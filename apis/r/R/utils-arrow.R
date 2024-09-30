@@ -356,17 +356,19 @@ get_domain_and_extent_dataframe <- function(tbl_schema, ind_col_names, domain = 
               "Second argument index names must be columns in first argument" =
                   all(is.finite(match(ind_col_names, names(tbl_schema)))),
               "Third argument must be options wrapper" = inherits(tdco, "TileDBCreateOptions"))
-    if (!is.null(domain)) {
-      stopifnot("Non-null domain provided to create must have same length as index-column names" =
-        (length(domain) == length(ind_col_names)))
-      for (name in ind_col_names) {
-        slot <- domain[[name]]
-        if (!is.null(slot)) {
-          stopifnot("Non-null domain provided to create must have null or 2-element vector in each slot" =
-            (length(slot) == 2))
-        }
-      }
-    }
+    stopifnot(
+        "domain must be NULL or a named list, with values being 2-element vectors or NULL" = is.null(domain) ||
+          ( # Check that `domain` is a list of length `length(index_column_names)`
+            # where all values are named after `index_column_names`
+            # and all values are `NULL` or a two-length atomic non-factor vector
+            rlang::is_list(domain, n = length(index_column_names)) &&
+              identical(sort(names(domain)), sort(index_column_names)) &&
+              all(vapply_lgl(
+                domain,
+                function(x) is.null(x) || (is.atomic(x) && !is.factor(x) && length(x) == 2L)
+              ))
+          )
+      )
 
     rl <- sapply(ind_col_names, \(ind_col_name) {
         ind_col <- tbl_schema$GetFieldByName(ind_col_name)
@@ -395,10 +397,10 @@ get_domain_and_extent_dataframe <- function(tbl_schema, ind_col_names, domain = 
         }
 
         requested_slot <- domain[[ind_col_name]]
-        if (is.null(requested_slot)) {
-          ind_cur_dom <- ind_max_dom
+        ind_cur_dom <- if (is.null(requested_slot)) {
+          ind_max_dom
         } else {
-          ind_cur_dom <- requested_slot
+          requested_slot
         }
         # Core supports no domain specification for variable-length dims, which
         # includes string/binary dims.
@@ -407,10 +409,10 @@ get_domain_and_extent_dataframe <- function(tbl_schema, ind_col_names, domain = 
         # https://github.com/single-cell-data/TileDB-SOMA/issues/2407
         if (.new_shape_feature_flag_is_enabled()) {
             if (ind_col_type_name %in% c("string", "utf8", "large_utf8")) {
-                if (is.null(requested_slot)) {
-                  aa <- arrow::arrow_array(c("", "", "", "", ""), ind_col_type)
+                aa <- if (is.null(requested_slot)) {
+                  arrow::arrow_array(c("", "", "", "", ""), ind_col_type)
                 } else {
-                  aa <- arrow::arrow_array(c("", "", "", requested_slot[[1]], requested_slot[[2]]), ind_col_type)
+                  arrow::arrow_array(c("", "", "", requested_slot[[1]], requested_slot[[2]]), ind_col_type)
                 }
             } else {
                 # If they wanted (0, 99) then extent must be at most 100.

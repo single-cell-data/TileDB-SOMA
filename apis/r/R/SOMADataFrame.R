@@ -25,7 +25,7 @@ SOMADataFrame <- R6::R6Class(
     #' the index column. For example, if there is a single int64-valued index column, then `domain`
     #' might be `c(100, 200)` to indicate that values between 100 and 200, inclusive, can be stored
     #' in that column.  If provided, this list must have the same length as `index_column_names`,
-    #' and the index-column domain will be as specified.  If omitted entirely, or if `NA` in a given
+    #' and the index-column domain will be as specified.  If omitted entirely, or if `NULL` in a given
     #' dimension, the corresponding index-column domain will use the minimum and maximum possible
     #' values for the column's datatype.  This makes a `DataFrame` growable.
     #' @template param-platform-config
@@ -45,17 +45,18 @@ SOMADataFrame <- R6::R6Class(
       schema <- private$validate_schema(schema, index_column_names)
 
       stopifnot(
-        "domain must be NULL or a named list, with values being 2-element vectors or NULL" =
-          is.null(domain) || is.list(domain))
-      if (!is.null(domain)) {
-        stopifnot("domain must be NULL or a named list, with values being 2-element vectors or NULL" =
-          !is.null(names(domain)))
-        for (name in names(domain)) {
-          slot <- domain[[name]]
-          stopifnot("domain must be NULL or a named list, with values being 2-element vectors or NULL" =
-            is.null(slot) || (is.vector(slot) && length(slot) == 2))
-        }
-      }
+        "domain must be NULL or a named list, with values being 2-element vectors or NULL" = is.null(domain) ||
+          ( # Check that `domain` is a list of length `length(index_column_names)`
+            # where all values are named after `index_column_names`
+            # and all values are `NULL` or a two-length atomic non-factor vector
+            rlang::is_list(domain, n = length(index_column_names)) &&
+              identical(sort(names(domain)), sort(index_column_names)) &&
+              all(vapply_lgl(
+                domain,
+                function(x) is.null(x) || (is.atomic(x) && !is.factor(x) && length(x) == 2L)
+              ))
+          )
+      )
 
       attr_column_names <- setdiff(schema$names, index_column_names)
       stopifnot("At least one non-index column must be defined in the schema" =

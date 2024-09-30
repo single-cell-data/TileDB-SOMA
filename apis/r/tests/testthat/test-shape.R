@@ -5,7 +5,7 @@ test_that("SOMADataFrame shape", {
     "soma_joinid",
     c("soma_joinid", "int_column"),
     c("soma_joinid", "string_column"),
-    c("string_column", "int_column"),
+    c("string_column", "int_column"), # duplicate intentional to match `domain_at_create_choices`
     c("string_column", "int_column")
   )
 
@@ -92,8 +92,8 @@ test_that("SOMADataFrame shape", {
       }
 
       # Check domain and maxdomain
-      dom = sdf$domain()
-      mxd = sdf$maxdomain()
+      dom <- sdf$domain()
+      mxd <- sdf$maxdomain()
 
       # First check names
       expect_equal(names(dom), index_column_names)
@@ -218,6 +218,87 @@ test_that("SOMADataFrame shape", {
       gc()
     }
   }
+  
+  # Test `domain` assertions
+  uri <- tempfile()
+
+  # `domain` must be `NULL` or a list
+  expect_error(SOMADataFrameCreate(
+    uri,
+    schema = asch,
+    index_column_names = "soma_joinid",
+    domain = NA
+  ))
+  expect_error(SOMADataFrameCreate(
+    uri,
+    schema = asch,
+    index_column_names = "soma_joinid",
+    domain = 1L
+  ))
+  expect_error(SOMADataFrameCreate(
+    uri,
+    schema = asch,
+    index_column_names = "soma_joinid",
+    domain = bit64::as.integer64(c(0L, 99L))
+  ))
+  # `domain` may not be an empty list
+  expect_error(SOMADataFrameCreate(
+    uri,
+    schema = asch,
+    index_column_names = "soma_joinid",
+    domain = list()
+  ))
+  # `domain` must be named
+  expect_error(SOMADataFrameCreate(
+    uri,
+    schema = asch,
+    index_column_names = "soma_joinid",
+    domain = list(bit64::as.integer64(c(0L, 99L)))
+  ))
+  # `domain` must be a list of two-length atomics
+  expect_error(SOMADataFrameCreate(
+    uri,
+    schema = asch,
+    index_column_names = "soma_joinid",
+    domain = list(soma_joinid = list(bit64::as.integer64(0L), bit64::as.integer64(99L)))
+  ))
+  expect_error(SOMADataFrameCreate(
+    uri,
+    schema = asch,
+    index_column_names = "soma_joinid",
+    domain = list(soma_joinid = NA)
+  ))
+  expect_error(SOMADataFrameCreate(
+    uri,
+    schema = asch,
+    index_column_names = "soma_joinid",
+    domain = list(soma_joinid = numeric())
+  ))
+  expect_error(SOMADataFrameCreate(
+    uri,
+    schema = asch,
+    index_column_names = "soma_joinid",
+    domain = list(soma_joinid = numeric(length = 3L))
+  ))
+  expect_error(SOMADataFrameCreate(
+    uri,
+    schema = asch,
+    index_column_names = c("soma_joinid", "int_column"),
+    domain = list(soma_joinid = NULL, int_column = data.frame())
+  ))
+  # `names(domain)` must be identical to `index_column_names`
+  expect_error(SOMADataFrameCreate(
+    uri,
+    schema = asch,
+    index_column_names = "soma_joinid",
+    domain = list(soma_joinid = NULL, int_column = NULL)
+  ))
+  expect_error(SOMADataFrameCreate(
+    uri,
+    schema = asch,
+    index_column_names = c("soma_joinid", "int_column"),
+    domain = list(soma_joinid = NULL)
+  ))
 })
 
 test_that("SOMASparseNDArray shape", {

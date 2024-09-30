@@ -13,7 +13,7 @@
 #' the index column. For example, if there is a single int64-valued index column, then `domain`
 #' might be `c(100, 200)` to indicate that values between 100 and 200, inclusive, can be stored
 #' in that column.  If provided, this list must have the same length as `index_column_names`,
-#' and the index-column domain will be as specified.  If omitted entirely, or if `NA` in a given
+#' and the index-column domain will be as specified.  If omitted entirely, or if `NULL` in a given
 #' dimension, the corresponding index-column domain will use the minimum and maximum possible
 #' values for the column's datatype.  This makes a `DataFrame` growable.
 #' @param ingest_mode Ingestion mode when creating the TileDB object; choose from:
