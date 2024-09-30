@@ -358,11 +358,11 @@ get_domain_and_extent_dataframe <- function(tbl_schema, ind_col_names, domain = 
               "Third argument must be options wrapper" = inherits(tdco, "TileDBCreateOptions"))
     stopifnot(
         "domain must be NULL or a named list, with values being 2-element vectors or NULL" = is.null(domain) ||
-          ( # Check that `domain` is a list of length `length(index_column_names)`
-            # where all values are named after `index_column_names`
+          ( # Check that `domain` is a list of length `length(ind_col_names)`
+            # where all values are named after `ind_col_names`
             # and all values are `NULL` or a two-length atomic non-factor vector
-            rlang::is_list(domain, n = length(index_column_names)) &&
-              identical(sort(names(domain)), sort(index_column_names)) &&
+            rlang::is_list(domain, n = length(ind_col_names)) &&
+              identical(sort(names(domain)), sort(ind_col_names)) &&
               all(vapply_lgl(
                 domain,
                 function(x) is.null(x) || (is.atomic(x) && !is.factor(x) && length(x) == 2L)
