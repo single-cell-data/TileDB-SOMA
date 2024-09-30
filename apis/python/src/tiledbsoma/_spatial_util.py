@@ -63,12 +63,12 @@ def transform_to_json(transform: somacore.CoordinateTransform) -> str:
 def transform_region(
     region: options.SpatialRegion,
     transform: somacore.CoordinateTransform,
-) -> shapely.GeometryType:
+) -> shapely.geometry.base.BaseGeometry:
     if len(transform.input_axes) != 2:
         raise NotImplementedError(
             "Spatial queries are currently only supported for 2D coordinates."
         )
-    if isinstance(region, shapely.GeometryType):
+    if isinstance(region, shapely.geometry.base.BaseGeometry):
         if region.has_z:
             raise ValueError("Only 2d shapely geometries are supported.")
         # Following check is currently unneeded, but leaving it for reference if
@@ -76,12 +76,12 @@ def transform_region(
         ndim = 3 if region.has_z else 2
         if ndim != len(transform.input_axes):
             raise ValueError(
-                "Input region must have {len(transform.input_axes)} dimension, but "
-                "region with {ndim} dimensions provided."
+                f"Input region must have {len(transform.input_axes)} dimension, "
+                f"but region with {ndim} dimensions provided."
             )
     else:
         if len(region) != 4:
-            raise ValueError("Unexpected region with size {len(region)}")
+            raise ValueError(f"Unexpected region with size {len(region)}")
         region = shapely.box(region[0], region[1], region[2], region[3])
 
     if not isinstance(transform, somacore.AffineTransform):

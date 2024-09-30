@@ -62,7 +62,7 @@ class PointCloud(SpatialDataFrame, somacore.PointCloud):
         Experimental.
     """
 
-    __slots__ = "_coord_space"
+    __slots__ = ("_coord_space",)
     _wrapper_type = PointCloudWrapper
 
     @classmethod
@@ -136,7 +136,7 @@ class PointCloud(SpatialDataFrame, somacore.PointCloud):
 
         # mypy false positive https://github.com/python/mypy/issues/5313
         coord_space = CoordinateSpace(
-            tuple(Axis(axis_name) for axis_name in axis_names)  # type: ignore[misc]
+            tuple(Axis(axis_name) for axis_name in axis_names)  # type: ignore
         )
         context = _validate_soma_tiledb_context(context)
         schema = _canonicalize_schema(schema, index_column_names)
@@ -408,7 +408,7 @@ class PointCloud(SpatialDataFrame, somacore.PointCloud):
             if region_coord_space is None:
                 # mypy false positive https://github.com/python/mypy/issues/5313
                 region_coord_space = CoordinateSpace(
-                    tuple(Axis(axis_name) for axis_name in region_transform.input_axes)  # type: ignore[misc]
+                    tuple(Axis(axis_name) for axis_name in region_transform.input_axes)  # type: ignore
                 )
             elif region_transform.input_axes != region_coord_space.axis_names:
                 raise ValueError(
