@@ -29,10 +29,10 @@
  *   This file defines the SOMAArray class.
  */
 
-#include "soma_array.h"
 #include <tiledb/array_experimental.h>
 #include "../utils/logger.h"
 #include "../utils/util.h"
+#include "soma_array.h"
 namespace tiledbsoma {
 using namespace tiledb;
 
@@ -1416,6 +1416,155 @@ std::vector<int64_t> SOMAArray::shape() {
 
 std::vector<int64_t> SOMAArray::maxshape() {
     return _tiledb_domain();
+}
+
+// This is a helper for can_upgrade_domain and can_resize, which have
+// much overlap.
+std::pair<bool, std::string> SOMAArray::_can_set_shape_helper(
+    const std::vector<int64_t>& newshape,
+    bool is_resize,
+    std::string method_name_for_messages) {
+    // E.g. it's an error to try to upgrade_domain or resize specifying
+    // a 3-D shape on a 2-D array.
+    auto arg_ndim = newshape.size();
+    auto array_ndim = arr_->schema().domain().ndim();
+    if (array_ndim != arg_ndim) {
+        return std::pair(
+            false,
+            fmt::format(
+                "cannot {}: provided shape has ndim {}, while the array has {}",
+                method_name_for_messages,
+                arg_ndim,
+                array_ndim));
+    }
+
+    // Enforce the semantics that tiledbsoma_upgrade_domain must be called
+    // only on arrays that don't have a shape set, and resize must be called
+    // only on arrays that do.
+    bool has_shape = has_current_domain();
+    if (is_resize) {
+        // They're trying to do resize on an array that doesn't already have a
+        // shape.
+        if (!has_shape) {
+            return std::pair(
+                false,
+                fmt::format(
+                    "{}: array currently has no shape: please use "
+                    "tiledbsoma_upgrade_shape.",
+                    method_name_for_messages));
+        }
+    } else {
+        // They're trying to do upgrade_shape on an array that already has a
+        // shape.
+        if (has_shape) {
+            return std::pair(
+                false,
+                fmt::format(
+                    "{}: array already has a shape: please use resize rather "
+                    "than "
+                    "tiledbsoma_upgrade_shape.",
+                    method_name_for_messages));
+        }
+    }
+
+    // * For old-style arrays without shape: core domain (soma maxdomain) may be
+    //   small (like 100) or big (like 2 billionish).
+    // * For new-style arrays with shape: core current domain (soma domain) will
+    //   probably be small and core domain (soma maxdomain) will be huge.
+    //
+    // In either case, we need to check that the user's requested shape isn't
+    // outside the core domain, which is immutable. For old-style arrays,
+    //
+    // if the requested shape fits in the array's core domain, it's good to go
+    // as a new shape.
+    auto domain_check = _can_set_shape_domainish_helper(
+        newshape, false, method_name_for_messages);
+    if (!domain_check.first) {
+        return domain_check;
+    }
+
+    // For new-style arrays, we need to additionally that the the requested
+    // shape (core current domain) isn't a downsize of the current one.
+    if (has_shape) {
+        auto current_domain_check = _can_set_shape_domainish_helper(
+            newshape, true, method_name_for_messages);
+        if (!current_domain_check.first) {
+            return current_domain_check;
+        }
+    }
+
+    return std::pair(true, "");
+}
+
+// This is a helper for _can_set_shape_helper: it's used for comparing
+// the user's requested shape against the core current domain or core (max)
+// domain.
+std::pair<bool, std::string> SOMAArray::_can_set_shape_domainish_helper(
+    const std::vector<int64_t>& newshape,
+    bool check_current_domain,
+    std::string method_name_for_messages) {
+    Domain domain = arr_->schema().domain();
+
+    for (unsigned i = 0; i < domain.ndim(); i++) {
+        const auto& dim = domain.dimension(i);
+
+        const std::string& dim_name = dim.name();
+
+        // These methods are only for SOMA NDArrays, and any other arrays for
+        // which the indices are entirely int64.  SOMA DataFrame objects, with
+        // multi-type dims, need to go through upgrade_domain -- and this is
+        // library-internal code, it's not the user's fault if we got here.
+        if (dim.type() != TILEDB_INT64) {
+            throw TileDBSOMAError(fmt::format(
+                "{}: internal error: expected {} dim to "
+                "be {}; got {}",
+                method_name_for_messages,
+                dim_name,
+                tiledb::impl::type_to_str(TILEDB_INT64),
+                tiledb::impl::type_to_str(dim.type())));
+        }
+
+        if (check_current_domain) {
+            std::pair<int64_t, int64_t>
+                cap = _core_current_domain_slot<int64_t>(dim_name);
+            int64_t old_dim_shape = cap.second + 1;
+
+            if (newshape[i] < old_dim_shape) {
+                return std::pair(
+                    false,
+                    fmt::format(
+                        "cannot {} for {}: new {} < existing shape {}",
+                        method_name_for_messages,
+                        dim_name,
+                        newshape[i],
+                        old_dim_shape));
+            }
+
+        } else {
+            std::pair<int64_t, int64_t> cap = _core_domain_slot<int64_t>(
+                dim_name);
+            int64_t old_dim_shape = cap.second + 1;
+
+            if (newshape[i] > old_dim_shape) {
+                return std::pair(
+                    false,
+                    fmt::format(
+                        "cannot {} for {}: new {} < existing maxshape {}",
+                        method_name_for_messages,
+                        dim_name,
+                        newshape[i],
+                        old_dim_shape));
+            }
+        }
+    }
+    return std::pair(true, "");
+}
+
+std::pair<bool, std::string> SOMAArray::can_set_shape_soma_joinid(
+    int64_t /*newshape*/,
+    bool /*is_resize*/,
+    std::string /*method_name_for_messages*/) {
+    return std::pair(false, "TBW");
 }
 
 void SOMAArray::resize(const std::vector<int64_t>& newshape) {
