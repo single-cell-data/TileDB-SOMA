@@ -8,6 +8,7 @@
 #include "soma_dense_ndarray.h"
 #include "soma_experiment.h"
 #include "soma_measurement.h"
+#include "soma_multiscale_image.h"
 #include "soma_sparse_ndarray.h"
 
 namespace tiledbsoma {
@@ -87,8 +88,7 @@ std::unique_ptr<SOMAObject> SOMAObject::open(
             throw TileDBSOMAError(
                 "Support for SOMAScene is not yet implemented.");
         } else if (group_type == "somamultiscaleimage") {
-            throw TileDBSOMAError(
-                "Support for SOMAMultiscaleImage is not yet implemented.");
+            return std::make_unique<SOMAMultiscaleImage>(*group_);
         } else {
             throw TileDBSOMAError("Saw invalid SOMAGroup type");
         }
