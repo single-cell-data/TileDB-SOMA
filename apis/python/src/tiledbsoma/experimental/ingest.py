@@ -26,12 +26,14 @@ from typing import (
 )
 
 import anndata as ad
+import attrs
 import numpy as np
 import pandas as pd
 import pyarrow as pa
 import pyarrow.compute as pacomp
 import scanpy
 from anndata import AnnData
+from typing_extensions import Self
 
 try:
     from PIL import Image
@@ -195,9 +197,71 @@ def from_cxg_spatial_h5ad(
     )
 
 
+@attrs.define
+class InputVisiumPaths:
+
+    @classmethod
+    def from_folder(
+        cls,
+        input_path: Path,
+        *,
+        version: Optional[Union[int, Tuple[int, int, int]]] = None,
+        use_raw_counts: bool = True,
+    ) -> Self:
+        input_path = Path(input_path)
+        input_gene_expression = input_path / "raw_feature_bc_matrix.h5"
+
+        # TODO: Generalize - this is hard-coded for Space Ranger version 2
+        input_tissue_positions = input_path / "spatial/tissue_positions.csv"
+
+        input_scale_factors = input_path / "spatial/scalefactors_json.json"
+        input_gene_expression = (
+            input_path / "raw_feature_bc_matrix.h5"
+            if use_raw_counts
+            else input_path / "filtered_feature_bc_matrix.h5"
+        )
+
+        # TODO: Generalize - hard-coded for Space Ranger version 2
+        fullres_image = None
+        hires_image = input_path / "spatial/tissue_hires_image.png"
+        lowres_image = input_path / "spatial/tissue_lowres_image.png"
+
+        return cls(
+            input_gene_expression,
+            input_scale_factors,
+            input_tissue_positions,
+            fullres_image,
+            hires_image,
+            lowres_image,
+            base_path=input_path,
+            major_version=version[0] if isinstance(version, tuple) else version,
+            minor_version=version[1] if isinstance(version, tuple) else None,
+            patch_version=version[1] if isinstance(version, tuple) else None,
+        )
+
+    gene_expression: Path
+    scale_factors: Path
+    tissue_positions: Path
+    fullres_image: Optional[Path]
+    hires_image: Optional[Path]
+    lowres_image: Optional[Path]
+    base_path: Optional[Path] = None
+    major_version: Optional[int] = None
+    minor_version: Optional[int] = None
+    patch_version: Optional[int] = None
+
+    @property
+    def has_image(self) -> bool:
+        return (
+            self.fullres_image is not None
+            or self.hires_image is not None
+            or self.lowres_image is not None
+        )
+
+
 def from_visium(
     experiment_uri: str,
-    input_path: "Path",
+    input_path: Union[Path, InputVisiumPaths],
     measurement_name: str,
     scene_name: str,
     *,
@@ -236,28 +300,19 @@ def from_visium(
         )
 
     # Get input file locations.
-    input_path = Path(input_path)
-
-    input_gene_expression = (
-        input_path / "raw_feature_bc_matrix.h5"
-        if use_raw_counts
-        else input_path / "filtered_feature_bc_matrix.h5"
+    input_paths = (
+        input_path
+        if isinstance(input_path, InputVisiumPaths)
+        else InputVisiumPaths.from_folder(input_path, use_raw_counts=use_raw_counts)
     )
 
-    # TODO: Generalize - this is hard-coded for Space Ranger version 2
-    input_tissue_positions = input_path / "spatial/tissue_positions.csv"
-
     # Get JSON scale factors.
-    input_scale_factors = input_path / "spatial/scalefactors_json.json"
-    with open(input_scale_factors, mode="r", encoding="utf-8") as scale_factors_json:
+    with open(
+        input_paths.scale_factors, mode="r", encoding="utf-8"
+    ) as scale_factors_json:
         scale_factors = json.load(scale_factors_json)
 
-    # TODO: Generalize - hard-coded for Space Ranger version 2
-    input_hires = input_path / "spatial/tissue_hires_image.png"
-    input_lowres = input_path / "spatial/tissue_lowres_image.png"
-    input_fullres = None
-
-    adata = scanpy.read_10x_h5(input_gene_expression)
+    adata = scanpy.read_10x_h5(input_paths.gene_expression)
 
     return _write_visium_data_to_experiment_uri(
         experiment_uri=experiment_uri,
@@ -277,10 +332,10 @@ def from_visium(
         context=context,
         platform_config=platform_config,
         scale_factors=scale_factors,
-        input_hires=input_hires,
-        input_lowres=input_lowres,
-        input_fullres=input_fullres,
-        input_tissue_positions=input_tissue_positions,
+        input_hires=input_paths.hires_image,
+        input_lowres=input_paths.lowres_image,
+        input_fullres=input_paths.fullres_image,
+        input_tissue_positions=input_paths.tissue_positions,
         write_obs_spatial_presence=write_obs_spatial_presence,
         write_var_spatial_presence=write_var_spatial_presence,
     )
@@ -340,7 +395,6 @@ def _write_visium_data_to_experiment_uri(
     pixels_per_spot_diameter = scale_factors["spot_diameter_fullres"]
 
     # Get the size of the fullres image.
-    # TODO: This is a hack.
     if input_fullres is not None:
         with Image.open(input_fullres) as im:
             ref_shape: Tuple[int, ...] = np.array(im).shape
