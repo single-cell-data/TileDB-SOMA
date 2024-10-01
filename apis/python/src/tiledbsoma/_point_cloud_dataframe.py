@@ -512,9 +512,9 @@ class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
         if self._coord_space is not None:
             if value.axis_names != self._coord_space.axis_names:
                 raise ValueError(
-                    f"Cannot change axis names of a point cloud dataframe. Existing "
-                    f"axis names are {self._coord_space.axis_names}. New coordinate "
-                    f"space has axis names {self._coord_space.axis_names}."
+                    f"Cannot change axis names of a point cloud. Existing axis names "
+                    f"are {self._coord_space.axis_names}. New coordinate space has "
+                    f"axis names {value.axis_names}."
                 )
         self.metadata[SOMA_COORDINATE_SPACE_METADATA_KEY] = coordinate_space_to_json(
             value

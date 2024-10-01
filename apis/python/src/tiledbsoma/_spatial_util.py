@@ -1,5 +1,5 @@
 import json
-from typing import Dict, Optional, Tuple
+from typing import Any, Dict, Optional, Tuple, Type
 
 import numpy as np
 import pyarrow as pa
@@ -26,31 +26,52 @@ def coordinate_space_to_json(coord_space: somacore.CoordinateSpace) -> str:
 
 
 def transform_from_json(data: str) -> somacore.CoordinateTransform:
-    """Creates a coordinate transform from a json string."""
+    """Convert a JSON string representing a CoordinateTransform"""
+
     raw = json.loads(data)
+
     try:
         transform_type = raw.pop("transform_type")
-    except KeyError as ke:
-        raise KeyError("Missing required key 'transform_type'.") from ke
+    except KeyError:
+        raise KeyError(
+            "'transform_type' not found when attempting to convert "
+            "JSON to CoordinateTransform child class"
+        )
+
     try:
         kwargs = raw.pop("transform")
-    except KeyError as ke:
-        raise KeyError("Missing reequired key 'transform'.") from ke
-    if transform_type == "IdentityTransform":
-        return somacore.IdentityTransform(**kwargs)
-    elif transform_type == "AffineTransform":
-        return somacore.AffineTransform(**kwargs)
-    else:
-        raise KeyError(f"Unrecognized transform type '{transform_type}'.")
+    except KeyError:
+        raise KeyError(
+            "'transform' kwargs options not found when attempting to "
+            "convert JSON to CoordinateTransform child class"
+        )
+
+    coord_transform_init: Dict[str, Type[somacore.CoordinateTransform]] = {
+        "AffineTransform": somacore.AffineTransform,
+        "ScaleTransform": somacore.ScaleTransform,
+        "UniformScaleTransform": somacore.UniformScaleTransform,
+        "IdentityTransform": somacore.IdentityTransform,
+    }
+
+    try:
+        return coord_transform_init[transform_type](**kwargs)
+    except KeyError:
+        raise KeyError(f"Unrecognized transform type key '{transform_type}'")
 
 
 def transform_to_json(transform: somacore.CoordinateTransform) -> str:
-    kwargs = {
+    """Representing a CoordinateTransform as a JSON string"""
+
+    kwargs: Dict[str, Any] = {
         "input_axes": transform.input_axes,
         "output_axes": transform.output_axes,
     }
     if isinstance(transform, somacore.IdentityTransform):
         pass
+    elif isinstance(transform, somacore.UniformScaleTransform):
+        kwargs["scale"] = transform.scale
+    elif isinstance(transform, somacore.ScaleTransform):
+        kwargs["scale_factors"] = transform.scale_factors.tolist()
     elif isinstance(transform, somacore.AffineTransform):
         kwargs["matrix"] = transform.augmented_matrix.tolist()
     else:
