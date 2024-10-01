@@ -27,6 +27,9 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0 # ensure we get all tags to inform package version determination
+      - name: Install dependencies
+        run: pip install --upgrade 'setuptools>=70.1' importlib-metadata  # cf. https://github.com/single-cell-data/TileDB-SOMA/pull/3076
+      - run: pip list
       - name: Build sdist
         run: python setup.py sdist
         working-directory: ./apis/python
