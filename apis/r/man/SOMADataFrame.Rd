@@ -10,7 +10,7 @@ row and is intended to act as a join key for other objects, such as
 \code{\link{SOMASparseNDArray}}.  (lifecycle: maturing)
 }
 \section{Super classes}{
-\code{tiledbsoma::TileDBObject} -> \code{tiledbsoma::TileDBArray} -> \code{tiledbsoma::SOMAArrayBase} -> \code{SOMADataFrame}
+\code{\link[tiledbsoma:TileDBObject]{tiledbsoma::TileDBObject}} -> \code{\link[tiledbsoma:TileDBArray]{tiledbsoma::TileDBArray}} -> \code{\link[tiledbsoma:SOMAArrayBase]{tiledbsoma::SOMAArrayBase}} -> \code{SOMADataFrame}
 }
 \section{Methods}{
 \subsection{Public methods}{
@@ -21,6 +21,8 @@ row and is intended to act as a join key for other objects, such as
 \item \href{#method-SOMADataFrame-update}{\code{SOMADataFrame$update()}}
 \item \href{#method-SOMADataFrame-shape}{\code{SOMADataFrame$shape()}}
 \item \href{#method-SOMADataFrame-maxshape}{\code{SOMADataFrame$maxshape()}}
+\item \href{#method-SOMADataFrame-domain}{\code{SOMADataFrame$domain()}}
+\item \href{#method-SOMADataFrame-maxdomain}{\code{SOMADataFrame$maxdomain()}}
 \item \href{#method-SOMADataFrame-tiledbsoma_has_upgraded_domain}{\code{SOMADataFrame$tiledbsoma_has_upgraded_domain()}}
 \item \href{#method-SOMADataFrame-clone}{\code{SOMADataFrame$clone()}}
 }
@@ -44,6 +46,7 @@ row and is intended to act as a join key for other objects, such as
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="index_column_names"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-index_column_names'><code>tiledbsoma::TileDBArray$index_column_names()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="ndim"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-ndim'><code>tiledbsoma::TileDBArray$ndim()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="non_empty_domain"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-non_empty_domain'><code>tiledbsoma::TileDBArray$non_empty_domain()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="non_empty_domain_new"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-non_empty_domain_new'><code>tiledbsoma::TileDBArray$non_empty_domain_new()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="open"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-open'><code>tiledbsoma::TileDBArray$open()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="print"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-print'><code>tiledbsoma::TileDBArray$print()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="schema"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-schema'><code>tiledbsoma::TileDBArray$schema()</code></a></span></li>
@@ -63,6 +66,7 @@ Create (lifecycle: maturing)
 \if{html}{\out{<div class="r">}}\preformatted{SOMADataFrame$create(
   schema,
   index_column_names = c("soma_joinid"),
+  domain = NULL,
   platform_config = NULL,
   internal_use_only = NULL
 )}\if{html}{\out{</div>}}
@@ -76,6 +80,15 @@ Create (lifecycle: maturing)
 \item{\code{index_column_names}}{A vector of column names to use as user-defined
 index columns.  All named columns must exist in the schema, and at least
 one index column name is required.}
+
+\item{\code{domain}}{An optional list of 2-element vectors specifying the domain of each index
+column. Each vector should be a pair consisting of the minimum and maximum values storable in
+the index column. For example, if there is a single int64-valued index column, then \code{domain}
+might be \code{c(100, 200)} to indicate that values between 100 and 200, inclusive, can be stored
+in that column.  If provided, this list must have the same length as \code{index_column_names},
+and the index-column domain will be as specified.  If omitted entirely, or if \code{NULL} in a given
+dimension, the corresponding index-column domain will use the minimum and maximum possible
+values for the column's datatype.  This makes a \code{DataFrame} growable.}
 
 \item{\code{platform_config}}{A \link[tiledbsoma:PlatformConfig]{platform configuration}
 object}
@@ -216,6 +229,38 @@ simply raises an error
 
 \subsection{Returns}{
 None, instead a \code{\link{.NotYetImplemented}()} error is raised
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SOMADataFrame-domain"></a>}}
+\if{latex}{\out{\hypertarget{method-SOMADataFrame-domain}{}}}
+\subsection{Method \code{domain()}}{
+Returns a named list of minimum/maximum pairs, one per index
+column, currently storable on each index column of the dataframe. These
+can be resized up to \code{maxdomain}.
+(lifecycle: maturing)
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SOMADataFrame$domain()}\if{html}{\out{</div>}}
+}
+
+\subsection{Returns}{
+Named list of minimum/maximum values.
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SOMADataFrame-maxdomain"></a>}}
+\if{latex}{\out{\hypertarget{method-SOMADataFrame-maxdomain}{}}}
+\subsection{Method \code{maxdomain()}}{
+Returns a named list of minimum/maximum pairs, one per index
+column, which are the limits up to which the dataframe can have its
+domain resized.
+(lifecycle: maturing)
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SOMADataFrame$maxdomain()}\if{html}{\out{</div>}}
+}
+
+\subsection{Returns}{
+Named list of minimum/maximum values.
 }
 }
 \if{html}{\out{<hr>}}

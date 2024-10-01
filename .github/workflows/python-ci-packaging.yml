@@ -65,7 +65,7 @@ jobs:
           apt-get install --yes cmake git python-is-python3 python3 python3-pip python3-venv unzip wget
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # for setuptools-scm
+          fetch-depth: 0  # for setuptools-scm
       - name: Configure Git
         run: |
           # This is a permissions quirk due to running Git as root inside of a Docker container
@@ -76,7 +76,7 @@ jobs:
         run: |
           mkdir -p external
           # Please do not edit manually -- let scripts/update-tiledb-version.py update this
-          wget --quiet https://github.com/TileDB-Inc/TileDB/releases/download/2.26.1/tiledb-linux-x86_64-2.26.1-db1cee4.tar.gz
+          wget --quiet https://github.com/TileDB-Inc/TileDB/releases/download/2.26.2/tiledb-linux-x86_64-2.26.2-30fc114.tar.gz
           tar -C external -xzf tiledb-linux-x86_64-*.tar.gz
           ls external/lib/
           echo "LD_LIBRARY_PATH=$(pwd)/external/lib" >> $GITHUB_ENV
@@ -101,7 +101,7 @@ jobs:
         run: |
           python --version
           python -m venv ./venv-soma
-          ./venv-soma/bin/pip install --prefer-binary pybind11-global typeguard sparse wheel
+          ./venv-soma/bin/pip install --prefer-binary pybind11-global typeguard sparse 'setuptools>=70.1' wheel
           ./venv-soma/bin/pip list
       - name: Build wheel
         run: |
@@ -164,7 +164,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # for setuptools-scm
+          fetch-depth: 0  # for setuptools-scm
       - name: Check if System Integrity Protection (SIP) is enabled
         run: csrutil status
       - name: Install pre-built libtiledb
@@ -172,7 +172,7 @@ jobs:
         run: |
           mkdir -p external
           # Please do not edit manually -- let scripts/update-tiledb-version.py update this
-          wget --quiet https://github.com/TileDB-Inc/TileDB/releases/download/2.26.1/tiledb-macos-x86_64-2.26.1-db1cee4.tar.gz
+          wget --quiet https://github.com/TileDB-Inc/TileDB/releases/download/2.26.2/tiledb-macos-x86_64-2.26.2-30fc114.tar.gz
           tar -C external -xzf tiledb-macos-x86_64-*.tar.gz
           ls external/lib/
           echo "DYLD_LIBRARY_PATH=$(pwd)/external/lib" >> $GITHUB_ENV
@@ -201,7 +201,7 @@ jobs:
         run: |
           python --version
           python -m venv ./venv-soma
-          ./venv-soma/bin/pip install --prefer-binary pybind11-global typeguard sparse wheel setuptools
+          ./venv-soma/bin/pip install --prefer-binary pybind11-global typeguard sparse wheel 'setuptools>=70.1'
           ./venv-soma/bin/pip list
       - name: Build wheel
         run: |
@@ -257,17 +257,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # for setuptools-scm
+          fetch-depth: 0  # for setuptools-scm
       - name: Install pre-built libtiledb
         run: |
           mkdir -p external
           if [ `uname -s` == "Darwin" ];
           then
             # Please do not edit manually -- let scripts/update-tiledb-version.py update this
-            wget --quiet https://github.com/TileDB-Inc/TileDB/releases/download/2.26.1/tiledb-macos-x86_64-2.26.1-db1cee4.tar.gz
+            wget --quiet https://github.com/TileDB-Inc/TileDB/releases/download/2.26.2/tiledb-macos-x86_64-2.26.2-30fc114.tar.gz
           else
             # Please do not edit manually -- let scripts/update-tiledb-version.py update this
-            wget --quiet https://github.com/TileDB-Inc/TileDB/releases/download/2.26.1/tiledb-linux-x86_64-2.26.1-db1cee4.tar.gz
+            wget --quiet https://github.com/TileDB-Inc/TileDB/releases/download/2.26.2/tiledb-linux-x86_64-2.26.2-30fc114.tar.gz
           fi
           tar -C external -xzf tiledb-*.tar.gz
           ls external/lib/
@@ -302,7 +302,7 @@ jobs:
         run: |
           python --version
           python -m venv ./venv-soma
-          ./venv-soma/bin/pip install --prefer-binary pybind11-global typeguard sparse wheel setuptools
+          ./venv-soma/bin/pip install --prefer-binary pybind11-global typeguard sparse wheel 'setuptools>=70.1'
           ./venv-soma/bin/pip list
       - name: Install TileDB-SOMA-Py with setuptools and --libtiledbsoma
         run: |
@@ -359,13 +359,13 @@ jobs:
       - uses: actions/checkout@v4
         with:
           path: TileDB-SOMA
-          fetch-depth: 0 # for setuptools-scm
+          fetch-depth: 0  # for setuptools-scm
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
       - name: Install dependencies
-        run: pip install --prefer-binary pybind11 wheel
+        run: pip install --prefer-binary pybind11 'setuptools>=70.1' wheel
       - name: Build source tarball (sdist)
         run: |
           cd TileDB-SOMA/apis/python

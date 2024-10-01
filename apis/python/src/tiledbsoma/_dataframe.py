@@ -417,6 +417,18 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         """
         return self._handle.tiledbsoma_has_upgraded_domain
 
+    def resize_soma_joinid(self, newshape: int) -> None:
+        """Increases the shape of the dataframe on the ``soma_joinid`` index
+        column, if it indeed is an index column, leaving all other index columns
+        as-is. If the ``soma_joinid`` is not an index column, no change is made.
+        This is a special case of ``upgrade_domain`` (WIP for 1.15), but simpler
+        to keystroke, and handles the most common case for dataframe domain
+        expansion.  Raises an error if the dataframe doesn't already have a
+        domain: in that case please call ``tiledbsoma_upgrade_domain`` (WIP for
+        1.15).
+        """
+        self._handle._handle.resize_soma_joinid(newshape)
+
     def __len__(self) -> int:
         """Returns the number of rows in the dataframe. Same as ``df.count``."""
         return self.count
@@ -830,9 +842,8 @@ def _fill_out_slot_soma_domain(
         # Here the slot_domain isn't specified by the user; we're setting it.
         # The SOMA spec disallows negative soma_joinid.
         if index_column_name == SOMA_JOINID:
-            slot_domain = (0, 2**31 - 2)  # R-friendly, which 2**63-1 is not
-        else:
-            saturated_range = True
+            slot_domain = (0, 2**63 - 2)
+        saturated_range = True
     elif np.issubdtype(dtype, NPFloating):
         finfo = np.finfo(cast(NPFloating, dtype))
         slot_domain = finfo.min, finfo.max

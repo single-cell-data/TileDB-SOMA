@@ -164,6 +164,11 @@ test_that("Resume-mode data frames", {
     }
   }
 
+  if (.new_shape_feature_flag_is_enabled()) {
+    sdfp$reopen("WRITE")
+    sdfp$resize_soma_joinid(nrow(co2))
+  }
+
   expect_s3_class(
     sdfc <- write_soma(
       co2,

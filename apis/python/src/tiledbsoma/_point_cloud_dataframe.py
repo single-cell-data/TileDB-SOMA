@@ -3,7 +3,7 @@
 #
 # Licensed under the MIT License.
 """
-Implementation of a SOMA Point Cloud
+Implementation of a SOMA Point Cloud DataFrame
 """
 
 import warnings
@@ -38,7 +38,7 @@ from ._spatial_util import (
     coordinate_space_to_json,
     process_spatial_df_region,
 )
-from ._tdb_handles import PointCloudWrapper
+from ._tdb_handles import PointCloudDataFrameWrapper
 from ._types import OpenTimestamp
 from .options import SOMATileDBContext
 from .options._soma_tiledb_context import _validate_soma_tiledb_context
@@ -50,11 +50,11 @@ from .options._tiledb_create_write_options import (
 _UNBATCHED = options.BatchSize()
 
 
-class PointCloud(SpatialDataFrame, somacore.PointCloud):
+class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
     """A specialized SOMA DataFrame for storing collections of points in
     multi-dimensional space.
 
-    The ``PointCloud`` class is designed to efficiently store and query point data,
+    The ``PointCloudDataFrame`` class is designed to efficiently store and query point data,
     where each point is represented by coordinates in one or more spatial dimensions
     (e.g., x, y, z) and may have additional columns for associated attributes.
 
@@ -63,7 +63,7 @@ class PointCloud(SpatialDataFrame, somacore.PointCloud):
     """
 
     __slots__ = ("_coord_space",)
-    _wrapper_type = PointCloudWrapper
+    _wrapper_type = PointCloudDataFrameWrapper
 
     @classmethod
     def create(
@@ -78,7 +78,7 @@ class PointCloud(SpatialDataFrame, somacore.PointCloud):
         context: Optional[SOMATileDBContext] = None,
         tiledb_timestamp: Optional[OpenTimestamp] = None,
     ) -> Self:
-        """Creates a new ``PointCloud`` at the given URI.
+        """Creates a new ``PointCloudDataFrame`` at the given URI.
 
         The schema of the created point cloud dataframe will include a column named
         ``soma_joinid`` of type ``pyarrow.int64``, with negative values disallowed, and
@@ -234,7 +234,7 @@ class PointCloud(SpatialDataFrame, somacore.PointCloud):
         plt_cfg = _util.build_clib_platform_config(platform_config)
         timestamp_ms = context._open_timestamp_ms(tiledb_timestamp)
         try:
-            clib.SOMAPointCloud.create(
+            clib.SOMAPointCloudDataFrame.create(
                 uri,
                 schema=schema,
                 index_column_info=index_column_info,
@@ -256,7 +256,7 @@ class PointCloud(SpatialDataFrame, somacore.PointCloud):
 
     def __init__(
         self,
-        handle: PointCloudWrapper,
+        handle: PointCloudDataFrameWrapper,
         **kwargs: Any,
     ):
         super().__init__(handle, **kwargs)
@@ -270,8 +270,8 @@ class PointCloud(SpatialDataFrame, somacore.PointCloud):
         for name in self._coord_space.axis_names:
             if name not in self.index_column_names:
                 raise SOMAError(
-                    f"Point cloud axis '{name}' does not match any of the index column"
-                    f" names."
+                    f"Point cloud dataframe axis '{name}' does not match any of the "
+                    f"index column names."
                 )
 
     # Data operations
@@ -284,8 +284,8 @@ class PointCloud(SpatialDataFrame, somacore.PointCloud):
     def count(self) -> int:
         """Returns the number of rows in the dataframe."""
         self._check_open_read()
-        # if is it in read open mode, then it is a PointCloudWrapper
-        return cast(PointCloudWrapper, self._handle).count
+        # if is it in read open mode, then it is a PointCloudDataFrameWrapper
+        return cast(PointCloudDataFrameWrapper, self._handle).count
 
     def read(
         self,
@@ -331,7 +331,7 @@ class PointCloud(SpatialDataFrame, somacore.PointCloud):
             config.update(platform_config)
             context = clib.SOMAContext(config)
 
-        sr = clib.SOMAPointCloud.open(
+        sr = clib.SOMAPointCloudDataFrame.open(
             uri=handle.uri,
             mode=clib.OpenMode.read,
             context=context,
@@ -420,7 +420,7 @@ class PointCloud(SpatialDataFrame, somacore.PointCloud):
                 raise ValueError(
                     f"The output axes of '{region_transform.output_axes}' of the "
                     f"transform must match the axes '{self._coord_space.axis_names}' "
-                    f"of the coordinate space of this point cloud."
+                    f"of the coordinate space of this point cloud dataframe."
                 )
 
         # Process the user provided region.
@@ -494,7 +494,7 @@ class PointCloud(SpatialDataFrame, somacore.PointCloud):
 
     @property
     def coordinate_space(self) -> CoordinateSpace:
-        """Coordinate space for this point cloud.
+        """Coordinate space for this point cloud dataframe.
 
         Lifecycle:
             Experimental.
@@ -503,7 +503,7 @@ class PointCloud(SpatialDataFrame, somacore.PointCloud):
 
     @coordinate_space.setter
     def coordinate_space(self, value: CoordinateSpace) -> None:
-        """Coordinate space for this point cloud.
+        """Coordinate space for this point cloud dataframe.
 
         Lifecycle:
             Experimental.
@@ -511,9 +511,9 @@ class PointCloud(SpatialDataFrame, somacore.PointCloud):
         if self._coord_space is not None:
             if value.axis_names != self._coord_space.axis_names:
                 raise ValueError(
-                    f"Cannot change axis names of a point cloud. Existing axis names "
-                    f"are {self._coord_space.axis_names}. New coordinate space has "
-                    f"axis names {self._coord_space.axis_names}."
+                    f"Cannot change axis names of a point cloud dataframe. Existing "
+                    f"axis names are {self._coord_space.axis_names}. New coordinate "
+                    f"space has axis names {self._coord_space.axis_names}."
                 )
         self.metadata[SOMA_COORDINATE_SPACE_METADATA_KEY] = coordinate_space_to_json(
             value

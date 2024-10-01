@@ -291,6 +291,13 @@ class SOMAArray : public SOMAObject {
     std::vector<std::string> dimension_names() const;
 
     /**
+     * @brief Sees if the array has a dimension of the given name.
+     *
+     * @return bool
+     */
+    bool has_dimension_name(const std::string& name) const;
+
+    /**
      * @brief Set the dimension slice using one point
      *
      * @note Partitioning is not supported
@@ -1032,6 +1039,55 @@ class SOMAArray : public SOMAObject {
     std::vector<int64_t> maxshape();
 
     /**
+     * This wires up to Python/R to tell a user if they can call resize() on an
+     * array without error. For single arrays, they could just call resize() and
+     * take their chances -- but for experiment-level resize (e.g. append mode)
+     * it's crucial that we provide a can-we-do-them-all pass through all arrays
+     * in the experiment before attempting any of them.
+     *
+     * On failure, returns false and an error string suitable for showing
+     * to the user; on success, returns true and the empty string.
+     *
+     * Failure reasons: the requested shape's dimension-count doesn't match the
+     * arrays; the array doesn't have a shape set (they must call
+     * upgrade_shape), or the requested shape doesn't fit within the array's
+     * existing core domain.
+     */
+    std::pair<bool, std::string> can_resize(
+        const std::vector<int64_t>& newshape) {
+        return _can_set_shape_helper(newshape, true, "resize");
+    }
+
+    /**
+     * This wires up to Python/R to tell a user if they can call
+     * upgrade_shape() on an array without error. For single dataframes,
+     * they could just call upgrade_shape() and take their chances -- but for
+     * experiment-level resize (e.g. append mode) it's crucial that we provide a
+     * can-we-do-them-all pass through all arrays in the experiment before
+     * attempting any of them.
+     *
+     * On failure, returns false and an error string suitable for showing
+     * to the user; on success, returns true and the empty string.
+     *
+     * Failure reasons: the requested shape's dimension-count doesn't match the
+     * arrays; the array already has a shape set (they must call resize), the
+     * requested shape doesn't fit within the array's existing core domain, or
+     * the requested shape is a downsize of the array's existing core current
+     * domain.
+     */
+    std::pair<bool, std::string> can_upgrade_shape(
+        const std::vector<int64_t>& newshape) {
+        return _can_set_shape_helper(
+            newshape, false, "tiledbsoma_upgrade_shape");
+    }
+
+    /**
+     * This is similar to can_upgrade_shape, but it's a can-we call
+     * for maybe_resize_soma_joinid.
+     */
+    std::pair<bool, std::string> can_resize_soma_joinid(int64_t newshape);
+
+    /**
      * @brief Resize the shape (what core calls "current domain") up to the
      * maxshape (what core calls "domain").
      *
@@ -1066,7 +1122,7 @@ class SOMAArray : public SOMAObject {
      * @return Throws if the requested shape exceeds the array's create-time
      * maxshape. Throws if the array does not have current-domain support.
      */
-    void maybe_resize_soma_joinid(const std::vector<int64_t>& newshape);
+    void resize_soma_joinid(int64_t newshape);
 
    protected:
     // These two are for use nominally by SOMADataFrame. This could be moved in
@@ -1125,7 +1181,23 @@ class SOMAArray : public SOMAObject {
     }
 
     /**
-     * Helper method for resize and upgrade_shape.
+     * This is a code-dedupe helper for can_resize and can_upgrade_domain.
+     */
+    std::pair<bool, std::string> _can_set_shape_helper(
+        const std::vector<int64_t>& newshape,
+        bool is_resize,
+        std::string method_name_for_messages);
+
+    /**
+     * This is a second-level code-dedupe helper for _can_set_shape_helper.
+     */
+    std::pair<bool, std::string> _can_set_shape_domainish_helper(
+        const std::vector<int64_t>& newshape,
+        bool check_current_domain,
+        std::string method_name_for_messages);
+
+    /**
+     * This is a code-dedupe helper method for resize and upgrade_shape.
      */
     void _set_current_domain_from_shape(const std::vector<int64_t>& newshape);
 

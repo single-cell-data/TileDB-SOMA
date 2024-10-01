@@ -1,11 +1,11 @@
 /**
- * @file   common.h
+ * @file   unit_soma_multiscale_image.cc
  *
  * @section LICENSE
  *
  * The MIT License
  *
- * @copyright Copyright (c) 2022 TileDB, Inc.
+ * @copyright Copyright (c) 2024 TileDB, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -27,40 +27,19 @@
  *
  * @section DESCRIPTION
  *
- *   This declares the common functions in the API
+ * This file manages unit tests for the SOMAMultiscaleImage class
  */
+#include "common.h"
 
-#ifndef TILEDBSOMA_COMMON_H
-#define TILEDBSOMA_COMMON_H
+TEST_CASE("SOMAMultiscaleImage: basic") {
+    auto ctx = std::make_shared<SOMAContext>();
+    std::string uri = "mem://unit-test-multiscale-image-basic";
 
-#include <stdexcept>  // for windows: error C2039: 'runtime_error': is not a member of 'std'
-#include <string>
-#include <tiledb/tiledb>
-
-namespace tiledbsoma {
-
-const std::string SOMA_OBJECT_TYPE_KEY = "soma_object_type";
-const std::string ENCODING_VERSION_KEY = "soma_encoding_version";
-const std::string ENCODING_VERSION_VAL = "1.1.0";
-
-using MetadataValue = std::tuple<tiledb_datatype_t, uint32_t, const void*>;
-enum MetadataInfo { dtype = 0, num, value };
-
-using TimestampRange = std::pair<uint64_t, uint64_t>;
-
-class TileDBSOMAError : public std::runtime_error {
-   public:
-    explicit TileDBSOMAError(const char* m)
-        : std::runtime_error(m){};
-    explicit TileDBSOMAError(std::string m)
-        : std::runtime_error(m.c_str()){};
-
-   public:
-    virtual const char* what() const noexcept override {
-        return std::runtime_error::what();
-    }
-};
-
-};  // namespace tiledbsoma
-
-#endif  // TILEDBSOMA_COMMON_H
+    SOMAMultiscaleImage::create(uri, ctx, std::nullopt);
+    auto soma_image = SOMAMultiscaleImage::open(
+        uri, OpenMode::read, ctx, std::nullopt);
+    REQUIRE(soma_image->uri() == uri);
+    REQUIRE(soma_image->ctx() == ctx);
+    REQUIRE(soma_image->type() == "SOMAMultiscaleImage");
+    soma_image->close();
+}

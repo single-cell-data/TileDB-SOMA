@@ -390,6 +390,18 @@ void resize(
 }
 
 // [[Rcpp::export]]
+void resize_soma_joinid(
+    const std::string& uri,
+    Rcpp::NumericVector new_shape,
+    Rcpp::XPtr<somactx_wrap_t> ctxxp) {
+    // This function is solely for SOMADataFrame.
+    auto sr = tdbs::SOMADataFrame::open(uri, OpenMode::write, ctxxp->ctxptr);
+    std::vector<int64_t> new_shape_i64 = i64_from_rcpp_numeric(new_shape);
+    sr->resize_soma_joinid(new_shape_i64[0]);
+    sr->close();
+}
+
+// [[Rcpp::export]]
 void tiledbsoma_upgrade_shape(
     const std::string& uri,
     Rcpp::NumericVector new_shape,

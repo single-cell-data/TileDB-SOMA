@@ -9,7 +9,7 @@ Base class for representing an individual TileDB array.
 }
 \keyword{internal}
 \section{Super class}{
-\code{tiledbsoma::TileDBObject} -> \code{TileDBArray}
+\code{\link[tiledbsoma:TileDBObject]{tiledbsoma::TileDBObject}} -> \code{TileDBArray}
 }
 \section{Active bindings}{
 \if{html}{\out{<div class="r6-active-bindings">}}
@@ -35,6 +35,7 @@ Base class for representing an individual TileDB array.
 \item \href{#method-TileDBArray-maxshape}{\code{TileDBArray$maxshape()}}
 \item \href{#method-TileDBArray-used_shape}{\code{TileDBArray$used_shape()}}
 \item \href{#method-TileDBArray-non_empty_domain}{\code{TileDBArray$non_empty_domain()}}
+\item \href{#method-TileDBArray-non_empty_domain_new}{\code{TileDBArray$non_empty_domain_new()}}
 \item \href{#method-TileDBArray-ndim}{\code{TileDBArray$ndim()}}
 \item \href{#method-TileDBArray-attributes}{\code{TileDBArray$attributes()}}
 \item \href{#method-TileDBArray-dimnames}{\code{TileDBArray$dimnames()}}
@@ -278,6 +279,26 @@ each dimension in the array.
 \subsection{Returns}{
 A vector of \code{\link[bit64:bit64-package]{bit64::integer64}}s with one entry for
 each dimension.
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-TileDBArray-non_empty_domain_new"></a>}}
+\if{latex}{\out{\hypertarget{method-TileDBArray-non_empty_domain_new}{}}}
+\subsection{Method \code{non_empty_domain_new()}}{
+Returns a named list of minimum/maximum pairs, one per index
+column, which are the smallest and largest values written on that
+index column.
+
+As tracked on https://github.com/single-cell-data/TileDB-SOMA/issues/2407
+this will replace the existing \code{non_empty_domain} method.
+
+(lifecycle: maturing)
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{TileDBArray$non_empty_domain_new()}\if{html}{\out{</div>}}
+}
+
+\subsection{Returns}{
+Named list of minimum/maximum values.
 }
 }
 \if{html}{\out{<hr>}}

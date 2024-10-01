@@ -219,12 +219,31 @@ write_soma.data.frame <- function(
     choices = names(x),
     several.ok = TRUE
   )
+
+  # For index_column_name being soma_joinid -- this being the default
+  # -- set that domain slot to match the data. This will endow the
+  # dataframe with something users think of as a "shape". For the
+  # other slots, set the domain wide open.
+  #
+  domain <- NULL
+  if (.new_shape_feature_flag_is_enabled()) {
+    domain <- list()
+    for (index_column_name in index_column_names) {
+      if (index_column_name == "soma_joinid") {
+        domain[["soma_joinid"]] <- c(0, nrow(x) - 1)
+      } else {
+        domain[[index_column_name]] <- NULL
+      }
+    }
+  }
+
   # Create the SOMADataFrame
   tbl <- arrow::arrow_table(x)
   sdf <- SOMADataFrameCreate(
     uri = uri,
     schema = tbl$schema,
     index_column_names = index_column_names,
+    domain = domain,
     ingest_mode = ingest_mode,
     platform_config = platform_config,
     tiledbsoma_ctx = tiledbsoma_ctx
@@ -238,6 +257,9 @@ write_soma.data.frame <- function(
     } else {
       NULL
     }
+  }
+  if (ingest_mode %in% c('resume') && sdf$tiledbsoma_has_upgraded_domain()) {
+    sdf$resize_soma_joinid(nrow(x))
   }
   if (!is.null(tbl)) {
     sdf$write(tbl)
