@@ -1116,6 +1116,13 @@ ArrowAdapter::to_arrow(std::shared_ptr<ColumnBuffer> column) {
         array->n_buffers,
         column->is_nullable()));
 
+    if (array->n_buffers != n_buffers) {
+        throw TileDBSOMAError(fmt::format(
+            "[ArrowAdapter] expected array n_buffers {}; got {}",
+            n_buffers,
+            array->n_buffers));
+    }
+
     // After allocating and initializing via nanoarrow we
     // hook our custom release function in
     array->release = &release_array;
