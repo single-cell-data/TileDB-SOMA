@@ -1,0 +1,8 @@
+#include "polygon.h"
+
+namespace tiledbsoma
+{
+    Polygon::Polygon(std::vector<BasePoint>&& exteriorRing, std::vector<std::vector<BasePoint>>&& interiorRings) : exteriorRing(exteriorRing), interiorRings(interiorRings) {}
+
+    Polygon::~Polygon() {}
+} // namespace tiledbsoma

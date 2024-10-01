@@ -1,0 +1,20 @@
+#ifndef TILEDBSOMA_LINESTRING_H
+#define TILEDBSOMA_LINESTRING_H
+
+#include <vector>
+
+#include "base.h"
+
+namespace tiledbsoma {
+
+class LineString
+{
+public:
+    LineString(std::vector<BasePoint>&& points);
+    ~LineString();
+
+    std::vector<BasePoint> points;
+};
+}
+
+#endif // TILEDBSOMA_LINESTRING_H
