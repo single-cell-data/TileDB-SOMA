@@ -235,7 +235,7 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
         coordinate_space: Optional[CoordinateSpace] = None,
     ) -> PointCloudDataFrame:
         """Adds the coordinate transform for the scene coordinate space to
-        a point cloud dataframe  stored in the scene.
+        a point cloud dataframe stored in the scene.
 
         If the subcollection the point cloud is inside of is more than one
         layer deep, the input should be provided as a sequence of names. For example,

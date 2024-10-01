@@ -4,7 +4,7 @@
 # Licensed under the MIT License.
 
 """
-Implementation of a base class shared between GeometryDataFrame and PointCloud
+Implementation of a base class shared between GeometryDataFrame and PointCloudDataFrame
 """
 from typing import Any, Optional, Sequence, Tuple, Type, Union
 
