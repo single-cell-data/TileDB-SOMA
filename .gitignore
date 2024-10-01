@@ -51,7 +51,10 @@ apis/python/src/tiledbsoma/_version.py
 apis/python/src/tiledbsoma/libtiledb.*
 apis/python/src/tiledbsoma/libtiledbsoma.so
 apis/python/src/tiledbsoma/libtiledbsoma.dylib
-apis/python/src/tiledbsoma/pytiledbsoma.*
+# This is called .so on Linux and MacOS both (not .dylib).
+# Adding a second rule just in case that ever changes.
+apis/python/src/tiledbsoma/pytiledbsoma.*.so
+apis/python/src/tiledbsoma/pytiledbsoma.*.dylib
 
 /.quarto/
 
