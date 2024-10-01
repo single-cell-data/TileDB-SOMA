@@ -154,6 +154,11 @@ PYBIND11_MODULE(pytiledbsoma, m) {
                     *ctx->tiledb_ctx(),
                     attr_name,
                     ArrowAdapter::to_tiledb_format(attr_type));
+
+                if (ArrowAdapter::arrow_is_string_type(attr_type.c_str())) {
+                    attr.set_cell_val_num(TILEDB_VAR_NUM);
+                }
+
                 FilterList filter_list(*ctx->tiledb_ctx());
                 filter_list.add_filter(
                     Filter(*ctx->tiledb_ctx(), TILEDB_FILTER_ZSTD));
