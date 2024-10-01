@@ -139,6 +139,7 @@ def test_scene_coord_space(tmp_path):
         # Reserved metadata key should not be settable?
         # with pytest.raises(soma.SOMAError):
         #     scene.metadata["soma_coordinate_space"] = coord_space_json
+        
         scene.coordinate_space = coord_space
         assert scene.coordinate_space == coord_space
         assert json.loads(scene.metadata["soma_coordinate_space"]) == json.loads(
@@ -149,10 +150,17 @@ def test_scene_coord_space(tmp_path):
         assert scene.coordinate_space == coord_space
 
 
-def test_scene_point_cloud_with_affine_transform(tmp_path):
-    baseuri = urljoin(
-        f"{tmp_path.as_uri()}/", "test_scene_point_cloud_with_affine_transform"
-    )
+@pytest.mark.parametrize(
+    "coord_transform, transform_kwargs",
+    [
+        (soma.AffineTransform, {"matrix": [[1, 0, 0], [0, 1, 0], [0, 0, 1]]}),
+        (soma.ScaleTransform, {"scale_factors": [1, 1]}),
+        (soma.UniformScaleTransform, {"scale": 1}),
+        (soma.IdentityTransform, {}),
+    ],
+)
+def test_scene_point_cloud(tmp_path, coord_transform, transform_kwargs):
+    baseuri = urljoin(f"{tmp_path.as_uri()}/", "test_scene_point_cloud")
 
     with soma.Scene.create(baseuri) as scene:
         obsl_uri = urljoin(baseuri, "obsl")
@@ -165,295 +173,104 @@ def test_scene_point_cloud_with_affine_transform(tmp_path):
         # TODO replace with Scene.add_new_point_cloud_dataframe when implemented
         scene["obsl"]["ptc"] = soma.PointCloudDataFrame.create(ptc_uri, schema=asch)
 
-        transform = soma.AffineTransform(
+        transform = coord_transform(
+            input_axes=("x", "y"), output_axes=("x", "y"), **transform_kwargs
+        )
+
+        # The scene coordinate space must be set before registering
+        with pytest.raises(soma.SOMAError):
+            scene.set_transform_to_point_cloud_dataframe("ptc", transform)
+
+        scene.coordinate_space = coord_space
+
+        # No PointCloudDataFrame named 'bad' in Scene
+        with pytest.raises(KeyError):
+            scene.set_transform_to_point_cloud_dataframe("bad", transform)
+
+        # Transform not set
+        with pytest.raises(KeyError):
+            scene.get_transform_to_point_cloud_dataframe("ptc")
+            
+        scene.set_transform_to_point_cloud_dataframe("ptc", transform)
+
+        ptc_transform = scene.get_transform_to_point_cloud_dataframe("ptc")
+        if isinstance(coord_transform, soma.AffineTransform):
+            assert np.array_equal(
+                ptc_transform.augmented_matrix,
+                transform.augmented_matrix,
+            )
+        elif isinstance(coord_transform, soma.ScaleTransform):
+            assert np.array_equal(
+                ptc_transform.scale_factors,
+                transform.scale_factors,
+            )
+        elif isinstance(
+            coord_transform, (soma.UniformScaleTransform, soma.IdentityTransform)
+        ):
+            assert ptc_transform.scale == transform.scale
+
+
+@pytest.mark.parametrize(
+    "coord_transform, transform_kwargs",
+    [
+        (soma.AffineTransform, {"matrix": [[1, 0, 0], [0, 1, 0], [0, 0, 1]]}),
+        (soma.ScaleTransform, {"scale_factors": [1, 1]}),
+        (soma.UniformScaleTransform, {"scale": 1}),
+        (soma.IdentityTransform, {}),
+    ],
+)
+def test_scene_multiscale_image(tmp_path, coord_transform, transform_kwargs):
+    baseuri = urljoin(f"{tmp_path.as_uri()}/", "test_scene_multiscale_image")
+
+    with soma.Scene.create(baseuri) as scene:
+        obsl_uri = urljoin(baseuri, "obsl")
+        scene["obsl"] = soma.Collection.create(obsl_uri)
+
+        img_uri = urljoin(baseuri, "img")
+        scene["img"] = soma.Collection.create(img_uri)
+
+        msi_uri = urljoin(img_uri, "msi")
+        coord_space = soma.CoordinateSpace([soma.Axis(name="x"), soma.Axis(name="y")])
+
+        # TODO replace with Scene.add_multiscale_image when implemented
+        scene["img"]["msi"] = soma.MultiscaleImage.create(
+            msi_uri, type=pa.int64(), reference_level_shape=[1, 2, 3]
+        )
+
+        transform = coord_transform(
             input_axes=("x", "y"),
             output_axes=("x", "y"),
-            matrix=np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]]),
+            **transform_kwargs,
         )
 
         # The scene coordinate space must be set before registering
         with pytest.raises(soma.SOMAError):
-            scene.set_transform_to_point_cloud_dataframe("transcripts", transform)
+            scene.set_transform_to_multiscale_image("msi", transform)
 
         scene.coordinate_space = coord_space
 
-        # No PointCloudDataFrame named 'bad' in Scene
-        with pytest.raises(KeyError):
-            scene.set_transform_to_point_cloud_dataframe("bad", transform)
-
-        scene.set_transform_to_point_cloud_dataframe("ptc", transform)
-        assert np.array_equal(
-            scene.get_transform_to_point_cloud_dataframe("ptc").augmented_matrix,
-            transform.augmented_matrix,
-        )
-
-
-def test_scene_point_cloud_with_scale_transform(tmp_path):
-    baseuri = urljoin(
-        f"{tmp_path.as_uri()}/", "test_scene_point_cloud_with_scale_transform"
-    )
-
-    with soma.Scene.create(baseuri) as scene:
-        obsl_uri = urljoin(baseuri, "obsl")
-        scene["obsl"] = soma.Collection.create(obsl_uri)
-
-        ptc_uri = urljoin(obsl_uri, "ptc")
-        asch = pa.schema([("x", pa.float64()), ("y", pa.float64())])
-        coord_space = soma.CoordinateSpace([soma.Axis(name="x"), soma.Axis(name="y")])
-
-        # TODO replace with Scene.add_new_point_cloud_dataframe when implemented
-        scene["obsl"]["ptc"] = soma.PointCloudDataFrame.create(ptc_uri, schema=asch)
-
-        transform = soma.ScaleTransform(
-            input_axes=("x", "y"), output_axes=("x", "y"), scale_factors=[1, 1]
-        )
-
-        # The scene coordinate space must be set before registering
-        with pytest.raises(soma.SOMAError):
-            scene.set_transform_to_point_cloud_dataframe("transcripts", transform)
-
-        scene.coordinate_space = coord_space
-
-        # No PointCloudDataFrame named 'bad' in Scene
-        with pytest.raises(KeyError):
-            scene.set_transform_to_point_cloud_dataframe("bad", transform)
-
-        scene.set_transform_to_point_cloud_dataframe("ptc", transform)
-        assert np.array_equal(
-            scene.get_transform_to_point_cloud_dataframe("ptc").scale_factors,
-            transform.scale_factors,
-        )
-
-
-def test_scene_point_cloud_with_uniform_scale_transform(tmp_path):
-    baseuri = urljoin(
-        f"{tmp_path.as_uri()}/", "test_scene_point_cloud_with_uniform_scale_transform"
-    )
-
-    with soma.Scene.create(baseuri) as scene:
-        obsl_uri = urljoin(baseuri, "obsl")
-        scene["obsl"] = soma.Collection.create(obsl_uri)
-
-        ptc_uri = urljoin(obsl_uri, "ptc")
-        asch = pa.schema([("x", pa.float64()), ("y", pa.float64())])
-        coord_space = soma.CoordinateSpace([soma.Axis(name="x"), soma.Axis(name="y")])
-
-        # TODO replace with Scene.add_new_point_cloud_dataframe when implemented
-        scene["obsl"]["ptc"] = soma.PointCloudDataFrame.create(ptc_uri, schema=asch)
-
-        transform = soma.UniformScaleTransform(
-            input_axes=("x", "y"), output_axes=("x", "y"), scale=1
-        )
-
-        # The scene coordinate space must be set before registering
-        with pytest.raises(soma.SOMAError):
-            scene.set_transform_to_point_cloud_dataframe("transcripts", transform)
-
-        scene.coordinate_space = coord_space
-
-        # No PointCloudDataFrame named 'bad' in Scene
-        with pytest.raises(KeyError):
-            scene.set_transform_to_point_cloud_dataframe("bad", transform)
-
-        scene.set_transform_to_point_cloud_dataframe("ptc", transform)
-        assert (
-            scene.get_transform_to_point_cloud_dataframe("ptc").scale == transform.scale
-        )
-
-
-def test_scene_point_cloud_with_identity_scale_transform(tmp_path):
-    baseuri = urljoin(
-        f"{tmp_path.as_uri()}/", "test_scene_point_cloud_with_identity_scale_transform"
-    )
-
-    with soma.Scene.create(baseuri) as scene:
-        obsl_uri = urljoin(baseuri, "obsl")
-        scene["obsl"] = soma.Collection.create(obsl_uri)
-
-        ptc_uri = urljoin(obsl_uri, "ptc")
-        asch = pa.schema([("x", pa.float64()), ("y", pa.float64())])
-        coord_space = soma.CoordinateSpace([soma.Axis(name="x"), soma.Axis(name="y")])
-
-        # TODO replace with Scene.add_new_point_cloud_dataframe when implemented
-        scene["obsl"]["ptc"] = soma.PointCloudDataFrame.create(ptc_uri, schema=asch)
-
-        transform = soma.IdentityTransform(
-            input_axes=("x", "y"), output_axes=("x", "y")
-        )
-
-        # The scene coordinate space must be set before registering
-        with pytest.raises(soma.SOMAError):
-            scene.set_transform_to_point_cloud_dataframe("transcripts", transform)
-
-        scene.coordinate_space = coord_space
-
-        # No PointCloudDataFrame named 'bad' in Scene
-        with pytest.raises(KeyError):
-            scene.set_transform_to_point_cloud_dataframe("bad", transform)
-
-        scene.set_transform_to_point_cloud_dataframe("ptc", transform)
-        assert (
-            scene.get_transform_to_point_cloud_dataframe("ptc").scale == transform.scale
-        )
-
-
-def test_scene_multiscale_image_with_affine_transform(tmp_path):
-    baseuri = urljoin(
-        f"{tmp_path.as_uri()}/", "test_scene_multiscale_image_with_affine_transform"
-    )
-
-    with soma.Scene.create(baseuri) as scene:
-        obsl_uri = urljoin(baseuri, "obsl")
-        scene["obsl"] = soma.Collection.create(obsl_uri)
-
-        img_uri = urljoin(baseuri, "img")
-        scene["img"] = soma.Collection.create(img_uri)
-
-        msi_uri = urljoin(img_uri, "msi")
-        coord_space = soma.CoordinateSpace([soma.Axis(name="x"), soma.Axis(name="y")])
-
-        # TODO replace with Scene.add_multiscale_image when implemented
-        scene["img"]["msi"] = soma.MultiscaleImage.create(
-            msi_uri, type=pa.int64(), reference_level_shape=[1, 2, 3]
-        )
-
-        transform = soma.AffineTransform(
-            input_axes=("x", "y"),
-            output_axes=("x", "y"),
-            matrix=np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]]),
-        )
-
-        # The scene coordinate space must be set before registering
-        with pytest.raises(soma.SOMAError):
-            scene.set_transform_to_multiscale_image("transcripts", transform)
-
-        scene.coordinate_space = coord_space
-
-        # No PointCloudDataFrame named 'bad' in Scene
+        # No MultiscaleImage named 'bad' in Scene
         with pytest.raises(KeyError):
             scene.set_transform_to_multiscale_image("bad", transform)
-
-        scene.set_transform_to_multiscale_image("msi", transform)
-        assert np.array_equal(
-            scene.get_transform_to_multiscale_image("msi").augmented_matrix,
-            transform.augmented_matrix,
-        )
-
-
-def test_scene_multiscale_image_with_scale_transform(tmp_path):
-    baseuri = urljoin(
-        f"{tmp_path.as_uri()}/", "test_scene_multiscale_image_with_scale_transform"
-    )
-
-    with soma.Scene.create(baseuri) as scene:
-        obsl_uri = urljoin(baseuri, "obsl")
-        scene["obsl"] = soma.Collection.create(obsl_uri)
-
-        img_uri = urljoin(baseuri, "img")
-        scene["img"] = soma.Collection.create(img_uri)
-
-        msi_uri = urljoin(img_uri, "msi")
-        coord_space = soma.CoordinateSpace([soma.Axis(name="x"), soma.Axis(name="y")])
-
-        # TODO replace with Scene.add_multiscale_image when implemented
-        scene["img"]["msi"] = soma.MultiscaleImage.create(
-            msi_uri, type=pa.int64(), reference_level_shape=[1, 2, 3]
-        )
-
-        transform = soma.ScaleTransform(
-            input_axes=("x", "y"), output_axes=("x", "y"), scale_factors=[1, 1]
-        )
-
-        # The scene coordinate space must be set before registering
-        with pytest.raises(soma.SOMAError):
-            scene.set_transform_to_multiscale_image("transcripts", transform)
-
-        scene.coordinate_space = coord_space
-
-        # No PointCloudDataFrame named 'bad' in Scene
+            
+        # Transform not set
         with pytest.raises(KeyError):
-            scene.set_transform_to_multiscale_image("bad", transform)
-
+            scene.get_transform_to_multiscale_image("msi")
+            
         scene.set_transform_to_multiscale_image("msi", transform)
-        assert np.array_equal(
-            scene.get_transform_to_multiscale_image("msi").scale_factors,
-            transform.scale_factors,
-        )
 
-
-def test_scene_multiscale_image_with_uniform_scale_transform(tmp_path):
-    baseuri = urljoin(
-        f"{tmp_path.as_uri()}/",
-        "test_scene_multiscale_image_with_uniform_scale_transform",
-    )
-
-    with soma.Scene.create(baseuri) as scene:
-        obsl_uri = urljoin(baseuri, "obsl")
-        scene["obsl"] = soma.Collection.create(obsl_uri)
-
-        img_uri = urljoin(baseuri, "img")
-        scene["img"] = soma.Collection.create(img_uri)
-
-        msi_uri = urljoin(img_uri, "msi")
-        coord_space = soma.CoordinateSpace([soma.Axis(name="x"), soma.Axis(name="y")])
-
-        # TODO replace with Scene.add_multiscale_image when implemented
-        scene["img"]["msi"] = soma.MultiscaleImage.create(
-            msi_uri, type=pa.int64(), reference_level_shape=[1, 2, 3]
-        )
-
-        transform = soma.UniformScaleTransform(
-            input_axes=("x", "y"), output_axes=("x", "y"), scale=1
-        )
-
-        # The scene coordinate space must be set before registering
-        with pytest.raises(soma.SOMAError):
-            scene.set_transform_to_multiscale_image("transcripts", transform)
-
-        scene.coordinate_space = coord_space
-
-        # No PointCloudDataFrame named 'bad' in Scene
-        with pytest.raises(KeyError):
-            scene.set_transform_to_multiscale_image("bad", transform)
-
-        scene.set_transform_to_multiscale_image("msi", transform)
-        assert scene.get_transform_to_multiscale_image("msi").scale == transform.scale
-
-
-def test_scene_multiscale_image_with_identity_scale_transform(tmp_path):
-    baseuri = urljoin(
-        f"{tmp_path.as_uri()}/",
-        "test_scene_multiscale_image_with_identity_scale_transform",
-    )
-
-    with soma.Scene.create(baseuri) as scene:
-        obsl_uri = urljoin(baseuri, "obsl")
-        scene["obsl"] = soma.Collection.create(obsl_uri)
-
-        img_uri = urljoin(baseuri, "img")
-        scene["img"] = soma.Collection.create(img_uri)
-
-        msi_uri = urljoin(img_uri, "msi")
-        coord_space = soma.CoordinateSpace([soma.Axis(name="x"), soma.Axis(name="y")])
-
-        # TODO replace with Scene.add_multiscale_image when implemented
-        scene["img"]["msi"] = soma.MultiscaleImage.create(
-            msi_uri, type=pa.int64(), reference_level_shape=[1, 2, 3]
-        )
-
-        transform = soma.IdentityTransform(
-            input_axes=("x", "y"), output_axes=("x", "y")
-        )
-
-        # The scene coordinate space must be set before registering
-        with pytest.raises(soma.SOMAError):
-            scene.set_transform_to_multiscale_image("transcripts", transform)
-
-        scene.coordinate_space = coord_space
-
-        # No PointCloudDataFrame named 'bad' in Scene
-        with pytest.raises(KeyError):
-            scene.set_transform_to_multiscale_image("bad", transform)
-
-        scene.set_transform_to_multiscale_image("msi", transform)
-        assert scene.get_transform_to_multiscale_image("msi").scale == transform.scale
+        msi_transform = scene.get_transform_to_multiscale_image("msi")
+        if isinstance(coord_transform, soma.AffineTransform):
+            assert np.array_equal(
+                msi_transform.augmented_matrix,
+                transform.augmented_matrix,
+            )
+        elif isinstance(coord_transform, soma.ScaleTransform):
+            assert np.array_equal(
+                msi_transform.scale_factors,
+                transform.scale_factors,
+            )
+        elif isinstance(
+            coord_transform, (soma.UniformScaleTransform, soma.IdentityTransform)
+        ):
+            assert msi_transform.scale == transform.scale
