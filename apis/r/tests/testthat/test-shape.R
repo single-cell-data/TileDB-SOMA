@@ -10,9 +10,9 @@ test_that("SOMADataFrame shape", {
   )
 
   domain_at_create_choices  = list(
-    list(soma_joinid = c(0, 1000)),
-    list(soma_joinid = c(0, 1000), int_column = c(-10000, 10000)),
-    list(soma_joinid = c(0, 1000), string_column = NULL),
+    list(soma_joinid = c(0, 999)),
+    list(soma_joinid = c(0, 999), int_column = c(-10000, 10000)),
+    list(soma_joinid = c(0, 999), string_column = NULL),
     list(string_column = NULL, int_column = c(-10000, 10000)),
     list(string_column = c("apple", "zebra"), int_column = c(-10000, 10000))
   )
@@ -186,8 +186,8 @@ test_that("SOMADataFrame shape", {
             expect_equal(int_mxd, int_dfc)
           }
         } else {
-            expect_true(int_mxd[[1]] < -2000000000)
-            expect_true(int_mxd[[2]] > 2000000000)
+          expect_true(int_mxd[[1]] < -2000000000)
+          expect_true(int_mxd[[2]] > 2000000000)
         }
       }
 
@@ -205,7 +205,7 @@ test_that("SOMADataFrame shape", {
             expect_equal(str_dom, c("", ""))
           } else {
             if (is.null(str_dfc)) {
-                expect_equal(str_dom, c("", ""))
+              expect_equal(str_dom, c("", ""))
             } else {
               expect_equal(str_dom, str_dfc)
             }
@@ -215,6 +215,69 @@ test_that("SOMADataFrame shape", {
       }
 
       sdf$close()
+
+      # Test resize for dataframes (more general upgrade_domain to be tested
+      # separately -- see https://github.com/single-cell-data/TileDB-SOMA/issues/2407)
+      if (.new_shape_feature_flag_is_enabled() && use_domain_at_create) {
+        has_soma_joinid_dim <- "soma_joinid" %in% index_column_names
+        sjid_dfc <- domain_for_create[["soma_joinid"]]
+
+        # Test resize down
+        new_shape <- 0
+        sdf <- SOMADataFrameOpen(uri, "WRITE")
+        if (has_soma_joinid_dim) {
+          # It's an error to downsize
+          expect_error(sdf$resize_soma_joinid(new_shape))
+        } else {
+          # There is no problem when soma_joinid is not a dim --
+          # sdf$resize_soma_joinid is a no-op in that case
+          expect_no_condition(sdf$resize_soma_joinid(new_shape))
+        }
+        sdf$close()
+
+        # Make sure the failed resize really didn't change the shape
+        if (has_soma_joinid_dim) {
+          sdf <- SOMADataFrameOpen(uri, "READ")
+          expect_equal(sdf$domain()[["soma_joinid"]], sjid_dfc)
+          sdf$close()
+        }
+
+        # Test writes out of bounds, before resize
+        old_shape <- 100
+        if (has_soma_joinid_dim) {
+          old_shape <- domain_for_create[["soma_joinid"]][[2]] + 1 + 100
+        }
+        new_shape <- old_shape + 100
+
+        tbl1 <- arrow::arrow_table(
+          int_column = 5L:8L,
+          soma_joinid = (old_shape+1L):(old_shape+4L),
+          float_column = 5.1:8.1,
+          string_column = c("egg", "flag", "geese", "hay"),
+          schema = asch)
+
+        sdf <- SOMADataFrameOpen(uri, "WRITE")
+        if (has_soma_joinid_dim) {
+          expect_error(sdf$write(tbl1))
+        } else {
+          expect_no_condition(sdf$write(tbl1))
+        }
+        sdf$close()
+
+        # Test resize
+        sdf <- SOMADataFrameOpen(uri, "WRITE")
+        sdf$resize_soma_joinid(new_shape)
+        sdf$close();
+
+        # Test writes out of old bounds, within new bounds, after resize
+        sdf <- SOMADataFrameOpen(uri, "WRITE")
+        expect_no_condition(sdf$write(tbl1))
+        sdf$close();
+
+        # To do: test readback
+
+        rm(tbl1)
+      }
 
       rm(sdf, tbl0)
 
