@@ -115,6 +115,8 @@ SOMADataFrame <- R6::R6Class(
     write = function(values) {
       private$check_open_for_write()
 
+      ### 3079:04
+
       # Prevent downcasting of int64 to int32 when materializing a column
       op <- options(arrow.int64_downcast = FALSE)
       on.exit(options(op), add = TRUE, after = FALSE)
@@ -295,6 +297,7 @@ SOMADataFrame <- R6::R6Class(
       tiledb_create_options <- TileDBCreateOptions$new(self$platform_config)
 
       # Check compatibility of new/old data types in common columns
+      ### debug 3079:02
       check_arrow_schema_data_types(
         old_schema[common_cols],
         new_schema[common_cols]

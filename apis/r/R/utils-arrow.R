@@ -313,6 +313,8 @@ check_arrow_schema_data_types <- function(from, to) {
     }
   }
 
+  ### debug 3079:03
+
   if (length(msgs) > 0L) {
     stop(
       "Schemas are incompatible:\n",
