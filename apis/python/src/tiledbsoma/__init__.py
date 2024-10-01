@@ -175,6 +175,7 @@ from ._general_utilities import (
 )
 from ._indexer import IntIndexer, tiledbsoma_build_index
 from ._measurement import Measurement
+from ._multiscale_image import MultiscaleImage
 from ._point_cloud_dataframe import PointCloudDataFrame
 from ._sparse_nd_array import SparseNDArray, SparseNDArrayRead
 from .options import SOMATileDBContext, TileDBCreateOptions, TileDBWriteOptions
@@ -209,6 +210,7 @@ __all__ = [
     "get_storage_engine",
     "IntIndexer",
     "Measurement",
+    "MultiscaleImage",
     "NotCreateableError",
     "open",
     "PointCloudDataFrame",
