@@ -135,7 +135,17 @@ except ImportError:
         # Otherwise try loading by name only.
         ctypes.CDLL(libtiledbsoma_name)
 
-from somacore import AxisColumnNames, AxisQuery, ExperimentAxisQuery
+from somacore import (
+    Axis,
+    CoordinateSpace,
+    AffineTransform,
+    ScaleTransform,
+    IdentityTransform,
+    UniformScaleTransform,
+    AxisColumnNames,
+    AxisQuery,
+    ExperimentAxisQuery,
+)
 from somacore.options import ResultOrder
 
 # This is important since we need to do the above dll/dylib/so business
@@ -165,6 +175,7 @@ from ._general_utilities import (
 )
 from ._indexer import IntIndexer, tiledbsoma_build_index
 from ._measurement import Measurement
+from ._point_cloud_dataframe import PointCloudDataFrame
 from ._sparse_nd_array import SparseNDArray, SparseNDArrayRead
 from .options import SOMATileDBContext, TileDBCreateOptions, TileDBWriteOptions
 from .pytiledbsoma import (
@@ -182,9 +193,11 @@ __version__ = get_implementation_version()
 
 __all__ = [
     "AlreadyExistsError",
+    "Axis",
     "AxisColumnNames",
     "AxisQuery",
     "Collection",
+    "CoordinateSpace",
     "DataFrame",
     "DenseNDArray",
     "DoesNotExistError",
@@ -198,6 +211,7 @@ __all__ = [
     "Measurement",
     "NotCreateableError",
     "open",
+    "PointCloudDataFrame",
     "ResultOrder",
     "show_package_versions",
     "SOMA_JOINID",

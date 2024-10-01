@@ -110,7 +110,7 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
         axis_types: Sequence[str] = ("channel", "height", "width"),
     ) -> MultiscaleImage:
         """Adds a ``MultiscaleImage`` to the scene and sets a coordinate transform
-        between the scene and the dataframe.
+        between the scene and the multiscale image.
 
         Parameters are as in :meth:`spatial.MultiscaleImage.create`.
         See :meth:`add_new_collection` for details about child URIs.
@@ -226,7 +226,7 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
         """
         raise NotImplementedError()
 
-    def set_transform_to_point_cloud(
+    def set_transform_to_point_cloud_dataframe(
         self,
         key: str,
         transform: CoordinateTransform,
@@ -235,14 +235,14 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
         coordinate_space: Optional[CoordinateSpace] = None,
     ) -> PointCloudDataFrame:
         """Adds the coordinate transform for the scene coordinate space to
-        a point cloud stored in the scene.
+        a point cloud dataframe  stored in the scene.
 
         If the subcollection the point cloud is inside of is more than one
         layer deep, the input should be provided as a sequence of names. For example,
         to set a transform for  a point named `transcripts` in the `var/RNA`
         collection::
 
-            scene.set_transformation_for_point_cloud(
+            scene.set_transformation_for_point_cloud_dataframe(
                 'transcripts', transform, subcollection=['var', 'RNA'],
             )
 
@@ -305,19 +305,19 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
         """
         raise NotImplementedError()
 
-    def get_transform_from_point_cloud(
+    def get_transform_from_point_cloud_dataframe(
         self, key: str, *, subcollection: str = "obsl"
     ) -> CoordinateTransform:
-        """Returns the coordinate transformation from the requested point cloud to
-        the scene.
+        """Returns the coordinate transformation from the requested point cloud
+        dataframe to the scene.
 
         Args:
-            key: The name of the point cloud.
+            key: The name of the point cloud dataframe.
             subcollection: The name, or sequence of names, of the subcollection the
-                point cloud is stored in. Defaults to ``'obsl'``.
+                dataframe is stored in. Defaults to ``'obsl'``.
 
         Returns:
-            Coordinate transform from the scene to the point cloud.
+            Coordinate transform from the scene to the point cloud dataframe.
 
         Lifecycle: experimental
         """
@@ -366,7 +366,7 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
         """
         raise NotImplementedError()
 
-    def get_transform_to_point_cloud(
+    def get_transform_to_point_cloud_dataframe(
         self, key: str, *, subcollection: str = "obsl"
     ) -> CoordinateTransform:
         """Returns the coordinate transformation from the scene to a requested
@@ -375,7 +375,7 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
         Args:
             key: The name of the point cloud.
             subcollection: The name, or sequence of names, of the subcollection the
-                point cloud is stored in. Defaults to ``'obsl'``.
+                point cloud dataframe is stored in. Defaults to ``'obsl'``.
 
         Returns:
             Coordinate transform from the scene to the requested point cloud.
