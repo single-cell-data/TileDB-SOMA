@@ -822,7 +822,7 @@ ArraySchema ArrowAdapter::tiledb_schema_from_arrow_schema(
             auto schild = index_column_schema->children[i];
             auto col_name = schild->name;
             if (strcmp(child->name, col_name) == 0) {
-                if (ArrowAdapter::_isvar(child->format)) {
+                if (ArrowAdapter::arrow_is_string_type(child->format)) {
                     type = TILEDB_STRING_ASCII;
                 }
 
@@ -861,7 +861,7 @@ ArraySchema ArrowAdapter::tiledb_schema_from_arrow_schema(
                 attr.set_nullable(true);
             }
 
-            if (ArrowAdapter::_isvar(child->format)) {
+            if (ArrowAdapter::arrow_is_string_type(child->format)) {
                 attr.set_cell_val_num(TILEDB_VAR_NUM);
             }
 
@@ -872,7 +872,9 @@ ArraySchema ArrowAdapter::tiledb_schema_from_arrow_schema(
                     *ctx,
                     child->name,
                     enmr_type,
-                    ArrowAdapter::_isvar(enmr_format) ? TILEDB_VAR_NUM : 1,
+                    ArrowAdapter::arrow_is_string_type(enmr_format) ?
+                        TILEDB_VAR_NUM :
+                        1,
                     child->flags & ARROW_FLAG_DICTIONARY_ORDERED);
                 ArraySchemaExperimental::add_enumeration(*ctx, schema, enmr);
                 AttributeExperimental::set_enumeration_name(
@@ -919,7 +921,7 @@ ArraySchema ArrowAdapter::tiledb_schema_from_arrow_schema(
                     continue;
                 }
 
-                if (ArrowAdapter::_isvar(child->format)) {
+                if (ArrowAdapter::arrow_is_string_type(child->format)) {
                     // In the core API:
                     //
                     // * domain for strings must be set as (nullptr, nullptr)
@@ -1241,12 +1243,10 @@ ArrowAdapter::to_arrow(std::shared_ptr<ColumnBuffer> column) {
     return std::pair(std::move(array), std::move(schema));
 }
 
-bool ArrowAdapter::_isvar(const char* format) {
-    if ((strcmp(format, "U") == 0) || (strcmp(format, "Z") == 0) ||
-        (strcmp(format, "u") == 0) || (strcmp(format, "z") == 0)) {
-        return true;
-    }
-    return false;
+bool ArrowAdapter::arrow_is_string_type(const char* format) {
+    return (
+        (strcmp(format, "U") == 0) || (strcmp(format, "Z") == 0) ||
+        (strcmp(format, "u") == 0) || (strcmp(format, "z") == 0));
 }
 
 std::string_view ArrowAdapter::to_arrow_format(
