@@ -139,7 +139,7 @@ def test_scene_coord_space(tmp_path):
         # Reserved metadata key should not be settable?
         # with pytest.raises(soma.SOMAError):
         #     scene.metadata["soma_coordinate_space"] = coord_space_json
-        
+
         scene.coordinate_space = coord_space
         assert scene.coordinate_space == coord_space
         assert json.loads(scene.metadata["soma_coordinate_space"]) == json.loads(
@@ -183,14 +183,19 @@ def test_scene_point_cloud(tmp_path, coord_transform, transform_kwargs):
 
         scene.coordinate_space = coord_space
 
-        # No PointCloudDataFrame named 'bad' in Scene
+        # No SOMAObject named 'bad' in Scene
         with pytest.raises(KeyError):
             scene.set_transform_to_point_cloud_dataframe("bad", transform)
+
+        # Not a PointCloudDataFrame
+        scene["obsl"]["col"] = soma.Collection.create(urljoin(obsl_uri, "col"))
+        with pytest.raises(typeguard.TypeCheckError):
+            scene.set_transform_to_point_cloud_dataframe("col", transform)
 
         # Transform not set
         with pytest.raises(KeyError):
             scene.get_transform_to_point_cloud_dataframe("ptc")
-            
+
         scene.set_transform_to_point_cloud_dataframe("ptc", transform)
 
         ptc_transform = scene.get_transform_to_point_cloud_dataframe("ptc")
@@ -252,11 +257,16 @@ def test_scene_multiscale_image(tmp_path, coord_transform, transform_kwargs):
         # No MultiscaleImage named 'bad' in Scene
         with pytest.raises(KeyError):
             scene.set_transform_to_multiscale_image("bad", transform)
-            
+
         # Transform not set
         with pytest.raises(KeyError):
             scene.get_transform_to_multiscale_image("msi")
-            
+
+        # Not a MultiscaleImage
+        scene["img"]["col"] = soma.Collection.create(urljoin(img_uri, "col"))
+        with pytest.raises(typeguard.TypeCheckError):
+            scene.set_transform_to_multiscale_image("col", transform)
+
         scene.set_transform_to_multiscale_image("msi", transform)
 
         msi_transform = scene.get_transform_to_multiscale_image("msi")
@@ -274,3 +284,69 @@ def test_scene_multiscale_image(tmp_path, coord_transform, transform_kwargs):
             coord_transform, (soma.UniformScaleTransform, soma.IdentityTransform)
         ):
             assert msi_transform.scale == transform.scale
+
+
+@pytest.mark.skip("GeometryDataFrame not supported yet")
+@pytest.mark.parametrize(
+    "coord_transform, transform_kwargs",
+    [
+        (soma.AffineTransform, {"matrix": [[1, 0, 0], [0, 1, 0], [0, 0, 1]]}),
+        (soma.ScaleTransform, {"scale_factors": [1, 1]}),
+        (soma.UniformScaleTransform, {"scale": 1}),
+        (soma.IdentityTransform, {}),
+    ],
+)
+def test_scene_geometry_dataframe(tmp_path, coord_transform, transform_kwargs):
+    baseuri = urljoin(f"{tmp_path.as_uri()}/", "test_scene_geometry_dataframe")
+
+    with soma.Scene.create(baseuri) as scene:
+        obsl_uri = urljoin(baseuri, "obsl")
+        scene["obsl"] = soma.Collection.create(obsl_uri)
+
+        gdf_uri = urljoin(obsl_uri, "gdf")
+        asch = pa.schema([("x", pa.float64()), ("y", pa.float64())])
+        coord_space = soma.CoordinateSpace([soma.Axis(name="x"), soma.Axis(name="y")])
+
+        # TODO replace with Scene.add_new_geometry_dataframe when implemented
+        scene["obsl"]["gdf"] = soma.GeometryDataFrame.create(gdf_uri, schema=asch)
+
+        transform = coord_transform(
+            input_axes=("x", "y"), output_axes=("x", "y"), **transform_kwargs
+        )
+
+        # The scene coordinate space must be set before registering
+        with pytest.raises(soma.SOMAError):
+            scene.set_transform_to_geometry_dataframe("gdf", transform)
+
+        scene.coordinate_space = coord_space
+
+        # No SOMAObject named 'bad' in Scene
+        with pytest.raises(KeyError):
+            scene.set_transform_to_geometry_dataframe("bad", transform)
+
+        # Not a GeometryDataFrame
+        scene["obsl"]["col"] = soma.Collection.create(urljoin(obsl_uri, "col"))
+        with pytest.raises(typeguard.TypeCheckError):
+            scene.set_transform_to_geometry_dataframe("col", transform)
+
+        # Transform not set
+        with pytest.raises(KeyError):
+            scene.get_transform_to_geometry_dataframe("gdf")
+
+        scene.set_transform_to_geometry_dataframe("gdf", transform)
+
+        gdf_transform = scene.get_transform_to_geometry_dataframe("gdf")
+        if isinstance(coord_transform, soma.AffineTransform):
+            assert np.array_equal(
+                gdf_transform.augmented_matrix,
+                transform.augmented_matrix,
+            )
+        elif isinstance(coord_transform, soma.ScaleTransform):
+            assert np.array_equal(
+                gdf_transform.scale_factors,
+                transform.scale_factors,
+            )
+        elif isinstance(
+            coord_transform, (soma.UniformScaleTransform, soma.IdentityTransform)
+        ):
+            assert gdf_transform.scale == transform.scale
