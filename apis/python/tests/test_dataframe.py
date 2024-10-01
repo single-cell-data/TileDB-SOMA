@@ -1722,3 +1722,37 @@ def test_only_evolve_schema_when_enmr_is_extended(tmp_path):
     # subtract 1 for the __schema/__enumerations directory;
     # only looking at fragment files
     assert len(vfs.ls(os.path.join(uri, "__schema"))) - 1 == 3
+
+
+def test_fix_update_dataframe_with_var_strings(tmp_path):
+    uri = tmp_path.as_posix()
+
+    tbl = pa.table(
+        {
+            "soma_joinid": pa.array([0, 1, 2, 3], pa.int64()),
+            "mystring": pa.array(["a", "bb", "ccc", "dddd"], pa.large_utf8()),
+            "myint": pa.array([33, 44, 55, 66], pa.int32()),
+            "myfloat": pa.array([4.5, 5.5, 6.5, 7.5], pa.float32()),
+        }
+    )
+
+    with soma.DataFrame.create(uri, schema=tbl.schema) as sdf:
+        sdf.write(tbl)
+
+    with soma.DataFrame.open(uri, "r") as sdf:
+        updated_sdf = sdf.read().concat().to_pandas()
+    updated_sdf["newattr"] = np.array(["a", "b", "c", "d"])
+
+    with soma.DataFrame.open(uri, "w") as sdf:
+        soma.io.ingest._update_dataframe(
+            sdf,
+            updated_sdf,
+            "testing",
+            platform_config=None,
+            context=None,
+            default_index_name="mystring",
+        )
+
+    with soma.DataFrame.open(uri, "r") as sdf:
+        results = sdf.read().concat().to_pandas()
+        assert results.equals(updated_sdf)

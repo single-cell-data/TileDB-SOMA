@@ -261,6 +261,15 @@ class ArrowAdapter {
         tiledb_datatype_t tiledb_dtype, bool use_large = true);
 
     /**
+     * @brief Keystroke saver to determine whether Arrow type is of string,
+     * large string, binary, or large binary type.
+     *
+     * @param const char* Arrow data format
+     * @return bool Whether the Arrow type represents a string type
+     */
+    static bool arrow_is_string_type(const char* format);
+
+    /**
      * @brief Get TileDB datatype from Arrow format string.
      *
      * @param datatype TileDB datatype.
@@ -672,8 +681,6 @@ class ArrowAdapter {
         std::shared_ptr<Context> ctx, std::string name, T* b) {
         return Dimension::create<T>(*ctx, name, {b[0], b[1]}, b[2]);
     }
-
-    static bool _isvar(const char* format);
 
     static FilterList _create_filter_list(
         std::string filters, std::shared_ptr<Context> ctx);
