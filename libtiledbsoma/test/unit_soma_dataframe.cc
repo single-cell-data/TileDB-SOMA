@@ -664,6 +664,28 @@ TEST_CASE_METHOD(
             REQUIRE(maxdom_sjid[1] > 2000000000);
         }
 
+        // Check can_resize_soma_joinid
+        std::pair<bool, std::string> check = soma_dataframe
+                                                 ->can_resize_soma_joinid(1);
+        if (!use_current_domain) {
+            REQUIRE(check.first == false);
+            REQUIRE(
+                check.second ==
+                "can_resize_soma_joinid: dataframe currently has no domain "
+                "set: please use tiledbsoma_upgrade_domain.");
+        } else {
+            // Must fail since this is too small.
+            REQUIRE(check.first == false);
+            REQUIRE(
+                check.second ==
+                "cannot resize_soma_joinid: new soma_joinid shape 1 < existing "
+                "shape 199");
+            check = soma_dataframe->can_resize_soma_joinid(
+                SOMA_JOINID_RESIZE_DIM_MAX + 1);
+            REQUIRE(check.first == true);
+            REQUIRE(check.second == "");
+        }
+
         soma_dataframe->close();
     }
 }
@@ -876,6 +898,28 @@ TEST_CASE_METHOD(
             REQUIRE(maxdom_u32.size() == 2);
             REQUIRE(maxdom_u32[0] == 0);
             REQUIRE(maxdom_u32[1] > 2000000000);
+        }
+
+        // Check can_resize_soma_joinid
+        std::pair<bool, std::string> check = soma_dataframe
+                                                 ->can_resize_soma_joinid(1);
+        if (!use_current_domain) {
+            REQUIRE(check.first == false);
+            REQUIRE(
+                check.second ==
+                "can_resize_soma_joinid: dataframe currently has no domain "
+                "set: please use tiledbsoma_upgrade_domain.");
+        } else {
+            // Must fail since this is too small.
+            REQUIRE(check.first == false);
+            REQUIRE(
+                check.second ==
+                "cannot resize_soma_joinid: new soma_joinid shape 1 < existing "
+                "shape 199");
+            check = soma_dataframe->can_resize_soma_joinid(
+                SOMA_JOINID_RESIZE_DIM_MAX + 1);
+            REQUIRE(check.first == true);
+            REQUIRE(check.second == "");
         }
 
         soma_dataframe->close();
@@ -1108,6 +1152,28 @@ TEST_CASE_METHOD(
 
         REQUIRE(ned_str == std::vector<std::string>({"", ""}));
 
+        // Check can_resize_soma_joinid
+        std::pair<bool, std::string> check = soma_dataframe
+                                                 ->can_resize_soma_joinid(1);
+        if (!use_current_domain) {
+            REQUIRE(check.first == false);
+            REQUIRE(
+                check.second ==
+                "can_resize_soma_joinid: dataframe currently has no domain "
+                "set: please use tiledbsoma_upgrade_domain.");
+        } else {
+            // Must fail since this is too small.
+            REQUIRE(check.first == false);
+            REQUIRE(
+                check.second ==
+                "cannot resize_soma_joinid: new soma_joinid shape 1 < existing "
+                "shape 99");
+            check = soma_dataframe->can_resize_soma_joinid(
+                SOMA_JOINID_RESIZE_DIM_MAX + 1);
+            REQUIRE(check.first == true);
+            REQUIRE(check.second == "");
+        }
+
         soma_dataframe->close();
     }
 }
@@ -1297,6 +1363,21 @@ TEST_CASE_METHOD(
                 REQUIRE(dom_str == std::vector<std::string>({"", ""}));
             }
             REQUIRE(maxdom_str == std::vector<std::string>({"", ""}));
+        }
+
+        // Check can_resize_soma_joinid
+        std::pair<bool, std::string> check = soma_dataframe
+                                                 ->can_resize_soma_joinid(0);
+        if (!use_current_domain) {
+            REQUIRE(check.first == false);
+            REQUIRE(
+                check.second ==
+                "can_resize_soma_joinid: dataframe currently has no domain "
+                "set: please use tiledbsoma_upgrade_domain.");
+        } else {
+            // Must pass since soma_joinid isn't a dim in this case.
+            REQUIRE(check.first == true);
+            REQUIRE(check.second == "");
         }
 
         soma_dataframe->close();
