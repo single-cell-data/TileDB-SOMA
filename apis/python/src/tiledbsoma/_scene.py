@@ -176,7 +176,7 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
         to set a transformation for geometry dataframe named  "transcripts" in the
         "var/RNA" collection::
 
-            scene.set_transfrom_for_geometry_dataframe(
+            scene.set_transfrom_to_geometry_dataframe(
                 'transcripts', transform, subcollection=['var', 'RNA'],
             )
 
@@ -242,7 +242,7 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
         to set a transform for  a point named `transcripts` in the `var/RNA`
         collection::
 
-            scene.set_transformation_for_point_cloud_dataframe(
+            scene.set_transformation_to_point_cloud_dataframe(
                 'transcripts', transform, subcollection=['var', 'RNA'],
             )
 
