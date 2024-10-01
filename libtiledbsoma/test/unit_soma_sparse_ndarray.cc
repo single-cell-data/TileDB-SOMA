@@ -340,3 +340,141 @@ TEST_CASE("SOMASparseNDArray: metadata", "[SOMASparseNDArray]") {
         REQUIRE(soma_sparse->metadata_num() == 2);
     }
 }
+void breakme() {
+}
+
+TEST_CASE(
+    "SOMASparseNDArray: can_tiledbsoma_upgrade_shape", "[SOMASparseNDArray]") {
+    int64_t dim_max = 999;
+
+    auto ctx = std::make_shared<SOMAContext>();
+    std::string uri = "mem://unit-test-sparse-ndarray-upgrade-shape";
+
+    std::string dim_name = "soma_dim_0";
+    tiledb_datatype_t dim_tiledb_datatype = TILEDB_INT64;
+    tiledb_datatype_t attr_tiledb_datatype = TILEDB_INT32;
+    std::string dim_arrow_format = ArrowAdapter::tdb_to_arrow_type(
+        dim_tiledb_datatype);
+    std::string attr_arrow_format = ArrowAdapter::tdb_to_arrow_type(
+        attr_tiledb_datatype);
+
+    std::vector<helper::DimInfo> dim_infos(
+        {{.name = dim_name,
+          .tiledb_datatype = dim_tiledb_datatype,
+          .dim_max = dim_max,
+          .string_lo = "N/A",
+          .string_hi = "N/A",
+          .use_current_domain = false}});
+
+    auto index_columns = helper::create_column_index_info(dim_infos);
+
+    SOMASparseNDArray::create(
+        uri,
+        attr_arrow_format,
+        ArrowTable(
+            std::move(index_columns.first), std::move(index_columns.second)),
+        ctx);
+
+    auto soma_sparse = SOMASparseNDArray::open(uri, OpenMode::write, ctx);
+    REQUIRE(soma_sparse->has_current_domain() == false);
+
+    // For old-style arrays, from before the current-domain feature:
+    // * The shape specified at create becomes the core (max) domain
+    //   o Recall that the core domain is immutable
+    // * There is no current domain set
+    //   o A current domain can be applied to it, up to <= (max) domain
+    auto dom = soma_sparse->soma_domain_slot<int64_t>(dim_name);
+    auto mxd = soma_sparse->soma_maxdomain_slot<int64_t>(dim_name);
+    REQUIRE(dom == mxd);
+    REQUIRE(dom.first == 0);
+    REQUIRE(dom.second == dim_max);
+
+    breakme();
+    std::vector<int64_t> newshape_wrong_dims({dim_max, 12});
+    std::vector<int64_t> newshape_too_big({dim_max + 10});
+    std::vector<int64_t> newshape_good({40});
+
+    auto check = soma_sparse->can_upgrade_shape(newshape_wrong_dims);
+    REQUIRE(check.first == false);
+    REQUIRE(
+        check.second ==
+        "cannot tiledbsoma_upgrade_shape: provided shape has ndim 2, while the "
+        "array has 1");
+
+    check = soma_sparse->can_upgrade_shape(newshape_too_big);
+    REQUIRE(check.first == false);
+    REQUIRE(
+        check.second ==
+        "cannot tiledbsoma_upgrade_shape for soma_dim_0: new 1009 < maxshape "
+        "1000");
+
+    check = soma_sparse->can_upgrade_shape(newshape_good);
+    REQUIRE(check.first == true);
+    REQUIRE(check.second == "");
+}
+
+TEST_CASE("SOMASparseNDArray: can_resize", "[SOMASparseNDArray]") {
+    int64_t dim_max = 999;
+
+    auto ctx = std::make_shared<SOMAContext>();
+    std::string uri = "mem://unit-test-sparse-ndarray-resize";
+
+    std::string dim_name = "soma_dim_0";
+    tiledb_datatype_t dim_tiledb_datatype = TILEDB_INT64;
+    tiledb_datatype_t attr_tiledb_datatype = TILEDB_INT32;
+    std::string dim_arrow_format = ArrowAdapter::tdb_to_arrow_type(
+        dim_tiledb_datatype);
+    std::string attr_arrow_format = ArrowAdapter::tdb_to_arrow_type(
+        attr_tiledb_datatype);
+
+    std::vector<helper::DimInfo> dim_infos(
+        {{.name = dim_name,
+          .tiledb_datatype = dim_tiledb_datatype,
+          .dim_max = dim_max,
+          .string_lo = "N/A",
+          .string_hi = "N/A",
+          .use_current_domain = true}});
+
+    auto index_columns = helper::create_column_index_info(dim_infos);
+
+    SOMASparseNDArray::create(
+        uri,
+        attr_arrow_format,
+        ArrowTable(
+            std::move(index_columns.first), std::move(index_columns.second)),
+        ctx);
+
+    auto soma_sparse = SOMASparseNDArray::open(uri, OpenMode::write, ctx);
+    REQUIRE(soma_sparse->has_current_domain() == true);
+
+    // For new-style arrays, with the current-domain feature:
+    // * The shape specified at create becomes the core current domain
+    //   o Recall that the core current domain is mutable, up tp <= (max) domain
+    // * The core (max) domain is huge
+    //   o Recall that the core max domain is immutable
+    auto dom = soma_sparse->soma_domain_slot<int64_t>(dim_name);
+    auto mxd = soma_sparse->soma_maxdomain_slot<int64_t>(dim_name);
+    REQUIRE(dom != mxd);
+    REQUIRE(dom.first == 0);
+    REQUIRE(dom.second == dim_max);
+
+    std::vector<int64_t> newshape_wrong_dims({dim_max, 12});
+    std::vector<int64_t> newshape_too_small({40});
+    std::vector<int64_t> newshape_good({2000});
+
+    auto check = soma_sparse->can_resize(newshape_wrong_dims);
+    REQUIRE(check.first == false);
+    REQUIRE(
+        check.second ==
+        "cannot resize: provided shape has ndim 2, while the array has 1");
+
+    check = soma_sparse->can_resize(newshape_too_small);
+    REQUIRE(check.first == false);
+    REQUIRE(
+        check.second ==
+        "cannot resize for soma_dim_0: new 40 < existing shape 1000");
+
+    check = soma_sparse->can_resize(newshape_good);
+    REQUIRE(check.first == true);
+    REQUIRE(check.second == "");
+}

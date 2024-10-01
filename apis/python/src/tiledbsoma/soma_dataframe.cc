@@ -155,6 +155,17 @@ void load_soma_dataframe(py::module& m) {
             "maybe_soma_joinid_maxshape",
             &SOMADataFrame::maybe_soma_joinid_maxshape)
         .def_property_readonly(
-            "tiledbsoma_has_upgraded_domain", &SOMAArray::has_current_domain);
+            "tiledbsoma_has_upgraded_domain", &SOMAArray::has_current_domain)
+
+        .def(
+            "resize_soma_joinid",
+            [](SOMADataFrame& sdf, int64_t newshape) {
+                try {
+                    sdf.resize_soma_joinid(newshape);
+                } catch (const std::exception& e) {
+                    throw TileDBSOMAError(e.what());
+                }
+            },
+            "newshape"_a);
 }
 }  // namespace libtiledbsomacpp

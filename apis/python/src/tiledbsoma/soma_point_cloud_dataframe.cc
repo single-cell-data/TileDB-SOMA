@@ -1,5 +1,5 @@
 /**
- * @file   soma_point_cloud.cc
+ * @file   soma_point_cloud_dataframe.cc
  *
  * @section LICENSE
  *
@@ -27,7 +27,7 @@
  *
  * @section DESCRIPTION
  *
- * This file defines the SOMAPointCloud bindings.
+ * This file defines the SOMAPointCloudDataFrame bindings.
  */
 
 #include <pybind11/numpy.h>
@@ -46,8 +46,9 @@ namespace py = pybind11;
 using namespace py::literals;
 using namespace tiledbsoma;
 
-void load_soma_point_cloud(py::module& m) {
-    py::class_<SOMAPointCloud, SOMAArray, SOMAObject>(m, "SOMAPointCloud")
+void load_soma_point_cloud_dataframe(py::module& m) {
+    py::class_<SOMAPointCloudDataFrame, SOMAArray, SOMAObject>(
+        m, "SOMAPointCloudDataFrame")
 
         .def_static(
             "create",
@@ -99,7 +100,7 @@ void load_soma_point_cloud(py::module& m) {
                     index_column_array_ptr, index_column_schema_ptr);
 
                 try {
-                    SOMAPointCloud::create(
+                    SOMAPointCloudDataFrame::create(
                         uri,
                         std::make_unique<ArrowSchema>(schema),
                         ArrowTable(
@@ -132,7 +133,7 @@ void load_soma_point_cloud(py::module& m) {
                 std::vector<std::string>,
                 ResultOrder,
                 std::optional<std::pair<uint64_t, uint64_t>>>(
-                &SOMAPointCloud::open),
+                &SOMAPointCloudDataFrame::open),
             "uri"_a,
             "mode"_a,
             "context"_a,
@@ -141,12 +142,12 @@ void load_soma_point_cloud(py::module& m) {
             "result_order"_a = ResultOrder::automatic,
             "timestamp"_a = py::none())
 
-        .def_static("exists", &SOMAPointCloud::exists)
+        .def_static("exists", &SOMAPointCloudDataFrame::exists)
         .def_property_readonly(
-            "index_column_names", &SOMAPointCloud::index_column_names)
+            "index_column_names", &SOMAPointCloudDataFrame::index_column_names)
         .def_property_readonly(
             "count",
-            &SOMAPointCloud::count,
+            &SOMAPointCloudDataFrame::count,
             py::call_guard<py::gil_scoped_release>());
 }
 }  // namespace libtiledbsomacpp

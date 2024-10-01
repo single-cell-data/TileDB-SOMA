@@ -60,7 +60,7 @@ tdco$attr_filters("non-existant")
 }
 \keyword{internal}
 \section{Super class}{
-\code{tiledbsoma::MappingBase} -> \code{TileDBCreateOptions}
+\code{\link[tiledbsoma:MappingBase]{tiledbsoma::MappingBase}} -> \code{TileDBCreateOptions}
 }
 \section{Methods}{
 \subsection{Public methods}{

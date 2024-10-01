@@ -8,7 +8,7 @@
 }
 \keyword{internal}
 \section{Super classes}{
-\code{tiledbsoma::TileDBObject} -> \code{tiledbsoma::TileDBGroup} -> \code{tiledbsoma::SOMACollectionBase} -> \code{tiledbsoma::EphemeralCollectionBase} -> \code{EphemeralExperiment}
+\code{\link[tiledbsoma:TileDBObject]{tiledbsoma::TileDBObject}} -> \code{\link[tiledbsoma:TileDBGroup]{tiledbsoma::TileDBGroup}} -> \code{\link[tiledbsoma:SOMACollectionBase]{tiledbsoma::SOMACollectionBase}} -> \code{\link[tiledbsoma:EphemeralCollectionBase]{tiledbsoma::EphemeralCollectionBase}} -> \code{EphemeralExperiment}
 }
 \section{Active bindings}{
 \if{html}{\out{<div class="r6-active-bindings">}}

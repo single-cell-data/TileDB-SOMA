@@ -41,7 +41,7 @@ from .options._soma_tiledb_context import SOMATileDBContext
 RawHandle = Union[
     clib.SOMAArray,
     clib.SOMADataFrame,
-    clib.SOMAPointCloud,
+    clib.SOMAPointCloudDataFrame,
     clib.SOMASparseNDArray,
     clib.SOMADenseNDArray,
     clib.SOMAGroup,
@@ -80,7 +80,7 @@ def open(
 
     _type_to_class = {
         "somadataframe": DataFrameWrapper,
-        "somapointcloud": PointCloudWrapper,
+        "somapointclouddataframe": PointCloudDataFrameWrapper,
         "somadensendarray": DenseNDArrayWrapper,
         "somasparsendarray": SparseNDArrayWrapper,
         "somacollection": CollectionWrapper,
@@ -95,6 +95,15 @@ def open(
             soma_object, context
         )
     except KeyError:
+        if soma_object.type.lower() in {
+            "somascene",
+            "somapointclouddataframe",
+            "somageometrydataframe",
+            "somamultiscaleimage",
+        }:
+            raise NotImplementedError(
+                f"Support for {soma_object.type!r} is not yet implemented."
+            )
         raise SOMAError(f"{uri!r} has unknown storage type {soma_object.type!r}")
 
 
@@ -459,6 +468,10 @@ class SOMAArrayWrapper(Wrapper[_ArrType]):
         """Not implemented for DataFrame."""
         raise NotImplementedError
 
+    def resize_soma_joinid(self, newshape: int) -> None:
+        """Only implemented for DataFrame."""
+        raise NotImplementedError
+
 
 class DataFrameWrapper(SOMAArrayWrapper[clib.SOMADataFrame]):
     """Wrapper around a Pybind11 SOMADataFrame handle."""
@@ -505,11 +518,23 @@ class DataFrameWrapper(SOMAArrayWrapper[clib.SOMADataFrame]):
         """
         return cast(bool, self._handle.tiledbsoma_has_upgraded_domain)
 
+    def resize_soma_joinid(self, newshape: int) -> None:
+        """Increases the shape of the dataframe on the ``soma_joinid`` index
+        column, if it indeed is an index column, leaving all other index columns
+        as-is. If the ``soma_joinid`` is not an index column, no change is made.
+        This is a special case of ``upgrade_domain`` (WIP for 1.15), but simpler
+        to keystroke, and handles the most common case for dataframe domain
+        expansion.  Raises an error if the dataframe doesn't already have a
+        domain: in that case please call ``tiledbsoma_upgrade_domain`` (WIP for
+        1.15).
+        """
+        self._handle.resize_soma_joinid(newshape)
 
-class PointCloudWrapper(SOMAArrayWrapper[clib.SOMAPointCloud]):
-    """Wrapper around a Pybind11 SOMAPointCloud handle."""
 
-    _ARRAY_WRAPPED_TYPE = clib.SOMAPointCloud
+class PointCloudDataFrameWrapper(SOMAArrayWrapper[clib.SOMAPointCloudDataFrame]):
+    """Wrapper around a Pybind11 SOMAPointCloudDataFrame handle."""
+
+    _ARRAY_WRAPPED_TYPE = clib.SOMAPointCloudDataFrame
 
     @property
     def count(self) -> int:
@@ -520,7 +545,7 @@ class PointCloudWrapper(SOMAArrayWrapper[clib.SOMAPointCloud]):
 
     @property
     def shape(self) -> Tuple[int, ...]:
-        # Shape is not implemented for point clouds
+        # Shape is not implemented for point cloud dataframes
         raise NotImplementedError
 
 

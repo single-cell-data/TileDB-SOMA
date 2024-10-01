@@ -8,6 +8,7 @@ SOMADataFrameCreate(
   uri,
   schema,
   index_column_names = c("soma_joinid"),
+  domain = NULL,
   ingest_mode = c("write", "resume"),
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
@@ -23,6 +24,15 @@ SOMADataFrameCreate(
 \item{index_column_names}{A vector of column names to use as user-defined
 index columns; all named columns must exist in the schema, and at least
 one index column name is required}
+
+\item{domain}{An optional list of 2-element vectors specifying the domain of each index
+column. Each vector should be a pair consisting of the minimum and maximum values storable in
+the index column. For example, if there is a single int64-valued index column, then \code{domain}
+might be \code{c(100, 200)} to indicate that values between 100 and 200, inclusive, can be stored
+in that column.  If provided, this list must have the same length as \code{index_column_names},
+and the index-column domain will be as specified.  If omitted entirely, or if \code{NULL} in a given
+dimension, the corresponding index-column domain will use the minimum and maximum possible
+values for the column's datatype.  This makes a \code{DataFrame} growable.}
 
 \item{ingest_mode}{Ingestion mode when creating the TileDB object; choose from:
 \itemize{

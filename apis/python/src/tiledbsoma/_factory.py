@@ -29,14 +29,13 @@ from . import (
     _experiment,
     _measurement,
     _multiscale_image,
-    _point_cloud,
+    _point_cloud_dataframe,
     _scene,
     _soma_object,
     _sparse_nd_array,
     _tdb_handles,
 )
 from ._constants import (
-    SOMA_ENCODING_VERSION,
     SOMA_ENCODING_VERSION_METADATA_KEY,
     SOMA_OBJECT_TYPE_METADATA_KEY,
 )
@@ -203,7 +202,7 @@ def _read_soma_type(hdl: _tdb_handles.AnyWrapper) -> str:
     if isinstance(encoding_version, bytes):
         encoding_version = str(encoding_version, "utf-8")
 
-    if encoding_version != SOMA_ENCODING_VERSION:
+    if encoding_version not in {"1", "1.1.0"}:
         raise ValueError(f"Unsupported SOMA object encoding version {encoding_version}")
 
     return obj_type
@@ -222,7 +221,7 @@ def _type_name_to_cls(type_name: str) -> Type[AnySOMAObject]:
             _multiscale_image.MultiscaleImage,
             _sparse_nd_array.SparseNDArray,
             _scene.Scene,
-            _point_cloud.PointCloud,
+            _point_cloud_dataframe.PointCloudDataFrame,
         )
     }
     try:

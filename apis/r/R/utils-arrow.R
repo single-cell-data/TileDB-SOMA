@@ -348,7 +348,7 @@ extract_levels <- function(arrtbl, exclude_cols=c("soma_joinid")) {
 #' Domain and extent table creation helper for data.frame writes returning a Table with
 #' a column per dimension for the given (incoming) arrow schema of a Table
 #' @noRd
-get_domain_and_extent_dataframe <- function(tbl_schema, ind_col_names,
+get_domain_and_extent_dataframe <- function(tbl_schema, ind_col_names, domain = NULL,
                                             tdco = TileDBCreateOptions$new(PlatformConfig$new())) {
     stopifnot("First argument must be an arrow schema" = inherits(tbl_schema, "Schema"),
               "Second argument must be character" = is.character(ind_col_names),
@@ -356,13 +356,25 @@ get_domain_and_extent_dataframe <- function(tbl_schema, ind_col_names,
               "Second argument index names must be columns in first argument" =
                   all(is.finite(match(ind_col_names, names(tbl_schema)))),
               "Third argument must be options wrapper" = inherits(tdco, "TileDBCreateOptions"))
+    stopifnot(
+        "domain must be NULL or a named list, with values being 2-element vectors or NULL" = is.null(domain) ||
+          ( # Check that `domain` is a list of length `length(ind_col_names)`
+            # where all values are named after `ind_col_names`
+            # and all values are `NULL` or a two-length atomic non-factor vector
+            rlang::is_list(domain, n = length(ind_col_names)) &&
+              identical(sort(names(domain)), sort(ind_col_names)) &&
+              all(vapply_lgl(
+                domain,
+                function(x) is.null(x) || (is.atomic(x) && !is.factor(x) && length(x) == 2L)
+              ))
+          )
+      )
+
     rl <- sapply(ind_col_names, \(ind_col_name) {
         ind_col <- tbl_schema$GetFieldByName(ind_col_name)
         ind_col_type <- ind_col$type
         ind_col_type_name <- ind_col$type$name
 
-        # TODO: tiledbsoma-r does not accept the domain argument to SOMADataFrame::create, but should
-        # https://github.com/single-cell-data/TileDB-SOMA/issues/2967
         ind_ext <- tdco$dim_tile(ind_col_name)
 
         # Default 2048 mods to 0 for 8-bit types and 0 is an invalid extent
@@ -384,21 +396,59 @@ get_domain_and_extent_dataframe <- function(tbl_schema, ind_col_names,
           ind_max_dom <- arrow_type_range(ind_col_type) - c(0, ind_ext)
         }
 
-        ind_cur_dom <- ind_max_dom
+        requested_slot <- domain[[ind_col_name]]
+        ind_cur_dom <- if (is.null(requested_slot)) {
+          ind_max_dom
+        } else {
+          requested_slot
+        }
+        # Core supports no domain specification for variable-length dims, which
+        # includes string/binary dims.
         if (ind_col_type_name %in% c("string", "large_utf8", "utf8")) ind_ext <- NA
 
         # https://github.com/single-cell-data/TileDB-SOMA/issues/2407
         if (.new_shape_feature_flag_is_enabled()) {
             if (ind_col_type_name %in% c("string", "utf8", "large_utf8")) {
-                aa <- arrow::arrow_array(c("", "", "", "", ""), ind_col_type)
+                aa <- if (is.null(requested_slot)) {
+                  arrow::arrow_array(c("", "", "", "", ""), ind_col_type)
+                } else {
+                  arrow::arrow_array(c("", "", "", requested_slot[[1]], requested_slot[[2]]), ind_col_type)
+                }
             } else {
+                # If they wanted (0, 99) then extent must be at most 100.
+                # This is tricky though. Some cases:
+                # * lo = 0, hi = 99, extent = 1000
+                #   We look at hi - lo + 1; resize extent down to 100
+                # * lo = 1000, hi = 1099, extent = 1000
+                #   We look at hi - lo + 1; resize extent down to 100
+                # * lo = min for datatype, hi = max for datatype
+                #   We get integer overflow trying to compute hi - lo + 1
+                # So if lo <= 0 and hi >= ind_ext, this is fine without
+                # computing hi - lo + 1.
+                lo <- ind_max_dom[[1]]
+                hi <- ind_max_dom[[2]]
+                if (lo > 0 || hi < ind_ext) {
+                  dom_span <- hi - lo + 1
+                  if (ind_ext > dom_span) {
+                    ind_ext <- dom_span
+                  }
+                }
                 aa <- arrow::arrow_array(c(ind_max_dom, ind_ext, ind_cur_dom), ind_col_type)
             }
         } else {
             if (ind_col_type_name %in% c("string", "utf8", "large_utf8")) {
                 aa <- arrow::arrow_array(c("", "", ""), ind_col_type)
             } else {
-                aa <- arrow::arrow_array(c(ind_max_dom, ind_ext), ind_col_type)
+                # Same comments as above
+                lo <- ind_cur_dom[[1]]
+                hi <- ind_cur_dom[[2]]
+                if (lo > 0 || hi < ind_ext) {
+                  dom_span <- hi - lo + 1
+                  if (ind_ext > dom_span) {
+                    ind_ext <- dom_span
+                  }
+                }
+                aa <- arrow::arrow_array(c(ind_cur_dom, ind_ext), ind_col_type)
             }
         }
 

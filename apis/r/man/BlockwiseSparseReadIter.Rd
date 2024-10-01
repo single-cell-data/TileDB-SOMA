@@ -9,7 +9,7 @@ as sparse matrices
 }
 \keyword{internal}
 \section{Super classes}{
-\code{tiledbsoma::ReadIter} -> \code{tiledbsoma::BlockwiseReadIterBase} -> \code{BlockwiseSparseReadIter}
+\code{\link[tiledbsoma:ReadIter]{tiledbsoma::ReadIter}} -> \code{\link[tiledbsoma:BlockwiseReadIterBase]{tiledbsoma::BlockwiseReadIterBase}} -> \code{BlockwiseSparseReadIter}
 }
 \section{Active bindings}{
 \if{html}{\out{<div class="r6-active-bindings">}}

@@ -1,11 +1,11 @@
 /**
- * @file   common.h
+ * @file   unit_soma_scene.cc
  *
  * @section LICENSE
  *
  * The MIT License
  *
- * @copyright Copyright (c) 2022 TileDB, Inc.
+ * @copyright Copyright (c) 2024 TileDB, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -27,40 +27,19 @@
  *
  * @section DESCRIPTION
  *
- *   This declares the common functions in the API
+ * This file manages unit tests for the SOMAScene class
  */
 
-#ifndef TILEDBSOMA_COMMON_H
-#define TILEDBSOMA_COMMON_H
+#include "common.h"
 
-#include <stdexcept>  // for windows: error C2039: 'runtime_error': is not a member of 'std'
-#include <string>
-#include <tiledb/tiledb>
+TEST_CASE("SOMAScene: basic") {
+    auto ctx = std::make_shared<SOMAContext>();
+    std::string uri{"mem://unit-test-scene-basic"};
 
-namespace tiledbsoma {
-
-const std::string SOMA_OBJECT_TYPE_KEY = "soma_object_type";
-const std::string ENCODING_VERSION_KEY = "soma_encoding_version";
-const std::string ENCODING_VERSION_VAL = "1.1.0";
-
-using MetadataValue = std::tuple<tiledb_datatype_t, uint32_t, const void*>;
-enum MetadataInfo { dtype = 0, num, value };
-
-using TimestampRange = std::pair<uint64_t, uint64_t>;
-
-class TileDBSOMAError : public std::runtime_error {
-   public:
-    explicit TileDBSOMAError(const char* m)
-        : std::runtime_error(m){};
-    explicit TileDBSOMAError(std::string m)
-        : std::runtime_error(m.c_str()){};
-
-   public:
-    virtual const char* what() const noexcept override {
-        return std::runtime_error::what();
-    }
-};
-
-};  // namespace tiledbsoma
-
-#endif  // TILEDBSOMA_COMMON_H
+    SOMAScene::create(uri, ctx, std::nullopt);
+    auto soma_scene = SOMAScene::open(uri, OpenMode::read, ctx, std::nullopt);
+    CHECK(soma_scene->uri() == uri);
+    CHECK(soma_scene->ctx() == ctx);
+    CHECK(soma_scene->type() == "SOMAScene");
+    soma_scene->close();
+}

@@ -40,7 +40,7 @@ from .. import (
     DenseNDArray,
     Experiment,
     MultiscaleImage,
-    PointCloud,
+    PointCloudDataFrame,
     Scene,
     SparseNDArray,
     _util,
@@ -444,7 +444,7 @@ def _write_visium_data_to_experiment_uri(
                         **ingest_ctx,
                     ) as loc:
                         _maybe_set(obsl, "loc", loc, use_relative_uri=use_relative_uri)
-                        scene.set_transform_to_point_cloud(
+                        scene.set_transform_to_point_cloud_dataframe(
                             "loc", IdentityTransform(("x", "y"), ("x", "y"))
                         )
 
@@ -558,7 +558,7 @@ def _write_visium_spots(
     additional_metadata: "AdditionalMetadata" = None,
     platform_config: Optional["PlatformConfig"] = None,
     context: Optional["SOMATileDBContext"] = None,
-) -> PointCloud:
+) -> PointCloudDataFrame:
     """TODO: Add _write_visium_spot_dataframe docs"""
     df = (
         pd.read_csv(input_tissue_positions)
@@ -576,7 +576,7 @@ def _write_visium_spots(
 
     arrow_table = df_to_arrow(df)
 
-    soma_point_cloud = PointCloud.create(
+    soma_point_cloud = PointCloudDataFrame.create(
         df_uri,
         schema=arrow_table.schema,
         platform_config=platform_config,

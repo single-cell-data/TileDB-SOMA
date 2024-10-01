@@ -1,11 +1,11 @@
 /**
- * @file   soma_point_cloud.h
+ * @file   soma_point_cloud_dataframe.h
  *
  * @section LICENSE
  *
  * The MIT License
  *
- * @copyright Copyright (c) 2023-2024 TileDB, Inc.
+ * @copyright Copyright (c) 2024 TileDB, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -27,11 +27,11 @@
  *
  * @section DESCRIPTION
  *
- *   This file defines the SOMAPointCloud class.
+ *   This file defines the SOMAPointCloudDataFrame class.
  */
 
-#ifndef SOMA_POINT_CLOUD
-#define SOMA_POINT_CLOUD
+#ifndef SOMA_POINT_CLOUD_DATAFRAME
+#define SOMA_POINT_CLOUD_DATAFRAME
 
 #include <filesystem>
 
@@ -43,16 +43,16 @@ class ArrayBuffers;
 
 using namespace tiledb;
 
-class SOMAPointCloud : public SOMAArray {
+class SOMAPointCloudDataFrame : public SOMAArray {
    public:
     //===================================================================
     //= public static
     //===================================================================
 
     /**
-     * @brief Create a SOMAPointCloud object at the given URI.
+     * @brief Create a SOMAPointCloudDataFrame object at the given URI.
      *
-     * @param uri URI to create the SOMAPointCloud
+     * @param uri URI to create the SOMAPointCloudDataFrame
      * @param schema Arrow schema
      * @param index_columns The index column names with associated domains
      * and tile extents per dimension
@@ -69,9 +69,9 @@ class SOMAPointCloud : public SOMAArray {
         std::optional<TimestampRange> timestamp = std::nullopt);
 
     /**
-     * @brief Open and return a SOMAPointCloud object at the given URI.
+     * @brief Open and return a SOMAPointCloudDataFrame object at the given URI.
      *
-     * @param uri URI to create the SOMAPointCloud
+     * @param uri URI to create the SOMAPointCloudDataFrame
      * @param mode read or write
      * @param ctx SOMAContext
      * @param column_names A list of column names to use as user-defined index
@@ -81,9 +81,9 @@ class SOMAPointCloud : public SOMAArray {
      * colmajor
      * @param timestamp If specified, overrides the default timestamp used to
      * open this object. If unset, uses the timestamp provided by the context.
-     * @return std::unique_ptr<SOMAPointCloud> SOMAPointCloud
+     * @return std::unique_ptr<SOMAPointCloudDataFrame> SOMAPointCloudDataFrame
      */
-    static std::unique_ptr<SOMAPointCloud> open(
+    static std::unique_ptr<SOMAPointCloudDataFrame> open(
         std::string_view uri,
         OpenMode mode,
         std::shared_ptr<SOMAContext> ctx,
@@ -92,9 +92,9 @@ class SOMAPointCloud : public SOMAArray {
         std::optional<TimestampRange> timestamp = std::nullopt);
 
     /**
-     * @brief Check if the SOMAPointCloud exists at the URI.
+     * @brief Check if the SOMAPointCloudDataFrame exists at the URI.
      *
-     * @param uri URI to create the SOMAPointCloud
+     * @param uri URI to create the SOMAPointCloudDataFrame
      * @param ctx SOMAContext
      */
     static bool exists(std::string_view uri, std::shared_ptr<SOMAContext> ctx);
@@ -104,7 +104,7 @@ class SOMAPointCloud : public SOMAArray {
     //===================================================================
 
     /**
-     * @brief Construct a new SOMAPointCloud object.
+     * @brief Construct a new SOMAPointCloudDataFrame object.
      *
      * @param mode read or write
      * @param uri URI of the array
@@ -114,7 +114,7 @@ class SOMAPointCloud : public SOMAArray {
      * colmajor
      * @param timestamp Timestamp
      */
-    SOMAPointCloud(
+    SOMAPointCloudDataFrame(
         OpenMode mode,
         std::string_view uri,
         std::shared_ptr<SOMAContext> ctx,
@@ -132,14 +132,14 @@ class SOMAPointCloud : public SOMAArray {
               timestamp) {
     }
 
-    SOMAPointCloud(const SOMAArray& other)
+    SOMAPointCloudDataFrame(const SOMAArray& other)
         : SOMAArray(other) {
     }
 
-    SOMAPointCloud() = delete;
-    SOMAPointCloud(const SOMAPointCloud&) = default;
-    SOMAPointCloud(SOMAPointCloud&&) = delete;
-    ~SOMAPointCloud() = default;
+    SOMAPointCloudDataFrame() = delete;
+    SOMAPointCloudDataFrame(const SOMAPointCloudDataFrame&) = default;
+    SOMAPointCloudDataFrame(SOMAPointCloudDataFrame&&) = delete;
+    ~SOMAPointCloudDataFrame() = default;
 
     using SOMAArray::open;
 
