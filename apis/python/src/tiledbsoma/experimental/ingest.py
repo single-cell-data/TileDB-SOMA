@@ -13,11 +13,14 @@ Do NOT merge into main.
 import json
 import os
 import warnings
+from contextlib import contextmanager
 from pathlib import Path
 from typing import (
     TYPE_CHECKING,
     Any,
     Dict,
+    Generator,
+    List,
     Optional,
     Sequence,
     Tuple,
@@ -42,13 +45,14 @@ except ImportError as err:
     raise err
 
 
-from somacore import Axis, CoordinateSpace, IdentityTransform
+from somacore import Axis, CoordinateSpace, IdentityTransform, ScaleTransform
 
 from .. import (
     Collection,
     DataFrame,
     DenseNDArray,
     Experiment,
+    ImageProperties,
     MultiscaleImage,
     PointCloudDataFrame,
     Scene,
@@ -386,36 +390,27 @@ def _write_visium_data_to_experiment_uri(
         additional_metadata=additional_metadata,
     )
 
+    # Set the ingestion parameters.
     ingest_ctx: IngestCtx = {
         "context": context,
         "ingestion_params": IngestionParams(ingest_mode, registration_mapping),
         "additional_metadata": additional_metadata,
     }
 
+    # Get the spot diameters from teh scale factors file.
     pixels_per_spot_diameter = scale_factors["spot_diameter_fullres"]
 
-    # Get the size of the fullres image.
+    # Create a list of image paths.
+    # -- Each item contains: level name, image path, and scale factors to fullres.
+    image_paths: List[Tuple[str, Path, Optional[float]]] = []
     if input_fullres is not None:
-        with Image.open(input_fullres) as im:
-            ref_shape: Tuple[int, ...] = np.array(im).shape
-    elif input_hires is not None:
-        with Image.open(input_hires) as im:
-            width, height, nchannel = np.array(im).shape
+        image_paths.append(("fullres", Path(input_fullres), None))
+    if input_hires is not None:
         scale = scale_factors["tissue_hires_scalef"]
-        ref_shape = (
-            int(np.round(width / scale)),
-            int(np.round(height / scale)),
-            nchannel,
-        )
-    elif input_lowres is not None:
-        with Image.open(input_lowres) as im:
-            width, height, nchannel = np.array(im).shape
+        image_paths.append(("hires", Path(input_hires), scale))
+    if input_lowres is not None:
         scale = scale_factors["tissue_lowres_scalef"]
-        ref_shape = (
-            int(np.round(width / scale)),
-            int(np.round(height / scale)),
-            nchannel,
-        )
+        image_paths.append(("lowres", Path(input_lowres), scale))
 
     # Create axes and transformations
     # mypy false positive https://github.com/python/mypy/issues/5313
@@ -448,46 +443,58 @@ def _write_visium_data_to_experiment_uri(
                 )
                 scene.coordinate_space = coord_space
 
-                # Write image data and add to the scene.
                 img_uri = _util.uri_joinpath(scene_uri, "img")
                 with _create_or_open_collection(
                     Collection[MultiscaleImage], img_uri, **ingest_ctx
                 ) as img:
                     _maybe_set(scene, "img", img, use_relative_uri=use_relative_uri)
-                    if any(
-                        x is not None
-                        for x in (input_hires, input_lowres, input_fullres)
-                    ):
+
+                    # Write image data and add to the scene.
+                    if image_paths:
                         tissue_uri = _util.uri_joinpath(img_uri, image_name)
-                        with MultiscaleImage.create(
+                        with _create_visium_tissue_images(
                             tissue_uri,
-                            type=pa.uint8(),
-                            reference_level_shape=ref_shape,
-                            axis_names=("y", "x", "c"),
-                            axis_types=("height", "width", "channel"),
-                            context=ingest_ctx.get("context"),
-                        ) as tissue:
-                            add_metadata(tissue, ingest_ctx.get("additional_metadata"))
+                            image_paths,
+                            use_relative_uri=use_relative_uri,
+                            **ingest_ctx,
+                        ) as tissue_image:
+                            add_metadata(
+                                tissue_image, ingest_ctx.get("additional_metadata")
+                            )
                             _maybe_set(
                                 img,
                                 image_name,
-                                tissue,
+                                tissue_image,
                                 use_relative_uri=use_relative_uri,
                             )
-                            _write_visium_images(
-                                tissue,
-                                scale_factors,
-                                input_hires=input_hires,
-                                input_lowres=input_lowres,
-                                input_fullres=input_fullres,
-                                use_relative_uri=use_relative_uri,
-                                **ingest_ctx,
-                            )
-                            tissue.coordinate_space = coord_space
-                            scene.set_transform_to_multiscale_image(
-                                image_name,
-                                IdentityTransform(("x", "y"), ("x", "y")),
-                            )
+
+                            # Add scale factors as extra metadata.
+                            for key, value in scale_factors.items():
+                                tissue_image.metadata[key] = value
+
+                            tissue_image.coordinate_space = coord_space
+                            scale = image_paths[0][2]
+                            if scale is None:
+                                scene.set_transform_to_multiscale_image(
+                                    image_name,
+                                    IdentityTransform(("x", "y"), ("x", "y")),
+                                )
+                            else:
+                                level_props: ImageProperties = (
+                                    tissue_image.level_properties(0)  # type: ignore[assignment]
+                                )
+                                updated_scales = (
+                                    level_props.width
+                                    / np.round(level_props.width / scale),
+                                    level_props.height
+                                    / np.round(level_props.height / scale),
+                                )
+                                scene.set_transform_to_multiscale_image(
+                                    image_name,
+                                    ScaleTransform(
+                                        ("x", "y"), ("x", "y"), updated_scales
+                                    ),
+                                )
 
                 obsl_uri = _util.uri_joinpath(scene_uri, "obsl")
                 with _create_or_open_collection(
@@ -495,8 +502,8 @@ def _write_visium_data_to_experiment_uri(
                 ) as obsl:
                     _maybe_set(scene, "obsl", obsl, use_relative_uri=use_relative_uri)
 
-                    loc_uri = _util.uri_joinpath(obsl_uri, "loc")
                     # Write spot data and add to the scene.
+                    loc_uri = _util.uri_joinpath(obsl_uri, "loc")
                     with _write_visium_spots(
                         loc_uri,
                         input_tissue_positions,
@@ -669,31 +676,48 @@ def _write_visium_spots(
     return soma_point_cloud
 
 
-def _write_visium_images(
-    image_pyramid: MultiscaleImage,
-    scale_factors: Dict[str, Any],
+@contextmanager
+def _create_visium_tissue_images(
+    uri: str,
+    image_paths: List[Tuple[str, Path, Optional[float]]],
     *,
-    input_hires: Union[None, str, Path],
-    input_lowres: Union[None, str, Path],
-    input_fullres: Union[None, str, Path],
-    ingestion_params: IngestionParams,
     additional_metadata: "AdditionalMetadata" = None,
     platform_config: Optional["PlatformConfig"] = None,
     context: Optional["SOMATileDBContext"] = None,
+    ingestion_params: IngestionParams,
     use_relative_uri: Optional[bool] = None,
-) -> None:
-    # Write metadata from scale_factors file
-    for key, value in scale_factors.items():
-        image_pyramid.metadata[key] = value
+) -> Generator[MultiscaleImage, None, None]:
 
-    # Add the different levels of zoom to the image pyramid.
-    for name, image_path in (
-        ("fullres", input_fullres),
-        ("hires", input_hires),
-        ("lowres", input_lowres),
-    ):
-        if image_path is None:
-            continue
+    # Open the first image to get the base size.
+    with Image.open(image_paths[0][1]) as im:
+        im_data_numpy = np.array(im)
+        ref_shape: Tuple[int, ...] = im_data_numpy.shape
+        im_data = pa.Tensor.from_numpy(im_data_numpy)
+
+    # Create the multiscale image.
+    image_pyramid = MultiscaleImage.create(
+        uri,
+        type=pa.uint8(),
+        reference_level_shape=ref_shape,
+        axis_names=("y", "x", "c"),
+        axis_types=("height", "width", "channel"),
+        context=context,
+    )
+
+    # Add additional metadata.
+    add_metadata(image_pyramid, additional_metadata)
+
+    # Add and write the first level.
+    im_array = image_pyramid.add_new_level(image_paths[0][0], shape=ref_shape)
+    im_array.write(
+        (slice(None), slice(None), slice(None)),
+        im_data,
+        platform_config=platform_config,
+    )
+    im_array.close()
+
+    # Add the remaining levels.
+    for name, image_path, _ in image_paths[1:]:
         with Image.open(image_path) as im:
             im_data = pa.Tensor.from_numpy(np.array(im))
         im_array = image_pyramid.add_new_level(name, shape=im_data.shape)
@@ -702,3 +726,9 @@ def _write_visium_images(
             im_data,
             platform_config=platform_config,
         )
+        im_array.close()
+
+    try:
+        yield image_pyramid
+    finally:
+        image_pyramid.close()
