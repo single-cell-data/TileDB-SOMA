@@ -415,3 +415,84 @@ void tiledbsoma_upgrade_shape(
     sr->upgrade_shape(new_shape_i64);
     sr->close();
 }
+
+// [[Rcpp::export]]
+void c_update_dataframe_schema(
+    const std::string& uri,
+    Rcpp::XPtr<somactx_wrap_t> ctxxp,
+    Rcpp::CharacterVector column_names_to_drop,
+    Rcpp::List add_cols_types,
+    Rcpp::List add_cols_enum_value_types,
+    Rcpp::List add_cols_enum_ordered) {
+    // Drop columns is just a list of column names: it goes right through
+    // from R to C++.
+    std::vector<std::string> drop_attrs = Rcpp::as<std::vector<std::string>>(
+        column_names_to_drop);
+
+    // For add columns: coming from R we have a named list from attr name to:
+    // * for non-enum attrs: the datatype of the attr
+    // * for enum attrs: the index type (e.g. int8) of the enumeration attr
+    std::map<std::string, std::string> add_attrs;
+    int n_add = add_cols_types.length();
+
+    if (n_add > 0) {
+        // Calling .names on empty list results in:
+        // Not compatible with STRSXP: [type=NULL].Abort trap: 6
+        Rcpp::CharacterVector add_col_names = add_cols_types.names();
+        for (int i = 0; i < n_add; i++) {
+            std::string type_name = Rcpp::as<std::string>(add_cols_types[i]);
+
+            // Map type names like "int8" in the R Arrow API to type names like
+            // "c" in the C NanoArrow API. I looked and didn't find an R
+            // accessor for this; no big deal. Here we remap what we know about,
+            // and if there's still an unrecognized type name (which is
+            // developer error, not user error), we will let libtiledbsoma
+            // throw.
+            type_name = remap_arrow_type_code_r_to_c(type_name);
+
+            add_attrs.emplace(add_col_names[i], type_name);
+        }
+    }
+
+    // For enum columns, two more things: value type (e.g. string) and
+    // is-ordered-enum boolean. These come into us as separate lists but
+    // we will reshape them into a map from enum-attr name to pair of
+    // (value_type, ordered).
+
+    // First do integrity checks.
+    if (add_cols_enum_value_types.length() != add_cols_enum_ordered.length()) {
+        // This isn't user error
+        throw Rcpp::exception(
+            "c_update_dataframe_schema: internal coding error");
+    }
+
+    std::map<std::string, std::pair<std::string, bool>> add_enmrs;
+    int n_add_enum = add_cols_enum_value_types.length();
+    if (n_add_enum > 0) {
+        // Calling .names on empty list results in:
+        // Not compatible with STRSXP: [type=NULL].Abort trap: 6
+        Rcpp::CharacterVector add_enum_col_names = add_cols_enum_value_types
+                                                       .names();
+        Rcpp::CharacterVector other_names = add_cols_enum_ordered.names();
+        for (int i = 0; i < n_add_enum; i++) {
+            if (add_enum_col_names[i] != other_names[i]) {
+                // This also isn't user error
+                throw Rcpp::exception(
+                    "c_update_dataframe_schema: internal coding error");
+            }
+        }
+
+        for (int i = 0; i < n_add_enum; i++) {
+            std::string key = Rcpp::as<std::string>(add_enum_col_names[i]);
+            std::string type_name = Rcpp::as<std::string>(
+                add_cols_enum_value_types[i]);
+            type_name = remap_arrow_type_code_r_to_c(type_name);
+            bool ordered = Rcpp::as<bool>(add_cols_enum_ordered[i]);
+
+            add_enmrs.emplace(key, std::pair(type_name, ordered));
+        }
+    }
+
+    tdbs::SOMADataFrame::update_dataframe_schema(
+        uri, ctxxp->ctxptr, drop_attrs, add_attrs, add_enmrs);
+}

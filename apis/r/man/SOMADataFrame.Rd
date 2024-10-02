@@ -24,6 +24,7 @@ row and is intended to act as a join key for other objects, such as
 \item \href{#method-SOMADataFrame-domain}{\code{SOMADataFrame$domain()}}
 \item \href{#method-SOMADataFrame-maxdomain}{\code{SOMADataFrame$maxdomain()}}
 \item \href{#method-SOMADataFrame-tiledbsoma_has_upgraded_domain}{\code{SOMADataFrame$tiledbsoma_has_upgraded_domain()}}
+\item \href{#method-SOMADataFrame-resize_soma_joinid}{\code{SOMADataFrame$resize_soma_joinid()}}
 \item \href{#method-SOMADataFrame-clone}{\code{SOMADataFrame$clone()}}
 }
 }
@@ -277,6 +278,34 @@ or it has had \code{upgrade_domain} applied to it.
 
 \subsection{Returns}{
 Logical
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SOMADataFrame-resize_soma_joinid"></a>}}
+\if{latex}{\out{\hypertarget{method-SOMADataFrame-resize_soma_joinid}{}}}
+\subsection{Method \code{resize_soma_joinid()}}{
+Increases the shape of the dataframe on the \code{soma_joinid}
+index column, if it indeed is an index column, leaving all other index
+columns as-is. If the \code{soma_joinid} is not an index column, no change is
+made.  This is a special case of \code{upgrade_domain} (WIP for 1.15), but
+simpler to keystroke, and handles the most common case for dataframe
+domain expansion.  Raises an error if the dataframe doesn't already have a
+domain: in that case please call \code{tiledbsoma_upgrade_domain} (WIP for
+1.15).
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SOMADataFrame$resize_soma_joinid(new_shape)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{new_shape}}{An integer, greater than or equal to 1 + the
+\code{soma_joinid} domain slot.}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+No return value
 }
 }
 \if{html}{\out{<hr>}}

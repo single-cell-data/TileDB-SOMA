@@ -226,6 +226,10 @@ tiledbsoma_upgrade_shape <- function(uri, new_shape, ctxxp) {
     invisible(.Call(`_tiledbsoma_tiledbsoma_upgrade_shape`, uri, new_shape, ctxxp))
 }
 
+c_update_dataframe_schema <- function(uri, ctxxp, column_names_to_drop, add_cols_types, add_cols_enum_value_types, add_cols_enum_ordered) {
+    invisible(.Call(`_tiledbsoma_c_update_dataframe_schema`, uri, ctxxp, column_names_to_drop, add_cols_types, add_cols_enum_value_types, add_cols_enum_ordered))
+}
+
 #' Iterator-Style Access to SOMA Array via SOMAArray
 #'
 #' The `sr_*` functions provide low-level access to an instance of the SOMAArray

@@ -238,6 +238,7 @@ SOMADataFrame <- R6::R6Class(
     #' prior to performing the update. The name of this new column will be set
     #' to the value specified by `row_index_name`.
     update = function(values, row_index_name = NULL) {
+
       private$check_open_for_write()
       stopifnot(
         "'values' must be a data.frame, Arrow Table or RecordBatch" =
@@ -299,47 +300,49 @@ SOMADataFrame <- R6::R6Class(
         new_schema[common_cols]
       )
 
-      # Drop columns
-      se <- tiledb::tiledb_array_schema_evolution()
-      for (drop_col in drop_cols) {
-        spdl::debug("[SOMADataFrame update]: dropping column '{}'", drop_col)
-        se <- tiledb::tiledb_array_schema_evolution_drop_attribute(
-          object = se,
-          attrname = drop_col
-        )
-      }
+      drop_cols_for_clib <- drop_cols
+      add_cols_types_for_clib <- 
+        add_cols_enum_value_types_for_clib <- 
+        add_cols_enum_ordered_for_clib <- vector("list", length = length(add_cols))
+      names(add_cols_types_for_clib) <- 
+        names(add_cols_enum_value_types_for_clib) <- 
+        names(add_cols_enum_ordered_for_clib) <- add_cols
 
       # Add columns
       for (add_col in add_cols) {
-        spdl::debug("[SOMADataFrame update]: adding column '{}'", add_col)
 
         col_type <- new_schema$GetFieldByName(add_col)$type
-        attr <- tiledb_attr_from_arrow_field(
-          field = new_schema$GetFieldByName(add_col),
-          tiledb_create_options = tiledb_create_options
-        )
 
         if (inherits(col_type, "DictionaryType")) {
           spdl::debug(
-            "[SOMADataFrame update]: adding column '{}' as an enumerated type",
-            add_col
+            "[SOMADataFrame update]: adding enum column '{}' index type '{}' value type '{}' ordered {}",
+            add_col, col_type$index_type$name, col_type$value_type$name, col_type$ordered
           )
-          se <- tiledb::tiledb_array_schema_evolution_add_enumeration(
-            object = se,
-            name = add_col,
-            enums = levels(values$GetColumnByName(add_col)$as_vector()),
-            ordered = col_type$ordered
-          )
-          attr <- tiledb::tiledb_attribute_set_enumeration_name(attr, add_col)
-        }
 
-        se <- tiledb::tiledb_array_schema_evolution_add_attribute(se, attr)
+          add_cols_types_for_clib[[add_col]] <- col_type$index_type$name
+          add_cols_enum_value_types_for_clib[[add_col]] <- col_type$value_type$name
+          add_cols_enum_ordered_for_clib[[add_col]] <- col_type$ordered
+        } else {
+          spdl::debug("[SOMADataFrame update]: adding column '{}' type '{}'", add_col, col_type$name)
+
+          add_cols_types_for_clib[[add_col]] <- col_type$name
+        }
       }
 
-      se <- tiledb::tiledb_array_schema_evolution_array_evolve(se, self$uri)
+      if (length(drop_cols_for_clib) > 0 || length(add_cols_types_for_clib) > 0) {
+        c_update_dataframe_schema(
+          self$uri,
+          private$.soma_context,
+          drop_cols_for_clib,
+          Filter(Negate(is.null), add_cols_types_for_clib),
+          Filter(Negate(is.null), add_cols_enum_value_types_for_clib),
+          Filter(Negate(is.null), add_cols_enum_ordered_for_clib)
+        )
+      }
 
       # Reopen array for writing with new schema
       self$reopen(mode = "WRITE")
+
       spdl::debug("[SOMADataFrame update]: Writing new data")
       self$write(values)
     },
