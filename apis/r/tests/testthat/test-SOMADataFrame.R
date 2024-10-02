@@ -639,30 +639,7 @@ test_that("SOMADataFrame can be updated", {
 
   # Add a new enum and update
   tbl0$frobo <- factor(sample(letters[1:3], nrow(tbl0), replace = TRUE))
-
-  # Browse[2]> tbl0
-  # Table
-  # 10 rows x 5 columns
-  # $int_column <int32 not null>
-  # $soma_joinid <int64>
-  # $string_column <large_string>
-  # $float_column <bool>
-  # $frobo <dictionary<values=string, indices=int8>>
-  #                           ^^^^^^
-
-  ### debug 3079
-  ### expect_no_condition(sdf <- SOMADataFrameOpen(uri, mode = "WRITE")$update(tbl0))
-  sdf <- SOMADataFrameOpen(uri, mode = "WRITE")
-  sdf <- sdf$update(tbl0)
-
-  # Browse[2]> SOMADataFrameOpen(uri)$schema()
-  # Schema
-  # int_column: int32 not null
-  # soma_joinid: int64
-  # string_column: large_string
-  # float_column: bool
-  # frobo: dictionary<values=binary, indices=int8>
-  #                          ^^^^^^
+  expect_no_condition(sdf <- SOMADataFrameOpen(uri, mode = "WRITE")$update(tbl0))
 
   # Verify enum was added on disk
   expect_s3_class(
@@ -686,31 +663,7 @@ test_that("SOMADataFrame can be updated", {
     levels(tbl0$GetColumnByName("rlvl")$as_vector()),
     c("green", "red", "blue")
   )
-  ### debug 3079:01
-  ### expect_no_condition(sdf <- SOMADataFrameOpen(uri, mode = "WRITE")$update(tbl0))
-
-  # Browse[2]> tbl0
-  # Table
-  # 10 rows x 6 columns
-  # $int_column <int32 not null>
-  # $soma_joinid <int64>
-  # $string_column <large_string>
-  # $float_column <bool>
-  # $frobo <dictionary<values=string, indices=int8>>
-  #                           ^^^^^^
-
-  # Browse[2]> SOMADataFrameOpen(uri)$schema()
-  # Schema
-  # int_column: int32 not null
-  # soma_joinid: int64
-  # string_column: large_string
-  # float_column: bool
-  # frobo: dictionary<values=binary, indices=int8>
-  #                          ^^^^^^
-
-  # The written-to sdf has binary values
-
-  sdf <- SOMADataFrameOpen(uri, mode = "WRITE")$update(tbl0)
+  expect_no_condition(sdf <- SOMADataFrameOpen(uri, mode = "WRITE")$update(tbl0))
 
   # Verify unordered enum was added on disk
   expect_s3_class(
