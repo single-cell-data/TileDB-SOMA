@@ -217,8 +217,8 @@ std::unique_ptr<ArrowSchema> ArrowAdapter::arrow_schema_from_tiledb_array(
         child->release = &ArrowAdapter::release_schema;
         child->private_data = nullptr;
         LOG_TRACE(fmt::format(
-            "[ArrowAdapter] arrow_schema_from_tiledb_array dim {} name {} "
-            "format {}",
+            "[ArrowAdapter] arrow_schema_from_tiledb_array dim {} format {} "
+            "name {}",
             i,
             child->format,
             child->name));
@@ -245,8 +245,8 @@ std::unique_ptr<ArrowSchema> ArrowAdapter::arrow_schema_from_tiledb_array(
         child->private_data = nullptr;
 
         LOG_TRACE(fmt::format(
-            "[ArrowAdapter] arrow_schema_from_tiledb_array attr {} name {} "
-            "format {}",
+            "[ArrowAdapter] arrow_schema_from_tiledb_array attr {} format {} "
+            "name {}",
             i,
             child->format,
             child->name));
