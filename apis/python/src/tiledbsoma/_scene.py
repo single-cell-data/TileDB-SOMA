@@ -194,7 +194,7 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
         to set a transformation for geometry dataframe named  "transcripts" in the
         "var/RNA" collection::
 
-            scene.set_transfrom_for_geometry_dataframe(
+            scene.set_transform_to_geometry_dataframe(
                 'transcripts', transform, subcollection=['var', 'RNA'],
             )
 
@@ -307,9 +307,9 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
         If the subcollection the point cloud dataframe is inside of is more than one
         layer deep, the input should be provided as a sequence of names. For example,
         to set a transform for  a point named `transcripts` in the `var/RNA`
-        collection::
+        collection:
 
-            scene.set_transformation_for_point_cloud_dataframe(
+            scene.set_transform_to_point_cloud_dataframe(
                 'transcripts', transform, subcollection=['var', 'RNA'],
             )
 
