@@ -511,8 +511,11 @@ static std::map<std::string, std::string> _type_name_remap = {
     {"uint16", "S"},
     {"uint32", "I"},
     {"uint64", "L"},
-    {"utf8", "U"},
-    {"bool", "b"}};
+    {"utf8", "u"},
+    {"large_utf8", "U"},
+    {"bool", "b"},
+    {"float", "f"},
+    {"double", "g"}};
 
 std::string remap_arrow_type_code_r_to_c(std::string input) {
     auto it = _type_name_remap.find(input);
