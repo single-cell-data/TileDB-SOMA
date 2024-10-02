@@ -126,6 +126,31 @@ class SOMADataFrame : public SOMAArray {
      */
     static bool exists(std::string_view uri, std::shared_ptr<SOMAContext> ctx);
 
+    /**
+     * This is for schema evolution.
+     *
+     * For non-enum attrs:
+     *
+     * o drop_cols: attr_name
+     * o add_attrs: attr_name -> Arrow type string like "i" or "U"
+     * o add_enmrs: no key present
+     *
+     * Enum attrs:
+     *
+     * o drop_cols: attr_name
+     * o add_attrs: attr_name -> Arrow type string for the index
+     *   type, e.g. 'c' for int8
+     * o add_enmrs: attr_name -> pair of:
+     *   - Arrow type string the value type, e.g. "f" or "U"
+     *   - bool ordered
+     */
+    static void update_dataframe_schema(
+        std::string uri,
+        std::shared_ptr<SOMAContext> ctx,
+        std::vector<std::string> drop_attrs,
+        std::map<std::string, std::string> add_attrs,
+        std::map<std::string, std::pair<std::string, bool>> add_enmrs);
+
     //===================================================================
     //= public non-static
     //===================================================================

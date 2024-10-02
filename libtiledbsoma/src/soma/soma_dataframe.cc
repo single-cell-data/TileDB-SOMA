@@ -31,6 +31,7 @@
  */
 
 #include "soma_dataframe.h"
+#include "../utils/logger.h"
 
 namespace tiledbsoma {
 using namespace tiledb;
@@ -84,6 +85,109 @@ bool SOMADataFrame::exists(
     } catch (TileDBSOMAError& e) {
         return false;
     }
+}
+
+void SOMADataFrame::update_dataframe_schema(
+    std::string uri,
+    std::shared_ptr<SOMAContext> ctx,
+    std::vector<std::string> drop_attrs,
+    std::map<std::string, std::string> add_attrs,
+    std::map<std::string, std::pair<std::string, bool>> add_enmrs) {
+    ArraySchemaEvolution se(*ctx->tiledb_ctx());
+    for (auto key_name : drop_attrs) {
+        LOG_DEBUG(fmt::format(
+            "[SOMADataFrame::update_dataframe_schema] drop col name {}",
+            key_name));
+        se.drop_attribute(key_name);
+    }
+    for (auto add_attr : add_attrs) {
+        auto [attr_name, attr_type] = add_attr;
+
+        Attribute attr(
+            *ctx->tiledb_ctx(),
+            attr_name,
+            ArrowAdapter::to_tiledb_format(attr_type));
+
+        if (ArrowAdapter::arrow_is_string_type(attr_type.c_str())) {
+            attr.set_cell_val_num(TILEDB_VAR_NUM);
+        }
+
+        FilterList filter_list(*ctx->tiledb_ctx());
+        filter_list.add_filter(Filter(*ctx->tiledb_ctx(), TILEDB_FILTER_ZSTD));
+        attr.set_filter_list(filter_list);
+
+        // An update can create (or drop) columns, or mutate existing
+        // ones. A brand-new column might have nulls in it -- or it
+        // might not.  And a subsequent mutator-update might set null
+        // values to non-null -- or vice versa. Therefore we must be
+        // careful to set nullability for all types.
+        //
+        // Note: this must match what DataFrame.create does:
+        //
+        // * DataFrame.create sets nullability for obs/var columns on
+        //   initial ingest
+        // * Here, we set nullability for obs/var columns on update_obs
+        //
+        // Users should get the same behavior either way.
+        //
+        // Note: this is specific to tiledbsoma.io.
+        //
+        // * In the SOMA API -- e.g. soma.DataFrame.create -- users
+        //   bring their own Arrow schema (including nullabilities) and
+        //   we must do what they say.
+        // * In the tiledbsoma.io API, users bring their AnnData
+        //   objects, and we compute Arrow schemas on their behalf, and
+        //   we must accommodate reasonable/predictable needs.
+        attr.set_nullable(true);
+
+        // Non-enum columns:
+        //
+        // * add_attrs: attr_name -> Arrow type string like "i" or "U"
+        // * add_enmrs: no key present
+        //
+        // Enum columns:
+        //
+        // * add_attrs: attr_name -> attr_type: Arrow type string for the index
+        //   type, e.g. 'c' for int8
+        // * add_enmrs: attr_name -> pair of:
+        //   o enmr_type: Arrow type string the value type, e.g. "f" or "U"
+        //   o ordered: bool
+
+        auto enmr_it = add_enmrs.find(attr_name);
+        bool has_enmr = enmr_it != add_enmrs.end();
+
+        if (has_enmr) {
+            auto [enmr_type, ordered] = enmr_it->second;
+            LOG_DEBUG(fmt::format(
+                "[SOMADataFrame::update_dataframe_schema] add col name {} "
+                "index_type "
+                "{} value_type {} ordered {}",
+                attr_name,
+                attr_type,
+                enmr_type,
+                ordered));
+            se.add_enumeration(Enumeration::create_empty(
+                *ctx->tiledb_ctx(),
+                attr_name,
+                ArrowAdapter::to_tiledb_format(enmr_type),
+                enmr_type == "u" || enmr_type == "z" || enmr_type == "U" ||
+                        enmr_type == "Z" ?
+                    TILEDB_VAR_NUM :
+                    1,
+                ordered));
+            AttributeExperimental::set_enumeration_name(
+                *ctx->tiledb_ctx(), attr, attr_name);
+        } else {
+            LOG_DEBUG(fmt::format(
+                "[SOMADataFrame::update_dataframe_schema] add col name {} type "
+                "{}",
+                attr_name,
+                attr_type));
+        }
+
+        se.add_attribute(attr);
+    }
+    se.array_evolve(uri);
 }
 
 //===================================================================
