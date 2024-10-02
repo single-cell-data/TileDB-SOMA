@@ -137,16 +137,7 @@ PYBIND11_MODULE(pytiledbsoma, m) {
         .def_readwrite(
             "consolidate_and_vacuum", &PlatformConfig::consolidate_and_vacuum);
 
-    m.def(
-        "_update_dataframe_schema",
-        [](std::string uri,
-           std::shared_ptr<SOMAContext> ctx,
-           std::vector<std::string> drop_attrs,
-           std::map<std::string, std::string> add_attrs,
-           std::map<std::string, std::pair<std::string, bool>> add_enmrs) {
-            SOMADataFrame::update_dataframe_schema(
-                uri, ctx, drop_attrs, add_attrs, add_enmrs);
-        });
+    m.def("_update_dataframe_schema", &SOMADataFrame::update_dataframe_schema);
 
     load_soma_context(m);
     load_soma_object(m);
