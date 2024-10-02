@@ -1,5 +1,5 @@
-# Copyright (c) 2021-2023 The Chan Zuckerberg Initiative Foundation
-# Copyright (c) 2021-2023 TileDB, Inc.
+# Copyright (c) 2021-2024 The Chan Zuckerberg Initiative Foundation
+# Copyright (c) 2021-2024 TileDB, Inc.
 #
 # Licensed under the MIT License.
 
@@ -48,6 +48,7 @@ RawHandle = Union[
     clib.SOMACollection,
     clib.SOMAMeasurement,
     clib.SOMAExperiment,
+    clib.SOMAScene,
     clib.SOMAMultiscaleImage,
 ]
 _RawHdl_co = TypeVar("_RawHdl_co", bound=RawHandle, covariant=True)
@@ -85,6 +86,7 @@ def open(
         "somacollection": CollectionWrapper,
         "somaexperiment": ExperimentWrapper,
         "somameasurement": MeasurementWrapper,
+        "somascene": SceneWrapper,
         "somamultiscaleimage": MultiscaleImageWrapper,
     }
 
@@ -93,7 +95,7 @@ def open(
             soma_object, context
         )
     except KeyError:
-        if soma_object.type.lower() in {"somascene", "somageometrydataframe"}:
+        if soma_object.type.lower() == "somageometrydataframe":
             raise NotImplementedError(
                 f"Support for {soma_object.type!r} is not yet implemented."
             )
@@ -326,6 +328,12 @@ class MultiscaleImageWrapper(SOMAGroupWrapper[clib.SOMAMultiscaleImage]):
     _GROUP_WRAPPED_TYPE = clib.SOMAMultiscaleImage
 
 
+class SceneWrapper(SOMAGroupWrapper[clib.SOMAScene]):
+    """Wrapper around a Pybind11 SceneWrapper handle."""
+
+    _GROUP_WRAPPED_TYPE = clib.SOMAScene
+
+
 _ArrType = TypeVar("_ArrType", bound=clib.SOMAArray)
 
 
@@ -519,7 +527,7 @@ class DataFrameWrapper(SOMAArrayWrapper[clib.SOMADataFrame]):
 
 
 class PointCloudDataFrameWrapper(SOMAArrayWrapper[clib.SOMAPointCloudDataFrame]):
-    """Wrapper around a Pybind11 SOMADataFrame handle."""
+    """Wrapper around a Pybind11 SOMAPointCloudDataFrame handle."""
 
     _ARRAY_WRAPPED_TYPE = clib.SOMAPointCloudDataFrame
 
