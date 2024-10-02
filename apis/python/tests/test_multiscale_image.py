@@ -88,14 +88,14 @@ def test_multiscale_basic_no_channels(tmp_path):
 
         # Create very small downsample and write to it.
         level2 = image.add_new_level("level2", shape=(8, 4))
-        data = pa.Tensor.from_numpy(np.arange(32, dtype=np.uint8))
-        level2.write((slice(None), slice(None)), data)
+        level2_data = pa.Tensor.from_numpy(np.arange(32, dtype=np.uint8).reshape(8, 4))
+        level2.write((slice(None), slice(None)), level2_data)
 
     # Open for reading and check metadata.
     with soma.MultiscaleImage.open(image_uri, mode="r") as image:
 
         # Check the base properties for the image.
-        # assert image.axis_names == ("y", "x")
+        assert image.axis_names == ("y", "x")
         base_props = image.reference_level_properties
         assert base_props.name == "reference_level"
         assert base_props.shape == (128, 64)
@@ -114,6 +114,7 @@ def test_multiscale_basic_no_channels(tmp_path):
         assert image.level_count == 3
         for index, shape in enumerate([(128, 64), (64, 32), (8, 4)]):
             props = image.level_properties(index)
+            assert props == image.level_properties(props.name)
             assert props.nchannels is None
             assert props.depth is None
             assert props.image_type == "YX"
@@ -121,6 +122,19 @@ def test_multiscale_basic_no_channels(tmp_path):
             assert props.shape == shape
             assert props.height == shape[0]
             assert props.width == shape[1]
+
+        # Check a basic read
+        assert level2_data == image.read_spatial_region(2).data
+
+        # Check transform to and from levels
+        to_level = image.get_transform_to_level
+        from_level = image.get_transform_from_level
+        assert np.array_equal(to_level(0).scale_factors, [1, 1])
+        assert np.array_equal(to_level(1).scale_factors, [0.5, 0.5])
+        assert np.array_equal(to_level(2).scale_factors, [0.0625, 0.0625])
+        assert np.array_equal(from_level(0).scale_factors, [1, 1])
+        assert np.array_equal(from_level(1).scale_factors, [2, 2])
+        assert np.array_equal(from_level(2).scale_factors, [16, 16])
 
 
 class TestSimpleMultiscale2D:

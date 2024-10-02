@@ -457,6 +457,7 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
             raise SOMAError(
                 f"Unable to open the dense array with name '{array_name}'."
             ) from ke
+
         return somacore.SpatialRead(
             array.read(
                 coords,
@@ -477,7 +478,7 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
         Lifecycle:
             Experimental.
         """
-        return self._schema.axis_names
+        return tuple(self._schema.axis_names)
 
     @property
     def coordinate_space(self) -> CoordinateSpace:
@@ -514,16 +515,7 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
         Lifecycle:
             Experimental.
         """
-        if isinstance(level, str):
-            level_props = None
-            for val in self._levels:
-                if val.name == level:
-                    level_props = val
-                    break
-            else:
-                raise KeyError("No level with name '{level}'")
-        else:
-            level_props = self._levels[level]
+        level_props = self.level_properties(level)
         ref_level_props = self._schema.reference_level_properties
         if ref_level_props.depth is None:
             return ScaleTransform(
@@ -552,16 +544,7 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
         Lifecycle:
             Experimental.
         """
-        if isinstance(level, str):
-            level_props = None
-            for val in self._levels:
-                if val.name == level:
-                    level_props = val
-                    break
-            else:
-                raise KeyError("No level with name '{level}'")
-        else:
-            level_props = self._levels[level]
+        level_props = self.level_properties(level)
         ref_level_props = self._schema.reference_level_properties
         if ref_level_props.depth is None:
             return ScaleTransform(
@@ -607,10 +590,17 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
         Lifecycle:
             Experimental.
         """
+        # by name
+        # TODO could dyanmically create a dictionary whenever a name-based
+        # lookup is requested
         if isinstance(level, str):
-            raise NotImplementedError(
-                "Support for getting level properties by name is not yet implemented."
-            )  # TODO
+            for val in self._levels:
+                if val.name == level:
+                    return val
+            else:
+                raise KeyError("No level with name '{level}'")
+
+        # by index
         return self._levels[level]
 
     @property
