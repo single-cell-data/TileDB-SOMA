@@ -10,7 +10,7 @@ namespace tiledbsoma {
 class LineString
 {
 public:
-    LineString(std::vector<BasePoint>&& points);
+    LineString(std::vector<BasePoint>&& points = std::vector<BasePoint>());
     ~LineString();
 
     std::vector<BasePoint> points;

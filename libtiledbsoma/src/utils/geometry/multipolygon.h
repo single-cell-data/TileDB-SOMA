@@ -10,7 +10,7 @@ namespace tiledbsoma
 class MultiPolygon
 {
 public:
-    MultiPolygon(std::vector<Polygon>&& polygons);
+    MultiPolygon(std::vector<Polygon>&& polygons = std::vector<Polygon>());
     ~MultiPolygon();
 
     std::vector<Polygon> polygons;

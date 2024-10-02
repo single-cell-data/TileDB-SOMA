@@ -10,7 +10,7 @@ namespace tiledbsoma
     class MultiPoint
     {
     public:
-        MultiPoint(std::vector<Point>&& points);
+        MultiPoint(std::vector<Point>&& points = std::vector<Point>());
         ~MultiPoint();
 
         std::vector<Point> points;
