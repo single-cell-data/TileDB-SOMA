@@ -301,9 +301,12 @@ SOMADataFrame <- R6::R6Class(
       )
 
       drop_cols_for_clib <- drop_cols
-      add_cols_types_for_clib <- list()
-      add_cols_enum_value_types_for_clib <- list()
-      add_cols_enum_ordered_for_clib <- list()
+      add_cols_types_for_clib <- 
+        add_cols_enum_value_types_for_clib <- 
+        add_cols_enum_ordered_for_clib <- vector("list", length = length(add_cols))
+      names(add_cols_types_for_clib) <- 
+        names(add_cols_enum_value_types_for_clib) <- 
+        names(add_cols_enum_ordered_for_clib) <- add_cols
 
       # Add columns
       for (add_col in add_cols) {
@@ -331,9 +334,10 @@ SOMADataFrame <- R6::R6Class(
           self$uri,
           private$.soma_context,
           drop_cols_for_clib,
-          add_cols_types_for_clib,
-          add_cols_enum_value_types_for_clib,
-          add_cols_enum_ordered_for_clib)
+          Filter(Negate(is.null), add_cols_types_for_clib),
+          Filter(Negate(is.null), add_cols_enum_value_types_for_clib),
+          Filter(Negate(is.null), add_cols_enum_ordered_for_clib)
+        )
       }
 
       # Reopen array for writing with new schema
