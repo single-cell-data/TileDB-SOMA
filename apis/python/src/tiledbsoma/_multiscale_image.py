@@ -9,9 +9,9 @@ Implementation of a SOMA MultiscaleImage.
 
 import json
 import warnings
-from dataclasses import dataclass, field
 from typing import Any, Optional, Sequence, Tuple, Union
 
+import attrs
 import pyarrow as pa
 import somacore
 from somacore import (
@@ -45,7 +45,7 @@ from .options import SOMATileDBContext
 from .options._soma_tiledb_context import _validate_soma_tiledb_context
 
 
-@dataclass
+@attrs.define(frozen=True)
 class ImageProperties:
     """Properties for a single resolution level in a multiscale image.
 
@@ -55,43 +55,49 @@ class ImageProperties:
 
     name: str
     image_type: str
-    shape: Tuple[int, ...]
-    width: int = field(init=False)
-    height: int = field(init=False)
-    depth: Optional[int] = field(init=False)
-    nchannels: Optional[int] = field(init=False)
+    shape: Tuple[int, ...] = attrs.field(converter=tuple)
+    width: int = attrs.field(init=False)
+    height: int = attrs.field(init=False)
+    depth: Optional[int] = attrs.field(init=False)
+    nchannels: Optional[int] = attrs.field(init=False)
 
-    def __post_init__(self):  # type: ignore[no-untyped-def]
+    def __attrs_post_init__(self):  # type: ignore[no-untyped-def]
         if len(self.image_type) != len(set(self.image_type)):
             raise ValueError(
                 f"Invalid image type '{self.image_type}'. Image type cannot contain "
                 f"repeated values."
-            )
-        self.nchannels = None
-        self.width = None  # type: ignore[assignment]
-        self.height = None  # type: ignore[assignment]
-        self.depth = None
-        for val, size in zip(self.image_type, self.shape):
-            if val == "X":
-                self.width = size
-            elif val == "Y":
-                self.height = size
-            elif val == "Z":
-                self.depth = size
-            elif val == "C":
-                self.nchannels = size
-            else:
-                raise SOMAError(f"Invalid image type '{self.image_type}'")
-        if self.width is None or self.height is None:
-            raise ValueError(
-                f"Invalid image type '{self.image_type}'. Image type must include "
-                f"'X' and 'Y'."
             )
         if len(self.image_type) != len(self.shape):
             raise ValueError(
                 f"{len(self.image_type)} axis names must be provided for a multiscale "
                 f"image with image type {self.image_type}."
             )
+
+        nchannels: Optional[int] = None
+        width: Optional[int] = None
+        height: Optional[int] = None
+        depth: Optional[int] = None
+        for val, size in zip(self.image_type, self.shape):
+            if val == "X":
+                width = size
+            elif val == "Y":
+                height = size
+            elif val == "Z":
+                depth = size
+            elif val == "C":
+                nchannels = size
+            else:
+                raise SOMAError(f"Invalid image type '{self.image_type}'")
+        if width is None or height is None:
+            raise ValueError(
+                f"Invalid image type '{self.image_type}'. Image type must include "
+                f"'X' and 'Y'."
+            )
+
+        object.__setattr__(self, "nchannels", nchannels)
+        object.__setattr__(self, "width", width)
+        object.__setattr__(self, "height", height)
+        object.__setattr__(self, "depth", depth)
 
 
 class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
@@ -168,7 +174,7 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
             ImageProperties(
                 name="reference_level",
                 image_type=image_type,
-                shape=tuple(reference_level_shape),
+                shape=tuple(reference_level_shape),  # type: ignore
             ),
             axis_names=tuple(axis_names),
             datatype=type,
@@ -276,17 +282,18 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
 
         # Check if the shape is valid.
         ref_props = self._schema.reference_level_properties
-        if len(shape) != len(tuple(shape)):
+        shape = tuple(shape)
+        if len(shape) != len(ref_props.shape):
             raise ValueError(
-                f"New level must have {len(shape)} dimensions, but shape {shape} has "
-                f"{len(shape)} dimensions."
+                f"New level must have {len(ref_props.shape)} dimensions, but shape "
+                f"{shape} has {len(shape)} dimensions."
             )
 
         # Check, create, and store as metadata the new level image properties.
         props = ImageProperties(
             image_type=ref_props.image_type,
             name=key,
-            shape=tuple(shape),
+            shape=shape,  # type: ignore
         )
         if ref_props.nchannels is not None and ref_props.nchannels != props.nchannels:
             raise ValueError(
@@ -625,14 +632,14 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
 
 
 # TODO: Push down to C++ layer
-@dataclass
+@attrs.define
 class MultiscaleImageSchema:
 
     reference_level_properties: ImageProperties
     axis_names: Tuple[str, ...]
     datatype: pa.DataType
 
-    def __post_init__(self):  # type: ignore[no-untyped-def]
+    def __attrs_post_init__(self):  # type: ignore[no-untyped-def]
         ndim = len(self.reference_level_properties.shape)
         if len(self.axis_names) != ndim:
             raise ValueError(
