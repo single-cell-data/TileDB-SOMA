@@ -1563,7 +1563,7 @@ def _update_dataframe(
         else:
             add_attrs[add_key] = get_arrow_str_format(atype)
 
-    clib._update_dataframe(
+    clib._update_dataframe_schema(
         sdf.uri, sdf.context.native_context, list(drop_keys), add_attrs, add_enmrs
     )
 
