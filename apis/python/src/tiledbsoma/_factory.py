@@ -1,5 +1,5 @@
-# Copyright (c) 2021-2023 The Chan Zuckerberg Initiative Foundation
-# Copyright (c) 2021-2023 TileDB, Inc.
+# Copyright (c) 2021-2024 The Chan Zuckerberg Initiative Foundation
+# Copyright (c) 2021-2024 TileDB, Inc.
 #
 # Licensed under the MIT License.
 
@@ -30,6 +30,7 @@ from . import (
     _measurement,
     _multiscale_image,
     _point_cloud_dataframe,
+    _scene,
     _soma_object,
     _sparse_nd_array,
     _tdb_handles,
@@ -219,6 +220,7 @@ def _type_name_to_cls(type_name: str) -> Type[AnySOMAObject]:
             _measurement.Measurement,
             _multiscale_image.MultiscaleImage,
             _sparse_nd_array.SparseNDArray,
+            _scene.Scene,
             _point_cloud_dataframe.PointCloudDataFrame,
         )
     }

@@ -91,6 +91,8 @@ void load_soma_object(py::module& m) {
                     else if (soma_obj_type == "somameasurement")
                         return py::cast(
                             dynamic_cast<SOMAMeasurement&>(*soma_obj));
+                    else if (soma_obj_type == "somascene")
+                        return py::cast(dynamic_cast<SOMAScene&>(*soma_obj));
                     else if (soma_obj_type == "somamultiscaleimage")
                         return py::cast(
                             dynamic_cast<SOMAMultiscaleImage&>(*soma_obj));
