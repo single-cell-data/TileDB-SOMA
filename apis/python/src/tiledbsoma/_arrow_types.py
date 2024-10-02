@@ -74,6 +74,23 @@ _PYARROW_TO_CARROW: Dict[pa.DataType, str] = {
     pa.timestamp("ns"): "tsn:",
 }
 
+_CARROW_TO_PYARROW: Dict[pa.DataType, str] = {
+    "c": pa.int8(),
+    "s": pa.int16(),
+    "i": pa.int32(),
+    "l": pa.int64(),
+    "C": pa.uint8(),
+    "S": pa.uint16(),
+    "I": pa.uint32(),
+    "L": pa.uint64(),
+    "f": pa.float32(),
+    "g": pa.float64(),
+    "tss:": pa.timestamp("s"),
+    "tsm:": pa.timestamp("ms"),
+    "tsu:": pa.timestamp("us"),
+    "tsn:": pa.timestamp("ns"),
+}
+
 # Same as _ARROW_TO_TDB_ATTR, but used for DataFrame indexed columns, aka TileDB Dimensions.
 # Any type system differences from the base-case Attr should be added here.
 _ARROW_TO_TDB_DIM: Dict[Any, Union[str, TypeError]] = _ARROW_TO_TDB_ATTR.copy()
@@ -284,3 +301,10 @@ def pyarrow_to_carrow_type(pa_type: pa.DataType) -> str:
         return _PYARROW_TO_CARROW[pa_type]
     except KeyError:
         raise TypeError(f"Invalid pyarrow type {pa_type}") from None
+
+
+def carrow_type_to_pyarrow(ca_type: str) -> pa.DataType:
+    try:
+        return _CARROW_TO_PYARROW[ca_type]
+    except KeyError:
+        raise TypeError(f"Invalid carrrow type {ca_type}") from None

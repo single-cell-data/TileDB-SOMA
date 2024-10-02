@@ -28,6 +28,7 @@ from . import (
     _dense_nd_array,
     _experiment,
     _measurement,
+    _multiscale_image,
     _point_cloud_dataframe,
     _soma_object,
     _sparse_nd_array,
@@ -216,6 +217,7 @@ def _type_name_to_cls(type_name: str) -> Type[AnySOMAObject]:
             _dense_nd_array.DenseNDArray,
             _experiment.Experiment,
             _measurement.Measurement,
+            _multiscale_image.MultiscaleImage,
             _sparse_nd_array.SparseNDArray,
             _point_cloud_dataframe.PointCloudDataFrame,
         )

@@ -48,6 +48,7 @@ RawHandle = Union[
     clib.SOMACollection,
     clib.SOMAMeasurement,
     clib.SOMAExperiment,
+    clib.SOMAMultiscaleImage,
 ]
 _RawHdl_co = TypeVar("_RawHdl_co", bound=RawHandle, covariant=True)
 """A raw TileDB object. Covariant because Handles are immutable enough."""
@@ -84,6 +85,7 @@ def open(
         "somacollection": CollectionWrapper,
         "somaexperiment": ExperimentWrapper,
         "somameasurement": MeasurementWrapper,
+        "somamultiscaleimage": MultiscaleImageWrapper,
     }
 
     try:
@@ -91,12 +93,7 @@ def open(
             soma_object, context
         )
     except KeyError:
-        if soma_object.type.lower() in {
-            "somascene",
-            "somapointclouddataframe",
-            "somageometrydataframe",
-            "somamultiscaleimage",
-        }:
+        if soma_object.type.lower() in {"somascene", "somageometrydataframe"}:
             raise NotImplementedError(
                 f"Support for {soma_object.type!r} is not yet implemented."
             )
@@ -321,6 +318,12 @@ class MeasurementWrapper(SOMAGroupWrapper[clib.SOMAMeasurement]):
     """Wrapper around a Pybind11 MeasurementWrapper handle."""
 
     _GROUP_WRAPPED_TYPE = clib.SOMAMeasurement
+
+
+class MultiscaleImageWrapper(SOMAGroupWrapper[clib.SOMAMultiscaleImage]):
+    """Wrapper around a Pybind11 MultiscaleImage handle."""
+
+    _GROUP_WRAPPED_TYPE = clib.SOMAMultiscaleImage
 
 
 _ArrType = TypeVar("_ArrType", bound=clib.SOMAArray)
