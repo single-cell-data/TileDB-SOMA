@@ -501,3 +501,24 @@ SEXP convert_domainish(const tdbs::ArrowTable& arrow_table) {
 
     return arrayxp;
 }
+
+static std::map<std::string, std::string> _type_name_remap = {
+    {"int8", "c"},
+    {"int16", "s"},
+    {"int32", "i"},
+    {"int64", "l"},
+    {"uint8", "C"},
+    {"uint16", "S"},
+    {"uint32", "I"},
+    {"uint64", "L"},
+    {"utf8", "U"},
+    {"bool", "b"}};
+
+std::string remap_arrow_type_code_r_to_c(std::string input) {
+    auto it = _type_name_remap.find(input);
+    if (it == _type_name_remap.end()) {
+        return input;
+    } else {
+        return it->second;
+    }
+}

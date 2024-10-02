@@ -76,3 +76,6 @@ std::vector<int64_t> i64_from_rcpp_numeric(const Rcpp::NumericVector& input);
 // * obtain an ArrowTable
 // * need to map that to an R list of lo/hi pairs
 SEXP convert_domainish(const tdbs::ArrowTable& arrow_table);
+
+// Maps e.g. "int8" and "float32" to "c" and "f".
+std::string remap_arrow_type_code_r_to_c(std::string input);

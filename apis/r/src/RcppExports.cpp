@@ -512,6 +512,21 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
+// c_update_dataframe_schema
+void c_update_dataframe_schema(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp, Rcpp::CharacterVector column_names_to_drop, Rcpp::List add_cols_types, Rcpp::List add_cols_enum_value_types, Rcpp::List add_cols_enum_ordered);
+RcppExport SEXP _tiledbsoma_c_update_dataframe_schema(SEXP uriSEXP, SEXP ctxxpSEXP, SEXP column_names_to_dropSEXP, SEXP add_cols_typesSEXP, SEXP add_cols_enum_value_typesSEXP, SEXP add_cols_enum_orderedSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const std::string& >::type uri(uriSEXP);
+    Rcpp::traits::input_parameter< Rcpp::XPtr<somactx_wrap_t> >::type ctxxp(ctxxpSEXP);
+    Rcpp::traits::input_parameter< Rcpp::CharacterVector >::type column_names_to_drop(column_names_to_dropSEXP);
+    Rcpp::traits::input_parameter< Rcpp::List >::type add_cols_types(add_cols_typesSEXP);
+    Rcpp::traits::input_parameter< Rcpp::List >::type add_cols_enum_value_types(add_cols_enum_value_typesSEXP);
+    Rcpp::traits::input_parameter< Rcpp::List >::type add_cols_enum_ordered(add_cols_enum_orderedSEXP);
+    c_update_dataframe_schema(uri, ctxxp, column_names_to_drop, add_cols_types, add_cols_enum_value_types, add_cols_enum_ordered);
+    return R_NilValue;
+END_RCPP
+}
 // sr_setup
 Rcpp::XPtr<tdbs::SOMAArray> sr_setup(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp, Rcpp::Nullable<Rcpp::CharacterVector> colnames, Rcpp::Nullable<Rcpp::XPtr<tiledb::QueryCondition>> qc, Rcpp::Nullable<Rcpp::List> dim_points, Rcpp::Nullable<Rcpp::List> dim_ranges, std::string batch_size, std::string result_order, Rcpp::Nullable<Rcpp::DatetimeVector> timestamprange, const std::string& loglevel);
 RcppExport SEXP _tiledbsoma_sr_setup(SEXP uriSEXP, SEXP ctxxpSEXP, SEXP colnamesSEXP, SEXP qcSEXP, SEXP dim_pointsSEXP, SEXP dim_rangesSEXP, SEXP batch_sizeSEXP, SEXP result_orderSEXP, SEXP timestamprangeSEXP, SEXP loglevelSEXP) {
@@ -722,6 +737,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_tiledbsoma_resize", (DL_FUNC) &_tiledbsoma_resize, 3},
     {"_tiledbsoma_resize_soma_joinid", (DL_FUNC) &_tiledbsoma_resize_soma_joinid, 3},
     {"_tiledbsoma_tiledbsoma_upgrade_shape", (DL_FUNC) &_tiledbsoma_tiledbsoma_upgrade_shape, 3},
+    {"_tiledbsoma_c_update_dataframe_schema", (DL_FUNC) &_tiledbsoma_c_update_dataframe_schema, 6},
     {"_tiledbsoma_sr_setup", (DL_FUNC) &_tiledbsoma_sr_setup, 10},
     {"_tiledbsoma_sr_complete", (DL_FUNC) &_tiledbsoma_sr_complete, 1},
     {"_tiledbsoma_create_empty_arrow_table", (DL_FUNC) &_tiledbsoma_create_empty_arrow_table, 0},
