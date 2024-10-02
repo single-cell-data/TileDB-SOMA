@@ -129,7 +129,9 @@ def process_image_region(
         if axis == "Y":
             coords.append(slice(y_min, y_max))  # type: ignore[attr-defined]
         if axis == "Z":
-            raise NotImplementedError()
+            raise NotImplementedError(
+                "Spatial queries are currently only supported for 2D coordinates."
+            )
     return (coords, data_region, inv_transform)
 
 

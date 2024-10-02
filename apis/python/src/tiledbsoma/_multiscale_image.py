@@ -25,7 +25,7 @@ from typing_extensions import Final, Self
 
 from . import _funcs, _tdb_handles
 from . import pytiledbsoma as clib
-from ._arrow_types import pyarrow_to_carrow_type
+from ._arrow_types import carrow_type_to_pyarrow, pyarrow_to_carrow_type
 from ._constants import (
     SOMA_COORDINATE_SPACE_METADATA_KEY,
     SOMA_MULTISCALE_IMAGE_SCHEMA,
@@ -693,17 +693,5 @@ class MultiscaleImageSchema:
         kwargs = json.loads(data)
         axis_names = kwargs.pop("axis_names")
         type_str = kwargs.pop("datatype")
-        _carrow_to_pyarrow = {
-            "c": pa.int8(),
-            "s": pa.int16(),
-            "i": pa.int32(),
-            "l": pa.int64(),
-            "C": pa.uint8(),
-            "S": pa.uint16(),
-            "I": pa.uint32(),
-            "L": pa.uint64(),
-            "f": pa.float32(),
-            "g": pa.float64(),
-        }
-        type = _carrow_to_pyarrow[type_str]
+        type = carrow_type_to_pyarrow(type_str)
         return cls(ImageProperties(**kwargs), axis_names, type)
