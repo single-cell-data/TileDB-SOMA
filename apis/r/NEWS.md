@@ -2,6 +2,7 @@
 
 ## Changes
 
+* Use `libtiledbsoma` for R schema evolution [#3100](https://github.com/single-cell-data/TileDB-SOMA/pull/3100)
 * Implement missing `domain` argument to `SOMADataFrame` `create` [#3032](https://github.com/single-cell-data/TileDB-SOMA/pull/3032)
 * Remove unused `fragment_count` accessor [#3054](https://github.com/single-cell-data/TileDB-SOMA/pull/3054)
 
