@@ -430,8 +430,8 @@ def _write_visium_data_to_experiment_uri(
                 var_id = pacomp.unique(x_layer["soma_dim_1"])
 
     # Add spatial information to the experiment.
-    with Experiment.open(uri, mode="w", context=context) as exp:
-        spatial_uri = _util.uri_joinpath(uri, "spatial")
+    with Experiment.open(experiment_uri, mode="w", context=context) as exp:
+        spatial_uri = _util.uri_joinpath(experiment_uri, "spatial")
         with _create_or_open_collection(
             Collection[Scene], spatial_uri, **ingest_ctx
         ) as spatial:
@@ -458,9 +458,6 @@ def _write_visium_data_to_experiment_uri(
                             use_relative_uri=use_relative_uri,
                             **ingest_ctx,
                         ) as tissue_image:
-                            add_metadata(
-                                tissue_image, ingest_ctx.get("additional_metadata")
-                            )
                             _maybe_set(
                                 img,
                                 image_name,
