@@ -164,16 +164,16 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
         if len(axis_names) != len(axis_types):
             raise ValueError("Mismatched lengths for axis names and types.")
         axis_type_map = {"channel": "C", "height": "Y", "width": "X", "depth": "Z"}
-        image_type = ""
+        image_type = []
         for val in axis_types:
             try:
-                image_type += axis_type_map[val]
+                image_type.append(axis_type_map[val])
             except KeyError as ke:
                 raise ValueError("Invalid axis type name '{val}'.") from ke
         schema = MultiscaleImageSchema(
             ImageProperties(
                 name="reference_level",
-                image_type=image_type,
+                image_type="".join(image_type),
                 shape=tuple(reference_level_shape),  # type: ignore
             ),
             axis_names=tuple(axis_names),
