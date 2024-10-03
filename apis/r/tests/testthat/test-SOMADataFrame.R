@@ -745,6 +745,7 @@ test_that("SOMADataFrame can be updated", {
   )
   tbl0 <- tbl1
 
+
   # Error on incompatible schema updates
   tbl0$string_column <- tbl0$string_column$cast(target_type = arrow::int32()) # string to int
   expect_error(
