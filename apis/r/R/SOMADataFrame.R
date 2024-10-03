@@ -247,7 +247,8 @@ SOMADataFrame <- R6::R6Class(
 
       # Leave state unmodified
       # TODO: this issue will automatically go away on https://github.com/single-cell-data/TileDB-SOMA/issues/3059
-      on.exit(self$reopen(mode = "WRITE"))
+      omode <- self$mode()
+      on.exit(self$reopen(mode = omode))
 
       if (is.data.frame(values)) {
         if (!is.null(row_index_name)) {
