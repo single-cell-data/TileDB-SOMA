@@ -1,5 +1,5 @@
 /**
- * @file   unit_soma_dataframe.cc
+ * @file   unit_sdf.cc
  *
  * @section LICENSE
  *
@@ -167,7 +167,7 @@ struct VariouslyIndexedDataFrameFixture {
     }
 
     void write_sjid_u32_str_data_from(int64_t sjid_base) {
-        auto soma_dataframe = SOMADataFrame::open(uri_, OpenMode::write, ctx_);
+        auto sdf = SOMADataFrame::open(uri_, OpenMode::write, ctx_);
 
         auto i64_data = std::vector<int64_t>({sjid_base + 1, sjid_base + 2});
 
@@ -190,15 +190,13 @@ struct VariouslyIndexedDataFrameFixture {
         }
         char_offsets.push_back(offset);
 
-        soma_dataframe->set_column_data(
-            i64_name, i64_data.size(), i64_data.data());
-        soma_dataframe->set_column_data(
+        sdf->set_column_data(i64_name, i64_data.size(), i64_data.data());
+        sdf->set_column_data(
             str_name, strings.size(), char_data.data(), char_offsets.data());
-        soma_dataframe->set_column_data(
-            u32_name, u32_data.size(), u32_data.data());
-        soma_dataframe->write();
+        sdf->set_column_data(u32_name, u32_data.size(), u32_data.data());
+        sdf->write();
 
-        soma_dataframe->close();
+        sdf->close();
     }
 };
 
@@ -228,40 +226,36 @@ TEST_CASE_METHOD(
         REQUIRE(!SOMASparseNDArray::exists(uri_, ctx_));
         REQUIRE(!SOMADenseNDArray::exists(uri_, ctx_));
 
-        auto soma_dataframe = open(OpenMode::read);
-        REQUIRE(soma_dataframe->uri() == uri_);
-        REQUIRE(soma_dataframe->ctx() == ctx_);
-        REQUIRE(soma_dataframe->type() == "SOMADataFrame");
+        auto sdf = open(OpenMode::read);
+        REQUIRE(sdf->uri() == uri_);
+        REQUIRE(sdf->ctx() == ctx_);
+        REQUIRE(sdf->type() == "SOMADataFrame");
         std::vector<std::string> expected_index_column_names = {
             dim_infos[0].name};
-        REQUIRE(
-            soma_dataframe->index_column_names() ==
-            expected_index_column_names);
-        REQUIRE(soma_dataframe->nnz() == 0);
-        soma_dataframe->close();
+        REQUIRE(sdf->index_column_names() == expected_index_column_names);
+        REQUIRE(sdf->nnz() == 0);
+        sdf->close();
 
         std::vector<int64_t> d0(10);
         for (int j = 0; j < 10; j++)
             d0[j] = j;
         std::vector<uint32_t> a0(10, 1);
 
-        soma_dataframe = open(OpenMode::write);
-        soma_dataframe->set_column_data(
-            dim_infos[0].name, d0.size(), d0.data());
-        soma_dataframe->set_column_data(
-            attr_infos[0].name, a0.size(), a0.data());
-        soma_dataframe->write();
-        soma_dataframe->close();
+        sdf = open(OpenMode::write);
+        sdf->set_column_data(dim_infos[0].name, d0.size(), d0.data());
+        sdf->set_column_data(attr_infos[0].name, a0.size(), a0.data());
+        sdf->write();
+        sdf->close();
 
-        soma_dataframe = open(OpenMode::read);
-        while (auto batch = soma_dataframe->read_next()) {
+        sdf = open(OpenMode::read);
+        while (auto batch = sdf->read_next()) {
             auto arrbuf = batch.value();
             auto d0span = arrbuf->at(dim_infos[0].name)->data<int64_t>();
             auto a0span = arrbuf->at(attr_infos[0].name)->data<uint32_t>();
             REQUIRE(d0 == std::vector<int64_t>(d0span.begin(), d0span.end()));
             REQUIRE(a0 == std::vector<uint32_t>(a0span.begin(), a0span.end()));
         }
-        soma_dataframe->close();
+        sdf->close();
 
         auto soma_object = SOMAObject::open(uri_, OpenMode::read, ctx_);
         REQUIRE(soma_object->uri() == uri_);
@@ -347,8 +341,8 @@ TEST_CASE_METHOD(
 
             create(dim_infos, attr_infos, platform_config);
 
-            auto soma_dataframe = open(OpenMode::read);
-            auto sch = soma_dataframe->tiledb_schema();
+            auto sdf = open(OpenMode::read);
+            auto sch = sdf->tiledb_schema();
             REQUIRE(
                 sch->offsets_filter_list().filter(0).filter_type() ==
                 filter.second);
@@ -372,7 +366,7 @@ TEST_CASE_METHOD(
                         .filter(0)
                         .filter_type() == filter.second);
             }
-            soma_dataframe->close();
+            sdf->close();
         }
     }
 }
@@ -398,55 +392,55 @@ TEST_CASE_METHOD(
 
         create(dim_infos, attr_infos, PlatformConfig(), TimestampRange(0, 2));
 
-        auto soma_dataframe = open(
+        auto sdf = open(
             OpenMode::write, ResultOrder::automatic, TimestampRange(1, 1));
 
         int32_t val = 100;
-        soma_dataframe->set_metadata("md", TILEDB_INT32, 1, &val);
-        soma_dataframe->close();
+        sdf->set_metadata("md", TILEDB_INT32, 1, &val);
+        sdf->close();
 
         // Read metadata
-        soma_dataframe->open(OpenMode::read, TimestampRange(0, 2));
-        REQUIRE(soma_dataframe->metadata_num() == 3);
-        REQUIRE(soma_dataframe->has_metadata("soma_object_type"));
-        REQUIRE(soma_dataframe->has_metadata("soma_encoding_version"));
-        REQUIRE(soma_dataframe->has_metadata("md"));
-        auto mdval = soma_dataframe->get_metadata("md");
+        sdf->open(OpenMode::read, TimestampRange(0, 2));
+        REQUIRE(sdf->metadata_num() == 3);
+        REQUIRE(sdf->has_metadata("soma_object_type"));
+        REQUIRE(sdf->has_metadata("soma_encoding_version"));
+        REQUIRE(sdf->has_metadata("md"));
+        auto mdval = sdf->get_metadata("md");
         REQUIRE(std::get<MetadataInfo::dtype>(*mdval) == TILEDB_INT32);
         REQUIRE(std::get<MetadataInfo::num>(*mdval) == 1);
         REQUIRE(
             *((const int32_t*)std::get<MetadataInfo::value>(*mdval)) == 100);
-        soma_dataframe->close();
+        sdf->close();
 
         // md should not be available at (2, 2)
-        soma_dataframe->open(OpenMode::read, TimestampRange(2, 2));
-        REQUIRE(soma_dataframe->metadata_num() == 2);
-        REQUIRE(soma_dataframe->has_metadata("soma_object_type"));
-        REQUIRE(soma_dataframe->has_metadata("soma_encoding_version"));
-        REQUIRE(!soma_dataframe->has_metadata("md"));
-        soma_dataframe->close();
+        sdf->open(OpenMode::read, TimestampRange(2, 2));
+        REQUIRE(sdf->metadata_num() == 2);
+        REQUIRE(sdf->has_metadata("soma_object_type"));
+        REQUIRE(sdf->has_metadata("soma_encoding_version"));
+        REQUIRE(!sdf->has_metadata("md"));
+        sdf->close();
 
         // Metadata should also be retrievable in write mode
-        soma_dataframe->open(OpenMode::write, TimestampRange(0, 2));
-        REQUIRE(soma_dataframe->metadata_num() == 3);
-        REQUIRE(soma_dataframe->has_metadata("soma_object_type"));
-        REQUIRE(soma_dataframe->has_metadata("soma_encoding_version"));
-        REQUIRE(soma_dataframe->has_metadata("md"));
-        mdval = soma_dataframe->get_metadata("md");
+        sdf->open(OpenMode::write, TimestampRange(0, 2));
+        REQUIRE(sdf->metadata_num() == 3);
+        REQUIRE(sdf->has_metadata("soma_object_type"));
+        REQUIRE(sdf->has_metadata("soma_encoding_version"));
+        REQUIRE(sdf->has_metadata("md"));
+        mdval = sdf->get_metadata("md");
         REQUIRE(
             *((const int32_t*)std::get<MetadataInfo::value>(*mdval)) == 100);
 
         // Delete and have it reflected when reading metadata while in write
         // mode
-        soma_dataframe->delete_metadata("md");
-        mdval = soma_dataframe->get_metadata("md");
+        sdf->delete_metadata("md");
+        mdval = sdf->get_metadata("md");
         REQUIRE(!mdval.has_value());
-        soma_dataframe->close();
+        sdf->close();
 
         // Confirm delete in read mode
-        soma_dataframe->open(OpenMode::read, TimestampRange(0, 2));
-        REQUIRE(!soma_dataframe->has_metadata("md"));
-        REQUIRE(soma_dataframe->metadata_num() == 2);
+        sdf->open(OpenMode::read, TimestampRange(0, 2));
+        REQUIRE(!sdf->has_metadata("md"));
+        REQUIRE(sdf->metadata_num() == 2);
     }
 }
 
@@ -467,27 +461,27 @@ TEST_CASE_METHOD(
 
     create(dim_infos, attr_infos);
 
-    auto soma_dataframe = open(OpenMode::write);
+    auto sdf = open(OpenMode::write);
 
     std::vector<int64_t> d0({old_max + 1, old_max + 2});
     std::vector<double> a0({1.5, 2.5});
-    soma_dataframe->set_column_data(dim_infos[0].name, d0.size(), d0.data());
-    soma_dataframe->set_column_data(attr_infos[0].name, a0.size(), a0.data());
+    sdf->set_column_data(dim_infos[0].name, d0.size(), d0.data());
+    sdf->set_column_data(attr_infos[0].name, a0.size(), a0.data());
     // Writing outside the current domain should fail
-    REQUIRE_THROWS(soma_dataframe->write());
-    soma_dataframe->close();
+    REQUIRE_THROWS(sdf->write());
+    sdf->close();
 
-    soma_dataframe = open(OpenMode::write);
-    soma_dataframe->resize_soma_joinid(int64_t{new_max});
-    soma_dataframe->close();
+    sdf = open(OpenMode::write);
+    sdf->resize_soma_joinid(int64_t{new_max});
+    sdf->close();
 
-    soma_dataframe = open(OpenMode::write);
-    soma_dataframe->set_column_data(dim_infos[0].name, d0.size(), d0.data());
-    soma_dataframe->set_column_data(attr_infos[0].name, a0.size(), a0.data());
+    sdf = open(OpenMode::write);
+    sdf->set_column_data(dim_infos[0].name, d0.size(), d0.data());
+    sdf->set_column_data(attr_infos[0].name, a0.size(), a0.data());
     // Writing after resize should succeed
-    soma_dataframe->write();
+    sdf->write();
 
-    soma_dataframe->close();
+    sdf->close();
 }
 
 TEST_CASE_METHOD(
@@ -512,10 +506,9 @@ TEST_CASE_METHOD(
         create(dim_infos, attr_infos);
 
         // Check current domain
-        auto soma_dataframe = open(OpenMode::read);
+        auto sdf = open(OpenMode::read);
 
-        CurrentDomain current_domain = soma_dataframe
-                                           ->get_current_domain_for_test();
+        CurrentDomain current_domain = sdf->get_current_domain_for_test();
         if (!use_current_domain) {
             REQUIRE(current_domain.is_empty());
         } else {
@@ -531,40 +524,39 @@ TEST_CASE_METHOD(
 
         // Check shape before resize
         int64_t expect = dim_infos[0].dim_max + 1;
-        std::optional<int64_t> actual = soma_dataframe
-                                            ->maybe_soma_joinid_shape();
+        std::optional<int64_t> actual = sdf->maybe_soma_joinid_shape();
         REQUIRE(actual.has_value());
         REQUIRE(actual.value() == expect);
 
-        REQUIRE(soma_dataframe->nnz() == 0);
+        REQUIRE(sdf->nnz() == 0);
 
-        soma_dataframe->close();
+        sdf->close();
 
         // Write data
         write_sjid_u32_str_data_from(0);
 
         // Check shape after write
-        soma_dataframe->open(OpenMode::read);
+        sdf->open(OpenMode::read);
 
-        REQUIRE(soma_dataframe->nnz() == 2);
+        REQUIRE(sdf->nnz() == 2);
 
         expect = dim_infos[0].dim_max + 1;
-        actual = soma_dataframe->maybe_soma_joinid_shape();
+        actual = sdf->maybe_soma_joinid_shape();
         REQUIRE(actual.has_value());
         REQUIRE(actual.value() == expect);
 
         // Check domainish accessors before resize
-        ArrowTable non_empty_domain = soma_dataframe->get_non_empty_domain();
+        ArrowTable non_empty_domain = sdf->get_non_empty_domain();
         std::vector<int64_t> ned_sjid =
             ArrowAdapter::get_table_non_string_column_by_name<int64_t>(
                 non_empty_domain, "soma_joinid");
 
-        ArrowTable soma_domain = soma_dataframe->get_soma_domain();
+        ArrowTable soma_domain = sdf->get_soma_domain();
         std::vector<int64_t> dom_sjid =
             ArrowAdapter::get_table_non_string_column_by_name<int64_t>(
                 soma_domain, "soma_joinid");
 
-        ArrowTable soma_maxdomain = soma_dataframe->get_soma_maxdomain();
+        ArrowTable soma_maxdomain = sdf->get_soma_maxdomain();
         std::vector<int64_t> maxdom_sjid =
             ArrowAdapter::get_table_non_string_column_by_name<int64_t>(
                 soma_maxdomain, "soma_joinid");
@@ -581,11 +573,11 @@ TEST_CASE_METHOD(
             REQUIRE(maxdom_sjid[1] > 2000000000);
         }
 
-        soma_dataframe->close();
+        sdf->close();
 
-        REQUIRE(soma_dataframe->nnz() == 2);
+        REQUIRE(sdf->nnz() == 2);
         write_sjid_u32_str_data_from(8);
-        REQUIRE(soma_dataframe->nnz() == 4);
+        REQUIRE(sdf->nnz() == 4);
 
         // Resize
         auto new_shape = int64_t{SOMA_JOINID_RESIZE_DIM_MAX + 1};
@@ -597,58 +589,57 @@ TEST_CASE_METHOD(
             // * throw on an attempt to resize.
             REQUIRE_THROWS(write_sjid_u32_str_data_from(SOMA_JOINID_DIM_MAX));
 
-            soma_dataframe = open(OpenMode::write);
+            sdf = open(OpenMode::write);
             // Array not resizeable if it has not already been sized
-            REQUIRE_THROWS(soma_dataframe->resize_soma_joinid(new_shape));
-            soma_dataframe->close();
+            REQUIRE_THROWS(sdf->resize_soma_joinid(new_shape));
+            sdf->close();
 
         } else {
             // Expect throw on write beyond current domain before resize
             REQUIRE_THROWS(write_sjid_u32_str_data_from(SOMA_JOINID_DIM_MAX));
 
             // Check shape after write
-            soma_dataframe = open(OpenMode::read);
+            sdf = open(OpenMode::read);
             expect = dim_infos[0].dim_max + 1;
 
-            std::optional<int64_t> actual = soma_dataframe
-                                                ->maybe_soma_joinid_shape();
+            std::optional<int64_t> actual = sdf->maybe_soma_joinid_shape();
             REQUIRE(actual.has_value());
             REQUIRE(actual.value() == expect);
-            soma_dataframe->close();
+            sdf->close();
 
-            soma_dataframe = open(OpenMode::read);
-            REQUIRE_THROWS(soma_dataframe->resize_soma_joinid(new_shape));
-            soma_dataframe->close();
+            sdf = open(OpenMode::read);
+            REQUIRE_THROWS(sdf->resize_soma_joinid(new_shape));
+            sdf->close();
 
-            soma_dataframe = open(OpenMode::write);
-            soma_dataframe->resize_soma_joinid(new_shape);
-            soma_dataframe->close();
+            sdf = open(OpenMode::write);
+            sdf->resize_soma_joinid(new_shape);
+            sdf->close();
 
             // Check shape after resize
-            soma_dataframe = open(OpenMode::read);
+            sdf = open(OpenMode::read);
             expect = SOMA_JOINID_RESIZE_DIM_MAX + 1;
-            actual = soma_dataframe->maybe_soma_joinid_shape();
+            actual = sdf->maybe_soma_joinid_shape();
             REQUIRE(actual.has_value());
             REQUIRE(actual.value() == expect);
 
-            soma_dataframe->close();
+            sdf->close();
 
             // Implicitly we expect no throw
             write_sjid_u32_str_data_from(SOMA_JOINID_DIM_MAX);
         }
 
         // Check domainish accessors after resize
-        soma_dataframe->open(OpenMode::read);
+        sdf->open(OpenMode::read);
 
-        non_empty_domain = soma_dataframe->get_non_empty_domain();
+        non_empty_domain = sdf->get_non_empty_domain();
         ned_sjid = ArrowAdapter::get_table_non_string_column_by_name<int64_t>(
             non_empty_domain, "soma_joinid");
 
-        soma_domain = soma_dataframe->get_soma_domain();
+        soma_domain = sdf->get_soma_domain();
         dom_sjid = ArrowAdapter::get_table_non_string_column_by_name<int64_t>(
             soma_domain, "soma_joinid");
 
-        soma_maxdomain = soma_dataframe->get_soma_maxdomain();
+        soma_maxdomain = sdf->get_soma_maxdomain();
         maxdom_sjid = ArrowAdapter::get_table_non_string_column_by_name<
             int64_t>(soma_maxdomain, "soma_joinid");
 
@@ -665,8 +656,7 @@ TEST_CASE_METHOD(
         }
 
         // Check can_resize_soma_joinid
-        std::pair<bool, std::string> check = soma_dataframe
-                                                 ->can_resize_soma_joinid(1);
+        std::pair<bool, std::string> check = sdf->can_resize_soma_joinid(1);
         if (!use_current_domain) {
             REQUIRE(check.first == false);
             REQUIRE(
@@ -680,13 +670,12 @@ TEST_CASE_METHOD(
                 check.second ==
                 "cannot resize_soma_joinid: new soma_joinid shape 1 < existing "
                 "shape 199");
-            check = soma_dataframe->can_resize_soma_joinid(
-                SOMA_JOINID_RESIZE_DIM_MAX + 1);
+            check = sdf->can_resize_soma_joinid(SOMA_JOINID_RESIZE_DIM_MAX + 1);
             REQUIRE(check.first == true);
             REQUIRE(check.second == "");
         }
 
-        soma_dataframe->close();
+        sdf->close();
     }
 }
 
@@ -712,10 +701,9 @@ TEST_CASE_METHOD(
         create(dim_infos, attr_infos);
 
         // Check current domain
-        auto soma_dataframe = open(OpenMode::read);
+        auto sdf = open(OpenMode::read);
 
-        CurrentDomain current_domain = soma_dataframe
-                                           ->get_current_domain_for_test();
+        CurrentDomain current_domain = sdf->get_current_domain_for_test();
         if (!use_current_domain) {
             REQUIRE(current_domain.is_empty());
         } else {
@@ -736,26 +724,25 @@ TEST_CASE_METHOD(
 
         // Check shape before write
         int64_t expect = dim_infos[1].dim_max + 1;
-        std::optional<int64_t> actual = soma_dataframe
-                                            ->maybe_soma_joinid_shape();
+        std::optional<int64_t> actual = sdf->maybe_soma_joinid_shape();
         REQUIRE(actual.has_value());
         REQUIRE(actual.value() == expect);
 
-        soma_dataframe->close();
+        sdf->close();
 
-        REQUIRE(soma_dataframe->nnz() == 0);
+        REQUIRE(sdf->nnz() == 0);
 
         // Write
         write_sjid_u32_str_data_from(0);
 
-        REQUIRE(soma_dataframe->nnz() == 2);
+        REQUIRE(sdf->nnz() == 2);
         write_sjid_u32_str_data_from(8);
-        REQUIRE(soma_dataframe->nnz() == 4);
+        REQUIRE(sdf->nnz() == 4);
 
         // Check domainish accessors before resize
-        soma_dataframe->open(OpenMode::read);
+        sdf->open(OpenMode::read);
 
-        ArrowTable non_empty_domain = soma_dataframe->get_non_empty_domain();
+        ArrowTable non_empty_domain = sdf->get_non_empty_domain();
         std::vector<int64_t> ned_sjid =
             ArrowAdapter::get_table_non_string_column_by_name<int64_t>(
                 non_empty_domain, "soma_joinid");
@@ -763,7 +750,7 @@ TEST_CASE_METHOD(
             ArrowAdapter::get_table_non_string_column_by_name<uint32_t>(
                 non_empty_domain, "myuint32");
 
-        ArrowTable soma_domain = soma_dataframe->get_soma_domain();
+        ArrowTable soma_domain = sdf->get_soma_domain();
         std::vector<int64_t> dom_sjid =
             ArrowAdapter::get_table_non_string_column_by_name<int64_t>(
                 soma_domain, "soma_joinid");
@@ -771,7 +758,7 @@ TEST_CASE_METHOD(
             ArrowAdapter::get_table_non_string_column_by_name<uint32_t>(
                 soma_domain, "myuint32");
 
-        ArrowTable soma_maxdomain = soma_dataframe->get_soma_maxdomain();
+        ArrowTable soma_maxdomain = sdf->get_soma_maxdomain();
         std::vector<int64_t> maxdom_sjid =
             ArrowAdapter::get_table_non_string_column_by_name<int64_t>(
                 soma_maxdomain, "soma_joinid");
@@ -795,15 +782,15 @@ TEST_CASE_METHOD(
             REQUIRE(maxdom_u32[1] > 2000000000);
         }
 
-        soma_dataframe->close();
+        sdf->close();
 
         // Check shape after write
-        soma_dataframe = open(OpenMode::read);
+        sdf = open(OpenMode::read);
         expect = dim_infos[1].dim_max + 1;
-        actual = soma_dataframe->maybe_soma_joinid_shape();
+        actual = sdf->maybe_soma_joinid_shape();
         REQUIRE(actual.has_value());
         REQUIRE(actual.value() == expect);
-        soma_dataframe->close();
+        sdf->close();
 
         // Resize
         auto new_shape = int64_t{SOMA_JOINID_RESIZE_DIM_MAX + 1};
@@ -815,60 +802,59 @@ TEST_CASE_METHOD(
             // * throw on an attempt to resize.
             REQUIRE_THROWS(write_sjid_u32_str_data_from(SOMA_JOINID_DIM_MAX));
 
-            soma_dataframe = open(OpenMode::write);
+            sdf = open(OpenMode::write);
             // Array not resizeable if it has not already been sized
-            REQUIRE_THROWS(soma_dataframe->resize_soma_joinid(new_shape));
-            soma_dataframe->close();
+            REQUIRE_THROWS(sdf->resize_soma_joinid(new_shape));
+            sdf->close();
 
         } else {
             // Expect throw on write beyond current domain before resize
             REQUIRE_THROWS(write_sjid_u32_str_data_from(SOMA_JOINID_DIM_MAX));
 
             // Check shape after write
-            soma_dataframe = open(OpenMode::read);
+            sdf = open(OpenMode::read);
             expect = dim_infos[1].dim_max + 1;
-            std::optional<int64_t> actual = soma_dataframe
-                                                ->maybe_soma_joinid_shape();
+            std::optional<int64_t> actual = sdf->maybe_soma_joinid_shape();
             REQUIRE(actual.has_value());
             REQUIRE(actual.value() == expect);
-            soma_dataframe->close();
+            sdf->close();
 
-            soma_dataframe = open(OpenMode::read);
-            REQUIRE_THROWS(soma_dataframe->resize_soma_joinid(new_shape));
-            soma_dataframe->close();
+            sdf = open(OpenMode::read);
+            REQUIRE_THROWS(sdf->resize_soma_joinid(new_shape));
+            sdf->close();
 
-            soma_dataframe = open(OpenMode::write);
-            soma_dataframe->resize_soma_joinid(new_shape);
-            soma_dataframe->close();
+            sdf = open(OpenMode::write);
+            sdf->resize_soma_joinid(new_shape);
+            sdf->close();
 
             // Check shape after resize
-            soma_dataframe = open(OpenMode::read);
+            sdf = open(OpenMode::read);
             expect = SOMA_JOINID_RESIZE_DIM_MAX + 1;
-            actual = soma_dataframe->maybe_soma_joinid_shape();
+            actual = sdf->maybe_soma_joinid_shape();
             REQUIRE(actual.has_value());
             REQUIRE(actual.value() == expect);
-            soma_dataframe->close();
+            sdf->close();
 
             // Implicitly we expect no throw
             write_sjid_u32_str_data_from(SOMA_JOINID_DIM_MAX);
         }
 
         // Check domainish accessors after resize
-        soma_dataframe->open(OpenMode::read);
+        sdf->open(OpenMode::read);
 
-        non_empty_domain = soma_dataframe->get_non_empty_domain();
+        non_empty_domain = sdf->get_non_empty_domain();
         ned_sjid = ArrowAdapter::get_table_non_string_column_by_name<int64_t>(
             non_empty_domain, "soma_joinid");
         ned_u32 = ArrowAdapter::get_table_non_string_column_by_name<uint32_t>(
             non_empty_domain, "myuint32");
 
-        soma_domain = soma_dataframe->get_soma_domain();
+        soma_domain = sdf->get_soma_domain();
         dom_sjid = ArrowAdapter::get_table_non_string_column_by_name<int64_t>(
             soma_domain, "soma_joinid");
         dom_u32 = ArrowAdapter::get_table_non_string_column_by_name<uint32_t>(
             soma_domain, "myuint32");
 
-        soma_maxdomain = soma_dataframe->get_soma_maxdomain();
+        soma_maxdomain = sdf->get_soma_maxdomain();
         maxdom_sjid = ArrowAdapter::get_table_non_string_column_by_name<
             int64_t>(soma_maxdomain, "soma_joinid");
         maxdom_u32 = ArrowAdapter::get_table_non_string_column_by_name<
@@ -901,8 +887,7 @@ TEST_CASE_METHOD(
         }
 
         // Check can_resize_soma_joinid
-        std::pair<bool, std::string> check = soma_dataframe
-                                                 ->can_resize_soma_joinid(1);
+        std::pair<bool, std::string> check = sdf->can_resize_soma_joinid(1);
         if (!use_current_domain) {
             REQUIRE(check.first == false);
             REQUIRE(
@@ -916,13 +901,12 @@ TEST_CASE_METHOD(
                 check.second ==
                 "cannot resize_soma_joinid: new soma_joinid shape 1 < existing "
                 "shape 199");
-            check = soma_dataframe->can_resize_soma_joinid(
-                SOMA_JOINID_RESIZE_DIM_MAX + 1);
+            check = sdf->can_resize_soma_joinid(SOMA_JOINID_RESIZE_DIM_MAX + 1);
             REQUIRE(check.first == true);
             REQUIRE(check.second == "");
         }
 
-        soma_dataframe->close();
+        sdf->close();
     }
 }
 
@@ -956,10 +940,9 @@ TEST_CASE_METHOD(
         create(dim_infos, attr_infos);
 
         // Check current domain
-        auto soma_dataframe = open(OpenMode::read);
+        auto sdf = open(OpenMode::read);
 
-        CurrentDomain current_domain = soma_dataframe
-                                           ->get_current_domain_for_test();
+        CurrentDomain current_domain = sdf->get_current_domain_for_test();
         if (!use_current_domain) {
             REQUIRE(current_domain.is_empty());
         } else {
@@ -989,30 +972,29 @@ TEST_CASE_METHOD(
 
         // Check shape before write
         int64_t expect = dim_infos[0].dim_max + 1;
-        std::optional<int64_t> actual = soma_dataframe
-                                            ->maybe_soma_joinid_shape();
+        std::optional<int64_t> actual = sdf->maybe_soma_joinid_shape();
         REQUIRE(actual.has_value());
         REQUIRE(actual.value() == expect);
-        soma_dataframe->close();
+        sdf->close();
 
-        REQUIRE(soma_dataframe->nnz() == 0);
+        REQUIRE(sdf->nnz() == 0);
 
         // Write
         write_sjid_u32_str_data_from(0);
 
-        REQUIRE(soma_dataframe->nnz() == 2);
+        REQUIRE(sdf->nnz() == 2);
         write_sjid_u32_str_data_from(8);
-        REQUIRE(soma_dataframe->nnz() == 4);
+        REQUIRE(sdf->nnz() == 4);
 
         // Check shape after write
-        soma_dataframe = open(OpenMode::read);
+        sdf = open(OpenMode::read);
         expect = dim_infos[0].dim_max + 1;
-        actual = soma_dataframe->maybe_soma_joinid_shape();
+        actual = sdf->maybe_soma_joinid_shape();
         REQUIRE(actual.has_value());
         REQUIRE(actual.value() == expect);
 
         // Check domainish accessors before resize
-        ArrowTable non_empty_domain = soma_dataframe->get_non_empty_domain();
+        ArrowTable non_empty_domain = sdf->get_non_empty_domain();
         std::vector<int64_t> ned_sjid =
             ArrowAdapter::get_table_non_string_column_by_name<int64_t>(
                 non_empty_domain, "soma_joinid");
@@ -1020,7 +1002,7 @@ TEST_CASE_METHOD(
             ned_str = ArrowAdapter::get_table_string_column_by_name(
                 non_empty_domain, "mystring");
 
-        ArrowTable soma_domain = soma_dataframe->get_soma_domain();
+        ArrowTable soma_domain = sdf->get_soma_domain();
         std::vector<int64_t> dom_sjid =
             ArrowAdapter::get_table_non_string_column_by_name<int64_t>(
                 soma_domain, "soma_joinid");
@@ -1028,7 +1010,7 @@ TEST_CASE_METHOD(
             dom_str = ArrowAdapter::get_table_string_column_by_name(
                 soma_domain, "mystring");
 
-        ArrowTable soma_maxdomain = soma_dataframe->get_soma_maxdomain();
+        ArrowTable soma_maxdomain = sdf->get_soma_maxdomain();
         std::vector<int64_t> maxdom_sjid =
             ArrowAdapter::get_table_non_string_column_by_name<int64_t>(
                 soma_maxdomain, "soma_joinid");
@@ -1057,7 +1039,7 @@ TEST_CASE_METHOD(
         }
         REQUIRE(maxdom_str == std::vector<std::string>({"", ""}));
 
-        soma_dataframe->close();
+        sdf->close();
 
         // Resize
         auto new_shape = int64_t{SOMA_JOINID_RESIZE_DIM_MAX + 1};
@@ -1069,60 +1051,59 @@ TEST_CASE_METHOD(
             // * throw on an attempt to resize.
             REQUIRE_THROWS(write_sjid_u32_str_data_from(SOMA_JOINID_DIM_MAX));
 
-            soma_dataframe = open(OpenMode::write);
+            sdf = open(OpenMode::write);
             // Array not resizeable if it has not already been sized
-            REQUIRE_THROWS(soma_dataframe->resize_soma_joinid(new_shape));
-            soma_dataframe->close();
+            REQUIRE_THROWS(sdf->resize_soma_joinid(new_shape));
+            sdf->close();
 
         } else {
             // Expect throw on write beyond current domain before resize
             REQUIRE_THROWS(write_sjid_u32_str_data_from(SOMA_JOINID_DIM_MAX));
 
             // Check shape after write
-            soma_dataframe = open(OpenMode::read);
+            sdf = open(OpenMode::read);
             expect = dim_infos[0].dim_max + 1;
-            std::optional<int64_t> actual = soma_dataframe
-                                                ->maybe_soma_joinid_shape();
+            std::optional<int64_t> actual = sdf->maybe_soma_joinid_shape();
             REQUIRE(actual.has_value());
             REQUIRE(actual.value() == expect);
-            soma_dataframe->close();
+            sdf->close();
 
-            soma_dataframe = open(OpenMode::read);
-            REQUIRE_THROWS(soma_dataframe->resize_soma_joinid(new_shape));
-            soma_dataframe->close();
+            sdf = open(OpenMode::read);
+            REQUIRE_THROWS(sdf->resize_soma_joinid(new_shape));
+            sdf->close();
 
-            soma_dataframe = open(OpenMode::write);
-            soma_dataframe->resize_soma_joinid(new_shape);
-            soma_dataframe->close();
+            sdf = open(OpenMode::write);
+            sdf->resize_soma_joinid(new_shape);
+            sdf->close();
 
             // Check shape after resize
-            soma_dataframe = open(OpenMode::read);
+            sdf = open(OpenMode::read);
             expect = SOMA_JOINID_RESIZE_DIM_MAX + 1;
-            actual = soma_dataframe->maybe_soma_joinid_shape();
+            actual = sdf->maybe_soma_joinid_shape();
             REQUIRE(actual.has_value());
             REQUIRE(actual.value() == expect);
-            soma_dataframe->close();
+            sdf->close();
 
             // Implicitly we expect no throw
             write_sjid_u32_str_data_from(SOMA_JOINID_DIM_MAX);
         }
 
         // Check domainish accessors after resize
-        soma_dataframe->open(OpenMode::read, TimestampRange(0, 2));
+        sdf->open(OpenMode::read, TimestampRange(0, 2));
 
-        non_empty_domain = soma_dataframe->get_non_empty_domain();
+        non_empty_domain = sdf->get_non_empty_domain();
         ned_sjid = ArrowAdapter::get_table_non_string_column_by_name<int64_t>(
             non_empty_domain, "soma_joinid");
         ned_str = ArrowAdapter::get_table_string_column_by_name(
             non_empty_domain, "mystring");
 
-        soma_domain = soma_dataframe->get_soma_domain();
+        soma_domain = sdf->get_soma_domain();
         dom_sjid = ArrowAdapter::get_table_non_string_column_by_name<int64_t>(
             soma_domain, "soma_joinid");
         dom_str = ArrowAdapter::get_table_string_column_by_name(
             soma_domain, "mystring");
 
-        soma_maxdomain = soma_dataframe->get_soma_maxdomain();
+        soma_maxdomain = sdf->get_soma_maxdomain();
         maxdom_sjid = ArrowAdapter::get_table_non_string_column_by_name<
             int64_t>(soma_maxdomain, "soma_joinid");
         maxdom_str = ArrowAdapter::get_table_string_column_by_name(
@@ -1153,8 +1134,7 @@ TEST_CASE_METHOD(
         REQUIRE(ned_str == std::vector<std::string>({"", ""}));
 
         // Check can_resize_soma_joinid
-        std::pair<bool, std::string> check = soma_dataframe
-                                                 ->can_resize_soma_joinid(1);
+        std::pair<bool, std::string> check = sdf->can_resize_soma_joinid(1);
         if (!use_current_domain) {
             REQUIRE(check.first == false);
             REQUIRE(
@@ -1168,13 +1148,12 @@ TEST_CASE_METHOD(
                 check.second ==
                 "cannot resize_soma_joinid: new soma_joinid shape 1 < existing "
                 "shape 99");
-            check = soma_dataframe->can_resize_soma_joinid(
-                SOMA_JOINID_RESIZE_DIM_MAX + 1);
+            check = sdf->can_resize_soma_joinid(SOMA_JOINID_RESIZE_DIM_MAX + 1);
             REQUIRE(check.first == true);
             REQUIRE(check.second == "");
         }
 
-        soma_dataframe->close();
+        sdf->close();
     }
 }
 
@@ -1208,10 +1187,9 @@ TEST_CASE_METHOD(
         create(dim_infos, attr_infos);
 
         // Check current domain
-        auto soma_dataframe = open(OpenMode::read);
+        auto sdf = open(OpenMode::read);
 
-        CurrentDomain current_domain = soma_dataframe
-                                           ->get_current_domain_for_test();
+        CurrentDomain current_domain = sdf->get_current_domain_for_test();
         if (!use_current_domain) {
             REQUIRE(current_domain.is_empty());
         } else {
@@ -1240,22 +1218,21 @@ TEST_CASE_METHOD(
         }
 
         // Check shape before write
-        std::optional<int64_t> actual = soma_dataframe
-                                            ->maybe_soma_joinid_shape();
+        std::optional<int64_t> actual = sdf->maybe_soma_joinid_shape();
         REQUIRE(!actual.has_value());
 
         // Check domainish accessors before resize
-        ArrowTable non_empty_domain = soma_dataframe->get_non_empty_domain();
+        ArrowTable non_empty_domain = sdf->get_non_empty_domain();
         std::vector<std::string>
             ned_str = ArrowAdapter::get_table_string_column_by_name(
                 non_empty_domain, "mystring");
 
-        ArrowTable soma_domain = soma_dataframe->get_soma_domain();
+        ArrowTable soma_domain = sdf->get_soma_domain();
         std::vector<std::string>
             dom_str = ArrowAdapter::get_table_string_column_by_name(
                 soma_domain, "mystring");
 
-        ArrowTable soma_maxdomain = soma_dataframe->get_soma_maxdomain();
+        ArrowTable soma_maxdomain = sdf->get_soma_maxdomain();
         std::vector<std::string>
             maxdom_str = ArrowAdapter::get_table_string_column_by_name(
                 soma_maxdomain, "mystring");
@@ -1275,24 +1252,24 @@ TEST_CASE_METHOD(
             REQUIRE(maxdom_str == std::vector<std::string>({"", ""}));
         }
 
-        soma_dataframe->close();
+        sdf->close();
 
-        REQUIRE(soma_dataframe->nnz() == 0);
+        REQUIRE(sdf->nnz() == 0);
 
         // Write
         write_sjid_u32_str_data_from(0);
 
-        REQUIRE(soma_dataframe->nnz() == 2);
+        REQUIRE(sdf->nnz() == 2);
         write_sjid_u32_str_data_from(8);
         // soma_joinid is not a dim here and so the second write is an overwrite
         // of the first here
-        REQUIRE(soma_dataframe->nnz() == 2);
+        REQUIRE(sdf->nnz() == 2);
 
         // Check shape after write
-        soma_dataframe = open(OpenMode::read);
-        actual = soma_dataframe->maybe_soma_joinid_shape();
+        sdf = open(OpenMode::read);
+        actual = sdf->maybe_soma_joinid_shape();
         REQUIRE(!actual.has_value());
-        soma_dataframe->close();
+        sdf->close();
 
         // Resize
         auto new_shape = int64_t{SOMA_JOINID_RESIZE_DIM_MAX + 1};
@@ -1304,49 +1281,48 @@ TEST_CASE_METHOD(
             //   a dim, so no throw
             // * throw on an attempt to resize.
 
-            soma_dataframe = open(OpenMode::write);
+            sdf = open(OpenMode::write);
             // Array not resizeable if it has not already been sized
-            REQUIRE_THROWS(soma_dataframe->resize_soma_joinid(new_shape));
-            soma_dataframe->close();
+            REQUIRE_THROWS(sdf->resize_soma_joinid(new_shape));
+            sdf->close();
 
         } else {
             // Check shape after write
-            soma_dataframe = open(OpenMode::read);
-            std::optional<int64_t> actual = soma_dataframe
-                                                ->maybe_soma_joinid_shape();
+            sdf = open(OpenMode::read);
+            std::optional<int64_t> actual = sdf->maybe_soma_joinid_shape();
             REQUIRE(!actual.has_value());
-            soma_dataframe->close();
+            sdf->close();
 
-            soma_dataframe = open(OpenMode::read);
-            REQUIRE_THROWS(soma_dataframe->resize_soma_joinid(new_shape));
-            soma_dataframe->close();
+            sdf = open(OpenMode::read);
+            REQUIRE_THROWS(sdf->resize_soma_joinid(new_shape));
+            sdf->close();
 
-            soma_dataframe = open(OpenMode::write);
-            soma_dataframe->resize_soma_joinid(new_shape);
-            soma_dataframe->close();
+            sdf = open(OpenMode::write);
+            sdf->resize_soma_joinid(new_shape);
+            sdf->close();
 
             // Check shape after resize -- noting soma_joinid is not a dim here
-            soma_dataframe = open(OpenMode::read);
-            actual = soma_dataframe->maybe_soma_joinid_shape();
+            sdf = open(OpenMode::read);
+            actual = sdf->maybe_soma_joinid_shape();
             REQUIRE(!actual.has_value());
-            soma_dataframe->close();
+            sdf->close();
 
             // Implicitly we expect no throw
             write_sjid_u32_str_data_from(SOMA_JOINID_DIM_MAX);
         }
 
         // Check domainish accessors after resize
-        soma_dataframe->open(OpenMode::read, TimestampRange(0, 2));
+        sdf->open(OpenMode::read, TimestampRange(0, 2));
 
-        non_empty_domain = soma_dataframe->get_non_empty_domain();
+        non_empty_domain = sdf->get_non_empty_domain();
         ned_str = ArrowAdapter::get_table_string_column_by_name(
             non_empty_domain, "mystring");
 
-        soma_domain = soma_dataframe->get_soma_domain();
+        soma_domain = sdf->get_soma_domain();
         dom_str = ArrowAdapter::get_table_string_column_by_name(
             soma_domain, "mystring");
 
-        soma_maxdomain = soma_dataframe->get_soma_maxdomain();
+        soma_maxdomain = sdf->get_soma_maxdomain();
         maxdom_str = ArrowAdapter::get_table_string_column_by_name(
             soma_maxdomain, "mystring");
 
@@ -1366,8 +1342,7 @@ TEST_CASE_METHOD(
         }
 
         // Check can_resize_soma_joinid
-        std::pair<bool, std::string> check = soma_dataframe
-                                                 ->can_resize_soma_joinid(0);
+        std::pair<bool, std::string> check = sdf->can_resize_soma_joinid(0);
         if (!use_current_domain) {
             REQUIRE(check.first == false);
             REQUIRE(
@@ -1380,6 +1355,6 @@ TEST_CASE_METHOD(
             REQUIRE(check.second == "");
         }
 
-        soma_dataframe->close();
+        sdf->close();
     }
 }
