@@ -1083,9 +1083,10 @@ class SOMAArray : public SOMAObject {
      * domain.
      */
     std::pair<bool, std::string> can_upgrade_shape(
-        const std::vector<int64_t>& newshape) {
+        const std::vector<int64_t>& newshape,
+        std::string function_name_for_messages) {
         return _can_set_shape_helper(
-            newshape, false, "tiledbsoma_upgrade_shape");
+            newshape, false, function_name_for_messages);
     }
 
     /**

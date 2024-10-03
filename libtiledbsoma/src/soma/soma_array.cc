@@ -1452,7 +1452,7 @@ std::pair<bool, std::string> SOMAArray::_can_set_shape_helper(
         return std::pair(
             false,
             fmt::format(
-                "cannot {}: provided shape has ndim {}, while the array has {}",
+                "{}: provided shape has ndim {}, while the array has {}",
                 function_name_for_messages,
                 arg_ndim,
                 array_ndim));

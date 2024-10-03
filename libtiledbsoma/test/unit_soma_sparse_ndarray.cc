@@ -394,21 +394,21 @@ TEST_CASE(
     std::vector<int64_t> newshape_too_big({dim_max + 10});
     std::vector<int64_t> newshape_good({40});
 
-    auto check = snda->can_upgrade_shape(newshape_wrong_dims);
+    auto check = snda->can_upgrade_shape(newshape_wrong_dims, "testing");
     REQUIRE(check.first == false);
     REQUIRE(
         check.second ==
-        "cannot tiledbsoma_upgrade_shape: provided shape has ndim 2, while the "
+        "testing: provided shape has ndim 2, while the "
         "array has 1");
 
-    check = snda->can_upgrade_shape(newshape_too_big);
+    check = snda->can_upgrade_shape(newshape_too_big, "testing");
     REQUIRE(check.first == false);
     REQUIRE(
         check.second ==
-        "cannot tiledbsoma_upgrade_shape for soma_dim_0: new 1009 < maxshape "
+        "testing for soma_dim_0: new 1009 < maxshape "
         "1000");
 
-    check = snda->can_upgrade_shape(newshape_good);
+    check = snda->can_upgrade_shape(newshape_good, "testing");
     REQUIRE(check.first == true);
     REQUIRE(check.second == "");
 }
