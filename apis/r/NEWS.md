@@ -2,6 +2,7 @@
 
 ## Changes
 
+* Push `schema` accessor down to `libtiledbsoma` [#3079](https://github.com/single-cell-data/TileDB-SOMA/pull/3079)
 * Push `attrnames` down to C++ [#3121](https://github.com/single-cell-data/TileDB-SOMA/pull/3121)
 * Use `libtiledbsoma` for R schema evolution [#3100](https://github.com/single-cell-data/TileDB-SOMA/pull/3100)
 * Implement missing `domain` argument to `SOMADataFrame` `create` [#3032](https://github.com/single-cell-data/TileDB-SOMA/pull/3032)

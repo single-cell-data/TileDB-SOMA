@@ -218,6 +218,10 @@ c_attrnames <- function(uri, ctxxp) {
     .Call(`_tiledbsoma_c_attrnames`, uri, ctxxp)
 }
 
+c_schema <- function(uri, ctxxp) {
+    .Call(`_tiledbsoma_c_schema`, uri, ctxxp)
+}
+
 resize <- function(uri, new_shape, ctxxp) {
     invisible(.Call(`_tiledbsoma_resize`, uri, new_shape, ctxxp))
 }

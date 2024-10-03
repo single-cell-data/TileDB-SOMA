@@ -245,6 +245,11 @@ SOMADataFrame <- R6::R6Class(
           is.data.frame(values) || is_arrow_table(values) || is_arrow_record_batch(values)
       )
 
+      # Leave state unmodified
+      # TODO: this issue will automatically go away on https://github.com/single-cell-data/TileDB-SOMA/issues/3059
+      omode <- self$mode()
+      on.exit(self$reopen(mode = omode))
+
       if (is.data.frame(values)) {
         if (!is.null(row_index_name)) {
           stopifnot(

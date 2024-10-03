@@ -132,7 +132,8 @@ TileDBArray <- R6::R6Class(
     #' @description Retrieve the array schema as an Arrow schema (lifecycle: maturing)
     #' @return A [`arrow::schema`] object
     schema = function() {
-      arrow_schema_from_tiledb_schema(tiledb::schema(self$object))
+      arrow::as_schema(
+        c_schema(self$uri, private$.soma_context));
     },
 
     #' @description Retrieve the array schema as TileDB schema (lifecycle: maturing)
