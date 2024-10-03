@@ -128,7 +128,7 @@ SOMADenseNDArray <- R6::R6Class(
         "'coords' must be a list of integer vectors" =
           is.list(coords) && all(vapply_lgl(coords, is.integer)),
         "length of 'coords' must match number of dimensions" =
-          length(coords) == length(self$dimensions())
+          length(coords) == self$ndim()
       )
 
       ## the 'soma_data' data type may not have been cached, and if so we need to fetch it

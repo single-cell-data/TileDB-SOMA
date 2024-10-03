@@ -617,33 +617,47 @@ test_that("SOMADataFrame can be updated", {
   uri <- withr::local_tempdir("soma-dataframe-update")
   if (dir.exists(uri)) unlink(uri, recursive=TRUE)
   sdf <- create_and_populate_soma_dataframe(uri, nrows = 10L)
+  sdf$close();
 
   # Retrieve the table from disk
-  tbl0 <- SOMADataFrameOpen(uri, "READ")$read()$concat()
+  sdf <- SOMADataFrameOpen(uri, "READ")
+  tbl0 <- sdf$read()$concat()
+  sdf$close()
 
   # Remove a column and update
   tbl0$float_column <- NULL
-  sdf <- SOMADataFrameOpen(uri, "WRITE")$update(tbl0)
+  sdf <- SOMADataFrameOpen(uri, "WRITE")
+  sdf$update(tbl0)
+  sdf$close()
 
   # Verify attribute was removed on disk
-  tbl1 <- SOMADataFrameOpen(uri, "READ")$read()$concat()
+  sdf <- SOMADataFrameOpen(uri, "READ")
+  tbl1 <- sdf$read()$concat()
   expect_true(tbl1$Equals(tbl0))
+  sdf$close()
 
   # # Add a new column and update
   tbl0$float_column <- sample(c(TRUE, FALSE), nrow(tbl0), replace = TRUE)
-  sdf <- SOMADataFrameOpen(uri, mode = "WRITE")$update(tbl0)
+  sdf <- SOMADataFrameOpen(uri, "WRITE")
+  sdf$update(tbl0)
+  sdf$close()
 
   # Verify attribute was added on disk
-  tbl1 <- SOMADataFrameOpen(uri, mode = "READ")$read()$concat()
+  sdf <- SOMADataFrameOpen(uri, "READ")
+  tbl1 <- sdf$read()$concat()
   expect_true(tbl1$Equals(tbl0))
+  sdf$close()
 
   # Add a new enum and update
   tbl0$frobo <- factor(sample(letters[1:3], nrow(tbl0), replace = TRUE))
-  expect_no_condition(sdf <- SOMADataFrameOpen(uri, mode = "WRITE")$update(tbl0))
+  sdf <- SOMADataFrameOpen(uri, "WRITE")
+  expect_no_condition(sdf$update(tbl0))
+  sdf$close()
 
   # Verify enum was added on disk
+  sdf <- SOMADataFrameOpen(uri, "READ")
   expect_s3_class(
-    tbl1 <- SOMADataFrameOpen(uri, mode = "READ")$read()$concat(),
+    tbl1 <- sdf$read()$concat(),
     "Table"
   )
   expect_identical(as.data.frame(tbl1), as.data.frame(tbl0))
@@ -652,6 +666,7 @@ test_that("SOMADataFrame can be updated", {
     "factor",
     exact = TRUE
   )
+  sdf$close()
 
   # Add a new enum where levels aren't in appearance- or alphabetical-order
   tbl0 <- tbl1
@@ -663,11 +678,14 @@ test_that("SOMADataFrame can be updated", {
     levels(tbl0$GetColumnByName("rlvl")$as_vector()),
     c("green", "red", "blue")
   )
-  expect_no_condition(sdf <- SOMADataFrameOpen(uri, mode = "WRITE")$update(tbl0))
+  sdf <- SOMADataFrameOpen(uri, "WRITE")
+  expect_no_condition(sdf$update(tbl0))
+  sdf$close()
 
   # Verify unordered enum was added on disk
+  sdf <- SOMADataFrameOpen(uri, "READ")
   expect_s3_class(
-    tbl1 <- SOMADataFrameOpen(uri, mode = "READ")$read()$concat(),
+    tbl1 <- sdf$read()$concat(),
     "Table"
   )
   expect_identical(as.data.frame(tbl1), as.data.frame(tbl0))
@@ -684,26 +702,31 @@ test_that("SOMADataFrame can be updated", {
 
   # Verify queryability
   expect_s3_class(
-    tblq <- SOMADataFrameOpen(uri, mode = "READ")$read(value_filter = 'rlvl == "green"')$concat(),
+    tblq <- sdf$read(value_filter = 'rlvl == "green"')$concat(),
     "Table"
   )
   expect_length(tblq[["rlvl"]], 3)
   expect_s3_class(
-    tblq <- SOMADataFrameOpen(uri, mode = "READ")$read(value_filter = 'rlvl %in% c("blue", "green")')$concat(),
+    tblq <- sdf$read(value_filter = 'rlvl %in% c("blue", "green")')$concat(),
     "Table"
   )
   expect_length(tblq[["rlvl"]], 6)
+  sdf$close()
 
   # Add a new ordered and update
   tbl0 <- tbl1
   tbl0$ord <- ordered(sample(c("g1", "g2", "g3"), nrow(tbl0), replace = TRUE))
-  expect_no_condition(sdf <- SOMADataFrameOpen(uri, mode = "WRITE")$update(tbl0))
+  sdf <- SOMADataFrameOpen(uri, "WRITE")
+  expect_no_condition(sdf$update(tbl0))
+  sdf$close()
 
   # Verify ordered was added on disk
+  sdf <- SOMADataFrameOpen(uri, "READ")
   expect_s3_class(
-    tbl1 <- SOMADataFrameOpen(uri, mode = "READ")$read()$concat(),
+    tbl1 <- sdf$read()$concat(),
     "Table"
   )
+  sdf$close()
 
   # Read ordered enums
   expect_identical(as.data.frame(tbl1), as.data.frame(tbl0))
@@ -715,16 +738,18 @@ test_that("SOMADataFrame can be updated", {
 
   # Error if attempting to drop an array dimension
   tbl0$int_column <- NULL # drop the indexed dimension
+  sdf <- SOMADataFrameOpen(uri, "WRITE")
   expect_error(
-    SOMADataFrameOpen(uri, mode = "WRITE")$update(tbl0),
+    sdf$update(tbl0),
     "The following indexed field does not exist"
   )
   tbl0 <- tbl1
 
+
   # Error on incompatible schema updates
   tbl0$string_column <- tbl0$string_column$cast(target_type = arrow::int32()) # string to int
   expect_error(
-    SOMADataFrameOpen(uri, mode = "WRITE")$update(tbl0),
+    sdf$update(tbl0),
     "Schemas are incompatible"
   )
   tbl0 <- tbl1
@@ -732,9 +757,11 @@ test_that("SOMADataFrame can be updated", {
   # Error if the number of rows changes
   tbl0 <- tbl0$Slice(offset = 1, length = tbl0$num_rows - 1)
   expect_error(
-    SOMADataFrameOpen(uri, mode = "WRITE")$update(tbl0),
+    sdf$update(tbl0),
     "Number of rows in 'values' must match number of rows in array"
   )
+
+  sdf$close()
 })
 
 test_that("SOMADataFrame can be updated from a data frame", {
