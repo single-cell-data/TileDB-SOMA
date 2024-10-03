@@ -169,7 +169,7 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
             try:
                 image_type.append(axis_type_map[val])
             except KeyError as ke:
-                raise ValueError("Invalid axis type name '{val}'.") from ke
+                raise ValueError(f"Invalid axis type name '{val}'.") from ke
         schema = MultiscaleImageSchema(
             ImageProperties(
                 name="reference_level",
@@ -519,7 +519,7 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
                 if val.name == level:
                     level_props = val
                 else:
-                    raise KeyError("No level with name '{level}'")
+                    raise KeyError(f"No level with name '{level}'")
         else:
             level_props = self._levels[level]
         ref_level_props = self._schema.reference_level_properties
@@ -555,7 +555,7 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
                 if val.name == level:
                     level_props = val
                 else:
-                    raise KeyError("No level with name '{level}'")
+                    raise KeyError(f"No level with name '{level}'")
         else:
             level_props = self._levels[level]
         ref_level_props = self._schema.reference_level_properties
