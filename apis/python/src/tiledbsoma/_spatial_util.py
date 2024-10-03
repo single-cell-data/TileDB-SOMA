@@ -113,46 +113,62 @@ def transform_region(
 
 
 def process_image_region(
-    region: options.SpatialRegion,
+    region: Optional[options.SpatialRegion],
     transform: somacore.CoordinateTransform,
     channel_coords: options.DenseCoord,
     image_type: str,
-) -> Tuple[options.DenseNDCoords, options.SpatialRegion, somacore.CoordinateTransform]:
-    # Get the transformed region the user is selecting in the data space.
-    # Note: transform region verifies only 2D data. This function is hard-coded to
-    # make the same assumption.
-    data_region = transform_region(region, transform)
+) -> Tuple[
+    options.DenseNDCoords, Optional[options.SpatialRegion], somacore.CoordinateTransform
+]:
 
-    # Convert the region to a bounding box. Round values of bounding box to integer
-    # values. Include any partially intersected pixels.
-    (x_min, y_min, x_max, y_max) = shapely.bounds(data_region)
-    x_min = max(0, int(np.floor(x_min)))
-    y_min = max(0, int(np.floor(y_min)))
-    x_max = int(np.ceil(x_max))
-    y_max = int(np.ceil(y_max))
+    if region is None:
+        # Select the full region.
+        data_region: Optional[options.SpatialRegion] = None
+        x_coords: options.DenseCoord = None
+        y_coords: options.DenseCoord = None
+    else:
+        # Get the transformed region the user is selecting in the data space.
+        # Note: transform region verifies only 2D data. This function is hard-coded to
+        # make the same assumption.
+        data_region = transform_region(region, transform)
+
+        # Convert the region to a bounding box. Round values of bounding box to integer
+        # values. Include any partially intersected pixels.
+        (x_min, y_min, x_max, y_max) = shapely.bounds(data_region)
+        x_min = max(0, int(np.floor(x_min)))
+        y_min = max(0, int(np.floor(y_min)))
+        x_max = int(np.ceil(x_max))
+        y_max = int(np.ceil(y_max))
+        x_coords = slice(x_min, x_max)
+        y_coords = slice(y_min, y_max)
+
+        # Translate the transform if the region does not start at the origin.
+        if x_min != 0 or y_min != 0:
+            translate = somacore.AffineTransform(
+                transform.output_axes,
+                transform.output_axes,
+                np.array([[1, 0, -x_min], [0, 1, -y_min], [0, 0, 1]]),
+            )
+
+            transform = translate @ transform
 
     # Get the inverse translation from the data space to the original requested region.
-    if x_min != 0 or y_min != 0:
-        translate = somacore.AffineTransform(
-            transform.output_axes,
-            transform.output_axes,
-            np.array([[1, 0, -x_min], [0, 1, -y_min], [0, 0, 1]]),
-        )
-        transform = translate @ transform
     inv_transform = transform.inverse_transform()
 
+    # Get the dense coordinates for querying the array storing the image.
     coords: options.DenseNDCoords = []
     for axis in image_type:
         if axis == "C":
             coords.append(channel_coords)  # type: ignore[attr-defined]
         if axis == "X":
-            coords.append(slice(x_min, x_max))  # type: ignore[attr-defined]
+            coords.append(x_coords)  # type: ignore[attr-defined]
         if axis == "Y":
-            coords.append(slice(y_min, y_max))  # type: ignore[attr-defined]
+            coords.append(y_coords)  # type: ignore[attr-defined]
         if axis == "Z":
             raise NotImplementedError(
                 "Spatial queries are currently only supported for 2D coordinates."
             )
+
     return (coords, data_region, inv_transform)
 
 
