@@ -8,8 +8,10 @@
 This module contains methods to export SOMA artifacts to other formats.
 Currently only ``.h5ad`` (`AnnData <https://anndata.readthedocs.io/>`_) is supported.
 """
+from __future__ import annotations
 
 import json
+from concurrent.futures import Future
 from typing import (
     Any,
     Dict,
@@ -23,6 +25,7 @@ from typing import (
 import anndata as ad
 import numpy as np
 import pandas as pd
+import scipy.sparse as sp
 
 from .. import (
     Collection,
@@ -252,20 +255,23 @@ def to_anndata(
             f"requested measurement name {measurement_name} not found in input: {experiment.ms.keys()}"
         )
     measurement = experiment.ms[measurement_name]
+    tp = experiment.context.threadpool
 
     # How to choose index name for AnnData obs and var dataframes:
     # * If the desired names are passed in, use them.
     # * Else if the names used at ingest time are available, use them.
     # * Else use the default/fallback name.
 
-    obs_df = _read_dataframe(experiment.obs, obs_id_name, "obs_id")
-    var_df = _read_dataframe(measurement.var, var_id_name, "var_id")
+    obs_df, var_df = tp.map(
+        _read_dataframe,
+        (experiment.obs, measurement.var),
+        (obs_id_name, var_id_name),
+        ("obs_id", "var_id"),
+    )
 
     nobs = len(obs_df.index)
     nvar = len(var_df.index)
 
-    anndata_X = None
-    anndata_X_dtype = None  # some datasets have no X
     anndata_layers = {}
 
     # Let them use
@@ -281,9 +287,11 @@ def to_anndata(
             "If X_layer_name is None, extra_X_layer_names must not be provided"
         )
 
+    anndata_X_future: Future[Matrix] | None = None
     if X_layer_name is not None:
-        anndata_X = _extract_X_key(measurement, X_layer_name, nobs, nvar)
-        anndata_X_dtype = anndata_X.dtype
+        anndata_X_future = tp.submit(
+            _extract_X_key, measurement, X_layer_name, nobs, nvar
+        )
 
     if extra_X_layer_names is not None:
         for extra_X_layer_name in extra_X_layer_names:
@@ -300,43 +308,66 @@ def to_anndata(
     if "obsm" in measurement:
         obsm_width_hints = obsm_varm_width_hints.get("obsm", {})
         for key in measurement.obsm.keys():
-            obsm[key] = _extract_obsm_or_varm(
-                measurement.obsm[key], "obsm", key, nobs, obsm_width_hints
+            obsm[key] = tp.submit(
+                _extract_obsm_or_varm,
+                measurement.obsm[key],
+                "obsm",
+                key,
+                nobs,
+                obsm_width_hints,
             )
 
     varm = {}
     if "varm" in measurement:
         varm_width_hints = obsm_varm_width_hints.get("obsm", {})
         for key in measurement.varm.keys():
-            varm[key] = _extract_obsm_or_varm(
-                measurement.varm[key], "varm", key, nvar, varm_width_hints
+            varm[key] = tp.submit(
+                _extract_obsm_or_varm,
+                measurement.varm[key],
+                "varm",
+                key,
+                nvar,
+                varm_width_hints,
             )
 
     obsp = {}
     if "obsp" in measurement:
-        for key in measurement.obsp.keys():
+
+        def load_obsp(measurement: Measurement, key: str, nobs: int) -> sp.csr_matrix:
             matrix = measurement.obsp[key].read().tables().concat().to_pandas()
-            obsp[key] = conversions.csr_from_tiledb_df(matrix, nobs, nobs)
+            return conversions.csr_from_tiledb_df(matrix, nobs, nobs)
+
+        for key in measurement.obsp.keys():
+            obsp[key] = tp.submit(load_obsp, measurement, key, nobs)
 
     varp = {}
     if "varp" in measurement:
-        for key in measurement.varp.keys():
-            matrix = measurement.varp[key].read().tables().concat().to_pandas()
-            varp[key] = conversions.csr_from_tiledb_df(matrix, nvar, nvar)
 
-    uns: UnsMapping = {}
+        def load_varp(measurement: Measurement, key: str, nvar: int) -> sp.csr_matrix:
+            matrix = measurement.varp[key].read().tables().concat().to_pandas()
+            return conversions.csr_from_tiledb_df(matrix, nvar, nvar)
+
+        for key in measurement.varp.keys():
+            varp[key] = tp.submit(load_varp, measurement, key, nvar)
+
+    uns_future: Future[UnsMapping] | None = None
     if "uns" in measurement:
         s = _util.get_start_stamp()
         uns_coll = cast(Collection[Any], measurement["uns"])
         logging.log_io(None, f"Start  writing uns for {uns_coll.uri}")
-        uns = _extract_uns(
-            uns_coll,
-            uns_keys=uns_keys,
-        )
+        uns_future = tp.submit(_extract_uns, uns_coll, uns_keys=uns_keys)
         logging.log_io(
             None,
             _util.format_elapsed(s, f"Finish writing uns for {uns_coll.uri}"),
         )
+
+    # Resolve all futures
+    obsm = {k: v.result() if isinstance(v, Future) else v for k, v in obsm.items()}
+    varm = {k: v.result() if isinstance(v, Future) else v for k, v in varm.items()}
+    obsp = {k: v.result() if isinstance(v, Future) else v for k, v in obsp.items()}
+    varp = {k: v.result() if isinstance(v, Future) else v for k, v in varp.items()}
+    anndata_X = anndata_X_future.result() if anndata_X_future is not None else None
+    uns: UnsMapping = uns_future.result() if uns_future is not None else {}
 
     anndata = ad.AnnData(
         X=anndata_X,
@@ -348,7 +379,7 @@ def to_anndata(
         obsp=obsp,
         varp=varp,
         uns=uns,
-        dtype=anndata_X_dtype,
+        dtype=anndata_X.dtype if anndata_X is not None else None,
     )
 
     logging.log_io(None, _util.format_elapsed(s, "FINISH Experiment.to_anndata"))
