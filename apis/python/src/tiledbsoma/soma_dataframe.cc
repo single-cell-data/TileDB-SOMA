@@ -158,10 +158,10 @@ void load_soma_dataframe(py::module& m) {
             "tiledbsoma_has_upgraded_domain", &SOMAArray::has_current_domain)
 
         .def(
-            "resize_soma_joinid",
+            "resize_soma_joinid_shape",
             [](SOMADataFrame& sdf, int64_t newshape) {
                 try {
-                    sdf.resize_soma_joinid(newshape);
+                    sdf.resize_soma_joinid_shape(newshape);
                 } catch (const std::exception& e) {
                     throw TileDBSOMAError(e.what());
                 }

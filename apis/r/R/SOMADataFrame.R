@@ -416,13 +416,13 @@ SOMADataFrame <- R6::R6Class(
     #' @param new_shape An integer, greater than or equal to 1 + the
     #' `soma_joinid` domain slot.
     #' @return No return value
-    resize_soma_joinid = function(new_shape) {
+    resize_soma_joinid_shape = function(new_shape) {
 
       stopifnot("'new_shape' must be an integer" = rlang::is_integerish(new_shape, n = 1) ||
         (bit64::is.integer64(new_shape) && length(new_shape) == 1)
       )
       # Checking slotwise new shape >= old shape, and <= max_shape, is already done in libtiledbsoma
-      invisible(resize_soma_joinid(self$uri, new_shape, private$.soma_context))
+      invisible(resize_soma_joinid_shape(self$uri, new_shape, private$.soma_context))
     }
 
   ),

@@ -463,7 +463,7 @@ class SOMAArrayWrapper(Wrapper[_ArrType]):
         """Not implemented for DataFrame."""
         raise NotImplementedError
 
-    def resize_soma_joinid(self, newshape: int) -> None:
+    def resize_soma_joinid_shape(self, newshape: int) -> None:
         """Only implemented for DataFrame."""
         raise NotImplementedError
 
@@ -513,7 +513,7 @@ class DataFrameWrapper(SOMAArrayWrapper[clib.SOMADataFrame]):
         """
         return cast(bool, self._handle.tiledbsoma_has_upgraded_domain)
 
-    def resize_soma_joinid(self, newshape: int) -> None:
+    def resize_soma_joinid_shape(self, newshape: int) -> None:
         """Increases the shape of the dataframe on the ``soma_joinid`` index
         column, if it indeed is an index column, leaving all other index columns
         as-is. If the ``soma_joinid`` is not an index column, no change is made.
@@ -523,7 +523,7 @@ class DataFrameWrapper(SOMAArrayWrapper[clib.SOMADataFrame]):
         domain: in that case please call ``tiledbsoma_upgrade_domain`` (WIP for
         1.15).
         """
-        self._handle.resize_soma_joinid(newshape)
+        self._handle.resize_soma_joinid_shape(newshape)
 
 
 class PointCloudDataFrameWrapper(SOMAArrayWrapper[clib.SOMAPointCloudDataFrame]):

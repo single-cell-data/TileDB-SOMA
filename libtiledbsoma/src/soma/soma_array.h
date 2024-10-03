@@ -1129,7 +1129,7 @@ class SOMAArray : public SOMAObject {
      * @return Throws if the requested shape exceeds the array's create-time
      * maxshape. Throws if the array does not have current-domain support.
      */
-    void resize_soma_joinid(int64_t newshape);
+    void resize_soma_joinid_shape(int64_t newshape);
 
    protected:
     // These two are for use nominally by SOMADataFrame. This could be moved in

@@ -472,7 +472,7 @@ TEST_CASE_METHOD(
     sdf->close();
 
     sdf = open(OpenMode::write);
-    sdf->resize_soma_joinid(int64_t{new_max});
+    sdf->resize_soma_joinid_shape(int64_t{new_max});
     sdf->close();
 
     sdf = open(OpenMode::write);
@@ -591,7 +591,7 @@ TEST_CASE_METHOD(
 
             sdf = open(OpenMode::write);
             // Array not resizeable if it has not already been sized
-            REQUIRE_THROWS(sdf->resize_soma_joinid(new_shape));
+            REQUIRE_THROWS(sdf->resize_soma_joinid_shape(new_shape));
             sdf->close();
 
         } else {
@@ -608,11 +608,11 @@ TEST_CASE_METHOD(
             sdf->close();
 
             sdf = open(OpenMode::read);
-            REQUIRE_THROWS(sdf->resize_soma_joinid(new_shape));
+            REQUIRE_THROWS(sdf->resize_soma_joinid_shape(new_shape));
             sdf->close();
 
             sdf = open(OpenMode::write);
-            sdf->resize_soma_joinid(new_shape);
+            sdf->resize_soma_joinid_shape(new_shape);
             sdf->close();
 
             // Check shape after resize
@@ -668,7 +668,8 @@ TEST_CASE_METHOD(
             REQUIRE(check.first == false);
             REQUIRE(
                 check.second ==
-                "cannot resize_soma_joinid: new soma_joinid shape 1 < existing "
+                "cannot resize_soma_joinid_shape: new soma_joinid shape 1 < "
+                "existing "
                 "shape 199");
             check = sdf->can_resize_soma_joinid(SOMA_JOINID_RESIZE_DIM_MAX + 1);
             REQUIRE(check.first == true);
@@ -804,7 +805,7 @@ TEST_CASE_METHOD(
 
             sdf = open(OpenMode::write);
             // Array not resizeable if it has not already been sized
-            REQUIRE_THROWS(sdf->resize_soma_joinid(new_shape));
+            REQUIRE_THROWS(sdf->resize_soma_joinid_shape(new_shape));
             sdf->close();
 
         } else {
@@ -820,11 +821,11 @@ TEST_CASE_METHOD(
             sdf->close();
 
             sdf = open(OpenMode::read);
-            REQUIRE_THROWS(sdf->resize_soma_joinid(new_shape));
+            REQUIRE_THROWS(sdf->resize_soma_joinid_shape(new_shape));
             sdf->close();
 
             sdf = open(OpenMode::write);
-            sdf->resize_soma_joinid(new_shape);
+            sdf->resize_soma_joinid_shape(new_shape);
             sdf->close();
 
             // Check shape after resize
@@ -899,7 +900,8 @@ TEST_CASE_METHOD(
             REQUIRE(check.first == false);
             REQUIRE(
                 check.second ==
-                "cannot resize_soma_joinid: new soma_joinid shape 1 < existing "
+                "cannot resize_soma_joinid_shape: new soma_joinid shape 1 < "
+                "existing "
                 "shape 199");
             check = sdf->can_resize_soma_joinid(SOMA_JOINID_RESIZE_DIM_MAX + 1);
             REQUIRE(check.first == true);
@@ -1053,7 +1055,7 @@ TEST_CASE_METHOD(
 
             sdf = open(OpenMode::write);
             // Array not resizeable if it has not already been sized
-            REQUIRE_THROWS(sdf->resize_soma_joinid(new_shape));
+            REQUIRE_THROWS(sdf->resize_soma_joinid_shape(new_shape));
             sdf->close();
 
         } else {
@@ -1069,11 +1071,11 @@ TEST_CASE_METHOD(
             sdf->close();
 
             sdf = open(OpenMode::read);
-            REQUIRE_THROWS(sdf->resize_soma_joinid(new_shape));
+            REQUIRE_THROWS(sdf->resize_soma_joinid_shape(new_shape));
             sdf->close();
 
             sdf = open(OpenMode::write);
-            sdf->resize_soma_joinid(new_shape);
+            sdf->resize_soma_joinid_shape(new_shape);
             sdf->close();
 
             // Check shape after resize
@@ -1146,7 +1148,8 @@ TEST_CASE_METHOD(
             REQUIRE(check.first == false);
             REQUIRE(
                 check.second ==
-                "cannot resize_soma_joinid: new soma_joinid shape 1 < existing "
+                "cannot resize_soma_joinid_shape: new soma_joinid shape 1 < "
+                "existing "
                 "shape 99");
             check = sdf->can_resize_soma_joinid(SOMA_JOINID_RESIZE_DIM_MAX + 1);
             REQUIRE(check.first == true);
@@ -1283,7 +1286,7 @@ TEST_CASE_METHOD(
 
             sdf = open(OpenMode::write);
             // Array not resizeable if it has not already been sized
-            REQUIRE_THROWS(sdf->resize_soma_joinid(new_shape));
+            REQUIRE_THROWS(sdf->resize_soma_joinid_shape(new_shape));
             sdf->close();
 
         } else {
@@ -1294,11 +1297,11 @@ TEST_CASE_METHOD(
             sdf->close();
 
             sdf = open(OpenMode::read);
-            REQUIRE_THROWS(sdf->resize_soma_joinid(new_shape));
+            REQUIRE_THROWS(sdf->resize_soma_joinid_shape(new_shape));
             sdf->close();
 
             sdf = open(OpenMode::write);
-            sdf->resize_soma_joinid(new_shape);
+            sdf->resize_soma_joinid_shape(new_shape);
             sdf->close();
 
             // Check shape after resize -- noting soma_joinid is not a dim here
