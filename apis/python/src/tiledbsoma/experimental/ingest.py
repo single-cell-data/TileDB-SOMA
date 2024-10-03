@@ -13,13 +13,11 @@ Do NOT merge into main.
 import json
 import os
 import warnings
-from contextlib import contextmanager
 from pathlib import Path
 from typing import (
     TYPE_CHECKING,
     Any,
     Dict,
-    Generator,
     List,
     Optional,
     Sequence,
@@ -61,6 +59,7 @@ from .. import (
     logging,
 )
 from .._arrow_types import df_to_arrow
+from .._constants import SPATIAL_DISCLAIMER
 from .._exception import (
     AlreadyExistsError,
     NotCreateableError,
@@ -298,7 +297,7 @@ class VisiumPaths:
         spatial_dir = Path(spatial_dir)
 
         major_version = version[0] if isinstance(version, tuple) else version
-        if major_version not in {None, 1, 2}:
+        if major_version != 2:
             warnings.warn(
                 f"Support for SpaceRange version {version} has not been tests."
             )
@@ -311,7 +310,7 @@ class VisiumPaths:
                 ]
             else:
                 possible_file_names = [
-                    "tissue_postiions.csv",
+                    "tissue_positions.csv",
                     "tissue_positions_list.csv",
                 ]
             for possible in possible_file_names:
@@ -425,7 +424,10 @@ def from_visium(
     ) as scale_factors_json:
         scale_factors = json.load(scale_factors_json)
 
-    adata = scanpy.read_10x_h5(input_paths.gene_expression)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        warnings.simplefilter("ignore", category=FutureWarning)
+        adata = scanpy.read_10x_h5(input_paths.gene_expression)
 
     return _write_visium_data_to_experiment_uri(
         experiment_uri=experiment_uri,
@@ -481,6 +483,7 @@ def _write_visium_data_to_experiment_uri(
     write_obs_spatial_presence: bool = False,
     write_var_spatial_presence: bool = False,
 ) -> str:
+    warnings.warn(SPATIAL_DISCLAIMER, stacklevel=2)
     uri = from_anndata(
         experiment_uri,
         adata,
@@ -546,7 +549,7 @@ def _write_visium_data_to_experiment_uri(
         ) as spatial:
             _maybe_set(exp, "spatial", spatial, use_relative_uri=use_relative_uri)
             scene_uri = _util.uri_joinpath(spatial_uri, scene_name)
-            with _create_or_open_collection(Scene, scene_uri, **ingest_ctx) as scene:
+            with _create_or_open_scene(scene_uri, **ingest_ctx) as scene:
                 _maybe_set(
                     spatial, scene_name, scene, use_relative_uri=use_relative_uri
                 )
@@ -751,12 +754,14 @@ def _write_visium_spots(
 
     arrow_table = df_to_arrow(df)
 
-    soma_point_cloud = PointCloudDataFrame.create(
-        df_uri,
-        schema=arrow_table.schema,
-        platform_config=platform_config,
-        context=context,
-    )
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        soma_point_cloud = PointCloudDataFrame.create(
+            df_uri,
+            schema=arrow_table.schema,
+            platform_config=platform_config,
+            context=context,
+        )
     # TODO: Consider moving the following to properties in the PointCloud class
     if additional_metadata is None:
         additional_metadata = {
@@ -782,7 +787,27 @@ def _write_visium_spots(
     return soma_point_cloud
 
 
-@contextmanager
+def _create_or_open_scene(
+    uri: str,
+    *,
+    ingestion_params: IngestionParams,
+    context: Optional["SOMATileDBContext"],
+    additional_metadata: "AdditionalMetadata" = None,
+) -> Scene:
+    try:
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            scene = Scene.create(uri, context=context)
+    except (AlreadyExistsError, NotCreateableError):
+        # It already exists. Are we resuming?
+        if ingestion_params.error_if_already_exists:
+            raise SOMAError(f"{uri} already exists")
+        scene = Scene.open(uri, "w", context=context)
+
+    add_metadata(scene, additional_metadata)
+    return scene
+
+
 def _create_visium_tissue_images(
     uri: str,
     image_paths: List[Tuple[str, Path, Optional[float]]],
@@ -792,7 +817,7 @@ def _create_visium_tissue_images(
     context: Optional["SOMATileDBContext"] = None,
     ingestion_params: IngestionParams,
     use_relative_uri: Optional[bool] = None,
-) -> Generator[MultiscaleImage, None, None]:
+) -> MultiscaleImage:
 
     # Open the first image to get the base size.
     with Image.open(image_paths[0][1]) as im:
@@ -801,14 +826,16 @@ def _create_visium_tissue_images(
         im_data = pa.Tensor.from_numpy(im_data_numpy)
 
     # Create the multiscale image.
-    image_pyramid = MultiscaleImage.create(
-        uri,
-        type=pa.uint8(),
-        reference_level_shape=ref_shape,
-        axis_names=("y", "x", "c"),
-        axis_types=("height", "width", "channel"),
-        context=context,
-    )
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        image_pyramid = MultiscaleImage.create(
+            uri,
+            type=pa.uint8(),
+            reference_level_shape=ref_shape,
+            axis_names=("y", "x", "c"),
+            axis_types=("height", "width", "channel"),
+            context=context,
+        )
 
     # Add additional metadata.
     add_metadata(image_pyramid, additional_metadata)
@@ -834,7 +861,4 @@ def _create_visium_tissue_images(
         )
         im_array.close()
 
-    try:
-        yield image_pyramid
-    finally:
-        image_pyramid.close()
+    return image_pyramid
