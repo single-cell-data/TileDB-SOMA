@@ -80,11 +80,11 @@ SOMADenseNDArray <- R6::R6Class(
     ) {
       private$check_open_for_read()
 
-      dims <- self$dimensions()
-      attr <- self$attributes()
+      ndim <- self$ndim()
+      attrnames <- self$attrnames()
 
-      stopifnot("Array must have two dimensions" = length(dims) == 2,
-                "Array must contain column 'soma_data'" = all.equal("soma_data", names(attr)))
+      stopifnot("Array must have two dimensions" = ndim == 2,
+                "Array must contain column 'soma_data'" = all.equal("soma_data", attrnames))
 
       if (is.null(coords)) {
         ned <- self$non_empty_domain()
