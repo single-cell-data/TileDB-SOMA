@@ -214,6 +214,10 @@ c_dimnames <- function(uri, ctxxp) {
     .Call(`_tiledbsoma_c_dimnames`, uri, ctxxp)
 }
 
+c_attrnames <- function(uri, ctxxp) {
+    .Call(`_tiledbsoma_c_attrnames`, uri, ctxxp)
+}
+
 resize <- function(uri, new_shape, ctxxp) {
     invisible(.Call(`_tiledbsoma_resize`, uri, new_shape, ctxxp))
 }
