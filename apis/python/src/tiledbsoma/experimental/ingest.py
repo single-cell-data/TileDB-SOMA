@@ -235,11 +235,11 @@ class VisiumPaths:
         """Create ingestion files from Space Ranger output directory.
 
         This method attempts to find the required Visium assets from an output
-        directory from SpaceRanger. The path for all files can be directly
+        directory from Space Ranger. The path for all files can be directly
         specified instead.
 
-        The full resolution image is an input file to SpaceRanger. In order to
-        include it, the `fullres_image` argument must be specified.
+        The full resolution image is an input file to Space Ranger. In order to
+        include it, the ``fullres_image`` argument must be specified.
 
         Args:
             base_path: Root folder that contains SpaceRanger output.
@@ -297,7 +297,7 @@ class VisiumPaths:
     ) -> Self:
         spatial_dir = Path(spatial_dir)
 
-        # Attempt to read the SpaceRanger version if it is not already set.
+        # Attempt to read the Space Ranger version if it is not already set.
         if version is None:
             try:
                 version = _read_visium_software_version(gene_expression)
