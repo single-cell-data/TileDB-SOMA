@@ -368,7 +368,9 @@ class VisiumPaths:
     ) -> None:
         major_version = value[0] if isinstance(value, tuple) else value
         if major_version is not None and major_version != 2:
-            warnings.warn(f"Support for SpaceRanger version {value} has not been tests.")
+            warnings.warn(
+                f"Support for SpaceRanger version {value} has not been tests."
+            )
 
     @property
     def has_image(self) -> bool:
