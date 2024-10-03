@@ -1580,14 +1580,15 @@ std::pair<bool, std::string> SOMAArray::_can_set_shape_domainish_subhelper(
     return std::pair(true, "");
 }
 
-std::pair<bool, std::string> SOMAArray::can_resize_soma_joinid(
+std::pair<bool, std::string> SOMAArray::can_resize_soma_joinid_shape(
     int64_t newshape) {
     // Fail if the array doesn't already have a shape yet (they should upgrade
     // first).
     if (!has_current_domain()) {
         return std::pair(
             false,
-            "can_resize_soma_joinid: dataframe currently has no domain set: "
+            "can_resize_soma_joinid_shape: dataframe currently has no domain "
+            "set: "
             "please use tiledbsoma_upgrade_domain.");
     }
 

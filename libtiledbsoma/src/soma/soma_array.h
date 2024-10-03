@@ -1093,7 +1093,7 @@ class SOMAArray : public SOMAObject {
      * This is similar to can_upgrade_shape, but it's a can-we call
      * for maybe_resize_soma_joinid.
      */
-    std::pair<bool, std::string> can_resize_soma_joinid(int64_t newshape);
+    std::pair<bool, std::string> can_resize_soma_joinid_shape(int64_t newshape);
 
     /**
      * @brief Resize the shape (what core calls "current domain") up to the
