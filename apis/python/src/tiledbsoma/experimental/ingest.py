@@ -80,6 +80,7 @@ from ..options._tiledb_create_write_options import (
     TileDBCreateOptions,
     TileDBWriteOptions,
 )
+from ._util import _read_visium_software_version
 
 if TYPE_CHECKING:
     from somacore.options import PlatformConfig
@@ -200,7 +201,7 @@ def from_cxg_spatial_h5ad(
     )
 
 
-def path_validator(instance, attribute, value: Path) -> None:  # type: ignore
+def path_validator(instance, attribute, value: Path) -> None:  # type: ignore[no-untyped-def]
     if not value.exists():
         raise OSError(f"Path {value} does not exist")
 
@@ -209,7 +210,7 @@ def optional_path_converter(value: Optional[Union[str, Path]]) -> Optional[Path]
     return None if value is None else Path(value)
 
 
-def optional_path_validator(instance, attribute, x: Optional[Path]) -> None:  # type: ignore
+def optional_path_validator(instance, attribute, x: Optional[Path]) -> None:  # type: ignore[no-untyped-def]
     if x is not None and not x.exists():
         raise OSError(f"Path {x} does not exist")
 
@@ -296,11 +297,15 @@ class VisiumPaths:
     ) -> Self:
         spatial_dir = Path(spatial_dir)
 
+        # Attempt to read the SpaceRanger version if it is not already set.
+        if version is None:
+            try:
+                version = _read_visium_software_version(gene_expression)
+            except (KeyError, ValueError):
+                warnings.warn(
+                    "Unable to determine SpaceRanger vesion from gene expression file."
+                )
         major_version = version[0] if isinstance(version, tuple) else version
-        if major_version != 2:
-            warnings.warn(
-                f"Support for SpaceRange version {version} has not been tests."
-            )
 
         if tissue_positions is None:
             if major_version == 1:
@@ -339,9 +344,7 @@ class VisiumPaths:
             fullres_image=fullres_image,
             hires_image=hires_image,
             lowres_image=lowres_image,
-            major_version=version[0] if isinstance(version, tuple) else version,
-            minor_version=version[1] if isinstance(version, tuple) else None,
-            patch_version=version[1] if isinstance(version, tuple) else None,
+            version=version,
         )
 
     gene_expression: Path = attrs.field(converter=Path, validator=path_validator)
@@ -357,10 +360,15 @@ class VisiumPaths:
     lowres_image: Optional[Path] = attrs.field(
         converter=optional_path_converter, validator=optional_path_validator
     )
+    version: Optional[Union[int, Tuple[int, int, int]]] = attrs.field(default=None)
 
-    major_version: Optional[int] = None
-    minor_version: Optional[int] = None
-    patch_version: Optional[int] = None
+    @version.validator
+    def _validate_version(  # type: ignore[no-untyped-def]
+        self, attribute, value: Optional[Union[int, Tuple[int, int, int]]]
+    ) -> None:
+        major_version = value[0] if isinstance(value, tuple) else value
+        if major_version is not None and major_version != 2:
+            warnings.warn(f"Support for SpaceRange version {value} has not been tests.")
 
     @property
     def has_image(self) -> bool:
@@ -426,7 +434,6 @@ def from_visium(
 
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        warnings.simplefilter("ignore", category=FutureWarning)
         adata = scanpy.read_10x_h5(input_paths.gene_expression)
 
     return _write_visium_data_to_experiment_uri(
@@ -484,23 +491,25 @@ def _write_visium_data_to_experiment_uri(
     write_var_spatial_presence: bool = False,
 ) -> str:
     warnings.warn(SPATIAL_DISCLAIMER, stacklevel=2)
-    uri = from_anndata(
-        experiment_uri,
-        adata,
-        measurement_name,
-        context=context,
-        platform_config=platform_config,
-        obs_id_name=obs_id_name,
-        var_id_name=var_id_name,
-        X_layer_name=X_layer_name,
-        raw_X_layer_name=raw_X_layer_name,
-        ingest_mode=ingest_mode,
-        use_relative_uri=use_relative_uri,
-        X_kind=X_kind,
-        registration_mapping=registration_mapping,
-        uns_keys=uns_keys,
-        additional_metadata=additional_metadata,
-    )
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        uri = from_anndata(
+            experiment_uri,
+            adata,
+            measurement_name,
+            context=context,
+            platform_config=platform_config,
+            obs_id_name=obs_id_name,
+            var_id_name=var_id_name,
+            X_layer_name=X_layer_name,
+            raw_X_layer_name=raw_X_layer_name,
+            ingest_mode=ingest_mode,
+            use_relative_uri=use_relative_uri,
+            X_kind=X_kind,
+            registration_mapping=registration_mapping,
+            uns_keys=uns_keys,
+            additional_metadata=additional_metadata,
+        )
 
     # Set the ingestion parameters.
     ingest_ctx: IngestCtx = {
