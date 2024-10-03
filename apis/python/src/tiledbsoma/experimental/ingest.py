@@ -201,55 +201,164 @@ def from_cxg_spatial_h5ad(
     )
 
 
-@attrs.define
-class InputVisiumPaths:
+def path_validator(instance, attribute, value: Path) -> None:  # type: ignore
+    if not value.exists():
+        raise OSError(f"Path {value} does not exist")
+
+
+def optional_path_converter(value: Optional[Union[str, Path]]) -> Optional[Path]:
+    return None if value is None else Path(value)
+
+
+def optional_path_validator(instance, attribute, x: Optional[Path]) -> None:  # type: ignore
+    if x is not None and not x.exists():
+        raise OSError(f"Path {x} does not exist")
+
+
+@attrs.define(kw_only=True)
+class VisiumPaths:
 
     @classmethod
-    def from_folder(
+    def from_base_folder(
         cls,
-        input_path: Path,
+        base_path: Union[str, Path],
         *,
+        gene_expression: Optional[Union[str, Path]] = None,
+        scale_factors: Optional[Union[str, Path]] = None,
+        tissue_positions: Optional[Union[str, Path]] = None,
+        fullres_image: Optional[Union[str, Path]] = None,
+        hires_image: Optional[Union[str, Path]] = None,
+        lowres_image: Optional[Union[str, Path]] = None,
+        use_raw_counts: bool = False,
         version: Optional[Union[int, Tuple[int, int, int]]] = None,
-        use_raw_counts: bool = True,
     ) -> Self:
-        input_path = Path(input_path)
-        input_gene_expression = input_path / "raw_feature_bc_matrix.h5"
+        """Create ingestion files from Space Ranger output directory.
 
-        # TODO: Generalize - this is hard-coded for Space Ranger version 2
-        input_tissue_positions = input_path / "spatial/tissue_positions.csv"
+        This method attempts to find the required Visium assets from an output
+        directory from SpaceRanger. The path for all files can be directly
+        specified instead.
 
-        input_scale_factors = input_path / "spatial/scalefactors_json.json"
-        input_gene_expression = (
-            input_path / "raw_feature_bc_matrix.h5"
-            if use_raw_counts
-            else input_path / "filtered_feature_bc_matrix.h5"
+        The full resolution image is an input file to SpaceRanger. In order to
+        include it, the `fullres_image` argument must be specified.
+
+        Args:
+            base_path: Root folder that contains SpaceRanger output.
+
+
+        """
+        base_path = Path(base_path)
+
+        if gene_expression is None:
+            gene_expression_suffix = (
+                "raw_feature_bc_matrix.h5"
+                if use_raw_counts
+                else "filtered_feature_bc_matrix.h5"
+            )
+
+            possible_paths = list(base_path.glob(f"*{gene_expression_suffix}"))
+            if len(possible_paths) == 0:
+                raise OSError(
+                    f"No expression matrix ending in {gene_expression_suffix} found "
+                    f"in {base_path}. If the file has been renamed, it can be directly "
+                    f"specified with the `gene_expression` argument."
+                )
+            if len(possible_paths) > 1:
+                raise OSError(
+                    f"Multiple files ending in {gene_expression_suffix} "
+                    f"found in {base_path}. The desired file must be specified with "
+                    f"the `gene_expression` argument."
+                )
+            gene_expression = possible_paths[0]
+
+        return cls.from_spatial_folder(
+            base_path / "spatial",
+            gene_expression=gene_expression,
+            scale_factors=scale_factors,
+            tissue_positions=tissue_positions,
+            fullres_image=fullres_image,
+            hires_image=hires_image,
+            lowres_image=lowres_image,
+            version=version,
         )
 
-        # TODO: Generalize - hard-coded for Space Ranger version 2
-        fullres_image = None
-        hires_image = input_path / "spatial/tissue_hires_image.png"
-        lowres_image = input_path / "spatial/tissue_lowres_image.png"
+    @classmethod
+    def from_spatial_folder(
+        cls,
+        spatial_dir: Union[str, Path],
+        *,
+        gene_expression: Union[str, Path],
+        scale_factors: Optional[Union[str, Path]] = None,
+        tissue_positions: Optional[Union[str, Path]] = None,
+        fullres_image: Optional[Union[str, Path]] = None,
+        hires_image: Optional[Union[str, Path]] = None,
+        lowres_image: Optional[Union[str, Path]] = None,
+        use_raw_counts: bool = False,
+        version: Optional[Union[int, Tuple[int, int, int]]] = None,
+    ) -> Self:
+        spatial_dir = Path(spatial_dir)
+
+        major_version = version[0] if isinstance(version, tuple) else version
+        if major_version not in {None, 1, 2}:
+            warnings.warn(
+                f"Support for SpaceRange version {version} has not been tests."
+            )
+
+        if tissue_positions is None:
+            if major_version == 1:
+                possible_file_names = [
+                    "tissue_positions_list.csv",
+                    "tissue_positions.csv",
+                ]
+            else:
+                possible_file_names = [
+                    "tissue_postiions.csv",
+                    "tissue_positions_list.csv",
+                ]
+            for possible in possible_file_names:
+                tissue_positions = spatial_dir / possible
+                if tissue_positions.exists():
+                    break
+            else:
+                raise OSError(
+                    f"No tissue position file found in {spatial_dir}. Tried files: "
+                    f"{possible_file_names}. If the file has been renamed it can be "
+                    f"directly specified using argument `tissue_positions`."
+                )
+
+        if scale_factors is None:
+            scale_factors = spatial_dir / "scalefactors_json.json"
+
+        if hires_image is None:
+            hires_image = spatial_dir / "tissue_hires_image.png"
+        if lowres_image is None:
+            lowres_image = spatial_dir / "tissue_lowres_image.png"
 
         return cls(
-            input_gene_expression,
-            input_scale_factors,
-            input_tissue_positions,
-            fullres_image,
-            hires_image,
-            lowres_image,
-            base_path=input_path,
+            gene_expression=gene_expression,
+            scale_factors=scale_factors,
+            tissue_positions=tissue_positions,
+            fullres_image=fullres_image,
+            hires_image=hires_image,
+            lowres_image=lowres_image,
             major_version=version[0] if isinstance(version, tuple) else version,
             minor_version=version[1] if isinstance(version, tuple) else None,
             patch_version=version[1] if isinstance(version, tuple) else None,
         )
 
-    gene_expression: Path
-    scale_factors: Path
-    tissue_positions: Path
-    fullres_image: Optional[Path]
-    hires_image: Optional[Path]
-    lowres_image: Optional[Path]
-    base_path: Optional[Path] = None
+    gene_expression: Path = attrs.field(converter=Path, validator=path_validator)
+    scale_factors: Path = attrs.field(converter=Path, validator=path_validator)
+    tissue_positions: Path = attrs.field(converter=Path, validator=path_validator)
+    fullres_image: Optional[Path] = attrs.field(
+        converter=optional_path_converter, validator=optional_path_validator
+    )
+    hires_image: Optional[Path] = attrs.field(
+        converter=optional_path_converter, validator=optional_path_validator
+    )
+
+    lowres_image: Optional[Path] = attrs.field(
+        converter=optional_path_converter, validator=optional_path_validator
+    )
+
     major_version: Optional[int] = None
     minor_version: Optional[int] = None
     patch_version: Optional[int] = None
@@ -265,7 +374,7 @@ class InputVisiumPaths:
 
 def from_visium(
     experiment_uri: str,
-    input_path: Union[Path, InputVisiumPaths],
+    input_path: Union[Path, VisiumPaths],
     measurement_name: str,
     scene_name: str,
     *,
@@ -281,7 +390,7 @@ def from_visium(
     registration_mapping: Optional["ExperimentAmbientLabelMapping"] = None,
     uns_keys: Optional[Sequence[str]] = None,
     additional_metadata: "AdditionalMetadata" = None,
-    use_raw_counts: bool = True,
+    use_raw_counts: bool = False,
     write_obs_spatial_presence: bool = False,
     write_var_spatial_presence: bool = False,
 ) -> str:
@@ -306,8 +415,8 @@ def from_visium(
     # Get input file locations.
     input_paths = (
         input_path
-        if isinstance(input_path, InputVisiumPaths)
-        else InputVisiumPaths.from_folder(input_path, use_raw_counts=use_raw_counts)
+        if isinstance(input_path, VisiumPaths)
+        else VisiumPaths.from_base_folder(input_path, use_raw_counts=use_raw_counts)
     )
 
     # Get JSON scale factors.
