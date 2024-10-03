@@ -601,7 +601,7 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
         """
         return len(self._levels)
 
-    def level_properties(self, level: Union[int, str]) -> somacore.ImageProperties:
+    def level_properties(self, level: Union[int, str]) -> ImageProperties:
         """The properties of an image at the specified level.
 
         Lifecycle:

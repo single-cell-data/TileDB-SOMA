@@ -46,6 +46,7 @@ from .. import (
     DenseNDArray,
     Experiment,
     Measurement,
+    PointCloudDataFrame,
     SparseNDArray,
     _factory,
     _util,
@@ -1104,7 +1105,7 @@ def _extract_new_values_for_append(
 
 def _write_arrow_table(
     arrow_table: pa.Table,
-    handle: Union[DataFrame, SparseNDArray],
+    handle: Union[DataFrame, SparseNDArray, PointCloudDataFrame],
     tiledb_create_options: TileDBCreateOptions,
     tiledb_write_options: TileDBWriteOptions,
 ) -> None:
