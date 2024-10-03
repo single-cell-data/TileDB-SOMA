@@ -284,9 +284,9 @@ class SOMAArray : public SOMAObject {
     uint64_t ndim() const;
 
     /**
-     * @brief Get the name of each dimensions.
+     * @brief Get the name of each dimension.
      *
-     * @return std::vector<std::string> Name of each dimensions.
+     * @return std::vector<std::string> Name of each dimension.
      */
     std::vector<std::string> dimension_names() const;
 
@@ -296,6 +296,13 @@ class SOMAArray : public SOMAObject {
      * @return bool
      */
     bool has_dimension_name(const std::string& name) const;
+
+    /**
+     * @brief Get the name of each attribute.
+     *
+     * @return std::vector<std::string> Name of each attribute.
+     */
+    std::vector<std::string> attribute_names() const;
 
     /**
      * @brief Set the dimension slice using one point

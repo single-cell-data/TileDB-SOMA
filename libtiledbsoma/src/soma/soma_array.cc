@@ -1022,6 +1022,16 @@ bool SOMAArray::has_dimension_name(const std::string& name) const {
     return false;
 }
 
+std::vector<std::string> SOMAArray::attribute_names() const {
+    std::vector<std::string> result;
+    auto schema = tiledb_schema();
+    unsigned n = schema->attribute_num();
+    for (unsigned i = 0; i < n; i++) {
+        result.push_back(schema->attribute(i).name());
+    }
+    return result;
+}
+
 void SOMAArray::write(bool sort_coords) {
     if (mq_->query_type() != TILEDB_WRITE) {
         throw TileDBSOMAError("[SOMAArray] array must be opened in write mode");

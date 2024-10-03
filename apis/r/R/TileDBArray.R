@@ -282,12 +282,7 @@ TileDBArray <- R6::R6Class(
     #' @description Retrieve attribute names (lifecycle: maturing)
     #' @return A character vector with the array's attribute names
     attrnames = function() {
-      vapply(
-        self$attributes(),
-        FUN = tiledb::name,
-        FUN.VALUE = vector("character", 1L),
-        USE.NAMES = FALSE
-      )
+      c_attrnames(self$uri, private$.soma_context)
     },
 
     #' @description Retrieve the names of all columns, including dimensions and
