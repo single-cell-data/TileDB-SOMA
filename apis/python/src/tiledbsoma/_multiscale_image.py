@@ -508,18 +508,20 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
         self._coord_space = value
 
     def get_transform_from_level(self, level: Union[int, str]) -> ScaleTransform:
-        """Returns the transformation from user requested level to image reference
+        """Returns the transformation from user requested level to the image reference
         level.
 
         Lifecycle:
             Experimental.
         """
         if isinstance(level, str):
+            level_props = None
             for val in self._levels:
                 if val.name == level:
                     level_props = val
-                else:
-                    raise KeyError(f"No level with name '{level}'")
+                    break
+            else:
+                raise KeyError("No level with name '{level}'")
         else:
             level_props = self._levels[level]
         ref_level_props = self._schema.reference_level_properties
@@ -551,11 +553,13 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
             Experimental.
         """
         if isinstance(level, str):
+            level_props = None
             for val in self._levels:
                 if val.name == level:
                     level_props = val
-                else:
-                    raise KeyError(f"No level with name '{level}'")
+                    break
+            else:
+                raise KeyError("No level with name '{level}'")
         else:
             level_props = self._levels[level]
         ref_level_props = self._schema.reference_level_properties
