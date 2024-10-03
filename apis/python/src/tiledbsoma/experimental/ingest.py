@@ -529,7 +529,6 @@ def from_visium(
                             for key, value in scale_factors.items():
                                 tissue_image.metadata[key] = value
 
-                            tissue_image.coordinate_space = coord_space
                             scale = image_paths[0][2]
                             if scale is None:
                                 scene.set_transform_to_multiscale_image(
@@ -552,6 +551,9 @@ def from_visium(
                                         ("x", "y"), ("x", "y"), updated_scales
                                     ),
                                 )
+                            tissue_image.coordinate_space = CoordinateSpace(
+                                (Axis(name="x", unit="pixels"), Axis(name="y", unit="pixels"))  # type: ignore[arg-type]
+                            )
 
                 obsl_uri = _util.uri_joinpath(scene_uri, "obsl")
                 with _create_or_open_collection(
@@ -573,6 +575,7 @@ def from_visium(
                         scene.set_transform_to_point_cloud_dataframe(
                             "loc", IdentityTransform(("x", "y"), ("x", "y"))
                         )
+                        loc.coordinate_space = coord_space
 
                 varl_uri = _util.uri_joinpath(scene_uri, "varl")
                 with _create_or_open_collection(
