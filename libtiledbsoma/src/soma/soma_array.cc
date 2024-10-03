@@ -1497,7 +1497,7 @@ std::pair<bool, std::string> SOMAArray::_can_set_shape_helper(
     //
     // if the requested shape fits in the array's core domain, it's good to go
     // as a new shape.
-    auto domain_check = _can_set_shape_domainish_helper(
+    auto domain_check = _can_set_shape_domainish_subhelper(
         newshape, false, function_name_for_messages);
     if (!domain_check.first) {
         return domain_check;
@@ -1506,7 +1506,7 @@ std::pair<bool, std::string> SOMAArray::_can_set_shape_helper(
     // For new-style arrays, we need to additionally that the the requested
     // shape (core current domain) isn't a downsize of the current one.
     if (has_shape) {
-        auto current_domain_check = _can_set_shape_domainish_helper(
+        auto current_domain_check = _can_set_shape_domainish_subhelper(
             newshape, true, function_name_for_messages);
         if (!current_domain_check.first) {
             return current_domain_check;
@@ -1519,7 +1519,7 @@ std::pair<bool, std::string> SOMAArray::_can_set_shape_helper(
 // This is a helper for _can_set_shape_helper: it's used for comparing
 // the user's requested shape against the core current domain or core (max)
 // domain.
-std::pair<bool, std::string> SOMAArray::_can_set_shape_domainish_helper(
+std::pair<bool, std::string> SOMAArray::_can_set_shape_domainish_subhelper(
     const std::vector<int64_t>& newshape,
     bool check_current_domain,
     std::string function_name_for_messages) {
