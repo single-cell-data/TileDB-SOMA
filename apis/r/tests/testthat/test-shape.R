@@ -227,11 +227,11 @@ test_that("SOMADataFrame shape", {
         sdf <- SOMADataFrameOpen(uri, "WRITE")
         if (has_soma_joinid_dim) {
           # It's an error to downsize
-          expect_error(sdf$resize_soma_joinid(new_shape))
+          expect_error(sdf$resize_soma_joinid_shape(new_shape))
         } else {
           # There is no problem when soma_joinid is not a dim --
-          # sdf$resize_soma_joinid is a no-op in that case
-          expect_no_condition(sdf$resize_soma_joinid(new_shape))
+          # sdf$resize_soma_joinid_shape is a no-op in that case
+          expect_no_condition(sdf$resize_soma_joinid_shape(new_shape))
         }
         sdf$close()
 
@@ -266,7 +266,7 @@ test_that("SOMADataFrame shape", {
 
         # Test resize
         sdf <- SOMADataFrameOpen(uri, "WRITE")
-        sdf$resize_soma_joinid(new_shape)
+        sdf$resize_soma_joinid_shape(new_shape)
         sdf$close();
 
         # Test writes out of old bounds, within new bounds, after resize

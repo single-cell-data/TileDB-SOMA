@@ -417,7 +417,7 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         """
         return self._handle.tiledbsoma_has_upgraded_domain
 
-    def resize_soma_joinid(self, newshape: int) -> None:
+    def resize_soma_joinid_shape(self, newshape: int) -> None:
         """Increases the shape of the dataframe on the ``soma_joinid`` index
         column, if it indeed is an index column, leaving all other index columns
         as-is. If the ``soma_joinid`` is not an index column, no change is made.
@@ -427,7 +427,7 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         domain: in that case please call ``tiledbsoma_upgrade_domain`` (WIP for
         1.15).
         """
-        self._handle._handle.resize_soma_joinid(newshape)
+        self._handle._handle.resize_soma_joinid_shape(newshape)
 
     def __len__(self) -> int:
         """Returns the number of rows in the dataframe. Same as ``df.count``."""

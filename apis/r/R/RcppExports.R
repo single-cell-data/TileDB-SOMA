@@ -226,7 +226,7 @@ resize <- function(uri, new_shape, ctxxp) {
     invisible(.Call(`_tiledbsoma_resize`, uri, new_shape, ctxxp))
 }
 
-resize_soma_joinid <- function(uri, new_shape, ctxxp) {
+resize_soma_joinid_shape <- function(uri, new_shape, ctxxp) {
     invisible(.Call(`_tiledbsoma_resize_soma_joinid`, uri, new_shape, ctxxp))
 }
 

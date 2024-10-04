@@ -1602,7 +1602,7 @@ std::pair<bool, std::string> SOMAArray::can_resize_soma_joinid(
         return std::pair(
             false,
             fmt::format(
-                "cannot resize_soma_joinid: new soma_joinid shape {} < "
+                "cannot resize_soma_joinid_shape: new soma_joinid shape {} < "
                 "existing shape {}",
                 newshape,
                 cur_dom_lo_hi.second));
@@ -1614,7 +1614,7 @@ std::pair<bool, std::string> SOMAArray::can_resize_soma_joinid(
         return std::pair(
             false,
             fmt::format(
-                "cannot resize_soma_joinid: new soma_joinid shape {} > "
+                "cannot resize_soma_joinid_shape: new soma_joinid shape {} > "
                 "maxshape {}",
                 newshape,
                 dom_lo_hi.second));
@@ -1677,7 +1677,7 @@ void SOMAArray::_set_current_domain_from_shape(
     schema_evolution.array_evolve(uri_);
 }
 
-void SOMAArray::resize_soma_joinid(int64_t newshape) {
+void SOMAArray::resize_soma_joinid_shape(int64_t newshape) {
     if (mq_->query_type() != TILEDB_WRITE) {
         throw TileDBSOMAError(
             "[SOMAArray::resize] array must be opened in write mode");

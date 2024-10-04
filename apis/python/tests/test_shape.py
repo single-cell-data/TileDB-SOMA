@@ -280,9 +280,9 @@ def test_dataframe_basics(tmp_path, soma_joinid_domain, index_column_names):
                 # TODO: check draft spec
                 # with pytest.raises(ValueError):
                 with pytest.raises(tiledbsoma.SOMAError):
-                    sdf.resize_soma_joinid(new_shape)
+                    sdf.resize_soma_joinid_shape(new_shape)
             else:
-                sdf.resize_soma_joinid(new_shape)
+                sdf.resize_soma_joinid_shape(new_shape)
 
         with tiledbsoma.DataFrame.open(uri) as sdf:
             assert sdf._maybe_soma_joinid_shape == shape_at_create
@@ -302,7 +302,7 @@ def test_dataframe_basics(tmp_path, soma_joinid_domain, index_column_names):
         # Test resize
         new_shape = 0 if shape_at_create is None else shape_at_create + 100
         with tiledbsoma.DataFrame.open(uri, "w") as sdf:
-            sdf.resize_soma_joinid(new_shape)
+            sdf.resize_soma_joinid_shape(new_shape)
 
         # Test writes out of old bounds, within new bounds, after resize
         with tiledbsoma.DataFrame.open(uri, "w") as sdf:
