@@ -524,8 +524,8 @@ void SOMAArray::_promote_indexes_to_values(
             return _cast_dictionary_values<double>(schema, array);
         default:
             throw TileDBSOMAError(fmt::format(
-                "Saw invalid TileDB value type when attempting to "
-                "promote indexes to values: {}",
+                "Saw invalid TileDB value type when attempting to promote "
+                "indexes to values: {}",
                 tiledb::impl::type_to_str(value_type)));
     }
 }
@@ -1481,8 +1481,7 @@ std::pair<bool, std::string> SOMAArray::_can_set_shape_helper(
                 false,
                 fmt::format(
                     "{}: array already has a shape: please use resize rather "
-                    "than "
-                    "tiledbsoma_upgrade_shape.",
+                    "than tiledbsoma_upgrade_shape.",
                     function_name_for_messages));
         }
     }
@@ -1536,8 +1535,7 @@ std::pair<bool, std::string> SOMAArray::_can_set_shape_domainish_subhelper(
         // library-internal code, it's not the user's fault if we got here.
         if (dim.type() != TILEDB_INT64) {
             throw TileDBSOMAError(fmt::format(
-                "{}: internal error: expected {} dim to "
-                "be {}; got {}",
+                "{}: internal error: expected {} dim to be {}; got {}",
                 function_name_for_messages,
                 dim_name,
                 tiledb::impl::type_to_str(TILEDB_INT64),
@@ -1588,8 +1586,8 @@ std::pair<bool, std::string> SOMAArray::can_resize_soma_joinid_shape(
         return std::pair(
             false,
             fmt::format(
-                "{}: dataframe currently has no domain set: please use "
-                "tiledbsoma_upgrade_domain.",
+                "{}: dataframe currently has no domain set: please "
+                "upgrade the array.",
                 function_name_for_messages));
     }
 

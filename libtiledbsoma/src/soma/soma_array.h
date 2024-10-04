@@ -997,8 +997,7 @@ class SOMAArray : public SOMAObject {
             default:
                 throw std::runtime_error(
                     "internal coding error in "
-                    "SOMAArray::_core_domainish_slot_string: "
-                    "unknown kind");
+                    "SOMAArray::_core_domainish_slot_string: unknown kind");
         }
     }
 
