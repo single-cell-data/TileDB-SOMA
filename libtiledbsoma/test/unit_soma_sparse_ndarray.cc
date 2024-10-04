@@ -462,18 +462,18 @@ TEST_CASE("SOMASparseNDArray: can_resize", "[SOMASparseNDArray]") {
     std::vector<int64_t> newshape_too_small({40});
     std::vector<int64_t> newshape_good({2000});
 
-    auto check = snda->can_resize(newshape_wrong_dims);
+    auto check = snda->can_resize(newshape_wrong_dims, "testing");
     REQUIRE(check.first == false);
     REQUIRE(
         check.second ==
-        "resize: provided shape has ndim 2, while the array has 1");
+        "testing: provided shape has ndim 2, while the array has 1");
 
-    check = snda->can_resize(newshape_too_small);
+    check = snda->can_resize(newshape_too_small, "testing");
     REQUIRE(check.first == false);
     REQUIRE(
-        check.second == "resize for soma_dim_0: new 40 < existing shape 1000");
+        check.second == "testing for soma_dim_0: new 40 < existing shape 1000");
 
-    check = snda->can_resize(newshape_good);
+    check = snda->can_resize(newshape_good, "testing");
     REQUIRE(check.first == true);
     REQUIRE(check.second == "");
 }

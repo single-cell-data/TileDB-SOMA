@@ -1061,8 +1061,10 @@ class SOMAArray : public SOMAObject {
      * existing core domain.
      */
     std::pair<bool, std::string> can_resize(
-        const std::vector<int64_t>& newshape) {
-        return _can_set_shape_helper(newshape, true, "resize");
+        const std::vector<int64_t>& newshape,
+        std::string function_name_for_messages) {
+        return _can_set_shape_helper(
+            newshape, true, function_name_for_messages);
     }
 
     /**
@@ -1212,7 +1214,9 @@ class SOMAArray : public SOMAObject {
     /**
      * This is a code-dedupe helper method for resize and upgrade_shape.
      */
-    void _set_current_domain_from_shape(const std::vector<int64_t>& newshape, std::string function_name_for_messages);
+    void _set_current_domain_from_shape(
+        const std::vector<int64_t>& newshape,
+        std::string function_name_for_messages);
 
     /**
      * While SparseNDArray, DenseNDArray, and default-indexed DataFrame
