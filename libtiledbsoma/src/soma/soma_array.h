@@ -1154,7 +1154,30 @@ class SOMAArray : public SOMAObject {
      * maxshape. Throws if the array does not have current-domain support.
      */
     void resize_soma_joinid_shape(
-        int64_t newshape, std::string function_name_for_messages);
+        int64_t newshape, std::string function_name_for_messages) {
+        return _set_soma_joinid_shape_helper(
+            newshape, true, function_name_for_messages);
+    }
+
+    /**
+     * @brief Increases the tiledbsoma shape up to at most the maxshape,
+     * resizing the soma_joinid dimension if it is a dimension.
+     *
+     * While SOMA SparseNDArray and DenseNDArray, along with default-indexed
+     * DataFrame, have int64_t dims, non-default-indexed DataFrame objects need
+     * not: it is only required that they have a dim _or_ an attr called
+     * soma_joinid. If soma_joinid is one of the dims, it will be resized while
+     * the others will be preserved. If soma_joinid is not one of the dims,
+     * nothing will be changed, as nothing _needs_ to be changed.
+     *
+     * @return Throws if the requested shape exceeds the array's create-time
+     * maxshape. Throws if the array does not have current-domain support.
+     */
+    void upgrade_soma_joinid_shape(
+        int64_t newshape, std::string function_name_for_messages) {
+        return _set_soma_joinid_shape_helper(
+            newshape, false, function_name_for_messages);
+    }
 
    protected:
     // These two are for use nominally by SOMADataFrame. This could be moved in
@@ -1242,6 +1265,15 @@ class SOMAArray : public SOMAObject {
      */
     void _set_shape_helper(
         const std::vector<int64_t>& newshape,
+        bool is_resize,
+        std::string function_name_for_messages);
+
+    /**
+     * This is a code-dedupe helper method for resize_soma_joinid_shape and
+     * upgrade_soma_joinid_shape.
+     */
+    void _set_soma_joinid_shape_helper(
+        int64_t newshape,
         bool is_resize,
         std::string function_name_for_messages);
 

@@ -29,10 +29,10 @@
  *   This file defines the SOMAArray class.
  */
 
-#include "soma_array.h"
 #include <tiledb/array_experimental.h>
 #include "../utils/logger.h"
 #include "../utils/util.h"
+#include "soma_array.h"
 namespace tiledbsoma {
 using namespace tiledb;
 
@@ -1654,7 +1654,6 @@ void SOMAArray::_set_shape_helper(
                 "{}: array must not already have a shape",
                 function_name_for_messages));
         }
-
     } else {
         // Expanding an array's current domain
         if (_get_current_domain().is_empty()) {
@@ -1694,12 +1693,28 @@ void SOMAArray::_set_shape_helper(
     schema_evolution.array_evolve(uri_);
 }
 
-void SOMAArray::resize_soma_joinid_shape(
-    int64_t newshape, std::string function_name_for_messages) {
+void SOMAArray::_set_soma_joinid_shape_helper(
+    int64_t newshape, bool is_resize, std::string function_name_for_messages) {
     if (mq_->query_type() != TILEDB_WRITE) {
         throw TileDBSOMAError(fmt::format(
             "{}: array must be opened in write mode",
             function_name_for_messages));
+    }
+
+    if (!is_resize) {
+        // Upgrading an array to install a current domain
+        if (!_get_current_domain().is_empty()) {
+            throw TileDBSOMAError(fmt::format(
+                "{}: array must not already have a shape",
+                function_name_for_messages));
+        }
+    } else {
+        // Expanding an array's current domain
+        if (_get_current_domain().is_empty()) {
+            throw TileDBSOMAError(fmt::format(
+                "{} array must already have a shape",
+                function_name_for_messages));
+        }
     }
 
     ArraySchema schema = arr_->schema();
