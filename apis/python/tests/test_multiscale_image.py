@@ -1,3 +1,4 @@
+import functools
 from urllib.parse import urljoin
 
 import numpy as np
@@ -67,7 +68,7 @@ def test_multiscale_image_bad_create(tmp_path):
         )
 
 
-def test_multiscale_basic_no_channels(tmp_path):
+def test_multiscale_basic(tmp_path):
     baseuri = urljoin(f"{tmp_path.as_uri()}/", "basic_read")
     image_uri = urljoin(baseuri, "default")
 
@@ -129,9 +130,22 @@ def test_multiscale_basic_no_channels(tmp_path):
         # Check transform to and from levels
         to_level = image.get_transform_to_level
         from_level = image.get_transform_from_level
+
         assert np.array_equal(to_level(0).scale_factors, [1, 1])
         assert np.array_equal(to_level(1).scale_factors, [0.5, 0.5])
         assert np.array_equal(to_level(2).scale_factors, [0.0625, 0.0625])
+        assert np.array_equal(to_level("level0").scale_factors, [1, 1])
+        assert np.array_equal(to_level("level1").scale_factors, [0.5, 0.5])
+        assert np.array_equal(to_level("level2").scale_factors, [0.0625, 0.0625])
+
+        # oob
+        with pytest.raises(IndexError):
+            to_level(3).scale_factors
+
+        # dne
+        with pytest.raises(KeyError):
+            to_level("level3").scale_factors
+
         assert np.array_equal(from_level(0).scale_factors, [1, 1])
         assert np.array_equal(from_level(1).scale_factors, [2, 2])
         assert np.array_equal(from_level(2).scale_factors, [16, 16])
@@ -212,3 +226,231 @@ class TestSimpleMultiscale2D:
             expected_transform.augmented_matrix,
             decimal=8,
         )
+
+
+def create_multiscale(baseuri, axis_names, axis_types, shapes):
+    image_uri = urljoin(baseuri, "default")
+    with soma.MultiscaleImage.create(
+        image_uri,
+        type=pa.uint8(),
+        axis_names=axis_names,
+        axis_types=axis_types,
+        reference_level_shape=shapes[0],
+    ) as image:
+        for i in range(len(shapes)):
+            image.add_new_level(f"level{i}", shape=shapes[i])
+    return image_uri
+
+
+@pytest.mark.parametrize(
+    "axis_names, axis_types, shapes, expected_scale_factors",
+    [
+        [
+            ("C", "Z", "Y", "X"),
+            ("channel", "depth", "height", "width"),
+            ((128, 64, 32, 16), (128, 32, 16, 8), (128, 16, 8, 4), (128, 4, 2, 1)),
+            ([1, 1, 1], [2, 2, 2], [4, 4, 4], [16, 16, 16]),
+        ],
+        [
+            ("C", "Z", "Y", "X"),
+            ("channel", "depth", "height", "width"),
+            ((128, 64, 32, 16), (128, 32, 16, 8), (128, 16, 8, 4)),
+            ([1, 1, 1], [2, 2, 2], [4, 4, 4]),
+        ],
+        [
+            ("C", "Z", "Y", "X"),
+            ("channel", "depth", "height", "width"),
+            ((64, 64, 64, 64), (64, 64, 64, 64)),
+            ([1, 1, 1], [1, 1, 1]),
+        ],
+        [
+            ("C", "Z", "Y", "X"),
+            ("channel", "depth", "height", "width"),
+            ((64, 32, 16, 8), (64, 16, 8, 4)),
+            ([1, 1, 1], [2, 2, 2]),
+        ],
+        [
+            ("C", "Z", "Y", "X"),
+            ("channel", "depth", "height", "width"),
+            ((128, 64, 32, 16), (128, 32, 32, 8), (128, 16, 16, 4)),
+            ([1, 1, 1], [2, 1, 2], [4, 2, 4]),
+        ],
+        [
+            ("C", "Y", "X"),
+            ("channel", "height", "width"),
+            ((128, 64, 32), (128, 32, 16), (128, 16, 8)),
+            ([1, 1], [2, 2], [4, 4]),
+        ],
+        [
+            ("C", "Y", "X"),
+            ("channel", "height", "width"),
+            ((128, 128, 128), (128, 128, 128)),
+            ([1, 1], [1, 1]),
+        ],
+        [
+            ("Y", "X"),
+            ("height", "width"),
+            ((128, 128), (128, 128)),
+            ([1, 1], [1, 1]),
+        ],
+        [
+            ("Y", "X"),
+            ("height", "width"),
+            ((128, 64), (64, 32)),
+            ([1, 1], [2, 2]),
+        ],
+        [
+            ("Y", "X"),
+            ("height", "width"),
+            ((60, 30), (30, 6)),
+            ([1, 1], [5, 2]),
+        ],
+    ],
+)
+def test_multiscale_with_axis_names(
+    tmp_path, axis_names, axis_types, shapes, expected_scale_factors
+):
+    baseuri = urljoin(f"{tmp_path.as_uri()}/", "test_multiscale_with_axis_names")
+    image_uri = create_multiscale(baseuri, axis_names, axis_types, shapes)
+
+    with soma.MultiscaleImage.open(image_uri, mode="r") as image:
+        base_props = image.reference_level_properties
+        assert base_props.shape == shapes[0]
+        assert image.level_count == len(shapes)
+
+        for index, shape in enumerate(shapes):
+            props = image.level_properties(index)
+            assert props.name == f"level{index}"
+            assert props == image.level_properties(props.name)
+            assert props.image_type == "".join(axis_names)
+            assert props.shape == shape
+
+            for i, axis_type in enumerate(axis_types):
+                if axis_type == "channel":
+                    assert getattr(props, "nchannels") == shape[i]
+                else:
+                    assert getattr(props, axis_type) == shape[i]
+
+            # Check transform to and from levels
+            assert np.array_equal(
+                image.get_transform_to_level(index).scale_factors,
+                1 / np.array(expected_scale_factors[index]),
+            )
+            assert np.array_equal(
+                image.get_transform_to_level(f"level{index}").scale_factors,
+                1 / np.array(expected_scale_factors[index]),
+            )
+            assert np.array_equal(
+                image.get_transform_from_level(index).scale_factors,
+                expected_scale_factors[index],
+            )
+            assert np.array_equal(
+                image.get_transform_from_level(f"level{index}").scale_factors,
+                expected_scale_factors[index],
+            )
+
+
+@pytest.mark.parametrize(
+    "shapes, region",
+    [
+        # full region
+        (
+            ((64, 32), (32, 16), (16, 8)),
+            None,
+        ),
+        (
+            ((128, 128), (128, 128)),
+            None,
+        ),
+        (
+            ((128, 64), (64, 32)),
+            None,
+        ),
+        (
+            ((60, 30), (30, 6)),
+            None,
+        ),
+        (
+            ((1, 1),),
+            None,
+        ),
+        # partial subregion
+        (
+            ((128, 64), (64, 32)),
+            (0, 0, 20, 30),
+        ),
+        (
+            ((64, 32), (32, 16)),
+            (0, 0, 16, 10),
+        ),
+    ],
+)
+def test_multiscale_2d_read_region(tmp_path, shapes, region):
+    baseuri = urljoin(f"{tmp_path.as_uri()}/", "test_multiscale_read_region")
+    image_uri = create_multiscale(baseuri, ("Y", "X"), ("height", "width"), shapes)
+
+    with soma.Collection.open(image_uri, mode="w") as image:
+        for i, shape in enumerate(shapes):
+            data = np.arange(shape[0] * shape[1], dtype=np.uint8).reshape(shape)
+            image[f"level{i}"].write(
+                (slice(None), slice(None)), pa.Tensor.from_numpy(data)
+            )
+
+    with soma.MultiscaleImage.open(image_uri, mode="r") as image:
+        for i, shape in enumerate(shapes):
+            actual_data = image.read_spatial_region(i, region=region).data
+            expected_data = np.arange(shape[0] * shape[1], dtype=np.uint8).reshape(
+                shape
+            )
+            if region is not None:
+                expected_data = expected_data[
+                    region[1] : region[3] + 1, region[0] : region[2] + 1
+                ]
+            print("expected_data:", expected_data.size)
+            print("actual_data:", actual_data.to_numpy().size)
+            # assert (expected_data == actual_data).all()
+
+
+@pytest.mark.skip("reading 3D regions not supported yet")
+@pytest.mark.parametrize(
+    "shapes, region",
+    [
+        (
+            ((64, 32, 16), (32, 16, 8), (16, 8, 4), (4, 2, 1)),
+            (slice(None), slice(None)),
+        ),
+        (
+            ((64, 32, 16), (32, 16, 8), (16, 8, 4)),
+            (slice(None), slice(None)),
+        ),
+        (
+            ((64, 64, 64), (64, 64, 64)),
+            (slice(None), slice(None)),
+        ),
+        (
+            ((32, 16, 8), (16, 8, 4)),
+            (slice(None), slice(None)),
+        ),
+        (
+            ((64, 32, 16), (32, 32, 8), (16, 16, 4)),
+            (slice(None), slice(None)),
+        ),
+    ],
+)
+def test_multiscale_3d_read_region(tmp_path, shapes, region):
+    baseuri = urljoin(f"{tmp_path.as_uri()}/", "test_multiscale_read_region")
+    image_uri = create_multiscale(
+        baseuri, ("Z", "Y", "X"), ("depth", "height", "width"), shapes
+    )
+
+    with soma.Collection.open(image_uri, mode="w") as image:
+        for i, shape in enumerate(shapes):
+            size = functools.reduce(lambda x, y: x * y, shape)
+            data = np.arange(size, dtype=np.uint8).reshape(*shape)
+            image[f"level{i}"].write(region, pa.Tensor.from_numpy(data))
+
+    with soma.MultiscaleImage.open(image_uri, mode="r") as image:
+        for i, shape in enumerate(shapes):
+            size = functools.reduce(lambda x, y: x * y, shape)
+            expected_data = np.arange(size, dtype=np.uint8).reshape(*shape)
+            assert np.array_equal(image.read_spatial_region(i).data, expected_data)

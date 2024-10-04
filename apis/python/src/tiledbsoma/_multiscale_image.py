@@ -457,7 +457,6 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
             raise SOMAError(
                 f"Unable to open the dense array with name '{array_name}'."
             ) from ke
-
         return somacore.SpatialRead(
             array.read(
                 coords,
