@@ -1578,17 +1578,28 @@ std::pair<bool, std::string> SOMAArray::_can_set_shape_domainish_subhelper(
     return std::pair(true, "");
 }
 
-std::pair<bool, std::string> SOMAArray::can_resize_soma_joinid_shape(
-    int64_t newshape, std::string function_name_for_messages) {
+std::pair<bool, std::string> SOMAArray::_can_set_soma_joinid_shape_helper(
+    int64_t newshape, bool is_resize, std::string function_name_for_messages) {
     // Fail if the array doesn't already have a shape yet (they should upgrade
     // first).
-    if (!has_current_domain()) {
-        return std::pair(
-            false,
-            fmt::format(
-                "{}: dataframe currently has no domain set: please "
-                "upgrade the array.",
-                function_name_for_messages));
+    if (is_resize) {
+        if (!has_current_domain()) {
+            return std::pair(
+                false,
+                fmt::format(
+                    "{}: dataframe currently has no domain set: please "
+                    "upgrade the array.",
+                    function_name_for_messages));
+        }
+
+    } else {
+        if (!has_current_domain()) {
+            return std::pair(
+                false,
+                fmt::format(
+                    "{}: dataframe already has a shape set.",
+                    function_name_for_messages));
+        }
     }
 
     // OK if soma_joinid isn't a dim.

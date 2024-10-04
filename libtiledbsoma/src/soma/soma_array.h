@@ -1095,7 +1095,20 @@ class SOMAArray : public SOMAObject {
      * for maybe_resize_soma_joinid.
      */
     std::pair<bool, std::string> can_resize_soma_joinid_shape(
-        int64_t newshape, std::string function_name_for_messages);
+        int64_t newshape, std::string function_name_for_messages) {
+        return _can_set_soma_joinid_shape_helper(
+            newshape, true, function_name_for_messages);
+    }
+
+    /**
+     * This is similar to can_upgrade_shape, but it's a can-we call
+     * for maybe_resize_soma_joinid.
+     */
+    std::pair<bool, std::string> can_upgrade_soma_joinid_shape(
+        int64_t newshape, std::string function_name_for_messages) {
+        return _can_set_soma_joinid_shape_helper(
+            newshape, false, function_name_for_messages);
+    }
 
     /**
      * @brief Resize the shape (what core calls "current domain") up to the
@@ -1209,6 +1222,15 @@ class SOMAArray : public SOMAObject {
     std::pair<bool, std::string> _can_set_shape_domainish_subhelper(
         const std::vector<int64_t>& newshape,
         bool check_current_domain,
+        std::string function_name_for_messages);
+
+    /**
+     * This is a code-dedupe helper for can_resize_soma_joinid_shape and
+     * can_upgrade_soma_joinid_shape.
+     */
+    std::pair<bool, std::string> _can_set_soma_joinid_shape_helper(
+        int64_t newshape,
+        bool is_resize,
         std::string function_name_for_messages);
 
     /**
