@@ -657,23 +657,21 @@ TEST_CASE_METHOD(
 
         // Check can_resize_soma_joinid_shape
         std::pair<bool, std::string> check = sdf->can_resize_soma_joinid_shape(
-            1);
+            1, "testing");
         if (!use_current_domain) {
             REQUIRE(check.first == false);
             REQUIRE(
                 check.second ==
-                "can_resize_soma_joinid_shape: dataframe currently has no "
-                "domain "
-                "set: please use tiledbsoma_upgrade_domain.");
+                "testing: dataframe currently has no domain set: please use "
+                "tiledbsoma_upgrade_domain.");
         } else {
             // Must fail since this is too small.
             REQUIRE(check.first == false);
             REQUIRE(
                 check.second ==
-                "resize_soma_joinid_shape: new soma_joinid shape 1 < existing "
-                "shape 199");
+                "testing: new soma_joinid shape 1 < existing shape 199");
             check = sdf->can_resize_soma_joinid_shape(
-                SOMA_JOINID_RESIZE_DIM_MAX + 1);
+                SOMA_JOINID_RESIZE_DIM_MAX + 1, "testing");
             REQUIRE(check.first == true);
             REQUIRE(check.second == "");
         }
@@ -891,23 +889,21 @@ TEST_CASE_METHOD(
 
         // Check can_resize_soma_joinid_shape
         std::pair<bool, std::string> check = sdf->can_resize_soma_joinid_shape(
-            1);
+            1, "testing");
         if (!use_current_domain) {
             REQUIRE(check.first == false);
             REQUIRE(
                 check.second ==
-                "can_resize_soma_joinid_shape: dataframe currently has no "
-                "domain "
-                "set: please use tiledbsoma_upgrade_domain.");
+                "testing: dataframe currently has no domain set: please use "
+                "tiledbsoma_upgrade_domain.");
         } else {
             // Must fail since this is too small.
             REQUIRE(check.first == false);
             REQUIRE(
                 check.second ==
-                "resize_soma_joinid_shape: new soma_joinid shape 1 < "
-                "existing shape 199");
+                "testing: new soma_joinid shape 1 < existing shape 199");
             check = sdf->can_resize_soma_joinid_shape(
-                SOMA_JOINID_RESIZE_DIM_MAX + 1);
+                SOMA_JOINID_RESIZE_DIM_MAX + 1, "testing");
             REQUIRE(check.first == true);
             REQUIRE(check.second == "");
         }
@@ -1141,23 +1137,21 @@ TEST_CASE_METHOD(
 
         // Check can_resize_soma_joinid_shape
         std::pair<bool, std::string> check = sdf->can_resize_soma_joinid_shape(
-            1);
+            1, "testing");
         if (!use_current_domain) {
             REQUIRE(check.first == false);
             REQUIRE(
                 check.second ==
-                "can_resize_soma_joinid_shape: dataframe currently has no "
-                "domain "
-                "set: please use tiledbsoma_upgrade_domain.");
+                "testing: dataframe currently has no domain set: please use "
+                "tiledbsoma_upgrade_domain.");
         } else {
             // Must fail since this is too small.
             REQUIRE(check.first == false);
             REQUIRE(
                 check.second ==
-                "resize_soma_joinid_shape: new soma_joinid shape 1 < existing "
-                "shape 99");
+                "testing: new soma_joinid shape 1 < existing shape 99");
             check = sdf->can_resize_soma_joinid_shape(
-                SOMA_JOINID_RESIZE_DIM_MAX + 1);
+                SOMA_JOINID_RESIZE_DIM_MAX + 1, "testing");
             REQUIRE(check.first == true);
             REQUIRE(check.second == "");
         }
@@ -1352,14 +1346,13 @@ TEST_CASE_METHOD(
 
         // Check can_resize_soma_joinid_shape
         std::pair<bool, std::string> check = sdf->can_resize_soma_joinid_shape(
-            0);
+            0, "testing");
         if (!use_current_domain) {
             REQUIRE(check.first == false);
             REQUIRE(
                 check.second ==
-                "can_resize_soma_joinid_shape: dataframe currently has no "
-                "domain "
-                "set: please use tiledbsoma_upgrade_domain.");
+                "testing: dataframe currently has no domain set: please use "
+                "tiledbsoma_upgrade_domain.");
         } else {
             // Must pass since soma_joinid isn't a dim in this case.
             REQUIRE(check.first == true);
