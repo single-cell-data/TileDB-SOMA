@@ -1116,7 +1116,9 @@ class SOMAArray : public SOMAObject {
      * of int64 type. Namely, all SparseNDArray/DenseNDArray, and
      * default-indexed DataFrame.
      */
-    void upgrade_shape(const std::vector<int64_t>& newshape);
+    void upgrade_shape(
+        const std::vector<int64_t>& newshape,
+        std::string function_name_for_messages);
 
     /**
      * @brief Increases the tiledbsoma shape up to at most the maxshape,
@@ -1210,7 +1212,7 @@ class SOMAArray : public SOMAObject {
     /**
      * This is a code-dedupe helper method for resize and upgrade_shape.
      */
-    void _set_current_domain_from_shape(const std::vector<int64_t>& newshape);
+    void _set_current_domain_from_shape(const std::vector<int64_t>& newshape, std::string function_name_for_messages);
 
     /**
      * While SparseNDArray, DenseNDArray, and default-indexed DataFrame

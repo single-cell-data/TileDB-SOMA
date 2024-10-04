@@ -148,7 +148,7 @@ TEST_CASE("SOMASparseNDArray: basic", "[SOMASparseNDArray]") {
             REQUIRE(!snda->has_current_domain());
             REQUIRE_THROWS(snda->resize(new_shape, "testing"));
             // Now set the shape
-            snda->upgrade_shape(new_shape);
+            snda->upgrade_shape(new_shape, "testing");
             snda->close();
 
             snda->open(OpenMode::read);
@@ -171,7 +171,7 @@ TEST_CASE("SOMASparseNDArray: basic", "[SOMASparseNDArray]") {
             snda = SOMASparseNDArray::open(uri, OpenMode::write, ctx);
             // Should throw since this already has a shape (core current
             // domain).
-            REQUIRE_THROWS(snda->upgrade_shape(new_shape));
+            REQUIRE_THROWS(snda->upgrade_shape(new_shape, "testing"));
             snda->resize(new_shape, "testing");
             snda->close();
 

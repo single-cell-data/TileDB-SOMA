@@ -132,7 +132,7 @@ void load_soma_sparse_ndarray(py::module& m) {
             "tiledbsoma_upgrade_shape",
             [](SOMAArray& array, const std::vector<int64_t>& newshape) {
                 try {
-                    array.upgrade_shape(newshape);
+                    array.upgrade_shape(newshape, "tiledbsoma_upgrade_shape");
                 } catch (const std::exception& e) {
                     throw TileDBSOMAError(e.what());
                 }
