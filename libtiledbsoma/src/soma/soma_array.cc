@@ -29,10 +29,10 @@
  *   This file defines the SOMAArray class.
  */
 
+#include "soma_array.h"
 #include <tiledb/array_experimental.h>
 #include "../utils/logger.h"
 #include "../utils/util.h"
-#include "soma_array.h"
 namespace tiledbsoma {
 using namespace tiledb;
 
@@ -1610,15 +1610,18 @@ std::pair<bool, std::string> SOMAArray::_can_set_soma_joinid_shape_helper(
     }
 
     // Fail if the newshape isn't within the array's core current domain.
-    std::pair cur_dom_lo_hi = _core_current_domain_slot<int64_t>("soma_joinid");
-    if (newshape < cur_dom_lo_hi.second) {
-        return std::pair(
-            false,
-            fmt::format(
-                "{}: new soma_joinid shape {} < existing shape {}",
-                function_name_for_messages,
-                newshape,
-                cur_dom_lo_hi.second));
+    if (is_resize) {
+        std::pair cur_dom_lo_hi = _core_current_domain_slot<int64_t>(
+            "soma_joinid");
+        if (newshape < cur_dom_lo_hi.second) {
+            return std::pair(
+                false,
+                fmt::format(
+                    "{}: new soma_joinid shape {} < existing shape {}",
+                    function_name_for_messages,
+                    newshape,
+                    cur_dom_lo_hi.second + 1));
+        }
     }
 
     // Fail if the newshape isn't within the array's core (max) domain.
@@ -1630,7 +1633,7 @@ std::pair<bool, std::string> SOMAArray::_can_set_soma_joinid_shape_helper(
                 "{}: new soma_joinid shape {} > maxshape {}",
                 function_name_for_messages,
                 newshape,
-                dom_lo_hi.second));
+                dom_lo_hi.second + 1));
     }
 
     // Sucess otherwise.
