@@ -1110,7 +1110,9 @@ class SOMAArray : public SOMAObject {
      */
     void resize(
         const std::vector<int64_t>& newshape,
-        std::string function_name_for_messages);
+        std::string function_name_for_messages) {
+        _set_shape_helper(newshape, true, function_name_for_messages);
+    }
 
     /**
      * @brief Given an old-style array without current domain, sets its
@@ -1120,7 +1122,9 @@ class SOMAArray : public SOMAObject {
      */
     void upgrade_shape(
         const std::vector<int64_t>& newshape,
-        std::string function_name_for_messages);
+        std::string function_name_for_messages) {
+        _set_shape_helper(newshape, false, function_name_for_messages);
+    }
 
     /**
      * @brief Increases the tiledbsoma shape up to at most the maxshape,
@@ -1214,8 +1218,9 @@ class SOMAArray : public SOMAObject {
     /**
      * This is a code-dedupe helper method for resize and upgrade_shape.
      */
-    void _set_current_domain_from_shape(
+    void _set_shape_helper(
         const std::vector<int64_t>& newshape,
+        bool is_resize,
         std::string function_name_for_messages);
 
     /**
