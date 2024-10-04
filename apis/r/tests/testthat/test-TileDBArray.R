@@ -10,6 +10,7 @@ test_that("TileDBArray helper functions", {
   # Create an array
   index_cols <- c("Dept", "Gender")
   df <- as.data.frame(UCBAdmissions)
+  # XXX CHANGEME
   tiledb::fromDataFrame(df, uri, col_index = index_cols)
 
   expect_identical(tdba$uri, uri)

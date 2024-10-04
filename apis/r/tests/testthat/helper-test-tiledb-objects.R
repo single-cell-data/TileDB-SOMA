@@ -1,12 +1,17 @@
 create_empty_test_array <- function(uri) {
   stopifnot(!dir.exists(uri))
+  # XXX CHANGEME
   dim <- tiledb::tiledb_dim("d0", type = "ASCII", domain = NULL, tile = NULL)
+  # XXX CHANGEME
   dom <- tiledb::tiledb_domain(dims = dim)
+  # XXX CHANGEME
   schema <- tiledb::tiledb_array_schema(
     domain = dom,
+    # XXX CHANGEME
     attrs = c(tiledb::tiledb_attr("a", type = "INT32")),
     sparse = TRUE
   )
+  # XXX CHANGEME
   tiledb::tiledb_array_create(uri, schema)
   return(uri)
 }

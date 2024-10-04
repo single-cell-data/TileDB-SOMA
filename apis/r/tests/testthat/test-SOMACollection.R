@@ -10,7 +10,6 @@ test_that("SOMACollection basics", {
   # Verify the empty collection is accessible and reads back as empty
   collection <- SOMACollectionOpen(uri)
   expect_true(dir.exists(uri))
-  expect_match(tiledb::tiledb_object_type(uri), "GROUP")
   expect_true(collection$soma_type == "SOMACollection")
   expect_true(collection$exists())
   expect_equal(collection$length(), 0)

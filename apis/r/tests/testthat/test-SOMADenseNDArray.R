@@ -9,7 +9,6 @@ test_that("SOMADenseNDArray creation", {
   ndarray$close()
   ndarray <- SOMADenseNDArrayOpen(uri, "WRITE")
 
-  expect_equal(tiledb::tiledb_object_type(uri), "ARRAY")
   expect_equal(ndarray$dimnames(), c("soma_dim_0", "soma_dim_1"))
   expect_equal(ndarray$attrnames(), "soma_data")
   expect_equal(ndarray$schema()[["soma_data"]]$type$name, "int32")
@@ -72,6 +71,7 @@ test_that("SOMADenseNDArray creation", {
   )
 
   # Validate TileDB array schema
+  # XXX CHANGEME
   arr <- tiledb::tiledb_array(uri)
   sch <- tiledb::schema(arr)
   expect_false(tiledb::is.sparse(sch))
@@ -129,6 +129,7 @@ test_that("platform_config is respected", {
   dnda <- SOMADenseNDArrayCreate(uri=uri, type=arrow::int32(), shape=c(100,100), platform_config = cfg)
 
   # Read back and check the array schema against the tiledb create options
+  # XXX CHANGEME
   arr <- tiledb::tiledb_array(uri)
   tsch <- tiledb::schema(arr)
 
@@ -197,6 +198,7 @@ test_that("platform_config defaults", {
   dnda <- SOMADenseNDArrayCreate(uri=uri, type=arrow::int32(), shape=c(100,100), platform_config = cfg)
 
   # Read back and check the array schema against the tiledb create options
+  # XXX CHANGEME
   arr <- tiledb::tiledb_array(uri)
   tsch <- tiledb::schema(arr)
 

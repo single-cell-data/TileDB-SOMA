@@ -37,6 +37,7 @@ test_that("Basic mechanics", {
 
   # Verify the array is still open for write
   expect_equal(sdf$mode(), "WRITE")
+  # XXX CHANGEME
   expect_true(tiledb::tiledb_array_is_open(sdf$object))
   sdf$close()
 
@@ -47,6 +48,7 @@ test_that("Basic mechanics", {
   expect_error(sdf$shape(), class = "notYetImplementedError")
 
   expect_equivalent(
+    # XXX CHANGEME
     tiledb::tiledb_array(sdf$uri, return_as = "asis")[],
     as.list(tbl0),
     ignore_attr = TRUE
@@ -74,6 +76,7 @@ test_that("Basic mechanics", {
   # Read back the data (ignore attributes)
   sdf <- SOMADataFrameOpen(uri)
   expect_equivalent(
+    # XXX CHANGEME
     tiledb::tiledb_array(sdf$uri, return_as = "asis")[],
     as.list(rb0),
     ignore_attr = TRUE
@@ -105,6 +108,7 @@ test_that("Basic mechanics", {
   expect_true(tbl1$Equals(tbl0$Filter(tbl0$float_column < 5)))
 
   # Validate TileDB array schema
+  # XXX CHANGEME
   arr <- tiledb::tiledb_array(uri)
   sch <- tiledb::schema(arr)
   expect_true(tiledb::is.sparse(sch))
@@ -156,6 +160,7 @@ test_that("Basic mechanics with default index_column_names", {
 
   # read back the data (ignore attributes)
   expect_equivalent(
+    # XXX CHANGEME
     tiledb::tiledb_array(sdf$uri, return_as = "asis")[],
     as.list(tbl0),
     ignore_attr = TRUE
@@ -342,6 +347,7 @@ test_that("soma_joinid is added on creation", {
   sdf <- SOMADataFrameCreate(uri, asch, index_column_names = "int_column")
 
   expect_true("soma_joinid" %in% sdf$attrnames())
+  # XXX CHANGEME
   expect_equal(tiledb::datatype(sdf$attributes()$soma_joinid), "INT64")
   sdf$close()
 })
@@ -411,18 +417,22 @@ test_that("platform_config is respected", {
   sdf <- SOMADataFrameCreate(uri=uri, schema=asch, index_column_names=c("soma_joinid"), platform_config = cfg)
 
   # Read back and check the array schema against the tiledb create options
+  # XXX CHANGEME
   arr <- tiledb::tiledb_array(uri)
   tsch <- tiledb::schema(arr)
 
+  # XXX CHANGEME
   expect_equal(tiledb::capacity(tsch), 8000)
   expect_equal(tiledb::tile_order(tsch), "COL_MAJOR")
   expect_equal(tiledb::cell_order(tsch), "ROW_MAJOR")
 
+  # XXX CHANGEME
   offsets_filters <- tiledb::filter_list(tsch)$offsets
   expect_equal(tiledb::nfilters(offsets_filters), 1)
   o1 <- offsets_filters[0] # C++ indexing here
   expect_equal(tiledb::tiledb_filter_type(o1), "RLE")
 
+  # XXX CHANGEME
   validity_filters <- tiledb::filter_list(tsch)$validity
   expect_equal(tiledb::nfilters(validity_filters), 2)
   v1 <- validity_filters[0] # C++ indexing here
@@ -430,6 +440,7 @@ test_that("platform_config is respected", {
   expect_equal(tiledb::tiledb_filter_type(v1), "RLE")
   expect_equal(tiledb::tiledb_filter_type(v2), "NONE")
 
+  # XXX CHANGEME
   dom <- tiledb::domain(tsch)
   expect_equal(tiledb::tiledb_ndim(dom), 1)
   dim <- tiledb::dimensions(dom)[[1]]
@@ -446,6 +457,7 @@ test_that("platform_config is respected", {
   expect_equal(tiledb::tiledb_filter_type(d3), "NONE")
   expect_equal(tiledb::tiledb_filter_get_option(d2, "COMPRESSION_LEVEL"), 8)
 
+  # XXX CHANGEME
   expect_equal(length(tiledb::attrs(tsch)), 3)
   i32_filters <- tiledb::filter_list(tiledb::attrs(tsch)$i32)
   f64_filters <- tiledb::filter_list(tiledb::attrs(tsch)$f64)
@@ -454,6 +466,7 @@ test_that("platform_config is respected", {
 
   i1 <- i32_filters[0] # C++ indexing here
   i2 <- i32_filters[1] # C++ indexing here
+  # XXX CHANGEME
   expect_equal(tiledb::tiledb_filter_type(i1), "RLE")
   expect_equal(tiledb::tiledb_filter_type(i2), "ZSTD")
   expect_equal(tiledb::tiledb_filter_get_option(i2, "COMPRESSION_LEVEL"), 9)
@@ -486,6 +499,7 @@ test_that("platform_config defaults", {
   )
 
   # Read back and check the array schema against the tiledb create options
+  # XXX CHANGEME
   arr <- tiledb::tiledb_array(uri)
   tsch <- tiledb::schema(arr)
 
@@ -531,6 +545,7 @@ test_that("platform_config defaults", {
   tsch <- tiledb::schema(arr)
 
   # Here we're snooping on the default dim filter that's used when no other is specified.
+  # XXX CHANGEME
   dom <- tiledb::domain(tsch)
   expect_equal(tiledb::tiledb_ndim(dom), 1)
   dim <- tiledb::dimensions(dom)[[1]]
@@ -820,6 +835,7 @@ test_that("missing levels in enums", {
 
   # Test missingness is preserved
   expect_s3_class(sdf <- SOMADataFrameOpen(uri), "SOMADataFrame")
+  # XXX CHANGEME
   expect_true(tiledb::tiledb_array_has_enumeration(sdf$object)["enum"])
   expect_s4_class(
     attr <- tiledb::attrs(sdf$tiledb_schema())$enum,
@@ -849,6 +865,7 @@ test_that("missing levels in enums", {
 
   # Test missingness is preserved when updating
   expect_s3_class(sdf <- SOMADataFrameOpen(uri), "SOMADataFrame")
+  # XXX CHANGEME
   expect_true(tiledb::tiledb_array_has_enumeration(sdf$object)["miss"])
   expect_s4_class(
     attr <- tiledb::attrs(sdf$tiledb_schema())$miss,
