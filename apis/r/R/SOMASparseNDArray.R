@@ -266,10 +266,7 @@ SOMASparseNDArray <- R6::R6Class(
 
       ## the 'soma_data' data type may not have been cached, and if so we need to fetch it
       if (is.null(private$.type)) {
-          ## TODO: replace with a libtiledbsoma accessor as discussed
-          tpstr <- tiledb::datatype(tiledb::attrs(tiledb::schema(self$uri))[["soma_data"]])
-          arstr <- arrow_type_from_tiledb_type(tpstr)
-          private$.type <- arstr
+          private$.type <- self$schema()[["soma_data"]]$type
       }
 
       arrsch <- arrow::schema(arrow::field(nms[1], arrow::int64()),

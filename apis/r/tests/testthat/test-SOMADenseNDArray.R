@@ -12,14 +12,13 @@ test_that("SOMADenseNDArray creation", {
   expect_equal(tiledb::tiledb_object_type(uri), "ARRAY")
   expect_equal(ndarray$dimnames(), c("soma_dim_0", "soma_dim_1"))
   expect_equal(ndarray$attrnames(), "soma_data")
-  expect_equal(tiledb::datatype(ndarray$attributes()$soma_data), "INT32")
+  expect_equal(ndarray$schema()[["soma_data"]]$type$name, "int32")
 
   mat <- create_dense_matrix_with_int_dims(10, 5)
   ndarray$write(mat)
 
   # Verify the array is still open for write
   expect_equal(ndarray$mode(), "WRITE")
-  expect_true(tiledb::tiledb_array_is_open(ndarray$object))
   ndarray$close()
 
   # Read result in column-major order to match R matrix layout

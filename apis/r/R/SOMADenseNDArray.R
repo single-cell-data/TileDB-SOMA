@@ -133,14 +133,9 @@ SOMADenseNDArray <- R6::R6Class(
 
       ## the 'soma_data' data type may not have been cached, and if so we need to fetch it
       if (is.null(private$.type)) {
-          ## TODO: replace with a libtiledbsoma accessor as discussed
-          tpstr <- tiledb::datatype(tiledb::attrs(tiledb::schema(self$uri))[["soma_data"]])
-          arstr <- arrow_type_from_tiledb_type(tpstr)
-          private$.type <- arstr
+          private$.type <- self$schema()[["soma_data"]]$type
       }
 
-      arr <- self$object
-      tiledb::query_layout(arr) <- "COL_MAJOR"
       spdl::debug("[SOMADenseNDArray::write] about to call write")
       arrsch <- arrow::schema(arrow::field("soma_data", private$.type))
       tbl <- arrow::arrow_table(soma_data = values, schema = arrsch)
@@ -149,7 +144,6 @@ SOMADenseNDArray <- R6::R6Class(
       naap <- nanoarrow::nanoarrow_allocate_array()
       nasp <- nanoarrow::nanoarrow_allocate_schema()
       arrow::as_record_batch(tbl)$export_to_c(naap, nasp)
-      #arr[] <- values
       writeArrayFromArrow(
         uri = self$uri,
         naap = naap,
