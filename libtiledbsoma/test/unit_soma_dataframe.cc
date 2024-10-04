@@ -662,8 +662,7 @@ TEST_CASE_METHOD(
             REQUIRE(check.first == false);
             REQUIRE(
                 check.second ==
-                "testing: dataframe currently has no domain set: please "
-                "upgrade the array.");
+                "testing: dataframe currently has no domain set.");
         } else {
             // Must fail since this is too small.
             REQUIRE(check.first == false);
@@ -894,8 +893,7 @@ TEST_CASE_METHOD(
             REQUIRE(check.first == false);
             REQUIRE(
                 check.second ==
-                "testing: dataframe currently has no domain set: please "
-                "upgrade the array.");
+                "testing: dataframe currently has no domain set.");
         } else {
             // Must fail since this is too small.
             REQUIRE(check.first == false);
@@ -1142,8 +1140,7 @@ TEST_CASE_METHOD(
             REQUIRE(check.first == false);
             REQUIRE(
                 check.second ==
-                "testing: dataframe currently has no domain set: please "
-                "upgrade the array.");
+                "testing: dataframe currently has no domain set.");
         } else {
             // Must fail since this is too small.
             REQUIRE(check.first == false);
@@ -1351,8 +1348,7 @@ TEST_CASE_METHOD(
             REQUIRE(check.first == false);
             REQUIRE(
                 check.second ==
-                "testing: dataframe currently has no domain set: please "
-                "upgrade the array.");
+                "testing: dataframe currently has no domain set.");
         } else {
             // Must pass since soma_joinid isn't a dim in this case.
             REQUIRE(check.first == true);
