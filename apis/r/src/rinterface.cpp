@@ -440,7 +440,7 @@ void resize_soma_joinid_shape(
     // This function is solely for SOMADataFrame.
     auto sr = tdbs::SOMADataFrame::open(uri, OpenMode::write, ctxxp->ctxptr);
     std::vector<int64_t> new_shape_i64 = i64_from_rcpp_numeric(new_shape);
-    sr->resize_soma_joinid_shape(new_shape_i64[0]);
+    sr->resize_soma_joinid_shape(new_shape_i64[0], "resize_soma_joinid_shape");
     sr->close();
 }
 

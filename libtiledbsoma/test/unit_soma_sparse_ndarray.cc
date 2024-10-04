@@ -471,8 +471,7 @@ TEST_CASE("SOMASparseNDArray: can_resize", "[SOMASparseNDArray]") {
     check = snda->can_resize(newshape_too_small);
     REQUIRE(check.first == false);
     REQUIRE(
-        check.second ==
-        "resize for soma_dim_0: new 40 < existing shape 1000");
+        check.second == "resize for soma_dim_0: new 40 < existing shape 1000");
 
     check = snda->can_resize(newshape_good);
     REQUIRE(check.first == true);
