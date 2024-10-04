@@ -96,59 +96,59 @@ TEST_CASE("SOMADenseNDArray: basic", "[SOMADenseNDArray]") {
             REQUIRE(!SOMADataFrame::exists(uri, ctx));
             REQUIRE(!SOMASparseNDArray::exists(uri, ctx));
 
-            auto soma_dense = SOMADenseNDArray::open(uri, OpenMode::read, ctx);
-            REQUIRE(soma_dense->uri() == uri);
-            REQUIRE(soma_dense->ctx() == ctx);
-            REQUIRE(soma_dense->type() == "SOMADenseNDArray");
-            REQUIRE(soma_dense->is_sparse() == false);
-            REQUIRE(soma_dense->soma_data_type() == attr_arrow_format);
-            auto schema = soma_dense->tiledb_schema();
+            auto dnda = SOMADenseNDArray::open(uri, OpenMode::read, ctx);
+            REQUIRE(dnda->uri() == uri);
+            REQUIRE(dnda->ctx() == ctx);
+            REQUIRE(dnda->type() == "SOMADenseNDArray");
+            REQUIRE(dnda->is_sparse() == false);
+            REQUIRE(dnda->soma_data_type() == attr_arrow_format);
+            auto schema = dnda->tiledb_schema();
             REQUIRE(schema->has_attribute("soma_data"));
             REQUIRE(schema->array_type() == TILEDB_DENSE);
             REQUIRE(schema->domain().has_dimension(dim_name));
-            REQUIRE(soma_dense->ndim() == 1);
+            REQUIRE(dnda->ndim() == 1);
 
             // TODO: Once we have support for current domain in dense arrays
             // https://github.com/single-cell-data/TileDB-SOMA/issues/2955
             // if (use_current_domain) {
-            //    REQUIRE(soma_dense->shape() == std::vector<int64_t>{dim_max +
+            //    REQUIRE(dnda->shape() == std::vector<int64_t>{dim_max +
             //    1});
             //} else {
             //    REQUIRE(
-            //        soma_dense->maxshape() == std::vector<int64_t>{dim_max +
+            //        dnda->maxshape() == std::vector<int64_t>{dim_max +
             //        1});
             //}
 
-            REQUIRE(soma_dense->maxshape() == std::vector<int64_t>{shape});
+            REQUIRE(dnda->maxshape() == std::vector<int64_t>{shape});
 
-            soma_dense->close();
+            dnda->close();
 
             std::vector<int64_t> d0{1, 10};
             std::vector<int32_t> a0(10, 1);
 
-            soma_dense->open(OpenMode::write);
-            soma_dense->set_column_data("soma_data", a0.size(), a0.data());
-            soma_dense->set_column_data(dim_name, d0.size(), d0.data());
-            soma_dense->write();
-            soma_dense->close();
+            dnda->open(OpenMode::write);
+            dnda->set_column_data("soma_data", a0.size(), a0.data());
+            dnda->set_column_data(dim_name, d0.size(), d0.data());
+            dnda->write();
+            dnda->close();
 
-            soma_dense->open(OpenMode::read);
-            while (auto batch = soma_dense->read_next()) {
+            dnda->open(OpenMode::read);
+            while (auto batch = dnda->read_next()) {
                 auto arrbuf = batch.value();
                 auto a0span = arrbuf->at("soma_data")->data<int32_t>();
                 REQUIRE(
                     a0 == std::vector<int32_t>(a0span.begin(), a0span.end()));
             }
-            soma_dense->close();
+            dnda->close();
 
-            soma_dense = SOMADenseNDArray::open(uri, OpenMode::read, ctx);
+            dnda = SOMADenseNDArray::open(uri, OpenMode::read, ctx);
             auto new_shape = std::vector<int64_t>({shape * 2});
             // * When use_current_domain is false: can't resize what has not
             //   been sized.
             // * When use_current_domain is true: TODO: current domain not
             //   supported for dense arrays yet (see above).
-            REQUIRE_THROWS(soma_dense->resize(new_shape));
-            soma_dense->close();
+            REQUIRE_THROWS(dnda->resize(new_shape));
+            dnda->close();
         }
     }
 }
@@ -205,8 +205,8 @@ TEST_CASE("SOMADenseNDArray: platform_config", "[SOMADenseNDArray]") {
                 ctx,
                 platform_config);
 
-            auto soma_dense = SOMADenseNDArray::open(uri, OpenMode::read, ctx);
-            auto dim_filter = soma_dense->tiledb_schema()
+            auto dnda = SOMADenseNDArray::open(uri, OpenMode::read, ctx);
+            auto dim_filter = dnda->tiledb_schema()
                                   ->domain()
                                   .dimension(dim_name)
                                   .filter_list()
@@ -215,7 +215,7 @@ TEST_CASE("SOMADenseNDArray: platform_config", "[SOMADenseNDArray]") {
             REQUIRE(
                 dim_filter.get_option<int32_t>(TILEDB_COMPRESSION_LEVEL) == 6);
 
-            soma_dense->close();
+            dnda->close();
         }
     }
 }
@@ -256,7 +256,7 @@ TEST_CASE("SOMADenseNDArray: metadata", "[SOMADenseNDArray]") {
             PlatformConfig(),
             TimestampRange(0, 2));
 
-        auto soma_dense = SOMADenseNDArray::open(
+        auto dnda = SOMADenseNDArray::open(
             uri,
             OpenMode::write,
             ctx,
@@ -265,50 +265,50 @@ TEST_CASE("SOMADenseNDArray: metadata", "[SOMADenseNDArray]") {
             std::pair<uint64_t, uint64_t>(1, 1));
 
         int32_t val = 100;
-        soma_dense->set_metadata("md", TILEDB_INT32, 1, &val);
-        soma_dense->close();
+        dnda->set_metadata("md", TILEDB_INT32, 1, &val);
+        dnda->close();
 
         // Read metadata
-        soma_dense->open(OpenMode::read, TimestampRange(0, 2));
-        REQUIRE(soma_dense->metadata_num() == 3);
-        REQUIRE(soma_dense->has_metadata("soma_object_type"));
-        REQUIRE(soma_dense->has_metadata("soma_encoding_version"));
-        REQUIRE(soma_dense->has_metadata("md"));
-        auto mdval = soma_dense->get_metadata("md");
+        dnda->open(OpenMode::read, TimestampRange(0, 2));
+        REQUIRE(dnda->metadata_num() == 3);
+        REQUIRE(dnda->has_metadata("soma_object_type"));
+        REQUIRE(dnda->has_metadata("soma_encoding_version"));
+        REQUIRE(dnda->has_metadata("md"));
+        auto mdval = dnda->get_metadata("md");
         REQUIRE(std::get<MetadataInfo::dtype>(*mdval) == TILEDB_INT32);
         REQUIRE(std::get<MetadataInfo::num>(*mdval) == 1);
         REQUIRE(
             *((const int32_t*)std::get<MetadataInfo::value>(*mdval)) == 100);
-        soma_dense->close();
+        dnda->close();
 
         // md should not be available at (2, 2)
-        soma_dense->open(OpenMode::read, TimestampRange(2, 2));
-        REQUIRE(soma_dense->metadata_num() == 2);
-        REQUIRE(soma_dense->has_metadata("soma_object_type"));
-        REQUIRE(soma_dense->has_metadata("soma_encoding_version"));
-        REQUIRE(!soma_dense->has_metadata("md"));
-        soma_dense->close();
+        dnda->open(OpenMode::read, TimestampRange(2, 2));
+        REQUIRE(dnda->metadata_num() == 2);
+        REQUIRE(dnda->has_metadata("soma_object_type"));
+        REQUIRE(dnda->has_metadata("soma_encoding_version"));
+        REQUIRE(!dnda->has_metadata("md"));
+        dnda->close();
 
         // Metadata should also be retrievable in write mode
-        soma_dense->open(OpenMode::write, TimestampRange(0, 2));
-        REQUIRE(soma_dense->metadata_num() == 3);
-        REQUIRE(soma_dense->has_metadata("soma_object_type"));
-        REQUIRE(soma_dense->has_metadata("soma_encoding_version"));
-        REQUIRE(soma_dense->has_metadata("md"));
-        mdval = soma_dense->get_metadata("md");
+        dnda->open(OpenMode::write, TimestampRange(0, 2));
+        REQUIRE(dnda->metadata_num() == 3);
+        REQUIRE(dnda->has_metadata("soma_object_type"));
+        REQUIRE(dnda->has_metadata("soma_encoding_version"));
+        REQUIRE(dnda->has_metadata("md"));
+        mdval = dnda->get_metadata("md");
         REQUIRE(
             *((const int32_t*)std::get<MetadataInfo::value>(*mdval)) == 100);
 
         // Delete and have it reflected when reading metadata while in write
         // mode
-        soma_dense->delete_metadata("md");
-        mdval = soma_dense->get_metadata("md");
+        dnda->delete_metadata("md");
+        mdval = dnda->get_metadata("md");
         REQUIRE(!mdval.has_value());
-        soma_dense->close();
+        dnda->close();
 
         // Confirm delete in read mode
-        soma_dense->open(OpenMode::read, TimestampRange(0, 2));
-        REQUIRE(!soma_dense->has_metadata("md"));
-        REQUIRE(soma_dense->metadata_num() == 2);
+        dnda->open(OpenMode::read, TimestampRange(0, 2));
+        REQUIRE(!dnda->has_metadata("md"));
+        REQUIRE(dnda->metadata_num() == 2);
     }
 }

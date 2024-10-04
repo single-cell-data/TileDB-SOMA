@@ -1193,7 +1193,7 @@ class SOMAArray : public SOMAObject {
     std::pair<bool, std::string> _can_set_shape_helper(
         const std::vector<int64_t>& newshape,
         bool is_resize,
-        std::string method_name_for_messages);
+        std::string function_name_for_messages);
 
     /**
      * This is a second-level code-dedupe helper for _can_set_shape_helper.
@@ -1201,7 +1201,7 @@ class SOMAArray : public SOMAObject {
     std::pair<bool, std::string> _can_set_shape_domainish_helper(
         const std::vector<int64_t>& newshape,
         bool check_current_domain,
-        std::string method_name_for_messages);
+        std::string function_name_for_messages);
 
     /**
      * This is a code-dedupe helper method for resize and upgrade_shape.

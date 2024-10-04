@@ -1443,7 +1443,7 @@ std::vector<int64_t> SOMAArray::maxshape() {
 std::pair<bool, std::string> SOMAArray::_can_set_shape_helper(
     const std::vector<int64_t>& newshape,
     bool is_resize,
-    std::string method_name_for_messages) {
+    std::string function_name_for_messages) {
     // E.g. it's an error to try to upgrade_domain or resize specifying
     // a 3-D shape on a 2-D array.
     auto arg_ndim = newshape.size();
@@ -1453,7 +1453,7 @@ std::pair<bool, std::string> SOMAArray::_can_set_shape_helper(
             false,
             fmt::format(
                 "cannot {}: provided shape has ndim {}, while the array has {}",
-                method_name_for_messages,
+                function_name_for_messages,
                 arg_ndim,
                 array_ndim));
     }
@@ -1471,7 +1471,7 @@ std::pair<bool, std::string> SOMAArray::_can_set_shape_helper(
                 fmt::format(
                     "{}: array currently has no shape: please use "
                     "tiledbsoma_upgrade_shape.",
-                    method_name_for_messages));
+                    function_name_for_messages));
         }
     } else {
         // They're trying to do upgrade_shape on an array that already has a
@@ -1483,7 +1483,7 @@ std::pair<bool, std::string> SOMAArray::_can_set_shape_helper(
                     "{}: array already has a shape: please use resize rather "
                     "than "
                     "tiledbsoma_upgrade_shape.",
-                    method_name_for_messages));
+                    function_name_for_messages));
         }
     }
 
@@ -1498,7 +1498,7 @@ std::pair<bool, std::string> SOMAArray::_can_set_shape_helper(
     // if the requested shape fits in the array's core domain, it's good to go
     // as a new shape.
     auto domain_check = _can_set_shape_domainish_helper(
-        newshape, false, method_name_for_messages);
+        newshape, false, function_name_for_messages);
     if (!domain_check.first) {
         return domain_check;
     }
@@ -1507,7 +1507,7 @@ std::pair<bool, std::string> SOMAArray::_can_set_shape_helper(
     // shape (core current domain) isn't a downsize of the current one.
     if (has_shape) {
         auto current_domain_check = _can_set_shape_domainish_helper(
-            newshape, true, method_name_for_messages);
+            newshape, true, function_name_for_messages);
         if (!current_domain_check.first) {
             return current_domain_check;
         }
@@ -1522,7 +1522,7 @@ std::pair<bool, std::string> SOMAArray::_can_set_shape_helper(
 std::pair<bool, std::string> SOMAArray::_can_set_shape_domainish_helper(
     const std::vector<int64_t>& newshape,
     bool check_current_domain,
-    std::string method_name_for_messages) {
+    std::string function_name_for_messages) {
     Domain domain = arr_->schema().domain();
 
     for (unsigned i = 0; i < domain.ndim(); i++) {
@@ -1538,7 +1538,7 @@ std::pair<bool, std::string> SOMAArray::_can_set_shape_domainish_helper(
             throw TileDBSOMAError(fmt::format(
                 "{}: internal error: expected {} dim to "
                 "be {}; got {}",
-                method_name_for_messages,
+                function_name_for_messages,
                 dim_name,
                 tiledb::impl::type_to_str(TILEDB_INT64),
                 tiledb::impl::type_to_str(dim.type())));
@@ -1554,7 +1554,7 @@ std::pair<bool, std::string> SOMAArray::_can_set_shape_domainish_helper(
                     false,
                     fmt::format(
                         "cannot {} for {}: new {} < existing shape {}",
-                        method_name_for_messages,
+                        function_name_for_messages,
                         dim_name,
                         newshape[i],
                         old_dim_shape));
@@ -1570,7 +1570,7 @@ std::pair<bool, std::string> SOMAArray::_can_set_shape_domainish_helper(
                     false,
                     fmt::format(
                         "cannot {} for {}: new {} < maxshape {}",
-                        method_name_for_messages,
+                        function_name_for_messages,
                         dim_name,
                         newshape[i],
                         old_dim_shape));
