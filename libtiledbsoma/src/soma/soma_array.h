@@ -1092,10 +1092,23 @@ class SOMAArray : public SOMAObject {
 
     /**
      * This is similar to can_upgrade_shape, but it's a can-we call
-     * for maybe_resize_soma_joinid.
+     * for resize_soma_joinid_shape.
      */
     std::pair<bool, std::string> can_resize_soma_joinid_shape(
-        int64_t newshape, std::string function_name_for_messages);
+        int64_t newshape, std::string function_name_for_messages) {
+        return _can_set_soma_joinid_shape_helper(
+            newshape, true, function_name_for_messages);
+    }
+
+    /**
+     * This is similar to can_upgrade_shape, but it's a can-we call
+     * for upgrade_soma_joinid_shape.
+     */
+    std::pair<bool, std::string> can_upgrade_soma_joinid_shape(
+        int64_t newshape, std::string function_name_for_messages) {
+        return _can_set_soma_joinid_shape_helper(
+            newshape, false, function_name_for_messages);
+    }
 
     /**
      * @brief Resize the shape (what core calls "current domain") up to the
@@ -1110,7 +1123,9 @@ class SOMAArray : public SOMAObject {
      */
     void resize(
         const std::vector<int64_t>& newshape,
-        std::string function_name_for_messages);
+        std::string function_name_for_messages) {
+        _set_shape_helper(newshape, true, function_name_for_messages);
+    }
 
     /**
      * @brief Given an old-style array without current domain, sets its
@@ -1120,7 +1135,9 @@ class SOMAArray : public SOMAObject {
      */
     void upgrade_shape(
         const std::vector<int64_t>& newshape,
-        std::string function_name_for_messages);
+        std::string function_name_for_messages) {
+        _set_shape_helper(newshape, false, function_name_for_messages);
+    }
 
     /**
      * @brief Increases the tiledbsoma shape up to at most the maxshape,
@@ -1137,7 +1154,30 @@ class SOMAArray : public SOMAObject {
      * maxshape. Throws if the array does not have current-domain support.
      */
     void resize_soma_joinid_shape(
-        int64_t newshape, std::string function_name_for_messages);
+        int64_t newshape, std::string function_name_for_messages) {
+        return _set_soma_joinid_shape_helper(
+            newshape, true, function_name_for_messages);
+    }
+
+    /**
+     * @brief Increases the tiledbsoma shape up to at most the maxshape,
+     * resizing the soma_joinid dimension if it is a dimension.
+     *
+     * While SOMA SparseNDArray and DenseNDArray, along with default-indexed
+     * DataFrame, have int64_t dims, non-default-indexed DataFrame objects need
+     * not: it is only required that they have a dim _or_ an attr called
+     * soma_joinid. If soma_joinid is one of the dims, it will be resized while
+     * the others will be preserved. If soma_joinid is not one of the dims,
+     * nothing will be changed, as nothing _needs_ to be changed.
+     *
+     * @return Throws if the requested shape exceeds the array's create-time
+     * maxshape. Throws if the array does not have current-domain support.
+     */
+    void upgrade_soma_joinid_shape(
+        int64_t newshape, std::string function_name_for_messages) {
+        return _set_soma_joinid_shape_helper(
+            newshape, false, function_name_for_messages);
+    }
 
    protected:
     // These two are for use nominally by SOMADataFrame. This could be moved in
@@ -1212,10 +1252,29 @@ class SOMAArray : public SOMAObject {
         std::string function_name_for_messages);
 
     /**
+     * This is a code-dedupe helper for can_resize_soma_joinid_shape and
+     * can_upgrade_domain_soma_joinid_shape.
+     */
+    std::pair<bool, std::string> _can_set_soma_joinid_shape_helper(
+        int64_t newshape,
+        bool is_resize,
+        std::string function_name_for_messages);
+
+    /**
      * This is a code-dedupe helper method for resize and upgrade_shape.
      */
-    void _set_current_domain_from_shape(
+    void _set_shape_helper(
         const std::vector<int64_t>& newshape,
+        bool is_resize,
+        std::string function_name_for_messages);
+
+    /**
+     * This is a code-dedupe helper method for resize_soma_joinid_shape and
+     * upgrade_soma_joinid_shape.
+     */
+    void _set_soma_joinid_shape_helper(
+        int64_t newshape,
+        bool is_resize,
         std::string function_name_for_messages);
 
     /**

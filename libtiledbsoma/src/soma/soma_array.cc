@@ -1578,17 +1578,30 @@ std::pair<bool, std::string> SOMAArray::_can_set_shape_domainish_subhelper(
     return std::pair(true, "");
 }
 
-std::pair<bool, std::string> SOMAArray::can_resize_soma_joinid_shape(
-    int64_t newshape, std::string function_name_for_messages) {
+std::pair<bool, std::string> SOMAArray::_can_set_soma_joinid_shape_helper(
+    int64_t newshape, bool is_resize, std::string function_name_for_messages) {
     // Fail if the array doesn't already have a shape yet (they should upgrade
     // first).
-    if (!has_current_domain()) {
-        return std::pair(
-            false,
-            fmt::format(
-                "{}: dataframe currently has no domain set: please "
-                "upgrade the array.",
-                function_name_for_messages));
+    if (!is_resize) {
+        // Upgrading an array to give it a current domain
+        if (has_current_domain()) {
+            return std::pair(
+                false,
+                fmt::format(
+                    "{}: dataframe already has its domain set.",
+                    function_name_for_messages));
+        }
+
+    } else {
+        // Resizing an array's existing current domain
+
+        if (!has_current_domain()) {
+            return std::pair(
+                false,
+                fmt::format(
+                    "{}: dataframe currently has no domain set.",
+                    function_name_for_messages));
+        }
     }
 
     // OK if soma_joinid isn't a dim.
@@ -1597,15 +1610,18 @@ std::pair<bool, std::string> SOMAArray::can_resize_soma_joinid_shape(
     }
 
     // Fail if the newshape isn't within the array's core current domain.
-    std::pair cur_dom_lo_hi = _core_current_domain_slot<int64_t>("soma_joinid");
-    if (newshape < cur_dom_lo_hi.second) {
-        return std::pair(
-            false,
-            fmt::format(
-                "{}: new soma_joinid shape {} < existing shape {}",
-                function_name_for_messages,
-                newshape,
-                cur_dom_lo_hi.second));
+    if (is_resize) {
+        std::pair cur_dom_lo_hi = _core_current_domain_slot<int64_t>(
+            "soma_joinid");
+        if (newshape < cur_dom_lo_hi.second) {
+            return std::pair(
+                false,
+                fmt::format(
+                    "{}: new soma_joinid shape {} < existing shape {}",
+                    function_name_for_messages,
+                    newshape,
+                    cur_dom_lo_hi.second + 1));
+        }
     }
 
     // Fail if the newshape isn't within the array's core (max) domain.
@@ -1617,41 +1633,37 @@ std::pair<bool, std::string> SOMAArray::can_resize_soma_joinid_shape(
                 "{}: new soma_joinid shape {} > maxshape {}",
                 function_name_for_messages,
                 newshape,
-                dom_lo_hi.second));
+                dom_lo_hi.second + 1));
     }
 
     // Sucess otherwise.
     return std::pair(true, "");
 }
 
-void SOMAArray::resize(
+void SOMAArray::_set_shape_helper(
     const std::vector<int64_t>& newshape,
-    std::string function_name_for_messages) {
-    if (_get_current_domain().is_empty()) {
-        throw TileDBSOMAError(fmt::format(
-            "{} array must already have a shape", function_name_for_messages));
-    }
-    _set_current_domain_from_shape(newshape, function_name_for_messages);
-}
-
-void SOMAArray::upgrade_shape(
-    const std::vector<int64_t>& newshape,
-    std::string function_name_for_messages) {
-    if (!_get_current_domain().is_empty()) {
-        throw TileDBSOMAError(fmt::format(
-            "{}: array must not already have a shape",
-            function_name_for_messages));
-    }
-    _set_current_domain_from_shape(newshape, function_name_for_messages);
-}
-
-void SOMAArray::_set_current_domain_from_shape(
-    const std::vector<int64_t>& newshape,
+    bool is_resize,
     std::string function_name_for_messages) {
     if (mq_->query_type() != TILEDB_WRITE) {
         throw TileDBSOMAError(fmt::format(
             "{} array must be opened in write mode",
             function_name_for_messages));
+    }
+
+    if (!is_resize) {
+        // Upgrading an array to install a current domain
+        if (!_get_current_domain().is_empty()) {
+            throw TileDBSOMAError(fmt::format(
+                "{}: array must not already have a shape",
+                function_name_for_messages));
+        }
+    } else {
+        // Expanding an array's current domain
+        if (_get_current_domain().is_empty()) {
+            throw TileDBSOMAError(fmt::format(
+                "{} array must already have a shape",
+                function_name_for_messages));
+        }
     }
 
     // Variant-indexed dataframes must use a separate path
@@ -1684,12 +1696,28 @@ void SOMAArray::_set_current_domain_from_shape(
     schema_evolution.array_evolve(uri_);
 }
 
-void SOMAArray::resize_soma_joinid_shape(
-    int64_t newshape, std::string function_name_for_messages) {
+void SOMAArray::_set_soma_joinid_shape_helper(
+    int64_t newshape, bool is_resize, std::string function_name_for_messages) {
     if (mq_->query_type() != TILEDB_WRITE) {
         throw TileDBSOMAError(fmt::format(
             "{}: array must be opened in write mode",
             function_name_for_messages));
+    }
+
+    if (!is_resize) {
+        // Upgrading an array to install a current domain
+        if (!_get_current_domain().is_empty()) {
+            throw TileDBSOMAError(fmt::format(
+                "{}: array must not already have a shape",
+                function_name_for_messages));
+        }
+    } else {
+        // Expanding an array's current domain
+        if (_get_current_domain().is_empty()) {
+            throw TileDBSOMAError(fmt::format(
+                "{} array must already have a shape",
+                function_name_for_messages));
+        }
     }
 
     ArraySchema schema = arr_->schema();

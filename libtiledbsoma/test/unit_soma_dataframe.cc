@@ -572,12 +572,29 @@ TEST_CASE_METHOD(
         } else {
             REQUIRE(maxdom_sjid[1] > 2000000000);
         }
-
         sdf->close();
 
         REQUIRE(sdf->nnz() == 2);
         write_sjid_u32_str_data_from(8);
         REQUIRE(sdf->nnz() == 4);
+
+        // Check can_upgrade_soma_joinid_shape
+        sdf->open(OpenMode::read);
+        if (!use_current_domain) {
+            std::pair<bool, std::string>
+                check = sdf->can_upgrade_soma_joinid_shape(1, "testing");
+            REQUIRE(check.first == true);
+            REQUIRE(check.second == "");
+        } else {
+            std::pair<bool, std::string>
+                check = sdf->can_upgrade_soma_joinid_shape(1, "testing");
+            // Must fail since this is too small.
+            REQUIRE(check.first == false);
+            REQUIRE(
+                check.second ==
+                "testing: dataframe already has its domain set.");
+        }
+        sdf->close();
 
         // Resize
         auto new_shape = int64_t{SOMA_JOINID_RESIZE_DIM_MAX + 1};
@@ -662,14 +679,13 @@ TEST_CASE_METHOD(
             REQUIRE(check.first == false);
             REQUIRE(
                 check.second ==
-                "testing: dataframe currently has no domain set: please "
-                "upgrade the array.");
+                "testing: dataframe currently has no domain set.");
         } else {
             // Must fail since this is too small.
             REQUIRE(check.first == false);
             REQUIRE(
                 check.second ==
-                "testing: new soma_joinid shape 1 < existing shape 199");
+                "testing: new soma_joinid shape 1 < existing shape 200");
             check = sdf->can_resize_soma_joinid_shape(
                 SOMA_JOINID_RESIZE_DIM_MAX + 1, "testing");
             REQUIRE(check.first == true);
@@ -894,14 +910,13 @@ TEST_CASE_METHOD(
             REQUIRE(check.first == false);
             REQUIRE(
                 check.second ==
-                "testing: dataframe currently has no domain set: please "
-                "upgrade the array.");
+                "testing: dataframe currently has no domain set.");
         } else {
             // Must fail since this is too small.
             REQUIRE(check.first == false);
             REQUIRE(
                 check.second ==
-                "testing: new soma_joinid shape 1 < existing shape 199");
+                "testing: new soma_joinid shape 1 < existing shape 200");
             check = sdf->can_resize_soma_joinid_shape(
                 SOMA_JOINID_RESIZE_DIM_MAX + 1, "testing");
             REQUIRE(check.first == true);
@@ -1142,14 +1157,13 @@ TEST_CASE_METHOD(
             REQUIRE(check.first == false);
             REQUIRE(
                 check.second ==
-                "testing: dataframe currently has no domain set: please "
-                "upgrade the array.");
+                "testing: dataframe currently has no domain set.");
         } else {
             // Must fail since this is too small.
             REQUIRE(check.first == false);
             REQUIRE(
                 check.second ==
-                "testing: new soma_joinid shape 1 < existing shape 99");
+                "testing: new soma_joinid shape 1 < existing shape 100");
             check = sdf->can_resize_soma_joinid_shape(
                 SOMA_JOINID_RESIZE_DIM_MAX + 1, "testing");
             REQUIRE(check.first == true);
@@ -1351,8 +1365,7 @@ TEST_CASE_METHOD(
             REQUIRE(check.first == false);
             REQUIRE(
                 check.second ==
-                "testing: dataframe currently has no domain set: please "
-                "upgrade the array.");
+                "testing: dataframe currently has no domain set.");
         } else {
             // Must pass since soma_joinid isn't a dim in this case.
             REQUIRE(check.first == true);
