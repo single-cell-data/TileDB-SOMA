@@ -161,7 +161,8 @@ void load_soma_dataframe(py::module& m) {
             "resize_soma_joinid_shape",
             [](SOMADataFrame& sdf, int64_t newshape) {
                 try {
-                    sdf.resize_soma_joinid_shape(newshape);
+                    sdf.resize_soma_joinid_shape(
+                        newshape, "resize_soma_joinid_shape");
                 } catch (const std::exception& e) {
                     throw TileDBSOMAError(e.what());
                 }

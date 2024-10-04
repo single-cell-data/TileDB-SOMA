@@ -997,8 +997,7 @@ class SOMAArray : public SOMAObject {
             default:
                 throw std::runtime_error(
                     "internal coding error in "
-                    "SOMAArray::_core_domainish_slot_string: "
-                    "unknown kind");
+                    "SOMAArray::_core_domainish_slot_string: unknown kind");
         }
     }
 
@@ -1061,8 +1060,10 @@ class SOMAArray : public SOMAObject {
      * existing core domain.
      */
     std::pair<bool, std::string> can_resize(
-        const std::vector<int64_t>& newshape) {
-        return _can_set_shape_helper(newshape, true, "resize");
+        const std::vector<int64_t>& newshape,
+        std::string function_name_for_messages) {
+        return _can_set_shape_helper(
+            newshape, true, function_name_for_messages);
     }
 
     /**
@@ -1083,16 +1084,18 @@ class SOMAArray : public SOMAObject {
      * domain.
      */
     std::pair<bool, std::string> can_upgrade_shape(
-        const std::vector<int64_t>& newshape) {
+        const std::vector<int64_t>& newshape,
+        std::string function_name_for_messages) {
         return _can_set_shape_helper(
-            newshape, false, "tiledbsoma_upgrade_shape");
+            newshape, false, function_name_for_messages);
     }
 
     /**
      * This is similar to can_upgrade_shape, but it's a can-we call
      * for maybe_resize_soma_joinid.
      */
-    std::pair<bool, std::string> can_resize_soma_joinid(int64_t newshape);
+    std::pair<bool, std::string> can_resize_soma_joinid_shape(
+        int64_t newshape, std::string function_name_for_messages);
 
     /**
      * @brief Resize the shape (what core calls "current domain") up to the
@@ -1105,7 +1108,9 @@ class SOMAArray : public SOMAObject {
      * @return Nothing. Raises an exception if the resize would be a downsize,
      * which is not supported.
      */
-    void resize(const std::vector<int64_t>& newshape);
+    void resize(
+        const std::vector<int64_t>& newshape,
+        std::string function_name_for_messages);
 
     /**
      * @brief Given an old-style array without current domain, sets its
@@ -1113,7 +1118,9 @@ class SOMAArray : public SOMAObject {
      * of int64 type. Namely, all SparseNDArray/DenseNDArray, and
      * default-indexed DataFrame.
      */
-    void upgrade_shape(const std::vector<int64_t>& newshape);
+    void upgrade_shape(
+        const std::vector<int64_t>& newshape,
+        std::string function_name_for_messages);
 
     /**
      * @brief Increases the tiledbsoma shape up to at most the maxshape,
@@ -1129,7 +1136,8 @@ class SOMAArray : public SOMAObject {
      * @return Throws if the requested shape exceeds the array's create-time
      * maxshape. Throws if the array does not have current-domain support.
      */
-    void resize_soma_joinid_shape(int64_t newshape);
+    void resize_soma_joinid_shape(
+        int64_t newshape, std::string function_name_for_messages);
 
    protected:
     // These two are for use nominally by SOMADataFrame. This could be moved in
@@ -1198,7 +1206,7 @@ class SOMAArray : public SOMAObject {
     /**
      * This is a second-level code-dedupe helper for _can_set_shape_helper.
      */
-    std::pair<bool, std::string> _can_set_shape_domainish_helper(
+    std::pair<bool, std::string> _can_set_shape_domainish_subhelper(
         const std::vector<int64_t>& newshape,
         bool check_current_domain,
         std::string function_name_for_messages);
@@ -1206,7 +1214,9 @@ class SOMAArray : public SOMAObject {
     /**
      * This is a code-dedupe helper method for resize and upgrade_shape.
      */
-    void _set_current_domain_from_shape(const std::vector<int64_t>& newshape);
+    void _set_current_domain_from_shape(
+        const std::vector<int64_t>& newshape,
+        std::string function_name_for_messages);
 
     /**
      * While SparseNDArray, DenseNDArray, and default-indexed DataFrame

@@ -146,9 +146,9 @@ TEST_CASE("SOMASparseNDArray: basic", "[SOMASparseNDArray]") {
             // Without current-domain support: this should throw since
             // one cannot resize what has not been sized.
             REQUIRE(!snda->has_current_domain());
-            REQUIRE_THROWS(snda->resize(new_shape));
+            REQUIRE_THROWS(snda->resize(new_shape, "testing"));
             // Now set the shape
-            snda->upgrade_shape(new_shape);
+            snda->upgrade_shape(new_shape, "testing");
             snda->close();
 
             snda->open(OpenMode::read);
@@ -158,7 +158,7 @@ TEST_CASE("SOMASparseNDArray: basic", "[SOMASparseNDArray]") {
             snda->open(OpenMode::write);
             REQUIRE(snda->has_current_domain());
             // Should not fail since we're setting it to what it already is.
-            snda->resize(new_shape);
+            snda->resize(new_shape, "testing");
             snda->close();
 
             snda = SOMASparseNDArray::open(uri, OpenMode::read, ctx);
@@ -171,8 +171,8 @@ TEST_CASE("SOMASparseNDArray: basic", "[SOMASparseNDArray]") {
             snda = SOMASparseNDArray::open(uri, OpenMode::write, ctx);
             // Should throw since this already has a shape (core current
             // domain).
-            REQUIRE_THROWS(snda->upgrade_shape(new_shape));
-            snda->resize(new_shape);
+            REQUIRE_THROWS(snda->upgrade_shape(new_shape, "testing"));
+            snda->resize(new_shape, "testing");
             snda->close();
 
             // Try out-of-bounds write after resize.
@@ -394,21 +394,21 @@ TEST_CASE(
     std::vector<int64_t> newshape_too_big({dim_max + 10});
     std::vector<int64_t> newshape_good({40});
 
-    auto check = snda->can_upgrade_shape(newshape_wrong_dims);
+    auto check = snda->can_upgrade_shape(newshape_wrong_dims, "testing");
     REQUIRE(check.first == false);
     REQUIRE(
         check.second ==
-        "cannot tiledbsoma_upgrade_shape: provided shape has ndim 2, while the "
+        "testing: provided shape has ndim 2, while the "
         "array has 1");
 
-    check = snda->can_upgrade_shape(newshape_too_big);
+    check = snda->can_upgrade_shape(newshape_too_big, "testing");
     REQUIRE(check.first == false);
     REQUIRE(
         check.second ==
-        "cannot tiledbsoma_upgrade_shape for soma_dim_0: new 1009 < maxshape "
+        "testing for soma_dim_0: new 1009 < maxshape "
         "1000");
 
-    check = snda->can_upgrade_shape(newshape_good);
+    check = snda->can_upgrade_shape(newshape_good, "testing");
     REQUIRE(check.first == true);
     REQUIRE(check.second == "");
 }
@@ -462,19 +462,18 @@ TEST_CASE("SOMASparseNDArray: can_resize", "[SOMASparseNDArray]") {
     std::vector<int64_t> newshape_too_small({40});
     std::vector<int64_t> newshape_good({2000});
 
-    auto check = snda->can_resize(newshape_wrong_dims);
+    auto check = snda->can_resize(newshape_wrong_dims, "testing");
     REQUIRE(check.first == false);
     REQUIRE(
         check.second ==
-        "cannot resize: provided shape has ndim 2, while the array has 1");
+        "testing: provided shape has ndim 2, while the array has 1");
 
-    check = snda->can_resize(newshape_too_small);
+    check = snda->can_resize(newshape_too_small, "testing");
     REQUIRE(check.first == false);
     REQUIRE(
-        check.second ==
-        "cannot resize for soma_dim_0: new 40 < existing shape 1000");
+        check.second == "testing for soma_dim_0: new 40 < existing shape 1000");
 
-    check = snda->can_resize(newshape_good);
+    check = snda->can_resize(newshape_good, "testing");
     REQUIRE(check.first == true);
     REQUIRE(check.second == "");
 }

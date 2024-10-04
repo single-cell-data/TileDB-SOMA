@@ -472,7 +472,7 @@ TEST_CASE_METHOD(
     sdf->close();
 
     sdf = open(OpenMode::write);
-    sdf->resize_soma_joinid_shape(int64_t{new_max});
+    sdf->resize_soma_joinid_shape(int64_t{new_max}, "testing");
     sdf->close();
 
     sdf = open(OpenMode::write);
@@ -591,7 +591,7 @@ TEST_CASE_METHOD(
 
             sdf = open(OpenMode::write);
             // Array not resizeable if it has not already been sized
-            REQUIRE_THROWS(sdf->resize_soma_joinid_shape(new_shape));
+            REQUIRE_THROWS(sdf->resize_soma_joinid_shape(new_shape, "testing"));
             sdf->close();
 
         } else {
@@ -608,11 +608,11 @@ TEST_CASE_METHOD(
             sdf->close();
 
             sdf = open(OpenMode::read);
-            REQUIRE_THROWS(sdf->resize_soma_joinid_shape(new_shape));
+            REQUIRE_THROWS(sdf->resize_soma_joinid_shape(new_shape, "testing"));
             sdf->close();
 
             sdf = open(OpenMode::write);
-            sdf->resize_soma_joinid_shape(new_shape);
+            sdf->resize_soma_joinid_shape(new_shape, "testing");
             sdf->close();
 
             // Check shape after resize
@@ -655,23 +655,23 @@ TEST_CASE_METHOD(
             REQUIRE(maxdom_sjid[1] > 2000000000);
         }
 
-        // Check can_resize_soma_joinid
-        std::pair<bool, std::string> check = sdf->can_resize_soma_joinid(1);
+        // Check can_resize_soma_joinid_shape
+        std::pair<bool, std::string> check = sdf->can_resize_soma_joinid_shape(
+            1, "testing");
         if (!use_current_domain) {
             REQUIRE(check.first == false);
             REQUIRE(
                 check.second ==
-                "can_resize_soma_joinid: dataframe currently has no domain "
-                "set: please use tiledbsoma_upgrade_domain.");
+                "testing: dataframe currently has no domain set: please "
+                "upgrade the array.");
         } else {
             // Must fail since this is too small.
             REQUIRE(check.first == false);
             REQUIRE(
                 check.second ==
-                "cannot resize_soma_joinid_shape: new soma_joinid shape 1 < "
-                "existing "
-                "shape 199");
-            check = sdf->can_resize_soma_joinid(SOMA_JOINID_RESIZE_DIM_MAX + 1);
+                "testing: new soma_joinid shape 1 < existing shape 199");
+            check = sdf->can_resize_soma_joinid_shape(
+                SOMA_JOINID_RESIZE_DIM_MAX + 1, "testing");
             REQUIRE(check.first == true);
             REQUIRE(check.second == "");
         }
@@ -805,7 +805,7 @@ TEST_CASE_METHOD(
 
             sdf = open(OpenMode::write);
             // Array not resizeable if it has not already been sized
-            REQUIRE_THROWS(sdf->resize_soma_joinid_shape(new_shape));
+            REQUIRE_THROWS(sdf->resize_soma_joinid_shape(new_shape, "testing"));
             sdf->close();
 
         } else {
@@ -821,11 +821,11 @@ TEST_CASE_METHOD(
             sdf->close();
 
             sdf = open(OpenMode::read);
-            REQUIRE_THROWS(sdf->resize_soma_joinid_shape(new_shape));
+            REQUIRE_THROWS(sdf->resize_soma_joinid_shape(new_shape, "testing"));
             sdf->close();
 
             sdf = open(OpenMode::write);
-            sdf->resize_soma_joinid_shape(new_shape);
+            sdf->resize_soma_joinid_shape(new_shape, "testing");
             sdf->close();
 
             // Check shape after resize
@@ -887,23 +887,23 @@ TEST_CASE_METHOD(
             REQUIRE(maxdom_u32[1] > 2000000000);
         }
 
-        // Check can_resize_soma_joinid
-        std::pair<bool, std::string> check = sdf->can_resize_soma_joinid(1);
+        // Check can_resize_soma_joinid_shape
+        std::pair<bool, std::string> check = sdf->can_resize_soma_joinid_shape(
+            1, "testing");
         if (!use_current_domain) {
             REQUIRE(check.first == false);
             REQUIRE(
                 check.second ==
-                "can_resize_soma_joinid: dataframe currently has no domain "
-                "set: please use tiledbsoma_upgrade_domain.");
+                "testing: dataframe currently has no domain set: please "
+                "upgrade the array.");
         } else {
             // Must fail since this is too small.
             REQUIRE(check.first == false);
             REQUIRE(
                 check.second ==
-                "cannot resize_soma_joinid_shape: new soma_joinid shape 1 < "
-                "existing "
-                "shape 199");
-            check = sdf->can_resize_soma_joinid(SOMA_JOINID_RESIZE_DIM_MAX + 1);
+                "testing: new soma_joinid shape 1 < existing shape 199");
+            check = sdf->can_resize_soma_joinid_shape(
+                SOMA_JOINID_RESIZE_DIM_MAX + 1, "testing");
             REQUIRE(check.first == true);
             REQUIRE(check.second == "");
         }
@@ -1055,7 +1055,7 @@ TEST_CASE_METHOD(
 
             sdf = open(OpenMode::write);
             // Array not resizeable if it has not already been sized
-            REQUIRE_THROWS(sdf->resize_soma_joinid_shape(new_shape));
+            REQUIRE_THROWS(sdf->resize_soma_joinid_shape(new_shape, "testing"));
             sdf->close();
 
         } else {
@@ -1071,11 +1071,11 @@ TEST_CASE_METHOD(
             sdf->close();
 
             sdf = open(OpenMode::read);
-            REQUIRE_THROWS(sdf->resize_soma_joinid_shape(new_shape));
+            REQUIRE_THROWS(sdf->resize_soma_joinid_shape(new_shape, "testing"));
             sdf->close();
 
             sdf = open(OpenMode::write);
-            sdf->resize_soma_joinid_shape(new_shape);
+            sdf->resize_soma_joinid_shape(new_shape, "testing");
             sdf->close();
 
             // Check shape after resize
@@ -1135,23 +1135,23 @@ TEST_CASE_METHOD(
 
         REQUIRE(ned_str == std::vector<std::string>({"", ""}));
 
-        // Check can_resize_soma_joinid
-        std::pair<bool, std::string> check = sdf->can_resize_soma_joinid(1);
+        // Check can_resize_soma_joinid_shape
+        std::pair<bool, std::string> check = sdf->can_resize_soma_joinid_shape(
+            1, "testing");
         if (!use_current_domain) {
             REQUIRE(check.first == false);
             REQUIRE(
                 check.second ==
-                "can_resize_soma_joinid: dataframe currently has no domain "
-                "set: please use tiledbsoma_upgrade_domain.");
+                "testing: dataframe currently has no domain set: please "
+                "upgrade the array.");
         } else {
             // Must fail since this is too small.
             REQUIRE(check.first == false);
             REQUIRE(
                 check.second ==
-                "cannot resize_soma_joinid_shape: new soma_joinid shape 1 < "
-                "existing "
-                "shape 99");
-            check = sdf->can_resize_soma_joinid(SOMA_JOINID_RESIZE_DIM_MAX + 1);
+                "testing: new soma_joinid shape 1 < existing shape 99");
+            check = sdf->can_resize_soma_joinid_shape(
+                SOMA_JOINID_RESIZE_DIM_MAX + 1, "testing");
             REQUIRE(check.first == true);
             REQUIRE(check.second == "");
         }
@@ -1286,7 +1286,7 @@ TEST_CASE_METHOD(
 
             sdf = open(OpenMode::write);
             // Array not resizeable if it has not already been sized
-            REQUIRE_THROWS(sdf->resize_soma_joinid_shape(new_shape));
+            REQUIRE_THROWS(sdf->resize_soma_joinid_shape(new_shape, "testing"));
             sdf->close();
 
         } else {
@@ -1297,11 +1297,11 @@ TEST_CASE_METHOD(
             sdf->close();
 
             sdf = open(OpenMode::read);
-            REQUIRE_THROWS(sdf->resize_soma_joinid_shape(new_shape));
+            REQUIRE_THROWS(sdf->resize_soma_joinid_shape(new_shape, "testing"));
             sdf->close();
 
             sdf = open(OpenMode::write);
-            sdf->resize_soma_joinid_shape(new_shape);
+            sdf->resize_soma_joinid_shape(new_shape, "testing");
             sdf->close();
 
             // Check shape after resize -- noting soma_joinid is not a dim here
@@ -1344,14 +1344,15 @@ TEST_CASE_METHOD(
             REQUIRE(maxdom_str == std::vector<std::string>({"", ""}));
         }
 
-        // Check can_resize_soma_joinid
-        std::pair<bool, std::string> check = sdf->can_resize_soma_joinid(0);
+        // Check can_resize_soma_joinid_shape
+        std::pair<bool, std::string> check = sdf->can_resize_soma_joinid_shape(
+            0, "testing");
         if (!use_current_domain) {
             REQUIRE(check.first == false);
             REQUIRE(
                 check.second ==
-                "can_resize_soma_joinid: dataframe currently has no domain "
-                "set: please use tiledbsoma_upgrade_domain.");
+                "testing: dataframe currently has no domain set: please "
+                "upgrade the array.");
         } else {
             // Must pass since soma_joinid isn't a dim in this case.
             REQUIRE(check.first == true);

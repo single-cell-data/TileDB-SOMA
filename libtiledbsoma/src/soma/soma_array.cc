@@ -524,8 +524,8 @@ void SOMAArray::_promote_indexes_to_values(
             return _cast_dictionary_values<double>(schema, array);
         default:
             throw TileDBSOMAError(fmt::format(
-                "Saw invalid TileDB value type when attempting to "
-                "promote indexes to values: {}",
+                "Saw invalid TileDB value type when attempting to promote "
+                "indexes to values: {}",
                 tiledb::impl::type_to_str(value_type)));
     }
 }
@@ -1452,7 +1452,7 @@ std::pair<bool, std::string> SOMAArray::_can_set_shape_helper(
         return std::pair(
             false,
             fmt::format(
-                "cannot {}: provided shape has ndim {}, while the array has {}",
+                "{}: provided shape has ndim {}, while the array has {}",
                 function_name_for_messages,
                 arg_ndim,
                 array_ndim));
@@ -1481,8 +1481,7 @@ std::pair<bool, std::string> SOMAArray::_can_set_shape_helper(
                 false,
                 fmt::format(
                     "{}: array already has a shape: please use resize rather "
-                    "than "
-                    "tiledbsoma_upgrade_shape.",
+                    "than tiledbsoma_upgrade_shape.",
                     function_name_for_messages));
         }
     }
@@ -1497,7 +1496,7 @@ std::pair<bool, std::string> SOMAArray::_can_set_shape_helper(
     //
     // if the requested shape fits in the array's core domain, it's good to go
     // as a new shape.
-    auto domain_check = _can_set_shape_domainish_helper(
+    auto domain_check = _can_set_shape_domainish_subhelper(
         newshape, false, function_name_for_messages);
     if (!domain_check.first) {
         return domain_check;
@@ -1506,7 +1505,7 @@ std::pair<bool, std::string> SOMAArray::_can_set_shape_helper(
     // For new-style arrays, we need to additionally that the the requested
     // shape (core current domain) isn't a downsize of the current one.
     if (has_shape) {
-        auto current_domain_check = _can_set_shape_domainish_helper(
+        auto current_domain_check = _can_set_shape_domainish_subhelper(
             newshape, true, function_name_for_messages);
         if (!current_domain_check.first) {
             return current_domain_check;
@@ -1519,7 +1518,7 @@ std::pair<bool, std::string> SOMAArray::_can_set_shape_helper(
 // This is a helper for _can_set_shape_helper: it's used for comparing
 // the user's requested shape against the core current domain or core (max)
 // domain.
-std::pair<bool, std::string> SOMAArray::_can_set_shape_domainish_helper(
+std::pair<bool, std::string> SOMAArray::_can_set_shape_domainish_subhelper(
     const std::vector<int64_t>& newshape,
     bool check_current_domain,
     std::string function_name_for_messages) {
@@ -1536,8 +1535,7 @@ std::pair<bool, std::string> SOMAArray::_can_set_shape_domainish_helper(
         // library-internal code, it's not the user's fault if we got here.
         if (dim.type() != TILEDB_INT64) {
             throw TileDBSOMAError(fmt::format(
-                "{}: internal error: expected {} dim to "
-                "be {}; got {}",
+                "{}: internal error: expected {} dim to be {}; got {}",
                 function_name_for_messages,
                 dim_name,
                 tiledb::impl::type_to_str(TILEDB_INT64),
@@ -1553,7 +1551,7 @@ std::pair<bool, std::string> SOMAArray::_can_set_shape_domainish_helper(
                 return std::pair(
                     false,
                     fmt::format(
-                        "cannot {} for {}: new {} < existing shape {}",
+                        "{} for {}: new {} < existing shape {}",
                         function_name_for_messages,
                         dim_name,
                         newshape[i],
@@ -1569,7 +1567,7 @@ std::pair<bool, std::string> SOMAArray::_can_set_shape_domainish_helper(
                 return std::pair(
                     false,
                     fmt::format(
-                        "cannot {} for {}: new {} < maxshape {}",
+                        "{} for {}: new {} < maxshape {}",
                         function_name_for_messages,
                         dim_name,
                         newshape[i],
@@ -1580,15 +1578,17 @@ std::pair<bool, std::string> SOMAArray::_can_set_shape_domainish_helper(
     return std::pair(true, "");
 }
 
-std::pair<bool, std::string> SOMAArray::can_resize_soma_joinid(
-    int64_t newshape) {
+std::pair<bool, std::string> SOMAArray::can_resize_soma_joinid_shape(
+    int64_t newshape, std::string function_name_for_messages) {
     // Fail if the array doesn't already have a shape yet (they should upgrade
     // first).
     if (!has_current_domain()) {
         return std::pair(
             false,
-            "can_resize_soma_joinid: dataframe currently has no domain set: "
-            "please use tiledbsoma_upgrade_domain.");
+            fmt::format(
+                "{}: dataframe currently has no domain set: please "
+                "upgrade the array.",
+                function_name_for_messages));
     }
 
     // OK if soma_joinid isn't a dim.
@@ -1602,8 +1602,8 @@ std::pair<bool, std::string> SOMAArray::can_resize_soma_joinid(
         return std::pair(
             false,
             fmt::format(
-                "cannot resize_soma_joinid_shape: new soma_joinid shape {} < "
-                "existing shape {}",
+                "{}: new soma_joinid shape {} < existing shape {}",
+                function_name_for_messages,
                 newshape,
                 cur_dom_lo_hi.second));
     }
@@ -1614,8 +1614,8 @@ std::pair<bool, std::string> SOMAArray::can_resize_soma_joinid(
         return std::pair(
             false,
             fmt::format(
-                "cannot resize_soma_joinid_shape: new soma_joinid shape {} > "
-                "maxshape {}",
+                "{}: new soma_joinid shape {} > maxshape {}",
+                function_name_for_messages,
                 newshape,
                 dom_lo_hi.second));
     }
@@ -1624,27 +1624,34 @@ std::pair<bool, std::string> SOMAArray::can_resize_soma_joinid(
     return std::pair(true, "");
 }
 
-void SOMAArray::resize(const std::vector<int64_t>& newshape) {
+void SOMAArray::resize(
+    const std::vector<int64_t>& newshape,
+    std::string function_name_for_messages) {
     if (_get_current_domain().is_empty()) {
-        throw TileDBSOMAError(
-            "[SOMAArray::resize] array must already have a shape");
+        throw TileDBSOMAError(fmt::format(
+            "{} array must already have a shape", function_name_for_messages));
     }
-    _set_current_domain_from_shape(newshape);
+    _set_current_domain_from_shape(newshape, function_name_for_messages);
 }
 
-void SOMAArray::upgrade_shape(const std::vector<int64_t>& newshape) {
+void SOMAArray::upgrade_shape(
+    const std::vector<int64_t>& newshape,
+    std::string function_name_for_messages) {
     if (!_get_current_domain().is_empty()) {
-        throw TileDBSOMAError(
-            "[SOMAArray::resize] array must not already have a shape");
+        throw TileDBSOMAError(fmt::format(
+            "{}: array must not already have a shape",
+            function_name_for_messages));
     }
-    _set_current_domain_from_shape(newshape);
+    _set_current_domain_from_shape(newshape, function_name_for_messages);
 }
 
 void SOMAArray::_set_current_domain_from_shape(
-    const std::vector<int64_t>& newshape) {
+    const std::vector<int64_t>& newshape,
+    std::string function_name_for_messages) {
     if (mq_->query_type() != TILEDB_WRITE) {
-        throw TileDBSOMAError(
-            "[SOMAArray::resize] array must be opened in write mode");
+        throw TileDBSOMAError(fmt::format(
+            "{} array must be opened in write mode",
+            function_name_for_messages));
     }
 
     // Variant-indexed dataframes must use a separate path
@@ -1677,10 +1684,12 @@ void SOMAArray::_set_current_domain_from_shape(
     schema_evolution.array_evolve(uri_);
 }
 
-void SOMAArray::resize_soma_joinid_shape(int64_t newshape) {
+void SOMAArray::resize_soma_joinid_shape(
+    int64_t newshape, std::string function_name_for_messages) {
     if (mq_->query_type() != TILEDB_WRITE) {
-        throw TileDBSOMAError(
-            "[SOMAArray::resize] array must be opened in write mode");
+        throw TileDBSOMAError(fmt::format(
+            "{}: array must be opened in write mode",
+            function_name_for_messages));
     }
 
     ArraySchema schema = arr_->schema();
