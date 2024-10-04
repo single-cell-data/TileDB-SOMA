@@ -146,7 +146,7 @@ TEST_CASE("SOMASparseNDArray: basic", "[SOMASparseNDArray]") {
             // Without current-domain support: this should throw since
             // one cannot resize what has not been sized.
             REQUIRE(!snda->has_current_domain());
-            REQUIRE_THROWS(snda->resize(new_shape));
+            REQUIRE_THROWS(snda->resize(new_shape, "testing"));
             // Now set the shape
             snda->upgrade_shape(new_shape);
             snda->close();
@@ -158,7 +158,7 @@ TEST_CASE("SOMASparseNDArray: basic", "[SOMASparseNDArray]") {
             snda->open(OpenMode::write);
             REQUIRE(snda->has_current_domain());
             // Should not fail since we're setting it to what it already is.
-            snda->resize(new_shape);
+            snda->resize(new_shape, "testing");
             snda->close();
 
             snda = SOMASparseNDArray::open(uri, OpenMode::read, ctx);
@@ -172,7 +172,7 @@ TEST_CASE("SOMASparseNDArray: basic", "[SOMASparseNDArray]") {
             // Should throw since this already has a shape (core current
             // domain).
             REQUIRE_THROWS(snda->upgrade_shape(new_shape));
-            snda->resize(new_shape);
+            snda->resize(new_shape, "testing");
             snda->close();
 
             // Try out-of-bounds write after resize.
@@ -466,13 +466,13 @@ TEST_CASE("SOMASparseNDArray: can_resize", "[SOMASparseNDArray]") {
     REQUIRE(check.first == false);
     REQUIRE(
         check.second ==
-        "cannot resize: provided shape has ndim 2, while the array has 1");
+        "resize: provided shape has ndim 2, while the array has 1");
 
     check = snda->can_resize(newshape_too_small);
     REQUIRE(check.first == false);
     REQUIRE(
         check.second ==
-        "cannot resize for soma_dim_0: new 40 < existing shape 1000");
+        "resize for soma_dim_0: new 40 < existing shape 1000");
 
     check = snda->can_resize(newshape_good);
     REQUIRE(check.first == true);

@@ -428,7 +428,7 @@ void resize(
     // https://github.com/single-cell-data/TileDB-SOMA/issues/2407.
     auto sr = tdbs::SOMAArray::open(OpenMode::write, uri, ctxxp->ctxptr);
     std::vector<int64_t> new_shape_i64 = i64_from_rcpp_numeric(new_shape);
-    sr->resize(new_shape_i64);
+    sr->resize(new_shape_i64, "resize");
     sr->close();
 }
 

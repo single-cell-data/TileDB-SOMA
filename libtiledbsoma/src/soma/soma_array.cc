@@ -29,10 +29,10 @@
  *   This file defines the SOMAArray class.
  */
 
-#include "soma_array.h"
 #include <tiledb/array_experimental.h>
 #include "../utils/logger.h"
 #include "../utils/util.h"
+#include "soma_array.h"
 namespace tiledbsoma {
 using namespace tiledb;
 
@@ -1553,7 +1553,7 @@ std::pair<bool, std::string> SOMAArray::_can_set_shape_domainish_subhelper(
                 return std::pair(
                     false,
                     fmt::format(
-                        "cannot {} for {}: new {} < existing shape {}",
+                        "{} for {}: new {} < existing shape {}",
                         function_name_for_messages,
                         dim_name,
                         newshape[i],
@@ -1569,7 +1569,7 @@ std::pair<bool, std::string> SOMAArray::_can_set_shape_domainish_subhelper(
                 return std::pair(
                     false,
                     fmt::format(
-                        "cannot {} for {}: new {} < maxshape {}",
+                        "{} for {}: new {} < maxshape {}",
                         function_name_for_messages,
                         dim_name,
                         newshape[i],
@@ -1625,10 +1625,12 @@ std::pair<bool, std::string> SOMAArray::can_resize_soma_joinid_shape(
     return std::pair(true, "");
 }
 
-void SOMAArray::resize(const std::vector<int64_t>& newshape) {
+void SOMAArray::resize(
+    const std::vector<int64_t>& newshape,
+    std::string function_name_for_messages) {
     if (_get_current_domain().is_empty()) {
         throw TileDBSOMAError(
-            "[SOMAArray::resize] array must already have a shape");
+            fmt::format("{} array must already have a shape", function_name_for_messages));
     }
     _set_current_domain_from_shape(newshape);
 }

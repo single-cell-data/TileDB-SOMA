@@ -121,7 +121,7 @@ void load_soma_sparse_ndarray(py::module& m) {
             "resize",
             [](SOMAArray& array, const std::vector<int64_t>& newshape) {
                 try {
-                    array.resize(newshape);
+                    array.resize(newshape, "resize");
                 } catch (const std::exception& e) {
                     throw TileDBSOMAError(e.what());
                 }

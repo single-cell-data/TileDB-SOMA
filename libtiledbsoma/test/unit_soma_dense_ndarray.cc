@@ -147,7 +147,7 @@ TEST_CASE("SOMADenseNDArray: basic", "[SOMADenseNDArray]") {
             //   been sized.
             // * When use_current_domain is true: TODO: current domain not
             //   supported for dense arrays yet (see above).
-            REQUIRE_THROWS(dnda->resize(new_shape));
+            REQUIRE_THROWS(dnda->resize(new_shape, "testing"));
             dnda->close();
         }
     }

@@ -1106,7 +1106,9 @@ class SOMAArray : public SOMAObject {
      * @return Nothing. Raises an exception if the resize would be a downsize,
      * which is not supported.
      */
-    void resize(const std::vector<int64_t>& newshape);
+    void resize(
+        const std::vector<int64_t>& newshape,
+        std::string function_name_for_messages);
 
     /**
      * @brief Given an old-style array without current domain, sets its
