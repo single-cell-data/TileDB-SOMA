@@ -417,7 +417,9 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         """
         return self._handle.tiledbsoma_has_upgraded_domain
 
-    def resize_soma_joinid_shape(self, newshape: int) -> None:
+    def resize_soma_joinid_shape(
+        self, newshape: int, check_only: bool = False
+    ) -> Tuple[bool, str]:
         """Increases the shape of the dataframe on the ``soma_joinid`` index
         column, if it indeed is an index column, leaving all other index columns
         as-is. If the ``soma_joinid`` is not an index column, no change is made.
@@ -427,7 +429,30 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         domain: in that case please call ``tiledbsoma_upgrade_domain`` (WIP for
         1.15).
         """
-        self._handle._handle.resize_soma_joinid_shape(newshape)
+        if check_only:
+            return cast(
+                Tuple[bool, str],
+                self._handle._handle.can_resize_soma_joinid_shape(newshape),
+            )
+        else:
+            self._handle._handle.resize_soma_joinid_shape(newshape)
+            return (True, "")
+
+    def upgrade_soma_joinid_shape(
+        self, newshape: int, check_only: bool = False
+    ) -> Tuple[bool, str]:
+        """This is like ``upgrade_domain``, but it only applies the specified domain
+        update to the ``soma_joinid`` index column. Any other index columns have their
+        domain set to match the maxdomain. If the ``soma_joinid`` column is not an index
+        column at all, then no actiong is taken."""
+        if check_only:
+            return cast(
+                Tuple[bool, str],
+                self._handle._handle.can_upgrade_soma_joinid_shape(newshape),
+            )
+        else:
+            self._handle._handle.upgrade_soma_joinid_shape(newshape)
+            return (True, "")
 
     def __len__(self) -> int:
         """Returns the number of rows in the dataframe. Same as ``df.count``."""
