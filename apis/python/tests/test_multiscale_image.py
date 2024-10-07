@@ -351,41 +351,48 @@ def test_multiscale_with_axis_names(
 
 
 @pytest.mark.parametrize(
-    "shapes, region",
+    "shapes, region, scale_factors",
     [
         # full region
         (
             ((64, 32), (32, 16), (16, 8)),
             None,
+            ([1, 1], [2, 2], [4, 4]),
         ),
         (
             ((128, 128), (128, 128)),
             None,
+            ([1, 1], [1, 1]),
         ),
         (
             ((128, 64), (64, 32)),
             None,
+            ([1, 1], [2, 2]),
         ),
         (
             ((60, 30), (30, 6)),
             None,
+            ([1, 1], [2, 5]),
         ),
         (
             ((1, 1),),
             None,
+            ([1, 1]),
         ),
-        # partial subregion
+        # partial region
         (
             ((128, 64), (64, 32)),
             (0, 0, 20, 30),
+            ([1, 1], [2, 2]),
         ),
         (
             ((64, 32), (32, 16)),
             (0, 0, 16, 10),
+            ([1, 1], [2, 2]),
         ),
     ],
 )
-def test_multiscale_2d_read_region(tmp_path, shapes, region):
+def test_multiscale_2d_read_region(tmp_path, shapes, region, scale_factors):
     baseuri = urljoin(f"{tmp_path.as_uri()}/", "test_multiscale_read_region")
     image_uri = create_multiscale(baseuri, ("Y", "X"), ("height", "width"), shapes)
 
@@ -399,45 +406,68 @@ def test_multiscale_2d_read_region(tmp_path, shapes, region):
     with soma.MultiscaleImage.open(image_uri, mode="r") as image:
         for i, shape in enumerate(shapes):
             actual_data = image.read_spatial_region(i, region=region).data
-            expected_data = np.arange(shape[0] * shape[1], dtype=np.uint8).reshape(
-                shape
-            )
-            if region is not None:
-                expected_data = expected_data[
-                    region[1] : region[3] + 1, region[0] : region[2] + 1
-                ]
-            print("expected_data:", expected_data.size)
-            print("actual_data:", actual_data.to_numpy().size)
-            # assert (expected_data == actual_data).all()
+            if region is None:
+                expected_data = image[f"level{i}"].read()
+            else:
+                expected_data = image[f"level{i}"].read(
+                    coords=(
+                        slice(
+                            region[1],
+                            region[3] // scale_factors[i][0],
+                        ),
+                        slice(
+                            region[0],
+                            region[2] // scale_factors[i][1],
+                        ),
+                    )
+                )
+            assert np.array_equal(actual_data, expected_data)
 
 
 @pytest.mark.skip("reading 3D regions not supported yet")
 @pytest.mark.parametrize(
-    "shapes, region",
+    "shapes, region, scale_factors",
     [
+        # full region
         (
             ((64, 32, 16), (32, 16, 8), (16, 8, 4), (4, 2, 1)),
-            (slice(None), slice(None)),
+            None,
+            ([1, 1, 1], [2, 2, 2], [4, 4, 4], [16, 16, 16]),
         ),
         (
             ((64, 32, 16), (32, 16, 8), (16, 8, 4)),
-            (slice(None), slice(None)),
+            None,
+            ([1, 1, 1], [2, 2, 2], [4, 4, 4]),
         ),
         (
             ((64, 64, 64), (64, 64, 64)),
-            (slice(None), slice(None)),
+            None,
+            ([1, 1, 1], [1, 1, 1]),
         ),
         (
             ((32, 16, 8), (16, 8, 4)),
-            (slice(None), slice(None)),
+            None,
+            ([1, 1, 1], [2, 2, 2]),
         ),
         (
             ((64, 32, 16), (32, 32, 8), (16, 16, 4)),
-            (slice(None), slice(None)),
+            None,
+            ([1, 1, 1], [2, 1, 2], [4, 2, 2]),
+        ),
+        # partial region
+        (
+            ((64, 32, 16), (32, 16, 8)),
+            (0, 0, 0, 16, 16, 8),
+            ([1, 1, 1], [2, 2, 2]),
+        ),
+        (
+            ((64, 64, 64), (64, 64, 64)),
+            (0, 0, 0, 48, 48, 48),
+            ([1, 1, 1], [1, 1, 1]),
         ),
     ],
 )
-def test_multiscale_3d_read_region(tmp_path, shapes, region):
+def test_multiscale_3d_read_region(tmp_path, shapes, region, scale_factors):
     baseuri = urljoin(f"{tmp_path.as_uri()}/", "test_multiscale_read_region")
     image_uri = create_multiscale(
         baseuri, ("Z", "Y", "X"), ("depth", "height", "width"), shapes
@@ -447,10 +477,24 @@ def test_multiscale_3d_read_region(tmp_path, shapes, region):
         for i, shape in enumerate(shapes):
             size = functools.reduce(lambda x, y: x * y, shape)
             data = np.arange(size, dtype=np.uint8).reshape(*shape)
-            image[f"level{i}"].write(region, pa.Tensor.from_numpy(data))
+            image[f"level{i}"].write(
+                (slice(None), slice(None), slice(None)), pa.Tensor.from_numpy(data)
+            )
 
     with soma.MultiscaleImage.open(image_uri, mode="r") as image:
         for i, shape in enumerate(shapes):
-            size = functools.reduce(lambda x, y: x * y, shape)
-            expected_data = np.arange(size, dtype=np.uint8).reshape(*shape)
-            assert np.array_equal(image.read_spatial_region(i).data, expected_data)
+            if region is None:
+                actual_data = image.read_spatial_region(i).data
+                expected_data = np.arange(
+                    functools.reduce(lambda x, y: x * y, shape), dtype=np.uint8
+                ).reshape(*shape)
+            else:
+                actual_data = image.read_spatial_region(i, region=region).data
+                expected_data = image[f"level{i}"].read(
+                    coords=(
+                        slice(region[2], region[5] // scale_factors[i][2]),
+                        slice(region[1], region[4] // scale_factors[i][1]),
+                        slice(region[0], region[3] // scale_factors[i][0]),
+                    )
+                )
+            assert np.array_equal(actual_data, expected_data)
