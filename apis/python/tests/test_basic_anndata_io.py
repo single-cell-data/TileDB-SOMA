@@ -176,12 +176,8 @@ def test_import_anndata(conftest_pbmc_small, ingest_modes, X_kind):
                     assert X.used_shape() == tuple([(0, e - 1) for e in orig.shape])
             else:
                 assert X.metadata.get(metakey) == "SOMADenseNDArray"
-                if have_ingested:
-                    matrix = X.read(coords=all2d)
-                    assert matrix.size == orig.X.size
-                else:
-                    with pytest.raises(ValueError):
-                        X.read(coords=all2d)
+                matrix = X.read(coords=all2d)
+                assert matrix.size == orig.X.size
 
         # Check raw/X/data (sparse)
         assert exp.ms["raw"].X["data"].metadata.get(metakey) == "SOMASparseNDArray"
