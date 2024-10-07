@@ -326,7 +326,10 @@ setuptools.setup(
     zip_safe=False,
     setup_requires=["pybind11"],
     install_requires=[
-        "anndata>=0.10.1",
+        # Temporary for 1.15.0rc series -- avoid RC versions of these packages
+        "anndata>=0.10.1,<0.11.0rc1",
+        "networkx~=3.2.1",
+        "pyparsing~=3.1.4",
         "attrs>=22.2",
         "numba>=0.58.0",
         "numpy<2.0",
