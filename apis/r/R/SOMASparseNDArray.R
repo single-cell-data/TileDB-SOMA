@@ -46,13 +46,16 @@ SOMASparseNDArray <- R6::R6Class(
         coords <- private$.convert_coords(coords)
       }
 
-      sr <- sr_setup(uri = self$uri,
-                     private$.soma_context,
-                     dim_points = coords,
-                     result_order = result_order,
-                     timestamprange = self$.tiledb_timestamp_range,
-                     loglevel = log_level)
-      SOMASparseNDArrayRead$new(sr, self, coords)
+      sr <- sr_setup(
+        uri = self$uri,
+        private$.soma_context,
+        dim_points = coords,
+        result_order = result_order,
+        timestamprange = self$.tiledb_timestamp_range,
+        loglevel = log_level
+      )
+
+      return(SOMASparseNDArrayRead$new(sr, self, coords))
     },
 
     #' @description Write matrix-like data to the array. (lifecycle: maturing)
