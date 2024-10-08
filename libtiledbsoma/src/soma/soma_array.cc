@@ -1469,7 +1469,7 @@ std::pair<bool, std::string> SOMAArray::_can_set_shape_helper(
             return std::pair(
                 false,
                 fmt::format(
-                    "{}: array currently has no shape: please use "
+                    "{}: array currently has no shape: please "
                     "upgrade the array.",
                     function_name_for_messages));
         }
