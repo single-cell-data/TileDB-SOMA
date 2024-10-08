@@ -491,3 +491,18 @@ def test_fixed_timestamp(tmp_path: pathlib.Path):
 
     with pytest.raises(soma.SOMAError):
         soma.open(tmp_path.as_posix(), context=fixed_time, tiledb_timestamp=111)
+
+
+@pytest.mark.parametrize("shape", [(10,), (10, 20), (10, 20, 2), (2, 4, 6, 8)])
+def test_read_to_unwritten_array(tmp_path, shape):
+    uri = tmp_path.as_posix()
+
+    soma.DenseNDArray.create(uri, type=pa.uint8(), shape=shape)
+
+    with tiledb.open(uri, "r") as A:
+        expected = A[:]["soma_data"]
+
+    with soma.DenseNDArray.open(uri, "r") as A:
+        actual = A.read().to_numpy()
+
+    assert np.array_equal(expected, actual)
