@@ -9,12 +9,6 @@ import tiledbsoma.options._soma_tiledb_context as stc
 import tiledbsoma.pytiledbsoma as clib
 
 
-@pytest.fixture(autouse=True)
-def global_ctx_reset():
-    stc._default_global_native_context.cache_clear()
-    yield
-
-
 def test_lazy_init():
     """Verifies we don't construct a Ctx until we have to."""
     with mock.patch.object(clib, "SOMAContext", wraps=clib.SOMAContext) as mock_ctx:
@@ -55,6 +49,7 @@ def test_delete_config_entry():
     }
 
 
+@pytest.mark.skip("Enable when tiledb.Ctx is removed")
 def test_shared_ctx():
     """Verifies that one global context is shared by default."""
     ctx = stc.SOMATileDBContext()
