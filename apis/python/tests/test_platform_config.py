@@ -6,7 +6,6 @@ import pytest
 import tiledbsoma
 import tiledbsoma.io
 import tiledbsoma.options._tiledb_create_write_options as tco
-from tiledbsoma._util import verify_obs_and_var_eq
 
 tiledb = pytest.importorskip("tiledb")
 
