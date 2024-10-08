@@ -35,7 +35,7 @@ from typing_extensions import Literal, Self
 
 from . import pytiledbsoma as clib
 from ._exception import DoesNotExistError, SOMAError, is_does_not_exist_error
-from ._types import METADATA_TYPES, Metadatum, OpenTimestamp
+from ._types import METADATA_TYPES, Metadatum, OpenTimestamp, StatusAndReason
 from .options._soma_tiledb_context import SOMATileDBContext
 
 RawHandle = Union[
@@ -461,7 +461,7 @@ class SOMAArrayWrapper(Wrapper[_ArrType]):
 
     def tiledbsoma_can_resize(
         self, newshape: Sequence[Union[int, None]]
-    ) -> Tuple[bool, str]:
+    ) -> StatusAndReason:
         """Not implemented for DataFrame."""
         raise NotImplementedError
 
@@ -473,7 +473,7 @@ class SOMAArrayWrapper(Wrapper[_ArrType]):
         """Only implemented for DataFrame."""
         raise NotImplementedError
 
-    def can_resize_soma_joinid_shape(self, newshape: int) -> Tuple[bool, str]:
+    def can_resize_soma_joinid_shape(self, newshape: int) -> StatusAndReason:
         """Only implemented for DataFrame."""
         raise NotImplementedError
 
@@ -481,7 +481,7 @@ class SOMAArrayWrapper(Wrapper[_ArrType]):
         """Only implemented for DataFrame."""
         raise NotImplementedError
 
-    def can_upgrade_soma_joinid_shape(self, newshape: int) -> Tuple[bool, str]:
+    def can_upgrade_soma_joinid_shape(self, newshape: int) -> StatusAndReason:
         """Only implemented for DataFrame."""
         raise NotImplementedError
 
@@ -543,7 +543,7 @@ class DataFrameWrapper(SOMAArrayWrapper[clib.SOMADataFrame]):
         """
         self._handle.resize_soma_joinid_shape(newshape)
 
-    def can_resize_soma_joinid_shape(self, newshape: int) -> Tuple[bool, str]:
+    def can_resize_soma_joinid_shape(self, newshape: int) -> StatusAndReason:
         """Increases the shape of the dataframe on the ``soma_joinid`` index
         column, if it indeed is an index column, leaving all other index columns
         as-is. If the ``soma_joinid`` is not an index column, no change is made.
@@ -551,26 +551,29 @@ class DataFrameWrapper(SOMAArrayWrapper[clib.SOMADataFrame]):
         to keystroke, and handles the most common case for dataframe domain
         expansion.  Raises an error if the dataframe doesn't already have a
         domain: in that case please call ``tiledbsoma_upgrade_domain`` (WIP for
-        1.15).
+        1.15).  If ``check_only`` is ``True``, returns whether the operation
+        would succeed if attempted, and a reason why it would not.
         """
         return cast(
-            Tuple[bool, str], self._handle.can_resize_soma_joinid_shape(newshape)
+            StatusAndReason, self._handle.can_resize_soma_joinid_shape(newshape)
         )
 
     def upgrade_soma_joinid_shape(self, newshape: int) -> None:
         """This is like ``upgrade_domain``, but it only applies the specified domain
         update to the ``soma_joinid`` index column. Any other index columns have their
         domain set to match the maxdomain. If the ``soma_joinid`` column is not an index
-        column at all, then no actiong is taken."""
+        column at all, then no action is taken."""
         self._handle.upgrade_soma_joinid_shape(newshape)
 
-    def can_upgrade_soma_joinid_shape(self, newshape: int) -> Tuple[bool, str]:
-        """This allows you to see if ``upgrade_soma_joinid_shape`` will
-        succeed before calling it.  This is an important test-point and
-        dev-internal access-point, in particular, for the tiledbsoma-io
-        experiment-level resizer."""
+    def can_upgrade_soma_joinid_shape(self, newshape: int) -> StatusAndReason:
+        """This allows you to see if ``upgrade_soma_joinid_shape`` will succeed
+        before calling it.  This is an important test-point and dev-internal
+        access-point, in particular, for the tiledbsoma-io experiment-level
+        resizer.  If ``check_only`` is ``True``, returns whether the operation
+        would succeed if attempted, and a reason why it would not.
+        """
         return cast(
-            Tuple[bool, str], self._handle.can_upgrade_soma_joinid_shape(newshape)
+            StatusAndReason, self._handle.can_upgrade_soma_joinid_shape(newshape)
         )
 
 
@@ -613,9 +616,9 @@ class DenseNDArrayWrapper(SOMAArrayWrapper[clib.SOMADenseNDArray]):
 
     def tiledbsoma_can_resize(
         self, newshape: Sequence[Union[int, None]]
-    ) -> Tuple[bool, str]:
+    ) -> StatusAndReason:
         """Supported for ``SparseNDArray``; scheduled for implementation for
-        ``DenseNDArray`` in TileDB-SOMA 1.15
+        ``DenseNDArray`` in TileDB-SOMA 1.15.
         """
         # TODO: support current domain for dense arrays once we have core support.
         # https://github.com/single-cell-data/TileDB-SOMA/issues/2955
@@ -653,12 +656,14 @@ class SparseNDArrayWrapper(SOMAArrayWrapper[clib.SOMASparseNDArray]):
 
     def tiledbsoma_can_resize(
         self, newshape: Sequence[Union[int, None]]
-    ) -> Tuple[bool, str]:
+    ) -> StatusAndReason:
         """This allows you to see if ``resize`` will succeed before calling it.
         This is an important test-point and dev-internal access-point, in
-        particular, for the tiledbsoma-io experiment-level resizer.
+        particular, for the tiledbsoma-io experiment-level resizer.  If
+        ``check_only`` is ``True``, returns whether the operation would succeed
+        if attempted, and a reason why it would not.
         """
-        return cast(Tuple[bool, str], self._handle.can_resize(newshape))
+        return cast(StatusAndReason, self._handle.can_resize(newshape))
 
     def tiledbsoma_upgrade_shape(self, newshape: Sequence[Union[int, None]]) -> None:
         """Allows the array to have a resizeable shape as described in the TileDB-SOMA

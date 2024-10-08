@@ -24,7 +24,14 @@ from ._query_condition import QueryCondition
 from ._read_iters import TableReadIter
 from ._soma_array import SOMAArray
 from ._tdb_handles import DataFrameWrapper
-from ._types import NPFloating, NPInteger, OpenTimestamp, Slice, is_slice_of
+from ._types import (
+    NPFloating,
+    NPInteger,
+    OpenTimestamp,
+    Slice,
+    StatusAndReason,
+    is_slice_of,
+)
 from .options import SOMATileDBContext
 from .options._soma_tiledb_context import _validate_soma_tiledb_context
 from .options._tiledb_create_write_options import (
@@ -419,7 +426,7 @@ class DataFrame(SOMAArray, somacore.DataFrame):
 
     def resize_soma_joinid_shape(
         self, newshape: int, check_only: bool = False
-    ) -> Tuple[bool, str]:
+    ) -> StatusAndReason:
         """Increases the shape of the dataframe on the ``soma_joinid`` index
         column, if it indeed is an index column, leaving all other index columns
         as-is. If the ``soma_joinid`` is not an index column, no change is made.
@@ -427,11 +434,12 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         to keystroke, and handles the most common case for dataframe domain
         expansion.  Raises an error if the dataframe doesn't already have a
         domain: in that case please call ``tiledbsoma_upgrade_domain`` (WIP for
-        1.15).
+        1.15).  If ``check_only`` is ``True``, returns whether the operation
+        would succeed if attempted, and a reason why it would not.
         """
         if check_only:
             return cast(
-                Tuple[bool, str],
+                StatusAndReason,
                 self._handle._handle.can_resize_soma_joinid_shape(newshape),
             )
         else:
@@ -440,14 +448,17 @@ class DataFrame(SOMAArray, somacore.DataFrame):
 
     def upgrade_soma_joinid_shape(
         self, newshape: int, check_only: bool = False
-    ) -> Tuple[bool, str]:
-        """This is like ``upgrade_domain``, but it only applies the specified domain
-        update to the ``soma_joinid`` index column. Any other index columns have their
-        domain set to match the maxdomain. If the ``soma_joinid`` column is not an index
-        column at all, then no actiong is taken."""
+    ) -> StatusAndReason:
+        """This is like ``upgrade_domain``, but it only applies the specified
+        domain update to the ``soma_joinid`` index column. Any other index
+        columns have their domain set to match the maxdomain. If the
+        ``soma_joinid`` column is not an index column at all, then no action is
+        taken.  If ``check_only`` is ``True``, returns whether the operation
+        would succeed if attempted, and a reason why it would not.
+        """
         if check_only:
             return cast(
-                Tuple[bool, str],
+                StatusAndReason,
                 self._handle._handle.can_upgrade_soma_joinid_shape(newshape),
             )
         else:
