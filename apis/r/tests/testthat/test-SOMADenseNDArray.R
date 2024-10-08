@@ -37,7 +37,7 @@ test_that("SOMADenseNDArray creation", {
 
   # Subset the array on both dimensions
   tbl <- ndarray$read_arrow_table(
-    coords = list(soma_dim_0=0:3, soma_dim_1=0:2),
+    coords = list(soma_dim_0 = 0:3, soma_dim_1 = 0:2),
     result_order = "COL_MAJOR"
   )
   expect_identical(
@@ -69,7 +69,7 @@ test_that("SOMADenseNDArray creation", {
   # Validating coords format
   expect_error(
     ndarray$read_arrow_table(coords = list(cbind(0, 1))),
-    "must be a list of vectors"
+    regexp = "'coords' must be a list integerish vectors"
   )
 
   # Validate TileDB array schema
