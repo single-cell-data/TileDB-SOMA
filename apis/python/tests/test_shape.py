@@ -118,6 +118,9 @@ def test_sparse_nd_array_basics(
         # Test resize down
         new_shape = tuple([arg_shape[i] - 50 for i in range(ndim)])
         with tiledbsoma.SparseNDArray.open(uri, "w") as snda:
+            (ok, msg) = snda.resize(new_shape, check_only=True)
+            assert not ok
+            assert msg == "can_resize for soma_dim_0: new 50 < existing shape 100"
             # TODO: check draft spec
             # with pytest.raises(ValueError):
             with pytest.raises(tiledbsoma.SOMAError):
@@ -161,6 +164,18 @@ def test_sparse_nd_array_basics(
 
         with tiledbsoma.SparseNDArray.open(uri) as snda:
             assert snda.shape == new_shape
+
+            (ok, msg) = snda.resize(new_shape, check_only=True)
+            assert ok
+            assert msg == ""
+
+            too_small = tuple(e - 1 for e in new_shape)
+            (ok, msg) = snda.resize(too_small, check_only=True)
+            assert not ok
+            assert msg == "can_resize for soma_dim_0: new 149 < existing shape 150"
+
+        with tiledbsoma.SparseNDArray.open(uri, "w") as snda:
+            (ok, msg) = snda.resize(new_shape, check_only=True)
 
 
 ## Pending 2.27 timeframe for dense support for current domain, including resize
@@ -276,12 +291,20 @@ def test_dataframe_basics(tmp_path, soma_joinid_domain, index_column_names):
         # Test resize down
         new_shape = 0
         with tiledbsoma.DataFrame.open(uri, "w") as sdf:
+            ok, msg = sdf.resize_soma_joinid_shape(new_shape, check_only=True)
             if has_soma_joinid_dim:
                 # TODO: check draft spec
                 # with pytest.raises(ValueError):
+                assert not ok
+                assert (
+                    "can_resize_soma_joinid_shape: new soma_joinid shape 0 < existing shape"
+                    in msg
+                )
                 with pytest.raises(tiledbsoma.SOMAError):
                     sdf.resize_soma_joinid_shape(new_shape)
             else:
+                assert ok
+                assert msg == ""
                 sdf.resize_soma_joinid_shape(new_shape)
 
         with tiledbsoma.DataFrame.open(uri) as sdf:

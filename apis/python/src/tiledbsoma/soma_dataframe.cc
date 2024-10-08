@@ -167,6 +167,42 @@ void load_soma_dataframe(py::module& m) {
                     throw TileDBSOMAError(e.what());
                 }
             },
+            "newshape"_a)
+
+        .def(
+            "can_resize_soma_joinid_shape",
+            [](SOMADataFrame& sdf, int64_t newshape) {
+                try {
+                    return sdf.can_resize_soma_joinid_shape(
+                        newshape, "can_resize_soma_joinid_shape");
+                } catch (const std::exception& e) {
+                    throw TileDBSOMAError(e.what());
+                }
+            },
+            "newshape"_a)
+
+        .def(
+            "upgrade_soma_joinid_shape",
+            [](SOMADataFrame& sdf, int64_t newshape) {
+                try {
+                    sdf.upgrade_soma_joinid_shape(
+                        newshape, "upgrade_soma_joinid_shape");
+                } catch (const std::exception& e) {
+                    throw TileDBSOMAError(e.what());
+                }
+            },
+            "newshape"_a)
+
+        .def(
+            "can_upgrade_soma_joinid_shape",
+            [](SOMADataFrame& sdf, int64_t newshape) {
+                try {
+                    return sdf.can_upgrade_soma_joinid_shape(
+                        newshape, "can_upgrade_soma_joinid_shape");
+                } catch (const std::exception& e) {
+                    throw TileDBSOMAError(e.what());
+                }
+            },
             "newshape"_a);
 }
 }  // namespace libtiledbsomacpp
