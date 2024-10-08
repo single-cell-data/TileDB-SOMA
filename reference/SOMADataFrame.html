@@ -13,7 +13,7 @@ SOMASparseNDArray.  (lifecycle: maturing)"></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">tiledbsoma</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.14.99.5</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.14.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -45,7 +45,7 @@ SOMASparseNDArray.  (lifecycle: maturing)"></head><body>
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>SOMADataFrame</h1>
-      <small class="dont-index">Source: <a href="https://github.com/single-cell-data/TileDB-SOMA/blob/1.15.0rc2/R/SOMADataFrame.R" class="external-link"><code>R/SOMADataFrame.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/single-cell-data/TileDB-SOMA/blob/1.14.3/R/SOMADataFrame.R" class="external-link"><code>R/SOMADataFrame.R</code></a></small>
       <div class="d-none name"><code>SOMADataFrame.Rd</code></div>
     </div>
 
@@ -73,10 +73,7 @@ row and is intended to act as a join key for other objects, such as
 <li><p><a href="#method-SOMADataFrame-update"><code>SOMADataFrame$update()</code></a></p></li>
 <li><p><a href="#method-SOMADataFrame-shape"><code>SOMADataFrame$shape()</code></a></p></li>
 <li><p><a href="#method-SOMADataFrame-maxshape"><code>SOMADataFrame$maxshape()</code></a></p></li>
-<li><p><a href="#method-SOMADataFrame-domain"><code>SOMADataFrame$domain()</code></a></p></li>
-<li><p><a href="#method-SOMADataFrame-maxdomain"><code>SOMADataFrame$maxdomain()</code></a></p></li>
 <li><p><a href="#method-SOMADataFrame-tiledbsoma_has_upgraded_domain"><code>SOMADataFrame$tiledbsoma_has_upgraded_domain()</code></a></p></li>
-<li><p><a href="#method-SOMADataFrame-resize_soma_joinid_shape"><code>SOMADataFrame$resize_soma_joinid_shape()</code></a></p></li>
 <li><p><a href="#method-SOMADataFrame-clone"><code>SOMADataFrame$clone()</code></a></p></li>
 </ul></div><p><details><summary>Inherited methods</summary><ul><li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="class"><a href="TileDBObject.html#method-class"><code>tiledbsoma::TileDBObject$class()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="exists"><a href="TileDBObject.html#method-exists"><code>tiledbsoma::TileDBObject$exists()</code></a></span></li>
@@ -90,11 +87,11 @@ row and is intended to act as a join key for other objects, such as
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="colnames"><a href="TileDBArray.html#method-colnames"><code>tiledbsoma::TileDBArray$colnames()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="dimensions"><a href="TileDBArray.html#method-dimensions"><code>tiledbsoma::TileDBArray$dimensions()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="dimnames"><a href="TileDBArray.html#method-dimnames"><code>tiledbsoma::TileDBArray$dimnames()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="fragment_count"><a href="TileDBArray.html#method-fragment_count"><code>tiledbsoma::TileDBArray$fragment_count()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="get_metadata"><a href="TileDBArray.html#method-get_metadata"><code>tiledbsoma::TileDBArray$get_metadata()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="index_column_names"><a href="TileDBArray.html#method-index_column_names"><code>tiledbsoma::TileDBArray$index_column_names()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="ndim"><a href="TileDBArray.html#method-ndim"><code>tiledbsoma::TileDBArray$ndim()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="non_empty_domain"><a href="TileDBArray.html#method-non_empty_domain"><code>tiledbsoma::TileDBArray$non_empty_domain()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="non_empty_domain_new"><a href="TileDBArray.html#method-non_empty_domain_new"><code>tiledbsoma::TileDBArray$non_empty_domain_new()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="open"><a href="TileDBArray.html#method-open"><code>tiledbsoma::TileDBArray$open()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="print"><a href="TileDBArray.html#method-print"><code>tiledbsoma::TileDBArray$print()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="schema"><a href="TileDBArray.html#method-schema"><code>tiledbsoma::TileDBArray$schema()</code></a></span></li>
@@ -109,7 +106,6 @@ row and is intended to act as a join key for other objects, such as
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SOMADataFrame</span><span class="op">$</span><span class="fu">create</span><span class="op">(</span></span>
 <span>  <span class="va">schema</span>,</span>
 <span>  index_column_names <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"soma_joinid"</span><span class="op">)</span>,</span>
-<span>  domain <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  platform_config <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  internal_use_only <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div><p></p></div>
@@ -125,17 +121,6 @@ row and is intended to act as a join key for other objects, such as
 <dd><p>A vector of column names to use as user-defined
 index columns.  All named columns must exist in the schema, and at least
 one index column name is required.</p></dd>
-
-
-<dt><code>domain</code></dt>
-<dd><p>An optional list of 2-element vectors specifying the domain of each index
-column. Each vector should be a pair consisting of the minimum and maximum values storable in
-the index column. For example, if there is a single int64-valued index column, then <code>domain</code>
-might be <code>c(100, 200)</code> to indicate that values between 100 and 200, inclusive, can be stored
-in that column.  If provided, this list must have the same length as <code>index_column_names</code>,
-and the index-column domain will be as specified.  If omitted entirely, or if <code>NULL</code> in a given
-dimension, the corresponding index-column domain will use the minimum and maximum possible
-values for the column's datatype.  This makes a <code>DataFrame</code> growable.</p></dd>
 
 
 <dt><code>platform_config</code></dt>
@@ -288,88 +273,30 @@ simply raises an error</p><div class="section">
 <p>None, instead a <code><a href="https://rdrr.io/r/base/notyet.html" class="external-link">.NotYetImplemented</a>()</code> error is raised</p>
 </div>
 
-</div><p></p><hr><a id="method-SOMADataFrame-domain"></a><div class="section">
-<h3 id="method-domain-">Method <code>domain()</code><a class="anchor" aria-label="anchor" href="#method-domain-"></a></h3>
-<p>Returns a named list of minimum/maximum pairs, one per index
-column, currently storable on each index column of the dataframe. These
-can be resized up to <code>maxdomain</code>.
-(lifecycle: maturing)</p><div class="section">
-<h4 id="usage-6">Usage<a class="anchor" aria-label="anchor" href="#usage-6"></a></h4>
-<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SOMADataFrame</span><span class="op">$</span><span class="fu">domain</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
-</div>
-
-<div class="section">
-<h4 id="returns-3">Returns<a class="anchor" aria-label="anchor" href="#returns-3"></a></h4>
-<p>Named list of minimum/maximum values.</p>
-</div>
-
-</div><p></p><hr><a id="method-SOMADataFrame-maxdomain"></a><div class="section">
-<h3 id="method-maxdomain-">Method <code>maxdomain()</code><a class="anchor" aria-label="anchor" href="#method-maxdomain-"></a></h3>
-<p>Returns a named list of minimum/maximum pairs, one per index
-column, which are the limits up to which the dataframe can have its
-domain resized.
-(lifecycle: maturing)</p><div class="section">
-<h4 id="usage-7">Usage<a class="anchor" aria-label="anchor" href="#usage-7"></a></h4>
-<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SOMADataFrame</span><span class="op">$</span><span class="fu">maxdomain</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
-</div>
-
-<div class="section">
-<h4 id="returns-4">Returns<a class="anchor" aria-label="anchor" href="#returns-4"></a></h4>
-<p>Named list of minimum/maximum values.</p>
-</div>
-
 </div><p></p><hr><a id="method-SOMADataFrame-tiledbsoma_has_upgraded_domain"></a><div class="section">
 <h3 id="method-tiledbsoma-has-upgraded-domain-">Method <code>tiledbsoma_has_upgraded_domain()</code><a class="anchor" aria-label="anchor" href="#method-tiledbsoma-has-upgraded-domain-"></a></h3>
 <p>Returns TRUE if the array has the upgraded resizeable domain
 feature from TileDB-SOMA 1.15: the array was created with this support,
 or it has had <code>upgrade_domain</code> applied to it.
 (lifecycle: maturing)</p><div class="section">
-<h4 id="usage-8">Usage<a class="anchor" aria-label="anchor" href="#usage-8"></a></h4>
+<h4 id="usage-6">Usage<a class="anchor" aria-label="anchor" href="#usage-6"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SOMADataFrame</span><span class="op">$</span><span class="fu">tiledbsoma_has_upgraded_domain</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
-<h4 id="returns-5">Returns<a class="anchor" aria-label="anchor" href="#returns-5"></a></h4>
+<h4 id="returns-3">Returns<a class="anchor" aria-label="anchor" href="#returns-3"></a></h4>
 <p>Logical</p>
-</div>
-
-</div><p></p><hr><a id="method-SOMADataFrame-resize_soma_joinid_shape"></a><div class="section">
-<h3 id="method-resize-soma-joinid-shape-">Method <code>resize_soma_joinid_shape()</code><a class="anchor" aria-label="anchor" href="#method-resize-soma-joinid-shape-"></a></h3>
-<p>Increases the shape of the dataframe on the <code>soma_joinid</code>
-index column, if it indeed is an index column, leaving all other index
-columns as-is. If the <code>soma_joinid</code> is not an index column, no change is
-made.  This is a special case of <code>upgrade_domain</code> (WIP for 1.15), but
-simpler to keystroke, and handles the most common case for dataframe
-domain expansion.  Raises an error if the dataframe doesn't already have a
-domain: in that case please call <code>tiledbsoma_upgrade_domain</code> (WIP for
-1.15).</p><div class="section">
-<h4 id="usage-9">Usage<a class="anchor" aria-label="anchor" href="#usage-9"></a></h4>
-<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SOMADataFrame</span><span class="op">$</span><span class="fu">resize_soma_joinid_shape</span><span class="op">(</span><span class="va">new_shape</span><span class="op">)</span></span></code></pre></div><p></p></div>
-</div>
-
-<div class="section">
-<h4 id="arguments-4">Arguments<a class="anchor" aria-label="anchor" href="#arguments-4"></a></h4>
-<p></p><div class="arguments"><dl><dt><code>new_shape</code></dt>
-<dd><p>An integer, greater than or equal to 1 + the
-<code>soma_joinid</code> domain slot.</p></dd>
-
-
-</dl><p></p></div>
-</div>
-<div class="section">
-<h4 id="returns-6">Returns<a class="anchor" aria-label="anchor" href="#returns-6"></a></h4>
-<p>No return value</p>
 </div>
 
 </div><p></p><hr><a id="method-SOMADataFrame-clone"></a><div class="section">
 <h3 id="method-clone-">Method <code>clone()</code><a class="anchor" aria-label="anchor" href="#method-clone-"></a></h3>
 <p>The objects of this class are cloneable with this method.</p><div class="section">
-<h4 id="usage-10">Usage<a class="anchor" aria-label="anchor" href="#usage-10"></a></h4>
+<h4 id="usage-7">Usage<a class="anchor" aria-label="anchor" href="#usage-7"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SOMADataFrame</span><span class="op">$</span><span class="fu">clone</span><span class="op">(</span>deep <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
-<h4 id="arguments-5">Arguments<a class="anchor" aria-label="anchor" href="#arguments-5"></a></h4>
+<h4 id="arguments-4">Arguments<a class="anchor" aria-label="anchor" href="#arguments-4"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>deep</code></dt>
 <dd><p>Whether to make a deep clone.</p></dd>
 

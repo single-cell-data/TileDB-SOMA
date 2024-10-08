@@ -1,4 +1,4 @@
-pandoc: 3.1.11
+pandoc: 2.7.3
 pkgdown: 2.1.1
 pkgdown_sha: ~
 articles:
@@ -6,4 +6,4 @@ articles:
   soma-objects: soma-objects.html
   soma-reading: soma-reading.html
   UsingPlatformConfig: UsingPlatformConfig.html
-last_built: 2024-10-07T22:31Z
+last_built: 2024-10-08T14:16Z

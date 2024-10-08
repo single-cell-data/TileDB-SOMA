@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">tiledbsoma</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.14.99.5</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.14.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -39,7 +39,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Create and cache a SOMA Context Object</h1>
-      <small class="dont-index">Source: <a href="https://github.com/single-cell-data/TileDB-SOMA/blob/1.15.0rc2/R/Init.R" class="external-link"><code>R/Init.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/single-cell-data/TileDB-SOMA/blob/1.14.3/R/Init.R" class="external-link"><code>R/Init.R</code></a></small>
       <div class="d-none name"><code>soma_context.Rd</code></div>
     </div>
 
@@ -66,12 +66,6 @@ configuration setting</p></dd>
     <p>An external pointer object containing a shared pointer instance of <code>SOMAContext</code></p>
     </div>
 
-    <div class="section level2">
-    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">cfgvec</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/vector.html" class="external-link">as.vector</a></span><span class="op">(</span><span class="fu">tiledb</span><span class="fu">::</span><span class="fu"><a href="https://tiledb-inc.github.io/TileDB-R/reference/tiledb_config.html" class="external-link">tiledb_config</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span>   <span class="co"># TileDB Config in vector form</span></span></span>
-<span class="r-in"><span><span class="va">sctx</span> <span class="op">&lt;-</span> <span class="fu">soma_context</span><span class="op">(</span><span class="va">cfgvec</span><span class="op">)</span></span></span>
-</code></pre></div>
-    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 
