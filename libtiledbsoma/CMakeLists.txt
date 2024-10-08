@@ -232,7 +232,7 @@ else()
   )
   list(APPEND
     TILEDBSOMA_COMPILE_OPTIONS
-    $<$<OR:$<CONFIG:ASAN>,$<CONFIG:TSAN>,$<CONFIG:MSAN>,$<CONFIG:LSAN>,$<CONFIG:UBSAN>>: -DDEBUG -O1 -g -fno-omit-frame-pointer  -fno-optimize-sibling-calls>
+    $<$<OR:$<CONFIG:ASAN>,$<CONFIG:TSAN>,$<CONFIG:LSAN>,$<CONFIG:UBSAN>>: -DDEBUG -O1 -g -fno-omit-frame-pointer  -fno-optimize-sibling-calls>
   )
 
   # Sanitizer compiler flag: Must use generator expressions to support
@@ -241,14 +241,7 @@ else()
   list(APPEND TILEDBSOMA_SANITIZER_OPTIONS $<$<CONFIG:ASAN>: -fsanitize=address >)
   list(APPEND TILEDBSOMA_SANITIZER_OPTIONS $<$<CONFIG:LSAN>: -fsanitize=leak >)
   list(APPEND TILEDBSOMA_SANITIZER_OPTIONS $<$<CONFIG:TSAN>: -fsanitize=thread >)
-  list(APPEND TILEDBSOMA_SANITIZER_OPTIONS $<$<CONFIG:MSAN>: -fsanitize=memory >)
   list(APPEND TILEDBSOMA_SANITIZER_OPTIONS $<$<CONFIG:UBSAN>: -fsanitize=undefined >)
-
-  # Compiler specific additions:
-  if(NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-    # Use -Wno-literal-suffix on Linux for C++ libtiledbsoma target.
-    list(APPEND TILEDBSOMA_COMPILE_OPTIONS -Wno-literal-suffix)
-  endif()
 
   # Sanitizer link options: Must use generator expressions to support
   # multi-configuration build generators.
@@ -256,8 +249,19 @@ else()
   list(APPEND TILEDBSOMA_LINK_OPTIONS $<$<CONFIG:ASAN>: -fsanitize=address >)
   list(APPEND TILEDBSOMA_LINK_OPTIONS $<$<CONFIG:LSAN>: -fsanitize=leak >)
   list(APPEND TILEDBSOMA_LINK_OPTIONS $<$<CONFIG:TSAN>: -fsanitize=thread >)
-  list(APPEND TILEDBSOMA_LINK_OPTIONS $<$<CONFIG:MSAN>: -fsanitize=memory >)
   list(APPEND TILEDBSOMA_LINK_OPTIONS $<$<CONFIG:UBSAN>: -fsanitize=undefined >)
+
+  # Compiler specific additions:
+  if(NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    # Use -Wno-literal-suffix on Linux for C++ libtiledbsoma target.
+    list(APPEND TILEDBSOMA_COMPILE_OPTIONS -Wno-literal-suffix)
+  else()
+    # GCC Doesn't have a memory sanitizer, but clang does.
+    list(APPEND TILEDBSOMA_SANITIZER_OPTIONS $<$<CONFIG:MSAN>: -DDEBUG -O1 -g -fno-omit-frame-pointer  -fno-optimize-sibling-calls -fsanitize=memory >)
+    list(APPEND TILEDBSOMA_LINK_OPTIONS $<$<CONFIG:MSAN>: -fsanitize=memory >)
+  endif()
+
+
 
 endif()
 
