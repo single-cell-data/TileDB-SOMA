@@ -563,12 +563,12 @@ TEST_CASE_METHOD(
 
         REQUIRE(ned_sjid == std::vector<int64_t>({1, 2}));
 
-        REQUIRE(dom_sjid == std::vector<int64_t>({0, 99}));
+        REQUIRE(dom_sjid == std::vector<int64_t>({0, SOMA_JOINID_DIM_MAX}));
 
         REQUIRE(maxdom_sjid.size() == 2);
         REQUIRE(maxdom_sjid[0] == 0);
         if (!use_current_domain) {
-            REQUIRE(maxdom_sjid[1] == 99);
+            REQUIRE(maxdom_sjid[1] == SOMA_JOINID_DIM_MAX);
         } else {
             REQUIRE(maxdom_sjid[1] > 2000000000);
         }
@@ -662,11 +662,14 @@ TEST_CASE_METHOD(
 
         if (!use_current_domain) {
             REQUIRE(ned_sjid == std::vector<int64_t>({1, 10}));
-            REQUIRE(dom_sjid == std::vector<int64_t>({0, 99}));
-            REQUIRE(maxdom_sjid == std::vector<int64_t>({0, 99}));
+            REQUIRE(dom_sjid == std::vector<int64_t>({0, SOMA_JOINID_DIM_MAX}));
+            REQUIRE(
+                maxdom_sjid == std::vector<int64_t>({0, SOMA_JOINID_DIM_MAX}));
         } else {
             REQUIRE(ned_sjid == std::vector<int64_t>({1, 101}));
-            REQUIRE(dom_sjid == std::vector<int64_t>({0, 199}));
+            REQUIRE(
+                dom_sjid ==
+                std::vector<int64_t>({0, SOMA_JOINID_RESIZE_DIM_MAX}));
             REQUIRE(maxdom_sjid.size() == 2);
             REQUIRE(maxdom_sjid[0] == 0);
             REQUIRE(maxdom_sjid[1] > 2000000000);
@@ -680,6 +683,21 @@ TEST_CASE_METHOD(
             REQUIRE(
                 check.second ==
                 "testing: dataframe currently has no domain set.");
+
+            REQUIRE(!sdf->has_current_domain());
+            sdf->close();
+
+            sdf = open(OpenMode::write);
+            sdf->upgrade_soma_joinid_shape(SOMA_JOINID_DIM_MAX + 1, "testing");
+            sdf->close();
+
+            sdf = open(OpenMode::read);
+            REQUIRE(sdf->has_current_domain());
+            std::optional<int64_t> actual = sdf->maybe_soma_joinid_shape();
+            REQUIRE(actual.has_value());
+            REQUIRE(actual.value() == SOMA_JOINID_DIM_MAX + 1);
+            sdf->close();
+
         } else {
             // Must fail since this is too small.
             REQUIRE(check.first == false);
