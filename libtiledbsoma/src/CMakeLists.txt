@@ -11,12 +11,12 @@ add_library(TILEDBSOMA_NANOARROW_OBJECT OBJECT
 )
 target_link_libraries(TILEDBSOMA_NANOARROW_OBJECT
   PRIVATE
-    ${TILEDBSOMA_LINK_OPTIONS}
+    ${TILEDBSOMA_SANITIZER_FLAG}
 )
 target_compile_options(TILEDBSOMA_NANOARROW_OBJECT
   PRIVATE
     ${TILEDBSOMA_COMPILE_OPTIONS}
-    ${TILEDBSOMA_SANITIZER_OPTIONS}
+    ${TILEDBSOMA_SANITIZER_FLAG}
 )
 target_include_directories(TILEDBSOMA_NANOARROW_OBJECT
   PUBLIC
@@ -63,11 +63,11 @@ target_compile_options(TILEDB_SOMA_OBJECTS
   PRIVATE
     ${TILEDBSOMA_COMPILE_OPTIONS}
     ${TILEDBSOMA_WERROR_OPTION}
-    ${TILEDBSOMA_SANITIZER_OPTIONS}
+    ${TILEDBSOMA_SANITIZER_FLAG}
 )
 target_link_libraries(TILEDB_SOMA_OBJECTS
   PRIVATE
-    ${TILEDBSOMA_LINK_OPTIONS}
+    ${TILEDBSOMA_SANITIZER_FLAG}
 )
 
 
@@ -110,7 +110,6 @@ if(TILEDBSOMA_BUILD_STATIC)
   endif()
   target_link_libraries(tiledbsoma_static
     PRIVATE
-      ${TILEDBSOMA_LINK_OPTIONS}
   )
 else()
   add_library(tiledbsoma SHARED
@@ -123,7 +122,7 @@ else()
       TileDB::tiledb_shared
       spdlog::spdlog
     PRIVATE
-      ${TILEDBSOMA_LINK_OPTIONS}
+      ${TILEDBSOMA_SANITIZER_FLAG}
   )
 endif()
 
@@ -259,7 +258,7 @@ if(TILEDBSOMA_BUILD_CLI)
       tiledbsoma
       TileDB::tiledb_shared
     PRIVATE
-      ${TILEDBSOMA_LINK_OPTIONS}
+      ${TILEDBSOMA_SANITIZER_FLAG}
   )
 
 

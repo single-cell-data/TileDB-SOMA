@@ -37,7 +37,7 @@ add_executable(unit_soma
 
 target_link_libraries(unit_soma
   PRIVATE
-    ${TILEDBSOMA_LINK_OPTIONS}
+    ${TILEDBSOMA_SANITIZER_FLAG}
     Catch2::Catch2WithMain
     TileDB::tiledb_shared
 )
@@ -58,6 +58,7 @@ target_compile_definitions(unit_soma
 target_compile_options(unit_soma
   PRIVATE
     ${TILEDBSOMA_COMPILE_OPTIONS}
+    ${TILEDBSOMA_SANITIZER_FLAG}
     ${TILEDBSOMA_WERROR_OPTION}
 )
 

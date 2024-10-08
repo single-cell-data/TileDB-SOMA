@@ -232,36 +232,29 @@ else()
   )
   list(APPEND
     TILEDBSOMA_COMPILE_OPTIONS
-    $<$<CONFIG:ASAN,TSAN,LSAN,UBSAN>: -DDEBUG -O1 -g -fno-omit-frame-pointer  -fno-optimize-sibling-calls>
+    $<$<CONFIG:ASAN,TSAN,LSAN,UBSAN,MSAN>: -DDEBUG -O1 -g -fno-omit-frame-pointer  -fno-optimize-sibling-calls>
   )
 
-  # Sanitizer compiler flag: Must use generator expressions to support
-  # multi-configuration build generators.
-  set(TILEDBSOMA_SANITIZER_OPTIONS "")
-  list(APPEND TILEDBSOMA_SANITIZER_OPTIONS $<$<CONFIG:ASAN>: -fsanitize=address>)
-  list(APPEND TILEDBSOMA_SANITIZER_OPTIONS $<$<CONFIG:LSAN>: -fsanitize=leak>)
-  list(APPEND TILEDBSOMA_SANITIZER_OPTIONS $<$<CONFIG:TSAN>: -fsanitize=thread>)
-  list(APPEND TILEDBSOMA_SANITIZER_OPTIONS $<$<CONFIG:UBSAN>: -fsanitize=undefined>)
 
-  # Sanitizer link options: Must use generator expressions to support
-  # multi-configuration build generators.
-  set(TILEDBSOMA_LINK_OPTIONS "")
-  list(APPEND TILEDBSOMA_LINK_OPTIONS $<$<CONFIG:ASAN>: -fsanitize=address>)
-  list(APPEND TILEDBSOMA_LINK_OPTIONS $<$<CONFIG:LSAN>: -fsanitize=leak>)
-  list(APPEND TILEDBSOMA_LINK_OPTIONS $<$<CONFIG:TSAN>: -fsanitize=thread>)
-  list(APPEND TILEDBSOMA_LINK_OPTIONS $<$<CONFIG:UBSAN>: -fsanitize=undefined>)
+  # TODO: There is a bug in CMake 3.22.1 but not 3.27.6 where nested generators
+  # are not fully evaluated in the `target_link_library` commands. The GENEX_EVAL
+  # commands are not multi-configuration friendly and should be removed after we
+  # update CMake.
+  # See https://www.reddit.com/r/cmake/comments/17d70h6/why_arent_generator_expressions_evaluated_for/
+  # for this placeholder solution.
+  set(TILEDBSOMA_SANITIZER_FLAG "")
+  list(APPEND TILEDBSOMA_SANITIZER_FLAG "\$<GENEX_EVAL:$<$<CONFIG:ASAN>: -fsanitize=address>>")
+  list(APPEND TILEDBSOMA_SANITIZER_FLAG "\$<GENEX_EVAL:$<$<CONFIG:LSAN>: -fsanitize=leak>>")
+  list(APPEND TILEDBSOMA_SANITIZER_FLAG "\$<GENEX_EVAL:$<$<CONFIG:TSAN>: -fsanitize=thread>>")
+  list(APPEND TILEDBSOMA_SANITIZER_FLAG "\$<GENEX_EVAL:$<$<CONFIG:UBSAN>: -fsanitize=undefined>>")
+  list(APPEND TILEDBSOMA_SANITIZER_FLAG "\$<GENEX_EVAL:$<$<CONFIG:MSAN>: -fsanitize=memory>>")
+
 
   # Compiler specific additions:
   if(NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     # Use -Wno-literal-suffix on Linux for C++ libtiledbsoma target.
     list(APPEND TILEDBSOMA_COMPILE_OPTIONS -Wno-literal-suffix)
-  else()
-    # GCC Doesn't have a memory sanitizer, but clang does.
-    list(APPEND TILEDBSOMA_SANITIZER_OPTIONS $<$<CONFIG:MSAN>: -DDEBUG -O1 -g -fno-omit-frame-pointer  -fno-optimize-sibling-calls -fsanitize=memory >)
-    list(APPEND TILEDBSOMA_LINK_OPTIONS $<$<CONFIG:MSAN>: -fsanitize=memory >)
   endif()
-
-
 
 endif()
 
