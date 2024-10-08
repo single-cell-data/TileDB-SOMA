@@ -1,6 +1,6 @@
 #include "linestring.h"
 
-namespace tiledbsoma
+namespace tiledbsoma::geometry
 {
     LineString::LineString(std::vector<BasePoint>&& points) : points(points) {}
 

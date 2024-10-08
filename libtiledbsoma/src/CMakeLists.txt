@@ -54,6 +54,8 @@ add_library(TILEDB_SOMA_OBJECTS OBJECT
   ${CMAKE_CURRENT_SOURCE_DIR}/utils/geometry/multipoint.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/utils/geometry/multilinestring.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/utils/geometry/multipolygon.cc
+  ${CMAKE_CURRENT_SOURCE_DIR}/utils/geometry/operators/io/read.cc
+  ${CMAKE_CURRENT_SOURCE_DIR}/utils/geometry/operators/io/write.cc
 )
 
 target_compile_definitions(TILEDB_SOMA_OBJECTS
@@ -186,15 +188,6 @@ install(FILES
   ${CMAKE_CURRENT_SOURCE_DIR}/utils/stats.h
   ${CMAKE_CURRENT_SOURCE_DIR}/utils/util.h
   ${CMAKE_CURRENT_SOURCE_DIR}/utils/version.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/utils/geometry/base.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/utils/geometry/operators/io.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/utils/geometry/point.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/utils/geometry/geometry.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/utils/geometry/linestring.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/utils/geometry/polygon.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/utils/geometry/multipoint.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/utils/geometry/multilinestring.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/utils/geometry/multipolygon.h
 
   DESTINATION "include/tiledbsoma/utils"
 )

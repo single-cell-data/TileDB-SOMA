@@ -5,7 +5,7 @@
 
 #include "linestring.h"
 
-namespace tiledbsoma
+namespace tiledbsoma::geometry
 {
 class MultiLineString {
 public:

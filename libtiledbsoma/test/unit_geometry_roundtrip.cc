@@ -40,13 +40,14 @@
 #include <catch2/matchers/catch_matchers_templated.hpp>
 #include <catch2/matchers/catch_matchers_vector.hpp>
 #include <catch2/matchers/catch_matchers_all.hpp>
-#include <sstream>
 #include <utility>
 
-#include "../src/utils/geometry/operators/io.h"
+#include "../src/utils/geometry/operators/io/write.h"
+#include "../src/utils/geometry/operators/io/read.h"
 #include "../src/utils/geometry/geometry.h"
 
 using namespace tiledbsoma;
+using namespace tiledbsoma::geometry;
 using namespace Catch::Matchers;
 
 #ifndef TILEDBSOMA_SOURCE_ROOT

@@ -5,7 +5,7 @@
 
 #include "point.h"
 
-namespace tiledbsoma
+namespace tiledbsoma::geometry
 {
     class MultiPoint
     {

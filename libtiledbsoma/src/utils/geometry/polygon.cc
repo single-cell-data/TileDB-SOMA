@@ -1,6 +1,6 @@
 #include "polygon.h"
 
-namespace tiledbsoma
+namespace tiledbsoma::geometry
 {
     Polygon::Polygon(std::vector<BasePoint>&& exteriorRing, std::vector<std::vector<BasePoint>>&& interiorRings) : exteriorRing(exteriorRing), interiorRings(interiorRings) {}
 

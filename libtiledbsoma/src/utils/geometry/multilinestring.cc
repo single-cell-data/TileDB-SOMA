@@ -1,6 +1,6 @@
 #include "multilinestring.h"
 
-namespace tiledbsoma
+namespace tiledbsoma::geometry
 {
     MultiLineString::MultiLineString(std::vector<LineString>&& linestrings) : linestrings(linestrings) {}
 

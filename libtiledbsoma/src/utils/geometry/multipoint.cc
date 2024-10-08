@@ -1,6 +1,6 @@
 #include "multipoint.h"
 
-namespace tiledbsoma
+namespace tiledbsoma::geometry
 {
     MultiPoint::MultiPoint(std::vector<Point>&& points) : points(points) {}
 

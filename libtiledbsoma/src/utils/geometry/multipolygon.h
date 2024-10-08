@@ -5,7 +5,7 @@
 
 #include "polygon.h"
 
-namespace tiledbsoma
+namespace tiledbsoma::geometry
 {
 class MultiPolygon
 {

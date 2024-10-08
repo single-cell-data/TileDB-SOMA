@@ -5,7 +5,7 @@
 
 #include "base.h"
 
-namespace tiledbsoma {
+namespace tiledbsoma::geometry {
 
 class LineString
 {

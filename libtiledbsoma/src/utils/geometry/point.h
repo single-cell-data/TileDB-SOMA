@@ -6,7 +6,7 @@
 
 #include "base.h"
 
-namespace tiledbsoma
+namespace tiledbsoma::geometry
 {
 
 class Point : public BasePoint

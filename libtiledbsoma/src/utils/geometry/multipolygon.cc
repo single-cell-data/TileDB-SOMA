@@ -1,6 +1,6 @@
 #include "multipolygon.h"
 
-namespace tiledbsoma
+namespace tiledbsoma::geometry
 {
     MultiPolygon::MultiPolygon(std::vector<Polygon>&& polygons) : polygons(polygons) {}
 

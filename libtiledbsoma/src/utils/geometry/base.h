@@ -6,7 +6,7 @@
 #include <optional>
 #include <memory>
 
-namespace tiledbsoma {
+namespace tiledbsoma::geometry {
 
 struct BasePoint
 {
