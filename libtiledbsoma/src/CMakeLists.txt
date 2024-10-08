@@ -109,7 +109,7 @@ if(TILEDBSOMA_BUILD_STATIC)
     )
   endif()
   target_link_libraries(tiledbsoma_static
-    PUBLIC
+    PRIVATE
       ${TILEDBSOMA_LINK_OPTIONS}
   )
 else()
@@ -122,6 +122,7 @@ else()
     PUBLIC
       TileDB::tiledb_shared
       spdlog::spdlog
+    PRIVATE
       ${TILEDBSOMA_LINK_OPTIONS}
   )
 endif()
@@ -253,12 +254,12 @@ if(TILEDBSOMA_BUILD_CLI)
 
   target_link_libraries(tiledbsoma-cli
     PUBLIC
-
-    # CLI11::CLI11
-    # spdlog::spdlog
-    tiledbsoma
-    TileDB::tiledb_shared
-    ${TILEDBSOMA_LINK_OPTIONS}
+      # CLI11::CLI11
+      # spdlog::spdlog
+      tiledbsoma
+      TileDB::tiledb_shared
+    PRIVATE
+      ${TILEDBSOMA_LINK_OPTIONS}
   )
 
 
