@@ -37,9 +37,9 @@ add_executable(unit_soma
 
 target_link_libraries(unit_soma
   PRIVATE
+    ${TILEDBSOMA_LINK_OPTIONS}
     Catch2::Catch2WithMain
     TileDB::tiledb_shared
-    ${TILEDBSOMA_LINK_OPTIONS}
 )
 
 target_include_directories(unit_soma

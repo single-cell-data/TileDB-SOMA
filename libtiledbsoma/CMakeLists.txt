@@ -238,18 +238,18 @@ else()
   # Sanitizer compiler flag: Must use generator expressions to support
   # multi-configuration build generators.
   set(TILEDBSOMA_SANITIZER_OPTIONS "")
-  list(APPEND TILEDBSOMA_SANITIZER_OPTIONS $<$<CONFIG:ASAN>: -fsanitize=address >)
-  list(APPEND TILEDBSOMA_SANITIZER_OPTIONS $<$<CONFIG:LSAN>: -fsanitize=leak >)
-  list(APPEND TILEDBSOMA_SANITIZER_OPTIONS $<$<CONFIG:TSAN>: -fsanitize=thread >)
-  list(APPEND TILEDBSOMA_SANITIZER_OPTIONS $<$<CONFIG:UBSAN>: -fsanitize=undefined >)
+  list(APPEND TILEDBSOMA_SANITIZER_OPTIONS $<$<CONFIG:ASAN>: -fsanitize=address>)
+  list(APPEND TILEDBSOMA_SANITIZER_OPTIONS $<$<CONFIG:LSAN>: -fsanitize=leak>)
+  list(APPEND TILEDBSOMA_SANITIZER_OPTIONS $<$<CONFIG:TSAN>: -fsanitize=thread>)
+  list(APPEND TILEDBSOMA_SANITIZER_OPTIONS $<$<CONFIG:UBSAN>: -fsanitize=undefined>)
 
   # Sanitizer link options: Must use generator expressions to support
   # multi-configuration build generators.
   set(TILEDBSOMA_LINK_OPTIONS "")
-  list(APPEND TILEDBSOMA_LINK_OPTIONS $<$<CONFIG:ASAN>: -fsanitize=address >)
-  list(APPEND TILEDBSOMA_LINK_OPTIONS $<$<CONFIG:LSAN>: -fsanitize=leak >)
-  list(APPEND TILEDBSOMA_LINK_OPTIONS $<$<CONFIG:TSAN>: -fsanitize=thread >)
-  list(APPEND TILEDBSOMA_LINK_OPTIONS $<$<CONFIG:UBSAN>: -fsanitize=undefined >)
+  list(APPEND TILEDBSOMA_LINK_OPTIONS $<$<CONFIG:ASAN>: -fsanitize=address>)
+  list(APPEND TILEDBSOMA_LINK_OPTIONS $<$<CONFIG:LSAN>: -fsanitize=leak>)
+  list(APPEND TILEDBSOMA_LINK_OPTIONS $<$<CONFIG:TSAN>: -fsanitize=thread>)
+  list(APPEND TILEDBSOMA_LINK_OPTIONS $<$<CONFIG:UBSAN>: -fsanitize=undefined>)
 
   # Compiler specific additions:
   if(NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang")
