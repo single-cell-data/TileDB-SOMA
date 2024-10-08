@@ -232,7 +232,7 @@ else()
   )
   list(APPEND
     TILEDBSOMA_COMPILE_OPTIONS
-    $<$<OR:$<CONFIG:ASAN>,$<CONFIG:TSAN>,$<CONFIG:LSAN>,$<CONFIG:UBSAN>>: -DDEBUG -O1 -g -fno-omit-frame-pointer  -fno-optimize-sibling-calls>
+    $<$<CONFIG:ASAN,TSAN,LSAN,UBSAN>: -DDEBUG -O1 -g -fno-omit-frame-pointer  -fno-optimize-sibling-calls>
   )
 
   # Sanitizer compiler flag: Must use generator expressions to support
