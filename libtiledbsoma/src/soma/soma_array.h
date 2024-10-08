@@ -605,7 +605,7 @@ class SOMAArray : public SOMAObject {
      *
      * @return PlatformConfig
      */
-    PlatformConfig config_options() const {
+    PlatformConfig config_options_from_schema() const {
         return ArrowAdapter::platform_config_from_tiledb_schema(*mq_->schema());
     }
 
