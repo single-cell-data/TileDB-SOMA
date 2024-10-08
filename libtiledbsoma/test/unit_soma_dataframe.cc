@@ -385,7 +385,6 @@ TEST_CASE_METHOD(
                     json::parse(config_options.attrs)["a0"][0].at("name") ==
                     Filter::to_str(filter.second));
             }
-            std::cout << json::parse(config_options.dims).dump() << std::endl;
             REQUIRE(
                 json::parse(config_options.dims)["soma_joinid"][0].at("name") ==
                 Filter::to_str(TILEDB_FILTER_ZSTD));
