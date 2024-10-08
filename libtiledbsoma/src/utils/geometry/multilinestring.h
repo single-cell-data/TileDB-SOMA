@@ -5,15 +5,15 @@
 
 #include "linestring.h"
 
-namespace tiledbsoma::geometry
-{
+namespace tiledbsoma::geometry {
 class MultiLineString {
-public:
-    MultiLineString(std::vector<LineString>&& linestring = std::vector<LineString>());
+   public:
+    MultiLineString(
+        std::vector<LineString>&& linestring = std::vector<LineString>());
     ~MultiLineString();
 
     std::vector<LineString> linestrings;
 };
-} // namespace tiledbsoma
+}  // namespace tiledbsoma::geometry
 
-#endif // TILEDBSOMA_MULTILINESTRING_H
+#endif  // TILEDBSOMA_MULTILINESTRING_H

@@ -3,12 +3,12 @@
 
 #include <variant>
 
-#include "point.h"
 #include "linestring.h"
-#include "polygon.h"
-#include "multipoint.h"
 #include "multilinestring.h"
+#include "multipoint.h"
 #include "multipolygon.h"
+#include "point.h"
+#include "polygon.h"
 
 namespace tiledbsoma::geometry {
 
@@ -25,12 +25,18 @@ enum class GeometryType {
 using BinaryBuffer = std::vector<uint8_t>;
 
 struct GeometryCollection;
-using GenericGeometry = std::variant<Point, LineString, Polygon, MultiPoint, MultiLineString, MultiPolygon, GeometryCollection>;
+using GenericGeometry = std::variant<
+    Point,
+    LineString,
+    Polygon,
+    MultiPoint,
+    MultiLineString,
+    MultiPolygon,
+    GeometryCollection>;
 
-struct GeometryCollection : public std::vector<GenericGeometry>
-{
+struct GeometryCollection : public std::vector<GenericGeometry> {
     using std::vector<GenericGeometry>::vector;
 };
-}
+}  // namespace tiledbsoma::geometry
 
 #endif  // TILEDBSOMA_GEOMETRY_H

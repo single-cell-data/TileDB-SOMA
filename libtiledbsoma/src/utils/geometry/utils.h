@@ -3,28 +3,28 @@
 
 #include <utility>
 
-namespace tiledbsoma::geometry
-{
+namespace tiledbsoma::geometry {
 
-template<typename... Base>
+template <typename... Base>
 struct Operator : Base... {
     using Base::operator()...;
 };
 
-template<typename...T> Operator(T...) -> Operator<T...>;
+template <typename... T>
+Operator(T...) -> Operator<T...>;
 
 template <typename G>
 struct Recurse {
     template <typename... X>
-    decltype(auto) operator()(X &&... x) const &
-    {
+    decltype(auto) operator()(X&&... x) const& {
         return g(*this, std::forward<X>(x)...);
     }
     G g;
 };
 
-template <typename G> Recurse(G) -> Recurse<G>;
+template <typename G>
+Recurse(G) -> Recurse<G>;
 
-} // namespace tiledbsoma::geometry
+}  // namespace tiledbsoma::geometry
 
 #endif

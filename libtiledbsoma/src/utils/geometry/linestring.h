@@ -7,14 +7,13 @@
 
 namespace tiledbsoma::geometry {
 
-class LineString
-{
-public:
+class LineString {
+   public:
     LineString(std::vector<BasePoint>&& points = std::vector<BasePoint>());
     ~LineString();
 
     std::vector<BasePoint> points;
 };
-}
+}  // namespace tiledbsoma::geometry
 
-#endif // TILEDBSOMA_LINESTRING_H
+#endif  // TILEDBSOMA_LINESTRING_H

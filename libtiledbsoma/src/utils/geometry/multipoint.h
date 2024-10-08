@@ -5,17 +5,15 @@
 
 #include "point.h"
 
-namespace tiledbsoma::geometry
-{
-    class MultiPoint
-    {
-    public:
-        MultiPoint(std::vector<Point>&& points = std::vector<Point>());
-        ~MultiPoint();
+namespace tiledbsoma::geometry {
+class MultiPoint {
+   public:
+    MultiPoint(std::vector<Point>&& points = std::vector<Point>());
+    ~MultiPoint();
 
-        std::vector<Point> points;
-    };
-    
-} // namespace tiledbsoma
+    std::vector<Point> points;
+};
 
-#endif // TILEDBSOMA_MULTIPOINT_H
+}  // namespace tiledbsoma::geometry
+
+#endif  // TILEDBSOMA_MULTIPOINT_H
