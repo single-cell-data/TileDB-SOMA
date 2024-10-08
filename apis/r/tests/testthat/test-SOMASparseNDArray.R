@@ -164,6 +164,116 @@ test_that("SOMASparseNDArray read_sparse_matrix_zero_based", {
   ndarray$close()
 })
 
+test_that("SOMASparseNDArray read coordinates", {
+  skip_if(!extended_tests())
+  uri <- tempfile(pattern = "sparse-ndarray")
+  nrows <- 100L
+  ncols <- 20L
+
+  ndarray <- create_and_populate_sparse_nd_array(
+    uri = uri,
+    mode = "READ",
+    nrows = nrows,
+    ncols = ncols,
+    seed = 42L
+  )
+  on.exit(ndarray$close(), add = TRUE, after = FALSE)
+
+  expect_identical(as.integer(ndarray$shape()), c(nrows, ncols))
+  expect_s4_class(mat <- ndarray$read()$sparse_matrix()$concat(), "dgTMatrix")
+  expect_identical(dim(mat), c(nrows, ncols))
+
+  # Note: slices `:` yield integers, not numerics
+  # Note: #L is integer, # on its own is numeric
+  cases <- list(
+    # Test one dim NULL
+    "dim0 null, dim1 slice" = list(soma_dim_0 = NULL, soma_dim_1 = 0:9),
+    "dim0 null, dim1 slice" = list(soma_dim_0 = 35:45, soma_dim_1 = NULL),
+    "dim0 null, dim1 coords" = list(
+      soma_dim_0 = NULL,
+      soma_dim_1 = c(0L, 5L, 10L)
+    ),
+    "dim0 coords, dim1 null" = list(soma_dim_0 = c(72, 83), soma_dim_1 = NULL),
+    # Test both dims null
+    "dim0 null, dim1 null" = list(soma_dim_0 = NULL, soma_dim_1 = NULL),
+    # Test both dims provided
+    "dim0 coords, dim1 coords" = list(
+      soma_dim_0 = c(72, 83),
+      soma_dim_1 = c(0L, 5L, 10L)
+    ),
+    "dim0 slice, dim1 slice" = list(soma_dim_0 = 35:45, soma_dim_1 = 0:9),
+    "dim0 coords, dim1 slice" = list(soma_dim_0 = c(72, 83), soma_dim_1 = 0:9),
+    "dim0 slice, dim0 coords" = list(
+      soma_dim_0 = 35:45,
+      soma_dim_1 = c(0L, 5L, 10L)
+    ),
+    # Test one dim missing
+    "dim0 missing, dim1 slice" = list(soma_dim_1 = 0:9),
+    "dim0 missing, dim1 coords" = list(soma_dim_1 = c(0L, 5L, 10L)),
+    "dim0 missing, dim1 null" = list(soma_dim_1 = NULL),
+    "dim0 slice, dim1 missing" = list(soma_dim_0 = 35:45),
+    "dim0 coords, dim1 missing" = list(soma_dim_0 = c(72, 83)),
+    "dim0 coords, dim1 null" = list(soma_dim_0 = NULL),
+    # Test zero-pull
+    "zero-pull" = list(soma_dim_0 = c(0, 3), soma_dim_1 = c(0L, 9L))
+  )
+  for (i in seq_along(cases)) {
+    coords <- cases[[i]]
+    label <- names(cases)[i]
+    expect_s3_class(tbl <- ndarray$read(coords)$tables()$concat(), "Table")
+    ii <- if (is.null(coords$soma_dim_0)) {
+      TRUE
+    } else {
+      mat@i %in% coords$soma_dim_0
+    }
+    jj <- if (is.null(coords$soma_dim_1)) {
+      TRUE
+    } else {
+      mat@j %in% coords$soma_dim_1
+    }
+    nr <- ifelse(isTRUE(ii) && isTRUE(jj), yes = length(mat@x), no = sum(ii & jj))
+    expect_identical(nrow(tbl), nr, label = label)
+  }
+
+  # Test assertions
+  list_cases <- list(TRUE, "tomato", 1L, 1.1, bit64::as.integer64(1L), list())
+  for (coords in list_cases) {
+    expect_error(ndarray$read(coords), regexp = "'coords' must be a list")
+  }
+
+  intgerish_cases <- list(
+    list(TRUE),
+    list("tomato"),
+    list(1.1),
+    list(NA_integer_),
+    list(NA_real_),
+    list(bit64::NA_integer64_),
+    list(Inf),
+    list(-4),
+    list(factor(letters[1:10])),
+    list(matrix(1:10, ncol = 1:10)),
+    list(array(1:10))
+  )
+  for (coords in intgerish_cases) {
+    expect_error(
+      ndarray$read(coords),
+      regexp = "'coords' must be a list integerish vectors"
+    )
+  }
+
+  names_cases <- list(
+    list(1:3, 1:5, 1:10),
+    list(tomato = 1:10),
+    list(soma_dim_0 = 1:10, tomato = 1:10)
+  )
+  for (coords in names_cases) {
+    expect_error(
+      ndarray$read(coords),
+      regexp = "'coords' if unnamed must have length of dim names, else if named names must match dim names"
+    )
+  }
+})
+
 test_that("SOMASparseNDArray creation with duplicates", {
   skip_if(!extended_tests())
   uri <- tempfile(pattern="sparse-ndarray")

@@ -1,3 +1,9 @@
+# tiledbsoma 1.14.3
+
+## Changes
+
+* Handle `numeric` coords properly when reading arrays [3145](https://github.com/single-cell-data/TileDB-SOMA/pull/3145)
+
 # tiledbsoma 1.14.2
 
 ## Changes
