@@ -1,9 +1,13 @@
 from __future__ import annotations
 
+import tarfile
+
 import pyarrow as pa
 import pytest
 
 import tiledbsoma
+
+from ._util import TESTDATA
 
 
 @pytest.mark.parametrize(
@@ -344,3 +348,62 @@ def test_dataframe_basics(tmp_path, soma_joinid_domain, index_column_names):
         # Test writes out of old bounds, within new bounds, after resize
         with tiledbsoma.DataFrame.open(uri, "w") as sdf:
             sdf.write(data)
+
+
+@pytest.mark.parametrize("has_shapes", [False, True])
+def test_canned_experiments(tmp_path, has_shapes):
+    uri = tmp_path.as_posix()
+
+    if not has_shapes:
+        tgz = TESTDATA / "pbmc-exp-without-shapes.tgz"
+    else:
+        tgz = TESTDATA / "pbmc-exp-with-shapes.tgz"
+
+    with tarfile.open(tgz) as handle:
+        handle.extractall(uri)
+
+    def _assert_huge_domainish(d):
+        assert len(d) == 1
+        assert len(d[0]) == 2
+        assert d[0][0] == 0
+        # Exact number depends on tile extent, and is unimportant in any case
+        assert d[0][1] > 2**62
+
+    def _check_dataframe(sdf, has_shapes, expected_count):
+        assert sdf.count == expected_count
+        if not has_shapes:
+            _assert_huge_domainish(sdf.domain)
+        else:
+            assert sdf.domain == ((0, expected_count - 1),)
+        _assert_huge_domainish(sdf.maxdomain)
+        assert sdf.tiledbsoma_has_upgraded_domain == has_shapes
+
+    def _assert_huge_shape(d):
+        assert len(d) == 2
+        # Exact number depends on tile extent, and is unimportant in any case
+        assert d[0] > 2**62
+        assert d[1] > 2**62
+
+    def _check_ndarray(ndarray, has_shapes, expected_shape):
+        if not has_shapes:
+            _assert_huge_shape(ndarray.shape)
+        else:
+            assert ndarray.shape == expected_shape
+        _assert_huge_shape(ndarray.maxshape)
+
+    with tiledbsoma.Experiment.open(uri) as exp:
+
+        _check_dataframe(exp.obs, has_shapes, 2638)
+
+        assert "raw" in exp.ms
+        assert exp.ms["raw"].var.count == 13714
+        assert "data" in exp.ms["raw"].X
+
+        _check_dataframe(exp.ms["raw"].var, has_shapes, 13714)
+        _check_ndarray(exp.ms["raw"].X["data"], has_shapes, (2638, 13714))
+
+        _check_dataframe(exp.ms["RNA"].var, has_shapes, 1838)
+        _check_ndarray(exp.ms["RNA"].X["data"], has_shapes, (2638, 1838))
+        _check_ndarray(exp.ms["RNA"].obsm["X_pca"], has_shapes, (2638, 50))
+        _check_ndarray(exp.ms["RNA"].obsp["connectivities"], has_shapes, (2638, 2638))
+        _check_ndarray(exp.ms["RNA"].varm["PCs"], has_shapes, (1838, 50))
