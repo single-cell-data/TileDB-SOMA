@@ -36,10 +36,10 @@ void apply_dim_points(
                 if (uv[i] >= pr.first && uv[i] <= pr.second) {
                     sr->set_dim_point<uint64_t>(
                         nm, uv[i]);  // bonked when use with vector
-                    spdl::info(
+                    spdl::info(std::format(
                         "[apply_dim_points] Applying dim point {} on {}",
                         uv[i],
-                        nm);
+                        nm));
                     suitable = true;
                 }
             }
@@ -50,10 +50,10 @@ void apply_dim_points(
             for (size_t i = 0; i < iv.size(); i++) {
                 if (iv[i] >= pr.first && iv[i] <= pr.second) {
                     sr->set_dim_point<int64_t>(nm, iv[i]);
-                    spdl::debug(
+                    spdl::debug(std::format(
                         "[apply_dim_points] Applying dim point {} on {}",
                         iv[i],
-                        nm);
+                        nm));
                     suitable = true;
                 }
             }
@@ -64,10 +64,10 @@ void apply_dim_points(
                 float v = static_cast<float>(payload[i]);
                 if (v >= pr.first && v <= pr.second) {
                     sr->set_dim_point<float>(nm, v);
-                    spdl::debug(
+                    spdl::debug(std::format(
                         "[apply_dim_points] Applying dim point {} on {}",
                         v,
-                        nm);
+                        nm));
                     suitable = true;
                 }
             }
@@ -77,10 +77,10 @@ void apply_dim_points(
             for (R_xlen_t i = 0; i < payload.size(); i++) {
                 if (payload[i] >= pr.first && payload[i] <= pr.second) {
                     sr->set_dim_point<double>(nm, payload[i]);
-                    spdl::debug(
+                    spdl::debug(std::format(
                         "[apply_dim_points] Applying dim point {} on {}",
                         payload[i],
-                        nm);
+                        nm));
                     suitable = true;
                 }
             }
@@ -90,10 +90,10 @@ void apply_dim_points(
             for (R_xlen_t i = 0; i < payload.size(); i++) {
                 if (payload[i] >= pr.first && payload[i] <= pr.second) {
                     sr->set_dim_point<int32_t>(nm, payload[i]);
-                    spdl::debug(
+                    spdl::debug(std::format(
                         "[apply_dim_points] Applying dim point {} on {}",
                         payload[i],
-                        nm);
+                        nm));
                     suitable = true;
                 }
             }
@@ -133,13 +133,13 @@ void apply_dim_ranges(
                 uint64_t h = static_cast<uint64_t>(Rcpp::fromInteger64(hi[i]));
                 vp[i] = std::make_pair(
                     std::max(l, pr.first), std::min(h, pr.second));
-                spdl::debug(
+                spdl::debug(std::format(
                     "[apply_dim_ranges] Applying dim point {} on {} with {} - "
                     "{}",
                     i,
                     nm,
                     l,
-                    h);
+                    h));
                 suitable = l < pr.second &&
                            h > pr.first;  // lower must be less than max, higher
                                           // more than min
@@ -155,13 +155,13 @@ void apply_dim_ranges(
             for (int i = 0; i < mm.nrow(); i++) {
                 vp[i] = std::make_pair(
                     std::max(lo[i], pr.first), std::min(hi[i], pr.second));
-                spdl::debug(
+                spdl::debug(std::format(
                     "[apply_dim_ranges] Applying dim point {} on {} with {} - "
                     "{}",
                     i,
                     nm,
                     lo[i],
-                    hi[i]);
+                    hi[i]));
                 suitable = lo[i] < pr.second &&
                            hi[i] > pr.first;  // lower must be less than max,
                                               // higher more than min
@@ -181,13 +181,13 @@ void apply_dim_ranges(
                 float h = static_cast<float>(hi[i]);
                 vp[i] = std::make_pair(
                     std::max(l, pr.first), std::min(h, pr.second));
-                spdl::debug(
+                spdl::debug(std::format(
                     "[apply_dim_ranges] Applying dim point {} on {} with {} - "
                     "{}",
                     i,
                     nm,
                     l,
-                    h);
+                    h));
                 suitable = l < pr.second &&
                            h > pr.first;  // lower must be less than max, higher
                                           // more than min
@@ -205,13 +205,13 @@ void apply_dim_ranges(
             for (int i = 0; i < mm.nrow(); i++) {
                 vp[i] = std::make_pair(
                     std::max(lo[i], pr.first), std::min(hi[i], pr.second));
-                spdl::debug(
+                spdl::debug(std::format(
                     "[apply_dim_ranges] Applying dim point {} on {} with {} - "
                     "{}",
                     i,
                     nm,
                     lo[i],
-                    hi[i]);
+                    hi[i]));
                 suitable = lo[i] < pr.second &&
                            hi[i] > pr.first;  // lower must be less than max,
                                               // higher more than min
@@ -229,13 +229,13 @@ void apply_dim_ranges(
             for (int i = 0; i < mm.nrow(); i++) {
                 vp[i] = std::make_pair(
                     std::max(lo[i], pr.first), std::min(hi[i], pr.second));
-                spdl::debug(
+                spdl::debug(std::format(
                     "[apply_dim_ranges] Applying dim point {} on {} with {} - "
                     "{}",
                     i,
                     nm[i],
                     lo[i],
-                    hi[i]);
+                    hi[i]));
                 suitable = lo[i] < pr.second &&
                            hi[i] > pr.first;  // lower must be less than max,
                                               // higher more than min
@@ -475,21 +475,21 @@ SEXP convert_domainish(const tdbs::ArrowTable& arrow_table) {
             std::vector<std::string>
                 lohi = tiledbsoma::ArrowAdapter::get_array_string_column(
                     arrow_array->children[i], arrow_schema->children[i]);
-            spdl::info(
+            spdl::info(std::format(
                 "[domainish] name {} format {} length {} lo {} hi {}",
                 std::string(arrow_schema->children[i]->name),
                 std::string(arrow_schema->children[i]->format),
                 arrow_array->children[i]->length,
                 lohi[0],
-                lohi[1]);
+                lohi[1]));
         } else {
             // Arrow semantics: non-variable-length: buffers 0,1 are validity &
             // data
-            spdl::info(
+            spdl::info(std::format(
                 "[domainish] name {} format {} length {}",
                 std::string(arrow_schema->children[i]->name),
                 std::string(arrow_schema->children[i]->format),
-                arrow_array->children[i]->length);
+                arrow_array->children[i]->length));
         }
 
         ArrowArrayMove(arrow_array->children[i], arr->children[i]);

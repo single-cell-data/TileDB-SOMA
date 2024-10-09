@@ -90,7 +90,7 @@ Rcpp::XPtr<tdbs::SOMAArray> sr_setup(
         tdbs::LOG_SET_LEVEL(loglevel);
     }
 
-    spdl::debug("[sr_setup] Setting up {}", uri);
+    spdl::debug(std::format("[sr_setup] Setting up {}", uri));
 
     std::string_view name = "unnamed";
     std::vector<std::string> column_names = {};
@@ -130,12 +130,12 @@ Rcpp::XPtr<tdbs::SOMAArray> sr_setup(
     tiledb::Domain domain = schema->domain();
     std::vector<tiledb::Dimension> dims = domain.dimensions();
     for (auto& dim : dims) {
-        spdl::debug(
+        spdl::debug(std::format(
             "[sr_setup] Dimension {} type {} domain {} extent {}",
             dim.name(),
             tiledb::impl::to_str(dim.type()),
             dim.domain_to_str(),
-            dim.tile_extent_to_str());
+            dim.tile_extent_to_str()));
         name2dim.emplace(std::make_pair(
             dim.name(), std::make_shared<tiledb::Dimension>(dim)));
     }
@@ -173,11 +173,11 @@ bool sr_complete(Rcpp::XPtr<tdbs::SOMAArray> sr) {
     bool initial = sr->is_initial_read();
     bool res = complt && !initial;  // completed transfer if query status
                                     // complete and query ran once
-    spdl::debug(
+    spdl::debug(std::format(
         "[sr_complete] Complete query test {} (compl {} initial {})",
         res,
         complt,
-        initial);
+        initial));
     return res;
 }
 
@@ -216,26 +216,26 @@ SEXP sr_next(Rcpp::XPtr<tdbs::SOMAArray> sr) {
     check_xptr_tag<tdbs::SOMAArray>(sr);
 
     if (sr_complete(sr)) {
-        spdl::trace(
+        spdl::trace(std::format(
             "[sr_next] complete {} num_cells {}",
             sr->is_complete(true),
-            sr->total_num_cells());
+            sr->total_num_cells()));
         return create_empty_arrow_table();
     }
 
     if (!sr->is_initial_read() && sr->total_num_cells() == 0) {
-        spdl::trace(
+        spdl::trace(std::format(
             "[sr_next] is_initial_read {} num_cells {}",
             sr->is_initial_read(),
-            sr->total_num_cells());
+            sr->total_num_cells()));
         return create_empty_arrow_table();
     }
 
     auto sr_data = sr->read_next();
-    spdl::debug(
+    spdl::debug(std::format(
         "[sr_next] Read {} rows and {} cols",
         sr_data->get()->num_rows(),
-        sr_data->get()->names().size());
+        sr_data->get()->names().size()));
 
     const std::vector<std::string> names = sr_data->get()->names();
     auto ncol = names.size();
@@ -259,7 +259,7 @@ SEXP sr_next(Rcpp::XPtr<tdbs::SOMAArray> sr) {
     arr->length = 0;  // initial value
 
     for (size_t i = 0; i < ncol; i++) {
-        spdl::trace("[sr_next] Accessing {} at {}", names[i], i);
+        spdl::trace(std::format("[sr_next] Accessing {} at {}", names[i], i));
 
         // now buf is a shared_ptr to ColumnBuffer
         auto buf = sr_data->get()->at(names[i]);
@@ -271,14 +271,14 @@ SEXP sr_next(Rcpp::XPtr<tdbs::SOMAArray> sr) {
         ArrowSchemaMove(pp.second.get(), sch->children[i]);
 
         if (pp.first->length > arr->length) {
-            spdl::debug(
+            spdl::debug(std::format(
                 "[soma_array_reader] Setting array length to {}",
-                pp.first->length);
+                pp.first->length));
             arr->length = pp.first->length;
         }
     }
 
-    spdl::debug("[sr_next] Exporting chunk with {} rows", arr->length);
+    spdl::debug(std::format("[sr_next] Exporting chunk with {} rows", arr->length));
     // Nanoarrow special: stick schema into xptr tag to return single SEXP
     array_xptr_set_schema(arrayxp, schemaxp);  // embed schema in array
     return arrayxp;
@@ -288,7 +288,7 @@ SEXP sr_next(Rcpp::XPtr<tdbs::SOMAArray> sr) {
 void sr_reset(Rcpp::XPtr<tdbs::SOMAArray> sr) {
     check_xptr_tag<tdbs::SOMAArray>(sr);
     sr->reset();
-    spdl::debug("[sr_reset] Reset SOMAArray object");
+    spdl::debug(std::format("[sr_reset] Reset SOMAArray object"));
 }
 
 // [[Rcpp::export]]
@@ -301,11 +301,11 @@ void sr_set_dim_points(
 
     std::vector<int64_t> vec = Rcpp::fromInteger64(points);
     sr->set_dim_points<int64_t>(dim, vec);
-    spdl::debug(
+    spdl::debug(std::format(
         "[sr_set_dim_points] Set on dim '{}' for {} points, first two are {} "
         "and {}",
         dim,
         points.length(),
         vec[0],
-        vec[1]);
+        vec[1]));
 }
