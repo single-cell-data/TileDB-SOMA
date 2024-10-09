@@ -113,7 +113,21 @@ def test_sparse_nd_array_basics(
     with tiledbsoma.SparseNDArray.open(uri) as snda:
         assert snda.shape == arg_shape
 
-    if tiledbsoma._flags.NEW_SHAPE_FEATURE_FLAG_ENABLED:
+    if not tiledbsoma._flags.NEW_SHAPE_FEATURE_FLAG_ENABLED:
+        with tiledbsoma.SparseNDArray.open(uri) as snda:
+            ok, msg = snda.tiledbsoma_upgrade_shape(arg_shape, check_only=True)
+            assert ok
+            assert msg == ""
+
+    else:
+
+        with tiledbsoma.SparseNDArray.open(uri) as snda:
+            ok, msg = snda.tiledbsoma_upgrade_shape(arg_shape, check_only=True)
+            assert not ok
+            assert (
+                msg
+                == "tiledbsoma_can_upgrade_shape: array already has a shape: please use resize"
+            )
 
         # Test resize down
         new_shape = tuple([arg_shape[i] - 50 for i in range(ndim)])
