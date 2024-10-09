@@ -212,7 +212,7 @@ def _treewalk(
             for coll_name in ["X", "obsm", "obsp", "varm", "varp"]:
                 if coll_name in item:
 
-                    args[coll_name] = coll_name
+                    args["coll_name"] = coll_name
 
                     ok = _treewalk(
                         item[coll_name].uri,
@@ -227,7 +227,7 @@ def _treewalk(
             for key in item:
 
                 if node_name == "ms":
-                    args[ms_name] = key
+                    args["ms_name"] = key
 
                 ok = _treewalk(item[key].uri, node_name=key, visitor=visitor, args=args)
                 retval = retval and ok
@@ -525,4 +525,3 @@ def _get_new_ndarray_shape(
         raise tiledbsoma.SOMAError(
             f"experiment resize: internal error: unhandled collection {coll_name}"
         )
-
