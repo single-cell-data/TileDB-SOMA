@@ -376,6 +376,9 @@ class SOMAArrayWrapper(Wrapper[_ArrType]):
     def schema(self) -> pa.Schema:
         return self._handle.schema
 
+    def config_options_from_schema(self) -> clib.PlatformConfig:
+        return self._handle.config_options_from_schema()
+
     @property
     def meta(self) -> "MetadataWrapper":
         return self.metadata

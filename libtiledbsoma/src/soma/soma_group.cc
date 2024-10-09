@@ -261,12 +261,14 @@ void SOMAGroup::set_metadata(
     metadata_.insert(mdpair);
 }
 
-void SOMAGroup::delete_metadata(const std::string& key) {
-    if (key.compare(SOMA_OBJECT_TYPE_KEY) == 0)
+void SOMAGroup::delete_metadata(const std::string& key, bool force) {
+    if (!force && key.compare(SOMA_OBJECT_TYPE_KEY) == 0) {
         throw TileDBSOMAError(SOMA_OBJECT_TYPE_KEY + " cannot be deleted.");
+    }
 
-    if (key.compare(ENCODING_VERSION_KEY) == 0)
+    if (!force && key.compare(ENCODING_VERSION_KEY) == 0) {
         throw TileDBSOMAError(ENCODING_VERSION_KEY + " cannot be deleted.");
+    }
 
     group_->delete_metadata(key);
     metadata_.erase(key);
