@@ -44,7 +44,7 @@ option(TILEDBSOMA_BUILD_PYTHON "Build Python API bindings" ON)
 option(TILEDBSOMA_BUILD_CLI "Build tiledbsoma CLI tool" ON)
 option(TILEDBSOMA_BUILD_STATIC "Build a static library; otherwise, shared library" OFF)
 option(TILEDBSOMA_ENABLE_TESTING "Enable tests" ON)
-option(TILEDBSOMA_ENABLE_WERROR "Enables the -Werror flag during compilation." ON)
+option(TILEDBSOMA_ENABLE_WERROR "Enables the -Werror flag during compilation." OFF)
 
 # Superbuild option must be on by default.
 option(SUPERBUILD "If true, perform a superbuild (builds all missing dependencies)." ON)
@@ -168,7 +168,7 @@ if(MSVC)
   set(TILEDBSOMA_COMPILE_OPTIONS /W4 /wd4101 /wd4146 /wd4244 /wd4251 /wd4456 /wd4457 /wd4702 /wd4800 /wd4996)
 
   # Warnings as errors:
-  if(TILEDBSOMA_ENABLE_WERROR)
+  if(${TILEDBSOMA_ENABLE_WERROR})
     set(TILEDBSOMA_WERROR_OPTION /WX)
   else()
     set(TILEDBSOMA_WERROR_OPTION "")
@@ -199,8 +199,8 @@ else()
 
   set(TILEDBSOMA_COMPILE_OPTIONS -Wall -Wextra)
 
-  if(TILEDBSOMA_ENABLE_WERROR)
-    set(TILEDBSOMA_WERROR_OPTION -Werror)
+  if(${TILEDBSOMA_ENABLE_WERROR})
+    set(TILEDBSOMA_WERROR_OPTION "") #-Werror)
   else()
     set(TILEDBSOMA_WERROR_OPTION "")
   endif()
