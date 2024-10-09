@@ -69,13 +69,13 @@ SEXP soma_array_reader(
     // shared pointer to SOMAContext from external pointer wrapper
     std::shared_ptr<tdbs::SOMAContext> somactx = ctxxp->ctxptr;
 
-    spdl::info(std::format("[soma_array_reader] Reading from {}", uri));
+    spdl::info("[soma_array_reader] Reading from {}", uri);
 
     std::vector<std::string> column_names = {};
     if (!colnames.isNull()) {  // If we have column names, select them
         column_names = Rcpp::as<std::vector<std::string>>(colnames);
-        spdl::debug(std::format(
-            "[soma_array_reader] Selecting {} columns", column_names.size()));
+        spdl::debug(
+            "[soma_array_reader] Selecting {} columns", column_names.size());
     }
 
     auto tdb_result_order = get_tdb_result_order(result_order);
@@ -85,8 +85,8 @@ SEXP soma_array_reader(
         timestamprange);
     if (timestamprange.isNotNull()) {
         Rcpp::DatetimeVector vec(timestamprange);
-        spdl::debug(std::format(
-            "[soma_array_reader] timestamprange ({},{})", vec[0], vec[1]));
+        spdl::debug(
+            "[soma_array_reader] timestamprange ({},{})", vec[0], vec[1]);
     }
 
     // Read selected columns from the uri (return is unique_ptr<SOMAArray>)
@@ -106,12 +106,12 @@ SEXP soma_array_reader(
     tiledb::Domain domain = schema->domain();
     std::vector<tiledb::Dimension> dims = domain.dimensions();
     for (auto& dim : dims) {
-        spdl::info(std::format(
+        spdl::info(
             "[soma_array_reader] Dimension {} type {} domain {} extent {}",
             dim.name(),
             tiledb::impl::to_str(dim.type()),
             dim.domain_to_str(),
-            dim.tile_extent_to_str()));
+            dim.tile_extent_to_str());
         name2dim.emplace(std::make_pair(
             dim.name(), std::make_shared<tiledb::Dimension>(dim)));
     }
