@@ -469,6 +469,12 @@ class SOMAArrayWrapper(Wrapper[_ArrType]):
         """Not implemented for DataFrame."""
         raise NotImplementedError
 
+    def tiledbsoma_can_upgrade_shape(
+        self, newshape: Sequence[Union[int, None]]
+    ) -> StatusAndReason:
+        """Not implemented for DataFrame."""
+        raise NotImplementedError
+
     def resize_soma_joinid_shape(self, newshape: int) -> None:
         """Only implemented for DataFrame."""
         raise NotImplementedError
@@ -671,6 +677,17 @@ class SparseNDArrayWrapper(SOMAArrayWrapper[clib.SOMASparseNDArray]):
         any dimension. Raises an error if the array already has a shape.
         """
         self._handle.tiledbsoma_upgrade_shape(newshape)
+
+    def tiledbsoma_can_upgrade_shape(
+        self, newshape: Sequence[Union[int, None]]
+    ) -> StatusAndReason:
+        """Allows the array to have a resizeable shape as described in the TileDB-SOMA
+        1.15 release notes.  Raises an error if the new shape exceeds maxshape in
+        any dimension. Raises an error if the array already has a shape.
+        """
+        return cast(
+            StatusAndReason, self._handle.tiledbsoma_can_upgrade_shape(newshape)
+        )
 
 
 class _DictMod(enum.Enum):
