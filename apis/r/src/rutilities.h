@@ -43,10 +43,10 @@ inline std::map<std::string, std::string> config_vector_to_map(
         for (size_t i = 0; i < n; i++) {
             platform_config.emplace(std::make_pair(
                 std::string(namesvec[i]), std::string(confvec[i])));
-            spdl::trace(
+            spdl::trace(fmt::runtime(
                 "[config_vector_to_map] adding '{}' = '{}'",
                 std::string(namesvec[i]),
-                std::string(confvec[i]));
+                std::string(confvec[i])));
         }
     }
 
