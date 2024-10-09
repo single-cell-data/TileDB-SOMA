@@ -242,6 +242,9 @@ void load_soma_array(py::module& m) {
                 return pa_schema_import(
                     py::capsule(array.arrow_schema().get()));
             })
+        .def(
+            "config_options_from_schema",
+            &SOMAArray::config_options_from_schema)
         .def("context", &SOMAArray::ctx)
 
         // After this are short functions expected to be invoked when the coords
@@ -951,9 +954,18 @@ void load_soma_array(py::module& m) {
                 return meta(array.get_metadata());
             })
 
-        .def("set_metadata", set_metadata)
+        .def(
+            "set_metadata",
+            set_metadata,
+            py::arg("key"),
+            py::arg("value"),
+            py::arg("force") = false)
 
-        .def("delete_metadata", &SOMAArray::delete_metadata)
+        .def(
+            "delete_metadata",
+            &SOMAArray::delete_metadata,
+            py::arg("key"),
+            py::arg("force") = false)
 
         .def(
             "get_metadata",
