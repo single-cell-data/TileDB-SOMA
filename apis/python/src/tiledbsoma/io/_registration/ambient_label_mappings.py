@@ -489,13 +489,17 @@ class ExperimentAmbientLabelMapping:
         return "\n".join(lines)
 
     def get_obs_shape(self) -> int:
-        """XXX WRITE ME"""
+        """Reports the new obs shape which the experiment will need to be
+        resized to in order to accommodate the data contained within the
+        registration."""
         if len(self.obs_axis.data.values()) == 0:
             return 0
         return 1 + max(self.obs_axis.data.values())
 
     def get_var_shapes(self) -> Dict[str, int]:
-        """XXX WRITE ME"""
+        """Reports the new var shapes, one per measurement, which the experiment
+        will need to be resized to in order to accommodate the data contained
+        within the registration."""
         retval: Dict[str, int] = {}
         for key, axis in self.var_axes.items():
             if len(axis.data.values()) == 0:
