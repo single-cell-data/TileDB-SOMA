@@ -236,7 +236,7 @@ void set_metadata(
         value_num,
         value_num > 0 ? value.data() : nullptr,
         force);  // The force flag is intended to only be toggled for testing in
-                 // test_factory.py
+                 // fault-injection scenarios
 }
 
 }  // namespace tiledbsoma
