@@ -77,10 +77,6 @@ struct WKBSizeOperator {
 
         return size;
     }
-
-    // size_t operator()(const auto& geometry) {
-    //     throw std::runtime_error("Unsupported geometry type");
-    // }
 };
 
 size_t wkb_size(const GenericGeometry& geometry) {
@@ -173,10 +169,6 @@ struct WKBWriteOperator {
             std::visit(
                 WKBWriteOperator{this->buffer, this->position, this->size},
                 geometry);
-    }
-
-    void operator()(const auto&) {
-        throw std::runtime_error("Unsupported geometry type");
     }
 
     uint8_t* buffer;
