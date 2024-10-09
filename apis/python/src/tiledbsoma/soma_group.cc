@@ -94,7 +94,7 @@ void load_soma_group(py::module& m) {
                     return py::none();
                 return py::cast(group.timestamp()->second);
             })
-            
+
         .def_property_readonly(
             "meta",
             [](SOMAGroup& group) -> py::dict {
