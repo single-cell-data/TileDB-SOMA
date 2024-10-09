@@ -10,13 +10,6 @@ from tiledbsoma import _constants
 
 UNKNOWN_ENCODING_VERSION = "3141596"
 
-try:
-    import tiledb
-
-    hastiledb = True
-except ModuleNotFoundError:
-    hastiledb = False
-
 
 @pytest.fixture
 def tiledb_object_uri(tmp_path, metadata_typename, encoding_version, soma_type):
@@ -91,7 +84,6 @@ def test_open_wrong_type(tiledb_object_uri, soma_type):
         ("SOMASparseNDArray", UNKNOWN_ENCODING_VERSION, soma.SparseNDArray),
     ],
 )
-@pytest.mark.skipif(not hastiledb, reason="tiledb-py not installed")
 def test_factory_unsupported_version(tiledb_object_uri):
     """All of these should raise, as they are encoding formats from the future"""
     # TODO: Fix Windows test failures without the following.
@@ -131,7 +123,6 @@ def test_factory_unsupported_version(tiledb_object_uri):
         ),  # DataFrame can't be a group
     ],
 )
-@pytest.mark.skipif(not hastiledb, reason="tiledb-py not installed")
 def test_factory_unsupported_types(tiledb_object_uri):
     """Illegal or non-existant metadata"""
     with pytest.raises(soma.SOMAError):
