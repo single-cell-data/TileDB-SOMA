@@ -6,7 +6,8 @@ import pytest
 import tiledbsoma
 import tiledbsoma.io
 import tiledbsoma.options._tiledb_create_write_options as tco
-import tiledb
+
+tiledb = pytest.importorskip("tiledb")
 
 from ._util import assert_adata_equal
 

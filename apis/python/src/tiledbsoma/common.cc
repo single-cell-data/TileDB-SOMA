@@ -209,7 +209,10 @@ py::dict meta(std::map<std::string, MetadataValue> metadata_mapping) {
 }
 
 void set_metadata(
-    SOMAObject& soma_object, const std::string& key, py::array value) {
+    SOMAObject& soma_object,
+    const std::string& key,
+    py::array value,
+    bool force) {
     tiledb_datatype_t value_type = np_to_tdb_dtype(value.dtype());
 
     // For https://github.com/single-cell-data/TileDB-SOMA/pull/2900:
@@ -228,7 +231,12 @@ void set_metadata(
 
     auto value_num = is_tdb_str(value_type) ? value.nbytes() : value.size();
     soma_object.set_metadata(
-        key, value_type, value_num, value_num > 0 ? value.data() : nullptr);
+        key,
+        value_type,
+        value_num,
+        value_num > 0 ? value.data() : nullptr,
+        force);  // The force flag is intended to only be toggled for testing in
+                 // test_factory.py
 }
 
 }  // namespace tiledbsoma
