@@ -165,8 +165,8 @@ def resize_experiment(
     # measurent names. This isn't a can-do status for the experiment;
     # it's a failure of the user's arguments.
     with tiledbsoma.Experiment.open(uri) as exp:
-        arg_keys = sorted(list(set(nvars.keys())))
-        ms_keys = sorted(list(set(exp.ms.keys())))
+        arg_keys = sorted(nvars.keys())
+        ms_keys = sorted(exp.ms.keys())
         if arg_keys != ms_keys:
             raise ValueError(
                 f"resize_experiment: provided nvar keys {arg_keys} do not match experiment keys {ms_keys}"
@@ -212,16 +212,7 @@ def _treewalk(
             for coll_name in ["X", "obsm", "obsp", "varm", "varp"]:
                 if coll_name in item:
 
-                    args = dict(
-                        nobs=args["nobs"],
-                        nvars=args["nvars"],
-                        ms_name=args["ms_name"],
-                        coll_name=coll_name,
-                        verbose=args["verbose"],
-                        check_only=args["check_only"],
-                        context=args["context"],
-                        output_handle=args["output_handle"],
-                    )
+                    args[coll_name] = coll_name
 
                     ok = _treewalk(
                         item[coll_name].uri,
@@ -236,16 +227,7 @@ def _treewalk(
             for key in item:
 
                 if node_name == "ms":
-                    args = dict(
-                        nobs=args["nobs"],
-                        nvars=args["nvars"],
-                        ms_name=key,
-                        coll_name=args["coll_name"],
-                        verbose=args["verbose"],
-                        check_only=args["check_only"],
-                        context=args["context"],
-                        output_handle=args["output_handle"],
-                    )
+                    args[ms_name] = key
 
                 ok = _treewalk(item[key].uri, node_name=key, visitor=visitor, args=args)
                 retval = retval and ok
@@ -458,7 +440,7 @@ def _get_leaf_node_description(
     if args["coll_name"] is not None:
         pieces.append(args["coll_name"])
     pieces.append(node_name)
-    return "[" + type_name + "] " + "/".join(pieces)
+    return f"[{type_name}] {'/'.join(pieces)} "
 
 
 def _bannerize(
@@ -467,8 +449,7 @@ def _bannerize(
     value: Any,
 ) -> None:
     if args["verbose"] or args["check_only"]:
-        padded_name = "%-20s" % name
-        print(f"  {padded_name} {value}", file=args["output_handle"])
+        print(f"  {name:<20} {value}", file=args["output_handle"])
 
 
 def _print_dry_run_result(ok: bool, msg: str, args: SizingArgs) -> None:
@@ -530,17 +511,18 @@ def _get_new_ndarray_shape(
             "experiment resize: internal error: coll_name missing"
         )
 
-    if coll_name == "X":
-        return (nobs, nvar)
-    elif coll_name == "obsm":
-        return (nobs, current_shape[1])
-    elif coll_name == "obsp":
-        return (nobs, nobs)
-    elif coll_name == "varm":
-        return (nvar, current_shape[1])
-    elif coll_name == "varp":
-        return (nvar, nvar)
-    else:
+    coll_dict = {
+        "X": (nobs, nvar),
+        "obsm": (nobs, current_shape[1]),
+        "obsp": (nobs, nobs),
+        "varm": (nvar, current_shape[1]),
+        "varp": (nvar, nvar),
+    }
+
+    try:
+        return coll_dict[coll_name]
+    except KeyError:
         raise tiledbsoma.SOMAError(
             f"experiment resize: internal error: unhandled collection {coll_name}"
         )
+
