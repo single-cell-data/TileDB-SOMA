@@ -354,7 +354,7 @@ class ExperimentAmbientLabelMapping:
 
         if experiment_uri is not None:
             if not tiledbsoma.Experiment.exists(experiment_uri, context=context):
-                raise ValueError("cannot find experiment at URI {experiment_uri}")
+                raise ValueError(f"cannot find experiment at URI {experiment_uri}")
 
             # Pre-check
             with tiledbsoma.Experiment.open(experiment_uri, context=context) as exp:
@@ -487,6 +487,22 @@ class ExperimentAmbientLabelMapping:
         for k, v in self.var_axes.items():
             lines.append(f"{k}/var:{len(v.data)}")
         return "\n".join(lines)
+
+    def get_obs_shape(self) -> int:
+        """XXX WRITE ME"""
+        if len(self.obs_axis.data.values()) == 0:
+            return 0
+        return 1 + max(self.obs_axis.data.values())
+
+    def get_var_shapes(self) -> Dict[str, int]:
+        """XXX WRITE ME"""
+        retval: Dict[str, int] = {}
+        for key, axis in self.var_axes.items():
+            if len(axis.data.values()) == 0:
+                retval[key] = 0
+            else:
+                retval[key] = 1 + max(axis.data.values())
+        return retval
 
     def to_json(self) -> str:
         return json.dumps(self, default=attrs.asdict, sort_keys=True, indent=4)
