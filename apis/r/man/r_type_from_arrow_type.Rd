@@ -33,6 +33,15 @@ the names are field names and the values are the \R \link[base:typeof]{types}
 of each field
 }
 \description{
-Get the \R Type from an Arrow Type
+Get an \R \link[base:typeof]{type} from an Arrow type. This function is
+equivalent to \code{\link[base]{typeof}()} rather than
+\code{\link[base]{mode}()} or \code{\link[base]{class}()}, and returns the
+equivalent \strong{type}. For example, the equivalent \R type to an Arrow
+\link[arrow]{dictionary} is \dQuote{\code{integer}}, not
+\dQuote{\code{factor}}; likewise, the equivalent \R type to an Arrow 64-bit
+integer is \dQuote{\code{double}}
+}
+\seealso{
+\code{\link[base]{typeof}()}
 }
 \keyword{internal}

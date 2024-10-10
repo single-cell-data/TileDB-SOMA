@@ -116,6 +116,14 @@ arrow_type_from_tiledb_type <- function(x) {
 
 #' Get the \R Type from an Arrow Type
 #'
+#' Get an \R \link[base:typeof]{type} from an Arrow type. This function is
+#' equivalent to \code{\link[base]{typeof}()} rather than
+#' \code{\link[base]{mode}()} or \code{\link[base]{class}()}, and returns the
+#' equivalent \strong{type}. For example, the equivalent \R type to an Arrow
+#' \link[arrow]{dictionary} is \dQuote{\code{integer}}, not
+#' \dQuote{\code{factor}}; likewise, the equivalent \R type to an Arrow 64-bit
+#' integer is \dQuote{\code{double}}
+#'
 #' @param x An \CRANpkg{Arrow} \link[arrow:Schema]{schema},
 #' \link[arrow:Field]{field}, or \link[arrow:infer_type]{data type}
 #'
@@ -134,6 +142,8 @@ arrow_type_from_tiledb_type <- function(x) {
 #' @keywords internal
 #'
 #' @export
+#'
+#' @seealso \code{\link[base]{typeof}()}
 #'
 r_type_from_arrow_type <- function(x) UseMethod('r_type_from_arrow_type')
 
@@ -168,6 +178,7 @@ r_type_from_arrow_type.Field <- function(x) {
 #' @export
 #'
 r_type_from_arrow_type.DataType <- function(x) {
+  # Types are equivalent to `typeof()`, not `mode()` or `class()`
   return(switch(
     EXPR = x$name,
     int8 = ,
