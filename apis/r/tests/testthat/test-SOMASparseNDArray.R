@@ -3,6 +3,7 @@ test_that("SOMASparseNDArray creation", {
   uri <- tempfile(pattern="sparse-ndarray")
   ndarray <- SOMASparseNDArrayCreate(uri, arrow::int32(), shape = c(10, 10))
 
+  # XXX CHANGEME
   expect_equal(tiledb::tiledb_object_type(uri), "ARRAY")
   expect_equal(ndarray$dimnames(), c("soma_dim_0", "soma_dim_1"))
 
@@ -51,6 +52,7 @@ test_that("SOMASparseNDArray creation", {
   )
 
   # Validate TileDB array schema
+  # XXX CHANGEME
   arr <- tiledb::tiledb_array(uri)
   sch <- tiledb::schema(arr)
   expect_true(tiledb::is.sparse(sch))
@@ -285,6 +287,7 @@ test_that("SOMASparseNDArray creation with duplicates", {
 
   create_write_check <- function(uri, D, allows_dups, do_dup, expected_nnz) {
       ## write from tiledb "for now"
+      # XXX CHANGEME
       dom <- tiledb::tiledb_domain(dims = c(tiledb::tiledb_dim("rows", c(1L, 100L), 100L, "INT32"),
                                             tiledb::tiledb_dim("cols", c(1L, 100L), 100L, "INT32")))
       sch <- tiledb::tiledb_array_schema(dom,
@@ -353,6 +356,7 @@ test_that("platform_config is respected", {
   snda <- SOMASparseNDArrayCreate(uri=uri, type=arrow::int32(), shape=c(100,100), platform_config = cfg)
 
   # Read back and check the array schema against the tiledb create options
+  # XXX CHANGEME
   arr <- tiledb::tiledb_array(uri)
   tsch <- tiledb::schema(arr)
 
@@ -421,6 +425,7 @@ test_that("platform_config defaults", {
   snda <- SOMASparseNDArrayCreate(uri=uri, type=arrow::int32(), shape=c(100,100), platform_config = cfg)
 
   # Read back and check the array schema against the tiledb create options
+  # XXX CHANGEME
   arr <- tiledb::tiledb_array(uri)
   tsch <- tiledb::schema(arr)
 
@@ -536,6 +541,7 @@ test_that("SOMASparseNDArray bounding box", {
     bbox_names[i] <- paste0(dnames[ceiling(i / 2)], '_domain', type)
   }
 
+  # XXX CHANGEME
   expect_true(all(bbox_names %in% names(tiledb::tiledb_get_all_metadata(ndarray$object))))
   for (i in seq_along(bbox_names)) {
     expect_s3_class(x <- ndarray$get_metadata(bbox_names[i]), 'integer64')
@@ -596,6 +602,7 @@ test_that("SOMASparseNDArray without bounding box", {
     bbox_names[i] <- paste0(dnames[ceiling(i / 2)], '_domain', type)
   }
 
+  # XXX CHANGEME
   expect_false(all(bbox_names %in% names(tiledb::tiledb_get_all_metadata(ndarray$object))))
 
   expect_error(suppressWarnings(ndarray$used_shape(), classes = "deprecatedWarning"))
@@ -626,6 +633,7 @@ test_that("SOMASparseNDArray with failed bounding box", {
     bbox_names[i] <- paste0(dnames[ceiling(i / 2)], '_domain', type)
   }
 
+  # XXX CHANGEME
   expect_false(all(bbox_names %in% names(tiledb::tiledb_get_all_metadata(ndarray$object))))
 
   expect_error(suppressWarnings(ndarray$used_shape(), classes = "deprecatedWarning"))
@@ -650,6 +658,7 @@ test_that("SOMASparseNDArray bounding box implicitly-stored values", {
     bbox_names[i] <- paste0(dnames[ceiling(i / 2)], '_domain', type)
   }
 
+  # XXX CHANGEME
   expect_true(all(bbox_names %in% names(tiledb::tiledb_get_all_metadata(ndarray$object))))
   for (i in seq_along(bbox_names)) {
     expect_s3_class(x <- ndarray$get_metadata(bbox_names[i]), 'integer64')

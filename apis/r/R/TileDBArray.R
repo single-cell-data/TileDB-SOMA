@@ -28,7 +28,6 @@ TileDBArray <- R6::R6Class(
       private$.mode <- mode
       if (is.null(self$tiledb_timestamp)) {
         spdl::debug("[TileDBArray$open] Opening {} '{}' in {} mode", self$class(), self$uri, mode)
-        private$.tiledb_array <- tiledb::tiledb_array_open(self$object, type = mode)
       } else {
         if (is.null(internal_use_only)) stopifnot("tiledb_timestamp not yet supported for WRITE mode" = mode == "READ")
         spdl::debug(
@@ -38,8 +37,6 @@ TileDBArray <- R6::R6Class(
           mode,
           self$tiledb_timestamp %||% "now"
         )
-        #private$.tiledb_array <- tiledb::tiledb_array_open_at(self$object, type = mode,
-        #                                                      timestamp = self$tiledb_timestamp)
       }
 
       ## TODO -- cannot do here while needed for array case does not work for data frame case
@@ -54,7 +51,6 @@ TileDBArray <- R6::R6Class(
     close = function() {
       spdl::debug("[TileDBArray$close] Closing {} '{}'", self$class(), self$uri)
       private$.mode = "CLOSED"
-      tiledb::tiledb_array_close(self$object)
       invisible(self)
     },
 
@@ -65,19 +61,6 @@ TileDBArray <- R6::R6Class(
         cat("  dimensions:", string_collapse(self$dimnames()), "\n")
         cat("  attributes:", string_collapse(self$attrnames()), "\n")
       }
-    },
-
-    #' @description Return a [`TileDBArray`] object (lifecycle: maturing)
-    #' @param ... Optional arguments to pass to `tiledb::tiledb_array()`
-    #' @return A [`tiledb::tiledb_array`] object.
-    tiledb_array = function(...) {
-      args <- list(...)
-      args$uri <- self$uri
-      args$query_type <- self$.mode
-      args$query_layout <- "UNORDERED"
-      args$ctx <- self$tiledbsoma_ctx$context()
-      spdl::debug("[TileDBArray$tiledb_array] ctor uri {} mode {} layout {}", args$uri, args$query_type, args$query_layout)
-      do.call(tiledb::tiledb_array, args)
     },
 
     #' @description Retrieve metadata from the TileDB array. (lifecycle: maturing)
@@ -134,12 +117,6 @@ TileDBArray <- R6::R6Class(
     schema = function() {
       arrow::as_schema(
         c_schema(self$uri, private$.soma_context));
-    },
-
-    #' @description Retrieve the array schema as TileDB schema (lifecycle: maturing)
-    #' @return A [`tiledb::tiledb_array_schema`] object
-    tiledb_schema = function() {
-      tiledb::schema(self$object)
     },
 
     #' @description Retrieve the array dimensions (lifecycle: maturing)
@@ -225,25 +202,8 @@ TileDBArray <- R6::R6Class(
     #' @return A vector of [`bit64::integer64`]s with one entry for
     #' each dimension.
     non_empty_domain = function(index1 = FALSE) {
-      dims <- self$dimnames()
-      ned <- bit64::integer64(length = length(dims))
-      ## added during C++-ification as self$object could close
-      if (isFALSE(tiledb::tiledb_array_is_open(self$object))) {
-          arrhandle <- tiledb::tiledb_array_open(self$object, type = "READ")
-      } else {
-          arrhandle <- self$object
-      }
-      for (i in seq_along(along.with = ned)) {
-        dom <- max(tiledb::tiledb_array_get_non_empty_domain_from_name(
-          arrhandle, # instead of:  self$object,
-          name = dims[i]
-        ))
-        if (isTRUE(x = index1)) {
-          dom <- dom + 1L
-        }
-        ned[i] <- dom
-      }
-      return(ned)
+      # XXX TEMP
+      vapply_int(self$non_empty_domain_new(), function(x){x[[2]]})
     },
 
     #' @description Returns a named list of minimum/maximum pairs, one per index
@@ -266,12 +226,6 @@ TileDBArray <- R6::R6Class(
     #' @return A scalar with the number of dimensions
     ndim = function() {
       ndim(self$uri, private$.soma_context)
-    },
-
-    #' @description Retrieve the array attributes (lifecycle: maturing)
-    #' @return A list of [`tiledb::tiledb_attr`] objects
-    attributes = function() {
-      tiledb::attrs(self$tiledb_schema())
     },
 
     #' @description Retrieve dimension names (lifecycle: maturing)
@@ -301,39 +255,9 @@ TileDBArray <- R6::R6Class(
   ),
 
   active = list(
-    #' @field object Access the underlying TileB object directly (either a
-    #' [`tiledb::tiledb_array`] or [`tiledb::tiledb_group`]).
-    object = function(value) {
-      if (!missing(value)) {
-        stop(sprintf("'%s' is a read-only field.", "object"), call. = FALSE)
-      }
-      # If the array was created after the object was instantiated, we need to
-      # initialize private$.tiledb_array
-      if (is.null(private$.tiledb_array)) {
-        private$initialize_object()
-      }
-      private$.tiledb_array
-    }
   ),
 
   private = list(
-
-    # Internal pointer to the TileDB array.
-    #
-    # Important implementation note:
-    # * In TileDB-R there is an unopened handle obtained by tiledb::tiledb_array, which takes
-    #   a URI as its argument.
-    # * One may then open and close this using tiledb::tiledb_array_open (for read or write)
-    #   and tiledb::tiledb_array_close, which take a tiledb_array handle as their first argument.
-    #
-    # However, for groups:
-    # * tiledb::tiledb_group and tiledb::group_open both return an object opened for read or write.
-    # * Therefore for groups we cannot imitate the behavior for arrays.
-    #
-    # For this reason there is a limit to how much handle-abstraction we can do in the TileDBObject
-    # parent class. In particular, we cannot have a single .tiledb_object shared by both TileDBArray
-    # and TileDBGroup.
-    .tiledb_array = NULL,
 
     # Initially NULL, once the array is created or opened, this is populated
     # with a list that's empty or contains the array metadata. Since the SOMA
@@ -341,16 +265,6 @@ TileDBArray <- R6::R6Class(
     # is open for write, but the TileDB layer underneath us does not, we must
     # have this cache.
     .metadata_cache = NULL,
-
-    # Once the array has been created this initializes the TileDB array object
-    # and stores the reference in private$.tiledb_array.
-    initialize_object = function() {
-      private$.tiledb_array <- tiledb::tiledb_array(
-        uri = self$uri,
-        ctx = self$tiledbsoma_ctx$context(),
-        query_layout = "UNORDERED"
-      )
-    },
 
     # ----------------------------------------------------------------
     # Metadata-caching

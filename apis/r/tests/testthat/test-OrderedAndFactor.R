@@ -79,6 +79,7 @@ test_that("SOMADataFrame round-trip with factor and ordered", {
     ## quick write with tiledb-r so that we get a schema from the manifested array
     ## there should possibly be a helper function to create the schema from a data.frame
     turi <- tempfile()
+    # XXX CHANGEME
     expect_silent(tiledb::fromDataFrame(ett, turi, col_index="soma_joinid"))
 
     tsch <- tiledb::schema(turi)

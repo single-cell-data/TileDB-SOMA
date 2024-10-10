@@ -140,7 +140,6 @@ SOMADataFrame <- R6::R6Class(
       arrow::as_record_batch(values)$export_to_c(naap, nasp)
 
       df <- as.data.frame(values)[schema_names]
-      arr <- self$object
       writeArrayFromArrow(
         uri = self$uri,
         naap = naap,

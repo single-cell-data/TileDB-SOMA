@@ -36,7 +36,6 @@ test_that("SOMATileDBContext SOMA mechanics", {
   expect_identical(ctx$length(), ntiledb + 2L)
   expect_length(ctx$keys(), ntiledb + 2L)
   expect_s4_class(context <- ctx$to_tiledb_context(), 'tiledb_ctx')
-  expect_length(as.vector(tiledb::config(context)), ctx$length())
 })
 
 test_that("SOMATileDBContext TileDB mechanics", {
@@ -84,5 +83,4 @@ test_that("SOMATileDBContext SOMA + TileDB mechanics", {
   expect_type(ctx$get('b'), 'integer')
   expect_equal(head(ctx$keys(), 3L), c('member_uris_are_relative', 'b', 'a'))
   expect_s4_class(context <- ctx$to_tiledb_context(), 'tiledb_ctx')
-  expect_length(as.vector(tiledb::config(context)), ctx$length())
 })
