@@ -55,9 +55,12 @@ parse_query_condition_new <- function(
   somactx
   ) {
 
-  stopifnot("The schema argument must be an Arrow Schema" =
-    is(schema, "ArrowObject") &&
-    is(schema, "Schema"))
+  stopifnot(
+      "The schema argument must be an Arrow Schema" =
+          is(schema, "ArrowObject") &&
+          is(schema, "Schema"),
+    "The argument must be a somactx object" =
+        is(somactx, "externalptr"))
 
     # ----------------------------------------------------------------
     # Helpers for walking the parse tree
@@ -201,12 +204,12 @@ setClass(
 # ================================================================
 #' Creates a 'tiledbsoma_query_condition' object
 #'
-#' @param ctx (optional) A TileDB Ctx object; if not supplied the default
+#' @param somactx (optional) A TileDB Ctx object; if not supplied the default
 #' context object is retrieved
 #' @return A 'tiledbsoma_query_condition' object
 #' @export
 tiledbsoma_empty_query_condition <- function(somactx) {
-    stopifnot("The argument must be a ctx object" = is(ctx, "externalptr"))
+    stopifnot("The argument must be a somactx object" = is(somactx, "externalptr"))
     ptr <- libtiledbsoma_empty_query_condition(somactx)
     query_condition <- new("tiledbsoma_query_condition", ptr = ptr, init = FALSE)
     invisible(query_condition)
