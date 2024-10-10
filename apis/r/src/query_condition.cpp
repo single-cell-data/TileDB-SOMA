@@ -130,7 +130,7 @@ void libtiledbsoma_query_condition_from_triple(
         uint64_t cond_val_size = sizeof(float);
         query_cond->init(attr_name, (void*)&v, cond_val_size, op);
 
-    } else if (arrow_type_name == "ascii" || arrow_type_name == "utf8") {
+    } else if (arrow_type_name == "utf8" || arrow_type_name == "large_utf8") {
         std::string v = Rcpp::as<std::string>(condition_value);
         query_cond->init(attr_name, v, op);
 
@@ -139,18 +139,18 @@ void libtiledbsoma_query_condition_from_triple(
         uint64_t cond_val_size = sizeof(bool);
         query_cond->init(attr_name, (void*)&v, cond_val_size, op);
 
-        // XXX FIXME
-        //    } else if (arrow_type_name == "DATETIME_MS") {
-        //        int64_t v = static_cast<int64_t>(
-        //            Rcpp::as<double>(condition_value) * 1000);
-        //        uint64_t cond_val_size = sizeof(int64_t);
-        //        query_cond->init(attr_name, (void*)&v, cond_val_size, op);
+    } else if (arrow_type_name == "timestamp") {
+        // Arrow timestamp TileDB DATETIME_MS
+        int64_t v = static_cast<int64_t>(
+            Rcpp::as<double>(condition_value) * 1000);
+        uint64_t cond_val_size = sizeof(int64_t);
+        query_cond->init(attr_name, (void*)&v, cond_val_size, op);
 
-        //    } else if (arrow_type_name == "DATETIME_DAY") {
-        //        int64_t v =
-        //        static_cast<int64_t>(Rcpp::as<double>(condition_value));
-        //        uint64_t cond_val_size = sizeof(int64_t);
-        //        query_cond->init(attr_name, (void*)&v, cond_val_size, op);
+    } else if (arrow_type_name == "date32") {
+        // Arrow date32 TileDB DATETIME_DAY
+        int64_t v = static_cast<int64_t>(Rcpp::as<double>(condition_value));
+        uint64_t cond_val_size = sizeof(int64_t);
+        query_cond->init(attr_name, (void*)&v, cond_val_size, op);
 
     } else {
         Rcpp::stop(
