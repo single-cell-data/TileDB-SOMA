@@ -182,7 +182,21 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
         Lifecycle:
             Experimental.
         """
-        raise NotImplementedError()
+        if transform is not None:
+            raise NotImplementedError()
+
+        coll = self._open_subcollection(subcollection)
+        return coll._add_new_element(
+            key,
+            MultiscaleImage,
+            lambda create_uri: MultiscaleImage.create(
+                create_uri,
+                context=self.context,
+                tiledb_timestamp=self.tiledb_timestamp_ms,
+                **kwargs,
+            ),
+            uri,
+        )
 
     @_funcs.forwards_kwargs_to(
         PointCloudDataFrame.create, exclude=("context", "tiledb_timestamp")
@@ -227,7 +241,20 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
         Lifecycle:
             Experimental.
         """
-        raise NotImplementedError()
+        if transform is not None:
+            raise NotImplementedError()
+        coll = self._open_subcollection(subcollection)
+        return coll._add_new_element(
+            key,
+            PointCloudDataFrame,
+            lambda create_uri: PointCloudDataFrame.create(
+                create_uri,
+                context=self.context,
+                tiledb_timestamp=self.tiledb_timestamp_ms,
+                **kwargs,
+            ),
+            uri,
+        )
 
     def set_transform_to_geometry_dataframe(
         self,
