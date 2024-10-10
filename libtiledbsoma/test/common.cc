@@ -119,12 +119,17 @@ create_arrow_schema_and_index_columns(
 // Create index-column info only, no schema involving the attrs
 ArrowTable create_column_index_info(const std::vector<DimInfo>& dim_infos) {
     for (auto info : dim_infos) {
+        LOG_DEBUG(fmt::format("create_column_index_info name={}", info.name));
+
         LOG_DEBUG(fmt::format(
-            "create_column_index_info name={} type={} dim_max={} ucd={}",
-            info.name,
-            tiledb::impl::to_str(info.tiledb_datatype),
-            info.dim_max,
-            info.use_current_domain));
+            "create_column_index_info type={}",
+            tiledb::impl::to_str(info.tiledb_datatype)));
+
+        LOG_DEBUG(
+            fmt::format("create_column_index_info dim_max={}", info.dim_max));
+
+        LOG_DEBUG(fmt::format(
+            "create_column_index_info ucd={}", info.use_current_domain));
     }
 
     auto index_cols_info_schema = _create_index_cols_info_schema(dim_infos);
