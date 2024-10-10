@@ -40,6 +40,10 @@ target_link_libraries(unit_soma
     Catch2::Catch2WithMain
     TileDB::tiledb_shared
 )
+target_link_options(unit_soma
+  PRIVATE
+    ${TILEDBSOMA_SANITIZER_FLAG}
+)
 
 target_include_directories(unit_soma
   PRIVATE
@@ -57,6 +61,7 @@ target_compile_definitions(unit_soma
 target_compile_options(unit_soma
   PRIVATE
     ${TILEDBSOMA_COMPILE_OPTIONS}
+    ${TILEDBSOMA_SANITIZER_FLAG}
     ${TILEDBSOMA_WERROR_OPTION}
 )
 
