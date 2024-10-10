@@ -6,7 +6,7 @@
 Implementation of a SOMA Scene
 """
 
-from typing import Any, Optional, Sequence, Union
+from typing import Any, List, Optional, Sequence, Union
 
 import somacore
 from somacore import Axis, CoordinateSpace, CoordinateTransform, IdentityTransform
@@ -60,6 +60,27 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
             self._coord_space: Optional[CoordinateSpace] = None
         else:
             self._coord_space = coordinate_space_from_json(coord_space)
+
+    def _open_subcollection(
+        self, subcollection: Union[str, Sequence[str]]
+    ) -> CollectionBase[AnySOMAObject]:
+        if len(subcollection) == 0:
+            raise ValueError("Invalid subcollection: value cannot be empty.")
+        if isinstance(subcollection, str):
+            subcollection = (subcollection,)
+        else:
+            subcollection = tuple(subcollection)
+        coll: CollectionBase[AnySOMAObject] = self
+        parent_name: List[str] = []
+        for name in subcollection:
+            try:
+                coll = coll[name]  # type: ignore[assignment]
+            except KeyError as ke:
+                raise KeyError(
+                    f"Unable to open collection '{name}' in {parent_name}."
+                ) from ke
+            parent_name.append(name)
+        return coll
 
     @property
     def coordinate_space(self) -> Optional[CoordinateSpace]:
@@ -145,7 +166,26 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
 
         Lifecycle: experimental
         """
-        raise NotImplementedError()
+        if transform is not None:
+            if self.coordinate_space is None:
+                raise SOMAError(
+                    "The scene coordinate space must be set before adding a "
+                    "multiscale image with a transform."
+                )
+            raise NotImplementedError()
+
+        coll = self._open_subcollection(subcollection)
+        return coll._add_new_element(
+            key,
+            MultiscaleImage,
+            lambda create_uri: MultiscaleImage.create(
+                create_uri,
+                context=self.context,
+                tiledb_timestamp=self.tiledb_timestamp_ms,
+                **kwargs,
+            ),
+            uri,
+        )
 
     @_funcs.forwards_kwargs_to(
         PointCloudDataFrame.create, exclude=("context", "tiledb_timestamp")
@@ -176,7 +216,25 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
 
         Lifecycle: experimental
         """
-        raise NotImplementedError()
+        if transform is not None:
+            if self.coordinate_space is None:
+                raise SOMAError(
+                    "The scene coordinate space must be set before adding a "
+                    "multiscale image with a transform."
+                )
+            raise NotImplementedError()
+        coll = self._open_subcollection(subcollection)
+        return coll._add_new_element(
+            key,
+            PointCloudDataFrame,
+            lambda create_uri: PointCloudDataFrame.create(
+                create_uri,
+                context=self.context,
+                tiledb_timestamp=self.tiledb_timestamp_ms,
+                **kwargs,
+            ),
+            uri,
+        )
 
     def set_transform_to_geometry_dataframe(
         self,
