@@ -13,6 +13,10 @@
 
 namespace tiledbsoma::geometry {
 
+const size_t WKB_BYTE_ORDER_SIZE = 1;
+const size_t WKB_GEOEMTRY_TYPE_SIZE = 4;
+const size_t WKB_ELEMENT_COUNT_SIZE = 4;
+
 struct WKBSizeOperator {
     size_t binary_size(const BasePoint& point);
     size_t operator()(const Point& point);
