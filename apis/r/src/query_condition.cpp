@@ -130,7 +130,9 @@ void libtiledbsoma_query_condition_from_triple(
         uint64_t cond_val_size = sizeof(float);
         query_cond->init(attr_name, (void*)&v, cond_val_size, op);
 
-    } else if (arrow_type_name == "utf8" || arrow_type_name == "large_utf8") {
+    } else if (
+        arrow_type_name == "string" || arrow_type_name == "ascii" ||
+        arrow_type_name == "utf8" || arrow_type_name == "large_utf8") {
         std::string v = Rcpp::as<std::string>(condition_value);
         query_cond->init(attr_name, v, op);
 
