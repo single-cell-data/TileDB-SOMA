@@ -9,6 +9,7 @@
 * Push `schema` accessor down to `libtiledbsoma` [#3079](https://github.com/single-cell-data/TileDB-SOMA/pull/3079)
 * Handle `numeric` coords properly when reading arrays
 * Remove two more `tiledb::schema` callsites [#3160](https://github.com/single-cell-data/TileDB-SOMA/pull/3160)
+* Add new Arrow-to-R type mapper
 
 # tiledbsoma 1.14.1
 
