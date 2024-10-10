@@ -1,3 +1,9 @@
+# Unreleased
+
+## Changes
+
+* Add new Arrow-to-R type mapper
+
 # tiledbsoma 1.14.3
 
 ## Changes
