@@ -248,11 +248,11 @@ else()
   # See https://www.reddit.com/r/cmake/comments/17d70h6/why_arent_generator_expressions_evaluated_for/
   # for this placeholder solution.
   set(TILEDBSOMA_SANITIZER_FLAG "")
-  list(APPEND TILEDBSOMA_SANITIZER_FLAG "\$<GENEX_EVAL:$<$<CONFIG:ASAN>: -fsanitize=address>>")
-  list(APPEND TILEDBSOMA_SANITIZER_FLAG "\$<GENEX_EVAL:$<$<CONFIG:LSAN>: -fsanitize=leak>>")
-  list(APPEND TILEDBSOMA_SANITIZER_FLAG "\$<GENEX_EVAL:$<$<CONFIG:TSAN>: -fsanitize=thread>>")
-  list(APPEND TILEDBSOMA_SANITIZER_FLAG "\$<GENEX_EVAL:$<$<CONFIG:UBSAN>: -fsanitize=undefined>>")
-  list(APPEND TILEDBSOMA_SANITIZER_FLAG "\$<GENEX_EVAL:$<$<CONFIG:MSAN>: -fsanitize=memory>>")
+  list(APPEND TILEDBSOMA_SANITIZER_FLAG "\$<GENEX_EVAL:$<$<CONFIG:ASAN>:-fsanitize=address>>")
+  list(APPEND TILEDBSOMA_SANITIZER_FLAG "\$<GENEX_EVAL:$<$<CONFIG:LSAN>:-fsanitize=leak>>")
+  list(APPEND TILEDBSOMA_SANITIZER_FLAG "\$<GENEX_EVAL:$<$<CONFIG:TSAN>:-fsanitize=thread>>")
+  list(APPEND TILEDBSOMA_SANITIZER_FLAG "\$<GENEX_EVAL:$<$<CONFIG:UBSAN>:-fsanitize=undefined>>")
+  list(APPEND TILEDBSOMA_SANITIZER_FLAG "\$<GENEX_EVAL:$<$<CONFIG:MSAN>:-fsanitize=memory>>")
 
 
   # Compiler specific additions:

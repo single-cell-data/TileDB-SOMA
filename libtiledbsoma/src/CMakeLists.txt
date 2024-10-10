@@ -9,7 +9,7 @@ set_source_files_properties(
 add_library(TILEDBSOMA_NANOARROW_OBJECT OBJECT
   ${CMAKE_CURRENT_SOURCE_DIR}/external/src/nanoarrow/nanoarrow.c
 )
-target_link_libraries(TILEDBSOMA_NANOARROW_OBJECT
+target_link_options(TILEDBSOMA_NANOARROW_OBJECT
   PRIVATE
     ${TILEDBSOMA_SANITIZER_FLAG}
 )
@@ -65,7 +65,7 @@ target_compile_options(TILEDB_SOMA_OBJECTS
     ${TILEDBSOMA_WERROR_OPTION}
     ${TILEDBSOMA_SANITIZER_FLAG}
 )
-target_link_libraries(TILEDB_SOMA_OBJECTS
+target_link_options(TILEDB_SOMA_OBJECTS
   PRIVATE
     ${TILEDBSOMA_SANITIZER_FLAG}
 )
@@ -121,6 +121,8 @@ else()
     PUBLIC
       TileDB::tiledb_shared
       spdlog::spdlog
+  )
+  target_link_options(tiledbsoma
     PRIVATE
       ${TILEDBSOMA_SANITIZER_FLAG}
   )
@@ -257,6 +259,8 @@ if(TILEDBSOMA_BUILD_CLI)
       # spdlog::spdlog
       tiledbsoma
       TileDB::tiledb_shared
+  )
+  target_link_options(tiledbsoma-cli
     PRIVATE
       ${TILEDBSOMA_SANITIZER_FLAG}
   )
