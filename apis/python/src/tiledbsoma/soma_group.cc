@@ -94,18 +94,28 @@ void load_soma_group(py::module& m) {
                     return py::none();
                 return py::cast(group.timestamp()->second);
             })
+
         .def_property_readonly(
             "meta",
             [](SOMAGroup& group) -> py::dict {
                 return meta(group.get_metadata());
             })
+
         .def(
             "set_metadata",
-            [](SOMAGroup& group, const std::string& key, py::array value) {
-                set_metadata(group, key, value);
-            })
-        .def("delete_metadata", &SOMAGroup::delete_metadata)
+            set_metadata,
+            py::arg("key"),
+            py::arg("value"),
+            py::arg("force") = false)
+
+        .def(
+            "delete_metadata",
+            &SOMAGroup::delete_metadata,
+            py::arg("key"),
+            py::arg("force") = false)
+
         .def("has_metadata", &SOMAGroup::has_metadata)
+
         .def("metadata_num", &SOMAGroup::metadata_num);
 }
 }  // namespace libtiledbsomacpp

@@ -264,7 +264,7 @@ class SOMAGroup : public SOMAObject {
      * @note If the key does not exist, this will take no effect
      *     (i.e., the function will not error out).
      */
-    void delete_metadata(const std::string& key);
+    void delete_metadata(const std::string& key, bool force = false);
 
     /**
      * @brief Given a key, get the associated value datatype, number of
