@@ -88,11 +88,16 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 get_property(is_multi_config GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
 if (is_multi_config)
   set(CMAKE_CONFIGURATION_TYPES
-      "Release;Debug;RelWithDebInfo"
+      "Release;Debug;RelWithDebInfo;ASAN;TSAN;LSAN;UBSAN;MSAN"
       CACHE
       STRING
       "Semi-colon separate list of build types for multi-configuration generators."
   )
+  set(CMAKE_MAP_IMPORTED_CONFIG_ASAN Debug)
+  set(CMAKE_MAP_IMPORTED_CONFIG_TSAN Debug)
+  set(CMAKE_MAP_IMPORTED_CONFIG_LSAN Debug)
+  set(CMAKE_MAP_IMPORTED_CONFIG_UBSAN Debug)
+  set(CMAKE_MAP_IMPORTED_CONFIG_MSAN Debug)
 else()
     set(CMAKE_BUILD_TYPE
       "Release" CACHE STRING "Build type for single-configuration generators."
