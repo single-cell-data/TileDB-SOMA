@@ -6,7 +6,7 @@
 Implementation of a SOMA Scene
 """
 
-from typing import Any, Optional, Sequence, Union
+from typing import Any, List, Optional, Sequence, Union
 
 import somacore
 from somacore import Axis, CoordinateSpace, CoordinateTransform, IdentityTransform
@@ -60,6 +60,27 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
             self._coord_space: Optional[CoordinateSpace] = None
         else:
             self._coord_space = coordinate_space_from_json(coord_space)
+
+    def _open_subcollection(
+        self, subcollection: Union[str, Sequence[str]]
+    ) -> CollectionBase[AnySOMAObject]:
+        if len(subcollection) == 0:
+            raise ValueError("Invalid subcollection: value cannot be empty.")
+        if isinstance(subcollection, str):
+            subcollection = (subcollection,)
+        else:
+            subcollection = tuple(subcollection)
+        coll: CollectionBase[AnySOMAObject] = self
+        parent_name: List[str] = []
+        for name in subcollection:
+            try:
+                coll = coll[name]  # type: ignore[assignment]
+            except KeyError as ke:
+                raise KeyError(
+                    f"Unable to open collection '{name}' in {parent_name}."
+                ) from ke
+            parent_name.append(name)
+        return coll
 
     @property
     def coordinate_space(self) -> Optional[CoordinateSpace]:
