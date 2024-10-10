@@ -55,9 +55,12 @@ parse_query_condition_new <- function(
   somactx
   ) {
 
-  stopifnot("The schema argument must be an Arrow Schema" =
-    is(schema, "ArrowObject") &&
-    is(schema, "Schema"))
+  stopifnot(
+      "The schema argument must be an Arrow Schema" =
+          is(schema, "ArrowObject") &&
+          is(schema, "Schema"),
+    "The argument must be a somactx object" =
+        is(somactx, "externalptr"))
 
     # ----------------------------------------------------------------
     # Helpers for walking the parse tree
@@ -124,7 +127,6 @@ parse_query_condition_new <- function(
             r_op_name <- tolower(as.character(node[1]))
             tdb_op_name <- if (r_op_name == "%in%") "IN" else "NOT_IN"
 
-            # XXX EXTRACT HELPER
             arrow_field <- schema[[attr_name]]
             if (is.null(arrow_field)) {
                 .error_function("No attribute '", attr_name, "' is present.", call. = FALSE)
@@ -168,8 +170,8 @@ parse_query_condition_new <- function(
                     ascii = rhs_text,
                     utf8 = rhs_text,
                     bool = as.logical(rhs_text),
-                    ## XXX DATETIME_MS = as.POSIXct(rhs_text),
-                    ## XXX DATETIME_DAY = as.Date(rhs_text),
+                    date32 = as.POSIXct(rhs_text),
+                    timestamp = as.Date(rhs_text),
                     as.numeric(rhs_text)),
                 arrow_type_name = arrow_type_name,
                 op_name = .map_op_to_character(op_name),
@@ -201,12 +203,12 @@ setClass(
 # ================================================================
 #' Creates a 'tiledbsoma_query_condition' object
 #'
-#' @param ctx (optional) A TileDB Ctx object; if not supplied the default
+#' @param somactx (optional) A TileDB Ctx object; if not supplied the default
 #' context object is retrieved
 #' @return A 'tiledbsoma_query_condition' object
 #' @export
 tiledbsoma_empty_query_condition <- function(somactx) {
-    stopifnot("The argument must be a ctx object" = is(ctx, "externalptr"))
+    stopifnot("The argument must be a somactx object" = is(somactx, "externalptr"))
     ptr <- libtiledbsoma_empty_query_condition(somactx)
     query_condition <- new("tiledbsoma_query_condition", ptr = ptr, init = FALSE)
     invisible(query_condition)
