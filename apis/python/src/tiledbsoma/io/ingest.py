@@ -64,6 +64,7 @@ from .._exception import (
     NotCreateableError,
     SOMAError,
 )
+from .._flags import NEW_SHAPE_FEATURE_FLAG_ENABLED
 from .._soma_array import SOMAArray
 from .._soma_object import AnySOMAObject, SOMAObject
 from .._tdb_handles import RawHandle
@@ -1203,9 +1204,13 @@ def _write_dataframe_impl(
         arrow_table = _extract_new_values_for_append(df_uri, arrow_table, context)
 
     try:
+        domain = None
+        if NEW_SHAPE_FEATURE_FLAG_ENABLED:
+            domain = ((0, int(df.shape[0]) - 1),)
         soma_df = DataFrame.create(
             df_uri,
             schema=arrow_table.schema,
+            domain=domain,
             platform_config=platform_config,
             context=context,
         )
@@ -1304,8 +1309,14 @@ def _create_from_matrix(
     logging.log_io(None, f"START  WRITING {uri}")
 
     try:
+        shape: Sequence[Union[int, None]] = ()
         # A SparseNDArray must be appendable in soma.io.
-        shape = [None for _ in matrix.shape] if cls.is_sparse else matrix.shape
+        if NEW_SHAPE_FEATURE_FLAG_ENABLED:
+            shape = tuple(int(e) for e in matrix.shape)
+        elif cls.is_sparse:
+            shape = tuple(None for _ in matrix.shape)
+        else:
+            shape = matrix.shape
         soma_ndarray = cls.create(
             uri,
             type=pa.from_numpy_dtype(matrix.dtype),
