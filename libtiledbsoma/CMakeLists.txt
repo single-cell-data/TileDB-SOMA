@@ -200,7 +200,7 @@ else()
   set(TILEDBSOMA_COMPILE_OPTIONS -Wall -Wextra)
 
   if(${TILEDBSOMA_ENABLE_WERROR})
-    set(TILEDBSOMA_WERROR_OPTION "") #-Werror)
+    set(TILEDBSOMA_WERROR_OPTION -Werror)
   else()
     set(TILEDBSOMA_WERROR_OPTION "")
   endif()
