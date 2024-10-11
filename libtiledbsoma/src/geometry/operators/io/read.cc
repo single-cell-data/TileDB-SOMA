@@ -1,7 +1,6 @@
 #include "read.h"
 
-namespace tiledbsoma::geometry {
-namespace implementation {
+namespace tiledbsoma::geometry::implementation {
 template <>
 BasePoint parse(Reader<BinaryBuffer>& reader) {
     double_t x = reader.read<double_t>();
@@ -15,8 +14,9 @@ std::vector<BasePoint> parse(Reader<BinaryBuffer>& reader) {
     std::vector<BasePoint> ring;
     ring.reserve(pointCount);
 
-    for (uint32_t i = 0; i < pointCount; ++i)
+    for (uint32_t i = 0; i < pointCount; ++i) {
         ring.push_back(parse<BasePoint>(reader));
+    }
 
     return ring;
 }
@@ -25,7 +25,7 @@ template <>
 Point parse(Reader<BinaryBuffer>& reader) {
     [[maybe_unused]] uint8_t endian = reader.read<uint8_t>();
     [[maybe_unused]] uint32_t type = reader.read<uint32_t>();
-    assert(GeometryType::POINT == static_cast<GeometryType>(type));
+    assert(GeometryType::POINT == type);
 
     return Point(parse<BasePoint>(reader));
 }
@@ -34,7 +34,7 @@ template <>
 LineString parse(Reader<BinaryBuffer>& reader) {
     [[maybe_unused]] uint8_t endian = reader.read<uint8_t>();
     [[maybe_unused]] uint32_t type = reader.read<uint32_t>();
-    assert(GeometryType::LINESTRING == static_cast<GeometryType>(type));
+    assert(GeometryType::LINESTRING == type);
 
     return LineString(parse<std::vector<BasePoint>>(reader));
 }
@@ -43,7 +43,7 @@ template <>
 Polygon parse(Reader<BinaryBuffer>& reader) {
     [[maybe_unused]] uint8_t endian = reader.read<uint8_t>();
     [[maybe_unused]] uint32_t type = reader.read<uint32_t>();
-    assert(GeometryType::POLYGON == static_cast<GeometryType>(type));
+    assert(GeometryType::POLYGON == type);
 
     uint32_t ringCount = reader.read<uint32_t>();
     assert(ringCount > 0);
@@ -62,7 +62,7 @@ template <>
 MultiPoint parse(Reader<BinaryBuffer>& reader) {
     [[maybe_unused]] uint8_t endian = reader.read<uint8_t>();
     [[maybe_unused]] uint32_t type = reader.read<uint32_t>();
-    assert(GeometryType::MULTIPOINT == static_cast<GeometryType>(type));
+    assert(GeometryType::MULTIPOINT == type);
 
     uint32_t pointCount = reader.read<uint32_t>();
     std::vector<Point> points;
@@ -79,7 +79,7 @@ template <>
 MultiLineString parse(Reader<BinaryBuffer>& reader) {
     [[maybe_unused]] uint8_t endian = reader.read<uint8_t>();
     [[maybe_unused]] uint32_t type = reader.read<uint32_t>();
-    assert(GeometryType::MULTILINESTRING == static_cast<GeometryType>(type));
+    assert(GeometryType::MULTILINESTRING == type);
 
     uint32_t linestringCount = reader.read<uint32_t>();
     std::vector<LineString> linestrings;
@@ -96,7 +96,7 @@ template <>
 MultiPolygon parse(Reader<BinaryBuffer>& reader) {
     [[maybe_unused]] uint8_t endian = reader.read<uint8_t>();
     [[maybe_unused]] uint32_t type = reader.read<uint32_t>();
-    assert(GeometryType::MULTIPOLYGON == static_cast<GeometryType>(type));
+    assert(GeometryType::MULTIPOLYGON == type);
 
     uint32_t polygonCount = reader.read<uint32_t>();
     std::vector<Polygon> polygons;
@@ -140,7 +140,7 @@ template <>
 GeometryCollection parse(Reader<BinaryBuffer>& reader) {
     [[maybe_unused]] uint8_t endian = reader.read<uint8_t>();
     [[maybe_unused]] uint32_t type = reader.read<uint32_t>();
-    assert(GeometryType::GEOMETRYCOLLECTION == static_cast<GeometryType>(type));
+    assert(GeometryType::GEOMETRYCOLLECTION == type);
 
     uint32_t geometryCount = reader.read<uint32_t>();
     GeometryCollection geometries;
@@ -152,5 +152,4 @@ GeometryCollection parse(Reader<BinaryBuffer>& reader) {
 
     return geometries;
 }
-}  // namespace implementation
-}  // namespace tiledbsoma::geometry
+}  // namespace tiledbsoma::geometry::implementation

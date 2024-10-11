@@ -4,10 +4,12 @@ namespace tiledbsoma::geometry {
 
 size_t WKBSizeOperator::binary_size(const BasePoint& point) {
     size_t size = 16;
-    if (point.z.has_value())
+    if (point.z.has_value()) {
         size += 8;
-    if (point.m.has_value())
+    }
+    if (point.m.has_value()) {
         size += 8;
+    }
     return size;
 }
 
@@ -18,8 +20,9 @@ size_t WKBSizeOperator::operator()(const Point& point) {
 size_t WKBSizeOperator::operator()(const LineString& linestring) {
     size_t size = WKB_BYTE_ORDER_SIZE + WKB_GEOEMTRY_TYPE_SIZE +
                   WKB_ELEMENT_COUNT_SIZE;
-    if (linestring.points.size() == 0)
+    if (linestring.points.size() == 0) {
         return size;
+    }
 
     return size +
            linestring.points.size() * binary_size(linestring.points.front());
@@ -30,19 +33,22 @@ size_t WKBSizeOperator::operator()(const Polygon& polygon) {
                   WKB_ELEMENT_COUNT_SIZE;  // Number of rings
 
     // At least one ring is required and the first ring is the exterior ring
-    if (polygon.exteriorRing.size() != 0)
+    if (polygon.exteriorRing.size() != 0) {
         size += WKB_ELEMENT_COUNT_SIZE +
                 polygon.exteriorRing.size() *
                     binary_size(polygon.exteriorRing.front());
-    else
+    } else {
         size += WKB_ELEMENT_COUNT_SIZE;
+    }
 
-    for (auto& ring : polygon.interiorRings)
-        if (ring.size() != 0)
+    for (auto& ring : polygon.interiorRings) {
+        if (ring.size() != 0) {
             size += WKB_ELEMENT_COUNT_SIZE +
                     ring.size() * binary_size(ring.front());
-        else
+        } else {
             size += WKB_ELEMENT_COUNT_SIZE;
+        }
+    }
 
     return size;
 }
@@ -51,8 +57,9 @@ size_t WKBSizeOperator::operator()(const MultiPoint& multi_point) {
     size_t size = WKB_BYTE_ORDER_SIZE + WKB_GEOEMTRY_TYPE_SIZE +
                   WKB_ELEMENT_COUNT_SIZE;
 
-    for (auto& point : multi_point.points)
+    for (auto& point : multi_point.points) {
         size += this->operator()(point);
+    }
 
     return size;
 }
@@ -61,8 +68,9 @@ size_t WKBSizeOperator::operator()(const MultiLineString& multi_linestring) {
     size_t size = WKB_BYTE_ORDER_SIZE + WKB_GEOEMTRY_TYPE_SIZE +
                   WKB_ELEMENT_COUNT_SIZE;
 
-    for (auto& linestring : multi_linestring.linestrings)
+    for (auto& linestring : multi_linestring.linestrings) {
         size += this->operator()(linestring);
+    }
 
     return size;
 }
@@ -71,8 +79,9 @@ size_t WKBSizeOperator::operator()(const MultiPolygon& multi_polygon) {
     size_t size = WKB_BYTE_ORDER_SIZE + WKB_GEOEMTRY_TYPE_SIZE +
                   WKB_ELEMENT_COUNT_SIZE;
 
-    for (auto& polygon : multi_polygon.polygons)
+    for (auto& polygon : multi_polygon.polygons) {
         size += this->operator()(polygon);
+    }
 
     return size;
 }
@@ -81,8 +90,9 @@ size_t WKBSizeOperator::operator()(const GeometryCollection& collection) {
     size_t size = WKB_BYTE_ORDER_SIZE + WKB_GEOEMTRY_TYPE_SIZE +
                   WKB_ELEMENT_COUNT_SIZE;
 
-    for (auto& geometry : collection)
+    for (auto& geometry : collection) {
         size += std::visit(WKBSizeOperator{}, geometry);
+    }
 
     return size;
 }
@@ -141,34 +151,38 @@ void WKBWriteOperator::operator()(const MultiPoint& multi_point) {
     write((uint8_t)1);
     write(static_cast<uint32_t>(GeometryType::MULTIPOINT));
     write((uint32_t)multi_point.points.size());
-    for (auto& point : multi_point.points)
+    for (auto& point : multi_point.points) {
         this->operator()(point);
+    }
 }
 
 void WKBWriteOperator::operator()(const MultiLineString& multi_linestring) {
     write((uint8_t)1);
     write(static_cast<uint32_t>(GeometryType::MULTILINESTRING));
     write((uint32_t)multi_linestring.linestrings.size());
-    for (auto& linestring : multi_linestring.linestrings)
+    for (auto& linestring : multi_linestring.linestrings) {
         this->operator()(linestring);
+    }
 }
 
 void WKBWriteOperator::operator()(const MultiPolygon& multi_polygon) {
     write((uint8_t)1);
     write(static_cast<uint32_t>(GeometryType::MULTIPOLYGON));
     write((uint32_t)multi_polygon.polygons.size());
-    for (auto& polygon : multi_polygon.polygons)
+    for (auto& polygon : multi_polygon.polygons) {
         this->operator()(polygon);
+    }
 }
 
 void WKBWriteOperator::operator()(const GeometryCollection& collection) {
     write((uint8_t)1);
     write(static_cast<uint32_t>(GeometryType::GEOMETRYCOLLECTION));
     write((uint32_t)collection.size());
-    for (auto& geometry : collection)
+    for (auto& geometry : collection) {
         std::visit(
             WKBWriteOperator{this->buffer, this->position, this->size},
             geometry);
+    }
 }
 
 void to_wkb(const GenericGeometry& geometry, uint8_t* buffer, size_t size) {

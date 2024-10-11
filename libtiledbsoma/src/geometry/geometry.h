@@ -12,7 +12,7 @@
 
 namespace tiledbsoma::geometry {
 
-enum class GeometryType {
+enum GeometryType : uint32_t {
     POINT = 1,
     LINESTRING = 2,
     POLYGON = 3,

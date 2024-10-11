@@ -42,9 +42,9 @@
 #include <catch2/matchers/catch_matchers_vector.hpp>
 #include <utility>
 
-#include "../src/utils/geometry/geometry.h"
-#include "../src/utils/geometry/operators/io/read.h"
-#include "../src/utils/geometry/operators/io/write.h"
+#include "../src/geometry/geometry.h"
+#include "../src/geometry/operators/io/read.h"
+#include "../src/geometry/operators/io/write.h"
 
 using namespace tiledbsoma;
 using namespace tiledbsoma::geometry;

@@ -9,7 +9,6 @@
 #include <vector>
 
 #include "../../geometry.h"
-#include "../../utils.h"
 
 namespace tiledbsoma::geometry {
 template <typename Input>
