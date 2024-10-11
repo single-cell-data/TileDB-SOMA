@@ -172,6 +172,15 @@ class SOMAGroup : public SOMAObject {
     std::shared_ptr<SOMAContext> ctx();
 
     /**
+     * Check if a named member is relative
+     *
+     * @param name of member to retrieve associated relative indicator.
+     */
+    bool is_relative(std::string name) const {
+        return group_->is_relative(name);
+    }
+
+    /**
      * Get a member from the SOMAGroup given the index.
      *
      * @param index of member

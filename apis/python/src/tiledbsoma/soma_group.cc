@@ -76,6 +76,7 @@ void load_soma_group(py::module& m) {
             [](SOMAGroup& group) -> bool { return not group.is_open(); })
         .def_property_readonly("uri", &SOMAGroup::uri)
         .def("context", &SOMAGroup::ctx)
+        .def("is_relative", &SOMAGroup::is_relative)
         .def("has", &SOMAGroup::has)
         .def(
             "add",
