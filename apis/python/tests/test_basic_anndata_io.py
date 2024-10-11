@@ -18,7 +18,6 @@ import tiledbsoma.io
 from tiledbsoma import Experiment, _constants, _factory
 from tiledbsoma._soma_object import SOMAObject
 from tiledbsoma.io._common import _TILEDBSOMA_TYPE, UnsDict, UnsMapping
-import tiledb
 
 from ._util import TESTDATA, assert_adata_equal, make_pd_df
 
@@ -760,24 +759,24 @@ def test_null_obs(conftest_pbmc_small, tmp_path: Path):
     )
     assert_adata_equal(original, conftest_pbmc_small)
 
-    exp = tiledbsoma.Experiment.open(uri)
-    with tiledb.open(exp.obs.uri, "r") as obs:
-        #   Explicitly check columns created above
-        assert obs.attr("empty_categorical_all").isnullable
-        assert obs.attr("empty_categorical_partial").isnullable
-        assert obs.attr("empty_extension_all").isnullable
-        assert obs.attr("empty_extension_partial").isnullable
-        #   For every column in the data frame
-        #   ensure that `isnullable` reflects the null-ness
-        #   of the Pandas data frame
+    with tiledbsoma.Experiment.open(uri) as exp:
+        schema = exp.obs.schema.field
+
+        # Explicitly check columns created above
+        assert schema("empty_categorical_all").nullable
+        assert schema("empty_categorical_partial").nullable
+        assert schema("empty_extension_all").nullable
+        assert schema("empty_extension_partial").nullable
+
+        # For every column in the data frame ensure that `isnullable` reflects
+        # he null-ness of the Pandas data frame
         for k in conftest_pbmc_small.obs:
-            assert obs.attr(k).isnullable
+            assert schema(k).nullable
 
 
 def test_export_obsm_with_holes(h5ad_file_with_obsm_holes, tmp_path):
     adata = anndata.read_h5ad(h5ad_file_with_obsm_holes.as_posix())
     original = adata.copy()
-    assert 1 == 1
 
     # This data file is prepared such that obsm["X_pca"] has shape (2638, 50)
     # but its [0][0] element is a 0, so when it's stored as sparse, its nnz
@@ -790,48 +789,47 @@ def test_export_obsm_with_holes(h5ad_file_with_obsm_holes, tmp_path):
 
     assert_adata_equal(original, adata)
 
-    exp = tiledbsoma.Experiment.open(output_path)
-
     # Verify the bounding box on the SOMA SparseNDArray
-    with tiledb.open(exp.ms["RNA"].obsm["X_pca"].uri) as so:
-        assert so.meta["soma_dim_0_domain_lower"] == 0
-        assert so.meta["soma_dim_0_domain_upper"] == 2637
-        assert so.meta["soma_dim_1_domain_lower"] == 0
-        assert so.meta["soma_dim_1_domain_upper"] == 49
+    with tiledbsoma.Experiment.open(output_path) as exp:
+        meta = exp.ms["RNA"].obsm["X_pca"].metadata
+        assert meta["soma_dim_0_domain_lower"] == 0
+        assert meta["soma_dim_0_domain_upper"] == 2637
+        assert meta["soma_dim_1_domain_lower"] == 0
+        assert meta["soma_dim_1_domain_upper"] == 49
 
-    # With the bounding box present, all is well for outgest to AnnData format.
-    try1 = tiledbsoma.io.to_anndata(exp, "RNA")
-    assert try1.obsm["X_pca"].shape == (2638, 50)
+        # With the bounding box present, all is well for outgest to AnnData format.
+        try1 = tiledbsoma.io.to_anndata(exp, "RNA")
+        assert try1.obsm["X_pca"].shape == (2638, 50)
 
     # Now remove the bounding box to simulate reading older data that lacks a bounding box.
-    with tiledb.open(exp.ms["RNA"].obsm["X_pca"].uri, "w") as so:
-        del so.meta["soma_dim_0_domain_lower"]
-        del so.meta["soma_dim_0_domain_upper"]
-        del so.meta["soma_dim_1_domain_lower"]
-        del so.meta["soma_dim_1_domain_upper"]
+    with tiledbsoma.Experiment.open(output_path, "w") as exp:
+        meta = exp.ms["RNA"].obsm["X_pca"].metadata
+        del meta["soma_dim_0_domain_lower"]
+        del meta["soma_dim_0_domain_upper"]
+        del meta["soma_dim_1_domain_lower"]
+        del meta["soma_dim_1_domain_upper"]
 
     # Re-open to simulate opening afresh a bounding-box-free array.
-    exp = tiledbsoma.Experiment.open(output_path)
+    with tiledbsoma.Experiment.open(output_path) as exp:
+        meta = exp.ms["RNA"].obsm["X_pca"].metadata
+        with pytest.raises(KeyError):
+            meta["soma_dim_0_domain_lower"]
+        with pytest.raises(KeyError):
+            meta["soma_dim_0_domain_upper"]
+        with pytest.raises(KeyError):
+            meta["soma_dim_1_domain_lower"]
+        with pytest.raises(KeyError):
+            meta["soma_dim_1_domain_upper"]
+        assert meta["soma_object_type"] == "SOMASparseNDArray"
 
-    with tiledb.open(exp.ms["RNA"].obsm["X_pca"].uri) as so:
-        with pytest.raises(KeyError):
-            so.meta["soma_dim_0_domain_lower"]
-        with pytest.raises(KeyError):
-            so.meta["soma_dim_0_domain_upper"]
-        with pytest.raises(KeyError):
-            so.meta["soma_dim_1_domain_lower"]
-        with pytest.raises(KeyError):
-            so.meta["soma_dim_1_domain_upper"]
-        assert so.meta["soma_object_type"] == "SOMASparseNDArray"
+        # Now try the remaining options for outgest.
+        with pytest.raises(tiledbsoma.SOMAError):
+            tiledbsoma.io.to_anndata(exp, "RNA")
 
-    # Now try the remaining options for outgest.
-    with pytest.raises(tiledbsoma.SOMAError):
-        tiledbsoma.io.to_anndata(exp, "RNA")
-
-    try3 = tiledbsoma.io.to_anndata(
-        exp, "RNA", obsm_varm_width_hints={"obsm": {"X_pca": 50}}
-    )
-    assert try3.obsm["X_pca"].shape == (2638, 50)
+        try3 = tiledbsoma.io.to_anndata(
+            exp, "RNA", obsm_varm_width_hints={"obsm": {"X_pca": 50}}
+        )
+        assert try3.obsm["X_pca"].shape == (2638, 50)
 
 
 def test_X_empty(h5ad_file_X_empty):
