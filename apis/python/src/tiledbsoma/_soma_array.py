@@ -58,6 +58,40 @@ class SOMAArray(SOMAObject[_tdb_handles.SOMAArrayWrapper[Any]]):
         """
         return self._handle.schema
 
+    def config_options_from_schema(self) -> clib.PlatformConfig:
+        """Returns metadata about the array that is not encompassed within the
+        Arrow Schema, in the form of a PlatformConfig.
+
+        Available attributes are:
+            * dataframe_dim_zstd_level: int
+            * sparse_nd_array_dim_zstd_level: int
+            * sparse_nd_array_dim_zstd_level: int
+            * write_X_chunked: bool
+            * goal_chunk_nnz: int
+            * remote_cap_nbytes: int
+            * capacity: int
+            * offsets_filters: str
+                * name (of filter): str
+                * compression_level: str
+            * validity_filters: str
+            * attrs: str
+                * name (of attribute): str
+                    * filters: str
+                        * name (of filter): str
+                        * compression_level: str
+            * dims: str
+                * name (of dimension): str
+                    * filters: str
+                        * name (of filter): str
+                        * compression_level: str
+                    * tile: int
+            * allows_duplicates: bool
+            * tile_order: str
+            * cell_order: str
+            * consolidate_and_vacuum: bool
+        """
+        return self._handle.config_options_from_schema()
+
     def non_empty_domain(self) -> Tuple[Tuple[Any, Any], ...]:
         """
         Retrieves the non-empty domain for each dimension, namely the smallest

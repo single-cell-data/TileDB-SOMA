@@ -1,5 +1,6 @@
 import contextlib
 import datetime
+import json
 import os
 from typing import Dict, List
 
@@ -138,12 +139,15 @@ def test_dataframe(tmp_path, arrow_schema):
         assert [e.as_py() for e in table["baz"]] == pydict["baz"]
         assert [e.as_py() for e in table["quux"]] == pydict["quux"]
 
-    # Validate TileDB array schema
-    with tiledb.open(uri) as A:
-        assert A.schema.sparse
-        assert not A.schema.allows_duplicates
-        assert A.dim("foo").filters == [tiledb.ZstdFilter(level=3)]
-        assert A.attr("bar").filters == [tiledb.ZstdFilter()]
+    with soma.DataFrame.open(uri) as A:
+        cfg = A.config_options_from_schema()
+        assert not cfg.allows_duplicates
+        assert json.loads(cfg.dims)["foo"]["filters"] == [
+            {"COMPRESSION_LEVEL": 3, "name": "ZSTD"}
+        ]
+        assert json.loads(cfg.attrs)["bar"]["filters"] == [
+            {"COMPRESSION_LEVEL": -1, "name": "ZSTD"}
+        ]
 
     with soma.DataFrame.open(uri) as sdf:
         assert sdf.count == 5
@@ -1052,21 +1056,21 @@ def test_result_order(tmp_path):
         (
             {"allows_duplicates": True},
             {
-                "validity_filters": tiledb.FilterList([tiledb.RleFilter()]),
+                "validity_filters": [{"COMPRESSION_LEVEL": -1, "name": "RLE"}],
                 "allows_duplicates": True,
             },
         ),
         (
             {"allows_duplicates": False},
             {
-                "validity_filters": tiledb.FilterList([tiledb.RleFilter()]),
+                "validity_filters": [{"COMPRESSION_LEVEL": -1, "name": "RLE"}],
                 "allows_duplicates": False,
             },
         ),
         (
             {"validity_filters": ["NoOpFilter"], "allows_duplicates": False},
             {
-                "validity_filters": tiledb.FilterList([tiledb.NoOpFilter()]),
+                "validity_filters": [{"name": "NOOP"}],
                 "allows_duplicates": False,
             },
         ),
@@ -1081,9 +1085,13 @@ def test_create_platform_config_overrides(
         schema=pa.schema([pa.field("colA", pa.string())]),
         platform_config={"tiledb": {"create": {**create_options}}},
     ).close()
-    with tiledb.open(uri) as D:
-        for k, v in expected_schema_fields.items():
-            assert getattr(D.schema, k) == v
+
+    with soma.DataFrame.open(tmp_path.as_posix()) as A:
+        cfg = A.config_options_from_schema()
+        assert expected_schema_fields["validity_filters"] == json.loads(
+            cfg.validity_filters
+        )
+        assert expected_schema_fields["allows_duplicates"] == cfg.allows_duplicates
 
 
 @pytest.mark.parametrize("allows_duplicates", [False, True])
