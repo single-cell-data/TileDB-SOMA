@@ -136,8 +136,6 @@ SOMADenseNDArray <- R6::R6Class(
           private$.type <- self$schema()[["soma_data"]]$type
       }
 
-      arr <- self$object
-      tiledb::query_layout(arr) <- "COL_MAJOR"
       spdl::debug("[SOMADenseNDArray::write] about to call write")
       arrsch <- arrow::schema(arrow::field("soma_data", private$.type))
       tbl <- arrow::arrow_table(soma_data = values, schema = arrsch)
@@ -146,7 +144,6 @@ SOMADenseNDArray <- R6::R6Class(
       naap <- nanoarrow::nanoarrow_allocate_array()
       nasp <- nanoarrow::nanoarrow_allocate_schema()
       arrow::as_record_batch(tbl)$export_to_c(naap, nasp)
-      #arr[] <- values
       writeArrayFromArrow(
         uri = self$uri,
         naap = naap,

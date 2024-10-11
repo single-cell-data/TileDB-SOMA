@@ -23,7 +23,6 @@ test_that("Create empty", {
   expect_true(file.exists(file.path(uri, "__group")))
   expect_true(group$exists())
   fp = file.path(uri, "__group")
-  expect_match(tiledb::tiledb_object_type(uri), "GROUP")
   group$close()
 })
 
@@ -56,6 +55,7 @@ test_that("Add and remove members", {
     internal_use_only = "allowed_use"
   )
   g1 <- TileDBGroup$new(
+    # XXX CHANGEME
     uri = tiledb::tiledb_group_create(file.path(uri, "g1")),
     internal_use_only = "allowed_use"
   )

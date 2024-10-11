@@ -9,17 +9,15 @@ test_that("SOMADenseNDArray creation", {
   ndarray$close()
   ndarray <- SOMADenseNDArrayOpen(uri, "WRITE")
 
-  expect_equal(tiledb::tiledb_object_type(uri), "ARRAY")
   expect_equal(ndarray$dimnames(), c("soma_dim_0", "soma_dim_1"))
   expect_equal(ndarray$attrnames(), "soma_data")
-  expect_equal(tiledb::datatype(ndarray$attributes()$soma_data), "INT32")
+  expect_equal(ndarray$schema()[["soma_data"]]$type$name, "int32")
 
   mat <- create_dense_matrix_with_int_dims(10, 5)
   ndarray$write(mat)
 
   # Verify the array is still open for write
   expect_equal(ndarray$mode(), "WRITE")
-  expect_true(tiledb::tiledb_array_is_open(ndarray$object))
   ndarray$close()
 
   # Read result in column-major order to match R matrix layout
@@ -73,6 +71,7 @@ test_that("SOMADenseNDArray creation", {
   )
 
   # Validate TileDB array schema
+  # XXX CHANGEME
   arr <- tiledb::tiledb_array(uri)
   sch <- tiledb::schema(arr)
   expect_false(tiledb::is.sparse(sch))
@@ -130,6 +129,7 @@ test_that("platform_config is respected", {
   dnda <- SOMADenseNDArrayCreate(uri=uri, type=arrow::int32(), shape=c(100,100), platform_config = cfg)
 
   # Read back and check the array schema against the tiledb create options
+  # XXX CHANGEME
   arr <- tiledb::tiledb_array(uri)
   tsch <- tiledb::schema(arr)
 
@@ -198,6 +198,7 @@ test_that("platform_config defaults", {
   dnda <- SOMADenseNDArrayCreate(uri=uri, type=arrow::int32(), shape=c(100,100), platform_config = cfg)
 
   # Read back and check the array schema against the tiledb create options
+  # XXX CHANGEME
   arr <- tiledb::tiledb_array(uri)
   tsch <- tiledb::schema(arr)
 

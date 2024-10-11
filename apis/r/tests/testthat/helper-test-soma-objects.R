@@ -315,6 +315,7 @@ create_and_populate_32bit_sparse_nd_array <- function(uri) {
     soma_data = c(1L, 2L, 3L)
   )
 
+  # XXX CHANGEME
   tdb_dims <- mapply(
     tiledb::tiledb_dim,
     name = c("soma_dim_0", "soma_dim_1"),

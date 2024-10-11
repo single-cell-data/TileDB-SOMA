@@ -190,16 +190,6 @@ test_that("query by value filters with enums", {
   expect_identical(levels(obs_df$enum), c("red", "blue", "green"))
   expect_identical(unique(as.vector(obs_df$enum)), "green")
 
-  # Test enum query with present and missing level
-  core <- list(
-    tiledbsoma = numeric_version(tiledbsoma:::libtiledbsoma_version(TRUE)),
-    tiledb.r = numeric_version(paste(tiledb::tiledb_version(), collapse = '.'))
-  )
-  skip_if(
-    any(vapply(core, \(x) x < '2.21', FUN.VALUE = logical(1L))),
-    message = "Handling of missing enum levels is implemented in Core 2.21 and higher"
-  )
-
   query <- SOMAExperimentAxisQuery$new(
     experiment = experiment,
     measurement_name = "RNA",
