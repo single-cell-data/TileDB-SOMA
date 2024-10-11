@@ -141,10 +141,29 @@ void libtiledbsoma_query_condition_from_triple(
         uint64_t cond_val_size = sizeof(bool);
         query_cond->init(attr_name, (void*)&v, cond_val_size, op);
 
-    } else if (arrow_type_name == "timestamp") {
-        // Arrow timestamp TileDB DATETIME_MS
+    } else if (arrow_type_name == "timestamp_s") {
+        int64_t v = static_cast<int64_t>(
+            Rcpp::as<double>(condition_value));
+      spdl::debug("ts3 {}", v);
+        uint64_t cond_val_size = sizeof(int64_t);
+        query_cond->init(attr_name, (void*)&v, cond_val_size, op);
+
+    } else if (arrow_type_name == "timestamp_ms") {
         int64_t v = static_cast<int64_t>(
             Rcpp::as<double>(condition_value) * 1000);
+        uint64_t cond_val_size = sizeof(int64_t);
+        query_cond->init(attr_name, (void*)&v, cond_val_size, op);
+
+    } else if (arrow_type_name == "timestamp_us") {
+        int64_t v = static_cast<int64_t>(
+            Rcpp::as<double>(condition_value) * 1e6);
+        uint64_t cond_val_size = sizeof(int64_t);
+        query_cond->init(attr_name, (void*)&v, cond_val_size, op);
+
+    } else if (arrow_type_name == "timestamp_ns") {
+        // XXX nanotime ...
+        int64_t v = static_cast<int64_t>(
+            Rcpp::as<double>(condition_value) * 1e9);
         uint64_t cond_val_size = sizeof(int64_t);
         query_cond->init(attr_name, (void*)&v, cond_val_size, op);
 
