@@ -201,29 +201,32 @@ PlatformConfig ArrowAdapter::platform_config_from_tiledb_schema(
     platform_config.attrs = ArrowAdapter::_get_attrs_filter_list_json(
                                 tiledb_schema)
                                 .dump();
-    platform_config
-        .dims = ArrowAdapter::_get_dims_filter_list_json(tiledb_schema).dump();
+    platform_config.dims = ArrowAdapter::_get_dims_list_json(tiledb_schema)
+                               .dump();
 
     return platform_config;
 }
 
-json ArrowAdapter::_get_attrs_filter_list_json(ArraySchema tiledb_schema) {
+json ArrowAdapter::_get_attrs_filter_list_json(
+    const ArraySchema& tiledb_schema) {
     json attrs_filter_list_as_json;
-    for (auto attr : tiledb_schema.attributes()) {
-        attrs_filter_list_as_json.emplace(
-            attr.first,
-            ArrowAdapter::_get_filter_list_json(attr.second.filter_list()));
+    for (const auto& attr : tiledb_schema.attributes()) {
+        json attr_info = {
+            {"filters", _get_filter_list_json(attr.second.filter_list())}};
+        attrs_filter_list_as_json.emplace(attr.first, attr_info);
     }
     return attrs_filter_list_as_json;
 }
 
-json ArrowAdapter::_get_dims_filter_list_json(ArraySchema tiledb_schema) {
-    json dims_filter_list_as_json;
-    for (auto dim : tiledb_schema.domain().dimensions()) {
-        dims_filter_list_as_json.emplace(
-            dim.name(), ArrowAdapter::_get_filter_list_json(dim.filter_list()));
+json ArrowAdapter::_get_dims_list_json(const ArraySchema& tiledb_schema) {
+    json dims_as_json;
+    for (const auto& dim : tiledb_schema.domain().dimensions()) {
+        json dim_info = {
+            {"tile", dim.tile_extent_to_str()},
+            {"filters", _get_filter_list_json(dim.filter_list())}};
+        dims_as_json.emplace(dim.name(), dim_info);
     }
-    return dims_filter_list_as_json;
+    return dims_as_json;
 }
 
 json ArrowAdapter::_get_filter_list_json(FilterList filter_list) {

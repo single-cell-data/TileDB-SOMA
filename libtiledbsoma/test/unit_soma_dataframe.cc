@@ -382,12 +382,12 @@ TEST_CASE_METHOD(
                 Filter::to_str(filter.second));
             if (filter.second != TILEDB_FILTER_WEBP) {
                 REQUIRE(
-                    json::parse(config_options.attrs)["a0"][0].at("name") ==
-                    Filter::to_str(filter.second));
+                    json::parse(config_options.attrs)["a0"]["filters"][0].at(
+                        "name") == Filter::to_str(filter.second));
             }
             REQUIRE(
-                json::parse(config_options.dims)["soma_joinid"][0].at("name") ==
-                Filter::to_str(TILEDB_FILTER_ZSTD));
+                json::parse(config_options.dims)["soma_joinid"]["filters"][0]
+                    .at("name") == Filter::to_str(TILEDB_FILTER_ZSTD));
 
             sdf->close();
         }

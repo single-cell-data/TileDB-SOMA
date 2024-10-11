@@ -720,9 +720,9 @@ class ArrowAdapter {
 
     static tiledb_layout_t _get_order(std::string order);
 
-    static json _get_attrs_filter_list_json(ArraySchema tiledb_schema);
+    static json _get_attrs_filter_list_json(const ArraySchema& tiledb_schema);
 
-    static json _get_dims_filter_list_json(ArraySchema tiledb_schema);
+    static json _get_dims_list_json(const ArraySchema& tiledb_schema);
 
     static json _get_filter_list_json(FilterList filter_list);
 
