@@ -7,7 +7,6 @@ from typing import Tuple
 import numpy as np
 import pyarrow as pa
 import pytest
-import json
 
 import tiledbsoma as soma
 from tiledbsoma.options import SOMATileDBContext
@@ -495,4 +494,4 @@ def test_read_to_unwritten_array(tmp_path, shape):
     soma.DenseNDArray.create(uri, type=pa.uint8(), shape=shape)
 
     with soma.DenseNDArray.open(uri, "r") as A:
-        assert np.array_equal(np.ones(shape)*255, A.read().to_numpy())
+        assert np.array_equal(np.ones(shape) * 255, A.read().to_numpy())

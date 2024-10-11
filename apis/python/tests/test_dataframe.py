@@ -1057,7 +1057,6 @@ def test_result_order(tmp_path):
             next(sdf.read(result_order="bogus"))
 
 
-@pytest.mark.skipif(not hastiledb, reason="tiledb-py not installed")
 @pytest.mark.parametrize(
     "create_options,expected_schema_fields",
     (
@@ -1104,7 +1103,6 @@ def test_create_platform_config_overrides(
 
 @pytest.mark.parametrize("allows_duplicates", [False, True])
 @pytest.mark.parametrize("consolidate", [False, True])
-@pytest.mark.skipif(not hastiledb, reason="tiledb-py not installed")
 def test_timestamped_ops(tmp_path, allows_duplicates, consolidate):
     uri = tmp_path.as_posix()
 

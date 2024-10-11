@@ -1120,7 +1120,6 @@ def test_tile_extents(tmp_path):
         ),
     ),
 )
-@pytest.mark.skipif(not hastiledb, reason="tiledb-py not installed")
 def test_create_platform_config_overrides(
     tmp_path, create_options, expected_schema_fields
 ):
