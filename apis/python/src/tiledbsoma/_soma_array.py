@@ -63,21 +63,32 @@ class SOMAArray(SOMAObject[_tdb_handles.SOMAArrayWrapper[Any]]):
         Arrow Schema, in the form of a PlatformConfig.
 
         Available attributes are:
-            * dataframe_dim_zstd_level
-            * sparse_nd_array_dim_zstd_level
-            * sparse_nd_array_dim_zstd_level
-            * write_X_chunked
-            * goal_chunk_nnz
-            * remote_cap_nbytes
-            * capacity
-            * offsets_filters
-            * validity_filters
-            * attrs
-            * dims
-            * allows_duplicates
-            * tile_order
-            * cell_order
-            * consolidate_and_vacuum
+            * dataframe_dim_zstd_level: int
+            * sparse_nd_array_dim_zstd_level: int
+            * sparse_nd_array_dim_zstd_level: int
+            * write_X_chunked: bool
+            * goal_chunk_nnz: int
+            * remote_cap_nbytes: int
+            * capacity: int
+            * offsets_filters: str
+                * name (of filter): str
+                * compression_level: str
+            * validity_filters: str
+            * attrs: str
+                * name (of attribute): str
+                    * filters: str
+                        * name (of filter): str
+                        * compression_level: str
+            * dims: str
+                * name (of dimension): str
+                    * filters: str
+                        * name (of filter): str
+                        * compression_level: str
+                    * tile: int
+            * allows_duplicates: bool
+            * tile_order: str
+            * cell_order: str
+            * consolidate_and_vacuum: bool
         """
         return self._handle.config_options_from_schema()
 
