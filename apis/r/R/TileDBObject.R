@@ -45,7 +45,13 @@ TileDBObject <- R6::R6Class(
       #   "'soma_context' must be a pointer" = inherits(x = soma_context, what = 'externalptr')
       # )
       if (is.null(soma_context)) {
-          private$.soma_context <- soma_context()  # FIXME via factory and paramater_config
+        # More to work out on
+        # https://github.com/single-cell-data/TileDB-SOMA/issues/2406
+        if (is.null(tiledbsoma_ctx)) {
+            private$.soma_context <- soma_context()
+          } else {
+            private$.soma_context <- soma_context(unlist(tiledbsoma_ctx$items()))
+          }
       } else {
           private$.soma_context <- soma_context
       }
