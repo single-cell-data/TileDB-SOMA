@@ -1,7 +1,7 @@
 import contextlib
 import datetime
 import json
-import os
+from pathlib import Path
 from typing import Dict, List
 
 import numpy as np
@@ -1726,10 +1726,9 @@ def test_only_evolve_schema_when_enmr_is_extended(tmp_path):
 
     # total 3 fragment files
 
-    vfs = tiledb.VFS()
     # subtract 1 for the __schema/__enumerations directory;
     # only looking at fragment files
-    assert len(vfs.ls(os.path.join(uri, "__schema"))) - 1 == 3
+    assert len(list((Path(uri) / "__schema").iterdir())) - 1 == 3
 
 
 def test_fix_update_dataframe_with_var_strings(tmp_path):

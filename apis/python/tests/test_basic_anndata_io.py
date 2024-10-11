@@ -1,5 +1,4 @@
 import json
-import pathlib
 import tempfile
 from copy import deepcopy
 from pathlib import Path
@@ -265,7 +264,8 @@ def test_named_X_layers(conftest_pbmc_small_h5ad_path, X_layer_name):
 
 
 def _get_fragment_count(array_uri):
-    return len(tiledb.fragment.FragmentInfoList(array_uri=array_uri))
+    fragment_uri = Path(array_uri) / "__fragments"
+    return len(list(fragment_uri.iterdir())) if fragment_uri.exists() else 0
 
 
 @pytest.mark.parametrize(
@@ -381,7 +381,7 @@ def test_ingest_relative(conftest_pbmc3k_h5ad_path, use_relative_uri):
 
 @pytest.mark.parametrize("ingest_uns_keys", [["louvain_colors"], None])
 def test_ingest_uns(
-    tmp_path: pathlib.Path,
+    tmp_path: Path,
     conftest_pbmc3k_h5ad_path,
     conftest_pbmc3k_adata,
     ingest_uns_keys,
