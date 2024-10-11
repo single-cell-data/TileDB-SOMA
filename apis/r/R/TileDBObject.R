@@ -50,7 +50,8 @@ TileDBObject <- R6::R6Class(
         if (is.null(tiledbsoma_ctx)) {
             private$.soma_context <- soma_context()
           } else {
-            private$.soma_context <- soma_context(unlist(tiledbsoma_ctx$items()))
+            #private$.soma_context <- soma_context(unlist(tiledbsoma_ctx$items()))
+            private$.soma_context <- createSOMAContext(unlist(tiledbsoma_ctx$items()))
           }
       } else {
           private$.soma_context <- soma_context
