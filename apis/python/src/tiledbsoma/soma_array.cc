@@ -946,7 +946,11 @@ void load_soma_array(py::module& m) {
 
         .def_property_readonly("dimension_names", &SOMAArray::dimension_names)
 
-        .def("consolidate_and_vacuum", &SOMAArray::consolidate_and_vacuum)
+        .def(
+            "consolidate_and_vacuum",
+            &SOMAArray::consolidate_and_vacuum,
+            py::arg(
+                "modes") = std::vector<std::string>{"fragment_meta", "commits"})
 
         .def_property_readonly(
             "meta",

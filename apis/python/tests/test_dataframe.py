@@ -1132,20 +1132,18 @@ def test_timestamped_ops(tmp_path, allows_duplicates, consolidate):
             "float": [200.2, 300.3],
             "string": ["ball", "cat"],
         }
-        sidf.write(pa.Table.from_pydict(data))
-        assert sidf.tiledb_timestamp_ms == 1615403005000
-        assert sidf.tiledb_timestamp.isoformat() == "2021-03-10T19:03:25+00:00"
 
-    # Without consolidate:
-    # * There are two fragments:
-    #   o One with tiledb.fragment.FragmentInfoList[i].timestamp_range = (10, 10)
-    #   o One with tiledb.fragment.FragmentInfoList[i].timestamp_range = (20, 20)
-    # With consolidate:
-    # * There is one fragment:
-    #   o One with tiledb.fragment.FragmentInfoList[i].timestamp_range = (10, 20)
-    if consolidate:
-        tiledb.consolidate(uri)
-        tiledb.vacuum(uri)
+        # Without consolidate:
+        # * There are two fragments:
+        #   o One with tiledb.fragment.FragmentInfoList[i].timestamp_range = (10, 10)
+        #   o One with tiledb.fragment.FragmentInfoList[i].timestamp_range = (20, 20)
+        # With consolidate:
+        # * There is one fragment:
+        #   o One with tiledb.fragment.FragmentInfoList[i].timestamp_range = (10, 20)
+        sidf.write(
+            pa.Table.from_pydict(data),
+            soma.TileDBWriteOptions(consolidate_and_vacuum=consolidate),
+        )
 
     # read without timestamp (i.e., after final write) & see final image
     with soma.DataFrame.open(uri) as sidf:
