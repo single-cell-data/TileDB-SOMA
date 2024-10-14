@@ -41,11 +41,12 @@ using namespace tiledbsoma;
 using VFSFilebuf = tiledb::impl::VFSFilebuf;
 
 void load_soma_vfs(py::module& m) {
-    py::class_<tiledb::VFS>(m, "SOMAVFS").def(
-        py::init([](std::shared_ptr<SOMAContext> context) {
-            return tiledb::VFS(*context->tiledb_ctx());
-        }),
-        "ctx"_a);
+    py::class_<tiledb::VFS>(m, "SOMAVFS")
+        .def(
+            py::init([](std::shared_ptr<SOMAContext> context) {
+                return tiledb::VFS(*context->tiledb_ctx());
+            }),
+            "ctx"_a);
 
     py::class_<VFSFilebuf>(m, "SOMAVFSFilebuf")
         .def(py::init<const VFS&>())
