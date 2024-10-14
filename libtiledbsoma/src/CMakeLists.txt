@@ -86,12 +86,59 @@ target_include_directories(TILEDB_SOMA_OBJECTS
 )
 
 # ###########################################################
+# tiledbsoma geometry library target
+# ###########################################################
+
+add_library(TILEDB_SOMA_GEOMETRY_OBJECTS OBJECT
+  ${CMAKE_CURRENT_SOURCE_DIR}/geometry/point.cc
+  ${CMAKE_CURRENT_SOURCE_DIR}/geometry/linestring.cc
+  ${CMAKE_CURRENT_SOURCE_DIR}/geometry/polygon.cc
+  ${CMAKE_CURRENT_SOURCE_DIR}/geometry/multipoint.cc
+  ${CMAKE_CURRENT_SOURCE_DIR}/geometry/multilinestring.cc
+  ${CMAKE_CURRENT_SOURCE_DIR}/geometry/multipolygon.cc
+  ${CMAKE_CURRENT_SOURCE_DIR}/geometry/operators/io/read.cc
+  ${CMAKE_CURRENT_SOURCE_DIR}/geometry/operators/io/write.cc
+)
+
+target_link_options(TILEDB_SOMA_GEOMETRY_OBJECTS
+  PRIVATE
+    ${TILEDBSOMA_SANITIZER_FLAG}
+)
+
+target_compile_definitions(TILEDB_SOMA_GEOMETRY_OBJECTS
+  PRIVATE
+  -DTILEDB_NO_API_DEPRECATION_WARNINGS
+)
+
+target_compile_options(TILEDB_SOMA_GEOMETRY_OBJECTS
+  PRIVATE
+  ${TILEDBSOMA_COMPILE_OPTIONS}
+  ${TILEDBSOMA_WERROR_OPTION}
+  ${TILEDBSOMA_SANITIZER_OPTIONS}
+)
+
+set_property(TARGET TILEDB_SOMA_GEOMETRY_OBJECTS PROPERTY POSITION_INDEPENDENT_CODE ON)
+target_include_directories(TILEDB_SOMA_GEOMETRY_OBJECTS
+  PRIVATE
+  ${CMAKE_CURRENT_SOURCE_DIR}
+  ${CMAKE_CURRENT_SOURCE_DIR}/vendor
+  ${CMAKE_CURRENT_SOURCE_DIR}/soma
+  ${CMAKE_CURRENT_SOURCE_DIR}/external/khash
+  ${CMAKE_CURRENT_SOURCE_DIR}/external/include
+  ${CMAKE_CURRENT_SOURCE_DIR}/external/include/nanoarrow
+  $<TARGET_PROPERTY:TileDB::tiledb_shared,INTERFACE_INCLUDE_DIRECTORIES>
+  $<TARGET_PROPERTY:spdlog::spdlog,INTERFACE_INCLUDE_DIRECTORIES>
+  ${pybind11_INCLUDE_DIRS}
+)
+
+# ###########################################################
 # tiledbsoma library target
 # ###########################################################
 set(TILEDBSOMA_INSTALL_TARGETS "")
 if(TILEDBSOMA_BUILD_STATIC)
   add_library(tiledbsoma_static STATIC
     $<TARGET_OBJECTS:TILEDB_SOMA_OBJECTS>
+    $<TARGET_OBJECTS:TILEDB_SOMA_GEOMETRY_OBJECTS>
     $<TARGET_OBJECTS:TILEDBSOMA_NANOARROW_OBJECT>
   )
   list(APPEND TILEDBSOMA_INSTALL_TARGETS tiledbsoma_static)
@@ -114,6 +161,7 @@ if(TILEDBSOMA_BUILD_STATIC)
 else()
   add_library(tiledbsoma SHARED
     $<TARGET_OBJECTS:TILEDB_SOMA_OBJECTS>
+    $<TARGET_OBJECTS:TILEDB_SOMA_GEOMETRY_OBJECTS>
     $<TARGET_OBJECTS:TILEDBSOMA_NANOARROW_OBJECT>
   )
   list(APPEND TILEDBSOMA_INSTALL_TARGETS tiledbsoma)
@@ -225,6 +273,9 @@ set(TILEDB_SOMA_EXPORT_HEADER "${TILEDB_SOMA_EXPORT_HEADER}" PARENT_SCOPE)
 # Set related compiler settings
 target_compile_definitions(TILEDB_SOMA_OBJECTS PRIVATE -DTILEDB_SOMA_OBJECTS_EXPORTS)
 target_include_directories(TILEDB_SOMA_OBJECTS PRIVATE ${TILEDB_SOMA_EXPORT_HEADER_DIR})
+
+target_compile_definitions(TILEDB_SOMA_GEOMETRY_OBJECTS PRIVATE -DTILEDB_SOMA_OBJECTS_EXPORTS)
+target_include_directories(TILEDB_SOMA_GEOMETRY_OBJECTS PRIVATE ${TILEDB_SOMA_EXPORT_HEADER_DIR})
 
 # Add the generated header to the public headers list
 list(APPEND TILEDB_SOMA_PUBLIC_HEADERS

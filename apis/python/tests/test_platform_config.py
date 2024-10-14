@@ -1,3 +1,4 @@
+import json
 import tempfile
 from pathlib import Path
 
@@ -6,81 +7,73 @@ import pytest
 import tiledbsoma
 import tiledbsoma.io
 import tiledbsoma.options._tiledb_create_write_options as tco
-import tiledb
 
 from ._util import assert_adata_equal
 
 
 def test_platform_config(conftest_pbmc_small):
-    # TODO as we remove usage of TileDB-Py in favor of ArrowSchema, we
-    # need a new method to get which filters have applied to the column
-    # rather than grabbing it from the ArraySchema. One consideration
-    # would be to store TileDB information in JSON format as a field in
-    # the ArraySchema metadata very similar to how Pandas stores information
-    # within pa.Schema.pandas_metadata. This could hold not only which
-    # filters have been applied to the column, but other info that cannot
-    # be "directly" stored in the ArrowSchema such as whether the column
-    # is a TileDB attribute or dimension, whether this represent a dense
-    # or sparse array, etc. This may be as easy as simply copying the
-    # platform_config by calling pa.Schema.with_metadata(platform_config).
-
     # Set up anndata input path and tiledb-group output path
     original = conftest_pbmc_small.copy()
     with tempfile.TemporaryDirectory() as output_path:
         # Ingest
+        create_cfg = {
+            "capacity": 8888,
+            "offsets_filters": [
+                "RleFilter",
+                {"_type": "GzipFilter", "level": 7},
+                "NoOpFilter",
+            ],
+            "dims": {
+                "soma_dim_0": {"tile": 6, "filters": ["RleFilter"]},
+                # Empty filters for soma_dim_1 overrides the default
+                # dimension zstd level defined below.
+                "soma_dim_1": {"filters": []},
+            },
+            "attrs": {"soma_data": {"filters": ["NoOpFilter"]}},
+            "dataframe_dim_zstd_level": 1,
+            "cell_order": "row-major",
+            "tile_order": "column-major",
+            "dense_nd_array_dim_zstd_level": 2,
+        }
+
         tiledbsoma.io.from_anndata(
             output_path,
             conftest_pbmc_small,
             "RNA",
-            platform_config={
-                "tiledb": {
-                    "create": {
-                        "capacity": 8888,
-                        "offsets_filters": [
-                            "RleFilter",
-                            {"_type": "GzipFilter", "level": 7},
-                            "NoOpFilter",
-                        ],
-                        "dims": {
-                            "soma_dim_0": {"tile": 6, "filters": ["RleFilter"]},
-                            # Empty filters for soma_dim_1 overrides the default
-                            # dimension zstd level defined below.
-                            "soma_dim_1": {"filters": []},
-                        },
-                        "attrs": {"soma_data": {"filters": ["NoOpFilter"]}},
-                        "dataframe_dim_zstd_level": 1,
-                        "cell_order": "row-major",
-                        "tile_order": "col-major",
-                        "dense_nd_array_dim_zstd_level": 2,
-                    }
-                }
-            },
+            platform_config={"tiledb": {"create": create_cfg}},
         )
         assert_adata_equal(original, conftest_pbmc_small)
 
         x_arr_uri = str(Path(output_path) / "ms" / "RNA" / "X" / "data")
-        with tiledb.open(x_arr_uri) as x_arr:
-            x_sch = x_arr.schema
-            assert x_sch.capacity == 8888
-            assert x_sch.cell_order == "row-major"
-            assert x_sch.tile_order == "col-major"
-            assert x_sch.offsets_filters == [
-                tiledb.RleFilter(),
-                tiledb.GzipFilter(level=7),
-                tiledb.NoOpFilter(),
+        with tiledbsoma.SparseNDArray.open(x_arr_uri) as x_arr:
+            cfg = x_arr.config_options_from_schema()
+            assert cfg.capacity == create_cfg["capacity"]
+            assert cfg.cell_order == create_cfg["cell_order"]
+            assert cfg.tile_order == create_cfg["tile_order"]
+            assert json.loads(cfg.offsets_filters) == [
+                {"COMPRESSION_LEVEL": -1, "name": "RLE"},
+                {"COMPRESSION_LEVEL": 7, "name": "GZIP"},
+                {"name": "NOOP"},
             ]
-            assert x_arr.attr("soma_data").filters == [tiledb.NoOpFilter()]
-            assert x_arr.dim("soma_dim_0").tile == 6
-            assert x_arr.dim("soma_dim_0").filters == [tiledb.RleFilter()]
+
+            assert json.loads(cfg.attrs)["soma_data"]["filters"] == [{"name": "NOOP"}]
+
+            soma_dim_0 = json.loads(cfg.dims)["soma_dim_0"]
+            assert int(soma_dim_0["tile"]) == 6
+            assert soma_dim_0["filters"] == [{"COMPRESSION_LEVEL": -1, "name": "RLE"}]
+
             # As of 2.17.0 this is the default when empty filter-list, or none at all,
             # is requested. Those who want truly no filtering can request a no-op filter.
-            assert list(x_arr.dim("soma_dim_1").filters) == [
-                tiledb.ZstdFilter(level=-1)
+            assert json.loads(cfg.dims)["soma_dim_1"]["filters"] == [
+                {"COMPRESSION_LEVEL": -1, "name": "ZSTD"}
             ]
 
         var_arr_uri = str(Path(output_path) / "ms" / "RNA" / "var")
-        with tiledb.open(var_arr_uri) as var_arr:
-            assert var_arr.dim("soma_joinid").filters == [tiledb.ZstdFilter(level=1)]
+        with tiledbsoma.SparseNDArray.open(var_arr_uri) as var_arr:
+            cfg = var_arr.config_options_from_schema()
+            assert json.loads(cfg.dims)["soma_joinid"]["filters"] == [
+                {"COMPRESSION_LEVEL": 1, "name": "ZSTD"}
+            ]
 
 
 def test__from_platform_config__admits_ignored_config_structure():

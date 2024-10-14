@@ -325,6 +325,7 @@ TEST_CASE_METHOD(
                 "mem://unit-test-dataframe-platform-config");
 
             PlatformConfig platform_config;
+            platform_config.cell_order = "hilbert";
             platform_config.dataframe_dim_zstd_level = 6;
             platform_config.offsets_filters = R"([)" + filter.first + R"(])";
             platform_config.validity_filters = R"([)" + filter.first + R"(])";
@@ -366,6 +367,28 @@ TEST_CASE_METHOD(
                         .filter(0)
                         .filter_type() == filter.second);
             }
+
+            auto config_options = sdf->config_options_from_schema();
+            REQUIRE(config_options.capacity == 100000);
+            REQUIRE(config_options.allows_duplicates == false);
+            REQUIRE(config_options.tile_order == "row-major");
+            REQUIRE(config_options.cell_order == "hilbert");
+
+            REQUIRE(
+                json::parse(config_options.offsets_filters)[0].at("name") ==
+                Filter::to_str(filter.second));
+            REQUIRE(
+                json::parse(config_options.validity_filters)[0].at("name") ==
+                Filter::to_str(filter.second));
+            if (filter.second != TILEDB_FILTER_WEBP) {
+                REQUIRE(
+                    json::parse(config_options.attrs)["a0"]["filters"][0].at(
+                        "name") == Filter::to_str(filter.second));
+            }
+            REQUIRE(
+                json::parse(config_options.dims)["soma_joinid"]["filters"][0]
+                    .at("name") == Filter::to_str(TILEDB_FILTER_ZSTD));
+
             sdf->close();
         }
     }
@@ -376,9 +399,9 @@ TEST_CASE_METHOD(
     "SOMADataFrame: metadata",
     "[SOMADataFrame]") {
     auto use_current_domain = GENERATE(false, true);
-    // TODO this could be formatted with fmt::format which is part of internal
-    // header spd/log/fmt/fmt.h and should not be used. In C++20, this can be
-    // replaced with std::format.
+    // TODO this could be formatted with fmt::format which is part of
+    // internal header spd/log/fmt/fmt.h and should not be used. In
+    // C++20, this can be replaced with std::format.
     std::ostringstream section;
     section << "- use_current_domain=" << use_current_domain;
     SECTION(section.str()) {
@@ -430,8 +453,8 @@ TEST_CASE_METHOD(
         REQUIRE(
             *((const int32_t*)std::get<MetadataInfo::value>(*mdval)) == 100);
 
-        // Delete and have it reflected when reading metadata while in write
-        // mode
+        // Delete and have it reflected when reading metadata while in
+        // write mode
         sdf->delete_metadata("md");
         mdval = sdf->get_metadata("md");
         REQUIRE(!mdval.has_value());
@@ -563,12 +586,12 @@ TEST_CASE_METHOD(
 
         REQUIRE(ned_sjid == std::vector<int64_t>({1, 2}));
 
-        REQUIRE(dom_sjid == std::vector<int64_t>({0, 99}));
+        REQUIRE(dom_sjid == std::vector<int64_t>({0, SOMA_JOINID_DIM_MAX}));
 
         REQUIRE(maxdom_sjid.size() == 2);
         REQUIRE(maxdom_sjid[0] == 0);
         if (!use_current_domain) {
-            REQUIRE(maxdom_sjid[1] == 99);
+            REQUIRE(maxdom_sjid[1] == SOMA_JOINID_DIM_MAX);
         } else {
             REQUIRE(maxdom_sjid[1] > 2000000000);
         }
@@ -600,8 +623,8 @@ TEST_CASE_METHOD(
         auto new_shape = int64_t{SOMA_JOINID_RESIZE_DIM_MAX + 1};
 
         if (!use_current_domain) {
-            // Domain is already set. The domain (not current domain but domain)
-            // is immutable. All we can do is check for:
+            // Domain is already set. The domain (not current domain but
+            // domain) is immutable. All we can do is check for:
             // * throw on write beyond domain
             // * throw on an attempt to resize.
             REQUIRE_THROWS(write_sjid_u32_str_data_from(SOMA_JOINID_DIM_MAX));
@@ -662,11 +685,14 @@ TEST_CASE_METHOD(
 
         if (!use_current_domain) {
             REQUIRE(ned_sjid == std::vector<int64_t>({1, 10}));
-            REQUIRE(dom_sjid == std::vector<int64_t>({0, 99}));
-            REQUIRE(maxdom_sjid == std::vector<int64_t>({0, 99}));
+            REQUIRE(dom_sjid == std::vector<int64_t>({0, SOMA_JOINID_DIM_MAX}));
+            REQUIRE(
+                maxdom_sjid == std::vector<int64_t>({0, SOMA_JOINID_DIM_MAX}));
         } else {
             REQUIRE(ned_sjid == std::vector<int64_t>({1, 101}));
-            REQUIRE(dom_sjid == std::vector<int64_t>({0, 199}));
+            REQUIRE(
+                dom_sjid ==
+                std::vector<int64_t>({0, SOMA_JOINID_RESIZE_DIM_MAX}));
             REQUIRE(maxdom_sjid.size() == 2);
             REQUIRE(maxdom_sjid[0] == 0);
             REQUIRE(maxdom_sjid[1] > 2000000000);
@@ -680,12 +706,28 @@ TEST_CASE_METHOD(
             REQUIRE(
                 check.second ==
                 "testing: dataframe currently has no domain set.");
+
+            REQUIRE(!sdf->has_current_domain());
+            sdf->close();
+
+            sdf = open(OpenMode::write);
+            sdf->upgrade_soma_joinid_shape(SOMA_JOINID_DIM_MAX + 1, "testing");
+            sdf->close();
+
+            sdf = open(OpenMode::read);
+            REQUIRE(sdf->has_current_domain());
+            std::optional<int64_t> actual = sdf->maybe_soma_joinid_shape();
+            REQUIRE(actual.has_value());
+            REQUIRE(actual.value() == SOMA_JOINID_DIM_MAX + 1);
+            sdf->close();
+
         } else {
             // Must fail since this is too small.
             REQUIRE(check.first == false);
             REQUIRE(
                 check.second ==
-                "testing: new soma_joinid shape 1 < existing shape 200");
+                "testing: new soma_joinid shape 1 < existing shape "
+                "200");
             check = sdf->can_resize_soma_joinid_shape(
                 SOMA_JOINID_RESIZE_DIM_MAX + 1, "testing");
             REQUIRE(check.first == true);
@@ -813,8 +855,8 @@ TEST_CASE_METHOD(
         auto new_shape = int64_t{SOMA_JOINID_RESIZE_DIM_MAX + 1};
 
         if (!use_current_domain) {
-            // Domain is already set. The domain (not current domain but domain)
-            // is immutable. All we can do is check for:
+            // Domain is already set. The domain (not current domain but
+            // domain) is immutable. All we can do is check for:
             // * throw on write beyond domain
             // * throw on an attempt to resize.
             REQUIRE_THROWS(write_sjid_u32_str_data_from(SOMA_JOINID_DIM_MAX));
@@ -916,7 +958,8 @@ TEST_CASE_METHOD(
             REQUIRE(check.first == false);
             REQUIRE(
                 check.second ==
-                "testing: new soma_joinid shape 1 < existing shape 200");
+                "testing: new soma_joinid shape 1 < existing shape "
+                "200");
             check = sdf->can_resize_soma_joinid_shape(
                 SOMA_JOINID_RESIZE_DIM_MAX + 1, "testing");
             REQUIRE(check.first == true);
@@ -1062,8 +1105,8 @@ TEST_CASE_METHOD(
         auto new_shape = int64_t{SOMA_JOINID_RESIZE_DIM_MAX + 1};
 
         if (!use_current_domain) {
-            // Domain is already set. The domain (not current domain but domain)
-            // is immutable. All we can do is check for:
+            // Domain is already set. The domain (not current domain but
+            // domain) is immutable. All we can do is check for:
             // * throw on write beyond domain
             // * throw on an attempt to resize.
             REQUIRE_THROWS(write_sjid_u32_str_data_from(SOMA_JOINID_DIM_MAX));
@@ -1163,7 +1206,8 @@ TEST_CASE_METHOD(
             REQUIRE(check.first == false);
             REQUIRE(
                 check.second ==
-                "testing: new soma_joinid shape 1 < existing shape 100");
+                "testing: new soma_joinid shape 1 < existing shape "
+                "100");
             check = sdf->can_resize_soma_joinid_shape(
                 SOMA_JOINID_RESIZE_DIM_MAX + 1, "testing");
             REQUIRE(check.first == true);
@@ -1278,8 +1322,8 @@ TEST_CASE_METHOD(
 
         REQUIRE(sdf->nnz() == 2);
         write_sjid_u32_str_data_from(8);
-        // soma_joinid is not a dim here and so the second write is an overwrite
-        // of the first here
+        // soma_joinid is not a dim here and so the second write is an
+        // overwrite of the first here
         REQUIRE(sdf->nnz() == 2);
 
         // Check shape after write
@@ -1292,9 +1336,10 @@ TEST_CASE_METHOD(
         auto new_shape = int64_t{SOMA_JOINID_RESIZE_DIM_MAX + 1};
 
         if (!use_current_domain) {
-            // Domain is already set. The domain (not current domain but domain)
-            // is immutable. All we can do is check for:
-            // * throw on write beyond domain -- except here, soma_joinid is not
+            // Domain is already set. The domain (not current domain but
+            // domain) is immutable. All we can do is check for:
+            // * throw on write beyond domain -- except here,
+            // soma_joinid is not
             //   a dim, so no throw
             // * throw on an attempt to resize.
 
@@ -1318,7 +1363,8 @@ TEST_CASE_METHOD(
             sdf->resize_soma_joinid_shape(new_shape, "testing");
             sdf->close();
 
-            // Check shape after resize -- noting soma_joinid is not a dim here
+            // Check shape after resize -- noting soma_joinid is not a
+            // dim here
             sdf = open(OpenMode::read);
             actual = sdf->maybe_soma_joinid_shape();
             REQUIRE(!actual.has_value());

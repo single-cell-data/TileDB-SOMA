@@ -230,6 +230,14 @@ class ArrowAdapter {
         std::shared_ptr<Context> ctx, std::shared_ptr<Array> tiledb_array);
 
     /**
+     * @brief Get members of the TileDB Schema in the form of a PlatformConfig
+     *
+     * @return PlatformConfig
+     */
+    static PlatformConfig platform_config_from_tiledb_schema(
+        ArraySchema tiledb_schema);
+
+    /**
      * @brief Create a TileDB ArraySchema from ArrowSchema
      *
      * The number of rows in index_column_info was three without core
@@ -712,6 +720,12 @@ class ArrowAdapter {
 
     static tiledb_layout_t _get_order(std::string order);
 
+    static json _get_attrs_filter_list_json(const ArraySchema& tiledb_schema);
+
+    static json _get_dims_list_json(const ArraySchema& tiledb_schema);
+
+    static json _get_filter_list_json(FilterList filter_list);
+
     // Throws if the array and the schema don't have the same
     // recursive child-counts.
     static void _check_shapes(
@@ -725,8 +739,6 @@ class ArrowAdapter {
         const ArrowTable& arrow_table,
         int64_t column_index,
         int64_t expected_n_buffers);
-
 };  // class ArrowAdapter
-
 };  // namespace tiledbsoma
 #endif

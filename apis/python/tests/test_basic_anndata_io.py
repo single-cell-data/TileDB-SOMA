@@ -1,5 +1,4 @@
 import json
-import pathlib
 import tempfile
 from copy import deepcopy
 from pathlib import Path
@@ -265,7 +264,8 @@ def test_named_X_layers(conftest_pbmc_small_h5ad_path, X_layer_name):
 
 
 def _get_fragment_count(array_uri):
-    return len(tiledb.fragment.FragmentInfoList(array_uri=array_uri))
+    fragment_uri = Path(array_uri) / "__fragments"
+    return len(list(fragment_uri.iterdir())) if fragment_uri.exists() else 0
 
 
 @pytest.mark.parametrize(
@@ -353,42 +353,35 @@ def test_ingest_relative(conftest_pbmc3k_h5ad_path, use_relative_uri):
     if use_relative_uri is None:
         expected_relative = True  # since local disk
 
-    exp = tiledbsoma.open(output_path)
-    with tiledb.Group(exp.uri) as G:
-        assert G.is_relative("obs") == expected_relative
-        assert G.is_relative("ms") == expected_relative
+    with tiledbsoma.Experiment.open(output_path) as G:
+        assert G._handle._handle.is_relative("obs") == expected_relative
+        assert G._handle._handle.is_relative("ms") == expected_relative
 
-    with tiledb.Group(exp.ms.uri) as G:
-        assert G.is_relative("RNA") == expected_relative
-    with tiledb.Group(exp.ms["RNA"].uri) as G:
-        assert G.is_relative("var") == expected_relative
-        assert G.is_relative("X") == expected_relative
-    with tiledb.Group(exp.ms["RNA"].X.uri) as G:
-        assert G.is_relative("data") == expected_relative
+        assert G.ms._handle._handle.is_relative("RNA") == expected_relative
+        assert G.ms["RNA"]._handle._handle.is_relative("var") == expected_relative
+        assert G.ms["RNA"]._handle._handle.is_relative("X") == expected_relative
+        assert G.ms["RNA"].X._handle._handle.is_relative("data") == expected_relative
 
-    for collection_name in [
-        "obsm",
-        "obsp",
-        "varm",
-    ]:  # conftest_h5ad_file_extended has no varp
-        with tiledb.Group(exp.ms["RNA"][collection_name].uri) as G:
-            for member in G:
-                assert G.is_relative(member.name) == expected_relative
+        for collection_name in [
+            "obsm",
+            "obsp",
+            "varm",
+        ]:  # conftest_h5ad_file_extended has no varp
+            for member in G.ms["RNA"][collection_name]:
+                assert (
+                    G.ms["RNA"][collection_name]._handle._handle.is_relative(member)
+                    == expected_relative
+                )
 
-    with tiledb.Group(exp.ms.uri) as G:
-        assert G.is_relative("raw") == expected_relative
-    with tiledb.Group(exp.ms["raw"].uri) as G:
-        assert G.is_relative("var") == expected_relative
-        assert G.is_relative("X") == expected_relative
-    with tiledb.Group(exp.ms["raw"].X.uri) as G:
-        assert G.is_relative("data") == expected_relative
-
-    exp.close()
+        assert G.ms._handle._handle.is_relative("raw") == expected_relative
+        assert G.ms["raw"]._handle._handle.is_relative("var") == expected_relative
+        assert G.ms["raw"]._handle._handle.is_relative("X") == expected_relative
+        assert G.ms["raw"].X._handle._handle.is_relative("data") == expected_relative
 
 
 @pytest.mark.parametrize("ingest_uns_keys", [["louvain_colors"], None])
 def test_ingest_uns(
-    tmp_path: pathlib.Path,
+    tmp_path: Path,
     conftest_pbmc3k_h5ad_path,
     conftest_pbmc3k_adata,
     ingest_uns_keys,

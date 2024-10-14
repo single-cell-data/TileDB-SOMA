@@ -28,7 +28,10 @@ std::optional<py::object> to_table(
 
 py::dict meta(std::map<std::string, MetadataValue> metadata_mapping);
 void set_metadata(
-    SOMAObject& soma_object, const std::string& key, py::array value);
+    SOMAObject& soma_object,
+    const std::string& key,
+    py::array value,
+    bool force = false);
 
 class PyQueryCondition {
    private:

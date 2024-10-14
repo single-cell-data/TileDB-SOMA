@@ -599,6 +599,17 @@ class SOMAArray : public SOMAObject {
     }
 
     /**
+     * @brief Get members of the schema (capacity, allows_duplicates,
+     * tile_order, cell_order, offsets_filters, validity_filters, attr filters,
+     * and dim filters) in the form of a PlatformConfig
+     *
+     * @return PlatformConfig
+     */
+    PlatformConfig config_options_from_schema() const {
+        return ArrowAdapter::platform_config_from_tiledb_schema(*mq_->schema());
+    }
+
+    /**
      * @brief Get the mapping of attributes to Enumerations.
      *
      * @return std::map<std::string, Enumeration>
@@ -653,7 +664,7 @@ class SOMAArray : public SOMAObject {
      * @note If the key does not exist, this will take no effect
      *     (i.e., the function will not error out).
      */
-    void delete_metadata(const std::string& key);
+    void delete_metadata(const std::string& key, bool force = false);
 
     /**
      * @brief Given a key, get the associated value datatype, number of

@@ -92,6 +92,7 @@ jobs:
             -D OVERRIDE_INSTALL_PREFIX=OFF \
             -D DOWNLOAD_TILEDB_PREBUILT=OFF \
             -D TILEDB_REMOVE_DEPRECATIONS=ON \
+            -D TILEDBSOMA_ENABLE_WERROR=ON \
             -D FORCE_BUILD_TILEDB=OFF
           cmake --build build-libtiledbsoma -j $(nproc) --verbose
           cmake --build build-libtiledbsoma --target install-libtiledbsoma

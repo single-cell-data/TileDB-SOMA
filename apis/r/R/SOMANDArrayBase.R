@@ -111,22 +111,51 @@ SOMANDArrayBase <- R6::R6Class(
     #  format acceptable for sr_setup and soma_array_reader
     .convert_coords = function(coords) {
 
-      ## ensure coords is a named list, use to select dim points
-      stopifnot("'coords' must be a list" = is.list(coords),
-                "'coords' must be a list of vectors or integer64" =
-                    all(vapply_lgl(coords, is_vector_or_int64)),
-                "'coords' if unnamed must have length of dim names, else if named names must match dim names" =
-                    (is.null(names(coords)) && length(coords) == length(self$dimnames())) ||
-                    (!is.null(names(coords)) && all(names(coords) %in% self$dimnames()))
-                )
+      # Ensure coords is a named list, use to select dim points
+      stopifnot(
+        "'coords' must be a list" = is.list(coords) && length(coords),
+        "'coords' must be a list integerish vectors" =
+          all(vapply(
+            X = coords,
+            FUN = function(x) {
+              if (is.null(x)) {
+                return(TRUE)
+              }
+              return(
+                (is.null(dim(x)) && !is.factor(x)) &&
+                  (rlang::is_integerish(x, finite = TRUE) || (bit64::is.integer64(x) && all(is.finite(x)))) &&
+                  length(x) &&
+                  all(x >= 0L)
+              )
+            },
+            FUN.VALUE = logical(length = 1L),
+            USE.NAMES = FALSE
+          )),
+        "'coords' if unnamed must have length of dim names, else if named names must match dim names" = ifelse(
+          test = is.null(names(coords)),
+          yes = length(coords) == length(self$dimnames()),
+          no = all(names(coords) %in% self$dimnames())
+        )
+      )
 
-      ## if unnamed (and test for length has passed in previous statement) set names
-      if (is.null(names(coords))) names(coords) <- self$dimnames()
+      # Remove NULL-entries from coords
+      coords <- Filter(Negate(is.null), coords)
+      if (!length(coords)) {
+        return(NULL)
+      }
 
-      ## convert integer to integer64 to match dimension type
-      coords <- lapply(coords, function(x) if (inherits(x, "integer")) bit64::as.integer64(x) else x)
+      # If unnamed, set names
+      if (is.null(names(coords))) {
+        names(coords) <- self$dimnames()
+      }
 
-      coords
+      # Convert to integer64 to match dimension type
+      return(sapply(
+        coords,
+        FUN = bit64::as.integer64,
+        simplify = FALSE,
+        USE.NAMES = TRUE
+      ))
     },
 
     #  @description Converts a vector of ints into a vector of int64 in a format

@@ -3,6 +3,7 @@ from __future__ import annotations
 import contextlib
 import datetime
 import itertools
+import json
 import operator
 import pathlib
 import sys
@@ -18,7 +19,6 @@ import scipy.sparse as sparse
 import tiledbsoma as soma
 from tiledbsoma import _factory
 from tiledbsoma.options import SOMATileDBContext
-import tiledb
 
 from . import NDARRAY_ARROW_TYPES_NOT_SUPPORTED, NDARRAY_ARROW_TYPES_SUPPORTED
 from ._util import raises_no_typeguard
@@ -325,10 +325,9 @@ def test_sparse_nd_array_read_write_sparse_tensor(
 
         assert t.shape == shape
 
-    # Validate TileDB array schema
-    with tiledb.open(tmp_path.as_posix()) as A:
-        assert A.schema.sparse
-        assert not A.schema.allows_duplicates
+    with soma.SparseNDArray.open(tmp_path.as_posix()) as A:
+        assert A.is_sparse
+        assert not A.config_options_from_schema().allows_duplicates
 
 
 @pytest.mark.parametrize("shape", [(10,), (23, 4), (5, 3, 1), (8, 4, 2, 30)])
@@ -350,10 +349,9 @@ def test_sparse_nd_array_read_write_table(
     assert isinstance(t, pa.Table)
     assert tables_are_same_value(data, t)
 
-    # Validate TileDB array schema
-    with tiledb.open(tmp_path.as_posix()) as A:
-        assert A.schema.sparse
-        assert not A.schema.allows_duplicates
+    with soma.SparseNDArray.open(tmp_path.as_posix()) as A:
+        assert A.is_sparse
+        assert not A.config_options_from_schema().allows_duplicates
 
 
 @pytest.mark.parametrize("dtype", [np.float32, np.float64, np.int32, np.int64])
@@ -379,10 +377,9 @@ def test_sparse_nd_array_read_as_pandas(
         data.to_pandas().sort_values(by=dim_names, ignore_index=True)
     )
 
-    # Validate TileDB array schema
-    with tiledb.open(tmp_path.as_posix()) as A:
-        assert A.schema.sparse
-        assert not A.schema.allows_duplicates
+    with soma.SparseNDArray.open(tmp_path.as_posix()) as A:
+        assert A.is_sparse
+        assert not A.config_options_from_schema().allows_duplicates
 
 
 @pytest.mark.parametrize("shape_is_nones", [True, False])
@@ -1087,13 +1084,14 @@ def test_tile_extents(tmp_path):
         },
     ).close()
 
-    with tiledb.open(uri) as A:
+    with soma.SparseNDArray.open(tmp_path.as_posix()) as A:
+        dim_info = json.loads(A.config_options_from_schema().dims)
         if soma._flags.NEW_SHAPE_FEATURE_FLAG_ENABLED:
-            assert A.schema.domain.dim(0).tile == 2048
-            assert A.schema.domain.dim(1).tile == 2048
+            assert int(dim_info["soma_dim_0"]["tile"]) == 2048
+            assert int(dim_info["soma_dim_1"]["tile"]) == 2048
         else:
-            assert A.schema.domain.dim(0).tile == 100
-            assert A.schema.domain.dim(1).tile == 2048
+            assert int(dim_info["soma_dim_0"]["tile"]) == 100
+            assert int(dim_info["soma_dim_1"]["tile"]) == 2048
 
 
 @pytest.mark.parametrize(
@@ -1102,21 +1100,21 @@ def test_tile_extents(tmp_path):
         (
             {"allows_duplicates": True},
             {
-                "validity_filters": tiledb.FilterList([tiledb.RleFilter()]),
+                "validity_filters": [{"COMPRESSION_LEVEL": -1, "name": "RLE"}],
                 "allows_duplicates": True,
             },
         ),
         (
             {"allows_duplicates": False},
             {
-                "validity_filters": tiledb.FilterList([tiledb.RleFilter()]),
+                "validity_filters": [{"COMPRESSION_LEVEL": -1, "name": "RLE"}],
                 "allows_duplicates": False,
             },
         ),
         (
             {"validity_filters": ["NoOpFilter"], "allows_duplicates": False},
             {
-                "validity_filters": tiledb.FilterList([tiledb.NoOpFilter()]),
+                "validity_filters": [{"name": "NOOP"}],
                 "allows_duplicates": False,
             },
         ),
@@ -1132,9 +1130,13 @@ def test_create_platform_config_overrides(
         shape=(100, 100),
         platform_config={"tiledb": {"create": {**create_options}}},
     ).close()
-    with tiledb.open(uri) as D:
-        for k, v in expected_schema_fields.items():
-            assert getattr(D.schema, k) == v
+
+    with soma.SparseNDArray.open(tmp_path.as_posix()) as A:
+        cfg = A.config_options_from_schema()
+        assert expected_schema_fields["validity_filters"] == json.loads(
+            cfg.validity_filters
+        )
+        assert expected_schema_fields["allows_duplicates"] == cfg.allows_duplicates
 
 
 def test_timestamped_ops(tmp_path):
