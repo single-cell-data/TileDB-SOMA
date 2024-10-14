@@ -95,6 +95,7 @@ add_executable(unit_geometry
     common.cc
     common.h
     unit_geometry_roundtrip.cc
+    unit_geometry_envelope.cc
 # TODO: uncomment when thread_pool is enabled
 #    unit_thread_pool.cc
 )
