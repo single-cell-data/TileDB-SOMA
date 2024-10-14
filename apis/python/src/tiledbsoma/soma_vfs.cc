@@ -37,9 +37,7 @@ namespace libtiledbsomacpp {
 namespace py = pybind11;
 using namespace py::literals;
 using namespace tiledbsoma;
-
 using VFSFilebuf = tiledb::impl::VFSFilebuf;
-using VFS = tiledb::VFS;
 
 // TODO This temporary workaround prevents namespace clash with tiledb-py.
 // Bind tiledb::VFS directly once tiledb-py dependency is removed
@@ -57,7 +55,7 @@ void load_soma_vfs(py::module& m) {
             "ctx"_a);
 
     py::class_<VFSFilebuf>(m, "SOMAVFSFilebuf")
-        .def(py::init<const VFS&>())
+        .def(py::init<const SOMAVFS&>())
         .def(
             "open",
             [](VFSFilebuf& buf, const std::string& uri) {
