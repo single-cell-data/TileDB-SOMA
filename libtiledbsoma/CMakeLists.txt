@@ -71,6 +71,7 @@ option(TILEDB_VERBOSE "If true, sets default logging to verbose for TileDB" OFF)
 option(OVERRIDE_INSTALL_PREFIX "Ignores the setting of CMAKE_INSTALL_PREFIX and sets a default prefix" ON)
 option(ENABLE_ARROW_EXPORT "Installs an extra header for exporting in-memory results with Apache Arrow" ON)
 option(TILEDB_LOG_OUTPUT_ON_FAILURE "If true, print error logs if dependency sub-project build fails" ON)
+option(TILEDB_SANITIZER "Sanitizer to use in TILEDB. ")
 
 # Enable compiler cache to speed up recompilation
 find_program(CCACHE_FOUND ccache)
@@ -88,9 +89,24 @@ set(CMAKE_CXX_EXTENSIONS OFF) # Don't use GNU extensions
 # Build with fPIC
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
-# Release builds by default.
-if(NOT CMAKE_BUILD_TYPE)
-  set(CMAKE_BUILD_TYPE RELEASE)
+# Set default builds/configuration to be Release.
+get_property(is_multi_config GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
+if (is_multi_config)
+  set(CMAKE_CONFIGURATION_TYPES
+      "Release;Debug;RelWithDebInfo;ASAN;TSAN;LSAN;UBSAN;MSAN"
+      CACHE
+      STRING
+      "Semi-colon separate list of build types for multi-configuration generators."
+  )
+  set(CMAKE_MAP_IMPORTED_CONFIG_ASAN Debug)
+  set(CMAKE_MAP_IMPORTED_CONFIG_TSAN Debug)
+  set(CMAKE_MAP_IMPORTED_CONFIG_LSAN Debug)
+  set(CMAKE_MAP_IMPORTED_CONFIG_UBSAN Debug)
+  set(CMAKE_MAP_IMPORTED_CONFIG_MSAN Debug)
+else()
+    set(CMAKE_BUILD_TYPE
+      "Release" CACHE STRING "Build type for single-configuration generators."
+    )
 endif()
 
 # Use @rpath on macOS for building shared libraries.
@@ -214,52 +230,43 @@ else()
   # build generators that set the config type at build time.
   list(APPEND
     TILEDBSOMA_COMPILE_OPTIONS
-    $<$<STREQUAL:${CMAKE_BUILD_TYPE},Debug>: -DDEBUG -O0 -g3 -ggdb3 -gdwarf-3>
+    $<$<CONFIG:Debug>: -DDEBUG -O0 -g3 -ggdb3 -gdwarf-3>
   )
   list(APPEND
     TILEDBSOMA_COMPILE_OPTIONS
-    $<$<STREQUAL:${CMAKE_BUILD_TYPE},Release>: -DNDEBUG -O3>
+    $<$<CONFIG:Release>: -DNDEBUG -O3>
   )
   list(APPEND
     TILEDBSOMA_COMPILE_OPTIONS
-    $<$<STREQUAL:${CMAKE_BUILD_TYPE},RelWithDebInfo>: -DNDEBUG -O3 -g3 -ggdb3 -gdwarf-3>
+    $<$<CONFIG:RelWithDebInfo>: -DNDEBUG -O3 -g3 -ggdb3 -gdwarf-3>
   )
   list(APPEND
     TILEDBSOMA_COMPILE_OPTIONS
-    $<$<STREQUAL:${CMAKE_BUILD_TYPE},>: -DDEBUG -g3 -gdwarf-3 --coverage>
+    $<$<CONFIG:ASAN,TSAN,LSAN,UBSAN,MSAN>: -DDEBUG -O1 -g -fno-omit-frame-pointer  -fno-optimize-sibling-calls>
   )
 
-  # Use -Wno-literal-suffix on Linux for C++ libtiledbsoma target.
+
+  # TODO: There is a bug in CMake 3.22.1 but not 3.27.6 where nested generators
+  # are not fully evaluated in the `target_link_library` commands. The GENEX_EVAL
+  # commands are not multi-configuration friendly and should be removed after we
+  # update CMake.
+  # See https://www.reddit.com/r/cmake/comments/17d70h6/why_arent_generator_expressions_evaluated_for/
+  # for this placeholder solution.
+  set(TILEDBSOMA_SANITIZER_FLAG "")
+  list(APPEND TILEDBSOMA_SANITIZER_FLAG "\$<GENEX_EVAL:$<$<CONFIG:ASAN>:-fsanitize=address>>")
+  list(APPEND TILEDBSOMA_SANITIZER_FLAG "\$<GENEX_EVAL:$<$<CONFIG:LSAN>:-fsanitize=leak>>")
+  list(APPEND TILEDBSOMA_SANITIZER_FLAG "\$<GENEX_EVAL:$<$<CONFIG:TSAN>:-fsanitize=thread>>")
+  list(APPEND TILEDBSOMA_SANITIZER_FLAG "\$<GENEX_EVAL:$<$<CONFIG:UBSAN>:-fsanitize=undefined>>")
+  list(APPEND TILEDBSOMA_SANITIZER_FLAG "\$<GENEX_EVAL:$<$<CONFIG:MSAN>:-fsanitize=memory>>")
+
+
+  # Compiler specific additions:
   if(NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    # Use -Wno-literal-suffix on Linux for C++ libtiledbsoma target.
     list(APPEND TILEDBSOMA_COMPILE_OPTIONS -Wno-literal-suffix)
   endif()
+
 endif()
-
-# ###########################################################
-# Compile options/definitions
-# ###########################################################
-if(SANITIZER)
-  string(TOLOWER "${CMAKE_BUILD_TYPE}" CMAKE_BUILD_TYPE_LOWER)
-
-  if(NOT CMAKE_BUILD_TYPE_LOWER MATCHES "debug")
-    message(FATAL_ERROR "Sanitizers only enabled for Debug build")
-  endif()
-
-  string(TOLOWER ${SANITIZER} SANITIZER)
-
-  if(NOT SANITIZER MATCHES "^(address|memory|leak|thread|undefined)$")
-    message(FATAL_ERROR "Unknown clang sanitizer: ${SANITIZER})")
-  else()
-    message(STATUS "The TileDB-SOMA library is compiled with sanitizer ${SANITIZER} enabled")
-  endif()
-
-  set(TILEDBSOMA_SANITIZER_OPTIONS
-    -g -fno-omit-frame-pointer -fno-optimize-sibling-calls -fsanitize=${SANITIZER}
-  )
-else()
- set(TILEDBSOMA_SANITIZER_OPTIONS "")
-endif()
-
 
 
 # Definitions for all targets

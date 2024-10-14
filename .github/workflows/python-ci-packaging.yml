@@ -94,7 +94,7 @@ jobs:
             -D TILEDB_REMOVE_DEPRECATIONS=ON \
             -D TILEDBSOMA_ENABLE_WERROR=ON \
             -D FORCE_BUILD_TILEDB=OFF
-          cmake --build build-libtiledbsoma -j $(nproc)
+          cmake --build build-libtiledbsoma -j $(nproc) --verbose
           cmake --build build-libtiledbsoma --target install-libtiledbsoma
           ls external/lib/
           echo "TILEDBSOMA_PATH=$(pwd)/external" >> $GITHUB_ENV
