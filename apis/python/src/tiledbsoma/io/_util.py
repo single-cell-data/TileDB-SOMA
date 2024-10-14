@@ -48,8 +48,8 @@ def read_h5ad(
     This lets us ingest H5AD with "r" (backed mode) from S3 URIs.
     """
     ctx = ctx or SOMATileDBContext()
-    vfs = clib.VFS(ctx.native_context)
-    input_handle = clib.VFSFilebuf(vfs).open(str(input_path))
+    vfs = clib.SOMAVFS(ctx.native_context)
+    input_handle = clib.SOMAVFSFilebuf(vfs).open(str(input_path))
     try:
         with _hack_patch_anndata():
             anndata = ad.read_h5ad(_FSPathWrapper(input_handle, input_path), mode)

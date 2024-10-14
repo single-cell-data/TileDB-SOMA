@@ -1,5 +1,5 @@
 /**
- * @file   vfs.cc
+ * @file   soma_vfs.cc
  *
  * @section LICENSE
  *
@@ -40,14 +40,14 @@ using namespace tiledbsoma;
 
 using VFSFilebuf = tiledb::impl::VFSFilebuf;
 
-void load_vfs(py::module& m) {
-    py::class_<tiledb::VFS>(m, "VFS").def(
+void load_soma_vfs(py::module& m) {
+    py::class_<tiledb::VFS>(m, "SOMAVFS").def(
         py::init([](std::shared_ptr<SOMAContext> context) {
             return tiledb::VFS(*context->tiledb_ctx());
         }),
         "ctx"_a);
 
-    py::class_<VFSFilebuf>(m, "VFSFilebuf")
+    py::class_<VFSFilebuf>(m, "SOMAVFSFilebuf")
         .def(py::init<const VFS&>())
         .def(
             "open",
