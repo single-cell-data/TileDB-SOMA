@@ -34,7 +34,7 @@
 #' Expressions, in the R language syntax, are parsed locally by this function.
 #'
 #' @param expr An expression that is understood by the TileDB grammar for
-#' query conditions.
+#' query conditions, as a character string.
 #'
 #' @param schema The Arrow schema for the array for which a query
 #' condition is being prepared. This is necessary to obtain type information
@@ -57,7 +57,11 @@ parse_query_condition_new <- function(
   somactx
   ) {
 
+    spdl::debug("[parseqc] ENTER [{}]", expr)
+
   stopifnot(
+      "The expr argument must be a single character string" =
+        is(expr, "character") && length(expr) == 1,
       "The schema argument must be an Arrow Schema" =
           is(schema, "ArrowObject") &&
           is(schema, "Schema"),
@@ -184,7 +188,9 @@ parse_query_condition_new <- function(
             value = switch(
                 arrow_type_name,
                 ascii = rhs_text,
+                string = rhs_text,
                 utf8 = rhs_text,
+                large_utf8 = rhs_text,
                 bool = as.logical(rhs_text),
                 # Problem:
 
@@ -231,8 +237,11 @@ parse_query_condition_new <- function(
         }
     }
 
+    # Convert expr from string to language
+    aslang <- str2lang(expr)
+
     # Use base-r `substitute` to map the user-provided expression to a parse tree
-    parse_tree <- substitute(expr)
+    parse_tree <- substitute(aslang)
 
     # Map the parse tree to TileDB core QueryCondition
     return(.parse_tree_to_qc(parse_tree, debug))
