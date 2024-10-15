@@ -242,6 +242,9 @@ void load_soma_array(py::module& m) {
                 return pa_schema_import(
                     py::capsule(array.arrow_schema().get()));
             })
+        .def(
+            "config_options_from_schema",
+            &SOMAArray::config_options_from_schema)
         .def("context", &SOMAArray::ctx)
 
         // After this are short functions expected to be invoked when the coords
@@ -781,6 +784,62 @@ void load_soma_array(py::module& m) {
             })
 
         .def(
+            "non_empty_domain_slot_opt",
+            [](SOMAArray& array, std::string name, py::dtype dtype) {
+                switch (np_to_tdb_dtype(dtype)) {
+                    case TILEDB_UINT64:
+                        return py::cast(
+                            array.non_empty_domain_slot_opt<uint64_t>(name));
+                    case TILEDB_DATETIME_YEAR:
+                    case TILEDB_DATETIME_MONTH:
+                    case TILEDB_DATETIME_WEEK:
+                    case TILEDB_DATETIME_DAY:
+                    case TILEDB_DATETIME_HR:
+                    case TILEDB_DATETIME_MIN:
+                    case TILEDB_DATETIME_SEC:
+                    case TILEDB_DATETIME_MS:
+                    case TILEDB_DATETIME_US:
+                    case TILEDB_DATETIME_NS:
+                    case TILEDB_DATETIME_PS:
+                    case TILEDB_DATETIME_FS:
+                    case TILEDB_DATETIME_AS:
+                    case TILEDB_INT64:
+                        return py::cast(
+                            array.non_empty_domain_slot_opt<int64_t>(name));
+                    case TILEDB_UINT32:
+                        return py::cast(
+                            array.non_empty_domain_slot_opt<uint32_t>(name));
+                    case TILEDB_INT32:
+                        return py::cast(
+                            array.non_empty_domain_slot_opt<int32_t>(name));
+                    case TILEDB_UINT16:
+                        return py::cast(
+                            array.non_empty_domain_slot_opt<uint16_t>(name));
+                    case TILEDB_INT16:
+                        return py::cast(
+                            array.non_empty_domain_slot_opt<int16_t>(name));
+                    case TILEDB_UINT8:
+                        return py::cast(
+                            array.non_empty_domain_slot_opt<uint8_t>(name));
+                    case TILEDB_INT8:
+                        return py::cast(
+                            array.non_empty_domain_slot_opt<int8_t>(name));
+                    case TILEDB_FLOAT64:
+                        return py::cast(
+                            array.non_empty_domain_slot_opt<double>(name));
+                    case TILEDB_FLOAT32:
+                        return py::cast(
+                            array.non_empty_domain_slot_opt<float>(name));
+                    case TILEDB_STRING_UTF8:
+                    case TILEDB_STRING_ASCII:
+                        return py::cast(array.non_empty_domain_slot_var(name));
+                    default:
+                        throw TileDBSOMAError(
+                            "Unsupported dtype for nonempty domain.");
+                }
+            })
+
+        .def(
             "soma_domain_slot",
             [](SOMAArray& array, std::string name, py::dtype dtype) {
                 switch (np_to_tdb_dtype(dtype)) {
@@ -887,7 +946,11 @@ void load_soma_array(py::module& m) {
 
         .def_property_readonly("dimension_names", &SOMAArray::dimension_names)
 
-        .def("consolidate_and_vacuum", &SOMAArray::consolidate_and_vacuum)
+        .def(
+            "consolidate_and_vacuum",
+            &SOMAArray::consolidate_and_vacuum,
+            py::arg(
+                "modes") = std::vector<std::string>{"fragment_meta", "commits"})
 
         .def_property_readonly(
             "meta",
@@ -895,9 +958,18 @@ void load_soma_array(py::module& m) {
                 return meta(array.get_metadata());
             })
 
-        .def("set_metadata", set_metadata)
+        .def(
+            "set_metadata",
+            set_metadata,
+            py::arg("key"),
+            py::arg("value"),
+            py::arg("force") = false)
 
-        .def("delete_metadata", &SOMAArray::delete_metadata)
+        .def(
+            "delete_metadata",
+            &SOMAArray::delete_metadata,
+            py::arg("key"),
+            py::arg("force") = false)
 
         .def(
             "get_metadata",

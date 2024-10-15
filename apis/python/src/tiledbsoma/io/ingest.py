@@ -36,7 +36,7 @@ import numpy as np
 import pandas as pd
 import pyarrow as pa
 import scipy.sparse as sp
-from anndata._core.sparse_dataset import SparseDataset
+from anndata.experimental import CSCDataset
 from somacore.options import PlatformConfig
 from typing_extensions import get_args
 
@@ -46,6 +46,7 @@ from .. import (
     DenseNDArray,
     Experiment,
     Measurement,
+    PointCloudDataFrame,
     SparseNDArray,
     _factory,
     _util,
@@ -1104,7 +1105,7 @@ def _extract_new_values_for_append(
 
 def _write_arrow_table(
     arrow_table: pa.Table,
-    handle: Union[DataFrame, SparseNDArray],
+    handle: Union[DataFrame, SparseNDArray, PointCloudDataFrame],
     tiledb_create_options: TileDBCreateOptions,
     tiledb_write_options: TileDBWriteOptions,
 ) -> None:
@@ -1295,7 +1296,7 @@ def _create_from_matrix(
     """
     Internal helper for user-facing ``create_from_matrix``.
     """
-    # SparseDataset has no ndim but it has a shape
+    # Older SparseDataset has no ndim but it has a shape
     if len(matrix.shape) != 2:
         raise ValueError(f"expected matrix.shape == 2; got {matrix.shape}")
 
@@ -1603,7 +1604,7 @@ def update_matrix(
         soma_ndarray: a ``SparseNDArray`` or ``DenseNDArray`` already opened for write.
 
         new_data: If the ``soma_ndarray`` is sparse, a Scipy CSR/CSC matrix or
-            AnnData ``SparseDataset``. If the ``soma_ndarray`` is dense,
+            AnnData ``CSCDataset`` / ``CSRDataset``. If the ``soma_ndarray`` is dense,
             a NumPy NDArray.
 
         context: Optional :class:`SOMATileDBContext` containing storage parameters, etc.
@@ -2035,11 +2036,12 @@ def _find_sparse_chunk_size_backed(
       these nnz values is quick.  This happens when the input is AnnData via
       anndata.read_h5ad(name_of_h5ad) without the second backing-mode argument.
 
-    * If the input matrix is anndata._core.sparse_dataset.SparseDataset -- which
-      happens with out-of-core anndata reads -- then getting all these nnz
-      values is prohibitively expensive.  This happens when the input is AnnData
-      via anndata.read_h5ad(name_of_h5ad, "r") with the second backing-mode
-      argument, which is necessary for being able to ingest larger H5AD files.
+    * If the input matrix is ``anndata.abc.CSCDataset`` or
+      ``anndata.abc.CSRDataset`` -- which happens with out-of-core anndata reads
+      -- then getting all these nnz values is prohibitively expensive.  This
+      happens when the input is AnnData via anndata.read_h5ad(name_of_h5ad, "r")
+      with the second backing-mode argument, which is necessary for being able
+      to ingest larger H5AD files.
 
     Say there are 100,000 rows, each with possibly quite different nnz values.
     Then in the non-backed case we simply check each row's nnz value. But for
@@ -2243,7 +2245,7 @@ def _write_matrix_to_sparseNDArray(
     if sp.isspmatrix_csc(matrix):
         # E.g. if we used anndata.X[:]
         stride_axis = 1
-    if isinstance(matrix, SparseDataset) and matrix.format_str == "csc":
+    if isinstance(matrix, CSCDataset) and matrix.format_str == "csc":
         # E.g. if we used anndata.X without the [:]
         stride_axis = 1
 

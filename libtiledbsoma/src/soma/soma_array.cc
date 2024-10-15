@@ -524,8 +524,8 @@ void SOMAArray::_promote_indexes_to_values(
             return _cast_dictionary_values<double>(schema, array);
         default:
             throw TileDBSOMAError(fmt::format(
-                "Saw invalid TileDB value type when attempting to "
-                "promote indexes to values: {}",
+                "Saw invalid TileDB value type when attempting to promote "
+                "indexes to values: {}",
                 tiledb::impl::type_to_str(value_type)));
     }
 }
@@ -1094,12 +1094,12 @@ void SOMAArray::set_metadata(
     metadata_.insert(mdpair);
 }
 
-void SOMAArray::delete_metadata(const std::string& key) {
-    if (key.compare(SOMA_OBJECT_TYPE_KEY) == 0) {
+void SOMAArray::delete_metadata(const std::string& key, bool force) {
+    if (!force && key.compare(SOMA_OBJECT_TYPE_KEY) == 0) {
         throw TileDBSOMAError(SOMA_OBJECT_TYPE_KEY + " cannot be deleted.");
     }
 
-    if (key.compare(ENCODING_VERSION_KEY) == 0) {
+    if (!force && key.compare(ENCODING_VERSION_KEY) == 0) {
         throw TileDBSOMAError(ENCODING_VERSION_KEY + " cannot be deleted.");
     }
 
@@ -1443,7 +1443,7 @@ std::vector<int64_t> SOMAArray::maxshape() {
 std::pair<bool, std::string> SOMAArray::_can_set_shape_helper(
     const std::vector<int64_t>& newshape,
     bool is_resize,
-    std::string method_name_for_messages) {
+    std::string function_name_for_messages) {
     // E.g. it's an error to try to upgrade_domain or resize specifying
     // a 3-D shape on a 2-D array.
     auto arg_ndim = newshape.size();
@@ -1452,8 +1452,8 @@ std::pair<bool, std::string> SOMAArray::_can_set_shape_helper(
         return std::pair(
             false,
             fmt::format(
-                "cannot {}: provided shape has ndim {}, while the array has {}",
-                method_name_for_messages,
+                "{}: provided shape has ndim {}, while the array has {}",
+                function_name_for_messages,
                 arg_ndim,
                 array_ndim));
     }
@@ -1469,9 +1469,9 @@ std::pair<bool, std::string> SOMAArray::_can_set_shape_helper(
             return std::pair(
                 false,
                 fmt::format(
-                    "{}: array currently has no shape: please use "
-                    "tiledbsoma_upgrade_shape.",
-                    method_name_for_messages));
+                    "{}: array currently has no shape: please "
+                    "upgrade the array.",
+                    function_name_for_messages));
         }
     } else {
         // They're trying to do upgrade_shape on an array that already has a
@@ -1480,10 +1480,8 @@ std::pair<bool, std::string> SOMAArray::_can_set_shape_helper(
             return std::pair(
                 false,
                 fmt::format(
-                    "{}: array already has a shape: please use resize rather "
-                    "than "
-                    "tiledbsoma_upgrade_shape.",
-                    method_name_for_messages));
+                    "{}: array already has a shape: please use resize",
+                    function_name_for_messages));
         }
     }
 
@@ -1497,8 +1495,8 @@ std::pair<bool, std::string> SOMAArray::_can_set_shape_helper(
     //
     // if the requested shape fits in the array's core domain, it's good to go
     // as a new shape.
-    auto domain_check = _can_set_shape_domainish_helper(
-        newshape, false, method_name_for_messages);
+    auto domain_check = _can_set_shape_domainish_subhelper(
+        newshape, false, function_name_for_messages);
     if (!domain_check.first) {
         return domain_check;
     }
@@ -1506,8 +1504,8 @@ std::pair<bool, std::string> SOMAArray::_can_set_shape_helper(
     // For new-style arrays, we need to additionally that the the requested
     // shape (core current domain) isn't a downsize of the current one.
     if (has_shape) {
-        auto current_domain_check = _can_set_shape_domainish_helper(
-            newshape, true, method_name_for_messages);
+        auto current_domain_check = _can_set_shape_domainish_subhelper(
+            newshape, true, function_name_for_messages);
         if (!current_domain_check.first) {
             return current_domain_check;
         }
@@ -1519,10 +1517,10 @@ std::pair<bool, std::string> SOMAArray::_can_set_shape_helper(
 // This is a helper for _can_set_shape_helper: it's used for comparing
 // the user's requested shape against the core current domain or core (max)
 // domain.
-std::pair<bool, std::string> SOMAArray::_can_set_shape_domainish_helper(
+std::pair<bool, std::string> SOMAArray::_can_set_shape_domainish_subhelper(
     const std::vector<int64_t>& newshape,
     bool check_current_domain,
-    std::string method_name_for_messages) {
+    std::string function_name_for_messages) {
     Domain domain = arr_->schema().domain();
 
     for (unsigned i = 0; i < domain.ndim(); i++) {
@@ -1536,9 +1534,8 @@ std::pair<bool, std::string> SOMAArray::_can_set_shape_domainish_helper(
         // library-internal code, it's not the user's fault if we got here.
         if (dim.type() != TILEDB_INT64) {
             throw TileDBSOMAError(fmt::format(
-                "{}: internal error: expected {} dim to "
-                "be {}; got {}",
-                method_name_for_messages,
+                "{}: internal error: expected {} dim to be {}; got {}",
+                function_name_for_messages,
                 dim_name,
                 tiledb::impl::type_to_str(TILEDB_INT64),
                 tiledb::impl::type_to_str(dim.type())));
@@ -1553,8 +1550,8 @@ std::pair<bool, std::string> SOMAArray::_can_set_shape_domainish_helper(
                 return std::pair(
                     false,
                     fmt::format(
-                        "cannot {} for {}: new {} < existing shape {}",
-                        method_name_for_messages,
+                        "{} for {}: new {} < existing shape {}",
+                        function_name_for_messages,
                         dim_name,
                         newshape[i],
                         old_dim_shape));
@@ -1569,8 +1566,8 @@ std::pair<bool, std::string> SOMAArray::_can_set_shape_domainish_helper(
                 return std::pair(
                     false,
                     fmt::format(
-                        "cannot {} for {}: new {} < maxshape {}",
-                        method_name_for_messages,
+                        "{} for {}: new {} < maxshape {}",
+                        function_name_for_messages,
                         dim_name,
                         newshape[i],
                         old_dim_shape));
@@ -1580,15 +1577,30 @@ std::pair<bool, std::string> SOMAArray::_can_set_shape_domainish_helper(
     return std::pair(true, "");
 }
 
-std::pair<bool, std::string> SOMAArray::can_resize_soma_joinid(
-    int64_t newshape) {
+std::pair<bool, std::string> SOMAArray::_can_set_soma_joinid_shape_helper(
+    int64_t newshape, bool is_resize, std::string function_name_for_messages) {
     // Fail if the array doesn't already have a shape yet (they should upgrade
     // first).
-    if (!has_current_domain()) {
-        return std::pair(
-            false,
-            "can_resize_soma_joinid: dataframe currently has no domain set: "
-            "please use tiledbsoma_upgrade_domain.");
+    if (!is_resize) {
+        // Upgrading an array to give it a current domain
+        if (has_current_domain()) {
+            return std::pair(
+                false,
+                fmt::format(
+                    "{}: dataframe already has its domain set.",
+                    function_name_for_messages));
+        }
+
+    } else {
+        // Resizing an array's existing current domain
+
+        if (!has_current_domain()) {
+            return std::pair(
+                false,
+                fmt::format(
+                    "{}: dataframe currently has no domain set.",
+                    function_name_for_messages));
+        }
     }
 
     // OK if soma_joinid isn't a dim.
@@ -1597,15 +1609,18 @@ std::pair<bool, std::string> SOMAArray::can_resize_soma_joinid(
     }
 
     // Fail if the newshape isn't within the array's core current domain.
-    std::pair cur_dom_lo_hi = _core_current_domain_slot<int64_t>("soma_joinid");
-    if (newshape < cur_dom_lo_hi.second) {
-        return std::pair(
-            false,
-            fmt::format(
-                "cannot resize_soma_joinid: new soma_joinid shape {} < "
-                "existing shape {}",
-                newshape,
-                cur_dom_lo_hi.second));
+    if (is_resize) {
+        std::pair cur_dom_lo_hi = _core_current_domain_slot<int64_t>(
+            "soma_joinid");
+        if (newshape < cur_dom_lo_hi.second) {
+            return std::pair(
+                false,
+                fmt::format(
+                    "{}: new soma_joinid shape {} < existing shape {}",
+                    function_name_for_messages,
+                    newshape,
+                    cur_dom_lo_hi.second + 1));
+        }
     }
 
     // Fail if the newshape isn't within the array's core (max) domain.
@@ -1614,37 +1629,40 @@ std::pair<bool, std::string> SOMAArray::can_resize_soma_joinid(
         return std::pair(
             false,
             fmt::format(
-                "cannot resize_soma_joinid: new soma_joinid shape {} > "
-                "maxshape {}",
+                "{}: new soma_joinid shape {} > maxshape {}",
+                function_name_for_messages,
                 newshape,
-                dom_lo_hi.second));
+                dom_lo_hi.second + 1));
     }
 
     // Sucess otherwise.
     return std::pair(true, "");
 }
 
-void SOMAArray::resize(const std::vector<int64_t>& newshape) {
-    if (_get_current_domain().is_empty()) {
-        throw TileDBSOMAError(
-            "[SOMAArray::resize] array must already have a shape");
-    }
-    _set_current_domain_from_shape(newshape);
-}
-
-void SOMAArray::upgrade_shape(const std::vector<int64_t>& newshape) {
-    if (!_get_current_domain().is_empty()) {
-        throw TileDBSOMAError(
-            "[SOMAArray::resize] array must not already have a shape");
-    }
-    _set_current_domain_from_shape(newshape);
-}
-
-void SOMAArray::_set_current_domain_from_shape(
-    const std::vector<int64_t>& newshape) {
+void SOMAArray::_set_shape_helper(
+    const std::vector<int64_t>& newshape,
+    bool is_resize,
+    std::string function_name_for_messages) {
     if (mq_->query_type() != TILEDB_WRITE) {
-        throw TileDBSOMAError(
-            "[SOMAArray::resize] array must be opened in write mode");
+        throw TileDBSOMAError(fmt::format(
+            "{} array must be opened in write mode",
+            function_name_for_messages));
+    }
+
+    if (!is_resize) {
+        // Upgrading an array to install a current domain
+        if (!_get_current_domain().is_empty()) {
+            throw TileDBSOMAError(fmt::format(
+                "{}: array must not already have a shape",
+                function_name_for_messages));
+        }
+    } else {
+        // Expanding an array's current domain
+        if (_get_current_domain().is_empty()) {
+            throw TileDBSOMAError(fmt::format(
+                "{} array must already have a shape",
+                function_name_for_messages));
+        }
     }
 
     // Variant-indexed dataframes must use a separate path
@@ -1677,32 +1695,179 @@ void SOMAArray::_set_current_domain_from_shape(
     schema_evolution.array_evolve(uri_);
 }
 
-void SOMAArray::resize_soma_joinid(int64_t newshape) {
+void SOMAArray::_set_soma_joinid_shape_helper(
+    int64_t newshape, bool is_resize, std::string function_name_for_messages) {
     if (mq_->query_type() != TILEDB_WRITE) {
-        throw TileDBSOMAError(
-            "[SOMAArray::resize] array must be opened in write mode");
+        throw TileDBSOMAError(fmt::format(
+            "{}: array must be opened in write mode",
+            function_name_for_messages));
+    }
+
+    if (!is_resize) {
+        // Upgrading an array to install a current domain
+        if (!_get_current_domain().is_empty()) {
+            throw TileDBSOMAError(fmt::format(
+                "{}: array must not already have a shape",
+                function_name_for_messages));
+        }
+    } else {
+        // Expanding an array's current domain
+        if (_get_current_domain().is_empty()) {
+            throw TileDBSOMAError(fmt::format(
+                "{} array must already have a shape",
+                function_name_for_messages));
+        }
     }
 
     ArraySchema schema = arr_->schema();
     Domain domain = schema.domain();
     unsigned ndim = domain.ndim();
-
     auto tctx = ctx_->tiledb_ctx();
-    CurrentDomain old_current_domain = ArraySchemaExperimental::current_domain(
-        *tctx, schema);
-    NDRectangle ndrect = old_current_domain.ndrectangle();
-
-    CurrentDomain new_current_domain(*tctx);
     ArraySchemaEvolution schema_evolution(*tctx);
+    CurrentDomain new_current_domain(*tctx);
 
-    for (unsigned i = 0; i < ndim; i++) {
-        if (domain.dimension(i).name() == "soma_joinid") {
-            ndrect.set_range<int64_t>(
-                domain.dimension(i).name(), 0, newshape - 1);
+    if (!is_resize) {
+        // For upgrade: copy from the full/wide/max domain except for the
+        // soma_joinid restriction.
+
+        NDRectangle ndrect(*tctx, domain);
+
+        for (unsigned i = 0; i < ndim; i++) {
+            const Dimension& dim = domain.dimension(i);
+            const std::string dim_name = dim.name();
+            if (dim_name == "soma_joinid") {
+                if (dim.type() != TILEDB_INT64) {
+                    throw TileDBSOMAError(fmt::format(
+                        "{}: expected soma_joinid to be of type {}; got {}",
+                        function_name_for_messages,
+                        tiledb::impl::type_to_str(TILEDB_INT64),
+                        tiledb::impl::type_to_str(dim.type())));
+                }
+                ndrect.set_range<int64_t>(dim_name, 0, newshape - 1);
+                continue;
+
+                switch (dim.type()) {
+                    case TILEDB_STRING_ASCII:
+                    case TILEDB_STRING_UTF8:
+                    case TILEDB_CHAR:
+                        // TODO: make these named constants b/c they're shared
+                        // with arrow_adapter.
+                        ndrect.set_range(dim_name, "", "\xff");
+                        break;
+
+                    case TILEDB_INT8:
+                        ndrect.set_range<int8_t>(
+                            dim_name,
+                            dim.domain<int8_t>().first,
+                            dim.domain<int8_t>().second);
+                        break;
+                    case TILEDB_BOOL:
+                    case TILEDB_UINT8:
+                        ndrect.set_range<uint8_t>(
+                            dim_name,
+                            dim.domain<uint8_t>().first,
+                            dim.domain<uint8_t>().second);
+                        break;
+                    case TILEDB_INT16:
+                        ndrect.set_range<int16_t>(
+                            dim_name,
+                            dim.domain<int16_t>().first,
+                            dim.domain<int16_t>().second);
+                        break;
+                    case TILEDB_UINT16:
+                        ndrect.set_range<uint16_t>(
+                            dim_name,
+                            dim.domain<uint16_t>().first,
+                            dim.domain<uint16_t>().second);
+                        break;
+                    case TILEDB_INT32:
+                        ndrect.set_range<int32_t>(
+                            dim_name,
+                            dim.domain<int32_t>().first,
+                            dim.domain<int32_t>().second);
+                        break;
+                    case TILEDB_UINT32:
+                        ndrect.set_range<uint32_t>(
+                            dim_name,
+                            dim.domain<uint32_t>().first,
+                            dim.domain<uint32_t>().second);
+                        break;
+                    case TILEDB_INT64:
+                    case TILEDB_DATETIME_YEAR:
+                    case TILEDB_DATETIME_MONTH:
+                    case TILEDB_DATETIME_WEEK:
+                    case TILEDB_DATETIME_DAY:
+                    case TILEDB_DATETIME_HR:
+                    case TILEDB_DATETIME_MIN:
+                    case TILEDB_DATETIME_SEC:
+                    case TILEDB_DATETIME_MS:
+                    case TILEDB_DATETIME_US:
+                    case TILEDB_DATETIME_NS:
+                    case TILEDB_DATETIME_PS:
+                    case TILEDB_DATETIME_FS:
+                    case TILEDB_DATETIME_AS:
+                    case TILEDB_TIME_HR:
+                    case TILEDB_TIME_MIN:
+                    case TILEDB_TIME_SEC:
+                    case TILEDB_TIME_MS:
+                    case TILEDB_TIME_US:
+                    case TILEDB_TIME_NS:
+                    case TILEDB_TIME_PS:
+                    case TILEDB_TIME_FS:
+                    case TILEDB_TIME_AS:
+                        ndrect.set_range<int64_t>(
+                            dim_name,
+                            dim.domain<int64_t>().first,
+                            dim.domain<int64_t>().second);
+                        break;
+                    case TILEDB_UINT64:
+                        ndrect.set_range<uint64_t>(
+                            dim_name,
+                            dim.domain<int64_t>().first,
+                            dim.domain<int64_t>().second);
+                        break;
+                    case TILEDB_FLOAT32:
+                        ndrect.set_range<float>(
+                            dim_name,
+                            dim.domain<float>().first,
+                            dim.domain<float>().second);
+                        break;
+                    case TILEDB_FLOAT64:
+                        ndrect.set_range<double>(
+                            dim_name,
+                            dim.domain<double>().first,
+                            dim.domain<double>().second);
+                        break;
+                    default:
+                        throw TileDBSOMAError(fmt::format(
+                            "{}: internal error: unhandled type {} for {}.",
+                            function_name_for_messages,
+                            tiledb::impl::type_to_str(dim.type()),
+                            dim_name));
+                }
+            }
         }
+
+        new_current_domain.set_ndrectangle(ndrect);
+
+    } else {
+        // For resize: copy from the existing current domain except for the
+        // new soma_joinid value.
+        CurrentDomain
+            old_current_domain = ArraySchemaExperimental::current_domain(
+                *tctx, schema);
+        NDRectangle ndrect = old_current_domain.ndrectangle();
+
+        for (unsigned i = 0; i < ndim; i++) {
+            if (domain.dimension(i).name() == "soma_joinid") {
+                ndrect.set_range<int64_t>(
+                    domain.dimension(i).name(), 0, newshape - 1);
+            }
+        }
+
+        new_current_domain.set_ndrectangle(ndrect);
     }
 
-    new_current_domain.set_ndrectangle(ndrect);
     schema_evolution.expand_current_domain(new_current_domain);
     schema_evolution.array_evolve(uri_);
 }
@@ -1718,7 +1883,8 @@ std::vector<int64_t> SOMAArray::_tiledb_current_domain() {
 
     if (current_domain.is_empty()) {
         throw TileDBSOMAError(
-            "Internal error: current domain requested for an array which does "
+            "Internal error: current domain requested for an array which "
+            "does "
             "not support it");
     }
 
@@ -1831,7 +1997,8 @@ bool SOMAArray::_dims_are_int64() {
 void SOMAArray::_check_dims_are_int64() {
     if (!_dims_are_int64()) {
         throw TileDBSOMAError(
-            "[SOMAArray] internal coding error: expected all dims to be int64");
+            "[SOMAArray] internal coding error: expected all dims to be "
+            "int64");
     }
 }
 

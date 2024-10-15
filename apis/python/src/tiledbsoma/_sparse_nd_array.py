@@ -42,7 +42,7 @@ from ._read_iters import (
     TableReadIter,
 )
 from ._tdb_handles import SparseNDArrayWrapper
-from ._types import NTuple, OpenTimestamp
+from ._types import NTuple, OpenTimestamp, StatusAndReason
 from .options._soma_tiledb_context import (
     SOMATileDBContext,
     _validate_soma_tiledb_context,
@@ -296,21 +296,35 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
 
         return SparseNDArrayRead(sr, self, coords)
 
-    def resize(self, newshape: Sequence[Union[int, None]]) -> None:
+    def resize(
+        self, newshape: Sequence[Union[int, None]], check_only: bool = False
+    ) -> StatusAndReason:
         """Increases the shape of the array as specfied. Raises an error if the new
         shape is less than the current shape in any dimension. Raises an error if
         the new shape exceeds maxshape in any dimension. Raises an error if the
         array doesn't already have a shape: in that case please call
-        tiledbsoma_upgrade_shape.
+        tiledbsoma_upgrade_shape. If ``check_only`` is ``True``, returns
+        whether the operation would succeed if attempted, and a reason why it
+        would not.
         """
-        self._handle.resize(newshape)
+        if check_only:
+            return self._handle.tiledbsoma_can_resize(newshape)
+        else:
+            self._handle.resize(newshape)
+            return (True, "")
 
-    def tiledbsoma_upgrade_shape(self, newshape: Sequence[Union[int, None]]) -> None:
+    def tiledbsoma_upgrade_shape(
+        self, newshape: Sequence[Union[int, None]], check_only: bool = False
+    ) -> StatusAndReason:
         """Allows the array to have a resizeable shape as described in the TileDB-SOMA
         1.15 release notes.  Raises an error if the new shape exceeds maxshape in
         any dimension. Raises an error if the array already has a shape.
         """
-        self._handle.tiledbsoma_upgrade_shape(newshape)
+        if check_only:
+            return self._handle.tiledbsoma_can_upgrade_shape(newshape)
+        else:
+            self._handle.tiledbsoma_upgrade_shape(newshape)
+            return (True, "")
 
     def write(
         self,

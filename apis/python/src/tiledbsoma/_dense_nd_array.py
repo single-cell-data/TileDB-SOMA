@@ -189,10 +189,18 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
         # all, in which case the best we can do is use the schema shape.
         handle: clib.SOMADenseNDArray = self._handle._handle
 
-        data_shape = handle.shape
-        ned = self.non_empty_domain()
-        if ned is not None:
-            data_shape = tuple(slot[1] + 1 for slot in ned)
+        ned = []
+        for dim_name in handle.dimension_names:
+            dtype = np.dtype(self.schema.field(dim_name).type.to_pandas_dtype())
+            slot = handle.non_empty_domain_slot_opt(dim_name, dtype)
+            if slot is None:
+                use_shape = True
+                break
+            ned.append(slot[1] + 1)
+        else:
+            use_shape = False
+
+        data_shape = tuple(handle.shape if use_shape else ned)
         target_shape = dense_indices_to_shape(coords, data_shape, result_order)
 
         context = handle.context()

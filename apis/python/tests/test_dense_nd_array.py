@@ -1,5 +1,6 @@
 import contextlib
 import datetime
+import json
 import pathlib
 from typing import Tuple
 
@@ -48,10 +49,6 @@ def test_dense_nd_array_create_ok(
         assert a.schema.field(f"soma_dim_{d}").type == pa.int64()
     assert a.schema.field("soma_data").type == element_type
     assert not a.schema.field("soma_data").nullable
-
-    # Validate TileDB array schema
-    with tiledb.open(tmp_path.as_posix()) as A:
-        assert not A.schema.sparse
 
     # Ensure read mode uses clib object
     with soma.DenseNDArray.open(tmp_path.as_posix(), "r") as A:
@@ -150,12 +147,9 @@ def test_dense_nd_array_read_write_tensor(tmp_path, shape: Tuple[int, ...]):
         table = a.read_next()["soma_data"]
         assert np.array_equal(data, table.combine_chunks().to_numpy().reshape(shape))
 
-    # Validate TileDB array schema
-    with tiledb.open(tmp_path.as_posix()) as A:
-        assert not A.schema.sparse
-
     # write a single-value sub-array and recheck
     with soma.DenseNDArray.open(tmp_path.as_posix(), "w") as c:
+        assert not c.is_sparse
         c.write(
             (0,) * len(shape),
             pa.Tensor.from_numpy(np.zeros((1,) * len(shape), dtype=np.float64)),
@@ -415,9 +409,10 @@ def test_tile_extents(tmp_path):
         },
     ).close()
 
-    with tiledb.open(tmp_path.as_posix()) as A:
-        assert A.schema.domain.dim(0).tile == 100
-        assert A.schema.domain.dim(1).tile == 2048
+    with soma.DenseNDArray.open(tmp_path.as_posix()) as A:
+        dim_info = json.loads(A.config_options_from_schema().dims)
+        assert int(dim_info["soma_dim_0"]["tile"]) == 100
+        assert int(dim_info["soma_dim_1"]["tile"]) == 2048
 
 
 def test_timestamped_ops(tmp_path):
@@ -491,3 +486,18 @@ def test_fixed_timestamp(tmp_path: pathlib.Path):
 
     with pytest.raises(soma.SOMAError):
         soma.open(tmp_path.as_posix(), context=fixed_time, tiledb_timestamp=111)
+
+
+@pytest.mark.parametrize("shape", [(10,), (10, 20), (10, 20, 2), (2, 4, 6, 8)])
+def test_read_to_unwritten_array(tmp_path, shape):
+    uri = tmp_path.as_posix()
+
+    soma.DenseNDArray.create(uri, type=pa.uint8(), shape=shape)
+
+    with tiledb.open(uri, "r") as A:
+        expected = A[:]["soma_data"]
+
+    with soma.DenseNDArray.open(uri, "r") as A:
+        actual = A.read().to_numpy()
+
+    assert np.array_equal(expected, actual)
