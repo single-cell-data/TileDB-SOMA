@@ -47,7 +47,9 @@
 #' @param somactx SOMAContext pointer.
 #'
 #' @return A `tiledbsoma_query_condition` object.
-#' @export
+#' 
+#' @noRd
+#'
 parse_query_condition_new <- function(
   expr,
   schema,
