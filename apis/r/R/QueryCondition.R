@@ -47,7 +47,9 @@
 #' @param somactx SOMAContext pointer.
 #'
 #' @return A `tiledbsoma_query_condition` object.
-#' @export
+#' 
+#' @noRd
+#'
 parse_query_condition_new <- function(
   expr,
   schema,
@@ -195,7 +197,6 @@ parse_query_condition_new <- function(
 #' @slot ptr An external pointer to the underlying implementation
 #' @slot init A logical variable tracking if the query condition object has been
 #' initialized
-#' @exportClass tiledbsoma_query_condition
 setClass(
     "tiledbsoma_query_condition",
     slots = list(ptr = "externalptr", init = "logical"))
@@ -229,7 +230,9 @@ tiledbsoma_empty_query_condition <- function(somactx) {
 #' 'LT', 'LE', 'GT', 'GE', 'EQ', 'NE'.
 #' @param qc A 'tiledbsoma_query_condition' object to be initialized by this call.
 #' @return The initialized 'tiledbsoma_query_condition' object
-#' @export
+#' 
+#' @noRd
+#'
 tiledbsoma_query_condition_from_triple <- function(
     attr_name,
     value,
@@ -269,7 +272,9 @@ tiledbsoma_query_condition_from_triple <- function(
 #' @param op_name A character value with the relation, which must be one of 'AND', 'OR' or 'NOT'.
 #' @param somactx SOMAContext pointer.
 #' @return The combined 'tiledbsoma_query_condition' object
-#' @export
+#' 
+#' @noRd
+#'
 tiledbsoma_query_condition_combine <- function(lhs, rhs, op_name, somactx) {
     stopifnot(
         "Argument 'lhs' must be a query condition object" = is(lhs, "tiledbsoma_query_condition"),
@@ -298,7 +303,9 @@ tiledbsoma_query_condition_combine <- function(lhs, rhs, op_name, somactx) {
 #' @param somactx SOMAContext pointer.
 #'
 #' @return A query-condition object is returned
-#' @export
+#' 
+#' @noRd
+#'
 tiledbsoma_query_condition_in_nin <- function(
   attr_name,
   op_name = "IN",
