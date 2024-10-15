@@ -197,7 +197,6 @@ parse_query_condition_new <- function(
 #' @slot ptr An external pointer to the underlying implementation
 #' @slot init A logical variable tracking if the query condition object has been
 #' initialized
-#' @exportClass tiledbsoma_query_condition
 setClass(
     "tiledbsoma_query_condition",
     slots = list(ptr = "externalptr", init = "logical"))
