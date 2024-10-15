@@ -98,6 +98,7 @@ add_library(TILEDB_SOMA_GEOMETRY_OBJECTS OBJECT
   ${CMAKE_CURRENT_SOURCE_DIR}/geometry/multipolygon.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/geometry/operators/io/read.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/geometry/operators/io/write.cc
+  ${CMAKE_CURRENT_SOURCE_DIR}/geometry/operators/envelope.cc
 )
 
 target_link_options(TILEDB_SOMA_GEOMETRY_OBJECTS
