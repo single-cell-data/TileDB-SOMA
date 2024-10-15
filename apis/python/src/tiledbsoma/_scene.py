@@ -71,6 +71,7 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
         else:
             subcollection = tuple(subcollection)
         coll: CollectionBase[AnySOMAObject] = self
+        # Keep track of collection hierarchy for informative error reporting
         parent_name: List[str] = []
         for name in subcollection:
             try:
