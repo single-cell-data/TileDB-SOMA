@@ -230,7 +230,9 @@ tiledbsoma_empty_query_condition <- function(somactx) {
 #' 'LT', 'LE', 'GT', 'GE', 'EQ', 'NE'.
 #' @param qc A 'tiledbsoma_query_condition' object to be initialized by this call.
 #' @return The initialized 'tiledbsoma_query_condition' object
-#' @export
+#' 
+#' @noRd
+#'
 tiledbsoma_query_condition_from_triple <- function(
     attr_name,
     value,
