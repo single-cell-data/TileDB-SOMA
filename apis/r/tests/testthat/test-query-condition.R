@@ -22,12 +22,12 @@ test_that("DataFrame Factory", {
               value_type = arrow::utf8(),
               ordered = TRUE)),
       arrow::field("float32", arrow::float32()),
-      arrow::field("float64", arrow::float64())
+      arrow::field("float64", arrow::float64()),
       # TODO: for a follow-up PR
-      # arrow::field("timestamp_s", arrow::timestamp(unit="s")),
-      # arrow::field("timestamp_ms", arrow::timestamp(unit="ms")),
-      # arrow::field("timestamp_us", arrow::timestamp(unit="us")),
-      # arrow::field("timestamp_ns", arrow::timestamp(unit="ns"))
+      arrow::field("timestamp_s", arrow::timestamp(unit="s")),
+      arrow::field("timestamp_ms", arrow::timestamp(unit="ms")),
+      arrow::field("timestamp_us", arrow::timestamp(unit="us")),
+      arrow::field("timestamp_ns", arrow::timestamp(unit="ns"))
       # Not supported in libtiledbsoma
       # arrow::field("datetime_day", arrow::date32())
     )
@@ -54,10 +54,10 @@ test_that("DataFrame Factory", {
         float32 = 1.5:10.5,
         float64 = 11.5:20.5,
         # TODO: for a follow-up PR
-        # timestamp_s  = as.POSIXct(as.numeric(3600 + 1:10), tz="GMT"),
-        # timestamp_ms = as.POSIXct(as.numeric(3600*1000 + 1:10), tz="GMT"),
-        # timestamp_us = as.POSIXct(as.numeric(3600*1000*1000 + 1:10), tz="GMT"),
-        # timestamp_ns = as.POSIXct(as.numeric(3600*1000*1000*1000 + 1:10), tz="GMT"),
+        timestamp_s  = as.POSIXct(as.numeric(1*3600 + 1:10), tz="UTC"),
+        timestamp_ms = as.POSIXct(as.numeric(2*3600 + 1:10), tz="UTC"),
+        timestamp_us = as.POSIXct(as.numeric(3*3600 + 1:10), tz="UTC"),
+        timestamp_ns = as.POSIXct(as.numeric(4*3600 + 1:10), tz="UTC"),
         schema = sch)
     sdf$write(tbl)
     sdf$close()
@@ -154,21 +154,37 @@ test_that("DataFrame Factory", {
       },
       'enum %nin% c("orange", "purple")' = function(df) {
           expect_equal(df$soma_joinid, 1:10)
-      }
+      },
 
       # TODO: for a follow-up PR
-      # 'timestamp_s < "1969-12-31 20:01:04 EST"' = function(df) {
-      #     expect_equal(df$soma_joinid, 1:3)
-      # },
-      # 'timestamp_ms != "1970-02-11 11:00:05 EST"' = function(df) {
-      #     expect_equal(df$soma_joinid, 1:10)
-      # },
-      # 'timestamp_us > "1970-01-01 00:00:01 GMT"' = function(df) {
-      #     expect_equal(df$soma_joinid, 1:10)
-      # },
-      # 'timestamp_ns > "1970-01-01 00:00:01 GMT"' = function(df) {
-      #     expect_equal(df$soma_joinid, 1:10)
-      # }
+      'timestamp_s < "1970-01-01 01:00:05 UTC"' = function(df) {
+          expect_equal(df$soma_joinid, 1:4)
+      },
+
+      'timestamp_ms < "1970-01-01 02:00:05 UTC"' = function(df) {
+          expect_equal(df$soma_joinid, 1:4)
+      },
+
+      'timestamp_us < "1970-01-01 03:00:05 UTC"' = function(df) {
+          expect_equal(df$soma_joinid, 1:4)
+      },
+
+      'timestamp_ns < "1970-01-01 04:00:05 UTC"' = function(df) {
+          expect_equal(df$soma_joinid, 1:4)
+      }
+
+      #         timestamp_s        timestamp_ms        timestamp_us        timestamp_ns
+      # 1970-01-01 01:00:01 1970-01-01 02:00:01 1970-01-01 03:00:01 1970-01-01 04:00:01
+      # 1970-01-01 01:00:02 1970-01-01 02:00:02 1970-01-01 03:00:02 1970-01-01 04:00:02
+      # 1970-01-01 01:00:03 1970-01-01 02:00:03 1970-01-01 03:00:03 1970-01-01 04:00:03
+      # 1970-01-01 01:00:04 1970-01-01 02:00:04 1970-01-01 03:00:04 1970-01-01 04:00:04
+      # 1970-01-01 01:00:05 1970-01-01 02:00:05 1970-01-01 03:00:05 1970-01-01 04:00:05
+      # 1970-01-01 01:00:06 1970-01-01 02:00:06 1970-01-01 03:00:06 1970-01-01 04:00:06
+      # 1970-01-01 01:00:07 1970-01-01 02:00:07 1970-01-01 03:00:07 1970-01-01 04:00:07
+      # 1970-01-01 01:00:08 1970-01-01 02:00:08 1970-01-01 03:00:08 1970-01-01 04:00:08
+      # 1970-01-01 01:00:09 1970-01-01 02:00:09 1970-01-01 03:00:09 1970-01-01 04:00:09
+      # 1970-01-01 01:00:10 1970-01-01 02:00:10 1970-01-01 03:00:10 1970-01-01 04:00:10
+
     )
 
     for (query_string in names(good_cases)) {
