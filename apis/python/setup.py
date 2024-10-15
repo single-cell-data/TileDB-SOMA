@@ -341,6 +341,9 @@ setuptools.setup(
     ],
     extras_require={
         "dev": open("requirements_dev.txt").read(),
+        "spatial-io": open("requirements_spatial.txt").read(),
+        "all": open("requirements_dev.txt").read()
+        + open("requirements_spatial.txt").read(),
     },
     python_requires=">=3.9",
     cmdclass={"build_ext": build_ext, "bdist_wheel": bdist_wheel},
