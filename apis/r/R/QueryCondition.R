@@ -272,7 +272,9 @@ tiledbsoma_query_condition_from_triple <- function(
 #' @param op_name A character value with the relation, which must be one of 'AND', 'OR' or 'NOT'.
 #' @param somactx SOMAContext pointer.
 #' @return The combined 'tiledbsoma_query_condition' object
-#' @export
+#' 
+#' @noRd
+#'
 tiledbsoma_query_condition_combine <- function(lhs, rhs, op_name, somactx) {
     stopifnot(
         "Argument 'lhs' must be a query condition object" = is(lhs, "tiledbsoma_query_condition"),
