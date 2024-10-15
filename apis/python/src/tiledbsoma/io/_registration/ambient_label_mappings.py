@@ -189,8 +189,7 @@ class ExperimentAmbientLabelMapping:
         experiment, not in append mode, but allowing us to still have the bulk of the ingestor code
         to be non-duplicated between non-append mode and append mode.
         """
-        tiledb_ctx = None if context is None else context.tiledb_ctx
-        with read_h5ad(h5ad_file_name, mode="r", ctx=tiledb_ctx) as adata:
+        with read_h5ad(h5ad_file_name, mode="r", ctx=context) as adata:
             return cls.from_isolated_anndata(
                 adata,
                 measurement_name=measurement_name,
@@ -434,8 +433,7 @@ class ExperimentAmbientLabelMapping:
         """Extends registration data to one more H5AD input file."""
         tiledbsoma.logging.logger.info(f"Registration: registering {h5ad_file_name}.")
 
-        tiledb_ctx = None if context is None else context.tiledb_ctx
-        with read_h5ad(h5ad_file_name, mode="r", ctx=tiledb_ctx) as adata:
+        with read_h5ad(h5ad_file_name, mode="r", ctx=context) as adata:
             return cls.from_anndata_append_on_experiment(
                 adata,
                 previous,
