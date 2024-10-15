@@ -303,7 +303,9 @@ tiledbsoma_query_condition_combine <- function(lhs, rhs, op_name, somactx) {
 #' @param somactx SOMAContext pointer.
 #'
 #' @return A query-condition object is returned
-#' @export
+#' 
+#' @noRd
+#'
 tiledbsoma_query_condition_in_nin <- function(
   attr_name,
   op_name = "IN",
