@@ -21,8 +21,8 @@ jobs:
       fail-fast: false
       matrix:
         # TODO: decide on Windows CI coverage
-        os: [ubuntu-22.04, macos-12]
-        # os: [ubuntu-22.04, macos-12, windows-2019]
+        os: [ubuntu-22.04, macos-latest]
+        # os: [ubuntu-22.04, macos-latest, windows-2019]
         # TODO: add 3.12
         # https://github.com/single-cell-data/TileDB-SOMA/issues/1849
         python-version: ['3.9', '3.10', '3.11']
@@ -30,7 +30,7 @@ jobs:
           - runs-on: ubuntu-22.04
             cc: gcc-11
             cxx: g++-11
-          - runs-on: macos-12
+          - runs-on: macos-latest
             cc: clang
             cxx: clang++
     uses: ./.github/workflows/python-ci-single.yml

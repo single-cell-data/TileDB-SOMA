@@ -74,7 +74,7 @@ jobs:
       run: cat /proc/cpuinfo
 
     - name: MacOS CPU info
-      if: ${{ inputs.os == 'macos-12' }}
+      if: ${{ inputs.os == 'macos-latest' }}
       run: sysctl -a | grep cpu
     - name: Select XCode version
       if: startsWith(inputs.os, 'macos')
