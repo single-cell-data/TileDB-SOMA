@@ -57,7 +57,7 @@ jobs:
             os: ubuntu-20.04
             wheel-name: manylinux2014
           - cibw_build: macosx_x86_64
-            os: macos-12
+            os: macos-latest
             cibw_archs_macos: x86_64
             wheel-name: macos-x86_64
           - cibw_build: macosx_arm64
@@ -130,7 +130,7 @@ jobs:
             cc: gcc-11
             cxx: g++-11
           - wheel-name: macos-x86_64
-            os: macos-12
+            os: macos-13
             arch: x86_64
             cc: clang
             cxx: clang++

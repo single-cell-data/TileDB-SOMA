@@ -74,14 +74,13 @@ jobs:
       run: cat /proc/cpuinfo
 
     - name: MacOS CPU info
-      if: ${{ inputs.os == 'macos-12' }}
+      if: ${{ inputs.os == 'macos-latest' }}
       run: sysctl -a | grep cpu
     - name: Select XCode version
       if: startsWith(inputs.os, 'macos')
       uses: maxim-lobanov/setup-xcode@v1
       with:
-        # Pending https://github.com/actions/runner-images/issues/6350
-        xcode-version: '13.4'
+        xcode-version: '15.4'
 
     - name: Checkout TileDB-SOMA
       uses: actions/checkout@v4
