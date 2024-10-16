@@ -10,7 +10,8 @@
 * Handle `numeric` coords properly when reading arrays
 * Remove two more `tiledb::schema` callsites [#3160](https://github.com/single-cell-data/TileDB-SOMA/pull/3160)
 * Add new Arrow-to-R type mapper
-* Add transitiona/non-exported `parse_query_condition_new` [#3162](https://github.com/single-cell-data/TileDB-SOMA/pull/3162)
+* Add transitional/non-exported `parse_query_condition_new` [#3162](https://github.com/single-cell-data/TileDB-SOMA/pull/3162)
+* Apply new `parse_query_condition` [#3174](https://github.com/single-cell-data/TileDB-SOMA/pull/3174)
 
 # tiledbsoma 1.14.1
 

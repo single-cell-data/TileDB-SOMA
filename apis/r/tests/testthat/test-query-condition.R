@@ -15,6 +15,8 @@ test_that("DataFrame Factory", {
       arrow::field("uint32", arrow::uint32()),
       arrow::field("uint64", arrow::uint64()),
       arrow::field("string", arrow::string()),
+      # Unlike in pyarrow there is no arrow::large_string
+      arrow::field("utf8", arrow::utf8()),
       arrow::field("large_utf8", arrow::large_utf8()),
       arrow::field("enum",
           arrow::dictionary(
@@ -22,12 +24,12 @@ test_that("DataFrame Factory", {
               value_type = arrow::utf8(),
               ordered = TRUE)),
       arrow::field("float32", arrow::float32()),
-      arrow::field("float64", arrow::float64())
+      arrow::field("float64", arrow::float64()),
       # TODO: for a follow-up PR
-      # arrow::field("timestamp_s", arrow::timestamp(unit="s")),
-      # arrow::field("timestamp_ms", arrow::timestamp(unit="ms")),
-      # arrow::field("timestamp_us", arrow::timestamp(unit="us")),
-      # arrow::field("timestamp_ns", arrow::timestamp(unit="ns"))
+      arrow::field("timestamp_s", arrow::timestamp(unit="s")),
+      arrow::field("timestamp_ms", arrow::timestamp(unit="ms")),
+      arrow::field("timestamp_us", arrow::timestamp(unit="us")),
+      arrow::field("timestamp_ns", arrow::timestamp(unit="ns"))
       # Not supported in libtiledbsoma
       # arrow::field("datetime_day", arrow::date32())
     )
@@ -47,6 +49,7 @@ test_that("DataFrame Factory", {
         uint32 =  301L:310L,
         uint64 =  401L:410L,
         string = c("apple", "ball", "cat", "dog", "egg", "fig", "goose", "hay", "ice", "jam"),
+        utf8 = c("apple", "ball", "cat", "dog", "egg", "fig", "goose", "hay", "ice", "jam"),
         large_utf8 = c("APPLE", "BALL", "CAT", "DOG", "EGG", "FIG", "GOOSE", "HAY", "ICE", "JAM"),
         enum = factor(
             c("red", "yellow", "green", "red", "red", "red", "yellow", "green", "red", "green"),
@@ -54,10 +57,10 @@ test_that("DataFrame Factory", {
         float32 = 1.5:10.5,
         float64 = 11.5:20.5,
         # TODO: for a follow-up PR
-        # timestamp_s  = as.POSIXct(as.numeric(3600 + 1:10), tz="GMT"),
-        # timestamp_ms = as.POSIXct(as.numeric(3600*1000 + 1:10), tz="GMT"),
-        # timestamp_us = as.POSIXct(as.numeric(3600*1000*1000 + 1:10), tz="GMT"),
-        # timestamp_ns = as.POSIXct(as.numeric(3600*1000*1000*1000 + 1:10), tz="GMT"),
+        timestamp_s  = as.POSIXct(as.numeric(1*3600 + 1:10), tz="UTC"),
+        timestamp_ms = as.POSIXct(as.numeric(2*3600 + 1:10), tz="UTC"),
+        timestamp_us = as.POSIXct(as.numeric(3*3600 + 1:10), tz="UTC"),
+        timestamp_ns = as.POSIXct(as.numeric(4*3600 + 1:10), tz="UTC"),
         schema = sch)
     sdf$write(tbl)
     sdf$close()
@@ -118,10 +121,57 @@ test_that("DataFrame Factory", {
       'string == "dog"' = function(df) {
           expect_equal(df$soma_joinid, c(4))
       },
+      'string == "cat" || string == "dog"' = function(df) {
+          expect_equal(df$soma_joinid, c(3, 4))
+      },
+      "string == 'cat' || string == 'dog'" = function(df) {
+          expect_equal(df$soma_joinid, c(3, 4))
+      },
+      "string == 'cat' || string == 'yak'" = function(df) {
+          expect_equal(df$soma_joinid, c(3))
+      },
       'string %in% c("fig", "dog")' = function(df) {
           expect_equal(df$soma_joinid, c(4, 6))
       },
       'string %nin% c("fig", "dog")' = function(df) {
+          expect_equal(df$soma_joinid, c(1, 2, 3, 5, 7, 8, 9, 10))
+      },
+
+      'utf8 == "dog"' = function(df) {
+          expect_equal(df$soma_joinid, c(4))
+      },
+      'utf8 == "cat" || utf8 == "dog"' = function(df) {
+          expect_equal(df$soma_joinid, c(3, 4))
+      },
+      "utf8 == 'cat' || utf8 == 'dog'" = function(df) {
+          expect_equal(df$soma_joinid, c(3, 4))
+      },
+      "utf8 == 'cat' || utf8 == 'yak'" = function(df) {
+          expect_equal(df$soma_joinid, c(3))
+      },
+      'utf8 %in% c("fig", "dog")' = function(df) {
+          expect_equal(df$soma_joinid, c(4, 6))
+      },
+      'utf8 %nin% c("fig", "dog")' = function(df) {
+          expect_equal(df$soma_joinid, c(1, 2, 3, 5, 7, 8, 9, 10))
+      },
+
+      'large_utf8 == "DOG"' = function(df) {
+          expect_equal(df$soma_joinid, c(4))
+      },
+      'large_utf8 == "CAT" || large_utf8 == "DOG"' = function(df) {
+          expect_equal(df$soma_joinid, c(3, 4))
+      },
+      "large_utf8 == 'CAT' || large_utf8 == 'DOG'" = function(df) {
+          expect_equal(df$soma_joinid, c(3, 4))
+      },
+      "large_utf8 == 'CAT' || large_utf8 == 'YAK'" = function(df) {
+          expect_equal(df$soma_joinid, c(3))
+      },
+      'large_utf8 %in% c("FIG", "DOG")' = function(df) {
+          expect_equal(df$soma_joinid, c(4, 6))
+      },
+      'large_utf8 %nin% c("FIG", "DOG")' = function(df) {
           expect_equal(df$soma_joinid, c(1, 2, 3, 5, 7, 8, 9, 10))
       },
 
@@ -154,33 +204,41 @@ test_that("DataFrame Factory", {
       },
       'enum %nin% c("orange", "purple")' = function(df) {
           expect_equal(df$soma_joinid, 1:10)
-      }
+      },
 
       # TODO: for a follow-up PR
-      # 'timestamp_s < "1969-12-31 20:01:04 EST"' = function(df) {
-      #     expect_equal(df$soma_joinid, 1:3)
-      # },
-      # 'timestamp_ms != "1970-02-11 11:00:05 EST"' = function(df) {
-      #     expect_equal(df$soma_joinid, 1:10)
-      # },
-      # 'timestamp_us > "1970-01-01 00:00:01 GMT"' = function(df) {
-      #     expect_equal(df$soma_joinid, 1:10)
-      # },
-      # 'timestamp_ns > "1970-01-01 00:00:01 GMT"' = function(df) {
-      #     expect_equal(df$soma_joinid, 1:10)
-      # }
+      'timestamp_s < "1970-01-01 01:00:05 UTC"' = function(df) {
+          expect_equal(df$soma_joinid, 1:4)
+      },
+
+      'timestamp_ms < "1970-01-01 02:00:05 UTC"' = function(df) {
+          expect_equal(df$soma_joinid, 1:4)
+      },
+
+      'timestamp_us < "1970-01-01 03:00:05 UTC"' = function(df) {
+          expect_equal(df$soma_joinid, 1:4)
+      },
+
+      'timestamp_ns < "1970-01-01 04:00:05 UTC"' = function(df) {
+          expect_equal(df$soma_joinid, 1:4)
+      }
+
+      #         timestamp_s        timestamp_ms        timestamp_us        timestamp_ns
+      # 1970-01-01 01:00:01 1970-01-01 02:00:01 1970-01-01 03:00:01 1970-01-01 04:00:01
+      # 1970-01-01 01:00:02 1970-01-01 02:00:02 1970-01-01 03:00:02 1970-01-01 04:00:02
+      # 1970-01-01 01:00:03 1970-01-01 02:00:03 1970-01-01 03:00:03 1970-01-01 04:00:03
+      # 1970-01-01 01:00:04 1970-01-01 02:00:04 1970-01-01 03:00:04 1970-01-01 04:00:04
+      # 1970-01-01 01:00:05 1970-01-01 02:00:05 1970-01-01 03:00:05 1970-01-01 04:00:05
+      # 1970-01-01 01:00:06 1970-01-01 02:00:06 1970-01-01 03:00:06 1970-01-01 04:00:06
+      # 1970-01-01 01:00:07 1970-01-01 02:00:07 1970-01-01 03:00:07 1970-01-01 04:00:07
+      # 1970-01-01 01:00:08 1970-01-01 02:00:08 1970-01-01 03:00:08 1970-01-01 04:00:08
+      # 1970-01-01 01:00:09 1970-01-01 02:00:09 1970-01-01 03:00:09 1970-01-01 04:00:09
+      # 1970-01-01 01:00:10 1970-01-01 02:00:10 1970-01-01 03:00:10 1970-01-01 04:00:10
+
     )
 
     for (query_string in names(good_cases)) {
-        parsed <- do.call(
-            what = tiledbsoma:::parse_query_condition_new,
-            args = list(expr=str2lang(query_string), schema=sch, somactx=ctx))
-        clib_value_filter <- parsed@ptr
-
-        sr <- sr_setup(uri = sdf$uri, ctx, qc=clib_value_filter)
-        iter <- TableReadIter$new(sr)
-        tbl <- iter$read_next()
-        expect_true(iter$read_complete())
+        tbl <- sdf$read(value_filter = query_string)$concat()
         df <- as.data.frame(tbl)
         # Call the validator
         good_cases[[query_string]](df)
@@ -196,10 +254,7 @@ test_that("DataFrame Factory", {
     )
 
     for (query_string in names(bad_cases)) {
-        expect_error(
-            do.call(
-                what = tiledbsoma:::parse_query_condition_new,
-                args = list(expr=str2lang(query_string), schema=sch, somactx=ctx)))
+        expect_error(sdf$read(value_filter = query_string)$concat())
     }
 
     sdf$close()

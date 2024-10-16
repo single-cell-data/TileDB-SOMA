@@ -34,7 +34,7 @@
 #' Expressions, in the R language syntax, are parsed locally by this function.
 #'
 #' @param expr An expression that is understood by the TileDB grammar for
-#' query conditions.
+#' query conditions, as a character string.
 #'
 #' @param schema The Arrow schema for the array for which a query
 #' condition is being prepared. This is necessary to obtain type information
@@ -57,7 +57,11 @@ parse_query_condition_new <- function(
   somactx
   ) {
 
+    spdl::debug("[parseqc] ENTER [{}]", expr)
+
   stopifnot(
+      "The expr argument must be a single character string" =
+        is(expr, "character") && length(expr) == 1,
       "The schema argument must be an Arrow Schema" =
           is(schema, "ArrowObject") &&
           is(schema, "Schema"),
@@ -164,17 +168,66 @@ parse_query_condition_new <- function(
                 arrow_type_name <- "utf8"
             }
 
+            if (arrow_type_name == "timestamp") {
+              unit <- arrow_field$type$unit()
+              if (unit == 0) {
+                arrow_type_name <- "timestamp_s"
+              } else if (unit == 1) {
+                arrow_type_name <- "timestamp_ms"
+              } else if (unit == 2) {
+                arrow_type_name <- "timestamp_us"
+              } else if (unit == 3) {
+                arrow_type_name <- "timestamp_ns"
+              } else {
+                .error_function(
+                  "Attribute '", attr_name, "' has unknown unit ",
+                  arrow_field$type$unit, call. = FALSE)
+              }
+            }
+
+            value = switch(
+                arrow_type_name,
+                ascii = rhs_text,
+                string = rhs_text,
+                utf8 = rhs_text,
+                large_utf8 = rhs_text,
+                bool = as.logical(rhs_text),
+                # Problem:
+
+                # > t <-as.POSIXct('1970-01-01 01:00:05 UTC')
+                # > as.numeric(t)
+                # [1] 21605
+                # > ?as.POSIXct
+                # > t <-as.POSIXct('1970-01-01 01:00:05 EST')
+                # > as.numeric(t)
+                # [1] 21605
+                # > t <-as.POSIXct('1970-01-01 01:00:05 UTC', tz="EST")
+                # > as.numeric(t)
+                # [1] 21605
+                # > t <-as.POSIXct('1970-01-01 01:00:05 UTC', tz="UTC")
+                # > as.numeric(t)
+                # [1] 3605
+
+                # It's not respecting the timezone given in the first argument string.
+                # Not good.
+
+                timestamp_s  = as.numeric(as.POSIXct(rhs_text, tz="UTC")), # THIS NEEDS THOUGHT
+                timestamp_ms = as.numeric(as.POSIXct(rhs_text, tz="UTC")), # THIS NEEDS THOUGHT
+                timestamp_ns = as.numeric(as.POSIXct(rhs_text, tz="UTC")), # THIS NEEDS THOUGHT
+                timestamp_us = as.numeric(as.POSIXct(rhs_text, tz="UTC")), # THIS NEEDS THOUGHT
+                date32 = as.Date(rhs_text),
+                as.numeric(rhs_text))
+
+            spdl::debug("[parseqc] triple name:[{}] value:[{}] type:[{}] op:[{}]",
+                attr_name,
+                value,
+                arrow_type_name,
+                op_name);
+
             # General case of extracting appropriate value given type info
             return(tiledbsoma_query_condition_from_triple(
                 attr_name = attr_name,
-                value = switch(
-                    arrow_type_name,
-                    ascii = rhs_text,
-                    utf8 = rhs_text,
-                    bool = as.logical(rhs_text),
-                    date32 = as.POSIXct(rhs_text),
-                    timestamp = as.Date(rhs_text),
-                    as.numeric(rhs_text)),
+                value = value,
                 arrow_type_name = arrow_type_name,
                 op_name = .map_op_to_character(op_name),
                 qc = tiledbsoma_empty_query_condition(somactx)))
@@ -184,8 +237,11 @@ parse_query_condition_new <- function(
         }
     }
 
+    # Convert expr from string to language
+    aslang <- str2lang(expr)
+
     # Use base-r `substitute` to map the user-provided expression to a parse tree
-    parse_tree <- substitute(expr)
+    parse_tree <- substitute(aslang)
 
     # Map the parse tree to TileDB core QueryCondition
     return(.parse_tree_to_qc(parse_tree, debug))
