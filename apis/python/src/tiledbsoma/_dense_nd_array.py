@@ -20,6 +20,7 @@ from . import pytiledbsoma as clib
 from ._arrow_types import pyarrow_to_carrow_type
 from ._common_nd_array import NDArray
 from ._exception import SOMAError, map_exception_for_create
+from ._flags import NEW_SHAPE_FEATURE_FLAG_ENABLED
 from ._tdb_handles import DenseNDArrayWrapper
 from ._types import OpenTimestamp, Slice
 from ._util import dense_indices_to_shape
@@ -103,15 +104,43 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
         for dim_idx, dim_shape in enumerate(shape):
             dim_name = f"soma_dim_{dim_idx}"
             pa_field = pa.field(dim_name, pa.int64())
-            dim_capacity, dim_extent = cls._dim_capacity_and_extent(
-                dim_name,
-                dim_shape,
-                TileDBCreateOptions.from_platform_config(platform_config),
-            )
-            index_column_schema.append(pa_field)
-            # TODO: support current domain for dense arrays once we have core support.
-            # https://github.com/single-cell-data/TileDB-SOMA/issues/2955
+
+            if NEW_SHAPE_FEATURE_FLAG_ENABLED and clib.embedded_version_triple() >= (
+                2,
+                27,
+                0,
+            ):
+                dim_capacity, dim_extent = cls._dim_capacity_and_extent(
+                    dim_name,
+                    # The user specifies current domain -- this is the max domain
+                    # which is taken from the max ranges for the dim datatype.
+                    # We pass None here to detect those.
+                    None,
+                    TileDBCreateOptions.from_platform_config(platform_config),
+                )
+
+                if dim_shape == 0:
+                    raise ValueError("DenseNDArray shape slots must be at least 1")
+                if dim_shape is None:
+                    dim_shape = dim_capacity
+
+                index_column_data[pa_field.name] = [
+                    0,
+                    dim_capacity - 1,
+                    dim_extent,
+                    0,
+                    dim_shape - 1,
+                ]
+
+            else:
+                dim_capacity, dim_extent = cls._dim_capacity_and_extent(
+                    dim_name,
+                    dim_shape,
+                    TileDBCreateOptions.from_platform_config(platform_config),
+                )
+
             index_column_data[pa_field.name] = [0, dim_capacity - 1, dim_extent]
+            index_column_schema.append(pa_field)
 
         index_column_info = pa.RecordBatch.from_pydict(
             index_column_data, schema=pa.schema(index_column_schema)
@@ -309,9 +338,10 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
         """Supported for ``SparseNDArray``; scheduled for implementation for
         ``DenseNDArray`` in TileDB-SOMA 1.15
         """
-        # TODO: support current domain for dense arrays once we have core support.
-        # https://github.com/single-cell-data/TileDB-SOMA/issues/2955
-        raise NotImplementedError()
+        if clib.embedded_version_triple() >= (2, 27, 0):
+            self._handle.resize(newshape)
+        else:
+            raise NotImplementedError("Not implemented for libtiledbsoma < 2.27.0")
 
     @classmethod
     def _dim_capacity_and_extent(

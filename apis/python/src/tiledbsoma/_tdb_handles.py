@@ -619,9 +619,10 @@ class DenseNDArrayWrapper(SOMAArrayWrapper[clib.SOMADenseNDArray]):
         """Supported for ``SparseNDArray``; scheduled for implementation for
         ``DenseNDArray`` in TileDB-SOMA 1.15
         """
-        # TODO: support current domain for dense arrays once we have core support.
-        # https://github.com/single-cell-data/TileDB-SOMA/issues/2955
-        raise NotImplementedError()
+        if clib.embedded_version_triple() >= (2, 27, 0):
+            self._handle.resize(newshape)
+        else:
+            raise NotImplementedError("Not implemented for libtiledbsoma < 2.27.0")
 
     def tiledbsoma_can_resize(
         self, newshape: Sequence[Union[int, None]]
@@ -629,9 +630,10 @@ class DenseNDArrayWrapper(SOMAArrayWrapper[clib.SOMADenseNDArray]):
         """Supported for ``SparseNDArray``; scheduled for implementation for
         ``DenseNDArray`` in TileDB-SOMA 1.15.
         """
-        # TODO: support current domain for dense arrays once we have core support.
-        # https://github.com/single-cell-data/TileDB-SOMA/issues/2955
-        raise NotImplementedError()
+        if clib.embedded_version_triple() >= (2, 27, 0):
+            return cast(StatusAndReason, self._handle.tiledbsoma_can_resize(newshape))
+        else:
+            raise NotImplementedError("Not implemented for libtiledbsoma < 2.27.0")
 
 
 class SparseNDArrayWrapper(SOMAArrayWrapper[clib.SOMASparseNDArray]):
