@@ -19,7 +19,6 @@ vapply_int <- function(X, FUN, ..., USE.NAMES = TRUE) {
   vapply(X, FUN, FUN.VALUE = integer(1L), ..., USE.NAMES = USE.NAMES)
 }
 
-# rename(iris, c(petal_length = "Petal.Length", species = "Species", hi = "YO"))
 rename <- function(x, names) {
   stopifnot(
     "'x' must be named" = is_named(x),

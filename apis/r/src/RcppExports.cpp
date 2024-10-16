@@ -432,15 +432,15 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// non_empty_domain_new
-SEXP non_empty_domain_new(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp);
-RcppExport SEXP _tiledbsoma_non_empty_domain_new(SEXP uriSEXP, SEXP ctxxpSEXP) {
+// non_empty_domain
+SEXP non_empty_domain(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp);
+RcppExport SEXP _tiledbsoma_non_empty_domain(SEXP uriSEXP, SEXP ctxxpSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const std::string& >::type uri(uriSEXP);
     Rcpp::traits::input_parameter< Rcpp::XPtr<somactx_wrap_t> >::type ctxxp(ctxxpSEXP);
-    rcpp_result_gen = Rcpp::wrap(non_empty_domain_new(uri, ctxxp));
+    rcpp_result_gen = Rcpp::wrap(non_empty_domain(uri, ctxxp));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -806,7 +806,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_tiledbsoma_check_arrow_array_tag", (DL_FUNC) &_tiledbsoma_check_arrow_array_tag, 1},
     {"_tiledbsoma_shape", (DL_FUNC) &_tiledbsoma_shape, 2},
     {"_tiledbsoma_maxshape", (DL_FUNC) &_tiledbsoma_maxshape, 2},
-    {"_tiledbsoma_non_empty_domain_new", (DL_FUNC) &_tiledbsoma_non_empty_domain_new, 2},
+    {"_tiledbsoma_non_empty_domain", (DL_FUNC) &_tiledbsoma_non_empty_domain, 2},
     {"_tiledbsoma_domain", (DL_FUNC) &_tiledbsoma_domain, 2},
     {"_tiledbsoma_maxdomain", (DL_FUNC) &_tiledbsoma_maxdomain, 2},
     {"_tiledbsoma_maybe_soma_joinid_shape", (DL_FUNC) &_tiledbsoma_maybe_soma_joinid_shape, 2},

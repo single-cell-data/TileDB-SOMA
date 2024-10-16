@@ -420,7 +420,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
         for (i in seq_along(ldims)) {
           ldim <- ldims[i]
           if (is.null(coords[[ldim]])) {
-            coords[[ldim]] <- seq_len(as.numeric(layer$non_empty_domain()[i] + 1L))
+            coords[[ldim]] <- seq_len(as.numeric(layer$non_empty_domain(index1=TRUE, max_only=TRUE)[i]))
           }
         }
         mat <- matrix(

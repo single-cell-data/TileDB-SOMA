@@ -35,7 +35,6 @@ Base class for representing an individual TileDB array.
 \item \href{#method-TileDBArray-maxshape}{\code{TileDBArray$maxshape()}}
 \item \href{#method-TileDBArray-used_shape}{\code{TileDBArray$used_shape()}}
 \item \href{#method-TileDBArray-non_empty_domain}{\code{TileDBArray$non_empty_domain()}}
-\item \href{#method-TileDBArray-non_empty_domain_new}{\code{TileDBArray$non_empty_domain_new()}}
 \item \href{#method-TileDBArray-ndim}{\code{TileDBArray$ndim()}}
 \item \href{#method-TileDBArray-attributes}{\code{TileDBArray$attributes()}}
 \item \href{#method-TileDBArray-dimnames}{\code{TileDBArray$dimnames()}}
@@ -262,43 +261,27 @@ If \code{simplify = TRUE}, returns a vector of only the upper bounds.
 \if{html}{\out{<a id="method-TileDBArray-non_empty_domain"></a>}}
 \if{latex}{\out{\hypertarget{method-TileDBArray-non_empty_domain}{}}}
 \subsection{Method \code{non_empty_domain()}}{
-Retrieve the non-empty domain for each dimension. This
-method calls \code{\link[tiledb:tiledb_array_get_non_empty_domain_from_name]{tiledb::tiledb_array_get_non_empty_domain_from_name}} for
-each dimension in the array.
+Returns a named list of minimum/maximum pairs, one per index
+column, which are the smallest and largest values written on that
+index column.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{TileDBArray$non_empty_domain(index1 = FALSE)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{TileDBArray$non_empty_domain(index1 = FALSE, max_only = FALSE)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
 \item{\code{index1}}{Return the non-empty domain with 1-based indices.}
+
+\item{\code{max_only}}{Return only the max value per dimension, and return
+this as a vector. Names are dropped.
+(lifecycle: maturing)}
 }
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-A vector of \code{\link[bit64:bit64-package]{bit64::integer64}}s with one entry for
-each dimension.
-}
-}
-\if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-TileDBArray-non_empty_domain_new"></a>}}
-\if{latex}{\out{\hypertarget{method-TileDBArray-non_empty_domain_new}{}}}
-\subsection{Method \code{non_empty_domain_new()}}{
-Returns a named list of minimum/maximum pairs, one per index
-column, which are the smallest and largest values written on that
-index column.
-
-As tracked on https://github.com/single-cell-data/TileDB-SOMA/issues/2407
-this will replace the existing \code{non_empty_domain} method.
-
-(lifecycle: maturing)
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{TileDBArray$non_empty_domain_new()}\if{html}{\out{</div>}}
-}
-
-\subsection{Returns}{
-Named list of minimum/maximum values.
+Named list of minimum/maximum values, or integer vector
+of maximum values.
 }
 }
 \if{html}{\out{<hr>}}

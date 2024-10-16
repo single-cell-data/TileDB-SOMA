@@ -263,7 +263,6 @@ setClass(
 #' @param somactx (optional) A TileDB Ctx object; if not supplied the default
 #' context object is retrieved
 #' @return A 'tiledbsoma_query_condition' object
-#' @export
 tiledbsoma_empty_query_condition <- function(somactx) {
     stopifnot("The argument must be a somactx object" = is(somactx, "externalptr"))
     ptr <- libtiledbsoma_empty_query_condition(somactx)
