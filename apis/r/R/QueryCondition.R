@@ -50,7 +50,7 @@
 #' 
 #' @noRd
 #'
-parse_query_condition_new <- function(
+parse_query_condition <- function(
   expr,
   schema,
   strict=TRUE,
