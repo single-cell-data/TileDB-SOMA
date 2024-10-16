@@ -102,7 +102,7 @@ SOMANDArrayBase <- R6::R6Class(
     resize = function(new_shape) {
       stopifnot(
         "resize is not supported for dense arrays until tiledbsoma 1.15" =
-          .dense_arrays_can_have_current_domain || private$.is_sparse,
+          .dense_arrays_can_have_current_domain() || private$.is_sparse,
         "'new_shape' must be a vector of integerish values, of the same length as maxshape" =
         rlang::is_integerish(new_shape, n = self$ndim()) ||
           (bit64::is.integer64(new_shape) && length(new_shape) == self$ndim())
@@ -119,7 +119,7 @@ SOMANDArrayBase <- R6::R6Class(
     tiledbsoma_upgrade_shape = function(shape) {
       stopifnot(
         "tiledbsoma_upgrade_shape is not supported for dense arrays until tiledbsoma 1.15" =
-          .dense_arrays_can_have_current_domain || private$.is_sparse,
+          .dense_arrays_can_have_current_domain() || private$.is_sparse,
         "'shape' must be a vector of integerish values, of the same length as maxshape" =
         rlang::is_integerish(shape, n = self$ndim()) ||
           (bit64::is.integer64(shape) && length(shape) == self$ndim())

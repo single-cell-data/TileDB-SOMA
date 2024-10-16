@@ -435,7 +435,8 @@ test_that("SOMASparseNDArray shape", {
 
       # Test resize up
       new_shape <- c(500, 600)
-      expect_no_error(ndarray$resize(new_shape))
+      ####expect_no_error(ndarray$resize(new_shape))
+      ndarray$resize(new_shape)
 
       # Test writes within new bounds
       soma_dim_0 <- c(200,300)
@@ -480,7 +481,11 @@ test_that("SOMADenseNDArray shape", {
     expect_equal(length(readback_shape), length(readback_maxshape))
 
     if (.new_shape_feature_flag_is_enabled()) {
-      expect_true(all(readback_shape < readback_maxshape))
+      if (.dense_arrays_can_have_current_domain()) {
+        expect_true(all(readback_shape < readback_maxshape))
+      } else {
+        expect_true(all(readback_shape == readback_maxshape))
+      }
     } else {
       expect_true(all(readback_shape == readback_maxshape))
     }
