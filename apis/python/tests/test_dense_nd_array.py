@@ -494,10 +494,5 @@ def test_read_to_unwritten_array(tmp_path, shape):
 
     soma.DenseNDArray.create(uri, type=pa.uint8(), shape=shape)
 
-    with tiledb.open(uri, "r") as A:
-        expected = A[:]["soma_data"]
-
     with soma.DenseNDArray.open(uri, "r") as A:
-        actual = A.read().to_numpy()
-
-    assert np.array_equal(expected, actual)
+        assert np.array_equal(np.ones(shape) * 255, A.read().to_numpy())

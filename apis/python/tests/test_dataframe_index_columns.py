@@ -1898,6 +1898,6 @@ def test_types_read_errors(
     with soma.DataFrame.open(uri, "w") as sdf:
         sdf.write(arrow_table)
 
-    with pytest.raises((soma.SOMAError)):
+    with pytest.raises(soma.SOMAError):
         with soma.DataFrame.open(uri, "r") as sdf:
             sdf.read(coords=coords).concat()
