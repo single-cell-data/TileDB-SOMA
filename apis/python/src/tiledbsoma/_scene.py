@@ -10,7 +10,6 @@ from typing import Any, List, Optional, Sequence, Union
 
 import somacore
 from somacore import (
-    Axis,
     CoordinateSpace,
     CoordinateTransform,
     IdentityTransform,
@@ -316,10 +315,7 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
             if isinstance(transform, IdentityTransform):
                 coordinate_space = self.coordinate_space
             else:
-                # mypy false positive https://github.com/python/mypy/issues/5313
-                coordinate_space = CoordinateSpace(
-                    tuple(Axis(name=axis_name) for axis_name in transform.input_axes)  # type: ignore[misc]
-                )
+                coordinate_space = CoordinateSpace.from_axis_names(transform.input_axes)
         else:
             if transform.input_axes != coordinate_space.axis_names:
                 raise ValueError(
@@ -390,10 +386,7 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
             if isinstance(transform, IdentityTransform):
                 coordinate_space = self.coordinate_space
             else:
-                # mypy false positive https://github.com/python/mypy/issues/5313
-                coordinate_space = CoordinateSpace(
-                    tuple(Axis(name=axis_name) for axis_name in transform.input_axes)  # type: ignore[misc]
-                )
+                coordinate_space = CoordinateSpace.from_axis_names(transform.input_axes)
         else:
             if transform.input_axes != coordinate_space.axis_names:
                 raise ValueError(
