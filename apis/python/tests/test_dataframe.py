@@ -1212,7 +1212,7 @@ def test_extend_enumerations(tmp_path):
                 np.array([0, 1.1, 2.1, 0, 1.1, 2.1], dtype=np.float64), dtype="category"
             ),
             "float64_w_non_finite": pd.Series(
-                np.array([0, 1.1, 2.1, 0, np.Inf, np.NINF], dtype=np.float64),
+                np.array([0, 1.1, 2.1, 0, np.inf, -np.inf], dtype=np.float64),
                 dtype="category",
             ),
             "str_ordered": pd.Series(

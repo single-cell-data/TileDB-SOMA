@@ -332,7 +332,7 @@ setuptools.setup(
         "pyparsing~=3.1.4",
         "attrs>=22.2",
         "numba>=0.58.0",
-        "numpy<2.0",
+        "numpy",
         "pandas",
         "pyarrow",
         "scanpy>=1.9.2",
