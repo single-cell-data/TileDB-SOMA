@@ -150,6 +150,84 @@ def test_scene_coord_space(tmp_path):
         assert scene.coordinate_space == coord_space
 
 
+class TestSceneDeepSubcollections:
+    """Tests on a Scene with multiple layers of subcollections.
+
+    Scene structure:
+
+        scene
+        |
+        ├- obsl
+        ├- varl
+        |   └- RNA
+        └- suns
+            └- suns
+                └- final
+    """
+
+    @pytest.fixture(scope="class")
+    def scene(self, tmp_path_factory):
+        """Creates and returns a scene for reading that"""
+        baseuri = tmp_path_factory.mktemp("scene").as_uri()
+        scene_uri = urljoin(baseuri, "multi-collection")
+
+        # Create a scene with multi-level collections.
+        with soma.Scene.create(scene_uri) as scene:
+
+            obsl = scene.add_new_collection("obsl")
+            obsl.metadata["name"] = "obsl"
+
+            varl = scene.add_new_collection("varl")
+            varl.metadata["name"] = "varl"
+
+            rna = varl.add_new_collection("RNA")  # type: ignore[attr-defined]
+            rna.metadata["name"] = "varl/RNA"
+
+            # Add a collection that is not part of the set data model.
+            # Using 'suns' for spatial-uns.
+            suns = scene.add_new_collection("suns")
+            suns.metadata["name"] = "suns"
+
+            suns2 = suns.add_new_collection("suns")
+            suns2.metadata["name"] = "suns/suns"
+
+            fin = suns2.add_new_collection("final")
+            fin.metadata["name"] = "suns/suns/final"
+
+        scene = scene.open(scene_uri)
+        yield scene
+        scene.close()
+
+    def test_open_subcollection_no_items(self, scene):
+        with pytest.raises(ValueError):
+            scene._open_subcollection([])
+
+    @pytest.mark.parametrize(
+        "subcollection",
+        ["bad_name", ["obsl", "bad_name"], ["bad_name", "obsl"]],
+    )
+    def test_open_subcollection_keyerror(self, scene, subcollection):
+        with pytest.raises(KeyError):
+            scene._open_subcollection(subcollection)
+
+    @pytest.mark.parametrize(
+        "subcollection,expected_metadata",
+        [
+            ("obsl", "obsl"),
+            (["obsl"], "obsl"),
+            ("varl", "varl"),
+            (["varl", "RNA"], "varl/RNA"),
+            ("suns", "suns"),
+            (["suns", "suns"], "suns/suns"),
+            (["suns", "suns", "final"], "suns/suns/final"),
+        ],
+    )
+    def test_open_subcolletion(self, scene, subcollection, expected_metadata):
+        coll = scene._open_subcollection(subcollection)
+        actual_metadata = coll.metadata["name"]
+        assert actual_metadata == expected_metadata
+
+
 @pytest.mark.parametrize(
     "coord_transform, transform_kwargs",
     [

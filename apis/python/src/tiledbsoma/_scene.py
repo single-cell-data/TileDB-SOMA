@@ -6,7 +6,7 @@
 Implementation of a SOMA Scene
 """
 
-from typing import Any, Optional, Sequence, Union
+from typing import Any, List, Optional, Sequence, Union
 
 import somacore
 from somacore import Axis, CoordinateSpace, CoordinateTransform, IdentityTransform
@@ -60,6 +60,28 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
             self._coord_space: Optional[CoordinateSpace] = None
         else:
             self._coord_space = coordinate_space_from_json(coord_space)
+
+    def _open_subcollection(
+        self, subcollection: Union[str, Sequence[str]]
+    ) -> CollectionBase[AnySOMAObject]:
+        if len(subcollection) == 0:
+            raise ValueError("Invalid subcollection: value cannot be empty.")
+        if isinstance(subcollection, str):
+            subcollection = (subcollection,)
+        else:
+            subcollection = tuple(subcollection)
+        coll: CollectionBase[AnySOMAObject] = self
+        # Keep track of collection hierarchy for informative error reporting
+        parent_name: List[str] = []
+        for name in subcollection:
+            try:
+                coll = coll[name]  # type: ignore[assignment]
+            except KeyError as ke:
+                raise KeyError(
+                    f"Unable to open collection '{name}' in {parent_name}."
+                ) from ke
+            parent_name.append(name)
+        return coll
 
     @property
     def coordinate_space(self) -> Optional[CoordinateSpace]:
@@ -276,12 +298,9 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
                 )
 
         # Check asset exists in the specified location.
+        coll = self._open_subcollection(subcollection)
         try:
-            coll: Collection = self[subcollection]  # type: ignore
-        except KeyError as ke:
-            raise KeyError(f"No collection '{subcollection}' in this scene.") from ke
-        try:
-            image: MultiscaleImage = coll[key]
+            image: MultiscaleImage = coll[key]  # type: ignore[assignment]
         except KeyError as ke:
             raise KeyError(
                 f"No multiscale image named '{key}' in '{subcollection}'."
@@ -447,12 +466,7 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
 
         Lifecycle: experimental
         """
-        if not isinstance(subcollection, str):
-            raise NotImplementedError()
-        try:
-            coll: Collection = self[subcollection]  # type: ignore
-        except KeyError as ke:
-            raise KeyError(f"No collection '{subcollection}' in this scene.") from ke
+        coll = self._open_subcollection(subcollection)
         try:
             transform_json = coll.metadata[f"soma_scene_registry_{key}"]
         except KeyError as ke:
@@ -485,12 +499,7 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
 
         Lifecycle: experimental
         """
-        if not isinstance(subcollection, str):
-            raise NotImplementedError()
-        try:
-            coll: Collection = self[subcollection]  # type: ignore
-        except KeyError as ke:
-            raise KeyError(f"No collection '{subcollection}' in this scene.") from ke
+        coll = self._open_subcollection(subcollection)
         try:
             transform_json = coll.metadata[f"soma_scene_registry_{key}"]
         except KeyError:
@@ -502,14 +511,15 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
         if level is None:
             return base_transform
         try:
-            image: MultiscaleImage = coll[key]
+            image: MultiscaleImage = coll[key]  # type: ignore[assignment]
         except KeyError as ke:
             raise KeyError(
                 f"No MultiscaleImage named '{key}' in '{subcollection}'."
             ) from ke
-        if isinstance(level, str):
-            raise NotImplementedError(
-                "Support for querying image level by name is not yet implemented."
+        if not isinstance(image, MultiscaleImage):
+            raise TypeError(
+                f"Item at '{key}' in '{subcollection}' has an unexpected type "
+                f"{type(image)!r}."
             )
         level_transform = image.get_transform_to_level(level)
         return level_transform @ base_transform
@@ -530,12 +540,7 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
 
         Lifecycle: experimental
         """
-        if not isinstance(subcollection, str):
-            raise NotImplementedError()
-        try:
-            coll: Collection = self[subcollection]  # type: ignore
-        except KeyError as ke:
-            raise KeyError(f"No collection '{subcollection}' in this scene.") from ke
+        coll = self._open_subcollection(subcollection)
         try:
             transform_json = coll.metadata[f"soma_scene_registry_{key}"]
         except KeyError as ke:
