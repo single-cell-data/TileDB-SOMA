@@ -46,7 +46,7 @@ SOMADenseNDArray <- R6::R6Class(
 
       if (is.null(coords)) {
         # These are 0-up: add 1 for R use
-        ned <- self$non_empty_domain_new(max_only=TRUE)
+        ned <- self$non_empty_domain(max_only=TRUE)
         coords <- lapply(X=as.integer(ned), FUN=function(x){0:x})
       }
       coords <- private$.convert_coords(coords)
@@ -87,7 +87,7 @@ SOMADenseNDArray <- R6::R6Class(
                 "Array must contain column 'soma_data'" = all.equal("soma_data", attrnames))
 
       if (is.null(coords)) {
-        ned <- self$non_empty_domain()
+        ned <- self$non_empty_domain(max_only=TRUE)
         # These are 0-up: add 1 for R use
         nrow <- as.numeric(ned[[1]]) + 1
         ncol <- as.numeric(ned[[2]]) + 1

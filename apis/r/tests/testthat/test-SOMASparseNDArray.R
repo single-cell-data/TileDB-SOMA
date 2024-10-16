@@ -698,9 +698,9 @@ test_that("SOMASparseNDArray bounding box implicitly-stored values", {
     s <- c('i', 'j')[i]
     ranges[i] <- max(range(slot(mat, s)))
   }
-  expect_equal(bit64::as.integer64(ndarray$non_empty_domain_new(max_only=TRUE)), ranges)
+  expect_equal(bit64::as.integer64(ndarray$non_empty_domain(max_only=TRUE)), ranges)
   expect_true(all(
-    ndarray$non_empty_domain_new(max_only=TRUE) < suppressWarnings(
+    ndarray$non_empty_domain(max_only=TRUE) < suppressWarnings(
       ndarray$used_shape(simplify = TRUE),
       classes = "deprecatedWarning"
     )

@@ -217,34 +217,6 @@ TileDBArray <- R6::R6Class(
       return(utilized)
     },
 
-    #' @description Retrieve the non-empty domain for each dimension. This
-    #' method calls [`tiledb::tiledb_array_get_non_empty_domain_from_name`] for
-    #' each dimension in the array.
-    #' @param index1 Return the non-empty domain with 1-based indices.
-    #' @return A vector of [`bit64::integer64`]s with one entry for
-    #' each dimension.
-    non_empty_domain = function(index1 = FALSE) {
-      dims <- self$dimnames()
-      ned <- bit64::integer64(length = length(dims))
-      ## added during C++-ification as self$object could close
-      if (isFALSE(tiledb::tiledb_array_is_open(self$object))) {
-          arrhandle <- tiledb::tiledb_array_open(self$object, type = "READ")
-      } else {
-          arrhandle <- self$object
-      }
-      for (i in seq_along(along.with = ned)) {
-        dom <- max(tiledb::tiledb_array_get_non_empty_domain_from_name(
-          arrhandle, # instead of:  self$object,
-          name = dims[i]
-        ))
-        if (isTRUE(x = index1)) {
-          dom <- dom + 1L
-        }
-        ned[i] <- dom
-      }
-      return(ned)
-    },
-
     #' @description Returns a named list of minimum/maximum pairs, one per index
     #' column, which are the smallest and largest values written on that
     #' index column.
@@ -254,11 +226,11 @@ TileDBArray <- R6::R6Class(
     #' (lifecycle: maturing)
     #' @return Named list of minimum/maximum values, or integer vector
     #' of maximum values.
-    non_empty_domain_new = function(index1 = FALSE, max_only = FALSE) {
+    non_empty_domain = function(index1 = FALSE, max_only = FALSE) {
       retval <- as.list(
         arrow::as_record_batch(
           arrow::as_arrow_table(
-            non_empty_domain_new(self$uri, private$.soma_context))))
+            non_empty_domain(self$uri, private$.soma_context))))
       if (index1) {
         retval <- lapply(retval, function(c) {c+1})
       }

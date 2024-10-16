@@ -198,8 +198,8 @@ maxshape <- function(uri, ctxxp) {
     .Call(`_tiledbsoma_maxshape`, uri, ctxxp)
 }
 
-non_empty_domain_new <- function(uri, ctxxp) {
-    .Call(`_tiledbsoma_non_empty_domain_new`, uri, ctxxp)
+non_empty_domain <- function(uri, ctxxp) {
+    .Call(`_tiledbsoma_non_empty_domain`, uri, ctxxp)
 }
 
 domain <- function(uri, ctxxp) {
