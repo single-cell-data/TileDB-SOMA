@@ -161,16 +161,18 @@ def resize_experiment(
         output_handle=output_handle,
     )
 
-    # Do an early check on the nvars keys vs the experiment's
-    # measurent names. This isn't a can-do status for the experiment;
-    # it's a failure of the user's arguments.
+    # Extra user-provided keys not relevant to the experiment are ignored.  This
+    # is important for the case when a new measurement, which is registered from
+    # AnnData/H5AD inputs, is registered and is about to be created but does not
+    # exist just yet in the experiment storage.
+    #
+    # If the user hasn't provided a key -- e.g. a from-anndata-append-with-resize
+    # on one measurement while the experiment's other measurements aren't being
+    # updated -- then we need to find those other measurements' var-shapes.
     with tiledbsoma.Experiment.open(uri) as exp:
-        arg_keys = sorted(nvars.keys())
-        ms_keys = sorted(exp.ms.keys())
-        if arg_keys != ms_keys:
-            raise ValueError(
-                f"resize_experiment: provided nvar keys {arg_keys} do not match experiment keys {ms_keys}"
-            )
+        for ms_key in exp.ms.keys():
+            if ms_key not in nvars.keys():
+                nvars[ms_key] = exp.ms[ms_key].var._maybe_soma_joinid_shape or 1
 
     ok = _treewalk(
         uri,

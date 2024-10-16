@@ -397,8 +397,6 @@ def test_multiples_without_experiment(
             var_field_name=var_field_name,
         )
 
-        # XXX TO DO
-
     assert rd.obs_axis.id_mapping_from_values(["AGAG", "GGAG"]).data == (2, 8)
     assert rd.var_axes["measname"].id_mapping_from_values(["ESR1", "VEGFA"]).data == (
         2,
@@ -466,7 +464,6 @@ def test_multiples_without_experiment(
                     nvars=rd.get_var_shapes(),
                 )
 
-        # XXX FIXME
         tiledbsoma.io.from_h5ad(
             experiment_uri,
             h5ad_file_name,
@@ -860,7 +857,6 @@ def test_append_with_disjoint_measurements(
     )
 
     if tiledbsoma._flags.NEW_SHAPE_FEATURE_FLAG_ENABLED:
-        # XXX FIXME
         tiledbsoma.io.resize_experiment(
             soma_uri,
             nobs=rd.get_obs_shape(),
@@ -1223,7 +1219,6 @@ def test_enum_bit_width_append(tmp_path, all_at_once, nobs_a, nobs_b):
         )
 
         if tiledbsoma._flags.NEW_SHAPE_FEATURE_FLAG_ENABLED:
-            # XXX FIXME
             tiledbsoma.io.resize_experiment(
                 soma_uri,
                 nobs=rd.get_obs_shape(),
