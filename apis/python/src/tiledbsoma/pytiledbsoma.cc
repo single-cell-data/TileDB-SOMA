@@ -73,6 +73,9 @@ PYBIND11_MODULE(pytiledbsoma, m) {
     m.doc() = "SOMA acceleration library";
 
     m.def("version", []() { return tiledbsoma::version::as_string(); });
+    m.def("embedded_version_triple", []() {
+        return tiledbsoma::version::embedded_version_triple();
+    });
 
     m.def(
         "config_logging",

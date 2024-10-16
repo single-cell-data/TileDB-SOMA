@@ -198,8 +198,6 @@ def test_sparse_nd_array_basics(
             (ok, msg) = snda.resize(new_shape, check_only=True)
 
 
-## Pending 2.27 timeframe for dense support for current domain, including resize
-## https://github.com/single-cell-data/TileDB-SOMA/issues/2955
 def test_dense_nd_array_basics(tmp_path):
     uri = tmp_path.as_posix()
     shape = (100, 200)
@@ -212,12 +210,18 @@ def test_dense_nd_array_basics(tmp_path):
         assert dnda.non_empty_domain() == ((0, 0), (0, 0))
 
     with tiledbsoma.DenseNDArray.open(uri, "w") as dnda:
-        with pytest.raises(NotImplementedError):
+        if tiledbsoma.pytiledbsoma.embedded_version_triple() >= (2, 27, 0):
             dnda.resize((300, 400))
+        else:
+            with pytest.raises(NotImplementedError):
+                dnda.resize((300, 400))
 
     with tiledbsoma.DenseNDArray.open(uri) as dnda:
         assert dnda.non_empty_domain() == ((0, 0), (0, 0))
-        assert dnda.shape == (100, 200)
+        if tiledbsoma.pytiledbsoma.embedded_version_triple() >= (2, 27, 0):
+            assert dnda.shape == (300, 400)
+        else:
+            assert dnda.shape == (100, 200)
 
 
 @pytest.mark.parametrize(
