@@ -402,6 +402,16 @@ class ManagedQuery {
         return query_->query_type();
     }
 
+    /**
+     * @brief Return the query status.
+     *
+     * @return tiledb::Query::Status INCOMPLETE, COMPLETE, INPROGRESS, FAILED,
+     * UNINITIALIZED, or INITIALIZED
+     */
+    Query::Status query_status() const {
+        return query_->query_status();
+    }
+
    private:
     //===================================================================
     //= private non-static
