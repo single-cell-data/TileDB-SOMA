@@ -144,28 +144,31 @@ TEST_CASE("SOMACollection: add SOMADenseNDArray") {
             base_uri, OpenMode::write, ctx, ts);
         REQUIRE(soma_collection->timestamp() == ts);
 
-        auto soma_dense = soma_collection->add_new_dense_ndarray(
-            "dense_ndarray",
-            sub_uri,
-            URIType::absolute,
-            ctx,
-            arrow_format,
-            ArrowTable(
-                std::move(index_columns.first),
-                std::move(index_columns.second)));
-        REQUIRE(soma_collection->members_map() == expected_map);
-        REQUIRE(soma_dense->uri() == sub_uri);
-        REQUIRE(soma_dense->ctx() == ctx);
-        REQUIRE(soma_dense->type() == "SOMADenseNDArray");
-        REQUIRE(soma_dense->is_sparse() == false);
-        REQUIRE(soma_dense->ndim() == 1);
-        REQUIRE(soma_dense->shape() == std::vector<int64_t>{DIM_MAX + 1});
-        REQUIRE(soma_dense->timestamp() == ts);
-        soma_collection->close();
+        if (helper::have_dense_current_domain_support()) {
+            auto soma_dense = soma_collection->add_new_dense_ndarray(
+                "dense_ndarray",
+                sub_uri,
+                URIType::absolute,
+                ctx,
+                arrow_format,
+                ArrowTable(
+                    std::move(index_columns.first),
+                    std::move(index_columns.second)));
+            REQUIRE(soma_collection->members_map() == expected_map);
+            REQUIRE(soma_dense->uri() == sub_uri);
+            REQUIRE(soma_dense->ctx() == ctx);
+            REQUIRE(soma_dense->type() == "SOMADenseNDArray");
+            REQUIRE(soma_dense->is_sparse() == false);
+            REQUIRE(soma_dense->ndim() == 1);
+            REQUIRE(soma_dense->shape() == std::vector<int64_t>{DIM_MAX + 1});
+            REQUIRE(soma_dense->timestamp() == ts);
+            soma_collection->close();
 
-        soma_collection = SOMACollection::open(base_uri, OpenMode::read, ctx);
-        REQUIRE(soma_collection->members_map() == expected_map);
-        soma_collection->close();
+            soma_collection = SOMACollection::open(
+                base_uri, OpenMode::read, ctx);
+            REQUIRE(soma_collection->members_map() == expected_map);
+            soma_collection->close();
+        }
     }
 }
 
