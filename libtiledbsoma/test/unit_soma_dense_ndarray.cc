@@ -185,9 +185,6 @@ TEST_CASE("SOMADenseNDArray: platform_config", "[SOMADenseNDArray]") {
         auto index_columns = helper::create_column_index_info(dim_infos);
 
         if (use_current_domain) {
-            // Setting a current domain on a TileDB dense array is not (yet)
-            // supported
-            // https://github.com/single-cell-data/TileDB-SOMA/issues/2955
             if (helper::have_dense_current_domain_support()) {
                 SOMADenseNDArray::create(
                     uri,
