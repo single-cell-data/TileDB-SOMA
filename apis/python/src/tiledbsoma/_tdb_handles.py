@@ -633,7 +633,7 @@ class DenseNDArrayWrapper(SOMAArrayWrapper[clib.SOMADenseNDArray]):
         if clib.embedded_version_triple() >= (2, 27, 0):
             return cast(StatusAndReason, self._handle.tiledbsoma_can_resize(newshape))
         else:
-            raise NotImplementedError()
+            raise NotImplementedError("Not implemented for libtiledbsoma < 2.27.0")
 
 
 class SparseNDArrayWrapper(SOMAArrayWrapper[clib.SOMASparseNDArray]):
