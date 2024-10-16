@@ -70,7 +70,7 @@ jobs:
       run: echo "inputs.os:" ${{ inputs.os }}
 
     - name: Linux CPU info
-      if: ${{ inputs.os == 'ubuntu-22.04' }}
+      if: ${{ inputs.os == 'ubuntu-latest' }}
       run: cat /proc/cpuinfo
 
     - name: MacOS CPU info

@@ -50,7 +50,7 @@ jobs:
           - TILEDB_EXISTS: "no"
             TILEDBSOMA_EXISTS: "yes"
     container:
-      image: ubuntu:22.04
+      image: ubuntu:latest
     defaults:
       run:
         shell: bash
@@ -259,7 +259,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: ["ubuntu-22.04", "macos-latest"]
+        os: ["ubuntu-latest", "macos-latest"]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -362,7 +362,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: ["ubuntu-22.04", "macos-latest"]
+        os: ["ubuntu-latest", "macos-latest"]
     steps:
       - uses: actions/checkout@v4
         with:
