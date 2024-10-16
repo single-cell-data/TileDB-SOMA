@@ -32,6 +32,12 @@
 
 #include "common.h"
 
+// https://github.com/TileDB-Inc/TileDB/pull/5303
+bool have_dense_current_domain_support() {
+    auto vers = tiledbsoma::version::embedded_version_triple();
+    return std::get<0>(vers) >= 2 && std::get<1>(vers) >= 27;
+}
+
 TEST_CASE("SOMADenseNDArray: basic", "[SOMADenseNDArray]") {
     // Core uses domain & current domain like (0, 999); SOMA uses shape like
     // 1000. We want to carefully and explicitly test here that there aren't any
@@ -69,18 +75,31 @@ TEST_CASE("SOMADenseNDArray: basic", "[SOMADenseNDArray]") {
         auto index_columns = helper::create_column_index_info(dim_infos);
 
         if (use_current_domain) {
-            // Setting a current domain on a TileDB dense array is not (yet)
-            // supported
-            // https://github.com/single-cell-data/TileDB-SOMA/issues/2955
-            REQUIRE_THROWS(SOMADenseNDArray::create(
-                uri,
-                dim_arrow_format,
-                ArrowTable(
-                    std::move(index_columns.first),
-                    std::move(index_columns.second)),
-                ctx,
-                PlatformConfig(),
-                TimestampRange(0, 2)));
+            if (have_dense_current_domain_support()) {
+                SOMADenseNDArray::create(
+                    uri,
+                    dim_arrow_format,
+                    ArrowTable(
+                        std::move(index_columns.first),
+                        std::move(index_columns.second)),
+                    ctx,
+                    PlatformConfig(),
+                    TimestampRange(0, 2));
+
+                auto dnda = SOMADenseNDArray::open(uri, OpenMode::read, ctx);
+                REQUIRE(dnda->shape() == std::vector<int64_t>{dim_max + 1});
+                dnda->close();
+            } else {
+                REQUIRE_THROWS(SOMADenseNDArray::create(
+                    uri,
+                    dim_arrow_format,
+                    ArrowTable(
+                        std::move(index_columns.first),
+                        std::move(index_columns.second)),
+                    ctx,
+                    PlatformConfig(),
+                    TimestampRange(0, 2)));
+            }
         } else {
             SOMADenseNDArray::create(
                 uri,
@@ -107,17 +126,6 @@ TEST_CASE("SOMADenseNDArray: basic", "[SOMADenseNDArray]") {
             REQUIRE(schema->array_type() == TILEDB_DENSE);
             REQUIRE(schema->domain().has_dimension(dim_name));
             REQUIRE(dnda->ndim() == 1);
-
-            // TODO: Once we have support for current domain in dense arrays
-            // https://github.com/single-cell-data/TileDB-SOMA/issues/2955
-            // if (use_current_domain) {
-            //    REQUIRE(dnda->shape() == std::vector<int64_t>{dim_max +
-            //    1});
-            //} else {
-            //    REQUIRE(
-            //        dnda->maxshape() == std::vector<int64_t>{dim_max +
-            //        1});
-            //}
 
             REQUIRE(dnda->maxshape() == std::vector<int64_t>{shape});
 
@@ -156,9 +164,9 @@ TEST_CASE("SOMADenseNDArray: basic", "[SOMADenseNDArray]") {
 TEST_CASE("SOMADenseNDArray: platform_config", "[SOMADenseNDArray]") {
     int64_t dim_max = 999;
     auto use_current_domain = GENERATE(false, true);
-    // TODO this could be formatted with fmt::format which is part of internal
-    // header spd/log/fmt/fmt.h and should not be used. In C++20, this can be
-    // replaced with std::format.
+    // TODO this could be formatted with fmt::format which is part of
+    // internal header spd/log/fmt/fmt.h and should not be used. In C++20,
+    // this can be replaced with std::format.
     std::ostringstream section;
     section << "- use_current_domain=" << use_current_domain;
     SECTION(section.str()) {
@@ -186,14 +194,39 @@ TEST_CASE("SOMADenseNDArray: platform_config", "[SOMADenseNDArray]") {
             // Setting a current domain on a TileDB dense array is not (yet)
             // supported
             // https://github.com/single-cell-data/TileDB-SOMA/issues/2955
-            REQUIRE_THROWS(SOMADenseNDArray::create(
-                uri,
-                arrow_format,
-                ArrowTable(
-                    std::move(index_columns.first),
-                    std::move(index_columns.second)),
-                ctx,
-                platform_config));
+            if (have_dense_current_domain_support()) {
+                SOMADenseNDArray::create(
+                    uri,
+                    arrow_format,
+                    ArrowTable(
+                        std::move(index_columns.first),
+                        std::move(index_columns.second)),
+                    ctx,
+                    platform_config);
+
+                auto dnda = SOMADenseNDArray::open(uri, OpenMode::read, ctx);
+                auto dim_filter = dnda->tiledb_schema()
+                                      ->domain()
+                                      .dimension(dim_name)
+                                      .filter_list()
+                                      .filter(0);
+                REQUIRE(dim_filter.filter_type() == TILEDB_FILTER_ZSTD);
+                REQUIRE(
+                    dim_filter.get_option<int32_t>(TILEDB_COMPRESSION_LEVEL) ==
+                    6);
+
+                dnda->close();
+
+            } else {
+                REQUIRE_THROWS(SOMADenseNDArray::create(
+                    uri,
+                    arrow_format,
+                    ArrowTable(
+                        std::move(index_columns.first),
+                        std::move(index_columns.second)),
+                    ctx,
+                    platform_config));
+            }
 
         } else {
             SOMADenseNDArray::create(
@@ -223,9 +256,9 @@ TEST_CASE("SOMADenseNDArray: platform_config", "[SOMADenseNDArray]") {
 TEST_CASE("SOMADenseNDArray: metadata", "[SOMADenseNDArray]") {
     int64_t dim_max = 999;
     auto use_current_domain = GENERATE(false, true);
-    // TODO this could be formatted with fmt::format which is part of internal
-    // header spd/log/fmt/fmt.h and should not be used. In C++20, this can be
-    // replaced with std::format.
+    // TODO this could be formatted with fmt::format which is part of
+    // internal header spd/log/fmt/fmt.h and should not be used. In C++20,
+    // this can be replaced with std::format.
     std::ostringstream section;
     section << "- use_current_domain=" << use_current_domain;
     SECTION(section.str()) {
