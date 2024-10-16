@@ -248,17 +248,25 @@ TileDBArray <- R6::R6Class(
     #' @description Returns a named list of minimum/maximum pairs, one per index
     #' column, which are the smallest and largest values written on that
     #' index column.
-    #'
-    #' As tracked on https://github.com/single-cell-data/TileDB-SOMA/issues/2407
-    #' this will replace the existing `non_empty_domain` method.
-    #'
+    #' @param index1 Return the non-empty domain with 1-based indices.
+    #' @param max_only Return only the max value per dimension, and return
+    #' this as a vector. Names are dropped.
     #' (lifecycle: maturing)
-    #' @return Named list of minimum/maximum values.
-    non_empty_domain_new = function() {
-      as.list(
+    #' @return Named list of minimum/maximum values, or integer vector
+    #' of maximum values.
+    non_empty_domain_new = function(index1 = FALSE, max_only = FALSE) {
+      retval <- as.list(
         arrow::as_record_batch(
           arrow::as_arrow_table(
             non_empty_domain_new(self$uri, private$.soma_context))))
+      if (index1) {
+        retval <- lapply(retval, function(c) {c+1})
+      }
+      if (max_only) {
+        # No vapply options since SOMADataFrame can have varying types.
+        retval <- unname(unlist(lapply(retval, function(e) {e[[2]]})))
+      }
+      return(retval)
     },
 
     #' @description Retrieve number of dimensions (lifecycle: maturing)

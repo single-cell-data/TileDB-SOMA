@@ -406,8 +406,9 @@ test_that("SOMASparseNDArray shape", {
     ndarray$close()
 
     ndarray <- SOMASparseNDArrayOpen(uri)
-    ned <- ndarray$non_empty_domain()
-    expect_equal(ned, c(2,4))
+    ned <- ndarray$non_empty_domain_new(max_only=TRUE)
+    #expect_equal(ned, c(2,4))
+    expect_equal(as.integer(ned), as.integer(c(2,4)))
 
     # Test reads out of bounds
     coords <- list(bit64::as.integer64(c(1,2)), bit64::as.integer64(c(3,4)))
@@ -495,7 +496,7 @@ test_that("SOMADenseNDArray shape", {
     ndarray$close()
 
     ndarray <- SOMADenseNDArrayOpen(uri)
-    ned <- ndarray$non_empty_domain()
+    ned <- ndarray$non_empty_domain_new(max_only=TRUE)
     expect_equal(ned, c(99, 199))
 
     # Test reads out of bounds

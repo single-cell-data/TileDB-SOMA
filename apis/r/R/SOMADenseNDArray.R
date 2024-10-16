@@ -46,7 +46,7 @@ SOMADenseNDArray <- R6::R6Class(
 
       if (is.null(coords)) {
         # These are 0-up: add 1 for R use
-        ned <- self$non_empty_domain()
+        ned <- self$non_empty_domain_new(max_only=TRUE)
         coords <- lapply(X=as.integer(ned), FUN=function(x){0:x})
       }
       coords <- private$.convert_coords(coords)

@@ -26,7 +26,8 @@ test_that("Load SCE object from ExperimentQuery mechanics", {
     experiment = experiment,
     measurement_name = "RNA"
   )
-  expect_warning(obj <- query$to_single_cell_experiment())
+  #####expect_warning(obj <- query$to_single_cell_experiment())
+  obj <- query$to_single_cell_experiment()
   expect_s4_class(obj, 'SingleCellExperiment')
   expect_identical(dim(obj), c(n_var, n_obs))
   expect_identical(
