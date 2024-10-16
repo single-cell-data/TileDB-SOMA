@@ -478,13 +478,13 @@ test_that("SOMADenseNDArray shape", {
     readback_shape <- ndarray$shape()
     readback_maxshape <- ndarray$maxshape()
     expect_equal(length(readback_shape), length(readback_maxshape))
-    # TODO: Awaiting core support for new shape in dense arrays.
-    # https://github.com/single-cell-data/TileDB-SOMA/issues/2955
-    #if (.new_shape_feature_flag_is_enabled()) {
-    #  expect_true(all(readback_shape < readback_maxshape))
-    #} else {
-    #  expect_true(all(readback_shape == readback_maxshape))
-    #}
+
+    if (.new_shape_feature_flag_is_enabled()) {
+      expect_true(all(readback_shape < readback_maxshape))
+    } else {
+      expect_true(all(readback_shape == readback_maxshape))
+    }
+
     expect_true(all(readback_shape == readback_maxshape))
 
     ndarray$close()
@@ -523,26 +523,29 @@ test_that("SOMADenseNDArray shape", {
 
       # Test resize up
       new_shape <- c(500, 600)
-      # TODO: Awaiting core support for new shape in dense arrays.
-      # https://github.com/single-cell-data/TileDB-SOMA/issues/2955
-      # expect_no_error(ndarray$resize(new_shape))
-      expect_error(ndarray$resize(new_shape))
+      if (tiledbsoma:::.dense_arrays_can_have_current_domain()) {
+        expect_no_error(ndarray$resize(new_shape))
+      } else {
+        expect_error(ndarray$resize(new_shape))
+      }
 
       # Test writes within new bounds
       ndarray <- SOMADenseNDArrayOpen(uri, "WRITE")
       mat <- create_dense_matrix_with_int_dims(300, 400)
-      # TODO: Awaiting core support for new shape in dense arrays.
-      # https://github.com/single-cell-data/TileDB-SOMA/issues/2955
-      # expect_no_error(ndarray$write(sm))
-      expect_error(ndarray$write(sm))
+      if (tiledbsoma:::.dense_arrays_can_have_current_domain()) {
+        expect_no_error(ndarray$write(sm))
+      } else {
+        expect_error(ndarray$write(sm))
+      }
       ndarray$close()
 
       ndarray <- SOMADenseNDArrayOpen(uri)
       coords <- list(bit64::as.integer64(c(101,202)), bit64::as.integer64(c(3,4)))
-      # TODO: Awaiting core support for new shape in dense arrays.
-      # https://github.com/single-cell-data/TileDB-SOMA/issues/2955
-      # expect_no_error(x <- ndarray$read(coords=coords)$tables()$concat())
-      expect_error(x <- ndarray$read(coords=coords)$tables()$concat())
+      if (tiledbsoma:::.dense_arrays_can_have_current_domain()) {
+        expect_no_condition(x <- ndarray$read(coords=coords)$tables()$concat())
+      } else {
+        expect_error(x <- ndarray$read(coords=coords)$tables()$concat())
+      }
       ndarray$close()
     }
 

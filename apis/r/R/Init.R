@@ -34,6 +34,11 @@
     .pkgenv[["use_current_domain_transitional_internal_only"]]
 }
 
+.dense_arrays_can_have_current_domain <- function() {
+  triple <- tiledb_embedded_version()
+  return(triple[[1]] >= 2 && triple[[2]] >= 27)
+}
+
 ## An .onAttach() function is not allowed to use cat() etc but _must_ communicate via
 ## packageStartupMessage() as this function can be 'muzzled' as desired. See Writing R Extensions.
 .onAttach <- function(libname, pkgname) {
