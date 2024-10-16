@@ -186,6 +186,7 @@ class SOMAArray : public SOMAObject {
         , mq_(std::make_unique<ManagedQuery>(
               other.arr_, other.ctx_->tiledb_ctx(), other.name_))
         , arr_(other.arr_)
+        , schema_(other.schema_)
         , meta_cache_arr_(other.meta_cache_arr_)
         , first_read_next_(other.first_read_next_)
         , submitted_(other.submitted_) {
@@ -585,7 +586,7 @@ class SOMAArray : public SOMAObject {
      * @return std::shared_ptr<ArraySchema> Schema
      */
     std::shared_ptr<ArraySchema> tiledb_schema() const {
-        return mq_->schema();
+        return schema_;
     }
 
     /**
@@ -606,7 +607,7 @@ class SOMAArray : public SOMAObject {
      * @return PlatformConfig
      */
     PlatformConfig config_options_from_schema() const {
-        return ArrowAdapter::platform_config_from_tiledb_schema(*mq_->schema());
+        return ArrowAdapter::platform_config_from_tiledb_schema(*schema_);
     }
 
     /**
@@ -909,7 +910,7 @@ class SOMAArray : public SOMAObject {
                 "SOMAArray::_core_domain_slot: template-specialization "
                 "failure.");
         }
-        return arr_->schema().domain().dimension(name).domain<T>();
+        return schema_->domain().dimension(name).domain<T>();
     }
 
     std::pair<std::string, std::string> _core_domain_slot_string(
@@ -1263,7 +1264,7 @@ class SOMAArray : public SOMAObject {
      */
     CurrentDomain _get_current_domain() const {
         return tiledb::ArraySchemaExperimental::current_domain(
-            *ctx_->tiledb_ctx(), arr_->schema());
+            *ctx_->tiledb_ctx(), *schema_);
     }
 
     /**
@@ -1627,6 +1628,9 @@ class SOMAArray : public SOMAObject {
 
     // Array associated with mq_
     std::shared_ptr<Array> arr_;
+
+    // Array schema
+    std::shared_ptr<ArraySchema> schema_;
 
     // Array associated with metadata_. Metadata values need to be
     // accessible in write mode as well. We need to keep this read-mode
