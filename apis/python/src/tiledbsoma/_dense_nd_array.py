@@ -341,7 +341,7 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
         if clib.embedded_version_triple() >= (2, 27, 0):
             self._handle.resize(newshape)
         else:
-            raise NotImplementedError()
+            raise NotImplementedError("Not implemented for libtiledbsoma < 2.27.0")
 
     @classmethod
     def _dim_capacity_and_extent(
