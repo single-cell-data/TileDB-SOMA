@@ -12,7 +12,6 @@ import somacore
 from somacore import (
     CoordinateSpace,
     CoordinateTransform,
-    IdentityTransform,
 )
 
 from . import _funcs, _tdb_handles
@@ -64,6 +63,34 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
             self._coord_space: Optional[CoordinateSpace] = None
         else:
             self._coord_space = coordinate_space_from_json(coord_space)
+
+    def _check_transform_to_asset(
+        self,
+        transform: CoordinateTransform,
+        asset_coord_space: Optional[CoordinateSpace],
+    ) -> None:
+        """Raises an error if the scene coordinate space is not set or the
+        scene axis names do not match the input transform axis names.
+        """
+        if self.coordinate_space is None:
+            raise SOMAError(
+                "The scene coordinate space must be set before setting a transform."
+            )
+        if transform.input_axes != self.coordinate_space.axis_names:
+            raise ValueError(
+                f"The name of the transform input axes, {transform.input_axes}, do "
+                f"not match the name of the axes in the scene coordinate space, "
+                f"{self.coordinate_space.axis_names}."
+            )
+        if (
+            asset_coord_space is not None
+            and transform.output_axes != asset_coord_space.axis_names
+        ):
+            raise ValueError(
+                f"The name of the transform output axes, {transform.output_axes}, do "
+                f"not match the name of the axes in the provided coordinate space, "
+                f"{asset_coord_space.axis_names}."
+            )
 
     def _open_subcollection(
         self, subcollection: Union[str, Sequence[str]]
@@ -320,35 +347,11 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
 
         Lifecycle: experimental
         """
-        if not isinstance(subcollection, str):
-            raise NotImplementedError()
-
-        # Check the transform matches this
-        if self.coordinate_space is None:
-            raise SOMAError(
-                "The scene coordinate space must be set before registering an image."
-            )
-        if transform.output_axes != self.coordinate_space.axis_names:
-            raise ValueError(
-                f"The name of the transform output axes, {transform.output_axes}, do "
-                f"not match the name of the axes in the scene coordinate space, "
-                f"{self.coordinate_space.axis_names}."
-            )
-
-        # Create the coordinate space if it does not exist. Otherwise, check it is
-        # compatible with the provide transform.
-        if coordinate_space is None:
-            if isinstance(transform, IdentityTransform):
-                coordinate_space = self.coordinate_space
-            else:
-                coordinate_space = CoordinateSpace.from_axis_names(transform.input_axes)
-        else:
-            if transform.input_axes != coordinate_space.axis_names:
-                raise ValueError(
-                    f"The name of the transform input axes, {transform.input_axes}, do "
-                    f"not match the name of the axes in the provided coordinate space, "
-                    f"{coordinate_space.axis_names}."
-                )
+        # Check the transform is compatible with the oordinate spaces.
+        self._check_transform_to_asset(transform, coordinate_space)
+        assert (
+            self.coordinate_space is not None
+        )  # Assert for typing - verified in the above method.
 
         # Check asset exists in the specified location.
         coll = self._open_subcollection(subcollection)
@@ -361,7 +364,19 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
         if not isinstance(image, MultiscaleImage):
             raise TypeError(f"'{key}' in '{subcollection}' is not an MultiscaleImage.")
 
-        image.coordinate_space = coordinate_space
+        # Either set the new coordinate space or check the axes of the current
+        # coordinate space the multiscale image is defined on.
+        if coordinate_space is None:
+            if image.coordinate_space.axis_names != transform.output_axes:
+                raise ValueError(
+                    f"The name of transform output axes, {transform.output_axes}, do"
+                    f"not match the name of the axes in the multiscale image coordinate"
+                    f" space, {image.coordinate_space.axis_names}."
+                )
+        else:
+            image.coordinate_space = coordinate_space
+
+        # Set the transform metadata and return the multisclae image.
         coll.metadata[f"soma_scene_registry_{key}"] = transform_to_json(transform)
         return image
 
@@ -399,27 +414,11 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
 
         Lifecycle: experimental
         """
-        if not isinstance(subcollection, str):
-            raise NotImplementedError()
-        if self.coordinate_space is None:
-            raise SOMAError(
-                "The scene coordinate space must be set before registering a point "
-                "cloud dataframe."
-            )
-        # Create the coordinate space if it does not exist. Otherwise, check it is
-        # compatible with the provide transform.
-        if coordinate_space is None:
-            if isinstance(transform, IdentityTransform):
-                coordinate_space = self.coordinate_space
-            else:
-                coordinate_space = CoordinateSpace.from_axis_names(transform.input_axes)
-        else:
-            if transform.input_axes != coordinate_space.axis_names:
-                raise ValueError(
-                    f"The name of the transform input axes, {transform.input_axes}, do "
-                    f"not match the name of the axes in the provided coordinate space, "
-                    f"{coordinate_space.axis_names}."
-                )
+        # Check the transform is compatible with the Scene coordinate spaces.
+        self._check_transform_to_asset(transform, coordinate_space)
+        assert (
+            self.coordinate_space is not None
+        )  # Assert for typing - verified in the above method.
 
         # Check asset exists in the specified location.
         try:
@@ -435,7 +434,19 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
                 f"'{key}' in '{subcollection}' is not an PointCloudDataFrame."
             )
 
-        point_cloud.coordinate_space = coordinate_space
+        # Either set the new coordinate space or check the axes of the current point
+        # cloud coordinate space.
+        if coordinate_space is None:
+            if point_cloud.coordinate_space.axis_names != transform.output_axes:
+                raise ValueError(
+                    f"The name of transform output axes, {transform.output_axes}, do"
+                    f"not match the name of the axes in the point cloud coordinate "
+                    f"space, {point_cloud.coordinate_space.axis_names}."
+                )
+        else:
+            point_cloud.coordinate_space = coordinate_space
+
+        # Set the transform metadata and return the point cloud.
         coll.metadata[f"soma_scene_registry_{key}"] = transform_to_json(transform)
         return point_cloud
 
