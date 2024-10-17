@@ -879,7 +879,7 @@ def add_dataframe(coll: CollectionBase, key: str, sz: int) -> None:
                 ("label", pa.large_string()),
             ]
         ),
-        domain=[[0, sz-1]],
+        domain=[[0, sz - 1]],
         index_column_names=["soma_joinid"],
     )
     df.write(
