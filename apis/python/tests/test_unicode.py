@@ -46,6 +46,7 @@ def sample_dataframe_path(tmp_path, sample_arrow_table):
         tmp_path.as_posix(),
         schema=sample_arrow_table.schema,
         index_column_names=["soma_joinid"],
+        domain=((0, len(sample_arrow_table) - 1),),
     ) as sdf:
         sdf.write(sample_arrow_table)
     return sdf.uri

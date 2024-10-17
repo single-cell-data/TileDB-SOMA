@@ -29,7 +29,7 @@ def create_and_populate_dataframe(path: str) -> soma.DataFrame:
         ]
     )
 
-    with soma.DataFrame.create(path, schema=arrow_schema) as df:
+    with soma.DataFrame.create(path, schema=arrow_schema, domain=[[0, 999]]) as df:
         pydict = {}
         pydict["soma_joinid"] = [0, 1, 2, 3, 4]
         pydict["foo"] = [10, 20, 30, 40, 50]

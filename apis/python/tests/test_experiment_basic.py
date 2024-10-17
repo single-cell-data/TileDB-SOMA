@@ -21,14 +21,18 @@ def create_and_populate_obs(uri: str) -> soma.DataFrame:
         ]
     )
 
+    pydict = {}
+    pydict["soma_joinid"] = [0, 1, 2, 3, 4]
+    pydict["foo"] = [10, 20, 30, 40, 50]
+    pydict["bar"] = [4.1, 5.2, 6.3, 7.4, 8.5]
+    pydict["baz"] = ["apple", "ball", "cat", "dog", "egg"]
+    rb = pa.Table.from_pydict(pydict)
+
+    domain = [[0, len(rb) - 1]]
+
     # TODO: indexing option ...
-    with soma.DataFrame.create(uri, schema=obs_arrow_schema) as obs:
-        pydict = {}
-        pydict["soma_joinid"] = [0, 1, 2, 3, 4]
-        pydict["foo"] = [10, 20, 30, 40, 50]
-        pydict["bar"] = [4.1, 5.2, 6.3, 7.4, 8.5]
-        pydict["baz"] = ["apple", "ball", "cat", "dog", "egg"]
-        rb = pa.Table.from_pydict(pydict)
+    with soma.DataFrame.create(uri, schema=obs_arrow_schema, domain=domain) as obs:
+
         obs.write(rb)
 
     return _factory.open(uri)
@@ -43,12 +47,15 @@ def create_and_populate_var(uri: str) -> soma.DataFrame:
         ]
     )
 
-    with soma.DataFrame.create(uri, schema=var_arrow_schema) as var:
-        pydict = {}
-        pydict["soma_joinid"] = [0, 1, 2, 3]
-        pydict["quux"] = ["zebra", "yak", "xylophone", "wapiti"]
-        pydict["xyzzy"] = [12.3, 23.4, 34.5, 45.6]
-        rb = pa.Table.from_pydict(pydict)
+    pydict = {}
+    pydict["soma_joinid"] = [0, 1, 2, 3]
+    pydict["quux"] = ["zebra", "yak", "xylophone", "wapiti"]
+    pydict["xyzzy"] = [12.3, 23.4, 34.5, 45.6]
+    rb = pa.Table.from_pydict(pydict)
+
+    domain = [[0, len(rb) - 1]]
+
+    with soma.DataFrame.create(uri, schema=var_arrow_schema, domain=domain) as var:
         var.write(rb)
 
     return _factory.open(uri)

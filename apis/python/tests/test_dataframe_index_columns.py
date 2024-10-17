@@ -60,7 +60,7 @@ def arrow_table():
         [
             "SOMA_JOINID-ALL",
             ["soma_joinid"],
-            None,
+            [[0, 999]],
             [],
             "default01234",
         ],
@@ -74,7 +74,7 @@ def arrow_table():
         [
             "soma_joinid-py-list",
             ["soma_joinid"],
-            None,
+            [[0, 999]],
             [[0, 2]],
             {
                 "soma_joinid": pa.array([0, 2], pa.int64()),
@@ -84,7 +84,7 @@ def arrow_table():
         [
             "soma_joinid-py-tuple",
             ["soma_joinid"],
-            None,
+            [[0, 999]],
             [(0, 2)],
             {
                 "soma_joinid": pa.array([0, 2], pa.int64()),
@@ -94,7 +94,7 @@ def arrow_table():
         [
             "soma_joinid-py-slice",
             ["soma_joinid"],
-            None,
+            [[0, 999]],
             [slice(0, 2)],
             {
                 "soma_joinid": pa.array([0, 1, 2], pa.int64()),
@@ -104,7 +104,7 @@ def arrow_table():
         [
             "soma_joinid-py-left-none-slice",
             ["soma_joinid"],
-            None,
+            [[0, 999]],
             [slice(None, 2)],
             {
                 "soma_joinid": pa.array([0, 1, 2], pa.int64()),
@@ -114,7 +114,7 @@ def arrow_table():
         [
             "soma_joinid-py-right-none-slice",
             ["soma_joinid"],
-            None,
+            [[0, 999]],
             [slice(2, None)],
             {
                 "soma_joinid": pa.array([2, 3, 4], pa.int64()),
@@ -124,14 +124,14 @@ def arrow_table():
         [
             "soma_joinid-py-both-none-slice",
             ["soma_joinid"],
-            None,
+            [[0, 999]],
             [slice(None, None)],
             "default01234",
         ],
         [
             "soma_joinid-np-array-untyped",
             ["soma_joinid"],
-            None,
+            [[0, 999]],
             [np.array([0, 2])],
             {
                 "soma_joinid": pa.array([0, 2], pa.int64()),
@@ -141,7 +141,7 @@ def arrow_table():
         [
             "soma_joinid-np-array-typed",
             ["soma_joinid"],
-            None,
+            [[0, 999]],
             [np.array([0, 2], np.int64)],
             {
                 "soma_joinid": pa.array([0, 2], pa.int64()),
@@ -151,7 +151,7 @@ def arrow_table():
         [
             "soma_joinid-pa-array-untyped",
             ["soma_joinid"],
-            None,
+            [[0, 999]],
             [pa.array([0, 2])],
             {
                 "soma_joinid": pa.array([0, 2]),
@@ -161,7 +161,7 @@ def arrow_table():
         [
             "soma_joinid-pa-array-typed",
             ["soma_joinid"],
-            None,
+            [[0, 999]],
             [pa.array([0, 2])],
             {
                 "soma_joinid": pa.array([0, 2], pa.int64()),
@@ -172,56 +172,56 @@ def arrow_table():
         [
             "STRING-ALL",
             ["string"],
-            None,
+            [None],
             [],
             "default01234",
         ],
         [
             "string-py-list",
             ["string"],
-            None,
+            [None],
             [["cat", "dog"]],
             "default23",
         ],
         [
             "string-py-tuple",
             ["string"],
-            None,
+            [None],
             [("cat", "dog")],
             "default23",
         ],
         [
             "string-py-slice",
             ["string"],
-            None,
+            [None],
             [("cat", "dog")],
             "default23",
         ],
         [
             "string-pa-array-untyped",
             ["string"],
-            None,
+            [None],
             [pa.array(["cat", "dog"])],
             "default23",
         ],
         [
             "string-pa-array-typed",
             ["string"],
-            None,
+            [None],
             [pa.array(["cat", "dog"], pa.string())],
             "default23",
         ],
         [
             "string-np-array-untyped",
             ["string"],
-            None,
+            [None],
             [np.asarray(["cat", "dog"])],
             "default23",
         ],
         [
             "string-np-array-typed",
             ["string"],
-            None,
+            [None],
             [np.asarray(["cat", "dog"], str)],
             "default23",
         ],
@@ -229,56 +229,56 @@ def arrow_table():
         [
             "BYTES-ALL",
             ["bytes"],
-            None,
+            [None],
             [],
             "default01234",
         ],
         [
             "bytes-py-list",
             ["bytes"],
-            None,
+            [None],
             [[b"cat", b"dog"]],
             "default23",
         ],
         [
             "bytes-py-tuple",
             ["bytes"],
-            None,
+            [None],
             [(b"cat", b"dog")],
             "default23",
         ],
         [
             "bytes-py-slice",
             ["bytes"],
-            None,
+            [None],
             [(b"cat", b"dog")],
             "default23",
         ],
         [
             "bytes-pa-array-untyped",
             ["bytes"],
-            None,
+            [None],
             [pa.array([b"cat", b"dog"])],
             "default23",
         ],
         [
             "bytes-pa-array-typed",
             ["bytes"],
-            None,
+            [None],
             [pa.array([b"cat", b"dog"], pa.binary())],
             "default23",
         ],
         [
             "bytes-np-array-untyped",
             ["bytes"],
-            None,
+            [None],
             [np.asarray([b"cat", b"dog"])],
             "default23",
         ],
         [
             "bytes-np-array-typed",
             ["bytes"],
-            None,
+            [None],
             [np.asarray([b"cat", b"dog"], bytes)],
             "default23",
         ],
@@ -286,7 +286,7 @@ def arrow_table():
         [
             "INT64-ALL",
             ["int64"],
-            None,
+            [[-10000, 10000]],
             [],
             "default01234",
         ],
@@ -300,28 +300,28 @@ def arrow_table():
         [
             "int64-py-list",
             ["int64"],
-            None,
+            [[-10000, 10000]],
             [[6402, 6403]],
             "default23",
         ],
         [
             "int64-py-tuple",
             ["int64"],
-            None,
+            [[-10000, 10000]],
             [[6402, 6403]],
             "default23",
         ],
         [
             "int64-py-slice",
             ["int64"],
-            None,
+            [[-10000, 10000]],
             [slice(6402, 6403)],
             "default23",
         ],
         [
             "int64-py-left-none-slice",
             ["int64"],
-            None,
+            [[-10000, 10000]],
             [slice(None, 6402)],
             {
                 "soma_joinid": pa.array([0, 1, 2], pa.int64()),
@@ -331,7 +331,7 @@ def arrow_table():
         [
             "int64-py-right-none-slice",
             ["int64"],
-            None,
+            [[-10000, 10000]],
             [slice(6402, None)],
             {
                 "soma_joinid": pa.array([2, 3, 4], pa.int64()),
@@ -341,35 +341,35 @@ def arrow_table():
         [
             "int64-py-both-none-slice",
             ["int64"],
-            None,
+            [[-10000, 10000]],
             [slice(None, None)],
             "default01234",
         ],
         [
             "int64-numpy-untyped",
             ["int64"],
-            None,
+            [[-10000, 10000]],
             [np.asarray([6402, 6403])],
             "default23",
         ],
         [
             "int64-numpy-typed",
             ["int64"],
-            None,
+            [[-10000, 10000]],
             [np.asarray([6402, 6403], np.int64)],
             "default23",
         ],
         [
             "int64-pa-array-untyped",
             ["int64"],
-            None,
+            [[-10000, 10000]],
             [pa.array([6402, 6403])],
             "default23",
         ],
         [
             "int64-pa-array-typed",
             ["int64"],
-            None,
+            [[-10000, 10000]],
             [pa.array([6402, 6403], pa.int64())],
             "default23",
         ],
@@ -377,7 +377,7 @@ def arrow_table():
         [
             "INT32-ALL",
             ["int32"],
-            None,
+            [[-10000, 10000]],
             [],
             "default01234",
         ],
@@ -391,28 +391,28 @@ def arrow_table():
         [
             "int32-py-list",
             ["int32"],
-            None,
+            [[-10000, 10000]],
             [[3202, 3203]],
             "default23",
         ],
         [
             "int32-py-tuple",
             ["int32"],
-            None,
+            [[-10000, 10000]],
             [[3202, 3203]],
             "default23",
         ],
         [
             "int32-py-slice",
             ["int32"],
-            None,
+            [[-10000, 10000]],
             [slice(3202, 3203)],
             "default23",
         ],
         [
             "int32-py-left-none-slice",
             ["int32"],
-            None,
+            [[-10000, 10000]],
             [slice(None, 3202)],
             {
                 "soma_joinid": pa.array([0, 1, 2], pa.int64()),
@@ -422,7 +422,7 @@ def arrow_table():
         [
             "int32-py-right-none-slice",
             ["int32"],
-            None,
+            [[-10000, 10000]],
             [slice(3202, None)],
             {
                 "soma_joinid": pa.array([2, 3, 4], pa.int64()),
@@ -432,28 +432,28 @@ def arrow_table():
         [
             "int32-py-both-none-slice",
             ["int32"],
-            None,
+            [[-10000, 10000]],
             [slice(None, None)],
             "default01234",
         ],
         [
             "int32-numpy-untyped",
             ["int32"],
-            None,
+            [[-10000, 10000]],
             [np.asarray([3202, 3203])],
             "default23",
         ],
         [
             "int32-numpy-typed",
             ["int32"],
-            None,
+            [[-10000, 10000]],
             [np.asarray([3202, 3203], np.int32)],
             "default23",
         ],
         [
             "int32-pa-array-typed",
             ["int32"],
-            None,
+            [[-10000, 10000]],
             [pa.array([3202, 3203], pa.int32())],
             "default23",
         ],
@@ -461,7 +461,7 @@ def arrow_table():
         [
             "INT16-ALL",
             ["int16"],
-            None,
+            [[-2000, 2000]],
             [],
             "default01234",
         ],
@@ -475,28 +475,28 @@ def arrow_table():
         [
             "int16-py-list",
             ["int16"],
-            None,
+            [[-2000, 2000]],
             [[1602, 1603]],
             "default23",
         ],
         [
             "int16-py-tuple",
             ["int16"],
-            None,
+            [[-2000, 2000]],
             [[1602, 1603]],
             "default23",
         ],
         [
             "int16-py-slice",
             ["int16"],
-            None,
+            [[-2000, 2000]],
             [slice(1602, 1603)],
             "default23",
         ],
         [
             "int16-py-left-none-slice",
             ["int16"],
-            None,
+            [[-2000, 2000]],
             [slice(None, 1602)],
             {
                 "soma_joinid": pa.array([0, 1, 2], pa.int64()),
@@ -506,7 +506,7 @@ def arrow_table():
         [
             "int16-py-right-none-slice",
             ["int16"],
-            None,
+            [[-2000, 2000]],
             [slice(1602, None)],
             {
                 "soma_joinid": pa.array([2, 3, 4], pa.int64()),
@@ -516,28 +516,28 @@ def arrow_table():
         [
             "int16-py-both-none-slice",
             ["int16"],
-            None,
+            [[-2000, 2000]],
             [slice(None, None)],
             "default01234",
         ],
         [
             "int16-numpy-untyped",
             ["int16"],
-            None,
+            [[-2000, 2000]],
             [np.asarray([1602, 1603])],
             "default23",
         ],
         [
             "int16-numpy-typed",
             ["int16"],
-            None,
+            [[-2000, 2000]],
             [np.asarray([1602, 1603], np.int16)],
             "default23",
         ],
         [
             "int16-pa-array-typed",
             ["int16"],
-            None,
+            [[-2000, 2000]],
             [pa.array([1602, 1603], pa.int16())],
             "default23",
         ],
@@ -545,7 +545,7 @@ def arrow_table():
         [
             "INT8-ALL",
             ["int8"],
-            None,
+            [[-100, 100]],
             [],
             "default01234",
         ],
@@ -559,28 +559,28 @@ def arrow_table():
         [
             "int8-py-list",
             ["int8"],
-            None,
+            [[-100, 100]],
             [[82, 83]],
             "default23",
         ],
         [
             "int8-py-tuple",
             ["int8"],
-            None,
+            [[-100, 100]],
             [[82, 83]],
             "default23",
         ],
         [
             "int8-py-slice",
             ["int8"],
-            None,
+            [[-100, 100]],
             [slice(82, 83)],
             "default23",
         ],
         [
             "int8-py-left-none-slice",
             ["int8"],
-            None,
+            [[-100, 100]],
             [slice(None, 82)],
             {
                 "soma_joinid": pa.array([0, 1, 2], pa.int64()),
@@ -590,7 +590,7 @@ def arrow_table():
         [
             "int8-py-right-none-slice",
             ["int8"],
-            None,
+            [[-100, 100]],
             [slice(82, None)],
             {
                 "soma_joinid": pa.array([2, 3, 4], pa.int64()),
@@ -600,28 +600,28 @@ def arrow_table():
         [
             "int8-py-both-none-slice",
             ["int8"],
-            None,
+            [[-100, 100]],
             [slice(None, None)],
             "default01234",
         ],
         [
             "int8-numpy-untyped",
             ["int8"],
-            None,
+            [[-100, 100]],
             [np.asarray([82, 83])],
             "default23",
         ],
         [
             "int8-numpy-typed",
             ["int8"],
-            None,
+            [[-100, 100]],
             [np.asarray([82, 83], np.int8)],
             "default23",
         ],
         [
             "int8-pa-array-typed",
             ["int8"],
-            None,
+            [[-100, 100]],
             [pa.array([82, 83], pa.int8())],
             "default23",
         ],
@@ -629,7 +629,7 @@ def arrow_table():
         [
             "UINT64-ALL",
             ["uint64"],
-            None,
+            [[0, 10000]],
             [],
             "default01234",
         ],
@@ -643,28 +643,28 @@ def arrow_table():
         [
             "uint64-py-list",
             ["uint64"],
-            None,
+            [[0, 10000]],
             [[6412, 6413]],
             "default23",
         ],
         [
             "uint64-py-tuple",
             ["uint64"],
-            None,
+            [[0, 10000]],
             [[6412, 6413]],
             "default23",
         ],
         [
             "uint64-py-slice",
             ["uint64"],
-            None,
+            [[0, 10000]],
             [slice(6412, 6413)],
             "default23",
         ],
         [
             "uint64-py-left-none-slice",
             ["uint64"],
-            None,
+            [[0, 10000]],
             [slice(None, 6412)],
             {
                 "soma_joinid": pa.array([0, 1, 2], pa.int64()),
@@ -674,7 +674,7 @@ def arrow_table():
         [
             "uint64-py-right-none-slice",
             ["uint64"],
-            None,
+            [[0, 10000]],
             [slice(6412, None)],
             {
                 "soma_joinid": pa.array([2, 3, 4], pa.int64()),
@@ -684,28 +684,28 @@ def arrow_table():
         [
             "uint64-py-both-none-slice",
             ["uint64"],
-            None,
+            [[0, 10000]],
             [slice(None, None)],
             "default01234",
         ],
         [
             "uint64-numpy-untyped",
             ["uint64"],
-            None,
+            [[0, 10000]],
             [np.asarray([6412, 6413])],
             "default23",
         ],
         [
             "uint64-numpy-typed",
             ["uint64"],
-            None,
+            [[0, 10000]],
             [np.asarray([6412, 6413], np.uint64)],
             "default23",
         ],
         [
             "uint64-pa-array-typed",
             ["uint64"],
-            None,
+            [[0, 10000]],
             [pa.array([6412, 6413], pa.uint64())],
             "default23",
         ],
@@ -713,7 +713,7 @@ def arrow_table():
         [
             "UINT32-ALL",
             ["uint32"],
-            None,
+            [[0, 10000]],
             [],
             "default01234",
         ],
@@ -727,28 +727,28 @@ def arrow_table():
         [
             "uint32-py-list",
             ["uint32"],
-            None,
+            [[0, 10000]],
             [[3212, 3213]],
             "default23",
         ],
         [
             "uint32-py-tuple",
             ["uint32"],
-            None,
+            [[0, 10000]],
             [[3212, 3213]],
             "default23",
         ],
         [
             "uint32-py-slice",
             ["uint32"],
-            None,
+            [[0, 10000]],
             [slice(3212, 3213)],
             "default23",
         ],
         [
             "uint32-py-left-none-slice",
             ["uint32"],
-            None,
+            [[0, 10000]],
             [slice(None, 3212)],
             {
                 "soma_joinid": pa.array([0, 1, 2], pa.int64()),
@@ -758,7 +758,7 @@ def arrow_table():
         [
             "uint32-py-right-none-slice",
             ["uint32"],
-            None,
+            [[0, 10000]],
             [slice(3212, None)],
             {
                 "soma_joinid": pa.array([2, 3, 4], pa.int64()),
@@ -768,28 +768,28 @@ def arrow_table():
         [
             "uint32-py-both-none-slice",
             ["uint32"],
-            None,
+            [[0, 10000]],
             [slice(None, None)],
             "default01234",
         ],
         [
             "uint32-numpy-untyped",
             ["uint32"],
-            None,
+            [[0, 10000]],
             [np.asarray([3212, 3213])],
             "default23",
         ],
         [
             "uint32-numpy-typed",
             ["uint32"],
-            None,
+            [[0, 10000]],
             [np.asarray([3212, 3213], np.uint32)],
             "default23",
         ],
         [
             "uint32-pa-array-typed",
             ["uint32"],
-            None,
+            [[0, 10000]],
             [pa.array([3212, 3213], pa.uint32())],
             "default23",
         ],
@@ -797,7 +797,7 @@ def arrow_table():
         [
             "UINT16-ALL",
             ["uint16"],
-            None,
+            [[0, 10000]],
             [],
             "default01234",
         ],
@@ -811,28 +811,28 @@ def arrow_table():
         [
             "uint16-py-list",
             ["uint16"],
-            None,
+            [[0, 10000]],
             [[1612, 1613]],
             "default23",
         ],
         [
             "uint16-py-tuple",
             ["uint16"],
-            None,
+            [[0, 10000]],
             [[1612, 1613]],
             "default23",
         ],
         [
             "uint16-py-slice",
             ["uint16"],
-            None,
+            [[0, 10000]],
             [slice(1612, 1613)],
             "default23",
         ],
         [
             "uint16-py-left-none-slice",
             ["uint16"],
-            None,
+            [[0, 10000]],
             [slice(None, 1612)],
             {
                 "soma_joinid": pa.array([0, 1, 2], pa.int64()),
@@ -842,7 +842,7 @@ def arrow_table():
         [
             "uint16-py-right-none-slice",
             ["uint16"],
-            None,
+            [[0, 10000]],
             [slice(1612, None)],
             {
                 "soma_joinid": pa.array([2, 3, 4], pa.int64()),
@@ -852,28 +852,28 @@ def arrow_table():
         [
             "uint16-py-both-none-slice",
             ["uint16"],
-            None,
+            [[0, 10000]],
             [slice(None, None)],
             "default01234",
         ],
         [
             "uint16-numpy-untyped",
             ["uint16"],
-            None,
+            [[0, 10000]],
             [np.asarray([1612, 1613])],
             "default23",
         ],
         [
             "uint16-numpy-typed",
             ["uint16"],
-            None,
+            [[0, 10000]],
             [np.asarray([1612, 1613], np.uint16)],
             "default23",
         ],
         [
             "uint16-pa-array-typed",
             ["uint16"],
-            None,
+            [[0, 10000]],
             [pa.array([1612, 1613], pa.uint16())],
             "default23",
         ],
@@ -881,7 +881,7 @@ def arrow_table():
         [
             "UINT8-ALL",
             ["uint8"],
-            None,
+            [[0, 200]],
             [],
             "default01234",
         ],
@@ -895,28 +895,28 @@ def arrow_table():
         [
             "uint8-py-list",
             ["uint8"],
-            None,
+            [[0, 200]],
             [[92, 93]],
             "default23",
         ],
         [
             "uint8-py-tuple",
             ["uint8"],
-            None,
+            [[0, 200]],
             [[92, 93]],
             "default23",
         ],
         [
             "uint8-py-slice",
             ["uint8"],
-            None,
+            [[0, 200]],
             [slice(92, 93)],
             "default23",
         ],
         [
             "uint8-py-left-none-slice",
             ["uint8"],
-            None,
+            [[0, 200]],
             [slice(None, 92)],
             {
                 "soma_joinid": pa.array([0, 1, 2], pa.int64()),
@@ -926,7 +926,7 @@ def arrow_table():
         [
             "uint8-py-right-none-slice",
             ["uint8"],
-            None,
+            [[0, 200]],
             [slice(92, None)],
             {
                 "soma_joinid": pa.array([2, 3, 4], pa.int64()),
@@ -936,28 +936,28 @@ def arrow_table():
         [
             "uint8-py-both-none-slice",
             ["uint8"],
-            None,
+            [[0, 200]],
             [slice(None, None)],
             "default01234",
         ],
         [
             "uint8-numpy-untyped",
             ["uint8"],
-            None,
+            [[0, 200]],
             [np.asarray([92, 93])],
             "default23",
         ],
         [
             "uint8-numpy-typed",
             ["uint8"],
-            None,
+            [[0, 200]],
             [np.asarray([92, 93], np.uint8)],
             "default23",
         ],
         [
             "uint8-pa-array-typed",
             ["uint8"],
-            None,
+            [[0, 200]],
             [pa.array([92, 93], pa.uint8())],
             "default23",
         ],
@@ -965,7 +965,7 @@ def arrow_table():
         [
             "FLOAT32-ALL",
             ["float32"],
-            None,
+            [[-1e6, 1e6]],
             [],
             "default01234",
         ],
@@ -979,42 +979,42 @@ def arrow_table():
         [
             "float32-py-list",
             ["float32"],
-            None,
+            [[-1e6, 1e6]],
             [[322.5, 323.5]],
             "default23",
         ],
         [
             "float32-py-tuple",
             ["float32"],
-            None,
+            [[-1e6, 1e6]],
             [(322.5, 323.5)],
             "default23",
         ],
         [
             "float32-py-slice",
             ["float32"],
-            None,
+            [[-1e6, 1e6]],
             [slice(322.5, 323.5)],
             "default23",
         ],
         [
             "float32-np-array-untyped",
             ["float32"],
-            None,
+            [[-1e6, 1e6]],
             [np.asarray([322.5, 323.5])],
             "default23",
         ],
         [
             "float32-np-array-typed",
             ["float32"],
-            None,
+            [[-1e6, 1e6]],
             [np.asarray([322.5, 323.5], np.float32)],
             "default23",
         ],
         [
             "float32-pa-array-typed-float32",
             ["float32"],
-            None,
+            [[-1e6, 1e6]],
             [pa.array([322.5, 323.5], pa.float32())],
             "default23",
         ],
@@ -1022,7 +1022,7 @@ def arrow_table():
         [
             "FLOAT64-ALL",
             ["float64"],
-            None,
+            [[-1e6, 1e6]],
             [],
             "default01234",
         ],
@@ -1036,49 +1036,49 @@ def arrow_table():
         [
             "float64-py-list",
             ["float64"],
-            None,
+            [[-1e6, 1e6]],
             [[642.5, 643.5]],
             "default23",
         ],
         [
             "float64-py-tuple",
             ["float64"],
-            None,
+            [[-1e6, 1e6]],
             [(642.5, 643.5)],
             "default23",
         ],
         [
             "float64-py-slice",
             ["float64"],
-            None,
+            [[-1e6, 1e6]],
             [slice(642.5, 643.5)],
             "default23",
         ],
         [
             "float64-np-array-untyped",
             ["float64"],
-            None,
+            [[-1e6, 1e6]],
             [np.asarray([642.5, 643.5])],
             "default23",
         ],
         [
             "float64-np-array-typed",
             ["float64"],
-            None,
+            [[-1e6, 1e6]],
             [np.asarray([642.5, 643.5], np.float64)],
             "default23",
         ],
         [
             "float64-pa-array-untyped",
             ["float64"],
-            None,
+            [[-1e6, 1e6]],
             [pa.array([642.5, 643.5])],
             "default23",
         ],
         [
             "float64-pa-array-typed-float64",
             ["float64"],
-            None,
+            [[-1e6, 1e6]],
             [pa.array([642.5, 643.5], pa.float64())],
             "default23",
         ],
@@ -1086,7 +1086,7 @@ def arrow_table():
         [
             "INT64+STRING-ALL",
             ["int64", "string"],
-            None,
+            [[-10000, 10000], None],
             [],
             "default01234",
         ],
@@ -1100,35 +1100,35 @@ def arrow_table():
         [
             "int64+string-arrow",
             ["int64", "string"],
-            None,
+            [[-10000, 10000], None],
             [pa.array([6402, 6403]), pa.array(["cat", "dog"])],
             "default23",
         ],
         [
             "string+int64-arrow",
             ["string", "int64"],
-            None,
+            [None, [-10000, 10000]],
             [pa.array(["cat", "dog"]), pa.array([6402, 6403])],
             "default23",
         ],
         [
             "string+int64-numpy",
             ["string", "int64"],
-            None,
+            [None, [-10000, 10000]],
             [np.asarray(["cat", "dog"]), np.asarray([6402, 6403])],
             "default23",
         ],
         [
             "string+int64-py-list",
             ["string", "int64"],
-            None,
+            [None, [-10000, 10000]],
             [["cat", "dog"], [6402, 6403]],
             "default23",
         ],
         [
             "string+int64-py-tuple",
             ["string", "int64"],
-            None,
+            [None, [-10000, 10000]],
             [("cat", "dog"), (6402, 6403)],
             "default23",
         ],
@@ -1136,14 +1136,14 @@ def arrow_table():
         [
             "INT64+FLOAT64+STRING-ALL",
             ["int64", "float64", "string"],
-            None,
+            [[-10000, 10000], [-1e6, 1e6], None],
             [],
             "default01234",
         ],
         [
             "int64+float64+string-arrow",
             ["int64", "float64", "string"],
-            None,
+            [[-10000, 10000], [-1e6, 1e6], None],
             [
                 pa.array([6402, 6403]),
                 pa.array([642.5, 643.5]),
@@ -1154,7 +1154,7 @@ def arrow_table():
         [
             "float64+string+int64-arrow",
             ["float64", "string", "int64"],
-            None,
+            [[-1e6, 1e6], None, [-10000, 10000]],
             [
                 pa.array([642.5, 643.5]),
                 pa.array(["cat", "dog"]),
@@ -1165,7 +1165,7 @@ def arrow_table():
         [
             "string+int64+float64-numpy",
             ["string", "int64", "float64"],
-            None,
+            [None, [-10000, 10000], [-1e6, 1e6]],
             [
                 np.asarray(["cat", "dog"]),
                 np.asarray([6402, 6403]),
@@ -1176,14 +1176,14 @@ def arrow_table():
         [
             "string+int64+float64py-list",
             ["string", "int64", "float64"],
-            None,
+            [None, [-10000, 10000], [-1e6, 1e6]],
             [["cat", "dog"], [6402, 6403], [642.5, 643.5]],
             "default23",
         ],
         [
             "string+int64+float64-py-tuple",
             ["string", "int64", "float64"],
-            None,
+            [None, [-10000, 10000], [-1e6, 1e6]],
             [("cat", "dog"), (6402, 6403), (642.5, 643.5)],
             "default23",
         ],
@@ -1191,7 +1191,12 @@ def arrow_table():
         [
             "TIMESTAMP-SEC-ALL",
             ["tss"],
-            None,
+            [
+                [
+                    np.datetime64(0, "s"),
+                    np.datetime64(1000000000, "s"),
+                ]
+            ],
             [],
             "default01234",
         ],
@@ -1210,28 +1215,48 @@ def arrow_table():
         [
             "tss-py-list",
             ["tss"],
-            None,
+            [
+                [
+                    np.datetime64(0, "s"),
+                    np.datetime64(1000000000, "s"),
+                ]
+            ],
             [[np.datetime64(946684802, "s"), np.datetime64(946684803, "s")]],
             "default23",
         ],
         [
             "tss-py-tuple",
             ["tss"],
-            None,
+            [
+                [
+                    np.datetime64(0, "s"),
+                    np.datetime64(1000000000, "s"),
+                ]
+            ],
             [[np.datetime64(946684802, "s"), np.datetime64(946684803, "s")]],
             "default23",
         ],
         [
             "tss-py-slice",
             ["tss"],
-            None,
+            [
+                [
+                    np.datetime64(0, "s"),
+                    np.datetime64(1000000000, "s"),
+                ]
+            ],
             [slice(np.datetime64(946684802, "s"), np.datetime64(946684803, "s"))],
             "default23",
         ],
         [
             "tss-py-left-none-slice",
             ["tss"],
-            None,
+            [
+                [
+                    np.datetime64(0, "s"),
+                    np.datetime64(1000000000, "s"),
+                ]
+            ],
             [slice(None, np.datetime64(946684802, "s"))],
             {
                 "soma_joinid": pa.array([0, 1, 2], pa.int64()),
@@ -1241,7 +1266,12 @@ def arrow_table():
         [
             "tss-py-right-none-slice",
             ["tss"],
-            None,
+            [
+                [
+                    np.datetime64(0, "s"),
+                    np.datetime64(1000000000, "s"),
+                ]
+            ],
             [slice(np.datetime64(946684802, "s"), None)],
             {
                 "soma_joinid": pa.array([2, 3, 4], pa.int64()),
@@ -1251,14 +1281,24 @@ def arrow_table():
         [
             "tss-py-both-none-slice",
             ["tss"],
-            None,
+            [
+                [
+                    np.datetime64(0, "s"),
+                    np.datetime64(1000000000, "s"),
+                ]
+            ],
             [slice(None, None)],
             "default01234",
         ],
         [
             "tss-numpy",
             ["tss"],
-            None,
+            [
+                [
+                    np.datetime64(0, "s"),
+                    np.datetime64(1000000000, "s"),
+                ]
+            ],
             [
                 np.asarray(
                     [np.datetime64(946684802, "s"), np.datetime64(946684803, "s")]
@@ -1269,14 +1309,24 @@ def arrow_table():
         [
             "tss-pa-array-untyped",
             ["tss"],
-            None,
+            [
+                [
+                    np.datetime64(0, "s"),
+                    np.datetime64(1000000000, "s"),
+                ]
+            ],
             [pa.array([946684802, 946684803])],
             "default23",
         ],
         [
             "tss-pa-array-typed",
             ["tss"],
-            None,
+            [
+                [
+                    np.datetime64(0, "s"),
+                    np.datetime64(1000000000, "s"),
+                ]
+            ],
             [pa.array([946684802, 946684803], pa.timestamp("s"))],
             "default23",
         ],
@@ -1284,7 +1334,12 @@ def arrow_table():
         [
             "TIMESTAMP-MSEC-ALL",
             ["tsms"],
-            None,
+            [
+                [
+                    np.datetime64(0, "ms"),
+                    np.datetime64(1000000000000, "ms"),
+                ]
+            ],
             [],
             "default01234",
         ],
@@ -1303,21 +1358,36 @@ def arrow_table():
         [
             "tsms-py-list",
             ["tsms"],
-            None,
+            [
+                [
+                    np.datetime64(0, "ms"),
+                    np.datetime64(1000000000000, "ms"),
+                ]
+            ],
             [[np.datetime64(946684800002, "ms"), np.datetime64(946684800003, "ms")]],
             "default23",
         ],
         [
             "tsms-py-tuple",
             ["tsms"],
-            None,
+            [
+                [
+                    np.datetime64(0, "ms"),
+                    np.datetime64(1000000000000, "ms"),
+                ]
+            ],
             [[np.datetime64(946684800002, "ms"), np.datetime64(946684800003, "ms")]],
             "default23",
         ],
         [
             "tsms-py-slice",
             ["tsms"],
-            None,
+            [
+                [
+                    np.datetime64(0, "ms"),
+                    np.datetime64(1000000000000, "ms"),
+                ]
+            ],
             [
                 slice(
                     np.datetime64(946684800002, "ms"), np.datetime64(946684800003, "ms")
@@ -1328,7 +1398,12 @@ def arrow_table():
         [
             "tsms-py-left-none-slice",
             ["tsms"],
-            None,
+            [
+                [
+                    np.datetime64(0, "ms"),
+                    np.datetime64(1000000000000, "ms"),
+                ]
+            ],
             [slice(None, np.datetime64(946684800002, "ms"))],
             {
                 "soma_joinid": pa.array([0, 1, 2], pa.int64()),
@@ -1338,7 +1413,12 @@ def arrow_table():
         [
             "tsms-py-right-none-slice",
             ["tsms"],
-            None,
+            [
+                [
+                    np.datetime64(0, "ms"),
+                    np.datetime64(1000000000000, "ms"),
+                ]
+            ],
             [slice(np.datetime64(946684800002, "ms"), None)],
             {
                 "soma_joinid": pa.array([2, 3, 4], pa.int64()),
@@ -1348,14 +1428,24 @@ def arrow_table():
         [
             "tsms-py-both-none-slice",
             ["tsms"],
-            None,
+            [
+                [
+                    np.datetime64(0, "ms"),
+                    np.datetime64(1000000000000, "ms"),
+                ]
+            ],
             [slice(None, None)],
             "default01234",
         ],
         [
             "tsms-numpy",
             ["tsms"],
-            None,
+            [
+                [
+                    np.datetime64(0, "ms"),
+                    np.datetime64(1000000000000, "ms"),
+                ]
+            ],
             [
                 np.asarray(
                     [
@@ -1369,14 +1459,24 @@ def arrow_table():
         [
             "tsms-pa-array-untyped",
             ["tsms"],
-            None,
+            [
+                [
+                    np.datetime64(0, "ms"),
+                    np.datetime64(1000000000000, "ms"),
+                ]
+            ],
             [pa.array([946684800002, 946684800003])],
             "default23",
         ],
         [
             "tsms-pa-array-typed",
             ["tsms"],
-            None,
+            [
+                [
+                    np.datetime64(0, "ms"),
+                    np.datetime64(1000000000000, "ms"),
+                ]
+            ],
             [pa.array([946684800002, 946684800003], pa.timestamp("ms"))],
             "default23",
         ],
@@ -1384,7 +1484,12 @@ def arrow_table():
         [
             "TIMESTAMP-USEC-ALL",
             ["tsus"],
-            None,
+            [
+                [
+                    np.datetime64(0, "us"),
+                    np.datetime64(1000000000000000, "us"),
+                ]
+            ],
             [],
             "default01234",
         ],
@@ -1403,7 +1508,12 @@ def arrow_table():
         [
             "tsus-py-list",
             ["tsus"],
-            None,
+            [
+                [
+                    np.datetime64(0, "us"),
+                    np.datetime64(1000000000000000, "us"),
+                ]
+            ],
             [
                 [
                     np.datetime64(946684800000002, "us"),
@@ -1415,7 +1525,12 @@ def arrow_table():
         [
             "tsus-py-tuple",
             ["tsus"],
-            None,
+            [
+                [
+                    np.datetime64(0, "us"),
+                    np.datetime64(1000000000000000, "us"),
+                ]
+            ],
             [
                 [
                     np.datetime64(946684800000002, "us"),
@@ -1427,7 +1542,12 @@ def arrow_table():
         [
             "tsus-py-slice",
             ["tsus"],
-            None,
+            [
+                [
+                    np.datetime64(0, "us"),
+                    np.datetime64(1000000000000000, "us"),
+                ]
+            ],
             [
                 slice(
                     np.datetime64(946684800000002, "us"),
@@ -1439,7 +1559,12 @@ def arrow_table():
         [
             "tsus-py-left-none-slice",
             ["tsus"],
-            None,
+            [
+                [
+                    np.datetime64(0, "us"),
+                    np.datetime64(1000000000000000, "us"),
+                ]
+            ],
             [slice(None, np.datetime64(946684800000002, "us"))],
             {
                 "soma_joinid": pa.array([0, 1, 2], pa.int64()),
@@ -1449,7 +1574,12 @@ def arrow_table():
         [
             "tsus-py-right-none-slice",
             ["tsus"],
-            None,
+            [
+                [
+                    np.datetime64(0, "us"),
+                    np.datetime64(1000000000000000, "us"),
+                ]
+            ],
             [slice(np.datetime64(946684800000002, "us"), None)],
             {
                 "soma_joinid": pa.array([2, 3, 4], pa.int64()),
@@ -1459,14 +1589,24 @@ def arrow_table():
         [
             "tsus-py-both-none-slice",
             ["tsus"],
-            None,
+            [
+                [
+                    np.datetime64(0, "us"),
+                    np.datetime64(1000000000000000, "us"),
+                ]
+            ],
             [slice(None, None)],
             "default01234",
         ],
         [
             "tsus-numpy",
             ["tsus"],
-            None,
+            [
+                [
+                    np.datetime64(0, "us"),
+                    np.datetime64(1000000000000000, "us"),
+                ]
+            ],
             [
                 np.asarray(
                     [
@@ -1480,14 +1620,24 @@ def arrow_table():
         [
             "tsus-pa-array-untyped",
             ["tsus"],
-            None,
+            [
+                [
+                    np.datetime64(0, "us"),
+                    np.datetime64(1000000000000000, "us"),
+                ]
+            ],
             [pa.array([946684800000002, 946684800000003])],
             "default23",
         ],
         [
             "tsus-pa-array-typed",
             ["tsus"],
-            None,
+            [
+                [
+                    np.datetime64(0, "us"),
+                    np.datetime64(1000000000000000, "us"),
+                ]
+            ],
             [pa.array([946684800000002, 946684800000003], pa.timestamp("us"))],
             "default23",
         ],
@@ -1495,7 +1645,12 @@ def arrow_table():
         [
             "TIMESTAMP-NSEC-ALL",
             ["tsns"],
-            None,
+            [
+                [
+                    np.datetime64(0, "ns"),
+                    np.datetime64(1000000000000000000, "ns"),
+                ]
+            ],
             [],
             "default01234",
         ],
@@ -1514,7 +1669,12 @@ def arrow_table():
         [
             "tsns-py-list",
             ["tsns"],
-            None,
+            [
+                [
+                    np.datetime64(0, "ns"),
+                    np.datetime64(1000000000000000000, "ns"),
+                ]
+            ],
             [
                 [
                     np.datetime64(946684800000000002, "ns"),
@@ -1526,7 +1686,12 @@ def arrow_table():
         [
             "tsns-py-tuple",
             ["tsns"],
-            None,
+            [
+                [
+                    np.datetime64(0, "ns"),
+                    np.datetime64(1000000000000000000, "ns"),
+                ]
+            ],
             [
                 [
                     np.datetime64(946684800000000002, "ns"),
@@ -1538,7 +1703,12 @@ def arrow_table():
         [
             "tsns-py-slice",
             ["tsns"],
-            None,
+            [
+                [
+                    np.datetime64(0, "ns"),
+                    np.datetime64(1000000000000000000, "ns"),
+                ]
+            ],
             [
                 slice(
                     np.datetime64(946684800000000002, "ns"),
@@ -1550,7 +1720,12 @@ def arrow_table():
         [
             "tsns-py-left-none-slice",
             ["tsns"],
-            None,
+            [
+                [
+                    np.datetime64(0, "ns"),
+                    np.datetime64(1000000000000000000, "ns"),
+                ]
+            ],
             [slice(None, np.datetime64(946684800000000002, "ns"))],
             {
                 "soma_joinid": pa.array([0, 1, 2], pa.int64()),
@@ -1560,7 +1735,12 @@ def arrow_table():
         [
             "tsns-py-right-none-slice",
             ["tsns"],
-            None,
+            [
+                [
+                    np.datetime64(0, "ns"),
+                    np.datetime64(1000000000000000000, "ns"),
+                ]
+            ],
             [slice(np.datetime64(946684800000000002, "ns"), None)],
             {
                 "soma_joinid": pa.array([2, 3, 4], pa.int64()),
@@ -1570,14 +1750,24 @@ def arrow_table():
         [
             "tsns-py-both-none-slice",
             ["tsns"],
-            None,
+            [
+                [
+                    np.datetime64(0, "ns"),
+                    np.datetime64(1000000000000000000, "ns"),
+                ]
+            ],
             [slice(None, None)],
             "default01234",
         ],
         [
             "tsns-numpy",
             ["tsns"],
-            None,
+            [
+                [
+                    np.datetime64(0, "ns"),
+                    np.datetime64(1000000000000000000, "ns"),
+                ]
+            ],
             [
                 np.asarray(
                     [
@@ -1591,14 +1781,24 @@ def arrow_table():
         [
             "tsns-pa-array-untyped",
             ["tsns"],
-            None,
+            [
+                [
+                    np.datetime64(0, "ns"),
+                    np.datetime64(1000000000000000000, "ns"),
+                ]
+            ],
             [pa.array([946684800000000002, 946684800000000003])],
             "default23",
         ],
         [
             "tsns-pa-array-typed",
             ["tsns"],
-            None,
+            [
+                [
+                    np.datetime64(0, "ns"),
+                    np.datetime64(1000000000000000000, "ns"),
+                ]
+            ],
             [pa.array([946684800000000002, 946684800000000003], pa.timestamp("ns"))],
             "default23",
         ],
@@ -1809,70 +2009,70 @@ def test_types_write_errors(
         [
             "int32-pa-array-untyped",
             ["int32"],
-            None,
+            [[-20000, 20000]],
             [pa.array([3202, 3203])],
             # Static type (INT64) does not match expected type (INT32)
         ],
         [
             "int16-pa-array-untyped",
             ["int16"],
-            None,
+            [[-2000, 2000]],
             [pa.array([1602, 1603])],
             # Static type (INT64) does not match expected type (INT16)
         ],
         [
             "int8-pa-array-untyped",
             ["int8"],
-            None,
+            [[-100, 100]],
             [pa.array([82, 83])],
             # Static type (INT64) does not match expected type (INT8)
         ],
         [
             "uint64-pa-array-untyped",
             ["uint64"],
-            None,
+            [[0, 100000]],
             [pa.array([6412, 6413])],
             # Static type (INT64) does not match expected type (UINT64)
         ],
         [
             "uint32-pa-array-untyped",
             ["uint32"],
-            None,
+            [[0, 100000]],
             [pa.array([3212, 3213])],
             # Static type (UINT64) does not match expected type (UINT32)
         ],
         [
             "uint16-pa-array-untyped",
             ["uint16"],
-            None,
+            [[0, 2000]],
             [pa.array([1612, 1613])],
             # Static type (UINT64) does not match expected type (UINT16)
         ],
         [
             "uint8-pa-array-untyped",
             ["uint8"],
-            None,
+            [[0, 100]],
             [pa.array([92, 93])],
             # Static type (UINT64) does not match expected type (UINT8)
         ],
         [
             "float32-pa-array-untyped",
             ["float32"],
-            None,
+            [[-1e6, 1e6]],
             [pa.array([322.5, 323.5])],
             # Static type (FLOAT64) does not match expected type (FLOAT32)
         ],
         [
             "float32-pa-array-typed-float64",
             ["float32"],
-            None,
+            [[-1e6, 1e6]],
             [pa.array([322.5, 323.5], pa.float64())],
             # Static type (FLOAT64) does not match expected type (FLOAT32)
         ],
         [
             "float64-pa-array-typed-float32",
             ["float64"],
-            None,
+            [[-1e6, 1e6]],
             [pa.array([322.5, 323.5], pa.float32())],
             # Static type (FLOAT32) does not match expected type (FLOAT64)
         ],
