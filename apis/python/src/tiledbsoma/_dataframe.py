@@ -250,7 +250,7 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         if soma_domain is None:
             # XXX COMMENT
             if NEW_SHAPE_FEATURE_FLAG_ENABLED:
-                soma_domain = tuple((0,0) for _ in index_column_names)
+                soma_domain = tuple((0, 0) for _ in index_column_names)
             else:
                 soma_domain = tuple(None for _ in index_column_names)
         else:
