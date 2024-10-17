@@ -571,10 +571,7 @@ get_domain_and_extent_array <- function(shape, is_sparse) {
         # expansion.
         ind_max_dom <- arrow_type_unsigned_range(ind_col_type) - c(0,ind_ext)
 
-        # TODO: support current domain for dense arrays once we have that support
-        # from core.
-        # https://github.com/single-cell-data/TileDB-SOMA/issues/2955
-        if (.new_shape_feature_flag_is_enabled() && is_sparse) {
+        if (.new_shape_feature_flag_is_enabled() && (is_sparse || .dense_arrays_can_have_current_domain())) {
             aa <- arrow::arrow_array(c(ind_max_dom, ind_ext, ind_cur_dom), ind_col_type)
         } else {
             aa <- arrow::arrow_array(c(ind_cur_dom, ind_ext), ind_col_type)

@@ -90,6 +90,42 @@ SOMANDArrayBase <- R6::R6Class(
     #' @return Logical
     tiledbsoma_has_upgraded_shape = function() {
       has_current_domain(self$uri, private$.soma_context)
+    },
+
+    #' @description Increases the shape of the array as specfied. Raises an error
+    #' if the new shape is less than the current shape in any dimension. Raises
+    #' an error if the new shape exceeds maxshape in any dimension. Raises an
+    #' error if the array doesn't already have a shape: in that case please call
+    #' tiledbsoma_upgrade_shape.
+    #' @param new_shape A vector of integerish, of the same length as the array's `ndim`.
+    #' @return No return value
+    resize = function(new_shape) {
+      stopifnot(
+        "resize is not supported for dense arrays until tiledbsoma 1.15" =
+          .dense_arrays_can_have_current_domain() || private$.is_sparse,
+        "'new_shape' must be a vector of integerish values, of the same length as maxshape" =
+        rlang::is_integerish(new_shape, n = self$ndim()) ||
+          (bit64::is.integer64(new_shape) && length(new_shape) == self$ndim())
+      )
+      # Checking slotwise new shape >= old shape, and <= max_shape, is already done in libtiledbsoma
+      resize(self$uri, new_shape, private$.soma_context)
+    },
+
+    #' @description Allows the array to have a resizeable shape as described in the
+    #' TileDB-SOMA 1.15 release notes.  Raises an error if the shape exceeds maxshape in any
+    #' dimension. Raises an error if the array already has a shape.
+    #' @param shape A vector of integerish, of the same length as the array's `ndim`.
+    #' @return No return value
+    tiledbsoma_upgrade_shape = function(shape) {
+      stopifnot(
+        "tiledbsoma_upgrade_shape is not supported for dense arrays until tiledbsoma 1.15" =
+          .dense_arrays_can_have_current_domain() || private$.is_sparse,
+        "'shape' must be a vector of integerish values, of the same length as maxshape" =
+        rlang::is_integerish(shape, n = self$ndim()) ||
+          (bit64::is.integer64(shape) && length(shape) == self$ndim())
+      )
+      # Checking slotwise new shape >= old shape, and <= max_shape, is already done in libtiledbsoma
+      tiledbsoma_upgrade_shape(self$uri, shape, private$.soma_context)
     }
 
   ),
