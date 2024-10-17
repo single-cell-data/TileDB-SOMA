@@ -40,13 +40,13 @@
 #include <tiledb/tiledb>
 
 #include "../utils/common.h"
-#include "soma_array.h"
 #include "array_buffers.h"
 #include "column_buffer.h"
 
 namespace tiledbsoma {
 
 using namespace tiledb;
+class SOMAArray;
 
 // Probably we should just use a std::tuple here
 class StatusAndException {
