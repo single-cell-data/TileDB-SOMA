@@ -13,7 +13,6 @@ from somacore import (
     CoordinateSpace,
     CoordinateTransform,
     IdentityTransform,
-    options,
 )
 
 from . import _funcs, _tdb_handles
