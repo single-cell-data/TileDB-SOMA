@@ -248,7 +248,11 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         domain = None
 
         if soma_domain is None:
-            soma_domain = tuple(None for _ in index_column_names)
+            # XXX COMMENT
+            if NEW_SHAPE_FEATURE_FLAG_ENABLED:
+                soma_domain = tuple((0,0) for _ in index_column_names)
+            else:
+                soma_domain = tuple(None for _ in index_column_names)
         else:
             ndom = len(soma_domain)
             nidx = len(index_column_names)

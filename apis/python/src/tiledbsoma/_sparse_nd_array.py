@@ -176,7 +176,8 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
                 if dim_shape == 0:
                     raise ValueError("SparseNDArray shape slots must be at least 1")
                 if dim_shape is None:
-                    dim_shape = dim_capacity
+                    # XXX dim_shape = dim_capacity
+                    dim_shape = 1
 
                 index_column_data[pa_field.name] = [
                     0,
