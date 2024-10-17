@@ -2,7 +2,7 @@ import contextlib
 import datetime
 import json
 from pathlib import Path
-from typing import Dict, List
+from typing import Any, Dict, List
 
 import numpy as np
 import pandas as pd
@@ -54,7 +54,9 @@ def test_dataframe(tmp_path, arrow_schema):
     with pytest.raises(ValueError):
         # nonexistent indexed column
         soma.DataFrame.create(uri, schema=asch, index_column_names=["bogus"])
-    soma.DataFrame.create(uri, schema=asch, index_column_names=["foo"]).close()
+    soma.DataFrame.create(
+        uri, schema=asch, index_column_names=["foo"], domain=[[0, 99]]
+    ).close()
 
     assert soma.DataFrame.exists(uri)
     assert not soma.Collection.exists(uri)
@@ -79,6 +81,9 @@ def test_dataframe(tmp_path, arrow_schema):
             pydict["baz"] = ["apple", "ball", "cat", "dog", "egg"]
             pydict["quux"] = [True, False, False, True, False]
             rb = pa.Table.from_pydict(pydict)
+
+            if soma._flags.NEW_SHAPE_FEATURE_FLAG_ENABLED:
+                sdf.resize_soma_joinid_shape(len(rb))
 
             sdf.write(rb)
 
@@ -215,7 +220,9 @@ def test_dataframe_with_enumeration(tmp_path):
         ]
     )
     enums = {"enmr1": ("a", "bb", "ccc"), "enmr2": ("cat", "dog")}
-    with soma.DataFrame.create(tmp_path.as_posix(), schema=schema) as sdf:
+    with soma.DataFrame.create(
+        tmp_path.as_posix(), schema=schema, domain=[[0, 5]]
+    ) as sdf:
         data = {}
         data["soma_joinid"] = [0, 1, 2, 3, 4]
         data["foo"] = ["a", "bb", "ccc", "bb", "a"]
@@ -249,7 +256,10 @@ def simple_data_frame(tmp_path):
     )
     index_column_names = ["index"]
     with soma.DataFrame.create(
-        tmp_path.as_posix(), schema=schema, index_column_names=index_column_names
+        tmp_path.as_posix(),
+        schema=schema,
+        index_column_names=index_column_names,
+        domain=[[0, 3]],
     ) as sdf:
         data = {
             "index": [0, 1, 2, 3],
@@ -416,7 +426,7 @@ def test_columns(tmp_path):
 
 @pytest.fixture
 def make_dataframe(request):
-    index_type = request.param
+    index_type, domain = request.param
 
     index = {
         pa.string(): ["A", "B", "C"],
@@ -448,38 +458,43 @@ def make_dataframe(request):
             "float32": np.array([0.0, 1.1, 2.2], np.float32),
         }
     )
-    return pa.Table.from_pandas(df)
+    return [pa.Table.from_pandas(df), domain]
 
 
 @pytest.mark.parametrize(
     "make_dataframe",
     [
-        pa.float32(),
-        pa.float64(),
-        pa.int8(),
-        pa.uint8(),
-        pa.int16(),
-        pa.uint16(),
-        pa.int32(),
-        pa.uint32(),
-        pa.int64(),
-        pa.uint64(),
-        pa.string(),
-        pa.large_string(),
-        pa.binary(),
-        pa.large_binary(),
+        [pa.float32(), [[-1000, 1000]]],
+        [pa.float64(), [[-1000, 1000]]],
+        [pa.int8(), [[-100, 100]]],
+        [pa.uint8(), [[0, 100]]],
+        [pa.int16(), [[-1000, 1000]]],
+        [pa.uint16(), [[0, 1000]]],
+        [pa.int32(), [[-1000, 1000]]],
+        [pa.uint32(), [[0, 1000]]],
+        [pa.int64(), [[-1000, 1000]]],
+        [pa.uint64(), [[0, 1000]]],
+        [pa.string(), [None]],
+        [pa.large_string(), [None]],
+        [pa.binary(), [None]],
+        [pa.large_binary(), [None]],
     ],
     indirect=True,
 )
 def test_index_types(tmp_path, make_dataframe):
     """Verify that the index columns can be of various types"""
     sdf = soma.DataFrame.create(
-        tmp_path.as_posix(), schema=make_dataframe.schema, index_column_names=["index"]
+        tmp_path.as_posix(),
+        schema=make_dataframe[0].schema,
+        index_column_names=["index"],
+        domain=make_dataframe[1],
     )
-    sdf.write(make_dataframe)
+    sdf.write(make_dataframe[0])
 
 
-def make_multiply_indexed_dataframe(tmp_path, index_column_names: List[str]):
+def make_multiply_indexed_dataframe(
+    tmp_path, index_column_names: List[str], domain: List[Any]
+):
     """
     Creates a variably-indexed DataFrame for use in tests below.
     """
@@ -498,7 +513,10 @@ def make_multiply_indexed_dataframe(tmp_path, index_column_names: List[str]):
     )
 
     sdf = soma.DataFrame.create(
-        uri=tmp_path.as_posix(), schema=schema, index_column_names=index_column_names
+        uri=tmp_path.as_posix(),
+        schema=schema,
+        index_column_names=index_column_names,
+        domain=domain,
     )
 
     data: Dict[str, list] = {
@@ -523,6 +541,7 @@ def make_multiply_indexed_dataframe(tmp_path, index_column_names: List[str]):
         {
             "name": "1D indexing slot is None",
             "index_column_names": ["0_thru_5"],
+            "domain": [[-1000, 1000]],
             "coords": [None],
             "A": [10, 11, 12, 13, 14, 15],
             "throws": None,
@@ -530,6 +549,7 @@ def make_multiply_indexed_dataframe(tmp_path, index_column_names: List[str]):
         {
             "name": "1D indexing slot is int",
             "index_column_names": ["0_thru_5"],
+            "domain": [[-1000, 1000]],
             "coords": [0],
             "A": [10],
             "throws": None,
@@ -537,6 +557,7 @@ def make_multiply_indexed_dataframe(tmp_path, index_column_names: List[str]):
         {
             "name": "1D no results for 100",
             "index_column_names": ["0_thru_5"],
+            "domain": [[-1000, 1000]],
             "coords": [100],
             "A": [],
             "throws": None,
@@ -544,6 +565,7 @@ def make_multiply_indexed_dataframe(tmp_path, index_column_names: List[str]):
         {
             "name": "1D no results for -100",
             "index_column_names": ["0_thru_5"],
+            "domain": [[-1000, 1000]],
             "coords": [-100],
             "A": [],
             "throws": None,
@@ -551,6 +573,7 @@ def make_multiply_indexed_dataframe(tmp_path, index_column_names: List[str]):
         {
             "name": "1D indexing slot is list",
             "index_column_names": ["0_thru_5"],
+            "domain": [[-1000, 1000]],
             "coords": [[1, 3]],
             "A": [11, 13],
             "throws": None,
@@ -558,6 +581,7 @@ def make_multiply_indexed_dataframe(tmp_path, index_column_names: List[str]):
         {
             "name": "1D no results for -100, 100",
             "index_column_names": ["0_thru_5"],
+            "domain": [[-1000, 1000]],
             "coords": [[-100, 100]],
             "A": [],
             "throws": None,
@@ -565,6 +589,7 @@ def make_multiply_indexed_dataframe(tmp_path, index_column_names: List[str]):
         {
             "name": "1D empty list returns empty results",
             "index_column_names": ["0_thru_5"],
+            "domain": [[-1000, 1000]],
             "coords": [[]],
             "A": [],
             "throws": None,
@@ -572,6 +597,7 @@ def make_multiply_indexed_dataframe(tmp_path, index_column_names: List[str]):
         {
             "name": "1D indexing slot is tuple",
             "index_column_names": ["0_thru_5"],
+            "domain": [[-1000, 1000]],
             "coords": [(1, 3)],
             "A": [11, 13],
             "throws": None,
@@ -579,6 +605,7 @@ def make_multiply_indexed_dataframe(tmp_path, index_column_names: List[str]):
         {
             "name": "1D indexing slot is range",
             "index_column_names": ["0_thru_5"],
+            "domain": [[-1000, 1000]],
             "coords": [range(1, 3)],
             "A": [11, 12],
             "throws": None,
@@ -586,6 +613,7 @@ def make_multiply_indexed_dataframe(tmp_path, index_column_names: List[str]):
         {
             "name": "1D indexing slot is pa.ChunkedArray",
             "index_column_names": ["0_thru_5"],
+            "domain": [[-1000, 1000]],
             "coords": [pa.chunked_array(pa.array([1, 3]))],
             "A": [11, 13],
             "throws": None,
@@ -593,6 +621,7 @@ def make_multiply_indexed_dataframe(tmp_path, index_column_names: List[str]):
         {
             "name": "1D indexing slot is pa.Array",
             "index_column_names": ["0_thru_5"],
+            "domain": [[-1000, 1000]],
             "coords": [pa.array([1, 3])],
             "A": [11, 13],
             "throws": None,
@@ -601,6 +630,7 @@ def make_multiply_indexed_dataframe(tmp_path, index_column_names: List[str]):
         {
             "name": "1D indexing slot is np.ndarray",
             "index_column_names": ["0_thru_5"],
+            "domain": [[-1000, 1000]],
             "coords": [np.asarray([1, 3])],
             "A": [11, 13],
             "throws": None,
@@ -608,6 +638,7 @@ def make_multiply_indexed_dataframe(tmp_path, index_column_names: List[str]):
         {
             "name": "1D indexing by 2D np.ndarray",
             "index_column_names": ["0_thru_5"],
+            "domain": [[-1000, 1000]],
             "coords": [
                 np.asarray([[1, 3], [2, 4]])
             ],  # Error since 2D array in the slot
@@ -617,6 +648,7 @@ def make_multiply_indexed_dataframe(tmp_path, index_column_names: List[str]):
         {
             "name": "1D indexing by slice(None)",
             "index_column_names": ["0_thru_5"],
+            "domain": [[-1000, 1000]],
             "coords": [
                 slice(None)
             ],  # Indexing slot is none-slice i.e. `[:]` which is like None
@@ -626,6 +658,7 @@ def make_multiply_indexed_dataframe(tmp_path, index_column_names: List[str]):
         {
             "name": "1D indexing by empty coords",
             "index_column_names": ["0_thru_5"],
+            "domain": [[-1000, 1000]],
             "coords": [],
             "A": [10, 11, 12, 13, 14, 15],
             "throws": None,
@@ -633,6 +666,7 @@ def make_multiply_indexed_dataframe(tmp_path, index_column_names: List[str]):
         {
             "name": "1D indexing by 1:3",
             "index_column_names": ["0_thru_5"],
+            "domain": [[-1000, 1000]],
             "coords": [slice(1, 3)],  # Indexing slot is double-ended slice
             "A": [11, 12, 13],
             "throws": None,
@@ -640,6 +674,7 @@ def make_multiply_indexed_dataframe(tmp_path, index_column_names: List[str]):
         {
             "name": "1D indexing by [:3]",
             "index_column_names": ["0_thru_5"],
+            "domain": [[-1000, 1000]],
             "coords": [slice(None, 3)],  # Half-slice
             "A": [10, 11, 12, 13],
             "throws": None,
@@ -647,6 +682,7 @@ def make_multiply_indexed_dataframe(tmp_path, index_column_names: List[str]):
         {
             "name": "1D indexing by [2:]",
             "index_column_names": ["0_thru_5"],
+            "domain": [[-1000, 1000]],
             "coords": [slice(2, None)],  # Half-slice
             "A": [12, 13, 14, 15],
             "throws": None,
@@ -654,6 +690,7 @@ def make_multiply_indexed_dataframe(tmp_path, index_column_names: List[str]):
         {
             "name": "1D indexing with negatives",
             "index_column_names": ["both_signs"],
+            "domain": [[-10, 10]],
             "coords": [slice(-2, 1)],
             "A": [11, 10, 13],
             "throws": None,
@@ -661,6 +698,7 @@ def make_multiply_indexed_dataframe(tmp_path, index_column_names: List[str]):
         {
             "name": "1D indexing by ['bbb':'c']",
             "index_column_names": ["strings_aaa", "zero_one"],
+            "domain": [None, [0, 1]],
             "coords": [slice("bbb", "c")],
             "A": [12, 13],
             "throws": None,
@@ -668,6 +706,7 @@ def make_multiply_indexed_dataframe(tmp_path, index_column_names: List[str]):
         {
             "name": "1D indexing by ['ccc':]",
             "index_column_names": ["strings_aaa", "zero_one"],
+            "domain": [None, [0, 1]],
             "coords": [slice("ccc", None)],
             "A": [14, 15],
             "throws": None,
@@ -675,6 +714,7 @@ def make_multiply_indexed_dataframe(tmp_path, index_column_names: List[str]):
         {
             "name": "1D indexing by [:'bbd']",
             "index_column_names": ["strings_aaa", "zero_one"],
+            "domain": [None, [0, 1]],
             "coords": [slice("bbd")],
             "A": [10, 11, 12, 13],
             "throws": None,
@@ -682,6 +722,7 @@ def make_multiply_indexed_dataframe(tmp_path, index_column_names: List[str]):
         {
             "name": "1D indexing with one partition",
             "index_column_names": ["0_thru_5"],
+            "domain": [[0, 8]],
             "coords": [slice(2, None)],
             "partitions": somacore.IOfN(0, 1),
             "A": [12, 13, 14, 15],
@@ -690,6 +731,7 @@ def make_multiply_indexed_dataframe(tmp_path, index_column_names: List[str]):
         {
             "name": "partitioned reads unimplemented",
             "index_column_names": ["0_thru_5"],
+            "domain": [[0, 8]],
             "coords": [],
             "partitions": somacore.IOfN(1, 2),
             "A": None,
@@ -698,6 +740,7 @@ def make_multiply_indexed_dataframe(tmp_path, index_column_names: List[str]):
         {
             "name": "steps forbidden",
             "index_column_names": ["0_thru_5"],
+            "domain": [[0, 8]],
             "coords": [slice(1, 5, 2)],
             "A": None,
             "throws": ValueError,
@@ -705,6 +748,7 @@ def make_multiply_indexed_dataframe(tmp_path, index_column_names: List[str]):
         {
             "name": "slice must overlap domain (negative)",
             "index_column_names": ["soma_joinid"],
+            "domain": [[0, 59]],
             "coords": [slice(-2, -1)],
             "A": None,
             "throws": ValueError,
@@ -712,6 +756,7 @@ def make_multiply_indexed_dataframe(tmp_path, index_column_names: List[str]):
         {
             "name": "backwards slice",
             "index_column_names": ["0_thru_5"],
+            "domain": [[-1000, 1000]],
             "coords": [slice(1, 0)],
             "A": None,
             "throws": ValueError,
@@ -719,6 +764,7 @@ def make_multiply_indexed_dataframe(tmp_path, index_column_names: List[str]):
         {
             "name": "too many columns",
             "index_column_names": ["0_thru_5"],
+            "domain": [[-1000, 1000]],
             "coords": [(1,), (2,)],
             "A": None,
             "throws": ValueError,
@@ -726,6 +772,7 @@ def make_multiply_indexed_dataframe(tmp_path, index_column_names: List[str]):
         {
             "name": "wrong coords type",
             "index_column_names": ["0_thru_5"],
+            "domain": [[-1000, 1000]],
             "coords": "bogus",
             "A": None,
             "throws": TypeError,
@@ -733,6 +780,7 @@ def make_multiply_indexed_dataframe(tmp_path, index_column_names: List[str]):
         {
             "name": "bad index type dict",
             "index_column_names": ["0_thru_5"],
+            "domain": [[-1000, 1000]],
             "coords": [{"bogus": True}],
             "A": None,
             "throws": TypeError,
@@ -740,6 +788,7 @@ def make_multiply_indexed_dataframe(tmp_path, index_column_names: List[str]):
         {
             "name": "bad index type bool",
             "index_column_names": ["strings_aaa", "zero_one"],
+            "domain": [None, [0, 1]],
             "coords": [[True], slice(None)],
             "A": None,
             "throws": TypeError,
@@ -747,6 +796,7 @@ def make_multiply_indexed_dataframe(tmp_path, index_column_names: List[str]):
         {
             "name": "2D index empty",
             "index_column_names": ["strings_aaa", "zero_one"],
+            "domain": [None, [0, 1]],
             "coords": (),
             "A": [10, 11, 12, 13, 14, 15],
             "throws": None,
@@ -754,6 +804,7 @@ def make_multiply_indexed_dataframe(tmp_path, index_column_names: List[str]):
         {
             "name": "2D index None",
             "index_column_names": ["strings_aaa", "zero_one"],
+            "domain": [None, [0, 1]],
             "coords": [None, None],
             "A": [10, 11, 12, 13, 14, 15],
             "throws": None,
@@ -761,6 +812,7 @@ def make_multiply_indexed_dataframe(tmp_path, index_column_names: List[str]):
         {
             "name": "2D index 0, 0",
             "index_column_names": ["0_thru_5", "zero_one"],
+            "domain": [[-1000, 1000], [0, 1]],
             "coords": [0, 0],
             "A": [10],
             "throws": None,
@@ -768,6 +820,7 @@ def make_multiply_indexed_dataframe(tmp_path, index_column_names: List[str]):
         {
             "name": "2D index str, int",
             "index_column_names": ["strings_aaa", "zero_one"],
+            "domain": [None, [0, 1]],
             "coords": [["aaa"], 0],
             "A": [10],
             "throws": None,
@@ -775,6 +828,7 @@ def make_multiply_indexed_dataframe(tmp_path, index_column_names: List[str]):
         {
             "name": "2D index str, not sequence[str]",
             "index_column_names": ["strings_aaa", "zero_one"],
+            "domain": [None, [0, 1]],
             "coords": ["aaa", 0],
             "A": [10],
             "throws": None,
@@ -782,6 +836,7 @@ def make_multiply_indexed_dataframe(tmp_path, index_column_names: List[str]):
         {
             "name": "2D index List[str]",
             "index_column_names": ["strings_aaa", "zero_one"],
+            "domain": [None, [0, 1]],
             "coords": [["aaa", "ccc"], None],
             "A": [10, 11, 14, 15],
             "throws": None,
@@ -789,6 +844,7 @@ def make_multiply_indexed_dataframe(tmp_path, index_column_names: List[str]):
         {
             "name": "3D index List[str]",
             "index_column_names": ["strings_aaa", "zero_one", "thousands"],
+            "domain": [None, [0, 1], [0, 9999]],
             "coords": [["aaa", "ccc"], None, None],
             "A": [10, 11, 14, 15],
             "throws": None,
@@ -796,6 +852,7 @@ def make_multiply_indexed_dataframe(tmp_path, index_column_names: List[str]):
         {
             "name": "3D index mixed",
             "index_column_names": ["strings_aaa", "zero_one", "thousands"],
+            "domain": [None, [0, 1], [0, 9999]],
             "coords": [("aaa", "ccc"), None, np.asarray([2000, 9999])],
             "A": [11],
             "throws": None,
@@ -803,6 +860,7 @@ def make_multiply_indexed_dataframe(tmp_path, index_column_names: List[str]):
         {
             "name": "value filter good",
             "index_column_names": ["0_thru_5", "strings_aaa"],
+            "domain": [[-1000, 1000], None],
             "coords": [None, ("ccc", "zzz")],
             "value_filter": "soma_joinid > 13",
             "A": [14, 15],
@@ -810,6 +868,7 @@ def make_multiply_indexed_dataframe(tmp_path, index_column_names: List[str]):
         {
             "name": "value filter bad",
             "index_column_names": ["0_thru_5", "strings_aaa"],
+            "domain": [[-1000, 1000], None],
             "coords": [None, ("bbb", "zzz")],
             "value_filter": "quick brown fox",
             "A": None,
@@ -822,7 +881,7 @@ def test_read_indexing(tmp_path, io):
     """Test various ways of indexing on read"""
 
     schema, sdf, n_data = make_multiply_indexed_dataframe(
-        tmp_path, io["index_column_names"]
+        tmp_path, io["index_column_names"], io["domain"]
     )
     with soma.DataFrame.open(uri=sdf.uri) as sdf:
         assert list(sdf.index_column_names) == io["index_column_names"]
@@ -868,7 +927,10 @@ def test_write_categorical_types(tmp_path):
         ]
     )
     with soma.DataFrame.create(
-        tmp_path.as_posix(), schema=schema, index_column_names=["soma_joinid"]
+        tmp_path.as_posix(),
+        schema=schema,
+        index_column_names=["soma_joinid"],
+        domain=[[0, 3]],
     ) as sdf:
         df = pd.DataFrame(
             data={
@@ -978,6 +1040,7 @@ def test_write_categorical_dim_extend(tmp_path, index_type):
         tmp_path.as_posix(),
         schema=schema,
         index_column_names=["soma_joinid"],
+        domain=[[0, 5]],
     ) as sdf:
         table = pa.Table.from_pandas(df1)
         dtype = pa.dictionary(index_type, pa.string())
@@ -1012,7 +1075,10 @@ def test_result_order(tmp_path):
         ]
     )
     with soma.DataFrame.create(
-        uri=tmp_path.as_posix(), schema=schema, index_column_names=["row", "col"]
+        uri=tmp_path.as_posix(),
+        schema=schema,
+        index_column_names=["row", "col"],
+        domain=[[0, 15], [0, 15]],
     ) as sdf:
         data = {
             "row": [0] * 4 + [1] * 4 + [2] * 4 + [3] * 4,
@@ -1112,6 +1178,7 @@ def test_timestamped_ops(tmp_path, allows_duplicates, consolidate):
         uri,
         schema=schema,
         index_column_names=["soma_joinid"],
+        domain=[[0, 1]],
         tiledb_timestamp=start,
         platform_config=platform_config,
     ) as sidf:
@@ -1253,7 +1320,9 @@ def test_extend_enumerations(tmp_path):
 
     schema = pa.Schema.from_pandas(written_df, preserve_index=False)
 
-    with soma.DataFrame.create(str(tmp_path), schema=schema) as soma_dataframe:
+    with soma.DataFrame.create(
+        str(tmp_path), schema=schema, domain=[[0, 9]]
+    ) as soma_dataframe:
         tbl = pa.Table.from_pandas(written_df, preserve_index=False)
         soma_dataframe.write(tbl)
 
@@ -1283,7 +1352,7 @@ def test_multiple_writes_with_str_enums(tmp_path):
             ),
         ]
     )
-    soma.DataFrame.create(uri, schema=schema).close()
+    soma.DataFrame.create(uri, schema=schema, domain=[[0, 7]]).close()
 
     df1 = pd.DataFrame(
         {
@@ -1354,7 +1423,7 @@ def test_multiple_writes_with_int_enums(tmp_path):
             ),
         ]
     )
-    soma.DataFrame.create(uri, schema=schema).close()
+    soma.DataFrame.create(uri, schema=schema, domain=[[0, 9]]).close()
 
     df1 = pd.DataFrame(
         {
@@ -1436,7 +1505,9 @@ def test_multichunk(tmp_path):
     expected_df = pd.concat([df_0, df_1, df_2], ignore_index=True)
 
     soma.DataFrame.create(
-        uri, schema=pa.Schema.from_pandas(df_0, preserve_index=False)
+        uri,
+        schema=pa.Schema.from_pandas(df_0, preserve_index=False),
+        domain=[[0, 11]],
     ).close()
 
     with soma.open(uri, mode="w") as A:
@@ -1485,7 +1556,9 @@ def test_multichunk_with_enums(tmp_path):
     expected_df = pd.concat([df_0, df_1, df_2], ignore_index=True)
 
     soma.DataFrame.create(
-        uri, schema=pa.Schema.from_pandas(df_0, preserve_index=False)
+        uri,
+        schema=pa.Schema.from_pandas(df_0, preserve_index=False),
+        domain=[[0, 11]],
     ).close()
 
     with soma.open(uri, mode="w") as A:
@@ -1530,7 +1603,7 @@ def test_enum_extend_past_numerical_limit(tmp_path):
             ),
         ]
     )
-    soma.DataFrame.create(uri, schema=schema).close()
+    soma.DataFrame.create(uri, schema=schema, domain=[[0, 999]]).close()
 
     n_elem = 132
     n_cats = 127
@@ -1588,7 +1661,7 @@ def test_enum_schema_report(tmp_path):
 
     arrow_schema = pa.Schema.from_pandas(pandas_df, preserve_index=False)
 
-    with soma.DataFrame.create(uri, schema=arrow_schema) as sdf:
+    with soma.DataFrame.create(uri, schema=arrow_schema, domain=[[0, 5]]) as sdf:
         arrow_table = pa.Table.from_pandas(pandas_df, preserve_index=False)
         sdf.write(arrow_table)
 
@@ -1651,7 +1724,7 @@ def test_nullable(tmp_path):
     pydict["yes-meta-flag-false"] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
     data = pa.Table.from_pydict(pydict)
 
-    with soma.DataFrame.create(uri, schema=asch) as sdf:
+    with soma.DataFrame.create(uri, schema=asch, domain=[[0, 9]]) as sdf:
         sdf.write(data)
 
     with soma.DataFrame.open(uri, "r") as sdf:
@@ -1671,7 +1744,7 @@ def test_only_evolve_schema_when_enmr_is_extended(tmp_path):
 
     # +1 creating the schema
     # +1 evolving the schema
-    with soma.DataFrame.create(uri, schema=schema) as sdf:
+    with soma.DataFrame.create(uri, schema=schema, domain=[[0, 4]]) as sdf:
         data = {}
         data["soma_joinid"] = [0, 1, 2, 3, 4]
         data["foo"] = pd.Categorical(["a", "bb", "ccc", "bb", "a"])
@@ -1721,7 +1794,7 @@ def test_fix_update_dataframe_with_var_strings(tmp_path):
         }
     )
 
-    with soma.DataFrame.create(uri, schema=tbl.schema) as sdf:
+    with soma.DataFrame.create(uri, schema=tbl.schema, domain=[[0, 3]]) as sdf:
         sdf.write(tbl)
 
     with soma.DataFrame.open(uri, "r") as sdf:
