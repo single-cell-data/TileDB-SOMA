@@ -82,3 +82,9 @@ test_that("validate read coords with dimension names and schema", {
   expect_equal(test_coords$int_column, 1:10)
   expect_equal(test_coords$soma_joinid, as.integer64(1:10))
 })
+
+test_that("half-named lists are not treated as named", {
+  expect_true(is_named_list(list(a=1, b=2)))
+  expect_false(is_named_list(list(a=1, 2)))
+  expect_false(is_named_list(list(1, 2)))
+})
