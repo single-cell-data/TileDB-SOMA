@@ -66,7 +66,7 @@ def test_point_cloud_basic_read(tmp_path):
         urljoin(baseuri, "user_defined"),
         schema=asch,
         index_column_names="x",
-        axis_names="x",
+        coordinate_space="x",
         domain=((1, 10),),
     ) as ptc:
         pydict = {}
@@ -397,7 +397,7 @@ def test_point_cloud_read_spatial_region_basic_3d(
         uri,
         schema=schema,
         index_column_names=("soma_joinid", "x", "y", "z"),
-        axis_names=("x", "y", "z"),
+        coordinate_space=("x", "y", "z"),
     ) as ptc:
         pydict = {
             "soma_joinid": [1, 2, 3, 4, 5],

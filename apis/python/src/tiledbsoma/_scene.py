@@ -9,7 +9,11 @@ Implementation of a SOMA Scene
 from typing import Any, List, Optional, Sequence, Union
 
 import somacore
-from somacore import Axis, CoordinateSpace, CoordinateTransform, IdentityTransform
+from somacore import (
+    CoordinateSpace,
+    CoordinateTransform,
+    IdentityTransform,
+)
 
 from . import _funcs, _tdb_handles
 from ._collection import Collection, CollectionBase
@@ -104,68 +108,79 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
     @_funcs.forwards_kwargs_to(
         GeometryDataFrame.create, exclude=("context", "tiledb_timestamp")
     )
-    def add_geometry_dataframe(
+    def add_new_geometry_dataframe(
         self,
         key: str,
         subcollection: Union[str, Sequence[str]],
-        transform: Optional[CoordinateTransform],
         *,
-        uri: str,
+        transform: Optional[CoordinateTransform],
+        uri: Optional[str] = None,
         **kwargs: Any,
     ) -> GeometryDataFrame:
         """Adds a ``GeometryDataFrame`` to the scene and sets a coordinate transform
         between the scene and the dataframe.
 
-        If the subcollection the geometry dataframe is inside of is more than one
-        layer deep, the input should be provided as a sequence of names. For example,
-        to set the transformation to a geometry dataframe named  "transcripts" in
-        the "var/RNA" collection::
+        If the subcollection the geometry dataframe will be created inside of is more
+        than one layer deep, the input should be provided as a sequence of names. For
+        example, to add a new geometry dataframe named  "transcripts" in the "var/RNA"
+        collection::
 
-            scene.add_geometry_dataframe(
-                'cell_boundaries', subcollection=['var', 'RNA'], **kwargs
+            scene.add_new_geometry_dataframe(
+                'transcripts', subcollection=['var', 'RNA'], **kwargs
             )
+
+        See :meth:`add_new_collection` for details about child URIs.
 
         Args:
             key: The name of the geometry dataframe.
-            transform: The coordinate transformation from the scene to the dataframe.
             subcollection: The name, or sequence of names, of the subcollection the
                 dataframe is stored in. Defaults to ``'obsl'``.
+            transform: The coordinate transformation from the scene to the dataframe.
+            uri: If provided, overrides the default URI what would be used to create
+                this object. This may be aboslution or relative.
+            kwargs: Additional keyword arugments as specified in
+                :meth:`spatial.GeometryDataFrame.create`.
 
         Returns:
             The newly create ``GeometryDataFrame``, opened for writing.
 
-        Lifecycle: experimental
+        Lifecycle:
+            Experimental.
         """
         raise NotImplementedError()
 
     @_funcs.forwards_kwargs_to(
         MultiscaleImage.create, exclude=("context", "tiledb_timestamp")
     )
-    def add_multiscale_image(
+    def add_new_multiscale_image(
         self,
         key: str,
         subcollection: Union[str, Sequence[str]],
-        transform: Optional[CoordinateTransform],
         *,
-        uri: str,
+        transform: Optional[CoordinateTransform],
+        uri: Optional[str] = None,
         **kwargs: Any,
     ) -> MultiscaleImage:
         """Adds a ``MultiscaleImage`` to the scene and sets a coordinate transform
         between the scene and the dataframe.
 
-        Parameters are as in :meth:`spatial.MultiscaleImage.create`.
         See :meth:`add_new_collection` for details about child URIs.
 
         Args:
             key: The name of the multiscale image.
-            transform: The coordinate transformation from the scene to the dataframe.
             subcollection: The name, or sequence of names, of the subcollection the
                 dataframe is stored in. Defaults to ``'obsl'``.
+            transform: The coordinate transformation from the scene to the dataframe.
+            uri: If provided, overrides the default URI what would be used to create
+                this object. This may be aboslution or relative.
+            kwargs: Additional keyword arugments as specified in
+                :meth:`spatial.MultiscaleImage.create`.
 
         Returns:
             The newly create ``MultiscaleImage``, opened for writing.
 
-        Lifecycle: experimental
+        Lifecycle:
+            Experimental.
         """
         raise NotImplementedError()
 
@@ -176,27 +191,41 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
         self,
         key: str,
         subcollection: Union[str, Sequence[str]],
-        transform: Optional[CoordinateTransform],
         *,
+        transform: Optional[CoordinateTransform],
         uri: Optional[str] = None,
         **kwargs: Any,
     ) -> PointCloudDataFrame:
-        """Adds a point cloud dataframe to the scene and sets a coordinate
-        transform between the scene and the dataframe.
+        """Adds a point cloud to the scene and sets a coordinate transform
+        between the scene and the dataframe.
 
-        Parameters are as in :meth:`spatial.PointCloudDataFrame.create`.
+        If the subcollection the point cloud dataframe will be added to is more than
+        one layer deep, the input should be provided as a sequence of names. For
+        example, to add a new point cloud dataframe named  "transcripts" to the
+        "var/RNA" collection::
+
+            scene.add_new_point_cloud_dataframe(
+                'transcripts', subcollection=['var', 'RNA'], **kwargs
+            )
+
+
         See :meth:`add_new_collection` for details about child URIs.
 
         Args:
-            key: The name of the geometry dataframe.
-            transform: The coordinate transformation from the scene to the dataframe.
+            key: The name of the point cloud dataframe.
             subcollection: The name, or sequence of names, of the subcollection the
                 dataframe is stored in. Defaults to ``'obsl'``.
+            transform: The coordinate transformation from the scene to the dataframe.
+            uri: If provided, overrides the default URI what would be used to create
+                this object. This may be aboslution or relative.
+            kwargs: Additional keyword arugments as specified in
+                :meth:`spatial.PointCloudDataFrame.create`.
 
         Returns:
             The newly created ``PointCloudDataFrame``, opened for writing.
 
-        Lifecycle: experimental
+        Lifecycle:
+            Experimental.
         """
         raise NotImplementedError()
 
@@ -285,10 +314,7 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
             if isinstance(transform, IdentityTransform):
                 coordinate_space = self.coordinate_space
             else:
-                # mypy false positive https://github.com/python/mypy/issues/5313
-                coordinate_space = CoordinateSpace(
-                    tuple(Axis(name=axis_name) for axis_name in transform.input_axes)  # type: ignore[misc]
-                )
+                coordinate_space = CoordinateSpace.from_axis_names(transform.input_axes)
         else:
             if transform.input_axes != coordinate_space.axis_names:
                 raise ValueError(
@@ -359,10 +385,7 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
             if isinstance(transform, IdentityTransform):
                 coordinate_space = self.coordinate_space
             else:
-                # mypy false positive https://github.com/python/mypy/issues/5313
-                coordinate_space = CoordinateSpace(
-                    tuple(Axis(name=axis_name) for axis_name in transform.input_axes)  # type: ignore[misc]
-                )
+                coordinate_space = CoordinateSpace.from_axis_names(transform.input_axes)
         else:
             if transform.input_axes != coordinate_space.axis_names:
                 raise ValueError(

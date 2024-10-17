@@ -15,7 +15,6 @@ import attrs
 import pyarrow as pa
 import somacore
 from somacore import (
-    Axis,
     CoordinateSpace,
     CoordinateTransform,
     ScaleTransform,
@@ -180,9 +179,8 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
             datatype=type,
         )
 
-        # mypy false positive https://github.com/python/mypy/issues/5313
-        coord_space = CoordinateSpace(
-            tuple(Axis(name) for name in schema.get_coordinate_space_axis_names())  # type: ignore[misc]
+        coord_space = CoordinateSpace.from_axis_names(
+            schema.get_coordinate_space_axis_names()
         )
         schema_str = schema.to_json()
         coord_space_str = coordinate_space_to_json(coord_space)
@@ -422,9 +420,8 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
                 )
             # Create or check output coordinates.
             if region_coord_space is None:
-                # mypy false positive https://github.com/python/mypy/issues/5313
-                region_coord_space = CoordinateSpace(
-                    tuple(Axis(axis_name) for axis_name in region_transform.input_axes)  # type: ignore[misc]
+                region_coord_space = CoordinateSpace.from_axis_names(
+                    region_transform.input_axes
                 )
             elif len(region_coord_space) != len(data_coord_space):
                 raise ValueError(
@@ -641,11 +638,8 @@ class MultiscaleImageSchema:
                 f"{self.reference_level_properties.image_type}. "
             )
 
-    # mypy false positive https://github.com/python/mypy/issues/5313
     def create_coordinate_space(self) -> CoordinateSpace:
-        return CoordinateSpace(
-            tuple(Axis(name) for name in self.get_coordinate_space_axis_names())  # type: ignore[misc]
-        )
+        return CoordinateSpace.from_axis_names(self.get_coordinate_space_axis_names())
 
     def get_coordinate_space_axis_names(self) -> Tuple[str, ...]:
         # TODO: Setting axes and the coordinate space is going to be updated
