@@ -1206,6 +1206,8 @@ def _write_dataframe_impl(
         arrow_table = _extract_new_values_for_append(df_uri, arrow_table, context)
 
     try:
+        # Note: tiledbsoma.io creates dataframes with soma_joinid being the one
+        # and only index column.
         domain = None
         if NEW_SHAPE_FEATURE_FLAG_ENABLED:
             domain = ((0, shape - 1),)
