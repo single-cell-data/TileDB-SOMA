@@ -426,7 +426,7 @@ def test_columns(tmp_path):
 
 @pytest.fixture
 def make_dataframe(request):
-    index_type = request.param
+    index_type, domain = request.param
 
     index = {
         pa.string(): ["A", "B", "C"],
@@ -458,35 +458,38 @@ def make_dataframe(request):
             "float32": np.array([0.0, 1.1, 2.2], np.float32),
         }
     )
-    return pa.Table.from_pandas(df)
+    return [pa.Table.from_pandas(df), domain]
 
 
 @pytest.mark.parametrize(
     "make_dataframe",
     [
-        pa.float32(),
-        pa.float64(),
-        pa.int8(),
-        pa.uint8(),
-        pa.int16(),
-        pa.uint16(),
-        pa.int32(),
-        pa.uint32(),
-        pa.int64(),
-        pa.uint64(),
-        pa.string(),
-        pa.large_string(),
-        pa.binary(),
-        pa.large_binary(),
+        [pa.float32(), [[-1000, 1000]]],
+        [pa.float64(), [[-1000, 1000]]],
+        [pa.int8(), [[-100, 100]]],
+        [pa.uint8(), [[0, 100]]],
+        [pa.int16(), [[-1000, 1000]]],
+        [pa.uint16(), [[0, 1000]]],
+        [pa.int32(), [[-1000, 1000]]],
+        [pa.uint32(), [[0, 1000]]],
+        [pa.int64(), [[-1000, 1000]]],
+        [pa.uint64(), [[0, 1000]]],
+        [pa.string(), [None]],
+        [pa.large_string(), [None]],
+        [pa.binary(), [None]],
+        [pa.large_binary(), [None]],
     ],
     indirect=True,
 )
 def test_index_types(tmp_path, make_dataframe):
     """Verify that the index columns can be of various types"""
     sdf = soma.DataFrame.create(
-        tmp_path.as_posix(), schema=make_dataframe.schema, index_column_names=["index"]
+        tmp_path.as_posix(),
+        schema=make_dataframe[0].schema,
+        index_column_names=["index"],
+        domain=make_dataframe[1],
     )
-    sdf.write(make_dataframe)
+    sdf.write(make_dataframe[0])
 
 
 def make_multiply_indexed_dataframe(
@@ -538,7 +541,7 @@ def make_multiply_indexed_dataframe(
         {
             "name": "1D indexing slot is None",
             "index_column_names": ["0_thru_5"],
-            "domain": [[0, 5]],
+            "domain": [[-1000, 1000]],
             "coords": [None],
             "A": [10, 11, 12, 13, 14, 15],
             "throws": None,
@@ -546,7 +549,7 @@ def make_multiply_indexed_dataframe(
         {
             "name": "1D indexing slot is int",
             "index_column_names": ["0_thru_5"],
-            "domain": [[0, 5]],
+            "domain": [[-1000, 1000]],
             "coords": [0],
             "A": [10],
             "throws": None,
@@ -554,7 +557,7 @@ def make_multiply_indexed_dataframe(
         {
             "name": "1D no results for 100",
             "index_column_names": ["0_thru_5"],
-            "domain": [[0, 5]],
+            "domain": [[-1000, 1000]],
             "coords": [100],
             "A": [],
             "throws": None,
@@ -562,7 +565,7 @@ def make_multiply_indexed_dataframe(
         {
             "name": "1D no results for -100",
             "index_column_names": ["0_thru_5"],
-            "domain": [[0, 5]],
+            "domain": [[-1000, 1000]],
             "coords": [-100],
             "A": [],
             "throws": None,
@@ -570,7 +573,7 @@ def make_multiply_indexed_dataframe(
         {
             "name": "1D indexing slot is list",
             "index_column_names": ["0_thru_5"],
-            "domain": [[0, 5]],
+            "domain": [[-1000, 1000]],
             "coords": [[1, 3]],
             "A": [11, 13],
             "throws": None,
@@ -578,7 +581,7 @@ def make_multiply_indexed_dataframe(
         {
             "name": "1D no results for -100, 100",
             "index_column_names": ["0_thru_5"],
-            "domain": [[0, 5]],
+            "domain": [[-1000, 1000]],
             "coords": [[-100, 100]],
             "A": [],
             "throws": None,
@@ -586,7 +589,7 @@ def make_multiply_indexed_dataframe(
         {
             "name": "1D empty list returns empty results",
             "index_column_names": ["0_thru_5"],
-            "domain": [[0, 5]],
+            "domain": [[-1000, 1000]],
             "coords": [[]],
             "A": [],
             "throws": None,
@@ -594,7 +597,7 @@ def make_multiply_indexed_dataframe(
         {
             "name": "1D indexing slot is tuple",
             "index_column_names": ["0_thru_5"],
-            "domain": [[0, 5]],
+            "domain": [[-1000, 1000]],
             "coords": [(1, 3)],
             "A": [11, 13],
             "throws": None,
@@ -602,7 +605,7 @@ def make_multiply_indexed_dataframe(
         {
             "name": "1D indexing slot is range",
             "index_column_names": ["0_thru_5"],
-            "domain": [[0, 5]],
+            "domain": [[-1000, 1000]],
             "coords": [range(1, 3)],
             "A": [11, 12],
             "throws": None,
@@ -610,7 +613,7 @@ def make_multiply_indexed_dataframe(
         {
             "name": "1D indexing slot is pa.ChunkedArray",
             "index_column_names": ["0_thru_5"],
-            "domain": [[0, 5]],
+            "domain": [[-1000, 1000]],
             "coords": [pa.chunked_array(pa.array([1, 3]))],
             "A": [11, 13],
             "throws": None,
@@ -618,7 +621,7 @@ def make_multiply_indexed_dataframe(
         {
             "name": "1D indexing slot is pa.Array",
             "index_column_names": ["0_thru_5"],
-            "domain": [[0, 5]],
+            "domain": [[-1000, 1000]],
             "coords": [pa.array([1, 3])],
             "A": [11, 13],
             "throws": None,
@@ -627,7 +630,7 @@ def make_multiply_indexed_dataframe(
         {
             "name": "1D indexing slot is np.ndarray",
             "index_column_names": ["0_thru_5"],
-            "domain": [[0, 5]],
+            "domain": [[-1000, 1000]],
             "coords": [np.asarray([1, 3])],
             "A": [11, 13],
             "throws": None,
@@ -635,7 +638,7 @@ def make_multiply_indexed_dataframe(
         {
             "name": "1D indexing by 2D np.ndarray",
             "index_column_names": ["0_thru_5"],
-            "domain": [[0, 5]],
+            "domain": [[-1000, 1000]],
             "coords": [
                 np.asarray([[1, 3], [2, 4]])
             ],  # Error since 2D array in the slot
@@ -645,7 +648,7 @@ def make_multiply_indexed_dataframe(
         {
             "name": "1D indexing by slice(None)",
             "index_column_names": ["0_thru_5"],
-            "domain": [[0, 5]],
+            "domain": [[-1000, 1000]],
             "coords": [
                 slice(None)
             ],  # Indexing slot is none-slice i.e. `[:]` which is like None
@@ -655,7 +658,7 @@ def make_multiply_indexed_dataframe(
         {
             "name": "1D indexing by empty coords",
             "index_column_names": ["0_thru_5"],
-            "domain": [[0, 5]],
+            "domain": [[-1000, 1000]],
             "coords": [],
             "A": [10, 11, 12, 13, 14, 15],
             "throws": None,
@@ -663,7 +666,7 @@ def make_multiply_indexed_dataframe(
         {
             "name": "1D indexing by 1:3",
             "index_column_names": ["0_thru_5"],
-            "domain": [[0, 5]],
+            "domain": [[-1000, 1000]],
             "coords": [slice(1, 3)],  # Indexing slot is double-ended slice
             "A": [11, 12, 13],
             "throws": None,
@@ -671,7 +674,7 @@ def make_multiply_indexed_dataframe(
         {
             "name": "1D indexing by [:3]",
             "index_column_names": ["0_thru_5"],
-            "domain": [[0, 5]],
+            "domain": [[-1000, 1000]],
             "coords": [slice(None, 3)],  # Half-slice
             "A": [10, 11, 12, 13],
             "throws": None,
@@ -679,7 +682,7 @@ def make_multiply_indexed_dataframe(
         {
             "name": "1D indexing by [2:]",
             "index_column_names": ["0_thru_5"],
-            "domain": [[0, 5]],
+            "domain": [[-1000, 1000]],
             "coords": [slice(2, None)],  # Half-slice
             "A": [12, 13, 14, 15],
             "throws": None,
@@ -695,7 +698,7 @@ def make_multiply_indexed_dataframe(
         {
             "name": "1D indexing by ['bbb':'c']",
             "index_column_names": ["strings_aaa", "zero_one"],
-            "domain": [["", "~"], [0, 1]],
+            "domain": [None, [0, 1]],
             "coords": [slice("bbb", "c")],
             "A": [12, 13],
             "throws": None,
@@ -703,7 +706,7 @@ def make_multiply_indexed_dataframe(
         {
             "name": "1D indexing by ['ccc':]",
             "index_column_names": ["strings_aaa", "zero_one"],
-            "domain": [["", "~"], [0, 1]],
+            "domain": [None, [0, 1]],
             "coords": [slice("ccc", None)],
             "A": [14, 15],
             "throws": None,
@@ -711,7 +714,7 @@ def make_multiply_indexed_dataframe(
         {
             "name": "1D indexing by [:'bbd']",
             "index_column_names": ["strings_aaa", "zero_one"],
-            "domain": [["", "~"], [0, 1]],
+            "domain": [None, [0, 1]],
             "coords": [slice("bbd")],
             "A": [10, 11, 12, 13],
             "throws": None,
@@ -753,7 +756,7 @@ def make_multiply_indexed_dataframe(
         {
             "name": "backwards slice",
             "index_column_names": ["0_thru_5"],
-            "domain": [[0, 5]],
+            "domain": [[-1000, 1000]],
             "coords": [slice(1, 0)],
             "A": None,
             "throws": ValueError,
@@ -761,7 +764,7 @@ def make_multiply_indexed_dataframe(
         {
             "name": "too many columns",
             "index_column_names": ["0_thru_5"],
-            "domain": [[0, 5]],
+            "domain": [[-1000, 1000]],
             "coords": [(1,), (2,)],
             "A": None,
             "throws": ValueError,
@@ -769,7 +772,7 @@ def make_multiply_indexed_dataframe(
         {
             "name": "wrong coords type",
             "index_column_names": ["0_thru_5"],
-            "domain": [[0, 5]],
+            "domain": [[-1000, 1000]],
             "coords": "bogus",
             "A": None,
             "throws": TypeError,
@@ -777,7 +780,7 @@ def make_multiply_indexed_dataframe(
         {
             "name": "bad index type dict",
             "index_column_names": ["0_thru_5"],
-            "domain": [[0, 5]],
+            "domain": [[-1000, 1000]],
             "coords": [{"bogus": True}],
             "A": None,
             "throws": TypeError,
@@ -785,7 +788,7 @@ def make_multiply_indexed_dataframe(
         {
             "name": "bad index type bool",
             "index_column_names": ["strings_aaa", "zero_one"],
-            "domain": [["", "~"], [0, 1]],
+            "domain": [None, [0, 1]],
             "coords": [[True], slice(None)],
             "A": None,
             "throws": TypeError,
@@ -793,7 +796,7 @@ def make_multiply_indexed_dataframe(
         {
             "name": "2D index empty",
             "index_column_names": ["strings_aaa", "zero_one"],
-            "domain": [["", "~"], [0, 1]],
+            "domain": [None, [0, 1]],
             "coords": (),
             "A": [10, 11, 12, 13, 14, 15],
             "throws": None,
@@ -801,7 +804,7 @@ def make_multiply_indexed_dataframe(
         {
             "name": "2D index None",
             "index_column_names": ["strings_aaa", "zero_one"],
-            "domain": [["", "~"], [0, 1]],
+            "domain": [None, [0, 1]],
             "coords": [None, None],
             "A": [10, 11, 12, 13, 14, 15],
             "throws": None,
@@ -809,7 +812,7 @@ def make_multiply_indexed_dataframe(
         {
             "name": "2D index 0, 0",
             "index_column_names": ["0_thru_5", "zero_one"],
-            "domain": [[0, 5], [0, 1]],
+            "domain": [[-1000, 1000], [0, 1]],
             "coords": [0, 0],
             "A": [10],
             "throws": None,
@@ -817,7 +820,7 @@ def make_multiply_indexed_dataframe(
         {
             "name": "2D index str, int",
             "index_column_names": ["strings_aaa", "zero_one"],
-            "domain": [["", "~"], [0, 1]],
+            "domain": [None, [0, 1]],
             "coords": [["aaa"], 0],
             "A": [10],
             "throws": None,
@@ -825,7 +828,7 @@ def make_multiply_indexed_dataframe(
         {
             "name": "2D index str, not sequence[str]",
             "index_column_names": ["strings_aaa", "zero_one"],
-            "domain": [["", "~"], [0, 1]],
+            "domain": [None, [0, 1]],
             "coords": ["aaa", 0],
             "A": [10],
             "throws": None,
@@ -833,7 +836,7 @@ def make_multiply_indexed_dataframe(
         {
             "name": "2D index List[str]",
             "index_column_names": ["strings_aaa", "zero_one"],
-            "domain": [["", "~"], [0, 1]],
+            "domain": [None, [0, 1]],
             "coords": [["aaa", "ccc"], None],
             "A": [10, 11, 14, 15],
             "throws": None,
@@ -841,7 +844,7 @@ def make_multiply_indexed_dataframe(
         {
             "name": "3D index List[str]",
             "index_column_names": ["strings_aaa", "zero_one", "thousands"],
-            "domain": [["", "~"], [0, 1], [0, 9999]],
+            "domain": [None, [0, 1], [0, 9999]],
             "coords": [["aaa", "ccc"], None, None],
             "A": [10, 11, 14, 15],
             "throws": None,
@@ -849,7 +852,7 @@ def make_multiply_indexed_dataframe(
         {
             "name": "3D index mixed",
             "index_column_names": ["strings_aaa", "zero_one", "thousands"],
-            "domain": [["", "~"], [0, 1], [0, 9999]],
+            "domain": [None, [0, 1], [0, 9999]],
             "coords": [("aaa", "ccc"), None, np.asarray([2000, 9999])],
             "A": [11],
             "throws": None,
@@ -857,7 +860,7 @@ def make_multiply_indexed_dataframe(
         {
             "name": "value filter good",
             "index_column_names": ["0_thru_5", "strings_aaa"],
-            "domain": [[0, 5], ["", "~"]],
+            "domain": [[-1000, 1000], None],
             "coords": [None, ("ccc", "zzz")],
             "value_filter": "soma_joinid > 13",
             "A": [14, 15],
@@ -865,7 +868,7 @@ def make_multiply_indexed_dataframe(
         {
             "name": "value filter bad",
             "index_column_names": ["0_thru_5", "strings_aaa"],
-            "domain": [[0, 5], ["", "~"]],
+            "domain": [[-1000, 1000], None],
             "coords": [None, ("bbb", "zzz")],
             "value_filter": "quick brown fox",
             "A": None,

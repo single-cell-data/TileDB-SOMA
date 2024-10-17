@@ -248,12 +248,7 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         domain = None
 
         if soma_domain is None:
-            # XXX COMMENT
-            if NEW_SHAPE_FEATURE_FLAG_ENABLED:
-                # XXX NOT CORRECT FOR VARIOUS TYPES
-                soma_domain = tuple((0, 0) for _ in index_column_names)
-            else:
-                soma_domain = tuple(None for _ in index_column_names)
+            soma_domain = tuple(None for _ in index_column_names)
         else:
             ndom = len(soma_domain)
             nidx = len(index_column_names)
@@ -272,10 +267,10 @@ class DataFrame(SOMAArray, somacore.DataFrame):
             )
 
             (slot_core_current_domain, saturated_cd) = _fill_out_slot_soma_domain(
-                slot_soma_domain, index_column_name, pa_field.type, dtype
+                slot_soma_domain, False, index_column_name, pa_field.type, dtype
             )
             (slot_core_max_domain, saturated_md) = _fill_out_slot_soma_domain(
-                None, index_column_name, pa_field.type, dtype
+                None, True, index_column_name, pa_field.type, dtype
             )
 
             extent = _find_extent_for_domain(
@@ -829,6 +824,7 @@ def _canonicalize_schema(
 
 def _fill_out_slot_soma_domain(
     slot_domain: AxisDomain,
+    is_max_domain: bool,
     index_column_name: str,
     pa_type: pa.DataType,
     dtype: Any,
@@ -878,17 +874,30 @@ def _fill_out_slot_soma_domain(
         # will (and must) ignore these when creating the TileDB schema.
         slot_domain = "", ""
     elif np.issubdtype(dtype, NPInteger):
-        iinfo = np.iinfo(cast(NPInteger, dtype))
-        slot_domain = iinfo.min, iinfo.max - 1
-        # Here the slot_domain isn't specified by the user; we're setting it.
-        # The SOMA spec disallows negative soma_joinid.
-        if index_column_name == SOMA_JOINID:
-            slot_domain = (0, 2**63 - 2)
-        saturated_range = True
+        if is_max_domain:
+            # Core max domain is immutable. If unspecified, it should be as big
+            # as possible since it can never be resized.
+            iinfo = np.iinfo(cast(NPInteger, dtype))
+            slot_domain = iinfo.min, iinfo.max - 1
+            # Here the slot_domain isn't specified by the user; we're setting it.
+            # The SOMA spec disallows negative soma_joinid.
+            if index_column_name == SOMA_JOINID:
+                slot_domain = (0, 2**63 - 2)
+            saturated_range = True
+        else:
+            # Core current domain is mutable but not shrinkable. If unspecified,
+            # it should be as small as possible since it can only be grown, not shrunk.
+            #
+            # Also: core current domain can't be (0, -1): only (0, 0). Yes, this
+            # does mean that "smallest" current domain has shape 1 not 0.
+            slot_domain = 0, 0
     elif np.issubdtype(dtype, NPFloating):
-        finfo = np.finfo(cast(NPFloating, dtype))
-        slot_domain = finfo.min, finfo.max
-        saturated_range = True
+        if is_max_domain:
+            finfo = np.finfo(cast(NPFloating, dtype))
+            slot_domain = finfo.min, finfo.max
+            saturated_range = True
+        else:
+            slot_domain = 0.0, 0.0
 
     # The `iinfo.min+1` is necessary as of tiledb core 2.15 / tiledb-py 0.21.1 since
     # `iinfo.min` maps to `NaT` (not a time), resulting in
@@ -900,25 +909,37 @@ def _fill_out_slot_soma_domain(
     #   expanded to multiple of tile extent exceeds max value representable by domain type. Reduce
     #   domain max by 1 tile extent to allow for expansion.
     elif dtype == "datetime64[s]":
-        iinfo = np.iinfo(cast(NPInteger, np.int64))
-        slot_domain = np.datetime64(iinfo.min + 1, "s"), np.datetime64(
-            iinfo.max - 1000000, "s"
-        )
+        if is_max_domain:
+            iinfo = np.iinfo(cast(NPInteger, np.int64))
+            slot_domain = np.datetime64(iinfo.min + 1, "s"), np.datetime64(
+                iinfo.max - 1000000, "s"
+            )
+        else:
+            slot_domain = np.datetime64(0, "s"), np.datetime64(0, "s")
     elif dtype == "datetime64[ms]":
-        iinfo = np.iinfo(cast(NPInteger, np.int64))
-        slot_domain = np.datetime64(iinfo.min + 1, "ms"), np.datetime64(
-            iinfo.max - 1000000, "ms"
-        )
+        if is_max_domain:
+            iinfo = np.iinfo(cast(NPInteger, np.int64))
+            slot_domain = np.datetime64(iinfo.min + 1, "ms"), np.datetime64(
+                iinfo.max - 1000000, "ms"
+            )
+        else:
+            slot_domain = np.datetime64(0, "ms"), np.datetime64(0, "ms")
     elif dtype == "datetime64[us]":
-        iinfo = np.iinfo(cast(NPInteger, np.int64))
-        slot_domain = np.datetime64(iinfo.min + 1, "us"), np.datetime64(
-            iinfo.max - 1000000, "us"
-        )
+        if is_max_domain:
+            iinfo = np.iinfo(cast(NPInteger, np.int64))
+            slot_domain = np.datetime64(iinfo.min + 1, "us"), np.datetime64(
+                iinfo.max - 1000000, "us"
+            )
+        else:
+            slot_domain = np.datetime64(0, "us"), np.datetime64(0, "us")
     elif dtype == "datetime64[ns]":
-        iinfo = np.iinfo(cast(NPInteger, np.int64))
-        slot_domain = np.datetime64(iinfo.min + 1, "ns"), np.datetime64(
-            iinfo.max - 1000000, "ns"
-        )
+        if is_max_domain:
+            iinfo = np.iinfo(cast(NPInteger, np.int64))
+            slot_domain = np.datetime64(iinfo.min + 1, "ns"), np.datetime64(
+                iinfo.max - 1000000, "ns"
+            )
+        else:
+            slot_domain = np.datetime64(0, "ns"), np.datetime64(0, "ns")
 
     else:
         raise TypeError(f"Unsupported dtype {dtype}")

@@ -183,10 +183,10 @@ class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
             )
 
             (slot_core_current_domain, saturated_cd) = _fill_out_slot_soma_domain(
-                slot_soma_domain, index_column_name, pa_field.type, dtype
+                slot_soma_domain, False, index_column_name, pa_field.type, dtype
             )
             (slot_core_max_domain, saturated_md) = _fill_out_slot_soma_domain(
-                None, index_column_name, pa_field.type, dtype
+                None, True, index_column_name, pa_field.type, dtype
             )
 
             extent = _find_extent_for_domain(
