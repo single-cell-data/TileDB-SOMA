@@ -244,12 +244,13 @@ def test_scene_point_cloud(tmp_path, coord_transform, transform_kwargs):
         obsl_uri = urljoin(baseuri, "obsl")
         scene["obsl"] = soma.Collection.create(obsl_uri)
 
-        ptc_uri = urljoin(obsl_uri, "ptc")
         asch = pa.schema([("x", pa.float64()), ("y", pa.float64())])
         coord_space = soma.CoordinateSpace([soma.Axis(name="x"), soma.Axis(name="y")])
 
-        # TODO replace with Scene.add_new_point_cloud_dataframe when implemented
-        scene["obsl"]["ptc"] = soma.PointCloudDataFrame.create(ptc_uri, schema=asch)
+        # TODO Add transform directly to add_new_point_cloud
+        scene.add_new_point_cloud_dataframe(
+            "ptc", subcollection="obsl", transform=None, schema=asch
+        )
 
         transform = coord_transform(
             input_axes=("x", "y"), output_axes=("x", "y"), **transform_kwargs
@@ -312,12 +313,15 @@ def test_scene_multiscale_image(tmp_path, coord_transform, transform_kwargs):
         img_uri = urljoin(baseuri, "img")
         scene["img"] = soma.Collection.create(img_uri)
 
-        msi_uri = urljoin(img_uri, "msi")
         coord_space = soma.CoordinateSpace([soma.Axis(name="x"), soma.Axis(name="y")])
 
-        # TODO replace with Scene.add_multiscale_image when implemented
-        scene["img"]["msi"] = soma.MultiscaleImage.create(
-            msi_uri, type=pa.int64(), reference_level_shape=[1, 2, 3]
+        # TODO Add transform directly to add_new_multiscale_image
+        scene.add_new_multiscale_image(
+            "msi",
+            "img",
+            transform=None,
+            type=pa.int64(),
+            reference_level_shape=[1, 2, 3],
         )
 
         transform = coord_transform(
