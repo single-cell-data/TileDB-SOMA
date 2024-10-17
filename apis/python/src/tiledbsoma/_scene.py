@@ -303,10 +303,40 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
         Lifecycle:
             Experimental.
         """
+        # If the transform is set, check it is consistent with the coordinate spaces.
         if transform is not None:
-            raise NotImplementedError()
+            # Get Scene coordinate space and check the axis names.
+            if self.coordinate_space is None:
+                raise SOMAError(
+                    "The scene coordinate space must be set before setting a transform."
+                )
+            if transform.input_axes != self.coordinate_space.axis_names:
+                raise ValueError(
+                    f"The name of the transform input axes, {transform.input_axes}, "
+                    f"do not match the name of the axes, "
+                    f"{self.coordinate_space.axis_names}, in the scene coordinate "
+                    f"space."
+                )
+
+            # Get point cloud coordinate space and check
+            coord_space: Union[Sequence[str], CoordinateSpace] = kwargs[
+                "coordinate_space"
+            ]
+            elem_axis_names = (
+                coord_space.axis_names
+                if isinstance(coord_space, CoordinateSpace)
+                else tuple(coord_space)
+            )
+            if transform.output_axes != elem_axis_names:
+                raise ValueError(
+                    f"The name of the transform output axes, {transform.output_axes}, "
+                    f"do not match the name of the axes, {elem_axis_names}, of the "
+                    f"coordinate space the point cloud is defined on."
+                )
+
+        # Open the collection and add the new point cloud.
         coll = self._open_subcollection(subcollection)
-        return coll._add_new_element(
+        point_cloud = coll._add_new_element(
             key,
             PointCloudDataFrame,
             lambda create_uri: PointCloudDataFrame.create(
@@ -317,6 +347,13 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
             ),
             uri,
         )
+
+        # Store the metadata for the transform.
+        if transform is not None:
+            coll.metadata[f"soma_scene_registry_{key}"] = transform_to_json(transform)
+
+        # Return the point cloud.
+        return point_cloud
 
     def set_transform_to_geometry_dataframe(
         self,
