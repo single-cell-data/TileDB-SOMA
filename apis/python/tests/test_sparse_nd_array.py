@@ -390,7 +390,7 @@ def test_sparse_nd_array_shaping(tmp_path, shape_is_nones, element_type):
     if soma._flags.NEW_SHAPE_FEATURE_FLAG_ENABLED:
         shape = [2, 3]
     else:
-        shape = ([None, None] if shape_is_nones else [2, 3])
+        shape = [None, None] if shape_is_nones else [2, 3]
 
     soma.SparseNDArray.create(
         uri,
