@@ -77,6 +77,11 @@ test_that("DataFrame Factory", {
           expect_equal(df$int32, -310)
           expect_equal(as.character(df$enum), c("green"))
       },
+      'soma_joinid == 10.0' = function(df) {
+          expect_equal(df$soma_joinid, 10)
+          expect_equal(df$int32, -310)
+          expect_equal(as.character(df$enum), c("green"))
+      },
       'soma_joinid > 4 && soma_joinid < 8' = function(df) {
           expect_equal(df$soma_joinid, 5:7)
           expect_equal(df$string, c("egg", "fig", "goose"))
@@ -85,11 +90,25 @@ test_that("DataFrame Factory", {
       'soma_joinid < 4 || soma_joinid > 8' = function(df) {
           expect_equal(df$soma_joinid, c(1:3, 9:10))
       },
+      '(soma_joinid < 4) || (soma_joinid > 8)' = function(df) {
+          expect_equal(df$soma_joinid, c(1:3, 9:10))
+      },
 
       'int8 == 8' = function(df) {
           expect_equal(length(df$soma_joinid), 0)
       },
       'int8 == -12' = function(df) {
+          expect_equal(df$soma_joinid, c(2))
+      },
+      'uint8 == 12' = function(df) {
+          expect_equal(df$soma_joinid, c(2))
+      },
+      'uint8 == 268' = function(df) {
+          # 12+256
+          expect_equal(df$soma_joinid, c(2))
+      },
+      'uint8 == -244' = function(df) {
+          # 12-256
           expect_equal(df$soma_joinid, c(2))
       },
       'int16 > -203' = function(df) {
@@ -122,6 +141,9 @@ test_that("DataFrame Factory", {
           expect_equal(df$soma_joinid, c(4))
       },
       'string == "cat" || string == "dog"' = function(df) {
+          expect_equal(df$soma_joinid, c(3, 4))
+      },
+      '(string == "cat") || (string == "dog")' = function(df) {
           expect_equal(df$soma_joinid, c(3, 4))
       },
       "string == 'cat' || string == 'dog'" = function(df) {
@@ -249,8 +271,13 @@ test_that("DataFrame Factory", {
       ' ',
       'nonesuch < 10',
       'soma_joinid << 10',
+      '(soma_joinid < 10',
       'soma_joinid',
-      'soma_joinid < 4 or soma_joinid > 8'
+      'soma_joinid ==',
+      'soma_joinid && int8',
+      'soma_joinid ==1 &&',
+      'soma_joinid < 4 or soma_joinid > 8',
+      'soma_joinid == "ten"'
     )
 
     for (query_string in names(bad_cases)) {
