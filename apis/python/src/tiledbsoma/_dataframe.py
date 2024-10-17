@@ -874,7 +874,7 @@ def _fill_out_slot_soma_domain(
         # will (and must) ignore these when creating the TileDB schema.
         slot_domain = "", ""
     elif np.issubdtype(dtype, NPInteger):
-        if is_max_domain:
+        if is_max_domain or not NEW_SHAPE_FEATURE_FLAG_ENABLED:
             # Core max domain is immutable. If unspecified, it should be as big
             # as possible since it can never be resized.
             iinfo = np.iinfo(cast(NPInteger, dtype))
@@ -892,7 +892,7 @@ def _fill_out_slot_soma_domain(
             # does mean that "smallest" current domain has shape 1 not 0.
             slot_domain = 0, 0
     elif np.issubdtype(dtype, NPFloating):
-        if is_max_domain:
+        if is_max_domain or not NEW_SHAPE_FEATURE_FLAG_ENABLED:
             finfo = np.finfo(cast(NPFloating, dtype))
             slot_domain = finfo.min, finfo.max
             saturated_range = True
@@ -909,7 +909,7 @@ def _fill_out_slot_soma_domain(
     #   expanded to multiple of tile extent exceeds max value representable by domain type. Reduce
     #   domain max by 1 tile extent to allow for expansion.
     elif dtype == "datetime64[s]":
-        if is_max_domain:
+        if is_max_domain or not NEW_SHAPE_FEATURE_FLAG_ENABLED:
             iinfo = np.iinfo(cast(NPInteger, np.int64))
             slot_domain = np.datetime64(iinfo.min + 1, "s"), np.datetime64(
                 iinfo.max - 1000000, "s"
@@ -917,7 +917,7 @@ def _fill_out_slot_soma_domain(
         else:
             slot_domain = np.datetime64(0, "s"), np.datetime64(0, "s")
     elif dtype == "datetime64[ms]":
-        if is_max_domain:
+        if is_max_domain or not NEW_SHAPE_FEATURE_FLAG_ENABLED:
             iinfo = np.iinfo(cast(NPInteger, np.int64))
             slot_domain = np.datetime64(iinfo.min + 1, "ms"), np.datetime64(
                 iinfo.max - 1000000, "ms"
@@ -925,7 +925,7 @@ def _fill_out_slot_soma_domain(
         else:
             slot_domain = np.datetime64(0, "ms"), np.datetime64(0, "ms")
     elif dtype == "datetime64[us]":
-        if is_max_domain:
+        if is_max_domain or not NEW_SHAPE_FEATURE_FLAG_ENABLED:
             iinfo = np.iinfo(cast(NPInteger, np.int64))
             slot_domain = np.datetime64(iinfo.min + 1, "us"), np.datetime64(
                 iinfo.max - 1000000, "us"
@@ -933,7 +933,7 @@ def _fill_out_slot_soma_domain(
         else:
             slot_domain = np.datetime64(0, "us"), np.datetime64(0, "us")
     elif dtype == "datetime64[ns]":
-        if is_max_domain:
+        if is_max_domain or not NEW_SHAPE_FEATURE_FLAG_ENABLED:
             iinfo = np.iinfo(cast(NPInteger, np.int64))
             slot_domain = np.datetime64(iinfo.min + 1, "ns"), np.datetime64(
                 iinfo.max - 1000000, "ns"
