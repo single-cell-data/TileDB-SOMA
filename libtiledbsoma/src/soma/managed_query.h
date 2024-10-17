@@ -40,6 +40,7 @@
 #include <tiledb/tiledb>
 
 #include "../utils/common.h"
+#include "soma_array.h"
 #include "array_buffers.h"
 #include "column_buffer.h"
 
@@ -81,6 +82,11 @@ class ManagedQuery {
      */
     ManagedQuery(
         std::shared_ptr<Array> array,
+        std::shared_ptr<Context> ctx,
+        std::string_view name = "unnamed");
+
+    ManagedQuery(
+        std::shared_ptr<SOMAArray> array,
         std::shared_ptr<Context> ctx,
         std::string_view name = "unnamed");
 

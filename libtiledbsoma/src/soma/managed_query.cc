@@ -35,7 +35,7 @@
 #include <tiledb/attribute_experimental.h>
 #include "../utils/logger.h"
 #include "utils/common.h"
-#include "utils/util.h"
+#include "../utils/util.h"
 namespace tiledbsoma {
 
 using namespace tiledb;
@@ -49,6 +49,17 @@ ManagedQuery::ManagedQuery(
     std::shared_ptr<Context> ctx,
     std::string_view name)
     : array_(array)
+    , ctx_(ctx)
+    , name_(name)
+    , schema_(std::make_shared<ArraySchema>(array->schema())) {
+    reset();
+}
+
+ManagedQuery::ManagedQuery(
+    std::shared_ptr<SOMAArray> array,
+    std::shared_ptr<Context> ctx,
+    std::string_view name)
+    : array_(array.arr_)
     , ctx_(ctx)
     , name_(name)
     , schema_(std::make_shared<ArraySchema>(array->schema())) {
