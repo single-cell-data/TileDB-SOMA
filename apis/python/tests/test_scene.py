@@ -248,7 +248,7 @@ def test_scene_point_cloud(tmp_path):
             scale_factors=[-1, 1],
         )
 
-        # Cannot set transform before the Scene coordinate space is set.
+        # Cannot set transform before the scene coordinate space is set.
         with pytest.raises(soma.SOMAError):
             scene.add_new_point_cloud_dataframe(
                 "ptc",
@@ -258,7 +258,7 @@ def test_scene_point_cloud(tmp_path):
                 coordinate_space=elem_coord_space,
             )
 
-        # Set Scene coordinate space.
+        # Set scene coordinate space.
         scene_coord_space = soma.CoordinateSpace(
             [soma.Axis(name="x_scene"), soma.Axis(name="y_scene")]
         )
@@ -405,6 +405,84 @@ def test_scene_set_transform_to_point_cloud(
         assert_transform_equal(ptc_transform, transform)
 
 
+def test_scene_multiscale_image(tmp_path):
+    baseuri = urljoin(f"{tmp_path.as_uri()}/", "test_scene_multiscale_image")
+
+    with soma.Scene.create(baseuri) as scene:
+        # Create img.
+        img_uri = urljoin(baseuri, "img")
+        scene["img"] = soma.Collection.create(img_uri)
+
+        # Parameters for the multiscale image.
+        transform = soma.ScaleTransform(
+            input_axes=("x_scene", "y_scene"),
+            output_axes=("x", "y"),
+            scale_factors=[-1, 1],
+        )
+
+        # Cannot set transform before the scene coordinate space is set.
+        with pytest.raises(soma.SOMAError):
+            scene.add_new_multiscale_image(
+                "msi",
+                "img",
+                transform=transform,
+                type=pa.int64(),
+                reference_level_shape=[1, 2, 3],
+            )
+
+            # The scene coordinate space must be set before registering
+            scene.set_transform_to_multiscale_image("msi", transform)
+
+        # Set the scene multiscale image.
+        scene_coord_space = soma.CoordinateSpace(
+            [soma.Axis(name="x_scene"), soma.Axis(name="y_scene")]
+        )
+        scene.coordinate_space = scene_coord_space
+
+        # Mismatch in transform input axes and scene coordinate space axes.
+        bad_transform = soma.ScaleTransform(
+            input_axes=("xbad", "ybad"),
+            output_axes=("x", "y"),
+            scale_factors=[-1, 1],
+        )
+        with pytest.raises(ValueError):
+            scene.add_new_multiscale_image(
+                "msi",
+                "img",
+                transform=bad_transform,
+                type=pa.int64(),
+                reference_level_shape=[1, 2, 3],
+            )
+
+        # Mismatch in transform output axes and multiscale image coordinate space axes.
+        bad_transform = soma.ScaleTransform(
+            input_axes=("x_scene", "y_scene"),
+            output_axes=("xbad", "ybad"),
+            scale_factors=[-1, 1],
+        )
+        with pytest.raises(ValueError):
+            scene.add_new_multiscale_image(
+                "msi",
+                "img",
+                transform=bad_transform,
+                type=pa.int64(),
+                reference_level_shape=[1, 2, 3],
+            )
+
+        # Add the multiscale image.
+        scene.add_new_multiscale_image(
+            "msi",
+            "img",
+            transform=transform,
+            type=pa.int64(),
+            reference_level_shape=[1, 2, 3],
+        )
+
+        # Check the transform.
+        msi_transform = scene.get_transform_to_multiscale_image("msi")
+        assert_transform_equal(msi_transform, transform)
+
+
 @pytest.mark.parametrize(
     "coord_transform, transform_kwargs",
     [
@@ -414,8 +492,13 @@ def test_scene_set_transform_to_point_cloud(
         (soma.IdentityTransform, {}),
     ],
 )
-def test_scene_multiscale_image(tmp_path, coord_transform, transform_kwargs):
-    baseuri = urljoin(f"{tmp_path.as_uri()}/", "test_scene_multiscale_image")
+@pytest.mark.parametrize("set_coord_space", [True, False])
+def test_scene_set_transfrom_to_multiscale_image(
+    tmp_path, coord_transform, transform_kwargs, set_coord_space
+):
+    baseuri = urljoin(
+        f"{tmp_path.as_uri()}/", "test_scene_set_transform_to_multiscale_image"
+    )
 
     with soma.Scene.create(baseuri) as scene:
         obsl_uri = urljoin(baseuri, "obsl")
@@ -480,7 +563,25 @@ def test_scene_multiscale_image(tmp_path, coord_transform, transform_kwargs):
         with pytest.raises(ValueError):
             scene.set_transform_to_multiscale_image("msi", transform_bad)
 
-        scene.set_transform_to_multiscale_image("msi", transform)
+        if set_coord_space:
+            bad_coord_space = soma.CoordinateSpace.from_axis_names(("xbad", "ybad"))
+            with pytest.raises(ValueError):
+                scene.set_transform_to_multiscale_image(
+                    "msi", transform, coordinate_space=bad_coord_space
+                )
+
+            coord_space = soma.CoordinateSpace(
+                (soma.Axis(name="x", unit="nm"), soma.Axis(name="y", unit="nm"))
+            )
+
+            msi = scene.set_transform_to_multiscale_image(
+                "msi", transform, coordinate_space=coord_space
+            )
+            actual_coord_space = msi.coordinate_space
+            assert actual_coord_space == coord_space
+
+        else:
+            scene.set_transform_to_multiscale_image("msi", transform)
 
         msi_transform = scene.get_transform_to_multiscale_image("msi")
         assert_transform_equal(msi_transform, transform)
