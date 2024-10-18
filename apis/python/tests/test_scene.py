@@ -311,9 +311,9 @@ def test_scene_point_cloud(tmp_path):
 @pytest.mark.parametrize(
     "coord_transform, transform_kwargs",
     [
-        (soma.AffineTransform, {"matrix": [[1, 0, 0], [0, 1, 0], [0, 0, 1]]}),
-        (soma.ScaleTransform, {"scale_factors": [1, 1]}),
-        (soma.UniformScaleTransform, {"scale": 1}),
+        (soma.AffineTransform, {"matrix": [[1, 0, 1], [0, 1, 1], [0, 0, 1]]}),
+        (soma.ScaleTransform, {"scale_factors": [-1, 1]}),
+        (soma.UniformScaleTransform, {"scale": 2}),
         (soma.IdentityTransform, {}),
     ],
 )
@@ -403,6 +403,10 @@ def test_scene_set_transform_to_point_cloud(
 
         ptc_transform = scene.get_transform_to_point_cloud_dataframe("ptc")
         assert_transform_equal(ptc_transform, transform)
+
+        inv_transform = transform.inverse_transform()
+        ptc_inv_transform = scene.get_transform_from_point_cloud_dataframe("ptc")
+        assert_transform_equal(ptc_inv_transform, inv_transform)
 
 
 def test_scene_multiscale_image(tmp_path):
@@ -517,7 +521,7 @@ def test_scene_set_transfrom_to_multiscale_image(
             "img",
             transform=None,
             type=pa.int64(),
-            reference_level_shape=[1, 2, 3],
+            reference_level_shape=[3, 8, 9],
         )
 
         transform = coord_transform(
@@ -581,10 +585,36 @@ def test_scene_set_transfrom_to_multiscale_image(
             assert actual_coord_space == coord_space
 
         else:
-            scene.set_transform_to_multiscale_image("msi", transform)
+            msi = scene.set_transform_to_multiscale_image("msi", transform)
 
         msi_transform = scene.get_transform_to_multiscale_image("msi")
         assert_transform_equal(msi_transform, transform)
+
+        inv_transform = transform.inverse_transform()
+        msi_transform = scene.get_transform_from_multiscale_image("msi")
+        assert_transform_equal(msi_transform, inv_transform)
+
+        # Set a level to test get transform with level.
+        # -- Original size: (3, 8, 9)
+        # -- This level: (3, 4, 3)
+        # -- x_scale = 3 / 9 = 1 / 3
+        # -- y_scale = 4 / 8 = 0.5
+        scale_transform = soma.ScaleTransform(
+            input_axes=("x", "y"),
+            output_axes=("x", "y"),
+            scale_factors=[1 / 3, 0.5],
+        )
+        msi.add_new_level("lowres", shape=(3, 4, 3))
+
+        # Check the transform to the "lowres" level.
+        transform_to_level = scale_transform @ transform
+        msi_transform = scene.get_transform_to_multiscale_image("msi", level="lowres")
+        assert_transform_equal(msi_transform, transform_to_level)
+
+        # Check the transform from the "lowres" level.
+        transform_from_level = transform_to_level.inverse_transform()
+        msi_transform = scene.get_transform_from_multiscale_image("msi", level="lowres")
+        assert_transform_equal(msi_transform, transform_from_level)
 
 
 @pytest.mark.skip("GeometryDataFrame not supported yet")
