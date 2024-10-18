@@ -33,6 +33,7 @@ the object are overwritten and new index values are added. (lifecycle: maturing)
 \item \href{#method-SOMASparseNDArray-nnz}{\code{SOMASparseNDArray$nnz()}}
 \item \href{#method-SOMASparseNDArray-resize}{\code{SOMASparseNDArray$resize()}}
 \item \href{#method-SOMASparseNDArray-tiledbsoma_upgrade_shape}{\code{SOMASparseNDArray$tiledbsoma_upgrade_shape()}}
+\item \href{#method-SOMASparseNDArray-.write_coordinates}{\code{SOMASparseNDArray$.write_coordinates()}}
 \item \href{#method-SOMASparseNDArray-clone}{\code{SOMASparseNDArray$clone()}}
 }
 }
@@ -125,6 +126,9 @@ dimension of \code{values}. Generally should be \code{NULL}.}
 }
 \if{html}{\out{</div>}}
 }
+\subsection{Returns}{
+Invisibly returns \code{self}
+}
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-SOMASparseNDArray-nnz"></a>}}
@@ -183,6 +187,28 @@ dimension. Raises an error if the array already has a shape.
 }
 \subsection{Returns}{
 No return value
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SOMASparseNDArray-.write_coordinates"></a>}}
+\if{latex}{\out{\hypertarget{method-SOMASparseNDArray-.write_coordinates}{}}}
+\subsection{Method \code{.write_coordinates()}}{
+Write a COO table to the array
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SOMASparseNDArray$.write_coordinates(values)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{values}}{A \code{data.frame} or \code{\link[arrow:Table]{Arrow::Table}}
+with data in COO format; must be named with the dimension and attribute
+labels of the array}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+Invisibly returns \code{self}
 }
 }
 \if{html}{\out{<hr>}}

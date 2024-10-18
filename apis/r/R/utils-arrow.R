@@ -34,6 +34,11 @@ is_arrow_dictionary <- function(x) {
   is_arrow_object(x) && inherits(x, "Field") && inherits(x$type, "DictionaryType")
 }
 
+#' @method as.logical Scalar
+#' @export
+#'
+as.logical.Scalar <- \(x, ...) as.logical(x$as_vector(), ...)
+
 #' Convert Arrow types to supported TileDB type
 #' List of TileDB types supported in R: https://github.com/TileDB-Inc/TileDB-R/blob/8014da156b5fee5b4cc221d57b4aa7d388abc968/inst/tinytest/test_dim.R#L97-L121
 #' Note: TileDB attrs may be UTF-8; TileDB dims may not.
