@@ -426,8 +426,8 @@ class DataFrame(SOMAArray, somacore.DataFrame):
             Maturing.
         """
         self._check_open_read()
-        # if is it in read open mode, then it is a DataFrameWrapper
-        return cast(DataFrameWrapper, self._handle).count
+        # XXX WHY
+        return cast(int, self._clib_handle.count)
 
     @property
     def _maybe_soma_joinid_shape(self) -> Optional[int]:
@@ -439,7 +439,7 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         Lifecycle:
             Experimental.
         """
-        return self._handle.maybe_soma_joinid_shape
+        return cast(Optional[int], self._clib_handle.maybe_soma_joinid_shape)
 
     @property
     def _maybe_soma_joinid_maxshape(self) -> Optional[int]:
@@ -450,7 +450,7 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         Lifecycle:
             Experimental.
         """
-        return self._handle.maybe_soma_joinid_maxshape
+        return cast(Optional[int], self._clib_handle.maybe_soma_joinid_maxshape)
 
     @property
     def tiledbsoma_has_upgraded_domain(self) -> bool:
@@ -461,7 +461,7 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         Lifecycle:
             Maturing.
         """
-        return self._handle.tiledbsoma_has_upgraded_domain
+        return cast(bool, self._clib_handle.tiledbsoma_has_upgraded_domain)
 
     def resize_soma_joinid_shape(
         self, newshape: int, check_only: bool = False
@@ -479,10 +479,10 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         if check_only:
             return cast(
                 StatusAndReason,
-                self._handle._handle.can_resize_soma_joinid_shape(newshape),
+                self._clib_handle.can_resize_soma_joinid_shape(newshape),
             )
         else:
-            self._handle._handle.resize_soma_joinid_shape(newshape)
+            self._clib_handle.resize_soma_joinid_shape(newshape)
             return (True, "")
 
     def upgrade_soma_joinid_shape(
@@ -498,10 +498,10 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         if check_only:
             return cast(
                 StatusAndReason,
-                self._handle._handle.can_upgrade_soma_joinid_shape(newshape),
+                self._clib_handle.can_upgrade_soma_joinid_shape(newshape),
             )
         else:
-            self._handle._handle.upgrade_soma_joinid_shape(newshape)
+            self._clib_handle.upgrade_soma_joinid_shape(newshape)
             return (True, "")
 
     def __len__(self) -> int:
