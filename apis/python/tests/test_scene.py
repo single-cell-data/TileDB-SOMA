@@ -1,12 +1,13 @@
 import json
 from urllib.parse import urljoin
 
-import numpy as np
 import pyarrow as pa
 import pytest
 import typeguard
 
 import tiledbsoma as soma
+
+from ._util import assert_transform_equal
 
 
 def create_and_populate_df(uri: str) -> soma.DataFrame:
@@ -300,20 +301,7 @@ def test_scene_point_cloud(tmp_path, coord_transform, transform_kwargs):
         scene.set_transform_to_point_cloud_dataframe("ptc", transform)
 
         ptc_transform = scene.get_transform_to_point_cloud_dataframe("ptc")
-        if isinstance(coord_transform, soma.AffineTransform):
-            assert np.array_equal(
-                ptc_transform.augmented_matrix,
-                transform.augmented_matrix,
-            )
-        elif isinstance(coord_transform, soma.ScaleTransform):
-            assert np.array_equal(
-                ptc_transform.scale_factors,
-                transform.scale_factors,
-            )
-        elif isinstance(
-            coord_transform, (soma.UniformScaleTransform, soma.IdentityTransform)
-        ):
-            assert ptc_transform.scale == transform.scale
+        assert_transform_equal(ptc_transform, transform)
 
 
 @pytest.mark.parametrize(
@@ -394,20 +382,7 @@ def test_scene_multiscale_image(tmp_path, coord_transform, transform_kwargs):
         scene.set_transform_to_multiscale_image("msi", transform)
 
         msi_transform = scene.get_transform_to_multiscale_image("msi")
-        if isinstance(coord_transform, soma.AffineTransform):
-            assert np.array_equal(
-                msi_transform.augmented_matrix,
-                transform.augmented_matrix,
-            )
-        elif isinstance(coord_transform, soma.ScaleTransform):
-            assert np.array_equal(
-                msi_transform.scale_factors,
-                transform.scale_factors,
-            )
-        elif isinstance(
-            coord_transform, (soma.UniformScaleTransform, soma.IdentityTransform)
-        ):
-            assert msi_transform.scale == transform.scale
+        assert_transform_equal(msi_transform, transform)
 
 
 @pytest.mark.skip("GeometryDataFrame not supported yet")
@@ -464,17 +439,4 @@ def test_scene_geometry_dataframe(tmp_path, coord_transform, transform_kwargs):
         scene.set_transform_to_geometry_dataframe("gdf", transform)
 
         gdf_transform = scene.get_transform_to_geometry_dataframe("gdf")
-        if isinstance(coord_transform, soma.AffineTransform):
-            assert np.array_equal(
-                gdf_transform.augmented_matrix,
-                transform.augmented_matrix,
-            )
-        elif isinstance(coord_transform, soma.ScaleTransform):
-            assert np.array_equal(
-                gdf_transform.scale_factors,
-                transform.scale_factors,
-            )
-        elif isinstance(
-            coord_transform, (soma.UniformScaleTransform, soma.IdentityTransform)
-        ):
-            assert gdf_transform.scale == transform.scale
+        assert_transform_equal(gdf_transform, transform)
