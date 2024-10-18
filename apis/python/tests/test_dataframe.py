@@ -783,7 +783,9 @@ def make_multiply_indexed_dataframe(
             "domain": [[-1000, 1000]],
             "coords": [{"bogus": True}],
             "A": None,
-            "throws": TypeError,
+            # Disable Typeguard while asserting this error, otherwise a typeguard.TypeCheckError is
+            # raised (though that's not what would happen in production)
+            "throws": (TypeError, False),
         },
         {
             "name": "bad index type bool",
@@ -890,15 +892,30 @@ def test_read_indexing(tmp_path, io):
         read_kwargs.update(
             {k: io[k] for k in ("coords", "partitions", "value_filter") if k in io}
         )
-        if io.get("throws", None):
-            with pytest.raises(io["throws"]):
+
+        # `throws` can be `Type[Exception]`, or `(Type[Exception], bool)` indicating explicitly
+        # whether Typeguard should be enabled during the `with raises` check.
+        throws = io.get("throws", None)
+        if throws:
+            if isinstance(throws, tuple) and not throws[1]:
+                # Disable Typeguard, verify actual runtime error type (avoid
+                # `typeguard.TypeCheckError` short-circuit)
+                throws = throws[0]
+                throws_ctx = raises_no_typeguard
+            else:
+                throws_ctx = pytest.raises
+        else:
+            throws_ctx = None
+
+        if throws_ctx:
+            with throws_ctx(throws):
                 next(sdf.read(**read_kwargs))
         else:
             table = next(sdf.read(**read_kwargs))
             assert table["A"].to_pylist() == io["A"]
 
-        if io.get("throws", None):
-            with pytest.raises(io["throws"]):
+        if throws_ctx:
+            with throws_ctx(throws):
                 next(sdf.read(**read_kwargs)).to_pandas()
         else:
             table = next(sdf.read(**read_kwargs)).to_pandas()
