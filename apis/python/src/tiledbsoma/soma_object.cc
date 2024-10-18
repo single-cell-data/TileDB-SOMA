@@ -58,8 +58,11 @@ void load_soma_object(py::module& m) {
                std::optional<std::pair<uint64_t, uint64_t>> timestamp,
                std::optional<std::string> clib_type) -> py::object {
                 try {
-                    auto soma_obj = SOMAObject::open(
-                        uri, mode, context, timestamp, clib_type);
+                    auto soma_obj = ([&]() {
+                        py::gil_scoped_release release;
+                        return SOMAObject::open(
+                            uri, mode, context, timestamp, clib_type);
+                    })();
                     auto soma_obj_type = soma_obj->type();
 
                     if (soma_obj_type.has_value()) {
