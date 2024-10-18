@@ -136,6 +136,45 @@ class DataFrame(SOMAArray, somacore.DataFrame):
     """
 
     _wrapper_type = DataFrameWrapper
+    _clib_handle: clib.SOMADataFrame
+
+    @classmethod
+    def open(
+        cls,
+        uri: str,
+        mode: options.OpenMode = "r",
+        *,
+        tiledb_timestamp: Optional[OpenTimestamp] = None,
+        context: Optional[SOMATileDBContext] = None,
+        platform_config: Optional[options.PlatformConfig] = None,
+        clib_type: Optional[str] = None,
+    ) -> Self:
+        """Opens this specific type of SOMA object."""
+
+        retval = super().open(
+            uri,
+            mode,
+            tiledb_timestamp=tiledb_timestamp,
+            context=context,
+            platform_config=platform_config,
+            clib_type="SOMAArray",
+        )
+
+        # XXX libify
+        open_mode = clib.OpenMode.read if mode == "r" else clib.OpenMode.write
+        context = _validate_soma_tiledb_context(context)
+        timestamp_ms = context._open_timestamp_ms(tiledb_timestamp)
+
+        retval._clib_handle = clib.SOMADataFrame.open(
+            uri,
+            open_mode,
+            context.native_context,
+            column_names=[],  # XXX
+            result_order=clib.ResultOrder.automatic,  # XXX
+            timestamp=(0, timestamp_ms),
+        )
+
+        return retval
 
     @classmethod
     def create(
