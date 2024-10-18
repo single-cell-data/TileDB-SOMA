@@ -75,9 +75,8 @@ def test_open(tiledb_object_uri, soma_type: Type):
     ],
 )
 def test_open_wrong_type(tiledb_object_uri, soma_type):
-    # with pytest.raises((soma.SOMAError, TypeError)):
-    with soma.open(tiledb_object_uri, tiledb_timestamp=1) as A:
-        print("meta:", A.metadata)
+    with pytest.raises((soma.SOMAError, TypeError)):
+        soma.open(tiledb_object_uri, tiledb_timestamp=2)
 
 
 @pytest.mark.parametrize(
