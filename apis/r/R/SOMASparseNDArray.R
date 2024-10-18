@@ -222,7 +222,7 @@ SOMASparseNDArray <- R6::R6Class(
           identical(names(values), c(dnames, attrn))
       )
 
-      # Arrow Tables cannot have NULL names, so this only applies to data frames
+      # Arrow Tables cannot have NULL names, so this only applies to dataframes
       if (is.null(names(values))) {
         spdl::warn("[SOMASparseNDArray$.write_coordinates] no names on input data frame, assuming <dimensions[...], data> order")
         names(values) <- c(dnames, attrn)
