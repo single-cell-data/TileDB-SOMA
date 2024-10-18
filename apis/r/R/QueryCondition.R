@@ -111,6 +111,11 @@ parse_query_condition <- function(
         if (is.symbol(node)) {
             stop("Unexpected symbol in expression: ", format(node))
 
+        } else if (node[[1]] == '(') {
+            spdl::debug("[parseqc] paren [{}]",
+                as.character(node[2]));
+            return(.parse_tree_to_qc(node[[2]]))
+
         } else if (.is_boolean_operator(node[1])) {
             spdl::debug("[parseqc] boolop [{}] [{}] [{}]",
                 as.character(node[2]),
