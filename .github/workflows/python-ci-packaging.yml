@@ -102,7 +102,7 @@ jobs:
         run: |
           python --version
           python -m venv ./venv-soma
-          ./venv-soma/bin/pip install --prefer-binary pybind11-global typeguard sparse 'setuptools>=70.1' wheel
+          ./venv-soma/bin/pip install --prefer-binary pybind11-global typeguard sparse wheel 'setuptools>=70.1'
           ./venv-soma/bin/pip list
       - name: Build wheel
         run: |
