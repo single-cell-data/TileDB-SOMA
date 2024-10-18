@@ -199,6 +199,7 @@ class Wrapper(Generic[_RawHdl_co], metaclass=abc.ABCMeta):
         """
         # non–attrs-managed field
         self.metadata = MetadataWrapper(self, dict(reader.meta))
+        print(self.metadata)
 
     @property
     def reader(self) -> _RawHdl_co:
