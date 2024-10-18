@@ -73,7 +73,7 @@ SOMASparseNDArray <- R6::R6Class(
         "'values' must be a matrix" = is_matrix(values),
         "'bbox' must contain two entries" = is.null(bbox) || length(bbox) == length(dim(values)),
         "'bbox' must be a vector of two integers or a list with each entry containg two integers" = is.null(bbox) ||
-          (is_integerish(bbox) || bit64::is.integer64(bbox)) ||
+          .is_integerish(bbox) ||
           (is.list(bbox) && all(vapply_lgl(bbox, function(x, n) length(x) == 2L)))
       )
       # coerce to a TsparseMatrix, which uses 0-based COO indexing
@@ -231,14 +231,8 @@ SOMASparseNDArray <- R6::R6Class(
       spdl::debug("[SOMASparseNDArray$.write_coordinates] checking dimension values")
       for (i in seq_along(dnames)) {
         dn <- dnames[i]
-        integerish <- if (is.data.frame(values)) {
-          rlang::is_integerish(values[[dn]], finite = TRUE) ||
-            (bit64::is.integer64(values[[dn]]) && !any(is.na(values[[dn]])))
-        } else {
-          grepl('^int[[:digit:]]{1,2}$', x = values[[dn]]$type$name)
-        }
         offending <- sprintf("(offending column: '%s')", dn)
-        if (!integerish) {
+        if (!.is_integerish(values[[dn]])) {
           stop("All dimension columns must be integerish ", offending)
         }
         if (as.logical(min(values[[dn]]) < 0L)) {

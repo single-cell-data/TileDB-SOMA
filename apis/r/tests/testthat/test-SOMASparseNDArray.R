@@ -114,7 +114,7 @@ test_that("SOMASparseNDArray write COO assertions", {
 
   ndarray$reopen("WRITE")
   expect_invisible(ndarray$.write_coordinates(df))
-  ndarray$close
+  ndarray$close()
 
   # Test write with Table
   tbl <- arrow::as_arrow_table(df)
