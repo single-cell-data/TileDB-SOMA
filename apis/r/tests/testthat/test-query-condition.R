@@ -228,6 +228,26 @@ test_that("DataFrame Factory", {
           expect_equal(df$soma_joinid, 1:10)
       },
 
+      'uint8 <= 14 && uint16 == 202 || uint32 == 308' = function(df) {
+          expect_equal(df$soma_joinid, c(2, 8))
+      },
+      '(uint8 <= 14 && uint16 == 202) || uint32 == 308' = function(df) {
+          expect_equal(df$soma_joinid, c(2, 8))
+      },
+      'uint8 <= 14 && (uint16 == 202 || uint32 == 308)' = function(df) {
+          expect_equal(df$soma_joinid, c(2))
+      },
+
+      'uint32 == 308 || uint8 <= 14 && uint16 == 202' = function(df) {
+          expect_equal(df$soma_joinid, c(2, 8))
+      },
+      'uint32 == 308 || (uint8 <= 14 && uint16 == 202)' = function(df) {
+          expect_equal(df$soma_joinid, c(2, 8))
+      },
+      '(uint32 == 308 || uint8 <= 14) && uint16 == 202' = function(df) {
+          expect_equal(df$soma_joinid, c(2))
+      },
+
       # TODO: for a follow-up PR
       'timestamp_s < "1970-01-01 01:00:05 UTC"' = function(df) {
           expect_equal(df$soma_joinid, 1:4)
