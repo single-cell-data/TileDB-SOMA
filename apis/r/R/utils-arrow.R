@@ -34,6 +34,11 @@ is_arrow_dictionary <- function(x) {
   is_arrow_object(x) && inherits(x, "Field") && inherits(x$type, "DictionaryType")
 }
 
+#' @method as.logical Scalar
+#' @export
+#'
+as.logical.Scalar <- \(x, ...) as.logical(x$as_vector(), ...)
+
 #' Convert Arrow types to supported TileDB type
 #' List of TileDB types supported in R: https://github.com/TileDB-Inc/TileDB-R/blob/8014da156b5fee5b4cc221d57b4aa7d388abc968/inst/tinytest/test_dim.R#L97-L121
 #' Note: TileDB attrs may be UTF-8; TileDB dims may not.
@@ -114,6 +119,92 @@ arrow_type_from_tiledb_type <- function(x) {
   )
 }
 
+#' Get the \R Type from an Arrow Type
+#'
+#' Get an \R \link[base:typeof]{type} from an Arrow type. This function is
+#' equivalent to \code{\link[base]{typeof}()} rather than
+#' \code{\link[base]{mode}()} or \code{\link[base]{class}()}, and returns the
+#' equivalent \strong{type}. For example, the equivalent \R type to an Arrow
+#' \link[arrow]{dictionary} is \dQuote{\code{integer}}, not
+#' \dQuote{\code{factor}}; likewise, the equivalent \R type to an Arrow 64-bit
+#' integer is \dQuote{\code{double}}
+#'
+#' @param x An \CRANpkg{Arrow} \link[arrow:Schema]{schema},
+#' \link[arrow:Field]{field}, or \link[arrow:infer_type]{data type}
+#'
+#' @return If \code{x} is a \link[arrow:infer_type]{data type}, a single
+#' character value giving the \R \link[base:typeof]{type} of \code{x}; if no
+#' corresponding \R type, returns the \CRANpkg{Arrow} type name
+#'
+#' @return If \code{x} is a \link[arrow:Field]{field}, a single named character
+#' vector with the name being the field name and the value being the \R
+#' \link[base:typeof]{type}
+#'
+#' @return If \code{x} is a \link[arrow:Schema]{schema}, a named vector where
+#' the names are field names and the values are the \R \link[base:typeof]{types}
+#' of each field
+#'
+#' @keywords internal
+#'
+#' @export
+#'
+#' @seealso \code{\link[base]{typeof}()}
+#'
+r_type_from_arrow_type <- function(x) UseMethod('r_type_from_arrow_type')
+
+#' @rdname r_type_from_arrow_type
+#'
+#' @method r_type_from_arrow_type Schema
+#' @export
+#'
+r_type_from_arrow_type.Schema <- function(x) {
+  return(vapply(
+    X = x$names,
+    FUN = function(f) r_type_from_arrow_type(x[[f]]),
+    FUN.VALUE = character(1L),
+    USE.NAMES = TRUE
+  ))
+}
+
+#' @rdname r_type_from_arrow_type
+#'
+#' @method r_type_from_arrow_type Field
+#' @export
+#'
+r_type_from_arrow_type.Field <- function(x) {
+  tt <- r_type_from_arrow_type(x$type)
+  names(x = tt) <- x$name
+  return(tt)
+}
+
+#' @rdname r_type_from_arrow_type
+#'
+#' @method r_type_from_arrow_type DataType
+#' @export
+#'
+r_type_from_arrow_type.DataType <- function(x) {
+  # Types are equivalent to `typeof()`, not `mode()` or `class()`
+  return(switch(
+    EXPR = x$name,
+    int8 = ,
+    int16 = ,
+    int32 = ,
+    dictionary = ,
+    uint8 = ,
+    uint16 = ,
+    uint32 = 'integer',
+    int64 = ,
+    uint64 = ,
+    date32 = ,
+    timestamp = ,
+    float = 'double',
+    bool = 'logical',
+    utf8 = ,
+    large_utf8 = 'character',
+    x$name
+  ))
+}
+
 #' Retrieve limits for Arrow types
 #' @importFrom bit64 lim.integer64
 #' @noRd
@@ -174,9 +265,8 @@ arrow_field_from_tiledb_dim <- function(x) {
 ## With a nod to Kevin Ushey
 #' @noRd
 yoink <- function(package, symbol) {
-    do.call(":::", list(package, symbol))
+  do.call(":::", list(package, symbol))
 }
-
 
 #' Create an Arrow field from a TileDB attribute
 #' @noRd
@@ -486,10 +576,7 @@ get_domain_and_extent_array <- function(shape, is_sparse) {
         # expansion.
         ind_max_dom <- arrow_type_unsigned_range(ind_col_type) - c(0,ind_ext)
 
-        # TODO: support current domain for dense arrays once we have that support
-        # from core.
-        # https://github.com/single-cell-data/TileDB-SOMA/issues/2955
-        if (.new_shape_feature_flag_is_enabled() && is_sparse) {
+        if (.new_shape_feature_flag_is_enabled() && (is_sparse || .dense_arrays_can_have_current_domain())) {
             aa <- arrow::arrow_array(c(ind_max_dom, ind_ext, ind_cur_dom), ind_col_type)
         } else {
             aa <- arrow::arrow_array(c(ind_cur_dom, ind_ext), ind_col_type)

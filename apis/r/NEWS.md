@@ -2,11 +2,20 @@
 
 ## Changes
 
-* Push `schema` accessor down to `libtiledbsoma` [#3079](https://github.com/single-cell-data/TileDB-SOMA/pull/3079)
-* Push `attrnames` down to C++ [#3121](https://github.com/single-cell-data/TileDB-SOMA/pull/3121)
-* Use `libtiledbsoma` for R schema evolution [#3100](https://github.com/single-cell-data/TileDB-SOMA/pull/3100)
-* Implement missing `domain` argument to `SOMADataFrame` `create` [#3032](https://github.com/single-cell-data/TileDB-SOMA/pull/3032)
 * Remove unused `fragment_count` accessor [#3054](https://github.com/single-cell-data/TileDB-SOMA/pull/3054)
+* Implement missing `domain` argument to `SOMADataFrame` `create` [#3032](https://github.com/single-cell-data/TileDB-SOMA/pull/3032)
+* Use `libtiledbsoma` for R schema evolution [#3100](https://github.com/single-cell-data/TileDB-SOMA/pull/3100)
+* Push `attrnames` down to C++ [#3121](https://github.com/single-cell-data/TileDB-SOMA/pull/3121)
+* Push `schema` accessor down to `libtiledbsoma` [#3079](https://github.com/single-cell-data/TileDB-SOMA/pull/3079)
+* Handle `numeric` coords properly when reading arrays
+* Remove two more `tiledb::schema` callsites [#3160](https://github.com/single-cell-data/TileDB-SOMA/pull/3160)
+* Add new Arrow-to-R type mapper
+* Add transitional/non-exported `parse_query_condition_new` [#3162](https://github.com/single-cell-data/TileDB-SOMA/pull/3162)
+* Apply new `parse_query_condition` [#3174](https://github.com/single-cell-data/TileDB-SOMA/pull/3174)
+* Apply new `non_empty_domain` [#3176](https://github.com/single-cell-data/TileDB-SOMA/pull/3176)
+* Support for dense current domain with core 2.27 [#3180](https://github.com/single-cell-data/TileDB-SOMA/pull/3180)
+* Fix `is_named_list` bug for half-named lists [#3183](https://github.com/single-cell-data/TileDB-SOMA/pull/3183)
+* Expose block/random writer for sparse arrays [#3204](https://github.com/single-cell-data/TileDB-SOMA/pull/3204)
 
 # tiledbsoma 1.14.1
 

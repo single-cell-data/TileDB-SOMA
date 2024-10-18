@@ -279,7 +279,7 @@ Rcpp::NumericVector maxshape(
 }
 
 // [[Rcpp::export]]
-SEXP non_empty_domain_new(
+SEXP non_empty_domain(
     const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
     auto sdf = tdbs::SOMADataFrame::open(uri, OpenMode::read, ctxxp->ctxptr);
     tdbs::ArrowTable arrow_table = sdf->get_non_empty_domain();
@@ -428,19 +428,19 @@ void resize(
     // https://github.com/single-cell-data/TileDB-SOMA/issues/2407.
     auto sr = tdbs::SOMAArray::open(OpenMode::write, uri, ctxxp->ctxptr);
     std::vector<int64_t> new_shape_i64 = i64_from_rcpp_numeric(new_shape);
-    sr->resize(new_shape_i64);
+    sr->resize(new_shape_i64, "resize");
     sr->close();
 }
 
 // [[Rcpp::export]]
-void resize_soma_joinid(
+void resize_soma_joinid_shape(
     const std::string& uri,
     Rcpp::NumericVector new_shape,
     Rcpp::XPtr<somactx_wrap_t> ctxxp) {
     // This function is solely for SOMADataFrame.
     auto sr = tdbs::SOMADataFrame::open(uri, OpenMode::write, ctxxp->ctxptr);
     std::vector<int64_t> new_shape_i64 = i64_from_rcpp_numeric(new_shape);
-    sr->resize_soma_joinid(new_shape_i64[0]);
+    sr->resize_soma_joinid_shape(new_shape_i64[0], "resize_soma_joinid_shape");
     sr->close();
 }
 
@@ -455,7 +455,7 @@ void tiledbsoma_upgrade_shape(
     // https://github.com/single-cell-data/TileDB-SOMA/issues/2407.
     auto sr = tdbs::SOMAArray::open(OpenMode::write, uri, ctxxp->ctxptr);
     std::vector<int64_t> new_shape_i64 = i64_from_rcpp_numeric(new_shape);
-    sr->upgrade_shape(new_shape_i64);
+    sr->upgrade_shape(new_shape_i64, "tiledbsoma_upgrade_shape");
     sr->close();
 }
 

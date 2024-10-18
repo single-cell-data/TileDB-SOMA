@@ -19,7 +19,6 @@ vapply_int <- function(X, FUN, ..., USE.NAMES = TRUE) {
   vapply(X, FUN, FUN.VALUE = integer(1L), ..., USE.NAMES = USE.NAMES)
 }
 
-# rename(iris, c(petal_length = "Petal.Length", species = "Species", hi = "YO"))
 rename <- function(x, names) {
   stopifnot(
     "'x' must be named" = is_named(x),
@@ -96,6 +95,82 @@ uns_hint <- function(type = c('1d', '2d')) {
   } else {
     x
   })
+}
+
+#' Is an Object Integerish
+#'
+#' @inheritParams rlang::is_integerish
+#'
+#' @return \code{TRUE} if \code{x} is integerish, otherwise \code{FALSE}
+#'
+#' @keywords internal
+#'
+#' @noRd
+#'
+.is_integerish <- function(x, n = NULL, finite = NULL) {
+  UseMethod(generic = '.is_integerish', object = x)
+}
+
+#' @method .is_integerish default
+#' @export
+#'
+.is_integerish.default <- function(x, n = NULL, finite = NULL) {
+  return(rlang::is_integerish(x = x, n = n, finite = finite))
+}
+
+#' @method .is_integerish integer64
+#' @export
+#'
+.is_integerish.integer64 <- function(x, n = NULL, finite = NULL) {
+  res <- if (!is.null(x = n)) {
+    stopifnot(
+      "'n' must be a single integerish value" = .is_integerish(x = n) &&
+        length(x = n) == 1L &&
+        is.finite(x = n)
+    )
+    length(x = x) == n
+  } else {
+    TRUE
+  }
+  res <- res && if (!is.null(x = finite)) {
+    stopifnot(isTRUE(x = finite) || isFALSE(x = finite))
+    # In `rlang::is_integerish()`,
+    # `finite = TRUE`: all values are finite
+    # `finite = FALSE`: at least one value is infinite
+    # `bit64::is.infinite()` returns FALSE for NA
+    ifelse(
+      test = finite,
+      yes = all(is.finite(x = x)),
+      no = any(is.infinite(x = x) | is.na(x = x))
+    )
+  } else {
+    TRUE
+  }
+  return(res)
+}
+
+#' @method .is_integerish Field
+#' @export
+#'
+.is_integerish.Field <-function(x, n = NULL, finite = NULL) {
+  return(.is_integerish(x = x$type, n = n, finite = finite))
+}
+
+#' @method .is_integerish Array
+#' @export
+#'
+.is_integerish.Array <- .is_integerish.Field
+
+#' @method .is_integerish ChunkedArray
+#' @export
+#'
+.is_integerish.ChunkedArray <- .is_integerish.Field
+
+#' @method .is_integerish DataType
+#' @export
+#'
+.is_integerish.DataType <-function(x, n = NULL, finite = NULL) {
+  return(grepl(pattern = '^[u]?int[[:digit:]]{1,2}$', x = x$name))
 }
 
 .maybe_muffle <- function(w, cond = getOption('verbose', default = FALSE)) {

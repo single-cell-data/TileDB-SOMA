@@ -303,6 +303,7 @@ setuptools.setup(
                 "src/tiledbsoma/common.cc",
                 "src/tiledbsoma/reindexer.cc",
                 "src/tiledbsoma/query_condition.cc",
+                "src/tiledbsoma/soma_vfs.cc",
                 "src/tiledbsoma/soma_context.cc",
                 "src/tiledbsoma/soma_array.cc",
                 "src/tiledbsoma/soma_object.cc",
@@ -326,18 +327,16 @@ setuptools.setup(
     zip_safe=False,
     setup_requires=["pybind11"],
     install_requires=[
-        # Tracked in https://github.com/single-cell-data/TileDB-SOMA/issues/1785
-        "anndata != 0.10.0",
+        "anndata>=0.10.1",
         "attrs>=22.2",
         "numba>=0.58.0",
-        "numpy<2.0",
+        "numpy",
         "pandas",
         "pyarrow",
         "scanpy>=1.9.2",
         "scipy",
         # Note: the somacore version is in .pre-commit-config.yaml too
-        "somacore==1.0.20",
-        "tiledb~=0.32.0",
+        "somacore==1.0.21",
         "typing-extensions",  # Note "-" even though `import typing_extensions`
     ],
     extras_require={

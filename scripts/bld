@@ -13,6 +13,7 @@ prefix=""
 tiledb=""
 cmake_verbose="false"
 no_tiledb_deprecated="false"
+werror="false"
 
 while test $# != 0; do
   case "$1" in
@@ -21,6 +22,7 @@ while test $# != 0; do
   --tiledb=*) tiledb=$(arg "$1");;
   --cmake-verbose=*) cmake_verbose=$(arg "$1");;
   --no-tiledb-deprecated=*) no_tiledb_deprecated=$(arg "$1");;
+  --werror=*) werror=$(arg "$1");;
   esac
   shift
 done
@@ -46,6 +48,8 @@ if [ "$(uname -m)" == "aarch64" ]; then
   extra_opts+=" -DDOWNLOAD_TILEDB_PREBUILT=OFF"
 fi
 
+
+
 # NOTE: set to true to debug the cmake build
 if [ "$cmake_verbose" = "true" ]; then
   # This is _incredibly_ helpful in that it reveals the actual compile lines etc which make itself
@@ -61,11 +65,15 @@ if [ "$cmake_verbose" = "true" ]; then
 
   # Also (pro-tip), set nproc=1 to get a more deterministic ordering of output lines.
   nproc=1
+elif [ "$werror" = "true" ]; then
+    extra_opts+=" -DTILEDBSOMA_ENABLE_WERROR=ON"
+
 fi
 
 if [ "$no_tiledb_deprecated" = "true" ]; then
     extra_opts+=" -DTILEDB_REMOVE_DEPRECATIONS=ON"
 fi
+
 
 # set installation path
 if [ -n "${prefix}"  ]; then

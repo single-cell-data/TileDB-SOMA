@@ -46,13 +46,7 @@ ctest_update:
 
 .PHONY: data
 data:
-	rm -rvf test/soco
-	./apis/python/devtools/ingestor \
-		--soco \
-		-o test/soco \
-		-n \
-		data/pbmc3k_processed.h5ad \
-		data/10x-pbmc-multiome-v1.0/subset_100_100.h5ad
+	cd test && rm -rf soco && tar zxf soco.tgz && cd ..
 
 # format
 # -------------------------------------------------------------------

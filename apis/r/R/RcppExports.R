@@ -126,6 +126,22 @@ set_metadata <- function(uri, key, valuesxp, type, is_array, ctxxp, tsvec = NULL
     invisible(.Call(`_tiledbsoma_set_metadata`, uri, key, valuesxp, type, is_array, ctxxp, tsvec))
 }
 
+libtiledbsoma_empty_query_condition <- function(ctxxp) {
+    .Call(`_tiledbsoma_libtiledbsoma_empty_query_condition`, ctxxp)
+}
+
+libtiledbsoma_query_condition_from_triple <- function(query_cond, attr_name, condition_value, arrow_type_name, cond_op_string) {
+    invisible(.Call(`_tiledbsoma_libtiledbsoma_query_condition_from_triple`, query_cond, attr_name, condition_value, arrow_type_name, cond_op_string))
+}
+
+libtiledbsoma_query_condition_combine <- function(lhs, rhs, str) {
+    .Call(`_tiledbsoma_libtiledbsoma_query_condition_combine`, lhs, rhs, str)
+}
+
+libtiledbsoma_query_condition_in_nin <- function(ctxxp, attr_name, op_name, values) {
+    .Call(`_tiledbsoma_libtiledbsoma_query_condition_in_nin`, ctxxp, attr_name, op_name, values)
+}
+
 reindex_create <- function() {
     .Call(`_tiledbsoma_reindex_create`)
 }
@@ -182,8 +198,8 @@ maxshape <- function(uri, ctxxp) {
     .Call(`_tiledbsoma_maxshape`, uri, ctxxp)
 }
 
-non_empty_domain_new <- function(uri, ctxxp) {
-    .Call(`_tiledbsoma_non_empty_domain_new`, uri, ctxxp)
+non_empty_domain <- function(uri, ctxxp) {
+    .Call(`_tiledbsoma_non_empty_domain`, uri, ctxxp)
 }
 
 domain <- function(uri, ctxxp) {
@@ -226,8 +242,8 @@ resize <- function(uri, new_shape, ctxxp) {
     invisible(.Call(`_tiledbsoma_resize`, uri, new_shape, ctxxp))
 }
 
-resize_soma_joinid <- function(uri, new_shape, ctxxp) {
-    invisible(.Call(`_tiledbsoma_resize_soma_joinid`, uri, new_shape, ctxxp))
+resize_soma_joinid_shape <- function(uri, new_shape, ctxxp) {
+    invisible(.Call(`_tiledbsoma_resize_soma_joinid_shape`, uri, new_shape, ctxxp))
 }
 
 tiledbsoma_upgrade_shape <- function(uri, new_shape, ctxxp) {

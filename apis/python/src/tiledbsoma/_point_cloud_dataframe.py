@@ -11,7 +11,7 @@ from typing import Any, Optional, Sequence, Tuple, Union, cast
 
 import pyarrow as pa
 import somacore
-from somacore import Axis, CoordinateSpace, CoordinateTransform, options
+from somacore import CoordinateSpace, CoordinateTransform, options
 from typing_extensions import Self
 
 from . import _arrow_types, _util
@@ -71,8 +71,8 @@ class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
         uri: str,
         *,
         schema: pa.Schema,
-        index_column_names: Sequence[str] = (SOMA_JOINID, "x", "y"),
-        axis_names: Sequence[str] = ("x", "y"),
+        coordinate_space: Union[Sequence[str], CoordinateSpace] = ("x", "y"),
+        index_column_names: Optional[Sequence[str]] = None,
         domain: Optional[Domain] = None,
         platform_config: Optional[options.PlatformConfig] = None,
         context: Optional[SOMATileDBContext] = None,
@@ -97,9 +97,8 @@ class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
                 columns (e.g., ``['x', 'y']``). All named columns must exist in the
                 schema, and at least one index column name is required.
                 Default is ``("soma_joinid", "x", "y")``.
-            axis_names: An ordered list of axis column names that correspond to the
-                names of axes of the the coordinate space the points are defined on.
-                Must be the name of index columns. Default is ``("x", "y")``.
+            coordinate_space: Either the coordinate space or the axis names for the
+                coordinate space the point cloud is defined on.
             domain: An optional sequence of tuples specifying the domain of each
                 index column. Each tuple should be a pair consisting of the minimum
                 and maximum values storable in the index column. If omitted entirely,
@@ -116,7 +115,11 @@ class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
         warnings.warn(SPATIAL_DISCLAIMER)
 
         axis_dtype: Optional[pa.DataType] = None
-        for column_name in axis_names:
+        if not isinstance(coordinate_space, CoordinateSpace):
+            coordinate_space = CoordinateSpace.from_axis_names(coordinate_space)
+        if index_column_names is None:
+            index_column_names = (SOMA_JOINID,) + coordinate_space.axis_names
+        for column_name in coordinate_space.axis_names:
             if column_name not in index_column_names:
                 raise ValueError(f"Spatial column '{column_name}' must an index column")
             # Check axis column type is valid and all axis columns have the same type.
@@ -134,10 +137,6 @@ class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
                 if column_dtype != axis_dtype:
                     raise ValueError("All spatial axes must have the same datatype.")
 
-        # mypy false positive https://github.com/python/mypy/issues/5313
-        coord_space = CoordinateSpace(
-            tuple(Axis(axis_name) for axis_name in axis_names)  # type: ignore
-        )
         context = _validate_soma_tiledb_context(context)
         schema = _canonicalize_schema(schema, index_column_names)
 
@@ -183,10 +182,10 @@ class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
             )
 
             (slot_core_current_domain, saturated_cd) = _fill_out_slot_soma_domain(
-                slot_soma_domain, index_column_name, pa_field.type, dtype
+                slot_soma_domain, False, index_column_name, pa_field.type, dtype
             )
             (slot_core_max_domain, saturated_md) = _fill_out_slot_soma_domain(
-                None, index_column_name, pa_field.type, dtype
+                None, True, index_column_name, pa_field.type, dtype
             )
 
             extent = _find_extent_for_domain(
@@ -247,7 +246,7 @@ class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
 
         handle = cls._wrapper_type.open(uri, "w", context, tiledb_timestamp)
         handle.meta[SOMA_COORDINATE_SPACE_METADATA_KEY] = coordinate_space_to_json(
-            coord_space
+            coordinate_space
         )
         return cls(
             handle,
@@ -406,9 +405,8 @@ class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
             region_coord_space = self._coord_space
         else:
             if region_coord_space is None:
-                # mypy false positive https://github.com/python/mypy/issues/5313
-                region_coord_space = CoordinateSpace(
-                    tuple(Axis(axis_name) for axis_name in region_transform.input_axes)  # type: ignore
+                region_coord_space = CoordinateSpace.from_axis_names(
+                    region_transform.input_axes
                 )
             elif region_transform.input_axes != region_coord_space.axis_names:
                 raise ValueError(

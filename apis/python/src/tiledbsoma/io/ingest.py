@@ -36,7 +36,7 @@ import numpy as np
 import pandas as pd
 import pyarrow as pa
 import scipy.sparse as sp
-from anndata._core.sparse_dataset import SparseDataset
+from anndata.experimental import CSCDataset
 from somacore.options import PlatformConfig
 from typing_extensions import get_args
 
@@ -46,6 +46,7 @@ from .. import (
     DenseNDArray,
     Experiment,
     Measurement,
+    PointCloudDataFrame,
     SparseNDArray,
     _factory,
     _util,
@@ -63,6 +64,7 @@ from .._exception import (
     NotCreateableError,
     SOMAError,
 )
+from .._flags import NEW_SHAPE_FEATURE_FLAG_ENABLED
 from .._soma_array import SOMAArray
 from .._soma_object import AnySOMAObject, SOMAObject
 from .._tdb_handles import RawHandle
@@ -357,7 +359,7 @@ def from_h5ad(
 
     logging.log_io(None, f"START  READING {input_path}")
 
-    with read_h5ad(input_path, mode="r", ctx=context.tiledb_ctx) as anndata:
+    with read_h5ad(input_path, mode="r", ctx=context) as anndata:
         logging.log_io(None, _util.format_elapsed(s, f"FINISH READING {input_path}"))
 
         uri = from_anndata(
@@ -1104,7 +1106,7 @@ def _extract_new_values_for_append(
 
 def _write_arrow_table(
     arrow_table: pa.Table,
-    handle: Union[DataFrame, SparseNDArray],
+    handle: Union[DataFrame, SparseNDArray, PointCloudDataFrame],
     tiledb_create_options: TileDBCreateOptions,
     tiledb_write_options: TileDBWriteOptions,
 ) -> None:
@@ -1163,6 +1165,7 @@ def _write_dataframe(
         df,
         df_uri,
         id_column_name,
+        shape=axis_mapping.get_shape(),
         ingestion_params=ingestion_params,
         additional_metadata=additional_metadata,
         original_index_metadata=original_index_metadata,
@@ -1176,6 +1179,7 @@ def _write_dataframe_impl(
     df_uri: str,
     id_column_name: Optional[str],
     *,
+    shape: int,
     ingestion_params: IngestionParams,
     additional_metadata: AdditionalMetadata = None,
     original_index_metadata: OriginalIndexMetadata = None,
@@ -1202,9 +1206,15 @@ def _write_dataframe_impl(
         arrow_table = _extract_new_values_for_append(df_uri, arrow_table, context)
 
     try:
+        # Note: tiledbsoma.io creates dataframes with soma_joinid being the one
+        # and only index column.
+        domain = None
+        if NEW_SHAPE_FEATURE_FLAG_ENABLED:
+            domain = ((0, shape - 1),)
         soma_df = DataFrame.create(
             df_uri,
             schema=arrow_table.schema,
+            domain=domain,
             platform_config=platform_config,
             context=context,
         )
@@ -1295,7 +1305,7 @@ def _create_from_matrix(
     """
     Internal helper for user-facing ``create_from_matrix``.
     """
-    # SparseDataset has no ndim but it has a shape
+    # Older SparseDataset has no ndim but it has a shape
     if len(matrix.shape) != 2:
         raise ValueError(f"expected matrix.shape == 2; got {matrix.shape}")
 
@@ -1303,8 +1313,19 @@ def _create_from_matrix(
     logging.log_io(None, f"START  WRITING {uri}")
 
     try:
+        shape: Sequence[Union[int, None]] = ()
         # A SparseNDArray must be appendable in soma.io.
-        shape = [None for _ in matrix.shape] if cls.is_sparse else matrix.shape
+        if NEW_SHAPE_FEATURE_FLAG_ENABLED:
+            # Instead of
+            #   shape = tuple(int(e) for e in matrix.shape)
+            # we consult the registration mapping. This is important
+            # in the case when multiple H5ADs/AnnDatas are being
+            # ingested to an experiment which doesn't pre-exist.
+            shape = (axis_0_mapping.get_shape(), axis_1_mapping.get_shape())
+        elif cls.is_sparse:
+            shape = tuple(None for _ in matrix.shape)
+        else:
+            shape = matrix.shape
         soma_ndarray = cls.create(
             uri,
             type=pa.from_numpy_dtype(matrix.dtype),
@@ -1603,7 +1624,7 @@ def update_matrix(
         soma_ndarray: a ``SparseNDArray`` or ``DenseNDArray`` already opened for write.
 
         new_data: If the ``soma_ndarray`` is sparse, a Scipy CSR/CSC matrix or
-            AnnData ``SparseDataset``. If the ``soma_ndarray`` is dense,
+            AnnData ``CSCDataset`` / ``CSRDataset``. If the ``soma_ndarray`` is dense,
             a NumPy NDArray.
 
         context: Optional :class:`SOMATileDBContext` containing storage parameters, etc.
@@ -2035,11 +2056,12 @@ def _find_sparse_chunk_size_backed(
       these nnz values is quick.  This happens when the input is AnnData via
       anndata.read_h5ad(name_of_h5ad) without the second backing-mode argument.
 
-    * If the input matrix is anndata._core.sparse_dataset.SparseDataset -- which
-      happens with out-of-core anndata reads -- then getting all these nnz
-      values is prohibitively expensive.  This happens when the input is AnnData
-      via anndata.read_h5ad(name_of_h5ad, "r") with the second backing-mode
-      argument, which is necessary for being able to ingest larger H5AD files.
+    * If the input matrix is ``anndata.abc.CSCDataset`` or
+      ``anndata.abc.CSRDataset`` -- which happens with out-of-core anndata reads
+      -- then getting all these nnz values is prohibitively expensive.  This
+      happens when the input is AnnData via anndata.read_h5ad(name_of_h5ad, "r")
+      with the second backing-mode argument, which is necessary for being able
+      to ingest larger H5AD files.
 
     Say there are 100,000 rows, each with possibly quite different nnz values.
     Then in the non-backed case we simply check each row's nnz value. But for
@@ -2243,7 +2265,7 @@ def _write_matrix_to_sparseNDArray(
     if sp.isspmatrix_csc(matrix):
         # E.g. if we used anndata.X[:]
         stride_axis = 1
-    if isinstance(matrix, SparseDataset) and matrix.format_str == "csc":
+    if isinstance(matrix, CSCDataset) and matrix.format_str == "csc":
         # E.g. if we used anndata.X without the [:]
         stride_axis = 1
 
@@ -2709,6 +2731,7 @@ def _ingest_uns_1d_string_array(
         df,
         df_uri,
         None,
+        shape=df.shape[0],
         ingestion_params=ingestion_params,
         platform_config=platform_config,
         context=context,
@@ -2754,6 +2777,7 @@ def _ingest_uns_2d_string_array(
         df,
         df_uri,
         None,
+        shape=df.shape[0],
         ingestion_params=ingestion_params,
         additional_metadata=additional_metadata,
         platform_config=platform_config,

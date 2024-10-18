@@ -246,6 +246,58 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
+// libtiledbsoma_empty_query_condition
+Rcpp::XPtr<tdbs::QueryCondition> libtiledbsoma_empty_query_condition(Rcpp::XPtr<somactx_wrap_t> ctxxp);
+RcppExport SEXP _tiledbsoma_libtiledbsoma_empty_query_condition(SEXP ctxxpSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::XPtr<somactx_wrap_t> >::type ctxxp(ctxxpSEXP);
+    rcpp_result_gen = Rcpp::wrap(libtiledbsoma_empty_query_condition(ctxxp));
+    return rcpp_result_gen;
+END_RCPP
+}
+// libtiledbsoma_query_condition_from_triple
+void libtiledbsoma_query_condition_from_triple(Rcpp::XPtr<tdbs::QueryCondition> query_cond, const std::string& attr_name, SEXP condition_value, const std::string& arrow_type_name, const std::string& cond_op_string);
+RcppExport SEXP _tiledbsoma_libtiledbsoma_query_condition_from_triple(SEXP query_condSEXP, SEXP attr_nameSEXP, SEXP condition_valueSEXP, SEXP arrow_type_nameSEXP, SEXP cond_op_stringSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::XPtr<tdbs::QueryCondition> >::type query_cond(query_condSEXP);
+    Rcpp::traits::input_parameter< const std::string& >::type attr_name(attr_nameSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type condition_value(condition_valueSEXP);
+    Rcpp::traits::input_parameter< const std::string& >::type arrow_type_name(arrow_type_nameSEXP);
+    Rcpp::traits::input_parameter< const std::string& >::type cond_op_string(cond_op_stringSEXP);
+    libtiledbsoma_query_condition_from_triple(query_cond, attr_name, condition_value, arrow_type_name, cond_op_string);
+    return R_NilValue;
+END_RCPP
+}
+// libtiledbsoma_query_condition_combine
+Rcpp::XPtr<tdbs::QueryCondition> libtiledbsoma_query_condition_combine(Rcpp::XPtr<tdbs::QueryCondition> lhs, Rcpp::XPtr<tdbs::QueryCondition> rhs, const std::string& str);
+RcppExport SEXP _tiledbsoma_libtiledbsoma_query_condition_combine(SEXP lhsSEXP, SEXP rhsSEXP, SEXP strSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::XPtr<tdbs::QueryCondition> >::type lhs(lhsSEXP);
+    Rcpp::traits::input_parameter< Rcpp::XPtr<tdbs::QueryCondition> >::type rhs(rhsSEXP);
+    Rcpp::traits::input_parameter< const std::string& >::type str(strSEXP);
+    rcpp_result_gen = Rcpp::wrap(libtiledbsoma_query_condition_combine(lhs, rhs, str));
+    return rcpp_result_gen;
+END_RCPP
+}
+// libtiledbsoma_query_condition_in_nin
+Rcpp::XPtr<tdbs::QueryCondition> libtiledbsoma_query_condition_in_nin(Rcpp::XPtr<somactx_wrap_t> ctxxp, const std::string& attr_name, const std::string& op_name, SEXP values);
+RcppExport SEXP _tiledbsoma_libtiledbsoma_query_condition_in_nin(SEXP ctxxpSEXP, SEXP attr_nameSEXP, SEXP op_nameSEXP, SEXP valuesSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::XPtr<somactx_wrap_t> >::type ctxxp(ctxxpSEXP);
+    Rcpp::traits::input_parameter< const std::string& >::type attr_name(attr_nameSEXP);
+    Rcpp::traits::input_parameter< const std::string& >::type op_name(op_nameSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type values(valuesSEXP);
+    rcpp_result_gen = Rcpp::wrap(libtiledbsoma_query_condition_in_nin(ctxxp, attr_name, op_name, values));
+    return rcpp_result_gen;
+END_RCPP
+}
 // reindex_create
 Rcpp::XPtr<tdbs::IntIndexer> reindex_create();
 RcppExport SEXP _tiledbsoma_reindex_create() {
@@ -380,15 +432,15 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// non_empty_domain_new
-SEXP non_empty_domain_new(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp);
-RcppExport SEXP _tiledbsoma_non_empty_domain_new(SEXP uriSEXP, SEXP ctxxpSEXP) {
+// non_empty_domain
+SEXP non_empty_domain(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp);
+RcppExport SEXP _tiledbsoma_non_empty_domain(SEXP uriSEXP, SEXP ctxxpSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const std::string& >::type uri(uriSEXP);
     Rcpp::traits::input_parameter< Rcpp::XPtr<somactx_wrap_t> >::type ctxxp(ctxxpSEXP);
-    rcpp_result_gen = Rcpp::wrap(non_empty_domain_new(uri, ctxxp));
+    rcpp_result_gen = Rcpp::wrap(non_empty_domain(uri, ctxxp));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -512,15 +564,15 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
-// resize_soma_joinid
-void resize_soma_joinid(const std::string& uri, Rcpp::NumericVector new_shape, Rcpp::XPtr<somactx_wrap_t> ctxxp);
-RcppExport SEXP _tiledbsoma_resize_soma_joinid(SEXP uriSEXP, SEXP new_shapeSEXP, SEXP ctxxpSEXP) {
+// resize_soma_joinid_shape
+void resize_soma_joinid_shape(const std::string& uri, Rcpp::NumericVector new_shape, Rcpp::XPtr<somactx_wrap_t> ctxxp);
+RcppExport SEXP _tiledbsoma_resize_soma_joinid_shape(SEXP uriSEXP, SEXP new_shapeSEXP, SEXP ctxxpSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const std::string& >::type uri(uriSEXP);
     Rcpp::traits::input_parameter< Rcpp::NumericVector >::type new_shape(new_shapeSEXP);
     Rcpp::traits::input_parameter< Rcpp::XPtr<somactx_wrap_t> >::type ctxxp(ctxxpSEXP);
-    resize_soma_joinid(uri, new_shape, ctxxp);
+    resize_soma_joinid_shape(uri, new_shape, ctxxp);
     return R_NilValue;
 END_RCPP
 }
@@ -739,6 +791,10 @@ static const R_CallMethodDef CallEntries[] = {
     {"_tiledbsoma_has_metadata", (DL_FUNC) &_tiledbsoma_has_metadata, 4},
     {"_tiledbsoma_delete_metadata", (DL_FUNC) &_tiledbsoma_delete_metadata, 4},
     {"_tiledbsoma_set_metadata", (DL_FUNC) &_tiledbsoma_set_metadata, 7},
+    {"_tiledbsoma_libtiledbsoma_empty_query_condition", (DL_FUNC) &_tiledbsoma_libtiledbsoma_empty_query_condition, 1},
+    {"_tiledbsoma_libtiledbsoma_query_condition_from_triple", (DL_FUNC) &_tiledbsoma_libtiledbsoma_query_condition_from_triple, 5},
+    {"_tiledbsoma_libtiledbsoma_query_condition_combine", (DL_FUNC) &_tiledbsoma_libtiledbsoma_query_condition_combine, 3},
+    {"_tiledbsoma_libtiledbsoma_query_condition_in_nin", (DL_FUNC) &_tiledbsoma_libtiledbsoma_query_condition_in_nin, 4},
     {"_tiledbsoma_reindex_create", (DL_FUNC) &_tiledbsoma_reindex_create, 0},
     {"_tiledbsoma_reindex_map", (DL_FUNC) &_tiledbsoma_reindex_map, 2},
     {"_tiledbsoma_reindex_lookup", (DL_FUNC) &_tiledbsoma_reindex_lookup, 2},
@@ -750,7 +806,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_tiledbsoma_check_arrow_array_tag", (DL_FUNC) &_tiledbsoma_check_arrow_array_tag, 1},
     {"_tiledbsoma_shape", (DL_FUNC) &_tiledbsoma_shape, 2},
     {"_tiledbsoma_maxshape", (DL_FUNC) &_tiledbsoma_maxshape, 2},
-    {"_tiledbsoma_non_empty_domain_new", (DL_FUNC) &_tiledbsoma_non_empty_domain_new, 2},
+    {"_tiledbsoma_non_empty_domain", (DL_FUNC) &_tiledbsoma_non_empty_domain, 2},
     {"_tiledbsoma_domain", (DL_FUNC) &_tiledbsoma_domain, 2},
     {"_tiledbsoma_maxdomain", (DL_FUNC) &_tiledbsoma_maxdomain, 2},
     {"_tiledbsoma_maybe_soma_joinid_shape", (DL_FUNC) &_tiledbsoma_maybe_soma_joinid_shape, 2},
@@ -761,7 +817,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_tiledbsoma_c_attrnames", (DL_FUNC) &_tiledbsoma_c_attrnames, 2},
     {"_tiledbsoma_c_schema", (DL_FUNC) &_tiledbsoma_c_schema, 2},
     {"_tiledbsoma_resize", (DL_FUNC) &_tiledbsoma_resize, 3},
-    {"_tiledbsoma_resize_soma_joinid", (DL_FUNC) &_tiledbsoma_resize_soma_joinid, 3},
+    {"_tiledbsoma_resize_soma_joinid_shape", (DL_FUNC) &_tiledbsoma_resize_soma_joinid_shape, 3},
     {"_tiledbsoma_tiledbsoma_upgrade_shape", (DL_FUNC) &_tiledbsoma_tiledbsoma_upgrade_shape, 3},
     {"_tiledbsoma_c_update_dataframe_schema", (DL_FUNC) &_tiledbsoma_c_update_dataframe_schema, 6},
     {"_tiledbsoma_sr_setup", (DL_FUNC) &_tiledbsoma_sr_setup, 10},

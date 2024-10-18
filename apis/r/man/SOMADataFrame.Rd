@@ -24,7 +24,7 @@ row and is intended to act as a join key for other objects, such as
 \item \href{#method-SOMADataFrame-domain}{\code{SOMADataFrame$domain()}}
 \item \href{#method-SOMADataFrame-maxdomain}{\code{SOMADataFrame$maxdomain()}}
 \item \href{#method-SOMADataFrame-tiledbsoma_has_upgraded_domain}{\code{SOMADataFrame$tiledbsoma_has_upgraded_domain()}}
-\item \href{#method-SOMADataFrame-resize_soma_joinid}{\code{SOMADataFrame$resize_soma_joinid()}}
+\item \href{#method-SOMADataFrame-resize_soma_joinid_shape}{\code{SOMADataFrame$resize_soma_joinid_shape()}}
 \item \href{#method-SOMADataFrame-clone}{\code{SOMADataFrame$clone()}}
 }
 }
@@ -47,7 +47,6 @@ row and is intended to act as a join key for other objects, such as
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="index_column_names"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-index_column_names'><code>tiledbsoma::TileDBArray$index_column_names()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="ndim"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-ndim'><code>tiledbsoma::TileDBArray$ndim()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="non_empty_domain"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-non_empty_domain'><code>tiledbsoma::TileDBArray$non_empty_domain()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="non_empty_domain_new"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-non_empty_domain_new'><code>tiledbsoma::TileDBArray$non_empty_domain_new()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="open"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-open'><code>tiledbsoma::TileDBArray$open()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="print"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-print'><code>tiledbsoma::TileDBArray$print()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="schema"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-schema'><code>tiledbsoma::TileDBArray$schema()</code></a></span></li>
@@ -281,9 +280,9 @@ Logical
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-SOMADataFrame-resize_soma_joinid"></a>}}
-\if{latex}{\out{\hypertarget{method-SOMADataFrame-resize_soma_joinid}{}}}
-\subsection{Method \code{resize_soma_joinid()}}{
+\if{html}{\out{<a id="method-SOMADataFrame-resize_soma_joinid_shape"></a>}}
+\if{latex}{\out{\hypertarget{method-SOMADataFrame-resize_soma_joinid_shape}{}}}
+\subsection{Method \code{resize_soma_joinid_shape()}}{
 Increases the shape of the dataframe on the \code{soma_joinid}
 index column, if it indeed is an index column, leaving all other index
 columns as-is. If the \code{soma_joinid} is not an index column, no change is
@@ -293,7 +292,7 @@ domain expansion.  Raises an error if the dataframe doesn't already have a
 domain: in that case please call \code{tiledbsoma_upgrade_domain} (WIP for
 1.15).
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{SOMADataFrame$resize_soma_joinid(new_shape)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{SOMADataFrame$resize_soma_joinid_shape(new_shape)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{

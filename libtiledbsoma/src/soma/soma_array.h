@@ -599,6 +599,17 @@ class SOMAArray : public SOMAObject {
     }
 
     /**
+     * @brief Get members of the schema (capacity, allows_duplicates,
+     * tile_order, cell_order, offsets_filters, validity_filters, attr filters,
+     * and dim filters) in the form of a PlatformConfig
+     *
+     * @return PlatformConfig
+     */
+    PlatformConfig config_options_from_schema() const {
+        return ArrowAdapter::platform_config_from_tiledb_schema(*mq_->schema());
+    }
+
+    /**
      * @brief Get the mapping of attributes to Enumerations.
      *
      * @return std::map<std::string, Enumeration>
@@ -653,7 +664,7 @@ class SOMAArray : public SOMAObject {
      * @note If the key does not exist, this will take no effect
      *     (i.e., the function will not error out).
      */
-    void delete_metadata(const std::string& key);
+    void delete_metadata(const std::string& key, bool force = false);
 
     /**
      * @brief Given a key, get the associated value datatype, number of
@@ -722,12 +733,48 @@ class SOMAArray : public SOMAObject {
 
     /**
      * Retrieves the non-empty domain from the array. This is the union of the
-     * non-empty domains of the array fragments.
+     * non-empty domains of the array fragments. Returns (0, 0) for empty
+     * domains.
      */
     template <typename T>
     std::pair<T, T> non_empty_domain_slot(const std::string& name) const {
         try {
             return arr_->non_empty_domain<T>(name);
+        } catch (const std::exception& e) {
+            throw TileDBSOMAError(e.what());
+        }
+    }
+
+    /**
+     * Retrieves the non-empty domain from the array. This is the union of the
+     * non-empty domains of the array fragments. Return std::nullopt for empty
+     * domains.
+     */
+    template <typename T>
+    std::optional<std::pair<T, T>> non_empty_domain_slot_opt(
+        const std::string& name) const {
+        try {
+            int32_t is_empty;
+            T ned[2];
+
+            // TODO currently we need to use the TileDB C API in order to check
+            // if the domain is empty or not. The C++ API returns (0, 0)
+            // currently which could also represent a single point at coordinate
+            // 0. Replace this when the C++ API supports correct checking for
+            // empty domains
+            ctx_->tiledb_ctx()->handle_error(
+                tiledb_array_get_non_empty_domain_from_name(
+                    ctx_->tiledb_ctx()->ptr().get(),
+                    arr_->ptr().get(),
+                    name.c_str(),
+                    &ned,
+                    &is_empty));
+
+            if (is_empty == 1) {
+                return std::nullopt;
+            } else {
+                return std::make_pair(ned[0], ned[1]);
+            }
         } catch (const std::exception& e) {
             throw TileDBSOMAError(e.what());
         }
@@ -997,8 +1044,7 @@ class SOMAArray : public SOMAObject {
             default:
                 throw std::runtime_error(
                     "internal coding error in "
-                    "SOMAArray::_core_domainish_slot_string: "
-                    "unknown kind");
+                    "SOMAArray::_core_domainish_slot_string: unknown kind");
         }
     }
 
@@ -1061,8 +1107,10 @@ class SOMAArray : public SOMAObject {
      * existing core domain.
      */
     std::pair<bool, std::string> can_resize(
-        const std::vector<int64_t>& newshape) {
-        return _can_set_shape_helper(newshape, true, "resize");
+        const std::vector<int64_t>& newshape,
+        std::string function_name_for_messages) {
+        return _can_set_shape_helper(
+            newshape, true, function_name_for_messages);
     }
 
     /**
@@ -1083,16 +1131,31 @@ class SOMAArray : public SOMAObject {
      * domain.
      */
     std::pair<bool, std::string> can_upgrade_shape(
-        const std::vector<int64_t>& newshape) {
+        const std::vector<int64_t>& newshape,
+        std::string function_name_for_messages) {
         return _can_set_shape_helper(
-            newshape, false, "tiledbsoma_upgrade_shape");
+            newshape, false, function_name_for_messages);
     }
 
     /**
      * This is similar to can_upgrade_shape, but it's a can-we call
-     * for maybe_resize_soma_joinid.
+     * for resize_soma_joinid_shape.
      */
-    std::pair<bool, std::string> can_resize_soma_joinid(int64_t newshape);
+    std::pair<bool, std::string> can_resize_soma_joinid_shape(
+        int64_t newshape, std::string function_name_for_messages) {
+        return _can_set_soma_joinid_shape_helper(
+            newshape, true, function_name_for_messages);
+    }
+
+    /**
+     * This is similar to can_upgrade_shape, but it's a can-we call
+     * for upgrade_soma_joinid_shape.
+     */
+    std::pair<bool, std::string> can_upgrade_soma_joinid_shape(
+        int64_t newshape, std::string function_name_for_messages) {
+        return _can_set_soma_joinid_shape_helper(
+            newshape, false, function_name_for_messages);
+    }
 
     /**
      * @brief Resize the shape (what core calls "current domain") up to the
@@ -1105,7 +1168,11 @@ class SOMAArray : public SOMAObject {
      * @return Nothing. Raises an exception if the resize would be a downsize,
      * which is not supported.
      */
-    void resize(const std::vector<int64_t>& newshape);
+    void resize(
+        const std::vector<int64_t>& newshape,
+        std::string function_name_for_messages) {
+        _set_shape_helper(newshape, true, function_name_for_messages);
+    }
 
     /**
      * @brief Given an old-style array without current domain, sets its
@@ -1113,7 +1180,11 @@ class SOMAArray : public SOMAObject {
      * of int64 type. Namely, all SparseNDArray/DenseNDArray, and
      * default-indexed DataFrame.
      */
-    void upgrade_shape(const std::vector<int64_t>& newshape);
+    void upgrade_shape(
+        const std::vector<int64_t>& newshape,
+        std::string function_name_for_messages) {
+        _set_shape_helper(newshape, false, function_name_for_messages);
+    }
 
     /**
      * @brief Increases the tiledbsoma shape up to at most the maxshape,
@@ -1129,7 +1200,31 @@ class SOMAArray : public SOMAObject {
      * @return Throws if the requested shape exceeds the array's create-time
      * maxshape. Throws if the array does not have current-domain support.
      */
-    void resize_soma_joinid(int64_t newshape);
+    void resize_soma_joinid_shape(
+        int64_t newshape, std::string function_name_for_messages) {
+        return _set_soma_joinid_shape_helper(
+            newshape, true, function_name_for_messages);
+    }
+
+    /**
+     * @brief Increases the tiledbsoma shape up to at most the maxshape,
+     * resizing the soma_joinid dimension if it is a dimension.
+     *
+     * While SOMA SparseNDArray and DenseNDArray, along with default-indexed
+     * DataFrame, have int64_t dims, non-default-indexed DataFrame objects need
+     * not: it is only required that they have a dim _or_ an attr called
+     * soma_joinid. If soma_joinid is one of the dims, it will be resized while
+     * the others will be preserved. If soma_joinid is not one of the dims,
+     * nothing will be changed, as nothing _needs_ to be changed.
+     *
+     * @return Throws if the requested shape exceeds the array's create-time
+     * maxshape. Throws if the array does not have current-domain support.
+     */
+    void upgrade_soma_joinid_shape(
+        int64_t newshape, std::string function_name_for_messages) {
+        return _set_soma_joinid_shape_helper(
+            newshape, false, function_name_for_messages);
+    }
 
    protected:
     // These two are for use nominally by SOMADataFrame. This could be moved in
@@ -1193,20 +1288,41 @@ class SOMAArray : public SOMAObject {
     std::pair<bool, std::string> _can_set_shape_helper(
         const std::vector<int64_t>& newshape,
         bool is_resize,
-        std::string method_name_for_messages);
+        std::string function_name_for_messages);
 
     /**
      * This is a second-level code-dedupe helper for _can_set_shape_helper.
      */
-    std::pair<bool, std::string> _can_set_shape_domainish_helper(
+    std::pair<bool, std::string> _can_set_shape_domainish_subhelper(
         const std::vector<int64_t>& newshape,
         bool check_current_domain,
-        std::string method_name_for_messages);
+        std::string function_name_for_messages);
+
+    /**
+     * This is a code-dedupe helper for can_resize_soma_joinid_shape and
+     * can_upgrade_domain_soma_joinid_shape.
+     */
+    std::pair<bool, std::string> _can_set_soma_joinid_shape_helper(
+        int64_t newshape,
+        bool is_resize,
+        std::string function_name_for_messages);
 
     /**
      * This is a code-dedupe helper method for resize and upgrade_shape.
      */
-    void _set_current_domain_from_shape(const std::vector<int64_t>& newshape);
+    void _set_shape_helper(
+        const std::vector<int64_t>& newshape,
+        bool is_resize,
+        std::string function_name_for_messages);
+
+    /**
+     * This is a code-dedupe helper method for resize_soma_joinid_shape and
+     * upgrade_soma_joinid_shape.
+     */
+    void _set_soma_joinid_shape_helper(
+        int64_t newshape,
+        bool is_resize,
+        std::string function_name_for_messages);
 
     /**
      * While SparseNDArray, DenseNDArray, and default-indexed DataFrame

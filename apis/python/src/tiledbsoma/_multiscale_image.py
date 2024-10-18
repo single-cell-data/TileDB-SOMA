@@ -15,7 +15,6 @@ import attrs
 import pyarrow as pa
 import somacore
 from somacore import (
-    Axis,
     CoordinateSpace,
     CoordinateTransform,
     ScaleTransform,
@@ -180,9 +179,8 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
             datatype=type,
         )
 
-        # mypy false positive https://github.com/python/mypy/issues/5313
-        coord_space = CoordinateSpace(
-            tuple(Axis(name) for name in schema.get_coordinate_space_axis_names())  # type: ignore[misc]
+        coord_space = CoordinateSpace.from_axis_names(
+            schema.get_coordinate_space_axis_names()
         )
         schema_str = schema.to_json()
         coord_space_str = coordinate_space_to_json(coord_space)
@@ -422,9 +420,8 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
                 )
             # Create or check output coordinates.
             if region_coord_space is None:
-                # mypy false positive https://github.com/python/mypy/issues/5313
-                region_coord_space = CoordinateSpace(
-                    tuple(Axis(axis_name) for axis_name in region_transform.input_axes)  # type: ignore[misc]
+                region_coord_space = CoordinateSpace.from_axis_names(
+                    region_transform.input_axes
                 )
             elif len(region_coord_space) != len(data_coord_space):
                 raise ValueError(
@@ -477,7 +474,7 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
         Lifecycle:
             Experimental.
         """
-        return self._schema.axis_names
+        return tuple(self._schema.axis_names)
 
     @property
     def coordinate_space(self) -> CoordinateSpace:
@@ -514,16 +511,7 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
         Lifecycle:
             Experimental.
         """
-        if isinstance(level, str):
-            level_props = None
-            for val in self._levels:
-                if val.name == level:
-                    level_props = val
-                    break
-            else:
-                raise KeyError("No level with name '{level}'")
-        else:
-            level_props = self._levels[level]
+        level_props = self.level_properties(level)
         ref_level_props = self._schema.reference_level_properties
         if ref_level_props.depth is None:
             return ScaleTransform(
@@ -552,16 +540,7 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
         Lifecycle:
             Experimental.
         """
-        if isinstance(level, str):
-            level_props = None
-            for val in self._levels:
-                if val.name == level:
-                    level_props = val
-                    break
-            else:
-                raise KeyError("No level with name '{level}'")
-        else:
-            level_props = self._levels[level]
+        level_props = self.level_properties(level)
         ref_level_props = self._schema.reference_level_properties
         if ref_level_props.depth is None:
             return ScaleTransform(
@@ -601,16 +580,23 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
         """
         return len(self._levels)
 
-    def level_properties(self, level: Union[int, str]) -> somacore.ImageProperties:
+    def level_properties(self, level: Union[int, str]) -> ImageProperties:
         """The properties of an image at the specified level.
 
         Lifecycle:
             Experimental.
         """
+        # by name
+        # TODO could dyanmically create a dictionary whenever a name-based
+        # lookup is requested
         if isinstance(level, str):
-            raise NotImplementedError(
-                "Support for getting level properties by name is not yet implemented."
-            )  # TODO
+            for val in self._levels:
+                if val.name == level:
+                    return val
+            else:
+                raise KeyError("No level with name '{level}'")
+
+        # by index
         return self._levels[level]
 
     @property
@@ -652,11 +638,8 @@ class MultiscaleImageSchema:
                 f"{self.reference_level_properties.image_type}. "
             )
 
-    # mypy false positive https://github.com/python/mypy/issues/5313
     def create_coordinate_space(self) -> CoordinateSpace:
-        return CoordinateSpace(
-            tuple(Axis(name) for name in self.get_coordinate_space_axis_names())  # type: ignore[misc]
-        )
+        return CoordinateSpace.from_axis_names(self.get_coordinate_space_axis_names())
 
     def get_coordinate_space_axis_names(self) -> Tuple[str, ...]:
         # TODO: Setting axes and the coordinate space is going to be updated

@@ -124,13 +124,16 @@ class SOMAObject {
      * error out.
      *
      * @param key The key of the metadata item to be deleted.
+     * @param force A boolean toggle to suppress internal checks, defaults to
+     *     false.
      *
      * @note The writes will take effect only upon closing the group.
      *
      * @note If the key does not exist, this will take no effect
      *     (i.e., the function will not error out).
      */
-    virtual void delete_metadata(const std::string& key) = 0;
+    virtual void delete_metadata(
+        const std::string& key, bool force = false) = 0;
 
     /**
      * @brief Given a key, get the associated value datatype, number of

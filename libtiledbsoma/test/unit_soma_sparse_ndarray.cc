@@ -83,47 +83,47 @@ TEST_CASE("SOMASparseNDArray: basic", "[SOMASparseNDArray]") {
         REQUIRE(!SOMADataFrame::exists(uri, ctx));
         REQUIRE(!SOMADenseNDArray::exists(uri, ctx));
 
-        auto soma_sparse = SOMASparseNDArray::open(uri, OpenMode::read, ctx);
-        REQUIRE(soma_sparse->uri() == uri);
-        REQUIRE(soma_sparse->ctx() == ctx);
-        REQUIRE(soma_sparse->type() == "SOMASparseNDArray");
-        REQUIRE(soma_sparse->is_sparse() == true);
-        REQUIRE(soma_sparse->soma_data_type() == attr_arrow_format);
-        auto schema = soma_sparse->tiledb_schema();
+        auto snda = SOMASparseNDArray::open(uri, OpenMode::read, ctx);
+        REQUIRE(snda->uri() == uri);
+        REQUIRE(snda->ctx() == ctx);
+        REQUIRE(snda->type() == "SOMASparseNDArray");
+        REQUIRE(snda->is_sparse() == true);
+        REQUIRE(snda->soma_data_type() == attr_arrow_format);
+        auto schema = snda->tiledb_schema();
         REQUIRE(schema->has_attribute(attr_name));
         REQUIRE(schema->array_type() == TILEDB_SPARSE);
         REQUIRE(schema->domain().has_dimension(dim_name));
-        REQUIRE(soma_sparse->ndim() == 1);
-        REQUIRE(soma_sparse->nnz() == 0);
+        REQUIRE(snda->ndim() == 1);
+        REQUIRE(snda->nnz() == 0);
 
         auto expect = std::vector<int64_t>({shape});
-        REQUIRE(soma_sparse->shape() == expect);
+        REQUIRE(snda->shape() == expect);
         if (!use_current_domain) {
-            REQUIRE(soma_sparse->maxshape() == expect);
+            REQUIRE(snda->maxshape() == expect);
         }
 
-        soma_sparse->close();
+        snda->close();
 
         std::vector<int64_t> d0(10);
         for (int j = 0; j < 10; j++)
             d0[j] = j;
         std::vector<int32_t> a0(10, 1);
 
-        soma_sparse->open(OpenMode::write);
-        soma_sparse->set_column_data(dim_name, d0.size(), d0.data());
-        soma_sparse->set_column_data(attr_name, a0.size(), a0.data());
-        soma_sparse->write();
-        soma_sparse->close();
+        snda->open(OpenMode::write);
+        snda->set_column_data(dim_name, d0.size(), d0.data());
+        snda->set_column_data(attr_name, a0.size(), a0.data());
+        snda->write();
+        snda->close();
 
-        soma_sparse->open(OpenMode::read);
-        while (auto batch = soma_sparse->read_next()) {
+        snda->open(OpenMode::read);
+        while (auto batch = snda->read_next()) {
             auto arrbuf = batch.value();
             auto d0span = arrbuf->at(dim_name)->data<int64_t>();
             auto a0span = arrbuf->at(attr_name)->data<int32_t>();
             REQUIRE(d0 == std::vector<int64_t>(d0span.begin(), d0span.end()));
             REQUIRE(a0 == std::vector<int32_t>(a0span.begin(), a0span.end()));
         }
-        soma_sparse->close();
+        snda->close();
 
         std::vector<int64_t> d0b({dim_max, dim_max + 1});
         std::vector<int64_t> a0b({30, 40});
@@ -133,59 +133,59 @@ TEST_CASE("SOMASparseNDArray: basic", "[SOMASparseNDArray]") {
         //   outside the (immutable) doqain.
         // * With current domain support: this should throw since it's outside
         // the (mutable) current domain.
-        soma_sparse = SOMASparseNDArray::open(uri, OpenMode::write, ctx);
-        soma_sparse->set_column_data(dim_name, d0b.size(), d0b.data());
-        soma_sparse->set_column_data(attr_name, a0b.size(), a0b.data());
-        REQUIRE_THROWS(soma_sparse->write());
-        soma_sparse->close();
+        snda = SOMASparseNDArray::open(uri, OpenMode::write, ctx);
+        snda->set_column_data(dim_name, d0b.size(), d0b.data());
+        snda->set_column_data(attr_name, a0b.size(), a0b.data());
+        REQUIRE_THROWS(snda->write());
+        snda->close();
 
         if (!use_current_domain) {
             auto new_shape = std::vector<int64_t>({shape});
 
-            soma_sparse = SOMASparseNDArray::open(uri, OpenMode::write, ctx);
+            snda = SOMASparseNDArray::open(uri, OpenMode::write, ctx);
             // Without current-domain support: this should throw since
             // one cannot resize what has not been sized.
-            REQUIRE(!soma_sparse->has_current_domain());
-            REQUIRE_THROWS(soma_sparse->resize(new_shape));
+            REQUIRE(!snda->has_current_domain());
+            REQUIRE_THROWS(snda->resize(new_shape, "testing"));
             // Now set the shape
-            soma_sparse->upgrade_shape(new_shape);
-            soma_sparse->close();
+            snda->upgrade_shape(new_shape, "testing");
+            snda->close();
 
-            soma_sparse->open(OpenMode::read);
-            REQUIRE(soma_sparse->has_current_domain());
-            soma_sparse->close();
+            snda->open(OpenMode::read);
+            REQUIRE(snda->has_current_domain());
+            snda->close();
 
-            soma_sparse->open(OpenMode::write);
-            REQUIRE(soma_sparse->has_current_domain());
+            snda->open(OpenMode::write);
+            REQUIRE(snda->has_current_domain());
             // Should not fail since we're setting it to what it already is.
-            soma_sparse->resize(new_shape);
-            soma_sparse->close();
+            snda->resize(new_shape, "testing");
+            snda->close();
 
-            soma_sparse = SOMASparseNDArray::open(uri, OpenMode::read, ctx);
-            REQUIRE(soma_sparse->shape() == new_shape);
-            soma_sparse->close();
+            snda->open(OpenMode::read);
+            REQUIRE(snda->shape() == new_shape);
+            snda->close();
 
         } else {
             auto new_shape = std::vector<int64_t>({shape * 2});
 
-            soma_sparse = SOMASparseNDArray::open(uri, OpenMode::write, ctx);
+            snda = SOMASparseNDArray::open(uri, OpenMode::write, ctx);
             // Should throw since this already has a shape (core current
             // domain).
-            REQUIRE_THROWS(soma_sparse->upgrade_shape(new_shape));
-            soma_sparse->resize(new_shape);
-            soma_sparse->close();
+            REQUIRE_THROWS(snda->upgrade_shape(new_shape, "testing"));
+            snda->resize(new_shape, "testing");
+            snda->close();
 
             // Try out-of-bounds write after resize.
-            soma_sparse = SOMASparseNDArray::open(uri, OpenMode::write, ctx);
-            soma_sparse->set_column_data(dim_name, d0b.size(), d0b.data());
-            soma_sparse->set_column_data(attr_name, a0b.size(), a0b.data());
+            snda->open(OpenMode::write);
+            snda->set_column_data(dim_name, d0b.size(), d0b.data());
+            snda->set_column_data(attr_name, a0b.size(), a0b.data());
             // Implicitly checking for no throw
-            soma_sparse->write();
-            soma_sparse->close();
+            snda->write();
+            snda->close();
 
-            soma_sparse->open(OpenMode::read);
-            REQUIRE(soma_sparse->shape() == new_shape);
-            soma_sparse->close();
+            snda->open(OpenMode::read);
+            REQUIRE(snda->shape() == new_shape);
+            snda->close();
         }
     }
 }
@@ -284,7 +284,7 @@ TEST_CASE("SOMASparseNDArray: metadata", "[SOMASparseNDArray]") {
             PlatformConfig(),
             TimestampRange(0, 2));
 
-        auto soma_sparse = SOMASparseNDArray::open(
+        auto snda = SOMASparseNDArray::open(
             uri,
             OpenMode::write,
             ctx,
@@ -293,51 +293,51 @@ TEST_CASE("SOMASparseNDArray: metadata", "[SOMASparseNDArray]") {
             std::pair<uint64_t, uint64_t>(1, 1));
 
         int32_t val = 100;
-        soma_sparse->set_metadata("md", TILEDB_INT32, 1, &val);
-        soma_sparse->close();
+        snda->set_metadata("md", TILEDB_INT32, 1, &val);
+        snda->close();
 
         // Read metadata
-        soma_sparse->open(OpenMode::read, TimestampRange(0, 2));
-        REQUIRE(soma_sparse->metadata_num() == 3);
-        REQUIRE(soma_sparse->has_metadata("soma_object_type"));
-        REQUIRE(soma_sparse->has_metadata("soma_encoding_version"));
-        REQUIRE(soma_sparse->has_metadata("md"));
-        auto mdval = soma_sparse->get_metadata("md");
+        snda->open(OpenMode::read, TimestampRange(0, 2));
+        REQUIRE(snda->metadata_num() == 3);
+        REQUIRE(snda->has_metadata("soma_object_type"));
+        REQUIRE(snda->has_metadata("soma_encoding_version"));
+        REQUIRE(snda->has_metadata("md"));
+        auto mdval = snda->get_metadata("md");
         REQUIRE(std::get<MetadataInfo::dtype>(*mdval) == TILEDB_INT32);
         REQUIRE(std::get<MetadataInfo::num>(*mdval) == 1);
         REQUIRE(
             *((const int32_t*)std::get<MetadataInfo::value>(*mdval)) == 100);
-        soma_sparse->close();
+        snda->close();
 
         // md should not be available at (2, 2)
-        soma_sparse->open(OpenMode::read, TimestampRange(2, 2));
-        REQUIRE(soma_sparse->metadata_num() == 2);
-        REQUIRE(soma_sparse->has_metadata("soma_object_type"));
-        REQUIRE(soma_sparse->has_metadata("soma_encoding_version"));
-        REQUIRE(!soma_sparse->has_metadata("md"));
-        soma_sparse->close();
+        snda->open(OpenMode::read, TimestampRange(2, 2));
+        REQUIRE(snda->metadata_num() == 2);
+        REQUIRE(snda->has_metadata("soma_object_type"));
+        REQUIRE(snda->has_metadata("soma_encoding_version"));
+        REQUIRE(!snda->has_metadata("md"));
+        snda->close();
 
         // Metadata should also be retrievable in write mode
-        soma_sparse->open(OpenMode::write, TimestampRange(0, 2));
-        REQUIRE(soma_sparse->metadata_num() == 3);
-        REQUIRE(soma_sparse->has_metadata("soma_object_type"));
-        REQUIRE(soma_sparse->has_metadata("soma_encoding_version"));
-        REQUIRE(soma_sparse->has_metadata("md"));
-        mdval = soma_sparse->get_metadata("md");
+        snda->open(OpenMode::write, TimestampRange(0, 2));
+        REQUIRE(snda->metadata_num() == 3);
+        REQUIRE(snda->has_metadata("soma_object_type"));
+        REQUIRE(snda->has_metadata("soma_encoding_version"));
+        REQUIRE(snda->has_metadata("md"));
+        mdval = snda->get_metadata("md");
         REQUIRE(
             *((const int32_t*)std::get<MetadataInfo::value>(*mdval)) == 100);
 
         // Delete and have it reflected when reading metadata while in write
         // mode
-        soma_sparse->delete_metadata("md");
-        mdval = soma_sparse->get_metadata("md");
+        snda->delete_metadata("md");
+        mdval = snda->get_metadata("md");
         REQUIRE(!mdval.has_value());
-        soma_sparse->close();
+        snda->close();
 
         // Confirm delete in read mode
-        soma_sparse->open(OpenMode::read, TimestampRange(0, 2));
-        REQUIRE(!soma_sparse->has_metadata("md"));
-        REQUIRE(soma_sparse->metadata_num() == 2);
+        snda->open(OpenMode::read, TimestampRange(0, 2));
+        REQUIRE(!snda->has_metadata("md"));
+        REQUIRE(snda->metadata_num() == 2);
     }
 }
 void breakme() {
@@ -375,16 +375,16 @@ TEST_CASE(
             std::move(index_columns.first), std::move(index_columns.second)),
         ctx);
 
-    auto soma_sparse = SOMASparseNDArray::open(uri, OpenMode::write, ctx);
-    REQUIRE(soma_sparse->has_current_domain() == false);
+    auto snda = SOMASparseNDArray::open(uri, OpenMode::write, ctx);
+    REQUIRE(snda->has_current_domain() == false);
 
     // For old-style arrays, from before the current-domain feature:
     // * The shape specified at create becomes the core (max) domain
     //   o Recall that the core domain is immutable
     // * There is no current domain set
     //   o A current domain can be applied to it, up to <= (max) domain
-    auto dom = soma_sparse->soma_domain_slot<int64_t>(dim_name);
-    auto mxd = soma_sparse->soma_maxdomain_slot<int64_t>(dim_name);
+    auto dom = snda->soma_domain_slot<int64_t>(dim_name);
+    auto mxd = snda->soma_maxdomain_slot<int64_t>(dim_name);
     REQUIRE(dom == mxd);
     REQUIRE(dom.first == 0);
     REQUIRE(dom.second == dim_max);
@@ -394,21 +394,21 @@ TEST_CASE(
     std::vector<int64_t> newshape_too_big({dim_max + 10});
     std::vector<int64_t> newshape_good({40});
 
-    auto check = soma_sparse->can_upgrade_shape(newshape_wrong_dims);
+    auto check = snda->can_upgrade_shape(newshape_wrong_dims, "testing");
     REQUIRE(check.first == false);
     REQUIRE(
         check.second ==
-        "cannot tiledbsoma_upgrade_shape: provided shape has ndim 2, while the "
+        "testing: provided shape has ndim 2, while the "
         "array has 1");
 
-    check = soma_sparse->can_upgrade_shape(newshape_too_big);
+    check = snda->can_upgrade_shape(newshape_too_big, "testing");
     REQUIRE(check.first == false);
     REQUIRE(
         check.second ==
-        "cannot tiledbsoma_upgrade_shape for soma_dim_0: new 1009 < maxshape "
+        "testing for soma_dim_0: new 1009 < maxshape "
         "1000");
 
-    check = soma_sparse->can_upgrade_shape(newshape_good);
+    check = snda->can_upgrade_shape(newshape_good, "testing");
     REQUIRE(check.first == true);
     REQUIRE(check.second == "");
 }
@@ -444,16 +444,16 @@ TEST_CASE("SOMASparseNDArray: can_resize", "[SOMASparseNDArray]") {
             std::move(index_columns.first), std::move(index_columns.second)),
         ctx);
 
-    auto soma_sparse = SOMASparseNDArray::open(uri, OpenMode::write, ctx);
-    REQUIRE(soma_sparse->has_current_domain() == true);
+    auto snda = SOMASparseNDArray::open(uri, OpenMode::write, ctx);
+    REQUIRE(snda->has_current_domain() == true);
 
     // For new-style arrays, with the current-domain feature:
     // * The shape specified at create becomes the core current domain
     //   o Recall that the core current domain is mutable, up tp <= (max) domain
     // * The core (max) domain is huge
     //   o Recall that the core max domain is immutable
-    auto dom = soma_sparse->soma_domain_slot<int64_t>(dim_name);
-    auto mxd = soma_sparse->soma_maxdomain_slot<int64_t>(dim_name);
+    auto dom = snda->soma_domain_slot<int64_t>(dim_name);
+    auto mxd = snda->soma_maxdomain_slot<int64_t>(dim_name);
     REQUIRE(dom != mxd);
     REQUIRE(dom.first == 0);
     REQUIRE(dom.second == dim_max);
@@ -462,19 +462,18 @@ TEST_CASE("SOMASparseNDArray: can_resize", "[SOMASparseNDArray]") {
     std::vector<int64_t> newshape_too_small({40});
     std::vector<int64_t> newshape_good({2000});
 
-    auto check = soma_sparse->can_resize(newshape_wrong_dims);
+    auto check = snda->can_resize(newshape_wrong_dims, "testing");
     REQUIRE(check.first == false);
     REQUIRE(
         check.second ==
-        "cannot resize: provided shape has ndim 2, while the array has 1");
+        "testing: provided shape has ndim 2, while the array has 1");
 
-    check = soma_sparse->can_resize(newshape_too_small);
+    check = snda->can_resize(newshape_too_small, "testing");
     REQUIRE(check.first == false);
     REQUIRE(
-        check.second ==
-        "cannot resize for soma_dim_0: new 40 < existing shape 1000");
+        check.second == "testing for soma_dim_0: new 40 < existing shape 1000");
 
-    check = soma_sparse->can_resize(newshape_good);
+    check = snda->can_resize(newshape_good, "testing");
     REQUIRE(check.first == true);
     REQUIRE(check.second == "");
 }

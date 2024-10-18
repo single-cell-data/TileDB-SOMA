@@ -78,3 +78,7 @@ is_slice_of = types.is_slice_of
 
 Metadatum = Union[bytes, float, int, str]
 METADATA_TYPES = (bytes, float, int, str)
+
+StatusAndReason = Tuple[bool, str]
+"""Information for whether an upgrade-shape or resize would succeed
+if attempted, along with a reason why not."""
