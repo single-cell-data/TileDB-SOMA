@@ -28,6 +28,12 @@ class AxisIDMapping:
                 return False
         return True
 
+    def get_shape(self) -> int:
+        if len(self.data) == 0:
+            return 0
+        else:
+            return 1 + max(self.data)
+
     @classmethod
     def identity(cls, n: int) -> Self:
         """This maps 0-up input-file offsets to 0-up soma_joinid values. This is

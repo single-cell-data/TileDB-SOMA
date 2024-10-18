@@ -64,6 +64,7 @@ from .._exception import (
     NotCreateableError,
     SOMAError,
 )
+from .._flags import NEW_SHAPE_FEATURE_FLAG_ENABLED
 from .._soma_array import SOMAArray
 from .._soma_object import AnySOMAObject, SOMAObject
 from .._tdb_handles import RawHandle
@@ -1164,6 +1165,7 @@ def _write_dataframe(
         df,
         df_uri,
         id_column_name,
+        shape=axis_mapping.get_shape(),
         ingestion_params=ingestion_params,
         additional_metadata=additional_metadata,
         original_index_metadata=original_index_metadata,
@@ -1177,6 +1179,7 @@ def _write_dataframe_impl(
     df_uri: str,
     id_column_name: Optional[str],
     *,
+    shape: int,
     ingestion_params: IngestionParams,
     additional_metadata: AdditionalMetadata = None,
     original_index_metadata: OriginalIndexMetadata = None,
@@ -1203,9 +1206,15 @@ def _write_dataframe_impl(
         arrow_table = _extract_new_values_for_append(df_uri, arrow_table, context)
 
     try:
+        # Note: tiledbsoma.io creates dataframes with soma_joinid being the one
+        # and only index column.
+        domain = None
+        if NEW_SHAPE_FEATURE_FLAG_ENABLED:
+            domain = ((0, shape - 1),)
         soma_df = DataFrame.create(
             df_uri,
             schema=arrow_table.schema,
+            domain=domain,
             platform_config=platform_config,
             context=context,
         )
@@ -1304,8 +1313,19 @@ def _create_from_matrix(
     logging.log_io(None, f"START  WRITING {uri}")
 
     try:
+        shape: Sequence[Union[int, None]] = ()
         # A SparseNDArray must be appendable in soma.io.
-        shape = [None for _ in matrix.shape] if cls.is_sparse else matrix.shape
+        if NEW_SHAPE_FEATURE_FLAG_ENABLED:
+            # Instead of
+            #   shape = tuple(int(e) for e in matrix.shape)
+            # we consult the registration mapping. This is important
+            # in the case when multiple H5ADs/AnnDatas are being
+            # ingested to an experiment which doesn't pre-exist.
+            shape = (axis_0_mapping.get_shape(), axis_1_mapping.get_shape())
+        elif cls.is_sparse:
+            shape = tuple(None for _ in matrix.shape)
+        else:
+            shape = matrix.shape
         soma_ndarray = cls.create(
             uri,
             type=pa.from_numpy_dtype(matrix.dtype),
@@ -2711,6 +2731,7 @@ def _ingest_uns_1d_string_array(
         df,
         df_uri,
         None,
+        shape=df.shape[0],
         ingestion_params=ingestion_params,
         platform_config=platform_config,
         context=context,
@@ -2756,6 +2777,7 @@ def _ingest_uns_2d_string_array(
         df,
         df_uri,
         None,
+        shape=df.shape[0],
         ingestion_params=ingestion_params,
         additional_metadata=additional_metadata,
         platform_config=platform_config,
