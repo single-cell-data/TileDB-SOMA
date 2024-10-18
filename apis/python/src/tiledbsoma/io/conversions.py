@@ -13,6 +13,7 @@ from typing import TypeVar, cast
 import numpy as np
 import pandas as pd
 import pandas._typing as pdt
+import pyarrow as pa
 import scipy.sparse as sp
 
 from .._funcs import typeguard_ignore
@@ -77,9 +78,10 @@ def to_tiledb_supported_array_type(name: str, x: _MT) -> _MT:
     return x
 
 
-def csr_from_tiledb_df(df: pd.DataFrame, num_rows: int, num_cols: int) -> sp.csr_matrix:
-    """Given a tiledb dataframe, return a ``scipy.sparse.csr_matrx``."""
-    return sp.csr_matrix(
-        (df["soma_data"], (df["soma_dim_0"], df["soma_dim_1"])),
-        shape=(num_rows, num_cols),
-    )
+def csr_from_coo_table(tbl: pa.Table, num_rows: int, num_cols: int) -> sp.csr_matrix:
+    """Given an Arrow Table containing COO data, return a ``scipy.sparse.csr_matrx``."""
+    # to_pandas is preferred as it is more performant (and releases GIL)
+    df = tbl.to_pandas()
+    dij = (df["soma_data"], (df["soma_dim_0"], df["soma_dim_1"]))
+    s = sp.csr_matrix(dij, shape=(num_rows, num_cols))
+    return s
