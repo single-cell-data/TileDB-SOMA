@@ -369,10 +369,21 @@ class DataFrame(SOMAArray, somacore.DataFrame):
             raise map_exception_for_create(e, uri) from None
 
         handle = cls._wrapper_type.open(uri, "w", context, tiledb_timestamp)
-        return cls(
+        retval = cls(
             handle,
             _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code",
         )
+
+        retval._clib_handle = clib.SOMADataFrame.open(
+            uri,
+            clib.OpenMode.write,
+            context.native_context,
+            column_names=[],  # XXX
+            result_order=clib.ResultOrder.automatic,  # XXX
+            timestamp=(0, timestamp_ms),
+        )
+
+        return retval
 
     def keys(self) -> Tuple[str, ...]:
         """Returns the names of the columns when read back as a dataframe.
