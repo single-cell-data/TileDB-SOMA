@@ -1139,6 +1139,321 @@ ArraySchema ArrowAdapter::tiledb_schema_from_arrow_schema(
     return schema;
 }
 
+ArraySchema ArrowAdapter::tiledb_schema_from_arrow_schema(
+    std::shared_ptr<Context> ctx,
+    std::unique_ptr<ArrowSchema> arrow_schema,
+    ArrowTable index_column_info,
+    ArrowTable spatial_column_info,
+    std::string soma_type,
+    bool is_sparse,
+    PlatformConfig platform_config) {
+    auto index_column_array = std::move(index_column_info.first);
+    auto index_column_schema = std::move(index_column_info.second);
+
+    auto spatial_column_array = std::move(spatial_column_info.first);
+    auto spatial_column_schema = std::move(spatial_column_info.second);
+
+    ArraySchema schema(*ctx, is_sparse ? TILEDB_SPARSE : TILEDB_DENSE);
+    Domain domain(*ctx);
+
+    schema.set_capacity(platform_config.capacity);
+
+    if (!platform_config.offsets_filters.empty()) {
+        schema.set_offsets_filter_list(ArrowAdapter::_create_filter_list(
+            platform_config.offsets_filters, ctx));
+    }
+
+    if (!platform_config.validity_filters.empty()) {
+        schema.set_validity_filter_list(ArrowAdapter::_create_filter_list(
+            platform_config.validity_filters, ctx));
+    }
+
+    schema.set_allows_dups(platform_config.allows_duplicates);
+
+    if (platform_config.tile_order) {
+        schema.set_tile_order(
+            ArrowAdapter::_get_order(*platform_config.tile_order));
+    }
+
+    if (platform_config.cell_order) {
+        schema.set_cell_order(
+            ArrowAdapter::_get_order(*platform_config.cell_order));
+    }
+
+    std::map<std::string, Dimension> dims;
+
+    bool use_current_domain = true;
+
+    for (int64_t sch_idx = 0; sch_idx < arrow_schema->n_children; ++sch_idx) {
+        auto child = arrow_schema->children[sch_idx];
+        auto type = ArrowAdapter::to_tiledb_format(child->format);
+
+        LOG_DEBUG(fmt::format(
+            "[ArrowAdapter] schema pass for child {} name {}",
+            sch_idx,
+            std::string(child->name)));
+
+        bool isattr = true;
+
+        for (int64_t i = 0; i < index_column_schema->n_children; ++i) {
+            auto achild = index_column_array->children[i];
+            auto schild = index_column_schema->children[i];
+            auto col_name = schild->name;
+            if (strcmp(child->name, col_name) == 0) {
+                if (ArrowAdapter::arrow_is_string_type(child->format)) {
+                    type = TILEDB_STRING_ASCII;
+                }
+
+                if (type == TILEDB_GEOM_WKB) {
+                    for (int64_t j = 0; j < spatial_column_schema->n_children;
+                         ++j) {
+                        auto spatial_achild = spatial_column_array->children[j];
+                        auto spatial_schild = spatial_column_schema
+                                                  ->children[j];
+                        auto type = ArrowAdapter::to_tiledb_format(
+                            spatial_schild->format);
+                        auto col_name = "tiledb__internal__" +
+                                        std::string(spatial_schild->name);
+
+                        FilterList
+                            filter_list = ArrowAdapter::_create_dim_filter_list(
+                                col_name, platform_config, soma_type, ctx);
+
+                        if (spatial_achild->length == 3) {
+                            use_current_domain = false;
+                        } else if (spatial_achild->length == 5) {
+                            // This is fine
+                        } else {
+                            throw TileDBSOMAError(fmt::format(
+                                "ArrowAdapter: unexpected length {} for name "
+                                "{}",
+                                spatial_achild->length,
+                                col_name));
+                        }
+
+                        const void* buff = spatial_achild->buffers[1];
+                        auto dim_min = ArrowAdapter::_create_dim(
+                            type, col_name + "__min", buff, ctx);
+                        auto dim_max = ArrowAdapter::_create_dim(
+                            type, col_name + "__max", buff, ctx);
+
+                        dim_min.set_filter_list(filter_list);
+                        dim_max.set_filter_list(filter_list);
+
+                        dims.insert({col_name + "__min", dim_min});
+                        dims.insert({col_name + "__max", dim_max});
+                    }
+
+                    LOG_DEBUG(fmt::format(
+                        "[ArrowAdapter] spatial_column_info length {}",
+                        spatial_column_array->length));
+                } else {
+                    FilterList
+                        filter_list = ArrowAdapter::_create_dim_filter_list(
+                            child->name, platform_config, soma_type, ctx);
+
+                    if (achild->length == 3) {
+                        use_current_domain = false;
+                    } else if (achild->length == 5) {
+                        // This is fine
+                    } else {
+                        throw TileDBSOMAError(fmt::format(
+                            "ArrowAdapter: unexpected length {} for name {}",
+                            achild->length,
+                            col_name));
+                    }
+
+                    const void* buff = achild->buffers[1];
+                    auto dim = ArrowAdapter::_create_dim(
+                        type, child->name, buff, ctx);
+                    dim.set_filter_list(filter_list);
+                    dims.insert({child->name, dim});
+                    isattr = false;
+                }
+                break;
+            }
+        }
+
+        if (isattr) {
+            Attribute attr(*ctx, child->name, type);
+
+            FilterList filter_list = ArrowAdapter::_create_attr_filter_list(
+                child->name, platform_config, ctx);
+            attr.set_filter_list(filter_list);
+
+            if (child->flags & ARROW_FLAG_NULLABLE) {
+                attr.set_nullable(true);
+            }
+
+            if (ArrowAdapter::arrow_is_string_type(child->format) ||
+                ArrowAdapter::arrow_is_binary_type(child->format)) {
+                attr.set_cell_val_num(TILEDB_VAR_NUM);
+            }
+
+            if (child->dictionary != nullptr) {
+                auto enmr_format = child->dictionary->format;
+                auto enmr_type = ArrowAdapter::to_tiledb_format(enmr_format);
+                auto enmr = Enumeration::create_empty(
+                    *ctx,
+                    child->name,
+                    enmr_type,
+                    ArrowAdapter::arrow_is_string_type(enmr_format) ?
+                        TILEDB_VAR_NUM :
+                        1,
+                    child->flags & ARROW_FLAG_DICTIONARY_ORDERED);
+                ArraySchemaExperimental::add_enumeration(*ctx, schema, enmr);
+                AttributeExperimental::set_enumeration_name(
+                    *ctx, attr, child->name);
+                LOG_DEBUG(fmt::format(
+                    "[ArrowAdapter] dictionary for {} as {} {}",
+                    std::string(child->name),
+                    tiledb::impl::type_to_str(enmr_type),
+                    std::string(enmr_format)));
+            }
+
+            LOG_DEBUG(
+                fmt::format("[ArrowAdapter] adding attribute {}", child->name));
+
+            schema.add_attribute(attr);
+        }
+    }
+
+    for (int64_t i = 0; i < index_column_schema->n_children; ++i) {
+        LOG_DEBUG(fmt::format("[ArrowAdapter] child {}", i));
+        auto col_name = index_column_schema->children[i]->name;
+        auto type = ArrowAdapter::to_tiledb_format(
+            index_column_schema->children[i]->format);
+
+        if (type == TILEDB_GEOM_WKB) {
+            for (auto& dim : dims) {
+                if (dim.first.substr(std::max(0ul, dim.first.size() - 5)) ==
+                    std::string("__min")) {
+                    domain.add_dimension(dim.second);
+                }
+            }
+
+            for (auto& dim : dims) {
+                if (dim.first.substr(std::max(0ul, dim.first.size() - 5)) ==
+                    std::string("__max")) {
+                    domain.add_dimension(dim.second);
+                }
+            }
+        } else {
+            domain.add_dimension(dims.at(col_name));
+        }
+    }
+
+    LOG_DEBUG(fmt::format("[ArrowAdapter] set_domain"));
+    schema.set_domain(domain);
+
+    LOG_DEBUG(fmt::format(
+        "[ArrowAdapter] index_column_info length {}",
+        index_column_array->length));
+
+    // Note: this must be done after we've got the core domain, since the
+    // NDRectangle constructor requires access to the core domain.
+    if (use_current_domain) {
+        CurrentDomain current_domain(*ctx);
+        NDRectangle ndrect(*ctx, domain);
+
+        for (int64_t sch_idx = 0; sch_idx < arrow_schema->n_children;
+             ++sch_idx) {
+            auto child = arrow_schema->children[sch_idx];
+            auto type = ArrowAdapter::to_tiledb_format(child->format);
+
+            for (int64_t i = 0; i < index_column_schema->n_children; ++i) {
+                auto col_name = index_column_schema->children[i]->name;
+                if (strcmp(child->name, col_name) != 0) {
+                    continue;
+                }
+
+                if (type == TILEDB_GEOM_WKB) {
+                    for (int64_t j = 0; j < spatial_column_array->n_children;
+                         ++j) {
+                        auto col_name = "tiledb__internal__" +
+                                        std::string(
+                                            spatial_column_schema->children[j]
+                                                ->name);
+                        const void* buff = spatial_column_array->children[j]
+                                               ->buffers[1];
+                        auto type = ArrowAdapter::to_tiledb_format(
+                            spatial_column_schema->children[j]->format);
+
+                        _set_current_domain_slot(
+                            type, buff, ndrect, col_name + "__min");
+                        _set_current_domain_slot(
+                            type, buff, ndrect, col_name + "__max");
+                    }
+
+                } else if (ArrowAdapter::arrow_is_string_type(child->format)) {
+                    // In the core API:
+                    //
+                    // * domain for strings must be set as (nullptr, nullptr)
+                    // * current_domain for strings cannot be set as (nullptr,
+                    //   nullptr)
+                    //
+                    // Fortunately, these are ASCII dims and we can range
+                    // these accordingly.
+
+                    ArrowArray* child_array = index_column_array->children[i];
+                    ArrowSchema* child_schema = index_column_schema
+                                                    ->children[i];
+
+                    std::vector<std::string>
+                        strings = ArrowAdapter::get_array_string_column(
+                            child_array, child_schema);
+                    if (strings.size() != 5) {
+                        throw TileDBSOMAError(fmt::format(
+                            "ArrowAdapter::tiledb_schema_from_arrow_schema: "
+                            "internal error: "
+                            "expected 5 strings, got {}",
+                            strings.size()));
+                    }
+
+                    std::string lo = strings[3];
+                    std::string hi = strings[4];
+                    if (lo == "" && hi == "") {
+                        // These mean "I the caller don't care, you
+                        // libtiledbsoma make it as big as possible"
+                        ndrect.set_range(col_name, "", "\xff");
+                    } else {
+                        ndrect.set_range(col_name, lo, hi);
+                        LOG_DEBUG(fmt::format(
+                            "[ArrowAdapter] index_column_info nbuf {}",
+                            index_column_array->children[i]->n_buffers));
+                    }
+
+                    LOG_DEBUG(fmt::format(
+                        "[ArrowAdapter] current domain {} \"{}\"-\"{}\"",
+                        child_schema->name,
+                        lo,
+                        hi));
+                } else {
+                    const void* buff = index_column_array->children[i]
+                                           ->buffers[1];
+                    _set_current_domain_slot(type, buff, ndrect, col_name);
+                }
+                break;
+            }
+        }
+
+        current_domain.set_ndrectangle(ndrect);
+
+        LOG_DEBUG(fmt::format(
+            "[ArrowAdapter] before setting current_domain from ndrect"));
+        ArraySchemaExperimental::set_current_domain(
+            *ctx, schema, current_domain);
+        LOG_DEBUG(fmt::format(
+            "[ArrowAdapter] after setting current_domain from ndrect"));
+    }
+
+    LOG_DEBUG(fmt::format("[ArrowAdapter] check"));
+    schema.check();
+
+    LOG_DEBUG(fmt::format("[ArrowAdapter] returning"));
+    return schema;
+}
+
 std::pair<const void*, std::size_t> ArrowAdapter::_get_data_and_length(
     Enumeration& enmr, const void* dst) {
     switch (enmr.type()) {
@@ -1400,9 +1715,11 @@ ArrowAdapter::to_arrow(std::shared_ptr<ColumnBuffer> column) {
 }
 
 bool ArrowAdapter::arrow_is_string_type(const char* format) {
-    return (
-        (strcmp(format, "U") == 0) || (strcmp(format, "Z") == 0) ||
-        (strcmp(format, "u") == 0) || (strcmp(format, "z") == 0));
+    return (strcmp(format, "U") == 0) || (strcmp(format, "u") == 0);
+}
+
+bool ArrowAdapter::arrow_is_binary_type(const char* format) {
+    return (strcmp(format, "Z") == 0) || (strcmp(format, "z") == 0);
 }
 
 std::string_view ArrowAdapter::to_arrow_format(
@@ -1419,8 +1736,8 @@ std::string_view ArrowAdapter::to_arrow_format(
         {TILEDB_FLOAT32, "f"},        {TILEDB_FLOAT64, "g"},
         {TILEDB_BOOL, "b"},           {TILEDB_DATETIME_SEC, "tss:"},
         {TILEDB_DATETIME_MS, "tsm:"}, {TILEDB_DATETIME_US, "tsu:"},
-        {TILEDB_DATETIME_NS, "tsn:"},
-    };
+        {TILEDB_DATETIME_NS, "tsn:"}, {TILEDB_GEOM_WKB, z},
+        {TILEDB_GEOM_WKT, u}};
 
     try {
         return _to_arrow_format_map.at(tiledb_dtype);
@@ -1434,7 +1751,7 @@ std::string_view ArrowAdapter::to_arrow_format(
 tiledb_datatype_t ArrowAdapter::to_tiledb_format(std::string_view arrow_dtype) {
     std::map<std::string_view, tiledb_datatype_t> _to_tiledb_format_map = {
         {"u", TILEDB_STRING_UTF8},    {"U", TILEDB_STRING_UTF8},
-        {"z", TILEDB_CHAR},           {"Z", TILEDB_CHAR},
+        {"z", TILEDB_GEOM_WKB},       {"Z", TILEDB_GEOM_WKB},
         {"c", TILEDB_INT8},           {"C", TILEDB_UINT8},
         {"s", TILEDB_INT16},          {"S", TILEDB_UINT16},
         {"i", TILEDB_INT32},          {"I", TILEDB_UINT32},

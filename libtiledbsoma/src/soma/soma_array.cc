@@ -411,6 +411,8 @@ bool SOMAArray::_cast_column(
         case TILEDB_STRING_ASCII:
         case TILEDB_STRING_UTF8:
         case TILEDB_CHAR:
+        case TILEDB_GEOM_WKB:
+        case TILEDB_GEOM_WKT:
             return _cast_column_aux<std::string>(schema, array, se);
         case TILEDB_BOOL:
             return _cast_column_aux<bool>(schema, array, se);
