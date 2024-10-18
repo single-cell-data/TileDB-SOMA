@@ -615,6 +615,8 @@ Dimension ArrowAdapter::_create_dim(
     std::shared_ptr<Context> ctx) {
     switch (type) {
         case TILEDB_STRING_ASCII:
+        case TILEDB_GEOM_WKB:
+        case TILEDB_GEOM_WKT:
             return Dimension::create(*ctx, name, type, nullptr, nullptr);
         case TILEDB_TIME_SEC:
         case TILEDB_TIME_MS:
@@ -1073,7 +1075,8 @@ ArraySchema ArrowAdapter::tiledb_schema_from_arrow_schema(
                     continue;
                 }
 
-                if (ArrowAdapter::arrow_is_string_type(child->format)) {
+                if (ArrowAdapter::arrow_is_string_type(child->format) ||
+                    ArrowAdapter::arrow_is_binary_type(child->format)) {
                     // In the core API:
                     //
                     // * domain for strings must be set as (nullptr, nullptr)
