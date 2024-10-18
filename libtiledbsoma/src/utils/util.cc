@@ -156,9 +156,11 @@ std::vector<ArrowArray*> cast_vertices_to_wkb(
         geometry::BinaryBuffer wkb = geometry::to_wkb(geometry);
         geometry::Envelope envelope = geometry::envelope(geometry);
 
-        NANOARROW_THROW_NOT_OK(ArrowArrayAppendBytes(
-            arrays.front(),
-            {.data = wkb.data(), .size_bytes = (int64_t)wkb.size()}));
+        ArrowBufferView wkb_view;
+        wkb_view.data.data = wkb.data();
+        wkb_view.size_bytes = (int64_t)wkb.size();
+
+        NANOARROW_THROW_NOT_OK(ArrowArrayAppendBytes(arrays.front(), wkb_view));
 
         for (size_t i = 0; i < spatial_axes.size(); ++i) {
             NANOARROW_THROW_NOT_OK(ArrowArrayAppendDouble(
