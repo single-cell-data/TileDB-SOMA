@@ -290,7 +290,7 @@ def test_scene_point_cloud(tmp_path, coord_transform, transform_kwargs):
 
         # Not a PointCloudDataFrame
         scene["obsl"]["col"] = soma.Collection.create(urljoin(obsl_uri, "col"))
-        with pytest.raises(typeguard.TypeCheckError):
+        with pytest.raises(TypeError):
             scene.set_transform_to_point_cloud_dataframe("col", transform)
 
         # Transform not set
@@ -370,7 +370,7 @@ def test_scene_multiscale_image(tmp_path, coord_transform, transform_kwargs):
 
         # Not a MultiscaleImage
         scene["img"]["col"] = soma.Collection.create(urljoin(img_uri, "col"))
-        with pytest.raises(typeguard.TypeCheckError):
+        with pytest.raises(TypeError):
             scene.set_transform_to_multiscale_image("col", transform)
 
         # Mismatched input axes.

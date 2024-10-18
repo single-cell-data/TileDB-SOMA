@@ -6,7 +6,7 @@
 Implementation of a SOMA Scene
 """
 
-from typing import Any, List, Optional, Sequence, Union
+from typing import Any, List, Optional, Sequence, Tuple, Type, TypeVar, Union
 
 import somacore
 from somacore import (
@@ -15,7 +15,7 @@ from somacore import (
 )
 
 from . import _funcs, _tdb_handles
-from ._collection import Collection, CollectionBase
+from ._collection import CollectionBase
 from ._constants import SOMA_COORDINATE_SPACE_METADATA_KEY
 from ._exception import SOMAError
 from ._geometry_dataframe import GeometryDataFrame
@@ -28,6 +28,10 @@ from ._spatial_util import (
     transform_from_json,
     transform_to_json,
 )
+
+_spatial_element = Union[GeometryDataFrame, MultiscaleImage, PointCloudDataFrame]
+
+_SE = TypeVar("_SE", bound=_spatial_element)
 
 
 class Scene(  # type: ignore[misc]   # __eq__ false positive
@@ -64,34 +68,6 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
         else:
             self._coord_space = coordinate_space_from_json(coord_space)
 
-    def _check_transform_to_asset(
-        self,
-        transform: CoordinateTransform,
-        asset_coord_space: Optional[CoordinateSpace],
-    ) -> None:
-        """Raises an error if the scene coordinate space is not set or the
-        scene axis names do not match the input transform axis names.
-        """
-        if self.coordinate_space is None:
-            raise SOMAError(
-                "The scene coordinate space must be set before setting a transform."
-            )
-        if transform.input_axes != self.coordinate_space.axis_names:
-            raise ValueError(
-                f"The name of the transform input axes, {transform.input_axes}, do "
-                f"not match the name of the axes in the scene coordinate space, "
-                f"{self.coordinate_space.axis_names}."
-            )
-        if (
-            asset_coord_space is not None
-            and transform.output_axes != asset_coord_space.axis_names
-        ):
-            raise ValueError(
-                f"The name of the transform output axes, {transform.output_axes}, do "
-                f"not match the name of the axes in the provided coordinate space, "
-                f"{asset_coord_space.axis_names}."
-            )
-
     def _open_subcollection(
         self, subcollection: Union[str, Sequence[str]]
     ) -> CollectionBase[AnySOMAObject]:
@@ -113,6 +89,65 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
                 ) from ke
             parent_name.append(name)
         return coll
+
+    def _set_transform_to_element(
+        self,
+        kind: Type[_SE],
+        *,
+        key: str,
+        transform: CoordinateTransform,
+        subcollection: Union[str, Sequence[str]],
+        coordinate_space: Optional[CoordinateSpace],
+    ) -> _SE:
+        # Check the transform is compatible with the coordinate spaces of the scene
+        # and the new element coordinate space (if provided).
+        if self.coordinate_space is None:
+            raise SOMAError(
+                "The scene coordinate space must be set before setting a transform."
+            )
+        if transform.input_axes != self.coordinate_space.axis_names:
+            raise ValueError(
+                f"The name of the transform input axes, {transform.input_axes}, do "
+                f"not match the name of the axes, {self.coordinate_space.axis_names}, "
+                f"in the scene coordinate space."
+            )
+        if (
+            coordinate_space is not None
+            and transform.output_axes != coordinate_space.axis_names
+        ):
+            raise ValueError(
+                f"The name of the transform output axes, {transform.output_axes}, do "
+                f"not match the name of the axes, {coordinate_space.axis_names}, ."
+                f" in the provided coordinate space."
+            )
+
+        # Check asset exists in the specified location.
+        coll = self._open_subcollection(subcollection)
+        try:
+            elem = coll[key]
+        except KeyError as ke:
+            raise KeyError(f"No element named '{key}' in '{subcollection}'.") from ke
+        if not isinstance(elem, kind):
+            raise TypeError(
+                f"'{key}' in '{subcollection}' is a {type(elem).__name__} not a {kind.__name__}."
+            )
+
+        # Either set the new coordinate space or check the axes of the current
+        # coordinate space the element is defined on.
+        if coordinate_space is None:
+            elem_axis_names: Tuple[str, ...] = elem.coordinate_space.axis_names  # type: ignore[attr-defined]
+            if elem_axis_names != transform.output_axes:
+                raise ValueError(
+                    f"The name of transform output axes, {transform.output_axes}, do "
+                    f"not match the name of the axes in the multiscale image coordinate"
+                    f" space, {elem_axis_names}."
+                )
+        else:
+            elem.coordinate_space = coordinate_space  # type: ignore[attr-defined]
+
+        # Set the transform metadata and return the multisclae image.
+        coll.metadata[f"soma_scene_registry_{key}"] = transform_to_json(transform)
+        return elem
 
     @property
     def coordinate_space(self) -> Optional[CoordinateSpace]:
@@ -347,38 +382,13 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
 
         Lifecycle: experimental
         """
-        # Check the transform is compatible with the oordinate spaces.
-        self._check_transform_to_asset(transform, coordinate_space)
-        assert (
-            self.coordinate_space is not None
-        )  # Assert for typing - verified in the above method.
-
-        # Check asset exists in the specified location.
-        coll = self._open_subcollection(subcollection)
-        try:
-            image: MultiscaleImage = coll[key]  # type: ignore[assignment]
-        except KeyError as ke:
-            raise KeyError(
-                f"No multiscale image named '{key}' in '{subcollection}'."
-            ) from ke
-        if not isinstance(image, MultiscaleImage):
-            raise TypeError(f"'{key}' in '{subcollection}' is not an MultiscaleImage.")
-
-        # Either set the new coordinate space or check the axes of the current
-        # coordinate space the multiscale image is defined on.
-        if coordinate_space is None:
-            if image.coordinate_space.axis_names != transform.output_axes:
-                raise ValueError(
-                    f"The name of transform output axes, {transform.output_axes}, do"
-                    f"not match the name of the axes in the multiscale image coordinate"
-                    f" space, {image.coordinate_space.axis_names}."
-                )
-        else:
-            image.coordinate_space = coordinate_space
-
-        # Set the transform metadata and return the multisclae image.
-        coll.metadata[f"soma_scene_registry_{key}"] = transform_to_json(transform)
-        return image
+        return self._set_transform_to_element(
+            MultiscaleImage,
+            key=key,
+            transform=transform,
+            subcollection=subcollection,
+            coordinate_space=coordinate_space,
+        )
 
     def set_transform_to_point_cloud_dataframe(
         self,
@@ -414,41 +424,13 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
 
         Lifecycle: experimental
         """
-        # Check the transform is compatible with the Scene coordinate spaces.
-        self._check_transform_to_asset(transform, coordinate_space)
-        assert (
-            self.coordinate_space is not None
-        )  # Assert for typing - verified in the above method.
-
-        # Check asset exists in the specified location.
-        try:
-            coll: Collection = self[subcollection]  # type: ignore
-        except KeyError as ke:
-            raise KeyError(f"No collection '{subcollection}' in this scene.") from ke
-        try:
-            point_cloud: PointCloudDataFrame = coll[key]
-        except KeyError as ke:
-            raise KeyError(f"No PointCloudDataFrame named '{key}' in '{coll}'.") from ke
-        if not isinstance(point_cloud, PointCloudDataFrame):
-            raise TypeError(
-                f"'{key}' in '{subcollection}' is not an PointCloudDataFrame."
-            )
-
-        # Either set the new coordinate space or check the axes of the current point
-        # cloud coordinate space.
-        if coordinate_space is None:
-            if point_cloud.coordinate_space.axis_names != transform.output_axes:
-                raise ValueError(
-                    f"The name of transform output axes, {transform.output_axes}, do"
-                    f"not match the name of the axes in the point cloud coordinate "
-                    f"space, {point_cloud.coordinate_space.axis_names}."
-                )
-        else:
-            point_cloud.coordinate_space = coordinate_space
-
-        # Set the transform metadata and return the point cloud.
-        coll.metadata[f"soma_scene_registry_{key}"] = transform_to_json(transform)
-        return point_cloud
+        return self._set_transform_to_element(
+            PointCloudDataFrame,
+            key=key,
+            transform=transform,
+            subcollection=subcollection,
+            coordinate_space=coordinate_space,
+        )
 
     def get_transform_from_geometry_dataframe(
         self, key: str, *, subcollection: Union[str, Sequence[str]] = "obsl"
