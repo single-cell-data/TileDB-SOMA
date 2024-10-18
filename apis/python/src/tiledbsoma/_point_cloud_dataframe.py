@@ -96,7 +96,7 @@ class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
             index_column_names: A list of column names to use as user-defined index
                 columns (e.g., ``['x', 'y']``). All named columns must exist in the
                 schema, and at least one index column name is required.
-                Default is ``("soma_joinid", "x", "y")``.
+                Default is ``("soma_joinid", *coordinate_space)``.
             coordinate_space: Either the coordinate space or the axis names for the
                 coordinate space the point cloud is defined on.
             domain: An optional sequence of tuples specifying the domain of each
@@ -276,7 +276,7 @@ class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
     # Data operations
 
     def __len__(self) -> int:
-        """Returns the number of rows in the point cound dataframe."""
+        """Returns the number of rows in the point cloud dataframe."""
         return self.count
 
     @property
@@ -360,7 +360,7 @@ class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
         value_filter: Optional[str] = None,
         platform_config: Optional[options.PlatformConfig] = None,
     ) -> somacore.SpatialRead[somacore.ReadIter[pa.Table]]:
-        """Reads data intersecting an user-defined region of space into a
+        """Reads data intersecting a user-defined region of space into a
         :class:`SpatialRead` with data in Arrow tables.
 
         Args:
@@ -376,7 +376,7 @@ class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
             region_coord_space: An optional coordinate space for the region being read.
                 Defaults to ``None``, coordinate space will be inferred from transform.
             batch_size: The size of batched reads.
-                Defaults to `unbatched`.
+                Defaults to ``_UNBATCHED``.
             partitions: If present, specifies that this is part of a partitioned read,
                 and which part of the data to include.
             result_order: the order to return results, specified as a
@@ -425,7 +425,7 @@ class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
         coords, data_region, inv_transform = process_spatial_df_region(
             region,
             region_transform,
-            dict(),  #  Move index value_filters into this dict to optimize queries
+            dict(),  # Move index value_filters into this dict to optimize queries
             self._tiledb_dim_names(),
             self._coord_space.axis_names,
             self._handle.schema,
