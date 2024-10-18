@@ -971,7 +971,8 @@ ArraySchema ArrowAdapter::tiledb_schema_from_arrow_schema(
             auto schild = index_column_schema->children[i];
             auto col_name = schild->name;
             if (strcmp(child->name, col_name) == 0) {
-                if (ArrowAdapter::arrow_is_string_type(child->format)) {
+                if (ArrowAdapter::arrow_is_string_type(child->format) ||
+                    ArrowAdapter::arrow_is_binary_type(child->format)) {
                     type = TILEDB_STRING_ASCII;
                 }
 
@@ -1010,7 +1011,8 @@ ArraySchema ArrowAdapter::tiledb_schema_from_arrow_schema(
                 attr.set_nullable(true);
             }
 
-            if (ArrowAdapter::arrow_is_string_type(child->format)) {
+            if (ArrowAdapter::arrow_is_string_type(child->format) ||
+                ArrowAdapter::arrow_is_binary_type(child->format)) {
                 attr.set_cell_val_num(TILEDB_VAR_NUM);
             }
 
@@ -1021,7 +1023,8 @@ ArraySchema ArrowAdapter::tiledb_schema_from_arrow_schema(
                     *ctx,
                     child->name,
                     enmr_type,
-                    ArrowAdapter::arrow_is_string_type(enmr_format) ?
+                    ArrowAdapter::arrow_is_string_type(enmr_format) ||
+                            ArrowAdapter::arrow_is_binary_type(enmr_format) ?
                         TILEDB_VAR_NUM :
                         1,
                     child->flags & ARROW_FLAG_DICTIONARY_ORDERED);
@@ -1297,7 +1300,8 @@ ArraySchema ArrowAdapter::tiledb_schema_from_arrow_schema(
                     *ctx,
                     child->name,
                     enmr_type,
-                    ArrowAdapter::arrow_is_string_type(enmr_format) ?
+                    ArrowAdapter::arrow_is_string_type(enmr_format) ||
+                            ArrowAdapter::arrow_is_binary_type(enmr_format) ?
                         TILEDB_VAR_NUM :
                         1,
                     child->flags & ARROW_FLAG_DICTIONARY_ORDERED);
@@ -1696,6 +1700,12 @@ ArrowAdapter::to_arrow(std::shared_ptr<ColumnBuffer> column) {
         if (enmr->type() == TILEDB_STRING_ASCII ||
             enmr->type() == TILEDB_STRING_UTF8 || enmr->type() == TILEDB_CHAR) {
             auto dict_vec = enmr->as_vector<std::string>();
+            column->convert_enumeration();
+            dict_arr->buffers[1] = column->enum_offsets().data();
+            dict_arr->buffers[2] = column->enum_string().data();
+            dict_arr->length = dict_vec.size();
+        } else if (enmr->type() == TILEDB_GEOM_WKB) {
+            auto dict_vec = enmr->as_vector<uint8_t>();
             column->convert_enumeration();
             dict_arr->buffers[1] = column->enum_offsets().data();
             dict_arr->buffers[2] = column->enum_string().data();

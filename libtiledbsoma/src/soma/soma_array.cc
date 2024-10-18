@@ -413,6 +413,7 @@ bool SOMAArray::_cast_column(
         case TILEDB_CHAR:
         case TILEDB_GEOM_WKB:
         case TILEDB_GEOM_WKT:
+        case TILEDB_BLOB:
             return _cast_column_aux<std::string>(schema, array, se);
         case TILEDB_BOOL:
             return _cast_column_aux<bool>(schema, array, se);
@@ -786,6 +787,9 @@ bool SOMAArray::_extend_enumeration(
         case TILEDB_STRING_ASCII:
         case TILEDB_STRING_UTF8:
         case TILEDB_CHAR:
+        case TILEDB_BLOB:
+        case TILEDB_GEOM_WKB:
+        case TILEDB_GEOM_WKT:
             return _extend_and_evolve_schema<std::string>(
                 value_schema, value_array, index_schema, index_array, se);
         case TILEDB_INT8:
