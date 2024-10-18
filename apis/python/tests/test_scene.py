@@ -229,6 +229,85 @@ class TestSceneDeepSubcollections:
         assert actual_metadata == expected_metadata
 
 
+def test_scene_point_cloud(tmp_path):
+    baseuri = urljoin(f"{tmp_path.as_uri()}/", "test_scene_point_cloud")
+
+    with soma.Scene.create(baseuri) as scene:
+        # Create obsl.
+        obsl_uri = urljoin(baseuri, "obsl")
+        scene["obsl"] = soma.Collection.create(obsl_uri)
+
+        # Add parameters for the point cloud.
+        asch = pa.schema([("x", pa.float64()), ("y", pa.float64())])
+        elem_coord_space = soma.CoordinateSpace(
+            [soma.Axis(name="x", unit="nm"), soma.Axis(name="y", unit="nm")]
+        )
+        transform = soma.ScaleTransform(
+            input_axes=("x_scene", "y_scene"),
+            output_axes=("x", "y"),
+            scale_factors=[-1, 1],
+        )
+
+        # Cannot set transform before the Scene coordinate space is set.
+        with pytest.raises(soma.SOMAError):
+            scene.add_new_point_cloud_dataframe(
+                "ptc",
+                subcollection="obsl",
+                transform=transform,
+                schema=asch,
+                coordinate_space=elem_coord_space,
+            )
+
+        # Set Scene coordinate space.
+        scene_coord_space = soma.CoordinateSpace(
+            [soma.Axis(name="x_scene"), soma.Axis(name="y_scene")]
+        )
+        scene.coordinate_space = scene_coord_space
+
+        # Mismatch in transform input axes and coordinate space axes.
+        bad_transform = soma.ScaleTransform(
+            input_axes=("xbad", "ybad"),
+            output_axes=("x", "y"),
+            scale_factors=[-1, 1],
+        )
+        with pytest.raises(ValueError):
+            scene.add_new_point_cloud_dataframe(
+                "ptc",
+                subcollection="obsl",
+                transform=bad_transform,
+                schema=asch,
+                coordinate_space=elem_coord_space,
+            )
+
+        # Mismatch in transform output axes and point cloud axes.
+        bad_transform = soma.ScaleTransform(
+            input_axes=("x_scene", "y_scene"),
+            output_axes=("xbad", "ybad"),
+            scale_factors=[-1, 1],
+        )
+        with pytest.raises(ValueError):
+            scene.add_new_point_cloud_dataframe(
+                "ptc",
+                subcollection="obsl",
+                transform=bad_transform,
+                schema=asch,
+                coordinate_space=elem_coord_space,
+            )
+
+        # Add the point cloud dataframe.
+        scene.add_new_point_cloud_dataframe(
+            "ptc",
+            subcollection="obsl",
+            transform=transform,
+            schema=asch,
+            coordinate_space=elem_coord_space,
+        )
+
+        # Check the transform.
+        ptc_transform = scene.get_transform_to_point_cloud_dataframe("ptc")
+        assert_transform_equal(ptc_transform, transform)
+
+
 @pytest.mark.parametrize(
     "coord_transform, transform_kwargs",
     [
@@ -238,8 +317,13 @@ class TestSceneDeepSubcollections:
         (soma.IdentityTransform, {}),
     ],
 )
-def test_scene_point_cloud(tmp_path, coord_transform, transform_kwargs):
-    baseuri = urljoin(f"{tmp_path.as_uri()}/", "test_scene_point_cloud")
+@pytest.mark.parametrize("set_coord_space", [True, False])
+def test_scene_set_transform_to_point_cloud(
+    tmp_path, coord_transform, transform_kwargs, set_coord_space
+):
+    baseuri = urljoin(
+        f"{tmp_path.as_uri()}/", "test_scene_set_transform_to_point_cloud"
+    )
 
     with soma.Scene.create(baseuri) as scene:
         obsl_uri = urljoin(baseuri, "obsl")
@@ -250,7 +334,6 @@ def test_scene_point_cloud(tmp_path, coord_transform, transform_kwargs):
             [soma.Axis(name="x_scene"), soma.Axis(name="y_scene")]
         )
 
-        # TODO Add transform directly to add_new_point_cloud
         scene.add_new_point_cloud_dataframe(
             "ptc", subcollection="obsl", transform=None, schema=asch
         )
@@ -298,7 +381,25 @@ def test_scene_point_cloud(tmp_path, coord_transform, transform_kwargs):
         with pytest.raises(KeyError):
             scene.get_transform_to_point_cloud_dataframe("ptc")
 
-        scene.set_transform_to_point_cloud_dataframe("ptc", transform)
+        if set_coord_space:
+            bad_coord_space = soma.CoordinateSpace.from_axis_names(("xbad", "ybad"))
+            with pytest.raises(ValueError):
+                scene.set_transform_to_point_cloud_dataframe(
+                    "ptc", transform, coordinate_space=bad_coord_space
+                )
+
+            coord_space = soma.CoordinateSpace(
+                (soma.Axis(name="x", unit="nm"), soma.Axis(name="y", unit="nm"))
+            )
+
+            point_cloud = scene.set_transform_to_point_cloud_dataframe(
+                "ptc", transform, coordinate_space=coord_space
+            )
+            actual_coord_space = point_cloud.coordinate_space
+            assert actual_coord_space == coord_space
+
+        else:
+            scene.set_transform_to_point_cloud_dataframe("ptc", transform)
 
         ptc_transform = scene.get_transform_to_point_cloud_dataframe("ptc")
         assert_transform_equal(ptc_transform, transform)
