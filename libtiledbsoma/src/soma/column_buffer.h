@@ -203,6 +203,13 @@ class ColumnBuffer {
     std::vector<std::string> strings();
 
     /**
+     * @brief Return data in a vector of binary buffers.
+     *
+     * @return std::vector<std::vector<uint8_t>>
+     */
+    std::vector<std::vector<uint8_t>> binary();
+
+    /**
      * @brief Return a string_view of the string at the provided cell index.
      *
      * @param index Cell index

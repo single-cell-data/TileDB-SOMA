@@ -260,6 +260,29 @@ class ArrowAdapter {
         PlatformConfig platform_config = PlatformConfig());
 
     /**
+     * @brief Create a TileDB ArraySchema from ArrowSchema
+     *
+     * The number of rows in index_column_info was three without core
+     * current-domain support, and is five with core current-domain support:
+     *
+     * - Slot 0: core domain low value (inclusive)
+     * - Slot 1: core domain high value (inclusive)
+     * - Slot 2: core extent parameter
+     * - Slot 3: core current-domain low value (inclusive)
+     * - Slot 4: core current-domain high value (inclusive)
+     *
+     * @return tiledb::ArraySchema
+     */
+    static ArraySchema tiledb_schema_from_arrow_schema(
+        std::shared_ptr<Context> ctx,
+        std::unique_ptr<ArrowSchema> arrow_schema,
+        ArrowTable index_column_info,
+        ArrowTable spatial_column_info,
+        std::string soma_type,
+        bool is_sparse = true,
+        PlatformConfig platform_config = PlatformConfig());
+
+    /**
      * @brief Get Arrow format string from TileDB datatype.
      *
      * @param tiledb_dtype TileDB datatype.
@@ -270,12 +293,21 @@ class ArrowAdapter {
 
     /**
      * @brief Keystroke saver to determine whether Arrow type is of string,
-     * large string, binary, or large binary type.
+     * large string type.
      *
      * @param const char* Arrow data format
      * @return bool Whether the Arrow type represents a string type
      */
     static bool arrow_is_string_type(const char* format);
+
+    /**
+     * @brief Keystroke saver to determine whether Arrow type is of binary,
+     * or large binary type.
+     *
+     * @param const char* Arrow data format
+     * @return bool Whether the Arrow type represents a binary type
+     */
+    static bool arrow_is_binary_type(const char* format);
 
     /**
      * @brief Get TileDB datatype from Arrow format string.
@@ -338,6 +370,16 @@ class ArrowAdapter {
         const std::pair<std::string, std::string>& pair) {
         std::vector<std::string> v({pair.first, pair.second});
         return make_arrow_array_child_string(v);
+    }
+
+    static ArrowArray* make_arrow_array_child_wkb() {
+        // Use malloc here, not new, to match ArrowAdapter::release_array
+        auto arrow_array = (ArrowArray*)malloc(sizeof(ArrowArray));
+
+        ArrowArrayInitFromType(
+            arrow_array, ArrowType::NANOARROW_TYPE_LARGE_BINARY);
+
+        return arrow_array;
     }
 
     template <typename T>
