@@ -333,7 +333,9 @@ jobs:
           otool -L ./venv-soma/lib/python*/site-packages/tiledbsoma/pytiledbsoma.*.so
           otool -l ./venv-soma/lib/python*/site-packages/tiledbsoma/pytiledbsoma.*.so
       - name: Install runtime dependencies
-        run: ./venv-soma/bin/pip install --prefer-binary `grep -v '^\[' apis/python/src/tiledbsoma.egg-info/requires.txt`
+        run: |
+          grep -v '^\[' apis/python/src/tiledbsoma.egg-info/requires.txt > runtime-reqs.txt
+          ./venv-soma/bin/pip install --prefer-binary -r runtime-reqs.txt
       - name: Runtime test
         run: ./venv-soma/bin/python -c "import tiledbsoma; print(tiledbsoma.pytiledbsoma.version())"
 

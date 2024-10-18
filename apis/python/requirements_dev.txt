@@ -3,5 +3,8 @@ ruff
 pytest
 pytest-cov
 sparse
-typeguard==4.3.0
+# Python 3.12 support requires https://github.com/agronholm/typeguard/pull/490;
+# use Typeguard @ HEAD until that PR is included in a release. See also:
+# https://github.com/single-cell-data/TileDB-SOMA/issues/3216
+typeguard @ git+https://github.com/agronholm/typeguard
 types-setuptools
