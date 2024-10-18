@@ -35,6 +35,7 @@
 
 #include <regex>
 #include <stdexcept>  // for windows: error C2039: 'runtime_error': is not a member of 'std'
+#include <string>
 
 #include "arrow_adapter.h"
 #include "common.h"
@@ -79,6 +80,9 @@ std::string rstrip_uri(std::string_view uri);
  * @return std::vector<uint8_t>
  */
 std::vector<uint8_t> cast_bit_to_uint8(ArrowSchema* schema, ArrowArray* array);
+
+std::vector<ArrowArray*> cast_vertices_to_wkb(
+    ArrowArray* array, std::vector<std::string> spatial_axes);
 
 }  // namespace tiledbsoma::util
 
