@@ -190,7 +190,6 @@ SOMASparseNDArray <- R6::R6Class(
       )
 
       self$.write_coordinates(coo)
-      # private$.write_coo_dataframe(coo)
 
       return(invisible(self))
     },
