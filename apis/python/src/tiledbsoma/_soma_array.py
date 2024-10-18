@@ -39,7 +39,7 @@ class SOMAArray(SOMAObject[_tdb_handles.SOMAArrayWrapper[Any]]):
         clib_type: Optional[str] = None,
     ) -> Self:
         """Opens this specific type of SOMA object."""
-        return super().open(
+        retval = super().open(
             uri,
             mode,
             tiledb_timestamp=tiledb_timestamp,
@@ -47,6 +47,7 @@ class SOMAArray(SOMAObject[_tdb_handles.SOMAArrayWrapper[Any]]):
             platform_config=platform_config,
             clib_type="SOMAArray",
         )
+        return retval
 
     @property
     def schema(self) -> pa.Schema:

@@ -586,25 +586,23 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         _util.check_unpartitioned(partitions)
         self._check_open_read()
 
-        handle = self._handle._handle
-
-        context = handle.context()
+        context = self._clib_handle.context()
         if platform_config is not None:
             config = context.tiledb_config.copy()
             config.update(platform_config)
             context = clib.SOMAContext(config)
 
         sr = clib.SOMADataFrame.open(
-            uri=handle.uri,
+            uri=self._clib_handle.uri,
             mode=clib.OpenMode.read,
             context=context,
             column_names=column_names or [],
             result_order=_util.to_clib_result_order(result_order),
-            timestamp=handle.timestamp and (0, handle.timestamp),
+            timestamp=self._clib_handle.timestamp and (0, self._clib_handle.timestamp),
         )
 
         if value_filter is not None:
-            sr.set_condition(QueryCondition(value_filter), handle.schema)
+            sr.set_condition(QueryCondition(value_filter), self._clib_handle.schema)
 
         self._set_reader_coords(sr, coords)
 
@@ -658,13 +656,11 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         write_options = TileDBWriteOptions.from_platform_config(platform_config)
         sort_coords = write_options.sort_coords
 
-        clib_dataframe = self._handle._handle
-
         for batch in values.to_batches():
-            clib_dataframe.write(batch, sort_coords or False)
+            self._clib_handle.write(batch, sort_coords or False)
 
         if write_options.consolidate_and_vacuum:
-            clib_dataframe.consolidate_and_vacuum()
+            self._clib_handle.consolidate_and_vacuum()
 
         return self
 
