@@ -1,4 +1,14 @@
 # Returns the object created, populated, and closed (unless otherwise requested)
+domain_from_arrow_table <- function(tbl, index_column_names) {
+  domain <- list()
+
+  for (index_column_name in index_column_names) {
+    column <- tbl[[index_column_name]]
+    domain[[index_column_name]] <- c(min(column), max(column))
+  }
+  return(domain)
+}
+
 create_and_populate_soma_dataframe <- function(
   uri,
   nrows = 10L,
@@ -12,7 +22,15 @@ create_and_populate_soma_dataframe <- function(
   # arrow_schema <- create_arrow_schema()
   tbl <- create_arrow_table(nrows = nrows, factors = factors)
 
-  sdf <- SOMADataFrameCreate(uri, tbl$schema, index_column_names = index_column_names)
+  domain <- domain_from_arrow_table(tbl, index_column_names)
+
+  sdf <- SOMADataFrameCreate(
+    uri,
+    tbl$schema,
+    index_column_names = index_column_names,
+    domain = domain
+  )
+
   sdf$write(tbl)
 
   if (is.null(mode)) {
