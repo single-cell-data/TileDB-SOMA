@@ -18,7 +18,7 @@ def create_and_populate_df(uri: str) -> soma.DataFrame:
         ]
     )
 
-    with soma.DataFrame.create(uri, schema=obs_arrow_schema) as obs:
+    with soma.DataFrame.create(uri, schema=obs_arrow_schema, domain=[[0, 9]]) as obs:
         pydict = {}
         pydict["soma_joinid"] = [0, 1, 2, 3, 4]
         pydict["foo"] = [10, 20, 30, 40, 50]
