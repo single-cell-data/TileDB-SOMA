@@ -116,7 +116,7 @@ TileDBArray <- R6::R6Class(
             valuesxp = val,
             type = class(val),
             is_array = TRUE,
-            ctxxp = soma_context(),
+            ctxxp = private$.soma_context,
             tsvec = self$.tiledb_timestamp_range
           )
       }
