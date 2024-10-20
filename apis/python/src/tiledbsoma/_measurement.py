@@ -11,6 +11,7 @@ from typing import Union
 from somacore import measurement
 
 from . import _tdb_handles
+from . import pytiledbsoma as clib
 from ._collection import Collection, CollectionBase
 from ._dataframe import DataFrame
 from ._dense_nd_array import DenseNDArray
@@ -72,6 +73,7 @@ class Measurement(  # type: ignore[misc]  # __eq__ false positive
 
     __slots__ = ()
     _wrapper_type = _tdb_handles.MeasurementWrapper
+    _clib_handle_type = clib.SOMAMeasurement
 
     _subclass_constrained_soma_types = {
         "var": ("SOMADataFrame",),

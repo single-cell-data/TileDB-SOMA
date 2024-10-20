@@ -66,6 +66,21 @@ class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
     ]
     """Class variable of the Wrapper class used to open this object type."""
 
+    _clib_handle_type: Union[
+        Type[clib.SOMAArray],
+        Type[clib.SOMADataFrame],
+        Type[clib.SOMAPointCloudDataFrame],
+        Type[clib.SOMASparseNDArray],
+        Type[clib.SOMADenseNDArray],
+        Type[clib.SOMAGroup],
+        Type[clib.SOMACollection],
+        Type[clib.SOMAMeasurement],
+        Type[clib.SOMAExperiment],
+        Type[clib.SOMAScene],
+        Type[clib.SOMAMultiscaleImage],
+    ]
+    """XXX comment me."""
+
     __slots__ = ("_close_stack", "_handle", "_clib_handle")
 
     @classmethod
@@ -132,6 +147,7 @@ class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
             _tdb_handles.SparseNDArrayWrapper,
         ],
         *,
+        clib_handle: Any = None,  # XXX TEMP
         _dont_call_this_use_create_or_open_instead: str = "unset",
     ):
         """Internal-only common initializer steps.
@@ -159,7 +175,12 @@ class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
                 f" internal use only."
             )
         self._handle = handle
-        self._clib_handle = handle._handle
+
+        if clib_handle is None:
+            self._clib_handle = handle._handle
+        else:
+            self._clib_handle = clib_handle
+
         self._close_stack.enter_context(self._handle)
 
     def reopen(

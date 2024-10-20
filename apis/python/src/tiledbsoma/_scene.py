@@ -16,6 +16,7 @@ from somacore import (
 )
 
 from . import _funcs, _tdb_handles
+from . import pytiledbsoma as clib
 from ._collection import Collection, CollectionBase
 from ._constants import SOMA_COORDINATE_SPACE_METADATA_KEY
 from ._exception import SOMAError
@@ -46,6 +47,7 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
 
     __slots__ = ("_coord_space",)
     _wrapper_type = _tdb_handles.SceneWrapper
+    _clib_handle_type = clib.SOMAScene
 
     _subclass_constrained_soma_types = {
         "img": ("SOMACollection",),

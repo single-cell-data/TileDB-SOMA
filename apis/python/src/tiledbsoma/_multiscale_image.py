@@ -116,6 +116,7 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
 
     __slots__ = ("_schema", "_coord_space", "_levels")
     _wrapper_type = _tdb_handles.MultiscaleImageWrapper
+    _clib_handle_type = clib.SOMAMultiscaleImage
 
     _level_prefix: Final = "soma_level_"
 

@@ -519,6 +519,7 @@ class Collection(  # type: ignore[misc]  # __eq__ false positive
     __slots__ = ()
 
     _wrapper_type = _tdb_handles.CollectionWrapper
+    _clib_handle_type = clib.SOMACollection
 
 
 @typeguard_ignore

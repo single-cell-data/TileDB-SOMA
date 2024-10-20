@@ -26,6 +26,7 @@ _UNBATCHED = options.BatchSize()
 class SpatialDataFrame(SOMAArray):
 
     __slots__ = ()
+    # XXX _clib_handle_type = clib.XXX
 
     def keys(self) -> Tuple[str, ...]:
         """Returns the names of the columns when read back as a spatial dataframe.

@@ -35,6 +35,7 @@ class GeometryDataFrame(somacore.GeometryDataFrame):
     """
 
     __slots__ = ()
+    # XXX _clib_handle_type = clib.XXX
 
     # Lifecycle
 
