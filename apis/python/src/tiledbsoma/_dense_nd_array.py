@@ -216,12 +216,10 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
         #
         # The only exception is if the array has been created but no data have been written at
         # all, in which case the best we can do is use the schema shape.
-        handle: clib.SOMADenseNDArray = self._handle._handle
-
         ned = []
-        for dim_name in handle.dimension_names:
+        for dim_name in self._clib_handle.dimension_names:
             dtype = np.dtype(self.schema.field(dim_name).type.to_pandas_dtype())
-            slot = handle.non_empty_domain_slot_opt(dim_name, dtype)
+            slot = self._clib_handle.non_empty_domain_slot_opt(dim_name, dtype)
             if slot is None:
                 use_shape = True
                 break
@@ -229,22 +227,22 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
         else:
             use_shape = False
 
-        data_shape = tuple(handle.shape if use_shape else ned)
+        data_shape = tuple(self._clib_handle.shape if use_shape else ned)
         target_shape = dense_indices_to_shape(coords, data_shape, result_order)
 
-        context = handle.context()
+        context = self._clib_handle.context()
         if platform_config is not None:
             config = context.tiledb_config.copy()
             config.update(platform_config)
             context = clib.SOMAContext(config)
 
         sr = clib.SOMADenseNDArray.open(
-            uri=handle.uri,
+            uri=self._clib_handle.uri,
             mode=clib.OpenMode.read,
             context=context,
             column_names=[],
             result_order=_util.to_clib_result_order(result_order),
-            timestamp=handle.timestamp and (0, handle.timestamp),
+            timestamp=self._clib_handle.timestamp and (0, self._clib_handle.timestamp),
         )
 
         self._set_reader_coords(sr, coords)
@@ -304,8 +302,6 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
         """
         _util.check_type("values", values, (pa.Tensor,))
 
-        clib_dense_array = self._handle._handle
-
         # Compute the coordinates for the dense array.
         new_coords: List[Union[int, Slice[int], None]] = []
         for c in coords:
@@ -325,13 +321,13 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
             if not input.flags.contiguous:
                 input = np.ascontiguousarray(input)
             order = clib.ResultOrder.rowmajor
-        clib_dense_array.reset(result_order=order)
-        self._set_reader_coords(clib_dense_array, new_coords)
-        clib_dense_array.write(input)
+        self._clib_handle.reset(result_order=order)
+        self._set_reader_coords(self._clib_handle, new_coords)
+        self._clib_handle.write(input)
 
         tiledb_write_options = TileDBWriteOptions.from_platform_config(platform_config)
         if tiledb_write_options.consolidate_and_vacuum:
-            clib_dense_array.consolidate_and_vacuum()
+            self._clib_handle.consolidate_and_vacuum()
         return self
 
     def resize(self, newshape: Sequence[Union[int, None]]) -> None:
@@ -339,7 +335,7 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
         ``DenseNDArray`` in TileDB-SOMA 1.15
         """
         if clib.embedded_version_triple() >= (2, 27, 0):
-            self._handle.resize(newshape)
+            self._clib_handle.resize(newshape)
         else:
             raise NotImplementedError("Not implemented for libtiledbsoma < 2.27.0")
 
