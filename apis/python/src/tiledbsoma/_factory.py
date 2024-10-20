@@ -8,7 +8,6 @@ Collection.
 """
 
 from typing import (
-    Callable,
     Dict,
     Optional,
     Type,
@@ -123,7 +122,7 @@ def open(
     """
     context = _validate_soma_tiledb_context(context)
     obj: SOMAObject[_Wrapper] = _open_internal(  # type: ignore[valid-type]
-        _tdb_handles.open, uri, mode, context, tiledb_timestamp
+        uri, mode, context, tiledb_timestamp
     )
     try:
         if soma_type:
@@ -144,16 +143,14 @@ def open(
 
 
 def _open_internal(
-    opener: Callable[
-        [str, options.OpenMode, SOMATileDBContext, Optional[OpenTimestamp]], _Wrapper
-    ],
     uri: str,
     mode: options.OpenMode,
     context: SOMATileDBContext,
     timestamp: Optional[OpenTimestamp],
 ) -> SOMAObject[_Wrapper]:
     """Lower-level open function for internal use only."""
-    handle = opener(uri, mode, context, timestamp)
+    # XXX temp cast
+    handle = cast(_Wrapper, _tdb_handles.open(uri, mode, context, timestamp))
     try:
         return reify_handle(handle)
     except Exception:
