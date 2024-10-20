@@ -7,7 +7,7 @@ Implementation of a SOMA Point Cloud DataFrame
 """
 
 import warnings
-from typing import Any, Optional, Sequence, Tuple, Union
+from typing import Any, Optional, Sequence, Tuple, Union, cast
 
 import pyarrow as pa
 import somacore
