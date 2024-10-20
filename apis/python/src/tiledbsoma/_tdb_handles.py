@@ -15,11 +15,9 @@ from typing import (
     Dict,
     Generic,
     Iterator,
-    List,
     Mapping,
     MutableMapping,
     Optional,
-    Sequence,
     Tuple,
     Type,
     TypeVar,
@@ -29,16 +27,15 @@ from typing import (
 
 import attrs
 import numpy as np
-import pyarrow as pa
 from somacore import options
 from typing_extensions import Literal, Self
 
 from . import pytiledbsoma as clib
 from ._exception import DoesNotExistError, SOMAError, is_does_not_exist_error
-from ._types import METADATA_TYPES, Metadatum, OpenTimestamp, StatusAndReason
+from ._types import METADATA_TYPES, Metadatum, OpenTimestamp
 from .options._soma_tiledb_context import SOMATileDBContext
 
-RawHandle = Union[
+CLibHandle = Union[
     clib.SOMAArray,
     clib.SOMADataFrame,
     clib.SOMAPointCloudDataFrame,
@@ -51,8 +48,8 @@ RawHandle = Union[
     clib.SOMAScene,
     clib.SOMAMultiscaleImage,
 ]
-_RawHdl_co = TypeVar("_RawHdl_co", bound=RawHandle, covariant=True)
-"""A raw TileDB object. Covariant because Handles are immutable enough."""
+_CLibHandle_co = TypeVar("_CLibHandle_co", bound=CLibHandle, covariant=True)
+"""A handle to a pybind11-managed libtiledbsoma object. Covariant because Handles are immutable enough."""
 
 
 def open(
@@ -61,7 +58,7 @@ def open(
     context: SOMATileDBContext,
     timestamp: Optional[OpenTimestamp],
     clib_type: Optional[str] = None,
-) -> "Wrapper[RawHandle]":
+) -> "Wrapper[CLibHandle]":
     """Determine whether the URI is an array or group, and open it."""
     open_mode = clib.OpenMode.read if mode == "r" else clib.OpenMode.write
 
@@ -103,7 +100,7 @@ def open(
 
 
 @attrs.define(eq=False, hash=False, slots=False)
-class Wrapper(Generic[_RawHdl_co], metaclass=abc.ABCMeta):
+class Wrapper(Generic[_CLibHandle_co], metaclass=abc.ABCMeta):
     """Wrapper for TileDB handles to manage lifecycle and metadata.
 
     Callers may read and use (non-underscored) members but should never set
@@ -114,7 +111,7 @@ class Wrapper(Generic[_RawHdl_co], metaclass=abc.ABCMeta):
     mode: options.OpenMode
     context: SOMATileDBContext
     timestamp_ms: int
-    _handle: _RawHdl_co
+    _handle: _CLibHandle_co
     closed: bool = attrs.field(default=False, init=False)
     clib_type: Optional[str] = None
 
@@ -173,7 +170,7 @@ class Wrapper(Generic[_RawHdl_co], metaclass=abc.ABCMeta):
         mode: options.OpenMode,
         context: SOMATileDBContext,
         timestamp: int,
-    ) -> _RawHdl_co:
+    ) -> _CLibHandle_co:
         """Opens and returns a TileDB object specific to this type."""
         raise NotImplementedError()
 
@@ -191,7 +188,7 @@ class Wrapper(Generic[_RawHdl_co], metaclass=abc.ABCMeta):
 
     # Covariant types should normally not be in parameters, but this is for
     # internal use only so it's OK.
-    def _do_initial_reads(self, reader: _RawHdl_co) -> None:  # type: ignore[misc]
+    def _do_initial_reads(self, reader: _CLibHandle_co) -> None:  # type: ignore[misc]
         """Final setup step before returning the Handle.
 
         This is passed a raw TileDB object opened in read mode, since writers
@@ -201,7 +198,7 @@ class Wrapper(Generic[_RawHdl_co], metaclass=abc.ABCMeta):
         self.metadata = MetadataWrapper(self, dict(reader.meta))
 
     @property
-    def reader(self) -> _RawHdl_co:
+    def reader(self) -> _CLibHandle_co:
         """Accessor to assert that you are working in read mode."""
         if self.closed:
             raise SOMAError(f"{self} is closed")
@@ -210,7 +207,7 @@ class Wrapper(Generic[_RawHdl_co], metaclass=abc.ABCMeta):
         raise SOMAError(f"cannot read from {self}; it is open for writing")
 
     @property
-    def writer(self) -> _RawHdl_co:
+    def writer(self) -> _CLibHandle_co:
         """Accessor to assert that you are working in write mode."""
         if self.closed:
             raise SOMAError(f"{self} is closed")
@@ -243,7 +240,7 @@ class Wrapper(Generic[_RawHdl_co], metaclass=abc.ABCMeta):
         self.close()
 
 
-AnyWrapper = Wrapper[RawHandle]
+AnyWrapper = Wrapper[CLibHandle]
 """Non-instantiable type representing any Handle."""
 
 
@@ -262,13 +259,13 @@ class GroupEntry:
         raise SOMAError(f"internal error: unknown object type {uri}")
 
 
-_GrpType = TypeVar("_GrpType", bound=clib.SOMAGroup)
+_ClibGroupType = TypeVar("_ClibGroupType", bound=clib.SOMAGroup)
 
 
-class SOMAGroupWrapper(Wrapper[_GrpType]):
+class SOMAGroupWrapper(Wrapper[_ClibGroupType]):
     """Base class for Pybind11 SOMAGroupWrapper handles."""
 
-    _GROUP_WRAPPED_TYPE: Type[_GrpType]
+    _GROUP_WRAPPED_TYPE: Type[_ClibGroupType]
 
     clib_type = "SOMAGroup"
 
@@ -334,13 +331,13 @@ class SceneWrapper(SOMAGroupWrapper[clib.SOMAScene]):
     _GROUP_WRAPPED_TYPE = clib.SOMAScene
 
 
-_ArrType = TypeVar("_ArrType", bound=clib.SOMAArray)
+_CLibArrayType = TypeVar("_CLibArrayType", bound=clib.SOMAArray)
 
 
-class SOMAArrayWrapper(Wrapper[_ArrType]):
+class SOMAArrayWrapper(Wrapper[_CLibArrayType]):
     """Base class for Pybind11 SOMAArrayWrapper handles."""
 
-    _ARRAY_WRAPPED_TYPE: Type[_ArrType]
+    _ARRAY_WRAPPED_TYPE: Type[_CLibArrayType]
 
     clib_type = "SOMAArray"
 
@@ -363,7 +360,7 @@ class SOMAArrayWrapper(Wrapper[_ArrType]):
             timestamp=(0, timestamp),
         )
 
-    def _do_initial_reads(self, reader: RawHandle) -> None:
+    def _do_initial_reads(self, reader: CLibHandle) -> None:
         """Final setup step before returning the Handle.
 
         This is passed a raw TileDB object opened in read mode, since writers
@@ -373,126 +370,8 @@ class SOMAArrayWrapper(Wrapper[_ArrType]):
         self.metadata = MetadataWrapper(self, dict(reader.meta))
 
     @property
-    def schema(self) -> pa.Schema:
-        return self._handle.schema
-
-    def config_options_from_schema(self) -> clib.PlatformConfig:
-        return self._handle.config_options_from_schema()
-
-    @property
     def meta(self) -> "MetadataWrapper":
         return self.metadata
-
-    @property
-    def ndim(self) -> int:
-        return len(self._handle.dimension_names)
-
-    def _cast_domainish(
-        self, domainish: List[Any]
-    ) -> Tuple[Tuple[object, object], ...]:
-        result = []
-        for i, slot in enumerate(domainish):
-
-            arrow_type = slot[0].type
-            if pa.types.is_timestamp(arrow_type):
-                pandas_type = np.dtype(arrow_type.to_pandas_dtype())
-                result.append(
-                    tuple(
-                        pandas_type.type(e.cast(pa.int64()).as_py(), arrow_type.unit)
-                        for e in slot
-                    )
-                )
-            else:
-                result.append(tuple(e.as_py() for e in slot))
-
-        return tuple(result)
-
-    @property
-    def domain(self) -> Tuple[Tuple[object, object], ...]:
-        return self._cast_domainish(self._handle.domain())
-
-    @property
-    def maxdomain(self) -> Tuple[Tuple[object, object], ...]:
-        return self._cast_domainish(self._handle.maxdomain())
-
-    def non_empty_domain(self) -> Tuple[Tuple[object, object], ...]:
-        return self._cast_domainish(self._handle.non_empty_domain())
-
-    @property
-    def attr_names(self) -> Tuple[str, ...]:
-        return tuple(
-            f.name for f in self.schema if f.name not in self._handle.dimension_names
-        )
-
-    @property
-    def dim_names(self) -> Tuple[str, ...]:
-        return tuple(self._handle.dimension_names)
-
-    @property
-    def shape(self) -> Tuple[int, ...]:
-        """Not implemented for DataFrame."""
-        return cast(Tuple[int, ...], tuple(self._handle.shape))
-
-    @property
-    def maxshape(self) -> Tuple[int, ...]:
-        """Not implemented for DataFrame."""
-        return cast(Tuple[int, ...], tuple(self._handle.maxshape))
-
-    @property
-    def maybe_soma_joinid_shape(self) -> Optional[int]:
-        """Only implemented for DataFrame."""
-        raise NotImplementedError
-
-    @property
-    def maybe_soma_joinid_maxshape(self) -> Optional[int]:
-        """Only implemented for DataFrame."""
-        raise NotImplementedError
-
-    @property
-    def tiledbsoma_has_upgraded_shape(self) -> bool:
-        """Not implemented for DataFrame."""
-        raise NotImplementedError
-
-    @property
-    def tiledbsoma_has_upgraded_domain(self) -> bool:
-        """Only implemented for DataFrame."""
-        raise NotImplementedError
-
-    def resize(self, newshape: Sequence[Union[int, None]]) -> None:
-        """Not implemented for DataFrame."""
-        raise NotImplementedError
-
-    def tiledbsoma_can_resize(
-        self, newshape: Sequence[Union[int, None]]
-    ) -> StatusAndReason:
-        """Not implemented for DataFrame."""
-        raise NotImplementedError
-
-    def tiledbsoma_upgrade_shape(self, newshape: Sequence[Union[int, None]]) -> None:
-        """Not implemented for DataFrame."""
-        raise NotImplementedError
-
-    def tiledbsoma_can_upgrade_shape(
-        self, newshape: Sequence[Union[int, None]]
-    ) -> StatusAndReason:
-        """Not implemented for DataFrame."""
-        raise NotImplementedError
-
-    def resize_soma_joinid_shape(self, newshape: int) -> None:
-        """Only implemented for DataFrame."""
-        raise NotImplementedError
-
-    def can_resize_soma_joinid_shape(self, newshape: int) -> StatusAndReason:
-        """Only implemented for DataFrame."""
-        raise NotImplementedError
-
-    def upgrade_soma_joinid_shape(self, newshape: int) -> None:
-        """Only implemented for DataFrame."""
-        raise NotImplementedError
-
-    def can_upgrade_soma_joinid_shape(self, newshape: int) -> StatusAndReason:
-        """Only implemented for DataFrame."""
-        raise NotImplementedError
 
 
 class DataFrameWrapper(SOMAArrayWrapper[clib.SOMADataFrame]):
@@ -500,103 +379,11 @@ class DataFrameWrapper(SOMAArrayWrapper[clib.SOMADataFrame]):
 
     _ARRAY_WRAPPED_TYPE = clib.SOMADataFrame
 
-    @property
-    def count(self) -> int:
-        return int(self._handle.count)
-
-    def write(self, values: pa.RecordBatch) -> None:
-        self._handle.write(values)
-
-    @property
-    def maybe_soma_joinid_shape(self) -> Optional[int]:
-        """Return the shape slot for the soma_joinid dim, if the array has one.
-        This is an important test-point and dev-internal access-point,
-        in particular, for the tiledbsoma-io experiment-level resizer.
-
-        Lifecycle:
-            Maturing.
-        """
-        return cast(Optional[int], self._handle.maybe_soma_joinid_shape)
-
-    @property
-    def maybe_soma_joinid_maxshape(self) -> Optional[int]:
-        """Return the maxshape slot for the soma_joinid dim, if the array has one.
-        This is an important test-point and dev-internal access-point,
-        in particular, for the tiledbsoma-io experiment-level resizer.
-
-        Lifecycle:
-            Maturing.
-        """
-        return cast(Optional[int], self._handle.maybe_soma_joinid_maxshape)
-
-    @property
-    def tiledbsoma_has_upgraded_domain(self) -> bool:
-        """Returns true if the array has the upgraded resizeable domain feature
-        from TileDB-SOMA 1.15: the array was created with this support, or it has
-        had ``.tiledbsoma_upgrade_domain`` applied to it.
-
-        Lifecycle:
-            Maturing.
-        """
-        return cast(bool, self._handle.tiledbsoma_has_upgraded_domain)
-
-    def resize_soma_joinid_shape(self, newshape: int) -> None:
-        """Increases the shape of the dataframe on the ``soma_joinid`` index
-        column, if it indeed is an index column, leaving all other index columns
-        as-is. If the ``soma_joinid`` is not an index column, no change is made.
-        This is a special case of ``upgrade_domain`` (WIP for 1.15), but simpler
-        to keystroke, and handles the most common case for dataframe domain
-        expansion.  Raises an error if the dataframe doesn't already have a
-        domain: in that case please call ``tiledbsoma_upgrade_domain`` (WIP for
-        1.15).
-        """
-        self._handle.resize_soma_joinid_shape(newshape)
-
-    def can_resize_soma_joinid_shape(self, newshape: int) -> StatusAndReason:
-        """Increases the shape of the dataframe on the ``soma_joinid`` index
-        column, if it indeed is an index column, leaving all other index columns
-        as-is. If the ``soma_joinid`` is not an index column, no change is made.
-        This is a special case of ``upgrade_domain`` (WIP for 1.15), but simpler
-        to keystroke, and handles the most common case for dataframe domain
-        expansion.  Raises an error if the dataframe doesn't already have a
-        domain: in that case please call ``tiledbsoma_upgrade_domain`` (WIP for
-        1.15).  If ``check_only`` is ``True``, returns whether the operation
-        would succeed if attempted, and a reason why it would not.
-        """
-        return cast(
-            StatusAndReason, self._handle.can_resize_soma_joinid_shape(newshape)
-        )
-
-    def upgrade_soma_joinid_shape(self, newshape: int) -> None:
-        """This is like ``upgrade_domain``, but it only applies the specified domain
-        update to the ``soma_joinid`` index column. Any other index columns have their
-        domain set to match the maxdomain. If the ``soma_joinid`` column is not an index
-        column at all, then no action is taken."""
-        self._handle.upgrade_soma_joinid_shape(newshape)
-
-    def can_upgrade_soma_joinid_shape(self, newshape: int) -> StatusAndReason:
-        """This allows you to see if ``upgrade_soma_joinid_shape`` will succeed
-        before calling it.  This is an important test-point and dev-internal
-        access-point, in particular, for the tiledbsoma-io experiment-level
-        resizer.  If ``check_only`` is ``True``, returns whether the operation
-        would succeed if attempted, and a reason why it would not.
-        """
-        return cast(
-            StatusAndReason, self._handle.can_upgrade_soma_joinid_shape(newshape)
-        )
-
 
 class PointCloudDataFrameWrapper(SOMAArrayWrapper[clib.SOMAPointCloudDataFrame]):
     """Wrapper around a Pybind11 SOMAPointCloudDataFrame handle."""
 
     _ARRAY_WRAPPED_TYPE = clib.SOMAPointCloudDataFrame
-
-    @property
-    def count(self) -> int:
-        return int(self._handle.count)
-
-    def write(self, values: pa.RecordBatch) -> None:
-        self._handle.write(values)
 
 
 class DenseNDArrayWrapper(SOMAArrayWrapper[clib.SOMADenseNDArray]):
@@ -604,95 +391,11 @@ class DenseNDArrayWrapper(SOMAArrayWrapper[clib.SOMADenseNDArray]):
 
     _ARRAY_WRAPPED_TYPE = clib.SOMADenseNDArray
 
-    @property
-    def tiledbsoma_has_upgraded_shape(self) -> bool:
-        """Returns true if the array has the upgraded resizeable shape feature
-        from TileDB-SOMA 1.15: the array was created with this support, or it has
-        had ``.tiledbsoma_upgrade_shape`` applied to it.
-
-        Lifecycle:
-            Maturing.
-        """
-        return cast(bool, self._handle.tiledbsoma_has_upgraded_shape)
-
-    def resize(self, newshape: Sequence[Union[int, None]]) -> None:
-        """Supported for ``SparseNDArray``; scheduled for implementation for
-        ``DenseNDArray`` in TileDB-SOMA 1.15
-        """
-        if clib.embedded_version_triple() >= (2, 27, 0):
-            self._handle.resize(newshape)
-        else:
-            raise NotImplementedError("Not implemented for libtiledbsoma < 2.27.0")
-
-    def tiledbsoma_can_resize(
-        self, newshape: Sequence[Union[int, None]]
-    ) -> StatusAndReason:
-        """Supported for ``SparseNDArray``; scheduled for implementation for
-        ``DenseNDArray`` in TileDB-SOMA 1.15.
-        """
-        if clib.embedded_version_triple() >= (2, 27, 0):
-            return cast(StatusAndReason, self._handle.tiledbsoma_can_resize(newshape))
-        else:
-            raise NotImplementedError("Not implemented for libtiledbsoma < 2.27.0")
-
 
 class SparseNDArrayWrapper(SOMAArrayWrapper[clib.SOMASparseNDArray]):
     """Wrapper around a Pybind11 SparseNDArrayWrapper handle."""
 
     _ARRAY_WRAPPED_TYPE = clib.SOMASparseNDArray
-
-    @property
-    def nnz(self) -> int:
-        return int(self._handle.nnz())
-
-    @property
-    def tiledbsoma_has_upgraded_shape(self) -> bool:
-        """Returns true if the array has the upgraded resizeable shape feature
-        from TileDB-SOMA 1.15: the array was created with this support, or it has
-        had ``.tiledbsoma_upgrade_shape`` applied to it.
-
-        Lifecycle:
-            Maturing.
-        """
-        return cast(bool, self._handle.tiledbsoma_has_upgraded_shape)
-
-    def resize(self, newshape: Sequence[Union[int, None]]) -> None:
-        """Increases the shape of the array as specfied. Raises an error if the new
-        shape is less than the current shape in any dimension. Raises an error if
-        the new shape exceeds maxshape in any dimension. Raises an error if the
-        array doesn't already have a shape: in that case please call
-        tiledbsoma_upgrade_shape.
-        """
-        self._handle.resize(newshape)
-
-    def tiledbsoma_can_resize(
-        self, newshape: Sequence[Union[int, None]]
-    ) -> StatusAndReason:
-        """This allows you to see if ``resize`` will succeed before calling it.
-        This is an important test-point and dev-internal access-point, in
-        particular, for the tiledbsoma-io experiment-level resizer.  If
-        ``check_only`` is ``True``, returns whether the operation would succeed
-        if attempted, and a reason why it would not.
-        """
-        return cast(StatusAndReason, self._handle.can_resize(newshape))
-
-    def tiledbsoma_upgrade_shape(self, newshape: Sequence[Union[int, None]]) -> None:
-        """Allows the array to have a resizeable shape as described in the TileDB-SOMA
-        1.15 release notes.  Raises an error if the new shape exceeds maxshape in
-        any dimension. Raises an error if the array already has a shape.
-        """
-        self._handle.tiledbsoma_upgrade_shape(newshape)
-
-    def tiledbsoma_can_upgrade_shape(
-        self, newshape: Sequence[Union[int, None]]
-    ) -> StatusAndReason:
-        """Allows the array to have a resizeable shape as described in the TileDB-SOMA
-        1.15 release notes.  Raises an error if the new shape exceeds maxshape in
-        any dimension. Raises an error if the array already has a shape.
-        """
-        return cast(
-            StatusAndReason, self._handle.tiledbsoma_can_upgrade_shape(newshape)
-        )
 
 
 class _DictMod(enum.Enum):
@@ -756,7 +459,7 @@ class MetadataWrapper(MutableMapping[str, Any]):
     through to the backing store and the cache is updated to match.
     """
 
-    owner: Wrapper[RawHandle]
+    owner: Wrapper[CLibHandle]
     cache: Dict[str, Any]
     _mods: Dict[str, "_DictMod"] = attrs.field(init=False, factory=dict)
     """Tracks the modifications we have made to cache entries."""

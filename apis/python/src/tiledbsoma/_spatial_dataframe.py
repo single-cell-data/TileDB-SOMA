@@ -223,7 +223,7 @@ class SpatialDataFrame(SOMAArray):
             if coord.stop is None:
                 # There's no way to specify "to infinity" for strings.
                 # We have to get the nonempty domain and use that as the end.
-                ned = self._handle.non_empty_domain()
+                ned = self._clib_handle.non_empty_domain()
                 _, stop = ned[dim_idx]
             else:
                 stop = coord.stop

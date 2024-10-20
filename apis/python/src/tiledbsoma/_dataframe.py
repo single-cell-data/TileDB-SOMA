@@ -138,6 +138,30 @@ class DataFrame(SOMAArray, somacore.DataFrame):
     _wrapper_type = DataFrameWrapper
 
     @classmethod
+    def open(
+        cls,
+        uri: str,
+        mode: options.OpenMode = "r",
+        *,
+        tiledb_timestamp: Optional[OpenTimestamp] = None,
+        context: Optional[SOMATileDBContext] = None,
+        platform_config: Optional[options.PlatformConfig] = None,
+        clib_type: Optional[str] = None,
+    ) -> Self:
+        """Opens this specific type of SOMA object."""
+
+        retval = super().open(
+            uri,
+            mode,
+            tiledb_timestamp=tiledb_timestamp,
+            context=context,
+            platform_config=platform_config,
+            clib_type="SOMAArray",
+        )
+
+        return retval
+
+    @classmethod
     def create(
         cls,
         uri: str,
@@ -330,10 +354,12 @@ class DataFrame(SOMAArray, somacore.DataFrame):
             raise map_exception_for_create(e, uri) from None
 
         handle = cls._wrapper_type.open(uri, "w", context, tiledb_timestamp)
-        return cls(
+        retval = cls(
             handle,
             _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code",
         )
+
+        return retval
 
     def keys(self) -> Tuple[str, ...]:
         """Returns the names of the columns when read back as a dataframe.
@@ -387,8 +413,8 @@ class DataFrame(SOMAArray, somacore.DataFrame):
             Maturing.
         """
         self._check_open_read()
-        # if is it in read open mode, then it is a DataFrameWrapper
-        return cast(DataFrameWrapper, self._handle).count
+        # XXX WHY
+        return cast(int, self._clib_handle.count)
 
     @property
     def _maybe_soma_joinid_shape(self) -> Optional[int]:
@@ -400,7 +426,7 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         Lifecycle:
             Experimental.
         """
-        return self._handle.maybe_soma_joinid_shape
+        return cast(Optional[int], self._clib_handle.maybe_soma_joinid_shape)
 
     @property
     def _maybe_soma_joinid_maxshape(self) -> Optional[int]:
@@ -411,7 +437,7 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         Lifecycle:
             Experimental.
         """
-        return self._handle.maybe_soma_joinid_maxshape
+        return cast(Optional[int], self._clib_handle.maybe_soma_joinid_maxshape)
 
     @property
     def tiledbsoma_has_upgraded_domain(self) -> bool:
@@ -422,7 +448,7 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         Lifecycle:
             Maturing.
         """
-        return self._handle.tiledbsoma_has_upgraded_domain
+        return cast(bool, self._clib_handle.tiledbsoma_has_upgraded_domain)
 
     def resize_soma_joinid_shape(
         self, newshape: int, check_only: bool = False
@@ -440,10 +466,10 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         if check_only:
             return cast(
                 StatusAndReason,
-                self._handle._handle.can_resize_soma_joinid_shape(newshape),
+                self._clib_handle.can_resize_soma_joinid_shape(newshape),
             )
         else:
-            self._handle._handle.resize_soma_joinid_shape(newshape)
+            self._clib_handle.resize_soma_joinid_shape(newshape)
             return (True, "")
 
     def upgrade_soma_joinid_shape(
@@ -459,10 +485,10 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         if check_only:
             return cast(
                 StatusAndReason,
-                self._handle._handle.can_upgrade_soma_joinid_shape(newshape),
+                self._clib_handle.can_upgrade_soma_joinid_shape(newshape),
             )
         else:
-            self._handle._handle.upgrade_soma_joinid_shape(newshape)
+            self._clib_handle.upgrade_soma_joinid_shape(newshape)
             return (True, "")
 
     def __len__(self) -> int:
@@ -536,25 +562,23 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         _util.check_unpartitioned(partitions)
         self._check_open_read()
 
-        handle = self._handle._handle
-
-        context = handle.context()
+        context = self._clib_handle.context()
         if platform_config is not None:
             config = context.tiledb_config.copy()
             config.update(platform_config)
             context = clib.SOMAContext(config)
 
         sr = clib.SOMADataFrame.open(
-            uri=handle.uri,
+            uri=self._clib_handle.uri,
             mode=clib.OpenMode.read,
             context=context,
             column_names=column_names or [],
             result_order=_util.to_clib_result_order(result_order),
-            timestamp=handle.timestamp and (0, handle.timestamp),
+            timestamp=self._clib_handle.timestamp and (0, self._clib_handle.timestamp),
         )
 
         if value_filter is not None:
-            sr.set_condition(QueryCondition(value_filter), handle.schema)
+            sr.set_condition(QueryCondition(value_filter), self._clib_handle.schema)
 
         self._set_reader_coords(sr, coords)
 
@@ -608,13 +632,11 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         write_options = TileDBWriteOptions.from_platform_config(platform_config)
         sort_coords = write_options.sort_coords
 
-        clib_dataframe = self._handle._handle
-
         for batch in values.to_batches():
-            clib_dataframe.write(batch, sort_coords or False)
+            self._clib_handle.write(batch, sort_coords or False)
 
         if write_options.consolidate_and_vacuum:
-            clib_dataframe.consolidate_and_vacuum()
+            self._clib_handle.consolidate_and_vacuum()
 
         return self
 
@@ -667,11 +689,13 @@ class DataFrame(SOMAArray, somacore.DataFrame):
             if coord.stop is None:
                 # There's no way to specify "to infinity" for strings.
                 # We have to get the nonempty domain and use that as the end.
-                ned = self._handle.non_empty_domain()
+                ned = self._clib_handle.non_empty_domain()
                 _, stop = ned[dim_idx]
             else:
                 stop = coord.stop
-            sr.set_dim_ranges_string_or_bytes(dim.name, [(start, stop)])
+            # Use str(...) in case this is an Arrow string type, to satisfy
+            # the type-checker
+            sr.set_dim_ranges_string_or_bytes(dim.name, [(str(start), str(stop))])
             return True
 
         # Note: slice(None, None) matches the is_slice_of part, unless we also check the dim-type

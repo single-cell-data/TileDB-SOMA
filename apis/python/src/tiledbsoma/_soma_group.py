@@ -157,13 +157,12 @@ class SOMAGroup(
             # TileDB groups currently do not support replacing elements.
             # If we use a hack to flush writes, corruption is possible.
             raise SOMAError(f"replacing key {key!r} is unsupported")
-        clib_collection = self._handle._handle
         relative_type = clib.URIType.relative if relative else clib.URIType.absolute
-        clib_collection.add(
+        self._clib_handle.add(
             uri=uri,
             uri_type=relative_type,
             name=key,
-            soma_type=clib_collection.type,
+            soma_type=self._clib_handle.type,
         )
         self._contents[key] = _CachedElement(
             entry=_tdb_handles.GroupEntry(soma_object.uri, soma_object._wrapper_type),

@@ -67,7 +67,7 @@ from .._exception import (
 from .._flags import NEW_SHAPE_FEATURE_FLAG_ENABLED
 from .._soma_array import SOMAArray
 from .._soma_object import AnySOMAObject, SOMAObject
-from .._tdb_handles import RawHandle
+from .._tdb_handles import CLibHandle
 from .._types import (
     _INGEST_MODES,
     INGEST_MODES,
@@ -107,7 +107,7 @@ from ._registration.signatures import OriginalIndexMetadata, _prepare_df_for_ing
 from ._util import get_arrow_str_format, read_h5ad
 
 _NDArr = TypeVar("_NDArr", bound=NDArray)
-_TDBO = TypeVar("_TDBO", bound=SOMAObject[RawHandle])
+_TDBO = TypeVar("_TDBO", bound=SOMAObject[CLibHandle])
 
 
 def add_metadata(obj: SOMAObject[Any], additional_metadata: AdditionalMetadata) -> None:
@@ -1762,7 +1762,7 @@ def add_matrix_to_collection(
             coll_uri = f"{meas.uri}/{collection_name}"
 
         if collection_name in meas:
-            coll = cast(Collection[RawHandle], meas[collection_name])
+            coll = cast(Collection[CLibHandle], meas[collection_name])
         else:
             coll = _create_or_open_collection(
                 Collection,
@@ -1931,7 +1931,7 @@ def _write_matrix_to_denseNDArray(
 
 def _read_nonempty_domain(arr: SOMAArray) -> Any:
     try:
-        return arr._handle.non_empty_domain()
+        return arr.non_empty_domain()
     except (SOMAError, RuntimeError):
         # This means that we're open in write-only mode.
         # Reopen the array in read mode.
@@ -1940,7 +1940,7 @@ def _read_nonempty_domain(arr: SOMAArray) -> Any:
 
     cls = type(arr)
     with cls.open(arr.uri, "r", platform_config=None, context=arr.context) as readarr:
-        return readarr._handle.non_empty_domain()
+        return readarr.non_empty_domain()
 
 
 def _find_sparse_chunk_size(
