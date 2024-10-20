@@ -115,6 +115,7 @@ class CollectionBase(  # type: ignore[misc]  # __eq__ false positive
                 timestamp=(0, timestamp_ms),
             )
             handle = wrapper.open(uri, "w", context, tiledb_timestamp)
+
             return cls(
                 handle,
                 _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code",

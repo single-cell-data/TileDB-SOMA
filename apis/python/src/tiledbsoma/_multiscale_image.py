@@ -198,8 +198,18 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
             )
             handle.metadata[SOMA_MULTISCALE_IMAGE_SCHEMA] = schema_str
             handle.metadata[SOMA_COORDINATE_SPACE_METADATA_KEY] = coord_space_str
+            # XXX
+            # clib_handle = cls._clib_handle_type.open(
+            #    uri,
+            #    mode=clib.OpenMode.write,
+            #    context=context.native_context,
+            #    timestamp=(0, timestamp_ms),
+            # )
+
             return cls(
                 handle,
+                # XXX
+                # clib_handle=clib_handle,
                 _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code",
             )
         except SOMAError as e:

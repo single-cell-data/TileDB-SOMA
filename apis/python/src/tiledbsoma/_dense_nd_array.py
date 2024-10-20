@@ -163,8 +163,15 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
             raise map_exception_for_create(e, uri) from None
 
         handle = cls._wrapper_type.open(uri, "w", context, tiledb_timestamp)
+        clib_handle = cls._clib_handle_type.open(
+            uri,
+            clib.OpenMode.write,
+            context.native_context,
+            timestamp=(0, timestamp_ms),
+        )
         return cls(
             handle,
+            clib_handle=clib_handle,
             _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code",
         )
 
