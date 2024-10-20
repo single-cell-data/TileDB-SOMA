@@ -259,13 +259,13 @@ class GroupEntry:
         raise SOMAError(f"internal error: unknown object type {uri}")
 
 
-_GrpType = TypeVar("_GrpType", bound=clib.SOMAGroup)
+_ClibGroupType = TypeVar("_ClibGroupType", bound=clib.SOMAGroup)
 
 
-class SOMAGroupWrapper(Wrapper[_GrpType]):
+class SOMAGroupWrapper(Wrapper[_ClibGroupType]):
     """Base class for Pybind11 SOMAGroupWrapper handles."""
 
-    _GROUP_WRAPPED_TYPE: Type[_GrpType]
+    _GROUP_WRAPPED_TYPE: Type[_ClibGroupType]
 
     clib_type = "SOMAGroup"
 
@@ -331,13 +331,13 @@ class SceneWrapper(SOMAGroupWrapper[clib.SOMAScene]):
     _GROUP_WRAPPED_TYPE = clib.SOMAScene
 
 
-_ArrType = TypeVar("_ArrType", bound=clib.SOMAArray)
+_CLibArrayType = TypeVar("_CLibArrayType", bound=clib.SOMAArray)
 
 
-class SOMAArrayWrapper(Wrapper[_ArrType]):
+class SOMAArrayWrapper(Wrapper[_CLibArrayType]):
     """Base class for Pybind11 SOMAArrayWrapper handles."""
 
-    _ARRAY_WRAPPED_TYPE: Type[_ArrType]
+    _ARRAY_WRAPPED_TYPE: Type[_CLibArrayType]
 
     clib_type = "SOMAArray"
 
