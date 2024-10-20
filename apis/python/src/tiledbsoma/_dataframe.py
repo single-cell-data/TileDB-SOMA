@@ -136,7 +136,6 @@ class DataFrame(SOMAArray, somacore.DataFrame):
     """
 
     _wrapper_type = DataFrameWrapper
-    _clib_handle: clib.SOMADataFrame
 
     @classmethod
     def open(
@@ -164,15 +163,6 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         open_mode = clib.OpenMode.read if mode == "r" else clib.OpenMode.write
         context = _validate_soma_tiledb_context(context)
         timestamp_ms = context._open_timestamp_ms(tiledb_timestamp)
-
-        retval._clib_handle = clib.SOMADataFrame.open(
-            uri,
-            open_mode,
-            context.native_context,
-            column_names=[],  # XXX
-            result_order=clib.ResultOrder.automatic,  # XXX
-            timestamp=(0, timestamp_ms),
-        )
 
         return retval
 
@@ -372,15 +362,6 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         retval = cls(
             handle,
             _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code",
-        )
-
-        retval._clib_handle = clib.SOMADataFrame.open(
-            uri,
-            clib.OpenMode.write,
-            context.native_context,
-            column_names=[],  # XXX
-            result_order=clib.ResultOrder.automatic,  # XXX
-            timestamp=(0, timestamp_ms),
         )
 
         return retval
