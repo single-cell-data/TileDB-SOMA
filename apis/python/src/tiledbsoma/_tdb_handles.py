@@ -27,7 +27,6 @@ from typing import (
 
 import attrs
 import numpy as np
-import pyarrow as pa
 from somacore import options
 from typing_extensions import Literal, Self
 
@@ -379,13 +378,6 @@ class DataFrameWrapper(SOMAArrayWrapper[clib.SOMADataFrame]):
     """Wrapper around a Pybind11 SOMADataFrame handle."""
 
     _ARRAY_WRAPPED_TYPE = clib.SOMADataFrame
-
-    @property
-    def count(self) -> int:
-        return int(self._handle.count)
-
-    def write(self, values: pa.RecordBatch) -> None:
-        self._handle.write(values)
 
 
 class PointCloudDataFrameWrapper(SOMAArrayWrapper[clib.SOMAPointCloudDataFrame]):
