@@ -171,7 +171,8 @@ test_that("`reopen()` works on nested collections", {
       soma_joinid = bit64::integer64(),
       int = integer()
     )),
-    index_column_names = "soma_joinid"
+    index_column_names = "soma_joinid",
+    domain = list(soma_joinid = c(0, 999))
   )
   expect_length(col$names(), 4L)
 

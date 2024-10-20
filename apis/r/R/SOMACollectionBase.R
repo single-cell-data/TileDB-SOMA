@@ -94,10 +94,11 @@ SOMACollectionBase <- R6::R6Class(
     #' @param key The key to be added.
     #' @param schema Arrow schema argument passed on to DataFrame$create()
     #' @param index_column_names Index column names passed on to DataFrame$create()
+    #' @param domain As in ``SOMADataFrameCreate``.
     #' @template param-platform-config
-    add_new_dataframe = function(key, schema, index_column_names, platform_config = NULL) {
+    add_new_dataframe = function(key, schema, index_column_names, domain, platform_config = NULL) {
       ## TODO: Check argument validity
-      ndf <- SOMADataFrame$new(
+      sdf <- SOMADataFrame$new(
         uri = file_path(self$uri, key),
         platform_config = platform_config %||% private$.tiledb_platform_config,
         tiledbsoma_ctx = private$.tiledbsoma_ctx,
@@ -105,9 +106,9 @@ SOMACollectionBase <- R6::R6Class(
         internal_use_only = "allowed_use"
       )
 
-      ndf$create(schema, index_column_names, internal_use_only = "allowed_use")
-      super$set(ndf, key)
-      ndf
+      sdf$create(schema, index_column_names=index_column_names, domain=domain, internal_use_only = "allowed_use")
+      super$set(sdf, key)
+      sdf
     },
 
     #' @description Add a new SOMA DenseNdArray to this collection. (lifecycle: maturing)

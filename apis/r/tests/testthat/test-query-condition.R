@@ -34,7 +34,13 @@ test_that("DataFrame Factory", {
       # arrow::field("datetime_day", arrow::date32())
     )
 
-    sdf <- SOMADataFrameCreate(uri, sch, index_column_names = "soma_joinid")
+    sdf <- SOMADataFrameCreate(
+      uri,
+      sch,
+      index_column_names = "soma_joinid",
+      domain = list(soma_joinid = c(0, 999))
+    )
+
     expect_true(sdf$exists())
     expect_true(dir.exists(uri))
 
