@@ -12,6 +12,7 @@ from somacore import options
 from typing_extensions import Self
 
 from . import _constants, _tdb_handles
+from . import pytiledbsoma as clib
 from ._exception import SOMAError
 from ._types import OpenTimestamp
 from ._util import check_type, ms_to_datetime
@@ -26,6 +27,20 @@ _WrapperType_co = TypeVar(
 
 Covariant because ``_handle`` is read-only.
 """
+
+CLibHandle = Union[
+    clib.SOMAArray,
+    clib.SOMADataFrame,
+    clib.SOMAPointCloudDataFrame,
+    clib.SOMASparseNDArray,
+    clib.SOMADenseNDArray,
+    clib.SOMAGroup,
+    clib.SOMACollection,
+    clib.SOMAMeasurement,
+    clib.SOMAExperiment,
+    clib.SOMAScene,
+    clib.SOMAMultiscaleImage,
+]
 
 
 class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
@@ -94,6 +109,8 @@ class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
         Lifecycle:
             Maturing.
         """
+        if mode not in ("r", "w"):
+            raise ValueError(f"Invalid open mode {mode!r}")
         del platform_config  # unused
         context = _validate_soma_tiledb_context(context)
         handle = _tdb_handles.open(
