@@ -35,7 +35,7 @@ from ._exception import DoesNotExistError, SOMAError, is_does_not_exist_error
 from ._types import METADATA_TYPES, Metadatum, OpenTimestamp
 from .options._soma_tiledb_context import SOMATileDBContext
 
-RawHandle = Union[
+CLibHandle = Union[
     clib.SOMAArray,
     clib.SOMADataFrame,
     clib.SOMAPointCloudDataFrame,
@@ -48,8 +48,8 @@ RawHandle = Union[
     clib.SOMAScene,
     clib.SOMAMultiscaleImage,
 ]
-_RawHdl_co = TypeVar("_RawHdl_co", bound=RawHandle, covariant=True)
-"""A raw TileDB object. Covariant because Handles are immutable enough."""
+_CLibHandle_co = TypeVar("_CLibHandle_co", bound=CLibHandle, covariant=True)
+"""A handle to a pybind11-managed libtiledbsoma object. Covariant because Handles are immutable enough."""
 
 
 def open(
@@ -58,7 +58,7 @@ def open(
     context: SOMATileDBContext,
     timestamp: Optional[OpenTimestamp],
     clib_type: Optional[str] = None,
-) -> "Wrapper[RawHandle]":
+) -> "Wrapper[CLibHandle]":
     """Determine whether the URI is an array or group, and open it."""
     open_mode = clib.OpenMode.read if mode == "r" else clib.OpenMode.write
 
@@ -100,7 +100,7 @@ def open(
 
 
 @attrs.define(eq=False, hash=False, slots=False)
-class Wrapper(Generic[_RawHdl_co], metaclass=abc.ABCMeta):
+class Wrapper(Generic[_CLibHandle_co], metaclass=abc.ABCMeta):
     """Wrapper for TileDB handles to manage lifecycle and metadata.
 
     Callers may read and use (non-underscored) members but should never set
@@ -111,7 +111,7 @@ class Wrapper(Generic[_RawHdl_co], metaclass=abc.ABCMeta):
     mode: options.OpenMode
     context: SOMATileDBContext
     timestamp_ms: int
-    _handle: _RawHdl_co
+    _handle: _CLibHandle_co
     closed: bool = attrs.field(default=False, init=False)
     clib_type: Optional[str] = None
 
@@ -170,7 +170,7 @@ class Wrapper(Generic[_RawHdl_co], metaclass=abc.ABCMeta):
         mode: options.OpenMode,
         context: SOMATileDBContext,
         timestamp: int,
-    ) -> _RawHdl_co:
+    ) -> _CLibHandle_co:
         """Opens and returns a TileDB object specific to this type."""
         raise NotImplementedError()
 
@@ -188,7 +188,7 @@ class Wrapper(Generic[_RawHdl_co], metaclass=abc.ABCMeta):
 
     # Covariant types should normally not be in parameters, but this is for
     # internal use only so it's OK.
-    def _do_initial_reads(self, reader: _RawHdl_co) -> None:  # type: ignore[misc]
+    def _do_initial_reads(self, reader: _CLibHandle_co) -> None:  # type: ignore[misc]
         """Final setup step before returning the Handle.
 
         This is passed a raw TileDB object opened in read mode, since writers
@@ -198,7 +198,7 @@ class Wrapper(Generic[_RawHdl_co], metaclass=abc.ABCMeta):
         self.metadata = MetadataWrapper(self, dict(reader.meta))
 
     @property
-    def reader(self) -> _RawHdl_co:
+    def reader(self) -> _CLibHandle_co:
         """Accessor to assert that you are working in read mode."""
         if self.closed:
             raise SOMAError(f"{self} is closed")
@@ -207,7 +207,7 @@ class Wrapper(Generic[_RawHdl_co], metaclass=abc.ABCMeta):
         raise SOMAError(f"cannot read from {self}; it is open for writing")
 
     @property
-    def writer(self) -> _RawHdl_co:
+    def writer(self) -> _CLibHandle_co:
         """Accessor to assert that you are working in write mode."""
         if self.closed:
             raise SOMAError(f"{self} is closed")
@@ -240,7 +240,7 @@ class Wrapper(Generic[_RawHdl_co], metaclass=abc.ABCMeta):
         self.close()
 
 
-AnyWrapper = Wrapper[RawHandle]
+AnyWrapper = Wrapper[CLibHandle]
 """Non-instantiable type representing any Handle."""
 
 
@@ -360,7 +360,7 @@ class SOMAArrayWrapper(Wrapper[_CLibArrayType]):
             timestamp=(0, timestamp),
         )
 
-    def _do_initial_reads(self, reader: RawHandle) -> None:
+    def _do_initial_reads(self, reader: CLibHandle) -> None:
         """Final setup step before returning the Handle.
 
         This is passed a raw TileDB object opened in read mode, since writers
@@ -459,7 +459,7 @@ class MetadataWrapper(MutableMapping[str, Any]):
     through to the backing store and the cache is updated to match.
     """
 
-    owner: Wrapper[RawHandle]
+    owner: Wrapper[CLibHandle]
     cache: Dict[str, Any]
     _mods: Dict[str, "_DictMod"] = attrs.field(init=False, factory=dict)
     """Tracks the modifications we have made to cache entries."""
