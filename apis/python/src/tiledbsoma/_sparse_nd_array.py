@@ -306,9 +306,7 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
         would not.
         """
         if check_only:
-            return cast(
-                StatusAndReason, self._clib_handle.can_resize(newshape)
-            )
+            return cast(StatusAndReason, self._clib_handle.can_resize(newshape))
         else:
             self._clib_handle.resize(newshape)
             return (True, "")

@@ -7,7 +7,7 @@ Implementation of a SOMA Point Cloud DataFrame
 """
 
 import warnings
-from typing import Any, Optional, Sequence, Tuple, Union, cast
+from typing import Any, Optional, Sequence, Tuple, Union
 
 import pyarrow as pa
 import somacore
@@ -284,7 +284,7 @@ class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
         """Returns the number of rows in the dataframe."""
         self._check_open_read()
         # if is it in read open mode, then it is a PointCloudDataFrameWrapper
-        return cast(PointCloudDataFrameWrapper, self._handle).count
+        return self._clib_handle.count
 
     def read(
         self,
@@ -322,25 +322,23 @@ class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
         _util.check_unpartitioned(partitions)
         self._check_open_read()
 
-        handle = self._handle._handle
-
-        context = handle.context()
+        context = self._clib_handle.context()
         if platform_config is not None:
             config = context.tiledb_config.copy()
             config.update(platform_config)
             context = clib.SOMAContext(config)
 
         sr = clib.SOMAPointCloudDataFrame.open(
-            uri=handle.uri,
+            uri=self._clib_handle.uri,
             mode=clib.OpenMode.read,
             context=context,
             column_names=column_names or [],
             result_order=_util.to_clib_result_order(result_order),
-            timestamp=handle.timestamp and (0, handle.timestamp),
+            timestamp=self._clib_handle.timestamp and (0, self._clib_handle.timestamp),
         )
 
         if value_filter is not None:
-            sr.set_condition(QueryCondition(value_filter), handle.schema)
+            sr.set_condition(QueryCondition(value_filter), self._clib_handle.schema)
 
         self._set_reader_coords(sr, coords)
 
@@ -428,7 +426,7 @@ class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
             dict(),  #  Move index value_filters into this dict to optimize queries
             self._tiledb_dim_names(),
             self._coord_space.axis_names,
-            self._handle.schema,
+            self._clib_handle.schema,
         )
 
         return somacore.SpatialRead(
@@ -479,13 +477,11 @@ class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
         write_options = TileDBWriteOptions.from_platform_config(platform_config)
         sort_coords = write_options.sort_coords
 
-        clib_dataframe = self._handle._handle
-
         for batch in values.to_batches():
-            clib_dataframe.write(batch, sort_coords or False)
+            self._clib_handle.write(batch, sort_coords or False)
 
         if write_options.consolidate_and_vacuum:
-            clib_dataframe.consolidate_and_vacuum()
+            self._clib_handle.consolidate_and_vacuum()
 
         return self
 
