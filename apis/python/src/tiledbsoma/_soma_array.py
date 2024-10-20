@@ -3,8 +3,9 @@
 #
 # Licensed under the MIT License.
 
-from typing import Any, Optional, Sequence, Tuple
+from typing import Any, List, Optional, Sequence, Tuple
 
+import numpy as np
 import pyarrow as pa
 from somacore import options
 from typing_extensions import Self
@@ -57,7 +58,11 @@ class SOMAArray(SOMAObject[_tdb_handles.SOMAArrayWrapper[Any]]):
         Lifecycle:
             Maturing.
         """
-        return self._handle.schema
+        return self._clib_handle.schema
+
+    @property
+    def ndim(self) -> int:
+        return len(self._clib_handle.dimension_names)
 
     def config_options_from_schema(self) -> clib.PlatformConfig:
         """Returns metadata about the array that is not encompassed within the
@@ -91,7 +96,53 @@ class SOMAArray(SOMAObject[_tdb_handles.SOMAArrayWrapper[Any]]):
             * cell_order: str
             * consolidate_and_vacuum: bool
         """
-        return self._handle.config_options_from_schema()
+        return self._clib_handle.config_options_from_schema()
+
+    def _tiledb_array_keys(self) -> Tuple[str, ...]:
+        """Return all dim and attr names."""
+        return self._tiledb_dim_names() + self._tiledb_attr_names()
+
+    def _tiledb_dim_names(self) -> Tuple[str, ...]:
+        """Reads the dimension names from the schema: for example, ['obs_id', 'var_id']."""
+        return tuple(self._clib_handle.dimension_names)
+
+    def _tiledb_attr_names(self) -> Tuple[str, ...]:
+        """Reads the attribute names from the schema:
+        for example, the list of column names in a dataframe.
+        """
+        return self.attr_names
+
+    @property
+    def dim_names(self) -> Tuple[str, ...]:
+        return tuple(self._clib_handle.dimension_names)
+
+    @property
+    def attr_names(self) -> Tuple[str, ...]:
+        return tuple(
+            f.name
+            for f in self.schema
+            if f.name not in self._clib_handle.dimension_names
+        )
+
+    def _cast_domainish(
+        self, domainish: List[Any]
+    ) -> Tuple[Tuple[object, object], ...]:
+        result = []
+        for i, slot in enumerate(domainish):
+
+            arrow_type = slot[0].type
+            if pa.types.is_timestamp(arrow_type):
+                pandas_type = np.dtype(arrow_type.to_pandas_dtype())
+                result.append(
+                    tuple(
+                        pandas_type.type(e.cast(pa.int64()).as_py(), arrow_type.unit)
+                        for e in slot
+                    )
+                )
+            else:
+                result.append(tuple(e.as_py() for e in slot))
+
+        return tuple(result)
 
     def non_empty_domain(self) -> Tuple[Tuple[Any, Any], ...]:
         """
@@ -102,21 +153,7 @@ class SOMAArray(SOMAObject[_tdb_handles.SOMAArrayWrapper[Any]]):
         has actually had data written, this function will return a tighter
         range.
         """
-        return self._handle.non_empty_domain()
-
-    def _tiledb_array_keys(self) -> Tuple[str, ...]:
-        """Return all dim and attr names."""
-        return self._tiledb_dim_names() + self._tiledb_attr_names()
-
-    def _tiledb_dim_names(self) -> Tuple[str, ...]:
-        """Reads the dimension names from the schema: for example, ['obs_id', 'var_id']."""
-        return self._handle.dim_names
-
-    def _tiledb_attr_names(self) -> Tuple[str, ...]:
-        """Reads the attribute names from the schema:
-        for example, the list of column names in a dataframe.
-        """
-        return self._handle.attr_names
+        return self._cast_domainish(self._clib_handle.non_empty_domain())
 
     def _domain(self) -> Tuple[Tuple[Any, Any], ...]:
         """This is the SOMA domain, not the core domain.
@@ -131,7 +168,7 @@ class SOMAArray(SOMAObject[_tdb_handles.SOMAArrayWrapper[Any]]):
         * Core current domain is new as of core 2.25 and can be
           resized up to core (max) domain.
         """
-        return self._handle.domain
+        return self._cast_domainish(self._clib_handle.domain())
 
     def _maxdomain(self) -> Tuple[Tuple[Any, Any], ...]:
         """This is the SOMA maxdomain, not the core domain.
@@ -146,7 +183,7 @@ class SOMAArray(SOMAObject[_tdb_handles.SOMAArrayWrapper[Any]]):
         * Core current domain is new as of core 2.25 and can be
           resized up to core (max) domain.
         """
-        return self._handle.maxdomain
+        return self._cast_domainish(self._clib_handle.maxdomain())
 
     def _set_reader_coords(self, sr: clib.SOMAArray, coords: Sequence[object]) -> None:
         """Parses the given coords and sets them on the SOMA Reader."""
@@ -156,10 +193,10 @@ class SOMAArray(SOMAObject[_tdb_handles.SOMAArrayWrapper[Any]]):
                 " not str or bytes"
             )
 
-        if len(coords) > self._handle.ndim:
+        if len(coords) > self.ndim:
             raise ValueError(
                 f"coords ({len(coords)} elements) must be shorter than ndim"
-                f" ({self._handle.ndim})"
+                f" ({self.ndim})"
             )
         for i, coord in enumerate(coords):
             dim = self.schema.field(i)
@@ -190,7 +227,7 @@ class SOMAArray(SOMAObject[_tdb_handles.SOMAArrayWrapper[Any]]):
         if isinstance(coord, slice):
             _util.validate_slice(coord)
             try:
-                dom = self._handle.domain[dim_idx]
+                dom = self._domain()[dim_idx]
                 lo_hi = _util.slice_to_numeric_range(coord, dom)
             except _util.NonNumericDimensionError:
                 return False  # We only handle numeric dimensions here.

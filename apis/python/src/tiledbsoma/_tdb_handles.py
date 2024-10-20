@@ -15,7 +15,6 @@ from typing import (
     Dict,
     Generic,
     Iterator,
-    List,
     Mapping,
     MutableMapping,
     Optional,
@@ -373,126 +372,8 @@ class SOMAArrayWrapper(Wrapper[_ArrType]):
         self.metadata = MetadataWrapper(self, dict(reader.meta))
 
     @property
-    def schema(self) -> pa.Schema:
-        return self._handle.schema
-
-    def config_options_from_schema(self) -> clib.PlatformConfig:
-        return self._handle.config_options_from_schema()
-
-    @property
     def meta(self) -> "MetadataWrapper":
         return self.metadata
-
-    @property
-    def ndim(self) -> int:
-        return len(self._handle.dimension_names)
-
-    def _cast_domainish(
-        self, domainish: List[Any]
-    ) -> Tuple[Tuple[object, object], ...]:
-        result = []
-        for i, slot in enumerate(domainish):
-
-            arrow_type = slot[0].type
-            if pa.types.is_timestamp(arrow_type):
-                pandas_type = np.dtype(arrow_type.to_pandas_dtype())
-                result.append(
-                    tuple(
-                        pandas_type.type(e.cast(pa.int64()).as_py(), arrow_type.unit)
-                        for e in slot
-                    )
-                )
-            else:
-                result.append(tuple(e.as_py() for e in slot))
-
-        return tuple(result)
-
-    @property
-    def domain(self) -> Tuple[Tuple[object, object], ...]:
-        return self._cast_domainish(self._handle.domain())
-
-    @property
-    def maxdomain(self) -> Tuple[Tuple[object, object], ...]:
-        return self._cast_domainish(self._handle.maxdomain())
-
-    def non_empty_domain(self) -> Tuple[Tuple[object, object], ...]:
-        return self._cast_domainish(self._handle.non_empty_domain())
-
-    @property
-    def attr_names(self) -> Tuple[str, ...]:
-        return tuple(
-            f.name for f in self.schema if f.name not in self._handle.dimension_names
-        )
-
-    @property
-    def dim_names(self) -> Tuple[str, ...]:
-        return tuple(self._handle.dimension_names)
-
-    @property
-    def shape(self) -> Tuple[int, ...]:
-        """Not implemented for DataFrame."""
-        return cast(Tuple[int, ...], tuple(self._handle.shape))
-
-    @property
-    def maxshape(self) -> Tuple[int, ...]:
-        """Not implemented for DataFrame."""
-        return cast(Tuple[int, ...], tuple(self._handle.maxshape))
-
-    @property
-    def maybe_soma_joinid_shape(self) -> Optional[int]:
-        """Only implemented for DataFrame."""
-        raise NotImplementedError
-
-    @property
-    def maybe_soma_joinid_maxshape(self) -> Optional[int]:
-        """Only implemented for DataFrame."""
-        raise NotImplementedError
-
-    @property
-    def tiledbsoma_has_upgraded_shape(self) -> bool:
-        """Not implemented for DataFrame."""
-        raise NotImplementedError
-
-    @property
-    def tiledbsoma_has_upgraded_domain(self) -> bool:
-        """Only implemented for DataFrame."""
-        raise NotImplementedError
-
-    def resize(self, newshape: Sequence[Union[int, None]]) -> None:
-        """Not implemented for DataFrame."""
-        raise NotImplementedError
-
-    def tiledbsoma_can_resize(
-        self, newshape: Sequence[Union[int, None]]
-    ) -> StatusAndReason:
-        """Not implemented for DataFrame."""
-        raise NotImplementedError
-
-    def tiledbsoma_upgrade_shape(self, newshape: Sequence[Union[int, None]]) -> None:
-        """Not implemented for DataFrame."""
-        raise NotImplementedError
-
-    def tiledbsoma_can_upgrade_shape(
-        self, newshape: Sequence[Union[int, None]]
-    ) -> StatusAndReason:
-        """Not implemented for DataFrame."""
-        raise NotImplementedError
-
-    def resize_soma_joinid_shape(self, newshape: int) -> None:
-        """Only implemented for DataFrame."""
-        raise NotImplementedError
-
-    def can_resize_soma_joinid_shape(self, newshape: int) -> StatusAndReason:
-        """Only implemented for DataFrame."""
-        raise NotImplementedError
-
-    def upgrade_soma_joinid_shape(self, newshape: int) -> None:
-        """Only implemented for DataFrame."""
-        raise NotImplementedError
-
-    def can_upgrade_soma_joinid_shape(self, newshape: int) -> StatusAndReason:
-        """Only implemented for DataFrame."""
-        raise NotImplementedError
 
 
 class DataFrameWrapper(SOMAArrayWrapper[clib.SOMADataFrame]):
