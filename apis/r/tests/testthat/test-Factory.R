@@ -8,9 +8,19 @@ test_that("DataFrame Factory", {
 
     # Check creation of a DF
     asch <- create_arrow_schema(foo_first=FALSE)
-    expect_silent(d2 <- SOMADataFrameCreate(uri, schema = asch))
-    tbl <- arrow::arrow_table(soma_joinid = 1L:10L, int_column = 1L:10L, float_column = sqrt(1:10),
-                              string_column = letters[1:10], schema = asch)
+
+    expect_silent(d2 <- SOMADataFrameCreate(
+      uri,
+      schema = asch,
+      domain = list(soma_joinid = c(0, 99))
+    ))
+
+    tbl <- arrow::arrow_table(
+      soma_joinid = 1L:10L,
+      int_column = 1L:10L,
+      float_column = sqrt(1:10),
+      string_column = letters[1:10],
+      schema = asch)
     d2$write(tbl)
 
     # Check opening to read
@@ -26,9 +36,21 @@ test_that("DataFrame Factory with specified index_column_names", {
     # Check creation of a DF
     asch <- create_arrow_schema()
     expect_error(d2 <- SOMADataFrameCreate(uri, index_column_names = "int_column")) # misses schema
-    expect_silent(d2 <- SOMADataFrameCreate(uri, schema = asch, index_column_names = "int_column"))
-    tbl <- arrow::arrow_table(int_column = 1L:10L, soma_joinid = 1L:10L, float_column = sqrt(1:10),
-                              string_column = letters[1:10], schema = asch)
+
+    expect_silent(d2 <- SOMADataFrameCreate(
+      uri,
+      schema = asch,
+      index_column_names = "int_column",
+      domain = list(int_column = c(1, 10))
+    ))
+
+    tbl <- arrow::arrow_table(
+      int_column = 1L:10L,
+      soma_joinid = 1L:10L,
+      float_column = sqrt(1:10),
+      string_column = letters[1:10],
+      schema = asch)
+
     d2$write(tbl)
 
     # Check opening to read
