@@ -693,7 +693,9 @@ class DataFrame(SOMAArray, somacore.DataFrame):
                 _, stop = ned[dim_idx]
             else:
                 stop = coord.stop
-            sr.set_dim_ranges_string_or_bytes(dim.name, [(start, stop)])
+            # Use str(...) in case this is an Arrow string type, to satisfy
+            # the type-checker
+            sr.set_dim_ranges_string_or_bytes(dim.name, [(str(start), str(stop))])
             return True
 
         # Note: slice(None, None) matches the is_slice_of part, unless we also check the dim-type
