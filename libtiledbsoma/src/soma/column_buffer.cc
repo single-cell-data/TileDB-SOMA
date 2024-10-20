@@ -252,6 +252,17 @@ size_t ColumnBuffer::update_size(const Query& query) {
     return num_cells_;
 }
 
+std::vector<std::vector<std::byte>> ColumnBuffer::binaries() {
+    std::vector<std::vector<std::byte>> result;
+
+    for (size_t i = 0; i < num_cells_; i++) {
+        result.emplace_back(std::vector<std::byte>(
+            data_.data() + offsets_[i], data_.data() + offsets_[i + 1]));
+    }
+
+    return result;
+}
+
 std::vector<std::string> ColumnBuffer::strings() {
     std::vector<std::string> result;
 

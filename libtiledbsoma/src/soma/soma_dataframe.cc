@@ -108,7 +108,7 @@ void SOMADataFrame::update_dataframe_schema(
             attr_name,
             ArrowAdapter::to_tiledb_format(attr_type));
 
-        if (ArrowAdapter::arrow_is_string_type(attr_type.c_str())) {
+        if (ArrowAdapter::arrow_is_var_length_type(attr_type.c_str())) {
             attr.set_cell_val_num(TILEDB_VAR_NUM);
         }
 
