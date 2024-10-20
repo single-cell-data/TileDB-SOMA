@@ -8,32 +8,21 @@
 ``open``, ``ArrayWrapper.open``, ``GroupWrapper.open`` are the important parts.
 """
 
-import abc
 import enum
 from typing import (
     Any,
     Dict,
-    Generic,
     Iterator,
     Mapping,
     MutableMapping,
-    Optional,
-    Tuple,
-    Type,
-    TypeVar,
-    Union,
-    cast,
 )
 
 import attrs
 import numpy as np
-from somacore import options
-from typing_extensions import Literal, Self
+from typing_extensions import Literal
 
-from . import pytiledbsoma as clib
-from ._exception import DoesNotExistError, SOMAError, is_does_not_exist_error
-from ._types import METADATA_TYPES, Metadatum, OpenTimestamp
-from .options._soma_tiledb_context import SOMATileDBContext
+from ._types import METADATA_TYPES, Metadatum
+
 
 class _DictMod(enum.Enum):
     """State machine to keep track of modifications to a dictionary.
