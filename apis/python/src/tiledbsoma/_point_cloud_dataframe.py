@@ -284,7 +284,7 @@ class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
         """Returns the number of rows in the dataframe."""
         self._check_open_read()
         # if is it in read open mode, then it is a PointCloudDataFrameWrapper
-        return self._clib_handle.count
+        return cast(int, self._clib_handle.count)
 
     def read(
         self,
