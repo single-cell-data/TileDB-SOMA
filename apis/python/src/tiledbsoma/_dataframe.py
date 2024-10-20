@@ -159,11 +159,6 @@ class DataFrame(SOMAArray, somacore.DataFrame):
             clib_type="SOMAArray",
         )
 
-        # XXX libify
-        open_mode = clib.OpenMode.read if mode == "r" else clib.OpenMode.write
-        context = _validate_soma_tiledb_context(context)
-        timestamp_ms = context._open_timestamp_ms(tiledb_timestamp)
-
         return retval
 
     @classmethod
@@ -694,7 +689,7 @@ class DataFrame(SOMAArray, somacore.DataFrame):
             if coord.stop is None:
                 # There's no way to specify "to infinity" for strings.
                 # We have to get the nonempty domain and use that as the end.
-                ned = self._handle.non_empty_domain()
+                ned = self._clib_handle.non_empty_domain()
                 _, stop = ned[dim_idx]
             else:
                 stop = coord.stop

@@ -228,7 +228,7 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
             Maturing.
         """
         self._check_open_read()
-        return cast(SparseNDArrayWrapper, self._handle).nnz
+        return cast(int, self._clib_handle.nnz())
 
     def read(
         self,
@@ -274,24 +274,22 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
             * Negative indexing is unsupported.
         """
         del batch_size  # Currently unused.
-        handle: clib.SOMASparseNDArray = self._handle._handle
-
         self._check_open_read()
         _util.check_unpartitioned(partitions)
 
-        context = handle.context()
+        context = self._clib_handle.context()
         if platform_config is not None:
             config = context.tiledb_config.copy()
             config.update(platform_config)
             context = clib.SOMAContext(config)
 
         sr = clib.SOMASparseNDArray.open(
-            uri=handle.uri,
+            uri=self._clib_handle.uri,
             mode=clib.OpenMode.read,
             context=context,
             column_names=[],
             result_order=_util.to_clib_result_order(result_order),
-            timestamp=handle.timestamp and (0, handle.timestamp),
+            timestamp=self._clib_handle.timestamp and (0, self._clib_handle.timestamp),
         )
 
         return SparseNDArrayRead(sr, self, coords)
@@ -308,9 +306,11 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
         would not.
         """
         if check_only:
-            return self._handle.tiledbsoma_can_resize(newshape)
+            return cast(
+                StatusAndReason, self._clib_handle.tiledbsoma_can_resize(newshape)
+            )
         else:
-            self._handle.resize(newshape)
+            self._clib_handle.resize(newshape)
             return (True, "")
 
     def tiledbsoma_upgrade_shape(
@@ -321,9 +321,12 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
         any dimension. Raises an error if the array already has a shape.
         """
         if check_only:
-            return self._handle.tiledbsoma_can_upgrade_shape(newshape)
+            return cast(
+                StatusAndReason,
+                self._clib_handle.tiledbsoma_can_upgrade_shape(newshape),
+            )
         else:
-            self._handle.tiledbsoma_upgrade_shape(newshape)
+            self._clib_handle.tiledbsoma_upgrade_shape(newshape)
             return (True, "")
 
     def write(
@@ -370,12 +373,10 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
         write_options = TileDBWriteOptions.from_platform_config(platform_config)
         sort_coords = write_options.sort_coords
 
-        clib_sparse_array = self._handle._handle
-
         if isinstance(values, pa.SparseCOOTensor):
             # Write bulk data
             data, coords = values.to_numpy()
-            clib_sparse_array.write_coords(
+            self._clib_handle.write_coords(
                 [
                     np.array(
                         c,
@@ -396,7 +397,7 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
 
             if write_options.consolidate_and_vacuum:
                 # Consolidate non-bulk data
-                clib_sparse_array.consolidate_and_vacuum()
+                self._clib_handle.consolidate_and_vacuum()
             return self
 
         if isinstance(values, (pa.SparseCSCMatrix, pa.SparseCSRMatrix)):
@@ -407,7 +408,7 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
             # Write bulk data
             # TODO: the ``to_scipy`` function is not zero copy. Need to explore zero-copy options.
             sp = values.to_scipy().tocoo()
-            clib_sparse_array.write_coords(
+            self._clib_handle.write_coords(
                 [
                     np.array(
                         c,
@@ -428,14 +429,14 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
 
             if write_options.consolidate_and_vacuum:
                 # Consolidate non-bulk data
-                clib_sparse_array.consolidate_and_vacuum()
+                self._clib_handle.consolidate_and_vacuum()
             return self
 
         if isinstance(values, pa.Table):
             # Write bulk data
             values = _util.cast_values_to_target_schema(values, self.schema)
             for batch in values.to_batches():
-                clib_sparse_array.write(batch, sort_coords or False)
+                self._clib_handle.write(batch, sort_coords or False)
 
             # Write bounding-box metadata
             maxes = []
@@ -451,7 +452,7 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
 
             if write_options.consolidate_and_vacuum:
                 # Consolidate non-bulk data
-                clib_sparse_array.consolidate_and_vacuum()
+                self._clib_handle.consolidate_and_vacuum()
             return self
 
         raise TypeError(
