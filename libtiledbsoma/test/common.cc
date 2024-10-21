@@ -151,7 +151,25 @@ std::unique_ptr<ArrowSchema> create_index_cols_info_schema(
         tiledb_datatypes[i] = dim_info.tiledb_datatype;
     }
 
-    return ArrowAdapter::make_arrow_schema(names, tiledb_datatypes);
+    auto schema = ArrowAdapter::make_arrow_schema(names, tiledb_datatypes);
+
+    for (size_t i = 0; i < schema->n_children; ++i) {
+        if (strcmp(schema->children[i]->name, "soma_geometry")) {
+            nanoarrow::UniqueBuffer buffer;
+            ArrowMetadataBuilderInit(buffer.get(), nullptr);
+            ArrowMetadataBuilderAppend(
+                buffer.get(),
+                ArrowCharView("dtype"),
+                ArrowCharView(
+                    dim_infos[i].tiledb_datatype == TILEDB_GEOM_WKB ? "WKB" :
+                                                                      "WKT"));
+            ArrowSchemaSetMetadata(
+                schema->children[i],
+                std::string((char*)buffer->data, buffer->size_bytes).c_str());
+        }
+    }
+
+    return schema;
 }
 
 static std::unique_ptr<ArrowArray> _create_index_cols_info_array(
@@ -207,6 +225,25 @@ static std::unique_ptr<ArrowArray> _create_index_cols_info_array(
             } else {
                 std::vector<std::string> dom({"", "", ""});
                 dim_array = ArrowAdapter::make_arrow_array_child_string(dom);
+            }
+        } else if (info.tiledb_datatype == TILEDB_GEOM_WKB) {
+            // No domain can be set for WKB. The domain will be set to the
+            // individual spatial axes.
+            dim_array = ArrowAdapter::make_arrow_array_child_binary();
+        } else if (info.tiledb_datatype == TILEDB_FLOAT64) {
+            if (info.use_current_domain) {
+                // domain big; current_domain small
+                std::vector<double_t> dom(
+                    {0,
+                     (double_t)CORE_DOMAIN_MAX,
+                     1,
+                     0,
+                     (double_t)info.dim_max});
+                dim_array = ArrowAdapter::make_arrow_array_child(dom);
+            } else {
+                // domain small; current_domain feature not being used
+                std::vector<double_t> dom({0, (double_t)info.dim_max, 1});
+                dim_array = ArrowAdapter::make_arrow_array_child(dom);
             }
         }
 
