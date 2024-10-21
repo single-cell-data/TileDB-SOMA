@@ -80,6 +80,12 @@ class AxisAmbientLabelMapping:
             next_soma_joinid += 1
         return cls(data=data, field_name=index_field_name)
 
+    def get_shape(self) -> int:
+        if len(self.data.values()) == 0:
+            return 0
+        else:
+            return 1 + max(self.data.values())
+
     def to_json(self) -> str:
         return json.dumps(self, default=attrs.asdict, sort_keys=True, indent=4)
 
@@ -189,8 +195,7 @@ class ExperimentAmbientLabelMapping:
         experiment, not in append mode, but allowing us to still have the bulk of the ingestor code
         to be non-duplicated between non-append mode and append mode.
         """
-        tiledb_ctx = None if context is None else context.tiledb_ctx
-        with read_h5ad(h5ad_file_name, mode="r", ctx=tiledb_ctx) as adata:
+        with read_h5ad(h5ad_file_name, mode="r", ctx=context) as adata:
             return cls.from_isolated_anndata(
                 adata,
                 measurement_name=measurement_name,
@@ -434,8 +439,7 @@ class ExperimentAmbientLabelMapping:
         """Extends registration data to one more H5AD input file."""
         tiledbsoma.logging.logger.info(f"Registration: registering {h5ad_file_name}.")
 
-        tiledb_ctx = None if context is None else context.tiledb_ctx
-        with read_h5ad(h5ad_file_name, mode="r", ctx=tiledb_ctx) as adata:
+        with read_h5ad(h5ad_file_name, mode="r", ctx=context) as adata:
             return cls.from_anndata_append_on_experiment(
                 adata,
                 previous,
@@ -492,9 +496,7 @@ class ExperimentAmbientLabelMapping:
         """Reports the new obs shape which the experiment will need to be
         resized to in order to accommodate the data contained within the
         registration."""
-        if len(self.obs_axis.data.values()) == 0:
-            return 0
-        return 1 + max(self.obs_axis.data.values())
+        return self.obs_axis.get_shape()
 
     def get_var_shapes(self) -> Dict[str, int]:
         """Reports the new var shapes, one per measurement, which the experiment
@@ -502,10 +504,7 @@ class ExperimentAmbientLabelMapping:
         within the registration."""
         retval: Dict[str, int] = {}
         for key, axis in self.var_axes.items():
-            if len(axis.data.values()) == 0:
-                retval[key] = 0
-            else:
-                retval[key] = 1 + max(axis.data.values())
+            retval[key] = axis.get_shape()
         return retval
 
     def to_json(self) -> str:

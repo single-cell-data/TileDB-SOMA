@@ -15,33 +15,24 @@ test_that("Arrow Interface from SOMAArrayReader", {
     tb1 <- soma_array_to_arrow_table(soma_array_reader(uri, columns))
     expect_equal(tb1$num_rows, 2638)
 
-    arr <- tiledb_array(uri)         # need array for schema access to qc parser
-    qc <- parse_query_condition(n_counts < 1000 && n_genes >= 400, ta = arr)
-    tb2 <- soma_array_to_arrow_table(soma_array_reader(uri, columns, qc@ptr))
-
-    expect_equal(tb2$num_rows, 47)
-    expect_true(all(tb2$n_counts < 1000))
-    expect_true(all(tb2$n_genes >= 400))
-
-
     # read everything
-    tb3 <- soma_array_to_arrow_table(soma_array_reader(uri))
+    tb2 <- soma_array_to_arrow_table(soma_array_reader(uri))
 
-    expect_equal(tb3$num_rows, 2638)
-    expect_equal(tb3$num_columns, 6)
+    expect_equal(tb2$num_rows, 2638)
+    expect_equal(tb2$num_columns, 6)
 
     # read a subset of rows and columns
-    tb4 <- soma_array_to_arrow_table(soma_array_reader(uri = uri,
+    tb3 <- soma_array_to_arrow_table(soma_array_reader(uri = uri,
                 colnames = c("obs_id", "percent_mito", "n_counts", "louvain"),
                 dim_ranges = list(soma_joinid = rbind(bit64::as.integer64(c(1000, 1004)),
                                                   bit64::as.integer64(c(2000, 2004)))),
                 dim_points=list(soma_joinid = bit64::as.integer64(seq(0, 100, by = 20)))))
 
 
-    expect_equal(tb4$num_rows, 16)
-    expect_equal(tb4$num_columns, 4)
+    expect_equal(tb3$num_rows, 16)
+    expect_equal(tb3$num_columns, 4)
 
-    rm(z, tb, rb, tb1, arr, tb2, tb3, tb4)
+    rm(z, tb, rb, tb1, tb2, tb3)
     gc()
 })
 

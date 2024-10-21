@@ -52,6 +52,7 @@ If this comes up empty for your system, you'll definitely need to build from sou
   ```
 * In either case:
   ```shell
+  make data
   python -m pytest tests
   ```
 

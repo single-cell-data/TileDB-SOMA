@@ -10,9 +10,7 @@ def test_nd_dense_non_contiguous_write(tmp_path):
     """Test regression dected in GitHub Issue #2537"""
     # Create data.
     data = (
-        np.arange(np.product(24), dtype=np.uint8)
-        .reshape((4, 3, 2))
-        .transpose((2, 0, 1))
+        np.arange(np.prod(24), dtype=np.uint8).reshape((4, 3, 2)).transpose((2, 0, 1))
     )
     coords = tuple(slice(0, dim_len) for dim_len in data.shape)
     tensor = pa.Tensor.from_numpy(data)

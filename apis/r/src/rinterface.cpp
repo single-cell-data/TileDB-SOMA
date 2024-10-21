@@ -279,7 +279,7 @@ Rcpp::NumericVector maxshape(
 }
 
 // [[Rcpp::export]]
-SEXP non_empty_domain_new(
+SEXP non_empty_domain(
     const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
     auto sdf = tdbs::SOMADataFrame::open(uri, OpenMode::read, ctxxp->ctxptr);
     tdbs::ArrowTable arrow_table = sdf->get_non_empty_domain();

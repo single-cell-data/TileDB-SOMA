@@ -18,7 +18,7 @@ def create_and_populate_df(uri: str) -> soma.DataFrame:
         ]
     )
 
-    with soma.DataFrame.create(uri, schema=obs_arrow_schema) as obs:
+    with soma.DataFrame.create(uri, schema=obs_arrow_schema, domain=[[0, 9]]) as obs:
         pydict = {}
         pydict["soma_joinid"] = [0, 1, 2, 3, 4]
         pydict["foo"] = [10, 20, 30, 40, 50]
@@ -150,6 +150,84 @@ def test_scene_coord_space(tmp_path):
         assert scene.coordinate_space == coord_space
 
 
+class TestSceneDeepSubcollections:
+    """Tests on a Scene with multiple layers of subcollections.
+
+    Scene structure:
+
+        scene
+        |
+        ├- obsl
+        ├- varl
+        |   └- RNA
+        └- suns
+            └- suns
+                └- final
+    """
+
+    @pytest.fixture(scope="class")
+    def scene(self, tmp_path_factory):
+        """Creates and returns a scene for reading that"""
+        baseuri = tmp_path_factory.mktemp("scene").as_uri()
+        scene_uri = urljoin(baseuri, "multi-collection")
+
+        # Create a scene with multi-level collections.
+        with soma.Scene.create(scene_uri) as scene:
+
+            obsl = scene.add_new_collection("obsl")
+            obsl.metadata["name"] = "obsl"
+
+            varl = scene.add_new_collection("varl")
+            varl.metadata["name"] = "varl"
+
+            rna = varl.add_new_collection("RNA")
+            rna.metadata["name"] = "varl/RNA"
+
+            # Add a collection that is not part of the set data model.
+            # Using 'suns' for spatial-uns.
+            suns = scene.add_new_collection("suns")
+            suns.metadata["name"] = "suns"
+
+            suns2 = suns.add_new_collection("suns")
+            suns2.metadata["name"] = "suns/suns"
+
+            fin = suns2.add_new_collection("final")
+            fin.metadata["name"] = "suns/suns/final"
+
+        scene = scene.open(scene_uri)
+        yield scene
+        scene.close()
+
+    def test_open_subcollection_no_items(self, scene):
+        with pytest.raises(ValueError):
+            scene._open_subcollection([])
+
+    @pytest.mark.parametrize(
+        "subcollection",
+        ["bad_name", ["obsl", "bad_name"], ["bad_name", "obsl"]],
+    )
+    def test_open_subcollection_keyerror(self, scene, subcollection):
+        with pytest.raises(KeyError):
+            scene._open_subcollection(subcollection)
+
+    @pytest.mark.parametrize(
+        "subcollection,expected_metadata",
+        [
+            ("obsl", "obsl"),
+            (["obsl"], "obsl"),
+            ("varl", "varl"),
+            (["varl", "RNA"], "varl/RNA"),
+            ("suns", "suns"),
+            (["suns", "suns"], "suns/suns"),
+            (["suns", "suns", "final"], "suns/suns/final"),
+        ],
+    )
+    def test_open_subcolletion(self, scene, subcollection, expected_metadata):
+        coll = scene._open_subcollection(subcollection)
+        actual_metadata = coll.metadata["name"]
+        assert actual_metadata == expected_metadata
+
+
 @pytest.mark.parametrize(
     "coord_transform, transform_kwargs",
     [
@@ -166,15 +244,20 @@ def test_scene_point_cloud(tmp_path, coord_transform, transform_kwargs):
         obsl_uri = urljoin(baseuri, "obsl")
         scene["obsl"] = soma.Collection.create(obsl_uri)
 
-        ptc_uri = urljoin(obsl_uri, "ptc")
         asch = pa.schema([("x", pa.float64()), ("y", pa.float64())])
-        coord_space = soma.CoordinateSpace([soma.Axis(name="x"), soma.Axis(name="y")])
+        coord_space = soma.CoordinateSpace(
+            [soma.Axis(name="x_scene"), soma.Axis(name="y_scene")]
+        )
 
-        # TODO replace with Scene.add_new_point_cloud_dataframe when implemented
-        scene["obsl"]["ptc"] = soma.PointCloudDataFrame.create(ptc_uri, schema=asch)
+        # TODO Add transform directly to add_new_point_cloud
+        scene.add_new_point_cloud_dataframe(
+            "ptc", subcollection="obsl", transform=None, schema=asch
+        )
 
         transform = coord_transform(
-            input_axes=("x", "y"), output_axes=("x", "y"), **transform_kwargs
+            input_axes=("x_scene", "y_scene"),
+            output_axes=("x", "y"),
+            **transform_kwargs,
         )
 
         # The scene coordinate space must be set before registering
@@ -187,9 +270,27 @@ def test_scene_point_cloud(tmp_path, coord_transform, transform_kwargs):
         with pytest.raises(KeyError):
             scene.set_transform_to_point_cloud_dataframe("bad", transform)
 
+        # Mismatched input axes.
+        transform_bad = coord_transform(
+            input_axes=("x", "y"),
+            output_axes=("x", "y"),
+            **transform_kwargs,
+        )
+        with pytest.raises(ValueError):
+            scene.set_transform_to_point_cloud_dataframe("ptc", transform_bad)
+
+        # Mismatched output axes.
+        transform_bad = coord_transform(
+            input_axes=("x_scene", "y_scene"),
+            output_axes=("x_scene", "y_scene"),
+            **transform_kwargs,
+        )
+        with pytest.raises(ValueError):
+            scene.set_transform_to_point_cloud_dataframe("ptc", transform_bad)
+
         # Not a PointCloudDataFrame
         scene["obsl"]["col"] = soma.Collection.create(urljoin(obsl_uri, "col"))
-        with pytest.raises(typeguard.TypeCheckError):
+        with pytest.raises(TypeError):
             scene.set_transform_to_point_cloud_dataframe("col", transform)
 
         # Transform not set
@@ -234,16 +335,21 @@ def test_scene_multiscale_image(tmp_path, coord_transform, transform_kwargs):
         img_uri = urljoin(baseuri, "img")
         scene["img"] = soma.Collection.create(img_uri)
 
-        msi_uri = urljoin(img_uri, "msi")
-        coord_space = soma.CoordinateSpace([soma.Axis(name="x"), soma.Axis(name="y")])
+        coord_space = soma.CoordinateSpace(
+            [soma.Axis(name="x_scene"), soma.Axis(name="y_scene")]
+        )
 
-        # TODO replace with Scene.add_multiscale_image when implemented
-        scene["img"]["msi"] = soma.MultiscaleImage.create(
-            msi_uri, type=pa.int64(), reference_level_shape=[1, 2, 3]
+        # TODO Add transform directly to add_new_multiscale_image
+        scene.add_new_multiscale_image(
+            "msi",
+            "img",
+            transform=None,
+            type=pa.int64(),
+            reference_level_shape=[1, 2, 3],
         )
 
         transform = coord_transform(
-            input_axes=("x", "y"),
+            input_axes=("x_scene", "y_scene"),
             output_axes=("x", "y"),
             **transform_kwargs,
         )
@@ -264,8 +370,26 @@ def test_scene_multiscale_image(tmp_path, coord_transform, transform_kwargs):
 
         # Not a MultiscaleImage
         scene["img"]["col"] = soma.Collection.create(urljoin(img_uri, "col"))
-        with pytest.raises(typeguard.TypeCheckError):
+        with pytest.raises(TypeError):
             scene.set_transform_to_multiscale_image("col", transform)
+
+        # Mismatched input axes.
+        transform_bad = coord_transform(
+            input_axes=("x", "y"),
+            output_axes=("x", "y"),
+            **transform_kwargs,
+        )
+        with pytest.raises(ValueError):
+            scene.set_transform_to_multiscale_image("msi", transform_bad)
+
+        # Mismatched output axes.
+        transform_bad = coord_transform(
+            input_axes=("x_scene", "y_scene"),
+            output_axes=("x_scene", "y_scene"),
+            **transform_kwargs,
+        )
+        with pytest.raises(ValueError):
+            scene.set_transform_to_multiscale_image("msi", transform_bad)
 
         scene.set_transform_to_multiscale_image("msi", transform)
 
@@ -305,13 +429,17 @@ def test_scene_geometry_dataframe(tmp_path, coord_transform, transform_kwargs):
 
         gdf_uri = urljoin(obsl_uri, "gdf")
         asch = pa.schema([("x", pa.float64()), ("y", pa.float64())])
-        coord_space = soma.CoordinateSpace([soma.Axis(name="x"), soma.Axis(name="y")])
+        coord_space = soma.CoordinateSpace(
+            [soma.Axis(name="x_scene"), soma.Axis(name="y_scene")]
+        )
 
         # TODO replace with Scene.add_new_geometry_dataframe when implemented
         scene["obsl"]["gdf"] = soma.GeometryDataFrame.create(gdf_uri, schema=asch)
 
         transform = coord_transform(
-            input_axes=("x", "y"), output_axes=("x", "y"), **transform_kwargs
+            input_axes=("x_scene", "y_scene"),
+            output_axes=("x", "y"),
+            **transform_kwargs,
         )
 
         # The scene coordinate space must be set before registering

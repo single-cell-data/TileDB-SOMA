@@ -34,6 +34,11 @@ is_arrow_dictionary <- function(x) {
   is_arrow_object(x) && inherits(x, "Field") && inherits(x$type, "DictionaryType")
 }
 
+#' @method as.logical Scalar
+#' @export
+#'
+as.logical.Scalar <- \(x, ...) as.logical(x$as_vector(), ...)
+
 #' Convert Arrow types to supported TileDB type
 #' List of TileDB types supported in R: https://github.com/TileDB-Inc/TileDB-R/blob/8014da156b5fee5b4cc221d57b4aa7d388abc968/inst/tinytest/test_dim.R#L97-L121
 #' Note: TileDB attrs may be UTF-8; TileDB dims may not.
@@ -571,10 +576,7 @@ get_domain_and_extent_array <- function(shape, is_sparse) {
         # expansion.
         ind_max_dom <- arrow_type_unsigned_range(ind_col_type) - c(0,ind_ext)
 
-        # TODO: support current domain for dense arrays once we have that support
-        # from core.
-        # https://github.com/single-cell-data/TileDB-SOMA/issues/2955
-        if (.new_shape_feature_flag_is_enabled() && is_sparse) {
+        if (.new_shape_feature_flag_is_enabled() && (is_sparse || .dense_arrays_can_have_current_domain())) {
             aa <- arrow::arrow_array(c(ind_max_dom, ind_ext, ind_cur_dom), ind_col_type)
         } else {
             aa <- arrow::arrow_array(c(ind_cur_dom, ind_ext), ind_col_type)

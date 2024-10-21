@@ -25,7 +25,9 @@ def tiledb_object_uri(tmp_path, metadata_typename, encoding_version, soma_type):
             [("rows", pa.int64()), ("a", pa.int32()), ("b", pa.float32())]
         )
 
-    with soma_type.create(object_uri, **kwargs) as soma_obj:
+    soma_type.create(object_uri, tiledb_timestamp=1, **kwargs).close()
+
+    with soma_type.open(object_uri, "w", tiledb_timestamp=2) as soma_obj:
         _setmetadata(soma_obj, metadata_typename, encoding_version)
 
     return object_uri
@@ -48,11 +50,15 @@ def test_open(tiledb_object_uri, soma_type: Type):
     """Happy path tests"""
     # TODO: Fix Windows test failures without the following.
     sleep(0.01)
-    soma_obj = soma.open(tiledb_object_uri)
+    soma_obj = soma.open(tiledb_object_uri, tiledb_timestamp=2)
     assert isinstance(soma_obj, soma_type)
-    typed_soma_obj = soma.open(tiledb_object_uri, soma_type=soma_type)
+    typed_soma_obj = soma.open(
+        tiledb_object_uri, soma_type=soma_type, tiledb_timestamp=2
+    )
     assert isinstance(typed_soma_obj, soma_type)
-    str_typed_soma_obj = soma.open(tiledb_object_uri, soma_type=soma_type.soma_type)
+    str_typed_soma_obj = soma.open(
+        tiledb_object_uri, soma_type=soma_type.soma_type, tiledb_timestamp=2
+    )
     assert isinstance(str_typed_soma_obj, soma_type)
     assert soma_type.exists(tiledb_object_uri)
 
@@ -70,7 +76,7 @@ def test_open(tiledb_object_uri, soma_type: Type):
 )
 def test_open_wrong_type(tiledb_object_uri, soma_type):
     with pytest.raises((soma.SOMAError, TypeError)):
-        soma.open(tiledb_object_uri, soma_type=soma_type)
+        soma.open(tiledb_object_uri, soma_type=soma_type, tiledb_timestamp=2)
 
 
 @pytest.mark.parametrize(
@@ -89,7 +95,7 @@ def test_factory_unsupported_version(tiledb_object_uri):
     # TODO: Fix Windows test failures without the following.
     sleep(0.01)
     with pytest.raises(ValueError):
-        soma.open(tiledb_object_uri)
+        soma.open(tiledb_object_uri, tiledb_timestamp=2)
 
 
 @pytest.mark.parametrize(
@@ -126,7 +132,7 @@ def test_factory_unsupported_version(tiledb_object_uri):
 def test_factory_unsupported_types(tiledb_object_uri):
     """Illegal or non-existant metadata"""
     with pytest.raises(soma.SOMAError):
-        soma.open(tiledb_object_uri)
+        soma.open(tiledb_object_uri, tiledb_timestamp=2)
 
 
 def test_factory_unknown_files():

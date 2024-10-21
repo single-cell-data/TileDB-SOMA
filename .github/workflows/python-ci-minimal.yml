@@ -28,13 +28,13 @@ jobs:
       fail-fast: true
 
       matrix:
-        os: [ubuntu-22.04, macos-12]
+        os: [ubuntu-latest, macos-latest]
         python-version: ['3.9', '3.11']
         include:
-          - os: ubuntu-22.04
+          - os: ubuntu-latest
             cc: gcc-11
             cxx: g++-11
-          - os: macos-12
+          - os: macos-latest
             cc: clang
             cxx: clang++
     uses: ./.github/workflows/python-ci-single.yml

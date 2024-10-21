@@ -10,11 +10,9 @@ import scanpy as sc
 import scipy as sp
 
 import tiledbsoma
-import tiledb
 
 print("tiledbsoma.__version__   ", tiledbsoma.__version__)
-print("tiledb.version()         ", ".".join(str(e) for e in tiledb.version()))
-print("core version             ", ".".join(map(str, tiledb.libtiledb.version())))
+print("core version             ", tiledbsoma.get_libtiledbsoma_core_version())
 print("anndata.__version__  (ad)", ad.__version__)
 print("numpy.__version__    (np)", np.__version__)
 print("pandas.__version__   (pd)", pd.__version__)
