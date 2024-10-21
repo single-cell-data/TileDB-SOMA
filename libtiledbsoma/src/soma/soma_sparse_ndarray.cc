@@ -54,6 +54,7 @@ void SOMASparseNDArray::create(
     schema->format = strdup("+s");
     schema->n_children = index_column_size + 1;
     schema->dictionary = nullptr;
+    schema->metadata = nullptr;
     schema->flags = 0;
     schema->release = &ArrowAdapter::release_schema;
     schema->children = new ArrowSchema*[schema->n_children];
@@ -66,6 +67,7 @@ void SOMASparseNDArray::create(
             std::string("soma_dim_" + std::to_string(dim_idx)).c_str());
         dim->n_children = 0;
         dim->dictionary = nullptr;
+        dim->metadata = nullptr;
         dim->release = &ArrowAdapter::release_schema;
         index_column_names.push_back(dim->name);
     }
@@ -76,6 +78,7 @@ void SOMASparseNDArray::create(
     attr->n_children = 0;
     attr->flags = 0;
     attr->dictionary = nullptr;
+    attr->metadata = nullptr;
     attr->release = &ArrowAdapter::release_schema;
 
     auto tiledb_schema = ArrowAdapter::tiledb_schema_from_arrow_schema(

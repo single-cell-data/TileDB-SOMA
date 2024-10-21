@@ -411,6 +411,8 @@ bool SOMAArray::_cast_column(
         case TILEDB_STRING_ASCII:
         case TILEDB_STRING_UTF8:
         case TILEDB_CHAR:
+        case TILEDB_GEOM_WKB:
+        case TILEDB_GEOM_WKT:
             return _cast_column_aux<std::string>(schema, array, se);
         case TILEDB_BOOL:
             return _cast_column_aux<bool>(schema, array, se);
@@ -477,6 +479,8 @@ void SOMAArray::_promote_indexes_to_values(
         case TILEDB_STRING_ASCII:
         case TILEDB_STRING_UTF8:
         case TILEDB_CHAR:
+        case TILEDB_GEOM_WKB:
+        case TILEDB_GEOM_WKT:
             return _cast_dictionary_values<std::string>(schema, array);
         case TILEDB_BOOL:
             return _cast_dictionary_values<bool>(schema, array);
@@ -784,6 +788,8 @@ bool SOMAArray::_extend_enumeration(
         case TILEDB_STRING_ASCII:
         case TILEDB_STRING_UTF8:
         case TILEDB_CHAR:
+        case TILEDB_GEOM_WKB:
+        case TILEDB_GEOM_WKT:
             return _extend_and_evolve_schema<std::string>(
                 value_schema, value_array, index_schema, index_array, se);
         case TILEDB_INT8:
@@ -1261,6 +1267,8 @@ ArrowTable SOMAArray::_get_core_domainish(enum Domainish which_kind) {
 
             case TILEDB_STRING_ASCII:
             case TILEDB_CHAR:
+            case TILEDB_GEOM_WKB:
+            case TILEDB_GEOM_WKT:
                 child = ArrowAdapter::make_arrow_array_child_string(
                     _core_domainish_slot_string(core_dim.name(), which_kind));
                 break;
@@ -1750,6 +1758,8 @@ void SOMAArray::_set_soma_joinid_shape_helper(
                     case TILEDB_STRING_ASCII:
                     case TILEDB_STRING_UTF8:
                     case TILEDB_CHAR:
+                    case TILEDB_GEOM_WKB:
+                    case TILEDB_GEOM_WKT:
                         // TODO: make these named constants b/c they're shared
                         // with arrow_adapter.
                         ndrect.set_range(dim_name, "", "\xff");

@@ -275,15 +275,19 @@ class ArrowAdapter {
      * @param const char* Arrow data format
      * @return bool Whether the Arrow type represents a string type
      */
-    static bool arrow_is_string_type(const char* format);
+    static bool arrow_is_var_length_type(const char* format);
 
     /**
      * @brief Get TileDB datatype from Arrow format string.
      *
      * @param datatype TileDB datatype.
+     * @param arrow_dtype_metadata Additional datatype info. Useful for
+     * differentiating between BLOB and WKB.
      * @return std::string_view Arrow format string.
      */
-    static tiledb_datatype_t to_tiledb_format(std::string_view arrow_dtype);
+    static tiledb_datatype_t to_tiledb_format(
+        std::string_view arrow_dtype,
+        std::string_view arrow_dtype_metadata = {});
 
     static enum ArrowType to_nanoarrow_type(std::string_view sv);
 
