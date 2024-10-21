@@ -1158,6 +1158,12 @@ class SOMAArray : public SOMAObject {
     }
 
     /**
+     * This is for SOMADataFrame.
+     */
+    std::pair<bool, std::string> can_upgrade_domain(
+        const ArrowTable& newdomain, std::string function_name_for_messages);
+
+    /**
      * @brief Resize the shape (what core calls "current domain") up to the
      * maxshape (what core calls "domain").
      *
@@ -1226,6 +1232,12 @@ class SOMAArray : public SOMAObject {
             newshape, false, function_name_for_messages);
     }
 
+    /**
+     * This is for SOMADataFrame.
+     */
+    void upgrade_domain(
+        const ArrowTable& newdomain, std::string function_name_for_messages);
+
    protected:
     // These two are for use nominally by SOMADataFrame. This could be moved in
     // its entirety to SOMADataFrame, but it would entail moving several
@@ -1283,7 +1295,7 @@ class SOMAArray : public SOMAObject {
     }
 
     /**
-     * This is a code-dedupe helper for can_resize and can_upgrade_domain.
+     * This is a code-dedupe helper for can_resize and can_upgrade_shape.
      */
     std::pair<bool, std::string> _can_set_shape_helper(
         const std::vector<int64_t>& newshape,
@@ -1295,6 +1307,14 @@ class SOMAArray : public SOMAObject {
      */
     std::pair<bool, std::string> _can_set_shape_domainish_subhelper(
         const std::vector<int64_t>& newshape,
+        bool check_current_domain,
+        std::string function_name_for_messages);
+
+    /**
+     * This is a code-dedupe helper for can_upgrade_domain.
+     */
+    std::pair<bool, std::string> _can_set_dataframe_domainish_subhelper(
+        const ArrowTable& newdomain,
         bool check_current_domain,
         std::string function_name_for_messages);
 
@@ -1323,6 +1343,98 @@ class SOMAArray : public SOMAObject {
         int64_t newshape,
         bool is_resize,
         std::string function_name_for_messages);
+
+    /**
+     * This is a helper for can_upgrade_domain.
+     */
+    template <typename T>
+    std::pair<bool, std::string>
+    _can_set_dataframe_domainish_slot_checker_non_string(
+        bool check_current_domain,
+        const ArrowTable& domain_table,
+        std::string dim_name) {
+        std::pair<T, T> old_lo_hi = check_current_domain ?
+                                        _core_current_domain_slot<T>(dim_name) :
+                                        _core_domain_slot<T>(dim_name);
+        std::vector<T>
+            new_lo_hi = ArrowAdapter::get_table_non_string_column_by_name<T>(
+                domain_table, dim_name);
+        if (new_lo_hi.size() != 2) {
+            throw TileDBSOMAError(
+                "internal coding error detected at "
+                "_can_set_dataframe_domainish_slot_checker");
+        }
+
+        const T& old_lo = old_lo_hi.first;
+        const T& old_hi = old_lo_hi.second;
+        const T& new_lo = new_lo_hi[0];
+        const T& new_hi = new_lo_hi[1];
+
+        // It's difficult to use fmt::format within a header file since the
+        // include path to logger.h 'moves around' depending on which source
+        // file included us.
+        //
+        // TODO: once we're on C++ 20, just use std::format here and include
+        // things like "old ({}, {}) new ({}, {})".
+        if (new_lo > new_hi) {
+            return std::pair(false, "new lower > new upper");
+        }
+        if (new_lo > old_lo) {
+            return std::pair(
+                false, "new lower > old lower (downsize is unsupported)");
+        }
+        if (new_hi < old_hi) {
+            return std::pair(
+                false, "new upper < old upper (downsize is unsupported)");
+        }
+        return std::pair(true, "");
+    }
+
+    /**
+     * This is a helper for can_upgrade_domain.
+     */
+    std::pair<bool, std::string>
+    _can_set_dataframe_domainish_slot_checker_string(
+        bool check_current_domain,
+        const ArrowTable& domain_table,
+        std::string dim_name) {
+        std::pair<std::string, std::string>
+            old_lo_hi = check_current_domain ?
+                            _core_current_domain_slot_string(dim_name) :
+                            _core_domain_slot_string(dim_name);
+        std::vector<std::string>
+            new_lo_hi = ArrowAdapter::get_table_string_column_by_name(
+                domain_table, dim_name);
+        if (new_lo_hi.size() != 2) {
+            throw TileDBSOMAError(
+                "internal coding error detected at "
+                "_can_set_dataframe_domainish_slot_checker");
+        }
+
+        const std::string& old_lo = old_lo_hi.first;
+        const std::string& old_hi = old_lo_hi.second;
+        const std::string& new_lo = new_lo_hi[0];
+        const std::string& new_hi = new_lo_hi[1];
+
+        // It's difficult to use fmt::format within a header file since the
+        // include path to logger.h 'moves around' depending on which source
+        // file included us.
+        //
+        // TODO: once we're on C++ 20, just use std::format here and include
+        // things like "old ({}, {}) new ({}, {})".
+        if (new_lo > new_hi) {
+            return std::pair(false, "new lower > new upper");
+        }
+        if (new_lo > old_lo) {
+            return std::pair(
+                false, "new lower > old lower (downsize is unsupported)");
+        }
+        if (new_hi < old_hi) {
+            return std::pair(
+                false, "new upper < old upper (downsize is unsupported)");
+        }
+        return std::pair(true, "");
+    }
 
     /**
      * While SparseNDArray, DenseNDArray, and default-indexed DataFrame
