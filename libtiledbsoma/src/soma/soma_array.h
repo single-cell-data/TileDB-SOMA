@@ -1158,6 +1158,13 @@ class SOMAArray : public SOMAObject {
     }
 
     /**
+     * XXX WRITE ME
+     */
+    std::pair<bool, std::string> can_upgrade_domain(
+        const ArrowTable& newdomain,
+        std::string function_name_for_messages);
+
+    /**
      * @brief Resize the shape (what core calls "current domain") up to the
      * maxshape (what core calls "domain").
      *
@@ -1226,6 +1233,13 @@ class SOMAArray : public SOMAObject {
             newshape, false, function_name_for_messages);
     }
 
+    /**
+     * XXX WRITE ME
+     */
+    void upgrade_domain(
+        const ArrowTable& newdomain,
+        std::string function_name_for_messages);
+
    protected:
     // These two are for use nominally by SOMADataFrame. This could be moved in
     // its entirety to SOMADataFrame, but it would entail moving several
@@ -1283,7 +1297,7 @@ class SOMAArray : public SOMAObject {
     }
 
     /**
-     * This is a code-dedupe helper for can_resize and can_upgrade_domain.
+     * This is a code-dedupe helper for can_resize and can_upgrade_shape.
      */
     std::pair<bool, std::string> _can_set_shape_helper(
         const std::vector<int64_t>& newshape,
@@ -1295,6 +1309,14 @@ class SOMAArray : public SOMAObject {
      */
     std::pair<bool, std::string> _can_set_shape_domainish_subhelper(
         const std::vector<int64_t>& newshape,
+        bool check_current_domain,
+        std::string function_name_for_messages);
+
+    /**
+     * This is a code-dedupe helper for can_upgrade_domain.
+     */
+    std::pair<bool, std::string> _can_set_dataframe_domainish_subhelper(
+        const ArrowTable& newdomain,
         bool check_current_domain,
         std::string function_name_for_messages);
 
