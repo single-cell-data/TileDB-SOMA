@@ -1452,7 +1452,7 @@ std::vector<int64_t> SOMAArray::maxshape() {
 // much overlap.
 StatusAndReason SOMAArray::_can_set_shape_helper(
     const std::vector<int64_t>& newshape,
-    bool is_resize,
+    bool must_already_have,
     std::string function_name_for_messages) {
     // E.g. it's an error to try to upgrade_domain or resize specifying
     // a 3-D shape on a 2-D array.
@@ -1472,7 +1472,7 @@ StatusAndReason SOMAArray::_can_set_shape_helper(
     // only on arrays that don't have a shape set, and resize must be called
     // only on arrays that do.
     bool has_shape = has_current_domain();
-    if (is_resize) {
+    if (must_already_have) {
         // They're trying to do resize on an array that doesn't already have a
         // shape.
         if (!has_shape) {
@@ -1588,10 +1588,12 @@ StatusAndReason SOMAArray::_can_set_shape_domainish_subhelper(
 }
 
 StatusAndReason SOMAArray::_can_set_soma_joinid_shape_helper(
-    int64_t newshape, bool is_resize, std::string function_name_for_messages) {
+    int64_t newshape,
+    bool must_already_have,
+    std::string function_name_for_messages) {
     // Fail if the array doesn't already have a shape yet (they should upgrade
     // first).
-    if (!is_resize) {
+    if (!must_already_have) {
         // Upgrading an array to give it a current domain
         if (has_current_domain()) {
             return std::pair(
@@ -1619,7 +1621,7 @@ StatusAndReason SOMAArray::_can_set_soma_joinid_shape_helper(
     }
 
     // Fail if the newshape isn't within the array's core current domain.
-    if (is_resize) {
+    if (must_already_have) {
         std::pair cur_dom_lo_hi = _core_current_domain_slot<int64_t>(
             "soma_joinid");
         if (newshape < cur_dom_lo_hi.second) {
@@ -1651,7 +1653,7 @@ StatusAndReason SOMAArray::_can_set_soma_joinid_shape_helper(
 
 void SOMAArray::_set_shape_helper(
     const std::vector<int64_t>& newshape,
-    bool is_resize,
+    bool must_already_have,
     std::string function_name_for_messages) {
     if (mq_->query_type() != TILEDB_WRITE) {
         throw TileDBSOMAError(fmt::format(
@@ -1659,7 +1661,7 @@ void SOMAArray::_set_shape_helper(
             function_name_for_messages));
     }
 
-    if (!is_resize) {
+    if (!must_already_have) {
         // Upgrading an array to install a current domain
         if (!_get_current_domain().is_empty()) {
             throw TileDBSOMAError(fmt::format(
@@ -1706,14 +1708,16 @@ void SOMAArray::_set_shape_helper(
 }
 
 void SOMAArray::_set_soma_joinid_shape_helper(
-    int64_t newshape, bool is_resize, std::string function_name_for_messages) {
+    int64_t newshape,
+    bool must_already_have,
+    std::string function_name_for_messages) {
     if (mq_->query_type() != TILEDB_WRITE) {
         throw TileDBSOMAError(fmt::format(
             "{}: array must be opened in write mode",
             function_name_for_messages));
     }
 
-    if (!is_resize) {
+    if (!must_already_have) {
         // Upgrading an array to install a current domain
         if (!_get_current_domain().is_empty()) {
             throw TileDBSOMAError(fmt::format(
@@ -1736,7 +1740,7 @@ void SOMAArray::_set_soma_joinid_shape_helper(
     ArraySchemaEvolution schema_evolution(*tctx);
     CurrentDomain new_current_domain(*tctx);
 
-    if (!is_resize) {
+    if (!must_already_have) {
         // For upgrade: copy from the full/wide/max domain except for the
         // soma_joinid restriction.
 
@@ -1884,37 +1888,52 @@ void SOMAArray::_set_soma_joinid_shape_helper(
     schema_evolution.array_evolve(uri_);
 }
 
-StatusAndReason SOMAArray::can_upgrade_domain(
-    const ArrowTable& newdomain, std::string function_name_for_messages) {
+StatusAndReason SOMAArray::_can_set_domain_helper(
+    const ArrowTable& newdomain,
+    bool must_already_have,
+    std::string function_name_for_messages) {
     // Enforce the semantics that tiledbsoma_upgrade_domain must be called
     // only on arrays that don't have a shape set, and resize must be called
     // only on arrays that do.
-    if (has_current_domain()) {
-        return std::pair(
-            false,
-            fmt::format(
-                "{}: dataframe already has a domain",
-                function_name_for_messages));
+    if (must_already_have) {
+        if (!has_current_domain()) {
+            return std::pair(
+                false,
+                fmt::format(
+                    "{}: dataframe does not have a domain: please upgrade it",
+                    function_name_for_messages));
+        }
+    } else {
+        if (has_current_domain()) {
+            return std::pair(
+                false,
+                fmt::format(
+                    "{}: dataframe already has a domain",
+                    function_name_for_messages));
+        }
     }
 
-    // * For old-style dataframe without shape: core domain (soma maxdomain) may
+    // * For old-style dataframe without shape: core domain (soma maxdomain)
+    // may
     //   be small (like 100) or big (like 2 billionish).
-    // * For new-style dataframe with shape: core current domain (soma domain)
-    //   will probably be small and core domain (soma maxdomain) will be huge.
+    // * For new-style dataframe with shape: core current domain (soma
+    // domain)
+    //   will probably be small and core domain (soma maxdomain) will be
+    //   huge.
     //
-    // In either case, we need to check that the user's requested soma domain
-    // isn't outside the core domain, which is immutable. For old-style
-    // dataframes, if the requested domain fits in the array's core domain, it's
-    // good to go as a new soma domain.
+    // In either case, we need to check that the user's requested soma
+    // domain isn't outside the core domain, which is immutable. For
+    // old-style dataframes, if the requested domain fits in the array's
+    // core domain, it's good to go as a new soma domain.
     auto domain_check = _can_set_dataframe_domainish_subhelper(
         newdomain, false, function_name_for_messages);
     if (!domain_check.first) {
         return domain_check;
     }
 
-    // For new-style dataframes, we need to additionally that the the requested
-    // soma domain (core current domain) isn't a downsize of the current
-    // one.
+    // For new-style dataframes, we need to additionally that the the
+    // requested soma domain (core current domain) isn't a downsize of the
+    // current one.
     if (has_current_domain()) {
         auto current_domain_check = _can_set_dataframe_domainish_subhelper(
             newdomain, true, function_name_for_messages);
@@ -2065,6 +2084,165 @@ StatusAndReason SOMAArray::_can_set_dataframe_domainish_subhelper(
         }
     }
     return std::pair(true, "");
+}
+
+void SOMAArray::_set_domain_helper(
+    const ArrowTable& newdomain,
+    bool must_already_have,
+    std::string function_name_for_messages) {
+    if (mq_->query_type() != TILEDB_WRITE) {
+        throw TileDBSOMAError(fmt::format(
+            "{}: array must be opened in write mode",
+            function_name_for_messages));
+    }
+
+    if (must_already_have) {
+        if (!has_current_domain()) {
+            throw TileDBSOMAError(fmt::format(fmt::format(
+                "{}: dataframe does not have a domain: please upgrade it",
+                function_name_for_messages)));
+        }
+    } else {
+        if (has_current_domain()) {
+            throw TileDBSOMAError(fmt::format(fmt::format(
+                "{}: dataframe already has a domain",
+                function_name_for_messages)));
+        }
+    }
+
+    Domain domain = arr_->schema().domain();
+
+    ArrowArray* new_domain_array = newdomain.first.get();
+    ArrowSchema* new_domain_schema = newdomain.second.get();
+
+    if (new_domain_schema->n_children != domain.ndim()) {
+        throw TileDBSOMAError(fmt::format(fmt::format(
+            "{}: requested domain has ndim={} but the dataframe has "
+            "ndim={}",
+            function_name_for_messages,
+            new_domain_schema->n_children,
+            domain.ndim())));
+    }
+
+    if (new_domain_schema->n_children != new_domain_array->n_children) {
+        throw TileDBSOMAError(fmt::format(fmt::format(
+            "{}: internal coding error", function_name_for_messages)));
+    }
+
+    auto tctx = ctx_->tiledb_ctx();
+    NDRectangle ndrect(*tctx, domain);
+    CurrentDomain new_current_domain(*tctx);
+    ArraySchemaEvolution schema_evolution(*tctx);
+
+    for (unsigned i = 0; i < domain.ndim(); i++) {
+        const Dimension& dim = domain.dimension(i);
+        const std::string dim_name = dim.name();
+
+        switch (dim.type()) {
+            case TILEDB_STRING_ASCII:
+            case TILEDB_STRING_UTF8:
+            case TILEDB_CHAR:
+            case TILEDB_GEOM_WKB:
+            case TILEDB_GEOM_WKT: {
+                auto lo_hi = ArrowAdapter::get_table_string_column_by_index(
+                    newdomain, i);
+                if (lo_hi[0] == "" && lo_hi[1] == "") {
+                    // Don't care -> as big as possible
+                    ndrect.set_range(dim_name, "", "\xff");
+                } else {
+                    throw TileDBSOMAError(
+                        fmt::format("domain (\"{}\", \"{}\") cannot be set for "
+                                    "string index columns: please use "
+                                    "(\"\", \"\")"));
+                }
+            } break;
+
+            case TILEDB_INT8: {
+                auto lo_hi = ArrowAdapter::get_table_non_string_column_by_index<
+                    int8_t>(newdomain, i);
+                ndrect.set_range<int8_t>(dim_name, lo_hi[0], lo_hi[1]);
+            } break;
+            case TILEDB_BOOL:
+            case TILEDB_UINT8: {
+                auto lo_hi = ArrowAdapter::get_table_non_string_column_by_index<
+                    uint8_t>(newdomain, i);
+                ndrect.set_range<uint8_t>(dim_name, lo_hi[0], lo_hi[1]);
+            } break;
+            case TILEDB_INT16: {
+                auto lo_hi = ArrowAdapter::get_table_non_string_column_by_index<
+                    int16_t>(newdomain, i);
+                ndrect.set_range<int16_t>(dim_name, lo_hi[0], lo_hi[1]);
+            } break;
+            case TILEDB_UINT16: {
+                auto lo_hi = ArrowAdapter::get_table_non_string_column_by_index<
+                    uint16_t>(newdomain, i);
+                ndrect.set_range<uint16_t>(dim_name, lo_hi[0], lo_hi[1]);
+            } break;
+            case TILEDB_INT32: {
+                auto lo_hi = ArrowAdapter::get_table_non_string_column_by_index<
+                    int32_t>(newdomain, i);
+                ndrect.set_range<int32_t>(dim_name, lo_hi[0], lo_hi[1]);
+            } break;
+            case TILEDB_UINT32: {
+                auto lo_hi = ArrowAdapter::get_table_non_string_column_by_index<
+                    uint32_t>(newdomain, i);
+                ndrect.set_range<uint32_t>(dim_name, lo_hi[0], lo_hi[1]);
+            } break;
+            case TILEDB_INT64:
+            case TILEDB_DATETIME_YEAR:
+            case TILEDB_DATETIME_MONTH:
+            case TILEDB_DATETIME_WEEK:
+            case TILEDB_DATETIME_DAY:
+            case TILEDB_DATETIME_HR:
+            case TILEDB_DATETIME_MIN:
+            case TILEDB_DATETIME_SEC:
+            case TILEDB_DATETIME_MS:
+            case TILEDB_DATETIME_US:
+            case TILEDB_DATETIME_NS:
+            case TILEDB_DATETIME_PS:
+            case TILEDB_DATETIME_FS:
+            case TILEDB_DATETIME_AS:
+            case TILEDB_TIME_HR:
+            case TILEDB_TIME_MIN:
+            case TILEDB_TIME_SEC:
+            case TILEDB_TIME_MS:
+            case TILEDB_TIME_US:
+            case TILEDB_TIME_NS:
+            case TILEDB_TIME_PS:
+            case TILEDB_TIME_FS:
+            case TILEDB_TIME_AS: {
+                auto lo_hi = ArrowAdapter::get_table_non_string_column_by_index<
+                    int64_t>(newdomain, i);
+                ndrect.set_range<int64_t>(dim_name, lo_hi[0], lo_hi[1]);
+            } break;
+            case TILEDB_UINT64: {
+                auto lo_hi = ArrowAdapter::get_table_non_string_column_by_index<
+                    uint64_t>(newdomain, i);
+                ndrect.set_range<uint64_t>(dim_name, lo_hi[0], lo_hi[1]);
+            } break;
+            case TILEDB_FLOAT32: {
+                auto lo_hi = ArrowAdapter::get_table_non_string_column_by_index<
+                    float>(newdomain, i);
+                ndrect.set_range<float>(dim_name, lo_hi[0], lo_hi[1]);
+            } break;
+            case TILEDB_FLOAT64: {
+                auto lo_hi = ArrowAdapter::get_table_non_string_column_by_index<
+                    double>(newdomain, i);
+                ndrect.set_range<double>(dim_name, lo_hi[0], lo_hi[1]);
+            } break;
+            default:
+                throw TileDBSOMAError(fmt::format(
+                    "{}: internal error: unhandled type {} for {}.",
+                    function_name_for_messages,
+                    tiledb::impl::type_to_str(dim.type()),
+                    dim_name));
+        }
+    }
+
+    new_current_domain.set_ndrectangle(ndrect);
+
+    schema_evolution.expand_current_domain(new_current_domain);
+    schema_evolution.array_evolve(uri_);
 }
 
 std::vector<int64_t> SOMAArray::_tiledb_current_domain() {
