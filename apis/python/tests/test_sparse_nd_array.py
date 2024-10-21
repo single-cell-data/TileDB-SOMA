@@ -1036,7 +1036,7 @@ def test_sparse_nd_array_error_corners(tmp_path):
 
     with soma.SparseNDArray.open(tmp_path.as_posix()) as a:
         # other coord types are illegal
-        with pytest.raises(TypeError):
+        with raises_no_typeguard(TypeError):
             next(a.read("hi").tables())
 
 
