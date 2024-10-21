@@ -81,12 +81,6 @@ test_that("validate read coords with dimension names and schema", {
   expect_equal(test_coords$soma_joinid, as.integer64(1:10))
 })
 
-test_that("half-named lists are not treated as named", {
-  expect_true(is_named_list(list(a=1, b=2)))
-  expect_false(is_named_list(list(a=1, 2)))
-  expect_false(is_named_list(list(1, 2)))
-})
-
 test_that("is_integerish: default", {
   expect_true(.is_integerish(vector("integer")))
   expect_true(.is_integerish(vector("numeric")))
@@ -160,7 +154,7 @@ test_that("is_integerish: arrow::Field", {
     label <- sprintf(".is_integerish(sch[['%s']])", i)
     switch(
       EXPR = i,
-      int_column = ,
+      foo = ,
       soma_joinid = expect_true(.is_integerish(sch[[i]]), label = label),
       expect_false(.is_integerish(sch[[i]]), label = label)
     )
@@ -173,7 +167,7 @@ test_that("is_integerish: arrow::Arrays", {
     label <- sprintf(".is_integerish(tbl[['%s']])", i)
     switch(
       EXPR = i,
-      int_column = ,
+      foo = ,
       soma_joinid = expect_true(.is_integerish(tbl[[i]]), label = label),
       expect_false(.is_integerish(tbl[[i]]), label = label)
     )

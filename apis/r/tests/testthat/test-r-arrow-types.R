@@ -78,10 +78,10 @@ test_that("Arrow to R types: schema", {
   for (fn in names(rt)) {
     et <- switch(
       EXPR = fn,
-      int_column = 'integer',
+      foo = 'integer',
       soma_joinid = 'double',
-      float_column = 'double',
-      string_column = 'character'
+      bar = 'double',
+      baz = 'character'
     )
     expect_equivalent(
       rt[fn],
