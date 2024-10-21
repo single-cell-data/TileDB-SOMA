@@ -29,10 +29,10 @@
  *   This file defines the SOMAArray class.
  */
 
-#include "soma_array.h"
 #include <tiledb/array_experimental.h>
 #include "../utils/logger.h"
 #include "../utils/util.h"
+#include "soma_array.h"
 namespace tiledbsoma {
 using namespace tiledb;
 
@@ -1438,7 +1438,7 @@ std::vector<int64_t> SOMAArray::maxshape() {
     return _tiledb_domain();
 }
 
-// This is a helper for can_upgrade_domain and can_resize, which have
+// This is a helper for can_upgrade_shape and can_resize, which have
 // much overlap.
 std::pair<bool, std::string> SOMAArray::_can_set_shape_helper(
     const std::vector<int64_t>& newshape,
@@ -1458,7 +1458,7 @@ std::pair<bool, std::string> SOMAArray::_can_set_shape_helper(
                 array_ndim));
     }
 
-    // Enforce the semantics that tiledbsoma_upgrade_domain must be called
+    // Enforce the semantics that tiledbsoma_upgrade_shape must be called
     // only on arrays that don't have a shape set, and resize must be called
     // only on arrays that do.
     bool has_shape = has_current_domain();
@@ -1870,6 +1870,57 @@ void SOMAArray::_set_soma_joinid_shape_helper(
 
     schema_evolution.expand_current_domain(new_current_domain);
     schema_evolution.array_evolve(uri_);
+}
+
+std::pair<bool, std::string> SOMAArray::can_upgrade_domain(
+    const ArrowTable& newdomain, std::string function_name_for_messages) {
+    // Enforce the semantics that tiledbsoma_upgrade_domain must be called
+    // only on arrays that don't have a shape set, and resize must be called
+    // only on arrays that do.
+    if (has_current_domain()) {
+        return std::pair(
+            false,
+            fmt::format(
+                "{}: dataframe already has a domain: please use upgrade_domain",
+                function_name_for_messages));
+    }
+
+    // * For old-style dataframe without shape: core domain (soma maxdomain) may
+    //   be small (like 100) or big (like 2 billionish).
+    // * For new-style dataframe with shape: core current domain (soma domain)
+    //   will probably be small and core domain (soma maxdomain) will be huge.
+    //
+    // In either case, we need to check that the user's requested soma domain
+    // isn't outside the core domain, which is immutable. For old-style
+    // dataframes, if the requested domain fits in the array's core domain, it's
+    // good to go as a new soma domain.
+
+    auto domain_check = _can_set_dataframe_domainish_subhelper(
+        newdomain, false, function_name_for_messages);
+    if (!domain_check.first) {
+        return domain_check;
+    }
+
+    // For new-style dataframes, we need to additionally that the the requested
+    // soma domain shape (core current domain) isn't a downsize of the current
+    // one.
+
+    if (has_current_domain()) {
+        auto current_domain_check = _can_set_dataframe_domainish_subhelper(
+            newdomain, true, function_name_for_messages);
+        if (!current_domain_check.first) {
+            return current_domain_check;
+        }
+    }
+
+    return std::pair(true, "");
+}
+
+std::pair<bool, std::string> SOMAArray::_can_set_dataframe_domainish_subhelper(
+    const ArrowTable& newdomain,
+    bool check_current_domain,
+    std::string function_name_for_messages) {
+    return std::pair(false, "UNDER CONSTRUCTION");
 }
 
 std::vector<int64_t> SOMAArray::_tiledb_current_domain() {
