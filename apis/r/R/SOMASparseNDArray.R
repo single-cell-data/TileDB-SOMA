@@ -66,12 +66,14 @@ SOMASparseNDArray <- R6::R6Class(
     #' @param bbox A vector of integers describing the upper bounds of each
     #' dimension of `values`. Generally should be `NULL`.
     #'
+    #' @return Invisibly returns \code{self}
+    #'
     write = function(values, bbox = NULL) {
       stopifnot(
         "'values' must be a matrix" = is_matrix(values),
         "'bbox' must contain two entries" = is.null(bbox) || length(bbox) == length(dim(values)),
         "'bbox' must be a vector of two integers or a list with each entry containg two integers" = is.null(bbox) ||
-          (is_integerish(bbox) || bit64::is.integer64(bbox)) ||
+          .is_integerish(bbox) ||
           (is.list(bbox) && all(vapply_lgl(bbox, function(x, n) length(x) == 2L)))
       )
       # coerce to a TsparseMatrix, which uses 0-based COO indexing
@@ -81,6 +83,12 @@ SOMASparseNDArray <- R6::R6Class(
         j = bit64::as.integer64(values@j),
         x = values@x
       )
+      if (!is.null(private$.type)) {
+        rt <- r_type_from_arrow_type(private$.type)
+        if (rt == 'integer' && rlang::is_integerish(coo$x)) {
+          coo$x <- as.integer(coo$x)
+        }
+      }
       dnames <- self$dimnames()
       colnames(coo) <- c(dnames, self$attrnames())
       ranges <- sapply(
@@ -181,9 +189,9 @@ SOMASparseNDArray <- R6::R6Class(
         self$tiledb_timestamp %||% "now"
       )
 
-      private$.write_coo_dataframe(coo)
+      self$.write_coordinates(coo)
 
-      invisible(self)
+      return(invisible(self))
     },
 
     #' @description Retrieve number of non-zero elements (lifecycle: maturing)
@@ -224,6 +232,96 @@ SOMASparseNDArray <- R6::R6Class(
       )
       # Checking slotwise new shape >= old shape, and <= max_shape, is already done in libtiledbsoma
       tiledbsoma_upgrade_shape(self$uri, shape, private$.soma_context)
+    },
+
+    #' @description Write a COO table to the array
+    #'
+    #' @param values A \code{data.frame} or \code{\link[arrow:Table]{Arrow::Table}}
+    #' with data in COO format; must be named with the dimension and attribute
+    #' labels of the array
+    #'
+    #' @return Invisibly returns \code{self}
+    #'
+    .write_coordinates = function(values) {
+      private$check_open_for_write()
+      dnames <- self$dimnames()
+      attrn <- self$attrnames()
+
+      stopifnot(
+        "'values' must be a data frame or Arrow Table" = is.data.frame(values) ||
+          inherits(values, what = 'Table'),
+        "'values' must have one column for each dimension and the data" = ncol(values) == length(dnames) + 1L,
+        "'values' must be named with the dimension and attribute labels" = is.null(names(values)) ||
+          identical(names(values), c(dnames, attrn))
+      )
+
+      # Arrow Tables cannot have NULL names, so this only applies to dataframes
+      if (is.null(names(values))) {
+        spdl::warn("[SOMASparseNDArray$.write_coordinates] no names on input data frame, assuming <dimensions[...], data> order")
+        names(values) <- c(dnames, attrn)
+      }
+
+      # Check dimensions
+      spdl::debug("[SOMASparseNDArray$.write_coordinates] checking dimension values")
+      for (i in seq_along(dnames)) {
+        dn <- dnames[i]
+        offending <- sprintf("(offending column: '%s')", dn)
+        if (!.is_integerish(values[[dn]])) {
+          stop("All dimension columns must be integerish ", offending)
+        }
+        if (as.logical(min(values[[dn]]) < 0L)) {
+          stop("Dimension columns cannot contain negative values ", offending)
+        }
+        if (as.logical(max(values[[dn]]) >= as.numeric(self$shape()[i]))) {
+          stop("Dimension columns cannot exceed the shape of the array ", offending)
+        }
+      }
+
+      # Check attribute
+      spdl::debug("[SOMASparseNDArray$.write_coordinates] checking data values")
+      if (is.null(private$.type)) {
+        tt <- self$schema()[attrn]$type
+        if (is.null(tt)) {
+          tt <- if (is.data.frame(values)) {
+            arrow::infer_type(values[[attrn]])
+          } else {
+            values[[attrn]]$type
+          }
+        }
+        private$.type <- tt
+      }
+      vt <- if (is.data.frame(values)) {
+        arrow::infer_type(values[[attrn]])
+      } else {
+        values[[attrn]]$type
+      }
+      if ((vrt <- r_type_from_arrow_type(vt)) != (rt <- r_type_from_arrow_type(private$.type))) {
+        stop("The data column must be of type '", rt, "', got '", vrt, "'")
+      }
+
+      # Build our Arrow table and schema
+      fields <- c(
+        lapply(dnames, arrow::field, type = arrow::int64()),
+        arrow::field(attrn, private$.type)
+      )
+      sch <- do.call(arrow::schema, fields)
+      tbl <- arrow::as_arrow_table(values, schema = sch)
+
+      # Write via libtiledbsoma
+      spdl::debug("[SOMASparseNDArray$.write_coordinates] writing arrow table")
+      naap <- nanoarrow::nanoarrow_allocate_array()
+      nasp <- nanoarrow::nanoarrow_allocate_schema()
+      arrow::as_record_batch(tbl)$export_to_c(naap, nasp)
+      writeArrayFromArrow(
+        uri = self$uri,
+        naap = naap,
+        nasp = nasp,
+        ctxxp = private$.soma_context,
+        arraytype = "SOMASparseNDArray",
+        config = NULL,
+        tsvec = self$.tiledb_timestamp_range
+      )
+      return(invisible(self))
     }
 
   ),
@@ -250,53 +348,6 @@ SOMASparseNDArray <- R6::R6Class(
       }
 
       out
-    },
-
-    # @description Ingest COO-formatted dataframe into the TileDB array.
-    # (lifecycle: maturing)
-    # @param values A [`data.frame`].
-    .write_coo_dataframe = function(values) {
-      private$check_open_for_write()
-
-      stopifnot(is.data.frame(values))
-      # private$log_array_ingestion()
-      #arr <- self$object
-      #if (!is.null(self$tiledb_timestamp)) {
-      #    # arr@timestamp <- self$tiledb_timestamp
-      #   arr@timestamp_end <- self$tiledb_timestamp
-      #}
-      nms <- colnames(values)
-
-      ## the 'soma_data' data type may not have been cached, and if so we need to fetch it
-      if (is.null(private$.type)) {
-          ## TODO: replace with a libtiledbsoma accessor as discussed
-          tpstr <- tiledb::datatype(tiledb::attrs(tiledb::schema(self$uri))[["soma_data"]])
-          arstr <- arrow_type_from_tiledb_type(tpstr)
-          private$.type <- arstr
-      }
-
-      arrsch <- arrow::schema(arrow::field(nms[1], arrow::int64()),
-                              arrow::field(nms[2], arrow::int64()),
-                              arrow::field(nms[3], private$.type))
-
-      tbl <- arrow::arrow_table(values, schema = arrsch)
-      spdl::debug(
-        "[SOMASparseNDArray$write] array created, writing to {} at ({})",
-        self$uri,
-        self$tiledb_timestamp %||% "now"
-      )
-      naap <- nanoarrow::nanoarrow_allocate_array()
-      nasp <- nanoarrow::nanoarrow_allocate_schema()
-      arrow::as_record_batch(tbl)$export_to_c(naap, nasp)
-      writeArrayFromArrow(
-        uri = self$uri,
-        naap = naap,
-        nasp = nasp,
-        ctxxp = private$.soma_context,
-        arraytype = "SOMASparseNDArray",
-        config = NULL,
-        tsvec = self$.tiledb_timestamp_range
-      )
     },
 
     # Internal marking of one or zero based matrices for iterated reads
