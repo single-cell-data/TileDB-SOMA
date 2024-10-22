@@ -221,6 +221,8 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
         *,
         transform: Optional[CoordinateTransform],
         uri: Optional[str] = None,
+        axis_names: Sequence[str] = ("c", "y", "x"),
+        axis_types: Sequence[str] = ("channel", "height", "width"),
         **kwargs: Any,
     ) -> MultiscaleImage:
         """Adds a ``MultiscaleImage`` to the scene and sets a coordinate transform
@@ -245,20 +247,65 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
             Experimental.
         """
         if transform is not None:
-            raise NotImplementedError()
+            # Get and check the scene coordinate space axis names.
+            if self.coordinate_space is None:
+                raise SOMAError(
+                    "The scene coordinate space must be set before setting a transform."
+                )
+            if transform.input_axes != self.coordinate_space.axis_names:
+                raise ValueError(
+                    f"The name of the transform input axes, {transform.input_axes}, "
+                    f"do not match the name of the axes, "
+                    f"{self.coordinate_space.axis_names}, in the scene coordinate "
+                    f"space."
+                )
 
+            # Get and check the multiscale image coordinata space axis names.
+            # Note: The input paremeters to the MultiscaleImage create method are being
+            #   revisited. The following code will be improved after the create
+            #   parameters stabilize.
+            ordered_axis_names: List[Optional[str]] = [None, None, None]
+            for ax_name, ax_type in zip(axis_names, axis_types):
+                # Validation unneed if the type falls through. Invalid types will be
+                # caught in the MultiscaleImage.create method.
+                if ax_type == "width":
+                    ordered_axis_names[0] = ax_name
+                elif ax_type == "height":
+                    ordered_axis_names[1] = ax_name
+                elif ax_type == "depth":
+                    ordered_axis_names[2] = ax_name
+            ordered_axis_names = [
+                axis_name for axis_name in ordered_axis_names if axis_name is not None
+            ]
+            if transform.output_axes != tuple(ordered_axis_names):
+                raise ValueError(
+                    f"The name of the transform output axes, {transform.output_axes}, "
+                    f"do not match the name of the axes, {tuple(ordered_axis_names)}, "
+                    f"of the coordinate space the multiscale image is defined on."
+                )
+
+        # Open the subcollection and add the new multiscale image.
         coll = self._open_subcollection(subcollection)
-        return coll._add_new_element(
+        image = coll._add_new_element(
             key,
             MultiscaleImage,
             lambda create_uri: MultiscaleImage.create(
                 create_uri,
                 context=self.context,
                 tiledb_timestamp=self.tiledb_timestamp_ms,
+                axis_names=axis_names,
+                axis_types=axis_types,
                 **kwargs,
             ),
             uri,
         )
+
+        # Store the metadata for the transform.
+        if transform is not None:
+            coll.metadata[f"soma_scene_registry_{key}"] = transform_to_json(transform)
+
+        # Return the multiscale image.
+        return image
 
     @_funcs.forwards_kwargs_to(
         PointCloudDataFrame.create, exclude=("context", "tiledb_timestamp")
@@ -270,6 +317,7 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
         *,
         transform: Optional[CoordinateTransform],
         uri: Optional[str] = None,
+        coordinate_space: Union[Sequence[str], CoordinateSpace] = ("x", "y"),
         **kwargs: Any,
     ) -> PointCloudDataFrame:
         """Adds a point cloud to the scene and sets a coordinate transform
@@ -303,20 +351,55 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
         Lifecycle:
             Experimental.
         """
+        # If the transform is set, check it is consistent with the coordinate spaces.
         if transform is not None:
-            raise NotImplementedError()
+            # Get Scene coordinate space and check the axis names.
+            if self.coordinate_space is None:
+                raise SOMAError(
+                    "The scene coordinate space must be set before setting a transform."
+                )
+            if transform.input_axes != self.coordinate_space.axis_names:
+                raise ValueError(
+                    f"The name of the transform input axes, {transform.input_axes}, "
+                    f"do not match the name of the axes, "
+                    f"{self.coordinate_space.axis_names}, in the scene coordinate "
+                    f"space."
+                )
+
+            # Get point cloud coordinate space and check
+            elem_axis_names = (
+                coordinate_space.axis_names
+                if isinstance(coordinate_space, CoordinateSpace)
+                else tuple(coordinate_space)
+            )
+            if transform.output_axes != elem_axis_names:
+                raise ValueError(
+                    f"The name of the transform output axes, {transform.output_axes}, "
+                    f"do not match the name of the axes, {elem_axis_names}, of the "
+                    f"coordinate space the point cloud is defined on."
+                )
+
+        # Open the collection and add the new point cloud.
         coll = self._open_subcollection(subcollection)
-        return coll._add_new_element(
+        point_cloud = coll._add_new_element(
             key,
             PointCloudDataFrame,
             lambda create_uri: PointCloudDataFrame.create(
                 create_uri,
                 context=self.context,
                 tiledb_timestamp=self.tiledb_timestamp_ms,
+                coordinate_space=coordinate_space,
                 **kwargs,
             ),
             uri,
         )
+
+        # Store the metadata for the transform.
+        if transform is not None:
+            coll.metadata[f"soma_scene_registry_{key}"] = transform_to_json(transform)
+
+        # Return the point cloud.
+        return point_cloud
 
     def set_transform_to_geometry_dataframe(
         self,
