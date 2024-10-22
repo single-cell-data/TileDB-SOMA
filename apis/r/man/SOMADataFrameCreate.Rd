@@ -11,7 +11,8 @@ SOMADataFrameCreate(
   ingest_mode = c("write", "resume"),
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
-  tiledb_timestamp = NULL
+  tiledb_timestamp = NULL,
+  soma_context = NULL
 )
 }
 \arguments{
