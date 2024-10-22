@@ -46,7 +46,8 @@ Create a new TileDB object. (lifecycle: maturing)
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
   tiledb_timestamp = NULL,
-  internal_use_only = NULL
+  internal_use_only = NULL,
+  soma_context = NULL
 )}\if{html}{\out{</div>}}
 }
 
