@@ -119,6 +119,8 @@ jobs:
             dotted-version: '3.10'
           - undotted-version: '311'
             dotted-version: '3.11'
+          - undotted-version: '312'
+            dotted-version: '3.12'
         wheel-name:
           - manylinux2014
           - macos-x86_64
