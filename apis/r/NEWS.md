@@ -1,8 +1,8 @@
-# Unreleased
+# tiledbsoma 1.14.4
 
 ## Changes
 
-* Add new Arrow-to-R type mapper
+* Add new Arrow-to-R type mapper [#3161](https://github.com/single-cell-data/TileDB-SOMA/pull/3161)
 * Expose block/random writer for sparse arrays [#3204](https://github.com/single-cell-data/TileDB-SOMA/pull/3204)
 
 # tiledbsoma 1.14.3
