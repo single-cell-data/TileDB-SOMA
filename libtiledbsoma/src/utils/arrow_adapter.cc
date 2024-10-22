@@ -1278,8 +1278,9 @@ ArrowAdapter::to_arrow(std::shared_ptr<ColumnBuffer> column) {
 
     if (array->n_buffers != n_buffers) {
         throw TileDBSOMAError(fmt::format(
-            "[ArrowAdapter] expected array n_buffers {}; got {}",
+            "[ArrowAdapter] expected array n_buffers {} for column {}; got {}",
             n_buffers,
+            column->name(),
             array->n_buffers));
     }
 
