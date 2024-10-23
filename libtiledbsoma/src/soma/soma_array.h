@@ -543,7 +543,7 @@ class SOMAArray : public SOMAObject {
      * @param arrow_schema
      * @param arrow_array
      */
-    void set_array_data(
+    virtual void set_array_data(
         std::unique_ptr<ArrowSchema> arrow_schema,
         std::unique_ptr<ArrowArray> arrow_array);
 
