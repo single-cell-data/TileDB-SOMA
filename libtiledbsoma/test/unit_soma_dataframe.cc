@@ -618,8 +618,10 @@ TEST_CASE_METHOD(
                 check.second ==
                 "testing: dataframe already has its domain set.");
         }
+        sdf->close();
 
         // Check can_upgrade_domain
+        sdf->open(OpenMode::read);
         std::unique_ptr<ArrowSchema>
             domain_schema = create_index_cols_info_schema(dim_infos);
         auto domain_array = ArrowAdapter::make_arrow_array_parent(
@@ -628,7 +630,6 @@ TEST_CASE_METHOD(
             std::vector<int64_t>({0, 0}));
         auto domain_table = ArrowTable(
             std::move(domain_array), std::move(domain_schema));
-
         if (!use_current_domain) {
             std::pair<bool, std::string> check = sdf->can_upgrade_domain(
                 domain_table, "testing");
@@ -646,7 +647,6 @@ TEST_CASE_METHOD(
                 check.second ==
                 "testing: dataframe already has its domain set.");
         }
-
         sdf->close();
 
         // Resize
@@ -764,6 +764,22 @@ TEST_CASE_METHOD(
             REQUIRE(check.second == "");
         }
 
+        sdf->close();
+
+        // Check can_upgrade_domain
+        sdf->open(OpenMode::read);
+        domain_schema = create_index_cols_info_schema(dim_infos);
+        domain_array = ArrowAdapter::make_arrow_array_parent(dim_infos.size());
+        domain_array->children[0] = ArrowAdapter::make_arrow_array_child(
+            std::vector<int64_t>({0, 0}));
+        domain_table = ArrowTable(
+            std::move(domain_array), std::move(domain_schema));
+        // The dataframe now has a shape
+        check = sdf->can_upgrade_soma_joinid_shape(1, "testing");
+        // Must fail since this is too small.
+        REQUIRE(check.first == false);
+        REQUIRE(
+            check.second == "testing: dataframe already has its domain set.");
         sdf->close();
     }
 }
