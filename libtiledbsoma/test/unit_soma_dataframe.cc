@@ -601,16 +601,46 @@ TEST_CASE_METHOD(
         write_sjid_u32_str_data_from(8);
         REQUIRE(sdf->nnz() == 4);
 
-        // Check can_upgrade_soma_joinid_shape
         sdf->open(OpenMode::read);
+
+        // Check can_upgrade_soma_joinid_shape
         if (!use_current_domain) {
-            std::pair<bool, std::string>
-                check = sdf->can_upgrade_soma_joinid_shape(1, "testing");
+            StatusAndReason check = sdf->can_upgrade_soma_joinid_shape(
+                1, "testing");
             REQUIRE(check.first == true);
             REQUIRE(check.second == "");
         } else {
-            std::pair<bool, std::string>
-                check = sdf->can_upgrade_soma_joinid_shape(1, "testing");
+            StatusAndReason check = sdf->can_upgrade_soma_joinid_shape(
+                1, "testing");
+            // Must fail since this is too small.
+            REQUIRE(check.first == false);
+            REQUIRE(
+                check.second ==
+                "testing: dataframe already has its domain set.");
+        }
+        sdf->close();
+
+        // Check can_upgrade_domain
+        sdf->open(OpenMode::read);
+        std::unique_ptr<ArrowSchema>
+            domain_schema = create_index_cols_info_schema(dim_infos);
+        auto domain_array = ArrowAdapter::make_arrow_array_parent(
+            dim_infos.size());
+        domain_array->children[0] = ArrowAdapter::make_arrow_array_child(
+            std::vector<int64_t>({0, 0}));
+        auto domain_table = ArrowTable(
+            std::move(domain_array), std::move(domain_schema));
+        if (!use_current_domain) {
+            StatusAndReason check = sdf->can_upgrade_domain(
+                domain_table, "testing");
+            REQUIRE(check.first == false);
+            REQUIRE(
+                check.second ==
+                "testing for soma_joinid: new upper < old upper (downsize is "
+                "unsupported)");
+        } else {
+            StatusAndReason check = sdf->can_upgrade_soma_joinid_shape(
+                1, "testing");
             // Must fail since this is too small.
             REQUIRE(check.first == false);
             REQUIRE(
@@ -699,8 +729,7 @@ TEST_CASE_METHOD(
         }
 
         // Check can_resize_soma_joinid_shape
-        std::pair<bool, std::string> check = sdf->can_resize_soma_joinid_shape(
-            1, "testing");
+        StatusAndReason check = sdf->can_resize_soma_joinid_shape(1, "testing");
         if (!use_current_domain) {
             REQUIRE(check.first == false);
             REQUIRE(
@@ -734,6 +763,22 @@ TEST_CASE_METHOD(
             REQUIRE(check.second == "");
         }
 
+        sdf->close();
+
+        // Check can_upgrade_domain
+        sdf->open(OpenMode::read);
+        domain_schema = create_index_cols_info_schema(dim_infos);
+        domain_array = ArrowAdapter::make_arrow_array_parent(dim_infos.size());
+        domain_array->children[0] = ArrowAdapter::make_arrow_array_child(
+            std::vector<int64_t>({0, 0}));
+        domain_table = ArrowTable(
+            std::move(domain_array), std::move(domain_schema));
+        // The dataframe now has a shape
+        check = sdf->can_upgrade_soma_joinid_shape(1, "testing");
+        // Must fail since this is too small.
+        REQUIRE(check.first == false);
+        REQUIRE(
+            check.second == "testing: dataframe already has its domain set.");
         sdf->close();
     }
 }
@@ -849,6 +894,53 @@ TEST_CASE_METHOD(
         actual = sdf->maybe_soma_joinid_shape();
         REQUIRE(actual.has_value());
         REQUIRE(actual.value() == expect);
+
+        // Check can_upgrade_soma_joinid_shape
+        if (!use_current_domain) {
+            StatusAndReason check = sdf->can_upgrade_soma_joinid_shape(
+                1, "testing");
+            REQUIRE(check.first == true);
+            REQUIRE(check.second == "");
+        } else {
+            StatusAndReason check = sdf->can_upgrade_soma_joinid_shape(
+                1, "testing");
+            // Must fail since this is too small.
+            REQUIRE(check.first == false);
+            REQUIRE(
+                check.second ==
+                "testing: dataframe already has its domain set.");
+        }
+
+        // Check can_upgrade_domain
+        std::unique_ptr<ArrowSchema>
+            domain_schema = create_index_cols_info_schema(dim_infos);
+        auto domain_array = ArrowAdapter::make_arrow_array_parent(
+            dim_infos.size());
+        domain_array->children[0] = ArrowAdapter::make_arrow_array_child(
+            std::vector<uint32_t>({0, 0}));
+        domain_array->children[1] = ArrowAdapter::make_arrow_array_child(
+            std::vector<int64_t>({0, 0}));
+        auto domain_table = ArrowTable(
+            std::move(domain_array), std::move(domain_schema));
+
+        if (!use_current_domain) {
+            StatusAndReason check = sdf->can_upgrade_domain(
+                domain_table, "testing");
+            REQUIRE(check.first == false);
+            REQUIRE(
+                check.second ==
+                "testing for myuint32: new upper < old upper (downsize is "
+                "unsupported)");
+        } else {
+            StatusAndReason check = sdf->can_upgrade_soma_joinid_shape(
+                1, "testing");
+            // Must fail since this is too small.
+            REQUIRE(check.first == false);
+            REQUIRE(
+                check.second ==
+                "testing: dataframe already has its domain set.");
+        }
+
         sdf->close();
 
         // Resize
@@ -946,8 +1038,7 @@ TEST_CASE_METHOD(
         }
 
         // Check can_resize_soma_joinid_shape
-        std::pair<bool, std::string> check = sdf->can_resize_soma_joinid_shape(
-            1, "testing");
+        StatusAndReason check = sdf->can_resize_soma_joinid_shape(1, "testing");
         if (!use_current_domain) {
             REQUIRE(check.first == false);
             REQUIRE(
@@ -1101,6 +1192,37 @@ TEST_CASE_METHOD(
 
         sdf->close();
 
+        // Check can_upgrade_domain
+        sdf = open(OpenMode::read);
+        std::unique_ptr<ArrowSchema>
+            domain_schema = create_index_cols_info_schema(dim_infos);
+        auto domain_array = ArrowAdapter::make_arrow_array_parent(
+            dim_infos.size());
+        domain_array->children[0] = ArrowAdapter::make_arrow_array_child(
+            std::vector<int64_t>({0, 0}));
+        domain_array->children[1] = ArrowAdapter::make_arrow_array_child_string(
+            std::vector<std::string>({"a", "z"}));
+        auto domain_table = ArrowTable(
+            std::move(domain_array), std::move(domain_schema));
+        if (!use_current_domain) {
+            StatusAndReason check = sdf->can_upgrade_domain(
+                domain_table, "testing");
+            REQUIRE(check.first == false);
+            REQUIRE(
+                check.second ==
+                "testing for soma_joinid: new upper < old upper (downsize is "
+                "unsupported)");
+        } else {
+            StatusAndReason check = sdf->can_upgrade_soma_joinid_shape(
+                1, "testing");
+            // Must fail since this is too small.
+            REQUIRE(check.first == false);
+            REQUIRE(
+                check.second ==
+                "testing: dataframe already has its domain set.");
+        }
+        sdf->close();
+
         // Resize
         auto new_shape = int64_t{SOMA_JOINID_RESIZE_DIM_MAX + 1};
 
@@ -1194,8 +1316,7 @@ TEST_CASE_METHOD(
         REQUIRE(ned_str == std::vector<std::string>({"", ""}));
 
         // Check can_resize_soma_joinid_shape
-        std::pair<bool, std::string> check = sdf->can_resize_soma_joinid_shape(
-            1, "testing");
+        StatusAndReason check = sdf->can_resize_soma_joinid_shape(1, "testing");
         if (!use_current_domain) {
             REQUIRE(check.first == false);
             REQUIRE(
@@ -1332,6 +1453,37 @@ TEST_CASE_METHOD(
         REQUIRE(!actual.has_value());
         sdf->close();
 
+        // Check can_upgrade_domain
+        sdf = open(OpenMode::read);
+        std::unique_ptr<ArrowSchema>
+            domain_schema = create_index_cols_info_schema(dim_infos);
+        auto domain_array = ArrowAdapter::make_arrow_array_parent(
+            dim_infos.size());
+        domain_array->children[0] = ArrowAdapter::make_arrow_array_child_string(
+            std::vector<std::string>({"a", "z"}));
+        domain_array->children[1] = ArrowAdapter::make_arrow_array_child(
+            std::vector<uint32_t>({0, 0}));
+        auto domain_table = ArrowTable(
+            std::move(domain_array), std::move(domain_schema));
+        if (!use_current_domain) {
+            StatusAndReason check = sdf->can_upgrade_domain(
+                domain_table, "testing");
+            REQUIRE(check.first == false);
+            REQUIRE(
+                check.second ==
+                "testing for mystring: new lower > old lower (downsize is "
+                "unsupported)");
+        } else {
+            StatusAndReason check = sdf->can_upgrade_soma_joinid_shape(
+                1, "testing");
+            // Must fail since this is too small.
+            REQUIRE(check.first == false);
+            REQUIRE(
+                check.second ==
+                "testing: dataframe already has its domain set.");
+        }
+        sdf->close();
+
         // Resize
         auto new_shape = int64_t{SOMA_JOINID_RESIZE_DIM_MAX + 1};
 
@@ -1405,8 +1557,7 @@ TEST_CASE_METHOD(
         }
 
         // Check can_resize_soma_joinid_shape
-        std::pair<bool, std::string> check = sdf->can_resize_soma_joinid_shape(
-            0, "testing");
+        StatusAndReason check = sdf->can_resize_soma_joinid_shape(0, "testing");
         if (!use_current_domain) {
             REQUIRE(check.first == false);
             REQUIRE(

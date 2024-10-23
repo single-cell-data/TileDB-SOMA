@@ -1446,9 +1446,9 @@ std::vector<int64_t> SOMAArray::maxshape() {
     return _tiledb_domain();
 }
 
-// This is a helper for can_upgrade_domain and can_resize, which have
+// This is a helper for can_upgrade_shape and can_resize, which have
 // much overlap.
-std::pair<bool, std::string> SOMAArray::_can_set_shape_helper(
+StatusAndReason SOMAArray::_can_set_shape_helper(
     const std::vector<int64_t>& newshape,
     bool is_resize,
     std::string function_name_for_messages) {
@@ -1466,7 +1466,7 @@ std::pair<bool, std::string> SOMAArray::_can_set_shape_helper(
                 array_ndim));
     }
 
-    // Enforce the semantics that tiledbsoma_upgrade_domain must be called
+    // Enforce the semantics that tiledbsoma_upgrade_shape must be called
     // only on arrays that don't have a shape set, and resize must be called
     // only on arrays that do.
     bool has_shape = has_current_domain();
@@ -1525,7 +1525,7 @@ std::pair<bool, std::string> SOMAArray::_can_set_shape_helper(
 // This is a helper for _can_set_shape_helper: it's used for comparing
 // the user's requested shape against the core current domain or core (max)
 // domain.
-std::pair<bool, std::string> SOMAArray::_can_set_shape_domainish_subhelper(
+StatusAndReason SOMAArray::_can_set_shape_domainish_subhelper(
     const std::vector<int64_t>& newshape,
     bool check_current_domain,
     std::string function_name_for_messages) {
@@ -1585,7 +1585,7 @@ std::pair<bool, std::string> SOMAArray::_can_set_shape_domainish_subhelper(
     return std::pair(true, "");
 }
 
-std::pair<bool, std::string> SOMAArray::_can_set_soma_joinid_shape_helper(
+StatusAndReason SOMAArray::_can_set_soma_joinid_shape_helper(
     int64_t newshape, bool is_resize, std::string function_name_for_messages) {
     // Fail if the array doesn't already have a shape yet (they should upgrade
     // first).
@@ -1880,6 +1880,189 @@ void SOMAArray::_set_soma_joinid_shape_helper(
 
     schema_evolution.expand_current_domain(new_current_domain);
     schema_evolution.array_evolve(uri_);
+}
+
+StatusAndReason SOMAArray::can_upgrade_domain(
+    const ArrowTable& newdomain, std::string function_name_for_messages) {
+    // Enforce the semantics that tiledbsoma_upgrade_domain must be called
+    // only on arrays that don't have a shape set, and resize must be called
+    // only on arrays that do.
+    if (has_current_domain()) {
+        return std::pair(
+            false,
+            fmt::format(
+                "{}: dataframe already has a domain",
+                function_name_for_messages));
+    }
+
+    // * For old-style dataframe without shape: core domain (soma maxdomain) may
+    //   be small (like 100) or big (like 2 billionish).
+    // * For new-style dataframe with shape: core current domain (soma domain)
+    //   will probably be small and core domain (soma maxdomain) will be huge.
+    //
+    // In either case, we need to check that the user's requested soma domain
+    // isn't outside the core domain, which is immutable. For old-style
+    // dataframes, if the requested domain fits in the array's core domain, it's
+    // good to go as a new soma domain.
+    auto domain_check = _can_set_dataframe_domainish_subhelper(
+        newdomain, false, function_name_for_messages);
+    if (!domain_check.first) {
+        return domain_check;
+    }
+
+    // For new-style dataframes, we need to additionally that the the requested
+    // soma domain (core current domain) isn't a downsize of the current
+    // one.
+    if (has_current_domain()) {
+        auto current_domain_check = _can_set_dataframe_domainish_subhelper(
+            newdomain, true, function_name_for_messages);
+        if (!current_domain_check.first) {
+            return current_domain_check;
+        }
+    }
+
+    return std::pair(true, "");
+}
+
+// This is a helper for can_upgrade_domain: it's used for comparing
+// the user's requested soma domain against the core current domain or core
+// (max) domain.
+StatusAndReason SOMAArray::_can_set_dataframe_domainish_subhelper(
+    const ArrowTable& newdomain,
+    bool check_current_domain,
+    std::string function_name_for_messages) {
+    Domain domain = arr_->schema().domain();
+
+    ArrowArray* new_domain_array = newdomain.first.get();
+    ArrowSchema* new_domain_schema = newdomain.second.get();
+
+    if (new_domain_schema->n_children != domain.ndim()) {
+        return std::pair(
+            false,
+            fmt::format(
+                "{}: requested domain has ndim={} but the dataframe has "
+                "ndim={}",
+                function_name_for_messages,
+                new_domain_schema->n_children,
+                domain.ndim()));
+    }
+
+    if (new_domain_schema->n_children != new_domain_array->n_children) {
+        return std::pair(
+            false,
+            fmt::format(
+                "{}: internal coding error", function_name_for_messages));
+    }
+
+    for (unsigned i = 0; i < domain.ndim(); i++) {
+        const auto& dim = domain.dimension(i);
+
+        StatusAndReason status_and_reason;
+
+        switch (dim.type()) {
+            case TILEDB_STRING_ASCII:
+            case TILEDB_STRING_UTF8:
+            case TILEDB_CHAR:
+                status_and_reason =
+                    _can_set_dataframe_domainish_slot_checker_string(
+                        check_current_domain, newdomain, dim.name());
+                break;
+            case TILEDB_BOOL:
+                status_and_reason =
+                    _can_set_dataframe_domainish_slot_checker_non_string<bool>(
+                        check_current_domain, newdomain, dim.name());
+                break;
+            case TILEDB_INT8:
+                status_and_reason =
+                    _can_set_dataframe_domainish_slot_checker_non_string<
+                        int8_t>(check_current_domain, newdomain, dim.name());
+                break;
+            case TILEDB_UINT8:
+                status_and_reason =
+                    _can_set_dataframe_domainish_slot_checker_non_string<
+                        uint8_t>(check_current_domain, newdomain, dim.name());
+                break;
+            case TILEDB_INT16:
+                status_and_reason =
+                    _can_set_dataframe_domainish_slot_checker_non_string<
+                        int16_t>(check_current_domain, newdomain, dim.name());
+                break;
+            case TILEDB_UINT16:
+                status_and_reason =
+                    _can_set_dataframe_domainish_slot_checker_non_string<
+                        uint16_t>(check_current_domain, newdomain, dim.name());
+                break;
+            case TILEDB_INT32:
+                status_and_reason =
+                    _can_set_dataframe_domainish_slot_checker_non_string<
+                        int32_t>(check_current_domain, newdomain, dim.name());
+                break;
+            case TILEDB_UINT32:
+                status_and_reason =
+                    _can_set_dataframe_domainish_slot_checker_non_string<
+                        uint32_t>(check_current_domain, newdomain, dim.name());
+                break;
+            case TILEDB_INT64:
+            case TILEDB_DATETIME_YEAR:
+            case TILEDB_DATETIME_MONTH:
+            case TILEDB_DATETIME_WEEK:
+            case TILEDB_DATETIME_DAY:
+            case TILEDB_DATETIME_HR:
+            case TILEDB_DATETIME_MIN:
+            case TILEDB_DATETIME_SEC:
+            case TILEDB_DATETIME_MS:
+            case TILEDB_DATETIME_US:
+            case TILEDB_DATETIME_NS:
+            case TILEDB_DATETIME_PS:
+            case TILEDB_DATETIME_FS:
+            case TILEDB_DATETIME_AS:
+            case TILEDB_TIME_HR:
+            case TILEDB_TIME_MIN:
+            case TILEDB_TIME_SEC:
+            case TILEDB_TIME_MS:
+            case TILEDB_TIME_US:
+            case TILEDB_TIME_NS:
+            case TILEDB_TIME_PS:
+            case TILEDB_TIME_FS:
+            case TILEDB_TIME_AS:
+                status_and_reason =
+                    _can_set_dataframe_domainish_slot_checker_non_string<
+                        int64_t>(check_current_domain, newdomain, dim.name());
+                break;
+            case TILEDB_UINT64:
+                status_and_reason =
+                    _can_set_dataframe_domainish_slot_checker_non_string<
+                        uint64_t>(check_current_domain, newdomain, dim.name());
+                break;
+            case TILEDB_FLOAT32:
+                status_and_reason =
+                    _can_set_dataframe_domainish_slot_checker_non_string<float>(
+                        check_current_domain, newdomain, dim.name());
+                break;
+            case TILEDB_FLOAT64:
+                status_and_reason =
+                    _can_set_dataframe_domainish_slot_checker_non_string<
+                        double>(check_current_domain, newdomain, dim.name());
+                break;
+            default:
+                throw TileDBSOMAError(fmt::format(
+                    "{}: saw invalid TileDB type when attempting to cast "
+                    "domain information: {}",
+                    function_name_for_messages,
+                    tiledb::impl::type_to_str(dim.type())));
+        }
+
+        if (status_and_reason.first == false) {
+            return std::pair(
+                false,
+                fmt::format(
+                    "{} for {}: {}",
+                    function_name_for_messages,
+                    dim.name(),
+                    status_and_reason.second));
+        }
+    }
+    return std::pair(true, "");
 }
 
 std::vector<int64_t> SOMAArray::_tiledb_current_domain() {
