@@ -605,13 +605,13 @@ TEST_CASE_METHOD(
 
         // Check can_upgrade_soma_joinid_shape
         if (!use_current_domain) {
-            std::pair<bool, std::string>
-                check = sdf->can_upgrade_soma_joinid_shape(1, "testing");
+            StatusAndReason check = sdf->can_upgrade_soma_joinid_shape(
+                1, "testing");
             REQUIRE(check.first == true);
             REQUIRE(check.second == "");
         } else {
-            std::pair<bool, std::string>
-                check = sdf->can_upgrade_soma_joinid_shape(1, "testing");
+            StatusAndReason check = sdf->can_upgrade_soma_joinid_shape(
+                1, "testing");
             // Must fail since this is too small.
             REQUIRE(check.first == false);
             REQUIRE(
@@ -631,7 +631,7 @@ TEST_CASE_METHOD(
         auto domain_table = ArrowTable(
             std::move(domain_array), std::move(domain_schema));
         if (!use_current_domain) {
-            std::pair<bool, std::string> check = sdf->can_upgrade_domain(
+            StatusAndReason check = sdf->can_upgrade_domain(
                 domain_table, "testing");
             REQUIRE(check.first == false);
             REQUIRE(
@@ -639,8 +639,8 @@ TEST_CASE_METHOD(
                 "testing for soma_joinid: new upper < old upper (downsize is "
                 "unsupported)");
         } else {
-            std::pair<bool, std::string>
-                check = sdf->can_upgrade_soma_joinid_shape(1, "testing");
+            StatusAndReason check = sdf->can_upgrade_soma_joinid_shape(
+                1, "testing");
             // Must fail since this is too small.
             REQUIRE(check.first == false);
             REQUIRE(
@@ -729,8 +729,7 @@ TEST_CASE_METHOD(
         }
 
         // Check can_resize_soma_joinid_shape
-        std::pair<bool, std::string> check = sdf->can_resize_soma_joinid_shape(
-            1, "testing");
+        StatusAndReason check = sdf->can_resize_soma_joinid_shape(1, "testing");
         if (!use_current_domain) {
             REQUIRE(check.first == false);
             REQUIRE(
@@ -898,13 +897,13 @@ TEST_CASE_METHOD(
 
         // Check can_upgrade_soma_joinid_shape
         if (!use_current_domain) {
-            std::pair<bool, std::string>
-                check = sdf->can_upgrade_soma_joinid_shape(1, "testing");
+            StatusAndReason check = sdf->can_upgrade_soma_joinid_shape(
+                1, "testing");
             REQUIRE(check.first == true);
             REQUIRE(check.second == "");
         } else {
-            std::pair<bool, std::string>
-                check = sdf->can_upgrade_soma_joinid_shape(1, "testing");
+            StatusAndReason check = sdf->can_upgrade_soma_joinid_shape(
+                1, "testing");
             // Must fail since this is too small.
             REQUIRE(check.first == false);
             REQUIRE(
@@ -925,7 +924,7 @@ TEST_CASE_METHOD(
             std::move(domain_array), std::move(domain_schema));
 
         if (!use_current_domain) {
-            std::pair<bool, std::string> check = sdf->can_upgrade_domain(
+            StatusAndReason check = sdf->can_upgrade_domain(
                 domain_table, "testing");
             REQUIRE(check.first == false);
             REQUIRE(
@@ -933,8 +932,8 @@ TEST_CASE_METHOD(
                 "testing for myuint32: new upper < old upper (downsize is "
                 "unsupported)");
         } else {
-            std::pair<bool, std::string>
-                check = sdf->can_upgrade_soma_joinid_shape(1, "testing");
+            StatusAndReason check = sdf->can_upgrade_soma_joinid_shape(
+                1, "testing");
             // Must fail since this is too small.
             REQUIRE(check.first == false);
             REQUIRE(
@@ -1039,8 +1038,7 @@ TEST_CASE_METHOD(
         }
 
         // Check can_resize_soma_joinid_shape
-        std::pair<bool, std::string> check = sdf->can_resize_soma_joinid_shape(
-            1, "testing");
+        StatusAndReason check = sdf->can_resize_soma_joinid_shape(1, "testing");
         if (!use_current_domain) {
             REQUIRE(check.first == false);
             REQUIRE(
@@ -1207,7 +1205,7 @@ TEST_CASE_METHOD(
         auto domain_table = ArrowTable(
             std::move(domain_array), std::move(domain_schema));
         if (!use_current_domain) {
-            std::pair<bool, std::string> check = sdf->can_upgrade_domain(
+            StatusAndReason check = sdf->can_upgrade_domain(
                 domain_table, "testing");
             REQUIRE(check.first == false);
             REQUIRE(
@@ -1215,8 +1213,8 @@ TEST_CASE_METHOD(
                 "testing for soma_joinid: new upper < old upper (downsize is "
                 "unsupported)");
         } else {
-            std::pair<bool, std::string>
-                check = sdf->can_upgrade_soma_joinid_shape(1, "testing");
+            StatusAndReason check = sdf->can_upgrade_soma_joinid_shape(
+                1, "testing");
             // Must fail since this is too small.
             REQUIRE(check.first == false);
             REQUIRE(
@@ -1318,8 +1316,7 @@ TEST_CASE_METHOD(
         REQUIRE(ned_str == std::vector<std::string>({"", ""}));
 
         // Check can_resize_soma_joinid_shape
-        std::pair<bool, std::string> check = sdf->can_resize_soma_joinid_shape(
-            1, "testing");
+        StatusAndReason check = sdf->can_resize_soma_joinid_shape(1, "testing");
         if (!use_current_domain) {
             REQUIRE(check.first == false);
             REQUIRE(
@@ -1469,7 +1466,7 @@ TEST_CASE_METHOD(
         auto domain_table = ArrowTable(
             std::move(domain_array), std::move(domain_schema));
         if (!use_current_domain) {
-            std::pair<bool, std::string> check = sdf->can_upgrade_domain(
+            StatusAndReason check = sdf->can_upgrade_domain(
                 domain_table, "testing");
             REQUIRE(check.first == false);
             REQUIRE(
@@ -1477,8 +1474,8 @@ TEST_CASE_METHOD(
                 "testing for mystring: new lower > old lower (downsize is "
                 "unsupported)");
         } else {
-            std::pair<bool, std::string>
-                check = sdf->can_upgrade_soma_joinid_shape(1, "testing");
+            StatusAndReason check = sdf->can_upgrade_soma_joinid_shape(
+                1, "testing");
             // Must fail since this is too small.
             REQUIRE(check.first == false);
             REQUIRE(
@@ -1560,8 +1557,7 @@ TEST_CASE_METHOD(
         }
 
         // Check can_resize_soma_joinid_shape
-        std::pair<bool, std::string> check = sdf->can_resize_soma_joinid_shape(
-            0, "testing");
+        StatusAndReason check = sdf->can_resize_soma_joinid_shape(0, "testing");
         if (!use_current_domain) {
             REQUIRE(check.first == false);
             REQUIRE(

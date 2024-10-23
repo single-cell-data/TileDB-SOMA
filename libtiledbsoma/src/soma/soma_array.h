@@ -86,6 +86,8 @@
 namespace tiledbsoma {
 using namespace tiledb;
 
+using StatusAndReason = std::pair<bool, std::string>;
+
 // This enables some code deduplication between core domain, core current
 // domain, and core non-empty domain.
 enum class Domainish {
@@ -1144,7 +1146,7 @@ class SOMAArray : public SOMAObject {
      * upgrade_shape), or the requested shape doesn't fit within the array's
      * existing core domain.
      */
-    std::pair<bool, std::string> can_resize(
+    StatusAndReason can_resize(
         const std::vector<int64_t>& newshape,
         std::string function_name_for_messages) {
         return _can_set_shape_helper(
@@ -1168,7 +1170,7 @@ class SOMAArray : public SOMAObject {
      * the requested shape is a downsize of the array's existing core current
      * domain.
      */
-    std::pair<bool, std::string> can_upgrade_shape(
+    StatusAndReason can_upgrade_shape(
         const std::vector<int64_t>& newshape,
         std::string function_name_for_messages) {
         return _can_set_shape_helper(
@@ -1179,7 +1181,7 @@ class SOMAArray : public SOMAObject {
      * This is similar to can_upgrade_shape, but it's a can-we call
      * for resize_soma_joinid_shape.
      */
-    std::pair<bool, std::string> can_resize_soma_joinid_shape(
+    StatusAndReason can_resize_soma_joinid_shape(
         int64_t newshape, std::string function_name_for_messages) {
         return _can_set_soma_joinid_shape_helper(
             newshape, true, function_name_for_messages);
@@ -1189,7 +1191,7 @@ class SOMAArray : public SOMAObject {
      * This is similar to can_upgrade_shape, but it's a can-we call
      * for upgrade_soma_joinid_shape.
      */
-    std::pair<bool, std::string> can_upgrade_soma_joinid_shape(
+    StatusAndReason can_upgrade_soma_joinid_shape(
         int64_t newshape, std::string function_name_for_messages) {
         return _can_set_soma_joinid_shape_helper(
             newshape, false, function_name_for_messages);
@@ -1198,7 +1200,7 @@ class SOMAArray : public SOMAObject {
     /**
      * This is for SOMADataFrame.
      */
-    std::pair<bool, std::string> can_upgrade_domain(
+    StatusAndReason can_upgrade_domain(
         const ArrowTable& newdomain, std::string function_name_for_messages);
 
     /**
@@ -1332,7 +1334,7 @@ class SOMAArray : public SOMAObject {
     /**
      * This is a code-dedupe helper for can_resize and can_upgrade_shape.
      */
-    std::pair<bool, std::string> _can_set_shape_helper(
+    StatusAndReason _can_set_shape_helper(
         const std::vector<int64_t>& newshape,
         bool is_resize,
         std::string function_name_for_messages);
@@ -1340,7 +1342,7 @@ class SOMAArray : public SOMAObject {
     /**
      * This is a second-level code-dedupe helper for _can_set_shape_helper.
      */
-    std::pair<bool, std::string> _can_set_shape_domainish_subhelper(
+    StatusAndReason _can_set_shape_domainish_subhelper(
         const std::vector<int64_t>& newshape,
         bool check_current_domain,
         std::string function_name_for_messages);
@@ -1348,7 +1350,7 @@ class SOMAArray : public SOMAObject {
     /**
      * This is a code-dedupe helper for can_upgrade_domain.
      */
-    std::pair<bool, std::string> _can_set_dataframe_domainish_subhelper(
+    StatusAndReason _can_set_dataframe_domainish_subhelper(
         const ArrowTable& newdomain,
         bool check_current_domain,
         std::string function_name_for_messages);
@@ -1357,7 +1359,7 @@ class SOMAArray : public SOMAObject {
      * This is a code-dedupe helper for can_resize_soma_joinid_shape and
      * can_upgrade_domain_soma_joinid_shape.
      */
-    std::pair<bool, std::string> _can_set_soma_joinid_shape_helper(
+    StatusAndReason _can_set_soma_joinid_shape_helper(
         int64_t newshape,
         bool is_resize,
         std::string function_name_for_messages);
@@ -1383,8 +1385,7 @@ class SOMAArray : public SOMAObject {
      * This is a helper for can_upgrade_domain.
      */
     template <typename T>
-    std::pair<bool, std::string>
-    _can_set_dataframe_domainish_slot_checker_non_string(
+    StatusAndReason _can_set_dataframe_domainish_slot_checker_non_string(
         bool check_current_domain,
         const ArrowTable& domain_table,
         std::string dim_name) {
@@ -1428,8 +1429,7 @@ class SOMAArray : public SOMAObject {
     /**
      * This is a helper for can_upgrade_domain.
      */
-    std::pair<bool, std::string>
-    _can_set_dataframe_domainish_slot_checker_string(
+    StatusAndReason _can_set_dataframe_domainish_slot_checker_string(
         bool check_current_domain,
         const ArrowTable& domain_table,
         std::string dim_name) {

@@ -1448,7 +1448,7 @@ std::vector<int64_t> SOMAArray::maxshape() {
 
 // This is a helper for can_upgrade_shape and can_resize, which have
 // much overlap.
-std::pair<bool, std::string> SOMAArray::_can_set_shape_helper(
+StatusAndReason SOMAArray::_can_set_shape_helper(
     const std::vector<int64_t>& newshape,
     bool is_resize,
     std::string function_name_for_messages) {
@@ -1525,7 +1525,7 @@ std::pair<bool, std::string> SOMAArray::_can_set_shape_helper(
 // This is a helper for _can_set_shape_helper: it's used for comparing
 // the user's requested shape against the core current domain or core (max)
 // domain.
-std::pair<bool, std::string> SOMAArray::_can_set_shape_domainish_subhelper(
+StatusAndReason SOMAArray::_can_set_shape_domainish_subhelper(
     const std::vector<int64_t>& newshape,
     bool check_current_domain,
     std::string function_name_for_messages) {
@@ -1585,7 +1585,7 @@ std::pair<bool, std::string> SOMAArray::_can_set_shape_domainish_subhelper(
     return std::pair(true, "");
 }
 
-std::pair<bool, std::string> SOMAArray::_can_set_soma_joinid_shape_helper(
+StatusAndReason SOMAArray::_can_set_soma_joinid_shape_helper(
     int64_t newshape, bool is_resize, std::string function_name_for_messages) {
     // Fail if the array doesn't already have a shape yet (they should upgrade
     // first).
@@ -1882,7 +1882,7 @@ void SOMAArray::_set_soma_joinid_shape_helper(
     schema_evolution.array_evolve(uri_);
 }
 
-std::pair<bool, std::string> SOMAArray::can_upgrade_domain(
+StatusAndReason SOMAArray::can_upgrade_domain(
     const ArrowTable& newdomain, std::string function_name_for_messages) {
     // Enforce the semantics that tiledbsoma_upgrade_domain must be called
     // only on arrays that don't have a shape set, and resize must be called
@@ -1927,7 +1927,7 @@ std::pair<bool, std::string> SOMAArray::can_upgrade_domain(
 // This is a helper for can_upgrade_domain: it's used for comparing
 // the user's requested soma domain against the core current domain or core
 // (max) domain.
-std::pair<bool, std::string> SOMAArray::_can_set_dataframe_domainish_subhelper(
+StatusAndReason SOMAArray::_can_set_dataframe_domainish_subhelper(
     const ArrowTable& newdomain,
     bool check_current_domain,
     std::string function_name_for_messages) {
@@ -1957,7 +1957,7 @@ std::pair<bool, std::string> SOMAArray::_can_set_dataframe_domainish_subhelper(
     for (unsigned i = 0; i < domain.ndim(); i++) {
         const auto& dim = domain.dimension(i);
 
-        std::pair<bool, std::string> status_and_reason;
+        StatusAndReason status_and_reason;
 
         switch (dim.type()) {
             case TILEDB_STRING_ASCII:
