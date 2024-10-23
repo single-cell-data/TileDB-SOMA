@@ -72,9 +72,12 @@ class TableReadIter(somacore.ReadIter[pa.Table]):
         sr: clib.SOMAArray,
         coords: options.SparseDFCoords = (),
         column_names: Optional[Sequence[str]] = None,
+        result_order: options.ResultOrderStr = options.ResultOrder.AUTO,
         value_filter: Optional[str] = None,
     ):
-        self._reader = _arrow_table_reader(sr, coords, column_names, value_filter)
+        self._reader = _arrow_table_reader(
+            sr, coords, column_names, result_order, value_filter
+        )
 
     def __next__(self) -> pa.Table:
         return next(self._reader)
@@ -471,11 +474,14 @@ def _arrow_table_reader(
     sr: clib.SOMAArray,
     coords: options.SparseDFCoords = (),
     column_names: Optional[Sequence[str]] = None,
+    result_order: options.ResultOrderStr = options.ResultOrder.AUTO,
     value_filter: Optional[str] = None,
 ) -> Iterator[pa.Table]:
     """Private. Simple Table iterator on any Array"""
 
     mq = clib.ManagedQuery(sr, sr.context())
+
+    mq.set_layout(_util.to_clib_result_order(result_order))
 
     if column_names is not None:
         mq.select_columns(list(column_names))
@@ -500,7 +506,7 @@ def _arrow_table_reader(
 
     mq.setup_read()
     if mq.is_empty_query():
-        return None
+        yield mq.results()
 
     while not mq.is_complete(True):
         mq.submit_read()
@@ -510,6 +516,9 @@ def _arrow_table_reader(
 def _set_reader_coord(
     dim_idx: int, mq: clib.ManagedQuery, sr: clib.SOMAArray, coord: object
 ) -> None:
+    if coord is None:
+        return
+
     dim = sr.schema.field(dim_idx)
     dom = SOMAArrayWrapper._cast_domainish(sr.domain())[dim_idx]
 
@@ -544,13 +553,13 @@ def _set_reader_coord(
             stop = coord.stop
         return mq.set_dim_ranges_string_or_bytes(dim.name, [(start, stop)])
 
-    # Note: slice(None, None) matches the is_slice_of part, unless we also check the dim-type
-    # part.
+    # Note: slice(None, None) matches the is_slice_of part, unless we also check
+    # the dim-type part.
     if is_slice_of(coord, np.datetime64) and pa.types.is_timestamp(dim.type):
         _util.validate_slice(coord)
-        # These timestamp types are stored in Arrow as well as TileDB as 64-bit integers (with
-        # distinguishing metadata of course). For purposes of the query logic they're just
-        # int64.
+        # These timestamp types are stored in Arrow as well as TileDB as 64-bit
+        # integers (with distinguishing metadata of course). For purposes of the
+        # query logic they're just int64.
         istart = coord.start or dom[0]
         istart = int(istart.astype("int64"))
         istop = coord.stop or dom[1]
@@ -560,8 +569,10 @@ def _set_reader_coord(
     if isinstance(coord, slice):
         _util.validate_slice(coord)
         if coord.start is None and coord.stop is None:
-            pass
+            return
         return _set_reader_coord_by_numeric_slice(mq, dim, dom, coord)
+
+    raise TypeError(f"unhandled type {dim.type} for index column named {dim.name}")
 
 
 def _set_reader_coord_by_py_seq_or_np_array(

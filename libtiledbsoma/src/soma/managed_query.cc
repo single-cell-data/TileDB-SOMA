@@ -85,6 +85,27 @@ void ManagedQuery::reset() {
     query_submitted_ = false;
 }
 
+void ManagedQuery::set_layout(ResultOrder result_order) {
+    switch (result_order) {
+        case ResultOrder::automatic:
+            if (schema_->array_type() == TILEDB_SPARSE)
+                query_->set_layout(TILEDB_UNORDERED);
+            else
+                query_->set_layout(TILEDB_ROW_MAJOR);
+            break;
+        case ResultOrder::rowmajor:
+            query_->set_layout(TILEDB_ROW_MAJOR);
+            break;
+        case ResultOrder::colmajor:
+            query_->set_layout(TILEDB_COL_MAJOR);
+            break;
+        default:
+            throw std::invalid_argument(fmt::format(
+                "[ManagedQuery] invalid ResultOrder({}) passed",
+                static_cast<int>(result_order)));
+    }
+}
+
 void ManagedQuery::select_columns(
     const std::vector<std::string>& names, bool if_not_empty) {
     // Return if we are selecting all columns (columns_ is empty) and we want to

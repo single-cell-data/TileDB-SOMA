@@ -544,7 +544,7 @@ class DataFrame(SOMAArray, somacore.DataFrame):
             context = clib.SOMAContext(config)
 
         # TODO: batch_size
-        return TableReadIter(handle, coords, column_names, value_filter)
+        return TableReadIter(handle, coords, column_names, result_order, value_filter)
 
     def write(
         self, values: pa.Table, platform_config: Optional[options.PlatformConfig] = None

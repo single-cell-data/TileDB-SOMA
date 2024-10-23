@@ -42,6 +42,7 @@
 #include "../utils/common.h"
 #include "array_buffers.h"
 #include "column_buffer.h"
+#include "enums.h"
 #include "logger_public.h"
 
 namespace tiledbsoma {
@@ -226,11 +227,9 @@ class ManagedQuery {
     /**
      * @brief Set query result order (layout).
      *
-     * @param layout A tiledb_layout_t constant
+     * @param layout A ResultOrder constant
      */
-    void set_layout(tiledb_layout_t layout) {
-        query_->set_layout(layout);
-    }
+    void set_layout(ResultOrder result_order);
 
     /**
      * @brief Set column data for write query.
