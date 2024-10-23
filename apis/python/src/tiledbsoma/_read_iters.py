@@ -12,12 +12,14 @@ from concurrent import futures
 from concurrent.futures import ThreadPoolExecutor
 from typing import (
     TYPE_CHECKING,
+    Any,
     Dict,
     Iterator,
     List,
     Optional,
     Sequence,
     Tuple,
+    Type,
     TypeVar,
     Union,
     cast,
@@ -37,7 +39,9 @@ import tiledbsoma.pytiledbsoma as clib
 from . import _util
 from ._exception import SOMAError
 from ._indexer import IntIndexer
-from ._types import NTuple
+from ._query_condition import QueryCondition
+from ._tdb_handles import SOMAArrayWrapper
+from ._types import NTuple, Slice, is_nonstringy_sequence, is_slice_of
 from .options import SOMATileDBContext
 
 if TYPE_CHECKING:
@@ -63,8 +67,14 @@ IJDType = Tuple[
 class TableReadIter(somacore.ReadIter[pa.Table]):
     """Iterator over `Arrow Table <https://arrow.apache.org/docs/python/generated/pyarrow.Table.html>`_ elements"""
 
-    def __init__(self, sr: clib.SOMAArray):
-        self._reader = _arrow_table_reader(sr)
+    def __init__(
+        self,
+        sr: clib.SOMAArray,
+        coords: options.SparseDFCoords = (),
+        column_names: Optional[Sequence[str]] = None,
+        value_filter: Optional[str] = None,
+    ):
+        self._reader = _arrow_table_reader(sr, coords, column_names, value_filter)
 
     def __next__(self) -> pa.Table:
         return next(self._reader)
@@ -457,12 +467,151 @@ class SparseCOOTensorReadIter(SparseTensorReadIterBase[pa.SparseCOOTensor]):
         return pa.SparseCOOTensor.from_numpy(coo_data, coo_coords, shape=self.shape)
 
 
-def _arrow_table_reader(sr: clib.SOMAArray) -> Iterator[pa.Table]:
+def _arrow_table_reader(
+    sr: clib.SOMAArray,
+    coords: options.SparseDFCoords = (),
+    column_names: Optional[Sequence[str]] = None,
+    value_filter: Optional[str] = None,
+) -> Iterator[pa.Table]:
     """Private. Simple Table iterator on any Array"""
-    tbl = sr.read_next()
-    while tbl is not None:
-        yield tbl
-        tbl = sr.read_next()
+
+    mq = clib.ManagedQuery(sr, sr.context())
+
+    if column_names is not None:
+        mq.select_columns(list(column_names))
+
+    if value_filter is not None:
+        mq.set_condition(QueryCondition(value_filter), sr.schema)
+
+    if not is_nonstringy_sequence(coords):
+        raise TypeError(
+            f"coords type {type(coords)} must be a regular sequence,"
+            " not str or bytes"
+        )
+
+    if len(coords) > len(sr.dimension_names):
+        raise ValueError(
+            f"coords ({len(coords)} elements) must be shorter than ndim"
+            f" ({len(sr.dimension_names)})"
+        )
+
+    for i, coord in enumerate(coords):
+        _set_reader_coord(i, mq, sr, coord)
+
+    mq.setup_read()
+    if mq.is_empty_query():
+        return None
+
+    while not mq.is_complete(True):
+        mq.submit_read()
+        yield mq.results()
+
+
+def _set_reader_coord(
+    dim_idx: int, mq: clib.ManagedQuery, sr: clib.SOMAArray, coord: object
+) -> None:
+    dim = sr.schema.field(dim_idx)
+    dom = SOMAArrayWrapper._cast_domainish(sr.domain())[dim_idx]
+
+    if isinstance(coord, (str, bytes)):
+        return mq.set_dim_points_string_or_bytes(dim.name, [coord])
+
+    if isinstance(coord, (pa.Array, pa.ChunkedArray)):
+        return mq.set_dim_points_arrow(dim.name, coord)
+
+    if isinstance(coord, (Sequence, np.ndarray)):
+        return _set_reader_coord_by_py_seq_or_np_array(mq, dim, coord)
+
+    if isinstance(coord, int):
+        return mq.set_dim_points_int64(dim.name, [coord])
+
+    # Note: slice(None, None) matches the is_slice_of part, unless we also check
+    # the dim-type part
+    if (
+        is_slice_of(coord, str) or is_slice_of(coord, bytes)
+    ) and _util.pa_types_is_string_or_bytes(dim.type):
+        _util.validate_slice(coord)
+        # Figure out which one.
+        dim_type: Union[Type[str], Type[bytes]] = type(dom[0])
+        # A ``None`` or empty start is always equivalent to empty str/bytes.
+        start = coord.start or dim_type()
+        if coord.stop is None:
+            # There's no way to specify "to infinity" for strings.
+            # We have to get the nonempty domain and use that as the end.\
+            ned = SOMAArrayWrapper._cast_domainish(sr.non_empty_domain())
+            _, stop = ned[dim_idx]
+        else:
+            stop = coord.stop
+        return mq.set_dim_ranges_string_or_bytes(dim.name, [(start, stop)])
+
+    # Note: slice(None, None) matches the is_slice_of part, unless we also check the dim-type
+    # part.
+    if is_slice_of(coord, np.datetime64) and pa.types.is_timestamp(dim.type):
+        _util.validate_slice(coord)
+        # These timestamp types are stored in Arrow as well as TileDB as 64-bit integers (with
+        # distinguishing metadata of course). For purposes of the query logic they're just
+        # int64.
+        istart = coord.start or dom[0]
+        istart = int(istart.astype("int64"))
+        istop = coord.stop or dom[1]
+        istop = int(istop.astype("int64"))
+        return mq.set_dim_ranges_int64(dim.name, [(istart, istop)])
+
+    if isinstance(coord, slice):
+        _util.validate_slice(coord)
+        if coord.start is None and coord.stop is None:
+            pass
+        return _set_reader_coord_by_numeric_slice(mq, dim, dom, coord)
+
+
+def _set_reader_coord_by_py_seq_or_np_array(
+    mq: clib.ManagedQuery, dim: pa.Field, coord: object
+) -> None:
+    if isinstance(coord, np.ndarray):
+        if coord.ndim != 1:
+            raise ValueError(
+                f"only 1D numpy arrays may be used to index; got {coord.ndim}"
+            )
+
+    try:
+        set_dim_points = getattr(mq, f"set_dim_points_{dim.type}")
+    except AttributeError:
+        # We have to handle this type specially below
+        pass
+    else:
+        return set_dim_points(dim.name, coord)
+
+    if _util.pa_types_is_string_or_bytes(dim.type):
+        return mq.set_dim_points_string_or_bytes(dim.name, coord)
+    elif pa.types.is_timestamp(dim.type):
+        if not isinstance(coord, (tuple, list, np.ndarray)):
+            raise ValueError(
+                f"unhandled coord type {type(coord)} for index column named {dim.name}"
+            )
+        icoord = [
+            int(e.astype("int64")) if isinstance(e, np.datetime64) else e for e in coord
+        ]
+        return mq.set_dim_points_int64(dim.name, icoord)
+
+    raise ValueError(f"unhandled type {dim.type} for index column named {dim.name}")
+
+
+def _set_reader_coord_by_numeric_slice(
+    mq: clib.ManagedQuery, dim: pa.Field, dom, coord: Slice[Any]
+) -> None:
+    try:
+        lo_hi = _util.slice_to_numeric_range(coord, dom)
+    except _util.NonNumericDimensionError:
+        return
+
+    if not lo_hi:
+        return
+
+    try:
+        set_dim_range = getattr(mq, f"set_dim_ranges_{dim.type}")
+        return set_dim_range(dim.name, [lo_hi])
+    except AttributeError:
+        return
 
 
 def _coords_strider(

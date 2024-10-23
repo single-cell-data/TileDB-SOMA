@@ -387,9 +387,8 @@ class SOMAArrayWrapper(Wrapper[_ArrType]):
     def ndim(self) -> int:
         return len(self._handle.dimension_names)
 
-    def _cast_domainish(
-        self, domainish: List[Any]
-    ) -> Tuple[Tuple[object, object], ...]:
+    @staticmethod
+    def _cast_domainish(domainish: List[Any]) -> Tuple[Tuple[object, object], ...]:
         result = []
         for i, slot in enumerate(domainish):
 

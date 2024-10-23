@@ -58,7 +58,7 @@ ManagedQuery::ManagedQuery(
 }
 
 ManagedQuery::ManagedQuery(
-    std::shared_ptr<SOMAArray> array,
+    std::unique_ptr<SOMAArray> array,
     std::shared_ptr<Context> ctx,
     std::string_view name)
     : array_(array->arr_)

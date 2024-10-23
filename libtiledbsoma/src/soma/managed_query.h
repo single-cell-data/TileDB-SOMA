@@ -42,6 +42,7 @@
 #include "../utils/common.h"
 #include "array_buffers.h"
 #include "column_buffer.h"
+#include "logger_public.h"
 
 namespace tiledbsoma {
 
@@ -86,7 +87,7 @@ class ManagedQuery {
         std::string_view name = "unnamed");
 
     ManagedQuery(
-        std::shared_ptr<SOMAArray> array,
+        std::unique_ptr<SOMAArray> array,
         std::shared_ptr<Context> ctx,
         std::string_view name = "unnamed");
 

@@ -20,7 +20,6 @@ from . import _arrow_types, _util
 from . import pytiledbsoma as clib
 from ._constants import SOMA_JOINID
 from ._exception import SOMAError, map_exception_for_create
-from ._query_condition import QueryCondition
 from ._read_iters import TableReadIter
 from ._soma_array import SOMAArray
 from ._tdb_handles import DataFrameWrapper
@@ -544,22 +543,8 @@ class DataFrame(SOMAArray, somacore.DataFrame):
             config.update(platform_config)
             context = clib.SOMAContext(config)
 
-        sr = clib.SOMADataFrame.open(
-            uri=handle.uri,
-            mode=clib.OpenMode.read,
-            context=context,
-            column_names=column_names or [],
-            result_order=_util.to_clib_result_order(result_order),
-            timestamp=handle.timestamp and (0, handle.timestamp),
-        )
-
-        if value_filter is not None:
-            sr.set_condition(QueryCondition(value_filter), handle.schema)
-
-        self._set_reader_coords(sr, coords)
-
-        # # TODO: batch_size
-        return TableReadIter(sr)
+        # TODO: batch_size
+        return TableReadIter(handle, coords, column_names, value_filter)
 
     def write(
         self, values: pa.Table, platform_config: Optional[options.PlatformConfig] = None
