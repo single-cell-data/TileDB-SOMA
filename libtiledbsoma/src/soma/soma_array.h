@@ -45,6 +45,44 @@
 #include "managed_query.h"
 #include "soma_object.h"
 
+// ================================================================
+// Some general developer notes:
+//
+// ----------------------------------------------------------------
+// In several places we have
+//
+//     template <typename T>
+//     static sometype foo(T arg) {
+//         if (std::is_same_v<T, std::string>) {
+//             throw std::runtime_error(...);
+//         }
+//         }D...
+//     }
+//
+//     static sometype foo_string(std::string arg) { ... }
+//
+// -- with explicit `_string` suffix -- rather than
+//
+//     template <typename T>
+//     static sometype foo(T arg) ...
+//
+//     template <>
+//     static sometype foo(std::string arg) ...
+//
+// We're aware of the former but we've found it a bit fiddly across systems and
+// compiler versions -- namely, with the latter we find it tricky to always
+// avoid the <typename T> variant being templated with std::string. It's simple,
+// explicit, and robust to go the `_string` suffix route, and it's friendlier to
+// current and future maintainers of this code.
+//
+// ----------------------------------------------------------------
+// These are several methods here for use nominally by SOMADataFrame. These
+// could be moved in their entirety to SOMADataFrame, but that would entail
+// moving several SOMAArray attributes from private to protected, which has
+// knock-on effects on the order of constructor initializers, etc.: in total
+// it's simplest to place these here and have SOMADataFrame invoke them.
+// ================================================================
+
 namespace tiledbsoma {
 using namespace tiledb;
 
@@ -1239,13 +1277,10 @@ class SOMAArray : public SOMAObject {
         const ArrowTable& newdomain, std::string function_name_for_messages);
 
    protected:
-    // These two are for use nominally by SOMADataFrame. This could be moved in
-    // its entirety to SOMADataFrame, but it would entail moving several
-    // SOMAArray attributes from private to protected, which has knock-on
-    // effects on the order of constructor initializers, etc.: in total it's
-    // simplest to place this here and have SOMADataFrame invoke it.
+    // See top-of-file notes regarding methods for SOMADataFrame being
+    // defined in this file.
     //
-    // They return the shape and maxshape slots for the soma_joinid dim, if
+    // These return the shape and maxshape slots for the soma_joinid dim, if
     // the array has one. These are important test-points and dev-internal
     // access-points, in particular, for the tiledbsoma-io experiment-level
     // resizer.
