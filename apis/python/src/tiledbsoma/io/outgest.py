@@ -522,10 +522,6 @@ def _extract_uns(
     for key, value in collection.metadata.items():
         if level == 0 and uns_keys is not None and key not in uns_keys:
             continue
-        if key in extracted:
-            # This should not be possible, as it implies we wrote the same key to the collection and metadata.
-            # Just skip if it happens, as a precaution.
-            continue
         if not key.startswith("soma_"):
             extracted[key] = value
 
