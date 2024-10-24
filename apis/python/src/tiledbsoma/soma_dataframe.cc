@@ -160,50 +160,63 @@ void load_soma_dataframe(py::module& m) {
 
         .def(
             "resize_soma_joinid_shape",
-            [](SOMADataFrame& sdf, int64_t newshape) {
+            [](SOMADataFrame& sdf,
+               int64_t newshape,
+               std::string function_name_for_messages) {
                 try {
                     sdf.resize_soma_joinid_shape(
-                        newshape, "resize_soma_joinid_shape");
+                        newshape, function_name_for_messages);
                 } catch (const std::exception& e) {
                     throw TileDBSOMAError(e.what());
                 }
             },
-            "newshape"_a)
+            "newshape"_a,
+            "function_name_for_messages"_a)
 
         .def(
             "can_resize_soma_joinid_shape",
-            [](SOMADataFrame& sdf, int64_t newshape) {
+            [](SOMADataFrame& sdf,
+               int64_t newshape,
+               std::string function_name_for_messages) {
                 try {
                     return sdf.can_resize_soma_joinid_shape(
-                        newshape, "can_resize_soma_joinid_shape");
+                        newshape, function_name_for_messages);
                 } catch (const std::exception& e) {
                     throw TileDBSOMAError(e.what());
                 }
             },
-            "newshape"_a)
+            "newshape"_a,
+            "function_name_for_messages"_a)
 
         .def(
             "upgrade_soma_joinid_shape",
-            [](SOMADataFrame& sdf, int64_t newshape) {
+            [](SOMADataFrame& sdf,
+               int64_t newshape,
+               std::string function_name_for_messages) {
                 try {
                     sdf.upgrade_soma_joinid_shape(
-                        newshape, "upgrade_soma_joinid_shape");
+                        newshape, function_name_for_messages);
                 } catch (const std::exception& e) {
                     throw TileDBSOMAError(e.what());
                 }
             },
-            "newshape"_a)
+            "newshape"_a,
+            "function_name_for_messages"_a)
 
         .def(
             "can_upgrade_soma_joinid_shape",
-            [](SOMADataFrame& sdf, int64_t newshape) {
+            [](SOMADataFrame& sdf,
+               int64_t newshape,
+               std::string function_name_for_messages) {
                 try {
                     return sdf.can_upgrade_soma_joinid_shape(
-                        newshape, "can_upgrade_soma_joinid_shape");
+                        newshape, function_name_for_messages);
                 } catch (const std::exception& e) {
                     throw TileDBSOMAError(e.what());
                 }
             },
-            "newshape"_a);
+            "newshape"_a,
+            "function_name_for_messages"_a);
 }
+
 }  // namespace libtiledbsomacpp

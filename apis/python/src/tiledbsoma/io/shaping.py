@@ -287,20 +287,20 @@ def _leaf_visitor_upgrade(
         _print_leaf_node_banner("DataFrame", node_name, item.uri, args)
         if check_only:
             print(
-                f"  Dry run for: upgrade_soma_joinid_shape({count})",
+                f"  Dry run for: tiledbsoma_upgrade_soma_joinid_shape({count})",
                 file=args["output_handle"],
             )
-            ok, msg = item.upgrade_soma_joinid_shape(count, check_only=True)
+            ok, msg = item.tiledbsoma_upgrade_soma_joinid_shape(count, check_only=True)
             _print_dry_run_result(ok, msg, args)
             retval = retval and ok
         elif not item.tiledbsoma_has_upgraded_domain:
             if verbose:
                 print(
-                    f"  Applying upgrade_soma_joinid_shape({count})",
+                    f"  Applying tiledbsoma_upgrade_soma_joinid_shape({count})",
                     file=args["output_handle"],
                 )
             with tiledbsoma.DataFrame.open(item.uri, "w") as writer:
-                writer.upgrade_soma_joinid_shape(count)
+                writer.tiledbsoma_upgrade_soma_joinid_shape(count)
         else:
             if verbose:
                 print("  Already upgraded", file=args["output_handle"])
@@ -312,7 +312,8 @@ def _leaf_visitor_upgrade(
         _print_leaf_node_banner("SparseNDArray", node_name, item.uri, args)
         if check_only:
             print(
-                f"  Dry run for: upgrade_shape({new_shape})", file=args["output_handle"]
+                f"  Dry run for: tiledbsoma_upgrade_shape({new_shape})",
+                file=args["output_handle"],
             )
             ok, msg = item.tiledbsoma_upgrade_shape(new_shape, check_only=True)
             _print_dry_run_result(ok, msg, args)
@@ -320,7 +321,8 @@ def _leaf_visitor_upgrade(
         elif not item.tiledbsoma_has_upgraded_shape:
             if verbose:
                 print(
-                    f"  Applying upgrade_shape({new_shape})", file=args["output_handle"]
+                    f"  Applying tiledbsoma_upgrade_shape({new_shape})",
+                    file=args["output_handle"],
                 )
             with tiledbsoma.SparseNDArray.open(item.uri, "w") as writer:
                 writer.tiledbsoma_upgrade_shape(new_shape)
@@ -368,10 +370,10 @@ def _leaf_visitor_resize(
 
         if check_only:
             print(
-                f"  Dry run for: resize_soma_joinid_shape({new_soma_joinid_shape})",
+                f"  Dry run for: tiledbsoma_resize_soma_joinid_shape({new_soma_joinid_shape})",
                 file=args["output_handle"],
             )
-            ok, msg = item.resize_soma_joinid_shape(
+            ok, msg = item.tiledbsoma_resize_soma_joinid_shape(
                 new_soma_joinid_shape, check_only=True
             )
             _print_dry_run_result(ok, msg, args)
@@ -379,11 +381,11 @@ def _leaf_visitor_resize(
         else:
             if verbose:
                 print(
-                    f"  Applying resize_soma_joinid_shape({new_soma_joinid_shape})",
+                    f"  Applying tiledbsoma_resize_soma_joinid_shape({new_soma_joinid_shape})",
                     file=args["output_handle"],
                 )
             with tiledbsoma.DataFrame.open(item.uri, "w") as writer:
-                writer.resize_soma_joinid_shape(new_soma_joinid_shape)
+                writer.tiledbsoma_resize_soma_joinid_shape(new_soma_joinid_shape)
 
     elif isinstance(item, tiledbsoma.SparseNDArray):
 
