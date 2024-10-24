@@ -1201,7 +1201,19 @@ class SOMAArray : public SOMAObject {
      * This is for SOMADataFrame.
      */
     StatusAndReason can_upgrade_domain(
-        const ArrowTable& newdomain, std::string function_name_for_messages);
+        const ArrowTable& newdomain, std::string function_name_for_messages) {
+        return _can_set_domain_helper(
+            newdomain, false, function_name_for_messages);
+    }
+
+    /**
+     * This is for SOMADataFrame.
+     */
+    StatusAndReason can_change_domain(
+        const ArrowTable& newdomain, std::string function_name_for_messages) {
+        return _can_set_domain_helper(
+            newdomain, true, function_name_for_messages);
+    }
 
     /**
      * @brief Resize the shape (what core calls "current domain") up to the
@@ -1274,9 +1286,21 @@ class SOMAArray : public SOMAObject {
 
     /**
      * This is for SOMADataFrame.
+     * XXX comment more
      */
     void upgrade_domain(
-        const ArrowTable& newdomain, std::string function_name_for_messages);
+        const ArrowTable& newdomain, std::string function_name_for_messages) {
+        _set_domain_helper(newdomain, false, function_name_for_messages);
+    }
+
+    /**
+     * This is for SOMADataFrame.
+     * XXX comment more
+     */
+    void change_domain(
+        const ArrowTable& newdomain, std::string function_name_for_messages) {
+        _set_domain_helper(newdomain, true, function_name_for_messages);
+    }
 
    protected:
     // See top-of-file notes regarding methods for SOMADataFrame being
@@ -1336,7 +1360,16 @@ class SOMAArray : public SOMAObject {
      */
     StatusAndReason _can_set_shape_helper(
         const std::vector<int64_t>& newshape,
-        bool is_resize,
+        bool must_already_have,
+        std::string function_name_for_messages);
+
+    /**
+     * This is a code-dedupe helper method for can_change_domain and
+     * can_upgrade_domain.
+     */
+    StatusAndReason _can_set_domain_helper(
+        const ArrowTable& newdomain,
+        bool must_already_have,
         std::string function_name_for_messages);
 
     /**
@@ -1361,7 +1394,7 @@ class SOMAArray : public SOMAObject {
      */
     StatusAndReason _can_set_soma_joinid_shape_helper(
         int64_t newshape,
-        bool is_resize,
+        bool must_already_have,
         std::string function_name_for_messages);
 
     /**
@@ -1369,7 +1402,7 @@ class SOMAArray : public SOMAObject {
      */
     void _set_shape_helper(
         const std::vector<int64_t>& newshape,
-        bool is_resize,
+        bool must_already_have,
         std::string function_name_for_messages);
 
     /**
@@ -1378,7 +1411,15 @@ class SOMAArray : public SOMAObject {
      */
     void _set_soma_joinid_shape_helper(
         int64_t newshape,
-        bool is_resize,
+        bool must_already_have,
+        std::string function_name_for_messages);
+
+    /**
+     * This is a code-dedupe helper method for change_domain and upgrade_domain.
+     */
+    void _set_domain_helper(
+        const ArrowTable& newdomain,
+        bool must_already_have,
         std::string function_name_for_messages);
 
     /**
@@ -1430,13 +1471,9 @@ class SOMAArray : public SOMAObject {
      * This is a helper for can_upgrade_domain.
      */
     StatusAndReason _can_set_dataframe_domainish_slot_checker_string(
-        bool check_current_domain,
+        bool /*check_current_domain*/,
         const ArrowTable& domain_table,
         std::string dim_name) {
-        std::pair<std::string, std::string>
-            old_lo_hi = check_current_domain ?
-                            _core_current_domain_slot_string(dim_name) :
-                            _core_domain_slot_string(dim_name);
         std::vector<std::string>
             new_lo_hi = ArrowAdapter::get_table_string_column_by_name(
                 domain_table, dim_name);
@@ -1446,28 +1483,16 @@ class SOMAArray : public SOMAObject {
                 "_can_set_dataframe_domainish_slot_checker");
         }
 
-        const std::string& old_lo = old_lo_hi.first;
-        const std::string& old_hi = old_lo_hi.second;
         const std::string& new_lo = new_lo_hi[0];
         const std::string& new_hi = new_lo_hi[1];
 
-        // It's difficult to use fmt::format within a header file since the
-        // include path to logger.h 'moves around' depending on which source
-        // file included us.
-        //
-        // TODO: once we're on C++ 20, just use std::format here and include
-        // things like "old ({}, {}) new ({}, {})".
-        if (new_lo > new_hi) {
-            return std::pair(false, "new lower > new upper");
-        }
-        if (new_lo > old_lo) {
+        if (new_lo != "" || new_hi != "") {
             return std::pair(
-                false, "new lower > old lower (downsize is unsupported)");
+                false,
+                "domain cannot be set for string index columns: please use "
+                "(\"\", \"\")");
         }
-        if (new_hi < old_hi) {
-            return std::pair(
-                false, "new upper < old upper (downsize is unsupported)");
-        }
+
         return std::pair(true, "");
     }
 
