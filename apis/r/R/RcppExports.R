@@ -238,16 +238,16 @@ c_schema <- function(uri, ctxxp) {
     .Call(`_tiledbsoma_c_schema`, uri, ctxxp)
 }
 
-resize <- function(uri, new_shape, ctxxp) {
-    invisible(.Call(`_tiledbsoma_resize`, uri, new_shape, ctxxp))
+resize <- function(uri, new_shape, function_name_for_messages, ctxxp) {
+    invisible(.Call(`_tiledbsoma_resize`, uri, new_shape, function_name_for_messages, ctxxp))
 }
 
-resize_soma_joinid_shape <- function(uri, new_shape, ctxxp) {
-    invisible(.Call(`_tiledbsoma_resize_soma_joinid_shape`, uri, new_shape, ctxxp))
+resize_soma_joinid_shape <- function(uri, new_shape, function_name_for_messages, ctxxp) {
+    invisible(.Call(`_tiledbsoma_resize_soma_joinid_shape`, uri, new_shape, function_name_for_messages, ctxxp))
 }
 
-tiledbsoma_upgrade_shape <- function(uri, new_shape, ctxxp) {
-    invisible(.Call(`_tiledbsoma_tiledbsoma_upgrade_shape`, uri, new_shape, ctxxp))
+tiledbsoma_upgrade_shape <- function(uri, new_shape, function_name_for_messages, ctxxp) {
+    invisible(.Call(`_tiledbsoma_tiledbsoma_upgrade_shape`, uri, new_shape, function_name_for_messages, ctxxp))
 }
 
 c_update_dataframe_schema <- function(uri, ctxxp, column_names_to_drop, add_cols_types, add_cols_enum_value_types, add_cols_enum_ordered) {
