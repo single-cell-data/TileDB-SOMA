@@ -421,6 +421,7 @@ SEXP c_schema(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
 void resize(
     const std::string& uri,
     Rcpp::NumericVector new_shape,
+    std::string function_name_for_messages,
     Rcpp::XPtr<somactx_wrap_t> ctxxp) {
     // This function is solely for SparseNDArray and DenseNDArray for which the
     // dims are required by the SOMA spec to be of type int64. Domain-resize for
@@ -428,7 +429,7 @@ void resize(
     // https://github.com/single-cell-data/TileDB-SOMA/issues/2407.
     auto sr = tdbs::SOMAArray::open(OpenMode::write, uri, ctxxp->ctxptr);
     std::vector<int64_t> new_shape_i64 = i64_from_rcpp_numeric(new_shape);
-    sr->resize(new_shape_i64, "resize");
+    sr->resize(new_shape_i64, function_name_for_messages);
     sr->close();
 }
 
@@ -436,11 +437,12 @@ void resize(
 void resize_soma_joinid_shape(
     const std::string& uri,
     Rcpp::NumericVector new_shape,
+    std::string function_name_for_messages,
     Rcpp::XPtr<somactx_wrap_t> ctxxp) {
     // This function is solely for SOMADataFrame.
     auto sr = tdbs::SOMADataFrame::open(uri, OpenMode::write, ctxxp->ctxptr);
     std::vector<int64_t> new_shape_i64 = i64_from_rcpp_numeric(new_shape);
-    sr->resize_soma_joinid_shape(new_shape_i64[0], "resize_soma_joinid_shape");
+    sr->resize_soma_joinid_shape(new_shape_i64[0], function_name_for_messages);
     sr->close();
 }
 
@@ -448,6 +450,7 @@ void resize_soma_joinid_shape(
 void tiledbsoma_upgrade_shape(
     const std::string& uri,
     Rcpp::NumericVector new_shape,
+    std::string function_name_for_messages,
     Rcpp::XPtr<somactx_wrap_t> ctxxp) {
     // This function is solely for SparseNDArray and DenseNDArray for which the
     // dims are required by the SOMA spec to be of type int64. Domain-resize for
@@ -455,7 +458,7 @@ void tiledbsoma_upgrade_shape(
     // https://github.com/single-cell-data/TileDB-SOMA/issues/2407.
     auto sr = tdbs::SOMAArray::open(OpenMode::write, uri, ctxxp->ctxptr);
     std::vector<int64_t> new_shape_i64 = i64_from_rcpp_numeric(new_shape);
-    sr->upgrade_shape(new_shape_i64, "tiledbsoma_upgrade_shape");
+    sr->upgrade_shape(new_shape_i64, function_name_for_messages);
     sr->close();
 }
 
