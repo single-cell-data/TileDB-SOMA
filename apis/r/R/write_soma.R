@@ -259,7 +259,7 @@ write_soma.data.frame <- function(
     }
   }
   if (ingest_mode %in% c('resume') && sdf$tiledbsoma_has_upgraded_domain()) {
-    sdf$resize_soma_joinid_shape(nrow(x))
+    sdf$tiledbsoma_resize_soma_joinid_shape(nrow(x))
   }
   if (!is.null(tbl)) {
     sdf$write(tbl)

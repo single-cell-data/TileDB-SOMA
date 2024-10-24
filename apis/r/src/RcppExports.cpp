@@ -553,38 +553,41 @@ BEGIN_RCPP
 END_RCPP
 }
 // resize
-void resize(const std::string& uri, Rcpp::NumericVector new_shape, Rcpp::XPtr<somactx_wrap_t> ctxxp);
-RcppExport SEXP _tiledbsoma_resize(SEXP uriSEXP, SEXP new_shapeSEXP, SEXP ctxxpSEXP) {
+void resize(const std::string& uri, Rcpp::NumericVector new_shape, std::string function_name_for_messages, Rcpp::XPtr<somactx_wrap_t> ctxxp);
+RcppExport SEXP _tiledbsoma_resize(SEXP uriSEXP, SEXP new_shapeSEXP, SEXP function_name_for_messagesSEXP, SEXP ctxxpSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const std::string& >::type uri(uriSEXP);
     Rcpp::traits::input_parameter< Rcpp::NumericVector >::type new_shape(new_shapeSEXP);
+    Rcpp::traits::input_parameter< std::string >::type function_name_for_messages(function_name_for_messagesSEXP);
     Rcpp::traits::input_parameter< Rcpp::XPtr<somactx_wrap_t> >::type ctxxp(ctxxpSEXP);
-    resize(uri, new_shape, ctxxp);
+    resize(uri, new_shape, function_name_for_messages, ctxxp);
     return R_NilValue;
 END_RCPP
 }
 // resize_soma_joinid_shape
-void resize_soma_joinid_shape(const std::string& uri, Rcpp::NumericVector new_shape, Rcpp::XPtr<somactx_wrap_t> ctxxp);
-RcppExport SEXP _tiledbsoma_resize_soma_joinid_shape(SEXP uriSEXP, SEXP new_shapeSEXP, SEXP ctxxpSEXP) {
+void resize_soma_joinid_shape(const std::string& uri, Rcpp::NumericVector new_shape, std::string function_name_for_messages, Rcpp::XPtr<somactx_wrap_t> ctxxp);
+RcppExport SEXP _tiledbsoma_resize_soma_joinid_shape(SEXP uriSEXP, SEXP new_shapeSEXP, SEXP function_name_for_messagesSEXP, SEXP ctxxpSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const std::string& >::type uri(uriSEXP);
     Rcpp::traits::input_parameter< Rcpp::NumericVector >::type new_shape(new_shapeSEXP);
+    Rcpp::traits::input_parameter< std::string >::type function_name_for_messages(function_name_for_messagesSEXP);
     Rcpp::traits::input_parameter< Rcpp::XPtr<somactx_wrap_t> >::type ctxxp(ctxxpSEXP);
-    resize_soma_joinid_shape(uri, new_shape, ctxxp);
+    resize_soma_joinid_shape(uri, new_shape, function_name_for_messages, ctxxp);
     return R_NilValue;
 END_RCPP
 }
 // tiledbsoma_upgrade_shape
-void tiledbsoma_upgrade_shape(const std::string& uri, Rcpp::NumericVector new_shape, Rcpp::XPtr<somactx_wrap_t> ctxxp);
-RcppExport SEXP _tiledbsoma_tiledbsoma_upgrade_shape(SEXP uriSEXP, SEXP new_shapeSEXP, SEXP ctxxpSEXP) {
+void tiledbsoma_upgrade_shape(const std::string& uri, Rcpp::NumericVector new_shape, std::string function_name_for_messages, Rcpp::XPtr<somactx_wrap_t> ctxxp);
+RcppExport SEXP _tiledbsoma_tiledbsoma_upgrade_shape(SEXP uriSEXP, SEXP new_shapeSEXP, SEXP function_name_for_messagesSEXP, SEXP ctxxpSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const std::string& >::type uri(uriSEXP);
     Rcpp::traits::input_parameter< Rcpp::NumericVector >::type new_shape(new_shapeSEXP);
+    Rcpp::traits::input_parameter< std::string >::type function_name_for_messages(function_name_for_messagesSEXP);
     Rcpp::traits::input_parameter< Rcpp::XPtr<somactx_wrap_t> >::type ctxxp(ctxxpSEXP);
-    tiledbsoma_upgrade_shape(uri, new_shape, ctxxp);
+    tiledbsoma_upgrade_shape(uri, new_shape, function_name_for_messages, ctxxp);
     return R_NilValue;
 END_RCPP
 }
@@ -816,9 +819,9 @@ static const R_CallMethodDef CallEntries[] = {
     {"_tiledbsoma_c_dimnames", (DL_FUNC) &_tiledbsoma_c_dimnames, 2},
     {"_tiledbsoma_c_attrnames", (DL_FUNC) &_tiledbsoma_c_attrnames, 2},
     {"_tiledbsoma_c_schema", (DL_FUNC) &_tiledbsoma_c_schema, 2},
-    {"_tiledbsoma_resize", (DL_FUNC) &_tiledbsoma_resize, 3},
-    {"_tiledbsoma_resize_soma_joinid_shape", (DL_FUNC) &_tiledbsoma_resize_soma_joinid_shape, 3},
-    {"_tiledbsoma_tiledbsoma_upgrade_shape", (DL_FUNC) &_tiledbsoma_tiledbsoma_upgrade_shape, 3},
+    {"_tiledbsoma_resize", (DL_FUNC) &_tiledbsoma_resize, 4},
+    {"_tiledbsoma_resize_soma_joinid_shape", (DL_FUNC) &_tiledbsoma_resize_soma_joinid_shape, 4},
+    {"_tiledbsoma_tiledbsoma_upgrade_shape", (DL_FUNC) &_tiledbsoma_tiledbsoma_upgrade_shape, 4},
     {"_tiledbsoma_c_update_dataframe_schema", (DL_FUNC) &_tiledbsoma_c_update_dataframe_schema, 6},
     {"_tiledbsoma_sr_setup", (DL_FUNC) &_tiledbsoma_sr_setup, 10},
     {"_tiledbsoma_sr_complete", (DL_FUNC) &_tiledbsoma_sr_complete, 1},
