@@ -185,6 +185,35 @@ uns_hint <- function(type = c("1d", "2d")) {
   }
 }
 
+#' Generate a SOMA Metadata Type Hint
+#'
+#' @param type A character vector giving the class of an object
+#'
+#' @return A named list where the name is \dQuote{\code{soma_r_type_hint}} and
+#' the value is a single string value giving the R class; this value changes
+#' based on the type of object a type hint is being generated for
+#' \describe{
+#'  \item{Simple S3 objects}{the R class (eg. \dQuote{\code{data.frame}})}
+#'  \item{S3 classes with inheritance}{a JSON-array encoding of the R class
+#'   (eg. \dQuote{\code{["matrix", "array"]}})}
+#'  \item{S4 classes}{the R package and class encoded in
+#'   \dQuote{\code{pkg:class}} form (eg. \dQuote{\code{Matrix:dgCMatrix}})}
+#' }
+#'
+#' @keywords internal
+#'
+#' @examples
+#' # Type hint for S3 classes
+#' .type_hint("data.frame") # data.frame
+#'
+#' # Type hint for complex S3 classes
+#' .type_hint(class(matrix())) # ["matrix","array"]
+#'
+#' # Type hint for S4 classes
+#' .type_hint(class(Matrix::Matrix())) # Matrix::ldiMatrix
+#'
+#' @noRd
+#'
 .type_hint <- function(type) {
   nm <- 'soma_r_type_hint'
   if (is.null(type)) {
