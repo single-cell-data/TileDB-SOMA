@@ -129,7 +129,7 @@ individual \link[tiledbsoma:SOMAMeasurement]{measurements}:
 \link[SeuratObject:IsMatrixEmpty]{empty}, is written out as a
 \link[tiledbsoma:SOMASparseNDArray]{sparse array} called
 \dQuote{\code{scale_data}} within the \dQuote{\code{X}} group
-\item feature-level meta data is written out as a
+\item feature-level metadata is written out as a
 \link[tiledbsoma:SOMADataFrame]{data frame} called \dQuote{\code{var}}
 }
 Expression matrices are transposed (cells as rows) prior to writing. All
@@ -145,7 +145,7 @@ out as individual\link[tiledbsoma:SOMAMeasurement]{measurements}:
 \item the layer matrices are written out as
 \link[tiledbsoma:SOMASparseNDArray]{sparse arrays} within the
 \dQuote{\code{X}} group
-\item feature-level meta data is written out as a
+\item feature-level metadata is written out as a
 \link[tiledbsoma:SOMADataFrame]{data frame} called \dQuote{\code{var}}
 }
 Expression matrices are transposed (cells as rows) prior to writing. All
