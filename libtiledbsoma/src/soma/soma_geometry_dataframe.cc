@@ -206,8 +206,7 @@ std::vector<ArrowTable> SOMAGeometryDataFrame::_cast_polygon_vertex_list_to_wkb(
             tables.back().second.get(), ArrowType::NANOARROW_TYPE_DOUBLE));
         NANOARROW_THROW_NOT_OK(ArrowSchemaSetName(
             tables.back().second.get(),
-            (SOMAGeometryDataFrame::dimension_prefix + axis + "__min")
-                .c_str()));
+            (SOMA_GEOMETRY_DIMENSION_PREFIX + axis + "__min").c_str()));
 
         // Max spatial axis
         tables.push_back(ArrowTable(
@@ -218,8 +217,7 @@ std::vector<ArrowTable> SOMAGeometryDataFrame::_cast_polygon_vertex_list_to_wkb(
             tables.back().second.get(), ArrowType::NANOARROW_TYPE_DOUBLE));
         NANOARROW_THROW_NOT_OK(ArrowSchemaSetName(
             tables.back().second.get(),
-            (SOMAGeometryDataFrame::dimension_prefix + axis + "__max")
-                .c_str()));
+            (SOMA_GEOMETRY_DIMENSION_PREFIX + axis + "__max").c_str()));
     }
 
     // Large list of doubles
