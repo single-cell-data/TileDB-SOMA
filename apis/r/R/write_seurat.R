@@ -363,13 +363,18 @@ write_soma.Assay5 <- function(
       soma_dim_1 = bit64::as.integer64(jdx[ldat@j + 1L] - 1L),
       soma_data = ldat@x
     )
+    atype <- arrow::infer_type(coo$soma_data)
+    rt <- r_type_from_arrow_type(atype)
+    if (rt == 'integer' && .is_integerish(coo$soma_data)) {
+      coo$soma_data <- as.integer(coo$soma_data)
+    }
     shape <- c(max(coo$soma_dim_0), max(coo$soma_dim_1)) + 1L
     arr <- X$add_new_sparse_ndarray(
       key = layer,
-      type = arrow::infer_type(coo$soma_data),
+      type = atype,
       shape = as.integer(shape)
     )
-    arr$.__enclos_env__$private$.write_coo_dataframe(coo)
+    arr$.write_coordinates(coo)
     arr$set_metadata(.ragged_array_hint())
     arr$set_metadata(type)
   }
