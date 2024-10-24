@@ -313,8 +313,8 @@ write_soma.Assay5 <- function(
   X$set_metadata(.layer_hint(SeuratObject::DefaultLayer(x)))
 
   # Pull presence matrices from the v5 assay
-  cmat <- methods::slot(x, name = 'cells')
-  fmat <- methods::slot(x, name = 'features')
+  cells_matrix <- methods::slot(x, name = 'cells')
+  features_matrix <- methods::slot(x, name = 'features')
 
   # Write `X` matrices
   for (lyr in SeuratObject::Layers(x)) {
@@ -374,7 +374,7 @@ write_soma.Assay5 <- function(
     arr$set_metadata(type)
   }
 
-  # Write feature-level meta data
+  # Write feature-level metadata
   var_df <- .df_index(
     x = x[[]],
     alt = 'features',
@@ -756,7 +756,7 @@ write_soma.Seurat <- function(
   )
   on.exit(experiment$close(), add = TRUE, after = FALSE)
 
-  # Prepare cell-level meta daa (obs)
+  # Prepare cell-level metadata (obs)
   obs_df <- .df_index(
     x = x[[]],
     alt = "cells",
