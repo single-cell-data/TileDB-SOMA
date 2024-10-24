@@ -358,6 +358,103 @@ def test_dataframe_basics(tmp_path, soma_joinid_domain, index_column_names):
             sdf.write(data)
 
 
+def test_domain_mods(tmp_path):
+    if not tiledbsoma._flags.NEW_SHAPE_FEATURE_FLAG_ENABLED:
+        return
+
+    uri = tmp_path.as_posix()
+
+    schema = pa.schema(
+        [
+            ("soma_joinid", pa.int64()),
+            ("mystring", pa.string()),
+            ("myint", pa.int16()),
+            ("myfloat", pa.float32()),
+            ("mybool", pa.bool_()),  # not supported as an index type
+        ]
+    )
+    index_column_names = ["soma_joinid", "mystring", "myint", "myfloat"]
+
+    domain_for_create = [
+        [0, 3],
+        None,
+        [20, 50],
+        [0.0, 6.0],
+    ]
+
+    data_dict = {
+        "soma_joinid": [0, 1, 2, 3],
+        "mystring": ["a", "b", "a", "b"],
+        "myint": [20, 30, 40, 50],
+        "myfloat": [1.0, 2.5, 4.0, 5.5],
+        "mybool": [True, False, True, True],
+    }
+
+    data = pa.Table.from_pydict(data_dict)
+
+    with tiledbsoma.DataFrame.create(
+        uri,
+        schema=schema,
+        index_column_names=index_column_names,
+        domain=domain_for_create,
+    ) as sdf:
+        sdf.write(data)
+
+    # Check "expand" to same
+    with tiledbsoma.DataFrame.open(uri, "w") as sdf:
+        newdomain = [[0, 3], None, [20, 50], [0.0, 6.0]]
+        ok, msg = sdf.change_domain(newdomain, check_only=True)
+        assert ok
+        assert msg == ""
+
+    # Shrink
+    with tiledbsoma.DataFrame.open(uri, "w") as sdf:
+        newdomain = [[0, 2], None, [20, 50], [0.0, 6.0]]
+        ok, msg = sdf.change_domain(newdomain, check_only=True)
+        assert not ok
+        assert "downsize is unsupported" in msg
+
+    with tiledbsoma.DataFrame.open(uri, "w") as sdf:
+        newdomain = [[0, 3], None, [20, 40], [0.0, 6.0]]
+        ok, msg = sdf.change_domain(newdomain, check_only=True)
+        assert not ok
+        assert "downsize is unsupported" in msg
+
+    with tiledbsoma.DataFrame.open(uri, "w") as sdf:
+        newdomain = [[0, 3], None, [20, 50], [1.0, 6.0]]
+        ok, msg = sdf.change_domain(newdomain, check_only=True)
+        assert not ok
+        assert "downsize is unsupported" in msg
+
+    # String domain cannot be specified
+    with tiledbsoma.DataFrame.open(uri, "w") as sdf:
+        newdomain = [
+            [0, 3],
+            ["a", "z"],
+            [20, 50],
+            [0.0, 6.0],
+        ]
+        ok, msg = sdf.change_domain(newdomain, check_only=True)
+        assert not ok
+        assert "domain cannot be set for string index columns" in msg
+
+    # All clear
+    with tiledbsoma.DataFrame.open(uri, "w") as sdf:
+        newdomain = [[0, 9], None, [0, 100], [-10.0, 10.0]]
+        ok, msg = sdf.change_domain(newdomain, check_only=True)
+        assert ok
+        assert msg == ""
+        sdf.change_domain(newdomain)
+
+    # Check for success
+    with tiledbsoma.DataFrame.open(uri, "r") as sdf:
+        dom = sdf.domain
+        assert dom[0] == (0, 9)
+        assert dom[1] == ("", "")
+        assert dom[2] == (0, 100)
+        assert dom[3] == (-10.0, 10.0)
+
+
 @pytest.mark.parametrize("has_shapes", [False, True])
 def test_canned_experiments(tmp_path, has_shapes):
     uri = tmp_path.as_posix()
@@ -436,6 +533,28 @@ def test_canned_experiments(tmp_path, has_shapes):
     body = "\n".join(lines)
     assert "[SparseNDArray] ms/RNA/obsp/distances" in body
     assert "ms/RNA/obsm/X_draw_graph_fr" in body
+
+    # Check upgrade_domain for dataframes
+    with tiledbsoma.Experiment.open(uri, "w") as exp:
+
+        ok, msg = exp.obs.tiledbsoma_upgrade_domain([[10, 4]], check_only=True)
+        if has_shapes:
+            assert not ok
+            assert "dataframe already has a domain" in msg
+        else:
+            assert not ok
+            assert "new lower > new upper" in msg
+
+        ok, msg = exp.obs.tiledbsoma_upgrade_domain([[0, 1]], check_only=True)
+        if has_shapes:
+            assert not ok
+            assert "dataframe already has a domain" in msg
+        else:
+            assert ok
+            assert msg == ""
+
+        with pytest.raises(ValueError):
+            exp.obs.tiledbsoma_upgrade_domain([[0, 1, 2]], check_only=True)
 
     # Check dry run of tiledbsoma.io.upgrade_experiment_shapes
     handle = io.StringIO()

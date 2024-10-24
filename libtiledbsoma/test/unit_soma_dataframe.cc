@@ -623,6 +623,7 @@ TEST_CASE_METHOD(
                 domain_schema = create_index_cols_info_schema(dim_infos);
             auto domain_array = ArrowAdapter::make_arrow_array_parent(
                 dim_infos.size());
+            // OK since there currently is no shape set:
             domain_array->children[0] = ArrowAdapter::make_arrow_array_child(
                 std::vector<int64_t>({0, 0}));
             auto domain_table = ArrowTable(
@@ -630,13 +631,8 @@ TEST_CASE_METHOD(
             if (!use_current_domain) {
                 StatusAndReason check = sdf->can_upgrade_domain(
                     domain_table, "testing");
-                REQUIRE(check.first == false);
-                REQUIRE(
-                    check.second ==
-                    "testing for soma_joinid: new upper < old upper "
-                    "(downsize "
-                    "is "
-                    "unsupported)");
+                REQUIRE(check.first == true);
+                REQUIRE(check.second == "");
             } else {
                 StatusAndReason check = sdf->can_upgrade_soma_joinid_shape(
                     1, "testing");
@@ -999,6 +995,7 @@ TEST_CASE_METHOD(
                 domain_schema = create_index_cols_info_schema(dim_infos);
             auto domain_array = ArrowAdapter::make_arrow_array_parent(
                 dim_infos.size());
+            // OK since there currently is no shape set:
             domain_array->children[0] = ArrowAdapter::make_arrow_array_child(
                 std::vector<uint32_t>({0, 0}));
             domain_array->children[1] = ArrowAdapter::make_arrow_array_child(
@@ -1009,12 +1006,8 @@ TEST_CASE_METHOD(
             if (!use_current_domain) {
                 StatusAndReason check = sdf->can_upgrade_domain(
                     domain_table, "testing");
-                REQUIRE(check.first == false);
-                REQUIRE(
-                    check.second ==
-                    "testing for myuint32: new upper < old upper (downsize "
-                    "is "
-                    "unsupported)");
+                REQUIRE(check.first == true);
+                REQUIRE(check.second == "");
             } else {
                 StatusAndReason check = sdf->can_upgrade_soma_joinid_shape(
                     1, "testing");
@@ -1356,9 +1349,8 @@ TEST_CASE_METHOD(
                     REQUIRE(check.first == false);
                     REQUIRE(
                         check.second ==
-                        "testing for soma_joinid: new upper < old upper "
-                        "(downsize is "
-                        "unsupported)");
+                        "testing for mystring: domain cannot be set for string "
+                        "index columns: please use (\"\", \"\")");
                 } else {
                     StatusAndReason check = sdf->can_upgrade_soma_joinid_shape(
                         1, "testing");

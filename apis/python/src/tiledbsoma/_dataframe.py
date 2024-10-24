@@ -7,7 +7,18 @@
 Implementation of a SOMA DataFrame
 """
 import inspect
-from typing import Any, List, Optional, Sequence, Tuple, Type, Union, cast
+from typing import (
+    Any,
+    Dict,
+    Iterable,
+    List,
+    Optional,
+    Sequence,
+    Tuple,
+    Type,
+    Union,
+    cast,
+)
 
 import numpy as np
 import pyarrow as pa
@@ -496,6 +507,11 @@ class DataFrame(SOMAArray, somacore.DataFrame):
                 f"{function_name_for_messages}: requested domain has length {len(dim_names)} but the dataframe's schema has index-column count {len(newdomain)}"
             )
 
+        if any([len(slot) != 2 for slot in newdomain]):  # type: ignore
+            raise ValueError(
+                f"{function_name_for_messages}: requested domain must have low,high pairs in each slot"
+            )
+
         # From the dataframe's schema, extract the subschema for only index columns (TileDB dimensions).
         full_schema = self.schema
         dim_schema_list = []
@@ -504,9 +520,22 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         dim_schema = pa.schema(dim_schema_list)
 
         # Convert the user's tuple of low/high pairs into a dict keyed by index-column name.
-        new_domain_dict = {}
+        new_domain_dict: Dict[str, Iterable[Any]] = {}
         for i, dim_name in enumerate(dim_names):
-            new_domain_dict[dim_name] = newdomain[i]
+            # Domain can't be specified for strings (core constraint) so let them keystroke that easily.
+            if (
+                dim_schema.field(dim_name).type
+                in [
+                    pa.string(),
+                    pa.large_string(),
+                    pa.binary(),
+                    pa.large_binary(),
+                ]
+                and newdomain[i] is None
+            ):
+                new_domain_dict[dim_name] = ("", "")
+            else:
+                new_domain_dict[dim_name] = tuple(newdomain[i])  # type: ignore
 
         # Return this as a pyarrow table. This has n columns where n is the number of
         # index columns, and two rows: one row for the low values and one for the high values.
