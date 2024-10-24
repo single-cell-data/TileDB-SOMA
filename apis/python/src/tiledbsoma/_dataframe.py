@@ -424,7 +424,7 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         """
         return self._handle.tiledbsoma_has_upgraded_domain
 
-    def resize_soma_joinid_shape(
+    def tiledbsoma_resize_soma_joinid_shape(
         self, newshape: int, check_only: bool = False
     ) -> StatusAndReason:
         """Increases the shape of the dataframe on the ``soma_joinid`` index
@@ -440,13 +440,17 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         if check_only:
             return cast(
                 StatusAndReason,
-                self._handle._handle.can_resize_soma_joinid_shape(newshape),
+                self._handle._handle.can_resize_soma_joinid_shape(
+                    newshape, "tiledbsoma_resize_soma_joinid_shape"
+                ),
             )
         else:
-            self._handle._handle.resize_soma_joinid_shape(newshape)
+            self._handle._handle.resize_soma_joinid_shape(
+                newshape, "tiledbsoma_resize_soma_joinid_shape"
+            )
             return (True, "")
 
-    def upgrade_soma_joinid_shape(
+    def tiledbsoma_upgrade_soma_joinid_shape(
         self, newshape: int, check_only: bool = False
     ) -> StatusAndReason:
         """This is like ``upgrade_domain``, but it only applies the specified
@@ -459,10 +463,14 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         if check_only:
             return cast(
                 StatusAndReason,
-                self._handle._handle.can_upgrade_soma_joinid_shape(newshape),
+                self._handle._handle.can_upgrade_soma_joinid_shape(
+                    newshape, "tiledbsoma_upgrade_soma_joinid_shape"
+                ),
             )
         else:
-            self._handle._handle.upgrade_soma_joinid_shape(newshape)
+            self._handle._handle.upgrade_soma_joinid_shape(
+                newshape, "tiledbsoma_upgrade_soma_joinid_shape"
+            )
             return (True, "")
 
     def __len__(self) -> int:

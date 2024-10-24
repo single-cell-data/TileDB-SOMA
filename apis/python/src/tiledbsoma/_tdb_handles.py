@@ -38,6 +38,9 @@ from ._exception import DoesNotExistError, SOMAError, is_does_not_exist_error
 from ._types import METADATA_TYPES, Metadatum, OpenTimestamp, StatusAndReason
 from .options._soma_tiledb_context import SOMATileDBContext
 
+AxisDomain = Union[None, Tuple[Any, Any], List[Any]]
+Domain = Sequence[AxisDomain]
+
 RawHandle = Union[
     clib.SOMAArray,
     clib.SOMADataFrame,
@@ -478,19 +481,27 @@ class SOMAArrayWrapper(Wrapper[_ArrType]):
         """Not implemented for DataFrame."""
         raise NotImplementedError
 
-    def resize_soma_joinid_shape(self, newshape: int) -> None:
+    def resize_soma_joinid_shape(
+        self, newshape: int, function_name_for_messages: str
+    ) -> None:
         """Only implemented for DataFrame."""
         raise NotImplementedError
 
-    def can_resize_soma_joinid_shape(self, newshape: int) -> StatusAndReason:
+    def can_resize_soma_joinid_shape(
+        self, newshape: int, function_name_for_messages: str
+    ) -> StatusAndReason:
         """Only implemented for DataFrame."""
         raise NotImplementedError
 
-    def upgrade_soma_joinid_shape(self, newshape: int) -> None:
+    def upgrade_soma_joinid_shape(
+        self, newshape: int, function_name_for_messages: str
+    ) -> None:
         """Only implemented for DataFrame."""
         raise NotImplementedError
 
-    def can_upgrade_soma_joinid_shape(self, newshape: int) -> StatusAndReason:
+    def can_upgrade_soma_joinid_shape(
+        self, newshape: int, function_name_for_messages: str
+    ) -> StatusAndReason:
         """Only implemented for DataFrame."""
         raise NotImplementedError
 
@@ -522,24 +533,38 @@ class DataFrameWrapper(SOMAArrayWrapper[clib.SOMADataFrame]):
         """Wrapper-class internals"""
         return cast(bool, self._handle.tiledbsoma_has_upgraded_domain)
 
-    def resize_soma_joinid_shape(self, newshape: int) -> None:
+    def resize_soma_joinid_shape(
+        self, newshape: int, function_name_for_messages: str
+    ) -> None:
         """Wrapper-class internals"""
-        self._handle.resize_soma_joinid_shape(newshape)
+        self._handle.resize_soma_joinid_shape(newshape, function_name_for_messages)
 
-    def can_resize_soma_joinid_shape(self, newshape: int) -> StatusAndReason:
+    def can_resize_soma_joinid_shape(
+        self, newshape: int, function_name_for_messages: str
+    ) -> StatusAndReason:
         """Wrapper-class internals"""
         return cast(
-            StatusAndReason, self._handle.can_resize_soma_joinid_shape(newshape)
+            StatusAndReason,
+            self._handle.can_resize_soma_joinid_shape(
+                newshape, function_name_for_messages
+            ),
         )
 
-    def upgrade_soma_joinid_shape(self, newshape: int) -> None:
+    def upgrade_soma_joinid_shape(
+        self, newshape: int, function_name_for_messages: str
+    ) -> None:
         """Wrapper-class internals"""
-        self._handle.upgrade_soma_joinid_shape(newshape)
+        self._handle.upgrade_soma_joinid_shape(newshape, function_name_for_messages)
 
-    def can_upgrade_soma_joinid_shape(self, newshape: int) -> StatusAndReason:
+    def can_upgrade_soma_joinid_shape(
+        self, newshape: int, function_name_for_messages: str
+    ) -> StatusAndReason:
         """Wrapper-class internals"""
         return cast(
-            StatusAndReason, self._handle.can_upgrade_soma_joinid_shape(newshape)
+            StatusAndReason,
+            self._handle.can_upgrade_soma_joinid_shape(
+                newshape, function_name_for_messages
+            ),
         )
 
 
