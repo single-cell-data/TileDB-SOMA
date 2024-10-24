@@ -509,78 +509,35 @@ class DataFrameWrapper(SOMAArrayWrapper[clib.SOMADataFrame]):
 
     @property
     def maybe_soma_joinid_shape(self) -> Optional[int]:
-        """Return the shape slot for the soma_joinid dim, if the array has one.
-        This is an important test-point and dev-internal access-point,
-        in particular, for the tiledbsoma-io experiment-level resizer.
-
-        Lifecycle:
-            Maturing.
-        """
+        """Wrapper-class internals"""
         return cast(Optional[int], self._handle.maybe_soma_joinid_shape)
 
     @property
     def maybe_soma_joinid_maxshape(self) -> Optional[int]:
-        """Return the maxshape slot for the soma_joinid dim, if the array has one.
-        This is an important test-point and dev-internal access-point,
-        in particular, for the tiledbsoma-io experiment-level resizer.
-
-        Lifecycle:
-            Maturing.
-        """
+        """Wrapper-class internals"""
         return cast(Optional[int], self._handle.maybe_soma_joinid_maxshape)
 
     @property
     def tiledbsoma_has_upgraded_domain(self) -> bool:
-        """Returns true if the array has the upgraded resizeable domain feature
-        from TileDB-SOMA 1.15: the array was created with this support, or it has
-        had ``.tiledbsoma_upgrade_domain`` applied to it.
-
-        Lifecycle:
-            Maturing.
-        """
+        """Wrapper-class internals"""
         return cast(bool, self._handle.tiledbsoma_has_upgraded_domain)
 
     def resize_soma_joinid_shape(self, newshape: int) -> None:
-        """Increases the shape of the dataframe on the ``soma_joinid`` index
-        column, if it indeed is an index column, leaving all other index columns
-        as-is. If the ``soma_joinid`` is not an index column, no change is made.
-        This is a special case of ``upgrade_domain`` (WIP for 1.15), but simpler
-        to keystroke, and handles the most common case for dataframe domain
-        expansion.  Raises an error if the dataframe doesn't already have a
-        domain: in that case please call ``tiledbsoma_upgrade_domain`` (WIP for
-        1.15).
-        """
+        """Wrapper-class internals"""
         self._handle.resize_soma_joinid_shape(newshape)
 
     def can_resize_soma_joinid_shape(self, newshape: int) -> StatusAndReason:
-        """Increases the shape of the dataframe on the ``soma_joinid`` index
-        column, if it indeed is an index column, leaving all other index columns
-        as-is. If the ``soma_joinid`` is not an index column, no change is made.
-        This is a special case of ``upgrade_domain`` (WIP for 1.15), but simpler
-        to keystroke, and handles the most common case for dataframe domain
-        expansion.  Raises an error if the dataframe doesn't already have a
-        domain: in that case please call ``tiledbsoma_upgrade_domain`` (WIP for
-        1.15).  If ``check_only`` is ``True``, returns whether the operation
-        would succeed if attempted, and a reason why it would not.
-        """
+        """Wrapper-class internals"""
         return cast(
             StatusAndReason, self._handle.can_resize_soma_joinid_shape(newshape)
         )
 
     def upgrade_soma_joinid_shape(self, newshape: int) -> None:
-        """This is like ``upgrade_domain``, but it only applies the specified domain
-        update to the ``soma_joinid`` index column. Any other index columns have their
-        domain set to match the maxdomain. If the ``soma_joinid`` column is not an index
-        column at all, then no action is taken."""
+        """Wrapper-class internals"""
         self._handle.upgrade_soma_joinid_shape(newshape)
 
     def can_upgrade_soma_joinid_shape(self, newshape: int) -> StatusAndReason:
-        """This allows you to see if ``upgrade_soma_joinid_shape`` will succeed
-        before calling it.  This is an important test-point and dev-internal
-        access-point, in particular, for the tiledbsoma-io experiment-level
-        resizer.  If ``check_only`` is ``True``, returns whether the operation
-        would succeed if attempted, and a reason why it would not.
-        """
+        """Wrapper-class internals"""
         return cast(
             StatusAndReason, self._handle.can_upgrade_soma_joinid_shape(newshape)
         )
@@ -606,19 +563,11 @@ class DenseNDArrayWrapper(SOMAArrayWrapper[clib.SOMADenseNDArray]):
 
     @property
     def tiledbsoma_has_upgraded_shape(self) -> bool:
-        """Returns true if the array has the upgraded resizeable shape feature
-        from TileDB-SOMA 1.15: the array was created with this support, or it has
-        had ``.tiledbsoma_upgrade_shape`` applied to it.
-
-        Lifecycle:
-            Maturing.
-        """
+        """Wrapper-class internals"""
         return cast(bool, self._handle.tiledbsoma_has_upgraded_shape)
 
     def resize(self, newshape: Sequence[Union[int, None]]) -> None:
-        """Supported for ``SparseNDArray``; scheduled for implementation for
-        ``DenseNDArray`` in TileDB-SOMA 1.15
-        """
+        """Wrapper-class internals"""
         if clib.embedded_version_triple() >= (2, 27, 0):
             self._handle.resize(newshape)
         else:
@@ -627,9 +576,7 @@ class DenseNDArrayWrapper(SOMAArrayWrapper[clib.SOMADenseNDArray]):
     def tiledbsoma_can_resize(
         self, newshape: Sequence[Union[int, None]]
     ) -> StatusAndReason:
-        """Supported for ``SparseNDArray``; scheduled for implementation for
-        ``DenseNDArray`` in TileDB-SOMA 1.15.
-        """
+        """Wrapper-class internals"""
         if clib.embedded_version_triple() >= (2, 27, 0):
             return cast(StatusAndReason, self._handle.tiledbsoma_can_resize(newshape))
         else:
@@ -647,49 +594,27 @@ class SparseNDArrayWrapper(SOMAArrayWrapper[clib.SOMASparseNDArray]):
 
     @property
     def tiledbsoma_has_upgraded_shape(self) -> bool:
-        """Returns true if the array has the upgraded resizeable shape feature
-        from TileDB-SOMA 1.15: the array was created with this support, or it has
-        had ``.tiledbsoma_upgrade_shape`` applied to it.
-
-        Lifecycle:
-            Maturing.
-        """
+        """Wrapper-class internals"""
         return cast(bool, self._handle.tiledbsoma_has_upgraded_shape)
 
     def resize(self, newshape: Sequence[Union[int, None]]) -> None:
-        """Increases the shape of the array as specfied. Raises an error if the new
-        shape is less than the current shape in any dimension. Raises an error if
-        the new shape exceeds maxshape in any dimension. Raises an error if the
-        array doesn't already have a shape: in that case please call
-        tiledbsoma_upgrade_shape.
-        """
+        """Wrapper-class internals"""
         self._handle.resize(newshape)
 
     def tiledbsoma_can_resize(
         self, newshape: Sequence[Union[int, None]]
     ) -> StatusAndReason:
-        """This allows you to see if ``resize`` will succeed before calling it.
-        This is an important test-point and dev-internal access-point, in
-        particular, for the tiledbsoma-io experiment-level resizer.  If
-        ``check_only`` is ``True``, returns whether the operation would succeed
-        if attempted, and a reason why it would not.
-        """
+        """Wrapper-class internals"""
         return cast(StatusAndReason, self._handle.can_resize(newshape))
 
     def tiledbsoma_upgrade_shape(self, newshape: Sequence[Union[int, None]]) -> None:
-        """Allows the array to have a resizeable shape as described in the TileDB-SOMA
-        1.15 release notes.  Raises an error if the new shape exceeds maxshape in
-        any dimension. Raises an error if the array already has a shape.
-        """
+        """Wrapper-class internals"""
         self._handle.tiledbsoma_upgrade_shape(newshape)
 
     def tiledbsoma_can_upgrade_shape(
         self, newshape: Sequence[Union[int, None]]
     ) -> StatusAndReason:
-        """Allows the array to have a resizeable shape as described in the TileDB-SOMA
-        1.15 release notes.  Raises an error if the new shape exceeds maxshape in
-        any dimension. Raises an error if the array already has a shape.
-        """
+        """Wrapper-class internals"""
         return cast(
             StatusAndReason, self._handle.tiledbsoma_can_upgrade_shape(newshape)
         )
