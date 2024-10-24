@@ -110,7 +110,14 @@ jobs:
       - name: Update Packages
         run: Rscript -e 'update.packages(ask=FALSE)'
 
-      - name: Interop Tests
+      - name: Interop tests with new-shape feature flag off
         run: python -m pytest apis/system/tests/
         env:
           TILEDB_SOMA_INIT_BUFFER_BYTES: 33554432 # accommodate tiny runners
+
+      - name: Interop tests with new-shape feature flag on
+        run: python -m pytest apis/system/tests/
+        env:
+          TILEDB_SOMA_INIT_BUFFER_BYTES: 33554432 # accommodate tiny runners
+          SOMA_PY_NEW_SHAPE: true
+          SOMA_R_NEW_SHAPE: true
