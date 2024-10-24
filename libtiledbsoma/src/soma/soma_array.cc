@@ -1351,17 +1351,19 @@ uint64_t SOMAArray::nnz() {
     uint64_t total_cell_num = 0;
     std::vector<std::array<uint64_t, 2>> non_empty_domains(fragment_count);
 
-    // The loop after this only works if dim 0 is int64 soma_joinid.
-    // That's the case for _almost_ all SOMADataFrame objects, but
+    // The loop after this only works if dim 0 is int64 soma_joinid or
+    // soma_dim_0. That's the case for _almost_ all SOMADataFrame objects, but
     // not the "variant-indexed" ones: the SOMA spec only requires
-    // that soma_joinid be present as a dim or an attr.
+    // that soma_joinid be present as a dim or an attr. It's true for all
+    // SOMASparseNDArray objects.
     auto dim = tiledb_schema()->domain().dimension(0);
     auto dim_name = dim.name();
     auto type_code = dim.type();
-    if (dim_name != "soma_joinid" || type_code != TILEDB_INT64) {
+    if ((dim_name != "soma_joinid" && dim_name != "soma_dim_0") ||
+        type_code != TILEDB_INT64) {
         LOG_DEBUG(fmt::format(
             "[SOMAArray::nnz] dim 0 (type={} name={}) isn't int64 "
-            "soma_joind: using _nnz_slow",
+            "soma_joinid or int64 soma_dim_0: using _nnz_slow",
             tiledb::impl::type_to_str(type_code),
             dim_name));
         return _nnz_slow();
