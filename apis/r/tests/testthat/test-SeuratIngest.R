@@ -137,6 +137,96 @@ test_that("Write Assay mechanics", {
   gc()
 })
 
+test_that("Write v5 in-memory Assay mechanics", {
+  skip_if(!extended_tests())
+  skip_if_not_installed("SeuratObject", minimum_version = "5.0.2")
+
+  uri <- tempfile(pattern = "write-v5-assay")
+  collection <- SOMACollectionCreate(uri)
+  on.exit(collection$close(), add = TRUE, after = FALSE)
+
+  rna <- get_data("pbmc_small", package = "SeuratObject")[["RNA"]]
+  rna <- as(rna, "Assay5")
+  expect_no_condition(ms <- write_soma(rna, soma_parent = collection))
+  expect_s3_class(ms, 'SOMAMeasurement')
+  expect_true(ms$exists())
+  on.exit(ms$close(), add = TRUE, after = FALSE)
+
+  expect_identical(ms$uri, file.path(collection$uri, "rna"))
+  assay_hint <- .assay_version_hint("v5")
+  expect_equivalent(
+    ms$get_metadata(names(assay_hint)),
+    assay_hint[[1L]]
+  )
+  expect_identical(ms$names(), c("X", "var"))
+  expect_s3_class(ms$var, "SOMADataFrame")
+  expect_identical(setdiff(ms$var$attrnames(), "var_id"), names(rna[[]]))
+  expect_s3_class(ms$X, "SOMACollection")
+  expect_identical(ms$X$names(), SeuratObject::Layers(rna))
+  fmat <- methods::slot(rna, name = "features")
+  cmat <- methods::slot(rna, name = "cells")
+  ragged_hint <- .ragged_array_hint()
+  type_hint <- names(.type_hint(NULL))
+  for (lyr in SeuratObject::Layers(rna)) {
+    idx <- which(cmat[, lyr])
+    jdx <- which(fmat[, lyr])
+    expect_equal(ms$X$get(lyr)$shape(), c(max(idx), max(jdx)), info = lyr)
+    switch(
+      EXPR = lyr,
+      scale.data = expect_equivalent(
+        ms$X$get(lyr)$get_metadata(names(ragged_hint)),
+        ragged_hint[[1L]],
+        info = lyr
+      ),
+      expect_null(ms$X$get(lyr)$get_metadata(names(ragged_hint)), info = lyr)
+    )
+    expect_type(th <- ms$X$get(lyr)$get_metadata(type_hint), 'character')
+    expect_length(th, 1L)
+    switch(
+      EXPR = lyr,
+      scale.data = expect_identical(th, 'matrix', info = lyr),
+      expect_true(grepl('^Matrix', x = th), info = lyr)
+    )
+  }
+
+  # Test ragged arrays
+  mat <- SeuratObject::LayerData(rna, "counts")
+  cells2 <- paste0(colnames(rna), ".2")
+  features2 <- paste0(rownames(rna), ".2")
+  layers <- list(
+    mat = mat,
+    cells2 = `colnames<-`(mat, cells2),
+    features2 = `rownames<-`(mat, features2),
+    c2f2 = `dimnames<-`(mat, list(features2, cells2))
+  )
+  expect_s4_class(rna2 <- SeuratObject::.CreateStdAssay(layers), "Assay5")
+  expect_identical(dim(rna2), dim(rna) * 2)
+
+  expect_no_condition(ms2 <- write_soma(rna2, uri = "ragged-arrays", soma_parent = collection))
+  expect_s3_class(ms2, "SOMAMeasurement")
+  expect_true(ms2$exists())
+  on.exit(ms2$close(), add = TRUE, after = FALSE)
+
+  expect_identical(ms2$uri, file.path(collection$uri, "ragged-arrays"))
+  expect_identical(ms2$X$names(), SeuratObject::Layers(rna2))
+  fmat <- methods::slot(rna2, name = "features")
+  cmat <- methods::slot(rna2, name = "cells")
+  for (lyr in SeuratObject::Layers(rna2)) {
+    idx <- which(cmat[, lyr])
+    jdx <- which(fmat[, lyr])
+    expect_equal(ms2$X$get(lyr)$shape(), c(max(idx), max(jdx)), info = lyr)
+    expect_equivalent(
+      ms2$X$get(lyr)$get_metadata(names(ragged_hint)),
+      ragged_hint[[1L]],
+      info = lyr
+    )
+    expect_true(
+      grepl('^Matrix', x = ms2$X$get(lyr)$get_metadata(type_hint)),
+      info = lyr
+    )
+  }
+})
+
 test_that("Write DimReduc mechanics", {
   skip_if(!extended_tests())
   skip_if_not_installed('SeuratObject', .MINIMUM_SEURAT_VERSION('c'))
@@ -311,7 +401,7 @@ test_that("Write Seurat mechanics", {
   skip_if_not_installed('SeuratObject', .MINIMUM_SEURAT_VERSION('c'))
 
   pbmc_small <- get_data('pbmc_small', package = 'SeuratObject')
-  uri <- tempfile(pattern=SeuratObject::Project(pbmc_small))
+  uri <- tempfile(pattern = SeuratObject::Project(pbmc_small))
 
   expect_no_condition(uri <- write_soma(pbmc_small, uri))
   expect_type(uri, 'character')
@@ -353,4 +443,50 @@ test_that("Write Seurat mechanics", {
   expect_error(write_soma(pbmc_small, ''))
 
   gc()
+})
+
+test_that("Write Seurat with v3 and v5 assays", {
+  skip_if(!extended_tests())
+  skip_if_not_installed("SeuratObject", minimum_version = "5.0.2")
+
+  pbmc_small <- get_data("pbmc_small", package = "SeuratObject")
+  suppressWarnings(pbmc_small[["RNA5"]] <- methods::as(pbmc_small[["RNA"]], "Assay5"))
+  extra <- c(
+    SeuratObject::Graphs(pbmc_small),
+    SeuratObject::Reductions(pbmc_small),
+    SeuratObject::Command(pbmc_small)
+  )
+  for (i in extra) {
+    pbmc_small[[i]] <- NULL
+  }
+
+  assay_hint <- .assay_version_hint("v5")
+  uri <- tempfile(pattern = SeuratObject::Project(pbmc_small))
+
+  expect_no_condition(uri <- write_soma(pbmc_small, uri))
+  expect_type(uri, "character")
+  expect_no_condition(experiment <- SOMAExperimentOpen(uri))
+  on.exit(experiment$close(), add = TRUE, after = FALSE)
+
+  expect_s3_class(experiment, "SOMAExperiment")
+  expect_no_error(experiment$ms)
+  expect_identical(sort(experiment$ms$names()), sort(c("RNA", "RNA5")))
+  for (assay in experiment$ms$names()) {
+    expect_s3_class(experiment$ms$get(assay), "SOMAMeasurement")
+    if (inherits(pbmc_small[[assay]], "Assay5")) {
+      expect_equivalent(
+        experiment$ms$get(assay)$get_metadata(names(assay_hint)),
+        assay_hint[[1L]],
+        info = assay
+      )
+    }
+  }
+
+  obs_hints <- vapply(
+    X = SeuratObject::.FilterObjects(pbmc_small, "Assay5"),
+    FUN = .assay_obs_hint,
+    FUN.VALUE = character(1L),
+    USE.NAMES = FALSE
+  )
+  expect_true(all(obs_hints %in% experiment$obs$colnames()))
 })

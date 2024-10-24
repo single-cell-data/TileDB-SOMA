@@ -88,6 +88,36 @@
   return(commands[idx])
 }
 
+.assay_version_hint <- function(type = c('v3', 'v5')) {
+  type <- match.arg(type)
+  return(list(soma_ecosystem_seurat_assay_version = type))
+}
+
+.assay_obs_hint <- function(assay) {
+  stopifnot(
+    "'assay' must be a single, non-empty character value" = is.character(assay) &&
+      length(assay) == 1L &&
+      nzchar(assay) &&
+      !is.na(assay)
+  )
+  return(sprintf("soma_ecosystem_seurat_assay_cells_%s", assay))
+}
+
+.layer_hint <- function(lyr) {
+  stopifnot(
+    "'lyr' must be a non-empty character vector" = is.character(lyr) &&
+      length(lyr) &&
+      all(nzchar(lyr)) &&
+      !any(is.na(lyr))
+  )
+  if (length(lyr) > 1L) {
+    lyr <- paste0('[', paste(dQuote(lyr, FALSE), collapse = ','), ']')
+  }
+  return(list(soma_ecosystem_seurat_v5_default_layers = lyr))
+}
+
+.ragged_array_hint <- function() list(soma_ecosystem_seurat_v5_ragged = 'ragged')
+
 .MINIMUM_SEURAT_VERSION <- function(repr = c('v', 'c')) {
   repr <- repr[1L]
   repr <- match.arg(arg = repr)
