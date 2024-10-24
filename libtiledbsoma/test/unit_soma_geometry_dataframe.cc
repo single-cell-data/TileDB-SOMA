@@ -323,22 +323,22 @@ TEST_CASE("SOMAGeometryDataFrame: Roundtrip", "[SOMAGeometryDataFrame]") {
             auto d0span = arrbuf->at(dim_infos[0].name)->data<int64_t>();
             auto d1span = arrbuf
                               ->at(
-                                  "tiledb__internal__" +
+                                  SOMA_GEOMETRY_DIMENSION_PREFIX +
                                   spatial_dim_infos[0].name + "__min")
                               ->data<double_t>();
             auto d2span = arrbuf
                               ->at(
-                                  "tiledb__internal__" +
+                                  SOMA_GEOMETRY_DIMENSION_PREFIX +
                                   spatial_dim_infos[0].name + "__max")
                               ->data<double_t>();
             auto d3span = arrbuf
                               ->at(
-                                  "tiledb__internal__" +
+                                  SOMA_GEOMETRY_DIMENSION_PREFIX +
                                   spatial_dim_infos[1].name + "__min")
                               ->data<double_t>();
             auto d4span = arrbuf
                               ->at(
-                                  "tiledb__internal__" +
+                                  SOMA_GEOMETRY_DIMENSION_PREFIX +
                                   spatial_dim_infos[1].name + "__max")
                               ->data<double_t>();
             auto wkbs = arrbuf->at(dim_infos[1].name)->binaries();
