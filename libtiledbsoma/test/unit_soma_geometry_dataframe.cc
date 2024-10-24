@@ -358,10 +358,7 @@ TEST_CASE("SOMAGeometryDataFrame: Roundtrip", "[SOMAGeometryDataFrame]") {
             CHECK(
                 std::vector<double_t>({1}) ==
                 std::vector<double_t>(d4span.begin(), d4span.end()));
-            auto a = geometry::to_wkb(polygon);
-            for (size_t i = 0; i < wkbs[0].size(); ++i) {
-                CHECK(a[i] == (unsigned char)wkbs[0][i]);
-            }
+            CHECK(geometry::to_wkb(polygon) == wkbs[0]);
             CHECK(
                 std::vector<double_t>({63}) ==
                 std::vector<double>(a0span.begin(), a0span.end()));

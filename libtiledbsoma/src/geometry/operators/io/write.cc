@@ -102,7 +102,7 @@ size_t wkb_size(const GenericGeometry& geometry) {
 }
 
 WKBWriteOperator::WKBWriteOperator(
-    uint8_t* buffer, size_t& position, size_t size)
+    std::byte* buffer, size_t& position, size_t size)
     : buffer(buffer)
     , position(position)
     , size(size) {
@@ -185,7 +185,7 @@ void WKBWriteOperator::operator()(const GeometryCollection& collection) {
     }
 }
 
-void to_wkb(const GenericGeometry& geometry, uint8_t* buffer, size_t size) {
+void to_wkb(const GenericGeometry& geometry, std::byte* buffer, size_t size) {
     size_t position = 0;
 
     std::visit(WKBWriteOperator{buffer, position, size}, geometry);
