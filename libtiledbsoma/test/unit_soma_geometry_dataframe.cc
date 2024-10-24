@@ -33,6 +33,7 @@
 #include <vector>
 #include "../src/geometry/geometry.h"
 #include "../src/geometry/operators/io/write.h"
+#include "../src/utils/common.h"
 #include "common.h"
 
 const int64_t SOMA_JOINID_DIM_MAX = 99;
@@ -84,10 +85,10 @@ TEST_CASE("SOMAGeometryDataFrame: basic", "[SOMAGeometryDataFrame]") {
         std::vector<helper::AttrInfo> attr_infos({helper::AttrInfo(
             {.name = "quality", .tiledb_datatype = TILEDB_FLOAT64})});
 
-        // Check the point cloud doesn't exist yet.
+        // Check the geometry dataframe doesn't exist yet.
         REQUIRE(!SOMAGeometryDataFrame::exists(uri, ctx));
 
-        // Create the point cloud.
+        // Create the geometry dataframe.
         auto [schema, index_columns] =
             helper::create_arrow_schema_and_index_columns(
                 dim_infos, attr_infos);
@@ -107,8 +108,8 @@ TEST_CASE("SOMAGeometryDataFrame: basic", "[SOMAGeometryDataFrame]") {
             platform_config,
             std::nullopt);
 
-        // Check the point cloud exists and it cannot be read as a different
-        // object.
+        // Check the geometry dataframe exists and it cannot be read as a
+        // different object.
         REQUIRE(SOMAGeometryDataFrame::exists(uri, ctx));
         REQUIRE(!SOMASparseNDArray::exists(uri, ctx));
         REQUIRE(!SOMADenseNDArray::exists(uri, ctx));
@@ -126,10 +127,14 @@ TEST_CASE("SOMAGeometryDataFrame: basic", "[SOMAGeometryDataFrame]") {
         REQUIRE(soma_geometry->type() == "SOMAGeometryDataFrame");
         std::vector<std::string> expected_index_column_names = {
             dim_infos[0].name,
-            "tiledb__internal__" + spatial_dim_infos[0].name + "__min",
-            "tiledb__internal__" + spatial_dim_infos[1].name + "__min",
-            "tiledb__internal__" + spatial_dim_infos[0].name + "__max",
-            "tiledb__internal__" + spatial_dim_infos[1].name + "__max"};
+            SOMA_GEOMETRY_DIMENSION_PREFIX + spatial_dim_infos[0].name +
+                "__min",
+            SOMA_GEOMETRY_DIMENSION_PREFIX + spatial_dim_infos[1].name +
+                "__min",
+            SOMA_GEOMETRY_DIMENSION_PREFIX + spatial_dim_infos[0].name +
+                "__max",
+            SOMA_GEOMETRY_DIMENSION_PREFIX + spatial_dim_infos[1].name +
+                "__max"};
 
         std::vector<std::string> expected_spatial_column_names = {
             spatial_dim_infos[0].name, spatial_dim_infos[1].name};

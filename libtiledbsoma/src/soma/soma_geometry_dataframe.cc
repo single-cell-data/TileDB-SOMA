@@ -44,24 +44,21 @@ using namespace tiledb;
 
 void SOMAGeometryDataFrame::create(
     std::string_view uri,
-    std::unique_ptr<ArrowSchema> schema,
-    ArrowTable index_columns,
-    ArrowTable spatial_columns,
+    const std::unique_ptr<ArrowSchema>& schema,
+    const ArrowTable& index_columns,
+    const ArrowTable& spatial_columns,
     std::shared_ptr<SOMAContext> ctx,
     PlatformConfig platform_config,
     std::optional<TimestampRange> timestamp) {
     std::vector<std::string> spatial_axes;
     auto tiledb_schema = ArrowAdapter::tiledb_schema_from_arrow_schema(
         ctx->tiledb_ctx(),
-        std::move(schema),
-        ArrowTable(
-            std::move(index_columns.first), std::move(index_columns.second)),
+        schema,
+        index_columns,
         "SOMAGeometryDataFrame",
         true,
         platform_config,
-        ArrowTable(
-            std::move(spatial_columns.first),
-            std::move(spatial_columns.second)));
+        spatial_columns);
     auto array = SOMAArray::create(
         ctx, uri, tiledb_schema, "SOMAGeometryDataFrame", timestamp);
 }

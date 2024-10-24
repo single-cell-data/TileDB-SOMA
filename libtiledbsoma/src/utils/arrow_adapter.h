@@ -253,26 +253,14 @@ class ArrowAdapter {
      */
     static ArraySchema tiledb_schema_from_arrow_schema(
         std::shared_ptr<Context> ctx,
-        std::unique_ptr<ArrowSchema> arrow_schema,
-        ArrowTable index_column_info,
+        const std::unique_ptr<ArrowSchema>& arrow_schema,
+        const ArrowTable& index_column_info,
         std::string soma_type,
         bool is_sparse = true,
         PlatformConfig platform_config = PlatformConfig(),
-        ArrowTable spatial_column_info = {
+        const ArrowTable& spatial_column_info = {
             std::unique_ptr<ArrowArray>(nullptr),
             std::unique_ptr<ArrowSchema>(nullptr)});
-
-    /**
-     * @brief Get a TileDB attribute with its enumeration from an Arrow schema.
-     *
-     * @return std::pair<Attribute, std::optional<Enumeration>>
-     */
-    static std::pair<Attribute, std::optional<Enumeration>>
-    tiledb_attribute_from_arrow_schema(
-        std::shared_ptr<Context> ctx,
-        ArrowSchema* arrow_schema,
-        std::string_view type_metadata,
-        PlatformConfig platform_config = PlatformConfig());
 
     /**
      * @brief Get a TileDB dimension from an Arrow schema.
@@ -288,6 +276,18 @@ class ArrowAdapter {
         std::string_view type_metadata,
         std::string prefix = std::string(),
         std::string suffix = std::string(),
+        PlatformConfig platform_config = PlatformConfig());
+
+    /**
+     * @brief Get a TileDB attribute with its enumeration from an Arrow schema.
+     *
+     * @return std::pair<Attribute, std::optional<Enumeration>>
+     */
+    static std::pair<Attribute, std::optional<Enumeration>>
+    tiledb_attribute_from_arrow_schema(
+        std::shared_ptr<Context> ctx,
+        ArrowSchema* arrow_schema,
+        std::string_view type_metadata,
         PlatformConfig platform_config = PlatformConfig());
 
     /**
@@ -784,6 +784,14 @@ class ArrowAdapter {
         const ArrowTable& arrow_table,
         int64_t column_index,
         int64_t expected_n_buffers);
+
+    static bool _set_spatial_dimensions(
+        std::map<std::string, Dimension>& dims,
+        const ArrowTable& spatial_column_info,
+        std::string_view type_metadata,
+        std::string soma_type,
+        std::shared_ptr<Context> ctx,
+        PlatformConfig platform_config);
 };  // class ArrowAdapter
 };  // namespace tiledbsoma
 #endif

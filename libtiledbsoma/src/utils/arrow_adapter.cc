@@ -916,14 +916,14 @@ tiledb_layout_t ArrowAdapter::_get_order(std::string order) {
 
 ArraySchema ArrowAdapter::tiledb_schema_from_arrow_schema(
     std::shared_ptr<Context> ctx,
-    std::unique_ptr<ArrowSchema> arrow_schema,
-    ArrowTable index_column_info,
+    const std::unique_ptr<ArrowSchema>& arrow_schema,
+    const ArrowTable& index_column_info,
     std::string soma_type,
     bool is_sparse,
     PlatformConfig platform_config,
-    ArrowTable spatial_column_info) {
-    auto index_column_array = std::move(index_column_info.first);
-    auto index_column_schema = std::move(index_column_info.second);
+    const ArrowTable& spatial_column_info) {
+    auto& index_column_array = index_column_info.first;
+    auto& index_column_schema = index_column_info.second;
 
     ArraySchema schema(*ctx, is_sparse ? TILEDB_SPARSE : TILEDB_DENSE);
     Domain domain(*ctx);
@@ -960,10 +960,14 @@ ArraySchema ArrowAdapter::tiledb_schema_from_arrow_schema(
         auto child = arrow_schema->children[sch_idx];
         std::string_view type_metadata;
 
-        if (ArrowMetadataHasKey(child->metadata, ArrowCharView("dtype"))) {
+        if (ArrowMetadataHasKey(
+                child->metadata,
+                ArrowCharView(ARROW_DATATYPE_METADATA_KEY.c_str()))) {
             ArrowStringView out;
             NANOARROW_THROW_NOT_OK(ArrowMetadataGetValue(
-                child->metadata, ArrowCharView("dtype"), &out));
+                child->metadata,
+                ArrowCharView(ARROW_DATATYPE_METADATA_KEY.c_str()),
+                &out));
 
             type_metadata = std::string_view(out.data, out.size_bytes);
         }
@@ -978,45 +982,16 @@ ArraySchema ArrowAdapter::tiledb_schema_from_arrow_schema(
         for (int64_t i = 0; i < index_column_schema->n_children; ++i) {
             if (strcmp(child->name, index_column_schema->children[i]->name) ==
                 0) {
-                if (strcmp(child->name, "soma_geometry") == 0 &&
+                if (strcmp(child->name, SOMA_GEOMETRY_COLUMN_NAME.c_str()) ==
+                        0 &&
                     spatial_column_info.first.get() != nullptr) {
-                    if (type_metadata.compare("WKB") != 0) {
-                        throw std::runtime_error(
-                            std::string(
-                                "Unkwown type metadata for `soma_geometry`. "
-                                "Expected 'WKB', found ") +
-                            std::string(type_metadata.data()));
-                    }
-
-                    for (int64_t j = 0;
-                         j < spatial_column_info.second->n_children;
-                         ++j) {
-                        auto min_dim = tiledb_dimension_from_arrow_schema(
-                            ctx,
-                            spatial_column_info.second->children[j],
-                            spatial_column_info.first->children[j],
-                            soma_type,
-                            type_metadata,
-                            "tiledb__internal__",
-                            "__min",
-                            platform_config);
-
-                        auto max_dim = tiledb_dimension_from_arrow_schema(
-                            ctx,
-                            spatial_column_info.second->children[j],
-                            spatial_column_info.first->children[j],
-                            soma_type,
-                            type_metadata,
-                            "tiledb__internal__",
-                            "__max",
-                            platform_config);
-
-                        dims.insert({min_dim.first.name(), min_dim.first});
-                        dims.insert({max_dim.first.name(), max_dim.first});
-
-                        use_current_domain &= min_dim.second;
-                        use_current_domain &= max_dim.second;
-                    }
+                    _set_spatial_dimensions(
+                        dims,
+                        spatial_column_info,
+                        type_metadata,
+                        soma_type,
+                        ctx,
+                        platform_config);
 
                     // Do not set the `isattr` flag to false to add the
                     // `soma_geometry` as attribute
@@ -1057,7 +1032,7 @@ ArraySchema ArrowAdapter::tiledb_schema_from_arrow_schema(
     for (int64_t i = 0; i < index_column_schema->n_children; ++i) {
         LOG_DEBUG(fmt::format("[ArrowAdapter] child {}", i));
         auto col_name = index_column_schema->children[i]->name;
-        if (strcmp(col_name, "soma_geometry") == 0) {
+        if (strcmp(col_name, SOMA_GEOMETRY_COLUMN_NAME.c_str()) == 0) {
             for (auto& dim : dims) {
                 if (dim.first.substr(std::max(0ul, dim.first.size() - 5)) ==
                     std::string("__min")) {
@@ -1100,12 +1075,13 @@ ArraySchema ArrowAdapter::tiledb_schema_from_arrow_schema(
                     continue;
                 }
 
-                if (strcmp(child->name, "soma_geometry") == 0 &&
+                if (strcmp(child->name, SOMA_GEOMETRY_COLUMN_NAME.c_str()) ==
+                        0 &&
                     spatial_column_info.first.get() != nullptr) {
                     for (int64_t j = 0;
                          j < spatial_column_info.first->n_children;
                          ++j) {
-                        auto col_name = "tiledb__internal__" +
+                        auto col_name = SOMA_GEOMETRY_DIMENSION_PREFIX +
                                         std::string(spatial_column_info.second
                                                         ->children[j]
                                                         ->name);
@@ -1190,6 +1166,47 @@ ArraySchema ArrowAdapter::tiledb_schema_from_arrow_schema(
     return schema;
 }
 
+std::pair<Dimension, bool> ArrowAdapter::tiledb_dimension_from_arrow_schema(
+    std::shared_ptr<Context> ctx,
+    ArrowSchema* schema,
+    ArrowArray* array,
+    std::string soma_type,
+    std::string_view type_metadata,
+    std::string prefix,
+    std::string suffix,
+    PlatformConfig platform_config) {
+    bool use_current_domain = true;
+
+    auto type = ArrowAdapter::to_tiledb_format(schema->format, type_metadata);
+
+    if (ArrowAdapter::arrow_is_var_length_type(schema->format)) {
+        type = TILEDB_STRING_ASCII;
+    }
+
+    auto col_name = prefix + std::string(schema->name) + suffix;
+
+    FilterList filter_list = ArrowAdapter::_create_dim_filter_list(
+        col_name, platform_config, soma_type, ctx);
+
+    if (array->length == 3) {
+        use_current_domain = false;
+    } else if (array->length == 5) {
+        // This is fine
+    } else {
+        throw TileDBSOMAError(fmt::format(
+            "ArrowAdapter: unexpected length {} for name "
+            "{}",
+            array->length,
+            col_name));
+    }
+
+    const void* buff = array->buffers[1];
+    auto dim = ArrowAdapter::_create_dim(type, col_name, buff, ctx);
+    dim.set_filter_list(filter_list);
+
+    return {dim, use_current_domain};
+}
+
 std::pair<Attribute, std::optional<Enumeration>>
 ArrowAdapter::tiledb_attribute_from_arrow_schema(
     std::shared_ptr<Context> ctx,
@@ -1197,14 +1214,16 @@ ArrowAdapter::tiledb_attribute_from_arrow_schema(
     std::string_view type_metadata,
     PlatformConfig platform_config) {
     auto type = ArrowAdapter::to_tiledb_format(arrow_schema->format);
-    if (strcmp(arrow_schema->name, "soma_geometry") == 0) {
+    if (strcmp(arrow_schema->name, SOMA_GEOMETRY_COLUMN_NAME.c_str()) == 0) {
         if (type_metadata.compare("WKB") == 0) {
             type = TILEDB_GEOM_WKB;
         } else {
-            throw std::runtime_error(
-                std::string("Unkwown type metadata for `soma_geometry`. "
-                            "Expected 'WKB', found ") +
-                type_metadata.data());
+            throw TileDBSOMAError(fmt::format(
+                "ArrowAdapter::tiledb_attribute_from_arrow_schema: "
+                "Unkwown type metadata for `{}`: "
+                "Expected 'WKB', got {}",
+                SOMA_GEOMETRY_COLUMN_NAME,
+                type_metadata));
         }
     }
 
@@ -1245,47 +1264,6 @@ ArrowAdapter::tiledb_attribute_from_arrow_schema(
     }
 
     return {attr, enmr};
-}
-
-std::pair<Dimension, bool> ArrowAdapter::tiledb_dimension_from_arrow_schema(
-    std::shared_ptr<Context> ctx,
-    ArrowSchema* schema,
-    ArrowArray* array,
-    std::string soma_type,
-    std::string_view type_metadata,
-    std::string prefix,
-    std::string suffix,
-    PlatformConfig platform_config) {
-    bool use_current_domain = true;
-
-    auto type = ArrowAdapter::to_tiledb_format(schema->format, type_metadata);
-
-    if (ArrowAdapter::arrow_is_var_length_type(schema->format)) {
-        type = TILEDB_STRING_ASCII;
-    }
-
-    auto col_name = prefix + std::string(schema->name) + suffix;
-
-    FilterList filter_list = ArrowAdapter::_create_dim_filter_list(
-        col_name, platform_config, soma_type, ctx);
-
-    if (array->length == 3) {
-        use_current_domain = false;
-    } else if (array->length == 5) {
-        // This is fine
-    } else {
-        throw TileDBSOMAError(fmt::format(
-            "ArrowAdapter: unexpected length {} for name "
-            "{}",
-            array->length,
-            col_name));
-    }
-
-    const void* buff = array->buffers[1];
-    auto dim = ArrowAdapter::_create_dim(type, col_name, buff, ctx);
-    dim.set_filter_list(filter_list);
-
-    return {dim, use_current_domain};
 }
 
 std::pair<const void*, std::size_t> ArrowAdapter::_get_data_and_length(
@@ -1712,12 +1690,12 @@ std::unique_ptr<ArrowSchema> ArrowAdapter::make_arrow_schema(
             dim_schema->format,
             dim_schema->name));
 
-        if (strcmp(dim_schema->name, "soma_geometry") == 0) {
+        if (strcmp(dim_schema->name, SOMA_GEOMETRY_COLUMN_NAME.c_str()) == 0) {
             nanoarrow::UniqueBuffer buffer;
             ArrowMetadataBuilderInit(buffer.get(), nullptr);
             ArrowMetadataBuilderAppend(
                 buffer.get(),
-                ArrowCharView("dtype"),
+                ArrowCharView(ARROW_DATATYPE_METADATA_KEY.c_str()),
                 ArrowCharView(
                     tiledb_datatypes[i] == TILEDB_GEOM_WKB ? "WKB" : "WKT"));
             ArrowSchemaSetMetadata(
@@ -1850,6 +1828,54 @@ ArrowArray* ArrowAdapter::_get_and_check_column(
     }
 
     return child;
+}
+
+bool ArrowAdapter::_set_spatial_dimensions(
+    std::map<std::string, Dimension>& dims,
+    const ArrowTable& spatial_column_info,
+    std::string_view type_metadata,
+    std::string soma_type,
+    std::shared_ptr<Context> ctx,
+    PlatformConfig platform_config) {
+    bool use_current_domain = true;
+    if (type_metadata.compare("WKB") != 0) {
+        throw TileDBSOMAError(fmt::format(
+            "ArrowAdapter::tiledb_attribute_from_arrow_schema: "
+            "Unkwown type metadata for `{}`: "
+            "Expected 'WKB', got {}",
+            SOMA_GEOMETRY_COLUMN_NAME,
+            type_metadata));
+    }
+
+    for (int64_t j = 0; j < spatial_column_info.second->n_children; ++j) {
+        auto min_dim = tiledb_dimension_from_arrow_schema(
+            ctx,
+            spatial_column_info.second->children[j],
+            spatial_column_info.first->children[j],
+            soma_type,
+            type_metadata,
+            SOMA_GEOMETRY_DIMENSION_PREFIX,
+            "__min",
+            platform_config);
+
+        auto max_dim = tiledb_dimension_from_arrow_schema(
+            ctx,
+            spatial_column_info.second->children[j],
+            spatial_column_info.first->children[j],
+            soma_type,
+            type_metadata,
+            SOMA_GEOMETRY_DIMENSION_PREFIX,
+            "__max",
+            platform_config);
+
+        dims.insert({min_dim.first.name(), min_dim.first});
+        dims.insert({max_dim.first.name(), max_dim.first});
+
+        use_current_domain &= min_dim.second;
+        use_current_domain &= max_dim.second;
+    }
+
+    return use_current_domain;
 }
 
 }  // namespace tiledbsoma
