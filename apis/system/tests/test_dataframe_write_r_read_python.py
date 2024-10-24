@@ -21,7 +21,7 @@ class TestDataframeWriteRReadPython(TestReadPythonWriteR):
             field("quux", bool())
         )
 
-        sdf <- SOMADataFrameCreate("{self.uri}", df_schema, "foo")
+        sdf <- SOMADataFrameCreate("{self.uri}", df_schema, index_column_names=c("foo"), domain=list(foo=c(0,99)))
 
         df <- data.frame(
             soma_joinid = bit64::as.integer64(c(1,2,3,4,5)),
