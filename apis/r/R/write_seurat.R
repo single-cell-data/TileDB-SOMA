@@ -43,7 +43,7 @@ NULL
 #'   \link[SeuratObject:IsMatrixEmpty]{empty}, is written out as a
 #'   \link[tiledbsoma:SOMASparseNDArray]{sparse array} called
 #'   \dQuote{\code{scale_data}} within the \dQuote{\code{X}} group
-#'  \item feature-level meta data is written out as a
+#'  \item feature-level metadata is written out as a
 #'   \link[tiledbsoma:SOMADataFrame]{data frame} called \dQuote{\code{var}}
 #' }
 #' Expression matrices are transposed (cells as rows) prior to writing. All
@@ -170,7 +170,7 @@ write_soma.Assay <- function(
     )
   }
 
-  # Write feature-level meta data
+  # Write feature-level metadata
   var_df <- .df_index(
     x = x[[]],
     alt = "features",
@@ -217,7 +217,7 @@ write_soma.Assay <- function(
 #'  \item the layer matrices are written out as
 #'   \link[tiledbsoma:SOMASparseNDArray]{sparse arrays} within the
 #'   \dQuote{\code{X}} group
-#'  \item feature-level meta data is written out as a
+#'  \item feature-level metadata is written out as a
 #'   \link[tiledbsoma:SOMADataFrame]{data frame} called \dQuote{\code{var}}
 #' }
 #' Expression matrices are transposed (cells as rows) prior to writing. All
@@ -317,37 +317,37 @@ write_soma.Assay5 <- function(
   features_matrix <- methods::slot(x, name = 'features')
 
   # Write `X` matrices
-  for (lyr in SeuratObject::Layers(x)) {
-    ldat <- SeuratObject::LayerData(x, layer = lyr)
+  for (layer in SeuratObject::Layers(x)) {
+    ldat <- SeuratObject::LayerData(x, layer = layer)
     if (!inherits(ldat, what = c("matrix", "Matrix"))) {
       warning(warningCondition(
-        message = sprintf("%s", lyr),
+        message = sprintf("%s", layer),
         class = "unknownMatrixTypeWarning",
         call = str2lang("write_soma()")
       ))
       next
     }
     type <- .type_hint(ifelse(is.matrix(ldat), yes = 'matrix', no = class(ldat)))
-    if (all(fmat[, lyr]) && all(cmat[, lyr])) {
-      spdl::info("Adding '{}' matrix as '{}'", lyr, lyr)
+    if (all(features_matrix[, layer]) && all(cells_matrix[, layer])) {
+      spdl::info("Adding '{}' matrix as '{}'", layer, layer)
       tryCatch(
         expr = {
           arr <- write_soma(
             x = ldat,
-            uri = lyr,
+            uri = layer,
             soma_parent = X,
             sparse = TRUE,
             transpose = TRUE,
             ingest_mode = ingest_mode,
             shape = shape,
-            key = lyr,
+            key = layer,
             platform_config = platform_config,
             tiledbsoma_ctx = tiledbsoma_ctx
           )
           arr$set_metadata(type)
         },
         error = function(err) {
-          if (lyr %in% SeuratObject::DefaultLayer(x)) {
+          if (layer %in% SeuratObject::DefaultLayer(x)) {
             stop(err)
           }
           err_to_warn(err)
@@ -356,8 +356,8 @@ write_soma.Assay5 <- function(
       next
     }
     ldat <- Matrix::t(as(ldat, "TsparseMatrix"))
-    idx <- which(cmat[, lyr])
-    jdx <- which(fmat[, lyr])
+    idx <- which(cells_matrix[, layer])
+    jdx <- which(features_matrix[, layer])
     coo <- data.frame(
       soma_dim_0 = bit64::as.integer64(idx[ldat@i + 1L] - 1L),
       soma_dim_1 = bit64::as.integer64(jdx[ldat@j + 1L] - 1L),
@@ -365,7 +365,7 @@ write_soma.Assay5 <- function(
     )
     shape <- c(max(coo$soma_dim_0), max(coo$soma_dim_1)) + 1L
     arr <- X$add_new_sparse_ndarray(
-      key = lyr,
+      key = layer,
       type = arrow::infer_type(coo$soma_data),
       shape = as.integer(shape)
     )
@@ -382,7 +382,7 @@ write_soma.Assay5 <- function(
     prefix = 'seurat'
   )
   var_df[[attr(x = var_df, which = 'index')]] <- rownames(x)
-  spdl::info("Adding feature-level meta data")
+  spdl::info("Adding feature-level metadata")
   write_soma(
     x = var_df,
     uri = 'var',
@@ -701,8 +701,8 @@ write_soma.Graph <- function(
 #'
 #' @inherit write_soma return
 #'
-#' @section Writing Cell-Level Meta Data:
-#' Cell-level meta data is written out as a
+#' @section Writing Cell-Level Metadata:
+#' Cell-level metadata is written out as a
 #' \link[tiledbsoma:SOMADataFrame]{data frame} called \dQuote{\code{obs}} at
 #' the \code{\link[tiledbsoma:SOMAExperiment]{experiment}} level
 #'
@@ -809,8 +809,8 @@ write_soma.Seurat <- function(
     }
   }
 
-  # Write cell-level meta data (obs)
-  spdl::info("Adding cell-level meta data")
+  # Write cell-level metadata (obs)
+  spdl::info("Adding cell-level metadata")
   write_soma(
     x = obs_df,
     uri = 'obs',
