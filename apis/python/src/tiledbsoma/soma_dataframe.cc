@@ -216,6 +216,110 @@ void load_soma_dataframe(py::module& m) {
                 }
             },
             "newshape"_a,
+            "function_name_for_messages"_a)
+
+        .def(
+            "upgrade_domain",
+            [](SOMADataFrame& sdf,
+               py::object pyarrow_domain_table,
+               std::string function_name_for_messages) {
+                ArrowArray pyarrow_domain_array;
+                ArrowSchema pyarrow_domain_schema;
+                uintptr_t nanoarrow_domain_array_ptr =
+                    (uintptr_t)(&pyarrow_domain_array);
+                uintptr_t nanoarrow_domain_schema_ptr =
+                    (uintptr_t)(&pyarrow_domain_schema);
+                pyarrow_domain_table.attr("_export_to_c")(
+                    nanoarrow_domain_array_ptr, nanoarrow_domain_schema_ptr);
+                ArrowTable nanoarrow_domain_table(
+                    std::make_unique<ArrowArray>(pyarrow_domain_array),
+                    std::make_unique<ArrowSchema>(pyarrow_domain_schema));
+                try {
+                    sdf.upgrade_domain(
+                        nanoarrow_domain_table, function_name_for_messages);
+                } catch (const std::exception& e) {
+                    throw TileDBSOMAError(e.what());
+                }
+            },
+            "pyarrow_domain_table"_a,
+            "function_name_for_messages"_a)
+
+        .def(
+            "can_upgrade_domain",
+            [](SOMADataFrame& sdf,
+               py::object pyarrow_domain_table,
+               std::string function_name_for_messages) {
+                ArrowArray pyarrow_domain_array;
+                ArrowSchema pyarrow_domain_schema;
+                uintptr_t nanoarrow_domain_array_ptr =
+                    (uintptr_t)(&pyarrow_domain_array);
+                uintptr_t nanoarrow_domain_schema_ptr =
+                    (uintptr_t)(&pyarrow_domain_schema);
+                pyarrow_domain_table.attr("_export_to_c")(
+                    nanoarrow_domain_array_ptr, nanoarrow_domain_schema_ptr);
+                ArrowTable nanoarrow_domain_table(
+                    std::make_unique<ArrowArray>(pyarrow_domain_array),
+                    std::make_unique<ArrowSchema>(pyarrow_domain_schema));
+                try {
+                    return sdf.can_upgrade_domain(
+                        nanoarrow_domain_table, function_name_for_messages);
+                } catch (const std::exception& e) {
+                    throw TileDBSOMAError(e.what());
+                }
+            },
+            "pyarrow_domain_table"_a,
+            "function_name_for_messages"_a)
+
+        .def(
+            "change_domain",
+            [](SOMADataFrame& sdf,
+               py::object pyarrow_domain_table,
+               std::string function_name_for_messages) {
+                ArrowArray pyarrow_domain_array;
+                ArrowSchema pyarrow_domain_schema;
+                uintptr_t nanoarrow_domain_array_ptr =
+                    (uintptr_t)(&pyarrow_domain_array);
+                uintptr_t nanoarrow_domain_schema_ptr =
+                    (uintptr_t)(&pyarrow_domain_schema);
+                pyarrow_domain_table.attr("_export_to_c")(
+                    nanoarrow_domain_array_ptr, nanoarrow_domain_schema_ptr);
+                ArrowTable nanoarrow_domain_table(
+                    std::make_unique<ArrowArray>(pyarrow_domain_array),
+                    std::make_unique<ArrowSchema>(pyarrow_domain_schema));
+                try {
+                    sdf.change_domain(
+                        nanoarrow_domain_table, function_name_for_messages);
+                } catch (const std::exception& e) {
+                    throw TileDBSOMAError(e.what());
+                }
+            },
+            "pyarrow_domain_table"_a,
+            "function_name_for_messages"_a)
+
+        .def(
+            "can_change_domain",
+            [](SOMADataFrame& sdf,
+               py::object pyarrow_domain_table,
+               std::string function_name_for_messages) {
+                ArrowArray pyarrow_domain_array;
+                ArrowSchema pyarrow_domain_schema;
+                uintptr_t nanoarrow_domain_array_ptr =
+                    (uintptr_t)(&pyarrow_domain_array);
+                uintptr_t nanoarrow_domain_schema_ptr =
+                    (uintptr_t)(&pyarrow_domain_schema);
+                pyarrow_domain_table.attr("_export_to_c")(
+                    nanoarrow_domain_array_ptr, nanoarrow_domain_schema_ptr);
+                ArrowTable nanoarrow_domain_table(
+                    std::make_unique<ArrowArray>(pyarrow_domain_array),
+                    std::make_unique<ArrowSchema>(pyarrow_domain_schema));
+                try {
+                    return sdf.can_change_domain(
+                        nanoarrow_domain_table, function_name_for_messages);
+                } catch (const std::exception& e) {
+                    throw TileDBSOMAError(e.what());
+                }
+            },
+            "pyarrow_domain_table"_a,
             "function_name_for_messages"_a);
 }
 

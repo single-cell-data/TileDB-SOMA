@@ -1447,22 +1447,51 @@ class SOMAArray : public SOMAObject {
         const T& new_lo = new_lo_hi[0];
         const T& new_hi = new_lo_hi[1];
 
-        // It's difficult to use fmt::format within a header file since the
-        // include path to logger.h 'moves around' depending on which source
+        // If we're checking against the core current domain: the user-provided
+        // domain must contain the core current domain.
+        //
+        // If we're checking against the core (max) domain: the user-provided
+        // domain must be contained within the core (max) domain.
+
+        // Note: It's difficult to use fmt::format within a header file since
+        // the include path to logger.h 'moves around' depending on which source
         // file included us.
         //
         // TODO: once we're on C++ 20, just use std::format here and include
         // things like "old ({}, {}) new ({}, {})".
+
         if (new_lo > new_hi) {
-            return std::pair(false, "new lower > new upper");
-        }
-        if (new_lo > old_lo) {
             return std::pair(
-                false, "new lower > old lower (downsize is unsupported)");
+                false,
+                "index-column name " + dim_name + ": new lower > new upper");
         }
-        if (new_hi < old_hi) {
-            return std::pair(
-                false, "new upper < old upper (downsize is unsupported)");
+
+        if (check_current_domain) {
+            if (new_lo > old_lo) {
+                return std::pair(
+                    false,
+                    "index-column name " + dim_name +
+                        ": new lower > old lower (downsize is unsupported)");
+            }
+            if (new_hi < old_hi) {
+                return std::pair(
+                    false,
+                    "index-column name " + dim_name +
+                        ": new upper < old upper (downsize is unsupported)");
+            }
+        } else {
+            if (new_lo < old_lo) {
+                return std::pair(
+                    false,
+                    "index-column name " + dim_name +
+                        ": new lower < limit lower");
+            }
+            if (new_hi > old_hi) {
+                return std::pair(
+                    false,
+                    "index-column name " + dim_name +
+                        ": new upper > limit upper");
+            }
         }
         return std::pair(true, "");
     }

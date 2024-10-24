@@ -6,7 +6,18 @@
 """
 Implementation of a SOMA DataFrame
 """
-from typing import Any, List, Optional, Sequence, Tuple, Type, Union, cast
+from typing import (
+    Any,
+    Dict,
+    Iterable,
+    List,
+    Optional,
+    Sequence,
+    Tuple,
+    Type,
+    Union,
+    cast,
+)
 
 import numpy as np
 import pyarrow as pa
@@ -471,6 +482,103 @@ class DataFrame(SOMAArray, somacore.DataFrame):
             self._handle._handle.upgrade_soma_joinid_shape(
                 newshape, "tiledbsoma_upgrade_soma_joinid_shape"
             )
+            return (True, "")
+
+    def _upgrade_or_change_domain_helper(
+        self, newdomain: Domain, function_name_for_messages: str
+    ) -> Any:
+        """Converts the user-level tuple of low/high pairs into a pyarrow table suitable for calling libtiledbsoma."""
+
+        # Check user-provided domain against dataframe domain.
+        dim_names = self._tiledb_dim_names()
+        if len(dim_names) != len(newdomain):
+            raise ValueError(
+                f"{function_name_for_messages}: requested domain has length {len(dim_names)} but the dataframe's schema has index-column count {len(newdomain)}"
+            )
+
+        if any([len(slot) != 2 for slot in newdomain]):  # type: ignore
+            raise ValueError(
+                f"{function_name_for_messages}: requested domain must have low,high pairs in each slot"
+            )
+
+        # From the dataframe's schema, extract the subschema for only index columns (TileDB dimensions).
+        full_schema = self.schema
+        dim_schema_list = []
+        for dim_name in dim_names:
+            dim_schema_list.append(full_schema.field(dim_name))
+        dim_schema = pa.schema(dim_schema_list)
+
+        # Convert the user's tuple of low/high pairs into a dict keyed by index-column name.
+        new_domain_dict: Dict[str, Iterable[Any]] = {}
+        for i, dim_name in enumerate(dim_names):
+            # Domain can't be specified for strings (core constraint) so let them keystroke that easily.
+            if (
+                dim_schema.field(dim_name).type
+                in [
+                    pa.string(),
+                    pa.large_string(),
+                    pa.binary(),
+                    pa.large_binary(),
+                ]
+                and newdomain[i] is None
+            ):
+                new_domain_dict[dim_name] = ("", "")
+            else:
+                new_domain_dict[dim_name] = tuple(newdomain[i])  # type: ignore
+
+        # Return this as a pyarrow table. This has n columns where n is the number of
+        # index columns, and two rows: one row for the low values and one for the high values.
+        return pa.RecordBatch.from_pydict(new_domain_dict, schema=dim_schema)
+
+    def tiledbsoma_upgrade_domain(
+        self, newdomain: Domain, check_only: bool = False
+    ) -> StatusAndReason:
+        """Allows you to set the domain of a SOMA :class:`DataFrame``, when the
+        ``DataFrame`` does not have a domain set yet.  The argument must be a
+        tuple of pairs of low/high values for the desired domain, one pair per
+        index column. For string index columns, you must offer the low/high pair
+        as `("", "")`.  If ``check_only`` is ``True``, returns whether the
+        operation would succeed if attempted, and a reason why it would not.
+        """
+        pyarrow_domain_table = self._upgrade_or_change_domain_helper(
+            newdomain, "tiledbsoma_upgrade_domain"
+        )
+
+        if check_only:
+            return cast(
+                StatusAndReason,
+                self._handle._handle.can_upgrade_domain(
+                    pyarrow_domain_table, "tiledbsoma_upgrade_domain"
+                ),
+            )
+        else:
+            self._handle._handle.upgrade_domain(
+                pyarrow_domain_table, "tiledbsoma_upgrade_domain"
+            )
+            return (True, "")
+
+    def change_domain(
+        self, newdomain: Domain, check_only: bool = False
+    ) -> StatusAndReason:
+        """Allows you to enlarge the domain of a SOMA :class:`DataFrame``, when
+        the ``DataFrame`` already has a domain.  The argument must be a tuple of
+        pairs of low/high values for the desired domain, one pair per index
+        column. For string index columns, you must offer the low/high pair as
+        `("", "")`.  If ``check_only`` is ``True``, returns whether the
+        operation would succeed if attempted, and a reason why it would not.
+        """
+        pyarrow_domain_table = self._upgrade_or_change_domain_helper(
+            newdomain, "change_domain"
+        )
+        if check_only:
+            return cast(
+                StatusAndReason,
+                self._handle._handle.can_change_domain(
+                    pyarrow_domain_table, "change_domain"
+                ),
+            )
+        else:
+            self._handle._handle.change_domain(pyarrow_domain_table, "change_domain")
             return (True, "")
 
     def __len__(self) -> int:
