@@ -38,7 +38,7 @@ struct Reader<BinaryBuffer> {
         return value;
     }
 
-    std::vector<uint8_t> buffer;
+    std::vector<std::byte> buffer;
     size_t position;
 };
 
