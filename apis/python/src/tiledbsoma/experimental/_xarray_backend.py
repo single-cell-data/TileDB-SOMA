@@ -2,21 +2,23 @@
 # Copyright (c) 2024 TileDB, Inc
 #
 # Licensed under the MIT License.
-import io
-import os
 from typing import Any, Tuple, Union
 
 import numpy as np
-import xarray as xr
+from xarray.backends import BackendArray
+from xarray.core.indexing import (
+    BasicIndexer,
+    ExplicitIndexer,
+    IndexingSupport,
+    OuterIndexer,
+    VectorizedIndexer,
+    explicit_indexing_adapter,
+)
 
 from .. import DenseNDArray
 
-XarrayOpenable = Union[
-    str, os.PathLike[Any], io.BufferedIOBase, xr.backends.AbstractDataStore
-]
 
-
-class DenseNDArrayWrapper(xr.backends.BackendArray):  # type: ignore
+class DenseNDArrayWrapper(BackendArray):  # type: ignore
     """Wraps an SOMA DenseNDArray for xarray variable/DataArray support.
 
     Note: This class does not open or close the SOMA array. The array must be already
@@ -73,7 +75,7 @@ class DenseNDArrayWrapper(xr.backends.BackendArray):  # type: ignore
         result = self._array.read(key).to_numpy()
         return result.reshape(output_shape)  # type: ignore
 
-    def __getitem__(self, key: xr.core.indexing.ExplicitIndexer) -> np.typing.ArrayLike:
+    def __getitem__(self, key: ExplicitIndexer) -> np.typing.ArrayLike:
         def has_step(x: Any) -> bool:
             return isinstance(x, slice) and x.step not in (1, None)
 
@@ -91,16 +93,15 @@ class DenseNDArrayWrapper(xr.backends.BackendArray):  # type: ignore
             )
 
             key = (
-                xr.core.indexing.OuterIndexer(key_tuple)
-                if isinstance(key, xr.core.indexing.BasicIndexer)
-                or isinstance(key, xr.core.indexing.OuterIndexer)
-                else xr.core.indexing.VectorizedIndexer(key_tuple)
+                OuterIndexer(key_tuple)
+                if isinstance(key, BasicIndexer) or isinstance(key, OuterIndexer)
+                else VectorizedIndexer(key_tuple)
             )
 
-        return xr.core.indexing.explicit_indexing_adapter(  # type: ignore
+        return explicit_indexing_adapter(  # type: ignore
             key,
             self.shape,
-            xr.core.indexing.IndexingSupport.BASIC,
+            IndexingSupport.BASIC,
             self._raw_indexing_method,
         )
 
