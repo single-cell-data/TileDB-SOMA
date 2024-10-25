@@ -557,7 +557,15 @@ SOMADataFrame <- R6::R6Class(
       # Get the user's new_domain list with keys in the same order as dim_names.
       ordered_new_domain = list()
       for (dimname in dimnames) {
-        ordered_new_domain[[dimname]] <- new_domain[[dimname]]
+        # * Domain cannot be specified for string-type index columns.
+        # * So we let them say `NULL` rather than `c("", "")`.
+        # * But R list semantics are `mylist[[key]] <- NULL` results in nothing
+        #   being set at that key.
+        if (is.null(new_domain[[dimname]]) && full_schema[[dimname]]$type$ToString() %in% c("string", "large_string", "utf8", "large_utf8")) {
+          ordered_new_domain[[dimname]] <- c("", "")
+        } else {
+          ordered_new_domain[[dimname]] <- new_domain[[dimname]]
+        }
       }
 
       pyarrow_table <- arrow::arrow_table(as.data.frame(ordered_new_domain), schema=dim_schema)
