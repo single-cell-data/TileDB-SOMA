@@ -591,6 +591,21 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
+// upgrade_or_change_domain
+void upgrade_or_change_domain(const std::string& uri, bool is_change_domain, naxpArray nadimap, naxpSchema nadimsp, std::string function_name_for_messages, Rcpp::XPtr<somactx_wrap_t> ctxxp);
+RcppExport SEXP _tiledbsoma_upgrade_or_change_domain(SEXP uriSEXP, SEXP is_change_domainSEXP, SEXP nadimapSEXP, SEXP nadimspSEXP, SEXP function_name_for_messagesSEXP, SEXP ctxxpSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const std::string& >::type uri(uriSEXP);
+    Rcpp::traits::input_parameter< bool >::type is_change_domain(is_change_domainSEXP);
+    Rcpp::traits::input_parameter< naxpArray >::type nadimap(nadimapSEXP);
+    Rcpp::traits::input_parameter< naxpSchema >::type nadimsp(nadimspSEXP);
+    Rcpp::traits::input_parameter< std::string >::type function_name_for_messages(function_name_for_messagesSEXP);
+    Rcpp::traits::input_parameter< Rcpp::XPtr<somactx_wrap_t> >::type ctxxp(ctxxpSEXP);
+    upgrade_or_change_domain(uri, is_change_domain, nadimap, nadimsp, function_name_for_messages, ctxxp);
+    return R_NilValue;
+END_RCPP
+}
 // c_update_dataframe_schema
 void c_update_dataframe_schema(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp, Rcpp::CharacterVector column_names_to_drop, Rcpp::List add_cols_types, Rcpp::List add_cols_enum_value_types, Rcpp::List add_cols_enum_ordered);
 RcppExport SEXP _tiledbsoma_c_update_dataframe_schema(SEXP uriSEXP, SEXP ctxxpSEXP, SEXP column_names_to_dropSEXP, SEXP add_cols_typesSEXP, SEXP add_cols_enum_value_typesSEXP, SEXP add_cols_enum_orderedSEXP) {
@@ -822,6 +837,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_tiledbsoma_resize", (DL_FUNC) &_tiledbsoma_resize, 4},
     {"_tiledbsoma_resize_soma_joinid_shape", (DL_FUNC) &_tiledbsoma_resize_soma_joinid_shape, 4},
     {"_tiledbsoma_tiledbsoma_upgrade_shape", (DL_FUNC) &_tiledbsoma_tiledbsoma_upgrade_shape, 4},
+    {"_tiledbsoma_upgrade_or_change_domain", (DL_FUNC) &_tiledbsoma_upgrade_or_change_domain, 6},
     {"_tiledbsoma_c_update_dataframe_schema", (DL_FUNC) &_tiledbsoma_c_update_dataframe_schema, 6},
     {"_tiledbsoma_sr_setup", (DL_FUNC) &_tiledbsoma_sr_setup, 10},
     {"_tiledbsoma_sr_complete", (DL_FUNC) &_tiledbsoma_sr_complete, 1},
