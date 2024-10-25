@@ -28,7 +28,7 @@ struct WKBSizeOperator {
 };
 
 struct WKBWriteOperator {
-    WKBWriteOperator(uint8_t* buffer, size_t& position, size_t size);
+    WKBWriteOperator(std::byte* buffer, size_t& position, size_t size);
 
     template <typename T>
     void write(const T& value) {
@@ -47,7 +47,7 @@ struct WKBWriteOperator {
     void operator()(const MultiPolygon& multi_polygon);
     void operator()(const GeometryCollection& collection);
 
-    uint8_t* buffer;
+    std::byte* buffer;
     size_t& position;
     size_t size;
 };
