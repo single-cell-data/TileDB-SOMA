@@ -1854,12 +1854,12 @@ def _write_matrix_to_denseNDArray(
     # * Compute chunk sizes for both and take the minimum.
     chunk_size_using_nnz = int(math.ceil(tiledb_create_options.goal_chunk_nnz / ncol))
 
-    #try:
-        ## not scipy csr/csc
-        #itemsize = matrix.itemsize
-    #except AttributeError:
-        ## scipy csr/csc
-    #except AttributeError:
+    # try:
+    ## not scipy csr/csc
+    # itemsize = matrix.itemsize
+    # except AttributeError:
+    ## scipy csr/csc
+    # except AttributeError:
     # XXX TEMP
     itemsize = 8
 
@@ -1911,7 +1911,9 @@ def _write_matrix_to_denseNDArray(
         else:
             tensor = pa.Tensor.from_numpy(chunk.toarray())
         if matrix.ndim == 2:
-            soma_ndarray.write((slice(i, i2), slice(None)), tensor)
+            ### XXX BUG soma_ndarray.write((slice(i, i2), slice(None)), tensor)
+            ### soma_ndarray.write((slice(i, i2), slice(0, ncol - 1)), tensor)
+            soma_ndarray.write((slice(i, i2), slice(0, ncol)), tensor)
         else:
             soma_ndarray.write((slice(i, i2),), tensor)
 
