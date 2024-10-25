@@ -136,6 +136,8 @@ class TestSample3DDenseNDArrayWrapper:
             ([1, 3], 1, [0, 2]),
             (-1, -1, -1),
             (0, 1, slice(0, 4, 2)),
+            ([0, 3, 4], [0, 1, 0], [1, 3, 2]),
+            (slice(0, 5, 2), [0, 1, 0], [1, 3, 2]),
         ],
     )
     def test_getitem(self, soma_variable, numpy_variable, key):
