@@ -81,8 +81,8 @@ class Test1DSampleDenseNDArrayWrapper:
         ],
     )
     def test_getitem(self, soma_variable, numpy_variable, key):
-        actual = soma_variable[*key]
-        expected = numpy_variable[*key]
+        actual = soma_variable[key]
+        expected = numpy_variable[key]
 
         assert actual.dims == expected.dims
         assert actual.shape == expected.shape
@@ -141,8 +141,8 @@ class TestSample3DDenseNDArrayWrapper:
         ],
     )
     def test_getitem(self, soma_variable, numpy_variable, key):
-        actual = soma_variable[*key]
-        expected = numpy_variable[*key]
+        actual = soma_variable[key]
+        expected = numpy_variable[key]
 
         assert actual.dims == expected.dims
         assert actual.shape == expected.shape
