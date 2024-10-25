@@ -540,7 +540,7 @@ def from_visium(
                             if scale is None:
                                 scene.set_transform_to_multiscale_image(
                                     image_name,
-                                    IdentityTransform(("x", "y"), ("x", "y")),
+                                    transform=IdentityTransform(("x", "y"), ("x", "y")),
                                 )
                             else:
                                 level_props: ImageProperties = (
@@ -554,7 +554,7 @@ def from_visium(
                                 )
                                 scene.set_transform_to_multiscale_image(
                                     image_name,
-                                    ScaleTransform(
+                                    transform=ScaleTransform(
                                         ("x", "y"), ("x", "y"), updated_scales
                                     ),
                                 )
@@ -580,7 +580,7 @@ def from_visium(
                     ) as loc:
                         _maybe_set(obsl, "loc", loc, use_relative_uri=use_relative_uri)
                         scene.set_transform_to_point_cloud_dataframe(
-                            "loc", IdentityTransform(("x", "y"), ("x", "y"))
+                            "loc", transform=IdentityTransform(("x", "y"), ("x", "y"))
                         )
                         loc.coordinate_space = coord_space
 
