@@ -1285,21 +1285,27 @@ class SOMAArray : public SOMAObject {
     }
 
     /**
-     * This is for SOMADataFrame.
-     * XXX comment more
-     */
-    void upgrade_domain(
-        const ArrowTable& newdomain, std::string function_name_for_messages) {
-        _set_domain_helper(newdomain, false, function_name_for_messages);
-    }
-
-    /**
-     * This is for SOMADataFrame.
-     * XXX comment more
+     * This is for SOMADataFrame.  While resize_soma_joinid_shape allows the
+     * user to do up the soma_joinid domain slot, without needing to specify
+     * the rest (which is the common operation for experiment-level resize)
+     * this allows the full-generality resize-every-index-column case
+     * (which only applies to variant-indexed/non-standard dataframes).
      */
     void change_domain(
         const ArrowTable& newdomain, std::string function_name_for_messages) {
         _set_domain_helper(newdomain, true, function_name_for_messages);
+    }
+
+    /**
+     * This is for SOMADataFrame.  While upgrade_soma_joinid_shape allows the
+     * user to do up the soma_joinid domain slot, without needing to specify
+     * the rest (which is the common operation for experiment-level resize)
+     * this allows the full-generality resize-every-index-column case
+     * (which only applies to variant-indexed/non-standard dataframes).
+     */
+    void upgrade_domain(
+        const ArrowTable& newdomain, std::string function_name_for_messages) {
+        _set_domain_helper(newdomain, false, function_name_for_messages);
     }
 
    protected:

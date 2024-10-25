@@ -10,7 +10,6 @@ import inspect
 from typing import (
     Any,
     Dict,
-    Iterable,
     List,
     Optional,
     Sequence,
@@ -507,7 +506,7 @@ class DataFrame(SOMAArray, somacore.DataFrame):
                 f"{function_name_for_messages}: requested domain has length {len(dim_names)} but the dataframe's schema has index-column count {len(newdomain)}"
             )
 
-        if any([slot is not None and len(slot) != 2 for slot in newdomain]):  # type: ignore
+        if any([slot is not None and len(slot) != 2 for slot in newdomain]):
             raise ValueError(
                 f"{function_name_for_messages}: requested domain must have low,high pairs, or `None`, in each slot"
             )
@@ -520,8 +519,8 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         dim_schema = pa.schema(dim_schema_list)
 
         # Convert the user's tuple of low/high pairs into a dict keyed by index-column name.
-        new_domain_dict: Dict[str, Iterable[Any]] = {}
-        for i, dim_name in enumerate(dim_names):
+        new_domain_dict: Dict[str, Domain] = {}
+        for dim_name, new_dom in zip(dim_names, newdomain):
             # Domain can't be specified for strings (core constraint) so let them keystroke that easily.
             if (
                 dim_schema.field(dim_name).type
@@ -531,11 +530,11 @@ class DataFrame(SOMAArray, somacore.DataFrame):
                     pa.binary(),
                     pa.large_binary(),
                 ]
-                and newdomain[i] is None
+                and new_dom is None
             ):
-                new_domain_dict[dim_name] = ("", "")
+                new_domain_dict[dim_name] = ("", "")  # type: ignore
             else:
-                new_domain_dict[dim_name] = tuple(newdomain[i])  # type: ignore
+                new_domain_dict[dim_name] = tuple(new_dom)  # type: ignore
 
         # Return this as a pyarrow table. This has n columns where n is the number of
         # index columns, and two rows: one row for the low values and one for the high values.
