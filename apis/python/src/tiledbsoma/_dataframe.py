@@ -507,9 +507,9 @@ class DataFrame(SOMAArray, somacore.DataFrame):
                 f"{function_name_for_messages}: requested domain has length {len(dim_names)} but the dataframe's schema has index-column count {len(newdomain)}"
             )
 
-        if any([len(slot) != 2 for slot in newdomain]):  # type: ignore
+        if any([slot is not None and len(slot) != 2 for slot in newdomain]):  # type: ignore
             raise ValueError(
-                f"{function_name_for_messages}: requested domain must have low,high pairs in each slot"
+                f"{function_name_for_messages}: requested domain must have low,high pairs, or `None`, in each slot"
             )
 
         # From the dataframe's schema, extract the subschema for only index columns (TileDB dimensions).
