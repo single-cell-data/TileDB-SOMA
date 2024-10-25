@@ -17,6 +17,8 @@ Adds NDArray-specific functionality to the \code{\link{SOMAArrayBase}} class.
 \item \href{#method-SOMANDArrayBase-create}{\code{SOMANDArrayBase$create()}}
 \item \href{#method-SOMANDArrayBase-set_data_type}{\code{SOMANDArrayBase$set_data_type()}}
 \item \href{#method-SOMANDArrayBase-tiledbsoma_has_upgraded_shape}{\code{SOMANDArrayBase$tiledbsoma_has_upgraded_shape()}}
+\item \href{#method-SOMANDArrayBase-resize}{\code{SOMANDArrayBase$resize()}}
+\item \href{#method-SOMANDArrayBase-tiledbsoma_upgrade_shape}{\code{SOMANDArrayBase$tiledbsoma_upgrade_shape()}}
 \item \href{#method-SOMANDArrayBase-clone}{\code{SOMANDArrayBase$clone()}}
 }
 }
@@ -115,6 +117,52 @@ or it has had \code{upgrade_domain} applied to it.
 
 \subsection{Returns}{
 Logical
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SOMANDArrayBase-resize"></a>}}
+\if{latex}{\out{\hypertarget{method-SOMANDArrayBase-resize}{}}}
+\subsection{Method \code{resize()}}{
+Increases the shape of the array as specfied. Raises an error
+if the new shape is less than the current shape in any dimension. Raises
+an error if the new shape exceeds maxshape in any dimension. Raises an
+error if the array doesn't already have a shape: in that case please call
+tiledbsoma_upgrade_shape.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SOMANDArrayBase$resize(new_shape)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{new_shape}}{A vector of integerish, of the same length as the array's \code{ndim}.}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+No return value
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SOMANDArrayBase-tiledbsoma_upgrade_shape"></a>}}
+\if{latex}{\out{\hypertarget{method-SOMANDArrayBase-tiledbsoma_upgrade_shape}{}}}
+\subsection{Method \code{tiledbsoma_upgrade_shape()}}{
+Allows the array to have a resizeable shape as described in the
+TileDB-SOMA 1.15 release notes.  Raises an error if the shape exceeds maxshape in any
+dimension. Raises an error if the array already has a shape.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SOMANDArrayBase$tiledbsoma_upgrade_shape(shape)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{shape}}{A vector of integerish, of the same length as the array's \code{ndim}.}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+No return value
 }
 }
 \if{html}{\out{<hr>}}

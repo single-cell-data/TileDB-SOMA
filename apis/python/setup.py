@@ -337,11 +337,13 @@ setuptools.setup(
         "scipy",
         # Note: the somacore version is in .pre-commit-config.yaml too
         "somacore==1.0.21",
-        "tiledb~=0.32.0",
         "typing-extensions",  # Note "-" even though `import typing_extensions`
     ],
     extras_require={
         "dev": open("requirements_dev.txt").read(),
+        "spatial-io": open("requirements_spatial.txt").read(),
+        "all": open("requirements_dev.txt").read()
+        + open("requirements_spatial.txt").read(),
     },
     python_requires=">=3.9",
     cmdclass={"build_ext": build_ext, "bdist_wheel": bdist_wheel},

@@ -43,7 +43,7 @@ test_that("SOMACollection basics", {
   subcollection$close()
 
   # Add another dataframe to the collection, this time using add_new_dataframe
-  collection$add_new_dataframe("new_df", create_arrow_schema(), "int_column")$close()
+  collection$add_new_dataframe("new_df", create_arrow_schema(), "int_column", domain = list(int_column = c(0, 999)))$close()
   df3 <- collection$get("new_df")
   df3 <- SOMADataFrameOpen(df3$uri)
   expect_true(df3$soma_type == "SOMADataFrame")
@@ -131,7 +131,7 @@ test_that("Platform config and context are respected by add_ methods", {
 
   # Add a dataframe element to the collection
   tbl <- create_arrow_table()
-  sdf1 <- collection$add_new_dataframe("sdf1", tbl$schema, "soma_joinid")
+  sdf1 <- collection$add_new_dataframe("sdf1", tbl$schema, "soma_joinid", domain = list(soma_joinid = c(0, 999)))
   sdf1$write(tbl)
   collection$close()
 
@@ -154,6 +154,7 @@ test_that("Platform config and context are respected by add_ methods", {
     key = "sdf2",
     schema = tbl$schema,
     index_column_names = "soma_joinid",
+    domain = list(soma_joinid = c(0, 999)),
     platform_config = cfg
   )
   sdf2$write(tbl)

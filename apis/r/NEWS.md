@@ -15,6 +15,8 @@
 * Apply new `non_empty_domain` [#3176](https://github.com/single-cell-data/TileDB-SOMA/pull/3176)
 * Support for dense current domain with core 2.27 [#3180](https://github.com/single-cell-data/TileDB-SOMA/pull/3180)
 * Fix `is_named_list` bug for half-named lists [#3183](https://github.com/single-cell-data/TileDB-SOMA/pull/3183)
+* Expose block/random writer for sparse arrays [#3204](https://github.com/single-cell-data/TileDB-SOMA/pull/3204)
+* Min-sizing for dataframes/arrays with new shape feature [#3208](https://github.com/single-cell-data/TileDB-SOMA/pull/3208)
 
 # tiledbsoma 1.14.1
 

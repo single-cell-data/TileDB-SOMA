@@ -34,6 +34,11 @@ is_arrow_dictionary <- function(x) {
   is_arrow_object(x) && inherits(x, "Field") && inherits(x$type, "DictionaryType")
 }
 
+#' @method as.logical Scalar
+#' @export
+#'
+as.logical.Scalar <- \(x, ...) as.logical(x$as_vector(), ...)
+
 #' Convert Arrow types to supported TileDB type
 #' List of TileDB types supported in R: https://github.com/TileDB-Inc/TileDB-R/blob/8014da156b5fee5b4cc221d57b4aa7d388abc968/inst/tinytest/test_dim.R#L97-L121
 #' Note: TileDB attrs may be UTF-8; TileDB dims may not.
@@ -483,7 +488,26 @@ get_domain_and_extent_dataframe <- function(tbl_schema, ind_col_names, domain = 
 
         requested_slot <- domain[[ind_col_name]]
         ind_cur_dom <- if (is.null(requested_slot)) {
-          ind_max_dom
+          if (.new_shape_feature_flag_is_enabled()) {
+            # New shape: if the slot is null, make the size as small
+            # as possible since current domain can only be resized upward.
+            #
+            # Core current-domain semantics are (lo, hi) with both
+            # inclusive, with lo <= hi. This means smallest is (0, 0)
+            # which is shape 1, not 0.
+            if (bit64::is.integer64(ind_max_dom)) {
+              c(bit64::as.integer64(0), bit64::as.integer64(0))
+            } else if (is.integer(ind_max_dom)) {
+              c(0L, 0L)
+            } else {
+              c(0, 0)
+            }
+          } else {
+            # Old shape: if the slot is null, make the size as large
+            # as possible since there is not current domain, and the
+            # max domain is immutable.
+            ind_max_dom
+          }
         } else {
           requested_slot
         }

@@ -957,7 +957,18 @@ ArraySchema ArrowAdapter::tiledb_schema_from_arrow_schema(
 
     for (int64_t sch_idx = 0; sch_idx < arrow_schema->n_children; ++sch_idx) {
         auto child = arrow_schema->children[sch_idx];
-        auto type = ArrowAdapter::to_tiledb_format(child->format);
+        std::string_view type_metadata;
+
+        if (ArrowMetadataHasKey(child->metadata, ArrowCharView("dtype"))) {
+            ArrowStringView out;
+            NANOARROW_THROW_NOT_OK(ArrowMetadataGetValue(
+                child->metadata, ArrowCharView("dtype"), &out));
+
+            type_metadata = std::string_view(out.data, out.size_bytes);
+        }
+
+        auto type = ArrowAdapter::to_tiledb_format(
+            child->format, type_metadata);
 
         LOG_DEBUG(fmt::format(
             "[ArrowAdapter] schema pass for child {} name {}",
@@ -971,7 +982,7 @@ ArraySchema ArrowAdapter::tiledb_schema_from_arrow_schema(
             auto schild = index_column_schema->children[i];
             auto col_name = schild->name;
             if (strcmp(child->name, col_name) == 0) {
-                if (ArrowAdapter::arrow_is_string_type(child->format)) {
+                if (ArrowAdapter::arrow_is_var_length_type(child->format)) {
                     type = TILEDB_STRING_ASCII;
                 }
 
@@ -1010,7 +1021,7 @@ ArraySchema ArrowAdapter::tiledb_schema_from_arrow_schema(
                 attr.set_nullable(true);
             }
 
-            if (ArrowAdapter::arrow_is_string_type(child->format)) {
+            if (ArrowAdapter::arrow_is_var_length_type(child->format)) {
                 attr.set_cell_val_num(TILEDB_VAR_NUM);
             }
 
@@ -1021,7 +1032,7 @@ ArraySchema ArrowAdapter::tiledb_schema_from_arrow_schema(
                     *ctx,
                     child->name,
                     enmr_type,
-                    ArrowAdapter::arrow_is_string_type(enmr_format) ?
+                    ArrowAdapter::arrow_is_var_length_type(enmr_format) ?
                         TILEDB_VAR_NUM :
                         1,
                     child->flags & ARROW_FLAG_DICTIONARY_ORDERED);
@@ -1070,7 +1081,7 @@ ArraySchema ArrowAdapter::tiledb_schema_from_arrow_schema(
                     continue;
                 }
 
-                if (ArrowAdapter::arrow_is_string_type(child->format)) {
+                if (ArrowAdapter::arrow_is_var_length_type(child->format)) {
                     // In the core API:
                     //
                     // * domain for strings must be set as (nullptr, nullptr)
@@ -1267,8 +1278,9 @@ ArrowAdapter::to_arrow(std::shared_ptr<ColumnBuffer> column) {
 
     if (array->n_buffers != n_buffers) {
         throw TileDBSOMAError(fmt::format(
-            "[ArrowAdapter] expected array n_buffers {}; got {}",
+            "[ArrowAdapter] expected array n_buffers {} for column {}; got {}",
             n_buffers,
+            column->name(),
             array->n_buffers));
     }
 
@@ -1399,7 +1411,7 @@ ArrowAdapter::to_arrow(std::shared_ptr<ColumnBuffer> column) {
     return std::pair(std::move(array), std::move(schema));
 }
 
-bool ArrowAdapter::arrow_is_string_type(const char* format) {
+bool ArrowAdapter::arrow_is_var_length_type(const char* format) {
     return (
         (strcmp(format, "U") == 0) || (strcmp(format, "Z") == 0) ||
         (strcmp(format, "u") == 0) || (strcmp(format, "z") == 0));
@@ -1419,8 +1431,8 @@ std::string_view ArrowAdapter::to_arrow_format(
         {TILEDB_FLOAT32, "f"},        {TILEDB_FLOAT64, "g"},
         {TILEDB_BOOL, "b"},           {TILEDB_DATETIME_SEC, "tss:"},
         {TILEDB_DATETIME_MS, "tsm:"}, {TILEDB_DATETIME_US, "tsu:"},
-        {TILEDB_DATETIME_NS, "tsn:"},
-    };
+        {TILEDB_DATETIME_NS, "tsn:"}, {TILEDB_GEOM_WKB, z},
+        {TILEDB_GEOM_WKT, u}};
 
     try {
         return _to_arrow_format_map.at(tiledb_dtype);
@@ -1431,7 +1443,8 @@ std::string_view ArrowAdapter::to_arrow_format(
     }
 }
 
-tiledb_datatype_t ArrowAdapter::to_tiledb_format(std::string_view arrow_dtype) {
+tiledb_datatype_t ArrowAdapter::to_tiledb_format(
+    std::string_view arrow_dtype, std::string_view arrow_dtype_metadata) {
     std::map<std::string_view, tiledb_datatype_t> _to_tiledb_format_map = {
         {"u", TILEDB_STRING_UTF8},    {"U", TILEDB_STRING_UTF8},
         {"z", TILEDB_CHAR},           {"Z", TILEDB_CHAR},
@@ -1446,7 +1459,17 @@ tiledb_datatype_t ArrowAdapter::to_tiledb_format(std::string_view arrow_dtype) {
     };
 
     try {
-        return _to_tiledb_format_map.at(arrow_dtype);
+        auto dtype = _to_tiledb_format_map.at(arrow_dtype);
+
+        if (dtype == TILEDB_CHAR && arrow_dtype_metadata.compare("WKB") == 0) {
+            dtype = TILEDB_GEOM_WKB;
+        } else if (
+            dtype == TILEDB_STRING_UTF8 &&
+            arrow_dtype_metadata.compare("WKT") == 0) {
+            dtype = TILEDB_GEOM_WKT;
+        }
+
+        return dtype;
     } catch (const std::out_of_range& e) {
         throw std::out_of_range(fmt::format(
             "ArrowAdapter: Unsupported Arrow type: {} ", arrow_dtype));
