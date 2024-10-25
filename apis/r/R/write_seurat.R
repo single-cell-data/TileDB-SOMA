@@ -724,6 +724,8 @@ write_soma.Seurat <- function(
   platform_config = NULL,
   tiledbsoma_ctx = NULL
 ) {
+  # Allow writing `soma_` prefixed columns to SOMADataFrames
+  # (normally disallowed as a reserved prefix)
   op <- options(tiledbsoma.write_soma.internal = TRUE)
   on.exit(options(op), add = TRUE, after = FALSE)
   check_package("SeuratObject", version = .MINIMUM_SEURAT_VERSION())
