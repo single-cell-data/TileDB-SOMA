@@ -148,3 +148,42 @@ class TestSample3DDenseNDArrayWrapper:
         assert actual.shape == expected.shape
 
         np.testing.assert_equal(actual.data, expected.data)
+
+
+def test_1d_xarray_dataset(sample_1d_dense_array):
+    datastore = soma_xarray.DenseNDArrayDatastore(
+        sample_1d_dense_array.uri, attrs={"test1": 1, "test2": 2}
+    )
+    ds = xr.Dataset.load_store(datastore)
+    assert isinstance(ds, xr.Dataset)
+    assert len(ds.attrs) == 2
+    assert ds.attrs == {"test1": 1, "test2": 2}
+
+    assert len(ds.data_vars) == 1
+    assert "soma_data" in ds
+
+    data = ds["soma_data"]
+    assert isinstance(data, xr.DataArray)
+    assert data.dims == ("soma_dim_0",)
+    assert len(data.attrs) == 0
+
+    expected = np.arange(8, dtype=np.uint8)
+    np.testing.assert_equal(data.data, expected)
+
+
+def test_3d_xarray_dataset(sample_3d_dense_array):
+    datastore = soma_xarray.DenseNDArrayDatastore(sample_3d_dense_array.uri)
+    ds = xr.Dataset.load_store(datastore)
+    assert isinstance(ds, xr.Dataset)
+    assert len(ds.attrs) == 0
+
+    assert len(ds.data_vars) == 1
+    assert "soma_data" in ds
+
+    data = ds["soma_data"]
+    assert isinstance(data, xr.DataArray)
+    assert data.dims == ("soma_dim_0", "soma_dim_1", "soma_dim_2")
+    assert len(data.attrs) == 0
+
+    expected = np.reshape(np.arange(64, dtype=np.uint8), (8, 2, 4))
+    np.testing.assert_equal(data.data, expected)

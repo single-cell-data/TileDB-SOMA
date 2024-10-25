@@ -2,20 +2,26 @@
 # Copyright (c) 2024 TileDB, Inc
 #
 # Licensed under the MIT License.
-from typing import Any, Tuple, Union
+from typing import Any, Mapping, Optional, Tuple, Union
 
 import numpy as np
-from xarray.backends import BackendArray
+from somacore import options
+from xarray import Variable
+from xarray.backends import AbstractDataStore, BackendArray
 from xarray.core.indexing import (
     BasicIndexer,
     ExplicitIndexer,
     IndexingSupport,
+    LazilyIndexedArray,
     OuterIndexer,
     VectorizedIndexer,
     explicit_indexing_adapter,
 )
+from xarray.core.utils import Frozen
 
 from .. import DenseNDArray
+from .._types import OpenTimestamp
+from ..options._soma_tiledb_context import SOMATileDBContext
 
 
 class DenseNDArrayWrapper(BackendArray):  # type: ignore
@@ -56,7 +62,6 @@ class DenseNDArrayWrapper(BackendArray):  # type: ignore
 
         # Update the indices in the key.
         def update_slice_index(index: slice, dim_size: int) -> slice:
-            print(f"Key index: {index} and {index.step}")
             if index.step not in (1, None):
                 raise ValueError("Slice steps are not supported.")
             _index = range(dim_size)[index]  # Convert negative values to positive.
@@ -113,3 +118,62 @@ class DenseNDArrayWrapper(BackendArray):  # type: ignore
     @property
     def shape(self) -> Tuple[int, ...]:
         return self._array.shape
+
+
+class DenseNDArrayDatastore(AbstractDataStore):  # type: ignore
+    __slots__ = (
+        "_array",
+        "_attrs",
+        "_dim_names",
+        "_variable_name",
+    )
+
+    def __init__(
+        self,
+        uri: str,
+        *,
+        tiledb_timestamp: Optional[OpenTimestamp] = None,
+        context: Optional[SOMATileDBContext] = None,
+        platform_config: Optional[options.PlatformConfig] = None,
+        variable_name: Optional[str] = None,
+        dim_names: Optional[str] = None,
+        attrs: Optional[Mapping[str, Any]] = None,
+    ):
+        """Initialize and open the data store."""
+        self._array = DenseNDArray.open(
+            uri,
+            mode="r",
+            tiledb_timestamp=tiledb_timestamp,
+            context=context,
+            platform_config=platform_config,
+        )
+        self._variable_name = "soma_data" if variable_name is None else variable_name
+        self._dim_names = (
+            tuple(f"soma_dim_{enum}" for enum in range(self._array.ndim))
+            if dim_names is None
+            else dim_names
+        )
+        self._attrs = Frozen(dict()) if attrs is None else Frozen(attrs)
+
+    def close(self) -> None:
+        """Close the data store."""
+        self._array.close()
+
+    def load(self) -> Tuple[Frozen[str, Any], Frozen[str, Any]]:
+        """Returns a dictionary of ``xarray.Variable`` objects and a dictionary of
+        ``xarray.Attribute`` objects.
+        """
+        variables = Frozen(
+            {
+                self._variable_name: Variable(
+                    self._dim_names,
+                    LazilyIndexedArray(DenseNDArrayWrapper(self._array)),
+                    attrs={
+                        key: val
+                        for key, val in self._array.metadata.items()
+                        if not key.startswith("soma_")
+                    },
+                )
+            }
+        )
+        return variables, self._attrs
