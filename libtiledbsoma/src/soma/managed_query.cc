@@ -30,10 +30,10 @@
  * This file defines the performing TileDB queries.
  */
 
-#include "managed_query.h"
 #include <tiledb/array_experimental.h>
 #include <tiledb/attribute_experimental.h>
 #include "../utils/logger.h"
+#include "managed_query.h"
 #include "utils/common.h"
 namespace tiledbsoma {
 
@@ -119,8 +119,46 @@ void ManagedQuery::setup_read() {
                 ctx_->ptr().get(), array_->ptr().get(), 0, &ned, &is_empty));
 
             std::pair<int64_t, int64_t> array_shape;
-            if (is_empty == 1) {
-                array_shape = schema.domain().dimension(0).domain<int64_t>();
+            if (is_empty) {
+                // Before the new-shape feature (core 2.26 for sparse, core 2.27
+                // for dense, and tiledbsoma 1.15):
+                //
+                // * Core current domain did not exist
+                //
+                // * Core domain was small for tiledbsoma DenseNDArray --
+                // dimensioned
+                //   like the experiment's obs/var counts
+                //
+                // With the new-shape feature (core 2.26, and tiledbsoma 1.15):
+                //
+                // * Core current domain exists and is small -- dimensioned
+                //   like the experiment's obs/var counts
+                //
+                // * Core domain is huge -- a bit shy of 2**63
+                //
+                // We need to find out which one is the case.
+                //
+                // Note that SOMAArray has a one-line accessor for this
+                // but we are not operating within that context.
+
+                auto current_domain =
+                    tiledb::ArraySchemaExperimental::current_domain(
+                        *ctx_, array_->schema());
+                auto dim0 = schema.domain().dimension(0);
+                if (current_domain.is_empty()) {
+                    // Core current domain does not exist; use core domain.
+                    array_shape = dim0.domain<int64_t>();
+                } else {
+                    // Core current domain exists; use it.
+                    if (current_domain.type() != TILEDB_NDRECTANGLE) {
+                        throw TileDBSOMAError(
+                            "found non-rectangle current-domain type");
+                    }
+                    NDRectangle ndrect = current_domain.ndrectangle();
+                    std::array<int64_t, 2> arr = ndrect.range<int64_t>(
+                        dim0.name());
+                    array_shape = std::pair<int64_t, int64_t>(arr[0], arr[1]);
+                }
             } else {
                 array_shape = std::make_pair(ned[0], ned[1]);
             }

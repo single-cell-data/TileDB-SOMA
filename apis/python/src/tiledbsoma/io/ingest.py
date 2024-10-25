@@ -1854,12 +1854,14 @@ def _write_matrix_to_denseNDArray(
     # * Compute chunk sizes for both and take the minimum.
     chunk_size_using_nnz = int(math.ceil(tiledb_create_options.goal_chunk_nnz / ncol))
 
-    try:
-        # not scipy csr/csc
-        itemsize = matrix.itemsize
-    except AttributeError:
-        # scipy csr/csc
-        itemsize = matrix.data.itemsize
+    #try:
+        ## not scipy csr/csc
+        #itemsize = matrix.itemsize
+    #except AttributeError:
+        ## scipy csr/csc
+    #except AttributeError:
+    # XXX TEMP
+    itemsize = 8
 
     total_nbytes = matrix.size * itemsize
     nbytes_num_chunks = math.ceil(
