@@ -23,8 +23,8 @@
 
 .CREATE_DEFAULTS <- list(
   # Non-filter-related schema parameters
-  tile_order = 'ROW_MAJOR',
-  cell_order = 'ROW_MAJOR',
+  tile_order = "ROW_MAJOR",
+  cell_order = "ROW_MAJOR",
   # tile_extent = 2048,
   capacity = 100000,
   allows_duplicates = FALSE,
@@ -54,7 +54,7 @@
 #' @noMd
 #'
 TileDBCreateOptions <- R6::R6Class(
-  classname = 'TileDBCreateOptions',
+  classname = "TileDBCreateOptions",
   inherit = MappingBase,
   public = list(
 
@@ -66,10 +66,10 @@ TileDBCreateOptions <- R6::R6Class(
       if (!is.null(platform_config)) {
         stopifnot("'platform_config' must be a PlatformConfig" = inherits(
           x = platform_config,
-          what = 'PlatformConfig'
+          what = "PlatformConfig"
         ))
         if ("tiledb" %in% platform_config$platforms() && "create" %in% platform_config$params()) {
-          map <- platform_config$get('tiledb', 'create')
+          map <- platform_config$get("tiledb", "create")
           for (key in map$keys()) {
             super$set(key, map$get(key))
           }
@@ -88,10 +88,12 @@ TileDBCreateOptions <- R6::R6Class(
     #' @return A two-length character vector with names of
     #' \dQuote{\code{cell_order}} and \dQuote{\code{tile_order}}
     #'
-    cell_tile_orders = function() c(
-      cell_order = self$get('cell_order'),
-      tile_order = self$get('tile_order')
-    ),
+    cell_tile_orders = function() {
+      c(
+        cell_order = self$get("cell_order"),
+        tile_order = self$get("tile_order")
+      )
+    },
 
     #' @param dim_name Name of dimension to get tiling for
     #' @param default Default tiling if \code{dim_name} is not set
@@ -120,28 +122,28 @@ TileDBCreateOptions <- R6::R6Class(
           finite = TRUE
         )
       )
-      return(private$.dim(dim_name)[['tile']] %||% default)
+      return(private$.dim(dim_name)[["tile"]] %||% default)
     },
 
     #' @return int
     #'
-    capacity = function() self$get('capacity'),
+    capacity = function() self$get("capacity"),
 
     #' @return bool
     #'
-    allows_duplicates = function() self$get('allows_duplicates'),
+    allows_duplicates = function() self$get("allows_duplicates"),
 
     #' @return int
     #'
-    dataframe_dim_zstd_level = function() self$get('dataframe_dim_zstd_level'),
+    dataframe_dim_zstd_level = function() self$get("dataframe_dim_zstd_level"),
 
     #' @return int
     #'
-    sparse_nd_array_dim_zstd_level = function() self$get('sparse_nd_array_dim_zstd_level'),
+    sparse_nd_array_dim_zstd_level = function() self$get("sparse_nd_array_dim_zstd_level"),
 
     #' @return int
     #'
-    dense_nd_array_dim_zstd_level = function() self$get('dense_nd_array_dim_zstd_level'),
+    dense_nd_array_dim_zstd_level = function() self$get("dense_nd_array_dim_zstd_level"),
 
     #' @param default Default offset filters to use if not currently set
     #'
@@ -152,7 +154,7 @@ TileDBCreateOptions <- R6::R6Class(
       stopifnot(
         "'default' must be an unnamed list" = is.list(default) && !is_named(default)
       )
-      return(private$.build_filters(self$get('offsets_filters', default = default)))
+      return(private$.build_filters(self$get("offsets_filters", default = default)))
     },
 
     #' @param default Default validity filters to use if not currently set
@@ -164,7 +166,7 @@ TileDBCreateOptions <- R6::R6Class(
       stopifnot(
         "'default' must be an unnamed list" = is.list(default) && !is_named(default)
       )
-      return(private$.build_filters(self$get('validity_filters', default = default)))
+      return(private$.build_filters(self$get("validity_filters", default = default)))
     },
 
     #' @param dim_name Name of dimension to get filters for
@@ -191,7 +193,7 @@ TileDBCreateOptions <- R6::R6Class(
           nzchar(dim_name),
         "'default' must be an unnamed list" = is.list(default) && !is_named(default)
       )
-      filters <- private$.dim(dim_name)[['filters']] %||% default
+      filters <- private$.dim(dim_name)[["filters"]] %||% default
       return(private$.build_filters(filters))
     },
 
@@ -219,17 +221,17 @@ TileDBCreateOptions <- R6::R6Class(
           nzchar(attr_name),
         "'default' must be an unnamed list" = is.list(default) && !is_named(default)
       )
-      filters <- private$.attr(attr_name)[['filters']] %||% default
+      filters <- private$.attr(attr_name)[["filters"]] %||% default
       return(private$.build_filters(filters))
     },
 
     #' @return bool
     #'
-    write_X_chunked = function() self$get('write_X_chunked'),
+    write_X_chunked = function() self$get("write_X_chunked"),
 
     #' @return int
     #'
-    goal_chunk_nnz = function() self$get('goal_chunk_nnz'),
+    goal_chunk_nnz = function() self$get("goal_chunk_nnz"),
 
     #' @description ...
     #'
@@ -242,51 +244,50 @@ TileDBCreateOptions <- R6::R6Class(
     to_list = function(build_filters = TRUE) {
       stopifnot("'build_filters' must be TRUE or FALSE" = is_scalar_logical(build_filters))
       opts <- super$to_list()
-      for (key in grep('_filters$', names(.CREATE_DEFAULTS), value = TRUE)) {
+      for (key in grep("_filters$", names(.CREATE_DEFAULTS), value = TRUE)) {
         if (is.null(opts[[key]])) {
           opts[[key]] <- .CREATE_DEFAULTS[[key]]
         }
       }
       if (isTRUE(build_filters)) {
-        for (key in grep('_filters$', names(x = opts), value = TRUE)) {
+        for (key in grep("_filters$", names(x = opts), value = TRUE)) {
           opts[[key]] <- private$.build_filters(opts[[key]])
         }
-        for (key in c('dims', 'attrs')) {
+        for (key in c("dims", "attrs")) {
           for (i in seq_along(opts[[key]])) {
-            if ('filters' %in% names(opts[[key]][[i]])) {
-              opts[[key]][[i]][['filters']] <- private$.build_filters(
-                opts[[key]][[i]][['filters']]
+            if ("filters" %in% names(opts[[key]][[i]])) {
+              opts[[key]][[i]][["filters"]] <- private$.build_filters(
+                opts[[key]][[i]][["filters"]]
               )
             }
           }
         }
-      } else {    ## ie   if (isFALSE(build_filters)) {   as build_filters is bool
-          for (key in grep('_filters$', names(opts), value = TRUE)) {
-              #spdl::trace("[tdco::to_list] _filters key is {}", key)
-              opts[[key]] <- private$.build_filters_json(opts[[key]])
+      } else { ## ie   if (isFALSE(build_filters)) {   as build_filters is bool
+        for (key in grep("_filters$", names(opts), value = TRUE)) {
+          # spdl::trace("[tdco::to_list] _filters key is {}", key)
+          opts[[key]] <- private$.build_filters_json(opts[[key]])
+        }
+        for (key in c("dims", "attrs")) {
+          json <- "{"
+          for (i in seq_along(names(opts[[key]]))) {
+            nm <- names(opts[[key]])[[i]]
+            elem <- opts[[key]][[i]]
+            if (i > 1) json <- paste0(json, ",")
+            json <- paste(json, sprintf(r"("%s": { "filters":)", nm))
+            if ("filters" %in% names(elem)) {
+              jsonflt <- private$.build_filters_json(elem[["filters"]])
+              json <- paste0(json, if (jsonflt == "") "[ ]" else jsonflt)
+            }
+            json <- paste(json, " }")
           }
-          for (key in c("dims", "attrs")) {
-              json <- "{"
-              for (i in seq_along(names(opts[[key]]))) {
-                  nm <- names(opts[[key]])[[i]]
-                  elem <- opts[[key]][[i]]
-                  if (i > 1) json <- paste0(json, ",")
-                  json <- paste(json, sprintf(r"("%s": { "filters":)", nm))
-                  if ('filters' %in% names(elem)) {
-                      jsonflt <- private$.build_filters_json(elem[['filters']])
-                      json <- paste0(json, if (jsonflt == "") "[ ]" else jsonflt)
-                  }
-                  json <- paste(json, " }")
-              }
-              json <- paste(json, "}")
-              #spdl::trace("[tdco::to_list] dim/attrs key {} -> {}", key, json)
-              opts[[key]] <- json
-          }
+          json <- paste(json, "}")
+          # spdl::trace("[tdco::to_list] dim/attrs key {} -> {}", key, json)
+          opts[[key]] <- json
+        }
       }
       return(opts)
     }
   ),
-
   private = list(
     # This is an accessor for nested things like
     #
@@ -300,7 +301,7 @@ TileDBCreateOptions <- R6::R6Class(
     #
     # @return Named list of character
     #
-    .dim = function(dim_name) self$get('dims', NULL)[[dim_name]],
+    .dim = function(dim_name) self$get("dims", NULL)[[dim_name]],
 
     # This is an accessor for nested things like
     #
@@ -348,24 +349,23 @@ TileDBCreateOptions <- R6::R6Class(
       stopifnot(
         "'item' must be a named list" = is.list(item) &&
           is_named(item, allow_empty = FALSE),
-        "'name' must be one of the names in 'item'" = 'name' %in% names(item)
+        "'name' must be one of the names in 'item'" = "name" %in% names(item)
       )
-      filter <- tiledb::tiledb_filter(item[['name']])
-      for (key in setdiff(x = names(item), y = 'name')) {
+      filter <- tiledb::tiledb_filter(item[["name"]])
+      for (key in setdiff(x = names(item), y = "name")) {
         tiledb::tiledb_filter_set_option(filter, option = key, value = item[[key]])
       }
       return(filter)
     },
-
     .build_filters_json = function(lst) {
       if (length(lst) > 1L) {
-          res <- paste0("[", paste(lapply(lst, private$.build_filter_json), collapse=", "), "]")
+        res <- paste0("[", paste(lapply(lst, private$.build_filter_json), collapse = ", "), "]")
       } else if (length(lst) == 1L) {
-          res <- private$.build_filter_json(lst[[1L]])
+        res <- private$.build_filter_json(lst[[1L]])
       } else {
-          res <- ""
+        res <- ""
       }
-      #spdl::trace("[.build_filters_json] res: {}", res)
+      # spdl::trace("[.build_filters_json] res: {}", res)
       res
     },
 
@@ -378,20 +378,22 @@ TileDBCreateOptions <- R6::R6Class(
     ## @return A JSON string describing the tiledb filter setting
     ##
     .build_filter_json = function(item) {
-        if (is.character(item) && length(item) == 1) item <- list(name = item)
-        stopifnot("'item' must be a named list" = is.list(item) && !is.null(names(item)),
-                  "'name' must be one of the names in 'item'" = 'name' %in% names(item) )
-        json <- "{ "
-        json <- paste0(json, sprintf(r"( "name": "%s")", item[[1]]))
-        if (length(item) > 1) {
-            for (j in seq(2, length(item))) {
-                key <- names(item)[[j]]
-                json <- paste0(json, sprintf(r"(, "%s": %s)", key, format(item[[key]])))
-            }
+      if (is.character(item) && length(item) == 1) item <- list(name = item)
+      stopifnot(
+        "'item' must be a named list" = is.list(item) && !is.null(names(item)),
+        "'name' must be one of the names in 'item'" = "name" %in% names(item)
+      )
+      json <- "{ "
+      json <- paste0(json, sprintf(r"( "name": "%s")", item[[1]]))
+      if (length(item) > 1) {
+        for (j in seq(2, length(item))) {
+          key <- names(item)[[j]]
+          json <- paste0(json, sprintf(r"(, "%s": %s)", key, format(item[[key]])))
         }
-        json <- paste0(json, " }")
-        #spdl::trace("[.build_filter_json] filter to json: {}", json)
-        json
+      }
+      json <- paste0(json, " }")
+      # spdl::trace("[.build_filter_json] filter to json: {}", json)
+      json
     }
   )
 )

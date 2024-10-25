@@ -22,7 +22,6 @@
 SOMASparseNDArray <- R6::R6Class(
   classname = "SOMASparseNDArray",
   inherit = SOMANDArrayBase,
-
   public = list(
 
     #' @description Reads a user-defined slice of the \code{SOMASparseNDArray}
@@ -34,11 +33,9 @@ SOMASparseNDArray <- R6::R6Class(
     #' `FALSE`, the default value) or in several iterated steps.
     #' @param log_level Optional logging level with default value of `"warn"`.
     #' @return \link{SOMASparseNDArrayRead}
-    read = function(
-      coords = NULL,
-      result_order = "auto",
-      log_level = "auto"
-    ) {
+    read = function(coords = NULL,
+                    result_order = "auto",
+                    log_level = "auto") {
       private$check_open_for_read()
       result_order <- map_query_layout(match_query_layout(result_order))
 
@@ -85,7 +82,7 @@ SOMASparseNDArray <- R6::R6Class(
       )
       if (!is.null(private$.type)) {
         rt <- r_type_from_arrow_type(private$.type)
-        if (rt == 'integer' && rlang::is_integerish(coo$x)) {
+        if (rt == "integer" && rlang::is_integerish(coo$x)) {
           coo$x <- as.integer(coo$x)
         }
       }
@@ -174,13 +171,13 @@ SOMASparseNDArray <- R6::R6Class(
         }
         bbox[[x]] <- xrange
       }
-      names(bbox) <- paste0(names(bbox), '_domain')
-      bbox_flat <- vector(mode = 'list', length = length(x = bbox) * 2L)
+      names(bbox) <- paste0(names(bbox), "_domain")
+      bbox_flat <- vector(mode = "list", length = length(x = bbox) * 2L)
       index <- 1L
       for (i in seq_along(bbox)) {
         bbox_flat[[index]] <- bbox[[i]][1L]
         bbox_flat[[index + 1L]] <- bbox[[i]][2L]
-        names(bbox_flat)[index:(index + 1L)] <- paste0(names(bbox)[i], c('_lower', '_upper'))
+        names(bbox_flat)[index:(index + 1L)] <- paste0(names(bbox)[i], c("_lower", "_upper"))
         index <- index + 2L
       }
       self$set_metadata(bbox_flat)
@@ -215,7 +212,7 @@ SOMASparseNDArray <- R6::R6Class(
 
       stopifnot(
         "'values' must be a data frame or Arrow Table" = is.data.frame(values) ||
-          inherits(values, what = 'Table'),
+          inherits(values, what = "Table"),
         "'values' must have one column for each dimension and the data" = ncol(values) == length(dnames) + 1L,
         "'values' must be named with the dimension and attribute labels" = is.null(names(values)) ||
           identical(names(values), c(dnames, attrn))
@@ -289,9 +286,7 @@ SOMASparseNDArray <- R6::R6Class(
       )
       return(invisible(self))
     }
-
   ),
-
   private = list(
     .is_sparse = TRUE,
 
@@ -318,6 +313,5 @@ SOMASparseNDArray <- R6::R6Class(
 
     # Internal marking of one or zero based matrices for iterated reads
     zero_based = NA
-
   )
 )

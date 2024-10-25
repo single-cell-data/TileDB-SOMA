@@ -1,6 +1,6 @@
 test_that("SOMACollection basics", {
   skip_if(!extended_tests())
-  uri <- tempfile(pattern="new-collection")
+  uri <- tempfile(pattern = "new-collection")
 
   # Create an empty collection
   collection <- SOMACollectionCreate(uri)
@@ -69,7 +69,7 @@ test_that("SOMACollection basics", {
 test_that("SOMACollection timestamped ops", {
   skip_if(!extended_tests())
   # Create a collection @ t0
-  uri <- tempfile(pattern="timestamped-collection")
+  uri <- tempfile(pattern = "timestamped-collection")
   collection <- SOMACollectionCreate(uri)
   expect_equal(collection$uri, uri)
   collection$close()
@@ -78,7 +78,7 @@ test_that("SOMACollection timestamped ops", {
 
   # add array A with 1 in top-left entry @ t1
   collection <- SOMACollectionOpen(uri, mode = "WRITE")
-  collection$add_new_sparse_ndarray("A", arrow::int8(), shape = c(2,2))$write(Matrix::sparseMatrix(i = 1, j = 1, x = 1, dims = c(2, 2)))
+  collection$add_new_sparse_ndarray("A", arrow::int8(), shape = c(2, 2))$write(Matrix::sparseMatrix(i = 1, j = 1, x = 1, dims = c(2, 2)))
   collection$close()
   t1 <- Sys.time()
   Sys.sleep(1.01)
@@ -106,12 +106,11 @@ test_that("SOMACollection timestamped ops", {
   expect_false("A" %in% collection$names())
   expect_error(collection$get("A"))
   collection$close()
-
 })
 
 test_that("Platform config and context are respected by add_ methods", {
   skip_if(!extended_tests())
-  uri <- tempfile(pattern="new-collection")
+  uri <- tempfile(pattern = "new-collection")
 
   # Set params in the config and context
   cfg <- PlatformConfig$new()

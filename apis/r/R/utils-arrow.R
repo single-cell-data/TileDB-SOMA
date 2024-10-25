@@ -90,7 +90,7 @@ tiledb_type_from_arrow_type <- function(x, is_dim) {
     # fixed_size_list = "fixed_size_list",
     # map_of = "map",
     # duration = "duration",
-    dictionary = tiledb_type_from_arrow_type(x$index_type, is_dim=is_dim),
+    dictionary = tiledb_type_from_arrow_type(x$index_type, is_dim = is_dim),
     stop("Unsupported Arrow data type: ", x$name, call. = FALSE)
   )
   if (is_dim && retval == "UTF8") {
@@ -150,7 +150,7 @@ arrow_type_from_tiledb_type <- function(x) {
 #'
 #' @seealso \code{\link[base]{typeof}()}
 #'
-r_type_from_arrow_type <- function(x) UseMethod('r_type_from_arrow_type')
+r_type_from_arrow_type <- function(x) UseMethod("r_type_from_arrow_type")
 
 #' @rdname r_type_from_arrow_type
 #'
@@ -192,15 +192,15 @@ r_type_from_arrow_type.DataType <- function(x) {
     dictionary = ,
     uint8 = ,
     uint16 = ,
-    uint32 = 'integer',
+    uint32 = "integer",
     int64 = ,
     uint64 = ,
     date32 = ,
     timestamp = ,
-    float = 'double',
-    bool = 'logical',
+    float = "double",
+    bool = "logical",
     utf8 = ,
-    large_utf8 = 'character',
+    large_utf8 = "character",
     x$name
   ))
 }
@@ -224,7 +224,7 @@ arrow_type_range <- function(x) {
     # float32/float
     float = c(-3.4028235e+38, 3.4028235e+38),
     # float64/double
-    double =  c(.Machine$double.xmin, .Machine$double.xmax),
+    double = c(.Machine$double.xmin, .Machine$double.xmax),
     # boolean/bool
     bool = NULL,
     # string/utf8
@@ -270,24 +270,28 @@ yoink <- function(package, symbol) {
 
 #' Create an Arrow field from a TileDB attribute
 #' @noRd
-arrow_field_from_tiledb_attr <- function(x, arrptr=NULL) {
-    stopifnot(inherits(x, "tiledb_attr"))
-    if (tiledb::tiledb_attribute_has_enumeration(x) && !is.null(arrptr)) {
-        .tiledb_array_is_open <- yoink("tiledb", "libtiledb_array_is_open")
-        if (!.tiledb_array_is_open(arrptr)) {
-            .tiledb_array_open_with_ptr <- yoink("tiledb", "libtiledb_array_open_with_ptr")
-            arrptr <- .tiledb_array_open_with_ptr(arrptr, "READ")
-        }
-        ord <- tiledb::tiledb_attribute_is_ordered_enumeration_ptr(x, arrptr)
-        idx <- arrow_type_from_tiledb_type(tiledb::datatype(x))
-        arrow::field(name = tiledb::name(x),
-                     type = arrow::dictionary(index_type=idx, ordered=ord),
-                     nullable = tiledb::tiledb_attribute_get_nullable(x))
-    } else {
-        arrow::field(name = tiledb::name(x),
-                     type = arrow_type_from_tiledb_type(tiledb::datatype(x)),
-                     nullable = tiledb::tiledb_attribute_get_nullable(x))
+arrow_field_from_tiledb_attr <- function(x, arrptr = NULL) {
+  stopifnot(inherits(x, "tiledb_attr"))
+  if (tiledb::tiledb_attribute_has_enumeration(x) && !is.null(arrptr)) {
+    .tiledb_array_is_open <- yoink("tiledb", "libtiledb_array_is_open")
+    if (!.tiledb_array_is_open(arrptr)) {
+      .tiledb_array_open_with_ptr <- yoink("tiledb", "libtiledb_array_open_with_ptr")
+      arrptr <- .tiledb_array_open_with_ptr(arrptr, "READ")
     }
+    ord <- tiledb::tiledb_attribute_is_ordered_enumeration_ptr(x, arrptr)
+    idx <- arrow_type_from_tiledb_type(tiledb::datatype(x))
+    arrow::field(
+      name = tiledb::name(x),
+      type = arrow::dictionary(index_type = idx, ordered = ord),
+      nullable = tiledb::tiledb_attribute_get_nullable(x)
+    )
+  } else {
+    arrow::field(
+      name = tiledb::name(x),
+      type = arrow_type_from_tiledb_type(tiledb::datatype(x)),
+      nullable = tiledb::tiledb_attribute_get_nullable(x)
+    )
+  }
 }
 
 #' Create a TileDB attribute from an Arrow field
@@ -305,7 +309,7 @@ tiledb_attr_from_arrow_field <- function(field, tiledb_create_options) {
     COMPRESSION_LEVEL = tiledb_create_options$dataframe_dim_zstd_level()
   )
 
-  field_type <- tiledb_type_from_arrow_type(field$type, is_dim=FALSE)
+  field_type <- tiledb_type_from_arrow_type(field$type, is_dim = FALSE)
   tiledb::tiledb_attr(
     name = field$name,
     type = field_type,
@@ -326,9 +330,9 @@ arrow_schema_from_tiledb_schema <- function(x) {
   stopifnot(inherits(x, "tiledb_array_schema"))
   dimfields <- lapply(tiledb::dimensions(x), arrow_field_from_tiledb_dim)
   if (!is.null(x@arrptr)) {
-      attfields <- lapply(tiledb::attrs(x), arrow_field_from_tiledb_attr, x@arrptr)
+    attfields <- lapply(tiledb::attrs(x), arrow_field_from_tiledb_attr, x@arrptr)
   } else {
-      attfields <- lapply(tiledb::attrs(x), arrow_field_from_tiledb_attr)
+    attfields <- lapply(tiledb::attrs(x), arrow_field_from_tiledb_attr)
   }
   arrow::schema(c(dimfields, attfields))
 }
@@ -336,7 +340,7 @@ arrow_schema_from_tiledb_schema <- function(x) {
 #' Validate external pointer to ArrowArray which is embedded in a nanoarrow S3 type
 #' @noRd
 check_arrow_pointers <- function(arrlst) {
-    stopifnot(inherits(arrlst, "nanoarrow_array"))
+  stopifnot(inherits(arrlst, "nanoarrow_array"))
 }
 
 #' Validate compatibility of Arrow data types
@@ -352,8 +356,7 @@ check_arrow_pointers <- function(arrlst) {
 #' @noRd
 check_arrow_data_types <- function(from, to) {
   stopifnot(
-    "'from' and 'to' must both be Arrow DataTypes"
-      = is_arrow_data_type(from) && is_arrow_data_type(to)
+    "'from' and 'to' must both be Arrow DataTypes" = is_arrow_data_type(from) && is_arrow_data_type(to)
   )
 
   is_string <- function(x) {
@@ -379,12 +382,9 @@ check_arrow_data_types <- function(from, to) {
 #' @noRd
 check_arrow_schema_data_types <- function(from, to) {
   stopifnot(
-    "'from' and 'to' must both be Arrow Schemas"
-      = is_arrow_schema(from) && is_arrow_schema(to),
-    "'from' and 'to' must have the same number of fields"
-      = length(from) == length(to),
-    "'from' and 'to' must have the same field names"
-      = identical(sort(names(from)), sort(names(to)))
+    "'from' and 'to' must both be Arrow Schemas" = is_arrow_schema(from) && is_arrow_schema(to),
+    "'from' and 'to' must have the same number of fields" = length(from) == length(to),
+    "'from' and 'to' must have the same field names" = identical(sort(names(from)), sort(names(to)))
   )
 
   fields <- names(from)
@@ -416,22 +416,22 @@ check_arrow_schema_data_types <- function(from, to) {
 #' Extract levels from dictionaries
 #' @importFrom tibble as_tibble
 #' @noRd
-extract_levels <- function(arrtbl, exclude_cols=c("soma_joinid")) {
-    stopifnot("Argument must be an Arrow Table object" = is_arrow_table(arrtbl))
-    nm <- names(arrtbl)                 # we go over the table column by column
-    nm <- nm[-match(exclude_cols, nm)]  # but skip soma_joinid etc as in exclude_cols
-    reslst <- vector(mode = "list", length = length(nm))
-    names(reslst) <- nm		# and fill a named list, entries default to NULL
-    for (n in nm) {
-        inftp <- arrow::infer_type(arrtbl[[n]])
-        if (inherits(inftp, "DictionaryType")) {
-            # levels() extracts the enumeration levels from the factor vector we have
-            reslst[[n]] <- levels(arrtbl[[n]]$as_vector())
-            # set 'ordered' attribute
-            attr(reslst[[n]], "ordered") <- inftp$ordered
-        }
+extract_levels <- function(arrtbl, exclude_cols = c("soma_joinid")) {
+  stopifnot("Argument must be an Arrow Table object" = is_arrow_table(arrtbl))
+  nm <- names(arrtbl) # we go over the table column by column
+  nm <- nm[-match(exclude_cols, nm)] # but skip soma_joinid etc as in exclude_cols
+  reslst <- vector(mode = "list", length = length(nm))
+  names(reslst) <- nm # and fill a named list, entries default to NULL
+  for (n in nm) {
+    inftp <- arrow::infer_type(arrtbl[[n]])
+    if (inherits(inftp, "DictionaryType")) {
+      # levels() extracts the enumeration levels from the factor vector we have
+      reslst[[n]] <- levels(arrtbl[[n]]$as_vector())
+      # set 'ordered' attribute
+      attr(reslst[[n]], "ordered") <- inftp$ordered
     }
-    reslst
+  }
+  reslst
 }
 
 
@@ -440,170 +440,172 @@ extract_levels <- function(arrtbl, exclude_cols=c("soma_joinid")) {
 #' @noRd
 get_domain_and_extent_dataframe <- function(tbl_schema, ind_col_names, domain = NULL,
                                             tdco = TileDBCreateOptions$new(PlatformConfig$new())) {
-    stopifnot("First argument must be an arrow schema" = inherits(tbl_schema, "Schema"),
-              "Second argument must be character" = is.character(ind_col_names),
-              "Second argument cannot be empty vector" = length(ind_col_names) > 0,
-              "Second argument index names must be columns in first argument" =
-                  all(is.finite(match(ind_col_names, names(tbl_schema)))),
-              "Third argument must be options wrapper" = inherits(tdco, "TileDBCreateOptions"))
-    stopifnot(
-        "domain must be NULL or a named list, with values being 2-element vectors or NULL" = is.null(domain) ||
-          ( # Check that `domain` is a list of length `length(ind_col_names)`
-            # where all values are named after `ind_col_names`
-            # and all values are `NULL` or a two-length atomic non-factor vector
-            rlang::is_list(domain, n = length(ind_col_names)) &&
-              identical(sort(names(domain)), sort(ind_col_names)) &&
-              all(vapply_lgl(
-                domain,
-                function(x) is.null(x) || (is.atomic(x) && !is.factor(x) && length(x) == 2L)
-              ))
-          )
+  stopifnot(
+    "First argument must be an arrow schema" = inherits(tbl_schema, "Schema"),
+    "Second argument must be character" = is.character(ind_col_names),
+    "Second argument cannot be empty vector" = length(ind_col_names) > 0,
+    "Second argument index names must be columns in first argument" =
+      all(is.finite(match(ind_col_names, names(tbl_schema)))),
+    "Third argument must be options wrapper" = inherits(tdco, "TileDBCreateOptions")
+  )
+  stopifnot(
+    "domain must be NULL or a named list, with values being 2-element vectors or NULL" = is.null(domain) ||
+      ( # Check that `domain` is a list of length `length(ind_col_names)`
+        # where all values are named after `ind_col_names`
+        # and all values are `NULL` or a two-length atomic non-factor vector
+        rlang::is_list(domain, n = length(ind_col_names)) &&
+          identical(sort(names(domain)), sort(ind_col_names)) &&
+          all(vapply_lgl(
+            domain,
+            function(x) is.null(x) || (is.atomic(x) && !is.factor(x) && length(x) == 2L)
+          ))
       )
+  )
 
-    rl <- sapply(ind_col_names, \(ind_col_name) {
-        ind_col <- tbl_schema$GetFieldByName(ind_col_name)
-        ind_col_type <- ind_col$type
-        ind_col_type_name <- ind_col$type$name
+  rl <- sapply(ind_col_names, \(ind_col_name) {
+    ind_col <- tbl_schema$GetFieldByName(ind_col_name)
+    ind_col_type <- ind_col$type
+    ind_col_type_name <- ind_col$type$name
 
-        ind_ext <- tdco$dim_tile(ind_col_name)
+    ind_ext <- tdco$dim_tile(ind_col_name)
 
-        # Default 2048 mods to 0 for 8-bit types and 0 is an invalid extent
-        if (ind_col$type$bit_width %||% 0L == 8L) {
-            ind_ext <- 64L
-        }
+    # Default 2048 mods to 0 for 8-bit types and 0 is an invalid extent
+    if (ind_col$type$bit_width %||% 0L == 8L) {
+      ind_ext <- 64L
+    }
 
-        # We need to subtract off extent from the max because if we don't:
+    # We need to subtract off extent from the max because if we don't:
+    #
+    # Error: [TileDB::Dimension] Error: Tile extent check failed; domain max
+    # expanded to multiple of tile extent exceeds max value representable by
+    # domain type. Reduce domain max by 1 tile extent to allow for
+    # expansion.
+    if (ind_col_name == "soma_joinid") {
+      # Must be non-negative
+      ind_max_dom <- arrow_type_unsigned_range(ind_col_type) - c(0, ind_ext)
+    } else {
+      # Others can be negative
+      ind_max_dom <- arrow_type_range(ind_col_type) - c(0, ind_ext)
+    }
+
+    requested_slot <- domain[[ind_col_name]]
+    ind_cur_dom <- if (is.null(requested_slot)) {
+      if (.new_shape_feature_flag_is_enabled()) {
+        # New shape: if the slot is null, make the size as small
+        # as possible since current domain can only be resized upward.
         #
-        # Error: [TileDB::Dimension] Error: Tile extent check failed; domain max
-        # expanded to multiple of tile extent exceeds max value representable by
-        # domain type. Reduce domain max by 1 tile extent to allow for
-        # expansion.
-        if (ind_col_name == "soma_joinid") {
-          # Must be non-negative
-          ind_max_dom <- arrow_type_unsigned_range(ind_col_type) - c(0, ind_ext)
+        # Core current-domain semantics are (lo, hi) with both
+        # inclusive, with lo <= hi. This means smallest is (0, 0)
+        # which is shape 1, not 0.
+        if (bit64::is.integer64(ind_max_dom)) {
+          c(bit64::as.integer64(0), bit64::as.integer64(0))
+        } else if (is.integer(ind_max_dom)) {
+          c(0L, 0L)
         } else {
-          # Others can be negative
-          ind_max_dom <- arrow_type_range(ind_col_type) - c(0, ind_ext)
+          c(0, 0)
         }
+      } else {
+        # Old shape: if the slot is null, make the size as large
+        # as possible since there is not current domain, and the
+        # max domain is immutable.
+        ind_max_dom
+      }
+    } else {
+      requested_slot
+    }
+    # Core supports no domain specification for variable-length dims, which
+    # includes string/binary dims.
+    if (ind_col_type_name %in% c("string", "large_utf8", "utf8")) ind_ext <- NA
 
-        requested_slot <- domain[[ind_col_name]]
-        ind_cur_dom <- if (is.null(requested_slot)) {
-          if (.new_shape_feature_flag_is_enabled()) {
-            # New shape: if the slot is null, make the size as small
-            # as possible since current domain can only be resized upward.
-            #
-            # Core current-domain semantics are (lo, hi) with both
-            # inclusive, with lo <= hi. This means smallest is (0, 0)
-            # which is shape 1, not 0.
-            if (bit64::is.integer64(ind_max_dom)) {
-              c(bit64::as.integer64(0), bit64::as.integer64(0))
-            } else if (is.integer(ind_max_dom)) {
-              c(0L, 0L)
-            } else {
-              c(0, 0)
-            }
-          } else {
-            # Old shape: if the slot is null, make the size as large
-            # as possible since there is not current domain, and the
-            # max domain is immutable.
-            ind_max_dom
+    # https://github.com/single-cell-data/TileDB-SOMA/issues/2407
+    if (.new_shape_feature_flag_is_enabled()) {
+      if (ind_col_type_name %in% c("string", "utf8", "large_utf8")) {
+        aa <- if (is.null(requested_slot)) {
+          arrow::arrow_array(c("", "", "", "", ""), ind_col_type)
+        } else {
+          arrow::arrow_array(c("", "", "", requested_slot[[1]], requested_slot[[2]]), ind_col_type)
+        }
+      } else {
+        # If they wanted (0, 99) then extent must be at most 100.
+        # This is tricky though. Some cases:
+        # * lo = 0, hi = 99, extent = 1000
+        #   We look at hi - lo + 1; resize extent down to 100
+        # * lo = 1000, hi = 1099, extent = 1000
+        #   We look at hi - lo + 1; resize extent down to 100
+        # * lo = min for datatype, hi = max for datatype
+        #   We get integer overflow trying to compute hi - lo + 1
+        # So if lo <= 0 and hi >= ind_ext, this is fine without
+        # computing hi - lo + 1.
+        lo <- ind_max_dom[[1]]
+        hi <- ind_max_dom[[2]]
+        if (lo > 0 || hi < ind_ext) {
+          dom_span <- hi - lo + 1
+          if (ind_ext > dom_span) {
+            ind_ext <- dom_span
           }
-        } else {
-          requested_slot
         }
-        # Core supports no domain specification for variable-length dims, which
-        # includes string/binary dims.
-        if (ind_col_type_name %in% c("string", "large_utf8", "utf8")) ind_ext <- NA
-
-        # https://github.com/single-cell-data/TileDB-SOMA/issues/2407
-        if (.new_shape_feature_flag_is_enabled()) {
-            if (ind_col_type_name %in% c("string", "utf8", "large_utf8")) {
-                aa <- if (is.null(requested_slot)) {
-                  arrow::arrow_array(c("", "", "", "", ""), ind_col_type)
-                } else {
-                  arrow::arrow_array(c("", "", "", requested_slot[[1]], requested_slot[[2]]), ind_col_type)
-                }
-            } else {
-                # If they wanted (0, 99) then extent must be at most 100.
-                # This is tricky though. Some cases:
-                # * lo = 0, hi = 99, extent = 1000
-                #   We look at hi - lo + 1; resize extent down to 100
-                # * lo = 1000, hi = 1099, extent = 1000
-                #   We look at hi - lo + 1; resize extent down to 100
-                # * lo = min for datatype, hi = max for datatype
-                #   We get integer overflow trying to compute hi - lo + 1
-                # So if lo <= 0 and hi >= ind_ext, this is fine without
-                # computing hi - lo + 1.
-                lo <- ind_max_dom[[1]]
-                hi <- ind_max_dom[[2]]
-                if (lo > 0 || hi < ind_ext) {
-                  dom_span <- hi - lo + 1
-                  if (ind_ext > dom_span) {
-                    ind_ext <- dom_span
-                  }
-                }
-                aa <- arrow::arrow_array(c(ind_max_dom, ind_ext, ind_cur_dom), ind_col_type)
-            }
-        } else {
-            if (ind_col_type_name %in% c("string", "utf8", "large_utf8")) {
-                aa <- arrow::arrow_array(c("", "", ""), ind_col_type)
-            } else {
-                # Same comments as above
-                lo <- ind_cur_dom[[1]]
-                hi <- ind_cur_dom[[2]]
-                if (lo > 0 || hi < ind_ext) {
-                  dom_span <- hi - lo + 1
-                  if (ind_ext > dom_span) {
-                    ind_ext <- dom_span
-                  }
-                }
-                aa <- arrow::arrow_array(c(ind_cur_dom, ind_ext), ind_col_type)
-            }
+        aa <- arrow::arrow_array(c(ind_max_dom, ind_ext, ind_cur_dom), ind_col_type)
+      }
+    } else {
+      if (ind_col_type_name %in% c("string", "utf8", "large_utf8")) {
+        aa <- arrow::arrow_array(c("", "", ""), ind_col_type)
+      } else {
+        # Same comments as above
+        lo <- ind_cur_dom[[1]]
+        hi <- ind_cur_dom[[2]]
+        if (lo > 0 || hi < ind_ext) {
+          dom_span <- hi - lo + 1
+          if (ind_ext > dom_span) {
+            ind_ext <- dom_span
+          }
         }
+        aa <- arrow::arrow_array(c(ind_cur_dom, ind_ext), ind_col_type)
+      }
+    }
 
-        aa
-    })
-    names(rl) <- ind_col_names
-    dom_ext_tbl <- do.call(arrow::arrow_table, rl)
-    dom_ext_tbl
+    aa
+  })
+  names(rl) <- ind_col_names
+  dom_ext_tbl <- do.call(arrow::arrow_table, rl)
+  dom_ext_tbl
 }
 
 #' Domain and extent table creation helper for array writes returning a Table with
 #' a column per dimension for the given (incoming) arrow schema of a Table
 #' @noRd
 get_domain_and_extent_array <- function(shape, is_sparse) {
-    stopifnot("First argument must be vector of positive values" = is.vector(shape) && all(shape > 0))
-    indvec <- seq_len(length(shape)) - 1   # sequence 0, ..., length()-1
-    rl <- sapply(indvec, \(ind) {
-        ind_col <- sprintf("soma_dim_%d", ind)
-        ind_col_type <- arrow::int64()
+  stopifnot("First argument must be vector of positive values" = is.vector(shape) && all(shape > 0))
+  indvec <- seq_len(length(shape)) - 1 # sequence 0, ..., length()-1
+  rl <- sapply(indvec, \(ind) {
+    ind_col <- sprintf("soma_dim_%d", ind)
+    ind_col_type <- arrow::int64()
 
-        # TODO:  this function needs to take a
-        # TileDBCreateOptions$new(PlatformConfig option as
-        # get_domain_and_extent_dataframe does.
-        # https://github.com/single-cell-data/TileDB-SOMA/issues/2966
-        # For now, the core extent is not taken from the platform_config.
-        ind_ext <- shape[ind+1]
+    # TODO:  this function needs to take a
+    # TileDBCreateOptions$new(PlatformConfig option as
+    # get_domain_and_extent_dataframe does.
+    # https://github.com/single-cell-data/TileDB-SOMA/issues/2966
+    # For now, the core extent is not taken from the platform_config.
+    ind_ext <- shape[ind + 1]
 
-        ind_cur_dom <- c(0L, shape[ind+1] - 1L)
+    ind_cur_dom <- c(0L, shape[ind + 1] - 1L)
 
-        # We need to do this because if we don't:
-        #
-        # Error: [TileDB::Dimension] Error: Tile extent check failed; domain max
-        # expanded to multiple of tile extent exceeds max value representable by
-        # domain type. Reduce domain max by 1 tile extent to allow for
-        # expansion.
-        ind_max_dom <- arrow_type_unsigned_range(ind_col_type) - c(0,ind_ext)
+    # We need to do this because if we don't:
+    #
+    # Error: [TileDB::Dimension] Error: Tile extent check failed; domain max
+    # expanded to multiple of tile extent exceeds max value representable by
+    # domain type. Reduce domain max by 1 tile extent to allow for
+    # expansion.
+    ind_max_dom <- arrow_type_unsigned_range(ind_col_type) - c(0, ind_ext)
 
-        if (.new_shape_feature_flag_is_enabled() && (is_sparse || .dense_arrays_can_have_current_domain())) {
-            aa <- arrow::arrow_array(c(ind_max_dom, ind_ext, ind_cur_dom), ind_col_type)
-        } else {
-            aa <- arrow::arrow_array(c(ind_cur_dom, ind_ext), ind_col_type)
-        }
+    if (.new_shape_feature_flag_is_enabled() && (is_sparse || .dense_arrays_can_have_current_domain())) {
+      aa <- arrow::arrow_array(c(ind_max_dom, ind_ext, ind_cur_dom), ind_col_type)
+    } else {
+      aa <- arrow::arrow_array(c(ind_cur_dom, ind_ext), ind_col_type)
+    }
 
-        aa
-    })
-    names(rl) <- sprintf("soma_dim_%d", indvec)
-    dom_ext_tbl <- do.call(arrow::arrow_table, rl)
-    dom_ext_tbl
+    aa
+  })
+  names(rl) <- sprintf("soma_dim_%d", indvec)
+  dom_ext_tbl <- do.call(arrow::arrow_table, rl)
+  dom_ext_tbl
 }

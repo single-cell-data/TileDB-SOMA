@@ -10,7 +10,7 @@
 #' @noMd
 #'
 ConfigList <- R6::R6Class(
-  classname = 'ConfigList',
+  classname = "ConfigList",
   inherit = MappingBase,
   public = list(
     #' @param param Outer key or \dQuote{parameter} to fetch
@@ -54,7 +54,7 @@ ConfigList <- R6::R6Class(
         "'param' must be a single character" = is_scalar_character(param)
       )
       parammap <- super$get(key = param, default = ScalarMap$new())
-      if (missing(key) && inherits(x = value, what = 'ScalarMap')) {
+      if (missing(key) && inherits(x = value, what = "ScalarMap")) {
         parammap$update(map = value)
         super$set(key = param, value = parammap)
         return(invisible(x = self))

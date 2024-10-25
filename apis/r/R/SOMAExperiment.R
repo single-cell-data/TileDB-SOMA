@@ -7,7 +7,7 @@
 #'
 #' @templateVar class SOMAExperiment
 #' @template section-add-object-to-collection
- #' @param row_index_name An optional scalar character. If provided, and if
+#' @param row_index_name An optional scalar character. If provided, and if
 #' the `values` argument is a `data.frame` with row names, then the row
 #' names will be extracted and added as a new column to the `data.frame`
 #' prior to performing the update. The name of this new column will be set
@@ -17,7 +17,6 @@
 SOMAExperiment <- R6::R6Class(
   classname = "SOMAExperiment",
   inherit = SOMACollectionBase,
-
   public = list(
     #' @description Subset and extract data from a [`SOMAMeasurement`] by
     #' querying the `obs`/`var` axes.
@@ -58,7 +57,6 @@ SOMAExperiment <- R6::R6Class(
       self$ms$get(measurement_name)$var$update(values, row_index_name)
     }
   ),
-
   active = list(
     #' @field obs a [`SOMADataFrame`] containing primary annotations on the
     #' observation axis. The contents of the `soma_joinid` column define the

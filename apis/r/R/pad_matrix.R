@@ -10,7 +10,7 @@
 #'
 #' @noRd
 pad_matrix <- function(x, ...) {
-  UseMethod(generic = 'pad_matrix', object = x)
+  UseMethod(generic = "pad_matrix", object = x)
 }
 
 #' Pad a sparse Matrix with additional rows or columns
@@ -36,11 +36,10 @@ pad_matrix.default <- function(x, rownames = NULL, colnames = NULL, ...) {
     dgCMatrix = "C",
     dgRMatrix = "R",
     stop("Untested Matrix object representation")
-
   )
   new_rownames <- setdiff(rownames, rownames(x))
   new_colnames <- setdiff(colnames, colnames(x))
-  dtype <- typeof(methods::slot(object = x, name = 'x'))
+  dtype <- typeof(methods::slot(object = x, name = "x"))
   if (!is_empty(new_rownames)) {
     rpad <- Matrix::sparseMatrix(
       i = integer(0L),
@@ -80,19 +79,22 @@ pad_matrix.matrix <- function(x, rowidx, colidx, shape, sparse = FALSE, ...) {
     is_scalar_logical(sparse)
   )
   if (!all(rowidx) <= shape[1L]) {
-    stop('rowidx')
+    stop("rowidx")
   } else if (!all(colidx <= shape[2L])) {
-    stop('colidx')
+    stop("colidx")
   }
   type <- typeof(x)
-  type <- match.arg(arg = type, choices = c('integer', 'double', 'logical'))
+  type <- match.arg(arg = type, choices = c("integer", "double", "logical"))
   mat <- if (isTRUE(sparse)) {
     Matrix::sparseMatrix(
       i = integer(),
       j = integer(),
-      x = switch(EXPR = type, logical = logical(), numeric()),
+      x = switch(EXPR = type,
+        logical = logical(),
+        numeric()
+      ),
       dims = shape,
-      repr = 'T'
+      repr = "T"
     )
   } else {
     matrix(

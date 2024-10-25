@@ -34,7 +34,6 @@ SOMAAxisIndexer <- R6::R6Class("SOMAAxisIndexer",
       )
     }
   ),
-
   private = list(
     .cached_obs = NULL,
     .cached_var = NULL,
@@ -55,7 +54,6 @@ SOMAAxisIndexer <- R6::R6Class("SOMAAxisIndexer",
       }
       private$.cached_var
     },
-
     .validate_coords = function(coords) {
       stopifnot(
         "'coords' must be a numeric vector or arrow Array" =

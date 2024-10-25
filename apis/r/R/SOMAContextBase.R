@@ -8,7 +8,7 @@
 #' @export
 
 SOMAContextBase <- R6::R6Class(
-  classname = 'SOMAContextBase',
+  classname = "SOMAContextBase",
   inherit = ScalarMap,
   public = list(
     #' @template param-config
@@ -18,13 +18,13 @@ SOMAContextBase <- R6::R6Class(
     initialize = function(config = NULL) {
       calls <- vapply_char(
         X = lapply(X = sys.calls(), FUN = as.character),
-        FUN = '[[',
+        FUN = "[[",
         1L
       )
-      if ('SOMAContextBase$new' %in% calls) {
+      if ("SOMAContextBase$new" %in% calls) {
         stop(
-            "'SOMAContextBase' is a virtual class and cannot be instantiated directly",
-            call. = FALSE
+          "'SOMAContextBase' is a virtual class and cannot be instantiated directly",
+          call. = FALSE
         )
       }
       super$initialize()
@@ -70,6 +70,6 @@ SOMAContextBase <- R6::R6Class(
 
 .SOMA_CONTEXTS <- function() {
   return(c(
-    member_uris_are_relative = 'logical'
+    member_uris_are_relative = "logical"
   ))
 }

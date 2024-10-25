@@ -12,7 +12,6 @@
 SOMADataFrame <- R6::R6Class(
   classname = "SOMADataFrame",
   inherit = SOMAArrayBase,
-
   public = list(
 
     #' @description Create (lifecycle: maturing)
@@ -31,16 +30,16 @@ SOMADataFrame <- R6::R6Class(
     #' @template param-platform-config
     #' @param internal_use_only Character value to signal this is a 'permitted' call,
     #' as `create()` is considered internal and should not be called directly.
-    create = function(
-      schema,
-      index_column_names = c("soma_joinid"),
-      domain = NULL,
-      platform_config = NULL,
-      internal_use_only = NULL
-    ) {
+    create = function(schema,
+                      index_column_names = c("soma_joinid"),
+                      domain = NULL,
+                      platform_config = NULL,
+                      internal_use_only = NULL) {
       if (is.null(internal_use_only) || internal_use_only != "allowed_use") {
-        stop(paste("Use of the create() method is for internal use only. Consider using a",
-                   "factory method as e.g. 'SOMADataFrameCreate()'."), call. = FALSE)
+        stop(paste(
+          "Use of the create() method is for internal use only. Consider using a",
+          "factory method as e.g. 'SOMADataFrameCreate()'."
+        ), call. = FALSE)
       }
       schema <- private$validate_schema(schema, index_column_names)
 
@@ -59,8 +58,10 @@ SOMADataFrame <- R6::R6Class(
       )
 
       attr_column_names <- setdiff(schema$names, index_column_names)
-      stopifnot("At least one non-index column must be defined in the schema" =
-                length(attr_column_names) > 0)
+      stopifnot(
+        "At least one non-index column must be defined in the schema" =
+          length(attr_column_names) > 0
+      )
 
       # Parse the tiledb/create/ subkeys of the platform_config into a handy,
       # typed, queryable data structure.
@@ -121,10 +122,10 @@ SOMADataFrame <- R6::R6Class(
 
       schema_names <- c(self$dimnames(), self$attrnames())
       col_names <- if (is_arrow_record_batch(values)) {
-                       arrow::as_arrow_table(values)$ColumnNames()
-                   } else {
-                       values$ColumnNames()
-                   }
+        arrow::as_arrow_table(values)$ColumnNames()
+      } else {
+        values$ColumnNames()
+      }
       stopifnot(
         "'values' must be an Arrow Table or RecordBatch" =
           (is_arrow_table(values) || is_arrow_record_batch(values)),
@@ -174,43 +175,49 @@ SOMADataFrame <- R6::R6Class(
                     result_order = "auto",
                     iterated = FALSE,
                     log_level = "auto") {
-
       private$check_open_for_read()
 
       result_order <- match_query_layout(result_order)
 
       ## if unnamed set names
       if (!is.null(coords)) {
-          if (!is.list(coords))
-              coords <- list(coords)
-          if (is.null(names(coords)))
-              names(coords) <- self$dimnames()
+        if (!is.list(coords)) {
+          coords <- list(coords)
+        }
+        if (is.null(names(coords))) {
+          names(coords) <- self$dimnames()
+        }
       }
 
       stopifnot(
-          ## check columns
-          "'column_names' must only contain valid dimension or attribute columns" =
-              is.null(column_names) || all(column_names %in% c(self$dimnames(), self$attrnames()))
+        ## check columns
+        "'column_names' must only contain valid dimension or attribute columns" =
+          is.null(column_names) || all(column_names %in% c(self$dimnames(), self$attrnames()))
       )
 
       coords <- validate_read_coords(coords, dimnames = self$dimnames(), schema = self$schema())
 
       if (!is.null(value_filter)) {
-          value_filter <- validate_read_value_filter(value_filter)
-          parsed <- do.call(
-              what = parse_query_condition,
-              args = list(expr = value_filter, schema = self$schema(), somactx = private$.soma_context))
-          value_filter <- parsed@ptr
+        value_filter <- validate_read_value_filter(value_filter)
+        parsed <- do.call(
+          what = parse_query_condition,
+          args = list(expr = value_filter, schema = self$schema(), somactx = private$.soma_context)
+        )
+        value_filter <- parsed@ptr
       }
-      spdl::debug("[SOMADataFrame$read] calling sr_setup for {} at ({},{})", self$uri,
-                  private$tiledb_timestamp[1], private$tiledb_timestamp[2])
-      sr <- sr_setup(uri = self$uri,
-                     private$.soma_context,
-                     colnames = column_names,
-                     qc = value_filter,
-                     dim_points = coords,
-                     timestamprange = self$.tiledb_timestamp_range,  # NULL or two-elem vector
-                     loglevel = log_level)
+      spdl::debug(
+        "[SOMADataFrame$read] calling sr_setup for {} at ({},{})", self$uri,
+        private$tiledb_timestamp[1], private$tiledb_timestamp[2]
+      )
+      sr <- sr_setup(
+        uri = self$uri,
+        private$.soma_context,
+        colnames = column_names,
+        qc = value_filter,
+        dim_points = coords,
+        timestamprange = self$.tiledb_timestamp_range, # NULL or two-elem vector
+        loglevel = log_level
+      )
       TableReadIter$new(sr)
     },
 
@@ -237,7 +244,6 @@ SOMADataFrame <- R6::R6Class(
     #' prior to performing the update. The name of this new column will be set
     #' to the value specified by `row_index_name`.
     update = function(values, row_index_name = NULL) {
-
       private$check_open_for_write()
       stopifnot(
         "'values' must be a data.frame, Arrow Table or RecordBatch" =
@@ -314,7 +320,6 @@ SOMADataFrame <- R6::R6Class(
 
       # Add columns
       for (add_col in add_cols) {
-
         col_type <- new_schema$GetFieldByName(add_col)$type
 
         if (inherits(col_type, "DictionaryType")) {
@@ -356,20 +361,24 @@ SOMADataFrame <- R6::R6Class(
     #'
     #' @return None, instead a \code{\link{.NotYetImplemented}()} error is raised
     #'
-    shape = function() stop(errorCondition(
-      "'SOMADataFrame$shape()' is not implemented yet",
-      class = 'notYetImplementedError'
-    )),
+    shape = function() {
+      stop(errorCondition(
+        "'SOMADataFrame$shape()' is not implemented yet",
+        class = "notYetImplementedError"
+      ))
+    },
 
     #' @description Retrieve the maxshape; as \code{SOMADataFrames} are shapeless,
     #' simply raises an error
     #'
     #' @return None, instead a \code{\link{.NotYetImplemented}()} error is raised
     #'
-    maxshape = function() stop(errorCondition(
-      "'SOMADataFrame$maxshape()' is not implemented",
-      class = 'notYetImplementedError'
-    )),
+    maxshape = function() {
+      stop(errorCondition(
+        "'SOMADataFrame$maxshape()' is not implemented",
+        class = "notYetImplementedError"
+      ))
+    },
 
     #' @description Returns a named list of minimum/maximum pairs, one per index
     #' column, currently storable on each index column of the dataframe. These
@@ -380,7 +389,10 @@ SOMADataFrame <- R6::R6Class(
       as.list(
         arrow::as_record_batch(
           arrow::as_arrow_table(
-            domain(self$uri, private$.soma_context))))
+            domain(self$uri, private$.soma_context)
+          )
+        )
+      )
     },
 
     #' @description Returns a named list of minimum/maximum pairs, one per index
@@ -392,7 +404,10 @@ SOMADataFrame <- R6::R6Class(
       as.list(
         arrow::as_record_batch(
           arrow::as_arrow_table(
-            maxdomain(self$uri, private$.soma_context))))
+            maxdomain(self$uri, private$.soma_context)
+          )
+        )
+      )
     },
 
     #' @description Returns TRUE if the array has the upgraded resizeable domain
@@ -417,8 +432,7 @@ SOMADataFrame <- R6::R6Class(
     #' @return No return value
     tiledbsoma_resize_soma_joinid_shape = function(new_shape) {
       stopifnot("'new_shape' must be an integer" = rlang::is_integerish(new_shape, n = 1) ||
-        (bit64::is.integer64(new_shape) && length(new_shape) == 1)
-      )
+        (bit64::is.integer64(new_shape) && length(new_shape) == 1))
       # Checking slotwise new shape >= old shape, and <= max_shape, is already done in libtiledbsoma
       invisible(
         resize_soma_joinid_shape(
@@ -491,9 +505,7 @@ SOMADataFrame <- R6::R6Class(
         )
       )
     }
-
   ),
-
   private = list(
 
     # @description Validate schema (lifecycle: maturing)
@@ -506,7 +518,7 @@ SOMADataFrame <- R6::R6Class(
         "'schema' must be a valid Arrow schema" =
           is_arrow_schema(schema),
         "'index_column_names' must be a non-empty character vector" =
-            is.character(index_column_names) && length(index_column_names) > 0,
+          is.character(index_column_names) && length(index_column_names) > 0,
         "All 'index_column_names' must be defined in the 'schema'" =
           assert_subset(index_column_names, schema$names, "indexed field"),
         "Column names must not start with reserved prefix 'soma_'" =

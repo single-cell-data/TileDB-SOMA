@@ -11,7 +11,7 @@
 #' @noMd
 #'
 PlatformConfig <- R6::R6Class(
-  classname = 'PlatformConfig',
+  classname = "PlatformConfig",
   inherit = MappingBase,
   public = list(
     #' @return The names of the \dQuote{platforms} (outer keys)
@@ -62,12 +62,10 @@ PlatformConfig <- R6::R6Class(
     #' @return The value of \code{key} for \code{param} in \code{platform} in the
     #' map, or \code{default} if \code{key} is not found
     #'
-    get = function(
-      platform,
-      param = NULL,
-      key = NULL,
-      default = quote(expr = )
-    ) {
+    get = function(platform,
+                   param = NULL,
+                   key = NULL,
+                   default = quote(expr = )) {
       if (!length(self)) {
         warning("No platforms configured", call. = FALSE)
         return(NULL)

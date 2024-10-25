@@ -8,7 +8,6 @@
 SOMACollectionBase <- R6::R6Class(
   classname = "SOMACollectionBase",
   inherit = TileDBGroup,
-
   public = list(
 
     #' @description Create a new `SOMACollection`. (lifecycle: maturing)
@@ -21,9 +20,11 @@ SOMACollectionBase <- R6::R6Class(
     #' as `new()` is considered internal and should not be called directly.
     initialize = function(uri, platform_config = NULL, tiledbsoma_ctx = NULL, tiledb_timestamp = NULL,
                           internal_use_only = NULL) {
-      super$initialize(uri=uri, platform_config=platform_config,
-                       tiledbsoma_ctx=tiledbsoma_ctx, tiledb_timestamp = tiledb_timestamp,
-                       internal_use_only=internal_use_only)
+      super$initialize(
+        uri = uri, platform_config = platform_config,
+        tiledbsoma_ctx = tiledbsoma_ctx, tiledb_timestamp = tiledb_timestamp,
+        internal_use_only = internal_use_only
+      )
     },
 
     #' @description Add a new SOMA object to the collection. (lifecycle: maturing)
@@ -31,8 +32,10 @@ SOMACollectionBase <- R6::R6Class(
     #' as `create()` is considered internal and should not be called directly.
     create = function(internal_use_only = NULL) {
       if (is.null(internal_use_only) || internal_use_only != "allowed_use") {
-        stop(paste("Use of the create() method is for internal use only. Consider using a",
-                   "factory method as e.g. 'SOMACollectionCreate()'."), call. = FALSE)
+        stop(paste(
+          "Use of the create() method is for internal use only. Consider using a",
+          "factory method as e.g. 'SOMACollectionCreate()'."
+        ), call. = FALSE)
       }
       super$create(internal_use_only = internal_use_only)
 
@@ -106,7 +109,7 @@ SOMACollectionBase <- R6::R6Class(
         internal_use_only = "allowed_use"
       )
 
-      sdf$create(schema, index_column_names=index_column_names, domain=domain, internal_use_only = "allowed_use")
+      sdf$create(schema, index_column_names = index_column_names, domain = domain, internal_use_only = "allowed_use")
       super$set(sdf, key)
       sdf
     },
@@ -150,9 +153,7 @@ SOMACollectionBase <- R6::R6Class(
       super$set(ndarr, key)
       ndarr
     }
-
   ),
-
   active = list(
     #' @field soma_type Retrieve the SOMA object type.
     soma_type = function(value) {
@@ -163,12 +164,10 @@ SOMACollectionBase <- R6::R6Class(
       private$soma_type_cache
     }
   ),
-
   private = list(
 
     # Cache object's SOMA_OBJECT_TYPE_METADATA_KEY
     soma_type_cache = NULL,
-
     update_soma_type_cache = function() {
       private$soma_type_cache <- self$get_metadata(SOMA_OBJECT_TYPE_METADATA_KEY)
     },
@@ -195,9 +194,9 @@ SOMACollectionBase <- R6::R6Class(
       # We have to use the appropriate TileDB base class to read the soma_type
       # from the object's metadata so we know which SOMA class to instantiate
       tiledbsoma_constructor <- switch(type,
-        ARRAY     = TileDBArray$new,
+        ARRAY = TileDBArray$new,
         SOMAArray = TileDBArray$new,
-        GROUP     = TileDBGroup$new,
+        GROUP = TileDBGroup$new,
         SOMAGroup = TileDBGroup$new,
         stop(sprintf("Unknown member TileDB type: %s", type), call. = FALSE)
       )
@@ -249,7 +248,9 @@ SOMACollectionBase <- R6::R6Class(
     get_or_set_soma_field = function(value, name, expected_class) {
       private$check_open_for_read_or_write()
 
-      if (missing(value)) return(self$get(name))
+      if (missing(value)) {
+        return(self$get(name))
+      }
 
       stopifnot(
         "Must define 'name' of the field to set" = !missing(name),

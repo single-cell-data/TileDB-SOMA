@@ -16,14 +16,12 @@ BlockwiseReadIterBase <- R6::R6Class(
     #' @template param-coords-iter
     #' @template param-dots-ignored
     #'
-    initialize = function(
-      sr,
-      array,
-      coords,
-      axis,
-      ...,
-      reindex_disable_on_axis = NA
-    ) {
+    initialize = function(sr,
+                          array,
+                          coords,
+                          axis,
+                          ...,
+                          reindex_disable_on_axis = NA) {
       super$initialize(sr)
       stopifnot(
         "'array' must be a 'SOMASparseNDArray'" = inherits(array, "SOMASparseNDArray")
@@ -99,8 +97,10 @@ BlockwiseReadIterBase <- R6::R6Class(
     #'
     #' @return \code{TRUE} if read is complete, otherwise \code{FALSE}
     #'
-    read_complete = function() !self$coords_axis$has_next() ||
-      is.null(private$soma_reader_pointer),
+    read_complete = function() {
+      !self$coords_axis$has_next() ||
+        is.null(private$soma_reader_pointer)
+    },
     #' @description Read the next chunk of the iterated read. If read
     #' is complete, throws an \code{iterationCompleteWarning} warning and
     #' returns \code{NULL}
@@ -109,7 +109,7 @@ BlockwiseReadIterBase <- R6::R6Class(
     #'
     read_next = function() {
       if (is.null(private$soma_reader_pointer)) {
-       return(NULL)
+        return(NULL)
       }
       if (self$read_complete()) {
         return(private$.readComplete())
@@ -156,8 +156,10 @@ BlockwiseReadIterBase <- R6::R6Class(
     #' @field reindexable Shorthand to see if this iterator is poised to be
     #' re-indexed or not
     #'
-    reindexable = function() length(self$axes_to_reindex) ||
-      !bit64::as.integer64(self$axis) %in% self$reindex_disable_on_axis
+    reindexable = function() {
+      length(self$axes_to_reindex) ||
+        !bit64::as.integer64(self$axis) %in% self$reindex_disable_on_axis
+    }
   ),
   private = list(
     .array = NULL,
@@ -168,10 +170,12 @@ BlockwiseReadIterBase <- R6::R6Class(
     .reindexers = list(),
     # @description Throw an error saying that re-indexed
     # iterators are not concatenatable
-    .notConcatenatable = function() stop(errorCondition(
-      message = "Re-indexed blockwise iterators are not concatenatable",
-      class = "notConcatenatableError"
-    )),
+    .notConcatenatable = function() {
+      stop(errorCondition(
+        message = "Re-indexed blockwise iterators are not concatenatable",
+        class = "notConcatenatableError"
+      ))
+    },
     # @description Reset internal state of SOMA Reader while keeping array open
     reset = function() {
       if (is.null(private$soma_reader_pointer)) {
@@ -183,7 +187,7 @@ BlockwiseReadIterBase <- R6::R6Class(
     # @description Re-index an Arrow table
     reindex_arrow_table = function(tbl) {
       stopifnot(
-        "'tbl' must be an Arrow table" = R6::is.R6(tbl) && inherits(tbl, 'Table')
+        "'tbl' must be an Arrow table" = R6::is.R6(tbl) && inherits(tbl, "Table")
       )
       dname <- self$array$dimnames()[self$axis + 1L]
       if (!dname %in% names(tbl)) {
@@ -289,15 +293,13 @@ BlockwiseSparseReadIter <- R6::R6Class(
     #' @template param-dots-ignored
     #' @template param-repr-read
     #'
-    initialize = function(
-      sr,
-      array,
-      coords,
-      axis,
-      ...,
-      repr = "T",
-      reindex_disable_on_axis = NA
-    ) {
+    initialize = function(sr,
+                          array,
+                          coords,
+                          axis,
+                          ...,
+                          repr = "T",
+                          reindex_disable_on_axis = NA) {
       super$initialize(
         sr,
         array,
@@ -310,9 +312,9 @@ BlockwiseSparseReadIter <- R6::R6Class(
         "Sparse reads only work with two-dimensional arrays" = self$array$ndim() == 2L
       )
       reprs <- c(
-        'T',
-        if (!bit64::as.integer64(0L) %in% self$reindex_disable_on_axis)'R',
-        if (!bit64::as.integer64(1L) %in% self$reindex_disable_on_axis) 'C'
+        "T",
+        if (!bit64::as.integer64(0L) %in% self$reindex_disable_on_axis) "R",
+        if (!bit64::as.integer64(1L) %in% self$reindex_disable_on_axis) "C"
       )
       private$.repr <- match.arg(repr, choices = reprs)
       private$.shape <- sapply(coords, length)

@@ -1,12 +1,11 @@
 # Returns the object created, populated, and closed (unless otherwise requested)
 create_and_populate_soma_dataframe <- function(
-  uri,
-  nrows = 10L,
-  seed = 1,
-  index_column_names = "int_column",
-  factors = FALSE,
-  mode = NULL
-) {
+    uri,
+    nrows = 10L,
+    seed = 1,
+    index_column_names = "int_column",
+    factors = FALSE,
+    mode = NULL) {
   set.seed(seed)
 
   tbl <- create_arrow_table(nrows = nrows, factors = factors)
@@ -38,12 +37,11 @@ create_and_populate_soma_dataframe <- function(
 
 # Returns the object created, populated, and closed (unless otherwise requested)
 create_and_populate_obs <- function(
-  uri,
-  nrows = 10L,
-  seed = 1,
-  factors = FALSE,
-  mode = NULL
-) {
+    uri,
+    nrows = 10L,
+    seed = 1,
+    factors = FALSE,
+    mode = NULL) {
   create_and_populate_soma_dataframe(
     uri = uri,
     nrows = nrows,
@@ -56,13 +54,11 @@ create_and_populate_obs <- function(
 
 # Returns the object created, populated, and closed (unless otherwise requested)
 create_and_populate_var <- function(
-  uri,
-  nrows = 10L,
-  seed = 1,
-  factors = FALSE,
-  mode = NULL
-) {
-
+    uri,
+    nrows = 10L,
+    seed = 1,
+    factors = FALSE,
+    mode = NULL) {
   tbl <- arrow::arrow_table(
     soma_joinid = bit64::seq.integer64(from = 0L, to = nrows - 1L),
     quux = as.character(seq.int(nrows) + 1000L),
@@ -144,19 +140,17 @@ create_and_populate_sparse_nd_array <- function(uri, mode = NULL, ...) {
 #' prevent creation of `varp` layers
 #'
 create_and_populate_experiment <- function(
-  uri,
-  n_obs,
-  n_var,
-  X_layer_names,
-  obsm_layers = NULL,
-  varm_layers = NULL,
-  obsp_layer_names = NULL,
-  varp_layer_names = NULL,
-  config = NULL,
-  factors = FALSE,
-  mode = NULL
-) {
-
+    uri,
+    n_obs,
+    n_var,
+    X_layer_names,
+    obsm_layers = NULL,
+    varm_layers = NULL,
+    obsp_layer_names = NULL,
+    varp_layer_names = NULL,
+    config = NULL,
+    factors = FALSE,
+    mode = NULL) {
   stopifnot(
     "'obsm_layers' must be a named integer vector" = is.null(obsm_layers) ||
       (rlang::is_integerish(obsm_layers) && rlang::is_named(obsm_layers) && all(obsm_layers > 0L)),
@@ -200,9 +194,9 @@ create_and_populate_experiment <- function(
   if (rlang::is_integerish(obsm_layers)) {
     obsm <- SOMACollectionCreate(file.path(ms_rna$uri, "obsm"))
     for (layer in names(obsm_layers)) {
-      key <- gsub(pattern = '^dense:', replacement = '', x = layer)
+      key <- gsub(pattern = "^dense:", replacement = "", x = layer)
       shape <- c(n_obs, obsm_layers[layer])
-      if (grepl(pattern = '^dense:', x = layer)) {
+      if (grepl(pattern = "^dense:", x = layer)) {
         obsm$add_new_dense_ndarray(
           key = key,
           type = arrow::int32(),
@@ -232,9 +226,9 @@ create_and_populate_experiment <- function(
   if (rlang::is_integerish(varm_layers)) {
     varm <- SOMACollectionCreate(file.path(ms_rna$uri, "varm"))
     for (layer in names(varm_layers)) {
-      key <- gsub(pattern = '^dense:', replacement = '', x = layer)
+      key <- gsub(pattern = "^dense:", replacement = "", x = layer)
       shape <- c(n_var, varm_layers[layer])
-      if (grepl(pattern = '^dense:', x = layer)) {
+      if (grepl(pattern = "^dense:", x = layer)) {
         varm$add_new_dense_ndarray(
           key = key,
           type = arrow::int32(),
@@ -323,7 +317,6 @@ create_and_populate_experiment <- function(
 #  2147483647    0      ...    0          |    3
 
 create_and_populate_32bit_sparse_nd_array <- function(uri) {
-
   df <- data.frame(
     soma_dim_0 = bit64::as.integer64(c(0, 2^31 - 2, 2^31 - 1)),
     soma_dim_1 = bit64::as.integer64(c(0, 2^31 - 2, 2^31 - 1)),
