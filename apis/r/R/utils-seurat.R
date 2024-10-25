@@ -126,3 +126,239 @@
     version
   ))
 }
+
+.write_seurat_assay <- function(
+  x,
+  uri = NULL,
+  soma_parent,
+  ...,
+  ingest_mode = 'write',
+  platform_config = NULL,
+  tiledbsoma_ctx = NULL,
+  relative = TRUE
+) {
+  check_package('SeuratObject', version = .MINIMUM_SEURAT_VERSION())
+  if (!inherits(x, what = 'Assay')) {
+    check_package('SeuratObject', version = '5.0.1')
+    if (!inherits(x, 'Assay5')) {
+      stop("'x' must be a Seurat v3 or v5 assay object")
+    }
+  }
+  stopifnot(
+    "'uri' must be a single character value" = is.null(uri) ||
+      is_scalar_character(uri),
+    "'soma_parent' must be a SOMACollection" = inherits(
+      x = soma_parent,
+      what = 'SOMACollectionBase'
+    ),
+    "'relative' must be a single logical value" = is_scalar_logical(relative)
+  )
+
+  v5 <- inherits(x, what = 'Assay5')
+
+  # Find `shape` if and only if we're called from `write_soma.Seurat()`
+  parents <- unique(sys.parents())
+  idx <- which(vapply_lgl(
+    parents,
+    FUN = function(i) identical(sys.function(i), write_soma.Seurat)
+  ))
+  shape <- if (length(idx) == 1L) {
+    get("shape", envir = sys.frame(parents[idx]))
+  } else {
+    NULL
+  }
+  shape <- rev(shape)
+
+  # Create a proper URI
+  uri <- uri %||% sub(pattern = '_$', replacement = '', x = SeuratObject::Key(x))
+  uri <- .check_soma_uri(
+    uri = uri,
+    soma_parent = soma_parent,
+    relative = relative
+  )
+
+  # Create the measurement
+  ms <- SOMAMeasurementCreate(
+    uri = uri,
+    ingest_mode = ingest_mode,
+    platform_config = platform_config,
+    tiledbsoma_ctx = tiledbsoma_ctx
+  )
+  ms$set_metadata(.assay_version_hint(ifelse(v5, yes = 'v5', no = 'v3')))
+  X <- if (!'X' %in% ms$names()) {
+    SOMACollectionCreate(
+      uri = file_path(ms$uri, 'X'),
+      ingest_mode = ingest_mode,
+      platform_config = platform_config,
+      tiledbsoma_ctx = tiledbsoma_ctx
+    )
+  } else if (isTRUE(relative)) {
+    SOMACollectionOpen(uri = file_path(ms$uri, 'X'), mode = 'WRITE')
+  } else {
+    ms$X
+  }
+  withCallingHandlers(
+    .register_soma_object(X, soma_parent = ms, key = 'X', relative = relative),
+    existingKeyWarning = .maybe_muffle
+  )
+  on.exit(X$close(), add = TRUE, after = FALSE)
+
+  # Write `X` matrices
+  if (v5) {
+    # Pull presence matrices from the v5 assay
+    cells_matrix <- methods::slot(x, name = 'cells')
+    features_matrix <- methods::slot(x, name = 'features')
+
+    # Write `X` matrices
+    for (layer in SeuratObject::Layers(x)) {
+      ldat <- SeuratObject::LayerData(x, layer = layer)
+      if (!inherits(ldat, what = c("matrix", "Matrix"))) {
+        warning(warningCondition(
+          message = sprintf(
+            "Unknown matrix type %s (layer %s)",
+            class(ldat)[1L],
+            layer
+          ),
+          class = "unknownMatrixTypeWarning",
+          call = str2lang("write_soma()")
+        ))
+        next
+      }
+      type <- .type_hint(ifelse(is.matrix(ldat), yes = 'matrix', no = class(ldat)))
+      if (all(features_matrix[, layer]) && all(cells_matrix[, layer])) {
+        spdl::info("Adding '{}' matrix as '{}'", layer, layer)
+        tryCatch(
+          expr = {
+            arr <- write_soma(
+              x = ldat,
+              uri = layer,
+              soma_parent = X,
+              sparse = TRUE,
+              transpose = TRUE,
+              ingest_mode = ingest_mode,
+              shape = shape,
+              key = layer,
+              platform_config = platform_config,
+              tiledbsoma_ctx = tiledbsoma_ctx
+            )
+            arr$set_metadata(type)
+          },
+          error = function(err) {
+            if (layer %in% SeuratObject::DefaultLayer(x)) {
+              stop(err)
+            }
+            err_to_warn(err)
+          }
+        )
+        next
+      }
+      ldat <- Matrix::t(as(ldat, "TsparseMatrix"))
+      idx <- which(cells_matrix[, layer])
+      jdx <- which(features_matrix[, layer])
+      coo <- data.frame(
+        soma_dim_0 = bit64::as.integer64(idx[ldat@i + 1L] - 1L),
+        soma_dim_1 = bit64::as.integer64(jdx[ldat@j + 1L] - 1L),
+        soma_data = ldat@x
+      )
+      atype <- arrow::infer_type(coo$soma_data)
+      rt <- r_type_from_arrow_type(atype)
+      if (rt == 'integer' && .is_integerish(coo$soma_data)) {
+        coo$soma_data <- as.integer(coo$soma_data)
+      }
+      shape <- c(max(coo$soma_dim_0), max(coo$soma_dim_1)) + 1L
+      arr <- X$add_new_sparse_ndarray(
+        key = layer,
+        type = atype,
+        shape = as.integer(shape)
+      )
+      arr$.write_coordinates(coo)
+      arr$set_metadata(.ragged_array_hint())
+      arr$set_metadata(type)
+    }
+  } else {
+    for (slot in c("counts", "data", "scale.data")) {
+      mat <- SeuratObject::GetAssayData(x, slot)
+      if (SeuratObject::IsMatrixEmpty(mat)) next
+
+      # Skip 'data' slot if it's identical to 'counts'
+      if (slot == "data" && identical(mat, SeuratObject::GetAssayData(x, "counts"))) {
+        spdl::info("Skipping 'data' slot because it's identical to 'counts'")
+        next
+      }
+
+      # Pad 'scale.data'
+      if (!identical(x = dim(mat), y = dim(x))) {
+        spdl::info("Padding layer '{}' to match dimensions of assay", slot)
+        mat <- pad_matrix(
+          x = mat,
+          rowidx = match(x = rownames(mat), table = rownames(x)),
+          colidx = match(x = colnames(mat), table = colnames(x)),
+          shape = dim(x),
+          sparse = TRUE,
+          rownames = rownames(x),
+          colnames = colnames(x)
+        )
+      }
+
+      layer <- gsub(pattern = '\\.', replacement = '_', x = slot)
+      spdl::info("Adding '{}' matrix as '{}'", slot, layer)
+      tryCatch(
+        expr = write_soma(
+          x = mat,
+          uri = layer,
+          soma_parent = X,
+          sparse = TRUE,
+          transpose = TRUE,
+          ingest_mode = ingest_mode,
+          shape = shape,
+          key = layer,
+          platform_config = platform_config,
+          tiledbsoma_ctx = tiledbsoma_ctx
+        ),
+        error = function(err) {
+          if (slot == 'data') {
+            stop(err)
+          }
+          err_to_warn(err)
+        }
+      )
+    }
+  }
+
+  # Write feature-level metadata
+  var_df <- .df_index(
+    x = x[[]],
+    alt = 'features',
+    axis = 'var',
+    prefix = 'seurat'
+  )
+  var_df[[attr(x = var_df, which = 'index')]] <- rownames(x)
+  spdl::info("Adding feature-level metadata")
+  write_soma(
+    x = var_df,
+    uri = 'var',
+    soma_parent = ms,
+    key = 'var',
+    ingest_mode = ingest_mode,
+    platform_config = platform_config,
+    tiledbsoma_ctx = tiledbsoma_ctx
+  )
+
+  # Check for any potentially-missed data
+  if (!class(x)[1L] %in% c('Assay', 'Assay5')) {
+    warning(
+      paste(
+        strwrap(paste0(
+          "Extended assays (eg. ",
+          class(x)[1L],
+          ") are not fully supported; core Assay data has been written but ",
+          "additional slots have been skipped"
+        )),
+        collapse = '\n'
+      ),
+      call. = FALSE,
+      immediate. = TRUE
+    )
+  }
+  return(ms)
+}
