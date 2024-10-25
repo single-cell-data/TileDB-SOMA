@@ -83,7 +83,7 @@ def test_dataframe(tmp_path, arrow_schema):
             rb = pa.Table.from_pydict(pydict)
 
             if soma._flags.NEW_SHAPE_FEATURE_FLAG_ENABLED:
-                sdf.resize_soma_joinid_shape(len(rb))
+                sdf.tiledbsoma_resize_soma_joinid_shape(len(rb))
 
             sdf.write(rb)
 

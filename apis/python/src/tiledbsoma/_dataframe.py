@@ -6,6 +6,7 @@
 """
 Implementation of a SOMA DataFrame
 """
+import inspect
 from typing import Any, List, Optional, Sequence, Tuple, Type, Union, cast
 
 import numpy as np
@@ -437,16 +438,21 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         1.15).  If ``check_only`` is ``True``, returns whether the operation
         would succeed if attempted, and a reason why it would not.
         """
+        frame = inspect.currentframe()
+        function_name_for_messages = frame.f_code.co_name if frame else "tiledbsoma"
+
         if check_only:
             return cast(
                 StatusAndReason,
                 self._handle._handle.can_resize_soma_joinid_shape(
-                    newshape, "tiledbsoma_resize_soma_joinid_shape"
+                    newshape,
+                    function_name_for_messages=function_name_for_messages,
                 ),
             )
         else:
             self._handle._handle.resize_soma_joinid_shape(
-                newshape, "tiledbsoma_resize_soma_joinid_shape"
+                newshape,
+                function_name_for_messages=function_name_for_messages,
             )
             return (True, "")
 
@@ -460,16 +466,21 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         taken.  If ``check_only`` is ``True``, returns whether the operation
         would succeed if attempted, and a reason why it would not.
         """
+        frame = inspect.currentframe()
+        function_name_for_messages = frame.f_code.co_name if frame else "tiledbsoma"
+
         if check_only:
             return cast(
                 StatusAndReason,
                 self._handle._handle.can_upgrade_soma_joinid_shape(
-                    newshape, "tiledbsoma_upgrade_soma_joinid_shape"
+                    newshape,
+                    function_name_for_messages=function_name_for_messages,
                 ),
             )
         else:
             self._handle._handle.upgrade_soma_joinid_shape(
-                newshape, "tiledbsoma_upgrade_soma_joinid_shape"
+                newshape,
+                function_name_for_messages=function_name_for_messages,
             )
             return (True, "")
 
