@@ -315,21 +315,23 @@ def test_dataframe_basics(tmp_path, soma_joinid_domain, index_column_names):
         # Test resize down
         new_shape = 0
         with tiledbsoma.DataFrame.open(uri, "w") as sdf:
-            ok, msg = sdf.resize_soma_joinid_shape(new_shape, check_only=True)
+            ok, msg = sdf.tiledbsoma_resize_soma_joinid_shape(
+                new_shape, check_only=True
+            )
             if has_soma_joinid_dim:
                 # TODO: check draft spec
                 # with pytest.raises(ValueError):
                 assert not ok
                 assert (
-                    "can_resize_soma_joinid_shape: new soma_joinid shape 0 < existing shape"
+                    "tiledbsoma_resize_soma_joinid_shape: new soma_joinid shape 0 < existing shape"
                     in msg
                 )
                 with pytest.raises(tiledbsoma.SOMAError):
-                    sdf.resize_soma_joinid_shape(new_shape)
+                    sdf.tiledbsoma_resize_soma_joinid_shape(new_shape)
             else:
                 assert ok
                 assert msg == ""
-                sdf.resize_soma_joinid_shape(new_shape)
+                sdf.tiledbsoma_resize_soma_joinid_shape(new_shape)
 
         with tiledbsoma.DataFrame.open(uri) as sdf:
             assert sdf._maybe_soma_joinid_shape == shape_at_create
@@ -349,7 +351,7 @@ def test_dataframe_basics(tmp_path, soma_joinid_domain, index_column_names):
         # Test resize
         new_shape = 0 if shape_at_create is None else shape_at_create + 100
         with tiledbsoma.DataFrame.open(uri, "w") as sdf:
-            sdf.resize_soma_joinid_shape(new_shape)
+            sdf.tiledbsoma_resize_soma_joinid_shape(new_shape)
 
         # Test writes out of old bounds, within new bounds, after resize
         with tiledbsoma.DataFrame.open(uri, "w") as sdf:
