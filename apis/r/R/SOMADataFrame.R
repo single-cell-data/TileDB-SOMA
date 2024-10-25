@@ -305,11 +305,11 @@ SOMADataFrame <- R6::R6Class(
       )
 
       drop_cols_for_clib <- drop_cols
-      add_cols_types_for_clib <- 
-        add_cols_enum_value_types_for_clib <- 
+      add_cols_types_for_clib <-
+        add_cols_enum_value_types_for_clib <-
         add_cols_enum_ordered_for_clib <- vector("list", length = length(add_cols))
-      names(add_cols_types_for_clib) <- 
-        names(add_cols_enum_value_types_for_clib) <- 
+      names(add_cols_types_for_clib) <-
+        names(add_cols_enum_value_types_for_clib) <-
         names(add_cols_enum_ordered_for_clib) <- add_cols
 
       # Add columns
@@ -423,6 +423,73 @@ SOMADataFrame <- R6::R6Class(
       invisible(
         resize_soma_joinid_shape(
           self$uri, new_shape, .name_of_function(), private$.soma_context))
+    },
+
+    #' @description Allows you to set the domain of a `SOMADataFrame`, when the
+    #' `SOMADataFrame` does not have a domain set yet.  The argument must be a
+    #' tuple of pairs of low/high values for the desired domain, one pair per
+    #' index column. For string index columns, you must offer the low/high pair
+    #' as `("", "")`, or as `NULL`.  If ``check_only`` is ``True``, returns
+    #' whether the operation would succeed if attempted, and a reason why it
+    #' would not. The domain being requested must be contained within what
+    #' `maxdomain` returns.
+    #' @param new_domain A named list, keyed by index-column name, with values
+    #' being two-element vectors containing the desired lower and upper bounds
+    #' for the domain.
+    #' @return No return value
+    tiledbsoma_upgrade_domain = function(new_domain) {
+      # stopifnot("'new_domain' must be CODE ME UP PLZ" = ...
+      # Checking slotwise new shape >= old shape, and <= max_shape, is already
+      # done in libtiledbsoma
+
+      pyarrow_domain_table <- private$upgrade_or_change_domain_helper(
+        new_domain, "tiledbsoma_upgrade_domain"
+      )
+
+      invisible(
+        upgrade_or_change_domain(
+          self$uri,
+          FALSE,
+          pyarrow_domain_table$array,
+          pyarrow_domain_table$schema,
+          .name_of_function(),
+          private$.soma_context
+        )
+      )
+    },
+
+    #' @description Allows you to set the domain of a `SOMADataFrame`, when the
+    #' `SOMADataFrame` already has a domain set yet.  The argument must be a
+    #' tuple of pairs of low/high values for the desired domain, one pair per
+    #' index column. For string index columns, you must offer the low/high pair
+    #' as `("", "")`, or as `NULL`.  If ``check_only`` is ``True``, returns
+    #' whether the operation would succeed if attempted, and a reason why it
+    #' would not. The return value from `domain` must be contained within
+    #' the requested `new_domain`, and the requested `new_domain` must be
+    #' contained within the return value from `maxdomain`.
+    #' @param new_domain A named list, keyed by index-column name, with values
+    #' being two-element vectors containing the desired lower and upper bounds
+    #' for the domain.
+    #' @return No return value
+    change_domain = function(new_domain) {
+      # stopifnot("'new_domain' must be CODE ME UP PLZ" = ...
+      # Checking slotwise new shape >= old shape, and <= max_shape, is already
+      # done in libtiledbsoma
+
+      pyarrow_domain_table <- private$upgrade_or_change_domain_helper(
+        new_domain, tiledbsoma_upgrade_domain
+      )
+
+      invisible(
+        upgrade_or_change_domain(
+          self$uri,
+          TRUE,
+          pyarrow_domain_table$array,
+          pyarrow_domain_table$schema,
+          .name_of_function(),
+          private$.soma_context
+        )
+      )
     }
 
   ),
@@ -460,6 +527,47 @@ SOMADataFrame <- R6::R6Class(
       }
 
       schema
+    },
+
+    # Converts the user-level tuple of low/high pairs into a pyarrow table
+    # suitable for calling libtiledbsoma.
+    upgrade_or_change_domain_helper = function(new_domain, function_name_for_messages) {
+      dimnames <- self$dimnames()
+
+      # Check user-provided domain against dataframe domain.
+      stopifnot(
+        "new_domain must be a named list, with values being 2-element vectors or NULL, with names the same as the dataframe's index-column names" =
+        rlang::is_list(new_domain, n = length(dimnames)) &&
+          identical(sort(names(new_domain)), sort(dimnames)) &&
+          all(vapply_lgl(
+            new_domain,
+            function(x) is.null(x) || (is.atomic(x) && !is.factor(x) && length(x) == 2L)
+          ))
+      )
+
+      # From the dataframe's schema, extract the subschema for only index
+      # columns (TileDB dimensions).
+      full_schema <- self$schema()
+      dim_schema_list <- list()
+      for (dimname in dimnames) {
+        dim_schema_list[[dimname]] <- full_schema[[dimname]]
+      }
+      dim_schema <- arrow::schema(dim_schema_list)
+
+      # Get the user's new_domain list with keys in the same order as dim_names.
+      ordered_new_domain = list()
+      for (dimname in dimnames) {
+        ordered_new_domain[[dimname]] <- new_domain[[dimname]]
+      }
+
+      pyarrow_table <- arrow::arrow_table(as.data.frame(ordered_new_domain), schema=dim_schema)
+
+      # We transfer to the arrow table via a pair of array and schema pointers
+      dnaap <- nanoarrow::nanoarrow_allocate_array()
+      dnasp <- nanoarrow::nanoarrow_allocate_schema()
+      arrow::as_record_batch(pyarrow_table)$export_to_c(dnaap, dnasp)
+
+      return(list(array=dnaap, schema=dnasp))
     }
   )
 )

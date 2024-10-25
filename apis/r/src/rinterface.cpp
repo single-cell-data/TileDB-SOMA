@@ -425,8 +425,7 @@ void resize(
     Rcpp::XPtr<somactx_wrap_t> ctxxp) {
     // This function is solely for SparseNDArray and DenseNDArray for which the
     // dims are required by the SOMA spec to be of type int64. Domain-resize for
-    // variant-indexed dataframes will be separate work as tracked on
-    // https://github.com/single-cell-data/TileDB-SOMA/issues/2407.
+    // variant-indexed dataframes is via upgrade_domain and change_domain.
     auto sr = tdbs::SOMAArray::open(OpenMode::write, uri, ctxxp->ctxptr);
     std::vector<int64_t> new_shape_i64 = i64_from_rcpp_numeric(new_shape);
     sr->resize(new_shape_i64, function_name_for_messages);
@@ -454,11 +453,41 @@ void tiledbsoma_upgrade_shape(
     Rcpp::XPtr<somactx_wrap_t> ctxxp) {
     // This function is solely for SparseNDArray and DenseNDArray for which the
     // dims are required by the SOMA spec to be of type int64. Domain-resize for
-    // variant-indexed dataframes will be separate work as tracked on
-    // https://github.com/single-cell-data/TileDB-SOMA/issues/2407.
+    // variant-indexed dataframes is via upgrade_domain and change_domain.
     auto sr = tdbs::SOMAArray::open(OpenMode::write, uri, ctxxp->ctxptr);
     std::vector<int64_t> new_shape_i64 = i64_from_rcpp_numeric(new_shape);
     sr->upgrade_shape(new_shape_i64, function_name_for_messages);
+    sr->close();
+}
+
+// [[Rcpp::export]]
+void upgrade_or_change_domain(
+    const std::string& uri,
+    bool is_change_domain,
+    naxpArray nadimap,
+    naxpSchema nadimsp,
+    std::string function_name_for_messages,
+    Rcpp::XPtr<somactx_wrap_t> ctxxp) {
+
+    // This is pointer manipulation from R -> Rcpp SEXP -> libtiledbsoma:
+    nanoarrow::UniqueArray apdim{nanoarrow_array_from_xptr(nadimap)};
+    nanoarrow::UniqueSchema spdim{nanoarrow_schema_from_xptr(nadimsp)};
+
+    auto dimarr = std::make_unique<ArrowArray>();
+    auto dimsch = std::make_unique<ArrowSchema>();
+
+    apdim.move(dimarr.get());
+    spdim.move(dimsch.get());
+
+    tdbs::ArrowTable arrow_table(std::move(dimarr), std::move(dimsch));
+
+    // Now call libtiledbsoma
+    auto sr = tdbs::SOMADataFrame::open(uri, OpenMode::write, ctxxp->ctxptr);
+    if (is_change_domain) {
+      sr->change_domain(arrow_table, function_name_for_messages);
+    } else {
+      sr->upgrade_domain(arrow_table, function_name_for_messages);
+    }
     sr->close();
 }
 
