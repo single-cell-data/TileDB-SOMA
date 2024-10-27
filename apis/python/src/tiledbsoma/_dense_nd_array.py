@@ -258,6 +258,10 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
             timestamp=handle.timestamp and (0, handle.timestamp),
         )
 
+        # TODO: more on #2407, including the slotwise-none case
+        if coords == ():
+            coords = tuple(slice(0, e - 1) for e in data_shape)
+
         self._set_coords(sr, coords)
 
         arrow_tables = []

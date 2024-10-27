@@ -1,4 +1,4 @@
-#include <Rcpp/Lighter>             // for R interface to C++
+#include <Rcpp/Lighter>  // for R interface to C++
 
 #include <nanoarrow/r.h>  // for C/C++ interface to Arrow (via header exported from the R package)
 #include <RcppInt64>                // for fromInteger64
@@ -175,6 +175,7 @@ void writeArrayFromArrow(
     const std::string& uri,
     naxpArray naap,
     naxpSchema nasp,
+    Rcpp::List coords_list,
     Rcpp::XPtr<somactx_wrap_t> ctxxp,
     const std::string arraytype = "",
     Rcpp::Nullable<Rcpp::CharacterVector> config = R_NilValue,
@@ -201,23 +202,6 @@ void writeArrayFromArrow(
     std::shared_ptr<tdbs::SOMAContext> somactx = ctxxp->ctxptr;
     // shared pointer to TileDB Context from SOMAContext -- not needed here
     // std::shared_ptr<tiledb::Context> ctx = sctx->tiledb_ctx();
-
-    // // if we hae a coonfig, use it
-    // std::shared_ptr<tdbs::SOMAContext> somactx;
-    // if (config.isNotNull()) {
-    //     std::map<std::string, std::string> smap;
-    //     auto config_vec = config.as();
-    //     auto config_names =
-    //     Rcpp::as<Rcpp::CharacterVector>(config_vec.names()); for (auto &name
-    //     : config_names) {
-    //         std::string param = Rcpp::as<std::string>(name);
-    //         std::string value = Rcpp::as<std::string>(config_vec[param]);
-    //         smap[param] = value;
-    //     }
-    //     somactx = std::make_shared<tdbs::SOMAContext>(smap);
-    // } else {
-    //     somactx = std::make_shared<tdbs::SOMAContext>();
-    // }
 
     // optional timestamp range
     std::optional<tdbs::TimestampRange> tsrng = makeTimestampRange(tsvec);
@@ -258,6 +242,44 @@ void writeArrayFromArrow(
     }
 
     arrup.get()->set_array_data(std::move(schema), std::move(array));
+
+    // For dense arrays, we need to specify the subrange for the write.
+    // If we don't, the core domain is used.
+    //
+    // * With the new shape feature (core 2.27, tiledbsoma 1.15) the
+    //   core domain (soma maxdomain) is huge while the core current domain
+    //   (soma domain) is small.
+    //
+    // * It's important to be able to write subarrays. E.g. a dense 2D
+    //   array is 1,000,000 x 60,000 but we want to write the first 3000
+    //   rows.
+
+    if (arraytype == "SOMADenseNDArray") {
+        auto dim_names = arrup->dimension_names();
+
+        if (dim_names.size() != coords_list.length()) {
+            // This is internal error not used error since this should have been
+            // a stopifnot at the R level, caught already before we got here.
+            Rcpp::stop(tfm::format(
+                "dense array write: internal error: ndim %d != ncoord %d",
+                dim_names.size(),
+                coords_list.length()));
+        }
+
+        for (int i = 0; i < dim_names.size(); i++) {
+            auto dim_name = dim_names[i];
+            std::vector<int> slot_values = Rcpp::as<std::vector<int>>(
+                coords_list[i]);
+            int lo = *std::min_element(slot_values.begin(), slot_values.end());
+            int hi = *std::max_element(slot_values.begin(), slot_values.end());
+            spdl::debug(
+                "dense array write: dim {} set range lo {} hi {}", dim_name, lo, hi);
+            std::pair<int64_t, int64_t> lo_hi(int64_t{lo}, int64_t{hi});
+            std::vector<std::pair<int64_t, int64_t>> range({lo_hi});
+            arrup.get()->set_dim_ranges(dim_name, range);
+        }
+    }
+
     arrup.get()->write();
     arrup.get()->close();
 }

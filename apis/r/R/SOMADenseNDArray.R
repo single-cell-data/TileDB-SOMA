@@ -154,6 +154,7 @@ SOMADenseNDArray <- R6::R6Class(
       # arr[] <- values
       writeArrayFromArrow(
         uri = self$uri,
+        coords,
         naap = naap,
         nasp = nasp,
         ctxxp = private$.soma_context,

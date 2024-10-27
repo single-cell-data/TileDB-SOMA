@@ -30,10 +30,10 @@
  * This file defines the performing TileDB queries.
  */
 
+#include "managed_query.h"
 #include <tiledb/array_experimental.h>
 #include <tiledb/attribute_experimental.h>
 #include "../utils/logger.h"
-#include "managed_query.h"
 #include "utils/common.h"
 namespace tiledbsoma {
 
