@@ -18,6 +18,32 @@
 * Expose block/random writer for sparse arrays [#3204](https://github.com/single-cell-data/TileDB-SOMA/pull/3204)
 * Min-sizing for dataframes/arrays with new shape feature [#3208](https://github.com/single-cell-data/TileDB-SOMA/pull/3208)
 * Proper prefixing for shape-related methods [#3237](https://github.com/single-cell-data/TileDB-SOMA/pull/3237)
+* Bindings for `upgrade_domain` [#3238](https://github.com/single-cell-data/TileDB-SOMA/pull/3238)
+
+# tiledbsoma 1.14.5
+
+## Changes
+
+* Fixes a Python-only bug [#3225](https://github.com/single-cell-data/TileDB-SOMA/pull/3225)
+
+# tiledbsoma 1.14.4
+
+## Changes
+
+* Add new Arrow-to-R type mapper [#3161](https://github.com/single-cell-data/TileDB-SOMA/pull/3161)
+* Expose block/random writer for sparse arrays [#3204](https://github.com/single-cell-data/TileDB-SOMA/pull/3204)
+
+# tiledbsoma 1.14.3
+
+## Changes
+
+* Handle `numeric` coords properly when reading arrays [3145](https://github.com/single-cell-data/TileDB-SOMA/pull/3145)
+
+# tiledbsoma 1.14.2
+
+## Changes
+
+* Fixes a Python-only bug [#3074](https://github.com/single-cell-data/TileDB-SOMA/pull/3074)
 
 # tiledbsoma 1.14.1
 
