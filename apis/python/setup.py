@@ -335,8 +335,8 @@ setuptools.setup(
         "pyarrow",
         "scanpy>=1.9.2",
         "scipy",
-        # Note: the somacore version is also pinned in .pre-commit-config.yaml
-        "somacore @ git+https://github.com/single-cell-data/SOMA.git",  # DO NOT MERGE
+        # Note: the somacore version is in .pre-commit-config.yaml too
+        "somacore==1.0.23",
         "typing-extensions",  # Note "-" even though `import typing_extensions`
     ],
     extras_require={
