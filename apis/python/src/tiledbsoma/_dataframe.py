@@ -547,8 +547,9 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         ``DataFrame`` does not have a domain set yet.  The argument must be a
         tuple of pairs of low/high values for the desired domain, one pair per
         index column. For string index columns, you must offer the low/high pair
-        as `("", "")`.  If ``check_only`` is ``True``, returns whether the
-        operation would succeed if attempted, and a reason why it would not.
+        as `("", "")`, or as `None`.  If ``check_only`` is ``True``, returns
+        whether the operation would succeed if attempted, and a reason why it
+        would not.
         """
         pyarrow_domain_table = self._upgrade_or_change_domain_helper(
             newdomain, "tiledbsoma_upgrade_domain"
@@ -574,8 +575,8 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         the ``DataFrame`` already has a domain.  The argument must be a tuple of
         pairs of low/high values for the desired domain, one pair per index
         column. For string index columns, you must offer the low/high pair as
-        `("", "")`.  If ``check_only`` is ``True``, returns whether the
-        operation would succeed if attempted, and a reason why it would not.
+        `("", "")`, or as `None`.  If ``check_only`` is ``True``, returns whether
+        the operation would succeed if attempted, and a reason why it would not.
         """
         pyarrow_domain_table = self._upgrade_or_change_domain_helper(
             newdomain, "change_domain"

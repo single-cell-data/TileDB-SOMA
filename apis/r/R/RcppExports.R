@@ -250,6 +250,10 @@ tiledbsoma_upgrade_shape <- function(uri, new_shape, function_name_for_messages,
     invisible(.Call(`_tiledbsoma_tiledbsoma_upgrade_shape`, uri, new_shape, function_name_for_messages, ctxxp))
 }
 
+upgrade_or_change_domain <- function(uri, is_change_domain, nadimap, nadimsp, function_name_for_messages, ctxxp) {
+    invisible(.Call(`_tiledbsoma_upgrade_or_change_domain`, uri, is_change_domain, nadimap, nadimsp, function_name_for_messages, ctxxp))
+}
+
 c_update_dataframe_schema <- function(uri, ctxxp, column_names_to_drop, add_cols_types, add_cols_enum_value_types, add_cols_enum_ordered) {
     invisible(.Call(`_tiledbsoma_c_update_dataframe_schema`, uri, ctxxp, column_names_to_drop, add_cols_types, add_cols_enum_value_types, add_cols_enum_ordered))
 }

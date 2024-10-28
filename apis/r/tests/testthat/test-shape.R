@@ -338,6 +338,110 @@ test_that("SOMADataFrame shape", {
   ))
 })
 
+test_that("SOMADataFrame domain mods", {
+  skip_if(!.new_shape_feature_flag_is_enabled())
+
+  uri <- withr::local_tempdir("soma-dataframe-domain-mods")
+
+   schema = arrow::schema(
+     arrow::field("soma_joinid", arrow::int64()),
+     arrow::field("mystring", arrow::string()),
+     arrow::field("myint", arrow::int16()),
+     arrow::field("myfloat", arrow::float32()),
+     arrow::field("mybool", arrow::bool()) # not supported as an index type
+   )
+
+   index_column_names <- c("soma_joinid", "mystring", "myint", "myfloat")
+
+    domain_for_create <- list(
+        soma_joinid = c(1, 4),
+        mystring = NULL,
+        myint = c(20, 50),
+        myfloat = c(0.0, 6.0)
+    )
+
+    table <- arrow::arrow_table(
+      soma_joinid = 1L:4L,
+      mystring = c("a", "b", "a", "b"),
+      myint = c(20, 30, 40, 50),
+      myfloat = c(1.0, 2.5, 4.0, 5.5),
+      mybool = c(TRUE, FALSE, TRUE, TRUE),
+      schema = schema
+    )
+
+    sdf <- SOMADataFrameCreate(
+      uri,
+      schema=schema,
+      index_column_names=index_column_names,
+      domain=domain_for_create
+    )
+    sdf$write(table)
+    sdf$close()
+
+    sdf <- SOMADataFrameOpen(uri, "WRITE")
+
+    # Check "expand" to same
+    new_domain <- list(
+        soma_joinid = c(1, 4),
+        mystring = NULL,
+        myint = c(20, 50),
+        myfloat = c(0.0, 6.0)
+    )
+    expect_no_condition(sdf$change_domain(new_domain))
+
+    # Shrink
+    new_domain <- list(
+        soma_joinid = c(1, 3),
+        mystring = NULL,
+        myint = c(20, 50),
+        myfloat = c(0.0, 6.0)
+    )
+    expect_error(sdf$change_domain(new_domain))
+
+    new_domain <- list(
+        soma_joinid = c(1, 4),
+        mystring = NULL,
+        myint = c(20, 40),
+        myfloat = c(0.0, 6.0)
+    )
+    expect_error(sdf$change_domain(new_domain))
+
+    new_domain <- list(
+        soma_joinid = c(1, 4),
+        mystring = NULL,
+        myint = c(20, 50),
+        myfloat = c(2.0, 6.0)
+    )
+    expect_error(sdf$change_domain(new_domain))
+
+    # String domain cannot be specified
+    new_domain <- list(
+        soma_joinid = c(1, 4),
+        mystring = c("a", "z"),
+        myint = c(20, 50),
+        myfloat = c(0.0, 6.0)
+    )
+    expect_error(sdf$change_domain(new_domain))
+
+    # All clear
+
+    # String domain cannot be specified
+    new_domain <- list(
+        soma_joinid = c(1, 9),
+        mystring = c("", ""),
+        myint = c(20, 50),
+        myfloat = c(0.0, 10.0)
+    )
+    expect_no_condition(sdf$change_domain(new_domain))
+    sdf$close()
+
+    # Check for success
+    sdf <- SOMADataFrameOpen(uri, "WRITE")
+    dom <- sdf$domain()
+    expect_equal(sdf$domain(), new_domain)
+    sdf$close()
+})
+
 test_that("SOMASparseNDArray shape", {
   uri <- withr::local_tempdir("soma-sparse-ndarray-shape")
   asch <- create_arrow_schema()
