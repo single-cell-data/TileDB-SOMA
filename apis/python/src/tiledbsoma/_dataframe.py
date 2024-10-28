@@ -859,8 +859,10 @@ def _fill_out_slot_soma_domain(
     if slot_domain is not None:
         # User-specified; go with it when possible
         if (
-            pa_type == pa.string()
-            or pa_type == pa.large_string()
+            (
+                (pa_type == pa.string() or pa_type == pa.large_string())
+                and slot_domain != ("", "")
+            )
             or pa_type == pa.binary()
             or pa_type == pa.large_binary()
         ):
