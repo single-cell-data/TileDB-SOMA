@@ -21,7 +21,7 @@ on:
 jobs:
   sdist:
     name: Build source distribution
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout TileDB-SOMA
         uses: actions/checkout@v4
@@ -50,14 +50,14 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        python-version: [ '39', '310', '311' ]
+        python-version: [ '39', '310', '311', '312' ]
         cibw_build: [ manylinux_x86_64, macosx_x86_64, macosx_arm64 ]
         include:
           - cibw_build: manylinux_x86_64
-            os: ubuntu-20.04
+            os: ubuntu-latest
             wheel-name: manylinux2014
           - cibw_build: macosx_x86_64
-            os: macos-12
+            os: macos-latest
             cibw_archs_macos: x86_64
             wheel-name: macos-x86_64
           - cibw_build: macosx_arm64
@@ -119,18 +119,20 @@ jobs:
             dotted-version: '3.10'
           - undotted-version: '311'
             dotted-version: '3.11'
+          - undotted-version: '312'
+            dotted-version: '3.12'
         wheel-name:
           - manylinux2014
           - macos-x86_64
           - macos-arm64
         include:
           - wheel-name: manylinux2014
-            os: ubuntu-20.04
+            os: ubuntu-latest
             arch: x86_64
             cc: gcc-11
             cxx: g++-11
           - wheel-name: macos-x86_64
-            os: macos-12
+            os: macos-13
             arch: x86_64
             cc: clang
             cxx: clang++
@@ -164,7 +166,7 @@ jobs:
         run: python -c 'import tiledbsoma; print(tiledbsoma.pytiledbsoma.__file__); tiledbsoma.show_package_versions()'
         # TODO: more thorough local smoke test
       - name: Smoke test in docker
-        if: ${{ matrix.os == 'ubuntu-20.04' }}
+        if: ${{ matrix.os == 'ubuntu-latest' }}
         run: |
           docker run -v $(pwd):/mnt python:${{ matrix.python.dotted-version }} bash -ec "
             apt-get -qq update && apt-get install -y python3-pip python3-wheel
@@ -176,7 +178,7 @@ jobs:
   publish-to-test-pypi:
     name: Publish package to TestPyPI
     needs: smoke-test
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     if: github.event_name == 'workflow_dispatch'
     steps:
       - name: Download artifacts
@@ -200,7 +202,7 @@ jobs:
   publish-to-pypi:
     name: Publish package to PyPI
     needs: smoke-test
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     if: github.event_name == 'release'
     steps:
       - name: Download artifacts

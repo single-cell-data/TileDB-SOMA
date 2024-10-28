@@ -1,4 +1,5 @@
-# Copyright (c) 2024 TileDB, Inc
+# Copyright (c) 2024 The Chan Zuckerberg Initiative Foundation
+# Copyright (c) 2024 TileDB, Inc.
 #
 # Licensed under the MIT License.
 
@@ -6,8 +7,6 @@
 
 This module contains experimental methods to generate Spatial SOMA artifacts
 start from other formats.
-
-Do NOT merge into main.
 """
 
 import json
@@ -282,6 +281,7 @@ def from_visium(
     X_layer_name: str = "data",
     raw_X_layer_name: str = "data",
     image_name: str = "tissue",
+    image_channel_first: bool = True,
     ingest_mode: IngestMode = "write",
     use_relative_uri: Optional[bool] = None,
     X_kind: Union[Type[SparseNDArray], Type[DenseNDArray]] = SparseNDArray,
@@ -331,6 +331,9 @@ def from_visium(
 
         image_name: SOMA multiscale image name for the multiscale image of the
             Space Ranger output images.
+
+        image_channel_first: If ``True``, the image is ingested in channel-first format.
+            Otherwise, it is ingested into channel-last format. Defaults to ``True``.
 
         ingest_mode: The ingestion type to perform:
 
@@ -483,11 +486,14 @@ def from_visium(
             exp.obs.read(column_names=["soma_joinid", "obs_id"]).concat().to_pandas()
         )
         if write_obs_spatial_presence or write_var_spatial_presence:
-            x_layer = exp.ms[measurement_name].X[X_layer_name].read().tables().concat()
+            x_layer = exp.ms[measurement_name].X[X_layer_name]
+            (len_obs_id, len_var_id) = x_layer.shape
+            x_layer_data = x_layer.read().tables().concat()
             if write_obs_spatial_presence:
-                obs_id = pacomp.unique(x_layer["soma_dim_0"])
+                obs_id = pacomp.unique(x_layer_data["soma_dim_0"])
+
             if write_var_spatial_presence:
-                var_id = pacomp.unique(x_layer["soma_dim_1"])
+                var_id = pacomp.unique(x_layer_data["soma_dim_1"])
 
     # Add spatial information to the experiment.
     with Experiment.open(experiment_uri, mode="w", context=context) as exp:
@@ -515,6 +521,7 @@ def from_visium(
                         with _create_visium_tissue_images(
                             tissue_uri,
                             image_paths,
+                            image_channel_first=image_channel_first,
                             use_relative_uri=use_relative_uri,
                             **ingest_ctx,
                         ) as tissue_image:
@@ -587,7 +594,7 @@ def from_visium(
         if write_obs_spatial_presence:
             obs_spatial_presence_uri = _util.uri_joinpath(uri, "obs_spatial_presence")
             obs_spatial_presence = _write_scene_presence_dataframe(
-                obs_id, scene_name, obs_spatial_presence_uri, **ingest_ctx
+                obs_id, len_obs_id, scene_name, obs_spatial_presence_uri, **ingest_ctx
             )
             _maybe_set(
                 exp,
@@ -601,7 +608,7 @@ def from_visium(
                 "var_spatial_presence",
             )
             var_spatial_presence = _write_scene_presence_dataframe(
-                var_id, scene_name, var_spatial_presence_uri, **ingest_ctx
+                var_id, len_var_id, scene_name, var_spatial_presence_uri, **ingest_ctx
             )
             meas = exp.ms[measurement_name]
             _maybe_set(
@@ -615,6 +622,7 @@ def from_visium(
 
 def _write_scene_presence_dataframe(
     joinids: pa.array,
+    max_joinid_len: int,
     scene_id: str,
     df_uri: str,
     *,
@@ -635,6 +643,7 @@ def _write_scene_presence_dataframe(
                     ("data", pa.bool_()),
                 ]
             ),
+            domain=((0, max_joinid_len - 1), ("", "")),
             index_column_names=("soma_joinid", "scene_id"),
             platform_config=platform_config,
             context=context,
@@ -704,6 +713,8 @@ def _write_visium_spots(
     df = pd.merge(obs_df, df, how="inner", on=id_column_name)
     df.drop(id_column_name, axis=1, inplace=True)
 
+    domain = ((df["x"].min(), df["x"].max()), (df["y"].min(), df["y"].max()))
+
     arrow_table = df_to_arrow(df)
 
     with warnings.catch_warnings():
@@ -711,6 +722,8 @@ def _write_visium_spots(
         soma_point_cloud = PointCloudDataFrame.create(
             df_uri,
             schema=arrow_table.schema,
+            index_column_names=("x", "y"),
+            domain=domain,
             platform_config=platform_config,
             context=context,
         )
@@ -765,6 +778,7 @@ def _create_visium_tissue_images(
     uri: str,
     image_paths: List[Tuple[str, Path, Optional[float]]],
     *,
+    image_channel_first: bool,
     additional_metadata: "AdditionalMetadata" = None,
     platform_config: Optional["PlatformConfig"] = None,
     context: Optional["SOMATileDBContext"] = None,
@@ -778,8 +792,15 @@ def _create_visium_tissue_images(
     # Open the first image to get the base size.
     with Image.open(image_paths[0][1]) as im:
         im_data_numpy = np.array(im)
-        ref_shape: Tuple[int, ...] = im_data_numpy.shape
-        im_data = pa.Tensor.from_numpy(im_data_numpy)
+
+    if image_channel_first:
+        axis_names = ("c", "y", "x")
+        axis_types = ("channel", "height", "width")
+        im_data_numpy = np.moveaxis(im_data_numpy, -1, 0)
+    else:
+        axis_names = ("y", "x", "c")
+        axis_types = ("height", "width", "channel")
+    ref_shape: Tuple[int, ...] = im_data_numpy.shape
 
     # Create the multiscale image.
     with warnings.catch_warnings():
@@ -788,8 +809,8 @@ def _create_visium_tissue_images(
             uri,
             type=pa.uint8(),
             reference_level_shape=ref_shape,
-            axis_names=("y", "x", "c"),
-            axis_types=("height", "width", "channel"),
+            axis_names=axis_names,
+            axis_types=axis_types,
             context=context,
         )
 
@@ -798,6 +819,7 @@ def _create_visium_tissue_images(
 
     # Add and write the first level.
     im_array = image_pyramid.add_new_level(image_paths[0][0], shape=ref_shape)
+    im_data = pa.Tensor.from_numpy(im_data_numpy)
     im_array.write(
         (slice(None), slice(None), slice(None)),
         im_data,
@@ -808,7 +830,10 @@ def _create_visium_tissue_images(
     # Add the remaining levels.
     for name, image_path, _ in image_paths[1:]:
         with Image.open(image_path) as im:
-            im_data = pa.Tensor.from_numpy(np.array(im))
+            im_data_numpy = np.array(im)
+        if image_channel_first:
+            im_data_numpy = np.moveaxis(im_data_numpy, -1, 0)
+        im_data = pa.Tensor.from_numpy(im_data_numpy)
         im_array = image_pyramid.add_new_level(name, shape=im_data.shape)
         im_array.write(
             (slice(None), slice(None), slice(None)),

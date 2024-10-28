@@ -20,6 +20,11 @@ from .outgest import (
     to_anndata,
     to_h5ad,
 )
+from .shaping import (
+    resize_experiment,
+    show_experiment_shapes,
+    upgrade_experiment_shapes,
+)
 
 __all__ = (
     "add_matrix_to_collection",
@@ -37,5 +42,8 @@ __all__ = (
     "update_matrix",
     "update_obs",
     "update_var",
+    "upgrade_experiment_shapes",
+    "show_experiment_shapes",
+    "resize_experiment",
     "ExperimentAmbientLabelMapping",
 )

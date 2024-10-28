@@ -172,6 +172,15 @@ class SOMAGroup : public SOMAObject {
     std::shared_ptr<SOMAContext> ctx();
 
     /**
+     * Check if a named member is relative
+     *
+     * @param name of member to retrieve associated relative indicator.
+     */
+    bool is_relative(std::string name) const {
+        return group_->is_relative(name);
+    }
+
+    /**
      * Get a member from the SOMAGroup given the index.
      *
      * @param index of member
@@ -264,7 +273,7 @@ class SOMAGroup : public SOMAObject {
      * @note If the key does not exist, this will take no effect
      *     (i.e., the function will not error out).
      */
-    void delete_metadata(const std::string& key);
+    void delete_metadata(const std::string& key, bool force = false);
 
     /**
      * @brief Given a key, get the associated value datatype, number of

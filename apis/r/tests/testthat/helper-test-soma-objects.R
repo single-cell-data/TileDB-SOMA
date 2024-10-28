@@ -9,10 +9,22 @@ create_and_populate_soma_dataframe <- function(
 ) {
   set.seed(seed)
 
-  # arrow_schema <- create_arrow_schema()
   tbl <- create_arrow_table(nrows = nrows, factors = factors)
 
-  sdf <- SOMADataFrameCreate(uri, tbl$schema, index_column_names = index_column_names)
+  full_domain <- domain_for_arrow_table()
+  # Pick out the index-column names actually being used in this case
+  domain <- list()
+  for (index_column in index_column_names) {
+    domain[[index_column]] <- full_domain[[index_column]]
+  }
+
+  sdf <- SOMADataFrameCreate(
+    uri,
+    tbl$schema,
+    index_column_names = index_column_names,
+    domain = domain
+  )
+
   sdf$write(tbl)
 
   if (is.null(mode)) {
@@ -67,11 +79,14 @@ create_and_populate_var <- function(
       rep_len("lvl2", length.out = floor(nrows / 2))
     ))
   }
+  domain <- list(
+    soma_joinid = c(0, nrows - 1L)
+  )
 
   dname <- dirname(uri)
   if (!dir.exists(dname)) dir.create(dname)
 
-  sdf <- SOMADataFrameCreate(uri, tbl$schema, index_column_names = "soma_joinid")
+  sdf <- SOMADataFrameCreate(uri, tbl$schema, index_column_names = "soma_joinid", domain = domain)
   sdf$write(tbl)
 
   if (is.null(mode)) {

@@ -8,7 +8,7 @@ test_that("SOMADataFrame", {
 
     ## create at t = 1
     ts1 <- as.POSIXct(1, tz = "UTC", origin = "1970-01-01")
-    sdf <- tiledbsoma::SOMADataFrameCreate(uri, sch, tiledb_timestamp = ts1)
+    sdf <- tiledbsoma::SOMADataFrameCreate(uri, sch, tiledb_timestamp = ts1, domain = list(soma_joinid=c(0, 999)))
 
     ## write part1 at t = 2
     dat2 <- arrow::arrow_table(soma_joinid = bit64::as.integer64(1L:5L),

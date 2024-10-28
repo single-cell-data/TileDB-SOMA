@@ -303,6 +303,7 @@ setuptools.setup(
                 "src/tiledbsoma/common.cc",
                 "src/tiledbsoma/reindexer.cc",
                 "src/tiledbsoma/query_condition.cc",
+                "src/tiledbsoma/soma_vfs.cc",
                 "src/tiledbsoma/soma_context.cc",
                 "src/tiledbsoma/soma_array.cc",
                 "src/tiledbsoma/soma_object.cc",
@@ -326,10 +327,7 @@ setuptools.setup(
     zip_safe=False,
     setup_requires=["pybind11"],
     install_requires=[
-        # Temporary for 1.15.0rc series -- avoid RC versions of these packages
-        "anndata>=0.10.1,<0.11.0rc1",
-        "networkx~=3.2.1",
-        "pyparsing~=3.1.4",
+        "anndata>=0.10.1",
         "attrs>=22.2",
         "numba>=0.58.0",
         "numpy",
@@ -338,12 +336,14 @@ setuptools.setup(
         "scanpy>=1.9.2",
         "scipy",
         # Note: the somacore version is in .pre-commit-config.yaml too
-        "somacore==1.0.20",
-        "tiledb~=0.32.0",
+        "somacore==1.0.21",
         "typing-extensions",  # Note "-" even though `import typing_extensions`
     ],
     extras_require={
         "dev": open("requirements_dev.txt").read(),
+        "spatial-io": open("requirements_spatial.txt").read(),
+        "all": open("requirements_dev.txt").read()
+        + open("requirements_spatial.txt").read(),
     },
     python_requires=">=3.9",
     cmdclass={"build_ext": build_ext, "bdist_wheel": bdist_wheel},

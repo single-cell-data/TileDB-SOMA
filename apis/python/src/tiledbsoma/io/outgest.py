@@ -8,8 +8,10 @@
 This module contains methods to export SOMA artifacts to other formats.
 Currently only ``.h5ad`` (`AnnData <https://anndata.readthedocs.io/>`_) is supported.
 """
+from __future__ import annotations
 
 import json
+from concurrent.futures import Future
 from typing import (
     Any,
     Dict,
@@ -23,6 +25,7 @@ from typing import (
 import anndata as ad
 import numpy as np
 import pandas as pd
+import scipy.sparse as sp
 
 from .. import (
     Collection,
@@ -47,8 +50,11 @@ from ._common import (
     _UNS_OUTGEST_HINT_KEY,
     Matrix,
     UnsDict,
-    UnsMapping,
+    UnsLeaf,
 )
+
+FutureUnsLeaf = Union[UnsLeaf, Future[UnsLeaf]]
+FutureUnsDictNode = Union[FutureUnsLeaf, Dict[str, "FutureUnsDictNode"]]
 
 
 # ----------------------------------------------------------------
@@ -104,7 +110,6 @@ def _extract_X_key(
     nvar: int,
 ) -> Matrix:
     """Helper function for to_anndata"""
-
     if X_layer_name not in measurement.X:
         raise ValueError(
             f"X_layer_name {X_layer_name} not found in data: {measurement.X.keys()}"
@@ -117,8 +122,9 @@ def _extract_X_key(
     if isinstance(soma_X_data_handle, DenseNDArray):
         data = soma_X_data_handle.read((slice(None), slice(None))).to_numpy()
     elif isinstance(soma_X_data_handle, SparseNDArray):
-        X_mat = soma_X_data_handle.read().tables().concat().to_pandas()
-        data = conversions.csr_from_tiledb_df(X_mat, nobs, nvar)
+        data = conversions.csr_from_coo_table(
+            soma_X_data_handle.read().tables().concat(), nobs, nvar
+        )
     else:
         raise TypeError(f"Unexpected NDArray type {type(soma_X_data_handle)}")
 
@@ -252,20 +258,23 @@ def to_anndata(
             f"requested measurement name {measurement_name} not found in input: {experiment.ms.keys()}"
         )
     measurement = experiment.ms[measurement_name]
+    tp = experiment.context.threadpool
 
     # How to choose index name for AnnData obs and var dataframes:
     # * If the desired names are passed in, use them.
     # * Else if the names used at ingest time are available, use them.
     # * Else use the default/fallback name.
 
-    obs_df = _read_dataframe(experiment.obs, obs_id_name, "obs_id")
-    var_df = _read_dataframe(measurement.var, var_id_name, "var_id")
+    obs_df, var_df = tp.map(
+        _read_dataframe,
+        (experiment.obs, measurement.var),
+        (obs_id_name, var_id_name),
+        ("obs_id", "var_id"),
+    )
 
     nobs = len(obs_df.index)
     nvar = len(var_df.index)
 
-    anndata_X = None
-    anndata_X_dtype = None  # some datasets have no X
     anndata_layers = {}
 
     # Let them use
@@ -281,9 +290,11 @@ def to_anndata(
             "If X_layer_name is None, extra_X_layer_names must not be provided"
         )
 
+    anndata_X_future: Future[Matrix] | None = None
     if X_layer_name is not None:
-        anndata_X = _extract_X_key(measurement, X_layer_name, nobs, nvar)
-        anndata_X_dtype = anndata_X.dtype
+        anndata_X_future = tp.submit(
+            _extract_X_key, measurement, X_layer_name, nobs, nvar
+        )
 
     if extra_X_layer_names is not None:
         for extra_X_layer_name in extra_X_layer_names:
@@ -300,43 +311,72 @@ def to_anndata(
     if "obsm" in measurement:
         obsm_width_hints = obsm_varm_width_hints.get("obsm", {})
         for key in measurement.obsm.keys():
-            obsm[key] = _extract_obsm_or_varm(
-                measurement.obsm[key], "obsm", key, nobs, obsm_width_hints
+            obsm[key] = tp.submit(
+                _extract_obsm_or_varm,
+                measurement.obsm[key],
+                "obsm",
+                key,
+                nobs,
+                obsm_width_hints,
             )
 
     varm = {}
     if "varm" in measurement:
         varm_width_hints = obsm_varm_width_hints.get("obsm", {})
         for key in measurement.varm.keys():
-            varm[key] = _extract_obsm_or_varm(
-                measurement.varm[key], "varm", key, nvar, varm_width_hints
+            varm[key] = tp.submit(
+                _extract_obsm_or_varm,
+                measurement.varm[key],
+                "varm",
+                key,
+                nvar,
+                varm_width_hints,
             )
 
     obsp = {}
     if "obsp" in measurement:
+
+        def load_obsp(measurement: Measurement, key: str, nobs: int) -> sp.csr_matrix:
+            return conversions.csr_from_coo_table(
+                measurement.obsp[key].read().tables().concat(), nobs, nobs
+            )
+
         for key in measurement.obsp.keys():
-            matrix = measurement.obsp[key].read().tables().concat().to_pandas()
-            obsp[key] = conversions.csr_from_tiledb_df(matrix, nobs, nobs)
+            obsp[key] = tp.submit(load_obsp, measurement, key, nobs)
 
     varp = {}
     if "varp" in measurement:
-        for key in measurement.varp.keys():
-            matrix = measurement.varp[key].read().tables().concat().to_pandas()
-            varp[key] = conversions.csr_from_tiledb_df(matrix, nvar, nvar)
 
-    uns: UnsMapping = {}
+        def load_varp(measurement: Measurement, key: str, nvar: int) -> sp.csr_matrix:
+            return conversions.csr_from_coo_table(
+                measurement.varp[key].read().tables().concat(), nvar, nvar
+            )
+
+        for key in measurement.varp.keys():
+            varp[key] = tp.submit(load_varp, measurement, key, nvar)
+
+    uns_future: Future[Dict[str, FutureUnsDictNode]] | None = None
     if "uns" in measurement:
         s = _util.get_start_stamp()
         uns_coll = cast(Collection[Any], measurement["uns"])
         logging.log_io(None, f"Start  writing uns for {uns_coll.uri}")
-        uns = _extract_uns(
-            uns_coll,
-            uns_keys=uns_keys,
-        )
+        uns_future = tp.submit(_extract_uns, uns_coll, uns_keys=uns_keys)
         logging.log_io(
             None,
             _util.format_elapsed(s, f"Finish writing uns for {uns_coll.uri}"),
         )
+
+    # Resolve all futures
+    obsm = _resolve_futures(obsm)
+    varm = _resolve_futures(varm)
+    obsp = _resolve_futures(obsp)
+    varp = _resolve_futures(varp)
+    anndata_X = anndata_X_future.result() if anndata_X_future is not None else None
+    uns: UnsDict = (
+        _resolve_futures(uns_future.result(), deep=True)
+        if uns_future is not None
+        else {}
+    )
 
     anndata = ad.AnnData(
         X=anndata_X,
@@ -348,7 +388,7 @@ def to_anndata(
         obsp=obsp,
         varp=varp,
         uns=uns,
-        dtype=anndata_X_dtype,
+        dtype=anndata_X.dtype if anndata_X is not None else None,
     )
 
     logging.log_io(None, _util.format_elapsed(s, "FINISH Experiment.to_anndata"))
@@ -379,7 +419,7 @@ def _extract_obsm_or_varm(
         # 3.8 and we still support Python 3.7
         return matrix
 
-    matrix = soma_nd_array.read().tables().concat().to_pandas()
+    matrix_tbl = soma_nd_array.read().tables().concat()
 
     # Problem to solve: whereas for other sparse arrays we have:
     #
@@ -411,7 +451,7 @@ def _extract_obsm_or_varm(
             pass  # We tried; moving on to next option
 
     if num_cols is None:
-        num_rows_times_width, coo_column_count = matrix.shape
+        num_rows_times_width, coo_column_count = matrix_tbl.shape
 
         if coo_column_count != 3:
             raise SOMAError(
@@ -426,43 +466,53 @@ def _extract_obsm_or_varm(
             f"could not determine outgest width for {description}: please try to_anndata's obsm_varm_width_hints option"
         )
 
-    return conversions.csr_from_tiledb_df(matrix, num_rows, num_cols).toarray()
+    return conversions.csr_from_coo_table(matrix_tbl, num_rows, num_cols).toarray()
 
 
 def _extract_uns(
     collection: Collection[Any],
     uns_keys: Optional[Sequence[str]] = None,
     level: int = 0,
-) -> UnsDict:
+) -> Dict[str, FutureUnsDictNode]:
     """
     This is a helper function for ``to_anndata`` of ``uns`` elements.
     """
-
-    extracted: UnsDict = {}
-    for key, element in collection.items():
+    extracted: Dict[str, FutureUnsDictNode] = {}
+    tp = collection.context.threadpool
+    for key in collection.keys():
         if level == 0 and uns_keys is not None and key not in uns_keys:
             continue
 
+        element = collection[key]
         if isinstance(element, Collection):
             extracted[key] = _extract_uns(element, level=level + 1)
         elif isinstance(element, DataFrame):
             hint = element.metadata.get(_UNS_OUTGEST_HINT_KEY)
-            if hint == _UNS_OUTGEST_HINT_1D:
-                pdf = element.read().concat().to_pandas()
-                extracted[key] = _outgest_uns_1d_string_array(pdf, element.uri)
-            elif hint == _UNS_OUTGEST_HINT_2D:
-                pdf = element.read().concat().to_pandas()
-                extracted[key] = _outgest_uns_2d_string_array(pdf, element.uri)
-            else:
-                if hint is not None:
-                    logging.log_io_same(
-                        f"Warning: uns {collection.uri}[{key!r}] has {_UNS_OUTGEST_HINT_KEY} as unrecognized {hint}: leaving this as Pandas DataFrame"
-                    )
-                extracted[key] = _read_dataframe(element, fallback_index_name="index")
+
+            def _outgest_df(
+                element: Any, hint: Any, key: Any, collection: Collection[Any]
+            ) -> NPNDArray | pd.DataFrame:
+                if hint == _UNS_OUTGEST_HINT_1D:
+                    pdf = element.read().concat().to_pandas()
+                    return _outgest_uns_1d_string_array(pdf, element.uri)
+                elif hint == _UNS_OUTGEST_HINT_2D:
+                    pdf = element.read().concat().to_pandas()
+                    return _outgest_uns_2d_string_array(pdf, element.uri)
+                else:
+                    if hint is not None:
+                        logging.log_io_same(
+                            f"Warning: uns {collection.uri}[{key!r}] has {_UNS_OUTGEST_HINT_KEY} as unrecognized {hint}: leaving this as Pandas DataFrame"
+                        )
+                    return _read_dataframe(element, fallback_index_name="index")
+
+            extracted[key] = tp.submit(_outgest_df, element, hint, key, collection)
+
         elif isinstance(element, SparseNDArray):
-            extracted[key] = element.read().tables().concat().to_pandas()
+            extracted[key] = tp.submit(
+                lambda e: e.read().tables().concat().to_pandas(), element
+            )
         elif isinstance(element, DenseNDArray):
-            extracted[key] = element.read().to_numpy()
+            extracted[key] = tp.submit(lambda e: e.read().to_numpy(), element)
         else:
             logging.log_io_same(
                 f"Skipping uns key {key} with unhandled type {element.soma_type}"
@@ -512,3 +562,18 @@ def _outgest_uns_2d_string_array(pdf: pd.DataFrame, uri_for_logging: str) -> NPN
             raise SOMAError(f"Expected {column_name} column in {uri_for_logging}")
         columns.append(list(pdf[column_name]))
     return np.asarray(columns).transpose()
+
+
+def _resolve_futures(unresolved: Dict[str, Any], deep: bool = False) -> Dict[str, Any]:
+    """Helper. Resolves any futures found in the dict."""
+    resolved = {}
+    for k, v in unresolved.items():
+        if isinstance(v, Future):
+            v = v.result()
+
+        if deep and isinstance(v, dict):
+            v = _resolve_futures(v, deep=deep)
+
+        resolved[k] = v
+
+    return resolved

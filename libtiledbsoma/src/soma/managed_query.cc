@@ -100,22 +100,36 @@ void ManagedQuery::setup_read() {
         return;
     }
 
+    auto schema = array_->schema();
+
     // If the query is uninitialized, set the subarray for the query
     if (status == Query::Status::UNINITIALIZED) {
         // Dense array must have a subarray set. If the array is dense and no
         // ranges have been set, add a range for the array's entire non-empty
-        // domain on dimension 0.
-        if (array_->schema().array_type() == TILEDB_DENSE &&
-            !subarray_range_set_) {
-            auto non_empty_domain = array_->non_empty_domain<int64_t>(0);
-            subarray_->add_range(
-                0, non_empty_domain.first, non_empty_domain.second);
+        // domain on dimension 0. In the case that the non-empty domain does not
+        // exist (when the array has not been written to yet), use dimension 0's
+        // full domain
+        if (schema.array_type() == TILEDB_DENSE && !subarray_range_set_) {
+            // Check if the array has been written to by using the C API as
+            // there is no way to to check for an empty domain using the current
+            // CPP API
+            int32_t is_empty;
+            int64_t ned[2];
+            ctx_->handle_error(tiledb_array_get_non_empty_domain_from_index(
+                ctx_->ptr().get(), array_->ptr().get(), 0, &ned, &is_empty));
 
+            std::pair<int64_t, int64_t> array_shape;
+            if (is_empty == 1) {
+                array_shape = schema.domain().dimension(0).domain<int64_t>();
+            } else {
+                array_shape = std::make_pair(ned[0], ned[1]);
+            }
+
+            subarray_->add_range(0, array_shape.first, array_shape.second);
             LOG_DEBUG(fmt::format(
-                "[ManagedQuery] Add full NED range to dense subarray = (0, {}, "
-                "{})",
-                non_empty_domain.first,
-                non_empty_domain.second));
+                "[ManagedQuery] Add full range to dense subarray = (0, {}, {})",
+                array_shape.first,
+                array_shape.second));
         }
 
         // Set the subarray for range slicing
@@ -125,14 +139,14 @@ void ManagedQuery::setup_read() {
     // If no columns were selected, select all columns.
     // Add dims and attrs in the same order as specified in the schema
     if (columns_.empty()) {
-        if (array_->schema().array_type() == TILEDB_SPARSE) {
-            for (const auto& dim : array_->schema().domain().dimensions()) {
+        if (schema.array_type() == TILEDB_SPARSE) {
+            for (const auto& dim : schema.domain().dimensions()) {
                 columns_.push_back(dim.name());
             }
         }
-        int attribute_num = array_->schema().attribute_num();
+        int attribute_num = schema.attribute_num();
         for (int i = 0; i < attribute_num; i++) {
-            columns_.push_back(array_->schema().attribute(i).name());
+            columns_.push_back(schema.attribute(i).name());
         }
     }
 

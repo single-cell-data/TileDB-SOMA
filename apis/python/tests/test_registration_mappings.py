@@ -242,8 +242,8 @@ def test_pandas_indexing(
     signature_col_names: List[Union[str, Tuple[str, str]]],
 ):
     """
-    The `default_index_name` for registration can interact with column- and index-names in a variety of ways; this test
-    exercises several of them.
+    The `default_index_name` for registration can interact with column- and
+    index-names in a variety of ways; this test exercises several of them.
     """
     df = PANDAS_INDEXING_TEST_DF.copy()
     index_col = index_col_and_name[0]
@@ -300,6 +300,9 @@ def test_isolated_anndata_mappings(obs_field_name, var_field_name):
         ["RAW2", "TP53", "VEGFA"]
     ).data == (6, 3, 4)
 
+    assert rd.get_obs_shape() == 3
+    assert rd.get_var_shapes() == {"measname": 5, "raw": 7}
+
 
 @pytest.mark.parametrize("obs_field_name", ["obs_id", "cell_id"])
 @pytest.mark.parametrize("var_field_name", ["var_id", "gene_id"])
@@ -319,6 +322,9 @@ def test_isolated_h5ad_mappings(obs_field_name, var_field_name):
         ["RAW2", "TP53", "VEGFA"]
     ).data == (6, 3, 4)
 
+    assert rd.get_obs_shape() == 3
+    assert rd.get_var_shapes() == {"measname": 5, "raw": 7}
+
 
 @pytest.mark.parametrize("obs_field_name", ["obs_id", "cell_id"])
 @pytest.mark.parametrize("var_field_name", ["var_id", "gene_id"])
@@ -336,6 +342,9 @@ def test_isolated_soma_experiment_mappings(obs_field_name, var_field_name):
     assert rd.var_axes["raw"].id_mapping_from_values(
         ["RAW2", "TP53", "VEGFA"]
     ).data == (6, 3, 4)
+
+    assert rd.get_obs_shape() == 3
+    assert rd.get_var_shapes() == {"measname": 5, "raw": 7}
 
 
 @pytest.mark.parametrize("obs_field_name", ["obs_id", "cell_id"])
@@ -372,6 +381,11 @@ def test_multiples_without_experiment(
             obs_field_name=obs_field_name,
             var_field_name=var_field_name,
         )
+
+        if tiledbsoma._flags.NEW_SHAPE_FEATURE_FLAG_ENABLED:
+            nobs = rd.get_obs_shape()
+            nvars = rd.get_var_shapes()
+            tiledbsoma.io.resize_experiment(experiment_uri, nobs=nobs, nvars=nvars)
 
     else:
         # "Append" all the H5ADs where no experiment exists yet.
@@ -430,6 +444,9 @@ def test_multiples_without_experiment(
         "ZZZ3": 9,
     }
 
+    assert rd.get_obs_shape() == 12
+    assert rd.get_var_shapes() == {"measname": 7, "raw": 10}
+
     # Now do the ingestion per se.  Note that once registration is done sequentially, ingest order
     # mustn't matter, and in fact, can be done in parallel. This is why we test various permutations
     # of the ordering of the h5ad file names.
@@ -439,6 +456,14 @@ def test_multiples_without_experiment(
         h5ad_file_names[permutation[2]],
         h5ad_file_names[permutation[3]],
     ]:
+        if tiledbsoma._flags.NEW_SHAPE_FEATURE_FLAG_ENABLED:
+            if tiledbsoma.Experiment.exists(experiment_uri):
+                tiledbsoma.io.resize_experiment(
+                    experiment_uri,
+                    nobs=rd.get_obs_shape(),
+                    nvars=rd.get_var_shapes(),
+                )
+
         tiledbsoma.io.from_h5ad(
             experiment_uri,
             h5ad_file_name,
@@ -677,6 +702,9 @@ def test_multiples_with_experiment(obs_field_name, var_field_name):
         "ZZZ3": 9,
     }
 
+    assert rd.get_obs_shape() == 12
+    assert rd.get_var_shapes() == {"measname": 7, "raw": 10}
+
 
 @pytest.mark.parametrize("obs_field_name", ["obs_id", "cell_id"])
 @pytest.mark.parametrize("var_field_name", ["var_id", "gene_id"])
@@ -691,9 +719,19 @@ def test_append_items_with_experiment(obs_field_name, var_field_name):
         var_field_name=var_field_name,
     )
 
+    assert rd.get_obs_shape() == 6
+    assert rd.get_var_shapes() == {"measname": 5, "raw": 7}
+
     adata2 = ad.read_h5ad(h5ad2)
 
     original = adata2.copy()
+
+    if tiledbsoma._flags.NEW_SHAPE_FEATURE_FLAG_ENABLED:
+        tiledbsoma.io.resize_experiment(
+            soma1,
+            nobs=rd.get_obs_shape(),
+            nvars=rd.get_var_shapes(),
+        )
 
     with tiledbsoma.Experiment.open(soma1, "w") as exp1:
         tiledbsoma.io.append_obs(
@@ -817,6 +855,13 @@ def test_append_with_disjoint_measurements(
         obs_field_name=obs_field_name,
         var_field_name=var_field_name,
     )
+
+    if tiledbsoma._flags.NEW_SHAPE_FEATURE_FLAG_ENABLED:
+        tiledbsoma.io.resize_experiment(
+            soma_uri,
+            nobs=rd.get_obs_shape(),
+            nvars=rd.get_var_shapes(),
+        )
 
     tiledbsoma.io.from_anndata(
         soma_uri,
@@ -1054,6 +1099,9 @@ def test_registration_with_batched_reads(tmp_path, soma_larger, use_small_buffer
 
     assert len(rd.obs_axis.data) == 1000
 
+    assert rd.get_obs_shape() == 1000
+    assert rd.get_var_shapes() == {"measname": 6}
+
 
 def test_ealm_expose():
     """Checks that this is exported from tiledbsoma.io._registration"""
@@ -1163,9 +1211,20 @@ def test_enum_bit_width_append(tmp_path, all_at_once, nobs_a, nobs_b):
             var_field_name=var_field_name,
         )
 
+        assert rd.get_obs_shape() == nobs_a + nobs_b
+        assert rd.get_var_shapes() == {"meas": 4, "raw": 0}
+
         tiledbsoma.io.from_anndata(
             soma_uri, adata, measurement_name=measurement_name, registration_mapping=rd
         )
+
+        if tiledbsoma._flags.NEW_SHAPE_FEATURE_FLAG_ENABLED:
+            tiledbsoma.io.resize_experiment(
+                soma_uri,
+                nobs=rd.get_obs_shape(),
+                nvars=rd.get_var_shapes(),
+            )
+
         tiledbsoma.io.from_anndata(
             soma_uri, bdata, measurement_name=measurement_name, registration_mapping=rd
         )
@@ -1180,6 +1239,16 @@ def test_enum_bit_width_append(tmp_path, all_at_once, nobs_a, nobs_b):
             obs_field_name=obs_field_name,
             var_field_name=var_field_name,
         )
+
+        assert rd.get_obs_shape() == nobs_a + nobs_b
+        assert rd.get_var_shapes() == {"meas": 4}
+
+        if tiledbsoma._flags.NEW_SHAPE_FEATURE_FLAG_ENABLED:
+            tiledbsoma.io.resize_experiment(
+                soma_uri,
+                nobs=rd.get_obs_shape(),
+                nvars=rd.get_var_shapes(),
+            )
 
         tiledbsoma.io.from_anndata(
             soma_uri, bdata, measurement_name=measurement_name, registration_mapping=rd
@@ -1255,6 +1324,9 @@ def test_multimodal_names(tmp_path, conftest_pbmc3k_adata):
         obs_field_name=adata_protein.obs.index.name,
         var_field_name=adata_protein.var.index.name,
     )
+
+    assert rd.get_obs_shape() == 2638
+    assert rd.get_var_shapes() == {"protein": 500, "raw": 13714}
 
     # Ingest the second anndata object into the protein measurement
     tiledbsoma.io.from_anndata(

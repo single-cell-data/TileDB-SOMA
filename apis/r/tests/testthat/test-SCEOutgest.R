@@ -335,6 +335,7 @@ test_that("Load SCE object from indexed ExperimentQuery", {
   skip_if(!extended_tests() || covr_tests())
   skip_if_not_installed('SingleCellExperiment', .MINIMUM_SCE_VERSION('c'))
   uri <- tempfile(pattern="sce-experiment-query-value-filters")
+
   n_obs <- 1001L
   n_var <- 99L
   n_pcs <- 50L
@@ -371,6 +372,7 @@ test_that("Load SCE object from indexed ExperimentQuery", {
   n_var_select <- length(var_label_values)
   n_obs_select <- length(obs_label_values)
   expect_no_condition(obj <- query$to_single_cell_experiment())
+
   expect_s4_class(obj, 'SingleCellExperiment')
   expect_identical(dim(obj), c(n_var_select, n_obs_select))
   expect_identical(

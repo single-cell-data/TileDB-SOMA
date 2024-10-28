@@ -24,266 +24,237 @@ test_that("SOMADataFrame shape", {
   for (i in seq_along(index_column_name_choices)) {
     index_column_names <- index_column_name_choices[[i]]
 
-    for (use_domain_at_create in c(FALSE, TRUE)) {
+    uri <- withr::local_tempdir("soma-dataframe-shape")
 
-      uri <- withr::local_tempdir("soma-dataframe-shape")
+    # Create
+    if (dir.exists(uri)) unlink(uri, recursive=TRUE)
 
-      # Create
-      if (dir.exists(uri)) unlink(uri, recursive=TRUE)
+    domain_for_create <- domain_at_create_choices[[i]]
 
-      domain_for_create <- NULL
-      if (use_domain_at_create) {
-        domain_for_create <- domain_at_create_choices[[i]]
-      }
+    sdf <- SOMADataFrameCreate(
+      uri,
+      asch,
+      index_column_names = index_column_names,
+      domain = domain_for_create)
 
-      sdf <- SOMADataFrameCreate(
-        uri,
-        asch,
-        index_column_names = index_column_names,
-        domain = domain_for_create)
+    expect_true(sdf$exists())
+    expect_true(dir.exists(uri))
 
-      expect_true(sdf$exists())
-      expect_true(dir.exists(uri))
+    # Write
+    tbl0 <- arrow::arrow_table(int_column = 1L:4L,
+                               soma_joinid = 1L:4L,
+                               float_column = 1.1:4.1,
+                               string_column = c("apple", "ball", "cat", "dog"),
+                               schema = asch)
 
-      # Write
-      tbl0 <- arrow::arrow_table(int_column = 1L:4L,
-                                 soma_joinid = 1L:4L,
-                                 float_column = 1.1:4.1,
-                                 string_column = c("apple", "ball", "cat", "dog"),
-                                 schema = asch)
+    sdf$write(tbl0)
+    sdf$close()
 
-      sdf$write(tbl0)
-      sdf$close()
+    sdf <- SOMADataFrameOpen(uri)
 
-      sdf <- SOMADataFrameOpen(uri)
-
-      # Check shape and maxshape et al.
-      if (!.new_shape_feature_flag_is_enabled()) {
-        expect_false(sdf$tiledbsoma_has_upgraded_domain())
-      } else {
-        expect_true(sdf$tiledbsoma_has_upgraded_domain())
-      }
-      expect_error(sdf$shape(), class = "notYetImplementedError")
-      expect_error(sdf$maxshape(), class = "notYetImplementedError")
-
-      # Not implemented this way per
-      # https://github.com/single-cell-data/TileDB-SOMA/pull/2953#discussion_r1746125089
-      # sjid_shape <- sdf$.maybe_soma_joinid_shape()
-      # sjid_maxshape <- sdf$.maybe_soma_joinid_maxshape()
-      soma_context <- soma_context()
-      sjid_shape <- maybe_soma_joinid_shape(sdf$uri, soma_context)
-      sjid_maxshape <- maybe_soma_joinid_maxshape(sdf$uri, soma_context)
-
-      if ("soma_joinid" %in% index_column_names) {
-        # More testing to come on
-        # https://github.com/single-cell-data/TileDB-SOMA/issues/2407
-        expect_false(rlang::is_na(sjid_shape))
-        expect_false(rlang::is_na(sjid_maxshape))
-      } else {
-        expect_true(rlang::is_na(sjid_shape))
-        expect_true(rlang::is_na(sjid_maxshape))
-      }
-
-      # Check has_upgraded_domain
-      if (!.new_shape_feature_flag_is_enabled()) {
-        expect_false(sdf$tiledbsoma_has_upgraded_domain())
-      } else {
-        expect_true(sdf$tiledbsoma_has_upgraded_domain())
-      }
-
-      # Check domain and maxdomain
-      dom <- sdf$domain()
-      mxd <- sdf$maxdomain()
-
-      # First check names
-      expect_equal(names(dom), index_column_names)
-      expect_equal(names(mxd), index_column_names)
-
-      # Then check all slots are pairs
-      for (name in names(dom)) {
-        expect_length(dom[[name]], 2L)
-        expect_length(mxd[[name]], 2L)
-      }
-
-      # Then check contents
-
-      # Old shape/domainishes (without core current domain) for non-string dims:
-      # * There is no core current domain
-      # * Expect domain == maxdomain
-      # * If they asked for NULL: both should be huge (near min/max for datatype)
-      # * If they asked for something specific: they should get it
-      #
-      # New shape/domainishes (with core current domain) for non-string dims:
-      # * Maxdomain should be huge (near min/max for datatype)
-      # * If they asked for NULL: domain should be the same as maxdomain
-      # * If they asked for a specific domain: they should get it
-      #
-      # Old shape/domainishes (without core current domain) for string dims:
-      # * There is no core current domain
-      # * Expect domain == maxdomain
-      # * Core domain for strings is always ("", "")
-      #
-      # New shape/domainishes (with core current domain) for string dims:
-      # * Core domain (soma maxdomain) for strings is always ("", "")
-      # * Core current domain (soma domain) for strings:
-      #   o If they asked for NULL: expect ("", "")
-      #   o If they asked for something specific: they should get it
-
-      if ("soma_joinid" %in% index_column_names) {
-        sjid_dom <- dom[["soma_joinid"]]
-        sjid_mxd <- mxd[["soma_joinid"]]
-        sjid_dfc <- domain_for_create[["soma_joinid"]]
-
-        if (!.new_shape_feature_flag_is_enabled()) {
-          # Old behavior
-          expect_equal(sjid_dom, sjid_mxd)
-        }
-
-        if (!use_domain_at_create) {
-          expect_equal(sjid_dom[[1]], 0)
-          expect_equal(sjid_mxd[[1]], 0)
-          # This is a really big number in the ballpark of 2**63; its exact
-          # value is unimportant.
-          expect_true(sjid_dom[[2]] > bit64::as.integer64(10000000000))
-          expect_true(sjid_mxd[[2]] > bit64::as.integer64(10000000000))
-        } else {
-          # Not: expect_equal(sjid_dom, bit64::as.integer64(sjid_dfc)) The
-          # soma_joinid dim is always of type int64.  Everything coming back
-          # from libtiledbsoma, through C nanoarrow, through the R arrow
-          # package, to Arrow RecordBatch, holds true to that. But the final
-          # as.list() converts the domain to regular integer. This is a feature
-          # TBH: suppressable with `op <- options(arrow.int64_downcast =
-          # FALSE)`. The maxdomainis likely to be in the 2**63 range
-          # but the domain is likely to be ordinary-sized numbers in the
-          # thousands or millions. Users are likely to prefer these
-          # being downcast to regular R integers.
-          expect_equal(sjid_dom, sjid_dfc)
-        }
-      }
-
-      if ("int_column" %in% index_column_names) {
-        int_dom <- dom[["int_column"]]
-        int_mxd <- mxd[["int_column"]]
-        int_dfc <- domain_for_create[["int_column"]]
-
-        if (!.new_shape_feature_flag_is_enabled()) {
-          # Old behavior
-          expect_equal(int_dom, int_mxd)
-        }
-
-        if (!use_domain_at_create) {
-          expect_true(int_dom[[1]] < -2000000000)
-          expect_true(int_dom[[2]] > 2000000000)
-        } else {
-          expect_equal(int_dom, int_dfc)
-        }
-
-        if (!.new_shape_feature_flag_is_enabled()) {
-          if (!use_domain_at_create) {
-            expect_true(int_mxd[[1]] < -2000000000)
-            expect_true(int_mxd[[2]] > 2000000000)
-          } else {
-            expect_equal(int_mxd, int_dfc)
-          }
-        } else {
-          expect_true(int_mxd[[1]] < -2000000000)
-          expect_true(int_mxd[[2]] > 2000000000)
-        }
-      }
-
-      if ("string_column" %in% index_column_names) {
-        str_dom <- dom[["string_column"]]
-        str_mxd <- mxd[["string_column"]]
-        str_dfc <- domain_for_create[["string_column"]]
-
-        if (!.new_shape_feature_flag_is_enabled()) {
-          expect_equal(str_dom, c("", ""))
-          expect_equal(str_mxd, c("", ""))
-
-        } else {
-          if (!use_domain_at_create) {
-            expect_equal(str_dom, c("", ""))
-          } else {
-            if (is.null(str_dfc)) {
-              expect_equal(str_dom, c("", ""))
-            } else {
-              expect_equal(str_dom, str_dfc)
-            }
-          }
-          expect_equal(str_mxd, c("", ""))
-        }
-      }
-
-      sdf$close()
-
-      # Test resize for dataframes (more general upgrade_domain to be tested
-      # separately -- see https://github.com/single-cell-data/TileDB-SOMA/issues/2407)
-      if (.new_shape_feature_flag_is_enabled() && use_domain_at_create) {
-        has_soma_joinid_dim <- "soma_joinid" %in% index_column_names
-        sjid_dfc <- domain_for_create[["soma_joinid"]]
-
-        # Test resize down
-        new_shape <- 0
-        sdf <- SOMADataFrameOpen(uri, "WRITE")
-        if (has_soma_joinid_dim) {
-          # It's an error to downsize
-          expect_error(sdf$resize_soma_joinid_shape(new_shape))
-        } else {
-          # There is no problem when soma_joinid is not a dim --
-          # sdf$resize_soma_joinid_shape is a no-op in that case
-          expect_no_condition(sdf$resize_soma_joinid_shape(new_shape))
-        }
-        sdf$close()
-
-        # Make sure the failed resize really didn't change the shape
-        if (has_soma_joinid_dim) {
-          sdf <- SOMADataFrameOpen(uri, "READ")
-          expect_equal(sdf$domain()[["soma_joinid"]], sjid_dfc)
-          sdf$close()
-        }
-
-        # Test writes out of bounds, before resize
-        old_shape <- 100
-        if (has_soma_joinid_dim) {
-          old_shape <- domain_for_create[["soma_joinid"]][[2]] + 1 + 100
-        }
-        new_shape <- old_shape + 100
-
-        tbl1 <- arrow::arrow_table(
-          int_column = 5L:8L,
-          soma_joinid = (old_shape+1L):(old_shape+4L),
-          float_column = 5.1:8.1,
-          string_column = c("egg", "flag", "geese", "hay"),
-          schema = asch)
-
-        sdf <- SOMADataFrameOpen(uri, "WRITE")
-        if (has_soma_joinid_dim) {
-          expect_error(sdf$write(tbl1))
-        } else {
-          expect_no_condition(sdf$write(tbl1))
-        }
-        sdf$close()
-
-        # Test resize
-        sdf <- SOMADataFrameOpen(uri, "WRITE")
-        sdf$resize_soma_joinid_shape(new_shape)
-        sdf$close();
-
-        # Test writes out of old bounds, within new bounds, after resize
-        sdf <- SOMADataFrameOpen(uri, "WRITE")
-        expect_no_condition(sdf$write(tbl1))
-        sdf$close();
-
-        # To do: test readback
-
-        rm(tbl1)
-      }
-
-      rm(sdf, tbl0)
-
-      gc()
+    # Check shape and maxshape et al.
+    if (!.new_shape_feature_flag_is_enabled()) {
+      expect_false(sdf$tiledbsoma_has_upgraded_domain())
+    } else {
+      expect_true(sdf$tiledbsoma_has_upgraded_domain())
     }
-  }
+    expect_error(sdf$shape(), class = "notYetImplementedError")
+    expect_error(sdf$maxshape(), class = "notYetImplementedError")
+
+    # Not implemented this way per
+    # https://github.com/single-cell-data/TileDB-SOMA/pull/2953#discussion_r1746125089
+    # sjid_shape <- sdf$.maybe_soma_joinid_shape()
+    # sjid_maxshape <- sdf$.maybe_soma_joinid_maxshape()
+    soma_context <- soma_context()
+    sjid_shape <- maybe_soma_joinid_shape(sdf$uri, soma_context)
+    sjid_maxshape <- maybe_soma_joinid_maxshape(sdf$uri, soma_context)
+
+    if ("soma_joinid" %in% index_column_names) {
+      # More testing to come on
+      # https://github.com/single-cell-data/TileDB-SOMA/issues/2407
+      expect_false(rlang::is_na(sjid_shape))
+      expect_false(rlang::is_na(sjid_maxshape))
+    } else {
+      expect_true(rlang::is_na(sjid_shape))
+      expect_true(rlang::is_na(sjid_maxshape))
+    }
+
+    # Check has_upgraded_domain
+    if (!.new_shape_feature_flag_is_enabled()) {
+      expect_false(sdf$tiledbsoma_has_upgraded_domain())
+    } else {
+      expect_true(sdf$tiledbsoma_has_upgraded_domain())
+    }
+
+    # Check domain and maxdomain
+    dom <- sdf$domain()
+    mxd <- sdf$maxdomain()
+
+    # First check names
+    expect_equal(names(dom), index_column_names)
+    expect_equal(names(mxd), index_column_names)
+
+    # Then check all slots are pairs
+    for (name in names(dom)) {
+      expect_length(dom[[name]], 2L)
+      expect_length(mxd[[name]], 2L)
+    }
+
+    # Then check contents
+
+    # Old shape/domainishes (without core current domain) for non-string dims:
+    # * There is no core current domain
+    # * Expect domain == maxdomain
+    # * If they asked for NULL: both should be huge (near min/max for datatype)
+    # * If they asked for something specific: they should get it
+    #
+    # New shape/domainishes (with core current domain) for non-string dims:
+    # * Maxdomain should be huge (near min/max for datatype)
+    # * If they asked for NULL: domain should be the same as maxdomain
+    # * If they asked for a specific domain: they should get it
+    #
+    # Old shape/domainishes (without core current domain) for string dims:
+    # * There is no core current domain
+    # * Expect domain == maxdomain
+    # * Core domain for strings is always ("", "")
+    #
+    # New shape/domainishes (with core current domain) for string dims:
+    # * Core domain (soma maxdomain) for strings is always ("", "")
+    # * Core current domain (soma domain) for strings:
+    #   o If they asked for NULL: expect ("", "")
+    #   o If they asked for something specific: they should get it
+
+    if ("soma_joinid" %in% index_column_names) {
+      sjid_dom <- dom[["soma_joinid"]]
+      sjid_mxd <- mxd[["soma_joinid"]]
+      sjid_dfc <- domain_for_create[["soma_joinid"]]
+
+      if (!.new_shape_feature_flag_is_enabled()) {
+        # Old behavior
+        expect_equal(sjid_dom, sjid_mxd)
+      }
+
+      # Not: expect_equal(sjid_dom, bit64::as.integer64(sjid_dfc)) The
+      # soma_joinid dim is always of type int64.  Everything coming back
+      # from libtiledbsoma, through C nanoarrow, through the R arrow
+      # package, to Arrow RecordBatch, holds true to that. But the final
+      # as.list() converts the domain to regular integer. This is a feature
+      # TBH: suppressable with `op <- options(arrow.int64_downcast =
+      # FALSE)`. The maxdomainis likely to be in the 2**63 range
+      # but the domain is likely to be ordinary-sized numbers in the
+      # thousands or millions. Users are likely to prefer these
+      # being downcast to regular R integers.
+      expect_equal(sjid_dom, sjid_dfc)
+    }
+
+    if ("int_column" %in% index_column_names) {
+      int_dom <- dom[["int_column"]]
+      int_mxd <- mxd[["int_column"]]
+      int_dfc <- domain_for_create[["int_column"]]
+
+      if (!.new_shape_feature_flag_is_enabled()) {
+        # Old behavior
+        expect_equal(int_dom, int_mxd)
+      }
+
+      expect_equal(int_dom, int_dfc)
+
+      if (!.new_shape_feature_flag_is_enabled()) {
+        expect_equal(int_mxd, int_dfc)
+      } else {
+        expect_true(int_mxd[[1]] < -2000000000)
+        expect_true(int_mxd[[2]] > 2000000000)
+      }
+    }
+
+    if ("string_column" %in% index_column_names) {
+      str_dom <- dom[["string_column"]]
+      str_mxd <- mxd[["string_column"]]
+      str_dfc <- domain_for_create[["string_column"]]
+
+      if (!.new_shape_feature_flag_is_enabled()) {
+        expect_equal(str_dom, c("", ""))
+        expect_equal(str_mxd, c("", ""))
+
+      } else {
+        if (is.null(str_dfc)) {
+          expect_equal(str_dom, c("", ""))
+        } else {
+          expect_equal(str_dom, str_dfc)
+        }
+        expect_equal(str_mxd, c("", ""))
+      }
+    }
+
+    sdf$close()
+
+    # Test resize for dataframes (more general upgrade_domain to be tested
+    # separately -- see https://github.com/single-cell-data/TileDB-SOMA/issues/2407)
+    if (.new_shape_feature_flag_is_enabled()) {
+      has_soma_joinid_dim <- "soma_joinid" %in% index_column_names
+      sjid_dfc <- domain_for_create[["soma_joinid"]]
+
+      # Test resize down
+      new_shape <- 0
+      sdf <- SOMADataFrameOpen(uri, "WRITE")
+      if (has_soma_joinid_dim) {
+        # It's an error to downsize
+        expect_error(sdf$resize_soma_joinid_shape(new_shape))
+      } else {
+        # There is no problem when soma_joinid is not a dim --
+        # sdf$resize_soma_joinid_shape is a no-op in that case
+        expect_no_condition(sdf$resize_soma_joinid_shape(new_shape))
+      }
+      sdf$close()
+
+      # Make sure the failed resize really didn't change the shape
+      if (has_soma_joinid_dim) {
+        sdf <- SOMADataFrameOpen(uri, "READ")
+        expect_equal(sdf$domain()[["soma_joinid"]], sjid_dfc)
+        sdf$close()
+      }
+
+      # Test writes out of bounds, before resize
+      old_shape <- 100
+      if (has_soma_joinid_dim) {
+        old_shape <- domain_for_create[["soma_joinid"]][[2]] + 1 + 100
+      }
+      new_shape <- old_shape + 100
+
+      tbl1 <- arrow::arrow_table(
+        int_column = 5L:8L,
+        soma_joinid = (old_shape+1L):(old_shape+4L),
+        float_column = 5.1:8.1,
+        string_column = c("egg", "flag", "geese", "hay"),
+        schema = asch)
+
+      sdf <- SOMADataFrameOpen(uri, "WRITE")
+      if (has_soma_joinid_dim) {
+        expect_error(sdf$write(tbl1))
+      } else {
+        expect_no_condition(sdf$write(tbl1))
+      }
+      sdf$close()
+
+      # Test resize
+      sdf <- SOMADataFrameOpen(uri, "WRITE")
+      sdf$resize_soma_joinid_shape(new_shape)
+      sdf$close();
+
+      # Test writes out of old bounds, within new bounds, after resize
+      sdf <- SOMADataFrameOpen(uri, "WRITE")
+      expect_no_condition(sdf$write(tbl1))
+      sdf$close();
+
+      # To do: test readback
+
+      rm(tbl1)
+    }
+
+    rm(sdf, tbl0)
+
+    gc()
+}
   
   # Test `domain` assertions
   uri <- tempfile()
@@ -406,8 +377,9 @@ test_that("SOMASparseNDArray shape", {
     ndarray$close()
 
     ndarray <- SOMASparseNDArrayOpen(uri)
-    ned <- ndarray$non_empty_domain()
-    expect_equal(ned, c(2,4))
+    ned <- ndarray$non_empty_domain(max_only=TRUE)
+    #expect_equal(ned, c(2,4))
+    expect_equal(as.integer(ned), as.integer(c(2,4)))
 
     # Test reads out of bounds
     coords <- list(bit64::as.integer64(c(1,2)), bit64::as.integer64(c(3,4)))
@@ -434,7 +406,8 @@ test_that("SOMASparseNDArray shape", {
 
       # Test resize up
       new_shape <- c(500, 600)
-      expect_no_error(ndarray$resize(new_shape))
+      ####expect_no_error(ndarray$resize(new_shape))
+      ndarray$resize(new_shape)
 
       # Test writes within new bounds
       soma_dim_0 <- c(200,300)
@@ -477,13 +450,17 @@ test_that("SOMADenseNDArray shape", {
     readback_shape <- ndarray$shape()
     readback_maxshape <- ndarray$maxshape()
     expect_equal(length(readback_shape), length(readback_maxshape))
-    # TODO: Awaiting core support for new shape in dense arrays.
-    # https://github.com/single-cell-data/TileDB-SOMA/issues/2955
-    #if (.new_shape_feature_flag_is_enabled()) {
-    #  expect_true(all(readback_shape < readback_maxshape))
-    #} else {
-    #  expect_true(all(readback_shape == readback_maxshape))
-    #}
+
+    if (.new_shape_feature_flag_is_enabled()) {
+      if (.dense_arrays_can_have_current_domain()) {
+        expect_true(all(readback_shape < readback_maxshape))
+      } else {
+        expect_true(all(readback_shape == readback_maxshape))
+      }
+    } else {
+      expect_true(all(readback_shape == readback_maxshape))
+    }
+
     expect_true(all(readback_shape == readback_maxshape))
 
     ndarray$close()
@@ -495,7 +472,7 @@ test_that("SOMADenseNDArray shape", {
     ndarray$close()
 
     ndarray <- SOMADenseNDArrayOpen(uri)
-    ned <- ndarray$non_empty_domain()
+    ned <- ndarray$non_empty_domain(max_only=TRUE)
     expect_equal(ned, c(99, 199))
 
     # Test reads out of bounds
@@ -522,26 +499,29 @@ test_that("SOMADenseNDArray shape", {
 
       # Test resize up
       new_shape <- c(500, 600)
-      # TODO: Awaiting core support for new shape in dense arrays.
-      # https://github.com/single-cell-data/TileDB-SOMA/issues/2955
-      # expect_no_error(ndarray$resize(new_shape))
-      expect_error(ndarray$resize(new_shape))
+      if (tiledbsoma:::.dense_arrays_can_have_current_domain()) {
+        expect_no_error(ndarray$resize(new_shape))
+      } else {
+        expect_error(ndarray$resize(new_shape))
+      }
 
       # Test writes within new bounds
       ndarray <- SOMADenseNDArrayOpen(uri, "WRITE")
       mat <- create_dense_matrix_with_int_dims(300, 400)
-      # TODO: Awaiting core support for new shape in dense arrays.
-      # https://github.com/single-cell-data/TileDB-SOMA/issues/2955
-      # expect_no_error(ndarray$write(sm))
-      expect_error(ndarray$write(sm))
+      if (tiledbsoma:::.dense_arrays_can_have_current_domain()) {
+        expect_no_error(ndarray$write(sm))
+      } else {
+        expect_error(ndarray$write(sm))
+      }
       ndarray$close()
 
       ndarray <- SOMADenseNDArrayOpen(uri)
       coords <- list(bit64::as.integer64(c(101,202)), bit64::as.integer64(c(3,4)))
-      # TODO: Awaiting core support for new shape in dense arrays.
-      # https://github.com/single-cell-data/TileDB-SOMA/issues/2955
-      # expect_no_error(x <- ndarray$read(coords=coords)$tables()$concat())
-      expect_error(x <- ndarray$read(coords=coords)$tables()$concat())
+      if (tiledbsoma:::.dense_arrays_can_have_current_domain()) {
+        expect_no_condition(x <- ndarray$read(coords=coords)$tables()$concat())
+      } else {
+        expect_error(x <- ndarray$read(coords=coords)$tables()$concat())
+      }
       ndarray$close()
     }
 

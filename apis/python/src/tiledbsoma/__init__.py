@@ -172,6 +172,7 @@ from ._general_utilities import (
     get_SOMA_version,
     get_storage_engine,
     show_package_versions,
+    get_libtiledbsoma_core_version,
 )
 from ._indexer import IntIndexer, tiledbsoma_build_index
 from ._measurement import Measurement
