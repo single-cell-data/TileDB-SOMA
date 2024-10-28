@@ -505,6 +505,28 @@ class SOMAArrayWrapper(Wrapper[_ArrType]):
         """Only implemented for DataFrame."""
         raise NotImplementedError
 
+    def upgrade_domain(
+        self, newdomain: Domain, function_name_for_messages: str
+    ) -> None:
+        """Only implemented for DataFrame."""
+        raise NotImplementedError
+
+    def can_upgrade_domain(
+        self, newdomain: Domain, function_name_for_messages: str
+    ) -> StatusAndReason:
+        """Only implemented for DataFrame."""
+        raise NotImplementedError
+
+    def change_domain(self, newdomain: Domain, function_name_for_messages: str) -> None:
+        """Only implemented for DataFrame."""
+        raise NotImplementedError
+
+    def can_change_domain(
+        self, newdomain: Domain, function_name_for_messages: str
+    ) -> StatusAndReason:
+        """Only implemented for DataFrame."""
+        raise NotImplementedError
+
 
 class DataFrameWrapper(SOMAArrayWrapper[clib.SOMADataFrame]):
     """Wrapper around a Pybind11 SOMADataFrame handle."""
@@ -565,6 +587,34 @@ class DataFrameWrapper(SOMAArrayWrapper[clib.SOMADataFrame]):
             self._handle.can_upgrade_soma_joinid_shape(
                 newshape, function_name_for_messages
             ),
+        )
+
+    def upgrade_domain(
+        self, newdomain: Domain, function_name_for_messages: str
+    ) -> None:
+        """Wrapper-class internals"""
+        self._handle.upgrade_domain(newdomain, function_name_for_messages)
+
+    def can_upgrade_domain(
+        self, newdomain: Domain, function_name_for_messages: str
+    ) -> StatusAndReason:
+        """Wrapper-class internals"""
+        return cast(
+            StatusAndReason,
+            self._handle.can_upgrade_domain(newdomain, function_name_for_messages),
+        )
+
+    def change_domain(self, newdomain: Domain, function_name_for_messages: str) -> None:
+        """Wrapper-class internals"""
+        self._handle.change_domain(newdomain, function_name_for_messages)
+
+    def can_change_domain(
+        self, newdomain: Domain, function_name_for_messages: str
+    ) -> StatusAndReason:
+        """Wrapper-class internals"""
+        return cast(
+            StatusAndReason,
+            self._handle.can_change_domain(newdomain, function_name_for_messages),
         )
 
 

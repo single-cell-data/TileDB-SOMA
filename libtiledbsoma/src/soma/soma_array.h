@@ -1285,21 +1285,27 @@ class SOMAArray : public SOMAObject {
     }
 
     /**
-     * This is for SOMADataFrame.
-     * XXX comment more
-     */
-    void upgrade_domain(
-        const ArrowTable& newdomain, std::string function_name_for_messages) {
-        _set_domain_helper(newdomain, false, function_name_for_messages);
-    }
-
-    /**
-     * This is for SOMADataFrame.
-     * XXX comment more
+     * This is for SOMADataFrame.  While resize_soma_joinid_shape allows the
+     * user to do up the soma_joinid domain slot, without needing to specify
+     * the rest (which is the common operation for experiment-level resize)
+     * this allows the full-generality resize-every-index-column case
+     * (which only applies to variant-indexed/non-standard dataframes).
      */
     void change_domain(
         const ArrowTable& newdomain, std::string function_name_for_messages) {
         _set_domain_helper(newdomain, true, function_name_for_messages);
+    }
+
+    /**
+     * This is for SOMADataFrame.  While upgrade_soma_joinid_shape allows the
+     * user to do up the soma_joinid domain slot, without needing to specify
+     * the rest (which is the common operation for experiment-level resize)
+     * this allows the full-generality resize-every-index-column case
+     * (which only applies to variant-indexed/non-standard dataframes).
+     */
+    void upgrade_domain(
+        const ArrowTable& newdomain, std::string function_name_for_messages) {
+        _set_domain_helper(newdomain, false, function_name_for_messages);
     }
 
    protected:
@@ -1447,22 +1453,51 @@ class SOMAArray : public SOMAObject {
         const T& new_lo = new_lo_hi[0];
         const T& new_hi = new_lo_hi[1];
 
-        // It's difficult to use fmt::format within a header file since the
-        // include path to logger.h 'moves around' depending on which source
+        // If we're checking against the core current domain: the user-provided
+        // domain must contain the core current domain.
+        //
+        // If we're checking against the core (max) domain: the user-provided
+        // domain must be contained within the core (max) domain.
+
+        // Note: It's difficult to use fmt::format within a header file since
+        // the include path to logger.h 'moves around' depending on which source
         // file included us.
         //
         // TODO: once we're on C++ 20, just use std::format here and include
         // things like "old ({}, {}) new ({}, {})".
+
         if (new_lo > new_hi) {
-            return std::pair(false, "new lower > new upper");
-        }
-        if (new_lo > old_lo) {
             return std::pair(
-                false, "new lower > old lower (downsize is unsupported)");
+                false,
+                "index-column name " + dim_name + ": new lower > new upper");
         }
-        if (new_hi < old_hi) {
-            return std::pair(
-                false, "new upper < old upper (downsize is unsupported)");
+
+        if (check_current_domain) {
+            if (new_lo > old_lo) {
+                return std::pair(
+                    false,
+                    "index-column name " + dim_name +
+                        ": new lower > old lower (downsize is unsupported)");
+            }
+            if (new_hi < old_hi) {
+                return std::pair(
+                    false,
+                    "index-column name " + dim_name +
+                        ": new upper < old upper (downsize is unsupported)");
+            }
+        } else {
+            if (new_lo < old_lo) {
+                return std::pair(
+                    false,
+                    "index-column name " + dim_name +
+                        ": new lower < limit lower");
+            }
+            if (new_hi > old_hi) {
+                return std::pair(
+                    false,
+                    "index-column name " + dim_name +
+                        ": new upper > limit upper");
+            }
         }
         return std::pair(true, "");
     }
