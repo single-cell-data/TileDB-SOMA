@@ -745,7 +745,7 @@ def test_null_obs(conftest_pbmc_small, tmp_path: Path):
     seed = 42
     #   Create column of all null values
     conftest_pbmc_small.obs["empty_categorical_all"] = pd.Categorical(
-        [np.NaN] * conftest_pbmc_small.n_obs,
+        [np.nan] * conftest_pbmc_small.n_obs,
         dtype=pd.CategoricalDtype(categories=[], ordered=False),
     )
     conftest_pbmc_small.obs["empty_extension_all"] = pd.Series(
@@ -755,7 +755,7 @@ def test_null_obs(conftest_pbmc_small, tmp_path: Path):
     rng = np.random.RandomState(seed)
 
     conftest_pbmc_small.obs["empty_categorical_partial"] = rng.choice(
-        (np.NaN, 1.0), conftest_pbmc_small.n_obs, True
+        (np.nan, 1.0), conftest_pbmc_small.n_obs, True
     )
     conftest_pbmc_small.obs["empty_extension_partial"] = pd.Series(
         [1] * conftest_pbmc_small.n_obs + [np.nan], dtype=pd.Int64Dtype()
