@@ -332,7 +332,8 @@ setuptools.setup(
         "numba>=0.58.0",
         "numpy",
         "pandas",
-        "pyarrow",
+        #### TEMP #3245 "pyarrow",
+        "pyarrow<18",
         "scanpy>=1.9.2",
         "scipy",
         # Note: the somacore version is in .pre-commit-config.yaml too
