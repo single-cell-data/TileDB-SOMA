@@ -16,12 +16,13 @@ BlockwiseReadIterBase <- R6::R6Class(
     #' @template param-coords-iter
     #' @template param-dots-ignored
     #'
-    initialize = function(sr,
-                          array,
-                          coords,
-                          axis,
-                          ...,
-                          reindex_disable_on_axis = NA) {
+    initialize = function(
+        sr,
+        array,
+        coords,
+        axis,
+        ...,
+        reindex_disable_on_axis = NA) {
       super$initialize(sr)
       stopifnot(
         "'array' must be a 'SOMASparseNDArray'" = inherits(array, "SOMASparseNDArray")
@@ -293,13 +294,14 @@ BlockwiseSparseReadIter <- R6::R6Class(
     #' @template param-dots-ignored
     #' @template param-repr-read
     #'
-    initialize = function(sr,
-                          array,
-                          coords,
-                          axis,
-                          ...,
-                          repr = "T",
-                          reindex_disable_on_axis = NA) {
+    initialize = function(
+        sr,
+        array,
+        coords,
+        axis,
+        ...,
+        repr = "T",
+        reindex_disable_on_axis = NA) {
       super$initialize(
         sr,
         array,

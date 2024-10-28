@@ -30,11 +30,12 @@ SOMADataFrame <- R6::R6Class(
     #' @template param-platform-config
     #' @param internal_use_only Character value to signal this is a 'permitted' call,
     #' as `create()` is considered internal and should not be called directly.
-    create = function(schema,
-                      index_column_names = c("soma_joinid"),
-                      domain = NULL,
-                      platform_config = NULL,
-                      internal_use_only = NULL) {
+    create = function(
+        schema,
+        index_column_names = c("soma_joinid"),
+        domain = NULL,
+        platform_config = NULL,
+        internal_use_only = NULL) {
       if (is.null(internal_use_only) || internal_use_only != "allowed_use") {
         stop(paste(
           "Use of the create() method is for internal use only. Consider using a",
@@ -169,12 +170,13 @@ SOMADataFrame <- R6::R6Class(
     #' `FALSE`, the default value) or in several iterated steps.
     #' @param log_level Optional logging level with default value of `"warn"`.
     #' @return arrow::\link[arrow]{Table} or \link{TableReadIter}
-    read = function(coords = NULL,
-                    column_names = NULL,
-                    value_filter = NULL,
-                    result_order = "auto",
-                    iterated = FALSE,
-                    log_level = "auto") {
+    read = function(
+        coords = NULL,
+        column_names = NULL,
+        value_filter = NULL,
+        result_order = "auto",
+        iterated = FALSE,
+        log_level = "auto") {
       private$check_open_for_read()
 
       result_order <- match_query_layout(result_order)

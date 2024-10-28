@@ -32,9 +32,10 @@ SOMADenseNDArray <- R6::R6Class(
     #' @template param-result-order
     #' @param log_level Optional logging level with default value of `"warn"`.
     #' @return An [`arrow::Table`].
-    read_arrow_table = function(coords = NULL,
-                                result_order = "auto",
-                                log_level = "warn") {
+    read_arrow_table = function(
+        coords = NULL,
+        result_order = "auto",
+        log_level = "warn") {
       private$check_open_for_read()
 
       uri <- self$uri
@@ -74,9 +75,10 @@ SOMADenseNDArray <- R6::R6Class(
     #' @template param-result-order
     #' @param log_level Optional logging level with default value of `"warn"`.
     #' @return A `matrix` object
-    read_dense_matrix = function(coords = NULL,
-                                 result_order = "ROW_MAJOR",
-                                 log_level = "warn") {
+    read_dense_matrix = function(
+        coords = NULL,
+        result_order = "ROW_MAJOR",
+        log_level = "warn") {
       private$check_open_for_read()
 
       ndim <- self$ndim()

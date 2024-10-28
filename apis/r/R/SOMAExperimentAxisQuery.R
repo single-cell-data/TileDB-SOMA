@@ -33,10 +33,11 @@ SOMAExperimentAxisQuery <- R6::R6Class(
     #' @param measurement_name The name of the measurement to query.
     #' @param obs_query,var_query An [`SOMAAxisQuery`] object for the obs/var
     #' axis.
-    initialize = function(experiment,
-                          measurement_name,
-                          obs_query = NULL,
-                          var_query = NULL) {
+    initialize = function(
+        experiment,
+        measurement_name,
+        obs_query = NULL,
+        var_query = NULL) {
       stopifnot(
         "experiment must be a SOMAExperiment" =
           inherits(experiment, "SOMAExperiment"),
@@ -508,15 +509,16 @@ SOMAExperimentAxisQuery <- R6::R6Class(
     #'
     #' @return A \code{\link[SeuratObject]{Seurat}} object
     #'
-    to_seurat = function(X_layers = c(counts = "counts", data = "logcounts"),
-                         obs_index = NULL,
-                         var_index = NULL,
-                         obs_column_names = NULL,
-                         var_column_names = NULL,
-                         obsm_layers = NULL,
-                         varm_layers = NULL,
-                         obsp_layers = NULL,
-                         drop_levels = FALSE) {
+    to_seurat = function(
+        X_layers = c(counts = "counts", data = "logcounts"),
+        obs_index = NULL,
+        var_index = NULL,
+        obs_column_names = NULL,
+        var_column_names = NULL,
+        obsm_layers = NULL,
+        varm_layers = NULL,
+        obsp_layers = NULL,
+        drop_levels = FALSE) {
       check_package("SeuratObject", version = .MINIMUM_SEURAT_VERSION())
       op <- options(Seurat.object.assay.version = "v3")
       on.exit(options(op), add = TRUE)
@@ -729,11 +731,12 @@ SOMAExperimentAxisQuery <- R6::R6Class(
     #'
     #' @return An \code{\link[SeuratObject]{Assay}} object
     #'
-    to_seurat_assay = function(X_layers = c(counts = "counts", data = "logcounts"),
-                               obs_index = NULL,
-                               var_index = NULL,
-                               var_column_names = NULL,
-                               drop_levels = FALSE) {
+    to_seurat_assay = function(
+        X_layers = c(counts = "counts", data = "logcounts"),
+        obs_index = NULL,
+        var_index = NULL,
+        var_column_names = NULL,
+        drop_levels = FALSE) {
       version <- "v3"
       check_package("SeuratObject", version = .MINIMUM_SEURAT_VERSION())
       op <- options(Seurat.object.assay.version = "v3")
@@ -829,10 +832,11 @@ SOMAExperimentAxisQuery <- R6::R6Class(
     #'
     #' @return A \code{\link[SeuratObject]{DimReduc}} object
     #'
-    to_seurat_reduction = function(obsm_layer,
-                                   varm_layer = NULL,
-                                   obs_index = NULL,
-                                   var_index = NULL) {
+    to_seurat_reduction = function(
+        obsm_layer,
+        varm_layer = NULL,
+        obs_index = NULL,
+        var_index = NULL) {
       check_package("SeuratObject", version = .MINIMUM_SEURAT_VERSION())
       stopifnot(
         "'obsm_layer' must be a single character value" = is_scalar_character(obsm_layer),
@@ -1055,17 +1059,18 @@ SOMAExperimentAxisQuery <- R6::R6Class(
     #'
     #' @return A \code{\link[SingleCellExperiment]{SingleCellExperiment}} object
     #'
-    to_single_cell_experiment = function(X_layers = NULL,
-                                         obs_index = NULL,
-                                         var_index = NULL,
-                                         obs_column_names = NULL,
-                                         var_column_names = NULL,
-                                         obsm_layers = NULL,
-                                         # Omission of `varm_layers` parameter is purposeful as
-                                         # SCE objects do not support `varm_layers`
-                                         obsp_layers = NULL,
-                                         varp_layers = NULL,
-                                         drop_levels = FALSE) {
+    to_single_cell_experiment = function(
+        X_layers = NULL,
+        obs_index = NULL,
+        var_index = NULL,
+        obs_column_names = NULL,
+        var_column_names = NULL,
+        obsm_layers = NULL,
+        # Omission of `varm_layers` parameter is purposeful as
+        # SCE objects do not support `varm_layers`
+        obsp_layers = NULL,
+        varp_layers = NULL,
+        drop_levels = FALSE) {
       check_package("SingleCellExperiment", version = .MINIMUM_SCE_VERSION())
       stopifnot(
         "'X_layers' must be a character vector" = is_character_or_null(X_layers),
@@ -1263,10 +1268,11 @@ SOMAExperimentAxisQuery <- R6::R6Class(
     # - `FALSE` or `NA`: return a data frame the number of rows as present
     # in `df_name` and zero columns
     # - a character vector of names of attributes to load in
-    .load_df = function(df_name = c("obs", "var"),
-                        index = NULL,
-                        column_names = NULL,
-                        drop_levels = FALSE) {
+    .load_df = function(
+        df_name = c("obs", "var"),
+        index = NULL,
+        column_names = NULL,
+        drop_levels = FALSE) {
       stopifnot(
         is.character(df_name),
         is.null(index) || is_scalar_character(index),
@@ -1500,11 +1506,12 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       return(stats::setNames(row_pairs, names(varp_layers)))
     },
     # Helper methods for loading Seurat assays
-    .to_seurat_assay_v3 = function(counts,
-                                   data,
-                                   scale_data = NULL,
-                                   cells = NULL,
-                                   features = NULL) {
+    .to_seurat_assay_v3 = function(
+        counts,
+        data,
+        scale_data = NULL,
+        cells = NULL,
+        features = NULL) {
       check_package("SeuratObject", version = .MINIMUM_SEURAT_VERSION())
       stopifnot(
         "'data' must be a single character value" = is.null(data) ||

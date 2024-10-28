@@ -33,9 +33,10 @@ SOMASparseNDArray <- R6::R6Class(
     #' `FALSE`, the default value) or in several iterated steps.
     #' @param log_level Optional logging level with default value of `"warn"`.
     #' @return \link{SOMASparseNDArrayRead}
-    read = function(coords = NULL,
-                    result_order = "auto",
-                    log_level = "auto") {
+    read = function(
+        coords = NULL,
+        result_order = "auto",
+        log_level = "auto") {
       private$check_open_for_read()
       result_order <- map_query_layout(match_query_layout(result_order))
 

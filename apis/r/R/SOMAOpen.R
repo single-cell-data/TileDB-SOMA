@@ -9,8 +9,9 @@
 #'        collection timestamp defaults to the time of opening.
 #'
 #' @export
-SOMAOpen <- function(uri, mode = "READ", platform_config = NULL,
-                     tiledbsoma_ctx = NULL, tiledb_timestamp = NULL) {
+SOMAOpen <- function(
+    uri, mode = "READ", platform_config = NULL,
+    tiledbsoma_ctx = NULL, tiledb_timestamp = NULL) {
   # As an alternative we could rely tiledb-r and its tiledb_object_type but
   # this would require instantiating a ctx object first. It is a possible
   # refinement if and when we decide to hold an array or group pointer.

@@ -171,10 +171,11 @@ SOMASparseNDArrayRead <- R6::R6Class(
     #'
     #' @return A \code{\link{SOMASparseNDArrayBlockwiseRead}} iterated reader
     #'
-    blockwise = function(axis,
-                         ...,
-                         size = NULL,
-                         reindex_disable_on_axis = NA) {
+    blockwise = function(
+        axis,
+        ...,
+        size = NULL,
+        reindex_disable_on_axis = NA) {
       return(SOMASparseNDArrayBlockwiseRead$new(
         self$sr,
         self$array,
@@ -206,13 +207,14 @@ SOMASparseNDArrayBlockwiseRead <- R6::R6Class(
     #' @template param-coords-read
     #' @template param-dots-ignored
     #'
-    initialize = function(sr,
-                          array,
-                          coords,
-                          axis,
-                          ...,
-                          size,
-                          reindex_disable_on_axis = NA) {
+    initialize = function(
+        sr,
+        array,
+        coords,
+        axis,
+        ...,
+        size,
+        reindex_disable_on_axis = NA) {
       super$initialize(sr, array, coords)
       stopifnot(
         "'axis' must be a single integer value" = rlang::is_integerish(axis, n = 1L, finite = TRUE),

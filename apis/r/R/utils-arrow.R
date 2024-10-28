@@ -438,8 +438,9 @@ extract_levels <- function(arrtbl, exclude_cols = c("soma_joinid")) {
 #' Domain and extent table creation helper for data.frame writes returning a Table with
 #' a column per dimension for the given (incoming) arrow schema of a Table
 #' @noRd
-get_domain_and_extent_dataframe <- function(tbl_schema, ind_col_names, domain = NULL,
-                                            tdco = TileDBCreateOptions$new(PlatformConfig$new())) {
+get_domain_and_extent_dataframe <- function(
+    tbl_schema, ind_col_names, domain = NULL,
+    tdco = TileDBCreateOptions$new(PlatformConfig$new())) {
   stopifnot(
     "First argument must be an arrow schema" = inherits(tbl_schema, "Schema"),
     "Second argument must be character" = is.character(ind_col_names),

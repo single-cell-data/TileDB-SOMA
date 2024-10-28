@@ -26,9 +26,10 @@
 #' arrow::RecordBatch$import_from_c(z$array_data, z$schema)
 #' }
 #' @noRd
-soma_array_reader <- function(uri, colnames = NULL, qc = NULL, dim_points = NULL, dim_ranges = NULL,
-                              batch_size = "auto", result_order = "auto", loglevel = "auto",
-                              soma_context = NULL, timestamprange = NULL) {
+soma_array_reader <- function(
+    uri, colnames = NULL, qc = NULL, dim_points = NULL, dim_ranges = NULL,
+    batch_size = "auto", result_order = "auto", loglevel = "auto",
+    soma_context = NULL, timestamprange = NULL) {
   stopifnot(
     "'uri' must be character" = is.character(uri),
     "'colnames' must be character or NULL" = is_character_or_null(colnames),
