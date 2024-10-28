@@ -108,7 +108,7 @@ SOMANDArrayBase <- R6::R6Class(
           (bit64::is.integer64(new_shape) && length(new_shape) == self$ndim())
       )
       # Checking slotwise new shape >= old shape, and <= max_shape, is already done in libtiledbsoma
-      resize(self$uri, new_shape, private$.soma_context)
+      resize(self$uri, new_shape, .name_of_function(), private$.soma_context)
     },
 
     #' @description Allows the array to have a resizeable shape as described in the
@@ -125,7 +125,7 @@ SOMANDArrayBase <- R6::R6Class(
           (bit64::is.integer64(shape) && length(shape) == self$ndim())
       )
       # Checking slotwise new shape >= old shape, and <= max_shape, is already done in libtiledbsoma
-      tiledbsoma_upgrade_shape(self$uri, shape, private$.soma_context)
+      tiledbsoma_upgrade_shape(self$uri, shape, .name_of_function(), private$.soma_context)
     }
 
   ),
