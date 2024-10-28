@@ -3,5 +3,9 @@ ruff
 pytest
 pytest-cov
 sparse
-typeguard==4.2.1
+# Python 3.12 support requires https://github.com/agronholm/typeguard/pull/490, which landed between 4.3.0 and 4.4.0.
+# However, 4.4.0 also included https://github.com/agronholm/typeguard/pull/496, which causes errors in Python 3.9 (e.g.
+# https://github.com/single-cell-data/TileDB-SOMA/actions/runs/11545217103/job/32131849817), so we are pinning to the
+# last useful commit here. See also: https://github.com/single-cell-data/TileDB-SOMA/issues/3216.
+typeguard @ git+https://github.com/agronholm/typeguard@afad2c7
 types-setuptools

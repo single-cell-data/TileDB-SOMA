@@ -6,7 +6,18 @@
 """
 Implementation of a SOMA DataFrame
 """
-from typing import Any, List, Optional, Sequence, Tuple, Type, Union, cast
+import inspect
+from typing import (
+    Any,
+    Dict,
+    List,
+    Optional,
+    Sequence,
+    Tuple,
+    Type,
+    Union,
+    cast,
+)
 
 import numpy as np
 import pyarrow as pa
@@ -24,7 +35,14 @@ from ._query_condition import QueryCondition
 from ._read_iters import TableReadIter
 from ._soma_array import SOMAArray
 from ._tdb_handles import DataFrameWrapper
-from ._types import NPFloating, NPInteger, OpenTimestamp, Slice, is_slice_of
+from ._types import (
+    NPFloating,
+    NPInteger,
+    OpenTimestamp,
+    Slice,
+    StatusAndReason,
+    is_slice_of,
+)
 from .options import SOMATileDBContext
 from .options._soma_tiledb_context import _validate_soma_tiledb_context
 from .options._tiledb_create_write_options import (
@@ -260,10 +278,10 @@ class DataFrame(SOMAArray, somacore.DataFrame):
             )
 
             (slot_core_current_domain, saturated_cd) = _fill_out_slot_soma_domain(
-                slot_soma_domain, index_column_name, pa_field.type, dtype
+                slot_soma_domain, False, index_column_name, pa_field.type, dtype
             )
             (slot_core_max_domain, saturated_md) = _fill_out_slot_soma_domain(
-                None, index_column_name, pa_field.type, dtype
+                None, True, index_column_name, pa_field.type, dtype
             )
 
             extent = _find_extent_for_domain(
@@ -417,7 +435,9 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         """
         return self._handle.tiledbsoma_has_upgraded_domain
 
-    def resize_soma_joinid_shape(self, newshape: int) -> None:
+    def tiledbsoma_resize_soma_joinid_shape(
+        self, newshape: int, check_only: bool = False
+    ) -> StatusAndReason:
         """Increases the shape of the dataframe on the ``soma_joinid`` index
         column, if it indeed is an index column, leaving all other index columns
         as-is. If the ``soma_joinid`` is not an index column, no change is made.
@@ -425,9 +445,151 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         to keystroke, and handles the most common case for dataframe domain
         expansion.  Raises an error if the dataframe doesn't already have a
         domain: in that case please call ``tiledbsoma_upgrade_domain`` (WIP for
-        1.15).
+        1.15).  If ``check_only`` is ``True``, returns whether the operation
+        would succeed if attempted, and a reason why it would not.
         """
-        self._handle._handle.resize_soma_joinid_shape(newshape)
+        frame = inspect.currentframe()
+        function_name_for_messages = frame.f_code.co_name if frame else "tiledbsoma"
+
+        if check_only:
+            return cast(
+                StatusAndReason,
+                self._handle._handle.can_resize_soma_joinid_shape(
+                    newshape,
+                    function_name_for_messages=function_name_for_messages,
+                ),
+            )
+        else:
+            self._handle._handle.resize_soma_joinid_shape(
+                newshape,
+                function_name_for_messages=function_name_for_messages,
+            )
+            return (True, "")
+
+    def tiledbsoma_upgrade_soma_joinid_shape(
+        self, newshape: int, check_only: bool = False
+    ) -> StatusAndReason:
+        """This is like ``upgrade_domain``, but it only applies the specified
+        domain update to the ``soma_joinid`` index column. Any other index
+        columns have their domain set to match the maxdomain. If the
+        ``soma_joinid`` column is not an index column at all, then no action is
+        taken.  If ``check_only`` is ``True``, returns whether the operation
+        would succeed if attempted, and a reason why it would not.
+        """
+        frame = inspect.currentframe()
+        function_name_for_messages = frame.f_code.co_name if frame else "tiledbsoma"
+
+        if check_only:
+            return cast(
+                StatusAndReason,
+                self._handle._handle.can_upgrade_soma_joinid_shape(
+                    newshape,
+                    function_name_for_messages=function_name_for_messages,
+                ),
+            )
+        else:
+            self._handle._handle.upgrade_soma_joinid_shape(
+                newshape,
+                function_name_for_messages=function_name_for_messages,
+            )
+            return (True, "")
+
+    def _upgrade_or_change_domain_helper(
+        self, newdomain: Domain, function_name_for_messages: str
+    ) -> Any:
+        """Converts the user-level tuple of low/high pairs into a pyarrow table suitable for calling libtiledbsoma."""
+
+        # Check user-provided domain against dataframe domain.
+        dim_names = self._tiledb_dim_names()
+        if len(dim_names) != len(newdomain):
+            raise ValueError(
+                f"{function_name_for_messages}: requested domain has length {len(dim_names)} but the dataframe's schema has index-column count {len(newdomain)}"
+            )
+
+        if any([slot is not None and len(slot) != 2 for slot in newdomain]):
+            raise ValueError(
+                f"{function_name_for_messages}: requested domain must have low,high pairs, or `None`, in each slot"
+            )
+
+        # From the dataframe's schema, extract the subschema for only index columns (TileDB dimensions).
+        full_schema = self.schema
+        dim_schema_list = []
+        for dim_name in dim_names:
+            dim_schema_list.append(full_schema.field(dim_name))
+        dim_schema = pa.schema(dim_schema_list)
+
+        # Convert the user's tuple of low/high pairs into a dict keyed by index-column name.
+        new_domain_dict: Dict[str, Domain] = {}
+        for dim_name, new_dom in zip(dim_names, newdomain):
+            # Domain can't be specified for strings (core constraint) so let them keystroke that easily.
+            if (
+                dim_schema.field(dim_name).type
+                in [
+                    pa.string(),
+                    pa.large_string(),
+                    pa.binary(),
+                    pa.large_binary(),
+                ]
+                and new_dom is None
+            ):
+                new_domain_dict[dim_name] = ("", "")  # type: ignore
+            else:
+                new_domain_dict[dim_name] = tuple(new_dom)  # type: ignore
+
+        # Return this as a pyarrow table. This has n columns where n is the number of
+        # index columns, and two rows: one row for the low values and one for the high values.
+        return pa.RecordBatch.from_pydict(new_domain_dict, schema=dim_schema)
+
+    def tiledbsoma_upgrade_domain(
+        self, newdomain: Domain, check_only: bool = False
+    ) -> StatusAndReason:
+        """Allows you to set the domain of a SOMA :class:`DataFrame``, when the
+        ``DataFrame`` does not have a domain set yet.  The argument must be a
+        tuple of pairs of low/high values for the desired domain, one pair per
+        index column. For string index columns, you must offer the low/high pair
+        as `("", "")`.  If ``check_only`` is ``True``, returns whether the
+        operation would succeed if attempted, and a reason why it would not.
+        """
+        pyarrow_domain_table = self._upgrade_or_change_domain_helper(
+            newdomain, "tiledbsoma_upgrade_domain"
+        )
+
+        if check_only:
+            return cast(
+                StatusAndReason,
+                self._handle._handle.can_upgrade_domain(
+                    pyarrow_domain_table, "tiledbsoma_upgrade_domain"
+                ),
+            )
+        else:
+            self._handle._handle.upgrade_domain(
+                pyarrow_domain_table, "tiledbsoma_upgrade_domain"
+            )
+            return (True, "")
+
+    def change_domain(
+        self, newdomain: Domain, check_only: bool = False
+    ) -> StatusAndReason:
+        """Allows you to enlarge the domain of a SOMA :class:`DataFrame``, when
+        the ``DataFrame`` already has a domain.  The argument must be a tuple of
+        pairs of low/high values for the desired domain, one pair per index
+        column. For string index columns, you must offer the low/high pair as
+        `("", "")`.  If ``check_only`` is ``True``, returns whether the
+        operation would succeed if attempted, and a reason why it would not.
+        """
+        pyarrow_domain_table = self._upgrade_or_change_domain_helper(
+            newdomain, "change_domain"
+        )
+        if check_only:
+            return cast(
+                StatusAndReason,
+                self._handle._handle.can_change_domain(
+                    pyarrow_domain_table, "change_domain"
+                ),
+            )
+        else:
+            self._handle._handle.change_domain(pyarrow_domain_table, "change_domain")
+            return (True, "")
 
     def __len__(self) -> int:
         """Returns the number of rows in the dataframe. Same as ``df.count``."""
@@ -788,6 +950,7 @@ def _canonicalize_schema(
 
 def _fill_out_slot_soma_domain(
     slot_domain: AxisDomain,
+    is_max_domain: bool,
     index_column_name: str,
     pa_type: pa.DataType,
     dtype: Any,
@@ -803,8 +966,10 @@ def _fill_out_slot_soma_domain(
     if slot_domain is not None:
         # User-specified; go with it when possible
         if (
-            pa_type == pa.string()
-            or pa_type == pa.large_string()
+            (
+                (pa_type == pa.string() or pa_type == pa.large_string())
+                and slot_domain != ("", "")
+            )
             or pa_type == pa.binary()
             or pa_type == pa.large_binary()
         ):
@@ -837,47 +1002,78 @@ def _fill_out_slot_soma_domain(
         # will (and must) ignore these when creating the TileDB schema.
         slot_domain = "", ""
     elif np.issubdtype(dtype, NPInteger):
-        iinfo = np.iinfo(cast(NPInteger, dtype))
-        slot_domain = iinfo.min, iinfo.max - 1
-        # Here the slot_domain isn't specified by the user; we're setting it.
-        # The SOMA spec disallows negative soma_joinid.
-        if index_column_name == SOMA_JOINID:
-            slot_domain = (0, 2**63 - 2)
-        saturated_range = True
+        if is_max_domain or not NEW_SHAPE_FEATURE_FLAG_ENABLED:
+            # Core max domain is immutable. If unspecified, it should be as big
+            # as possible since it can never be resized.
+            iinfo = np.iinfo(cast(NPInteger, dtype))
+            slot_domain = iinfo.min, iinfo.max - 1
+            # Here the slot_domain isn't specified by the user; we're setting it.
+            # The SOMA spec disallows negative soma_joinid.
+            if index_column_name == SOMA_JOINID:
+                slot_domain = (0, 2**63 - 2)
+            saturated_range = True
+        else:
+            # Core current domain is mutable but not shrinkable. If
+            # unspecified, it should be as small as possible since it can only
+            # be grown, not shrunk.
+            #
+            # Core current-domain semantics are (lo, hi) with both inclusive,
+            # with lo <= hi. This means smallest is (0, 0) which is shape 1,
+            # not 0.
+            slot_domain = 0, 0
     elif np.issubdtype(dtype, NPFloating):
-        finfo = np.finfo(cast(NPFloating, dtype))
-        slot_domain = finfo.min, finfo.max
-        saturated_range = True
+        if is_max_domain or not NEW_SHAPE_FEATURE_FLAG_ENABLED:
+            finfo = np.finfo(cast(NPFloating, dtype))
+            slot_domain = finfo.min, finfo.max
+            saturated_range = True
+        else:
+            slot_domain = 0.0, 0.0
 
-    # The `iinfo.min+1` is necessary as of tiledb core 2.15 / tiledb-py 0.21.1 since
-    # `iinfo.min` maps to `NaT` (not a time), resulting in
-    #   TypeError: invalid domain extent, domain cannot be safely cast to dtype dtype('<M8[s]')
+    # The `iinfo.min+1` is necessary as of tiledb core 2.15 / tiledb-py 0.21.1
+    # since `iinfo.min` maps to `NaT` (not a time), resulting in
     #
-    # The `iinfo.max-delta` is necessary since with iinfo.min being bumped by 1, without subtracting
-    # we would get
-    #   tiledb.cc.TileDBError: [TileDB::Dimension] Error: Tile extent check failed; domain max
-    #   expanded to multiple of tile extent exceeds max value representable by domain type. Reduce
-    #   domain max by 1 tile extent to allow for expansion.
+    #   TypeError: invalid domain extent, domain cannot be safely cast to
+    #   dtype dtype('<M8[s]')
+    #
+    # The `iinfo.max-delta` is necessary since with iinfo.min being bumped by
+    # 1, without subtracting we would get
+    #
+    #   tiledb.cc.TileDBError: [TileDB::Dimension] Error: Tile extent check
+    #   failed; domain max expanded to multiple of tile extent exceeds max
+    #   value representable by domain type. Reduce domain max by 1 tile extent
+    #   to allow for expansion.
     elif dtype == "datetime64[s]":
-        iinfo = np.iinfo(cast(NPInteger, np.int64))
-        slot_domain = np.datetime64(iinfo.min + 1, "s"), np.datetime64(
-            iinfo.max - 1000000, "s"
-        )
+        if is_max_domain or not NEW_SHAPE_FEATURE_FLAG_ENABLED:
+            iinfo = np.iinfo(cast(NPInteger, np.int64))
+            slot_domain = np.datetime64(iinfo.min + 1, "s"), np.datetime64(
+                iinfo.max - 1000000, "s"
+            )
+        else:
+            slot_domain = np.datetime64(0, "s"), np.datetime64(0, "s")
     elif dtype == "datetime64[ms]":
-        iinfo = np.iinfo(cast(NPInteger, np.int64))
-        slot_domain = np.datetime64(iinfo.min + 1, "ms"), np.datetime64(
-            iinfo.max - 1000000, "ms"
-        )
+        if is_max_domain or not NEW_SHAPE_FEATURE_FLAG_ENABLED:
+            iinfo = np.iinfo(cast(NPInteger, np.int64))
+            slot_domain = np.datetime64(iinfo.min + 1, "ms"), np.datetime64(
+                iinfo.max - 1000000, "ms"
+            )
+        else:
+            slot_domain = np.datetime64(0, "ms"), np.datetime64(0, "ms")
     elif dtype == "datetime64[us]":
-        iinfo = np.iinfo(cast(NPInteger, np.int64))
-        slot_domain = np.datetime64(iinfo.min + 1, "us"), np.datetime64(
-            iinfo.max - 1000000, "us"
-        )
+        if is_max_domain or not NEW_SHAPE_FEATURE_FLAG_ENABLED:
+            iinfo = np.iinfo(cast(NPInteger, np.int64))
+            slot_domain = np.datetime64(iinfo.min + 1, "us"), np.datetime64(
+                iinfo.max - 1000000, "us"
+            )
+        else:
+            slot_domain = np.datetime64(0, "us"), np.datetime64(0, "us")
     elif dtype == "datetime64[ns]":
-        iinfo = np.iinfo(cast(NPInteger, np.int64))
-        slot_domain = np.datetime64(iinfo.min + 1, "ns"), np.datetime64(
-            iinfo.max - 1000000, "ns"
-        )
+        if is_max_domain or not NEW_SHAPE_FEATURE_FLAG_ENABLED:
+            iinfo = np.iinfo(cast(NPInteger, np.int64))
+            slot_domain = np.datetime64(iinfo.min + 1, "ns"), np.datetime64(
+                iinfo.max - 1000000, "ns"
+            )
+        else:
+            slot_domain = np.datetime64(0, "ns"), np.datetime64(0, "ns")
 
     else:
         raise TypeError(f"Unsupported dtype {dtype}")

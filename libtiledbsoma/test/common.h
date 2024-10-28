@@ -87,5 +87,11 @@ ArrowTable create_column_index_info(const std::vector<DimInfo>& dim_infos);
 
 std::string to_arrow_format(tiledb_datatype_t tiledb_datatype);
 
+// Core PR: https://github.com/TileDB-Inc/TileDB/pull/5303
+bool have_dense_current_domain_support();
+
+std::unique_ptr<ArrowSchema> create_index_cols_info_schema(
+    const std::vector<DimInfo>& dim_infos);
+
 }  // namespace helper
 #endif

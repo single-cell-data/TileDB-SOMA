@@ -108,7 +108,8 @@ void load_soma_sparse_ndarray(py::module& m) {
             py::kw_only(),
             "column_names"_a = py::tuple(),
             "result_order"_a = ResultOrder::automatic,
-            "timestamp"_a = py::none())
+            "timestamp"_a = py::none(),
+            py::call_guard<py::gil_scoped_release>())
 
         .def_static("exists", &SOMASparseNDArray::exists)
 
@@ -127,12 +128,33 @@ void load_soma_sparse_ndarray(py::module& m) {
                 }
             },
             "newshape"_a)
+        .def(
+            "can_resize",
+            [](SOMAArray& array, const std::vector<int64_t>& newshape) {
+                try {
+                    return array.can_resize(newshape, "can_resize");
+                } catch (const std::exception& e) {
+                    throw TileDBSOMAError(e.what());
+                }
+            },
+            "newshape"_a)
 
         .def(
             "tiledbsoma_upgrade_shape",
             [](SOMAArray& array, const std::vector<int64_t>& newshape) {
                 try {
                     array.upgrade_shape(newshape, "tiledbsoma_upgrade_shape");
+                } catch (const std::exception& e) {
+                    throw TileDBSOMAError(e.what());
+                }
+            },
+            "newshape"_a)
+        .def(
+            "tiledbsoma_can_upgrade_shape",
+            [](SOMAArray& array, const std::vector<int64_t>& newshape) {
+                try {
+                    return array.can_upgrade_shape(
+                        newshape, "tiledbsoma_can_upgrade_shape");
                 } catch (const std::exception& e) {
                     throw TileDBSOMAError(e.what());
                 }

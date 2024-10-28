@@ -111,55 +111,65 @@ TEST_CASE("SOMACollection: add SOMASparseNDArray") {
 }
 
 TEST_CASE("SOMACollection: add SOMADenseNDArray") {
-    TimestampRange ts(0, 2);
-    auto ctx = std::make_shared<SOMAContext>();
-    std::string base_uri = "mem://unit-test-add-dense-ndarray";
-    std::string sub_uri = "mem://unit-test-add-dense-ndarray/sub";
-    std::string dim_name = "soma_dim_0";
-    tiledb_datatype_t tiledb_datatype = TILEDB_INT64;
-    std::string arrow_format = ArrowAdapter::tdb_to_arrow_type(tiledb_datatype);
+    auto use_current_domain = GENERATE(false, true);
+    // TODO this could be formatted with fmt::format which is part of internal
+    // header spd/log/fmt/fmt.h and should not be used. In C++20, this can be
+    // replaced with std::format.
+    std::ostringstream section;
+    section << "- use_current_domain=" << use_current_domain;
+    SECTION(section.str()) {
+        TimestampRange ts(0, 2);
+        auto ctx = std::make_shared<SOMAContext>();
+        std::string base_uri = "mem://unit-test-add-dense-ndarray";
+        std::string sub_uri = "mem://unit-test-add-dense-ndarray/sub";
+        std::string dim_name = "soma_dim_0";
+        tiledb_datatype_t tiledb_datatype = TILEDB_INT64;
+        std::string arrow_format = ArrowAdapter::tdb_to_arrow_type(
+            tiledb_datatype);
 
-    SOMACollection::create(base_uri, ctx, ts);
-    // TODO: add support for current domain in dense arrays once we have that
-    // support from core
-    // https://github.com/single-cell-data/TileDB-SOMA/issues/2955
-    std::vector<helper::DimInfo> dim_infos(
-        {{.name = dim_name,
-          .tiledb_datatype = tiledb_datatype,
-          .dim_max = DIM_MAX,
-          .string_lo = "N/A",
-          .string_hi = "N/A",
-          .use_current_domain = false}});
-    auto index_columns = helper::create_column_index_info(dim_infos);
+        SOMACollection::create(base_uri, ctx, ts);
+        std::vector<helper::DimInfo> dim_infos(
+            {{.name = dim_name,
+              .tiledb_datatype = tiledb_datatype,
+              .dim_max = DIM_MAX,
+              .string_lo = "N/A",
+              .string_hi = "N/A",
+              .use_current_domain = use_current_domain}});
+        auto index_columns = helper::create_column_index_info(dim_infos);
 
-    std::map<std::string, SOMAGroupEntry> expected_map{
-        {"dense_ndarray", SOMAGroupEntry(sub_uri, "SOMAArray")}};
+        std::map<std::string, SOMAGroupEntry> expected_map{
+            {"dense_ndarray", SOMAGroupEntry(sub_uri, "SOMAArray")}};
 
-    auto soma_collection = SOMACollection::open(
-        base_uri, OpenMode::write, ctx, ts);
-    REQUIRE(soma_collection->timestamp() == ts);
+        auto soma_collection = SOMACollection::open(
+            base_uri, OpenMode::write, ctx, ts);
+        REQUIRE(soma_collection->timestamp() == ts);
 
-    auto soma_dense = soma_collection->add_new_dense_ndarray(
-        "dense_ndarray",
-        sub_uri,
-        URIType::absolute,
-        ctx,
-        arrow_format,
-        ArrowTable(
-            std::move(index_columns.first), std::move(index_columns.second)));
-    REQUIRE(soma_collection->members_map() == expected_map);
-    REQUIRE(soma_dense->uri() == sub_uri);
-    REQUIRE(soma_dense->ctx() == ctx);
-    REQUIRE(soma_dense->type() == "SOMADenseNDArray");
-    REQUIRE(soma_dense->is_sparse() == false);
-    REQUIRE(soma_dense->ndim() == 1);
-    REQUIRE(soma_dense->shape() == std::vector<int64_t>{DIM_MAX + 1});
-    REQUIRE(soma_dense->timestamp() == ts);
-    soma_collection->close();
+        if (helper::have_dense_current_domain_support()) {
+            auto soma_dense = soma_collection->add_new_dense_ndarray(
+                "dense_ndarray",
+                sub_uri,
+                URIType::absolute,
+                ctx,
+                arrow_format,
+                ArrowTable(
+                    std::move(index_columns.first),
+                    std::move(index_columns.second)));
+            REQUIRE(soma_collection->members_map() == expected_map);
+            REQUIRE(soma_dense->uri() == sub_uri);
+            REQUIRE(soma_dense->ctx() == ctx);
+            REQUIRE(soma_dense->type() == "SOMADenseNDArray");
+            REQUIRE(soma_dense->is_sparse() == false);
+            REQUIRE(soma_dense->ndim() == 1);
+            REQUIRE(soma_dense->shape() == std::vector<int64_t>{DIM_MAX + 1});
+            REQUIRE(soma_dense->timestamp() == ts);
+            soma_collection->close();
 
-    soma_collection = SOMACollection::open(base_uri, OpenMode::read, ctx);
-    REQUIRE(soma_collection->members_map() == expected_map);
-    soma_collection->close();
+            soma_collection = SOMACollection::open(
+                base_uri, OpenMode::read, ctx);
+            REQUIRE(soma_collection->members_map() == expected_map);
+            soma_collection->close();
+        }
+    }
 }
 
 TEST_CASE("SOMACollection: add SOMADataFrame") {

@@ -13,6 +13,13 @@ from anndata import AnnData
 from numpy import array_equal
 from pandas._testing import assert_frame_equal, assert_series_equal
 from scipy.sparse import spmatrix
+from somacore import (
+    AffineTransform,
+    CoordinateTransform,
+    IdentityTransform,
+    ScaleTransform,
+    UniformScaleTransform,
+)
 from typeguard import suppress_type_checks
 
 
@@ -70,6 +77,28 @@ def assert_adata_equal(ad0: AnnData, ad1: AnnData):
     assert_array_dicts_equal(ad0.varm, ad1.varm)
     assert_array_dicts_equal(ad0.obsp, ad1.obsp)
     assert_array_dicts_equal(ad0.varp, ad1.varp)
+
+
+def assert_transform_equal(
+    actual: CoordinateTransform, expected: CoordinateTransform
+) -> None:
+    assert actual.input_axes == expected.input_axes
+    assert actual.output_axes == expected.output_axes
+    if isinstance(expected, IdentityTransform):
+        assert isinstance(actual, IdentityTransform)
+    elif isinstance(expected, UniformScaleTransform):
+        assert isinstance(actual, UniformScaleTransform)
+        assert actual.scale == expected.scale
+    elif isinstance(expected, ScaleTransform):
+        assert isinstance(actual, ScaleTransform)
+        np.testing.assert_array_equal(actual.scale_factors, expected.scale_factors)
+    elif isinstance(expected, AffineTransform):
+        assert isinstance(actual, AffineTransform)
+        np.testing.assert_array_equal(
+            actual.augmented_matrix, expected.augmented_matrix
+        )
+    else:
+        assert False
 
 
 def parse_col(col_str: str) -> Tuple[Optional[str], List[str]]:

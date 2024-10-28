@@ -1,3 +1,4 @@
+
 test_that("SOMASparseNDArray creation", {
   skip_if(!extended_tests())
   uri <- tempfile(pattern="sparse-ndarray")
@@ -96,6 +97,105 @@ test_that("SOMASparseNDArray creation", {
 
 })
 
+test_that("SOMASparseNDArray write COO assertions", {
+  skip_if(!extended_tests())
+  uri <- tempfile(pattern = "sparse-ndarray-coo")
+  shape <- c(10L, 10L)
+  ndarray <- SOMASparseNDArrayCreate(uri, arrow::int32(), shape = shape)
+
+  expect_s3_class(ndarray, 'SOMASparseNDArray')
+  expect_equal(ndarray$ndim(), 2L)
+  mat <- create_sparse_matrix_with_int_dims(10L, 10L)
+  df <- data.frame(
+    soma_dim_0 = mat@i,
+    soma_dim_1 = mat@j,
+    soma_data = as.integer(mat@x)
+  )
+
+  ndarray$reopen("WRITE")
+  expect_invisible(ndarray$.write_coordinates(df))
+  ndarray$close()
+
+  # Test write with Table
+  tbl <- arrow::as_arrow_table(df)
+  ndarray <- SOMASparseNDArrayCreate(
+    tempfile(pattern = "sparse-ndarray-coo-table"),
+    type = tbl$soma_data$type,
+    shape = shape
+  )
+  expect_invisible(ndarray$.write_coordinates(tbl))
+  ndarray$close()
+
+  # Test write unnamed data frame
+  udf <- df
+  names(udf) <- NULL
+  ndarray <- SOMASparseNDArrayCreate(
+    uri = tempfile(pattern = "sparse-ndarray-coo-unnamed"),
+    type = arrow::int32(),
+    shape = shape
+  )
+  expect_invisible(ndarray$.write_coordinates(udf))
+  ndarray$close()
+
+  # Test argument assertions
+  arr <- SOMASparseNDArrayCreate(tempfile(), arrow::int32(), shape = shape)
+  on.exit(arr$close(), add = TRUE, after = FALSE)
+  expect_error(
+    arr$.write_coordinates(mat),
+    regexp = "'values' must be a data frame or Arrow Table"
+  )
+  expect_error(
+    arr$.write_coordinates(mtcars),
+    regexp = "'values' must have one column for each dimension and the data"
+  )
+
+  sdf <- df
+  while (identical(names(sdf), c(ndarray$dimnames(), ndarray$attrnames()))) {
+    sdf <- sdf[, sample(names(sdf)), drop = FALSE]
+  }
+  expect_error(
+    arr$.write_coordinates(sdf),
+    regexp = "'values' must be named with the dimension and attribute labels"
+  )
+
+  # Test dimension assertions
+  ddf <- df
+  ddf$soma_dim_0 <- ddf$soma_dim_0 + 0.1
+  expect_error(
+    arr$.write_coordinates(ddf),
+    regexp = "All dimension columns must be integerish"
+  )
+
+  ndf <- df
+  ndf$soma_dim_0 <- -ndf$soma_dim_0
+  expect_error(
+    arr$.write_coordinates(ndf),
+    regexp = "Dimension columns cannot contain negative values"
+  )
+
+  bdf <- df
+  bdf$soma_dim_0 <- bdf$soma_dim_0 * 1000
+  expect_error(
+    arr$.write_coordinates(bdf),
+    regexp = "Dimension columns cannot exceed the shape of the array"
+  )
+
+  # Test attribute assertions
+  ldf <- df
+  ldf$soma_data <- TRUE
+  expect_error(
+    arr$.write_coordinates(ldf),
+    regexp = "The data column must be of type 'integer'"
+  )
+
+  fdf <- df
+  fdf$soma_data <- fdf$soma_data + 0.1
+  expect_error(
+    arr$.write_coordinates(fdf),
+    regexp = "The data column must be of type 'integer'"
+  )
+})
+
 test_that("SOMASparseNDArray read_sparse_matrix", {
   skip_if(!extended_tests())
   uri <- tempfile(pattern="sparse-ndarray-3")
@@ -162,6 +262,116 @@ test_that("SOMASparseNDArray read_sparse_matrix_zero_based", {
   expect_true(all.equal(as.numeric(mat), as.numeric(mat2$take(0:8,0:8)$get_one_based_matrix())))
   expect_equal(sum(mat), sum(mat2$get_one_based_matrix()))
   ndarray$close()
+})
+
+test_that("SOMASparseNDArray read coordinates", {
+  skip_if(!extended_tests())
+  uri <- tempfile(pattern = "sparse-ndarray")
+  nrows <- 100L
+  ncols <- 20L
+
+  ndarray <- create_and_populate_sparse_nd_array(
+    uri = uri,
+    mode = "READ",
+    nrows = nrows,
+    ncols = ncols,
+    seed = 42L
+  )
+  on.exit(ndarray$close(), add = TRUE, after = FALSE)
+
+  expect_identical(as.integer(ndarray$shape()), c(nrows, ncols))
+  expect_s4_class(mat <- ndarray$read()$sparse_matrix()$concat(), "dgTMatrix")
+  expect_identical(dim(mat), c(nrows, ncols))
+
+  # Note: slices `:` yield integers, not numerics
+  # Note: #L is integer, # on its own is numeric
+  cases <- list(
+    # Test one dim NULL
+    "dim0 null, dim1 slice" = list(soma_dim_0 = NULL, soma_dim_1 = 0:9),
+    "dim0 null, dim1 slice" = list(soma_dim_0 = 35:45, soma_dim_1 = NULL),
+    "dim0 null, dim1 coords" = list(
+      soma_dim_0 = NULL,
+      soma_dim_1 = c(0L, 5L, 10L)
+    ),
+    "dim0 coords, dim1 null" = list(soma_dim_0 = c(72, 83), soma_dim_1 = NULL),
+    # Test both dims null
+    "dim0 null, dim1 null" = list(soma_dim_0 = NULL, soma_dim_1 = NULL),
+    # Test both dims provided
+    "dim0 coords, dim1 coords" = list(
+      soma_dim_0 = c(72, 83),
+      soma_dim_1 = c(0L, 5L, 10L)
+    ),
+    "dim0 slice, dim1 slice" = list(soma_dim_0 = 35:45, soma_dim_1 = 0:9),
+    "dim0 coords, dim1 slice" = list(soma_dim_0 = c(72, 83), soma_dim_1 = 0:9),
+    "dim0 slice, dim0 coords" = list(
+      soma_dim_0 = 35:45,
+      soma_dim_1 = c(0L, 5L, 10L)
+    ),
+    # Test one dim missing
+    "dim0 missing, dim1 slice" = list(soma_dim_1 = 0:9),
+    "dim0 missing, dim1 coords" = list(soma_dim_1 = c(0L, 5L, 10L)),
+    "dim0 missing, dim1 null" = list(soma_dim_1 = NULL),
+    "dim0 slice, dim1 missing" = list(soma_dim_0 = 35:45),
+    "dim0 coords, dim1 missing" = list(soma_dim_0 = c(72, 83)),
+    "dim0 coords, dim1 null" = list(soma_dim_0 = NULL),
+    # Test zero-pull
+    "zero-pull" = list(soma_dim_0 = c(0, 3), soma_dim_1 = c(0L, 9L))
+  )
+  for (i in seq_along(cases)) {
+    coords <- cases[[i]]
+    label <- names(cases)[i]
+    expect_s3_class(tbl <- ndarray$read(coords)$tables()$concat(), "Table")
+    ii <- if (is.null(coords$soma_dim_0)) {
+      TRUE
+    } else {
+      mat@i %in% coords$soma_dim_0
+    }
+    jj <- if (is.null(coords$soma_dim_1)) {
+      TRUE
+    } else {
+      mat@j %in% coords$soma_dim_1
+    }
+    nr <- ifelse(isTRUE(ii) && isTRUE(jj), yes = length(mat@x), no = sum(ii & jj))
+    expect_identical(nrow(tbl), nr, label = label)
+  }
+
+  # Test assertions
+  list_cases <- list(TRUE, "tomato", 1L, 1.1, bit64::as.integer64(1L), list())
+  for (coords in list_cases) {
+    expect_error(ndarray$read(coords), regexp = "'coords' must be a list")
+  }
+
+  intgerish_cases <- list(
+    list(TRUE),
+    list("tomato"),
+    list(1.1),
+    list(NA_integer_),
+    list(NA_real_),
+    list(bit64::NA_integer64_),
+    list(Inf),
+    list(-4),
+    list(factor(letters[1:10])),
+    list(matrix(1:10, ncol = 1:10)),
+    list(array(1:10))
+  )
+  for (coords in intgerish_cases) {
+    expect_error(
+      ndarray$read(coords),
+      regexp = "'coords' must be a list integerish vectors"
+    )
+  }
+
+  names_cases <- list(
+    list(1:3, 1:5, 1:10),
+    list(tomato = 1:10),
+    list(soma_dim_0 = 1:10, tomato = 1:10)
+  )
+  for (coords in names_cases) {
+    expect_error(
+      ndarray$read(coords),
+      regexp = "'coords' if unnamed must have length of dim names, else if named names must match dim names"
+    )
+  }
 })
 
 test_that("SOMASparseNDArray creation with duplicates", {
@@ -501,10 +711,10 @@ test_that("SOMASparseNDArray with failed bounding box", {
   coo <- data.frame(
     i = bit64::as.integer64(slot(mat, "i")),
     j = bit64::as.integer64(slot(mat, "j")),
-    x = slot(mat, "x")
+    x = as.integer(slot(mat, "x"))
   )
   names(coo) <- c(ndarray$dimnames(), ndarray$attrnames())
-  ndarray$.__enclos_env__$private$.write_coo_dataframe(coo)
+  expect_invisible(ndarray$.write_coordinates(coo))
 
   ndarray$close()
 
@@ -586,11 +796,11 @@ test_that("SOMASparseNDArray bounding box implicitly-stored values", {
   ranges <- bit64::integer64(2L)
   for (i in seq_along(ranges)) {
     s <- c('i', 'j')[i]
-    ranges[i] <- bit64::as.integer64(max(range(slot(mat, s))))
+    ranges[i] <- max(range(slot(mat, s)))
   }
-  expect_equal(ndarray$non_empty_domain(), ranges)
+  expect_equal(bit64::as.integer64(ndarray$non_empty_domain(max_only=TRUE)), ranges)
   expect_true(all(
-    ndarray$non_empty_domain() < suppressWarnings(
+    ndarray$non_empty_domain(max_only=TRUE) < suppressWarnings(
       ndarray$used_shape(simplify = TRUE),
       classes = "deprecatedWarning"
     )

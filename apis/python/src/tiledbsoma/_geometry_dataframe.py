@@ -45,7 +45,7 @@ class GeometryDataFrame(somacore.GeometryDataFrame):
         *,
         schema: pa.Schema,
         index_column_names: Sequence[str] = (SOMA_JOINID, SOMA_GEOMETRY),
-        axis_names: Sequence[str] = ("x", "y"),
+        coordinate_space: Union[Sequence[str], CoordinateSpace] = ("x", "y"),
         domain: Optional[Domain] = None,
         platform_config: Optional[options.PlatformConfig] = None,
         context: Optional[SOMATileDBContext] = None,
@@ -72,9 +72,8 @@ class GeometryDataFrame(somacore.GeometryDataFrame):
                 index columns (e.g., ``['cell_type', 'tissue_type']``).
                 All named columns must exist in the schema, and at least one
                 index column name is required.
-            axis_names: An ordered list of axis column names that correspond to the
-                names of the axes of the coordinate space the geometries are defined
-                on.
+            coordinate_space: Either the coordinate space or the axis names for the
+                coordinate space the point cloud is defined on.
             domain: An optional sequence of tuples specifying the domain of each
                 index column. Two tuples must be provided for the ``soma_geometry``
                 column which store the width followed by the height. Each tuple should

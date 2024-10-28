@@ -20,10 +20,10 @@
 
     # This is temporary for https://github.com/single-cell-data/TileDB-SOMA/issues/2407
     # It will be removed once 2407 is complete.
-    if (Sys.getenv("SOMA_R_NEW_SHAPE") != "") {
-      .pkgenv[["use_current_domain_transitional_internal_only"]] <- TRUE
-    } else {
+    if (Sys.getenv("SOMA_R_NEW_SHAPE") == "false") {
       .pkgenv[["use_current_domain_transitional_internal_only"]] <- FALSE
+    } else {
+      .pkgenv[["use_current_domain_transitional_internal_only"]] <- TRUE
     }
 }
 
@@ -32,6 +32,11 @@
 # * https://github.com/single-cell-data/TileDB-SOMA/pull/2950
 .new_shape_feature_flag_is_enabled <- function() {
     .pkgenv[["use_current_domain_transitional_internal_only"]]
+}
+
+.dense_arrays_can_have_current_domain <- function() {
+  triple <- tiledb_embedded_version()
+  return(triple[[1]] >= 2 && triple[[2]] >= 27)
 }
 
 ## An .onAttach() function is not allowed to use cat() etc but _must_ communicate via

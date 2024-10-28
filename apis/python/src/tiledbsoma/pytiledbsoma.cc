@@ -27,6 +27,7 @@ void load_soma_group(py::module&);
 void load_soma_collection(py::module&);
 void load_query_condition(py::module&);
 void load_reindexer(py::module&);
+void load_soma_vfs(py::module&);
 
 PYBIND11_MODULE(pytiledbsoma, m) {
     py::register_exception<TileDBSOMAError>(m, "SOMAError");
@@ -72,6 +73,9 @@ PYBIND11_MODULE(pytiledbsoma, m) {
     m.doc() = "SOMA acceleration library";
 
     m.def("version", []() { return tiledbsoma::version::as_string(); });
+    m.def("embedded_version_triple", []() {
+        return tiledbsoma::version::embedded_version_triple();
+    });
 
     m.def(
         "config_logging",
@@ -150,6 +154,7 @@ PYBIND11_MODULE(pytiledbsoma, m) {
     load_soma_collection(m);
     load_query_condition(m);
     load_reindexer(m);
+    load_soma_vfs(m);
 }
 
 };  // namespace libtiledbsomacpp

@@ -28,13 +28,13 @@ jobs:
       fail-fast: true
 
       matrix:
-        os: [ubuntu-22.04, macos-12]
-        python-version: ['3.9', '3.11']
+        os: [ubuntu-latest, macos-latest]
+        python-version: ['3.9', '3.12']
         include:
-          - os: ubuntu-22.04
+          - os: ubuntu-latest
             cc: gcc-11
             cxx: g++-11
-          - os: macos-12
+          - os: macos-latest
             cc: clang
             cxx: clang++
     uses: ./.github/workflows/python-ci-single.yml
@@ -43,6 +43,6 @@ jobs:
       python_version: ${{ matrix.python-version }}
       cc: ${{ matrix.cc }}
       cxx: ${{ matrix.cxx }}
-      report_codecov: ${{ matrix.python-version == '3.11' }}
-      run_lint: ${{ matrix.python-version == '3.11' }}
+      report_codecov: ${{ matrix.python-version == '3.12' }}
+      run_lint: ${{ matrix.python-version == '3.12' }}
     secrets: inherit

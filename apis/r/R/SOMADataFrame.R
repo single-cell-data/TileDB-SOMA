@@ -178,8 +178,6 @@ SOMADataFrame <- R6::R6Class(
       private$check_open_for_read()
 
       result_order <- match_query_layout(result_order)
-      uri <- self$uri
-      arr <- self$object                 # need array (schema) to properly parse query condition
 
       ## if unnamed set names
       if (!is.null(coords)) {
@@ -199,8 +197,9 @@ SOMADataFrame <- R6::R6Class(
 
       if (!is.null(value_filter)) {
           value_filter <- validate_read_value_filter(value_filter)
-          parsed <- do.call(what = tiledb::parse_query_condition,
-                            args = list(expr = str2lang(value_filter), ta = arr))
+          parsed <- do.call(
+              what = parse_query_condition,
+              args = list(expr = value_filter, schema = self$schema(), somactx = private$.soma_context))
           value_filter <- parsed@ptr
       }
       spdl::debug("[SOMADataFrame$read] calling sr_setup for {} at ({},{})", self$uri,

@@ -17,7 +17,9 @@ is_named <- function(x, allow_empty = TRUE) {
 }
 
 is_named_list <- function(x) {
-  is.list(x) && is_named(x)
+  # Use allow_empty=FALSE otherwise "half-named" lists like list(a=1, 2)
+  # will get through. We want all slots to have names.
+  is.list(x) && is_named(x, allow_empty = FALSE)
 }
 
 is_character_or_null <- function(x) {

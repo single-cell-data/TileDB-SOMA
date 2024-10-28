@@ -42,10 +42,14 @@ namespace helper {
 //   array-creation error.)
 const int CORE_DOMAIN_MAX = 2147483646;
 
-static std::unique_ptr<ArrowSchema> _create_index_cols_info_schema(
-    const std::vector<DimInfo>& dim_infos);
 static std::unique_ptr<ArrowArray> _create_index_cols_info_array(
     const std::vector<DimInfo>& dim_infos);
+
+// Core PRP: https://github.com/TileDB-Inc/TileDB/pull/5303
+bool have_dense_current_domain_support() {
+    auto vers = tiledbsoma::version::embedded_version_triple();
+    return std::get<0>(vers) >= 2 && std::get<1>(vers) >= 27;
+}
 
 // Notes:
 //
@@ -106,7 +110,7 @@ create_arrow_schema_and_index_columns(
     auto arrow_schema = ArrowAdapter::make_arrow_schema(
         names, tiledb_datatypes);
 
-    auto index_cols_info_schema = _create_index_cols_info_schema(dim_infos);
+    auto index_cols_info_schema = create_index_cols_info_schema(dim_infos);
     auto index_cols_info_array = _create_index_cols_info_array(dim_infos);
 
     return std::pair(
@@ -122,19 +126,19 @@ ArrowTable create_column_index_info(const std::vector<DimInfo>& dim_infos) {
         LOG_DEBUG(fmt::format(
             "create_column_index_info name={} type={} dim_max={} ucd={}",
             info.name,
-            info.tiledb_datatype,
+            tiledb::impl::to_str(info.tiledb_datatype),
             info.dim_max,
             info.use_current_domain));
     }
 
-    auto index_cols_info_schema = _create_index_cols_info_schema(dim_infos);
+    auto index_cols_info_schema = create_index_cols_info_schema(dim_infos);
     auto index_cols_info_array = _create_index_cols_info_array(dim_infos);
 
     return ArrowTable(
         std::move(index_cols_info_array), std::move(index_cols_info_schema));
 }
 
-static std::unique_ptr<ArrowSchema> _create_index_cols_info_schema(
+std::unique_ptr<ArrowSchema> create_index_cols_info_schema(
     const std::vector<DimInfo>& dim_infos) {
     auto ndim = dim_infos.size();
 

@@ -97,7 +97,7 @@ test_that("SOMADataFrame round-trip with factor and ordered", {
     expect_equal(names(lvls), colnames(et))
 
     #sdf <- SOMADataFrameCreate(uri, sch)
-    sdf <- SOMADataFrameCreate(uri, att$schema)
+    sdf <- SOMADataFrameCreate(uri, att$schema, domain = list(soma_joinid = c(0, 999)))
     expect_true(inherits(sdf, "SOMADataFrame"))
 
     sdf$write(att)

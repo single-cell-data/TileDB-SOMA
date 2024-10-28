@@ -7,6 +7,32 @@
 * Use `libtiledbsoma` for R schema evolution [#3100](https://github.com/single-cell-data/TileDB-SOMA/pull/3100)
 * Implement missing `domain` argument to `SOMADataFrame` `create` [#3032](https://github.com/single-cell-data/TileDB-SOMA/pull/3032)
 * Remove unused `fragment_count` accessor [#3054](https://github.com/single-cell-data/TileDB-SOMA/pull/3054)
+* Bulk-sync `main` to `release-1.15` in prep for 1.15.0rc3
+
+# tiledbsoma 1.14.5
+
+## Changes
+
+* Fixes a Python-only bug [#3225](https://github.com/single-cell-data/TileDB-SOMA/pull/3225)
+
+# tiledbsoma 1.14.4
+
+## Changes
+
+* Add new Arrow-to-R type mapper [#3161](https://github.com/single-cell-data/TileDB-SOMA/pull/3161)
+* Expose block/random writer for sparse arrays [#3204](https://github.com/single-cell-data/TileDB-SOMA/pull/3204)
+
+# tiledbsoma 1.14.3
+
+## Changes
+
+* Handle `numeric` coords properly when reading arrays [3145](https://github.com/single-cell-data/TileDB-SOMA/pull/3145)
+
+# tiledbsoma 1.14.2
+
+## Changes
+
+* Fixes a Python-only bug [#3074](https://github.com/single-cell-data/TileDB-SOMA/pull/3074)
 
 # tiledbsoma 1.14.1
 

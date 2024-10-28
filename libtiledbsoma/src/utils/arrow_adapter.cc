@@ -178,6 +178,155 @@ void ArrowAdapter::release_array(struct ArrowArray* array) {
     LOG_TRACE(fmt::format("[ArrowAdapter] release_array done"));
 }
 
+PlatformConfig ArrowAdapter::platform_config_from_tiledb_schema(
+    ArraySchema tiledb_schema) {
+    std::map<tiledb_layout_t, std::string> layout_as_string{
+        {TILEDB_ROW_MAJOR, "row-major"},
+        {TILEDB_COL_MAJOR, "column-major"},
+        {TILEDB_HILBERT, "hilbert"},
+        {TILEDB_UNORDERED, "unordered"},
+    };
+
+    PlatformConfig platform_config;
+    platform_config.capacity = tiledb_schema.capacity();
+    platform_config.allows_duplicates = tiledb_schema.allows_dups();
+    platform_config.tile_order = layout_as_string[tiledb_schema.tile_order()];
+    platform_config.cell_order = layout_as_string[tiledb_schema.cell_order()];
+    platform_config.offsets_filters = ArrowAdapter::_get_filter_list_json(
+                                          tiledb_schema.offsets_filter_list())
+                                          .dump();
+    platform_config.validity_filters = ArrowAdapter::_get_filter_list_json(
+                                           tiledb_schema.validity_filter_list())
+                                           .dump();
+    platform_config.attrs = ArrowAdapter::_get_attrs_filter_list_json(
+                                tiledb_schema)
+                                .dump();
+    platform_config.dims = ArrowAdapter::_get_dims_list_json(tiledb_schema)
+                               .dump();
+
+    return platform_config;
+}
+
+json ArrowAdapter::_get_attrs_filter_list_json(
+    const ArraySchema& tiledb_schema) {
+    json attrs_filter_list_as_json;
+    for (const auto& attr : tiledb_schema.attributes()) {
+        json attr_info = {
+            {"filters", _get_filter_list_json(attr.second.filter_list())}};
+        attrs_filter_list_as_json.emplace(attr.first, attr_info);
+    }
+    return attrs_filter_list_as_json;
+}
+
+json ArrowAdapter::_get_dims_list_json(const ArraySchema& tiledb_schema) {
+    json dims_as_json;
+    for (const auto& dim : tiledb_schema.domain().dimensions()) {
+        json dim_info = {
+            {"tile", dim.tile_extent_to_str()},
+            {"filters", _get_filter_list_json(dim.filter_list())}};
+        dims_as_json.emplace(dim.name(), dim_info);
+    }
+    return dims_as_json;
+}
+
+json ArrowAdapter::_get_filter_list_json(FilterList filter_list) {
+    std::map<tiledb_filter_option_t, std::string> option_as_string = {
+        {TILEDB_COMPRESSION_LEVEL, "COMPRESSION_LEVEL"},
+        {TILEDB_BIT_WIDTH_MAX_WINDOW, "BIT_WIDTH_MAX_WINDOW"},
+        {TILEDB_POSITIVE_DELTA_MAX_WINDOW, "POSITIVE_DELTA_MAX_WINDOW"},
+        {TILEDB_SCALE_FLOAT_BYTEWIDTH, "SCALE_FLOAT_BYTEWIDTH"},
+        {TILEDB_SCALE_FLOAT_FACTOR, "SCALE_FLOAT_FACTOR"},
+        {TILEDB_SCALE_FLOAT_OFFSET, "SCALE_FLOAT_OFFSET"},
+        {TILEDB_WEBP_INPUT_FORMAT, "WEBP_INPUT_FORMAT"},
+        {TILEDB_WEBP_QUALITY, "WEBP_QUALITY"},
+        {TILEDB_WEBP_LOSSLESS, "WEBP_LOSSLESS"},
+        {TILEDB_COMPRESSION_REINTERPRET_DATATYPE,
+         "COMPRESSION_REINTERPRET_DATATYPE"},
+    };
+
+    json filter_list_as_json = {};
+    for (uint32_t i = 0; i < filter_list.nfilters(); ++i) {
+        json filter_as_json = {};
+
+        auto filter = filter_list.filter(i);
+        filter_as_json.emplace("name", Filter::to_str(filter.filter_type()));
+
+        switch (filter.filter_type()) {
+            case TILEDB_FILTER_GZIP:
+            case TILEDB_FILTER_ZSTD:
+            case TILEDB_FILTER_LZ4:
+            case TILEDB_FILTER_BZIP2:
+            case TILEDB_FILTER_RLE:
+            case TILEDB_FILTER_DICTIONARY:
+                filter_as_json.emplace(
+                    "COMPRESSION_LEVEL",
+                    filter.get_option<int32_t>(TILEDB_COMPRESSION_LEVEL));
+                break;
+
+            case TILEDB_FILTER_DELTA:
+            case TILEDB_FILTER_DOUBLE_DELTA:
+                filter_as_json.emplace(
+                    "COMPRESSION_LEVEL",
+                    filter.get_option<int32_t>(TILEDB_COMPRESSION_LEVEL));
+                filter_as_json.emplace(
+                    "COMPRESSION_REINTERPRET_DATATYPE",
+                    filter.get_option<uint8_t>(
+                        TILEDB_COMPRESSION_REINTERPRET_DATATYPE));
+                break;
+
+            case TILEDB_FILTER_BIT_WIDTH_REDUCTION:
+                filter_as_json.emplace(
+                    "BIT_WIDTH_MAX_WINDOW",
+                    filter.get_option<uint32_t>(TILEDB_BIT_WIDTH_MAX_WINDOW));
+                break;
+
+            case TILEDB_FILTER_POSITIVE_DELTA:
+                filter_as_json.emplace(
+                    "POSITIVE_DELTA_MAX_WINDOW",
+                    filter.get_option<uint32_t>(
+                        TILEDB_POSITIVE_DELTA_MAX_WINDOW));
+                break;
+
+            case TILEDB_FILTER_SCALE_FLOAT:
+                filter_as_json.emplace(
+                    "SCALE_FLOAT_FACTOR",
+                    filter.get_option<double>(TILEDB_SCALE_FLOAT_FACTOR));
+                filter_as_json.emplace(
+                    "SCALE_FLOAT_OFFSET",
+                    filter.get_option<double>(TILEDB_SCALE_FLOAT_OFFSET));
+                filter_as_json.emplace(
+                    "SCALE_FLOAT_BYTEWIDTH",
+                    filter.get_option<uint64_t>(TILEDB_SCALE_FLOAT_BYTEWIDTH));
+                break;
+
+            case TILEDB_FILTER_WEBP:
+                filter_as_json.emplace(
+                    "WEBP_INPUT_FORMAT",
+                    filter.get_option<uint8_t>(TILEDB_WEBP_INPUT_FORMAT));
+                filter_as_json.emplace(
+                    "WEBP_QUALITY",
+                    filter.get_option<float>(TILEDB_WEBP_QUALITY));
+                filter_as_json.emplace(
+                    "WEBP_LOSSLESS",
+                    filter.get_option<uint8_t>(TILEDB_WEBP_LOSSLESS));
+                break;
+
+            case TILEDB_FILTER_CHECKSUM_MD5:
+            case TILEDB_FILTER_CHECKSUM_SHA256:
+            case TILEDB_FILTER_XOR:
+            case TILEDB_FILTER_BITSHUFFLE:
+            case TILEDB_FILTER_BYTESHUFFLE:
+            case TILEDB_FILTER_DEPRECATED:
+            case TILEDB_FILTER_NONE:
+                // These filters have no options and are left empty
+                // intentionally
+                break;
+        }
+        filter_list_as_json.emplace_back(filter_as_json);
+    }
+    return filter_list_as_json;
+}
+
 std::unique_ptr<ArrowSchema> ArrowAdapter::arrow_schema_from_tiledb_array(
     std::shared_ptr<Context> ctx, std::shared_ptr<Array> tiledb_array) {
     auto tiledb_schema = tiledb_array->schema();
@@ -808,7 +957,18 @@ ArraySchema ArrowAdapter::tiledb_schema_from_arrow_schema(
 
     for (int64_t sch_idx = 0; sch_idx < arrow_schema->n_children; ++sch_idx) {
         auto child = arrow_schema->children[sch_idx];
-        auto type = ArrowAdapter::to_tiledb_format(child->format);
+        std::string_view type_metadata;
+
+        if (ArrowMetadataHasKey(child->metadata, ArrowCharView("dtype"))) {
+            ArrowStringView out;
+            NANOARROW_THROW_NOT_OK(ArrowMetadataGetValue(
+                child->metadata, ArrowCharView("dtype"), &out));
+
+            type_metadata = std::string_view(out.data, out.size_bytes);
+        }
+
+        auto type = ArrowAdapter::to_tiledb_format(
+            child->format, type_metadata);
 
         LOG_DEBUG(fmt::format(
             "[ArrowAdapter] schema pass for child {} name {}",
@@ -822,7 +982,7 @@ ArraySchema ArrowAdapter::tiledb_schema_from_arrow_schema(
             auto schild = index_column_schema->children[i];
             auto col_name = schild->name;
             if (strcmp(child->name, col_name) == 0) {
-                if (ArrowAdapter::arrow_is_string_type(child->format)) {
+                if (ArrowAdapter::arrow_is_var_length_type(child->format)) {
                     type = TILEDB_STRING_ASCII;
                 }
 
@@ -861,7 +1021,7 @@ ArraySchema ArrowAdapter::tiledb_schema_from_arrow_schema(
                 attr.set_nullable(true);
             }
 
-            if (ArrowAdapter::arrow_is_string_type(child->format)) {
+            if (ArrowAdapter::arrow_is_var_length_type(child->format)) {
                 attr.set_cell_val_num(TILEDB_VAR_NUM);
             }
 
@@ -872,7 +1032,7 @@ ArraySchema ArrowAdapter::tiledb_schema_from_arrow_schema(
                     *ctx,
                     child->name,
                     enmr_type,
-                    ArrowAdapter::arrow_is_string_type(enmr_format) ?
+                    ArrowAdapter::arrow_is_var_length_type(enmr_format) ?
                         TILEDB_VAR_NUM :
                         1,
                     child->flags & ARROW_FLAG_DICTIONARY_ORDERED);
@@ -921,7 +1081,7 @@ ArraySchema ArrowAdapter::tiledb_schema_from_arrow_schema(
                     continue;
                 }
 
-                if (ArrowAdapter::arrow_is_string_type(child->format)) {
+                if (ArrowAdapter::arrow_is_var_length_type(child->format)) {
                     // In the core API:
                     //
                     // * domain for strings must be set as (nullptr, nullptr)
@@ -1118,8 +1278,9 @@ ArrowAdapter::to_arrow(std::shared_ptr<ColumnBuffer> column) {
 
     if (array->n_buffers != n_buffers) {
         throw TileDBSOMAError(fmt::format(
-            "[ArrowAdapter] expected array n_buffers {}; got {}",
+            "[ArrowAdapter] expected array n_buffers {} for column {}; got {}",
             n_buffers,
+            column->name(),
             array->n_buffers));
     }
 
@@ -1250,7 +1411,7 @@ ArrowAdapter::to_arrow(std::shared_ptr<ColumnBuffer> column) {
     return std::pair(std::move(array), std::move(schema));
 }
 
-bool ArrowAdapter::arrow_is_string_type(const char* format) {
+bool ArrowAdapter::arrow_is_var_length_type(const char* format) {
     return (
         (strcmp(format, "U") == 0) || (strcmp(format, "Z") == 0) ||
         (strcmp(format, "u") == 0) || (strcmp(format, "z") == 0));
@@ -1270,8 +1431,8 @@ std::string_view ArrowAdapter::to_arrow_format(
         {TILEDB_FLOAT32, "f"},        {TILEDB_FLOAT64, "g"},
         {TILEDB_BOOL, "b"},           {TILEDB_DATETIME_SEC, "tss:"},
         {TILEDB_DATETIME_MS, "tsm:"}, {TILEDB_DATETIME_US, "tsu:"},
-        {TILEDB_DATETIME_NS, "tsn:"},
-    };
+        {TILEDB_DATETIME_NS, "tsn:"}, {TILEDB_GEOM_WKB, z},
+        {TILEDB_GEOM_WKT, u}};
 
     try {
         return _to_arrow_format_map.at(tiledb_dtype);
@@ -1282,7 +1443,8 @@ std::string_view ArrowAdapter::to_arrow_format(
     }
 }
 
-tiledb_datatype_t ArrowAdapter::to_tiledb_format(std::string_view arrow_dtype) {
+tiledb_datatype_t ArrowAdapter::to_tiledb_format(
+    std::string_view arrow_dtype, std::string_view arrow_dtype_metadata) {
     std::map<std::string_view, tiledb_datatype_t> _to_tiledb_format_map = {
         {"u", TILEDB_STRING_UTF8},    {"U", TILEDB_STRING_UTF8},
         {"z", TILEDB_CHAR},           {"Z", TILEDB_CHAR},
@@ -1297,7 +1459,17 @@ tiledb_datatype_t ArrowAdapter::to_tiledb_format(std::string_view arrow_dtype) {
     };
 
     try {
-        return _to_tiledb_format_map.at(arrow_dtype);
+        auto dtype = _to_tiledb_format_map.at(arrow_dtype);
+
+        if (dtype == TILEDB_CHAR && arrow_dtype_metadata.compare("WKB") == 0) {
+            dtype = TILEDB_GEOM_WKB;
+        } else if (
+            dtype == TILEDB_STRING_UTF8 &&
+            arrow_dtype_metadata.compare("WKT") == 0) {
+            dtype = TILEDB_GEOM_WKT;
+        }
+
+        return dtype;
     } catch (const std::out_of_range& e) {
         throw std::out_of_range(fmt::format(
             "ArrowAdapter: Unsupported Arrow type: {} ", arrow_dtype));

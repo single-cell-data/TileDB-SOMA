@@ -1,9 +1,15 @@
 from __future__ import annotations
 
+import io
+import tarfile
+
 import pyarrow as pa
 import pytest
 
 import tiledbsoma
+import tiledbsoma.io
+
+from ._util import TESTDATA
 
 
 @pytest.mark.parametrize(
@@ -113,11 +119,28 @@ def test_sparse_nd_array_basics(
     with tiledbsoma.SparseNDArray.open(uri) as snda:
         assert snda.shape == arg_shape
 
-    if tiledbsoma._flags.NEW_SHAPE_FEATURE_FLAG_ENABLED:
+    if not tiledbsoma._flags.NEW_SHAPE_FEATURE_FLAG_ENABLED:
+        with tiledbsoma.SparseNDArray.open(uri) as snda:
+            ok, msg = snda.tiledbsoma_upgrade_shape(arg_shape, check_only=True)
+            assert ok
+            assert msg == ""
+
+    else:
+
+        with tiledbsoma.SparseNDArray.open(uri) as snda:
+            ok, msg = snda.tiledbsoma_upgrade_shape(arg_shape, check_only=True)
+            assert not ok
+            assert (
+                msg
+                == "tiledbsoma_can_upgrade_shape: array already has a shape: please use resize"
+            )
 
         # Test resize down
         new_shape = tuple([arg_shape[i] - 50 for i in range(ndim)])
         with tiledbsoma.SparseNDArray.open(uri, "w") as snda:
+            (ok, msg) = snda.resize(new_shape, check_only=True)
+            assert not ok
+            assert msg == "can_resize for soma_dim_0: new 50 < existing shape 100"
             # TODO: check draft spec
             # with pytest.raises(ValueError):
             with pytest.raises(tiledbsoma.SOMAError):
@@ -162,9 +185,19 @@ def test_sparse_nd_array_basics(
         with tiledbsoma.SparseNDArray.open(uri) as snda:
             assert snda.shape == new_shape
 
+            (ok, msg) = snda.resize(new_shape, check_only=True)
+            assert ok
+            assert msg == ""
 
-## Pending 2.27 timeframe for dense support for current domain, including resize
-## https://github.com/single-cell-data/TileDB-SOMA/issues/2955
+            too_small = tuple(e - 1 for e in new_shape)
+            (ok, msg) = snda.resize(too_small, check_only=True)
+            assert not ok
+            assert msg == "can_resize for soma_dim_0: new 149 < existing shape 150"
+
+        with tiledbsoma.SparseNDArray.open(uri, "w") as snda:
+            (ok, msg) = snda.resize(new_shape, check_only=True)
+
+
 def test_dense_nd_array_basics(tmp_path):
     uri = tmp_path.as_posix()
     shape = (100, 200)
@@ -177,12 +210,18 @@ def test_dense_nd_array_basics(tmp_path):
         assert dnda.non_empty_domain() == ((0, 0), (0, 0))
 
     with tiledbsoma.DenseNDArray.open(uri, "w") as dnda:
-        with pytest.raises(NotImplementedError):
+        if tiledbsoma.pytiledbsoma.embedded_version_triple() >= (2, 27, 0):
             dnda.resize((300, 400))
+        else:
+            with pytest.raises(NotImplementedError):
+                dnda.resize((300, 400))
 
     with tiledbsoma.DenseNDArray.open(uri) as dnda:
         assert dnda.non_empty_domain() == ((0, 0), (0, 0))
-        assert dnda.shape == (100, 200)
+        if tiledbsoma.pytiledbsoma.embedded_version_triple() >= (2, 27, 0):
+            assert dnda.shape == (300, 400)
+        else:
+            assert dnda.shape == (100, 200)
 
 
 @pytest.mark.parametrize(
@@ -276,13 +315,23 @@ def test_dataframe_basics(tmp_path, soma_joinid_domain, index_column_names):
         # Test resize down
         new_shape = 0
         with tiledbsoma.DataFrame.open(uri, "w") as sdf:
+            ok, msg = sdf.tiledbsoma_resize_soma_joinid_shape(
+                new_shape, check_only=True
+            )
             if has_soma_joinid_dim:
                 # TODO: check draft spec
                 # with pytest.raises(ValueError):
+                assert not ok
+                assert (
+                    "tiledbsoma_resize_soma_joinid_shape: new soma_joinid shape 0 < existing shape"
+                    in msg
+                )
                 with pytest.raises(tiledbsoma.SOMAError):
-                    sdf.resize_soma_joinid_shape(new_shape)
+                    sdf.tiledbsoma_resize_soma_joinid_shape(new_shape)
             else:
-                sdf.resize_soma_joinid_shape(new_shape)
+                assert ok
+                assert msg == ""
+                sdf.tiledbsoma_resize_soma_joinid_shape(new_shape)
 
         with tiledbsoma.DataFrame.open(uri) as sdf:
             assert sdf._maybe_soma_joinid_shape == shape_at_create
@@ -302,8 +351,348 @@ def test_dataframe_basics(tmp_path, soma_joinid_domain, index_column_names):
         # Test resize
         new_shape = 0 if shape_at_create is None else shape_at_create + 100
         with tiledbsoma.DataFrame.open(uri, "w") as sdf:
-            sdf.resize_soma_joinid_shape(new_shape)
+            sdf.tiledbsoma_resize_soma_joinid_shape(new_shape)
 
         # Test writes out of old bounds, within new bounds, after resize
         with tiledbsoma.DataFrame.open(uri, "w") as sdf:
             sdf.write(data)
+
+
+def test_domain_mods(tmp_path):
+    if not tiledbsoma._flags.NEW_SHAPE_FEATURE_FLAG_ENABLED:
+        return
+
+    uri = tmp_path.as_posix()
+
+    schema = pa.schema(
+        [
+            ("soma_joinid", pa.int64()),
+            ("mystring", pa.string()),
+            ("myint", pa.int16()),
+            ("myfloat", pa.float32()),
+            ("mybool", pa.bool_()),  # not supported as an index type
+        ]
+    )
+    index_column_names = ["soma_joinid", "mystring", "myint", "myfloat"]
+
+    domain_for_create = [
+        [0, 3],
+        None,
+        [20, 50],
+        [0.0, 6.0],
+    ]
+
+    data_dict = {
+        "soma_joinid": [0, 1, 2, 3],
+        "mystring": ["a", "b", "a", "b"],
+        "myint": [20, 30, 40, 50],
+        "myfloat": [1.0, 2.5, 4.0, 5.5],
+        "mybool": [True, False, True, True],
+    }
+
+    data = pa.Table.from_pydict(data_dict)
+
+    with tiledbsoma.DataFrame.create(
+        uri,
+        schema=schema,
+        index_column_names=index_column_names,
+        domain=domain_for_create,
+    ) as sdf:
+        sdf.write(data)
+
+    # Check "expand" to same
+    with tiledbsoma.DataFrame.open(uri, "w") as sdf:
+        newdomain = [[0, 3], None, [20, 50], [0.0, 6.0]]
+        ok, msg = sdf.change_domain(newdomain, check_only=True)
+        assert ok
+        assert msg == ""
+
+    # Shrink
+    with tiledbsoma.DataFrame.open(uri, "w") as sdf:
+        newdomain = [[0, 2], None, [20, 50], [0.0, 6.0]]
+        ok, msg = sdf.change_domain(newdomain, check_only=True)
+        assert not ok
+        assert "downsize is unsupported" in msg
+
+    with tiledbsoma.DataFrame.open(uri, "w") as sdf:
+        newdomain = [[0, 3], None, [20, 40], [0.0, 6.0]]
+        ok, msg = sdf.change_domain(newdomain, check_only=True)
+        assert not ok
+        assert "downsize is unsupported" in msg
+
+    with tiledbsoma.DataFrame.open(uri, "w") as sdf:
+        newdomain = [[0, 3], None, [20, 50], [1.0, 6.0]]
+        ok, msg = sdf.change_domain(newdomain, check_only=True)
+        assert not ok
+        assert "downsize is unsupported" in msg
+
+    # String domain cannot be specified
+    with tiledbsoma.DataFrame.open(uri, "w") as sdf:
+        newdomain = [
+            [0, 3],
+            ["a", "z"],
+            [20, 50],
+            [0.0, 6.0],
+        ]
+        ok, msg = sdf.change_domain(newdomain, check_only=True)
+        assert not ok
+        assert "domain cannot be set for string index columns" in msg
+
+    # All clear
+    with tiledbsoma.DataFrame.open(uri, "w") as sdf:
+        newdomain = [[0, 9], None, [0, 100], [-10.0, 10.0]]
+        ok, msg = sdf.change_domain(newdomain, check_only=True)
+        assert ok
+        assert msg == ""
+        sdf.change_domain(newdomain)
+
+    # Check for success
+    with tiledbsoma.DataFrame.open(uri, "r") as sdf:
+        dom = sdf.domain
+        assert dom[0] == (0, 9)
+        assert dom[1] == ("", "")
+        assert dom[2] == (0, 100)
+        assert dom[3] == (-10.0, 10.0)
+
+
+@pytest.mark.parametrize("has_shapes", [False, True])
+def test_canned_experiments(tmp_path, has_shapes):
+    uri = tmp_path.as_posix()
+
+    if not has_shapes:
+        tgz = TESTDATA / "pbmc-exp-without-shapes.tgz"
+    else:
+        tgz = TESTDATA / "pbmc-exp-with-shapes.tgz"
+
+    with tarfile.open(tgz) as handle:
+        handle.extractall(uri)
+
+    def _assert_huge_domainish(d):
+        assert len(d) == 1
+        assert len(d[0]) == 2
+        assert d[0][0] == 0
+        # Exact number depends on tile extent, and is unimportant in any case
+        assert d[0][1] > 2**62
+
+    def _check_dataframe(
+        sdf, has_shapes, expected_count, *, count_must_match: bool = True
+    ):
+        if count_must_match:
+            # OK match case: 2000 populated rows and shape is 2000.
+            # OK mismatch case: 2000 populated rows and a reshape to 3000 has been done.
+            assert sdf.count == expected_count
+        if not has_shapes:
+            _assert_huge_domainish(sdf.domain)
+        else:
+            assert sdf.domain == ((0, expected_count - 1),)
+        _assert_huge_domainish(sdf.maxdomain)
+        assert sdf.tiledbsoma_has_upgraded_domain == has_shapes
+
+    def _assert_huge_shape(d):
+        assert len(d) == 2
+        # Exact number depends on tile extent, and is unimportant in any case
+        assert d[0] > 2**62
+        assert d[1] > 2**62
+
+    def _check_ndarray(ndarray, has_shapes, expected_shape):
+        if not has_shapes:
+            _assert_huge_shape(ndarray.shape)
+        else:
+            assert ndarray.shape == expected_shape
+        _assert_huge_shape(ndarray.maxshape)
+
+    with tiledbsoma.Experiment.open(uri) as exp:
+
+        _check_dataframe(exp.obs, has_shapes, 2638)
+
+        assert "raw" in exp.ms
+        assert "data" in exp.ms["raw"].X
+
+        _check_dataframe(exp.ms["raw"].var, has_shapes, 13714)
+        _check_ndarray(exp.ms["raw"].X["data"], has_shapes, (2638, 13714))
+
+        _check_dataframe(exp.ms["RNA"].var, has_shapes, 1838)
+        _check_ndarray(exp.ms["RNA"].X["data"], has_shapes, (2638, 1838))
+        _check_ndarray(exp.ms["RNA"].obsm["X_pca"], has_shapes, (2638, 50))
+        _check_ndarray(exp.ms["RNA"].obsp["connectivities"], has_shapes, (2638, 2638))
+        _check_ndarray(exp.ms["RNA"].varm["PCs"], has_shapes, (1838, 50))
+
+    # Check tiledbsoma.io.show_experiment_shapes. This is mainly for interactive
+    # use, so in a unit test, we want to check basics:
+    # * Check that many lines were printed
+    # * Make sure exceptions occurred
+    # * Do some spot-checks on wording
+
+    handle = io.StringIO()
+    tiledbsoma.io.show_experiment_shapes(uri, output_handle=handle)
+    handle.seek(0)
+    lines = handle.readlines()
+    handle.close()
+    # Exact line count doesn't matter: make sure it's a lot.
+    assert len(lines) > 50
+    body = "\n".join(lines)
+    assert "[SparseNDArray] ms/RNA/obsp/distances" in body
+    assert "ms/RNA/obsm/X_draw_graph_fr" in body
+
+    # Check upgrade_domain for dataframes
+    with tiledbsoma.Experiment.open(uri, "w") as exp:
+
+        ok, msg = exp.obs.tiledbsoma_upgrade_domain([[10, 4]], check_only=True)
+        if has_shapes:
+            assert not ok
+            assert "dataframe already has a domain" in msg
+        else:
+            assert not ok
+            assert "new lower > new upper" in msg
+
+        ok, msg = exp.obs.tiledbsoma_upgrade_domain([[0, 1]], check_only=True)
+        if has_shapes:
+            assert not ok
+            assert "dataframe already has a domain" in msg
+        else:
+            assert ok
+            assert msg == ""
+
+        with pytest.raises(ValueError):
+            exp.obs.tiledbsoma_upgrade_domain([[0, 1, 2]], check_only=True)
+
+    # Check dry run of tiledbsoma.io.upgrade_experiment_shapes
+    handle = io.StringIO()
+    upgradeable = tiledbsoma.io.upgrade_experiment_shapes(
+        uri, check_only=True, output_handle=handle
+    )
+    handle.seek(0)
+    lines = handle.readlines()
+    handle.close()
+    # Exact line count doesn't matter: make sure it's a lot.
+    assert len(lines) > 50
+    body = "\n".join(lines)
+    assert "[SparseNDArray] ms/RNA/obsp/distances" in body
+    assert "ms/RNA/obsm/X_draw_graph_fr" in body
+    assert upgradeable != has_shapes
+
+    # Check dry run of tiledbsoma.io.resize_experiment -- plenty of room
+    handle = io.StringIO()
+    resizeable = tiledbsoma.io.resize_experiment(
+        uri,
+        nobs=100000,
+        nvars={"RNA": 100000, "raw": 200000},
+        check_only=True,
+        output_handle=handle,
+    )
+    handle.seek(0)
+    lines = handle.readlines()
+    handle.close()
+    # Exact line count doesn't matter: make sure it's a lot.
+    assert len(lines) > 50
+    body = "\n".join(lines)
+    assert "[SparseNDArray] ms/RNA/obsp/distances" in body
+    assert "ms/RNA/obsm/X_draw_graph_fr" in body
+    assert resizeable == has_shapes
+
+    # Check dry run of tiledbsoma.io.resize_experiment -- no change
+    handle = io.StringIO()
+    resizeable = tiledbsoma.io.resize_experiment(
+        uri,
+        nobs=2638,
+        nvars={"RNA": 1838, "raw": 13714},
+        check_only=True,
+        output_handle=handle,
+    )
+    assert resizeable == has_shapes
+
+    # Check dry run of tiledbsoma.io.resize_experiment -- downsize
+    handle = io.StringIO()
+    resizeable = tiledbsoma.io.resize_experiment(
+        uri,
+        nobs=2638,
+        nvars={"RNA": 1838, "raw": 13713},
+        check_only=True,
+        output_handle=handle,
+    )
+    assert not resizeable
+    handle.seek(0)
+    lines = handle.readlines()
+    handle.close()
+    body = "\n".join(lines)
+    if not has_shapes:
+        assert (
+            "Not OK: can_resize: array currently has no shape: please upgrade the array"
+            in body
+        )
+    else:
+        assert (
+            "Not OK: can_resize for soma_dim_1: new 13713 < existing shape 13714"
+            in body
+        )
+
+    # Check real run of tiledbsoma.io.upgrade_experiment_shapes
+    handle = io.StringIO()
+    upgraded = tiledbsoma.io.upgrade_experiment_shapes(uri, output_handle=handle)
+    handle.seek(0)
+    lines = handle.readlines()
+    handle.close()
+    # Experiment-level upgrade is idempotent.
+    assert upgraded
+
+    # Check post-upgrade shapes
+    with tiledbsoma.Experiment.open(uri) as exp:
+
+        _check_dataframe(exp.obs, True, 2638)
+
+        assert "raw" in exp.ms
+        assert "data" in exp.ms["raw"].X
+
+        _check_dataframe(exp.ms["raw"].var, True, 13714)
+        _check_ndarray(exp.ms["raw"].X["data"], True, (2638, 13714))
+
+        _check_dataframe(exp.ms["RNA"].var, True, 1838)
+        _check_ndarray(exp.ms["RNA"].X["data"], True, (2638, 1838))
+        _check_ndarray(exp.ms["RNA"].obsm["X_pca"], True, (2638, 50))
+        _check_ndarray(exp.ms["RNA"].obsp["connectivities"], True, (2638, 2638))
+        _check_ndarray(exp.ms["RNA"].varm["PCs"], True, (1838, 50))
+
+    # Check real same-size resize
+    handle = io.StringIO()
+    resized = tiledbsoma.io.resize_experiment(
+        uri,
+        nobs=2638,
+        nvars={"RNA": 1838, "raw": 13714},
+        output_handle=handle,
+    )
+    assert resized
+
+    # Check real down-size resize
+    with pytest.raises(tiledbsoma.SOMAError):
+        tiledbsoma.io.resize_experiment(
+            uri,
+            nobs=2637,
+            nvars={"RNA": 1838, "raw": 13714},
+            output_handle=handle,
+        )
+
+    # Check real up-size resize
+    handle = io.StringIO()
+    resized = tiledbsoma.io.resize_experiment(
+        uri,
+        nobs=2639,
+        nvars={"RNA": 1839, "raw": 13720},
+        output_handle=handle,
+    )
+    assert resized
+
+    # Check new shapes
+    with tiledbsoma.Experiment.open(uri) as exp:
+        _check_dataframe(exp.obs, True, 2639, count_must_match=False)
+
+        assert "raw" in exp.ms
+        assert "data" in exp.ms["raw"].X
+
+        _check_dataframe(exp.ms["raw"].var, True, 13720, count_must_match=False)
+        _check_ndarray(exp.ms["raw"].X["data"], True, (2639, 13720))
+
+        _check_dataframe(exp.ms["RNA"].var, True, 1839, count_must_match=False)
+        _check_ndarray(exp.ms["RNA"].X["data"], True, (2639, 1839))
+        _check_ndarray(exp.ms["RNA"].obsm["X_pca"], True, (2639, 50))
+        _check_ndarray(exp.ms["RNA"].obsp["connectivities"], True, (2639, 2639))
+        _check_ndarray(exp.ms["RNA"].varm["PCs"], True, (1839, 50))

@@ -161,7 +161,7 @@ TEST_CASE("SOMASparseNDArray: basic", "[SOMASparseNDArray]") {
             snda->resize(new_shape, "testing");
             snda->close();
 
-            snda = SOMASparseNDArray::open(uri, OpenMode::read, ctx);
+            snda->open(OpenMode::read);
             REQUIRE(snda->shape() == new_shape);
             snda->close();
 
@@ -176,7 +176,7 @@ TEST_CASE("SOMASparseNDArray: basic", "[SOMASparseNDArray]") {
             snda->close();
 
             // Try out-of-bounds write after resize.
-            snda = SOMASparseNDArray::open(uri, OpenMode::write, ctx);
+            snda->open(OpenMode::write);
             snda->set_column_data(dim_name, d0b.size(), d0b.data());
             snda->set_column_data(attr_name, a0b.size(), a0b.data());
             // Implicitly checking for no throw
