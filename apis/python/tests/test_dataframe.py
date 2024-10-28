@@ -1831,3 +1831,41 @@ def test_fix_update_dataframe_with_var_strings(tmp_path):
     with soma.DataFrame.open(uri, "r") as sdf:
         results = sdf.read().concat().to_pandas()
         assert results.equals(updated_sdf)
+
+
+def test_presence_matrix(tmp_path):
+    uri = tmp_path.as_uri()
+
+    # Cerate the dataframe
+    soma_df = soma.DataFrame.create(
+        uri,
+        schema=pa.schema(
+            [
+                ("soma_joinid", pa.int64()),
+                ("scene_id", pa.string()),
+                ("data", pa.bool_()),
+            ]
+        ),
+        domain=((0, 99), ("", "")),
+        index_column_names=("soma_joinid", "scene_id"),
+    )
+
+    # Create datda to write
+    joinid_data = pa.array(np.arange(0, 100, 5))
+    scene_id_data = 10 * ["scene1"] + 10 * ["scene2"]
+    df = pd.DataFrame(
+        {
+            "soma_joinid": joinid_data,
+            "scene_id": scene_id_data,
+            "data": 20 * [True],
+        }
+    )
+    arrow_table = pa.Table.from_pandas(df)
+    soma_df.write(arrow_table)
+
+    soma_df.close()
+
+    with soma.DataFrame.open(uri) as soma_df:
+        actual = soma_df.read().concat().to_pandas()
+
+    assert actual.equals(df)
