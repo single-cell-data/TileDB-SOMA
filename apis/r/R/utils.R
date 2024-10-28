@@ -303,3 +303,22 @@ SOMA_ENCODING_VERSION <- "1.1.0"
 ##' @importFrom spdl setup
 ##' @useDynLib tiledbsoma, .registration=TRUE
 NULL
+
+# This is for internal logging purposes. Context:
+# * We have R (and Python) code with function names the user invokes.
+# * These call C++ functions which can throw their own error messages.
+# * It's crucial that the C++ code "knows" the name of the function
+#   as typed by the user, not whatever (possibly out-of-date) guess
+#   the C++ code may have.
+.name_of_function <- function() {
+  # Tricky bits:
+  # * This might be `obj$foo`
+  # * The sys.call can return a parse-tree component (typeof = language)
+  #   with the '$', 'obj', and 'foo' -- hence the as.character
+  # * Even then there can be a second component returned like 'c(1)'
+  #   -- hence the [[1]]
+  # * Then remove the 'obj$' from 'obj$foo'
+  name <- as.character(sys.call(sys.parent(n=1)))[[1]]
+  name <- sub('.*\\$', replacement = '', x = name)
+  return(name)
+}
