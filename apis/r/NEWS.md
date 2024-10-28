@@ -17,6 +17,7 @@
 * Fix `is_named_list` bug for half-named lists [#3183](https://github.com/single-cell-data/TileDB-SOMA/pull/3183)
 * Expose block/random writer for sparse arrays [#3204](https://github.com/single-cell-data/TileDB-SOMA/pull/3204)
 * Min-sizing for dataframes/arrays with new shape feature [#3208](https://github.com/single-cell-data/TileDB-SOMA/pull/3208)
+* Proper prefixing for shape-related methods [#3237](https://github.com/single-cell-data/TileDB-SOMA/pull/3237)
 
 # tiledbsoma 1.14.1
 
