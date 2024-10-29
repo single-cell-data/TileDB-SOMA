@@ -15,9 +15,13 @@ TileDBObject <- R6::R6Class(
     #' @param internal_use_only Character value to signal this is a 'permitted' call,
     #' as `new()` is considered internal and should not be called directly.
     initialize = function(
-        uri, platform_config = NULL, tiledbsoma_ctx = NULL,
-        tiledb_timestamp = NULL, internal_use_only = NULL,
-        soma_context = NULL) {
+      uri,
+      platform_config = NULL,
+      tiledbsoma_ctx = NULL,
+      tiledb_timestamp = NULL,
+      internal_use_only = NULL,
+      soma_context = NULL
+    ) {
       if (is.null(internal_use_only) || internal_use_only != "allowed_use") {
         stop(paste(
           "Use of the new() method is for internal use only. Consider using a",
@@ -188,12 +192,12 @@ TileDBObject <- R6::R6Class(
     }
   ),
   private = list(
-    # Pro tip: in R6 we can't set these to anything other than NULL here, even if we want to.  If
-    # you want them defaulted to anything other than NULL, leave them NULL here and set the defaults
-    # in the constructor.
+    # Pro tip: in R6 we can't set these to anything other than NULL here, even
+    # if we want to.  If you want them defaulted to anything other than NULL,
+    # leave them NULL here and set the defaults in the constructor.
 
-    # Set by TileDBArray and TileDBGroup, as stateful handles have incompatible semantics
-    # we can't completely abstract here in this parent class
+    # Set by TileDBArray and TileDBGroup, as stateful handles have incompatible
+    # semanticswe can't completely abstract here in this parent class
     #
     # Semantics:
     # * "READ" when opened for read
@@ -212,8 +216,9 @@ TileDBObject <- R6::R6Class(
     # Internal platform config
     .tiledb_platform_config = NULL,
 
-    # Opener-supplied POSIXct timestamp, if any. TileDBArray and TileDBGroup are each responsible
-    # for making this effective, since the methods differ slightly.
+    # Opener-supplied POSIXct timestamp, if any. TileDBArray and TileDBGroup
+    # are each responsible for making this effective, since the methods
+    # differ slightly.
     .tiledb_timestamp = NULL,
 
     # Internal context
@@ -257,7 +262,8 @@ TileDBObject <- R6::R6Class(
       }
     },
 
-    # Per the spec, invoking user-level get-metadata requires open for read mode or write mode.
+    # Per the spec, invoking user-level get-metadata requires open for
+    # read mode or write mode.
     check_open_for_read_or_write = function() {
       if (!self$is_open()) {
         stop(paste("Item must be open for read or write.", self$uri))

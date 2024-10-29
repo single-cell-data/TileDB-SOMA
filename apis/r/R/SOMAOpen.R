@@ -9,9 +9,14 @@
 #'        collection timestamp defaults to the time of opening.
 #'
 #' @export
+#'
 SOMAOpen <- function(
-    uri, mode = "READ", platform_config = NULL,
-    tiledbsoma_ctx = NULL, tiledb_timestamp = NULL) {
+  uri,
+  mode = "READ",
+  platform_config = NULL,
+  tiledbsoma_ctx = NULL,
+  tiledb_timestamp = NULL
+) {
   # As an alternative we could rely tiledb-r and its tiledb_object_type but
   # this would require instantiating a ctx object first. It is a possible
   # refinement if and when we decide to hold an array or group pointer.
@@ -59,13 +64,50 @@ SOMAOpen <- function(
     stop("URI '", uri, "' is not a TileDB SOMA object.", call. = FALSE)
   }
 
-  switch(obj,
-    SOMACollection = SOMACollectionOpen(uri, mode = mode, platform_config = platform_config, tiledbsoma_ctx = tiledbsoma_ctx, tiledb_timestamp = tiledb_timestamp),
-    SOMADataFrame = SOMADataFrameOpen(uri, mode = mode, platform_config = platform_config, tiledbsoma_ctx = tiledbsoma_ctx, tiledb_timestamp = tiledb_timestamp),
-    SOMADenseNDArray = SOMADenseNDArrayOpen(uri, mode = mode, platform_config = platform_config, tiledbsoma_ctx = tiledbsoma_ctx, tiledb_timestamp = tiledb_timestamp),
-    SOMASparseNDArray = SOMASparseNDArrayOpen(uri, mode = mode, platform_config = platform_config, tiledbsoma_ctx = tiledbsoma_ctx, tiledb_timestamp = tiledb_timestamp),
-    SOMAExperiment = SOMAExperimentOpen(uri, mode = mode, platform_config = platform_config, tiledbsoma_ctx = tiledbsoma_ctx, tiledb_timestamp = tiledb_timestamp),
-    SOMAMeasurement = SOMAMeasurementOpen(uri, mode = mode, platform_config = platform_config, tiledbsoma_ctx = tiledbsoma_ctx, tiledb_timestamp = tiledb_timestamp),
+  switch(
+    EXPR = obj,
+    SOMACollection = SOMACollectionOpen(
+      uri,
+      mode = mode,
+      platform_config = platform_config,
+      tiledbsoma_ctx = tiledbsoma_ctx,
+      tiledb_timestamp = tiledb_timestamp
+    ),
+    SOMADataFrame = SOMADataFrameOpen(
+      uri,
+      mode = mode,
+      platform_config = platform_config,
+      tiledbsoma_ctx = tiledbsoma_ctx,
+      tiledb_timestamp = tiledb_timestamp
+    ),
+    SOMADenseNDArray = SOMADenseNDArrayOpen(
+      uri,
+      mode = mode,
+      platform_config = platform_config,
+      tiledbsoma_ctx = tiledbsoma_ctx,
+      tiledb_timestamp = tiledb_timestamp
+    ),
+    SOMASparseNDArray = SOMASparseNDArrayOpen(
+      uri,
+      mode = mode,
+      platform_config = platform_config,
+      tiledbsoma_ctx = tiledbsoma_ctx,
+      tiledb_timestamp = tiledb_timestamp
+    ),
+    SOMAExperiment = SOMAExperimentOpen(
+      uri,
+      mode = mode,
+      platform_config = platform_config,
+      tiledbsoma_ctx = tiledbsoma_ctx,
+      tiledb_timestamp = tiledb_timestamp
+    ),
+    SOMAMeasurement = SOMAMeasurementOpen(
+      uri,
+      mode = mode,
+      platform_config = platform_config,
+      tiledbsoma_ctx = tiledbsoma_ctx,
+      tiledb_timestamp = tiledb_timestamp
+    ),
     stop(sprintf("No support for type '%s'", obj), call. = FALSE)
   )
 }

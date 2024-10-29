@@ -53,14 +53,15 @@ NULL
 #' @export
 #'
 write_soma.Assay <- function(
-    x,
-    uri = NULL,
-    soma_parent,
-    ...,
-    ingest_mode = "write",
-    platform_config = NULL,
-    tiledbsoma_ctx = NULL,
-    relative = TRUE) {
+  x,
+  uri = NULL,
+  soma_parent,
+  ...,
+  ingest_mode = "write",
+  platform_config = NULL,
+  tiledbsoma_ctx = NULL,
+  relative = TRUE
+) {
   check_package("SeuratObject", version = .MINIMUM_SEURAT_VERSION())
   stopifnot(
     "'uri' must be a single character value" = is.null(uri) ||
@@ -239,16 +240,17 @@ write_soma.Assay <- function(
 #' @export
 #'
 write_soma.DimReduc <- function(
-    x,
-    uri = NULL,
-    soma_parent,
-    fidx = NULL,
-    nfeatures = NULL,
-    ...,
-    ingest_mode = "write",
-    platform_config = NULL,
-    tiledbsoma_ctx = NULL,
-    relative = TRUE) {
+  x,
+  uri = NULL,
+  soma_parent,
+  fidx = NULL,
+  nfeatures = NULL,
+  ...,
+  ingest_mode = "write",
+  platform_config = NULL,
+  tiledbsoma_ctx = NULL,
+  relative = TRUE
+) {
   check_package("SeuratObject", version = .MINIMUM_SEURAT_VERSION())
   stopifnot(
     "'uri' must be NULL" = is.null(uri),
@@ -419,14 +421,15 @@ write_soma.DimReduc <- function(
 #' @export
 #'
 write_soma.Graph <- function(
-    x,
-    uri,
-    soma_parent,
-    ...,
-    ingest_mode = "write",
-    platform_config = NULL,
-    tiledbsoma_ctx = NULL,
-    relative = TRUE) {
+  x,
+  uri,
+  soma_parent,
+  ...,
+  ingest_mode = "write",
+  platform_config = NULL,
+  tiledbsoma_ctx = NULL,
+  relative = TRUE
+) {
   check_package("SeuratObject", version = .MINIMUM_SEURAT_VERSION())
   stopifnot(
     "'soma_parent' must be a SOMAMeasurement" = inherits(
@@ -504,12 +507,13 @@ write_soma.Graph <- function(
 #' @export
 #'
 write_soma.Seurat <- function(
-    x,
-    uri,
-    ...,
-    ingest_mode = "write",
-    platform_config = NULL,
-    tiledbsoma_ctx = NULL) {
+  x,
+  uri,
+  ...,
+  ingest_mode = "write",
+  platform_config = NULL,
+  tiledbsoma_ctx = NULL
+) {
   check_package("SeuratObject", version = .MINIMUM_SEURAT_VERSION())
   stopifnot(
     "'uri' must be a single character value" = is.null(uri) ||
@@ -758,14 +762,15 @@ write_soma.Seurat <- function(
 #' @export
 #'
 write_soma.SeuratCommand <- function(
-    x,
-    uri = NULL,
-    soma_parent,
-    ...,
-    ingest_mode = "write",
-    platform_config = NULL,
-    tiledbsoma_ctx = NULL,
-    relative = TRUE) {
+  x,
+  uri = NULL,
+  soma_parent,
+  ...,
+  ingest_mode = "write",
+  platform_config = NULL,
+  tiledbsoma_ctx = NULL,
+  relative = TRUE
+) {
   check_package("SeuratObject", version = .MINIMUM_SEURAT_VERSION())
   check_package("jsonlite")
   stopifnot(

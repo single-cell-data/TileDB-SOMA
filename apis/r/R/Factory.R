@@ -28,15 +28,16 @@
 #' @export
 #'
 SOMADataFrameCreate <- function(
-    uri,
-    schema,
-    index_column_names = c("soma_joinid"),
-    domain = NULL,
-    ingest_mode = c("write", "resume"),
-    platform_config = NULL,
-    tiledbsoma_ctx = NULL,
-    tiledb_timestamp = NULL,
-    soma_context = NULL) {
+  uri,
+  schema,
+  index_column_names = c("soma_joinid"),
+  domain = NULL,
+  ingest_mode = c("write", "resume"),
+  platform_config = NULL,
+  tiledbsoma_ctx = NULL,
+  tiledb_timestamp = NULL,
+  soma_context = NULL
+) {
   ingest_mode <- match.arg(ingest_mode)
   sdf <- SOMADataFrame$new(
     uri,
@@ -79,12 +80,13 @@ SOMADataFrameCreate <- function(
 #' @export
 #'
 SOMADataFrameOpen <- function(
-    uri,
-    mode = "READ",
-    platform_config = NULL,
-    tiledbsoma_ctx = NULL,
-    tiledb_timestamp = NULL,
-    soma_context = NULL) {
+  uri,
+  mode = "READ",
+  platform_config = NULL,
+  tiledbsoma_ctx = NULL,
+  tiledb_timestamp = NULL,
+  soma_context = NULL
+) {
   spdl::debug("[SOMADataFrameOpen] uri {} ts ({})", uri, tiledb_timestamp %||% "now")
   sdf <- SOMADataFrame$new(
     uri,
@@ -109,13 +111,14 @@ SOMADataFrameOpen <- function(
 #' @export
 #'
 SOMASparseNDArrayCreate <- function(
-    uri,
-    type,
-    shape,
-    ingest_mode = c("write", "resume"),
-    platform_config = NULL,
-    tiledbsoma_ctx = NULL,
-    tiledb_timestamp = NULL) {
+  uri,
+  type,
+  shape,
+  ingest_mode = c("write", "resume"),
+  platform_config = NULL,
+  tiledbsoma_ctx = NULL,
+  tiledb_timestamp = NULL
+) {
   ingest_mode <- match.arg(ingest_mode)
   snda <- SOMASparseNDArray$new(
     uri,
@@ -151,11 +154,12 @@ SOMASparseNDArrayCreate <- function(
 #' @export
 #'
 SOMASparseNDArrayOpen <- function(
-    uri,
-    mode = "READ",
-    platform_config = NULL,
-    tiledbsoma_ctx = NULL,
-    tiledb_timestamp = NULL) {
+  uri,
+  mode = "READ",
+  platform_config = NULL,
+  tiledbsoma_ctx = NULL,
+  tiledb_timestamp = NULL
+) {
   snda <- SOMASparseNDArray$new(
     uri,
     platform_config,
@@ -176,12 +180,13 @@ SOMASparseNDArrayOpen <- function(
 #' @export
 #'
 SOMADenseNDArrayCreate <- function(
-    uri,
-    type,
-    shape,
-    platform_config = NULL,
-    tiledbsoma_ctx = NULL,
-    tiledb_timestamp = NULL) {
+  uri,
+  type,
+  shape,
+  platform_config = NULL,
+  tiledbsoma_ctx = NULL,
+  tiledb_timestamp = NULL
+) {
   spdl::debug("[SOMADenseNDArrayCreate] tstamp ({})", tiledb_timestamp %||% "now")
   dnda <- SOMADenseNDArray$new(
     uri,
@@ -208,11 +213,12 @@ SOMADenseNDArrayCreate <- function(
 #' @export
 #'
 SOMADenseNDArrayOpen <- function(
-    uri,
-    mode = "READ",
-    platform_config = NULL,
-    tiledbsoma_ctx = NULL,
-    tiledb_timestamp = NULL) {
+  uri,
+  mode = "READ",
+  platform_config = NULL,
+  tiledbsoma_ctx = NULL,
+  tiledb_timestamp = NULL
+) {
   dnda <- SOMADenseNDArray$new(
     uri,
     platform_config,
@@ -233,11 +239,12 @@ SOMADenseNDArrayOpen <- function(
 #' @export
 #'
 SOMACollectionCreate <- function(
-    uri,
-    ingest_mode = c("write", "resume"),
-    platform_config = NULL,
-    tiledbsoma_ctx = NULL,
-    tiledb_timestamp = NULL) {
+  uri,
+  ingest_mode = c("write", "resume"),
+  platform_config = NULL,
+  tiledbsoma_ctx = NULL,
+  tiledb_timestamp = NULL
+) {
   ingest_mode <- match.arg(ingest_mode)
   coll <- SOMACollection$new(
     uri,
@@ -268,11 +275,12 @@ SOMACollectionCreate <- function(
 #' @export
 #'
 SOMACollectionOpen <- function(
-    uri,
-    mode = "READ",
-    platform_config = NULL,
-    tiledbsoma_ctx = NULL,
-    tiledb_timestamp = NULL) {
+  uri,
+  mode = "READ",
+  platform_config = NULL,
+  tiledbsoma_ctx = NULL,
+  tiledb_timestamp = NULL
+) {
   coll <- SOMACollection$new(
     uri,
     platform_config,
@@ -293,11 +301,12 @@ SOMACollectionOpen <- function(
 #' @export
 #'
 SOMAMeasurementCreate <- function(
-    uri,
-    ingest_mode = c("write", "resume"),
-    platform_config = NULL,
-    tiledbsoma_ctx = NULL,
-    tiledb_timestamp = NULL) {
+  uri,
+  ingest_mode = c("write", "resume"),
+  platform_config = NULL,
+  tiledbsoma_ctx = NULL,
+  tiledb_timestamp = NULL
+) {
   ingest_mode <- match.arg(ingest_mode)
   meas <- SOMAMeasurement$new(
     uri,
@@ -328,11 +337,12 @@ SOMAMeasurementCreate <- function(
 #' @export
 #'
 SOMAMeasurementOpen <- function(
-    uri,
-    mode = "READ",
-    platform_config = NULL,
-    tiledbsoma_ctx = NULL,
-    tiledb_timestamp = NULL) {
+  uri,
+  mode = "READ",
+  platform_config = NULL,
+  tiledbsoma_ctx = NULL,
+  tiledb_timestamp = NULL
+) {
   meas <- SOMAMeasurement$new(
     uri,
     platform_config,
@@ -353,11 +363,12 @@ SOMAMeasurementOpen <- function(
 #' @export
 #'
 SOMAExperimentCreate <- function(
-    uri,
-    ingest_mode = c("write", "resume"),
-    platform_config = NULL,
-    tiledbsoma_ctx = NULL,
-    tiledb_timestamp = NULL) {
+  uri,
+  ingest_mode = c("write", "resume"),
+  platform_config = NULL,
+  tiledbsoma_ctx = NULL,
+  tiledb_timestamp = NULL
+) {
   ingest_mode <- match.arg(ingest_mode)
   exp <- SOMAExperiment$new(
     uri,
@@ -388,11 +399,12 @@ SOMAExperimentCreate <- function(
 #' @export
 #'
 SOMAExperimentOpen <- function(
-    uri,
-    mode = "READ",
-    platform_config = NULL,
-    tiledbsoma_ctx = NULL,
-    tiledb_timestamp = NULL) {
+  uri,
+  mode = "READ",
+  platform_config = NULL,
+  tiledbsoma_ctx = NULL,
+  tiledb_timestamp = NULL
+) {
   exp <- SOMAExperiment$new(
     uri,
     platform_config,

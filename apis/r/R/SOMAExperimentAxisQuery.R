@@ -34,10 +34,11 @@ SOMAExperimentAxisQuery <- R6::R6Class(
     #' @param obs_query,var_query An [`SOMAAxisQuery`] object for the obs/var
     #' axis.
     initialize = function(
-        experiment,
-        measurement_name,
-        obs_query = NULL,
-        var_query = NULL) {
+      experiment,
+      measurement_name,
+      obs_query = NULL,
+      var_query = NULL
+    ) {
       stopifnot(
         "experiment must be a SOMAExperiment" =
           inherits(experiment, "SOMAExperiment"),
@@ -253,7 +254,11 @@ SOMAExperimentAxisQuery <- R6::R6Class(
     #' @param X_layers The name(s) of the `X` layer(s) to read and return.
     #' @param obs_column_names,var_column_names Specify which column names in
     #' `var` and `obs` dataframes to read and return.
-    read = function(X_layers = NULL, obs_column_names = NULL, var_column_names = NULL) {
+    read = function(
+      X_layers = NULL,
+      obs_column_names = NULL,
+      var_column_names = NULL
+    ) {
       stopifnot(
         "'X_layers' must be a character vector" =
           is.null(X_layers) || is.character(X_layers),
@@ -333,7 +338,12 @@ SOMAExperimentAxisQuery <- R6::R6Class(
     #' | `obsp`     | row and column names | ignored              |
     #' | `varp`     | ignored              | row and column names |
     #' @return A [`Matrix::sparseMatrix-class`]
-    to_sparse_matrix = function(collection, layer_name, obs_index = NULL, var_index = NULL) {
+    to_sparse_matrix = function(
+      collection,
+      layer_name,
+      obs_index = NULL,
+      var_index = NULL
+    ) {
       stopifnot(
         assert_subset(
           x = collection,
@@ -510,15 +520,16 @@ SOMAExperimentAxisQuery <- R6::R6Class(
     #' @return A \code{\link[SeuratObject]{Seurat}} object
     #'
     to_seurat = function(
-        X_layers = c(counts = "counts", data = "logcounts"),
-        obs_index = NULL,
-        var_index = NULL,
-        obs_column_names = NULL,
-        var_column_names = NULL,
-        obsm_layers = NULL,
-        varm_layers = NULL,
-        obsp_layers = NULL,
-        drop_levels = FALSE) {
+      X_layers = c(counts = "counts", data = "logcounts"),
+      obs_index = NULL,
+      var_index = NULL,
+      obs_column_names = NULL,
+      var_column_names = NULL,
+      obsm_layers = NULL,
+      varm_layers = NULL,
+      obsp_layers = NULL,
+      drop_levels = FALSE
+    ) {
       check_package("SeuratObject", version = .MINIMUM_SEURAT_VERSION())
       op <- options(Seurat.object.assay.version = "v3")
       on.exit(options(op), add = TRUE)
@@ -732,11 +743,12 @@ SOMAExperimentAxisQuery <- R6::R6Class(
     #' @return An \code{\link[SeuratObject]{Assay}} object
     #'
     to_seurat_assay = function(
-        X_layers = c(counts = "counts", data = "logcounts"),
-        obs_index = NULL,
-        var_index = NULL,
-        var_column_names = NULL,
-        drop_levels = FALSE) {
+      X_layers = c(counts = "counts", data = "logcounts"),
+      obs_index = NULL,
+      var_index = NULL,
+      var_column_names = NULL,
+      drop_levels = FALSE
+    ) {
       version <- "v3"
       check_package("SeuratObject", version = .MINIMUM_SEURAT_VERSION())
       op <- options(Seurat.object.assay.version = "v3")
@@ -833,10 +845,11 @@ SOMAExperimentAxisQuery <- R6::R6Class(
     #' @return A \code{\link[SeuratObject]{DimReduc}} object
     #'
     to_seurat_reduction = function(
-        obsm_layer,
-        varm_layer = NULL,
-        obs_index = NULL,
-        var_index = NULL) {
+      obsm_layer,
+      varm_layer = NULL,
+      obs_index = NULL,
+      var_index = NULL
+    ) {
       check_package("SeuratObject", version = .MINIMUM_SEURAT_VERSION())
       stopifnot(
         "'obsm_layer' must be a single character value" = is_scalar_character(obsm_layer),
@@ -1060,17 +1073,18 @@ SOMAExperimentAxisQuery <- R6::R6Class(
     #' @return A \code{\link[SingleCellExperiment]{SingleCellExperiment}} object
     #'
     to_single_cell_experiment = function(
-        X_layers = NULL,
-        obs_index = NULL,
-        var_index = NULL,
-        obs_column_names = NULL,
-        var_column_names = NULL,
-        obsm_layers = NULL,
-        # Omission of `varm_layers` parameter is purposeful as
-        # SCE objects do not support `varm_layers`
-        obsp_layers = NULL,
-        varp_layers = NULL,
-        drop_levels = FALSE) {
+      X_layers = NULL,
+      obs_index = NULL,
+      var_index = NULL,
+      obs_column_names = NULL,
+      var_column_names = NULL,
+      obsm_layers = NULL,
+      # Omission of `varm_layers` parameter is purposeful as
+      # SCE objects do not support `varm_layers`
+      obsp_layers = NULL,
+      varp_layers = NULL,
+      drop_levels = FALSE
+    ) {
       check_package("SingleCellExperiment", version = .MINIMUM_SCE_VERSION())
       stopifnot(
         "'X_layers' must be a character vector" = is_character_or_null(X_layers),
@@ -1269,10 +1283,11 @@ SOMAExperimentAxisQuery <- R6::R6Class(
     # in `df_name` and zero columns
     # - a character vector of names of attributes to load in
     .load_df = function(
-        df_name = c("obs", "var"),
-        index = NULL,
-        column_names = NULL,
-        drop_levels = FALSE) {
+      df_name = c("obs", "var"),
+      index = NULL,
+      column_names = NULL,
+      drop_levels = FALSE
+    ) {
       stopifnot(
         is.character(df_name),
         is.null(index) || is_scalar_character(index),
@@ -1330,7 +1345,11 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       }
       return(df)
     },
-    .load_m_axis = function(layer, m_axis = c("obsm", "varm"), type = "Embeddings") {
+    .load_m_axis = function(
+      layer,
+      m_axis = c("obsm", "varm"),
+      type = "Embeddings"
+    ) {
       stopifnot(
         is_scalar_character(layer),
         is.character(m_axis),
@@ -1354,7 +1373,11 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       spdl::debug("Converting '{}' dgTMatrix to matrix", layer)
       return(as.matrix(mat))
     },
-    .load_p_axis = function(layer, p_axis = c("obsp", "varp"), repr = c("C", "T", "R", "D")) {
+    .load_p_axis = function(
+      layer,
+      p_axis = c("obsp", "varp"),
+      repr = c("C", "T", "R", "D")
+    ) {
       stopifnot(
         is_scalar_character(layer),
         is.character(p_axis),
@@ -1507,11 +1530,12 @@ SOMAExperimentAxisQuery <- R6::R6Class(
     },
     # Helper methods for loading Seurat assays
     .to_seurat_assay_v3 = function(
-        counts,
-        data,
-        scale_data = NULL,
-        cells = NULL,
-        features = NULL) {
+      counts,
+      data,
+      scale_data = NULL,
+      cells = NULL,
+      features = NULL
+    ) {
       check_package("SeuratObject", version = .MINIMUM_SEURAT_VERSION())
       stopifnot(
         "'data' must be a single character value" = is.null(data) ||

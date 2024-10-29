@@ -1,11 +1,12 @@
 # Returns the object created, populated, and closed (unless otherwise requested)
 create_and_populate_soma_dataframe <- function(
-    uri,
-    nrows = 10L,
-    seed = 1,
-    index_column_names = "int_column",
-    factors = FALSE,
-    mode = NULL) {
+  uri,
+  nrows = 10L,
+  seed = 1,
+  index_column_names = "int_column",
+  factors = FALSE,
+  mode = NULL
+) {
   set.seed(seed)
 
   tbl <- create_arrow_table(nrows = nrows, factors = factors)
@@ -37,11 +38,12 @@ create_and_populate_soma_dataframe <- function(
 
 # Returns the object created, populated, and closed (unless otherwise requested)
 create_and_populate_obs <- function(
-    uri,
-    nrows = 10L,
-    seed = 1,
-    factors = FALSE,
-    mode = NULL) {
+  uri,
+  nrows = 10L,
+  seed = 1,
+  factors = FALSE,
+  mode = NULL
+) {
   create_and_populate_soma_dataframe(
     uri = uri,
     nrows = nrows,
@@ -54,11 +56,12 @@ create_and_populate_obs <- function(
 
 # Returns the object created, populated, and closed (unless otherwise requested)
 create_and_populate_var <- function(
-    uri,
-    nrows = 10L,
-    seed = 1,
-    factors = FALSE,
-    mode = NULL) {
+  uri,
+  nrows = 10L,
+  seed = 1,
+  factors = FALSE,
+  mode = NULL
+) {
   tbl <- arrow::arrow_table(
     soma_joinid = bit64::seq.integer64(from = 0L, to = nrows - 1L),
     quux = as.character(seq.int(nrows) + 1000L),
@@ -140,17 +143,18 @@ create_and_populate_sparse_nd_array <- function(uri, mode = NULL, ...) {
 #' prevent creation of `varp` layers
 #'
 create_and_populate_experiment <- function(
-    uri,
-    n_obs,
-    n_var,
-    X_layer_names,
-    obsm_layers = NULL,
-    varm_layers = NULL,
-    obsp_layer_names = NULL,
-    varp_layer_names = NULL,
-    config = NULL,
-    factors = FALSE,
-    mode = NULL) {
+  uri,
+  n_obs,
+  n_var,
+  X_layer_names,
+  obsm_layers = NULL,
+  varm_layers = NULL,
+  obsp_layer_names = NULL,
+  varp_layer_names = NULL,
+  config = NULL,
+  factors = FALSE,
+  mode = NULL
+) {
   stopifnot(
     "'obsm_layers' must be a named integer vector" = is.null(obsm_layers) ||
       (rlang::is_integerish(obsm_layers) && rlang::is_named(obsm_layers) && all(obsm_layers > 0L)),

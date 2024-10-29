@@ -69,15 +69,16 @@ NULL
 #' @export
 #'
 write_soma.character <- function(
-    x,
-    uri,
-    soma_parent,
-    ...,
-    key = NULL,
-    ingest_mode = "write",
-    platform_config = NULL,
-    tiledbsoma_ctx = NULL,
-    relative = TRUE) {
+  x,
+  uri,
+  soma_parent,
+  ...,
+  key = NULL,
+  ingest_mode = "write",
+  platform_config = NULL,
+  tiledbsoma_ctx = NULL,
+  relative = TRUE
+) {
   sdf <- write_soma(
     x = data.frame(values = x),
     uri = uri,
@@ -131,17 +132,18 @@ write_soma.character <- function(
 #' @export
 #'
 write_soma.data.frame <- function(
-    x,
-    uri,
-    soma_parent,
-    df_index = NULL,
-    index_column_names = "soma_joinid",
-    ...,
-    key = NULL,
-    ingest_mode = "write",
-    platform_config = NULL,
-    tiledbsoma_ctx = NULL,
-    relative = TRUE) {
+  x,
+  uri,
+  soma_parent,
+  df_index = NULL,
+  index_column_names = "soma_joinid",
+  ...,
+  key = NULL,
+  ingest_mode = "write",
+  platform_config = NULL,
+  tiledbsoma_ctx = NULL,
+  relative = TRUE
+) {
   stopifnot(
     "'x' must be named" = is_named(x, allow_empty = FALSE),
     "'x' must have at lease one row and one column" = dim(x) > 0L,
@@ -296,19 +298,20 @@ write_soma.data.frame <- function(
 #' @export
 #'
 write_soma.matrix <- function(
-    x,
-    uri,
-    soma_parent,
-    sparse = TRUE,
-    type = NULL,
-    transpose = FALSE,
-    ...,
-    key = NULL,
-    ingest_mode = "write",
-    shape = NULL,
-    platform_config = NULL,
-    tiledbsoma_ctx = NULL,
-    relative = TRUE) {
+  x,
+  uri,
+  soma_parent,
+  sparse = TRUE,
+  type = NULL,
+  transpose = FALSE,
+  ...,
+  key = NULL,
+  ingest_mode = "write",
+  shape = NULL,
+  platform_config = NULL,
+  tiledbsoma_ctx = NULL,
+  relative = TRUE
+) {
   stopifnot(
     "'sparse' must be a single logical value" = is_scalar_logical(sparse),
     "'type' must be an Arrow type" = is.null(type) || is_arrow_data_type(type),
@@ -429,18 +432,19 @@ write_soma.Matrix <- write_soma.matrix
 #' @export
 #'
 write_soma.TsparseMatrix <- function(
-    x,
-    uri,
-    soma_parent,
-    type = NULL,
-    transpose = FALSE,
-    ...,
-    key = NULL,
-    ingest_mode = "write",
-    shape = NULL,
-    platform_config = NULL,
-    tiledbsoma_ctx = NULL,
-    relative = TRUE) {
+  x,
+  uri,
+  soma_parent,
+  type = NULL,
+  transpose = FALSE,
+  ...,
+  key = NULL,
+  ingest_mode = "write",
+  shape = NULL,
+  platform_config = NULL,
+  tiledbsoma_ctx = NULL,
+  relative = TRUE
+) {
   stopifnot(
     "'x' must be a general sparse matrix" = inherits(x = x, what = "generalMatrix"),
     "'x' must not be a pattern matrix" = !inherits(x = x, what = "nsparseMatrix"),
@@ -559,11 +563,12 @@ write_soma.TsparseMatrix <- function(
 #' @noRd
 #'
 .df_index <- function(
-    x,
-    alt = "rownames",
-    axis = "obs",
-    prefix = "tiledbsoma",
-    ...) {
+  x,
+  alt = "rownames",
+  axis = "obs",
+  prefix = "tiledbsoma",
+  ...
+) {
   stopifnot(
     "'x' must be a data frame" = is.data.frame(x) || inherits(x, "DataFrame"),
     "'alt' must be a single character value" = is_scalar_character(alt),
@@ -596,9 +601,10 @@ write_soma.TsparseMatrix <- function(
 #' @importFrom tools R_user_dir
 #'
 .check_soma_uri <- function(
-    uri,
-    soma_parent = NULL,
-    relative = TRUE) {
+  uri,
+  soma_parent = NULL,
+  relative = TRUE
+) {
   stopifnot(
     "'uri' must be a single character value" = is_scalar_character(uri),
     "'soma_parent' must be a SOMACollection" = is.null(soma_parent) ||

@@ -51,10 +51,11 @@
 #' @noRd
 #'
 parse_query_condition <- function(
-    expr,
-    schema,
-    strict = TRUE,
-    somactx) {
+  expr,
+  schema,
+  strict = TRUE,
+  somactx
+) {
   spdl::debug("[parseqc] ENTER [{}]", expr)
 
   stopifnot(
@@ -315,11 +316,12 @@ tiledbsoma_empty_query_condition <- function(somactx) {
 #' @noRd
 #'
 tiledbsoma_query_condition_from_triple <- function(
-    attr_name,
-    value,
-    arrow_type_name,
-    op_name,
-    qc) {
+  attr_name,
+  value,
+  arrow_type_name,
+  op_name,
+  qc
+) {
   stopifnot(
     "Argument 'qc' with query condition object required" = inherits(qc, "tiledbsoma_query_condition"),
     "Argument 'attr_name' must be character" = is.character(attr_name),
@@ -389,10 +391,11 @@ tiledbsoma_query_condition_combine <- function(lhs, rhs, op_name, somactx) {
 #' @noRd
 #'
 tiledbsoma_query_condition_in_nin <- function(
-    attr_name,
-    op_name = "IN",
-    values,
-    somactx) {
+  attr_name,
+  op_name = "IN",
+  values,
+  somactx
+) {
   stopifnot(
     "Argument 'attr_name' must be character" = is.character(attr_name),
     "Argument 'values' must be int, double, int64 or char" =

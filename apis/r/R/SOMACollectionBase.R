@@ -19,13 +19,19 @@ SOMACollectionBase <- R6::R6Class(
     #' @param internal_use_only Character value to signal this is a 'permitted' call,
     #' as `new()` is considered internal and should not be called directly.
     initialize = function(
-        uri, platform_config = NULL, tiledbsoma_ctx = NULL, tiledb_timestamp = NULL,
-        internal_use_only = NULL) {
-      super$initialize(
-        uri = uri, platform_config = platform_config,
-        tiledbsoma_ctx = tiledbsoma_ctx, tiledb_timestamp = tiledb_timestamp,
+      uri,
+      platform_config = NULL,
+      tiledbsoma_ctx = NULL,
+      tiledb_timestamp = NULL,
+      internal_use_only = NULL
+    ) {
+      return(super$initialize(
+        uri = uri,
+        platform_config = platform_config,
+        tiledbsoma_ctx = tiledbsoma_ctx,
+        tiledb_timestamp = tiledb_timestamp,
         internal_use_only = internal_use_only
-      )
+      ))
     },
 
     #' @description Add a new SOMA object to the collection. (lifecycle: maturing)
@@ -100,7 +106,13 @@ SOMACollectionBase <- R6::R6Class(
     #' @param index_column_names Index column names passed on to DataFrame$create()
     #' @param domain As in ``SOMADataFrameCreate``.
     #' @template param-platform-config
-    add_new_dataframe = function(key, schema, index_column_names, domain, platform_config = NULL) {
+    add_new_dataframe = function(
+      key,
+      schema,
+      index_column_names,
+      domain,
+      platform_config = NULL
+    ) {
       ## TODO: Check argument validity
       sdf <- SOMADataFrame$new(
         uri = file_path(self$uri, key),

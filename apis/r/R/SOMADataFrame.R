@@ -31,11 +31,12 @@ SOMADataFrame <- R6::R6Class(
     #' @param internal_use_only Character value to signal this is a 'permitted' call,
     #' as `create()` is considered internal and should not be called directly.
     create = function(
-        schema,
-        index_column_names = c("soma_joinid"),
-        domain = NULL,
-        platform_config = NULL,
-        internal_use_only = NULL) {
+      schema,
+      index_column_names = c("soma_joinid"),
+      domain = NULL,
+      platform_config = NULL,
+      internal_use_only = NULL
+    ) {
       if (is.null(internal_use_only) || internal_use_only != "allowed_use") {
         stop(paste(
           "Use of the create() method is for internal use only. Consider using a",
@@ -159,8 +160,8 @@ SOMADataFrame <- R6::R6Class(
     #' @description Read (lifecycle: maturing)
     #' Read a user-defined subset of data, addressed by the dataframe indexing
     #' column, and optionally filtered.
-    #' @param coords Optional named list of indices specifying the rows to read; each (named)
-    #' list element corresponds to a dimension of the same name.
+    #' @param coords Optional named list of indices specifying the rows to read;
+    #' each (named) list element corresponds to a dimension of the same name.
     #' @param column_names Optional character vector of column names to return.
     #' @param value_filter Optional string containing a logical expression that is used
     #' to filter the returned values. See [`tiledb::parse_query_condition`] for
@@ -171,12 +172,13 @@ SOMADataFrame <- R6::R6Class(
     #' @param log_level Optional logging level with default value of `"warn"`.
     #' @return arrow::\link[arrow]{Table} or \link{TableReadIter}
     read = function(
-        coords = NULL,
-        column_names = NULL,
-        value_filter = NULL,
-        result_order = "auto",
-        iterated = FALSE,
-        log_level = "auto") {
+      coords = NULL,
+      column_names = NULL,
+      value_filter = NULL,
+      result_order = "auto",
+      iterated = FALSE,
+      log_level = "auto"
+    ) {
       private$check_open_for_read()
 
       result_order <- match_query_layout(result_order)
@@ -545,7 +547,10 @@ SOMADataFrame <- R6::R6Class(
 
     # Converts the user-level tuple of low/high pairs into a pyarrow table
     # suitable for calling libtiledbsoma.
-    upgrade_or_change_domain_helper = function(new_domain, function_name_for_messages) {
+    upgrade_or_change_domain_helper = function(
+      new_domain,
+      function_name_for_messages
+    ) {
       dimnames <- self$dimnames()
 
       # Check user-provided domain against dataframe domain.

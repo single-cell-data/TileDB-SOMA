@@ -42,11 +42,12 @@ SparseReadIter <- R6::R6Class(
 
     ## refined from base class
     soma_reader_transform = function(x) {
-      arrow_table_to_sparse(soma_array_to_arrow_table(x),
+      return(arrow_table_to_sparse(
+        soma_array_to_arrow_table(x),
         repr = private$repr,
         shape = private$shape,
         zero_based = private$zero_based
-      )
+      ))
     }
   )
 )

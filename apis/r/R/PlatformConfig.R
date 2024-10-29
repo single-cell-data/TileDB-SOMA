@@ -63,10 +63,11 @@ PlatformConfig <- R6::R6Class(
     #' map, or \code{default} if \code{key} is not found
     #'
     get = function(
-        platform,
-        param = NULL,
-        key = NULL,
-        default = quote(expr = )) {
+      platform,
+      param = NULL,
+      key = NULL,
+      default = quote(expr = )
+    ) {
       if (!length(self)) {
         warning("No platforms configured", call. = FALSE)
         return(NULL)

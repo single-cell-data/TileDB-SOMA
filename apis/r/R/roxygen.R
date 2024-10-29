@@ -53,8 +53,9 @@ rd_atomic <- function() {
 #' @noRd
 #'
 rd_ephemeral_cls <- function(
-    cls = c("collection", "experiment", "measurement"),
-    base = FALSE) {
+  cls = c("collection", "experiment", "measurement"),
+  base = FALSE
+) {
   stopifnot(is.character(cls), is_scalar_logical(base))
   cls <- match.arg(arg = cls)
   switch(
@@ -161,7 +162,8 @@ rd_ephemeral_param <- function() {
 #' @noRd
 #'
 rd_soma_field <- function(
-    field = c("X", "ms", "obs", "obsm", "obsp", "var", "varm", "varp")) {
+  field = c("X", "ms", "obs", "obsm", "obsp", "var", "varm", "varp")
+) {
   stopifnot(is.character(field))
   field <- match.arg(arg = field)
   cd <- function(x) {

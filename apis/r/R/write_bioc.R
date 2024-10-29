@@ -4,16 +4,17 @@
 #' @export
 #'
 write_soma.DataFrame <- function(
-    x,
-    uri,
-    soma_parent,
-    df_index = NULL,
-    index_column_names = "soma_joinid",
-    ...,
-    ingest_mode = "write",
-    platform_config = NULL,
-    tiledbsoma_ctx = NULL,
-    relative = TRUE) {
+  x,
+  uri,
+  soma_parent,
+  df_index = NULL,
+  index_column_names = "soma_joinid",
+  ...,
+  ingest_mode = "write",
+  platform_config = NULL,
+  tiledbsoma_ctx = NULL,
+  relative = TRUE
+) {
   # Check for compound non-atomic/factor types
   for (i in names(x)) {
     if (!(is.atomic(x[[i]]) || is.factor(x[[i]]))) {
@@ -43,17 +44,18 @@ write_soma.DataFrame <- function(
 #' @export
 #'
 write_soma.Hits <- function(
-    x,
-    uri,
-    soma_parent,
-    sparse = TRUE,
-    type = NULL,
-    transpose = FALSE,
-    ...,
-    ingest_mode = "write",
-    platform_config = NULL,
-    tiledbsoma_ctx = NULL,
-    relative = TRUE) {
+  x,
+  uri,
+  soma_parent,
+  sparse = TRUE,
+  type = NULL,
+  transpose = FALSE,
+  ...,
+  ingest_mode = "write",
+  platform_config = NULL,
+  tiledbsoma_ctx = NULL,
+  relative = TRUE
+) {
   return(write_soma(
     x = .hits_to_mat(x),
     uri = uri,
@@ -98,13 +100,14 @@ write_soma.Hits <- function(
 #' @export
 #'
 write_soma.SingleCellExperiment <- function(
-    x,
-    uri,
-    ms_name = NULL,
-    ...,
-    ingest_mode = "write",
-    platform_config = NULL,
-    tiledbsoma_ctx = NULL) {
+  x,
+  uri,
+  ms_name = NULL,
+  ...,
+  ingest_mode = "write",
+  platform_config = NULL,
+  tiledbsoma_ctx = NULL
+) {
   check_package("SingleCellExperiment", version = .MINIMUM_SCE_VERSION())
   ingest_mode <- match.arg(arg = ingest_mode, choices = c("write", "resume"))
   if ("shape" %in% names(args <- rlang::dots_list(...))) {
@@ -286,13 +289,14 @@ write_soma.SingleCellExperiment <- function(
 #' @export
 #'
 write_soma.SummarizedExperiment <- function(
-    x,
-    uri,
-    ms_name,
-    ...,
-    ingest_mode = "write",
-    platform_config = NULL,
-    tiledbsoma_ctx = NULL) {
+  x,
+  uri,
+  ms_name,
+  ...,
+  ingest_mode = "write",
+  platform_config = NULL,
+  tiledbsoma_ctx = NULL
+) {
   check_package("SummarizedExperiment", "1.28.0")
   stopifnot(
     "'uri' must be a single character value" = is.null(uri) ||
