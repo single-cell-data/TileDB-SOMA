@@ -50,21 +50,21 @@ random_name <- function(length = 5L, chars = letters, ...) {
     "'length' must be a single integer" = is_integerish(length, n = 1L),
     "'chars' must be character" = is.character(chars)
   )
-  chars <- unique(unlist(strsplit(chars, split = '')))
-  return(paste(sample(chars, size = length, ...), collapse = ''))
+  chars <- unique(unlist(strsplit(chars, split = "")))
+  return(paste(sample(chars, size = length, ...), collapse = ""))
 }
 
-uns_hint <- function(type = c('1d', '2d')) {
+uns_hint <- function(type = c("1d", "2d")) {
   type <- match.arg(type)
-  hint <- list(paste0('array_', type))
-  names(hint) <- 'soma_uns_outgest_hint'
+  hint <- list(paste0("array_", type))
+  names(hint) <- "soma_uns_outgest_hint"
   return(hint)
 }
 
 .encode_as_char <- function(x) {
   return(switch(
     EXPR = typeof(x),
-    double = sprintf('%a', x),
+    double = sprintf("%a", x),
     x
   ))
 }
@@ -72,7 +72,7 @@ uns_hint <- function(type = c('1d', '2d')) {
 .err_to_warn <- function(err) {
   warning(warningCondition(
     message = conditionMessage(err),
-    class = setdiff(class(err), c('warning', 'simpleError', 'error', 'condition')),
+    class = setdiff(class(err), c("warning", "simpleError", "error", "condition")),
     call = conditionCall(err)
   ))
 }
@@ -80,15 +80,15 @@ uns_hint <- function(type = c('1d', '2d')) {
 .decode_from_char <- function(x) {
   stopifnot(is.character(x))
   double <- paste0(
-    '^',
+    "^",
     c(
-      '[-]?0x[0-9a-f](\\.[0-9a-f]+)?p[+-][0-9]+',
-      '[-]?Inf',
-      'NA',
-      'NaN'
+      "[-]?0x[0-9a-f](\\.[0-9a-f]+)?p[+-][0-9]+",
+      "[-]?Inf",
+      "NA",
+      "NaN"
     ),
-    '$',
-    collapse = '|'
+    "$",
+    collapse = "|"
   )
   return(if (all(grepl(double, x))) {
     as.numeric(x)
@@ -108,7 +108,7 @@ uns_hint <- function(type = c('1d', '2d')) {
 #' @noRd
 #'
 .is_integerish <- function(x, n = NULL, finite = NULL) {
-  UseMethod(generic = '.is_integerish', object = x)
+  UseMethod(generic = ".is_integerish", object = x)
 }
 
 #' @method .is_integerish default
@@ -152,7 +152,7 @@ uns_hint <- function(type = c('1d', '2d')) {
 #' @method .is_integerish Field
 #' @export
 #'
-.is_integerish.Field <-function(x, n = NULL, finite = NULL) {
+.is_integerish.Field <- function(x, n = NULL, finite = NULL) {
   return(.is_integerish(x = x$type, n = n, finite = finite))
 }
 
@@ -169,19 +169,19 @@ uns_hint <- function(type = c('1d', '2d')) {
 #' @method .is_integerish DataType
 #' @export
 #'
-.is_integerish.DataType <-function(x, n = NULL, finite = NULL) {
-  return(grepl(pattern = '^[u]?int[[:digit:]]{1,2}$', x = x$name))
+.is_integerish.DataType <- function(x, n = NULL, finite = NULL) {
+  return(grepl(pattern = "^[u]?int[[:digit:]]{1,2}$", x = x$name))
 }
 
-.maybe_muffle <- function(w, cond = getOption('verbose', default = FALSE)) {
+.maybe_muffle <- function(w, cond = getOption("verbose", default = FALSE)) {
   if (isTRUE(x = cond)) {
     warning(warningCondition(
       message = conditionMessage(w),
-      class = setdiff(class(w), c('warning', 'simpleError', 'error', 'condition')),
+      class = setdiff(class(w), c("warning", "simpleError", "error", "condition")),
       call = conditionCall(w)
     ))
   } else {
-    tryInvokeRestart('muffleWarning')
+    tryInvokeRestart("muffleWarning")
   }
 }
 
@@ -196,7 +196,7 @@ uns_hint <- function(type = c('1d', '2d')) {
 #' @noRd
 #'
 .read_soma_joinids <- function(x, ...) {
-  stopifnot(inherits(x = x, what = 'TileDBArray'))
+  stopifnot(inherits(x = x, what = "TileDBArray"))
   oldmode <- x$mode()
   on.exit(
     x$reopen(oldmode, tiledb_timestamp = x$tiledb_timestamp),
@@ -205,7 +205,7 @@ uns_hint <- function(type = c('1d', '2d')) {
   )
   op <- options(arrow.int64_downcast = FALSE)
   on.exit(options(op), add = TRUE, after = FALSE)
-  ids <- UseMethod(generic = '.read_soma_joinids', object = x)
+  ids <- UseMethod(generic = ".read_soma_joinids", object = x)
   return(ids)
 }
 
@@ -303,3 +303,22 @@ SOMA_ENCODING_VERSION <- "1.1.0"
 ##' @importFrom spdl setup
 ##' @useDynLib tiledbsoma, .registration=TRUE
 NULL
+
+# This is for internal logging purposes. Context:
+# * We have R (and Python) code with function names the user invokes.
+# * These call C++ functions which can throw their own error messages.
+# * It's crucial that the C++ code "knows" the name of the function
+#   as typed by the user, not whatever (possibly out-of-date) guess
+#   the C++ code may have.
+.name_of_function <- function() {
+  # Tricky bits:
+  # * This might be `obj$foo`
+  # * The sys.call can return a parse-tree component (typeof = language)
+  #   with the '$', 'obj', and 'foo' -- hence the as.character
+  # * Even then there can be a second component returned like 'c(1)'
+  #   -- hence the [[1]]
+  # * Then remove the 'obj$' from 'obj$foo'
+  name <- as.character(sys.call(sys.parent(n=1)))[[1]]
+  name <- sub('.*\\$', replacement = '', x = name)
+  return(name)
+}

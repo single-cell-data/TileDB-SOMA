@@ -7,9 +7,8 @@
 #' @importFrom data.table address
 
 EphemeralCollectionBase <- R6::R6Class(
-  classname = 'EphemeralCollectionBase',
+  classname = "EphemeralCollectionBase",
   inherit = SOMACollectionBase,
-
   public = list(
     # Override TileDBObject methods
     #' @description Create an ephemeral collection
@@ -27,7 +26,7 @@ EphemeralCollectionBase <- R6::R6Class(
       #
       if (rlang::dots_n(...)) {
         tryCatch(
-          expr = private$.ephemeral_error('custom', 'and cannot be customized'),
+          expr = private$.ephemeral_error("custom", "and cannot be customized"),
           error = function(e) {
             warning(conditionMessage(e), call. = FALSE, immediate. = TRUE)
           }
@@ -41,7 +40,7 @@ EphemeralCollectionBase <- R6::R6Class(
     #' @return Returns a new ephemeral collection of class \code{class(self)}
     #'
     create = function() {
-      gen <- getAnywhere(self$class())[['objs']][[1L]]
+      gen <- getAnywhere(self$class())[["objs"]][[1L]]
       if (!R6::is.R6Class(gen)) {
         stop(
           "Cannot find the class generator for ",
@@ -49,7 +48,7 @@ EphemeralCollectionBase <- R6::R6Class(
           call. = FALSE
         )
       }
-      return (gen$new())
+      return(gen$new())
     },
 
     # Override TileDBGroup private methods
@@ -60,7 +59,7 @@ EphemeralCollectionBase <- R6::R6Class(
     #' @return \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_error()}
     #'
     open = function(mode) {
-      private$.ephemeral_error('opened')
+      private$.ephemeral_error("opened")
     },
 
     #' @description \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_desc()}
@@ -108,7 +107,7 @@ EphemeralCollectionBase <- R6::R6Class(
     get_tiledb_config = function(param = NULL) {
       if (!is.null(param)) {
         tryCatch(
-          expr = private$.ephemeral_error('custom', 'and have no TileDB configuration'),
+          expr = private$.ephemeral_error("custom", "and have no TileDB configuration"),
           error = function(e) {
             warning(conditionMessage(e), call. = FALSE, immediate. = TRUE)
           }
@@ -149,7 +148,7 @@ EphemeralCollectionBase <- R6::R6Class(
       )
       if (!is.null(relative)) {
         tryCatch(
-          expr = private$.ephemeral_error('custom', 'so relative has no effect'),
+          expr = private$.ephemeral_error("custom", "so relative has no effect"),
           error = function(e) {
             warning(conditionMessage(e), call. = FALSE, immediate. = TRUE)
           }
@@ -192,7 +191,7 @@ EphemeralCollectionBase <- R6::R6Class(
     #' @return \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_error()}
     #'
     set_metadata = function(metadata) {
-      private$.ephemeral_error('edited')
+      private$.ephemeral_error("edited")
     },
 
     #' @description \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_desc()}
@@ -203,7 +202,7 @@ EphemeralCollectionBase <- R6::R6Class(
     #'
     get_metadata = function(key = NULL) {
       tryCatch(
-        expr = private$.ephemeral_error('custom', 'and have no metadata'),
+        expr = private$.ephemeral_error("custom", "and have no metadata"),
         error = function(e) {
           warning(conditionMessage(e), call. = FALSE, immediate. = TRUE)
         }
@@ -252,52 +251,50 @@ EphemeralCollectionBase <- R6::R6Class(
       private$.ephemeral_error()
     }
   ),
-
   active = list(
 
     #' @field uri \dQuote{\code{ephemeral-collection:<MEMORY_ADDRESS>}}
     uri = function(value) {
       if (!missing(value)) {
-        private$.read_only_error('uri')
+        private$.read_only_error("uri")
       }
-      return(paste0('ephemeral-collection:', data.table::address(self)))
+      return(paste0("ephemeral-collection:", data.table::address(self)))
     },
 
     # Override SOMACollectionBase fields
     #' @field soma_type \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_field()}
     soma_type = function(value) {
       if (!missing(value)) {
-        private$.read_only_error('soma_type')
+        private$.read_only_error("soma_type")
       }
-      private$.ephemeral_error('custom', 'and have no SOMA type')
+      private$.ephemeral_error("custom", "and have no SOMA type")
     },
 
     # Override TileDBObject fields
     #' @field platform_config \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_field()}
     platform_config = function(value) {
       if (!missing(value)) {
-        private$.read_only_error('platform_config')
+        private$.read_only_error("platform_config")
       }
-      private$.ephemeral_error('custom', 'and have no configuration')
+      private$.ephemeral_error("custom", "and have no configuration")
     },
 
     #' @field tiledbsoma_ctx \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_field()}
     tiledbsoma_ctx = function(value) {
       if (!missing(value)) {
-        private$.read_only_error('tiledbsoma_ctx')
+        private$.read_only_error("tiledbsoma_ctx")
       }
-      private$.ephemeral_error('custom', 'and have no context')
+      private$.ephemeral_error("custom", "and have no context")
     },
 
     #' @field object \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_field()}
     object = function(value) {
       if (!missing(value)) {
-        private$.read_only_error('object')
+        private$.read_only_error("object")
       }
-      private$.ephemeral_error('custom', 'and have no underlying object')
+      private$.ephemeral_error("custom", "and have no underlying object")
     }
   ),
-
   private = list(
     # Override SOMACollectionBase private fields
     tiledb_uri = NULL,
@@ -307,31 +304,31 @@ EphemeralCollectionBase <- R6::R6Class(
 
     # Override TileDBGroup private fields
     member_cache = NULL,
-
     check_open_for_read = function() { },
     check_open_for_write = function() { },
     check_open_for_read_or_write = function() { },
-
     fill_member_cache_if_null = function() { },
     update_member_cache = function() { },
 
     # Override SOMACollectionBase private fields
     soma_type_cache = NULL,
-
     initialize_object = function() {
-      private$.ephemeral_error('custom', 'and cannot be initialized')
+      private$.ephemeral_error("custom", "and cannot be initialized")
     },
-
     get_all_members = function() {
       if (!length(private$.data)) {
         return(list())
       }
-      members <- vector(mode = 'list', length = length(private$.data))
+      members <- vector(mode = "list", length = length(private$.data))
       names(members) <- names(private$.data)
       for (i in seq_along(members)) {
-        members[[i]] <- list(type = get_tiledb_object_type(private$.data[[i]]$uri,
-                                                           private$.soma_context),
-                             uri = private$.data[[i]]$uri, name = names(private$.data)[i])
+        members[[i]] <- list(
+          type = get_tiledb_object_type(
+            private$.data[[i]]$uri,
+            private$.soma_context
+          ),
+          uri = private$.data[[i]]$uri, name = names(private$.data)[i]
+        )
       }
       return(members)
     },
@@ -340,19 +337,19 @@ EphemeralCollectionBase <- R6::R6Class(
     .data = NULL,
 
     # Ephemeral methods
-    .ephemeral_error = function(type = 'added', msg = NULL) {
+    .ephemeral_error = function(type = "added", msg = NULL) {
       stopifnot("'type' must be a single character value" = is_scalar_character(type))
       type <- match.arg(
         arg = type,
         choices = c(
-          'base',
-          'added',
-          'opened',
-          'edited',
-          'custom'
+          "base",
+          "added",
+          "opened",
+          "edited",
+          "custom"
         )
       )
-      if (type == 'custom' && !is_scalar_character(msg)) {
+      if (type == "custom" && !is_scalar_character(msg)) {
         stop("'msg' must be a single character value")
       }
       stop(
@@ -360,10 +357,10 @@ EphemeralCollectionBase <- R6::R6Class(
         " objects are ephemeral",
         switch(
           EXPR = type,
-          added = ' and cannot be added to',
-          opened = ' and cannot be opened',
-          edited = ' and cannot be edited',
-          custom = paste0(' ', trimws(msg))
+          added = " and cannot be added to",
+          opened = " and cannot be opened",
+          edited = " and cannot be edited",
+          custom = paste0(" ", trimws(msg))
         ),
         call. = FALSE
       )
@@ -380,16 +377,15 @@ EphemeralCollectionBase <- R6::R6Class(
 #' @export
 #'
 EphemeralCollection <- R6::R6Class(
-  classname = 'EphemeralCollection',
+  classname = "EphemeralCollection",
   inherit = EphemeralCollectionBase,
-
   active = list(
     #' @field soma_type The SOMA object type
     soma_type = function(value) {
       if (!missing(value)) {
-        private$.read_only_error('soma_type')
+        private$.read_only_error("soma_type")
       }
-      return('SOMACollection')
+      return("SOMACollection")
     }
   )
 )
@@ -403,16 +399,15 @@ EphemeralCollection <- R6::R6Class(
 #' @export
 #'
 EphemeralMeasurement <- R6::R6Class(
-  classname = 'EphemeralMeasurement',
+  classname = "EphemeralMeasurement",
   inherit = EphemeralCollectionBase,
-
   active = list(
     #' @field var \Sexpr[results=rd]{tiledbsoma:::rd_soma_field("var")}
     var = function(value) {
       private$get_or_set_soma_field(
         value = value,
-        name = 'var',
-        expected_class = 'SOMADataFrame'
+        name = "var",
+        expected_class = "SOMADataFrame"
       )
     },
 
@@ -420,8 +415,8 @@ EphemeralMeasurement <- R6::R6Class(
     X = function(value) {
       private$get_or_set_soma_field(
         value = value,
-        name = 'X',
-        expected_class = c('EphemeralCollection', 'SOMACollection')
+        name = "X",
+        expected_class = c("EphemeralCollection", "SOMACollection")
       )
     },
 
@@ -429,8 +424,8 @@ EphemeralMeasurement <- R6::R6Class(
     obsm = function(value) {
       private$get_or_set_soma_field(
         value = value,
-        name = 'obsm',
-        expected_class = c('EphemeralCollection', 'SOMACollection')
+        name = "obsm",
+        expected_class = c("EphemeralCollection", "SOMACollection")
       )
     },
 
@@ -438,8 +433,8 @@ EphemeralMeasurement <- R6::R6Class(
     obsp = function(value) {
       private$get_or_set_soma_field(
         value = value,
-        name = 'obsp',
-        expected_class = c('EphemeralCollection', 'SOMACollection')
+        name = "obsp",
+        expected_class = c("EphemeralCollection", "SOMACollection")
       )
     },
 
@@ -447,8 +442,8 @@ EphemeralMeasurement <- R6::R6Class(
     varm = function(value) {
       private$get_or_set_soma_field(
         value = value,
-        name = 'varm',
-        expected_class = c('EphemeralCollection', 'SOMACollection')
+        name = "varm",
+        expected_class = c("EphemeralCollection", "SOMACollection")
       )
     },
 
@@ -456,17 +451,17 @@ EphemeralMeasurement <- R6::R6Class(
     varp = function(value) {
       private$get_or_set_soma_field(
         value = value,
-        name = 'varp',
-        expected_class = c('EphemeralCollection', 'SOMACollection')
+        name = "varp",
+        expected_class = c("EphemeralCollection", "SOMACollection")
       )
     },
 
     #' @field soma_type The SOMA object type
     soma_type = function(value) {
       if (!missing(value)) {
-        private$.read_only_error('soma_type')
+        private$.read_only_error("soma_type")
       }
-      return('SOMAMeasurement')
+      return("SOMAMeasurement")
     }
   )
 )
@@ -480,16 +475,15 @@ EphemeralMeasurement <- R6::R6Class(
 #' @export
 #'
 EphemeralExperiment <- R6::R6Class(
-  classname = 'EphemeralExperiment',
+  classname = "EphemeralExperiment",
   inherit = EphemeralCollectionBase,
-
   active = list(
     #' @field obs \Sexpr[results=rd]{tiledbsoma:::rd_soma_field("obs")}
     obs = function(value) {
       private$get_or_set_soma_field(
         value = value,
-        name = 'obs',
-        expected_class = 'SOMADataFrame'
+        name = "obs",
+        expected_class = "SOMADataFrame"
       )
     },
 
@@ -497,17 +491,17 @@ EphemeralExperiment <- R6::R6Class(
     ms = function(value) {
       private$get_or_set_soma_field(
         value = value,
-        name = 'ms',
-        expected_class = c('EphemeralCollection', 'SOMACollection')
+        name = "ms",
+        expected_class = c("EphemeralCollection", "SOMACollection")
       )
     },
 
     #' @field soma_type The SOMA object type
     soma_type = function(value) {
       if (!missing(value)) {
-        private$.read_only_error('soma_type')
+        private$.read_only_error("soma_type")
       }
-      return('SOMAExperiment')
+      return("SOMAExperiment")
     }
   )
 )

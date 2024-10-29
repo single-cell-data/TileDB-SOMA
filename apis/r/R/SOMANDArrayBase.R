@@ -11,7 +11,6 @@
 SOMANDArrayBase <- R6::R6Class(
   classname = "SOMANDArrayBase",
   inherit = SOMAArrayBase,
-
   public = list(
 
     #' @description Create a SOMA NDArray named with the URI. (lifecycle:
@@ -30,12 +29,14 @@ SOMANDArrayBase <- R6::R6Class(
       internal_use_only = NULL
     ) {
       if (is.null(internal_use_only) || internal_use_only != "allowed_use") {
-        stop(paste("Use of the create() method is for internal use only. Consider using a",
-                   "factory method as e.g. 'SOMASparseNDArrayCreate()'."), call. = FALSE)
+        stop(paste(
+          "Use of the create() method is for internal use only. Consider using a",
+          "factory method as e.g. 'SOMASparseNDArrayCreate()'."
+        ), call. = FALSE)
       }
 
       ## .is_sparse field is being set by dense and sparse private initialisers, respectively
-      private$.type <- type                 # Arrow schema type of data
+      private$.type <- type # Arrow schema type of data
 
       dom_ext_tbl <- get_domain_and_extent_array(shape, private$.is_sparse)
 
@@ -51,8 +52,10 @@ SOMANDArrayBase <- R6::R6Class(
       ## we need a schema pointer to transfer the schema information
       ## so we first embed the (single column) 'type' into a schema and
       ## combine it with domain schema
-      schema <- arrow::unify_schemas(arrow::schema(dom_ext_tbl),
-                                     arrow::schema(arrow::field("soma_data", type)))
+      schema <- arrow::unify_schemas(
+        arrow::schema(dom_ext_tbl),
+        arrow::schema(arrow::field("soma_data", type))
+      )
       nasp <- nanoarrow::nanoarrow_allocate_schema()
       schema$export_to_c(nasp)
 
@@ -69,7 +72,7 @@ SOMANDArrayBase <- R6::R6Class(
         ctxxp = private$.soma_context,
         tsvec = self$.tiledb_timestamp_range
       )
-      #private$write_object_type_metadata(timestamps)  ## FIXME: temp. commented out -- can this be removed overall?
+      # private$write_object_type_metadata(timestamps)  ## FIXME: temp. commented out -- can this be removed overall?
 
       self$open("WRITE", internal_use_only = "allowed_use")
       self
@@ -104,11 +107,11 @@ SOMANDArrayBase <- R6::R6Class(
         "resize is not supported for dense arrays until tiledbsoma 1.15" =
           .dense_arrays_can_have_current_domain() || private$.is_sparse,
         "'new_shape' must be a vector of integerish values, of the same length as maxshape" =
-        rlang::is_integerish(new_shape, n = self$ndim()) ||
-          (bit64::is.integer64(new_shape) && length(new_shape) == self$ndim())
+          rlang::is_integerish(new_shape, n = self$ndim()) ||
+            (bit64::is.integer64(new_shape) && length(new_shape) == self$ndim())
       )
       # Checking slotwise new shape >= old shape, and <= max_shape, is already done in libtiledbsoma
-      resize(self$uri, new_shape, private$.soma_context)
+      resize(self$uri, new_shape, .name_of_function(), private$.soma_context)
     },
 
     #' @description Allows the array to have a resizeable shape as described in the
@@ -121,15 +124,13 @@ SOMANDArrayBase <- R6::R6Class(
         "tiledbsoma_upgrade_shape is not supported for dense arrays until tiledbsoma 1.15" =
           .dense_arrays_can_have_current_domain() || private$.is_sparse,
         "'shape' must be a vector of integerish values, of the same length as maxshape" =
-        rlang::is_integerish(shape, n = self$ndim()) ||
-          (bit64::is.integer64(shape) && length(shape) == self$ndim())
+          rlang::is_integerish(shape, n = self$ndim()) ||
+            (bit64::is.integer64(shape) && length(shape) == self$ndim())
       )
       # Checking slotwise new shape >= old shape, and <= max_shape, is already done in libtiledbsoma
-      tiledbsoma_upgrade_shape(self$uri, shape, private$.soma_context)
+      tiledbsoma_upgrade_shape(self$uri, shape, .name_of_function(), private$.soma_context)
     }
-
   ),
-
   private = list(
     .is_sparse = NULL,
     .type = NULL,
@@ -146,7 +147,6 @@ SOMANDArrayBase <- R6::R6Class(
     #  @description Converts a list of vectors corresponding to coords to a
     #  format acceptable for sr_setup and soma_array_reader
     .convert_coords = function(coords) {
-
       # Ensure coords is a named list, use to select dim points
       stopifnot(
         "'coords' must be a list" = is.list(coords) && length(coords),

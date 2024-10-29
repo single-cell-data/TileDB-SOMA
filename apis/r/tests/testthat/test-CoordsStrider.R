@@ -1,6 +1,6 @@
 test_that("CoordsStrider start/end mechanics", {
-  skip_if_not_installed('iterators')
-  skip_if_not_installed('itertools')
+  skip_if_not_installed("iterators")
+  skip_if_not_installed("itertools")
   start <- 1L
   end <- 200L
   # Test no stride
@@ -56,8 +56,8 @@ test_that("CoordsStrider start/end mechanics", {
 })
 
 test_that("CoordsStrider coodinate mechanics", {
-  skip_if_not_installed('iterators')
-  skip_if_not_installed('itertools')
+  skip_if_not_installed("iterators")
+  skip_if_not_installed("itertools")
   init <- seq.int(1L, 205L, 3L)
   # Test no stride
   expect_s3_class(strider <- CoordsStrider$new(init), "CoordsStrider")

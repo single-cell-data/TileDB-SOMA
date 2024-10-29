@@ -12,7 +12,7 @@ soma_array_to_arrow_table <- function(x) {
 }
 
 soma_array_to_arrow_table_concat <- function(it) {
-  stopifnot("'it' must be a 'ReadIter' object" = inherits(it, 'ReadIter'))
+  stopifnot("'it' must be a 'ReadIter' object" = inherits(it, "ReadIter"))
   tbl <- it$read_next()
   while (!it$read_complete()) {
     nxt <- it$read_next()
@@ -23,7 +23,7 @@ soma_array_to_arrow_table_concat <- function(it) {
 
 soma_array_to_sparse_matrix_concat <- function(it, zero_based = FALSE) {
   stopifnot(
-    "'it' must be a 'ReadIter' object" = inherits(it, 'ReadIter'),
+    "'it' must be a 'ReadIter' object" = inherits(it, "ReadIter"),
     "'zero_based' must be TRUE or FALSE" = isTRUE(zero_based) || isFALSE(zero_based)
   )
   mat <- it$read_next()
@@ -55,7 +55,6 @@ soma_array_to_sparse_matrix_concat <- function(it, zero_based = FALSE) {
 #' Matrix::\link[Matrix]{sparseMatrix}
 #' @noRd
 arrow_table_to_sparse <- function(tbl, repr = c("C", "T", "R"), shape = NULL, zero_based = FALSE) {
-
   # To instantiate the one-based Matrix::sparseMatrix, we need to add 1 to the
   # zero-based soma_dim_0 and soma_dim_1 (done by arrow_table_to_sparse). But, because these dimensions are
   # usually populated with soma_joinid, users will need to access the matrix
@@ -87,16 +86,18 @@ arrow_table_to_sparse <- function(tbl, repr = c("C", "T", "R"), shape = NULL, ze
     )
   }
 
-  mat <- Matrix::sparseMatrix(i = tbl$soma_dim_0$as_vector(),
-                              j = tbl$soma_dim_1$as_vector(),
-                              x = tbl$soma_data$as_vector(),
-                              dims = shape,
-                              repr = repr,
-                              index1 = FALSE)
+  mat <- Matrix::sparseMatrix(
+    i = tbl$soma_dim_0$as_vector(),
+    j = tbl$soma_dim_1$as_vector(),
+    x = tbl$soma_data$as_vector(),
+    dims = shape,
+    repr = repr,
+    index1 = FALSE
+  )
   if (zero_based) {
-      matrixZeroBasedView$new(mat)
+    matrixZeroBasedView$new(mat)
   } else {
-      mat
+    mat
   }
 }
 
@@ -113,7 +114,6 @@ arrow_table_to_sparse <- function(tbl, repr = c("C", "T", "R"), shape = NULL, ze
 #' @return \link{matrixZeroBasedView} of \link[base]{matrix}
 #' @noRd
 arrow_table_to_dense <- function(tbl, byrow) {
-
   nrows <- length(unique(as.numeric(tbl$GetColumnByName("soma_dim_0"))))
   ncols <- length(unique(as.numeric(tbl$GetColumnByName("soma_dim_1"))))
   soma_data <- as.numeric(tbl$GetColumnByName("soma_data"))

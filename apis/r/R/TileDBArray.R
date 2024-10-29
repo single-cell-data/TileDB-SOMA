@@ -38,12 +38,12 @@ TileDBArray <- R6::R6Class(
           mode,
           self$tiledb_timestamp %||% "now"
         )
-        #private$.tiledb_array <- tiledb::tiledb_array_open_at(self$object, type = mode,
+        # private$.tiledb_array <- tiledb::tiledb_array_open_at(self$object, type = mode,
         #                                                      timestamp = self$tiledb_timestamp)
       }
 
       ## TODO -- cannot do here while needed for array case does not work for data frame case
-      #private$.type <- arrow_type_from_tiledb_type(tdbtype)
+      # private$.type <- arrow_type_from_tiledb_type(tdbtype)
 
       private$update_metadata_cache()
       self
@@ -53,7 +53,7 @@ TileDBArray <- R6::R6Class(
     #' @return The object, invisibly
     close = function() {
       spdl::debug("[TileDBArray$close] Closing {} '{}'", self$class(), self$uri)
-      private$.mode = "CLOSED"
+      private$.mode <- "CLOSED"
       tiledb::tiledb_array_close(self$object)
       invisible(self)
     },
@@ -105,20 +105,20 @@ TileDBArray <- R6::R6Class(
         "Metadata must be a named list" = is_named_list(metadata)
       )
 
-      #private$check_open_for_write()
+      # private$check_open_for_write()
 
       for (nm in names(metadata)) {
-          val <- metadata[[nm]]
-          spdl::debug("[TileDBArray$set_metadata] setting key {} to {} ({})", nm, val, class(val))
-          set_metadata(
-            uri = self$uri,
-            key = nm,
-            valuesxp = val,
-            type = class(val),
-            is_array = TRUE,
-            ctxxp = soma_context(),
-            tsvec = self$.tiledb_timestamp_range
-          )
+        val <- metadata[[nm]]
+        spdl::debug("[TileDBArray$set_metadata] setting key {} to {} ({})", nm, val, class(val))
+        set_metadata(
+          uri = self$uri,
+          key = nm,
+          valuesxp = val,
+          type = class(val),
+          is_array = TRUE,
+          ctxxp = soma_context(),
+          tsvec = self$.tiledb_timestamp_range
+        )
       }
 
       dev_null <- mapply(
@@ -178,14 +178,14 @@ TileDBArray <- R6::R6Class(
         isTRUE(simplify) || isFALSE(simplify),
         isTRUE(index1) || isFALSE(index1)
       )
-      .Deprecated(new="shape", msg="The 'used_shape' function will be removed in TileDB-SOMA 1.15.")
+      .Deprecated(new = "shape", msg = "The 'used_shape' function will be removed in TileDB-SOMA 1.15.")
       dims <- self$dimnames()
-      utilized <- vector(mode = 'list', length = length(dims))
+      utilized <- vector(mode = "list", length = length(dims))
       names(utilized) <- dims
       for (i in seq_along(along.with = utilized)) {
-        key <- paste0(dims[i], '_domain')
+        key <- paste0(dims[i], "_domain")
         dom <- bit64::integer64(2L)
-        names(dom) <- c('_lower', '_upper')
+        names(dom) <- c("_lower", "_upper")
         for (type in names(dom)) {
           dom[type] <- self$get_metadata(paste0(key, type)) %||% bit64::NA_integer64_
           if (any(is.na(dom))) {
@@ -230,13 +230,20 @@ TileDBArray <- R6::R6Class(
       retval <- as.list(
         arrow::as_record_batch(
           arrow::as_arrow_table(
-            non_empty_domain(self$uri, private$.soma_context))))
+            non_empty_domain(self$uri, private$.soma_context)
+          )
+        )
+      )
       if (index1) {
-        retval <- lapply(retval, function(c) {c+1})
+        retval <- lapply(retval, function(c) {
+          c + 1
+        })
       }
       if (max_only) {
         # No vapply options since SOMADataFrame can have varying types.
-        retval <- unname(unlist(lapply(retval, function(e) {e[[2]]})))
+        retval <- unname(unlist(lapply(retval, function(e) {
+          e[[2]]
+        })))
       }
       return(retval)
     },
@@ -278,7 +285,6 @@ TileDBArray <- R6::R6Class(
       self$dimnames()
     }
   ),
-
   active = list(
     #' @field object Access the underlying TileB object directly (either a
     #' [`tiledb::tiledb_array`] or [`tiledb::tiledb_group`]).
@@ -294,7 +300,6 @@ TileDBArray <- R6::R6Class(
       private$.tiledb_array
     }
   ),
-
   private = list(
 
     # Internal pointer to the TileDB array.
@@ -339,7 +344,6 @@ TileDBArray <- R6::R6Class(
         private$update_metadata_cache()
       }
     },
-
     update_metadata_cache = function() {
       spdl::debug("[TileDBArray$update_metadata_cache] updating metadata cache for {} '{}' in {}", self$class(), self$uri, private$.mode)
 
@@ -347,33 +351,31 @@ TileDBArray <- R6::R6Class(
       # while the array is open for read, but at the SOMA application level we must support
       # this. Therefore if the array is opened for write and there is no cache populated then
       # we must open a temporary handle for read, to fill the cache.
-      #array_handle <- private$.tiledb_array
-      #if (private$.mode == "WRITE") {
+      # array_handle <- private$.tiledb_array
+      # if (private$.mode == "WRITE") {
       #  spdl::debug("[TileDBArray::update_metadata_cache] getting object")
       #  array_object <- tiledb::tiledb_array(self$uri, ctx = private$.tiledb_ctx)
       #  array_handle <- tiledb::tiledb_array_open(array_object, type = "READ")
-      #}
+      # }
 
-      #if (isFALSE(tiledb::tiledb_array_is_open(array_handle))) {
+      # if (isFALSE(tiledb::tiledb_array_is_open(array_handle))) {
       #  spdl::debug("[TileDBArray::update_metadata_cache] reopening object")
       #  array_handle <- tiledb::tiledb_array_open(array_handle, type = "READ")
-      #}
+      # }
 
       private$.metadata_cache <- get_all_metadata(self$uri, TRUE, soma_context())
-      #print(str(private$.metadata_cache))
-      #if (private$.mode == "WRITE") {
+      # print(str(private$.metadata_cache))
+      # if (private$.mode == "WRITE") {
       #  tiledb::tiledb_array_close(array_handle)
-      #}
+      # }
 
       invisible(NULL)
     },
-
     add_cached_metadata = function(key, value) {
       if (is.null(private$.metadata_cache)) {
         private$.metadata_cache <- list()
       }
       private$.metadata_cache[[key]] <- value
     }
-
   )
 )

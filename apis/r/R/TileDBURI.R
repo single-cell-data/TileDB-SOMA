@@ -4,7 +4,6 @@
 TileDBURI <- R6::R6Class(
   classname = "TileDBURI",
   public = list(
-
     initialize = function(uri) {
       stopifnot(is_scalar_character(uri))
       private$.uri <- uri
@@ -40,34 +39,39 @@ TileDBURI <- R6::R6Class(
       self$is_tiledb_cloud_uri() && startsWith(private$.pieces$path, "s3://")
     }
   ),
-
   active = list(
     #' @field uri The original URI
     uri = function(value) {
-      if (missing(value)) return(private$.uri)
+      if (missing(value)) {
+        return(private$.uri)
+      }
       self$initialize(value)
     },
 
     #' @field scheme The URI scheme
     scheme = function(value) {
-      if (missing(value)) return(private$.pieces$scheme)
+      if (missing(value)) {
+        return(private$.pieces$scheme)
+      }
       read_only_error("tiledb_cloud_uri")
     },
 
     #' @field tiledb_cloud_uri URI for TileDB Cloud access
     tiledb_cloud_uri = function(value) {
-      if (missing(value)) return(private$.tiledb_cloud_uri)
+      if (missing(value)) {
+        return(private$.tiledb_cloud_uri)
+      }
       read_only_error("tiledb_cloud_uri")
     },
 
     #' @field object_uri URI for direct access to the object
     object_uri = function(value) {
-      if (missing(value)) return(private$.object_uri)
+      if (missing(value)) {
+        return(private$.object_uri)
+      }
       read_only_error("object_uri")
     }
-
   ),
-
   private = list(
     .uri = character(),
     # Named list of individual URL pieces
@@ -98,7 +102,6 @@ TileDBURI <- R6::R6Class(
       # remove trailing slash
       sub("\\/$", "", url)
     },
-
     read_only_error = function(field_name) {
       stop(glue::glue("'{field_name}' is a read-only field."))
     }

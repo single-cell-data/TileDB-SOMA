@@ -15,11 +15,11 @@ match_query_layout <- function(layout) {
 }
 
 map_query_layout <- function(layout) {
-    switch(layout,
-           ROW_MAJOR = "row-major",
-           COL_MAJOR = "column-major",
-           tolower(layout)
-    )
+  switch(layout,
+    ROW_MAJOR = "row-major",
+    COL_MAJOR = "column-major",
+    tolower(layout)
+  )
 }
 
 #' Display package versions
@@ -30,17 +30,18 @@ map_query_layout <- function(layout) {
 #' @export
 #' @importFrom utils packageVersion
 show_package_versions <- function() {
-    cat("tiledbsoma:    ", toString(utils::packageVersion("tiledbsoma")), "\n",
-        "tiledb-r:      ", toString(utils::packageVersion("tiledb")), "\n",
-        "tiledb core:   ", as.character(tiledb::tiledb_version(compact=TRUE)), "\n",
-        "libtiledbsoma: ", libtiledbsoma_version(compact=TRUE), "\n",
-        "R:             ", R.version.string, "\n",
-        "OS:            ", utils::osVersion, "\n",
-        sep="")
+  cat("tiledbsoma:    ", toString(utils::packageVersion("tiledbsoma")), "\n",
+    "tiledb-r:      ", toString(utils::packageVersion("tiledb")), "\n",
+    "tiledb core:   ", as.character(tiledb::tiledb_version(compact = TRUE)), "\n",
+    "libtiledbsoma: ", libtiledbsoma_version(compact = TRUE), "\n",
+    "R:             ", R.version.string, "\n",
+    "OS:            ", utils::osVersion, "\n",
+    sep = ""
+  )
 }
 
 #' @rdname tiledbsoma_stats
 #' @export
 tiledbsoma_stats_show <- function() {
-    cat(tiledbsoma_stats_dump(), "\n")
+  cat(tiledbsoma_stats_dump(), "\n")
 }

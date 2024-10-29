@@ -1,11 +1,10 @@
-
 test_that("Blockwise iterator for arrow tables", {
   skip_if(!extended_tests() || covr_tests())
-  skip_if_not_installed("pbmc3k.tiledb")      # a Suggests: pre-package 3k PBMC data
+  skip_if_not_installed("pbmc3k.tiledb") # a Suggests: pre-package 3k PBMC data
   # see https://ghrr.github.io/drat/
 
   tdir <- tempfile()
-  tgzfile <- system.file("raw-data", "soco-pbmc3k.tar.gz", package="pbmc3k.tiledb")
+  tgzfile <- system.file("raw-data", "soco-pbmc3k.tar.gz", package = "pbmc3k.tiledb")
   untar(tarfile = tgzfile, exdir = tdir)
 
   uri <- file.path(tdir, "soco", "pbmc3k_processed")
@@ -17,11 +16,11 @@ test_that("Blockwise iterator for arrow tables", {
   axqry <- expqry$axis_query("RNA")
   xrqry <- axqry$X("data")
 
-  expect_error(xrqry$blockwise(axis=2))
-  expect_error(xrqry$blockwise(size=-100))
+  expect_error(xrqry$blockwise(axis = 2))
+  expect_error(xrqry$blockwise(size = -100))
 
   expect_s3_class(
-    bi <- xrqry$blockwise(axis=ax, size=sz, reindex_disable_on_axis = TRUE),
+    bi <- xrqry$blockwise(axis = ax, size = sz, reindex_disable_on_axis = TRUE),
     "SOMASparseNDArrayBlockwiseRead"
   )
 
@@ -37,7 +36,7 @@ test_that("Blockwise iterator for arrow tables", {
   rm(bi, it, xrqry, axqry)
   axqry <- expqry$axis_query("RNA")
   xrqry <- axqry$X("data")
-  bi <- xrqry$blockwise(axis=ax, size=sz, reindex_disable_on_axis = TRUE)
+  bi <- xrqry$blockwise(axis = ax, size = sz, reindex_disable_on_axis = TRUE)
   it <- bi$tables()
   at <- it$concat()
   expect_s3_class(at, "Table")
@@ -47,7 +46,7 @@ test_that("Blockwise iterator for arrow tables", {
 
 test_that("Table blockwise iterator: re-indexed", {
   skip_if(!extended_tests() || covr_tests())
-  skip_if_not_installed("SeuratObject", minimum_version = .MINIMUM_SEURAT_VERSION('c'))
+  skip_if_not_installed("SeuratObject", minimum_version = .MINIMUM_SEURAT_VERSION("c"))
 
   obj <- get_data("pbmc_small", package = "SeuratObject")
   obj <- suppressWarnings(SeuratObject::UpdateSeuratObject(obj))
@@ -93,8 +92,8 @@ test_that("Table blockwise iterator: re-indexed", {
     sd0 <- at$GetColumnByName("soma_dim_0")$as_vector()
     expect_true(min(sd0) >= 0L)
     expect_true(max(sd0) <= sz)
-    strider <- attr(at, 'coords')$soma_dim_0
-    expect_s3_class(strider, 'CoordsStrider')
+    strider <- attr(at, "coords")$soma_dim_0
+    expect_s3_class(strider, "CoordsStrider")
     expect_true(strider$start == sz * (i - 1L))
     expect_true(strider$end < sz * i)
   }
@@ -125,11 +124,11 @@ test_that("Table blockwise iterator: re-indexed", {
 
 test_that("Blockwise iterator for sparse matrices", {
   skip_if(!extended_tests() || covr_tests())
-  skip_if_not_installed("pbmc3k.tiledb")      # a Suggests: pre-package 3k PBMC data
+  skip_if_not_installed("pbmc3k.tiledb") # a Suggests: pre-package 3k PBMC data
   # see https://ghrr.github.io/drat/
 
   tdir <- tempfile()
-  tgzfile <- system.file("raw-data", "soco-pbmc3k.tar.gz", package="pbmc3k.tiledb")
+  tgzfile <- system.file("raw-data", "soco-pbmc3k.tar.gz", package = "pbmc3k.tiledb")
   untar(tarfile = tgzfile, exdir = tdir)
 
   uri <- file.path(tdir, "soco", "pbmc3k_processed")
@@ -141,11 +140,11 @@ test_that("Blockwise iterator for sparse matrices", {
   axqry <- expqry$axis_query("RNA")
   xrqry <- axqry$X("data")
 
-  expect_error(xrqry$blockwise(axis=2))
-  expect_error(xrqry$blockwise(size=-100))
+  expect_error(xrqry$blockwise(axis = 2))
+  expect_error(xrqry$blockwise(size = -100))
 
   expect_s3_class(
-    bi <- xrqry$blockwise(axis=ax, size=sz, reindex_disable_on_axis = TRUE),
+    bi <- xrqry$blockwise(axis = ax, size = sz, reindex_disable_on_axis = TRUE),
     "SOMASparseNDArrayBlockwiseRead"
   )
 
@@ -164,7 +163,7 @@ test_that("Blockwise iterator for sparse matrices", {
   rm(bi, it, xrqry, axqry)
   axqry <- expqry$axis_query("RNA")
   xrqry <- axqry$X("data")
-  bi <- xrqry$blockwise(axis=ax, size=sz, reindex_disable_on_axis = TRUE)
+  bi <- xrqry$blockwise(axis = ax, size = sz, reindex_disable_on_axis = TRUE)
   it <- bi$sparse_matrix()
   at <- it$concat()
   expect_s4_class(at, "dgTMatrix")
@@ -173,7 +172,7 @@ test_that("Blockwise iterator for sparse matrices", {
 
 test_that("Sparse matrix blockwise iterator: re-indexed", {
   skip_if(!extended_tests() || covr_tests())
-  skip_if_not_installed("SeuratObject", minimum_version = .MINIMUM_SEURAT_VERSION('c'))
+  skip_if_not_installed("SeuratObject", minimum_version = .MINIMUM_SEURAT_VERSION("c"))
 
   obj <- get_data("pbmc_small", package = "SeuratObject")
   obj <- suppressWarnings(SeuratObject::UpdateSeuratObject(obj))
@@ -220,8 +219,8 @@ test_that("Sparse matrix blockwise iterator: re-indexed", {
     expect_identical(dim(mat), rev(dim(obj)))
     expect_true(min(mat@i) >= 0L)
     expect_true(max(mat@i) <= sz)
-    strider <- attr(mat, 'coords')$soma_dim_0
-    expect_s3_class(strider, 'CoordsStrider')
+    strider <- attr(mat, "coords")$soma_dim_0
+    expect_s3_class(strider, "CoordsStrider")
     expect_true(strider$start == sz * (i - 1L))
     expect_true(strider$end < sz * i)
   }

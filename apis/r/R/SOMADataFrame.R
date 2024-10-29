@@ -12,7 +12,6 @@
 SOMADataFrame <- R6::R6Class(
   classname = "SOMADataFrame",
   inherit = SOMAArrayBase,
-
   public = list(
 
     #' @description Create (lifecycle: maturing)
@@ -39,8 +38,10 @@ SOMADataFrame <- R6::R6Class(
       internal_use_only = NULL
     ) {
       if (is.null(internal_use_only) || internal_use_only != "allowed_use") {
-        stop(paste("Use of the create() method is for internal use only. Consider using a",
-                   "factory method as e.g. 'SOMADataFrameCreate()'."), call. = FALSE)
+        stop(paste(
+          "Use of the create() method is for internal use only. Consider using a",
+          "factory method as e.g. 'SOMADataFrameCreate()'."
+        ), call. = FALSE)
       }
       schema <- private$validate_schema(schema, index_column_names)
 
@@ -59,8 +60,10 @@ SOMADataFrame <- R6::R6Class(
       )
 
       attr_column_names <- setdiff(schema$names, index_column_names)
-      stopifnot("At least one non-index column must be defined in the schema" =
-                length(attr_column_names) > 0)
+      stopifnot(
+        "At least one non-index column must be defined in the schema" =
+          length(attr_column_names) > 0
+      )
 
       # Parse the tiledb/create/ subkeys of the platform_config into a handy,
       # typed, queryable data structure.
@@ -121,10 +124,10 @@ SOMADataFrame <- R6::R6Class(
 
       schema_names <- c(self$dimnames(), self$attrnames())
       col_names <- if (is_arrow_record_batch(values)) {
-                       arrow::as_arrow_table(values)$ColumnNames()
-                   } else {
-                       values$ColumnNames()
-                   }
+        arrow::as_arrow_table(values)$ColumnNames()
+      } else {
+        values$ColumnNames()
+      }
       stopifnot(
         "'values' must be an Arrow Table or RecordBatch" =
           (is_arrow_table(values) || is_arrow_record_batch(values)),
@@ -157,8 +160,8 @@ SOMADataFrame <- R6::R6Class(
     #' @description Read (lifecycle: maturing)
     #' Read a user-defined subset of data, addressed by the dataframe indexing
     #' column, and optionally filtered.
-    #' @param coords Optional named list of indices specifying the rows to read; each (named)
-    #' list element corresponds to a dimension of the same name.
+    #' @param coords Optional named list of indices specifying the rows to read;
+    #' each (named) list element corresponds to a dimension of the same name.
     #' @param column_names Optional character vector of column names to return.
     #' @param value_filter Optional string containing a logical expression that is used
     #' to filter the returned values. See [`tiledb::parse_query_condition`] for
@@ -168,49 +171,57 @@ SOMADataFrame <- R6::R6Class(
     #' `FALSE`, the default value) or in several iterated steps.
     #' @param log_level Optional logging level with default value of `"warn"`.
     #' @return arrow::\link[arrow]{Table} or \link{TableReadIter}
-    read = function(coords = NULL,
-                    column_names = NULL,
-                    value_filter = NULL,
-                    result_order = "auto",
-                    iterated = FALSE,
-                    log_level = "auto") {
-
+    read = function(
+      coords = NULL,
+      column_names = NULL,
+      value_filter = NULL,
+      result_order = "auto",
+      iterated = FALSE,
+      log_level = "auto"
+    ) {
       private$check_open_for_read()
 
       result_order <- match_query_layout(result_order)
 
       ## if unnamed set names
       if (!is.null(coords)) {
-          if (!is.list(coords))
-              coords <- list(coords)
-          if (is.null(names(coords)))
-              names(coords) <- self$dimnames()
+        if (!is.list(coords)) {
+          coords <- list(coords)
+        }
+        if (is.null(names(coords))) {
+          names(coords) <- self$dimnames()
+        }
       }
 
       stopifnot(
-          ## check columns
-          "'column_names' must only contain valid dimension or attribute columns" =
-              is.null(column_names) || all(column_names %in% c(self$dimnames(), self$attrnames()))
+        ## check columns
+        "'column_names' must only contain valid dimension or attribute columns" =
+          is.null(column_names) || all(column_names %in% c(self$dimnames(), self$attrnames()))
       )
 
       coords <- validate_read_coords(coords, dimnames = self$dimnames(), schema = self$schema())
 
       if (!is.null(value_filter)) {
-          value_filter <- validate_read_value_filter(value_filter)
-          parsed <- do.call(
-              what = parse_query_condition,
-              args = list(expr = value_filter, schema = self$schema(), somactx = private$.soma_context))
-          value_filter <- parsed@ptr
+        value_filter <- validate_read_value_filter(value_filter)
+        parsed <- do.call(
+          what = parse_query_condition,
+          args = list(expr = value_filter, schema = self$schema(), somactx = private$.soma_context)
+        )
+        value_filter <- parsed@ptr
       }
-      spdl::debug("[SOMADataFrame$read] calling sr_setup for {} at ({},{})", self$uri,
-                  private$tiledb_timestamp[1], private$tiledb_timestamp[2])
-      sr <- sr_setup(uri = self$uri,
-                     private$.soma_context,
-                     colnames = column_names,
-                     qc = value_filter,
-                     dim_points = coords,
-                     timestamprange = self$.tiledb_timestamp_range,  # NULL or two-elem vector
-                     loglevel = log_level)
+      spdl::debug(
+        "[SOMADataFrame$read] calling sr_setup for {} at ({},{})", self$uri,
+        private$tiledb_timestamp[1], private$tiledb_timestamp[2]
+      )
+      sr <- sr_setup(
+        uri = self$uri,
+        private$.soma_context,
+        colnames = column_names,
+        qc = value_filter,
+        dim_points = coords,
+        timestamprange = self$.tiledb_timestamp_range, # NULL or two-elem vector
+        loglevel = log_level
+      )
       TableReadIter$new(sr)
     },
 
@@ -237,7 +248,6 @@ SOMADataFrame <- R6::R6Class(
     #' prior to performing the update. The name of this new column will be set
     #' to the value specified by `row_index_name`.
     update = function(values, row_index_name = NULL) {
-
       private$check_open_for_write()
       stopifnot(
         "'values' must be a data.frame, Arrow Table or RecordBatch" =
@@ -305,16 +315,15 @@ SOMADataFrame <- R6::R6Class(
       )
 
       drop_cols_for_clib <- drop_cols
-      add_cols_types_for_clib <- 
-        add_cols_enum_value_types_for_clib <- 
+      add_cols_types_for_clib <-
+        add_cols_enum_value_types_for_clib <-
         add_cols_enum_ordered_for_clib <- vector("list", length = length(add_cols))
-      names(add_cols_types_for_clib) <- 
-        names(add_cols_enum_value_types_for_clib) <- 
+      names(add_cols_types_for_clib) <-
+        names(add_cols_enum_value_types_for_clib) <-
         names(add_cols_enum_ordered_for_clib) <- add_cols
 
       # Add columns
       for (add_col in add_cols) {
-
         col_type <- new_schema$GetFieldByName(add_col)$type
 
         if (inherits(col_type, "DictionaryType")) {
@@ -356,20 +365,24 @@ SOMADataFrame <- R6::R6Class(
     #'
     #' @return None, instead a \code{\link{.NotYetImplemented}()} error is raised
     #'
-    shape = function() stop(errorCondition(
-      "'SOMADataFrame$shape()' is not implemented yet",
-      class = 'notYetImplementedError'
-    )),
+    shape = function() {
+      stop(errorCondition(
+        "'SOMADataFrame$shape()' is not implemented yet",
+        class = "notYetImplementedError"
+      ))
+    },
 
     #' @description Retrieve the maxshape; as \code{SOMADataFrames} are shapeless,
     #' simply raises an error
     #'
     #' @return None, instead a \code{\link{.NotYetImplemented}()} error is raised
     #'
-    maxshape = function() stop(errorCondition(
-      "'SOMADataFrame$maxshape()' is not implemented",
-      class = 'notYetImplementedError'
-    )),
+    maxshape = function() {
+      stop(errorCondition(
+        "'SOMADataFrame$maxshape()' is not implemented",
+        class = "notYetImplementedError"
+      ))
+    },
 
     #' @description Returns a named list of minimum/maximum pairs, one per index
     #' column, currently storable on each index column of the dataframe. These
@@ -380,7 +393,10 @@ SOMADataFrame <- R6::R6Class(
       as.list(
         arrow::as_record_batch(
           arrow::as_arrow_table(
-            domain(self$uri, private$.soma_context))))
+            domain(self$uri, private$.soma_context)
+          )
+        )
+      )
     },
 
     #' @description Returns a named list of minimum/maximum pairs, one per index
@@ -392,7 +408,10 @@ SOMADataFrame <- R6::R6Class(
       as.list(
         arrow::as_record_batch(
           arrow::as_arrow_table(
-            maxdomain(self$uri, private$.soma_context))))
+            maxdomain(self$uri, private$.soma_context)
+          )
+        )
+      )
     },
 
     #' @description Returns TRUE if the array has the upgraded resizeable domain
@@ -415,17 +434,82 @@ SOMADataFrame <- R6::R6Class(
     #' @param new_shape An integer, greater than or equal to 1 + the
     #' `soma_joinid` domain slot.
     #' @return No return value
-    resize_soma_joinid_shape = function(new_shape) {
-
+    tiledbsoma_resize_soma_joinid_shape = function(new_shape) {
       stopifnot("'new_shape' must be an integer" = rlang::is_integerish(new_shape, n = 1) ||
-        (bit64::is.integer64(new_shape) && length(new_shape) == 1)
-      )
+        (bit64::is.integer64(new_shape) && length(new_shape) == 1))
       # Checking slotwise new shape >= old shape, and <= max_shape, is already done in libtiledbsoma
-      invisible(resize_soma_joinid_shape(self$uri, new_shape, private$.soma_context))
+      invisible(
+        resize_soma_joinid_shape(
+          self$uri, new_shape, .name_of_function(), private$.soma_context))
+    },
+
+    #' @description Allows you to set the domain of a `SOMADataFrame`, when the
+    #' `SOMADataFrame` does not have a domain set yet.  The argument must be a
+    #' tuple of pairs of low/high values for the desired domain, one pair per
+    #' index column. For string index columns, you must offer the low/high pair
+    #' as `("", "")`, or as `NULL`.  If ``check_only`` is ``True``, returns
+    #' whether the operation would succeed if attempted, and a reason why it
+    #' would not. The domain being requested must be contained within what
+    #' `maxdomain` returns.
+    #' @param new_domain A named list, keyed by index-column name, with values
+    #' being two-element vectors containing the desired lower and upper bounds
+    #' for the domain.
+    #' @return No return value
+    tiledbsoma_upgrade_domain = function(new_domain) {
+      # stopifnot("'new_domain' must be CODE ME UP PLZ" = ...
+      # Checking slotwise new shape >= old shape, and <= max_shape, is already
+      # done in libtiledbsoma
+
+      pyarrow_domain_table <- private$upgrade_or_change_domain_helper(
+        new_domain, "tiledbsoma_upgrade_domain"
+      )
+
+      invisible(
+        upgrade_or_change_domain(
+          self$uri,
+          FALSE,
+          pyarrow_domain_table$array,
+          pyarrow_domain_table$schema,
+          .name_of_function(),
+          private$.soma_context
+        )
+      )
+    },
+
+    #' @description Allows you to set the domain of a `SOMADataFrame`, when the
+    #' `SOMADataFrame` already has a domain set yet.  The argument must be a
+    #' tuple of pairs of low/high values for the desired domain, one pair per
+    #' index column. For string index columns, you must offer the low/high pair
+    #' as `("", "")`, or as `NULL`.  If ``check_only`` is ``True``, returns
+    #' whether the operation would succeed if attempted, and a reason why it
+    #' would not. The return value from `domain` must be contained within
+    #' the requested `new_domain`, and the requested `new_domain` must be
+    #' contained within the return value from `maxdomain`.
+    #' @param new_domain A named list, keyed by index-column name, with values
+    #' being two-element vectors containing the desired lower and upper bounds
+    #' for the domain.
+    #' @return No return value
+    change_domain = function(new_domain) {
+      # stopifnot("'new_domain' must be CODE ME UP PLZ" = ...
+      # Checking slotwise new shape >= old shape, and <= max_shape, is already
+      # done in libtiledbsoma
+
+      pyarrow_domain_table <- private$upgrade_or_change_domain_helper(
+        new_domain, tiledbsoma_upgrade_domain
+      )
+
+      invisible(
+        upgrade_or_change_domain(
+          self$uri,
+          TRUE,
+          pyarrow_domain_table$array,
+          pyarrow_domain_table$schema,
+          .name_of_function(),
+          private$.soma_context
+        )
+      )
     }
-
   ),
-
   private = list(
 
     # @description Validate schema (lifecycle: maturing)
@@ -438,7 +522,7 @@ SOMADataFrame <- R6::R6Class(
         "'schema' must be a valid Arrow schema" =
           is_arrow_schema(schema),
         "'index_column_names' must be a non-empty character vector" =
-            is.character(index_column_names) && length(index_column_names) > 0,
+          is.character(index_column_names) && length(index_column_names) > 0,
         "All 'index_column_names' must be defined in the 'schema'" =
           assert_subset(index_column_names, schema$names, "indexed field"),
         "Column names must not start with reserved prefix 'soma_'" =
@@ -459,6 +543,58 @@ SOMADataFrame <- R6::R6Class(
       }
 
       schema
+    },
+
+    # Converts the user-level tuple of low/high pairs into a pyarrow table
+    # suitable for calling libtiledbsoma.
+    upgrade_or_change_domain_helper = function(
+      new_domain,
+      function_name_for_messages
+    ) {
+      dimnames <- self$dimnames()
+
+      # Check user-provided domain against dataframe domain.
+      stopifnot(
+        "new_domain must be a named list, with values being 2-element vectors or NULL, with names the same as the dataframe's index-column names" =
+        rlang::is_list(new_domain, n = length(dimnames)) &&
+          identical(sort(names(new_domain)), sort(dimnames)) &&
+          all(vapply_lgl(
+            new_domain,
+            function(x) is.null(x) || (is.atomic(x) && !is.factor(x) && length(x) == 2L)
+          ))
+      )
+
+      # From the dataframe's schema, extract the subschema for only index
+      # columns (TileDB dimensions).
+      full_schema <- self$schema()
+      dim_schema_list <- list()
+      for (dimname in dimnames) {
+        dim_schema_list[[dimname]] <- full_schema[[dimname]]
+      }
+      dim_schema <- arrow::schema(dim_schema_list)
+
+      # Get the user's new_domain list with keys in the same order as dim_names.
+      ordered_new_domain = list()
+      for (dimname in dimnames) {
+        # * Domain cannot be specified for string-type index columns.
+        # * So we let them say `NULL` rather than `c("", "")`.
+        # * But R list semantics are `mylist[[key]] <- NULL` results in nothing
+        #   being set at that key.
+        if (is.null(new_domain[[dimname]]) && full_schema[[dimname]]$type$ToString() %in% c("string", "large_string", "utf8", "large_utf8")) {
+          ordered_new_domain[[dimname]] <- c("", "")
+        } else {
+          ordered_new_domain[[dimname]] <- new_domain[[dimname]]
+        }
+      }
+
+      pyarrow_table <- arrow::arrow_table(as.data.frame(ordered_new_domain), schema=dim_schema)
+
+      # We transfer to the arrow table via a pair of array and schema pointers
+      dnaap <- nanoarrow::nanoarrow_allocate_array()
+      dnasp <- nanoarrow::nanoarrow_allocate_schema()
+      arrow::as_record_batch(pyarrow_table)$export_to_c(dnaap, dnasp)
+
+      return(list(array=dnaap, schema=dnasp))
     }
   )
 )

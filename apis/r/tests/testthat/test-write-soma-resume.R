@@ -1,4 +1,3 @@
-
 factories <- list(
   substitute(SOMADataFrameCreate),
   substitute(SOMASparseNDArrayCreate),
@@ -18,8 +17,8 @@ test_that("Factory re-creation", {
   for (i in seq_along(factories)) {
     fname <- as.character(factories[[i]])
     fxn <- eval(factories[[i]])
-    uri <- tempfile(pattern=fname)
-    if (dir.exists(uri)) unlink(uri, recursive=TRUE)
+    uri <- tempfile(pattern = fname)
+    if (dir.exists(uri)) unlink(uri, recursive = TRUE)
     expect_no_condition(obj <- switch(
       EXPR = fname,
       SOMADataFrameCreate = fxn(uri, schema = schema),
@@ -38,13 +37,13 @@ test_that("Resume-mode factories", {
   skip_if(!extended_tests())
   for (i in seq_along(factories)) {
     fname <- as.character(factories[[i]])
-    if (fname == 'SOMADenseNDArrayCreate') {
+    if (fname == "SOMADenseNDArrayCreate") {
       next
     }
     fxn <- eval(factories[[i]])
     label <- paste0(fname, "-resume")
-    uri <- tempfile(pattern=label)
-    if (dir.exists(uri)) unlink(uri, recursive=TRUE)
+    uri <- tempfile(pattern = label)
+    if (dir.exists(uri)) unlink(uri, recursive = TRUE)
     # Do an initial create
     expect_no_condition(obj <- switch(
       EXPR = fname,
@@ -81,12 +80,12 @@ test_that("Resume-mode factories", {
 
 test_that("Resume-mode data frames", {
   skip_if(!extended_tests())
-  skip_if_not_installed('datasets')
+  skip_if_not_installed("datasets")
 
-  collection <- SOMACollectionCreate(tempfile(pattern="dataframe-resume"))
+  collection <- SOMACollectionCreate(tempfile(pattern = "dataframe-resume"))
   on.exit(collection$close(), add = TRUE, after = FALSE)
 
-  co2 <- get_data('CO2', package = 'datasets')
+  co2 <- get_data("CO2", package = "datasets")
 
   # Test resume-mode when writing data.frames
   uri <- "co2-complete"
@@ -166,7 +165,7 @@ test_that("Resume-mode data frames", {
 
   if (.new_shape_feature_flag_is_enabled()) {
     sdfp$reopen("WRITE")
-    sdfp$resize_soma_joinid_shape(nrow(co2))
+    sdfp$tiledbsoma_resize_soma_joinid_shape(nrow(co2))
   }
 
   expect_s3_class(
@@ -200,10 +199,10 @@ test_that("Resume-mode data frames", {
 test_that("Resume-mode sparse arrays", {
   skip_if(!extended_tests())
 
-  collection <- SOMACollectionCreate(tempfile(pattern="sparse-array-resume"))
+  collection <- SOMACollectionCreate(tempfile(pattern = "sparse-array-resume"))
   on.exit(collection$close(), add = TRUE, after = FALSE)
 
-  knex <- as(get_data('KNex', package = 'Matrix')$mm, "TsparseMatrix")
+  knex <- as(get_data("KNex", package = "Matrix")$mm, "TsparseMatrix")
 
   # Test resume-mode when writing sparse arrays
   uri <- "knex-complete"
@@ -306,12 +305,12 @@ test_that("Resume-mode sparse arrays", {
 
 test_that("Resume-mode dense arrays", {
   skip_if(!extended_tests())
-  skip_if_not_installed('datasets')
+  skip_if_not_installed("datasets")
 
-  collection <- SOMACollectionCreate(tempfile(pattern="dense-array-resume"))
+  collection <- SOMACollectionCreate(tempfile(pattern = "dense-array-resume"))
   on.exit(collection$close(), add = TRUE, after = FALSE)
 
-  mat <- get(x = 'state.x77', envir = getNamespace('datasets'))
+  mat <- get(x = "state.x77", envir = getNamespace("datasets"))
 
   # Resume mode should always fail for dense arrays
   expect_s3_class(
@@ -352,7 +351,7 @@ test_that("Resume-mode Seurat", {
   expect_type(
     uri <- write_soma(
       pbmc_small,
-      uri = tempfile(pattern=SeuratObject::Project(pbmc_small))
+      uri = tempfile(pattern = SeuratObject::Project(pbmc_small))
     ),
     "character"
   )
@@ -449,7 +448,7 @@ test_that("Resume-mode Seurat", {
   expect_type(
     urip <- write_soma(
       pbmc_partial,
-      uri = tempfile(pattern="pbmc-partial"),
+      uri = tempfile(pattern = "pbmc-partial"),
       shape = dim(pbmc_small)
     ),
     "character"
@@ -526,13 +525,13 @@ test_that("Resume-mode SingleCellExperiment", {
   skip_if_not_installed("pbmc3k.sce")
   suppressMessages(skip_if_not_installed("SingleCellExperiment", .MINIMUM_SCE_VERSION("c")))
 
-  sce <- get_data('pbmc3k.final', package = "pbmc3k.sce")
+  sce <- get_data("pbmc3k.final", package = "pbmc3k.sce")
   skip_if(is.null(sce), message = "`pbmc3k.sce` is funky")
   SingleCellExperiment::mainExpName(sce) <- "RNA"
 
   # Test resume-mode when writing Seurat object
   expect_type(
-    uri <- write_soma(sce, uri = tempfile(pattern="single-cell-experiment")),
+    uri <- write_soma(sce, uri = tempfile(pattern = "single-cell-experiment")),
     "character"
   )
   exp <- SOMAExperimentOpen(uri)
@@ -547,8 +546,8 @@ test_that("Resume-mode SingleCellExperiment", {
   expect_identical(
     sort(SummarizedExperiment::assayNames(obj)),
     sort(SummarizedExperiment::assayNames(sce)),
-    label = 'assayNames(obj)',
-    expected.label = 'assayNames(sce)'
+    label = "assayNames(obj)",
+    expected.label = "assayNames(sce)"
   )
   for (i in SummarizedExperiment::assayNames(sce)) {
     expect_identical(
@@ -562,8 +561,8 @@ test_that("Resume-mode SingleCellExperiment", {
   expect_identical(
     sort(SingleCellExperiment::reducedDimNames(obj)),
     sort(SingleCellExperiment::reducedDimNames(sce)),
-    label = 'reducedDimNames(obj)',
-    expected.label = 'reducedDimNames(sce)'
+    label = "reducedDimNames(obj)",
+    expected.label = "reducedDimNames(sce)"
   )
   for (i in SingleCellExperiment::reducedDimNames(sce)) {
     expect_identical(
@@ -577,8 +576,8 @@ test_that("Resume-mode SingleCellExperiment", {
   expect_identical(
     sort(SingleCellExperiment::colPairNames(obj)),
     sort(SingleCellExperiment::colPairNames(sce)),
-    label = 'colPairNames(obj)',
-    expected.label = 'colPairNames(sce)'
+    label = "colPairNames(obj)",
+    expected.label = "colPairNames(sce)"
   )
   for (i in SingleCellExperiment::colPairNames(sce)) {
     expect_identical(
@@ -592,8 +591,8 @@ test_that("Resume-mode SingleCellExperiment", {
   expect_identical(
     sort(SingleCellExperiment::rowPairNames(obj)),
     sort(SingleCellExperiment::rowPairNames(sce)),
-    label = 'rowPairNames(obj)',
-    expected.label = 'rowPairNames(sce)'
+    label = "rowPairNames(obj)",
+    expected.label = "rowPairNames(sce)"
   )
   for (i in SingleCellExperiment::rowPairNames(sce)) {
     expect_identical(
@@ -646,8 +645,8 @@ test_that("Resume-mode SingleCellExperiment", {
   expect_identical(
     sort(SummarizedExperiment::assayNames(objr)),
     sort(SummarizedExperiment::assayNames(sce)),
-    label = 'assayNames(objr)',
-    expected.label = 'assayNames(sce)'
+    label = "assayNames(objr)",
+    expected.label = "assayNames(sce)"
   )
   for (i in SummarizedExperiment::assayNames(sce)) {
     expect_identical(
@@ -661,8 +660,8 @@ test_that("Resume-mode SingleCellExperiment", {
   expect_identical(
     sort(SingleCellExperiment::reducedDimNames(objr)),
     sort(SingleCellExperiment::reducedDimNames(sce)),
-    label = 'reducedDimNames(objr)',
-    expected.label = 'reducedDimNames(sce)'
+    label = "reducedDimNames(objr)",
+    expected.label = "reducedDimNames(sce)"
   )
   for (i in SingleCellExperiment::reducedDimNames(sce)) {
     expect_identical(
@@ -676,8 +675,8 @@ test_that("Resume-mode SingleCellExperiment", {
   expect_identical(
     sort(SingleCellExperiment::colPairNames(objr)),
     sort(SingleCellExperiment::colPairNames(sce)),
-    label = 'colPairNames(objr)',
-    expected.label = 'colPairNames(sce)'
+    label = "colPairNames(objr)",
+    expected.label = "colPairNames(sce)"
   )
   for (i in SingleCellExperiment::colPairNames(sce)) {
     expect_identical(
@@ -691,8 +690,8 @@ test_that("Resume-mode SingleCellExperiment", {
   expect_identical(
     sort(SingleCellExperiment::rowPairNames(objr)),
     sort(SingleCellExperiment::rowPairNames(sce)),
-    label = 'rowPairNames(objr)',
-    expected.label = 'rowPairNames(sce)'
+    label = "rowPairNames(objr)",
+    expected.label = "rowPairNames(sce)"
   )
   for (i in SingleCellExperiment::rowPairNames(sce)) {
     expect_identical(
@@ -731,7 +730,7 @@ test_that("Resume-mode SingleCellExperiment", {
   expect_type(
     urip <- write_soma(
       sce_partial,
-      uri = tempfile(pattern="single-cell-experiment-partial"),
+      uri = tempfile(pattern = "single-cell-experiment-partial"),
       shape = dim(sce)
     ),
     "character"
@@ -750,8 +749,8 @@ test_that("Resume-mode SingleCellExperiment", {
   expect_identical(
     sort(SummarizedExperiment::assayNames(objp)),
     sort(SummarizedExperiment::assayNames(sce_partial)),
-    label = 'assayNames(objp)',
-    expected.label = 'assayNames(sce_partial)'
+    label = "assayNames(objp)",
+    expected.label = "assayNames(sce_partial)"
   )
   for (i in SummarizedExperiment::assayNames(sce_partial)) {
     expect_identical(
@@ -765,8 +764,8 @@ test_that("Resume-mode SingleCellExperiment", {
   expect_identical(
     sort(SingleCellExperiment::reducedDimNames(objp)),
     sort(SingleCellExperiment::reducedDimNames(sce_partial)),
-    label = 'reducedDimNames(objp)',
-    expected.label = 'reducedDimNames(sce_partial)'
+    label = "reducedDimNames(objp)",
+    expected.label = "reducedDimNames(sce_partial)"
   )
   for (i in SingleCellExperiment::reducedDimNames(sce_partial)) {
     expect_identical(
@@ -780,8 +779,8 @@ test_that("Resume-mode SingleCellExperiment", {
   expect_identical(
     sort(SingleCellExperiment::colPairNames(objp)),
     sort(SingleCellExperiment::colPairNames(sce_partial)),
-    label = 'colPairNames(objp)',
-    expected.label = 'colPairNames(sce_partial)'
+    label = "colPairNames(objp)",
+    expected.label = "colPairNames(sce_partial)"
   )
   for (i in SingleCellExperiment::colPairNames(sce_partial)) {
     expect_identical(
@@ -795,8 +794,8 @@ test_that("Resume-mode SingleCellExperiment", {
   expect_identical(
     sort(SingleCellExperiment::rowPairNames(objp)),
     sort(SingleCellExperiment::rowPairNames(sce_partial)),
-    label = 'rowPairNames(objp)',
-    expected.label = 'rowPairNames(sce_partial)'
+    label = "rowPairNames(objp)",
+    expected.label = "rowPairNames(sce_partial)"
   )
   for (i in SingleCellExperiment::rowPairNames(sce_partial)) {
     expect_identical(
@@ -847,8 +846,8 @@ test_that("Resume-mode SingleCellExperiment", {
   expect_identical(
     sort(SummarizedExperiment::assayNames(objc)),
     sort(SummarizedExperiment::assayNames(sce)),
-    label = 'assayNames(objc)',
-    expected.label = 'assayNames(sce)'
+    label = "assayNames(objc)",
+    expected.label = "assayNames(sce)"
   )
   for (i in SummarizedExperiment::assayNames(sce)) {
     expect_identical(
@@ -862,8 +861,8 @@ test_that("Resume-mode SingleCellExperiment", {
   expect_identical(
     sort(SingleCellExperiment::reducedDimNames(objc)),
     sort(SingleCellExperiment::reducedDimNames(sce)),
-    label = 'reducedDimNames(objc)',
-    expected.label = 'reducedDimNames(sce)'
+    label = "reducedDimNames(objc)",
+    expected.label = "reducedDimNames(sce)"
   )
   for (i in SingleCellExperiment::reducedDimNames(sce)) {
     expect_identical(
@@ -877,8 +876,8 @@ test_that("Resume-mode SingleCellExperiment", {
   expect_identical(
     sort(SingleCellExperiment::colPairNames(objc)),
     sort(SingleCellExperiment::colPairNames(sce)),
-    label = 'colPairNames(objc)',
-    expected.label = 'colPairNames(sce)'
+    label = "colPairNames(objc)",
+    expected.label = "colPairNames(sce)"
   )
   for (i in SingleCellExperiment::colPairNames(sce)) {
     expect_identical(
@@ -892,8 +891,8 @@ test_that("Resume-mode SingleCellExperiment", {
   expect_identical(
     sort(SingleCellExperiment::rowPairNames(objc)),
     sort(SingleCellExperiment::rowPairNames(sce)),
-    label = 'rowPairNames(objc)',
-    expected.label = 'rowPairNames(sce)'
+    label = "rowPairNames(objc)",
+    expected.label = "rowPairNames(sce)"
   )
   for (i in SingleCellExperiment::rowPairNames(sce)) {
     expect_identical(
