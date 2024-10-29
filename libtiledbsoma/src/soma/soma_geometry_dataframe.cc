@@ -164,9 +164,8 @@ void SOMAGeometryDataFrame::set_array_data(
                 throw std::runtime_error("Unknown geometry type");
             }
 
-            SOMAArray::set_array_data(
+            return SOMAArray::set_array_data(
                 std::move(casted_data.second), std::move(casted_data.first));
-            return;
         }
     }
 
@@ -181,7 +180,6 @@ std::vector<ArrowTable> SOMAGeometryDataFrame::_cast_polygon_vertex_list_to_wkb(
     ArrowArray* array) {
     // Initialize a vector to hold all the Arrow tables containing the
     // transformed geometry data
-    ArrowError error;
     std::vector<std::string> spatial_axes = this->spatial_column_names();
     std::vector<ArrowTable> tables;
     tables.push_back(ArrowTable(
@@ -195,7 +193,7 @@ std::vector<ArrowTable> SOMAGeometryDataFrame::_cast_polygon_vertex_list_to_wkb(
     NANOARROW_THROW_NOT_OK(
         ArrowSchemaSetName(tables.front().second.get(), "soma_geometry"));
 
-    for (auto axis : spatial_axes) {
+    for (const auto& axis : spatial_axes) {
         // Min spatial axis
         tables.push_back(ArrowTable(
             std::make_unique<ArrowArray>(ArrowArray{}),
@@ -253,13 +251,13 @@ std::vector<ArrowTable> SOMAGeometryDataFrame::_cast_polygon_vertex_list_to_wkb(
         NANOARROW_THROW_NOT_OK(ArrowArrayStartAppending(tables[i].first.get()));
     }
 
-    for (auto& geometry : geometries) {
+    for (const auto& geometry : geometries) {
         geometry::BinaryBuffer wkb = geometry::to_wkb(geometry);
         geometry::Envelope envelope = geometry::envelope(geometry);
 
         ArrowBufferView wkb_view;
         wkb_view.data.data = wkb.data();
-        wkb_view.size_bytes = (int64_t)wkb.size();
+        wkb_view.size_bytes = static_cast<int64_t>(wkb.size());
 
         NANOARROW_THROW_NOT_OK(
             ArrowArrayAppendBytes(tables.front().first.get(), wkb_view));
@@ -273,6 +271,7 @@ std::vector<ArrowTable> SOMAGeometryDataFrame::_cast_polygon_vertex_list_to_wkb(
     }
 
     for (size_t i = 0; i < tables.size(); ++i) {
+        ArrowError error;
         NANOARROW_THROW_NOT_OK(
             ArrowArrayFinishBuildingDefault(tables[i].first.get(), &error));
     }
