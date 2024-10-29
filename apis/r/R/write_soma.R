@@ -225,15 +225,12 @@ write_soma.data.frame <- function(
   # dataframe with something users think of as a "shape". For the
   # other slots, set the domain wide open.
   #
-  domain <- NULL
-  if (.new_shape_feature_flag_is_enabled()) {
-    domain <- list()
-    for (index_column_name in index_column_names) {
-      if (index_column_name == "soma_joinid") {
-        domain[["soma_joinid"]] <- c(0, nrow(x) - 1)
-      } else {
-        domain[[index_column_name]] <- NULL
-      }
+  domain <- list()
+  for (index_column_name in index_column_names) {
+    if (index_column_name == "soma_joinid") {
+      domain[["soma_joinid"]] <- c(0, nrow(x) - 1)
+    } else {
+      domain[[index_column_name]] <- NULL
     }
   }
 

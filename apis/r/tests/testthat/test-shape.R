@@ -56,11 +56,7 @@ test_that("SOMADataFrame shape", {
     sdf <- SOMADataFrameOpen(uri)
 
     # Check shape and maxshape et al.
-    if (!.new_shape_feature_flag_is_enabled()) {
-      expect_false(sdf$tiledbsoma_has_upgraded_domain())
-    } else {
-      expect_true(sdf$tiledbsoma_has_upgraded_domain())
-    }
+    expect_true(sdf$tiledbsoma_has_upgraded_domain())
     expect_error(sdf$shape(), class = "notYetImplementedError")
     expect_error(sdf$maxshape(), class = "notYetImplementedError")
 
@@ -83,11 +79,7 @@ test_that("SOMADataFrame shape", {
     }
 
     # Check has_upgraded_domain
-    if (!.new_shape_feature_flag_is_enabled()) {
-      expect_false(sdf$tiledbsoma_has_upgraded_domain())
-    } else {
-      expect_true(sdf$tiledbsoma_has_upgraded_domain())
-    }
+    expect_true(sdf$tiledbsoma_has_upgraded_domain())
 
     # Check domain and maxdomain
     dom <- sdf$domain()
@@ -132,11 +124,6 @@ test_that("SOMADataFrame shape", {
       sjid_mxd <- mxd[["soma_joinid"]]
       sjid_dfc <- domain_for_create[["soma_joinid"]]
 
-      if (!.new_shape_feature_flag_is_enabled()) {
-        # Old behavior
-        expect_equal(sjid_dom, sjid_mxd)
-      }
-
       # Not: expect_equal(sjid_dom, bit64::as.integer64(sjid_dfc)) The
       # soma_joinid dim is always of type int64.  Everything coming back
       # from libtiledbsoma, through C nanoarrow, through the R arrow
@@ -155,19 +142,10 @@ test_that("SOMADataFrame shape", {
       int_mxd <- mxd[["int_column"]]
       int_dfc <- domain_for_create[["int_column"]]
 
-      if (!.new_shape_feature_flag_is_enabled()) {
-        # Old behavior
-        expect_equal(int_dom, int_mxd)
-      }
-
       expect_equal(int_dom, int_dfc)
 
-      if (!.new_shape_feature_flag_is_enabled()) {
-        expect_equal(int_mxd, int_dfc)
-      } else {
-        expect_true(int_mxd[[1]] < -2000000000)
-        expect_true(int_mxd[[2]] > 2000000000)
-      }
+      expect_true(int_mxd[[1]] < -2000000000)
+      expect_true(int_mxd[[2]] > 2000000000)
     }
 
     if ("string_column" %in% index_column_names) {
@@ -175,85 +153,78 @@ test_that("SOMADataFrame shape", {
       str_mxd <- mxd[["string_column"]]
       str_dfc <- domain_for_create[["string_column"]]
 
-      if (!.new_shape_feature_flag_is_enabled()) {
+      if (is.null(str_dfc)) {
         expect_equal(str_dom, c("", ""))
-        expect_equal(str_mxd, c("", ""))
       } else {
-        if (is.null(str_dfc)) {
-          expect_equal(str_dom, c("", ""))
-        } else {
-          expect_equal(str_dom, str_dfc)
-        }
-        expect_equal(str_mxd, c("", ""))
+        expect_equal(str_dom, str_dfc)
       }
+      expect_equal(str_mxd, c("", ""))
     }
 
     sdf$close()
 
     # Test resize for dataframes (more general upgrade_domain to be tested
     # separately -- see https://github.com/single-cell-data/TileDB-SOMA/issues/2407)
-    if (.new_shape_feature_flag_is_enabled()) {
-      has_soma_joinid_dim <- "soma_joinid" %in% index_column_names
-      sjid_dfc <- domain_for_create[["soma_joinid"]]
 
-      # Test resize down
-      new_shape <- 0
-      sdf <- SOMADataFrameOpen(uri, "WRITE")
-      if (has_soma_joinid_dim) {
-        # It's an error to downsize
-        expect_error(sdf$tiledbsoma_resize_soma_joinid_shape(new_shape))
-      } else {
-        # There is no problem when soma_joinid is not a dim --
-        # sdf$tiledbsoma_resize_soma_joinid_shape is a no-op in that case
-        expect_no_condition(sdf$tiledbsoma_resize_soma_joinid_shape(new_shape))
-      }
+    has_soma_joinid_dim <- "soma_joinid" %in% index_column_names
+    sjid_dfc <- domain_for_create[["soma_joinid"]]
+
+    # Test resize down
+    new_shape <- 0
+    sdf <- SOMADataFrameOpen(uri, "WRITE")
+    if (has_soma_joinid_dim) {
+      # It's an error to downsize
+      expect_error(sdf$tiledbsoma_resize_soma_joinid_shape(new_shape))
+    } else {
+      # There is no problem when soma_joinid is not a dim --
+      # sdf$tiledbsoma_resize_soma_joinid_shape is a no-op in that case
+      expect_no_condition(sdf$tiledbsoma_resize_soma_joinid_shape(new_shape))
+    }
+    sdf$close()
+
+    # Make sure the failed resize really didn't change the shape
+    if (has_soma_joinid_dim) {
+      sdf <- SOMADataFrameOpen(uri, "READ")
+      expect_equal(sdf$domain()[["soma_joinid"]], sjid_dfc)
       sdf$close()
-
-      # Make sure the failed resize really didn't change the shape
-      if (has_soma_joinid_dim) {
-        sdf <- SOMADataFrameOpen(uri, "READ")
-        expect_equal(sdf$domain()[["soma_joinid"]], sjid_dfc)
-        sdf$close()
-      }
-
-      # Test writes out of bounds, before resize
-      old_shape <- 100
-      if (has_soma_joinid_dim) {
-        old_shape <- domain_for_create[["soma_joinid"]][[2]] + 1 + 100
-      }
-      new_shape <- old_shape + 100
-
-      tbl1 <- arrow::arrow_table(
-        int_column = 5L:8L,
-        soma_joinid = (old_shape + 1L):(old_shape + 4L),
-        float_column = 5.1:8.1,
-        string_column = c("egg", "flag", "geese", "hay"),
-        schema = asch
-      )
-
-      sdf <- SOMADataFrameOpen(uri, "WRITE")
-      if (has_soma_joinid_dim) {
-        expect_error(sdf$write(tbl1))
-      } else {
-        expect_no_condition(sdf$write(tbl1))
-      }
-      sdf$close()
-
-      # Test resize
-      sdf <- SOMADataFrameOpen(uri, "WRITE")
-      sdf$tiledbsoma_resize_soma_joinid_shape(new_shape)
-      sdf$close()
-
-      # Test writes out of old bounds, within new bounds, after resize
-      sdf <- SOMADataFrameOpen(uri, "WRITE")
-      expect_no_condition(sdf$write(tbl1))
-      sdf$close()
-
-      # To do: test readback
-
-      rm(tbl1)
     }
 
+    # Test writes out of bounds, before resize
+    old_shape <- 100
+    if (has_soma_joinid_dim) {
+      old_shape <- domain_for_create[["soma_joinid"]][[2]] + 1 + 100
+    }
+    new_shape <- old_shape + 100
+
+    tbl1 <- arrow::arrow_table(
+      int_column = 5L:8L,
+      soma_joinid = (old_shape + 1L):(old_shape + 4L),
+      float_column = 5.1:8.1,
+      string_column = c("egg", "flag", "geese", "hay"),
+      schema = asch
+    )
+
+    sdf <- SOMADataFrameOpen(uri, "WRITE")
+    if (has_soma_joinid_dim) {
+      expect_error(sdf$write(tbl1))
+    } else {
+      expect_no_condition(sdf$write(tbl1))
+    }
+    sdf$close()
+
+    # Test resize
+    sdf <- SOMADataFrameOpen(uri, "WRITE")
+    sdf$tiledbsoma_resize_soma_joinid_shape(new_shape)
+    sdf$close()
+
+    # Test writes out of old bounds, within new bounds, after resize
+    sdf <- SOMADataFrameOpen(uri, "WRITE")
+    expect_no_condition(sdf$write(tbl1))
+    sdf$close()
+
+    # To do: test readback
+
+    rm(tbl1)
     rm(sdf, tbl0)
 
     gc()
@@ -342,8 +313,6 @@ test_that("SOMADataFrame shape", {
 })
 
 test_that("SOMADataFrame domain mods", {
-  skip_if(!.new_shape_feature_flag_is_enabled())
-
   uri <- withr::local_tempdir("soma-dataframe-domain-mods")
 
    schema = arrow::schema(
@@ -465,11 +434,7 @@ test_that("SOMASparseNDArray shape", {
     readback_shape <- ndarray$shape()
     readback_maxshape <- ndarray$maxshape()
     expect_equal(length(readback_shape), length(readback_maxshape))
-    if (.new_shape_feature_flag_is_enabled()) {
-      expect_true(all(readback_shape < readback_maxshape))
-    } else {
-      expect_true(all(readback_shape == readback_maxshape))
-    }
+    expect_true(all(readback_shape < readback_maxshape))
 
     ndarray$close()
 
@@ -496,39 +461,36 @@ test_that("SOMASparseNDArray shape", {
 
     ndarray$close()
 
-    if (.new_shape_feature_flag_is_enabled()) {
-      ndarray <- SOMASparseNDArrayOpen(uri, "WRITE")
+    ndarray <- SOMASparseNDArrayOpen(uri, "WRITE")
 
-      # Test resize down
-      new_shape <- c(50, 60)
-      expect_error(ndarray$resize(new_shape))
+    # Test resize down
+    new_shape <- c(50, 60)
+    expect_error(ndarray$resize(new_shape))
 
-      # Test writes out of old bounds
-      soma_dim_0 <- c(200, 300)
-      soma_dim_1 <- c(400, 500)
-      soma_data <- c(6000, 7000)
-      sm <- sparseMatrix(i = soma_dim_0, j = soma_dim_1, x = soma_data)
-      expect_error(ndarray$write(sm))
+    # Test writes out of old bounds
+    soma_dim_0 <- c(200, 300)
+    soma_dim_1 <- c(400, 500)
+    soma_data <- c(6000, 7000)
+    sm <- sparseMatrix(i = soma_dim_0, j = soma_dim_1, x = soma_data)
+    expect_error(ndarray$write(sm))
 
-      # Test resize up
-      new_shape <- c(500, 600)
-      #### expect_no_error(ndarray$resize(new_shape))
-      ndarray$resize(new_shape)
+    # Test resize up
+    new_shape <- c(500, 600)
+    #### expect_no_error(ndarray$resize(new_shape))
+    ndarray$resize(new_shape)
 
-      # Test writes within new bounds
-      soma_dim_0 <- c(200, 300)
-      soma_dim_1 <- c(400, 500)
-      soma_data <- c(6000, 7000)
-      sm <- sparseMatrix(i = soma_dim_0, j = soma_dim_1, x = soma_data)
-      expect_no_error(ndarray$write(sm))
-      ndarray$close()
+    # Test writes within new bounds
+    soma_dim_0 <- c(200, 300)
+    soma_dim_1 <- c(400, 500)
+    soma_data <- c(6000, 7000)
+    sm <- sparseMatrix(i = soma_dim_0, j = soma_dim_1, x = soma_data)
+    expect_no_error(ndarray$write(sm))
+    ndarray$close()
 
-      ndarray <- SOMASparseNDArrayOpen(uri)
-      coords <- list(bit64::as.integer64(c(101, 202)), bit64::as.integer64(c(3, 4)))
-      expect_no_error(x <- ndarray$read(coords = coords)$tables()$concat())
-      ndarray$close()
-    }
-
+    ndarray <- SOMASparseNDArrayOpen(uri)
+    coords <- list(bit64::as.integer64(c(101, 202)), bit64::as.integer64(c(3, 4)))
+    expect_no_error(x <- ndarray$read(coords = coords)$tables()$concat())
+    ndarray$close()
     rm(ndarray)
     gc()
   }
@@ -556,12 +518,8 @@ test_that("SOMADenseNDArray shape", {
     readback_maxshape <- ndarray$maxshape()
     expect_equal(length(readback_shape), length(readback_maxshape))
 
-    if (.new_shape_feature_flag_is_enabled()) {
-      if (.dense_arrays_can_have_current_domain()) {
-        expect_true(all(readback_shape < readback_maxshape))
-      } else {
-        expect_true(all(readback_shape == readback_maxshape))
-      }
+    if (.dense_arrays_can_have_current_domain()) {
+      expect_true(all(readback_shape < readback_maxshape))
     } else {
       expect_true(all(readback_shape == readback_maxshape))
     }
@@ -589,46 +547,45 @@ test_that("SOMADenseNDArray shape", {
 
     ndarray$close()
 
-    if (.new_shape_feature_flag_is_enabled()) {
-      ndarray <- SOMADenseNDArrayOpen(uri, "WRITE")
 
-      # Test resize down
-      new_shape <- c(50, 60)
+    ndarray <- SOMADenseNDArrayOpen(uri, "WRITE")
+
+    # Test resize down
+    new_shape <- c(50, 60)
+    expect_error(ndarray$resize(new_shape))
+
+    # Test writes out of old bounds
+    ndarray <- SOMADenseNDArrayOpen(uri, "WRITE")
+    mat <- create_dense_matrix_with_int_dims(300, 400)
+    expect_error(ndarray$write(mat))
+    ndarray$close()
+
+    # Test resize up
+    new_shape <- c(500, 600)
+    if (tiledbsoma:::.dense_arrays_can_have_current_domain()) {
+      expect_no_error(ndarray$resize(new_shape))
+    } else {
       expect_error(ndarray$resize(new_shape))
-
-      # Test writes out of old bounds
-      ndarray <- SOMADenseNDArrayOpen(uri, "WRITE")
-      mat <- create_dense_matrix_with_int_dims(300, 400)
-      expect_error(ndarray$write(mat))
-      ndarray$close()
-
-      # Test resize up
-      new_shape <- c(500, 600)
-      if (tiledbsoma:::.dense_arrays_can_have_current_domain()) {
-        expect_no_error(ndarray$resize(new_shape))
-      } else {
-        expect_error(ndarray$resize(new_shape))
-      }
-
-      # Test writes within new bounds
-      ndarray <- SOMADenseNDArrayOpen(uri, "WRITE")
-      mat <- create_dense_matrix_with_int_dims(300, 400)
-      if (tiledbsoma:::.dense_arrays_can_have_current_domain()) {
-        expect_no_error(ndarray$write(sm))
-      } else {
-        expect_error(ndarray$write(sm))
-      }
-      ndarray$close()
-
-      ndarray <- SOMADenseNDArrayOpen(uri)
-      coords <- list(bit64::as.integer64(c(101, 202)), bit64::as.integer64(c(3, 4)))
-      if (tiledbsoma:::.dense_arrays_can_have_current_domain()) {
-        expect_no_condition(x <- ndarray$read(coords = coords)$tables()$concat())
-      } else {
-        expect_error(x <- ndarray$read(coords = coords)$tables()$concat())
-      }
-      ndarray$close()
     }
+
+    # Test writes within new bounds
+    ndarray <- SOMADenseNDArrayOpen(uri, "WRITE")
+    mat <- create_dense_matrix_with_int_dims(300, 400)
+    if (tiledbsoma:::.dense_arrays_can_have_current_domain()) {
+      expect_no_error(ndarray$write(sm))
+    } else {
+      expect_error(ndarray$write(sm))
+    }
+    ndarray$close()
+
+    ndarray <- SOMADenseNDArrayOpen(uri)
+    coords <- list(bit64::as.integer64(c(101, 202)), bit64::as.integer64(c(3, 4)))
+    if (tiledbsoma:::.dense_arrays_can_have_current_domain()) {
+      expect_no_condition(x <- ndarray$read(coords = coords)$tables()$concat())
+    } else {
+      expect_error(x <- ndarray$read(coords = coords)$tables()$concat())
+    }
+    ndarray$close()
 
     rm(ndarray)
     gc()
