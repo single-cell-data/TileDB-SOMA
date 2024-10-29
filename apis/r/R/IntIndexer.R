@@ -3,7 +3,7 @@
 #' @description A re-indexer for unique integer indices
 #' @export
 IntIndexer <- R6::R6Class(
-  classname = 'IntIndexer',
+  classname = "IntIndexer",
   public = list(
     #' @description Create a new re-indexer
     #'
@@ -11,7 +11,7 @@ IntIndexer <- R6::R6Class(
     #'
     initialize = function(data) {
       stopifnot("'data' must be a vector of integers" = rlang::is_integerish(data, finite = TRUE) ||
-                    (inherits(data, 'integer64') && all(is.finite(data))))
+        (inherits(data, "integer64") && all(is.finite(data))))
 
       # Setup the re-indexer with data
       private$.reindexer <- reindex_create()
@@ -28,7 +28,7 @@ IntIndexer <- R6::R6Class(
     #'
     get_indexer = function(target, nomatch_na = FALSE) {
       # If `target` is an Arrow array, do Arrow handling
-      if (R6::is.R6(target) && inherits(target, c('Array', 'ChunkedArray'))) {
+      if (R6::is.R6(target) && inherits(target, c("Array", "ChunkedArray"))) {
         op <- options(arrow.int64_downcast = FALSE)
         on.exit(options(op), add = TRUE, after = FALSE)
         target <- target$as_vector()
@@ -38,7 +38,7 @@ IntIndexer <- R6::R6Class(
       }
       stopifnot(
         "'target' must be a vector or arrow array of integers" = rlang::is_integerish(target, finite = TRUE) ||
-          (inherits(target, 'integer64') && all(is.finite(target))),
+          (inherits(target, "integer64") && all(is.finite(target))),
         "'nomatch_na' must be TRUE or FALSE" = isTRUE(nomatch_na) || isFALSE(nomatch_na)
       )
       # Do vector-based re-indexing

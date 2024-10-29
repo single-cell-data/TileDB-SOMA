@@ -8,7 +8,7 @@
 #' @export
 
 ScalarMap <- R6::R6Class(
-  classname = 'ScalarMap',
+  classname = "ScalarMap",
   inherit = MappingBase,
   public = list(
     #' @param type Limit the \code{ScalarMap} to a preset type; choose from:
@@ -17,7 +17,7 @@ ScalarMap <- R6::R6Class(
     #' @return An instantiated \code{ScalarMap} object with the
     #' type set to \code{type}
     #'
-    initialize = function(type = 'any') {
+    initialize = function(type = "any") {
       private$.type <- match.arg(arg = type, choices = .SCALAR_TYPES())
     },
     #' @param key Key to set
@@ -28,7 +28,7 @@ ScalarMap <- R6::R6Class(
     #' \code{value} added as \code{key}
     #'
     set = function(key, value) {
-      if (!is.null(value) && self$type != 'any') {
+      if (!is.null(value) && self$type != "any") {
         if (!inherits(x = value, what = self$type)) {
           stop(
             "'value' must be a ",
@@ -57,5 +57,5 @@ ScalarMap <- R6::R6Class(
 )
 
 .SCALAR_TYPES <- function() {
-  return(c('any', 'numeric', 'integer', 'character', 'logical'))
+  return(c("any", "numeric", "integer", "character", "logical"))
 }

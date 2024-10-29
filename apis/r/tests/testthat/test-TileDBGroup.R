@@ -22,7 +22,7 @@ test_that("Create empty", {
   expect_true(dir.exists(uri))
   expect_true(file.exists(file.path(uri, "__group")))
   expect_true(group$exists())
-  fp = file.path(uri, "__group")
+  fp <- file.path(uri, "__group")
   expect_match(tiledb::tiledb_object_type(uri), "GROUP")
   group$close()
 })
@@ -155,7 +155,7 @@ test_that("Metadata", {
 # Existence proof test via cached global context
 # soma_context(config = c(vfs.s3.region = "us-west-2"))
 # (grp <- TileDBGroup$new(
-#   uri = 's3://cellxgene-census-public-us-west-2/cell-census/2024-07-01/soma/', 
+#   uri = 's3://cellxgene-census-public-us-west-2/cell-census/2024-07-01/soma/',
 #   internal_use_only = 'allowed_use'
 # ))
 # grp$open(mode = 'READ', internal_use_only = 'allowed_use')

@@ -8,9 +8,9 @@ write_soma.DataFrame <- function(
   uri,
   soma_parent,
   df_index = NULL,
-  index_column_names = 'soma_joinid',
+  index_column_names = "soma_joinid",
   ...,
-  ingest_mode = 'write',
+  ingest_mode = "write",
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
   relative = TRUE
@@ -21,9 +21,9 @@ write_soma.DataFrame <- function(
       stop("All columns in DataFrames must be atomic or factors", call. = FALSE)
     }
   }
-  index <- attr(x, which = 'index')
+  index <- attr(x, which = "index")
   x <- suppressWarnings(as.data.frame(x), classes = "deprecatedWarning")
-  attr(x, which = 'index') <- index
+  attr(x, which = "index") <- index
   return(write_soma(
     x = x,
     uri = uri,
@@ -51,7 +51,7 @@ write_soma.Hits <- function(
   type = NULL,
   transpose = FALSE,
   ...,
-  ingest_mode = 'write',
+  ingest_mode = "write",
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
   relative = TRUE
@@ -104,13 +104,13 @@ write_soma.SingleCellExperiment <- function(
   uri,
   ms_name = NULL,
   ...,
-  ingest_mode = 'write',
+  ingest_mode = "write",
   platform_config = NULL,
   tiledbsoma_ctx = NULL
 ) {
-  check_package('SingleCellExperiment', version = .MINIMUM_SCE_VERSION())
-  ingest_mode <- match.arg(arg = ingest_mode, choices = c('write', 'resume'))
-  if ('shape' %in% names(args <- rlang::dots_list(...))) {
+  check_package("SingleCellExperiment", version = .MINIMUM_SCE_VERSION())
+  ingest_mode <- match.arg(arg = ingest_mode, choices = c("write", "resume"))
+  if ("shape" %in% names(args <- rlang::dots_list(...))) {
     shape <- args$shape
     stopifnot(
       "'shape' must be a vector of two postiive integers" = is.null(shape) ||
@@ -122,7 +122,7 @@ write_soma.SingleCellExperiment <- function(
   ms_name <- ms_name %||% SingleCellExperiment::mainExpName(x)
 
   uri <- NextMethod(
-    'write_soma',
+    "write_soma",
     x,
     uri = uri,
     ms_name = ms_name,
@@ -133,32 +133,32 @@ write_soma.SingleCellExperiment <- function(
   )
   experiment <- SOMAExperimentOpen(
     uri = uri,
-    mode = 'WRITE',
+    mode = "WRITE",
     platform_config = platform_config,
     tiledbsoma_ctx = tiledbsoma_ctx
   )
   on.exit(expr = experiment$close(), add = TRUE, after = FALSE)
 
   ms <- SOMAMeasurementOpen(
-    file_path(experiment$uri, 'ms', ms_name),
-    mode = 'WRITE'
+    file_path(experiment$uri, "ms", ms_name),
+    mode = "WRITE"
   )
   on.exit(ms$close(), add = TRUE, after = FALSE)
 
   # Write reduced dimensions
   spdl::info("Adding reduced dimensions")
-  obsm <- if (!'obsm' %in% ms$names()) {
+  obsm <- if (!"obsm" %in% ms$names()) {
     SOMACollectionCreate(
-      uri = file_path(ms$uri, 'obsm'),
+      uri = file_path(ms$uri, "obsm"),
       ingest_mode = ingest_mode,
       platform_config = platform_config,
       tiledbsoma_ctx = tiledbsoma_ctx
     )
   } else {
-    SOMACollectionOpen(file_path(ms$uri, 'obsm'), mode = 'WRITE')
+    SOMACollectionOpen(file_path(ms$uri, "obsm"), mode = "WRITE")
   }
   withCallingHandlers(
-    .register_soma_object(obsm, soma_parent = ms, key = 'obsm'),
+    .register_soma_object(obsm, soma_parent = ms, key = "obsm"),
     existingKeyWarning = .maybe_muffle
   )
   on.exit(obsm$close(), add = TRUE, after = FALSE)
@@ -183,18 +183,18 @@ write_soma.SingleCellExperiment <- function(
   }
 
   # Write nearest-neighbor graphs
-  obsp <- if (!'obsp' %in% ms$names()) {
+  obsp <- if (!"obsp" %in% ms$names()) {
     SOMACollectionCreate(
-      uri = file_path(ms$uri, 'obsp'),
+      uri = file_path(ms$uri, "obsp"),
       ingest_mode = ingest_mode,
       platform_config = platform_config,
       tiledbsoma_ctx = tiledbsoma_ctx
     )
   } else {
-    SOMACollectionOpen(file_path(ms$uri, 'obsp'), mode = 'WRITE')
+    SOMACollectionOpen(file_path(ms$uri, "obsp"), mode = "WRITE")
   }
   withCallingHandlers(
-    .register_soma_object(obsp, soma_parent = ms, key = 'obsp'),
+    .register_soma_object(obsp, soma_parent = ms, key = "obsp"),
     existingKeyWarning = .maybe_muffle
   )
   on.exit(obsp$close(), add = TRUE, after = FALSE)
@@ -219,18 +219,18 @@ write_soma.SingleCellExperiment <- function(
   }
 
   # Write coexpression networks
-  varp <- if (!'varp' %in% ms$names()) {
+  varp <- if (!"varp" %in% ms$names()) {
     SOMACollectionCreate(
-      uri = file_path(ms$uri, 'varp'),
+      uri = file_path(ms$uri, "varp"),
       ingest_mode = ingest_mode,
       platform_config = platform_config,
       tiledbsoma_ctx = tiledbsoma_ctx
     )
   } else {
-    SOMACollectionOpen(file_path(ms$uri, 'varp'), mode = 'WRITE')
+    SOMACollectionOpen(file_path(ms$uri, "varp"), mode = "WRITE")
   }
   withCallingHandlers(
-    .register_soma_object(varp, soma_parent = ms, key = 'varp'),
+    .register_soma_object(varp, soma_parent = ms, key = "varp"),
     existingKeyWarning = .maybe_muffle
   )
   on.exit(varp$close(), add = TRUE, after = FALSE)
@@ -293,11 +293,11 @@ write_soma.SummarizedExperiment <- function(
   uri,
   ms_name,
   ...,
-  ingest_mode = 'write',
+  ingest_mode = "write",
   platform_config = NULL,
   tiledbsoma_ctx = NULL
 ) {
-  check_package('SummarizedExperiment', '1.28.0')
+  check_package("SummarizedExperiment", "1.28.0")
   stopifnot(
     "'uri' must be a single character value" = is.null(uri) ||
       is_scalar_character(uri),
@@ -305,8 +305,8 @@ write_soma.SummarizedExperiment <- function(
       nzchar(ms_name) &&
       !is.na(ms_name)
   )
-  ingest_mode <- match.arg(arg = ingest_mode, choices = c('write', 'resume'))
-  if ('shape' %in% names(args <- rlang::dots_list(...))) {
+  ingest_mode <- match.arg(arg = ingest_mode, choices = c("write", "resume"))
+  if ("shape" %in% names(args <- rlang::dots_list(...))) {
     shape <- args$shape
     stopifnot(
       "'shape' must be a vector of two postiive integers" = is.null(shape) ||
@@ -326,13 +326,13 @@ write_soma.SummarizedExperiment <- function(
 
   # Write cell-level meta data (obs)
   spdl::info("Adding colData")
-  obs_df <- .df_index(SummarizedExperiment::colData(x), axis = 'obs')
-  obs_df[[attr(obs_df, 'index')]] <- colnames(x)
+  obs_df <- .df_index(SummarizedExperiment::colData(x), axis = "obs")
+  obs_df[[attr(obs_df, "index")]] <- colnames(x)
   write_soma(
     x = obs_df,
-    uri = 'obs',
+    uri = "obs",
     soma_parent = experiment,
-    key = 'obs',
+    key = "obs",
     ingest_mode = ingest_mode,
     platform_config = platform_config,
     tiledbsoma_ctx = tiledbsoma_ctx
@@ -341,13 +341,13 @@ write_soma.SummarizedExperiment <- function(
   # Write assays
   spdl::info("Writing assays")
   expms <- SOMACollectionCreate(
-    file_path(experiment$uri, 'ms'),
+    file_path(experiment$uri, "ms"),
     ingest_mode = ingest_mode,
     platform_config = platform_config,
     tiledbsoma_ctx = tiledbsoma_ctx
   )
   withCallingHandlers(
-    expr = .register_soma_object(expms, soma_parent = experiment, key = 'ms'),
+    expr = .register_soma_object(expms, soma_parent = experiment, key = "ms"),
     existingKeyWarning = .maybe_muffle
   )
   ms_uri <- .check_soma_uri(uri = ms_name, soma_parent = expms)
@@ -359,18 +359,18 @@ write_soma.SummarizedExperiment <- function(
   )
   on.exit(ms$close(), add = TRUE, after = FALSE)
 
-  X <- if (!'X' %in% ms$names()) {
+  X <- if (!"X" %in% ms$names()) {
     SOMACollectionCreate(
-      uri = file_path(ms$uri, 'X'),
+      uri = file_path(ms$uri, "X"),
       ingest_mode = ingest_mode,
       platform_config = platform_config,
       tiledbsoma_ctx = tiledbsoma_ctx
     )
   } else {
-    SOMACollectionOpen(file_path(ms$uri, 'X'), mode = 'WRITE')
+    SOMACollectionOpen(file_path(ms$uri, "X"), mode = "WRITE")
   }
   withCallingHandlers(
-    .register_soma_object(X, soma_parent = ms, key = 'X'),
+    .register_soma_object(X, soma_parent = ms, key = "X"),
     existingKeyWarning = .maybe_muffle
   )
   on.exit(X$close(), add = TRUE, after = FALSE)
@@ -393,15 +393,15 @@ write_soma.SummarizedExperiment <- function(
 
   # Write feature-level meta data
   spdl::info("Adding rowData")
-  var_df <- .df_index(SummarizedExperiment::rowData(x), axis = 'var')
+  var_df <- .df_index(SummarizedExperiment::rowData(x), axis = "var")
   if (!is.null(rownames(x))) {
-    var_df[[attr(var_df, 'index')]] <- rownames(x)
+    var_df[[attr(var_df, "index")]] <- rownames(x)
   }
   write_soma(
     x = var_df,
-    uri = 'var',
+    uri = "var",
     soma_parent = ms,
-    key = 'var',
+    key = "var",
     ingest_mode = ingest_mode,
     platform_config = platform_config,
     tiledbsoma_ctx = tiledbsoma_ctx

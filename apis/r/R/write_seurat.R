@@ -57,18 +57,18 @@ write_soma.Assay <- function(
   uri = NULL,
   soma_parent,
   ...,
-  ingest_mode = 'write',
+  ingest_mode = "write",
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
   relative = TRUE
 ) {
-  check_package('SeuratObject', version = .MINIMUM_SEURAT_VERSION())
+  check_package("SeuratObject", version = .MINIMUM_SEURAT_VERSION())
   stopifnot(
     "'uri' must be a single character value" = is.null(uri) ||
       is_scalar_character(uri),
     "'soma_parent' must be a SOMACollection" = inherits(
       x = soma_parent,
-      what = 'SOMACollectionBase'
+      what = "SOMACollectionBase"
     ),
     "'relative' must be a single logical value" = is_scalar_logical(relative)
   )
@@ -87,7 +87,7 @@ write_soma.Assay <- function(
   shape <- rev(shape)
 
   # Create a proper URI
-  uri <- uri %||% gsub(pattern = '_$', replacement = '', x = SeuratObject::Key(x))
+  uri <- uri %||% gsub(pattern = "_$", replacement = "", x = SeuratObject::Key(x))
   uri <- .check_soma_uri(
     uri = uri,
     soma_parent = soma_parent,
@@ -101,20 +101,20 @@ write_soma.Assay <- function(
     platform_config = platform_config,
     tiledbsoma_ctx = tiledbsoma_ctx
   )
-  X <- if (!'X' %in% ms$names()) {
+  X <- if (!"X" %in% ms$names()) {
     SOMACollectionCreate(
-      uri = file_path(ms$uri, 'X'),
+      uri = file_path(ms$uri, "X"),
       ingest_mode = ingest_mode,
       platform_config = platform_config,
       tiledbsoma_ctx = tiledbsoma_ctx
     )
   } else if (isTRUE(relative)) {
-    SOMACollectionOpen(uri = file_path(ms$uri, 'X'), mode = 'WRITE')
+    SOMACollectionOpen(uri = file_path(ms$uri, "X"), mode = "WRITE")
   } else {
     ms$X
   }
   withCallingHandlers(
-    .register_soma_object(X, soma_parent = ms, key = 'X', relative = relative),
+    .register_soma_object(X, soma_parent = ms, key = "X", relative = relative),
     existingKeyWarning = .maybe_muffle
   )
   on.exit(X$close(), add = TRUE, after = FALSE)
@@ -145,7 +145,7 @@ write_soma.Assay <- function(
       )
     }
 
-    layer <- gsub(pattern = '\\.', replacement = '_', x = slot)
+    layer <- gsub(pattern = "\\.", replacement = "_", x = slot)
     spdl::info("Adding '{}' matrix as '{}'", slot, layer)
     tryCatch(
       expr = write_soma(
@@ -161,7 +161,7 @@ write_soma.Assay <- function(
         tiledbsoma_ctx = tiledbsoma_ctx
       ),
       error = function(err) {
-        if (slot == 'data') {
+        if (slot == "data") {
           stop(err)
         }
         err_to_warn(err)
@@ -172,24 +172,24 @@ write_soma.Assay <- function(
   # Write feature-level meta data
   var_df <- .df_index(
     x = x[[]],
-    alt = 'features',
-    axis = 'var',
-    prefix = 'seurat'
+    alt = "features",
+    axis = "var",
+    prefix = "seurat"
   )
-  var_df[[attr(x = var_df, which = 'index')]] <- rownames(x)
+  var_df[[attr(x = var_df, which = "index")]] <- rownames(x)
   spdl::info("Adding feature-level meta data")
   write_soma(
     x = var_df,
-    uri = 'var',
+    uri = "var",
     soma_parent = ms,
-    key = 'var',
+    key = "var",
     ingest_mode = ingest_mode,
     platform_config = platform_config,
     tiledbsoma_ctx = tiledbsoma_ctx
   )
 
   # Return
-  if (class(x)[1L] != 'Assay') {
+  if (class(x)[1L] != "Assay") {
     warning(
       paste(
         strwrap(paste0(
@@ -198,7 +198,7 @@ write_soma.Assay <- function(
           ") are not fully supported; core Assay data has been written but ",
           "additional slots have been skipped"
         )),
-        collapse = '\n'
+        collapse = "\n"
       ),
       call. = FALSE,
       immediate. = TRUE
@@ -246,17 +246,17 @@ write_soma.DimReduc <- function(
   fidx = NULL,
   nfeatures = NULL,
   ...,
-  ingest_mode = 'write',
+  ingest_mode = "write",
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
   relative = TRUE
 ) {
-  check_package('SeuratObject', version = .MINIMUM_SEURAT_VERSION())
+  check_package("SeuratObject", version = .MINIMUM_SEURAT_VERSION())
   stopifnot(
     "'uri' must be NULL" = is.null(uri),
     "'soma_parent' must be a SOMAMeasurement" = inherits(
       x = soma_parent,
-      what = 'SOMAMeasurement'
+      what = "SOMAMeasurement"
     ),
     "'fidx' must be a positive integer vector" = is.null(fidx) ||
       (rlang::is_integerish(fidx, finite = TRUE) && all(fidx > 0L)),
@@ -265,8 +265,12 @@ write_soma.DimReduc <- function(
     "'relative' must be a single logical value" = is_scalar_logical(relative)
   )
 
-  key <- tolower(gsub(pattern = '_$', replacement = '', x = SeuratObject::Key(x)))
-  key <- switch(EXPR = key, pc = 'pca', ic = 'ica', key)
+  key <- tolower(gsub(pattern = "_$", replacement = "", x = SeuratObject::Key(x)))
+  key <- switch(EXPR = key,
+    pc = "pca",
+    ic = "ica",
+    key
+  )
 
   # Find `shape` if and only if we're called from `write_soma.Seurat()`
   parents <- unique(sys.parents())
@@ -288,25 +292,25 @@ write_soma.DimReduc <- function(
   }
 
   # Create a group for `obsm,`
-  obsm <- if (!'obsm' %in% soma_parent$names()) {
+  obsm <- if (!"obsm" %in% soma_parent$names()) {
     SOMACollectionCreate(
-      uri = file_path(soma_parent$uri, 'obsm'),
+      uri = file_path(soma_parent$uri, "obsm"),
       ingest_mode = ingest_mode,
       platform_config = platform_config,
       tiledbsoma_ctx = tiledbsoma_ctx
     )
   } else if (isTRUE(relative)) {
-    SOMACollectionOpen(uri = file_path(soma_parent$uri, 'obsm'), mode = 'WRITE')
+    SOMACollectionOpen(uri = file_path(soma_parent$uri, "obsm"), mode = "WRITE")
   } else {
     soma_parent$obsm
   }
   withCallingHandlers(
-    .register_soma_object(obsm, soma_parent, key = 'obsm', relative = relative),
+    .register_soma_object(obsm, soma_parent, key = "obsm", relative = relative),
     existingKeyWarning = .maybe_muffle
   )
   on.exit(obsm$close(), add = TRUE, after = FALSE)
 
-  embed <- paste0('X_', key)
+  embed <- paste0("X_", key)
   spdl::info("Adding embeddings as {}", sQuote(embed))
 
   # Always write reductions as sparse arrays
@@ -338,40 +342,44 @@ write_soma.DimReduc <- function(
     } else if (all(is.na(fidx))) {
       "No feature index match"
     } else {
-      ''
+      ""
     }
     if (nzchar(msg)) {
       warning(
         paste(
-          strwrap(paste0(msg, ', not adding feature loadings')),
-          collapse = '\n'
+          strwrap(paste0(msg, ", not adding feature loadings")),
+          collapse = "\n"
         ),
         call. = FALSE,
         immediate. = TRUE
       )
-      loadings <- methods::new('matrix')
+      loadings <- methods::new("matrix")
     }
   }
 
   # Write feature loadings
   if (!SeuratObject::IsMatrixEmpty(loadings)) {
-    ldgs <- switch(EXPR = key, pca = 'PCs', ica = 'ICs', paste0(toupper(key), 's'))
+    ldgs <- switch(EXPR = key,
+      pca = "PCs",
+      ica = "ICs",
+      paste0(toupper(key), "s")
+    )
 
     # Create a group for `varm`
-    varm <- if (!'varm' %in% soma_parent$names()) {
+    varm <- if (!"varm" %in% soma_parent$names()) {
       SOMACollectionCreate(
-        uri = file_path(soma_parent$uri, 'varm'),
+        uri = file_path(soma_parent$uri, "varm"),
         ingest_mode = ingest_mode,
         platform_config = platform_config,
         tiledbsoma_ctx = tiledbsoma_ctx
       )
     } else if (isTRUE(relative)) {
-      SOMACollectionOpen(uri = file_path(soma_parent$uri, 'varm'), mode = 'WRITE')
+      SOMACollectionOpen(uri = file_path(soma_parent$uri, "varm"), mode = "WRITE")
     } else {
       soma_parent$varm
     }
     withCallingHandlers(
-      .register_soma_object(varm, soma_parent, key = 'varm', relative = relative),
+      .register_soma_object(varm, soma_parent, key = "varm", relative = relative),
       existingKeyWarning = .maybe_muffle
     )
     on.exit(varm$close(), add = TRUE, after = FALSE)
@@ -417,33 +425,33 @@ write_soma.Graph <- function(
   uri,
   soma_parent,
   ...,
-  ingest_mode = 'write',
+  ingest_mode = "write",
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
   relative = TRUE
 ) {
-  check_package('SeuratObject', version = .MINIMUM_SEURAT_VERSION())
+  check_package("SeuratObject", version = .MINIMUM_SEURAT_VERSION())
   stopifnot(
     "'soma_parent' must be a SOMAMeasurement" = inherits(
       x = soma_parent,
-      what = 'SOMAMeasurement'
+      what = "SOMAMeasurement"
     ),
     "'relative' must be a single logical value" = is_scalar_logical(relative)
   )
-  obsp <- if (!'obsp' %in% soma_parent$names()) {
+  obsp <- if (!"obsp" %in% soma_parent$names()) {
     SOMACollectionCreate(
-      uri = file_path(soma_parent$uri, 'obsp'),
-      ingest_mode =  ingest_mode,
+      uri = file_path(soma_parent$uri, "obsp"),
+      ingest_mode = ingest_mode,
       platform_config = platform_config,
       tiledbsoma_ctx = tiledbsoma_ctx
     )
   } else if (isTRUE(relative)) {
-    SOMACollectionOpen(uri = file_path(soma_parent$uri, 'obsp'), mode = 'WRITE')
+    SOMACollectionOpen(uri = file_path(soma_parent$uri, "obsp"), mode = "WRITE")
   } else {
     soma_parent$obsp
   }
   withCallingHandlers(
-    .register_soma_object(obsp, soma_parent, key = 'obsp', relative = relative),
+    .register_soma_object(obsp, soma_parent, key = "obsp", relative = relative),
     existingKeyWarning = .maybe_muffle
   )
   on.exit(obsp$close(), add = TRUE, after = FALSE)
@@ -464,7 +472,7 @@ write_soma.Graph <- function(
   }
 
   NextMethod(
-    generic = 'write_soma',
+    generic = "write_soma",
     object = x,
     uri = uri,
     soma_parent = obsp,
@@ -502,17 +510,17 @@ write_soma.Seurat <- function(
   x,
   uri,
   ...,
-  ingest_mode = 'write',
+  ingest_mode = "write",
   platform_config = NULL,
   tiledbsoma_ctx = NULL
 ) {
-  check_package('SeuratObject', version = .MINIMUM_SEURAT_VERSION())
+  check_package("SeuratObject", version = .MINIMUM_SEURAT_VERSION())
   stopifnot(
     "'uri' must be a single character value" = is.null(uri) ||
       (is_scalar_character(uri) && nzchar(uri))
   )
-  ingest_mode <- match.arg(arg = ingest_mode, choices = c('write', 'resume'))
-  if ('shape' %in% names(args <- rlang::dots_list(...))) {
+  ingest_mode <- match.arg(arg = ingest_mode, choices = c("write", "resume"))
+  if ("shape" %in% names(args <- rlang::dots_list(...))) {
     shape <- args$shape
     stopifnot(
       "'shape' must be a vector of two postiive integers" = is.null(shape) ||
@@ -525,9 +533,9 @@ write_soma.Seurat <- function(
   if (!is.null(shape) && any(shape < dim(x))) {
     stop(
       "Requested an array of shape (",
-      paste(shape, collapse = ', '),
+      paste(shape, collapse = ", "),
       "), but was given a Seurat object with a larger shape (",
-      paste(dim(x), collapse = ', '),
+      paste(dim(x), collapse = ", "),
       ")",
       call. = FALSE
     )
@@ -545,16 +553,16 @@ write_soma.Seurat <- function(
   spdl::info("Adding cell-level meta data")
   obs_df <- .df_index(
     x = x[[]],
-    alt = 'cells',
-    axis = 'obs',
-    prefix = 'seurat'
+    alt = "cells",
+    axis = "obs",
+    prefix = "seurat"
   )
-  obs_df[[attr(obs_df, 'index')]] <- colnames(x)
+  obs_df[[attr(obs_df, "index")]] <- colnames(x)
   write_soma(
     x = obs_df,
-    uri = 'obs',
+    uri = "obs",
     soma_parent = experiment,
-    key = 'obs',
+    key = "obs",
     ingest_mode = ingest_mode,
     platform_config = platform_config,
     tiledbsoma_ctx = tiledbsoma_ctx
@@ -562,13 +570,13 @@ write_soma.Seurat <- function(
 
   # Write assays
   expms <- SOMACollectionCreate(
-    uri = file_path(experiment$uri, 'ms'),
+    uri = file_path(experiment$uri, "ms"),
     ingest_mode = ingest_mode,
     platform_config = platform_config,
     tiledbsoma_ctx = tiledbsoma_ctx
   )
   withCallingHandlers(
-    expr = .register_soma_object(expms, soma_parent = experiment, key = 'ms'),
+    expr = .register_soma_object(expms, soma_parent = experiment, key = "ms"),
     existingKeyWarning = .maybe_muffle
   )
   on.exit(expms$close(), add = TRUE, after = FALSE)
@@ -604,7 +612,7 @@ write_soma.Seurat <- function(
   for (reduc in SeuratObject::Reductions(x)) {
     measurement <- SeuratObject::DefaultAssay(x[[reduc]])
     ms <- if (measurement %in% expms$names()) {
-      SOMAMeasurementOpen(file_path(expms$uri, measurement), 'WRITE')
+      SOMAMeasurementOpen(file_path(expms$uri, measurement), "WRITE")
     } else if (SeuratObject::IsGlobal(x[[reduc]])) {
       measurement <- SeuratObject::DefaultAssay(x)
       warning(
@@ -617,12 +625,12 @@ write_soma.Seurat <- function(
             "), adding to measurement for ",
             sQuote(measurement)
           )),
-          collapse = '\n'
+          collapse = "\n"
         ),
         call. = FALSE,
         immediate. = TRUE
       )
-      SOMAMeasurementOpen(file_path(expms$uri, measurement), 'WRITE')
+      SOMAMeasurementOpen(file_path(expms$uri, measurement), "WRITE")
     } else {
       # This should never happen
       warning(
@@ -634,7 +642,7 @@ write_soma.Seurat <- function(
             sQuote(measurement),
             "), skipping"
           )),
-          collapse = '\n'
+          collapse = "\n"
         ),
         call. = FALSE,
         immediate. = TRUE
@@ -715,13 +723,13 @@ write_soma.Seurat <- function(
 
   # Add extra Seurat data
   expuns <- SOMACollectionCreate(
-    uri = file_path(experiment$uri, 'uns'),
+    uri = file_path(experiment$uri, "uns"),
     ingest_mode = ingest_mode,
     platform_config = platform_config,
     tiledbsoma_ctx = tiledbsoma_ctx
   )
   withCallingHandlers(
-    expr = .register_soma_object(expuns, soma_parent = experiment, key = 'uns'),
+    expr = .register_soma_object(expuns, soma_parent = experiment, key = "uns"),
     existingKeyWarning = .maybe_muffle
   )
   on.exit(expuns$close(), add = TRUE, after = FALSE)
@@ -758,22 +766,22 @@ write_soma.SeuratCommand <- function(
   uri = NULL,
   soma_parent,
   ...,
-  ingest_mode = 'write',
+  ingest_mode = "write",
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
   relative = TRUE
 ) {
-  check_package('SeuratObject', version = .MINIMUM_SEURAT_VERSION())
-  check_package('jsonlite')
+  check_package("SeuratObject", version = .MINIMUM_SEURAT_VERSION())
+  check_package("jsonlite")
   stopifnot(
     "'uri' must be a single character value" = is.null(uri) ||
       (is_scalar_character(uri) && nzchar(uri)),
-    "'soma_parent' must be a SOMACollection" = inherits(soma_parent, what = 'SOMACollection'),
+    "'soma_parent' must be a SOMACollection" = inherits(soma_parent, what = "SOMACollection"),
     "'relative' must be a single logical value" = is_scalar_logical(relative)
   )
 
-  key <- 'seurat_commands'
-  uri <- uri %||% methods::slot(x, name = 'name')
+  key <- "seurat_commands"
+  uri <- uri %||% methods::slot(x, name = "name")
 
   # Create a group for command logs
   logs_uri <- .check_soma_uri(key, soma_parent = soma_parent, relative = relative)
@@ -789,7 +797,7 @@ write_soma.SeuratCommand <- function(
     logs
   } else {
     logs <- soma_parent$get(key)
-    if (!inherits(logs, 'SOMACollection')) {
+    if (!inherits(logs, "SOMACollection")) {
       stop(
         "Existing ",
         class(logs)[1L],
@@ -801,7 +809,7 @@ write_soma.SeuratCommand <- function(
     }
     if (isTRUE(relative)) {
       logs$close()
-      logs <- SOMACollectionOpen(logs_uri, mode = 'WRITE')
+      logs <- SOMACollectionOpen(logs_uri, mode = "WRITE")
     }
     spdl::info("Found existing group for command logs")
     logs$reopen("WRITE")
@@ -821,11 +829,11 @@ write_soma.SeuratCommand <- function(
     # - numeric -> hex double precision (`sprintf("%a")`)
     # - hex double precision -> JSON
     # for lossless timestamp encoding in JSON
-    if (i == 'time.stamp') {
+    if (i == "time.stamp") {
       ts <- sapply(
         unclass(as.POSIXlt(
           xlist[[i]],
-          tz = attr(xlist[[i]], 'tzone', exact = TRUE) %||% Sys.timezone()
+          tz = attr(xlist[[i]], "tzone", exact = TRUE) %||% Sys.timezone()
         )),
         .encode_as_char,
         simplify = FALSE,
@@ -841,7 +849,7 @@ write_soma.SeuratCommand <- function(
   spdl::info("Encoding command log as JSON")
   enc <- as.character(jsonlite::toJSON(
     xlist,
-    null = 'null',
+    null = "null",
     auto_unbox = TRUE
   ))
 

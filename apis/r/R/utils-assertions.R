@@ -36,7 +36,7 @@ is_matrix <- function(x) {
 }
 
 is_vector_or_int64 <- function(x) {
-    is.vector(x) || inherits(x, "integer64")
+  is.vector(x) || inherits(x, "integer64")
 }
 
 has_dimnames <- function(x) {
@@ -55,7 +55,7 @@ check_package <- function(package, version = NULL, quietly = FALSE) {
     is_scalar_character(package),
     is.null(version) ||
       is_scalar_character(version) ||
-      (inherits(version, 'numeric_version') && length(version) == 1L),
+      (inherits(version, "numeric_version") && length(version) == 1L),
     is_scalar_logical(quietly)
   )
   checks <- c(
@@ -74,17 +74,17 @@ check_package <- function(package, version = NULL, quietly = FALSE) {
   if (isTRUE(quietly)) {
     return(invisible(all(checks)))
   }
-  if (!checks['installed']) {
+  if (!checks["installed"]) {
     stop(errorCondition(
       message = paste(sQuote(package), "must be installed"),
-      class = c('packageNotFoundError', 'packageCheckError'),
+      class = c("packageNotFoundError", "packageCheckError"),
       call = NULL
     ))
   }
-  if (!checks['version']) {
+  if (!checks["version"]) {
     stop(errorCondition(
       message = paste(sQuote(package), "must be version", version, "or higher"),
-      class = c('packageVersionError', 'packageCheckError'),
+      class = c("packageVersionError", "packageCheckError"),
       call = NULL
     ))
   }
@@ -126,7 +126,9 @@ assert_subset <- function(x, y, type = "value") {
 #' @noRd
 validate_read_coords <- function(coords, dimnames = NULL, schema = NULL) {
   # NULL is a valid value
-  if (is.null(coords)) return(coords)
+  if (is.null(coords)) {
+    return(coords)
+  }
 
   # If coords is a vector, wrap it in a list
   if (is.atomic(coords)) coords <- list(coords)
@@ -150,7 +152,9 @@ validate_read_coords <- function(coords, dimnames = NULL, schema = NULL) {
     # are attributes and which are dimensions.
     if (!is.null(schema)) {
       stop(
-      "'dimnames' must be provided with a 'schema'", call. = FALSE)
+        "'dimnames' must be provided with a 'schema'",
+        call. = FALSE
+      )
     }
   } else {
     #
@@ -182,7 +186,6 @@ validate_read_coords <- function(coords, dimnames = NULL, schema = NULL) {
         coords[int64_dims] <- recursively_make_integer64(coords[int64_dims])
       }
     }
-
   }
 
   coords
@@ -194,7 +197,7 @@ validate_read_value_filter <- function(value_filter) {
   stopifnot(
     "'value_filter' must be a scalar character" =
       is.null(value_filter) || is_scalar_character(value_filter)
-    )
+  )
   value_filter
 }
 
@@ -203,18 +206,18 @@ validate_read_value_filter <- function(value_filter) {
 #' This is needed as we may receive (named or unnamed) list and/or plain vectors
 #' @noRd
 recursively_make_integer64 <- function(x) {
-    if (is.null(x) || is.character(x) || is.factor(x) || is.ordered(x)) {
-        x 	# do nothing
-    } else if (is.list(x)) {
-        for (i in seq_along(x)) {
-            x[[i]] <- recursively_make_integer64(x[[i]])
-        }
-    } else if (is.integer(x) || is.double(x)) {
-        x <- bit64::as.integer64(x)
-    } else {
-        warning("encountered ", class(x))
+  if (is.null(x) || is.character(x) || is.factor(x) || is.ordered(x)) {
+    x # do nothing
+  } else if (is.list(x)) {
+    for (i in seq_along(x)) {
+      x[[i]] <- recursively_make_integer64(x[[i]])
     }
-    x
+  } else if (is.integer(x) || is.double(x)) {
+    x <- bit64::as.integer64(x)
+  } else {
+    warning("encountered ", class(x))
+  }
+  x
 }
 
 #' Warn if using a SOMADenseNDArray

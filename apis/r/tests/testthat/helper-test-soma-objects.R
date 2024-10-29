@@ -62,7 +62,6 @@ create_and_populate_var <- function(
   factors = FALSE,
   mode = NULL
 ) {
-
   tbl <- arrow::arrow_table(
     soma_joinid = bit64::seq.integer64(from = 0L, to = nrows - 1L),
     quux = as.character(seq.int(nrows) + 1000L),
@@ -156,7 +155,6 @@ create_and_populate_experiment <- function(
   factors = FALSE,
   mode = NULL
 ) {
-
   stopifnot(
     "'obsm_layers' must be a named integer vector" = is.null(obsm_layers) ||
       (rlang::is_integerish(obsm_layers) && rlang::is_named(obsm_layers) && all(obsm_layers > 0L)),
@@ -200,9 +198,9 @@ create_and_populate_experiment <- function(
   if (rlang::is_integerish(obsm_layers)) {
     obsm <- SOMACollectionCreate(file.path(ms_rna$uri, "obsm"))
     for (layer in names(obsm_layers)) {
-      key <- gsub(pattern = '^dense:', replacement = '', x = layer)
+      key <- gsub(pattern = "^dense:", replacement = "", x = layer)
       shape <- c(n_obs, obsm_layers[layer])
-      if (grepl(pattern = '^dense:', x = layer)) {
+      if (grepl(pattern = "^dense:", x = layer)) {
         obsm$add_new_dense_ndarray(
           key = key,
           type = arrow::int32(),
@@ -232,9 +230,9 @@ create_and_populate_experiment <- function(
   if (rlang::is_integerish(varm_layers)) {
     varm <- SOMACollectionCreate(file.path(ms_rna$uri, "varm"))
     for (layer in names(varm_layers)) {
-      key <- gsub(pattern = '^dense:', replacement = '', x = layer)
+      key <- gsub(pattern = "^dense:", replacement = "", x = layer)
       shape <- c(n_var, varm_layers[layer])
-      if (grepl(pattern = '^dense:', x = layer)) {
+      if (grepl(pattern = "^dense:", x = layer)) {
         varm$add_new_dense_ndarray(
           key = key,
           type = arrow::int32(),
@@ -323,7 +321,6 @@ create_and_populate_experiment <- function(
 #  2147483647    0      ...    0          |    3
 
 create_and_populate_32bit_sparse_nd_array <- function(uri) {
-
   df <- data.frame(
     soma_dim_0 = bit64::as.integer64(c(0, 2^31 - 2, 2^31 - 1)),
     soma_dim_1 = bit64::as.integer64(c(0, 2^31 - 2, 2^31 - 1)),

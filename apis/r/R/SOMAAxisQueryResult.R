@@ -21,7 +21,6 @@ SOMAAxisQueryResult <- R6Class(
       private$.X_layers <- X_layers
     }
   ),
-
   active = list(
     #' @field obs [`arrow::Table`] containing `obs` query slice.
     obs = function(value) {
@@ -42,7 +41,6 @@ SOMAAxisQueryResult <- R6Class(
       private$.X_layers
     }
   ),
-
   private = list(
     .obs = NULL,
     .var = NULL,

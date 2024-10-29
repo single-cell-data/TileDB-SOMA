@@ -5,7 +5,7 @@
 #' @export
 
 SOMATileDBContext <- R6::R6Class(
-  classname = 'SOMATileDBContext',
+  classname = "SOMATileDBContext",
   inherit = SOMAContextBase,
   public = list(
     #' @template param-config
@@ -31,7 +31,7 @@ SOMATileDBContext <- R6::R6Class(
         "'config' must be a character vector" = !length(config) || is.character(config),
         "'config' must be named" = !length(config) || is_named(config, allow_empty = FALSE)
       )
-      config['sm.mem.reader.sparse_global_order.ratio_array_data'] <- '0.3'
+      config["sm.mem.reader.sparse_global_order.ratio_array_data"] <- "0.3"
       # Add the TileDB context
       cfg <- tiledb::tiledb_config()
       for (opt in names(config)) {
@@ -115,7 +115,7 @@ SOMATileDBContext <- R6::R6Class(
   private = list(
     .tiledb_ctx = NULL,
     .tiledb_ctx_names = function() {
-      if (!inherits(x = private$.tiledb_ctx, what = 'tiledb_ctx')) {
+      if (!inherits(x = private$.tiledb_ctx, what = "tiledb_ctx")) {
         return(NULL)
       }
       return(tryCatch(

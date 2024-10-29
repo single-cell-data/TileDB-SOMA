@@ -179,6 +179,7 @@ Add a new SOMA dataframe to this collection. (lifecycle: maturing)
   key,
   schema,
   index_column_names,
+  domain,
   platform_config = NULL
 )}\if{html}{\out{</div>}}
 }
@@ -191,6 +192,8 @@ Add a new SOMA dataframe to this collection. (lifecycle: maturing)
 \item{\code{schema}}{Arrow schema argument passed on to DataFrame$create()}
 
 \item{\code{index_column_names}}{Index column names passed on to DataFrame$create()}
+
+\item{\code{domain}}{As in \code{SOMADataFrameCreate}.}
 
 \item{\code{platform_config}}{A \link[tiledbsoma:PlatformConfig]{platform configuration}
 object}
