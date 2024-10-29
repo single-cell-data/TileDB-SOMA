@@ -39,12 +39,35 @@ TileDBObject <- R6::R6Class(
       private$.tiledb_platform_config <- platform_config
 
       # Set context
-      tiledbsoma_ctx <- tiledbsoma_ctx %||% SOMATileDBContext$new()
-      if (!inherits(x = tiledbsoma_ctx, what = "SOMATileDBContext")) {
-        stop("'tiledbsoma_ctx' must be a SOMATileDBContext object", call. = FALSE)
+      if (!is.null(x = tiledbsoma_ctx)) {
+        if (!inherits(x = tiledbsoma_ctx, what = 'SOMATileDBContext')) {
+          stop(
+            "'tiledbsoma_ctx' must be a SOMATileDBContext object",
+            call. = FALSE
+          )
+        }
+        # TODO: Deprecate tiledbsoma_ctx in favor of soma_context
+        # warning("'tiledbsoma_ctx' is deprecated, use 'soma_context' instead")
+        # Set the old context
+        private$.tiledbsoma_ctx <- tiledbsoma_ctx
+        private$.tiledb_ctx <- self$tiledbsoma_ctx$context()
+        # Also plumb through to the new context
+        if (!is.null(soma_context)) {
+          warning(
+            "Both 'soma_context' and 'tiledbsoma_ctx' were provided,",
+            "using 'soma_context' only"
+          )
+        } else {
+          # why we named the parameter and function the same thing is beyond me
+          soma_context <- tiledbsoma::soma_context(
+            config = unlist(tiledbsoma_ctx$to_list())
+          )
+        }
+      } else {
+        tiledbsoma_ctx <- SOMATileDBContext$new()
+        private$.tiledbsoma_ctx <- tiledbsoma_ctx
+        private$.tiledb_ctx <- self$tiledbsoma_ctx$context()
       }
-      private$.tiledbsoma_ctx <- tiledbsoma_ctx
-      private$.tiledb_ctx <- self$tiledbsoma_ctx$context()
 
       # TODO: re-enable once new UX is worked out
       # soma_context <- soma_context %||% soma_context()
