@@ -1665,14 +1665,14 @@ void SOMAArray::_set_shape_helper(
         // Upgrading an array to install a current domain
         if (!_get_current_domain().is_empty()) {
             throw TileDBSOMAError(fmt::format(
-                "{}: array must not already have a shape",
+                "{}: array must not already have a shape: please upgrade it",
                 function_name_for_messages));
         }
     } else {
         // Expanding an array's current domain
         if (_get_current_domain().is_empty()) {
             throw TileDBSOMAError(fmt::format(
-                "{} array must already have a shape",
+                "{} array must already have a shape: please upgrade it",
                 function_name_for_messages));
         }
     }

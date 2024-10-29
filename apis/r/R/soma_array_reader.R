@@ -25,38 +25,54 @@
 #' z <- soma_array_reader(uri)
 #' arrow::RecordBatch$import_from_c(z$array_data, z$schema)
 #' }
+#'
 #' @noRd
-soma_array_reader <- function(uri, colnames = NULL, qc = NULL, dim_points = NULL, dim_ranges = NULL,
-                              batch_size = "auto", result_order = "auto", loglevel = "auto",
-                              soma_context = NULL, timestamprange = NULL) {
+#'
+soma_array_reader <- function(
+  uri,
+  colnames = NULL,
+  qc = NULL,
+  dim_points = NULL,
+  dim_ranges = NULL,
+  batch_size = "auto",
+  result_order = "auto",
+  loglevel = "auto",
+  soma_context = NULL,
+  timestamprange = NULL
+) {
+  stopifnot(
+    "'uri' must be character" = is.character(uri),
+    "'colnames' must be character or NULL" = is_character_or_null(colnames),
+    "'qc' must be a query condition object pointer or NULL" =
+    # inherits(qc,"tiledb_query_condition") || is.null(qc),
+      is(qc, "externalptr") || is.null(qc),
+    "'dim_points' must be a named list or NULL" =
+      is_named_list(dim_points) || is.null(dim_points),
+    "'dim_ranges' must be a named list or NULL" =
+      is_named_list(dim_ranges) || is.null(dim_ranges),
+    "'batch_size' must be character" = is.character(batch_size),
+    "'result_order' must be character" = is.character(result_order),
+    "'loglevel' must be character" = is.character(loglevel),
+    "'soma_context' must be external pointer or NULL" =
+      is.null(soma_context) || inherits(soma_context, "externalptr")
+  )
 
-    stopifnot("'uri' must be character" = is.character(uri),
-              "'colnames' must be character or NULL" = is_character_or_null(colnames),
-              "'qc' must be a query condition object pointer or NULL" =
-                  #inherits(qc,"tiledb_query_condition") || is.null(qc),
-                  is(qc, "externalptr") || is.null(qc),
-              "'dim_points' must be a named list or NULL" =
-                  is_named_list(dim_points) || is.null(dim_points),
-              "'dim_ranges' must be a named list or NULL" =
-                  is_named_list(dim_ranges) || is.null(dim_ranges),
-              "'batch_size' must be character" = is.character(batch_size),
-              "'result_order' must be character" = is.character(result_order),
-              "'loglevel' must be character" = is.character(loglevel),
-              "'soma_context' must be external pointer or NULL" =
-                  is.null(soma_context) || inherits(soma_context, "externalptr"))
-
-    if (!is.null(dim_points)) {
-        for (i in seq_along(dim_points)) {
-            if (is_arrow_array(dim_points[[i]])) {
-                obj <- dim_points[[i]]
-                dim_points[[i]] <- obj$as_vector()
-            }
-        }
+  if (!is.null(dim_points)) {
+    for (i in seq_along(dim_points)) {
+      if (is_arrow_array(dim_points[[i]])) {
+        obj <- dim_points[[i]]
+        dim_points[[i]] <- obj$as_vector()
+      }
     }
+  }
 
-    if (is.null(soma_context)) soma_context <- soma_context()  # package-level cached instance
-    spdl::debug("[soma_array_reader] calling soma_array_reader_impl ({},{}",
-                timestamprange[1], timestamprange[2])
-    soma_array_reader_impl(uri, soma_context, colnames, qc, dim_points, dim_ranges, batch_size,
-                           result_order, loglevel, timestamprange)
+  if (is.null(soma_context)) soma_context <- soma_context() # package-level cached instance
+  spdl::debug(
+    "[soma_array_reader] calling soma_array_reader_impl ({},{}",
+    timestamprange[1], timestamprange[2]
+  )
+  soma_array_reader_impl(
+    uri, soma_context, colnames, qc, dim_points, dim_ranges, batch_size,
+    result_order, loglevel, timestamprange
+  )
 }

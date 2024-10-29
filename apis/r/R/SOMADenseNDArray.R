@@ -23,7 +23,6 @@
 SOMADenseNDArray <- R6::R6Class(
   classname = "SOMADenseNDArray",
   inherit = SOMANDArrayBase,
-
   public = list(
 
     #' @description Read as an 'arrow::Table' (lifecycle: maturing)
@@ -46,8 +45,10 @@ SOMADenseNDArray <- R6::R6Class(
 
       if (is.null(coords)) {
         # These are 0-up: add 1 for R use
-        ned <- self$non_empty_domain(max_only=TRUE)
-        coords <- lapply(X=as.integer(ned), FUN=function(x){0:x})
+        ned <- self$non_empty_domain(max_only = TRUE)
+        coords <- lapply(X = as.integer(ned), FUN = function(x) {
+          0:x
+        })
       }
       coords <- private$.convert_coords(coords)
 
@@ -56,12 +57,14 @@ SOMADenseNDArray <- R6::R6Class(
         self$tiledb_timestamp %||% "now"
       )
 
-      rl <- soma_array_reader(uri = uri,
-                              dim_points = coords,
-                              result_order = result_order,
-                              timestamprange = self$.tiledb_timestamp_range,
-                              soma_context = private$.soma_context,
-                              loglevel = log_level)
+      rl <- soma_array_reader(
+        uri = uri,
+        dim_points = coords,
+        result_order = result_order,
+        timestamprange = self$.tiledb_timestamp_range,
+        soma_context = private$.soma_context,
+        loglevel = log_level
+      )
 
       soma_array_to_arrow_table(rl)
     },
@@ -83,11 +86,13 @@ SOMADenseNDArray <- R6::R6Class(
       ndim <- self$ndim()
       attrnames <- self$attrnames()
 
-      stopifnot("Array must have two dimensions" = ndim == 2,
-                "Array must contain column 'soma_data'" = all.equal("soma_data", attrnames))
+      stopifnot(
+        "Array must have two dimensions" = ndim == 2,
+        "Array must contain column 'soma_data'" = all.equal("soma_data", attrnames)
+      )
 
       if (is.null(coords)) {
-        ned <- self$non_empty_domain(max_only=TRUE)
+        ned <- self$non_empty_domain(max_only = TRUE)
         # These are 0-up: add 1 for R use
         nrow <- as.numeric(ned[[1]]) + 1
         ncol <- as.numeric(ned[[2]]) + 1
@@ -98,9 +103,9 @@ SOMADenseNDArray <- R6::R6Class(
 
       tbl <- self$read_arrow_table(coords = coords, result_order = result_order, log_level = log_level)
       m <- matrix(as.numeric(tbl$GetColumnByName("soma_data")),
-                  nrow = nrow, ncol = ncol,
-                  byrow = result_order == "ROW_MAJOR")
-
+        nrow = nrow, ncol = ncol,
+        byrow = result_order == "ROW_MAJOR"
+      )
     },
 
     #' @description Write matrix data to the array. (lifecycle: maturing)
@@ -133,7 +138,7 @@ SOMADenseNDArray <- R6::R6Class(
 
       ## the 'soma_data' data type may not have been cached, and if so we need to fetch it
       if (is.null(private$.type)) {
-          private$.type <- self$schema()[["soma_data"]]$type
+        private$.type <- self$schema()[["soma_data"]]$type
       }
 
       arr <- self$object
@@ -146,7 +151,7 @@ SOMADenseNDArray <- R6::R6Class(
       naap <- nanoarrow::nanoarrow_allocate_array()
       nasp <- nanoarrow::nanoarrow_allocate_schema()
       arrow::as_record_batch(tbl)$export_to_c(naap, nasp)
-      #arr[] <- values
+      # arr[] <- values
       writeArrayFromArrow(
         uri = self$uri,
         naap = naap,
@@ -160,11 +165,10 @@ SOMADenseNDArray <- R6::R6Class(
 
       # tiledb-r always closes the array after a write operation so we need to
       # manually reopen it until close-on-write is optional
-      #self$open("WRITE", internal_use_only = "allowed_use")
+      # self$open("WRITE", internal_use_only = "allowed_use")
       invisible(self)
     }
   ),
-
   private = list(
     .is_sparse = FALSE,
 

@@ -8,15 +8,15 @@ so_msg <- function(version) {
 
 test_that("Load Seurat object from ExperimentQuery mechanics", {
   skip_if(!extended_tests() || covr_tests())
-  skip_if_not_installed('SeuratObject', .MINIMUM_SEURAT_VERSION('c'))
-  so_version <- utils::packageVersion('SeuratObject')
+  skip_if_not_installed("SeuratObject", .MINIMUM_SEURAT_VERSION("c"))
+  so_version <- utils::packageVersion("SeuratObject")
   skip_if_not(
-    (so_version >= .MINIMUM_SEURAT_VERSION() && so_version < '5.0.0') ||
-      so_version >= '5.0.0.9003',
+    (so_version >= .MINIMUM_SEURAT_VERSION() && so_version < "5.0.0") ||
+      so_version >= "5.0.0.9003",
     message = so_msg(so_version)
   )
 
-  uri <- tempfile(pattern="seurat-experiment-query-whole")
+  uri <- tempfile(pattern = "seurat-experiment-query-whole")
   n_obs <- 20L
   n_var <- 10L
   n_pcs <- 50L
@@ -28,7 +28,7 @@ test_that("Load Seurat object from ExperimentQuery mechanics", {
     X_layer_names = c("counts", "logcounts"),
     obsm_layers = c(X_pca = n_pcs, X_umap = n_umaps),
     varm_layers = c(PCs = n_pcs),
-    obsp_layer_names = 'connectivities',
+    obsp_layer_names = "connectivities",
     # No varp in Seurat
     mode = "READ"
   )
@@ -40,91 +40,91 @@ test_that("Load Seurat object from ExperimentQuery mechanics", {
     measurement_name = "RNA"
   )
   expect_no_condition(obj <- query$to_seurat())
-  expect_s4_class(obj, 'Seurat')
+  expect_s4_class(obj, "Seurat")
   expect_identical(dim(obj), c(n_var, n_obs))
-  expect_identical(rownames(obj), paste0('feature', query$var_joinids()$as_vector()))
-  expect_identical(colnames(obj), paste0('cell', query$obs_joinids()$as_vector()))
+  expect_identical(rownames(obj), paste0("feature", query$var_joinids()$as_vector()))
+  expect_identical(colnames(obj), paste0("cell", query$obs_joinids()$as_vector()))
   expect_true(all(query$obs_df$attrnames() %in% names(obj[[]])))
-  expect_identical(SeuratObject::Assays(obj), 'RNA')
-  expect_s4_class(rna <- obj[['RNA']], 'Assay')
+  expect_identical(SeuratObject::Assays(obj), "RNA")
+  expect_s4_class(rna <- obj[["RNA"]], "Assay")
   expect_identical(rownames(rna), rownames(obj))
   expect_identical(colnames(rna), colnames(obj))
   expect_identical(
     lapply(list(SeuratObject::Reductions(obj)), sort),
-    lapply(list(c('pca', 'umap')), sort)
+    lapply(list(c("pca", "umap")), sort)
   )
-  expect_s4_class(pca <- obj[['pca']], 'DimReduc')
+  expect_s4_class(pca <- obj[["pca"]], "DimReduc")
   expect_identical(SeuratObject::Cells(pca), colnames(obj))
   expect_identical(rownames(SeuratObject::Loadings(pca)), rownames(obj))
   expect_identical(ncol(pca), n_pcs)
-  expect_s4_class(umap <- obj[['umap']], 'DimReduc')
+  expect_s4_class(umap <- obj[["umap"]], "DimReduc")
   expect_identical(SeuratObject::Cells(umap), colnames(obj))
   expect_identical(ncol(umap), n_umaps)
   expect_true(SeuratObject::IsMatrixEmpty(SeuratObject::Loadings(umap)))
-  expect_identical(SeuratObject::Graphs(obj), 'connectivities')
-  expect_s4_class(graph <- obj[['connectivities']], 'Graph')
+  expect_identical(SeuratObject::Graphs(obj), "connectivities")
+  expect_s4_class(graph <- obj[["connectivities"]], "Graph")
   expect_identical(dim(graph), c(n_obs, n_obs))
   expect_identical(rownames(graph), colnames(obj))
   expect_identical(colnames(graph), colnames(obj))
 
   # Test named
   expect_no_condition(obj <- query$to_seurat(
-    obs_index = 'string_column',
-    var_index = 'quux'
+    obs_index = "string_column",
+    var_index = "quux"
   ))
-  expect_s4_class(obj, 'Seurat')
+  expect_s4_class(obj, "Seurat")
   expect_identical(dim(obj), c(n_var, n_obs))
   expect_identical(
     rownames(obj),
-    query$var('quux')$concat()$GetColumnByName('quux')$as_vector()
+    query$var("quux")$concat()$GetColumnByName("quux")$as_vector()
   )
   expect_identical(
     colnames(obj),
-    query$obs('string_column')$concat()$GetColumnByName('string_column')$as_vector()
+    query$obs("string_column")$concat()$GetColumnByName("string_column")$as_vector()
   )
-  expect_identical(SeuratObject::Assays(obj), 'RNA')
+  expect_identical(SeuratObject::Assays(obj), "RNA")
   expect_false(all(query$obs_df$attrnames() %in% names(obj[[]])))
-  expect_true(all(setdiff(query$obs_df$attrnames(), 'string_column') %in% names(obj[[]])))
-  expect_s4_class(rna <- obj[['RNA']], 'Assay')
+  expect_true(all(setdiff(query$obs_df$attrnames(), "string_column") %in% names(obj[[]])))
+  expect_s4_class(rna <- obj[["RNA"]], "Assay")
   expect_identical(rownames(rna), rownames(obj))
   expect_identical(colnames(rna), colnames(obj))
   expect_identical(
     lapply(list(SeuratObject::Reductions(obj)), sort),
-    lapply(list(c('pca', 'umap')), sort)
+    lapply(list(c("pca", "umap")), sort)
   )
-  expect_s4_class(pca <- obj[['pca']], 'DimReduc')
+  expect_s4_class(pca <- obj[["pca"]], "DimReduc")
   expect_identical(SeuratObject::Cells(pca), colnames(obj))
   expect_identical(rownames(SeuratObject::Loadings(pca)), rownames(obj))
   expect_identical(ncol(pca), n_pcs)
-  expect_s4_class(umap <- obj[['umap']], 'DimReduc')
+  expect_s4_class(umap <- obj[["umap"]], "DimReduc")
   expect_identical(SeuratObject::Cells(umap), colnames(obj))
   expect_identical(ncol(umap), n_umaps)
   expect_true(SeuratObject::IsMatrixEmpty(SeuratObject::Loadings(umap)))
-  expect_identical(SeuratObject::Graphs(obj), 'connectivities')
-  expect_s4_class(graph <- obj[['connectivities']], 'Graph')
+  expect_identical(SeuratObject::Graphs(obj), "connectivities")
+  expect_s4_class(graph <- obj[["connectivities"]], "Graph")
   expect_identical(dim(graph), c(n_obs, n_obs))
   expect_identical(rownames(graph), colnames(obj))
   expect_identical(colnames(graph), colnames(obj))
 
   # Test `X_layers`
-  expect_no_condition(obj <- query$to_seurat(c(counts = 'counts')))
+  expect_no_condition(obj <- query$to_seurat(c(counts = "counts")))
   expect_s4_class(
-    counts <- SeuratObject::GetAssayData(obj[['RNA']], 'counts'),
-    'dgCMatrix'
+    counts <- SeuratObject::GetAssayData(obj[["RNA"]], "counts"),
+    "dgCMatrix"
   )
   expect_s4_class(
-    data <- SeuratObject::GetAssayData(obj[['RNA']], 'data'),
-    'dgCMatrix'
+    data <- SeuratObject::GetAssayData(obj[["RNA"]], "data"),
+    "dgCMatrix"
   )
   expect_identical(counts, data)
-  expect_no_condition(obj <- query$to_seurat(c(data = 'logcounts')))
+  expect_no_condition(obj <- query$to_seurat(c(data = "logcounts")))
   expect_s4_class(
-    SeuratObject::GetAssayData(obj[['RNA']], 'data'),
-    'dgCMatrix'
+    SeuratObject::GetAssayData(obj[["RNA"]], "data"),
+    "dgCMatrix"
   )
   expect_true(SeuratObject::IsMatrixEmpty(SeuratObject::GetAssayData(
-    obj[['RNA']],
-    'counts'
+    obj[["RNA"]],
+    "counts"
   )))
 
   # Test suppress reductions
@@ -132,17 +132,17 @@ test_that("Load Seurat object from ExperimentQuery mechanics", {
   expect_length(SeuratObject::Reductions(obj), 0L)
   expect_no_condition(obj <- query$to_seurat(obsm_layers = NA))
   expect_length(SeuratObject::Reductions(obj), 0L)
-  expect_no_condition(obj <- query$to_seurat(obsm_layers = 'umap'))
-  expect_identical(SeuratObject::Reductions(obj), 'umap')
-  expect_error(obj[['pca']])
+  expect_no_condition(obj <- query$to_seurat(obsm_layers = "umap"))
+  expect_identical(SeuratObject::Reductions(obj), "umap")
+  expect_error(obj[["pca"]])
 
   # Test suppress loadings
   expect_no_condition(obj <- query$to_seurat(varm_layers = FALSE))
   expect_identical(
     lapply(list(SeuratObject::Reductions(obj)), sort),
-    lapply(list(c('pca', 'umap')), sort)
+    lapply(list(c("pca", "umap")), sort)
   )
-  expect_true(SeuratObject::IsMatrixEmpty(SeuratObject::Loadings(obj[['pca']])))
+  expect_true(SeuratObject::IsMatrixEmpty(SeuratObject::Loadings(obj[["pca"]])))
 
   # Test suppress graphs
   expect_no_condition(obj <- query$to_seurat(obsp_layers = FALSE))
@@ -156,19 +156,19 @@ test_that("Load Seurat object from ExperimentQuery mechanics", {
   expect_error(query$to_seurat(NULL))
   expect_error(query$to_seurat(FALSE))
   expect_error(query$to_seurat(1))
-  expect_error(query$to_seurat('counts'))
-  expect_error(query$to_seurat(unlist(list(counts = 'counts', 'logcounts'))))
-  expect_error(query$to_seurat(list(counts = 'counts', data = 'logcounts')))
-  expect_error(query$to_seurat(c(a = 'counts')))
-  expect_error(query$to_seurat(c(scale.data = 'counts')))
-  expect_error(query$to_seurat(c(data = 'tomato')))
+  expect_error(query$to_seurat("counts"))
+  expect_error(query$to_seurat(unlist(list(counts = "counts", "logcounts"))))
+  expect_error(query$to_seurat(list(counts = "counts", data = "logcounts")))
+  expect_error(query$to_seurat(c(a = "counts")))
+  expect_error(query$to_seurat(c(scale.data = "counts")))
+  expect_error(query$to_seurat(c(data = "tomato")))
 
   # Test `obs_index` assertions
   expect_error(query$to_seurat(obs_index = FALSE))
   expect_error(query$to_seurat(obs_index = NA_character_))
   expect_error(query$to_seurat(obs_index = 1))
-  expect_error(query$to_seurat(obs_index = c('string_column', 'int_column')))
-  expect_error(query$to_seurat(obs_index = 'tomato'))
+  expect_error(query$to_seurat(obs_index = c("string_column", "int_column")))
+  expect_error(query$to_seurat(obs_index = "tomato"))
 
   # Test `obs_column_names` assertions
   expect_error(query$to_seurat(obs_column_names = 1L))
@@ -177,34 +177,34 @@ test_that("Load Seurat object from ExperimentQuery mechanics", {
     NA_character_
   )))
   expect_error(query$to_seurat(obs_column_names = c(TRUE, FALSE)))
-  expect_error(query$to_seurat(obs_column_names = 'tomato'))
+  expect_error(query$to_seurat(obs_column_names = "tomato"))
 
   # Test `obsm_layers` assertions
   expect_error(query$to_seurat(obsm_layers = 1L))
-  expect_warning(query$to_seurat(obsm_layers = 'tomato'))
+  expect_warning(query$to_seurat(obsm_layers = "tomato"))
 
   # Test `varm_layers` assertions
   expect_error(query$to_seurat(varm_layers = 1L))
-  expect_error(query$to_seurat(varm_layers = 'PCs'))
-  expect_warning(query$to_seurat(varm_layers = c(tomato = 'PCs')))
-  expect_warning(query$to_seurat(varm_layers = c(X_pca = 'tomato')))
+  expect_error(query$to_seurat(varm_layers = "PCs"))
+  expect_warning(query$to_seurat(varm_layers = c(tomato = "PCs")))
+  expect_warning(query$to_seurat(varm_layers = c(X_pca = "tomato")))
 
   # Test `obsp_layers` assertions
   expect_error(query$to_seurat(obsp_layers = 1L))
-  expect_warning(query$to_seurat(obsp_layers = 'tomato'))
+  expect_warning(query$to_seurat(obsp_layers = "tomato"))
 })
 
 test_that("Load Seurat object with dropped levels", {
   skip_if(!extended_tests() || covr_tests())
-  skip_if_not_installed('SeuratObject', .MINIMUM_SEURAT_VERSION('c'))
-  so_version <- utils::packageVersion('SeuratObject')
+  skip_if_not_installed("SeuratObject", .MINIMUM_SEURAT_VERSION("c"))
+  so_version <- utils::packageVersion("SeuratObject")
   skip_if_not(
-    (so_version >= .MINIMUM_SEURAT_VERSION() && so_version < '5.0.0') ||
-      so_version >= '5.0.0.9003',
+    (so_version >= .MINIMUM_SEURAT_VERSION() && so_version < "5.0.0") ||
+      so_version >= "5.0.0.9003",
     message = so_msg(so_version)
   )
 
-  uri <- tempfile(pattern="seurat-experiment-drop")
+  uri <- tempfile(pattern = "seurat-experiment-drop")
   n_obs <- 20L
   n_var <- 10L
   experiment <- create_and_populate_experiment(
@@ -241,21 +241,21 @@ test_that("Load Seurat object with dropped levels", {
   # Test assertions
   expect_error(query$to_seurat(drop_levels = NA))
   expect_error(query$to_seurat(drop_levels = 1L))
-  expect_error(query$to_seurat(drop_levels = 'drop'))
+  expect_error(query$to_seurat(drop_levels = "drop"))
   expect_error(query$to_seurat(drop_levels = c(TRUE, TRUE)))
 })
 
 test_that("Load Seurat object from sliced ExperimentQuery", {
   skip_if(!extended_tests() || covr_tests())
-  skip_if_not_installed('SeuratObject', .MINIMUM_SEURAT_VERSION('c'))
-  so_version <- utils::packageVersion('SeuratObject')
+  skip_if_not_installed("SeuratObject", .MINIMUM_SEURAT_VERSION("c"))
+  so_version <- utils::packageVersion("SeuratObject")
   skip_if_not(
-    (so_version >= .MINIMUM_SEURAT_VERSION() && so_version < '5.0.0') ||
-      so_version >= '5.0.0.9003',
+    (so_version >= .MINIMUM_SEURAT_VERSION() && so_version < "5.0.0") ||
+      so_version >= "5.0.0.9003",
     message = so_msg(so_version)
   )
 
-  uri <- tempfile(pattern="seurat-experiment-query-sliced")
+  uri <- tempfile(pattern = "seurat-experiment-query-sliced")
   n_obs <- 1001L
   n_var <- 99L
   n_pcs <- 50L
@@ -267,7 +267,7 @@ test_that("Load Seurat object from sliced ExperimentQuery", {
     X_layer_names = c("counts", "logcounts"),
     obsm_layers = c(X_pca = n_pcs, X_umap = n_umaps),
     varm_layers = c(PCs = n_pcs),
-    obsp_layer_names = 'connectivities',
+    obsp_layer_names = "connectivities",
     # No varp in Seurat
     mode = "READ"
   )
@@ -285,47 +285,47 @@ test_that("Load Seurat object from sliced ExperimentQuery", {
   n_var_slice <- length(var_slice)
   n_obs_slice <- length(obs_slice)
   expect_no_condition(obj <- query$to_seurat())
-  expect_s4_class(obj, 'Seurat')
+  expect_s4_class(obj, "Seurat")
   expect_identical(dim(obj), c(n_var_slice, n_obs_slice))
-  expect_identical(rownames(obj), paste0('feature', query$var_joinids()$as_vector()))
-  expect_identical(colnames(obj), paste0('cell', query$obs_joinids()$as_vector()))
+  expect_identical(rownames(obj), paste0("feature", query$var_joinids()$as_vector()))
+  expect_identical(colnames(obj), paste0("cell", query$obs_joinids()$as_vector()))
   expect_identical(
     lapply(list(names(obj)), sort),
-    lapply(list(c('RNA', 'connectivities', 'pca', 'umap')), sort)
+    lapply(list(c("RNA", "connectivities", "pca", "umap")), sort)
   )
 
   # Test named
   expect_no_condition(obj <- query$to_seurat(
-    obs_index = 'string_column',
-    var_index = 'quux'
+    obs_index = "string_column",
+    var_index = "quux"
   ))
-  expect_s4_class(obj, 'Seurat')
+  expect_s4_class(obj, "Seurat")
   expect_identical(dim(obj), c(n_var_slice, n_obs_slice))
   expect_identical(
     rownames(obj),
-    query$var('quux')$concat()$GetColumnByName('quux')$as_vector()
+    query$var("quux")$concat()$GetColumnByName("quux")$as_vector()
   )
   expect_identical(
     colnames(obj),
-    query$obs('string_column')$concat()$GetColumnByName('string_column')$as_vector()
+    query$obs("string_column")$concat()$GetColumnByName("string_column")$as_vector()
   )
   expect_identical(
     lapply(list(names(obj)), sort),
-    lapply(list(c('RNA', 'connectivities', 'pca', 'umap')), sort)
+    lapply(list(c("RNA", "connectivities", "pca", "umap")), sort)
   )
 })
 
 test_that("Load Seurat object from indexed ExperimentQuery", {
   skip_if(!extended_tests() || covr_tests())
-  skip_if_not_installed('SeuratObject', .MINIMUM_SEURAT_VERSION('c'))
-  so_version <- utils::packageVersion('SeuratObject')
+  skip_if_not_installed("SeuratObject", .MINIMUM_SEURAT_VERSION("c"))
+  so_version <- utils::packageVersion("SeuratObject")
   skip_if_not(
-    (so_version >= .MINIMUM_SEURAT_VERSION() && so_version < '5.0.0') ||
-      so_version >= '5.0.0.9003',
+    (so_version >= .MINIMUM_SEURAT_VERSION() && so_version < "5.0.0") ||
+      so_version >= "5.0.0.9003",
     message = so_msg(so_version)
   )
 
-  uri <- tempfile(pattern="seurat-experiment-query-value-filters")
+  uri <- tempfile(pattern = "seurat-experiment-query-value-filters")
   n_obs <- 1001L
   n_var <- 99L
   n_pcs <- 50L
@@ -339,7 +339,7 @@ test_that("Load Seurat object from indexed ExperimentQuery", {
     X_layer_names = c("counts", "logcounts"),
     obsm_layers = c(X_pca = n_pcs, X_umap = n_umaps),
     varm_layers = c(PCs = n_pcs),
-    obsp_layer_names = 'connectivities',
+    obsp_layer_names = "connectivities",
     # No varp in Seurat
     mode = "READ"
   )
@@ -363,32 +363,32 @@ test_that("Load Seurat object from indexed ExperimentQuery", {
   n_var_select <- length(var_label_values)
   n_obs_select <- length(obs_label_values)
   expect_no_condition(obj <- query$to_seurat())
-  expect_s4_class(obj, 'Seurat')
+  expect_s4_class(obj, "Seurat")
   expect_identical(dim(obj), c(n_var_select, n_obs_select))
-  expect_identical(rownames(obj), paste0('feature', query$var_joinids()$as_vector()))
-  expect_identical(colnames(obj), paste0('cell', query$obs_joinids()$as_vector()))
+  expect_identical(rownames(obj), paste0("feature", query$var_joinids()$as_vector()))
+  expect_identical(colnames(obj), paste0("cell", query$obs_joinids()$as_vector()))
   expect_identical(
     lapply(list(names(obj)), sort),
-    lapply(list(c('RNA', 'connectivities', 'pca', 'umap')), sort)
+    lapply(list(c("RNA", "connectivities", "pca", "umap")), sort)
   )
 
   # Test named
   expect_no_condition(obj <- query$to_seurat(
-    obs_index = 'string_column',
-    var_index = 'quux'
+    obs_index = "string_column",
+    var_index = "quux"
   ))
-  expect_s4_class(obj, 'Seurat')
+  expect_s4_class(obj, "Seurat")
   expect_identical(dim(obj), c(n_var_select, n_obs_select))
   expect_identical(
     rownames(obj),
-    query$var('quux')$concat()$GetColumnByName('quux')$as_vector()
+    query$var("quux")$concat()$GetColumnByName("quux")$as_vector()
   )
   expect_identical(
     colnames(obj),
-    query$obs('string_column')$concat()$GetColumnByName('string_column')$as_vector()
+    query$obs("string_column")$concat()$GetColumnByName("string_column")$as_vector()
   )
   expect_identical(
     lapply(list(names(obj)), sort),
-    lapply(list(c('RNA', 'connectivities', 'pca', 'umap')), sort)
+    lapply(list(c("RNA", "connectivities", "pca", "umap")), sort)
   )
 })

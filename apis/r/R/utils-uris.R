@@ -15,7 +15,9 @@ file_path <- function(..., fsep = .Platform$file.sep) {
 uri_scheme <- function(uri) {
   stopifnot(is_scalar_character(uri))
   uri_parts <- strsplit(uri, "://")[[1]]
-  if (length(uri_parts) == 1) return(NULL)
+  if (length(uri_parts) == 1) {
+    return(NULL)
+  }
   uri_parts[[1]]
 }
 
@@ -24,7 +26,9 @@ uri_scheme <- function(uri) {
 uri_scheme_remove <- function(uri) {
   stopifnot(is_scalar_character(uri))
   uri_parts <- strsplit(uri, "://")[[1]]
-  if (length(uri_parts) == 1) return(uri)
+  if (length(uri_parts) == 1) {
+    return(uri)
+  }
   uri_parts[[2]]
 }
 

@@ -26,7 +26,6 @@ matrixZeroBasedView <- R6::R6Class(
     #' @param j Column index (zero-based).
     #' @return The specified matrix slice as another \link{matrixZeroBasedView}
     take = function(i = NULL, j = NULL) {
-
       x <- NULL
       if (is.null(i) && is.null(j)) {
         x <- private$one_based_matrix[, , drop = FALSE]
@@ -86,9 +85,7 @@ matrixZeroBasedView <- R6::R6Class(
       invisible(self)
     }
   ),
-
   private = list(
     one_based_matrix = NULL
   )
-
 )

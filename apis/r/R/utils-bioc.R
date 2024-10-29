@@ -3,7 +3,7 @@
     return(NULL)
   }
   stopifnot(is.character(x))
-  return(toupper(gsub(pattern = '^X_', replacement = '', x = x)))
+  return(toupper(gsub(pattern = "^X_", replacement = "", x = x)))
 }
 
 #' \code{S4Vectors::Hits} to Matrix
@@ -22,8 +22,8 @@
 #'
 .hits_to_mat <- function(hits) {
   stopifnot(
-    "S4Vectors must be installed" = requireNamespace('S4Vectors', quietly = TRUE),
-    "'hits' must be a 'Hits' object" = inherits(hits, 'Hits')
+    "S4Vectors must be installed" = requireNamespace("S4Vectors", quietly = TRUE),
+    "'hits' must be a 'Hits' object" = inherits(hits, "Hits")
   )
   meta_cols <- S4Vectors::mcols(hits)
   x <- if (ncol(meta_cols)) {
@@ -35,7 +35,7 @@
     i = S4Vectors::queryHits(hits),
     j = S4Vectors::subjectHits(hits),
     x = x,
-    repr = 'T',
+    repr = "T",
     dims = rep.int(S4Vectors::nnode(hits), times = 2L),
     use.last.ij = TRUE
   ))
@@ -59,10 +59,10 @@
 #'
 .mat_to_hits <- function(mat) {
   stopifnot(
-    "S4Vectors must be installed" = requireNamespace('S4Vectors', quietly = TRUE),
+    "S4Vectors must be installed" = requireNamespace("S4Vectors", quietly = TRUE),
     "'mat' must be a matrix" = is_matrix(mat)
   )
-  f <- if (inherits(mat, 'Matrix')) {
+  f <- if (inherits(mat, "Matrix")) {
     Matrix::which
   } else {
     base::which
@@ -76,9 +76,12 @@
   ))
 }
 
-.MINIMUM_SCE_VERSION <- function(repr = c('v', 'c')) {
+.MINIMUM_SCE_VERSION <- function(repr = c("v", "c")) {
   repr <- repr[1L]
   repr <- match.arg(repr)
-  version <- '1.20.0'
-  return(switch(EXPR = repr, v = package_version(version), version))
+  version <- "1.20.0"
+  return(switch(EXPR = repr,
+    v = package_version(version),
+    version
+  ))
 }
