@@ -147,7 +147,7 @@ class SOMAArray(SOMAObject[_tdb_handles.SOMAArrayWrapper[Any]]):
         """
         return self._handle.maxdomain
 
-    def _set_reader_coords(self, sr: clib.SOMAArray, coords: Sequence[object]) -> None:
+    def _set_coords(self, sr: clib.SOMAArray, coords: Sequence[object]) -> None:
         """Parses the given coords and sets them on the SOMA Reader."""
         if not is_nonstringy_sequence(coords):
             raise TypeError(
@@ -162,13 +162,13 @@ class SOMAArray(SOMAObject[_tdb_handles.SOMAArrayWrapper[Any]]):
             )
         for i, coord in enumerate(coords):
             dim = self.schema.field(i)
-            if not self._set_reader_coord(sr, i, dim, coord):
+            if not self._set_coord(sr, i, dim, coord):
                 raise TypeError(
                     f"coord type {type(coord)} for dimension {dim.name}"
                     f" (slot {i}) unsupported"
                 )
 
-    def _set_reader_coord(
+    def _set_coord(
         self, sr: clib.SOMAArray, dim_idx: int, dim: pa.Field, coord: object
     ) -> bool:
         """Parses a single coordinate entry.
