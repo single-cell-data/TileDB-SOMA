@@ -382,10 +382,9 @@ def test_multiples_without_experiment(
             var_field_name=var_field_name,
         )
 
-        if tiledbsoma._flags.NEW_SHAPE_FEATURE_FLAG_ENABLED:
-            nobs = rd.get_obs_shape()
-            nvars = rd.get_var_shapes()
-            tiledbsoma.io.resize_experiment(experiment_uri, nobs=nobs, nvars=nvars)
+        nobs = rd.get_obs_shape()
+        nvars = rd.get_var_shapes()
+        tiledbsoma.io.resize_experiment(experiment_uri, nobs=nobs, nvars=nvars)
 
     else:
         # "Append" all the H5ADs where no experiment exists yet.
@@ -456,13 +455,12 @@ def test_multiples_without_experiment(
         h5ad_file_names[permutation[2]],
         h5ad_file_names[permutation[3]],
     ]:
-        if tiledbsoma._flags.NEW_SHAPE_FEATURE_FLAG_ENABLED:
-            if tiledbsoma.Experiment.exists(experiment_uri):
-                tiledbsoma.io.resize_experiment(
-                    experiment_uri,
-                    nobs=rd.get_obs_shape(),
-                    nvars=rd.get_var_shapes(),
-                )
+        if tiledbsoma.Experiment.exists(experiment_uri):
+            tiledbsoma.io.resize_experiment(
+                experiment_uri,
+                nobs=rd.get_obs_shape(),
+                nvars=rd.get_var_shapes(),
+            )
 
         tiledbsoma.io.from_h5ad(
             experiment_uri,
@@ -726,12 +724,11 @@ def test_append_items_with_experiment(obs_field_name, var_field_name):
 
     original = adata2.copy()
 
-    if tiledbsoma._flags.NEW_SHAPE_FEATURE_FLAG_ENABLED:
-        tiledbsoma.io.resize_experiment(
-            soma1,
-            nobs=rd.get_obs_shape(),
-            nvars=rd.get_var_shapes(),
-        )
+    tiledbsoma.io.resize_experiment(
+        soma1,
+        nobs=rd.get_obs_shape(),
+        nvars=rd.get_var_shapes(),
+    )
 
     with tiledbsoma.Experiment.open(soma1, "w") as exp1:
         tiledbsoma.io.append_obs(
@@ -856,12 +853,11 @@ def test_append_with_disjoint_measurements(
         var_field_name=var_field_name,
     )
 
-    if tiledbsoma._flags.NEW_SHAPE_FEATURE_FLAG_ENABLED:
-        tiledbsoma.io.resize_experiment(
-            soma_uri,
-            nobs=rd.get_obs_shape(),
-            nvars=rd.get_var_shapes(),
-        )
+    tiledbsoma.io.resize_experiment(
+        soma_uri,
+        nobs=rd.get_obs_shape(),
+        nvars=rd.get_var_shapes(),
+    )
 
     tiledbsoma.io.from_anndata(
         soma_uri,
@@ -1218,12 +1214,11 @@ def test_enum_bit_width_append(tmp_path, all_at_once, nobs_a, nobs_b):
             soma_uri, adata, measurement_name=measurement_name, registration_mapping=rd
         )
 
-        if tiledbsoma._flags.NEW_SHAPE_FEATURE_FLAG_ENABLED:
-            tiledbsoma.io.resize_experiment(
-                soma_uri,
-                nobs=rd.get_obs_shape(),
-                nvars=rd.get_var_shapes(),
-            )
+        tiledbsoma.io.resize_experiment(
+            soma_uri,
+            nobs=rd.get_obs_shape(),
+            nvars=rd.get_var_shapes(),
+        )
 
         tiledbsoma.io.from_anndata(
             soma_uri, bdata, measurement_name=measurement_name, registration_mapping=rd
@@ -1243,12 +1238,11 @@ def test_enum_bit_width_append(tmp_path, all_at_once, nobs_a, nobs_b):
         assert rd.get_obs_shape() == nobs_a + nobs_b
         assert rd.get_var_shapes() == {"meas": 4}
 
-        if tiledbsoma._flags.NEW_SHAPE_FEATURE_FLAG_ENABLED:
-            tiledbsoma.io.resize_experiment(
-                soma_uri,
-                nobs=rd.get_obs_shape(),
-                nvars=rd.get_var_shapes(),
-            )
+        tiledbsoma.io.resize_experiment(
+            soma_uri,
+            nobs=rd.get_obs_shape(),
+            nvars=rd.get_var_shapes(),
+        )
 
         tiledbsoma.io.from_anndata(
             soma_uri, bdata, measurement_name=measurement_name, registration_mapping=rd

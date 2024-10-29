@@ -25,8 +25,6 @@ import somacore
 from somacore import options
 from typing_extensions import Self
 
-from tiledbsoma._flags import NEW_SHAPE_FEATURE_FLAG_ENABLED
-
 from . import _arrow_types, _util
 from . import pytiledbsoma as clib
 from ._constants import SOMA_JOINID
@@ -311,16 +309,13 @@ class DataFrame(SOMAArray, somacore.DataFrame):
             # [4] core current domain hi
 
             index_column_schema.append(pa_field)
-            if NEW_SHAPE_FEATURE_FLAG_ENABLED:
 
-                index_column_data[pa_field.name] = [
-                    *slot_core_max_domain,
-                    extent,
-                    *slot_core_current_domain,
-                ]
+            index_column_data[pa_field.name] = [
+                *slot_core_max_domain,
+                extent,
+                *slot_core_current_domain,
+            ]
 
-            else:
-                index_column_data[pa_field.name] = [*slot_core_current_domain, extent]
 
         index_column_info = pa.RecordBatch.from_pydict(
             index_column_data, schema=pa.schema(index_column_schema)
@@ -1003,7 +998,7 @@ def _fill_out_slot_soma_domain(
         # will (and must) ignore these when creating the TileDB schema.
         slot_domain = "", ""
     elif np.issubdtype(dtype, NPInteger):
-        if is_max_domain or not NEW_SHAPE_FEATURE_FLAG_ENABLED:
+        if is_max_domain:
             # Core max domain is immutable. If unspecified, it should be as big
             # as possible since it can never be resized.
             iinfo = np.iinfo(cast(NPInteger, dtype))
@@ -1023,7 +1018,7 @@ def _fill_out_slot_soma_domain(
             # not 0.
             slot_domain = 0, 0
     elif np.issubdtype(dtype, NPFloating):
-        if is_max_domain or not NEW_SHAPE_FEATURE_FLAG_ENABLED:
+        if is_max_domain:
             finfo = np.finfo(cast(NPFloating, dtype))
             slot_domain = finfo.min, finfo.max
             saturated_range = True
@@ -1044,7 +1039,7 @@ def _fill_out_slot_soma_domain(
     #   value representable by domain type. Reduce domain max by 1 tile extent
     #   to allow for expansion.
     elif dtype == "datetime64[s]":
-        if is_max_domain or not NEW_SHAPE_FEATURE_FLAG_ENABLED:
+        if is_max_domain:
             iinfo = np.iinfo(cast(NPInteger, np.int64))
             slot_domain = np.datetime64(iinfo.min + 1, "s"), np.datetime64(
                 iinfo.max - 1000000, "s"
@@ -1052,7 +1047,7 @@ def _fill_out_slot_soma_domain(
         else:
             slot_domain = np.datetime64(0, "s"), np.datetime64(0, "s")
     elif dtype == "datetime64[ms]":
-        if is_max_domain or not NEW_SHAPE_FEATURE_FLAG_ENABLED:
+        if is_max_domain:
             iinfo = np.iinfo(cast(NPInteger, np.int64))
             slot_domain = np.datetime64(iinfo.min + 1, "ms"), np.datetime64(
                 iinfo.max - 1000000, "ms"
@@ -1060,7 +1055,7 @@ def _fill_out_slot_soma_domain(
         else:
             slot_domain = np.datetime64(0, "ms"), np.datetime64(0, "ms")
     elif dtype == "datetime64[us]":
-        if is_max_domain or not NEW_SHAPE_FEATURE_FLAG_ENABLED:
+        if is_max_domain:
             iinfo = np.iinfo(cast(NPInteger, np.int64))
             slot_domain = np.datetime64(iinfo.min + 1, "us"), np.datetime64(
                 iinfo.max - 1000000, "us"
@@ -1068,7 +1063,7 @@ def _fill_out_slot_soma_domain(
         else:
             slot_domain = np.datetime64(0, "us"), np.datetime64(0, "us")
     elif dtype == "datetime64[ns]":
-        if is_max_domain or not NEW_SHAPE_FEATURE_FLAG_ENABLED:
+        if is_max_domain:
             iinfo = np.iinfo(cast(NPInteger, np.int64))
             slot_domain = np.datetime64(iinfo.min + 1, "ns"), np.datetime64(
                 iinfo.max - 1000000, "ns"
