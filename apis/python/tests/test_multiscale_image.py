@@ -17,8 +17,8 @@ def test_multiscale_image_bad_create(tmp_path):
         soma.MultiscaleImage.create(
             baseuri,
             type=pa.string(),
-            axis_names=("x", "y", "y"),
-            reference_level_shape=(3, 64, 64),
+            coordinate_space=("x", "y", "y"),
+            level_shape=(3, 64, 64),
         )
 
     # Repeated axis names.
@@ -26,46 +26,39 @@ def test_multiscale_image_bad_create(tmp_path):
         soma.MultiscaleImage.create(
             baseuri,
             type=pa.uint8(),
-            axis_names=("x", "y", "y"),
-            reference_level_shape=(3, 64, 64),
+            coordinate_space=("x", "y", "y"),
+            level_shape=(3, 64, 64),
         )
 
-    # Repeated axis types.
+    # Repeated data axis order, bad length.
     with pytest.raises(ValueError):
         soma.MultiscaleImage.create(
             baseuri,
             type=pa.uint8(),
-            axis_types=("height", "height", "width"),
-            reference_level_shape=(3, 64, 64),
+            data_axis_order=("x", "x", "y"),
+            level_shape=(3, 64, 64),
         )
 
-    # Invalid axis type.
+    # Invalid data axis order.
     with pytest.raises(ValueError):
         soma.MultiscaleImage.create(
             baseuri,
             type=pa.uint8(),
-            axis_types=("c", "height", "width"),
-            reference_level_shape=(3, 64, 64),
+            data_axis_order=("soma_channel", "y", "bad-axis-name"),
+            level_shape=(3, 64, 64),
         )
 
-    # Mismatch in number of axis names and reference shape.
+    # Data order has `soma_channel` when not expected
     with pytest.raises(ValueError):
         soma.MultiscaleImage.create(
             baseuri,
             type=pa.uint8(),
-            axis_types=("x", "y", "y"),
-            reference_level_shape=(3, 64, 64),
+            data_axis_order=("soma_channel", "y", "x"),
+            level_shape=(3, 64, 64),
+            has_channel_axis=False,
         )
 
-    # Mismatch in number of axis names and axis types.
-    with pytest.raises(ValueError):
-        soma.MultiscaleImage.create(
-            baseuri,
-            type=pa.uint8(),
-            reference_level_shape=(64, 64),
-            axis_names=("y", "x"),
-            axis_types=("channels",),
-        )
+    # TODO: Add more checks
 
 
 def test_multiscale_basic(tmp_path):
@@ -76,18 +69,14 @@ def test_multiscale_basic(tmp_path):
     with soma.MultiscaleImage.create(
         image_uri,
         type=pa.uint8(),
-        reference_level_shape=(128, 64),
-        axis_names=("y", "x"),
-        axis_types=("height", "width"),
+        level_shape=(128, 64),
+        has_channel_axis=False,
     ) as image:
 
-        # Create reference level.
-        image.add_new_level("level0", shape=(128, 64))
-
-        # Create medium sized downsample.
+        # Add medium sized downsample.
         image.add_new_level("level1", shape=(64, 32))
 
-        # Create very small downsample and write to it.
+        # Add very small downsample and write to it.
         level2 = image.add_new_level("level2", shape=(8, 4))
         level2_data = pa.Tensor.from_numpy(np.arange(32, dtype=np.uint8).reshape(8, 4))
         level2.write((slice(None), slice(None)), level2_data)
@@ -96,15 +85,9 @@ def test_multiscale_basic(tmp_path):
     with soma.MultiscaleImage.open(image_uri, mode="r") as image:
 
         # Check the base properties for the image.
-        assert image.axis_names == ("y", "x")
-        base_props = image.reference_level_properties
-        assert base_props.name == "reference_level"
-        assert base_props.shape == (128, 64)
-        assert base_props.height == 128
-        assert base_props.width == 64
-        assert base_props.nchannels is None
-        assert base_props.depth is None
-        assert base_props.image_type == "YX"
+        assert image.level_shape(0) == (128, 64)
+        assert image.nchannels == 1
+        assert image.data_axis_order == ("y", "x")
 
         # Check coordinate space.
         coord_space = image.coordinate_space
@@ -114,15 +97,7 @@ def test_multiscale_basic(tmp_path):
         # Check the number of levels and level properties.
         assert image.level_count == 3
         for index, shape in enumerate([(128, 64), (64, 32), (8, 4)]):
-            props = image.level_properties(index)
-            assert props == image.level_properties(props.name)
-            assert props.nchannels is None
-            assert props.depth is None
-            assert props.image_type == "YX"
-            assert props.name == f"level{index}"
-            assert props.shape == shape
-            assert props.height == shape[0]
-            assert props.width == shape[1]
+            assert image.level_shape(index) == shape
 
         # Check a basic read
         assert level2_data == image.read_spatial_region(2).data
@@ -162,13 +137,11 @@ class TestSimpleMultiscale2D:
         with soma.MultiscaleImage.create(
             image_uri,
             type=pa.uint8(),
-            reference_level_shape=(1, 9, 8),
-            axis_names=("c", "y", "x"),
-            axis_types=("channel", "height", "width"),
+            level_shape=(1, 9, 8),
         ) as image:
             coords = (slice(None), slice(None), slice(None))
             # Create levels.
-            l0 = image.add_new_level("level0", shape=(1, 9, 8))
+            l0 = image["level0"]
             l0.write(
                 coords,
                 pa.Tensor.from_numpy(np.arange(72, dtype=np.uint8).reshape(1, 9, 8)),
@@ -228,108 +201,111 @@ class TestSimpleMultiscale2D:
         )
 
 
-def create_multiscale(baseuri, axis_names, axis_types, shapes):
+def create_multiscale(baseuri, coord_space, axis_order, has_channel_axis, shapes):
     image_uri = urljoin(baseuri, "default")
     with soma.MultiscaleImage.create(
         image_uri,
         type=pa.uint8(),
-        axis_names=axis_names,
-        axis_types=axis_types,
-        reference_level_shape=shapes[0],
+        coordinate_space=coord_space,
+        data_axis_order=axis_order,
+        has_channel_axis=has_channel_axis,
+        level_shape=shapes[0],
     ) as image:
-        for i in range(len(shapes)):
+        for i in range(1, len(shapes)):
             image.add_new_level(f"level{i}", shape=shapes[i])
     return image_uri
 
 
 @pytest.mark.parametrize(
-    "axis_names, axis_types, shapes, expected_scale_factors",
+    "coord_space, axis_order, has_channel_axis, shapes, expected_scale_factors",
     [
         [
-            ("C", "Z", "Y", "X"),
-            ("channel", "depth", "height", "width"),
+            ("x", "y", "z"),
+            ("soma_channel", "z", "y", "x"),
+            True,
             ((128, 64, 32, 16), (128, 32, 16, 8), (128, 16, 8, 4), (128, 4, 2, 1)),
             ([1, 1, 1], [2, 2, 2], [4, 4, 4], [16, 16, 16]),
         ],
         [
-            ("C", "Z", "Y", "X"),
-            ("channel", "depth", "height", "width"),
+            ("x", "y", "z"),
+            ("soma_channel", "z", "y", "x"),
+            True,
             ((128, 64, 32, 16), (128, 32, 16, 8), (128, 16, 8, 4)),
             ([1, 1, 1], [2, 2, 2], [4, 4, 4]),
         ],
         [
-            ("C", "Z", "Y", "X"),
-            ("channel", "depth", "height", "width"),
+            ("x", "y", "z"),
+            ("soma_channel", "z", "y", "x"),
+            True,
             ((64, 64, 64, 64), (64, 64, 64, 64)),
             ([1, 1, 1], [1, 1, 1]),
         ],
         [
-            ("C", "Z", "Y", "X"),
-            ("channel", "depth", "height", "width"),
+            ("x", "y", "z"),
+            ("soma_channel", "z", "y", "x"),
+            True,
             ((64, 32, 16, 8), (64, 16, 8, 4)),
             ([1, 1, 1], [2, 2, 2]),
         ],
         [
-            ("C", "Z", "Y", "X"),
-            ("channel", "depth", "height", "width"),
+            ("x", "y", "z"),
+            ("soma_channel", "z", "y", "x"),
+            True,
             ((128, 64, 32, 16), (128, 32, 32, 8), (128, 16, 16, 4)),
             ([1, 1, 1], [2, 1, 2], [4, 2, 4]),
         ],
         [
-            ("C", "Y", "X"),
-            ("channel", "height", "width"),
+            ("x", "y"),
+            ("soma_channel", "y", "x"),
+            True,
             ((128, 64, 32), (128, 32, 16), (128, 16, 8)),
             ([1, 1], [2, 2], [4, 4]),
         ],
         [
-            ("C", "Y", "X"),
-            ("channel", "height", "width"),
+            ("x", "y"),
+            ("soma_channel", "y", "x"),
+            True,
             ((128, 128, 128), (128, 128, 128)),
             ([1, 1], [1, 1]),
         ],
         [
-            ("Y", "X"),
-            ("height", "width"),
+            ("x", "y"),
+            ("y", "x"),
+            False,
             ((128, 128), (128, 128)),
             ([1, 1], [1, 1]),
         ],
         [
-            ("Y", "X"),
-            ("height", "width"),
+            ("x", "y"),
+            ("y", "x"),
+            False,
             ((128, 64), (64, 32)),
             ([1, 1], [2, 2]),
         ],
         [
-            ("Y", "X"),
-            ("height", "width"),
+            ("x", "y"),
+            ("y", "x"),
+            False,
             ((60, 30), (30, 6)),
             ([1, 1], [5, 2]),
         ],
     ],
 )
 def test_multiscale_with_axis_names(
-    tmp_path, axis_names, axis_types, shapes, expected_scale_factors
+    tmp_path, coord_space, axis_order, has_channel_axis, shapes, expected_scale_factors
 ):
     baseuri = urljoin(f"{tmp_path.as_uri()}/", "test_multiscale_with_axis_names")
-    image_uri = create_multiscale(baseuri, axis_names, axis_types, shapes)
+    image_uri = create_multiscale(
+        baseuri, coord_space, axis_order, has_channel_axis, shapes
+    )
 
     with soma.MultiscaleImage.open(image_uri, mode="r") as image:
-        base_props = image.reference_level_properties
-        assert base_props.shape == shapes[0]
         assert image.level_count == len(shapes)
 
-        for index, shape in enumerate(shapes):
-            props = image.level_properties(index)
-            assert props.name == f"level{index}"
-            assert props == image.level_properties(props.name)
-            assert props.image_type == "".join(axis_names)
-            assert props.shape == shape
+        # TODO Check channels
 
-            for i, axis_type in enumerate(axis_types):
-                if axis_type == "channel":
-                    assert getattr(props, "nchannels") == shape[i]
-                else:
-                    assert getattr(props, axis_type) == shape[i]
+        for index, shape in enumerate(shapes):
+            assert shape == image.level_shape(index)
 
             # Check transform to and from levels
             assert np.array_equal(
