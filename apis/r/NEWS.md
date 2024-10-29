@@ -8,6 +8,9 @@
 * Implement missing `domain` argument to `SOMADataFrame` `create` [#3032](https://github.com/single-cell-data/TileDB-SOMA/pull/3032)
 * Remove unused `fragment_count` accessor [#3054](https://github.com/single-cell-data/TileDB-SOMA/pull/3054)
 * Bulk-sync `main` to `release-1.15` in prep for 1.15.0rc3
+* New-shape mods [#2407](https://github.com/single-cell-data/TileDB-SOMA/issues/2407)
+* Run `clang-format` for C++ source and `styler::style_pkg()` for R source
+* Fix context/config bug [#3252](https://github.com/single-cell-data/TileDB-SOMA/pull/3252)
 
 # tiledbsoma 1.14.5
 
