@@ -28,6 +28,7 @@ from ._arrow_types import carrow_type_to_pyarrow, pyarrow_to_carrow_type
 from ._constants import (
     SOMA_COORDINATE_SPACE_METADATA_KEY,
     SOMA_MULTISCALE_IMAGE_SCHEMA,
+    SOMA_SPATIAL_ENCODING_VERSION,
     SOMA_SPATIAL_VERSION_METADATA_KEY,
     SPATIAL_DISCLAIMER,
 )
@@ -50,16 +51,16 @@ class _LevelProperties:
     """Properties for a single resolution level in a multiscale image."""
 
     name: str
-    shape: Tuple[int, ...]
+    shape: Tuple[int, ...] = attrs.field(converter=tuple)
 
 
 @attrs.define(frozen=True)
 class _MultiscaleImageMetadata:
     """Helper class for reading/writing multiscale image metadata."""
 
-    data_axis_permutation: Tuple[int, ...]
+    data_axis_permutation: Tuple[int, ...] = attrs.field(converter=tuple)
     has_channel_axis: bool
-    shape: Tuple[int, ...]
+    shape: Tuple[int, ...] = attrs.field(converter=tuple)
     datatype: pa.DataType
 
     def to_json(self) -> str:
@@ -187,9 +188,9 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
             axis_permutation = tuple(axis_indices[name] for name in data_axis_order)
 
         image_meta = _MultiscaleImageMetadata(
-            data_axis_permutation=axis_permutation,
+            data_axis_permutation=axis_permutation,  # type: ignore (false positive)
             has_channel_axis=has_channel_axis,
-            shape=tuple(level_shape),
+            shape=level_shape,  # type: ignore (false positive)
             datatype=type,
         )
 
@@ -206,14 +207,26 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
             handle = _tdb_handles.MultiscaleImageWrapper.open(
                 uri, "w", context, tiledb_timestamp
             )
+            handle.metadata[SOMA_SPATIAL_VERSION_METADATA_KEY] = (
+                SOMA_SPATIAL_ENCODING_VERSION
+            )
             handle.metadata[SOMA_MULTISCALE_IMAGE_SCHEMA] = _image_meta_str
             handle.metadata[SOMA_COORDINATE_SPACE_METADATA_KEY] = coord_space_str
-            return cls(
+            multiscale = cls(
                 handle,
                 _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code",
             )
         except SOMAError as e:
             raise map_exception_for_create(e, uri) from None
+
+        multiscale.add_new_level(
+            level_key,
+            uri=level_uri,
+            shape=level_shape,
+            platform_config=platform_config,
+        )
+
+        return multiscale
 
     def __init__(
         self,
@@ -260,13 +273,14 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
         image_meta = _MultiscaleImageMetadata.from_json(metadata_json)
         self._data_axis_permutation = image_meta.data_axis_permutation
         self._has_channel_axis = image_meta.has_channel_axis
-        self._shape = image_meta.shape
         self._datatype = image_meta.datatype
 
         # Get the image levels.
         # TODO: Optimize and push down to C++ level
         self._levels = [
-            _LevelProperties(name=key[len(self._level_prefix) :], shape=val)
+            _LevelProperties(
+                name=key[len(self._level_prefix) :], shape=tuple(json.loads(val))
+            )
             for key, val in self.metadata.items()
             if key.startswith(self._level_prefix)
         ]
@@ -310,19 +324,19 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
                 f"{len(shape)} dimensions."
             )
 
-        if self._has_channel_axis:
+        if self._has_channel_axis and len(self._levels) > 0:
             channel_index = self._data_axis_permutation.index(len(self._coord_space))
-            expected_nchannel = self._levels[0].shape[channel_index]
-            actual_nchannel = shape[channel_index]
-            if actual_nchannel != expected_nchannel:
+            expected_nchannels = self._levels[0].shape[channel_index]
+            actual_nchannels = shape[channel_index]
+            if actual_nchannels != expected_nchannels:
                 raise ValueError(
-                    f"New level must have {expected_nchannel}, but provided shape has "
-                    f"{actual_nchannel} channels."
+                    f"New level must have {expected_nchannels}, but provided shape has "
+                    f"{actual_nchannels} channels."
                 )
 
         # Add the level properties to level list.
         # Note: The names are guaranteed to be different from the earlier checks.
-        props = _LevelProperties(name=key, shape=shape)
+        props = _LevelProperties(name=key, shape=shape)  # type: ignore (false positive)
         for index, other in enumerate(self._levels):
             # Note: Name is unique, so guaranteed to be strict ordering.
             if tuple(-val for val in props.shape) + (props.name,) < tuple(
@@ -594,11 +608,16 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
         """
         level_shape = self._level_properties(level).shape
         base_shape = self._levels[0].shape
+        coord_indexer = sorted(
+            range(len(self._data_axis_permutation)),
+            key=lambda index: self._data_axis_permutation[index],
+        )
         scale_factors = [
             base_shape[index] / level_shape[index]
-            for index in self._data_axis_permutation
+            for index in coord_indexer
             if index != len(self._coord_space)
         ]
+
         return ScaleTransform(
             input_axes=self._coord_space.axis_names,
             output_axes=self._coord_space.axis_names,
@@ -614,9 +633,13 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
         """
         level_shape = self._level_properties(level).shape
         base_shape = self._levels[0].shape
+        coord_indexer = sorted(
+            range(len(self._data_axis_permutation)),
+            key=lambda index: self._data_axis_permutation[index],
+        )
         scale_factors = [
             level_shape[index] / base_shape[index]
-            for index in self._data_axis_permutation
+            for index in coord_indexer
             if index != len(self._coord_space)
         ]
         return ScaleTransform(
@@ -660,7 +683,7 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
         return self._levels[level].shape
 
     @property
-    def nchannel(self) -> int:
+    def nchannels(self) -> int:
         if self._has_channel_axis:
             index = self._data_axis_permutation.index(len(self._coord_space))
             return self._levels[0].shape[index]
