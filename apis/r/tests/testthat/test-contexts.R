@@ -177,7 +177,7 @@ test_that("Existence proof: soma_context()", {
     grp2 <- TileDBGroup$new(
       uri,
       internal_use_only = "allowed_use",
-      soma_context = soma_context(config = c(vfs.s3.region = "us-west-2"))
+      soma_context = soma_context(config = c(vfs.s3.region = "us-west-2", vfs.s3.no_sign_request = "true"))
     ),
     class = 'TileDBGroup'
   )
@@ -200,7 +200,7 @@ test_that("Existence proof: SOMATileDBContext", {
   expect_error(grp1$names())
   grp1$close()
 
-  ctx <- SOMATileDBContext$new(config = c(vfs.s3.region = "us-west-2"))
+  ctx <- SOMATileDBContext$new(config = c(vfs.s3.region = "us-west-2", vfs.s3.no_sign_request = "true"))
   expect_s3_class(
     grp2 <- TileDBGroup$new(
       uri,
