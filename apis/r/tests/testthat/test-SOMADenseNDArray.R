@@ -1,6 +1,6 @@
 test_that("SOMADenseNDArray creation", {
   skip_if(!extended_tests())
-  uri <- tempfile(pattern="dense-ndarray")
+  uri <- tempfile(pattern = "dense-ndarray")
 
   ndarray <- SOMADenseNDArrayCreate(uri, arrow::int32(), shape = c(10, 5))
 
@@ -88,19 +88,19 @@ test_that("SOMADenseNDArray creation", {
 
 test_that("platform_config is respected", {
   skip_if(!extended_tests())
-  uri <- tempfile(pattern="soma-dense-nd-array")
+  uri <- tempfile(pattern = "soma-dense-nd-array")
 
   # Set tiledb create options
   cfg <- PlatformConfig$new()
-  cfg$set('tiledb', 'create', 'dense_nd_array_dim_zstd_level', 9)
-  cfg$set('tiledb', 'create', 'capacity', 8000)
-  cfg$set('tiledb', 'create', 'tile_order', 'COL_MAJOR')
-  cfg$set('tiledb', 'create', 'cell_order', 'ROW_MAJOR')
-  cfg$set('tiledb', 'create', 'offsets_filters', list("RLE"))
-  cfg$set('tiledb', 'create', 'validity_filters', list("RLE", "NONE"))
-  cfg$set('tiledb', 'create', 'dims', list(
+  cfg$set("tiledb", "create", "dense_nd_array_dim_zstd_level", 9)
+  cfg$set("tiledb", "create", "capacity", 8000)
+  cfg$set("tiledb", "create", "tile_order", "COL_MAJOR")
+  cfg$set("tiledb", "create", "cell_order", "ROW_MAJOR")
+  cfg$set("tiledb", "create", "offsets_filters", list("RLE"))
+  cfg$set("tiledb", "create", "validity_filters", list("RLE", "NONE"))
+  cfg$set("tiledb", "create", "dims", list(
     soma_dim_0 = list(
-      filters = list("RLE", list(name="ZSTD", COMPRESSION_LEVEL=8), "NONE")
+      filters = list("RLE", list(name = "ZSTD", COMPRESSION_LEVEL = 8), "NONE")
       # TODO: test setting/checking tile extent, once shapes/domain-maxes are made programmable.
       # At present we get:
       #
@@ -120,14 +120,14 @@ test_that("platform_config is respected", {
       # tile = 999
     )
   ))
-  cfg$set('tiledb', 'create', 'attrs', list(
+  cfg$set("tiledb", "create", "attrs", list(
     soma_data = list(
-      filters = list("BITSHUFFLE", list(name="ZSTD", COMPRESSION_LEVEL=9))
+      filters = list("BITSHUFFLE", list(name = "ZSTD", COMPRESSION_LEVEL = 9))
     )
   ))
 
   # Create the SOMADenseNDArray
-  dnda <- SOMADenseNDArrayCreate(uri=uri, type=arrow::int32(), shape=c(100,100), platform_config = cfg)
+  dnda <- SOMADenseNDArrayCreate(uri = uri, type = arrow::int32(), shape = c(100, 100), platform_config = cfg)
 
   # Read back and check the array schema against the tiledb create options
   arr <- tiledb::tiledb_array(uri)
@@ -189,13 +189,13 @@ test_that("platform_config is respected", {
 
 test_that("platform_config defaults", {
   skip_if(!extended_tests())
-  uri <- tempfile(pattern="soma-dense-nd-array")
+  uri <- tempfile(pattern = "soma-dense-nd-array")
 
   # Set tiledb create options
   cfg <- PlatformConfig$new()
 
   # Create the SOMADenseNDArray
-  dnda <- SOMADenseNDArrayCreate(uri=uri, type=arrow::int32(), shape=c(100,100), platform_config = cfg)
+  dnda <- SOMADenseNDArrayCreate(uri = uri, type = arrow::int32(), shape = c(100, 100), platform_config = cfg)
 
   # Read back and check the array schema against the tiledb create options
   arr <- tiledb::tiledb_array(uri)
@@ -226,31 +226,31 @@ test_that("platform_config defaults", {
 
 test_that("SOMADenseNDArray timestamped ops", {
   skip_if(!extended_tests())
-  uri <- tempfile(pattern="soma-dense-nd-array-timestamps")
+  uri <- tempfile(pattern = "soma-dense-nd-array-timestamps")
 
   t10 <- Sys.time()
-  dnda <- SOMADenseNDArrayCreate(uri=uri, type=arrow::int16(), shape=c(2,2))
+  dnda <- SOMADenseNDArrayCreate(uri = uri, type = arrow::int16(), shape = c(2, 2))
   M1 <- matrix(rep(1, 4), 2, 2)
   dnda$write(M1)
   dnda$close()
 
-  dnda <- SOMADenseNDArrayOpen(uri=uri)
+  dnda <- SOMADenseNDArrayOpen(uri = uri)
   expect_equal(dnda$read_dense_matrix(), M1)
   dnda$close()
   Sys.sleep(1.0)
 
   t20 <- Sys.time()
-  dnda <- SOMADenseNDArrayOpen(uri=uri, mode="WRITE")
+  dnda <- SOMADenseNDArrayOpen(uri = uri, mode = "WRITE")
   dnda$set_data_type(arrow::int16())
   M2 <- matrix(rep(1, 4), 2, 2)
   dnda$write(M2)
   dnda$close()
 
-  dnda <- SOMADenseNDArrayOpen(uri=uri)
+  dnda <- SOMADenseNDArrayOpen(uri = uri)
   expect_equal(dnda$read_dense_matrix(), M2)
   dnda$close()
 
-  dnda <- SOMADenseNDArrayOpen(uri=uri, tiledb_timestamp = t10 + 0.5*as.numeric(t20 - t10))
-  expect_equal(dnda$read_dense_matrix(), M1)   # read between t10 and t20 sees only first write
+  dnda <- SOMADenseNDArrayOpen(uri = uri, tiledb_timestamp = t10 + 0.5 * as.numeric(t20 - t10))
+  expect_equal(dnda$read_dense_matrix(), M1) # read between t10 and t20 sees only first write
   dnda$close()
 })

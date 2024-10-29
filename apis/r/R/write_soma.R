@@ -24,7 +24,7 @@
 #' @export
 #'
 write_soma <- function(x, uri, ..., platform_config = NULL, tiledbsoma_ctx = NULL) {
-  UseMethod(generic = 'write_soma', object = x)
+  UseMethod(generic = "write_soma", object = x)
 }
 
 #' Write R Objects to SOMA
@@ -74,7 +74,7 @@ write_soma.character <- function(
   soma_parent,
   ...,
   key = NULL,
-  ingest_mode = 'write',
+  ingest_mode = "write",
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
   relative = TRUE
@@ -83,7 +83,7 @@ write_soma.character <- function(
     x = data.frame(values = x),
     uri = uri,
     soma_parent = soma_parent,
-    df_index = 'values',
+    df_index = "values",
     ...,
     key = key,
     ingest_mode = ingest_mode,
@@ -91,7 +91,7 @@ write_soma.character <- function(
     tiledbsoma_ctx = tiledbsoma_ctx,
     relative = relative
   )
-  sdf$set_metadata(uns_hint('1d'))
+  sdf$set_metadata(uns_hint("1d"))
   return(sdf)
 }
 
@@ -136,10 +136,10 @@ write_soma.data.frame <- function(
   uri,
   soma_parent,
   df_index = NULL,
-  index_column_names = 'soma_joinid',
+  index_column_names = "soma_joinid",
   ...,
   key = NULL,
-  ingest_mode = 'write',
+  ingest_mode = "write",
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
   relative = TRUE
@@ -153,7 +153,7 @@ write_soma.data.frame <- function(
     "'key' must be a single character value" = is.null(key) ||
       (is_scalar_character(key) && nzchar(key))
   )
-  ingest_mode <- match.arg(arg = ingest_mode, choices = c('write', 'resume'))
+  ingest_mode <- match.arg(arg = ingest_mode, choices = c("write", "resume"))
   # Create a proper URI
   uri <- .check_soma_uri(
     uri = uri,
@@ -164,12 +164,12 @@ write_soma.data.frame <- function(
     stop("'soma_parent' must be a SOMACollection if 'key' is provided")
   }
   # Clean up data types in `x`
-  remove <- vector(mode = 'logical', length = ncol(x))
+  remove <- vector(mode = "logical", length = ncol(x))
   for (i in seq_len(ncol(x))) {
     col <- names(x)[i]
     remove[i] <- !inherits(
       x = try(expr = arrow::infer_type(x[[col]]), silent = TRUE),
-      what = 'DataType'
+      what = "DataType"
     )
   }
   if (any(remove)) {
@@ -179,7 +179,7 @@ write_soma.data.frame <- function(
           "The following columns contain unsupported data types:",
           string_collapse(sQuote(names(x)[remove]))
         )),
-        collapse = '\n'
+        collapse = "\n"
       ),
       call. = FALSE
     )
@@ -190,11 +190,11 @@ write_soma.data.frame <- function(
     enumerations <- NULL
   }
   # Check `df_index`
-  df_index <- df_index %||% attr(x = x, which = 'index')
+  df_index <- df_index %||% attr(x = x, which = "index")
   if (is.null(df_index)) {
     x <- .df_index(x = x, ...)
     # x <- .df_index(x = x)
-    df_index <- attr(x = x, which = 'index')
+    df_index <- attr(x = x, which = "index")
   }
   if (!df_index %in% names(x)) {
     stop(
@@ -205,7 +205,7 @@ write_soma.data.frame <- function(
     )
   }
   # Add `soma_joinid` to `x`
-  if (!'soma_joinid' %in% names(x)) {
+  if (!"soma_joinid" %in% names(x)) {
     # bit64::seq.integer64 does not support seq(from = 0, to = 0)
     x$soma_joinid <- if (nrow(x) == 1L) {
       bit64::integer64(length = 1L)
@@ -249,7 +249,7 @@ write_soma.data.frame <- function(
     tiledbsoma_ctx = tiledbsoma_ctx
   )
   # Write values
-  if (ingest_mode %in% c('resume')) {
+  if (ingest_mode %in% c("resume")) {
     join_ids <- .read_soma_joinids(sdf)
     idx <- which(!x$soma_joinid %in% join_ids)
     tbl <- if (length(idx)) {
@@ -258,7 +258,7 @@ write_soma.data.frame <- function(
       NULL
     }
   }
-  if (ingest_mode %in% c('resume') && sdf$tiledbsoma_has_upgraded_domain()) {
+  if (ingest_mode %in% c("resume") && sdf$tiledbsoma_has_upgraded_domain()) {
     sdf$tiledbsoma_resize_soma_joinid_shape(nrow(x))
   }
   if (!is.null(tbl)) {
@@ -306,7 +306,7 @@ write_soma.matrix <- function(
   transpose = FALSE,
   ...,
   key = NULL,
-  ingest_mode = 'write',
+  ingest_mode = "write",
   shape = NULL,
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
@@ -321,8 +321,8 @@ write_soma.matrix <- function(
     "'shape' must be a vector of two postiive integers" = is.null(shape) ||
       (rlang::is_integerish(shape, n = 2L, finite = TRUE) && all(shape > 0L))
   )
-  ingest_mode <- match.arg(arg = ingest_mode, choices = c('write', 'resume'))
-  if (!isTRUE(sparse) && inherits(x = x, what = 'sparseMatrix')) {
+  ingest_mode <- match.arg(arg = ingest_mode, choices = c("write", "resume"))
+  if (!isTRUE(sparse) && inherits(x = x, what = "sparseMatrix")) {
     stop(
       "A sparse matrix was provided and a dense array was asked for",
       call. = FALSE
@@ -331,7 +331,7 @@ write_soma.matrix <- function(
   # Create a sparse array
   if (isTRUE(sparse)) {
     return(write_soma(
-      x = methods::as(object = x, Class = 'TsparseMatrix'),
+      x = methods::as(object = x, Class = "TsparseMatrix"),
       uri = uri,
       soma_parent = soma_parent,
       type = type,
@@ -354,7 +354,7 @@ write_soma.matrix <- function(
     )
   }
   # Create a dense array
-  if (inherits(x = x, what = 'Matrix')) {
+  if (inherits(x = x, what = "Matrix")) {
     x <- as.matrix(x)
   }
   # Create a proper URI
@@ -374,9 +374,9 @@ write_soma.matrix <- function(
   if (!is.null(shape) && any(shape < dim(x))) {
     stop(
       "Requested an array of shape (",
-      paste(shape, collapse = ', '),
+      paste(shape, collapse = ", "),
       "), but was given a matrix with a larger shape (",
-      paste(dim(x), collapse = ', '),
+      paste(dim(x), collapse = ", "),
       ")",
       call. = FALSE
     )
@@ -439,24 +439,24 @@ write_soma.TsparseMatrix <- function(
   transpose = FALSE,
   ...,
   key = NULL,
-  ingest_mode = 'write',
+  ingest_mode = "write",
   shape = NULL,
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
   relative = TRUE
 ) {
   stopifnot(
-    "'x' must be a general sparse matrix" = inherits(x = x, what = 'generalMatrix'),
-    "'x' must not be a pattern matrix" = !inherits(x = x, what = 'nsparseMatrix'),
+    "'x' must be a general sparse matrix" = inherits(x = x, what = "generalMatrix"),
+    "'x' must not be a pattern matrix" = !inherits(x = x, what = "nsparseMatrix"),
     "'type' must be an Arrow type" = is.null(type) ||
-      (R6::is.R6(type) && inherits(x = type, what = 'DataType')),
+      (R6::is.R6(type) && inherits(x = type, what = "DataType")),
     "'transpose' must be a single logical value" = is_scalar_logical(transpose),
     "'key' must be a single character value" = is.null(key) ||
       (is_scalar_character(key) && nzchar(key)),
     "'shape' must be a vector of two postiive integers" = is.null(shape) ||
       (rlang::is_integerish(shape, n = 2L, finite = TRUE) && all(shape > 0L))
   )
-  ingest_mode <- match.arg(arg = ingest_mode, choices = c('write', 'resume'))
+  ingest_mode <- match.arg(arg = ingest_mode, choices = c("write", "resume"))
   # Create a proper URI
   uri <- .check_soma_uri(
     uri = uri,
@@ -474,9 +474,9 @@ write_soma.TsparseMatrix <- function(
   if (!is.null(shape) && any(shape < dim(x))) {
     stop(
       "Requested an array of shape (",
-      paste(shape, collapse = ', '),
+      paste(shape, collapse = ", "),
       "), but was given a matrix with a larger shape (",
-      paste(dim(x), collapse = ', '),
+      paste(dim(x), collapse = ", "),
       ")",
       call. = FALSE
     )
@@ -484,7 +484,7 @@ write_soma.TsparseMatrix <- function(
   # Create the array
   array <- SOMASparseNDArrayCreate(
     uri = uri,
-    type = type %||% arrow::infer_type(methods::slot(object = x, name = 'x')),
+    type = type %||% arrow::infer_type(methods::slot(object = x, name = "x")),
     shape = shape %||% dim(x),
     ingest_mode = ingest_mode,
     platform_config = platform_config,
@@ -492,7 +492,7 @@ write_soma.TsparseMatrix <- function(
     tiledb_timestamp = Sys.time()
   )
   # Write values
-  if (ingest_mode %in% c('resume')) {
+  if (ingest_mode %in% c("resume")) {
     if (array$ndim() != 2L) {
       stop(
         "Attempting to resume writing a matrix to a sparse array with more than two dimensions",
@@ -502,9 +502,9 @@ write_soma.TsparseMatrix <- function(
     row_ids <- .read_soma_joinids(array, axis = 0L)
     col_ids <- .read_soma_joinids(array, axis = 1L)
     tbl <- data.frame(
-      i = bit64::as.integer64(slot(x, 'i')),
-      j = bit64::as.integer64(slot(x, 'j')),
-      x = slot(x, 'x')
+      i = bit64::as.integer64(slot(x, "i")),
+      j = bit64::as.integer64(slot(x, "j")),
+      x = slot(x, "x")
     )
     tbl <- tbl[-which(tbl$i %in% row_ids & tbl$j %in% col_ids), , drop = FALSE]
     x <- if (nrow(tbl)) {
@@ -514,7 +514,7 @@ write_soma.TsparseMatrix <- function(
         x = tbl$x,
         dims = dim(x),
         index1 = FALSE,
-        repr = 'T'
+        repr = "T"
       )
     } else {
       NULL
@@ -563,35 +563,38 @@ write_soma.TsparseMatrix <- function(
 #' @noRd
 #'
 .df_index <- function(
-    x,
-    alt = 'rownames',
-    axis = 'obs',
-    prefix = 'tiledbsoma',
-    ...
+  x,
+  alt = "rownames",
+  axis = "obs",
+  prefix = "tiledbsoma",
+  ...
 ) {
   stopifnot(
-    "'x' must be a data frame" = is.data.frame(x) || inherits(x, 'DataFrame'),
+    "'x' must be a data frame" = is.data.frame(x) || inherits(x, "DataFrame"),
     "'alt' must be a single character value" = is_scalar_character(alt),
     "'axis' must be a single character value" = is_scalar_character(axis),
     "'prefix' must be a single character value" = is_scalar_character(prefix)
   )
-  axis <- match.arg(axis, choices = c('obs', 'var', 'index'))
-  default <- switch(EXPR = axis, index = 'index', paste0(axis, '_id'))
-  index <- ''
+  axis <- match.arg(axis, choices = c("obs", "var", "index"))
+  default <- switch(EXPR = axis,
+    index = "index",
+    paste0(axis, "_id")
+  )
+  index <- ""
   i <- 1L
   while (!nzchar(index) || index %in% names(x)) {
     index <- switch(
       EXPR = i,
-      '1' = default,
-      '2' = alt,
-      '3' = paste(prefix, default, sep = '_'),
-      '4' = paste(prefix, alt, sep = '_'),
+      "1" = default,
+      "2" = alt,
+      "3" = paste(prefix, default, sep = "_"),
+      "4" = paste(prefix, alt, sep = "_"),
       random_name(length = i, ...)
     )
     i <- i + 1L
   }
   x[[index]] <- row.names(x)
-  attr(x = x, which = 'index') <- index
+  attr(x = x, which = "index") <- index
   return(x)
 }
 
@@ -605,7 +608,7 @@ write_soma.TsparseMatrix <- function(
   stopifnot(
     "'uri' must be a single character value" = is_scalar_character(uri),
     "'soma_parent' must be a SOMACollection" = is.null(soma_parent) ||
-      inherits(x = soma_parent, what = 'SOMACollectionBase'),
+      inherits(x = soma_parent, what = "SOMACollectionBase"),
     "'relative' must be a single logical value" = is_scalar_logical(relative)
   )
   if (!isFALSE(relative)) {
@@ -613,7 +616,7 @@ write_soma.TsparseMatrix <- function(
       warning("uri", call. = FALSE, immediate. = TRUE)
       uri <- basename(uri)
     }
-    uri <- file_path(soma_parent$uri %||% R_user_dir('tiledbsoma'), uri)
+    uri <- file_path(soma_parent$uri %||% R_user_dir("tiledbsoma"), uri)
   } else if (!is_remote_uri(uri)) {
     dir.create(dirname(uri), showWarnings = FALSE, recursive = TRUE)
   }
@@ -622,19 +625,19 @@ write_soma.TsparseMatrix <- function(
 
 .register_soma_object <- function(x, soma_parent, key, relative = TRUE) {
   stopifnot(
-    "'x' must be a SOMA object" = inherits(x, c('SOMAArrayBase', 'SOMACollectionBase')),
-    "'soma_parent' must be a SOMA collection" = inherits(soma_parent, 'SOMACollectionBase'),
+    "'x' must be a SOMA object" = inherits(x, c("SOMAArrayBase", "SOMACollectionBase")),
+    "'soma_parent' must be a SOMA collection" = inherits(soma_parent, "SOMACollectionBase"),
     "'key' must be a single character value" = is_scalar_character(key) && nzchar(key),
     "'relative' must be a single logical value" = is_scalar_logical(relative)
   )
   xmode <- x$mode()
-  if (xmode == 'CLOSED') {
-    x$reopen('READ', tiledb_timestamp = x$tiledb_timestamp)
+  if (xmode == "CLOSED") {
+    x$reopen("READ", tiledb_timestamp = x$tiledb_timestamp)
     xmode <- x$mode()
   }
   on.exit(x$reopen(mode = xmode), add = TRUE, after = FALSE)
   oldmode <- soma_parent$mode()
-  if (oldmode == 'CLOSED') {
+  if (oldmode == "CLOSED") {
     soma_parent$reopen("READ", tiledb_timestamp = soma_parent$tiledb_timestamp)
     oldmode <- soma_parent$mode()
   }
@@ -642,21 +645,25 @@ write_soma.TsparseMatrix <- function(
   if (key %in% soma_parent$names()) {
     existing <- soma_parent$get(key)
     warning(warningCondition(
-      message = paste("Already found a",
+      message = paste(
+        "Already found a",
         existing$class(),
         "stored as",
         sQuote(key),
         "in the parent collection"
       ),
-      class = 'existingKeyWarning'
+      class = "existingKeyWarning"
     ))
     return(invisible(NULL))
   }
-  soma_parent$reopen('WRITE')
+  soma_parent$reopen("WRITE")
   soma_parent$set(
     x,
     name = key,
-    relative = switch(uri_scheme(x$uri) %||% '', tiledb = FALSE, relative)
+    relative = switch(uri_scheme(x$uri) %||% "",
+      tiledb = FALSE,
+      relative
+    )
   )
   return(invisible(NULL))
 }

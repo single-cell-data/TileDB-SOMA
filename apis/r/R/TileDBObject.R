@@ -14,26 +14,33 @@ TileDBObject <- R6::R6Class(
     #' @param tiledb_timestamp Optional Datetime (POSIXct) with TileDB timestamp
     #' @param internal_use_only Character value to signal this is a 'permitted' call,
     #' as `new()` is considered internal and should not be called directly.
-    initialize = function(uri, platform_config = NULL, tiledbsoma_ctx = NULL,
-                          tiledb_timestamp = NULL, internal_use_only = NULL,
-                          soma_context = NULL) {
+    initialize = function(
+      uri,
+      platform_config = NULL,
+      tiledbsoma_ctx = NULL,
+      tiledb_timestamp = NULL,
+      internal_use_only = NULL,
+      soma_context = NULL
+    ) {
       if (is.null(internal_use_only) || internal_use_only != "allowed_use") {
-        stop(paste("Use of the new() method is for internal use only. Consider using a",
-                   "factory method as e.g. 'SOMADataFrameOpen()'."), call. = FALSE)
+        stop(paste(
+          "Use of the new() method is for internal use only. Consider using a",
+          "factory method as e.g. 'SOMADataFrameOpen()'."
+        ), call. = FALSE)
       }
       if (missing(uri)) stop("Must specify a `uri`", call. = FALSE)
       private$tiledb_uri <- TileDBURI$new(uri)
 
       # Set platform config
       platform_config <- platform_config %||% PlatformConfig$new()
-      if (!inherits(platform_config, 'PlatformConfig')) {
+      if (!inherits(platform_config, "PlatformConfig")) {
         stop("'platform_config' must be a PlatformConfig object", call. = FALSE)
       }
       private$.tiledb_platform_config <- platform_config
 
       # Set context
       tiledbsoma_ctx <- tiledbsoma_ctx %||% SOMATileDBContext$new()
-      if (!inherits(x = tiledbsoma_ctx, what = 'SOMATileDBContext')) {
+      if (!inherits(x = tiledbsoma_ctx, what = "SOMATileDBContext")) {
         stop("'tiledbsoma_ctx' must be a SOMATileDBContext object", call. = FALSE)
       }
       private$.tiledbsoma_ctx <- tiledbsoma_ctx
@@ -45,22 +52,24 @@ TileDBObject <- R6::R6Class(
       #   "'soma_context' must be a pointer" = inherits(x = soma_context, what = 'externalptr')
       # )
       if (is.null(soma_context)) {
-          private$.soma_context <- soma_context()  # FIXME via factory and paramater_config
+        private$.soma_context <- soma_context() # FIXME via factory and paramater_config
       } else {
-          private$.soma_context <- soma_context
+        private$.soma_context <- soma_context
       }
 
       if (!is.null(tiledb_timestamp)) {
         stopifnot(
-            "'tiledb_timestamp' must be a single POSIXct datetime object" = inherits(tiledb_timestamp, "POSIXct") &&
-              length(tiledb_timestamp) == 1L &&
-              !is.na(tiledb_timestamp)
+          "'tiledb_timestamp' must be a single POSIXct datetime object" = inherits(tiledb_timestamp, "POSIXct") &&
+            length(tiledb_timestamp) == 1L &&
+            !is.na(tiledb_timestamp)
         )
         private$.tiledb_timestamp <- tiledb_timestamp
       }
 
-      spdl::debug("[TileDBObject] initialize {} with '{}' at ({})", self$class(), self$uri,
-                  self$tiledb_timestamp %||% "now")
+      spdl::debug(
+        "[TileDBObject] initialize {} with '{}' at ({})", self$class(), self$uri,
+        self$tiledb_timestamp %||% "now"
+      )
     },
 
     #' @description Print the name of the R6 class.
@@ -75,7 +84,7 @@ TileDBObject <- R6::R6Class(
     #' @return \code{TRUE} if the object is open, otherwise \code{FALSE}
     #'
     is_open = function() {
-      return(self$mode() != 'CLOSED')
+      return(self$mode() != "CLOSED")
     },
 
     # TODO: make this an active
@@ -104,14 +113,14 @@ TileDBObject <- R6::R6Class(
     #' @return Invisibly returns \code{self} opened in \code{mode}
     #'
     reopen = function(mode, tiledb_timestamp = NULL) {
-      mode <- match.arg(mode, choices = c('READ', 'WRITE'))
+      mode <- match.arg(mode, choices = c("READ", "WRITE"))
       stopifnot(
         "'tiledb_timestamp' must be a POSIXct datetime object" = is.null(tiledb_timestamp) ||
           (inherits(tiledb_timestamp, what = "POSIXct") && length(tiledb_timestamp) == 1L && !is.na(tiledb_timestamp))
       )
       self$close()
       private$.tiledb_timestamp <- tiledb_timestamp
-      self$open(mode, internal_use_only = 'allowed_use')
+      self$open(mode, internal_use_only = "allowed_use")
       return(invisible(self))
     },
 
@@ -136,7 +145,6 @@ TileDBObject <- R6::R6Class(
       get_tiledb_object_type(self$uri, ctx = soma_context()) %in% expected_type
     }
   ),
-
   active = list(
     #' @field platform_config Platform configuration
     platform_config = function(value) {
@@ -163,7 +171,9 @@ TileDBObject <- R6::R6Class(
     #' @field uri
     #' The URI of the TileDB object.
     uri = function(value) {
-      if (missing(value)) return(private$tiledb_uri$uri)
+      if (missing(value)) {
+        return(private$tiledb_uri$uri)
+      }
       stop(sprintf("'%s' is a read-only field.", "uri"), call. = FALSE)
     },
     #' @field .tiledb_timestamp_range Time range for libtiledbsoma
@@ -176,19 +186,18 @@ TileDBObject <- R6::R6Class(
         return(NULL)
       }
       return(c(
-        as.POSIXct(0, tz = 'UTC', origin = '1970-01-01'),
+        as.POSIXct(0, tz = "UTC", origin = "1970-01-01"),
         self$tiledb_timestamp
       ))
     }
   ),
-
   private = list(
-    # Pro tip: in R6 we can't set these to anything other than NULL here, even if we want to.  If
-    # you want them defaulted to anything other than NULL, leave them NULL here and set the defaults
-    # in the constructor.
+    # Pro tip: in R6 we can't set these to anything other than NULL here, even
+    # if we want to.  If you want them defaulted to anything other than NULL,
+    # leave them NULL here and set the defaults in the constructor.
 
-    # Set by TileDBArray and TileDBGroup, as stateful handles have incompatible semantics
-    # we can't completely abstract here in this parent class
+    # Set by TileDBArray and TileDBGroup, as stateful handles have incompatible
+    # semanticswe can't completely abstract here in this parent class
     #
     # Semantics:
     # * "READ" when opened for read
@@ -207,19 +216,17 @@ TileDBObject <- R6::R6Class(
     # Internal platform config
     .tiledb_platform_config = NULL,
 
-    # Opener-supplied POSIXct timestamp, if any. TileDBArray and TileDBGroup are each responsible
-    # for making this effective, since the methods differ slightly.
+    # Opener-supplied POSIXct timestamp, if any. TileDBArray and TileDBGroup
+    # are each responsible for making this effective, since the methods
+    # differ slightly.
     .tiledb_timestamp = NULL,
 
     # Internal context
     .tiledbsoma_ctx = NULL,
-
     .tiledb_ctx = NULL,
-
     .read_only_error = function(field) {
       stop("Field ", sQuote(field), " is read-only", call. = FALSE)
     },
-
     is_open_for_read = function() {
       # Pro-tip: it's not enough to check $private.mode != "READ", since logical(0) isn't
       # the same as FALSE
@@ -231,7 +238,6 @@ TileDBObject <- R6::R6Class(
         TRUE
       }
     },
-
     is_open_for_write = function() {
       if (is.null(private$.mode)) {
         FALSE
@@ -256,7 +262,8 @@ TileDBObject <- R6::R6Class(
       }
     },
 
-    # Per the spec, invoking user-level get-metadata requires open for read mode or write mode.
+    # Per the spec, invoking user-level get-metadata requires open for
+    # read mode or write mode.
     check_open_for_read_or_write = function() {
       if (!self$is_open()) {
         stop(paste("Item must be open for read or write.", self$uri))

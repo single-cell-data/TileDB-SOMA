@@ -12,7 +12,6 @@
 SOMAMeasurement <- R6::R6Class(
   classname = "SOMAMeasurement",
   inherit = SOMACollectionBase,
-
   active = list(
     #' @field var a [`SOMADataFrame`] containing primary annotations on the
     #' variable axis, for variables in this measurement (i.e., annotates columns

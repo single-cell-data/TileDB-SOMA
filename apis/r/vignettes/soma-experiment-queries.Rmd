@@ -44,7 +44,7 @@ experiment$ms
 To use larger (or smaller) buffer sizes:
 
 ```{r}
-ctx <- SOMATileDBContext$new(c(soma.init_buffer_bytes=as.character(2 * 1024**3)))
+ctx <- SOMATileDBContext$new(c(soma.init_buffer_bytes = as.character(2 * 1024**3)))
 experiment <- SOMAExperimentOpen(experiment$uri, tiledbsoma_ctx = ctx)
 ```
 

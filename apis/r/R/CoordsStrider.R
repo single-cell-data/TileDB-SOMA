@@ -41,7 +41,7 @@ CoordsStrider <- R6::R6Class(
         stopifnot(
           "'start' must be a single integer value" = rlang::is_integerish(start, 1L, TRUE) ||
             (inherits(start, "integer64") && length(start) == 1L && is.finite(start)),
-          "'end' must be a single integer value"  = rlang::is_integerish(end, 1L, TRUE) ||
+          "'end' must be a single integer value" = rlang::is_integerish(end, 1L, TRUE) ||
             (inherits(end, "integer64") && length(end) == 1L && is.finite(end)),
           "'start' must be less than or equal to 'end'" = start <= end
         )
@@ -140,18 +140,22 @@ CoordsStrider <- R6::R6Class(
     #' @field start If set, the starting point of the iterated coordinates;
     #' otherwise the minimum value of \code{self$coords}
     #'
-    start = function() if (is.null(self$coords)) {
-      private$.start
-    } else {
-      bit64::min.integer64(self$coords)
+    start = function() {
+      if (is.null(self$coords)) {
+        private$.start
+      } else {
+        bit64::min.integer64(self$coords)
+      }
     },
     #' @field end If set, the end point of the iterated coordinates;
     #' otherwise the maximum value of \code{self$coords}
     #'
-    end = function() if (is.null(self$coords)) {
-      private$.end
-    } else {
-      bit64::max.integer64(self$coords)
+    end = function() {
+      if (is.null(self$coords)) {
+        private$.end
+      } else {
+        bit64::max.integer64(self$coords)
+      }
     },
     #' @field stride The stride, or how many coordinates to generate per
     #' iteration; note: this field is settable, which will reset the iterator
@@ -184,10 +188,12 @@ CoordsStrider <- R6::R6Class(
     .end = NULL,
     .stride = NULL,
     .index = NULL,
-    .stopIteration = function() stop(errorCondition(
-      "StopIteration",
-      class = "stopIteration"
-    ))
+    .stopIteration = function() {
+      stop(errorCondition(
+        "StopIteration",
+        class = "stopIteration"
+      ))
+    }
   )
 )
 
@@ -223,7 +229,7 @@ hasNext.CoordsStrider <- function(obj, ...) obj$has_next()
 unlist64 <- function(x) {
   stopifnot(
     "'x' must be a list" = is.list(x),
-    "'x' must contain 'integer64' values" = all(vapply_lgl(x, inherits, what = 'integer64'))
+    "'x' must contain 'integer64' values" = all(vapply_lgl(x, inherits, what = "integer64"))
   )
   res <- bit64::integer64(sum(vapply_int(x, length)))
   idx <- 1L

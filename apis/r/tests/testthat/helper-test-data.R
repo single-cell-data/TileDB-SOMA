@@ -71,12 +71,12 @@ create_arrow_table <- function(nrows = 10L, factors = FALSE) {
     ))
   }
   arrow::arrow_table(
-      int_column = seq.int(nrows) + 1000L,
-      soma_joinid = bit64::seq.integer64(from = 0L, to = nrows - 1L),
-      float_column = seq(nrows) + 0.1,
-      string_column = as.character(seq.int(nrows) + 1000L)
-      # schema = create_arrow_schema(false)
-    )
+    int_column = seq.int(nrows) + 1000L,
+    soma_joinid = bit64::seq.integer64(from = 0L, to = nrows - 1L),
+    float_column = seq(nrows) + 0.1,
+    string_column = as.character(seq.int(nrows) + 1000L)
+    # schema = create_arrow_schema(false)
+  )
 }
 
 domain_for_arrow_table <- function() {

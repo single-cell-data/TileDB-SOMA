@@ -1,6 +1,6 @@
 test_that("Load *m and *p layers from SOMAExperimentAxisQuery mechanics", {
   skip_if(!extended_tests())
-  uri <- tempfile(pattern="m-p-experiment-query-mechanics")
+  uri <- tempfile(pattern = "m-p-experiment-query-mechanics")
 
   n_obs <- 20L
   n_var <- 10L
@@ -13,11 +13,11 @@ test_that("Load *m and *p layers from SOMAExperimentAxisQuery mechanics", {
     n_obs = n_obs,
     n_var = n_var,
     X_layer_names = "counts",
-    obsm_layers = c(X_pca = n_pcs, 'dense:X_ica' = n_ics, X_umap = n_umaps),
+    obsm_layers = c(X_pca = n_pcs, "dense:X_ica" = n_ics, X_umap = n_umaps),
     varm_layers = c(PCs = n_pcs, "dense:ICs" = n_ics),
-    obsp_layer_names = 'connectivities',
-    varp_layer_names = 'network',
-    mode = 'READ'
+    obsp_layer_names = "connectivities",
+    varp_layer_names = "network",
+    mode = "READ"
   )
   on.exit(experiment$close(), add = TRUE)
 
@@ -81,7 +81,7 @@ test_that("Load *m and *p layers from SOMAExperimentAxisQuery mechanics", {
 
 test_that("SOMAExperimentAxisQuery without *m and *p layers mechanics", {
   skip_if(!extended_tests())
-  uri <- tempfile(pattern="m-p-missing-experiment-query-mechanics")
+  uri <- tempfile(pattern = "m-p-missing-experiment-query-mechanics")
 
   n_obs <- 1001L
   n_var <- 99L
@@ -91,7 +91,7 @@ test_that("SOMAExperimentAxisQuery without *m and *p layers mechanics", {
     n_obs = n_obs,
     n_var = n_var,
     X_layer_names = "counts",
-    mode = 'READ'
+    mode = "READ"
   )
   on.exit(experiment$close(), add = TRUE)
 
@@ -106,7 +106,7 @@ test_that("SOMAExperimentAxisQuery without *m and *p layers mechanics", {
 
 test_that("Load *m and *p layers from sliced SOMAExperimentAxisQuery", {
   skip_if(!extended_tests())
-  uri <- tempfile(pattern="m-p-experiment-query-sliced")
+  uri <- tempfile(pattern = "m-p-experiment-query-sliced")
 
   n_obs <- 1001L
   n_var <- 99L
@@ -120,9 +120,9 @@ test_that("Load *m and *p layers from sliced SOMAExperimentAxisQuery", {
     X_layer_names = "counts",
     obsm_layers = c(X_pca = n_pcs, X_umap = n_umaps),
     varm_layers = c(PCs = n_pcs),
-    obsp_layer_names = 'connectivities',
-    varp_layer_names = 'network',
-    mode = 'READ'
+    obsp_layer_names = "connectivities",
+    varp_layer_names = "network",
+    mode = "READ"
   )
   on.exit(experiment$close(), add = TRUE)
 
@@ -171,13 +171,13 @@ test_that("Load *m and *p layers from sliced SOMAExperimentAxisQuery", {
       min(con_dim),
       min(obs_slice),
       label = axis,
-      expected.label = 'lower obsp range'
+      expected.label = "lower obsp range"
     )
     expect_lte(
       max(con_dim),
       max(obs_slice),
       label = axis,
-      expected.label = 'upper obsp range'
+      expected.label = "upper obsp range"
     )
   }
 
@@ -191,21 +191,20 @@ test_that("Load *m and *p layers from sliced SOMAExperimentAxisQuery", {
       min(net_dim),
       min(var_slice),
       label = axis,
-      expected.label = 'lower varp range'
+      expected.label = "lower varp range"
     )
     expect_lte(
       max(net_dim),
       max(var_slice),
       label = axis,
-      expected.label = 'upper varp range'
+      expected.label = "upper varp range"
     )
   }
-
 })
 
 test_that("Load *m and *p layers from indexed SOMAExperimentAxisQuery", {
   skip_if(!extended_tests())
-  uri <- tempfile(pattern="m-p-experiment-query-indexed")
+  uri <- tempfile(pattern = "m-p-experiment-query-indexed")
 
   n_obs <- 1001L
   n_var <- 99L
@@ -221,9 +220,9 @@ test_that("Load *m and *p layers from indexed SOMAExperimentAxisQuery", {
     X_layer_names = "counts",
     obsm_layers = c(X_pca = n_pcs, X_umap = n_umaps),
     varm_layers = c(PCs = n_pcs),
-    obsp_layer_names = 'connectivities',
-    varp_layer_names = 'network',
-    mode = 'READ'
+    obsp_layer_names = "connectivities",
+    varp_layer_names = "network",
+    mode = "READ"
   )
   on.exit(experiment$close(), add = TRUE)
 
@@ -288,5 +287,4 @@ test_that("Load *m and *p layers from indexed SOMAExperimentAxisQuery", {
     net_dim <- net_tbl$GetColumnByName(axis)$as_vector()
     expect_in(net_dim, var_ids)
   }
-
 })

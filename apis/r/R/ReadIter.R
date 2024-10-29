@@ -6,7 +6,6 @@
 
 ReadIter <- R6::R6Class(
   classname = "ReadIter",
-
   public = list(
 
     #' @description Create (lifecycle: maturing)
@@ -19,9 +18,9 @@ ReadIter <- R6::R6Class(
     #' @return logical
     read_complete = function() {
       if (is.null(private$soma_reader_pointer)) {
-          TRUE
+        TRUE
       } else {
-          sr_complete(private$soma_reader_pointer)
+        sr_complete(private$soma_reader_pointer)
       }
     },
 
@@ -30,7 +29,7 @@ ReadIter <- R6::R6Class(
     #' @return \code{NULL} or one of arrow::\link[arrow]{Table}, \link{matrixZeroBasedView}
     read_next = function() {
       if (is.null(private$soma_reader_pointer)) {
-          return(NULL)
+        return(NULL)
       }
       if (self$read_complete()) {
         return(private$.readComplete())
@@ -45,7 +44,6 @@ ReadIter <- R6::R6Class(
       .NotYetImplemented()
     }
   ),
-
   private = list(
 
     # Internal 'external pointer' object used for iterated reads
@@ -71,6 +69,5 @@ ReadIter <- R6::R6Class(
       ))
       return(NULL)
     }
-
   )
 )

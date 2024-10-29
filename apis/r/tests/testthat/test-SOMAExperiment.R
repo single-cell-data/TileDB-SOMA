@@ -1,6 +1,6 @@
 test_that("Basic mechanics", {
   skip_if(!extended_tests())
-  uri <- tempfile(pattern="soma-experiment")
+  uri <- tempfile(pattern = "soma-experiment")
 
   experiment <- SOMAExperimentCreate(uri)
   # TODO: Determine behavior for retrieving empty obs/ms
@@ -40,15 +40,15 @@ test_that("Configured SOMAExperiment", {
   skip_if(!extended_tests())
   cfg <- PlatformConfig$new()
   cfg$set(
-    'tiledb',
-    'create',
+    "tiledb",
+    "create",
     value = ScalarMap$new()$setv(
       capacity = 8888L,
-      cell_order = 'row-major',
-      tile_order = 'col-major'
+      cell_order = "row-major",
+      tile_order = "col-major"
     )
   )
-  uri <- tempfile(pattern="soma-experiment-config")
+  uri <- tempfile(pattern = "soma-experiment-config")
   n_obs <- 20L
   n_var <- 10L
   experiment <- create_and_populate_experiment(
@@ -58,15 +58,15 @@ test_that("Configured SOMAExperiment", {
     X_layer_names = c("counts", "logcounts"),
     config = cfg
   )
-  expect_equal(experiment$platform_config$get('tiledb', 'create', 'capacity'), '8888')
-  expect_equal(experiment$platform_config$get('tiledb', 'create', 'cell_order'), 'row-major')
-  expect_equal(experiment$platform_config$get('tiledb', 'create', 'tile_order'), 'col-major')
+  expect_equal(experiment$platform_config$get("tiledb", "create", "capacity"), "8888")
+  expect_equal(experiment$platform_config$get("tiledb", "create", "cell_order"), "row-major")
+  expect_equal(experiment$platform_config$get("tiledb", "create", "tile_order"), "col-major")
 })
 
 test_that("Update obs and var", {
   skip_if(!extended_tests())
   # Update mechanics are tested more thoroughly in the SOMADataFrame tests
-  uri <- tempfile(pattern="soma-experiment-update")
+  uri <- tempfile(pattern = "soma-experiment-update")
   create_and_populate_experiment(
     uri = uri,
     n_obs = 20L,

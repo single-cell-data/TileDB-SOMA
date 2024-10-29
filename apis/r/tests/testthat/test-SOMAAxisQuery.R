@@ -46,12 +46,12 @@ test_that("SOMAAxisQuery", {
 
   ## check for numeric arguments becoming integer64 (issue #1537)
   expt <- load_dataset("soma-exp-pbmc-small")
-  intq <- SOMAAxisQuery$new(coords = 1:2) 		# int as : operator creates ints
-  numq <- SOMAAxisQuery$new(coords = c(1, 2))   # numeric
+  intq <- SOMAAxisQuery$new(coords = 1:2) # int as : operator creates ints
+  numq <- SOMAAxisQuery$new(coords = c(1, 2)) # numeric
   expt_query <- SOMAExperimentAxisQuery$new(expt, "RNA", var_query = intq, obs_query = numq)
   op <- getOption("arrow.int64_downcast")
-  options("arrow.int64_downcast"=FALSE) # else it becomes int
+  options("arrow.int64_downcast" = FALSE) # else it becomes int
   expect_true(inherits(expt_query$var_joinids()$as_vector(), "integer64"))
   expect_true(inherits(expt_query$obs_joinids()$as_vector(), "integer64"))
-  options("arrow.int64_downcast"=op)
+  options("arrow.int64_downcast" = op)
 })

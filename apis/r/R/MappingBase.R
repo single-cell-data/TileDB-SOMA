@@ -8,7 +8,7 @@
 #' @export
 
 MappingBase <- R6::R6Class(
-  classname = 'MappingBase',
+  classname = "MappingBase",
   lock_class = TRUE,
   public = list(
     #' @param ... Ignored
@@ -18,10 +18,10 @@ MappingBase <- R6::R6Class(
     initialize = function(...) {
       calls <- vapply_char(
         X = lapply(X = sys.calls(), FUN = as.character),
-        FUN = '[[',
+        FUN = "[[",
         1L
       )
-      if ('MappingBase$new' %in% calls) {
+      if ("MappingBase$new" %in% calls) {
         stop(
           "'MappingBase' is a virtual class and cannot be instantiated directly",
           call. = FALSE
@@ -112,7 +112,7 @@ MappingBase <- R6::R6Class(
     #'
     update = function(map) {
       stopifnot(
-        "'map' must be a mapping type" = inherits(x = map, what = 'MappingBase')
+        "'map' must be a mapping type" = inherits(x = map, what = "MappingBase")
       )
       self$setv(map$items())
       return(invisible(self))
@@ -131,13 +131,13 @@ MappingBase <- R6::R6Class(
     #' and invisibly returns \code{self}
     #'
     print = function() {
-      cat("<", class(self)[1L], ">\n", sep = '')
+      cat("<", class(self)[1L], ">\n", sep = "")
       if (length(self)) {
         cat(
-          '  ',
-          paste(self$keys(), self$values(), sep = ': ', collapse = '\n  '),
-          '\n',
-          sep = ''
+          "  ",
+          paste(self$keys(), self$values(), sep = ": ", collapse = "\n  "),
+          "\n",
+          sep = ""
         )
       }
       return(invisible(x = self))
@@ -167,7 +167,7 @@ MappingBase <- R6::R6Class(
 #' @method [[ MappingBase
 #' @export
 #'
-'[[.MappingBase' <- function(x, i, ..., default = NULL) {
+"[[.MappingBase" <- function(x, i, ..., default = NULL) {
   return(x$get(key = i, default = default))
 }
 
@@ -181,7 +181,7 @@ MappingBase <- R6::R6Class(
 #' @method [[<- MappingBase
 #' @export
 #'
-'[[<-.MappingBase' <- function(x, i, ..., value) {
+"[[<-.MappingBase" <- function(x, i, ..., value) {
   stopifnot("'i' must be a single character value" = is_scalar_character(i))
   x$set(key = i, value = value)
   return(x)

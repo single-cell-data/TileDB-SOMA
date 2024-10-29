@@ -12,12 +12,12 @@ test_that("Ephemeral Experiment mechanics", {
   obs <- create_and_populate_obs(file.path(uri, "obs"))
   expect_no_condition(experiment$obs <- obs)
   expect_equal(experiment$length(), 1)
-  expect_s3_class(experiment$obs, 'SOMADataFrame')
+  expect_s3_class(experiment$obs, "SOMADataFrame")
 
   # Add ms
   expect_error(experiment$ms <- obs)
-  expect_error(experiment$ms <- SOMAMeasurementCreate(file.path(uri, '_ms')))
-  expect_no_condition(experiment$ms <- SOMACollectionCreate(file.path(uri, 'ms')))
+  expect_error(experiment$ms <- SOMAMeasurementCreate(file.path(uri, "_ms")))
+  expect_no_condition(experiment$ms <- SOMACollectionCreate(file.path(uri, "ms")))
   expect_equal(experiment$length(), 2)
-  expect_s3_class(experiment$ms, 'SOMACollection')
+  expect_s3_class(experiment$ms, "SOMACollection")
 })

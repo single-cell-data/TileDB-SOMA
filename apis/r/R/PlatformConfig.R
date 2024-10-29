@@ -11,7 +11,7 @@
 #' @noMd
 #'
 PlatformConfig <- R6::R6Class(
-  classname = 'PlatformConfig',
+  classname = "PlatformConfig",
   inherit = MappingBase,
   public = list(
     #' @return The names of the \dQuote{platforms} (outer keys)

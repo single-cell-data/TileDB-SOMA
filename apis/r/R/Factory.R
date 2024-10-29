@@ -1,4 +1,3 @@
-
 #' Create SOMA DataFrame
 #'
 #' Factory function to create a SOMADataFrame for writing, (lifecycle: maturing)

@@ -1,5 +1,5 @@
 test_that("Basic mechanics", {
-  uri <- tempfile(pattern="soma-ms")
+  uri <- tempfile(pattern = "soma-ms")
 
   measurement <- SOMAMeasurementCreate(uri)
 

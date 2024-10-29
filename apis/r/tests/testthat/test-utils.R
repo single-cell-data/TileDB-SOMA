@@ -1,5 +1,4 @@
 test_that("validate read coords", {
-
   # NULL is a valid value
   expect_equal(
     validate_read_coords(NULL),
@@ -30,7 +29,6 @@ test_that("validate read coords", {
 })
 
 test_that("validate read coords with dimension names", {
-
   # assume vector or unnamed list of length 1 corresponds to first dimension
   expect_equal(
     validate_read_coords(1:10, dimnames = "int_column"),
@@ -72,9 +70,9 @@ test_that("validate read coords with dimension names and schema", {
 
   # casting is selective and only applies to int64 dimensions
   test_coords <- validate_read_coords(
-      coords = list(int_column = 1:10, soma_joinid = 1:10),
-      dimnames = c("int_column", "soma_joinid"),
-      schema = asch
+    coords = list(int_column = 1:10, soma_joinid = 1:10),
+    dimnames = c("int_column", "soma_joinid"),
+    schema = asch
   )
 
   expect_equal(test_coords$int_column, 1:10)
@@ -82,8 +80,8 @@ test_that("validate read coords with dimension names and schema", {
 })
 
 test_that("half-named lists are not treated as named", {
-  expect_true(is_named_list(list(a=1, b=2)))
-  expect_false(is_named_list(list(a=1, 2)))
+  expect_true(is_named_list(list(a = 1, b = 2)))
+  expect_false(is_named_list(list(a = 1, 2)))
   expect_false(is_named_list(list(1, 2)))
 })
 
@@ -123,11 +121,10 @@ test_that("is_integerish: integer64", {
   expect_false(.is_integerish(bit64::NA_integer64_, finite = TRUE))
 
   # Test large number
-  expect_true(.is_integerish(bit64::as.integer64((2 ^ 31) + 1L)))
+  expect_true(.is_integerish(bit64::as.integer64((2^31) + 1L)))
 })
 
 test_that("is_integerish: arrow::DataType", {
-
   ints <- paste0("int", c(8, 16, 32, 64))
   for (it in c(ints, paste0("u", ints))) {
     f <- get(it, envir = asNamespace("arrow"))

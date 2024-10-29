@@ -1,60 +1,58 @@
-
 test_that("write_soma.data.frame mechanics", {
   skip_if(!extended_tests())
 
-  uri <- tempfile(pattern="write-soma-data-frame")
+  uri <- tempfile(pattern = "write-soma-data-frame")
   collection <- SOMACollectionCreate(uri)
 
-  co2 <- get_data('CO2', package = 'datasets')
-  expect_no_condition(sdf <- write_soma(co2, uri = 'co2', soma = collection))
-  expect_s3_class(sdf, 'SOMADataFrame')
+  co2 <- get_data("CO2", package = "datasets")
+  expect_no_condition(sdf <- write_soma(co2, uri = "co2", soma = collection))
+  expect_s3_class(sdf, "SOMADataFrame")
   expect_true(sdf$exists())
-  expect_identical(sdf$uri, file.path(collection$uri, 'co2'))
-  expect_identical(sdf$dimnames(), 'soma_joinid')
-  expect_identical(sdf$attrnames(), c(names(co2), 'obs_id'))
-  expect_error(sdf$shape(), class = 'notYetImplementedError')
+  expect_identical(sdf$uri, file.path(collection$uri, "co2"))
+  expect_identical(sdf$dimnames(), "soma_joinid")
+  expect_identical(sdf$attrnames(), c(names(co2), "obs_id"))
+  expect_error(sdf$shape(), class = "notYetImplementedError")
   schema <- sdf$schema()
-  expect_s3_class(schema, 'Schema')
+  expect_s3_class(schema, "Schema")
   expect_equal(schema$num_fields - 2L, ncol(co2))
   expect_identical(
-    setdiff(schema$names, c('soma_joinid', 'obs_id')),
+    setdiff(schema$names, c("soma_joinid", "obs_id")),
     names(co2)
   )
 
   collection$close()
-
 })
 
 test_that("write_soma.data.frame enumerations", {
   skip_if(!extended_tests())
 
-  uri <- tempfile(pattern="write-soma-data-frame-enumerations")
+  uri <- tempfile(pattern = "write-soma-data-frame-enumerations")
   collection <- SOMACollectionCreate(uri)
   on.exit(collection$close(), add = TRUE)
 
-  co2 <- get_data('CO2', package = 'datasets')
-  expect_no_condition(sdf <- write_soma(co2, uri = 'co2', soma = collection))
-  expect_s3_class(sdf, 'SOMADataFrame')
+  co2 <- get_data("CO2", package = "datasets")
+  expect_no_condition(sdf <- write_soma(co2, uri = "co2", soma = collection))
+  expect_s3_class(sdf, "SOMADataFrame")
   expect_true(sdf$exists())
-  expect_identical(sdf$uri, file.path(collection$uri, 'co2'))
+  expect_identical(sdf$uri, file.path(collection$uri, "co2"))
   sdf$close()
   expect_no_condition(sdf <- SOMADataFrameOpen(sdf$uri))
 
-  expect_s3_class(schema <- sdf$schema(), 'Schema')
+  expect_s3_class(schema <- sdf$schema(), "Schema")
   expect_equal(schema$num_fields - 2L, ncol(co2))
   expect_identical(
-    setdiff(schema$names, c('soma_joinid', 'obs_id')),
+    setdiff(schema$names, c("soma_joinid", "obs_id")),
     names(co2)
   )
 
-  expect_s3_class(tbl <- sdf$read()$concat(), 'Table')
+  expect_s3_class(tbl <- sdf$read()$concat(), "Table")
   expect_equal(ncol(tbl), schema$num_fields)
   expect_identical(
     sort(names(tbl)),
     sort(schema$names)
   )
 
-  expect_s3_class(df <- as.data.frame(tbl), 'data.frame')
+  expect_s3_class(df <- as.data.frame(tbl), "data.frame")
   for (i in names(co2)) {
     if (is.factor(co2[[i]])) {
       expect_true(is.factor(df[[i]]))
@@ -67,43 +65,43 @@ test_that("write_soma.data.frame enumerations", {
 test_that("write_soma.data.frame no enumerations", {
   skip_if(!extended_tests())
 
-  uri <- tempfile(pattern="write-soma-data-frame-factorless")
+  uri <- tempfile(pattern = "write-soma-data-frame-factorless")
   collection <- SOMACollectionCreate(uri)
   on.exit(collection$close(), add = TRUE)
 
-  co2 <- get_data('CO2', package = 'datasets')
+  co2 <- get_data("CO2", package = "datasets")
   for (i in names(co2)) {
     if (is.factor(co2[[i]])) {
       co2[[i]] <- as.vector(co2[[i]])
     }
   }
 
-  expect_no_condition(sdf <- write_soma(co2, uri = 'co2', soma = collection))
-  expect_s3_class(sdf, 'SOMADataFrame')
+  expect_no_condition(sdf <- write_soma(co2, uri = "co2", soma = collection))
+  expect_s3_class(sdf, "SOMADataFrame")
   expect_true(sdf$exists())
-  expect_identical(sdf$uri, file.path(collection$uri, 'co2'))
+  expect_identical(sdf$uri, file.path(collection$uri, "co2"))
   sdf$close()
   expect_no_condition(sdf <- SOMADataFrameOpen(sdf$uri))
 
-  expect_s3_class(schema <- sdf$schema(), 'Schema')
+  expect_s3_class(schema <- sdf$schema(), "Schema")
   expect_equal(schema$num_fields - 2L, ncol(co2))
   expect_identical(
-    setdiff(schema$names, c('soma_joinid', 'obs_id')),
+    setdiff(schema$names, c("soma_joinid", "obs_id")),
     names(co2)
   )
 
-  expect_s3_class(tbl <- sdf$read()$concat(), 'Table')
+  expect_s3_class(tbl <- sdf$read()$concat(), "Table")
   expect_equal(ncol(tbl), schema$num_fields)
   expect_identical(
     sort(names(tbl)),
     sort(schema$names)
   )
 
-  expect_s3_class(df <- as.data.frame(tbl), 'data.frame')
+  expect_s3_class(df <- as.data.frame(tbl), "data.frame")
   for (i in names(co2)) {
     if (is.factor(co2[[i]])) {
       expect_false(is.factor(df[[i]]))
-      expect_type(df[[i]], 'character')
+      expect_type(df[[i]], "character")
     } else {
       expect_equal(class(df[[i]]), class(co2[[i]]))
     }
@@ -113,7 +111,7 @@ test_that("write_soma.data.frame no enumerations", {
 test_that("write_soma.data.frame registration", {
   skip_if(!extended_tests())
 
-  uri <- tempfile(pattern="write-soma-data-frame-registration")
+  uri <- tempfile(pattern = "write-soma-data-frame-registration")
   collection <- SOMACollectionCreate(uri)
   on.exit(collection$close(), add = TRUE)
 
@@ -137,7 +135,7 @@ test_that("write_soma.data.frame registration", {
   expect_identical(collection$length(), 1L)
   expect_identical(collection$names(), "co2")
   expect_s3_class(cdf <- collection$get("co2"), "SOMADataFrame")
-  expect_s3_class(df <- as.data.frame(cdf$read()$concat()), 'data.frame')
+  expect_s3_class(df <- as.data.frame(cdf$read()$concat()), "data.frame")
   for (col in names(co2)) {
     expect_identical(df[[col]], co2[[col]])
   }
@@ -147,60 +145,59 @@ test_that("write_soma.data.frame registration", {
   expect_error(write_soma(co2, "uri", soma_parent = collection, key = 1L))
   expect_error(write_soma(co2, "uri", soma_parent = collection, key = c("a", "b")))
   expect_error(write_soma(co2, "uri", soma_parent = NULL, key = "co2"))
-
 })
 
 test_that("write_soma dense matrix mechanics", {
   skip_if(!extended_tests())
 
-  uri <- tempfile(pattern="write-soma-dense-matrix")
+  uri <- tempfile(pattern = "write-soma-dense-matrix")
   collection <- SOMACollectionCreate(uri)
 
-  state77 <- get(x = 'state.x77', envir = getNamespace('datasets'))
+  state77 <- get(x = "state.x77", envir = getNamespace("datasets"))
   expect_no_condition(dmat <- write_soma(
     state77,
-    uri = 'state77',
+    uri = "state77",
     soma = collection,
     sparse = FALSE
   ))
-  expect_s3_class(dmat, 'SOMADenseNDArray')
+  expect_s3_class(dmat, "SOMADenseNDArray")
   expect_true(dmat$exists())
-  expect_identical(dmat$uri, file.path(collection$uri, 'state77'))
+  expect_identical(dmat$uri, file.path(collection$uri, "state77"))
   expect_equal(dmat$ndim(), 2L)
-  expect_identical(dmat$dimnames(), paste0('soma_dim_', c(0L, 1L)))
-  expect_identical(dmat$attrnames(), 'soma_data')
+  expect_identical(dmat$dimnames(), paste0("soma_dim_", c(0L, 1L)))
+  expect_identical(dmat$attrnames(), "soma_data")
   expect_equal(dmat$shape(), dim(state77))
   # Test transposition
   expect_no_condition(tmat <- write_soma(
     state77,
-    uri = 'state77t',
+    uri = "state77t",
     soma = collection,
     sparse = FALSE,
     transpose = TRUE
   ))
-  expect_s3_class(tmat, 'SOMADenseNDArray')
+  expect_s3_class(tmat, "SOMADenseNDArray")
   expect_true(tmat$exists())
-  expect_identical(tmat$uri, file.path(collection$uri, 'state77t'))
+  expect_identical(tmat$uri, file.path(collection$uri, "state77t"))
   expect_equal(tmat$ndim(), 2L)
-  expect_identical(tmat$dimnames(), paste0('soma_dim_', c(0L, 1L)))
-  expect_identical(tmat$attrnames(), 'soma_data')
+  expect_identical(tmat$dimnames(), paste0("soma_dim_", c(0L, 1L)))
+  expect_identical(tmat$attrnames(), "soma_data")
   expect_equal(tmat$shape(), rev(dim(state77)))
   # Error if given sparse matrix and ask for dense
-  knex <- get_data('KNex', package = 'Matrix')$mm
-  expect_error(write_soma(knex, uri = 'knex', soma = collection, sparse = FALSE))
+  knex <- get_data("KNex", package = "Matrix")$mm
+  expect_error(write_soma(knex, uri = "knex", soma = collection, sparse = FALSE))
   # Work on dgeMatrices
   expect_no_condition(emat <- write_soma(
-    as(knex, 'unpackedMatrix'),
-    uri = 'knexd',
+    as(knex, "unpackedMatrix"),
+    uri = "knexd",
     soma = collection,
     sparse = FALSE
   ))
-  expect_s3_class(emat, 'SOMADenseNDArray')
+  expect_s3_class(emat, "SOMADenseNDArray")
   expect_true(emat$exists())
-  expect_identical(emat$uri, file.path(collection$uri, 'knexd'))
+  expect_identical(emat$uri, file.path(collection$uri, "knexd"))
   expect_equal(emat$ndim(), 2L)
-  expect_identical(emat$dimnames(), paste0('soma_dim_', c(0L, 1L)))
-  expect_identical(emat$attrnames(), 'soma_data')
+  expect_identical(emat$dimnames(), paste0("soma_dim_", c(0L, 1L)))
+  expect_identical(emat$attrnames(), "soma_data")
   expect_equal(emat$shape(), dim(knex))
 
   collection$close()
@@ -209,11 +206,11 @@ test_that("write_soma dense matrix mechanics", {
 test_that("write_soma dense matrix registration", {
   skip_if(!extended_tests())
 
-  uri <- tempfile(pattern="write-soma-dense-matrix-registration")
+  uri <- tempfile(pattern = "write-soma-dense-matrix-registration")
   collection <- SOMACollectionCreate(uri)
   on.exit(collection$close(), add = TRUE)
 
-  state77 <- get(x = 'state.x77', envir = getNamespace('datasets'))
+  state77 <- get(x = "state.x77", envir = getNamespace("datasets"))
 
   expect_no_condition(dmat <- write_soma(
     state77,
@@ -234,7 +231,7 @@ test_that("write_soma dense matrix registration", {
   expect_identical(collection$length(), 1L)
   expect_identical(collection$names(), "state77")
   expect_s3_class(cmat <- collection$get("state77"), "SOMADenseNDArray")
-  expect_type(mat <- cmat$read_dense_matrix(), 'double')
+  expect_type(mat <- cmat$read_dense_matrix(), "double")
   expect_true(is.matrix(mat))
   expect_identical(mat, unname(state77))
 
@@ -243,45 +240,44 @@ test_that("write_soma dense matrix registration", {
   expect_error(write_soma(state77, "uri", soma_parent = collection, key = 1L))
   expect_error(write_soma(state77, "uri", soma_parent = collection, key = c("a", "b")))
   expect_error(write_soma(state77, "uri", soma_parent = NULL, key = "state77"))
-
 })
 
 test_that("write_soma sparse matrix mechanics", {
   skip_if(!extended_tests())
-  uri <- tempfile(pattern="write-soma-sparse-matrix")
+  uri <- tempfile(pattern = "write-soma-sparse-matrix")
   collection <- SOMACollectionCreate(uri)
-  knex <- get_data('KNex', package = 'Matrix')$mm
-  expect_no_condition(smat <- write_soma(knex, uri = 'knex', soma = collection))
-  expect_s3_class(smat, 'SOMASparseNDArray')
+  knex <- get_data("KNex", package = "Matrix")$mm
+  expect_no_condition(smat <- write_soma(knex, uri = "knex", soma = collection))
+  expect_s3_class(smat, "SOMASparseNDArray")
   expect_true(smat$exists())
-  expect_identical(smat$uri, file.path(collection$uri, 'knex'))
+  expect_identical(smat$uri, file.path(collection$uri, "knex"))
   expect_equal(smat$ndim(), 2L)
-  expect_identical(smat$dimnames(), paste0('soma_dim_', c(0L, 1L)))
-  expect_identical(smat$attrnames(), 'soma_data')
+  expect_identical(smat$dimnames(), paste0("soma_dim_", c(0L, 1L)))
+  expect_identical(smat$attrnames(), "soma_data")
   expect_equal(smat$shape(), dim(knex))
   # Test transposition
   expect_no_condition(tmat <- write_soma(
     knex,
-    uri = 'knext',
+    uri = "knext",
     soma = collection,
     transpose = TRUE
   ))
-  expect_s3_class(tmat, 'SOMASparseNDArray')
+  expect_s3_class(tmat, "SOMASparseNDArray")
   expect_true(tmat$exists())
-  expect_identical(tmat$uri, file.path(collection$uri, 'knext'))
+  expect_identical(tmat$uri, file.path(collection$uri, "knext"))
   expect_equal(tmat$ndim(), 2L)
-  expect_identical(tmat$dimnames(), paste0('soma_dim_', c(0L, 1L)))
-  expect_identical(tmat$attrnames(), 'soma_data')
+  expect_identical(tmat$dimnames(), paste0("soma_dim_", c(0L, 1L)))
+  expect_identical(tmat$attrnames(), "soma_data")
   expect_equal(tmat$shape(), rev(dim(knex)))
   # Try a dense matrix
-  state77 <- get(x = 'state.x77', envir = getNamespace('datasets'))
-  expect_no_condition(cmat <- write_soma(state77, 'state77s', soma = collection))
-  expect_s3_class(cmat, 'SOMASparseNDArray')
+  state77 <- get(x = "state.x77", envir = getNamespace("datasets"))
+  expect_no_condition(cmat <- write_soma(state77, "state77s", soma = collection))
+  expect_s3_class(cmat, "SOMASparseNDArray")
   expect_true(cmat$exists())
-  expect_identical(cmat$uri, file.path(collection$uri, 'state77s'))
+  expect_identical(cmat$uri, file.path(collection$uri, "state77s"))
   expect_equal(cmat$ndim(), 2L)
-  expect_identical(cmat$dimnames(), paste0('soma_dim_', c(0L, 1L)))
-  expect_identical(cmat$attrnames(), 'soma_data')
+  expect_identical(cmat$dimnames(), paste0("soma_dim_", c(0L, 1L)))
+  expect_identical(cmat$attrnames(), "soma_data")
   expect_equal(cmat$shape(), dim(state77))
 
   collection$close()
@@ -290,11 +286,11 @@ test_that("write_soma sparse matrix mechanics", {
 test_that("write_soma sparse matrix registration", {
   skip_if(!extended_tests())
 
-  uri <- tempfile(pattern="write-sparse-dense-matrix-registration")
+  uri <- tempfile(pattern = "write-sparse-dense-matrix-registration")
   collection <- SOMACollectionCreate(uri)
   on.exit(collection$close(), add = TRUE)
 
-  knex <- get_data('KNex', package = 'Matrix')$mm
+  knex <- get_data("KNex", package = "Matrix")$mm
 
   expect_no_condition(smat <- write_soma(
     knex,
@@ -322,13 +318,12 @@ test_that("write_soma sparse matrix registration", {
   expect_error(write_soma(knex, "uri", soma_parent = collection, key = 1L))
   expect_error(write_soma(knex, "uri", soma_parent = collection, key = c("a", "b")))
   expect_error(write_soma(knex, "uri", soma_parent = NULL, key = "knex"))
-
 })
 
 test_that("write_soma.character mechanics", {
   skip_if(!extended_tests())
 
-  uri <- tempfile(pattern="write-soma-character")
+  uri <- tempfile(pattern = "write-soma-character")
   collection <- SOMACollectionCreate(uri)
   on.exit(collection$close(), add = TRUE)
 
@@ -355,7 +350,7 @@ test_that("write_soma.character mechanics", {
 test_that("write_soma.character scalar", {
   skip_if(!extended_tests())
 
-  uri <- tempfile(pattern="write-soma-character-scalar")
+  uri <- tempfile(pattern = "write-soma-character-scalar")
   collection <- SOMACollectionCreate(uri)
   on.exit(collection$close(), add = TRUE)
 
@@ -382,38 +377,38 @@ test_that("write_soma.character scalar", {
 })
 
 test_that("get_{some,tiledb}_object_type", {
-    suppressMessages({
-        library(SeuratObject)
-        library(tiledbsoma)
-    })
+  suppressMessages({
+    library(SeuratObject)
+    library(tiledbsoma)
+  })
 
-    ## write out a SOMA
-    data("pbmc_small")
-    uri <- tempfile()
-    expect_equal(write_soma(pbmc_small, uri = uri), uri)  # uri return is success
+  ## write out a SOMA
+  data("pbmc_small")
+  uri <- tempfile()
+  expect_equal(write_soma(pbmc_small, uri = uri), uri) # uri return is success
 
-    # SOMA
-    expect_equal(tiledbsoma:::get_soma_object_type(uri, soma_context()), "SOMAExperiment")
-    expect_equal(tiledbsoma:::get_soma_object_type(file.path(uri, "ms/RNA"), soma_context()), "SOMAMeasurement")
-    coll <- c("ms", "ms/RNA/obsm", "ms/RNA/obsp/", "ms/RNA/varm")
-    for (co in coll) {
-        expect_equal(tiledbsoma:::get_soma_object_type(file.path(uri, co), soma_context()), "SOMACollection")
-    }
-    expect_equal(tiledbsoma:::get_soma_object_type(file.path(uri, "ms/RNA/var"), soma_context()), "SOMADataFrame")
-    sparr <- c("ms/RNA/obsm/X_pca", "ms/RNA/obsm/X_tsne", "ms/RNA/obsp/RNA_snn")
-    for (a in sparr) {
-        expect_equal(tiledbsoma:::get_soma_object_type(file.path(uri, a), soma_context()), "SOMASparseNDArray")
-    }
-    expect_error(tiledbsoma:::get_some_object_type("doesnotexit", soma_context()))
+  # SOMA
+  expect_equal(tiledbsoma:::get_soma_object_type(uri, soma_context()), "SOMAExperiment")
+  expect_equal(tiledbsoma:::get_soma_object_type(file.path(uri, "ms/RNA"), soma_context()), "SOMAMeasurement")
+  coll <- c("ms", "ms/RNA/obsm", "ms/RNA/obsp/", "ms/RNA/varm")
+  for (co in coll) {
+    expect_equal(tiledbsoma:::get_soma_object_type(file.path(uri, co), soma_context()), "SOMACollection")
+  }
+  expect_equal(tiledbsoma:::get_soma_object_type(file.path(uri, "ms/RNA/var"), soma_context()), "SOMADataFrame")
+  sparr <- c("ms/RNA/obsm/X_pca", "ms/RNA/obsm/X_tsne", "ms/RNA/obsp/RNA_snn")
+  for (a in sparr) {
+    expect_equal(tiledbsoma:::get_soma_object_type(file.path(uri, a), soma_context()), "SOMASparseNDArray")
+  }
+  expect_error(tiledbsoma:::get_some_object_type("doesnotexit", soma_context()))
 
-    ## TileDB
-    grps <- c("", "ms", "ms/RNA", "ms/RNA/obsm", "ms/RNA/obsp/", "ms/RNA/varm")
-    for (g in grps) {
-        expect_equal(tiledbsoma:::get_tiledb_object_type(file.path(uri, g), soma_context()), "GROUP")
-    }
-    arrs <- c("ms/RNA/obsm/X_pca", "ms/RNA/obsm/X_tsne", "ms/RNA/obsp/RNA_snn", "ms/RNA/var")
-    for (a in arrs) {
-        expect_equal(tiledbsoma:::get_tiledb_object_type(file.path(uri, a), soma_context()), "ARRAY")
-    }
-    expect_equal(tiledbsoma:::get_tiledb_object_type("doesnotexit", soma_context()), "INVALID")
+  ## TileDB
+  grps <- c("", "ms", "ms/RNA", "ms/RNA/obsm", "ms/RNA/obsp/", "ms/RNA/varm")
+  for (g in grps) {
+    expect_equal(tiledbsoma:::get_tiledb_object_type(file.path(uri, g), soma_context()), "GROUP")
+  }
+  arrs <- c("ms/RNA/obsm/X_pca", "ms/RNA/obsm/X_tsne", "ms/RNA/obsp/RNA_snn", "ms/RNA/var")
+  for (a in arrs) {
+    expect_equal(tiledbsoma:::get_tiledb_object_type(file.path(uri, a), soma_context()), "ARRAY")
+  }
+  expect_equal(tiledbsoma:::get_tiledb_object_type("doesnotexit", soma_context()), "INVALID")
 })

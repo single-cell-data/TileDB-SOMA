@@ -4,7 +4,7 @@ test_that("IntIndexer mechanics", {
   keys <- 1L
   lookups <- rep_len(1L, length.out = 4L)
   expect_s3_class(indexer <- IntIndexer$new(keys), "IntIndexer")
-  expect_s3_class(val <- indexer$get_indexer(lookups), 'integer64')
+  expect_s3_class(val <- indexer$get_indexer(lookups), "integer64")
   expect_equal(val, .match(lookups, keys))
 
   keys <- c(-1, 1, 2, 3, 4, 5)
@@ -48,8 +48,8 @@ test_that("IntIndexer mechanics", {
   lookups <- arrow::Array$create(seq.int(1L, 10000L - 1L))
   expect_no_condition(indexer <- IntIndexer$new(keys))
   expect_equal(
-   indexer$get_indexer(lookups),
-   .match(lookups$as_vector(), keys)
+    indexer$get_indexer(lookups),
+    .match(lookups$as_vector(), keys)
   )
 
   keys <- c(
@@ -64,8 +64,8 @@ test_that("IntIndexer mechanics", {
   ))
   expect_no_condition(indexer <- IntIndexer$new(keys))
   expect_equal(
-   indexer$get_indexer(lookups),
-   .match(unlist(lookups$as_vector()), keys)
+    indexer$get_indexer(lookups),
+    .match(unlist(lookups$as_vector()), keys)
   )
 
   # Test assertions
