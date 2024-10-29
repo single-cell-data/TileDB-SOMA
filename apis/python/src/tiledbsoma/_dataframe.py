@@ -682,7 +682,7 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         if value_filter is not None:
             sr.set_condition(QueryCondition(value_filter), handle.schema)
 
-        self._set_reader_coords(sr, coords)
+        self._set_coords(sr, coords)
 
         # # TODO: batch_size
         return TableReadIter(sr)
@@ -744,7 +744,7 @@ class DataFrame(SOMAArray, somacore.DataFrame):
 
         return self
 
-    def _set_reader_coord(
+    def _set_coord(
         self,
         sr: clib.SOMAArray,
         dim_idx: int,
@@ -765,7 +765,7 @@ class DataFrame(SOMAArray, somacore.DataFrame):
             return True
 
         if isinstance(coord, (Sequence, np.ndarray)):
-            if self._set_reader_coord_by_py_seq_or_np_array(sr, dim_idx, dim, coord):
+            if self._set_coord_by_py_seq_or_np_array(sr, dim_idx, dim, coord):
                 return True
 
         if isinstance(coord, slice):
@@ -775,7 +775,7 @@ class DataFrame(SOMAArray, somacore.DataFrame):
 
         if isinstance(coord, slice):
             _util.validate_slice(coord)
-            if self._set_reader_coord_by_numeric_slice(sr, dim_idx, dim, coord):
+            if self._set_coord_by_numeric_slice(sr, dim_idx, dim, coord):
                 return True
 
         domain = self.domain[dim_idx]
@@ -814,12 +814,12 @@ class DataFrame(SOMAArray, somacore.DataFrame):
             sr.set_dim_ranges_int64(dim.name, [(istart, istop)])
             return True
 
-        if super()._set_reader_coord(sr, dim_idx, dim, coord):
+        if super()._set_coord(sr, dim_idx, dim, coord):
             return True
 
         return False
 
-    def _set_reader_coord_by_py_seq_or_np_array(
+    def _set_coord_by_py_seq_or_np_array(
         self,
         sr: clib.SOMAArray,
         dim_idx: int,
@@ -860,7 +860,7 @@ class DataFrame(SOMAArray, somacore.DataFrame):
 
         raise ValueError(f"unhandled type {dim.type} for index column named {dim.name}")
 
-    def _set_reader_coord_by_numeric_slice(
+    def _set_coord_by_numeric_slice(
         self, sr: clib.SOMAArray, dim_idx: int, dim: pa.Field, coord: Slice[Any]
     ) -> bool:
         try:

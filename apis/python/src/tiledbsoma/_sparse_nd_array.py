@@ -461,10 +461,10 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
             f"Unsupported Arrow type or non-arrow type for values argument: {type(values)}"
         )
 
-    def _set_reader_coord(
+    def _set_coord(
         self, sr: clib.SOMAArray, dim_idx: int, dim: pa.Field, coord: object
     ) -> bool:
-        if super()._set_reader_coord(sr, dim_idx, dim, coord):
+        if super()._set_coord(sr, dim_idx, dim, coord):
             return True
         if isinstance(coord, Sequence):
             if pa.types.is_int64(dim.type):
@@ -642,7 +642,7 @@ class SparseNDArrayRead(_SparseNDArrayReadBase):
         """
         if shape is not None and (len(shape) != len(self.shape)):
             raise ValueError(f"shape must be a tuple of size {len(self.shape)}")
-        self.array._set_reader_coords(self.sr, self.coords)
+        self.array._set_coords(self.sr, self.coords)
         return SparseCOOTensorReadIter(self.sr, shape or self.shape)
 
     def tables(self) -> TableReadIter:
@@ -653,7 +653,7 @@ class SparseNDArrayRead(_SparseNDArrayReadBase):
         Lifecycle:
             Maturing.
         """
-        self.array._set_reader_coords(self.sr, self.coords)
+        self.array._set_coords(self.sr, self.coords)
         return TableReadIter(self.sr)
 
     def blockwise(
