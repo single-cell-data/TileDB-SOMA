@@ -1322,7 +1322,7 @@ def _create_from_matrix(
             # in the case when multiple H5ADs/AnnDatas are being
             # ingested to an experiment which doesn't pre-exist.
             shape = (axis_0_mapping.get_shape(), axis_1_mapping.get_shape())
-        elif cls.is_sparse:
+        elif cls.is_sparse or clib.embedded_version_triple() >= (2, 27, 0):
             shape = tuple(None for _ in matrix.shape)
         else:
             shape = matrix.shape
@@ -1909,7 +1909,7 @@ def _write_matrix_to_denseNDArray(
         else:
             tensor = pa.Tensor.from_numpy(chunk.toarray())
         if matrix.ndim == 2:
-            soma_ndarray.write((slice(i, i2), slice(None)), tensor)
+            soma_ndarray.write((slice(i, i2), slice(0, ncol)), tensor)
         else:
             soma_ndarray.write((slice(i, i2),), tensor)
 
