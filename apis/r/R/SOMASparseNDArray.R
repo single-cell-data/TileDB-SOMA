@@ -277,6 +277,7 @@ SOMASparseNDArray <- R6::R6Class(
         uri = self$uri,
         naap = naap,
         nasp = nasp,
+        coords_list = list(), # only used for SOMADenseNDArray
         ctxxp = private$.soma_context,
         arraytype = "SOMASparseNDArray",
         config = NULL,

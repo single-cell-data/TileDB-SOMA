@@ -180,8 +180,13 @@ def test_dense_nd_array_requires_shape(tmp_path, shape_is_numeric):
         with soma.DenseNDArray.open(uri) as dnda:
             assert dnda.shape == (2, 3)
     else:
-        with pytest.raises(ValueError):
-            soma.DenseNDArray.create(uri, type=pa.float32(), shape=(None, None)).close()
+        soma.DenseNDArray.create(uri, type=pa.float32(), shape=(None, None)).close()
+        with soma.DenseNDArray.open(uri) as dnda:
+            if (
+                soma._flags.NEW_SHAPE_FEATURE_FLAG_ENABLED
+                and soma._flags.DENSE_ARRAYS_CAN_HAVE_CURRENT_DOMAIN
+            ):
+                assert dnda.shape == (1, 1)
 
 
 def test_dense_nd_array_ned_write(tmp_path):

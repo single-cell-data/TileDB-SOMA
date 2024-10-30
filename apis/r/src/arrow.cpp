@@ -273,7 +273,20 @@ void writeArrayFromArrow(
             int lo = *std::min_element(slot_values.begin(), slot_values.end());
             int hi = *std::max_element(slot_values.begin(), slot_values.end());
             spdl::debug(
-                "dense array write: dim {} set range lo {} hi {}", dim_name, lo, hi);
+                "dense array write: dim {} set 1-up range lo {} hi {}",
+                dim_name,
+                lo,
+                hi);
+            // These are 1-up indices from R. Convert to 0-up for C++.
+            if (lo < 1) {
+                Rcpp::stop(tfm::format(
+                    "dense array write: expected lower bound %d >= 1 for dim "
+                    "name %s",
+                    lo,
+                    dim_name));
+            }
+            lo--;
+            hi--;
             std::pair<int64_t, int64_t> lo_hi(int64_t{lo}, int64_t{hi});
             std::vector<std::pair<int64_t, int64_t>> range({lo_hi});
             arrup.get()->set_dim_ranges(dim_name, range);

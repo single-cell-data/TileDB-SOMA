@@ -258,7 +258,20 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
             timestamp=handle.timestamp and (0, handle.timestamp),
         )
 
-        # TODO: more on #2407, including the slotwise-none case
+        # Scenario to avoid:
+        # * Query dense array with coords not provided
+        # * When coords not provided, core uses the core domain
+        # For old shape:
+        # * Core current domain did not exist
+        # * Core max domain may be small; .shape returns this
+        # For new shape (core 2.27 and tiledbsoma 1.15):
+        # * Core current domain exists and will be small; .shape returns this
+        # * Core max domain will be huge
+        # In either case, applying these coords is the right thing to do
+        #
+        # TODO: more on #2407, including the case where the coords
+        # is not the empty tuple but has None or slice-of-None
+        # in one or more slots
         if coords == ():
             coords = tuple(slice(0, e - 1) for e in data_shape)
 
