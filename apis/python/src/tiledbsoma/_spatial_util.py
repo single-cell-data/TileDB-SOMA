@@ -160,11 +160,11 @@ def process_image_region(
     for axis in data_order:
         if axis == len(inv_transform.input_axes):
             coords.append(channel_coords)  # type: ignore[attr-defined]
-        if axis == 0:
+        elif axis == 0:
             coords.append(x_coords)  # type: ignore[attr-defined]
-        if axis == 1:
+        elif axis == 1:
             coords.append(y_coords)  # type: ignore[attr-defined]
-        if axis == 2:
+        elif axis == 2:
             raise NotImplementedError(
                 "Spatial queries are currently only supported for 2D coordinates."
             )
