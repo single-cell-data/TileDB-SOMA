@@ -36,7 +36,7 @@ def sample_3d_dense_array(tmp_path_factory):
     return array
 
 
-class Test1DSampleDenseNDArrayWrapper:
+class TestDenseNDVariable1D:
 
     @pytest.fixture(scope="class")
     def soma_variable(self, sample_1d_dense_array):
@@ -90,7 +90,7 @@ class Test1DSampleDenseNDArrayWrapper:
         np.testing.assert_equal(actual.data, expected.data)
 
 
-class TestSample3DDenseNDArrayWrapper:
+class TestDenseNDVariable3D:
 
     @pytest.fixture(scope="class")
     def soma_variable(self, sample_3d_dense_array):
