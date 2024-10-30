@@ -101,9 +101,25 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
 
         index_column_schema = []
         index_column_data = {}
+
         for dim_idx, dim_shape in enumerate(shape):
             dim_name = f"soma_dim_{dim_idx}"
+
             pa_field = pa.field(dim_name, pa.int64())
+            index_column_schema.append(pa_field)
+
+            # Here is our Arrow data API for communicating schema info between
+            # Python/R and C++ libtiledbsoma:
+            #
+            # [0] core max domain lo
+            # [1] core max domain hi
+            # [2] core extent parameter
+            # If present, these next two signal to use the current-domain feature:
+            # [3] core current domain lo
+            # [4] core current domain hi
+
+            if dim_shape is None:
+                raise ValueError("DenseNDArray shape slots must be numeric")
 
             if NEW_SHAPE_FEATURE_FLAG_ENABLED and DENSE_ARRAYS_CAN_HAVE_CURRENT_DOMAIN:
                 dim_capacity, dim_extent = cls._dim_capacity_and_extent(
@@ -117,11 +133,6 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
 
                 if dim_shape == 0:
                     raise ValueError("DenseNDArray shape slots must be at least 1")
-                if dim_shape is None:
-                    # Core current-domain semantics are (lo, hi) with both
-                    # inclusive, with lo <= hi. This means smallest is (0, 0)
-                    # which is shape 1, not 0.
-                    dim_shape = 1
 
                 index_column_data[pa_field.name] = [
                     0,
@@ -138,8 +149,7 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
                     TileDBCreateOptions.from_platform_config(platform_config),
                 )
 
-            index_column_data[pa_field.name] = [0, dim_capacity - 1, dim_extent]
-            index_column_schema.append(pa_field)
+                index_column_data[pa_field.name] = [0, dim_capacity - 1, dim_extent]
 
         index_column_info = pa.RecordBatch.from_pydict(
             index_column_data, schema=pa.schema(index_column_schema)
@@ -349,16 +359,25 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
         dim_shape: Optional[int],
         create_options: TileDBCreateOptions,
     ) -> Tuple[int, int]:
-        """Given a user-specified shape along a particular dimension, returns a tuple of
-        the TileDB capacity and extent for that dimension, suitable for schema creation.
-        The user-specified shape cannot be ``None`` for :class:`DenseNDArray`.
+        """Given a user-specified shape (maybe ``None``) along a particular dimension,
+        returns a tuple of the TileDB capacity and extent for that dimension, suitable
+        for schema creation. If the user-specified shape is None, the largest possible
+        int64 is returned for the capacity -- which is particularly suitable for
+        maxdomain.
         """
-        if dim_shape is None or dim_shape <= 0:
-            raise ValueError(
-                "SOMADenseNDArray shape must be a non-zero-length tuple of positive ints"
-            )
-
-        dim_capacity = dim_shape
-        dim_extent = min(dim_shape, create_options.dim_tile(dim_name, 2048))
+        if dim_shape is None:
+            dim_capacity = 2**63 - 1
+            dim_extent = min(dim_capacity, create_options.dim_tile(dim_name, 2048))
+            # For core: "domain max expanded to multiple of tile extent exceeds max value
+            # representable by domain type. Reduce domain max by 1 tile extent to allow for
+            # expansion."
+            dim_capacity -= dim_extent
+        else:
+            if dim_shape <= 0:
+                raise ValueError(
+                    "SOMASparseNDArray shape must be a non-zero-length tuple of positive ints or Nones"
+                )
+            dim_capacity = dim_shape
+            dim_extent = min(dim_shape, create_options.dim_tile(dim_name, 2048))
 
         return (dim_capacity, dim_extent)

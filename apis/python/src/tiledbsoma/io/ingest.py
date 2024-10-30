@@ -64,7 +64,10 @@ from .._exception import (
     NotCreateableError,
     SOMAError,
 )
-from .._flags import NEW_SHAPE_FEATURE_FLAG_ENABLED
+from .._flags import (
+    DENSE_ARRAYS_CAN_HAVE_CURRENT_DOMAIN,
+    NEW_SHAPE_FEATURE_FLAG_ENABLED,
+)
 from .._soma_array import SOMAArray
 from .._soma_object import AnySOMAObject, SOMAObject
 from .._tdb_handles import RawHandle
@@ -1322,7 +1325,7 @@ def _create_from_matrix(
             # in the case when multiple H5ADs/AnnDatas are being
             # ingested to an experiment which doesn't pre-exist.
             shape = (axis_0_mapping.get_shape(), axis_1_mapping.get_shape())
-        elif cls.is_sparse:
+        elif cls.is_sparse or DENSE_ARRAYS_CAN_HAVE_CURRENT_DOMAIN:
             shape = tuple(None for _ in matrix.shape)
         else:
             shape = matrix.shape
@@ -1909,7 +1912,7 @@ def _write_matrix_to_denseNDArray(
         else:
             tensor = pa.Tensor.from_numpy(chunk.toarray())
         if matrix.ndim == 2:
-            soma_ndarray.write((slice(i, i2), slice(None)), tensor)
+            soma_ndarray.write((slice(i, i2), slice(0, ncol)), tensor)
         else:
             soma_ndarray.write((slice(i, i2),), tensor)
 

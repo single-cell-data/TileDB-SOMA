@@ -205,7 +205,12 @@ def test_dense_nd_array_basics(tmp_path):
 
     with tiledbsoma.DenseNDArray.open(uri) as dnda:
         assert dnda.shape == (100, 200)
-        assert dnda.maxshape == (100, 200)
+        if tiledbsoma._flags.DENSE_ARRAYS_CAN_HAVE_CURRENT_DOMAIN:
+            assert len(dnda.maxshape)
+            assert dnda.maxshape[0] > 2**62
+            assert dnda.maxshape[1] > 2**62
+        else:
+            assert dnda.maxshape == (100, 200)
 
         assert dnda.non_empty_domain() == ((0, 0), (0, 0))
 
