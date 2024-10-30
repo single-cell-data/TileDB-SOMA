@@ -10,4 +10,4 @@ import os
 # removed once https://github.com/single-cell-data/TileDB-SOMA/issues/2407 is
 # complete.
 
-NEW_SHAPE_FEATURE_FLAG_ENABLED = os.getenv("SOMA_PY_NEW_SHAPE") != "false"
+NEW_SHAPE_FEATURE_FLAG_ENABLED = os.getenv("SOMA_PY_NEW_SHAPE") is not None
