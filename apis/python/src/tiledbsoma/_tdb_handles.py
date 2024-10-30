@@ -35,6 +35,7 @@ from typing_extensions import Literal, Self
 
 from . import pytiledbsoma as clib
 from ._exception import DoesNotExistError, SOMAError, is_does_not_exist_error
+from ._flags import DENSE_ARRAYS_CAN_HAVE_CURRENT_DOMAIN
 from ._types import METADATA_TYPES, Metadatum, OpenTimestamp, StatusAndReason
 from .options._soma_tiledb_context import SOMATileDBContext
 
@@ -643,7 +644,7 @@ class DenseNDArrayWrapper(SOMAArrayWrapper[clib.SOMADenseNDArray]):
 
     def resize(self, newshape: Sequence[Union[int, None]]) -> None:
         """Wrapper-class internals"""
-        if clib.embedded_version_triple() >= (2, 27, 0):
+        if DENSE_ARRAYS_CAN_HAVE_CURRENT_DOMAIN:
             self._handle.resize(newshape)
         else:
             raise NotImplementedError("Not implemented for libtiledbsoma < 2.27.0")
@@ -652,7 +653,7 @@ class DenseNDArrayWrapper(SOMAArrayWrapper[clib.SOMADenseNDArray]):
         self, newshape: Sequence[Union[int, None]]
     ) -> StatusAndReason:
         """Wrapper-class internals"""
-        if clib.embedded_version_triple() >= (2, 27, 0):
+        if DENSE_ARRAYS_CAN_HAVE_CURRENT_DOMAIN:
             return cast(StatusAndReason, self._handle.tiledbsoma_can_resize(newshape))
         else:
             raise NotImplementedError("Not implemented for libtiledbsoma < 2.27.0")

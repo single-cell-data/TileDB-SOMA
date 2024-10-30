@@ -210,7 +210,7 @@ def test_dense_nd_array_basics(tmp_path):
         assert dnda.non_empty_domain() == ((0, 0), (0, 0))
 
     with tiledbsoma.DenseNDArray.open(uri, "w") as dnda:
-        if tiledbsoma.pytiledbsoma.embedded_version_triple() >= (2, 27, 0):
+        if tiledbsoma._flags.DENSE_ARRAYS_CAN_HAVE_CURRENT_DOMAIN:
             dnda.resize((300, 400))
         else:
             with pytest.raises(NotImplementedError):
@@ -218,7 +218,7 @@ def test_dense_nd_array_basics(tmp_path):
 
     with tiledbsoma.DenseNDArray.open(uri) as dnda:
         assert dnda.non_empty_domain() == ((0, 0), (0, 0))
-        if tiledbsoma.pytiledbsoma.embedded_version_triple() >= (2, 27, 0):
+        if tiledbsoma._flags.DENSE_ARRAYS_CAN_HAVE_CURRENT_DOMAIN:
             assert dnda.shape == (300, 400)
         else:
             assert dnda.shape == (100, 200)
