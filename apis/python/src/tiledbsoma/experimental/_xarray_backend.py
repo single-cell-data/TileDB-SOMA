@@ -41,7 +41,7 @@ class DenseNDArrayWrapper(BackendArray):  # type: ignore
 
     def _raw_indexing_method(
         self, key: Tuple[Union[slice, int], ...]
-    ) -> np.typing.ArrayLike:
+    ) -> np.typing.NDArray[Any]:
         """Returns a numpy array containing data from a requested tuple."""
         assert len(key) == len(self.shape)  # Should be verified by xarray.
 
@@ -89,7 +89,7 @@ class DenseNDArrayWrapper(BackendArray):  # type: ignore
         result = self._array.read(key).to_numpy()
         return result.reshape(output_shape)  # type: ignore
 
-    def __getitem__(self, key: ExplicitIndexer) -> np.typing.ArrayLike:
+    def __getitem__(self, key: ExplicitIndexer) -> np.typing.NDArray[Any]:
         """Returns data from SOMA DenseNDArray using xarray-style indexing."""
 
         # If any of the slices have steps, convert the key to a vectorized
