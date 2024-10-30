@@ -14,4 +14,5 @@ import tiledbsoma.pytiledbsoma as clib
 
 NEW_SHAPE_FEATURE_FLAG_ENABLED = os.getenv("SOMA_PY_NEW_SHAPE") != "false"
 
-DENSE_ARRAYS_CAN_HAVE_CURRENT_DOMAIN = clib.embedded_version_triple() >= (2, 27, 0)
+#DENSE_ARRAYS_CAN_HAVE_CURRENT_DOMAIN = clib.embedded_version_triple() >= (2, 27, 0)
+DENSE_ARRAYS_CAN_HAVE_CURRENT_DOMAIN = False

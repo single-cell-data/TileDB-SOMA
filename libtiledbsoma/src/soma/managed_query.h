@@ -383,7 +383,7 @@ class ManagedQuery {
      * @return true if the query contains only empty ranges.
      */
     bool is_empty_query() {
-      return _has_any_empty_range() && _has_any_subarray_range_set();
+        return _has_any_empty_range() && _has_any_subarray_range_set();
     }
 
     /**
@@ -426,6 +426,33 @@ class ManagedQuery {
         }
         return false;
     }
+
+    /**
+     * This handles a few internals.
+     *
+     * One is that (for a long time now) a dense array must have _at least one_
+     * dim's subarray set for a read query. Without that, reads fail immediately
+     * with the unambiguous
+     *
+     *   DenseReader: Cannot initialize reader; Dense reads must have a subarray
+     *   set
+     *
+     * The other is a combination of several things. One thing is current-domain
+     * support which we have for sparse arrays as of core 2.26, and for dense as
+     * of 2.27. Also, without current-domain support, we had small domains; with
+     * it, we have huge core domains (2^63-ish) since they are immutable, and
+     * small current domains as they are upward-mutable. (The soma domain and
+     * maxdomain, respectively, are core current domain and domain.) Thirdly,
+     * for a long time now, if a query doesn't have a subarray set on any
+     * particular dim, core will use the core domain on that dim. That was fine
+     * when core domains were small; not fine now that they are huge. In this
+     * routine, if the array is dense, for each dim without a subarray set,
+     * we set it to match the soma domain. This guarantees correct behavior.
+     */
+    void _fill_in_subarrays_if_dense();
+    void _fill_in_subarrays_if_dense_with_new_shape(
+        const CurrentDomain& current_domain);
+    void _fill_in_subarrays_if_dense_without_new_shape();
 
     // TileDB array being queried.
     std::shared_ptr<Array> array_;
