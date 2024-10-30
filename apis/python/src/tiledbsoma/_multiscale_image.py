@@ -9,7 +9,7 @@ Implementation of a SOMA MultiscaleImage.
 
 import json
 import warnings
-from typing import Any, Optional, Sequence, Tuple, Union
+from typing import Any, List, Optional, Sequence, Tuple, Union
 
 import attrs
 import pyarrow as pa
@@ -187,10 +187,12 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
                 raise ValueError()  # TODO: Add error
             axis_permutation = tuple(axis_indices[name] for name in data_axis_order)
 
+        # The type ignore comments are to address a false positive in the attrs tuple
+        # constructor.
         image_meta = _MultiscaleImageMetadata(
-            data_axis_permutation=axis_permutation,  # type: ignore (false positive)
+            data_axis_permutation=axis_permutation,  # type: ignore[arg-type]
             has_channel_axis=has_channel_axis,
-            shape=level_shape,  # type: ignore (false positive)
+            shape=level_shape,  # type: ignore[arg-type]
             datatype=type,
         )
 
@@ -336,7 +338,8 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
 
         # Add the level properties to level list.
         # Note: The names are guaranteed to be different from the earlier checks.
-        props = _LevelProperties(name=key, shape=shape)  # type: ignore (false positive)
+        # Type ignore is for a false positive in the attrs tuple constructor.
+        props = _LevelProperties(name=key, shape=shape)  # type: ignore[arg-type]
         for index, other in enumerate(self._levels):
             # Note: Name is unique, so guaranteed to be strict ordering.
             if tuple(-val for val in props.shape) + (props.name,) < tuple(
@@ -537,11 +540,7 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
 
     # Metadata operations
     def _level_properties(self, level: Union[int, str]) -> _LevelProperties:
-        """The properties of an image at the specified level.
-
-        Lifecycle:
-            Experimental.
-        """
+        """The properties of an image at the specified level."""
         # by name
         # TODO could dyanmically create a dictionary whenever a name-based
         # lookup is requested
@@ -554,6 +553,15 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
 
         # by index
         return self._levels[level]
+
+    def _axis_order(self) -> List[int]:
+        """Indices for accessing the data order for spatial axes."""
+        axes = [
+            index
+            for index in range(len(self._data_axis_permutation))
+            if self._data_axis_permutation[index] != len(self._coord_space)
+        ]
+        return sorted(axes, key=lambda index: self._data_axis_permutation[index])
 
     @property
     def coordinate_space(self) -> CoordinateSpace:
@@ -608,16 +616,10 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
         """
         level_shape = self._level_properties(level).shape
         base_shape = self._levels[0].shape
-        coord_indexer = sorted(
-            range(len(self._data_axis_permutation)),
-            key=lambda index: self._data_axis_permutation[index],
-        )
+        axis_indexer = self._axis_order()
         scale_factors = [
-            base_shape[index] / level_shape[index]
-            for index in coord_indexer
-            if index != len(self._coord_space)
+            base_shape[index] / level_shape[index] for index in axis_indexer
         ]
-
         return ScaleTransform(
             input_axes=self._coord_space.axis_names,
             output_axes=self._coord_space.axis_names,
@@ -633,14 +635,9 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
         """
         level_shape = self._level_properties(level).shape
         base_shape = self._levels[0].shape
-        coord_indexer = sorted(
-            range(len(self._data_axis_permutation)),
-            key=lambda index: self._data_axis_permutation[index],
-        )
+        axis_indexer = self._axis_order()
         scale_factors = [
-            level_shape[index] / base_shape[index]
-            for index in coord_indexer
-            if index != len(self._coord_space)
+            level_shape[index] / base_shape[index] for index in axis_indexer
         ]
         return ScaleTransform(
             input_axes=self._coord_space.axis_names,
