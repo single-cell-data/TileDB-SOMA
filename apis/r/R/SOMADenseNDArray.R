@@ -35,7 +35,7 @@ SOMADenseNDArray <- R6::R6Class(
     read_arrow_table = function(
       coords = NULL,
       result_order = "auto",
-      log_level = "warn"
+      log_level = "auto"
     ) {
       private$check_open_for_read()
 
