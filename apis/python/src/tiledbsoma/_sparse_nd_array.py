@@ -150,7 +150,6 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
             dim_name = f"soma_dim_{dim_idx}"
 
             pa_field = pa.field(dim_name, pa.int64())
-
             index_column_schema.append(pa_field)
 
             # Here is our Arrow data API for communicating schema info between
@@ -504,7 +503,8 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
         """Given a user-specified shape (maybe ``None``) along a particular dimension,
         returns a tuple of the TileDB capacity and extent for that dimension, suitable
         for schema creation. If the user-specified shape is None, the largest possible
-        int64 is returned for the capacity.
+        int64 is returned for the capacity -- which is particularly suitable for
+        maxdomain.
         """
         if dim_shape is None:
             dim_capacity = 2**63 - 1
