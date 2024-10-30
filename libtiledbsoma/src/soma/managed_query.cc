@@ -30,10 +30,10 @@
  * This file defines the performing TileDB queries.
  */
 
-#include "managed_query.h"
 #include <tiledb/array_experimental.h>
 #include <tiledb/attribute_experimental.h>
 #include "../utils/logger.h"
+#include "managed_query.h"
 #include "utils/common.h"
 namespace tiledbsoma {
 
@@ -62,7 +62,7 @@ void ManagedQuery::reset() {
     query_ = std::make_unique<Query>(*ctx_, *array_);
     subarray_ = std::make_unique<Subarray>(*ctx_, *array_);
 
-    subarray_range_set_ = false;
+    subarray_range_set_ = {};
     subarray_range_empty_ = {};
     columns_.clear();
     results_complete_ = true;
@@ -109,7 +109,8 @@ void ManagedQuery::setup_read() {
         // domain on dimension 0. In the case that the non-empty domain does not
         // exist (when the array has not been written to yet), use dimension 0's
         // full domain
-        if (schema.array_type() == TILEDB_DENSE && !subarray_range_set_) {
+        if (schema.array_type() == TILEDB_DENSE &&
+            !_has_any_subarray_range_set()) {
             // Check if the array has been written to by using the C API as
             // there is no way to to check for an empty domain using the current
             // CPP API

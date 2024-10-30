@@ -151,7 +151,7 @@ class ManagedQuery {
     template <typename T>
     void select_ranges(
         const std::string& dim, const std::vector<std::pair<T, T>>& ranges) {
-        subarray_range_set_ = true;
+        subarray_range_set_[dim] = true;
         subarray_range_empty_[dim] = true;
         for (auto& [start, stop] : ranges) {
             subarray_->add_range(dim, start, stop);
@@ -168,7 +168,7 @@ class ManagedQuery {
      */
     template <typename T>
     void select_points(const std::string& dim, const std::vector<T>& points) {
-        subarray_range_set_ = true;
+        subarray_range_set_[dim] = true;
         subarray_range_empty_[dim] = true;
         for (auto& point : points) {
             subarray_->add_range(dim, point, point);
@@ -185,7 +185,7 @@ class ManagedQuery {
      */
     template <typename T>
     void select_points(const std::string& dim, const tcb::span<T> points) {
-        subarray_range_set_ = true;
+        subarray_range_set_[dim] = true;
         subarray_range_empty_[dim] = true;
         for (auto& point : points) {
             subarray_->add_range(dim, point, point);
@@ -203,7 +203,7 @@ class ManagedQuery {
     template <typename T>
     void select_point(const std::string& dim, const T& point) {
         subarray_->add_range(dim, point, point);
-        subarray_range_set_ = true;
+        subarray_range_set_[dim] = true;
         subarray_range_empty_[dim] = false;
     }
 
@@ -383,14 +383,7 @@ class ManagedQuery {
      * @return true if the query contains only empty ranges.
      */
     bool is_empty_query() {
-        bool has_empty = false;
-        for (auto subdim : subarray_range_empty_) {
-            if (subdim.second == true) {
-                has_empty = true;
-                break;
-            }
-        }
-        return subarray_range_set_ && has_empty;
+      return _has_any_empty_range() && _has_any_subarray_range_set();
     }
 
     /**
@@ -414,6 +407,26 @@ class ManagedQuery {
      */
     void check_column_name(const std::string& name);
 
+    // Helper for is_empty_query
+    bool _has_any_empty_range() {
+        for (auto subdim : subarray_range_empty_) {
+            if (subdim.second == true) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    // Helper for is_empty_query
+    bool _has_any_subarray_range_set() {
+        for (auto subdim : subarray_range_set_) {
+            if (subdim.second == true) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     // TileDB array being queried.
     std::shared_ptr<Array> array_;
 
@@ -433,7 +446,7 @@ class ManagedQuery {
     std::unique_ptr<Subarray> subarray_;
 
     // True if a range has been added to the subarray
-    bool subarray_range_set_ = false;
+    std::map<std::string, bool> subarray_range_set_ = {};
 
     // Map whether the dimension is empty (true) or not
     std::map<std::string, bool> subarray_range_empty_ = {};
