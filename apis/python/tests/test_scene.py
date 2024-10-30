@@ -431,7 +431,7 @@ def test_scene_multiscale_image(tmp_path):
                 "img",
                 transform=transform,
                 type=pa.int64(),
-                reference_level_shape=[1, 2, 3],
+                level_shape=[1, 2, 3],
             )
 
             # The scene coordinate space must be set before registering
@@ -455,7 +455,7 @@ def test_scene_multiscale_image(tmp_path):
                 "img",
                 transform=bad_transform,
                 type=pa.int64(),
-                reference_level_shape=[1, 2, 3],
+                level_shape=[1, 2, 3],
             )
 
         # Mismatch in transform output axes and multiscale image coordinate space axes.
@@ -470,7 +470,7 @@ def test_scene_multiscale_image(tmp_path):
                 "img",
                 transform=bad_transform,
                 type=pa.int64(),
-                reference_level_shape=[1, 2, 3],
+                level_shape=[1, 2, 3],
             )
 
         # Add the multiscale image.
@@ -479,7 +479,7 @@ def test_scene_multiscale_image(tmp_path):
             "img",
             transform=transform,
             type=pa.int64(),
-            reference_level_shape=[1, 2, 3],
+            level_shape=[1, 2, 3],
         )
 
         # Check the transform.
@@ -521,7 +521,7 @@ def test_scene_set_transfrom_to_multiscale_image(
             "img",
             transform=None,
             type=pa.int64(),
-            reference_level_shape=[3, 8, 9],
+            level_shape=[3, 8, 9],
         )
 
         transform = coord_transform(
