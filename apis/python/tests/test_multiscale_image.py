@@ -307,23 +307,18 @@ def test_multiscale_with_axis_names(
         for index, shape in enumerate(shapes):
             assert shape == image.level_shape(index)
 
-            # Check transform to and from levels
-            assert np.array_equal(
-                image.get_transform_to_level(index).scale_factors,
-                1 / np.array(expected_scale_factors[index]),
-            )
-            assert np.array_equal(
-                image.get_transform_to_level(f"level{index}").scale_factors,
-                1 / np.array(expected_scale_factors[index]),
-            )
-            assert np.array_equal(
-                image.get_transform_from_level(index).scale_factors,
-                expected_scale_factors[index],
-            )
-            assert np.array_equal(
-                image.get_transform_from_level(f"level{index}").scale_factors,
-                expected_scale_factors[index],
-            )
+            # Check transform to levels.
+            expected = 1 / np.array(expected_scale_factors[index])
+            actual = image.get_transform_to_level(index).scale_factors
+            assert np.array_equal(actual, expected)
+            assert np.array_equal(actual, expected)
+
+            # Check transform from levels
+            expected = expected_scale_factors[index]
+            actual = image.get_transform_from_level(index).scale_factors
+            assert np.array_equal(actual, expected)
+            actual = image.get_transform_from_level(f"level{index}").scale_factors
+            assert np.array_equal(actual, expected)
 
 
 @pytest.mark.parametrize(
@@ -370,7 +365,7 @@ def test_multiscale_with_axis_names(
 )
 def test_multiscale_2d_read_region(tmp_path, shapes, region, scale_factors):
     baseuri = urljoin(f"{tmp_path.as_uri()}/", "test_multiscale_read_region")
-    image_uri = create_multiscale(baseuri, ("Y", "X"), ("height", "width"), shapes)
+    image_uri = create_multiscale(baseuri, ("x", "y"), ("y", "x"), False, shapes)
 
     with soma.Collection.open(image_uri, mode="w") as image:
         for i, shape in enumerate(shapes):
