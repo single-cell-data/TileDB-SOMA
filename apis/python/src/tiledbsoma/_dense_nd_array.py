@@ -20,7 +20,7 @@ from . import pytiledbsoma as clib
 from ._arrow_types import pyarrow_to_carrow_type
 from ._common_nd_array import NDArray
 from ._exception import SOMAError, map_exception_for_create
-from ._flags import NEW_SHAPE_FEATURE_FLAG_ENABLED
+from ._flags import DENSE_ARRAYS_CAN_HAVE_CURRENT_DOMAIN, NEW_SHAPE_FEATURE_FLAG_ENABLED
 from ._tdb_handles import DenseNDArrayWrapper
 from ._types import OpenTimestamp, Slice
 from ._util import dense_indices_to_shape
@@ -105,11 +105,7 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
             dim_name = f"soma_dim_{dim_idx}"
             pa_field = pa.field(dim_name, pa.int64())
 
-            if NEW_SHAPE_FEATURE_FLAG_ENABLED and clib.embedded_version_triple() >= (
-                2,
-                27,
-                0,
-            ):
+            if NEW_SHAPE_FEATURE_FLAG_ENABLED and DENSE_ARRAYS_CAN_HAVE_CURRENT_DOMAIN:
                 dim_capacity, dim_extent = cls._dim_capacity_and_extent(
                     dim_name,
                     # The user specifies current domain -- this is the max domain
@@ -341,7 +337,7 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
         """Supported for ``SparseNDArray``; scheduled for implementation for
         ``DenseNDArray`` in TileDB-SOMA 1.15
         """
-        if clib.embedded_version_triple() >= (2, 27, 0):
+        if DENSE_ARRAYS_CAN_HAVE_CURRENT_DOMAIN:
             self._handle.resize(newshape)
         else:
             raise NotImplementedError("Not implemented for libtiledbsoma < 2.27.0")

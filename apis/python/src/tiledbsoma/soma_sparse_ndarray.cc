@@ -114,51 +114,6 @@ void load_soma_sparse_ndarray(py::module& m) {
         .def_static("exists", &SOMASparseNDArray::exists)
 
         .def_property_readonly("shape", &SOMASparseNDArray::shape)
-        .def_property_readonly("maxshape", &SOMASparseNDArray::maxshape)
-        .def_property_readonly(
-            "tiledbsoma_has_upgraded_shape", &SOMAArray::has_current_domain)
-
-        .def(
-            "resize",
-            [](SOMAArray& array, const std::vector<int64_t>& newshape) {
-                try {
-                    array.resize(newshape, "resize");
-                } catch (const std::exception& e) {
-                    throw TileDBSOMAError(e.what());
-                }
-            },
-            "newshape"_a)
-        .def(
-            "can_resize",
-            [](SOMAArray& array, const std::vector<int64_t>& newshape) {
-                try {
-                    return array.can_resize(newshape, "can_resize");
-                } catch (const std::exception& e) {
-                    throw TileDBSOMAError(e.what());
-                }
-            },
-            "newshape"_a)
-
-        .def(
-            "tiledbsoma_upgrade_shape",
-            [](SOMAArray& array, const std::vector<int64_t>& newshape) {
-                try {
-                    array.upgrade_shape(newshape, "tiledbsoma_upgrade_shape");
-                } catch (const std::exception& e) {
-                    throw TileDBSOMAError(e.what());
-                }
-            },
-            "newshape"_a)
-        .def(
-            "tiledbsoma_can_upgrade_shape",
-            [](SOMAArray& array, const std::vector<int64_t>& newshape) {
-                try {
-                    return array.can_upgrade_shape(
-                        newshape, "tiledbsoma_can_upgrade_shape");
-                } catch (const std::exception& e) {
-                    throw TileDBSOMAError(e.what());
-                }
-            },
-            "newshape"_a);
+        .def_property_readonly("maxshape", &SOMASparseNDArray::maxshape);
 }
 }  // namespace libtiledbsomacpp

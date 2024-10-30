@@ -977,6 +977,61 @@ void load_soma_array(py::module& m) {
 
         .def("has_metadata", &SOMAArray::has_metadata)
 
-        .def("metadata_num", &SOMAArray::metadata_num);
+        .def("metadata_num", &SOMAArray::metadata_num)
+
+        // These are for SparseNDArray and DenseNDArray both:
+        // * tiledbsoma_has_upgraded_shape
+        // * resize
+        // * can_resize
+        // * tiledbsoma_upgrade_shape
+        // * tiledbsoma_can_upgrade_shape
+        // We don't have CommonNDArray base class in pybind11, and it's probably
+        // not worth it.  These are exposed to the user-facing API only for
+        // SparseNDArray and DenseNDArray and not for DataFrame.
+        .def_property_readonly(
+            "tiledbsoma_has_upgraded_shape", &SOMAArray::has_current_domain)
+
+        .def(
+            "resize",
+            [](SOMAArray& array, const std::vector<int64_t>& newshape) {
+                try {
+                    array.resize(newshape, "resize");
+                } catch (const std::exception& e) {
+                    throw TileDBSOMAError(e.what());
+                }
+            },
+            "newshape"_a)
+        .def(
+            "can_resize",
+            [](SOMAArray& array, const std::vector<int64_t>& newshape) {
+                try {
+                    return array.can_resize(newshape, "can_resize");
+                } catch (const std::exception& e) {
+                    throw TileDBSOMAError(e.what());
+                }
+            },
+            "newshape"_a)
+
+        .def(
+            "tiledbsoma_upgrade_shape",
+            [](SOMAArray& array, const std::vector<int64_t>& newshape) {
+                try {
+                    array.upgrade_shape(newshape, "tiledbsoma_upgrade_shape");
+                } catch (const std::exception& e) {
+                    throw TileDBSOMAError(e.what());
+                }
+            },
+            "newshape"_a)
+        .def(
+            "tiledbsoma_can_upgrade_shape",
+            [](SOMAArray& array, const std::vector<int64_t>& newshape) {
+                try {
+                    return array.can_upgrade_shape(
+                        newshape, "tiledbsoma_can_upgrade_shape");
+                } catch (const std::exception& e) {
+                    throw TileDBSOMAError(e.what());
+                }
+            },
+            "newshape"_a);
 }
 }  // namespace libtiledbsomacpp
