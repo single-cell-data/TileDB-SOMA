@@ -118,6 +118,9 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
             # [3] core current domain lo
             # [4] core current domain hi
 
+            if dim_shape is None:
+                raise ValueError("DenseNDArray shape slots must be numeric")
+
             if NEW_SHAPE_FEATURE_FLAG_ENABLED and DENSE_ARRAYS_CAN_HAVE_CURRENT_DOMAIN:
                 dim_capacity, dim_extent = cls._dim_capacity_and_extent(
                     dim_name,
@@ -130,8 +133,6 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
 
                 if dim_shape == 0:
                     raise ValueError("DenseNDArray shape slots must be at least 1")
-                if dim_shape is None:
-                    raise ValueError("DenseNDArray shape slots must be numeric")
 
                 index_column_data[pa_field.name] = [
                     0,
