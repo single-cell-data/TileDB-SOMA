@@ -131,10 +131,7 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
                 if dim_shape == 0:
                     raise ValueError("DenseNDArray shape slots must be at least 1")
                 if dim_shape is None:
-                    # Core current-domain semantics are (lo, hi) with both
-                    # inclusive, with lo <= hi. This means smallest is (0, 0)
-                    # which is shape 1, not 0.
-                    dim_shape = 1
+                    raise ValueError("DenseNDArray shape slots must be numeric")
 
                 index_column_data[pa_field.name] = [
                     0,
