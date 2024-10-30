@@ -130,7 +130,13 @@ class TestSample3DDenseNDArrayWrapper:
         [
             (2, 1, 3),
             (0, 0, slice(1, 2)),
-            (2, 1, slice(None,)),
+            (
+                2,
+                1,
+                slice(
+                    None,
+                ),
+            ),
             (0, slice(None, None), 1),
             ([1, 3], 1, 1),
             ([1, 3], 1, [0, 2]),
