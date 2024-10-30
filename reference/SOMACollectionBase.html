@@ -9,7 +9,7 @@ objects, mapping string keys to any SOMA object.  (lifecycle: maturing)"></head>
 
     <a class="navbar-brand me-2" href="../index.html">tiledbsoma</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.14.5</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.14.99.7</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -41,7 +41,7 @@ objects, mapping string keys to any SOMA object.  (lifecycle: maturing)"></head>
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>SOMA Collection Base Class</h1>
-      <small class="dont-index">Source: <a href="https://github.com/single-cell-data/TileDB-SOMA/blob/1.14.5/R/SOMACollectionBase.R" class="external-link"><code>R/SOMACollectionBase.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/single-cell-data/TileDB-SOMA/blob/release-1.15/R/SOMACollectionBase.R" class="external-link"><code>R/SOMACollectionBase.R</code></a></small>
       <div class="d-none name"><code>SOMACollectionBase.Rd</code></div>
     </div>
 
@@ -229,6 +229,7 @@ default), the object's URI is assumed to be relative unless it is a
 <span>  <span class="va">key</span>,</span>
 <span>  <span class="va">schema</span>,</span>
 <span>  <span class="va">index_column_names</span>,</span>
+<span>  <span class="va">domain</span>,</span>
 <span>  platform_config <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
@@ -245,6 +246,10 @@ default), the object's URI is assumed to be relative unless it is a
 
 <dt><code>index_column_names</code></dt>
 <dd><p>Index column names passed on to DataFrame$create()</p></dd>
+
+
+<dt><code>domain</code></dt>
+<dd><p>As in <code>SOMADataFrameCreate</code>.</p></dd>
 
 
 <dt><code>platform_config</code></dt>

@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">tiledbsoma</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.14.5</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.14.99.7</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -58,13 +58,14 @@
 
 
 
-<script src="UsingPlatformConfig_files/accessible-code-block-0.0.1/empty-anchor.js"></script><div class="row">
+
+<div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Using PlatformConfig</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/single-cell-data/TileDB-SOMA/blob/1.14.5/vignettes/UsingPlatformConfig.Rmd" class="external-link"><code>vignettes/UsingPlatformConfig.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/single-cell-data/TileDB-SOMA/blob/release-1.15/vignettes/UsingPlatformConfig.Rmd" class="external-link"><code>vignettes/UsingPlatformConfig.Rmd</code></a></small>
       <div class="d-none name"><code>UsingPlatformConfig.Rmd</code></div>
     </div>
 
@@ -73,8 +74,11 @@
 <div class="section level2">
 <h2 id="advanced-schema-configuration">Advanced schema configuration<a class="anchor" aria-label="anchor" href="#advanced-schema-configuration"></a>
 </h2>
-<p>Default schema-level TileDB parameters are set to be useful for most users.</p>
-<p>If you have particular needs or use-cases, though, you can use the <code>PlatformConfig</code> options to override default schema parameters.</p>
+<p>Default schema-level TileDB parameters are set to be useful for most
+users.</p>
+<p>If you have particular needs or use-cases, though, you can use the
+<code>PlatformConfig</code> options to override default schema
+parameters.</p>
 <pre><code><span><span class="va">platform_config</span> <span class="op">&lt;-</span> <span class="va"><a href="../reference/PlatformConfig.html">PlatformConfig</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="va">platform_config</span><span class="op">$</span><span class="fu">set</span><span class="op">(</span><span class="st">'tiledb'</span>, <span class="st">'create'</span>, <span class="st">'dataframe_dim_zstd_level'</span>, <span class="fl">8</span><span class="op">)</span></span>
 <span><span class="va">platform_config</span><span class="op">$</span><span class="fu">set</span><span class="op">(</span><span class="st">'tiledb'</span>, <span class="st">'create'</span>, <span class="st">'sparse_nd_array_dim_zstd_level'</span>, <span class="fl">9</span><span class="op">)</span></span>
@@ -88,8 +92,10 @@
 <span>  soma_data_a <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>filters <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="st">"RLE"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">tdco</span> <span class="op">&lt;-</span> <span class="va"><a href="../reference/TileDBCreateOptions.html">TileDBCreateOptions</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span><span class="va">platform_config</span><span class="op">)</span></span></code></pre>
-<p>This can then be passed to <code>SOMADataFrameCreate</code>, <code>SOMASparseNDArrayCreate</code>, et al.</p>
-<p>Coming soon: advice on how to connect these with <code>from_seurat</code>.</p>
+<p>This can then be passed to <code>SOMADataFrameCreate</code>,
+<code>SOMASparseNDArrayCreate</code>, et al.</p>
+<p>Coming soon: advice on how to connect these with
+<code>from_seurat</code>.</p>
 </div>
   </main>
 </div>

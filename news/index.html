@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">tiledbsoma</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.14.5</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.14.99.7</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -39,7 +39,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Changelog</h1>
-      <small>Source: <a href="https://github.com/single-cell-data/TileDB-SOMA/blob/1.14.5/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
+      <small>Source: <a href="https://github.com/single-cell-data/TileDB-SOMA/blob/release-1.15/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
     <div class="section level2">
@@ -47,7 +47,8 @@
 <div class="section level3">
 <h3 id="changes-1-14-5">Changes<a class="anchor" aria-label="anchor" href="#changes-1-14-5"></a></h3>
 <ul><li>Fixes a Python-only bug <a href="https://github.com/single-cell-data/TileDB-SOMA/pull/3225" class="external-link">#3225</a>
-</li></ul></div>
+</li>
+</ul></div>
 </div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.14.4" id="tiledbsoma-1144">tiledbsoma 1.14.4<a class="anchor" aria-label="anchor" href="#tiledbsoma-1144"></a></h2>
@@ -64,21 +65,24 @@
 <div class="section level3">
 <h3 id="changes-1-14-3">Changes<a class="anchor" aria-label="anchor" href="#changes-1-14-3"></a></h3>
 <ul><li>Handle <code>numeric</code> coords properly when reading arrays <a href="https://github.com/single-cell-data/TileDB-SOMA/pull/3145" class="external-link">3145</a>
-</li></ul></div>
+</li>
+</ul></div>
 </div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.14.2" id="tiledbsoma-1142">tiledbsoma 1.14.2<a class="anchor" aria-label="anchor" href="#tiledbsoma-1142"></a></h2>
 <div class="section level3">
 <h3 id="changes-1-14-2">Changes<a class="anchor" aria-label="anchor" href="#changes-1-14-2"></a></h3>
 <ul><li>Fixes a Python-only bug <a href="https://github.com/single-cell-data/TileDB-SOMA/pull/3074" class="external-link">#3074</a>
-</li></ul></div>
+</li>
+</ul></div>
 </div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.14.1" id="tiledbsoma-1141">tiledbsoma 1.14.1<a class="anchor" aria-label="anchor" href="#tiledbsoma-1141"></a></h2>
 <div class="section level3">
 <h3 id="changes-1-14-1">Changes<a class="anchor" aria-label="anchor" href="#changes-1-14-1"></a></h3>
 <ul><li>Fixes a Python-only bug <a href="https://github.com/single-cell-data/TileDB-SOMA/pull/3013" class="external-link">#3013</a>
-</li></ul></div>
+</li>
+</ul></div>
 </div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.14.0" id="tiledbsoma-1140">tiledbsoma 1.14.0<a class="anchor" aria-label="anchor" href="#tiledbsoma-1140"></a></h2>
@@ -102,7 +106,22 @@
 <div class="section level3">
 <h3 id="changes-1-13-1">Changes<a class="anchor" aria-label="anchor" href="#changes-1-13-1"></a></h3>
 <ul><li>Includes a fix for appended enumerations <a href="https://github.com/single-cell-data/TileDB-SOMA/pull/2903" class="external-link">#2903</a>
-</li></ul></div>
+</li>
+</ul></div>
+<div class="section level3">
+<h3 id="changes-1-13-1-1">Changes<a class="anchor" aria-label="anchor" href="#changes-1-13-1-1"></a></h3>
+<ul><li>New <code>resize</code> and <code>tiledbsoma_upgrade_shape</code> accessors as part of the <a href="https://github.com/single-cell-data/TileDB-SOMA/issues/2407" class="external-link">new-shape project</a>
+</li>
+<li>Make use of timestamp ranges in libtiledbsoma</li>
+<li>Simplify timestamp ranges; strengthen assumptions about <code>tiledb_timestamp</code>
+</li>
+<li>Use cached timestamps in <code>$write()</code> and <code>$create()</code>
+</li>
+<li>Fix bug in blockwise iteration</li>
+<li>Lay groundwork for cached SOMA contexts within objects rather than re-creating contexts</li>
+<li>SOMA context objects are used throughout SOMA object creation</li>
+<li>Add value-checking for <code>axis</code> parameter when initializing blockwise reads</li>
+</ul></div>
 </div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.13.0" id="tiledbsoma-1130">tiledbsoma 1.13.0<a class="anchor" aria-label="anchor" href="#tiledbsoma-1130"></a></h2>
@@ -118,19 +137,22 @@
 <h2 class="pkg-version" data-toc-text="1.12.3" id="tiledbsoma-1123">tiledbsoma 1.12.3<a class="anchor" aria-label="anchor" href="#tiledbsoma-1123"></a></h2>
 <div class="section level3">
 <h3 id="changes-1-12-3">Changes<a class="anchor" aria-label="anchor" href="#changes-1-12-3"></a></h3>
-<ul><li>Updates the TileDB Core dependency to 2.24.2</li></ul></div>
+<ul><li>Updates the TileDB Core dependency to 2.24.2</li>
+</ul></div>
 </div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.12.2" id="tiledbsoma-1122">tiledbsoma 1.12.2<a class="anchor" aria-label="anchor" href="#tiledbsoma-1122"></a></h2>
 <div class="section level3">
 <h3 id="changes-1-12-2">Changes<a class="anchor" aria-label="anchor" href="#changes-1-12-2"></a></h3>
-<ul><li>No R changes; only an update for Python</li></ul></div>
+<ul><li>No R changes; only an update for Python</li>
+</ul></div>
 </div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.12.1" id="tiledbsoma-1121">tiledbsoma 1.12.1<a class="anchor" aria-label="anchor" href="#tiledbsoma-1121"></a></h2>
 <div class="section level3">
 <h3 id="changes-1-12-1">Changes<a class="anchor" aria-label="anchor" href="#changes-1-12-1"></a></h3>
-<ul><li>Updates to TileDB Core 2.24.1</li></ul></div>
+<ul><li>Updates to TileDB Core 2.24.1</li>
+</ul></div>
 </div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.12.0" id="tiledbsoma-1120">tiledbsoma 1.12.0<a class="anchor" aria-label="anchor" href="#tiledbsoma-1120"></a></h2>
@@ -144,25 +166,29 @@
 <h2 class="pkg-version" data-toc-text="1.11.4" id="tiledbsoma-1114">tiledbsoma 1.11.4<a class="anchor" aria-label="anchor" href="#tiledbsoma-1114"></a></h2>
 <div class="section level3">
 <h3 id="changes-1-11-4">Changes<a class="anchor" aria-label="anchor" href="#changes-1-11-4"></a></h3>
-<ul><li>Fixes a couple bugs observed in Python</li></ul></div>
+<ul><li>Fixes a couple bugs observed in Python</li>
+</ul></div>
 </div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.11.3" id="tiledbsoma-1113">tiledbsoma 1.11.3<a class="anchor" aria-label="anchor" href="#tiledbsoma-1113"></a></h2>
 <div class="section level3">
 <h3 id="changes-1-11-3">Changes<a class="anchor" aria-label="anchor" href="#changes-1-11-3"></a></h3>
-<ul><li>Fixes an intermittent segfault observed in Python</li></ul></div>
+<ul><li>Fixes an intermittent segfault observed in Python</li>
+</ul></div>
 </div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.11.2" id="tiledbsoma-1112">tiledbsoma 1.11.2<a class="anchor" aria-label="anchor" href="#tiledbsoma-1112"></a></h2>
 <div class="section level3">
 <h3 id="changes-1-11-2">Changes<a class="anchor" aria-label="anchor" href="#changes-1-11-2"></a></h3>
-<ul><li>New <code>reopen</code> method available from R</li></ul></div>
+<ul><li>New <code>reopen</code> method available from R</li>
+</ul></div>
 </div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.11.1" id="tiledbsoma-1111">tiledbsoma 1.11.1<a class="anchor" aria-label="anchor" href="#tiledbsoma-1111"></a></h2>
 <div class="section level3">
 <h3 id="changes-1-11-1">Changes<a class="anchor" aria-label="anchor" href="#changes-1-11-1"></a></h3>
-<ul><li>No R changes; only an update for Python</li></ul></div>
+<ul><li>No R changes; only an update for Python</li>
+</ul></div>
 </div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.11.0" id="tiledbsoma-1110">tiledbsoma 1.11.0<a class="anchor" aria-label="anchor" href="#tiledbsoma-1110"></a></h2>
@@ -192,7 +218,8 @@
 <div class="section level3">
 <h3 id="fixes-1-6-0">Fixes<a class="anchor" aria-label="anchor" href="#fixes-1-6-0"></a></h3>
 <ul><li>
-<code>SOMADataFrame</code>, <code>SOMASparseNDArray</code>, and <code>SOMADenseNDArray</code>’s <code><a href="https://rdrr.io/r/base/write.html" class="external-link">write()</a></code> method now correctly leaves the array open in write mode</li></ul></div>
+<code>SOMADataFrame</code>, <code>SOMASparseNDArray</code>, and <code>SOMADenseNDArray</code>’s <code><a href="https://rdrr.io/r/base/write.html" class="external-link">write()</a></code> method now correctly leaves the array open in write mode</li>
+</ul></div>
 </div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.5.0" id="tiledbsoma-150">tiledbsoma 1.5.0<a class="anchor" aria-label="anchor" href="#tiledbsoma-150"></a></h2>
