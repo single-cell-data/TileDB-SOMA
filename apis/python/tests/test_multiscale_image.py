@@ -30,12 +30,21 @@ def test_multiscale_image_bad_create(tmp_path):
             level_shape=(3, 64, 64),
         )
 
-    # Repeated data axis order, bad length.
+    # Repeated data axis order, missing "soma_channel".
     with pytest.raises(ValueError):
         soma.MultiscaleImage.create(
             baseuri,
             type=pa.uint8(),
             data_axis_order=("x", "x", "y"),
+            level_shape=(3, 64, 64),
+        )
+
+    # Repeated data axis order, bad length.
+    with pytest.raises(ValueError):
+        soma.MultiscaleImage.create(
+            baseuri,
+            type=pa.uint8(),
+            data_axis_order=("soma_channel", "x", "x", "y"),
             level_shape=(3, 64, 64),
         )
 
@@ -57,8 +66,6 @@ def test_multiscale_image_bad_create(tmp_path):
             level_shape=(3, 64, 64),
             has_channel_axis=False,
         )
-
-    # TODO: Add more checks
 
 
 def test_multiscale_basic(tmp_path):
@@ -322,6 +329,131 @@ def test_multiscale_with_axis_names(
 
 
 @pytest.mark.parametrize(
+    "shapes, data_axis_order, region, expected_coords, scale_factors",
+    [
+        # full region
+        (
+            ((3, 64, 32), (3, 32, 16), (3, 16, 8)),
+            ("soma_channel", "y", "x"),
+            None,
+            None,
+            ([1, 1], [2, 2], [4, 4]),
+        ),
+        (
+            ((64, 32, 3), (32, 16, 3), (16, 8, 3)),
+            ("y", "x", "soma_channel"),
+            None,
+            None,
+            ([1, 1], [2, 2], [4, 4]),
+        ),
+        (
+            ((64, 3, 32), (32, 3, 16), (16, 3, 8)),
+            ("x", "soma_channel", "y"),
+            None,
+            None,
+            ([1, 1], [2, 2], [4, 4]),
+        ),
+        (
+            ((3, 128, 128), (3, 128, 128)),
+            ("soma_channel", "y", "x"),
+            None,
+            None,
+            ([1, 1], [1, 1]),
+        ),
+        (
+            ((3, 128, 64), (3, 64, 32)),
+            ("soma_channel", "y", "x"),
+            None,
+            None,
+            ([1, 1], [2, 2]),
+        ),
+        (
+            ((3, 60, 30), (3, 30, 6)),
+            ("soma_channel", "y", "x"),
+            None,
+            None,
+            ([1, 1], [2, 5]),
+        ),
+        (
+            ((3, 1, 1),),
+            ("soma_channel", "y", "x"),
+            None,
+            None,
+            ([1, 1]),
+        ),
+        # partial region
+        pytest.param(
+            ((3, 128, 64), (3, 64, 32)),
+            ("soma_channel", "y", "x"),
+            (0, 0, 20, 30),
+            (
+                (slice(None), slice(0, 30), slice(0, 20)),
+                (slice(None), slice(0, 15), slice(0, 10)),
+            ),
+            ([1, 1], [2, 2]),
+            id="partial region - channel first",
+        ),
+        pytest.param(
+            ((64, 3, 128), (32, 3, 64)),
+            ("x", "soma_channel", "y"),
+            (0, 0, 20, 30),
+            (
+                (slice(0, 20), slice(None), slice(0, 30)),
+                (slice(0, 10), slice(None), slice(0, 15)),
+            ),
+            ([1, 1], [2, 2]),
+            id="partial region - channel middle",
+        ),
+        pytest.param(
+            ((128, 64, 3), (64, 32, 3)),
+            ("y", "x", "soma_channel"),
+            (0, 0, 20, 30),
+            (
+                (slice(0, 30), slice(0, 20), slice(None)),
+                (slice(0, 15), slice(0, 10), slice(None)),
+            ),
+            ([1, 1], [2, 2]),
+            id="partial region - channel last",
+        ),
+        pytest.param(
+            ((3, 64, 32), (3, 32, 16)),
+            ("soma_channel", "y", "x"),
+            (0, 0, 16, 10),
+            (
+                (slice(None), slice(0, 10), slice(0, 16)),
+                (slice(None), slice(0, 5), slice(0, 8)),
+            ),
+            ([1, 1], [2, 2]),
+            id="partial region  - small",
+        ),
+    ],
+)
+def test_multiscale_2d_read_region_with_channel(
+    tmp_path, shapes, data_axis_order, region, expected_coords, scale_factors
+):
+    baseuri = urljoin(f"{tmp_path.as_uri()}/", "test_multiscale_read_region")
+    image_uri = create_multiscale(baseuri, ("x", "y"), data_axis_order, True, shapes)
+
+    with soma.Collection.open(image_uri, mode="w") as image:
+        for i, shape in enumerate(shapes):
+            data = np.arange(shape[0] * shape[1] * shape[2], dtype=np.uint8).reshape(
+                shape
+            )
+            image[f"level{i}"].write(
+                (slice(None), slice(None)), pa.Tensor.from_numpy(data)
+            )
+
+    with soma.MultiscaleImage.open(image_uri, mode="r") as image:
+        for i, shape in enumerate(shapes):
+            actual_data = image.read_spatial_region(i, region=region).data
+            if expected_coords is None:
+                expected_data = image[f"level{i}"].read()
+            else:
+                expected_data = image[f"level{i}"].read(expected_coords[i])
+            assert np.array_equal(actual_data, expected_data)
+
+
+@pytest.mark.parametrize(
     "shapes, region, scale_factors",
     [
         # full region
@@ -363,7 +495,7 @@ def test_multiscale_with_axis_names(
         ),
     ],
 )
-def test_multiscale_2d_read_region(tmp_path, shapes, region, scale_factors):
+def test_multiscale_2d_read_region_no_channel(tmp_path, shapes, region, scale_factors):
     baseuri = urljoin(f"{tmp_path.as_uri()}/", "test_multiscale_read_region")
     image_uri = create_multiscale(baseuri, ("x", "y"), ("y", "x"), False, shapes)
 
@@ -438,10 +570,10 @@ def test_multiscale_2d_read_region(tmp_path, shapes, region, scale_factors):
         ),
     ],
 )
-def test_multiscale_3d_read_region(tmp_path, shapes, region, scale_factors):
+def test_multiscale_3d_read_region_no_channel(tmp_path, shapes, region, scale_factors):
     baseuri = urljoin(f"{tmp_path.as_uri()}/", "test_multiscale_read_region")
     image_uri = create_multiscale(
-        baseuri, ("Z", "Y", "X"), ("depth", "height", "width"), shapes
+        baseuri, ("x", "y", "z"), ("z", "y", "x"), False, shapes
     )
 
     with soma.Collection.open(image_uri, mode="w") as image:

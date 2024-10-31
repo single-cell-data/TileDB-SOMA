@@ -174,7 +174,14 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
             ndim += 1
 
         if len(level_shape) != ndim:
-            raise ValueError()  # TODO: Add error
+            channel_descript = (
+                "with a channel axis" if has_channel_axis else "with no channel axis"
+            )
+            raise ValueError(
+                f"Invalid shape {level_shape}. Expected {ndim} dimensions for a "
+                f"multiscale image {channel_descript} on a coordinate space with "
+                f"{len(coordinate_space)} dimensions."
+            )
         if data_axis_order is None:
             axis_permutation = tuple(range(ndim - 1, -1, -1))
         else:
@@ -184,7 +191,10 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
             if has_channel_axis:
                 axis_indices["soma_channel"] = len(coordinate_space)
             if set(data_axis_order) != set(axis_indices.keys()):
-                raise ValueError()  # TODO: Add error
+                raise ValueError(
+                    f"Invalid data axis order '{data_axis_order}'. Must be a "
+                    f"permutation of the axes '{tuple(axis_indices.keys())}'."
+                )
             axis_permutation = tuple(axis_indices[name] for name in data_axis_order)
 
         # The type ignore comments are to address a false positive in the attrs tuple
