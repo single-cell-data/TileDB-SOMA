@@ -36,10 +36,17 @@
   .pkgenv[["use_current_domain_transitional_internal_only"]]
 }
 
+# Temporary for # https://github.com/single-cell-data/TileDB-SOMA/issues/2407.
+# Once core 2.27 is released and we depend on it, this can go away.
 .dense_arrays_can_have_current_domain <- function() {
-  #triple <- tiledb_embedded_version()
-  #return(triple[[1]] >= 2 && triple[[2]] >= 27)
-  return(FALSE)
+  # This allows testing dense + current domain on the same machine without
+  # having to switch core builds (or switch machines).
+  if (Sys.getenv("SOMA_IGNORE_CORE_2_27") != "") {
+    return(FALSE)
+  }
+
+  triple <- tiledb_embedded_version()
+  return(triple[[1]] >= 2 && triple[[2]] >= 27)
 }
 
 ## An .onAttach() function is not allowed to use cat() etc but _must_ communicate via
