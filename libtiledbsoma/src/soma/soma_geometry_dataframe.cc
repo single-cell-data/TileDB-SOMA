@@ -54,7 +54,6 @@ void SOMAGeometryDataFrame::create(
     std::shared_ptr<SOMAContext> ctx,
     PlatformConfig platform_config,
     std::optional<TimestampRange> timestamp) {
-    std::vector<std::string> spatial_axes;
     auto tiledb_schema = ArrowAdapter::tiledb_schema_from_arrow_schema(
         ctx->tiledb_ctx(),
         schema,
@@ -98,7 +97,20 @@ std::unique_ptr<ArrowSchema> SOMAGeometryDataFrame::schema() const {
 
 const std::vector<std::string> SOMAGeometryDataFrame::index_column_names()
     const {
-    return this->dimension_names();
+    std::vector<std::string> dim_names = this->dimension_names();
+
+    auto is_internal = [](std::string name) {
+        return name.rfind(SOMA_GEOMETRY_DIMENSION_PREFIX, 0) == 0;
+    };
+
+    auto first_dim = std::find_if(
+        begin(dim_names), end(dim_names), is_internal);
+    dim_names.insert(first_dim, SOMA_GEOMETRY_COLUMN_NAME);
+    auto internal_end = std::remove_if(
+        begin(dim_names), end(dim_names), is_internal);
+    dim_names.erase(internal_end, dim_names.end());
+
+    return dim_names;
 }
 
 const std::vector<std::string> SOMAGeometryDataFrame::spatial_column_names()

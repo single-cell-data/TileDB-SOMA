@@ -30,8 +30,11 @@
  * This file defines the ArrowAdapter class.
  */
 
-#include "arrow_adapter.h"
+#include <algorithm>
+#include <variant>
+
 #include "../soma/column_buffer.h"
+#include "arrow_adapter.h"
 #include "logger.h"
 
 namespace tiledbsoma {
@@ -329,16 +332,43 @@ json ArrowAdapter::_get_filter_list_json(FilterList filter_list) {
 
 std::unique_ptr<ArrowSchema> ArrowAdapter::arrow_schema_from_tiledb_array(
     std::shared_ptr<Context> ctx, std::shared_ptr<Array> tiledb_array) {
+    auto is_internal = [](const Dimension& dim) {
+        return dim.name().rfind(SOMA_GEOMETRY_DIMENSION_PREFIX, 0) == 0;
+    };
+
     auto tiledb_schema = tiledb_array->schema();
-    auto ndim = tiledb_schema.domain().ndim();
-    auto nattr = tiledb_schema.attribute_num();
+    auto dimensions = tiledb_schema.domain().dimensions();
+
+    // For geometry dataframe replace the internal dim with the geometry column
+    int internal_dim_idx = std::find_if(
+                               dimensions.begin(),
+                               dimensions.end(),
+                               is_internal) -
+                           dimensions.begin();
+    auto internal_dim_iter = std::remove_if(
+        dimensions.begin(), dimensions.end(), is_internal);
+    dimensions.erase(internal_dim_iter, dimensions.end());
+
+    std::vector<std::variant<Dimension, Attribute>> columns;
+    for (size_t i = 0; i < dimensions.size(); ++i) {
+        columns.push_back(dimensions[i]);
+    }
+
+    for (const auto& attr : tiledb_schema.attributes()) {
+        if (strcmp(attr.first.c_str(), SOMA_GEOMETRY_COLUMN_NAME.c_str()) ==
+            0) {
+            columns.insert(columns.begin() + internal_dim_idx, attr.second);
+        } else {
+            columns.push_back(attr.second);
+        }
+    }
 
     std::unique_ptr<ArrowSchema> arrow_schema = std::make_unique<ArrowSchema>();
     arrow_schema->format = strdup("+s");
     arrow_schema->name = strdup("parent");
     arrow_schema->metadata = nullptr;
     arrow_schema->flags = 0;
-    arrow_schema->n_children = ndim + nattr;
+    arrow_schema->n_children = columns.size();
     arrow_schema->dictionary = nullptr;
     arrow_schema->release = &ArrowAdapter::release_schema;
     arrow_schema->private_data = nullptr;
@@ -351,87 +381,106 @@ std::unique_ptr<ArrowSchema> ArrowAdapter::arrow_schema_from_tiledb_array(
 
     ArrowSchema* child = nullptr;
 
-    for (uint32_t i = 0; i < ndim; ++i) {
-        auto dim = tiledb_schema.domain().dimension(i);
-        child = arrow_schema->children[i] = (ArrowSchema*)malloc(
-            sizeof(ArrowSchema));
-        child->format = strdup(
-            ArrowAdapter::to_arrow_format(dim.type()).data());
-        child->name = strdup(dim.name().c_str());
-        child->metadata = nullptr;
-        child->flags = 0;
-        child->n_children = 0;
-        child->children = nullptr;
-        child->dictionary = nullptr;
-        child->release = &ArrowAdapter::release_schema;
-        child->private_data = nullptr;
-        LOG_TRACE(fmt::format(
-            "[ArrowAdapter] arrow_schema_from_tiledb_array dim {} format {} "
-            "name {}",
-            i,
-            child->format,
-            child->name));
+    for (size_t i = 0; i < columns.size(); ++i) {
+        std::visit(
+            [&](auto&& arg) {
+                using T = std::decay_t<decltype(arg)>;
+                if constexpr (std::is_same_v<T, Dimension>) {
+                    child = arrow_schema->children[i] =
+                        arrow_schema_from_tiledb_dimension(arg).release();
+                } else if constexpr (std::is_same_v<T, Attribute>) {
+                    child = arrow_schema->children[i] =
+                        arrow_schema_from_tiledb_attribute(
+                            arg, ctx, tiledb_array)
+                            .release();
+                }
+            },
+            columns[i]);
     }
 
-    for (uint32_t i = 0; i < nattr; ++i) {
-        auto attr = tiledb_schema.attribute(i);
-        child = arrow_schema->children[ndim + i] = (ArrowSchema*)malloc(
-            sizeof(ArrowSchema));
-        child->format = strdup(
-            ArrowAdapter::to_arrow_format(attr.type()).data());
-        child->name = strdup(attr.name().c_str());
-        child->metadata = nullptr;
-        child->flags = 0;
-        if (attr.nullable()) {
-            child->flags |= ARROW_FLAG_NULLABLE;
+    return arrow_schema;
+}
+
+std::unique_ptr<ArrowSchema> ArrowAdapter::arrow_schema_from_tiledb_dimension(
+    const Dimension& dimension) {
+    std::unique_ptr<ArrowSchema> arrow_schema = std::make_unique<ArrowSchema>();
+    arrow_schema->format = strdup(
+        ArrowAdapter::to_arrow_format(dimension.type()).data());
+    arrow_schema->name = strdup(dimension.name().c_str());
+    arrow_schema->metadata = nullptr;
+    arrow_schema->flags = 0;
+    arrow_schema->n_children = 0;
+    arrow_schema->children = nullptr;
+    arrow_schema->dictionary = nullptr;
+    arrow_schema->release = &ArrowAdapter::release_schema;
+    arrow_schema->private_data = nullptr;
+    LOG_TRACE(fmt::format(
+        "[ArrowAdapter] arrow_schema_from_tiledb_dimension format {} "
+        "name {}",
+        arrow_schema->format,
+        arrow_schema->name));
+
+    return arrow_schema;
+}
+
+std::unique_ptr<ArrowSchema> ArrowAdapter::arrow_schema_from_tiledb_attribute(
+    Attribute& attribute,
+    std::shared_ptr<Context> ctx,
+    std::shared_ptr<Array> tiledb_array) {
+    std::unique_ptr<ArrowSchema> arrow_schema = std::make_unique<ArrowSchema>();
+    arrow_schema->format = strdup(
+        ArrowAdapter::to_arrow_format(attribute.type()).data());
+    arrow_schema->name = strdup(attribute.name().c_str());
+    arrow_schema->metadata = nullptr;
+    arrow_schema->flags = 0;
+    if (attribute.nullable() &&
+        strcmp(attribute.name().c_str(), SOMA_GEOMETRY_COLUMN_NAME.c_str()) !=
+            0) {
+        arrow_schema->flags |= ARROW_FLAG_NULLABLE;
+    } else {
+        arrow_schema->flags &= ~ARROW_FLAG_NULLABLE;
+    }
+    arrow_schema->n_children = 0;
+    arrow_schema->children = nullptr;
+    arrow_schema->dictionary = nullptr;
+    arrow_schema->release = &ArrowAdapter::release_schema;
+    arrow_schema->private_data = nullptr;
+
+    LOG_TRACE(fmt::format(
+        "[ArrowAdapter] arrow_schema_from_tiledb_array format {} "
+        "name {}",
+        arrow_schema->format,
+        arrow_schema->name));
+
+    auto enmr_name = AttributeExperimental::get_enumeration_name(
+        *ctx, attribute);
+    if (enmr_name.has_value()) {
+        auto enmr = ArrayExperimental::get_enumeration(
+            *ctx, *tiledb_array, attribute.name());
+        auto dict = (ArrowSchema*)malloc(sizeof(ArrowSchema));
+        dict->format = strdup(
+            ArrowAdapter::to_arrow_format(enmr.type(), false).data());
+        if (enmr.type() == TILEDB_STRING_ASCII || enmr.type() == TILEDB_CHAR) {
+            dict->format = strdup("z");
         } else {
-            child->flags &= ~ARROW_FLAG_NULLABLE;
-        }
-        child->n_children = 0;
-        child->children = nullptr;
-        child->dictionary = nullptr;
-        child->release = &ArrowAdapter::release_schema;
-        child->private_data = nullptr;
-
-        LOG_TRACE(fmt::format(
-            "[ArrowAdapter] arrow_schema_from_tiledb_array attr {} format {} "
-            "name {}",
-            i,
-            child->format,
-            child->name));
-
-        auto enmr_name = AttributeExperimental::get_enumeration_name(
-            *ctx, attr);
-        if (enmr_name.has_value()) {
-            auto enmr = ArrayExperimental::get_enumeration(
-                *ctx, *tiledb_array, attr.name());
-            auto dict = (ArrowSchema*)malloc(sizeof(ArrowSchema));
             dict->format = strdup(
                 ArrowAdapter::to_arrow_format(enmr.type(), false).data());
-            if (enmr.type() == TILEDB_STRING_ASCII ||
-                enmr.type() == TILEDB_CHAR) {
-                dict->format = strdup("z");
-            } else {
-                dict->format = strdup(
-                    ArrowAdapter::to_arrow_format(enmr.type(), false).data());
-            }
-            dict->name = strdup(enmr.name().c_str());
-            dict->metadata = nullptr;
-            if (enmr.ordered()) {
-                child->flags |= ARROW_FLAG_DICTIONARY_ORDERED;
-            } else {
-                child->flags &= ~ARROW_FLAG_DICTIONARY_ORDERED;
-            }
-            dict->n_children = 0;
-            dict->children = nullptr;
-            dict->dictionary = nullptr;
-            dict->release = &ArrowAdapter::release_schema;
-            dict->private_data = nullptr;
-            child->dictionary = dict;
         }
-        child->release = &ArrowAdapter::release_schema;
+        dict->name = strdup(enmr.name().c_str());
+        dict->metadata = nullptr;
+        if (enmr.ordered()) {
+            arrow_schema->flags |= ARROW_FLAG_DICTIONARY_ORDERED;
+        } else {
+            arrow_schema->flags &= ~ARROW_FLAG_DICTIONARY_ORDERED;
+        }
+        dict->n_children = 0;
+        dict->children = nullptr;
+        dict->dictionary = nullptr;
+        dict->release = &ArrowAdapter::release_schema;
+        dict->private_data = nullptr;
+        arrow_schema->dictionary = dict;
     }
-
+    arrow_schema->release = &ArrowAdapter::release_schema;
     return arrow_schema;
 }
 
