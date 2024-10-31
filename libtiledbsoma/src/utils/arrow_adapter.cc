@@ -354,12 +354,13 @@ std::unique_ptr<ArrowSchema> ArrowAdapter::arrow_schema_from_tiledb_array(
         columns.push_back(dimensions[i]);
     }
 
-    for (const auto& attr : tiledb_schema.attributes()) {
-        if (strcmp(attr.first.c_str(), SOMA_GEOMETRY_COLUMN_NAME.c_str()) ==
+    for (size_t i = 0; i < tiledb_schema.attribute_num(); ++i) {
+        auto attr = tiledb_schema.attribute(i);
+        if (strcmp(attr.name().c_str(), SOMA_GEOMETRY_COLUMN_NAME.c_str()) ==
             0) {
-            columns.insert(columns.begin() + internal_dim_idx, attr.second);
+            columns.insert(columns.begin() + internal_dim_idx, attr);
         } else {
-            columns.push_back(attr.second);
+            columns.push_back(attr);
         }
     }
 
