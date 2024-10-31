@@ -122,6 +122,7 @@ class NDArray(SOMAArray, somacore.NDArray):
         cls,
         dim_name: str,
         dim_shape: Optional[int],
+        ndim: int,
         create_options: TileDBCreateOptions,
     ) -> Tuple[int, int]:
         raise NotImplementedError("must be implemented by child class.")

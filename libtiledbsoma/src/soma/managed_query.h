@@ -439,8 +439,8 @@ class ManagedQuery {
      *
      * The other is a combination of several things. Firstly, is current-domain
      * support which we have for sparse arrays as of core 2.26, and for dense as
-     * of 2.27. Secondly, without current-domain support, we had small domains; with
-     * it, we have huge core domains (2^63-ish) which are immutable, and
+     * of 2.27. Secondly, without current-domain support, we had small domains;
+     * with it, we have huge core domains (2^63-ish) which are immutable, and
      * small current domains which are upward-mutable. (The soma domain and
      * maxdomain, respectively, are core current domain and domain.) Thirdly,
      * if a query doesn't have a subarray set on any
