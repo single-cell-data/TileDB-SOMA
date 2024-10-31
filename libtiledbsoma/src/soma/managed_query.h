@@ -430,20 +430,20 @@ class ManagedQuery {
     /**
      * This handles a few internals.
      *
-     * One is that (for a long time now) a dense array must have _at least one_
+     * One is that a dense array must have _at least one_
      * dim's subarray set for a read query. Without that, reads fail immediately
      * with the unambiguous
      *
      *   DenseReader: Cannot initialize reader; Dense reads must have a subarray
      *   set
      *
-     * The other is a combination of several things. One thing is current-domain
+     * The other is a combination of several things. Firstly, is current-domain
      * support which we have for sparse arrays as of core 2.26, and for dense as
-     * of 2.27. Also, without current-domain support, we had small domains; with
-     * it, we have huge core domains (2^63-ish) since they are immutable, and
-     * small current domains as they are upward-mutable. (The soma domain and
+     * of 2.27. Secondly, without current-domain support, we had small domains; with
+     * it, we have huge core domains (2^63-ish) which are immutable, and
+     * small current domains which are upward-mutable. (The soma domain and
      * maxdomain, respectively, are core current domain and domain.) Thirdly,
-     * for a long time now, if a query doesn't have a subarray set on any
+     * if a query doesn't have a subarray set on any
      * particular dim, core will use the core domain on that dim. That was fine
      * when core domains were small; not fine now that they are huge. In this
      * routine, if the array is dense, for each dim without a subarray set,
