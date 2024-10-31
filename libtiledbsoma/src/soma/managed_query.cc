@@ -102,6 +102,8 @@ void ManagedQuery::setup_read() {
 
     auto schema = array_->schema();
 
+    _fill_in_subarrays_if_dense();
+
     // If the query is uninitialized, set the subarray for the query
     if (status == Query::Status::UNINITIALIZED) {
         // Set the subarray for range slicing
@@ -152,8 +154,6 @@ void ManagedQuery::submit_write(bool sort_coords) {
 }
 
 void ManagedQuery::submit_read() {
-    _fill_in_subarrays_if_dense();
-
     query_submitted_ = true;
     query_future_ = std::async(std::launch::async, [&]() {
         LOG_DEBUG("[ManagedQuery] submit thread start");
@@ -169,17 +169,17 @@ void ManagedQuery::submit_read() {
 
 // Please see the header-file comments for context.
 void ManagedQuery::_fill_in_subarrays_if_dense() {
-    LOG_DEBUG("[ManagedQuery] _fill_in_subarrays enter");
+    LOG_TRACE("[ManagedQuery] _fill_in_subarrays enter");
     // Don't do this on next-page etc.
     if (query_->query_status() != Query::Status::UNINITIALIZED) {
-        LOG_DEBUG("[ManagedQuery] _fill_in_subarrays exit 1");
+        LOG_TRACE("[ManagedQuery] _fill_in_subarrays exit: initialized");
         return;
     }
     auto schema = array_->schema();
 
     // Do this only for dense arrays.
     if (schema.array_type() != TILEDB_DENSE) {
-        LOG_DEBUG("[ManagedQuery] _fill_in_subarrays exit 2");
+        LOG_TRACE("[ManagedQuery] _fill_in_subarrays exit: non-dense");
         return;
     }
 
@@ -191,9 +191,12 @@ void ManagedQuery::_fill_in_subarrays_if_dense() {
     } else {
         _fill_in_subarrays_if_dense_with_new_shape(current_domain);
     }
+    LOG_TRACE("[ManagedQuery] _fill_in_subarrays exit");
 }
 
 void ManagedQuery::_fill_in_subarrays_if_dense_without_new_shape() {
+    LOG_TRACE(
+        "[ManagedQuery] _fill_in_subarrays_if_dense_without_new_shape enter");
     // Dense array must have a subarray set for read. If the array is dense and
     // no ranges have been set, add a range for the array's entire non-empty
     // domain on dimension 0. In the case that the non-empty domain does not
@@ -220,8 +223,8 @@ void ManagedQuery::_fill_in_subarrays_if_dense_without_new_shape() {
     }
 
     subarray_->add_range(0, array_shape.first, array_shape.second);
-    LOG_DEBUG(fmt::format(
-        "[ManagedQuery] Add full range to dense subarray = (0, {}, {})",
+    LOG_TRACE(fmt::format(
+        "[ManagedQuery] Add full range to dense subarray dim0 = ({}, {})",
         array_shape.first,
         array_shape.second));
 
@@ -231,6 +234,8 @@ void ManagedQuery::_fill_in_subarrays_if_dense_without_new_shape() {
 
 void ManagedQuery::_fill_in_subarrays_if_dense_with_new_shape(
     const CurrentDomain& current_domain) {
+    LOG_TRACE(
+        "[ManagedQuery] _fill_in_subarrays_if_dense_with_new_shape enter");
     if (current_domain.type() != TILEDB_NDRECTANGLE) {
         throw TileDBSOMAError("found non-rectangle current-domain type");
     }
@@ -242,7 +247,7 @@ void ManagedQuery::_fill_in_subarrays_if_dense_with_new_shape(
     for (const auto& dim : schema.domain().dimensions()) {
         std::string dim_name = dim.name();
         if (subarray_range_set_[dim_name]) {
-            LOG_DEBUG(fmt::format(
+            LOG_TRACE(fmt::format(
                 "[ManagedQuery] _fill_in_subarrays continue {}", dim_name));
             continue;
         }
@@ -263,6 +268,12 @@ void ManagedQuery::_fill_in_subarrays_if_dense_with_new_shape(
 
         std::array<int64_t, 2> lo_hi_arr = ndrect.range<int64_t>(dim_name);
         std::pair<int64_t, int64_t> lo_hi_pair(lo_hi_arr[0], lo_hi_arr[1]);
+        LOG_TRACE(fmt::format(
+            "[ManagedQuery] _fill_in_subarrays_if_dense_with_new_shape dim "
+            "name {} select ({}, {})",
+            dim_name,
+            lo_hi_pair.first,
+            lo_hi_pair.second));
         select_ranges(dim_name, std::vector({lo_hi_pair}));
     }
 }
