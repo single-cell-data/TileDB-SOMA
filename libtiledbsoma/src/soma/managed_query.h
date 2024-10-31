@@ -151,7 +151,7 @@ class ManagedQuery {
     template <typename T>
     void select_ranges(
         const std::string& dim, const std::vector<std::pair<T, T>>& ranges) {
-        subarray_range_set_ = true;
+        subarray_range_set_[dim] = true;
         subarray_range_empty_[dim] = true;
         for (auto& [start, stop] : ranges) {
             subarray_->add_range(dim, start, stop);
@@ -168,7 +168,7 @@ class ManagedQuery {
      */
     template <typename T>
     void select_points(const std::string& dim, const std::vector<T>& points) {
-        subarray_range_set_ = true;
+        subarray_range_set_[dim] = true;
         subarray_range_empty_[dim] = true;
         for (auto& point : points) {
             subarray_->add_range(dim, point, point);
@@ -185,7 +185,7 @@ class ManagedQuery {
      */
     template <typename T>
     void select_points(const std::string& dim, const tcb::span<T> points) {
-        subarray_range_set_ = true;
+        subarray_range_set_[dim] = true;
         subarray_range_empty_[dim] = true;
         for (auto& point : points) {
             subarray_->add_range(dim, point, point);
@@ -203,7 +203,7 @@ class ManagedQuery {
     template <typename T>
     void select_point(const std::string& dim, const T& point) {
         subarray_->add_range(dim, point, point);
-        subarray_range_set_ = true;
+        subarray_range_set_[dim] = true;
         subarray_range_empty_[dim] = false;
     }
 
@@ -383,14 +383,7 @@ class ManagedQuery {
      * @return true if the query contains only empty ranges.
      */
     bool is_empty_query() {
-        bool has_empty = false;
-        for (auto subdim : subarray_range_empty_) {
-            if (subdim.second == true) {
-                has_empty = true;
-                break;
-            }
-        }
-        return subarray_range_set_ && has_empty;
+        return _has_any_empty_range() && _has_any_subarray_range_set();
     }
 
     /**
@@ -414,6 +407,53 @@ class ManagedQuery {
      */
     void check_column_name(const std::string& name);
 
+    // Helper for is_empty_query
+    bool _has_any_empty_range() {
+        for (auto subdim : subarray_range_empty_) {
+            if (subdim.second == true) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    // Helper for is_empty_query
+    bool _has_any_subarray_range_set() {
+        for (auto subdim : subarray_range_set_) {
+            if (subdim.second == true) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * This handles a few internals.
+     *
+     * One is that a dense array must have _at least one_
+     * dim's subarray set for a read query. Without that, reads fail immediately
+     * with the unambiguous
+     *
+     *   DenseReader: Cannot initialize reader; Dense reads must have a subarray
+     *   set
+     *
+     * The other is a combination of several things. Firstly, is current-domain
+     * support which we have for sparse arrays as of core 2.26, and for dense as
+     * of 2.27. Secondly, without current-domain support, we had small domains; with
+     * it, we have huge core domains (2^63-ish) which are immutable, and
+     * small current domains which are upward-mutable. (The soma domain and
+     * maxdomain, respectively, are core current domain and domain.) Thirdly,
+     * if a query doesn't have a subarray set on any
+     * particular dim, core will use the core domain on that dim. That was fine
+     * when core domains were small; not fine now that they are huge. In this
+     * routine, if the array is dense, for each dim without a subarray set,
+     * we set it to match the soma domain. This guarantees correct behavior.
+     */
+    void _fill_in_subarrays_if_dense(bool is_read);
+    void _fill_in_subarrays_if_dense_with_new_shape(
+        const CurrentDomain& current_domain);
+    void _fill_in_subarrays_if_dense_without_new_shape(bool is_read);
+
     // TileDB array being queried.
     std::shared_ptr<Array> array_;
 
@@ -433,7 +473,7 @@ class ManagedQuery {
     std::unique_ptr<Subarray> subarray_;
 
     // True if a range has been added to the subarray
-    bool subarray_range_set_ = false;
+    std::map<std::string, bool> subarray_range_set_ = {};
 
     // Map whether the dimension is empty (true) or not
     std::map<std::string, bool> subarray_range_empty_ = {};

@@ -15,3 +15,9 @@ import tiledbsoma.pytiledbsoma as clib
 NEW_SHAPE_FEATURE_FLAG_ENABLED = os.getenv("SOMA_PY_NEW_SHAPE") != "false"
 
 DENSE_ARRAYS_CAN_HAVE_CURRENT_DOMAIN = clib.embedded_version_triple() >= (2, 27, 0)
+
+# Temporary for # https://github.com/single-cell-data/TileDB-SOMA/issues/2407:
+# this allows testing dense + current domain on the same machine without
+# having to switch core builds (or switch machines).
+if os.getenv("SOMA_IGNORE_CORE_2_27") is not None:
+    DENSE_ARRAYS_CAN_HAVE_CURRENT_DOMAIN = False

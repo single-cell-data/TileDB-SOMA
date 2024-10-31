@@ -62,7 +62,7 @@ void ManagedQuery::reset() {
     query_ = std::make_unique<Query>(*ctx_, *array_);
     subarray_ = std::make_unique<Subarray>(*ctx_, *array_);
 
-    subarray_range_set_ = false;
+    subarray_range_set_ = {};
     subarray_range_empty_ = {};
     columns_.clear();
     results_complete_ = true;
@@ -102,36 +102,10 @@ void ManagedQuery::setup_read() {
 
     auto schema = array_->schema();
 
+    _fill_in_subarrays_if_dense(true);
+
     // If the query is uninitialized, set the subarray for the query
     if (status == Query::Status::UNINITIALIZED) {
-        // Dense array must have a subarray set. If the array is dense and no
-        // ranges have been set, add a range for the array's entire non-empty
-        // domain on dimension 0. In the case that the non-empty domain does not
-        // exist (when the array has not been written to yet), use dimension 0's
-        // full domain
-        if (schema.array_type() == TILEDB_DENSE && !subarray_range_set_) {
-            // Check if the array has been written to by using the C API as
-            // there is no way to to check for an empty domain using the current
-            // CPP API
-            int32_t is_empty;
-            int64_t ned[2];
-            ctx_->handle_error(tiledb_array_get_non_empty_domain_from_index(
-                ctx_->ptr().get(), array_->ptr().get(), 0, &ned, &is_empty));
-
-            std::pair<int64_t, int64_t> array_shape;
-            if (is_empty == 1) {
-                array_shape = schema.domain().dimension(0).domain<int64_t>();
-            } else {
-                array_shape = std::make_pair(ned[0], ned[1]);
-            }
-
-            subarray_->add_range(0, array_shape.first, array_shape.second);
-            LOG_DEBUG(fmt::format(
-                "[ManagedQuery] Add full range to dense subarray = (0, {}, {})",
-                array_shape.first,
-                array_shape.second));
-        }
-
         // Set the subarray for range slicing
         query_->set_subarray(*subarray_);
     }
@@ -162,6 +136,8 @@ void ManagedQuery::setup_read() {
 }
 
 void ManagedQuery::submit_write(bool sort_coords) {
+    _fill_in_subarrays_if_dense(false);
+
     if (array_->schema().array_type() == TILEDB_DENSE) {
         query_->set_subarray(*subarray_);
     } else {
@@ -189,6 +165,130 @@ void ManagedQuery::submit_read() {
         LOG_DEBUG("[ManagedQuery] submit thread done");
         return StatusAndException(true, "success");
     });
+}
+
+// Please see the header-file comments for context.
+void ManagedQuery::_fill_in_subarrays_if_dense(bool is_read) {
+    LOG_TRACE("[ManagedQuery] _fill_in_subarrays enter");
+    // Don't do this on next-page etc.
+    if (query_->query_status() != Query::Status::UNINITIALIZED) {
+        LOG_TRACE("[ManagedQuery] _fill_in_subarrays exit: initialized");
+        return;
+    }
+    auto schema = array_->schema();
+
+    // Do this only for dense arrays.
+    if (schema.array_type() != TILEDB_DENSE) {
+        LOG_TRACE("[ManagedQuery] _fill_in_subarrays exit: non-dense");
+        return;
+    }
+
+    // Don't do this if the array doesn't have new shape AKA current domain.
+    auto current_domain = tiledb::ArraySchemaExperimental::current_domain(
+        *ctx_, schema);
+    if (current_domain.is_empty()) {
+        _fill_in_subarrays_if_dense_without_new_shape(is_read);
+    } else {
+        _fill_in_subarrays_if_dense_with_new_shape(current_domain);
+    }
+    LOG_TRACE("[ManagedQuery] _fill_in_subarrays exit");
+}
+
+void ManagedQuery::_fill_in_subarrays_if_dense_without_new_shape(bool is_read) {
+    LOG_TRACE(
+        "[ManagedQuery] _fill_in_subarrays_if_dense_without_new_shape enter");
+    // Dense array must have a subarray set for read. If the array is dense and
+    // no ranges have been set, add a range for the array's entire non-empty
+    // domain on dimension 0. In the case that the non-empty domain does not
+    // exist (when the array has not been written to yet), use dimension 0's
+    // full domain
+    if (_has_any_subarray_range_set()) {
+        return;
+    }
+
+    std::pair<int64_t, int64_t> array_shape;
+    auto schema = array_->schema();
+
+    if (!is_read && subarray_->range_num(0) > 0) {
+        LOG_TRACE(
+            "[ManagedQuery] _fill_in_subarrays_if_dense_without_new_shape "
+            "range 0 is set");
+        return;
+    }
+
+    if (is_read) {
+        // Check if the array has been written to by using the C API as
+        // there is no way to to check for an empty domain using the current
+        // C++ API.
+        int32_t is_empty;
+        int64_t ned[2];
+        ctx_->handle_error(tiledb_array_get_non_empty_domain_from_index(
+            ctx_->ptr().get(), array_->ptr().get(), 0, &ned, &is_empty));
+
+        if (is_empty == 1) {
+            array_shape = schema.domain().dimension(0).domain<int64_t>();
+        } else {
+            array_shape = std::make_pair(ned[0], ned[1]);
+        }
+    } else {
+        // Non-empty d0main is not avaiable for access at write time.
+        array_shape = schema.domain().dimension(0).domain<int64_t>();
+    }
+
+    subarray_->add_range(0, array_shape.first, array_shape.second);
+    LOG_TRACE(fmt::format(
+        "[ManagedQuery] Add full range to dense subarray dim0 = ({}, {})",
+        array_shape.first,
+        array_shape.second));
+
+    // Set the subarray for range slicing
+    query_->set_subarray(*subarray_);
+}
+
+void ManagedQuery::_fill_in_subarrays_if_dense_with_new_shape(
+    const CurrentDomain& current_domain) {
+    LOG_TRACE(
+        "[ManagedQuery] _fill_in_subarrays_if_dense_with_new_shape enter");
+    if (current_domain.type() != TILEDB_NDRECTANGLE) {
+        throw TileDBSOMAError("found non-rectangle current-domain type");
+    }
+    NDRectangle ndrect = current_domain.ndrectangle();
+
+    // Loop over dims and apply subarray ranges if not already done by the
+    // caller.
+    auto schema = array_->schema();
+    for (const auto& dim : schema.domain().dimensions()) {
+        std::string dim_name = dim.name();
+        if (subarray_range_set_[dim_name]) {
+            LOG_TRACE(fmt::format(
+                "[ManagedQuery] _fill_in_subarrays continue {}", dim_name));
+            continue;
+        }
+
+        // Dense arrays are (as of this writing in 1.15.0) all DenseNDArray.
+        // Per the spec DenseNDArray must only have dims named
+        // soma_dim_{i} with i=0,1,2,...,n-1, of type int64.
+        if (dim_name.rfind("soma_dim_", 0) != 0) {
+            throw TileDBSOMAError(fmt::format(
+                "found dense array with unexpected dim name {}", dim_name));
+        }
+        if (dim.type() != TILEDB_INT64) {
+            throw TileDBSOMAError(fmt::format(
+                "expected dense arrays to have int64 dims; got {} for {}",
+                tiledb::impl::to_str(dim.type()),
+                dim_name));
+        }
+
+        std::array<int64_t, 2> lo_hi_arr = ndrect.range<int64_t>(dim_name);
+        std::pair<int64_t, int64_t> lo_hi_pair(lo_hi_arr[0], lo_hi_arr[1]);
+        LOG_TRACE(fmt::format(
+            "[ManagedQuery] _fill_in_subarrays_if_dense_with_new_shape dim "
+            "name {} select ({}, {})",
+            dim_name,
+            lo_hi_pair.first,
+            lo_hi_pair.second));
+        select_ranges(dim_name, std::vector({lo_hi_pair}));
+    }
 }
 
 std::shared_ptr<ArrayBuffers> ManagedQuery::results() {

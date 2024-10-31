@@ -340,8 +340,6 @@ TEST_CASE("SOMASparseNDArray: metadata", "[SOMASparseNDArray]") {
         REQUIRE(snda->metadata_num() == 2);
     }
 }
-void breakme() {
-}
 
 TEST_CASE(
     "SOMASparseNDArray: can_tiledbsoma_upgrade_shape", "[SOMASparseNDArray]") {
@@ -389,7 +387,6 @@ TEST_CASE(
     REQUIRE(dom.first == 0);
     REQUIRE(dom.second == dim_max);
 
-    breakme();
     std::vector<int64_t> newshape_wrong_dims({dim_max, 12});
     std::vector<int64_t> newshape_too_big({dim_max + 10});
     std::vector<int64_t> newshape_good({40});
