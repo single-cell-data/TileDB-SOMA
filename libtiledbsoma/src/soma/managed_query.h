@@ -449,10 +449,10 @@ class ManagedQuery {
      * routine, if the array is dense, for each dim without a subarray set,
      * we set it to match the soma domain. This guarantees correct behavior.
      */
-    void _fill_in_subarrays_if_dense();
+    void _fill_in_subarrays_if_dense(bool is_read);
     void _fill_in_subarrays_if_dense_with_new_shape(
         const CurrentDomain& current_domain);
-    void _fill_in_subarrays_if_dense_without_new_shape();
+    void _fill_in_subarrays_if_dense_without_new_shape(bool is_read);
 
     // TileDB array being queried.
     std::shared_ptr<Array> array_;

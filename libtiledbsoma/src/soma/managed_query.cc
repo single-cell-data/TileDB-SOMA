@@ -102,7 +102,7 @@ void ManagedQuery::setup_read() {
 
     auto schema = array_->schema();
 
-    _fill_in_subarrays_if_dense();
+    _fill_in_subarrays_if_dense(true);
 
     // If the query is uninitialized, set the subarray for the query
     if (status == Query::Status::UNINITIALIZED) {
@@ -136,7 +136,7 @@ void ManagedQuery::setup_read() {
 }
 
 void ManagedQuery::submit_write(bool sort_coords) {
-    _fill_in_subarrays_if_dense();
+    _fill_in_subarrays_if_dense(false);
 
     if (array_->schema().array_type() == TILEDB_DENSE) {
         query_->set_subarray(*subarray_);
@@ -168,7 +168,7 @@ void ManagedQuery::submit_read() {
 }
 
 // Please see the header-file comments for context.
-void ManagedQuery::_fill_in_subarrays_if_dense() {
+void ManagedQuery::_fill_in_subarrays_if_dense(bool is_read) {
     LOG_TRACE("[ManagedQuery] _fill_in_subarrays enter");
     // Don't do this on next-page etc.
     if (query_->query_status() != Query::Status::UNINITIALIZED) {
@@ -187,14 +187,14 @@ void ManagedQuery::_fill_in_subarrays_if_dense() {
     auto current_domain = tiledb::ArraySchemaExperimental::current_domain(
         *ctx_, schema);
     if (current_domain.is_empty()) {
-        _fill_in_subarrays_if_dense_without_new_shape();
+        _fill_in_subarrays_if_dense_without_new_shape(is_read);
     } else {
         _fill_in_subarrays_if_dense_with_new_shape(current_domain);
     }
     LOG_TRACE("[ManagedQuery] _fill_in_subarrays exit");
 }
 
-void ManagedQuery::_fill_in_subarrays_if_dense_without_new_shape() {
+void ManagedQuery::_fill_in_subarrays_if_dense_without_new_shape(bool is_read) {
     LOG_TRACE(
         "[ManagedQuery] _fill_in_subarrays_if_dense_without_new_shape enter");
     // Dense array must have a subarray set for read. If the array is dense and
@@ -206,20 +206,33 @@ void ManagedQuery::_fill_in_subarrays_if_dense_without_new_shape() {
         return;
     }
 
-    // Check if the array has been written to by using the C API as
-    // there is no way to to check for an empty domain using the current
-    // CPP API
-    int32_t is_empty;
-    int64_t ned[2];
-    ctx_->handle_error(tiledb_array_get_non_empty_domain_from_index(
-        ctx_->ptr().get(), array_->ptr().get(), 0, &ned, &is_empty));
-
-    auto schema = array_->schema();
     std::pair<int64_t, int64_t> array_shape;
-    if (is_empty == 1) {
-        array_shape = schema.domain().dimension(0).domain<int64_t>();
+    auto schema = array_->schema();
+
+    if (!is_read && subarray_->range_num(0) > 0) {
+        LOG_TRACE(
+            "[ManagedQuery] _fill_in_subarrays_if_dense_without_new_shape "
+            "range 0 is set");
+        return;
+    }
+
+    if (is_read) {
+        // Check if the array has been written to by using the C API as
+        // there is no way to to check for an empty domain using the current
+        // C++ API.
+        int32_t is_empty;
+        int64_t ned[2];
+        ctx_->handle_error(tiledb_array_get_non_empty_domain_from_index(
+            ctx_->ptr().get(), array_->ptr().get(), 0, &ned, &is_empty));
+
+        if (is_empty == 1) {
+            array_shape = schema.domain().dimension(0).domain<int64_t>();
+        } else {
+            array_shape = std::make_pair(ned[0], ned[1]);
+        }
     } else {
-        array_shape = std::make_pair(ned[0], ned[1]);
+        // Non-empty d0main is not avaiable for access at write time.
+        array_shape = schema.domain().dimension(0).domain<int64_t>();
     }
 
     subarray_->add_range(0, array_shape.first, array_shape.second);
