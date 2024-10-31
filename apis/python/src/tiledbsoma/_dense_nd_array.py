@@ -101,6 +101,7 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
 
         index_column_schema = []
         index_column_data = {}
+        ndim = len(shape)
 
         for dim_idx, dim_shape in enumerate(shape):
             dim_name = f"soma_dim_{dim_idx}"
@@ -128,6 +129,7 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
                     # which is taken from the max ranges for the dim datatype.
                     # We pass None here to detect those.
                     None,
+                    ndim,
                     TileDBCreateOptions.from_platform_config(platform_config),
                 )
 
@@ -146,6 +148,7 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
                 dim_capacity, dim_extent = cls._dim_capacity_and_extent(
                     dim_name,
                     dim_shape,
+                    ndim,
                     TileDBCreateOptions.from_platform_config(platform_config),
                 )
 
@@ -357,6 +360,7 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
         cls,
         dim_name: str,
         dim_shape: Optional[int],
+        ndim: int,
         create_options: TileDBCreateOptions,
     ) -> Tuple[int, int]:
         """Given a user-specified shape (maybe ``None``) along a particular dimension,
@@ -365,9 +369,48 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
         int64 is returned for the capacity -- which is particularly suitable for
         maxdomain.
         """
+
+        # Old news: for dense n-dimensional arrays, the number of bytes for each
+        # core cell is the product of the following:
+        #
+        # * element size (e.g. 4 for float32, 8 for float64)
+        # * extent for dim 0
+        # * extent for dim 1
+        # * ...
+        # * extent for dim n
+        #
+        # With float64 and extent 2048, this memory requirement for n = 1,2,3,4
+        # multiplies out to:
+        #
+        # * n=1: ~10**4
+        # * n=2: ~10**8
+        # * n=3: ~10**11
+        # * n=4: ~10**14
+        #
+        # New news: before core 2.27 we didn't have current-domain support for
+        # dense arrays and so we made the core domain fit the shape -- and we of
+        # course cap each dim slot's extent at the slotwise domain. So if the
+        # array is 3D with shape = (10,20,30) we got tile extents 10, 20, 30.
+        #
+        # But as of core 2.27 we do have current-domain support for dense
+        # arrays, and we make the core domain huge. (Core domain is immutable;
+        # core current domain is upward-resizeable up to the limit which is the
+        # core domain.) This means a default extent of 2048 blows up fast at
+        # higher dimensions.
+        if ndim == 1:
+            default_extent = 2048
+        elif ndim == 2:
+            default_extent = 512
+        elif ndim == 3:
+            default_extent = 128
+        elif ndim >= 4:
+            default_extent = 4
+
         if dim_shape is None:
             dim_capacity = 2**63 - 1
-            dim_extent = min(dim_capacity, create_options.dim_tile(dim_name, 2048))
+            dim_extent = min(
+                dim_capacity, create_options.dim_tile(dim_name, default_extent)
+            )
             # For core: "domain max expanded to multiple of tile extent exceeds max value
             # representable by domain type. Reduce domain max by 1 tile extent to allow for
             # expansion."
@@ -378,6 +421,8 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
                     "SOMASparseNDArray shape must be a non-zero-length tuple of positive ints or Nones"
                 )
             dim_capacity = dim_shape
-            dim_extent = min(dim_shape, create_options.dim_tile(dim_name, 2048))
+            dim_extent = min(
+                dim_shape, create_options.dim_tile(dim_name, default_extent)
+            )
 
         return (dim_capacity, dim_extent)

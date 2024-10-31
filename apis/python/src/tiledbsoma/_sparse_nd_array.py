@@ -169,6 +169,7 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
                     # which is taken from the max ranges for the dim datatype.
                     # We pass None here to detect those.
                     None,
+                    len(shape),
                     TileDBCreateOptions.from_platform_config(platform_config),
                 )
 
@@ -192,6 +193,7 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
                 dim_capacity, dim_extent = cls._dim_capacity_and_extent(
                     dim_name,
                     dim_shape,
+                    len(shape),
                     TileDBCreateOptions.from_platform_config(platform_config),
                 )
                 index_column_data[pa_field.name] = [0, dim_capacity - 1, dim_extent]
@@ -498,6 +500,7 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
         cls,
         dim_name: str,
         dim_shape: Optional[int],
+        ndim: int,  # not needed for sparse
         create_options: TileDBCreateOptions,
     ) -> Tuple[int, int]:
         """Given a user-specified shape (maybe ``None``) along a particular dimension,
