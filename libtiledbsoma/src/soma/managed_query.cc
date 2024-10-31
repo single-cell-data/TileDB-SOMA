@@ -189,7 +189,7 @@ void ManagedQuery::_fill_in_subarrays_if_dense(bool is_read) {
     if (current_domain.is_empty()) {
         _fill_in_subarrays_if_dense_without_new_shape(is_read);
     } else {
-        _fill_in_subarrays_if_dense_with_new_shape(current_domain);
+        _fill_in_subarrays_if_dense_with_new_shape(current_domain, is_read);
     }
     LOG_TRACE("[ManagedQuery] _fill_in_subarrays exit");
 }
@@ -231,7 +231,7 @@ void ManagedQuery::_fill_in_subarrays_if_dense_without_new_shape(bool is_read) {
             array_shape = std::make_pair(ned[0], ned[1]);
         }
     } else {
-        // Non-empty d0main is not avaiable for access at write time.
+        // Non-empty domain is not avaiable for access at write time.
         array_shape = schema.domain().dimension(0).domain<int64_t>();
     }
 
@@ -246,7 +246,7 @@ void ManagedQuery::_fill_in_subarrays_if_dense_without_new_shape(bool is_read) {
 }
 
 void ManagedQuery::_fill_in_subarrays_if_dense_with_new_shape(
-    const CurrentDomain& current_domain) {
+    const CurrentDomain& current_domain, bool is_read) {
     LOG_TRACE(
         "[ManagedQuery] _fill_in_subarrays_if_dense_with_new_shape enter");
     if (current_domain.type() != TILEDB_NDRECTANGLE) {
@@ -280,13 +280,65 @@ void ManagedQuery::_fill_in_subarrays_if_dense_with_new_shape(
         }
 
         std::array<int64_t, 2> lo_hi_arr = ndrect.range<int64_t>(dim_name);
-        std::pair<int64_t, int64_t> lo_hi_pair(lo_hi_arr[0], lo_hi_arr[1]);
+        int64_t cd_lo = lo_hi_arr[0];
+        int64_t cd_hi = lo_hi_arr[1];
+        int64_t lo = cd_lo;
+        int64_t hi = cd_hi;
+
+        LOG_TRACE(fmt::format(
+            "[ManagedQuery] _fill_in_subarrays_if_dense_with_new_shape dim "
+            "name {} current domain ({}, {})",
+            dim_name,
+            cd_lo,
+            cd_hi));
+
+        if (is_read) {
+            // Check if the array has been written to by using the C API as
+            // there is no way to to check for an empty domain using the current
+            // C++ API.
+            //
+            // Non-empty domain is not avaliable at write time (the core array
+            // isn't open for read) -- but, we don't need to do this calculation
+            // for writes anyway.
+            int32_t is_empty;
+            int64_t ned[2];
+            ctx_->handle_error(tiledb_array_get_non_empty_domain_from_name(
+                ctx_->ptr().get(),
+                array_->ptr().get(),
+                dim_name.c_str(),
+                &ned,
+                &is_empty));
+            if (is_empty == 1) {
+                LOG_TRACE(fmt::format(
+                    "[ManagedQuery] _fill_in_subarrays_if_dense_with_new_shape "
+                    "dim name {} non-empty domain is absent",
+                    dim_name));
+            } else {
+                int64_t ned_lo = ned[0];
+                int64_t ned_hi = ned[1];
+                LOG_TRACE(fmt::format(
+                    "[ManagedQuery] _fill_in_subarrays_if_dense_with_new_shape "
+                    "dim name {} non-empty domain ({}, {})",
+                    dim_name,
+                    ned_lo,
+                    ned_hi));
+                if (ned_lo > cd_lo) {
+                    lo = ned_lo;
+                }
+                if (ned_hi < cd_hi) {
+                    hi = ned_hi;
+                }
+            }
+        }
+
         LOG_TRACE(fmt::format(
             "[ManagedQuery] _fill_in_subarrays_if_dense_with_new_shape dim "
             "name {} select ({}, {})",
             dim_name,
-            lo_hi_pair.first,
-            lo_hi_pair.second));
+            lo,
+            hi));
+
+        std::pair<int64_t, int64_t> lo_hi_pair(lo, hi);
         select_ranges(dim_name, std::vector({lo_hi_pair}));
     }
 }
