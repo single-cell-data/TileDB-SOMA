@@ -265,7 +265,7 @@ void ManagedQuery::_fill_in_subarrays_if_dense_with_new_shape(
             continue;
         }
 
-        // Dense arrays are (as of this writing) all DenseNDArray.
+        // Dense arrays are (as of this writing in 1.15.0) all DenseNDArray.
         // Per the spec DenseNDArray must only have dims named
         // soma_dim_{i} with i=0,1,2,...,n-1, of type int64.
         if (dim_name.rfind("soma_dim_", 0) != 0) {
