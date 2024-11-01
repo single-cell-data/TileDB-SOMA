@@ -280,9 +280,15 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
             )
 
         arrow_table = pa.concat_tables(arrow_tables)
-        return pa.Tensor.from_numpy(
-            arrow_table.column("soma_data").to_numpy().reshape(target_shape)
-        )
+        npval = arrow_table.column("soma_data").to_numpy()
+        # TODO: as currently coded we're looking at the non-empty domain upper
+        # bound but not its lower bound. That works fine if data are written at
+        # the start: e.g. domain (0, 99) and data written at 0,1,2,3,4. It
+        # doesn't work fine if data are written at say (40,41,42,43,44).
+        #
+        # This is tracked on https://github.com/single-cell-data/TileDB-SOMA/issues/3271
+        reshaped = npval.reshape(target_shape)
+        return pa.Tensor.from_numpy(reshaped)
 
     def write(
         self,

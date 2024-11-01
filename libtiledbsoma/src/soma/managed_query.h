@@ -451,7 +451,7 @@ class ManagedQuery {
      */
     void _fill_in_subarrays_if_dense(bool is_read);
     void _fill_in_subarrays_if_dense_with_new_shape(
-        const CurrentDomain& current_domain);
+        const CurrentDomain& current_domain, bool is_read);
     void _fill_in_subarrays_if_dense_without_new_shape(bool is_read);
 
     // TileDB array being queried.
