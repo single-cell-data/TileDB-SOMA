@@ -20,7 +20,8 @@
 * Proper prefixing for shape-related methods [#3237](https://github.com/single-cell-data/TileDB-SOMA/pull/3237)
 * Bindings for `upgrade_domain` [#3238](https://github.com/single-cell-data/TileDB-SOMA/pull/3238)
 * Apply `styler::style_pkg()` [#3239](https://github.com/single-cell-data/TileDB-SOMA/pull/3239)
-* Plumb old-style `SOMATileDBContext` into new-style `soma_context()`
+* Plumb old-style `SOMATileDBContext` into new-style `soma_context()` [#3252](https://github.com/single-cell-data/TileDB-SOMA/pull/3252)
+* Fixes for dense arrays and yet-to-be-released core 2.27 [#3270](https://github.com/single-cell-data/TileDB-SOMA/pull/3270)
 
 # tiledbsoma 1.14.5
 
