@@ -254,12 +254,12 @@ void SOMAArray::reset(
     } else {
         // Hide internal columns if any
         std::vector<std::string> columns;
-        for (const auto& dim : this->tiledb_schema()->domain().dimensions()) {
+        for (const auto& dim : arr_->schema().domain().dimensions()) {
             columns.push_back(dim.name());
         }
 
-        for (size_t i = 0; i < this->tiledb_schema()->attribute_num(); ++i) {
-            columns.push_back(this->tiledb_schema()->attribute(i).name());
+        for (size_t i = 0; i < arr_->schema().attribute_num(); ++i) {
+            columns.push_back(arr_->schema().attribute(i).name());
         }
         auto is_internal = [](std::string name) {
             return name.rfind(SOMA_GEOMETRY_DIMENSION_PREFIX, 0) == 0;
