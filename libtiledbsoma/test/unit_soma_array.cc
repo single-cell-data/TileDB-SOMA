@@ -455,37 +455,6 @@ TEST_CASE("SOMAArray: Test buffer size") {
     soma_array->close();
 }
 
-TEST_CASE("SOMAArray: Enumeration") {
-    std::string uri = "mem://unit-test-array-enmr";
-    auto ctx = std::make_shared<SOMAContext>();
-    ArraySchema schema(*ctx->tiledb_ctx(), TILEDB_SPARSE);
-
-    auto dim = Dimension::create<int64_t>(
-        *ctx->tiledb_ctx(), "d", {0, std::numeric_limits<int64_t>::max() - 1});
-
-    Domain dom(*ctx->tiledb_ctx());
-    dom.add_dimension(dim);
-    schema.set_domain(dom);
-
-    std::vector<std::string> vals = {"red", "blue", "green"};
-    auto enmr = Enumeration::create(*ctx->tiledb_ctx(), "rbg", vals);
-    ArraySchemaExperimental::add_enumeration(*ctx->tiledb_ctx(), schema, enmr);
-
-    auto attr = Attribute::create<int32_t>(*ctx->tiledb_ctx(), "a");
-    AttributeExperimental::set_enumeration_name(
-        *ctx->tiledb_ctx(), attr, "rbg");
-    schema.add_attribute(attr);
-
-    Array::create(uri, std::move(schema));
-
-    auto soma_array = SOMAArray::open(OpenMode::read, uri, ctx);
-    auto attr_to_enum = soma_array->get_attr_to_enum_mapping();
-    REQUIRE(attr_to_enum.size() == 1);
-    REQUIRE(attr_to_enum.at("a").name() == "rbg");
-    REQUIRE(soma_array->get_enum_label_on_attr("a"));
-    REQUIRE(soma_array->attr_has_enum("a"));
-}
-
 TEST_CASE("SOMAArray: ResultOrder") {
     auto ctx = std::make_shared<SOMAContext>();
     std::string base_uri = "mem://unit-test-array-result-order";

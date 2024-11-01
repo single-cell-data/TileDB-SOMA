@@ -42,6 +42,8 @@
 #include "../utils/common.h"
 #include "array_buffers.h"
 #include "column_buffer.h"
+#include "enums.h"
+#include "logger_public.h"
 
 namespace tiledbsoma {
 
@@ -256,6 +258,17 @@ class ManagedQuery {
         buffers_->emplace(std::string(name), column);
         buffers_->at(std::string(name))->attach(*query_, *subarray_);
     }
+
+    /**
+     * @brief Set the write buffers for an Arrow Table or Batch as represented
+     * by an ArrowSchema and ArrowArray.
+     *
+     * @param arrow_schema
+     * @param arrow_array
+     */
+    void set_array_data(
+        std::unique_ptr<ArrowSchema> arrow_schema,
+        std::unique_ptr<ArrowArray> arrow_array);
 
     /**
      * @brief Configure query and allocate result buffers for reads.
@@ -495,7 +508,338 @@ class ManagedQuery {
 
     // Future for asyncronous query
     std::future<StatusAndException> query_future_;
+
+    /**
+     * Convenience function for creating an ArraySchemaEvolution object
+     * referencing this array's context pointer, along with its open-at
+     * timestamp (if any).
+     */
+    ArraySchemaEvolution _make_se();
+
+    uint64_t _get_max_capacity(tiledb_datatype_t index_type);
+
+    bool _cast_column(
+        ArrowSchema* schema, ArrowArray* array, ArraySchemaEvolution se);
+
+    void _promote_indexes_to_values(ArrowSchema* schema, ArrowArray* array);
+
+    template <typename T>
+    void _cast_dictionary_values(ArrowSchema* schema, ArrowArray* array);
+
+    std::vector<int64_t> _get_index_vector(
+        ArrowSchema* schema, ArrowArray* array) {
+        auto index_type = ArrowAdapter::to_tiledb_format(schema->format);
+
+        switch (index_type) {
+            case TILEDB_INT8: {
+                int8_t* idxbuf = (int8_t*)array->buffers[1];
+                return std::vector<int64_t>(idxbuf, idxbuf + array->length);
+            }
+            case TILEDB_UINT8: {
+                uint8_t* idxbuf = (uint8_t*)array->buffers[1];
+                return std::vector<int64_t>(idxbuf, idxbuf + array->length);
+            }
+            case TILEDB_INT16: {
+                int16_t* idxbuf = (int16_t*)array->buffers[1];
+                return std::vector<int64_t>(idxbuf, idxbuf + array->length);
+            }
+            case TILEDB_UINT16: {
+                uint16_t* idxbuf = (uint16_t*)array->buffers[1];
+                return std::vector<int64_t>(idxbuf, idxbuf + array->length);
+            }
+            case TILEDB_INT32: {
+                int32_t* idxbuf = (int32_t*)array->buffers[1];
+                return std::vector<int64_t>(idxbuf, idxbuf + array->length);
+            }
+            case TILEDB_UINT32: {
+                uint32_t* idxbuf = (uint32_t*)array->buffers[1];
+                return std::vector<int64_t>(idxbuf, idxbuf + array->length);
+            }
+            case TILEDB_INT64: {
+                int64_t* idxbuf = (int64_t*)array->buffers[1];
+                return std::vector<int64_t>(idxbuf, idxbuf + array->length);
+            }
+            case TILEDB_UINT64: {
+                uint64_t* idxbuf = (uint64_t*)array->buffers[1];
+                return std::vector<int64_t>(idxbuf, idxbuf + array->length);
+            }
+            default:
+                throw TileDBSOMAError(
+                    "Saw invalid index type when trying to promote indexes to "
+                    "values");
+        }
+    }
+
+    template <typename UserType>
+    bool _cast_column_aux(
+        ArrowSchema* schema, ArrowArray* array, ArraySchemaEvolution se);
+
+    template <typename UserType, typename DiskType>
+    bool _set_column(
+        ArrowSchema* schema, ArrowArray* array, ArraySchemaEvolution se) {
+        // Here we cast the passed-in column to be what is the type in the
+        // schema on disk. For columns with dictionaries, we will need
+        // additional processing steps
+
+        UserType* buf;
+        if (array->n_buffers == 3) {
+            buf = (UserType*)array->buffers[2] + array->offset;
+        } else {
+            buf = (UserType*)array->buffers[1] + array->offset;
+        }
+
+        bool has_attr = schema_->has_attribute(schema->name);
+        if (has_attr && attr_has_enum(schema->name)) {
+            // For columns with dictionaries, we need to set the data buffers to
+            // the dictionary's indexes. If there were any new enumeration
+            // values added, we need to extend and and evolve the TileDB
+            // ArraySchema
+
+            // Return whether we extended the enumeration for this attribute
+            return _extend_enumeration(
+                schema->dictionary,  // value schema
+                array->dictionary,   // value array
+                schema,              // index schema
+                array,               // index array
+                se);
+        } else {
+            // In the general case, we can just cast the values and set the
+            // write buffers
+            std::vector<UserType> orig_vals(buf, buf + array->length);
+            std::vector<DiskType> casted_values(
+                orig_vals.begin(), orig_vals.end());
+
+            setup_write_column(
+                schema->name,
+                casted_values.size(),
+                (const void*)casted_values.data(),
+                (uint64_t*)nullptr,
+                (uint8_t*)array->buffers[0]);
+
+            // Return false because we do not extend the enumeration
+            return false;
+        }
+    }
+
+    template <typename ValueType>
+    bool _extend_and_evolve_schema(
+        ArrowSchema* value_schema,
+        ArrowArray* value_array,
+        ArrowSchema* index_schema,
+        ArrowArray* index_array,
+        ArraySchemaEvolution se);
+
+    template <typename ValueType>
+    void _remap_indexes(
+        std::string name,
+        Enumeration extended_enmr,
+        std::vector<ValueType> enums_in_write,
+        ArrowSchema* index_schema,
+        ArrowArray* index_array) {
+        // If the passed-in enumerations are only a subset of the new extended
+        // enumerations, then we will need to remap the indexes. Here identify
+        // the dictionary values' type
+
+        auto user_index_type = ArrowAdapter::to_tiledb_format(
+            index_schema->format);
+        switch (user_index_type) {
+            case TILEDB_INT8:
+                return _remap_indexes_aux<ValueType, int8_t>(
+                    name, extended_enmr, enums_in_write, index_array);
+            case TILEDB_UINT8:
+                return _remap_indexes_aux<ValueType, uint8_t>(
+                    name, extended_enmr, enums_in_write, index_array);
+            case TILEDB_INT16:
+                return _remap_indexes_aux<ValueType, int16_t>(
+                    name, extended_enmr, enums_in_write, index_array);
+            case TILEDB_UINT16:
+                return _remap_indexes_aux<ValueType, uint16_t>(
+                    name, extended_enmr, enums_in_write, index_array);
+            case TILEDB_INT32:
+                return _remap_indexes_aux<ValueType, int32_t>(
+                    name, extended_enmr, enums_in_write, index_array);
+            case TILEDB_UINT32:
+                return _remap_indexes_aux<ValueType, uint32_t>(
+                    name, extended_enmr, enums_in_write, index_array);
+            case TILEDB_INT64:
+                return _remap_indexes_aux<ValueType, int64_t>(
+                    name, extended_enmr, enums_in_write, index_array);
+            case TILEDB_UINT64:
+                return _remap_indexes_aux<ValueType, uint64_t>(
+                    name, extended_enmr, enums_in_write, index_array);
+            default:
+                throw TileDBSOMAError(
+                    "Saw invalid enumeration index type when trying to extend"
+                    "enumeration");
+        }
+    }
+
+    template <typename ValueType, typename IndexType>
+    void _remap_indexes_aux(
+        std::string column_name,
+        Enumeration extended_enmr,
+        std::vector<ValueType> enums_in_write,
+        ArrowArray* index_array) {
+        // Get the user passed-in dictionary indexes
+        IndexType* idxbuf;
+        if (index_array->n_buffers == 3) {
+            idxbuf = (IndexType*)index_array->buffers[2];
+        } else {
+            idxbuf = (IndexType*)index_array->buffers[1];
+        }
+        std::vector<IndexType> original_indexes(
+            idxbuf, idxbuf + index_array->length);
+
+        // Shift the dictionary indexes to match the on-disk extended
+        // enumerations
+        std::vector<IndexType> shifted_indexes;
+        auto enmr_vec = extended_enmr.as_vector<ValueType>();
+        for (auto i : original_indexes) {
+            // For nullable columns, when the value is NULL, the associated
+            // index may be a negative integer, so do not index into
+            // enums_in_write or it will segfault
+            if (0 > i) {
+                shifted_indexes.push_back(i);
+            } else {
+                auto it = std::find(
+                    enmr_vec.begin(), enmr_vec.end(), enums_in_write[i]);
+                shifted_indexes.push_back(it - enmr_vec.begin());
+            }
+        }
+
+        // Cast the user passed-in index type to be what is on-disk before we
+        // set the write buffers. Here we identify the on-disk type
+        auto attr = schema_->attribute(column_name);
+        switch (attr.type()) {
+            case TILEDB_INT8:
+                return _cast_shifted_indexes<IndexType, int8_t>(
+                    column_name, shifted_indexes, index_array);
+            case TILEDB_UINT8:
+                return _cast_shifted_indexes<IndexType, uint8_t>(
+                    column_name, shifted_indexes, index_array);
+            case TILEDB_INT16:
+                return _cast_shifted_indexes<IndexType, int16_t>(
+                    column_name, shifted_indexes, index_array);
+            case TILEDB_UINT16:
+                return _cast_shifted_indexes<IndexType, uint16_t>(
+                    column_name, shifted_indexes, index_array);
+            case TILEDB_INT32:
+                return _cast_shifted_indexes<IndexType, int32_t>(
+                    column_name, shifted_indexes, index_array);
+            case TILEDB_UINT32:
+                return _cast_shifted_indexes<IndexType, uint32_t>(
+                    column_name, shifted_indexes, index_array);
+            case TILEDB_INT64:
+                return _cast_shifted_indexes<IndexType, int64_t>(
+                    column_name, shifted_indexes, index_array);
+            case TILEDB_UINT64:
+                return _cast_shifted_indexes<IndexType, uint64_t>(
+                    column_name, shifted_indexes, index_array);
+            default:
+                throw TileDBSOMAError(
+                    "Saw invalid enumeration index type when trying to extend"
+                    "enumeration");
+        }
+    }
+
+    template <typename UserIndexType, typename DiskIndexType>
+    void _cast_shifted_indexes(
+        std::string column_name,
+        std::vector<UserIndexType> shifted_indexes,
+        ArrowArray* index_array) {
+        // Cast the user passed-in index type to be what is on-disk and
+        // set the write buffers
+        std::vector<DiskIndexType> casted_indexes(
+            shifted_indexes.begin(), shifted_indexes.end());
+
+        setup_write_column(
+            column_name,
+            casted_indexes.size(),
+            (const void*)casted_indexes.data(),
+            (uint64_t*)nullptr,
+            (uint8_t*)index_array->buffers[0]);
+    }
+
+    bool _extend_enumeration(
+        ArrowSchema* value_schema,
+        ArrowArray* value_array,
+        ArrowSchema* index_schema,
+        ArrowArray* index_array,
+        ArraySchemaEvolution se);
+
+    /**
+     * @brief Get the mapping of attributes to Enumerations.
+     *
+     * @return std::map<std::string, Enumeration>
+     */
+    std::map<std::string, Enumeration> get_attr_to_enum_mapping() {
+        std::map<std::string, Enumeration> result;
+        for (uint32_t i = 0; i < schema_->attribute_num(); ++i) {
+            auto attr = schema_->attribute(i);
+            if (attr_has_enum(attr.name())) {
+                auto enmr_label = *get_enum_label_on_attr(attr.name());
+                auto enmr = ArrayExperimental::get_enumeration(
+                    *ctx_, *array_, enmr_label);
+                result.insert({attr.name(), enmr});
+            }
+        }
+        return result;
+    }
+
+    /**
+     * @brief Get the Enumeration name associated with the given Attr.
+     *
+     * @return std::optional<std::string> The enumeration name if one exists.
+     */
+    std::optional<std::string> get_enum_label_on_attr(std::string attr_name) {
+        auto attr = schema_->attribute(attr_name);
+        return AttributeExperimental::get_enumeration_name(*ctx_, attr);
+    }
+
+    /**
+     * @brief Check if the given attribute has an associated enumeration.
+     *
+     * @return bool
+     */
+    bool attr_has_enum(std::string attr_name) {
+        return get_enum_label_on_attr(attr_name).has_value();
+    }
 };
+
+// These are all specializations to string/bool of various methods
+// which require special handling for that type.
+//
+// Declaring them down here is a bit weird -- they're easy to miss
+// on a read-through. However, we're in a bit of a bind regarding
+// various compilers: if we do these specializations within the
+// `class ManagedQuery { ... }`, then one compiler errors if we do
+// include `template <>`, while another errors if we don't.
+// Doing it down here, no compiler complains.
+
+template <>
+void ManagedQuery::_cast_dictionary_values<std::string>(
+    ArrowSchema* schema, ArrowArray* array);
+
+template <>
+void ManagedQuery::_cast_dictionary_values<bool>(
+    ArrowSchema* schema, ArrowArray* array);
+
+template <>
+bool ManagedQuery::_cast_column_aux<std::string>(
+    ArrowSchema* schema, ArrowArray* array, ArraySchemaEvolution se);
+
+template <>
+bool ManagedQuery::_cast_column_aux<bool>(
+    ArrowSchema* schema, ArrowArray* array, ArraySchemaEvolution se);
+
+template <>
+bool ManagedQuery::_extend_and_evolve_schema<std::string>(
+    ArrowSchema* value_schema,
+    ArrowArray* value_array,
+    ArrowSchema* index_schema,
+    ArrowArray* index_array,
+    ArraySchemaEvolution se);
+
 };  // namespace tiledbsoma
 
 #endif
