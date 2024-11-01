@@ -360,28 +360,16 @@ SOMADataFrame <- R6::R6Class(
       self$write(values)
     },
 
-    #' @description Retrieve the shape; as \code{SOMADataFrames} are shapeless,
-    #' simply raises an error
-    #'
-    #' @return None, instead a \code{\link{.NotYetImplemented}()} error is raised
-    #'
+    #' @description Returns the shape for the `soma_joinid` index column, if it
+    #' is an index column in the dataframe; otherwise, returns `NULL`.
     shape = function() {
-      stop(errorCondition(
-        "'SOMADataFrame$shape()' is not implemented yet",
-        class = "notYetImplementedError"
-      ))
+      return(maybe_soma_joinid_shape(self$uri, private$.soma_context))
     },
 
-    #' @description Retrieve the maxshape; as \code{SOMADataFrames} are shapeless,
-    #' simply raises an error
-    #'
-    #' @return None, instead a \code{\link{.NotYetImplemented}()} error is raised
-    #'
+    #' @description Returns the maxshape for the `soma_joinid` index column, if it
+    #' is an index column in the dataframe; otherwise, returns `NULL`.
     maxshape = function() {
-      stop(errorCondition(
-        "'SOMADataFrame$maxshape()' is not implemented",
-        class = "notYetImplementedError"
-      ))
+      return(maybe_soma_joinid_maxshape(self$uri, private$.soma_context))
     },
 
     #' @description Returns a named list of minimum/maximum pairs, one per index

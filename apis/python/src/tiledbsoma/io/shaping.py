@@ -172,7 +172,7 @@ def resize_experiment(
     with tiledbsoma.Experiment.open(uri) as exp:
         for ms_key in exp.ms.keys():
             if ms_key not in nvars.keys():
-                nvars[ms_key] = exp.ms[ms_key].var._maybe_soma_joinid_shape or 1
+                nvars[ms_key] = exp.ms[ms_key].var.shape or 1
 
     ok = _treewalk(
         uri,
@@ -251,6 +251,8 @@ def _leaf_visitor_show_shapes(
     if isinstance(item, tiledbsoma.DataFrame):
         _print_leaf_node_banner("DataFrame", node_name, item.uri, args)
         _bannerize(args, "count", item.count)
+        _bannerize(args, "shape", item.shape)
+        _bannerize(args, "maxshape", item.maxshape)
         _bannerize(args, "domain", item.domain)
         _bannerize(args, "maxdomain", item.maxdomain)
         _bannerize(args, "upgraded", item.tiledbsoma_has_upgraded_domain)

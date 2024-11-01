@@ -101,12 +101,9 @@ def test_dataframe(tmp_path, arrow_schema):
             == soma._flags.NEW_SHAPE_FEATURE_FLAG_ENABLED
         )
 
-        with pytest.raises(AttributeError):
-            assert sdf.shape is None
-
         # soma_joinid is not a dim here
-        assert sdf._maybe_soma_joinid_shape is None
-        assert sdf._maybe_soma_joinid_maxshape is None
+        assert sdf.shape is None
+        assert sdf.maxshape is None
 
         # Read all
         table = sdf.read().concat()

@@ -402,11 +402,9 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         return cast(DataFrameWrapper, self._handle).count
 
     @property
-    def _maybe_soma_joinid_shape(self) -> Optional[int]:
-        """An internal helper method that returns the shape
-        value along the ``soma_joinid`` index column, if the ``DataFrame
-        has one, else ``None``.
-
+    def shape(self) -> Optional[int]:
+        """Returns the shape for the ``soma_joinid`` index column, if it
+        is an index column in the dataframe; otherwise, returns ``None``.
 
         Lifecycle:
             Experimental.
@@ -414,10 +412,9 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         return self._handle.maybe_soma_joinid_shape
 
     @property
-    def _maybe_soma_joinid_maxshape(self) -> Optional[int]:
-        """An internal helper method that returns the maxshape
-        value along the ``soma_joinid`` index column, if the ``DataFrame
-        has one, else ``None``.
+    def maxshape(self) -> Optional[int]:
+        """Returns the maxshape for the ``soma_joinid`` index column, if it
+        is an index column in the dataframe; otherwise, returns ``None``.
 
         Lifecycle:
             Experimental.

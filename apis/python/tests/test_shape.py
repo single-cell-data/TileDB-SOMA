@@ -302,18 +302,18 @@ def test_dataframe_basics(tmp_path, soma_joinid_domain, index_column_names):
     with tiledbsoma.DataFrame.open(uri) as sdf:
         has_sjid_dim = "soma_joinid" in index_column_names
         if has_sjid_dim:
-            assert sdf._maybe_soma_joinid_shape == 1 + soma_joinid_domain[1]
+            assert sdf.shape == 1 + soma_joinid_domain[1]
             if not tiledbsoma._flags.NEW_SHAPE_FEATURE_FLAG_ENABLED:
-                assert sdf._maybe_soma_joinid_maxshape == 1 + soma_joinid_domain[1]
+                assert sdf.maxshape == 1 + soma_joinid_domain[1]
         else:
-            assert sdf._maybe_soma_joinid_shape is None
+            assert sdf.shape is None
             if not tiledbsoma._flags.NEW_SHAPE_FEATURE_FLAG_ENABLED:
-                assert sdf._maybe_soma_joinid_maxshape is None
+                assert sdf.maxshape is None
 
         assert len(sdf.non_empty_domain()) == len(index_column_names)
 
         # This may be None if soma_joinid is not an index column
-        shape_at_create = sdf._maybe_soma_joinid_shape
+        shape_at_create = sdf.shape
 
     if tiledbsoma._flags.NEW_SHAPE_FEATURE_FLAG_ENABLED:
 
@@ -339,7 +339,7 @@ def test_dataframe_basics(tmp_path, soma_joinid_domain, index_column_names):
                 sdf.tiledbsoma_resize_soma_joinid_shape(new_shape)
 
         with tiledbsoma.DataFrame.open(uri) as sdf:
-            assert sdf._maybe_soma_joinid_shape == shape_at_create
+            assert sdf.shape == shape_at_create
 
         # Test writes out of bounds, before resize
         offset = shape_at_create if has_soma_joinid_dim else 100
