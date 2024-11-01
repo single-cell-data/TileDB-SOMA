@@ -76,6 +76,9 @@ void load_soma_object(py::module& m) {
                     if (soma_obj_type == "somadataframe")
                         return py::cast(
                             dynamic_cast<SOMADataFrame&>(*soma_obj));
+                    if (soma_obj_type == "somageometrydataframe")
+                        return py::cast(
+                            dynamic_cast<SOMAGeometryDataFrame&>(*soma_obj));
                     if (soma_obj_type == "somapointclouddataframe")
                         return py::cast(
                             dynamic_cast<SOMAPointCloudDataFrame&>(*soma_obj));

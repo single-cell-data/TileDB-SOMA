@@ -308,6 +308,7 @@ setuptools.setup(
                 "src/tiledbsoma/soma_array.cc",
                 "src/tiledbsoma/soma_object.cc",
                 "src/tiledbsoma/soma_dataframe.cc",
+                "src/tiledbsoma/soma_geometry_dataframe.cc",
                 "src/tiledbsoma/soma_point_cloud_dataframe.cc",
                 "src/tiledbsoma/soma_dense_ndarray.cc",
                 "src/tiledbsoma/soma_sparse_ndarray.cc",
