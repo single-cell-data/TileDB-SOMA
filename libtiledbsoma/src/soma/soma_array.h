@@ -1567,7 +1567,10 @@ class SOMAArray : public SOMAObject {
     // Array associated with mq_
     std::shared_ptr<Array> arr_;
 
-    // Array schema
+    // The TileDB ArraySchema. The schema is inaccessible when the TileDB Array 
+    // is closed or opened in write mode which means we cannot use arr->schema()
+    // directly in those cases. Here, we store a copy of the schema so that it
+    // can be accessed in any mode
     std::shared_ptr<ArraySchema> schema_;
 
     // Array associated with metadata_. Metadata values need to be
