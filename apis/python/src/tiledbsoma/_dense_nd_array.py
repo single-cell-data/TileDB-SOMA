@@ -285,11 +285,8 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
         # bound but not its lower bound. That works fine if data are written at
         # the start: e.g. domain (0, 99) and data written at 0,1,2,3,4. It
         # doesn't work fine if data are written at say (40,41,42,43,44).
-        # Everything is fine in core and in libtiledbsoma except this very spot
-        # right here where we resize to (0,44) rather than (40,44). The fix is
-        # easy (and coming soon!): the target_shape business above in this file
-        # needs to be modified to handle lower and upper slots of non-empty
-        # domain, rather than discarding the lower slot as it now does.
+        #
+        # This is tracked on kerl/python-227-dense-ned-read.
         reshaped = npval.reshape(target_shape)
         return pa.Tensor.from_numpy(reshaped)
 
