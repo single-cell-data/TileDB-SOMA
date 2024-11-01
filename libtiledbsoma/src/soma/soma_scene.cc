@@ -46,30 +46,9 @@ void SOMAScene::create(
     std::optional<TimestampRange> timestamp) {
     try {
         std::filesystem::path scene_uri(uri);
-
-        SOMAGroup::create(ctx, scene_uri.string(), "SOMAScene", timestamp);
-        SOMACollection::create((scene_uri / "img").string(), ctx, timestamp);
-        SOMACollection::create((scene_uri / "obsl").string(), ctx, timestamp);
-        SOMACollection::create((scene_uri / "varl").string(), ctx, timestamp);
-
-        auto name = std::string(std::filesystem::path(uri).filename());
-        auto group = SOMAGroup::open(
-            OpenMode::write, scene_uri.string(), ctx, name, timestamp);
-        group->set(
-            (scene_uri / "img").string(),
-            URIType::absolute,
-            "img",
-            "SOMACollection");
-        group->set(
-            (scene_uri / "obsl").string(),
-            URIType::absolute,
-            "obsl",
-            "SOMACollection");
-        group->set(
-            (scene_uri / "varl").string(),
-            URIType::absolute,
-            "varl",
-            "SOMAColelction");
+        auto group = SOMAGroup::create(
+            ctx, scene_uri.string(), "SOMAScene", timestamp);
+        // TODO: Set extra metadata.
         group->close();
     } catch (TileDBError& e) {
         throw TileDBSOMAError(e.what());
