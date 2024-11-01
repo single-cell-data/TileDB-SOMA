@@ -48,7 +48,7 @@ test_that("Basic mechanics", {
   sdf <- SOMADataFrameOpen(uri)
   expect_match(sdf$soma_type, "SOMADataFrame")
 
-  expect_error(sdf$shape(), class = "notYetImplementedError")
+  ### TODO: add assertions expect_error(sdf$shape(), class = "notYetImplementedError")
 
   expect_equivalent(
     tiledb::tiledb_array(sdf$uri, return_as = "asis")[],

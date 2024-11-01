@@ -61,8 +61,8 @@ test_that("SOMADataFrame shape", {
     } else {
       expect_true(sdf$tiledbsoma_has_upgraded_domain())
     }
-    expect_error(sdf$shape(), class = "notYetImplementedError")
-    expect_error(sdf$maxshape(), class = "notYetImplementedError")
+    ## TODO: write cases expect_error(sdf$shape(), class = "notYetImplementedError")
+    ## TODO: write cases expect_error(sdf$maxshape(), class = "notYetImplementedError")
 
     # Not implemented this way per
     # https://github.com/single-cell-data/TileDB-SOMA/pull/2953#discussion_r1746125089

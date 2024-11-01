@@ -259,7 +259,6 @@ def _leaf_visitor_show_shapes(
 
     elif isinstance(item, tiledbsoma.SparseNDArray):
         _print_leaf_node_banner("SparseNDArray", node_name, item.uri, args)
-        _bannerize(args, "used_shape", item.used_shape())
         _bannerize(args, "shape", item.shape)
         _bannerize(args, "maxshape", item.maxshape)
         _bannerize(args, "upgraded", item.tiledbsoma_has_upgraded_shape)
