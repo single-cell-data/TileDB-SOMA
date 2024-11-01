@@ -392,7 +392,7 @@ std::unique_ptr<ArrowSchema> ArrowAdapter::arrow_schema_from_tiledb_array(
                 } else if constexpr (std::is_same_v<T, Attribute>) {
                     child = arrow_schema->children[i] =
                         arrow_schema_from_tiledb_attribute(
-                            arg, ctx, tiledb_array)
+                            arg, *ctx, *tiledb_array)
                             .release();
                 }
             },
@@ -425,9 +425,7 @@ std::unique_ptr<ArrowSchema> ArrowAdapter::arrow_schema_from_tiledb_dimension(
 }
 
 std::unique_ptr<ArrowSchema> ArrowAdapter::arrow_schema_from_tiledb_attribute(
-    Attribute& attribute,
-    std::shared_ptr<Context> ctx,
-    std::shared_ptr<Array> tiledb_array) {
+    Attribute& attribute, const Context& ctx, const Array& tiledb_array) {
     std::unique_ptr<ArrowSchema> arrow_schema = std::make_unique<ArrowSchema>();
     arrow_schema->format = strdup(
         ArrowAdapter::to_arrow_format(attribute.type()).data());
@@ -454,10 +452,10 @@ std::unique_ptr<ArrowSchema> ArrowAdapter::arrow_schema_from_tiledb_attribute(
         arrow_schema->name));
 
     auto enmr_name = AttributeExperimental::get_enumeration_name(
-        *ctx, attribute);
+        ctx, attribute);
     if (enmr_name.has_value()) {
         auto enmr = ArrayExperimental::get_enumeration(
-            *ctx, *tiledb_array, attribute.name());
+            ctx, tiledb_array, attribute.name());
         auto dict = (ArrowSchema*)malloc(sizeof(ArrowSchema));
         dict->format = strdup(
             ArrowAdapter::to_arrow_format(enmr.type(), false).data());

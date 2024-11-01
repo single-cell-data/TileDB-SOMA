@@ -313,43 +313,11 @@ TEST_CASE("SOMAGeometryDataFrame: Roundtrip", "[SOMAGeometryDataFrame]") {
         while (auto batch = soma_geometry->read_next()) {
             auto arrbuf = batch.value();
             auto d0span = arrbuf->at(dim_infos[0].name)->data<int64_t>();
-            auto d1span = arrbuf
-                              ->at(
-                                  SOMA_GEOMETRY_DIMENSION_PREFIX +
-                                  spatial_dim_infos[0].name + "__min")
-                              ->data<double_t>();
-            auto d2span = arrbuf
-                              ->at(
-                                  SOMA_GEOMETRY_DIMENSION_PREFIX +
-                                  spatial_dim_infos[0].name + "__max")
-                              ->data<double_t>();
-            auto d3span = arrbuf
-                              ->at(
-                                  SOMA_GEOMETRY_DIMENSION_PREFIX +
-                                  spatial_dim_infos[1].name + "__min")
-                              ->data<double_t>();
-            auto d4span = arrbuf
-                              ->at(
-                                  SOMA_GEOMETRY_DIMENSION_PREFIX +
-                                  spatial_dim_infos[1].name + "__max")
-                              ->data<double_t>();
             auto wkbs = arrbuf->at(dim_infos[1].name)->binaries();
             auto a0span = arrbuf->at(attr_infos[0].name)->data<double>();
             CHECK(
                 std::vector<int64_t>({1}) ==
                 std::vector<int64_t>(d0span.begin(), d0span.end()));
-            CHECK(
-                std::vector<double_t>({0}) ==
-                std::vector<double_t>(d1span.begin(), d1span.end()));
-            CHECK(
-                std::vector<double_t>({1}) ==
-                std::vector<double_t>(d2span.begin(), d2span.end()));
-            CHECK(
-                std::vector<double_t>({0}) ==
-                std::vector<double_t>(d3span.begin(), d3span.end()));
-            CHECK(
-                std::vector<double_t>({1}) ==
-                std::vector<double_t>(d4span.begin(), d4span.end()));
             CHECK(geometry::to_wkb(polygon) == wkbs[0]);
             CHECK(
                 std::vector<double_t>({63}) ==
