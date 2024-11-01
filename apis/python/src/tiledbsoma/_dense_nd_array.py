@@ -286,7 +286,7 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
         # the start: e.g. domain (0, 99) and data written at 0,1,2,3,4. It
         # doesn't work fine if data are written at say (40,41,42,43,44).
         #
-        # This is tracked on kerl/python-227-dense-ned-read.
+        # This is tracked on https://github.com/single-cell-data/TileDB-SOMA/issues/3271
         reshaped = npval.reshape(target_shape)
         return pa.Tensor.from_numpy(reshaped)
 
