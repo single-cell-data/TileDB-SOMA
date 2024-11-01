@@ -253,24 +253,7 @@ void SOMAArray::reset(
         mq_->select_columns(column_names);
     }
 
-    switch (result_order) {
-        case ResultOrder::automatic:
-            if (arr_->schema().array_type() == TILEDB_SPARSE)
-                mq_->set_layout(TILEDB_UNORDERED);
-            else
-                mq_->set_layout(TILEDB_ROW_MAJOR);
-            break;
-        case ResultOrder::rowmajor:
-            mq_->set_layout(TILEDB_ROW_MAJOR);
-            break;
-        case ResultOrder::colmajor:
-            mq_->set_layout(TILEDB_COL_MAJOR);
-            break;
-        default:
-            throw std::invalid_argument(fmt::format(
-                "[SOMAArray] invalid ResultOrder({}) passed",
-                static_cast<int>(result_order)));
-    }
+    mq_->set_layout(result_order);
 
     batch_size_ = batch_size;
     result_order_ = result_order;
