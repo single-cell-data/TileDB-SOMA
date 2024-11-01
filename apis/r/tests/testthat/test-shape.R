@@ -567,7 +567,7 @@ test_that("SOMADenseNDArray shape", {
     }
 
     if (! tiledbsoma:::.dense_arrays_can_have_current_domain()) {
-      expect_true(all(readback_shape == readback_maxshape))
+      expect_equal(readback_shape, readback_maxshape)
     }
 
     ndarray$close()
