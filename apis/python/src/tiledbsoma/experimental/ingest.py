@@ -44,7 +44,6 @@ from .. import (
     DataFrame,
     DenseNDArray,
     Experiment,
-    ImageProperties,
     MultiscaleImage,
     PointCloudDataFrame,
     Scene,
@@ -540,21 +539,20 @@ def from_visium(
                             if scale is None:
                                 scene.set_transform_to_multiscale_image(
                                     image_name,
-                                    IdentityTransform(("x", "y"), ("x", "y")),
+                                    transform=IdentityTransform(("x", "y"), ("x", "y")),
                                 )
                             else:
-                                level_props: ImageProperties = (
-                                    tissue_image.level_properties(0)
-                                )
+                                base_shape = tissue_image.level_shape(0)
+                                axis_order = tissue_image.data_axis_order
+                                width = base_shape[axis_order.index("x")]
+                                height = base_shape[axis_order.index("y")]
                                 updated_scales = (
-                                    level_props.width
-                                    / np.round(level_props.width / scale),
-                                    level_props.height
-                                    / np.round(level_props.height / scale),
+                                    width / np.round(width / scale),
+                                    height / np.round(height / scale),
                                 )
                                 scene.set_transform_to_multiscale_image(
                                     image_name,
-                                    ScaleTransform(
+                                    transform=ScaleTransform(
                                         ("x", "y"), ("x", "y"), updated_scales
                                     ),
                                 )
@@ -580,7 +578,7 @@ def from_visium(
                     ) as loc:
                         _maybe_set(obsl, "loc", loc, use_relative_uri=use_relative_uri)
                         scene.set_transform_to_point_cloud_dataframe(
-                            "loc", IdentityTransform(("x", "y"), ("x", "y"))
+                            "loc", transform=IdentityTransform(("x", "y"), ("x", "y"))
                         )
                         loc.coordinate_space = coord_space
 
@@ -794,12 +792,10 @@ def _create_visium_tissue_images(
         im_data_numpy = np.array(im)
 
     if image_channel_first:
-        axis_names = ("c", "y", "x")
-        axis_types = ("channel", "height", "width")
+        data_axis_order = ("soma_channel", "y", "x")
         im_data_numpy = np.moveaxis(im_data_numpy, -1, 0)
     else:
-        axis_names = ("y", "x", "c")
-        axis_types = ("height", "width", "channel")
+        data_axis_order = ("y", "x", "soma_channel")
     ref_shape: Tuple[int, ...] = im_data_numpy.shape
 
     # Create the multiscale image.
@@ -808,17 +804,18 @@ def _create_visium_tissue_images(
         image_pyramid = MultiscaleImage.create(
             uri,
             type=pa.uint8(),
-            reference_level_shape=ref_shape,
-            axis_names=axis_names,
-            axis_types=axis_types,
+            level_shape=ref_shape,
+            level_key=image_paths[0][0],
+            data_axis_order=data_axis_order,
             context=context,
+            platform_config=platform_config,
         )
 
     # Add additional metadata.
     add_metadata(image_pyramid, additional_metadata)
 
     # Add and write the first level.
-    im_array = image_pyramid.add_new_level(image_paths[0][0], shape=ref_shape)
+    im_array = image_pyramid[image_paths[0][0]]
     im_data = pa.Tensor.from_numpy(im_data_numpy)
     im_array.write(
         (slice(None), slice(None), slice(None)),

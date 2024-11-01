@@ -116,7 +116,7 @@ def process_image_region(
     region: Optional[options.SpatialRegion],
     transform: somacore.CoordinateTransform,
     channel_coords: options.DenseCoord,
-    image_type: str,
+    data_order: Tuple[int, ...],
 ) -> Tuple[
     options.DenseNDCoords, Optional[options.SpatialRegion], somacore.CoordinateTransform
 ]:
@@ -157,14 +157,14 @@ def process_image_region(
 
     # Get the dense coordinates for querying the array storing the image.
     coords: options.DenseNDCoords = []
-    for axis in image_type:
-        if axis == "C":
+    for axis in data_order:
+        if axis == len(inv_transform.input_axes):
             coords.append(channel_coords)  # type: ignore[attr-defined]
-        if axis == "X":
+        elif axis == 0:
             coords.append(x_coords)  # type: ignore[attr-defined]
-        if axis == "Y":
+        elif axis == 1:
             coords.append(y_coords)  # type: ignore[attr-defined]
-        if axis == "Z":
+        elif axis == 2:
             raise NotImplementedError(
                 "Spatial queries are currently only supported for 2D coordinates."
             )
