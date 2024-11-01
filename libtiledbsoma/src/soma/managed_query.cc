@@ -31,10 +31,12 @@
  */
 
 #include "managed_query.h"
+
 #include <tiledb/array_experimental.h>
 #include <tiledb/attribute_experimental.h>
-#include "../utils/logger.h"
 #include "utils/common.h"
+#include "utils/logger.h"
+#include "utils/util.h"
 namespace tiledbsoma {
 
 using namespace tiledb;
@@ -429,5 +431,675 @@ void ManagedQuery::check_column_name(const std::string& name) {
             "results.",
             name));
     }
+}
+
+uint64_t ManagedQuery::_get_max_capacity(tiledb_datatype_t index_type) {
+    switch (index_type) {
+        case TILEDB_INT8:
+            return std::numeric_limits<int8_t>::max();
+        case TILEDB_UINT8:
+            return std::numeric_limits<uint8_t>::max();
+        case TILEDB_INT16:
+            return std::numeric_limits<int16_t>::max();
+        case TILEDB_UINT16:
+            return std::numeric_limits<uint16_t>::max();
+        case TILEDB_INT32:
+            return std::numeric_limits<int32_t>::max();
+        case TILEDB_UINT32:
+            return std::numeric_limits<uint32_t>::max();
+        case TILEDB_INT64:
+            return std::numeric_limits<int64_t>::max();
+        case TILEDB_UINT64:
+            return std::numeric_limits<uint64_t>::max();
+        default:
+            throw TileDBSOMAError(
+                "Saw invalid enumeration index type when trying to extend "
+                "enumeration");
+    }
+}
+
+ArraySchemaEvolution ManagedQuery::_make_se() {
+    ArraySchemaEvolution se(*ctx_);
+    return se;
+}
+
+void ManagedQuery::set_array_data(
+    std::unique_ptr<ArrowSchema> arrow_schema,
+    std::unique_ptr<ArrowArray> arrow_array) {
+    // Go through all columns in the ArrowTable and cast the values to what is
+    // in the ArraySchema on disk
+    ArraySchemaEvolution se = _make_se();
+    bool evolve_schema = false;
+    for (auto i = 0; i < arrow_schema->n_children; ++i) {
+        bool enmr_extended = _cast_column(
+            arrow_schema->children[i], arrow_array->children[i], se);
+        evolve_schema = evolve_schema || enmr_extended;
+    }
+    if (evolve_schema) {
+        se.array_evolve(array_->uri());
+    }
+};
+
+bool ManagedQuery::_cast_column(
+    ArrowSchema* schema, ArrowArray* array, ArraySchemaEvolution se) {
+    auto user_type = ArrowAdapter::to_tiledb_format(schema->format);
+    bool has_attr = schema_->has_attribute(schema->name);
+
+    // If the attribute is enumerated, but the provided column is not, error out
+    if (has_attr && attr_has_enum(schema->name)) {
+        if (schema->dictionary == nullptr || array->dictionary == nullptr) {
+            throw std::invalid_argument(
+                "[SOMAArray] " + std::string(schema->name) +
+                " requires dictionary entry");
+        }
+    }
+
+    // If the attribute is not enumerated, but the provided column is, then we
+    // need to use the dictionary values when writing to the array
+    if (has_attr && !attr_has_enum(schema->name)) {
+        if (schema->dictionary != nullptr && array->dictionary != nullptr) {
+            _promote_indexes_to_values(schema, array);
+
+            // Return false because we do not extend the enumeration
+            return false;
+        }
+    }
+
+    // In the general cases that do not apply to the two cases above, we need to
+    // cast the passed-in column to be what is the type in the schema on disk.
+    // Here we identify the passed-in column type (UserType).
+    //
+    // If _cast_column_aux extended the enumeration then return true. Otherwise,
+    // false
+    switch (user_type) {
+        case TILEDB_STRING_ASCII:
+        case TILEDB_STRING_UTF8:
+        case TILEDB_CHAR:
+            return _cast_column_aux<std::string>(schema, array, se);
+        case TILEDB_BOOL:
+            return _cast_column_aux<bool>(schema, array, se);
+        case TILEDB_INT8:
+            return _cast_column_aux<int8_t>(schema, array, se);
+        case TILEDB_UINT8:
+            return _cast_column_aux<uint8_t>(schema, array, se);
+        case TILEDB_INT16:
+            return _cast_column_aux<int16_t>(schema, array, se);
+        case TILEDB_UINT16:
+            return _cast_column_aux<uint16_t>(schema, array, se);
+        case TILEDB_INT32:
+            return _cast_column_aux<int32_t>(schema, array, se);
+        case TILEDB_UINT32:
+            return _cast_column_aux<uint32_t>(schema, array, se);
+        case TILEDB_INT64:
+        case TILEDB_DATETIME_YEAR:
+        case TILEDB_DATETIME_MONTH:
+        case TILEDB_DATETIME_WEEK:
+        case TILEDB_DATETIME_DAY:
+        case TILEDB_DATETIME_HR:
+        case TILEDB_DATETIME_MIN:
+        case TILEDB_DATETIME_SEC:
+        case TILEDB_DATETIME_MS:
+        case TILEDB_DATETIME_US:
+        case TILEDB_DATETIME_NS:
+        case TILEDB_DATETIME_PS:
+        case TILEDB_DATETIME_FS:
+        case TILEDB_DATETIME_AS:
+        case TILEDB_TIME_HR:
+        case TILEDB_TIME_MIN:
+        case TILEDB_TIME_SEC:
+        case TILEDB_TIME_MS:
+        case TILEDB_TIME_US:
+        case TILEDB_TIME_NS:
+        case TILEDB_TIME_PS:
+        case TILEDB_TIME_FS:
+        case TILEDB_TIME_AS:
+            return _cast_column_aux<int64_t>(schema, array, se);
+        case TILEDB_UINT64:
+            return _cast_column_aux<uint64_t>(schema, array, se);
+        case TILEDB_FLOAT32:
+            return _cast_column_aux<float>(schema, array, se);
+        case TILEDB_FLOAT64:
+            return _cast_column_aux<double>(schema, array, se);
+        default:
+            throw TileDBSOMAError(fmt::format(
+                "Saw invalid TileDB user type when attempting to cast table: "
+                "{}",
+                tiledb::impl::type_to_str(user_type)));
+    }
+}
+
+void ManagedQuery::_promote_indexes_to_values(
+    ArrowSchema* schema, ArrowArray* array) {
+    // This is a column with a dictionary. However, the associated TileDB
+    // attribute on disk is not enumerated. We will need to map the dictionary
+    // indexes to the associated dictionary values and write the values to disk.
+    // Here, we identify the passed-in column type
+
+    auto value_type = ArrowAdapter::to_tiledb_format(
+        schema->dictionary->format);
+    switch (value_type) {
+        case TILEDB_STRING_ASCII:
+        case TILEDB_STRING_UTF8:
+        case TILEDB_CHAR:
+            return _cast_dictionary_values<std::string>(schema, array);
+        case TILEDB_BOOL:
+            return _cast_dictionary_values<bool>(schema, array);
+        case TILEDB_INT8:
+            return _cast_dictionary_values<int8_t>(schema, array);
+        case TILEDB_UINT8:
+            return _cast_dictionary_values<uint8_t>(schema, array);
+        case TILEDB_INT16:
+            return _cast_dictionary_values<int16_t>(schema, array);
+        case TILEDB_UINT16:
+            return _cast_dictionary_values<uint16_t>(schema, array);
+        case TILEDB_INT32:
+            return _cast_dictionary_values<int32_t>(schema, array);
+        case TILEDB_UINT32:
+            return _cast_dictionary_values<uint32_t>(schema, array);
+        case TILEDB_INT64:
+            return _cast_dictionary_values<int64_t>(schema, array);
+        case TILEDB_DATETIME_YEAR:
+        case TILEDB_DATETIME_MONTH:
+        case TILEDB_DATETIME_WEEK:
+        case TILEDB_DATETIME_DAY:
+        case TILEDB_DATETIME_HR:
+        case TILEDB_DATETIME_MIN:
+        case TILEDB_DATETIME_SEC:
+        case TILEDB_DATETIME_MS:
+        case TILEDB_DATETIME_US:
+        case TILEDB_DATETIME_NS:
+        case TILEDB_DATETIME_PS:
+        case TILEDB_DATETIME_FS:
+        case TILEDB_DATETIME_AS:
+        case TILEDB_TIME_HR:
+        case TILEDB_TIME_MIN:
+        case TILEDB_TIME_SEC:
+        case TILEDB_TIME_MS:
+        case TILEDB_TIME_US:
+        case TILEDB_TIME_NS:
+        case TILEDB_TIME_PS:
+        case TILEDB_TIME_FS:
+        case TILEDB_TIME_AS:
+        case TILEDB_UINT64:
+            return _cast_dictionary_values<uint64_t>(schema, array);
+        case TILEDB_FLOAT32:
+            return _cast_dictionary_values<float>(schema, array);
+        case TILEDB_FLOAT64:
+            return _cast_dictionary_values<double>(schema, array);
+        default:
+            throw TileDBSOMAError(fmt::format(
+                "Saw invalid TileDB value type when attempting to promote "
+                "indexes to values: {}",
+                tiledb::impl::type_to_str(value_type)));
+    }
+}
+
+template <typename T>
+void ManagedQuery::_cast_dictionary_values(
+    ArrowSchema* schema, ArrowArray* array) {
+    // This is a column with a dictionary. However, the associated TileDB
+    // attribute on disk is not enumerated. Here, we map the dictionary indexes
+    // to the associated dictionary values and set the buffers to use the
+    // dictionary values to write to disk. Note the specialized templates for
+    // string and Boolean types below
+
+    auto value_array = array->dictionary;
+
+    T* valbuf;
+    if (value_array->n_buffers == 3) {
+        valbuf = (T*)value_array->buffers[2];
+    } else {
+        valbuf = (T*)value_array->buffers[1];
+    }
+    std::vector<T> values(valbuf, valbuf + value_array->length);
+
+    std::vector<int64_t> indexes = _get_index_vector(schema, array);
+
+    std::vector<T> index_to_value;
+    for (auto i : indexes) {
+        index_to_value.push_back(values[i]);
+    }
+
+    setup_write_column(
+        schema->name,
+        array->length,
+        (const void*)index_to_value.data(),
+        (uint64_t*)nullptr,
+        (uint8_t*)value_array->buffers[0]);
+}
+
+template <>
+void ManagedQuery::_cast_dictionary_values<std::string>(
+    ArrowSchema* schema, ArrowArray* array) {
+    // String types require special handling due to large vs regular
+    // string/binary
+
+    auto value_schema = schema->dictionary;
+    auto value_array = array->dictionary;
+
+    uint64_t num_elems = value_array->length;
+
+    std::vector<uint64_t> offsets_v;
+    if ((strcmp(value_schema->format, "U") == 0) ||
+        (strcmp(value_schema->format, "Z") == 0)) {
+        uint64_t* offsets = (uint64_t*)value_array->buffers[1];
+        offsets_v.resize(num_elems + 1);
+        offsets_v.assign(offsets, offsets + num_elems + 1);
+    } else {
+        uint32_t* offsets = (uint32_t*)value_array->buffers[1];
+        std::vector<uint32_t> offset_holder(offsets, offsets + num_elems + 1);
+        for (auto offset : offset_holder) {
+            offsets_v.push_back((uint64_t)offset);
+        }
+    }
+
+    char* data = (char*)value_array->buffers[2];
+    std::string data_v(data, data + offsets_v[offsets_v.size() - 1]);
+
+    std::vector<std::string> values;
+    for (size_t offset_idx = 0; offset_idx < offsets_v.size() - 1;
+         ++offset_idx) {
+        auto beg = offsets_v[offset_idx];
+        auto sz = offsets_v[offset_idx + 1] - beg;
+        values.push_back(data_v.substr(beg, sz));
+    }
+
+    std::vector<int64_t> indexes = ManagedQuery::_get_index_vector(
+        schema, array);
+
+    uint64_t offset_sum = 0;
+    std::vector<uint64_t> value_offsets = {0};
+    std::string index_to_value;
+    for (auto i : indexes) {
+        auto value = values[i];
+        offset_sum += value.size();
+        value_offsets.push_back(offset_sum);
+        index_to_value.insert(index_to_value.end(), value.begin(), value.end());
+    }
+
+    setup_write_column(
+        schema->name,
+        value_offsets.size() - 1,
+        (const void*)index_to_value.data(),
+        (uint64_t*)value_offsets.data(),
+        (uint8_t*)value_array->buffers[0]);
+}
+
+template <>
+void ManagedQuery::_cast_dictionary_values<bool>(
+    ArrowSchema* schema, ArrowArray* array) {
+    // Boolean types require special handling due to bit vs uint8_t
+    // representation in Arrow vs TileDB respectively
+
+    auto value_schema = schema->dictionary;
+    auto value_array = array->dictionary;
+
+    std::vector<int64_t> indexes = _get_index_vector(schema, array);
+    std::vector<uint8_t> values = util::cast_bit_to_uint8(
+        value_schema, value_array);
+    std::vector<uint8_t> index_to_value;
+
+    for (auto i : indexes) {
+        index_to_value.push_back(values[i]);
+    }
+
+    setup_write_column(
+        schema->name,
+        array->length,
+        (const void*)index_to_value.data(),
+        (uint64_t*)nullptr,
+        (uint8_t*)value_array->buffers[0]);
+}
+
+template <typename UserType>
+bool ManagedQuery::_cast_column_aux(
+    ArrowSchema* schema, ArrowArray* array, ArraySchemaEvolution se) {
+    // We need to cast the passed-in column to be what is the type in the schema
+    // on disk. Here we identify the on-disk attribute or dimension type
+    // (DiskType).
+
+    tiledb_datatype_t disk_type;
+    std::string name(schema->name);
+    if (schema_->has_attribute(name)) {
+        disk_type = schema_->attribute(name).type();
+    } else {
+        disk_type = schema_->domain().dimension(name).type();
+    }
+
+    // If _set_column extended the enumeration then return true. Otherwise,
+    // false
+    switch (disk_type) {
+        case TILEDB_BOOL:
+        case TILEDB_INT8:
+            return _set_column<UserType, int8_t>(schema, array, se);
+        case TILEDB_UINT8:
+            return _set_column<UserType, uint8_t>(schema, array, se);
+        case TILEDB_INT16:
+            return _set_column<UserType, int16_t>(schema, array, se);
+        case TILEDB_UINT16:
+            return _set_column<UserType, uint16_t>(schema, array, se);
+        case TILEDB_INT32:
+            return _set_column<UserType, int32_t>(schema, array, se);
+        case TILEDB_UINT32:
+            return _set_column<UserType, uint32_t>(schema, array, se);
+        case TILEDB_INT64:
+        case TILEDB_DATETIME_YEAR:
+        case TILEDB_DATETIME_MONTH:
+        case TILEDB_DATETIME_WEEK:
+        case TILEDB_DATETIME_DAY:
+        case TILEDB_DATETIME_HR:
+        case TILEDB_DATETIME_MIN:
+        case TILEDB_DATETIME_SEC:
+        case TILEDB_DATETIME_MS:
+        case TILEDB_DATETIME_US:
+        case TILEDB_DATETIME_NS:
+        case TILEDB_DATETIME_PS:
+        case TILEDB_DATETIME_FS:
+        case TILEDB_DATETIME_AS:
+        case TILEDB_TIME_HR:
+        case TILEDB_TIME_MIN:
+        case TILEDB_TIME_SEC:
+        case TILEDB_TIME_MS:
+        case TILEDB_TIME_US:
+        case TILEDB_TIME_NS:
+        case TILEDB_TIME_PS:
+        case TILEDB_TIME_FS:
+        case TILEDB_TIME_AS:
+            return _set_column<UserType, int64_t>(schema, array, se);
+        case TILEDB_UINT64:
+            return _set_column<UserType, uint64_t>(schema, array, se);
+        case TILEDB_FLOAT32:
+            return _set_column<UserType, float>(schema, array, se);
+        case TILEDB_FLOAT64:
+            return _set_column<UserType, double>(schema, array, se);
+        default:
+            throw TileDBSOMAError(
+                "Saw invalid TileDB disk type when attempting to cast "
+                "column: " +
+                tiledb::impl::type_to_str(disk_type));
+    }
+}
+
+template <>
+bool ManagedQuery::_cast_column_aux<std::string>(
+    ArrowSchema* schema, ArrowArray* array, ArraySchemaEvolution se) {
+    (void)se;  // se is unused in std::string specialization
+
+    const void* data = nullptr;
+    const void* offset = nullptr;
+    const void* validity = nullptr;
+
+    if (array->n_buffers == 3) {
+        data = array->buffers[2];
+        offset = array->buffers[1];
+        validity = array->buffers[0];
+    } else {
+        data = array->buffers[1];
+        offset = nullptr;
+        validity = array->buffers[0];
+    }
+
+    if ((strcmp(schema->format, "U") == 0) ||
+        (strcmp(schema->format, "Z") == 0)) {
+        setup_write_column(
+            schema->name,
+            array->length,
+            (const void*)data,
+            (uint64_t*)offset,
+            (uint8_t*)validity);
+    } else {
+        setup_write_column(
+            schema->name,
+            array->length,
+            (const void*)data,
+            (uint32_t*)offset,
+            (uint8_t*)validity);
+    }
+    return false;
+}
+
+template <>
+bool ManagedQuery::_cast_column_aux<bool>(
+    ArrowSchema* schema, ArrowArray* array, ArraySchemaEvolution se) {
+    (void)se;  // se is unused in bool specialization
+
+    auto casted = util::cast_bit_to_uint8(schema, array);
+    setup_write_column(
+        schema->name,
+        array->length,
+        (const void*)casted.data(),
+        (uint64_t*)nullptr,
+        (uint8_t*)array->buffers[0]);
+    return false;
+}
+
+bool ManagedQuery::_extend_enumeration(
+    ArrowSchema* value_schema,
+    ArrowArray* value_array,
+    ArrowSchema* index_schema,
+    ArrowArray* index_array,
+    ArraySchemaEvolution se) {
+    // For columns with dictionaries, we need to identify whether the
+
+    auto enmr = ArrayExperimental::get_enumeration(
+        *ctx_, *array_, index_schema->name);
+    auto value_type = enmr.type();
+
+    switch (value_type) {
+        case TILEDB_STRING_ASCII:
+        case TILEDB_STRING_UTF8:
+        case TILEDB_CHAR:
+            return _extend_and_evolve_schema<std::string>(
+                value_schema, value_array, index_schema, index_array, se);
+        case TILEDB_INT8:
+            return _extend_and_evolve_schema<int8_t>(
+                value_schema, value_array, index_schema, index_array, se);
+        case TILEDB_BOOL:
+        case TILEDB_UINT8:
+            return _extend_and_evolve_schema<uint8_t>(
+                value_schema, value_array, index_schema, index_array, se);
+        case TILEDB_INT16:
+            return _extend_and_evolve_schema<int16_t>(
+                value_schema, value_array, index_schema, index_array, se);
+        case TILEDB_UINT16:
+            return _extend_and_evolve_schema<uint16_t>(
+                value_schema, value_array, index_schema, index_array, se);
+        case TILEDB_INT32:
+            return _extend_and_evolve_schema<int32_t>(
+                value_schema, value_array, index_schema, index_array, se);
+        case TILEDB_UINT32:
+            return _extend_and_evolve_schema<uint32_t>(
+                value_schema, value_array, index_schema, index_array, se);
+        case TILEDB_INT64:
+            return _extend_and_evolve_schema<int64_t>(
+                value_schema, value_array, index_schema, index_array, se);
+        case TILEDB_UINT64:
+            return _extend_and_evolve_schema<uint64_t>(
+                value_schema, value_array, index_schema, index_array, se);
+        case TILEDB_FLOAT32:
+            return _extend_and_evolve_schema<float>(
+                value_schema, value_array, index_schema, index_array, se);
+        case TILEDB_FLOAT64:
+            return _extend_and_evolve_schema<double>(
+                value_schema, value_array, index_schema, index_array, se);
+        default:
+            throw TileDBSOMAError(fmt::format(
+                "ArrowAdapter: Unsupported TileDB dict datatype: {} ",
+                tiledb::impl::type_to_str(value_type)));
+    }
+}
+
+template <typename ValueType>
+bool ManagedQuery::_extend_and_evolve_schema(
+    ArrowSchema* value_schema,
+    ArrowArray* value_array,
+    ArrowSchema* index_schema,
+    ArrowArray* index_array,
+    ArraySchemaEvolution se) {
+    // We need to check if we are writing any new enumeration values. If so,
+    // extend and evolve the schema. If not, just set the write buffers to the
+    // dictionary's indexes as-is
+
+    // Get all the enumeration values in the passed-in column
+    std::vector<ValueType> enums_in_write;
+    uint64_t num_elems = value_array->length;
+    if (strcmp(value_schema->format, "b") == 0) {
+        // Specially handle Boolean types as their representation in Arrow (bit)
+        // is different from what is in TileDB (uint8_t)
+        auto casted = util::cast_bit_to_uint8(value_schema, value_array);
+        enums_in_write.assign(
+            (ValueType*)casted.data(), (ValueType*)casted.data() + num_elems);
+    } else {
+        // General case
+        const void* data;
+        if (value_array->n_buffers == 3) {
+            data = value_array->buffers[2];
+        } else {
+            data = value_array->buffers[1];
+        }
+        enums_in_write.assign((ValueType*)data, (ValueType*)data + num_elems);
+    }
+
+    // Get all the enumeration values in the on-disk TileDB attribute
+    std::string column_name = index_schema->name;
+    auto enmr = ArrayExperimental::get_enumeration(*ctx_, *array_, column_name);
+    std::vector<ValueType> enums_existing = enmr.as_vector<ValueType>();
+
+    // Find any new enumeration values
+    std::vector<ValueType> extend_values;
+    for (auto enum_val : enums_in_write) {
+        if (std::find(enums_existing.begin(), enums_existing.end(), enum_val) ==
+            enums_existing.end()) {
+            extend_values.push_back(enum_val);
+        }
+    }
+
+    // extend_values = {true, false};
+    if (extend_values.size() != 0) {
+        // We have new enumeration values; additional processing needed
+
+        // Check if the number of new enumeration will cause an overflow if
+        // extended
+        auto disk_index_type = schema_->attribute(column_name).type();
+        uint64_t max_capacity = _get_max_capacity(disk_index_type);
+        auto free_capacity = max_capacity - enums_existing.size();
+        if (free_capacity < extend_values.size()) {
+            throw TileDBSOMAError(
+                "Cannot extend enumeration; reached maximum capacity");
+        }
+
+        // Take the existing enumeration values on disk and extend with the new
+        // enumeration values
+        auto extended_enmr = enmr.extend(extend_values);
+        se.extend_enumeration(extended_enmr);
+
+        // If the passed-in enumerations are only a subset of the new extended
+        // enumerations, then we will need to remap the indexes. ie. the user
+        // passes in values [B, C] which maps to indexes [0, 1]. However, the
+        // full set of extended enumerations is [A, B, C] which means we need to
+        // remap [B, C] to be indexes [1, 2]
+        ManagedQuery::_remap_indexes(
+            column_name,
+            extended_enmr,
+            enums_in_write,
+            index_schema,
+            index_array);
+
+        // The enumeration was extended
+        return true;
+    } else {
+        // Example:
+        //
+        // * Already on storage/schema there are values a,b,c with indices
+        //   0,1,2.
+        // * User appends values b,c which, within the Arrow data coming in
+        //   from the user, have indices 0,1.
+        // * We need to remap those to 1,2.
+        ManagedQuery::_remap_indexes(
+            column_name, enmr, enums_in_write, index_schema, index_array);
+
+        // The enumeration was not extended
+        return false;
+    }
+}
+
+template <>
+bool ManagedQuery::_extend_and_evolve_schema<std::string>(
+    ArrowSchema* value_schema,
+    ArrowArray* value_array,
+    ArrowSchema* index_schema,
+    ArrowArray* index_array,
+    ArraySchemaEvolution se) {
+    uint64_t num_elems = value_array->length;
+
+    std::vector<uint64_t> offsets_v;
+    if ((strcmp(value_schema->format, "U") == 0) ||
+        (strcmp(value_schema->format, "Z") == 0)) {
+        uint64_t* offsets = (uint64_t*)value_array->buffers[1];
+        offsets_v.assign(offsets, offsets + num_elems + 1);
+    } else {
+        uint32_t* offsets = (uint32_t*)value_array->buffers[1];
+        for (size_t i = 0; i < num_elems + 1; ++i) {
+            offsets_v.push_back((uint64_t)offsets[i]);
+        }
+    }
+
+    char* data = (char*)value_array->buffers[2];
+    std::string data_v(data, data + offsets_v[num_elems]);
+
+    std::vector<std::string> enums_in_write;
+    for (size_t i = 0; i < num_elems; ++i) {
+        auto beg = offsets_v[i];
+        auto sz = offsets_v[i + 1] - beg;
+        enums_in_write.push_back(data_v.substr(beg, sz));
+    }
+
+    std::string column_name = index_schema->name;
+    auto enmr = ArrayExperimental::get_enumeration(*ctx_, *array_, column_name);
+    std::vector<std::string> extend_values;
+    auto enums_existing = enmr.as_vector<std::string>();
+    for (auto enum_val : enums_in_write) {
+        if (std::find(enums_existing.begin(), enums_existing.end(), enum_val) ==
+            enums_existing.end()) {
+            extend_values.push_back(enum_val);
+        }
+    }
+
+    if (extend_values.size() != 0) {
+        // Check that we extend the enumeration values without
+        // overflowing
+        auto disk_index_type = schema_->attribute(column_name).type();
+        uint64_t max_capacity = ManagedQuery::_get_max_capacity(
+            disk_index_type);
+        auto free_capacity = max_capacity - enums_existing.size();
+        if (free_capacity < extend_values.size()) {
+            throw TileDBSOMAError(
+                "Cannot extend enumeration; reached maximum capacity");
+        }
+
+        auto extended_enmr = enmr.extend(extend_values);
+        se.extend_enumeration(extended_enmr);
+
+        ManagedQuery::_remap_indexes(
+            column_name,
+            extended_enmr,
+            enums_in_write,
+            index_schema,
+            index_array);
+
+        return true;
+    } else {
+        // Example:
+        //
+        // * Already on storage/schema there are values a,b,c with indices
+        //   0,1,2.
+        // * User appends values b,c which, within the Arrow data coming in
+        //   from the user, have indices 0,1.
+        // * We need to remap those to 1,2.
+
+        ManagedQuery::_remap_indexes(
+            column_name, enmr, enums_in_write, index_schema, index_array);
+    }
+    return false;
 }
 };  // namespace tiledbsoma
