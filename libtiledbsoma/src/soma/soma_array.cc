@@ -170,7 +170,8 @@ SOMAArray::SOMAArray(
     , result_order_(ResultOrder::automatic)
     , timestamp_(timestamp)
     , mq_(std::make_unique<ManagedQuery>(arr, ctx_->tiledb_ctx(), name_))
-    , arr_(arr) {
+    , arr_(arr)
+    , schema_(std::make_shared<ArraySchema>(arr->schema())) {
     reset({}, batch_size_, result_order_);
     fill_metadata_cache();
 }
@@ -356,7 +357,7 @@ std::vector<std::string> SOMAArray::attribute_names() const {
 }
 
 void SOMAArray::write(bool sort_coords) {
-    if (mq_->query_type() != TILEDB_WRITE) {
+    if (arr_->query_type() != TILEDB_WRITE) {
         throw TileDBSOMAError("[SOMAArray] array must be opened in write mode");
     }
     mq_->submit_write(sort_coords);
@@ -447,6 +448,7 @@ void SOMAArray::validate(
         LOG_TRACE(fmt::format("[SOMAArray] loading enumerations"));
         ArrayExperimental::load_all_enumerations(
             *ctx_->tiledb_ctx(), *(arr_.get()));
+        schema_ = std::make_shared<ArraySchema>(arr_->schema());
         mq_ = std::make_unique<ManagedQuery>(arr_, ctx_->tiledb_ctx(), name);
     } catch (const std::exception& e) {
         throw TileDBSOMAError(
@@ -580,7 +582,7 @@ ArrowTable SOMAArray::_get_core_domainish(enum Domainish which_kind) {
 
 uint64_t SOMAArray::nnz() {
     // Verify array is sparse
-    if (mq_->schema()->array_type() != TILEDB_SPARSE) {
+    if (schema_->array_type() != TILEDB_SPARSE) {
         throw TileDBSOMAError(
             "[SOMAArray] nnz is only supported for sparse arrays");
     }
@@ -621,7 +623,7 @@ uint64_t SOMAArray::nnz() {
         // If the application is allowing duplicates (in which case it's the
         // application's job to otherwise ensure uniqueness), then
         // sum-over-fragments is the right thing to do.
-        if (!mq_->schema()->allows_dups() && frag_ts.first != frag_ts.second) {
+        if (!schema_->allows_dups() && frag_ts.first != frag_ts.second) {
             return _nnz_slow();
         }
     }
@@ -712,7 +714,7 @@ uint64_t SOMAArray::_nnz_slow() {
         uri_,
         ctx_,
         "count_cells",
-        {mq_->schema()->domain().dimension(0).name()},
+        {schema_->domain().dimension(0).name()},
         batch_size_,
         result_order_,
         timestamp_);
@@ -749,7 +751,7 @@ StatusAndReason SOMAArray::_can_set_shape_helper(
     // E.g. it's an error to try to upgrade_domain or resize specifying
     // a 3-D shape on a 2-D array.
     auto arg_ndim = newshape.size();
-    auto array_ndim = arr_->schema().domain().ndim();
+    auto array_ndim = schema_->domain().ndim();
     if (array_ndim != arg_ndim) {
         return std::pair(
             false,
@@ -823,7 +825,7 @@ StatusAndReason SOMAArray::_can_set_shape_domainish_subhelper(
     const std::vector<int64_t>& newshape,
     bool check_current_domain,
     std::string function_name_for_messages) {
-    Domain domain = arr_->schema().domain();
+    Domain domain = schema_->domain();
 
     for (unsigned i = 0; i < domain.ndim(); i++) {
         const auto& dim = domain.dimension(i);
@@ -947,7 +949,7 @@ void SOMAArray::_set_shape_helper(
     const std::vector<int64_t>& newshape,
     bool must_already_have,
     std::string function_name_for_messages) {
-    if (mq_->query_type() != TILEDB_WRITE) {
+    if (arr_->query_type() != TILEDB_WRITE) {
         throw TileDBSOMAError(fmt::format(
             "{} array must be opened in write mode",
             function_name_for_messages));
@@ -1003,7 +1005,7 @@ void SOMAArray::_set_soma_joinid_shape_helper(
     int64_t newshape,
     bool must_already_have,
     std::string function_name_for_messages) {
-    if (mq_->query_type() != TILEDB_WRITE) {
+    if (arr_->query_type() != TILEDB_WRITE) {
         throw TileDBSOMAError(fmt::format(
             "{}: array must be opened in write mode",
             function_name_for_messages));
@@ -1382,7 +1384,7 @@ void SOMAArray::_set_domain_helper(
     const ArrowTable& newdomain,
     bool must_already_have,
     std::string function_name_for_messages) {
-    if (mq_->query_type() != TILEDB_WRITE) {
+    if (arr_->query_type() != TILEDB_WRITE) {
         throw TileDBSOMAError(fmt::format(
             "{}: array must be opened in write mode",
             function_name_for_messages));
@@ -1572,7 +1574,7 @@ std::vector<int64_t> SOMAArray::_tiledb_domain() {
     _check_dims_are_int64();
 
     std::vector<int64_t> result;
-    auto dimensions = mq_->schema()->domain().dimensions();
+    auto dimensions = schema_->domain().dimensions();
 
     for (const auto& dim : dimensions) {
         result.push_back(
@@ -1595,7 +1597,7 @@ std::optional<int64_t> SOMAArray::_maybe_soma_joinid_maxshape() {
 std::optional<int64_t> SOMAArray::_maybe_soma_joinid_tiledb_current_domain() {
     const std::string dim_name = "soma_joinid";
 
-    auto dom = arr_->schema().domain();
+    auto dom = schema_->domain();
     if (!dom.has_dimension(dim_name)) {
         return std::nullopt;
     }
@@ -1629,7 +1631,7 @@ std::optional<int64_t> SOMAArray::_maybe_soma_joinid_tiledb_current_domain() {
 std::optional<int64_t> SOMAArray::_maybe_soma_joinid_tiledb_domain() {
     const std::string dim_name = "soma_joinid";
 
-    auto dom = arr_->schema().domain();
+    auto dom = schema_->domain();
     if (!dom.has_dimension(dim_name)) {
         return std::nullopt;
     }

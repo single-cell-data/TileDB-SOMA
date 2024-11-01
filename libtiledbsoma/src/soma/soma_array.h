@@ -226,6 +226,7 @@ class SOMAArray : public SOMAObject {
         , mq_(std::make_unique<ManagedQuery>(
               other.arr_, other.ctx_->tiledb_ctx(), other.name_))
         , arr_(other.arr_)
+        , schema_(other.schema_)
         , meta_cache_arr_(other.meta_cache_arr_)
         , first_read_next_(other.first_read_next_)
         , submitted_(other.submitted_) {
@@ -299,8 +300,8 @@ class SOMAArray : public SOMAObject {
      * @return OpenMode
      */
     OpenMode mode() const {
-        return mq_->query_type() == TILEDB_READ ? OpenMode::read :
-                                                  OpenMode::write;
+        return arr_->query_type() == TILEDB_READ ? OpenMode::read :
+                                                   OpenMode::write;
     }
 
     /**
@@ -635,7 +636,7 @@ class SOMAArray : public SOMAObject {
      * @return std::shared_ptr<ArraySchema> Schema
      */
     std::shared_ptr<ArraySchema> tiledb_schema() const {
-        return mq_->schema();
+        return schema_;
     }
 
     /**
@@ -656,29 +657,8 @@ class SOMAArray : public SOMAObject {
      * @return PlatformConfig
      */
     PlatformConfig config_options_from_schema() const {
-        return ArrowAdapter::platform_config_from_tiledb_schema(*mq_->schema());
+        return ArrowAdapter::platform_config_from_tiledb_schema(*schema_);
     }
-
-    /**
-     * @brief Get the mapping of attributes to Enumerations.
-     *
-     * @return std::map<std::string, Enumeration>
-     */
-    std::map<std::string, Enumeration> get_attr_to_enum_mapping();
-
-    /**
-     * @brief Get the Enumeration name associated with the given Attr.
-     *
-     * @return std::optional<std::string> The enumeration name if one exists.
-     */
-    std::optional<std::string> get_enum_label_on_attr(std::string attr_name);
-
-    /**
-     * @brief Check if the given attribute has an associated enumeration.
-     *
-     * @return bool
-     */
-    bool attr_has_enum(std::string attr_name);
 
     /**
      * Set metadata key-value items to an open array. The array must
@@ -959,7 +939,7 @@ class SOMAArray : public SOMAObject {
                 "SOMAArray::_core_domain_slot: template-specialization "
                 "failure.");
         }
-        return arr_->schema().domain().dimension(name).domain<T>();
+        return schema_->domain().dimension(name).domain<T>();
     }
 
     std::pair<std::string, std::string> _core_domain_slot_string(
@@ -1343,7 +1323,7 @@ class SOMAArray : public SOMAObject {
      */
     CurrentDomain _get_current_domain() const {
         return tiledb::ArraySchemaExperimental::current_domain(
-            *ctx_->tiledb_ctx(), arr_->schema());
+            *ctx_->tiledb_ctx(), *schema_);
     }
 
     /**
@@ -1586,6 +1566,12 @@ class SOMAArray : public SOMAObject {
 
     // Array associated with mq_
     std::shared_ptr<Array> arr_;
+
+    // The TileDB ArraySchema. The schema is inaccessible when the TileDB Array
+    // is closed or opened in write mode which means we cannot use arr->schema()
+    // directly in those cases. Here, we store a copy of the schema so that it
+    // can be accessed in any mode
+    std::shared_ptr<ArraySchema> schema_;
 
     // Array associated with metadata_. Metadata values need to be
     // accessible in write mode as well. We need to keep this read-mode
