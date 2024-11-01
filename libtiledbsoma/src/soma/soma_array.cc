@@ -250,6 +250,25 @@ void SOMAArray::reset(
 
     if (!column_names.empty()) {
         mq_->select_columns(column_names);
+    } else {
+        // Hide internal columns if any
+        std::vector<std::string> columns;
+        for (const auto& dim : this->tiledb_schema()->domain().dimensions()) {
+            columns.push_back(dim.name());
+        }
+
+        for (size_t i = 0; i < this->tiledb_schema()->attribute_num(); ++i) {
+            columns.push_back(this->tiledb_schema()->attribute(i).name());
+        }
+        auto is_internal = [](std::string name) {
+            return name.rfind(SOMA_GEOMETRY_DIMENSION_PREFIX, 0) == 0;
+        };
+
+        auto internal_end = std::remove_if(
+            columns.begin(), columns.end(), is_internal);
+        columns.erase(internal_end, columns.end());
+
+        mq_->select_columns(columns);
     }
 
     switch (result_order) {
