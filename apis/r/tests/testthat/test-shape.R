@@ -566,7 +566,9 @@ test_that("SOMADenseNDArray shape", {
       expect_true(all(readback_shape == readback_maxshape))
     }
 
-    expect_true(all(readback_shape == readback_maxshape))
+    if (! tiledbsoma:::.dense_arrays_can_have_current_domain()) {
+      expect_equal(readback_shape, readback_maxshape)
+    }
 
     ndarray$close()
 
@@ -614,9 +616,9 @@ test_that("SOMADenseNDArray shape", {
       ndarray <- SOMADenseNDArrayOpen(uri, "WRITE")
       mat <- create_dense_matrix_with_int_dims(300, 400)
       if (tiledbsoma:::.dense_arrays_can_have_current_domain()) {
-        expect_no_error(ndarray$write(sm))
+        expect_no_error(ndarray$write(mat))
       } else {
-        expect_error(ndarray$write(sm))
+        expect_error(ndarray$write(mat))
       }
       ndarray$close()
 
