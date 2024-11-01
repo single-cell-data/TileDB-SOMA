@@ -148,6 +148,14 @@ void ManagedQuery::setup_read() {
         for (int i = 0; i < attribute_num; i++) {
             columns_.push_back(schema.attribute(i).name());
         }
+
+        auto is_internal = [](std::string name) {
+            return name.rfind(SOMA_GEOMETRY_DIMENSION_PREFIX, 0) == 0;
+        };
+
+        auto internal_end = std::remove_if(
+            columns_.begin(), columns_.end(), is_internal);
+        columns_.erase(internal_end, columns_.end());
     }
 
     // Allocate and attach buffers
