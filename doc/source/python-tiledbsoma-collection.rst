@@ -13,27 +13,29 @@
       :toctree: _generated
 
       ~Collection.__init__
+      ~Collection.exists
+      ~Collection.create
+      ~Collection.open
+      ~Collection.reopen
+      ~Collection.close
+      ~Collection.verify_open_for_writing
+
+      ~Collection.items
+      ~Collection.keys
+      ~Collection.values
+      ~Collection.members
+      ~Collection.get
+      ~Collection.set
+      ~Collection.update
+      ~Collection.clear
+      ~Collection.pop
+      ~Collection.popitem
+      ~Collection.setdefault
+
       ~Collection.add_new_collection
       ~Collection.add_new_dataframe
       ~Collection.add_new_dense_ndarray
       ~Collection.add_new_sparse_ndarray
-      ~Collection.clear
-      ~Collection.close
-      ~Collection.create
-      ~Collection.exists
-      ~Collection.get
-      ~Collection.items
-      ~Collection.keys
-      ~Collection.members
-      ~Collection.open
-      ~Collection.pop
-      ~Collection.popitem
-      ~Collection.reopen
-      ~Collection.set
-      ~Collection.setdefault
-      ~Collection.update
-      ~Collection.values
-      ~Collection.verify_open_for_writing
 
    .. rubric:: Attributes
 

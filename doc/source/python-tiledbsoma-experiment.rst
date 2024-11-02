@@ -13,28 +13,31 @@
       :toctree: _generated
 
       ~Experiment.__init__
+      ~Experiment.exists
+      ~Experiment.create
+      ~Experiment.open
+      ~Experiment.reopen
+      ~Experiment.close
+      ~Experiment.verify_open_for_writing
+
+      ~Experiment.items
+      ~Experiment.keys
+      ~Experiment.values
+      ~Experiment.members
+      ~Experiment.get
+      ~Experiment.set
+      ~Experiment.update
+      ~Experiment.clear
+      ~Experiment.pop
+      ~Experiment.popitem
+      ~Experiment.setdefault
+
       ~Experiment.add_new_collection
       ~Experiment.add_new_dataframe
       ~Experiment.add_new_dense_ndarray
       ~Experiment.add_new_sparse_ndarray
+
       ~Experiment.axis_query
-      ~Experiment.clear
-      ~Experiment.close
-      ~Experiment.create
-      ~Experiment.exists
-      ~Experiment.get
-      ~Experiment.items
-      ~Experiment.keys
-      ~Experiment.members
-      ~Experiment.open
-      ~Experiment.pop
-      ~Experiment.popitem
-      ~Experiment.reopen
-      ~Experiment.set
-      ~Experiment.setdefault
-      ~Experiment.update
-      ~Experiment.values
-      ~Experiment.verify_open_for_writing
 
    .. rubric:: Attributes
 

@@ -13,39 +13,46 @@
       :toctree: _generated
 
       ~DataFrame.__init__
-      ~DataFrame.change_domain
-      ~DataFrame.close
-      ~DataFrame.config_options_from_schema
-      ~DataFrame.create
       ~DataFrame.exists
-      ~DataFrame.keys
-      ~DataFrame.non_empty_domain
+      ~DataFrame.create
       ~DataFrame.open
-      ~DataFrame.read
       ~DataFrame.reopen
-      ~DataFrame.tiledbsoma_resize_soma_joinid_shape
-      ~DataFrame.tiledbsoma_upgrade_domain
-      ~DataFrame.tiledbsoma_upgrade_soma_joinid_shape
-      ~DataFrame.verify_open_for_writing
+      ~DataFrame.close
+      ~DataFrame.read
       ~DataFrame.write
+      ~DataFrame.verify_open_for_writing
+
+      ~DataFrame.keys
+
+      ~DataFrame.tiledbsoma_upgrade_domain
+      ~DataFrame.change_domain
+      ~DataFrame.tiledbsoma_resize_soma_joinid_shape
+      ~DataFrame.tiledbsoma_upgrade_soma_joinid_shape
+      ~DataFrame.non_empty_domain
+
+      ~DataFrame.config_options_from_schema
 
    .. rubric:: Attributes
 
    .. autosummary::
       :toctree: _generated
 
-      ~DataFrame.closed
-      ~DataFrame.context
+      ~DataFrame.uri
+      ~DataFrame.soma_type
+      ~DataFrame.schema
+      ~DataFrame.index_column_names
+
       ~DataFrame.count
       ~DataFrame.domain
-      ~DataFrame.index_column_names
       ~DataFrame.maxdomain
-      ~DataFrame.metadata
+      ~DataFrame.tiledbsoma_has_upgraded_domain
+
       ~DataFrame.mode
-      ~DataFrame.schema
-      ~DataFrame.soma_type
+      ~DataFrame.closed
+
+      ~DataFrame.context
       ~DataFrame.tiledb_timestamp
       ~DataFrame.tiledb_timestamp_ms
-      ~DataFrame.tiledbsoma_has_upgraded_domain
-      ~DataFrame.uri
+
+      ~DataFrame.metadata
 
