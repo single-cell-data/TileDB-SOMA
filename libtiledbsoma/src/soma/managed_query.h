@@ -221,11 +221,9 @@ class ManagedQuery {
     /**
      * @brief Set query result order (layout).
      *
-     * @param layout A tiledb_layout_t constant
+     * @param layout A ResultOrder constant
      */
-    void set_layout(tiledb_layout_t layout) {
-        query_->set_layout(layout);
-    }
+    void set_layout(ResultOrder layout);
 
     /**
      * @brief Set column data for write query.
