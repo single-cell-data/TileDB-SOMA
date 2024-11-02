@@ -48,6 +48,7 @@
 namespace tiledbsoma {
 
 using namespace tiledb;
+class SOMAArray;
 
 // Probably we should just use a std::tuple here
 class StatusAndException {
@@ -83,6 +84,11 @@ class ManagedQuery {
      */
     ManagedQuery(
         std::shared_ptr<Array> array,
+        std::shared_ptr<Context> ctx,
+        std::string_view name = "unnamed");
+
+    ManagedQuery(
+        std::unique_ptr<SOMAArray> array,
         std::shared_ptr<Context> ctx,
         std::string_view name = "unnamed");
 
@@ -404,6 +410,16 @@ class ManagedQuery {
      */
     tiledb_query_type_t query_type() const {
         return query_->query_type();
+    }
+
+    /**
+     * @brief Return the query status.
+     *
+     * @return tiledb::Query::Status INCOMPLETE, COMPLETE, INPROGRESS, FAILED,
+     * UNINITIALIZED, or INITIALIZED
+     */
+    Query::Status query_status() const {
+        return query_->query_status();
     }
 
    private:
