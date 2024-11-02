@@ -437,13 +437,18 @@ class DataFrame(SOMAArray, somacore.DataFrame):
     ) -> StatusAndReason:
         """Increases the shape of the dataframe on the ``soma_joinid`` index
         column, if it indeed is an index column, leaving all other index columns
-        as-is. If the ``soma_joinid`` is not an index column, no change is made.
-        This is a special case of ``upgrade_domain`` (WIP for 1.15), but simpler
-        to keystroke, and handles the most common case for dataframe domain
-        expansion.  Raises an error if the dataframe doesn't already have a
-        domain: in that case please call ``tiledbsoma_upgrade_domain`` (WIP for
-        1.15).  If ``check_only`` is ``True``, returns whether the operation
-        would succeed if attempted, and a reason why it would not.
+        as-is.
+
+        If the ``soma_joinid`` is not an index column, no change is made.  This
+        is a special case of ``upgrade_domain``, but simpler to
+        keystroke, and handles the most common case for dataframe domain
+        expansion.
+
+        Raises an error if the dataframe doesn't already have a domain: in that
+        case please call ``tiledbsoma_upgrade_domain``.
+
+        If ``check_only`` is ``True``, returns whether the operation would
+        succeed if attempted, and a reason why it would not.
         """
         frame = inspect.currentframe()
         function_name_for_messages = frame.f_code.co_name if frame else "tiledbsoma"
@@ -467,11 +472,12 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         self, newshape: int, check_only: bool = False
     ) -> StatusAndReason:
         """This is like ``upgrade_domain``, but it only applies the specified
-        domain update to the ``soma_joinid`` index column. Any other index
-        columns have their domain set to match the maxdomain. If the
-        ``soma_joinid`` column is not an index column at all, then no action is
-        taken.  If ``check_only`` is ``True``, returns whether the operation
-        would succeed if attempted, and a reason why it would not.
+        domain update to the ``soma_joinid`` index column. (It's a
+        keystroke-saver.) Any other index columns have their domain set to match
+        the maxdomain. If the ``soma_joinid`` column is not an index column at
+        all, then no action is taken.  If ``check_only`` is ``True``, returns
+        whether the operation would succeed if attempted, and a reason why it
+        would not.
         """
         frame = inspect.currentframe()
         function_name_for_messages = frame.f_code.co_name if frame else "tiledbsoma"
@@ -540,13 +546,22 @@ class DataFrame(SOMAArray, somacore.DataFrame):
     def tiledbsoma_upgrade_domain(
         self, newdomain: Domain, check_only: bool = False
     ) -> StatusAndReason:
-        """Allows you to set the domain of a SOMA :class:`DataFrame``, when the
-        ``DataFrame`` does not have a domain set yet.  The argument must be a
-        tuple of pairs of low/high values for the desired domain, one pair per
-        index column. For string index columns, you must offer the low/high pair
-        as `("", "")`, or as `None`.  If ``check_only`` is ``True``, returns
-        whether the operation would succeed if attempted, and a reason why it
-        would not.
+        """Allows you to set the domain of a SOMA :class:`DataFrame`, when the
+        ``DataFrame`` does not have a domain set yet.
+
+        The argument must be a tuple of pairs of low/high values for the desired
+        domain, one pair per index column. For string index columns, you must
+        offer the low/high pair as `("", "")`, or as `None`.  If ``check_only``
+        is ``True``, returns whether the operation would succeed if attempted,
+        and a reason why it would not.
+
+        The discussion at ``change_domain`` applies here in its entirety,
+        with the following exception: The ``tiledbsoma_upgrade_domain``
+        method is used to apply a ``domain`` to a dataframe created before
+        TileDB-SOMA 1.15. The ``change_domain`` method is used only for
+        a dataframe that already has a domain set, whether it's an older
+        dataframe that has had ``tiledbsoma_upgrade_domain`` applied to it,
+        or it's a newer dataframe created by TileDB-SOMA 1.15 or later.
         """
         frame = inspect.currentframe()
         function_name_for_messages = frame.f_code.co_name if frame else "tiledbsoma"
@@ -574,12 +589,34 @@ class DataFrame(SOMAArray, somacore.DataFrame):
     def change_domain(
         self, newdomain: Domain, check_only: bool = False
     ) -> StatusAndReason:
-        """Allows you to enlarge the domain of a SOMA :class:`DataFrame``, when
-        the ``DataFrame`` already has a domain.  The argument must be a tuple of
-        pairs of low/high values for the desired domain, one pair per index
-        column. For string index columns, you must offer the low/high pair as
-        `("", "")`, or as `None`.  If ``check_only`` is ``True``, returns whether
-        the operation would succeed if attempted, and a reason why it would not.
+        """Allows you to enlarge the domain of a SOMA :class:`DataFrame`, when
+        the ``DataFrame`` already has a domain.
+
+        The argument must be a tuple of pairs of low/high values for the desired
+        domain, one pair per index column. For string index columns, you must
+        offer the low/high pair as `("", "")`, or as `None`.  If ``check_only``
+        is ``True``, returns whether the operation would succeed if attempted,
+        and a reason why it would not.
+
+        For example, suppose the dataframe's sole index-column name is
+        ``"soma_joinid"`` (which is the default at create).  If the dataframe's
+        ``.maxdomain`` is ``((0, 999999),)`` and its ``.domain`` is ``((0,
+        2899),)``, this means that ``soma_joinid`` values between 0 and 2899 can
+        be read or written; any attempt to read or write ``soma_joinid`` values
+        outside this range will result in an error. If you then apply
+        ``.change_domain([(0, 5700)])``, then ``.domain`` will
+        report ``((0, 5699),)``, and now ``soma_joinid`` values in the range 0
+        to 5699 can now be written to the dataframe.
+
+        If you use non-default ``index_column_names`` in the dataframe's
+        ``create`` then you need to specify the (low, high) pairs for each
+        index column. For example, if the dataframe's ``index_column_names``
+        is ``["soma_joinid", "cell_type"]``, then you can upgrade domain using
+        ``[(0, 5699), ("", "")]``.
+
+        Lastly, it is an error to try to set the ``domain`` to be smaller than
+        ``maxdomain`` along any index column.  The ``maxdomain`` of a dataframe is
+        set at creation time, and cannot be extended afterward.
         """
         frame = inspect.currentframe()
         function_name_for_messages = frame.f_code.co_name if frame else "tiledbsoma"
