@@ -279,7 +279,7 @@ def from_h5ad(
           ``obs`` / ``var``.
 
           NOTE: it is not necessary for this column to be the index-column
-          name in the input AnnData objects ``obs``/``var``.
+          name in the input AnnData object's ``obs``/``var``.
 
         X_layer_name: SOMA array name for the AnnData's ``X`` matrix.
 
@@ -759,7 +759,7 @@ def append_obs(
     Writes new rows to an existing ``obs`` dataframe. (This is distinct from ``update_obs``
     which mutates the entirety of the ``obs`` dataframe, e.g. to add/remove columns.)
 
-    Example:
+    Example::
 
         rd = tiledbsoma.io.register_anndatas(
             exp_uri,
@@ -817,7 +817,7 @@ def append_var(
     Writes new rows to an existing ``var`` dataframe. (This is distinct from ``update_var``
     which mutates the entirety of the ``var`` dataframe, e.g. to add/remove columns.)
 
-    Example:
+    Example::
 
         rd = tiledbsoma.io.register_anndatas(
             exp_uri,
@@ -886,7 +886,7 @@ def append_X(
     with ``update_obs`` and ``update_var``, as an itemized alternative to doing
     ``from_anndata`` with a registration mapping supplied.
 
-    Example:
+    Example::
 
         rd = tiledbsoma.io.register_anndatas(
             exp_uri,
@@ -1413,18 +1413,17 @@ def update_obs(
     type for the column, the entire update will raise a ``ValueError`` exception.
 
     Args:
-        exp: The :class:`SOMAExperiment` whose ``obs`` is to be updated. Must
-        be opened for write.
+        exp: The :class:`SOMAExperiment` whose ``obs`` is to be updated. Must be opened for write.
 
         new_data: a Pandas dataframe with the desired contents.
 
         context: Optional :class:`SOMATileDBContext` containing storage parameters, etc.
 
-        platform_config: Platform-specific options used to update this array, provided
-        in the form ``{"tiledb": {"create": {"dataframe_dim_zstd_level": 7}}}``
+        platform_config: Platform-specific options used to update this array, provided in the form
+            ``{"tiledb": {"create": {"dataframe_dim_zstd_level": 7}}}``
 
-        default_index_name: What to call the ``new_data`` index column if it is
-        nameless in Pandas, or has name ``"index"``.
+        default_index_name: What to call the ``new_data`` index column if it is nameless in Pandas,
+            or has name ``"index"``.
 
     Returns:
         None
@@ -1473,11 +1472,11 @@ def update_var(
 
         context: Optional :class:`SOMATileDBContext` containing storage parameters, etc.
 
-        platform_config: Platform-specific options used to update this array, provided
-        in the form ``{"tiledb": {"create": {"dataframe_dim_zstd_level": 7}}}``
+        platform_config: Platform-specific options used to update this array, provided in the form
+            ``{"tiledb": {"create": {"dataframe_dim_zstd_level": 7}}}``
 
-        default_index_name: What to call the ``new_data`` index column if it is
-        nameless in Pandas, or has name ``"index"``.
+        default_index_name: What to call the ``new_data`` index column if it is nameless in Pandas,
+            or has name ``"index"``.
 
     Returns:
         None
@@ -1615,7 +1614,7 @@ def update_matrix(
     intended shape of written contents of the array match those of the existing
     data. The intended use-case is to replace updated numerical values.
 
-    Example:
+    Example::
 
         with tiledbsoma.Experiment.open(uri, "w") as exp:
             tiledbsoma.io.update_matrix(
@@ -1633,7 +1632,7 @@ def update_matrix(
         context: Optional :class:`SOMATileDBContext` containing storage parameters, etc.
 
         platform_config: Platform-specific options used to update this array, provided
-        in the form ``{"tiledb": {"create": {"dataframe_dim_zstd_level": 7}}}``
+            in the form ``{"tiledb": {"create": {"dataframe_dim_zstd_level": 7}}}``
 
     Returns:
         None
@@ -1740,8 +1739,7 @@ def add_matrix_to_collection(
     context: Optional[SOMATileDBContext] = None,
 ) -> None:
     """This is useful for adding X/obsp/varm/etc data, for example from
-    `Scanpy <https://scanpy.readthedocs.io/>`_'s ``scanpy.pp.normalize_total``,
-    ``scanpy.pp.log1p``, etc.
+    Scanpy's ``scanpy.pp.normalize_total``, ``scanpy.pp.log1p``, etc.
 
     Use ``ingest_mode="resume"`` to not error out if the schema already exists.
 

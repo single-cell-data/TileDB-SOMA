@@ -428,7 +428,7 @@ class DataFrame(SOMAArray, somacore.DataFrame):
     def tiledbsoma_has_upgraded_domain(self) -> bool:
         """Returns true if the array has the upgraded resizeable domain feature
         from TileDB-SOMA 1.15: the array was created with this support, or it has
-        had ``.tiledbsoma_upgrade_domain`` applied to it.
+        had ``tiledbsoma_upgrade_domain`` applied to it.
 
         Lifecycle:
             Maturing.

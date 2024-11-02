@@ -528,7 +528,7 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
 
     def used_shape(self) -> Tuple[Tuple[int, int], ...]:
         """
-        Retrieve the range of indexes for a dimension that were explicitly written.
+        Retrieve the range of indexes for a dimension that were explicitly written (deprecated).
         Compare this to ``shape`` which returns the available/writable capacity.
 
         This method is deprecated as of TileDB-SOMA 1.13, and will be removed in TileDB-SOMA 1.15.

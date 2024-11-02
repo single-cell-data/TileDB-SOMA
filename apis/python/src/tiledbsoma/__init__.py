@@ -83,7 +83,6 @@ Most errors will be signaled with a raised Exception. Of note:
 - :class:`NotImplementedError` will be raised when the requested function or method
   is unsupported.
 - :class:`SOMAError` is a base class for all SOMA-specific errors.
-- ``TileDBError`` will be raised for many TileDB-specific errors.
 
 Most errors will raise an appropriate Python error, e.g., ::class:`TypeError` or
 :class:`ValueError`.

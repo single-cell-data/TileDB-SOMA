@@ -118,7 +118,7 @@ def resize_experiment(
     output_handle: Printable = cast(Printable, sys.stdout),
 ) -> bool:
     """For each dataframe contained within the SOMA ``Experiment`` pointed to by
-    the given URI, resizes the ``domain`` for the ``soma_joinid index column
+    the given URI, resizes the ``domain`` for the ``soma_joinid`` index column
     (if it is an indexed column) to match the desired new value.
 
     The desired new value may be the same size as at present, or bigger, but not
@@ -137,10 +137,10 @@ def resize_experiment(
     given dimension, or bigger, but not exceeding ``maxshape`` for the given
     dimension.
 
-    If any array has not been upgraded, then its resize will fail.
+    If any array has not been upgraded, then the experiment's ``resize`` will fail.
 
     Args:
-        uri: The URI of a SOMA :class:`Experiment``.
+        uri: The URI of a SOMA :class:`Experiment`.
         nobs: The desired new shape of the experiment's ``obs`` dataframe.
         nvars: The desired new shapes of the experiment's ``var`` dataframes.
             This should be a dict from measurement name to shape, e.g.

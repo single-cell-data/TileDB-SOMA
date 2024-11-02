@@ -69,8 +69,7 @@ def to_h5ad(
     obsm_varm_width_hints: Optional[Dict[str, Dict[str, int]]] = None,
     uns_keys: Optional[Sequence[str]] = None,
 ) -> None:
-    """Converts the experiment group to `AnnData <https://anndata.readthedocs.io/>`_
-    format and writes it to the specified ``.h5ad`` file.
+    """Converts the experiment group to AnnData format and writes it to the specified ``.h5ad`` file.
 
     Arguments are as in ``to_anndata``.
 
@@ -203,14 +202,14 @@ def to_anndata(
     obsm_varm_width_hints: Optional[Dict[str, Dict[str, int]]] = None,
     uns_keys: Optional[Sequence[str]] = None,
 ) -> ad.AnnData:
-    """Converts the experiment group to `AnnData <https://anndata.readthedocs.io/>`_
-    format. Choice of matrix formats is following what we often see in input
-    ``.h5ad`` files:
+    """Converts the experiment group to AnnData format.
+
+    The choice of matrix formats is following what we often see in input ``.h5ad`` files:
 
     * ``X`` as ``scipy.sparse.csr_matrix``
-    * ``obs``,``var`` as ``pandas.dataframe``
-    * ``obsm``,``varm`` arrays as ``numpy.ndarray``
-    * ``obsp``,``varp`` arrays as ``scipy.sparse.csr_matrix``
+    * ``obs``, ``var`` as ``pandas.dataframe``
+    * ``obsm``, ``varm`` arrays as ``numpy.ndarray``
+    * ``obsp``, ``varp`` arrays as ``scipy.sparse.csr_matrix``
 
     The ``X_layer_name`` is the name of the TileDB-SOMA measurement's ``X``
     collection which will be outgested to the resulting AnnData object's
