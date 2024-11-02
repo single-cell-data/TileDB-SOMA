@@ -614,7 +614,7 @@ test_that("SOMADenseNDArray shape", {
 
       # Test writes within new bounds
       ndarray <- SOMADenseNDArrayOpen(uri, "WRITE")
-      mat <- create_dense_matrix_with_int_dims(300, 400)
+      mat <- create_dense_matrix_with_int_dims(500, 600)
       if (tiledbsoma:::.dense_arrays_can_have_current_domain()) {
         expect_no_error(ndarray$write(mat))
       } else {
@@ -625,7 +625,7 @@ test_that("SOMADenseNDArray shape", {
       ndarray <- SOMADenseNDArrayOpen(uri)
       coords <- list(bit64::as.integer64(c(101, 202)), bit64::as.integer64(c(3, 4)))
       if (tiledbsoma:::.dense_arrays_can_have_current_domain()) {
-        expect_no_condition(x <- ndarray$read(coords = coords)$tables()$concat())
+        expect_no_condition(x <- ndarray$read_dense_matrix(coords = coords))
       } else {
         expect_error(x <- ndarray$read(coords = coords)$tables()$concat())
       }
