@@ -26,11 +26,11 @@
       ~Collection.members
       ~Collection.get
       ~Collection.set
+      ~Collection.setdefault
       ~Collection.update
       ~Collection.clear
       ~Collection.pop
       ~Collection.popitem
-      ~Collection.setdefault
 
       ~Collection.add_new_collection
       ~Collection.add_new_dataframe
@@ -42,12 +42,13 @@
    .. autosummary::
       :toctree: _generated
 
+      ~Collection.uri
       ~Collection.closed
       ~Collection.context
       ~Collection.metadata
+
       ~Collection.mode
       ~Collection.soma_type
       ~Collection.tiledb_timestamp
       ~Collection.tiledb_timestamp_ms
-      ~Collection.uri
 
