@@ -464,7 +464,9 @@ def _cast_domainish(domainish: List[Any]) -> Tuple[Tuple[object, object], ...]:
     return tuple(result)
 
 
-def _set_coords(sarr: clib.SOMAArray, coords: options.SparseNDCoords) -> None:
+def _set_coords(
+    mq: clib.ManagedQuery, sarr: clib.SOMAArray, coords: options.SparseNDCoords
+) -> None:
     if not is_nonstringy_sequence(coords):
         raise TypeError(
             f"coords type {type(coords)} must be a regular sequence,"
@@ -478,10 +480,12 @@ def _set_coords(sarr: clib.SOMAArray, coords: options.SparseNDCoords) -> None:
         )
 
     for i, coord in enumerate(coords):
-        _set_coord(i, sarr, coord)
+        _set_coord(i, mq, sarr, coord)
 
 
-def _set_coord(dim_idx: int, sarr: clib.SOMAArray, coord: object) -> None:
+def _set_coord(
+    dim_idx: int, mq: clib.ManagedQuery, sarr: clib.SOMAArray, coord: object
+) -> None:
     if coord is None:
         return
 
@@ -489,19 +493,19 @@ def _set_coord(dim_idx: int, sarr: clib.SOMAArray, coord: object) -> None:
     dom = _cast_domainish(sarr.domain())[dim_idx]
 
     if isinstance(coord, (str, bytes)):
-        sarr.set_dim_points_string_or_bytes(dim.name, [coord])
+        mq.set_dim_points_string_or_bytes(dim.name, [coord])
         return
 
     if isinstance(coord, (pa.Array, pa.ChunkedArray)):
-        sarr.set_dim_points_arrow(dim.name, coord)
+        mq.set_dim_points_arrow(dim.name, coord)
         return
 
     if isinstance(coord, (Sequence, np.ndarray)):
-        _set_coord_by_py_seq_or_np_array(sarr, dim, coord)
+        _set_coord_by_py_seq_or_np_array(mq, dim, coord)
         return
 
     if isinstance(coord, int):
-        sarr.set_dim_points_int64(dim.name, [coord])
+        mq.set_dim_points_int64(dim.name, [coord])
         return
 
     # Note: slice(None, None) matches the is_slice_of part, unless we also check
@@ -520,7 +524,7 @@ def _set_coord(dim_idx: int, sarr: clib.SOMAArray, coord: object) -> None:
             _, stop = ned[dim_idx]
         else:
             stop = coord.stop
-        sarr.set_dim_ranges_string_or_bytes(dim.name, [(start, stop)])
+        mq.set_dim_ranges_string_or_bytes(dim.name, [(start, stop)])
         return
 
     # Note: slice(None, None) matches the is_slice_of part, unless we also check
@@ -543,21 +547,21 @@ def _set_coord(dim_idx: int, sarr: clib.SOMAArray, coord: object) -> None:
         else:
             istop = ts_dom[1].as_py()
 
-        sarr.set_dim_ranges_int64(dim.name, [(istart, istop)])
+        mq.set_dim_ranges_int64(dim.name, [(istart, istop)])
         return
 
     if isinstance(coord, slice):
         validate_slice(coord)
         if coord.start is None and coord.stop is None:
             return
-        _set_coord_by_numeric_slice(sarr, dim, dom, coord)
+        _set_coord_by_numeric_slice(mq, dim, dom, coord)
         return
 
     raise TypeError(f"unhandled type {dim.type} for index column named {dim.name}")
 
 
 def _set_coord_by_py_seq_or_np_array(
-    sarr: clib.SOMAArray, dim: pa.Field, coord: object
+    mq: clib.ManagedQuery, dim: pa.Field, coord: object
 ) -> None:
     if isinstance(coord, np.ndarray):
         if coord.ndim != 1:
@@ -566,7 +570,7 @@ def _set_coord_by_py_seq_or_np_array(
             )
 
     try:
-        set_dim_points = getattr(sarr, f"set_dim_points_{dim.type}")
+        set_dim_points = getattr(mq, f"set_dim_points_{dim.type}")
     except AttributeError:
         # We have to handle this type specially below
         pass
@@ -575,7 +579,7 @@ def _set_coord_by_py_seq_or_np_array(
         return
 
     if pa_types_is_string_or_bytes(dim.type):
-        sarr.set_dim_points_string_or_bytes(dim.name, coord)
+        mq.set_dim_points_string_or_bytes(dim.name, coord)
         return
 
     if pa.types.is_timestamp(dim.type):
@@ -586,14 +590,14 @@ def _set_coord_by_py_seq_or_np_array(
         icoord = [
             int(e.astype("int64")) if isinstance(e, np.datetime64) else e for e in coord
         ]
-        sarr.set_dim_points_int64(dim.name, icoord)
+        mq.set_dim_points_int64(dim.name, icoord)
         return
 
     raise ValueError(f"unhandled type {dim.type} for index column named {dim.name}")
 
 
 def _set_coord_by_numeric_slice(
-    sarr: clib.SOMAArray, dim: pa.Field, dom: Tuple[object, object], coord: Slice[Any]
+    mq: clib.ManagedQuery, dim: pa.Field, dom: Tuple[object, object], coord: Slice[Any]
 ) -> None:
     try:
         lo_hi = slice_to_numeric_range(coord, dom)
@@ -604,7 +608,7 @@ def _set_coord_by_numeric_slice(
         return
 
     try:
-        set_dim_range = getattr(sarr, f"set_dim_ranges_{dim.type}")
+        set_dim_range = getattr(mq, f"set_dim_ranges_{dim.type}")
         set_dim_range(dim.name, [lo_hi])
         return
     except AttributeError:
