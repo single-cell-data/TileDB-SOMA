@@ -185,6 +185,94 @@ uns_hint <- function(type = c("1d", "2d")) {
   }
 }
 
+#' Generate a SOMA Metadata Type Hint
+#'
+#' @param type A character vector giving the class of an object
+#'
+#' @return A named list where the name is \dQuote{\code{soma_r_type_hint}} and
+#' the value is a single string value giving the R class; this value changes
+#' based on the type of object a type hint is being generated for
+#' \describe{
+#'  \item{Simple S3 objects}{the R class (eg. \dQuote{\code{data.frame}})}
+#'  \item{S3 classes with inheritance}{a JSON-array encoding of the R class
+#'   (eg. \dQuote{\code{["matrix", "array"]}})}
+#'  \item{S4 classes}{the R package and class encoded in
+#'   \dQuote{\code{pkg:class}} form (eg. \dQuote{\code{Matrix:dgCMatrix}})}
+#' }
+#'
+#' @keywords internal
+#'
+#' @examples
+#' # Type hint for S3 classes
+#' .type_hint("data.frame") # data.frame
+#'
+#' # Type hint for complex S3 classes
+#' .type_hint(class(matrix())) # ["matrix","array"]
+#'
+#' # Type hint for S4 classes
+#' .type_hint(class(Matrix::Matrix())) # Matrix::ldiMatrix
+#'
+#' @noRd
+#'
+.type_hint <- function(type) {
+  nm <- 'soma_r_type_hint'
+  if (is.null(type)) {
+    hint <- list(NULL)
+    names(hint) <- nm
+    return(hint)
+  }
+  stopifnot(
+    "'type' must be a non-empty character" = is.character(type) && all(nzchar(type))
+  )
+  def <- if (length(type) > 1L) {
+    paste0('[', paste(dQuote(type, FALSE), collapse = ','), ']')
+  } else {
+    tryCatch(
+      expr = methods::getClassDef(type),
+      error = function(e) type
+    )
+  }
+  if (inherits(def, c('classUnionRepresentation', 'refClassRepresentation'))) {
+    def <- sprintf('%s:%s', def@package, def@className)
+  } else if (inherits(def, 'classRepresentation')) {
+    btypes <- vapply_char(
+      X = gsub(
+        pattern = '^is\\.',
+        replacement = '',
+        x = grep(
+          pattern = '<-',
+          x = grep(
+            pattern = '^is\\.',
+            x = lsf.str(envir = baseenv()),
+            value = TRUE
+          ),
+          value = TRUE,
+          invert = TRUE
+        )
+      ),
+      FUN = function(x) ifelse(
+        test = grepl(pattern = '^data\\.frame', x = x),
+        yes = paste(strsplit(x, split = '\\.')[[1L]][1:2], collapse = '.'),
+        no = strsplit(x, split = '\\.')[[1L]][1L]
+      ),
+      USE.NAMES = FALSE
+    )
+    def <- switch(
+      EXPR = def@package,
+      methods = {
+        def <- if ('oldClass' %in% names(def@contains) || def@className %in% btypes) {
+          as.character(def@className)
+        } else {
+          sprintf('%s:%s', def@package, def@className)
+        }
+        def
+      },
+      sprintf(fmt = '%s:%s', def@package, def@className)
+    )
+  }
+  return(list(soma_r_type_hint = def))
+}
+
 #' Read the SOMA Join IDs from an Array
 #'
 #' @param x A \code{\link{SOMASparseNDarray}} or \code{\link{SOMADataFrame}}

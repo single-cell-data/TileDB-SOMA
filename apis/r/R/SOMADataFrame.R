@@ -526,7 +526,8 @@ SOMADataFrame <- R6::R6Class(
         "All 'index_column_names' must be defined in the 'schema'" =
           assert_subset(index_column_names, schema$names, "indexed field"),
         "Column names must not start with reserved prefix 'soma_'" =
-          all(!startsWith(setdiff(schema$names, "soma_joinid"), "soma_"))
+          all(!startsWith(setdiff(schema$names, "soma_joinid"), "soma_")) ||
+          isTRUE(getOption("tiledbsoma.write_soma.internal", default = FALSE))
       )
 
       # Add soma_joinid column if not present

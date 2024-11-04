@@ -23,6 +23,7 @@
 * Plumb old-style `SOMATileDBContext` into new-style `soma_context()` [#3252](https://github.com/single-cell-data/TileDB-SOMA/pull/3252)
 * Fixes for dense arrays and yet-to-be-released core 2.27 [#3270](https://github.com/single-cell-data/TileDB-SOMA/pull/3270)
 * More fixes for unit-test cases with dense + core 2.27 [#3280](https://github.com/single-cell-data/TileDB-SOMA/pull/3280)
+* Add support for writing Seurat v5 ragged arrays
 
 # tiledbsoma 1.14.5
 

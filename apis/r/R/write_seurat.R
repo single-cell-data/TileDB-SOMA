@@ -22,27 +22,28 @@ NULL
 #'
 NULL
 
-#' @return \code{Assay} method: a \code{\link{SOMAMeasurement}} with the
-#' data from \code{x}, returned opened for write
+#' @return \code{Assay} and \code{Assay5} methods: a
+#' \code{\link{SOMAMeasurement}} with the data from \code{x},
+#' returned opened for write
 #'
 #' @rdname write_soma_seurat_sub
 #'
-#' @section Writing \code{\link[SeuratObject]{Assay}s}:
+#' @section Writing v3 \code{\link[SeuratObject]{Assay}s}:
 #' \pkg{Seurat} \code{\link[SeuratObject]{Assay}} objects are written out as
 #' individual \link[tiledbsoma:SOMAMeasurement]{measurements}:
 #' \itemize{
-#'  \item the \dQuote{\code{data}} matrix is written out a
-#'   \link[tiledbsoma:SOMASparseNDArray]{sparse matrix} called
+#'  \item the \dQuote{\code{data}} matrix is written out as a
+#'   \link[tiledbsoma:SOMASparseNDArray]{sparse array} called
 #'   \dQuote{\code{data}} within the \dQuote{\code{X}} group
 #'  \item the \dQuote{\code{counts}} matrix, if not
-#'   \link[SeuratObject:IsMatrixEmpty]{empty}, is written out a
-#'   \link[tiledbsoma:SOMASparseNDArray]{sparse matrix} called
+#'   \link[SeuratObject:IsMatrixEmpty]{empty}, is written out as a
+#'   \link[tiledbsoma:SOMASparseNDArray]{sparse array} called
 #'   \dQuote{\code{counts}} within the \dQuote{\code{X}} group
 #'  \item the \dQuote{\code{scale.data}} matrix, if not
-#'   \link[SeuratObject:IsMatrixEmpty]{empty}, is written out a
-#'   \link[tiledbsoma:SOMASparseNDArray]{sparse matrix} called
+#'   \link[SeuratObject:IsMatrixEmpty]{empty}, is written out as a
+#'   \link[tiledbsoma:SOMASparseNDArray]{sparse array} called
 #'   \dQuote{\code{scale_data}} within the \dQuote{\code{X}} group
-#'  \item feature-level meta data is written out as a
+#'  \item feature-level metadata is written out as a
 #'   \link[tiledbsoma:SOMADataFrame]{data frame} called \dQuote{\code{var}}
 #' }
 #' Expression matrices are transposed (cells as rows) prior to writing. All
@@ -52,160 +53,43 @@ NULL
 #' @method write_soma Assay
 #' @export
 #'
-write_soma.Assay <- function(
-  x,
-  uri = NULL,
-  soma_parent,
-  ...,
-  ingest_mode = "write",
-  platform_config = NULL,
-  tiledbsoma_ctx = NULL,
-  relative = TRUE
-) {
-  check_package("SeuratObject", version = .MINIMUM_SEURAT_VERSION())
-  stopifnot(
-    "'uri' must be a single character value" = is.null(uri) ||
-      is_scalar_character(uri),
-    "'soma_parent' must be a SOMACollection" = inherits(
-      x = soma_parent,
-      what = "SOMACollectionBase"
-    ),
-    "'relative' must be a single logical value" = is_scalar_logical(relative)
-  )
+write_soma.Assay <- .write_seurat_assay
 
-  # Find `shape` if and only if we're called from `write_soma.Seurat()`
-  parents <- unique(sys.parents())
-  idx <- which(vapply_lgl(
-    parents,
-    FUN = function(i) identical(sys.function(i), write_soma.Seurat)
-  ))
-  shape <- if (length(idx) == 1L) {
-    get("shape", envir = sys.frame(parents[idx]))
-  } else {
-    NULL
-  }
-  shape <- rev(shape)
-
-  # Create a proper URI
-  uri <- uri %||% gsub(pattern = "_$", replacement = "", x = SeuratObject::Key(x))
-  uri <- .check_soma_uri(
-    uri = uri,
-    soma_parent = soma_parent,
-    relative = relative
-  )
-
-  # Create the measurement
-  ms <- SOMAMeasurementCreate(
-    uri = uri,
-    ingest_mode = ingest_mode,
-    platform_config = platform_config,
-    tiledbsoma_ctx = tiledbsoma_ctx
-  )
-  X <- if (!"X" %in% ms$names()) {
-    SOMACollectionCreate(
-      uri = file_path(ms$uri, "X"),
-      ingest_mode = ingest_mode,
-      platform_config = platform_config,
-      tiledbsoma_ctx = tiledbsoma_ctx
-    )
-  } else if (isTRUE(relative)) {
-    SOMACollectionOpen(uri = file_path(ms$uri, "X"), mode = "WRITE")
-  } else {
-    ms$X
-  }
-  withCallingHandlers(
-    .register_soma_object(X, soma_parent = ms, key = "X", relative = relative),
-    existingKeyWarning = .maybe_muffle
-  )
-  on.exit(X$close(), add = TRUE, after = FALSE)
-
-  # Write `X` matrices
-  for (slot in c("counts", "data", "scale.data")) {
-    mat <- SeuratObject::GetAssayData(x, slot)
-    if (SeuratObject::IsMatrixEmpty(mat)) next
-
-    # Skip 'data' slot if it's identical to 'counts'
-    if (slot == "data") {
-      if (identical(mat, SeuratObject::GetAssayData(x, "counts"))) {
-        spdl::info("Skipping 'data' slot because it's identical to 'counts'")
-        next
-      }
-    }
-
-    if (!identical(x = dim(mat), y = dim(x))) {
-      spdl::info("Padding layer '{}' to match dimensions of assay", slot)
-      mat <- pad_matrix(
-        x = mat,
-        rowidx = match(x = rownames(mat), table = rownames(x)),
-        colidx = match(x = colnames(mat), table = colnames(x)),
-        shape = dim(x),
-        sparse = TRUE,
-        rownames = rownames(x),
-        colnames = colnames(x)
-      )
-    }
-
-    layer <- gsub(pattern = "\\.", replacement = "_", x = slot)
-    spdl::info("Adding '{}' matrix as '{}'", slot, layer)
-    tryCatch(
-      expr = write_soma(
-        x = mat,
-        uri = layer,
-        soma_parent = X,
-        sparse = TRUE,
-        transpose = TRUE,
-        ingest_mode = ingest_mode,
-        shape = shape,
-        key = layer,
-        platform_config = platform_config,
-        tiledbsoma_ctx = tiledbsoma_ctx
-      ),
-      error = function(err) {
-        if (slot == "data") {
-          stop(err)
-        }
-        err_to_warn(err)
-      }
-    )
-  }
-
-  # Write feature-level meta data
-  var_df <- .df_index(
-    x = x[[]],
-    alt = "features",
-    axis = "var",
-    prefix = "seurat"
-  )
-  var_df[[attr(x = var_df, which = "index")]] <- rownames(x)
-  spdl::info("Adding feature-level meta data")
-  write_soma(
-    x = var_df,
-    uri = "var",
-    soma_parent = ms,
-    key = "var",
-    ingest_mode = ingest_mode,
-    platform_config = platform_config,
-    tiledbsoma_ctx = tiledbsoma_ctx
-  )
-
-  # Return
-  if (class(x)[1L] != "Assay") {
-    warning(
-      paste(
-        strwrap(paste0(
-          "Extended assays (eg. ",
-          class(x)[1L],
-          ") are not fully supported; core Assay data has been written but ",
-          "additional slots have been skipped"
-        )),
-        collapse = "\n"
-      ),
-      call. = FALSE,
-      immediate. = TRUE
-    )
-  }
-  return(ms)
-}
+#' @rdname write_soma_seurat_sub
+#'
+#' @section Writing v5 \code{Assays}:
+#' \pkg{Seurat} v5 \code{\link[SeuratObject:Assay5]{Assays}s} are written
+#' out as individual\link[tiledbsoma:SOMAMeasurement]{measurements}:
+#' \itemize{
+#'  \item the layer matrices are written out as
+#'   \link[tiledbsoma:SOMASparseNDArray]{sparse arrays} within the
+#'   \dQuote{\code{X}} group
+#'  \item feature-level metadata is written out as a
+#'   \link[tiledbsoma:SOMADataFrame]{data frame} called \dQuote{\code{var}}
+#' }
+#' Expression matrices are transposed (cells as rows) prior to writing. All
+#' other slots, including results from extended assays (eg. \code{SCTAssay},
+#' \code{ChromatinAssay}) are lost\cr
+#' The following bits of metadata are written in various parts of the measurement
+#' \itemize{
+#'  \item \dQuote{\code{soma_ecosystem_seurat_assay_version}}: written at the
+#'   measurement level; indicates the Seurat assay version.
+#'   Set to \dQuote{\code{v5}}
+#'  \item \dQuote{\code{soma_ecosystem_seurat_v5_default_layers}}: written at
+#'   the \dQuote{\code{X}} group level; indicates the
+#'   \link[SeuratObject:DefaultLayer]{default layers}
+#'  \item \dQuote{\code{soma_ecosystem_seurat_v5_ragged}}: written at the
+#'   \dQuote{\code{X/<layer>}} array level; with a value of
+#'   \dQuote{\code{ragged}}, indicates whether or not the layer is ragged
+#'  \item \dQuote{\code{soma_r_type_hint}}: written at the
+#'   \dQuote{\code{X/<layer>}} array level; indicates the \R class and
+#'   defining package (for S4 classes) of the original layer
+#' }
+#'
+#' @method write_soma Assay5
+#' @export
+#'
+write_soma.Assay5 <- .write_seurat_assay
 
 #' @param fidx An integer vector describing the location of features in
 #' \code{SeuratObject::Loadings(x)} with relation to \code{soma_parent}
@@ -496,8 +380,8 @@ write_soma.Graph <- function(
 #'
 #' @inherit write_soma return
 #'
-#' @section Writing Cell-Level Meta Data:
-#' Cell-level meta data is written out as a
+#' @section Writing Cell-Level Metadata:
+#' Cell-level metadata is written out as a
 #' \link[tiledbsoma:SOMADataFrame]{data frame} called \dQuote{\code{obs}} at
 #' the \code{\link[tiledbsoma:SOMAExperiment]{experiment}} level
 #'
@@ -514,6 +398,10 @@ write_soma.Seurat <- function(
   platform_config = NULL,
   tiledbsoma_ctx = NULL
 ) {
+  # Allow writing `soma_` prefixed columns to SOMADataFrames
+  # (normally disallowed as a reserved prefix)
+  op <- options(tiledbsoma.write_soma.internal = TRUE)
+  on.exit(options(op), add = TRUE, after = FALSE)
   check_package("SeuratObject", version = .MINIMUM_SEURAT_VERSION())
   stopifnot(
     "'uri' must be a single character value" = is.null(uri) ||
@@ -549,24 +437,14 @@ write_soma.Seurat <- function(
   )
   on.exit(experiment$close(), add = TRUE, after = FALSE)
 
-  # Write cell-level meta data (obs)
-  spdl::info("Adding cell-level meta data")
+  # Prepare cell-level metadata (obs)
   obs_df <- .df_index(
     x = x[[]],
     alt = "cells",
     axis = "obs",
     prefix = "seurat"
   )
-  obs_df[[attr(obs_df, "index")]] <- colnames(x)
-  write_soma(
-    x = obs_df,
-    uri = "obs",
-    soma_parent = experiment,
-    key = "obs",
-    ingest_mode = ingest_mode,
-    platform_config = platform_config,
-    tiledbsoma_ctx = tiledbsoma_ctx
-  )
+  obs_df[[attr(obs_df, 'index')]] <- colnames(x)
 
   # Write assays
   expms <- SOMACollectionCreate(
@@ -606,9 +484,26 @@ write_soma.Seurat <- function(
         err_to_warn(err)
       }
     )
+    if (inherits(x[[measurement]], what = 'StdAssay')) {
+      key <- .assay_obs_hint(measurement)
+      obs_df[[key]] <- colnames(x) %in% colnames(x[[measurement]])
+    }
   }
 
+  # Write cell-level metadata (obs)
+  spdl::info("Adding cell-level metadata")
+  write_soma(
+    x = obs_df,
+    uri = 'obs',
+    soma_parent = experiment,
+    key = 'obs',
+    ingest_mode = ingest_mode,
+    platform_config = platform_config,
+    tiledbsoma_ctx = tiledbsoma_ctx
+  )
+
   # Write dimensional reductions (obsm/varm)
+  expms$reopen("WRITE")
   for (reduc in SeuratObject::Reductions(x)) {
     measurement <- SeuratObject::DefaultAssay(x[[reduc]])
     ms <- if (measurement %in% expms$names()) {
