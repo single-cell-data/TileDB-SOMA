@@ -1,3 +1,4 @@
 tifffile
 pillow
 spatialdata
+xarray>=2024.05.0
