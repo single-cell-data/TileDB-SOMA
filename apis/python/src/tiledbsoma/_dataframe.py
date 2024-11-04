@@ -551,20 +551,26 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         whether the operation would succeed if attempted, and a reason why it
         would not.
         """
+        frame = inspect.currentframe()
+        function_name_for_messages = frame.f_code.co_name if frame else "tiledbsoma"
+
         pyarrow_domain_table = self._upgrade_or_change_domain_helper(
-            newdomain, "tiledbsoma_upgrade_domain"
+            newdomain,
+            function_name_for_messages,
         )
 
         if check_only:
             return cast(
                 StatusAndReason,
                 self._handle._handle.can_upgrade_domain(
-                    pyarrow_domain_table, "tiledbsoma_upgrade_domain"
+                    pyarrow_domain_table,
+                    function_name_for_messages,
                 ),
             )
         else:
             self._handle._handle.upgrade_domain(
-                pyarrow_domain_table, "tiledbsoma_upgrade_domain"
+                pyarrow_domain_table,
+                function_name_for_messages,
             )
             return (True, "")
 
@@ -578,18 +584,25 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         `("", "")`, or as `None`.  If ``check_only`` is ``True``, returns whether
         the operation would succeed if attempted, and a reason why it would not.
         """
+        frame = inspect.currentframe()
+        function_name_for_messages = frame.f_code.co_name if frame else "tiledbsoma"
+
         pyarrow_domain_table = self._upgrade_or_change_domain_helper(
-            newdomain, "change_domain"
+            newdomain,
+            function_name_for_messages,
         )
         if check_only:
             return cast(
                 StatusAndReason,
                 self._handle._handle.can_change_domain(
-                    pyarrow_domain_table, "change_domain"
+                    pyarrow_domain_table,
+                    function_name_for_messages,
                 ),
             )
         else:
-            self._handle._handle.change_domain(pyarrow_domain_table, "change_domain")
+            self._handle._handle.change_domain(
+                pyarrow_domain_table, function_name_for_messages
+            )
             return (True, "")
 
     def __len__(self) -> int:
@@ -685,7 +698,7 @@ class DataFrame(SOMAArray, somacore.DataFrame):
 
         self._set_coords(sr, coords)
 
-        # # TODO: batch_size
+        # TODO: batch_size
         return TableReadIter(sr)
 
     def write(
