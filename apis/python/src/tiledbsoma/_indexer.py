@@ -29,15 +29,15 @@ IndexerDataType = Union[
 def tiledbsoma_build_index(
     data: IndexerDataType, *, context: Optional["SOMATileDBContext"] = None
 ) -> IndexLike:
-    """Initialize re-indexer for provided indices.
+    """Initialize re-indexer for provided indices (deprecated).
 
-    Deprecated. Provides the same functionality as the``IntIndexer`` class.
+    Provides the same functionality as the``IntIndexer`` class.
 
     Args:
        data:
            Integer keys used to build the index (hash) table.
        context:
-           ``SOMATileDBContext`` object containing concurrecy level.
+           ``SOMATileDBContext`` object containing concurrency level.
 
     Lifecycle:
         Deprecated.
@@ -62,7 +62,7 @@ class IntIndexer:
            data:
                Integer keys used to build the index (hash) table.
            context:
-               ``SOMATileDBContext`` object containing concurrecy level.
+               ``SOMATileDBContext`` object containing concurrency level.
 
         Lifecycle:
             Maturing.

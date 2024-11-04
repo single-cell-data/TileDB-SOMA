@@ -11,12 +11,12 @@ ParsedStats = List[Dict[Literal["counters", "timers"], Dict[str, Union[float, in
 
 
 def tiledbsoma_stats_json() -> str:
-    """Returns tiledbsoma stats as a JSON string"""
+    """Returns tiledbsoma stats as a JSON string."""
     # cast is needed for pybind11 things
     return cast(str, tiledbsoma_stats_string())
 
 
 def tiledbsoma_stats_as_py() -> ParsedStats:
-    """Returns tiledbsoma stats as a Python dict"""
+    """Returns tiledbsoma stats as a Python dict."""
     # cast is needed for pybind11 things
     return cast(ParsedStats, json.loads(tiledbsoma_stats_string()))
