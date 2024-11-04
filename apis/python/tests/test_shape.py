@@ -228,6 +228,18 @@ def test_dense_nd_array_basics(tmp_path):
         else:
             assert dnda.shape == (100, 200)
 
+    if (
+        tiledbsoma._flags.DENSE_ARRAYS_CAN_HAVE_CURRENT_DOMAIN
+        and tiledbsoma._flags.NEW_SHAPE_FEATURE_FLAG_ENABLED
+    ):
+        with tiledbsoma.DenseNDArray.open(uri) as dnda:
+            ok, msg = dnda.tiledbsoma_upgrade_shape((600, 700), check_only=True)
+            assert not ok
+            assert (
+                msg
+                == "tiledbsoma_can_upgrade_shape: array already has a shape: please use resize"
+            )
+
 
 @pytest.mark.parametrize(
     "soma_joinid_domain",

@@ -658,6 +658,24 @@ class DenseNDArrayWrapper(SOMAArrayWrapper[clib.SOMADenseNDArray]):
         else:
             raise NotImplementedError("Not implemented for libtiledbsoma < 2.27.0")
 
+    def tiledbsoma_upgrade_shape(self, newshape: Sequence[Union[int, None]]) -> None:
+        """Wrapper-class internals"""
+        if DENSE_ARRAYS_CAN_HAVE_CURRENT_DOMAIN:
+            self._handle.tiledbsoma_upgrade_shape(newshape)
+        else:
+            raise NotImplementedError("Not implemented for libtiledbsoma < 2.27.0")
+
+    def tiledbsoma_can_upgrade_shape(
+        self, newshape: Sequence[Union[int, None]]
+    ) -> StatusAndReason:
+        """Wrapper-class internals"""
+        if DENSE_ARRAYS_CAN_HAVE_CURRENT_DOMAIN:
+            return cast(
+                StatusAndReason, self._handle.tiledbsoma_can_upgrade_shape(newshape)
+            )
+        else:
+            raise NotImplementedError("Not implemented for libtiledbsoma < 2.27.0")
+
 
 class SparseNDArrayWrapper(SOMAArrayWrapper[clib.SOMASparseNDArray]):
     """Wrapper around a Pybind11 SparseNDArrayWrapper handle."""
