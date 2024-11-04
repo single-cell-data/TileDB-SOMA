@@ -102,9 +102,17 @@ def test_multiscale_basic(tmp_path):
         assert coord_space.axis_names == ("x", "y")
 
         # Check the number of levels and level properties.
+        expected_shapes = [(128, 64), (64, 32), (8, 4)]
         assert image.level_count == 3
-        for index, shape in enumerate([(128, 64), (64, 32), (8, 4)]):
+        for index, shape in enumerate(expected_shapes):
             assert image.level_shape(index) == shape
+
+        # Check the levels mapping.
+        levels = image.levels()
+        assert len(levels) == 3
+        for key, val in levels.items():
+            assert soma.DenseNDArray.exists(val[0])
+            assert image.level_shape(key) == val[1]
 
         # Check a basic read
         assert level2_data == image.read_spatial_region(2).data

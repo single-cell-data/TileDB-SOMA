@@ -9,7 +9,7 @@ Implementation of a SOMA MultiscaleImage.
 
 import json
 import warnings
-from typing import Any, List, Optional, Sequence, Tuple, Union
+from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
 
 import attrs
 import pyarrow as pa
@@ -669,6 +669,13 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
             Experimental.
         """
         return self._has_channel_axis
+
+    def levels(self) -> Dict[str, Tuple[str, Tuple[int, ...]]]:
+        """Returns a mapping of {member_name: (uri, shape)}."""
+        return {
+            level.name: (self._contents[level.name].entry.uri, level.shape)
+            for level in self._levels
+        }
 
     @property
     def level_count(self) -> int:
