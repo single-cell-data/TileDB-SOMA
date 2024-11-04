@@ -3,18 +3,18 @@
 #
 # Licensed under the MIT License.
 
-from typing import Any, Optional, Sequence, Tuple
+from typing import Any, Optional, Tuple
 
 import pyarrow as pa
 from somacore import options
 from typing_extensions import Self
 
-from . import _tdb_handles, _util
+from . import _tdb_handles
 
 # This package's pybind11 code
 from . import pytiledbsoma as clib  # noqa: E402
 from ._soma_object import SOMAObject
-from ._types import OpenTimestamp, is_nonstringy_sequence
+from ._types import OpenTimestamp
 from .options._soma_tiledb_context import SOMATileDBContext
 
 
@@ -146,55 +146,3 @@ class SOMAArray(SOMAObject[_tdb_handles.SOMAArrayWrapper[Any]]):
           resized up to core (max) domain.
         """
         return self._handle.maxdomain
-
-    def _set_coords(self, sr: clib.SOMAArray, coords: Sequence[object]) -> None:
-        """Parses the given coords and sets them on the SOMA Reader."""
-        if not is_nonstringy_sequence(coords):
-            raise TypeError(
-                f"coords type {type(coords)} must be a regular sequence,"
-                " not str or bytes"
-            )
-
-        if len(coords) > self._handle.ndim:
-            raise ValueError(
-                f"coords ({len(coords)} elements) must be shorter than ndim"
-                f" ({self._handle.ndim})"
-            )
-        for i, coord in enumerate(coords):
-            dim = self.schema.field(i)
-            if not self._set_coord(sr, i, dim, coord):
-                raise TypeError(
-                    f"coord type {type(coord)} for dimension {dim.name}"
-                    f" (slot {i}) unsupported"
-                )
-
-    def _set_coord(
-        self, sr: clib.SOMAArray, dim_idx: int, dim: pa.Field, coord: object
-    ) -> bool:
-        """Parses a single coordinate entry.
-
-        The base implementation parses the most fundamental types shared by all
-        TileDB Array types; subclasses can implement their own readers that
-        handle types not recognized here.
-
-        Returns:
-            True if successful, False if unrecognized.
-        """
-        if coord is None:
-            return True  # No constraint; select all in this dimension
-
-        if isinstance(coord, int):
-            sr.set_dim_points_int64(dim.name, [coord])
-            return True
-        if isinstance(coord, slice):
-            _util.validate_slice(coord)
-            try:
-                dom = self._handle.domain[dim_idx]
-                lo_hi = _util.slice_to_numeric_range(coord, dom)
-            except _util.NonNumericDimensionError:
-                return False  # We only handle numeric dimensions here.
-            if lo_hi:
-                sr.set_dim_ranges_int64(dim.name, [lo_hi])
-            # If `None`, coord was `slice(None)` and there is no constraint.
-            return True
-        return False

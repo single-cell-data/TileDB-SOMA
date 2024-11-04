@@ -462,39 +462,6 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
             f"Unsupported Arrow type or non-arrow type for values argument: {type(values)}"
         )
 
-    def _set_coord(
-        self, sr: clib.SOMAArray, dim_idx: int, dim: pa.Field, coord: object
-    ) -> bool:
-        if super()._set_coord(sr, dim_idx, dim, coord):
-            return True
-        if isinstance(coord, Sequence):
-            if pa.types.is_int64(dim.type):
-                sr.set_dim_points_int64(dim.name, coord)
-                return True
-            elif _util.pa_types_is_string_or_bytes(dim.type):
-                sr.set_dim_points_string_or_bytes(dim.name, coord)
-                return True
-            else:
-                return False
-
-        if isinstance(coord, np.ndarray):
-            if isinstance(coord, np.ndarray) and coord.ndim != 1:
-                raise ValueError(
-                    f"only 1D numpy arrays may be used to index; got {coord.ndim}"
-                )
-            if pa.types.is_int64(dim.type):
-                sr.set_dim_points_int64(dim.name, coord)
-                return True
-            elif _util.pa_types_is_string_or_bytes(dim.type):
-                sr.set_dim_points_string_or_bytes(dim.name, coord)
-                return True
-
-            return False
-        if isinstance(coord, (pa.Array, pa.ChunkedArray)):
-            sr.set_dim_points_arrow(dim.name, coord)
-            return True
-        return False
-
     @classmethod
     def _dim_capacity_and_extent(
         cls,
@@ -645,7 +612,7 @@ class SparseNDArrayRead(_SparseNDArrayReadBase):
         """
         if shape is not None and (len(shape) != len(self.shape)):
             raise ValueError(f"shape must be a tuple of size {len(self.shape)}")
-        self.array._set_coords(self.sr, self.coords)
+        _util._set_coords(self.sr, self.coords)
         return SparseCOOTensorReadIter(self.sr, shape or self.shape)
 
     def tables(self) -> TableReadIter:
@@ -656,7 +623,7 @@ class SparseNDArrayRead(_SparseNDArrayReadBase):
         Lifecycle:
             Maturing.
         """
-        self.array._set_coords(self.sr, self.coords)
+        _util._set_coords(self.sr, self.coords)
         return TableReadIter(self.sr)
 
     def blockwise(
