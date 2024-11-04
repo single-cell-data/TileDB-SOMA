@@ -342,7 +342,7 @@ class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
         if value_filter is not None:
             sr.set_condition(QueryCondition(value_filter), handle.schema)
 
-        self._set_coords(sr, coords)
+        _util._set_coords(sr, coords)
 
         # # TODO: batch_size
         return TableReadIter(sr)

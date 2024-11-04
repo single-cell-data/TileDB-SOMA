@@ -259,7 +259,7 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
             timestamp=handle.timestamp and (0, handle.timestamp),
         )
 
-        self._set_coords(sr, coords)
+        _util._set_coords(sr, coords)
 
         arrow_tables = []
         while True:
@@ -344,7 +344,7 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
                 input = np.ascontiguousarray(input)
             order = clib.ResultOrder.rowmajor
         clib_dense_array.reset(result_order=order)
-        self._set_coords(clib_dense_array, new_coords)
+        _util._set_coords(clib_dense_array, new_coords)
         clib_dense_array.write(input)
 
         tiledb_write_options = TileDBWriteOptions.from_platform_config(platform_config)

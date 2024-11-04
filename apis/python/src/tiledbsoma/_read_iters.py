@@ -236,7 +236,7 @@ class BlockwiseReadIterBase(somacore.ReadIter[_RT], metaclass=abc.ABCMeta):
             self.sr.reset(**kwargs)
             step_coords = list(self.coords)
             step_coords[self.major_axis] = coord_chunk
-            self.array._set_coords(self.sr, step_coords)
+            _util._set_coords(self.sr, step_coords)
 
             joinids = list(self.joinids)
             joinids[self.major_axis] = pa.array(coord_chunk)
