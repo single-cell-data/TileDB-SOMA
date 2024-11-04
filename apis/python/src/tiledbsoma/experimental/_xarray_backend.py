@@ -170,7 +170,7 @@ class DenseNDArrayDatastore(AbstractDataStore):  # type: ignore
         platform_config: Optional[options.PlatformConfig] = None,
     ):
         """Initialize and open the data store."""
-        self._array = DenseNDArray.open(
+        self._soma_array = DenseNDArray.open(
             uri,
             mode="r",
             context=context,
@@ -178,7 +178,7 @@ class DenseNDArrayDatastore(AbstractDataStore):  # type: ignore
         )
         self._variable_name = variable_name
         self._dim_names = (
-            tuple(f"soma_dim_{enum}" for enum in range(self._array.ndim))
+            tuple(f"soma_dim_{enum}" for enum in range(self._soma_array.ndim))
             if dim_names is None
             else dim_names
         )
@@ -186,7 +186,7 @@ class DenseNDArrayDatastore(AbstractDataStore):  # type: ignore
 
     def close(self) -> None:
         """Close the data store."""
-        self._array.close()
+        self._soma_array.close()
 
     def load(self) -> Tuple[Frozen[str, Any], Frozen[str, Any]]:
         """Returns a dictionary of ``xarray.Variable`` objects and a dictionary of
@@ -196,10 +196,10 @@ class DenseNDArrayDatastore(AbstractDataStore):  # type: ignore
             {
                 self._variable_name: Variable(
                     self._dim_names,
-                    LazilyIndexedArray(DenseNDArrayWrapper(self._array)),
+                    LazilyIndexedArray(DenseNDArrayWrapper(self._soma_array)),
                     attrs={
                         key: val
-                        for key, val in self._array.metadata.items()
+                        for key, val in self._soma_array.metadata.items()
                         if not key.startswith("soma_")
                     },
                 )
