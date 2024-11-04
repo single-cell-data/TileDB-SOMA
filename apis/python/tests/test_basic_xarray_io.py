@@ -24,7 +24,7 @@ def sample_1d_dense_array(tmp_path_factory):
 
 
 @pytest.fixture(scope="module")
-def sample_3d_dense_array(tmp_path_factory):
+def sample_soma_3d_dense_array(tmp_path_factory):
     """Create a sample DenseNDArray with data and return open for reading."""
     baseuri = tmp_path_factory.mktemp("basic_xarray_io").as_uri()
     array_uri = urljoin(baseuri, "sample_3d_dense_array")
@@ -39,7 +39,7 @@ def sample_3d_dense_array(tmp_path_factory):
 class TestDenseNDVariable1D:
 
     @pytest.fixture(scope="class")
-    def soma_variable(self, sample_1d_dense_array):
+    def xr_variable(self, sample_1d_dense_array):
         array_wrapper = soma_xarray.DenseNDArrayWrapper(sample_1d_dense_array)
         assert isinstance(array_wrapper, xr.backends.BackendArray)
         return xr.Variable(

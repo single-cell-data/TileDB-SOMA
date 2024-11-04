@@ -153,7 +153,7 @@ class DenseNDArrayDatastore(AbstractDataStore):  # type: ignore
     """
 
     __slots__ = (
-        "_array",
+        "_soma_array",
         "_attrs",
         "_dim_names",
         "_variable_name",
