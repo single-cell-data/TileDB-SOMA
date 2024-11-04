@@ -56,6 +56,7 @@ test_that("Write Assay mechanics", {
   expect_identical(ms3$uri, file.path(collection$uri, "rna-no-counts"))
   expect_identical(ms3$names(), c("X", "var"))
   expect_s3_class(ms3$X, "SOMACollection")
+  # Using a subset of the `layers` map
   lyrs <- layers[c("data", "scale.data")]
   expect_identical(ms3$X$names(), unname(lyrs))
   for (i in seq_along(lyrs)) {
@@ -78,6 +79,7 @@ test_that("Write Assay mechanics", {
   expect_identical(ms4$uri, file.path(collection$uri, "rna-no-scale"))
   expect_identical(ms4$names(), c("X", "var"))
   expect_s3_class(ms4$X, "SOMACollection")
+  # Using a subset of the `layers` map
   lyrs <- layers[c("counts", "data")]
   expect_identical(ms4$X$names(), unname(lyrs))
   for (i in seq_along(lyrs)) {
@@ -100,6 +102,7 @@ test_that("Write Assay mechanics", {
   expect_identical(ms5$uri, file.path(collection$uri, "rna-no-counts-scale"))
   expect_identical(ms5$names(), c("X", "var"))
   expect_s3_class(ms5$X, "SOMACollection")
+  # Using a subset of the `layers` map
   lyrs <- layers[c("counts", "data")]
   expect_identical(ms5$X$names(), "data")
   expect_equal(ms5$X$get("data")$shape(), rev(dim(rna5)))
@@ -163,29 +166,29 @@ test_that("Write v5 in-memory Assay mechanics", {
   expect_identical(setdiff(ms$var$attrnames(), "var_id"), names(rna[[]]))
   expect_s3_class(ms$X, "SOMACollection")
   expect_identical(ms$X$names(), SeuratObject::Layers(rna))
-  fmat <- methods::slot(rna, name = "features")
-  cmat <- methods::slot(rna, name = "cells")
+  features_map <- methods::slot(rna, name = "features")
+  cells_map <- methods::slot(rna, name = "cells")
   ragged_hint <- .ragged_array_hint()
   type_hint <- names(.type_hint(NULL))
-  for (lyr in SeuratObject::Layers(rna)) {
-    idx <- which(cmat[, lyr])
-    jdx <- which(fmat[, lyr])
-    expect_equal(ms$X$get(lyr)$shape(), c(max(idx), max(jdx)), info = lyr)
+  for (layer in SeuratObject::Layers(rna)) {
+    idx <- which(cells_map[, layer])
+    jdx <- which(features_map[, layer])
+    expect_equal(ms$X$get(layer)$shape(), c(max(idx), max(jdx)), info = layer)
     switch(
-      EXPR = lyr,
+      EXPR = layer,
       scale.data = expect_equivalent(
-        ms$X$get(lyr)$get_metadata(names(ragged_hint)),
+        ms$X$get(layer)$get_metadata(names(ragged_hint)),
         ragged_hint[[1L]],
-        info = lyr
+        info = layer
       ),
-      expect_null(ms$X$get(lyr)$get_metadata(names(ragged_hint)), info = lyr)
+      expect_null(ms$X$get(layer)$get_metadata(names(ragged_hint)), info = layer)
     )
-    expect_type(th <- ms$X$get(lyr)$get_metadata(type_hint), 'character')
+    expect_type(th <- ms$X$get(layer)$get_metadata(type_hint), 'character')
     expect_length(th, 1L)
     switch(
-      EXPR = lyr,
-      scale.data = expect_identical(th, 'matrix', info = lyr),
-      expect_true(grepl('^Matrix', x = th), info = lyr)
+      EXPR = layer,
+      scale.data = expect_identical(th, 'matrix', info = layer),
+      expect_true(grepl('^Matrix', x = th), info = layer)
     )
   }
 
@@ -209,20 +212,20 @@ test_that("Write v5 in-memory Assay mechanics", {
 
   expect_identical(ms2$uri, file.path(collection$uri, "ragged-arrays"))
   expect_identical(ms2$X$names(), SeuratObject::Layers(rna2))
-  fmat <- methods::slot(rna2, name = "features")
-  cmat <- methods::slot(rna2, name = "cells")
-  for (lyr in SeuratObject::Layers(rna2)) {
-    idx <- which(cmat[, lyr])
-    jdx <- which(fmat[, lyr])
-    expect_equal(ms2$X$get(lyr)$shape(), c(max(idx), max(jdx)), info = lyr)
+  features_map <- methods::slot(rna2, name = "features")
+  cells_map <- methods::slot(rna2, name = "cells")
+  for (layer in SeuratObject::Layers(rna2)) {
+    idx <- which(cells_map[, layer])
+    jdx <- which(features_map[, layer])
+    expect_equal(ms2$X$get(layer)$shape(), c(max(idx), max(jdx)), info = layer)
     expect_equivalent(
-      ms2$X$get(lyr)$get_metadata(names(ragged_hint)),
+      ms2$X$get(layer)$get_metadata(names(ragged_hint)),
       ragged_hint[[1L]],
-      info = lyr
+      info = layer
     )
     expect_true(
-      grepl('^Matrix', x = ms2$X$get(lyr)$get_metadata(type_hint)),
-      info = lyr
+      grepl('^Matrix', x = ms2$X$get(layer)$get_metadata(type_hint)),
+      info = layer
     )
   }
 })
