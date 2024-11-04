@@ -98,6 +98,8 @@ enum class Domainish {
 
 class SOMAArray : public SOMAObject {
    public:
+    friend class ManagedQuery;
+
     //===================================================================
     //= public static
     //===================================================================
