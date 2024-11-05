@@ -8,37 +8,35 @@ The tiledbsoma module
 Classes
 -------
 
-.. autosummary::
-    :toctree: _autosummary/
-    :nosignatures:
+.. toctree::
+    :maxdepth: 1
 
-    tiledbsoma.Collection
-    tiledbsoma.Experiment
-    tiledbsoma.Measurement
+    python-tiledbsoma-collection
+    python-tiledbsoma-experiment
+    python-tiledbsoma-measurement
 
-    tiledbsoma.DataFrame
-    tiledbsoma.SparseNDArray
-    tiledbsoma.SparseNDArrayRead
-    tiledbsoma.DenseNDArray
+    python-tiledbsoma-dataframe
+    python-tiledbsoma-sparsendarray
+    python-tiledbsoma-sparsendarrayread
+    python-tiledbsoma-densendarray
 
-    tiledbsoma.Axis
-    tiledbsoma.CoordinateSpace
-    tiledbsoma.MultiscaleImage
-    tiledbsoma.PointCloudDataFrame
-    tiledbsoma.Scene
+    python-tiledbsoma-axis
+    python-tiledbsoma-coordinatespace
+    python-tiledbsoma-multiscaleimage
+    python-tiledbsoma-pointclouddataframe
+    python-tiledbsoma-scene
 
-    tiledbsoma.ResultOrder
+    python-tiledbsoma-resultorder
 
-    tiledbsoma.AxisColumnNames
-    tiledbsoma.AxisQuery
-    tiledbsoma.ExperimentAxisQuery
+    python-tiledbsoma-axiscolumnnames
+    python-tiledbsoma-axisquery
+    python-tiledbsoma-experimentaxisquery
 
-    tiledbsoma.SOMATileDBContext
-    tiledbsoma.TileDBCreateOptions
-    tiledbsoma.TileDBWriteOptions
+    python-tiledbsoma-somatiledbcontext
+    python-tiledbsoma-tiledbcreateoptions
+    python-tiledbsoma-tiledbwriteoptions
 
-    tiledbsoma.IntIndexer
-    tiledbsoma.tiledbsoma_build_index
+    python-tiledbsoma-intindexer
 
 Exceptions
 ----------
@@ -74,3 +72,5 @@ Functions
     tiledbsoma.tiledbsoma_stats_dump
     tiledbsoma.tiledbsoma_stats_as_py
     tiledbsoma.tiledbsoma_stats_json
+
+    tiledbsoma.tiledbsoma_build_index
