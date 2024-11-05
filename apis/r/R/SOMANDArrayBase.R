@@ -95,11 +95,12 @@ SOMANDArrayBase <- R6::R6Class(
       has_current_domain(self$uri, private$.soma_context)
     },
 
-    #' @description Increases the shape of the array as specfied. Raises an error
-    #' if the new shape is less than the current shape in any dimension. Raises
-    #' an error if the new shape exceeds maxshape in any dimension. Raises an
-    #' error if the array doesn't already have a shape: in that case please call
-    #' tiledbsoma_upgrade_shape.
+    #' @description Increases the shape of the array as specified, up to the hard
+    #' limit which is `maxshape`. Raises an error if the new shape is less than
+    #' the current shape in any dimension.  Raises an error if the requested new
+    #' shape exceeds `maxshape` in any dimension. Raises an error if the array
+    #' doesn't already have a shape: in that case please call
+    #' `tiledbsoma_upgrade_shape`.
     #' @param new_shape A vector of integerish, of the same length as the array's `ndim`.
     #' @return No return value
     resize = function(new_shape) {
@@ -116,7 +117,10 @@ SOMANDArrayBase <- R6::R6Class(
 
     #' @description Allows the array to have a resizeable shape as described in the
     #' TileDB-SOMA 1.15 release notes.  Raises an error if the shape exceeds maxshape in any
-    #' dimension. Raises an error if the array already has a shape.
+    #' dimension. Raises an error if the array already has a shape. The methods
+    #' `tiledbsoma_upgrade_shape` and `resize` are very similar: the former must be
+    #' call on a pre-1.15 array the first time a shape is set on it; the latter must
+    #' be used for subsequent resizes on any array which already has upgraded shape.
     #' @param shape A vector of integerish, of the same length as the array's `ndim`.
     #' @return No return value
     tiledbsoma_upgrade_shape = function(shape) {

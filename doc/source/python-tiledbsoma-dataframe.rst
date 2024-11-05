@@ -43,6 +43,8 @@
       ~DataFrame.index_column_names
 
       ~DataFrame.count
+      ~DataFrame.shape
+      ~DataFrame.maxshape
       ~DataFrame.domain
       ~DataFrame.maxdomain
       ~DataFrame.tiledbsoma_has_upgraded_domain

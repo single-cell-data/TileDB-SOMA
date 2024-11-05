@@ -149,16 +149,18 @@ TileDBArray <- R6::R6Class(
     },
 
     #' @description Retrieve the shape, i.e. the capacity of each dimension.
-    #' This will not necessarily match the bounds of occupied cells within the
-    #' array.  Rather, it is the bounds outside of which no data may be written.
+    #' Attempted reads and writes outside the `shape` will result in a runtime
+    #' error: this is the purpose of `shape`.  This will not necessarily match
+    #' the bounds of occupied cells within the array. Using `resize`, this may be
+    #' increased up to the hard limit which `maxshape` reports.
     #' (lifecycle: maturing)
     #' @return A named vector of dimension length (and the same type as the dimension)
     shape = function() {
       as.integer64(shape(self$uri, private$.soma_context))
     },
 
-    #' @description Retrieve the maxshape, i.e. maximum possible that the
-    # shape can be resized up to.
+    #' @description Retrieve the hard limit up to which the array may be resized
+    #' using the `resize` method.
     #' (lifecycle: maturing)
     #' @return A named vector of dimension length (and the same type as the dimension)
     maxshape = function() {
@@ -167,7 +169,7 @@ TileDBArray <- R6::R6Class(
 
     #' @description Retrieve the range of indexes for a dimension that were
     #'  explicitly written.  This method is deprecated as of TileDB-SOMA 1.13, and will be
-    #' removed in TileDB-SOMA 1.15.
+    #' removed in TileDB-SOMA 1.16.
     #' @param simplify Return a vector of [`bit64::integer64`]s containing only
     #' the upper bounds.
     #' @param index1 Return the used shape with 1-based indices (0-based indices are returned by default)
@@ -178,7 +180,7 @@ TileDBArray <- R6::R6Class(
         isTRUE(simplify) || isFALSE(simplify),
         isTRUE(index1) || isFALSE(index1)
       )
-      .Deprecated(new = "shape", msg = "The 'used_shape' function will be removed in TileDB-SOMA 1.15.")
+      .Deprecated(new = "shape", msg = "The 'used_shape' function will be removed in TileDB-SOMA 1.16.")
       dims <- self$dimnames()
       utilized <- vector(mode = "list", length = length(dims))
       names(utilized) <- dims

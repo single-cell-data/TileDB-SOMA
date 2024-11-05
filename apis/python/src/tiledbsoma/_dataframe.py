@@ -551,7 +551,7 @@ class DataFrame(SOMAArray, somacore.DataFrame):
 
         The argument must be a tuple of pairs of low/high values for the desired
         domain, one pair per index column. For string index columns, you must
-        offer the low/high pair as `("", "")`, or as `None`.  If ``check_only``
+        offer the low/high pair as `("", "")`, or as ``None``.  If ``check_only``
         is ``True``, returns whether the operation would succeed if attempted,
         and a reason why it would not.
 
@@ -594,7 +594,7 @@ class DataFrame(SOMAArray, somacore.DataFrame):
 
         The argument must be a tuple of pairs of low/high values for the desired
         domain, one pair per index column. For string index columns, you must
-        offer the low/high pair as `("", "")`, or as `None`.  If ``check_only``
+        offer the low/high pair as `("", "")`, or as ``None``.  If ``check_only``
         is ``True``, returns whether the operation would succeed if attempted,
         and a reason why it would not.
 
