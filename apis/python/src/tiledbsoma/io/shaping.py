@@ -57,8 +57,29 @@ def show_experiment_shapes(
     (for arrays) or ``domain`` and ``maxdomain`` (for dataframes).
 
     Args:
-        uri: The URI of a SOMA :class:`Experiment``.
-        context: Optional :class:`SOMATileDBContext``.
+        uri: The URI of a SOMA :class:`Experiment`.
+        context: Optional :class:`SOMATileDBContext`.
+
+    Example::
+
+        >>> tiledbsoma.io.show_experiment_shapes('pbmc3k_unprocessed')
+        [DataFrame] obs
+          URI file:///data/pbmc3k_unprocessed/obs
+          count                2700
+          domain               ((0, 2699),)
+          maxdomain            ((0, 9223372036854773758),)
+          upgraded             True
+        [DataFrame] ms/RNA/var
+          URI file:///data/pbmc3k_unprocessed/ms/RNA/var
+          count                13714
+          domain               ((0, 13713),)
+          maxdomain            ((0, 9223372036854773758),)
+          upgraded             True
+        [SparseNDArray] ms/RNA/X/data
+          URI file:///data/pbmc3k_unprocessed/ms/RNA/X/data
+          shape                (2700, 13714)
+          maxshape             (9223372036854773759, 9223372036854773759)
+          upgraded             True
     """
     args: SizingArgs = dict(
         nobs=None,
@@ -94,12 +115,33 @@ def upgrade_experiment_shapes(
     is printed. If ``check_only`` is true, only does a dry run and reports any
     reasons the upgrade would fail.
 
+    This makes an experiment created before TileDB-SOMA 1.15 look like an
+    experiment created by TileDB-SOMA 1.15 or later. You can use
+    ``tiledbsoma.io.show_experiment_shapes`` before and after to see
+    the difference.
+
     Args:
-        uri: The URI of a SOMA :class:`Experiment``.
+        uri: The URI of a SOMA :class:`Experiment`.
         verbose: If ``True``, produce per-array output as the upgrade runs.
         check_only: If ``True``,  don't apply the upgrades, but show what would
             be attempted, and show why each one would fail.
-        context: Optional :class:`SOMATileDBContext``.
+        context: Optional :class:`SOMATileDBContext`.
+
+    Example::
+
+        >>> tiledbsoma.io.upgrade_experiment_shapes('pbmc3k_unprocessed_old', check_only=True)
+        [DataFrame] obs
+          URI file:///data/pbmc3k_unprocessed_old/obs
+          Dry run for: tiledbsoma_upgrade_soma_joinid_shape(2700)
+          OK
+        [DataFrame] ms/RNA/var
+          URI file:///data/pbmc3k_unprocessed_old/ms/RNA/var
+          Dry run for: tiledbsoma_upgrade_soma_joinid_shape(13714)
+          OK
+        [SparseNDArray] ms/RNA/X/data
+          URI file:///data/pbmc3k_unprocessed_old/ms/RNA/X/data
+          Dry run for: tiledbsoma_upgrade_shape((2700, 13714))
+          OK
     """
     args: SizingArgs = dict(
         nobs=None,
@@ -160,7 +202,28 @@ def resize_experiment(
         verbose: If ``True``, produce per-array output as the upgrade runs.
         check_only: If ``True``,  don't apply the upgrades, but show what would
             be attempted, and show why each one would fail.
-        context: Optional :class:`SOMATileDBContext``.
+        context: Optional :class:`SOMATileDBContext`.
+
+    Example::
+
+        >>> tiledbsoma.io.resize_experiment(
+            'pbmc3k_unprocessed',
+            nobs=5600,
+            nvars={"data":3204, "raw": 13714},
+            check_only=True,
+        )
+        [DataFrame] obs
+          URI file:///data/pbmc3k_unprocessed/obs
+          Dry run for: tiledbsoma_resize_soma_joinid_shape(5600)
+          OK
+        [DataFrame] ms/RNA/var
+          URI file:///data/pbmc3k_unprocessed/ms/RNA/var
+          Dry run for: tiledbsoma_resize_soma_joinid_shape(13714)
+          OK
+        [SparseNDArray] ms/RNA/X/data
+          URI file:///data/pbmc3k_unprocessed/ms/RNA/X/data
+          Dry run for: resize((5600, 13714))
+          OK
     """
     args: SizingArgs = dict(
         nobs=nobs,
