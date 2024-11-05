@@ -112,10 +112,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
         soma_dim_1 = self$var_joinids()$as_vector()
       )
       # Handle ragged arrays
-      shape <- tryCatch(
-        x_layer$maxshape(),
-        error = function(...) x_layer$shape()
-      )
+      shape <- x_layer$shape()
       for (i in seq_along(along.with = coords)) {
         coords[[i]] <- coords[[i]][coords[[i]] < shape[i]]
       }
@@ -1673,11 +1670,10 @@ SOMAExperimentAxisQuery <- R6::R6Class(
           call. = FALSE
         )
       }
-      dnames <- list(features, cells)
 
       # Find the default layers
       default_layers <- self$ms$X$get_metadata(default_hint)
-      if (!is.null(default_layers) && grepl(pattern = '^[', x = default_layers)) {
+      if (!is.null(default_layers) && grepl(pattern = '^\\[', x = default_layers)) {
         check_package('jsonlite')
         default_layers <- jsonlite::fromJSON(default_layers)
       }
@@ -1705,7 +1701,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
         attrn <- self$ms$X$get(lyr)$attrnames()
         pkg <- NULL
         if (!is.null(type_hint)) {
-          if (grepl(pattern = '^[', x = type_hint)) {
+          if (grepl(pattern = '^\\[', x = type_hint)) {
             if (!requireNamespace('jsonlite', quietly = TRUE)) {
               warning(warningCondition(
                 sprintf(
