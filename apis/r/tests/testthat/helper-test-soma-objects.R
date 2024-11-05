@@ -349,8 +349,7 @@ create_and_populate_ragged_experiment <- function(
   experiment$ms <- SOMACollectionCreate(file.path(uri, "ms"))
 
   ms_rna <- SOMAMeasurementCreate(file.path(uri, "ms", "RNA"))
-  # ms_rna$set_metadata(.assay_version_hint('v5'))
-  ms_rna$set_metadata(list(soma_ecosystem_seurat_assay_version = 'v5'))
+  ms_rna$set_metadata(.assay_version_hint('v5'))
 
   ms_rna$var <- create_and_populate_var(
     uri = file.path(ms_rna$uri, "var"),
@@ -387,9 +386,9 @@ create_and_populate_ragged_experiment <- function(
     )
     ndarray$write(mat)
     if (nd[i] != 1L) {
-      # ndarray$set_metadata(.ragged_array_hint())
-      ndarray$set_metadata(list(soma_ecosystem_seurat_v5_ragged = 'ragged'))
+      ndarray$set_metadata(.ragged_array_hint())
     }
+    ndarray$set_metadata(.type_hint(class(mat)))
 
     ms_rna$X$set(ndarray, name = layer_name)
   }
