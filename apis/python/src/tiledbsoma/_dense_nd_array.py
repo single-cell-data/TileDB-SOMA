@@ -289,7 +289,7 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
         """
         _util.check_type("values", values, (pa.Tensor,))
 
-        sr = self._handle._handle
+        clib_handle = self._handle._handle
 
         # Compute the coordinates for the dense array.
         new_coords: List[Union[int, Slice[int], None]] = []
@@ -311,15 +311,15 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
                 input = np.ascontiguousarray(input)
             order = clib.ResultOrder.rowmajor
 
-        mq = clib.ManagedQuery(sr, sr.context())
+        mq = clib.ManagedQuery(clib_handle, clib_handle.context())
         mq.set_layout(order)
-        _util._set_coords(mq, sr, new_coords)
+        _util._set_coords(mq, clib_handle, new_coords)
         mq.set_soma_data(input)
         mq.submit_write()
 
         tiledb_write_options = TileDBWriteOptions.from_platform_config(platform_config)
         if tiledb_write_options.consolidate_and_vacuum:
-            sr.consolidate_and_vacuum()
+            clib_handle.consolidate_and_vacuum()
         return self
 
     @classmethod
