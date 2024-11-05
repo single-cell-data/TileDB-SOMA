@@ -70,12 +70,37 @@ class TableReadIter(somacore.ReadIter[pa.Table]):
     def __init__(
         self,
         array: SOMAArray,
-        coords: options.SparseDFCoords,
+        coords: Union[options.SparseDFCoords, options.DenseNDCoords],
         column_names: Optional[Sequence[str]],
         result_order: clib.ResultOrder,
         value_filter: Optional[str],
         platform_config: Optional[options.PlatformConfig],
     ):
+        """Initalizes a new TableReadIter for SOMAArrays.
+
+        Args:
+            array (SOMAArray):
+                The NDArray, DataFrame, or SpatialDataFrame being read.
+
+            coords (Union[options.SparseDFCoords, options.DenseNDCoords]):
+                for each index dimension, which rows to read.
+                ``()`` means no constraint -- all IDs.
+
+            column_names (Optional[Sequence[str]]):
+                The named columns to read and return.
+                ``None`` means no constraint -- all column names.
+
+            result_order (clib.ResultOrder):
+                Order of read results.
+
+            value_filter (Optional[str]):
+                An optional [value filter] to apply to the results.
+                This can be one of automatic, rowmajor, or colmajor.
+
+            platform_config (Optional[options.PlatformConfig]):
+                Pass in parameters for tuning reads.
+
+        """
         self._reader = _arrow_table_reader(
             array, coords, column_names, result_order, value_filter, platform_config
         )
@@ -519,7 +544,7 @@ class SparseCOOTensorReadIter(SparseTensorReadIterBase[pa.SparseCOOTensor]):
 
 def _arrow_table_reader(
     array: SOMAArray,
-    coords: options.SparseDFCoords,
+    coords: Union[options.SparseDFCoords, options.DenseNDCoords],
     column_names: Optional[Sequence[str]],
     result_order: clib.ResultOrder,
     value_filter: Optional[str],
