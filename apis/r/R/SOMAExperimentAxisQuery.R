@@ -778,11 +778,9 @@ SOMAExperimentAxisQuery <- R6::R6Class(
         "'drop_levels' must be TRUE or FALSE" = isTRUE(drop_levels) ||
           isFALSE(drop_levels)
       )
-      # assay_hint <- names(.assay_version_hint())
-      assay_hint <- 'soma_ecosystem_seurat_assay_version'
+      assay_hint <- names(.assay_version_hint())
       # Get the assay version
       version <- version %||%
-        # self$ms$get_metadata(names(.assay_version_hint())) %||%
         self$ms$get_metadata(assay_hint) %||%
         'v3'
       match.arg(version, choices = c('v3', 'v5'))
@@ -835,11 +833,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
           )
         },
         v5 = {
-          # cells_hint <- .assay_obs_hint(private$.measurement_name)
-          cells_hint <- sprintf(
-            "soma_ecosystem_seurat_assay_cells_%s",
-            private$.measurement_name
-          )
+          cells_hint <- .assay_obs_hint(private$.measurement_name)
           if (cells_hint %in% private$.experiment$obs$colnames()) {
             cells_idx <- private$.load_df('obs', column_names = cells_hint)[[cells_hint]]
             cells <- cells[cells_idx]
@@ -1652,12 +1646,9 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       }
 
       # Get our metadata hints
-      # ragged_hint <- .ragged_array_hint()
-      ragged_hint <- list(soma_ecosystem_seurat_v5_ragged = 'ragged')
-      # default_hint <- names(.layer_hint(lname))
-      default_hint <- names(list(soma_ecosystem_seurat_v5_default_layers = lname))
-      # type_hint <- names(.type_hint(NULL))
-      r_type_hint <- names(list(soma_r_type_hint = NULL))
+      ragged_hint <- .ragged_array_hint()
+      default_hint <- names(.layer_hint(lname))
+      r_type_hint <- names(.type_hint(NULL))
       s4_type <- paste0('^', .standard_regexps()$valid_package_name, ':')
 
       # Check arguments
