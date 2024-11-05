@@ -1,8 +1,19 @@
+import tarfile
+import tempfile
+
 import tiledbsoma
+
+sparse_uri = tempfile.mktemp()
+with tarfile.open("../apis/python/notebooks/data/pbmc3k-sparse.tgz") as handle:
+    handle.extractall(sparse_uri)
+
+dense_uri = tempfile.mktemp()
+with tarfile.open("../apis/python/notebooks/data/pbmc3k-dense.tgz") as handle:
+    handle.extractall(dense_uri)
 
 # This test is extracted from tutorial_soma_objects.ipynb notebook
 # To test the profile run: `python main.py python tests/objects.py` in the profile folder
-experiment = tiledbsoma.open("../apis/python/notebooks/data/dense/pbmc3k")
+experiment = tiledbsoma.Experiment.open(sparse_uri)
 
 obs = experiment.obs
 print(f"obs schema {obs.schema}")
@@ -28,7 +39,7 @@ idx = var.read(value_filter="var_id == 'ICOSLG'").concat()["soma_joinid"].to_num
 
 print(X.read((None, int(idx[0]))).to_numpy())
 
-experiment = tiledbsoma.open("../apis/python/notebooks/data/sparse/pbmc3k")
+experiment = tiledbsoma.Experiment.open(dense_uri)
 X = experiment.ms["RNA"].X["data"]
 
 print(X.schema)
