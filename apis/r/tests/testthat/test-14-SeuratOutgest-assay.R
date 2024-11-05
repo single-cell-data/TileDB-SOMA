@@ -259,13 +259,13 @@ test_that("Load v5 assay", {
 
   # Test using cell and feature names
   expect_no_condition(named <- query$to_seurat_assay(
-    obs_index = "baz",
+    obs_index = "string_column",
     var_index = "quux",
     version = "v5"
   ))
   expect_identical(
     colnames(named),
-    query$obs("baz")$concat()$GetColumnByName("baz")$as_vector()
+    query$obs("string_column")$concat()$GetColumnByName("string_column")$as_vector()
   )
   expect_identical(
     rownames(named),
@@ -280,7 +280,7 @@ test_that("Load v5 ragged assay", {
   skip_if(!extended_tests())
   skip_if_not_installed("SeuratObject", minimum_version = "5.0.2")
 
-  uri <- tempfile(pattern = "assay-experiment-query-v5-whole")
+  uri <- tempfile(pattern = "assay-experiment-query-v5-ragged")
   n_obs <- 20L
   n_var <- 10L
   layers <- c("mat", "matA", "matB", "matC")
@@ -389,7 +389,7 @@ test_that("Load v5 assay from sliced ExperimentQuery", {
   # Test named
   expect_no_condition(named <- query$to_seurat_assay(
     "counts",
-    obs_index = "baz",
+    obs_index = "string_column",
     var_index = "quux",
     version = "v5"
   ))
@@ -399,7 +399,7 @@ test_that("Load v5 assay from sliced ExperimentQuery", {
   )
   expect_identical(
     colnames(named),
-    query$obs("baz")$concat()$GetColumnByName("baz")$as_vector()
+    query$obs("string_column")$concat()$GetColumnByName("string_column")$as_vector()
   )
 })
 
@@ -524,7 +524,7 @@ test_that("Load v5 assay from indexed ExperimentQuery", {
   on.exit(experiment$close(), add = TRUE, after = FALSE)
 
   obs_value_filter <- paste0(
-    sprintf("baz == '%s'", obs_label_values),
+    sprintf("string_column == '%s'", obs_label_values),
     collapse = "||"
   )
   var_value_filter <- paste0(
@@ -549,7 +549,7 @@ test_that("Load v5 assay from indexed ExperimentQuery", {
   # Test named
   expect_no_condition(named <- query$to_seurat_assay(
     "counts",
-    obs_index = "baz",
+    obs_index = "string_column",
     var_index = "quux",
     version = "v5"
   ))
@@ -560,7 +560,7 @@ test_that("Load v5 assay from indexed ExperimentQuery", {
   expect_identical(rownames(named), var_label_values)
   expect_identical(
     colnames(named),
-    query$obs("baz")$concat()$GetColumnByName("baz")$as_vector()
+    query$obs("string_column")$concat()$GetColumnByName("string_column")$as_vector()
   )
   expect_identical(colnames(named), obs_label_values)
 })
@@ -585,7 +585,7 @@ test_that("Load v5 ragged assay from indexed ExperimentQuery", {
   on.exit(experiment$close(), add = TRUE, after = FALSE)
 
   obs_value_filter <- paste0(
-    sprintf("baz == '%s'", obs_label_values),
+    sprintf("string_column == '%s'", obs_label_values),
     collapse = "||"
   )
   var_value_filter <- paste0(
