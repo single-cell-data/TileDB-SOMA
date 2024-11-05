@@ -1883,3 +1883,47 @@ def test_global_writes(tmp_path):
                 data,
                 platform_config=soma.TileDBCreateOptions(),
             )
+
+
+def test_pass_configs(tmp_path):
+    uri = tmp_path.as_posix()
+
+    with soma.SparseNDArray.create(
+        tmp_path.as_posix(), type=pa.uint8(), shape=(3,)
+    ) as a:
+        data = pa.Table.from_pydict(
+            {
+                "soma_dim_0": pa.array([0, 1, 2], type=pa.int64()),
+                "soma_data": pa.array([1, 2, 3], type=pa.uint8()),
+            }
+        )
+        a.write(data)
+
+    # Pass a custom config to open
+    with soma.SparseNDArray.open(
+        uri,
+        "r",
+        context=soma.SOMATileDBContext(
+            {"sm.mem.total_budget": "0", "sm.io_concurrency_level": "0"}
+        ),
+    ) as sdf:
+
+        # This error out as 0 are not valid values to set the total memory
+        # budget or nummber of threads
+        with pytest.raises(soma.SOMAError):
+            next(sdf.read().tables())
+
+        # This still errors out because read still sees that the number of
+        # threads is 0 and therefore invalid
+        with pytest.raises(soma.SOMAError):
+            next(sdf.read(platform_config={"sm.mem.total_budget": "10000"}).tables())
+
+        # With correct values, this reads without issue
+        next(
+            sdf.read(
+                platform_config={
+                    "sm.mem.total_budget": "10000",
+                    "sm.io_concurrency_level": "1",
+                }
+            ).tables()
+        )
