@@ -490,7 +490,9 @@ class SparseTensorReadIterBase(somacore.ReadIter[_RT], metaclass=abc.ABCMeta):
         sr = array._handle._handle
 
         if platform_config is not None:
-            ctx = clib.SOMAContext(platform_config)
+            cfg = sr.context().config()
+            cfg.update(platform_config)
+            ctx = clib.SOMAContext(cfg)
         else:
             ctx = sr.context()
 
@@ -561,7 +563,9 @@ def _arrow_table_reader(
     sr = array._handle._handle
 
     if platform_config is not None:
-        ctx = clib.SOMAContext(platform_config)
+        cfg = sr.context().config()
+        cfg.update(platform_config)
+        ctx = clib.SOMAContext(cfg)
     else:
         ctx = sr.context()
 
