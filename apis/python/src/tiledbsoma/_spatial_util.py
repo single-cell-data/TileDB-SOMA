@@ -249,7 +249,7 @@ def process_spatial_geometry_df_region(
 ]:
     # Check provided coords are valid.
     if not set(axis_names).isdisjoint(coords_by_name):
-        raise KeyError("Extra coords cannot contain a spatial index column.")
+        raise KeyError("Extra coords may not contain a spatial index column.")
     if not set(index_columns).issuperset(coords_by_name):
         raise KeyError("Extra coords must be index columns.")
 
