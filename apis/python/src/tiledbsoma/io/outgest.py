@@ -411,7 +411,7 @@ def to_anndata(
     varm = _resolve_futures(varm)
     obsp = _resolve_futures(obsp)
     varp = _resolve_futures(varp)
-    anndata_X = anndata_X_future.result() if anndata_X_future is not None else None
+    anndata_X = anndata_X_future.result() if anndata_X_future else None
     anndata_layers = _resolve_futures(anndata_layers_futures)
     uns: UnsDict = (
         _resolve_futures(uns_future.result(), deep=True)
