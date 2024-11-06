@@ -640,9 +640,9 @@ test_that("SOMADataFrame timestamped ops", {
     arrow::field("valdbl", arrow::float64(), nullable = FALSE)
   )
   if (dir.exists(uri)) unlink(uri, recursive = TRUE)
-  sdf <- SOMADataFrameCreate(uri = uri, schema = sch, domain = list(soma_joinid = c(1, 100)))
+  sdf <- SOMADataFrameCreate(uri = uri, schema = sch, domain = list(soma_joinid = c(0, 99)))
   rb1 <- arrow::record_batch(
-    soma_joinid = bit64::as.integer64(1L:3L),
+    soma_joinid = bit64::as.integer64(0L:2L),
     valint = 1L:3L,
     valdbl = 100 * (1:3),
     schema = sch
@@ -660,7 +660,7 @@ test_that("SOMADataFrame timestamped ops", {
   t20 <- Sys.time()
   sdf <- SOMADataFrameOpen(uri = uri, mode = "WRITE")
   rb2 <- arrow::record_batch(
-    soma_joinid = bit64::as.integer64(4L:6L),
+    soma_joinid = bit64::as.integer64(3L:5L),
     valint = 4L:6L,
     valdbl = 100 * (4:6),
     schema = sch
