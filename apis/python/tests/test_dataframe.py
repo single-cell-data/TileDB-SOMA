@@ -1864,3 +1864,31 @@ def test_presence_matrix(tmp_path):
         actual = soma_df.read().concat().to_pandas()
 
     assert actual.equals(df)
+
+
+def test_lower_bound_on_somajoinid_domain(tmp_path):
+    uri = tmp_path.as_posix()
+
+    schema = pa.schema(
+        [
+            ("soma_joinid", pa.int64()),
+            ("mystring", pa.string()),
+            ("myint", pa.int32()),
+            ("myfloat", pa.float32()),
+        ]
+    )
+
+    with pytest.raises(ValueError):
+        soma.DataFrame.create(
+            uri,
+            schema=schema,
+            domain=[[2, 99]],
+        )
+
+    soma.DataFrame.create(
+        uri,
+        schema=schema,
+        domain=[[0, 99]],
+    )
+
+    assert soma.DataFrame.exists(uri)
