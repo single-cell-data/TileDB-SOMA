@@ -29,13 +29,6 @@
   }
 }
 
-# This is temporary only. Please see:
-# * https://github.com/single-cell-data/TileDB-SOMA/issues/2407
-# * https://github.com/single-cell-data/TileDB-SOMA/pull/2950
-.new_shape_feature_flag_is_enabled <- function() {
-  .pkgenv[["use_current_domain_transitional_internal_only"]]
-}
-
 # Temporary for # https://github.com/single-cell-data/TileDB-SOMA/issues/2407.
 # Once core 2.27 is released and we depend on it, this can go away.
 .dense_arrays_can_have_current_domain <- function() {
@@ -61,13 +54,6 @@
       "about the SOMA project."
     )
   }
-}
-
-# This is temporary only. Please see:
-# * https://github.com/single-cell-data/TileDB-SOMA/issues/2407
-# * https://github.com/single-cell-data/TileDB-SOMA/pull/2950
-.new_shape_feature_flag_is_enabled <- function() {
-  .pkgenv[["use_current_domain_transitional_internal_only"]]
 }
 
 #' Create and cache a SOMA Context Object
