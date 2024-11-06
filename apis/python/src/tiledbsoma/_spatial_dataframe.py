@@ -40,7 +40,13 @@ class SpatialDataFrame(SOMAArray):
         Lifecycle:
             Experimental.
         """
-        return self._tiledb_array_keys()
+
+        return tuple(
+            filter(
+                lambda dim: not dim.startswith("tiledb__internal__"),
+                self._tiledb_array_keys(),
+            )
+        )
 
     @property
     def index_column_names(self) -> Tuple[str, ...]:

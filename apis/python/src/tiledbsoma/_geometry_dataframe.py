@@ -32,7 +32,10 @@ from tiledbsoma._spatial_util import (
 )
 from tiledbsoma._tdb_handles import GeometryDataFrameWrapper
 from tiledbsoma.options._soma_tiledb_context import _validate_soma_tiledb_context
-from tiledbsoma.options._tiledb_create_write_options import TileDBCreateOptions
+from tiledbsoma.options._tiledb_create_write_options import (
+    TileDBCreateOptions,
+    TileDBWriteOptions,
+)
 
 from . import pytiledbsoma as clib
 from ._constants import (
@@ -459,7 +462,27 @@ class GeometryDataFrame(SpatialDataFrame, somacore.GeometryDataFrame):
         Lifecycle:
             Experimental.
         """
-        raise NotImplementedError()
+        _util.check_type("values", values, (pa.Table,))
+
+        write_options: Union[TileDBCreateOptions, TileDBWriteOptions]
+        sort_coords = None
+        if isinstance(platform_config, TileDBCreateOptions):
+            raise ValueError(
+                "As of TileDB-SOMA 1.13, the write method takes "
+                "TileDBWriteOptions instead of TileDBCreateOptions"
+            )
+        write_options = TileDBWriteOptions.from_platform_config(platform_config)
+        sort_coords = write_options.sort_coords
+
+        clib_dataframe = self._handle._handle
+
+        for batch in values.to_batches():
+            clib_dataframe.write(batch, sort_coords or False)
+
+        if write_options.consolidate_and_vacuum:
+            clib_dataframe.consolidate_and_vacuum()
+
+        return self
 
     # Metadata operations
 
@@ -497,19 +520,17 @@ class GeometryDataFrame(SpatialDataFrame, somacore.GeometryDataFrame):
         Lifecycle:
             Experimental.
         """
-        raise NotImplementedError()
-
-    @property
-    def domain(self) -> Tuple[Tuple[Any, Any], ...]:
-        """The allowable range of values in each index column.
-
-        Returns: a tuple of minimum and maximum values, inclusive,
-            storable on each index column of the dataframe.
-
-        Lifecycle:
-            Experimental.
-        """
-        raise NotImplementedError()
+        if self._coord_space is not None:
+            if value.axis_names != self._coord_space.axis_names:
+                raise ValueError(
+                    f"Cannot change axis names of a point cloud dataframe. Existing "
+                    f"axis names are {self._coord_space.axis_names}. New coordinate "
+                    f"space has axis names {value.axis_names}."
+                )
+        self.metadata[SOMA_COORDINATE_SPACE_METADATA_KEY] = coordinate_space_to_json(
+            value
+        )
+        self._coord_space = value
 
     def _set_reader_coord(
         self, sr: clib.SOMAGeometryDataFrame, dim_idx: int, dim: pa.Field, coord: object
