@@ -38,7 +38,7 @@ def sample_point_cloud_dataframe_2d(tmp_path_factory):
 def test_export_to_shapes_2d(sample_point_cloud_dataframe_2d):
     """Test exporting a simple point cloud to a SpatialData shape model."""
     # Export PointCloudDataFrame to shapes.
-    shape = soma_outgest.to_spatial_shape(
+    shape = soma_outgest.to_spatial_data_shapes(
         sample_point_cloud_dataframe_2d,
         scene_id="scene0",
         soma_joinid_name="obs_id",

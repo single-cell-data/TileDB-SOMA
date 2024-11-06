@@ -71,7 +71,7 @@ def _transform_to_spatial_data(
     )
 
 
-def to_spatial_shape(
+def to_spatial_data_shapes(
     point_cloud: PointCloudDataFrame,
     *,
     scene_id: str,
