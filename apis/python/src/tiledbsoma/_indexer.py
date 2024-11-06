@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, List, Optional, Union
+from typing import List, Optional, Union
 
 import numpy as np
 import numpy.typing as npt
@@ -11,9 +11,7 @@ from somacore.query.types import IndexLike
 from tiledbsoma import pytiledbsoma as clib
 
 from ._types import PDSeries
-
-if TYPE_CHECKING:
-    from .options import SOMATileDBContext
+from .options import SOMATileDBContext
 
 IndexerDataType = Union[
     npt.NDArray[np.int64],
@@ -27,7 +25,7 @@ IndexerDataType = Union[
 
 
 def tiledbsoma_build_index(
-    data: IndexerDataType, *, context: Optional["SOMATileDBContext"] = None
+    data: IndexerDataType, *, context: Optional[SOMATileDBContext] = None
 ) -> IndexLike:
     """Initialize re-indexer for provided indices (deprecated).
 
@@ -54,7 +52,7 @@ class IntIndexer:
     """
 
     def __init__(
-        self, data: IndexerDataType, *, context: Optional["SOMATileDBContext"] = None
+        self, data: IndexerDataType, *, context: Optional[SOMATileDBContext] = None
     ):
         """Initialize re-indexer for provided indices.
 
@@ -73,7 +71,7 @@ class IntIndexer:
         )
         self._reindexer.map_locations(data)
 
-    def get_indexer(self, target: IndexerDataType) -> Any:
+    def get_indexer(self, target: IndexerDataType) -> npt.NDArray[np.intp]:
         """Compute underlying indices of index for target data.
 
         Compatible with Pandas' Index.get_indexer method.
@@ -81,7 +79,7 @@ class IntIndexer:
         Args:
             target: Data to return re-index data for.
         """
-        return (
+        return (  # type: ignore[no-any-return]
             self._reindexer.get_indexer_pyarrow(target)
             if isinstance(target, (pa.Array, pa.ChunkedArray))
             else self._reindexer.get_indexer_general(target)
