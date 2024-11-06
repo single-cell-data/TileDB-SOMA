@@ -184,6 +184,18 @@ void SOMAGeometryDataFrame::set_array_data(
     SOMAArray::set_array_data(std::move(arrow_schema), std::move(arrow_array));
 }
 
+ArrowTable SOMAGeometryDataFrame::get_soma_domain() {
+    return _reconstruct_geometry_domain(SOMAArray::get_soma_domain());
+}
+
+ArrowTable SOMAGeometryDataFrame::get_soma_maxdomain() {
+    return _reconstruct_geometry_domain(SOMAArray::get_soma_maxdomain());
+}
+
+ArrowTable SOMAGeometryDataFrame::get_non_empty_domain() {
+    return _reconstruct_geometry_domain(SOMAArray::get_non_empty_domain());
+}
+
 //===================================================================
 //= private non-static
 //===================================================================
@@ -362,6 +374,53 @@ ArrowTable SOMAGeometryDataFrame::_reconstruct_geometry_data_table(
     }
 
     return ArrowTable(std::move(arrow_array), std::move(arrow_schema));
+}
+
+ArrowTable SOMAGeometryDataFrame::_reconstruct_geometry_domain(
+    const ArrowTable& domain) {
+    std::unique_ptr<ArrowSchema> schema = std::make_unique<ArrowSchema>(
+        ArrowSchema{});
+    std::unique_ptr<ArrowArray> array = std::make_unique<ArrowArray>(
+        ArrowArray{});
+
+    int64_t internal_axes = 2 * spatial_column_names().size();
+
+    NANOARROW_THROW_NOT_OK(
+        ArrowSchemaInitFromType(schema.get(), NANOARROW_TYPE_STRUCT));
+    NANOARROW_THROW_NOT_OK(ArrowSchemaAllocateChildren(
+        schema.get(), domain.second->n_children - internal_axes + 1));
+    NANOARROW_THROW_NOT_OK(
+        ArrowArrayInitFromType(array.get(), NANOARROW_TYPE_STRUCT));
+    NANOARROW_THROW_NOT_OK(ArrowArrayAllocateChildren(
+        array.get(), domain.first->n_children - internal_axes + 1));
+
+    std::vector<std::string> dim_names = this->dimension_names();
+    auto is_internal = [](std::string name) {
+        return name.rfind(SOMA_GEOMETRY_DIMENSION_PREFIX, 0) == 0;
+    };
+    auto first_dim = static_cast<int64_t>(
+        std::find_if(begin(dim_names), end(dim_names), is_internal) -
+        dim_names.begin());
+
+    for (int64_t i = 0, orig_i = 0; i < schema->n_children; ++i, ++orig_i) {
+        ArrowSchemaMove(domain.second->children[orig_i], schema->children[i]);
+        ArrowArrayMove(domain.first->children[orig_i], array->children[i]);
+
+        if (i == first_dim) {
+            NANOARROW_THROW_NOT_OK(ArrowSchemaSetName(
+                schema->children[i], SOMA_GEOMETRY_COLUMN_NAME.c_str()));
+            std::vector<double_t> data;
+            for (; orig_i < i + internal_axes; orig_i += 2) {
+                data.push_back(
+                    ((double_t*)domain.first->children[orig_i]->buffers[1])[0]);
+                data.push_back(
+                    ((double_t*)domain.first->children[orig_i]->buffers[1])[1]);
+            }
+            array->children[i] = ArrowAdapter::make_arrow_array_child(data);
+        }
+    }
+
+    return ArrowTable(std::move(array), std::move(schema));
 }
 
 }  // namespace tiledbsoma
