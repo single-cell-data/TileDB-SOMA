@@ -321,7 +321,10 @@ setuptools.setup(
             library_dirs=LIB_DIRS,
             libraries=["tiledbsoma"] + (["tiledb"] if os.name == "nt" else []),
             extra_link_args=CXX_FLAGS,
-            extra_compile_args=["-std=c++17" if os.name != "nt" else "/std:c++17"]
+            extra_compile_args=[
+                "-std=c++17" if os.name != "nt" else "/std:c++17",
+                "-O3",  # this has a measurable impact on ome platforms over -O2 (default)
+            ]
             + CXX_FLAGS,
             language="c++",
         )
