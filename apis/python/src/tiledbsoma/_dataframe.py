@@ -295,6 +295,16 @@ class DataFrame(SOMAArray, somacore.DataFrame):
                 slot_core_max_domain, extent, saturated_md
             )
 
+            if index_column_name == "soma_joinid":
+                if slot_core_current_domain[0] != 0:
+                    raise ValueError(
+                        f"domain for soma_joinid must have lower bound of 0; got {slot_core_current_domain[0]}"
+                    )
+                if slot_core_max_domain[0] != 0:
+                    raise ValueError(
+                        f"maxdomain for soma_joinid must have lower bound of 0; got {slot_core_max_domain[0]}"
+                    )
+
             # Here is our Arrow data API for communicating schema info between
             # Python/R and C++ libtiledbsoma:
             #
