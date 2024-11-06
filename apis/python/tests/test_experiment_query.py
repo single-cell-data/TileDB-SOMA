@@ -1,7 +1,6 @@
 import re
 from concurrent import futures
 from contextlib import nullcontext
-from typing import Tuple
 from unittest import mock
 
 import attrs
@@ -15,13 +14,12 @@ from somacore import AxisQuery, options
 
 import tiledbsoma as soma
 from tiledbsoma import (
+    Experiment,
     ExperimentAxisQuery,
     SOMATileDBContext,
-    _factory,
     pytiledbsoma,
 )
 from tiledbsoma._collection import CollectionBase
-from tiledbsoma._experiment import Experiment
 from tiledbsoma.experiment_query import X_as_series
 
 from tests._util import raises_no_typeguard
@@ -98,9 +96,9 @@ def soma_experiment(
     return Experiment.open((tmp_path / "exp").as_posix())
 
 
-def get_soma_experiment_with_context(soma_experiment, context):
+def get_soma_experiment_with_context(soma_experiment, context) -> Experiment:
     soma_experiment.close()
-    return _factory.open(soma_experiment.uri, context=context)
+    return Experiment.open(soma_experiment.uri, context=context)
 
 
 @pytest.mark.parametrize("n_obs,n_vars,X_layer_names", [(101, 11, ("raw", "extra"))])
@@ -141,8 +139,8 @@ def test_experiment_query_all(soma_experiment):
         ad = query.to_anndata("raw")
         assert ad.n_obs == query.n_obs and ad.n_vars == query.n_vars
 
-        assert set(ad.obs.keys().to_list()) == set(["soma_joinid", "label"])
-        assert set(ad.var.keys().to_list()) == set(["soma_joinid", "label"])
+        assert set(ad.obs.keys()) == {"soma_joinid", "label"}
+        assert set(ad.var.keys()) == {"soma_joinid", "label"}
 
         obs = soma_experiment.obs.read().concat().to_pandas()
         obs.index = obs.index.map(str)
@@ -889,7 +887,7 @@ def add_dataframe(coll: CollectionBase, key: str, sz: int) -> None:
     )
 
 
-def add_sparse_array(coll: CollectionBase, key: str, shape: Tuple[int, int]) -> None:
+def add_sparse_array(coll: CollectionBase, key: str, shape: tuple[int, int]) -> None:
     a = coll.add_new_sparse_ndarray(key, type=pa.float32(), shape=shape)
     tensor = pa.SparseCOOTensor.from_scipy(
         sparse.random(
