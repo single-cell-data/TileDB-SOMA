@@ -177,6 +177,41 @@ test_that("Basic mechanics with default index_column_names", {
   gc()
 })
 
+test_that("soma_joinid domain lower bound must be zero", {
+  uri <- withr::local_tempdir("soma-dataframe-soma-joinid-domain-lower-bound")
+
+  index_column_names <- c("soma_joinid")
+
+  asch <- arrow::schema(
+      arrow::field("soma_joinid", arrow::int64(), nullable = FALSE),
+      arrow::field("mystring", arrow::large_utf8(), nullable = FALSE),
+      arrow::field("myint", arrow::int32(), nullable = FALSE),
+      arrow::field("myfloat", arrow::float32(), nullable = FALSE)
+  )
+
+  expect_error(
+    SOMADataFrameCreate(
+      uri,
+      asch,
+      index_column_names = index_column_names,
+      domain = list(soma_joinid=c(2, 99))
+    )
+  )
+
+  expect_no_condition(
+    SOMADataFrameCreate(
+      uri,
+      asch,
+      index_column_names = index_column_names,
+      domain = list(soma_joinid=c(0, 99))
+    )
+  )
+
+  sdf <- SOMADataFrameOpen(uri)
+  expect_true(sdf$exists())
+  sdf$close()
+})
+
 test_that("creation with all supported dimension data types", {
   skip_if(!extended_tests())
   sch <- arrow::schema(
