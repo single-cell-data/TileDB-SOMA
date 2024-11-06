@@ -522,20 +522,25 @@ get_domain_and_extent_dataframe <- function(
         arrow::arrow_array(c("", "", "", requested_slot[[1]], requested_slot[[2]]), ind_col_type)
       }
     } else {
-      if (ind_col_type_name %in% c("string", "utf8", "large_utf8")) {
-        aa <- arrow::arrow_array(c("", "", ""), ind_col_type)
-      } else {
-        # Same comments as above
-        lo <- ind_cur_dom[[1]]
-        hi <- ind_cur_dom[[2]]
-        if (lo > 0 || hi < ind_ext) {
-          dom_span <- hi - lo + 1
-          if (ind_ext > dom_span) {
-            ind_ext <- dom_span
-          }
+      # If they wanted (0, 99) then extent must be at most 100.
+      # This is tricky though. Some cases:
+      # * lo = 0, hi = 99, extent = 1000
+      #   We look at hi - lo + 1; resize extent down to 100
+      # * lo = 1000, hi = 1099, extent = 1000
+      #   We look at hi - lo + 1; resize extent down to 100
+      # * lo = min for datatype, hi = max for datatype
+      #   We get integer overflow trying to compute hi - lo + 1
+      # So if lo <= 0 and hi >= ind_ext, this is fine without
+      # computing hi - lo + 1.
+      lo <- ind_max_dom[[1]]
+      hi <- ind_max_dom[[2]]
+      if (lo > 0 || hi < ind_ext) {
+        dom_span <- hi - lo + 1
+        if (ind_ext > dom_span) {
+          ind_ext <- dom_span
         }
-        aa <- arrow::arrow_array(c(ind_cur_dom, ind_ext), ind_col_type)
       }
+      aa <- arrow::arrow_array(c(ind_max_dom, ind_ext, ind_cur_dom), ind_col_type)
     }
 
     aa

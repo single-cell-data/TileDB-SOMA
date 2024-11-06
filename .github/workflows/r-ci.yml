@@ -148,12 +148,7 @@ jobs:
       #      -e "devtools::install(upgrade = FALSE)" \
       #      -e "testthat::test_local('tests/testthat', load_package = 'installed')"
 
-      - name: Test without new shape
-        if: ${{ matrix.covr == 'no' }}
-        run: export SOMA_R_NEW_SHAPE=false && cd apis/r/tests && Rscript testthat.R
-
-      # https://github.com/single-cell-data/TileDB-SOMA/issues/2407
-      - name: Test with new shape
+      - name: Test
         if: ${{ matrix.covr == 'no' }}
         run: cd apis/r/tests && Rscript testthat.R
 

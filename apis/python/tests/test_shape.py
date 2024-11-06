@@ -306,9 +306,7 @@ def test_dataframe_basics(tmp_path, soma_joinid_domain, index_column_names):
     # Test resize down
     new_shape = 0
     with tiledbsoma.DataFrame.open(uri, "w") as sdf:
-        ok, msg = sdf.tiledbsoma_resize_soma_joinid_shape(
-            new_shape, check_only=True
-        )
+        ok, msg = sdf.tiledbsoma_resize_soma_joinid_shape(new_shape, check_only=True)
         if has_soma_joinid_dim:
             # TODO: check draft spec
             # with pytest.raises(ValueError):
