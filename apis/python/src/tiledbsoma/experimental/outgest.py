@@ -12,7 +12,7 @@ from .. import PointCloudDataFrame
 from .._constants import SOMA_JOINID
 
 
-def convert_axis_names(
+def _convert_axis_names(
     coord_axis_names: Tuple[str, ...],
     data_axis_names: Optional[Tuple[str, ...]] = None,
 ) -> Tuple[Tuple[str, ...], Dict[str, str]]:
@@ -45,7 +45,7 @@ def convert_axis_names(
     return spatial_data_axes, soma_dim_map
 
 
-def transform_to_spatial_data(
+def _transform_to_spatial_data(
     transform: somacore.CoordinateTransform,
     input_axes: Tuple[str, ...],
 ) -> spatialdata.transformations.BaseTransformation:
@@ -100,10 +100,10 @@ def to_spatial_shape(
 
     # Get the axis names for the spatial data shapes.
     orig_axis_names = point_cloud.coordinate_space.axis_names
-    new_axis_names, soma_dim_map = convert_axis_names(orig_axis_names)
+    new_axis_names, soma_dim_map = _convert_axis_names(orig_axis_names)
 
     # Create the transform to the scene.
-    transforms = {scene_id: transform_to_spatial_data(transform, new_axis_names)}
+    transforms = {scene_id: _transform_to_spatial_data(transform, new_axis_names)}
 
     data = point_cloud.read().concat().to_pandas()
     data.rename(columns={SOMA_JOINID: soma_joinid_name}, inplace=True)
