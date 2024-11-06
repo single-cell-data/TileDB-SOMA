@@ -399,10 +399,9 @@ void copy_to_dense(ThreadPool *const tp, uint64_t major_start, uint64_t major_en
                    const tcb::span<const VALUE> &Bd, tcb::span<VALUE> out)
 {
     auto [n_row, n_col] = shape;
-    auto n_major = (cm_format == Format::CSR) ? n_row : n_col;
-    assert(Bp.size() > n_major);
-    assert(major_start <= n_major);
-    assert(major_end <= n_major);
+    assert(Bp.size() > ((cm_format == Format::CSR) ? n_row : n_col));
+    assert(major_start <= ((cm_format == Format::CSR) ? n_row : n_col));
+    assert(major_end <= ((cm_format == Format::CSR) ? n_row : n_col));
     if (major_start >= major_end)
         return;
 
