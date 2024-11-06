@@ -29,7 +29,6 @@ from ._dataframe import (
     _revise_domain_for_extent,
 )
 from ._exception import SOMAError, map_exception_for_create
-from ._flags import NEW_SHAPE_FEATURE_FLAG_ENABLED
 from ._query_condition import QueryCondition
 from ._read_iters import TableReadIter
 from ._spatial_dataframe import SpatialDataFrame
@@ -215,16 +214,12 @@ class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
             # [4] core current domain hi
 
             index_column_schema.append(pa_field)
-            if NEW_SHAPE_FEATURE_FLAG_ENABLED:
 
-                index_column_data[pa_field.name] = [
-                    *slot_core_max_domain,
-                    extent,
-                    *slot_core_current_domain,
-                ]
-
-            else:
-                index_column_data[pa_field.name] = [*slot_core_current_domain, extent]
+            index_column_data[pa_field.name] = [
+                *slot_core_max_domain,
+                extent,
+                *slot_core_current_domain,
+            ]
 
         index_column_info = pa.RecordBatch.from_pydict(
             index_column_data, schema=pa.schema(index_column_schema)

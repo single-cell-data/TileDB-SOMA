@@ -1336,10 +1336,9 @@ def test_nan_append(conftest_pbmc_small, dtype, nans, new_obs_ids):
         var_field_name="var_id",
     )
 
-    if tiledbsoma._flags.NEW_SHAPE_FEATURE_FLAG_ENABLED:
-        nobs = rd.get_obs_shape()
-        nvars = rd.get_var_shapes()
-        tiledbsoma.io.resize_experiment(SOMA_URI, nobs=nobs, nvars=nvars)
+    nobs = rd.get_obs_shape()
+    nvars = rd.get_var_shapes()
+    tiledbsoma.io.resize_experiment(SOMA_URI, nobs=nobs, nvars=nvars)
 
     # Append the second anndata object
     tiledbsoma.io.from_anndata(
