@@ -9,6 +9,7 @@ import somacore
 import spatialdata
 
 from .. import PointCloudDataFrame
+from .._constants import SOMA_JOINID
 
 
 def convert_axis_names(
@@ -47,18 +48,22 @@ def convert_axis_names(
 def transform_to_spatial_data(
     transform: somacore.CoordinateTransform,
     input_axes: Tuple[str, ...],
-) -> spatialdata.BaseTransform:
+) -> spatialdata.transformations.BaseTransformation:
     """Returns the equivalent SpatialData transform for a somacore transform."""
     if isinstance(transform, somacore.IdentityTransform):
-        return spatialdata.Identity()
+        return spatialdata.transformations.Identity()
     if isinstance(transform, somacore.ScaleTransform):
-        return spatialdata.Scale(transform.scale_factors, transform.input_axes)
+        return spatialdata.transformations.Scale(
+            transform.scale_factors, transform.input_axes
+        )
     if isinstance(transform, somacore.AffineTransform):
         if len(input_axes):
             output_axes: Tuple[str, ...] = ("x", "y")
         else:
             output_axes = ("x", "y", "z")
-        return spatialdata.Affine(transform.augmented_matrix, input_axes, output_axes)
+        return spatialdata.transformations.Affin(
+            transform.augmented_matrix, input_axes, output_axes
+        )
 
     raise NotImplementedError(
         f"Support for converting transform of type {type(transform).__name__} is not "
@@ -70,6 +75,7 @@ def to_spatial_shape(
     point_cloud: PointCloudDataFrame,
     *,
     scene_id: str,
+    soma_joinid_name: str,
     transform: somacore.CoordinateTransform,
 ) -> gpd:
     """Export a :class:`PointCloudDataFrame` to a :class:`spatialdata.ShapesModel."""
@@ -100,7 +106,8 @@ def to_spatial_shape(
     transforms = {scene_id: transform_to_spatial_data(transform, new_axis_names)}
 
     data = point_cloud.read().concat().to_pandas()
-    data.insert(-1, "radius", radius)
+    data.rename(columns={SOMA_JOINID: soma_joinid_name}, inplace=True)
+    data.insert(len(data.columns), "radius", radius)
     ndim = len(orig_axis_names)
     if ndim == 2:
         geometry = gpd.points_from_xy(
