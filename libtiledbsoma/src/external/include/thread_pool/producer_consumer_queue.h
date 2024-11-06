@@ -42,7 +42,7 @@
 #include <deque>
 #include <queue>
 
-#include <logger_public.h>
+#include <soma/logger_public.h>
 
 namespace tiledbsoma {
 

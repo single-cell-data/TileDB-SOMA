@@ -16,8 +16,10 @@ import pandas._typing as pdt
 import pyarrow as pa
 import scipy.sparse as sp
 
+from .._fastercsx import CompressedMatrix
 from .._funcs import typeguard_ignore
 from .._types import NPNDArray, PDSeries
+from ..options._soma_tiledb_context import SOMATileDBContext
 
 _DT = TypeVar("_DT", bound=pdt.Dtype)
 _MT = TypeVar("_MT", NPNDArray, sp.spmatrix, PDSeries)
@@ -78,10 +80,11 @@ def to_tiledb_supported_array_type(name: str, x: _MT) -> _MT:
     return x
 
 
-def csr_from_coo_table(tbl: pa.Table, num_rows: int, num_cols: int) -> sp.csr_matrix:
+def csr_from_coo_table(
+    tbl: pa.Table, num_rows: int, num_cols: int, context: SOMATileDBContext
+) -> sp.csr_matrix:
     """Given an Arrow Table containing COO data, return a ``scipy.sparse.csr_matrx``."""
-    # to_pandas is preferred as it is more performant (and releases GIL)
-    df = tbl.to_pandas()
-    dij = (df["soma_data"], (df["soma_dim_0"], df["soma_dim_1"]))
-    s = sp.csr_matrix(dij, shape=(num_rows, num_cols))
+    s = CompressedMatrix.from_soma(
+        tbl, (num_rows, num_cols), "csr", True, context
+    ).to_scipy()
     return s

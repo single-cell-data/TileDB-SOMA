@@ -301,6 +301,7 @@ setuptools.setup(
             "tiledbsoma.pytiledbsoma",
             [
                 "src/tiledbsoma/common.cc",
+                "src/tiledbsoma/fastercsx.cc",
                 "src/tiledbsoma/reindexer.cc",
                 "src/tiledbsoma/query_condition.cc",
                 "src/tiledbsoma/soma_vfs.cc",
