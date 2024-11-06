@@ -67,7 +67,11 @@ SOMADataFrame <- R6::R6Class(
 
       if ("soma_joinid" %in% index_column_names && !is.null(domain)) {
         lower <- domain[["soma_joinid"]][1]
-        stopifnot("The lower bound for soma_joinid domain must be 0" = lower == 0)
+        upper <- domain[["soma_joinid"]][2]
+        stopifnot(
+          "The lower bound for soma_joinid domain must be 0" = lower == 0,
+          "The upper bound for soma_joinid domain must be >= 0" = upper >= 0
+          )
       }
 
       # Parse the tiledb/create/ subkeys of the platform_config into a handy,
