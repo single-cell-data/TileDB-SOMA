@@ -32,7 +32,6 @@
 
 #include <cmath>
 #include <cstdint>
-#include <forward_list>
 
 #include "parallel_functions.h"
 #include "span/span.hpp"
@@ -106,10 +105,10 @@ std::vector<Partition<COO_INDEX>> partition_views(
     assert(max_partitions > 0);
     std::vector<Partition<COO_INDEX>> partitions(max_partitions);
     for (auto& view : Ai) {
-        uint64_t n_partitions = std::min(
+        size_t n_partitions = std::min(
             (view.size() + partition_size - 1) / partition_size,
             max_partitions);
-        for (uint64_t i = 0; i < n_partitions; ++i) {
+        for (size_t i = 0; i < n_partitions; ++i) {
             const auto [start, stop] = get_split(view.size(), n_partitions, i);
             bin_view(partitions, view.subspan(start, stop - start));
         }
@@ -152,8 +151,7 @@ void count_rows(
             tp,
             0ul,
             n_partitions,
-            [&partition_counts, &partitions, &n_row](
-                const uint64_t partition) {
+            [&partition_counts, &partitions, &n_row](const uint64_t partition) {
                 auto& counts = partition_counts[partition];
                 for (auto& Ai_view : partitions[partition].views) {
                     for (size_t n = 0; n < Ai_view.size(); ++n) {
