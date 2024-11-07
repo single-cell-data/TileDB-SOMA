@@ -4,7 +4,7 @@ test_that("Arrow Interface from SOMAArrayReader", {
   library(tiledb)
 
   uri <- extract_dataset("soma-dataframe-pbmc3k-processed-obs")
-  columns <- c("n_counts", "n_genes", "louvain")
+  columns <- c("nCount_RNA", "nFeature_RNA", "seurat_clusters")
 
   z <- soma_array_reader(uri, columns)
   tb <- soma_array_to_arrow_table(z)
@@ -19,12 +19,12 @@ test_that("Arrow Interface from SOMAArrayReader", {
   tb2 <- soma_array_to_arrow_table(soma_array_reader(uri))
 
   expect_equal(tb2$num_rows, 2638)
-  expect_equal(tb2$num_columns, 6)
+  expect_equal(tb2$num_columns, 9)
 
   # read a subset of rows and columns
   tb3 <- soma_array_to_arrow_table(soma_array_reader(
     uri = uri,
-    colnames = c("obs_id", "percent_mito", "n_counts", "louvain"),
+    colnames = c("obs_id", "percent.mt", "nCount_RNA", "seurat_clusters"),
     dim_ranges = list(soma_joinid = rbind(
       bit64::as.integer64(c(1000, 1004)),
       bit64::as.integer64(c(2000, 2004))
