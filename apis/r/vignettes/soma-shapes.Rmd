@@ -1,0 +1,326 @@
+---
+title: "SOMA shapes"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{SOMA shapes}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+## Overview
+
+As of TileDB-SOMA 1.15 we're proud to support a more intuitive and extensible notion of shape.
+
+## Example data
+
+Let's load the bundled `SOMAExperiment` containing a subsetted version of the 10X genomics [PBMC dataset](https://satijalab.github.io/seurat-object/reference/pbmc_small.html) provided by SeuratObject. This will return a `SOMAExperiment` object.
+
+```{r}
+library(tiledbsoma)
+
+exp <- load_dataset("soma-exp-pbmc-small")
+exp
+```
+
+The `obs` dataframe has a `domain`, which is a soft limit on what values can be written to it. (You'll get an error if you try to read or write `soma_joinid` values outside this range, which is an important data-integrity reassurance.)
+
+The `domain` we see here matches with the data populated inside of it.  (This will usually be the case. It might not, if you've created the dataframe but not written any data to it yet --- at that point it's empty but it still has a shape.)
+
+If you have more data --- more cells --- to add to the experiment later, you will be able resize the obs, up to the maxdomain which is a hard limit.
+
+```{r}
+exp$obs$domain()
+```
+
+```{r}
+exp$obs$maxdomain()
+```
+
+```{r}
+head(as.data.frame(exp$obs$read()$concat()))
+```
+
+The `var` dataframe's `domain` is similar:
+
+```{r}
+var <- exp$ms$get("RNA")$var
+```
+
+```{r}
+var$domain()
+```
+
+```{r}
+var$maxdomain()
+```
+
+Likewise, the N-dimensional arrays within the experiment have their shapes as well.
+
+There's an important difference: while the dataframe domain gives you the inclusive lower and upper bounds for `soma_joinid` writes, the shape for the N-dimensional arrays is the upper bound plus 1.
+
+Since there are 80 cells here and 230 genes here, `X`'s shape reflects that.
+
+```{r}
+obs <- exp$obs
+var <- exp$ms$get("RNA")$var
+X   <- exp$ms$get("RNA")$X$get("data")
+
+obs$domain()
+```
+
+```{r}
+var$domain()
+```
+
+```{r}
+X$shape()
+```
+
+```{r}
+X$maxshape()
+```
+
+The other N-dimensional arrays are similar:
+
+```{r}
+obsm <- exp$ms$get("RNA")$obsm
+obsm$names()
+```
+
+```{r}
+obsp <- exp$ms$get("RNA")$obsp
+obsp$names()
+```
+
+```{r}
+list(
+    obsm$get("X_pca")$shape(),
+    obsm$get("X_pca")$maxshape()
+)
+```
+
+```{r}
+list(
+    obsp$get("RNA_snn")$shape(),
+    obsp$get("RNA_snn")$maxshape()
+)
+```
+
+In particular, the `X` array in this experiment --- and in most experiments --- is sparse. That means there needn't be a number in every row or cell of the matrix. Nonetheless, the shape serves as a soft limit for reads and writes: you'll get an exception trying to read or write outside of these.
+
+As a general rule you'll see the following:
+
+* An `X` array's shape is nobs x nvar
+* An `obsm` array's shape is `nobs` x some number, maybe 20
+* An `obsp` array's shape is `nobs` x `nobs`
+* A `varm` array's shape is `nvar` x some number, maybe 20
+* A `varp` array's shape is `nvar` x `nvar`
+
+## Advanced usage: dataframes with non-standard index columns
+
+In the SOMA data model, the `SOMASparseNDArray` and `SOMADenseNDArray` objects always have int64 dimensions named `soma_dim_0`, `soma_dim_1`, and up, and they have a numeric `soma_data` attribute for the contents of the array. Furthermore, this is always the case.
+
+```{r}
+exp$ms$get("RNA")$X$get("data")$schema()
+```
+
+For dataframes, though, while there must be a `soma_joinid` column of type int64, you can have one or more other index columns in addtion --- or, `soma_joinid` can be a non-index column.
+
+```{r}
+exp$obs$schema()
+```
+
+But really, dataframes are capable of more than that, via the index-column names you specify at creation time.
+
+Let's create a couple dataframes, with the same data, but different choices of index-column names.
+
+```{r}
+sdfuri1 <- withr::local_tempdir("sdf1")
+sdfuri2 <- withr::local_tempdir("sdf2")
+```
+
+```{r}
+asch <- arrow::schema(
+    arrow::field("soma_joinid", arrow::int64(), nullable = FALSE),
+    arrow::field("mystring", arrow::large_utf8(), nullable = FALSE),
+    arrow::field("myint", arrow::int32(), nullable = FALSE),
+    arrow::field("myfloat", arrow::float32(), nullable = FALSE)
+)
+
+soma_joinid = c(0, 1)
+mystring    = c("hello", "world")
+myint       = c(33, 44)
+myfloat     = c(4.5, 5.5)
+
+tbl <- arrow::arrow_table(
+    soma_joinid = c(soma_joinid),
+    mystring = c(mystring),
+    myint = c(myint),
+    myfloat = c(myfloat)
+)
+```
+
+```{r}
+sdf1 <- SOMADataFrameCreate(
+  sdfuri1,
+  asch,
+  index_column_names = c("soma_joinid", "mystring"),
+  domain = list(soma_joinid = c(0, 9), mystring = NULL)
+)
+sdf1$write(tbl)
+sdf1$close()
+```
+
+Now let's look at the `domain` and `maxdomain` for these dataframes.
+
+```{r}
+sdf1 <- SOMADataFrameOpen(sdfuri1)
+sdf1$index_column_names()
+```
+
+Here we see the `soma_joinid` slot of the dataframe's domain is as requested.
+
+Another point is that domain cannot be specified for string-type index columns.  You can set them at create one of two ways:
+
+`domain = list(soma_joinid = (0, 9), mystring = NULL)`
+
+or
+
+`domain = list(soma_joinid = (0, 9), mystring = c('', ''))`
+
+and in either case the domain slot for a string-typed index column will read back as `('', '')`.
+
+```{r}
+sdf1$domain()
+```
+
+```{r}
+sdf1$maxdomain()
+```
+
+Now let's look at our other dataframe. Here `soma_joinid` is not an index column at all. This is fine, as long as within the data you write to it, the index-column values uniquely identify each row.
+
+```{r}
+sdf2 <- SOMADataFrameCreate(
+  sdfuri2,
+  asch,
+  index_column_names = c("myfloat", "myint"),
+  domain = list(myfloat = c(0, 9999), myint = c(-1000, 1000))
+)
+sdf2$write(tbl)
+sdf2$close()
+```
+
+```{r}
+sdf2 <- SOMADataFrameOpen(sdfuri1)
+sdf2$index_column_names()
+```
+
+The domain reads back as written:
+
+```{r}
+sdf2$domain()
+```
+
+```{r}
+sdf2$maxdomain()
+```
+
+## Advanced usage: using resize at the dataframe/array level using the SOMA API
+
+In the TileDB-SOMA Python API, there is a method for resizing all the dataframes and arrays within an experiment. At present we do not yet offer a corresponding method in the TileDB-SOMA R API, for the simple reason that there is low demand for it. Nonetheless, for completeness, we offer here guidance on how to resizes dataframes and arrays within a TileDB-SOMA experiment.
+
+For N-dimensional arrays that have been upgraded, or that were created using TileDB-SOMA 1.15 or higher, simply do the following:
+
+* If the array's `$tiledbsoma_has_upgraded_shape()` reports `FALSE`, invoke the `$tiledbsoma_upgrade_shape()` method.
+* Otherwise invoke the `$.resize()` method.
+
+Let's do a fresh unpack of a pre-1.15 experiment:
+
+```{r}
+#XXX TO PORT FROM PYTHON
+
+#import tarfile
+#import tempfile
+
+#uri <- tempfile.mktemp()
+#with tarfile.open("data/pbmc3k-sparse-pre-1.15.tgz") as handle:
+#    handle.extractall(uri)
+#expold <- tiledbsoma.Experiment.open(uri)
+#X <- expold.ms$get("RNA")$X$get("data")
+```
+
+Here we see that the X array has not been upgraded, and that its shape reports the same as maxshape:
+
+```{r}
+#XXX TO PORT FROM PYTHON
+#X.tiledbsoma_has_upgraded_shape
+#False
+#X$shape
+#(9223372036854773759, 9223372036854773759)
+```
+
+Now let's give the X array the new-style shape:
+
+```{r}
+#XXX TO PORT FROM PYTHON
+#X.non_empty_domain()
+#((0, 2637), (0, 1837))
+#with tiledbsoma.Experiment.open(uri, "w") as exp:
+#    exp$ms$get("RNA")$X$get("data").tiledbsoma_upgrade_shape([X.non_empty_domain()[0][1]+1, X.non_empty_domain()[1][1]+1])
+```
+
+Next let's re-open and see what happened:
+
+```{r}
+#expold <- tiledbsoma.Experiment.open(expold.uri)
+#X <- expold.ms$get("RNA")$X$get("data")
+#X.tiledbsoma_has_upgraded_shape
+#True
+#X$shape
+#(2638, 1838)
+#X$maxshape
+#(9223372036854773759, 9223372036854773759)
+```
+
+Furthermore, we can resize it even farther:
+
+```{r}
+#with tiledbsoma.Experiment.open(expold.uri, "w") as exp:
+#    exp$ms$get("RNA")$X$get("data").resize([7200, 1848])
+#expold <- tiledbsoma.Experiment.open(expold.uri)
+#X <- expold.ms$get("RNA")$X$get("data")
+#X$shape
+#(7200, 1848)
+```
+
+* If the dataframe's `$tiledbsoma_has_upgraded_domain()` reports `FALSE`, invoke `$tiledbsoma_upgrade_domain()`
+* Otherwise invoke `$change_domain()`
+
+```{r}
+#XXX TO PORT FROM PYTHON
+#expold.obs.tiledbsoma_has_upgraded_domain
+#False
+#expold.obs$domain
+#((0, 9223372036854773758),)
+#expold.obs$maxdomain
+#((0, 9223372036854773758),)
+#expold.obs.non_empty_domain()
+#((0, 2637),)
+#with tiledbsoma.Experiment.open(expold.uri, "w") as exp:
+#    exp$obs.tiledbsoma_upgrade_domain([[0, expold.obs.non_empty_domain()[0][1]+1]])
+#expold <- tiledbsoma.Experiment.open(expold.uri)
+#expold.obs.tiledbsoma_has_upgraded_domain
+#True
+#expold.obs$domain
+#((0, 2638),)
+#expold.obs$maxdomain
+#((0, 9223372036854773758),)
+```

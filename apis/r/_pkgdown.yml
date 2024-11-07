@@ -17,6 +17,8 @@ navbar:
         href: articles/soma-objects.html
       - text: Reading From SOMA Objects
         href: articles/soma-reading.html
+      - text: SOMA shapes
+        href: articles/soma-shapes.html
       - text: Querying a SOMA Experiment
         href: articles/soma-experiment-queries.html
       - text: -------
