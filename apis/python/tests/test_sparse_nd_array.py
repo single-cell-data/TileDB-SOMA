@@ -387,10 +387,7 @@ def test_sparse_nd_array_read_as_pandas(
 def test_sparse_nd_array_shaping(tmp_path, shape_is_nones, element_type):
     uri = tmp_path.as_posix()
 
-    if soma._flags.NEW_SHAPE_FEATURE_FLAG_ENABLED:
-        shape = [2, 3]
-    else:
-        shape = [None, None] if shape_is_nones else [2, 3]
+    shape = [2, 3]
 
     soma.SparseNDArray.create(
         uri,
@@ -421,9 +418,8 @@ def test_sparse_nd_array_shaping(tmp_path, shape_is_nones, element_type):
         assert snda.nnz == 6
 
     if shape_is_nones:
-        if soma._flags.NEW_SHAPE_FEATURE_FLAG_ENABLED:
-            with soma.SparseNDArray.open(uri, "w") as snda:
-                snda.resize([3, 3])
+        with soma.SparseNDArray.open(uri, "w") as snda:
+            snda.resize([3, 3])
         with soma.SparseNDArray.open(uri, "w") as snda:
             snda.write(batch2)
     else:
@@ -1094,12 +1090,8 @@ def test_tile_extents(tmp_path):
 
     with soma.SparseNDArray.open(tmp_path.as_posix()) as A:
         dim_info = json.loads(A.config_options_from_schema().dims)
-        if soma._flags.NEW_SHAPE_FEATURE_FLAG_ENABLED:
-            assert int(dim_info["soma_dim_0"]["tile"]) == 2048
-            assert int(dim_info["soma_dim_1"]["tile"]) == 2048
-        else:
-            assert int(dim_info["soma_dim_0"]["tile"]) == 100
-            assert int(dim_info["soma_dim_1"]["tile"]) == 2048
+        assert int(dim_info["soma_dim_0"]["tile"]) == 2048
+        assert int(dim_info["soma_dim_1"]["tile"]) == 2048
 
 
 @pytest.mark.parametrize(

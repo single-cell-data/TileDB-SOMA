@@ -494,25 +494,18 @@ get_domain_and_extent_dataframe <- function(
 
     requested_slot <- domain[[ind_col_name]]
     ind_cur_dom <- if (is.null(requested_slot)) {
-      if (.new_shape_feature_flag_is_enabled()) {
-        # New shape: if the slot is null, make the size as small
-        # as possible since current domain can only be resized upward.
-        #
-        # Core current-domain semantics are (lo, hi) with both
-        # inclusive, with lo <= hi. This means smallest is (0, 0)
-        # which is shape 1, not 0.
-        if (bit64::is.integer64(ind_max_dom)) {
-          c(bit64::as.integer64(0), bit64::as.integer64(0))
-        } else if (is.integer(ind_max_dom)) {
-          c(0L, 0L)
-        } else {
-          c(0, 0)
-        }
+      # New shape: if the slot is null, make the size as small
+      # as possible since current domain can only be resized upward.
+      #
+      # Core current-domain semantics are (lo, hi) with both
+      # inclusive, with lo <= hi. This means smallest is (0, 0)
+      # which is shape 1, not 0.
+      if (bit64::is.integer64(ind_max_dom)) {
+        c(bit64::as.integer64(0), bit64::as.integer64(0))
+      } else if (is.integer(ind_max_dom)) {
+        c(0L, 0L)
       } else {
-        # Old shape: if the slot is null, make the size as large
-        # as possible since there is not current domain, and the
-        # max domain is immutable.
-        ind_max_dom
+        c(0, 0)
       }
     } else {
       requested_slot
@@ -522,49 +515,32 @@ get_domain_and_extent_dataframe <- function(
     if (ind_col_type_name %in% c("string", "large_utf8", "utf8")) ind_ext <- NA
 
     # https://github.com/single-cell-data/TileDB-SOMA/issues/2407
-    if (.new_shape_feature_flag_is_enabled()) {
-      if (ind_col_type_name %in% c("string", "utf8", "large_utf8")) {
-        aa <- if (is.null(requested_slot)) {
-          arrow::arrow_array(c("", "", "", "", ""), ind_col_type)
-        } else {
-          arrow::arrow_array(c("", "", "", requested_slot[[1]], requested_slot[[2]]), ind_col_type)
-        }
+    if (ind_col_type_name %in% c("string", "utf8", "large_utf8")) {
+      aa <- if (is.null(requested_slot)) {
+        arrow::arrow_array(c("", "", "", "", ""), ind_col_type)
       } else {
-        # If they wanted (0, 99) then extent must be at most 100.
-        # This is tricky though. Some cases:
-        # * lo = 0, hi = 99, extent = 1000
-        #   We look at hi - lo + 1; resize extent down to 100
-        # * lo = 1000, hi = 1099, extent = 1000
-        #   We look at hi - lo + 1; resize extent down to 100
-        # * lo = min for datatype, hi = max for datatype
-        #   We get integer overflow trying to compute hi - lo + 1
-        # So if lo <= 0 and hi >= ind_ext, this is fine without
-        # computing hi - lo + 1.
-        lo <- ind_max_dom[[1]]
-        hi <- ind_max_dom[[2]]
-        if (lo > 0 || hi < ind_ext) {
-          dom_span <- hi - lo + 1
-          if (ind_ext > dom_span) {
-            ind_ext <- dom_span
-          }
-        }
-        aa <- arrow::arrow_array(c(ind_max_dom, ind_ext, ind_cur_dom), ind_col_type)
+        arrow::arrow_array(c("", "", "", requested_slot[[1]], requested_slot[[2]]), ind_col_type)
       }
     } else {
-      if (ind_col_type_name %in% c("string", "utf8", "large_utf8")) {
-        aa <- arrow::arrow_array(c("", "", ""), ind_col_type)
-      } else {
-        # Same comments as above
-        lo <- ind_cur_dom[[1]]
-        hi <- ind_cur_dom[[2]]
-        if (lo > 0 || hi < ind_ext) {
-          dom_span <- hi - lo + 1
-          if (ind_ext > dom_span) {
-            ind_ext <- dom_span
-          }
+      # If they wanted (0, 99) then extent must be at most 100.
+      # This is tricky though. Some cases:
+      # * lo = 0, hi = 99, extent = 1000
+      #   We look at hi - lo + 1; resize extent down to 100
+      # * lo = 1000, hi = 1099, extent = 1000
+      #   We look at hi - lo + 1; resize extent down to 100
+      # * lo = min for datatype, hi = max for datatype
+      #   We get integer overflow trying to compute hi - lo + 1
+      # So if lo <= 0 and hi >= ind_ext, this is fine without
+      # computing hi - lo + 1.
+      lo <- ind_max_dom[[1]]
+      hi <- ind_max_dom[[2]]
+      if (lo > 0 || hi < ind_ext) {
+        dom_span <- hi - lo + 1
+        if (ind_ext > dom_span) {
+          ind_ext <- dom_span
         }
-        aa <- arrow::arrow_array(c(ind_cur_dom, ind_ext), ind_col_type)
       }
+      aa <- arrow::arrow_array(c(ind_max_dom, ind_ext, ind_cur_dom), ind_col_type)
     }
 
     aa
@@ -601,7 +577,7 @@ get_domain_and_extent_array <- function(shape, is_sparse) {
     # expansion.
     ind_max_dom <- arrow_type_unsigned_range(ind_col_type) - c(0, ind_ext)
 
-    if (.new_shape_feature_flag_is_enabled() && (is_sparse || .dense_arrays_can_have_current_domain())) {
+    if (is_sparse || .dense_arrays_can_have_current_domain()) {
       aa <- arrow::arrow_array(c(ind_max_dom, ind_ext, ind_cur_dom), ind_col_type)
     } else {
       aa <- arrow::arrow_array(c(ind_cur_dom, ind_ext), ind_col_type)

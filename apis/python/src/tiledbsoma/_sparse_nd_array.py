@@ -26,8 +26,6 @@ from somacore import options
 from somacore.options import PlatformConfig
 from typing_extensions import Self
 
-from tiledbsoma._flags import NEW_SHAPE_FEATURE_FLAG_ENABLED
-
 from . import _util
 
 # This package's pybind11 code
@@ -162,41 +160,31 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
             # [3] core current domain lo
             # [4] core current domain hi
 
-            if NEW_SHAPE_FEATURE_FLAG_ENABLED:
-                dim_capacity, dim_extent = cls._dim_capacity_and_extent(
-                    dim_name,
-                    # The user specifies current domain -- this is the max domain
-                    # which is taken from the max ranges for the dim datatype.
-                    # We pass None here to detect those.
-                    None,
-                    len(shape),
-                    TileDBCreateOptions.from_platform_config(platform_config),
-                )
+            dim_capacity, dim_extent = cls._dim_capacity_and_extent(
+                dim_name,
+                # The user specifies current domain -- this is the max domain
+                # which is taken from the max ranges for the dim datatype.
+                # We pass None here to detect those.
+                None,
+                len(shape),
+                TileDBCreateOptions.from_platform_config(platform_config),
+            )
 
-                if dim_shape == 0:
-                    raise ValueError("SparseNDArray shape slots must be at least 1")
-                if dim_shape is None:
-                    # Core current-domain semantics are (lo, hi) with both
-                    # inclusive, with lo <= hi. This means smallest is (0, 0)
-                    # which is shape 1, not 0.
-                    dim_shape = 1
+            if dim_shape == 0:
+                raise ValueError("SparseNDArray shape slots must be at least 1")
+            if dim_shape is None:
+                # Core current-domain semantics are (lo, hi) with both
+                # inclusive, with lo <= hi. This means smallest is (0, 0)
+                # which is shape 1, not 0.
+                dim_shape = 1
 
-                index_column_data[pa_field.name] = [
-                    0,
-                    dim_capacity - 1,
-                    dim_extent,
-                    0,
-                    dim_shape - 1,
-                ]
-
-            else:
-                dim_capacity, dim_extent = cls._dim_capacity_and_extent(
-                    dim_name,
-                    dim_shape,
-                    len(shape),
-                    TileDBCreateOptions.from_platform_config(platform_config),
-                )
-                index_column_data[pa_field.name] = [0, dim_capacity - 1, dim_extent]
+            index_column_data[pa_field.name] = [
+                0,
+                dim_capacity - 1,
+                dim_extent,
+                0,
+                dim_shape - 1,
+            ]
 
         index_column_info = pa.RecordBatch.from_pydict(
             index_column_data, schema=pa.schema(index_column_schema)

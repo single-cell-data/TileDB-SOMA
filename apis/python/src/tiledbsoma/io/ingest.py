@@ -64,10 +64,6 @@ from .._exception import (
     NotCreateableError,
     SOMAError,
 )
-from .._flags import (
-    DENSE_ARRAYS_CAN_HAVE_CURRENT_DOMAIN,
-    NEW_SHAPE_FEATURE_FLAG_ENABLED,
-)
 from .._soma_array import SOMAArray
 from .._soma_object import AnySOMAObject, SOMAObject
 from .._tdb_handles import RawHandle
@@ -1211,9 +1207,7 @@ def _write_dataframe_impl(
     try:
         # Note: tiledbsoma.io creates dataframes with soma_joinid being the one
         # and only index column.
-        domain = None
-        if NEW_SHAPE_FEATURE_FLAG_ENABLED:
-            domain = ((0, shape - 1),)
+        domain = ((0, shape - 1),)
         soma_df = DataFrame.create(
             df_uri,
             schema=arrow_table.schema,
@@ -1318,17 +1312,14 @@ def _create_from_matrix(
     try:
         shape: Sequence[Union[int, None]] = ()
         # A SparseNDArray must be appendable in soma.io.
-        if NEW_SHAPE_FEATURE_FLAG_ENABLED:
-            # Instead of
-            #   shape = tuple(int(e) for e in matrix.shape)
-            # we consult the registration mapping. This is important
-            # in the case when multiple H5ADs/AnnDatas are being
-            # ingested to an experiment which doesn't pre-exist.
-            shape = (axis_0_mapping.get_shape(), axis_1_mapping.get_shape())
-        elif cls.is_sparse or DENSE_ARRAYS_CAN_HAVE_CURRENT_DOMAIN:
-            shape = tuple(None for _ in matrix.shape)
-        else:
-            shape = matrix.shape
+
+        # Instead of
+        #   shape = tuple(int(e) for e in matrix.shape)
+        # we consult the registration mapping. This is important
+        # in the case when multiple H5ADs/AnnDatas are being
+        # ingested to an experiment which doesn't pre-exist.
+        shape = (axis_0_mapping.get_shape(), axis_1_mapping.get_shape())
+
         soma_ndarray = cls.create(
             uri,
             type=pa.from_numpy_dtype(matrix.dtype),
