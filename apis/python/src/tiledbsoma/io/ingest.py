@@ -2257,7 +2257,7 @@ def _write_matrix_to_sparseNDArray(
     if sp.isspmatrix_csc(matrix):
         # E.g. if we used anndata.X[:]
         stride_axis = 1
-    if isinstance(matrix, CSCDataset) and matrix.format_str == "csc":
+    if isinstance(matrix, CSCDataset):
         # E.g. if we used anndata.X without the [:]
         stride_axis = 1
 
