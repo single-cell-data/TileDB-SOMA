@@ -32,8 +32,8 @@
 
 #include <variant>
 
-#include "common.h"
 #include <tiledbsoma/utils/fastercsx.h>
+#include "common.h"
 
 namespace libtiledbsomacpp {
 
