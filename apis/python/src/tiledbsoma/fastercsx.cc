@@ -229,7 +229,7 @@ T lookup_dtype(
 
 void compress_coo(
     std::shared_ptr<tiledbsoma::SOMAContext> ctx,
-    const std::tuple<int64_t, int64_t>& shape,
+    const std::pair<int64_t, int64_t>& shape,
     py::tuple Ai_,
     py::tuple Aj_,
     py::tuple Ad_,
@@ -286,9 +286,6 @@ void compress_coo(
             auto Bd_view = make_mutable_span<VALUE>(Bd);
 
             py::gil_scoped_release release;
-
-            const fastercsx::Shape shape(
-                static_cast<uint64_t>(n_row), static_cast<uint64_t>(n_col));
             return fastercsx::compress_coo(
                 ctx->thread_pool().get(),
                 shape,
@@ -364,7 +361,7 @@ void copy_to_dense(
     std::shared_ptr<tiledbsoma::SOMAContext> ctx,
     const uint64_t major_idx_start,
     const int64_t major_idx_end,
-    const std::tuple<int64_t, int64_t>& shape,
+    const std::pair<int64_t, int64_t>& shape,
     const std::string& format,
     py::array Bp,
     py::array Bj,
@@ -412,9 +409,6 @@ void copy_to_dense(
             auto Bj_view = make_span<CSX_MINOR_INDEX>(Bj);
             auto Bd_view = make_span<VALUE>(Bd);
             auto out_view = make_mutable_span<VALUE>(out);
-
-            const fastercsx::Shape shape(
-                static_cast<uint64_t>(n_row), static_cast<uint64_t>(n_col));
 
             py::gil_scoped_release release;
             return fastercsx::copy_to_dense(
@@ -476,7 +470,6 @@ void count_rows(
             auto Bp_view = make_mutable_span<CSX_MAJOR_INDEX>(Bp);
 
             py::gil_scoped_release release;
-
             fastercsx::count_rows(
                 ctx->thread_pool().get(), n_row, nnz, Ai_views, Bp_view);
         },
