@@ -32,6 +32,7 @@
 
 #include <cmath>
 #include <cstdint>
+#include <numeric>
 
 #include "parallel_functions.h"
 #include "span/span.hpp"
