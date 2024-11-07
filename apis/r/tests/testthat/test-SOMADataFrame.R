@@ -177,6 +177,50 @@ test_that("Basic mechanics with default index_column_names", {
   gc()
 })
 
+test_that("soma_joinid domain lower bound must be zero", {
+  uri <- withr::local_tempdir("soma-dataframe-soma-joinid-domain-lower-bound")
+
+  index_column_names <- c("soma_joinid")
+
+  asch <- arrow::schema(
+      arrow::field("soma_joinid", arrow::int64(), nullable = FALSE),
+      arrow::field("mystring", arrow::large_utf8(), nullable = FALSE),
+      arrow::field("myint", arrow::int32(), nullable = FALSE),
+      arrow::field("myfloat", arrow::float32(), nullable = FALSE)
+  )
+
+  expect_error(
+    SOMADataFrameCreate(
+      uri,
+      asch,
+      index_column_names = index_column_names,
+      domain = list(soma_joinid=c(2, 99))
+    )
+  )
+
+  expect_error(
+    SOMADataFrameCreate(
+      uri,
+      asch,
+      index_column_names = index_column_names,
+      domain = list(soma_joinid=c(0, -1))
+    )
+  )
+
+  expect_no_condition(
+    SOMADataFrameCreate(
+      uri,
+      asch,
+      index_column_names = index_column_names,
+      domain = list(soma_joinid=c(0, 99))
+    )
+  )
+
+  sdf <- SOMADataFrameOpen(uri)
+  expect_true(sdf$exists())
+  sdf$close()
+})
+
 test_that("creation with all supported dimension data types", {
   skip_if(!extended_tests())
   sch <- arrow::schema(
@@ -605,9 +649,9 @@ test_that("SOMADataFrame timestamped ops", {
     arrow::field("valdbl", arrow::float64(), nullable = FALSE)
   )
   if (dir.exists(uri)) unlink(uri, recursive = TRUE)
-  sdf <- SOMADataFrameCreate(uri = uri, schema = sch, domain = list(soma_joinid = c(1, 100)))
+  sdf <- SOMADataFrameCreate(uri = uri, schema = sch, domain = list(soma_joinid = c(0, 99)))
   rb1 <- arrow::record_batch(
-    soma_joinid = bit64::as.integer64(1L:3L),
+    soma_joinid = bit64::as.integer64(0L:2L),
     valint = 1L:3L,
     valdbl = 100 * (1:3),
     schema = sch
@@ -625,7 +669,7 @@ test_that("SOMADataFrame timestamped ops", {
   t20 <- Sys.time()
   sdf <- SOMADataFrameOpen(uri = uri, mode = "WRITE")
   rb2 <- arrow::record_batch(
-    soma_joinid = bit64::as.integer64(4L:6L),
+    soma_joinid = bit64::as.integer64(3L:5L),
     valint = 4L:6L,
     valdbl = 100 * (4:6),
     schema = sch
