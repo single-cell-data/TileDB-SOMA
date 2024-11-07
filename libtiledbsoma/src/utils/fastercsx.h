@@ -152,7 +152,7 @@ void count_rows(
             tp,
             0ul,
             n_partitions,
-            [&partition_counts, &partitions, &nnz, &n_row, &n_partitions](
+            [&partition_counts, &partitions, &n_row](
                 const uint64_t partition) {
                 auto& counts = partition_counts[partition];
                 for (auto& Ai_view : partitions[partition].views) {
