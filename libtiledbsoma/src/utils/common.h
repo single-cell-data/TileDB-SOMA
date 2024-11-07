@@ -42,6 +42,9 @@ namespace tiledbsoma {
 const std::string SOMA_OBJECT_TYPE_KEY = "soma_object_type";
 const std::string ENCODING_VERSION_KEY = "soma_encoding_version";
 const std::string ENCODING_VERSION_VAL = "1.1.0";
+const std::string SOMA_GEOMETRY_COLUMN_NAME = "soma_geometry";
+const std::string SOMA_GEOMETRY_DIMENSION_PREFIX = "tiledb__internal__";
+const std::string ARROW_DATATYPE_METADATA_KEY = "dtype";
 
 using MetadataValue = std::tuple<tiledb_datatype_t, uint32_t, const void*>;
 enum MetadataInfo { dtype = 0, num, value };
