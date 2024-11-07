@@ -10,7 +10,14 @@ import h5py
 import numpy as np
 import pandas as pd
 import scipy.sparse as sp
-from anndata.experimental import CSCDataset, CSRDataset
+
+# As of anndata 0.11 we get a warning importing anndata.experimental.
+# But anndata.abc doesn't exist in anndata 0.10. And anndata 0.11 doesn't
+# exist for Python 3.9. And we have not yet dropped support for Python 3.9.
+try:
+    from anndata.abc import CSCDataset, CSRDataset
+except (AttributeError, ModuleNotFoundError):
+    from anndata.experimental import CSCDataset, CSRDataset
 
 from tiledbsoma._types import Metadatum, NPNDArray
 
