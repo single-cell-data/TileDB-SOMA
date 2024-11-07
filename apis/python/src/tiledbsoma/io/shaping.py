@@ -53,7 +53,7 @@ def show_experiment_shapes(
 ) -> bool:
     """For each dataframe/array contained within the SOMA ``Experiment`` pointed
     to by the given URI, shows the deprecated ``used_shape`` (for N-D arrays) or
-    the ``count`` (for dataframes), along with the ``shape`` and ``maxshape``
+    the ``non_empty_domain`` (for dataframes), along with the ``shape`` and ``maxshape``
     (for arrays) or ``domain`` and ``maxdomain`` (for dataframes).
 
     Args:
@@ -65,13 +65,13 @@ def show_experiment_shapes(
         >>> tiledbsoma.io.show_experiment_shapes('pbmc3k_unprocessed')
         [DataFrame] obs
           URI file:///data/pbmc3k_unprocessed/obs
-          count                2700
+          non_empty_domain     ((0, 2699),)
           domain               ((0, 2699),)
           maxdomain            ((0, 9223372036854773758),)
           upgraded             True
         [DataFrame] ms/RNA/var
           URI file:///data/pbmc3k_unprocessed/ms/RNA/var
-          count                13714
+          non_empty_domain     ((0, 13713),)
           domain               ((0, 13713),)
           maxdomain            ((0, 9223372036854773758),)
           upgraded             True
@@ -110,7 +110,7 @@ def upgrade_experiment_shapes(
 ) -> bool:
     """For each dataframe contained within the SOMA ``Experiment`` pointed to by
     the given URI, sets the ``domain`` to match the dataframe's current
-    ``count``.  For each N-D array, sets the ``shape`` to match the array's
+    ``non_empty_domain``.  For each N-D array, sets the ``shape`` to match the array's
     current ``used_shape``. If ``verbose`` is set to ``True``, an activity log
     is printed. If ``check_only`` is true, only does a dry run and reports any
     reasons the upgrade would fail.
@@ -325,7 +325,7 @@ def _leaf_visitor_show_shapes(
     retval = True
     if isinstance(item, tiledbsoma.DataFrame):
         _print_leaf_node_banner("DataFrame", node_name, item.uri, args)
-        _bannerize(args, "count", item.count)
+        _bannerize(args, "non_empty_domain", item.non_empty_domain())
         _bannerize(args, "domain", item.domain)
         _bannerize(args, "maxdomain", item.maxdomain)
         _bannerize(args, "upgraded", item.tiledbsoma_has_upgraded_domain)
@@ -358,7 +358,10 @@ def _leaf_visitor_upgrade(
     retval = True
 
     if isinstance(item, tiledbsoma.DataFrame):
-        count = item.count
+        if item.index_column_names == ("soma_joinid",):
+            count = item.non_empty_domain()[0][1] + 1
+        else:
+            count = item.count
 
         _print_leaf_node_banner("DataFrame", node_name, item.uri, args)
         if check_only:

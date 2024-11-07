@@ -327,14 +327,14 @@ test_that("SOMADataFrame domain mods", {
    index_column_names <- c("soma_joinid", "mystring", "myint", "myfloat")
 
     domain_for_create <- list(
-        soma_joinid = c(1, 4),
+        soma_joinid = c(0, 3),
         mystring = NULL,
         myint = c(20, 50),
         myfloat = c(0.0, 6.0)
     )
 
     table <- arrow::arrow_table(
-      soma_joinid = 1L:4L,
+      soma_joinid = 0L:3L,
       mystring = c("a", "b", "a", "b"),
       myint = c(20, 30, 40, 50),
       myfloat = c(1.0, 2.5, 4.0, 5.5),
@@ -355,7 +355,7 @@ test_that("SOMADataFrame domain mods", {
 
     # Check "expand" to same
     new_domain <- list(
-        soma_joinid = c(1, 4),
+        soma_joinid = c(0, 3),
         mystring = NULL,
         myint = c(20, 50),
         myfloat = c(0.0, 6.0)
@@ -364,7 +364,7 @@ test_that("SOMADataFrame domain mods", {
 
     # Shrink
     new_domain <- list(
-        soma_joinid = c(1, 3),
+        soma_joinid = c(0, 2),
         mystring = NULL,
         myint = c(20, 50),
         myfloat = c(0.0, 6.0)
@@ -372,7 +372,7 @@ test_that("SOMADataFrame domain mods", {
     expect_error(sdf$change_domain(new_domain))
 
     new_domain <- list(
-        soma_joinid = c(1, 4),
+        soma_joinid = c(0, 3),
         mystring = NULL,
         myint = c(20, 40),
         myfloat = c(0.0, 6.0)
@@ -380,7 +380,7 @@ test_that("SOMADataFrame domain mods", {
     expect_error(sdf$change_domain(new_domain))
 
     new_domain <- list(
-        soma_joinid = c(1, 4),
+        soma_joinid = c(0, 3),
         mystring = NULL,
         myint = c(20, 50),
         myfloat = c(2.0, 6.0)
@@ -389,7 +389,7 @@ test_that("SOMADataFrame domain mods", {
 
     # String domain cannot be specified
     new_domain <- list(
-        soma_joinid = c(1, 4),
+        soma_joinid = c(0, 3),
         mystring = c("a", "z"),
         myint = c(20, 50),
         myfloat = c(0.0, 6.0)
@@ -400,7 +400,7 @@ test_that("SOMADataFrame domain mods", {
 
     # String domain cannot be specified
     new_domain <- list(
-        soma_joinid = c(1, 9),
+        soma_joinid = c(0, 8),
         mystring = c("", ""),
         myint = c(20, 50),
         myfloat = c(0.0, 10.0)
