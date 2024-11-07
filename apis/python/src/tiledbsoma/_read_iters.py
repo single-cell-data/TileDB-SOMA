@@ -30,12 +30,12 @@ import pyarrow as pa
 import somacore
 from scipy import sparse
 from somacore import options
-from somacore.query._eager_iter import EagerIterator
 
 # This package's pybind11 code
 import tiledbsoma.pytiledbsoma as clib
 
 from . import _util
+from ._eager_iter import EagerIterator
 from ._exception import SOMAError
 from ._fastercsx import CompressedMatrix
 from ._indexer import IntIndexer

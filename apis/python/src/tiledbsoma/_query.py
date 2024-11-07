@@ -46,7 +46,6 @@ from somacore.options import (
     ResultOrder,
     ResultOrderStr,
 )
-from somacore.query import _fast_csr
 from somacore.query.query import (
     AxisColumnNames,
     Numpyable,
@@ -56,6 +55,7 @@ from typing_extensions import Self
 
 if TYPE_CHECKING:
     from ._experiment import Experiment
+from ._fast_csr import read_csr
 from ._measurement import Measurement
 from ._sparse_nd_array import SparseNDArray
 
@@ -579,7 +579,7 @@ class ExperimentAxisQuery:
 
         x_matrices = {
             _xname: (
-                _fast_csr.read_csr(
+                read_csr(
                     layer,
                     obs_joinids,
                     var_joinids,
