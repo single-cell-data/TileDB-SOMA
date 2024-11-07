@@ -20,7 +20,7 @@ from . import pytiledbsoma as clib
 from ._arrow_types import pyarrow_to_carrow_type
 from ._common_nd_array import NDArray
 from ._exception import SOMAError, map_exception_for_create
-from ._flags import DENSE_ARRAYS_CAN_HAVE_CURRENT_DOMAIN, NEW_SHAPE_FEATURE_FLAG_ENABLED
+from ._flags import DENSE_ARRAYS_CAN_HAVE_CURRENT_DOMAIN
 from ._tdb_handles import DenseNDArrayWrapper
 from ._types import OpenTimestamp, Slice, StatusAndReason
 from ._util import dense_indices_to_shape
@@ -122,7 +122,7 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
             if dim_shape is None:
                 raise ValueError("DenseNDArray shape slots must be numeric")
 
-            if NEW_SHAPE_FEATURE_FLAG_ENABLED and DENSE_ARRAYS_CAN_HAVE_CURRENT_DOMAIN:
+            if DENSE_ARRAYS_CAN_HAVE_CURRENT_DOMAIN:
                 dim_capacity, dim_extent = cls._dim_capacity_and_extent(
                     dim_name,
                     # The user specifies current domain -- this is the max domain
@@ -368,7 +368,7 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
         1.15 release notes.  Raises an error if the new shape exceeds maxshape in
         any dimension. Raises an error if the array already has a shape.
         """
-        if NEW_SHAPE_FEATURE_FLAG_ENABLED and DENSE_ARRAYS_CAN_HAVE_CURRENT_DOMAIN:
+        if DENSE_ARRAYS_CAN_HAVE_CURRENT_DOMAIN:
             if check_only:
                 return self._handle.tiledbsoma_can_upgrade_shape(newshape)
             else:

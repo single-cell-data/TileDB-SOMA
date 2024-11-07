@@ -82,8 +82,7 @@ def test_dataframe(tmp_path, arrow_schema):
             pydict["quux"] = [True, False, False, True, False]
             rb = pa.Table.from_pydict(pydict)
 
-            if soma._flags.NEW_SHAPE_FEATURE_FLAG_ENABLED:
-                sdf.tiledbsoma_resize_soma_joinid_shape(len(rb))
+            sdf.tiledbsoma_resize_soma_joinid_shape(len(rb))
 
             sdf.write(rb)
 
@@ -95,11 +94,7 @@ def test_dataframe(tmp_path, arrow_schema):
         assert sdf.count == 5
         assert len(sdf) == 5
 
-        # More to come on https://github.com/single-cell-data/TileDB-SOMA/issues/2407
-        assert (
-            sdf.tiledbsoma_has_upgraded_domain
-            == soma._flags.NEW_SHAPE_FEATURE_FLAG_ENABLED
-        )
+        assert sdf.tiledbsoma_has_upgraded_domain
 
         with pytest.raises(AttributeError):
             assert sdf.shape is None
