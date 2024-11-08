@@ -142,7 +142,7 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
                 SOMADenseNDArray it must match have the shape provided by
                 ``level_shape`` and type specified in ``type. If set to ``None``, the
                 ``level_key`` will be used to construct a default child URI. For more
-                on URIs see :meth:`collection.Collection.add_new_collction`.
+                on URIs see :meth:`collection.Collection.add_new_collection`.
             coordinate_space: Either the coordinate space or the axis names for the
                 coordinate space the ``level=0`` image is defined on. This does not
                 include the channel dimension, only spatial dimensions.
@@ -151,6 +151,11 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
                 axis is provided, this defaults to the channel axis followed by the
                 coordinate space axes in reverse order (e.g.
                 ``("soma_channel", "y", "x")`` if ``coordinate_space=("x", "y")``).
+            has_channel_axis: Save the image with a dedicated "channel" axis.
+            platform_config: platform-specific configuration; keys are SOMA
+                implementation names.
+            context: Other implementation-specific configuration.
+            tiledb_timestamp: set timestamp for created TileDB SOMA objects.
 
 
         Returns:
@@ -451,7 +456,8 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
                 :class:`~options.ResultOrder` or its string value. This is the result
                 order the data is read from disk. It may be permuted if
                 ``data_axis_order`` is not the default order.
-
+            platform_config: platform-specific configuration; keys are SOMA
+                implementation names.
 
         Returns:
             The data bounding the requested region as a :class:`SpatialRead` with
@@ -475,7 +481,7 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
         # Check channel coords input is valid.
         if channel_coords is not None and not self._has_channel_axis:
             raise ValueError(
-                "Invalide channel coordinate provided. This image has no channel "
+                "Invalid channel coordinate provided. This image has no channel "
                 "dimension."
             )
 
@@ -498,7 +504,7 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
         else:
             if not isinstance(region_transform, ScaleTransform):
                 raise NotImplementedError(
-                    f"Support for reading levels with a region tranform of type "
+                    f"Support for reading levels with a region transform of type "
                     f"{type(region_transform)!r} is not yet supported."
                 )
             # Create or check output coordinates.
@@ -552,7 +558,7 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
     def _level_properties(self, level: Union[int, str]) -> _LevelProperties:
         """The properties of an image at the specified level."""
         # by name
-        # TODO could dyanmically create a dictionary whenever a name-based
+        # TODO could dynamically create a dictionary whenever a name-based
         # lookup is requested
         if isinstance(level, str):
             for val in self._levels:
