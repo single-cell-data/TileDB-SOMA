@@ -36,7 +36,15 @@ import numpy as np
 import pandas as pd
 import pyarrow as pa
 import scipy.sparse as sp
-from anndata.experimental import CSCDataset
+
+# As of anndata 0.11 we get a warning importing anndata.experimental.
+# But anndata.abc doesn't exist in anndata 0.10. And anndata 0.11 doesn't
+# exist for Python 3.9. And we have not yet dropped support for Python 3.9.
+try:
+    from anndata.abc import CSCDataset
+except (AttributeError, ModuleNotFoundError):
+    from anndata.experimental import CSCDataset
+
 from somacore.options import PlatformConfig
 from typing_extensions import get_args
 
