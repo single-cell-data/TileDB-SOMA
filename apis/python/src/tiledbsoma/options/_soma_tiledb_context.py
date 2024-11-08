@@ -10,7 +10,7 @@ import functools
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
-from typing import Any, Dict, Literal, Mapping, Optional, Union
+from typing import Any, Dict, Literal, Optional, Union
 
 from somacore import ContextBase
 from typing_extensions import Self
@@ -19,18 +19,21 @@ from .. import pytiledbsoma as clib
 from .._types import OpenTimestamp
 from .._util import ms_to_datetime, to_timestamp_ms
 
+_Unset = Literal["__unset__"]
+_UNSET: _Unset = "__unset__"
 
-def _default_config(
-    override: Mapping[str, Union[str, float]]
-) -> Dict[str, Union[str, float]]:
+TileDBConfig = Dict[str, Union[str, float]]
+ReplaceConfig = Dict[str, Union[str, float, None]]
+"""Replacing a value with ``None`` serves to delete that key."""
+
+
+def _default_config(override: TileDBConfig) -> TileDBConfig:
     """Returns a fresh dictionary with TileDB config values.
 
     These should be reasonable defaults that can be used out-of-the-box.
     ``override`` does exactly what it says: overrides default entries.
     """
-    cfg: Dict[str, Union[str, float]] = {
-        "sm.mem.reader.sparse_global_order.ratio_array_data": 0.3
-    }
+    cfg: TileDBConfig = {"sm.mem.reader.sparse_global_order.ratio_array_data": 0.3}
     cfg.update(override)
     return cfg
 
@@ -45,10 +48,6 @@ def _maybe_timestamp_ms(input: Optional[OpenTimestamp]) -> Optional[int]:
     if input is None:
         return None
     return to_timestamp_ms(input)
-
-
-_Unset = Literal["__unset__"]
-_UNSET: _Unset = "__unset__"
 
 
 class SOMATileDBContext(ContextBase):
@@ -66,7 +65,7 @@ class SOMATileDBContext(ContextBase):
 
     def __init__(
         self,
-        tiledb_config: Optional[Dict[str, Union[str, float]]] = None,
+        tiledb_config: Optional[TileDBConfig] = None,
         timestamp: Optional[OpenTimestamp] = None,
         threadpool: Optional[ThreadPoolExecutor] = None,
     ) -> None:
@@ -80,9 +79,6 @@ class SOMATileDBContext(ContextBase):
         it is used to construct a new ``Ctx``.
 
         Args:
-            tiledb_ctx: An existing TileDB Context for use as the TileDB Context
-                in this configuration.
-
             tiledb_config: A set of TileDB configuration options to use,
                 overriding the default configuration.
 
@@ -119,7 +115,7 @@ class SOMATileDBContext(ContextBase):
         """
         self._lock = threading.Lock()
         """A lock to ensure single initialization of ``_tiledb_ctx``."""
-        self._initial_config: Optional[Dict[str, Union[str, float]]] = (
+        self._initial_config: Optional[TileDBConfig] = (
             None if tiledb_config is None else _default_config(tiledb_config)
         )
 
@@ -163,7 +159,7 @@ class SOMATileDBContext(ContextBase):
             return self._native_context
 
     @property
-    def tiledb_config(self) -> Dict[str, Union[str, float]]:
+    def tiledb_config(self) -> TileDBConfig:
         """The TileDB configuration dictionary for this SOMA context.
 
         If this ``SOMATileDBContext`` already has a ``tiledb_ctx``, this will
@@ -177,7 +173,7 @@ class SOMATileDBContext(ContextBase):
         with self._lock:
             return self._internal_tiledb_config()
 
-    def _internal_tiledb_config(self) -> Dict[str, Union[str, float]]:
+    def _internal_tiledb_config(self) -> TileDBConfig:
         """Internal function for getting the TileDB Config.
 
         Returns a new dict with the contents. Caller must hold ``_lock``.
@@ -197,7 +193,7 @@ class SOMATileDBContext(ContextBase):
     def replace(
         self,
         *,
-        tiledb_config: Optional[Dict[str, Any]] = None,
+        tiledb_config: Optional[ReplaceConfig] = None,
         timestamp: Union[None, OpenTimestamp, _Unset] = _UNSET,
         threadpool: Union[None, ThreadPoolExecutor, _Unset] = _UNSET,
     ) -> Self:
@@ -208,8 +204,6 @@ class SOMATileDBContext(ContextBase):
                 A dictionary of parameters for `tiledb.Config() <https://tiledb-inc-tiledb.readthedocs-hosted.com/projects/tiledb-py/en/stable/python-api.html#config>`_.
                 To remove a parameter from the existing config, provide ``None``
                 as the value.
-            tiledb_ctx:
-                A TileDB Context to replace the current context with.
             timestamp:
                 A timestamp to replace the current timestamp with.
                 Explicitly passing ``None`` will remove the timestamp.
@@ -230,9 +224,13 @@ class SOMATileDBContext(ContextBase):
         """
         with self._lock:
             if tiledb_config is not None:
-                new_config = self._internal_tiledb_config()
+                new_config: ReplaceConfig = dict(self._internal_tiledb_config())
                 new_config.update(tiledb_config)
-                tiledb_config = {k: v for (k, v) in new_config.items() if v is not None}
+                new_tiledb_config = {
+                    k: v for k, v in new_config.items() if v is not None
+                }
+            else:
+                new_tiledb_config = None
 
             if timestamp == _UNSET:
                 # Keep the existing timestamp if not overridden.
@@ -243,7 +241,7 @@ class SOMATileDBContext(ContextBase):
 
         assert timestamp is None or isinstance(timestamp, (datetime.datetime, int))
         return type(self)(
-            tiledb_config=tiledb_config,
+            tiledb_config=new_tiledb_config,
             timestamp=timestamp,
             threadpool=threadpool,
         )

@@ -27,7 +27,7 @@ IndexerDataType = Union[
 
 
 def tiledbsoma_build_index(
-    data: IndexerDataType, *, context: Optional["SOMATileDBContext"] = None
+    data: IndexerDataType, *, context: Optional[SOMATileDBContext] = None
 ) -> IndexLike:
     """Initialize re-indexer for provided indices (deprecated).
 
@@ -54,7 +54,7 @@ class IntIndexer:
     """
 
     def __init__(
-        self, data: IndexerDataType, *, context: Optional["SOMATileDBContext"] = None
+        self, data: IndexerDataType, *, context: Optional[SOMATileDBContext] = None
     ):
         """Initialize re-indexer for provided indices.
 
