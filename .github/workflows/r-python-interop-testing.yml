@@ -114,3 +114,4 @@ jobs:
         run: python -m pytest apis/system/tests/
         env:
           TILEDB_SOMA_INIT_BUFFER_BYTES: 33554432 # accommodate tiny runners
+          _R_CHECK_TESTS_NLINES_: 0
