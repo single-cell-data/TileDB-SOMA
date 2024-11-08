@@ -34,8 +34,8 @@
 #define TILEDB_THREAD_POOL_H
 
 #include "producer_consumer_queue.h"
-#include "status.h"
 #include "soma/logger_public.h"
+#include "status.h"
 
 #include <functional>
 #include <future>
