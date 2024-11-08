@@ -7,6 +7,9 @@ on:
   schedule:
     - cron: "23 4 * * *"
 
+env:
+  _R_CHECK_TESTS_NLINES_: 0
+
 jobs:
   r-valgrind:
     runs-on: ubuntu-latest
