@@ -145,7 +145,7 @@ std::unique_ptr<ArrowSchema> create_index_cols_info_schema(
     std::vector<std::string> names(ndim);
     std::vector<tiledb_datatype_t> tiledb_datatypes(ndim);
 
-    for (int i = 0; i < (int)ndim; i++) {
+    for (int i = 0; i < static_cast<int>(ndim); i++) {
         const DimInfo& dim_info = dim_infos[i];
         names[i] = dim_info.name;
         tiledb_datatypes[i] = dim_info.tiledb_datatype;
@@ -153,7 +153,7 @@ std::unique_ptr<ArrowSchema> create_index_cols_info_schema(
 
     auto schema = ArrowAdapter::make_arrow_schema(names, tiledb_datatypes);
 
-    for (size_t i = 0; i < (size_t)schema->n_children; ++i) {
+    for (size_t i = 0; i < static_cast<size_t>(schema->n_children); ++i) {
         if (strcmp(schema->children[i]->name, "soma_geometry")) {
             nanoarrow::UniqueBuffer buffer;
             ArrowMetadataBuilderInit(buffer.get(), nullptr);
