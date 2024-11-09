@@ -345,6 +345,7 @@ def test_bad_shapes(context: soma.SOMATileDBContext, rng: np.random.Generator) -
         (sp.shape[0], sp.shape[1] - 1),
     ]:
         with pytest.raises(IndexError):
+            # this will also log an error - which is expected behavior for parallel_for/thread_pool
             fastercsx.CompressedMatrix.from_ijd(
                 sp.row, sp.col, sp.data, shp, "csr", True, context
             )
