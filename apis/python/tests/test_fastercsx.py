@@ -8,11 +8,12 @@ import numpy as np
 import pyarrow as pa
 import pytest
 import scipy.sparse as sparse
+from typeguard import suppress_type_checks
 
 import tiledbsoma as soma
 import tiledbsoma._fastercsx as fastercsx
 
-NP_VALUE_TYPES = [
+NP_VALUE_TYPES = [ # supported types - see fastercsx.h
     np.float32,
     np.float64,
     np.uint8,
@@ -90,6 +91,22 @@ def test_from_ijd(
     assert_eq(sp, cm)
     assert cm.nbytes == (cm.indptr.nbytes + cm.indices.nbytes + cm.data.nbytes)
     assert cm.to_scipy().has_canonical_format
+
+
+def test_from_pjd(context: soma.SOMATileDBContext, rng: np.random.Generator) -> None:
+    sp = sparse.random(
+        9970, 3124, density=0.01, dtype=np.float32, random_state=rng
+    ).tocsr()
+    cm = fastercsx.CompressedMatrix.from_pjd(
+        sp.indptr,
+        sp.indices,
+        sp.data,
+        sp.shape,
+        format="csr",
+        sorted=True,
+        context=context,
+    )
+    assert_eq(sp, cm)
 
 
 @pytest.mark.parametrize("format", ["csr", "csc"])
@@ -255,3 +272,86 @@ def test_to_numpy(
         assert np.array_equal(
             sp.tocsc()[:, index or slice(None)].toarray(), cm.to_numpy(index)
         )
+
+
+def test_bad_arguments(
+    context: soma.SOMATileDBContext, rng: np.random.Generator
+) -> None:
+    """Test various bad argument types/values are caught."""
+    sp = sparse.random(970, 31, density=0.01, dtype=np.float32, random_state=rng)
+
+    with suppress_type_checks():  # w/o this, typeguard raises, which defeats the point of the test
+
+        # context - bad type
+        with pytest.raises(AttributeError):
+            fastercsx.CompressedMatrix.from_ijd(
+                sp.row, sp.col, sp.data, sp.shape, "csr", True, None
+            )
+        # context - missing
+        with pytest.raises(TypeError):
+            fastercsx.CompressedMatrix.from_ijd(
+                sp.row, sp.col, sp.data, sp.shape, "csr", True
+            )
+
+        # unsupported data type
+        unsup_data = np.full(sp.data.shape, "A", dtype="str")
+        with pytest.raises(ValueError):
+            fastercsx.CompressedMatrix.from_ijd(
+                sp.row, sp.col, unsup_data, sp.shape, "csr", True, context
+            )
+
+        # unsupported index type
+        with pytest.raises(ValueError):
+            fastercsx.CompressedMatrix.from_ijd(
+                sp.row.astype(np.float32),
+                sp.col.astype(np.float32),
+                sp.data,
+                sp.shape,
+                "csr",
+                True,
+                context,
+            )
+
+        # unsupported index type
+        with pytest.raises(ValueError):
+            fastercsx.CompressedMatrix.from_ijd(
+                sp.row.astype(np.int16),
+                sp.col.astype(np.int16),
+                sp.data,
+                sp.shape,
+                "csr",
+                True,
+                context,
+            )
+
+        # mismatched index types
+        with pytest.raises(RuntimeError):
+            fastercsx.CompressedMatrix.from_ijd(
+                sp.row.astype(np.int32),
+                sp.col.astype(np.int64),
+                sp.data,
+                sp.shape,
+                "csr",
+                True,
+                context,
+            )
+
+
+def test_bad_shapes(context: soma.SOMATileDBContext, rng: np.random.Generator) -> None:
+    """Test bad/mismatched shape."""
+    sp = sparse.identity(32, dtype=np.int8).tocoo()
+    for shp in [
+        (sp.shape[0] - 1, sp.shape[1]),
+        (sp.shape[0], sp.shape[1] - 1),
+    ]:
+        with pytest.raises(IndexError):
+            fastercsx.CompressedMatrix.from_ijd(
+                sp.row, sp.col, sp.data, shp, "csr", True, context
+            )
+
+
+"""
+other tests to consider
+1. duplicates
+
+"""

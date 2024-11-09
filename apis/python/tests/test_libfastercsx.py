@@ -1,4 +1,4 @@
-"""Tests of the Pybind11 C++ layer."""
+"""Test the fastercsx pybind11 C++ layer."""
 
 from __future__ import annotations
 
@@ -209,5 +209,8 @@ Other stuff to test:
 3. compress w/ bad shape
 4. copy_to_dense w/ and w/o slice
 5. count rows
+6. sort gets handed bogus shaped arrays
+7. sort gets handed data with corrupted indptr
+8. compress gets handled dups and/or coords outside shape
 
 """
