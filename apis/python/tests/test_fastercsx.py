@@ -13,7 +13,7 @@ from typeguard import suppress_type_checks
 import tiledbsoma as soma
 import tiledbsoma._fastercsx as fastercsx
 
-NP_VALUE_TYPES = [ # supported types - see fastercsx.h
+NP_VALUE_TYPES = [  # supported types - see fastercsx.h
     np.float32,
     np.float64,
     np.uint8,
