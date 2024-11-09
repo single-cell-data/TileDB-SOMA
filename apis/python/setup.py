@@ -16,6 +16,7 @@
 import ctypes
 import os
 import pathlib
+import platform
 import shutil
 import subprocess
 import sys
@@ -242,7 +243,10 @@ LIB_DIRS = [
     str(tiledb_dir / "lib"),
 ]
 
-CXX_FLAGS = []
+CXX_FLAGS = ["-O3"]
+
+if platform.machine() == "x86_64":
+    CXX_FLAGS.append("-mavx2")
 
 if os.name != "nt":
     CXX_FLAGS.append(f'-Wl,-rpath,{str(tiledbsoma_dir / "lib")}')
@@ -321,10 +325,7 @@ setuptools.setup(
             library_dirs=LIB_DIRS,
             libraries=["tiledbsoma"] + (["tiledb"] if os.name == "nt" else []),
             extra_link_args=CXX_FLAGS,
-            extra_compile_args=[
-                "-std=c++17" if os.name != "nt" else "/std:c++17",
-                "-O3",  # this has a measurable impact over -O2 (default)
-            ]
+            extra_compile_args=["-std=c++17" if os.name != "nt" else "/std:c++17"]
             + CXX_FLAGS,
             language="c++",
         )
