@@ -155,9 +155,11 @@ void count_rows(
             [&partition_counts, &partitions, &n_row](const uint64_t partition) {
                 auto& counts = partition_counts[partition];
                 for (auto& Ai_view : partitions[partition].views) {
-                    for (size_t n = 0; n < Ai_view.size(); ++n) {
-                        uint64_t row = Ai_view[n];
-                        if ((row > n_row - 1) || (row < 0)) [[unlikely]]
+                    for (size_t n = 0; n < Ai_view.size(); n++) {
+                        auto row = Ai_view[n];
+                        if ((row < 0) ||
+                            (static_cast<std::make_unsigned_t<COO_INDEX>>(
+                                 row) >= n_row)) [[unlikely]]
                             throw std::out_of_range("Coordinate out of range.");
                         counts[row]++;
                     }
@@ -254,39 +256,45 @@ void compress_coo(
 #if 0  // OLD version
 
     // Copy all minor index and data values
-    auto partition_bits = std::max(13L, std::lround(std::ceil(std::log2(n_row / tp->concurrency_level()))));
+    auto partition_bits = std::max(
+        13L,
+        std::lround(std::ceil(std::log2(n_row / tp->concurrency_level()))));
     auto n_partitions = (n_row + (1 << partition_bits) - 1) >> partition_bits;
     assert(partition_bits >= 0);
     assert((n_partitions > 0) || (n_row == 0));
-    auto status =
-        parallel_for(tp, 0ul, n_partitions, [&partition_bits, &Ai, &Bp, &Aj, &Bj, &Ad, &Bd](const uint64_t partition)
-                     {
-        for (uint64_t chnk = 0; chnk < Ai.size(); ++chnk)
-        {
-          auto Ai_ = Ai[chnk];
-          auto Aj_ = Aj[chnk];
-          auto Ad_ = Ad[chnk];
-          for (uint64_t n = 0; n < Ai_.size(); ++n)
-          {
-            const uint64_t row = Ai_[n];
-            if ((row >> partition_bits) != partition)
-              continue;
+    auto status = parallel_for(
+        tp,
+        0ul,
+        n_partitions,
+        [&partition_bits, &Ai, &Bp, &Aj, &Bj, &Ad, &Bd, &n_col](
+            const uint64_t partition) {
+            for (uint64_t chnk = 0; chnk < Ai.size(); ++chnk) {
+                auto Ai_ = Ai[chnk];
+                auto Aj_ = Aj[chnk];
+                auto Ad_ = Ad[chnk];
+                for (uint64_t n = 0; n < Ai_.size(); ++n) {
+                    const uint64_t row = Ai_[n];
+                    if ((row >> partition_bits) != partition)
+                        continue;
 
-            uint64_t dest = Bp[row];
-            Bj[dest] = Aj_[n];
-            Bd[dest] = Ad_[n];
-            Bp[row]++;
-          }
-        }
-        return Status::Ok(); });
+                    uint64_t dest = Bp[row];
+                    if ((Aj_[n] < 0) || (static_cast<std::make_unsigned_t<COO_INDEX>>(Aj_[n]) >= n_col)) [[unlikely]]
+                        throw std::out_of_range("Coordinate out of range.");
+
+                    Bj[dest] = Aj_[n];
+                    Bd[dest] = Ad_[n];
+                    Bp[row]++;
+                }
+            }
+            return Status::Ok();
+        });
     assert(status.ok());
 
     // Shift major axis pointers back by one slot
-    for (uint64_t i = 0, last = 0; i <= n_row; i++)
-    {
-      uint64_t temp = Bp[i];
-      Bp[i] = last;
-      last = temp;
+    for (uint64_t i = 0, last = 0; i <= n_row; i++) {
+        uint64_t temp = Bp[i];
+        Bp[i] = last;
+        last = temp;
     }
 
 #else  // unrolled to reduce read bandwidth by half
@@ -315,7 +323,8 @@ void compress_coo(
          &Aj,
          &Bj,
          &Ad,
-         &Bd](const uint64_t partition) {
+         &Bd,
+         &n_col](const uint64_t partition) {
             for (uint64_t chnk = 0; chnk < Ai.size(); ++chnk) {
                 auto Ai_ = Ai[chnk];
                 auto Aj_ = Aj[chnk];
@@ -330,20 +339,30 @@ void compress_coo(
                             continue;
                         }
 
-                        uint64_t dest = Bp_left[row];
+                        const auto dest = Bp_left[row];
+                        if ((Aj_[n] < 0) ||
+                            (static_cast<std::make_unsigned_t<COO_INDEX>>(
+                                 Aj_[n]) >= n_col)) [[unlikely]]
+                            throw std::out_of_range("Coordinate out of range.");
+
                         Bj[dest] = Aj_[n];
                         Bd[dest] = Ad_[n];
                         Bp_left[row]++;
                     }
                 } else {
                     for (auto n = (Ai_.size() / 2); n < Ai_.size(); ++n) {
-                        const uint64_t row = Ai_[n];
+                        const auto row = Ai_[n];
                         if ((row >> partition_bits) != row_partition) {
                             continue;
                         }
 
                         Bp_right[row]--;
-                        uint64_t dest = Bp_right[row];
+                        const auto dest = Bp_right[row];
+                        if ((Aj_[n] < 0) ||
+                            (static_cast<std::make_unsigned_t<COO_INDEX>>(
+                                 Aj_[n]) >= n_col)) [[unlikely]]
+                            throw std::out_of_range("Coordinate out of range.");
+
                         Bj[dest] = Aj_[n];
                         Bd[dest] = Ad_[n];
                     }
