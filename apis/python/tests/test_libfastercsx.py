@@ -18,6 +18,11 @@ def concurrency() -> int | None:
 
 
 @pytest.fixture
+def rng() -> np.random.Generator:
+    return np.random.default_rng()
+
+
+@pytest.fixture
 def context(concurrency: int | None) -> clib.SOMAContext:
     if concurrency is None:
         return clib.SOMAContext()
@@ -198,19 +203,111 @@ def test_multichunk(
     assert np.array_equal(data, csr.data)
 
 
-"""
-Other stuff to test:
+def test_sort_indices_bad_args(
+    rng: np.random.Generator, context: clib.SOMAContext
+) -> None:
 
-1. all error checking
-2. boundary conditions on index types, e.g.,
-    - nnz is too large to fit into major/minor axis
-    - bogus row/val in COO is negative or exceeds n_row/n_col
-    - Bp is too small
-3. compress w/ bad shape
-4. copy_to_dense w/ and w/o slice
-5. count rows
-6. sort gets handed bogus shaped arrays
-7. sort gets handed data with corrupted indptr
-8. compress gets handled dups and/or coords outside shape
+    sp = sparse.random(2830, 212, density=0.1, dtype=np.int8, random_state=rng).tocsr()
+    p, j, d = sp.indptr, sp.indices, sp.data
 
-"""
+    with pytest.raises(TypeError):
+        fastercsx.sort_indices(None, p, j, d)
+    with pytest.raises(TypeError):
+        fastercsx.sort_indices(0, p, j, d)
+    with pytest.raises(TypeError):
+        fastercsx.sort_indices(context, None, j, d)
+    with pytest.raises(TypeError):
+        fastercsx.sort_indices(context, p, None, d)
+    with pytest.raises(TypeError):
+        fastercsx.sort_indices(context, p, j, None)
+
+    with pytest.raises(RuntimeError):
+        fastercsx.sort_indices(context, p[:-1], j, d)
+
+    with pytest.raises(RuntimeError):
+        fastercsx.sort_indices(context, p, j[1:], d)
+
+    with pytest.raises(RuntimeError):
+        fastercsx.sort_indices(context, p, j, d[1:])
+
+    with pytest.raises(RuntimeError):
+        fastercsx.sort_indices(context, np.zeros_like(p), j, d)
+
+    with pytest.raises(OverflowError):
+        pbad = p.copy()
+        pbad[1] = sp.nnz + 1000000
+        fastercsx.sort_indices(context, pbad, j, d)
+
+    with pytest.raises(OverflowError):
+        pbad = p.copy()
+        pbad[1] = -1
+        fastercsx.sort_indices(context, pbad, j, d)
+
+
+def test_compress_coo_bad_args(
+    rng: np.random.Generator, context: clib.SOMAContext
+) -> None:
+
+    sp = sparse.random(2830, 212, density=0.1, dtype=np.int8, random_state=rng)
+    i, j, d = sp.row, sp.col, sp.data
+
+    indptr = np.empty((sp.shape[0] + 1), dtype=np.int32)
+    indices = np.empty((sp.nnz,), dtype=np.int32)
+    data = np.empty((sp.nnz,), dtype=sp.dtype)
+
+    with pytest.raises(TypeError):
+        fastercsx.compress_coo(None, sp.shape, (i,), (j,), (d,), indptr, indices, data)
+    with pytest.raises(TypeError):
+        fastercsx.compress_coo(context, None, (i,), (j,), (d,), indptr, indices, data)
+
+    with pytest.raises(RuntimeError):
+        fastercsx.compress_coo(
+            context,
+            (sp.shape[0] + 1, sp.shape[1]),
+            (i,),
+            (j,),
+            (d,),
+            indptr,
+            indices,
+            data,
+        )
+    with pytest.raises(RuntimeError):
+        fastercsx.compress_coo(
+            context, (0, sp.shape[1]), (i,), (j,), (d,), indptr, indices, data
+        )
+    with pytest.raises(RuntimeError):
+        fastercsx.compress_coo(
+            context, (-1, sp.shape[1]), (i,), (j,), (d,), indptr, indices, data
+        )
+    with pytest.raises(IndexError):
+        fastercsx.compress_coo(
+            context, (sp.shape[0], 0), (i,), (j,), (d,), indptr, indices, data
+        )
+    with pytest.raises(RuntimeError):
+        fastercsx.compress_coo(
+            context, (sp.shape[0], -1), (i,), (j,), (d,), indptr, indices, data
+        )
+    with pytest.raises(RuntimeError):
+        fastercsx.compress_coo(
+            context, sp.shape, (i,), (j,), (d,), indptr[:-1].copy(), indices, data
+        )
+    with pytest.raises(RuntimeError):
+        fastercsx.compress_coo(
+            context, sp.shape, (i,), (j,), (d,), indptr, indices[:-1].copy(), data
+        )
+    with pytest.raises(RuntimeError):
+        fastercsx.compress_coo(
+            context, sp.shape, (i,), (j,), (d,), indptr, indices, data[1:].copy()
+        )
+    with pytest.raises(RuntimeError):
+        fastercsx.compress_coo(
+            context, sp.shape, (i[1:],), (j,), (d,), indptr, indices, data
+        )
+    with pytest.raises(RuntimeError):
+        fastercsx.compress_coo(
+            context, sp.shape, (i,), (j[1:],), (d,), indptr, indices, data
+        )
+    with pytest.raises(RuntimeError):
+        fastercsx.compress_coo(
+            context, sp.shape, (i,), (j,), (d[1:],), indptr, indices, data
+        )

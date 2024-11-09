@@ -483,7 +483,7 @@ void load_fastercsx(py::module& m) {
     fastercsx_m.def(
         "compress_coo",
         compress_coo,
-        py::arg("ctx"),
+        py::arg("ctx").noconvert(),
         py::arg("shape"),
         py::arg("Ai").noconvert(),
         py::arg("Aj").noconvert(),
@@ -496,7 +496,7 @@ void load_fastercsx(py::module& m) {
     fastercsx_m.def(
         "sort_indices",
         sort_indices,
-        py::arg("ctx"),
+        py::arg("ctx").noconvert(),
         py::arg("Bp").noconvert(),
         py::arg("Bj").noconvert(),
         py::arg("Bd").noconvert(),
@@ -505,7 +505,7 @@ void load_fastercsx(py::module& m) {
     fastercsx_m.def(
         "copy_to_dense",
         copy_to_dense,
-        py::arg("ctx"),
+        py::arg("ctx").noconvert(),
         py::arg("major_idx_start"),
         py::arg("major_idx_end"),
         py::arg("shape"),
@@ -519,7 +519,7 @@ void load_fastercsx(py::module& m) {
     fastercsx_m.def(
         "count_rows",
         count_rows,
-        py::arg("ctx"),
+        py::arg("ctx").noconvert(),
         py::arg("n_row"),
         py::arg("nnz"),
         py::arg("Ai").noconvert(),
