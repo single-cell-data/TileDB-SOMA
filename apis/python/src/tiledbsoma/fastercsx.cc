@@ -95,6 +95,18 @@ struct type_identity {
 /**
  * @brief Value type - types supported in the sparse matrix value
  */
+// Dispatched by width, not actual type (e.g., all 8-bit use uint8_t, etc).
+// This reduces template instantiation combinatorics (binary size, compile time,
+// etc).
+
+#define USE_VALUE_TYPE_WIDTH 1
+#if USE_VALUE_TYPE_WIDTH
+using ValueType = std::variant<
+    type_identity<uint8_t>,
+    type_identity<uint16_t>,
+    type_identity<uint32_t>,
+    type_identity<uint64_t>>;
+#else
 using ValueType = std::variant<
     type_identity<int8_t>,
     type_identity<int16_t>,
@@ -106,6 +118,8 @@ using ValueType = std::variant<
     type_identity<uint64_t>,
     type_identity<float>,
     type_identity<double>>;
+
+#endif
 
 /**
  * @brief Index type - types supported as CSx indices.
@@ -122,6 +136,20 @@ using CsxIndexType = std::variant<
 using CooIndexType =
     std::variant<type_identity<int32_t>, type_identity<int64_t>>;
 
+#if USE_VALUE_TYPE_WIDTH
+static const std::unordered_map<int, ValueType> value_type_dispatch = {
+    {npy_api::NPY_INT8_, type_identity<uint8_t>{}},
+    {npy_api::NPY_INT16_, type_identity<uint16_t>{}},
+    {npy_api::NPY_INT32_, type_identity<uint32_t>{}},
+    {npy_api::NPY_INT64_, type_identity<uint64_t>{}},
+    {npy_api::NPY_UINT8_, type_identity<uint8_t>{}},
+    {npy_api::NPY_UINT16_, type_identity<uint16_t>{}},
+    {npy_api::NPY_UINT32_, type_identity<uint32_t>{}},
+    {npy_api::NPY_UINT64_, type_identity<uint64_t>{}},
+    {npy_api::NPY_FLOAT_, type_identity<uint32_t>{}},
+    {npy_api::NPY_DOUBLE_, type_identity<uint64_t>{}},
+};
+#else
 static const std::unordered_map<int, ValueType> value_type_dispatch = {
     {npy_api::NPY_INT8_, type_identity<int8_t>{}},
     {npy_api::NPY_INT16_, type_identity<int16_t>{}},
@@ -132,7 +160,9 @@ static const std::unordered_map<int, ValueType> value_type_dispatch = {
     {npy_api::NPY_UINT32_, type_identity<uint32_t>{}},
     {npy_api::NPY_UINT64_, type_identity<uint64_t>{}},
     {npy_api::NPY_FLOAT_, type_identity<float>{}},
-    {npy_api::NPY_DOUBLE_, type_identity<double>{}}};
+    {npy_api::NPY_DOUBLE_, type_identity<double>{}},
+};
+#endif
 
 static const std::unordered_map<int, CsxIndexType> csx_index_type_dispatch = {
     {npy_api::NPY_INT32_, type_identity<int32_t>{}},
