@@ -37,6 +37,10 @@
 #include "parallel_functions.h"
 #include "span/span.hpp"
 
+#ifdef __AVX2__
+#include <immintrin.h>
+#endif
+
 namespace tiledbsoma::fastercsx {
 
 using namespace std::chrono_literals;
@@ -67,6 +71,8 @@ std::pair<T, T> get_split(T n_elements, T n_sections, T section) noexcept {
     return std::pair<T, T>(start, stop);
 }
 
+#ifndef NDEBUG
+/* Used only in asserts */
 template <typename T>
 size_t sum_over_size(const std::vector<tcb::span<const T>>& v) noexcept {
     return std::transform_reduce(
@@ -74,6 +80,7 @@ size_t sum_over_size(const std::vector<tcb::span<const T>>& v) noexcept {
             return a.size();
         });
 }
+#endif
 
 template <typename COO_INDEX>
 struct Partition {
@@ -207,6 +214,206 @@ void sum_rows_to_pointers(tcb::span<CSX_MAJOR_INDEX>& Bp) {
     }
 }
 
+template <
+    typename VALUE,
+    typename COO_INDEX,
+    typename CSX_MINOR_INDEX,
+    typename CSX_MAJOR_INDEX>
+void compress_coo_inner_left(
+    const uint64_t& row_partition,
+    const int& partition_bits,
+    const uint64_t& n_col,
+    tcb::span<COO_INDEX const>& Ai_,
+    tcb::span<COO_INDEX const>& Aj_,
+    tcb::span<VALUE const>& Ad_,
+    tcb::span<CSX_MAJOR_INDEX>& Bp,
+    tcb::span<CSX_MINOR_INDEX>& Bj,
+    tcb::span<VALUE>& Bd) {
+    for (auto n = 0UL; n < (Ai_.size() / 2); ++n) {
+        const std::make_unsigned_t<COO_INDEX> row = Ai_[n];
+        if ((row >> partition_bits) != row_partition)
+            continue;
+
+        const auto dest = Bp[row];
+        if ((Aj_[n] < 0) ||
+            (static_cast<std::make_unsigned_t<COO_INDEX>>(Aj_[n]) >= n_col))
+            [[unlikely]]
+            throw std::out_of_range("Coordinate out of range.");
+
+        Bj[dest] = Aj_[n];
+        Bd[dest] = Ad_[n];
+        Bp[row]++;
+    }
+}
+
+template <
+    typename VALUE,
+    typename COO_INDEX,
+    typename CSX_MINOR_INDEX,
+    typename CSX_MAJOR_INDEX>
+void compress_coo_inner_right(
+    unsigned int row_partition,
+    unsigned int partition_bits,
+    uint64_t n_col,
+    tcb::span<COO_INDEX const>& Ai_,
+    tcb::span<COO_INDEX const>& Aj_,
+    tcb::span<VALUE const>& Ad_,
+    tcb::span<CSX_MAJOR_INDEX>& Bp,
+    tcb::span<CSX_MINOR_INDEX>& Bj,
+    tcb::span<VALUE>& Bd) {
+    for (auto n = (Ai_.size() / 2); n < Ai_.size(); ++n) {
+        const std::make_unsigned_t<COO_INDEX> row = Ai_[n];
+        if ((row >> partition_bits) != row_partition) {
+            continue;
+        }
+
+        Bp[row]--;
+        const auto dest = Bp[row];
+        if ((Aj_[n] < 0) ||
+            (static_cast<std::make_unsigned_t<COO_INDEX>>(Aj_[n]) >= n_col))
+            [[unlikely]]
+            throw std::out_of_range("Coordinate out of range.");
+
+        Bj[dest] = Aj_[n];
+        Bd[dest] = Ad_[n];
+    }
+}
+
+#ifdef _THIS_IS_NO_FASTER_AVX2__
+/**
+ * @brief AVX2 specialization for int64_t COO indices (i.e. SOMA common case).
+ *
+ * Code assumes all Ai coords are >= 0 (see count_rows for actual check).
+ */
+template <
+    typename VALUE,
+    typename COO_INDEX = int64_t,
+    typename CSX_MINOR_INDEX,
+    typename CSX_MAJOR_INDEX>
+void compress_coo_inner_left(
+    const uint64_t& row_partition,
+    const int& partition_bits,
+    const uint64_t& n_col,
+    tcb::span<int64_t const>& Ai_,
+    tcb::span<int64_t const>& Aj_,
+    tcb::span<VALUE const>& Ad_,
+    tcb::span<CSX_MAJOR_INDEX>& Bp,
+    tcb::span<CSX_MINOR_INDEX>& Bj,
+    tcb::span<VALUE>& Bd) {
+    std::cout << Bp.size() << std::endl;
+    const auto start = 0ULL;
+    const auto stop = Ai_.size() / 2;
+    const auto stop4 = stop & ~3;
+    const auto a = Ai_.data();
+    std::cout << "start,stop " << start << ", " << stop << ", " << stop4
+              << std::endl;
+    std::cout << "Bp.size " << Bp.size() << std::endl;
+    __m256i partition_reg = _mm256_set1_epi32(row_partition);
+    for (uint64_t n = start; n < stop4; n += 4) {
+        __m256i x = _mm256_lddqu_si256((__m256i*)&a[n]);
+        __m256i eq = _mm256_srai_epi32(x, static_cast<int>(partition_bits));
+        eq = _mm256_cmpeq_epi32(eq, partition_reg);
+        if (_mm256_testz_si256(eq, eq)) [[likely]]
+            continue;
+
+        // serial processing as any given row may appear more than once
+        auto mask = _mm256_movemask_epi8(eq);
+        for (auto i = 0; i < 4; ++i) {
+            if (mask & (0x0F << (8 * i))) {
+                auto row = _mm256_extract_epi64(x, i);
+                const auto dest = Bp[row];
+                if ((Aj_[n + i] < 0) ||
+                    (static_cast<uint64_t>(Aj_[n + i]) >= n_col)) [[unlikely]]
+                    throw std::out_of_range("Coordinate out of range.");
+
+                Bj[dest] = Aj_[n + i];
+                Bd[dest] = Ad_[n + i];
+                Bp[row]++;
+            }
+        }
+    }
+
+    // handled any residual tail
+    for (auto n = stop4; n < stop; ++n) {
+        const uint64_t row = Ai_[n];
+        if ((row >> partition_bits) != row_partition)
+            continue;
+
+        const auto dest = Bp[row];
+        if ((Aj_[n] < 0) || (static_cast<uint64_t>(Aj_[n]) >= n_col))
+            [[unlikely]]
+            throw std::out_of_range("Coordinate out of range.");
+
+        Bj[dest] = Aj_[n];
+        Bd[dest] = Ad_[n];
+        Bp[row]++;
+    }
+}
+
+template <
+    typename VALUE,
+    typename COO_INDEX = int64_t,
+    typename CSX_MINOR_INDEX,
+    typename CSX_MAJOR_INDEX>
+void compress_coo_inner_right(
+    const uint64_t& row_partition,
+    const int& partition_bits,
+    const uint64_t& n_col,
+    tcb::span<int64_t const>& Ai_,
+    tcb::span<int64_t const>& Aj_,
+    tcb::span<VALUE const>& Ad_,
+    tcb::span<CSX_MAJOR_INDEX>& Bp,
+    tcb::span<CSX_MINOR_INDEX>& Bj,
+    tcb::span<VALUE>& Bd) {
+    const auto start = Ai_.size() / 2;
+    const auto stop = Ai_.size();
+    const auto stop4 = start + ((stop - start) & ~3);
+    const auto a = Ai_.data();
+    __m256i partition_reg = _mm256_set1_epi32(row_partition);
+    for (uint64_t n = start; n < stop4; n += 4) {
+        __m256i x = _mm256_loadu_si256((__m256i*)&a[n]);
+        __m256i eq = _mm256_srai_epi32(x, static_cast<int>(partition_bits));
+        eq = _mm256_cmpeq_epi32(eq, partition_reg);
+        if (_mm256_testz_si256(eq, eq)) [[likely]]
+            continue;
+
+        // serial processing as any given row may appear more than once
+        auto mask = _mm256_movemask_epi8(eq);
+        for (auto i = 0; i < 4; ++i) {
+            if (mask & (0x0F << (8 * i))) {
+                auto row = _mm256_extract_epi64(x, i);
+
+                Bp[row]--;
+                const auto dest = Bp[row];
+                if ((Aj_[n + i] < 0) ||
+                    (static_cast<uint64_t>(Aj_[n + i]) >= n_col)) [[unlikely]]
+                    throw std::out_of_range("Coordinate out of range.");
+
+                Bj[dest] = Aj_[n + i];
+                Bd[dest] = Ad_[n + i];
+            }
+        }
+    }
+
+    // handled any residual tail
+    for (auto n = stop4; n < stop; ++n) {
+        const uint64_t row = Ai_[n];
+        if ((row >> partition_bits) != row_partition)
+            continue;
+
+        Bp[row]--;
+        const auto dest = Bp[row];
+        if ((Aj_[n] < 0) || (static_cast<uint64_t>(Aj_[n]) >= n_col))
+            [[unlikely]]
+            throw std::out_of_range("Coordinate out of range.");
+
+        Bj[dest] = Aj_[n];
+        Bd[dest] = Ad_[n];
+    }
+}
+
+#endif
+
 /**
  * Given COO matrix in <I,J,D> format (row, col, value), compress into CSX
  * <P,J,D>. To generate a CSC, just swap the major/minor axes.
@@ -248,7 +455,8 @@ void compress_coo(
     assert(Bj.size() == nnz);
     assert(Bd.size() == nnz);
 
-    // get major axis counts. Important side effect: range checks the Ai values.
+    // get major axis counts. Important side effect: range checks the Ai
+    // values.
     count_rows(tp, n_row, nnz, Ai, Bp);
     sum_rows_to_pointers(Bp);
     assert(Bp[n_row] >= 0 && static_cast<uint64_t>(Bp[n_row]) == nnz);
@@ -301,6 +509,8 @@ void compress_coo(
 
     std::vector<CSX_MAJOR_INDEX> Bp_left(Bp.begin(), Bp.end() - 1);
     std::vector<CSX_MAJOR_INDEX> Bp_right(Bp.begin() + 1, Bp.end());
+    tcb::span<CSX_MAJOR_INDEX> Bp_left_span{Bp_left};
+    tcb::span<CSX_MAJOR_INDEX> Bp_right_span{Bp_right};
 
     // Copy all minor index and data values
     const auto partition_bits = std::max(
@@ -318,8 +528,8 @@ void compress_coo(
         [&n_partitions,
          &partition_bits,
          &Ai,
-         &Bp_left,
-         &Bp_right,
+         &Bp_left_span,
+         &Bp_right_span,
          &Aj,
          &Bj,
          &Ad,
@@ -333,39 +543,27 @@ void compress_coo(
                 const auto row_partition = partition / 2;
                 const auto left_half = ((partition & 0x1) == 0x0);
                 if (left_half) {
-                    for (auto n = 0UL; n < (Ai_.size() / 2); ++n) {
-                        const uint64_t row = Ai_[n];
-                        if ((row >> partition_bits) != row_partition) {
-                            continue;
-                        }
-
-                        const auto dest = Bp_left[row];
-                        if ((Aj_[n] < 0) ||
-                            (static_cast<std::make_unsigned_t<COO_INDEX>>(
-                                 Aj_[n]) >= n_col)) [[unlikely]]
-                            throw std::out_of_range("Coordinate out of range.");
-
-                        Bj[dest] = Aj_[n];
-                        Bd[dest] = Ad_[n];
-                        Bp_left[row]++;
-                    }
+                    compress_coo_inner_left(
+                        row_partition,
+                        partition_bits,
+                        n_col,
+                        Ai_,
+                        Aj_,
+                        Ad_,
+                        Bp_left_span,
+                        Bj,
+                        Bd);
                 } else {
-                    for (auto n = (Ai_.size() / 2); n < Ai_.size(); ++n) {
-                        const auto row = Ai_[n];
-                        if ((row >> partition_bits) != row_partition) {
-                            continue;
-                        }
-
-                        Bp_right[row]--;
-                        const auto dest = Bp_right[row];
-                        if ((Aj_[n] < 0) ||
-                            (static_cast<std::make_unsigned_t<COO_INDEX>>(
-                                 Aj_[n]) >= n_col)) [[unlikely]]
-                            throw std::out_of_range("Coordinate out of range.");
-
-                        Bj[dest] = Aj_[n];
-                        Bd[dest] = Ad_[n];
-                    }
+                    compress_coo_inner_right(
+                        row_partition,
+                        partition_bits,
+                        n_col,
+                        Ai_,
+                        Aj_,
+                        Ad_,
+                        Bp_right_span,
+                        Bj,
+                        Bd);
                 }
             }
 
@@ -429,8 +627,8 @@ void sort_indices(
 };
 
 /**
- * @brief Unsafe copy from compressed to dense format, as a C-order contiguous
- * array
+ * @brief Unsafe copy from compressed to dense format, as a C-order
+ * contiguous array
  *
  */
 template <class VALUE, class CSX_MINOR_INDEX, class CSX_MAJOR_INDEX>
@@ -467,7 +665,8 @@ void copy_to_dense(
                                        out_col;  // C ordered
                     if (out_idx >= out.size()) [[unlikely]]
                         throw std::overflow_error(
-                            "Out array is too small for provided coordinate "
+                            "Out array is too small for provided "
+                            "coordinate "
                             "range.");
                     out[out_idx] = Bd[j];
                 }
@@ -477,15 +676,15 @@ void copy_to_dense(
     } else {
         // parallelizing this is less beneficial than the CSR case as it
         // partitions by columns, but writes in C order. This does not align
-        // with CPU cache lines, and is therefore quite a bit slower than the
-        // speedup achieved by the (above) CSR loop.
+        // with CPU cache lines, and is therefore quite a bit slower than
+        // the speedup achieved by the (above) CSR loop.
         //
         // We could write a Fortran-ordered output array, but then it would
-        // typically need to be converted back to C order, which is even worse
-        // as you move (even) more data once it is dense.
+        // typically need to be converted back to C order, which is even
+        // worse as you move (even) more data once it is dense.
         //
-        // If there is ever a requirement for use of F-ordered data, we could
-        // add the output order as an option.
+        // If there is ever a requirement for use of F-ordered data, we
+        // could add the output order as an option.
         //
         assert(cm_format == Format::CSC);
         uint64_t out_n_col = major_end - major_start;
@@ -502,7 +701,8 @@ void copy_to_dense(
                     auto out_idx = out_row * out_n_col + out_col;  // C ordered
                     if (out_idx >= out.size()) [[unlikely]]
                         throw std::overflow_error(
-                            "Out array is too small for provided coordinate "
+                            "Out array is too small for provided "
+                            "coordinate "
                             "range.");
                     out[out_idx] = Bd[j];
                 }
