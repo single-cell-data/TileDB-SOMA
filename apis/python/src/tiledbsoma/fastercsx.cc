@@ -103,8 +103,8 @@ struct type_identity {
 #if USE_VALUE_TYPE_WIDTH
 // TODO: this approach doesn't work, as numpy complains when it attempts to cast
 // types (e.g., float32->uint32). What we need to do is change the templating to
-// take a "width" int value, rather than a type, and ripple that through the entire
-// fastercsx.h codebase.
+// take a "width" int value, rather than a type, and ripple that through the
+// entire fastercsx.h codebase.
 using ValueType = std::variant<
     type_identity<uint8_t>,
     type_identity<uint16_t>,
