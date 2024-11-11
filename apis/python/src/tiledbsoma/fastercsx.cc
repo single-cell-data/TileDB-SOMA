@@ -98,9 +98,9 @@ struct type_identity {
 // Dispatched by width, not actual type (e.g., all 8-bit use uint8_t, etc).
 // This reduces template instantiation combinatorics (binary size, compile time,
 // etc).
-#define USE_VALUE_TYPE_WIDTH 0
+#define FASTERCSX_USE_VALUE_TYPE_WIDTH 1
 
-#if USE_VALUE_TYPE_WIDTH
+#if FASTERCSX_USE_VALUE_TYPE_WIDTH
 // TODO: this approach doesn't work, as numpy complains when it attempts to cast
 // types (e.g., float32->uint32). What we need to do is change the templating to
 // take a "width" int value, rather than a type, and ripple that through the
@@ -140,7 +140,7 @@ using CsxIndexType = std::variant<
 using CooIndexType =
     std::variant<type_identity<int32_t>, type_identity<int64_t>>;
 
-#if USE_VALUE_TYPE_WIDTH
+#if FASTERCSX_USE_VALUE_TYPE_WIDTH
 static const std::unordered_map<int, ValueType> value_type_dispatch = {
     {npy_api::NPY_INT8_, type_identity<uint8_t>{}},
     {npy_api::NPY_INT16_, type_identity<uint16_t>{}},
@@ -198,28 +198,28 @@ void compress_coo_validate_args(
     6. Ensure each element in A* tuples are same type
     */
     if (n_row < 0 || n_col < 0)
-        throw std::runtime_error("n_row and n_col must be >= 0");
+        throw std::range_error("n_row and n_col must be >= 0");
 
     auto n_chunks = Ai.size();
     for (auto& vec : {Ai, Aj, Ad}) {
         if (vec.size() != n_chunks)
-            throw std::runtime_error(
+            throw std::length_error(
                 "All COO array tuples must contain same number of chunks.");
         for (auto& arr : vec) {
             if (arr.ndim() != 1)
-                throw std::runtime_error(
+                throw std::length_error(
                     "All arrays must be of dimension rank 1.");
             if (arr.dtype().num() != vec[0].dtype().num())
-                throw std::runtime_error(
+                throw pybind11::type_error(
                     "All chunks of COO arrays must be of same type.");
         }
     }
     if (Bp.ndim() != 1 || Bj.ndim() != 1 || Bd.ndim() != 1)
-        throw std::runtime_error("All arrays must be of dimension rank 1.");
+        throw std::length_error("All arrays must be of dimension rank 1.");
 
     for (auto& arr : Ad)
         if (arr.dtype().num() != Bd.dtype().num())
-            throw std::runtime_error("All data arrays must be of same type.");
+            throw pybind11::type_error("All data arrays must be of same type.");
 
     uint64_t nnz = Bd.size();
     for (auto& vec : {Ai, Aj, Ad}) {
@@ -228,22 +228,22 @@ void compress_coo_validate_args(
                 return a.size();
             });
         if (s != nnz)
-            throw std::runtime_error(
+            throw std::length_error(
                 "All COO arrays must have same size (nnz).");
     }
 
     if (static_cast<uint64_t>(Bj.size()) != nnz)
-        throw std::runtime_error(
+        throw std::length_error(
             "All output data arrays must have same size (nnz).");
     if (Bp.size() != (n_row + 1))
-        throw std::runtime_error("Pointer array size does not match n_rows.");
+        throw std::length_error("Pointer array size does not match n_rows.");
 
     if (!Bp.writeable() || !Bj.writeable() || !Bd.writeable())
-        throw std::runtime_error("Output arrays must be writable.");
+        throw std::invalid_argument("Output arrays must be writable.");
 
     if (Ai.size() > 0) {
         if (!Ai[0].dtype().is(Aj[0].dtype()))
-            throw std::runtime_error("COO index arrays must have same dtype.");
+            throw pybind11::type_error("COO index arrays must have same dtype.");
     }
 }
 
@@ -277,7 +277,7 @@ void compress_coo(
         Aj = to_vector<py::array>(Aj_);
         Ad = to_vector<py::array>(Ad_);
     } catch (const py::cast_error& e) {
-        throw std::runtime_error(
+        throw pybind11::type_error(
             std::string("All COO data must be tuple of ndarray (") + e.what() +
             ")");
     }
@@ -345,10 +345,10 @@ void sort_indices(
     // Error checks first
     //
     if (Bp.ndim() != 1 || Bj.ndim() != 1 || Bd.ndim() != 1)
-        throw std::runtime_error("All arrays must be 1D");
+        throw std::length_error("All arrays must be 1D");
 
     if (!Bp.writeable() || !Bj.writeable() || !Bd.writeable())
-        throw std::runtime_error("Output arrays must be writable.");
+        throw std::invalid_argument("Output arrays must be writable.");
 
     // Get dispatch types (TODO: need to throw meaningful errors if missing)
     CsxIndexType csx_major_index_type = lookup_dtype(
@@ -371,7 +371,7 @@ void sort_indices(
             auto n_row = Bp.size() - 1;
             int64_t nnz = py::cast<py::array_t<CSX_MAJOR_INDEX>>(Bp).at(n_row);
             if (Bj.size() != nnz || Bd.size() != nnz)
-                throw std::runtime_error("Array length and nnz do not match.");
+                throw std::length_error("Array length and nnz do not match.");
 
             auto Bp_view = make_span<CSX_MAJOR_INDEX>(Bp);
             auto Bj_view = make_mutable_span<CSX_MINOR_INDEX>(Bj);
@@ -402,24 +402,24 @@ void copy_to_dense(
     py::array Bd,
     py::array out) {
     if (format != "csr" && format != "csc")
-        throw std::runtime_error("format must be 'csr' or 'csc'");
+        throw std::invalid_argument("format must be 'csr' or 'csc'");
     const fastercsx::Format cm_format =
         (format == "csr" ? fastercsx::Format::CSR : fastercsx::Format::CSC);
 
     auto [n_row, n_col] = shape;
     if (n_row < 0 || n_col < 0)
-        throw std::runtime_error("n_row and n_col must be >= 0");
+        throw std::length_error("n_row and n_col must be >= 0");
     auto n_major = (format == "csr") ? n_row : n_col;
 
     if (major_idx_start < 0 || major_idx_end > n_major)
-        throw std::runtime_error(
+        throw std::range_error(
             "row_start must be >= 0 and row_end < array shape");
     if (n_major != Bp.size() - 1)
-        throw std::runtime_error("n_rows does not match Bp.size()");
+        throw std::length_error("n_rows does not match Bp.size()");
     if (!out.writeable())
-        throw std::runtime_error("out must be writable");
+        throw std::invalid_argument("out must be writable");
     if (out.dtype().num() != Bd.dtype().num())
-        throw std::runtime_error("out dtype must match Bd dtype");
+        throw pybind11::type_error("out dtype must match Bd dtype");
 
     // Get dispatch types (TODO: need to throw meaningful errors if missing)
     CsxIndexType csx_major_index_type = lookup_dtype(
@@ -472,19 +472,19 @@ void count_rows(
     {
         Ai = to_vector<py::array>(Ai_);
     } catch (const py::cast_error& e) {
-        throw std::runtime_error(
+        throw pybind11::type_error(
             std::string("All COO data must be tuple of ndarray (") + e.what() +
             ")");
     }
 
     if (Bp.ndim() != 1)
-        throw std::runtime_error("All arrays must be of dimension rank 1.");
+        throw std::range_error("All arrays must be of dimension rank 1.");
 
     if (Bp.size() != (n_row + 1))
-        throw std::runtime_error("Pointer array size does not match n_rows.");
+        throw std::length_error("Pointer array size does not match n_rows.");
 
     if (!Bp.writeable())
-        throw std::runtime_error("Output arrays must be writable.");
+        throw std::invalid_argument("Output arrays must be writable.");
 
     CooIndexType coo_index_type = lookup_dtype(
         coo_index_type_dispatch, Ai[0].dtype(), "COO index (row, col) arrays");

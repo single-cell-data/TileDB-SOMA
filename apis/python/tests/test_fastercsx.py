@@ -325,7 +325,7 @@ def test_bad_arguments(
             )
 
         # mismatched index types
-        with pytest.raises(RuntimeError):
+        with pytest.raises(TypeError):
             fastercsx.CompressedMatrix.from_ijd(
                 sp.row.astype(np.int32),
                 sp.col.astype(np.int64),
