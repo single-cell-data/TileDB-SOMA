@@ -70,17 +70,63 @@ std::vector<T> to_vector(const py::tuple& tup) {
 template <typename T>
 tcb::span<T const> make_span(py::array arr) {
     assert(py::isinstance<py::array_t<T>>(arr));
-    auto arr_typed = py::cast<py::array_t<T>>(arr);
-    return tcb::span<const T>(arr.unchecked<T, 1>().data(0), arr_typed.size());
+    return tcb::span<T const>(arr.unchecked<T, 1>().data(0), arr.size());
 }
 
 template <typename T>
 tcb::span<T> make_mutable_span(py::array arr) {
     assert(py::isinstance<py::array_t<T>>(arr));
-    auto arr_typed = py::cast<py::array_t<T>>(arr);
     return tcb::span<T>(
-        arr.mutable_unchecked<T, 1>().mutable_data(0), arr_typed.size());
+        arr.mutable_unchecked<T, 1>().mutable_data(0), arr.size());
 }
+
+template <typename T, typename R>
+tcb::span<R const> make_casted_span(py::array arr) {
+    static_assert(sizeof(T) == sizeof(R));
+    assert(py::isinstance<py::array_t<T>>(arr));
+    std::remove_cv_t<T>* p = (std::remove_cv_t<T>*)arr
+                                 .unchecked<std::remove_cv_t<T>, 1>()
+                                 .data(0);
+    return tcb::span<R const>(reinterpret_cast<R*>(p), arr.size());
+}
+
+template <typename T, typename R>
+tcb::span<R> make_mutable_casted_span(py::array arr) {
+    static_assert(sizeof(T) == sizeof(R));
+    assert(py::isinstance<py::array_t<T>>(arr));
+    std::remove_cv_t<T>* p = (std::remove_cv_t<T>*)arr
+                                 .mutable_unchecked<std::remove_cv_t<T>, 1>()
+                                 .data(0);
+    return tcb::span<R>(reinterpret_cast<R*>(p), arr.size());
+}
+
+template <typename T>
+struct remap_value {
+    typedef std::make_unsigned_t<T> type;
+};
+
+template <>
+struct remap_value<float> {
+    typedef uint32_t type;
+};
+
+template <>
+struct remap_value<const float> {
+    typedef const uint32_t type;
+};
+
+template <>
+struct remap_value<double> {
+    typedef uint64_t type;
+};
+
+template <>
+struct remap_value<const double> {
+    typedef const uint64_t type;
+};
+
+template <class T>
+using remap_value_t = typename remap_value<T>::type;
 
 /**
  * @brief C++ std::type_identity, which is not available until C++20
@@ -95,22 +141,6 @@ struct type_identity {
 /**
  * @brief Value type - types supported in the sparse matrix value
  */
-// Dispatched by width, not actual type (e.g., all 8-bit use uint8_t, etc).
-// This reduces template instantiation combinatorics (binary size, compile time,
-// etc).
-#define FASTERCSX_USE_VALUE_TYPE_WIDTH 1
-
-#if FASTERCSX_USE_VALUE_TYPE_WIDTH
-// TODO: this approach doesn't work, as numpy complains when it attempts to cast
-// types (e.g., float32->uint32). What we need to do is change the templating to
-// take a "width" int value, rather than a type, and ripple that through the
-// entire fastercsx.h codebase.
-using ValueType = std::variant<
-    type_identity<uint8_t>,
-    type_identity<uint16_t>,
-    type_identity<uint32_t>,
-    type_identity<uint64_t>>;
-#else
 using ValueType = std::variant<
     type_identity<int8_t>,
     type_identity<int16_t>,
@@ -122,8 +152,6 @@ using ValueType = std::variant<
     type_identity<uint64_t>,
     type_identity<float>,
     type_identity<double>>;
-
-#endif
 
 /**
  * @brief Index type - types supported as CSx indices.
@@ -140,20 +168,6 @@ using CsxIndexType = std::variant<
 using CooIndexType =
     std::variant<type_identity<int32_t>, type_identity<int64_t>>;
 
-#if FASTERCSX_USE_VALUE_TYPE_WIDTH
-static const std::unordered_map<int, ValueType> value_type_dispatch = {
-    {npy_api::NPY_INT8_, type_identity<uint8_t>{}},
-    {npy_api::NPY_INT16_, type_identity<uint16_t>{}},
-    {npy_api::NPY_INT32_, type_identity<uint32_t>{}},
-    {npy_api::NPY_INT64_, type_identity<uint64_t>{}},
-    {npy_api::NPY_UINT8_, type_identity<uint8_t>{}},
-    {npy_api::NPY_UINT16_, type_identity<uint16_t>{}},
-    {npy_api::NPY_UINT32_, type_identity<uint32_t>{}},
-    {npy_api::NPY_UINT64_, type_identity<uint64_t>{}},
-    {npy_api::NPY_FLOAT_, type_identity<uint32_t>{}},
-    {npy_api::NPY_DOUBLE_, type_identity<uint64_t>{}},
-};
-#else
 static const std::unordered_map<int, ValueType> value_type_dispatch = {
     {npy_api::NPY_INT8_, type_identity<int8_t>{}},
     {npy_api::NPY_INT16_, type_identity<int16_t>{}},
@@ -166,7 +180,6 @@ static const std::unordered_map<int, ValueType> value_type_dispatch = {
     {npy_api::NPY_FLOAT_, type_identity<float>{}},
     {npy_api::NPY_DOUBLE_, type_identity<double>{}},
 };
-#endif
 
 static const std::unordered_map<int, CsxIndexType> csx_index_type_dispatch = {
     {npy_api::NPY_INT32_, type_identity<int32_t>{}},
@@ -178,6 +191,24 @@ static const std::unordered_map<int, CooIndexType> coo_index_type_dispatch = {
     {npy_api::NPY_INT32_, type_identity<int32_t>{}},
     {npy_api::NPY_INT64_, type_identity<int64_t>{}}};
 
+template <typename T>
+T lookup_dtype(
+    const std::unordered_map<int, T>& index,
+    const py::dtype& dtype,
+    const std::string& array_name) {
+    try {
+        return index.at(dtype.num());
+    } catch (const std::out_of_range& oor) {
+        // will bubble up as a ValueError
+        throw std::invalid_argument(
+            "Unsupported type: " + array_name + " has an unsupported dtype");
+    }
+}
+
+/**
+ * @brief Perform all checks required to ensure safe access to caller-provided
+ * array data.
+ */
 void compress_coo_validate_args(
     const int64_t n_row,
     const int64_t n_col,
@@ -196,6 +227,10 @@ void compress_coo_validate_args(
     4. num chunks/items in Ai/Aj/Ad is same size and type
     5. ensure B* are writable
     6. Ensure each element in A* tuples are same type
+    etc...
+
+    Not checked:
+    1. C-style vs F-style - as all arrays are 1D, there is no need to check.
     */
     if (n_row < 0 || n_col < 0)
         throw std::range_error("n_row and n_col must be >= 0");
@@ -243,21 +278,8 @@ void compress_coo_validate_args(
 
     if (Ai.size() > 0) {
         if (!Ai[0].dtype().is(Aj[0].dtype()))
-            throw pybind11::type_error("COO index arrays must have same dtype.");
-    }
-}
-
-template <typename T>
-T lookup_dtype(
-    const std::unordered_map<int, T>& index,
-    const py::dtype& dtype,
-    const std::string& array_name) {
-    try {
-        return index.at(dtype.num());
-    } catch (const std::out_of_range& oor) {
-        // will bubble up as a ValueError
-        throw std::invalid_argument(
-            "Unsupported type: " + array_name + " has an unsupported dtype");
+            throw pybind11::type_error(
+                "COO index arrays must have same dtype.");
     }
 }
 
@@ -309,15 +331,18 @@ void compress_coo(
             using VALUE = typename decltype(value_type)::type;
 
             std::vector<tcb::span<COO_INDEX const>> Ai_views, Aj_views;
-            std::vector<tcb::span<VALUE const>> Ad_views;
+            std::vector<tcb::span<remap_value_t<VALUE> const>> Ad_views;
             for (size_t i = 0; i < Ai.size(); ++i) {
                 Ai_views.push_back(make_span<COO_INDEX>(Ai[i]));
                 Aj_views.push_back(make_span<COO_INDEX>(Aj[i]));
-                Ad_views.push_back(make_span<VALUE>(Ad[i]));
+                Ad_views.push_back(
+                    make_casted_span<VALUE, remap_value_t<VALUE>>(Ad[i]));
             }
             auto Bp_view = make_mutable_span<CSX_MAJOR_INDEX>(Bp);
             auto Bj_view = make_mutable_span<CSX_MINOR_INDEX>(Bj);
-            auto Bd_view = make_mutable_span<VALUE>(Bd);
+            auto
+                Bd_view = make_mutable_casted_span<VALUE, remap_value_t<VALUE>>(
+                    Bd);
 
             py::gil_scoped_release release;
             return fastercsx::compress_coo(
@@ -350,7 +375,7 @@ void sort_indices(
     if (!Bp.writeable() || !Bj.writeable() || !Bd.writeable())
         throw std::invalid_argument("Output arrays must be writable.");
 
-    // Get dispatch types (TODO: need to throw meaningful errors if missing)
+    // Get dispatch types
     CsxIndexType csx_major_index_type = lookup_dtype(
         csx_index_type_dispatch, Bp.dtype(), "CSx indptr array");
     CsxIndexType csx_minor_index_type = lookup_dtype(
@@ -375,7 +400,9 @@ void sort_indices(
 
             auto Bp_view = make_span<CSX_MAJOR_INDEX>(Bp);
             auto Bj_view = make_mutable_span<CSX_MINOR_INDEX>(Bj);
-            auto Bd_view = make_mutable_span<VALUE>(Bd);
+            auto
+                Bd_view = make_mutable_casted_span<VALUE, remap_value_t<VALUE>>(
+                    Bd);
 
             py::gil_scoped_release release;
             return fastercsx::sort_indices(
@@ -421,7 +448,7 @@ void copy_to_dense(
     if (out.dtype().num() != Bd.dtype().num())
         throw pybind11::type_error("out dtype must match Bd dtype");
 
-    // Get dispatch types (TODO: need to throw meaningful errors if missing)
+    // Get dispatch types
     CsxIndexType csx_major_index_type = lookup_dtype(
         csx_index_type_dispatch, Bp.dtype(), "CSx indptr array");
     CsxIndexType csx_minor_index_type = lookup_dtype(
@@ -441,8 +468,9 @@ void copy_to_dense(
 
             auto Bp_view = make_span<CSX_MAJOR_INDEX>(Bp);
             auto Bj_view = make_span<CSX_MINOR_INDEX>(Bj);
-            auto Bd_view = make_span<VALUE>(Bd);
-            auto out_view = make_mutable_span<VALUE>(out);
+            auto Bd_view = make_casted_span<VALUE, remap_value_t<VALUE>>(Bd);
+            auto out_view =
+                make_mutable_casted_span<VALUE, remap_value_t<VALUE>>(out);
 
             py::gil_scoped_release release;
             return fastercsx::copy_to_dense(

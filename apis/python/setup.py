@@ -328,6 +328,7 @@ setuptools.setup(
             extra_compile_args=["-std=c++17" if os.name != "nt" else "/std:c++17"]
             + CXX_FLAGS,
             language="c++",
+            # undef_macros=["NDEBUG"],  # enable assertions by undefing NDEBUG
         )
     ],
     zip_safe=False,
