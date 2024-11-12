@@ -1912,10 +1912,7 @@ def test_pass_configs(tmp_path, arrow_schema):
         pydict["baz"] = ["apple", "ball", "cat", "dog", "egg"]
         pydict["quux"] = [True, False, False, True, False]
         rb = pa.Table.from_pydict(pydict)
-
-        if soma._flags.NEW_SHAPE_FEATURE_FLAG_ENABLED:
-            sdf.tiledbsoma_resize_soma_joinid_shape(len(rb))
-
+        sdf.tiledbsoma_resize_soma_joinid_shape(len(rb))
         sdf.write(rb)
 
     # Pass a custom config to open
