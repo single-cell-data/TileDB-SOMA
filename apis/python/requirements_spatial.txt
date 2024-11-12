@@ -1,5 +1,6 @@
 geopandas
 tifffile
 pillow
-spatialdata
-xarray>=2024.05.0
+spatialdata>=0.2.5
+xarray
+dask
