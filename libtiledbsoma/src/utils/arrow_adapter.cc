@@ -37,6 +37,10 @@
 #include "arrow_adapter.h"
 #include "logger.h"
 
+#include "../soma/soma_attribute.h"
+#include "../soma/soma_dimension.h"
+#include "../soma/soma_geometry_dimension.h"
+
 namespace tiledbsoma {
 
 using namespace tiledb;
@@ -794,7 +798,7 @@ Dimension ArrowAdapter::_create_dim(
     }
 }
 
-void ArrowAdapter::_set_current_domain_slot(
+void ArrowAdapter::set_current_domain_slot(
     tiledb_datatype_t type,
     const void* buff,
     NDRectangle& ndrect,
@@ -975,6 +979,7 @@ ArraySchema ArrowAdapter::tiledb_schema_from_arrow_schema(
 
     ArraySchema schema(*ctx, is_sparse ? TILEDB_SPARSE : TILEDB_DENSE);
     Domain domain(*ctx);
+    std::vector<std::shared_ptr<SOMAColumn>> columns;
 
     schema.set_capacity(platform_config.capacity);
 
@@ -1033,69 +1038,89 @@ ArraySchema ArrowAdapter::tiledb_schema_from_arrow_schema(
                 if (strcmp(child->name, SOMA_GEOMETRY_COLUMN_NAME.c_str()) ==
                         0 &&
                     spatial_column_info.first.get() != nullptr) {
-                    _set_spatial_dimensions(
-                        dims,
-                        spatial_column_info,
-                        type_metadata,
-                        soma_type,
+                    columns.push_back(SOMAGeometryColumn::create(
                         ctx,
-                        platform_config);
-
-                    // Do not set the `isattr` flag to false to add the
-                    // `soma_geometry` as attribute
+                        index_column_schema->children[i],
+                        index_column_array->children[i],
+                        spatial_column_info.second.get(),
+                        spatial_column_info.first.get(),
+                        soma_type,
+                        type_metadata,
+                        platform_config));
                 } else {
-                    auto dim = tiledb_dimension_from_arrow_schema(
+                    columns.push_back(SOMADimension::create(
                         ctx,
                         index_column_schema->children[i],
                         index_column_array->children[i],
                         soma_type,
                         type_metadata,
-                        "",
-                        "",
-                        platform_config);
-                    dims.insert({dim.first.name(), dim.first});
-                    use_current_domain &= dim.second;
-                    isattr = false;
+                        platform_config));
                 }
+                isattr = false;
 
                 break;
             }
         }
 
         if (isattr) {
-            auto attr = tiledb_attribute_from_arrow_schema(
-                ctx, child, type_metadata, platform_config);
-            if (attr.second.has_value()) {
-                ArraySchemaExperimental::add_enumeration(
-                    *ctx, schema, attr.second.value());
+            columns.push_back(SOMAAttribute::create(
+                ctx, child, type_metadata, platform_config));
+
+            if (columns.back()->tiledb_enumerations().has_value()) {
+                auto enumerations = columns.back()
+                                        ->tiledb_enumerations()
+                                        .value();
+                for (const auto& enumeration : enumerations) {
+                    ArraySchemaExperimental::add_enumeration(
+                        *ctx, schema, enumeration);
+                }
             }
 
             LOG_DEBUG(
                 fmt::format("[ArrowAdapter] adding attribute {}", child->name));
 
-            schema.add_attribute(attr.first);
+            // schema.add_attribute(attr.first);
         }
     }
 
-    for (int64_t i = 0; i < index_column_schema->n_children; ++i) {
-        LOG_DEBUG(fmt::format("[ArrowAdapter] child {}", i));
-        auto col_name = index_column_schema->children[i]->name;
-        if (strcmp(col_name, SOMA_GEOMETRY_COLUMN_NAME.c_str()) == 0) {
-            for (auto& dim : dims) {
-                if (dim.first.substr(std::max(0ul, dim.first.size() - 5)) ==
-                    std::string("__min")) {
-                    domain.add_dimension(dim.second);
-                }
-            }
+    // for (int64_t i = 0; i < index_column_schema->n_children; ++i) {
+    //     LOG_DEBUG(fmt::format("[ArrowAdapter] child {}", i));
+    //     auto col_name = index_column_schema->children[i]->name;
+    //     if (strcmp(col_name, SOMA_GEOMETRY_COLUMN_NAME.c_str()) == 0) {
+    //         for (auto& dim : dims) {
+    //             if (dim.first.substr(std::max(0ul, dim.first.size() - 5)) ==
+    //                 std::string("__min")) {
+    //                 domain.add_dimension(dim.second);
+    //             }
+    //         }
 
-            for (auto& dim : dims) {
-                if (dim.first.substr(std::max(0ul, dim.first.size() - 5)) ==
-                    std::string("__max")) {
-                    domain.add_dimension(dim.second);
-                }
+    //         for (auto& dim : dims) {
+    //             if (dim.first.substr(std::max(0ul, dim.first.size() - 5)) ==
+    //                 std::string("__max")) {
+    //                 domain.add_dimension(dim.second);
+    //             }
+    //         }
+    //     } else {
+    //         domain.add_dimension(dims.at(col_name));
+    //     }
+    // }
+
+    for (const auto& column : columns) {
+        if (column->isIndex()) {
+            use_current_domain &= column->has_current_domain();
+            auto dimensions = column->tiledb_dimensions().value();
+            for (const auto& dimension : dimensions) {
+                std::cout << dimension.name() << std::endl;
+                domain.add_dimension(dimension);
             }
-        } else {
-            domain.add_dimension(dims.at(col_name));
+        }
+
+        if (column->tiledb_attributes().has_value()) {
+            auto attributes = column->tiledb_attributes().value();
+            for (const auto& attribute : attributes) {
+                std::cout << attribute.name() << std::endl;
+                schema.add_attribute(attribute);
+            }
         }
     }
 
@@ -1112,88 +1137,59 @@ ArraySchema ArrowAdapter::tiledb_schema_from_arrow_schema(
         CurrentDomain current_domain(*ctx);
         NDRectangle ndrect(*ctx, domain);
 
-        for (int64_t sch_idx = 0; sch_idx < arrow_schema->n_children;
-             ++sch_idx) {
-            auto child = arrow_schema->children[sch_idx];
-            auto type = ArrowAdapter::to_tiledb_format(child->format);
-
-            for (int64_t i = 0; i < index_column_schema->n_children; ++i) {
-                auto col_name = index_column_schema->children[i]->name;
-                if (strcmp(child->name, col_name) != 0) {
-                    continue;
-                }
-
-                if (strcmp(child->name, SOMA_GEOMETRY_COLUMN_NAME.c_str()) ==
-                        0 &&
-                    spatial_column_info.first.get() != nullptr) {
-                    for (int64_t j = 0;
-                         j < spatial_column_info.first->n_children;
-                         ++j) {
-                        auto col_name = SOMA_GEOMETRY_DIMENSION_PREFIX +
-                                        std::string(spatial_column_info.second
-                                                        ->children[j]
-                                                        ->name);
-                        const void* buff = spatial_column_info.first
-                                               ->children[j]
-                                               ->buffers[1];
-                        auto type = ArrowAdapter::to_tiledb_format(
-                            spatial_column_info.second->children[j]->format);
-
-                        _set_current_domain_slot(
-                            type, buff, ndrect, col_name + "__min");
-                        _set_current_domain_slot(
-                            type, buff, ndrect, col_name + "__max");
-                    }
-                } else if (ArrowAdapter::arrow_is_var_length_type(
-                               child->format)) {
-                    // In the core API:
-                    //
-                    // * domain for strings must be set as (nullptr, nullptr)
-                    // * current_domain for strings cannot be set as (nullptr,
-                    //   nullptr)
-                    //
-                    // Fortunately, these are ASCII dims and we can range
-                    // these accordingly.
-
-                    ArrowArray* child_array = index_column_array->children[i];
-                    ArrowSchema* child_schema = index_column_schema
-                                                    ->children[i];
-
-                    std::vector<std::string>
-                        strings = ArrowAdapter::get_array_string_column(
-                            child_array, child_schema);
-                    if (strings.size() != 5) {
-                        throw TileDBSOMAError(fmt::format(
-                            "ArrowAdapter::tiledb_schema_from_arrow_schema: "
-                            "internal error: "
-                            "expected 5 strings, got {}",
-                            strings.size()));
-                    }
-
-                    std::string lo = strings[3];
-                    std::string hi = strings[4];
-                    if (lo == "" && hi == "") {
-                        // These mean "I the caller don't care, you
-                        // libtiledbsoma make it as big as possible"
-                        ndrect.set_range(col_name, "", "\xff");
-                    } else {
-                        ndrect.set_range(col_name, lo, hi);
-                        LOG_DEBUG(fmt::format(
-                            "[ArrowAdapter] index_column_info nbuf {}",
-                            index_column_array->children[i]->n_buffers));
-                    }
-
-                    LOG_DEBUG(fmt::format(
-                        "[ArrowAdapter] current domain {} \"{}\"-\"{}\"",
-                        child_schema->name,
-                        lo,
-                        hi));
-                } else {
-                    const void* buff = index_column_array->children[i]
+        for (int64_t i = 0; i < index_column_schema->n_children; ++i) {
+            auto column = *std::find_if(
+                columns.begin(), columns.end(), [&](auto& col) {
+                    return col->name().compare(
+                               index_column_schema->children[i]->name) == 0;
+                });
+            if (column->name() == SOMA_GEOMETRY_COLUMN_NAME) {
+                std::vector<const void*> dom;
+                for (int64_t j = 0; j < spatial_column_info.first->n_children;
+                     ++j) {
+                    const void* buff = spatial_column_info.first->children[j]
                                            ->buffers[1];
-                    _set_current_domain_slot(type, buff, ndrect, col_name);
+                    dom.push_back(buff);
                 }
-                break;
+                column->set_current_domain_slot(ndrect, dom);
+            } else if (ArrowAdapter::arrow_is_var_length_type(
+                           index_column_schema->children[i]->format)) {
+                ArrowArray* child_array = index_column_array->children[i];
+                ArrowSchema* child_schema = index_column_schema->children[i];
+
+                std::vector<std::string>
+                    strings = ArrowAdapter::get_array_string_column(
+                        child_array, child_schema);
+                if (strings.size() != 5) {
+                    throw TileDBSOMAError(fmt::format(
+                        "ArrowAdapter::tiledb_schema_from_arrow_schema: "
+                        "internal error: "
+                        "expected 5 strings, got {}",
+                        strings.size()));
+                }
+
+                std::string lo = strings[3];
+                std::string hi = strings[4];
+                if (lo == "" && hi == "") {
+                    // These mean "I the caller don't care, you
+                    // libtiledbsoma make it as big as possible"
+                    ndrect.set_range(column->name(), "", "\xff");
+                } else {
+                    ndrect.set_range(column->name(), lo, hi);
+                    LOG_DEBUG(fmt::format(
+                        "[ArrowAdapter] index_column_info nbuf {}",
+                        index_column_array->children[i]->n_buffers));
+                }
+
+                LOG_DEBUG(fmt::format(
+                    "[ArrowAdapter] current domain {} \"{}\"-\"{}\"",
+                    child_schema->name,
+                    lo,
+                    hi));
+            } else {
+                column->set_current_domain_slot(
+                    ndrect,
+                    std::vector({index_column_array->children[i]->buffers[1]}));
             }
         }
 
@@ -1218,7 +1214,7 @@ std::pair<Dimension, bool> ArrowAdapter::tiledb_dimension_from_arrow_schema(
     std::shared_ptr<Context> ctx,
     ArrowSchema* schema,
     ArrowArray* array,
-    std::string soma_type,
+    const std::string& soma_type,
     std::string_view type_metadata,
     std::string prefix,
     std::string suffix,

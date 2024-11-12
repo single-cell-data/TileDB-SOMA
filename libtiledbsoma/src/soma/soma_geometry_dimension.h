@@ -15,14 +15,21 @@ using namespace tiledb;
 
 class SOMAGeometryColumn : public virtual SOMAColumn {
    public:
-    static SOMAGeometryColumn create(const Context& ctx, Array& array);
+    static std::shared_ptr<SOMAGeometryColumn> create(
+        std::shared_ptr<Context> ctx,
+        ArrowSchema* schema,
+        ArrowArray* array,
+        ArrowSchema* spatial_schema,
+        ArrowArray* spatial_array,
+        const std::string& soma_type,
+        std::string_view type_metadata,
+        PlatformConfig platform_config);
 
     SOMAGeometryColumn(
         const Context& ctx,
-        Array& array,
         std::vector<Dimension> dimensions,
         Attribute attribute)
-        : SOMAColumn(ctx, array)
+        : SOMAColumn(ctx)
         , dimensions(dimensions)
         , attribute(attribute){};
 
@@ -38,20 +45,44 @@ class SOMAGeometryColumn : public virtual SOMAColumn {
         return true;
     }
 
+    inline std::optional<std::vector<Dimension>> tiledb_dimensions() {
+        return dimensions;
+    }
+
+    inline std::optional<std::vector<Attribute>> tiledb_attributes() {
+        return std::vector({attribute});
+    }
+
+    inline virtual std::optional<std::vector<Enumeration>>
+    tiledb_enumerations() {
+        return std::nullopt;
+    }
+
+    inline virtual bool has_current_domain() {
+        return _has_current_domain;
+    }
+
    protected:
-    void _set_dim_ranges(ManagedQuery& query, const std::any& ranges) const;
+    void _set_dim_ranges(
+        const std::unique_ptr<ManagedQuery>& query,
+        const std::any& ranges) const;
+
+    virtual void _set_current_domain_slot(
+        NDRectangle& rectangle, const std::vector<const void*>& domain) const;
 
     virtual std::any _core_domain_slot() const;
 
-    virtual std::any _non_empty_domain_slot() const;
+    virtual std::any _non_empty_domain_slot(Array& array) const;
 
-    virtual std::any _core_current_domain_slot() const;
+    virtual std::any _core_current_domain_slot(Array& array) const;
 
    private:
     std::vector<Dimension> dimensions;
     Attribute attribute;
+    bool _has_current_domain;
 
-    std::vector<std::pair<double_t, double_t>> _limits() const;
+    std::vector<std::pair<double_t, double_t>> _limits(
+        const ArraySchema& schema) const;
 
     std::vector<std::pair<double_t, double_t>> _transform_ranges(
         const std::vector<

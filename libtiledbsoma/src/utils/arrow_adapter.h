@@ -288,7 +288,7 @@ class ArrowAdapter {
         std::shared_ptr<Context> ctx,
         ArrowSchema* schema,
         ArrowArray* array,
-        std::string soma_type,
+        const std::string& soma_type,
         std::string_view type_metadata,
         std::string prefix = std::string(),
         std::string suffix = std::string(),
@@ -721,6 +721,12 @@ class ArrowAdapter {
         }
     }
 
+    static void set_current_domain_slot(
+        tiledb_datatype_t type,
+        const void* buff,
+        NDRectangle& ndrect,
+        std::string name);
+
    private:
     static std::pair<const void*, std::size_t> _get_data_and_length(
         Enumeration& enmr, const void* dst);
@@ -738,12 +744,6 @@ class ArrowAdapter {
         std::string name,
         const void* buff,
         std::shared_ptr<Context> ctx);
-
-    static void _set_current_domain_slot(
-        tiledb_datatype_t type,
-        const void* buff,
-        NDRectangle& ndrect,
-        std::string name);
 
     template <typename T>
     static Dimension _create_dim_aux(

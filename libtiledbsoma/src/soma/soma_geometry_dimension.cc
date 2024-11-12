@@ -2,81 +2,155 @@
 
 namespace tiledbsoma {
 
-SOMAGeometryColumn SOMAGeometryColumn::create(
-    const Context& ctx, Array& array) {
+std::shared_ptr<SOMAGeometryColumn> SOMAGeometryColumn::create(
+    std::shared_ptr<Context> ctx,
+    ArrowSchema* schema,
+    ArrowArray* array,
+    ArrowSchema* spatial_schema,
+    ArrowArray* spatial_array,
+    const std::string& soma_type,
+    std::string_view type_metadata,
+    PlatformConfig platform_config) {
     std::vector<Dimension> dims;
-
-    const ArraySchema& schema = array.schema();
-
-    for (size_t i = 0; i < schema.domain().ndim(); ++i) {
-        if (schema.domain().dimension(i).name().rfind(
-                SOMA_GEOMETRY_DIMENSION_PREFIX, 0) == 0) {
-            dims.push_back(schema.domain().dimension(i));
-        }
-    }
-
-    if (dims.size() != 4 && dims.size() != 6) {
+    bool use_current_domain = true;
+    if (type_metadata.compare("WKB") != 0) {
         throw TileDBSOMAError(fmt::format(
-            "[SOMAGeometryColumn] Spatial dimension invalid count. Expected 4 "
-            "or 6, found {}",
-            dims.size()));
+            "[SOMAGeometryColumn] "
+            "Unkwown type metadata for `{}`: "
+            "Expected 'WKB', got {}",
+            SOMA_GEOMETRY_COLUMN_NAME,
+            type_metadata));
     }
 
-    for (size_t i = 0; i < schema.attribute_num(); ++i) {
-        if (schema.attribute(i).name() == SOMA_GEOMETRY_COLUMN_NAME) {
-            return SOMAGeometryColumn(ctx, array, dims, schema.attribute(i));
-        }
+    for (int64_t j = 0; j < spatial_schema->n_children; ++j) {
+        auto dimension = ArrowAdapter::tiledb_dimension_from_arrow_schema(
+            ctx,
+            spatial_schema->children[j],
+            spatial_array->children[j],
+            soma_type,
+            type_metadata,
+            SOMA_GEOMETRY_DIMENSION_PREFIX,
+            "__min",
+            platform_config);
+        dims.push_back(dimension.first);
+
+        use_current_domain &= dimension.second;
     }
 
-    throw TileDBSOMAError(fmt::format(
-        "[SOMAGeometryColumn] Missing {} attribute",
-        SOMA_GEOMETRY_COLUMN_NAME));
+    for (int64_t j = 0; j < spatial_schema->n_children; ++j) {
+        auto dimension = ArrowAdapter::tiledb_dimension_from_arrow_schema(
+            ctx,
+            spatial_schema->children[j],
+            spatial_array->children[j],
+            soma_type,
+            type_metadata,
+            SOMA_GEOMETRY_DIMENSION_PREFIX,
+            "__max",
+            platform_config);
+        dims.push_back(dimension.first);
+
+        use_current_domain &= dimension.second;
+    }
+
+    auto attribute = ArrowAdapter::tiledb_attribute_from_arrow_schema(
+        ctx, schema, type_metadata, platform_config);
+
+    auto result = std::make_shared<SOMAGeometryColumn>(
+        SOMAGeometryColumn(*ctx, dims, attribute.first));
+    result->_has_current_domain = use_current_domain;
+
+    return result;
 }
 
+// TODO: LOAD IMPLEMENTAION
+// const ArraySchema& schema = array.schema();
+
+// for (size_t i = 0; i < schema.domain().ndim(); ++i) {
+//     if (schema.domain().dimension(i).name().rfind(
+//             SOMA_GEOMETRY_DIMENSION_PREFIX, 0) == 0) {
+//         dims.push_back(schema.domain().dimension(i));
+//     }
+// }
+
+// if (dims.size() != 4 && dims.size() != 6) {
+//     throw TileDBSOMAError(fmt::format(
+//         "[SOMAGeometryColumn] Spatial dimension invalid count. Expected 4 "
+//         "or 6, found {}",
+//         dims.size()));
+// }
+
+// for (size_t i = 0; i < schema.attribute_num(); ++i) {
+//     if (schema.attribute(i).name() == SOMA_GEOMETRY_COLUMN_NAME) {
+//         return SOMAGeometryColumn(ctx, array, dims, schema.attribute(i));
+//     }
+// }
+
+// throw TileDBSOMAError(fmt::format(
+//     "[SOMAGeometryColumn] Missing {} attribute",
+//     SOMA_GEOMETRY_COLUMN_NAME));
+
 void SOMAGeometryColumn::_set_dim_ranges(
-    ManagedQuery& query, const std::any& ranges) const {
+    const std::unique_ptr<ManagedQuery>& query, const std::any& ranges) const {
     std::vector<std::pair<double_t, double_t>>
         transformed_ranges = _transform_ranges(
             std::any_cast<std::vector<
                 std::pair<std::vector<double_t>, std::vector<double_t>>>>(
                 ranges));
 
-    auto domain_limits = _limits();
+    auto domain_limits = _limits(*query->schema());
 
-    // Create a rnage object and reuse if for all dimensions
+    // Create a range object and reuse if for all dimensions
     std::vector<std::pair<double_t, double_t>> range(1);
 
     for (size_t i = 0; i < transformed_ranges.size(); ++i) {
-        // TODO: Maybe remove?
-        impl::type_check<double_t>(dimensions[2 * i].type());
-        impl::type_check<double_t>(dimensions[2 * i + 1].type());
-
         range[0] = std::make_pair(
             domain_limits[i].first,
             std::min(transformed_ranges[i].second, domain_limits[i].second));
-        query.select_ranges(dimensions[2 * i].name(), range);
+        query->select_ranges(dimensions[2 * i].name(), range);
 
         range[0] = std::make_pair(
             std::max(transformed_ranges[i].first, domain_limits[i].first),
             domain_limits[i].second);
-        query.select_ranges(dimensions[2 * i + 1].name(), range);
+        query->select_ranges(dimensions[2 * i + 1].name(), range);
     }
 }
 
-std::vector<std::pair<double_t, double_t>> SOMAGeometryColumn::_limits() const {
+void SOMAGeometryColumn::_set_current_domain_slot(
+    NDRectangle& rectangle, const std::vector<const void*>& domain) const {
+    if (2 * domain.size() != dimensions.size()) {
+        throw TileDBSOMAError(fmt::format(
+            "[SOMAGeometryColumn] Dimension - Current Domain mismatch. "
+            "Expected current domain of size {}, found {}",
+            dimensions.size() / 2,
+            domain.size()));
+    }
+
+    for (size_t i = 0; i < domain.size(); ++i) {
+        const auto& dimension = dimensions[i];
+        ArrowAdapter::set_current_domain_slot(
+            dimension.type(), domain[i], rectangle, dimension.name());
+    }
+
+    for (size_t i = 0; i < domain.size(); ++i) {
+        const auto& dimension = dimensions[i + domain.size()];
+        ArrowAdapter::set_current_domain_slot(
+            dimension.type(), domain[i], rectangle, dimension.name());
+    }
+}
+
+std::vector<std::pair<double_t, double_t>> SOMAGeometryColumn::_limits(
+    const ArraySchema& schema) const {
     std::vector<std::pair<double_t, double_t>> limits;
 
     for (size_t i = 0; i < dimensions.size() / 2; ++i) {
-        if (ArraySchemaExperimental::current_domain(ctx, array.schema())
-                .is_empty()) {
+        if (ArraySchemaExperimental::current_domain(ctx, schema).is_empty()) {
             std::pair<double_t, double_t> domain = dimensions[2 * i]
                                                        .domain<double_t>();
 
             limits.push_back(std::make_pair(domain.first, domain.second));
         } else {
             std::array<double_t, 2>
-                domain = ArraySchemaExperimental::current_domain(
-                             ctx, array.schema())
+                domain = ArraySchemaExperimental::current_domain(ctx, schema)
                              .ndrectangle()
                              .range<double_t>(dimensions.at(2 * i).name());
 
@@ -124,7 +198,7 @@ std::any SOMAGeometryColumn::_core_domain_slot() const {
         std::make_pair(min, max));
 };
 
-std::any SOMAGeometryColumn::_non_empty_domain_slot() const {
+std::any SOMAGeometryColumn::_non_empty_domain_slot(Array& array) const {
     std::vector<double_t> min, max;
     for (size_t i = 0; i < dimensions.size() / 2; ++i) {
         std::pair<double_t, double_t>
@@ -143,7 +217,7 @@ std::any SOMAGeometryColumn::_non_empty_domain_slot() const {
         std::make_pair(min, max));
 }
 
-std::any SOMAGeometryColumn::_core_current_domain_slot() const {
+std::any SOMAGeometryColumn::_core_current_domain_slot(Array& array) const {
     std::vector<double_t> min, max;
     CurrentDomain
         current_domain = tiledb::ArraySchemaExperimental::current_domain(

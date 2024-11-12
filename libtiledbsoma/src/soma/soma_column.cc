@@ -7,12 +7,12 @@ std::pair<std::string, std::string> SOMAColumn::core_domain_slot() const {
 }
 
 template <>
-std::pair<std::string, std::string> SOMAColumn::core_current_domain_slot()
-    const {
+std::pair<std::string, std::string> SOMAColumn::core_current_domain_slot(
+    Array& array) const {
     try {
         std::pair<std::string, std::string>
             current_domain = std::any_cast<std::pair<std::string, std::string>>(
-                _core_current_domain_slot());
+                _core_current_domain_slot(array));
 
         if (current_domain.first == "" && current_domain.second == "\xff") {
             return std::pair<std::string, std::string>("", "");
