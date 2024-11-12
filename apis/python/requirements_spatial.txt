@@ -1,3 +1,4 @@
+geopandas
 tifffile
 pillow
 spatialdata
