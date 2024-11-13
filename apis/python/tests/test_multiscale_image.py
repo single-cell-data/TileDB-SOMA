@@ -105,14 +105,31 @@ def test_multiscale_basic(tmp_path):
         expected_shapes = [(128, 64), (64, 32), (8, 4)]
         assert image.level_count == 3
         for index, shape in enumerate(expected_shapes):
-            assert image.level_shape(index) == shape
+            assert shape == expected_shapes[index]
+            assert image.level_shape(index) == expected_shapes[index]
 
         # Check the levels mapping.
         levels = image.levels()
         assert len(levels) == 3
-        for key, val in levels.items():
-            assert soma.DenseNDArray.exists(val[0])
-            assert image.level_shape(key) == val[1]
+        for key, (uri, shape) in levels.items():
+            assert soma.DenseNDArray.exists(uri)
+            level_image = soma.DenseNDArray.open(uri)
+            assert level_image.shape == image.level_shape(key)
+            assert shape == image.level_shape(key)
+
+        # Check the level_uri function.
+        for index in range(3):
+            uri = image.level_uri(index)
+            print(uri)
+            assert soma.DenseNDArray.exists(uri)
+            level_image = soma.DenseNDArray.open(uri)
+            assert level_image.shape == expected_shapes[index]
+
+        for index, key in enumerate(["level0", "level1", "level2"]):
+            uri = image.level_uri(key)
+            assert soma.DenseNDArray.exists(uri)
+            level_image = soma.DenseNDArray.open(uri)
+            assert level_image.shape == expected_shapes[index]
 
         # Check a basic read
         assert level2_data == image.read_spatial_region(2).data
@@ -148,7 +165,7 @@ class TestSimpleMultiscale2D:
         """Create a multiscale image and return the path."""
         # Create the multiscale image.
         baseuri = tmp_path_factory.mktemp("multiscale_image").as_uri()
-        image_uri = urljoin(baseuri, "default")
+        image_uri = urljoin(baseuri, "simple2d")
         with soma.MultiscaleImage.create(
             image_uri,
             type=pa.uint8(),

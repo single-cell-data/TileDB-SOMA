@@ -687,11 +687,10 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
         return len(self._levels)
 
     def level_shape(self, level: Union[int, str]) -> Tuple[int, ...]:
-        """The shape of the image at the specified level.
+        """The shape of the image at the specified resolution level.
 
         Lifecycle: experimental
         """
-
         if isinstance(level, str):
             for val in self._levels:
                 if val.name == level:
@@ -701,6 +700,15 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
 
         # by index
         return self._levels[level].shape
+
+    def level_uri(self, level: Union[int, str]) -> str:
+        """The URI of the image at the specified resolution level.
+
+        Lifecycle: experimental
+        """
+        if isinstance(level, int):
+            level = self._levels[level].name
+        return self._contents[level].entry.uri
 
     @property
     def nchannels(self) -> int:
