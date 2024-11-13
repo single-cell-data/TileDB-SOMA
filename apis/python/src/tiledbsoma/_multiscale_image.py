@@ -17,6 +17,7 @@ import somacore
 from somacore import (
     CoordinateSpace,
     CoordinateTransform,
+    IdentityTransform,
     ScaleTransform,
     options,
 )
@@ -630,6 +631,11 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
         Lifecycle:
             Experimental.
         """
+        if level == 0 or level == self._level_properties(0).name:
+            return IdentityTransform(
+                input_axes=self._coord_space.axis_names,
+                output_axes=self._coord_space.axis_names,
+            )
         level_shape = self._level_properties(level).shape
         base_shape = self._levels[0].shape
         axis_indexer = self._axis_order()
@@ -649,6 +655,11 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
         Lifecycle:
             Experimental.
         """
+        if level == 0 or level == self._level_properties(0).name:
+            return IdentityTransform(
+                input_axes=self._coord_space.axis_names,
+                output_axes=self._coord_space.axis_names,
+            )
         level_shape = self._level_properties(level).shape
         base_shape = self._levels[0].shape
         axis_indexer = self._axis_order()
