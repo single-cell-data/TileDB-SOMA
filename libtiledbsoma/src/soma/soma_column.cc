@@ -1,14 +1,16 @@
 #include "soma_column.h"
 
 namespace tiledbsoma {
+
 template <>
-std::pair<std::string, std::string> SOMAColumn::core_domain_slot() const {
+std::pair<std::string, std::string> SOMAColumn::core_domain_slot<std::string>()
+    const {
     return std::pair<std::string, std::string>("", "");
 }
 
 template <>
-std::pair<std::string, std::string> SOMAColumn::core_current_domain_slot(
-    Array& array) const {
+std::pair<std::string, std::string>
+SOMAColumn::core_current_domain_slot<std::string>(Array& array) const {
     try {
         std::pair<std::string, std::string>
             current_domain = std::any_cast<std::pair<std::string, std::string>>(

@@ -118,5 +118,13 @@ class SOMAColumn {
     const Context& ctx;
 };
 
+template <>
+std::pair<std::string, std::string> SOMAColumn::core_domain_slot<std::string>()
+    const;
+
+template <>
+std::pair<std::string, std::string>
+SOMAColumn::core_current_domain_slot<std::string>(Array& array) const;
+
 }  // namespace tiledbsoma
 #endif

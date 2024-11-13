@@ -97,6 +97,7 @@ void SOMADimension::_set_dim_ranges(
                     ranges));
             break;
         case TILEDB_STRING_UTF8:
+        case TILEDB_STRING_ASCII:
         case TILEDB_CHAR:
         case TILEDB_BLOB:
             query->select_ranges(
@@ -164,7 +165,7 @@ std::any SOMADimension::_core_domain_slot() const {
                 dimension.domain<double_t>());
         default:
             throw TileDBSOMAError(fmt::format(
-                "[SOMADimension] Unknown dimension type {}",
+                "[SOMADimension][_core_domain_slot] Unknown dimension type {}",
                 impl::type_to_str(dimension.type())));
     }
 }
@@ -214,9 +215,16 @@ std::any SOMADimension::_non_empty_domain_slot(Array& array) const {
         case TILEDB_FLOAT64:
             return std::make_any<std::pair<double_t, double_t>>(
                 array.non_empty_domain<double_t>(dimension.name()));
+        case TILEDB_STRING_ASCII:
+        case TILEDB_STRING_UTF8:
+        case TILEDB_BLOB:
+        case TILEDB_CHAR:
+            return std::make_any<std::pair<std::string, std::string>>(
+                array.non_empty_domain_var(dimension.name()));
         default:
             throw TileDBSOMAError(fmt::format(
-                "[SOMADimension] Unknown dimension type {}",
+                "[SOMADimension][_non_empty_domain_slot] Unknown dimension "
+                "type {}",
                 impl::type_to_str(dimension.type())));
     }
 }
@@ -302,6 +310,7 @@ std::any SOMADimension::_core_current_domain_slot(Array& array) const {
                 std::make_pair(domain[0], domain[1]));
         }
         case TILEDB_STRING_UTF8:
+        case TILEDB_STRING_ASCII:
         case TILEDB_CHAR:
         case TILEDB_BLOB: {
             std::array<std::string, 2> domain = ndrect.range<std::string>(

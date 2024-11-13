@@ -440,7 +440,7 @@ class SOMAArray : public SOMAObject {
     template <typename T>
     void set_dim_ranges(
         const std::string& dim, const std::vector<std::pair<T, T>>& ranges) {
-        mq_->select_ranges(dim, ranges);
+        _get_column(dim)->set_dim_ranges(mq_, ranges);
     }
 
     /**
@@ -779,7 +779,8 @@ class SOMAArray : public SOMAObject {
     template <typename T>
     std::pair<T, T> non_empty_domain_slot(const std::string& name) const {
         try {
-            return arr_->non_empty_domain<T>(name);
+            // return arr_->non_empty_domain<T>(name);
+            return _get_column(name)->non_empty_domain_slot<T>(*arr_);
         } catch (const std::exception& e) {
             throw TileDBSOMAError(e.what());
         }
@@ -870,62 +871,7 @@ class SOMAArray : public SOMAObject {
      */
     template <typename T>
     std::pair<T, T> _core_current_domain_slot(const std::string& name) const {
-        if (std::is_same_v<T, std::string>) {
-            throw std::runtime_error(
-                "SOMAArray::soma_domain_slot: template-specialization "
-                "failure.");
-        }
-        CurrentDomain current_domain = _get_current_domain();
-        if (current_domain.is_empty()) {
-            throw TileDBSOMAError(
-                "_core_current_domain_slot: internal coding error");
-        }
-        if (current_domain.type() != TILEDB_NDRECTANGLE) {
-            throw TileDBSOMAError(
-                "_core_current_domain_slot: found non-rectangle type");
-        }
-        NDRectangle ndrect = current_domain.ndrectangle();
-
-        // Convert from two-element array (core API) to pair (tiledbsoma API)
-        std::array<T, 2> arr = ndrect.range<T>(name);
-        return std::pair<T, T>(arr[0], arr[1]);
-    }
-
-    std::pair<std::string, std::string> _core_current_domain_slot_string(
-        const std::string& name) const {
-        CurrentDomain current_domain = _get_current_domain();
-        if (current_domain.is_empty()) {
-            throw TileDBSOMAError(
-                "_core_current_domain_slot: internal coding error");
-        }
-        if (current_domain.type() != TILEDB_NDRECTANGLE) {
-            throw TileDBSOMAError(
-                "_core_current_domain_slot: found non-rectangle type");
-        }
-        NDRectangle ndrect = current_domain.ndrectangle();
-
-        // Convert from two-element array (core API) to pair (tiledbsoma API)
-        std::array<std::string, 2> arr = ndrect.range<std::string>(name);
-
-        // Here is an intersection of a few oddities:
-        //
-        // * Core domain for string dims must be a nullptr pair; it cannot be
-        //   anything else.
-        // * TileDB-Py shows this by using an empty-string pair, which we
-        //   imitate.
-        // * Core current domain for string dims must _not_ be a nullptr pair.
-        // * In TileDB-SOMA, unless the user specifies otherwise, we use "" for
-        //   min and "\xff" for max.
-        // * However, "\xff" causes display problems in Python. It's also
-        //   flat-out confusing to show to users.
-        //
-        // To work with all these factors, if the current domain is the default
-        // "" to "\xff", return an empty-string pair just as we do for domain.
-        if (arr[0] == "" && arr[1] == "\xff") {
-            return std::pair<std::string, std::string>("", "");
-        } else {
-            return std::pair<std::string, std::string>(arr[0], arr[1]);
-        }
+        return _get_column(name)->core_current_domain_slot<T>(*arr_);
     }
 
     /**
@@ -944,20 +890,7 @@ class SOMAArray : public SOMAObject {
      */
     template <typename T>
     std::pair<T, T> _core_domain_slot(const std::string& name) const {
-        if (std::is_same_v<T, std::string>) {
-            throw std::runtime_error(
-                "SOMAArray::_core_domain_slot: template-specialization "
-                "failure.");
-        }
-        return arr_->schema().domain().dimension(name).domain<T>();
-    }
-
-    std::pair<std::string, std::string> _core_domain_slot_string(
-        const std::string&) const {
-        // Core domain for string dims is always a nullptr pair at the C++
-        // level.  We follow the convention started by TileDB-Py which is to
-        // report these as an empty-string pair.
-        return std::pair<std::string, std::string>("", "");
+        return _get_column(name)->core_domain_slot<T>();
     }
 
     /**
@@ -1053,11 +986,6 @@ class SOMAArray : public SOMAObject {
     template <typename T>
     std::pair<T, T> _core_domainish_slot(
         const std::string& name, enum Domainish which_kind) const {
-        if (std::is_same_v<T, std::string>) {
-            throw std::runtime_error(
-                "SOMAArray::_core_domainish_slot: template-specialization "
-                "failure.");
-        }
         switch (which_kind) {
             case Domainish::kind_core_domain:
                 return _core_domain_slot<T>(name);
@@ -1076,9 +1004,9 @@ class SOMAArray : public SOMAObject {
         const std::string& name, enum Domainish which_kind) const {
         switch (which_kind) {
             case Domainish::kind_core_domain:
-                return _core_domain_slot_string(name);
+                return _core_domain_slot<std::string>(name);
             case Domainish::kind_core_current_domain:
-                return _core_current_domain_slot_string(name);
+                return _core_current_domain_slot<std::string>(name);
             case Domainish::kind_non_empty_domain:
                 return non_empty_domain_slot_var(name);
             default:
@@ -1454,8 +1382,8 @@ class SOMAArray : public SOMAObject {
         std::string dim_name) {
         std::pair<std::string, std::string>
             old_lo_hi = check_current_domain ?
-                            _core_current_domain_slot_string(dim_name) :
-                            _core_domain_slot_string(dim_name);
+                            _core_current_domain_slot<std::string>(dim_name) :
+                            _core_domain_slot<std::string>(dim_name);
         std::vector<std::string>
             new_lo_hi = ArrowAdapter::get_table_string_column_by_name(
                 domain_table, dim_name);
@@ -1768,6 +1696,8 @@ class SOMAArray : public SOMAObject {
     void fill_metadata_cache();
 
     void fill_columns();
+
+    std::shared_ptr<SOMAColumn> _get_column(const std::string& name) const;
 
     // SOMAArray URI
     std::string uri_;

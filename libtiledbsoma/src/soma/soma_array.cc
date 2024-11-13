@@ -1357,7 +1357,8 @@ ArrowTable SOMAArray::_get_core_domainish(enum Domainish which_kind) {
             case TILEDB_GEOM_WKB:
             case TILEDB_GEOM_WKT:
                 child = ArrowAdapter::make_arrow_array_child_string(
-                    _core_domainish_slot_string(core_dim.name(), which_kind));
+                    _core_domainish_slot<std::string>(
+                        core_dim.name(), which_kind));
                 break;
 
             default:
@@ -2282,6 +2283,22 @@ void SOMAArray::_check_dims_are_int64() {
             "[SOMAArray] internal coding error: expected all dims to be "
             "int64");
     }
+}
+
+inline std::shared_ptr<SOMAColumn> SOMAArray::_get_column(
+    const std::string& name) const {
+    std::vector<std::shared_ptr<tiledbsoma::SOMAColumn>>::const_iterator
+        column = std::find_if(
+            columns.begin(), columns.end(), [&](const auto& col) {
+                return col->name().compare(name) == 0;
+            });
+
+    if (column == columns.end()) {
+        throw TileDBSOMAError(
+            fmt::format("[SOMAArray] Missing column {}", name));
+    }
+
+    return *column;
 }
 
 }  // namespace tiledbsoma

@@ -1110,7 +1110,6 @@ ArraySchema ArrowAdapter::tiledb_schema_from_arrow_schema(
             use_current_domain &= column->has_current_domain();
             auto dimensions = column->tiledb_dimensions().value();
             for (const auto& dimension : dimensions) {
-                std::cout << dimension.name() << std::endl;
                 domain.add_dimension(dimension);
             }
         }
@@ -1118,7 +1117,6 @@ ArraySchema ArrowAdapter::tiledb_schema_from_arrow_schema(
         if (column->tiledb_attributes().has_value()) {
             auto attributes = column->tiledb_attributes().value();
             for (const auto& attribute : attributes) {
-                std::cout << attribute.name() << std::endl;
                 schema.add_attribute(attribute);
             }
         }
