@@ -42,6 +42,7 @@
 #include "enums.h"
 #include "logger_public.h"
 #include "managed_query.h"
+#include "soma_column.h"
 #include "soma_object.h"
 
 // ================================================================
@@ -1277,6 +1278,25 @@ class SOMAArray : public SOMAObject {
     void upgrade_domain(
         const ArrowTable& newdomain, std::string function_name_for_messages);
 
+    //===================================================================
+    //= Experimental SOMAColumn
+    //===================================================================
+
+    inline std::shared_ptr<SOMAColumn> column(int idx) const {
+        return columns.at(idx);
+    }
+
+    inline std::shared_ptr<SOMAColumn> column(std::string name) const {
+        auto element = std::find_if(
+            columns.begin(), columns.end(), [&](auto& col) {
+                return col->name() == name;
+            });
+
+        return *element;
+    }
+
+    std::vector<std::shared_ptr<SOMAColumn>> columns;
+
    protected:
     // See top-of-file notes regarding methods for SOMADataFrame being
     // defined in this file.
@@ -1746,6 +1766,8 @@ class SOMAArray : public SOMAObject {
         ArraySchemaEvolution se);
 
     void fill_metadata_cache();
+
+    void fill_columns();
 
     // SOMAArray URI
     std::string uri_;

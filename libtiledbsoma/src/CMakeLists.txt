@@ -41,6 +41,9 @@ add_library(TILEDB_SOMA_OBJECTS OBJECT
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_point_cloud_dataframe.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_multiscale_image.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_context.cc
+  ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_column.cc
+  ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_dimension.cc
+  ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_attribute.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_geometry_dimension.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_dataframe.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_dense_ndarray.cc
@@ -212,6 +215,8 @@ install(FILES
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_dense_ndarray.h
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_sparse_ndarray.h
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_column.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_dimension.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_attribute.h
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_geometry_dimension.h
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_experiment.h
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_measurement.h
