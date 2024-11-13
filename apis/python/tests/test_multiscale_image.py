@@ -6,7 +6,7 @@ import pyarrow as pa
 import pytest
 
 import tiledbsoma as soma
-from tiledbsoma import ScaleTransform
+from tiledbsoma import IdentityTransform, ScaleTransform
 
 
 def test_multiscale_image_bad_create(tmp_path):
@@ -138,6 +138,8 @@ def test_multiscale_basic(tmp_path):
         to_level = image.get_transform_to_level
         from_level = image.get_transform_from_level
 
+        assert isinstance(to_level(0), IdentityTransform)
+        assert isinstance(from_level(0), IdentityTransform)
         assert np.array_equal(to_level(0).scale_factors, [1, 1])
         assert np.array_equal(to_level(1).scale_factors, [0.5, 0.5])
         assert np.array_equal(to_level(2).scale_factors, [0.0625, 0.0625])
