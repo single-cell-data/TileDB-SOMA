@@ -9,7 +9,7 @@ Implementation of a SOMA MultiscaleImage.
 
 import json
 import warnings
-from typing import Any, List, Optional, Sequence, Tuple, Union
+from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
 
 import attrs
 import pyarrow as pa
@@ -670,6 +670,13 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
         """
         return self._has_channel_axis
 
+    def levels(self) -> Dict[str, Tuple[str, Tuple[int, ...]]]:
+        """Returns a mapping of {member_name: (uri, shape)}."""
+        return {
+            level.name: (self._contents[level.name].entry.uri, level.shape)
+            for level in self._levels
+        }
+
     @property
     def level_count(self) -> int:
         """The number of image resolution levels stored in the ``MultiscaleImage``.
@@ -680,11 +687,10 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
         return len(self._levels)
 
     def level_shape(self, level: Union[int, str]) -> Tuple[int, ...]:
-        """The shape of the image at the specified level.
+        """The shape of the image at the specified resolution level.
 
         Lifecycle: experimental
         """
-
         if isinstance(level, str):
             for val in self._levels:
                 if val.name == level:
@@ -694,6 +700,15 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
 
         # by index
         return self._levels[level].shape
+
+    def level_uri(self, level: Union[int, str]) -> str:
+        """The URI of the image at the specified resolution level.
+
+        Lifecycle: experimental
+        """
+        if isinstance(level, int):
+            level = self._levels[level].name
+        return self._contents[level].entry.uri
 
     @property
     def nchannels(self) -> int:
