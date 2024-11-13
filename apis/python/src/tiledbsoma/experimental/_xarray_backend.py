@@ -4,46 +4,35 @@
 # Licensed under the MIT License.
 from typing import Any, Mapping, Optional, Tuple, Union
 
+import dask.array as da
 import numpy as np
-from somacore import options
-from xarray import Variable
-from xarray.backends import AbstractDataStore, BackendArray
-from xarray.core.indexing import (
-    BasicIndexer,
-    ExplicitIndexer,
-    IndexingSupport,
-    LazilyIndexedArray,
-    OuterIndexer,
-    VectorizedIndexer,
-    explicit_indexing_adapter,
-)
-from xarray.core.utils import Frozen
+from xarray import DataArray
 
 from .. import DenseNDArray
 from ..options._soma_tiledb_context import SOMATileDBContext
 
 
-class DenseNDArrayWrapper(BackendArray):  # type: ignore
-    """Wraps an SOMA DenseNDArray for xarray variable/DataArray support.
+class DenseNDArrayWrapper:
+    """Wraps an SOMA DenseNDArray for array-like accessors from other libraries.
 
-    Note: This class does not open or close the SOMA array. The array must be already
-    opened for reading to be used with this wrapper.
+
+    Args:
+        uri: Location of the :class:`DenseNDArray`.
     """
 
     def __init__(
         self,
-        array: DenseNDArray,
+        uri: str,
+        *,
+        context: Optional[SOMATileDBContext] = None,
     ):
-        self._array = array
+        self._array = DenseNDArray.open(uri, context=context)
         self._dtype: np.typing.DTypeLike = self._array.schema.field(
             "soma_data"
         ).type.to_pandas_dtype()
 
-    def _raw_indexing_method(
-        self, key: Tuple[Union[slice, int], ...]
-    ) -> np.typing.NDArray[Any]:
+    def __getitem__(self, key: Tuple[Union[slice, int], ...]) -> np.typing.NDArray[Any]:
         """Returns a numpy array containing data from a requested tuple."""
-        assert len(key) == len(self.shape)  # Should be verified by xarray.
 
         # Compute the expected Xarray output shape.
         output_shape = tuple(
@@ -72,7 +61,7 @@ class DenseNDArrayWrapper(BackendArray):  # type: ignore
               exclusive (numpy/xarray).
             """
             if index.step not in (1, None):
-                raise ValueError("Slice steps are not supported.")
+                raise NotImplementedError("Slice steps are not supported.")
             _index = range(dim_size)[index]  # Convert negative values to positive.
             return slice(_index.start, _index.stop - 1)
 
@@ -89,38 +78,16 @@ class DenseNDArrayWrapper(BackendArray):  # type: ignore
         result = self._array.read(key).to_numpy()
         return result.reshape(output_shape)  # type: ignore
 
-    def __getitem__(self, key: ExplicitIndexer) -> np.typing.NDArray[Any]:
-        """Returns data from SOMA DenseNDArray using xarray-style indexing."""
+    @property
+    def chunks(self) -> Tuple[int, ...]:
+        """Recommended chunk sizes for chunking this array."""
+        # TODO: Fix this to return tile sizes instead.
+        return self.shape
 
-        # If any of the slices have steps, convert the key to a vectorized
-        # indexer and the slice to a numpy array.
-        def has_step(x: Any) -> bool:
-            return isinstance(x, slice) and x.step not in (1, None)
-
-        if any(has_step(index) for index in key.tuple):
-
-            key_tuple = tuple(
-                (
-                    np.arange(index.start, index.stop, index.step)
-                    if has_step(index)
-                    else index
-                )
-                for index, dim_size in zip(key.tuple, self.shape)
-            )
-
-            key = (
-                OuterIndexer(key_tuple)
-                if isinstance(key, BasicIndexer) or isinstance(key, OuterIndexer)
-                else VectorizedIndexer(key_tuple)
-            )
-
-        # Use xarray indexing adapter to further partition indicies.
-        return explicit_indexing_adapter(  # type: ignore
-            key,
-            self.shape,
-            IndexingSupport.BASIC,
-            self._raw_indexing_method,
-        )
+    @property
+    def ndim(self) -> int:
+        """Returns the number of dimensions."""
+        return len(self._array.shape)
 
     @property
     def dtype(self) -> np.typing.DTypeLike:
@@ -133,76 +100,32 @@ class DenseNDArrayWrapper(BackendArray):  # type: ignore
         return self._array.shape
 
 
-class DenseNDArrayDatastore(AbstractDataStore):  # type: ignore
-    """Xarray datastore for reading a SOMA DenseNDArray.
-
-    This class can be used to read an Xarray ``Dataset`` using the
-    ``xarray.Dataset.load_store`` class method. The SOMA DenseNDArray will be opened
-    when this class is initialized and closed by the ``close`` method. It will always
-    create a ``Dataset`` with exactly one ``DataArray``.
+def dense_nd_array_to_data_array(
+    uri: str,
+    *,
+    dim_names: Tuple[str, ...],
+    chunks: Optional[Tuple[int, ...]] = None,
+    attrs: Optional[Mapping[str, Any]] = None,
+    context: Optional[SOMATileDBContext] = None,
+) -> DataArray:
+    """Create a :class:`xarray.DataArray` that accesses a SOMA :class:`DenseNDarray`
+    through dask.
 
     Args:
-        uri: The URI of the :class:`DenseNDarray` to open.
-        variable_name: Name to use for the ``DataArray`` holding this
-            :class:`DenseNDArray`. Defaults to ``soma_data``.
-        dim_names: Name to use for the dimensions. Defaults to the
-            :class:`DenseNDArray` dimension names (e.g. ``("soma_dim0", "soma_dim1")``).
-        context: The Context value to use when opening the object. Defaults to ``None``.
-        platform_config: Platform configuration options specific to this open operation.
-            Defaults to ``None``.
+
     """
 
-    __slots__ = (
-        "_soma_array",
-        "_attrs",
-        "_dim_names",
-        "_variable_name",
+    array_wrapper = DenseNDArrayWrapper(uri=uri, context=context)
+
+    if chunks is None:
+        chunks = array_wrapper.chunks
+
+    data = da.from_array(
+        array_wrapper,
+        name="data",
+        chunks=chunks,
+        asarray=True,
+        fancy=False,
     )
 
-    def __init__(
-        self,
-        uri: str,
-        *,
-        variable_name: str = "soma_data",
-        dim_names: Optional[str] = None,
-        attrs: Optional[Mapping[str, Any]] = None,
-        context: Optional[SOMATileDBContext] = None,
-        platform_config: Optional[options.PlatformConfig] = None,
-    ):
-        """Initialize and open the data store."""
-        self._soma_array = DenseNDArray.open(
-            uri,
-            mode="r",
-            context=context,
-            platform_config=platform_config,
-        )
-        self._variable_name = variable_name
-        self._dim_names = (
-            tuple(f"soma_dim_{enum}" for enum in range(self._soma_array.ndim))
-            if dim_names is None
-            else dim_names
-        )
-        self._attrs = Frozen(dict()) if attrs is None else Frozen(attrs)
-
-    def close(self) -> None:
-        """Close the data store."""
-        self._soma_array.close()
-
-    def load(self) -> Tuple[Frozen[str, Any], Frozen[str, Any]]:
-        """Returns a dictionary of ``xarray.Variable`` objects and a dictionary of
-        ``xarray.Attribute`` objects.
-        """
-        variables = Frozen(
-            {
-                self._variable_name: Variable(
-                    self._dim_names,
-                    LazilyIndexedArray(DenseNDArrayWrapper(self._soma_array)),
-                    attrs={
-                        key: val
-                        for key, val in self._soma_array.metadata.items()
-                        if not key.startswith("soma_")
-                    },
-                )
-            }
-        )
-        return variables, self._attrs
+    return DataArray(data, dims=dim_names, attrs=attrs)

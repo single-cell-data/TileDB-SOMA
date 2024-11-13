@@ -10,62 +10,42 @@ soma_xarray = pytest.importorskip("tiledbsoma.experimental._xarray_backend")
 xr = pytest.importorskip("xarray")
 
 
-@pytest.fixture(scope="module")
-def sample_1d_dense_array(tmp_path_factory):
-    """Create a sample DenseNDArray with data and return open for reading."""
-    baseuri = tmp_path_factory.mktemp("basic_xarray_io").as_uri()
-    array_uri = urljoin(baseuri, "sample_1d_dense_array")
-    array = soma.DenseNDArray.create(array_uri, type=pa.uint8(), shape=(8,))
-    data = pa.Tensor.from_numpy(np.arange(8, dtype=np.uint8))
-    array.write((None,), data)
-    array.close()
-    array = soma.DenseNDArray.open(array_uri)
-    return array
-
-
-@pytest.fixture(scope="module")
-def sample_soma_3d_dense_array(tmp_path_factory):
-    """Create a sample DenseNDArray with data and return open for reading."""
-    baseuri = tmp_path_factory.mktemp("basic_xarray_io").as_uri()
-    array_uri = urljoin(baseuri, "sample_3d_dense_array")
-    array = soma.DenseNDArray.create(array_uri, type=pa.uint8(), shape=(8, 2, 4))
-    data = pa.Tensor.from_numpy(np.reshape(np.arange(64, dtype=np.uint8), (8, 2, 4)))
-    array.write((None,), data)
-    array.close()
-    array = soma.DenseNDArray.open(array_uri)
-    return array
-
-
-class TestDenseNDVariable1D:
+class TestDenseNDDataArray1D:
 
     @pytest.fixture(scope="class")
-    def xr_soma_variable(self, sample_1d_dense_array):
-        array_wrapper = soma_xarray.DenseNDArrayWrapper(sample_1d_dense_array)
-        assert isinstance(array_wrapper, xr.backends.BackendArray)
-        return xr.Variable(
-            ("xdim",), xr.core.indexing.LazilyIndexedArray(array_wrapper)
+    def xr_soma_data_array(self, tmp_path_factory):
+        baseuri = tmp_path_factory.mktemp("basic_xarray_io").as_uri()
+        array_uri = urljoin(baseuri, "sample_1d_dense_array")
+        with soma.DenseNDArray.create(array_uri, type=pa.uint8(), shape=(8,)) as array:
+            data = pa.Tensor.from_numpy(np.arange(8, dtype=np.uint8))
+            array.write((None,), data)
+        return soma_xarray.dense_nd_array_to_data_array(
+            array_uri,
+            dim_names=("xdim",),
+            attrs={"meta1": 1, "meta2": "abc"},
         )
 
     @pytest.fixture(scope="class")
-    def xr_numpy_variable(self):
+    def xr_numpy_data_array(self):
         data = np.arange(8, dtype=np.uint8)
-        return xr.Variable(("xdim",), data)
+        return xr.DataArray(data, dims=("xdim",))
 
-    def test_variable_basics(self, xr_soma_variable):
-        assert xr_soma_variable.shape == (8,)
-        assert xr_soma_variable.dims == ("xdim",)
-        assert isinstance(xr_soma_variable._data, xr.core.indexing.LazilyIndexedArray)
+    def test_data_array_basics(self, xr_soma_data_array):
+        assert isinstance(xr_soma_data_array, xr.DataArray)
+        assert xr_soma_data_array.shape == (8,)
+        assert xr_soma_data_array.dims == ("xdim",)
+        assert xr_soma_data_array.chunks is not None
+        assert xr_soma_data_array.attrs == {"meta1": 1, "meta2": "abc"}
 
-    def test_getitem_all(self, xr_soma_variable, xr_numpy_variable):
-        expected = xr_numpy_variable[...]
-
-        actual = xr_soma_variable[...]
+    def test_getitem_all(self, xr_soma_data_array, xr_numpy_data_array):
+        expected = xr_numpy_data_array[...]
+        actual = xr_soma_data_array[...]
         assert actual.shape == (8,)
-        np.testing.assert_equal(actual.data, expected.data)
+        np.testing.assert_equal(actual.data.compute(), expected.data)
 
-        actual = xr_soma_variable[:]
+        actual = xr_soma_data_array[:]
         assert actual.shape == (8,)
-        np.testing.assert_equal(actual.data, expected.data)
+        np.testing.assert_equal(actual.data.compute(), expected.data)
 
     @pytest.mark.parametrize(
         "key",
@@ -75,53 +55,70 @@ class TestDenseNDVariable1D:
             (slice(1, 2),),
             (slice(None, None),),
             (slice(1, -1),),
-            (slice(0, 4, 2),),
             ([0, 3],),
             ([0, -3],),
         ],
     )
-    def test_getitem(self, xr_soma_variable, xr_numpy_variable, key):
-        actual = xr_soma_variable[key]
-        expected = xr_numpy_variable[key]
+    def test_getitem(self, xr_soma_data_array, xr_numpy_data_array, key):
+        actual = xr_soma_data_array[key]
+        expected = xr_numpy_data_array[key]
 
         assert actual.dims == expected.dims
         assert actual.shape == expected.shape
 
-        np.testing.assert_equal(actual.data, expected.data)
+        np.testing.assert_equal(actual.data.compute(), expected.data)
+
+    @pytest.mark.parametrize(
+        "key",
+        [
+            (slice(0, 4, 2),),
+        ],
+    )
+    def test_getitem_with_steps(self, xr_soma_data_array, key):
+        with pytest.raises(NotImplementedError):
+            xr_soma_data_array[key].data.compute()
 
 
-class TestDenseNDVariable3D:
+class TestDenseNDDataArray3D:
 
     @pytest.fixture(scope="class")
-    def xr_soma_variable(self, sample_soma_3d_dense_array):
-        array_wrapper = soma_xarray.DenseNDArrayWrapper(sample_soma_3d_dense_array)
-        assert isinstance(array_wrapper, xr.backends.BackendArray)
-        return xr.Variable(
-            ("xdim", "ydim", "zdim"), xr.core.indexing.LazilyIndexedArray(array_wrapper)
+    def xr_soma_data_array(self, tmp_path_factory):
+        baseuri = tmp_path_factory.mktemp("basic_xarray_io").as_uri()
+        array_uri = urljoin(baseuri, "sample_3d_dense_array")
+        with soma.DenseNDArray.create(
+            array_uri, type=pa.uint8(), shape=(8, 2, 4)
+        ) as array:
+            data = pa.Tensor.from_numpy(
+                np.reshape(np.arange(64, dtype=np.uint8), (8, 2, 4))
+            )
+            array.write((None,), data)
+        return soma_xarray.dense_nd_array_to_data_array(
+            array_uri, dim_names=("xdim", "ydim", "zdim")
         )
 
     @pytest.fixture(scope="class")
-    def xr_numpy_variable(self):
+    def xr_numpy_data_array(self):
         data = np.reshape(np.arange(64, dtype=np.uint8), (8, 2, 4))
-        return xr.Variable(("xdim", "ydim", "zdim"), data)
+        return xr.DataArray(data, dims=("xdim", "ydim", "zdim"))
 
-    def test_variable_basics(self, xr_soma_variable):
-        assert xr_soma_variable.shape == (8, 2, 4)
-        assert xr_soma_variable.dims == ("xdim", "ydim", "zdim")
-        assert isinstance(xr_soma_variable._data, xr.core.indexing.LazilyIndexedArray)
+    def test_data_array_basics(self, xr_soma_data_array):
+        assert isinstance(xr_soma_data_array, xr.DataArray)
+        assert xr_soma_data_array.shape == (8, 2, 4)
+        assert xr_soma_data_array.dims == ("xdim", "ydim", "zdim")
+        assert len(xr_soma_data_array.attrs) == 0
 
-    def test_getitem_all(self, xr_soma_variable, xr_numpy_variable):
-        expected = xr_numpy_variable[...]
+    def test_getitem_all(self, xr_soma_data_array, xr_numpy_data_array):
+        expected = xr_numpy_data_array[...]
 
-        actual = xr_soma_variable[...]
+        actual = xr_soma_data_array[...]
         assert actual.shape == (8, 2, 4)
         np.testing.assert_equal(actual.data, expected.data)
 
-        actual = xr_soma_variable[:]
+        actual = xr_soma_data_array[:]
         assert actual.shape == (8, 2, 4)
         np.testing.assert_equal(actual.data, expected.data)
 
-        actual = xr_soma_variable[:, :, :]
+        actual = xr_soma_data_array[:, :, :]
         assert actual.shape == (8, 2, 4)
         np.testing.assert_equal(actual.data, expected.data)
 
@@ -130,68 +127,32 @@ class TestDenseNDVariable3D:
         [
             (2, 1, 3),
             (0, 0, slice(1, 2)),
-            (
-                2,
-                1,
-                slice(
-                    None,
-                ),
-            ),
+            (2, 1, slice(None)),
             (0, slice(None, None), 1),
             ([1, 3], 1, 1),
             ([1, 3], 1, [0, 2]),
             (-1, -1, -1),
-            (0, 1, slice(0, 4, 2)),
             ([0, 3, 4], [0, 1, 0], [1, 3, 2]),
-            (slice(0, 5, 2), [0, 1, 0], [1, 3, 2]),
             (..., slice(0, 3)),
             (slice(1, 2), ...),
+            (slice(0, 5, 2), [0, 1, 0], [1, 3, 2]),
         ],
     )
-    def test_getitem(self, xr_soma_variable, xr_numpy_variable, key):
-        actual = xr_soma_variable[key]
-        expected = xr_numpy_variable[key]
+    def test_getitem(self, xr_soma_data_array, xr_numpy_data_array, key):
+        actual = xr_soma_data_array[key]
+        expected = xr_numpy_data_array[key]
 
         assert actual.dims == expected.dims
         assert actual.shape == expected.shape
 
-        np.testing.assert_equal(actual.data, expected.data)
+        np.testing.assert_equal(actual.data.compute(), expected.data)
 
-
-def test_1d_xarray_dataset(sample_1d_dense_array):
-    datastore = soma_xarray.DenseNDArrayDatastore(
-        sample_1d_dense_array.uri, attrs={"test1": 1, "test2": 2}
+    @pytest.mark.parametrize(
+        "key",
+        [
+            (0, 1, slice(0, 4, 2)),
+        ],
     )
-    ds = xr.Dataset.load_store(datastore)
-    assert isinstance(ds, xr.Dataset)
-    assert len(ds.attrs) == 2
-    assert ds.attrs == {"test1": 1, "test2": 2}
-
-    assert len(ds.data_vars) == 1
-    assert "soma_data" in ds
-
-    data = ds["soma_data"]
-    assert isinstance(data, xr.DataArray)
-    assert data.dims == ("soma_dim_0",)
-    assert len(data.attrs) == 0
-
-    expected = np.arange(8, dtype=np.uint8)
-    np.testing.assert_equal(data.data, expected)
-
-
-def test_3d_xarray_dataset(sample_soma_3d_dense_array):
-    datastore = soma_xarray.DenseNDArrayDatastore(sample_soma_3d_dense_array.uri)
-    ds = xr.Dataset.load_store(datastore)
-    assert isinstance(ds, xr.Dataset)
-    assert len(ds.attrs) == 0
-
-    assert len(ds.data_vars) == 1
-    assert "soma_data" in ds
-
-    data = ds["soma_data"]
-    assert isinstance(data, xr.DataArray)
-    assert data.dims == ("soma_dim_0", "soma_dim_1", "soma_dim_2")
-    assert len(data.attrs) == 0
-
-    expected = np.reshape(np.arange(64, dtype=np.uint8), (8, 2, 4))
-    np.testing.assert_equal(data.data, expected)
+    def test_getitem_with_steps(self, xr_soma_data_array, key):
+        with pytest.raises(NotImplementedError):
+            xr_soma_data_array[key].data.compute()
