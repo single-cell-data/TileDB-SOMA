@@ -468,7 +468,7 @@ SEXP convert_domainish(const tdbs::ArrowTable& arrow_table) {
         ArrowArrayAllocateChildren(arr, arrow_array->n_children),
         "Bad array children alloc");
 
-    for (size_t i = 0; i < ncol; i++) {
+    for (size_t i = 0; i < static_cast<size_t>(ncol); i++) {
         if (arrow_array->children[i]->n_buffers == 3) {
             // Arrow semantics: variable-length: buffers 0,1,2 are validity,
             // offsets, data
