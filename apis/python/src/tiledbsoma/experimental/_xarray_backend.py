@@ -2,6 +2,7 @@
 # Copyright (c) 2024 TileDB, Inc
 #
 # Licensed under the MIT License.
+import json
 from typing import Any, Mapping, Optional, Tuple, Union
 
 import dask.array as da
@@ -10,6 +11,7 @@ from xarray import DataArray
 
 from .. import DenseNDArray
 from ..options._soma_tiledb_context import SOMATileDBContext
+from ._util import _str_to_int
 
 
 class DenseNDArrayWrapper:
@@ -18,6 +20,7 @@ class DenseNDArrayWrapper:
 
     Args:
         uri: Location of the :class:`DenseNDArray`.
+        context: Optional :class:`SOMATileDBContext` containing storage parameters, etc.
     """
 
     def __init__(
@@ -79,12 +82,6 @@ class DenseNDArrayWrapper:
         return result.reshape(output_shape)  # type: ignore
 
     @property
-    def chunks(self) -> Tuple[int, ...]:
-        """Recommended chunk sizes for chunking this array."""
-        # TODO: Fix this to return tile sizes instead.
-        return self.shape
-
-    @property
     def ndim(self) -> int:
         """Returns the number of dimensions."""
         return len(self._array.shape)
@@ -93,6 +90,14 @@ class DenseNDArrayWrapper:
     def dtype(self) -> np.typing.DTypeLike:
         """Numpy dtype of the array data."""
         return self._dtype
+
+    def recommend_chunks(self) -> Tuple[int, ...]:
+        """Returns recommended chunk sizes for chunking this array."""
+        dim_info = json.loads(self._array.config_options_from_schema().dims)
+        return tuple(
+            _str_to_int(dim_info[f"soma_dim_{index}"]["tile"])
+            for index in range(self.ndim)
+        )
 
     @property
     def shape(self) -> Tuple[int, ...]:
@@ -112,13 +117,19 @@ def dense_nd_array_to_data_array(
     through dask.
 
     Args:
-
+        uri: The location of the array to open,.
+        dim_names: The name of the dimensions to use for the :class:`xarray.DataArray`.
+        chunks: If provided, the chunk sizes to use for the dask array wrapping the
+            SOMA :class:`DenseNDArray`. If not provided, the tile size of the array
+            will be used.
+        attrs: The attributes (metadata) to set on the :class:`xarray.DataArray`.
+        context: Optional :class:`SOMATileDBContext` containing storage parameters, etc.
     """
 
     array_wrapper = DenseNDArrayWrapper(uri=uri, context=context)
 
     if chunks is None:
-        chunks = array_wrapper.chunks
+        chunks = array_wrapper.recommend_chunks()
 
     data = da.from_array(
         array_wrapper,

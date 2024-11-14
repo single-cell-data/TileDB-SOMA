@@ -16,7 +16,10 @@ class TestDenseNDDataArray1D:
     def xr_soma_data_array(self, tmp_path_factory):
         baseuri = tmp_path_factory.mktemp("basic_xarray_io").as_uri()
         array_uri = urljoin(baseuri, "sample_1d_dense_array")
-        with soma.DenseNDArray.create(array_uri, type=pa.uint8(), shape=(8,)) as array:
+        platform_config = {"tiledb": {"create": {"dims": {"soma_dim_0": {"tile": 4}}}}}
+        with soma.DenseNDArray.create(
+            array_uri, type=pa.uint8(), shape=(8,), platform_config=platform_config
+        ) as array:
             data = pa.Tensor.from_numpy(np.arange(8, dtype=np.uint8))
             array.write((None,), data)
         return soma_xarray.dense_nd_array_to_data_array(
@@ -34,7 +37,7 @@ class TestDenseNDDataArray1D:
         assert isinstance(xr_soma_data_array, xr.DataArray)
         assert xr_soma_data_array.shape == (8,)
         assert xr_soma_data_array.dims == ("xdim",)
-        assert xr_soma_data_array.chunks is not None
+        assert xr_soma_data_array.chunks == ((4, 4),)
         assert xr_soma_data_array.attrs == {"meta1": 1, "meta2": "abc"}
 
     def test_getitem_all(self, xr_soma_data_array, xr_numpy_data_array):
@@ -104,6 +107,7 @@ class TestDenseNDDataArray3D:
     def test_data_array_basics(self, xr_soma_data_array):
         assert isinstance(xr_soma_data_array, xr.DataArray)
         assert xr_soma_data_array.shape == (8, 2, 4)
+        assert xr_soma_data_array.chunks == ((8,), (2,), (4,))
         assert xr_soma_data_array.dims == ("xdim", "ydim", "zdim")
         assert len(xr_soma_data_array.attrs) == 0
 
