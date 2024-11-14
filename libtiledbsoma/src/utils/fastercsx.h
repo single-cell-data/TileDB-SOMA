@@ -37,10 +37,6 @@
 #include "parallel_functions.h"
 #include "span/span.hpp"
 
-#ifdef __AVX2__
-#include <immintrin.h>
-#endif
-
 namespace tiledbsoma::fastercsx {
 
 using namespace std::chrono_literals;
@@ -72,7 +68,9 @@ std::pair<T, T> get_split(T n_elements, T n_sections, T section) noexcept {
 }
 
 #ifndef NDEBUG
-/* Used only in asserts */
+/**
+ * @brief Sum size over all elements in vector - used only in asserts.
+ */
 template <typename T>
 size_t sum_over_size(const std::vector<tcb::span<const T>>& v) noexcept {
     return std::transform_reduce(
@@ -82,16 +80,27 @@ size_t sum_over_size(const std::vector<tcb::span<const T>>& v) noexcept {
 }
 #endif
 
-template <typename COO_INDEX>
+/**
+ * @brief Simple partitioning scheme - given a vector of spans, and a minimum
+ * partition size, create up to max_partitions.
+ *
+ * Used to split work across workers in a reasonably even manner. Currently a
+ * greedy n-way linear partition, which works well enough for the common case
+ * where most inputs are of similar sizes (which is typically the case).
+ *
+ * TODO: If we sort (descending) first, it will be LPT which would be better in
+ * edge cases where there are a lot of variable sized input vectors.
+ */
+template <typename COO_IDX>
 struct Partition {
     size_t size;  // sum of views[n].size for all n
-    std::vector<tcb::span<COO_INDEX>> views;
+    std::vector<tcb::span<COO_IDX>> views;
 };
 
-template <typename COO_INDEX>
+template <typename COO_IDX>
 void bin_view(
-    std::vector<Partition<COO_INDEX>>& partitions,
-    const tcb::span<COO_INDEX>& view) {
+    std::vector<Partition<COO_IDX>>& partitions,
+    const tcb::span<COO_IDX>& view) {
     // find minimum size partition and add the span to that partition.
     size_t min_idx = 0;
     for (size_t pidx = 1; pidx < partitions.size(); ++pidx) {
@@ -102,16 +111,13 @@ void bin_view(
     partitions[min_idx].views.push_back(view);
 }
 
-template <typename COO_INDEX>
-std::vector<Partition<COO_INDEX>> partition_views(
-    std::vector<tcb::span<COO_INDEX>> const& Ai,
+template <typename COO_IDX>
+std::vector<Partition<COO_IDX>> partition_views(
+    std::vector<tcb::span<COO_IDX>> const& Ai,
     const size_t max_partitions,
     const size_t partition_size) {
-    // Trivial greedy k-way linear partition. If we sort (descending) first, it
-    // would be LPT which would be better in edge cases where there are a lot of
-    // variable sized input vectors. TODO.
     assert(max_partitions > 0);
-    std::vector<Partition<COO_INDEX>> partitions(max_partitions);
+    std::vector<Partition<COO_IDX>> partitions(max_partitions);
     for (auto& view : Ai) {
         size_t n_partitions = std::min(
             (view.size() + partition_size - 1) / partition_size,
@@ -133,13 +139,17 @@ std::vector<Partition<COO_INDEX>> partition_views(
     return partitions;
 }
 
-template <typename COO_INDEX, typename CSX_MAJOR_INDEX>
+/**
+ * @brief Count occurrences of all values present in Ai - used as the basis
+ * for constructing the index pointer array.
+ */
+template <typename COO_IDX, typename CSX_MAJOR_IDX>
 void count_rows(
     ThreadPool* const tp,
     uint64_t n_row,
     uint64_t nnz,
-    std::vector<tcb::span<COO_INDEX const>> const& Ai,
-    tcb::span<CSX_MAJOR_INDEX>& Bp) {
+    std::vector<tcb::span<COO_IDX const>> const& Ai,
+    tcb::span<CSX_MAJOR_IDX>& Bp) {
     assert(nnz == sum_over_size(Ai));
     assert(Bp.size() == n_row + 1);
     assert(tp->concurrency_level() >= 1);
@@ -152,8 +162,8 @@ void count_rows(
     if (n_partitions > 1) {
         // for multiple partitions, allocate accumulators and perform in
         // parallel
-        std::vector<std::vector<CSX_MAJOR_INDEX>> partition_counts(
-            n_partitions, std::vector<CSX_MAJOR_INDEX>(n_row + 1, 0));
+        std::vector<std::vector<CSX_MAJOR_IDX>> partition_counts(
+            n_partitions, std::vector<CSX_MAJOR_IDX>(n_row + 1, 0));
 
         auto status = parallel_for(
             tp,
@@ -165,8 +175,8 @@ void count_rows(
                     for (size_t n = 0; n < Ai_view.size(); n++) {
                         auto row = Ai_view[n];
                         if ((row < 0) ||
-                            (static_cast<std::make_unsigned_t<COO_INDEX>>(
-                                 row) >= n_row)) [[unlikely]]
+                            (static_cast<std::make_unsigned_t<COO_IDX>>(row) >=
+                             n_row)) [[unlikely]]
                             throw std::out_of_range("Coordinate out of range.");
                         counts[row]++;
                     }
@@ -202,11 +212,11 @@ void count_rows(
 /**
  * @brief Sum counts in place to create index pointers. Same as a prefix sum,
  * but with the result stored offset by one position (ie., first position is
- * always)
+ * always zero).
  */
-template <typename CSX_MAJOR_INDEX>
-void sum_rows_to_pointers(tcb::span<CSX_MAJOR_INDEX>& Bp) {
-    CSX_MAJOR_INDEX cumsum = 0;
+template <typename CSX_MAJOR_IDX>
+void sum_rows_to_pointers(tcb::span<CSX_MAJOR_IDX>& Bp) {
+    CSX_MAJOR_IDX cumsum = 0;
     for (uint64_t i = 0; i < Bp.size(); i++) {
         auto temp = Bp[i];
         Bp[i] = cumsum;
@@ -216,27 +226,27 @@ void sum_rows_to_pointers(tcb::span<CSX_MAJOR_INDEX>& Bp) {
 
 template <
     typename VALUE,
-    typename COO_INDEX,
-    typename CSX_MINOR_INDEX,
-    typename CSX_MAJOR_INDEX>
+    typename COO_IDX,
+    typename CSX_MINOR_IDX,
+    typename CSX_MAJOR_IDX>
 void compress_coo_inner_left(
     const uint64_t& row_partition,
     const int& partition_bits,
     const uint64_t& n_col,
-    tcb::span<COO_INDEX const>& Ai_,
-    tcb::span<COO_INDEX const>& Aj_,
+    tcb::span<COO_IDX const>& Ai_,
+    tcb::span<COO_IDX const>& Aj_,
     tcb::span<VALUE const>& Ad_,
-    tcb::span<CSX_MAJOR_INDEX>& Bp,
-    tcb::span<CSX_MINOR_INDEX>& Bj,
+    tcb::span<CSX_MAJOR_IDX>& Bp,
+    tcb::span<CSX_MINOR_IDX>& Bj,
     tcb::span<VALUE>& Bd) {
     for (auto n = 0UL; n < (Ai_.size() / 2); ++n) {
-        const std::make_unsigned_t<COO_INDEX> row = Ai_[n];
+        const std::make_unsigned_t<COO_IDX> row = Ai_[n];
         if ((row >> partition_bits) != row_partition)
             continue;
 
         const auto dest = Bp[row];
         if ((Aj_[n] < 0) ||
-            (static_cast<std::make_unsigned_t<COO_INDEX>>(Aj_[n]) >= n_col))
+            (static_cast<std::make_unsigned_t<COO_IDX>>(Aj_[n]) >= n_col))
             [[unlikely]]
             throw std::out_of_range("Coordinate out of range.");
 
@@ -248,21 +258,21 @@ void compress_coo_inner_left(
 
 template <
     typename VALUE,
-    typename COO_INDEX,
-    typename CSX_MINOR_INDEX,
-    typename CSX_MAJOR_INDEX>
+    typename COO_IDX,
+    typename CSX_MINOR_IDX,
+    typename CSX_MAJOR_IDX>
 void compress_coo_inner_right(
     unsigned int row_partition,
     unsigned int partition_bits,
     uint64_t n_col,
-    tcb::span<COO_INDEX const>& Ai_,
-    tcb::span<COO_INDEX const>& Aj_,
+    tcb::span<COO_IDX const>& Ai_,
+    tcb::span<COO_IDX const>& Aj_,
     tcb::span<VALUE const>& Ad_,
-    tcb::span<CSX_MAJOR_INDEX>& Bp,
-    tcb::span<CSX_MINOR_INDEX>& Bj,
+    tcb::span<CSX_MAJOR_IDX>& Bp,
+    tcb::span<CSX_MINOR_IDX>& Bj,
     tcb::span<VALUE>& Bd) {
     for (auto n = (Ai_.size() / 2); n < Ai_.size(); ++n) {
-        const std::make_unsigned_t<COO_INDEX> row = Ai_[n];
+        const std::make_unsigned_t<COO_IDX> row = Ai_[n];
         if ((row >> partition_bits) != row_partition) {
             continue;
         }
@@ -270,7 +280,7 @@ void compress_coo_inner_right(
         Bp[row]--;
         const auto dest = Bp[row];
         if ((Aj_[n] < 0) ||
-            (static_cast<std::make_unsigned_t<COO_INDEX>>(Aj_[n]) >= n_col))
+            (static_cast<std::make_unsigned_t<COO_IDX>>(Aj_[n]) >= n_col))
             [[unlikely]]
             throw std::out_of_range("Coordinate out of range.");
 
@@ -278,141 +288,6 @@ void compress_coo_inner_right(
         Bd[dest] = Ad_[n];
     }
 }
-
-#ifdef _THIS_IS_NO_FASTER_AVX2__
-/**
- * @brief AVX2 specialization for int64_t COO indices (i.e. SOMA common case).
- *
- * Code assumes all Ai coords are >= 0 (see count_rows for actual check).
- */
-template <
-    typename VALUE,
-    typename COO_INDEX = int64_t,
-    typename CSX_MINOR_INDEX,
-    typename CSX_MAJOR_INDEX>
-void compress_coo_inner_left(
-    const uint64_t& row_partition,
-    const int& partition_bits,
-    const uint64_t& n_col,
-    tcb::span<int64_t const>& Ai_,
-    tcb::span<int64_t const>& Aj_,
-    tcb::span<VALUE const>& Ad_,
-    tcb::span<CSX_MAJOR_INDEX>& Bp,
-    tcb::span<CSX_MINOR_INDEX>& Bj,
-    tcb::span<VALUE>& Bd) {
-    std::cout << Bp.size() << std::endl;
-    const auto start = 0ULL;
-    const auto stop = Ai_.size() / 2;
-    const auto stop4 = stop & ~3;
-    const auto a = Ai_.data();
-    std::cout << "start,stop " << start << ", " << stop << ", " << stop4
-              << std::endl;
-    std::cout << "Bp.size " << Bp.size() << std::endl;
-    __m256i partition_reg = _mm256_set1_epi32(row_partition);
-    for (uint64_t n = start; n < stop4; n += 4) {
-        __m256i x = _mm256_lddqu_si256((__m256i*)&a[n]);
-        __m256i eq = _mm256_srai_epi32(x, static_cast<int>(partition_bits));
-        eq = _mm256_cmpeq_epi32(eq, partition_reg);
-        if (_mm256_testz_si256(eq, eq)) [[likely]]
-            continue;
-
-        // serial processing as any given row may appear more than once
-        auto mask = _mm256_movemask_epi8(eq);
-        for (auto i = 0; i < 4; ++i) {
-            if (mask & (0x0F << (8 * i))) {
-                auto row = _mm256_extract_epi64(x, i);
-                const auto dest = Bp[row];
-                if ((Aj_[n + i] < 0) ||
-                    (static_cast<uint64_t>(Aj_[n + i]) >= n_col)) [[unlikely]]
-                    throw std::out_of_range("Coordinate out of range.");
-
-                Bj[dest] = Aj_[n + i];
-                Bd[dest] = Ad_[n + i];
-                Bp[row]++;
-            }
-        }
-    }
-
-    // handled any residual tail
-    for (auto n = stop4; n < stop; ++n) {
-        const uint64_t row = Ai_[n];
-        if ((row >> partition_bits) != row_partition)
-            continue;
-
-        const auto dest = Bp[row];
-        if ((Aj_[n] < 0) || (static_cast<uint64_t>(Aj_[n]) >= n_col))
-            [[unlikely]]
-            throw std::out_of_range("Coordinate out of range.");
-
-        Bj[dest] = Aj_[n];
-        Bd[dest] = Ad_[n];
-        Bp[row]++;
-    }
-}
-
-template <
-    typename VALUE,
-    typename COO_INDEX = int64_t,
-    typename CSX_MINOR_INDEX,
-    typename CSX_MAJOR_INDEX>
-void compress_coo_inner_right(
-    const uint64_t& row_partition,
-    const int& partition_bits,
-    const uint64_t& n_col,
-    tcb::span<int64_t const>& Ai_,
-    tcb::span<int64_t const>& Aj_,
-    tcb::span<VALUE const>& Ad_,
-    tcb::span<CSX_MAJOR_INDEX>& Bp,
-    tcb::span<CSX_MINOR_INDEX>& Bj,
-    tcb::span<VALUE>& Bd) {
-    const auto start = Ai_.size() / 2;
-    const auto stop = Ai_.size();
-    const auto stop4 = start + ((stop - start) & ~3);
-    const auto a = Ai_.data();
-    __m256i partition_reg = _mm256_set1_epi32(row_partition);
-    for (uint64_t n = start; n < stop4; n += 4) {
-        __m256i x = _mm256_loadu_si256((__m256i*)&a[n]);
-        __m256i eq = _mm256_srai_epi32(x, static_cast<int>(partition_bits));
-        eq = _mm256_cmpeq_epi32(eq, partition_reg);
-        if (_mm256_testz_si256(eq, eq)) [[likely]]
-            continue;
-
-        // serial processing as any given row may appear more than once
-        auto mask = _mm256_movemask_epi8(eq);
-        for (auto i = 0; i < 4; ++i) {
-            if (mask & (0x0F << (8 * i))) {
-                auto row = _mm256_extract_epi64(x, i);
-
-                Bp[row]--;
-                const auto dest = Bp[row];
-                if ((Aj_[n + i] < 0) ||
-                    (static_cast<uint64_t>(Aj_[n + i]) >= n_col)) [[unlikely]]
-                    throw std::out_of_range("Coordinate out of range.");
-
-                Bj[dest] = Aj_[n + i];
-                Bd[dest] = Ad_[n + i];
-            }
-        }
-    }
-
-    // handled any residual tail
-    for (auto n = stop4; n < stop; ++n) {
-        const uint64_t row = Ai_[n];
-        if ((row >> partition_bits) != row_partition)
-            continue;
-
-        Bp[row]--;
-        const auto dest = Bp[row];
-        if ((Aj_[n] < 0) || (static_cast<uint64_t>(Aj_[n]) >= n_col))
-            [[unlikely]]
-            throw std::out_of_range("Coordinate out of range.");
-
-        Bj[dest] = Aj_[n];
-        Bd[dest] = Ad_[n];
-    }
-}
-
-#endif
 
 /**
  * Given COO matrix in <I,J,D> format (row, col, value), compress into CSX
@@ -431,20 +306,16 @@ void compress_coo_inner_right(
  * @param Bj Output, minor axis coordinates.
  * @param Bd Output values
  */
-template <
-    class VALUE,
-    class COO_INDEX,
-    class CSX_MINOR_INDEX,
-    class CSX_MAJOR_INDEX>
+template <class VALUE, class COO_IDX, class CSX_MINOR_IDX, class CSX_MAJOR_IDX>
 void compress_coo(
     ThreadPool* const tp,
     const Shape& shape,
     uint64_t nnz,
-    const std::vector<tcb::span<const COO_INDEX>>& Ai,
-    const std::vector<tcb::span<const COO_INDEX>>& Aj,
+    const std::vector<tcb::span<const COO_IDX>>& Ai,
+    const std::vector<tcb::span<const COO_IDX>>& Aj,
     const std::vector<tcb::span<const VALUE>>& Ad,
-    tcb::span<CSX_MAJOR_INDEX> Bp,
-    tcb::span<CSX_MINOR_INDEX> Bj,
+    tcb::span<CSX_MAJOR_IDX> Bp,
+    tcb::span<CSX_MINOR_IDX> Bj,
     tcb::span<VALUE> Bd) {
     auto [n_row, n_col] = shape;
     assert(Ai.size() == Aj.size() && Aj.size() == Ad.size());
@@ -461,58 +332,18 @@ void compress_coo(
     sum_rows_to_pointers(Bp);
     assert(Bp[n_row] >= 0 && static_cast<uint64_t>(Bp[n_row]) == nnz);
 
-#if 0  // OLD version
+    std::vector<CSX_MAJOR_IDX> Bp_left(Bp.begin(), Bp.end() - 1);
+    std::vector<CSX_MAJOR_IDX> Bp_right(Bp.begin() + 1, Bp.end());
+    tcb::span<CSX_MAJOR_IDX> Bp_left_span{Bp_left};
+    tcb::span<CSX_MAJOR_IDX> Bp_right_span{Bp_right};
 
-    // Copy all minor index and data values
-    auto partition_bits = std::max(
-        13L,
-        std::lround(std::ceil(std::log2(n_row / tp->concurrency_level()))));
-    auto n_partitions = (n_row + (1 << partition_bits) - 1) >> partition_bits;
-    assert(partition_bits >= 0);
-    assert((n_partitions > 0) || (n_row == 0));
-    auto status = parallel_for(
-        tp,
-        0ul,
-        n_partitions,
-        [&partition_bits, &Ai, &Bp, &Aj, &Bj, &Ad, &Bd, &n_col](
-            const uint64_t partition) {
-            for (uint64_t chnk = 0; chnk < Ai.size(); ++chnk) {
-                auto Ai_ = Ai[chnk];
-                auto Aj_ = Aj[chnk];
-                auto Ad_ = Ad[chnk];
-                for (uint64_t n = 0; n < Ai_.size(); ++n) {
-                    const uint64_t row = Ai_[n];
-                    if ((row >> partition_bits) != partition)
-                        continue;
-
-                    uint64_t dest = Bp[row];
-                    if ((Aj_[n] < 0) || (static_cast<std::make_unsigned_t<COO_INDEX>>(Aj_[n]) >= n_col)) [[unlikely]]
-                        throw std::out_of_range("Coordinate out of range.");
-
-                    Bj[dest] = Aj_[n];
-                    Bd[dest] = Ad_[n];
-                    Bp[row]++;
-                }
-            }
-            return Status::Ok();
-        });
-    assert(status.ok());
-
-    // Shift major axis pointers back by one slot
-    for (uint64_t i = 0, last = 0; i <= n_row; i++) {
-        uint64_t temp = Bp[i];
-        Bp[i] = last;
-        last = temp;
-    }
-
-#else  // unrolled to reduce read bandwidth by half
-
-    std::vector<CSX_MAJOR_INDEX> Bp_left(Bp.begin(), Bp.end() - 1);
-    std::vector<CSX_MAJOR_INDEX> Bp_right(Bp.begin() + 1, Bp.end());
-    tcb::span<CSX_MAJOR_INDEX> Bp_left_span{Bp_left};
-    tcb::span<CSX_MAJOR_INDEX> Bp_right_span{Bp_right};
-
-    // Copy all minor index and data values
+    // Parallel, lock-free copy of all minor index and data values. Partitioned
+    // by contiguous major dimension (Ai) values, minimizing the write
+    // contention in the indptr/Bp updates. Each partition is split into two
+    // parts, which can run in parallel, by working either left or right (minor
+    // dimension beginning and end of range) - this reduces the number of major
+    // dimension reads by half.
+    //
     const auto partition_bits = std::max(
                                     13L,
                                     std::lround(std::ceil(std::log2(
@@ -570,29 +401,26 @@ void compress_coo(
             return Status::Ok();
         });
     assert(status.ok());
-
-#endif
-
     // now Bp,Bj,Bx form a CSX representation (with possible duplicates)
 };
 
-template <typename CSX_MINOR_INDEX, typename VALUE>
+template <typename CSX_MINOR_IDX, typename VALUE>
 bool index_lt(
-    const std::pair<CSX_MINOR_INDEX, VALUE>& a,
-    const std::pair<CSX_MINOR_INDEX, VALUE>& b) {
+    const std::pair<CSX_MINOR_IDX, VALUE>& a,
+    const std::pair<CSX_MINOR_IDX, VALUE>& b) {
     return a.first < b.first;
 }
 
 /**
- * Inplace sort of minor axis.
+ * @brief Inplace sort of minor axis, used to canonicalize the CSx ordering.
  */
-template <class VALUE, class CSX_MINOR_INDEX, class CSX_MAJOR_INDEX>
+template <class VALUE, class CSX_MINOR_IDX, class CSX_MAJOR_IDX>
 void sort_indices(
     ThreadPool* const tp,
     uint64_t n_row,
     uint64_t nnz,
-    const tcb::span<CSX_MAJOR_INDEX> Bp,
-    tcb::span<CSX_MINOR_INDEX> Bj,
+    const tcb::span<CSX_MAJOR_IDX> Bp,
+    tcb::span<CSX_MINOR_IDX> Bj,
     tcb::span<VALUE> Bd) {
     assert(Bp.size() == n_row + 1);
     assert(Bj.size() == nnz);
@@ -606,14 +434,13 @@ void sort_indices(
             if (idx_end < idx_start || idx_end > nnz)
                 throw std::overflow_error("Row pointer exceeds nnz");
 
-            std::vector<std::pair<CSX_MINOR_INDEX, VALUE>> temp(
+            std::vector<std::pair<CSX_MINOR_IDX, VALUE>> temp(
                 idx_end - idx_start);
             for (uint64_t n = 0, idx = idx_start; idx < idx_end; ++n, ++idx) {
                 temp[n] = std::make_pair(Bj[idx], Bd[idx]);
             }
 
-            std::sort(
-                temp.begin(), temp.end(), index_lt<CSX_MINOR_INDEX, VALUE>);
+            std::sort(temp.begin(), temp.end(), index_lt<CSX_MINOR_IDX, VALUE>);
 
             for (uint64_t n = 0, idx = idx_start; idx < idx_end; ++n, ++idx) {
                 Bj[idx] = temp[n].first;
@@ -631,15 +458,15 @@ void sort_indices(
  * contiguous array
  *
  */
-template <class VALUE, class CSX_MINOR_INDEX, class CSX_MAJOR_INDEX>
+template <class VALUE, class CSX_MINOR_IDX, class CSX_MAJOR_IDX>
 void copy_to_dense(
     ThreadPool* const tp,
     uint64_t major_start,
     uint64_t major_end,
     const Shape& shape,
     Format cm_format,
-    const tcb::span<const CSX_MAJOR_INDEX>& Bp,
-    const tcb::span<const CSX_MINOR_INDEX>& Bj,
+    const tcb::span<const CSX_MAJOR_IDX>& Bp,
+    const tcb::span<const CSX_MINOR_IDX>& Bj,
     const tcb::span<const VALUE>& Bd,
     tcb::span<VALUE> out) {
     auto [n_row, n_col] = shape;

@@ -32,6 +32,9 @@
 
 #include <variant>
 
+// Define to include extra debugging bindings (e.g., count_rows)
+/* #define FASTERCSX__DEBUGGING_HOOKS 1 */
+
 #include <tiledbsoma/utils/fastercsx.h>
 #include "common.h"
 
@@ -67,6 +70,10 @@ std::vector<T> to_vector(const py::tuple& tup) {
     return vec;
 }
 
+/**
+ * @brief Various helpers which convert from py:array to spans.
+ */
+
 template <typename T>
 tcb::span<T const> make_span(py::array arr) {
     assert(py::isinstance<py::array_t<T>>(arr));
@@ -100,6 +107,11 @@ tcb::span<R> make_mutable_casted_span(py::array arr) {
     return tcb::span<R>(reinterpret_cast<R*>(p), arr.size());
 }
 
+/*
+ * Value/data arrays are cast to an unsigned of the same width as the actual
+ * value type. This is solely to reduce the combinatorics of template
+ * instantiation, improving final code size and compile time.
+ */
 template <typename T>
 struct remap_value {
     typedef std::make_unsigned_t<T> type;
@@ -207,7 +219,7 @@ T lookup_dtype(
 
 /**
  * @brief Perform all checks required to ensure safe access to caller-provided
- * array data.
+ * array data for the `coo_compress` function.
  */
 void compress_coo_validate_args(
     const int64_t n_row,
@@ -283,6 +295,11 @@ void compress_coo_validate_args(
     }
 }
 
+/**
+ * @brief python binding for coo_compress, which converts COO chunked array (I,
+ * J, D) into CSX arrays (P, J, D). The output arrays are NOT sorted on the
+ * minor dimension - see `sort_indices` if that is required.
+ */
 void compress_coo(
     std::shared_ptr<tiledbsoma::SOMAContext> ctx,
     const std::pair<int64_t, int64_t>& shape,
@@ -293,8 +310,8 @@ void compress_coo(
     py::array Bj,
     py::array Bd) {
     std::vector<py::array> Ai, Aj, Ad;
-    try  // convert py::tuple[py::array] to vector[py::array]
-    {
+    try {
+        // convert py::tuple[py::array] to vector[py::array]
         Ai = to_vector<py::array>(Ai_);
         Aj = to_vector<py::array>(Aj_);
         Ad = to_vector<py::array>(Ad_);
@@ -307,8 +324,10 @@ void compress_coo(
     const auto [n_row, n_col] = shape;
     const auto nnz = Bd.size();
 
+    // Check all user-provided values for constraints, typing, etc.
     compress_coo_validate_args(n_row, n_col, Ai, Aj, Ad, Bp, Bj, Bd);
 
+    // Lookup the underlying C++ primitive type for tag dispatch.
     CooIndexType coo_index_type = lookup_dtype(
         coo_index_type_dispatch, Ai[0].dtype(), "COO index (row, col) arrays");
     CsxIndexType csx_major_index_type = lookup_dtype(
@@ -318,6 +337,7 @@ void compress_coo(
     ValueType value_type = lookup_dtype(
         value_type_dispatch, Bd.dtype(), "CSx data array");
 
+    // Dispatch by type
     std::visit(
         [&](auto value_type,
             auto csx_major_index_type,
@@ -362,6 +382,10 @@ void compress_coo(
         coo_index_type);
 }
 
+/**
+ * @brief python binding for sort_indices, which sorts minor dimension of a
+ * compressed matrix
+ */
 void sort_indices(
     std::shared_ptr<tiledbsoma::SOMAContext> ctx,
     py::array Bp,
@@ -371,7 +395,6 @@ void sort_indices(
     //
     if (Bp.ndim() != 1 || Bj.ndim() != 1 || Bd.ndim() != 1)
         throw std::length_error("All arrays must be 1D");
-
     if (!Bp.writeable() || !Bj.writeable() || !Bd.writeable())
         throw std::invalid_argument("Output arrays must be writable.");
 
@@ -383,6 +406,7 @@ void sort_indices(
     ValueType value_type = lookup_dtype(
         value_type_dispatch, Bd.dtype(), "CSx data array");
 
+    // Dispatch by type
     std::visit(
         [&](auto value_type,
             auto csx_major_index_type,
@@ -418,6 +442,9 @@ void sort_indices(
         csx_minor_index_type);
 };
 
+/**
+ * @brief Python binding for parallel slice+to_dense operation.
+ */
 void copy_to_dense(
     std::shared_ptr<tiledbsoma::SOMAContext> ctx,
     const uint64_t major_idx_start,
@@ -489,6 +516,7 @@ void copy_to_dense(
         csx_minor_index_type);
 };
 
+#ifdef FASTERCSX__DEBUGGING_HOOKS
 void count_rows(
     std::shared_ptr<tiledbsoma::SOMAContext> ctx,
     const int64_t n_row,
@@ -538,6 +566,7 @@ void count_rows(
         csx_major_index_type,
         coo_index_type);
 }
+#endif
 
 void load_fastercsx(py::module& m) {
     py::module fastercsx_m = m.def_submodule("fastercsx", "CSX primitives");
@@ -578,6 +607,7 @@ void load_fastercsx(py::module& m) {
         py::arg("out").noconvert(),
         "Copy major axis slice to dense");
 
+#ifdef FASTERCSX__DEBUGGING_HOOKS
     fastercsx_m.def(
         "count_rows",
         count_rows,
@@ -587,6 +617,7 @@ void load_fastercsx(py::module& m) {
         py::arg("Ai").noconvert(),
         py::arg("Bp").noconvert(),
         "Count rows");
+#endif
 }
 
 }  // namespace libtiledbsomacpp

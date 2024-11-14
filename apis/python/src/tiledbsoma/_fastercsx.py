@@ -25,8 +25,8 @@ NDArrayNumber: TypeAlias = npt.NDArray[Union[np.integer[Any], np.floating[Any]]]
 class CompressedMatrix:
     """Fast compressed matrix construction from COO data.
 
-    Private class intended _only_ for compressed matrix construction. Export constructed matrix to SciPy (or
-    comparable package) for use of the result.
+    Private class intended _only_ for compressed matrix construction, for package internal use.
+    Export constructed matrix to SciPy (or comparable package) for use of the result.
     """
 
     __slots__ = ("indptr", "indices", "data", "shape", "format", "sorted", "context")
@@ -41,7 +41,9 @@ class CompressedMatrix:
         sorted: bool,
         context: SOMATileDBContext,
     ) -> None:
-        """Construct from PJV format."""
+        """Construct from PJV format. Not intended for direct use - see instead
+        static factory methods `from_ijd` and `from_pjv`.
+        """
         assert len(data) == len(indices)
         assert len(data) <= np.iinfo(indptr.dtype).max
         assert shape[1] <= np.iinfo(indices.dtype).max
