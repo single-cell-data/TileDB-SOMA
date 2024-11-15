@@ -361,10 +361,3 @@ def test_bad_shapes(context: soma.SOMATileDBContext, rng: np.random.Generator) -
             fastercsx.CompressedMatrix.from_ijd(
                 sp.row, sp.col, sp.data, shp, "csr", True, context
             )
-
-
-"""
-other tests to consider
-1. duplicates
-
-"""
