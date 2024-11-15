@@ -108,6 +108,12 @@ class CollectionBase(  # type: ignore[misc]  # __eq__ false positive
         try:
             wrapper = cast(_tdb_handles.SOMAGroupWrapper[Any], cls._wrapper_type)
             timestamp_ms = context._open_timestamp_ms(tiledb_timestamp)
+            print()
+            print("URI", uri)
+            print("URI", uri)
+            print("URI", uri)
+            print("URI", uri)
+            print()
             clib.SOMAGroup.create(
                 uri=uri,
                 soma_type=wrapper._GROUP_WRAPPED_TYPE.__name__,

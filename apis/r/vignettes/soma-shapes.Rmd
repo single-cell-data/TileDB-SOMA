@@ -71,7 +71,9 @@ Since there are 80 cells here and 230 genes here, `X`'s shape reflects that.
 obs <- exp$obs
 var <- exp$ms$get("RNA")$var
 X   <- exp$ms$get("RNA")$X$get("data")
+```
 
+```{r}
 obs$domain()
 ```
 
@@ -233,7 +235,7 @@ sdf2$domain()
 sdf2$maxdomain()
 ```
 
-## Advanced usage: using resize at the dataframe/array level using the SOMA API
+## Advanced usage: using resize at the dataframe/array level
 
 In the TileDB-SOMA Python API, there is a method for resizing all the dataframes and arrays within an experiment. At present we do not yet offer a corresponding method in the TileDB-SOMA R API, for the simple reason that there is low demand for it. Nonetheless, for completeness, we offer here guidance on how to resizes dataframes and arrays within a TileDB-SOMA experiment.
 
@@ -245,82 +247,23 @@ For N-dimensional arrays that have been upgraded, or that were created using Til
 Let's do a fresh unpack of a pre-1.15 experiment:
 
 ```{r}
-#XXX TO PORT FROM PYTHON
-
-#import tarfile
-#import tempfile
-
-#uri <- tempfile.mktemp()
-#with tarfile.open("data/pbmc3k-sparse-pre-1.15.tgz") as handle:
-#    handle.extractall(uri)
-#expold <- tiledbsoma.Experiment.open(uri)
-#X <- expold.ms$get("RNA")$X$get("data")
+exp <- load_dataset("soma-exp-pbmc-small-pre-1.15")
+exp
 ```
 
 Here we see that the X array has not been upgraded, and that its shape reports the same as maxshape:
 
 ```{r}
-#XXX TO PORT FROM PYTHON
-#X.tiledbsoma_has_upgraded_shape
-#False
-#X$shape
-#(9223372036854773759, 9223372036854773759)
+X <- exp$ms$get("RNA")$X$get("data")
+X$tiledbsoma_has_upgraded_shape()
 ```
-
-Now let's give the X array the new-style shape:
 
 ```{r}
-#XXX TO PORT FROM PYTHON
-#X.non_empty_domain()
-#((0, 2637), (0, 1837))
-#with tiledbsoma.Experiment.open(uri, "w") as exp:
-#    exp$ms$get("RNA")$X$get("data").tiledbsoma_upgrade_shape([X.non_empty_domain()[0][1]+1, X.non_empty_domain()[1][1]+1])
+X$shape()
 ```
-
-Next let's re-open and see what happened:
 
 ```{r}
-#expold <- tiledbsoma.Experiment.open(expold.uri)
-#X <- expold.ms$get("RNA")$X$get("data")
-#X.tiledbsoma_has_upgraded_shape
-#True
-#X$shape
-#(2638, 1838)
-#X$maxshape
-#(9223372036854773759, 9223372036854773759)
+X$maxshape()
 ```
 
-Furthermore, we can resize it even farther:
-
-```{r}
-#with tiledbsoma.Experiment.open(expold.uri, "w") as exp:
-#    exp$ms$get("RNA")$X$get("data").resize([7200, 1848])
-#expold <- tiledbsoma.Experiment.open(expold.uri)
-#X <- expold.ms$get("RNA")$X$get("data")
-#X$shape
-#(7200, 1848)
-```
-
-* If the dataframe's `$tiledbsoma_has_upgraded_domain()` reports `FALSE`, invoke `$tiledbsoma_upgrade_domain()`
-* Otherwise invoke `$change_domain()`
-
-```{r}
-#XXX TO PORT FROM PYTHON
-#expold.obs.tiledbsoma_has_upgraded_domain
-#False
-#expold.obs$domain
-#((0, 9223372036854773758),)
-#expold.obs$maxdomain
-#((0, 9223372036854773758),)
-#expold.obs.non_empty_domain()
-#((0, 2637),)
-#with tiledbsoma.Experiment.open(expold.uri, "w") as exp:
-#    exp$obs.tiledbsoma_upgrade_domain([[0, expold.obs.non_empty_domain()[0][1]+1]])
-#expold <- tiledbsoma.Experiment.open(expold.uri)
-#expold.obs.tiledbsoma_has_upgraded_domain
-#True
-#expold.obs$domain
-#((0, 2638),)
-#expold.obs$maxdomain
-#((0, 9223372036854773758),)
-```
+Given that pre-1.15 TileDB-SOMA-R arrays were created with a maxshape leaving no room for growth, these arrays cannot have their shape resized any further. From 1.15 onward, of course, as we've see above, arrays are created with room for growth and you can resize them upward.
