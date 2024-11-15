@@ -165,7 +165,8 @@ def slice_to_numeric_range(
     start = domain_start if slc.start is None else max(slc.start, domain_start)
     stop = domain_stop if slc.stop is None else min(slc.stop, domain_stop)
 
-    if stop < start:
+    # Lint says the left-hand and right-hand sides are both unions
+    if stop < start:  # type: ignore[operator]
         # With the above, we have guaranteed that at least one bound will
         # include the domain.  If we get here, that means that the other bound
         # never included it (e.g. stop == slc.stop < domain_start == start).
