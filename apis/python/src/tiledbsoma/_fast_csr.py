@@ -158,7 +158,7 @@ class _CSRAccumulator:
         )
         row_ind = rows_future.result()
         col_ind = cols_future.result()
-        self.coo_chunks.append((row_ind, col_ind, data.to_numpy()))  # type: ignore[arg-type]
+        self.coo_chunks.append((row_ind, col_ind, data.to_numpy()))
         _accum_row_length(self.row_length, row_ind)
 
     def finalize(self) -> AccumulatedCSR:
@@ -214,7 +214,7 @@ class _CSRAccumulator:
 
 
 @typeguard_ignore  # type: ignore[misc]
-@numba.jit(nopython=True, nogil=True)  # type: ignore[attr-defined,misc]
+@numba.jit(nopython=True, nogil=True)  # type: ignore[misc]
 def _accum_row_length(
     row_length: npt.NDArray[np.int64], row_ind: npt.NDArray[np.int64]
 ) -> None:
@@ -223,7 +223,7 @@ def _accum_row_length(
 
 
 @typeguard_ignore  # type: ignore[misc]
-@numba.jit(nopython=True, nogil=True)  # type: ignore[attr-defined,misc]
+@numba.jit(nopython=True, nogil=True)  # type: ignore[misc]
 def _copy_chunk_range(
     row_ind_chunk: npt.NDArray[np.signedinteger[npt.NBitBase]],
     col_ind_chunk: npt.NDArray[np.signedinteger[npt.NBitBase]],
@@ -245,7 +245,7 @@ def _copy_chunk_range(
 
 
 @typeguard_ignore  # type: ignore[misc]
-@numba.jit(nopython=True, nogil=True)  # type: ignore[attr-defined,misc]
+@numba.jit(nopython=True, nogil=True)  # type: ignore[misc]
 def _copy_chunklist_range(
     chunk_list: numba.typed.List,
     data: NPNDArray,
@@ -271,7 +271,7 @@ def _copy_chunklist_range(
 
 
 @typeguard_ignore  # type: ignore[misc]
-@numba.jit(nopython=True, nogil=True)  # type: ignore[attr-defined,misc]
+@numba.jit(nopython=True, nogil=True)  # type: ignore[misc]
 def _finalize_indptr(indptr: npt.NDArray[np.signedinteger[npt.NBitBase]]) -> None:
     prev = 0
     for r in range(len(indptr)):

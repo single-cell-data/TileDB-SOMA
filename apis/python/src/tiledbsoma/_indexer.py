@@ -79,7 +79,7 @@ class IntIndexer:
         Args:
             target: Data to return re-index data for.
         """
-        return (  # type: ignore[no-any-return]
+        return (
             self._reindexer.get_indexer_pyarrow(target)
             if isinstance(target, (pa.Array, pa.ChunkedArray))
             else self._reindexer.get_indexer_general(target)

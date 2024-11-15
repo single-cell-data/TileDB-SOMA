@@ -79,7 +79,7 @@ class DenseNDArrayWrapper:
 
         # Read the data from SOMA, convert to numpy, and reshape.
         result = self._array.read(key).to_numpy()
-        return result.reshape(output_shape)  # type: ignore
+        return result.reshape(output_shape)
 
     @property
     def ndim(self) -> int:

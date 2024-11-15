@@ -176,7 +176,7 @@ class CompressedMatrix:
             indptr = (self.indptr[idx_start : idx_end + 1]).copy()
             indices = self.indices[indptr[0] : indptr[-1]].copy()
             data = self.data[indptr[0] : indptr[-1]].copy()
-            indptr -= indptr[0]  # type: ignore[misc]
+            indptr -= indptr[0]
 
         shape = (
             (n_major, self.shape[1])

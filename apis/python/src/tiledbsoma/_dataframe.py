@@ -33,7 +33,9 @@ from ._read_iters import TableReadIter
 from ._soma_array import SOMAArray
 from ._tdb_handles import DataFrameWrapper
 from ._types import (
+    NPFInfo,
     NPFloating,
+    NPIInfo,
     NPInteger,
     OpenTimestamp,
     StatusAndReason,
@@ -925,7 +927,7 @@ def _fill_out_slot_soma_domain(
         if is_max_domain:
             # Core max domain is immutable. If unspecified, it should be as big
             # as possible since it can never be resized.
-            iinfo = np.iinfo(cast(NPInteger, dtype))
+            iinfo: NPIInfo = np.iinfo(cast(NPInteger, dtype))
             slot_domain = iinfo.min, iinfo.max - 1
             # Here the slot_domain isn't specified by the user; we're setting it.
             # The SOMA spec disallows negative soma_joinid.
@@ -943,7 +945,7 @@ def _fill_out_slot_soma_domain(
             slot_domain = 0, 0
     elif np.issubdtype(dtype, NPFloating):
         if is_max_domain:
-            finfo = np.finfo(cast(NPFloating, dtype))
+            finfo: NPFInfo = np.finfo(cast(NPFloating, dtype))
             slot_domain = finfo.min, finfo.max
             saturated_range = True
         else:

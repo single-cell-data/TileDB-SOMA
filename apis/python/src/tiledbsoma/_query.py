@@ -147,7 +147,7 @@ class AxisIndexer(query.AxisIndexer):
 def _to_numpy(it: Numpyable) -> npt.NDArray[np.int64]:
     if isinstance(it, np.ndarray):
         return it
-    return it.to_numpy()  # type: ignore[no-any-return]
+    return it.to_numpy()
 
 
 @attrs.define(frozen=True)
