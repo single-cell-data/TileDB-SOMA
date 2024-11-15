@@ -88,8 +88,9 @@ size_t sum_over_size_(const std::vector<tcb::span<const T>>& v) noexcept {
  * greedy n-way linear partition, which works well enough for the common case
  * where most inputs are of similar sizes (which is typically the case).
  *
- * TODO: If we sort (descending) first, it will be LPT which would be better in
- * edge cases where there are a lot of variable sized input vectors.
+ * TODO: If we sort (descending) first, it will be classic LPT (Largest Processing
+ * Time) partitioning which would be better in edge cases where there are a lot
+ * of variable sized input vectors.
  */
 template <typename COO_IDX>
 struct Partition {
@@ -140,7 +141,7 @@ std::vector<Partition<COO_IDX>> partition_views_(
 }
 
 /**
- * @brief Count occurrences of all values present in Ai - used as the basis
+ * @brief Count occurrences of all values present in Ai -- used as the basis
  * for constructing the index pointer array.
  */
 template <typename COO_IDX, typename CSX_MAJOR_IDX>
@@ -326,7 +327,7 @@ void compress_coo(
     assert(Bj.size() == nnz);
     assert(Bd.size() == nnz);
 
-    // get major axis counts. Important side effect: range checks the Ai
+    // Get major axis counts. Important side effect: range checks the Ai
     // values.
     count_rows_(tp, n_row, nnz, Ai, Bp);
     sum_rows_to_pointers_(Bp);
@@ -412,10 +413,10 @@ bool index_lt_(
 }
 
 /**
- * @brief Inplace sort of minor axis, used to canonicalize the CSx ordering.
+ * @brief In-place sort of minor axis, used to canonicalize the CSx ordering.
  */
 template <class VALUE, class CSX_MINOR_IDX, class CSX_MAJOR_IDX>
-void sort_indices(
+void sort_csx_indices(
     ThreadPool* const tp,
     uint64_t n_row,
     uint64_t nnz,
@@ -460,7 +461,7 @@ void sort_indices(
  *
  */
 template <class VALUE, class CSX_MINOR_IDX, class CSX_MAJOR_IDX>
-void copy_to_dense(
+void copy_csx_to_dense(
     ThreadPool* const tp,
     uint64_t major_start,
     uint64_t major_end,
@@ -502,14 +503,15 @@ void copy_to_dense(
             });
         assert(status.ok());
     } else {
-        // parallelizing this is less beneficial than the CSR case as it
+        // Parallelizing this is less beneficial than the CSR case as it
         // partitions by columns, but writes in C order. This does not align
         // with CPU cache lines, and is therefore quite a bit slower than
         // the speedup achieved by the (above) CSR loop.
         //
-        // We could write a Fortran-ordered output array, but then it would
-        // typically need to be converted back to C order, which is even
-        // worse as you move (even) more data once it is dense.
+        // We could write a Fortran-ordered ("column major") output array, but
+        // then it would typically need to be converted back to C order ("row
+        // major"), which is even worse as you move (even) more data once it is
+        // dense.
         //
         // If there is ever a requirement for use of F-ordered data, we
         // could add the output order as an option.

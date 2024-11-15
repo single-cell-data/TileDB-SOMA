@@ -83,7 +83,7 @@ def to_tiledb_supported_array_type(name: str, x: _MT) -> _MT:
 def csr_from_coo_table(
     tbl: pa.Table, num_rows: int, num_cols: int, context: SOMATileDBContext
 ) -> sp.csr_matrix:
-    """Given an Arrow Table containing COO data, return a ``scipy.sparse.csr_matrx``."""
+    """Given an Arrow Table containing COO data, return a ``scipy.sparse.csr_matrix``."""
     s = CompressedMatrix.from_soma(
         tbl, (num_rows, num_cols), "csr", True, context
     ).to_scipy()

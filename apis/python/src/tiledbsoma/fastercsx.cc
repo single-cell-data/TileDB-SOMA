@@ -237,7 +237,7 @@ void compress_coo_validate_args_(
     3. sum(Ai.size())==sum(Aj.size())==sum(Ad.size())==Bj.size()==Bd.size()
     (this is nnz).
     4. num chunks/items in Ai/Aj/Ad is same size and type
-    5. ensure B* are writable
+    5. ensure B* are writeable
     6. Ensure each element in A* tuples are same type
     etc...
 
@@ -286,7 +286,7 @@ void compress_coo_validate_args_(
         throw std::length_error("Pointer array size does not match n_rows.");
 
     if (!Bp.writeable() || !Bj.writeable() || !Bd.writeable())
-        throw std::invalid_argument("Output arrays must be writable.");
+        throw std::invalid_argument("Output arrays must be writeable.");
 
     if (Ai.size() > 0) {
         if (!Ai[0].dtype().is(Aj[0].dtype()))
@@ -298,7 +298,7 @@ void compress_coo_validate_args_(
 /**
  * @brief python binding for coo_compress, which converts COO chunked array (I,
  * J, D) into CSX arrays (P, J, D). The output arrays are NOT sorted on the
- * minor dimension - see `sort_indices` if that is required.
+ * minor dimension -- see `sort_csx_indices` if that is required.
  */
 void compress_coo(
     std::shared_ptr<tiledbsoma::SOMAContext> ctx,
@@ -382,10 +382,10 @@ void compress_coo(
 }
 
 /**
- * @brief python binding for sort_indices, which sorts minor dimension of a
+ * @brief Python binding for sort_csx_indices, which sorts minor dimension of a
  * compressed matrix
  */
-void sort_indices(
+void sort_csx_indices(
     std::shared_ptr<tiledbsoma::SOMAContext> ctx,
     py::array Bp,
     py::array Bj,
@@ -395,7 +395,7 @@ void sort_indices(
     if (Bp.ndim() != 1 || Bj.ndim() != 1 || Bd.ndim() != 1)
         throw std::length_error("All arrays must be 1D");
     if (!Bp.writeable() || !Bj.writeable() || !Bd.writeable())
-        throw std::invalid_argument("Output arrays must be writable.");
+        throw std::invalid_argument("Output arrays must be writeable.");
 
     // Get dispatch types
     CsxIndexType csx_major_index_type = lookup_dtype_(
@@ -427,7 +427,7 @@ void sort_indices(
                 make_mutable_casted_span_<VALUE, remap_value_t<VALUE>>(Bd);
 
             py::gil_scoped_release release;
-            return fastercsx::sort_indices(
+            return fastercsx::sort_csx_indices(
                 ctx->thread_pool().get(),
                 n_row,
                 nnz,
@@ -443,7 +443,7 @@ void sort_indices(
 /**
  * @brief Python binding for parallel slice+to_dense operation.
  */
-void copy_to_dense(
+void copy_csx_to_dense(
     std::shared_ptr<tiledbsoma::SOMAContext> ctx,
     const uint64_t major_idx_start,
     const int64_t major_idx_end,
@@ -469,7 +469,7 @@ void copy_to_dense(
     if (n_major != Bp.size() - 1)
         throw std::length_error("n_rows does not match Bp.size()");
     if (!out.writeable())
-        throw std::invalid_argument("out must be writable");
+        throw std::invalid_argument("out must be writeable");
     if (out.dtype().num() != Bd.dtype().num())
         throw pybind11::type_error("out dtype must match Bd dtype");
 
@@ -498,7 +498,7 @@ void copy_to_dense(
                 make_mutable_casted_span_<VALUE, remap_value_t<VALUE>>(out);
 
             py::gil_scoped_release release;
-            return fastercsx::copy_to_dense(
+            return fastercsx::copy_csx_to_dense(
                 ctx->thread_pool().get(),
                 major_idx_start,
                 major_idx_end,
@@ -538,7 +538,7 @@ void count_rows(
         throw std::length_error("Pointer array size does not match n_rows.");
 
     if (!Bp.writeable())
-        throw std::invalid_argument("Output arrays must be writable.");
+        throw std::invalid_argument("Output arrays must be writeable.");
 
     CooIndexType coo_index_type = lookup_dtype_(
         coo_index_type_dispatch, Ai[0].dtype(), "COO index (row, col) arrays");
@@ -583,8 +583,8 @@ void load_fastercsx(py::module& m) {
         "Create CSX elements");
 
     fastercsx_m.def(
-        "sort_indices",
-        sort_indices,
+        "sort_csx_indices",
+        sort_csx_indices,
         py::arg("ctx").noconvert(),
         py::arg("Bp").noconvert(),
         py::arg("Bj").noconvert(),
@@ -592,8 +592,8 @@ void load_fastercsx(py::module& m) {
         "Sort minor axis indices and data");
 
     fastercsx_m.def(
-        "copy_to_dense",
-        copy_to_dense,
+        "copy_csx_to_dense",
+        copy_csx_to_dense,
         py::arg("ctx").noconvert(),
         py::arg("major_idx_start"),
         py::arg("major_idx_end"),

@@ -16,7 +16,7 @@ import scipy.sparse
 from typing_extensions import TypeAlias
 
 from .options._soma_tiledb_context import SOMATileDBContext
-from .pytiledbsoma.fastercsx import compress_coo, copy_to_dense, sort_indices
+from .pytiledbsoma.fastercsx import compress_coo, copy_csx_to_dense, sort_csx_indices
 
 NDArrayIndex: TypeAlias = npt.NDArray[np.integer[Any]]
 NDArrayNumber: TypeAlias = npt.NDArray[Union[np.integer[Any], np.floating[Any]]]
@@ -87,7 +87,7 @@ class CompressedMatrix:
             context.native_context, (n_major, n_minor), i, j, d, indptr, indices, data
         )
         if make_sorted:
-            sort_indices(context.native_context, indptr, indices, data)
+            sort_csx_indices(context.native_context, indptr, indices, data)
         return CompressedMatrix(
             indptr, indices, data, shape, format, make_sorted, context
         )
@@ -200,7 +200,7 @@ class CompressedMatrix:
             else (self.shape[0], n_major)
         )
         out = np.zeros(math.prod(out_shape), dtype=self.data.dtype)
-        copy_to_dense(
+        copy_csx_to_dense(
             self.context.native_context,
             major_idx_start,
             major_idx_end,

@@ -68,7 +68,7 @@ def test_construction(
     )
 
     if sp.nnz >= np.iinfo(csr_major_index_dtype).max:
-        # only occur if we mess up the test params
+        # only occurs if we mess up the test params
         pytest.skip(reason="NNZ is too large for index type.")
 
     indptr = np.empty((sp.shape[0] + 1), dtype=csr_major_index_dtype)
@@ -85,7 +85,7 @@ def test_construction(
         indices,
         data,
     )
-    fastercsx.sort_indices(context, indptr, indices, data)
+    fastercsx.sort_csx_indices(context, indptr, indices, data)
 
     # Verify equality with SciPy constructed CSR
     csr = sp.tocsr()
@@ -144,7 +144,7 @@ def test_partitioning(
         indices,
         data,
     )
-    fastercsx.sort_indices(context, indptr, indices, data)
+    fastercsx.sort_csx_indices(context, indptr, indices, data)
 
     # Verify equality with SciPy constructed CSR
     csr = sp.tocsr()
@@ -164,7 +164,7 @@ def test_partitioning(
 def test_multichunk(
     nchunks: int, shape: tuple[int, int], density: float, context: clib.SOMAContext
 ) -> None:
-    """check that multi-chunk COO input functions correctly"""
+    """Check that multi-chunk COO input functions correctly"""
 
     rng = np.random.default_rng()
     sp = sparse.random(
@@ -194,7 +194,7 @@ def test_multichunk(
         indices,
         data,
     )
-    fastercsx.sort_indices(context, indptr, indices, data)
+    fastercsx.sort_csx_indices(context, indptr, indices, data)
 
     # Verify equality with SciPy constructed CSR
     csr = sp.tocsr()
@@ -203,7 +203,7 @@ def test_multichunk(
     assert np.array_equal(data, csr.data)
 
 
-def test_sort_indices_bad_args(
+def test_sort_csx_indices_bad_args(
     rng: np.random.Generator, context: clib.SOMAContext
 ) -> None:
 
@@ -211,37 +211,37 @@ def test_sort_indices_bad_args(
     p, j, d = sp.indptr, sp.indices, sp.data
 
     with pytest.raises(TypeError):
-        fastercsx.sort_indices(None, p, j, d)
+        fastercsx.sort_csx_indices(None, p, j, d)
     with pytest.raises(TypeError):
-        fastercsx.sort_indices(0, p, j, d)
+        fastercsx.sort_csx_indices(0, p, j, d)
     with pytest.raises(TypeError):
-        fastercsx.sort_indices(context, None, j, d)
+        fastercsx.sort_csx_indices(context, None, j, d)
     with pytest.raises(TypeError):
-        fastercsx.sort_indices(context, p, None, d)
+        fastercsx.sort_csx_indices(context, p, None, d)
     with pytest.raises(TypeError):
-        fastercsx.sort_indices(context, p, j, None)
+        fastercsx.sort_csx_indices(context, p, j, None)
 
     with pytest.raises(ValueError):
-        fastercsx.sort_indices(context, p[:-1], j, d)
+        fastercsx.sort_csx_indices(context, p[:-1], j, d)
 
     with pytest.raises(ValueError):
-        fastercsx.sort_indices(context, p, j[1:], d)
+        fastercsx.sort_csx_indices(context, p, j[1:], d)
 
     with pytest.raises(ValueError):
-        fastercsx.sort_indices(context, p, j, d[1:])
+        fastercsx.sort_csx_indices(context, p, j, d[1:])
 
     with pytest.raises(ValueError):
-        fastercsx.sort_indices(context, np.zeros_like(p), j, d)
+        fastercsx.sort_csx_indices(context, np.zeros_like(p), j, d)
 
     with pytest.raises(OverflowError):
         pbad = p.copy()
         pbad[1] = sp.nnz + 1000000
-        fastercsx.sort_indices(context, pbad, j, d)
+        fastercsx.sort_csx_indices(context, pbad, j, d)
 
     with pytest.raises(OverflowError):
         pbad = p.copy()
         pbad[1] = -1
-        fastercsx.sort_indices(context, pbad, j, d)
+        fastercsx.sort_csx_indices(context, pbad, j, d)
 
 
 def test_compress_coo_bad_args(
