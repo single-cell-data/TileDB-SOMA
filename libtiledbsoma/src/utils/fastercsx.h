@@ -88,9 +88,9 @@ size_t sum_over_size_(const std::vector<tcb::span<const T>>& v) noexcept {
  * greedy n-way linear partition, which works well enough for the common case
  * where most inputs are of similar sizes (which is typically the case).
  *
- * TODO: If we sort (descending) first, it will be classic LPT (Largest Processing
- * Time) partitioning which would be better in edge cases where there are a lot
- * of variable sized input vectors.
+ * TODO: If we sort (descending) first, it will be classic LPT (Largest
+ * Processing Time) partitioning which would be better in edge cases where there
+ * are a lot of variable sized input vectors.
  */
 template <typename COO_IDX>
 struct Partition {
