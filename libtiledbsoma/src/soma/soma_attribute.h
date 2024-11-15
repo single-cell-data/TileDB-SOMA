@@ -35,6 +35,24 @@ class SOMAAttribute : public virtual SOMAColumn {
         return false;
     }
 
+    inline virtual void select_columns(
+        const std::unique_ptr<ManagedQuery>& query,
+        bool if_not_empty = false) const override {
+        query->select_columns(std::vector({attribute.name()}), if_not_empty);
+    };
+
+    inline soma_column_datatype_t type() const {
+        return soma_column_datatype_t::SOMA_COLUMN_ATTRIBUTE;
+    }
+
+    inline std::optional<tiledb_datatype_t> domain_type() const {
+        return std::nullopt;
+    }
+
+    inline std::optional<tiledb_datatype_t> data_type() const {
+        return attribute.type();
+    }
+
     inline std::optional<std::vector<Dimension>> tiledb_dimensions() {
         return std::nullopt;
     }
@@ -56,7 +74,14 @@ class SOMAAttribute : public virtual SOMAColumn {
         return false;
     }
 
+    virtual ArrowArray* arrow_domain_slot(
+        Array& array, enum Domainish kind) const override;
+
    private:
+    virtual void _set_dim_points(
+        const std::unique_ptr<ManagedQuery>& query,
+        const std::any& points) const;
+
     virtual void _set_dim_ranges(
         const std::unique_ptr<ManagedQuery>& query,
         const std::any& ranges) const;

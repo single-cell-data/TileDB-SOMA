@@ -62,32 +62,29 @@ std::shared_ptr<SOMAGeometryColumn> SOMAGeometryColumn::create(
     return result;
 }
 
-// TODO: LOAD IMPLEMENTAION
-// const ArraySchema& schema = array.schema();
+void SOMAGeometryColumn::_set_dim_points(
+    const std::unique_ptr<ManagedQuery>& query, const std::any& points) const {
+    std::vector<std::pair<double_t, double_t>>
+        transformed_points = _transform_points(
+            std::any_cast<std::vector<std::vector<double_t>>>(points));
 
-// for (size_t i = 0; i < schema.domain().ndim(); ++i) {
-//     if (schema.domain().dimension(i).name().rfind(
-//             SOMA_GEOMETRY_DIMENSION_PREFIX, 0) == 0) {
-//         dims.push_back(schema.domain().dimension(i));
-//     }
-// }
+    auto domain_limits = _limits(*query->schema());
 
-// if (dims.size() != 4 && dims.size() != 6) {
-//     throw TileDBSOMAError(fmt::format(
-//         "[SOMAGeometryColumn] Spatial dimension invalid count. Expected 4 "
-//         "or 6, found {}",
-//         dims.size()));
-// }
+    // Create a range object and reuse if for all dimensions
+    std::vector<std::pair<double_t, double_t>> range(1);
 
-// for (size_t i = 0; i < schema.attribute_num(); ++i) {
-//     if (schema.attribute(i).name() == SOMA_GEOMETRY_COLUMN_NAME) {
-//         return SOMAGeometryColumn(ctx, array, dims, schema.attribute(i));
-//     }
-// }
+    for (size_t i = 0; i < transformed_points.size(); ++i) {
+        range[0] = std::make_pair(
+            domain_limits[i].first,
+            std::min(transformed_points[i].second, domain_limits[i].second));
+        query->select_ranges(dimensions[2 * i].name(), range);
 
-// throw TileDBSOMAError(fmt::format(
-//     "[SOMAGeometryColumn] Missing {} attribute",
-//     SOMA_GEOMETRY_COLUMN_NAME));
+        range[0] = std::make_pair(
+            std::max(transformed_points[i].first, domain_limits[i].first),
+            domain_limits[i].second);
+        query->select_ranges(dimensions[2 * i + 1].name(), range);
+    }
+}
 
 void SOMAGeometryColumn::_set_dim_ranges(
     const std::unique_ptr<ManagedQuery>& query, const std::any& ranges) const {
@@ -183,6 +180,25 @@ SOMAGeometryColumn::_transform_ranges(
     return transformed_ranges;
 }
 
+std::vector<std::pair<double_t, double_t>>
+SOMAGeometryColumn::_transform_points(
+    const std::vector<std::vector<double_t>>& points) const {
+    if (points.size() != 1) {
+        throw TileDBSOMAError(
+            "Multi points are not supported for geometry dimension");
+    }
+
+    std::vector<std::pair<double_t, double_t>> transformed_ranges;
+    for (size_t i = 0; i < dimensions.size() / 2; ++i) {
+        transformed_ranges.push_back(
+            std::make_pair(points.front()[i], points.front()[i]));
+        transformed_ranges.push_back(
+            std::make_pair(points.front()[i], points.front()[i]));
+    }
+
+    return transformed_ranges;
+}
+
 std::any SOMAGeometryColumn::_core_domain_slot() const {
     std::vector<double_t> min, max;
     for (size_t i = 0; i < dimensions.size() / 2; ++i) {
@@ -235,6 +251,23 @@ std::any SOMAGeometryColumn::_core_current_domain_slot(Array& array) const {
     return std::make_any<
         std::pair<std::vector<double_t>, std::vector<double_t>>>(
         std::make_pair(min, max));
+}
+
+ArrowArray* SOMAGeometryColumn::arrow_domain_slot(
+    Array& array, enum Domainish kind) const {
+    switch (domain_type().value()) {
+        case TILEDB_FLOAT64:
+            return ArrowAdapter::make_arrow_array_child_var(
+                domain_slot<std::vector<double_t>>(array, kind));
+            break;
+        default:
+            throw TileDBSOMAError(fmt::format(
+                "[SOMAGeometryColumn][arrow_domain_slot] dim {} has unhandled "
+                "extended type "
+                "{}",
+                name(),
+                tiledb::impl::type_to_str(domain_type().value())));
+    }
 }
 
 }  // namespace tiledbsoma

@@ -21,6 +21,76 @@ std::shared_ptr<SOMADimension> SOMADimension::create(
     return result;
 }
 
+void SOMADimension::_set_dim_points(
+    const std::unique_ptr<ManagedQuery>& query, const std::any& points) const {
+    switch (dimension.type()) {
+        case TILEDB_UINT8:
+            query->select_points(
+                dimension.name(), std::any_cast<std::vector<uint8_t>>(points));
+            break;
+        case TILEDB_UINT16:
+            query->select_points(
+                dimension.name(), std::any_cast<std::vector<uint16_t>>(points));
+            break;
+        case TILEDB_UINT32:
+            query->select_points(
+                dimension.name(), std::any_cast<std::vector<uint32_t>>(points));
+            break;
+        case TILEDB_UINT64:
+            query->select_points(
+                dimension.name(), std::any_cast<std::vector<uint64_t>>(points));
+            break;
+        case TILEDB_INT8:
+            query->select_points(
+                dimension.name(), std::any_cast<std::vector<int8_t>>(points));
+            break;
+        case TILEDB_INT16:
+            query->select_points(
+                dimension.name(), std::any_cast<std::vector<int16_t>>(points));
+            break;
+        case TILEDB_INT32:
+            query->select_points(
+                dimension.name(), std::any_cast<std::vector<int32_t>>(points));
+            break;
+        case TILEDB_DATETIME_YEAR:
+        case TILEDB_DATETIME_MONTH:
+        case TILEDB_DATETIME_WEEK:
+        case TILEDB_DATETIME_DAY:
+        case TILEDB_DATETIME_HR:
+        case TILEDB_DATETIME_MIN:
+        case TILEDB_DATETIME_SEC:
+        case TILEDB_DATETIME_MS:
+        case TILEDB_DATETIME_US:
+        case TILEDB_DATETIME_NS:
+        case TILEDB_DATETIME_PS:
+        case TILEDB_DATETIME_FS:
+        case TILEDB_DATETIME_AS:
+        case TILEDB_INT64:
+            query->select_points(
+                dimension.name(), std::any_cast<std::vector<int64_t>>(points));
+            break;
+        case TILEDB_FLOAT32:
+            query->select_points(
+                dimension.name(), std::any_cast<std::vector<float_t>>(points));
+            break;
+        case TILEDB_FLOAT64:
+            query->select_points(
+                dimension.name(), std::any_cast<std::vector<double_t>>(points));
+            break;
+        case TILEDB_STRING_ASCII:
+        case TILEDB_CHAR:
+        case TILEDB_BLOB:
+            query->select_points(
+                dimension.name(),
+                std::any_cast<std::vector<std::string>>(points));
+            break;
+        default:
+            throw TileDBSOMAError(fmt::format(
+                "[SOMADimension] Unknown dimension type {}",
+                impl::type_to_str(dimension.type())));
+    }
+}
+
 void SOMADimension::_set_dim_ranges(
     const std::unique_ptr<ManagedQuery>& query, const std::any& ranges) const {
     switch (dimension.type()) {
@@ -324,4 +394,76 @@ std::any SOMADimension::_core_current_domain_slot(Array& array) const {
                 impl::type_to_str(dimension.type())));
     }
 }
+
+ArrowArray* SOMADimension::arrow_domain_slot(
+    Array& array, enum Domainish kind) const {
+    switch (domain_type().value()) {
+        case TILEDB_INT64:
+        case TILEDB_DATETIME_YEAR:
+        case TILEDB_DATETIME_MONTH:
+        case TILEDB_DATETIME_WEEK:
+        case TILEDB_DATETIME_DAY:
+        case TILEDB_DATETIME_HR:
+        case TILEDB_DATETIME_MIN:
+        case TILEDB_DATETIME_SEC:
+        case TILEDB_DATETIME_MS:
+        case TILEDB_DATETIME_US:
+        case TILEDB_DATETIME_NS:
+        case TILEDB_DATETIME_PS:
+        case TILEDB_DATETIME_FS:
+        case TILEDB_DATETIME_AS:
+        case TILEDB_TIME_HR:
+        case TILEDB_TIME_MIN:
+        case TILEDB_TIME_SEC:
+        case TILEDB_TIME_MS:
+        case TILEDB_TIME_US:
+        case TILEDB_TIME_NS:
+        case TILEDB_TIME_PS:
+        case TILEDB_TIME_FS:
+        case TILEDB_TIME_AS:
+            return ArrowAdapter::make_arrow_array_child(
+                domain_slot<int64_t>(array, kind));
+        case TILEDB_UINT64:
+            return ArrowAdapter::make_arrow_array_child(
+                domain_slot<uint64_t>(array, kind));
+        case TILEDB_INT32:
+            return ArrowAdapter::make_arrow_array_child(
+                domain_slot<int32_t>(array, kind));
+        case TILEDB_UINT32:
+            return ArrowAdapter::make_arrow_array_child(
+                domain_slot<uint32_t>(array, kind));
+        case TILEDB_INT16:
+            return ArrowAdapter::make_arrow_array_child(
+                domain_slot<int16_t>(array, kind));
+        case TILEDB_UINT16:
+            return ArrowAdapter::make_arrow_array_child(
+                domain_slot<uint16_t>(array, kind));
+        case TILEDB_INT8:
+            return ArrowAdapter::make_arrow_array_child(
+                domain_slot<int8_t>(array, kind));
+        case TILEDB_UINT8:
+            return ArrowAdapter::make_arrow_array_child(
+                domain_slot<uint8_t>(array, kind));
+        case TILEDB_FLOAT64:
+            return ArrowAdapter::make_arrow_array_child(
+                domain_slot<double>(array, kind));
+        case TILEDB_FLOAT32:
+            return ArrowAdapter::make_arrow_array_child(
+                domain_slot<float>(array, kind));
+        case TILEDB_STRING_ASCII:
+        case TILEDB_CHAR:
+        case TILEDB_GEOM_WKB:
+        case TILEDB_GEOM_WKT:
+            return ArrowAdapter::make_arrow_array_child_string(
+                domain_slot<std::string>(array, kind));
+        default:
+            throw TileDBSOMAError(fmt::format(
+                "[SOMADimension][arrow_domain_slot] dim {} has unhandled "
+                "type "
+                "{}",
+                name(),
+                tiledb::impl::type_to_str(domain_type().value())));
+    }
+}
+
 }  // namespace tiledbsoma

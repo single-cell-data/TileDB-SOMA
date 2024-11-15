@@ -3,6 +3,9 @@
 
 #include <tiledb/tiledb>
 #include <tiledb/tiledb_experimental>
+#include <variant>
+
+#include "../soma/enums.h"
 
 // https://arrow.apache.org/docs/format/CDataInterface.html
 // https://arrow.apache.org/docs/format/Columnar.html#buffer-listing-for-each-layout
@@ -384,6 +387,15 @@ class ArrowAdapter {
      * #include <logger.h> is relative to the includer, which varies.
      */
     static void log_make_arrow_array_child(ArrowArray* child);
+
+    template <typename T>
+    static ArrowArray* make_arrow_array_child_var(
+        const std::pair<std::vector<T>, std::vector<T>>& pair) {
+        std::vector<T> v = pair.first;
+        v.insert(v.end(), pair.second.begin(), pair.second.end());
+        ArrowArray* child = make_arrow_array_child<T>(v);
+        return child;
+    }
 
     static ArrowArray* make_arrow_array_child_string(
         const std::pair<std::string, std::string>& pair) {

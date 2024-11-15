@@ -16,14 +16,20 @@ std::shared_ptr<SOMAAttribute> SOMAAttribute::create(
     return result;
 }
 
+void SOMAAttribute::_set_dim_points(
+    const std::unique_ptr<ManagedQuery>&, const std::any&) const {
+    throw TileDBSOMAError(fmt::format(
+        "[SOMAAttribute] Column with name {} is not an index column", name()));
+}
+
 void SOMAAttribute::_set_dim_ranges(
-    const std::unique_ptr<ManagedQuery>& query, const std::any& ranges) const {
+    const std::unique_ptr<ManagedQuery>&, const std::any&) const {
     throw TileDBSOMAError(fmt::format(
         "[SOMAAttribute] Column with name {} is not an index column", name()));
 }
 
 void SOMAAttribute::_set_current_domain_slot(
-    NDRectangle& rectangle, const std::vector<const void*>& domain) const {
+    NDRectangle&, const std::vector<const void*>&) const {
     throw TileDBSOMAError(fmt::format(
         "[SOMAAttribute] Column with name {} is not an index column", name()));
 }
@@ -33,12 +39,17 @@ std::any SOMAAttribute::_core_domain_slot() const {
         "[SOMAAttribute] Column with name {} is not an index column", name()));
 }
 
-std::any SOMAAttribute::_non_empty_domain_slot(Array& array) const {
+std::any SOMAAttribute::_non_empty_domain_slot(Array&) const {
     throw TileDBSOMAError(fmt::format(
         "[SOMAAttribute] Column with name {} is not an index column", name()));
 }
 
-std::any SOMAAttribute::_core_current_domain_slot(Array& array) const {
+std::any SOMAAttribute::_core_current_domain_slot(Array&) const {
+    throw TileDBSOMAError(fmt::format(
+        "[SOMAAttribute] Column with name {} is not an index column", name()));
+}
+
+ArrowArray* SOMAAttribute::arrow_domain_slot(Array&, enum Domainish) const {
     throw TileDBSOMAError(fmt::format(
         "[SOMAAttribute] Column with name {} is not an index column", name()));
 }

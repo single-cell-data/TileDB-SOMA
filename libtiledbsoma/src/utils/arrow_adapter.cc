@@ -979,7 +979,8 @@ ArraySchema ArrowAdapter::tiledb_schema_from_arrow_schema(
 
     ArraySchema schema(*ctx, is_sparse ? TILEDB_SPARSE : TILEDB_DENSE);
     Domain domain(*ctx);
-    std::vector<std::shared_ptr<SOMAColumn>> columns;
+    std::vector<std::shared_ptr<SOMAColumn>> columns(
+        index_column_schema->n_children);
 
     schema.set_capacity(platform_config.capacity);
 
@@ -1038,7 +1039,7 @@ ArraySchema ArrowAdapter::tiledb_schema_from_arrow_schema(
                 if (strcmp(child->name, SOMA_GEOMETRY_COLUMN_NAME.c_str()) ==
                         0 &&
                     spatial_column_info.first.get() != nullptr) {
-                    columns.push_back(SOMAGeometryColumn::create(
+                    columns[i] = SOMAGeometryColumn::create(
                         ctx,
                         index_column_schema->children[i],
                         index_column_array->children[i],
@@ -1046,15 +1047,15 @@ ArraySchema ArrowAdapter::tiledb_schema_from_arrow_schema(
                         spatial_column_info.first.get(),
                         soma_type,
                         type_metadata,
-                        platform_config));
+                        platform_config);
                 } else {
-                    columns.push_back(SOMADimension::create(
+                    columns[i] = SOMADimension::create(
                         ctx,
                         index_column_schema->children[i],
                         index_column_array->children[i],
                         soma_type,
                         type_metadata,
-                        platform_config));
+                        platform_config);
                 }
                 isattr = false;
 

@@ -88,14 +88,6 @@ using namespace tiledb;
 
 using StatusAndReason = std::pair<bool, std::string>;
 
-// This enables some code deduplication between core domain, core current
-// domain, and core non-empty domain.
-enum class Domainish {
-    kind_core_domain = 0,
-    kind_core_current_domain = 1,
-    kind_non_empty_domain = 2
-};
-
 class SOMAArray : public SOMAObject {
    public:
     //===================================================================
@@ -230,6 +222,7 @@ class SOMAArray : public SOMAObject {
         , first_read_next_(other.first_read_next_)
         , submitted_(other.submitted_) {
         fill_metadata_cache();
+        fill_columns();
     }
 
     SOMAArray(
@@ -355,7 +348,7 @@ class SOMAArray : public SOMAObject {
      */
     template <typename T>
     void set_dim_point(const std::string& dim, const T& point) {
-        mq_->select_point(dim, point);
+        _get_column(dim)->set_dim_point(mq_, point);
     }
 
     /**
@@ -425,7 +418,7 @@ class SOMAArray : public SOMAObject {
         LOG_DEBUG(
             "[SOMAArray] set_dim_points: sizeof(T)=" +
             std::to_string(sizeof(T)));
-        mq_->select_points(dim, points);
+        _get_column(dim)->set_dim_points(mq_, points);
     }
 
     /**
@@ -465,7 +458,9 @@ class SOMAArray : public SOMAObject {
      */
     void select_columns(
         const std::vector<std::string>& names, bool if_not_empty = false) {
-        mq_->select_columns(names, if_not_empty);
+        for (const auto& name : names) {
+            _get_column(name)->select_columns(mq_, if_not_empty);
+        }
     }
 
     /**
@@ -997,22 +992,6 @@ class SOMAArray : public SOMAObject {
                 throw std::runtime_error(
                     "internal coding error in SOMAArray::_core_domainish_slot: "
                     "unknown kind");
-        }
-    }
-
-    std::pair<std::string, std::string> _core_domainish_slot_string(
-        const std::string& name, enum Domainish which_kind) const {
-        switch (which_kind) {
-            case Domainish::kind_core_domain:
-                return _core_domain_slot<std::string>(name);
-            case Domainish::kind_core_current_domain:
-                return _core_current_domain_slot<std::string>(name);
-            case Domainish::kind_non_empty_domain:
-                return non_empty_domain_slot_var(name);
-            default:
-                throw std::runtime_error(
-                    "internal coding error in "
-                    "SOMAArray::_core_domainish_slot_string: unknown kind");
         }
     }
 
