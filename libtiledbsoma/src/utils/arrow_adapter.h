@@ -46,6 +46,7 @@ using namespace tiledb;
 using json = nlohmann::json;
 
 class ColumnBuffer;
+class SOMAColumn;
 
 /**
  * @brief The ArrowBuffer holds a shared pointer to a ColumnBuffer, which
@@ -230,7 +231,9 @@ class ArrowAdapter {
      * @return ArrowSchema
      */
     static std::unique_ptr<ArrowSchema> arrow_schema_from_tiledb_array(
-        std::shared_ptr<Context> ctx, std::shared_ptr<Array> tiledb_array);
+        std::shared_ptr<Context> ctx,
+        std::shared_ptr<Array> tiledb_array,
+        const std::vector<std::shared_ptr<SOMAColumn>>& columns);
 
     /**
      * @brief Create a an ArrowSchema from TileDB Dimension

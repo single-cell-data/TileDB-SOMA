@@ -270,4 +270,11 @@ ArrowArray* SOMAGeometryColumn::arrow_domain_slot(
     }
 }
 
+ArrowSchema* SOMAGeometryColumn::arrow_schema_slot(
+    const Context& ctx, Array& array) {
+    return ArrowAdapter::arrow_schema_from_tiledb_attribute(
+               attribute, ctx, array)
+        .release();
+}
+
 }  // namespace tiledbsoma

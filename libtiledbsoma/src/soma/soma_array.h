@@ -630,7 +630,7 @@ class SOMAArray : public SOMAObject {
      */
     std::unique_ptr<ArrowSchema> arrow_schema() const {
         return ArrowAdapter::arrow_schema_from_tiledb_array(
-            ctx_->tiledb_ctx(), arr_);
+            ctx_->tiledb_ctx(), arr_, columns);
     }
 
     /**

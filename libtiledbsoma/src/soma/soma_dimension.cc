@@ -466,4 +466,9 @@ ArrowArray* SOMADimension::arrow_domain_slot(
     }
 }
 
+ArrowSchema* SOMADimension::arrow_schema_slot(const Context&, Array&) {
+    return ArrowAdapter::arrow_schema_from_tiledb_dimension(dimension)
+        .release();
+}
+
 }  // namespace tiledbsoma

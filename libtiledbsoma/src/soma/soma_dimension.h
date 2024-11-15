@@ -76,6 +76,9 @@ class SOMADimension : public virtual SOMAColumn {
     virtual ArrowArray* arrow_domain_slot(
         Array& array, enum Domainish kind) const override;
 
+    virtual ArrowSchema* arrow_schema_slot(
+        const Context& ctx, Array& array) override;
+
    protected:
     virtual void _set_dim_points(
         const std::unique_ptr<ManagedQuery>& query,

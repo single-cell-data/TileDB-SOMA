@@ -335,39 +335,9 @@ json ArrowAdapter::_get_filter_list_json(FilterList filter_list) {
 }
 
 std::unique_ptr<ArrowSchema> ArrowAdapter::arrow_schema_from_tiledb_array(
-    std::shared_ptr<Context> ctx, std::shared_ptr<Array> tiledb_array) {
-    auto is_internal = [](const Dimension& dim) {
-        return dim.name().rfind(SOMA_GEOMETRY_DIMENSION_PREFIX, 0) == 0;
-    };
-
-    auto tiledb_schema = tiledb_array->schema();
-    auto dimensions = tiledb_schema.domain().dimensions();
-
-    // For geometry dataframe replace the internal dim with the geometry column
-    int internal_dim_idx = std::find_if(
-                               dimensions.begin(),
-                               dimensions.end(),
-                               is_internal) -
-                           dimensions.begin();
-    auto internal_dim_iter = std::remove_if(
-        dimensions.begin(), dimensions.end(), is_internal);
-    dimensions.erase(internal_dim_iter, dimensions.end());
-
-    std::vector<std::variant<Dimension, Attribute>> columns;
-    for (size_t i = 0; i < dimensions.size(); ++i) {
-        columns.push_back(dimensions[i]);
-    }
-
-    for (size_t i = 0; i < tiledb_schema.attribute_num(); ++i) {
-        auto attr = tiledb_schema.attribute(i);
-        if (strcmp(attr.name().c_str(), SOMA_GEOMETRY_COLUMN_NAME.c_str()) ==
-            0) {
-            columns.insert(columns.begin() + internal_dim_idx, attr);
-        } else {
-            columns.push_back(attr);
-        }
-    }
-
+    std::shared_ptr<Context> ctx,
+    std::shared_ptr<Array> tiledb_array,
+    const std::vector<std::shared_ptr<SOMAColumn>>& columns) {
     std::unique_ptr<ArrowSchema> arrow_schema = std::make_unique<ArrowSchema>();
     arrow_schema->format = strdup("+s");
     arrow_schema->name = strdup("parent");
@@ -384,23 +354,9 @@ std::unique_ptr<ArrowSchema> ArrowAdapter::arrow_schema_from_tiledb_array(
         "[ArrowAdapter] arrow_schema_from_tiledb_array n_children {}",
         arrow_schema->n_children));
 
-    ArrowSchema* child = nullptr;
-
     for (size_t i = 0; i < columns.size(); ++i) {
-        std::visit(
-            [&](auto&& arg) {
-                using T = std::decay_t<decltype(arg)>;
-                if constexpr (std::is_same_v<T, Dimension>) {
-                    child = arrow_schema->children[i] =
-                        arrow_schema_from_tiledb_dimension(arg).release();
-                } else if constexpr (std::is_same_v<T, Attribute>) {
-                    child = arrow_schema->children[i] =
-                        arrow_schema_from_tiledb_attribute(
-                            arg, *ctx, *tiledb_array)
-                            .release();
-                }
-            },
-            columns[i]);
+        arrow_schema->children[i] = columns[i]->arrow_schema_slot(
+            *ctx, *tiledb_array);
     }
 
     return arrow_schema;

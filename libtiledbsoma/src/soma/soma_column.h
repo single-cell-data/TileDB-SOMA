@@ -11,11 +11,10 @@
 #include <spdlog/fmt/fmt.h>
 #include "enums.h"
 #include "managed_query.h"
-#include "utils/arrow_adapter.h"
+#include "nanoarrow/nanoarrow.hpp"
 #include "utils/common.h"
 
 namespace tiledbsoma {
-
 using namespace tiledb;
 
 class SOMAColumn {
@@ -61,6 +60,9 @@ class SOMAColumn {
 
     virtual ArrowArray* arrow_domain_slot(
         Array& array, enum Domainish which_kind) const = 0;
+
+    virtual ArrowSchema* arrow_schema_slot(
+        const Context& ctx, Array& array) = 0;
 
     template <typename T>
     std::pair<T, T> domain_slot(Array& array, enum Domainish which_kind) const {

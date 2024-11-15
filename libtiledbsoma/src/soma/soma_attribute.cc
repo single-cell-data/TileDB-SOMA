@@ -53,4 +53,11 @@ ArrowArray* SOMAAttribute::arrow_domain_slot(Array&, enum Domainish) const {
     throw TileDBSOMAError(fmt::format(
         "[SOMAAttribute] Column with name {} is not an index column", name()));
 }
+
+ArrowSchema* SOMAAttribute::arrow_schema_slot(
+    const Context& ctx, Array& array) {
+    return ArrowAdapter::arrow_schema_from_tiledb_attribute(
+               attribute, ctx, array)
+        .release();
+}
 }  // namespace tiledbsoma
