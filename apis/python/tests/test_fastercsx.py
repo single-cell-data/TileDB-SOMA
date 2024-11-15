@@ -86,7 +86,7 @@ def test_from_ijd(
     )
 
     cm = fastercsx.CompressedMatrix.from_ijd(
-        sp.row, sp.col, sp.data, sp.shape, format, sorted=True, context=context
+        sp.row, sp.col, sp.data, sp.shape, format, make_sorted=True, context=context
     )
     assert_eq(sp, cm)
     assert cm.nbytes == (cm.indptr.nbytes + cm.indices.nbytes + cm.data.nbytes)
@@ -103,7 +103,7 @@ def test_from_pjd(context: soma.SOMATileDBContext, rng: np.random.Generator) -> 
         sp.data,
         sp.shape,
         format="csr",
-        sorted=True,
+        make_sorted=True,
         context=context,
     )
     assert_eq(sp, cm)
@@ -148,7 +148,7 @@ def test_from_soma_array(
         for i_, j_, d_ in zip(i, j, d)
     ]
     cm = fastercsx.CompressedMatrix.from_soma(
-        tables, sp.shape, format, sorted=True, context=context
+        tables, sp.shape, format, make_sorted=True, context=context
     )
     assert_eq(sp, cm)
     assert cm.to_scipy().has_canonical_format
@@ -198,7 +198,7 @@ def test_from_soma_chunked_array(
     assert len(tables) == n_tables
     assert tables[0]["soma_data"].num_chunks == n_chunks
     cm = fastercsx.CompressedMatrix.from_soma(
-        tables, sp.shape, format, sorted=True, context=context
+        tables, sp.shape, format, make_sorted=True, context=context
     )
     assert_eq(sp, cm)
     assert cm.to_scipy().has_canonical_format
@@ -221,7 +221,13 @@ def test_to_scipy(
     )
 
     cm = fastercsx.CompressedMatrix.from_ijd(
-        sp.row, sp.col, sp.data, sp.shape, format=format, sorted=sorted, context=context
+        sp.row,
+        sp.col,
+        sp.data,
+        sp.shape,
+        format=format,
+        make_sorted=sorted,
+        context=context,
     )
     assert_eq(sp, cm)
     if format == "csr":
@@ -260,7 +266,13 @@ def test_to_numpy(
     )
 
     cm = fastercsx.CompressedMatrix.from_ijd(
-        sp.row, sp.col, sp.data, sp.shape, format=format, sorted=sorted, context=context
+        sp.row,
+        sp.col,
+        sp.data,
+        sp.shape,
+        format=format,
+        make_sorted=sorted,
+        context=context,
     )
     assert_eq(sp, cm)
     assert np.array_equal(sp.toarray(), cm.to_numpy())
