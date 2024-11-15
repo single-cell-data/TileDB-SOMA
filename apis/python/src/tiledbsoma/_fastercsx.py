@@ -25,7 +25,7 @@ NDArrayNumber: TypeAlias = npt.NDArray[Union[np.integer[Any], np.floating[Any]]]
 class CompressedMatrix:
     """Fast compressed matrix construction from COO data.
 
-    Private class intended _only_ for compressed matrix construction, for package internal use.
+    Private class intended _only_ for compressed matrix construction, for package-internal use.
     Export constructed matrix to SciPy (or comparable package) for use of the result.
     """
 
@@ -64,7 +64,7 @@ class CompressedMatrix:
         d: NDArrayNumber | Sequence[NDArrayNumber],
         shape: Tuple[int, int],
         format: Literal["csc", "csr"],
-        sorted: bool,
+        make_sorted: bool,
         context: SOMATileDBContext,
     ) -> CompressedMatrix:
         """Factory method accepting COO points stored in IJD vectors."""
@@ -86,10 +86,10 @@ class CompressedMatrix:
         compress_coo(
             context.native_context, (n_major, n_minor), i, j, d, indptr, indices, data
         )
-        if sorted:
+        if make_sorted:
             sort_indices(context.native_context, indptr, indices, data)
         return CompressedMatrix(
-            indptr, indices, data, shape, format=format, sorted=sorted, context=context
+            indptr, indices, data, shape, format, make_sorted, context
         )
 
     @staticmethod
@@ -99,24 +99,24 @@ class CompressedMatrix:
         d: NDArrayNumber,
         shape: Tuple[int, int],
         format: Literal["csc", "csr"],
-        sorted: bool,
+        make_sorted: bool,
         context: SOMATileDBContext,
     ) -> CompressedMatrix:
         """Factory method accepting pointers, indices and data vectors."""
-        return CompressedMatrix(p, j, d, shape, format, sorted, context)
+        return CompressedMatrix(p, j, d, shape, format, make_sorted, context)
 
     @staticmethod
     def from_soma(
         tables: pa.Table | Sequence[pa.Table],
         shape: Tuple[int, int],
         format: Literal["csc", "csr"],
-        sorted: bool,
+        make_sorted: bool,
         context: SOMATileDBContext,
     ) -> CompressedMatrix:
         """Factory method accepting a sequence of Arrow tables containing SOMA sparse matrix data.
 
         Table names must conform to the standard SOMA format, i.e., have three columns, named
-        ``soma_data``, ``soma_dim_0`` and ``soma_dim_1``.
+        ``soma_dim_0``, ``soma_dim_1`` and ``soma_data``.
         """
         tables = tables if isinstance(tables, collections.abc.Sequence) else (tables,)
 
@@ -128,7 +128,7 @@ class CompressedMatrix:
         i = tuple(a.to_numpy() for tbl in tables for a in chunks(tbl["soma_dim_0"]))
         j = tuple(a.to_numpy() for tbl in tables for a in chunks(tbl["soma_dim_1"]))
         d = tuple(a.to_numpy() for tbl in tables for a in chunks(tbl["soma_data"]))
-        return CompressedMatrix.from_ijd(i, j, d, shape, format, sorted, context)
+        return CompressedMatrix.from_ijd(i, j, d, shape, format, make_sorted, context)
 
     @property
     def nnz(self) -> int:
