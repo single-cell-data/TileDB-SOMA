@@ -57,7 +57,7 @@ typedef std::pair<uint64_t, uint64_t> Shape;
  * @returns A std::pair containing the half-open range for the section.
  */
 template <typename T>
-std::pair<T, T> get_split(T n_elements, T n_sections, T section) noexcept {
+std::pair<T, T> get_split_(T n_elements, T n_sections, T section) noexcept {
     auto base_size = n_elements / n_sections;
     auto extras = n_elements % n_sections;
 
@@ -72,7 +72,7 @@ std::pair<T, T> get_split(T n_elements, T n_sections, T section) noexcept {
  * @brief Sum size over all elements in vector - used only in asserts.
  */
 template <typename T>
-size_t sum_over_size(const std::vector<tcb::span<const T>>& v) noexcept {
+size_t sum_over_size_(const std::vector<tcb::span<const T>>& v) noexcept {
     return std::transform_reduce(
         v.cbegin(), v.cend(), 0ul, std::plus<>{}, [](tcb::span<const T> a) {
             return a.size();
@@ -98,7 +98,7 @@ struct Partition {
 };
 
 template <typename COO_IDX>
-void bin_view(
+void bin_view_(
     std::vector<Partition<COO_IDX>>& partitions,
     const tcb::span<COO_IDX>& view) {
     // find minimum size partition and add the span to that partition.
@@ -112,7 +112,7 @@ void bin_view(
 }
 
 template <typename COO_IDX>
-std::vector<Partition<COO_IDX>> partition_views(
+std::vector<Partition<COO_IDX>> partition_views_(
     std::vector<tcb::span<COO_IDX>> const& Ai,
     const size_t max_partitions,
     const size_t partition_size) {
@@ -123,8 +123,8 @@ std::vector<Partition<COO_IDX>> partition_views(
             (view.size() + partition_size - 1) / partition_size,
             max_partitions);
         for (size_t i = 0; i < n_partitions; ++i) {
-            const auto [start, stop] = get_split(view.size(), n_partitions, i);
-            bin_view(partitions, view.subspan(start, stop - start));
+            const auto [start, stop] = get_split_(view.size(), n_partitions, i);
+            bin_view_(partitions, view.subspan(start, stop - start));
         }
     }
 
@@ -144,19 +144,19 @@ std::vector<Partition<COO_IDX>> partition_views(
  * for constructing the index pointer array.
  */
 template <typename COO_IDX, typename CSX_MAJOR_IDX>
-void count_rows(
+void count_rows_(
     ThreadPool* const tp,
     uint64_t n_row,
     uint64_t nnz,
     std::vector<tcb::span<COO_IDX const>> const& Ai,
     tcb::span<CSX_MAJOR_IDX>& Bp) {
-    assert(nnz == sum_over_size(Ai));
+    assert(nnz == sum_over_size_(Ai));
     assert(Bp.size() == n_row + 1);
     assert(tp->concurrency_level() >= 1);
 
     std::fill(Bp.begin(), Bp.end(), 0);
 
-    auto partitions = partition_views(
+    auto partitions = partition_views_(
         Ai, tp->concurrency_level(), 32 * MEBI /* heuristic (empirical) */);
     auto n_partitions = partitions.size();
     if (n_partitions > 1) {
@@ -215,7 +215,7 @@ void count_rows(
  * always zero).
  */
 template <typename CSX_MAJOR_IDX>
-void sum_rows_to_pointers(tcb::span<CSX_MAJOR_IDX>& Bp) {
+void sum_rows_to_pointers_(tcb::span<CSX_MAJOR_IDX>& Bp) {
     CSX_MAJOR_IDX cumsum = 0;
     for (uint64_t i = 0; i < Bp.size(); i++) {
         auto temp = Bp[i];
@@ -229,7 +229,7 @@ template <
     typename COO_IDX,
     typename CSX_MINOR_IDX,
     typename CSX_MAJOR_IDX>
-void compress_coo_inner_left(
+void compress_coo_inner_left_(
     const uint64_t& row_partition,
     const int& partition_bits,
     const uint64_t& n_col,
@@ -261,7 +261,7 @@ template <
     typename COO_IDX,
     typename CSX_MINOR_IDX,
     typename CSX_MAJOR_IDX>
-void compress_coo_inner_right(
+void compress_coo_inner_right_(
     unsigned int row_partition,
     unsigned int partition_bits,
     uint64_t n_col,
@@ -319,17 +319,17 @@ void compress_coo(
     tcb::span<VALUE> Bd) {
     auto [n_row, n_col] = shape;
     assert(Ai.size() == Aj.size() && Aj.size() == Ad.size());
-    assert(sum_over_size(Ai) == nnz);
-    assert(sum_over_size(Aj) == nnz);
-    assert(sum_over_size(Ad) == nnz);
+    assert(sum_over_size_(Ai) == nnz);
+    assert(sum_over_size_(Aj) == nnz);
+    assert(sum_over_size_(Ad) == nnz);
     assert(Bp.size() == n_row + 1);
     assert(Bj.size() == nnz);
     assert(Bd.size() == nnz);
 
     // get major axis counts. Important side effect: range checks the Ai
     // values.
-    count_rows(tp, n_row, nnz, Ai, Bp);
-    sum_rows_to_pointers(Bp);
+    count_rows_(tp, n_row, nnz, Ai, Bp);
+    sum_rows_to_pointers_(Bp);
     assert(Bp[n_row] >= 0 && static_cast<uint64_t>(Bp[n_row]) == nnz);
 
     std::vector<CSX_MAJOR_IDX> Bp_left(Bp.begin(), Bp.end() - 1);
@@ -374,7 +374,7 @@ void compress_coo(
                 const auto row_partition = partition / 2;
                 const auto left_half = ((partition & 0x1) == 0x0);
                 if (left_half) {
-                    compress_coo_inner_left(
+                    compress_coo_inner_left_(
                         row_partition,
                         partition_bits,
                         n_col,
@@ -385,7 +385,7 @@ void compress_coo(
                         Bj,
                         Bd);
                 } else {
-                    compress_coo_inner_right(
+                    compress_coo_inner_right_(
                         row_partition,
                         partition_bits,
                         n_col,
@@ -405,7 +405,7 @@ void compress_coo(
 };
 
 template <typename CSX_MINOR_IDX, typename VALUE>
-bool index_lt(
+bool index_lt_(
     const std::pair<CSX_MINOR_IDX, VALUE>& a,
     const std::pair<CSX_MINOR_IDX, VALUE>& b) {
     return a.first < b.first;
@@ -440,7 +440,8 @@ void sort_indices(
                 temp[n] = std::make_pair(Bj[idx], Bd[idx]);
             }
 
-            std::sort(temp.begin(), temp.end(), index_lt<CSX_MINOR_IDX, VALUE>);
+            std::sort(
+                temp.begin(), temp.end(), index_lt_<CSX_MINOR_IDX, VALUE>);
 
             for (uint64_t n = 0, idx = idx_start; idx < idx_end; ++n, ++idx) {
                 Bj[idx] = temp[n].first;
