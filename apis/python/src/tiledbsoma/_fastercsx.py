@@ -41,8 +41,8 @@ class CompressedMatrix:
         sorted: bool,
         context: SOMATileDBContext,
     ) -> None:
-        """Construct from PJV format. Not intended for direct use - see instead
-        static factory methods `from_ijd` and `from_pjv`.
+        """Construct from PJV format. Not intended for direct use - use instead the
+        static factory methods `from_ijd`, `from_pjv` and `from_soma`.
         """
         assert len(data) == len(indices)
         assert len(data) <= np.iinfo(indptr.dtype).max
@@ -116,7 +116,8 @@ class CompressedMatrix:
         """Factory method accepting a sequence of Arrow tables containing SOMA sparse matrix data.
 
         Table names must conform to the standard SOMA format, i.e., have three columns, named
-        ``soma_dim_0``, ``soma_dim_1`` and ``soma_data``.
+        ``soma_dim_0``, ``soma_dim_1`` and ``soma_data``. All arrays in each table column must
+        contain the same chunk count/size, and the dimension columns must be int64.
         """
         tables = tables if isinstance(tables, collections.abc.Sequence) else (tables,)
 
