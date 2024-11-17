@@ -318,7 +318,8 @@ void compress_coo(
     tcb::span<CSX_MAJOR_IDX> Bp,
     tcb::span<CSX_MINOR_IDX> Bj,
     tcb::span<VALUE> Bd) {
-    auto [n_row, n_col] = shape;
+    auto n_row = shape.first;
+    auto n_col = shape.second;
     assert(Ai.size() == Aj.size() && Aj.size() == Ad.size());
     assert(sum_over_size_(Ai) == nnz);
     assert(sum_over_size_(Aj) == nnz);
@@ -357,8 +358,7 @@ void compress_coo(
         tp,
         0ul,
         2 * n_partitions,
-        [&n_partitions,
-         &partition_bits,
+        [&partition_bits,
          &Ai,
          &Bp_left_span,
          &Bp_right_span,
