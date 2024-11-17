@@ -33,9 +33,8 @@
 #ifndef SOMA_ARRAY
 #define SOMA_ARRAY
 
-#include <stdexcept>  // for windows: error C2039: 'runtime_error': is not a member of 'std'
-
 #include <future>
+#include <stdexcept>  // for windows: error C2039: 'runtime_error': is not a member of 'std'
 
 #include <tiledb/tiledb>
 #include <tiledb/tiledb_experimental>
@@ -1005,7 +1004,7 @@ class SOMAArray : public SOMAObject {
      * @tparam T Domain datatype
      * @return Pair of [lower, upper] inclusive bounds.
      */
-    ArrowTable get_soma_domain() {
+    virtual ArrowTable get_soma_domain() {
         if (has_current_domain()) {
             return _get_core_current_domain();
         } else {
@@ -1028,7 +1027,7 @@ class SOMAArray : public SOMAObject {
      * @tparam T Domain datatype
      * @return Pair of [lower, upper] inclusive bounds.
      */
-    ArrowTable get_soma_maxdomain() {
+    virtual ArrowTable get_soma_maxdomain() {
         return _get_core_domain();
     }
 
@@ -1036,7 +1035,7 @@ class SOMAArray : public SOMAObject {
      * Returns the core non-empty domain in its entirety, as an Arrow
      * table for return to Python/R.
      */
-    ArrowTable get_non_empty_domain() {
+    virtual ArrowTable get_non_empty_domain() {
         return _get_core_domainish(Domainish::kind_non_empty_domain);
     }
 

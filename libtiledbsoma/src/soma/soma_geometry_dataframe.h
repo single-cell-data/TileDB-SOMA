@@ -239,6 +239,12 @@ class SOMAGeometryDataFrame : virtual public SOMAArray {
         std::unique_ptr<ArrowSchema> arrow_schema,
         std::unique_ptr<ArrowArray> arrow_array) override;
 
+    ArrowTable get_soma_domain() override;
+
+    ArrowTable get_soma_maxdomain() override;
+
+    ArrowTable get_non_empty_domain() override;
+
    private:
     //===================================================================
     //= private non-static
@@ -260,6 +266,13 @@ class SOMAGeometryDataFrame : virtual public SOMAArray {
      */
     ArrowTable _reconstruct_geometry_data_table(
         ArrowTable original_data, const std::vector<ArrowTable>& wkb_data);
+
+    /**
+     * @brief Create a new ArrowTable by merging the internal spatial dimensions
+     * and setting the ``soma_geometry`` domain as the stacked domain of each
+     * spatial axis.
+     */
+    ArrowTable _reconstruct_geometry_domain(const ArrowTable& domain);
 };
 }  // namespace tiledbsoma
 
