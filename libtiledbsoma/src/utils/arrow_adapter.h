@@ -238,7 +238,7 @@ class ArrowAdapter {
         const Dimension& dimension);
 
     /**
-     * @brief Create a an ArrowSchema from TileDB Attribute
+     * @brief Create an ArrowSchema from TileDB Attribute
      *
      * @return ArrowSchema
      */
