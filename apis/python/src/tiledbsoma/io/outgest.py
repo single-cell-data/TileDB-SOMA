@@ -102,8 +102,8 @@ def to_h5ad(
     )
 
 
-def _partitioned_sparse_reader(X: SparseNDArray, d0_size: int) -> pa.Table:
-    # partition dimension 0 based on a target point count and average
+def _read_partitioned_sparse(X: SparseNDArray, d0_size: int) -> pa.Table:
+    # Partition dimension 0 based on a target point count and average
     # density of matrix. Magic number determined empirically, as a tradeoff
     # between concurrency and fixed query overhead.
     tgt_point_count = 92 * 1024**2
@@ -153,7 +153,7 @@ def _extract_X_key(
     elif isinstance(X, SparseNDArray):
 
         def _read_X_partitions() -> Matrix:
-            stk_of_coo = _partitioned_sparse_reader(X, nobs)
+            stk_of_coo = _read_partitioned_sparse(X, nobs)
             return conversions.csr_from_coo_table(
                 stk_of_coo, nobs, nvar, context=X.context
             )
@@ -370,7 +370,7 @@ def to_anndata(
         def load_obsp(measurement: Measurement, key: str, nobs: int) -> sp.csr_matrix:
             A = measurement.obsp[key]
             return conversions.csr_from_coo_table(
-                _partitioned_sparse_reader(A, nobs),
+                _read_partitioned_sparse(A, nobs),
                 nobs,
                 nobs,
                 A.context,
@@ -385,7 +385,7 @@ def to_anndata(
         def load_varp(measurement: Measurement, key: str, nvar: int) -> sp.csr_matrix:
             A = measurement.varp[key]
             return conversions.csr_from_coo_table(
-                _partitioned_sparse_reader(A, nvar),
+                _read_partitioned_sparse(A, nvar),
                 nvar,
                 nvar,
                 A.context,
@@ -459,7 +459,7 @@ def _extract_obsm_or_varm(
         # 3.8 and we still support Python 3.7
         return matrix
 
-    matrix_tbl = _partitioned_sparse_reader(soma_nd_array, num_rows)
+    matrix_tbl = _read_partitioned_sparse(soma_nd_array, num_rows)
 
     # Problem to solve: whereas for other sparse arrays we have:
     #
