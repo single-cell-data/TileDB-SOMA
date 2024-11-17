@@ -230,7 +230,7 @@ class ArrowAdapter {
         std::shared_ptr<Context> ctx, std::shared_ptr<Array> tiledb_array);
 
     /**
-     * @brief Create a an ArrowSchema from TileDB Dimension
+     * @brief Create an ArrowSchema from TileDB Dimension
      *
      * @return ArrowSchema
      */
