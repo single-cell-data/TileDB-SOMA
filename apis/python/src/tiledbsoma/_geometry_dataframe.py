@@ -14,7 +14,7 @@ import somacore
 from somacore import CoordinateSpace, CoordinateTransform, options
 from typing_extensions import Self
 
-from ._constants import SOMA_GEOMETRY, SOMA_JOINID, SPATIAL_DISCLAIMER
+from ._constants import SPATIAL_DISCLAIMER
 from ._dataframe import Domain
 from ._read_iters import TableReadIter
 from ._types import OpenTimestamp
@@ -44,7 +44,6 @@ class GeometryDataFrame(somacore.GeometryDataFrame):
         uri: str,
         *,
         schema: pa.Schema,
-        index_column_names: Sequence[str] = (SOMA_JOINID, SOMA_GEOMETRY),
         coordinate_space: Union[Sequence[str], CoordinateSpace] = ("x", "y"),
         domain: Optional[Domain] = None,
         platform_config: Optional[options.PlatformConfig] = None,
@@ -59,8 +58,7 @@ class GeometryDataFrame(somacore.GeometryDataFrame):
         ``pyarrow.large_binary``.  If a ``soma_joinid`` column or ``soma_geometry``
         are present in the provided schema, they must be of the correct type.  If
         either the ``soma_joinid`` column or ``soma_geometry`` column are not provided,
-        one will be added. The ``soma_joinid`` may be an index column. The
-        ``soma_geometry`` column must be an index column.
+        one will be added.
 
         Args:
             uri: The URI where the dataframe will be created.
@@ -68,10 +66,6 @@ class GeometryDataFrame(somacore.GeometryDataFrame):
                 must define all columns, including columns to be named as index
                 columns.  If the schema includes types unsupported by the SOMA
                 implementation, a ValueError will be raised.
-            index_column_names: A list of column names to use as user-defined
-                index columns (e.g., ``['cell_type', 'tissue_type']``).
-                All named columns must exist in the schema, and at least one
-                index column name is required.
             coordinate_space: Either the coordinate space or the axis names for the
                 coordinate space the point cloud is defined on.
             domain: An optional sequence of tuples specifying the domain of each

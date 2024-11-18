@@ -720,7 +720,6 @@ def _write_visium_spots(
         soma_point_cloud = PointCloudDataFrame.create(
             df_uri,
             schema=arrow_table.schema,
-            index_column_names=("x", "y"),
             domain=domain,
             platform_config=platform_config,
             context=context,
