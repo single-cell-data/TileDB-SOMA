@@ -217,7 +217,7 @@ class CompressedMatrix:
     @classmethod
     def _smallest_index_dtype(cls, max_val: int) -> npt.DTypeLike:
         """NB: the underlying C++ code supports other index types, including uint16 and
-        uint 32. This helper method uses only int32/int64 to retain compatibility with
+        uint32. This helper method uses only int32/int64 to retain compatibility with
         the SciPy sparse matrix/array package.
         """
         candidate_index_types: list[npt.DTypeLike] = [np.int32, np.int64]

@@ -415,10 +415,10 @@ class BlockwiseScipyReadIter(BlockwiseReadIterBase[BlockwiseScipyReadIterResult]
                 i,
                 j,
                 d,
-                shape,
-                "csr" if self.major_axis == 0 else "csc",
-                True,
-                self.context,
+                shape=shape,
+                format="csr" if self.major_axis == 0 else "csc",
+                make_sorted=True,
+                context=self.context,
             ).to_scipy()
             yield sp, indices
 
