@@ -18,7 +18,7 @@ name: pkgdown
 
 jobs:
   pkgdown:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     # This is GitHub Actions magic -- there are no secrets we as package owners need to set up or manage
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}

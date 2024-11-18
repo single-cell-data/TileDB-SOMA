@@ -28,10 +28,10 @@ jobs:
       fail-fast: true
 
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        os: [ubuntu-24.04, macos-latest]
         python-version: ['3.9', '3.12']
         include:
-          - os: ubuntu-latest
+          - os: ubuntu-24.04
             cc: gcc-13
             cxx: g++-13
           - os: macos-latest
