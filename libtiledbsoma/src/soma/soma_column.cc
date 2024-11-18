@@ -1,11 +1,11 @@
 /**
- * @file   enums.h
+ * @file   soma_column.cc
  *
  * @section LICENSE
  *
  * The MIT License
  *
- * @copyright Copyright (c) 2023 TileDB, Inc.
+ * @copyright Copyright (c) 2024 TileDB, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -27,34 +27,34 @@
  *
  * @section DESCRIPTION
  *
- *   This file defines enumerated values.
+ *   This file defines the SOMAColumn class.
  */
 
-#ifndef SOMA_ENUMS
-#define SOMA_ENUMS
+#include "soma_column.h"
 
-/** Defines whether the SOMAObject should be opened in read or write mode */
-enum class OpenMode { read = 0, write };
+namespace tiledbsoma {
 
-/** Defines whether the result should be opened in row-major or column-major
- * order */
-enum class ResultOrder { automatic = 0, rowmajor, colmajor };
+template <>
+std::pair<std::string, std::string> SOMAColumn::core_domain_slot<std::string>()
+    const {
+    return std::pair<std::string, std::string>("", "");
+}
 
-/** Defines whether the SOMAGroup URI is absolute or relative */
-enum class URIType { automatic = 0, absolute, relative };
+template <>
+std::pair<std::string, std::string>
+SOMAColumn::core_current_domain_slot<std::string>(Array& array) const {
+    try {
+        std::pair<std::string, std::string>
+            current_domain = std::any_cast<std::pair<std::string, std::string>>(
+                _core_current_domain_slot(array));
 
-typedef enum {
-    SOMA_COLUMN_DIMENSION = 0,
-    SOMA_COLUMN_ATTRIBUTE = 1,
-    SOMA_COLUMN_GEOMETRY = 2
-} soma_column_datatype_t;
+        if (current_domain.first == "" && current_domain.second == "\xff") {
+            return std::pair<std::string, std::string>("", "");
+        }
 
-// This enables some code deduplication between core domain, core current
-// domain, and core non-empty domain.
-enum class Domainish {
-    kind_core_domain = 0,
-    kind_core_current_domain = 1,
-    kind_non_empty_domain = 2
-};
-
-#endif  // SOMA_ENUMS
+        return current_domain;
+    } catch (const std::exception& e) {
+        throw TileDBSOMAError(e.what());
+    }
+}
+}  // namespace tiledbsoma
