@@ -12,7 +12,9 @@ import somacore
 from somacore import (
     CoordinateSpace,
     CoordinateTransform,
+    options,
 )
+from typing_extensions import Self
 
 from . import _funcs, _tdb_handles
 from ._collection import CollectionBase
@@ -28,6 +30,8 @@ from ._spatial_util import (
     transform_from_json,
     transform_to_json,
 )
+from ._types import OpenTimestamp
+from .options import SOMATileDBContext
 
 _spatial_element = Union[GeometryDataFrame, MultiscaleImage, PointCloudDataFrame]
 
@@ -55,6 +59,54 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
         "obsl": ("SOMACollection",),
         "varl": ("SOMACollection",),
     }
+
+    @classmethod
+    def create(
+        cls,
+        uri: str,
+        *,
+        coordinate_space: Optional[Union[Sequence[str], CoordinateSpace]] = None,
+        platform_config: Optional[options.PlatformConfig] = None,
+        context: Optional[SOMATileDBContext] = None,
+        tiledb_timestamp: Optional[OpenTimestamp] = None,
+    ) -> Self:
+        """Creates a new scene at the given URI.
+
+        Args:
+            uri:
+                The location to create this SOMA scene at.
+            coordinate_space:
+                Optional coordinate space or the axis names for the coordinate space
+                the scene is defined on. If ``None`` no coordinate space is set.
+                Defaults to ``None``.
+            platform_config:
+                Platform-specific options used to create this scene. This may be
+                provided as settings in a dictionary, with options located in the
+                ``{'tiledb': {'create': ...}}`` key, or as a
+                :class:`~tiledbsoma.TileDBCreateOptions` object.
+            context:
+                If provided, the :class:`SOMATileDBContext` to use when creating and
+                opening this scene
+            tiledb_timestamp:
+                If specified, overrides the default timestamp used to open this object.
+                If unset, uses the timestamp provided by the context.
+
+        Returns:
+            The newly created scene, opened for writing.
+
+        Lifecycle:
+            Experimental.
+        """
+        if coordinate_space is not None:
+            raise NotImplementedError(
+                "Setting the coordinate space on create is not yet implemented."
+            )
+        return super().create(
+            uri=uri,
+            platform_config=platform_config,
+            context=context,
+            tiledb_timestamp=tiledb_timestamp,
+        )
 
     def __init__(
         self,
