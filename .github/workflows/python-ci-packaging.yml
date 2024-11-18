@@ -168,6 +168,10 @@ jobs:
           fetch-depth: 0  # for setuptools-scm
       - name: Check if System Integrity Protection (SIP) is enabled
         run: csrutil status
+      - name: Select XCode version
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: '15.4'
       - name: Install pre-built libtiledb
         if: ${{ matrix.TILEDB_EXISTS == 'yes' }}
         run: |
