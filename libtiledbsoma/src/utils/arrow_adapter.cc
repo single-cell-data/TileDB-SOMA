@@ -1063,7 +1063,7 @@ ArraySchema ArrowAdapter::tiledb_schema_from_arrow_schema(
     // }
 
     for (const auto& column : columns) {
-        if (column->isIndex()) {
+        if (column->isIndexColumn()) {
             use_current_domain &= column->has_current_domain();
             auto dimensions = column->tiledb_dimensions().value();
             for (const auto& dimension : dimensions) {

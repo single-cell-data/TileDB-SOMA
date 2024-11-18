@@ -41,7 +41,7 @@ class SOMAGeometryColumn : public virtual SOMAColumn {
         return "";
     }
 
-    inline bool isIndex() const {
+    inline bool isIndexColumn() const {
         return true;
     }
 

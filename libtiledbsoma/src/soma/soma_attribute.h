@@ -31,7 +31,7 @@ class SOMAAttribute : public virtual SOMAColumn {
         return attribute.name();
     }
 
-    virtual inline bool isIndex() const {
+    virtual inline bool isIndexColumn() const {
         return false;
     }
 

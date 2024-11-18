@@ -1,11 +1,42 @@
-#ifndef SOMA_COLUMN
-#define SOMA_COLUMN
+/**
+ * @file   soma_column.h
+ *
+ * @section LICENSE
+ *
+ * The MIT License
+ *
+ * @copyright Copyright (c) 2024 TileDB, Inc.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ *
+ * @section DESCRIPTION
+ *
+ *   This file defines the SOMAColumn class.
+ */
+
+#ifndef SOMA_COLUMN_H
+#define SOMA_COLUMN_H
 
 #include <algorithm>
 #include <any>
 #include <optional>
 #include <string>
-#include <tuple>
 #include <vector>
 
 #include <spdlog/fmt/fmt.h>
@@ -19,6 +50,15 @@ using namespace tiledb;
 
 class SOMAColumn {
    public:
+    //===================================================================
+    //= public non-static
+    //===================================================================
+
+    /**
+     * Construct a new SOMAColumn object.
+     *
+     * @param ctx TileDB context
+     */
     SOMAColumn(const Context& ctx)
         : ctx(ctx){};
     SOMAColumn(const SOMAColumn&) = default;
@@ -27,43 +67,86 @@ class SOMAColumn {
     SOMAColumn& operator=(SOMAColumn&&) = default;
 
     /**
-     * @brief SOMADImension display name
+     * Get the SOMAColumn name as defined in schema.
      */
     virtual std::string name() const = 0;
 
-    // /**
-    //  * Returns the domain of the dimension.
-    //  */
-    // ArrowTable domain() const;
+    /**
+     * If true, this column is used as index.
+     *
+     * @remark SOMAColumns used as indexes should define at least one TileDB
+     * Dimension
+     */
+    virtual bool isIndexColumn() const = 0;
 
-    virtual std::string domain_to_str() const = 0;
+    /**
+     * Get the TileDB Dimensions defined by the SOMAColumn object, if any.
+     */
+    virtual std::optional<std::vector<Dimension>> tiledb_dimensions() = 0;
 
-    virtual bool isIndex() const = 0;
+    /**
+     * Get the TileDB Attributes defined by the SOMAColumn object, if any.
+     */
+    virtual std::optional<std::vector<Attribute>> tiledb_attributes() = 0;
 
+    /**
+     * Get the TileDB Enumerations used by the SOMAColumn object, if any.
+     */
+    virtual std::optional<std::vector<Enumeration>> tiledb_enumerations() = 0;
+
+    /**
+     * Get the SOMAColumn type. Each subclass should define its own type.
+     */
+    virtual soma_column_datatype_t type() const = 0;
+
+    /**
+     * Get the datatype of the TileDB Dimensions if any. All dimensions must
+     * have the same type.
+     */
+    virtual std::optional<tiledb_datatype_t> domain_type() const = 0;
+
+    /**
+     * Get the datatype of the TileDB Attributes if any. All attributes must
+     * have the same type.
+     */
+    virtual std::optional<tiledb_datatype_t> data_type() const = 0;
+
+    /**
+     * @brief Select columns names to query (dim and attr). If the
+     * `if_not_empty` parameter is `true`, the column will be selected iff the
+     * list of selected columns is empty. This prevents a `select_columns` call
+     * from changing an empty list (all columns) to a subset of columns.
+     *
+     * @param query the ManagedQuery object to modify
+     * @param if_not_empty Prevent changing an "empty" selection of all columns
+     */
     virtual void select_columns(
         const std::unique_ptr<ManagedQuery>& query,
         bool if_not_empty = false) const = 0;
 
-    virtual std::optional<std::vector<Dimension>> tiledb_dimensions() = 0;
-
-    virtual std::optional<std::vector<Attribute>> tiledb_attributes() = 0;
-
-    virtual std::optional<std::vector<Enumeration>> tiledb_enumerations() = 0;
-
+    /**
+     * @brief Returns true if the SOMACOlumn has a non-empty current domain,
+     * else false.  Note that this only should be used if the SOMACOlumn objects
+     * is being constructed during schema generation. If a SOMAArray is already
+     * present this function should not be used.
+     */
     virtual bool has_current_domain() = 0;
 
-    virtual soma_column_datatype_t type() const = 0;
-
-    virtual std::optional<tiledb_datatype_t> domain_type() const = 0;
-
-    virtual std::optional<tiledb_datatype_t> data_type() const = 0;
-
+    /**
+     * Get the domain kind of the SOMAColumn as an ArrowArray for use with R/Python API. 
+     */
     virtual ArrowArray* arrow_domain_slot(
         Array& array, enum Domainish which_kind) const = 0;
 
+    /**
+     * Get the SOMAColumn encoded as an ArrowSchema. 
+     */
     virtual ArrowSchema* arrow_schema_slot(
         const Context& ctx, Array& array) = 0;
 
+    /**
+     * Get the domain kind of the SOMAColumn.
+     */
     template <typename T>
     std::pair<T, T> domain_slot(Array& array, enum Domainish which_kind) const {
         switch (which_kind) {
@@ -80,9 +163,15 @@ class SOMAColumn {
         }
     }
 
+    /**
+     * Set the current domain of this SOMAColumn.
+     * 
+     * @param rectangle The current domain rectangle to modify.
+     * @param domain A vector of void pointers to the the current domain data buffers. 
+     */
     void set_current_domain_slot(
         NDRectangle& rectangle, const std::vector<const void*>& domain) const {
-        if (!isIndex()) {
+        if (!isIndexColumn()) {
             throw TileDBSOMAError(fmt::format(
                 "[SOMAColumn] Column with name {} is not an index column",
                 name()));
@@ -91,10 +180,19 @@ class SOMAColumn {
         _set_current_domain_slot(rectangle, domain);
     }
 
+    /**
+     * @brief Set the dimension slice using one point
+     *
+     * @note Partitioning is not supported
+     *
+     * @tparam T
+     * @param query
+     * @param point
+     */
     template <typename T>
     void set_dim_point(
         const std::unique_ptr<ManagedQuery>& query, const T& point) const {
-        if (!isIndex()) {
+        if (!isIndexColumn()) {
             throw TileDBSOMAError(fmt::format(
                 "[SOMAColumn] Column with name {} is not an index column",
                 name()));
@@ -103,11 +201,20 @@ class SOMAColumn {
         this->_set_dim_points(query, std::vector({point}));
     }
 
+    /**
+     * @brief Set the dimension slice using multiple points
+     *
+     * @note Partitioning is not supported
+     *
+     * @tparam T
+     * @param query
+     * @param points
+     */
     template <typename T>
     void set_dim_points(
         const std::unique_ptr<ManagedQuery>& query,
         const std::vector<T>& points) const {
-        if (!isIndex()) {
+        if (!isIndexColumn()) {
             throw TileDBSOMAError(fmt::format(
                 "[SOMAColumn] Column with name {} is not an index column",
                 name()));
@@ -116,11 +223,20 @@ class SOMAColumn {
         this->_set_dim_points(query, points);
     }
 
+    /**
+     * @brief Set the dimension slice using multiple ranges
+     *
+     * @note Partitioning is not supported
+     *
+     * @tparam T
+     * @param dim
+     * @param ranges
+     */
     template <typename T>
     void set_dim_ranges(
         const std::unique_ptr<ManagedQuery>& query,
         const std::vector<std::pair<T, T>>& ranges) const {
-        if (!isIndex()) {
+        if (!isIndexColumn()) {
             throw TileDBSOMAError(fmt::format(
                 "[SOMAColumn] Column with name {} is not an index column",
                 name()));
@@ -129,6 +245,20 @@ class SOMAColumn {
         this->_set_dim_ranges(query, ranges);
     }
 
+/**
+     * Returns the core domain of this column.
+     *
+     * o For arrays with core current-domain support:
+     *   - soma domain is core current domain
+     *   - soma maxdomain is core domain
+     * o For arrays without core current-domain support:
+     *   - soma domain is core domain
+     *   - soma maxdomain is core domain
+     *   - core current domain is not accessed at the soma level
+     *
+     * @tparam T Domain datatype
+     * @return Pair of [lower, upper] inclusive bounds.
+     */
     template <typename T>
     std::pair<T, T> core_domain_slot() const {
         try {
@@ -138,6 +268,11 @@ class SOMAColumn {
         }
     }
 
+    /**
+     * Retrieves the non-empty domain from the array. This is the union of the
+     * non-empty domains of the array fragments. Returns (0, 0) for empty
+     * domains.
+     */
     template <typename T>
     std::pair<T, T> non_empty_domain_slot(Array& array) const {
         try {
@@ -148,6 +283,20 @@ class SOMAColumn {
         };
     }
 
+    /**
+     * Returns the core current domain of this column.
+     *
+     * o For arrays with core current-domain support:
+     *   - soma domain is core current domain
+     *   - soma maxdomain is core domain
+     * o For arrays without core current-domain support:
+     *   - soma domain is core domain
+     *   - soma maxdomain is core domain
+     *   - core current domain is not accessed at the soma level
+     *
+     * @tparam T Domain datatype
+     * @return Pair of [lower, upper] inclusive bounds.
+     */
     template <typename T>
     std::pair<T, T> core_current_domain_slot(Array& array) const {
         try {

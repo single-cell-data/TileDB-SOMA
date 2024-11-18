@@ -30,7 +30,7 @@ class SOMADimension : public virtual SOMAColumn {
         return dimension.name();
     }
 
-    inline bool isIndex() const {
+    inline bool isIndexColumn() const {
         return true;
     }
 

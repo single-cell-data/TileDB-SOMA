@@ -1264,7 +1264,7 @@ std::optional<TimestampRange> SOMAArray::timestamp() {
 ArrowTable SOMAArray::_get_core_domainish(enum Domainish which_kind) {
     int array_ndim = std::count_if(
         columns.begin(), columns.end(), [](const auto& col) {
-            return col->isIndex();
+            return col->isIndexColumn();
         });
 
     // Create the schema for the info we return
@@ -1272,7 +1272,7 @@ ArrowTable SOMAArray::_get_core_domainish(enum Domainish which_kind) {
     std::vector<tiledb_datatype_t> tiledb_datatypes;
 
     for (const auto& column : columns) {
-        if (!column->isIndex()) {
+        if (!column->isIndexColumn()) {
             continue;
         }
 
@@ -1288,7 +1288,7 @@ ArrowTable SOMAArray::_get_core_domainish(enum Domainish which_kind) {
 
     size_t i = 0;
     for (const auto& column : columns) {
-        if (!column->isIndex()) {
+        if (!column->isIndexColumn()) {
             continue;
         }
 
