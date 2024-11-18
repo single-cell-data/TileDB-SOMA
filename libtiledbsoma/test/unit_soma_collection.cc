@@ -32,6 +32,8 @@
 
 #include "common.h"
 
+#include <format>
+
 static const int64_t DIM_MAX = 999;
 
 TEST_CASE("SOMACollection: basic") {
@@ -50,12 +52,8 @@ TEST_CASE("SOMACollection: basic") {
 
 TEST_CASE("SOMACollection: add SOMASparseNDArray") {
     auto use_current_domain = GENERATE(false, true);
-    // TODO this could be formatted with fmt::format which is part of internal
-    // header spd/log/fmt/fmt.h and should not be used. In C++20, this can be
-    // replaced with std::format.
-    std::ostringstream section;
-    section << "- use_current_domain=" << use_current_domain;
-    SECTION(section.str()) {
+
+    SECTION(std::format("- use_current_domain={}", use_current_domain)) {
         TimestampRange ts(0, 2);
         auto ctx = std::make_shared<SOMAContext>();
         std::string base_uri = "mem://unit-test-add-sparse-ndarray";
@@ -112,12 +110,8 @@ TEST_CASE("SOMACollection: add SOMASparseNDArray") {
 
 TEST_CASE("SOMACollection: add SOMADenseNDArray") {
     auto use_current_domain = GENERATE(false, true);
-    // TODO this could be formatted with fmt::format which is part of internal
-    // header spd/log/fmt/fmt.h and should not be used. In C++20, this can be
-    // replaced with std::format.
-    std::ostringstream section;
-    section << "- use_current_domain=" << use_current_domain;
-    SECTION(section.str()) {
+
+    SECTION(std::format("- use_current_domain={}", use_current_domain)) {
         TimestampRange ts(0, 2);
         auto ctx = std::make_shared<SOMAContext>();
         std::string base_uri = "mem://unit-test-add-dense-ndarray";

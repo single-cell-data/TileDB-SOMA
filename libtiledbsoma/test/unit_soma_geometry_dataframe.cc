@@ -35,17 +35,14 @@
 #include "../src/geometry/operators/io/write.h"
 #include "../src/utils/common.h"
 #include "common.h"
+#include <format>
 
 const int64_t SOMA_JOINID_DIM_MAX = 99;
 
 TEST_CASE("SOMAGeometryDataFrame: basic", "[SOMAGeometryDataFrame]") {
     auto use_current_domain = GENERATE(false, true);
-    // TODO this could be formatted with fmt::format which is part of internal
-    // header spd/log/fmt/fmt.h and should not be used. In C++20, this can be
-    // replaced with std::format.
-    std::ostringstream section;
-    section << "- use_current_domain=" << use_current_domain;
-    SECTION(section.str()) {
+
+    SECTION(std::format("- use_current_domain={}", use_current_domain)) {
         auto ctx = std::make_shared<SOMAContext>();
         std::string uri{"mem://unit-test-geometry-basic"};
         PlatformConfig platform_config{};
@@ -155,12 +152,8 @@ TEST_CASE("SOMAGeometryDataFrame: basic", "[SOMAGeometryDataFrame]") {
 
 TEST_CASE("SOMAGeometryDataFrame: Roundtrip", "[SOMAGeometryDataFrame]") {
     auto use_current_domain = GENERATE(false, true);
-    // TODO this could be formatted with fmt::format which is part of internal
-    // header spd/log/fmt/fmt.h and should not be used. In C++20, this can be
-    // replaced with std::format.
-    std::ostringstream section;
-    section << "- use_current_domain=" << use_current_domain;
-    SECTION(section.str()) {
+
+    SECTION(std::format("- use_current_domain={}", use_current_domain)) {
         auto ctx = std::make_shared<SOMAContext>();
         std::string uri{"mem://unit-test-geometry-roundtrip"};
         PlatformConfig platform_config{};

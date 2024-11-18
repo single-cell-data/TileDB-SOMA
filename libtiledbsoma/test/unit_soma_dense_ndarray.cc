@@ -31,6 +31,7 @@
  */
 
 #include "common.h"
+#include <format>
 
 TEST_CASE("SOMADenseNDArray: basic", "[SOMADenseNDArray]") {
     // Core uses domain & current domain like (0, 999); SOMA uses shape like
@@ -40,12 +41,8 @@ TEST_CASE("SOMADenseNDArray: basic", "[SOMADenseNDArray]") {
     int64_t shape = 1000;
 
     auto use_current_domain = GENERATE(false, true);
-    // TODO this could be formatted with fmt::format which is part of internal
-    // header spd/log/fmt/fmt.h and should not be used. In C++20, this can be
-    // replaced with std::format.
-    std::ostringstream section;
-    section << "- use_current_domain=" << use_current_domain;
-    SECTION(section.str()) {
+
+    SECTION(std::format("- use_current_domain={}", use_current_domain)) {
         auto ctx = std::make_shared<SOMAContext>();
         std::string uri = "mem://unit-test-dense-ndarray-basic";
         std::string dim_name = "soma_dim_0";
@@ -158,12 +155,8 @@ TEST_CASE("SOMADenseNDArray: basic", "[SOMADenseNDArray]") {
 TEST_CASE("SOMADenseNDArray: platform_config", "[SOMADenseNDArray]") {
     int64_t dim_max = 999;
     auto use_current_domain = GENERATE(false, true);
-    // TODO this could be formatted with fmt::format which is part of
-    // internal header spd/log/fmt/fmt.h and should not be used. In C++20,
-    // this can be replaced with std::format.
-    std::ostringstream section;
-    section << "- use_current_domain=" << use_current_domain;
-    SECTION(section.str()) {
+
+    SECTION(std::format("- use_current_domain={}", use_current_domain)) {
         auto ctx = std::make_shared<SOMAContext>();
         std::string uri = "mem://unit-test-dense-ndarray-platform-config";
         std::string dim_name = "soma_dim_0";
@@ -247,12 +240,8 @@ TEST_CASE("SOMADenseNDArray: platform_config", "[SOMADenseNDArray]") {
 TEST_CASE("SOMADenseNDArray: metadata", "[SOMADenseNDArray]") {
     int64_t dim_max = 999;
     auto use_current_domain = GENERATE(false, true);
-    // TODO this could be formatted with fmt::format which is part of
-    // internal header spd/log/fmt/fmt.h and should not be used. In C++20,
-    // this can be replaced with std::format.
-    std::ostringstream section;
-    section << "- use_current_domain=" << use_current_domain;
-    SECTION(section.str()) {
+
+    SECTION(std::format("- use_current_domain={}", use_current_domain)) {
         auto ctx = std::make_shared<SOMAContext>();
         std::string uri = "mem://unit-test-dense-ndarray";
         std::string dim_name = "soma_dim_0";

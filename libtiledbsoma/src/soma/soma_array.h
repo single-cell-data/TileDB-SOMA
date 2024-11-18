@@ -36,6 +36,7 @@
 #include <stdexcept>  // for windows: error C2039: 'runtime_error': is not a member of 'std'
 
 #include <future>
+#include <format>
 
 #include <tiledb/tiledb>
 #include <tiledb/tiledb_experimental>
@@ -377,13 +378,11 @@ class SOMAArray : public SOMAObject {
         int partition_count) {
         // Validate partition inputs
         if (partition_index >= partition_count) {
-            // TODO this use to be formatted with fmt::format which is part of
-            // internal header spd/log/fmt/fmt.h and should not be used.
-            // In C++20, this can be replaced with std::format.
-            std::ostringstream err;
-            err << "[SOMAArray] partition_index (" << partition_index
-                << ") must be < partition_count (" << partition_count;
-            throw TileDBSOMAError(err.str());
+            throw TileDBSOMAError(std::format(
+                "[SOMAArray] partition_index ({}) must be < partition_count "
+                "({})",
+                partition_index,
+                partition_count));
         }
 
         if (partition_count > 1) {
@@ -395,17 +394,16 @@ class SOMAArray : public SOMAObject {
                 partition_size = points.size() - start;
             }
 
-            // TODO this use to be formatted with fmt::format which is part of
-            // internal header spd/log/fmt/fmt.h and should not be used.
-            // In C++20, this can be replaced with std::format.
-            std::ostringstream log_dbg;
-            log_dbg << "[SOMAArray] set_dim_points partitioning:"
-                    << " sizeof(T)=" << sizeof(T) << " dim=" << dim
-                    << " index=" << partition_index
-                    << " count=" << partition_count << " range =[" << start
-                    << ", " << start + partition_size - 1 << "] of "
-                    << points.size() << "points";
-            LOG_DEBUG(log_dbg.str());
+            LOG_DEBUG(std::format(
+                "[SOMAArray] set_dim_points partitioning: sizeof(T)={} dim={} "
+                "index={} count={} range =[{}, {}] of {} points",
+                sizeof(T),
+                dim,
+                partition_index,
+                partition_count,
+                start,
+                start + partition_size - 1,
+                points.size()));
 
             mq_->select_points(
                 dim, tcb::span<T>{&points[start], partition_size});
@@ -1441,13 +1439,6 @@ class SOMAArray : public SOMAObject {
         //
         // If we're checking against the core (max) domain: the user-provided
         // domain must be contained within the core (max) domain.
-
-        // Note: It's difficult to use fmt::format within a header file since
-        // the include path to logger.h 'moves around' depending on which source
-        // file included us.
-        //
-        // TODO: once we're on C++ 20, just use std::format here and include
-        // things like "old ({}, {}) new ({}, {})".
 
         if (new_lo > new_hi) {
             return std::pair(

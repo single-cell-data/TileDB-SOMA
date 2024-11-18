@@ -34,6 +34,7 @@
 #include "soma/soma_array.h"
 #include "utils/arrow_adapter.h"
 #include "utils/logger.h"
+#include <format>
 
 using namespace tiledbsoma;
 
@@ -77,8 +78,8 @@ void test_sdf(const std::string& uri) {
         total_num_rows += (*batch)->num_rows();
     }
 
-    LOG_INFO(fmt::format("X/data rows = {}", total_num_rows));
-    LOG_INFO(fmt::format("  batches = {}", batches));
+    LOG_INFO(std::format("X/data rows = {}", total_num_rows));
+    LOG_INFO(std::format("  batches = {}", batches));
 }
 
 namespace tdbs = tiledbsoma;
@@ -89,10 +90,10 @@ void test_arrow(const std::string& uri) {
     // Getting next batch:  std::optional<std::shared_ptr<ArrayBuffers>>
     auto obs_data = obs->read_next();
     if (!obs->results_complete()) {
-        tdbs::LOG_WARN(fmt::format("Read of '{}' incomplete", uri));
+        tdbs::LOG_WARN(std::format("Read of '{}' incomplete", uri));
         exit(-1);
     }
-    tdbs::LOG_INFO(fmt::format(
+    tdbs::LOG_INFO(std::format(
         "Read complete with {} obs and {} cols",
         obs_data->get()->num_rows(),
         obs_data->get()->names().size()));
@@ -101,7 +102,7 @@ void test_arrow(const std::string& uri) {
         auto buf = obs_data->get()->at(nm);
         auto pp = tdbs::ArrowAdapter::to_arrow(buf);
         ArrowSchema* schema = pp.second.get();
-        tdbs::LOG_INFO(fmt::format(
+        tdbs::LOG_INFO(std::format(
             "Accessing '{}', retrieved '{}', n_children {}",
             nm,
             schema->name,

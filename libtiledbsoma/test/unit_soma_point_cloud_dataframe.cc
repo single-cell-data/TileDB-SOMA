@@ -31,17 +31,14 @@
  */
 
 #include "common.h"
+#include <format>
 
 const int64_t SOMA_JOINID_DIM_MAX = 99;
 
 TEST_CASE("SOMAPointCloudDataFrame: basic", "[SOMAPointCloudDataFrame]") {
     auto use_current_domain = GENERATE(false, true);
-    // TODO this could be formatted with fmt::format which is part of internal
-    // header spd/log/fmt/fmt.h and should not be used. In C++20, this can be
-    // replaced with std::format.
-    std::ostringstream section;
-    section << "- use_current_domain=" << use_current_domain;
-    SECTION(section.str()) {
+
+    SECTION(std::format("- use_current_domain={}", use_current_domain)) {
         auto ctx = std::make_shared<SOMAContext>();
         std::string uri{"mem://unit-test-point-cloud-basic"};
         PlatformConfig platform_config{};

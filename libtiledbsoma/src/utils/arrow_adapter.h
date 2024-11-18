@@ -361,12 +361,7 @@ class ArrowAdapter {
         ArrowArray* child = make_arrow_array_child<T>(v);
         return child;
     }
-    /**
-     * Helper for make_arrow_array_child. We need the templating
-     * in the header file so it's instantiated at all callsites.
-     * But fmt::format logging is hard in header files since
-     * #include <logger.h> is relative to the includer, which varies.
-     */
+
     static void log_make_arrow_array_child(ArrowArray* child);
 
     static ArrowArray* make_arrow_array_child_string(
