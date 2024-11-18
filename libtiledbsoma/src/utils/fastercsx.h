@@ -130,12 +130,12 @@ std::vector<Partition<COO_IDX>> partition_views_(
     }
 
     // Erase any partitions that are zero length
-    for (auto it = partitions.begin(); it != partitions.end();) {
-        if (it->size == 0)
-            it = partitions.erase(it);
-        else
-            ++it;
-    }
+    partitions.erase(
+        std::remove_if(
+            partitions.begin(),
+            partitions.end(),
+            [](const Partition<COO_IDX>& p) { return p.size == 0; }),
+        partitions.end());
 
     return partitions;
 }
