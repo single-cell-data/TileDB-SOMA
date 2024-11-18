@@ -28,8 +28,8 @@ jobs:
         python-version: ['3.9', '3.10', '3.11', '3.12']
         include:
           - runs-on: ubuntu-latest
-            cc: gcc-11
-            cxx: g++-11
+            cc: gcc-13
+            cxx: g++-13
           - runs-on: macos-latest
             cc: clang
             cxx: clang++

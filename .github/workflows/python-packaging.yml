@@ -129,8 +129,8 @@ jobs:
           - wheel-name: manylinux2014
             os: ubuntu-latest
             arch: x86_64
-            cc: gcc-11
-            cxx: g++-11
+            cc: gcc-13
+            cxx: g++-13
           - wheel-name: macos-x86_64
             os: macos-13
             arch: x86_64
