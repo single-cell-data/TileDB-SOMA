@@ -47,6 +47,7 @@ class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
         Type[_tdb_handles.ExperimentWrapper],
         Type[_tdb_handles.MeasurementWrapper],
         Type[_tdb_handles.SceneWrapper],
+        Type[_tdb_handles.GeometryDataFrameWrapper],
         Type[_tdb_handles.MultiscaleImageWrapper],
     ]
     """Class variable of the Wrapper class used to open this object type."""
@@ -111,6 +112,7 @@ class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
         handle: Union[
             _WrapperType_co,
             _tdb_handles.DataFrameWrapper,
+            _tdb_handles.GeometryDataFrameWrapper,
             _tdb_handles.DenseNDArrayWrapper,
             _tdb_handles.SparseNDArrayWrapper,
         ],
