@@ -41,8 +41,11 @@ def test_export_to_shapes_2d(sample_point_cloud_dataframe_2d):
     shape = soma_outgest.to_spatial_data_shapes(
         sample_point_cloud_dataframe_2d,
         scene_id="scene0",
+        scene_dim_map={"x_scene": "x", "y_scene": "y"},
         soma_joinid_name="obs_id",
-        transform=somacore.IdentityTransform(("x", "y"), ("x", "y")),
+        transform=somacore.IdentityTransform(
+            ("x_scene", "y_scene"), ("x_points", "y_points")
+        ),
     )
 
     # Validate that this is validate storage for the SpatialData "Shapes"

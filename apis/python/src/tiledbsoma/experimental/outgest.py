@@ -6,7 +6,7 @@ from typing import Dict, Optional, Tuple
 
 import geopandas as gpd
 import somacore
-import spatialdata
+import spatialdata as sd
 
 from .. import PointCloudDataFrame
 from .._constants import SOMA_JOINID
@@ -41,27 +41,34 @@ def _convert_axis_names(
     if data_axis_names is None:
         data_axis_names = coord_axis_names
     spatial_data_axes = tuple(dim_map[axis_name] for axis_name in data_axis_names)
-    soma_dim_map = {key: val for key, val in dim_map.items() if key != val}
+    soma_dim_map = {key: val for key, val in dim_map.items()}
     return spatial_data_axes, soma_dim_map
 
 
 def _transform_to_spatial_data(
     transform: somacore.CoordinateTransform,
-    input_axes: Tuple[str, ...],
-) -> spatialdata.transformations.BaseTransformation:
-    """Returns the equivalent SpatialData transform for a somacore transform."""
+    input_dim_map: Dict[str, str],
+    output_dim_map: Dict[str, str],
+) -> sd.transformations.BaseTransformation:
+    """Returns the equivalent SpatialData transform for a SOMA transform.
+
+    Args:
+        transform: The SOMA transform to convert.
+        input_dim_map: Mapping from SOMA transform input axes to SpatialData dimension names.
+        output_dim_map: Mapping from SOMA transform output axes to SpatialData dimension names.
+
+    Returns:
+        Equivalent SpatialData transformation.
+    """
     if isinstance(transform, somacore.IdentityTransform):
-        return spatialdata.transformations.Identity()
+        return sd.transformations.Identity()
     if isinstance(transform, somacore.ScaleTransform):
-        return spatialdata.transformations.Scale(
-            transform.scale_factors, transform.input_axes
-        )
+        input_axes = tuple(input_dim_map[name] for name in transform.input_axes)
+        return sd.transformations.Scale(transform.scale_factors, input_axes)
     if isinstance(transform, somacore.AffineTransform):
-        if len(input_axes):
-            output_axes: Tuple[str, ...] = ("x", "y")
-        else:
-            output_axes = ("x", "y", "z")
-        return spatialdata.transformations.Affin(
+        input_axes = tuple(input_dim_map[name] for name in transform.input_axes)
+        output_axes = tuple(output_dim_map[name] for name in transform.output_axes)
+        return sd.transformations.Affine(
             transform.augmented_matrix, input_axes, output_axes
         )
 
@@ -72,24 +79,35 @@ def _transform_to_spatial_data(
 
 
 def to_spatial_data_shapes(
-    point_cloud: PointCloudDataFrame,
+    points: PointCloudDataFrame,
     *,
     scene_id: str,
-    soma_joinid_name: str,
+    scene_dim_map: Dict[str, str],
     transform: somacore.CoordinateTransform,
-) -> gpd:
-    """Export a :class:`PointCloudDataFrame` to a :class:`spatialdata.ShapesModel."""
+    soma_joinid_name: str,
+) -> gpd.GeoDataFrame:
+    """Export a :class:`PointCloudDataFrame` to a :class:`spatialdata.ShapesModel.
+
+    Args:
+        points: The point cloud data frame to convert to SpatialData shapes.
+        scene_id: The ID of the scene this point cloud dataframe is from.
+        scene_dim_map: A mapping from the axis names of the scene to the corresponding
+            SpatialData dimension names.
+        transform: The transformation from the coordinate space of the scene this point
+            cloud is in to the coordinate space of the point cloud.
+        soma_joinid: The name to use for the SOMA joinid.
+    """
 
     # Get the radius for the point cloud.
     try:
-        radius = point_cloud.metadata["soma_geometry"]
+        radius = points.metadata["soma_geometry"]
     except KeyError as ke:
         raise KeyError(
             "Missing metadata 'soma_geometry' needed for reading the point cloud "
             "dataframe as a shape."
         ) from ke
     try:
-        soma_geometry_type = point_cloud.metadata["soma_geometry_type"]
+        soma_geometry_type = points.metadata["soma_geometry_type"]
         if soma_geometry_type != "radius":
             raise NotImplementedError(
                 f"Support for a point cloud with shape '{soma_geometry_type}' is "
@@ -99,13 +117,18 @@ def to_spatial_data_shapes(
         raise KeyError("Missing metadata 'soma_geometry_type'.") from ke
 
     # Get the axis names for the spatial data shapes.
-    orig_axis_names = point_cloud.coordinate_space.axis_names
-    new_axis_names, soma_dim_map = _convert_axis_names(orig_axis_names)
+    orig_axis_names = points.coordinate_space.axis_names
+    new_axis_names, points_dim_map = _convert_axis_names(orig_axis_names)
 
-    # Create the transform to the scene.
-    transforms = {scene_id: _transform_to_spatial_data(transform, new_axis_names)}
+    # Create the SpatialData transform from the points to the Scene (inverse of the
+    # transform SOMA stores).
+    transforms = {
+        scene_id: _transform_to_spatial_data(
+            transform.inverse_transform(), points_dim_map, scene_dim_map
+        )
+    }
 
-    data = point_cloud.read().concat().to_pandas()
+    data = points.read().concat().to_pandas()
     data.rename(columns={SOMA_JOINID: soma_joinid_name}, inplace=True)
     data.insert(len(data.columns), "radius", radius)
     ndim = len(orig_axis_names)
