@@ -30,8 +30,8 @@
  * This file manages unit tests for the SOMASparseNDArray class
  */
 
-#include "common.h"
 #include <format>
+#include "common.h"
 
 TEST_CASE("SOMASparseNDArray: basic", "[SOMASparseNDArray]") {
     // Core uses domain & current domain like (0, 999); SOMA uses shape like

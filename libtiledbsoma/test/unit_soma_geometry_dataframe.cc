@@ -30,12 +30,12 @@
  * This file manages unit tests for the SOMAGeometryDataFrame class
  */
 
+#include <format>
 #include <vector>
 #include "../src/geometry/geometry.h"
 #include "../src/geometry/operators/io/write.h"
 #include "../src/utils/common.h"
 #include "common.h"
-#include <format>
 
 const int64_t SOMA_JOINID_DIM_MAX = 99;
 

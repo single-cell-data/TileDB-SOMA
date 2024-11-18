@@ -34,11 +34,11 @@
 
 #include <tiledb/array_experimental.h>
 #include <tiledb/attribute_experimental.h>
+#include <format>
 #include "soma_array.h"
 #include "utils/common.h"
 #include "utils/logger.h"
 #include "utils/util.h"
-#include <format>
 namespace tiledbsoma {
 
 using namespace tiledb;

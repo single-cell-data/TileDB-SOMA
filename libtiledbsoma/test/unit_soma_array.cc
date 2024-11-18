@@ -39,9 +39,9 @@
 #include <catch2/matchers/catch_matchers_string.hpp>
 #include <catch2/matchers/catch_matchers_templated.hpp>
 #include <catch2/matchers/catch_matchers_vector.hpp>
+#include <format>
 #include <numeric>
 #include <random>
-#include <format>
 
 #include <tiledb/tiledb>
 #include <tiledbsoma/tiledbsoma>
@@ -191,7 +191,11 @@ TEST_CASE("SOMAArray: nnz") {
     const char* dim_name = "d0";
     const char* attr_name = "a0";
 
-    SECTION(std::format("- fragments={}, overlap={}, allow_duplicates={}", num_fragments, overlap, allow_duplicates)) {
+    SECTION(std::format(
+        "- fragments={}, overlap={}, allow_duplicates={}",
+        num_fragments,
+        overlap,
+        allow_duplicates)) {
         auto ctx = std::make_shared<SOMAContext>();
 
         // Create array
@@ -258,7 +262,11 @@ TEST_CASE("SOMAArray: nnz with timestamp") {
     auto allow_duplicates = true;
     int num_cells_per_fragment = 128;
 
-    SECTION(std::format("- fragments={}, overlap={}, allow_duplicates={}", num_fragments, overlap, allow_duplicates)) {
+    SECTION(std::format(
+        "- fragments={}, overlap={}, allow_duplicates={}",
+        num_fragments,
+        overlap,
+        allow_duplicates)) {
         auto ctx = std::make_shared<SOMAContext>();
 
         // Create array
@@ -304,7 +312,11 @@ TEST_CASE("SOMAArray: nnz with consolidation") {
     auto vacuum = GENERATE(false, true);
     int num_cells_per_fragment = 128;
 
-    SECTION(std::format("- fragments={}, overlap={}, allow_duplicates={}", num_fragments, overlap, allow_duplicates)) {
+    SECTION(std::format(
+        "- fragments={}, overlap={}, allow_duplicates={}",
+        num_fragments,
+        overlap,
+        allow_duplicates)) {
         auto ctx = std::make_shared<SOMAContext>();
 
         // Create array

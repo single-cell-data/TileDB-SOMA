@@ -30,8 +30,8 @@
  * This file manages unit tests for the SOMADataFrame class
  */
 
-#include "common.h"
 #include <format>
+#include "common.h"
 
 const int64_t SOMA_JOINID_DIM_MAX = 99;
 const int64_t SOMA_JOINID_RESIZE_DIM_MAX = 199;

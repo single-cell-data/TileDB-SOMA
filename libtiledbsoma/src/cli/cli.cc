@@ -30,11 +30,11 @@
  * This file is currently a sandbox for C++ API experiments
  */
 
+#include <format>
 #include "soma/enums.h"
 #include "soma/soma_array.h"
 #include "utils/arrow_adapter.h"
 #include "utils/logger.h"
-#include <format>
 
 using namespace tiledbsoma;
 
