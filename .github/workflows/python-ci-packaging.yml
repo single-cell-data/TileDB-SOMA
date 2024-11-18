@@ -152,7 +152,7 @@ jobs:
   # https://github.com/single-cell-data/TileDB-SOMA/pull/1937
   # Same as job above, but running on macOS instead of in a Docker container
   macos:
-    runs-on: macos-13
+    runs-on: macos-latest
     name: "SO copying (macos) TILEDB_EXISTS: ${{ matrix.TILEDB_EXISTS }} TILEDBSOMA_EXISTS: ${{ matrix.TILEDBSOMA_EXISTS }}"
     strategy:
       fail-fast: false
