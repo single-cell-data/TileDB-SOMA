@@ -18,11 +18,11 @@ if [ $? -eq 0 ]; then
         pkgcflags=`pkg-config --cflags tiledb tiledbsoma`
         pkglibs=`pkg-config --libs tiledb tiledbsoma`
 
-        ## substitute them in (leaving @tiledb_rpath@ and @cxx17_macos@ alone for now)
+        ## substitute them in (leaving @tiledb_rpath@ and @cxx20_macos@ alone for now)
         sed -e "s|@tiledb_include@|$pkgcflags |" \
             -e "s|@tiledb_libs@|$pkglibs|" \
             -e "s|@tiledb_rpath@||" \
-            -e "s|@cxx17_macos@||" \
+            -e "s|@cxx20_macos@||" \
             src/Makevars.in > src/Makevars
 
         echo "** updated src/Makevars for system library via pkg-config"
@@ -59,5 +59,5 @@ macosver=`${R_HOME}/bin/Rscript -e 'if (Sys.info()["sysname"] == "Darwin") cat("
 sed -e "s|@tiledb_include@|$pkgincl |" \
     -e "s|@tiledb_libs@|$pkglibs|" \
     -e "s|@tiledb_rpath@|$rpath|" \
-    -e "s|@cxx17_macos@|$macosver|" \
+    -e "s|@cxx20_macos@|$macosver|" \
     src/Makevars.in > src/Makevars
