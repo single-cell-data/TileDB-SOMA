@@ -105,7 +105,7 @@ class TableReadIter(somacore.ReadIter[pa.Table]):
                 Pass in parameters for tuning reads.
 
         """
-        self._reader = _arrow_table_reader(
+        self._reader = ArrowTableRead(
             array, coords, column_names, result_order, value_filter, platform_config
         )
 
@@ -280,7 +280,7 @@ class BlockwiseReadIterBase(somacore.ReadIter[_RT], metaclass=abc.ABCMeta):
             joinids = list(self.joinids)
             joinids[self.major_axis] = pa.array(coord_chunk)
             yield pa.concat_tables(
-                _arrow_table_reader(
+                ArrowTableRead(
                     array=self.array,
                     coords=step_coords,
                     column_names=[],
@@ -547,6 +547,52 @@ class SparseCOOTensorReadIter(SparseTensorReadIterBase[pa.SparseCOOTensor]):
         ).T
         return pa.SparseCOOTensor.from_numpy(coo_data, coo_coords, shape=self.shape)
 
+
+class ArrowTableRead:
+    def __init__(
+        self,
+        array: SOMAArray,
+        coords: Union[
+            options.SparseDFCoords, options.SparseNDCoords, options.DenseNDCoords
+        ],
+        column_names: Optional[Sequence[str]],
+        result_order: clib.ResultOrder,
+        value_filter: Optional[str],
+        platform_config: Optional[options.PlatformConfig],
+    ):
+        sr = array._handle._handle
+
+        if platform_config is not None:
+            cfg = sr.context().config()
+            cfg.update(platform_config)
+            ctx = clib.SOMAContext(cfg)
+        else:
+            ctx = sr.context()
+
+        self.mq = clib.ManagedQuery(sr, ctx)
+
+        self.mq.set_layout(result_order)
+
+        if column_names is not None:
+            self.mq.select_columns(list(column_names))
+
+        if value_filter is not None:
+            self.mq.set_condition(QueryCondition(value_filter), sr.schema)
+
+        _util._set_coords(self.mq, sr, coords)
+
+        self.mq.setup_read()
+
+    def __iter__(self):
+        return self
+
+    def __next__(self) -> pa.Table:
+        return self.mq.next()
+        # if self.mq.is_empty_query() or self.mq.is_complete(True):
+        #     raise StopIteration
+
+        # self.mq.submit_read()
+        # return self.mq.results()
 
 def _arrow_table_reader(
     array: SOMAArray,
