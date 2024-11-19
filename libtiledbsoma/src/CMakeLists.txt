@@ -233,6 +233,8 @@ install(FILES
 install(FILES
   ${CMAKE_CURRENT_SOURCE_DIR}/utils/arrow_adapter.h
   ${CMAKE_CURRENT_SOURCE_DIR}/utils/common.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/utils/fastercsx.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/utils/parallel_functions.h
   ${CMAKE_CURRENT_SOURCE_DIR}/utils/stats.h
   ${CMAKE_CURRENT_SOURCE_DIR}/utils/util.h
   ${CMAKE_CURRENT_SOURCE_DIR}/utils/version.h

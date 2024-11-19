@@ -11,7 +11,7 @@ on:
   push:
     branches:
       - main
-      - 'release-*'
+      - "release-*"
   workflow_dispatch:
 
 jobs:
@@ -27,7 +27,7 @@ jobs:
       - name: Checkout TileDB-SOMA
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # ensure we get all tags to inform package version determination
+          fetch-depth: 0 # ensure we get all tags to inform package version determination
 
       - name: Bootstrap
         run: cd apis/r && tools/r-ci.sh bootstrap
@@ -35,11 +35,8 @@ jobs:
       - name: Dependencies
         run: cd apis/r && Rscript -e "remotes::install_deps(dependencies = TRUE, upgrade = FALSE)"
 
-      - name: CMake
-        uses: lukka/get-cmake@latest
-
-      - name: MkVars
-        run: mkdir ~/.R && echo "CXX17FLAGS=-Wno-deprecated-declarations -Wno-deprecated" > ~/.R/Makevars
+      - name: Build Package
+        run: cd apis/r && R CMD build --no-build-vignettes --no-manual .
 
       # Uncomment these next two stanzas as needed whenever we've just released a new tiledb-r for
       # which source is available but CRAN releases (and hence update r2u binaries) are not yet:
@@ -66,15 +63,8 @@ jobs:
       #  if: ${{ matrix.os != 'macOS-latest' }}
       #  run: cd apis/r && Rscript -e "options(bspm.version.check=TRUE); install.packages('tiledb', repos = c('https://eddelbuettel.r-universe.dev/bin/linux/jammy/4.3/', 'https://cloud.r-project.org'))"
 
-      - name: Build and install libtiledbsoma
-        run: sudo scripts/bld --prefix=/usr/local --no-tiledb-deprecated=true --werror=true && sudo ldconfig
-
-      - name: Install R-tiledbsoma
-        run: |
-          cd apis/r
-          R CMD build --no-build-vignettes --no-manual .
-          FILE=$(ls -1t *.tar.gz | head -n 1)
-          R CMD INSTALL $FILE
+      - name: Install Package
+        run: cd apis/r && R CMD INSTALL $(ls -1tr *.tar.gz | tail -1)
 
       - name: Show R package versions
         run: Rscript -e 'tiledbsoma::show_package_versions()'

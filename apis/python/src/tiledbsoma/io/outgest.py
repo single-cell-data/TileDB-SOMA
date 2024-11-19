@@ -122,7 +122,10 @@ def _extract_X_key(
         data = soma_X_data_handle.read((slice(None), slice(None))).to_numpy()
     elif isinstance(soma_X_data_handle, SparseNDArray):
         data = conversions.csr_from_coo_table(
-            soma_X_data_handle.read().tables().concat(), nobs, nvar
+            soma_X_data_handle.read().tables().concat(),
+            nobs,
+            nvar,
+            context=soma_X_data_handle.context,
         )
     else:
         raise TypeError(f"Unexpected NDArray type {type(soma_X_data_handle)}")
@@ -336,8 +339,9 @@ def to_anndata(
     if "obsp" in measurement:
 
         def load_obsp(measurement: Measurement, key: str, nobs: int) -> sp.csr_matrix:
+            A = measurement.obsp[key]
             return conversions.csr_from_coo_table(
-                measurement.obsp[key].read().tables().concat(), nobs, nobs
+                A.read().tables().concat(), nobs, nobs, A.context
             )
 
         for key in measurement.obsp.keys():
@@ -347,8 +351,9 @@ def to_anndata(
     if "varp" in measurement:
 
         def load_varp(measurement: Measurement, key: str, nvar: int) -> sp.csr_matrix:
+            A = measurement.varp[key]
             return conversions.csr_from_coo_table(
-                measurement.varp[key].read().tables().concat(), nvar, nvar
+                A.read().tables().concat(), nvar, nvar, A.context
             )
 
         for key in measurement.varp.keys():
@@ -468,7 +473,9 @@ def _extract_obsm_or_varm(
             f"could not determine outgest width for {description}: please try to_anndata's obsm_varm_width_hints option"
         )
 
-    return conversions.csr_from_coo_table(matrix_tbl, num_rows, num_cols).toarray()
+    return conversions.csr_from_coo_table(
+        matrix_tbl, num_rows, num_cols, soma_nd_array.context
+    ).toarray()
 
 
 def _extract_uns(

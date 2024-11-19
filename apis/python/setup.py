@@ -16,6 +16,7 @@
 import ctypes
 import os
 import pathlib
+import platform
 import shutil
 import subprocess
 import sys
@@ -242,7 +243,10 @@ LIB_DIRS = [
     str(tiledb_dir / "lib"),
 ]
 
-CXX_FLAGS = []
+CXX_FLAGS = ["-O3"]
+
+if platform.machine() == "x86_64":
+    CXX_FLAGS.append("-mavx2")
 
 if os.name != "nt":
     CXX_FLAGS.append(f'-Wl,-rpath,{str(tiledbsoma_dir / "lib")}')
@@ -301,6 +305,7 @@ setuptools.setup(
             "tiledbsoma.pytiledbsoma",
             [
                 "src/tiledbsoma/common.cc",
+                "src/tiledbsoma/fastercsx.cc",
                 "src/tiledbsoma/reindexer.cc",
                 "src/tiledbsoma/query_condition.cc",
                 "src/tiledbsoma/soma_vfs.cc",

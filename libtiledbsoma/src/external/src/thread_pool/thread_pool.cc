@@ -37,8 +37,6 @@
 #include <queue>
 #include <thread>
 
-#include "soma/logger_public.h"
-
 namespace tiledbsoma {
 
 // Constructor.  May throw an exception on error.  No logging is done as the
