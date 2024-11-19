@@ -540,35 +540,6 @@ def test_error_corners(soma_experiment: Experiment):
                 next(query.varp(lyr_name))
 
 
-@pytest.mark.parametrize("n_obs,n_vars", [(1001, 99)])
-def test_query_cleanup(soma_experiment: Experiment):
-    """
-    Verify Experiment.query works as context manager and stand-alone,
-    and that it cleans up correctly.
-    """
-    from contextlib import closing
-
-    # Forces a context without a thread pool, which in turn causes ExperimentAxisQuery
-    # to own (and release) its own thread pool.
-    context = SOMATileDBContext()
-    context.threadpool = None
-    soma_experiment = get_soma_experiment_with_context(soma_experiment, context)
-
-    with soma_experiment.axis_query("RNA") as query:
-        assert query.n_obs == 1001
-        assert query.n_vars == 99
-        assert query.to_anndata("raw") is not None
-        assert query._threadpool_ is not None
-
-    assert query._threadpool_ is None
-
-    with closing(soma_experiment.axis_query("RNA")) as query:
-        assert query.to_anndata("raw") is not None
-        assert query._threadpool_ is not None
-
-    assert query._threadpool_ is None
-
-
 @pytest.mark.parametrize(
     "n_obs,n_vars,obsp_layer_names,varp_layer_names,obsm_layer_names,varm_layer_names",
     [(1001, 99, ["foo"], ["bar"], ["baz"], ["quux"])],

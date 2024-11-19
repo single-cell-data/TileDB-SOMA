@@ -243,7 +243,6 @@ class ExperimentAxisQuery:
             index_factory=index_factory,
         )
         self._index_factory = index_factory
-        self._threadpool_: Optional[ThreadPoolExecutor] = None
 
     def obs(
         self,
@@ -477,20 +476,7 @@ class ExperimentAxisQuery:
     # Context management
 
     def close(self) -> None:
-        """Releases resources associated with this query.
-
-        This method must be idempotent.
-
-        Lifecycle: maturing
-        """
-        # Because this may be called during ``__del__`` when we might be getting
-        # disassembled, sometimes ``_threadpool_`` is simply missing.
-        # Only try to shut it down if it still exists.
-        pool = getattr(self, "_threadpool_", None)
-        if pool is None:
-            return
-        pool.shutdown()
-        self._threadpool_ = None
+        pass
 
     def __enter__(self) -> Self:
         return self
@@ -775,13 +761,7 @@ class ExperimentAxisQuery:
         """
         Returns the threadpool provided by the experiment's context.
         If not available, creates a thread pool just in time."""
-        context = self.experiment.context
-        if context and context.threadpool:
-            return context.threadpool
-
-        if self._threadpool_ is None:
-            self._threadpool_ = ThreadPoolExecutor()
-        return self._threadpool_
+        return self.experiment.context.threadpool
 
 
 @attrs.define(frozen=True)
