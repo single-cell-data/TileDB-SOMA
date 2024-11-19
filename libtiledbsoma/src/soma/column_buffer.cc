@@ -105,7 +105,7 @@ std::shared_ptr<ColumnBuffer> ColumnBuffer::create(
     throw TileDBSOMAError("[ColumnBuffer] Column name not found: " + name_str);
 }
 
-void ColumnBuffer::to_bitmap(tcb::span<uint8_t> bytemap) {
+void ColumnBuffer::to_bitmap(std::span<uint8_t> bytemap) {
     int i_dst = 0;
     for (unsigned int i_src = 0; i_src < bytemap.size(); i_src++) {
         // Overwrite every 8 bytes with a one-byte bitmap
