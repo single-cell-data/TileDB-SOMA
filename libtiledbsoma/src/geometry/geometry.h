@@ -22,7 +22,7 @@ enum GeometryType : uint32_t {
     GEOMETRYCOLLECTION = 7
 };
 
-using BinaryBuffer = std::vector<uint8_t>;
+using BinaryBuffer = std::vector<std::byte>;
 
 struct GeometryCollection;
 using GenericGeometry = std::variant<
