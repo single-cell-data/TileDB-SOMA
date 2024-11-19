@@ -72,17 +72,12 @@ class SOMATileDBContext(ContextBase):
     ) -> None:
         """Initializes a new SOMATileDBContext.
 
-        Either ``tiledb_ctx`` or ``tiledb_config`` may be provided, or both may
-        be left at their default. If neither are provided, this will use a
-        single shared :class:`tiledb.Ctx` instantiated upon first use.
-        If ``tiledb_ctx`` is provided, that exact :class:`tiledb.Ctx` is used.
+        If ``tiledb_config`` is not provided, this will use a single shared
+        :class:`tiledb.Ctx` instantiated upon first use.
         If a ``tiledb_config`` is provided (in the form of a ``dict``),
         it is used to construct a new ``Ctx``.
 
         Args:
-            tiledb_ctx: An existing TileDB Context for use as the TileDB Context
-                in this configuration.
-
             tiledb_config: A set of TileDB configuration options to use,
                 overriding the default configuration.
 
@@ -118,7 +113,7 @@ class SOMATileDBContext(ContextBase):
                 default settings.
         """
         self._lock = threading.Lock()
-        """A lock to ensure single initialization of ``_tiledb_ctx``."""
+        """A lock to ensure single initialization of ``_native_context``."""
         self._initial_config: Optional[Dict[str, Union[str, float]]] = (
             None if tiledb_config is None else _default_config(tiledb_config)
         )
@@ -166,12 +161,6 @@ class SOMATileDBContext(ContextBase):
     def tiledb_config(self) -> Dict[str, Union[str, float]]:
         """The TileDB configuration dictionary for this SOMA context.
 
-        If this ``SOMATileDBContext`` already has a ``tiledb_ctx``, this will
-        return the full set of values from that TileDB Context; otherwise, this
-        will only return the values that will be passed into the ``tiledb.Ctx``
-        constructor, including both SOMA defaults and the ``tiledb_config``
-        parameter passed into this object's constructor.
-
         This always returns a fresh dictionary.
         """
         with self._lock:
@@ -208,8 +197,6 @@ class SOMATileDBContext(ContextBase):
                 A dictionary of parameters for `tiledb.Config() <https://tiledb-inc-tiledb.readthedocs-hosted.com/projects/tiledb-py/en/stable/python-api.html#config>`_.
                 To remove a parameter from the existing config, provide ``None``
                 as the value.
-            tiledb_ctx:
-                A TileDB Context to replace the current context with.
             timestamp:
                 A timestamp to replace the current timestamp with.
                 Explicitly passing ``None`` will remove the timestamp.
