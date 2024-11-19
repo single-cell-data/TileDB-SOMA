@@ -588,11 +588,6 @@ class ArrowTableRead:
 
     def __next__(self) -> pa.Table:
         return self.mq.next()
-        # if self.mq.is_empty_query() or self.mq.is_complete(True):
-        #     raise StopIteration
-
-        # self.mq.submit_read()
-        # return self.mq.results()
 
 def _arrow_table_reader(
     array: SOMAArray,

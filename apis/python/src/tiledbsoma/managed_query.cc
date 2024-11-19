@@ -141,7 +141,7 @@ void load_managed_query(py::module& m) {
             [](ManagedQuery& mq) -> std::optional<py::object> {
                 // Release python GIL before reading data
                 // py::gil_scoped_release release;
-                if(mq.is_empty_query() && mq.is_complete(true)){
+                if(mq.is_empty_query() || mq.is_complete(true)){
                     throw py::stop_iteration();
                 }
 
