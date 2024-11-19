@@ -33,6 +33,7 @@
 #ifndef SOMA_GEOMETRY_DATAFRAME
 #define SOMA_GEOMETRY_DATAFRAME
 
+#include <algorithm>
 #include <filesystem>
 #include <vector>
 
@@ -175,9 +176,74 @@ class SOMAGeometryDataFrame : virtual public SOMAArray {
      */
     uint64_t count();
 
+    /**
+     * @brief Set the spatial axis slice using multiple ranges
+     *
+     * @note Partitioning is not supported
+     *
+     * @tparam T
+     * @param axis
+     * @param ranges
+     */
+    template <typename T>
+    void set_spatial_dim_ranges(
+        const std::string& axis, const std::vector<std::pair<T, T>>& ranges) {
+        std::vector<std::pair<T, T>> min_range;
+        std::vector<std::pair<T, T>> max_range;
+
+        if (ranges.size() != 1) {
+            throw TileDBSOMAError(
+                "Multi ranges are not supported for axis dimensions");
+        }
+
+        T min_domain, max_domain;
+
+        // Both min and max dimension share the same domain
+        if (ArraySchemaExperimental::current_domain(
+                *this->ctx()->tiledb_ctx(), *this->tiledb_schema())
+                .is_empty()) {
+            std::pair<T, T> domain = this->tiledb_schema()
+                                         ->domain()
+                                         .dimension(
+                                             SOMA_GEOMETRY_DIMENSION_PREFIX +
+                                             axis + "__min")
+                                         .domain<T>();
+            min_domain = domain.first;
+            max_domain = domain.second;
+        } else {
+            auto current_domain = ArraySchemaExperimental::current_domain(
+                                      *this->ctx()->tiledb_ctx(),
+                                      *this->tiledb_schema().get())
+                                      .ndrectangle()
+                                      .range<T>(
+                                          SOMA_GEOMETRY_DIMENSION_PREFIX +
+                                          axis + "__min");
+            min_domain = current_domain[0];
+            max_domain = current_domain[1];
+        }
+
+        for (const std::pair<T, T>& range : ranges) {
+            min_range.push_back(
+                std::make_pair(min_domain, std::min(range.second, max_domain)));
+            max_range.push_back(
+                std::make_pair(std::max(range.first, min_domain), max_domain));
+        }
+
+        this->set_dim_ranges(
+            SOMA_GEOMETRY_DIMENSION_PREFIX + axis + "__min", min_range);
+        this->set_dim_ranges(
+            SOMA_GEOMETRY_DIMENSION_PREFIX + axis + "__max", max_range);
+    }
+
     void set_array_data(
         std::unique_ptr<ArrowSchema> arrow_schema,
         std::unique_ptr<ArrowArray> arrow_array) override;
+
+    ArrowTable get_soma_domain() override;
+
+    ArrowTable get_soma_maxdomain() override;
+
+    ArrowTable get_non_empty_domain() override;
 
    private:
     //===================================================================
@@ -200,6 +266,13 @@ class SOMAGeometryDataFrame : virtual public SOMAArray {
      */
     ArrowTable _reconstruct_geometry_data_table(
         ArrowTable original_data, const std::vector<ArrowTable>& wkb_data);
+
+    /**
+     * @brief Create a new ArrowTable by merging the internal spatial dimensions
+     * and setting the ``soma_geometry`` domain as the stacked domain of each
+     * spatial axis.
+     */
+    ArrowTable _reconstruct_geometry_domain(const ArrowTable& domain);
 };
 }  // namespace tiledbsoma
 
