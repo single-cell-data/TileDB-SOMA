@@ -34,6 +34,7 @@
 #define MANAGED_QUERY_H
 
 #include <future>
+#include <span>
 #include <stdexcept>  // for windows: error C2039: 'runtime_error': is not a member of 'std'
 #include <unordered_set>
 
@@ -192,7 +193,7 @@ class ManagedQuery {
      * @param points Vector of dimension points
      */
     template <typename T>
-    void select_points(const std::string& dim, const tcb::span<T> points) {
+    void select_points(const std::string& dim, const std::span<T> points) {
         subarray_range_set_[dim] = true;
         subarray_range_empty_[dim] = true;
         for (auto& point : points) {
@@ -323,10 +324,10 @@ class ManagedQuery {
      *
      * @tparam T Data type
      * @param name Column name
-     * @return tcb::span<T> Data view
+     * @return std::span<T> Data view
      */
     template <typename T>
-    tcb::span<T> data(const std::string& name) {
+    std::span<T> data(const std::string& name) {
         check_column_name(name);
         return buffers_->at(name)->data<T>();
     }
@@ -335,9 +336,9 @@ class ManagedQuery {
      * @brief Return a view of validity values for column `name`.
      *
      * @param name Column name
-     * @return tcb::span<uint8_t> Validity view
+     * @return std::span<uint8_t> Validity view
      */
-    const tcb::span<uint8_t> validity(const std::string& name) {
+    const std::span<uint8_t> validity(const std::string& name) {
         check_column_name(name);
         return buffers_->at(name)->validity();
     }

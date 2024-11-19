@@ -37,6 +37,7 @@
 
 #include <format>
 #include <future>
+#include <span>
 
 #include <tiledb/tiledb>
 #include <tiledb/tiledb_experimental>
@@ -373,7 +374,7 @@ class SOMAArray : public SOMAObject {
     template <typename T>
     void set_dim_points(
         const std::string& dim,
-        const tcb::span<T> points,
+        const std::span<T> points,
         int partition_index,
         int partition_count) {
         // Validate partition inputs
@@ -406,7 +407,7 @@ class SOMAArray : public SOMAObject {
                 points.size()));
 
             mq_->select_points(
-                dim, tcb::span<T>{&points[start], partition_size});
+                dim, std::span<T>{&points[start], partition_size});
         } else {
             mq_->select_points(dim, points);
         }

@@ -33,6 +33,7 @@
 #ifndef COLUMN_BUFFER_H
 #define COLUMN_BUFFER_H
 
+#include <span>
 #include <stdexcept>  // for windows: error C2039: 'runtime_error': is not a member of 'std'
 
 #include <tiledb/tiledb>
@@ -41,7 +42,6 @@
 #include "../utils/arrow_adapter.h"
 #include "../utils/common.h"
 #include "soma_context.h"
-#include "span/span.hpp"
 
 namespace tiledbsoma {
 
@@ -80,7 +80,7 @@ class ColumnBuffer {
      * @brief Convert a bytemap to a bitmap in place.
      *
      */
-    static void to_bitmap(tcb::span<uint8_t> bytemap);
+    static void to_bitmap(std::span<uint8_t> bytemap);
 
     //===================================================================
     //= public non-static
@@ -188,11 +188,11 @@ class ColumnBuffer {
      * @brief Return a view of the ColumnBuffer data.
      *
      * @tparam T Data type
-     * @return tcb::span<T> data view
+     * @return std::span<T> data view
      */
     template <typename T>
-    tcb::span<T> data() {
-        return tcb::span<T>((T*)data_.data(), num_cells_);
+    std::span<T> data() {
+        return std::span<T>((T*)data_.data(), num_cells_);
     }
 
     /**
@@ -220,28 +220,28 @@ class ColumnBuffer {
     /**
      * @brief Return a view of the ColumnBuffer offsets.
      *
-     * @return tcb::span<uint64_t> offsets view
+     * @return std::span<uint64_t> offsets view
      */
-    tcb::span<uint64_t> offsets() {
+    std::span<uint64_t> offsets() {
         if (!is_var_) {
             throw TileDBSOMAError(
                 "[ColumnBuffer] Offsets buffer not defined for " + name_);
         }
 
-        return tcb::span<uint64_t>(offsets_.data(), num_cells_);
+        return std::span<uint64_t>(offsets_.data(), num_cells_);
     }
 
     /**
      * @brief Return a view of the validity buffer.
      *
-     * @return tcb::span<uint8_t> validity view
+     * @return std::span<uint8_t> validity view
      */
-    tcb::span<uint8_t> validity() {
+    std::span<uint8_t> validity() {
         if (!is_nullable_) {
             throw TileDBSOMAError(
                 "[ColumnBuffer] Validity buffer not defined for " + name_);
         }
-        return tcb::span<uint8_t>(validity_.data(), num_cells_);
+        return std::span<uint8_t>(validity_.data(), num_cells_);
     }
 
     /**
@@ -346,24 +346,24 @@ class ColumnBuffer {
      * @brief Return optional enumeration offsets vector
      *
      */
-    tcb::span<uint32_t> enum_offsets() {
+    std::span<uint32_t> enum_offsets() {
         if (!has_enumeration_) {
             throw TileDBSOMAError(
                 "[ColumnBuffer] No enumeration defined for " + name_);
         }
-        return tcb::span<uint32_t>(enum_offsets_.data(), enum_offsets_.size());
+        return std::span<uint32_t>(enum_offsets_.data(), enum_offsets_.size());
     }
 
     /**
      * @brief Return optional enumeration string
      *
      */
-    tcb::span<char> enum_string() {
+    std::span<char> enum_string() {
         if (!has_enumeration_) {
             throw TileDBSOMAError(
                 "[ColumnBuffer] No enumeration defined for " + name_);
         }
-        return tcb::span<char>(enum_str_.data(), enum_str_.length());
+        return std::span<char>(enum_str_.data(), enum_str_.length());
     }
 
     /**
