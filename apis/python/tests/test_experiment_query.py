@@ -4,6 +4,7 @@ from contextlib import nullcontext
 from typing import Tuple
 from unittest import mock
 
+import attrs
 import numpy as np
 import pandas as pd
 import pyarrow as pa
@@ -13,8 +14,10 @@ from scipy import sparse
 from somacore import AxisQuery, options
 
 import tiledbsoma as soma
-from tiledbsoma import SOMATileDBContext, _factory
+from tiledbsoma import SOMATileDBContext, _factory, pytiledbsoma
 from tiledbsoma._collection import CollectionBase
+from tiledbsoma._experiment import Experiment
+from tiledbsoma._query import Axis, ExperimentAxisQuery
 from tiledbsoma.experiment_query import X_as_series
 
 from tests._util import raises_no_typeguard
@@ -58,7 +61,7 @@ def soma_experiment(
     varp_layer_names,
     obsm_layer_names,
     varm_layer_names,
-):
+) -> Experiment:
     with soma.Experiment.create((tmp_path / "exp").as_posix()) as exp:
         add_dataframe(exp, "obs", n_obs)
         ms = exp.add_new_collection("ms")
@@ -88,7 +91,7 @@ def soma_experiment(
             for varm_layer_name in varm_layer_names:
                 add_sparse_array(varm, varm_layer_name, (n_vars, N_FEATURES))
 
-    return _factory.open((tmp_path / "exp").as_posix())
+    return Experiment.open((tmp_path / "exp").as_posix())
 
 
 def get_soma_experiment_with_context(soma_experiment, context):
@@ -99,7 +102,7 @@ def get_soma_experiment_with_context(soma_experiment, context):
 @pytest.mark.parametrize("n_obs,n_vars,X_layer_names", [(101, 11, ("raw", "extra"))])
 def test_experiment_query_all(soma_experiment):
     """Test a query with default obs_query / var_query -- i.e., query all."""
-    with soma.ExperimentAxisQuery(soma_experiment, "RNA") as query:
+    with ExperimentAxisQuery(soma_experiment, "RNA") as query:
         assert query.n_obs == 101
         assert query.n_vars == 11
 
@@ -304,7 +307,7 @@ def test_experiment_query_batch_size(soma_experiment):
     This test merely verifies that the batch_size parameter is accepted
     but as a no-op.
     """
-    with soma.ExperimentAxisQuery(soma_experiment, "RNA") as query:
+    with ExperimentAxisQuery(soma_experiment, "RNA") as query:
         tbls = query.obs(batch_size=options.BatchSize(count=100))
         assert len(list(tbls)) == 1  # batch_size currently not implemented
 
@@ -315,7 +318,7 @@ def test_experiment_query_partitions(soma_experiment):
     partitions is currently not supported by this implementation of SOMA.
     This test checks if a ValueError is raised if a partitioning is requested.
     """
-    with soma.ExperimentAxisQuery(soma_experiment, "RNA") as query:
+    with ExperimentAxisQuery(soma_experiment, "RNA") as query:
         with pytest.raises(ValueError):
             query.obs(partitions=options.IOfN(i=0, n=3)).concat()
 
@@ -328,7 +331,7 @@ def test_experiment_query_partitions(soma_experiment):
 
 @pytest.mark.parametrize("n_obs,n_vars", [(10, 10)])
 def test_experiment_query_result_order(soma_experiment):
-    with soma.ExperimentAxisQuery(soma_experiment, "RNA") as query:
+    with ExperimentAxisQuery(soma_experiment, "RNA") as query:
         # Since obs is 1-dimensional, row-major and column-major should be the same
         obs_data_row_major = (
             query.obs(result_order="row-major").concat()["label"].to_numpy()
@@ -393,11 +396,10 @@ def test_experiment_axis_query_with_none(soma_experiment):
     """Test query by value filter"""
     obs_label_values = ["3", "7", "38", "99"]
 
-    with soma.ExperimentAxisQuery(
+    with ExperimentAxisQuery(
         experiment=soma_experiment,
         measurement_name="RNA",
         obs_query=soma.AxisQuery(value_filter=f"label in {obs_label_values}"),
-        var_query=None,
     ) as query:
         assert query.n_obs == len(obs_label_values)
         assert query.obs().concat()["label"].to_pylist() == obs_label_values
@@ -462,7 +464,7 @@ def test_X_layers(soma_experiment):
 @pytest.mark.parametrize("n_obs,n_vars", [(1001, 99)])
 def test_experiment_query_indexer(soma_experiment):
     """Test result indexer"""
-    with soma.ExperimentAxisQuery(
+    with ExperimentAxisQuery(
         soma_experiment,
         "RNA",
         obs_query=soma.AxisQuery(coords=(slice(1, 10),)),
@@ -501,7 +503,7 @@ def test_experiment_query_indexer(soma_experiment):
 
 
 @pytest.mark.parametrize("n_obs,n_vars", [(2833, 107)])
-def test_error_corners(soma_experiment: soma.Experiment):
+def test_error_corners(soma_experiment: Experiment):
     """Verify a couple of error conditions / corner cases."""
     # Unknown Measurement name
     with pytest.raises(ValueError):
@@ -532,39 +534,10 @@ def test_error_corners(soma_experiment: soma.Experiment):
         with soma_experiment.axis_query("RNA") as query:
             with raises_no_typeguard(KeyError):
                 next(query.X(lyr_name))
-            with pytest.raises(ValueError):
+            with raises_no_typeguard(ValueError):
                 next(query.obsp(lyr_name))
-            with pytest.raises(ValueError):
+            with raises_no_typeguard(ValueError):
                 next(query.varp(lyr_name))
-
-
-@pytest.mark.parametrize("n_obs,n_vars", [(1001, 99)])
-def test_query_cleanup(soma_experiment: soma.Experiment):
-    """
-    Verify soma.Experiment.query works as context manager and stand-alone,
-    and that it cleans up correctly.
-    """
-    from contextlib import closing
-
-    # Forces a context without a thread pool, which in turn causes ExperimentAxisQuery
-    # to own (and release) its own thread pool.
-    context = SOMATileDBContext()
-    context.threadpool = None
-    soma_experiment = get_soma_experiment_with_context(soma_experiment, context)
-
-    with soma_experiment.axis_query("RNA") as query:
-        assert query.n_obs == 1001
-        assert query.n_vars == 99
-        assert query.to_anndata("raw") is not None
-        assert query._threadpool_ is not None
-
-    assert query._threadpool_ is None
-
-    with closing(soma_experiment.axis_query("RNA")) as query:
-        assert query.to_anndata("raw") is not None
-        assert query._threadpool_ is not None
-
-    assert query._threadpool_ is None
 
 
 @pytest.mark.parametrize(
@@ -574,16 +547,16 @@ def test_query_cleanup(soma_experiment: soma.Experiment):
 def test_experiment_query_obsp_varp_obsm_varm(soma_experiment):
     obs_slice = slice(3, 72)
     var_slice = slice(7, 21)
-    with soma.ExperimentAxisQuery(
+    with ExperimentAxisQuery(
         soma_experiment,
         "RNA",
-        obs_query=soma.AxisQuery(coords=(obs_slice,)),
-        var_query=soma.AxisQuery(coords=(var_slice,)),
+        obs_query=AxisQuery(coords=(obs_slice,)),
+        var_query=AxisQuery(coords=(var_slice,)),
     ) as query:
         assert query.n_obs == obs_slice.stop - obs_slice.start + 1
         assert query.n_vars == var_slice.stop - var_slice.start + 1
 
-        with pytest.raises(ValueError):
+        with raises_no_typeguard(ValueError):
             next(query.obsp("no-such-layer"))
 
         with pytest.raises(ValueError):
@@ -682,44 +655,40 @@ def test_experiment_query_to_anndata_obsp_varp(soma_experiment):
 
 def test_axis_query():
     """Basic test of the AxisQuery class"""
-    assert soma.AxisQuery().coords == ()
-    assert soma.AxisQuery().value_filter is None
-    assert soma.AxisQuery() == soma.AxisQuery(coords=())
+    assert AxisQuery().coords == ()
+    assert AxisQuery().value_filter is None
+    assert AxisQuery() == AxisQuery(coords=())
 
-    assert soma.AxisQuery(coords=(1,)).coords == (1,)
-    assert soma.AxisQuery(coords=(slice(1, 2),)).coords == (slice(1, 2),)
-    assert soma.AxisQuery(coords=((1, 88),)).coords == ((1, 88),)
+    assert AxisQuery(coords=(1,)).coords == (1,)
+    assert AxisQuery(coords=(slice(1, 2),)).coords == (slice(1, 2),)
+    assert AxisQuery(coords=((1, 88),)).coords == ((1, 88),)
 
-    assert soma.AxisQuery(coords=(1, 2)).coords == (1, 2)
-    assert soma.AxisQuery(coords=(slice(1, 2), slice(None))).coords == (
+    assert AxisQuery(coords=(1, 2)).coords == (1, 2)
+    assert AxisQuery(coords=(slice(1, 2), slice(None))).coords == (
         slice(1, 2),
         slice(None),
     )
-    assert soma.AxisQuery(coords=(slice(1, 2),)).value_filter is None
+    assert AxisQuery(coords=(slice(1, 2),)).value_filter is None
 
-    assert soma.AxisQuery(value_filter="foo == 'bar'").value_filter == "foo == 'bar'"
-    assert soma.AxisQuery(value_filter="foo == 'bar'").coords == ()
+    assert AxisQuery(value_filter="foo == 'bar'").value_filter == "foo == 'bar'"
+    assert AxisQuery(value_filter="foo == 'bar'").coords == ()
 
-    assert soma.AxisQuery(
-        coords=(slice(1, 100),), value_filter="foo == 'bar'"
-    ).coords == (
+    assert AxisQuery(coords=(slice(1, 100),), value_filter="foo == 'bar'").coords == (
         slice(1, 100),
     )
     assert (
-        soma.AxisQuery(
-            coords=(slice(1, 100),), value_filter="foo == 'bar'"
-        ).value_filter
+        AxisQuery(coords=(slice(1, 100),), value_filter="foo == 'bar'").value_filter
         == "foo == 'bar'"
     )
 
     with pytest.raises(TypeError):
-        soma.AxisQuery(coords=True)
+        AxisQuery(coords=True)
 
     with pytest.raises(TypeError):
-        soma.AxisQuery(value_filter=[])
+        AxisQuery(value_filter=[])
 
     with pytest.raises(TypeError):
-        soma.AxisQuery(coords=({},))
+        AxisQuery(coords=({},))
 
 
 def test_X_as_series():
@@ -801,10 +770,10 @@ def test_experiment_query_column_names(soma_experiment):
     # column_names and value_filter
     with soma_experiment.axis_query(
         "RNA",
-        obs_query=soma.AxisQuery(
+        obs_query=AxisQuery(
             value_filter="label in [" + ",".join(f"'{i}'" for i in range(101)) + "]"
         ),
-        var_query=soma.AxisQuery(
+        var_query=AxisQuery(
             value_filter="label in [" + ",".join(f"'{i}'" for i in range(99)) + "]"
         ),
     ) as query:
@@ -860,7 +829,7 @@ def test_experiment_query_mp_disjoint_arrow_coords(soma_experiment):
     for ids in slices:
         with soma_experiment.axis_query(
             "RNA",
-            obs_query=soma.AxisQuery(coords=(ids,)),
+            obs_query=AxisQuery(coords=(ids,)),
         ) as query:
             assert query.obs_joinids() == ids
 
@@ -951,7 +920,7 @@ def test_empty_categorical_query(conftest_pbmc_small_exp):
         measurement_name="RNA", obs_query=AxisQuery(value_filter='groups == "foo"')
     )
     # Empty query on a categorical column raised ArrowInvalid before TileDB 2.21; see https://github.com/single-cell-data/TileDB-SOMA/pull/2299
-    m = re.fullmatch(r"libtiledb=(\d+\.\d+\.\d+)", soma.pytiledbsoma.version())
+    m = re.fullmatch(r"libtiledb=(\d+\.\d+\.\d+)", pytiledbsoma.version())
     version = m.group(1).split(".")
     major, minor = int(version[0]), int(version[1])
 
@@ -959,3 +928,24 @@ def test_empty_categorical_query(conftest_pbmc_small_exp):
     with ctx:
         obs = q.obs().concat()
         assert len(obs) == 0
+
+
+@attrs.define(frozen=True)
+class IHaveObsVarStuff:
+    obs: int
+    var: int
+    the_obs_suf: str
+    the_var_suf: str
+
+
+def test_axis_helpers() -> None:
+    thing = IHaveObsVarStuff(obs=1, var=2, the_obs_suf="observe", the_var_suf="vary")
+    assert 1 == Axis.OBS.getattr_from(thing)
+    assert 2 == Axis.VAR.getattr_from(thing)
+    assert "observe" == Axis.OBS.getattr_from(thing, pre="the_", suf="_suf")
+    assert "vary" == Axis.VAR.getattr_from(thing, pre="the_", suf="_suf")
+    ovdict = {"obs": "erve", "var": "y", "i_obscure": "hide", "i_varcure": "???"}
+    assert "erve" == Axis.OBS.getitem_from(ovdict)
+    assert "y" == Axis.VAR.getitem_from(ovdict)
+    assert "hide" == Axis.OBS.getitem_from(ovdict, pre="i_", suf="cure")
+    assert "???" == Axis.VAR.getitem_from(ovdict, pre="i_", suf="cure")

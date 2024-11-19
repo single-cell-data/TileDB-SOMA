@@ -27,6 +27,9 @@ if TYPE_CHECKING:
     NPInteger = np.integer[npt.NBitBase]
     NPFloating = np.floating[npt.NBitBase]
     NPNDArray = npt.NDArray[np.number[npt.NBitBase]]
+    NPIntArray = npt.NDArray[np.integer[npt.NBitBase]]
+    NPIInfo = np.iinfo[NPInteger]
+    NPFInfo = np.finfo[NPFloating]
 else:
     # When not-type-checking, but running with `pandas>=2`, the "missing" type-params don't affect anything.
     PDSeries = pd.Series
@@ -38,6 +41,9 @@ else:
     NPInteger = np.integer
     NPFloating = np.floating
     NPNDArray = np.ndarray
+    NPIntArray = np.ndarray
+    NPIInfo = np.iinfo
+    NPFInfo = np.finfo
 
 
 Path = Union[str, pathlib.Path]

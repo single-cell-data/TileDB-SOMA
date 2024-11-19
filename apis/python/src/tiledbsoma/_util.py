@@ -533,12 +533,12 @@ def _set_coord(dim_idx: int, sarr: clib.SOMAArray, coord: object) -> None:
         ts_dom = pa.array(dom, type=dim.type).cast(pa.int64())
 
         if coord.start is not None:
-            istart = coord.start.astype("int64")
+            istart = int(coord.start.astype("int64"))
         else:
             istart = ts_dom[0].as_py()
 
         if coord.stop is not None:
-            istop = coord.stop.astype("int64")
+            istop = int(coord.stop.astype("int64"))
         else:
             istop = ts_dom[1].as_py()
 

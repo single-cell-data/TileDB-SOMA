@@ -729,11 +729,11 @@ def _write_visium_spots(
     if additional_metadata is None:
         additional_metadata = {
             "soma_geometry_type": "radius",
-            "soma_geometry": 0.5 * np.double(spot_diameter),  # type: ignore
+            "soma_geometry": 0.5 * np.double(spot_diameter),
         }
     else:
         additional_metadata["soma_geometry_type"] = "radius"
-        additional_metadata["soma_geometry"] = 0.5 * np.double(spot_diameter)  # type: ignore
+        additional_metadata["soma_geometry"] = 0.5 * np.double(spot_diameter)
     if ingestion_params.write_schema_no_data:
         add_metadata(soma_point_cloud, additional_metadata)
         return soma_point_cloud
