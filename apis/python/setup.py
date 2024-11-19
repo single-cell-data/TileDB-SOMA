@@ -341,8 +341,8 @@ setuptools.setup(
         "pyarrow",
         "scanpy>=1.9.2",
         "scipy",
-        # Temporary, picks up https://github.com/single-cell-data/SOMA/pull/244, move to 1.0.24 when that's available.
-        "somacore @ git+https://github.com/single-cell-data/soma",
+        # Note: the somacore version is also in .pre-commit-config.yaml
+        "somacore==1.0.24",
         "typing-extensions",  # Note "-" even though `import typing_extensions`
     ],
     extras_require={
