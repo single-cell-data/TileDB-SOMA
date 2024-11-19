@@ -21,7 +21,7 @@ on:
 jobs:
   sdist:
     name: Build source distribution
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout TileDB-SOMA
         uses: actions/checkout@v4
@@ -54,7 +54,7 @@ jobs:
         cibw_build: [ manylinux_x86_64, macosx_x86_64, macosx_arm64 ]
         include:
           - cibw_build: manylinux_x86_64
-            os: ubuntu-latest
+            os: ubuntu-24.04
             wheel-name: manylinux2014
           - cibw_build: macosx_x86_64
             os: macos-latest
@@ -84,6 +84,11 @@ jobs:
           pip install setuptools
           python -c 'from distutils import util; print("distutil.util.get_platform:", util.get_platform())'
           python -c 'import platform; print("platform.platform()", platform.platform())'
+      - name: Select XCode version
+        if: startsWith(matrix.os, 'macos')
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: '15.4'
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.18.1
         with:
@@ -127,12 +132,12 @@ jobs:
           - macos-arm64
         include:
           - wheel-name: manylinux2014
-            os: ubuntu-latest
+            os: ubuntu-24.04
             arch: x86_64
-            cc: gcc-11
-            cxx: g++-11
+            cc: gcc-13
+            cxx: g++-13
           - wheel-name: macos-x86_64
-            os: macos-13
+            os: macos-latest
             arch: x86_64
             cc: clang
             cxx: clang++
@@ -166,7 +171,7 @@ jobs:
         run: python -c 'import tiledbsoma; print(tiledbsoma.pytiledbsoma.__file__); tiledbsoma.show_package_versions()'
         # TODO: more thorough local smoke test
       - name: Smoke test in docker
-        if: ${{ matrix.os == 'ubuntu-latest' }}
+        if: ${{ matrix.os == 'ubuntu-24.04' }}
         run: |
           docker run -v $(pwd):/mnt python:${{ matrix.python.dotted-version }} bash -ec "
             apt-get -qq update && apt-get install -y python3-pip python3-wheel
@@ -178,7 +183,7 @@ jobs:
   publish-to-test-pypi:
     name: Publish package to TestPyPI
     needs: smoke-test
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     if: github.event_name == 'workflow_dispatch'
     steps:
       - name: Download artifacts
@@ -202,7 +207,7 @@ jobs:
   publish-to-pypi:
     name: Publish package to PyPI
     needs: smoke-test
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     if: github.event_name == 'release'
     steps:
       - name: Download artifacts
@@ -223,7 +228,7 @@ jobs:
   # File a bug report if anything fails, but don't file tickets for manual runs
   # -- only for scheduled ones.
   create_issue_on_fail:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: [smoke-test, publish-to-test-pypi, publish-to-pypi]
     if: (failure() || cancelled()) && github.event_name != 'workflow_dispatch'
     steps:

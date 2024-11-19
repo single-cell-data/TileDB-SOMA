@@ -49,7 +49,7 @@ Imports:
     nanoarrow
 LinkingTo:
     Rcpp,
-    RcppSpdlog,
+    RcppSpdlog (>= 0.0.19),
     RcppInt64,
     nanoarrow
 Additional_repositories: https://ghrr.github.io/drat

@@ -30,6 +30,7 @@
  * This file manages unit tests for the SOMADataFrame class
  */
 
+#include <format>
 #include "common.h"
 
 const int64_t SOMA_JOINID_DIM_MAX = 99;
@@ -205,12 +206,8 @@ TEST_CASE_METHOD(
     "SOMADataFrame: basic",
     "[SOMADataFrame]") {
     auto use_current_domain = GENERATE(false, true);
-    // TODO this could be formatted with fmt::format which is part of internal
-    // header spd/log/fmt/fmt.h and should not be used. In C++20, this can be
-    // replaced with std::format.
-    std::ostringstream section;
-    section << "- use_current_domain=" << use_current_domain;
-    SECTION(section.str()) {
+
+    SECTION(std::format("- use_current_domain={}", use_current_domain)) {
         set_up(
             std::make_shared<SOMAContext>(), "mem://unit-test-dataframe-basic");
 
@@ -309,13 +306,7 @@ TEST_CASE_METHOD(
         std::make_pair(R"("BYTESHUFFLE")", TILEDB_FILTER_BYTESHUFFLE),
         std::make_pair(R"("NOOP")", TILEDB_FILTER_NONE));
 
-    // TODO this used to be formatted with fmt::format which is part of internal
-    // header spd/log/fmt/fmt.h and should not be used. In C++20, this can be
-    // replaced with std::format.
-    std::ostringstream section;
-    section << "- filter=" << filter.first;
-
-    SECTION(section.str()) {
+    SECTION(std::format("- filter={}", filter.first)) {
         auto use_current_domain = GENERATE(false, true);
         std::ostringstream section2;
         section2 << "- use_current_domain=" << use_current_domain;
@@ -399,12 +390,8 @@ TEST_CASE_METHOD(
     "SOMADataFrame: metadata",
     "[SOMADataFrame]") {
     auto use_current_domain = GENERATE(false, true);
-    // TODO this could be formatted with fmt::format which is part of
-    // internal header spd/log/fmt/fmt.h and should not be used. In
-    // C++20, this can be replaced with std::format.
-    std::ostringstream section;
-    section << "- use_current_domain=" << use_current_domain;
-    SECTION(section.str()) {
+
+    SECTION(std::format("- use_current_domain={}", use_current_domain)) {
         set_up(std::make_shared<SOMAContext>(), "mem://unit-test-collection");
 
         std::vector<helper::DimInfo> dim_infos(

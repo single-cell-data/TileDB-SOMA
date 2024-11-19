@@ -39,7 +39,7 @@ jobs:
   # Confirm shared object copying when building the Python package
   # https://github.com/single-cell-data/TileDB-SOMA/pull/1937
   docker:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     name: "SO copying (docker) TILEDB_EXISTS: ${{ matrix.TILEDB_EXISTS }} TILEDBSOMA_EXISTS: ${{ matrix.TILEDBSOMA_EXISTS }}"
     strategy:
       fail-fast: false
@@ -152,7 +152,7 @@ jobs:
   # https://github.com/single-cell-data/TileDB-SOMA/pull/1937
   # Same as job above, but running on macOS instead of in a Docker container
   macos:
-    runs-on: macos-13
+    runs-on: macos-latest
     name: "SO copying (macos) TILEDB_EXISTS: ${{ matrix.TILEDB_EXISTS }} TILEDBSOMA_EXISTS: ${{ matrix.TILEDBSOMA_EXISTS }}"
     strategy:
       fail-fast: false
@@ -168,6 +168,10 @@ jobs:
           fetch-depth: 0  # for setuptools-scm
       - name: Check if System Integrity Protection (SIP) is enabled
         run: csrutil status
+      - name: Select XCode version
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: '15.4'
       - name: Install pre-built libtiledb
         if: ${{ matrix.TILEDB_EXISTS == 'yes' }}
         run: |
@@ -259,7 +263,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: ["ubuntu-latest", "macos-latest"]
+        os: ["ubuntu-24.04", "macos-latest"]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -364,7 +368,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: ["ubuntu-latest", "macos-latest"]
+        os: ["ubuntu-24.04", "macos-latest"]
     steps:
       - uses: actions/checkout@v4
         with:

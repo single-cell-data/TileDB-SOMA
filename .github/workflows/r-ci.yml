@@ -32,13 +32,13 @@ jobs:
       matrix:
         include:
           - name: linux
-            os: ubuntu-latest
+            os: ubuntu-24.04
             covr: 'no'
           - name: macos
             os: macOS-latest
             covr: 'no'
           - name: coverage
-            os: ubuntu-latest
+            os: ubuntu-24.04
             covr: 'yes'
 
     runs-on: ${{ matrix.os }}
@@ -50,7 +50,7 @@ jobs:
         run: echo "matrix.os:" ${{ matrix.os }}
 
       - name: Linux CPU info
-        if: ${{ matrix.os == 'ubuntu-latest' }}
+        if: ${{ matrix.os == 'ubuntu-24.04' }}
         run: cat /proc/cpuinfo
 
       - name: MacOS CPU info
@@ -105,7 +105,7 @@ jobs:
       #  run: sudo scripts/bld --prefix=/usr/local
 
       #- name: Call ldconfig
-      #  if: ${{ matrix.os == 'ubuntu-latest' }}
+      #  if: ${{ matrix.os == 'ubuntu-24.04' }}
       #  run: sudo ldconfig
       #
       # - name: Update Packages
@@ -136,7 +136,7 @@ jobs:
         run: cd apis/r/tests && Rscript testthat.R
 
       - name: Coverage
-        if: ${{ matrix.os == 'ubuntu-latest' && matrix.covr == 'yes' && github.event_name == 'workflow_dispatch' }}
+        if: ${{ matrix.os == 'ubuntu-24.04' && matrix.covr == 'yes' && github.event_name == 'workflow_dispatch' }}
         run: apis/r/tools/r-ci.sh coverage
 
       - name: View Logs

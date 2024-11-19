@@ -30,6 +30,7 @@
  * This file manages unit tests for the SOMASparseNDArray class
  */
 
+#include <format>
 #include "common.h"
 
 TEST_CASE("SOMASparseNDArray: basic", "[SOMASparseNDArray]") {
@@ -40,12 +41,8 @@ TEST_CASE("SOMASparseNDArray: basic", "[SOMASparseNDArray]") {
     int64_t shape = 1000;
 
     auto use_current_domain = GENERATE(false, true);
-    // TODO this could be formatted with fmt::format which is part of internal
-    // header spd/log/fmt/fmt.h and should not be used. In C++20, this can be
-    // replaced with std::format.
-    std::ostringstream section;
-    section << "- use_current_domain=" << use_current_domain;
-    SECTION(section.str()) {
+
+    SECTION(std::format("- use_current_domain={}", use_current_domain)) {
         auto ctx = std::make_shared<SOMAContext>();
         std::string uri = "mem://unit-test-sparse-ndarray-basic";
         std::string dim_name = "soma_dim_0";
@@ -193,12 +190,8 @@ TEST_CASE("SOMASparseNDArray: basic", "[SOMASparseNDArray]") {
 TEST_CASE("SOMASparseNDArray: platform_config", "[SOMASparseNDArray]") {
     int64_t dim_max = 999;
     auto use_current_domain = GENERATE(false, true);
-    // TODO this could be formatted with fmt::format which is part of internal
-    // header spd/log/fmt/fmt.h and should not be used. In C++20, this can be
-    // replaced with std::format.
-    std::ostringstream section;
-    section << "- use_current_domain=" << use_current_domain;
-    SECTION(section.str()) {
+
+    SECTION(std::format("- use_current_domain={}", use_current_domain)) {
         auto ctx = std::make_shared<SOMAContext>();
         std::string uri = "mem://unit-test-dataframe-platform-config";
         std::string dim_name = "soma_dim_0";
@@ -247,12 +240,8 @@ TEST_CASE("SOMASparseNDArray: platform_config", "[SOMASparseNDArray]") {
 TEST_CASE("SOMASparseNDArray: metadata", "[SOMASparseNDArray]") {
     int64_t dim_max = 999;
     auto use_current_domain = GENERATE(false, true);
-    // TODO this could be formatted with fmt::format which is part of internal
-    // header spd/log/fmt/fmt.h and should not be used. In C++20, this can be
-    // replaced with std::format.
-    std::ostringstream section;
-    section << "- use_current_domain=" << use_current_domain;
-    SECTION(section.str()) {
+
+    SECTION(std::format("- use_current_domain={}", use_current_domain)) {
         auto ctx = std::make_shared<SOMAContext>();
 
         std::string uri = "mem://unit-test-sparse-ndarray";
