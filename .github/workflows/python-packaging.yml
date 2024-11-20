@@ -96,9 +96,9 @@ jobs:
           only: cp${{ matrix.python-version }}-${{ matrix.cibw_build }}
         env:
           CIBW_BUILD: ${{ matrix.cibw_build }}
-          CIBW_BUILD_VERBOSITY: 2
+          CIBW_BUILD_VERBOSITY: 1
           CIBW_MANYLINUX_X86_64_IMAGE: manylinux_2_28
-          CIBW_BEFORE_BUILD: echo 'UNAME IS'; uname; if [ `uname` = "Linux" ]; then echo "I AM DOING YUM INSTALL"; yum install -y gcc-toolset-13-gcc.x86_64; yum install -y gcc-toolset-13-gcc-c++.x86_64; echo 'FIND START'; find /opt/rh/gcc-toolset-* -name g++ -exec ls -l {} \; ; echo; echo 'FIND MORE'; find / -name g++ -ls 2> /dev/null ; echo 'FIND END'; echo 'WHICH START'; which g++; echo 'WHICH END'; echo 'PATH START'; echo $PATH; echo 'PATH END'; echo "LS -L START"; ls -l /opt/rh; echo; ls -l /usr/bin/g++; echo "LS -L END"; fi; bash -x -c 'rm -rf tiledbsoma*/dist_links/dist/lib*'
+          CIBW_BEFORE_BUILD: echo 'UNAME IS'; uname; if [ `uname` = "Linux" ]; then echo "I AM DOING YUM INSTALL"; yum -y remove gcc-toolset-12-gcc.x86_64; yum -y remove gcc-toolset-12-gcc-c++.x86_64; yum install -y gcc-toolset-13-gcc.x86_64; yum install -y gcc-toolset-13-gcc-c++.x86_64; echo 'FIND START'; find /opt/rh/gcc-toolset-* -name g++ -exec ls -l {} \; ; echo; echo 'FIND MORE'; find / -name g++ -ls 2> /dev/null ; echo 'FIND END'; echo 'WHICH START'; which g++; echo 'WHICH END'; echo 'PATH START'; echo $PATH; echo 'PATH END'; echo "LS -L START"; ls -l /opt/rh; echo; ls -l /usr/bin/g++ || true; echo "LS -L END"; fi; bash -x -c 'rm -rf tiledbsoma*/dist_links/dist/lib*'
             # ^ Delete lib folder that apis/python/setup.py:find_or_build() looks for in deciding to
             #   run CMake build or not. Otherwise it'll keep reusing the library file built in the
             #   first iteration of cibuildwheel's outer loop, resulting in wheels with the library
