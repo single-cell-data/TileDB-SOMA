@@ -179,8 +179,8 @@ def to_spatial_data_image(
     if level is None:
         if image.level_count != 1:
             raise ValueError(
-                "Parmeter ``level`` is required for a multiscale image with more than "
-                "one resolution level."
+                "The level must be specified for a multiscale image with more than one "
+                "resolution level."
             )
         level = 0
     level_uri = image.level_uri(level)
