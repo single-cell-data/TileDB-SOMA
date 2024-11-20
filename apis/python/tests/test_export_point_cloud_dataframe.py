@@ -1,6 +1,7 @@
 from urllib.parse import urljoin
 
 import numpy as np
+import pandas as pd
 import pyarrow as pa
 import pytest
 import shapely
@@ -64,6 +65,40 @@ def test_export_to_shapes_2d(sample_point_cloud_dataframe_2d):
 
     # Check the metadata.
     metadata = dict(shape.attrs)
+    for key, val in metadata.items():
+        print(f"{key}: {val}")
+    assert len(metadata) == 1
+    assert metadata["transform"] == {"scene0": spatialdata.transformations.Identity()}
+
+
+def test_export_to_points_2d(sample_point_cloud_dataframe_2d):
+    """Test exporting a simple point cloud to a SpatialData shape model."""
+    # Export PointCloudDataFrame to shapes.
+    points = soma_outgest.to_spatial_data_points(
+        sample_point_cloud_dataframe_2d,
+        scene_id="scene0",
+        scene_dim_map={"x_scene": "x", "y_scene": "y"},
+        soma_joinid_name="obs_id",
+        transform=somacore.IdentityTransform(
+            ("x_scene", "y_scene"), ("x_points", "y_points")
+        ),
+    )
+
+    # Validate that this is validate storage for the SpatialData "Shapes"
+    spatialdata.models.PointsModel.validate(points)
+
+    # Check the dataframe.
+    expected = pd.DataFrame.from_dict(
+        {
+            "x": [0, 0, 0.5, 0.5],
+            "y": [0, 0.5, 0, 0.5],
+            "obs_id": np.arange(4),
+        }
+    )
+    assert all(points == expected)
+
+    # Check the metadata.
+    metadata = dict(points.attrs)
     for key, val in metadata.items():
         print(f"{key}: {val}")
     assert len(metadata) == 1
