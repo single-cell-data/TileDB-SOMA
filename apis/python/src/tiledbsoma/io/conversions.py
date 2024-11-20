@@ -13,6 +13,7 @@ from typing import TypeVar, cast
 import numpy as np
 import pandas as pd
 import pandas._typing as pdt
+import pandas.api.types
 import pyarrow as pa
 import scipy.sparse as sp
 
@@ -26,17 +27,17 @@ _MT = TypeVar("_MT", NPNDArray, sp.spmatrix, PDSeries)
 _str_to_type = {"boolean": bool, "string": str, "bytes": bytes}
 
 
-def decategoricalize_obs_or_var(obs_or_var: pd.DataFrame) -> pd.DataFrame:
+def obs_or_var_to_tiledb_supported_array_type(obs_or_var: pd.DataFrame) -> pd.DataFrame:
     """Performs a typecast into types that TileDB can persist."""
-    if len(obs_or_var.columns) > 0:
-        return pd.DataFrame.from_dict(
-            {
-                str(k): to_tiledb_supported_array_type(str(k), v)
-                for k, v in obs_or_var.items()
-            },
-        )
-    else:
+    if len(obs_or_var.columns) == 0:
         return obs_or_var.copy()
+
+    return pd.DataFrame.from_dict(
+        {
+            str(k): to_tiledb_supported_array_type(str(k), v)
+            for k, v in obs_or_var.items()
+        },
+    )
 
 
 @typeguard_ignore
@@ -56,27 +57,14 @@ def to_tiledb_supported_array_type(name: str, x: _MT) -> _MT:
         target_dtype = _to_tiledb_supported_dtype(x.dtype)
         return x if target_dtype == x.dtype else x.astype(target_dtype)
 
-    # categories = x.cat.categories
-    # cat_dtype = categories.dtype
-    # if cat_dtype.kind in ("f", "u", "i"):
-    #     if x.hasnans and cat_dtype.kind == "i":
-    #         raise ValueError(
-    #             f"Categorical column {name!r} contains NaN -- unable to convert to TileDB array."
-    #         )
-    #     # More mysterious spurious mypy errors.
-    #     target_dtype = _to_tiledb_supported_dtype(cat_dtype)  # type: ignore[arg-type]
-    # else:
-    #     # Into the weirdness. See if Pandas can help with edge cases.
-    #     inferred = infer_dtype(categories)
-    #     if x.hasnans and inferred in ("boolean", "bytes"):
-    #         raise ValueError(
-    #             "Categorical array contains NaN -- unable to convert to TileDB array."
-    #         )
-    #     target_dtype = np.dtype(  # type: ignore[assignment]
-    #         _str_to_type.get(inferred, object)
-    #     )
+    # If the column is categorical-of-string of high cardinality, we declare
+    # this is likely a mistake, and it will definitely lead to performance
+    # issues in subsequent processing.
+    if isinstance(x, pd.Series) and isinstance(x.dtype, pd.CategoricalDtype):
+        # Heuristic number
+        if pandas.api.types.is_string_dtype(x) and len(x.cat.categories) > 4096:
+            return x.astype(str)
 
-    # return x.astype(target_dtype)
     return x
 
 

@@ -516,7 +516,7 @@ def from_anndata(
     df_uri = _util.uri_joinpath(experiment_uri, "obs")
     with _write_dataframe(
         df_uri,
-        conversions.decategoricalize_obs_or_var(anndata.obs),
+        conversions.obs_or_var_to_tiledb_supported_array_type(anndata.obs),
         id_column_name=obs_id_name,
         axis_mapping=jidmaps.obs_axis,
         **ingest_platform_ctx,
@@ -566,7 +566,7 @@ def from_anndata(
             # MS/meas/VAR
             with _write_dataframe(
                 _util.uri_joinpath(measurement_uri, "var"),
-                conversions.decategoricalize_obs_or_var(anndata.var),
+                conversions.obs_or_var_to_tiledb_supported_array_type(anndata.var),
                 id_column_name=var_id_name,
                 # Layer existence is pre-checked in the registration phase
                 axis_mapping=jidmaps.var_axes[measurement_name],
@@ -701,7 +701,9 @@ def from_anndata(
 
                         with _write_dataframe(
                             _util.uri_joinpath(raw_uri, "var"),
-                            conversions.decategoricalize_obs_or_var(anndata.raw.var),
+                            conversions.obs_or_var_to_tiledb_supported_array_type(
+                                anndata.raw.var
+                            ),
                             id_column_name=var_id_name,
                             axis_mapping=jidmaps.var_axes["raw"],
                             **ingest_platform_ctx,
@@ -794,7 +796,7 @@ def append_obs(
 
     with _write_dataframe(
         exp.obs.uri,
-        conversions.decategoricalize_obs_or_var(new_obs),
+        conversions.obs_or_var_to_tiledb_supported_array_type(new_obs),
         id_column_name=obs_id_name,
         platform_config=platform_config,
         context=context,
@@ -859,7 +861,7 @@ def append_var(
 
     with _write_dataframe(
         sdf.uri,
-        conversions.decategoricalize_obs_or_var(new_var),
+        conversions.obs_or_var_to_tiledb_supported_array_type(new_var),
         id_column_name=var_id_name,
         platform_config=platform_config,
         context=context,
