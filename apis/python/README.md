@@ -54,9 +54,7 @@ If this comes up empty for your system, you'll definitely need to build from sou
   make data
   python -m pytest tests
   ```
-* A note about the `fmt` and `spdlog` packages:
-  * If you encounter an install-time error like `undefined symbol: _ZTIN3fmt2v912format_errorE` then you should uninstall your systemversions of `fmt` and `spdlog`. On Linux, this means `dpkg -l | egrep "lib(spdlog|fmt)"` should now come up empty.
-  * If you encounter an install-time error like `fatal error: spdlog/spdlog.h: No such file or directory` you should additionally recursively remove `/usr/local/lib/cmake/spdlog `, since the system uninstall of `spdlog` fails to remove this properly.
+* A note about the `spdlog` package: If you encounter an install-time error like `fatal error: spdlog/spdlog.h: No such file or directory` you should additionally recursively remove `/usr/local/lib/cmake/spdlog `, since the system uninstall of `spdlog` fails to remove this properly.
 
 # Status
 
