@@ -48,6 +48,7 @@ def _default_config(override: Mapping[str, str | float]) -> Dict[str, str | floa
     cfg.update(override)
     return cfg
 
+
 @functools.lru_cache(maxsize=None)
 def _default_global_native_context() -> clib.SOMAContext:
     """Lazily builds a default SOMAContext with the default config."""
@@ -88,24 +89,24 @@ class SOMATileDBContext(ContextBase):
 
         Either ``tiledb_config`` or ``tiledb_ctx`` may be provided, or both may
         be left at their default.
-        
+
         If a ``tiledb_config`` is provided (in the form of a ``dict``),
         it is used to construct a new ``SOMAContext``.
-        
-        If `a `tiledb_ctx`` is provided, then it uses the configuration options 
+
+        If `a `tiledb_ctx`` is provided, then it uses the configuration options
         to construct a new ``SOMAContext``. Note that ``SOMAContext`` will create
-        a new ``Context`` object. The ``tiledb_ctx`` option is only available if 
+        a new ``Context`` object. The ``tiledb_ctx`` option is only available if
         the `tiledb` module is installed; otherwise, it will throw a ````ModuleNotFoundError``.
-        
+
         If neither are provided, this will use a single shared :class:`SOMAContext`
-        instantiated upon first use. 
+        instantiated upon first use.
 
         Args:
             tiledb_config: A set of TileDB configuration options to use,
                 overriding the default configuration.
-                
-            tiledb_ctx: A TileDB Context where the set of TileDB 
-                configuration options are used to override the default 
+
+            tiledb_ctx: A TileDB Context where the set of TileDB
+                configuration options are used to override the default
                 configuration.
 
             timestamp: The default timestamp for operations on SOMA objects,
@@ -145,13 +146,13 @@ class SOMATileDBContext(ContextBase):
                 " may be set when constructing a SOMATileDBContext"
             )
 
-       # A TileDB Context may only be passed if tiledb is installed
+        # A TileDB Context may only be passed if tiledb is installed
         if tiledb_ctx is not None:
             _check_tiledb()
 
         self._lock = threading.Lock()
         """A lock to ensure single initialization of ``_tiledb_ctx``."""
-        
+
         self._initial_config = (
             None if tiledb_config is None else _default_config(tiledb_config)
         )
@@ -161,15 +162,15 @@ class SOMATileDBContext(ContextBase):
         that we provide to TileDB. If this is unset, then either we were
         provided with a TileDB Ctx, or we need to use The Default Global Ctx.
         """
-        
+
         self._tiledb_ctx = tiledb_ctx
         """The TileDB context passed in by the user. None if not provided."""
-        
+
         self._timestamp_ms = _maybe_timestamp_ms(timestamp)
 
         self.threadpool = threadpool or ThreadPoolExecutor()
         """User specified threadpool. If None, we'll instantiate one ourselves."""
-        
+
         self._native_context: clib.SOMAContext | None = None
         """Lazily construct clib.SOMAContext."""
 
@@ -221,19 +222,19 @@ class SOMATileDBContext(ContextBase):
     @property
     def tiledb_ctx(self) -> "tiledb.Ctx" | None:
         """The TileDB-Py Context passed in to create the ``SOMATileDBContext``.
-    
-        This accessor is only available if tiledb is installed. If 
-        ``SOMATileDBContext`` was constructed with a ``tiledb_ctx``, this returns 
-        the ``tiledb.Ctx`` that was passed in. If it was not constructed with 
-        a ``tiledb_ctx`` (meaning, either using `tiledb_config` or with default 
+
+        This accessor is only available if tiledb is installed. If
+        ``SOMATileDBContext`` was constructed with a ``tiledb_ctx``, this returns
+        the ``tiledb.Ctx`` that was passed in. If it was not constructed with
+        a ``tiledb_ctx`` (meaning, either using `tiledb_config` or with default
         settings), then this will return ``None``.
-        
-        Note that when constructing ``SOMATileDBContext`` with ``tiledb_ctx``, 
-        internally it uses ``tiledb_ctx.config().dict()`` and constructs a new 
-        ``tiledb::Context`` object from the configuration options. Meaning, the 
-        ``Context`` passed-in as ``tiledb_ctx`` is NOT the same ``Context`` held 
+
+        Note that when constructing ``SOMATileDBContext`` with ``tiledb_ctx``,
+        internally it uses ``tiledb_ctx.config().dict()`` and constructs a new
+        ``tiledb::Context`` object from the configuration options. Meaning, the
+        ``Context`` passed-in as ``tiledb_ctx`` is NOT the same ``Context`` held
         by ``SOMATileDBContext``.
-        
+
         If `tiledb` is not installed, this accessor throws a ``ModuleNotFoundError``
         error.
         """
