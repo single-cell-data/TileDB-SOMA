@@ -55,7 +55,7 @@ jobs:
         include:
           - cibw_build: manylinux_x86_64
             os: ubuntu-24.04
-            wheel-name: manylinux2014
+            wheel-name: manylinux_2_28
           - cibw_build: macosx_x86_64
             os: macos-latest
             cibw_archs_macos: x86_64
@@ -97,12 +97,19 @@ jobs:
         env:
           CIBW_BUILD: ${{ matrix.cibw_build }}
           CIBW_BUILD_VERBOSITY: 1
+          CIBW_MANYLINUX_X86_64_IMAGE: manylinux_2_28
+          CIBW_BEFORE_BUILD_LINUX: yum -y remove gcc-toolset-12\*; yum -y install gcc-toolset-13; bash -x -c 'rm -rf tiledbsoma*/dist_links/dist/lib*'
+          # ^ Delete lib folder that apis/python/setup.py:find_or_build() looks for in deciding to
+          #   run CMake build or not. Otherwise it'll keep reusing the library file built in the
+          #   first iteration of cibuildwheel's outer loop, resulting in wheels with the library
+          #   built for the wrong python version.
           CIBW_BEFORE_BUILD: bash -x -c 'rm -rf tiledbsoma*/dist_links/dist/lib*'
           # ^ Delete lib folder that apis/python/setup.py:find_or_build() looks for in deciding to
           #   run CMake build or not. Otherwise it'll keep reusing the library file built in the
           #   first iteration of cibuildwheel's outer loop, resulting in wheels with the library
           #   built for the wrong python version.
           CIBW_ARCHS_MACOS: ${{ matrix.cibw_archs_macos }}
+          CIBW_ENVIRONMENT_LINUX : CC=/opt/rh/gcc-toolset-13/root/usr/bin/gcc CXX=/opt/rh/gcc-toolset-13/root/usr/bin/g++
           CIBW_TEST_SKIP: "*_arm64"
           CMAKE_OSX_ARCHITECTURES: ${{ matrix.cibw_archs_macos }}
           MACOSX_DEPLOYMENT_TARGET: "11.0"
@@ -127,17 +134,17 @@ jobs:
           - undotted-version: '312'
             dotted-version: '3.12'
         wheel-name:
-          - manylinux2014
+          - manylinux_2_28
           - macos-x86_64
           - macos-arm64
         include:
-          - wheel-name: manylinux2014
+          - wheel-name: manylinux_2_28
             os: ubuntu-24.04
             arch: x86_64
             cc: gcc-13
             cxx: g++-13
           - wheel-name: macos-x86_64
-            os: macos-latest
+            os: macos-13
             arch: x86_64
             cc: clang
             cxx: clang++
