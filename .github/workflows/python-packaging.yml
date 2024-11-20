@@ -55,7 +55,7 @@ jobs:
         include:
           - cibw_build: manylinux_x86_64
             os: ubuntu-24.04
-            wheel-name: manylinux2014
+            wheel-name: manylinux_2_28
           - cibw_build: macosx_x86_64
             os: macos-latest
             cibw_archs_macos: x86_64
@@ -127,11 +127,11 @@ jobs:
           - undotted-version: '312'
             dotted-version: '3.12'
         wheel-name:
-          - manylinux2014
+          - manylinux_2_28
           - macos-x86_64
           - macos-arm64
         include:
-          - wheel-name: manylinux2014
+          - wheel-name: manylinux_2_28
             os: ubuntu-24.04
             arch: x86_64
             cc: gcc-13
