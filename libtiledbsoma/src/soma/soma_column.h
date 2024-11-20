@@ -38,8 +38,8 @@
 #include <optional>
 #include <string>
 #include <vector>
+#include <format>
 
-#include <spdlog/fmt/fmt.h>
 #include "enums.h"
 #include "managed_query.h"
 #include "nanoarrow/nanoarrow.hpp"
@@ -125,8 +125,8 @@ class SOMAColumn {
         bool if_not_empty = false) const = 0;
 
     /**
-     * @brief Returns true if the SOMACOlumn has a non-empty current domain,
-     * else false.  Note that this only should be used if the SOMACOlumn objects
+     * @brief Returns true if the SOMAColumn has a non-empty current domain,
+     * else false.  Note that this only should be used if the SOMAColumn objects
      * is being constructed during schema generation. If a SOMAArray is already
      * present this function should not be used.
      */
@@ -174,7 +174,7 @@ class SOMAColumn {
     void set_current_domain_slot(
         NDRectangle& rectangle, const std::vector<const void*>& domain) const {
         if (!isIndexColumn()) {
-            throw TileDBSOMAError(fmt::format(
+            throw TileDBSOMAError(std::format(
                 "[SOMAColumn] Column with name {} is not an index column",
                 name()));
         }
@@ -195,7 +195,7 @@ class SOMAColumn {
     void set_dim_point(
         const std::unique_ptr<ManagedQuery>& query, const T& point) const {
         if (!isIndexColumn()) {
-            throw TileDBSOMAError(fmt::format(
+            throw TileDBSOMAError(std::format(
                 "[SOMAColumn] Column with name {} is not an index column",
                 name()));
         }
@@ -217,7 +217,7 @@ class SOMAColumn {
         const std::unique_ptr<ManagedQuery>& query,
         const std::vector<T>& points) const {
         if (!isIndexColumn()) {
-            throw TileDBSOMAError(fmt::format(
+            throw TileDBSOMAError(std::format(
                 "[SOMAColumn] Column with name {} is not an index column",
                 name()));
         }
@@ -231,7 +231,7 @@ class SOMAColumn {
      * @note Partitioning is not supported
      *
      * @tparam T
-     * @param dim
+     * @param query
      * @param ranges
      */
     template <typename T>
@@ -239,7 +239,7 @@ class SOMAColumn {
         const std::unique_ptr<ManagedQuery>& query,
         const std::vector<std::pair<T, T>>& ranges) const {
         if (!isIndexColumn()) {
-            throw TileDBSOMAError(fmt::format(
+            throw TileDBSOMAError(std::format(
                 "[SOMAColumn] Column with name {} is not an index column",
                 name()));
         }
