@@ -9,7 +9,6 @@ import tiledbsoma as soma
 
 soma_outgest = pytest.importorskip("tiledbsoma.experimental.outgest")
 sd = pytest.importorskip("spatialdata")
-xr = pytest.importorskip("xarray")
 
 
 @pytest.fixture(scope="module")
@@ -119,7 +118,7 @@ def test_export_image_level_to_spatial_data(
         transform=transform,
     )
 
-    assert isinstance(image2d, xr.DataArray)
+    assert isinstance(image2d, sd.models.models.DataArray)
 
     # Validate the model.
     schema = sd.models.get_model(image2d)
@@ -200,7 +199,7 @@ def test_export_full_image_to_spatial_data(
         transform=transform,
     )
 
-    assert isinstance(image2d, xr.DataTree)
+    assert isinstance(image2d, sd.models.models.DataTree)
 
     # Validate the model.
     schema = sd.models.get_model(image2d)

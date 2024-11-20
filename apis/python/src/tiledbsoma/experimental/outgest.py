@@ -2,17 +2,29 @@
 # Copyright (c) 2024 TileDB, Inc
 #
 # Licensed under the MIT License.
-from typing import Dict, Optional, Tuple, Union
+import warnings
+from typing import TYPE_CHECKING, Dict, Optional, Tuple, Union
 
-import geopandas as gpd
+try:
+    import geopandas as gpd
+except ImportError as err:
+    warnings.warn("Experimental spatial outgestor requires the geopandas package.")
+    raise err
 import pandas as pd
 import somacore
-import spatialdata as sd
-import xarray as xr
+
+try:
+    import spatialdata as sd
+except ImportError as err:
+    warnings.warn("Experimental spatial outgestor requires the spatialdata package.")
+    raise err
 
 from .. import MultiscaleImage, PointCloudDataFrame
 from .._constants import SOMA_JOINID
-from ._xarray_backend import dense_nd_array_to_data_array
+from ._xarray_backend import dense_nd_array_to_data_array, images_to_datatree
+
+if TYPE_CHECKING:
+    from spatialdata.models.models import DataArray, DataTree
 
 
 def _convert_axis_names(
@@ -195,7 +207,7 @@ def to_spatial_data_image(
     scene_id: str,
     scene_dim_map: Dict[str, str],
     transform: somacore.CoordinateTransform,
-) -> xr.DataArray:
+) -> "DataArray":
     """Export a level of a :class:`MultiscaleImage` to a
     :class:`spatialdata.Image2DModel` or :class:`spatialdata.Image3DModel`.
     """
@@ -264,7 +276,7 @@ def to_spatial_data_multiscale_image(
     scene_id: str,
     scene_dim_map: Dict[str, str],
     transform: somacore.CoordinateTransform,
-) -> xr.DataTree:
+) -> "DataTree":
     """Export a MultiscaleImage to a DataTree."""
 
     # Check for channel axis.
@@ -319,22 +331,15 @@ def to_spatial_data_multiscale_image(
             for scale_transform in sd_scale_transforms
         )
 
-    # Create the datatree
-    image_datasets = {
-        f"scale{index}": xr.Dataset(
-            {
-                "image": dense_nd_array_to_data_array(
-                    uri=image.level_uri(index),
-                    dim_names=new_axis_names,
-                    attrs={
-                        "transform": {scene_id: spatial_data_transformations[index]}
-                    },
-                    context=image.context,
-                )
-            }
+    # Create a sequence of resolution level.
+    image_data_arrays = tuple(
+        dense_nd_array_to_data_array(
+            uri=image.level_uri(index),
+            dim_names=new_axis_names,
+            attrs={"transform": {scene_id: spatial_data_transformations[index]}},
+            context=image.context,
         )
         for index, (soma_name, val) in enumerate(image.levels().items())
-    }
-    multiscale_image = xr.DataTree.from_dict(image_datasets)
+    )
 
-    return multiscale_image
+    return images_to_datatree(image_data_arrays)
