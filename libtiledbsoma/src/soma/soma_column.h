@@ -24,6 +24,7 @@
 #include <span>
 #include <string>
 #include <vector>
+#include <format>
 
 #include "enums.h"
 #include "managed_query.h"
