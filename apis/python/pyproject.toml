@@ -33,9 +33,6 @@ no-lines-before = ["tiledb"]
 "tiledbsoma" = ["tiledbsoma"]
 "tiledb" = ["tiledb"]
 
-[tool.cibuildwheel]
-build-frontend = "setuptools"
-
 [tool.cibuildwheel.environment]
 CMAKE_CXX_FLAGS = "-std=c++20"
 CXX = "g++-13"
