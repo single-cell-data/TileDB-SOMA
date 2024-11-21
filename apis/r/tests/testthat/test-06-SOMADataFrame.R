@@ -194,7 +194,7 @@ test_that("soma_joinid domain lower bound must be zero", {
       uri,
       asch,
       index_column_names = index_column_names,
-      domain = list(soma_joinid=c(2, 99))
+      domain = list(soma_joinid=c(3, 2))
     )
   )
 
@@ -207,12 +207,21 @@ test_that("soma_joinid domain lower bound must be zero", {
     )
   )
 
+  expect_error(
+    SOMADataFrameCreate(
+      uri,
+      asch,
+      index_column_names = index_column_names,
+      domain = list(soma_joinid=c(-1, 0))
+    )
+  )
+
   expect_no_condition(
     SOMADataFrameCreate(
       uri,
       asch,
       index_column_names = index_column_names,
-      domain = list(soma_joinid=c(0, 99))
+      domain = list(soma_joinid=c(2, 99))
     )
   )
 
