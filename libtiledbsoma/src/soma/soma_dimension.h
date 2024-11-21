@@ -60,8 +60,8 @@ class SOMADimension : public virtual SOMAColumn {
         return std::nullopt;
     }
 
-    inline virtual std::optional<std::vector<Enumeration>>
-    tiledb_enumerations() {
+    virtual inline std::optional<std::vector<Enumeration>> tiledb_enumerations()
+        override {
         return std::nullopt;
     }
 
