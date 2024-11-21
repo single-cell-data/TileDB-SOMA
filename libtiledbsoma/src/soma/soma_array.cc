@@ -1046,9 +1046,8 @@ void SOMAArray::_set_soma_joinid_shape_helper(
                     case TILEDB_CHAR:
                     case TILEDB_GEOM_WKB:
                     case TILEDB_GEOM_WKT:
-                        // TODO: make these named constants b/c they're shared
-                        // with arrow_adapter.
-                        ndrect.set_range(dim_name, "", "\xff");
+                        // See comments in soma_array.h.
+                        ndrect.set_range(dim_name, "", "\x7f");
                         break;
 
                     case TILEDB_INT8:
@@ -1427,8 +1426,9 @@ void SOMAArray::_set_domain_helper(
                 auto lo_hi = ArrowAdapter::get_table_string_column_by_index(
                     newdomain, i);
                 if (lo_hi[0] == "" && lo_hi[1] == "") {
-                    // Don't care -> as big as possible
-                    ndrect.set_range(dim_name, "", "\xff");
+                    // Don't care -> as big as possible.
+                        // See comments in soma_array.h.
+                    ndrect.set_range(dim_name, "", "\x7f");
                 } else {
                     throw TileDBSOMAError(std::format(
                         "domain (\"{}\", \"{}\") cannot be set for "

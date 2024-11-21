@@ -1126,8 +1126,9 @@ ArraySchema ArrowAdapter::tiledb_schema_from_arrow_schema(
                     std::string hi = strings[4];
                     if (lo == "" && hi == "") {
                         // These mean "I the caller don't care, you
-                        // libtiledbsoma make it as big as possible"
-                        ndrect.set_range(col_name, "", "\xff");
+                        // libtiledbsoma make it as big as possible".
+                        // See also comments in soma_array.h.
+                        ndrect.set_range(col_name, "", "\x7f");
                     } else {
                         ndrect.set_range(col_name, lo, hi);
                         LOG_DEBUG(std::format(
