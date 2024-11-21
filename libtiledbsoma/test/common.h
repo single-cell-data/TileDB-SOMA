@@ -61,6 +61,13 @@ static const std::string src_path = TILEDBSOMA_SOURCE_ROOT;
 
 namespace helper {
 
+// This non-obvious number is:
+// * Something that fits into signed 32-bit integer for R-friendliness;
+// * Is a comfortable tile-extent distance away from 2^31-1 for default
+//   core tile extent. (Using 2^31-1 exactly would result in a core
+//   array-creation error.)
+const int CORE_DOMAIN_MAX = 2147483646;
+
 // E.g. "d0" is of type TILEDB_INT64 with dim_max 1000 and current-domain
 // feature enabled
 struct DimInfo {
