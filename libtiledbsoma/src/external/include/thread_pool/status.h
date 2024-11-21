@@ -59,7 +59,7 @@
 
 #define tdb_delete_array(p) \
   if (p) {                  \
-    delete[] p;             \
+    free((void *)p);        \
   }
 #define tdb_new_array(T, size) (T*)malloc(size * sizeof(T))
 
