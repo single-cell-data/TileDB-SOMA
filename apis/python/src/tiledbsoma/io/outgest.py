@@ -26,7 +26,6 @@ import anndata as ad
 import numpy as np
 import pandas as pd
 import pyarrow as pa
-import scipy.sparse as sp
 
 from .. import (
     Collection,
@@ -238,12 +237,12 @@ def to_anndata(
 ) -> ad.AnnData:
     """Converts the experiment group to AnnData format.
 
-    The choice of matrix formats is following what we often see in input ``.h5ad`` files:
+    The choice of matrix formats follows AnnData conventions:
 
     * ``X`` as ``scipy.sparse.csr_matrix``
     * ``obs``, ``var`` as ``pandas.dataframe``
     * ``obsm``, ``varm`` arrays as ``numpy.ndarray``
-    * ``obsp``, ``varp`` arrays as ``scipy.sparse.csr_matrix``
+    * ``obsp``, ``varp`` arrays as ``numpy.ndarray``
 
     The ``X_layer_name`` is the name of the TileDB-SOMA measurement's ``X``
     collection which will be outgested to the resulting AnnData object's
@@ -340,10 +339,14 @@ def to_anndata(
 
     obsm = {}
     if "obsm" in measurement:
+        # Width hints were a necessary workaround for lack of reliable stored
+        # shape until TileDB-SOMA 1.15. For arrays created before TileDB-SOMA
+        # 1.15, we still need these. See also
+        # https://github.com/single-cell-data/TileDB-SOMA/issues/2407
         obsm_width_hints = obsm_varm_width_hints.get("obsm", {})
         for key in measurement.obsm.keys():
             obsm[key] = tp.submit(
-                _extract_obsm_or_varm,
+                _extract_obsm_obsp_varm_varp,
                 measurement.obsm[key],
                 "obsm",
                 key,
@@ -353,10 +356,14 @@ def to_anndata(
 
     varm = {}
     if "varm" in measurement:
+        # Width hints were a necessary workaround for lack of reliable stored
+        # shape until TileDB-SOMA 1.15. For arrays created before TileDB-SOMA
+        # 1.15, we still need these. See also
+        # https://github.com/single-cell-data/TileDB-SOMA/issues/2407
         varm_width_hints = obsm_varm_width_hints.get("obsm", {})
         for key in measurement.varm.keys():
             varm[key] = tp.submit(
-                _extract_obsm_or_varm,
+                _extract_obsm_obsp_varm_varp,
                 measurement.varm[key],
                 "varm",
                 key,
@@ -366,33 +373,27 @@ def to_anndata(
 
     obsp = {}
     if "obsp" in measurement:
-
-        def load_obsp(measurement: Measurement, key: str, nobs: int) -> sp.csr_matrix:
-            A = measurement.obsp[key]
-            return conversions.csr_from_coo_table(
-                _read_partitioned_sparse(A, nobs),
-                nobs,
-                nobs,
-                A.context,
-            )
-
         for key in measurement.obsp.keys():
-            obsp[key] = tp.submit(load_obsp, measurement, key, nobs)
+            obsp[key] = tp.submit(
+                _extract_obsm_obsp_varm_varp,
+                measurement.obsp[key],
+                "obsp",
+                key,
+                nobs,
+                {},
+            )
 
     varp = {}
     if "varp" in measurement:
-
-        def load_varp(measurement: Measurement, key: str, nvar: int) -> sp.csr_matrix:
-            A = measurement.varp[key]
-            return conversions.csr_from_coo_table(
-                _read_partitioned_sparse(A, nvar),
-                nvar,
-                nvar,
-                A.context,
-            )
-
         for key in measurement.varp.keys():
-            varp[key] = tp.submit(load_varp, measurement, key, nvar)
+            varp[key] = tp.submit(
+                _extract_obsm_obsp_varm_varp,
+                measurement.varp[key],
+                "varp",
+                key,
+                nvar,
+                {},
+            )
 
     uns_future: Future[Dict[str, FutureUnsDictNode]] | None = None
     if "uns" in measurement:
@@ -436,7 +437,7 @@ def to_anndata(
     return anndata
 
 
-def _extract_obsm_or_varm(
+def _extract_obsm_obsp_varm_varp(
     soma_nd_array: Union[SparseNDArray, DenseNDArray],
     collection_name: str,
     element_name: str,
@@ -444,7 +445,8 @@ def _extract_obsm_or_varm(
     width_configs: Dict[str, int],
 ) -> Matrix:
     """
-    This is a helper function for ``to_anndata`` of ``obsm`` and ``varm`` elements.
+    This is a helper function for ``to_anndata`` of ``obsm``, ``obsp``,
+    ``varm``, and ``varp`` elements.
     """
 
     # SOMA shape is capacity/domain -- not what AnnData wants.
@@ -478,6 +480,10 @@ def _extract_obsm_or_varm(
     # * Bounding-box metadata, if present
     # * Try arithmetic on nnz / num_rows, for densely occupied sparse matrices
     # Beyond that, we have to throw.
+    #
+    # Note: for arrays created at TileDB-SOMA 1.15 and after, we do have
+    # a reliable shape property. See also
+    # https://github.com/single-cell-data/TileDB-SOMA/issues/2407
 
     description = f'{collection_name}["{element_name}"]'
 
