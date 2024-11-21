@@ -35,10 +35,10 @@
 
 #include <algorithm>
 #include <any>
+#include <format>
 #include <optional>
 #include <string>
 #include <vector>
-#include <format>
 
 #include "enums.h"
 #include "managed_query.h"
@@ -53,14 +53,7 @@ class SOMAColumn {
     //===================================================================
     //= public non-static
     //===================================================================
-
-    /**
-     * Construct a new SOMAColumn object.
-     *
-     * @param ctx TileDB context
-     */
-    SOMAColumn(const Context& ctx)
-        : ctx(ctx){};
+    SOMAColumn() = default;
     SOMAColumn(const SOMAColumn&) = default;
     SOMAColumn(SOMAColumn&&) = default;
     SOMAColumn& operator=(const SOMAColumn&) = default;
@@ -125,36 +118,31 @@ class SOMAColumn {
         bool if_not_empty = false) const = 0;
 
     /**
-     * @brief Returns true if the SOMAColumn has a non-empty current domain,
-     * else false.  Note that this only should be used if the SOMAColumn objects
-     * is being constructed during schema generation. If a SOMAArray is already
-     * present this function should not be used.
-     */
-    virtual bool has_current_domain() = 0;
-
-    /**
      * Get the domain kind of the SOMAColumn as an ArrowArray for use with
      * R/Python API.
      */
     virtual ArrowArray* arrow_domain_slot(
-        Array& array, enum Domainish which_kind) const = 0;
+        const SOMAContext& ctx,
+        Array& array,
+        enum Domainish which_kind) const = 0;
 
     /**
      * Get the SOMAColumn encoded as an ArrowSchema for use with R/Python API.
      */
     virtual ArrowSchema* arrow_schema_slot(
-        const Context& ctx, Array& array) = 0;
+        const SOMAContext& ctx, Array& array) = 0;
 
     /**
      * Get the domain kind of the SOMAColumn.
      */
     template <typename T>
-    std::pair<T, T> domain_slot(Array& array, enum Domainish which_kind) const {
+    std::pair<T, T> domain_slot(
+        const SOMAContext& ctx, Array& array, enum Domainish which_kind) const {
         switch (which_kind) {
             case Domainish::kind_core_domain:
                 return core_domain_slot<T>();
             case Domainish::kind_core_current_domain:
-                return core_current_domain_slot<T>(array);
+                return core_current_domain_slot<T>(ctx, array);
             case Domainish::kind_non_empty_domain:
                 return non_empty_domain_slot<T>(array);
             default:
@@ -193,7 +181,9 @@ class SOMAColumn {
      */
     template <typename T>
     void set_dim_point(
-        const std::unique_ptr<ManagedQuery>& query, const T& point) const {
+        const std::unique_ptr<ManagedQuery>& query,
+        const SOMAContext& ctx,
+        const T& point) const {
         if (!isIndexColumn()) {
             throw TileDBSOMAError(std::format(
                 "[SOMAColumn] Column with name {} is not an index column",
@@ -215,6 +205,7 @@ class SOMAColumn {
     template <typename T>
     void set_dim_points(
         const std::unique_ptr<ManagedQuery>& query,
+        const SOMAContext& ctx,
         const std::vector<T>& points) const {
         if (!isIndexColumn()) {
             throw TileDBSOMAError(std::format(
@@ -237,6 +228,7 @@ class SOMAColumn {
     template <typename T>
     void set_dim_ranges(
         const std::unique_ptr<ManagedQuery>& query,
+        const SOMAContext& ctx,
         const std::vector<std::pair<T, T>>& ranges) const {
         if (!isIndexColumn()) {
             throw TileDBSOMAError(std::format(
@@ -300,10 +292,11 @@ class SOMAColumn {
      * @return Pair of [lower, upper] inclusive bounds.
      */
     template <typename T>
-    std::pair<T, T> core_current_domain_slot(Array& array) const {
+    std::pair<T, T> core_current_domain_slot(
+        const SOMAContext& ctx, Array& array) const {
         try {
             return std::any_cast<std::pair<T, T>>(
-                _core_current_domain_slot(array));
+                _core_current_domain_slot(ctx, array));
         } catch (const std::exception& e) {
             throw TileDBSOMAError(e.what());
         }
@@ -312,10 +305,12 @@ class SOMAColumn {
    protected:
     virtual void _set_dim_points(
         const std::unique_ptr<ManagedQuery>& query,
+        const SOMAContext& ctx,
         const std::any& points) const = 0;
 
     virtual void _set_dim_ranges(
         const std::unique_ptr<ManagedQuery>& query,
+        const SOMAContext& ctx,
         const std::any& ranges) const = 0;
 
     virtual void _set_current_domain_slot(
@@ -326,9 +321,8 @@ class SOMAColumn {
 
     virtual std::any _non_empty_domain_slot(Array& array) const = 0;
 
-    virtual std::any _core_current_domain_slot(Array& array) const = 0;
-
-    const Context& ctx;
+    virtual std::any _core_current_domain_slot(
+        const SOMAContext& ctx, Array& array) const = 0;
 };
 
 template <>
@@ -337,7 +331,8 @@ std::pair<std::string, std::string> SOMAColumn::core_domain_slot<std::string>()
 
 template <>
 std::pair<std::string, std::string>
-SOMAColumn::core_current_domain_slot<std::string>(Array& array) const;
+SOMAColumn::core_current_domain_slot<std::string>(
+    const SOMAContext& ctx, Array& array) const;
 
 }  // namespace tiledbsoma
 #endif
