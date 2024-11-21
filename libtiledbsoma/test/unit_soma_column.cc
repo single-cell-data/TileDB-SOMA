@@ -27,241 +27,92 @@
  *
  * @section DESCRIPTION
  *
- * This file manages unit tests for implementation of SOMAColumn class. This is
- * temparary and to be removed once SOMAColumn is fully integrated.
+ * This file manages unit tests for implementation of SOMAColumn class
  */
 
-#include <format>
-#include <tiledb/tiledb>
 #include <tiledbsoma/tiledbsoma>
 #include "common.h"
 
-const int64_t SOMA_JOINID_DIM_MAX = 99;
-const int64_t SOMA_JOINID_RESIZE_DIM_MAX = 199;
-
-// This is a keystroke-reduction fixture for some similar unit-test cases For
-// convenience there are dims/attrs of type int64, uint32, and string. (Feel
-// free to add more types.) The main value-adds of this fixture are (a) simple
-// keystroke-reduction; (b) you get to pick which ones are the dim(s) and which
-// are the attr(s).
-struct VariouslyIndexedDataFrameFixture {
-    std::shared_ptr<SOMAContext> ctx_;
-    std::string uri_;
-
-    //  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    // Using Catch2's TEST_CASE_METHOD we can't pass constructor args.
-    // This is a call-after-construction method.
-    void set_up(std::shared_ptr<SOMAContext> ctx, std::string uri) {
-        ctx_ = ctx;
-        uri_ = uri;
-    }
-
-    //  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    // Helpers for setting up dim/attr configs and data
-    static const inline int64_t i64_dim_max = SOMA_JOINID_DIM_MAX;
-    static const inline int64_t u32_dim_max = 9999;
-    static const inline int64_t str_dim_max = 0;  // not used for string dims
-
-    static const inline std::string i64_name = "soma_joinid";
-    static const inline std::string u32_name = "myuint32";
-    static const inline std::string str_name = "mystring";
-
-    tiledb_datatype_t i64_datatype = TILEDB_INT64;
-    tiledb_datatype_t u32_datatype = TILEDB_UINT32;
-    tiledb_datatype_t str_datatype = TILEDB_STRING_ASCII;
-
-    std::string i64_arrow_format = ArrowAdapter::tdb_to_arrow_type(
-        i64_datatype);
-    std::string u32_arrow_format = ArrowAdapter::tdb_to_arrow_type(
-        u32_datatype);
-    std::string attr_1_arrow_format = ArrowAdapter::tdb_to_arrow_type(
-        str_datatype);
-
-    helper::DimInfo i64_dim_info() {
-        return helper::DimInfo(
-            {.name = i64_name,
-             .tiledb_datatype = i64_datatype,
-             .dim_max = i64_dim_max,
-             .string_lo = "N/A",
-             .string_hi = "N/A"});
-    }
-    helper::DimInfo u32_dim_info() {
-        return helper::DimInfo(
-            {.name = u32_name,
-             .tiledb_datatype = u32_datatype,
-             .dim_max = u32_dim_max,
-             .string_lo = "N/A",
-             .string_hi = "N/A"});
-    }
-    helper::DimInfo str_dim_info(std::string string_lo, std::string string_hi) {
-        return helper::DimInfo(
-            {.name = str_name,
-             .tiledb_datatype = str_datatype,
-             .dim_max = str_dim_max,
-             .string_lo = string_lo,
-             .string_hi = string_hi});
-    }
-
-    helper::AttrInfo i64_attr_info(std::string name = i64_name) {
-        return helper::AttrInfo(
-            {.name = name, .tiledb_datatype = i64_datatype});
-    }
-    helper::AttrInfo u32_attr_info() {
-        return helper::AttrInfo(
-            {.name = u32_name, .tiledb_datatype = u32_datatype});
-    }
-    helper::AttrInfo str_attr_info() {
-        return helper::AttrInfo(
-            {.name = str_name, .tiledb_datatype = str_datatype});
-    }
-
-    //  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    // Helper methods for create/open/write/etc.
-
-    void create(
-        const std::vector<helper::DimInfo>& dim_infos,
-        const std::vector<helper::AttrInfo>& attr_infos) {
-        auto [schema, index_columns] =
-            helper::create_arrow_schema_and_index_columns(
-                dim_infos, attr_infos);
-        SOMADataFrame::create(
-            uri_,
-            std::move(schema),
-            ArrowTable(
-                std::move(index_columns.first),
-                std::move(index_columns.second)),
-            ctx_);
-    }
-
-    void create(
-        const std::vector<helper::DimInfo>& dim_infos,
-        const std::vector<helper::AttrInfo>& attr_infos,
-        const PlatformConfig& platform_config,
-        std::optional<TimestampRange> timestamp_range = std::nullopt) {
-        auto [schema, index_columns] =
-            helper::create_arrow_schema_and_index_columns(
-                dim_infos, attr_infos);
-        SOMADataFrame::create(
-            uri_,
-            std::move(schema),
-            ArrowTable(
-                std::move(index_columns.first),
-                std::move(index_columns.second)),
-            ctx_,
-            platform_config,
-            timestamp_range);
-    }
-
-    std::unique_ptr<SOMADataFrame> open(
-        OpenMode mode,
-        ResultOrder result_order = ResultOrder::automatic,
-        std::optional<TimestampRange> timestamp_range = std::nullopt) {
-        return SOMADataFrame::open(
-            uri_,
-            mode,
-            ctx_,
-            {},  // column_names
-            result_order,
-            timestamp_range);
-    }
-
-    void write_sjid_u32_str_data_from(int64_t sjid_base) {
-        auto sdf = SOMADataFrame::open(uri_, OpenMode::write, ctx_);
-
-        auto i64_data = std::vector<int64_t>({sjid_base + 1, sjid_base + 2});
-
-        auto u32_data = std::vector<uint32_t>({1234, 5678});
-
-        // We like to think we're writing an array of strings ...
-        auto strings = std::vector<std::string>({"apple", "bat"});
-        // ... but really we're writing an array of characters along
-        // with offsets data.
-        //
-        // It would be possible here to just hard-code a string "applebat" and
-        // an offsets array {0, 5, 8}. The following bits simply automate that.
-        std::string char_data("");
-        std::vector<uint64_t> char_offsets(0);
-        uint64_t offset = 0;
-        for (auto e : strings) {
-            char_data += e;
-            char_offsets.push_back(offset);
-            offset += e.size();
-        }
-        char_offsets.push_back(offset);
-
-        sdf->set_column_data(i64_name, i64_data.size(), i64_data.data());
-        sdf->set_column_data(
-            str_name, strings.size(), char_data.data(), char_offsets.data());
-        sdf->set_column_data(u32_name, u32_data.size(), u32_data.data());
-        sdf->write();
-
-        sdf->close();
-    }
-};
-
 TEST_CASE("SOMAColumn: SOMADimension") {
+    auto use_current_domain = GENERATE(false, true);
     auto ctx = std::make_shared<SOMAContext>();
     PlatformConfig platform_config{};
 
-    std::vector<helper::DimInfo> dim_infos(
-        {helper::DimInfo(
-             {.name = "dimension",
-              .tiledb_datatype = TILEDB_UINT32,
-              .dim_max = 100,
-              .string_lo = "N/A",
-              .string_hi = "N/A"}),
-         helper::DimInfo(
-             {.name = "dimension",
-              .tiledb_datatype = TILEDB_FLOAT64,
-              .dim_max = 100,
-              .string_lo = "N/A",
-              .string_hi = "N/A"}),
-         helper::DimInfo(
-             {.name = "dimension",
-              .tiledb_datatype = TILEDB_INT64,
-              .dim_max = 100,
-              .string_lo = "N/A",
-              .string_hi = "N/A"}),
-         helper::DimInfo(
-             {.name = "dimension",
-              .tiledb_datatype = TILEDB_STRING_ASCII,
-              .dim_max = 100,
-              .string_lo = "N/A",
-              .string_hi = "N/A"})});
+    SECTION(std::format("- use_current_domain={}", use_current_domain)) {
+        std::vector<helper::DimInfo> dim_infos(
+            {helper::DimInfo(
+                 {.name = "dimension",
+                  .tiledb_datatype = TILEDB_UINT32,
+                  .dim_max = 100,
+                  .string_lo = "N/A",
+                  .string_hi = "N/A",
+                  .use_current_domain = use_current_domain}),
+             helper::DimInfo(
+                 {.name = "dimension",
+                  .tiledb_datatype = TILEDB_FLOAT64,
+                  .dim_max = 100,
+                  .string_lo = "N/A",
+                  .string_hi = "N/A",
+                  .use_current_domain = use_current_domain}),
+             helper::DimInfo(
+                 {.name = "dimension",
+                  .tiledb_datatype = TILEDB_INT64,
+                  .dim_max = 100,
+                  .string_lo = "N/A",
+                  .string_hi = "N/A",
+                  .use_current_domain = use_current_domain}),
+             helper::DimInfo(
+                 {.name = "dimension",
+                  .tiledb_datatype = TILEDB_STRING_ASCII,
+                  .dim_max = 100,
+                  .string_lo = "N/A",
+                  .string_hi = "N/A",
+                  .use_current_domain = use_current_domain})});
 
-    std::vector<helper::DimInfo> geom_dim_infos({helper::DimInfo(
-        {.name = "dimension",
-         .tiledb_datatype = TILEDB_GEOM_WKB,
-         .dim_max = 100,
-         .string_lo = "N/A",
-         .string_hi = "N/A"})});
+        std::vector<helper::DimInfo> geom_dim_infos({helper::DimInfo(
+            {.name = "dimension",
+             .tiledb_datatype = TILEDB_GEOM_WKB,
+             .dim_max = 100,
+             .string_lo = "N/A",
+             .string_hi = "N/A",
+             .use_current_domain = use_current_domain})});
 
-    std::vector<helper::DimInfo> spatial_dim_infos(
-        {helper::DimInfo(
-             {.name = "x",
-              .tiledb_datatype = TILEDB_FLOAT64,
-              .dim_max = 200,
-              .string_lo = "N/A",
-              .string_hi = "N/A"}),
-         helper::DimInfo(
-             {.name = "y",
-              .tiledb_datatype = TILEDB_FLOAT64,
-              .dim_max = 100,
-              .string_lo = "N/A",
-              .string_hi = "N/A"})});
+        std::vector<helper::DimInfo> spatial_dim_infos(
+            {helper::DimInfo(
+                 {.name = "x",
+                  .tiledb_datatype = TILEDB_FLOAT64,
+                  .dim_max = 200,
+                  .string_lo = "N/A",
+                  .string_hi = "N/A",
+                  .use_current_domain = use_current_domain}),
+             helper::DimInfo(
+                 {.name = "y",
+                  .tiledb_datatype = TILEDB_FLOAT64,
+                  .dim_max = 100,
+                  .string_lo = "N/A",
+                  .string_hi = "N/A",
+                  .use_current_domain = use_current_domain})});
 
-    auto index_columns = helper::create_column_index_info(dim_infos);
+        auto index_columns = helper::create_column_index_info(dim_infos);
 
-    std::vector<std::shared_ptr<SOMAColumn>> columns;
+        std::vector<std::shared_ptr<SOMAColumn>> columns;
+        bool has_current_domain = true;
 
-    for (int64_t i = 0; i < index_columns.second->n_children; ++i) {
-        columns.push_back(SOMADimension::create(
-            ctx->tiledb_ctx(),
-            index_columns.second->children[i],
-            index_columns.first->children[i],
-            "SOMAGeometryDataFrame",
-            "",
-            platform_config));
+        for (int64_t i = 0; i < index_columns.second->n_children; ++i) {
+            columns.push_back(SOMADimension::create(
+                ctx->tiledb_ctx(),
+                index_columns.second->children[i],
+                index_columns.first->children[i],
+                "SOMAGeometryDataFrame",
+                "",
+                platform_config,
+                has_current_domain));
+
+            REQUIRE(has_current_domain == use_current_domain);
+            REQUIRE(
+                columns.back()->tiledb_dimensions().value()[0].type() ==
+                dim_infos[i].tiledb_datatype);
+        }
 
         REQUIRE(
             columns.back()->tiledb_dimensions().value()[0].type() ==
