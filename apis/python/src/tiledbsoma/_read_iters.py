@@ -29,6 +29,7 @@ import pyarrow as pa
 import somacore
 from scipy import sparse
 from somacore import options
+from typing_extensions import Self
 
 # This package's pybind11 code
 import tiledbsoma.pytiledbsoma as clib
@@ -583,52 +584,53 @@ class ArrowTableRead:
 
         self.mq.setup_read()
 
-    def __iter__(self):
+    def __iter__(self) -> Self:
         return self
 
     def __next__(self) -> pa.Table:
         return self.mq.next()
 
-def _arrow_table_reader(
-    array: SOMAArray,
-    coords: Union[
-        options.SparseDFCoords, options.SparseNDCoords, options.DenseNDCoords
-    ],
-    column_names: Optional[Sequence[str]],
-    result_order: clib.ResultOrder,
-    value_filter: Optional[str],
-    platform_config: Optional[options.PlatformConfig],
-) -> Iterator[pa.Table]:
-    """Private. Simple Table iterator on any Array"""
 
-    sr = array._handle._handle
+# def _arrow_table_reader(
+#     array: SOMAArray,
+#     coords: Union[
+#         options.SparseDFCoords, options.SparseNDCoords, options.DenseNDCoords
+#     ],
+#     column_names: Optional[Sequence[str]],
+#     result_order: clib.ResultOrder,
+#     value_filter: Optional[str],
+#     platform_config: Optional[options.PlatformConfig],
+# ) -> Iterator[pa.Table]:
+#     """Private. Simple Table iterator on any Array"""
 
-    if platform_config is not None:
-        cfg = sr.context().config()
-        cfg.update(platform_config)
-        ctx = clib.SOMAContext(cfg)
-    else:
-        ctx = sr.context()
+#     sr = array._handle._handle
 
-    mq = clib.ManagedQuery(sr, ctx)
+#     if platform_config is not None:
+#         cfg = sr.context().config()
+#         cfg.update(platform_config)
+#         ctx = clib.SOMAContext(cfg)
+#     else:
+#         ctx = sr.context()
 
-    mq.set_layout(result_order)
+#     mq = clib.ManagedQuery(sr, ctx)
 
-    if column_names is not None:
-        mq.select_columns(list(column_names))
+#     mq.set_layout(result_order)
 
-    if value_filter is not None:
-        mq.set_condition(QueryCondition(value_filter), sr.schema)
+#     if column_names is not None:
+#         mq.select_columns(list(column_names))
 
-    _util._set_coords(mq, sr, coords)
+#     if value_filter is not None:
+#         mq.set_condition(QueryCondition(value_filter), sr.schema)
 
-    mq.setup_read()
-    if mq.is_empty_query():
-        yield mq.results()
-    else:
-        while not mq.is_complete(True):
-            mq.submit_read()
-            yield mq.results()
+#     _util._set_coords(mq, sr, coords)
+
+#     mq.setup_read()
+#     if mq.is_empty_query():
+#         yield mq.results()
+#     else:
+#         while not mq.is_complete(True):
+#             mq.submit_read()
+#             yield mq.results()
 
 
 def _coords_strider(
