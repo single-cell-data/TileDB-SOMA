@@ -30,21 +30,21 @@ class SOMAGeometryColumn : public virtual SOMAColumn {
         : dimensions(dimensions)
         , attribute(attribute){};
 
-    inline std::string name() const {
+    virtual inline std::string name() const override {
         return SOMA_GEOMETRY_COLUMN_NAME;
     }
 
-    inline bool isIndexColumn() const {
+    virtual inline bool isIndexColumn() const override {
         return true;
     }
 
-    inline virtual void select_columns(
+    virtual inline void select_columns(
         const std::unique_ptr<ManagedQuery>& query,
         bool if_not_empty = false) const override {
         query->select_columns(std::vector({attribute.name()}), if_not_empty);
     };
 
-    inline soma_column_datatype_t type() const {
+    virtual inline soma_column_datatype_t type() const override {
         return soma_column_datatype_t::SOMA_COLUMN_GEOMETRY;
     }
 
@@ -64,8 +64,8 @@ class SOMAGeometryColumn : public virtual SOMAColumn {
         return std::vector({attribute});
     }
 
-    inline virtual std::optional<std::vector<Enumeration>>
-    tiledb_enumerations() {
+    virtual inline std::optional<std::vector<Enumeration>> tiledb_enumerations()
+        override {
         return std::nullopt;
     }
 
@@ -83,7 +83,7 @@ class SOMAGeometryColumn : public virtual SOMAColumn {
         const SOMAContext& ctx,
         const std::any& points) const override;
 
-    void _set_dim_ranges(
+    virtual void _set_dim_ranges(
         const std::unique_ptr<ManagedQuery>& query,
         const SOMAContext& ctx,
         const std::any& ranges) const override;
