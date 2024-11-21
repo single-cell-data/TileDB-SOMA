@@ -1882,20 +1882,20 @@ def test_bounds_on_somajoinid_domain(tmp_path):
         soma.DataFrame.create(
             uri,
             schema=schema,
-            domain=[[2, 99]],
+            domain=[[0, -1]],
         )
 
     with pytest.raises(ValueError):
         soma.DataFrame.create(
             uri,
             schema=schema,
-            domain=[[0, -1]],
+            domain=[[-1, 2]],
         )
 
     soma.DataFrame.create(
         uri,
         schema=schema,
-        domain=[[0, 99]],
+        domain=[[2, 99]],
     )
 
     assert soma.DataFrame.exists(uri)

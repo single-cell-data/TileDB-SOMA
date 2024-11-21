@@ -66,11 +66,12 @@ SOMADataFrame <- R6::R6Class(
       )
 
       if ("soma_joinid" %in% index_column_names && !is.null(domain)) {
-        lower <- domain[["soma_joinid"]][1]
-        upper <- domain[["soma_joinid"]][2]
+        lower_bound <- domain[["soma_joinid"]][1]
+        upper_bound <- domain[["soma_joinid"]][2]
         stopifnot(
-          "The lower bound for soma_joinid domain must be 0" = lower == 0,
-          "The upper bound for soma_joinid domain must be >= 0" = upper >= 0
+          "The lower bound for soma_joinid domain must be >= 0" = lower_bound >= 0,
+          "The upper bound for soma_joinid domain must be >= 0" = upper_bound >= 0,
+          "The upper bound for soma_joinid domain must be >= the lower bound" = upper_bound >= lower_bound
           )
       }
 
