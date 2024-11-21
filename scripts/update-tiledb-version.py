@@ -50,6 +50,7 @@ def update_version(filepath, new_version, new_hash, update_sha=True):
     old_version = None
     old_hash = None
     sha1 = None
+    error = False
 
     filepath = os.path.realpath(filepath)
     print(f"Updating {filepath}")
@@ -88,11 +89,17 @@ def update_version(filepath, new_version, new_hash, update_sha=True):
                         m = re.search(r'"(https://.*)"', line)
                         if m:
                             sha1 = hash_url_file(m.group(1))
+                            if sha1 is None:
+                                error = True
 
             # print line to file
             print(line)
 
     print(f"  old version = {old_version}-{old_hash}")
+
+    if error:
+        print("Not all artifacts were found.")
+        exit(1)
 
 
 def main(args):
