@@ -213,7 +213,7 @@ class SOMAColumn {
                 name()));
         }
 
-        this->_set_dim_points(query, points);
+        this->_set_dim_points(query, ctx, points);
     }
 
     /**
@@ -236,7 +236,7 @@ class SOMAColumn {
                 name()));
         }
 
-        this->_set_dim_ranges(query, ranges);
+        this->_set_dim_ranges(query, ctx, ranges);
     }
 
     /**
