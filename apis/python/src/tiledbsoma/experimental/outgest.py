@@ -5,6 +5,7 @@
 from typing import Dict, Optional, Tuple, Union
 
 import geopandas as gpd
+import pandas as pd
 import somacore
 import spatialdata as sd
 import xarray as xr
@@ -78,6 +79,45 @@ def _transform_to_spatial_data(
         f"Support for converting transform of type {type(transform).__name__} is not "
         f"yet implemented."
     )
+
+
+def to_spatial_data_points(
+    points: PointCloudDataFrame,
+    *,
+    scene_id: str,
+    scene_dim_map: Dict[str, str],
+    transform: somacore.CoordinateTransform,
+    soma_joinid_name: str,
+) -> pd.DataFrame:
+    """Export a :class:`PointCloudDataFrame` to a :class:`spatialdata.ShapesModel.
+
+    Args:
+        points: The point cloud data frame to convert to SpatialData shapes.
+        scene_id: The ID of the scene this point cloud dataframe is from.
+        scene_dim_map: A mapping from the axis names of the scene to the corresponding
+            SpatialData dimension names.
+        transform: The transformation from the coordinate space of the scene this point
+            cloud is in to the coordinate space of the point cloud.
+        soma_joinid: The name to use for the SOMA joinid.
+    """
+
+    # Get the axis names for the spatial data shapes.
+    orig_axis_names = points.coordinate_space.axis_names
+    new_axis_names, points_dim_map = _convert_axis_names(orig_axis_names)
+
+    # Create the SpatialData transform from the points to the Scene (inverse of the
+    # transform SOMA stores).
+    transforms = {
+        scene_id: _transform_to_spatial_data(
+            transform.inverse_transform(), points_dim_map, scene_dim_map
+        )
+    }
+
+    # Read the pandas dataframe, rename SOMA_JOINID, add metadata, and return.
+    df: pd.DataFrame = points.read().concat().to_pandas()
+    df.rename(columns={SOMA_JOINID: soma_joinid_name}, inplace=True)
+    df.attrs["transform"] = transforms
+    return df
 
 
 def to_spatial_data_shapes(
