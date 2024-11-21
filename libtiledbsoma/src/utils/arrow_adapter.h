@@ -338,6 +338,21 @@ class ArrowAdapter {
     static std::unique_ptr<ArrowSchema> arrow_schema_from_tiledb_array(
         std::shared_ptr<Context> ctx, std::shared_ptr<Array> tiledb_array);
 
+    /** @brief Create a an ArrowSchema from TileDB Dimension
+     *
+     * @return ArrowSchema
+     */
+    static std::unique_ptr<ArrowSchema> arrow_schema_from_tiledb_dimension(
+        const Dimension& dimension);
+
+    /**
+     * @brief Create a an ArrowSchema from TileDB Attribute
+     *
+     * @return ArrowSchema
+     */
+    static std::unique_ptr<ArrowSchema> arrow_schema_from_tiledb_attribute(
+        Attribute& attribute, const Context& ctx, const Array& tiledb_array);
+
     /**
      * @brief Get members of the TileDB Schema in the form of a
      * PlatformSchemaConfig
@@ -480,6 +495,15 @@ class ArrowAdapter {
     }
 
     static void log_make_arrow_array_child(ArrowArray* child);
+
+    template <typename T>
+    static ArrowArray* make_arrow_array_child_var(
+        const std::pair<std::vector<T>, std::vector<T>>& pair) {
+        std::vector<T> v = pair.first;
+        v.insert(v.end(), pair.second.begin(), pair.second.end());
+        ArrowArray* child = make_arrow_array_child<T>(v);
+        return child;
+    }
 
     static ArrowArray* make_arrow_array_child_string(
         const std::pair<std::string, std::string>& pair) {
@@ -816,6 +840,12 @@ class ArrowAdapter {
                 "Arrow string, large_string, binary, or large_binary");
         }
     }
+
+    static void set_current_domain_slot(
+        tiledb_datatype_t type,
+        const void* buff,
+        NDRectangle& ndrect,
+        std::string name);
 
    private:
     static std::pair<const void*, std::size_t> _get_data_and_length(
