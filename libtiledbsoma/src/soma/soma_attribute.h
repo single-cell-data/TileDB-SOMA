@@ -36,7 +36,7 @@ class SOMAAttribute : public virtual SOMAColumn {
         return false;
     }
 
-    inline virtual void select_columns(
+    virtual inline void select_columns(
         const std::unique_ptr<ManagedQuery>& query,
         bool if_not_empty = false) const override {
         query->select_columns(std::vector({attribute.name()}), if_not_empty);
