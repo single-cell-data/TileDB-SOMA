@@ -8,6 +8,7 @@ import json
 import pathlib
 import time
 import urllib.parse
+from concurrent.futures import Future
 from itertools import zip_longest
 from typing import (
     Any,
@@ -608,3 +609,18 @@ def _set_coord_by_numeric_slice(
         return
     except AttributeError:
         return
+
+
+def _resolve_futures(unresolved: Dict[str, Any], deep: bool = False) -> Dict[str, Any]:
+    """Resolves any futures found in the dict."""
+    resolved = {}
+    for k, v in unresolved.items():
+        if isinstance(v, Future):
+            v = v.result()
+
+        if deep and isinstance(v, dict):
+            v = _resolve_futures(v, deep=deep)
+
+        resolved[k] = v
+
+    return resolved

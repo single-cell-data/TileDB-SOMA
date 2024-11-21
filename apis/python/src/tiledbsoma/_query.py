@@ -6,7 +6,7 @@
 """Implementation of a SOMA Experiment.
 """
 import enum
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import Future, ThreadPoolExecutor
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -17,7 +17,6 @@ from typing import (
     Optional,
     Protocol,
     Sequence,
-    Tuple,
     TypeVar,
     cast,
     overload,
@@ -55,9 +54,10 @@ from typing_extensions import Self
 
 if TYPE_CHECKING:
     from ._experiment import Experiment
-from ._fast_csr import read_csr
+from ._fastercsx import CompressedMatrix
 from ._measurement import Measurement
 from ._sparse_nd_array import SparseNDArray
+from ._util import _resolve_futures
 
 _T = TypeVar("_T")
 _T_co = TypeVar("_T_co", covariant=True)
@@ -202,17 +202,11 @@ class ExperimentAxisQuery:
     the underlying X NDArray. API features such as ``n_obs`` and ``n_vars``
     codify this in the API.
 
-    IMPORTANT: you must call ``close()`` on any instance of this class to
-    release underlying resources. The ExperimentAxisQuery is a context manager,
-    and it is recommended that you use the following pattern to make this easy
-    and safe::
+    The ExperimentAxisQuery is a context manager and it is recommended that
+    you use the following pattern::
 
         with ExperimentAxisQuery(...) as query:
             ...
-
-    This base query implementation is designed to work against any SOMA
-    implementation that fulfills the basic APIs. A SOMA implementation may
-    include a custom query implementation optimized for its own use.
 
     Lifecycle: maturing
     """
@@ -475,21 +469,11 @@ class ExperimentAxisQuery:
 
     # Context management
 
-    def close(self) -> None:
-        pass
-
     def __enter__(self) -> Self:
         return self
 
     def __exit__(self, *_: Any) -> None:
-        self.close()
-
-    def __del__(self) -> None:
-        """Ensure that we're closed when our last ref disappears."""
-        self.close()
-        # If any superclass in our MRO has a __del__, call it.
-        sdel = getattr(super(), "__del__", lambda: None)
-        sdel()
+        pass
 
     # Internals
 
@@ -538,44 +522,41 @@ class ExperimentAxisQuery:
                 raise NotImplementedError("Dense array unsupported")
             all_x_arrays[_xname] = x_array
 
-        def _read_axis_mappings(
-            fn: Callable[[Axis, str], npt.NDArray[Any]],
-            axis: Axis,
-            keys: Sequence[str],
-        ) -> Dict[str, npt.NDArray[Any]]:
-            return {key: fn(axis, key) for key in keys}
-
-        obsm_ft = self._threadpool.submit(
-            _read_axis_mappings, self._axism_inner_ndarray, Axis.OBS, obsm_layers
+        obs_table, var_table = self._threadpool.map(
+            self._read_axis_dataframe,
+            (Axis.OBS, Axis.VAR),
+            (column_names, column_names),
         )
-        obsp_ft = self._threadpool.submit(
-            _read_axis_mappings, self._axisp_inner_ndarray, Axis.OBS, obsp_layers
-        )
-        varm_ft = self._threadpool.submit(
-            _read_axis_mappings, self._axism_inner_ndarray, Axis.VAR, varm_layers
-        )
-        varp_ft = self._threadpool.submit(
-            _read_axis_mappings, self._axisp_inner_ndarray, Axis.VAR, varp_layers
-        )
-
-        obs_table, var_table = self._read_both_axes(column_names)
-
         obs_joinids = self.obs_joinids()
         var_joinids = self.var_joinids()
 
         x_matrices = {
-            _xname: (
-                read_csr(
-                    layer,
-                    obs_joinids,
-                    var_joinids,
-                    index_factory=self._index_factory,
-                ).to_scipy()
+            _xname: self._threadpool.submit(
+                _read_as_csr, layer, obs_joinids, var_joinids, self._indexer
             )
             for _xname, layer in all_x_arrays.items()
         }
+        x_future = x_matrices.pop(X_name)
 
-        x = x_matrices.pop(X_name)
+        def _read_axis_mappings(
+            fn: Callable[[Axis, str], npt.NDArray[Any]],
+            axis: Axis,
+            keys: Sequence[str],
+        ) -> Dict[str, Future[npt.NDArray[Any]]]:
+            return {key: self._threadpool.submit(fn, axis, key) for key in keys}
+
+        obsm_future = _read_axis_mappings(
+            self._axism_inner_ndarray, Axis.OBS, obsm_layers
+        )
+        obsp_future = _read_axis_mappings(
+            self._axisp_inner_ndarray, Axis.OBS, obsp_layers
+        )
+        varm_future = _read_axis_mappings(
+            self._axism_inner_ndarray, Axis.VAR, varm_layers
+        )
+        varp_future = _read_axis_mappings(
+            self._axisp_inner_ndarray, Axis.VAR, varp_layers
+        )
 
         obs = obs_table.to_pandas()
         obs.index = obs.index.astype(str)
@@ -586,30 +567,13 @@ class ExperimentAxisQuery:
         return AxisQueryResult(
             obs=obs,
             var=var,
-            X=x,
-            obsm=obsm_ft.result(),
-            obsp=obsp_ft.result(),
-            varm=varm_ft.result(),
-            varp=varp_ft.result(),
-            X_layers=x_matrices,
+            X=x_future.result(),
+            obsm=_resolve_futures(obsm_future),
+            obsp=_resolve_futures(obsp_future),
+            varm=_resolve_futures(varm_future),
+            varp=_resolve_futures(varp_future),
+            X_layers=_resolve_futures(x_matrices),
         )
-
-    def _read_both_axes(
-        self,
-        column_names: AxisColumnNames,
-    ) -> Tuple[pa.Table, pa.Table]:
-        """Reads both axes in their entirety, ensuring soma_joinid is retained."""
-        obs_ft = self._threadpool.submit(
-            self._read_axis_dataframe,
-            Axis.OBS,
-            column_names,
-        )
-        var_ft = self._threadpool.submit(
-            self._read_axis_dataframe,
-            Axis.VAR,
-            column_names,
-        )
-        return obs_ft.result(), var_ft.result()
 
     def _read_axis_dataframe(
         self,
@@ -828,3 +792,83 @@ def load_joinids(df: DataFrame, axq: AxisQuery) -> pa.IntegerArray:
         column_names=["soma_joinid"],
     ).concat()
     return tbl.column("soma_joinid").combine_chunks()
+
+
+def _read_as_csr(
+    matrix: SparseNDArray,
+    obs_joinids_arr: pa.IntegerArray,
+    var_joinids_arr: pa.IntegerArray,
+    indexer: AxisIndexer,
+) -> sp.csr_matrix:
+
+    obs_joinids = obs_joinids_arr.to_numpy()
+    var_joinids = var_joinids_arr.to_numpy()
+    nnz = matrix.nnz
+
+    d0_dtype = np.int32 if len(obs_joinids) > np.iinfo(np.int32).max else np.int64
+    d1_dtype = np.int32 if len(var_joinids) > np.iinfo(np.int32).max else np.int64
+    pa_schema = pa.schema(
+        [
+            pa.field("soma_dim_0", pa.from_numpy_dtype(d0_dtype)),
+            pa.field("soma_dim_1", pa.from_numpy_dtype(d1_dtype)),
+            matrix.schema.field("soma_data"),
+        ]
+    )
+
+    def _read_and_reindex(
+        X: SparseNDArray, oids: npt.NDArray[np.int64], vids: npt.NDArray[np.int64]
+    ) -> pa.Table:
+        def _reindex(batch: pa.RecordBatch) -> pa.RecordBatch:
+            return pa.RecordBatch.from_pydict(
+                {
+                    "soma_dim_0": indexer.by_obs(batch["soma_dim_0"]).astype(d0_dtype),
+                    "soma_dim_1": indexer.by_var(batch["soma_dim_1"]).astype(d1_dtype),
+                    "soma_data": batch["soma_data"],
+                },
+                schema=pa_schema,
+            )
+
+        return pa.Table.from_batches(
+            (
+                _reindex(_batch)
+                for _tbl in X.read(coords=(oids, vids)).tables()
+                for _batch in _tbl.to_batches()
+            ),
+            schema=pa_schema,
+        )
+
+    approx_X_shape = tuple(b - a + 1 for a, b in matrix.non_empty_domain())
+    # heuristically derived number (benchmarking). Thesis is that this is roughly 80% of a 1 GiB io buffer,
+    # which is the default for SOMA.
+    target_point_count = 96 * 1024**2
+    # compute partition size from array density and target point count, rounding to nearest 1024.
+    partition_size = (
+        max(1024 * round(approx_X_shape[0] * target_point_count / nnz / 1024), 1024)
+        if nnz > 0
+        else approx_X_shape[0]
+    )
+    splits = list(
+        range(
+            partition_size,
+            len(obs_joinids) - partition_size + 1,
+            partition_size,
+        )
+    )
+    if len(splits) > 0:
+        obs_joinids_splits = np.array_split(np.partition(obs_joinids, splits), splits)
+        tp = matrix.context.threadpool
+        tbl = pa.concat_tables(
+            tp.map(
+                _read_and_reindex,
+                (matrix,) * len(obs_joinids_splits),
+                obs_joinids_splits,
+                (var_joinids,) * len(obs_joinids_splits),
+            )
+        )
+
+    else:
+        tbl = _read_and_reindex(matrix, obs_joinids, var_joinids)
+
+    return CompressedMatrix.from_soma(
+        tbl, (len(obs_joinids), len(var_joinids)), "csr", True, matrix.context
+    ).to_scipy()
