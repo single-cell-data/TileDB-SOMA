@@ -59,9 +59,9 @@
 
 #define tdb_delete_array(p) \
   if (p) {                  \
-    free((void *)p);        \
+    delete[] p;             \
   }
-#define tdb_new_array(T, size) (T*)malloc(size * sizeof(T))
+#define tdb_new_array(T, size) (new T[size])
 
 namespace tiledbsoma {
 
