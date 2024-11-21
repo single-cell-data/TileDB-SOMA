@@ -1427,7 +1427,7 @@ void SOMAArray::_set_domain_helper(
                     newdomain, i);
                 if (lo_hi[0] == "" && lo_hi[1] == "") {
                     // Don't care -> as big as possible.
-                        // See comments in soma_array.h.
+                    // See comments in soma_array.h.
                     ndrect.set_range(dim_name, "", "\x7f");
                 } else {
                     throw TileDBSOMAError(std::format(
