@@ -532,11 +532,11 @@ class ExperimentAxisQuery:
 
         x_matrices = {
             _xname: self._threadpool.submit(
-                _read_csr, layer, obs_joinids, var_joinids, self._indexer
+                _read_as_csr, layer, obs_joinids, var_joinids, self._indexer
             )
             for _xname, layer in all_x_arrays.items()
         }
-        x_ft = x_matrices.pop(X_name)
+        x_future = x_matrices.pop(X_name)
 
         def _read_axis_mappings(
             fn: Callable[[Axis, str], npt.NDArray[Any]],
@@ -545,10 +545,18 @@ class ExperimentAxisQuery:
         ) -> Dict[str, Future[npt.NDArray[Any]]]:
             return {key: self._threadpool.submit(fn, axis, key) for key in keys}
 
-        obsm_ft = _read_axis_mappings(self._axism_inner_ndarray, Axis.OBS, obsm_layers)
-        obsp_ft = _read_axis_mappings(self._axisp_inner_ndarray, Axis.OBS, obsp_layers)
-        varm_ft = _read_axis_mappings(self._axism_inner_ndarray, Axis.VAR, varm_layers)
-        varp_ft = _read_axis_mappings(self._axisp_inner_ndarray, Axis.VAR, varp_layers)
+        obsm_future = _read_axis_mappings(
+            self._axism_inner_ndarray, Axis.OBS, obsm_layers
+        )
+        obsp_future = _read_axis_mappings(
+            self._axisp_inner_ndarray, Axis.OBS, obsp_layers
+        )
+        varm_future = _read_axis_mappings(
+            self._axism_inner_ndarray, Axis.VAR, varm_layers
+        )
+        varp_future = _read_axis_mappings(
+            self._axisp_inner_ndarray, Axis.VAR, varp_layers
+        )
 
         obs = obs_table.to_pandas()
         obs.index = obs.index.astype(str)
@@ -559,11 +567,11 @@ class ExperimentAxisQuery:
         return AxisQueryResult(
             obs=obs,
             var=var,
-            X=x_ft.result(),
-            obsm=_resolve_futures(obsm_ft),
-            obsp=_resolve_futures(obsp_ft),
-            varm=_resolve_futures(varm_ft),
-            varp=_resolve_futures(varp_ft),
+            X=x_future.result(),
+            obsm=_resolve_futures(obsm_future),
+            obsp=_resolve_futures(obsp_future),
+            varm=_resolve_futures(varm_future),
+            varp=_resolve_futures(varp_future),
             X_layers=_resolve_futures(x_matrices),
         )
 
@@ -786,7 +794,7 @@ def load_joinids(df: DataFrame, axq: AxisQuery) -> pa.IntegerArray:
     return tbl.column("soma_joinid").combine_chunks()
 
 
-def _read_csr(
+def _read_as_csr(
     matrix: SparseNDArray,
     obs_joinids_arr: pa.IntegerArray,
     var_joinids_arr: pa.IntegerArray,
@@ -830,9 +838,12 @@ def _read_csr(
         )
 
     approx_X_shape = tuple(b - a + 1 for a, b in matrix.non_empty_domain())
-    tgt_point_count = 96 * 1024**2
+    # heuristically derived number (benchmarking). Thesis is that this is roughly 80% of a 1 GiB io buffer,
+    # which is the default for SOMA.
+    target_point_count = 96 * 1024**2
+    # compute partition size from array density and target point count, rounding to nearest 1024.
     partition_size = (
-        max(1024 * round(approx_X_shape[0] * tgt_point_count / nnz / 1024), 1024)
+        max(1024 * round(approx_X_shape[0] * target_point_count / nnz / 1024), 1024)
         if nnz > 0
         else approx_X_shape[0]
     )
