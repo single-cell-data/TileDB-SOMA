@@ -34,6 +34,7 @@ add_library(TILEDB_SOMA_OBJECTS OBJECT
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_group.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_object.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_column.cc
+  ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_dimension.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_collection.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_experiment.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_measurement.cc
@@ -208,6 +209,7 @@ install(FILES
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_array.h
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_group.h
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_column.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_dimension.h
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_collection.h
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_dataframe.h
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_dense_ndarray.h
