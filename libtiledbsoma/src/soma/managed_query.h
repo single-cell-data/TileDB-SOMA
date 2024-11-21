@@ -423,6 +423,10 @@ class ManagedQuery {
         return query_->query_status();
     }
 
+    bool is_first_read() const {
+        return !query_submitted_;
+    }
+
    private:
     //===================================================================
     //= private non-static

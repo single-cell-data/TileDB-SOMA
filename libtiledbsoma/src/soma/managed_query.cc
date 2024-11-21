@@ -381,6 +381,7 @@ void ManagedQuery::_fill_in_subarrays_if_dense_with_new_shape(
 
 std::shared_ptr<ArrayBuffers> ManagedQuery::results() {
     if (is_empty_query()) {
+        query_submitted_ = true;
         return buffers_;
     }
 
