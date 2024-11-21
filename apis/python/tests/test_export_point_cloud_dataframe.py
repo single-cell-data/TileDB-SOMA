@@ -48,7 +48,7 @@ def test_export_to_shapes_2d(sample_point_cloud_dataframe_2d):
         ),
     )
 
-    # Validate that this is validate storage for the SpatialData "Shapes"
+    # Check this is valid storage for the SpatialData "Shapes" model.
     spatialdata.models.ShapesModel.validate(shape)
 
     # Check the dataframe.
@@ -84,7 +84,7 @@ def test_export_to_points_2d(sample_point_cloud_dataframe_2d):
         ),
     )
 
-    # Validate that this is validate storage for the SpatialData "Shapes"
+    # Check this is valid storage for the SpatialData "Points" model.
     spatialdata.models.PointsModel.validate(points)
 
     # Check the dataframe.
