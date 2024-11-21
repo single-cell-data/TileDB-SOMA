@@ -119,16 +119,26 @@ class CompressedMatrix:
         ``soma_dim_0``, ``soma_dim_1`` and ``soma_data``. All arrays in each table column must
         contain the same chunk count/size, and the dimension columns must be int64.
         """
-        tables = tables if isinstance(tables, collections.abc.Sequence) else (tables,)
+        tbl = (
+            pa.concat_tables(tables)
+            if isinstance(tables, collections.abc.Sequence)
+            else tables
+        )
 
         def chunks(a: pa.Array | pa.ChunkedArray) -> List[pa.Array]:
             return (
                 list(a) if isinstance(a, pa.Array) else cast(List[pa.Array], a.chunks)
             )
 
-        i = tuple(a.to_numpy() for tbl in tables for a in chunks(tbl["soma_dim_0"]))
-        j = tuple(a.to_numpy() for tbl in tables for a in chunks(tbl["soma_dim_1"]))
-        d = tuple(a.to_numpy() for tbl in tables for a in chunks(tbl["soma_data"]))
+        if len(tbl) > 0:
+            i = tuple(a.to_numpy() for a in chunks(tbl["soma_dim_0"]))
+            j = tuple(a.to_numpy() for a in chunks(tbl["soma_dim_1"]))
+            d = tuple(a.to_numpy() for a in chunks(tbl["soma_data"]))
+        else:
+            i = (tbl["soma_dim_0"].to_numpy(),)
+            j = (tbl["soma_dim_1"].to_numpy(),)
+            d = (tbl["soma_data"].to_numpy(),)
+
         return CompressedMatrix.from_ijd(i, j, d, shape, format, make_sorted, context)
 
     @property

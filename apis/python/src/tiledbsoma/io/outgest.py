@@ -41,6 +41,7 @@ from .. import (
 from .._constants import SOMA_JOINID
 from .._exception import SOMAError
 from .._types import NPNDArray, Path
+from .._util import _resolve_futures
 from . import conversions
 from ._common import (
     _DATAFRAME_ORIGINAL_INDEX_NAME_JSON,
@@ -106,7 +107,7 @@ def _read_partitioned_sparse(X: SparseNDArray, d0_size: int) -> pa.Table:
     # Partition dimension 0 based on a target point count and average
     # density of matrix. Magic number determined empirically, as a tradeoff
     # between concurrency and fixed query overhead.
-    tgt_point_count = 92 * 1024**2
+    tgt_point_count = 96 * 1024**2
     partition_sz = (
         max(1024 * round(d0_size * tgt_point_count / X.nnz / 1024), 1024)
         if X.nnz > 0
@@ -607,18 +608,3 @@ def _outgest_uns_2d_string_array(pdf: pd.DataFrame, uri_for_logging: str) -> NPN
             raise SOMAError(f"Expected {column_name} column in {uri_for_logging}")
         columns.append(list(pdf[column_name]))
     return np.asarray(columns).transpose()
-
-
-def _resolve_futures(unresolved: Dict[str, Any], deep: bool = False) -> Dict[str, Any]:
-    """Helper. Resolves any futures found in the dict."""
-    resolved = {}
-    for k, v in unresolved.items():
-        if isinstance(v, Future):
-            v = v.result()
-
-        if deep and isinstance(v, dict):
-            v = _resolve_futures(v, deep=deep)
-
-        resolved[k] = v
-
-    return resolved
