@@ -5,6 +5,7 @@ import hashlib
 import os
 import re
 import sys
+import urllib.error
 from fileinput import FileInput
 from subprocess import run
 from urllib.request import urlopen
@@ -13,15 +14,19 @@ from urllib.request import urlopen
 def hash_url_file(url):
     """Return SHA1 hash of the file located at the provided url."""
 
-    print(f"URL {url}", file=sys.stderr)
     BLOCK_SIZE = 65536
     hash = hashlib.sha1()
-    with urlopen(url) as fp:
-        while True:
-            data = fp.read(BLOCK_SIZE)
-            if not data:
-                return hash.hexdigest()
-            hash.update(data)
+    try:
+        with urlopen(url) as fp:
+            print(f"URL  {url}", file=sys.stderr)
+            while True:
+                data = fp.read(BLOCK_SIZE)
+                if not data:
+                    return hash.hexdigest()
+                hash.update(data)
+    except urllib.error.HTTPError:
+        print(f"FAIL {url}", file=sys.stderr)
+        return None
 
 
 def get_version_hash(version):
