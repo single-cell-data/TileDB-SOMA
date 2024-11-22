@@ -53,15 +53,13 @@ TEST_CASE("SOMAGeometryDataFrame: basic", "[SOMAGeometryDataFrame]") {
                   .tiledb_datatype = TILEDB_INT64,
                   .dim_max = SOMA_JOINID_DIM_MAX,
                   .string_lo = "N/A",
-                  .string_hi = "N/A",
-                  .use_current_domain = use_current_domain}),
+                  .string_hi = "N/A"}),
              helper::DimInfo(
                  {.name = "soma_geometry",
                   .tiledb_datatype = TILEDB_GEOM_WKB,
                   .dim_max = 100,
                   .string_lo = "N/A",
-                  .string_hi = "N/A",
-                  .use_current_domain = use_current_domain})});
+                  .string_hi = "N/A"})});
 
         std::vector<helper::DimInfo> spatial_dim_infos(
             {helper::DimInfo(
@@ -69,15 +67,13 @@ TEST_CASE("SOMAGeometryDataFrame: basic", "[SOMAGeometryDataFrame]") {
                   .tiledb_datatype = TILEDB_FLOAT64,
                   .dim_max = 200,
                   .string_lo = "N/A",
-                  .string_hi = "N/A",
-                  .use_current_domain = use_current_domain}),
+                  .string_hi = "N/A"}),
              helper::DimInfo(
                  {.name = "y",
                   .tiledb_datatype = TILEDB_FLOAT64,
                   .dim_max = 100,
                   .string_lo = "N/A",
-                  .string_hi = "N/A",
-                  .use_current_domain = use_current_domain})});
+                  .string_hi = "N/A"})});
 
         std::vector<helper::AttrInfo> attr_infos({helper::AttrInfo(
             {.name = "quality", .tiledb_datatype = TILEDB_FLOAT64})});
@@ -164,15 +160,13 @@ TEST_CASE("SOMAGeometryDataFrame: Roundtrip", "[SOMAGeometryDataFrame]") {
                   .tiledb_datatype = TILEDB_INT64,
                   .dim_max = SOMA_JOINID_DIM_MAX,
                   .string_lo = "N/A",
-                  .string_hi = "N/A",
-                  .use_current_domain = use_current_domain}),
+                  .string_hi = "N/A"}),
              helper::DimInfo(
                  {.name = "soma_geometry",
                   .tiledb_datatype = TILEDB_GEOM_WKB,
                   .dim_max = 100,
                   .string_lo = "N/A",
-                  .string_hi = "N/A",
-                  .use_current_domain = use_current_domain})});
+                  .string_hi = "N/A"})});
 
         std::vector<helper::DimInfo> spatial_dim_infos(
             {helper::DimInfo(
@@ -180,15 +174,13 @@ TEST_CASE("SOMAGeometryDataFrame: Roundtrip", "[SOMAGeometryDataFrame]") {
                   .tiledb_datatype = TILEDB_FLOAT64,
                   .dim_max = 200,
                   .string_lo = "N/A",
-                  .string_hi = "N/A",
-                  .use_current_domain = use_current_domain}),
+                  .string_hi = "N/A"}),
              helper::DimInfo(
                  {.name = "y",
                   .tiledb_datatype = TILEDB_FLOAT64,
                   .dim_max = 100,
                   .string_lo = "N/A",
-                  .string_hi = "N/A",
-                  .use_current_domain = use_current_domain})});
+                  .string_hi = "N/A"})});
 
         std::vector<helper::AttrInfo> attr_infos({helper::AttrInfo(
             {.name = "quality", .tiledb_datatype = TILEDB_FLOAT64})});

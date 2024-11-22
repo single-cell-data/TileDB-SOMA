@@ -124,11 +124,10 @@ create_arrow_schema_and_index_columns(
 ArrowTable create_column_index_info(const std::vector<DimInfo>& dim_infos) {
     for (auto info : dim_infos) {
         LOG_DEBUG(std::format(
-            "create_column_index_info name={} type={} dim_max={} ucd={}",
+            "create_column_index_info name={} type={} dim_max={}",
             info.name,
             tiledb::impl::to_str(info.tiledb_datatype),
-            info.dim_max,
-            info.use_current_domain));
+            info.dim_max));
     }
 
     auto index_cols_info_schema = create_index_cols_info_schema(dim_infos);

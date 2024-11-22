@@ -61,8 +61,7 @@ TEST_CASE("SOMASparseNDArray: basic", "[SOMASparseNDArray]") {
               .tiledb_datatype = dim_tiledb_datatype,
               .dim_max = dim_max,
               .string_lo = "N/A",
-              .string_hi = "N/A",
-              .use_current_domain = use_current_domain}});
+              .string_hi = "N/A"}});
 
         auto index_columns = helper::create_column_index_info(dim_infos);
 
@@ -95,9 +94,6 @@ TEST_CASE("SOMASparseNDArray: basic", "[SOMASparseNDArray]") {
 
         auto expect = std::vector<int64_t>({shape});
         REQUIRE(snda->shape() == expect);
-        if (!use_current_domain) {
-            REQUIRE(snda->maxshape() == expect);
-        }
 
         snda->close();
 
@@ -136,54 +132,26 @@ TEST_CASE("SOMASparseNDArray: basic", "[SOMASparseNDArray]") {
         REQUIRE_THROWS(snda->write());
         snda->close();
 
-        if (!use_current_domain) {
-            auto new_shape = std::vector<int64_t>({shape});
+        auto new_shape = std::vector<int64_t>({shape * 2});
 
-            snda = SOMASparseNDArray::open(uri, OpenMode::write, ctx);
-            // Without current-domain support: this should throw since
-            // one cannot resize what has not been sized.
-            REQUIRE(!snda->has_current_domain());
-            REQUIRE_THROWS(snda->resize(new_shape, "testing"));
-            // Now set the shape
-            snda->upgrade_shape(new_shape, "testing");
-            snda->close();
+        snda = SOMASparseNDArray::open(uri, OpenMode::write, ctx);
+        // Should throw since this already has a shape (core current
+        // domain).
+        REQUIRE_THROWS(snda->upgrade_shape(new_shape, "testing"));
+        snda->resize(new_shape, "testing");
+        snda->close();
 
-            snda->open(OpenMode::read);
-            REQUIRE(snda->has_current_domain());
-            snda->close();
+        // Try out-of-bounds write after resize.
+        snda->open(OpenMode::write);
+        snda->set_column_data(dim_name, d0b.size(), d0b.data());
+        snda->set_column_data(attr_name, a0b.size(), a0b.data());
+        // Implicitly checking for no throw
+        snda->write();
+        snda->close();
 
-            snda->open(OpenMode::write);
-            REQUIRE(snda->has_current_domain());
-            // Should not fail since we're setting it to what it already is.
-            snda->resize(new_shape, "testing");
-            snda->close();
-
-            snda->open(OpenMode::read);
-            REQUIRE(snda->shape() == new_shape);
-            snda->close();
-
-        } else {
-            auto new_shape = std::vector<int64_t>({shape * 2});
-
-            snda = SOMASparseNDArray::open(uri, OpenMode::write, ctx);
-            // Should throw since this already has a shape (core current
-            // domain).
-            REQUIRE_THROWS(snda->upgrade_shape(new_shape, "testing"));
-            snda->resize(new_shape, "testing");
-            snda->close();
-
-            // Try out-of-bounds write after resize.
-            snda->open(OpenMode::write);
-            snda->set_column_data(dim_name, d0b.size(), d0b.data());
-            snda->set_column_data(attr_name, a0b.size(), a0b.data());
-            // Implicitly checking for no throw
-            snda->write();
-            snda->close();
-
-            snda->open(OpenMode::read);
-            REQUIRE(snda->shape() == new_shape);
-            snda->close();
-        }
+        snda->open(OpenMode::read);
+        REQUIRE(snda->shape() == new_shape);
+        snda->close();
     }
 }
 
@@ -210,8 +178,7 @@ TEST_CASE("SOMASparseNDArray: platform_config", "[SOMASparseNDArray]") {
               .tiledb_datatype = dim_tiledb_datatype,
               .dim_max = dim_max,
               .string_lo = "N/A",
-              .string_hi = "N/A",
-              .use_current_domain = use_current_domain}});
+              .string_hi = "N/A"}});
 
         auto index_columns = helper::create_column_index_info(dim_infos);
 
@@ -258,8 +225,7 @@ TEST_CASE("SOMASparseNDArray: metadata", "[SOMASparseNDArray]") {
               .tiledb_datatype = dim_tiledb_datatype,
               .dim_max = dim_max,
               .string_lo = "N/A",
-              .string_hi = "N/A",
-              .use_current_domain = use_current_domain}});
+              .string_hi = "N/A"}});
 
         auto index_columns = helper::create_column_index_info(dim_infos);
 
@@ -350,8 +316,7 @@ TEST_CASE(
           .tiledb_datatype = dim_tiledb_datatype,
           .dim_max = dim_max,
           .string_lo = "N/A",
-          .string_hi = "N/A",
-          .use_current_domain = true}});
+          .string_hi = "N/A"}});
 
     auto index_columns = helper::create_column_index_info(dim_infos);
 
@@ -412,8 +377,7 @@ TEST_CASE("SOMASparseNDArray: can_resize", "[SOMASparseNDArray]") {
           .tiledb_datatype = dim_tiledb_datatype,
           .dim_max = dim_max,
           .string_lo = "N/A",
-          .string_hi = "N/A",
-          .use_current_domain = true}});
+          .string_hi = "N/A"}});
 
     auto index_columns = helper::create_column_index_info(dim_infos);
 
