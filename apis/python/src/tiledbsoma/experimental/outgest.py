@@ -5,11 +5,6 @@
 import warnings
 from typing import TYPE_CHECKING, Dict, Optional, Tuple, Union
 
-try:
-    import geopandas as gpd
-except ImportError as err:
-    warnings.warn("Experimental spatial outgestor requires the geopandas package.")
-    raise err
 import pandas as pd
 import somacore
 
@@ -17,6 +12,11 @@ try:
     import spatialdata as sd
 except ImportError as err:
     warnings.warn("Experimental spatial outgestor requires the spatialdata package.")
+    raise err
+try:
+    import geopandas as gpd
+except ImportError as err:
+    warnings.warn("Experimental spatial outgestor requires the geopandas package.")
     raise err
 
 from .. import MultiscaleImage, PointCloudDataFrame
