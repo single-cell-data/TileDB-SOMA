@@ -187,64 +187,40 @@ static std::unique_ptr<ArrowArray> _create_index_cols_info_array(
         // SOMADataFrame objects baseline-tested in C++, then defer exhaustive
         // loop-over-all-datatypes handling to Python and R.
         if (info.tiledb_datatype == TILEDB_INT64) {
-            if (info.use_current_domain) {
-                // domain big; current_domain small
-                std::vector<int64_t> dom(
-                    {0, CORE_DOMAIN_MAX, 1, 0, info.dim_max});
-                dim_array = ArrowAdapter::make_arrow_array_child(dom);
-            } else {
-                // domain small; current_domain feature not being used
-                std::vector<int64_t> dom({0, info.dim_max, 1});
-                dim_array = ArrowAdapter::make_arrow_array_child(dom);
-            }
-
+              // domain big; current_domain small
+              std::vector<int64_t> dom(
+                  {0, CORE_DOMAIN_MAX, 1, 0, info.dim_max});
+              dim_array = ArrowAdapter::make_arrow_array_child(dom);
         } else if (info.tiledb_datatype == TILEDB_UINT32) {
-            if (info.use_current_domain) {
-                // domain big; current_domain small
-                std::vector<uint32_t> dom(
-                    {0,
-                     (uint32_t)CORE_DOMAIN_MAX,
-                     1,
-                     0,
-                     (uint32_t)info.dim_max});
-                dim_array = ArrowAdapter::make_arrow_array_child(dom);
-            } else {
-                // domain small; current_domain feature not being used
-                std::vector<uint32_t> dom({0, (uint32_t)info.dim_max, 1});
-                dim_array = ArrowAdapter::make_arrow_array_child(dom);
-            }
+              // domain big; current_domain small
+              std::vector<uint32_t> dom(
+                  {0,
+                   (uint32_t)CORE_DOMAIN_MAX,
+                   1,
+                   0,
+                   (uint32_t)info.dim_max});
+              dim_array = ArrowAdapter::make_arrow_array_child(dom);
 
         } else if (info.tiledb_datatype == TILEDB_STRING_ASCII) {
             // Domain specification for strings is not supported in core. See
             // arrow_adapter for more info. We rely on arrow_adapter to also
             // handle this case.
-            if (info.use_current_domain) {
-                std::vector<std::string> dom(
-                    {"", "", "", info.string_lo, info.string_hi});
-                dim_array = ArrowAdapter::make_arrow_array_child_string(dom);
-            } else {
-                std::vector<std::string> dom({"", "", ""});
-                dim_array = ArrowAdapter::make_arrow_array_child_string(dom);
-            }
+              std::vector<std::string> dom(
+                  {"", "", "", info.string_lo, info.string_hi});
+              dim_array = ArrowAdapter::make_arrow_array_child_string(dom);
         } else if (info.tiledb_datatype == TILEDB_GEOM_WKB) {
             // No domain can be set for WKB. The domain will be set to the
             // individual spatial axes.
             dim_array = ArrowAdapter::make_arrow_array_child_binary();
         } else if (info.tiledb_datatype == TILEDB_FLOAT64) {
-            if (info.use_current_domain) {
-                // domain big; current_domain small
-                std::vector<double_t> dom(
-                    {0,
-                     (double_t)CORE_DOMAIN_MAX,
-                     1,
-                     0,
-                     (double_t)info.dim_max});
-                dim_array = ArrowAdapter::make_arrow_array_child(dom);
-            } else {
-                // domain small; current_domain feature not being used
-                std::vector<double_t> dom({0, (double_t)info.dim_max, 1});
-                dim_array = ArrowAdapter::make_arrow_array_child(dom);
-            }
+              // domain big; current_domain small
+              std::vector<double_t> dom(
+                  {0,
+                   (double_t)CORE_DOMAIN_MAX,
+                   1,
+                   0,
+                   (double_t)info.dim_max});
+              dim_array = ArrowAdapter::make_arrow_array_child(dom);
         }
 
         if (dim_array == nullptr) {

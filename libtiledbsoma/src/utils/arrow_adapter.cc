@@ -1188,13 +1188,9 @@ std::pair<Dimension, bool> ArrowAdapter::tiledb_dimension_from_arrow_schema(
     FilterList filter_list = ArrowAdapter::_create_dim_filter_list(
         col_name, platform_config, soma_type, ctx);
 
-    if (array->length == 3) {
-        use_current_domain = false;
-    } else if (array->length == 5) {
-        // This is fine
-    } else {
+    if (array->length != 5) {
         throw TileDBSOMAError(std::format(
-            "ArrowAdapter: unexpected length {} for name "
+            "ArrowAdapter: unexpected length {} != 5 for name "
             "{}",
             array->length,
             col_name));
