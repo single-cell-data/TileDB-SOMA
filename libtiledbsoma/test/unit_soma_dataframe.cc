@@ -44,7 +44,6 @@ const int64_t SOMA_JOINID_RESIZE_DIM_MAX = 199;
 struct VariouslyIndexedDataFrameFixture {
     std::shared_ptr<SOMAContext> ctx_;
     std::string uri_;
-    bool use_current_domain_;
 
     //  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     // Using Catch2's TEST_CASE_METHOD we can't pass constructor args.
@@ -201,59 +200,53 @@ TEST_CASE_METHOD(
     VariouslyIndexedDataFrameFixture,
     "SOMADataFrame: basic",
     "[SOMADataFrame]") {
-    auto use_current_domain = GENERATE(true);
+    set_up(std::make_shared<SOMAContext>(), "mem://unit-test-dataframe-basic");
 
-    SECTION(std::format("- use_current_domain={}", use_current_domain)) {
-        set_up(
-            std::make_shared<SOMAContext>(), "mem://unit-test-dataframe-basic");
+    std::vector<helper::DimInfo> dim_infos({i64_dim_info()});
+    std::vector<helper::AttrInfo> attr_infos({u32_attr_info()});
 
-        std::vector<helper::DimInfo> dim_infos({i64_dim_info()});
-        std::vector<helper::AttrInfo> attr_infos({u32_attr_info()});
+    REQUIRE(!SOMADataFrame::exists(uri_, ctx_));
 
-        REQUIRE(!SOMADataFrame::exists(uri_, ctx_));
+    create(dim_infos, attr_infos);
 
-        create(dim_infos, attr_infos);
+    REQUIRE(SOMADataFrame::exists(uri_, ctx_));
+    REQUIRE(!SOMASparseNDArray::exists(uri_, ctx_));
+    REQUIRE(!SOMADenseNDArray::exists(uri_, ctx_));
 
-        REQUIRE(SOMADataFrame::exists(uri_, ctx_));
-        REQUIRE(!SOMASparseNDArray::exists(uri_, ctx_));
-        REQUIRE(!SOMADenseNDArray::exists(uri_, ctx_));
+    auto sdf = open(OpenMode::read);
+    REQUIRE(sdf->uri() == uri_);
+    REQUIRE(sdf->ctx() == ctx_);
+    REQUIRE(sdf->type() == "SOMADataFrame");
+    std::vector<std::string> expected_index_column_names = {dim_infos[0].name};
+    REQUIRE(sdf->index_column_names() == expected_index_column_names);
+    REQUIRE(sdf->nnz() == 0);
+    sdf->close();
 
-        auto sdf = open(OpenMode::read);
-        REQUIRE(sdf->uri() == uri_);
-        REQUIRE(sdf->ctx() == ctx_);
-        REQUIRE(sdf->type() == "SOMADataFrame");
-        std::vector<std::string> expected_index_column_names = {
-            dim_infos[0].name};
-        REQUIRE(sdf->index_column_names() == expected_index_column_names);
-        REQUIRE(sdf->nnz() == 0);
-        sdf->close();
+    std::vector<int64_t> d0(10);
+    for (int j = 0; j < 10; j++)
+        d0[j] = j;
+    std::vector<uint32_t> a0(10, 1);
 
-        std::vector<int64_t> d0(10);
-        for (int j = 0; j < 10; j++)
-            d0[j] = j;
-        std::vector<uint32_t> a0(10, 1);
+    sdf = open(OpenMode::write);
+    sdf->set_column_data(dim_infos[0].name, d0.size(), d0.data());
+    sdf->set_column_data(attr_infos[0].name, a0.size(), a0.data());
+    sdf->write();
+    sdf->close();
 
-        sdf = open(OpenMode::write);
-        sdf->set_column_data(dim_infos[0].name, d0.size(), d0.data());
-        sdf->set_column_data(attr_infos[0].name, a0.size(), a0.data());
-        sdf->write();
-        sdf->close();
-
-        sdf = open(OpenMode::read);
-        while (auto batch = sdf->read_next()) {
-            auto arrbuf = batch.value();
-            auto d0span = arrbuf->at(dim_infos[0].name)->data<int64_t>();
-            auto a0span = arrbuf->at(attr_infos[0].name)->data<uint32_t>();
-            REQUIRE(d0 == std::vector<int64_t>(d0span.begin(), d0span.end()));
-            REQUIRE(a0 == std::vector<uint32_t>(a0span.begin(), a0span.end()));
-        }
-        sdf->close();
-
-        auto soma_object = SOMAObject::open(uri_, OpenMode::read, ctx_);
-        REQUIRE(soma_object->uri() == uri_);
-        REQUIRE(soma_object->type() == "SOMADataFrame");
-        soma_object->close();
+    sdf = open(OpenMode::read);
+    while (auto batch = sdf->read_next()) {
+        auto arrbuf = batch.value();
+        auto d0span = arrbuf->at(dim_infos[0].name)->data<int64_t>();
+        auto a0span = arrbuf->at(attr_infos[0].name)->data<uint32_t>();
+        REQUIRE(d0 == std::vector<int64_t>(d0span.begin(), d0span.end()));
+        REQUIRE(a0 == std::vector<uint32_t>(a0span.begin(), a0span.end()));
     }
+    sdf->close();
+
+    auto soma_object = SOMAObject::open(uri_, OpenMode::read, ctx_);
+    REQUIRE(soma_object->uri() == uri_);
+    REQUIRE(soma_object->type() == "SOMADataFrame");
+    soma_object->close();
 }
 
 TEST_CASE_METHOD(
@@ -302,80 +295,74 @@ TEST_CASE_METHOD(
         std::make_pair(R"("NOOP")", TILEDB_FILTER_NONE));
 
     SECTION(std::format("- filter={}", filter.first)) {
-        auto use_current_domain = GENERATE(true);
-        std::ostringstream section2;
-        section2 << "- use_current_domain=" << use_current_domain;
-        SECTION(section2.str()) {
-            set_up(
-                std::make_shared<SOMAContext>(),
-                "mem://unit-test-dataframe-platform-config");
+        set_up(
+            std::make_shared<SOMAContext>(),
+            "mem://unit-test-dataframe-platform-config");
 
-            PlatformConfig platform_config;
-            platform_config.cell_order = "hilbert";
-            platform_config.dataframe_dim_zstd_level = 6;
-            platform_config.offsets_filters = R"([)" + filter.first + R"(])";
-            platform_config.validity_filters = R"([)" + filter.first + R"(])";
-            if (filter.second != TILEDB_FILTER_WEBP) {
-                platform_config.attrs = R"({"a0": {"filters":[)" +
-                                        filter.first + R"(]}})";
-            }
-
-            std::vector<helper::DimInfo> dim_infos({i64_dim_info()});
-            std::vector<helper::AttrInfo> attr_infos({i64_attr_info("a0")});
-
-            REQUIRE(!SOMADataFrame::exists(uri_, ctx_));
-
-            create(dim_infos, attr_infos, platform_config);
-
-            auto sdf = open(OpenMode::read);
-            auto sch = sdf->tiledb_schema();
-            REQUIRE(
-                sch->offsets_filter_list().filter(0).filter_type() ==
-                filter.second);
-
-            REQUIRE(
-                sch->validity_filter_list().filter(0).filter_type() ==
-                filter.second);
-
-            auto dim_filter = sch->domain()
-                                  .dimension(dim_infos[0].name)
-                                  .filter_list()
-                                  .filter(0);
-            REQUIRE(dim_filter.filter_type() == TILEDB_FILTER_ZSTD);
-            REQUIRE(
-                dim_filter.get_option<int32_t>(TILEDB_COMPRESSION_LEVEL) == 6);
-
-            if (filter.second != TILEDB_FILTER_WEBP) {
-                REQUIRE(
-                    sch->attribute(attr_infos[0].name)
-                        .filter_list()
-                        .filter(0)
-                        .filter_type() == filter.second);
-            }
-
-            auto config_options = sdf->config_options_from_schema();
-            REQUIRE(config_options.capacity == 100000);
-            REQUIRE(config_options.allows_duplicates == false);
-            REQUIRE(config_options.tile_order == "row-major");
-            REQUIRE(config_options.cell_order == "hilbert");
-
-            REQUIRE(
-                json::parse(config_options.offsets_filters)[0].at("name") ==
-                Filter::to_str(filter.second));
-            REQUIRE(
-                json::parse(config_options.validity_filters)[0].at("name") ==
-                Filter::to_str(filter.second));
-            if (filter.second != TILEDB_FILTER_WEBP) {
-                REQUIRE(
-                    json::parse(config_options.attrs)["a0"]["filters"][0].at(
-                        "name") == Filter::to_str(filter.second));
-            }
-            REQUIRE(
-                json::parse(config_options.dims)["soma_joinid"]["filters"][0]
-                    .at("name") == Filter::to_str(TILEDB_FILTER_ZSTD));
-
-            sdf->close();
+        PlatformConfig platform_config;
+        platform_config.cell_order = "hilbert";
+        platform_config.dataframe_dim_zstd_level = 6;
+        platform_config.offsets_filters = R"([)" + filter.first + R"(])";
+        platform_config.validity_filters = R"([)" + filter.first + R"(])";
+        if (filter.second != TILEDB_FILTER_WEBP) {
+            platform_config.attrs = R"({"a0": {"filters":[)" + filter.first +
+                                    R"(]}})";
         }
+
+        std::vector<helper::DimInfo> dim_infos({i64_dim_info()});
+        std::vector<helper::AttrInfo> attr_infos({i64_attr_info("a0")});
+
+        REQUIRE(!SOMADataFrame::exists(uri_, ctx_));
+
+        create(dim_infos, attr_infos, platform_config);
+
+        auto sdf = open(OpenMode::read);
+        auto sch = sdf->tiledb_schema();
+        REQUIRE(
+            sch->offsets_filter_list().filter(0).filter_type() ==
+            filter.second);
+
+        REQUIRE(
+            sch->validity_filter_list().filter(0).filter_type() ==
+            filter.second);
+
+        auto dim_filter = sch->domain()
+                              .dimension(dim_infos[0].name)
+                              .filter_list()
+                              .filter(0);
+        REQUIRE(dim_filter.filter_type() == TILEDB_FILTER_ZSTD);
+        REQUIRE(dim_filter.get_option<int32_t>(TILEDB_COMPRESSION_LEVEL) == 6);
+
+        if (filter.second != TILEDB_FILTER_WEBP) {
+            REQUIRE(
+                sch->attribute(attr_infos[0].name)
+                    .filter_list()
+                    .filter(0)
+                    .filter_type() == filter.second);
+        }
+
+        auto config_options = sdf->config_options_from_schema();
+        REQUIRE(config_options.capacity == 100000);
+        REQUIRE(config_options.allows_duplicates == false);
+        REQUIRE(config_options.tile_order == "row-major");
+        REQUIRE(config_options.cell_order == "hilbert");
+
+        REQUIRE(
+            json::parse(config_options.offsets_filters)[0].at("name") ==
+            Filter::to_str(filter.second));
+        REQUIRE(
+            json::parse(config_options.validity_filters)[0].at("name") ==
+            Filter::to_str(filter.second));
+        if (filter.second != TILEDB_FILTER_WEBP) {
+            REQUIRE(
+                json::parse(config_options.attrs)["a0"]["filters"][0].at(
+                    "name") == Filter::to_str(filter.second));
+        }
+        REQUIRE(
+            json::parse(config_options.dims)["soma_joinid"]["filters"][0].at(
+                "name") == Filter::to_str(TILEDB_FILTER_ZSTD));
+
+        sdf->close();
     }
 }
 
@@ -383,68 +370,62 @@ TEST_CASE_METHOD(
     VariouslyIndexedDataFrameFixture,
     "SOMADataFrame: metadata",
     "[SOMADataFrame]") {
-    auto use_current_domain = GENERATE(true);
+    set_up(std::make_shared<SOMAContext>(), "mem://unit-test-collection");
 
-    SECTION(std::format("- use_current_domain={}", use_current_domain)) {
-        set_up(std::make_shared<SOMAContext>(), "mem://unit-test-collection");
+    std::vector<helper::DimInfo> dim_infos({i64_dim_info()});
+    std::vector<helper::AttrInfo> attr_infos({u32_attr_info()});
 
-        std::vector<helper::DimInfo> dim_infos({i64_dim_info()});
-        std::vector<helper::AttrInfo> attr_infos({u32_attr_info()});
+    REQUIRE(!SOMADataFrame::exists(uri_, ctx_));
 
-        REQUIRE(!SOMADataFrame::exists(uri_, ctx_));
+    create(dim_infos, attr_infos, PlatformConfig(), TimestampRange(0, 2));
 
-        create(dim_infos, attr_infos, PlatformConfig(), TimestampRange(0, 2));
+    auto sdf = open(
+        OpenMode::write, ResultOrder::automatic, TimestampRange(1, 1));
 
-        auto sdf = open(
-            OpenMode::write, ResultOrder::automatic, TimestampRange(1, 1));
+    int32_t val = 100;
+    sdf->set_metadata("md", TILEDB_INT32, 1, &val);
+    sdf->close();
 
-        int32_t val = 100;
-        sdf->set_metadata("md", TILEDB_INT32, 1, &val);
-        sdf->close();
+    // Read metadata
+    sdf->open(OpenMode::read, TimestampRange(0, 2));
+    REQUIRE(sdf->metadata_num() == 3);
+    REQUIRE(sdf->has_metadata("soma_object_type"));
+    REQUIRE(sdf->has_metadata("soma_encoding_version"));
+    REQUIRE(sdf->has_metadata("md"));
+    auto mdval = sdf->get_metadata("md");
+    REQUIRE(std::get<MetadataInfo::dtype>(*mdval) == TILEDB_INT32);
+    REQUIRE(std::get<MetadataInfo::num>(*mdval) == 1);
+    REQUIRE(*((const int32_t*)std::get<MetadataInfo::value>(*mdval)) == 100);
+    sdf->close();
 
-        // Read metadata
-        sdf->open(OpenMode::read, TimestampRange(0, 2));
-        REQUIRE(sdf->metadata_num() == 3);
-        REQUIRE(sdf->has_metadata("soma_object_type"));
-        REQUIRE(sdf->has_metadata("soma_encoding_version"));
-        REQUIRE(sdf->has_metadata("md"));
-        auto mdval = sdf->get_metadata("md");
-        REQUIRE(std::get<MetadataInfo::dtype>(*mdval) == TILEDB_INT32);
-        REQUIRE(std::get<MetadataInfo::num>(*mdval) == 1);
-        REQUIRE(
-            *((const int32_t*)std::get<MetadataInfo::value>(*mdval)) == 100);
-        sdf->close();
+    // md should not be available at (2, 2)
+    sdf->open(OpenMode::read, TimestampRange(2, 2));
+    REQUIRE(sdf->metadata_num() == 2);
+    REQUIRE(sdf->has_metadata("soma_object_type"));
+    REQUIRE(sdf->has_metadata("soma_encoding_version"));
+    REQUIRE(!sdf->has_metadata("md"));
+    sdf->close();
 
-        // md should not be available at (2, 2)
-        sdf->open(OpenMode::read, TimestampRange(2, 2));
-        REQUIRE(sdf->metadata_num() == 2);
-        REQUIRE(sdf->has_metadata("soma_object_type"));
-        REQUIRE(sdf->has_metadata("soma_encoding_version"));
-        REQUIRE(!sdf->has_metadata("md"));
-        sdf->close();
+    // Metadata should also be retrievable in write mode
+    sdf->open(OpenMode::write, TimestampRange(0, 2));
+    REQUIRE(sdf->metadata_num() == 3);
+    REQUIRE(sdf->has_metadata("soma_object_type"));
+    REQUIRE(sdf->has_metadata("soma_encoding_version"));
+    REQUIRE(sdf->has_metadata("md"));
+    mdval = sdf->get_metadata("md");
+    REQUIRE(*((const int32_t*)std::get<MetadataInfo::value>(*mdval)) == 100);
 
-        // Metadata should also be retrievable in write mode
-        sdf->open(OpenMode::write, TimestampRange(0, 2));
-        REQUIRE(sdf->metadata_num() == 3);
-        REQUIRE(sdf->has_metadata("soma_object_type"));
-        REQUIRE(sdf->has_metadata("soma_encoding_version"));
-        REQUIRE(sdf->has_metadata("md"));
-        mdval = sdf->get_metadata("md");
-        REQUIRE(
-            *((const int32_t*)std::get<MetadataInfo::value>(*mdval)) == 100);
+    // Delete and have it reflected when reading metadata while in
+    // write mode
+    sdf->delete_metadata("md");
+    mdval = sdf->get_metadata("md");
+    REQUIRE(!mdval.has_value());
+    sdf->close();
 
-        // Delete and have it reflected when reading metadata while in
-        // write mode
-        sdf->delete_metadata("md");
-        mdval = sdf->get_metadata("md");
-        REQUIRE(!mdval.has_value());
-        sdf->close();
-
-        // Confirm delete in read mode
-        sdf->open(OpenMode::read, TimestampRange(0, 2));
-        REQUIRE(!sdf->has_metadata("md"));
-        REQUIRE(sdf->metadata_num() == 2);
-    }
+    // Confirm delete in read mode
+    sdf->open(OpenMode::read, TimestampRange(0, 2));
+    REQUIRE(!sdf->has_metadata("md"));
+    REQUIRE(sdf->metadata_num() == 2);
 }
 
 TEST_CASE_METHOD(
@@ -490,33 +471,513 @@ TEST_CASE_METHOD(
     VariouslyIndexedDataFrameFixture,
     "SOMADataFrame: standard-indexed dataframe dim-sjid attr-str-u32",
     "[SOMADataFrame]") {
-    auto use_current_domain = GENERATE(true);
+    // We have these:
+    // * upgrade_domain requires the user to specify values for all index
+    //   columns. This is in the spec.
+    // * resize_soma_joinid_shape allows the user to specify only the
+    //   desired soma_joinid shape. This is crucial for experiment-level
+    //   resize as an internal method at the Python level.
+    // Both need testing. Each one adds a shape where there wasn't one
+    // before. So we need to test one or the other on a given run.
+    auto test_upgrade_domain = GENERATE(false, true);
     std::ostringstream section;
-    section << "- use_current_domain=" << use_current_domain;
+    section << "- test_upgrade_domain=" << test_upgrade_domain;
     SECTION(section.str()) {
-        std::string suffix1 = use_current_domain ? "true" : "false";
-        // We have these:
-        // * upgrade_domain requires the user to specify values for all index
-        //   columns. This is in the spec.
-        // * resize_soma_joinid_shape allows the user to specify only the
-        //   desired soma_joinid shape. This is crucial for experiment-level
-        //   resize as an internal method at the Python level.
-        // Both need testing. Each one adds a shape where there wasn't one
-        // before. So we need to test one or the other on a given run.
-        auto test_upgrade_domain = GENERATE(false, true);
-        std::ostringstream section2;
-        section2 << "- test_upgrade_domain=" << test_upgrade_domain;
-        SECTION(section2.str()) {
-            std::string suffix2 = test_upgrade_domain ? "true" : "false";
+        std::string suffix = test_upgrade_domain ? "true" : "false";
 
+        set_up(
+            std::make_shared<SOMAContext>(),
+            "mem://unit-test-variant-indexed-dataframe-1-" + suffix);
+
+        std::vector<helper::DimInfo> dim_infos({i64_dim_info()});
+        std::vector<helper::AttrInfo> attr_infos(
+            {str_attr_info(), u32_attr_info()});
+
+        // Create
+        create(dim_infos, attr_infos);
+
+        // Check current domain
+        auto sdf = open(OpenMode::read);
+
+        CurrentDomain current_domain = sdf->get_current_domain_for_test();
+        REQUIRE(!current_domain.is_empty());
+        REQUIRE(current_domain.type() == TILEDB_NDRECTANGLE);
+        NDRectangle ndrect = current_domain.ndrectangle();
+
+        std::array<int64_t, 2> i64_range = ndrect.range<int64_t>(
+            dim_infos[0].name);
+        REQUIRE(i64_range[0] == (int64_t)0);
+        REQUIRE(i64_range[1] == (int64_t)dim_infos[0].dim_max);
+
+        // Check shape before resize
+        int64_t expect = dim_infos[0].dim_max + 1;
+        std::optional<int64_t> actual = sdf->maybe_soma_joinid_shape();
+        REQUIRE(actual.has_value());
+        REQUIRE(actual.value() == expect);
+
+        REQUIRE(sdf->nnz() == 0);
+
+        sdf->close();
+
+        // Write data
+        write_sjid_u32_str_data_from(0);
+
+        // Check shape after write
+        sdf->open(OpenMode::read);
+
+        REQUIRE(sdf->nnz() == 2);
+
+        expect = dim_infos[0].dim_max + 1;
+        actual = sdf->maybe_soma_joinid_shape();
+        REQUIRE(actual.has_value());
+        REQUIRE(actual.value() == expect);
+
+        // Check domainish accessors before resize
+        ArrowTable non_empty_domain = sdf->get_non_empty_domain();
+        std::vector<int64_t> ned_sjid =
+            ArrowAdapter::get_table_non_string_column_by_name<int64_t>(
+                non_empty_domain, "soma_joinid");
+
+        ArrowTable soma_domain = sdf->get_soma_domain();
+        std::vector<int64_t> dom_sjid =
+            ArrowAdapter::get_table_non_string_column_by_name<int64_t>(
+                soma_domain, "soma_joinid");
+
+        ArrowTable soma_maxdomain = sdf->get_soma_maxdomain();
+        std::vector<int64_t> maxdom_sjid =
+            ArrowAdapter::get_table_non_string_column_by_name<int64_t>(
+                soma_maxdomain, "soma_joinid");
+
+        REQUIRE(ned_sjid == std::vector<int64_t>({1, 2}));
+
+        REQUIRE(dom_sjid == std::vector<int64_t>({0, SOMA_JOINID_DIM_MAX}));
+
+        REQUIRE(maxdom_sjid.size() == 2);
+        REQUIRE(maxdom_sjid[0] == 0);
+        REQUIRE(maxdom_sjid[1] > 2000000000);
+        sdf->close();
+
+        REQUIRE(sdf->nnz() == 2);
+        write_sjid_u32_str_data_from(8);
+        REQUIRE(sdf->nnz() == 4);
+
+        sdf->open(OpenMode::read);
+
+        // Check can_upgrade_domain
+        std::unique_ptr<ArrowSchema>
+            domain_schema = create_index_cols_info_schema(dim_infos);
+        auto domain_array = ArrowAdapter::make_arrow_array_parent(
+            dim_infos.size());
+        // OK since there currently is no shape set:
+        domain_array->children[0] = ArrowAdapter::make_arrow_array_child(
+            std::vector<int64_t>({0, 0}));
+        auto domain_table = ArrowTable(
+            std::move(domain_array), std::move(domain_schema));
+        StatusAndReason check = sdf->can_upgrade_soma_joinid_shape(
+            1, "testing");
+        // Must fail since this is too small.
+        REQUIRE(check.first == false);
+        REQUIRE(
+            check.second == "testing: dataframe already has its domain set.");
+
+        // Check can_upgrade_soma_joinid_shape
+        check = sdf->can_upgrade_soma_joinid_shape(1, "testing");
+        // Must fail since this is too small.
+        REQUIRE(check.first == false);
+        REQUIRE(
+            check.second == "testing: dataframe already has its domain set.");
+
+        sdf->close();
+
+        // Resize
+        auto new_shape = int64_t{SOMA_JOINID_RESIZE_DIM_MAX + 1};
+
+        // Expect throw on write beyond current domain before resize
+        REQUIRE_THROWS(write_sjid_u32_str_data_from(SOMA_JOINID_DIM_MAX));
+
+        // Check shape after write
+        sdf = open(OpenMode::read);
+        expect = dim_infos[0].dim_max + 1;
+
+        actual = sdf->maybe_soma_joinid_shape();
+        REQUIRE(actual.has_value());
+        REQUIRE(actual.value() == expect);
+        sdf->close();
+
+        // Apply the domain change
+        if (test_upgrade_domain) {
+            std::unique_ptr<ArrowSchema>
+                domain_schema = create_index_cols_info_schema(dim_infos);
+            auto domain_array = ArrowAdapter::make_arrow_array_parent(
+                dim_infos.size());
+            domain_array->children[0] = ArrowAdapter::make_arrow_array_child(
+                std::vector<int64_t>({0, new_shape - 1}));
+            auto domain_table = ArrowTable(
+                std::move(domain_array), std::move(domain_schema));
+
+            // Not open for write
+            sdf = open(OpenMode::read);
+            REQUIRE_THROWS(sdf->change_domain(domain_table, "testing"));
+            sdf->close();
+
+            // Open for write
+            sdf = open(OpenMode::write);
+            sdf->change_domain(domain_table, "testing");
+            sdf->close();
+
+        } else {
+            // Not open for write
+            sdf = open(OpenMode::read);
+            REQUIRE_THROWS(sdf->resize_soma_joinid_shape(new_shape, "testing"));
+            sdf->close();
+
+            // Open for write
+            sdf = open(OpenMode::write);
+            sdf->resize_soma_joinid_shape(new_shape, "testing");
+            sdf->close();
+        }
+
+        // Check shape after resize
+        sdf = open(OpenMode::read);
+        expect = SOMA_JOINID_RESIZE_DIM_MAX + 1;
+        actual = sdf->maybe_soma_joinid_shape();
+        REQUIRE(actual.has_value());
+        REQUIRE(actual.value() == expect);
+        sdf->close();
+
+        // Implicitly we expect no throw
+        write_sjid_u32_str_data_from(SOMA_JOINID_DIM_MAX);
+
+        // Check domainish accessors after resize
+        sdf->open(OpenMode::read);
+
+        non_empty_domain = sdf->get_non_empty_domain();
+        ned_sjid = ArrowAdapter::get_table_non_string_column_by_name<int64_t>(
+            non_empty_domain, "soma_joinid");
+
+        soma_domain = sdf->get_soma_domain();
+        dom_sjid = ArrowAdapter::get_table_non_string_column_by_name<int64_t>(
+            soma_domain, "soma_joinid");
+
+        soma_maxdomain = sdf->get_soma_maxdomain();
+        maxdom_sjid = ArrowAdapter::get_table_non_string_column_by_name<
+            int64_t>(soma_maxdomain, "soma_joinid");
+
+        REQUIRE(ned_sjid == std::vector<int64_t>({1, 101}));
+        REQUIRE(
+            dom_sjid == std::vector<int64_t>({0, SOMA_JOINID_RESIZE_DIM_MAX}));
+        REQUIRE(maxdom_sjid.size() == 2);
+        REQUIRE(maxdom_sjid[0] == 0);
+        REQUIRE(maxdom_sjid[1] > 2000000000);
+
+        // Check can_resize_soma_joinid_shape
+        check = sdf->can_resize_soma_joinid_shape(1, "testing");
+        // Must fail since this is too small.
+        REQUIRE(check.first == false);
+        REQUIRE(
+            check.second ==
+            "testing: new soma_joinid shape 1 < existing shape "
+            "200");
+        check = sdf->can_resize_soma_joinid_shape(
+            SOMA_JOINID_RESIZE_DIM_MAX + 1, "testing");
+        REQUIRE(check.first == true);
+        REQUIRE(check.second == "");
+
+        sdf->close();
+
+        // Check can_upgrade_domain
+        sdf->open(OpenMode::read);
+        domain_schema = create_index_cols_info_schema(dim_infos);
+        domain_array = ArrowAdapter::make_arrow_array_parent(dim_infos.size());
+        domain_array->children[0] = ArrowAdapter::make_arrow_array_child(
+            std::vector<int64_t>({0, 0}));
+        domain_table = ArrowTable(
+            std::move(domain_array), std::move(domain_schema));
+        // The dataframe now has a shape
+        check = sdf->can_upgrade_soma_joinid_shape(1, "testing");
+        // Must fail since this is too small.
+        REQUIRE(check.first == false);
+        REQUIRE(
+            check.second == "testing: dataframe already has its domain set.");
+        sdf->close();
+    }
+}
+
+TEST_CASE_METHOD(
+    VariouslyIndexedDataFrameFixture,
+    "SOMADataFrame: variant-indexed dataframe dim-u32-sjid attr-str",
+    "[SOMADataFrame]") {
+    // We have these:
+    // * upgrade_domain requires the user to specify values for all
+    // index
+    //   columns. This is in the spec.
+    // * resize_soma_joinid_shape allows the user to specify only the
+    //   desired soma_joinid shape. This is crucial for experiment-level
+    //   resize as an internal method at the Python level.
+    // Both need testing. Each one adds a shape where there wasn't one
+    // before. So we need to test one or the other on a given run.
+    auto test_upgrade_domain = GENERATE(false, true);
+    std::ostringstream section;
+    section << "- test_upgrade_domain=" << test_upgrade_domain;
+    SECTION(section.str()) {
+        std::string suffix = test_upgrade_domain ? "true" : "false";
+        set_up(
+            std::make_shared<SOMAContext>(),
+            "mem://unit-test-variant-indexed-dataframe-2-" + suffix);
+
+        std::vector<helper::DimInfo> dim_infos(
+            {u32_dim_info(), i64_dim_info()});
+        std::vector<helper::AttrInfo> attr_infos({str_attr_info()});
+
+        // Create
+        create(dim_infos, attr_infos);
+
+        // Check current domain
+        auto sdf = open(OpenMode::read);
+
+        CurrentDomain current_domain = sdf->get_current_domain_for_test();
+        REQUIRE(!current_domain.is_empty());
+        REQUIRE(current_domain.type() == TILEDB_NDRECTANGLE);
+        NDRectangle ndrect = current_domain.ndrectangle();
+
+        std::array<uint32_t, 2> u32_range = ndrect.range<uint32_t>(
+            dim_infos[0].name);
+        REQUIRE(u32_range[0] == (uint32_t)0);
+        REQUIRE(u32_range[1] == (uint32_t)dim_infos[0].dim_max);
+
+        std::array<int64_t, 2> i64_range = ndrect.range<int64_t>(
+            dim_infos[1].name);
+        REQUIRE(i64_range[0] == (int64_t)0);
+        REQUIRE(i64_range[1] == (int64_t)dim_infos[1].dim_max);
+
+        // Check shape before write
+        int64_t expect = dim_infos[1].dim_max + 1;
+        std::optional<int64_t> actual = sdf->maybe_soma_joinid_shape();
+        REQUIRE(actual.has_value());
+        REQUIRE(actual.value() == expect);
+
+        sdf->close();
+
+        REQUIRE(sdf->nnz() == 0);
+
+        // Write
+        write_sjid_u32_str_data_from(0);
+
+        REQUIRE(sdf->nnz() == 2);
+        write_sjid_u32_str_data_from(8);
+        REQUIRE(sdf->nnz() == 4);
+
+        // Check domainish accessors before resize
+        sdf->open(OpenMode::read);
+
+        ArrowTable non_empty_domain = sdf->get_non_empty_domain();
+        std::vector<int64_t> ned_sjid =
+            ArrowAdapter::get_table_non_string_column_by_name<int64_t>(
+                non_empty_domain, "soma_joinid");
+        std::vector<uint32_t> ned_u32 =
+            ArrowAdapter::get_table_non_string_column_by_name<uint32_t>(
+                non_empty_domain, "myuint32");
+
+        ArrowTable soma_domain = sdf->get_soma_domain();
+        std::vector<int64_t> dom_sjid =
+            ArrowAdapter::get_table_non_string_column_by_name<int64_t>(
+                soma_domain, "soma_joinid");
+        std::vector<uint32_t> dom_u32 =
+            ArrowAdapter::get_table_non_string_column_by_name<uint32_t>(
+                soma_domain, "myuint32");
+
+        ArrowTable soma_maxdomain = sdf->get_soma_maxdomain();
+        std::vector<int64_t> maxdom_sjid =
+            ArrowAdapter::get_table_non_string_column_by_name<int64_t>(
+                soma_maxdomain, "soma_joinid");
+        std::vector<uint32_t> maxdom_u32 =
+            ArrowAdapter::get_table_non_string_column_by_name<uint32_t>(
+                soma_maxdomain, "myuint32");
+
+        REQUIRE(ned_sjid == std::vector<int64_t>({1, 10}));
+        REQUIRE(ned_u32 == std::vector<uint32_t>({1234, 5678}));
+
+        REQUIRE(dom_sjid == std::vector<int64_t>({0, 99}));
+        REQUIRE(dom_u32 == std::vector<uint32_t>({0, 9999}));
+
+        REQUIRE(maxdom_sjid.size() == 2);
+        REQUIRE(maxdom_u32.size() == 2);
+
+        REQUIRE(maxdom_u32[0] == 0);
+        REQUIRE(maxdom_u32[1] > 2000000000);
+
+        sdf->close();
+
+        // Check shape after write
+        sdf = open(OpenMode::read);
+        expect = dim_infos[1].dim_max + 1;
+        actual = sdf->maybe_soma_joinid_shape();
+        REQUIRE(actual.has_value());
+        REQUIRE(actual.value() == expect);
+
+        // Check can_upgrade_soma_joinid_shape
+        StatusAndReason check = sdf->can_upgrade_soma_joinid_shape(
+            1, "testing");
+        // Must fail since this is too small.
+        REQUIRE(check.first == false);
+        REQUIRE(
+            check.second == "testing: dataframe already has its domain set.");
+
+        // Check can_upgrade_domain
+        std::unique_ptr<ArrowSchema>
+            domain_schema = create_index_cols_info_schema(dim_infos);
+        auto domain_array = ArrowAdapter::make_arrow_array_parent(
+            dim_infos.size());
+        // OK since there currently is no shape set:
+        domain_array->children[0] = ArrowAdapter::make_arrow_array_child(
+            std::vector<uint32_t>({0, 0}));
+        domain_array->children[1] = ArrowAdapter::make_arrow_array_child(
+            std::vector<int64_t>({0, 0}));
+        auto domain_table = ArrowTable(
+            std::move(domain_array), std::move(domain_schema));
+
+        check = sdf->can_upgrade_soma_joinid_shape(1, "testing");
+        // Must fail since this is too small.
+        REQUIRE(check.first == false);
+        REQUIRE(
+            check.second == "testing: dataframe already has its domain set.");
+
+        sdf->close();
+
+        // Resize
+        auto new_shape = int64_t{SOMA_JOINID_RESIZE_DIM_MAX + 1};
+        uint32_t new_u32_dim_max = (uint32_t)u32_dim_max * 2 + 1;
+
+        // Expect throw on write beyond current domain before resize
+        REQUIRE_THROWS(write_sjid_u32_str_data_from(SOMA_JOINID_DIM_MAX));
+
+        // Check shape after write
+        sdf = open(OpenMode::read);
+        expect = dim_infos[1].dim_max + 1;
+        actual = sdf->maybe_soma_joinid_shape();
+        REQUIRE(actual.has_value());
+        REQUIRE(actual.value() == expect);
+        sdf->close();
+
+        // Apply the domain change
+        if (test_upgrade_domain) {
+            std::unique_ptr<ArrowSchema>
+                domain_schema = create_index_cols_info_schema(dim_infos);
+            auto domain_array = ArrowAdapter::make_arrow_array_parent(
+                dim_infos.size());
+            domain_array->children[0] = ArrowAdapter::make_arrow_array_child(
+                std::vector<uint32_t>({0, new_u32_dim_max}));
+            domain_array->children[1] = ArrowAdapter::make_arrow_array_child(
+                std::vector<int64_t>({0, new_shape - 1}));
+            auto domain_table = ArrowTable(
+                std::move(domain_array), std::move(domain_schema));
+
+            // Not open for write
+            sdf = open(OpenMode::read);
+            REQUIRE_THROWS(sdf->change_domain(domain_table, "testing"));
+            sdf->close();
+
+            // Open for write
+            sdf = open(OpenMode::write);
+            sdf->change_domain(domain_table, "testing");
+            sdf->close();
+
+        } else {
+            // Not open for write
+            sdf = open(OpenMode::read);
+            REQUIRE_THROWS(sdf->resize_soma_joinid_shape(new_shape, "testing"));
+            sdf->close();
+
+            // Open for write
+            sdf = open(OpenMode::write);
+            sdf->resize_soma_joinid_shape(new_shape, "testing");
+            sdf->close();
+        }
+        sdf->close();
+
+        // Implicitly we expect no throw
+        write_sjid_u32_str_data_from(SOMA_JOINID_DIM_MAX);
+
+        // Check domainish accessors after resize
+        sdf->open(OpenMode::read);
+
+        non_empty_domain = sdf->get_non_empty_domain();
+        ned_sjid = ArrowAdapter::get_table_non_string_column_by_name<int64_t>(
+            non_empty_domain, "soma_joinid");
+        ned_u32 = ArrowAdapter::get_table_non_string_column_by_name<uint32_t>(
+            non_empty_domain, "myuint32");
+
+        soma_domain = sdf->get_soma_domain();
+        dom_sjid = ArrowAdapter::get_table_non_string_column_by_name<int64_t>(
+            soma_domain, "soma_joinid");
+        dom_u32 = ArrowAdapter::get_table_non_string_column_by_name<uint32_t>(
+            soma_domain, "myuint32");
+
+        soma_maxdomain = sdf->get_soma_maxdomain();
+        maxdom_sjid = ArrowAdapter::get_table_non_string_column_by_name<
+            int64_t>(soma_maxdomain, "soma_joinid");
+        maxdom_u32 = ArrowAdapter::get_table_non_string_column_by_name<
+            uint32_t>(soma_maxdomain, "myuint32");
+
+        REQUIRE(ned_sjid == std::vector<int64_t>({1, 101}));
+        REQUIRE(ned_u32 == std::vector<uint32_t>({1234, 5678}));
+
+        REQUIRE(dom_sjid == std::vector<int64_t>({0, 199}));
+        if (test_upgrade_domain) {
+            REQUIRE(dom_u32 == std::vector<uint32_t>({0, 19999}));
+        } else {
+            REQUIRE(dom_u32 == std::vector<uint32_t>({0, 9999}));
+        }
+
+        REQUIRE(maxdom_sjid.size() == 2);
+        REQUIRE(maxdom_sjid[0] == 0);
+        REQUIRE(maxdom_sjid[1] > 2000000000);
+
+        REQUIRE(maxdom_u32.size() == 2);
+        REQUIRE(maxdom_u32[0] == 0);
+        REQUIRE(maxdom_u32[1] > 2000000000);
+
+        // Check can_resize_soma_joinid_shape
+        check = sdf->can_resize_soma_joinid_shape(1, "testing");
+        // Must fail since this is too small.
+        REQUIRE(check.first == false);
+        REQUIRE(
+            check.second ==
+            "testing: new soma_joinid shape 1 < existing shape "
+            "200");
+        check = sdf->can_resize_soma_joinid_shape(
+            SOMA_JOINID_RESIZE_DIM_MAX + 1, "testing");
+        REQUIRE(check.first == true);
+        REQUIRE(check.second == "");
+
+        sdf->close();
+    }
+}
+
+TEST_CASE_METHOD(
+    VariouslyIndexedDataFrameFixture,
+    "SOMADataFrame: variant-indexed dataframe dim-sjid-str attr-u32",
+    "[SOMADataFrame]") {
+    auto specify_domain = GENERATE(false, true);
+    std::ostringstream section;
+    section << "- specify_domain=" << specify_domain;
+    SECTION(section.str()) {
+        auto test_upgrade_domain = GENERATE(false, true);
+        std::ostringstream section3;
+        section << "- test_upgrade_domain=" << test_upgrade_domain;
+        SECTION(section3.str()) {
+            std::string suffix1 = specify_domain ? "true" : "false";
+            std::string suffix2 = test_upgrade_domain ? "true" : "false";
             set_up(
                 std::make_shared<SOMAContext>(),
-                "mem://unit-test-variant-indexed-dataframe-1-" + suffix1 + "-" +
+                "mem://unit-test-variant-indexed-dataframe-3-" + suffix1 + "-" +
                     suffix2);
 
-            std::vector<helper::DimInfo> dim_infos({i64_dim_info()});
-            std::vector<helper::AttrInfo> attr_infos(
-                {str_attr_info(), u32_attr_info()});
+            std::string string_lo = specify_domain ? "apple" : "";
+            std::string string_hi = specify_domain ? "zebra" : "";
+            std::vector<helper::DimInfo> dim_infos(
+                {i64_dim_info(), str_dim_info(string_lo, string_hi)});
+            std::vector<helper::AttrInfo> attr_infos({u32_attr_info()});
 
             // Create
             create(dim_infos, attr_infos);
@@ -534,24 +995,38 @@ TEST_CASE_METHOD(
             REQUIRE(i64_range[0] == (int64_t)0);
             REQUIRE(i64_range[1] == (int64_t)dim_infos[0].dim_max);
 
-            // Check shape before resize
+            std::array<std::string, 2> str_range = ndrect.range<std::string>(
+                dim_infos[1].name);
+            if (specify_domain) {
+                REQUIRE(str_range[0] == dim_infos[1].string_lo);
+                REQUIRE(str_range[1] == dim_infos[1].string_hi);
+            } else {
+                // Can we write empty strings in this range?
+                REQUIRE(str_range[0] <= "");
+                REQUIRE(str_range[1] >= "");
+                // Can we write ASCII values in this range?
+                REQUIRE(str_range[0] < " ");
+                REQUIRE(str_range[1] > "~");
+            }
+
+            // Check shape before write
             int64_t expect = dim_infos[0].dim_max + 1;
             std::optional<int64_t> actual = sdf->maybe_soma_joinid_shape();
             REQUIRE(actual.has_value());
             REQUIRE(actual.value() == expect);
+            sdf->close();
 
             REQUIRE(sdf->nnz() == 0);
 
-            sdf->close();
-
-            // Write data
+            // Write
             write_sjid_u32_str_data_from(0);
 
-            // Check shape after write
-            sdf->open(OpenMode::read);
-
             REQUIRE(sdf->nnz() == 2);
+            write_sjid_u32_str_data_from(8);
+            REQUIRE(sdf->nnz() == 4);
 
+            // Check shape after write
+            sdf = open(OpenMode::read);
             expect = dim_infos[0].dim_max + 1;
             actual = sdf->maybe_soma_joinid_shape();
             REQUIRE(actual.has_value());
@@ -562,52 +1037,61 @@ TEST_CASE_METHOD(
             std::vector<int64_t> ned_sjid =
                 ArrowAdapter::get_table_non_string_column_by_name<int64_t>(
                     non_empty_domain, "soma_joinid");
+            std::vector<std::string>
+                ned_str = ArrowAdapter::get_table_string_column_by_name(
+                    non_empty_domain, "mystring");
 
             ArrowTable soma_domain = sdf->get_soma_domain();
             std::vector<int64_t> dom_sjid =
                 ArrowAdapter::get_table_non_string_column_by_name<int64_t>(
                     soma_domain, "soma_joinid");
+            std::vector<std::string>
+                dom_str = ArrowAdapter::get_table_string_column_by_name(
+                    soma_domain, "mystring");
 
             ArrowTable soma_maxdomain = sdf->get_soma_maxdomain();
             std::vector<int64_t> maxdom_sjid =
                 ArrowAdapter::get_table_non_string_column_by_name<int64_t>(
                     soma_maxdomain, "soma_joinid");
+            std::vector<std::string>
+                maxdom_str = ArrowAdapter::get_table_string_column_by_name(
+                    soma_maxdomain, "mystring");
 
-            REQUIRE(ned_sjid == std::vector<int64_t>({1, 2}));
+            REQUIRE(ned_sjid == std::vector<int64_t>({1, 10}));
+            REQUIRE(ned_str == std::vector<std::string>({"apple", "bat"}));
 
-            REQUIRE(dom_sjid == std::vector<int64_t>({0, SOMA_JOINID_DIM_MAX}));
+            REQUIRE(dom_sjid == std::vector<int64_t>({0, 99}));
 
-            REQUIRE(maxdom_sjid.size() == 2);
+            if (specify_domain) {
+                REQUIRE(dom_str[0] == dim_infos[1].string_lo);
+                REQUIRE(dom_str[1] == dim_infos[1].string_hi);
+            } else {
+                REQUIRE(dom_str[0] == "");
+                REQUIRE(dom_str[1] == "");
+            }
+
             REQUIRE(maxdom_sjid[0] == 0);
             REQUIRE(maxdom_sjid[1] > 2000000000);
+            REQUIRE(maxdom_str == std::vector<std::string>({"", ""}));
+
             sdf->close();
 
-            REQUIRE(sdf->nnz() == 2);
-            write_sjid_u32_str_data_from(8);
-            REQUIRE(sdf->nnz() == 4);
-
-            sdf->open(OpenMode::read);
-
             // Check can_upgrade_domain
+            sdf = open(OpenMode::read);
             std::unique_ptr<ArrowSchema>
                 domain_schema = create_index_cols_info_schema(dim_infos);
             auto domain_array = ArrowAdapter::make_arrow_array_parent(
                 dim_infos.size());
-            // OK since there currently is no shape set:
             domain_array->children[0] = ArrowAdapter::make_arrow_array_child(
                 std::vector<int64_t>({0, 0}));
+            domain_array
+                ->children[1] = ArrowAdapter::make_arrow_array_child_string(
+                std::vector<std::string>({"a", "z"}));
             auto domain_table = ArrowTable(
                 std::move(domain_array), std::move(domain_schema));
+
             StatusAndReason check = sdf->can_upgrade_soma_joinid_shape(
                 1, "testing");
-            // Must fail since this is too small.
-            REQUIRE(check.first == false);
-            REQUIRE(
-                check.second ==
-                "testing: dataframe already has its domain set.");
-
-            // Check can_upgrade_soma_joinid_shape
-            check = sdf->can_upgrade_soma_joinid_shape(1, "testing");
             // Must fail since this is too small.
             REQUIRE(check.first == false);
             REQUIRE(
@@ -617,15 +1101,16 @@ TEST_CASE_METHOD(
             sdf->close();
 
             // Resize
+
             auto new_shape = int64_t{SOMA_JOINID_RESIZE_DIM_MAX + 1};
 
-            // Expect throw on write beyond current domain before resize
+            // Expect throw on write beyond current domain before
+            // resize
             REQUIRE_THROWS(write_sjid_u32_str_data_from(SOMA_JOINID_DIM_MAX));
 
             // Check shape after write
             sdf = open(OpenMode::read);
             expect = dim_infos[0].dim_max + 1;
-
             actual = sdf->maybe_soma_joinid_shape();
             REQUIRE(actual.has_value());
             REQUIRE(actual.value() == expect);
@@ -640,6 +1125,9 @@ TEST_CASE_METHOD(
                 domain_array
                     ->children[0] = ArrowAdapter::make_arrow_array_child(
                     std::vector<int64_t>({0, new_shape - 1}));
+                domain_array
+                    ->children[1] = ArrowAdapter::make_arrow_array_child_string(
+                    std::vector<std::string>({"", ""}));
                 auto domain_table = ArrowTable(
                     std::move(domain_array), std::move(domain_schema));
 
@@ -663,42 +1151,54 @@ TEST_CASE_METHOD(
                 // Open for write
                 sdf = open(OpenMode::write);
                 sdf->resize_soma_joinid_shape(new_shape, "testing");
+
                 sdf->close();
             }
 
-            // Check shape after resize
-            sdf = open(OpenMode::read);
-            expect = SOMA_JOINID_RESIZE_DIM_MAX + 1;
-            actual = sdf->maybe_soma_joinid_shape();
-            REQUIRE(actual.has_value());
-            REQUIRE(actual.value() == expect);
-            sdf->close();
-
+            sdf->open(OpenMode::write);
             // Implicitly we expect no throw
             write_sjid_u32_str_data_from(SOMA_JOINID_DIM_MAX);
+            sdf->close();
 
             // Check domainish accessors after resize
-            sdf->open(OpenMode::read);
+            sdf->open(OpenMode::read, TimestampRange(0, 2));
 
             non_empty_domain = sdf->get_non_empty_domain();
             ned_sjid = ArrowAdapter::get_table_non_string_column_by_name<
                 int64_t>(non_empty_domain, "soma_joinid");
+            ned_str = ArrowAdapter::get_table_string_column_by_name(
+                non_empty_domain, "mystring");
 
             soma_domain = sdf->get_soma_domain();
             dom_sjid = ArrowAdapter::get_table_non_string_column_by_name<
                 int64_t>(soma_domain, "soma_joinid");
+            dom_str = ArrowAdapter::get_table_string_column_by_name(
+                soma_domain, "mystring");
 
             soma_maxdomain = sdf->get_soma_maxdomain();
             maxdom_sjid = ArrowAdapter::get_table_non_string_column_by_name<
                 int64_t>(soma_maxdomain, "soma_joinid");
+            maxdom_str = ArrowAdapter::get_table_string_column_by_name(
+                soma_maxdomain, "mystring");
 
-            REQUIRE(ned_sjid == std::vector<int64_t>({1, 101}));
-            REQUIRE(
-                dom_sjid ==
-                std::vector<int64_t>({0, SOMA_JOINID_RESIZE_DIM_MAX}));
-            REQUIRE(maxdom_sjid.size() == 2);
+            REQUIRE(ned_sjid == std::vector<int64_t>({0, 0}));
+            REQUIRE(ned_str == std::vector<std::string>({"", ""}));
+
+            REQUIRE(dom_sjid == std::vector<int64_t>({0, 99}));
+
+            if (specify_domain) {
+                REQUIRE(dom_str[0] == dim_infos[1].string_lo);
+                REQUIRE(dom_str[1] == dim_infos[1].string_hi);
+            } else {
+                REQUIRE(dom_str == std::vector<std::string>({"", ""}));
+            }
+
             REQUIRE(maxdom_sjid[0] == 0);
             REQUIRE(maxdom_sjid[1] > 2000000000);
+
+            REQUIRE(maxdom_str == std::vector<std::string>({"", ""}));
+
+            REQUIRE(ned_str == std::vector<std::string>({"", ""}));
 
             // Check can_resize_soma_joinid_shape
             check = sdf->can_resize_soma_joinid_shape(1, "testing");
@@ -707,30 +1207,12 @@ TEST_CASE_METHOD(
             REQUIRE(
                 check.second ==
                 "testing: new soma_joinid shape 1 < existing shape "
-                "200");
+                "100");
             check = sdf->can_resize_soma_joinid_shape(
                 SOMA_JOINID_RESIZE_DIM_MAX + 1, "testing");
             REQUIRE(check.first == true);
             REQUIRE(check.second == "");
 
-            sdf->close();
-
-            // Check can_upgrade_domain
-            sdf->open(OpenMode::read);
-            domain_schema = create_index_cols_info_schema(dim_infos);
-            domain_array = ArrowAdapter::make_arrow_array_parent(
-                dim_infos.size());
-            domain_array->children[0] = ArrowAdapter::make_arrow_array_child(
-                std::vector<int64_t>({0, 0}));
-            domain_table = ArrowTable(
-                std::move(domain_array), std::move(domain_schema));
-            // The dataframe now has a shape
-            check = sdf->can_upgrade_soma_joinid_shape(1, "testing");
-            // Must fail since this is too small.
-            REQUIRE(check.first == false);
-            REQUIRE(
-                check.second ==
-                "testing: dataframe already has its domain set.");
             sdf->close();
         }
     }
@@ -738,35 +1220,28 @@ TEST_CASE_METHOD(
 
 TEST_CASE_METHOD(
     VariouslyIndexedDataFrameFixture,
-    "SOMADataFrame: variant-indexed dataframe dim-u32-sjid attr-str",
+    "SOMADataFrame: variant-indexed dataframe dim-str-u32 attr-sjid",
     "[SOMADataFrame]") {
-    auto use_current_domain = GENERATE(true);
+    auto specify_domain = GENERATE(false, true);
     std::ostringstream section;
-    section << "- use_current_domain=" << use_current_domain;
+    section << "- specify_domain=" << specify_domain;
     SECTION(section.str()) {
-        std::string suffix1 = use_current_domain ? "true" : "false";
-        // We have these:
-        // * upgrade_domain requires the user to specify values for all
-        // index
-        //   columns. This is in the spec.
-        // * resize_soma_joinid_shape allows the user to specify only the
-        //   desired soma_joinid shape. This is crucial for experiment-level
-        //   resize as an internal method at the Python level.
-        // Both need testing. Each one adds a shape where there wasn't one
-        // before. So we need to test one or the other on a given run.
         auto test_upgrade_domain = GENERATE(false, true);
-        std::ostringstream section2;
+        std::ostringstream section3;
         section << "- test_upgrade_domain=" << test_upgrade_domain;
-        SECTION(section2.str()) {
+        SECTION(section3.str()) {
+            std::string suffix1 = specify_domain ? "true" : "false";
             std::string suffix2 = test_upgrade_domain ? "true" : "false";
             set_up(
                 std::make_shared<SOMAContext>(),
-                "mem://unit-test-variant-indexed-dataframe-2-" + suffix1 + "-" +
+                "mem://unit-test-variant-indexed-dataframe-4-" + suffix1 + "-" +
                     suffix2);
 
+            std::string string_lo = specify_domain ? "apple" : "";
+            std::string string_hi = specify_domain ? "zebra" : "";
             std::vector<helper::DimInfo> dim_infos(
-                {u32_dim_info(), i64_dim_info()});
-            std::vector<helper::AttrInfo> attr_infos({str_attr_info()});
+                {str_dim_info(string_lo, string_hi), u32_dim_info()});
+            std::vector<helper::AttrInfo> attr_infos({i64_attr_info()});
 
             // Create
             create(dim_infos, attr_infos);
@@ -779,21 +1254,54 @@ TEST_CASE_METHOD(
             REQUIRE(current_domain.type() == TILEDB_NDRECTANGLE);
             NDRectangle ndrect = current_domain.ndrectangle();
 
-            std::array<uint32_t, 2> u32_range = ndrect.range<uint32_t>(
+            std::array<std::string, 2> str_range = ndrect.range<std::string>(
                 dim_infos[0].name);
-            REQUIRE(u32_range[0] == (uint32_t)0);
-            REQUIRE(u32_range[1] == (uint32_t)dim_infos[0].dim_max);
+            if (specify_domain) {
+                REQUIRE(str_range[0] == dim_infos[0].string_lo);
+                REQUIRE(str_range[1] == dim_infos[0].string_hi);
+            } else {
+                // Can we write empty strings in this range?
+                REQUIRE(str_range[0] <= "");
+                REQUIRE(str_range[1] >= "");
+                // Can we write ASCII values in this range?
+                REQUIRE(str_range[0] < " ");
+                REQUIRE(str_range[1] > "~");
+            }
 
-            std::array<int64_t, 2> i64_range = ndrect.range<int64_t>(
+            std::array<uint32_t, 2> u32_range = ndrect.range<uint32_t>(
                 dim_infos[1].name);
-            REQUIRE(i64_range[0] == (int64_t)0);
-            REQUIRE(i64_range[1] == (int64_t)dim_infos[1].dim_max);
+            REQUIRE(u32_range[0] == (uint32_t)0);
+            REQUIRE(u32_range[1] == (uint32_t)dim_infos[1].dim_max);
 
             // Check shape before write
-            int64_t expect = dim_infos[1].dim_max + 1;
             std::optional<int64_t> actual = sdf->maybe_soma_joinid_shape();
-            REQUIRE(actual.has_value());
-            REQUIRE(actual.value() == expect);
+            REQUIRE(!actual.has_value());
+
+            // Check domainish accessors before resize
+            ArrowTable non_empty_domain = sdf->get_non_empty_domain();
+            std::vector<std::string>
+                ned_str = ArrowAdapter::get_table_string_column_by_name(
+                    non_empty_domain, "mystring");
+
+            ArrowTable soma_domain = sdf->get_soma_domain();
+            std::vector<std::string>
+                dom_str = ArrowAdapter::get_table_string_column_by_name(
+                    soma_domain, "mystring");
+
+            ArrowTable soma_maxdomain = sdf->get_soma_maxdomain();
+            std::vector<std::string>
+                maxdom_str = ArrowAdapter::get_table_string_column_by_name(
+                    soma_maxdomain, "mystring");
+
+            REQUIRE(ned_str == std::vector<std::string>({"", ""}));
+
+            if (specify_domain) {
+                REQUIRE(dom_str[0] == dim_infos[0].string_lo);
+                REQUIRE(dom_str[1] == dim_infos[0].string_hi);
+            } else {
+                REQUIRE(dom_str == std::vector<std::string>({"", ""}));
+            }
+            REQUIRE(maxdom_str == std::vector<std::string>({"", ""}));
 
             sdf->close();
 
@@ -804,79 +1312,32 @@ TEST_CASE_METHOD(
 
             REQUIRE(sdf->nnz() == 2);
             write_sjid_u32_str_data_from(8);
-            REQUIRE(sdf->nnz() == 4);
-
-            // Check domainish accessors before resize
-            sdf->open(OpenMode::read);
-
-            ArrowTable non_empty_domain = sdf->get_non_empty_domain();
-            std::vector<int64_t> ned_sjid =
-                ArrowAdapter::get_table_non_string_column_by_name<int64_t>(
-                    non_empty_domain, "soma_joinid");
-            std::vector<uint32_t> ned_u32 =
-                ArrowAdapter::get_table_non_string_column_by_name<uint32_t>(
-                    non_empty_domain, "myuint32");
-
-            ArrowTable soma_domain = sdf->get_soma_domain();
-            std::vector<int64_t> dom_sjid =
-                ArrowAdapter::get_table_non_string_column_by_name<int64_t>(
-                    soma_domain, "soma_joinid");
-            std::vector<uint32_t> dom_u32 =
-                ArrowAdapter::get_table_non_string_column_by_name<uint32_t>(
-                    soma_domain, "myuint32");
-
-            ArrowTable soma_maxdomain = sdf->get_soma_maxdomain();
-            std::vector<int64_t> maxdom_sjid =
-                ArrowAdapter::get_table_non_string_column_by_name<int64_t>(
-                    soma_maxdomain, "soma_joinid");
-            std::vector<uint32_t> maxdom_u32 =
-                ArrowAdapter::get_table_non_string_column_by_name<uint32_t>(
-                    soma_maxdomain, "myuint32");
-
-            REQUIRE(ned_sjid == std::vector<int64_t>({1, 10}));
-            REQUIRE(ned_u32 == std::vector<uint32_t>({1234, 5678}));
-
-            REQUIRE(dom_sjid == std::vector<int64_t>({0, 99}));
-            REQUIRE(dom_u32 == std::vector<uint32_t>({0, 9999}));
-
-            REQUIRE(maxdom_sjid.size() == 2);
-            REQUIRE(maxdom_u32.size() == 2);
-
-            REQUIRE(maxdom_u32[0] == 0);
-            REQUIRE(maxdom_u32[1] > 2000000000);
-
-            sdf->close();
+            // soma_joinid is not a dim here and so the second write is
+            // an overwrite of the first here
+            REQUIRE(sdf->nnz() == 2);
 
             // Check shape after write
             sdf = open(OpenMode::read);
-            expect = dim_infos[1].dim_max + 1;
             actual = sdf->maybe_soma_joinid_shape();
-            REQUIRE(actual.has_value());
-            REQUIRE(actual.value() == expect);
-
-            // Check can_upgrade_soma_joinid_shape
-            StatusAndReason check = sdf->can_upgrade_soma_joinid_shape(
-                1, "testing");
-            // Must fail since this is too small.
-            REQUIRE(check.first == false);
-            REQUIRE(
-                check.second ==
-                "testing: dataframe already has its domain set.");
+            REQUIRE(!actual.has_value());
+            sdf->close();
 
             // Check can_upgrade_domain
+            sdf = open(OpenMode::read);
             std::unique_ptr<ArrowSchema>
                 domain_schema = create_index_cols_info_schema(dim_infos);
             auto domain_array = ArrowAdapter::make_arrow_array_parent(
                 dim_infos.size());
-            // OK since there currently is no shape set:
-            domain_array->children[0] = ArrowAdapter::make_arrow_array_child(
-                std::vector<uint32_t>({0, 0}));
+            domain_array
+                ->children[0] = ArrowAdapter::make_arrow_array_child_string(
+                std::vector<std::string>({"a", "z"}));
             domain_array->children[1] = ArrowAdapter::make_arrow_array_child(
-                std::vector<int64_t>({0, 0}));
+                std::vector<uint32_t>({0, 0}));
             auto domain_table = ArrowTable(
                 std::move(domain_array), std::move(domain_schema));
 
-            check = sdf->can_upgrade_soma_joinid_shape(1, "testing");
+            StatusAndReason check = sdf->can_upgrade_soma_joinid_shape(
+                1, "testing");
             // Must fail since this is too small.
             REQUIRE(check.first == false);
             REQUIRE(
@@ -886,18 +1347,13 @@ TEST_CASE_METHOD(
             sdf->close();
 
             // Resize
-            auto new_shape = int64_t{SOMA_JOINID_RESIZE_DIM_MAX + 1};
-            uint32_t new_u32_dim_max = (uint32_t)u32_dim_max * 2 + 1;
-
-            // Expect throw on write beyond current domain before resize
-            REQUIRE_THROWS(write_sjid_u32_str_data_from(SOMA_JOINID_DIM_MAX));
+            int64_t new_shape = int64_t{SOMA_JOINID_RESIZE_DIM_MAX + 1};
+            uint32_t new_u32_dim_max = u32_dim_max * 2 + 1;
 
             // Check shape after write
             sdf = open(OpenMode::read);
-            expect = dim_infos[1].dim_max + 1;
             actual = sdf->maybe_soma_joinid_shape();
-            REQUIRE(actual.has_value());
-            REQUIRE(actual.value() == expect);
+            REQUIRE(!actual.has_value());
             sdf->close();
 
             // Apply the domain change
@@ -907,11 +1363,11 @@ TEST_CASE_METHOD(
                 auto domain_array = ArrowAdapter::make_arrow_array_parent(
                     dim_infos.size());
                 domain_array
-                    ->children[0] = ArrowAdapter::make_arrow_array_child(
-                    std::vector<uint32_t>({0, new_u32_dim_max}));
+                    ->children[0] = ArrowAdapter::make_arrow_array_child_string(
+                    std::vector<std::string>({"", ""}));
                 domain_array
                     ->children[1] = ArrowAdapter::make_arrow_array_child(
-                    std::vector<int64_t>({0, new_shape - 1}));
+                    std::vector<uint32_t>({0, new_u32_dim_max}));
                 auto domain_table = ArrowTable(
                     std::move(domain_array), std::move(domain_schema));
 
@@ -937,564 +1393,44 @@ TEST_CASE_METHOD(
                 sdf->resize_soma_joinid_shape(new_shape, "testing");
                 sdf->close();
             }
+
+            sdf = open(OpenMode::write);
+            write_sjid_u32_str_data_from(SOMA_JOINID_DIM_MAX);
             sdf->close();
 
-            // Implicitly we expect no throw
-            write_sjid_u32_str_data_from(SOMA_JOINID_DIM_MAX);
-
             // Check domainish accessors after resize
-            sdf->open(OpenMode::read);
+            sdf->open(OpenMode::read, TimestampRange(0, 2));
 
             non_empty_domain = sdf->get_non_empty_domain();
-            ned_sjid = ArrowAdapter::get_table_non_string_column_by_name<
-                int64_t>(non_empty_domain, "soma_joinid");
-            ned_u32 = ArrowAdapter::get_table_non_string_column_by_name<
-                uint32_t>(non_empty_domain, "myuint32");
+            ned_str = ArrowAdapter::get_table_string_column_by_name(
+                non_empty_domain, "mystring");
 
             soma_domain = sdf->get_soma_domain();
-            dom_sjid = ArrowAdapter::get_table_non_string_column_by_name<
-                int64_t>(soma_domain, "soma_joinid");
-            dom_u32 = ArrowAdapter::get_table_non_string_column_by_name<
-                uint32_t>(soma_domain, "myuint32");
+            dom_str = ArrowAdapter::get_table_string_column_by_name(
+                soma_domain, "mystring");
 
             soma_maxdomain = sdf->get_soma_maxdomain();
-            maxdom_sjid = ArrowAdapter::get_table_non_string_column_by_name<
-                int64_t>(soma_maxdomain, "soma_joinid");
-            maxdom_u32 = ArrowAdapter::get_table_non_string_column_by_name<
-                uint32_t>(soma_maxdomain, "myuint32");
+            maxdom_str = ArrowAdapter::get_table_string_column_by_name(
+                soma_maxdomain, "mystring");
 
-            REQUIRE(ned_sjid == std::vector<int64_t>({1, 101}));
-            REQUIRE(ned_u32 == std::vector<uint32_t>({1234, 5678}));
+            REQUIRE(ned_str == std::vector<std::string>({"", ""}));
 
-            REQUIRE(dom_sjid == std::vector<int64_t>({0, 199}));
-            if (test_upgrade_domain) {
-                REQUIRE(dom_u32 == std::vector<uint32_t>({0, 19999}));
+            if (specify_domain) {
+                REQUIRE(dom_str[0] == dim_infos[0].string_lo);
+                REQUIRE(dom_str[1] == dim_infos[0].string_hi);
             } else {
-                REQUIRE(dom_u32 == std::vector<uint32_t>({0, 9999}));
+                REQUIRE(dom_str == std::vector<std::string>({"", ""}));
             }
-
-            REQUIRE(maxdom_sjid.size() == 2);
-            REQUIRE(maxdom_sjid[0] == 0);
-            REQUIRE(maxdom_sjid[1] > 2000000000);
-
-            REQUIRE(maxdom_u32.size() == 2);
-            REQUIRE(maxdom_u32[0] == 0);
-            REQUIRE(maxdom_u32[1] > 2000000000);
+            REQUIRE(maxdom_str == std::vector<std::string>({"", ""}));
 
             // Check can_resize_soma_joinid_shape
-            check = sdf->can_resize_soma_joinid_shape(1, "testing");
-            // Must fail since this is too small.
-            REQUIRE(check.first == false);
-            REQUIRE(
-                check.second ==
-                "testing: new soma_joinid shape 1 < existing shape "
-                "200");
-            check = sdf->can_resize_soma_joinid_shape(
-                SOMA_JOINID_RESIZE_DIM_MAX + 1, "testing");
+            check = sdf->can_resize_soma_joinid_shape(0, "testing");
+
+            // Must pass since soma_joinid isn't a dim in this case.
             REQUIRE(check.first == true);
             REQUIRE(check.second == "");
 
             sdf->close();
-        }
-    }
-}
-
-TEST_CASE_METHOD(
-    VariouslyIndexedDataFrameFixture,
-    "SOMADataFrame: variant-indexed dataframe dim-sjid-str attr-u32",
-    "[SOMADataFrame]") {
-    auto use_current_domain = GENERATE(true);
-    std::ostringstream section;
-    section << "- use_current_domain=" << use_current_domain;
-    SECTION(section.str()) {
-        auto specify_domain = GENERATE(false, true);
-        std::ostringstream section2;
-        section2 << "- specify_domain=" << specify_domain;
-        SECTION(section2.str()) {
-            auto test_upgrade_domain = GENERATE(false, true);
-            std::ostringstream section3;
-            section << "- test_upgrade_domain=" << test_upgrade_domain;
-            SECTION(section3.str()) {
-                std::string suffix1 = use_current_domain ? "true" : "false";
-                std::string suffix2 = specify_domain ? "true" : "false";
-                std::string suffix3 = test_upgrade_domain ? "true" : "false";
-                set_up(
-                    std::make_shared<SOMAContext>(),
-                    "mem://unit-test-variant-indexed-dataframe-3-" + suffix1 +
-                        "-" + suffix2 + "-" + suffix3);
-
-                std::string string_lo = specify_domain ? "apple" : "";
-                std::string string_hi = specify_domain ? "zebra" : "";
-                std::vector<helper::DimInfo> dim_infos(
-                    {i64_dim_info(), str_dim_info(string_lo, string_hi)});
-                std::vector<helper::AttrInfo> attr_infos({u32_attr_info()});
-
-                // Create
-                create(dim_infos, attr_infos);
-
-                // Check current domain
-                auto sdf = open(OpenMode::read);
-
-                CurrentDomain
-                    current_domain = sdf->get_current_domain_for_test();
-                REQUIRE(!current_domain.is_empty());
-                REQUIRE(current_domain.type() == TILEDB_NDRECTANGLE);
-                NDRectangle ndrect = current_domain.ndrectangle();
-
-                std::array<int64_t, 2> i64_range = ndrect.range<int64_t>(
-                    dim_infos[0].name);
-                REQUIRE(i64_range[0] == (int64_t)0);
-                REQUIRE(i64_range[1] == (int64_t)dim_infos[0].dim_max);
-
-                std::array<std::string, 2>
-                    str_range = ndrect.range<std::string>(dim_infos[1].name);
-                if (specify_domain) {
-                    REQUIRE(str_range[0] == dim_infos[1].string_lo);
-                    REQUIRE(str_range[1] == dim_infos[1].string_hi);
-                } else {
-                    // Can we write empty strings in this range?
-                    REQUIRE(str_range[0] <= "");
-                    REQUIRE(str_range[1] >= "");
-                    // Can we write ASCII values in this range?
-                    REQUIRE(str_range[0] < " ");
-                    REQUIRE(str_range[1] > "~");
-                }
-
-                // Check shape before write
-                int64_t expect = dim_infos[0].dim_max + 1;
-                std::optional<int64_t> actual = sdf->maybe_soma_joinid_shape();
-                REQUIRE(actual.has_value());
-                REQUIRE(actual.value() == expect);
-                sdf->close();
-
-                REQUIRE(sdf->nnz() == 0);
-
-                // Write
-                write_sjid_u32_str_data_from(0);
-
-                REQUIRE(sdf->nnz() == 2);
-                write_sjid_u32_str_data_from(8);
-                REQUIRE(sdf->nnz() == 4);
-
-                // Check shape after write
-                sdf->open(OpenMode::read);
-                expect = dim_infos[0].dim_max + 1;
-                actual = sdf->maybe_soma_joinid_shape();
-                REQUIRE(actual.has_value());
-                REQUIRE(actual.value() == expect);
-
-                // Check domainish accessors before resize
-                ArrowTable non_empty_domain = sdf->get_non_empty_domain();
-                std::vector<int64_t> ned_sjid =
-                    ArrowAdapter::get_table_non_string_column_by_name<int64_t>(
-                        non_empty_domain, "soma_joinid");
-                std::vector<std::string>
-                    ned_str = ArrowAdapter::get_table_string_column_by_name(
-                        non_empty_domain, "mystring");
-
-                ArrowTable soma_domain = sdf->get_soma_domain();
-                std::vector<int64_t> dom_sjid =
-                    ArrowAdapter::get_table_non_string_column_by_name<int64_t>(
-                        soma_domain, "soma_joinid");
-                std::vector<std::string>
-                    dom_str = ArrowAdapter::get_table_string_column_by_name(
-                        soma_domain, "mystring");
-
-                ArrowTable soma_maxdomain = sdf->get_soma_maxdomain();
-                std::vector<int64_t> maxdom_sjid =
-                    ArrowAdapter::get_table_non_string_column_by_name<int64_t>(
-                        soma_maxdomain, "soma_joinid");
-                std::vector<std::string>
-                    maxdom_str = ArrowAdapter::get_table_string_column_by_name(
-                        soma_maxdomain, "mystring");
-
-                REQUIRE(ned_sjid == std::vector<int64_t>({1, 10}));
-                REQUIRE(ned_str == std::vector<std::string>({"apple", "bat"}));
-                REQUIRE(dom_sjid == std::vector<int64_t>({0, 99}));
-
-                if (specify_domain) {
-                    REQUIRE(dom_str[0] == dim_infos[1].string_lo);
-                    REQUIRE(dom_str[1] == dim_infos[1].string_hi);
-                } else {
-                    REQUIRE(dom_str[0] == "");
-                    REQUIRE(dom_str[1] == "");
-                }
-
-                REQUIRE(maxdom_sjid[0] == 0);
-                REQUIRE(maxdom_sjid[1] > 2000000000);
-                REQUIRE(maxdom_str == std::vector<std::string>({"", ""}));
-
-                sdf->close();
-
-                // Check can_upgrade_domain
-                sdf->open(OpenMode::read);
-                std::unique_ptr<ArrowSchema>
-                    domain_schema = create_index_cols_info_schema(dim_infos);
-                auto domain_array = ArrowAdapter::make_arrow_array_parent(
-                    dim_infos.size());
-                domain_array
-                    ->children[0] = ArrowAdapter::make_arrow_array_child(
-                    std::vector<int64_t>({0, 0}));
-                domain_array
-                    ->children[1] = ArrowAdapter::make_arrow_array_child_string(
-                    std::vector<std::string>({"a", "z"}));
-                auto domain_table = ArrowTable(
-                    std::move(domain_array), std::move(domain_schema));
-
-                StatusAndReason check = sdf->can_upgrade_soma_joinid_shape(
-                    1, "testing");
-                // Must fail since this is too small.
-                REQUIRE(check.first == false);
-                REQUIRE(
-                    check.second ==
-                    "testing: dataframe already has its domain set.");
-
-                sdf->close();
-
-                // Resize
-
-                auto new_shape = int64_t{SOMA_JOINID_RESIZE_DIM_MAX + 1};
-
-                // Expect throw on write beyond current domain before
-                // resize
-                REQUIRE_THROWS(
-                    write_sjid_u32_str_data_from(SOMA_JOINID_DIM_MAX));
-
-                // Check shape after write
-                sdf->open(OpenMode::read);
-                expect = dim_infos[0].dim_max + 1;
-                actual = sdf->maybe_soma_joinid_shape();
-                REQUIRE(actual.has_value());
-                REQUIRE(actual.value() == expect);
-                sdf->close();
-
-                // Apply the domain change
-                if (test_upgrade_domain) {
-                    std::unique_ptr<ArrowSchema>
-                        domain_schema = create_index_cols_info_schema(
-                            dim_infos);
-                    auto domain_array = ArrowAdapter::make_arrow_array_parent(
-                        dim_infos.size());
-                    domain_array
-                        ->children[0] = ArrowAdapter::make_arrow_array_child(
-                        std::vector<int64_t>({0, new_shape - 1}));
-                    domain_array->children[1] =
-                        ArrowAdapter::make_arrow_array_child_string(
-                            std::vector<std::string>({"", ""}));
-                    auto domain_table = ArrowTable(
-                        std::move(domain_array), std::move(domain_schema));
-
-                    // Not open for write
-                    sdf->open(OpenMode::read);
-                    REQUIRE_THROWS(sdf->change_domain(domain_table, "testing"));
-                    sdf->close();
-
-                    // Open for write
-                    sdf->open(OpenMode::write);
-                    sdf->change_domain(domain_table, "testing");
-                    sdf->close();
-
-                } else {
-                    // Not open for write
-                    sdf->open(OpenMode::read);
-                    REQUIRE_THROWS(
-                        sdf->resize_soma_joinid_shape(new_shape, "testing"));
-                    sdf->close();
-
-                    // Open for write
-                    sdf->open(OpenMode::write);
-                    sdf->resize_soma_joinid_shape(new_shape, "testing");
-
-                    sdf->close();
-                }
-
-                sdf->open(OpenMode::write);
-                // Implicitly we expect no throw
-                write_sjid_u32_str_data_from(SOMA_JOINID_DIM_MAX);
-                sdf->close();
-
-                // Check domainish accessors after resize
-                sdf->open(OpenMode::read, TimestampRange(0, 2));
-
-                non_empty_domain = sdf->get_non_empty_domain();
-                ned_sjid = ArrowAdapter::get_table_non_string_column_by_name<
-                    int64_t>(non_empty_domain, "soma_joinid");
-                ned_str = ArrowAdapter::get_table_string_column_by_name(
-                    non_empty_domain, "mystring");
-
-                soma_domain = sdf->get_soma_domain();
-                dom_sjid = ArrowAdapter::get_table_non_string_column_by_name<
-                    int64_t>(soma_domain, "soma_joinid");
-                dom_str = ArrowAdapter::get_table_string_column_by_name(
-                    soma_domain, "mystring");
-
-                soma_maxdomain = sdf->get_soma_maxdomain();
-                maxdom_sjid = ArrowAdapter::get_table_non_string_column_by_name<
-                    int64_t>(soma_maxdomain, "soma_joinid");
-                maxdom_str = ArrowAdapter::get_table_string_column_by_name(
-                    soma_maxdomain, "mystring");
-
-                REQUIRE(ned_sjid == std::vector<int64_t>({0, 0}));
-                REQUIRE(ned_str == std::vector<std::string>({"", ""}));
-
-                REQUIRE(dom_sjid == std::vector<int64_t>({0, 99}));
-
-                if (specify_domain) {
-                    REQUIRE(dom_str[0] == dim_infos[1].string_lo);
-                    REQUIRE(dom_str[1] == dim_infos[1].string_hi);
-                } else {
-                    REQUIRE(dom_str == std::vector<std::string>({"", ""}));
-                }
-
-                REQUIRE(maxdom_sjid[0] == 0);
-                REQUIRE(maxdom_sjid[1] > 2000000000);
-
-                REQUIRE(maxdom_str == std::vector<std::string>({"", ""}));
-
-                REQUIRE(ned_str == std::vector<std::string>({"", ""}));
-
-                // Check can_resize_soma_joinid_shape
-                check = sdf->can_resize_soma_joinid_shape(1, "testing");
-                // Must fail since this is too small.
-                REQUIRE(check.first == false);
-                REQUIRE(
-                    check.second ==
-                    "testing: new soma_joinid shape 1 < existing shape "
-                    "100");
-                check = sdf->can_resize_soma_joinid_shape(
-                    SOMA_JOINID_RESIZE_DIM_MAX + 1, "testing");
-                REQUIRE(check.first == true);
-                REQUIRE(check.second == "");
-
-                sdf->close();
-            }
-        }
-    }
-}
-
-TEST_CASE_METHOD(
-    VariouslyIndexedDataFrameFixture,
-    "SOMADataFrame: variant-indexed dataframe dim-str-u32 attr-sjid",
-    "[SOMADataFrame]") {
-    auto use_current_domain = GENERATE(true);
-    std::ostringstream section;
-    section << "- use_current_domain=" << use_current_domain;
-    SECTION(section.str()) {
-        auto specify_domain = GENERATE(false, true);
-        std::ostringstream section2;
-        section2 << "- specify_domain=" << specify_domain;
-        SECTION(section2.str()) {
-            auto test_upgrade_domain = GENERATE(false, true);
-            std::ostringstream section3;
-            section << "- test_upgrade_domain=" << test_upgrade_domain;
-            SECTION(section3.str()) {
-                std::string suffix1 = use_current_domain ? "true" : "false";
-                std::string suffix2 = specify_domain ? "true" : "false";
-                std::string suffix3 = test_upgrade_domain ? "true" : "false";
-                set_up(
-                    std::make_shared<SOMAContext>(),
-                    "mem://unit-test-variant-indexed-dataframe-4-" + suffix1 +
-                        "-" + suffix2 + "-" + suffix3);
-
-                std::string string_lo = specify_domain ? "apple" : "";
-                std::string string_hi = specify_domain ? "zebra" : "";
-                std::vector<helper::DimInfo> dim_infos(
-                    {str_dim_info(string_lo, string_hi), u32_dim_info()});
-                std::vector<helper::AttrInfo> attr_infos({i64_attr_info()});
-
-                // Create
-                create(dim_infos, attr_infos);
-
-                // Check current domain
-                auto sdf = open(OpenMode::read);
-
-                CurrentDomain
-                    current_domain = sdf->get_current_domain_for_test();
-                REQUIRE(!current_domain.is_empty());
-                REQUIRE(current_domain.type() == TILEDB_NDRECTANGLE);
-                NDRectangle ndrect = current_domain.ndrectangle();
-
-                std::array<std::string, 2>
-                    str_range = ndrect.range<std::string>(dim_infos[0].name);
-                if (specify_domain) {
-                    REQUIRE(str_range[0] == dim_infos[0].string_lo);
-                    REQUIRE(str_range[1] == dim_infos[0].string_hi);
-                } else {
-                    // Can we write empty strings in this range?
-                    REQUIRE(str_range[0] <= "");
-                    REQUIRE(str_range[1] >= "");
-                    // Can we write ASCII values in this range?
-                    REQUIRE(str_range[0] < " ");
-                    REQUIRE(str_range[1] > "~");
-                }
-
-                std::array<uint32_t, 2> u32_range = ndrect.range<uint32_t>(
-                    dim_infos[1].name);
-                REQUIRE(u32_range[0] == (uint32_t)0);
-                REQUIRE(u32_range[1] == (uint32_t)dim_infos[1].dim_max);
-
-                // Check shape before write
-                std::optional<int64_t> actual = sdf->maybe_soma_joinid_shape();
-                REQUIRE(!actual.has_value());
-
-                // Check domainish accessors before resize
-                ArrowTable non_empty_domain = sdf->get_non_empty_domain();
-                std::vector<std::string>
-                    ned_str = ArrowAdapter::get_table_string_column_by_name(
-                        non_empty_domain, "mystring");
-
-                ArrowTable soma_domain = sdf->get_soma_domain();
-                std::vector<std::string>
-                    dom_str = ArrowAdapter::get_table_string_column_by_name(
-                        soma_domain, "mystring");
-
-                ArrowTable soma_maxdomain = sdf->get_soma_maxdomain();
-                std::vector<std::string>
-                    maxdom_str = ArrowAdapter::get_table_string_column_by_name(
-                        soma_maxdomain, "mystring");
-
-                REQUIRE(ned_str == std::vector<std::string>({"", ""}));
-
-                if (specify_domain) {
-                    REQUIRE(dom_str[0] == dim_infos[0].string_lo);
-                    REQUIRE(dom_str[1] == dim_infos[0].string_hi);
-                } else {
-                    REQUIRE(dom_str == std::vector<std::string>({"", ""}));
-                }
-                REQUIRE(maxdom_str == std::vector<std::string>({"", ""}));
-
-                sdf->close();
-
-                REQUIRE(sdf->nnz() == 0);
-
-                // Write
-                write_sjid_u32_str_data_from(0);
-
-                REQUIRE(sdf->nnz() == 2);
-                write_sjid_u32_str_data_from(8);
-                // soma_joinid is not a dim here and so the second write is
-                // an overwrite of the first here
-                REQUIRE(sdf->nnz() == 2);
-
-                // Check shape after write
-                sdf = open(OpenMode::read);
-                actual = sdf->maybe_soma_joinid_shape();
-                REQUIRE(!actual.has_value());
-                sdf->close();
-
-                // Check can_upgrade_domain
-                sdf = open(OpenMode::read);
-                std::unique_ptr<ArrowSchema>
-                    domain_schema = create_index_cols_info_schema(dim_infos);
-                auto domain_array = ArrowAdapter::make_arrow_array_parent(
-                    dim_infos.size());
-                domain_array
-                    ->children[0] = ArrowAdapter::make_arrow_array_child_string(
-                    std::vector<std::string>({"a", "z"}));
-                domain_array
-                    ->children[1] = ArrowAdapter::make_arrow_array_child(
-                    std::vector<uint32_t>({0, 0}));
-                auto domain_table = ArrowTable(
-                    std::move(domain_array), std::move(domain_schema));
-
-                StatusAndReason check = sdf->can_upgrade_soma_joinid_shape(
-                    1, "testing");
-                // Must fail since this is too small.
-                REQUIRE(check.first == false);
-                REQUIRE(
-                    check.second ==
-                    "testing: dataframe already has its domain set.");
-
-                sdf->close();
-
-                // Resize
-                int64_t new_shape = int64_t{SOMA_JOINID_RESIZE_DIM_MAX + 1};
-                uint32_t new_u32_dim_max = u32_dim_max * 2 + 1;
-
-                // Check shape after write
-                sdf = open(OpenMode::read);
-                actual = sdf->maybe_soma_joinid_shape();
-                REQUIRE(!actual.has_value());
-                sdf->close();
-
-                // Apply the domain change
-                if (test_upgrade_domain) {
-                    std::unique_ptr<ArrowSchema>
-                        domain_schema = create_index_cols_info_schema(
-                            dim_infos);
-                    auto domain_array = ArrowAdapter::make_arrow_array_parent(
-                        dim_infos.size());
-                    domain_array->children[0] =
-                        ArrowAdapter::make_arrow_array_child_string(
-                            std::vector<std::string>({"", ""}));
-                    domain_array
-                        ->children[1] = ArrowAdapter::make_arrow_array_child(
-                        std::vector<uint32_t>({0, new_u32_dim_max}));
-                    auto domain_table = ArrowTable(
-                        std::move(domain_array), std::move(domain_schema));
-
-                    // Not open for write
-                    sdf = open(OpenMode::read);
-                    // REQUIRE_THROWS(sdf->change_domain(domain_table,
-                    // "testing"));
-                    sdf->close();
-
-                    // Open for write
-                    sdf = open(OpenMode::write);
-                    sdf->change_domain(domain_table, "testing");
-                    sdf->close();
-
-                } else {
-                    // Not open for write
-                    sdf = open(OpenMode::read);
-                    REQUIRE_THROWS(
-                        sdf->resize_soma_joinid_shape(new_shape, "testing"));
-                    sdf->close();
-
-                    // Open for write
-                    sdf = open(OpenMode::write);
-                    sdf->resize_soma_joinid_shape(new_shape, "testing");
-                    sdf->close();
-                }
-
-                sdf = open(OpenMode::write);
-                write_sjid_u32_str_data_from(SOMA_JOINID_DIM_MAX);
-                sdf->close();
-
-                // Check domainish accessors after resize
-                sdf->open(OpenMode::read, TimestampRange(0, 2));
-
-                non_empty_domain = sdf->get_non_empty_domain();
-                ned_str = ArrowAdapter::get_table_string_column_by_name(
-                    non_empty_domain, "mystring");
-
-                soma_domain = sdf->get_soma_domain();
-                dom_str = ArrowAdapter::get_table_string_column_by_name(
-                    soma_domain, "mystring");
-
-                soma_maxdomain = sdf->get_soma_maxdomain();
-                maxdom_str = ArrowAdapter::get_table_string_column_by_name(
-                    soma_maxdomain, "mystring");
-
-                REQUIRE(ned_str == std::vector<std::string>({"", ""}));
-
-                if (specify_domain) {
-                    REQUIRE(dom_str[0] == dim_infos[0].string_lo);
-                    REQUIRE(dom_str[1] == dim_infos[0].string_hi);
-                } else {
-                    REQUIRE(dom_str == std::vector<std::string>({"", ""}));
-                }
-                REQUIRE(maxdom_str == std::vector<std::string>({"", ""}));
-
-                // Check can_resize_soma_joinid_shape
-                check = sdf->can_resize_soma_joinid_shape(0, "testing");
-
-                // Must pass since soma_joinid isn't a dim in this case.
-                REQUIRE(check.first == true);
-                REQUIRE(check.second == "");
-
-                sdf->close();
-            }
         }
     }
 }
