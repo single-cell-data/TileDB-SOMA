@@ -9,7 +9,6 @@ import tiledbsoma as soma
 
 soma_outgest = pytest.importorskip("tiledbsoma.experimental.outgest")
 sd = pytest.importorskip("spatialdata")
-xr = pytest.importorskip("xarray")
 
 
 @pytest.fixture(scope="module")
@@ -119,7 +118,7 @@ def test_export_image_level_to_spatial_data(
         transform=transform,
     )
 
-    assert isinstance(image2d, xr.DataArray)
+    assert isinstance(image2d, sd.models.models.DataArray)
 
     # Validate the model.
     schema = sd.models.get_model(image2d)
@@ -133,3 +132,88 @@ def test_export_image_level_to_spatial_data(
     metadata = dict(image2d.attrs)
     assert len(metadata) == 1
     assert metadata["transform"] == {"scene0": expected_transformation}
+
+
+@pytest.mark.parametrize(
+    "transform,expected_transformation",
+    [
+        (
+            somacore.IdentityTransform(("x_scene", "y_scene"), ("x_image", "y_image")),
+            [
+                sd.transformations.Identity(),
+                sd.transformations.Scale([2, 2], ("x", "y")),
+                sd.transformations.Scale([4, 4], ("x", "y")),
+            ],
+        ),
+        (
+            somacore.ScaleTransform(
+                ("x_scene", "y_scene"), ("x_image", "y_image"), [0.25, 0.5]
+            ),
+            [
+                sd.transformations.Scale([4, 2], ("x", "y")),
+                sd.transformations.Scale([8, 4], ("x", "y")),
+                sd.transformations.Scale([16, 8], ("x", "y")),
+            ],
+        ),
+        (
+            somacore.AffineTransform(
+                ("x_scene", "y_scene"), ("x_image", "y_image"), [[1, 0, 1], [0, 1, 2]]
+            ),
+            [
+                sd.transformations.Affine(
+                    np.array([[1, 0, -1], [0, 1, -2], [0, 0, 1]]),
+                    ("x", "y"),
+                    ("x", "y"),
+                ),
+                sd.transformations.Sequence(
+                    [
+                        sd.transformations.Scale([2, 2], ("x", "y")),
+                        sd.transformations.Affine(
+                            np.array([[1, 0, -1], [0, 1, -2], [0, 0, 1]]),
+                            ("x", "y"),
+                            ("x", "y"),
+                        ),
+                    ]
+                ),
+                sd.transformations.Sequence(
+                    [
+                        sd.transformations.Scale([4, 4], ("x", "y")),
+                        sd.transformations.Affine(
+                            np.array([[1, 0, -1], [0, 1, -2], [0, 0, 1]]),
+                            ("x", "y"),
+                            ("x", "y"),
+                        ),
+                    ]
+                ),
+            ],
+        ),
+    ],
+)
+def test_export_full_image_to_spatial_data(
+    sample_multiscale_image_2d, sample_2d_data, transform, expected_transformation
+):
+    image2d = soma_outgest.to_spatial_data_multiscale_image(
+        sample_multiscale_image_2d,
+        scene_id="scene0",
+        scene_dim_map={"x_scene": "x", "y_scene": "y"},
+        transform=transform,
+    )
+
+    assert isinstance(image2d, sd.models.models.DataTree)
+
+    # Validate the model.
+    schema = sd.models.get_model(image2d)
+    assert schema == sd.models.Image2DModel
+
+    # Check the correct data exists.
+    for index in range(3):
+        data_array = image2d[f"scale{index}"]["image"]
+
+        # Check data.
+        result = data_array.data.compute()
+        np.testing.assert_equal(result, sample_2d_data[index])
+
+        # Check the metadata.
+        metadata = dict(data_array.attrs)
+        assert len(metadata) == 1
+        assert metadata["transform"] == {"scene0": expected_transformation[index]}

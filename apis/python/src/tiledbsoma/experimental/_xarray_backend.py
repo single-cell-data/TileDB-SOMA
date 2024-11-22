@@ -3,11 +3,25 @@
 #
 # Licensed under the MIT License.
 import json
-from typing import Any, Mapping, Optional, Tuple, Union
+import warnings
+from typing import Any, Mapping, Optional, Sequence, Tuple, Union
 
 import dask.array as da
 import numpy as np
-from xarray import DataArray
+
+from ._util import _version_less_than
+
+try:
+    import spatialdata as sd
+    from spatialdata.models.models import DataTree
+except ImportError as err:
+    warnings.warn("Experimental spatial exporter requires the spatialdatda package.")
+    raise err
+try:
+    import xarray as xr
+except ImportError as err:
+    warnings.warn("Experimental spatial exporter requires the spatialdatda package.")
+    raise err
 
 from .. import DenseNDArray
 from ..options._soma_tiledb_context import SOMATileDBContext
@@ -112,7 +126,7 @@ def dense_nd_array_to_data_array(
     chunks: Optional[Tuple[int, ...]] = None,
     attrs: Optional[Mapping[str, Any]] = None,
     context: Optional[SOMATileDBContext] = None,
-) -> DataArray:
+) -> xr.DataArray:
     """Create a :class:`xarray.DataArray` that accesses a SOMA :class:`DenseNDarray`
     through dask.
 
@@ -139,4 +153,19 @@ def dense_nd_array_to_data_array(
         fancy=False,
     )
 
-    return DataArray(data, dims=dim_names, attrs=attrs)
+    return xr.DataArray(data, dims=dim_names, attrs=attrs)
+
+
+def images_to_datatree(image_data_arrays: Sequence[xr.DataArray]) -> DataTree:
+    # If SpatialData version < 0.2.6 use the legacy xarray_datatree implementation
+    # of the DataTree.
+    if _version_less_than(sd.__version__, (0, 2, 5)):
+        return DataTree.from_dict(
+            {f"scale{index}": image for index, image in enumerate(image_data_arrays)}
+        )
+    return DataTree.from_dict(
+        {
+            f"scale{index}": xr.Dataset({"image": image})
+            for index, image in enumerate(image_data_arrays)
+        }
+    )

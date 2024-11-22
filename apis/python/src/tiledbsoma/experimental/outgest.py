@@ -2,17 +2,29 @@
 # Copyright (c) 2024 TileDB, Inc
 #
 # Licensed under the MIT License.
-from typing import Dict, Optional, Tuple, Union
+import warnings
+from typing import TYPE_CHECKING, Dict, Optional, Tuple, Union
 
-import geopandas as gpd
+try:
+    import geopandas as gpd
+except ImportError as err:
+    warnings.warn("Experimental spatial outgestor requires the geopandas package.")
+    raise err
 import pandas as pd
 import somacore
-import spatialdata as sd
-import xarray as xr
+
+try:
+    import spatialdata as sd
+except ImportError as err:
+    warnings.warn("Experimental spatial outgestor requires the spatialdata package.")
+    raise err
 
 from .. import MultiscaleImage, PointCloudDataFrame
 from .._constants import SOMA_JOINID
-from ._xarray_backend import dense_nd_array_to_data_array
+from ._xarray_backend import dense_nd_array_to_data_array, images_to_datatree
+
+if TYPE_CHECKING:
+    from spatialdata.models.models import DataArray, DataTree
 
 
 def _convert_axis_names(
@@ -195,7 +207,7 @@ def to_spatial_data_image(
     scene_id: str,
     scene_dim_map: Dict[str, str],
     transform: somacore.CoordinateTransform,
-) -> xr.DataArray:
+) -> "DataArray":
     """Export a level of a :class:`MultiscaleImage` to a
     :class:`spatialdata.Image2DModel` or :class:`spatialdata.Image3DModel`.
     """
@@ -256,3 +268,78 @@ def to_spatial_data_image(
         attrs={"transform": transformations},
         context=image.context,
     )
+
+
+def to_spatial_data_multiscale_image(
+    image: MultiscaleImage,
+    *,
+    scene_id: str,
+    scene_dim_map: Dict[str, str],
+    transform: somacore.CoordinateTransform,
+) -> "DataTree":
+    """Export a MultiscaleImage to a DataTree."""
+
+    # Check for channel axis.
+    if not image.has_channel_axis:
+        raise NotImplementedError(
+            "Support for exporting a MultiscaleImage to without a channel axis to "
+            "SpatialData is not yet implemented."
+        )
+
+    # Convert from SOMA axis names to SpatialData axis names.
+    orig_axis_names = image.coordinate_space.axis_names
+    if len(orig_axis_names) not in {2, 3}:
+        raise NotImplementedError(
+            f"Support for converting a '{len(orig_axis_names)}'D is not yet implemented."
+        )
+    new_axis_names, image_dim_map = _convert_axis_names(
+        orig_axis_names, image.data_axis_order
+    )
+
+    # Get the transformtion from the image level to the scene:
+    # If the result is a single scale transform (or identity transform), output a
+    # single transformation. Otherwise, convert to a SpatialData sequence of
+    # transformations.
+    inv_transform = transform.inverse_transform()
+    if isinstance(transform, somacore.ScaleTransform):
+        # inv_transform @ scale_transform -> applies scale_transform first
+        spatial_data_transformations = tuple(
+            _transform_to_spatial_data(
+                inv_transform @ image.get_transform_from_level(level),
+                image_dim_map,
+                scene_dim_map,
+            )
+            for level in range(image.level_count)
+        )
+
+    else:
+        sd_scale_transforms = tuple(
+            _transform_to_spatial_data(
+                image.get_transform_from_level(level), image_dim_map, image_dim_map
+            )
+            for level in range(1, image.level_count)
+        )
+        sd_inv_transform = _transform_to_spatial_data(
+            inv_transform, image_dim_map, scene_dim_map
+        )
+
+        # First level transform is always the identity, so just directly use
+        # inv_transform. For remaining transformations,
+        # Sequence([sd_transform1, sd_transform2]) -> applies sd_transform1 first
+        spatial_data_transformations = (sd_inv_transform,) + tuple(
+            sd.transformations.Sequence([scale_transform, sd_inv_transform])
+            for scale_transform in sd_scale_transforms
+        )
+
+    # Create a sequence of resolution level.
+    image_data_arrays = tuple(
+        dense_nd_array_to_data_array(
+            uri=image.level_uri(index),
+            dim_names=new_axis_names,
+            attrs={"transform": {scene_id: spatial_data_transformations[index]}},
+            context=image.context,
+        )
+        for index, (soma_name, val) in enumerate(image.levels().items())
+    )
+
+    return images_to_datatree(image_data_arrays)
