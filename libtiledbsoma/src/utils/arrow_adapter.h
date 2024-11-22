@@ -265,10 +265,9 @@ class ArrowAdapter {
     /**
      * @brief Get a TileDB dimension from an Arrow schema.
      *
-     * @return std::pair<Dimension, bool> The TileDB dimension with a boolean
-     * flag indicating whether or not the dimension uses `current domain`.
+     * @return std::pair<Dimension, bool> The TileDB dimension.
      */
-    static std::pair<Dimension, bool> tiledb_dimension_from_arrow_schema(
+    static Dimension tiledb_dimension_from_arrow_schema(
         std::shared_ptr<Context> ctx,
         ArrowSchema* schema,
         ArrowArray* array,
@@ -780,7 +779,7 @@ class ArrowAdapter {
         int64_t column_index,
         int64_t expected_n_buffers);
 
-    static bool _set_spatial_dimensions(
+    static void _set_spatial_dimensions(
         std::map<std::string, Dimension>& dims,
         const ArrowTable& spatial_column_info,
         std::string_view type_metadata,

@@ -1005,8 +1005,7 @@ ArraySchema ArrowAdapter::tiledb_schema_from_arrow_schema(
                         "",
                         "",
                         platform_config);
-                    dims.insert({dim.first.name(), dim.first});
-                    use_current_domain &= dim.second;
+                    dims.insert({dim.name(), dim});
                     isattr = false;
                 }
 
@@ -1166,7 +1165,7 @@ ArraySchema ArrowAdapter::tiledb_schema_from_arrow_schema(
     return schema;
 }
 
-std::pair<Dimension, bool> ArrowAdapter::tiledb_dimension_from_arrow_schema(
+Dimension ArrowAdapter::tiledb_dimension_from_arrow_schema(
     std::shared_ptr<Context> ctx,
     ArrowSchema* schema,
     ArrowArray* array,
@@ -1175,8 +1174,6 @@ std::pair<Dimension, bool> ArrowAdapter::tiledb_dimension_from_arrow_schema(
     std::string prefix,
     std::string suffix,
     PlatformConfig platform_config) {
-    bool use_current_domain = true;
-
     auto type = ArrowAdapter::to_tiledb_format(schema->format, type_metadata);
 
     if (ArrowAdapter::arrow_is_var_length_type(schema->format)) {
@@ -1200,7 +1197,7 @@ std::pair<Dimension, bool> ArrowAdapter::tiledb_dimension_from_arrow_schema(
     auto dim = ArrowAdapter::_create_dim(type, col_name, buff, ctx);
     dim.set_filter_list(filter_list);
 
-    return {dim, use_current_domain};
+    return dim;
 }
 
 std::pair<Attribute, std::optional<Enumeration>>
@@ -1826,14 +1823,13 @@ ArrowArray* ArrowAdapter::_get_and_check_column(
     return child;
 }
 
-bool ArrowAdapter::_set_spatial_dimensions(
+void ArrowAdapter::_set_spatial_dimensions(
     std::map<std::string, Dimension>& dims,
     const ArrowTable& spatial_column_info,
     std::string_view type_metadata,
     std::string soma_type,
     std::shared_ptr<Context> ctx,
     PlatformConfig platform_config) {
-    bool use_current_domain = true;
     if (type_metadata.compare("WKB") != 0) {
         throw TileDBSOMAError(std::format(
             "ArrowAdapter::tiledb_attribute_from_arrow_schema: "
@@ -1864,14 +1860,9 @@ bool ArrowAdapter::_set_spatial_dimensions(
             "__max",
             platform_config);
 
-        dims.insert({min_dim.first.name(), min_dim.first});
-        dims.insert({max_dim.first.name(), max_dim.first});
-
-        use_current_domain &= min_dim.second;
-        use_current_domain &= max_dim.second;
+        dims.insert({min_dim.name(), min_dim});
+        dims.insert({max_dim.name(), max_dim});
     }
-
-    return use_current_domain;
 }
 
 }  // namespace tiledbsoma
