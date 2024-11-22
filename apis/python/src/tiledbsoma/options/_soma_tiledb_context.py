@@ -10,7 +10,7 @@ import functools
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
-from typing import TYPE_CHECKING, Any, Dict, Literal, Mapping
+from typing import Any, Dict, Literal, Mapping
 
 from somacore import ContextBase
 from typing_extensions import Self
@@ -19,17 +19,23 @@ from .. import pytiledbsoma as clib
 from .._types import OpenTimestamp
 from .._util import ms_to_datetime, to_timestamp_ms
 
-if TYPE_CHECKING:
-    import tiledb
-
 try:
-    import tiledb
+    from tiledb import Ctx as TileDBCtx
+
+    TILEDB_EXISTS = True
 except ModuleNotFoundError:
-    tiledb = None
+    # If we set this to None, then the type hint TileDBCtx | None in the code
+    # below will error out with:
+    #   TypeError: unsupported operand type(s) for |: 'NoneType' and 'NoneType'
+    # We prevent this by using Any as a catch-all type. This allows the type hint
+    # to remain compatible even when TileDB is not installed, without causing any
+    # issues at runtime or with type checking tools
+    TileDBCtx = Any
+    TILEDB_EXISTS = False
 
 
-def _check_tiledb() -> None:
-    if tiledb is None:
+def _check_tiledb_ctx() -> None:
+    if not TILEDB_EXISTS:
         raise ModuleNotFoundError(
             "The 'tiledb' module is required to access 'tiledb_ctx' but is "
             "not installed."
@@ -81,7 +87,7 @@ class SOMATileDBContext(ContextBase):
     def __init__(
         self,
         tiledb_config: Dict[str, str | float] | None = None,
-        tiledb_ctx: "tiledb.Ctx" | None = None,
+        tiledb_ctx: TileDBCtx | None = None,
         timestamp: OpenTimestamp | None = None,
         threadpool: ThreadPoolExecutor | None = None,
     ) -> None:
@@ -148,7 +154,7 @@ class SOMATileDBContext(ContextBase):
 
         # A TileDB Context may only be passed if tiledb is installed
         if tiledb_ctx is not None:
-            _check_tiledb()
+            _check_tiledb_ctx()
 
         self._lock = threading.Lock()
         """A lock to ensure single initialization of ``_tiledb_ctx``."""
@@ -207,7 +213,7 @@ class SOMATileDBContext(ContextBase):
                     # The user passed in a tiledb_ctx; if tiledb is not installed
                     # it should be impossible to enter into this block because
                     # we already check that in the constructor
-                    assert tiledb is not None
+                    assert TileDBCtx is not None
                     cfg = self._tiledb_ctx.config().dict()
                     self._native_context = clib.SOMAContext(
                         {k: str(v) for k, v in cfg.items()}
@@ -220,7 +226,7 @@ class SOMATileDBContext(ContextBase):
         return self._native_context
 
     @property
-    def tiledb_ctx(self) -> "tiledb.Ctx" | None:
+    def tiledb_ctx(self) -> TileDBCtx | None:
         """The TileDB-Py Context passed in to create the ``SOMATileDBContext``.
 
         This accessor is only available if tiledb is installed. If
@@ -238,7 +244,7 @@ class SOMATileDBContext(ContextBase):
         If `tiledb` is not installed, this accessor throws a ``ModuleNotFoundError``
         error.
         """
-        _check_tiledb()
+        _check_tiledb_ctx()
         return self._tiledb_ctx
 
     @property
@@ -267,7 +273,7 @@ class SOMATileDBContext(ContextBase):
 
         # The user passed in a TileDB Context. Return its actual config.
         if self._tiledb_ctx is not None:
-            _check_tiledb()
+            _check_tiledb_ctx()
             return dict(self._tiledb_ctx.config())
 
         # Our context has not yet been built.
@@ -282,7 +288,7 @@ class SOMATileDBContext(ContextBase):
         self,
         *,
         tiledb_config: Dict[str, Any] | None = None,
-        tiledb_ctx: "tiledb.Ctx" | None = None,
+        tiledb_ctx: TileDBCtx | None = None,
         timestamp: OpenTimestamp | _Unset | None = _UNSET,
         threadpool: ThreadPoolExecutor | _Unset | None = _UNSET,
     ) -> Self:
@@ -325,7 +331,7 @@ class SOMATileDBContext(ContextBase):
                 tiledb_config = {k: v for (k, v) in new_config.items() if v is not None}
 
             if tiledb_ctx is not None:
-                _check_tiledb()
+                _check_tiledb_ctx()
 
             if timestamp == _UNSET:
                 # Keep the existing timestamp if not overridden.
@@ -362,7 +368,7 @@ def _validate_soma_tiledb_context(context: Any) -> SOMATileDBContext:
     if context is None:
         return SOMATileDBContext()
 
-    if tiledb is not None and isinstance(context, tiledb.Ctx):
+    if TILEDB_EXISTS and isinstance(context, TileDBCtx):
         raise TypeError(
             "context is a tiledb.Ctx, not a SOMATileDBContext -- please wrap it in tiledbsoma.SOMATileDBContext(...)"
         )
