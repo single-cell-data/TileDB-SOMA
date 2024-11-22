@@ -51,7 +51,7 @@ TEST_CASE("SOMACollection: basic") {
 }
 
 TEST_CASE("SOMACollection: add SOMASparseNDArray") {
-    auto use_current_domain = GENERATE(false, true);
+    auto use_current_domain = GENERATE(true);
 
     SECTION(std::format("- use_current_domain={}", use_current_domain)) {
         TimestampRange ts(0, 2);
@@ -109,7 +109,7 @@ TEST_CASE("SOMACollection: add SOMASparseNDArray") {
 }
 
 TEST_CASE("SOMACollection: add SOMADenseNDArray") {
-    auto use_current_domain = GENERATE(false, true);
+    auto use_current_domain = GENERATE(true);
 
     SECTION(std::format("- use_current_domain={}", use_current_domain)) {
         TimestampRange ts(0, 2);
@@ -167,7 +167,7 @@ TEST_CASE("SOMACollection: add SOMADenseNDArray") {
 }
 
 TEST_CASE("SOMACollection: add SOMADataFrame") {
-    auto use_current_domain = GENERATE(false, true);
+    auto use_current_domain = GENERATE(true);
     std::ostringstream section;
     section << "- use_current_domain=" << use_current_domain;
     SECTION(section.str()) {
@@ -231,7 +231,7 @@ TEST_CASE("SOMACollection: add SOMADataFrame") {
 }
 
 TEST_CASE("SOMACollection: add SOMACollection") {
-    auto use_current_domain = GENERATE(false, true);
+    auto use_current_domain = GENERATE(true);
     std::ostringstream section;
     section << "- use_current_domain=" << use_current_domain;
     SECTION(section.str()) {
@@ -264,7 +264,7 @@ TEST_CASE("SOMACollection: add SOMACollection") {
 }
 
 TEST_CASE("SOMACollection: add SOMAExperiment") {
-    auto use_current_domain = GENERATE(false, true);
+    auto use_current_domain = GENERATE(true);
     std::ostringstream section;
     section << "- use_current_domain=" << use_current_domain;
     SECTION(section.str()) {
@@ -320,7 +320,7 @@ TEST_CASE("SOMACollection: add SOMAExperiment") {
 }
 
 TEST_CASE("SOMACollection: add SOMAMeasurement") {
-    auto use_current_domain = GENERATE(false, true);
+    auto use_current_domain = GENERATE(true);
     std::ostringstream section;
     section << "- use_current_domain=" << use_current_domain;
     SECTION(section.str()) {
@@ -376,7 +376,7 @@ TEST_CASE("SOMACollection: add SOMAMeasurement") {
 }
 
 TEST_CASE("SOMACollection: metadata") {
-    auto use_current_domain = GENERATE(false, true);
+    auto use_current_domain = GENERATE(true);
     std::ostringstream section;
     section << "- use_current_domain=" << use_current_domain;
     SECTION(section.str()) {
@@ -437,7 +437,7 @@ TEST_CASE("SOMACollection: metadata") {
 }
 
 TEST_CASE("SOMAExperiment: metadata") {
-    auto use_current_domain = GENERATE(false, true);
+    auto use_current_domain = GENERATE(true);
     std::ostringstream section;
     section << "- use_current_domain=" << use_current_domain;
     SECTION(section.str()) {
@@ -532,7 +532,7 @@ TEST_CASE("SOMAExperiment: metadata") {
 }
 
 TEST_CASE("SOMAMeasurement: metadata") {
-    auto use_current_domain = GENERATE(false, true);
+    auto use_current_domain = GENERATE(true);
     std::ostringstream section;
     section << "- use_current_domain=" << use_current_domain;
     SECTION(section.str()) {

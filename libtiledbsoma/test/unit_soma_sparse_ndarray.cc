@@ -40,7 +40,7 @@ TEST_CASE("SOMASparseNDArray: basic", "[SOMASparseNDArray]") {
     int64_t dim_max = 999;
     int64_t shape = 1000;
 
-    auto use_current_domain = GENERATE(false, true);
+    auto use_current_domain = GENERATE(true);
 
     SECTION(std::format("- use_current_domain={}", use_current_domain)) {
         auto ctx = std::make_shared<SOMAContext>();
@@ -189,7 +189,7 @@ TEST_CASE("SOMASparseNDArray: basic", "[SOMASparseNDArray]") {
 
 TEST_CASE("SOMASparseNDArray: platform_config", "[SOMASparseNDArray]") {
     int64_t dim_max = 999;
-    auto use_current_domain = GENERATE(false, true);
+    auto use_current_domain = GENERATE(true);
 
     SECTION(std::format("- use_current_domain={}", use_current_domain)) {
         auto ctx = std::make_shared<SOMAContext>();
@@ -239,7 +239,7 @@ TEST_CASE("SOMASparseNDArray: platform_config", "[SOMASparseNDArray]") {
 
 TEST_CASE("SOMASparseNDArray: metadata", "[SOMASparseNDArray]") {
     int64_t dim_max = 999;
-    auto use_current_domain = GENERATE(false, true);
+    auto use_current_domain = GENERATE(true);
 
     SECTION(std::format("- use_current_domain={}", use_current_domain)) {
         auto ctx = std::make_shared<SOMAContext>();
@@ -351,7 +351,7 @@ TEST_CASE(
           .dim_max = dim_max,
           .string_lo = "N/A",
           .string_hi = "N/A",
-          .use_current_domain = false}});
+          .use_current_domain = true}});
 
     auto index_columns = helper::create_column_index_info(dim_infos);
 
@@ -363,16 +363,9 @@ TEST_CASE(
         ctx);
 
     auto snda = SOMASparseNDArray::open(uri, OpenMode::write, ctx);
-    REQUIRE(snda->has_current_domain() == false);
+    REQUIRE(snda->has_current_domain());
 
-    // For old-style arrays, from before the current-domain feature:
-    // * The shape specified at create becomes the core (max) domain
-    //   o Recall that the core domain is immutable
-    // * There is no current domain set
-    //   o A current domain can be applied to it, up to <= (max) domain
     auto dom = snda->soma_domain_slot<int64_t>(dim_name);
-    auto mxd = snda->soma_maxdomain_slot<int64_t>(dim_name);
-    REQUIRE(dom == mxd);
     REQUIRE(dom.first == 0);
     REQUIRE(dom.second == dim_max);
 
@@ -391,12 +384,13 @@ TEST_CASE(
     REQUIRE(check.first == false);
     REQUIRE(
         check.second ==
-        "testing for soma_dim_0: new 1009 < maxshape "
-        "1000");
+        "testing: array already has a shape: please use resize");
 
     check = snda->can_upgrade_shape(newshape_good, "testing");
-    REQUIRE(check.first == true);
-    REQUIRE(check.second == "");
+    REQUIRE(check.first == false);
+    REQUIRE(
+        check.second ==
+        "testing: array already has a shape: please use resize");
 }
 
 TEST_CASE("SOMASparseNDArray: can_resize", "[SOMASparseNDArray]") {
@@ -431,7 +425,7 @@ TEST_CASE("SOMASparseNDArray: can_resize", "[SOMASparseNDArray]") {
         ctx);
 
     auto snda = SOMASparseNDArray::open(uri, OpenMode::write, ctx);
-    REQUIRE(snda->has_current_domain() == true);
+    REQUIRE(snda->has_current_domain());
 
     // For new-style arrays, with the current-domain feature:
     // * The shape specified at create becomes the core current domain

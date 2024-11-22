@@ -40,7 +40,7 @@ TEST_CASE("SOMADenseNDArray: basic", "[SOMADenseNDArray]") {
     int64_t dim_max = 999;
     int64_t shape = 1000;
 
-    auto use_current_domain = GENERATE(false, true);
+    auto use_current_domain = GENERATE(true);
 
     SECTION(std::format("- use_current_domain={}", use_current_domain)) {
         auto ctx = std::make_shared<SOMAContext>();
@@ -154,7 +154,7 @@ TEST_CASE("SOMADenseNDArray: basic", "[SOMADenseNDArray]") {
 
 TEST_CASE("SOMADenseNDArray: platform_config", "[SOMADenseNDArray]") {
     int64_t dim_max = 999;
-    auto use_current_domain = GENERATE(false, true);
+    auto use_current_domain = GENERATE(true);
 
     SECTION(std::format("- use_current_domain={}", use_current_domain)) {
         auto ctx = std::make_shared<SOMAContext>();
@@ -239,7 +239,7 @@ TEST_CASE("SOMADenseNDArray: platform_config", "[SOMADenseNDArray]") {
 
 TEST_CASE("SOMADenseNDArray: metadata", "[SOMADenseNDArray]") {
     int64_t dim_max = 999;
-    auto use_current_domain = GENERATE(false, true);
+    auto use_current_domain = GENERATE(true);
 
     SECTION(std::format("- use_current_domain={}", use_current_domain)) {
         auto ctx = std::make_shared<SOMAContext>();

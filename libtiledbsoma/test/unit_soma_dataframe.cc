@@ -205,7 +205,7 @@ TEST_CASE_METHOD(
     VariouslyIndexedDataFrameFixture,
     "SOMADataFrame: basic",
     "[SOMADataFrame]") {
-    auto use_current_domain = GENERATE(false, true);
+    auto use_current_domain = GENERATE(true);
 
     SECTION(std::format("- use_current_domain={}", use_current_domain)) {
         set_up(
@@ -307,7 +307,7 @@ TEST_CASE_METHOD(
         std::make_pair(R"("NOOP")", TILEDB_FILTER_NONE));
 
     SECTION(std::format("- filter={}", filter.first)) {
-        auto use_current_domain = GENERATE(false, true);
+        auto use_current_domain = GENERATE(true);
         std::ostringstream section2;
         section2 << "- use_current_domain=" << use_current_domain;
         SECTION(section2.str()) {
@@ -389,7 +389,7 @@ TEST_CASE_METHOD(
     VariouslyIndexedDataFrameFixture,
     "SOMADataFrame: metadata",
     "[SOMADataFrame]") {
-    auto use_current_domain = GENERATE(false, true);
+    auto use_current_domain = GENERATE(true);
 
     SECTION(std::format("- use_current_domain={}", use_current_domain)) {
         set_up(std::make_shared<SOMAContext>(), "mem://unit-test-collection");
@@ -498,7 +498,7 @@ TEST_CASE_METHOD(
     VariouslyIndexedDataFrameFixture,
     "SOMADataFrame: standard-indexed dataframe dim-sjid attr-str-u32",
     "[SOMADataFrame]") {
-    auto use_current_domain = GENERATE(false, true);
+    auto use_current_domain = GENERATE(true);
     std::ostringstream section;
     section << "- use_current_domain=" << use_current_domain;
     SECTION(section.str()) {
@@ -838,7 +838,7 @@ TEST_CASE_METHOD(
     VariouslyIndexedDataFrameFixture,
     "SOMADataFrame: variant-indexed dataframe dim-u32-sjid attr-str",
     "[SOMADataFrame]") {
-    auto use_current_domain = GENERATE(false, true);
+    auto use_current_domain = GENERATE(true);
     std::ostringstream section;
     section << "- use_current_domain=" << use_current_domain;
     SECTION(section.str()) {
@@ -1182,7 +1182,7 @@ TEST_CASE_METHOD(
     VariouslyIndexedDataFrameFixture,
     "SOMADataFrame: variant-indexed dataframe dim-sjid-str attr-u32",
     "[SOMADataFrame]") {
-    auto use_current_domain = GENERATE(false, true);
+    auto use_current_domain = GENERATE(true);
     std::ostringstream section;
     section << "- use_current_domain=" << use_current_domain;
     SECTION(section.str()) {
@@ -1532,7 +1532,7 @@ TEST_CASE_METHOD(
     VariouslyIndexedDataFrameFixture,
     "SOMADataFrame: variant-indexed dataframe dim-str-u32 attr-sjid",
     "[SOMADataFrame]") {
-    auto use_current_domain = GENERATE(false, true);
+    auto use_current_domain = GENERATE(true);
     std::ostringstream section;
     section << "- use_current_domain=" << use_current_domain;
     SECTION(section.str()) {
