@@ -207,6 +207,35 @@ PlatformConfig ArrowAdapter::platform_config_from_tiledb_schema(
     return platform_config;
 }
 
+PlatformSchemaConfig ArrowAdapter::platform_schema_config_from_tiledb(
+    ArraySchema tiledb_schema) {
+    std::map<tiledb_layout_t, std::string> layout_as_string{
+        {TILEDB_ROW_MAJOR, "row-major"},
+        {TILEDB_COL_MAJOR, "column-major"},
+        {TILEDB_HILBERT, "hilbert"},
+        {TILEDB_UNORDERED, "unordered"},
+    };
+
+    PlatformSchemaConfig platform_config;
+    platform_config.capacity = tiledb_schema.capacity();
+    platform_config.allows_duplicates = tiledb_schema.allows_dups();
+    platform_config.tile_order = layout_as_string[tiledb_schema.tile_order()];
+    platform_config.cell_order = layout_as_string[tiledb_schema.cell_order()];
+    platform_config.offsets_filters = ArrowAdapter::_get_filter_list_json(
+                                          tiledb_schema.offsets_filter_list())
+                                          .dump();
+    platform_config.validity_filters = ArrowAdapter::_get_filter_list_json(
+                                           tiledb_schema.validity_filter_list())
+                                           .dump();
+    platform_config.attrs = ArrowAdapter::_get_attrs_filter_list_json(
+                                tiledb_schema)
+                                .dump();
+    platform_config.dims = ArrowAdapter::_get_dims_list_json(tiledb_schema)
+                               .dump();
+
+    return platform_config;
+}
+
 json ArrowAdapter::_get_attrs_filter_list_json(
     const ArraySchema& tiledb_schema) {
     json attrs_filter_list_as_json;

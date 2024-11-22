@@ -139,7 +139,7 @@ def test_dataframe(tmp_path, arrow_schema):
         assert [e.as_py() for e in table["mybool"]] == pydict["mybool"]
 
     with soma.DataFrame.open(uri) as A:
-        cfg = A.config_options_from_schema()
+        cfg = A.schema_config_options()
         assert not cfg.allows_duplicates
         assert json.loads(cfg.dims)["myint"]["filters"] == [
             {"COMPRESSION_LEVEL": 3, "name": "ZSTD"}
@@ -1189,7 +1189,7 @@ def test_create_platform_config_overrides(
     ).close()
 
     with soma.DataFrame.open(tmp_path.as_posix()) as A:
-        cfg = A.config_options_from_schema()
+        cfg = A.schema_config_options()
         assert expected_schema_fields["validity_filters"] == json.loads(
             cfg.validity_filters
         )

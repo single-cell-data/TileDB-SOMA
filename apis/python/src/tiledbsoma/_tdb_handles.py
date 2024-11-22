@@ -394,6 +394,12 @@ class SOMAArrayWrapper(Wrapper[_SOMAObjectType]):
     def schema(self) -> pa.Schema:
         return self._handle.schema
 
+    def schema_config_options(self) -> clib.PlatformSchemaConfig:
+        """Returns a class containing the TileDB platform configuration options that
+        can be read from an array schema.
+        """
+        return self._handle.schema_config_options()
+
     def config_options_from_schema(self) -> clib.PlatformConfig:
         return self._handle.config_options_from_schema()
 
