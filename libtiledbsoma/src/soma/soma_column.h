@@ -190,7 +190,8 @@ class SOMAColumn {
                 name()));
         }
 
-        this->_set_dim_points(query, std::vector({point}));
+        this->_set_dim_points(
+            query, ctx, std::make_any<std::vector<T>>(std::vector<T>({point})));
     }
 
     /**
@@ -213,7 +214,8 @@ class SOMAColumn {
                 name()));
         }
 
-        this->_set_dim_points(query, ctx, points);
+        this->_set_dim_points(
+            query, ctx, std::make_any<std::vector<T>>(points));
     }
 
     /**
@@ -236,7 +238,8 @@ class SOMAColumn {
                 name()));
         }
 
-        this->_set_dim_ranges(query, ctx, ranges);
+        this->_set_dim_ranges(
+            query, ctx, std::make_any<std::vector<std::pair<T, T>>>(ranges));
     }
 
     /**
