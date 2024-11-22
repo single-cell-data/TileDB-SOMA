@@ -15,12 +15,12 @@ try:
     import spatialdata as sd
     from spatialdata.models.models import DataTree
 except ImportError as err:
-    warnings.warn("Experimental spatial exporter requires the spatialdatda package.")
+    warnings.warn("Experimental spatial exporter requires the spatialdata package.")
     raise err
 try:
     import xarray as xr
 except ImportError as err:
-    warnings.warn("Experimental spatial exporter requires the spatialdatda package.")
+    warnings.warn("Experimental spatial exporter requires the xarray package.")
     raise err
 
 from .. import DenseNDArray
