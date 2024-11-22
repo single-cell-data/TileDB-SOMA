@@ -18,7 +18,6 @@ from . import _arrow_types, _util
 from . import pytiledbsoma as clib
 from ._constants import (
     SOMA_COORDINATE_SPACE_METADATA_KEY,
-    SOMA_JOINID,
     SPATIAL_DISCLAIMER,
 )
 from ._dataframe import (
@@ -29,7 +28,6 @@ from ._dataframe import (
     _revise_domain_for_extent,
 )
 from ._exception import SOMAError, map_exception_for_create
-from ._flags import NEW_SHAPE_FEATURE_FLAG_ENABLED
 from ._query_condition import QueryCondition
 from ._read_iters import TableReadIter
 from ._spatial_dataframe import SpatialDataFrame
@@ -72,7 +70,6 @@ class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
         *,
         schema: pa.Schema,
         coordinate_space: Union[Sequence[str], CoordinateSpace] = ("x", "y"),
-        index_column_names: Optional[Sequence[str]] = None,
         domain: Optional[Domain] = None,
         platform_config: Optional[options.PlatformConfig] = None,
         context: Optional[SOMATileDBContext] = None,
@@ -84,8 +81,11 @@ class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
         ``soma_joinid`` of type ``pyarrow.int64``, with negative values disallowed, and
         at least one axis with numeric type.  If a ``soma_joinid`` column is
         present in the provided schema, it must be of the correct type.  If the
-        ``soma_joinid`` column is not provided, one will be added. The ``soma_joinid``
-        may be an index column. The axis columns must be index columns.
+        ``soma_joinid`` column is not provided, one will be added.
+
+        The schema of the created point cloud must contain columns for the axes in the
+        ``coordinate_space``. These columns will be index columns for the point cloud
+        dataframe.
 
         Args:
             uri: The URI where the dataframe will be created.
@@ -93,10 +93,6 @@ class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
                 must define all columns, including columns to be named as index
                 columns.  If the schema includes types unsupported by the SOMA
                 implementation, a ValueError will be raised.
-            index_column_names: A list of column names to use as user-defined index
-                columns (e.g., ``['x', 'y']``). All named columns must exist in the
-                schema, and at least one index column name is required.
-                Default is ``("soma_joinid", *coordinate_space)``.
             coordinate_space: Either the coordinate space or the axis names for the
                 coordinate space the point cloud is defined on.
             domain: An optional sequence of tuples specifying the domain of each
@@ -117,14 +113,17 @@ class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
         axis_dtype: Optional[pa.DataType] = None
         if not isinstance(coordinate_space, CoordinateSpace):
             coordinate_space = CoordinateSpace.from_axis_names(coordinate_space)
-        if index_column_names is None:
-            index_column_names = (SOMA_JOINID,) + coordinate_space.axis_names
+        index_column_names = coordinate_space.axis_names
         for column_name in coordinate_space.axis_names:
-            if column_name not in index_column_names:
-                raise ValueError(f"Spatial column '{column_name}' must an index column")
             # Check axis column type is valid and all axis columns have the same type.
             if axis_dtype is None:
-                axis_dtype = schema.field(column_name).type
+                try:
+                    axis_dtype = schema.field(column_name).type
+                except KeyError as ke:
+                    raise ValueError(
+                        f"Coordinate system axis '{column_name}' must be a column in the "
+                        f"schema."
+                    ) from ke
                 if not (
                     pa.types.is_integer(axis_dtype) or pa.types.is_floating(axis_dtype)
                 ):
@@ -133,7 +132,13 @@ class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
                         f"floating-point type. Column type is {axis_dtype!r}"
                     )
             else:
-                column_dtype = schema.field(column_name).type
+                try:
+                    column_dtype = schema.field(column_name).type
+                except KeyError as ke:
+                    raise ValueError(
+                        f"Coordinate system axis '{column_name}' must be a column in the "
+                        f"schema."
+                    ) from ke
                 if column_dtype != axis_dtype:
                     raise ValueError("All spatial axes must have the same datatype.")
 
@@ -215,16 +220,12 @@ class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
             # [4] core current domain hi
 
             index_column_schema.append(pa_field)
-            if NEW_SHAPE_FEATURE_FLAG_ENABLED:
 
-                index_column_data[pa_field.name] = [
-                    *slot_core_max_domain,
-                    extent,
-                    *slot_core_current_domain,
-                ]
-
-            else:
-                index_column_data[pa_field.name] = [*slot_core_current_domain, extent]
+            index_column_data[pa_field.name] = [
+                *slot_core_max_domain,
+                extent,
+                *slot_core_current_domain,
+            ]
 
         index_column_info = pa.RecordBatch.from_pydict(
             index_column_data, schema=pa.schema(index_column_schema)
@@ -342,7 +343,7 @@ class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
         if value_filter is not None:
             sr.set_condition(QueryCondition(value_filter), handle.schema)
 
-        self._set_coords(sr, coords)
+        _util._set_coords(sr, coords)
 
         # # TODO: batch_size
         return TableReadIter(sr)

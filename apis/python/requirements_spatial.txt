@@ -1,3 +1,6 @@
+geopandas
 tifffile
 pillow
-spatialdata
+spatialdata>=0.2.5
+xarray
+dask

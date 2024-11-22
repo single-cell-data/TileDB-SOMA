@@ -83,7 +83,6 @@ Most errors will be signaled with a raised Exception. Of note:
 - :class:`NotImplementedError` will be raised when the requested function or method
   is unsupported.
 - :class:`SOMAError` is a base class for all SOMA-specific errors.
-- ``TileDBError`` will be raised for many TileDB-specific errors.
 
 Most errors will raise an appropriate Python error, e.g., ::class:`TypeError` or
 :class:`ValueError`.
@@ -176,7 +175,7 @@ from ._general_utilities import (
 )
 from ._indexer import IntIndexer, tiledbsoma_build_index
 from ._measurement import Measurement
-from ._multiscale_image import ImageProperties, MultiscaleImage
+from ._multiscale_image import MultiscaleImage
 from ._point_cloud_dataframe import PointCloudDataFrame
 from ._scene import Scene
 from ._sparse_nd_array import SparseNDArray, SparseNDArrayRead
@@ -211,7 +210,6 @@ __all__ = [
     "get_SOMA_version",
     "get_storage_engine",
     "IntIndexer",
-    "ImageProperties",
     "Measurement",
     "MultiscaleImage",
     "NotCreateableError",

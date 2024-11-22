@@ -70,7 +70,7 @@ jobs:
       run: echo "inputs.os:" ${{ inputs.os }}
 
     - name: Linux CPU info
-      if: ${{ inputs.os == 'ubuntu-latest' }}
+      if: ${{ inputs.os == 'ubuntu-24.04' }}
       run: cat /proc/cpuinfo
 
     - name: MacOS CPU info
@@ -104,7 +104,7 @@ jobs:
 #        key: libtiledbsoma-build-dist-${{ inputs.os }}-${{ inputs.python_version }}-${{ hashFiles('libtiledbsoma', 'scripts/bld') }}
 
     - name: Install tiledbsoma
-      run: pip -v install -e apis/python[dev] -C "--build-option=--no-tiledb-deprecated"
+      run: pip -v install -e apis/python[all] -C "--build-option=--no-tiledb-deprecated"
       env:
         CC: ${{ inputs.cc }}
         CXX: ${{ inputs.cxx }}
@@ -128,19 +128,12 @@ jobs:
       env:
         TILEDB_SOMA_INIT_BUFFER_BYTES: 33554432 # accommodate tiny runners
 
-    - name: Run pytests for Python without new shape
+    - name: Run pytests for Python
       shell: bash
       # Setting PYTHONPATH ensures the tests load the in-tree source code under apis/python/src
       # instead of the copy we `pip install`ed to site-packages above. That's needed for the code
       # coverage analysis to work.
       run: PYTHONPATH=$(pwd)/apis/python/src python -m pytest --cov=apis/python/src --cov-report=xml apis/python/tests -v --durations=20 --maxfail=50
-
-    - name: Run pytests for Python with new shape
-      shell: bash
-      # Setting PYTHONPATH ensures the tests load the in-tree source code under apis/python/src
-      # instead of the copy we `pip install`ed to site-packages above. That's needed for the code
-      # coverage analysis to work.
-      run: export SOMA_PY_NEW_SHAPE=true; PYTHONPATH=$(pwd)/apis/python/src python -m pytest --cov=apis/python/src --cov-report=xml apis/python/tests -v --durations=20 --maxfail=50
 
     - name: Report coverage to Codecov
       if: inputs.report_codecov

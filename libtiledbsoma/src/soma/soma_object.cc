@@ -7,6 +7,7 @@
 #include "soma_dataframe.h"
 #include "soma_dense_ndarray.h"
 #include "soma_experiment.h"
+#include "soma_geometry_dataframe.h"
 #include "soma_measurement.h"
 #include "soma_multiscale_image.h"
 #include "soma_point_cloud_dataframe.h"
@@ -61,8 +62,7 @@ std::unique_ptr<SOMAObject> SOMAObject::open(
         } else if (array_type == "somapointclouddataframe") {
             return std::make_unique<SOMAPointCloudDataFrame>(*array_);
         } else if (array_type == "somageometrydataframe") {
-            throw TileDBSOMAError(
-                "Support for SOMAGeometryDataFrame is not yet implemented");
+            return std::make_unique<SOMAGeometryDataFrame>(*array_);
         } else {
             throw TileDBSOMAError("Saw invalid SOMAArray type");
         }

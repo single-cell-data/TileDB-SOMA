@@ -26,8 +26,6 @@ from somacore import options
 from somacore.options import PlatformConfig
 from typing_extensions import Self
 
-from tiledbsoma._flags import NEW_SHAPE_FEATURE_FLAG_ENABLED
-
 from . import _util
 
 # This package's pybind11 code
@@ -150,7 +148,6 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
             dim_name = f"soma_dim_{dim_idx}"
 
             pa_field = pa.field(dim_name, pa.int64())
-
             index_column_schema.append(pa_field)
 
             # Here is our Arrow data API for communicating schema info between
@@ -163,39 +160,31 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
             # [3] core current domain lo
             # [4] core current domain hi
 
-            if NEW_SHAPE_FEATURE_FLAG_ENABLED:
-                dim_capacity, dim_extent = cls._dim_capacity_and_extent(
-                    dim_name,
-                    # The user specifies current domain -- this is the max domain
-                    # which is taken from the max ranges for the dim datatype.
-                    # We pass None here to detect those.
-                    None,
-                    TileDBCreateOptions.from_platform_config(platform_config),
-                )
+            dim_capacity, dim_extent = cls._dim_capacity_and_extent(
+                dim_name,
+                # The user specifies current domain -- this is the max domain
+                # which is taken from the max ranges for the dim datatype.
+                # We pass None here to detect those.
+                None,
+                len(shape),
+                TileDBCreateOptions.from_platform_config(platform_config),
+            )
 
-                if dim_shape == 0:
-                    raise ValueError("SparseNDArray shape slots must be at least 1")
-                if dim_shape is None:
-                    # Core current-domain semantics are (lo, hi) with both
-                    # inclusive, with lo <= hi. This means smallest is (0, 0)
-                    # which is shape 1, not 0.
-                    dim_shape = 1
+            if dim_shape == 0:
+                raise ValueError("SparseNDArray shape slots must be at least 1")
+            if dim_shape is None:
+                # Core current-domain semantics are (lo, hi) with both
+                # inclusive, with lo <= hi. This means smallest is (0, 0)
+                # which is shape 1, not 0.
+                dim_shape = 1
 
-                index_column_data[pa_field.name] = [
-                    0,
-                    dim_capacity - 1,
-                    dim_extent,
-                    0,
-                    dim_shape - 1,
-                ]
-
-            else:
-                dim_capacity, dim_extent = cls._dim_capacity_and_extent(
-                    dim_name,
-                    dim_shape,
-                    TileDBCreateOptions.from_platform_config(platform_config),
-                )
-                index_column_data[pa_field.name] = [0, dim_capacity - 1, dim_extent]
+            index_column_data[pa_field.name] = [
+                0,
+                dim_capacity - 1,
+                dim_extent,
+                0,
+                dim_shape - 1,
+            ]
 
         index_column_info = pa.RecordBatch.from_pydict(
             index_column_data, schema=pa.schema(index_column_schema)
@@ -461,50 +450,19 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
             f"Unsupported Arrow type or non-arrow type for values argument: {type(values)}"
         )
 
-    def _set_coord(
-        self, sr: clib.SOMAArray, dim_idx: int, dim: pa.Field, coord: object
-    ) -> bool:
-        if super()._set_coord(sr, dim_idx, dim, coord):
-            return True
-        if isinstance(coord, Sequence):
-            if pa.types.is_int64(dim.type):
-                sr.set_dim_points_int64(dim.name, coord)
-                return True
-            elif _util.pa_types_is_string_or_bytes(dim.type):
-                sr.set_dim_points_string_or_bytes(dim.name, coord)
-                return True
-            else:
-                return False
-
-        if isinstance(coord, np.ndarray):
-            if isinstance(coord, np.ndarray) and coord.ndim != 1:
-                raise ValueError(
-                    f"only 1D numpy arrays may be used to index; got {coord.ndim}"
-                )
-            if pa.types.is_int64(dim.type):
-                sr.set_dim_points_int64(dim.name, coord)
-                return True
-            elif _util.pa_types_is_string_or_bytes(dim.type):
-                sr.set_dim_points_string_or_bytes(dim.name, coord)
-                return True
-
-            return False
-        if isinstance(coord, (pa.Array, pa.ChunkedArray)):
-            sr.set_dim_points_arrow(dim.name, coord)
-            return True
-        return False
-
     @classmethod
     def _dim_capacity_and_extent(
         cls,
         dim_name: str,
         dim_shape: Optional[int],
+        ndim: int,  # not needed for sparse
         create_options: TileDBCreateOptions,
     ) -> Tuple[int, int]:
         """Given a user-specified shape (maybe ``None``) along a particular dimension,
         returns a tuple of the TileDB capacity and extent for that dimension, suitable
         for schema creation. If the user-specified shape is None, the largest possible
-        int64 is returned for the capacity.
+        int64 is returned for the capacity -- which is particularly suitable for
+        maxdomain.
         """
         if dim_shape is None:
             dim_capacity = 2**63 - 1
@@ -525,10 +483,10 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
 
     def used_shape(self) -> Tuple[Tuple[int, int], ...]:
         """
-        Retrieve the range of indexes for a dimension that were explicitly written.
+        Retrieve the range of indexes for a dimension that were explicitly written (deprecated).
         Compare this to ``shape`` which returns the available/writable capacity.
 
-        This method is deprecated as of TileDB-SOMA 1.13, and will be removed in TileDB-SOMA 1.15.
+        This method is deprecated as of TileDB-SOMA 1.13, and will be removed in TileDB-SOMA 1.16.
         """
         retval = []
         for i in itertools.count():
@@ -642,7 +600,7 @@ class SparseNDArrayRead(_SparseNDArrayReadBase):
         """
         if shape is not None and (len(shape) != len(self.shape)):
             raise ValueError(f"shape must be a tuple of size {len(self.shape)}")
-        self.array._set_coords(self.sr, self.coords)
+        _util._set_coords(self.sr, self.coords)
         return SparseCOOTensorReadIter(self.sr, shape or self.shape)
 
     def tables(self) -> TableReadIter:
@@ -653,7 +611,7 @@ class SparseNDArrayRead(_SparseNDArrayReadBase):
         Lifecycle:
             Maturing.
         """
-        self.array._set_coords(self.sr, self.coords)
+        _util._set_coords(self.sr, self.coords)
         return TableReadIter(self.sr)
 
     def blockwise(

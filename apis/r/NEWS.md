@@ -2,15 +2,28 @@
 
 ## Changes
 
-* Push `schema` accessor down to `libtiledbsoma` [#3079](https://github.com/single-cell-data/TileDB-SOMA/pull/3079)
-* Push `attrnames` down to C++ [#3121](https://github.com/single-cell-data/TileDB-SOMA/pull/3121)
-* Use `libtiledbsoma` for R schema evolution [#3100](https://github.com/single-cell-data/TileDB-SOMA/pull/3100)
-* Implement missing `domain` argument to `SOMADataFrame` `create` [#3032](https://github.com/single-cell-data/TileDB-SOMA/pull/3032)
 * Remove unused `fragment_count` accessor [#3054](https://github.com/single-cell-data/TileDB-SOMA/pull/3054)
-* Bulk-sync `main` to `release-1.15` in prep for 1.15.0rc3
-* New-shape mods [#2407](https://github.com/single-cell-data/TileDB-SOMA/issues/2407)
-* Run `clang-format` for C++ source and `styler::style_pkg()` for R source
-* Fix context/config bug [#3252](https://github.com/single-cell-data/TileDB-SOMA/pull/3252)
+* Implement missing `domain` argument to `SOMADataFrame` `create` [#3032](https://github.com/single-cell-data/TileDB-SOMA/pull/3032)
+* Use `libtiledbsoma` for R schema evolution [#3100](https://github.com/single-cell-data/TileDB-SOMA/pull/3100)
+* Push `attrnames` down to C++ [#3121](https://github.com/single-cell-data/TileDB-SOMA/pull/3121)
+* Push `schema` accessor down to `libtiledbsoma` [#3079](https://github.com/single-cell-data/TileDB-SOMA/pull/3079)
+* Handle `numeric` coords properly when reading arrays
+* Remove two more `tiledb::schema` callsites [#3160](https://github.com/single-cell-data/TileDB-SOMA/pull/3160)
+* Add new Arrow-to-R type mapper
+* Add transitional/non-exported `parse_query_condition_new` [#3162](https://github.com/single-cell-data/TileDB-SOMA/pull/3162)
+* Apply new `parse_query_condition` [#3174](https://github.com/single-cell-data/TileDB-SOMA/pull/3174)
+* Apply new `non_empty_domain` [#3176](https://github.com/single-cell-data/TileDB-SOMA/pull/3176)
+* Support for dense current domain with core 2.27 [#3180](https://github.com/single-cell-data/TileDB-SOMA/pull/3180)
+* Fix `is_named_list` bug for half-named lists [#3183](https://github.com/single-cell-data/TileDB-SOMA/pull/3183)
+* Expose block/random writer for sparse arrays [#3204](https://github.com/single-cell-data/TileDB-SOMA/pull/3204)
+* Min-sizing for dataframes/arrays with new shape feature [#3208](https://github.com/single-cell-data/TileDB-SOMA/pull/3208)
+* Proper prefixing for shape-related methods [#3237](https://github.com/single-cell-data/TileDB-SOMA/pull/3237)
+* Bindings for `upgrade_domain` [#3238](https://github.com/single-cell-data/TileDB-SOMA/pull/3238)
+* Apply `styler::style_pkg()` [#3239](https://github.com/single-cell-data/TileDB-SOMA/pull/3239)
+* Plumb old-style `SOMATileDBContext` into new-style `soma_context()` [#3252](https://github.com/single-cell-data/TileDB-SOMA/pull/3252)
+* Fixes for dense arrays and yet-to-be-released core 2.27 [#3270](https://github.com/single-cell-data/TileDB-SOMA/pull/3270)
+* More fixes for unit-test cases with dense + core 2.27 [#3280](https://github.com/single-cell-data/TileDB-SOMA/pull/3280)
+* Add support for writing Seurat v5 ragged arrays
 
 # tiledbsoma 1.14.5
 

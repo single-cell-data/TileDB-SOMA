@@ -16,6 +16,7 @@
 import ctypes
 import os
 import pathlib
+import platform
 import shutil
 import subprocess
 import sys
@@ -242,7 +243,10 @@ LIB_DIRS = [
     str(tiledb_dir / "lib"),
 ]
 
-CXX_FLAGS = []
+CXX_FLAGS = ["-O3"]
+
+if platform.machine() == "x86_64":
+    CXX_FLAGS.append("-mavx2")
 
 if os.name != "nt":
     CXX_FLAGS.append(f'-Wl,-rpath,{str(tiledbsoma_dir / "lib")}')
@@ -301,6 +305,7 @@ setuptools.setup(
             "tiledbsoma.pytiledbsoma",
             [
                 "src/tiledbsoma/common.cc",
+                "src/tiledbsoma/fastercsx.cc",
                 "src/tiledbsoma/reindexer.cc",
                 "src/tiledbsoma/query_condition.cc",
                 "src/tiledbsoma/soma_vfs.cc",
@@ -313,13 +318,14 @@ setuptools.setup(
                 "src/tiledbsoma/soma_sparse_ndarray.cc",
                 "src/tiledbsoma/soma_group.cc",
                 "src/tiledbsoma/soma_collection.cc",
+                "src/tiledbsoma/managed_query.cc",
                 "src/tiledbsoma/pytiledbsoma.cc",
             ],
             include_dirs=INC_DIRS,
             library_dirs=LIB_DIRS,
             libraries=["tiledbsoma"] + (["tiledb"] if os.name == "nt" else []),
             extra_link_args=CXX_FLAGS,
-            extra_compile_args=["-std=c++17" if os.name != "nt" else "/std:c++17"]
+            extra_compile_args=["-std=c++20" if os.name != "nt" else "/std:c++20"]
             + CXX_FLAGS,
             language="c++",
         )
@@ -329,14 +335,13 @@ setuptools.setup(
     install_requires=[
         "anndata>=0.10.1",
         "attrs>=22.2",
-        "numba>=0.58.0",
         "numpy",
         "pandas",
         "pyarrow",
         "scanpy>=1.9.2",
         "scipy",
-        # Note: the somacore version is also pinned in .pre-commit-config.yaml
-        "somacore==1.0.22",
+        # Note: the somacore version is also in .pre-commit-config.yaml
+        "somacore==1.0.24",
         "typing-extensions",  # Note "-" even though `import typing_extensions`
     ],
     extras_require={

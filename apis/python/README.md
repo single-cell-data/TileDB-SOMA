@@ -38,7 +38,6 @@ If this comes up empty for your system, you'll definitely need to build from sou
 
 ## From source
 
-* This requires [`tiledb`](https://github.com/TileDB-Inc/TileDB-Py) (see [./setup.cfg](setup.cfg) for version), in addition to other dependencies in [setup.cfg](./setup.cfg).
 * Clone [this repo](https://github.com/single-cell-data/TileDB-SOMA)
 * `cd` into your checkout and then `cd apis/python`
 * `python -m pip install .`
@@ -55,6 +54,7 @@ If this comes up empty for your system, you'll definitely need to build from sou
   make data
   python -m pytest tests
   ```
+* A note about the `spdlog` package: If you encounter an install-time error like `fatal error: spdlog/spdlog.h: No such file or directory` you should additionally recursively remove `/usr/local/lib/cmake/spdlog `, since the system uninstall of `spdlog` fails to remove this properly.
 
 # Status
 

@@ -42,8 +42,6 @@
 #include <deque>
 #include <queue>
 
-#include <logger_public.h>
-
 namespace tiledbsoma {
 
 template <class Item, class Container = std::deque<Item>>

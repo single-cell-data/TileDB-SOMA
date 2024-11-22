@@ -822,14 +822,14 @@ def test_export_obsm_with_holes(h5ad_file_with_obsm_holes, tmp_path):
             meta["soma_dim_1_domain_upper"]
         assert meta["soma_object_type"] == "SOMASparseNDArray"
 
-        # Now try the remaining options for outgest.
-        with pytest.raises(tiledbsoma.SOMAError):
-            tiledbsoma.io.to_anndata(exp, "RNA")
+        # No longer throws as of new-shape feature in TileDB-SOMA 1.15.
+        try3 = tiledbsoma.io.to_anndata(exp, "RNA")
+        assert try3.obsm["X_pca"].shape == (2638, 50)
 
-        try3 = tiledbsoma.io.to_anndata(
+        try4 = tiledbsoma.io.to_anndata(
             exp, "RNA", obsm_varm_width_hints={"obsm": {"X_pca": 50}}
         )
-        assert try3.obsm["X_pca"].shape == (2638, 50)
+        assert try4.obsm["X_pca"].shape == (2638, 50)
 
 
 def test_X_empty(h5ad_file_X_empty):
@@ -1336,10 +1336,9 @@ def test_nan_append(conftest_pbmc_small, dtype, nans, new_obs_ids):
         var_field_name="var_id",
     )
 
-    if tiledbsoma._flags.NEW_SHAPE_FEATURE_FLAG_ENABLED:
-        nobs = rd.get_obs_shape()
-        nvars = rd.get_var_shapes()
-        tiledbsoma.io.resize_experiment(SOMA_URI, nobs=nobs, nvars=nvars)
+    nobs = rd.get_obs_shape()
+    nvars = rd.get_var_shapes()
+    tiledbsoma.io.resize_experiment(SOMA_URI, nobs=nobs, nvars=nvars)
 
     # Append the second anndata object
     tiledbsoma.io.from_anndata(

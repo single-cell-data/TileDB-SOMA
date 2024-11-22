@@ -39,6 +39,7 @@
 #include <catch2/matchers/catch_matchers_string.hpp>
 #include <catch2/matchers/catch_matchers_templated.hpp>
 #include <catch2/matchers/catch_matchers_vector.hpp>
+#include <format>
 #include <numeric>
 #include <random>
 
@@ -190,14 +191,11 @@ TEST_CASE("SOMAArray: nnz") {
     const char* dim_name = "d0";
     const char* attr_name = "a0";
 
-    // TODO this use to be formatted with fmt::format which is part of internal
-    // header spd/log/fmt/fmt.h and should not be used. In C++20, this can be
-    // replaced with std::format.
-    std::ostringstream section;
-    section << "- fragments=" << num_fragments << ", overlap" << overlap
-            << ", allow_duplicates=" << allow_duplicates;
-
-    SECTION(section.str()) {
+    SECTION(std::format(
+        "- fragments={}, overlap={}, allow_duplicates={}",
+        num_fragments,
+        overlap,
+        allow_duplicates)) {
         auto ctx = std::make_shared<SOMAContext>();
 
         // Create array
@@ -264,14 +262,11 @@ TEST_CASE("SOMAArray: nnz with timestamp") {
     auto allow_duplicates = true;
     int num_cells_per_fragment = 128;
 
-    // TODO this use to be formatted with fmt::format which is part of internal
-    // header spd/log/fmt/fmt.h and should not be used. In C++20, this can be
-    // replaced with std::format.
-    std::ostringstream section;
-    section << "- fragments=" << num_fragments << ", overlap" << overlap
-            << ", allow_duplicates=" << allow_duplicates;
-
-    SECTION(section.str()) {
+    SECTION(std::format(
+        "- fragments={}, overlap={}, allow_duplicates={}",
+        num_fragments,
+        overlap,
+        allow_duplicates)) {
         auto ctx = std::make_shared<SOMAContext>();
 
         // Create array
@@ -317,14 +312,11 @@ TEST_CASE("SOMAArray: nnz with consolidation") {
     auto vacuum = GENERATE(false, true);
     int num_cells_per_fragment = 128;
 
-    // TODO this use to be formatted with fmt::format which is part of internal
-    // header spd/log/fmt/fmt.h and should not be used. In C++20, this can be
-    // replaced with std::format.
-    std::ostringstream section;
-    section << "- fragments=" << num_fragments << ", overlap" << overlap
-            << ", allow_duplicates=" << allow_duplicates;
-
-    SECTION(section.str()) {
+    SECTION(std::format(
+        "- fragments={}, overlap={}, allow_duplicates={}",
+        num_fragments,
+        overlap,
+        allow_duplicates)) {
         auto ctx = std::make_shared<SOMAContext>();
 
         // Create array
@@ -453,37 +445,6 @@ TEST_CASE("SOMAArray: Test buffer size") {
         ++loops;
     REQUIRE(loops == 10);
     soma_array->close();
-}
-
-TEST_CASE("SOMAArray: Enumeration") {
-    std::string uri = "mem://unit-test-array-enmr";
-    auto ctx = std::make_shared<SOMAContext>();
-    ArraySchema schema(*ctx->tiledb_ctx(), TILEDB_SPARSE);
-
-    auto dim = Dimension::create<int64_t>(
-        *ctx->tiledb_ctx(), "d", {0, std::numeric_limits<int64_t>::max() - 1});
-
-    Domain dom(*ctx->tiledb_ctx());
-    dom.add_dimension(dim);
-    schema.set_domain(dom);
-
-    std::vector<std::string> vals = {"red", "blue", "green"};
-    auto enmr = Enumeration::create(*ctx->tiledb_ctx(), "rbg", vals);
-    ArraySchemaExperimental::add_enumeration(*ctx->tiledb_ctx(), schema, enmr);
-
-    auto attr = Attribute::create<int32_t>(*ctx->tiledb_ctx(), "a");
-    AttributeExperimental::set_enumeration_name(
-        *ctx->tiledb_ctx(), attr, "rbg");
-    schema.add_attribute(attr);
-
-    Array::create(uri, std::move(schema));
-
-    auto soma_array = SOMAArray::open(OpenMode::read, uri, ctx);
-    auto attr_to_enum = soma_array->get_attr_to_enum_mapping();
-    REQUIRE(attr_to_enum.size() == 1);
-    REQUIRE(attr_to_enum.at("a").name() == "rbg");
-    REQUIRE(soma_array->get_enum_label_on_attr("a"));
-    REQUIRE(soma_array->attr_has_enum("a"));
 }
 
 TEST_CASE("SOMAArray: ResultOrder") {

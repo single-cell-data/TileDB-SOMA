@@ -33,6 +33,18 @@ class SizingArgs(TypedDict):
     output_handle: Printable
 
 
+def _find_old_sparse_ndarray_bounds(
+    snda: tiledbsoma.SparseNDArray,
+) -> Tuple[Tuple[int, int], ...]:
+    # New arrays (created by tiledbsoma 1.15 and above) will have the new shape.
+    # Older will have used_shape ...
+    # ... except _really_ old won't even have that.
+    try:
+        return snda.used_shape()
+    except tiledbsoma.SOMAError:
+        return snda.non_empty_domain()
+
+
 def show_experiment_shapes(
     uri: str,
     *,
@@ -41,12 +53,33 @@ def show_experiment_shapes(
 ) -> bool:
     """For each dataframe/array contained within the SOMA ``Experiment`` pointed
     to by the given URI, shows the deprecated ``used_shape`` (for N-D arrays) or
-    the ``count`` (for dataframes), along with the ``shape`` and ``maxshape``
+    the ``non_empty_domain`` (for dataframes), along with the ``shape`` and ``maxshape``
     (for arrays) or ``domain`` and ``maxdomain`` (for dataframes).
 
     Args:
-        uri: The URI of a SOMA :class:`Experiment``.
-        context: Optional :class:`SOMATileDBContext``.
+        uri: The URI of a SOMA :class:`Experiment`.
+        context: Optional :class:`SOMATileDBContext`.
+
+    Example::
+
+        >>> tiledbsoma.io.show_experiment_shapes('pbmc3k_unprocessed')
+        [DataFrame] obs
+          URI file:///data/pbmc3k_unprocessed/obs
+          non_empty_domain     ((0, 2699),)
+          domain               ((0, 2699),)
+          maxdomain            ((0, 9223372036854773758),)
+          upgraded             True
+        [DataFrame] ms/RNA/var
+          URI file:///data/pbmc3k_unprocessed/ms/RNA/var
+          non_empty_domain     ((0, 13713),)
+          domain               ((0, 13713),)
+          maxdomain            ((0, 9223372036854773758),)
+          upgraded             True
+        [SparseNDArray] ms/RNA/X/data
+          URI file:///data/pbmc3k_unprocessed/ms/RNA/X/data
+          shape                (2700, 13714)
+          maxshape             (9223372036854773759, 9223372036854773759)
+          upgraded             True
     """
     args: SizingArgs = dict(
         nobs=None,
@@ -77,17 +110,38 @@ def upgrade_experiment_shapes(
 ) -> bool:
     """For each dataframe contained within the SOMA ``Experiment`` pointed to by
     the given URI, sets the ``domain`` to match the dataframe's current
-    ``count``.  For each N-D array, sets the ``shape`` to match the array's
+    ``non_empty_domain``.  For each N-D array, sets the ``shape`` to match the array's
     current ``used_shape``. If ``verbose`` is set to ``True``, an activity log
     is printed. If ``check_only`` is true, only does a dry run and reports any
     reasons the upgrade would fail.
 
+    This makes an experiment created before TileDB-SOMA 1.15 look like an
+    experiment created by TileDB-SOMA 1.15 or later. You can use
+    ``tiledbsoma.io.show_experiment_shapes`` before and after to see
+    the difference.
+
     Args:
-        uri: The URI of a SOMA :class:`Experiment``.
+        uri: The URI of a SOMA :class:`Experiment`.
         verbose: If ``True``, produce per-array output as the upgrade runs.
         check_only: If ``True``,  don't apply the upgrades, but show what would
             be attempted, and show why each one would fail.
-        context: Optional :class:`SOMATileDBContext``.
+        context: Optional :class:`SOMATileDBContext`.
+
+    Example::
+
+        >>> tiledbsoma.io.upgrade_experiment_shapes('pbmc3k_unprocessed_old', check_only=True)
+        [DataFrame] obs
+          URI file:///data/pbmc3k_unprocessed_old/obs
+          Dry run for: tiledbsoma_upgrade_soma_joinid_shape(2700)
+          OK
+        [DataFrame] ms/RNA/var
+          URI file:///data/pbmc3k_unprocessed_old/ms/RNA/var
+          Dry run for: tiledbsoma_upgrade_soma_joinid_shape(13714)
+          OK
+        [SparseNDArray] ms/RNA/X/data
+          URI file:///data/pbmc3k_unprocessed_old/ms/RNA/X/data
+          Dry run for: tiledbsoma_upgrade_shape((2700, 13714))
+          OK
     """
     args: SizingArgs = dict(
         nobs=None,
@@ -118,7 +172,7 @@ def resize_experiment(
     output_handle: Printable = cast(Printable, sys.stdout),
 ) -> bool:
     """For each dataframe contained within the SOMA ``Experiment`` pointed to by
-    the given URI, resizes the ``domain`` for the ``soma_joinid index column
+    the given URI, resizes the ``domain`` for the ``soma_joinid`` index column
     (if it is an indexed column) to match the desired new value.
 
     The desired new value may be the same size as at present, or bigger, but not
@@ -137,10 +191,10 @@ def resize_experiment(
     given dimension, or bigger, but not exceeding ``maxshape`` for the given
     dimension.
 
-    If any array has not been upgraded, then its resize will fail.
+    If any array has not been upgraded, then the experiment's ``resize`` will fail.
 
     Args:
-        uri: The URI of a SOMA :class:`Experiment``.
+        uri: The URI of a SOMA :class:`Experiment`.
         nobs: The desired new shape of the experiment's ``obs`` dataframe.
         nvars: The desired new shapes of the experiment's ``var`` dataframes.
             This should be a dict from measurement name to shape, e.g.
@@ -148,7 +202,28 @@ def resize_experiment(
         verbose: If ``True``, produce per-array output as the upgrade runs.
         check_only: If ``True``,  don't apply the upgrades, but show what would
             be attempted, and show why each one would fail.
-        context: Optional :class:`SOMATileDBContext``.
+        context: Optional :class:`SOMATileDBContext`.
+
+    Example::
+
+        >>> tiledbsoma.io.resize_experiment(
+            'pbmc3k_unprocessed',
+            nobs=5600,
+            nvars={"data":3204, "raw": 13714},
+            check_only=True,
+        )
+        [DataFrame] obs
+          URI file:///data/pbmc3k_unprocessed/obs
+          Dry run for: tiledbsoma_resize_soma_joinid_shape(5600)
+          OK
+        [DataFrame] ms/RNA/var
+          URI file:///data/pbmc3k_unprocessed/ms/RNA/var
+          Dry run for: tiledbsoma_resize_soma_joinid_shape(13714)
+          OK
+        [SparseNDArray] ms/RNA/X/data
+          URI file:///data/pbmc3k_unprocessed/ms/RNA/X/data
+          Dry run for: resize((5600, 13714))
+          OK
     """
     args: SizingArgs = dict(
         nobs=nobs,
@@ -250,14 +325,15 @@ def _leaf_visitor_show_shapes(
     retval = True
     if isinstance(item, tiledbsoma.DataFrame):
         _print_leaf_node_banner("DataFrame", node_name, item.uri, args)
-        _bannerize(args, "count", item.count)
+        _bannerize(args, "non_empty_domain", item.non_empty_domain())
         _bannerize(args, "domain", item.domain)
         _bannerize(args, "maxdomain", item.maxdomain)
         _bannerize(args, "upgraded", item.tiledbsoma_has_upgraded_domain)
 
     elif isinstance(item, tiledbsoma.SparseNDArray):
         _print_leaf_node_banner("SparseNDArray", node_name, item.uri, args)
-        _bannerize(args, "used_shape", item.used_shape())
+        ####_bannerize(args, "used_shape", item.used_shape())
+        _bannerize(args, "used_shape", _find_old_sparse_ndarray_bounds(item))
         _bannerize(args, "shape", item.shape)
         _bannerize(args, "maxshape", item.maxshape)
         _bannerize(args, "upgraded", item.tiledbsoma_has_upgraded_shape)
@@ -282,7 +358,10 @@ def _leaf_visitor_upgrade(
     retval = True
 
     if isinstance(item, tiledbsoma.DataFrame):
-        count = item.count
+        if item.index_column_names == ("soma_joinid",):
+            count = item.non_empty_domain()[0][1] + 1
+        else:
+            count = item.count
 
         _print_leaf_node_banner("DataFrame", node_name, item.uri, args)
         if check_only:
@@ -306,7 +385,8 @@ def _leaf_visitor_upgrade(
                 print("  Already upgraded", file=args["output_handle"])
 
     elif isinstance(item, tiledbsoma.SparseNDArray):
-        used_shape = item.used_shape()
+        #### used_shape = item.used_shape()
+        used_shape = _find_old_sparse_ndarray_bounds(item)
         new_shape = tuple(e[1] + 1 for e in used_shape)
 
         _print_leaf_node_banner("SparseNDArray", node_name, item.uri, args)

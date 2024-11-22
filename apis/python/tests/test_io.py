@@ -45,7 +45,7 @@ def src_matrix(request):
     ],
     indirect=True,
 )
-def test_io_create_from_matrix_Dense_nd_array(tmp_path, tdb_create_options, src_matrix):
+def test_io_create_from_matrix_dense_nd_array(tmp_path, tdb_create_options, src_matrix):
     """
     Test soma.io.from_matrix to a DenseNDArray.
 
@@ -94,7 +94,7 @@ def test_io_create_from_matrix_Dense_nd_array(tmp_path, tdb_create_options, src_
     ],
     indirect=True,
 )
-def test_io_create_from_matrix_Sparse_nd_array(
+def test_io_create_from_matrix_sparse_nd_array(
     tmp_path, tdb_create_options, src_matrix
 ):
     """

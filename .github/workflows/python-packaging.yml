@@ -21,7 +21,7 @@ on:
 jobs:
   sdist:
     name: Build source distribution
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout TileDB-SOMA
         uses: actions/checkout@v4
@@ -54,8 +54,8 @@ jobs:
         cibw_build: [ manylinux_x86_64, macosx_x86_64, macosx_arm64 ]
         include:
           - cibw_build: manylinux_x86_64
-            os: ubuntu-latest
-            wheel-name: manylinux2014
+            os: ubuntu-24.04
+            wheel-name: manylinux_2_28
           - cibw_build: macosx_x86_64
             os: macos-latest
             cibw_archs_macos: x86_64
@@ -84,6 +84,11 @@ jobs:
           pip install setuptools
           python -c 'from distutils import util; print("distutil.util.get_platform:", util.get_platform())'
           python -c 'import platform; print("platform.platform()", platform.platform())'
+      - name: Select XCode version
+        if: startsWith(matrix.os, 'macos')
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: '15.4'
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.18.1
         with:
@@ -92,12 +97,19 @@ jobs:
         env:
           CIBW_BUILD: ${{ matrix.cibw_build }}
           CIBW_BUILD_VERBOSITY: 1
+          CIBW_MANYLINUX_X86_64_IMAGE: manylinux_2_28
+          CIBW_BEFORE_BUILD_LINUX: yum -y remove gcc-toolset-12\*; yum -y install gcc-toolset-13; bash -x -c 'rm -rf tiledbsoma*/dist_links/dist/lib*'
+          # ^ Delete lib folder that apis/python/setup.py:find_or_build() looks for in deciding to
+          #   run CMake build or not. Otherwise it'll keep reusing the library file built in the
+          #   first iteration of cibuildwheel's outer loop, resulting in wheels with the library
+          #   built for the wrong python version.
           CIBW_BEFORE_BUILD: bash -x -c 'rm -rf tiledbsoma*/dist_links/dist/lib*'
           # ^ Delete lib folder that apis/python/setup.py:find_or_build() looks for in deciding to
           #   run CMake build or not. Otherwise it'll keep reusing the library file built in the
           #   first iteration of cibuildwheel's outer loop, resulting in wheels with the library
           #   built for the wrong python version.
           CIBW_ARCHS_MACOS: ${{ matrix.cibw_archs_macos }}
+          CIBW_ENVIRONMENT_LINUX : CC=/opt/rh/gcc-toolset-13/root/usr/bin/gcc CXX=/opt/rh/gcc-toolset-13/root/usr/bin/g++
           CIBW_TEST_SKIP: "*_arm64"
           CMAKE_OSX_ARCHITECTURES: ${{ matrix.cibw_archs_macos }}
           MACOSX_DEPLOYMENT_TARGET: "11.0"
@@ -122,15 +134,15 @@ jobs:
           - undotted-version: '312'
             dotted-version: '3.12'
         wheel-name:
-          - manylinux2014
+          - manylinux_2_28
           - macos-x86_64
           - macos-arm64
         include:
-          - wheel-name: manylinux2014
-            os: ubuntu-latest
+          - wheel-name: manylinux_2_28
+            os: ubuntu-24.04
             arch: x86_64
-            cc: gcc-11
-            cxx: g++-11
+            cc: gcc-13
+            cxx: g++-13
           - wheel-name: macos-x86_64
             os: macos-13
             arch: x86_64
@@ -166,7 +178,7 @@ jobs:
         run: python -c 'import tiledbsoma; print(tiledbsoma.pytiledbsoma.__file__); tiledbsoma.show_package_versions()'
         # TODO: more thorough local smoke test
       - name: Smoke test in docker
-        if: ${{ matrix.os == 'ubuntu-latest' }}
+        if: ${{ matrix.os == 'ubuntu-24.04' }}
         run: |
           docker run -v $(pwd):/mnt python:${{ matrix.python.dotted-version }} bash -ec "
             apt-get -qq update && apt-get install -y python3-pip python3-wheel
@@ -178,7 +190,7 @@ jobs:
   publish-to-test-pypi:
     name: Publish package to TestPyPI
     needs: smoke-test
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     if: github.event_name == 'workflow_dispatch'
     steps:
       - name: Download artifacts
@@ -202,7 +214,7 @@ jobs:
   publish-to-pypi:
     name: Publish package to PyPI
     needs: smoke-test
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     if: github.event_name == 'release'
     steps:
       - name: Download artifacts
@@ -223,7 +235,7 @@ jobs:
   # File a bug report if anything fails, but don't file tickets for manual runs
   # -- only for scheduled ones.
   create_issue_on_fail:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: [smoke-test, publish-to-test-pypi, publish-to-pypi]
     if: (failure() || cancelled()) && github.event_name != 'workflow_dispatch'
     steps:

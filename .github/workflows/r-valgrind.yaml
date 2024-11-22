@@ -7,9 +7,13 @@ on:
   schedule:
     - cron: "23 4 * * *"
 
+env:
+  _R_CHECK_TESTS_NLINES_: 0
+  TILEDB_SOMA_INIT_BUFFER_BYTES: 33554432 # accommodate tiny runners
+
 jobs:
   r-valgrind:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     container:
       image: rocker/r2u:latest
     steps:
@@ -20,18 +24,6 @@ jobs:
 
       - name: System Dependencies
         run: apt update -qq && apt upgrade --yes && apt install --yes --no-install-recommends valgrind cmake git
-
-      - name: Set additional repositories (Linux)
-        run: |
-          rversion <- paste(strsplit(as.character(getRversion()), split = '\\.')[[1L]][1:2], collapse = '.')
-          codename <-  system('. /etc/os-release; echo ${VERSION_CODENAME}', intern = TRUE)
-          repo <- "https://tiledb-inc.r-universe.dev"
-          (opt <- sprintf('options(repos = c("%s/bin/linux/%s/%s", "%s", getOption("repos")), timeout = 300L)', repo, codename, rversion, repo))
-          cat(opt, "\n", file = "~/.Rprofile", append = TRUE)
-        shell: Rscript {0}
-
-      - name: Install tiledb-r
-        run: cd apis/r && Rscript tools/install-tiledb-r.R
 
       - name: Package Dependencies
         run: cd apis/r && R -q -e 'remotes::install_deps(".", dependencies=TRUE, upgrade=FALSE)'

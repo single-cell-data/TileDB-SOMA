@@ -12,6 +12,7 @@ from concurrent import futures
 from concurrent.futures import ThreadPoolExecutor
 from typing import (
     TYPE_CHECKING,
+    Any,
     Dict,
     Iterator,
     List,
@@ -29,13 +30,14 @@ import pyarrow as pa
 import somacore
 from scipy import sparse
 from somacore import options
-from somacore.query._eager_iter import EagerIterator
 
 # This package's pybind11 code
 import tiledbsoma.pytiledbsoma as clib
 
 from . import _util
+from ._eager_iter import EagerIterator
 from ._exception import SOMAError
+from ._fastercsx import CompressedMatrix
 from ._indexer import IntIndexer
 from ._types import NTuple
 from .options import SOMATileDBContext
@@ -56,7 +58,8 @@ BlockwiseScipyReadIterResult = Tuple[
 
 IndicesType = Tuple[npt.NDArray[np.int64], npt.NDArray[np.int64]]
 IJDType = Tuple[
-    Tuple[npt.NDArray[np.int64], npt.NDArray[np.int64]], npt.NDArray[np.generic]
+    Tuple[npt.NDArray[np.int64], npt.NDArray[np.int64]],
+    npt.NDArray[Union[np.integer[Any], np.floating[Any]]],
 ]
 
 
@@ -236,7 +239,7 @@ class BlockwiseReadIterBase(somacore.ReadIter[_RT], metaclass=abc.ABCMeta):
             self.sr.reset(**kwargs)
             step_coords = list(self.coords)
             step_coords[self.major_axis] = coord_chunk
-            self.array._set_coords(self.sr, step_coords)
+            _util._set_coords(self.sr, step_coords)
 
             joinids = list(self.joinids)
             joinids[self.major_axis] = pa.array(coord_chunk)
@@ -406,12 +409,17 @@ class BlockwiseScipyReadIter(BlockwiseReadIterBase[BlockwiseScipyReadIterResult]
         ):
             major_coords = indices[self.major_axis]
             minor_coords = indices[self.minor_axis]
-            cls = sparse.csr_matrix if self.major_axis == 0 else sparse.csc_matrix
-            sp = cls(
-                sparse.coo_matrix(
-                    (d, (i, j)), shape=self._mk_shape(major_coords, minor_coords)
-                )
-            )
+            shape = self._mk_shape(major_coords, minor_coords)
+            assert self.context is not None
+            sp = CompressedMatrix.from_ijd(
+                i,
+                j,
+                d,
+                shape=shape,
+                format="csr" if self.major_axis == 0 else "csc",
+                make_sorted=True,
+                context=self.context,
+            ).to_scipy()
             yield sp, indices
 
 

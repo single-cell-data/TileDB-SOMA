@@ -69,7 +69,6 @@ struct DimInfo {
     int64_t dim_max;
     std::string string_lo;  // For custom/restricted DataFrame domains
     std::string string_hi;  // For custom/restricted DataFrame domains
-    bool use_current_domain;
 };
 
 // E.g. "a0" is of type TILEDB_FLOAT64

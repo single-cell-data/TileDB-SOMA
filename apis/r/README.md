@@ -31,6 +31,10 @@ To install the very latest tiledbsoma development version (our `main` branch), u
 ```r
 remotes::install_github("https://github.com/single-cell-data/TileDB-SOMA", subdir = "apis/r")
 ```
+A note about the `fmt` and `spdlog` packages:
+
+* If you encounter an install-time error like `undefined symbol: _ZTIN3fmt2v912format_errorE` then you should uninstall your systemversions of `fmt` and `spdlog`. On Linux, this means `dpkg -l | egrep "lib(spdlog|fmt)"` should now come up empty.
+* If you encounter an install-time error like `fatal error: spdlog/spdlog.h: No such file or directory` you should additionally recursively remove `/usr/local/lib/cmake/spdlog `, since the system uninstall of `spdlog` fails to remove this properly.
 
 ### Requirements
 

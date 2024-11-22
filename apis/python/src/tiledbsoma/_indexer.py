@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, List, Optional, Union
+from typing import List, Optional, Union
 
 import numpy as np
 import numpy.typing as npt
@@ -11,9 +11,7 @@ from somacore.query.types import IndexLike
 from tiledbsoma import pytiledbsoma as clib
 
 from ._types import PDSeries
-
-if TYPE_CHECKING:
-    from .options import SOMATileDBContext
+from .options import SOMATileDBContext
 
 IndexerDataType = Union[
     npt.NDArray[np.int64],
@@ -27,17 +25,17 @@ IndexerDataType = Union[
 
 
 def tiledbsoma_build_index(
-    data: IndexerDataType, *, context: Optional["SOMATileDBContext"] = None
+    data: IndexerDataType, *, context: Optional[SOMATileDBContext] = None
 ) -> IndexLike:
-    """Initialize re-indexer for provided indices.
+    """Initialize re-indexer for provided indices (deprecated).
 
-    Deprecated. Provides the same functionality as the``IntIndexer`` class.
+    Provides the same functionality as the``IntIndexer`` class.
 
     Args:
        data:
            Integer keys used to build the index (hash) table.
        context:
-           ``SOMATileDBContext`` object containing concurrecy level.
+           ``SOMATileDBContext`` object containing concurrency level.
 
     Lifecycle:
         Deprecated.
@@ -54,7 +52,7 @@ class IntIndexer:
     """
 
     def __init__(
-        self, data: IndexerDataType, *, context: Optional["SOMATileDBContext"] = None
+        self, data: IndexerDataType, *, context: Optional[SOMATileDBContext] = None
     ):
         """Initialize re-indexer for provided indices.
 
@@ -62,7 +60,7 @@ class IntIndexer:
            data:
                Integer keys used to build the index (hash) table.
            context:
-               ``SOMATileDBContext`` object containing concurrecy level.
+               ``SOMATileDBContext`` object containing concurrency level.
 
         Lifecycle:
             Maturing.
@@ -73,7 +71,7 @@ class IntIndexer:
         )
         self._reindexer.map_locations(data)
 
-    def get_indexer(self, target: IndexerDataType) -> Any:
+    def get_indexer(self, target: IndexerDataType) -> npt.NDArray[np.intp]:
         """Compute underlying indices of index for target data.
 
         Compatible with Pandas' Index.get_indexer method.

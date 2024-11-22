@@ -25,6 +25,7 @@ from typing import (
 import anndata as ad
 import numpy as np
 import pandas as pd
+import pyarrow as pa
 import scipy.sparse as sp
 
 from .. import (
@@ -40,6 +41,7 @@ from .. import (
 from .._constants import SOMA_JOINID
 from .._exception import SOMAError
 from .._types import NPNDArray, Path
+from .._util import _resolve_futures
 from . import conversions
 from ._common import (
     _DATAFRAME_ORIGINAL_INDEX_NAME_JSON,
@@ -69,8 +71,7 @@ def to_h5ad(
     obsm_varm_width_hints: Optional[Dict[str, Dict[str, int]]] = None,
     uns_keys: Optional[Sequence[str]] = None,
 ) -> None:
-    """Converts the experiment group to `AnnData <https://anndata.readthedocs.io/>`_
-    format and writes it to the specified ``.h5ad`` file.
+    """Converts the experiment group to AnnData format and writes it to the specified ``.h5ad`` file.
 
     Arguments are as in ``to_anndata``.
 
@@ -102,13 +103,36 @@ def to_h5ad(
     )
 
 
-# ----------------------------------------------------------------
+def _read_partitioned_sparse(X: SparseNDArray, d0_size: int) -> pa.Table:
+    # Partition dimension 0 based on a target point count and average
+    # density of matrix. Magic number determined empirically, as a tradeoff
+    # between concurrency and fixed query overhead.
+    tgt_point_count = 96 * 1024**2
+    partition_sz = (
+        max(1024 * round(d0_size * tgt_point_count / X.nnz / 1024), 1024)
+        if X.nnz > 0
+        else d0_size
+    )
+    partitions = [
+        slice(st, min(st + partition_sz - 1, d0_size - 1))
+        for st in range(0, d0_size, partition_sz)
+    ]
+    n_partitions = len(partitions)
+
+    def _read_sparse_X(A: SparseNDArray, row_slc: slice) -> pa.Table:
+        return A.read(coords=(row_slc,)).tables().concat()
+
+    if n_partitions > 1:  # don't consume threads unless there is a reason to do so
+        return pa.concat_tables(
+            X.context.threadpool.map(_read_sparse_X, (X,) * n_partitions, partitions)
+        )
+    else:
+        return _read_sparse_X(X, partitions[0])
+
+
 def _extract_X_key(
-    measurement: Measurement,
-    X_layer_name: str,
-    nobs: int,
-    nvar: int,
-) -> Matrix:
+    measurement: Measurement, X_layer_name: str, nobs: int, nvar: int
+) -> Future[Matrix]:
     """Helper function for to_anndata"""
     if X_layer_name not in measurement.X:
         raise ValueError(
@@ -116,19 +140,29 @@ def _extract_X_key(
         )
 
     # Acquire handle to TileDB-SOMA data
-    soma_X_data_handle = measurement.X[X_layer_name]
+    X = measurement.X[X_layer_name]
+    tp = X.context.threadpool
 
     # Read data from SOMA into memory
-    if isinstance(soma_X_data_handle, DenseNDArray):
-        data = soma_X_data_handle.read((slice(None), slice(None))).to_numpy()
-    elif isinstance(soma_X_data_handle, SparseNDArray):
-        data = conversions.csr_from_coo_table(
-            soma_X_data_handle.read().tables().concat(), nobs, nvar
-        )
-    else:
-        raise TypeError(f"Unexpected NDArray type {type(soma_X_data_handle)}")
+    if isinstance(X, DenseNDArray):
 
-    return data
+        def _read_dense_X(A: DenseNDArray) -> Matrix:
+            return A.read((slice(None), slice(None))).to_numpy()
+
+        return tp.submit(_read_dense_X, X)
+
+    elif isinstance(X, SparseNDArray):
+
+        def _read_X_partitions() -> Matrix:
+            stk_of_coo = _read_partitioned_sparse(X, nobs)
+            return conversions.csr_from_coo_table(
+                stk_of_coo, nobs, nvar, context=X.context
+            )
+
+        return X.context.threadpool.submit(_read_X_partitions)
+
+    else:
+        raise TypeError(f"Unexpected NDArray type {type(X)}")
 
 
 def _read_dataframe(
@@ -203,14 +237,14 @@ def to_anndata(
     obsm_varm_width_hints: Optional[Dict[str, Dict[str, int]]] = None,
     uns_keys: Optional[Sequence[str]] = None,
 ) -> ad.AnnData:
-    """Converts the experiment group to `AnnData <https://anndata.readthedocs.io/>`_
-    format. Choice of matrix formats is following what we often see in input
-    ``.h5ad`` files:
+    """Converts the experiment group to AnnData format.
+
+    The choice of matrix formats is following what we often see in input ``.h5ad`` files:
 
     * ``X`` as ``scipy.sparse.csr_matrix``
-    * ``obs``,``var`` as ``pandas.dataframe``
-    * ``obsm``,``varm`` arrays as ``numpy.ndarray``
-    * ``obsp``,``varp`` arrays as ``scipy.sparse.csr_matrix``
+    * ``obs``, ``var`` as ``pandas.dataframe``
+    * ``obsm``, ``varm`` arrays as ``numpy.ndarray``
+    * ``obsp``, ``varp`` arrays as ``scipy.sparse.csr_matrix``
 
     The ``X_layer_name`` is the name of the TileDB-SOMA measurement's ``X``
     collection which will be outgested to the resulting AnnData object's
@@ -275,7 +309,7 @@ def to_anndata(
     nobs = len(obs_df.index)
     nvar = len(var_df.index)
 
-    anndata_layers = {}
+    anndata_layers_futures = {}
 
     # Let them use
     #   extra_X_layer_names=exp.ms["RNA"].X.keys()
@@ -292,9 +326,7 @@ def to_anndata(
 
     anndata_X_future: Future[Matrix] | None = None
     if X_layer_name is not None:
-        anndata_X_future = tp.submit(
-            _extract_X_key, measurement, X_layer_name, nobs, nvar
-        )
+        anndata_X_future = _extract_X_key(measurement, X_layer_name, nobs, nvar)
 
     if extra_X_layer_names is not None:
         for extra_X_layer_name in extra_X_layer_names:
@@ -302,7 +334,7 @@ def to_anndata(
                 continue
             assert extra_X_layer_name is not None  # appease linter; already checked
             data = _extract_X_key(measurement, extra_X_layer_name, nobs, nvar)
-            anndata_layers[extra_X_layer_name] = data
+            anndata_layers_futures[extra_X_layer_name] = data
 
     if obsm_varm_width_hints is None:
         obsm_varm_width_hints = {}
@@ -337,8 +369,12 @@ def to_anndata(
     if "obsp" in measurement:
 
         def load_obsp(measurement: Measurement, key: str, nobs: int) -> sp.csr_matrix:
+            A = measurement.obsp[key]
             return conversions.csr_from_coo_table(
-                measurement.obsp[key].read().tables().concat(), nobs, nobs
+                _read_partitioned_sparse(A, nobs),
+                nobs,
+                nobs,
+                A.context,
             )
 
         for key in measurement.obsp.keys():
@@ -348,8 +384,12 @@ def to_anndata(
     if "varp" in measurement:
 
         def load_varp(measurement: Measurement, key: str, nvar: int) -> sp.csr_matrix:
+            A = measurement.varp[key]
             return conversions.csr_from_coo_table(
-                measurement.varp[key].read().tables().concat(), nvar, nvar
+                _read_partitioned_sparse(A, nvar),
+                nvar,
+                nvar,
+                A.context,
             )
 
         for key in measurement.varp.keys():
@@ -372,6 +412,7 @@ def to_anndata(
     obsp = _resolve_futures(obsp)
     varp = _resolve_futures(varp)
     anndata_X = anndata_X_future.result() if anndata_X_future is not None else None
+    anndata_layers = _resolve_futures(anndata_layers_futures)
     uns: UnsDict = (
         _resolve_futures(uns_future.result(), deep=True)
         if uns_future is not None
@@ -419,7 +460,7 @@ def _extract_obsm_or_varm(
         # 3.8 and we still support Python 3.7
         return matrix
 
-    matrix_tbl = soma_nd_array.read().tables().concat()
+    matrix_tbl = _read_partitioned_sparse(soma_nd_array, num_rows)
 
     # Problem to solve: whereas for other sparse arrays we have:
     #
@@ -444,11 +485,14 @@ def _extract_obsm_or_varm(
     num_cols = width_configs.get(element_name, None)
 
     if num_cols is None:
-        try:
-            used_shape = soma_nd_array.used_shape()
-            num_cols = used_shape[1][1] + 1
-        except SOMAError:
-            pass  # We tried; moving on to next option
+        if soma_nd_array.tiledbsoma_has_upgraded_shape:
+            num_cols = soma_nd_array.shape[1]
+        else:
+            try:
+                used_shape = soma_nd_array.used_shape()
+                num_cols = used_shape[1][1] + 1
+            except SOMAError:
+                pass  # We tried; moving on to next option
 
     if num_cols is None:
         num_rows_times_width, coo_column_count = matrix_tbl.shape
@@ -466,7 +510,9 @@ def _extract_obsm_or_varm(
             f"could not determine outgest width for {description}: please try to_anndata's obsm_varm_width_hints option"
         )
 
-    return conversions.csr_from_coo_table(matrix_tbl, num_rows, num_cols).toarray()
+    return conversions.csr_from_coo_table(
+        matrix_tbl, num_rows, num_cols, soma_nd_array.context
+    ).toarray()
 
 
 def _extract_uns(
@@ -562,18 +608,3 @@ def _outgest_uns_2d_string_array(pdf: pd.DataFrame, uri_for_logging: str) -> NPN
             raise SOMAError(f"Expected {column_name} column in {uri_for_logging}")
         columns.append(list(pdf[column_name]))
     return np.asarray(columns).transpose()
-
-
-def _resolve_futures(unresolved: Dict[str, Any], deep: bool = False) -> Dict[str, Any]:
-    """Helper. Resolves any futures found in the dict."""
-    resolved = {}
-    for k, v in unresolved.items():
-        if isinstance(v, Future):
-            v = v.result()
-
-        if deep and isinstance(v, dict):
-            v = _resolve_futures(v, deep=deep)
-
-        resolved[k] = v
-
-    return resolved
