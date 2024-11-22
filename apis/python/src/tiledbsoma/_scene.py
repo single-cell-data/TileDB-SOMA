@@ -12,7 +12,9 @@ import somacore
 from somacore import (
     CoordinateSpace,
     CoordinateTransform,
+    options,
 )
+from typing_extensions import Self
 
 from . import _funcs, _tdb_handles
 from ._collection import CollectionBase
@@ -28,6 +30,8 @@ from ._spatial_util import (
     transform_from_json,
     transform_to_json,
 )
+from ._types import OpenTimestamp
+from .options import SOMATileDBContext
 
 _spatial_element = Union[GeometryDataFrame, MultiscaleImage, PointCloudDataFrame]
 
@@ -55,6 +59,54 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
         "obsl": ("SOMACollection",),
         "varl": ("SOMACollection",),
     }
+
+    @classmethod
+    def create(
+        cls,
+        uri: str,
+        *,
+        coordinate_space: Optional[Union[Sequence[str], CoordinateSpace]] = None,
+        platform_config: Optional[options.PlatformConfig] = None,
+        context: Optional[SOMATileDBContext] = None,
+        tiledb_timestamp: Optional[OpenTimestamp] = None,
+    ) -> Self:
+        """Creates a new scene at the given URI.
+
+        Args:
+            uri:
+                The location to create this SOMA scene at.
+            coordinate_space:
+                Optional coordinate space or the axis names for the coordinate space
+                the scene is defined on. If ``None`` no coordinate space is set.
+                Defaults to ``None``.
+            platform_config:
+                Platform-specific options used to create this scene. This may be
+                provided as settings in a dictionary, with options located in the
+                ``{'tiledb': {'create': ...}}`` key, or as a
+                :class:`~tiledbsoma.TileDBCreateOptions` object.
+            context:
+                If provided, the :class:`SOMATileDBContext` to use when creating and
+                opening this scene
+            tiledb_timestamp:
+                If specified, overrides the default timestamp used to open this object.
+                If unset, uses the timestamp provided by the context.
+
+        Returns:
+            The newly created scene, opened for writing.
+
+        Lifecycle:
+            Experimental.
+        """
+        if coordinate_space is not None:
+            raise NotImplementedError(
+                "Setting the coordinate space on create is not yet implemented."
+            )
+        return super().create(
+            uri=uri,
+            platform_config=platform_config,
+            context=context,
+            tiledb_timestamp=tiledb_timestamp,
+        )
 
     def __init__(
         self,
@@ -196,7 +248,7 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
         Args:
             key: The name of the geometry dataframe.
             subcollection: The name, or sequence of names, of the subcollection the
-                dataframe is stored in. Defaults to ``'obsl'``.
+                dataframe is stored in.
             transform: The coordinate transformation from the scene to the dataframe.
             uri: If provided, overrides the default URI what would be used to create
                 this object. This may be aboslution or relative.
@@ -221,8 +273,7 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
         *,
         transform: Optional[CoordinateTransform],
         uri: Optional[str] = None,
-        axis_names: Sequence[str] = ("c", "y", "x"),
-        axis_types: Sequence[str] = ("channel", "height", "width"),
+        coordinate_space: Union[Sequence[str], CoordinateSpace] = ("x", "y"),
         **kwargs: Any,
     ) -> MultiscaleImage:
         """Adds a ``MultiscaleImage`` to the scene and sets a coordinate transform
@@ -233,7 +284,7 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
         Args:
             key: The name of the multiscale image.
             subcollection: The name, or sequence of names, of the subcollection the
-                dataframe is stored in. Defaults to ``'obsl'``.
+                dataframe is stored in.
             transform: The coordinate transformation from the scene to the dataframe.
             uri: If provided, overrides the default URI what would be used to create
                 this object. This may be aboslution or relative.
@@ -260,28 +311,25 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
                     f"space."
                 )
 
-            # Get and check the multiscale image coordinata space axis names.
-            # Note: The input paremeters to the MultiscaleImage create method are being
-            #   revisited. The following code will be improved after the create
-            #   parameters stabilize.
-            ordered_axis_names: List[Optional[str]] = [None, None, None]
-            for ax_name, ax_type in zip(axis_names, axis_types):
-                # Validation unneed if the type falls through. Invalid types will be
-                # caught in the MultiscaleImage.create method.
-                if ax_type == "width":
-                    ordered_axis_names[0] = ax_name
-                elif ax_type == "height":
-                    ordered_axis_names[1] = ax_name
-                elif ax_type == "depth":
-                    ordered_axis_names[2] = ax_name
-            ordered_axis_names = [
-                axis_name for axis_name in ordered_axis_names if axis_name is not None
-            ]
-            if transform.output_axes != tuple(ordered_axis_names):
+            if transform.input_axes != self.coordinate_space.axis_names:
+                raise ValueError(
+                    f"The name of the transform input axes, {transform.input_axes}, "
+                    f"do not match the name of the axes, "
+                    f"{self.coordinate_space.axis_names}, in the scene coordinate "
+                    f"space."
+                )
+
+            # Get multisclae image coordinate space and check.
+            elem_axis_names = (
+                coordinate_space.axis_names
+                if isinstance(coordinate_space, CoordinateSpace)
+                else tuple(coordinate_space)
+            )
+            if transform.output_axes != elem_axis_names:
                 raise ValueError(
                     f"The name of the transform output axes, {transform.output_axes}, "
-                    f"do not match the name of the axes, {tuple(ordered_axis_names)}, "
-                    f"of the coordinate space the multiscale image is defined on."
+                    f"do not match the name of the axes, {elem_axis_names}, of the "
+                    f"coordinate space the multiscale image is defined on."
                 )
 
         # Open the subcollection and add the new multiscale image.
@@ -293,8 +341,7 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
                 create_uri,
                 context=self.context,
                 tiledb_timestamp=self.tiledb_timestamp_ms,
-                axis_names=axis_names,
-                axis_types=axis_types,
+                coordinate_space=coordinate_space,
                 **kwargs,
             ),
             uri,
@@ -338,7 +385,7 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
         Args:
             key: The name of the point cloud dataframe.
             subcollection: The name, or sequence of names, of the subcollection the
-                dataframe is stored in. Defaults to ``'obsl'``.
+                dataframe is stored in.
             transform: The coordinate transformation from the scene to the dataframe.
             uri: If provided, overrides the default URI what would be used to create
                 this object. This may be aboslution or relative.
@@ -404,9 +451,9 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
     def set_transform_to_geometry_dataframe(
         self,
         key: str,
-        transform: CoordinateTransform,
-        *,
         subcollection: Union[str, Sequence[str]] = "obsl",
+        *,
+        transform: CoordinateTransform,
         coordinate_space: Optional[CoordinateSpace] = None,
     ) -> GeometryDataFrame:
         """Adds the coordinate transform for the scene coordinate space to
@@ -423,9 +470,9 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
 
         Args:
             key: The name of the geometry dataframe.
-            transform: The coordinate transformation from the scene to the dataframe.
             subcollection: The name, or sequence of names, of the subcollection the
                 dataframe is stored in. Defaults to ``'obsl'``.
+            transform: The coordinate transformation from the scene to the dataframe.
             coordinate_space: Optional coordinate space for the dataframe. This will
                 replace the existing coordinate space of the dataframe.
 
@@ -439,9 +486,9 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
     def set_transform_to_multiscale_image(
         self,
         key: str,
-        transform: CoordinateTransform,
-        *,
         subcollection: Union[str, Sequence[str]] = "img",
+        *,
+        transform: CoordinateTransform,
         coordinate_space: Optional[CoordinateSpace] = None,
     ) -> MultiscaleImage:
         """Adds the coordinate transform for the scene coordinate space to
@@ -453,10 +500,10 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
 
         Args:
             key: The name of the multiscale image.
-            transform: The coordinate transformation from the scene to the reference
-                level of the multiscale image.
             subcollection: The name, or sequence of names, of the subcollection the
                 image is stored in. Defaults to ``'img'``.
+            transform: The coordinate transformation from the scene to the reference
+                level of the multiscale image.
             coordinate_space: Optional coordinate space for the image. This will
                 replace the existing coordinate space of the multiscale image.
 
@@ -476,9 +523,9 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
     def set_transform_to_point_cloud_dataframe(
         self,
         key: str,
-        transform: CoordinateTransform,
-        *,
         subcollection: Union[str, Sequence[str]] = "obsl",
+        *,
+        transform: CoordinateTransform,
         coordinate_space: Optional[CoordinateSpace] = None,
     ) -> PointCloudDataFrame:
         """Adds the coordinate transform for the scene coordinate space to
@@ -516,7 +563,7 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
         )
 
     def get_transform_from_geometry_dataframe(
-        self, key: str, *, subcollection: Union[str, Sequence[str]] = "obsl"
+        self, key: str, subcollection: Union[str, Sequence[str]] = "obsl"
     ) -> CoordinateTransform:
         """Returns the coordinate transformation from the requested geometry dataframe
         to the scene.
@@ -531,16 +578,14 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
 
         Lifecycle: experimental
         """
-        transform = self.get_transform_to_geometry_dataframe(
-            key, subcollection=subcollection
-        )
+        transform = self.get_transform_to_geometry_dataframe(key, subcollection)
         return transform.inverse_transform()
 
     def get_transform_from_multiscale_image(
         self,
         key: str,
-        *,
         subcollection: str = "img",
+        *,
         level: Optional[Union[str, int]] = None,
     ) -> CoordinateTransform:
         """Returns the coordinate transformation from the requested multiscale image to
@@ -560,9 +605,7 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
         Lifecycle: experimental
         """
         if level is None:
-            transform = self.get_transform_to_multiscale_image(
-                key, subcollection=subcollection
-            )
+            transform = self.get_transform_to_multiscale_image(key, subcollection)
             return transform.inverse_transform()
         coll = self._open_subcollection(subcollection)
         try:
@@ -588,7 +631,7 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
         return base_transform.inverse_transform() @ level_transform
 
     def get_transform_from_point_cloud_dataframe(
-        self, key: str, *, subcollection: str = "obsl"
+        self, key: str, subcollection: str = "obsl"
     ) -> CoordinateTransform:
         """Returns the coordinate transformation from the requested point cloud
         dataframe to the scene.
@@ -609,7 +652,7 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
         return transform.inverse_transform()
 
     def get_transform_to_geometry_dataframe(
-        self, key: str, *, subcollection: Union[str, Sequence[str]] = "obsl"
+        self, key: str, subcollection: Union[str, Sequence[str]] = "obsl"
     ) -> CoordinateTransform:
         """Returns the coordinate transformation from the scene to a requested
         geometery dataframe.
@@ -637,8 +680,8 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
     def get_transform_to_multiscale_image(
         self,
         key: str,
-        *,
         subcollection: str = "img",
+        *,
         level: Optional[Union[str, int]] = None,
     ) -> CoordinateTransform:
         """Returns the coordinate transformation from the scene to a requested
@@ -683,7 +726,7 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
         return level_transform @ base_transform
 
     def get_transform_to_point_cloud_dataframe(
-        self, key: str, *, subcollection: str = "obsl"
+        self, key: str, subcollection: str = "obsl"
     ) -> CoordinateTransform:
         """Returns the coordinate transformation from the scene to a requested
         point cloud dataframe.

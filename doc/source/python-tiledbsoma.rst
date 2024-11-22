@@ -8,26 +8,35 @@ The tiledbsoma module
 Classes
 -------
 
-.. autosummary::
-    :toctree: _autosummary/
-    :nosignatures:
+.. toctree::
+    :maxdepth: 1
 
-    tiledbsoma.Collection
-    tiledbsoma.Experiment
-    tiledbsoma.Measurement   
+    python-tiledbsoma-collection
+    python-tiledbsoma-experiment
+    python-tiledbsoma-measurement
 
-    tiledbsoma.DataFrame
-    tiledbsoma.SparseNDArray
-    tiledbsoma.SparseNDArrayRead
-    tiledbsoma.DenseNDArray
+    python-tiledbsoma-dataframe
+    python-tiledbsoma-sparsendarray
+    python-tiledbsoma-sparsendarrayread
+    python-tiledbsoma-densendarray
 
-    tiledbsoma.ResultOrder
+    python-tiledbsoma-axis
+    python-tiledbsoma-coordinatespace
+    python-tiledbsoma-multiscaleimage
+    python-tiledbsoma-pointclouddataframe
+    python-tiledbsoma-scene
 
-    tiledbsoma.AxisColumnNames
-    tiledbsoma.AxisQuery
-    tiledbsoma.ExperimentAxisQuery
-    
-    tiledbsoma.SOMATileDBContext
+    python-tiledbsoma-resultorder
+
+    python-tiledbsoma-axiscolumnnames
+    python-tiledbsoma-axisquery
+    python-tiledbsoma-experimentaxisquery
+
+    python-tiledbsoma-somatiledbcontext
+    python-tiledbsoma-tiledbcreateoptions
+    python-tiledbsoma-tiledbwriteoptions
+
+    python-tiledbsoma-intindexer
 
 Exceptions
 ----------
@@ -36,8 +45,10 @@ Exceptions
     :toctree: _autosummary/
     :nosignatures:
 
-    tiledbsoma.DoesNotExistError
     tiledbsoma.SOMAError
+    tiledbsoma.DoesNotExistError
+    tiledbsoma.AlreadyExistsError
+    tiledbsoma.NotCreateableError
 
 Functions
 ---------
@@ -50,11 +61,16 @@ Functions
 
     tiledbsoma.show_package_versions
 
+    tiledbsoma.get_SOMA_version
     tiledbsoma.get_implementation
     tiledbsoma.get_implementation_version
     tiledbsoma.get_storage_engine
 
-    tiledbsoma.tiledbsoma_stats_disable
-    tiledbsoma.tiledbsoma_stats_dump
     tiledbsoma.tiledbsoma_stats_enable
+    tiledbsoma.tiledbsoma_stats_disable
     tiledbsoma.tiledbsoma_stats_reset
+    tiledbsoma.tiledbsoma_stats_dump
+    tiledbsoma.tiledbsoma_stats_as_py
+    tiledbsoma.tiledbsoma_stats_json
+
+    tiledbsoma.tiledbsoma_build_index

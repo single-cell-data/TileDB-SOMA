@@ -45,7 +45,7 @@ const int CORE_DOMAIN_MAX = 2147483646;
 static std::unique_ptr<ArrowArray> _create_index_cols_info_array(
     const std::vector<DimInfo>& dim_infos);
 
-// Core PRP: https://github.com/TileDB-Inc/TileDB/pull/5303
+// Core PR: https://github.com/TileDB-Inc/TileDB/pull/5303
 bool have_dense_current_domain_support() {
     auto vers = tiledbsoma::version::embedded_version_triple();
     return std::get<0>(vers) >= 2 && std::get<1>(vers) >= 27;
@@ -123,12 +123,11 @@ create_arrow_schema_and_index_columns(
 // Create index-column info only, no schema involving the attrs
 ArrowTable create_column_index_info(const std::vector<DimInfo>& dim_infos) {
     for (auto info : dim_infos) {
-        LOG_DEBUG(fmt::format(
-            "create_column_index_info name={} type={} dim_max={} ucd={}",
+        LOG_DEBUG(std::format(
+            "create_column_index_info name={} type={} dim_max={}",
             info.name,
             tiledb::impl::to_str(info.tiledb_datatype),
-            info.dim_max,
-            info.use_current_domain));
+            info.dim_max));
     }
 
     auto index_cols_info_schema = create_index_cols_info_schema(dim_infos);
@@ -145,13 +144,31 @@ std::unique_ptr<ArrowSchema> create_index_cols_info_schema(
     std::vector<std::string> names(ndim);
     std::vector<tiledb_datatype_t> tiledb_datatypes(ndim);
 
-    for (int i = 0; i < (int)ndim; i++) {
+    for (int i = 0; i < static_cast<int>(ndim); i++) {
         const DimInfo& dim_info = dim_infos[i];
         names[i] = dim_info.name;
         tiledb_datatypes[i] = dim_info.tiledb_datatype;
     }
 
-    return ArrowAdapter::make_arrow_schema(names, tiledb_datatypes);
+    auto schema = ArrowAdapter::make_arrow_schema(names, tiledb_datatypes);
+
+    for (size_t i = 0; i < static_cast<size_t>(schema->n_children); ++i) {
+        if (strcmp(schema->children[i]->name, "soma_geometry")) {
+            nanoarrow::UniqueBuffer buffer;
+            ArrowMetadataBuilderInit(buffer.get(), nullptr);
+            ArrowMetadataBuilderAppend(
+                buffer.get(),
+                ArrowCharView("dtype"),
+                ArrowCharView(
+                    dim_infos[i].tiledb_datatype == TILEDB_GEOM_WKB ? "WKB" :
+                                                                      "WKT"));
+            ArrowSchemaSetMetadata(
+                schema->children[i],
+                std::string((char*)buffer->data, buffer->size_bytes).c_str());
+        }
+    }
+
+    return schema;
 }
 
 static std::unique_ptr<ArrowArray> _create_index_cols_info_array(
@@ -169,45 +186,31 @@ static std::unique_ptr<ArrowArray> _create_index_cols_info_array(
         // SOMADataFrame objects baseline-tested in C++, then defer exhaustive
         // loop-over-all-datatypes handling to Python and R.
         if (info.tiledb_datatype == TILEDB_INT64) {
-            if (info.use_current_domain) {
-                // domain big; current_domain small
-                std::vector<int64_t> dom(
-                    {0, CORE_DOMAIN_MAX, 1, 0, info.dim_max});
-                dim_array = ArrowAdapter::make_arrow_array_child(dom);
-            } else {
-                // domain small; current_domain feature not being used
-                std::vector<int64_t> dom({0, info.dim_max, 1});
-                dim_array = ArrowAdapter::make_arrow_array_child(dom);
-            }
-
+            // domain big; current_domain small
+            std::vector<int64_t> dom({0, CORE_DOMAIN_MAX, 1, 0, info.dim_max});
+            dim_array = ArrowAdapter::make_arrow_array_child(dom);
         } else if (info.tiledb_datatype == TILEDB_UINT32) {
-            if (info.use_current_domain) {
-                // domain big; current_domain small
-                std::vector<uint32_t> dom(
-                    {0,
-                     (uint32_t)CORE_DOMAIN_MAX,
-                     1,
-                     0,
-                     (uint32_t)info.dim_max});
-                dim_array = ArrowAdapter::make_arrow_array_child(dom);
-            } else {
-                // domain small; current_domain feature not being used
-                std::vector<uint32_t> dom({0, (uint32_t)info.dim_max, 1});
-                dim_array = ArrowAdapter::make_arrow_array_child(dom);
-            }
+            // domain big; current_domain small
+            std::vector<uint32_t> dom(
+                {0, (uint32_t)CORE_DOMAIN_MAX, 1, 0, (uint32_t)info.dim_max});
+            dim_array = ArrowAdapter::make_arrow_array_child(dom);
 
         } else if (info.tiledb_datatype == TILEDB_STRING_ASCII) {
             // Domain specification for strings is not supported in core. See
             // arrow_adapter for more info. We rely on arrow_adapter to also
             // handle this case.
-            if (info.use_current_domain) {
-                std::vector<std::string> dom(
-                    {"", "", "", info.string_lo, info.string_hi});
-                dim_array = ArrowAdapter::make_arrow_array_child_string(dom);
-            } else {
-                std::vector<std::string> dom({"", "", ""});
-                dim_array = ArrowAdapter::make_arrow_array_child_string(dom);
-            }
+            std::vector<std::string> dom(
+                {"", "", "", info.string_lo, info.string_hi});
+            dim_array = ArrowAdapter::make_arrow_array_child_string(dom);
+        } else if (info.tiledb_datatype == TILEDB_GEOM_WKB) {
+            // No domain can be set for WKB. The domain will be set to the
+            // individual spatial axes.
+            dim_array = ArrowAdapter::make_arrow_array_child_binary();
+        } else if (info.tiledb_datatype == TILEDB_FLOAT64) {
+            // domain big; current_domain small
+            std::vector<double_t> dom(
+                {0, (double_t)CORE_DOMAIN_MAX, 1, 0, (double_t)info.dim_max});
+            dim_array = ArrowAdapter::make_arrow_array_child(dom);
         }
 
         if (dim_array == nullptr) {

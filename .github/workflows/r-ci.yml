@@ -32,13 +32,13 @@ jobs:
       matrix:
         include:
           - name: linux
-            os: ubuntu-latest
+            os: ubuntu-24.04
             covr: 'no'
           - name: macos
             os: macOS-latest
             covr: 'no'
           - name: coverage
-            os: ubuntu-latest
+            os: ubuntu-24.04
             covr: 'yes'
 
     runs-on: ${{ matrix.os }}
@@ -50,7 +50,7 @@ jobs:
         run: echo "matrix.os:" ${{ matrix.os }}
 
       - name: Linux CPU info
-        if: ${{ matrix.os == 'ubuntu-latest' }}
+        if: ${{ matrix.os == 'ubuntu-24.04' }}
         run: cat /proc/cpuinfo
 
       - name: MacOS CPU info
@@ -59,23 +59,6 @@ jobs:
 
       - name: Bootstrap
         run: cd apis/r && tools/r-ci.sh bootstrap
-
-      - name: Set additional repositories (macOS)
-        if: ${{ matrix.os != 'ubuntu-latest' }}
-        run: echo 'options(repos = c("https://tiledb-inc.r-universe.dev", getOption("repos")), timeout = 300L)' | tee -a ~/.Rprofile
-
-      - name: Set additional repositories (Linux)
-        if: ${{ matrix.os == 'ubuntu-latest' }}
-        run: |
-          rversion <- paste(strsplit(as.character(getRversion()), split = '\\.')[[1L]][1:2], collapse = '.')
-          codename <-  system('. /etc/os-release; echo ${VERSION_CODENAME}', intern = TRUE)
-          repo <- "https://tiledb-inc.r-universe.dev"
-          (opt <- sprintf('options(repos = c("%s/bin/linux/%s/%s", "%s", getOption("repos")), timeout = 300L)', repo, codename, rversion, repo))
-          cat(opt, "\n", file = "~/.Rprofile", append = TRUE)
-        shell: Rscript {0}
-
-      - name: Install tiledb-r
-        run: cd apis/r && Rscript tools/install-tiledb-r.R
 
       - name: Install BioConductor package SingleCellExperiment
         run: cd apis/r && tools/r-ci.sh install_bioc SingleCellExperiment
@@ -122,7 +105,7 @@ jobs:
       #  run: sudo scripts/bld --prefix=/usr/local
 
       #- name: Call ldconfig
-      #  if: ${{ matrix.os == 'ubuntu-latest' }}
+      #  if: ${{ matrix.os == 'ubuntu-24.04' }}
       #  run: sudo ldconfig
       #
       # - name: Update Packages
@@ -148,17 +131,12 @@ jobs:
       #      -e "devtools::install(upgrade = FALSE)" \
       #      -e "testthat::test_local('tests/testthat', load_package = 'installed')"
 
-      - name: Test without new shape
+      - name: Test
         if: ${{ matrix.covr == 'no' }}
         run: cd apis/r/tests && Rscript testthat.R
 
-      # https://github.com/single-cell-data/TileDB-SOMA/issues/2407
-      - name: Test with new shape
-        if: ${{ matrix.covr == 'no' }}
-        run: export SOMA_R_NEW_SHAPE=true && cd apis/r/tests && Rscript testthat.R
-
       - name: Coverage
-        if: ${{ matrix.os == 'ubuntu-latest' && matrix.covr == 'yes' && github.event_name == 'workflow_dispatch' }}
+        if: ${{ matrix.os == 'ubuntu-24.04' && matrix.covr == 'yes' && github.event_name == 'workflow_dispatch' }}
         run: apis/r/tools/r-ci.sh coverage
 
       - name: View Logs

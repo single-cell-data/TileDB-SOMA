@@ -55,7 +55,11 @@ py::array_t<int64_t> get_indexer_general_aux(
     auto results = py::array_t<int64_t>(size);
     auto results_buffer = results.request();
     int64_t* results_ptr = static_cast<int64_t*>(results_buffer.ptr);
+
+    py::gil_scoped_release release;
     indexer.lookup(input_ptr, results_ptr, size);
+    py::gil_scoped_acquire acquire;
+
     return results;
 }
 py::array_t<int64_t> get_indexer_general(
@@ -132,8 +136,12 @@ py::array_t<int64_t> get_indexer_py_arrow_aux(
         ArrowArray arrow_array;
         extract_py_array_schema(array, arrow_array, arrow_schema);
         auto input_ptr = (int64_t*)arrow_array.buffers[1];
+
+        py::gil_scoped_release release;
         indexer.lookup(
             input_ptr, results_ptr + write_offset, arrow_array.length);
+        py::gil_scoped_acquire acquire;
+
         write_offset += arrow_array.length;
 
         arrow_schema.release(&arrow_schema);
@@ -161,7 +169,12 @@ void load_reindexer(py::module& m) {
             "map_locations",
             [](IntIndexer& indexer, py::array_t<int64_t> keys) {
                 try {
-                    indexer.map_locations(keys.data(), keys.size());
+                    auto keys_p = keys.data();
+                    auto keys_sz = keys.size();
+
+                    py::gil_scoped_release release;
+                    indexer.map_locations(keys_p, keys_sz);
+
                 } catch (const std::exception& e) {
                     throw TileDBSOMAError(e.what());
                 }

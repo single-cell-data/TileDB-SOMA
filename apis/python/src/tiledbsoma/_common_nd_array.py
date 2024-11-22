@@ -88,7 +88,7 @@ class NDArray(SOMAArray, somacore.NDArray):
     def shape(self) -> Tuple[int, ...]:
         """Returns capacity of each dimension, always a list of length ``ndim``.
         This will not necessarily match the bounds of occupied cells within the array.
-        Rather, it is the bounds outside of which no data may be written.
+        Rather, it is the bounds outside of which no data may be read or written.
 
         Lifecycle:
             Maturing.
@@ -122,6 +122,7 @@ class NDArray(SOMAArray, somacore.NDArray):
         cls,
         dim_name: str,
         dim_shape: Optional[int],
+        ndim: int,
         create_options: TileDBCreateOptions,
     ) -> Tuple[int, int]:
         raise NotImplementedError("must be implemented by child class.")

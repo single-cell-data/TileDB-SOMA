@@ -63,7 +63,7 @@ def assert_array_equal(a0, a1):
     if isinstance(a0, np.ndarray):
         assert array_equal(a0, a1)
     elif isinstance(a0, spmatrix):
-        assert array_equal(a0.todense(), a1.todense())
+        assert (a0 != a1).nnz == 0
     else:
         raise ValueError(f"Unsupported type: {type(a0)}")
 

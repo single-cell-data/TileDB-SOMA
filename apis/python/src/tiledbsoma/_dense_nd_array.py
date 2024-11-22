@@ -20,9 +20,8 @@ from . import pytiledbsoma as clib
 from ._arrow_types import pyarrow_to_carrow_type
 from ._common_nd_array import NDArray
 from ._exception import SOMAError, map_exception_for_create
-from ._flags import NEW_SHAPE_FEATURE_FLAG_ENABLED
 from ._tdb_handles import DenseNDArrayWrapper
-from ._types import OpenTimestamp, Slice
+from ._types import OpenTimestamp, Slice, StatusAndReason
 from ._util import dense_indices_to_shape
 from .options._soma_tiledb_context import (
     SOMATileDBContext,
@@ -101,49 +100,47 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
 
         index_column_schema = []
         index_column_data = {}
+        ndim = len(shape)
+
         for dim_idx, dim_shape in enumerate(shape):
             dim_name = f"soma_dim_{dim_idx}"
+
             pa_field = pa.field(dim_name, pa.int64())
-
-            if NEW_SHAPE_FEATURE_FLAG_ENABLED and clib.embedded_version_triple() >= (
-                2,
-                27,
-                0,
-            ):
-                dim_capacity, dim_extent = cls._dim_capacity_and_extent(
-                    dim_name,
-                    # The user specifies current domain -- this is the max domain
-                    # which is taken from the max ranges for the dim datatype.
-                    # We pass None here to detect those.
-                    None,
-                    TileDBCreateOptions.from_platform_config(platform_config),
-                )
-
-                if dim_shape == 0:
-                    raise ValueError("DenseNDArray shape slots must be at least 1")
-                if dim_shape is None:
-                    # Core current-domain semantics are (lo, hi) with both
-                    # inclusive, with lo <= hi. This means smallest is (0, 0)
-                    # which is shape 1, not 0.
-                    dim_shape = 1
-
-                index_column_data[pa_field.name] = [
-                    0,
-                    dim_capacity - 1,
-                    dim_extent,
-                    0,
-                    dim_shape - 1,
-                ]
-
-            else:
-                dim_capacity, dim_extent = cls._dim_capacity_and_extent(
-                    dim_name,
-                    dim_shape,
-                    TileDBCreateOptions.from_platform_config(platform_config),
-                )
-
-            index_column_data[pa_field.name] = [0, dim_capacity - 1, dim_extent]
             index_column_schema.append(pa_field)
+
+            # Here is our Arrow data API for communicating schema info between
+            # Python/R and C++ libtiledbsoma:
+            #
+            # [0] core max domain lo
+            # [1] core max domain hi
+            # [2] core extent parameter
+            # If present, these next two signal to use the current-domain feature:
+            # [3] core current domain lo
+            # [4] core current domain hi
+
+            if dim_shape is None:
+                raise ValueError("DenseNDArray shape slots must be numeric")
+
+            dim_capacity, dim_extent = cls._dim_capacity_and_extent(
+                dim_name,
+                # The user specifies current domain -- this is the max domain
+                # which is taken from the max ranges for the dim datatype.
+                # We pass None here to detect those.
+                None,
+                ndim,
+                TileDBCreateOptions.from_platform_config(platform_config),
+            )
+
+            if dim_shape == 0:
+                raise ValueError("DenseNDArray shape slots must be at least 1")
+
+            index_column_data[pa_field.name] = [
+                0,
+                dim_capacity - 1,
+                dim_extent,
+                0,
+                dim_shape - 1,
+            ]
 
         index_column_info = pa.RecordBatch.from_pydict(
             index_column_data, schema=pa.schema(index_column_schema)
@@ -250,7 +247,7 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
             timestamp=handle.timestamp and (0, handle.timestamp),
         )
 
-        self._set_coords(sr, coords)
+        _util._set_coords(sr, coords)
 
         arrow_tables = []
         while True:
@@ -271,9 +268,15 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
             )
 
         arrow_table = pa.concat_tables(arrow_tables)
-        return pa.Tensor.from_numpy(
-            arrow_table.column("soma_data").to_numpy().reshape(target_shape)
-        )
+        npval = arrow_table.column("soma_data").to_numpy()
+        # TODO: as currently coded we're looking at the non-empty domain upper
+        # bound but not its lower bound. That works fine if data are written at
+        # the start: e.g. domain (0, 99) and data written at 0,1,2,3,4. It
+        # doesn't work fine if data are written at say (40,41,42,43,44).
+        #
+        # This is tracked on https://github.com/single-cell-data/TileDB-SOMA/issues/3271
+        reshaped = npval.reshape(target_shape)
+        return pa.Tensor.from_numpy(reshaped)
 
     def write(
         self,
@@ -329,7 +332,7 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
                 input = np.ascontiguousarray(input)
             order = clib.ResultOrder.rowmajor
         clib_dense_array.reset(result_order=order)
-        self._set_coords(clib_dense_array, new_coords)
+        _util._set_coords(clib_dense_array, new_coords)
         clib_dense_array.write(input)
 
         tiledb_write_options = TileDBWriteOptions.from_platform_config(platform_config)
@@ -341,28 +344,89 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
         """Supported for ``SparseNDArray``; scheduled for implementation for
         ``DenseNDArray`` in TileDB-SOMA 1.15
         """
-        if clib.embedded_version_triple() >= (2, 27, 0):
-            self._handle.resize(newshape)
+        self._handle.resize(newshape)
+
+    def tiledbsoma_upgrade_shape(
+        self, newshape: Sequence[Union[int, None]], check_only: bool = False
+    ) -> StatusAndReason:
+        """Allows the array to have a resizeable shape as described in the TileDB-SOMA
+        1.15 release notes.  Raises an error if the new shape exceeds maxshape in
+        any dimension. Raises an error if the array already has a shape.
+        """
+        if check_only:
+            return self._handle.tiledbsoma_can_upgrade_shape(newshape)
         else:
-            raise NotImplementedError("Not implemented for libtiledbsoma < 2.27.0")
+            self._handle.tiledbsoma_upgrade_shape(newshape)
+            return (True, "")
 
     @classmethod
     def _dim_capacity_and_extent(
         cls,
         dim_name: str,
         dim_shape: Optional[int],
+        ndim: int,
         create_options: TileDBCreateOptions,
     ) -> Tuple[int, int]:
-        """Given a user-specified shape along a particular dimension, returns a tuple of
-        the TileDB capacity and extent for that dimension, suitable for schema creation.
-        The user-specified shape cannot be ``None`` for :class:`DenseNDArray`.
+        """Given a user-specified shape (maybe ``None``) along a particular dimension,
+        returns a tuple of the TileDB capacity and extent for that dimension, suitable
+        for schema creation. If the user-specified shape is None, the largest possible
+        int64 is returned for the capacity -- which is particularly suitable for
+        maxdomain.
         """
-        if dim_shape is None or dim_shape <= 0:
-            raise ValueError(
-                "SOMADenseNDArray shape must be a non-zero-length tuple of positive ints"
-            )
 
-        dim_capacity = dim_shape
-        dim_extent = min(dim_shape, create_options.dim_tile(dim_name, 2048))
+        # Old news: for dense n-dimensional arrays, the number of bytes for each
+        # core cell is the product of the following:
+        #
+        # * element size (e.g. 4 for float32, 8 for float64)
+        # * extent for dim 0
+        # * extent for dim 1
+        # * ...
+        # * extent for dim n
+        #
+        # With float64 and extent 2048, this memory requirement for n = 1,2,3,4
+        # multiplies out to:
+        #
+        # * n=1: ~10**4
+        # * n=2: ~10**8
+        # * n=3: ~10**11
+        # * n=4: ~10**14
+        #
+        # New news: before core 2.27 we didn't have current-domain support for
+        # dense arrays and so we made the core domain fit the shape -- and we of
+        # course cap each dim slot's extent at the slotwise domain. So if the
+        # array is 3D with shape = (10,20,30) we got tile extents 10, 20, 30.
+        #
+        # But as of core 2.27 we do have current-domain support for dense
+        # arrays, and we make the core domain huge. (Core domain is immutable;
+        # core current domain is upward-resizeable up to the limit which is the
+        # core domain.) This means a default extent of 2048 blows up fast at
+        # higher dimensions.
+        if ndim == 1:
+            default_extent = 2048
+        elif ndim == 2:
+            default_extent = 512
+        elif ndim == 3:
+            default_extent = 128
+        elif ndim >= 4:
+            default_extent = 4
+
+        if dim_shape is None:
+            dim_capacity = 2**63 - 1
+            dim_extent = min(
+                dim_capacity, create_options.dim_tile(dim_name, default_extent)
+            )
+            # For core: "domain max expanded to multiple of tile extent exceeds max value
+            # representable by domain type. Reduce domain max by 1 tile extent to allow for
+            # expansion."
+            dim_capacity -= dim_extent
+        else:
+            if dim_shape <= 0:
+                raise ValueError(
+                    "SOMASparseNDArray shape must be a non-zero-length tuple of positive ints or Nones"
+                )
+            dim_capacity = dim_shape
+            dim_extent = min(
+                dim_shape, create_options.dim_tile(dim_name, default_extent)
+            )
 
         return (dim_capacity, dim_extent)

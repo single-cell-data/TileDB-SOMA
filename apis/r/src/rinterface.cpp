@@ -404,7 +404,7 @@ SEXP c_schema(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
         ArrowSchemaAllocateChildren(sch, lib_retval->n_children),
         "Bad schema children alloc");
 
-    for (size_t i = 0; i < lib_retval->n_children; i++) {
+    for (size_t i = 0; i < static_cast<size_t>(lib_retval->n_children); i++) {
         spdl::info(
             "[c_schema] Accessing name '{}' format '{}' at position {}",
             std::string(lib_retval->children[i]->name),

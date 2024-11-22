@@ -39,7 +39,7 @@ jobs:
   # Confirm shared object copying when building the Python package
   # https://github.com/single-cell-data/TileDB-SOMA/pull/1937
   docker:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     name: "SO copying (docker) TILEDB_EXISTS: ${{ matrix.TILEDB_EXISTS }} TILEDBSOMA_EXISTS: ${{ matrix.TILEDBSOMA_EXISTS }}"
     strategy:
       fail-fast: false
@@ -76,7 +76,7 @@ jobs:
         run: |
           mkdir -p external
           # Please do not edit manually -- let scripts/update-tiledb-version.py update this
-          wget --quiet https://github.com/TileDB-Inc/TileDB/releases/download/2.26.2/tiledb-linux-x86_64-2.26.2-30fc114.tar.gz
+          wget --quiet https://github.com/TileDB-Inc/TileDB/releases/download/2.27.0-rc3/tiledb-linux-x86_64-2.27.0-rc3-8d581f2.tar.gz
           tar -C external -xzf tiledb-linux-x86_64-*.tar.gz
           ls external/lib/
           echo "LD_LIBRARY_PATH=$(pwd)/external/lib" >> $GITHUB_ENV
@@ -152,7 +152,7 @@ jobs:
   # https://github.com/single-cell-data/TileDB-SOMA/pull/1937
   # Same as job above, but running on macOS instead of in a Docker container
   macos:
-    runs-on: macos-13
+    runs-on: macos-latest
     name: "SO copying (macos) TILEDB_EXISTS: ${{ matrix.TILEDB_EXISTS }} TILEDBSOMA_EXISTS: ${{ matrix.TILEDBSOMA_EXISTS }}"
     strategy:
       fail-fast: false
@@ -168,16 +168,20 @@ jobs:
           fetch-depth: 0  # for setuptools-scm
       - name: Check if System Integrity Protection (SIP) is enabled
         run: csrutil status
+      - name: Select XCode version
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: '15.4'
       - name: Install pre-built libtiledb
         if: ${{ matrix.TILEDB_EXISTS == 'yes' }}
         run: |
           mkdir -p external
           # Please do not edit manually -- let scripts/update-tiledb-version.py update this
           if [ `uname -m` == "arm64" ]; then
-            wget --quiet https://github.com/TileDB-Inc/TileDB/releases/download/2.26.2/tiledb-macos-arm64-2.26.2-30fc114.tar.gz
+            wget --quiet https://github.com/TileDB-Inc/TileDB/releases/download/2.27.0-rc3/tiledb-macos-arm64-2.27.0-rc3-8d581f2.tar.gz
             tar -C external -xzf tiledb-macos-arm64-*.tar.gz
           else
-            wget --quiet https://github.com/TileDB-Inc/TileDB/releases/download/2.26.2/tiledb-macos-x86_64-2.26.2-30fc114.tar.gz
+            wget --quiet https://github.com/TileDB-Inc/TileDB/releases/download/2.27.0-rc3/tiledb-macos-x86_64-2.27.0-rc3-8d581f2.tar.gz
             tar -C external -xzf tiledb-macos-x86_64-*.tar.gz
           fi
           ls external/lib/
@@ -259,7 +263,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: ["ubuntu-latest", "macos-latest"]
+        os: ["ubuntu-24.04", "macos-latest"]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -270,14 +274,14 @@ jobs:
           if [ `uname -s` == "Darwin" ]; then
             if [ `uname -m` == "arm64" ]; then
                 # Please do not edit manually -- let scripts/update-tiledb-version.py update this
-                wget --quiet https://github.com/TileDB-Inc/TileDB/releases/download/2.26.2/tiledb-macos-arm64-2.26.2-30fc114.tar.gz
+                wget --quiet https://github.com/TileDB-Inc/TileDB/releases/download/2.27.0-rc3/tiledb-macos-arm64-2.27.0-rc3-8d581f2.tar.gz
             else
                 # Please do not edit manually -- let scripts/update-tiledb-version.py update this
-                wget --quiet https://github.com/TileDB-Inc/TileDB/releases/download/2.26.2/tiledb-macos-x86_64-2.26.2-30fc114.tar.gz
+                wget --quiet https://github.com/TileDB-Inc/TileDB/releases/download/2.27.0-rc3/tiledb-macos-x86_64-2.27.0-rc3-8d581f2.tar.gz
             fi
           else
             # Please do not edit manually -- let scripts/update-tiledb-version.py update this
-            wget --quiet https://github.com/TileDB-Inc/TileDB/releases/download/2.26.2/tiledb-linux-x86_64-2.26.2-30fc114.tar.gz
+            wget --quiet https://github.com/TileDB-Inc/TileDB/releases/download/2.27.0-rc3/tiledb-linux-x86_64-2.27.0-rc3-8d581f2.tar.gz
           fi
           tar -C external -xzf tiledb-*.tar.gz
           ls external/lib/
@@ -364,7 +368,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: ["ubuntu-latest", "macos-latest"]
+        os: ["ubuntu-24.04", "macos-latest"]
     steps:
       - uses: actions/checkout@v4
         with:

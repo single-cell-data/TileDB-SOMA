@@ -81,8 +81,8 @@ if(CCACHE_FOUND)
   set_property(GLOBAL PROPERTY RULE_LAUNCH_LINK ccache)
 endif()
 
-# Set C++17 as required standard for all C++ targets (C++17 minimum is required to use the TileDB C++ API).
-set(CMAKE_CXX_STANDARD 17)
+# Set C++20 as required standard for all C++ targets (C++17 minimum is required to use the TileDB C++ API).
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF) # Don't use GNU extensions
 
@@ -218,7 +218,7 @@ if(MSVC)
   )
 else()
 
-  set(TILEDBSOMA_COMPILE_OPTIONS -Wall -Wextra)
+  set(TILEDBSOMA_COMPILE_OPTIONS -Wall -Wextra -DSPDLOG_USE_STD_FORMAT)
 
   if(${TILEDBSOMA_ENABLE_WERROR})
     set(TILEDBSOMA_WERROR_OPTION -Werror)

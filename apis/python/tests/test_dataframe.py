@@ -82,8 +82,7 @@ def test_dataframe(tmp_path, arrow_schema):
             pydict["quux"] = [True, False, False, True, False]
             rb = pa.Table.from_pydict(pydict)
 
-            if soma._flags.NEW_SHAPE_FEATURE_FLAG_ENABLED:
-                sdf.tiledbsoma_resize_soma_joinid_shape(len(rb))
+            sdf.tiledbsoma_resize_soma_joinid_shape(len(rb))
 
             sdf.write(rb)
 
@@ -95,11 +94,7 @@ def test_dataframe(tmp_path, arrow_schema):
         assert sdf.count == 5
         assert len(sdf) == 5
 
-        # More to come on https://github.com/single-cell-data/TileDB-SOMA/issues/2407
-        assert (
-            sdf.tiledbsoma_has_upgraded_domain
-            == soma._flags.NEW_SHAPE_FEATURE_FLAG_ENABLED
-        )
+        assert sdf.tiledbsoma_has_upgraded_domain
 
         with pytest.raises(AttributeError):
             assert sdf.shape is None
@@ -1869,3 +1864,38 @@ def test_presence_matrix(tmp_path):
         actual = soma_df.read().concat().to_pandas()
 
     assert actual.equals(df)
+
+
+def test_bounds_on_somajoinid_domain(tmp_path):
+    uri = tmp_path.as_posix()
+
+    schema = pa.schema(
+        [
+            ("soma_joinid", pa.int64()),
+            ("mystring", pa.string()),
+            ("myint", pa.int32()),
+            ("myfloat", pa.float32()),
+        ]
+    )
+
+    with pytest.raises(ValueError):
+        soma.DataFrame.create(
+            uri,
+            schema=schema,
+            domain=[[0, -1]],
+        )
+
+    with pytest.raises(ValueError):
+        soma.DataFrame.create(
+            uri,
+            schema=schema,
+            domain=[[-1, 2]],
+        )
+
+    soma.DataFrame.create(
+        uri,
+        schema=schema,
+        domain=[[2, 99]],
+    )
+
+    assert soma.DataFrame.exists(uri)

@@ -37,6 +37,7 @@ add_library(TILEDB_SOMA_OBJECTS OBJECT
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_experiment.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_measurement.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_scene.cc
+  ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_geometry_dataframe.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_point_cloud_dataframe.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_multiscale_image.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_context.cc
@@ -188,6 +189,7 @@ endif()
 #   ${CMAKE_CURRENT_SOURCE_DIR}/cpp_api/soma_experiment.h
 #   ${CMAKE_CURRENT_SOURCE_DIR}/cpp_api/soma_measurement.h
 #   ${CMAKE_CURRENT_SOURCE_DIR}/cpp_api/soma_scene.h
+#   ${CMAKE_CURRENT_SOURCE_DIR}/cpp_api/soma_geometry_dataframe.h
 #   ${CMAKE_CURRENT_SOURCE_DIR}/cpp_api/soma_point_cloud_dataframe.h
 #   ${CMAKE_CURRENT_SOURCE_DIR}/cpp_api/soma_multiscale_image.h
 #   ${CMAKE_CURRENT_SOURCE_DIR}/cpp_api/soma_object.h
@@ -211,6 +213,7 @@ install(FILES
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_experiment.h
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_measurement.h
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_scene.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_geometry_dataframe.h
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_point_cloud_dataframe.h
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_multiscale_image.h
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_object.h
@@ -230,16 +233,13 @@ install(FILES
 install(FILES
   ${CMAKE_CURRENT_SOURCE_DIR}/utils/arrow_adapter.h
   ${CMAKE_CURRENT_SOURCE_DIR}/utils/common.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/utils/fastercsx.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/utils/parallel_functions.h
   ${CMAKE_CURRENT_SOURCE_DIR}/utils/stats.h
   ${CMAKE_CURRENT_SOURCE_DIR}/utils/util.h
   ${CMAKE_CURRENT_SOURCE_DIR}/utils/version.h
 
   DESTINATION "include/tiledbsoma/utils"
-)
-
-install(FILES
-  ${CMAKE_CURRENT_SOURCE_DIR}/external/include/span/span.hpp
-  DESTINATION "include/tiledbsoma/soma/span"
 )
 
 install(FILES

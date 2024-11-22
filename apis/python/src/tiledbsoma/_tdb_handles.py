@@ -390,36 +390,22 @@ class SOMAArrayWrapper(Wrapper[_ArrType]):
     def ndim(self) -> int:
         return len(self._handle.dimension_names)
 
-    def _cast_domainish(
-        self, domainish: List[Any]
-    ) -> Tuple[Tuple[object, object], ...]:
-        result = []
-        for i, slot in enumerate(domainish):
-
-            arrow_type = slot[0].type
-            if pa.types.is_timestamp(arrow_type):
-                pandas_type = np.dtype(arrow_type.to_pandas_dtype())
-                result.append(
-                    tuple(
-                        pandas_type.type(e.cast(pa.int64()).as_py(), arrow_type.unit)
-                        for e in slot
-                    )
-                )
-            else:
-                result.append(tuple(e.as_py() for e in slot))
-
-        return tuple(result)
-
     @property
     def domain(self) -> Tuple[Tuple[object, object], ...]:
-        return self._cast_domainish(self._handle.domain())
+        from ._util import _cast_domainish
+
+        return _cast_domainish(self._handle.domain())
 
     @property
     def maxdomain(self) -> Tuple[Tuple[object, object], ...]:
-        return self._cast_domainish(self._handle.maxdomain())
+        from ._util import _cast_domainish
+
+        return _cast_domainish(self._handle.maxdomain())
 
     def non_empty_domain(self) -> Tuple[Tuple[object, object], ...]:
-        return self._cast_domainish(self._handle.non_empty_domain())
+        from ._util import _cast_domainish
+
+        return _cast_domainish(self._handle.non_empty_domain())
 
     @property
     def attr_names(self) -> Tuple[str, ...]:
@@ -643,19 +629,25 @@ class DenseNDArrayWrapper(SOMAArrayWrapper[clib.SOMADenseNDArray]):
 
     def resize(self, newshape: Sequence[Union[int, None]]) -> None:
         """Wrapper-class internals"""
-        if clib.embedded_version_triple() >= (2, 27, 0):
-            self._handle.resize(newshape)
-        else:
-            raise NotImplementedError("Not implemented for libtiledbsoma < 2.27.0")
+        self._handle.resize(newshape)
 
     def tiledbsoma_can_resize(
         self, newshape: Sequence[Union[int, None]]
     ) -> StatusAndReason:
         """Wrapper-class internals"""
-        if clib.embedded_version_triple() >= (2, 27, 0):
-            return cast(StatusAndReason, self._handle.tiledbsoma_can_resize(newshape))
-        else:
-            raise NotImplementedError("Not implemented for libtiledbsoma < 2.27.0")
+        return cast(StatusAndReason, self._handle.tiledbsoma_can_resize(newshape))
+
+    def tiledbsoma_upgrade_shape(self, newshape: Sequence[Union[int, None]]) -> None:
+        """Wrapper-class internals"""
+        self._handle.tiledbsoma_upgrade_shape(newshape)
+
+    def tiledbsoma_can_upgrade_shape(
+        self, newshape: Sequence[Union[int, None]]
+    ) -> StatusAndReason:
+        """Wrapper-class internals"""
+        return cast(
+            StatusAndReason, self._handle.tiledbsoma_can_upgrade_shape(newshape)
+        )
 
 
 class SparseNDArrayWrapper(SOMAArrayWrapper[clib.SOMASparseNDArray]):

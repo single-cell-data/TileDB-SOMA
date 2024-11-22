@@ -65,6 +65,16 @@ SOMADataFrame <- R6::R6Class(
           length(attr_column_names) > 0
       )
 
+      if ("soma_joinid" %in% index_column_names && !is.null(domain)) {
+        lower_bound <- domain[["soma_joinid"]][1]
+        upper_bound <- domain[["soma_joinid"]][2]
+        stopifnot(
+          "The lower bound for soma_joinid domain must be >= 0" = lower_bound >= 0,
+          "The upper bound for soma_joinid domain must be >= 0" = upper_bound >= 0,
+          "The upper bound for soma_joinid domain must be >= the lower bound" = upper_bound >= lower_bound
+          )
+      }
+
       # Parse the tiledb/create/ subkeys of the platform_config into a handy,
       # typed, queryable data structure.
       tiledb_create_options <- TileDBCreateOptions$new(platform_config)
@@ -526,7 +536,8 @@ SOMADataFrame <- R6::R6Class(
         "All 'index_column_names' must be defined in the 'schema'" =
           assert_subset(index_column_names, schema$names, "indexed field"),
         "Column names must not start with reserved prefix 'soma_'" =
-          all(!startsWith(setdiff(schema$names, "soma_joinid"), "soma_"))
+          all(!startsWith(setdiff(schema$names, "soma_joinid"), "soma_")) ||
+          isTRUE(getOption("tiledbsoma.write_soma.internal", default = FALSE))
       )
 
       # Add soma_joinid column if not present

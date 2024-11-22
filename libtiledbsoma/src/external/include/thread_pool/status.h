@@ -61,7 +61,7 @@
   if (p) {                  \
     delete[] p;             \
   }
-#define tdb_new_array(T, size) (T*)malloc(size * sizeof(T))
+#define tdb_new_array(T, size) (new T[size])
 
 namespace tiledbsoma {
 

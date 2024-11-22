@@ -36,7 +36,15 @@ import numpy as np
 import pandas as pd
 import pyarrow as pa
 import scipy.sparse as sp
-from anndata.experimental import CSCDataset
+
+# As of anndata 0.11 we get a warning importing anndata.experimental.
+# But anndata.abc doesn't exist in anndata 0.10. And anndata 0.11 doesn't
+# exist for Python 3.9. And we have not yet dropped support for Python 3.9.
+try:
+    from anndata.abc import CSCDataset
+except (AttributeError, ModuleNotFoundError):
+    from anndata.experimental import CSCDataset
+
 from somacore.options import PlatformConfig
 from typing_extensions import get_args
 
@@ -64,7 +72,6 @@ from .._exception import (
     NotCreateableError,
     SOMAError,
 )
-from .._flags import NEW_SHAPE_FEATURE_FLAG_ENABLED
 from .._soma_array import SOMAArray
 from .._soma_object import AnySOMAObject, SOMAObject
 from .._tdb_handles import RawHandle
@@ -276,7 +283,7 @@ def from_h5ad(
           ``obs`` / ``var``.
 
           NOTE: it is not necessary for this column to be the index-column
-          name in the input AnnData objects ``obs``/``var``.
+          name in the input AnnData object's ``obs``/``var``.
 
         X_layer_name: SOMA array name for the AnnData's ``X`` matrix.
 
@@ -756,7 +763,7 @@ def append_obs(
     Writes new rows to an existing ``obs`` dataframe. (This is distinct from ``update_obs``
     which mutates the entirety of the ``obs`` dataframe, e.g. to add/remove columns.)
 
-    Example:
+    Example::
 
         rd = tiledbsoma.io.register_anndatas(
             exp_uri,
@@ -814,7 +821,7 @@ def append_var(
     Writes new rows to an existing ``var`` dataframe. (This is distinct from ``update_var``
     which mutates the entirety of the ``var`` dataframe, e.g. to add/remove columns.)
 
-    Example:
+    Example::
 
         rd = tiledbsoma.io.register_anndatas(
             exp_uri,
@@ -883,7 +890,7 @@ def append_X(
     with ``update_obs`` and ``update_var``, as an itemized alternative to doing
     ``from_anndata`` with a registration mapping supplied.
 
-    Example:
+    Example::
 
         rd = tiledbsoma.io.register_anndatas(
             exp_uri,
@@ -1208,9 +1215,7 @@ def _write_dataframe_impl(
     try:
         # Note: tiledbsoma.io creates dataframes with soma_joinid being the one
         # and only index column.
-        domain = None
-        if NEW_SHAPE_FEATURE_FLAG_ENABLED:
-            domain = ((0, shape - 1),)
+        domain = ((0, shape - 1),)
         soma_df = DataFrame.create(
             df_uri,
             schema=arrow_table.schema,
@@ -1315,17 +1320,14 @@ def _create_from_matrix(
     try:
         shape: Sequence[Union[int, None]] = ()
         # A SparseNDArray must be appendable in soma.io.
-        if NEW_SHAPE_FEATURE_FLAG_ENABLED:
-            # Instead of
-            #   shape = tuple(int(e) for e in matrix.shape)
-            # we consult the registration mapping. This is important
-            # in the case when multiple H5ADs/AnnDatas are being
-            # ingested to an experiment which doesn't pre-exist.
-            shape = (axis_0_mapping.get_shape(), axis_1_mapping.get_shape())
-        elif cls.is_sparse:
-            shape = tuple(None for _ in matrix.shape)
-        else:
-            shape = matrix.shape
+
+        # Instead of
+        #   shape = tuple(int(e) for e in matrix.shape)
+        # we consult the registration mapping. This is important
+        # in the case when multiple H5ADs/AnnDatas are being
+        # ingested to an experiment which doesn't pre-exist.
+        shape = (axis_0_mapping.get_shape(), axis_1_mapping.get_shape())
+
         soma_ndarray = cls.create(
             uri,
             type=pa.from_numpy_dtype(matrix.dtype),
@@ -1410,18 +1412,17 @@ def update_obs(
     type for the column, the entire update will raise a ``ValueError`` exception.
 
     Args:
-        exp: The :class:`SOMAExperiment` whose ``obs`` is to be updated. Must
-        be opened for write.
+        exp: The :class:`SOMAExperiment` whose ``obs`` is to be updated. Must be opened for write.
 
         new_data: a Pandas dataframe with the desired contents.
 
         context: Optional :class:`SOMATileDBContext` containing storage parameters, etc.
 
-        platform_config: Platform-specific options used to update this array, provided
-        in the form ``{"tiledb": {"create": {"dataframe_dim_zstd_level": 7}}}``
+        platform_config: Platform-specific options used to update this array, provided in the form
+            ``{"tiledb": {"create": {"dataframe_dim_zstd_level": 7}}}``
 
-        default_index_name: What to call the ``new_data`` index column if it is
-        nameless in Pandas, or has name ``"index"``.
+        default_index_name: What to call the ``new_data`` index column if it is nameless in Pandas,
+            or has name ``"index"``.
 
     Returns:
         None
@@ -1470,11 +1471,11 @@ def update_var(
 
         context: Optional :class:`SOMATileDBContext` containing storage parameters, etc.
 
-        platform_config: Platform-specific options used to update this array, provided
-        in the form ``{"tiledb": {"create": {"dataframe_dim_zstd_level": 7}}}``
+        platform_config: Platform-specific options used to update this array, provided in the form
+            ``{"tiledb": {"create": {"dataframe_dim_zstd_level": 7}}}``
 
-        default_index_name: What to call the ``new_data`` index column if it is
-        nameless in Pandas, or has name ``"index"``.
+        default_index_name: What to call the ``new_data`` index column if it is nameless in Pandas,
+            or has name ``"index"``.
 
     Returns:
         None
@@ -1612,7 +1613,7 @@ def update_matrix(
     intended shape of written contents of the array match those of the existing
     data. The intended use-case is to replace updated numerical values.
 
-    Example:
+    Example::
 
         with tiledbsoma.Experiment.open(uri, "w") as exp:
             tiledbsoma.io.update_matrix(
@@ -1630,7 +1631,7 @@ def update_matrix(
         context: Optional :class:`SOMATileDBContext` containing storage parameters, etc.
 
         platform_config: Platform-specific options used to update this array, provided
-        in the form ``{"tiledb": {"create": {"dataframe_dim_zstd_level": 7}}}``
+            in the form ``{"tiledb": {"create": {"dataframe_dim_zstd_level": 7}}}``
 
     Returns:
         None
@@ -1737,8 +1738,7 @@ def add_matrix_to_collection(
     context: Optional[SOMATileDBContext] = None,
 ) -> None:
     """This is useful for adding X/obsp/varm/etc data, for example from
-    `Scanpy <https://scanpy.readthedocs.io/>`_'s ``scanpy.pp.normalize_total``,
-    ``scanpy.pp.log1p``, etc.
+    Scanpy's ``scanpy.pp.normalize_total``, ``scanpy.pp.log1p``, etc.
 
     Use ``ingest_mode="resume"`` to not error out if the schema already exists.
 
@@ -1909,7 +1909,7 @@ def _write_matrix_to_denseNDArray(
         else:
             tensor = pa.Tensor.from_numpy(chunk.toarray())
         if matrix.ndim == 2:
-            soma_ndarray.write((slice(i, i2), slice(None)), tensor)
+            soma_ndarray.write((slice(i, i2), slice(0, ncol)), tensor)
         else:
             soma_ndarray.write((slice(i, i2),), tensor)
 
@@ -2265,7 +2265,7 @@ def _write_matrix_to_sparseNDArray(
     if sp.isspmatrix_csc(matrix):
         # E.g. if we used anndata.X[:]
         stride_axis = 1
-    if isinstance(matrix, CSCDataset) and matrix.format_str == "csc":
+    if isinstance(matrix, CSCDataset):
         # E.g. if we used anndata.X without the [:]
         stride_axis = 1
 

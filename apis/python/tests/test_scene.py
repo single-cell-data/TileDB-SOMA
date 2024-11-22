@@ -346,13 +346,13 @@ def test_scene_set_transform_to_point_cloud(
 
         # The scene coordinate space must be set before registering
         with pytest.raises(soma.SOMAError):
-            scene.set_transform_to_point_cloud_dataframe("ptc", transform)
+            scene.set_transform_to_point_cloud_dataframe("ptc", transform=transform)
 
         scene.coordinate_space = coord_space
 
         # No SOMAObject named 'bad' in Scene
         with pytest.raises(KeyError):
-            scene.set_transform_to_point_cloud_dataframe("bad", transform)
+            scene.set_transform_to_point_cloud_dataframe("bad", transform=transform)
 
         # Mismatched input axes.
         transform_bad = coord_transform(
@@ -361,7 +361,7 @@ def test_scene_set_transform_to_point_cloud(
             **transform_kwargs,
         )
         with pytest.raises(ValueError):
-            scene.set_transform_to_point_cloud_dataframe("ptc", transform_bad)
+            scene.set_transform_to_point_cloud_dataframe("ptc", transform=transform_bad)
 
         # Mismatched output axes.
         transform_bad = coord_transform(
@@ -370,12 +370,12 @@ def test_scene_set_transform_to_point_cloud(
             **transform_kwargs,
         )
         with pytest.raises(ValueError):
-            scene.set_transform_to_point_cloud_dataframe("ptc", transform_bad)
+            scene.set_transform_to_point_cloud_dataframe("ptc", transform=transform_bad)
 
         # Not a PointCloudDataFrame
         scene["obsl"]["col"] = soma.Collection.create(urljoin(obsl_uri, "col"))
         with pytest.raises(TypeError):
-            scene.set_transform_to_point_cloud_dataframe("col", transform)
+            scene.set_transform_to_point_cloud_dataframe("col", transform=transform)
 
         # Transform not set
         with pytest.raises(KeyError):
@@ -385,7 +385,7 @@ def test_scene_set_transform_to_point_cloud(
             bad_coord_space = soma.CoordinateSpace.from_axis_names(("xbad", "ybad"))
             with pytest.raises(ValueError):
                 scene.set_transform_to_point_cloud_dataframe(
-                    "ptc", transform, coordinate_space=bad_coord_space
+                    "ptc", transform=transform, coordinate_space=bad_coord_space
                 )
 
             coord_space = soma.CoordinateSpace(
@@ -393,13 +393,13 @@ def test_scene_set_transform_to_point_cloud(
             )
 
             point_cloud = scene.set_transform_to_point_cloud_dataframe(
-                "ptc", transform, coordinate_space=coord_space
+                "ptc", transform=transform, coordinate_space=coord_space
             )
             actual_coord_space = point_cloud.coordinate_space
             assert actual_coord_space == coord_space
 
         else:
-            scene.set_transform_to_point_cloud_dataframe("ptc", transform)
+            scene.set_transform_to_point_cloud_dataframe("ptc", transform=transform)
 
         ptc_transform = scene.get_transform_to_point_cloud_dataframe("ptc")
         assert_transform_equal(ptc_transform, transform)
@@ -431,11 +431,11 @@ def test_scene_multiscale_image(tmp_path):
                 "img",
                 transform=transform,
                 type=pa.int64(),
-                reference_level_shape=[1, 2, 3],
+                level_shape=[1, 2, 3],
             )
 
             # The scene coordinate space must be set before registering
-            scene.set_transform_to_multiscale_image("msi", transform)
+            scene.set_transform_to_multiscale_image("msi", transform=transform)
 
         # Set the scene multiscale image.
         scene_coord_space = soma.CoordinateSpace(
@@ -455,7 +455,7 @@ def test_scene_multiscale_image(tmp_path):
                 "img",
                 transform=bad_transform,
                 type=pa.int64(),
-                reference_level_shape=[1, 2, 3],
+                level_shape=[1, 2, 3],
             )
 
         # Mismatch in transform output axes and multiscale image coordinate space axes.
@@ -470,7 +470,7 @@ def test_scene_multiscale_image(tmp_path):
                 "img",
                 transform=bad_transform,
                 type=pa.int64(),
-                reference_level_shape=[1, 2, 3],
+                level_shape=[1, 2, 3],
             )
 
         # Add the multiscale image.
@@ -479,7 +479,7 @@ def test_scene_multiscale_image(tmp_path):
             "img",
             transform=transform,
             type=pa.int64(),
-            reference_level_shape=[1, 2, 3],
+            level_shape=[1, 2, 3],
         )
 
         # Check the transform.
@@ -521,7 +521,7 @@ def test_scene_set_transfrom_to_multiscale_image(
             "img",
             transform=None,
             type=pa.int64(),
-            reference_level_shape=[3, 8, 9],
+            level_shape=[3, 8, 9],
         )
 
         transform = coord_transform(
@@ -532,13 +532,13 @@ def test_scene_set_transfrom_to_multiscale_image(
 
         # The scene coordinate space must be set before registering
         with pytest.raises(soma.SOMAError):
-            scene.set_transform_to_multiscale_image("msi", transform)
+            scene.set_transform_to_multiscale_image("msi", transform=transform)
 
         scene.coordinate_space = coord_space
 
         # No MultiscaleImage named 'bad' in Scene
         with pytest.raises(KeyError):
-            scene.set_transform_to_multiscale_image("bad", transform)
+            scene.set_transform_to_multiscale_image("bad", transform=transform)
 
         # Transform not set
         with pytest.raises(KeyError):
@@ -547,7 +547,7 @@ def test_scene_set_transfrom_to_multiscale_image(
         # Not a MultiscaleImage
         scene["img"]["col"] = soma.Collection.create(urljoin(img_uri, "col"))
         with pytest.raises(TypeError):
-            scene.set_transform_to_multiscale_image("col", transform)
+            scene.set_transform_to_multiscale_image("col", transform=transform)
 
         # Mismatched input axes.
         transform_bad = coord_transform(
@@ -556,7 +556,7 @@ def test_scene_set_transfrom_to_multiscale_image(
             **transform_kwargs,
         )
         with pytest.raises(ValueError):
-            scene.set_transform_to_multiscale_image("msi", transform_bad)
+            scene.set_transform_to_multiscale_image("msi", transform=transform_bad)
 
         # Mismatched output axes.
         transform_bad = coord_transform(
@@ -565,13 +565,13 @@ def test_scene_set_transfrom_to_multiscale_image(
             **transform_kwargs,
         )
         with pytest.raises(ValueError):
-            scene.set_transform_to_multiscale_image("msi", transform_bad)
+            scene.set_transform_to_multiscale_image("msi", transform=transform_bad)
 
         if set_coord_space:
             bad_coord_space = soma.CoordinateSpace.from_axis_names(("xbad", "ybad"))
             with pytest.raises(ValueError):
                 scene.set_transform_to_multiscale_image(
-                    "msi", transform, coordinate_space=bad_coord_space
+                    "msi", transform=transform, coordinate_space=bad_coord_space
                 )
 
             coord_space = soma.CoordinateSpace(
@@ -579,13 +579,13 @@ def test_scene_set_transfrom_to_multiscale_image(
             )
 
             msi = scene.set_transform_to_multiscale_image(
-                "msi", transform, coordinate_space=coord_space
+                "msi", transform=transform, coordinate_space=coord_space
             )
             actual_coord_space = msi.coordinate_space
             assert actual_coord_space == coord_space
 
         else:
-            msi = scene.set_transform_to_multiscale_image("msi", transform)
+            msi = scene.set_transform_to_multiscale_image("msi", transform=transform)
 
         msi_transform = scene.get_transform_to_multiscale_image("msi")
         assert_transform_equal(msi_transform, transform)
@@ -651,24 +651,24 @@ def test_scene_geometry_dataframe(tmp_path, coord_transform, transform_kwargs):
 
         # The scene coordinate space must be set before registering
         with pytest.raises(soma.SOMAError):
-            scene.set_transform_to_geometry_dataframe("gdf", transform)
+            scene.set_transform_to_geometry_dataframe("gdf", transform=transform)
 
         scene.coordinate_space = coord_space
 
         # No SOMAObject named 'bad' in Scene
         with pytest.raises(KeyError):
-            scene.set_transform_to_geometry_dataframe("bad", transform)
+            scene.set_transform_to_geometry_dataframe("bad", transform=transform)
 
         # Not a GeometryDataFrame
         scene["obsl"]["col"] = soma.Collection.create(urljoin(obsl_uri, "col"))
         with pytest.raises(typeguard.TypeCheckError):
-            scene.set_transform_to_geometry_dataframe("col", transform)
+            scene.set_transform_to_geometry_dataframe("col", transform=transform)
 
         # Transform not set
         with pytest.raises(KeyError):
             scene.get_transform_to_geometry_dataframe("gdf")
 
-        scene.set_transform_to_geometry_dataframe("gdf", transform)
+        scene.set_transform_to_geometry_dataframe("gdf", transform=transform)
 
         gdf_transform = scene.get_transform_to_geometry_dataframe("gdf")
-        assert_transform_equal(gdf_transform, transform)
+        assert_transform_equal(gdf_transform, transform=transform)

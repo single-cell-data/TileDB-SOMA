@@ -400,8 +400,8 @@ def test_tile_extents(tmp_path):
             "tiledb": {
                 "create": {
                     "dims": {
-                        "soma_dim_0": {"tile": 2048},
-                        "soma_dim_1": {"tile": 2048},
+                        "soma_dim_0": {"tile": 512},
+                        "soma_dim_1": {"tile": 512},
                     }
                 }
             }
@@ -410,8 +410,11 @@ def test_tile_extents(tmp_path):
 
     with soma.DenseNDArray.open(tmp_path.as_posix()) as A:
         dim_info = json.loads(A.config_options_from_schema().dims)
-        assert int(dim_info["soma_dim_0"]["tile"]) == 100
-        assert int(dim_info["soma_dim_1"]["tile"]) == 2048
+        # With new shape (tiledbsoma 1.15), core current domain is (100,10000)
+        # but core domain is huge, and therefore dim 0 does not get its extent
+        # squashed down to 100.
+        assert int(dim_info["soma_dim_0"]["tile"]) == 512
+        assert int(dim_info["soma_dim_1"]["tile"]) == 512
 
 
 def test_timestamped_ops(tmp_path):

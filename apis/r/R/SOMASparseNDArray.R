@@ -5,8 +5,13 @@
 #' (zero-based) integer indexing on each dimension. The `SOMASparseNDArray` has
 #' a user-defined schema, which includes:
 #'
-#' - type - a `primitive` type, expressed as an Arrow type (e.g., `int64`, `float32`, etc)
-#' - shape - the shape of the array, i.e., number and length of each dimension
+#' - **type**: A `primitive` type, expressed as an Arrow type (e.g., `int64`,
+#'   `float32`, etc), indicating the type of data contained within the array.
+#' - **shape**: The shape of the array, i.e., number and length of each
+#'   dimension. This is a soft limit which can be increased using `resize`,
+#'   up to the `maxshape`.
+#' - **maxshape**: The hard limit up to which `shape` may be increased using
+#'   `resize`.
 #'
 #' All dimensions must have a positive, non-zero length.
 #'
