@@ -8,8 +8,8 @@
 <title>Querying a SOMA experiment • tiledbsoma</title>
 <script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
-<script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.4.2/css/all.min.css" rel="stylesheet">
-<link href="../deps/font-awesome-6.4.2/css/v4-shims.min.css" rel="stylesheet">
+<script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
+<link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Querying a SOMA experiment">
 </head>
 <body>
@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">tiledbsoma</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.14.99.7</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.14.99.9</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -65,7 +65,7 @@
       <h1>Querying a SOMA experiment</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/single-cell-data/TileDB-SOMA/blob/1.15.0rc3/vignettes/soma-experiment-queries.Rmd" class="external-link"><code>vignettes/soma-experiment-queries.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/single-cell-data/TileDB-SOMA/blob/1.15.0rc4/vignettes/soma-experiment-queries.Rmd" class="external-link"><code>vignettes/soma-experiment-queries.Rmd</code></a></small>
       <div class="d-none name"><code>soma-experiment-queries.Rmd</code></div>
     </div>
 
@@ -81,7 +81,8 @@ selection of data from a <code>SOMAMeasurement</code> by filtering on
 annotations stored in each axis data frame (i.e., <code>obs</code> and
 <code>var</code>).</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/single-cell-data/TileDB-SOMA" class="external-link">tiledbsoma</a></span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/single-cell-data/TileDB-SOMA" class="external-link">tiledbsoma</a></span><span class="op">)</span></span>
+<span><span class="co">#&gt; TileDB Core version '2.26' used by TileDB-R package, but TileDB-SOMA uses '2.27'</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="example-data">Example data<a class="anchor" aria-label="anchor" href="#example-data"></a>
@@ -94,7 +95,7 @@ dataset</a> provided by SeuratObject. This will return a
 <code class="sourceCode R"><span><span class="va">experiment</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/example-datasets.html">load_dataset</a></span><span class="op">(</span><span class="st">"soma-exp-pbmc-small"</span><span class="op">)</span></span>
 <span><span class="va">experiment</span></span>
 <span><span class="co">#&gt; &lt;SOMAExperiment&gt;</span></span>
-<span><span class="co">#&gt;   uri: /tmp/RtmpdQNL6r/soma-exp-pbmc-small</span></span></code></pre></div>
+<span><span class="co">#&gt;   uri: /tmp/Rtmp3ENuaJ/soma-exp-pbmc-small</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="querying-basics">Querying basics<a class="anchor" aria-label="anchor" href="#querying-basics"></a>
@@ -108,7 +109,7 @@ measurement: <code>"RNA"</code>.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">experiment</span><span class="op">$</span><span class="va">ms</span></span>
 <span><span class="co">#&gt; &lt;SOMACollection&gt;</span></span>
-<span><span class="co">#&gt;   uri: file:///tmp/RtmpdQNL6r/soma-exp-pbmc-small/ms</span></span></code></pre></div>
+<span><span class="co">#&gt;   uri: file:///tmp/Rtmp3ENuaJ/soma-exp-pbmc-small/ms</span></span></code></pre></div>
 <p>To use larger (or smaller) buffer sizes:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">ctx</span> <span class="op">&lt;-</span> <span class="va"><a href="../reference/SOMATileDBContext.html">SOMATileDBContext</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>soma.init_buffer_bytes <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/character.html" class="external-link">as.character</a></span><span class="op">(</span><span class="fl">2</span> <span class="op">*</span> <span class="fl">1024</span><span class="op">**</span><span class="fl">3</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
@@ -151,13 +152,13 @@ iterator as shown below.</p>
 <span><span class="co">#&gt; Table</span></span>
 <span><span class="co">#&gt; 80 rows x 9 columns</span></span>
 <span><span class="co">#&gt; $soma_joinid &lt;int64 not null&gt;</span></span>
-<span><span class="co">#&gt; $orig.ident &lt;large_string&gt;</span></span>
+<span><span class="co">#&gt; $orig.ident &lt;dictionary&lt;values=string, indices=int8&gt;&gt;</span></span>
 <span><span class="co">#&gt; $nCount_RNA &lt;double&gt;</span></span>
 <span><span class="co">#&gt; $nFeature_RNA &lt;int32&gt;</span></span>
-<span><span class="co">#&gt; $RNA_snn_res.0.8 &lt;large_string&gt;</span></span>
-<span><span class="co">#&gt; $letter.idents &lt;large_string&gt;</span></span>
+<span><span class="co">#&gt; $RNA_snn_res.0.8 &lt;dictionary&lt;values=string, indices=int8&gt;&gt;</span></span>
+<span><span class="co">#&gt; $letter.idents &lt;dictionary&lt;values=string, indices=int8&gt;&gt;</span></span>
 <span><span class="co">#&gt; $groups &lt;large_string&gt;</span></span>
-<span><span class="co">#&gt; $RNA_snn_res.1 &lt;large_string&gt;</span></span>
+<span><span class="co">#&gt; $RNA_snn_res.1 &lt;dictionary&lt;values=string, indices=int8&gt;&gt;</span></span>
 <span><span class="co">#&gt; $obs_id &lt;large_string&gt;</span></span></code></pre></div>
 <p>As a reminder <code>arrow:Table</code> can be easily cast into a
 <code>tibble</code></p>
@@ -165,7 +166,7 @@ iterator as shown below.</p>
 <code class="sourceCode R"><span><span class="va">obs</span><span class="op">$</span><span class="fu">to_data_frame</span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 80 × 9</span></span></span>
 <span><span class="co">#&gt;    soma_joinid orig.ident  nCount_RNA nFeature_RNA RNA_snn_res.0.8 letter.idents</span></span>
-<span><span class="co">#&gt;          <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>            <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>           <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>        </span></span>
+<span><span class="co">#&gt;          <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;fct&gt;</span>            <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;fct&gt;</span>           <span style="color: #949494; font-style: italic;">&lt;fct&gt;</span>        </span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span>           0 SeuratProj…         70           47 0               A            </span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span>           1 SeuratProj…         85           52 0               A            </span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span>           2 SeuratProj…         87           50 1               B            </span></span>
@@ -177,7 +178,7 @@ iterator as shown below.</p>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span>           8 SeuratProj…         52           36 0               A            </span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span>           9 SeuratProj…        100           41 0               A            </span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># ℹ 70 more rows</span></span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 3 more variables: groups &lt;chr&gt;, RNA_snn_res.1 &lt;chr&gt;, obs_id &lt;chr&gt;</span></span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 3 more variables: groups &lt;chr&gt;, RNA_snn_res.1 &lt;fct&gt;, obs_id &lt;chr&gt;</span></span></span></code></pre></div>
 <p>Alternatively, you can use the iterator, which retrieves data in
 chunks that are smaller than the <code>soma.init_buffer_bytes</code>
 context field. You can use the iterator’s method
@@ -188,13 +189,13 @@ context field. You can use the iterator’s method
 <span><span class="co">#&gt; Table</span></span>
 <span><span class="co">#&gt; 80 rows x 9 columns</span></span>
 <span><span class="co">#&gt; $soma_joinid &lt;int64 not null&gt;</span></span>
-<span><span class="co">#&gt; $orig.ident &lt;large_string&gt;</span></span>
+<span><span class="co">#&gt; $orig.ident &lt;dictionary&lt;values=string, indices=int8&gt;&gt;</span></span>
 <span><span class="co">#&gt; $nCount_RNA &lt;double&gt;</span></span>
 <span><span class="co">#&gt; $nFeature_RNA &lt;int32&gt;</span></span>
-<span><span class="co">#&gt; $RNA_snn_res.0.8 &lt;large_string&gt;</span></span>
-<span><span class="co">#&gt; $letter.idents &lt;large_string&gt;</span></span>
+<span><span class="co">#&gt; $RNA_snn_res.0.8 &lt;dictionary&lt;values=string, indices=int8&gt;&gt;</span></span>
+<span><span class="co">#&gt; $letter.idents &lt;dictionary&lt;values=string, indices=int8&gt;&gt;</span></span>
 <span><span class="co">#&gt; $groups &lt;large_string&gt;</span></span>
-<span><span class="co">#&gt; $RNA_snn_res.1 &lt;large_string&gt;</span></span>
+<span><span class="co">#&gt; $RNA_snn_res.1 &lt;dictionary&lt;values=string, indices=int8&gt;&gt;</span></span>
 <span><span class="co">#&gt; $obs_id &lt;large_string&gt;</span></span></code></pre></div>
 <p>In this example the full <code>obs</code> table is relatively small
 and fits all in one chunk.</p>
@@ -211,13 +212,13 @@ iteration has finished by checking the logical
 <span><span class="co">#&gt; Table</span></span>
 <span><span class="co">#&gt; 80 rows x 9 columns</span></span>
 <span><span class="co">#&gt; $soma_joinid &lt;int64 not null&gt;</span></span>
-<span><span class="co">#&gt; $orig.ident &lt;large_string&gt;</span></span>
+<span><span class="co">#&gt; $orig.ident &lt;dictionary&lt;values=string, indices=int8&gt;&gt;</span></span>
 <span><span class="co">#&gt; $nCount_RNA &lt;double&gt;</span></span>
 <span><span class="co">#&gt; $nFeature_RNA &lt;int32&gt;</span></span>
-<span><span class="co">#&gt; $RNA_snn_res.0.8 &lt;large_string&gt;</span></span>
-<span><span class="co">#&gt; $letter.idents &lt;large_string&gt;</span></span>
+<span><span class="co">#&gt; $RNA_snn_res.0.8 &lt;dictionary&lt;values=string, indices=int8&gt;&gt;</span></span>
+<span><span class="co">#&gt; $letter.idents &lt;dictionary&lt;values=string, indices=int8&gt;&gt;</span></span>
 <span><span class="co">#&gt; $groups &lt;large_string&gt;</span></span>
-<span><span class="co">#&gt; $RNA_snn_res.1 &lt;large_string&gt;</span></span>
+<span><span class="co">#&gt; $RNA_snn_res.1 &lt;dictionary&lt;values=string, indices=int8&gt;&gt;</span></span>
 <span><span class="co">#&gt; $obs_id &lt;large_string&gt;</span></span>
 <span><span class="va">iterator</span><span class="op">$</span><span class="fu">read_complete</span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] TRUE</span></span></code></pre></div>
@@ -439,6 +440,7 @@ dimensions of the resulting object.</p>
 <span>  obs_index <span class="op">=</span> <span class="st">"obs_id"</span>,</span>
 <span>  var_index <span class="op">=</span> <span class="st">"var_id"</span></span>
 <span><span class="op">)</span></span>
+<span><span class="co">#&gt; Warning: Adding a command log without an assay associated with it</span></span>
 <span><span class="co">#&gt; An object of class Seurat </span></span>
 <span><span class="co">#&gt; 230 features across 80 samples within 1 assay </span></span>
 <span><span class="co">#&gt; Active assay: RNA (230 features, 0 variable features)</span></span>
