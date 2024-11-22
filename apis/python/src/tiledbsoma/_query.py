@@ -805,12 +805,16 @@ def _read_as_csr(
     var_joinids = var_joinids_arr.to_numpy()
     nnz = matrix.nnz
 
-    d0_dtype = np.int32 if len(obs_joinids) > np.iinfo(np.int32).max else np.int64
-    d1_dtype = np.int32 if len(var_joinids) > np.iinfo(np.int32).max else np.int64
+    # if able, downcast from int64 - reduces working memory
+    index_dtype = (
+        np.int32
+        if max(len(obs_joinids), len(var_joinids)) < np.iinfo(np.int32).max
+        else np.int64
+    )
     pa_schema = pa.schema(
         [
-            pa.field("soma_dim_0", pa.from_numpy_dtype(d0_dtype)),
-            pa.field("soma_dim_1", pa.from_numpy_dtype(d1_dtype)),
+            pa.field("soma_dim_0", pa.from_numpy_dtype(index_dtype)),
+            pa.field("soma_dim_1", pa.from_numpy_dtype(index_dtype)),
             matrix.schema.field("soma_data"),
         ]
     )
@@ -821,8 +825,12 @@ def _read_as_csr(
         def _reindex(batch: pa.RecordBatch) -> pa.RecordBatch:
             return pa.RecordBatch.from_pydict(
                 {
-                    "soma_dim_0": indexer.by_obs(batch["soma_dim_0"]).astype(d0_dtype),
-                    "soma_dim_1": indexer.by_var(batch["soma_dim_1"]).astype(d1_dtype),
+                    "soma_dim_0": indexer.by_obs(batch["soma_dim_0"]).astype(
+                        index_dtype
+                    ),
+                    "soma_dim_1": indexer.by_var(batch["soma_dim_1"]).astype(
+                        index_dtype
+                    ),
                     "soma_data": batch["soma_data"],
                 },
                 schema=pa_schema,
