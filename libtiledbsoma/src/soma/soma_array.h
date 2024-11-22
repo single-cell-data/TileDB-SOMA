@@ -906,13 +906,14 @@ class SOMAArray : public SOMAObject {
         //   imitate.
         // * Core current domain for string dims must _not_ be a nullptr pair.
         // * In TileDB-SOMA, unless the user specifies otherwise, we use "" for
-        //   min and "\xff" for max.
-        // * However, "\xff" causes display problems in Python. It's also
-        //   flat-out confusing to show to users.
+        //   min and "\x7f" for max. (We could use "\x7f" but that causes
+        //   display problems in Python.)
         //
         // To work with all these factors, if the current domain is the default
-        // "" to "\xff", return an empty-string pair just as we do for domain.
-        if (arr[0] == "" && arr[1] == "\xff") {
+        // "" to "\7f", return an empty-string pair just as we do for domain.
+        // (There was some pre-1.15 software using "\xff" and it's super-cheap
+        // to check for that as well.)
+        if (arr[0] == "" && (arr[1] == "\x7f" || arr[1] == "\xff")) {
             return std::pair<std::string, std::string>("", "");
         } else {
             return std::pair<std::string, std::string>(arr[0], arr[1]);
