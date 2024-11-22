@@ -20,7 +20,6 @@ from . import pytiledbsoma as clib
 from ._arrow_types import pyarrow_to_carrow_type
 from ._common_nd_array import NDArray
 from ._exception import SOMAError, map_exception_for_create
-from ._flags import DENSE_ARRAYS_CAN_HAVE_CURRENT_DOMAIN
 from ._tdb_handles import DenseNDArrayWrapper
 from ._types import OpenTimestamp, Slice, StatusAndReason
 from ._util import dense_indices_to_shape
@@ -122,37 +121,26 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
             if dim_shape is None:
                 raise ValueError("DenseNDArray shape slots must be numeric")
 
-            if DENSE_ARRAYS_CAN_HAVE_CURRENT_DOMAIN:
-                dim_capacity, dim_extent = cls._dim_capacity_and_extent(
-                    dim_name,
-                    # The user specifies current domain -- this is the max domain
-                    # which is taken from the max ranges for the dim datatype.
-                    # We pass None here to detect those.
-                    None,
-                    ndim,
-                    TileDBCreateOptions.from_platform_config(platform_config),
-                )
+            dim_capacity, dim_extent = cls._dim_capacity_and_extent(
+                dim_name,
+                # The user specifies current domain -- this is the max domain
+                # which is taken from the max ranges for the dim datatype.
+                # We pass None here to detect those.
+                None,
+                ndim,
+                TileDBCreateOptions.from_platform_config(platform_config),
+            )
 
-                if dim_shape == 0:
-                    raise ValueError("DenseNDArray shape slots must be at least 1")
+            if dim_shape == 0:
+                raise ValueError("DenseNDArray shape slots must be at least 1")
 
-                index_column_data[pa_field.name] = [
-                    0,
-                    dim_capacity - 1,
-                    dim_extent,
-                    0,
-                    dim_shape - 1,
-                ]
-
-            else:
-                dim_capacity, dim_extent = cls._dim_capacity_and_extent(
-                    dim_name,
-                    dim_shape,
-                    ndim,
-                    TileDBCreateOptions.from_platform_config(platform_config),
-                )
-
-                index_column_data[pa_field.name] = [0, dim_capacity - 1, dim_extent]
+            index_column_data[pa_field.name] = [
+                0,
+                dim_capacity - 1,
+                dim_extent,
+                0,
+                dim_shape - 1,
+            ]
 
         index_column_info = pa.RecordBatch.from_pydict(
             index_column_data, schema=pa.schema(index_column_schema)
@@ -356,10 +344,7 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
         """Supported for ``SparseNDArray``; scheduled for implementation for
         ``DenseNDArray`` in TileDB-SOMA 1.15
         """
-        if DENSE_ARRAYS_CAN_HAVE_CURRENT_DOMAIN:
-            self._handle.resize(newshape)
-        else:
-            raise NotImplementedError("Not implemented for libtiledbsoma < 2.27.0")
+        self._handle.resize(newshape)
 
     def tiledbsoma_upgrade_shape(
         self, newshape: Sequence[Union[int, None]], check_only: bool = False
@@ -368,14 +353,11 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
         1.15 release notes.  Raises an error if the new shape exceeds maxshape in
         any dimension. Raises an error if the array already has a shape.
         """
-        if DENSE_ARRAYS_CAN_HAVE_CURRENT_DOMAIN:
-            if check_only:
-                return self._handle.tiledbsoma_can_upgrade_shape(newshape)
-            else:
-                self._handle.tiledbsoma_upgrade_shape(newshape)
-                return (True, "")
+        if check_only:
+            return self._handle.tiledbsoma_can_upgrade_shape(newshape)
         else:
-            raise NotImplementedError("Not implemented for libtiledbsoma < 2.27.0")
+            self._handle.tiledbsoma_upgrade_shape(newshape)
+            return (True, "")
 
     @classmethod
     def _dim_capacity_and_extent(
