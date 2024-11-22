@@ -26,37 +26,40 @@ class SOMADimension : public virtual SOMAColumn {
         : dimension(dimension) {
     }
 
-    inline std::string name() const {
+    virtual inline std::string name() const override {
         return dimension.name();
     }
 
-    inline bool isIndexColumn() const {
+    virtual inline bool isIndexColumn() const override {
         return true;
     }
 
-    inline virtual void select_columns(
+    virtual inline void select_columns(
         const std::unique_ptr<ManagedQuery>& query,
         bool if_not_empty = false) const override {
         query->select_columns(std::vector({dimension.name()}), if_not_empty);
     };
 
-    inline soma_column_datatype_t type() const {
+    virtual inline soma_column_datatype_t type() const override {
         return soma_column_datatype_t::SOMA_COLUMN_DIMENSION;
     }
 
-    inline std::optional<tiledb_datatype_t> domain_type() const {
+    virtual inline std::optional<tiledb_datatype_t> domain_type()
+        const override {
         return dimension.type();
     }
 
-    inline std::optional<tiledb_datatype_t> data_type() const {
+    virtual inline std::optional<tiledb_datatype_t> data_type() const override {
         return std::nullopt;
     }
 
-    inline std::optional<std::vector<Dimension>> tiledb_dimensions() {
+    virtual inline std::optional<std::vector<Dimension>> tiledb_dimensions()
+        override {
         return std::vector({dimension});
     }
 
-    inline std::optional<std::vector<Attribute>> tiledb_attributes() {
+    virtual inline std::optional<std::vector<Attribute>> tiledb_attributes()
+        override {
         return std::nullopt;
     }
 
