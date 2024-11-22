@@ -163,13 +163,13 @@ class AxisQueryResult:
     X_layers: Dict[str, sp.csr_matrix] = attrs.field(factory=dict)
     """Any additional X layers requested, as SciPy sparse.csr_matrix(s)"""
     obsm: Dict[str, npt.NDArray[Any]] = attrs.field(factory=dict)
-    """Experiment.obsm query slice, as a numpy ndarray"""
-    obsp: Dict[str, npt.NDArray[Any]] = attrs.field(factory=dict)
-    """Experiment.obsp query slice, as a numpy ndarray"""
+    """Experiment.obsm query slice, as NumPy ndarray(s)"""
+    obsp: Dict[str, sp.csr_matrix] = attrs.field(factory=dict)
+    """Experiment.obsp query slice, as SciPy sparse.csr_matrix(s)"""
     varm: Dict[str, npt.NDArray[Any]] = attrs.field(factory=dict)
-    """Experiment.varm query slice, as a numpy ndarray"""
-    varp: Dict[str, npt.NDArray[Any]] = attrs.field(factory=dict)
-    """Experiment.varp query slice, as a numpy ndarray"""
+    """Experiment.varm query slice, as NumPy ndarray(s)"""
+    varp: Dict[str, sp.csr_matrix] = attrs.field(factory=dict)
+    """Experiment.varp query slice, as SciPy sparse.csr_matrix"""
 
     def to_anndata(self) -> AnnData:
         return AnnData(
@@ -542,19 +542,19 @@ class ExperimentAxisQuery:
             fn: Callable[[Axis, str], npt.NDArray[Any]],
             axis: Axis,
             keys: Sequence[str],
-        ) -> Dict[str, Future[npt.NDArray[Any]]]:
+        ) -> Dict[str, Future[npt.NDArray[Any]]]:  # XXX touch
             return {key: self._threadpool.submit(fn, axis, key) for key in keys}
 
         obsm_future = _read_axis_mappings(
             self._axism_inner_ndarray, Axis.OBS, obsm_layers
         )
-        obsp_future = _read_axis_mappings(
+        obsp_future = _read_axis_mappings(  # XXX touch
             self._axisp_inner_ndarray, Axis.OBS, obsp_layers
         )
         varm_future = _read_axis_mappings(
             self._axism_inner_ndarray, Axis.VAR, varm_layers
         )
-        varp_future = _read_axis_mappings(
+        varp_future = _read_axis_mappings(  # XXX touch
             self._axisp_inner_ndarray, Axis.VAR, varp_layers
         )
 
