@@ -48,19 +48,22 @@ class SOMAGeometryColumn : public virtual SOMAColumn {
         return soma_column_datatype_t::SOMA_COLUMN_GEOMETRY;
     }
 
-    inline std::optional<tiledb_datatype_t> domain_type() const {
+    virtual inline std::optional<tiledb_datatype_t> domain_type()
+        const override {
         return dimensions.front().type();
     }
 
-    inline std::optional<tiledb_datatype_t> data_type() const {
+    virtual inline std::optional<tiledb_datatype_t> data_type() const override {
         return attribute.type();
     }
 
-    inline std::optional<std::vector<Dimension>> tiledb_dimensions() {
+    virtual inline std::optional<std::vector<Dimension>> tiledb_dimensions()
+        override {
         return dimensions;
     }
 
-    inline std::optional<std::vector<Attribute>> tiledb_attributes() {
+    virtual inline std::optional<std::vector<Attribute>> tiledb_attributes()
+        override {
         return std::vector({attribute});
     }
 
