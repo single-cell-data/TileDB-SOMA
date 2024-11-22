@@ -208,7 +208,6 @@ def test_export_full_image_to_spatial_data(
     # Check the correct data exists.
     for index in range(3):
         data_array = image2d[f"scale{index}"]["image"]
-        print(f"{index}: {data_array}")
 
         # Check data.
         result = data_array.data.compute()

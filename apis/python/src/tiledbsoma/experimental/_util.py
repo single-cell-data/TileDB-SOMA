@@ -24,7 +24,6 @@ def _version_less_than(version: str, upper_bound: Tuple[int, int, int]) -> bool:
         patch = _str_to_int(split_version[2])
     except ValueError as err:
         raise ValueError(f"Unable to parse version {version}.") from err
-    print(f"Actual: {(major, minor, patch)} and Compare: {upper_bound}")
     return (
         major < upper_bound[0]
         or (major == upper_bound[0] and minor < upper_bound[1])
