@@ -10,7 +10,7 @@ import functools
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
-from typing import Any, Dict, Literal, Mapping
+from typing import TYPE_CHECKING, Any, Dict, Literal, Mapping
 
 from somacore import ContextBase
 from typing_extensions import Self
@@ -18,6 +18,9 @@ from typing_extensions import Self
 from .. import pytiledbsoma as clib
 from .._types import OpenTimestamp
 from .._util import ms_to_datetime, to_timestamp_ms
+
+if TYPE_CHECKING:
+    import tiledb
 
 try:
     import tiledb
