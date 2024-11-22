@@ -579,7 +579,9 @@ uint64_t SOMAArray::nnz() {
 
     LOG_DEBUG(std::format("[SOMAArray] Fragment info for array '{}'", uri_));
     if (LOG_DEBUG_ENABLED()) {
-        fragment_info.dump();
+        std::stringstream ss;
+        ss << fragment_info;
+        std::cout << ss.str() << "\n";
     }
 
     // Find the subset of fragments contained within the read timestamp range
