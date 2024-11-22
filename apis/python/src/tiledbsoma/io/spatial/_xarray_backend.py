@@ -107,7 +107,7 @@ class DenseNDArrayWrapper:
 
     def recommend_chunks(self) -> Tuple[int, ...]:
         """Returns recommended chunk sizes for chunking this array."""
-        dim_info = json.loads(self._array.config_options_from_schema().dims)
+        dim_info = json.loads(self._array.schema_config_options().dims)
         return tuple(
             _str_to_int(dim_info[f"soma_dim_{index}"]["tile"])
             for index in range(self.ndim)

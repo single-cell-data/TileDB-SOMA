@@ -143,6 +143,20 @@ PYBIND11_MODULE(pytiledbsoma, m) {
         .def_readwrite(
             "consolidate_and_vacuum", &PlatformConfig::consolidate_and_vacuum);
 
+    py::class_<PlatformSchemaConfig>(m, "PlatformSchemaConfig")
+        .def(py::init<>())
+        .def_readwrite("capacity", &PlatformSchemaConfig::capacity)
+        .def_readwrite(
+            "offsets_filters", &PlatformSchemaConfig::offsets_filters)
+        .def_readwrite(
+            "validity_filters", &PlatformSchemaConfig::validity_filters)
+        .def_readwrite("attrs", &PlatformSchemaConfig::attrs)
+        .def_readwrite("dims", &PlatformSchemaConfig::dims)
+        .def_readwrite(
+            "allows_duplicates", &PlatformSchemaConfig::allows_duplicates)
+        .def_readwrite("tile_order", &PlatformSchemaConfig::tile_order)
+        .def_readwrite("cell_order", &PlatformSchemaConfig::cell_order);
+
     m.def("_update_dataframe_schema", &SOMADataFrame::update_dataframe_schema);
 
     load_soma_context(m);

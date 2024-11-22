@@ -54,7 +54,7 @@ class ColumnBuffer;
  */
 struct ArrowBuffer {
     ArrowBuffer(std::shared_ptr<ColumnBuffer> buffer)
-        : buffer_(buffer){};
+        : buffer_(buffer) {};
 
     std::shared_ptr<ColumnBuffer> buffer_;
 };
@@ -62,7 +62,7 @@ struct ArrowBuffer {
 using ArrowTable =
     std::pair<std::unique_ptr<ArrowArray>, std::unique_ptr<ArrowSchema>>;
 
-class PlatformConfig {
+struct PlatformConfig {
    public:
     /* Set the ZstdFilter's level for DataFrame dims */
     int32_t dataframe_dim_zstd_level = 3;
@@ -190,6 +190,115 @@ class PlatformConfig {
     bool consolidate_and_vacuum = false;
 };
 
+/** TileDB specific configuration options that can be read back from a single
+ * TileDB ArraySchema.
+ */
+struct PlatformSchemaConfig {
+   public:
+    /* Set whether the TileDB Array allows duplicate values */
+    bool allows_duplicates = false;
+
+    /* Set the tile order as "row", "row-major", "col", or "col-major" */
+    std::optional<std::string> tile_order = std::nullopt;
+
+    /* Set the cell order as "hilbert", "row", "row-major", "col", or
+     * "col-major"
+     */
+    std::optional<std::string> cell_order = std::nullopt;
+
+    /* Set the tile capcity for sparse arrays */
+    uint64_t capacity = 100000;
+
+    /**
+     * Available filters with associated options are
+     * [
+     *     {
+     *         "name": "GZIP", "COMPRESSION_LEVEL": (int32_t)
+     *     },
+     *     {
+     *         "name": "ZSTD", "COMPRESSION_LEVEL": (int32_t)
+     *     },
+     *     {
+     *         "name": "LZ4", "COMPRESSION_LEVEL": (int32_t)
+     *     },
+     *     {
+     *         "name": "BZIP2", "COMPRESSION_LEVEL": (int32_t)
+     *     },
+     *     {
+     *         "name": "RLE", "COMPRESSION_LEVEL": (int32_t)
+     *     },
+     *     {
+     *         "name": "DELTA",
+     *         "COMPRESSION_LEVEL": (int32_t),
+     *         "COMPRESSION_REINTERPRET_DATATYPE": (uint8_t)
+     *     },
+     *     {
+     *         "name": "DOUBLE_DELTA",
+     *         "COMPRESSION_LEVEL": (int32_t),
+     *         "COMPRESSION_REINTERPRET_DATATYPE": (uint8_t)
+     *     },
+     *     {
+     *         "name": "BIT_WIDTH_REDUCTION",
+     *         "BIT_WIDTH_MAX_WINDOW": (uint32_t)
+     *     },
+     *     {
+     *         "name": "POSITIVE_DELTA", "POSITIVE_DELTA_MAX_WINDOW":
+     * (uint32_t),
+     *     },
+     *     {
+     *         "name": "DICTIONARY_ENCODING", "COMPRESSION_LEVEL": (int32_t)
+     *     },
+     *     {
+     *         "name": "SCALE_FLOAT",
+     *         "SCALE_FLOAT_FACTOR": (double),
+     *         "SCALE_FLOAT_OFFSET": (double),
+     *         "SCALE_FLOAT_BYTEWIDTH": (uint64_t),
+     *     },
+     *     {
+     *         "name": "WEBP",
+     *         "WEBP_INPUT_FORMAT": (uint8_t),
+     *         "WEBP_QUALITY": (float),
+     *         "WEBP_LOSSLESS": (uint8_t),
+     *     },
+     *     "CHECKSUM_MD5",
+     *     "CHECKSUM_SHA256",
+     *     "XOR",
+     *     "BITSHUFFLE",
+     *     "BYTESHUFFLE",
+     *     "NOOP"
+     * ]
+     *
+     */
+    std::string
+        offsets_filters = R"(["DOUBLE_DELTA", "BIT_WIDTH_REDUCTION", "ZSTD"])";
+
+    /* Set the validity filters. */
+    std::string validity_filters = "";
+
+    /* Set the filters for attributes.
+     *
+     * Example:
+     * {
+     *     "attr_name": {
+     *          "filters": ["XOR", {"name": "GZIP", "COMPRESSION_LEVEL": 3}]
+     *     }
+     * }
+     *
+     */
+    std::string attrs = "";
+
+    /* Set the filters and tiles for dimensions.
+     *
+     * Example:
+     * {
+     *     "dim_name": {"filters": ["NoOpFilter"], "tile": 8}
+     * }
+     *
+     */
+
+    std::string dims = "";
+};
+
 /**
  * This is our application-specific wrapper around nanoarrow.
  *
@@ -228,6 +337,15 @@ class ArrowAdapter {
      */
     static std::unique_ptr<ArrowSchema> arrow_schema_from_tiledb_array(
         std::shared_ptr<Context> ctx, std::shared_ptr<Array> tiledb_array);
+
+    /**
+     * @brief Get members of the TileDB Schema in the form of a
+     * PlatformSchemaConfig
+     *
+     * @return PlatformSchemaConfig
+     */
+    static PlatformSchemaConfig platform_schema_config_from_tiledb(
+        ArraySchema tiledb_schema);
 
     /**
      * @brief Get members of the TileDB Schema in the form of a PlatformConfig

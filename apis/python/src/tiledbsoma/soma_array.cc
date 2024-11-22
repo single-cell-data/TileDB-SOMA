@@ -242,6 +242,7 @@ void load_soma_array(py::module& m) {
                 return pa_schema_import(
                     py::capsule(array.arrow_schema().get()));
             })
+        .def("schema_config_options", &SOMAArray::schema_config_options)
         .def(
             "config_options_from_schema",
             &SOMAArray::config_options_from_schema)
