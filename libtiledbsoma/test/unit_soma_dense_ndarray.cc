@@ -60,41 +60,14 @@ TEST_CASE("SOMADenseNDArray: basic", "[SOMADenseNDArray]") {
               .tiledb_datatype = dim_tiledb_datatype,
               .dim_max = dim_max,
               .string_lo = "N/A",
-              .string_hi = "N/A",
-              .use_current_domain = use_current_domain}});
+              .string_hi = "N/A"}});
 
         auto index_columns = helper::create_column_index_info(dim_infos);
 
-        if (use_current_domain) {
-            if (helper::have_dense_current_domain_support()) {
-                SOMADenseNDArray::create(
-                    uri,
-                    dim_arrow_format,
-                    ArrowTable(
-                        std::move(index_columns.first),
-                        std::move(index_columns.second)),
-                    ctx,
-                    PlatformConfig(),
-                    TimestampRange(0, 2));
-
-                auto dnda = SOMADenseNDArray::open(uri, OpenMode::read, ctx);
-                REQUIRE(dnda->shape() == std::vector<int64_t>{dim_max + 1});
-                dnda->close();
-            } else {
-                REQUIRE_THROWS(SOMADenseNDArray::create(
-                    uri,
-                    dim_arrow_format,
-                    ArrowTable(
-                        std::move(index_columns.first),
-                        std::move(index_columns.second)),
-                    ctx,
-                    PlatformConfig(),
-                    TimestampRange(0, 2)));
-            }
-        } else {
+        if (helper::have_dense_current_domain_support()) {
             SOMADenseNDArray::create(
                 uri,
-                attr_arrow_format,
+                dim_arrow_format,
                 ArrowTable(
                     std::move(index_columns.first),
                     std::move(index_columns.second)),
@@ -102,52 +75,19 @@ TEST_CASE("SOMADenseNDArray: basic", "[SOMADenseNDArray]") {
                 PlatformConfig(),
                 TimestampRange(0, 2));
 
-            REQUIRE(SOMADenseNDArray::exists(uri, ctx));
-            REQUIRE(!SOMADataFrame::exists(uri, ctx));
-            REQUIRE(!SOMASparseNDArray::exists(uri, ctx));
-
             auto dnda = SOMADenseNDArray::open(uri, OpenMode::read, ctx);
-            REQUIRE(dnda->uri() == uri);
-            REQUIRE(dnda->ctx() == ctx);
-            REQUIRE(dnda->type() == "SOMADenseNDArray");
-            REQUIRE(dnda->is_sparse() == false);
-            REQUIRE(dnda->soma_data_type() == attr_arrow_format);
-            auto schema = dnda->tiledb_schema();
-            REQUIRE(schema->has_attribute("soma_data"));
-            REQUIRE(schema->array_type() == TILEDB_DENSE);
-            REQUIRE(schema->domain().has_dimension(dim_name));
-            REQUIRE(dnda->ndim() == 1);
-
-            REQUIRE(dnda->maxshape() == std::vector<int64_t>{shape});
-
+            REQUIRE(dnda->shape() == std::vector<int64_t>{dim_max + 1});
             dnda->close();
-
-            std::vector<int64_t> d0{1, 10};
-            std::vector<int32_t> a0(10, 1);
-
-            dnda->open(OpenMode::write);
-            dnda->set_column_data("soma_data", a0.size(), a0.data());
-            dnda->set_column_data(dim_name, d0.size(), d0.data());
-            dnda->write();
-            dnda->close();
-
-            dnda->open(OpenMode::read);
-            while (auto batch = dnda->read_next()) {
-                auto arrbuf = batch.value();
-                auto a0span = arrbuf->at("soma_data")->data<int32_t>();
-                REQUIRE(
-                    a0 == std::vector<int32_t>(a0span.begin(), a0span.end()));
-            }
-            dnda->close();
-
-            dnda = SOMADenseNDArray::open(uri, OpenMode::read, ctx);
-            auto new_shape = std::vector<int64_t>({shape * 2});
-            // * When use_current_domain is false: can't resize what has not
-            //   been sized.
-            // * When use_current_domain is true: TODO: current domain not
-            //   supported for dense arrays yet (see above).
-            REQUIRE_THROWS(dnda->resize(new_shape, "testing"));
-            dnda->close();
+        } else {
+            REQUIRE_THROWS(SOMADenseNDArray::create(
+                uri,
+                dim_arrow_format,
+                ArrowTable(
+                    std::move(index_columns.first),
+                    std::move(index_columns.second)),
+                ctx,
+                PlatformConfig(),
+                TimestampRange(0, 2)));
         }
     }
 }
@@ -172,47 +112,11 @@ TEST_CASE("SOMADenseNDArray: platform_config", "[SOMADenseNDArray]") {
               .tiledb_datatype = tiledb_datatype,
               .dim_max = dim_max,
               .string_lo = "N/A",
-              .string_hi = "N/A",
-              .use_current_domain = use_current_domain}});
+              .string_hi = "N/A"}});
 
         auto index_columns = helper::create_column_index_info(dim_infos);
 
-        if (use_current_domain) {
-            if (helper::have_dense_current_domain_support()) {
-                SOMADenseNDArray::create(
-                    uri,
-                    arrow_format,
-                    ArrowTable(
-                        std::move(index_columns.first),
-                        std::move(index_columns.second)),
-                    ctx,
-                    platform_config);
-
-                auto dnda = SOMADenseNDArray::open(uri, OpenMode::read, ctx);
-                auto dim_filter = dnda->tiledb_schema()
-                                      ->domain()
-                                      .dimension(dim_name)
-                                      .filter_list()
-                                      .filter(0);
-                REQUIRE(dim_filter.filter_type() == TILEDB_FILTER_ZSTD);
-                REQUIRE(
-                    dim_filter.get_option<int32_t>(TILEDB_COMPRESSION_LEVEL) ==
-                    6);
-
-                dnda->close();
-
-            } else {
-                REQUIRE_THROWS(SOMADenseNDArray::create(
-                    uri,
-                    arrow_format,
-                    ArrowTable(
-                        std::move(index_columns.first),
-                        std::move(index_columns.second)),
-                    ctx,
-                    platform_config));
-            }
-
-        } else {
+        if (helper::have_dense_current_domain_support()) {
             SOMADenseNDArray::create(
                 uri,
                 arrow_format,
@@ -233,6 +137,16 @@ TEST_CASE("SOMADenseNDArray: platform_config", "[SOMADenseNDArray]") {
                 dim_filter.get_option<int32_t>(TILEDB_COMPRESSION_LEVEL) == 6);
 
             dnda->close();
+
+        } else {
+            REQUIRE_THROWS(SOMADenseNDArray::create(
+                uri,
+                arrow_format,
+                ArrowTable(
+                    std::move(index_columns.first),
+                    std::move(index_columns.second)),
+                ctx,
+                platform_config));
         }
     }
 }
@@ -254,8 +168,7 @@ TEST_CASE("SOMADenseNDArray: metadata", "[SOMADenseNDArray]") {
               .tiledb_datatype = tiledb_datatype,
               .dim_max = dim_max,
               .string_lo = "N/A",
-              .string_hi = "N/A",
-              .use_current_domain = use_current_domain}});
+              .string_hi = "N/A"}});
 
         auto index_columns = helper::create_column_index_info(dim_infos);
 

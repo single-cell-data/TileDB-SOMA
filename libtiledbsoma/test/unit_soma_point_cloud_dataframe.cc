@@ -49,22 +49,19 @@ TEST_CASE("SOMAPointCloudDataFrame: basic", "[SOMAPointCloudDataFrame]") {
                  .tiledb_datatype = TILEDB_INT64,
                  .dim_max = SOMA_JOINID_DIM_MAX,
                  .string_lo = "N/A",
-                 .string_hi = "N/A",
-                 .use_current_domain = use_current_domain}),
+                 .string_hi = "N/A"}),
             helper::DimInfo(
                 {.name = "x",
                  .tiledb_datatype = TILEDB_UINT32,
                  .dim_max = 100,
                  .string_lo = "N/A",
-                 .string_hi = "N/A",
-                 .use_current_domain = use_current_domain}),
+                 .string_hi = "N/A"}),
             helper::DimInfo(
                 {.name = "y",
                  .tiledb_datatype = TILEDB_UINT32,
                  .dim_max = 100,
                  .string_lo = "N/A",
-                 .string_hi = "N/A",
-                 .use_current_domain = use_current_domain}),
+                 .string_hi = "N/A"}),
         });
 
         std::vector<helper::AttrInfo> attr_infos({helper::AttrInfo(
