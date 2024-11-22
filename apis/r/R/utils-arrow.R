@@ -577,11 +577,7 @@ get_domain_and_extent_array <- function(shape, is_sparse) {
     # expansion.
     ind_max_dom <- arrow_type_unsigned_range(ind_col_type) - c(0, ind_ext)
 
-    if (is_sparse || .dense_arrays_can_have_current_domain()) {
-      aa <- arrow::arrow_array(c(ind_max_dom, ind_ext, ind_cur_dom), ind_col_type)
-    } else {
-      aa <- arrow::arrow_array(c(ind_cur_dom, ind_ext), ind_col_type)
-    }
+    aa <- arrow::arrow_array(c(ind_max_dom, ind_ext, ind_cur_dom), ind_col_type)
 
     aa
   })

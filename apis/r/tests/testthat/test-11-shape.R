@@ -520,15 +520,7 @@ test_that("SOMADenseNDArray shape", {
     readback_maxshape <- ndarray$maxshape()
     expect_equal(length(readback_shape), length(readback_maxshape))
 
-    if (.dense_arrays_can_have_current_domain()) {
-      expect_true(all(readback_shape < readback_maxshape))
-    } else {
-      expect_true(all(readback_shape == readback_maxshape))
-    }
-
-    if (! tiledbsoma:::.dense_arrays_can_have_current_domain()) {
-      expect_equal(readback_shape, readback_maxshape)
-    }
+    expect_true(all(readback_shape < readback_maxshape))
 
     ndarray$close()
 
@@ -565,29 +557,17 @@ test_that("SOMADenseNDArray shape", {
 
     # Test resize up
     new_shape <- c(500, 600)
-    if (tiledbsoma:::.dense_arrays_can_have_current_domain()) {
-      expect_no_error(ndarray$resize(new_shape))
-    } else {
-      expect_error(ndarray$resize(new_shape))
-    }
+    expect_no_error(ndarray$resize(new_shape))
 
     # Test writes within new bounds
     ndarray <- SOMADenseNDArrayOpen(uri, "WRITE")
     mat <- create_dense_matrix_with_int_dims(500, 600)
-    if (tiledbsoma:::.dense_arrays_can_have_current_domain()) {
-      expect_no_error(ndarray$write(mat))
-    } else {
-      expect_error(ndarray$write(mat))
-    }
+    expect_no_error(ndarray$write(mat))
     ndarray$close()
 
     ndarray <- SOMADenseNDArrayOpen(uri)
     coords <- list(bit64::as.integer64(c(101, 202)), bit64::as.integer64(c(3, 4)))
-    if (tiledbsoma:::.dense_arrays_can_have_current_domain()) {
-      expect_no_condition(x <- ndarray$read_dense_matrix(coords = coords))
-    } else {
-      expect_error(x <- ndarray$read(coords = coords)$tables()$concat())
-    }
+    expect_no_condition(x <- ndarray$read_dense_matrix(coords = coords))
     ndarray$close()
 
     rm(ndarray)

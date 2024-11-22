@@ -40,7 +40,7 @@
 const int64_t SOMA_JOINID_DIM_MAX = 99;
 
 TEST_CASE("SOMAGeometryDataFrame: basic", "[SOMAGeometryDataFrame]") {
-    auto use_current_domain = GENERATE(false, true);
+    auto use_current_domain = GENERATE(true);
 
     SECTION(std::format("- use_current_domain={}", use_current_domain)) {
         auto ctx = std::make_shared<SOMAContext>();
@@ -151,7 +151,7 @@ TEST_CASE("SOMAGeometryDataFrame: basic", "[SOMAGeometryDataFrame]") {
 }
 
 TEST_CASE("SOMAGeometryDataFrame: Roundtrip", "[SOMAGeometryDataFrame]") {
-    auto use_current_domain = GENERATE(false, true);
+    auto use_current_domain = GENERATE(true);
 
     SECTION(std::format("- use_current_domain={}", use_current_domain)) {
         auto ctx = std::make_shared<SOMAContext>();
