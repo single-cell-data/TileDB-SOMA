@@ -10,7 +10,7 @@ import functools
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
-from typing import TYPE_CHECKING, Any, Dict, Literal, Mapping
+from typing import Any, Dict, Literal, Mapping
 
 from somacore import ContextBase
 from typing_extensions import Self
@@ -18,9 +18,6 @@ from typing_extensions import Self
 from .. import pytiledbsoma as clib
 from .._types import OpenTimestamp
 from .._util import ms_to_datetime, to_timestamp_ms
-
-if TYPE_CHECKING:
-    import tiledb
 
 try:
     import tiledb
@@ -208,7 +205,7 @@ class SOMATileDBContext(ContextBase):
                     # it should be impossible to enter into this block because
                     # we already check that in the constructor
                     assert tiledb is not None
-                    cfg = self._tiledb_ctx().config().dict()
+                    cfg = self._tiledb_ctx.config().dict()
                     self._native_context = clib.SOMAContext(
                         {k: str(v) for k, v in cfg.items()}
                     )
@@ -265,8 +262,7 @@ class SOMATileDBContext(ContextBase):
         if self._native_context is not None:
             return dict(self._native_context.config())
 
-        # We have TileDB Context. Return its actual config.
-        # TODO This block will be deleted once tiledb_ctx is removed
+        # The user passed in a TileDB Context. Return its actual config.
         if self._tiledb_ctx is not None:
             _check_tiledb()
             return dict(self._tiledb_ctx.config())
