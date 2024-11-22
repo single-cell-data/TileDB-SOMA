@@ -11,6 +11,8 @@
  * This file manages unit tests for implementation of SOMAColumn class
  */
 
+#include <format>
+#include <tiledb/tiledb>
 #include <tiledbsoma/tiledbsoma>
 #include "../src/soma/soma_attribute.h"
 #include "../src/soma/soma_column.h"
