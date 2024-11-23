@@ -23,8 +23,8 @@ except ImportError as err:
     warnings.warn("Experimental spatial exporter requires the xarray package.")
     raise err
 
-from .. import DenseNDArray
-from ..options._soma_tiledb_context import SOMATileDBContext
+from ... import DenseNDArray
+from ...options._soma_tiledb_context import SOMATileDBContext
 from ._util import _str_to_int
 
 
