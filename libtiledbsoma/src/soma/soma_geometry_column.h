@@ -23,8 +23,7 @@ class SOMAGeometryColumn : public virtual SOMAColumn {
         ArrowArray* spatial_array,
         const std::string& soma_type,
         std::string_view type_metadata,
-        PlatformConfig platform_config,
-        bool& has_current_domain);
+        PlatformConfig platform_config);
 
     SOMAGeometryColumn(std::vector<Dimension> dimensions, Attribute attribute)
         : dimensions(dimensions)
