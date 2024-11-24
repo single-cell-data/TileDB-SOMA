@@ -181,85 +181,68 @@ struct VariouslyIndexedDataFrameFixture {
 };
 
 TEST_CASE("SOMAColumn: SOMADimension") {
-    auto use_current_domain = GENERATE(false, true);
     auto ctx = std::make_shared<SOMAContext>();
     PlatformConfig platform_config{};
 
-    SECTION(std::format("- use_current_domain={}", use_current_domain)) {
-        std::vector<helper::DimInfo> dim_infos(
-            {helper::DimInfo(
-                 {.name = "dimension",
-                  .tiledb_datatype = TILEDB_UINT32,
-                  .dim_max = 100,
-                  .string_lo = "N/A",
-                  .string_hi = "N/A",
-                  .use_current_domain = use_current_domain}),
-             helper::DimInfo(
-                 {.name = "dimension",
-                  .tiledb_datatype = TILEDB_FLOAT64,
-                  .dim_max = 100,
-                  .string_lo = "N/A",
-                  .string_hi = "N/A",
-                  .use_current_domain = use_current_domain}),
-             helper::DimInfo(
-                 {.name = "dimension",
-                  .tiledb_datatype = TILEDB_INT64,
-                  .dim_max = 100,
-                  .string_lo = "N/A",
-                  .string_hi = "N/A",
-                  .use_current_domain = use_current_domain}),
-             helper::DimInfo(
-                 {.name = "dimension",
-                  .tiledb_datatype = TILEDB_STRING_ASCII,
-                  .dim_max = 100,
-                  .string_lo = "N/A",
-                  .string_hi = "N/A",
-                  .use_current_domain = use_current_domain})});
+    std::vector<helper::DimInfo> dim_infos(
+        {helper::DimInfo(
+             {.name = "dimension",
+              .tiledb_datatype = TILEDB_UINT32,
+              .dim_max = 100,
+              .string_lo = "N/A",
+              .string_hi = "N/A"}),
+         helper::DimInfo(
+             {.name = "dimension",
+              .tiledb_datatype = TILEDB_FLOAT64,
+              .dim_max = 100,
+              .string_lo = "N/A",
+              .string_hi = "N/A"}),
+         helper::DimInfo(
+             {.name = "dimension",
+              .tiledb_datatype = TILEDB_INT64,
+              .dim_max = 100,
+              .string_lo = "N/A",
+              .string_hi = "N/A"}),
+         helper::DimInfo(
+             {.name = "dimension",
+              .tiledb_datatype = TILEDB_STRING_ASCII,
+              .dim_max = 100,
+              .string_lo = "N/A",
+              .string_hi = "N/A"})});
 
-        std::vector<helper::DimInfo> geom_dim_infos({helper::DimInfo(
-            {.name = "dimension",
-             .tiledb_datatype = TILEDB_GEOM_WKB,
-             .dim_max = 100,
-             .string_lo = "N/A",
-             .string_hi = "N/A",
-             .use_current_domain = use_current_domain})});
+    std::vector<helper::DimInfo> geom_dim_infos({helper::DimInfo(
+        {.name = "dimension",
+         .tiledb_datatype = TILEDB_GEOM_WKB,
+         .dim_max = 100,
+         .string_lo = "N/A",
+         .string_hi = "N/A"})});
 
-        std::vector<helper::DimInfo> spatial_dim_infos(
-            {helper::DimInfo(
-                 {.name = "x",
-                  .tiledb_datatype = TILEDB_FLOAT64,
-                  .dim_max = 200,
-                  .string_lo = "N/A",
-                  .string_hi = "N/A",
-                  .use_current_domain = use_current_domain}),
-             helper::DimInfo(
-                 {.name = "y",
-                  .tiledb_datatype = TILEDB_FLOAT64,
-                  .dim_max = 100,
-                  .string_lo = "N/A",
-                  .string_hi = "N/A",
-                  .use_current_domain = use_current_domain})});
+    std::vector<helper::DimInfo> spatial_dim_infos(
+        {helper::DimInfo(
+             {.name = "x",
+              .tiledb_datatype = TILEDB_FLOAT64,
+              .dim_max = 200,
+              .string_lo = "N/A",
+              .string_hi = "N/A"}),
+         helper::DimInfo(
+             {.name = "y",
+              .tiledb_datatype = TILEDB_FLOAT64,
+              .dim_max = 100,
+              .string_lo = "N/A",
+              .string_hi = "N/A"})});
 
-        auto index_columns = helper::create_column_index_info(dim_infos);
+    auto index_columns = helper::create_column_index_info(dim_infos);
 
-        std::vector<std::shared_ptr<SOMAColumn>> columns;
-        bool has_current_domain = true;
+    std::vector<std::shared_ptr<SOMAColumn>> columns;
 
-        for (int64_t i = 0; i < index_columns.second->n_children; ++i) {
-            columns.push_back(SOMADimension::create(
-                ctx->tiledb_ctx(),
-                index_columns.second->children[i],
-                index_columns.first->children[i],
-                "SOMAGeometryDataFrame",
-                "",
-                platform_config,
-                has_current_domain));
-
-            REQUIRE(has_current_domain == use_current_domain);
-            REQUIRE(
-                columns.back()->tiledb_dimensions().value()[0].type() ==
-                dim_infos[i].tiledb_datatype);
-        }
+    for (int64_t i = 0; i < index_columns.second->n_children; ++i) {
+        columns.push_back(SOMADimension::create(
+            ctx->tiledb_ctx(),
+            index_columns.second->children[i],
+            index_columns.first->children[i],
+            "SOMAGeometryDataFrame",
+            "",
+            platform_config));
 
         REQUIRE(
             columns.back()->tiledb_dimensions().value()[0].type() ==
