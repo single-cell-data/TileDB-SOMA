@@ -9,14 +9,11 @@ std::shared_ptr<SOMADimension> SOMADimension::create(
     ArrowArray* array,
     const std::string& soma_type,
     std::string_view type_metadata,
-    PlatformConfig platform_config,
-    bool& has_current_domain) {
+    PlatformConfig platform_config) {
     auto dimension = ArrowAdapter::tiledb_dimension_from_arrow_schema(
         ctx, schema, array, soma_type, type_metadata, "", "", platform_config);
 
-    has_current_domain &= dimension.second;
-
-    return std::make_shared<SOMADimension>(SOMADimension(dimension.first));
+    return std::make_shared<SOMADimension>(SOMADimension(dimension));
 }
 
 void SOMADimension::_set_dim_points(
