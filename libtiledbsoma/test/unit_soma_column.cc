@@ -317,6 +317,11 @@ TEST_CASE_METHOD(
                 std::make_shared<SOMADimension>(SOMADimension(dimension)));
         }
 
+        for (size_t i = 0; i < sdf->tiledb_schema()->attribute_num(); ++i) {
+            columns.push_back(std::make_shared<SOMAAttribute>(
+                SOMAAttribute(sdf->tiledb_schema()->attribute(i))));
+        }
+
         CurrentDomain current_domain = sdf->get_current_domain_for_test();
 
         REQUIRE(!current_domain.is_empty());
