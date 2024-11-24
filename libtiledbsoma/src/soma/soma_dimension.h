@@ -19,8 +19,7 @@ class SOMADimension : public virtual SOMAColumn {
         ArrowArray* array,
         const std::string& soma_type,
         std::string_view type_metadata,
-        PlatformConfig platform_config,
-        bool& has_current_domain);
+        PlatformConfig platform_config);
 
     SOMADimension(Dimension dimension)
         : dimension(dimension) {
