@@ -10,10 +10,8 @@ std::shared_ptr<SOMAGeometryColumn> SOMAGeometryColumn::create(
     ArrowArray* spatial_array,
     const std::string& soma_type,
     std::string_view type_metadata,
-    PlatformConfig platform_config,
-    bool& has_current_domain) {
+    PlatformConfig platform_config) {
     std::vector<Dimension> dims;
-    bool use_current_domain = true;
     if (type_metadata.compare("WKB") != 0) {
         throw TileDBSOMAError(std::format(
             "[SOMAGeometryColumn] "
@@ -24,7 +22,7 @@ std::shared_ptr<SOMAGeometryColumn> SOMAGeometryColumn::create(
     }
 
     for (int64_t j = 0; j < spatial_schema->n_children; ++j) {
-        auto dimension = ArrowAdapter::tiledb_dimension_from_arrow_schema(
+        dims.push_back(ArrowAdapter::tiledb_dimension_from_arrow_schema(
             ctx,
             spatial_schema->children[j],
             spatial_array->children[j],
@@ -32,14 +30,11 @@ std::shared_ptr<SOMAGeometryColumn> SOMAGeometryColumn::create(
             type_metadata,
             SOMA_GEOMETRY_DIMENSION_PREFIX,
             "__min",
-            platform_config);
-        dims.push_back(dimension.first);
-
-        use_current_domain &= dimension.second;
+            platform_config));
     }
 
     for (int64_t j = 0; j < spatial_schema->n_children; ++j) {
-        auto dimension = ArrowAdapter::tiledb_dimension_from_arrow_schema(
+        dims.push_back(ArrowAdapter::tiledb_dimension_from_arrow_schema(
             ctx,
             spatial_schema->children[j],
             spatial_array->children[j],
@@ -47,16 +42,11 @@ std::shared_ptr<SOMAGeometryColumn> SOMAGeometryColumn::create(
             type_metadata,
             SOMA_GEOMETRY_DIMENSION_PREFIX,
             "__max",
-            platform_config);
-        dims.push_back(dimension.first);
-
-        use_current_domain &= dimension.second;
+            platform_config));
     }
 
     auto attribute = ArrowAdapter::tiledb_attribute_from_arrow_schema(
         ctx, schema, type_metadata, platform_config);
-
-    has_current_domain &= use_current_domain;
 
     return std::make_shared<SOMAGeometryColumn>(
         SOMAGeometryColumn(dims, attribute.first));

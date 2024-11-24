@@ -33,7 +33,6 @@
 #ifndef SOMA_COLUMN_H
 #define SOMA_COLUMN_H
 
-#include <algorithm>
 #include <any>
 #include <format>
 #include <optional>
