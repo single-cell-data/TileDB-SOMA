@@ -49,7 +49,8 @@ SOMAColumn::core_current_domain_slot<std::string>(
             current_domain = std::any_cast<std::pair<std::string, std::string>>(
                 _core_current_domain_slot(ctx, array));
 
-        if (current_domain.first == "" && current_domain.second == "\xff") {
+        if (current_domain.first == "" && (current_domain.second == "\x7f" ||
+                                           current_domain.second == "\xff")) {
             return std::pair<std::string, std::string>("", "");
         }
 
