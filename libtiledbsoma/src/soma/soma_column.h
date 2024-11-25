@@ -58,6 +58,8 @@ class SOMAColumn {
     SOMAColumn& operator=(const SOMAColumn&) = default;
     SOMAColumn& operator=(SOMAColumn&&) = default;
 
+    virtual ~SOMAColumn() = default;
+
     /**
      * Get the SOMAColumn name as defined in schema.
      */
