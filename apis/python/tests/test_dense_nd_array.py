@@ -531,12 +531,12 @@ def test_pass_configs(tmp_path):
         # This still errors out because read still sees that the number of
         # threads is 0 and therefore invalid
         with pytest.raises(soma.SOMAError):
-            sdf.read(platform_config={"sm.mem.total_budget": "10000"})
+            sdf.read(platform_config={"sm.mem.total_budget": "300000"})
 
         # With correct values, this reads without issue
         sdf.read(
             platform_config={
-                "sm.mem.total_budget": "10000",
+                "sm.mem.total_budget": "300000",
                 "sm.io_concurrency_level": "1",
             }
         )
