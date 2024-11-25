@@ -7,7 +7,7 @@ from typing import Tuple, Union
 
 import h5py
 
-from .._exception import SOMAError
+from ..._exception import SOMAError
 
 
 def _str_to_int(value: str) -> int:

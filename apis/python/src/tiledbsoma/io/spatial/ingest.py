@@ -39,7 +39,7 @@ except ImportError as err:
 
 from somacore import Axis, CoordinateSpace, IdentityTransform, ScaleTransform
 
-from .. import (
+from ... import (
     Collection,
     DataFrame,
     DenseNDArray,
@@ -51,17 +51,21 @@ from .. import (
     _util,
     logging,
 )
-from .._arrow_types import df_to_arrow
-from .._constants import SPATIAL_DISCLAIMER
-from .._exception import (
+from ..._arrow_types import df_to_arrow
+from ..._constants import SPATIAL_DISCLAIMER
+from ..._exception import (
     AlreadyExistsError,
     NotCreateableError,
     SOMAError,
 )
-from .._soma_object import AnySOMAObject
-from .._types import IngestMode
-from ..io import from_anndata
-from ..io.ingest import (
+from ..._soma_object import AnySOMAObject
+from ..._types import IngestMode
+from ...options._tiledb_create_write_options import (
+    TileDBCreateOptions,
+    TileDBWriteOptions,
+)
+from .. import from_anndata
+from ..ingest import (
     IngestCtx,
     IngestionParams,
     _create_or_open_collection,
@@ -69,18 +73,14 @@ from ..io.ingest import (
     _write_arrow_table,
     add_metadata,
 )
-from ..options._tiledb_create_write_options import (
-    TileDBCreateOptions,
-    TileDBWriteOptions,
-)
 from ._util import _read_visium_software_version
 
 if TYPE_CHECKING:
     from somacore.options import PlatformConfig
 
-    from ..io._common import AdditionalMetadata
-    from ..io._registration import ExperimentAmbientLabelMapping
-    from ..options import SOMATileDBContext
+    from ...options import SOMATileDBContext
+    from .._common import AdditionalMetadata
+    from .._registration import ExperimentAmbientLabelMapping
 
 
 def path_validator(instance, attribute, value: Path) -> None:  # type: ignore[no-untyped-def]

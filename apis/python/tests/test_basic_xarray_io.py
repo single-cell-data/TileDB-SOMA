@@ -6,7 +6,7 @@ import pytest
 
 import tiledbsoma as soma
 
-soma_xarray = pytest.importorskip("tiledbsoma.experimental._xarray_backend")
+soma_xarray = pytest.importorskip("tiledbsoma.io.spatial._xarray_backend")
 xr = pytest.importorskip("xarray")
 
 
