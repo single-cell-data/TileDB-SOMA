@@ -36,7 +36,6 @@
 /* #define FASTERCSX__DEBUGGING_HOOKS 1 */
 
 #include <tiledbsoma/utils/fastercsx.h>
-#include <span>
 #include "common.h"
 
 namespace libtiledbsomacpp {
@@ -76,36 +75,36 @@ std::vector<T> to_vector_(const py::tuple& tup) {
  */
 
 template <typename T>
-std::span<T const> make_span_(py::array arr) {
+tcb::span<T const> make_span_(py::array arr) {
     assert(py::isinstance<py::array_t<T>>(arr));
-    return std::span<T const>(arr.unchecked<T, 1>().data(0), arr.size());
+    return tcb::span<T const>(arr.unchecked<T, 1>().data(0), arr.size());
 }
 
 template <typename T>
-std::span<T> make_mutable_span_(py::array arr) {
+tcb::span<T> make_mutable_span_(py::array arr) {
     assert(py::isinstance<py::array_t<T>>(arr));
-    return std::span<T>(
+    return tcb::span<T>(
         arr.mutable_unchecked<T, 1>().mutable_data(0), arr.size());
 }
 
 template <typename T, typename R>
-std::span<R const> make_casted_span_(py::array arr) {
+tcb::span<R const> make_casted_span_(py::array arr) {
     static_assert(sizeof(T) == sizeof(R));
     assert(py::isinstance<py::array_t<T>>(arr));
     std::remove_cv_t<T>* p = (std::remove_cv_t<T>*)arr
                                  .unchecked<std::remove_cv_t<T>, 1>()
                                  .data(0);
-    return std::span<R const>(reinterpret_cast<R*>(p), arr.size());
+    return tcb::span<R const>(reinterpret_cast<R*>(p), arr.size());
 }
 
 template <typename T, typename R>
-std::span<R> make_mutable_casted_span_(py::array arr) {
+tcb::span<R> make_mutable_casted_span_(py::array arr) {
     static_assert(sizeof(T) == sizeof(R));
     assert(py::isinstance<py::array_t<T>>(arr));
     std::remove_cv_t<T>* p = (std::remove_cv_t<T>*)arr
                                  .mutable_unchecked<std::remove_cv_t<T>, 1>()
                                  .data(0);
-    return std::span<R>(reinterpret_cast<R*>(p), arr.size());
+    return tcb::span<R>(reinterpret_cast<R*>(p), arr.size());
 }
 
 /*
@@ -351,8 +350,8 @@ void compress_coo(
                 typename decltype(csx_minor_index_type)::type;
             using VALUE = typename decltype(value_type)::type;
 
-            std::vector<std::span<COO_INDEX const>> Ai_views, Aj_views;
-            std::vector<std::span<remap_value_t<VALUE> const>> Ad_views;
+            std::vector<tcb::span<COO_INDEX const>> Ai_views, Aj_views;
+            std::vector<tcb::span<remap_value_t<VALUE> const>> Ad_views;
             for (size_t i = 0; i < Ai.size(); ++i) {
                 Ai_views.push_back(make_span_<COO_INDEX>(Ai[i]));
                 Aj_views.push_back(make_span_<COO_INDEX>(Aj[i]));
@@ -552,7 +551,7 @@ void count_rows(
             using CSX_MAJOR_INDEX =
                 typename decltype(csx_major_index_type)::type;
 
-            std::vector<std::span<COO_INDEX const>> Ai_views, Aj_views;
+            std::vector<tcb::span<COO_INDEX const>> Ai_views, Aj_views;
             for (size_t i = 0; i < Ai.size(); ++i) {
                 Ai_views.push_back(make_span_<COO_INDEX>(Ai[i]));
             }

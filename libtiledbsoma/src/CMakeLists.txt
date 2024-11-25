@@ -243,6 +243,11 @@ install(FILES
 )
 
 install(FILES
+  ${CMAKE_CURRENT_SOURCE_DIR}/external/include/span/span.hpp
+  DESTINATION "include/tiledbsoma/soma/span"
+)
+
+install(FILES
   ${CMAKE_CURRENT_SOURCE_DIR}/external/include/nanoarrow/nanoarrow.h
   ${CMAKE_CURRENT_SOURCE_DIR}/external/include/nanoarrow/nanoarrow.hpp
   DESTINATION "include/tiledbsoma/nanoarrow"

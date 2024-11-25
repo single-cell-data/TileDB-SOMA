@@ -2,7 +2,7 @@
 
 ## System Dependencies
 
-* C++20 compiler
+* C++17 compiler
 * Python 3.9+
 
 Run these commands to setup a fresh Ubuntu 22.04 instance (tested on x86 and Arm):

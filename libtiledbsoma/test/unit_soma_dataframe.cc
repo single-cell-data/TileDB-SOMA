@@ -30,7 +30,6 @@
  * This file manages unit tests for the SOMADataFrame class
  */
 
-#include <format>
 #include "common.h"
 
 const int64_t SOMA_JOINID_DIM_MAX = 99;
@@ -294,7 +293,13 @@ TEST_CASE_METHOD(
         std::make_pair(R"("BYTESHUFFLE")", TILEDB_FILTER_BYTESHUFFLE),
         std::make_pair(R"("NOOP")", TILEDB_FILTER_NONE));
 
-    SECTION(std::format("- filter={}", filter.first)) {
+    // TODO this used to be formatted with fmt::format which is part of internal
+    // header spd/log/fmt/fmt.h and should not be used. In C++20, this can be
+    // replaced with std::format.
+    std::ostringstream section;
+    section << "- filter=" << filter.first;
+
+    SECTION(section.str()) {
         set_up(
             std::make_shared<SOMAContext>(),
             "mem://unit-test-dataframe-platform-config");
