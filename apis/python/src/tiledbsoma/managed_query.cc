@@ -153,8 +153,8 @@ void load_managed_query(py::module& m) {
                     throw py::stop_iteration();
                 }
 
-                mq.submit_read();
                 try {
+                    mq.submit_read();
                     auto tbl = mq.results();
                     // Acquire python GIL before accessing python objects
                     py::gil_scoped_acquire acquire;
