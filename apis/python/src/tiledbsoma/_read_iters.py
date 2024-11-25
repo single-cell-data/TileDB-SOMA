@@ -591,48 +591,6 @@ class ArrowTableRead:
         return self.mq.next()
 
 
-# def _arrow_table_reader(
-#     array: SOMAArray,
-#     coords: Union[
-#         options.SparseDFCoords, options.SparseNDCoords, options.DenseNDCoords
-#     ],
-#     column_names: Optional[Sequence[str]],
-#     result_order: clib.ResultOrder,
-#     value_filter: Optional[str],
-#     platform_config: Optional[options.PlatformConfig],
-# ) -> Iterator[pa.Table]:
-#     """Private. Simple Table iterator on any Array"""
-
-#     sr = array._handle._handle
-
-#     if platform_config is not None:
-#         cfg = sr.context().config()
-#         cfg.update(platform_config)
-#         ctx = clib.SOMAContext(cfg)
-#     else:
-#         ctx = sr.context()
-
-#     mq = clib.ManagedQuery(sr, ctx)
-
-#     mq.set_layout(result_order)
-
-#     if column_names is not None:
-#         mq.select_columns(list(column_names))
-
-#     if value_filter is not None:
-#         mq.set_condition(QueryCondition(value_filter), sr.schema)
-
-#     _util._set_coords(mq, sr, coords)
-
-#     mq.setup_read()
-#     if mq.is_empty_query():
-#         yield mq.results()
-#     else:
-#         while not mq.is_complete(True):
-#             mq.submit_read()
-#             yield mq.results()
-
-
 def _coords_strider(
     coords: options.SparseNDCoord, length: int, stride: int
 ) -> Iterator[npt.NDArray[np.int64]]:
