@@ -35,9 +35,8 @@
 
 #include <stdexcept>  // for windows: error C2039: 'runtime_error': is not a member of 'std'
 
-#include <format>
 #include <future>
-#include <span>
+#include "span/span.hpp"
 
 #include <tiledb/tiledb>
 #include <tiledb/tiledb_experimental>
@@ -374,16 +373,18 @@ class SOMAArray : public SOMAObject {
     template <typename T>
     void set_dim_points(
         const std::string& dim,
-        const std::span<T> points,
+        const tcb::span<T> points,
         int partition_index,
         int partition_count) {
         // Validate partition inputs
         if (partition_index >= partition_count) {
-            throw TileDBSOMAError(std::format(
-                "[SOMAArray] partition_index ({}) must be < partition_count "
-                "({})",
-                partition_index,
-                partition_count));
+            // TODO this use to be formatted with fmt::format which is part of
+            // internal header spd/log/fmt/fmt.h and should not be used.
+            // In C++20, this can be replaced with std::format.
+            std::ostringstream err;
+            err << "[SOMAArray] partition_index (" << partition_index
+                << ") must be < partition_count (" << partition_count;
+            throw TileDBSOMAError(err.str());
         }
 
         if (partition_count > 1) {
@@ -395,19 +396,20 @@ class SOMAArray : public SOMAObject {
                 partition_size = points.size() - start;
             }
 
-            LOG_DEBUG(std::format(
-                "[SOMAArray] set_dim_points partitioning: sizeof(T)={} dim={} "
-                "index={} count={} range =[{}, {}] of {} points",
-                sizeof(T),
-                dim,
-                partition_index,
-                partition_count,
-                start,
-                start + partition_size - 1,
-                points.size()));
+            // TODO this use to be formatted with fmt::format which is part of
+            // internal header spd/log/fmt/fmt.h and should not be used.
+            // In C++20, this can be replaced with std::format.
+            std::ostringstream log_dbg;
+            log_dbg << "[SOMAArray] set_dim_points partitioning:"
+                    << " sizeof(T)=" << sizeof(T) << " dim=" << dim
+                    << " index=" << partition_index
+                    << " count=" << partition_count << " range =[" << start
+                    << ", " << start + partition_size - 1 << "] of "
+                    << points.size() << "points";
+            LOG_DEBUG(log_dbg.str());
 
             mq_->select_points(
-                dim, std::span<T>{&points[start], partition_size});
+                dim, tcb::span<T>{&points[start], partition_size});
         } else {
             mq_->select_points(dim, points);
         }

@@ -95,7 +95,7 @@ void SOMADataFrame::update_dataframe_schema(
     std::map<std::string, std::pair<std::string, bool>> add_enmrs) {
     ArraySchemaEvolution se(*ctx->tiledb_ctx());
     for (auto key_name : drop_attrs) {
-        LOG_DEBUG(std::format(
+        LOG_DEBUG(fmt::format(
             "[SOMADataFrame::update_dataframe_schema] drop col name {}",
             key_name));
         se.drop_attribute(key_name);
@@ -158,7 +158,7 @@ void SOMADataFrame::update_dataframe_schema(
 
         if (has_enmr) {
             auto [enmr_type, ordered] = enmr_it->second;
-            LOG_DEBUG(std::format(
+            LOG_DEBUG(fmt::format(
                 "[SOMADataFrame::update_dataframe_schema] add col name {} "
                 "index_type "
                 "{} value_type {} ordered {}",
@@ -178,7 +178,7 @@ void SOMADataFrame::update_dataframe_schema(
             AttributeExperimental::set_enumeration_name(
                 *ctx->tiledb_ctx(), attr, attr_name);
         } else {
-            LOG_DEBUG(std::format(
+            LOG_DEBUG(fmt::format(
                 "[SOMADataFrame::update_dataframe_schema] add col name {} type "
                 "{}",
                 attr_name,

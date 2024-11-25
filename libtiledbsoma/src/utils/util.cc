@@ -76,7 +76,7 @@ std::string rstrip_uri(std::string_view uri) {
 
 std::vector<uint8_t> cast_bit_to_uint8(ArrowSchema* schema, ArrowArray* array) {
     if (strcmp(schema->format, "b") != 0) {
-        throw TileDBSOMAError(std::format(
+        throw TileDBSOMAError(fmt::format(
             "_cast_bit_to_uint8 expected column format to be 'b' but saw {}",
             schema->format));
     }

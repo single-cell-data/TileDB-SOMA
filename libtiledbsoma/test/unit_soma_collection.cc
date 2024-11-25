@@ -32,8 +32,6 @@
 
 #include "common.h"
 
-#include <format>
-
 static const int64_t DIM_MAX = 999;
 
 TEST_CASE("SOMACollection: basic") {

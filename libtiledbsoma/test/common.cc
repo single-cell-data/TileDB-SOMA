@@ -123,7 +123,7 @@ create_arrow_schema_and_index_columns(
 // Create index-column info only, no schema involving the attrs
 ArrowTable create_column_index_info(const std::vector<DimInfo>& dim_infos) {
     for (auto info : dim_infos) {
-        LOG_DEBUG(std::format(
+        LOG_DEBUG(fmt::format(
             "create_column_index_info name={} type={} dim_max={}",
             info.name,
             tiledb::impl::to_str(info.tiledb_datatype),

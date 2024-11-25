@@ -30,7 +30,6 @@
  * This file manages unit tests for the SOMAGeometryDataFrame class
  */
 
-#include <format>
 #include <vector>
 #include "../src/geometry/geometry.h"
 #include "../src/geometry/operators/io/write.h"
