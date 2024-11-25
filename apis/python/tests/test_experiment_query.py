@@ -637,19 +637,23 @@ def test_experiment_query_to_anndata_obsp_varp(soma_experiment):
         ad = query.to_anndata("raw", obsp_layers=["foo"], varp_layers=["bar"])
         assert set(ad.obsp.keys()) == {"foo"}
         obsp = ad.obsp["foo"]
-        assert isinstance(obsp, np.ndarray)
+        assert isinstance(obsp, sparse.spmatrix)
+        assert sparse.isspmatrix_csr(obsp)
         assert obsp.shape == (query.n_obs, query.n_obs)
 
+        assert (query.obsp("foo").coos().concat().to_scipy() != obsp).nnz == 0
         assert np.array_equal(
-            query.obsp("foo").coos().concat().to_scipy().todense(), obsp
+            query.obsp("foo").coos().concat().to_scipy().todense(), obsp.todense()
         )
 
         assert set(ad.varp.keys()) == {"bar"}
         varp = ad.varp["bar"]
-        assert isinstance(varp, np.ndarray)
+        assert isinstance(varp, sparse.spmatrix)
+        assert sparse.isspmatrix_csr(varp)
         assert varp.shape == (query.n_vars, query.n_vars)
+        assert (query.varp("bar").coos().concat().to_scipy() != varp).nnz == 0
         assert np.array_equal(
-            query.varp("bar").coos().concat().to_scipy().todense(), varp
+            query.varp("bar").coos().concat().to_scipy().todense(), varp.todense()
         )
 
 
