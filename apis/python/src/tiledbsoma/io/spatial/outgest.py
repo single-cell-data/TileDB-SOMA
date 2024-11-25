@@ -3,7 +3,7 @@
 #
 # Licensed under the MIT License.
 import warnings
-from typing import TYPE_CHECKING, Dict, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Any, Dict, Optional, Sequence, Tuple, Union
 
 import pandas as pd
 import somacore
@@ -26,8 +26,9 @@ except ImportError as err:
     warnings.warn("Experimental spatial outgestor requires the geopandas package.")
     raise err
 
-from ... import MultiscaleImage, PointCloudDataFrame
-from ..._constants import SOMA_JOINID
+from ... import Experiment, MultiscaleImage, PointCloudDataFrame
+from ..._constants import SOMA_JOINID, SPATIAL_DISCLAIMER
+from .. import to_anndata
 from ._xarray_backend import dense_nd_array_to_data_array, images_to_datatree
 
 if TYPE_CHECKING:
@@ -406,3 +407,48 @@ def to_spatial_data_multiscale_image(
     )
 
     return images_to_datatree(image_data_arrays)
+
+
+def to_spatial_data(
+    experiment: Experiment,
+    *,
+    measurement_names: Optional[Sequence[str]] = None,
+    obs_id_name: str = "obs_id",
+    var_id_name: str = "var_id",
+    default_X_layer_name: Optional[str] = "data",
+    table_kwargs: Optional[Dict[str, Any]] = None,
+) -> sd.SpatialData:
+    """TODO: Add docstring before merging"""
+    warnings.warn(SPATIAL_DISCLAIMER)
+    if measurement_names is None:
+        measurement_names = tuple(experiment.ms.keys())
+    else:
+        measurement_names = tuple(measurement_names)
+    if table_kwargs is None:
+        table_kwargs = {}
+    tables = {
+        measurement_name: (
+            to_anndata(
+                experiment,
+                measurement_name,
+                obs_id_name=obs_id_name,
+                var_id_name=var_id_name,
+                **table_kwargs[measurement_name],
+            )
+            if measurement_name in table_kwargs
+            else to_anndata(
+                experiment,
+                measurement_name,
+                obs_id_name=obs_id_name,
+                var_id_name=var_id_name,
+            )
+        )
+        for measurement_name in measurement_names
+    }
+    points: Dict[str, pd.DataFrame] = {}
+    shapes: Dict[str, gpd.GeoDataFrame] = {}
+    images: Dict[str, Union[DataArray, DataTree]] = {}
+    if "spatial" in experiment:
+        for scene in experiment.spatial:
+            raise NotImplementedError()
+    return sd.SpatialData(tables=tables, points=points, images=images, shapes=shapes)
