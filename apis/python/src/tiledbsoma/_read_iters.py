@@ -29,7 +29,6 @@ import pyarrow as pa
 import somacore
 from scipy import sparse
 from somacore import options
-from typing_extensions import Self
 
 # This package's pybind11 code
 import tiledbsoma.pytiledbsoma as clib
@@ -549,7 +548,7 @@ class SparseCOOTensorReadIter(SparseTensorReadIterBase[pa.SparseCOOTensor]):
         return pa.SparseCOOTensor.from_numpy(coo_data, coo_coords, shape=self.shape)
 
 
-class ArrowTableRead:
+class ArrowTableRead(Iterator[pa.Table]):
     def __init__(
         self,
         array: SOMAArray,
@@ -583,9 +582,6 @@ class ArrowTableRead:
         _util._set_coords(self.mq, sr, coords)
 
         self.mq.setup_read()
-
-    def __iter__(self) -> Self:
-        return self
 
     def __next__(self) -> pa.Table:
         return self.mq.next()
