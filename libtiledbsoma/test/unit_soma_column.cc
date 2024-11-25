@@ -33,6 +33,10 @@
 #include <format>
 #include <tiledb/tiledb>
 #include <tiledbsoma/tiledbsoma>
+#include "../src/soma/soma_column.h"
+#include "../src/soma/soma_attribute.h"
+#include "../src/soma/soma_dimension.h"
+#include "../src/soma/soma_geometry_column.h"
 #include "common.h"
 
 const int64_t SOMA_JOINID_DIM_MAX = 99;
