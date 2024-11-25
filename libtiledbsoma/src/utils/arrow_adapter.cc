@@ -1701,8 +1701,8 @@ void ArrowAdapter::set_current_domain_slot(
             LOG_DEBUG(std::format(
                 "[ArrowAdapter] {} current_domain float {} to {}",
                 name,
-                lo,
-                hi));
+                std::to_string(lo),
+                std::to_string(hi)));
         } break;
         case TILEDB_FLOAT64: {
             double lo = ((double*)buff)[3];
@@ -1711,8 +1711,8 @@ void ArrowAdapter::set_current_domain_slot(
             LOG_DEBUG(std::format(
                 "[ArrowAdapter] {} current_domain double {} to {}",
                 name,
-                lo,
-                hi));
+                std::to_string(lo),
+                std::to_string(hi)));
         } break;
         default:
             throw TileDBSOMAError(std::format(
