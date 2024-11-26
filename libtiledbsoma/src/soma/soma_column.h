@@ -27,7 +27,10 @@
  *
  * @section DESCRIPTION
  *
- *   This file defines the SOMAColumn class.
+ *   This file defines the SOMAColumn class. SOMAColumn is an abstraction over
+ * TileDB dimensions, attributes and combinations of them. It is designed to add
+ * indexing capabilities to any datatype utilizing native TileDB dimensions
+ * without exposing the internal indexing to the end user.
  */
 
 #ifndef SOMA_COLUMN_H
@@ -37,6 +40,7 @@
 #include <format>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "enums.h"
@@ -63,7 +67,7 @@ class SOMAColumn {
     /**
      * Get the SOMAColumn name as defined in schema.
      */
-    virtual std::string name() const = 0;
+    virtual std::string_view name() const = 0;
 
     /**
      * If true, this column is used as index.
