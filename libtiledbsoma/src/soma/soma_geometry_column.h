@@ -29,7 +29,7 @@ class SOMAGeometryColumn : public virtual SOMAColumn {
         : dimensions(dimensions)
         , attribute(attribute){};
 
-    virtual inline std::string name() const override {
+    virtual inline std::string_view name() const override {
         return SOMA_GEOMETRY_COLUMN_NAME;
     }
 
