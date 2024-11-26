@@ -25,7 +25,7 @@ class SOMADimension : public virtual SOMAColumn {
         : dimension(dimension) {
     }
 
-    virtual inline std::string name() const override {
+    virtual inline std::string_view name() const override {
         return dimension.name();
     }
 
