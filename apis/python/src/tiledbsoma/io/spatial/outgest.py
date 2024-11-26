@@ -28,6 +28,7 @@ except ImportError as err:
 
 from ... import Experiment, MultiscaleImage, PointCloudDataFrame
 from ..._constants import SOMA_JOINID, SPATIAL_DISCLAIMER
+from ..._spatial_util import transform_from_json
 from .. import to_anndata
 from ._xarray_backend import dense_nd_array_to_data_array, images_to_datatree
 
@@ -413,6 +414,7 @@ def to_spatial_data(
     experiment: Experiment,
     *,
     measurement_names: Optional[Sequence[str]] = None,
+    scene_names: Optional[Sequence[str]] = None,
     obs_id_name: str = "obs_id",
     var_id_name: str = "var_id",
     default_X_layer_name: Optional[str] = "data",
@@ -420,35 +422,130 @@ def to_spatial_data(
 ) -> sd.SpatialData:
     """TODO: Add docstring before merging"""
     warnings.warn(SPATIAL_DISCLAIMER)
-    if measurement_names is None:
-        measurement_names = tuple(experiment.ms.keys())
+
+    # Read non-spatial data into Anndata tables.
+    if "ms" in experiment:
+        if measurement_names is None:
+            measurement_names = tuple(experiment.ms.keys())
+        else:
+            measurement_names = tuple(measurement_names)
+        if table_kwargs is None:
+            table_kwargs = {}
+        tables = {
+            measurement_name: (
+                to_anndata(
+                    experiment,
+                    measurement_name,
+                    obs_id_name=obs_id_name,
+                    var_id_name=var_id_name,
+                    **table_kwargs[measurement_name],
+                )
+                if measurement_name in table_kwargs
+                else to_anndata(
+                    experiment,
+                    measurement_name,
+                    obs_id_name=obs_id_name,
+                    var_id_name=var_id_name,
+                )
+            )
+            for measurement_name in measurement_names
+        }
     else:
-        measurement_names = tuple(measurement_names)
-    if table_kwargs is None:
-        table_kwargs = {}
-    tables = {
-        measurement_name: (
-            to_anndata(
-                experiment,
-                measurement_name,
-                obs_id_name=obs_id_name,
-                var_id_name=var_id_name,
-                **table_kwargs[measurement_name],
-            )
-            if measurement_name in table_kwargs
-            else to_anndata(
-                experiment,
-                measurement_name,
-                obs_id_name=obs_id_name,
-                var_id_name=var_id_name,
-            )
-        )
-        for measurement_name in measurement_names
-    }
+        tables = {}
+
+    # If no spatial data, return just the tables.
+    if "spatial" not in experiment:
+        return sd.SpatialData(tables=tables)
+
+    if scene_names is not None:
+        raise NotImplementedError()  # TODO
+
     points: Dict[str, pd.DataFrame] = {}
     shapes: Dict[str, gpd.GeoDataFrame] = {}
     images: Dict[str, Union[DataArray, DataTree]] = {}
-    if "spatial" in experiment:
-        for scene in experiment.spatial:
-            raise NotImplementedError()
+    for scene_id, scene in experiment.spatial.items():
+        if scene.coordinate_space is None:
+            continue
+
+        # Get the map from Scene dimension names to SpatialData dimension names.
+        input_axis_names = scene.coordinate_space.axis_names
+        _, scene_dim_map = _convert_axis_names(input_axis_names, input_axis_names)
+
+        # Convert obsl data to
+        if "obsl" in scene:
+            for key, df in scene.obsl.items():
+                transform_key = f"soma_scene_registry_{key}"
+                if transform_key in scene.obsl.metadata:
+                    transform = transform_from_json(scene.obsl.metadata[transform_key])
+                else:
+                    raise NotImplementedError()  # TODO: Implement this.
+                if isinstance(df, PointCloudDataFrame):
+                    if "soma_geometry" in df.metadata:
+                        points[f"{scene_id}_obsl_{key}"] = to_spatial_data_shapes(
+                            df,
+                            scene_id=scene_id,
+                            scene_dim_map=scene_dim_map,
+                            transform=transform,
+                            soma_joinid_name=obs_id_name,
+                        )
+                else:
+                    warnings.warn(
+                        f"Skipping obsl[{key}] in Scene {scene_id}; unexpected datatype"
+                        f" {type(df).__name__}."
+                    )
+        if "varl" in scene:
+            for measurement_name, subcoll in scene.varl.items():
+                if (
+                    measurement_names is not None
+                    and measurement_name not in measurement_names
+                ):
+                    continue
+                for key, df in subcoll.items():
+                    transform_key = f"soma_scene_registry_{key}"
+                    if transform_key in subcoll.metadata:
+                        transform = transform_from_json(subcoll.metadata[transform_key])
+                    else:
+                        raise NotImplementedError()  # TODO: Implement this.
+                    if isinstance(df, PointCloudDataFrame):
+                        if "soma_geometry" in df.metadata:
+                            points[f"{scene_id}_varl_{key}"] = to_spatial_data_shapes(
+                                df,
+                                scene_id=scene_id,
+                                scene_dim_map=scene_dim_map,
+                                transform=transform,
+                                soma_joinid_name=obs_id_name,
+                            )
+                    else:
+                        warnings.warn(
+                            f"Skipping varl[{measurement_name}][{key}] in Scene "
+                            f"{scene_id}; unexpected datatype {type(df).__name__}."
+                        )
+        if "img" in scene:
+            for key, image in scene.img.items():
+                transform_key = f"soma_scene_registry_{key}"
+                if transform_key in scene.img.metadata:
+                    transform = transform_from_json(scene.img.metadata[transform_key])
+                else:
+                    raise NotImplementedError()  # TODO: Implement this.
+                if not isinstance(image, MultiscaleImage):
+                    warnings.warn(  # type: ignore[unreachable]
+                        f"Skipping img[{image}] in Scene {scene_id}; unexpected "
+                        f"datatype {type(image).__name__}."
+                    )
+                if image.level_count == 1:
+                    images[f"{scene_id}_img_{key}"] = to_spatial_data_image(
+                        image,
+                        0,
+                        scene_id=scene_id,
+                        scene_dim_map=scene_dim_map,
+                        transform=transform,
+                    )
+                else:
+                    images[f"{scene_id}_img_{key}"] = to_spatial_data_multiscale_image(
+                        image,
+                        scene_id=scene_id,
+                        scene_dim_map=scene_dim_map,
+                        transform=transform,
+                    )
+
     return sd.SpatialData(tables=tables, points=points, images=images, shapes=shapes)
