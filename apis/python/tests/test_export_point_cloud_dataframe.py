@@ -35,17 +35,30 @@ def sample_point_cloud_dataframe_2d(tmp_path_factory):
     return point_cloud
 
 
-def test_export_to_shapes_2d(sample_point_cloud_dataframe_2d):
+@pytest.mark.parametrize(
+    "transform,expected_transformation",
+    [
+        (None, {"point_cloud": spatialdata.transformations.Identity()}),
+        (
+            somacore.IdentityTransform(
+                ("x_scene", "y_scene"), ("x_points", "y_points")
+            ),
+            {"scene0": spatialdata.transformations.Identity()},
+        ),
+    ],
+)
+def test_export_to_shapes_2d(
+    sample_point_cloud_dataframe_2d, transform, expected_transformation
+):
     """Test exporting a simple point cloud to a SpatialData shape model."""
     # Export PointCloudDataFrame to shapes.
     shape = soma_outgest.to_spatial_data_shapes(
         sample_point_cloud_dataframe_2d,
         scene_id="scene0",
+        key="point_cloud",
         scene_dim_map={"x_scene": "x", "y_scene": "y"},
         soma_joinid_name="obs_id",
-        transform=somacore.IdentityTransform(
-            ("x_scene", "y_scene"), ("x_points", "y_points")
-        ),
+        transform=transform,
     )
 
     # Check this is valid storage for the SpatialData "Shapes" model.
@@ -65,23 +78,34 @@ def test_export_to_shapes_2d(sample_point_cloud_dataframe_2d):
 
     # Check the metadata.
     metadata = dict(shape.attrs)
-    for key, val in metadata.items():
-        print(f"{key}: {val}")
     assert len(metadata) == 1
-    assert metadata["transform"] == {"scene0": spatialdata.transformations.Identity()}
+    assert metadata["transform"] == expected_transformation
 
 
-def test_export_to_points_2d(sample_point_cloud_dataframe_2d):
+@pytest.mark.parametrize(
+    "transform,expected_transformation",
+    [
+        (None, {"point_cloud": spatialdata.transformations.Identity()}),
+        (
+            somacore.IdentityTransform(
+                ("x_scene", "y_scene"), ("x_points", "y_points")
+            ),
+            {"scene0": spatialdata.transformations.Identity()},
+        ),
+    ],
+)
+def test_export_to_points_2d(
+    sample_point_cloud_dataframe_2d, transform, expected_transformation
+):
     """Test exporting a simple point cloud to a SpatialData shape model."""
     # Export PointCloudDataFrame to shapes.
     points = soma_outgest.to_spatial_data_points(
         sample_point_cloud_dataframe_2d,
+        key="point_cloud",
         scene_id="scene0",
         scene_dim_map={"x_scene": "x", "y_scene": "y"},
         soma_joinid_name="obs_id",
-        transform=somacore.IdentityTransform(
-            ("x_scene", "y_scene"), ("x_points", "y_points")
-        ),
+        transform=transform,
     )
 
     # Check this is valid storage for the SpatialData "Points" model.
@@ -99,7 +123,5 @@ def test_export_to_points_2d(sample_point_cloud_dataframe_2d):
 
     # Check the metadata.
     metadata = dict(points.attrs)
-    for key, val in metadata.items():
-        print(f"{key}: {val}")
     assert len(metadata) == 1
-    assert metadata["transform"] == {"scene0": spatialdata.transformations.Identity()}
+    assert metadata["transform"] == expected_transformation

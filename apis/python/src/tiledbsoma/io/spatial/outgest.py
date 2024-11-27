@@ -96,9 +96,10 @@ def _transform_to_spatial_data(
 def to_spatial_data_points(
     points: PointCloudDataFrame,
     *,
+    key: str,
     scene_id: str,
     scene_dim_map: Dict[str, str],
-    transform: somacore.CoordinateTransform,
+    transform: Optional[somacore.CoordinateTransform],
     soma_joinid_name: str,
 ) -> pd.DataFrame:
     """Export a :class:`PointCloudDataFrame` to a :class:`spatialdata.ShapesModel.
@@ -119,11 +120,14 @@ def to_spatial_data_points(
 
     # Create the SpatialData transform from the points to the Scene (inverse of the
     # transform SOMA stores).
-    transforms = {
-        scene_id: _transform_to_spatial_data(
-            transform.inverse_transform(), points_dim_map, scene_dim_map
-        )
-    }
+    if transform is None:
+        transforms = {key: sd.transformations.Identity()}
+    else:
+        transforms = {
+            scene_id: _transform_to_spatial_data(
+                transform.inverse_transform(), points_dim_map, scene_dim_map
+            )
+        }
 
     # Read the pandas dataframe, rename SOMA_JOINID, add metadata, and return.
     df: pd.DataFrame = points.read().concat().to_pandas()
@@ -135,9 +139,10 @@ def to_spatial_data_points(
 def to_spatial_data_shapes(
     points: PointCloudDataFrame,
     *,
+    key: str,
     scene_id: str,
     scene_dim_map: Dict[str, str],
-    transform: somacore.CoordinateTransform,
+    transform: Optional[somacore.CoordinateTransform],
     soma_joinid_name: str,
 ) -> gpd.GeoDataFrame:
     """Export a :class:`PointCloudDataFrame` to a :class:`spatialdata.ShapesModel.
@@ -176,11 +181,14 @@ def to_spatial_data_shapes(
 
     # Create the SpatialData transform from the points to the Scene (inverse of the
     # transform SOMA stores).
-    transforms = {
-        scene_id: _transform_to_spatial_data(
-            transform.inverse_transform(), points_dim_map, scene_dim_map
-        )
-    }
+    if transform is None:
+        transforms = {key: sd.transformations.Identity()}
+    else:
+        transforms = {
+            scene_id: _transform_to_spatial_data(
+                transform.inverse_transform(), points_dim_map, scene_dim_map
+            )
+        }
 
     data = points.read().concat().to_pandas()
     data.rename(columns={SOMA_JOINID: soma_joinid_name}, inplace=True)
@@ -204,9 +212,10 @@ def to_spatial_data_image(
     image: MultiscaleImage,
     level: Optional[Union[str, int]] = None,
     *,
+    key: str,
     scene_id: str,
     scene_dim_map: Dict[str, str],
-    transform: somacore.CoordinateTransform,
+    transform: Optional[somacore.CoordinateTransform],
 ) -> "DataArray":
     """Export a level of a :class:`MultiscaleImage` to a
     :class:`spatialdata.Image2DModel` or :class:`spatialdata.Image3DModel`.
@@ -237,29 +246,37 @@ def to_spatial_data_image(
         level = 0
     level_uri = image.level_uri(level)
 
-    # Get the transformtion from the image level to the scene:
-    # If the result is a single scale transform (or identity transform), output a
-    # single transformation. Otherwise, convert to a SpatialData sequence of
-    # transformations.
-    inv_transform = transform.inverse_transform()
-    scale_transform = image.get_transform_from_level(level)
-    if isinstance(transform, somacore.ScaleTransform) or isinstance(
-        scale_transform, somacore.IdentityTransform
-    ):
-        # inv_transform @ scale_transform -> applies scale_transform first
+    if transform is None:
+        # Get the transformation from the image level to the highest resolution of the multiscale image.
+        scale_transform = image.get_transform_from_level(level)
         sd_transform = _transform_to_spatial_data(
-            inv_transform @ scale_transform, image_dim_map, scene_dim_map
-        )
-    else:
-        sd_transform1 = _transform_to_spatial_data(
             scale_transform, image_dim_map, image_dim_map
         )
-        sd_transform2 = _transform_to_spatial_data(
-            inv_transform, image_dim_map, scene_dim_map
-        )
-        # Sequence([sd_transform1, sd_transform2]) -> applies sd_transform1 first
-        sd_transform = sd.transformations.Sequence([sd_transform1, sd_transform2])
-    transformations = {scene_id: sd_transform}
+        transformations = {key: sd_transform}
+    else:
+        # Get the transformation from the image level to the scene:
+        # If the result is a single scale transform (or identity transform), output a
+        # single transformation. Otherwise, convert to a SpatialData sequence of
+        # transformations.
+        inv_transform = transform.inverse_transform()
+        scale_transform = image.get_transform_from_level(level)
+        if isinstance(transform, somacore.ScaleTransform) or isinstance(
+            scale_transform, somacore.IdentityTransform
+        ):
+            # inv_transform @ scale_transform -> applies scale_transform first
+            sd_transform = _transform_to_spatial_data(
+                inv_transform @ scale_transform, image_dim_map, scene_dim_map
+            )
+        else:
+            sd_transform1 = _transform_to_spatial_data(
+                scale_transform, image_dim_map, image_dim_map
+            )
+            sd_transform2 = _transform_to_spatial_data(
+                inv_transform, image_dim_map, scene_dim_map
+            )
+            # Sequence([sd_transform1, sd_transform2]) -> applies sd_transform1 first
+            sd_transform = sd.transformations.Sequence([sd_transform1, sd_transform2])
+        transformations = {scene_id: sd_transform}
 
     # Return array accessor as a dask array.
     return dense_nd_array_to_data_array(
@@ -273,9 +290,10 @@ def to_spatial_data_image(
 def to_spatial_data_multiscale_image(
     image: MultiscaleImage,
     *,
+    key: str,
     scene_id: str,
     scene_dim_map: Dict[str, str],
-    transform: somacore.CoordinateTransform,
+    transform: Optional[somacore.CoordinateTransform],
 ) -> "DataTree":
     """Export a MultiscaleImage to a DataTree."""
 
@@ -296,47 +314,60 @@ def to_spatial_data_multiscale_image(
         orig_axis_names, image.data_axis_order
     )
 
-    # Get the transformtion from the image level to the scene:
-    # If the result is a single scale transform (or identity transform), output a
-    # single transformation. Otherwise, convert to a SpatialData sequence of
-    # transformations.
-    inv_transform = transform.inverse_transform()
-    if isinstance(transform, somacore.ScaleTransform):
-        # inv_transform @ scale_transform -> applies scale_transform first
+    if transform is None:
         spatial_data_transformations = tuple(
             _transform_to_spatial_data(
-                inv_transform @ image.get_transform_from_level(level),
+                image.get_transform_from_level(level),
                 image_dim_map,
-                scene_dim_map,
+                image_dim_map,
             )
             for level in range(image.level_count)
         )
-
     else:
-        sd_scale_transforms = tuple(
-            _transform_to_spatial_data(
-                image.get_transform_from_level(level), image_dim_map, image_dim_map
+        # Get the transformtion from the image level to the scene:
+        # If the result is a single scale transform (or identity transform), output a
+        # single transformation. Otherwise, convert to a SpatialData sequence of
+        # transformations.
+        inv_transform = transform.inverse_transform()
+        if isinstance(transform, somacore.ScaleTransform):
+            # inv_transform @ scale_transform -> applies scale_transform first
+            spatial_data_transformations = tuple(
+                _transform_to_spatial_data(
+                    inv_transform @ image.get_transform_from_level(level),
+                    image_dim_map,
+                    scene_dim_map,
+                )
+                for level in range(image.level_count)
             )
-            for level in range(1, image.level_count)
-        )
-        sd_inv_transform = _transform_to_spatial_data(
-            inv_transform, image_dim_map, scene_dim_map
-        )
+        else:
+            sd_scale_transforms = tuple(
+                _transform_to_spatial_data(
+                    image.get_transform_from_level(level), image_dim_map, image_dim_map
+                )
+                for level in range(1, image.level_count)
+            )
+            sd_inv_transform = _transform_to_spatial_data(
+                inv_transform, image_dim_map, scene_dim_map
+            )
 
-        # First level transform is always the identity, so just directly use
-        # inv_transform. For remaining transformations,
-        # Sequence([sd_transform1, sd_transform2]) -> applies sd_transform1 first
-        spatial_data_transformations = (sd_inv_transform,) + tuple(
-            sd.transformations.Sequence([scale_transform, sd_inv_transform])
-            for scale_transform in sd_scale_transforms
-        )
+            # First level transform is always the identity, so just directly use
+            # inv_transform. For remaining transformations,
+            # Sequence([sd_transform1, sd_transform2]) -> applies sd_transform1 first
+            spatial_data_transformations = (sd_inv_transform,) + tuple(
+                sd.transformations.Sequence([scale_transform, sd_inv_transform])
+                for scale_transform in sd_scale_transforms
+            )
 
     # Create a sequence of resolution level.
     image_data_arrays = tuple(
         dense_nd_array_to_data_array(
             uri=image.level_uri(index),
             dim_names=new_axis_names,
-            attrs={"transform": {scene_id: spatial_data_transformations[index]}},
+            attrs=(
+                {"transform": {key: spatial_data_transformations[index]}}
+                if transform is None
+                else {"transform": {scene_id: spatial_data_transformations[index]}}
+            ),
             context=image.context,
         )
         for index, (soma_name, val) in enumerate(image.levels().items())
