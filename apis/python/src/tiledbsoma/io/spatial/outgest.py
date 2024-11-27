@@ -457,13 +457,16 @@ def to_spatial_data(
     if "spatial" not in experiment:
         return sd.SpatialData(tables=tables)
 
-    if scene_names is not None:
-        raise NotImplementedError()  # TODO
+    if scene_names is None:
+        scene_names = tuple(experiment.spatial.keys())
+    else:
+        scene_names = tuple(scene_names)
 
     points: Dict[str, pd.DataFrame] = {}
     shapes: Dict[str, gpd.GeoDataFrame] = {}
     images: Dict[str, Union[DataArray, DataTree]] = {}
-    for scene_id, scene in experiment.spatial.items():
+    for scene_id in scene_names:
+        scene = experiment.spatial[scene_id]
         if scene.coordinate_space is None:
             continue
 
@@ -481,6 +484,14 @@ def to_spatial_data(
                     raise NotImplementedError()  # TODO: Implement this.
                 if isinstance(df, PointCloudDataFrame):
                     if "soma_geometry" in df.metadata:
+                        shapes[f"{scene_id}_obsl_{key}"] = to_spatial_data_shapes(
+                            df,
+                            scene_id=scene_id,
+                            scene_dim_map=scene_dim_map,
+                            transform=transform,
+                            soma_joinid_name=obs_id_name,
+                        )
+                    else:
                         points[f"{scene_id}_obsl_{key}"] = to_spatial_data_shapes(
                             df,
                             scene_id=scene_id,
@@ -488,6 +499,7 @@ def to_spatial_data(
                             transform=transform,
                             soma_joinid_name=obs_id_name,
                         )
+
                 else:
                     warnings.warn(
                         f"Skipping obsl[{key}] in Scene {scene_id}; unexpected datatype"
@@ -508,7 +520,15 @@ def to_spatial_data(
                         raise NotImplementedError()  # TODO: Implement this.
                     if isinstance(df, PointCloudDataFrame):
                         if "soma_geometry" in df.metadata:
-                            points[f"{scene_id}_varl_{key}"] = to_spatial_data_shapes(
+                            shapes[f"{scene_id}_varl_{key}"] = to_spatial_data_shapes(
+                                df,
+                                scene_id=scene_id,
+                                scene_dim_map=scene_dim_map,
+                                transform=transform,
+                                soma_joinid_name=obs_id_name,
+                            )
+                        else:
+                            points[f"{scene_id}_obsl_{key}"] = to_spatial_data_shapes(
                                 df,
                                 scene_id=scene_id,
                                 scene_dim_map=scene_dim_map,
@@ -547,5 +567,4 @@ def to_spatial_data(
                         scene_dim_map=scene_dim_map,
                         transform=transform,
                     )
-
     return sd.SpatialData(tables=tables, points=points, images=images, shapes=shapes)
