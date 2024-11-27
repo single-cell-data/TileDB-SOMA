@@ -19,7 +19,7 @@ def experiment_with_single_scene(tmp_path_factory) -> soma.Experiment:
         exp.add_new_collection("spatial")
 
         # Create scene 1.
-        scene1_uri = urljoin(urljoin(uri, "spatial"), "scene1")
+        scene1_uri = urljoin(exp.spatial.uri, "scene1")
         exp.spatial["scene1"] = soma.Scene.create(scene1_uri)
         scene1 = exp.spatial["scene1"]
         assert scene1_uri == scene1.uri
@@ -98,9 +98,9 @@ def experiment_with_single_scene(tmp_path_factory) -> soma.Experiment:
         )
         image2.add_new_level("hires", shape=(3, 16, 16))
         image2.add_new_level("lowres", shape=(3, 8, 8))
+        scene1.close()
 
-    exp = soma.Experiment.open(uri, mode="r")
-    return exp
+    return soma.Experiment.open(uri, mode="r")
 
 
 def test_outgest_no_spatial(tmp_path, conftest_pbmc_small):
