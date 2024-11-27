@@ -106,6 +106,8 @@ def to_spatial_data_points(
 
     Args:
         points: The point cloud data frame to convert to SpatialData shapes.
+        key: Key for the item in the SpatialData object. Used to set a transformation
+            to the item itself if no scene transform is provided.
         scene_id: The ID of the scene this point cloud dataframe is from.
         scene_dim_map: A mapping from the axis names of the scene to the corresponding
             SpatialData dimension names.
@@ -149,6 +151,8 @@ def to_spatial_data_shapes(
 
     Args:
         points: The point cloud data frame to convert to SpatialData shapes.
+        key: Key for the item in the SpatialData object. Used to set a transformation
+            to the item itself if no scene transform is provided.
         scene_id: The ID of the scene this point cloud dataframe is from.
         scene_dim_map: A mapping from the axis names of the scene to the corresponding
             SpatialData dimension names.
@@ -219,6 +223,17 @@ def to_spatial_data_image(
 ) -> "DataArray":
     """Export a level of a :class:`MultiscaleImage` to a
     :class:`spatialdata.Image2DModel` or :class:`spatialdata.Image3DModel`.
+
+    Args:
+        image: The multiscale image to convert to a level from to a SpatialData image.
+        level: The level of the multiscale image to convert.
+        key: Key for the item in the SpatialData object. Used to set a transformation
+            to the item itself if no scene transform is provided.
+        scene_id: The ID of the scene this multiscale image is from.
+        scene_dim_map: A mapping from the axis names of the scene to the corresponding
+            SpatialData dimension names.
+        transform: The transformation from the coordinate space of the scene this
+            multiscale image is in to the coordinate space of the image itself.
     """
     if not image.has_channel_axis:
         raise NotImplementedError(
@@ -295,7 +310,18 @@ def to_spatial_data_multiscale_image(
     scene_dim_map: Dict[str, str],
     transform: Optional[somacore.CoordinateTransform],
 ) -> "DataTree":
-    """Export a MultiscaleImage to a DataTree."""
+    """Export a MultiscaleImage to a DataTree.
+
+    Args:
+        image: The multiscale image to convert to a SpatialData image.
+        key: Key for the item in the SpatialData object. Used to set a transformation
+            to the item itself if no scene transform is provided.
+        scene_id: The ID of the scene this multiscale image is from.
+        scene_dim_map: A mapping from the axis names of the scene to the corresponding
+            SpatialData dimension names.
+        transform: The transformation from the coordinate space of the scene this
+            multiscale image is in to the coordinate space of the image itself.
+    """
 
     # Check for channel axis.
     if not image.has_channel_axis:
