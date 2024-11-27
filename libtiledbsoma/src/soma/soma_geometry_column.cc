@@ -58,7 +58,7 @@ void SOMAGeometryColumn::_set_dim_points(
     const std::any& points) const {
     std::vector<std::pair<double_t, double_t>>
         transformed_points = _transform_points(
-            std::any_cast<std::vector<std::vector<double_t>>>(points));
+            std::any_cast<std::span<std::vector<double_t>>>(points));
 
     auto domain_limits = _limits(ctx, *query->schema());
 
@@ -178,7 +178,7 @@ SOMAGeometryColumn::_transform_ranges(
 
 std::vector<std::pair<double_t, double_t>>
 SOMAGeometryColumn::_transform_points(
-    const std::vector<std::vector<double_t>>& points) const {
+    const std::span<std::vector<double_t>>& points) const {
     if (points.size() != 1) {
         throw TileDBSOMAError(
             "Multi points are not supported for geometry dimension");

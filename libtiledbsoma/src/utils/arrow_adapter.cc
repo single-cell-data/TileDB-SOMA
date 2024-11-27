@@ -1901,6 +1901,31 @@ std::unique_ptr<ArrowSchema> ArrowAdapter::make_arrow_schema(
     return arrow_schema;
 }
 
+std::unique_ptr<ArrowSchema> ArrowAdapter::make_arrow_schema_parent(
+    int num_columns) {
+    auto arrow_schema = std::make_unique<ArrowSchema>();
+    arrow_schema->format = "+s";  // structure, i.e. non-leaf node
+    arrow_schema->name = strdup("parent");
+    arrow_schema->metadata = nullptr;
+    arrow_schema->flags = 0;
+    arrow_schema->n_children = num_columns;  // non-leaf node
+    arrow_schema->children = (ArrowSchema**)malloc(
+        arrow_schema->n_children * sizeof(ArrowSchema*));
+    arrow_schema->dictionary = nullptr;
+    arrow_schema->release = &ArrowAdapter::release_schema;
+    arrow_schema->private_data = nullptr;
+
+    for (int i = 0; i < num_columns; i++) {
+        arrow_schema->children[i] = nullptr;
+    }
+
+    LOG_DEBUG(std::format(
+        "[ArrowAdapter] make_arrow_schema n_children {}",
+        arrow_schema->n_children));
+
+    return arrow_schema;
+}
+
 std::unique_ptr<ArrowArray> ArrowAdapter::make_arrow_array_parent(
     int num_columns) {
     auto arrow_array = std::make_unique<ArrowArray>();

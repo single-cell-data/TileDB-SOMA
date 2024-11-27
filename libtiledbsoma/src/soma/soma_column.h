@@ -39,6 +39,7 @@
 #include <any>
 #include <format>
 #include <optional>
+#include <span>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -67,7 +68,7 @@ class SOMAColumn {
     /**
      * Get the SOMAColumn name as defined in schema.
      */
-    virtual std::string_view name() const = 0;
+    virtual std::string name() const = 0;
 
     /**
      * If true, this column is used as index.
@@ -195,8 +196,9 @@ class SOMAColumn {
                 name()));
         }
 
+        T points[] = {point};
         this->_set_dim_points(
-            query, ctx, std::make_any<std::vector<T>>(std::vector<T>({point})));
+            query, ctx, std::make_any<std::span<T>>(std::span<T>(points)));
     }
 
     /**
@@ -212,15 +214,14 @@ class SOMAColumn {
     void set_dim_points(
         const std::unique_ptr<ManagedQuery>& query,
         const SOMAContext& ctx,
-        const std::vector<T>& points) const {
+        std::span<const T> points) const {
         if (!isIndexColumn()) {
             throw TileDBSOMAError(std::format(
                 "[SOMAColumn] Column with name {} is not an index column",
                 name()));
         }
 
-        this->_set_dim_points(
-            query, ctx, std::make_any<std::vector<T>>(points));
+        this->_set_dim_points(query, ctx, std::make_any<std::span<T>>(points));
     }
 
     /**

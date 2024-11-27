@@ -29,7 +29,7 @@ class SOMAGeometryColumn : public virtual SOMAColumn {
         : dimensions(dimensions)
         , attribute(attribute){};
 
-    virtual inline std::string_view name() const override {
+    virtual inline std::string name() const override {
         return SOMA_GEOMETRY_COLUMN_NAME;
     }
 
@@ -114,7 +114,7 @@ class SOMAGeometryColumn : public virtual SOMAColumn {
         const;
 
     std::vector<std::pair<double_t, double_t>> _transform_points(
-        const std::vector<std::vector<double_t>>& points) const;
+        const std::span<std::vector<double_t>>& points) const;
 };
 
 }  // namespace tiledbsoma

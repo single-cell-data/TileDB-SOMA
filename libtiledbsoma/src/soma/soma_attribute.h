@@ -28,7 +28,7 @@ class SOMAAttribute : public virtual SOMAColumn {
         , enumeration(enumeration) {
     }
 
-    virtual inline std::string_view name() const override {
+    virtual inline std::string name() const override {
         return attribute.name();
     }
 
