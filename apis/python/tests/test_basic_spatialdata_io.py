@@ -20,18 +20,16 @@ def experiment_with_single_scene(tmp_path_factory) -> soma.Experiment:
 
         # Create scene 1.
         scene1_uri = urljoin(urljoin(uri, "spatial"), "scene1")
-        obsl_uri = urljoin(scene1_uri, "obsl")
-        varl_uri = urljoin(scene1_uri, "varl")
-        img_uri = urljoin(scene1_uri, "img")
         exp.spatial["scene1"] = soma.Scene.create(scene1_uri)
         scene1 = exp.spatial["scene1"]
+        assert scene1_uri == scene1.uri
         scene1.coordinate_space = soma.CoordinateSpace.from_axis_names(
             ["x_scene1", "y_scene1"]
         )
-        scene1.obsl = soma.Collection.create(obsl_uri)
-        scene1.varl = soma.Collection.create(varl_uri)
+        scene1.add_new_collection("obsl")
+        scene1.add_new_collection("varl")
         scene1.varl.add_new_collection("RNA")
-        scene1.img = soma.Collection.create(img_uri)
+        scene1.add_new_collection("img")
 
         # Add point cloud with shape to scene 1.
         points1 = scene1.add_new_point_cloud_dataframe(
@@ -142,15 +140,14 @@ def test_outgest_no_spatial(tmp_path, conftest_pbmc_small):
 
 
 def test_outgest_spatial_only(experiment_with_single_scene):
-    print(experiment_with_single_scene)
+    # Export to SpatialData.
     sdata = spatial_outgest.to_spatial_data(experiment_with_single_scene)
 
     # Check the number assets is correct.
-    print(sdata)
     assert len(sdata.tables) == 0
-    assert len(sdata.points) == 1
-    assert len(sdata.shapes) == 1
     assert len(sdata.images) == 2
+    assert len(sdata.shapes) == 1
+    assert len(sdata.points) == 1
 
     # Check the values of the points.
     assert False  # TODO
