@@ -221,7 +221,8 @@ class SOMAColumn {
                 name()));
         }
 
-        this->_set_dim_points(query, ctx, std::make_any<std::span<T>>(points));
+        this->_set_dim_points(
+            query, ctx, std::make_any<std::span<const T>>(points));
     }
 
     /**

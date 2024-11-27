@@ -23,31 +23,38 @@ void SOMADimension::_set_dim_points(
     switch (dimension.type()) {
         case TILEDB_UINT8:
             query->select_points(
-                dimension.name(), std::any_cast<std::span<uint8_t>>(points));
+                dimension.name(),
+                std::any_cast<std::span<const uint8_t>>(points));
             break;
         case TILEDB_UINT16:
             query->select_points(
-                dimension.name(), std::any_cast<std::span<uint16_t>>(points));
+                dimension.name(),
+                std::any_cast<std::span<const uint16_t>>(points));
             break;
         case TILEDB_UINT32:
             query->select_points(
-                dimension.name(), std::any_cast<std::span<uint32_t>>(points));
+                dimension.name(),
+                std::any_cast<std::span<const uint32_t>>(points));
             break;
         case TILEDB_UINT64:
             query->select_points(
-                dimension.name(), std::any_cast<std::span<uint64_t>>(points));
+                dimension.name(),
+                std::any_cast<std::span<const uint64_t>>(points));
             break;
         case TILEDB_INT8:
             query->select_points(
-                dimension.name(), std::any_cast<std::span<int8_t>>(points));
+                dimension.name(),
+                std::any_cast<std::span<const int8_t>>(points));
             break;
         case TILEDB_INT16:
             query->select_points(
-                dimension.name(), std::any_cast<std::span<int16_t>>(points));
+                dimension.name(),
+                std::any_cast<std::span<const int16_t>>(points));
             break;
         case TILEDB_INT32:
             query->select_points(
-                dimension.name(), std::any_cast<std::span<int32_t>>(points));
+                dimension.name(),
+                std::any_cast<std::span<const int32_t>>(points));
             break;
         case TILEDB_DATETIME_YEAR:
         case TILEDB_DATETIME_MONTH:
@@ -64,22 +71,25 @@ void SOMADimension::_set_dim_points(
         case TILEDB_DATETIME_AS:
         case TILEDB_INT64:
             query->select_points(
-                dimension.name(), std::any_cast<std::span<int64_t>>(points));
+                dimension.name(),
+                std::any_cast<std::span<const int64_t>>(points));
             break;
         case TILEDB_FLOAT32:
             query->select_points(
-                dimension.name(), std::any_cast<std::span<float_t>>(points));
+                dimension.name(),
+                std::any_cast<std::span<const float_t>>(points));
             break;
         case TILEDB_FLOAT64:
             query->select_points(
-                dimension.name(), std::any_cast<std::span<double_t>>(points));
+                dimension.name(),
+                std::any_cast<std::span<const double_t>>(points));
             break;
         case TILEDB_STRING_ASCII:
         case TILEDB_CHAR:
         case TILEDB_BLOB:
             query->select_points(
                 dimension.name(),
-                std::any_cast<std::span<std::string>>(points));
+                std::any_cast<std::span<const std::string>>(points));
             break;
         default:
             throw TileDBSOMAError(std::format(

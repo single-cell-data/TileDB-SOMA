@@ -421,7 +421,7 @@ class SOMAArray : public SOMAObject {
         LOG_DEBUG(
             "[SOMAArray] set_dim_points: sizeof(T)=" +
             std::to_string(sizeof(T)));
-        get_column(dim)->set_dim_points(mq_, *ctx_, std::span<T>(points));
+        get_column(dim)->set_dim_points(mq_, *ctx_, std::span<const T>(points));
     }
 
     /**

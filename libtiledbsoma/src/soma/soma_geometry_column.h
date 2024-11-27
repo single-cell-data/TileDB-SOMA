@@ -114,7 +114,7 @@ class SOMAGeometryColumn : public virtual SOMAColumn {
         const;
 
     std::vector<std::pair<double_t, double_t>> _transform_points(
-        const std::span<std::vector<double_t>>& points) const;
+        const std::span<const std::vector<double_t>>& points) const;
 };
 
 }  // namespace tiledbsoma
