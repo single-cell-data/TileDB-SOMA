@@ -99,7 +99,7 @@ jobs:
       #   uses: lukka/get-cmake@latest
 
       #- name: MkVars
-      #  run: mkdir ~/.R && echo "CXX17FLAGS=-Wno-deprecated-declarations -Wno-deprecated" > ~/.R/Makevars
+      #  run: mkdir ~/.R && echo "CXX20FLAGS=-Wno-deprecated-declarations -Wno-deprecated" > ~/.R/Makevars
 
       #- name: Build and install libtiledbsoma
       #  run: sudo scripts/bld --prefix=/usr/local
