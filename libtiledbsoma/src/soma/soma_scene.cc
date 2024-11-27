@@ -49,6 +49,7 @@ void SOMAScene::create(
         auto group = SOMAGroup::create(
             ctx, scene_uri.string(), "SOMAScene", timestamp);
         // TODO: Set extra metadata.
+        // (See story: https://app.shortcut.com/tiledb-inc/story/59915)
         group->close();
     } catch (TileDBError& e) {
         throw TileDBSOMAError(e.what());
