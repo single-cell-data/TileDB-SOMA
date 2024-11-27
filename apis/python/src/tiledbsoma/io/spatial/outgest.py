@@ -500,7 +500,7 @@ def to_spatial_data(
                             soma_joinid_name=obs_id_name,
                         )
                     else:
-                        points[output_key] = to_spatial_data_shapes(
+                        points[output_key] = to_spatial_data_points(
                             df,
                             key=output_key,
                             scene_id=scene_id,
@@ -536,7 +536,7 @@ def to_spatial_data(
                                 soma_joinid_name=obs_id_name,
                             )
                         else:
-                            points[output_key] = to_spatial_data_shapes(
+                            points[output_key] = to_spatial_data_points(
                                 df,
                                 key=output_key,
                                 scene_id=scene_id,
