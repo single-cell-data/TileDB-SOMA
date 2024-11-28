@@ -1380,10 +1380,13 @@ class SOMAArray : public SOMAObject {
     StatusAndReason _can_set_dataframe_domainish_slot_checker_non_string(
         bool check_current_domain,
         const ArrowTable& domain_table,
-        std::string dim_name) {
+        std::shared_ptr<SOMAColumn> column) {
+        const std::string& dim_name = column->name();
         std::pair<T, T> old_lo_hi = check_current_domain ?
-                                        _core_current_domain_slot<T>(dim_name) :
-                                        _core_domain_slot<T>(dim_name);
+                                        column->core_current_domain_slot<T>(
+                                            *ctx_, *arr_) :
+                                        column->core_domain_slot<T>();
+
         std::vector<T>
             new_lo_hi = ArrowAdapter::get_table_non_string_column_by_name<T>(
                 domain_table, dim_name);
@@ -1446,10 +1449,10 @@ class SOMAArray : public SOMAObject {
     StatusAndReason _can_set_dataframe_domainish_slot_checker_string(
         bool /*check_current_domain*/,
         const ArrowTable& domain_table,
-        std::string dim_name) {
+        std::shared_ptr<SOMAColumn> column) {
         std::vector<std::string>
             new_lo_hi = ArrowAdapter::get_table_string_column_by_name(
-                domain_table, dim_name);
+                domain_table, column->name());
         if (new_lo_hi.size() != 2) {
             throw TileDBSOMAError(
                 "internal coding error detected at "
