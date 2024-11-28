@@ -92,7 +92,7 @@ class SOMAGeometryColumn : public virtual SOMAColumn {
 
     virtual void _set_current_domain_slot(
         NDRectangle& rectangle,
-        const std::vector<const void*>& domain) const override;
+        std::span<const std::any> domain) const override;
 
     virtual std::any _core_domain_slot() const override;
 

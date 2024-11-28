@@ -192,9 +192,71 @@ void SOMADimension::_set_dim_ranges(
 }
 
 void SOMADimension::_set_current_domain_slot(
-    NDRectangle& rectangle, const std::vector<const void*>& domain) const {
-    ArrowAdapter::set_current_domain_slot(
-        dimension.type(), domain.front(), rectangle, dimension.name());
+    NDRectangle& rectangle, std::span<const std::any> domain) const {
+    if (domain.size() != 1) {
+        throw TileDBSOMAError(std::format(
+            "[SOMADimension][_set_current_domain_slot] Invalid domain size. "
+            "Expected 1, got {}",
+            domain.size()));
+    }
+
+    switch (dimension.type()) {
+        case TILEDB_UINT8: {
+            auto dom = std::any_cast<std::array<uint8_t, 2>>(domain[0]);
+            rectangle.set_range<uint8_t>(dimension.name(), dom[0], dom[1]);
+        } break;
+        case TILEDB_UINT16: {
+            auto dom = std::any_cast<std::array<uint16_t, 2>>(domain[0]);
+            rectangle.set_range<uint16_t>(dimension.name(), dom[0], dom[1]);
+        } break;
+        case TILEDB_UINT32: {
+            auto dom = std::any_cast<std::array<uint32_t, 2>>(domain[0]);
+            rectangle.set_range<uint32_t>(dimension.name(), dom[0], dom[1]);
+        } break;
+        case TILEDB_UINT64: {
+            auto dom = std::any_cast<std::array<uint64_t, 2>>(domain[0]);
+            rectangle.set_range<uint64_t>(dimension.name(), dom[0], dom[1]);
+        } break;
+        case TILEDB_INT8: {
+            auto dom = std::any_cast<std::array<int8_t, 2>>(domain[0]);
+            rectangle.set_range<int8_t>(dimension.name(), dom[0], dom[1]);
+        } break;
+        case TILEDB_INT16: {
+            auto dom = std::any_cast<std::array<int16_t, 2>>(domain[0]);
+            rectangle.set_range<int16_t>(dimension.name(), dom[0], dom[1]);
+        } break;
+        case TILEDB_INT32: {
+            auto dom = std::any_cast<std::array<int32_t, 2>>(domain[0]);
+            rectangle.set_range<int32_t>(dimension.name(), dom[0], dom[1]);
+        } break;
+        case TILEDB_DATETIME_YEAR:
+        case TILEDB_DATETIME_MONTH:
+        case TILEDB_DATETIME_WEEK:
+        case TILEDB_DATETIME_DAY:
+        case TILEDB_DATETIME_HR:
+        case TILEDB_DATETIME_MIN:
+        case TILEDB_DATETIME_SEC:
+        case TILEDB_DATETIME_MS:
+        case TILEDB_DATETIME_US:
+        case TILEDB_DATETIME_NS:
+        case TILEDB_DATETIME_PS:
+        case TILEDB_DATETIME_FS:
+        case TILEDB_DATETIME_AS:
+        case TILEDB_INT64: {
+            auto dom = std::any_cast<std::array<int64_t, 2>>(domain[0]);
+            rectangle.set_range<int64_t>(dimension.name(), dom[0], dom[1]);
+        } break;
+        case TILEDB_FLOAT32: {
+            auto dom = std::any_cast<std::array<float_t, 2>>(domain[0]);
+            rectangle.set_range<float_t>(dimension.name(), dom[0], dom[1]);
+        } break;
+        case TILEDB_FLOAT64: {
+            auto dom = std::any_cast<std::array<double_t, 2>>(domain[0]);
+            rectangle.set_range<double_t>(dimension.name(), dom[0], dom[1]);
+        } break;
+        default:
+            break;
+    }
 }
 
 std::any SOMADimension::_core_domain_slot() const {

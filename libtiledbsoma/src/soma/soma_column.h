@@ -161,19 +161,36 @@ class SOMAColumn {
     /**
      * Set the current domain of this SOMAColumn.
      *
+     * @tparam T
      * @param rectangle The current domain rectangle to modify.
      * @param domain A vector of void pointers to the the current domain data
      * buffers.
      */
+    template <typename T>
     void set_current_domain_slot(
-        NDRectangle& rectangle, const std::vector<const void*>& domain) const {
+        NDRectangle& rectangle, const std::vector<T>& domain) const {
         if (!isIndexColumn()) {
             throw TileDBSOMAError(std::format(
-                "[SOMAColumn] Column with name {} is not an index column",
+                "[SOMAColumn][set_current_domain_slot] Column with name {} is "
+                "not an index column",
                 name()));
         }
 
-        _set_current_domain_slot(rectangle, domain);
+        if (domain.size() % 2 != 0) {
+            throw TileDBSOMAError(std::format(
+                "[SOMAColumn][set_current_domain_slot] Provided domain for "
+                "column {} has missing values",
+                name()));
+        }
+
+        std::vector<std::any> transformed_domain;
+        size_t dim_count = domain.size() / 2;
+        for (size_t i = 0; i < dim_count; ++i) {
+            transformed_domain.push_back(std::make_any<std::array<T, 2>>(
+                std::array<T, 2>({domain[i], domain[i + dim_count]})));
+        }
+
+        _set_current_domain_slot(rectangle, transformed_domain);
     }
 
     /**
@@ -198,7 +215,9 @@ class SOMAColumn {
 
         T points[] = {point};
         this->_set_dim_points(
-            query, ctx, std::make_any<std::span<T>>(std::span<T>(points)));
+            query,
+            ctx,
+            std::make_any<std::span<const T>>(std::span<const T>(points)));
     }
 
     /**
@@ -324,8 +343,7 @@ class SOMAColumn {
         const std::any& ranges) const = 0;
 
     virtual void _set_current_domain_slot(
-        NDRectangle& rectangle,
-        const std::vector<const void*>& domain) const = 0;
+        NDRectangle& rectangle, std::span<const std::any> domain) const = 0;
 
     virtual std::any _core_domain_slot() const = 0;
 

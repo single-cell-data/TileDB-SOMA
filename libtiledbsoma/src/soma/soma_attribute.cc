@@ -34,7 +34,7 @@ void SOMAAttribute::_set_dim_ranges(
 }
 
 void SOMAAttribute::_set_current_domain_slot(
-    NDRectangle&, const std::vector<const void*>&) const {
+    NDRectangle&, std::span<const std::any>) const {
     throw TileDBSOMAError(std::format(
         "[SOMAAttribute][_set_current_domain_slot] Column with name {} is not "
         "an index column",

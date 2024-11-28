@@ -109,7 +109,7 @@ void SOMAGeometryColumn::_set_dim_ranges(
 }
 
 void SOMAGeometryColumn::_set_current_domain_slot(
-    NDRectangle& rectangle, const std::vector<const void*>& domain) const {
+    NDRectangle& rectangle, std::span<const std::any> domain) const {
     if (2 * domain.size() != dimensions.size()) {
         throw TileDBSOMAError(std::format(
             "[SOMAGeometryColumn] Dimension - Current Domain mismatch. "
@@ -119,15 +119,14 @@ void SOMAGeometryColumn::_set_current_domain_slot(
     }
 
     for (size_t i = 0; i < domain.size(); ++i) {
-        const auto& dimension = dimensions[i];
-        ArrowAdapter::set_current_domain_slot(
-            dimension.type(), domain[i], rectangle, dimension.name());
+        auto dom = std::any_cast<std::span<double_t, 2>>(domain[i]);
+        rectangle.set_range<double_t>(dimensions[i].name(), dom[0], dom[1]);
     }
 
     for (size_t i = 0; i < domain.size(); ++i) {
-        const auto& dimension = dimensions[i + domain.size()];
-        ArrowAdapter::set_current_domain_slot(
-            dimension.type(), domain[i], rectangle, dimension.name());
+        auto dom = std::any_cast<std::span<double_t, 2>>(domain[i]);
+        rectangle.set_range<double_t>(
+            dimensions[i + domain.size()].name(), dom[0], dom[1]);
     }
 }
 
