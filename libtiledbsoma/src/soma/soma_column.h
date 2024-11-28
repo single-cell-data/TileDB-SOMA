@@ -163,8 +163,8 @@ class SOMAColumn {
      *
      * @tparam T
      * @param rectangle The current domain rectangle to modify.
-     * @param domain A vector of void pointers to the the current domain data
-     * buffers.
+     * @param domain A vector of the n-dimensional domain in the form
+     * [dim_0_min, dim_1_min, ..., dim_n_max]
      */
     template <typename T>
     void set_current_domain_slot(
@@ -191,6 +191,26 @@ class SOMAColumn {
         }
 
         _set_current_domain_slot(rectangle, transformed_domain);
+    }
+
+    /**
+     * Set the multi-type current domain of this SOMAColumn.
+     *
+     * @tparam T
+     * @param rectangle The current domain rectangle to modify.
+     * @param domain A vector holding std::arrays with 2 elements each [min,
+     * max], casted as std::any
+     */
+    void set_current_domain_slot(
+        NDRectangle& rectangle, const std::vector<std::any>& domain) const {
+        if (!isIndexColumn()) {
+            throw TileDBSOMAError(std::format(
+                "[SOMAColumn][set_current_domain_slot] Column with name {} is "
+                "not an index column",
+                name()));
+        }
+
+        _set_current_domain_slot(rectangle, domain);
     }
 
     /**
