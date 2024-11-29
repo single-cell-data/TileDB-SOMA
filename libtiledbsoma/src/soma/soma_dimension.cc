@@ -254,8 +254,30 @@ void SOMADimension::_set_current_domain_slot(
             auto dom = std::any_cast<std::array<double_t, 2>>(domain[0]);
             rectangle.set_range<double_t>(dimension.name(), dom[0], dom[1]);
         } break;
+        case TILEDB_STRING_ASCII:
+        case TILEDB_STRING_UTF8:
+        case TILEDB_CHAR:
+        case TILEDB_BLOB:
+        case TILEDB_GEOM_WKT:
+        case TILEDB_GEOM_WKB: {
+            auto dom = std::any_cast<std::array<std::string, 2>>(domain[0]);
+
+            if (dom[0] == "" && dom[1] == "") {
+                rectangle.set_range(dimension.name(), "", "\x7f");
+            } else {
+                throw TileDBSOMAError(std::format(
+                    "[SOMADimension][_set_current_domain_slot] domain (\"{}\", "
+                    "\"{}\") cannot be set for "
+                    "string index columns: please use "
+                    "(\"\", \"\")",
+                    dom[0],
+                    dom[1]));
+            }
+        } break;
         default:
-            break;
+            throw TileDBSOMAError(std::format(
+                "[SOMADimension][_set_current_domain_slot] Unknown datatype {}",
+                tiledb::impl::type_to_str(dimension.type())));
     }
 }
 
