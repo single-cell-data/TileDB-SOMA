@@ -41,6 +41,15 @@ void SOMAAttribute::_set_current_domain_slot(
         name()));
 }
 
+std::pair<bool, std::string> SOMAAttribute::_can_set_current_domain_slot(
+    std::optional<NDRectangle>& rectangle,
+    std::span<const std::any> new_domain) const {
+    throw TileDBSOMAError(std::format(
+        "[SOMAAttribute][_set_current_domain_slot] Column with name {} is not "
+        "an index column",
+        name()));
+};
+
 std::any SOMAAttribute::_core_domain_slot() const {
     throw TileDBSOMAError(std::format(
         "[SOMAAttribute][_core_domain_slot] Column with name {} is not an "
@@ -57,6 +66,13 @@ std::any SOMAAttribute::_non_empty_domain_slot(Array&) const {
 
 std::any SOMAAttribute::_core_current_domain_slot(
     const SOMAContext&, Array&) const {
+    throw TileDBSOMAError(std::format(
+        "[SOMAAttribute][_core_current_domain_slot] Column with name {} is not "
+        "an index column",
+        name()));
+}
+
+std::any SOMAAttribute::_core_current_domain_slot(NDRectangle&) const {
     throw TileDBSOMAError(std::format(
         "[SOMAAttribute][_core_current_domain_slot] Column with name {} is not "
         "an index column",

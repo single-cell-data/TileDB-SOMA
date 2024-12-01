@@ -201,7 +201,8 @@ void SOMADimension::_set_current_domain_slot(
     }
 
     switch (dimension.type()) {
-        case TILEDB_UINT8: {
+        case TILEDB_UINT8:
+        case TILEDB_BOOL: {
             auto dom = std::any_cast<std::array<uint8_t, 2>>(domain[0]);
             rectangle.set_range<uint8_t>(dimension.name(), dom[0], dom[1]);
         } break;
@@ -277,6 +278,141 @@ void SOMADimension::_set_current_domain_slot(
         default:
             throw TileDBSOMAError(std::format(
                 "[SOMADimension][_set_current_domain_slot] Unknown datatype {}",
+                tiledb::impl::type_to_str(dimension.type())));
+    }
+}
+
+std::pair<bool, std::string> SOMADimension::_can_set_current_domain_slot(
+    std::optional<NDRectangle>& rectangle,
+    std::span<const std::any> new_domain) const {
+    if (new_domain.size() != 1) {
+        throw TileDBSOMAError(std::format(
+            "[SOMADimension][_can_set_current_domain_slot] Expected domain "
+            "size is 1, found {}",
+            new_domain.size()));
+    }
+
+    auto comparator =
+        [&]<typename T>(
+            const std::array<T, 2>& new_dom) -> std::pair<bool, std::string> {
+        if (new_dom[0] > new_dom[1]) {
+            return std::pair(
+                false,
+                std::format(
+                    "index-column name {}: new lower > new upper",
+                    dimension.name()));
+        }
+
+        // If we're checking against the core current domain: the user-provided
+        // domain must contain the core current domain.
+        //
+        // If we're checking against the core (max) domain: the user-provided
+        // domain must be contained within the core (max) domain.
+
+        if (rectangle.has_value()) {
+            auto dom = rectangle.value().range<T>(dimension.name());
+
+            if (new_dom[0] > dom[0]) {
+                return std::pair(
+                    false,
+                    std::format(
+                        "index-column name {}: new lower > old lower (downsize "
+                        "is unsupported)",
+                        dimension.name()));
+            }
+            if (new_dom[1] < dom[1]) {
+                return std::pair(
+                    false,
+                    std::format(
+                        "index-column name {}: new upper < old upper (downsize "
+                        "is unsupported)",
+                        dimension.name()));
+            }
+        } else {
+            auto dom = std::any_cast<std::pair<T, T>>(_core_domain_slot());
+
+            if (new_dom[0] > dom.first) {
+                return std::pair(
+                    false,
+                    std::format(
+                        "index-column name {}: new lower < limit lower",
+                        dimension.name()));
+            }
+            if (new_dom[1] < dom.second) {
+                return std::pair(
+                    false,
+                    std::format(
+                        "index-column name {}: new upper > limit upper",
+                        dimension.name()));
+            }
+        }
+
+        return std::pair(true, "");
+    };
+
+    switch (dimension.type()) {
+        case TILEDB_UINT8:
+            return comparator(
+                std::any_cast<std::array<uint8_t, 2>>(new_domain));
+        case TILEDB_UINT16:
+            return comparator(
+                std::any_cast<std::array<uint16_t, 2>>(new_domain));
+        case TILEDB_UINT32:
+            return comparator(
+                std::any_cast<std::array<uint32_t, 2>>(new_domain));
+        case TILEDB_UINT64:
+            return comparator(
+                std::any_cast<std::array<uint64_t, 2>>(new_domain));
+        case TILEDB_INT8:
+            return comparator(std::any_cast<std::array<int8_t, 2>>(new_domain));
+        case TILEDB_INT16:
+            return comparator(
+                std::any_cast<std::array<int16_t, 2>>(new_domain));
+        case TILEDB_INT32:
+            return comparator(
+                std::any_cast<std::array<int32_t, 2>>(new_domain));
+        case TILEDB_DATETIME_YEAR:
+        case TILEDB_DATETIME_MONTH:
+        case TILEDB_DATETIME_WEEK:
+        case TILEDB_DATETIME_DAY:
+        case TILEDB_DATETIME_HR:
+        case TILEDB_DATETIME_MIN:
+        case TILEDB_DATETIME_SEC:
+        case TILEDB_DATETIME_MS:
+        case TILEDB_DATETIME_US:
+        case TILEDB_DATETIME_NS:
+        case TILEDB_DATETIME_PS:
+        case TILEDB_DATETIME_FS:
+        case TILEDB_DATETIME_AS:
+        case TILEDB_INT64:
+            return comparator(
+                std::any_cast<std::array<int64_t, 2>>(new_domain));
+        case TILEDB_FLOAT32:
+            return comparator(
+                std::any_cast<std::array<float_t, 2>>(new_domain));
+        case TILEDB_FLOAT64:
+            return comparator(
+                std::any_cast<std::array<double_t, 2>>(new_domain));
+        case TILEDB_STRING_ASCII:
+        case TILEDB_STRING_UTF8:
+        case TILEDB_CHAR:
+        case TILEDB_BLOB:
+        case TILEDB_GEOM_WKT:
+        case TILEDB_GEOM_WKB: {
+            auto dom = std::any_cast<std::array<std::string, 2>>(new_domain);
+            if (dom[0] != "" || dom[1] != "") {
+                return std::pair(
+                    false,
+                    "domain cannot be set for string index columns: please use "
+                    "(\"\", \"\")");
+            }
+
+            return std::pair(true, "");
+        }
+        default:
+            throw TileDBSOMAError(std::format(
+                "[SOMADimension][_can_set_current_domain_slot] Unknown dataype "
+                "{}",
                 tiledb::impl::type_to_str(dimension.type())));
     }
 }
@@ -399,6 +535,10 @@ std::any SOMADimension::_core_current_domain_slot(
             *ctx.tiledb_ctx(), array.schema());
     NDRectangle ndrect = current_domain.ndrectangle();
 
+    return _core_current_domain_slot(ndrect);
+}
+
+std::any SOMADimension::_core_current_domain_slot(NDRectangle& ndrect) const {
     switch (dimension.type()) {
         case TILEDB_UINT8: {
             std::array<uint8_t, 2> domain = ndrect.range<uint8_t>(

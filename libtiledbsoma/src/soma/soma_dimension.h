@@ -90,12 +90,19 @@ class SOMADimension : public virtual SOMAColumn {
         NDRectangle& rectangle,
         std::span<const std::any> domain) const override;
 
+    virtual std::pair<bool, std::string> _can_set_current_domain_slot(
+        std::optional<NDRectangle>& rectangle,
+        std::span<const std::any> new_domain) const override;
+
     virtual std::any _core_domain_slot() const override;
 
     virtual std::any _non_empty_domain_slot(Array& array) const override;
 
     virtual std::any _core_current_domain_slot(
         const SOMAContext& ctx, Array& array) const override;
+
+    virtual std::any _core_current_domain_slot(
+        NDRectangle& ndrect) const override;
 
    private:
     Dimension dimension;

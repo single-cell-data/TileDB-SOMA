@@ -214,6 +214,27 @@ class SOMAColumn {
     }
 
     /**
+     * Set the multi-type current domain of this SOMAColumn.
+     *
+     * @tparam T
+     * @param rectangle The current domain rectangle to modify.
+     * @param domain A vector holding std::arrays with 2 elements each [min,
+     * max], casted as std::any
+     */
+    std::pair<bool, std::string> can_set_current_domain_slot(
+        std::optional<NDRectangle>& rectangle,
+        const std::vector<std::any>& new_domain) const {
+        if (!isIndexColumn()) {
+            throw TileDBSOMAError(std::format(
+                "[SOMAColumn][set_current_domain_slot] Column with name {} is "
+                "not an index column",
+                name()));
+        }
+
+        return _can_set_current_domain_slot(rectangle, new_domain);
+    }
+
+    /**
      * @brief Set the dimension slice using one point
      *
      * @note Partitioning is not supported
@@ -351,6 +372,31 @@ class SOMAColumn {
         }
     }
 
+    /**
+     * Returns the core current domain of this column from the supplied
+     * NDRectangle.
+     *
+     * o For arrays with core current-domain support:
+     *   - soma domain is core current domain
+     *   - soma maxdomain is core domain
+     * o For arrays without core current-domain support:
+     *   - soma domain is core domain
+     *   - soma maxdomain is core domain
+     *   - core current domain is not accessed at the soma level
+     *
+     * @tparam T Domain datatype
+     * @return Pair of [lower, upper] inclusive bounds.
+     */
+    template <typename T>
+    std::pair<T, T> core_current_domain_slot(NDRectangle& ndrect) const {
+        try {
+            return std::any_cast<std::pair<T, T>>(
+                _core_current_domain_slot(ndrect));
+        } catch (const std::exception& e) {
+            throw TileDBSOMAError(e.what());
+        }
+    }
+
    protected:
     virtual void _set_dim_points(
         const std::unique_ptr<ManagedQuery>& query,
@@ -365,12 +411,18 @@ class SOMAColumn {
     virtual void _set_current_domain_slot(
         NDRectangle& rectangle, std::span<const std::any> domain) const = 0;
 
+    virtual std::pair<bool, std::string> _can_set_current_domain_slot(
+        std::optional<NDRectangle>& rectangle,
+        std::span<const std::any> new_domain) const = 0;
+
     virtual std::any _core_domain_slot() const = 0;
 
     virtual std::any _non_empty_domain_slot(Array& array) const = 0;
 
     virtual std::any _core_current_domain_slot(
         const SOMAContext& ctx, Array& array) const = 0;
+
+    virtual std::any _core_current_domain_slot(NDRectangle& ndrect) const = 0;
 };
 
 template <>

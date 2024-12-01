@@ -130,6 +130,93 @@ void SOMAGeometryColumn::_set_current_domain_slot(
     }
 }
 
+std::pair<bool, std::string> SOMAGeometryColumn::_can_set_current_domain_slot(
+    std::optional<NDRectangle>& rectangle,
+    std::span<const std::any> new_domain) const {
+    if (new_domain.size() != dimensions.size() / 2) {
+        throw TileDBSOMAError(std::format(
+            "[SOMADimension][_can_set_current_domain_slot] Expected domain "
+            "size is 2, found {}",
+            new_domain.size()));
+    }
+
+    for (size_t i = 0; i < new_domain.size(); ++i) {
+        auto new_dom = std::any_cast<std::array<double_t, 2>>(new_domain[i]);
+
+        if (new_dom[0] > new_dom[1]) {
+            return std::pair(
+                false,
+                std::format(
+                    "index-column name {}: new lower > new upper",
+                    dimensions[i].name()));
+        }
+
+        auto dimension_min = dimensions[i];
+        auto dimension_max = dimensions[i + dimensions.size() / 2];
+
+        if (rectangle.has_value()) {
+            auto dom_min = rectangle.value().range<double_t>(
+                dimension_min.name());
+            auto dom_max = rectangle.value().range<double_t>(
+                dimension_max.name());
+
+            if (new_dom[0] > dom_min[0]) {
+                return std::pair(
+                    false,
+                    std::format(
+                        "index-column name {}: new lower > old lower (downsize "
+                        "is unsupported)",
+                        dimension_min.name()));
+            }
+            if (new_dom[0] > dom_max[0]) {
+                return std::pair(
+                    false,
+                    std::format(
+                        "index-column name {}: new lower > old lower (downsize "
+                        "is unsupported)",
+                        dimension_max.name()));
+            }
+            if (new_dom[1] < dom_min[1]) {
+                return std::pair(
+                    false,
+                    std::format(
+                        "index-column name {}: new upper < old upper (downsize "
+                        "is unsupported)",
+                        dimension_min.name()));
+            }
+            if (new_dom[1] < dom_max[1]) {
+                return std::pair(
+                    false,
+                    std::format(
+                        "index-column name {}: new upper < old upper (downsize "
+                        "is unsupported)",
+                        dimension_max.name()));
+            }
+        } else {
+            auto dom = std::any_cast<
+                std::pair<std::vector<double_t>, std::vector<double_t>>>(
+                _core_domain_slot());
+
+            if (new_dom[0] > dom.first[i]) {
+                return std::pair(
+                    false,
+                    std::format(
+                        "index-column name {}: new lower < limit lower",
+                        dimension_min.name()));
+            }
+            if (new_dom[1] < dom.second[i]) {
+                return std::pair(
+                    false,
+                    std::format(
+                        "index-column name {}: new upper > limit upper",
+                        dimension_min.name()));
+            }
+        }
+    }
+
+    return std::pair(true, "");
+}
+
 std::vector<std::pair<double_t, double_t>> SOMAGeometryColumn::_limits(
     const SOMAContext& ctx, const ArraySchema& schema) const {
     std::vector<std::pair<double_t, double_t>> limits;
@@ -227,11 +314,17 @@ std::any SOMAGeometryColumn::_non_empty_domain_slot(Array& array) const {
 
 std::any SOMAGeometryColumn::_core_current_domain_slot(
     const SOMAContext& ctx, Array& array) const {
-    std::vector<double_t> min, max;
     CurrentDomain
         current_domain = tiledb::ArraySchemaExperimental::current_domain(
             *ctx.tiledb_ctx(), array.schema());
     NDRectangle ndrect = current_domain.ndrectangle();
+
+    return _core_current_domain_slot(ndrect);
+}
+
+std::any SOMAGeometryColumn::_core_current_domain_slot(
+    NDRectangle& ndrect) const {
+    std::vector<double_t> min, max;
 
     for (size_t i = 0; i < dimensions.size() / 2; ++i) {
         std::array<double_t, 2> domain = ndrect.range<double_t>(
