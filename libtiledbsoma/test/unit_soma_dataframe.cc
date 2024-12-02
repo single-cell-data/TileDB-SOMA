@@ -534,23 +534,23 @@ TEST_CASE_METHOD(
 
         // Check domainish accessors before resize
         ArrowTable non_empty_domain = sdf->get_non_empty_domain();
-        std::vector<int64_t> ned_sjid =
-            ArrowAdapter::get_table_non_string_column_by_name<int64_t>(
-                non_empty_domain, "soma_joinid");
+        std::array<int64_t, 2>
+            ned_sjid = ArrowAdapter::get_table_column_by_name<int64_t, 2>(
+                non_empty_domain, "soma_joinid")[0];
 
         ArrowTable soma_domain = sdf->get_soma_domain();
-        std::vector<int64_t> dom_sjid =
-            ArrowAdapter::get_table_non_string_column_by_name<int64_t>(
-                soma_domain, "soma_joinid");
+        std::array<int64_t, 2>
+            dom_sjid = ArrowAdapter::get_table_column_by_name<int64_t, 2>(
+                soma_domain, "soma_joinid")[0];
 
         ArrowTable soma_maxdomain = sdf->get_soma_maxdomain();
-        std::vector<int64_t> maxdom_sjid =
-            ArrowAdapter::get_table_non_string_column_by_name<int64_t>(
-                soma_maxdomain, "soma_joinid");
+        std::array<int64_t, 2>
+            maxdom_sjid = ArrowAdapter::get_table_column_by_name<int64_t, 2>(
+                soma_maxdomain, "soma_joinid")[0];
 
-        REQUIRE(ned_sjid == std::vector<int64_t>({1, 2}));
+        REQUIRE(ned_sjid == std::array<int64_t, 2>({1, 2}));
 
-        REQUIRE(dom_sjid == std::vector<int64_t>({0, SOMA_JOINID_DIM_MAX}));
+        REQUIRE(dom_sjid == std::array<int64_t, 2>({0, SOMA_JOINID_DIM_MAX}));
 
         REQUIRE(maxdom_sjid.size() == 2);
         REQUIRE(maxdom_sjid[0] == 0);
@@ -652,20 +652,21 @@ TEST_CASE_METHOD(
         sdf->open(OpenMode::read);
 
         non_empty_domain = sdf->get_non_empty_domain();
-        ned_sjid = ArrowAdapter::get_table_non_string_column_by_name<int64_t>(
-            non_empty_domain, "soma_joinid");
+        ned_sjid = ArrowAdapter::get_table_column_by_name<int64_t, 2>(
+            non_empty_domain, "soma_joinid")[0];
 
         soma_domain = sdf->get_soma_domain();
-        dom_sjid = ArrowAdapter::get_table_non_string_column_by_name<int64_t>(
-            soma_domain, "soma_joinid");
+        dom_sjid = ArrowAdapter::get_table_column_by_name<int64_t, 2>(
+            soma_domain, "soma_joinid")[0];
 
         soma_maxdomain = sdf->get_soma_maxdomain();
-        maxdom_sjid = ArrowAdapter::get_table_non_string_column_by_name<
-            int64_t>(soma_maxdomain, "soma_joinid");
+        maxdom_sjid = ArrowAdapter::get_table_column_by_name<int64_t, 2>(
+            soma_maxdomain, "soma_joinid")[0];
 
-        REQUIRE(ned_sjid == std::vector<int64_t>({1, 101}));
+        REQUIRE(ned_sjid == std::array<int64_t, 2>({1, 101}));
         REQUIRE(
-            dom_sjid == std::vector<int64_t>({0, SOMA_JOINID_RESIZE_DIM_MAX}));
+            dom_sjid ==
+            std::array<int64_t, 2>({0, SOMA_JOINID_RESIZE_DIM_MAX}));
         REQUIRE(maxdom_sjid.size() == 2);
         REQUIRE(maxdom_sjid[0] == 0);
         REQUIRE(maxdom_sjid[1] > 2000000000);
@@ -771,34 +772,34 @@ TEST_CASE_METHOD(
         sdf->open(OpenMode::read);
 
         ArrowTable non_empty_domain = sdf->get_non_empty_domain();
-        std::vector<int64_t> ned_sjid =
-            ArrowAdapter::get_table_non_string_column_by_name<int64_t>(
-                non_empty_domain, "soma_joinid");
-        std::vector<uint32_t> ned_u32 =
-            ArrowAdapter::get_table_non_string_column_by_name<uint32_t>(
-                non_empty_domain, "myuint32");
+        std::array<int64_t, 2>
+            ned_sjid = ArrowAdapter::get_table_column_by_name<int64_t, 2>(
+                non_empty_domain, "soma_joinid")[0];
+        std::array<uint32_t, 2>
+            ned_u32 = ArrowAdapter::get_table_column_by_name<uint32_t, 2>(
+                non_empty_domain, "myuint32")[0];
 
         ArrowTable soma_domain = sdf->get_soma_domain();
-        std::vector<int64_t> dom_sjid =
-            ArrowAdapter::get_table_non_string_column_by_name<int64_t>(
-                soma_domain, "soma_joinid");
-        std::vector<uint32_t> dom_u32 =
-            ArrowAdapter::get_table_non_string_column_by_name<uint32_t>(
-                soma_domain, "myuint32");
+        std::array<int64_t, 2>
+            dom_sjid = ArrowAdapter::get_table_column_by_name<int64_t, 2>(
+                soma_domain, "soma_joinid")[0];
+        std::array<uint32_t, 2>
+            dom_u32 = ArrowAdapter::get_table_column_by_name<uint32_t, 2>(
+                soma_domain, "myuint32")[0];
 
         ArrowTable soma_maxdomain = sdf->get_soma_maxdomain();
-        std::vector<int64_t> maxdom_sjid =
-            ArrowAdapter::get_table_non_string_column_by_name<int64_t>(
-                soma_maxdomain, "soma_joinid");
-        std::vector<uint32_t> maxdom_u32 =
-            ArrowAdapter::get_table_non_string_column_by_name<uint32_t>(
-                soma_maxdomain, "myuint32");
+        std::array<int64_t, 2>
+            maxdom_sjid = ArrowAdapter::get_table_column_by_name<int64_t, 2>(
+                soma_maxdomain, "soma_joinid")[0];
+        std::array<uint32_t, 2>
+            maxdom_u32 = ArrowAdapter::get_table_column_by_name<uint32_t, 2>(
+                soma_maxdomain, "myuint32")[0];
 
-        REQUIRE(ned_sjid == std::vector<int64_t>({1, 10}));
-        REQUIRE(ned_u32 == std::vector<uint32_t>({1234, 5678}));
+        REQUIRE(ned_sjid == std::array<int64_t, 2>({1, 10}));
+        REQUIRE(ned_u32 == std::array<uint32_t, 2>({1234, 5678}));
 
-        REQUIRE(dom_sjid == std::vector<int64_t>({0, 99}));
-        REQUIRE(dom_u32 == std::vector<uint32_t>({0, 9999}));
+        REQUIRE(dom_sjid == std::array<int64_t, 2>({0, 99}));
+        REQUIRE(dom_u32 == std::array<uint32_t, 2>({0, 9999}));
 
         REQUIRE(maxdom_sjid.size() == 2);
         REQUIRE(maxdom_u32.size() == 2);
@@ -902,31 +903,31 @@ TEST_CASE_METHOD(
         sdf->open(OpenMode::read);
 
         non_empty_domain = sdf->get_non_empty_domain();
-        ned_sjid = ArrowAdapter::get_table_non_string_column_by_name<int64_t>(
-            non_empty_domain, "soma_joinid");
-        ned_u32 = ArrowAdapter::get_table_non_string_column_by_name<uint32_t>(
-            non_empty_domain, "myuint32");
+        ned_sjid = ArrowAdapter::get_table_column_by_name<int64_t, 2>(
+            non_empty_domain, "soma_joinid")[0];
+        ned_u32 = ArrowAdapter::get_table_column_by_name<uint32_t, 2>(
+            non_empty_domain, "myuint32")[0];
 
         soma_domain = sdf->get_soma_domain();
-        dom_sjid = ArrowAdapter::get_table_non_string_column_by_name<int64_t>(
-            soma_domain, "soma_joinid");
-        dom_u32 = ArrowAdapter::get_table_non_string_column_by_name<uint32_t>(
-            soma_domain, "myuint32");
+        dom_sjid = ArrowAdapter::get_table_column_by_name<int64_t, 2>(
+            soma_domain, "soma_joinid")[0];
+        dom_u32 = ArrowAdapter::get_table_column_by_name<uint32_t, 2>(
+            soma_domain, "myuint32")[0];
 
         soma_maxdomain = sdf->get_soma_maxdomain();
-        maxdom_sjid = ArrowAdapter::get_table_non_string_column_by_name<
-            int64_t>(soma_maxdomain, "soma_joinid");
-        maxdom_u32 = ArrowAdapter::get_table_non_string_column_by_name<
-            uint32_t>(soma_maxdomain, "myuint32");
+        maxdom_sjid = ArrowAdapter::get_table_column_by_name<int64_t, 2>(
+            soma_maxdomain, "soma_joinid")[0];
+        maxdom_u32 = ArrowAdapter::get_table_column_by_name<uint32_t, 2>(
+            soma_maxdomain, "myuint32")[0];
 
-        REQUIRE(ned_sjid == std::vector<int64_t>({1, 101}));
-        REQUIRE(ned_u32 == std::vector<uint32_t>({1234, 5678}));
+        REQUIRE(ned_sjid == std::array<int64_t, 2>({1, 101}));
+        REQUIRE(ned_u32 == std::array<uint32_t, 2>({1234, 5678}));
 
-        REQUIRE(dom_sjid == std::vector<int64_t>({0, 199}));
+        REQUIRE(dom_sjid == std::array<int64_t, 2>({0, 199}));
         if (test_upgrade_domain) {
-            REQUIRE(dom_u32 == std::vector<uint32_t>({0, 19999}));
+            REQUIRE(dom_u32 == std::array<uint32_t, 2>({0, 19999}));
         } else {
-            REQUIRE(dom_u32 == std::vector<uint32_t>({0, 9999}));
+            REQUIRE(dom_u32 == std::array<uint32_t, 2>({0, 9999}));
         }
 
         REQUIRE(maxdom_sjid.size() == 2);
@@ -1034,33 +1035,33 @@ TEST_CASE_METHOD(
 
             // Check domainish accessors before resize
             ArrowTable non_empty_domain = sdf->get_non_empty_domain();
-            std::vector<int64_t> ned_sjid =
-                ArrowAdapter::get_table_non_string_column_by_name<int64_t>(
-                    non_empty_domain, "soma_joinid");
-            std::vector<std::string>
-                ned_str = ArrowAdapter::get_table_string_column_by_name(
-                    non_empty_domain, "mystring");
+            std::array<int64_t, 2>
+                ned_sjid = ArrowAdapter::get_table_column_by_name<int64_t, 2>(
+                    non_empty_domain, "soma_joinid")[0];
+            std::array<std::string, 2> ned_str =
+                ArrowAdapter::get_table_column_by_name<std::string, 2>(
+                    non_empty_domain, "mystring")[0];
 
             ArrowTable soma_domain = sdf->get_soma_domain();
-            std::vector<int64_t> dom_sjid =
-                ArrowAdapter::get_table_non_string_column_by_name<int64_t>(
-                    soma_domain, "soma_joinid");
-            std::vector<std::string>
-                dom_str = ArrowAdapter::get_table_string_column_by_name(
-                    soma_domain, "mystring");
+            std::array<int64_t, 2>
+                dom_sjid = ArrowAdapter::get_table_column_by_name<int64_t, 2>(
+                    soma_domain, "soma_joinid")[0];
+            std::array<std::string, 2> dom_str =
+                ArrowAdapter::get_table_column_by_name<std::string, 2>(
+                    soma_domain, "mystring")[0];
 
             ArrowTable soma_maxdomain = sdf->get_soma_maxdomain();
-            std::vector<int64_t> maxdom_sjid =
-                ArrowAdapter::get_table_non_string_column_by_name<int64_t>(
-                    soma_maxdomain, "soma_joinid");
-            std::vector<std::string>
-                maxdom_str = ArrowAdapter::get_table_string_column_by_name(
-                    soma_maxdomain, "mystring");
+            std::array<int64_t, 2> maxdom_sjid =
+                ArrowAdapter::get_table_column_by_name<int64_t, 2>(
+                    soma_maxdomain, "soma_joinid")[0];
+            std::array<std::string, 2> maxdom_str =
+                ArrowAdapter::get_table_column_by_name<std::string, 2>(
+                    soma_maxdomain, "mystring")[0];
 
-            REQUIRE(ned_sjid == std::vector<int64_t>({1, 10}));
-            REQUIRE(ned_str == std::vector<std::string>({"apple", "bat"}));
+            REQUIRE(ned_sjid == std::array<int64_t, 2>({1, 10}));
+            REQUIRE(ned_str == std::array<std::string, 2>({"apple", "bat"}));
 
-            REQUIRE(dom_sjid == std::vector<int64_t>({0, 99}));
+            REQUIRE(dom_sjid == std::array<int64_t, 2>({0, 99}));
 
             if (specify_domain) {
                 REQUIRE(dom_str[0] == dim_infos[1].string_lo);
@@ -1072,7 +1073,7 @@ TEST_CASE_METHOD(
 
             REQUIRE(maxdom_sjid[0] == 0);
             REQUIRE(maxdom_sjid[1] > 2000000000);
-            REQUIRE(maxdom_str == std::vector<std::string>({"", ""}));
+            REQUIRE(maxdom_str == std::array<std::string, 2>({"", ""}));
 
             sdf->close();
 
@@ -1164,41 +1165,41 @@ TEST_CASE_METHOD(
             sdf->open(OpenMode::read, TimestampRange(0, 2));
 
             non_empty_domain = sdf->get_non_empty_domain();
-            ned_sjid = ArrowAdapter::get_table_non_string_column_by_name<
-                int64_t>(non_empty_domain, "soma_joinid");
-            ned_str = ArrowAdapter::get_table_string_column_by_name(
-                non_empty_domain, "mystring");
+            ned_sjid = ArrowAdapter::get_table_column_by_name<int64_t, 2>(
+                non_empty_domain, "soma_joinid")[0];
+            ned_str = ArrowAdapter::get_table_column_by_name<std::string, 2>(
+                non_empty_domain, "mystring")[0];
 
             soma_domain = sdf->get_soma_domain();
-            dom_sjid = ArrowAdapter::get_table_non_string_column_by_name<
-                int64_t>(soma_domain, "soma_joinid");
-            dom_str = ArrowAdapter::get_table_string_column_by_name(
-                soma_domain, "mystring");
+            dom_sjid = ArrowAdapter::get_table_column_by_name<int64_t, 2>(
+                soma_domain, "soma_joinid")[0];
+            dom_str = ArrowAdapter::get_table_column_by_name<std::string, 2>(
+                soma_domain, "mystring")[0];
 
             soma_maxdomain = sdf->get_soma_maxdomain();
-            maxdom_sjid = ArrowAdapter::get_table_non_string_column_by_name<
-                int64_t>(soma_maxdomain, "soma_joinid");
-            maxdom_str = ArrowAdapter::get_table_string_column_by_name(
-                soma_maxdomain, "mystring");
+            maxdom_sjid = ArrowAdapter::get_table_column_by_name<int64_t, 2>(
+                soma_maxdomain, "soma_joinid")[0];
+            maxdom_str = ArrowAdapter::get_table_column_by_name<std::string, 2>(
+                soma_maxdomain, "mystring")[0];
 
-            REQUIRE(ned_sjid == std::vector<int64_t>({0, 0}));
-            REQUIRE(ned_str == std::vector<std::string>({"", ""}));
+            REQUIRE(ned_sjid == std::array<int64_t, 2>({0, 0}));
+            REQUIRE(ned_str == std::array<std::string, 2>({"", ""}));
 
-            REQUIRE(dom_sjid == std::vector<int64_t>({0, 99}));
+            REQUIRE(dom_sjid == std::array<int64_t, 2>({0, 99}));
 
             if (specify_domain) {
                 REQUIRE(dom_str[0] == dim_infos[1].string_lo);
                 REQUIRE(dom_str[1] == dim_infos[1].string_hi);
             } else {
-                REQUIRE(dom_str == std::vector<std::string>({"", ""}));
+                REQUIRE(dom_str == std::array<std::string, 2>({"", ""}));
             }
 
             REQUIRE(maxdom_sjid[0] == 0);
             REQUIRE(maxdom_sjid[1] > 2000000000);
 
-            REQUIRE(maxdom_str == std::vector<std::string>({"", ""}));
+            REQUIRE(maxdom_str == std::array<std::string, 2>({"", ""}));
 
-            REQUIRE(ned_str == std::vector<std::string>({"", ""}));
+            REQUIRE(ned_str == std::array<std::string, 2>({"", ""}));
 
             // Check can_resize_soma_joinid_shape
             check = sdf->can_resize_soma_joinid_shape(1, "testing");
@@ -1279,29 +1280,29 @@ TEST_CASE_METHOD(
 
             // Check domainish accessors before resize
             ArrowTable non_empty_domain = sdf->get_non_empty_domain();
-            std::vector<std::string>
-                ned_str = ArrowAdapter::get_table_string_column_by_name(
-                    non_empty_domain, "mystring");
+            std::array<std::string, 2> ned_str =
+                ArrowAdapter::get_table_column_by_name<std::string, 2>(
+                    non_empty_domain, "mystring")[0];
 
             ArrowTable soma_domain = sdf->get_soma_domain();
-            std::vector<std::string>
-                dom_str = ArrowAdapter::get_table_string_column_by_name(
-                    soma_domain, "mystring");
+            std::array<std::string, 2> dom_str =
+                ArrowAdapter::get_table_column_by_name<std::string, 2>(
+                    soma_domain, "mystring")[0];
 
             ArrowTable soma_maxdomain = sdf->get_soma_maxdomain();
-            std::vector<std::string>
-                maxdom_str = ArrowAdapter::get_table_string_column_by_name(
-                    soma_maxdomain, "mystring");
+            std::array<std::string, 2> maxdom_str =
+                ArrowAdapter::get_table_column_by_name<std::string, 2>(
+                    soma_maxdomain, "mystring")[0];
 
-            REQUIRE(ned_str == std::vector<std::string>({"", ""}));
+            REQUIRE(ned_str == std::array<std::string, 2>({"", ""}));
 
             if (specify_domain) {
                 REQUIRE(dom_str[0] == dim_infos[0].string_lo);
                 REQUIRE(dom_str[1] == dim_infos[0].string_hi);
             } else {
-                REQUIRE(dom_str == std::vector<std::string>({"", ""}));
+                REQUIRE(dom_str == std::array<std::string, 2>({"", ""}));
             }
-            REQUIRE(maxdom_str == std::vector<std::string>({"", ""}));
+            REQUIRE(maxdom_str == std::array<std::string, 2>({"", ""}));
 
             sdf->close();
 
@@ -1402,26 +1403,26 @@ TEST_CASE_METHOD(
             sdf->open(OpenMode::read, TimestampRange(0, 2));
 
             non_empty_domain = sdf->get_non_empty_domain();
-            ned_str = ArrowAdapter::get_table_string_column_by_name(
-                non_empty_domain, "mystring");
+            ned_str = ArrowAdapter::get_table_column_by_name<std::string, 2>(
+                non_empty_domain, "mystring")[0];
 
             soma_domain = sdf->get_soma_domain();
-            dom_str = ArrowAdapter::get_table_string_column_by_name(
-                soma_domain, "mystring");
+            dom_str = ArrowAdapter::get_table_column_by_name<std::string, 2>(
+                soma_domain, "mystring")[0];
 
             soma_maxdomain = sdf->get_soma_maxdomain();
-            maxdom_str = ArrowAdapter::get_table_string_column_by_name(
-                soma_maxdomain, "mystring");
+            maxdom_str = ArrowAdapter::get_table_column_by_name<std::string, 2>(
+                soma_maxdomain, "mystring")[0];
 
-            REQUIRE(ned_str == std::vector<std::string>({"", ""}));
+            REQUIRE(ned_str == std::array<std::string, 2>({"", ""}));
 
             if (specify_domain) {
                 REQUIRE(dom_str[0] == dim_infos[0].string_lo);
                 REQUIRE(dom_str[1] == dim_infos[0].string_hi);
             } else {
-                REQUIRE(dom_str == std::vector<std::string>({"", ""}));
+                REQUIRE(dom_str == std::array<std::string, 2>({"", ""}));
             }
-            REQUIRE(maxdom_str == std::vector<std::string>({"", ""}));
+            REQUIRE(maxdom_str == std::array<std::string, 2>({"", ""}));
 
             // Check can_resize_soma_joinid_shape
             check = sdf->can_resize_soma_joinid_shape(0, "testing");

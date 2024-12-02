@@ -418,39 +418,48 @@ TEST_CASE_METHOD(
 
         // Check domainish accessors before resize
         ArrowTable non_empty_domain = sdf->get_non_empty_domain();
-        std::vector<std::string>
-            ned_str = ArrowAdapter::get_table_string_column_by_name(
-                non_empty_domain, "mystring");
+        std::array<std::string, 2>
+            ned_str = ArrowAdapter::get_table_column_by_name<std::string, 2>(
+                non_empty_domain, "mystring")[0];
 
-        std::vector<std::string>
-            ned_str_col = ArrowAdapter::get_array_string_column(
-                columns[0]->arrow_domain_slot(
-                    *ctx_, raw_array, Domainish::kind_non_empty_domain),
-                columns[0]->arrow_schema_slot(*ctx_, raw_array));
+        std::array<std::string, 2> ned_str_col =
+            ArrowAdapter::get_table_column_by_name<std::string, 2>(
+                ArrowTable(
+                    std::unique_ptr<ArrowArray>(columns[0]->arrow_domain_slot(
+                        *ctx_, raw_array, Domainish::kind_non_empty_domain)),
+                    std::unique_ptr<ArrowSchema>(
+                        columns[0]->arrow_schema_slot(*ctx_, raw_array))),
+                columns[0]->name())[0];
 
         ArrowTable soma_domain = sdf->get_soma_domain();
-        std::vector<std::string>
-            dom_str = ArrowAdapter::get_table_string_column_by_name(
-                soma_domain, "mystring");
+        std::array<std::string, 2>
+            dom_str = ArrowAdapter::get_table_column_by_name<std::string, 2>(
+                soma_domain, "mystring")[0];
 
-        std::vector<std::string>
-            dom_str_col = ArrowAdapter::get_array_string_column(
-                columns[0]->arrow_domain_slot(
-                    *ctx_, raw_array, Domainish::kind_core_current_domain),
-                columns[0]->arrow_schema_slot(*ctx_, raw_array));
+        std::array<std::string, 2> dom_str_col =
+            ArrowAdapter::get_table_column_by_name<std::string, 2>(
+                ArrowTable(
+                    std::unique_ptr<ArrowArray>(columns[0]->arrow_domain_slot(
+                        *ctx_, raw_array, Domainish::kind_core_current_domain)),
+                    std::unique_ptr<ArrowSchema>(
+                        columns[0]->arrow_schema_slot(*ctx_, raw_array))),
+                columns[0]->name())[0];
 
         ArrowTable soma_maxdomain = sdf->get_soma_maxdomain();
-        std::vector<std::string>
-            maxdom_str = ArrowAdapter::get_table_string_column_by_name(
-                soma_maxdomain, "mystring");
+        std::array<std::string, 2>
+            maxdom_str = ArrowAdapter::get_table_column_by_name<std::string, 2>(
+                soma_maxdomain, "mystring")[0];
 
-        std::vector<std::string>
-            maxdom_str_col = ArrowAdapter::get_array_string_column(
-                columns[0]->arrow_domain_slot(
-                    *ctx_, raw_array, Domainish::kind_core_domain),
-                columns[0]->arrow_schema_slot(*ctx_, raw_array));
+        std::array<std::string, 2> maxdom_str_col =
+            ArrowAdapter::get_table_column_by_name<std::string, 2>(
+                ArrowTable(
+                    std::unique_ptr<ArrowArray>(columns[0]->arrow_domain_slot(
+                        *ctx_, raw_array, Domainish::kind_core_domain)),
+                    std::unique_ptr<ArrowSchema>(
+                        columns[0]->arrow_schema_slot(*ctx_, raw_array))),
+                columns[0]->name())[0];
 
-        REQUIRE(ned_str == std::vector<std::string>({"", ""}));
+        REQUIRE(ned_str == std::array<std::string, 2>({"", ""}));
 
         REQUIRE(ned_str == ned_str_col);
         REQUIRE(dom_str == dom_str_col);
@@ -460,9 +469,9 @@ TEST_CASE_METHOD(
             REQUIRE(dom_str[0] == dim_infos[0].string_lo);
             REQUIRE(dom_str[1] == dim_infos[0].string_hi);
         } else {
-            REQUIRE(dom_str == std::vector<std::string>({"", ""}));
+            REQUIRE(dom_str == std::array<std::string, 2>({"", ""}));
         }
-        REQUIRE(maxdom_str == std::vector<std::string>({"", ""}));
+        REQUIRE(maxdom_str == std::array<std::string, 2>({"", ""}));
 
         sdf->close();
 

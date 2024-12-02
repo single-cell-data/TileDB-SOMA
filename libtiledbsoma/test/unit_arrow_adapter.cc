@@ -73,29 +73,44 @@ TEST_CASE("name", "[pattern]") {
 
     ArrowTable arrow_table(std::move(arrow_array), std::move(arrow_schema));
 
-    std::vector<int64_t> outputs_int64 =
-        ArrowAdapter::get_table_non_string_column_by_name<int64_t>(
-            arrow_table, "int64");
-    std::vector<uint8_t> outputs_uint8 =
-        ArrowAdapter::get_table_non_string_column_by_name<uint8_t>(
-            arrow_table, "uint8");
-    std::vector<double> outputs_float64 =
-        ArrowAdapter::get_table_non_string_column_by_name<double>(
-            arrow_table, "float64");
-    std::vector<float> outputs_float32 =
-        ArrowAdapter::get_table_non_string_column_by_name<float>(
-            arrow_table, "float32");
-    std::vector<bool>
-        outputs_bool = ArrowAdapter::get_table_non_string_column_by_name<bool>(
-            arrow_table, "bool");
-    std::vector<std::string>
-        outputs_string = ArrowAdapter::get_table_string_column_by_name(
-            arrow_table, "string");
+    std::array<int64_t, 3>
+        outputs_int64 = std::any_cast<std::array<int64_t, 3>>(
+            ArrowAdapter::get_table_any_column_by_name<3>(
+                arrow_table, "int64")[0]);
+    std::array<uint8_t, 3>
+        outputs_uint8 = std::any_cast<std::array<uint8_t, 3>>(
+            ArrowAdapter::get_table_any_column_by_name<3>(
+                arrow_table, "uint8")[0]);
+    std::array<double_t, 3>
+        outputs_float64 = std::any_cast<std::array<double_t, 3>>(
+            ArrowAdapter::get_table_any_column_by_name<3>(
+                arrow_table, "float64")[0]);
+    std::array<float_t, 3>
+        outputs_float32 = std::any_cast<std::array<float_t, 3>>(
+            ArrowAdapter::get_table_any_column_by_name<3>(
+                arrow_table, "float32")[0]);
+    std::array<bool, 3> outputs_bool = std::any_cast<std::array<bool, 3>>(
+        ArrowAdapter::get_table_any_column_by_name<3>(arrow_table, "bool")[0]);
+    std::array<std::string, 3>
+        outputs_string = std::any_cast<std::array<std::string, 3>>(
+            ArrowAdapter::get_table_any_column_by_name<3>(
+                arrow_table, "string")[0]);
 
-    REQUIRE(outputs_int64 == inputs_int64);
-    REQUIRE(outputs_uint8 == inputs_uint8);
-    REQUIRE(outputs_float64 == inputs_float64);
-    REQUIRE(outputs_float32 == inputs_float32);
-    REQUIRE(outputs_bool == inputs_bool);
-    REQUIRE(outputs_string == inputs_string);
+    REQUIRE(
+        std::vector(outputs_int64.begin(), outputs_int64.end()) ==
+        inputs_int64);
+    REQUIRE(
+        std::vector(outputs_uint8.begin(), outputs_uint8.end()) ==
+        inputs_uint8);
+    REQUIRE(
+        std::vector(outputs_float64.begin(), outputs_float64.end()) ==
+        inputs_float64);
+    REQUIRE(
+        std::vector(outputs_float32.begin(), outputs_float32.end()) ==
+        inputs_float32);
+    REQUIRE(
+        std::vector(outputs_bool.begin(), outputs_bool.end()) == inputs_bool);
+    REQUIRE(
+        std::vector(outputs_string.begin(), outputs_string.end()) ==
+        inputs_string);
 }
