@@ -1183,9 +1183,10 @@ ArraySchema ArrowAdapter::tiledb_schema_from_arrow_schema(
                 ArrowArray* child_array = index_column_array->children[i];
                 ArrowSchema* child_schema = index_column_schema->children[i];
 
-                std::vector<std::string>
-                    strings = ArrowAdapter::get_array_string_column(
-                        child_array, child_schema);
+                std::array<std::string, 5>
+                    strings = std::any_cast<std::array<std::string, 5>>(
+                        ArrowAdapter::get_table_any_column<5>(
+                            child_array, child_schema));
                 if (strings.size() != 5) {
                     throw TileDBSOMAError(std::format(
                         "ArrowAdapter::tiledb_schema_from_arrow_schema: "

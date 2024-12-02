@@ -538,45 +538,33 @@ class ArrowAdapter {
         return arrow_array;
     }
 
-    // These table-column getters are, as of this writing, intended primarily
-    // for keystroke-reduction in unit-test cases.
-
-    template <typename T>
-    static std::vector<T> get_table_non_string_column_by_name(
+    template <typename T, size_t D>
+    static std::vector<std::array<T, D>> get_table_column_by_name(
         const ArrowTable& arrow_table, std::string column_name) {
-        int64_t index = _get_column_index_from_name(arrow_table, column_name);
-        return get_table_non_string_column_by_index<T>(arrow_table, index);
-    }
+        std::vector<std::any> data = get_table_any_column_by_name<D>(
+            arrow_table, column_name);
+        std::vector<std::array<T, D>> result;
 
-    static std::vector<std::string> get_table_string_column_by_name(
-        const ArrowTable& arrow_table, std::string column_name) {
-        int64_t index = _get_column_index_from_name(arrow_table, column_name);
-        return get_table_string_column_by_index(arrow_table, index);
+        for (size_t i = 0; i < data.size(); ++i) {
+            result.push_back(std::any_cast<std::array<T, D>>(data[i]));
+        }
+
+        return result;
     }
 
     /**
-     * Returns a copy of the data in a specified non-string column of an
-     * ArrowTable as a standard/non-Arrow C++ object.
+     * Return a copy of the data in a specified column of an arrow table.
+     * Complex column types are supported. The for each sub column are an
+     * std::array<T, 2> casted as an std::any object.
      */
-    template <typename T>
-    static std::vector<T> get_table_non_string_column_by_index(
-        const ArrowTable& arrow_table, int64_t column_index) {
-        ArrowArray* arrow_array = arrow_table.first.get();
-        ArrowSchema* arrow_schema = arrow_table.second.get();
-        _check_shapes(arrow_array, arrow_schema);
-
-        if (std::is_same_v<T, std::string>) {
-            throw std::runtime_error(
-                "SOMAArray::get_table_non_string_column_by_index: "
-                "template-specialization failure.");
-        }
-
-        ArrowArray* child_array = _get_and_check_column(
-            arrow_table, column_index, 2);
-
-        return get_array_non_string_column<T>(child_array);
+    template <size_t D>
+    static std::vector<std::any> get_table_any_column_by_name(
+        const ArrowTable& arrow_table, std::string column_name) {
+        int64_t index = _get_column_index_from_name(arrow_table, column_name);
+        return get_table_any_column_by_index<D>(arrow_table, index);
     }
 
+    template <size_t D>
     static std::vector<std::any> get_table_any_column_by_index(
         const ArrowTable& arrow_table, int64_t column_index) {
         ArrowArray* arrow_array = arrow_table.first.get();
@@ -607,69 +595,107 @@ class ArrowAdapter {
                 ArrowArray* array = selected_array->children[i];
                 ArrowSchema* schema = selected_schema->children[i];
 
-                if (strcmp(schema->format, "s+") == 0) {
-                    throw std::runtime_error(
-                        "ArrowAdapter::get_table_any_column_by_index: expected "
-                        "leaf "
-                        "node");
-                }
-
-                result.push_back(get_table_any_column(array, schema));
+                result.push_back(get_table_any_column<D>(array, schema));
             }
         } else {
             result.push_back(
-                get_table_any_column(selected_array, selected_schema));
+                get_table_any_column<D>(selected_array, selected_schema));
         }
 
         return result;
     }
 
+    template <size_t D>
     static std::any get_table_any_column(
         ArrowArray* array, ArrowSchema* schema) {
         auto tdb_type = to_tiledb_format(schema->format, "");
 
-        if (array->length != 2) {
+        if (array->n_children != 0) {
             throw std::runtime_error(
-                "ArrowAdapter::get_table_any_column_by_index: expected "
-                "two "
-                "elements");
+                "ArrowAdapter::get_table_any_column: expected leaf "
+                "node");
+        }
+
+        if (array->length != D) {
+            throw std::runtime_error(std::format(
+                "ArrowAdapter::get_table_any_column: expected {} elements", D));
+        }
+
+        if (strcmp(schema->format, "u") == 0 ||
+            strcmp(schema->format, "z") == 0 ||
+            strcmp(schema->format, "U") == 0 ||
+            strcmp(schema->format, "Z") == 0) {
+            if (array->n_buffers != 3) {
+                throw std::runtime_error(
+                    "ArrowAdapter::get_table_any_column: expected three "
+                    "buffers");
+            }
+
+            if (array->buffers[0] != nullptr) {
+                throw std::runtime_error(
+                    "ArrowAdapter::get_table_any_column: validity buffer "
+                    "unsupported here");
+            }
+            if (array->buffers[1] == nullptr) {
+                throw std::runtime_error(
+                    "ArrowAdapter::get_table_any_column: null "
+                    "offsets buffer");
+            }
+            if (array->buffers[2] == nullptr) {
+                throw std::runtime_error(
+                    "ArrowAdapter::get_table_any_column: null data "
+                    "buffer");
+            }
+        } else {
+            if (array->n_buffers != 2) {
+                throw std::runtime_error(
+                    "ArrowAdapter::get_table_any_column: expected two "
+                    "buffers");
+            }
+
+            if (array->buffers[0] != nullptr) {
+                throw std::runtime_error(
+                    "ArrowAdapter::get_table_any_column: validity buffer "
+                    "unsupported here");
+            }
+            if (array->buffers[1] == nullptr) {
+                throw std::runtime_error(
+                    "ArrowAdapter::get_table_any_column: null data buffer");
+            }
         }
 
         switch (tdb_type) {
+            case TILEDB_BOOL: {
+                return std::make_any<std::array<bool, D>>(std::to_array(
+                    (bool(&)[D])(*((bool*)array->buffers[1]))));
+            }
             case TILEDB_UINT8: {
-                uint8_t* data = (uint8_t*)array->buffers[1];
-                return std::make_any<std::array<uint8_t, 2>>(
-                    std::array<uint8_t, 2>({data[0], data[1]}));
+                return std::make_any<std::array<uint8_t, D>>(std::to_array(
+                    (uint8_t(&)[D])(*((uint8_t*)array->buffers[1]))));
             }
             case TILEDB_UINT16: {
-                uint16_t* data = (uint16_t*)array->buffers[1];
-                return std::make_any<std::array<uint16_t, 2>>(
-                    std::array<uint16_t, 2>({data[0], data[1]}));
+                return std::make_any<std::array<uint16_t, D>>(std::to_array(
+                    (uint16_t(&)[D])(*((uint16_t*)array->buffers[1]))));
             }
             case TILEDB_UINT32: {
-                uint32_t* data = (uint32_t*)array->buffers[1];
-                return std::make_any<std::array<uint32_t, 2>>(
-                    std::array<uint32_t, 2>({data[0], data[1]}));
+                return std::make_any<std::array<uint32_t, D>>(std::to_array(
+                    (uint32_t(&)[D])(*((uint32_t*)array->buffers[1]))));
             }
             case TILEDB_UINT64: {
-                uint64_t* data = (uint64_t*)array->buffers[1];
-                return std::make_any<std::array<uint64_t, 2>>(
-                    std::array<uint64_t, 2>({data[0], data[1]}));
+                return std::make_any<std::array<uint64_t, D>>(std::to_array(
+                    (uint64_t(&)[D])(*((uint64_t*)array->buffers[1]))));
             }
             case TILEDB_INT8: {
-                int8_t* data = (int8_t*)array->buffers[1];
-                return std::make_any<std::array<int8_t, 2>>(
-                    std::array<int8_t, 2>({data[0], data[1]}));
+                return std::make_any<std::array<int8_t, D>>(std::to_array(
+                    (int8_t(&)[D])(*((int8_t*)array->buffers[1]))));
             }
             case TILEDB_INT16: {
-                int16_t* data = (int16_t*)array->buffers[1];
-                return std::make_any<std::array<int16_t, 2>>(
-                    std::array<int16_t, 2>({data[0], data[1]}));
+                return std::make_any<std::array<int16_t, D>>(std::to_array(
+                    (int16_t(&)[D])(*((int16_t*)array->buffers[1]))));
             }
             case TILEDB_INT32: {
-                int32_t* data = (int32_t*)array->buffers[1];
-                return std::make_any<std::array<int32_t, 2>>(
-                    std::array<int32_t, 2>({data[0], data[1]}));
+                return std::make_any<std::array<int32_t, D>>(std::to_array(
+                    (int32_t(&)[D])(*((int32_t*)array->buffers[1]))));
             }
             case TILEDB_DATETIME_YEAR:
             case TILEDB_DATETIME_MONTH:
@@ -685,19 +711,16 @@ class ArrowAdapter {
             case TILEDB_DATETIME_FS:
             case TILEDB_DATETIME_AS:
             case TILEDB_INT64: {
-                int64_t* data = (int64_t*)array->buffers[1];
-                return std::make_any<std::array<int64_t, 2>>(
-                    std::array<int64_t, 2>({data[0], data[1]}));
+                return std::make_any<std::array<int64_t, D>>(std::to_array(
+                    (int64_t(&)[D])(*((int64_t*)array->buffers[1]))));
             }
             case TILEDB_FLOAT32: {
-                int64_t* data = (int64_t*)array->buffers[1];
-                return std::make_any<std::array<int64_t, 2>>(
-                    std::array<int64_t, 2>({data[0], data[1]}));
+                return std::make_any<std::array<float_t, D>>(std::to_array(
+                    (float_t(&)[D])(*((float_t*)array->buffers[1]))));
             }
             case TILEDB_FLOAT64: {
-                int64_t* data = (int64_t*)array->buffers[1];
-                return std::make_any<std::array<int64_t, 2>>(
-                    std::array<int64_t, 2>({data[0], data[1]}));
+                return std::make_any<std::array<double_t, D>>(std::to_array(
+                    (double_t(&)[D])(*((double_t*)array->buffers[1]))));
             }
             case TILEDB_STRING_ASCII:
             case TILEDB_STRING_UTF8:
@@ -710,22 +733,26 @@ class ArrowAdapter {
                     uint32_t* offsets = (uint32_t*)array->buffers[1];
                     char* data = (char*)array->buffers[2];
 
-                    return std::make_any<std::array<std::string, 2>>(
-                        std::array<std::string, 2>(
-                            {std::string(&data[offsets[0]], &data[offsets[1]]),
-                             std::string(
-                                 &data[offsets[1]], &data[offsets[2]])}));
+                    std::array<std::string, D> result;
+                    for (size_t i = 0; i < D; ++i) {
+                        result[i] = std::string(
+                            &data[offsets[i]], &data[offsets[i + 1]]);
+                    }
+
+                    return std::make_any<std::array<std::string, D>>(result);
                 } else if (
                     strcmp(schema->format, "U") == 0 ||
                     strcmp(schema->format, "Z") == 0) {
                     uint64_t* offsets = (uint64_t*)array->buffers[1];
                     char* data = (char*)array->buffers[2];
 
-                    return std::make_any<std::array<std::string, 2>>(
-                        std::array<std::string, 2>(
-                            {std::string(&data[offsets[0]], &data[offsets[1]]),
-                             std::string(
-                                 &data[offsets[1]], &data[offsets[2]])}));
+                    std::array<std::string, D> result;
+                    for (size_t i = 0; i < D; ++i) {
+                        result[i] = std::string(
+                            &data[offsets[i]], &data[offsets[i + 1]]);
+                    }
+
+                    return std::make_any<std::array<std::string, D>>(result);
                 } else {
                     throw std::runtime_error(std::format(
                         "ArrowAdapter::get_table_any_column: Unknown "
@@ -739,165 +766,6 @@ class ArrowAdapter {
                     "datatype {}",
                     tiledb::impl::type_to_str(tdb_type)));
                 break;
-        }
-    }
-
-    /**
-     * Returns a copy of the data in a specified string column of an
-     * ArrowTable as a standard/non-Arrow C++ object.
-     */
-    static std::vector<std::string> get_table_string_column_by_index(
-        const ArrowTable& arrow_table, int64_t column_index) {
-        ArrowArray* arrow_array = arrow_table.first.get();
-        ArrowSchema* arrow_schema = arrow_table.second.get();
-        _check_shapes(arrow_array, arrow_schema);
-
-        ArrowArray* child_array = _get_and_check_column(
-            arrow_table, column_index, 3);
-
-        const ArrowSchema* child_schema = arrow_schema->children[column_index];
-
-        return get_array_string_column(child_array, child_schema);
-    }
-
-    /**
-     * Returns a copy of the data in a specified non-string column of an
-     * ArrowArray as a standard/non-Arrow C++ object. There is no ArrowSchema*
-     * argument, as the caller must have determined the Arrow type, inferred
-     * a C++ type, and have invoked this method with the appropriate C++ type.
-     *
-     * This is a helper for get_table_non_string_column_by_index; also exposed
-     * for callsites which have access to child objects which are not top-level
-     * ArrowTables.
-     */
-    template <typename T>
-    static std::vector<T> get_array_non_string_column(
-        const ArrowArray* arrow_array) {
-        if (arrow_array->n_children != 0) {
-            throw std::runtime_error(
-                "ArrowAdapter::get_array_non_string_column: expected leaf "
-                "node");
-        }
-        if (arrow_array->n_buffers != 2) {
-            throw std::runtime_error(
-                "ArrowAdapter::get_array_non_string_column: expected two "
-                "buffers");
-        }
-
-        if (std::is_same_v<T, std::string>) {
-            throw std::runtime_error(
-                "SOMAArray::get_array_non_string_column: "
-                "template-specialization "
-                "failure.");
-        }
-
-        // Two-buffer model for non-string data:
-        // * Slot 0 is the Arrow validity buffer which we leave null
-        // * Slot 1 is data, void* but will be derefrenced as T*
-        // * There is no offset information
-
-        // For our purposes -- reporting domains, etc. -- we don't use the Arrow
-        // validity buffers. If this class needs to be extended someday to
-        // support arrow-nulls, we can work on that.
-        if (arrow_array->buffers[0] != nullptr) {
-            throw std::runtime_error(
-                "ArrowAdapter::get_array_non_string_column: validity buffer "
-                "unsupported here");
-        }
-        if (arrow_array->buffers[1] == nullptr) {
-            throw std::runtime_error(
-                "ArrowAdapter::get_array_non_string_column: null data buffer");
-        }
-
-        const void* vdata = arrow_array->buffers[1];
-        if (vdata == nullptr) {
-            throw std::runtime_error(
-                "ArrowAdapter::get_array_non_string_column: null data buffer");
-        }
-
-        const T* data = (T*)vdata;
-
-        std::vector<T> retval(arrow_array->length);
-        for (auto i = 0; i < arrow_array->length; i++) {
-            retval[i] = data[i];
-        }
-        return retval;
-    }
-
-    /**
-     * Returns a copy of the data in a specified non-string column of an
-     * ArrowArray as a standard/non-Arrow C++ object.
-     * Helper for get_table_string_column_by_index. Also exposed for
-     * callsites which have access to child objects which are not top-level
-     * ArrowTables.
-     */
-    static std::vector<std::string> get_array_string_column(
-        const ArrowArray* arrow_array, const ArrowSchema* arrow_schema) {
-        if (arrow_array->n_children != 0 || arrow_schema->n_children != 0) {
-            throw std::runtime_error(
-                "ArrowAdapter::get_array_string_column: expected leaf "
-                "node");
-        }
-        if (arrow_array->n_buffers != 3) {
-            throw std::runtime_error(
-                "ArrowAdapter::get_array_string_column: expected three "
-                "buffers");
-        }
-
-        // Three-buffer model for string data:
-        // * Slot 0 is the Arrow uint8_t* validity buffer
-        // * Slot 1 is the Arrow offsets buffer: uint32_t* for Arrow string
-        //   or uint64_t* for Arrow large_string
-        // * Slot 2 is data, void* but will be derefrenced as T*
-
-        // For our purposes -- reporting domains, etc. -- we don't use the Arrow
-        // validity buffers. If this class needs to be extended someday to
-        // support arrow-nulls, we can work on that.
-        if (arrow_array->buffers[0] != nullptr) {
-            throw std::runtime_error(
-                "ArrowAdapter::get_array_string_column: validity buffer "
-                "unsupported here");
-        }
-        if (arrow_array->buffers[1] == nullptr) {
-            throw std::runtime_error(
-                "ArrowAdapter::get_array_string_column: null "
-                "offsets buffer");
-        }
-        if (arrow_array->buffers[2] == nullptr) {
-            throw std::runtime_error(
-                "ArrowAdapter::get_array_string_column: null data "
-                "buffer");
-        }
-
-        const char* data = (char*)arrow_array->buffers[2];
-
-        if (strcmp(arrow_schema->format, "u") == 0 ||
-            strcmp(arrow_schema->format, "z") == 0) {
-            uint32_t* offsets = (uint32_t*)arrow_array->buffers[1];
-            int num_cells = (int)arrow_array->length;
-            std::vector<std::string> retval(num_cells);
-            for (int j = 0; j < num_cells; j++) {
-                std::string e(&data[offsets[j]], &data[offsets[j + 1]]);
-                retval[j] = e;
-            }
-            return retval;
-
-        } else if (
-            strcmp(arrow_schema->format, "U") == 0 ||
-            strcmp(arrow_schema->format, "Z") == 0) {
-            uint64_t* offsets = (uint64_t*)arrow_array->buffers[1];
-            int num_cells = (int)arrow_array->length;
-            std::vector<std::string> retval(num_cells);
-            for (int j = 0; j < num_cells; j++) {
-                std::string e(&data[offsets[j]], &data[offsets[j + 1]]);
-                retval[j] = e;
-            }
-            return retval;
-
-        } else {
-            throw std::runtime_error(
-                "ArrowAdapter::get_array_string_column: expected "
-                "Arrow string, large_string, binary, or large_binary");
         }
     }
 
