@@ -19,14 +19,21 @@ SOMADataFrame <- R6::R6Class(
     #' @param index_column_names A vector of column names to use as user-defined
     #' index columns.  All named columns must exist in the schema, and at least
     #' one index column name is required.
-    #' @param domain An optional list of 2-element vectors specifying the domain of each index
-    #' column. Each vector should be a pair consisting of the minimum and maximum values storable in
-    #' the index column. For example, if there is a single int64-valued index column, then `domain`
-    #' might be `c(100, 200)` to indicate that values between 100 and 200, inclusive, can be stored
-    #' in that column.  If provided, this list must have the same length as `index_column_names`,
-    #' and the index-column domain will be as specified.  If omitted entirely, or if `NULL` in a given
-    #' dimension, the corresponding index-column domain will use the minimum and maximum possible
-    #' values for the column's datatype.  This makes a `DataFrame` growable.
+    #' @param domain An optional sequence of tuples specifying the domain of each
+    #' index column. Each tuple must be a pair consisting of the minimum and
+    #' maximum values storable in the index column. For example, if there is a
+    #' single int64-valued index column `soma_joinid`, then `domain` might be
+    #' `list(soma_joinid=c(100, 200))` to indicate that values between 100 and
+    #' 200, inclusive, can be stored in that column.  If provided, this sequence
+    #' must have the same length as `index_column_names`, and the index-column
+    #' domain will be as specified.  If omitted entirely, or if `NULL` in a given
+    #' dimension, the corresponding index-column domain will use the smallest
+    #' possible values for the column's datatype, and data writes after that will
+    #' fail with "A range was set outside of the current domain". Unless you have
+    #' a particular reason not to, you should always provide the desired `domain`
+    #' at create time: this is an optional but strongly recommended parameter.
+    #' See also `change_domain` which allows you to expand the domain after
+    #' create.
     #' @template param-platform-config
     #' @param internal_use_only Character value to signal this is a 'permitted' call,
     #' as `create()` is considered internal and should not be called directly.
