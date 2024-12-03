@@ -123,11 +123,12 @@ Logical
 \if{html}{\out{<a id="method-SOMANDArrayBase-resize"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMANDArrayBase-resize}{}}}
 \subsection{Method \code{resize()}}{
-Increases the shape of the array as specfied. Raises an error
-if the new shape is less than the current shape in any dimension. Raises
-an error if the new shape exceeds maxshape in any dimension. Raises an
-error if the array doesn't already have a shape: in that case please call
-tiledbsoma_upgrade_shape.
+Increases the shape of the array as specified, up to the hard
+limit which is \code{maxshape}. Raises an error if the new shape is less than
+the current shape in any dimension.  Raises an error if the requested new
+shape exceeds \code{maxshape} in any dimension. Raises an error if the array
+doesn't already have a shape: in that case please call
+\code{tiledbsoma_upgrade_shape}.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMANDArrayBase$resize(new_shape)}\if{html}{\out{</div>}}
 }
@@ -149,7 +150,10 @@ No return value
 \subsection{Method \code{tiledbsoma_upgrade_shape()}}{
 Allows the array to have a resizeable shape as described in the
 TileDB-SOMA 1.15 release notes.  Raises an error if the shape exceeds maxshape in any
-dimension. Raises an error if the array already has a shape.
+dimension. Raises an error if the array already has a shape. The methods
+\code{tiledbsoma_upgrade_shape} and \code{resize} are very similar: the former must be
+call on a pre-1.15 array the first time a shape is set on it; the latter must
+be used for subsequent resizes on any array which already has upgraded shape.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMANDArrayBase$tiledbsoma_upgrade_shape(shape)}\if{html}{\out{</div>}}
 }
