@@ -18,6 +18,8 @@ knitr::opts_chunk$set(
 
 As of TileDB-SOMA 1.15 we're proud to support a more intuitive and extensible notion of shape.
 
+Please also see the [Academy tutorial](https://cloud.tiledb.com/academy/structure/life-sciences/single-cell/tutorials/shapes/).
+
 ## Example data
 
 Let's load the bundled `SOMAExperiment` containing a subsetted version of the 10X genomics [PBMC dataset](https://satijalab.github.io/seurat-object/reference/pbmc_small.html) provided by SeuratObject. This will return a `SOMAExperiment` object.
@@ -191,11 +193,15 @@ Here we see the `soma_joinid` slot of the dataframe's domain is as requested.
 
 Another point is that domain cannot be specified for string-type index columns.  You can set them at create one of two ways:
 
-`domain = list(soma_joinid = (0, 9), mystring = NULL)`
+```{r, eval=FALSE}
+domain = list(soma_joinid = (0, 9), mystring = NULL)
+```
 
 or
 
-`domain = list(soma_joinid = (0, 9), mystring = c('', ''))`
+```{r, eval=FALSE}
+domain = list(soma_joinid = (0, 9), mystring = c('', ''))
+```
 
 and in either case the domain slot for a string-typed index column will read back as `('', '')`.
 
