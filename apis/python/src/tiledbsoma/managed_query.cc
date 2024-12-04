@@ -142,6 +142,8 @@ void load_managed_query(py::module& m) {
                 // Release python GIL before reading data
                 py::gil_scoped_release release;
 
+                mq.setup_read();
+
                 if (mq.is_empty_query() && mq.is_first_read()) {
                     auto tbl = mq.results();
                     // Acquire python GIL before accessing python objects
