@@ -180,14 +180,13 @@ class DataFrame(SOMAArray, somacore.DataFrame):
                 If provided, this sequence must have the same length as
                 ``index_column_names``, and the index-column domain will be as
                 specified.  If omitted entirely, or if ``None`` in a given
-                dimension, the corresponding index-column domain will use the
-                smallest possible values for the column's datatype, and data
-                writes after that will fail with "A range was set outside of the
-                current domain". Unless you have a particular reason not to, you
-                should always provide the desired `domain` at create time: this
-                is an optional but strongly recommended parameter. See also
-                ``change_domain`` which allows you to expand the domain after
-                create.
+                dimension, the corresponding index-column domain will use an
+                empty range, and data writes after that will fail with "A range
+                was set outside of the current domain". Unless you have a
+                particular reason not to, you should always provide the desired
+                `domain` at create time: this is an optional but strongly
+                recommended parameter. See also ``change_domain`` which allows
+                you to expand the domain after create.
             platform_config:
                 Platform-specific options used to create this array.
                 This may be provided as settings in a dictionary, with options
