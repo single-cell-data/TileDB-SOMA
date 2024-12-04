@@ -93,13 +93,12 @@ to indicate that values between 100 and 200, inclusive, can be stored
 in that column.  If provided, this sequence must have the same length
 as \code{index_column_names}, and the index-column domain will be as
 specified.  If omitted entirely, or if \code{NULL} in a given dimension, the
-corresponding index-column domain will use the smallest possible values
-for the column's datatype, and data writes after that will fail with "A
-range was set outside of the current domain". Unless you have a particular
-reason not to, you should always provide the desired \code{domain} at create
-time: this is an optional but strongly recommended parameter.  See also
-\code{change_domain} which allows you to expand the domain after
-create.}
+corresponding index-column domain will use an empty range, and data writes
+after that will fail with "A range was set outside of the current domain".
+Unless you have a particular reason not to, you should always provide the
+desired \code{domain} at create time: this is an optional but strongly
+recommended parameter.  See also \code{change_domain} which allows you to
+expand the domain after create.}
 
 \item{\code{platform_config}}{A \link[tiledbsoma:PlatformConfig]{platform configuration}
 object}
