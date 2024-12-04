@@ -502,7 +502,7 @@ SOMADataFrame <- R6::R6Class(
     #' whether the operation would succeed if attempted, and a reason why it
     #' would not. The return value from `domain` must be contained within
     #' the requested `new_domain`, and the requested `new_domain` must be
-    #' contained within the return value from `maxdomain`.
+    #' contained within the return value from `maxdomain`. (lifecycle: maturing)
     #' @param new_domain A named list, keyed by index-column name, with values
     #' being two-element vectors containing the desired lower and upper bounds
     #' for the domain.

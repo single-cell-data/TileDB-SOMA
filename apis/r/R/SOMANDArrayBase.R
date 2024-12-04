@@ -14,7 +14,7 @@ SOMANDArrayBase <- R6::R6Class(
   public = list(
 
     #' @description Create a SOMA NDArray named with the URI. (lifecycle:
-    #' experimental)
+    #' maturing)
     #' @param type an [Arrow type][arrow::data-type] defining the type of each
     #' element in the array.
     #' @param shape a vector of integers defining the shape of the array.
@@ -79,7 +79,7 @@ SOMANDArrayBase <- R6::R6Class(
     },
 
     ## needed eg after open() to set (Arrow) type
-    #' @description Sets a cache value for the datatype (lifecycle: experimental)
+    #' @description Sets a cache value for the datatype (lifecycle: maturing)
     #' @param type A character value describing the TileDB data type
     set_data_type = function(type) {
       spdl::debug("[SOMANDArrayBase::set_data_type] caching type {}", type$ToString())
@@ -100,7 +100,7 @@ SOMANDArrayBase <- R6::R6Class(
     #' the current shape in any dimension.  Raises an error if the requested new
     #' shape exceeds `maxshape` in any dimension. Raises an error if the array
     #' doesn't already have a shape: in that case please call
-    #' `tiledbsoma_upgrade_shape`.
+    #' `tiledbsoma_upgrade_shape`. (lifecycle: maturing)
     #' @param new_shape A vector of integerish, of the same length as the array's `ndim`.
     #' @return No return value
     resize = function(new_shape) {
@@ -119,6 +119,7 @@ SOMANDArrayBase <- R6::R6Class(
     #' `tiledbsoma_upgrade_shape` and `resize` are very similar: the former must be
     #' call on a pre-1.15 array the first time a shape is set on it; the latter must
     #' be used for subsequent resizes on any array which already has upgraded shape.
+    #' (lifecycle: maturing)
     #' @param shape A vector of integerish, of the same length as the array's `ndim`.
     #' @return No return value
     tiledbsoma_upgrade_shape = function(shape) {

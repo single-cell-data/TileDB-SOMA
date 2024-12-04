@@ -21,7 +21,7 @@ from ._arrow_types import pyarrow_to_carrow_type
 from ._common_nd_array import NDArray
 from ._exception import SOMAError, map_exception_for_create
 from ._tdb_handles import DenseNDArrayWrapper
-from ._types import OpenTimestamp, Slice, StatusAndReason
+from ._types import OpenTimestamp, Slice
 from ._util import dense_indices_to_shape
 from .options._soma_tiledb_context import (
     SOMATileDBContext,
@@ -339,25 +339,6 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
         if tiledb_write_options.consolidate_and_vacuum:
             clib_dense_array.consolidate_and_vacuum()
         return self
-
-    def resize(self, newshape: Sequence[Union[int, None]]) -> None:
-        """Supported for ``SparseNDArray``; scheduled for implementation for
-        ``DenseNDArray`` in TileDB-SOMA 1.15
-        """
-        self._handle.resize(newshape)
-
-    def tiledbsoma_upgrade_shape(
-        self, newshape: Sequence[Union[int, None]], check_only: bool = False
-    ) -> StatusAndReason:
-        """Allows the array to have a resizeable shape as described in the TileDB-SOMA
-        1.15 release notes.  Raises an error if the new shape exceeds maxshape in
-        any dimension. Raises an error if the array already has a shape.
-        """
-        if check_only:
-            return self._handle.tiledbsoma_can_upgrade_shape(newshape)
-        else:
-            self._handle.tiledbsoma_upgrade_shape(newshape)
-            return (True, "")
 
     @classmethod
     def _dim_capacity_and_extent(

@@ -626,6 +626,9 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         Lastly, it is an error to try to set the ``domain`` to be smaller than
         ``maxdomain`` along any index column.  The ``maxdomain`` of a dataframe is
         set at creation time, and cannot be extended afterward.
+
+        Lifecycle:
+            Maturing.
         """
         frame = inspect.currentframe()
         function_name_for_messages = frame.f_code.co_name if frame else "tiledbsoma"

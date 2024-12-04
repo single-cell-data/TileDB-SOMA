@@ -13,7 +13,7 @@ from somacore import options
 from typing_extensions import Self
 
 from ._soma_array import SOMAArray
-from ._types import OpenTimestamp
+from ._types import OpenTimestamp, StatusAndReason
 from .options._soma_tiledb_context import (
     SOMATileDBContext,
 )
@@ -51,9 +51,9 @@ class NDArray(SOMAArray, somacore.NDArray):
                 None)``, as the sequence length determines the number of dimensions
                 N in the N-dimensional array.
 
-                For :class:`SparseNDArray` only, if a slot is None, then the maximum
-                possible int32 will be used.  This makes a :class:`SparseNDArray`
-                growable.
+                For :class:`SparseNDArray` only, if a slot is None, then the minimum
+                possible int64 will be used.  This makes a :class:`SparseNDArray`
+                growable using ``resize``.
             platform_config:
                 Platform-specific options used to create this array.
                 This may be provided as settings in a dictionary, with options
@@ -83,6 +83,39 @@ class NDArray(SOMAArray, somacore.NDArray):
             Maturing.
         """
         raise NotImplementedError("must be implemented by child class.")
+
+    def resize(
+        self, newshape: Sequence[Union[int, None]], check_only: bool = False
+    ) -> StatusAndReason:
+        """Increases the shape of the array as specfied. Raises an error if the new
+        shape is less than the current shape in any dimension. Raises an error if
+        the new shape exceeds maxshape in any dimension. Raises an error if the
+        array doesn't already have a shape: in that case please call
+        tiledbsoma_upgrade_shape. If ``check_only`` is ``True``, returns
+        whether the operation would succeed if attempted, and a reason why it
+        would not.
+
+        Lifecycle:
+            Maturing.
+        """
+        if check_only:
+            return self._handle.tiledbsoma_can_resize(newshape)
+        else:
+            self._handle.resize(newshape)
+            return (True, "")
+
+    def tiledbsoma_upgrade_shape(
+        self, newshape: Sequence[Union[int, None]], check_only: bool = False
+    ) -> StatusAndReason:
+        """Allows the array to have a resizeable shape as described in the TileDB-SOMA
+        1.15 release notes.  Raises an error if the new shape exceeds maxshape in
+        any dimension. Raises an error if the array already has a shape.
+        """
+        if check_only:
+            return self._handle.tiledbsoma_can_upgrade_shape(newshape)
+        else:
+            self._handle.tiledbsoma_upgrade_shape(newshape)
+            return (True, "")
 
     @property
     def shape(self) -> Tuple[int, ...]:
