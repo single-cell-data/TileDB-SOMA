@@ -360,6 +360,21 @@ test_that("SOMADataFrame domain mods", {
         myint = c(20, 50),
         myfloat = c(0.0, 6.0)
     )
+
+    # -- first check dry run
+    expect_no_condition(sdf$change_domain(domain_for_create, check_only=TRUE))
+    sdf$close()
+
+    check <- list(
+        soma_joinid = c(0, 3),
+        mystring = c("", ""), # this is how it reads back
+        myint = c(20, 50),
+        myfloat = c(0.0, 6.0)
+    )
+    expect_equal(sdf$domain(), check)
+    sdf$close()
+
+    sdf <- SOMADataFrameOpen(uri, "WRITE")
     expect_no_condition(sdf$change_domain(new_domain))
 
     # Shrink
@@ -409,10 +424,11 @@ test_that("SOMADataFrame domain mods", {
     sdf$close()
 
     # Check for success
-    sdf <- SOMADataFrameOpen(uri, "WRITE")
+    sdf <- SOMADataFrameOpen(uri, "READ")
     dom <- sdf$domain()
     expect_equal(sdf$domain(), new_domain)
     sdf$close()
+
 })
 
 test_that("SOMASparseNDArray shape", {
@@ -555,7 +571,12 @@ test_that("SOMADenseNDArray shape", {
     expect_error(ndarray$write(mat))
     ndarray$close()
 
-    # Test resize up
+    # Test resize up, dry run
+    new_shape <- c(501, 601)
+    expect_no_error(reason_string <- ndarray$resize(new_shape, check_only=TRUE))
+    expect_equal(reason_string, "")
+
+    # Test resize up, for real
     new_shape <- c(500, 600)
     expect_no_error(ndarray$resize(new_shape))
 
