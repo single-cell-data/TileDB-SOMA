@@ -352,7 +352,7 @@ BlockwiseSparseReadIter <- R6::R6Class(
       stride <- self$coords[[axname]]$stride
       # For re-indexed blockwise iterators, shape should reflect the re-indexed
       # axes; this can generally be the stride of the iterator, but for the end
-      # of each iterator this needs to the remainder (see ?`%%`).
+      # of each iterator this needs to be the remainder (see ?`%%`).
       # Note: this only applies to the major axis, minor axes always return
       # the full domain.
       if (self$reindexable && shape[axis + 1L] > stride) {
