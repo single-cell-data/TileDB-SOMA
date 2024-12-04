@@ -58,7 +58,7 @@ Adds NDArray-specific functionality to the \code{\link{SOMAArrayBase}} class.
 \if{latex}{\out{\hypertarget{method-SOMANDArrayBase-create}{}}}
 \subsection{Method \code{create()}}{
 Create a SOMA NDArray named with the URI. (lifecycle:
-experimental)
+maturing)
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMANDArrayBase$create(
   type,
@@ -90,7 +90,7 @@ directly.}
 \if{html}{\out{<a id="method-SOMANDArrayBase-set_data_type"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMANDArrayBase-set_data_type}{}}}
 \subsection{Method \code{set_data_type()}}{
-Sets a cache value for the datatype (lifecycle: experimental)
+Sets a cache value for the datatype (lifecycle: maturing)
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMANDArrayBase$set_data_type(type)}\if{html}{\out{</div>}}
 }
@@ -128,7 +128,7 @@ limit which is \code{maxshape}. Raises an error if the new shape is less than
 the current shape in any dimension.  Raises an error if the requested new
 shape exceeds \code{maxshape} in any dimension. Raises an error if the array
 doesn't already have a shape: in that case please call
-\code{tiledbsoma_upgrade_shape}.
+\code{tiledbsoma_upgrade_shape}. (lifecycle: maturing)
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMANDArrayBase$resize(new_shape)}\if{html}{\out{</div>}}
 }
@@ -154,6 +154,7 @@ dimension. Raises an error if the array already has a shape. The methods
 \code{tiledbsoma_upgrade_shape} and \code{resize} are very similar: the former must be
 call on a pre-1.15 array the first time a shape is set on it; the latter must
 be used for subsequent resizes on any array which already has upgraded shape.
+(lifecycle: maturing)
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMANDArrayBase$tiledbsoma_upgrade_shape(shape)}\if{html}{\out{</div>}}
 }
