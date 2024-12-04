@@ -502,18 +502,12 @@ class SparseTensorReadIterBase(somacore.ReadIter[_RT], metaclass=abc.ABCMeta):
 
         _util._set_coords(self.mq, sr, coords)
 
-        self.mq.setup_read()
-
     @abc.abstractmethod
     def _from_table(self, arrow_table: pa.Table) -> _RT:
         raise NotImplementedError()
 
     def __next__(self) -> _RT:
-        if self.mq.is_empty_query():
-            raise StopIteration
-
-        self.mq.submit_read()
-        return self._from_table(self.mq.results())
+        return self._from_table(self.mq.next())
 
     def concat(self) -> _RT:
         """Returns all the requested data in a single operation.
@@ -580,8 +574,6 @@ class ArrowTableRead(Iterator[pa.Table]):
             self.mq.set_condition(QueryCondition(value_filter), sr.schema)
 
         _util._set_coords(self.mq, sr, coords)
-
-        self.mq.setup_read()
 
     def __next__(self) -> pa.Table:
         return self.mq.next()

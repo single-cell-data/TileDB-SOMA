@@ -40,7 +40,7 @@ from ._read_iters import (
     TableReadIter,
 )
 from ._tdb_handles import SparseNDArrayWrapper
-from ._types import NTuple, OpenTimestamp
+from ._types import NTuple, OpenTimestamp, StatusAndReason
 from .options._soma_tiledb_context import (
     SOMATileDBContext,
     _validate_soma_tiledb_context,
