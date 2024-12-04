@@ -26,6 +26,7 @@
 * Add support for writing Seurat v5 ragged arrays
 * Update docstrings for `domain` argument to `create` [#3396](https://github.com/single-cell-data/TileDB-SOMA/pull/3396)
 * Vignette for new-shape feature [#3302](https://github.com/single-cell-data/TileDB-SOMA/pull/3302)
+* Fix blockwise iterator + re-indexer to return re-indexed shape instead of full domain
 
 # tiledbsoma 1.14.5
 
