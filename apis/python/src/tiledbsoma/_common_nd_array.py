@@ -52,7 +52,7 @@ class NDArray(SOMAArray, somacore.NDArray):
                 N in the N-dimensional array.
 
                 For :class:`SparseNDArray` only, if a slot is None, then the minimum
-                possible int64 will be used.  This makes a :class:`SparseNDArray`
+                possible range will be used.  This makes a :class:`SparseNDArray`
                 growable using ``resize``.
             platform_config:
                 Platform-specific options used to create this array.

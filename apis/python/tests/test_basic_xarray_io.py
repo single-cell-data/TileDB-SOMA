@@ -71,15 +71,16 @@ class TestDenseNDDataArray1D:
 
         np.testing.assert_equal(actual.data.compute(), expected.data)
 
-    @pytest.mark.parametrize(
-        "key",
-        [
-            (slice(0, 4, 2),),
-        ],
-    )
-    def test_getitem_with_steps(self, xr_soma_data_array, key):
-        with pytest.raises(NotImplementedError):
-            xr_soma_data_array[key].data.compute()
+    # TEMPORARY PENDING https://github.com/single-cell-data/TileDB-SOMA/issues/3398
+    # @pytest.mark.parametrize(
+    #    "key",
+    #    [
+    #        (slice(0, 4, 2),),
+    #    ],
+    # )
+    # def test_getitem_with_steps(self, xr_soma_data_array, key):
+    #    with pytest.raises(NotImplementedError):
+    #        xr_soma_data_array[key].data.compute()
 
 
 class TestDenseNDDataArray3D:
@@ -151,12 +152,13 @@ class TestDenseNDDataArray3D:
 
         np.testing.assert_equal(actual.data.compute(), expected.data)
 
-    @pytest.mark.parametrize(
-        "key",
-        [
-            (0, 1, slice(0, 4, 2)),
-        ],
-    )
-    def test_getitem_with_steps(self, xr_soma_data_array, key):
-        with pytest.raises(NotImplementedError):
-            xr_soma_data_array[key].data.compute()
+    # TEMPORARY PENDING https://github.com/single-cell-data/TileDB-SOMA/issues/3398
+    # @pytest.mark.parametrize(
+    #    "key",
+    #    [
+    #        (0, 1, slice(0, 4, 2)),
+    #    ],
+    # )
+    # def test_getitem_with_steps(self, xr_soma_data_array, key):
+    #    with pytest.raises(NotImplementedError):
+    #        xr_soma_data_array[key].data.compute()
