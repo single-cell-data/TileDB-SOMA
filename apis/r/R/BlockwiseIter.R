@@ -361,32 +361,6 @@ BlockwiseSparseReadIter <- R6::R6Class(
         } else {
           as.numeric(self$coords[[axname]]$end %% stride) + 1L
         }
-        # axes_to_reindex <- c(
-        #   if (self$axis %in% self$reindex_disable_on_axis) {
-        #     bit64::integer64()
-        #   } else {
-        #     bit64::as.integer64(self$axis)
-        #   },
-        #   self$axes_to_reindex
-        # )
-        # for (i in seq_along(axes_to_reindex)) {
-        #   ax <- axes_to_reindex[i]
-        #   axname <- sprintf("soma_dim_%i", as.integer(ax))
-        #   # self$axes_to_reindex does not contain self$axis,
-        #   # so this is the equivalent of
-        #   # ax == self$axis
-        #   # but `ax` and `self$axes_to_reindex` are integers
-        #   # while `self$axis` is an int64
-        #   if (!ax %in% self$axes_to_reindex) {
-        #     shape[axname] <- if (self$coords[[axname]]$has_next()) {
-        #       self$coords[[axname]]$stride
-        #     } else {
-        #       self$coords[[axname]]$end %% self$coords[[axname]]$stride
-        #     }
-        #     next
-        #   }
-        #   # TODO: Handle cases where minor axes are indexed
-        # }
       }
       mat <- arrow_table_to_sparse(
         tbl,
