@@ -24,6 +24,7 @@
 * Fixes for dense arrays and yet-to-be-released core 2.27 [#3270](https://github.com/single-cell-data/TileDB-SOMA/pull/3270)
 * More fixes for unit-test cases with dense + core 2.27 [#3280](https://github.com/single-cell-data/TileDB-SOMA/pull/3280)
 * Add support for writing Seurat v5 ragged arrays
+* Update docstrings for `domain` argument to `create` [#3396](https://github.com/single-cell-data/TileDB-SOMA/pull/3396)
 
 # tiledbsoma 1.14.5
 
