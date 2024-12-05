@@ -53,7 +53,7 @@ BlockwiseTableReadIterResult = Tuple[pa.Table, Tuple[pa.Array, ...]]
 BlockwiseSingleAxisTableIter = Iterator[BlockwiseTableReadIterResult]
 
 BlockwiseScipyReadIterResult = Tuple[
-    Union[sparse.cclib_handle_matrix, sparse.csc_matrix, sparse.coo_matrix],
+    Union[sparse.csr_handle_matrix, sparse.csc_matrix, sparse.coo_matrix],
     Tuple[npt.NDArray[np.int64], npt.NDArray[np.int64]],
 ]
 
@@ -447,9 +447,7 @@ class BlockwiseScipyReadIter(BlockwiseReadIterBase[BlockwiseScipyReadIterResult]
 
     def _cs_reader(
         self, _pool: Optional[ThreadPoolExecutor] = None
-    ) -> Iterator[
-        Tuple[Union[sparse.cclib_handle_matrix, sparse.csc_matrix], IndicesType],
-    ]:
+    ) -> Iterator[Tuple[Union[sparse.csr_matrix, sparse.csc_matrix], IndicesType],]:
         """Private. Compressed sparse variants"""
         assert self.compress
         assert self.major_axis not in self.reindex_disable_on_axis
