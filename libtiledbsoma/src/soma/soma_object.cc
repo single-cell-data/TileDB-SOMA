@@ -35,7 +35,8 @@ std::unique_ptr<SOMAObject> SOMAObject::open(
                 soma_type = "SOMAGroup";
                 break;
             default:
-                throw TileDBSOMAError("[SOMAObject::open] Saw invalid TileDB type");
+                throw TileDBSOMAError(
+                    "[SOMAObject::open] Saw invalid TileDB type");
         }
     }
 
