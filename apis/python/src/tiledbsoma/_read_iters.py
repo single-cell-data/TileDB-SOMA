@@ -487,7 +487,7 @@ class SparseTensorReadIterBase(somacore.ReadIter[_RT], metaclass=abc.ABCMeta):
         self.result_order = result_order
         self.platform_config = platform_config
 
-        sr = array._handle._handle
+        clib_handle = array._handle._handle
 
         if platform_config is not None:
             cfg = sr.context().config()
