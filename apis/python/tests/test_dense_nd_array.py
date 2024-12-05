@@ -523,7 +523,7 @@ def test_pass_configs(tmp_path):
         ),
     ) as sdf:
 
-        # This error out as 0 are not valid values to set the total memory
+        # This errors out as 0 is not a valid value to set the total memory
         # budget or nummber of threads
         with pytest.raises(soma.SOMAError):
             sdf.read()

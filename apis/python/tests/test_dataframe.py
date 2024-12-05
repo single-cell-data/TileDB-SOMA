@@ -1907,10 +1907,10 @@ def test_pass_configs(tmp_path, arrow_schema):
     with soma.DataFrame.create(uri, schema=arrow_schema()) as sdf:
         pydict = {}
         pydict["soma_joinid"] = [0, 1, 2, 3, 4]
-        pydict["foo"] = [10, 20, 30, 40, 50]
-        pydict["bar"] = [4.1, 5.2, 6.3, 7.4, 8.5]
-        pydict["baz"] = ["apple", "ball", "cat", "dog", "egg"]
-        pydict["quux"] = [True, False, False, True, False]
+        pydict["myint"] = [10, 20, 30, 40, 50]
+        pydict["myfloat"] = [4.1, 5.2, 6.3, 7.4, 8.5]
+        pydict["mystring"] = ["apple", "ball", "cat", "dog", "egg"]
+        pydict["mybool"] = [True, False, False, True, False]
         rb = pa.Table.from_pydict(pydict)
         sdf.tiledbsoma_resize_soma_joinid_shape(len(rb))
         sdf.write(rb)
@@ -1924,7 +1924,7 @@ def test_pass_configs(tmp_path, arrow_schema):
         ),
     ) as sdf:
 
-        # This error out as 0 are not valid values to set the total memory
+        # This errors out as 0 is not a valid value to set the total memory
         # budget or nummber of threads
         with pytest.raises(soma.SOMAError):
             next(sdf.read())
