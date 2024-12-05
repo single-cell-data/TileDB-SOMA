@@ -106,7 +106,7 @@ SOMANDArrayBase <- R6::R6Class(
     #' whether it would have succeeded.
     #' @return No return value if `check_only` is `FALSE`. If `check_only` is `TRUE`,
     #' returns the empty string if no error is detected, else a description of the error.
-    resize = function(new_shape, check_only=FALSE) {
+    resize = function(new_shape, check_only = FALSE) {
       stopifnot(
         "'new_shape' must be a vector of integerish values, of the same length as maxshape" =
           rlang::is_integerish(new_shape, n = self$ndim()) ||
@@ -114,14 +114,14 @@ SOMANDArrayBase <- R6::R6Class(
       )
       # Checking slotwise new shape >= old shape, and <= max_shape, is already done in libtiledbsoma
 
-      reason_string = resize(self$uri, new_shape, .name_of_function(), check_only, private$.soma_context)
+      reason_string <- resize(self$uri, new_shape, .name_of_function(), check_only, private$.soma_context)
 
       if (check_only) {
         return(reason_string)
-      } else {
-        # Return value is always "", or it raises an error trying.
-        invisible(reason_string)
       }
+      
+      # Return value is always "", or it raises an error trying.
+      invisible(reason_string)
     },
 
     #' @description Allows the array to have a resizeable shape as described in the
@@ -135,7 +135,7 @@ SOMANDArrayBase <- R6::R6Class(
     #' whether it would have succeeded.
     #' @return No return value if `check_only` is `FALSE`. If `check_only` is `TRUE`,
     #' returns the empty string if no error is detected, else a description of the error.
-    tiledbsoma_upgrade_shape = function(shape, check_only=FALSE) {
+    tiledbsoma_upgrade_shape = function(shape, check_only = FALSE) {
       stopifnot(
         "'shape' must be a vector of integerish values, of the same length as maxshape" =
           rlang::is_integerish(shape, n = self$ndim()) ||
@@ -143,14 +143,12 @@ SOMANDArrayBase <- R6::R6Class(
       )
       # Checking slotwise new shape >= old shape, and <= max_shape, is already done in libtiledbsoma
 
-      reason_string = tiledbsoma_upgrade_shape(self$uri, shape, .name_of_function(), check_only, private$.soma_context)
+      reason_string <- tiledbsoma_upgrade_shape(self$uri, shape, .name_of_function(), check_only, private$.soma_context)
       if (check_only) {
         return(reason_string)
       }
-      else {
-        # Return value is always "", or it raises an error trying.
-        invisible(reason_string)
-      }
+      # Return value is always "", or it raises an error trying.
+      return(invisible(reason_string))
     }
   ),
   private = list(

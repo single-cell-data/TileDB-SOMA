@@ -484,24 +484,22 @@ SOMADataFrame <- R6::R6Class(
         new_domain, "tiledbsoma_upgrade_domain"
       )
 
-      reason_string = (
-         upgrade_or_change_domain(
-          self$uri,
-          FALSE,
-          pyarrow_domain_table$array,
-          pyarrow_domain_table$schema,
-          .name_of_function(),
-          check_only,
-          private$.soma_context
-        )
+      reason_string <- upgrade_or_change_domain(
+        self$uri,
+        FALSE,
+        pyarrow_domain_table$array,
+        pyarrow_domain_table$schema,
+        .name_of_function(),
+        check_only,
+        private$.soma_context
       )
 
-      if (check_only) {
+      if (isTRUE(check_only)) {
         return(reason_string)
-      } else {
-        # Return value is always "", or it raises an error trying.
-        invisible(reason_string)
       }
+
+      # Return value is always "", or it raises an error trying.
+      return(invisible(reason_string))
     },
 
     #' @description Allows you to set the domain of a `SOMADataFrame`, when the
@@ -520,7 +518,7 @@ SOMADataFrame <- R6::R6Class(
     #' whether it would have succeeded.
     #' @return No return value if `check_only` is `FALSE`. If `check_only` is `TRUE`,
     #' returns the empty string if no error is detected, else a description of the error.
-    change_domain = function(new_domain, check_only=FALSE) {
+    change_domain = function(new_domain, check_only = FALSE) {
       # stopifnot("'new_domain' must be CODE ME UP PLZ" = ...
       # Checking slotwise new shape >= old shape, and <= max_shape, is already
       # done in libtiledbsoma

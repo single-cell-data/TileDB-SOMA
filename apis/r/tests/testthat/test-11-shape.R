@@ -362,14 +362,14 @@ test_that("SOMADataFrame domain mods", {
     )
 
     # -- first check dry run
-    expect_no_condition(sdf$change_domain(domain_for_create, check_only=TRUE))
+    expect_no_condition(sdf$change_domain(domain_for_create, check_only = TRUE))
     sdf$close()
 
     check <- list(
-        soma_joinid = c(0, 3),
-        mystring = c("", ""), # this is how it reads back
-        myint = c(20, 50),
-        myfloat = c(0.0, 6.0)
+      soma_joinid = c(0, 3),
+      mystring = c("", ""), # this is how it reads back
+      myint = c(20, 50),
+      myfloat = c(0.0, 6.0)
     )
     expect_equal(sdf$domain(), check)
     sdf$close()
@@ -573,7 +573,7 @@ test_that("SOMADenseNDArray shape", {
 
     # Test resize up, dry run
     new_shape <- c(501, 601)
-    expect_no_error(reason_string <- ndarray$resize(new_shape, check_only=TRUE))
+    expect_no_error(reason_string <- ndarray$resize(new_shape, check_only = TRUE))
     expect_equal(reason_string, "")
 
     # Test resize up, for real
