@@ -27,6 +27,7 @@
 * Update docstrings for `domain` argument to `create` [#3396](https://github.com/single-cell-data/TileDB-SOMA/pull/3396)
 * Vignette for new-shape feature [#3302](https://github.com/single-cell-data/TileDB-SOMA/pull/3302)
 * Fix blockwise iterator + re-indexer to return re-indexed shape instead of full domain
+* Add `check_only` support for domain/shape updates [#3400](https://github.com/single-cell-data/TileDB-SOMA/pull/3400)
 
 # tiledbsoma 1.14.5
 
