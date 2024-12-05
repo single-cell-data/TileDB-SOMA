@@ -120,8 +120,9 @@ SOMANDArrayBase <- R6::R6Class(
         return(reason_string)
       }
       
-      # Return value is always "", or it raises an error trying.
-      invisible(reason_string)
+      # The return value from resize without check_only is always "", or it
+      # raises an error trying.
+      return(invisible(NULL))
     },
 
     #' @description Allows the array to have a resizeable shape as described in the
@@ -147,8 +148,10 @@ SOMANDArrayBase <- R6::R6Class(
       if (check_only) {
         return(reason_string)
       }
-      # Return value is always "", or it raises an error trying.
-      return(invisible(reason_string))
+
+      # The return value from tiledbsoma_upgrade_shape without check_only is
+      # always "", or it raises an error trying.
+      return(invisible(NULL))
     }
   ),
   private = list(
