@@ -116,7 +116,7 @@ SOMANDArrayBase <- R6::R6Class(
 
       reason_string <- resize(self$uri, new_shape, .name_of_function(), check_only, private$.soma_context)
 
-      if (check_only) {
+      if (isTRUE(check_only)) {
         return(reason_string)
       }
       
@@ -145,7 +145,7 @@ SOMANDArrayBase <- R6::R6Class(
       # Checking slotwise new shape >= old shape, and <= max_shape, is already done in libtiledbsoma
 
       reason_string <- tiledbsoma_upgrade_shape(self$uri, shape, .name_of_function(), check_only, private$.soma_context)
-      if (check_only) {
+      if (isTRUE(check_only)) {
         return(reason_string)
       }
 
