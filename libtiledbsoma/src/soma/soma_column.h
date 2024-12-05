@@ -210,7 +210,15 @@ class SOMAColumn {
                 name()));
         }
 
-        _set_current_domain_slot(rectangle, domain);
+        try {
+            _set_current_domain_slot(rectangle, domain);
+        } catch (const std::exception& e) {
+            throw TileDBSOMAError(std::format(
+                "[SOMAColumn][set_current_domain_slot] Failed on \"{}\" with "
+                "error \"{}\"",
+                name(),
+                e.what()));
+        }
     }
 
     /**
@@ -231,7 +239,15 @@ class SOMAColumn {
                 name()));
         }
 
-        return _can_set_current_domain_slot(rectangle, new_domain);
+        try {
+            return _can_set_current_domain_slot(rectangle, new_domain);
+        } catch (const std::exception& e) {
+            throw TileDBSOMAError(std::format(
+                "[SOMAColumn][can_set_current_domain_slot] Failed on \"{}\" "
+                "with error \"{}\"",
+                name(),
+                e.what()));
+        }
     }
 
     /**
@@ -255,10 +271,19 @@ class SOMAColumn {
         }
 
         T points[] = {point};
-        this->_set_dim_points(
-            query,
-            ctx,
-            std::make_any<std::span<const T>>(std::span<const T>(points)));
+
+        try {
+            this->_set_dim_points(
+                query,
+                ctx,
+                std::make_any<std::span<const T>>(std::span<const T>(points)));
+        } catch (const std::exception& e) {
+            throw TileDBSOMAError(std::format(
+                "[SOMAColumn][set_dim_point] Failed on \"{}\" with error "
+                "\"{}\"",
+                name(),
+                e.what()));
+        }
     }
 
     /**
@@ -281,8 +306,16 @@ class SOMAColumn {
                 name()));
         }
 
-        this->_set_dim_points(
-            query, ctx, std::make_any<std::span<const T>>(points));
+        try {
+            this->_set_dim_points(
+                query, ctx, std::make_any<std::span<const T>>(points));
+        } catch (const std::exception& e) {
+            throw TileDBSOMAError(std::format(
+                "[SOMAColumn][set_dim_points] Failed on \"{}\" with error "
+                "\"{}\"",
+                name(),
+                e.what()));
+        }
     }
 
     /**
@@ -305,8 +338,18 @@ class SOMAColumn {
                 name()));
         }
 
-        this->_set_dim_ranges(
-            query, ctx, std::make_any<std::vector<std::pair<T, T>>>(ranges));
+        try {
+            this->_set_dim_ranges(
+                query,
+                ctx,
+                std::make_any<std::vector<std::pair<T, T>>>(ranges));
+        } catch (const std::exception& e) {
+            throw TileDBSOMAError(std::format(
+                "[SOMAColumn][set_dim_ranges] Failed on \"{}\" with error "
+                "\"{}\"",
+                name(),
+                e.what()));
+        }
     }
 
     /**
@@ -328,7 +371,11 @@ class SOMAColumn {
         try {
             return std::any_cast<std::pair<T, T>>(_core_domain_slot());
         } catch (const std::exception& e) {
-            throw TileDBSOMAError(e.what());
+            throw TileDBSOMAError(std::format(
+                "[SOMAColumn][core_domain_slot] Failed on \"{}\" with error "
+                "\"{}\"",
+                name(),
+                e.what()));
         }
     }
 
@@ -343,8 +390,12 @@ class SOMAColumn {
             return std::any_cast<std::pair<T, T>>(
                 _non_empty_domain_slot(array));
         } catch (const std::exception& e) {
-            throw TileDBSOMAError(e.what());
-        };
+            throw TileDBSOMAError(std::format(
+                "[SOMAColumn][non_empty_domain_slot] Failed on \"{}\" with "
+                "error \"{}\"",
+                name(),
+                e.what()));
+        }
     }
 
     /**
@@ -368,7 +419,11 @@ class SOMAColumn {
             return std::any_cast<std::pair<T, T>>(
                 _core_current_domain_slot(ctx, array));
         } catch (const std::exception& e) {
-            throw TileDBSOMAError(e.what());
+            throw TileDBSOMAError(std::format(
+                "[SOMAColumn][core_current_domain_slot] Failed on \"{}\" with "
+                "error \"{}\"",
+                name(),
+                e.what()));
         }
     }
 

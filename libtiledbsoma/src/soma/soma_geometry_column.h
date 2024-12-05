@@ -18,7 +18,6 @@ class SOMAGeometryColumn : public virtual SOMAColumn {
     static std::shared_ptr<SOMAGeometryColumn> create(
         std::shared_ptr<Context> ctx,
         ArrowSchema* schema,
-        ArrowArray* array,
         ArrowSchema* spatial_schema,
         ArrowArray* spatial_array,
         const std::string& soma_type,

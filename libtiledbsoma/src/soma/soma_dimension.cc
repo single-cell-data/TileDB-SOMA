@@ -84,6 +84,7 @@ void SOMADimension::_set_dim_points(
                 dimension.name(),
                 std::any_cast<std::span<const double_t>>(points));
             break;
+        case TILEDB_STRING_UTF8:
         case TILEDB_STRING_ASCII:
         case TILEDB_CHAR:
         case TILEDB_BLOB:
@@ -179,6 +180,8 @@ void SOMADimension::_set_dim_ranges(
         case TILEDB_STRING_ASCII:
         case TILEDB_CHAR:
         case TILEDB_BLOB:
+        case TILEDB_GEOM_WKT:
+        case TILEDB_GEOM_WKB:
             query->select_ranges(
                 dimension.name(),
                 std::any_cast<std::vector<std::pair<std::string, std::string>>>(
@@ -201,8 +204,7 @@ void SOMADimension::_set_current_domain_slot(
     }
 
     switch (dimension.type()) {
-        case TILEDB_UINT8:
-        case TILEDB_BOOL: {
+        case TILEDB_UINT8: {
             auto dom = std::any_cast<std::array<uint8_t, 2>>(domain[0]);
             rectangle.set_range<uint8_t>(dimension.name(), dom[0], dom[1]);
         } break;
@@ -262,7 +264,6 @@ void SOMADimension::_set_current_domain_slot(
         case TILEDB_GEOM_WKT:
         case TILEDB_GEOM_WKB: {
             auto dom = std::any_cast<std::array<std::string, 2>>(domain[0]);
-
             if (dom[0] == "" && dom[1] == "") {
                 rectangle.set_range(dimension.name(), "", "\x7f");
             } else {
@@ -274,6 +275,7 @@ void SOMADimension::_set_current_domain_slot(
                     dom[0],
                     dom[1]));
             }
+
         } break;
         default:
             throw TileDBSOMAError(std::format(
@@ -331,14 +333,14 @@ std::pair<bool, std::string> SOMADimension::_can_set_current_domain_slot(
         } else {
             auto dom = std::any_cast<std::pair<T, T>>(_core_domain_slot());
 
-            if (new_dom[0] > dom.first) {
+            if (new_dom[0] < dom.first) {
                 return std::pair(
                     false,
                     std::format(
                         "index-column name {}: new lower < limit lower",
                         dimension.name()));
             }
-            if (new_dom[1] < dom.second) {
+            if (new_dom[1] > dom.second) {
                 return std::pair(
                     false,
                     std::format(
@@ -353,24 +355,25 @@ std::pair<bool, std::string> SOMADimension::_can_set_current_domain_slot(
     switch (dimension.type()) {
         case TILEDB_UINT8:
             return comparator(
-                std::any_cast<std::array<uint8_t, 2>>(new_domain));
+                std::any_cast<std::array<uint8_t, 2>>(new_domain[0]));
         case TILEDB_UINT16:
             return comparator(
-                std::any_cast<std::array<uint16_t, 2>>(new_domain));
+                std::any_cast<std::array<uint16_t, 2>>(new_domain[0]));
         case TILEDB_UINT32:
             return comparator(
-                std::any_cast<std::array<uint32_t, 2>>(new_domain));
+                std::any_cast<std::array<uint32_t, 2>>(new_domain[0]));
         case TILEDB_UINT64:
             return comparator(
-                std::any_cast<std::array<uint64_t, 2>>(new_domain));
+                std::any_cast<std::array<uint64_t, 2>>(new_domain[0]));
         case TILEDB_INT8:
-            return comparator(std::any_cast<std::array<int8_t, 2>>(new_domain));
+            return comparator(
+                std::any_cast<std::array<int8_t, 2>>(new_domain[0]));
         case TILEDB_INT16:
             return comparator(
-                std::any_cast<std::array<int16_t, 2>>(new_domain));
+                std::any_cast<std::array<int16_t, 2>>(new_domain[0]));
         case TILEDB_INT32:
             return comparator(
-                std::any_cast<std::array<int32_t, 2>>(new_domain));
+                std::any_cast<std::array<int32_t, 2>>(new_domain[0]));
         case TILEDB_DATETIME_YEAR:
         case TILEDB_DATETIME_MONTH:
         case TILEDB_DATETIME_WEEK:
@@ -386,20 +389,20 @@ std::pair<bool, std::string> SOMADimension::_can_set_current_domain_slot(
         case TILEDB_DATETIME_AS:
         case TILEDB_INT64:
             return comparator(
-                std::any_cast<std::array<int64_t, 2>>(new_domain));
+                std::any_cast<std::array<int64_t, 2>>(new_domain[0]));
         case TILEDB_FLOAT32:
             return comparator(
-                std::any_cast<std::array<float_t, 2>>(new_domain));
+                std::any_cast<std::array<float_t, 2>>(new_domain[0]));
         case TILEDB_FLOAT64:
             return comparator(
-                std::any_cast<std::array<double_t, 2>>(new_domain));
+                std::any_cast<std::array<double_t, 2>>(new_domain[0]));
         case TILEDB_STRING_ASCII:
         case TILEDB_STRING_UTF8:
         case TILEDB_CHAR:
         case TILEDB_BLOB:
         case TILEDB_GEOM_WKT:
         case TILEDB_GEOM_WKB: {
-            auto dom = std::any_cast<std::array<std::string, 2>>(new_domain);
+            auto dom = std::any_cast<std::array<std::string, 2>>(new_domain[0]);
             if (dom[0] != "" || dom[1] != "") {
                 return std::pair(
                     false,
@@ -518,6 +521,8 @@ std::any SOMADimension::_non_empty_domain_slot(Array& array) const {
         case TILEDB_STRING_UTF8:
         case TILEDB_BLOB:
         case TILEDB_CHAR:
+        case TILEDB_GEOM_WKB:
+        case TILEDB_GEOM_WKT:
             return std::make_any<std::pair<std::string, std::string>>(
                 array.non_empty_domain_var(dimension.name()));
         default:
@@ -616,7 +621,9 @@ std::any SOMADimension::_core_current_domain_slot(NDRectangle& ndrect) const {
         case TILEDB_STRING_UTF8:
         case TILEDB_STRING_ASCII:
         case TILEDB_CHAR:
-        case TILEDB_BLOB: {
+        case TILEDB_BLOB:
+        case TILEDB_GEOM_WKT:
+        case TILEDB_GEOM_WKB: {
             std::array<std::string, 2> domain = ndrect.range<std::string>(
                 dimension.name());
             return std::make_any<std::pair<std::string, std::string>>(
@@ -685,6 +692,7 @@ ArrowArray* SOMADimension::arrow_domain_slot(
             return ArrowAdapter::make_arrow_array_child(
                 domain_slot<float>(ctx, array, kind));
         case TILEDB_STRING_ASCII:
+        case TILEDB_STRING_UTF8:
         case TILEDB_CHAR:
         case TILEDB_GEOM_WKB:
         case TILEDB_GEOM_WKT:

@@ -5,7 +5,6 @@ namespace tiledbsoma {
 std::shared_ptr<SOMAGeometryColumn> SOMAGeometryColumn::create(
     std::shared_ptr<Context> ctx,
     ArrowSchema* schema,
-    ArrowArray* array,
     ArrowSchema* spatial_schema,
     ArrowArray* spatial_array,
     const std::string& soma_type,
@@ -119,12 +118,12 @@ void SOMAGeometryColumn::_set_current_domain_slot(
     }
 
     for (size_t i = 0; i < domain.size(); ++i) {
-        auto dom = std::any_cast<std::span<double_t, 2>>(domain[i]);
+        auto dom = std::any_cast<std::array<double_t, 2>>(domain[i]);
         rectangle.set_range<double_t>(dimensions[i].name(), dom[0], dom[1]);
     }
 
     for (size_t i = 0; i < domain.size(); ++i) {
-        auto dom = std::any_cast<std::span<double_t, 2>>(domain[i]);
+        auto dom = std::any_cast<std::array<double_t, 2>>(domain[i]);
         rectangle.set_range<double_t>(
             dimensions[i + domain.size()].name(), dom[0], dom[1]);
     }
