@@ -498,8 +498,9 @@ SOMADataFrame <- R6::R6Class(
         return(reason_string)
       }
 
-      # Return value is always "", or it raises an error trying.
-      return(invisible(reason_string))
+      # The return value from upgrade_or_change_domain without check_only is
+      # always "", or it raises an error trying.
+      return(invisible(NULL))
     },
 
     #' @description Allows you to set the domain of a `SOMADataFrame`, when the
