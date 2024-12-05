@@ -53,7 +53,7 @@ BlockwiseTableReadIterResult = Tuple[pa.Table, Tuple[pa.Array, ...]]
 BlockwiseSingleAxisTableIter = Iterator[BlockwiseTableReadIterResult]
 
 BlockwiseScipyReadIterResult = Tuple[
-    Union[sparse.csr_handle_matrix, sparse.csc_matrix, sparse.coo_matrix],
+    Union[sparse.csr_matrix, sparse.csc_matrix, sparse.coo_matrix],
     Tuple[npt.NDArray[np.int64], npt.NDArray[np.int64]],
 ]
 
