@@ -553,16 +553,18 @@ BEGIN_RCPP
 END_RCPP
 }
 // resize
-void resize(const std::string& uri, Rcpp::NumericVector new_shape, std::string function_name_for_messages, Rcpp::XPtr<somactx_wrap_t> ctxxp);
-RcppExport SEXP _tiledbsoma_resize(SEXP uriSEXP, SEXP new_shapeSEXP, SEXP function_name_for_messagesSEXP, SEXP ctxxpSEXP) {
+std::string resize(const std::string& uri, Rcpp::NumericVector new_shape, std::string function_name_for_messages, bool check_only, Rcpp::XPtr<somactx_wrap_t> ctxxp);
+RcppExport SEXP _tiledbsoma_resize(SEXP uriSEXP, SEXP new_shapeSEXP, SEXP function_name_for_messagesSEXP, SEXP check_onlySEXP, SEXP ctxxpSEXP) {
 BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const std::string& >::type uri(uriSEXP);
     Rcpp::traits::input_parameter< Rcpp::NumericVector >::type new_shape(new_shapeSEXP);
     Rcpp::traits::input_parameter< std::string >::type function_name_for_messages(function_name_for_messagesSEXP);
+    Rcpp::traits::input_parameter< bool >::type check_only(check_onlySEXP);
     Rcpp::traits::input_parameter< Rcpp::XPtr<somactx_wrap_t> >::type ctxxp(ctxxpSEXP);
-    resize(uri, new_shape, function_name_for_messages, ctxxp);
-    return R_NilValue;
+    rcpp_result_gen = Rcpp::wrap(resize(uri, new_shape, function_name_for_messages, check_only, ctxxp));
+    return rcpp_result_gen;
 END_RCPP
 }
 // resize_soma_joinid_shape
@@ -579,31 +581,35 @@ BEGIN_RCPP
 END_RCPP
 }
 // tiledbsoma_upgrade_shape
-void tiledbsoma_upgrade_shape(const std::string& uri, Rcpp::NumericVector new_shape, std::string function_name_for_messages, Rcpp::XPtr<somactx_wrap_t> ctxxp);
-RcppExport SEXP _tiledbsoma_tiledbsoma_upgrade_shape(SEXP uriSEXP, SEXP new_shapeSEXP, SEXP function_name_for_messagesSEXP, SEXP ctxxpSEXP) {
+std::string tiledbsoma_upgrade_shape(const std::string& uri, Rcpp::NumericVector new_shape, std::string function_name_for_messages, bool check_only, Rcpp::XPtr<somactx_wrap_t> ctxxp);
+RcppExport SEXP _tiledbsoma_tiledbsoma_upgrade_shape(SEXP uriSEXP, SEXP new_shapeSEXP, SEXP function_name_for_messagesSEXP, SEXP check_onlySEXP, SEXP ctxxpSEXP) {
 BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const std::string& >::type uri(uriSEXP);
     Rcpp::traits::input_parameter< Rcpp::NumericVector >::type new_shape(new_shapeSEXP);
     Rcpp::traits::input_parameter< std::string >::type function_name_for_messages(function_name_for_messagesSEXP);
+    Rcpp::traits::input_parameter< bool >::type check_only(check_onlySEXP);
     Rcpp::traits::input_parameter< Rcpp::XPtr<somactx_wrap_t> >::type ctxxp(ctxxpSEXP);
-    tiledbsoma_upgrade_shape(uri, new_shape, function_name_for_messages, ctxxp);
-    return R_NilValue;
+    rcpp_result_gen = Rcpp::wrap(tiledbsoma_upgrade_shape(uri, new_shape, function_name_for_messages, check_only, ctxxp));
+    return rcpp_result_gen;
 END_RCPP
 }
 // upgrade_or_change_domain
-void upgrade_or_change_domain(const std::string& uri, bool is_change_domain, naxpArray nadimap, naxpSchema nadimsp, std::string function_name_for_messages, Rcpp::XPtr<somactx_wrap_t> ctxxp);
-RcppExport SEXP _tiledbsoma_upgrade_or_change_domain(SEXP uriSEXP, SEXP is_change_domainSEXP, SEXP nadimapSEXP, SEXP nadimspSEXP, SEXP function_name_for_messagesSEXP, SEXP ctxxpSEXP) {
+std::string upgrade_or_change_domain(const std::string& uri, bool is_change_domain, naxpArray nadimap, naxpSchema nadimsp, std::string function_name_for_messages, bool check_only, Rcpp::XPtr<somactx_wrap_t> ctxxp);
+RcppExport SEXP _tiledbsoma_upgrade_or_change_domain(SEXP uriSEXP, SEXP is_change_domainSEXP, SEXP nadimapSEXP, SEXP nadimspSEXP, SEXP function_name_for_messagesSEXP, SEXP check_onlySEXP, SEXP ctxxpSEXP) {
 BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const std::string& >::type uri(uriSEXP);
     Rcpp::traits::input_parameter< bool >::type is_change_domain(is_change_domainSEXP);
     Rcpp::traits::input_parameter< naxpArray >::type nadimap(nadimapSEXP);
     Rcpp::traits::input_parameter< naxpSchema >::type nadimsp(nadimspSEXP);
     Rcpp::traits::input_parameter< std::string >::type function_name_for_messages(function_name_for_messagesSEXP);
+    Rcpp::traits::input_parameter< bool >::type check_only(check_onlySEXP);
     Rcpp::traits::input_parameter< Rcpp::XPtr<somactx_wrap_t> >::type ctxxp(ctxxpSEXP);
-    upgrade_or_change_domain(uri, is_change_domain, nadimap, nadimsp, function_name_for_messages, ctxxp);
-    return R_NilValue;
+    rcpp_result_gen = Rcpp::wrap(upgrade_or_change_domain(uri, is_change_domain, nadimap, nadimsp, function_name_for_messages, check_only, ctxxp));
+    return rcpp_result_gen;
 END_RCPP
 }
 // c_update_dataframe_schema
@@ -834,10 +840,10 @@ static const R_CallMethodDef CallEntries[] = {
     {"_tiledbsoma_c_dimnames", (DL_FUNC) &_tiledbsoma_c_dimnames, 2},
     {"_tiledbsoma_c_attrnames", (DL_FUNC) &_tiledbsoma_c_attrnames, 2},
     {"_tiledbsoma_c_schema", (DL_FUNC) &_tiledbsoma_c_schema, 2},
-    {"_tiledbsoma_resize", (DL_FUNC) &_tiledbsoma_resize, 4},
+    {"_tiledbsoma_resize", (DL_FUNC) &_tiledbsoma_resize, 5},
     {"_tiledbsoma_resize_soma_joinid_shape", (DL_FUNC) &_tiledbsoma_resize_soma_joinid_shape, 4},
-    {"_tiledbsoma_tiledbsoma_upgrade_shape", (DL_FUNC) &_tiledbsoma_tiledbsoma_upgrade_shape, 4},
-    {"_tiledbsoma_upgrade_or_change_domain", (DL_FUNC) &_tiledbsoma_upgrade_or_change_domain, 6},
+    {"_tiledbsoma_tiledbsoma_upgrade_shape", (DL_FUNC) &_tiledbsoma_tiledbsoma_upgrade_shape, 5},
+    {"_tiledbsoma_upgrade_or_change_domain", (DL_FUNC) &_tiledbsoma_upgrade_or_change_domain, 7},
     {"_tiledbsoma_c_update_dataframe_schema", (DL_FUNC) &_tiledbsoma_c_update_dataframe_schema, 6},
     {"_tiledbsoma_sr_setup", (DL_FUNC) &_tiledbsoma_sr_setup, 10},
     {"_tiledbsoma_sr_complete", (DL_FUNC) &_tiledbsoma_sr_complete, 1},

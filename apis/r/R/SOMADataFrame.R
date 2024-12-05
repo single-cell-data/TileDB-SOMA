@@ -472,9 +472,11 @@ SOMADataFrame <- R6::R6Class(
     #' @param new_domain A named list, keyed by index-column name, with values
     #' being two-element vectors containing the desired lower and upper bounds
     #' for the domain.
-    #' @return No return value
-    tiledbsoma_upgrade_domain = function(new_domain) {
-      # stopifnot("'new_domain' must be CODE ME UP PLZ" = ...
+    #' @param check_only If true, does not apply the operation, but only reports
+    #' whether it would have succeeded.
+    #' @return No return value if `check_only` is `FALSE`. If `check_only` is `TRUE`,
+    #' returns the empty string if no error is detected, else a description of the error.
+    tiledbsoma_upgrade_domain = function(new_domain, check_only = FALSE) {
       # Checking slotwise new shape >= old shape, and <= max_shape, is already
       # done in libtiledbsoma
 
@@ -482,16 +484,23 @@ SOMADataFrame <- R6::R6Class(
         new_domain, "tiledbsoma_upgrade_domain"
       )
 
-      invisible(
-        upgrade_or_change_domain(
-          self$uri,
-          FALSE,
-          pyarrow_domain_table$array,
-          pyarrow_domain_table$schema,
-          .name_of_function(),
-          private$.soma_context
-        )
+      reason_string <- upgrade_or_change_domain(
+        self$uri,
+        FALSE,
+        pyarrow_domain_table$array,
+        pyarrow_domain_table$schema,
+        .name_of_function(),
+        check_only,
+        private$.soma_context
       )
+
+      if (isTRUE(check_only)) {
+        return(reason_string)
+      }
+
+      # The return value from upgrade_or_change_domain without check_only is
+      # always "", or it raises an error trying.
+      return(invisible(NULL))
     },
 
     #' @description Allows you to set the domain of a `SOMADataFrame`, when the
@@ -506,9 +515,11 @@ SOMADataFrame <- R6::R6Class(
     #' @param new_domain A named list, keyed by index-column name, with values
     #' being two-element vectors containing the desired lower and upper bounds
     #' for the domain.
-    #' @return No return value
-    change_domain = function(new_domain) {
-      # stopifnot("'new_domain' must be CODE ME UP PLZ" = ...
+    #' @param check_only If true, does not apply the operation, but only reports
+    #' whether it would have succeeded.
+    #' @return No return value if `check_only` is `FALSE`. If `check_only` is `TRUE`,
+    #' returns the empty string if no error is detected, else a description of the error.
+    change_domain = function(new_domain, check_only = FALSE) {
       # Checking slotwise new shape >= old shape, and <= max_shape, is already
       # done in libtiledbsoma
 
@@ -516,16 +527,23 @@ SOMADataFrame <- R6::R6Class(
         new_domain, tiledbsoma_upgrade_domain
       )
 
-      invisible(
-        upgrade_or_change_domain(
+      reason_string <- upgrade_or_change_domain(
           self$uri,
           TRUE,
           pyarrow_domain_table$array,
           pyarrow_domain_table$schema,
           .name_of_function(),
+          check_only,
           private$.soma_context
-        )
       )
+
+      if (isTRUE(check_only)) {
+        return(reason_string)
+      }
+
+      # The return value from upgrade_or_change_domain without check_only is
+      # always "", or it raises an error trying.
+      return(invisible(NULL))
     }
   ),
   private = list(

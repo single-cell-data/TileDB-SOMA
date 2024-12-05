@@ -102,15 +102,27 @@ SOMANDArrayBase <- R6::R6Class(
     #' doesn't already have a shape: in that case please call
     #' `tiledbsoma_upgrade_shape`. (lifecycle: maturing)
     #' @param new_shape A vector of integerish, of the same length as the array's `ndim`.
-    #' @return No return value
-    resize = function(new_shape) {
+    #' @param check_only If true, does not apply the operation, but only reports
+    #' whether it would have succeeded.
+    #' @return No return value if `check_only` is `FALSE`. If `check_only` is `TRUE`,
+    #' returns the empty string if no error is detected, else a description of the error.
+    resize = function(new_shape, check_only = FALSE) {
       stopifnot(
         "'new_shape' must be a vector of integerish values, of the same length as maxshape" =
           rlang::is_integerish(new_shape, n = self$ndim()) ||
             (bit64::is.integer64(new_shape) && length(new_shape) == self$ndim())
       )
       # Checking slotwise new shape >= old shape, and <= max_shape, is already done in libtiledbsoma
-      resize(self$uri, new_shape, .name_of_function(), private$.soma_context)
+
+      reason_string <- resize(self$uri, new_shape, .name_of_function(), check_only, private$.soma_context)
+
+      if (isTRUE(check_only)) {
+        return(reason_string)
+      }
+      
+      # The return value from resize without check_only is always "", or it
+      # raises an error trying.
+      return(invisible(NULL))
     },
 
     #' @description Allows the array to have a resizeable shape as described in the
@@ -121,15 +133,26 @@ SOMANDArrayBase <- R6::R6Class(
     #' be used for subsequent resizes on any array which already has upgraded shape.
     #' (lifecycle: maturing)
     #' @param shape A vector of integerish, of the same length as the array's `ndim`.
-    #' @return No return value
-    tiledbsoma_upgrade_shape = function(shape) {
+    #' @param check_only If true, does not apply the operation, but only reports
+    #' whether it would have succeeded.
+    #' @return No return value if `check_only` is `FALSE`. If `check_only` is `TRUE`,
+    #' returns the empty string if no error is detected, else a description of the error.
+    tiledbsoma_upgrade_shape = function(shape, check_only = FALSE) {
       stopifnot(
         "'shape' must be a vector of integerish values, of the same length as maxshape" =
           rlang::is_integerish(shape, n = self$ndim()) ||
             (bit64::is.integer64(shape) && length(shape) == self$ndim())
       )
       # Checking slotwise new shape >= old shape, and <= max_shape, is already done in libtiledbsoma
-      tiledbsoma_upgrade_shape(self$uri, shape, .name_of_function(), private$.soma_context)
+
+      reason_string <- tiledbsoma_upgrade_shape(self$uri, shape, .name_of_function(), check_only, private$.soma_context)
+      if (isTRUE(check_only)) {
+        return(reason_string)
+      }
+
+      # The return value from tiledbsoma_upgrade_shape without check_only is
+      # always "", or it raises an error trying.
+      return(invisible(NULL))
     }
   ),
   private = list(
