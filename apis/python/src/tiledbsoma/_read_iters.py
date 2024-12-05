@@ -53,7 +53,7 @@ BlockwiseTableReadIterResult = Tuple[pa.Table, Tuple[pa.Array, ...]]
 BlockwiseSingleAxisTableIter = Iterator[BlockwiseTableReadIterResult]
 
 BlockwiseScipyReadIterResult = Tuple[
-    Union[sparse.csr_matrix, sparse.csc_matrix, sparse.coo_matrix],
+    Union[sparse.cclib_handle_matrix, sparse.csc_matrix, sparse.coo_matrix],
     Tuple[npt.NDArray[np.int64], npt.NDArray[np.int64]],
 ]
 
@@ -96,10 +96,10 @@ class TableReadIter(somacore.ReadIter[pa.Table]):
 
             result_order (clib.ResultOrder):
                 Order of read results.
+                This can be one of automatic, rowmajor, or colmajor.
 
             value_filter (Optional[str]):
                 An optional [value filter] to apply to the results.
-                This can be one of automatic, rowmajor, or colmajor.
 
             platform_config (Optional[options.PlatformConfig]):
                 Pass in parameters for tuning reads.
@@ -283,7 +283,7 @@ class BlockwiseReadIterBase(somacore.ReadIter[_RT], metaclass=abc.ABCMeta):
                 ArrowTableRead(
                     array=self.array,
                     coords=step_coords,
-                    column_names=[],
+                    column_names=[],  # select all columns
                     result_order=self.result_order,
                     value_filter=None,
                     platform_config=self.platform_config,
@@ -368,10 +368,10 @@ class BlockwiseScipyReadIter(BlockwiseReadIterBase[BlockwiseScipyReadIterResult]
 
         if self.compress and self.major_axis in self.reindex_disable_on_axis:
             raise SOMAError(
-                "Unable to disable reindexing of coordinates on CSC/CSR major axis"
+                "Unable to disable reindexing of coordinates on CSC/Cclib_handle major axis"
             )
 
-        # Sanity check: if CSC/CSR, we _must_ be reindexing
+        # Sanity check: if CSC/Cclib_handle, we _must_ be reindexing
         assert not self.compress or self.axes_to_reindex
 
     @property
@@ -447,7 +447,9 @@ class BlockwiseScipyReadIter(BlockwiseReadIterBase[BlockwiseScipyReadIterResult]
 
     def _cs_reader(
         self, _pool: Optional[ThreadPoolExecutor] = None
-    ) -> Iterator[Tuple[Union[sparse.csr_matrix, sparse.csc_matrix], IndicesType],]:
+    ) -> Iterator[
+        Tuple[Union[sparse.cclib_handle_matrix, sparse.csc_matrix], IndicesType],
+    ]:
         """Private. Compressed sparse variants"""
         assert self.compress
         assert self.major_axis not in self.reindex_disable_on_axis
@@ -490,17 +492,17 @@ class SparseTensorReadIterBase(somacore.ReadIter[_RT], metaclass=abc.ABCMeta):
         clib_handle = array._handle._handle
 
         if platform_config is not None:
-            cfg = sr.context().config()
+            cfg = clib_handle.context().config()
             cfg.update(platform_config)
             ctx = clib.SOMAContext(cfg)
         else:
-            ctx = sr.context()
+            ctx = clib_handle.context()
 
-        self.mq = clib.ManagedQuery(sr, ctx)
+        self.mq = clib.ManagedQuery(clib_handle, ctx)
 
         self.mq.set_layout(result_order)
 
-        _util._set_coords(self.mq, sr, coords)
+        _util._set_coords(self.mq, clib_handle, coords)
 
     @abc.abstractmethod
     def _from_table(self, arrow_table: pa.Table) -> _RT:
@@ -519,7 +521,7 @@ class SparseTensorReadIterBase(somacore.ReadIter[_RT], metaclass=abc.ABCMeta):
             TableReadIter(
                 array=self.array,
                 coords=self.coords,
-                column_names=[],
+                column_names=[],  # select all columns
                 result_order=self.result_order,
                 value_filter=None,
                 platform_config=self.platform_config,
@@ -554,16 +556,16 @@ class ArrowTableRead(Iterator[pa.Table]):
         value_filter: Optional[str],
         platform_config: Optional[options.PlatformConfig],
     ):
-        sr = array._handle._handle
+        clib_handle = array._handle._handle
 
         if platform_config is not None:
-            cfg = sr.context().config()
+            cfg = clib_handle.context().config()
             cfg.update(platform_config)
             ctx = clib.SOMAContext(cfg)
         else:
-            ctx = sr.context()
+            ctx = clib_handle.context()
 
-        self.mq = clib.ManagedQuery(sr, ctx)
+        self.mq = clib.ManagedQuery(clib_handle, ctx)
 
         self.mq.set_layout(result_order)
 
@@ -571,9 +573,9 @@ class ArrowTableRead(Iterator[pa.Table]):
             self.mq.select_columns(list(column_names))
 
         if value_filter is not None:
-            self.mq.set_condition(QueryCondition(value_filter), sr.schema)
+            self.mq.set_condition(QueryCondition(value_filter), clib_handle.schema)
 
-        _util._set_coords(self.mq, sr, coords)
+        _util._set_coords(self.mq, clib_handle, coords)
 
     def __next__(self) -> pa.Table:
         return self.mq.next()
