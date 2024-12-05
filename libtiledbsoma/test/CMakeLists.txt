@@ -29,7 +29,6 @@ add_executable(unit_soma
     unit_soma_dense_ndarray.cc
     unit_soma_sparse_ndarray.cc
     unit_soma_collection.cc
-    unit_soma_column.cc
     unit_soma_scene.cc
     unit_soma_geometry_dataframe.cc
     unit_soma_point_cloud_dataframe.cc
