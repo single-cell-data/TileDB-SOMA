@@ -5,7 +5,7 @@
 \title{SOMA Array Base Class}
 \description{
 Adds SOMA-specific functionality to the \code{\link{TileDBArray}} class.  (lifecycle:
-experimental)
+maturing)
 }
 \keyword{internal}
 \section{Super classes}{

@@ -358,7 +358,7 @@ as \verb{("", "")}, or as \code{NULL}.  If \code{check_only} is \code{True}, ret
 whether the operation would succeed if attempted, and a reason why it
 would not. The return value from \code{domain} must be contained within
 the requested \code{new_domain}, and the requested \code{new_domain} must be
-contained within the return value from \code{maxdomain}.
+contained within the return value from \code{maxdomain}. (lifecycle: maturing)
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMADataFrame$change_domain(new_domain)}\if{html}{\out{</div>}}
 }
