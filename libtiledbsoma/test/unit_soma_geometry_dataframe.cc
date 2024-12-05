@@ -113,11 +113,7 @@ TEST_CASE("SOMAGeometryDataFrame: basic", "[SOMAGeometryDataFrame]") {
     REQUIRE(soma_geometry->ctx() == ctx);
     REQUIRE(soma_geometry->type() == "SOMAGeometryDataFrame");
     std::vector<std::string> expected_index_column_names = {
-        dim_infos[0].name,
-        SOMA_GEOMETRY_DIMENSION_PREFIX + spatial_dim_infos[0].name + "__min",
-        SOMA_GEOMETRY_DIMENSION_PREFIX + spatial_dim_infos[1].name + "__min",
-        SOMA_GEOMETRY_DIMENSION_PREFIX + spatial_dim_infos[0].name + "__max",
-        SOMA_GEOMETRY_DIMENSION_PREFIX + spatial_dim_infos[1].name + "__max"};
+        dim_infos[0].name, dim_infos[1].name};
 
     std::vector<std::string> expected_spatial_column_names = {
         spatial_dim_infos[0].name, spatial_dim_infos[1].name};

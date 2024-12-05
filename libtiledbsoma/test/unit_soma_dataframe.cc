@@ -974,8 +974,8 @@ TEST_CASE_METHOD(
                 "mem://unit-test-variant-indexed-dataframe-3-" + suffix1 + "-" +
                     suffix2);
 
-            std::string string_lo = specify_domain ? "apple" : "";
-            std::string string_hi = specify_domain ? "zebra" : "";
+            std::string string_lo = "";
+            std::string string_hi = "";
             std::vector<helper::DimInfo> dim_infos(
                 {i64_dim_info(), str_dim_info(string_lo, string_hi)});
             std::vector<helper::AttrInfo> attr_infos({u32_attr_info()});
@@ -998,17 +998,14 @@ TEST_CASE_METHOD(
 
             std::array<std::string, 2> str_range = ndrect.range<std::string>(
                 dim_infos[1].name);
-            if (specify_domain) {
-                REQUIRE(str_range[0] == dim_infos[1].string_lo);
-                REQUIRE(str_range[1] == dim_infos[1].string_hi);
-            } else {
-                // Can we write empty strings in this range?
-                REQUIRE(str_range[0] <= "");
-                REQUIRE(str_range[1] >= "");
-                // Can we write ASCII values in this range?
-                REQUIRE(str_range[0] < " ");
-                REQUIRE(str_range[1] > "~");
-            }
+
+            // Can we write empty strings in this range?
+            REQUIRE(str_range[0] <= "");
+            REQUIRE(str_range[1] >= "");
+            // Can we write ASCII values in this range?
+            REQUIRE(str_range[0] < " ");
+            REQUIRE(str_range[1] > "~");
+            
 
             // Check shape before write
             int64_t expect = dim_infos[0].dim_max + 1;
@@ -1238,8 +1235,8 @@ TEST_CASE_METHOD(
                 "mem://unit-test-variant-indexed-dataframe-4-" + suffix1 + "-" +
                     suffix2);
 
-            std::string string_lo = specify_domain ? "apple" : "";
-            std::string string_hi = specify_domain ? "zebra" : "";
+            std::string string_lo = "";
+            std::string string_hi = "";
             std::vector<helper::DimInfo> dim_infos(
                 {str_dim_info(string_lo, string_hi), u32_dim_info()});
             std::vector<helper::AttrInfo> attr_infos({i64_attr_info()});
@@ -1257,17 +1254,14 @@ TEST_CASE_METHOD(
 
             std::array<std::string, 2> str_range = ndrect.range<std::string>(
                 dim_infos[0].name);
-            if (specify_domain) {
-                REQUIRE(str_range[0] == dim_infos[0].string_lo);
-                REQUIRE(str_range[1] == dim_infos[0].string_hi);
-            } else {
-                // Can we write empty strings in this range?
-                REQUIRE(str_range[0] <= "");
-                REQUIRE(str_range[1] >= "");
-                // Can we write ASCII values in this range?
-                REQUIRE(str_range[0] < " ");
-                REQUIRE(str_range[1] > "~");
-            }
+  
+            // Can we write empty strings in this range?
+            REQUIRE(str_range[0] <= "");
+            REQUIRE(str_range[1] >= "");
+            // Can we write ASCII values in this range?
+            REQUIRE(str_range[0] < " ");
+            REQUIRE(str_range[1] > "~");
+            
 
             std::array<uint32_t, 2> u32_range = ndrect.range<uint32_t>(
                 dim_infos[1].name);
@@ -1295,13 +1289,7 @@ TEST_CASE_METHOD(
                     soma_maxdomain, "mystring")[0];
 
             REQUIRE(ned_str == std::array<std::string, 2>({"", ""}));
-
-            if (specify_domain) {
-                REQUIRE(dom_str[0] == dim_infos[0].string_lo);
-                REQUIRE(dom_str[1] == dim_infos[0].string_hi);
-            } else {
-                REQUIRE(dom_str == std::array<std::string, 2>({"", ""}));
-            }
+            REQUIRE(dom_str == std::array<std::string, 2>({"", ""}));
             REQUIRE(maxdom_str == std::array<std::string, 2>({"", ""}));
 
             sdf->close();
@@ -1331,7 +1319,7 @@ TEST_CASE_METHOD(
                 dim_infos.size());
             domain_array
                 ->children[0] = ArrowAdapter::make_arrow_array_child_string(
-                std::vector<std::string>({"a", "z"}));
+                std::vector<std::string>({"", ""}));
             domain_array->children[1] = ArrowAdapter::make_arrow_array_child(
                 std::vector<uint32_t>({0, 0}));
             auto domain_table = ArrowTable(

@@ -107,8 +107,12 @@ const std::vector<std::string> SOMAGeometryDataFrame::spatial_column_names()
     std::unordered_set<std::string> unique_names;
     std::regex rgx("tiledb__internal__(\\S+)__");
     std::smatch matches;
-    for (auto dimension : this->dimension_names()) {
-        if (std::regex_search(dimension, matches, rgx)) {
+    auto dims = get_column(SOMA_GEOMETRY_COLUMN_NAME)
+                    ->tiledb_dimensions()
+                    .value();
+    for (const auto& dimension : dims) {
+        auto dim_name = dimension.name();
+        if (std::regex_search(dim_name, matches, rgx)) {
             if (unique_names.count(matches[1].str()) == 0) {
                 unique_names.insert(matches[1].str());
                 names.push_back(matches[1].str());
