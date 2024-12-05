@@ -45,7 +45,8 @@ std::unique_ptr<SOMAObject> SOMAObject::open(
         auto array_type = array_->type();
 
         if (!array_type.has_value())
-            throw TileDBSOMAError("SOMAArray has no type info");
+            throw TileDBSOMAError(
+                "[SOMAObject::open] SOMAArray has no type info");
 
         std::transform(
             array_type->begin(),
@@ -64,14 +65,16 @@ std::unique_ptr<SOMAObject> SOMAObject::open(
         } else if (array_type == "somageometrydataframe") {
             return std::make_unique<SOMAGeometryDataFrame>(*array_);
         } else {
-            throw TileDBSOMAError("Saw invalid SOMAArray type");
+            throw TileDBSOMAError(
+                "[SOMAObject::open] Saw invalid SOMAArray type");
         }
     } else if (soma_type == "SOMAGroup") {
         auto group_ = SOMAGroup::open(mode, uri, ctx, "", timestamp);
         auto group_type = group_->type();
 
         if (!group_type.has_value())
-            throw TileDBSOMAError("SOMAGroup has no type info");
+            throw TileDBSOMAError(
+                "[SOMAObject::open] SOMAGroup has no type info");
 
         std::transform(
             group_type->begin(),
@@ -90,11 +93,13 @@ std::unique_ptr<SOMAObject> SOMAObject::open(
         } else if (group_type == "somamultiscaleimage") {
             return std::make_unique<SOMAMultiscaleImage>(*group_);
         } else {
-            throw TileDBSOMAError("Saw invalid SOMAGroup type");
+            throw TileDBSOMAError(
+                "[SOMAObject::open] Saw invalid SOMAGroup type");
         }
     }
 
-    throw TileDBSOMAError("Invalid TileDB object passed to SOMAObject::open");
+    throw TileDBSOMAError(
+        "[SOMAObject::open] Invalid TileDB object passed to SOMAObject::open");
 }
 
 const std::optional<std::string> SOMAObject::type() {

@@ -70,16 +70,18 @@ def open(
 
     timestamp_ms = context._open_timestamp_ms(timestamp)
 
-    soma_object = clib.SOMAObject.open(
-        uri=uri,
-        mode=open_mode,
-        context=context.native_context,
-        timestamp=(0, timestamp_ms),
-        clib_type=clib_type,
-    )
-
-    if not soma_object:
-        raise DoesNotExistError(f"{uri!r} does not exist")
+    try:
+        soma_object = clib.SOMAObject.open(
+            uri=uri,
+            mode=open_mode,
+            context=context.native_context,
+            timestamp=(0, timestamp_ms),
+            clib_type=clib_type,
+        )
+    except (RuntimeError, SOMAError) as tdbe:
+        if is_does_not_exist_error(tdbe):
+            raise DoesNotExistError(tdbe) from tdbe
+        raise
 
     _type_to_class = {
         "somadataframe": DataFrameWrapper,
