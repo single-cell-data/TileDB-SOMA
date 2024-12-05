@@ -557,14 +557,14 @@ class ArrowAdapter {
      * Complex column types are supported. The for each sub column are an
      * std::array<T, 2> casted as an std::any object.
      */
-    template <size_t D>
+    template <size_t Take, size_t Skip = 0>
     static std::vector<std::any> get_table_any_column_by_name(
         const ArrowTable& arrow_table, std::string column_name) {
         int64_t index = _get_column_index_from_name(arrow_table, column_name);
-        return get_table_any_column_by_index<D>(arrow_table, index);
+        return get_table_any_column_by_index<Take, Skip>(arrow_table, index);
     }
 
-    template <size_t D>
+    template <size_t Take, size_t Skip = 0>
     static std::vector<std::any> get_table_any_column_by_index(
         const ArrowTable& arrow_table, int64_t column_index) {
         ArrowArray* arrow_array = arrow_table.first.get();
@@ -595,17 +595,18 @@ class ArrowAdapter {
                 ArrowArray* array = selected_array->children[i];
                 ArrowSchema* schema = selected_schema->children[i];
 
-                result.push_back(get_table_any_column<D>(array, schema));
+                result.push_back(
+                    get_table_any_column<Take, Skip>(array, schema));
             }
         } else {
-            result.push_back(
-                get_table_any_column<D>(selected_array, selected_schema));
+            result.push_back(get_table_any_column<Take, Skip>(
+                selected_array, selected_schema));
         }
 
         return result;
     }
 
-    template <size_t D>
+    template <size_t Take, size_t Skip = 0>
     static std::any get_table_any_column(
         ArrowArray* array, ArrowSchema* schema) {
         auto tdb_type = to_tiledb_format(schema->format, "");
@@ -616,9 +617,11 @@ class ArrowAdapter {
                 "node");
         }
 
-        if (array->length != D) {
+        if (array->length < Skip + Take) {
             throw std::runtime_error(std::format(
-                "ArrowAdapter::get_table_any_column: expected {} elements", D));
+                "ArrowAdapter::get_table_any_column: expected at least {} "
+                "elements",
+                Skip + Take));
         }
 
         if (strcmp(schema->format, "u") == 0 ||
@@ -666,36 +669,39 @@ class ArrowAdapter {
 
         switch (tdb_type) {
             case TILEDB_BOOL: {
-                return std::make_any<std::array<bool, D>>(std::to_array(
-                    (bool(&)[D])(*((bool*)array->buffers[1]))));
+                return std::make_any<std::array<bool, Take>>(std::to_array(
+                    (bool(&)[Take])(*((bool*)array->buffers[1] + Skip))));
             }
             case TILEDB_UINT8: {
-                return std::make_any<std::array<uint8_t, D>>(std::to_array(
-                    (uint8_t(&)[D])(*((uint8_t*)array->buffers[1]))));
+                return std::make_any<std::array<uint8_t, Take>>(std::to_array(
+                    (uint8_t(&)[Take])(*((uint8_t*)array->buffers[1] + Skip))));
             }
             case TILEDB_UINT16: {
-                return std::make_any<std::array<uint16_t, D>>(std::to_array(
-                    (uint16_t(&)[D])(*((uint16_t*)array->buffers[1]))));
+                return std::make_any<std::array<uint16_t, Take>>(
+                    std::to_array((uint16_t(&)[Take])(
+                        *((uint16_t*)array->buffers[1] + Skip))));
             }
             case TILEDB_UINT32: {
-                return std::make_any<std::array<uint32_t, D>>(std::to_array(
-                    (uint32_t(&)[D])(*((uint32_t*)array->buffers[1]))));
+                return std::make_any<std::array<uint32_t, Take>>(
+                    std::to_array((uint32_t(&)[Take])(
+                        *((uint32_t*)array->buffers[1] + Skip))));
             }
             case TILEDB_UINT64: {
-                return std::make_any<std::array<uint64_t, D>>(std::to_array(
-                    (uint64_t(&)[D])(*((uint64_t*)array->buffers[1]))));
+                return std::make_any<std::array<uint64_t, Take>>(
+                    std::to_array((uint64_t(&)[Take])(
+                        *((uint64_t*)array->buffers[1] + Skip))));
             }
             case TILEDB_INT8: {
-                return std::make_any<std::array<int8_t, D>>(std::to_array(
-                    (int8_t(&)[D])(*((int8_t*)array->buffers[1]))));
+                return std::make_any<std::array<int8_t, Take>>(std::to_array(
+                    (int8_t(&)[Take])(*((int8_t*)array->buffers[1] + Skip))));
             }
             case TILEDB_INT16: {
-                return std::make_any<std::array<int16_t, D>>(std::to_array(
-                    (int16_t(&)[D])(*((int16_t*)array->buffers[1]))));
+                return std::make_any<std::array<int16_t, Take>>(std::to_array(
+                    (int16_t(&)[Take])(*((int16_t*)array->buffers[1] + Skip))));
             }
             case TILEDB_INT32: {
-                return std::make_any<std::array<int32_t, D>>(std::to_array(
-                    (int32_t(&)[D])(*((int32_t*)array->buffers[1]))));
+                return std::make_any<std::array<int32_t, Take>>(std::to_array(
+                    (int32_t(&)[Take])(*((int32_t*)array->buffers[1] + Skip))));
             }
             case TILEDB_DATETIME_YEAR:
             case TILEDB_DATETIME_MONTH:
@@ -711,16 +717,17 @@ class ArrowAdapter {
             case TILEDB_DATETIME_FS:
             case TILEDB_DATETIME_AS:
             case TILEDB_INT64: {
-                return std::make_any<std::array<int64_t, D>>(std::to_array(
-                    (int64_t(&)[D])(*((int64_t*)array->buffers[1]))));
+                return std::make_any<std::array<int64_t, Take>>(std::to_array(
+                    (int64_t(&)[Take])(*((int64_t*)array->buffers[1] + Skip))));
             }
             case TILEDB_FLOAT32: {
-                return std::make_any<std::array<float_t, D>>(std::to_array(
-                    (float_t(&)[D])(*((float_t*)array->buffers[1]))));
+                return std::make_any<std::array<float_t, Take>>(std::to_array(
+                    (float_t(&)[Take])(*((float_t*)array->buffers[1] + Skip))));
             }
             case TILEDB_FLOAT64: {
-                return std::make_any<std::array<double_t, D>>(std::to_array(
-                    (double_t(&)[D])(*((double_t*)array->buffers[1]))));
+                return std::make_any<std::array<double_t, Take>>(
+                    std::to_array((double_t(&)[Take])(
+                        *((double_t*)array->buffers[1] + Skip))));
             }
             case TILEDB_STRING_ASCII:
             case TILEDB_STRING_UTF8:
@@ -733,26 +740,30 @@ class ArrowAdapter {
                     uint32_t* offsets = (uint32_t*)array->buffers[1];
                     char* data = (char*)array->buffers[2];
 
-                    std::array<std::string, D> result;
-                    for (size_t i = 0; i < D; ++i) {
-                        result[i] = std::string(
-                            &data[offsets[i]], &data[offsets[i + 1]]);
+                    std::array<std::string, Take> result;
+                    for (size_t i = Skip; i < Skip + Take; ++i) {
+                        if (offsets[i + 1] - offsets[i] != 0) {
+                            result[i - Skip] = std::string(
+                                &data[offsets[i]], &data[offsets[i + 1]]);
+                        }
                     }
 
-                    return std::make_any<std::array<std::string, D>>(result);
+                    return std::make_any<std::array<std::string, Take>>(result);
                 } else if (
                     strcmp(schema->format, "U") == 0 ||
                     strcmp(schema->format, "Z") == 0) {
                     uint64_t* offsets = (uint64_t*)array->buffers[1];
                     char* data = (char*)array->buffers[2];
 
-                    std::array<std::string, D> result;
-                    for (size_t i = 0; i < D; ++i) {
-                        result[i] = std::string(
-                            &data[offsets[i]], &data[offsets[i + 1]]);
+                    std::array<std::string, Take> result;
+                    for (size_t i = Skip; i < Skip + Take; ++i) {
+                        if (offsets[i + 1] - offsets[i] != 0) {
+                            result[i - Skip] = std::string(
+                                &data[offsets[i]], &data[offsets[i + 1]]);
+                        }
                     }
 
-                    return std::make_any<std::array<std::string, D>>(result);
+                    return std::make_any<std::array<std::string, Take>>(result);
                 } else {
                     throw std::runtime_error(std::format(
                         "ArrowAdapter::get_table_any_column: Unknown "
