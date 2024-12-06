@@ -935,7 +935,7 @@ class ArrowAdapter {
                 "node");
         }
 
-        if (array->length < Skip + Take) {
+        if (array->length < static_cast<int64_t>(Skip + Take)) {
             throw std::runtime_error(std::format(
                 "ArrowAdapter::get_table_any_column: expected at least {} "
                 "elements",
