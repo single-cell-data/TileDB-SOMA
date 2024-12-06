@@ -95,7 +95,11 @@ class SOMAAttribute : public virtual SOMAColumn {
 
     virtual void _set_current_domain_slot(
         NDRectangle& rectangle,
-        const std::vector<const void*>& domain) const override;
+        std::span<const std::any> domain) const override;
+
+    virtual std::pair<bool, std::string> _can_set_current_domain_slot(
+        std::optional<NDRectangle>& rectangle,
+        std::span<const std::any> new_domain) const override;
 
     virtual std::any _core_domain_slot() const override;
 
@@ -103,6 +107,9 @@ class SOMAAttribute : public virtual SOMAColumn {
 
     virtual std::any _core_current_domain_slot(
         const SOMAContext& ctx, Array& array) const override;
+
+    virtual std::any _core_current_domain_slot(
+        NDRectangle& ndrect) const override;
 
     Attribute attribute;
     std::optional<Enumeration> enumeration;
