@@ -1098,10 +1098,12 @@ def _extract_new_values_for_append(
         with _factory.open(
             df_uri, "r", soma_type=DataFrame, context=context
         ) as previous_soma_dataframe:
-            previous_table = previous_soma_dataframe.read().concat()
-            previous_df = previous_table.to_pandas()
+            previous_sjids_table = previous_soma_dataframe.read().concat()
             previous_join_ids = set(
-                int(e) for e in get_dataframe_values(previous_df, SOMA_JOINID)
+                int(e)
+                for e in get_dataframe_values(
+                    previous_sjids_table.to_pandas(), SOMA_JOINID
+                )
             )
             mask = [
                 e.as_py() not in previous_join_ids for e in arrow_table[SOMA_JOINID]
