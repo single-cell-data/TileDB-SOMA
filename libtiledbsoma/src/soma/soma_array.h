@@ -90,14 +90,6 @@ using namespace tiledb;
 
 using StatusAndReason = std::pair<bool, std::string>;
 
-// This enables some code deduplication between core domain, core current
-// domain, and core non-empty domain.
-enum class Domainish {
-    kind_core_domain = 0,
-    kind_core_current_domain = 1,
-    kind_non_empty_domain = 2
-};
-
 class SOMAArray : public SOMAObject {
    public:
     friend class ManagedQuery;
