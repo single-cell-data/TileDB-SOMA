@@ -77,7 +77,7 @@ struct VariouslyIndexedDataFrameFixture {
     std::string attr_1_arrow_format = ArrowAdapter::tdb_to_arrow_type(
         str_datatype);
 
-    helper::DimInfo i64_dim_info(bool use_current_domain) {
+    helper::DimInfo i64_dim_info() {
         return helper::DimInfo(
             {.name = i64_name,
              .tiledb_datatype = i64_datatype,
@@ -85,7 +85,7 @@ struct VariouslyIndexedDataFrameFixture {
              .string_lo = "N/A",
              .string_hi = "N/A"});
     }
-    helper::DimInfo u32_dim_info(bool use_current_domain) {
+    helper::DimInfo u32_dim_info() {
         return helper::DimInfo(
             {.name = u32_name,
              .tiledb_datatype = u32_datatype,
@@ -93,8 +93,7 @@ struct VariouslyIndexedDataFrameFixture {
              .string_lo = "N/A",
              .string_hi = "N/A"});
     }
-    helper::DimInfo str_dim_info(
-        bool use_current_domain, std::string string_lo, std::string string_hi) {
+    helper::DimInfo str_dim_info(std::string string_lo, std::string string_hi) {
         return helper::DimInfo(
             {.name = str_name,
              .tiledb_datatype = str_datatype,
@@ -314,7 +313,6 @@ TEST_CASE("SOMAColumn: SOMAGeometryDimension") {
     auto geometry_column = SOMAGeometryColumn::create(
         ctx->tiledb_ctx(),
         geom_columns.second->children[0],
-        geom_columns.first->children[0],
         spatial_columns.second.get(),
         spatial_columns.first.get(),
         "SOMAGeometryDataFrame",
@@ -347,10 +345,10 @@ TEST_CASE_METHOD(
             std::make_shared<SOMAContext>(),
             "mem://unit-test-column-variant-indexed-dataframe-4-" + suffix1);
 
-        std::string string_lo = specify_domain ? "apple" : "";
-        std::string string_hi = specify_domain ? "zebra" : "";
+        std::string string_lo = "";
+        std::string string_hi = "";
         std::vector<helper::DimInfo> dim_infos(
-            {str_dim_info(true, string_lo, string_hi), u32_dim_info(true)});
+            {str_dim_info(string_lo, string_hi), u32_dim_info()});
         std::vector<helper::AttrInfo> attr_infos({i64_attr_info()});
 
         // Create
@@ -385,21 +383,16 @@ TEST_CASE_METHOD(
             str_external = columns[0]->core_current_domain_slot<std::string>(
                 *ctx_, raw_array);
 
-        if (specify_domain) {
-            REQUIRE(str_range[0] == str_external.first);
-            REQUIRE(str_range[1] == str_external.second);
-        } else {
-            // Can we write empty strings in this range?
-            REQUIRE(str_range[0] <= "");
-            REQUIRE(str_external.first <= "");
-            REQUIRE(str_range[1] >= "");
-            REQUIRE(str_external.second >= "");
-            // Can we write ASCII values in this range?
-            REQUIRE(str_range[0] < " ");
-            REQUIRE(str_external.first <= " ");
-            REQUIRE(str_range[1] > "~");
-            // REQUIRE(str_external.second >= "~");
-        }
+        // Can we write empty strings in this range?
+        REQUIRE(str_range[0] <= "");
+        REQUIRE(str_external.first <= "");
+        REQUIRE(str_range[1] >= "");
+        REQUIRE(str_external.second >= "");
+        // Can we write ASCII values in this range?
+        REQUIRE(str_range[0] < " ");
+        REQUIRE(str_external.first <= " ");
+        REQUIRE(str_range[1] > "~");
+        // REQUIRE(str_external.second >= "~");
 
         std::array<uint32_t, 2> u32_range = ndrect.range<uint32_t>(
             dim_infos[1].name);
