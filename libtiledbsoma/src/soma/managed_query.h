@@ -275,12 +275,6 @@ class ManagedQuery {
         std::unique_ptr<ArrowSchema> arrow_schema,
         std::unique_ptr<ArrowArray> arrow_array);
 
-    /**
-     * @brief Configure query and allocate result buffers for reads.
-     *
-     */
-    void setup_read();
-
     std::optional<std::shared_ptr<ArrayBuffers>> read_next();
 
     /**
@@ -370,19 +364,6 @@ class ManagedQuery {
     }
 
     /**
-     * @brief Submit the query.
-     *
-     */
-    void submit_read();
-
-    /**
-     * @brief Return results from the query.
-     *
-     * @return std::shared_ptr<ArrayBuffers>
-     */
-    std::shared_ptr<ArrayBuffers> results();
-
-    /**
      * @brief Submit the write query.
      *
      */
@@ -433,6 +414,25 @@ class ManagedQuery {
     //===================================================================
     //= private non-static
     //===================================================================
+
+    /**
+     * @brief Configure query and allocate result buffers for reads.
+     *
+     */
+    void setup_read();
+
+    /**
+     * @brief Submit the query.
+     *
+     */
+    std::optional<std::shared_ptr<ArrayBuffers>> submit_read();
+
+    /**
+     * @brief Return results from the query.
+     *
+     * @return std::shared_ptr<ArrayBuffers>
+     */
+    std::shared_ptr<ArrayBuffers> results();
 
     /**
      * @brief Check if column name is contained in the query results.
