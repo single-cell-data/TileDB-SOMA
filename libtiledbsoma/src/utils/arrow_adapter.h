@@ -1098,12 +1098,6 @@ class ArrowAdapter {
         }
     }
 
-    static void set_current_domain_slot(
-        tiledb_datatype_t type,
-        const void* buff,
-        NDRectangle& ndrect,
-        std::string name);
-
    private:
     static std::pair<const void*, std::size_t> _get_data_and_length(
         Enumeration& enmr, const void* dst);
@@ -1184,13 +1178,6 @@ class ArrowAdapter {
         int64_t column_index,
         int64_t expected_n_buffers);
 
-    static void _set_spatial_dimensions(
-        std::map<std::string, Dimension>& dims,
-        const ArrowTable& spatial_column_info,
-        std::string_view type_metadata,
-        std::string soma_type,
-        std::shared_ptr<Context> ctx,
-        PlatformConfig platform_config);
 };  // class ArrowAdapter
 };  // namespace tiledbsoma
 #endif

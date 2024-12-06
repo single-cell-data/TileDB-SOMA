@@ -961,8 +961,8 @@ void ArrowAdapter::_set_current_domain_slot(
             LOG_DEBUG(std::format(
                 "[ArrowAdapter] {} current_domain float {} to {}",
                 name,
-                std::to_string(lo),
-                std::to_string(hi)));
+                lo,
+                hi));
         } break;
         case TILEDB_FLOAT64: {
             double lo = ((double*)buff)[3];
@@ -971,8 +971,8 @@ void ArrowAdapter::_set_current_domain_slot(
             LOG_DEBUG(std::format(
                 "[ArrowAdapter] {} current_domain double {} to {}",
                 name,
-                std::to_string(lo),
-                std::to_string(hi)));
+                lo,
+                hi));
         } break;
         default:
             throw TileDBSOMAError(std::format(
@@ -2013,48 +2013,6 @@ ArrowArray* ArrowAdapter::_get_and_check_column(
     }
 
     return child;
-}
-
-void ArrowAdapter::_set_spatial_dimensions(
-    std::map<std::string, Dimension>& dims,
-    const ArrowTable& spatial_column_info,
-    std::string_view type_metadata,
-    std::string soma_type,
-    std::shared_ptr<Context> ctx,
-    PlatformConfig platform_config) {
-    if (type_metadata.compare("WKB") != 0) {
-        throw TileDBSOMAError(std::format(
-            "ArrowAdapter::tiledb_attribute_from_arrow_schema: "
-            "Unkwown type metadata for `{}`: "
-            "Expected 'WKB', got {}",
-            SOMA_GEOMETRY_COLUMN_NAME,
-            type_metadata));
-    }
-
-    for (int64_t j = 0; j < spatial_column_info.second->n_children; ++j) {
-        auto min_dim = tiledb_dimension_from_arrow_schema(
-            ctx,
-            spatial_column_info.second->children[j],
-            spatial_column_info.first->children[j],
-            soma_type,
-            type_metadata,
-            SOMA_GEOMETRY_DIMENSION_PREFIX,
-            "__min",
-            platform_config);
-
-        auto max_dim = tiledb_dimension_from_arrow_schema(
-            ctx,
-            spatial_column_info.second->children[j],
-            spatial_column_info.first->children[j],
-            soma_type,
-            type_metadata,
-            SOMA_GEOMETRY_DIMENSION_PREFIX,
-            "__max",
-            platform_config);
-
-        dims.insert({min_dim.name(), min_dim});
-        dims.insert({max_dim.name(), max_dim});
-    }
 }
 
 }  // namespace tiledbsoma
