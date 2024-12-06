@@ -14,7 +14,7 @@ test_that("SOMADataFrame shape", {
     list(soma_joinid = c(0, 999), int_column = c(-10000, 10000)),
     list(soma_joinid = c(0, 999), string_column = NULL),
     list(string_column = NULL, int_column = c(-10000, 10000)),
-    list(string_column = c("apple", "zebra"), int_column = c(-10000, 10000))
+    list(string_column = c("", ""), int_column = c(-10000, 10000))
   )
 
   # Check the test configs themselves to make sure someone (ahem, me)
