@@ -20,6 +20,10 @@
 #include "../soma/soma_dimension.h"
 #include "../soma/soma_geometry_column.h"
 
+#include "../soma/soma_attribute.h"
+#include "../soma/soma_dimension.h"
+#include "../soma/soma_geometry_column.h"
+
 namespace tiledbsoma {
 
 using namespace tiledb;
