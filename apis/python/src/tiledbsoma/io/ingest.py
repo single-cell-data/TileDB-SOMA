@@ -1128,11 +1128,10 @@ def _extract_new_values_for_append_aux(
     old_schema = previous_soma_dataframe.schema
     new_schema = arrow_table.schema
 
-    old_names = sorted(old_schema.names)
-    new_names = sorted(new_schema.names)
-    if old_names != new_names:
-        raise SOMAError(f"old column names {old_names} != {new_names}")
-    names = new_names
+    # Note: we may be doing an add-column that doesn't exist in tiledbsoma
+    # storage but is present in the new AnnData. We don't need to change
+    # anything in that case. Regardless, we can't assume that the old
+    # and new schema have the same column names.
 
     # Helper functions for
     def is_str_type(typ: pa.DataType) -> bool:
@@ -1151,7 +1150,9 @@ def _extract_new_values_for_append_aux(
     # duplicate the new data -- and we must, since pyarrow.Table is immutable --
     # so let's only do that if we need to.
     any_to_change = False
-    for name in names:
+    for name in new_schema.names:
+        if name not in old_schema.names:
+            continue
         if is_str_col(old_schema.field(name)) and is_str_cat_col(
             new_schema.field(name)
         ):
@@ -1165,7 +1166,9 @@ def _extract_new_values_for_append_aux(
 
     if any_to_change:
         fields_dict = {}
-        for name in names:
+        for name in new_schema.names:
+            if name not in old_schema.names:
+                continue
             column = arrow_table.column(name)
             old_info = old_schema.field(name)
             new_info = new_schema.field(name)
