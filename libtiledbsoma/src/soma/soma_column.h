@@ -36,6 +36,7 @@
 #include <any>
 #include <format>
 #include <optional>
+#include <span>
 #include <string>
 #include <vector>
 
@@ -121,6 +122,10 @@ class SOMAColumn {
     /**
      * Get the domain kind of the SOMAColumn as an ArrowArray for use with
      * R/Python API.
+     *
+     * @param ctx
+     * @param array
+     * @param which_kind
      */
     virtual ArrowArray* arrow_domain_slot(
         const SOMAContext& ctx,
@@ -129,12 +134,20 @@ class SOMAColumn {
 
     /**
      * Get the SOMAColumn encoded as an ArrowSchema for use with R/Python API.
+     *
+     * @param ctx
+     * @param array
      */
     virtual ArrowSchema* arrow_schema_slot(
         const SOMAContext& ctx, Array& array) = 0;
 
     /**
      * Get the domain kind of the SOMAColumn.
+     *
+     * @tparam T
+     * @param ctx
+     * @param array
+     * @param which_kind
      */
     template <typename T>
     std::pair<T, T> domain_slot(
@@ -156,19 +169,102 @@ class SOMAColumn {
     /**
      * Set the current domain of this SOMAColumn.
      *
+     * @tparam T
      * @param rectangle The current domain rectangle to modify.
-     * @param domain A vector of void pointers to the the current domain data
-     * buffers.
+     * @param domain A vector of the n-dimensional domain in the form
+     * [dim_0_min, dim_1_min, ..., dim_n_max]
      */
+    template <typename T>
     void set_current_domain_slot(
-        NDRectangle& rectangle, const std::vector<const void*>& domain) const {
+        NDRectangle& rectangle, const std::vector<T>& domain) const {
         if (!isIndexColumn()) {
             throw TileDBSOMAError(std::format(
-                "[SOMAColumn] Column with name {} is not an index column",
+                "[SOMAColumn][set_current_domain_slot] Column with name {} is "
+                "not an index column",
                 name()));
         }
 
-        _set_current_domain_slot(rectangle, domain);
+        if (domain.size() % 2 != 0) {
+            throw TileDBSOMAError(std::format(
+                "[SOMAColumn][set_current_domain_slot] Provided domain for "
+                "column {} has missing values",
+                name()));
+        }
+
+        std::vector<std::any> transformed_domain;
+        size_t dim_count = domain.size() / 2;
+        for (size_t i = 0; i < dim_count; ++i) {
+            transformed_domain.push_back(std::make_any<std::array<T, 2>>(
+                std::array<T, 2>({domain[i], domain[i + dim_count]})));
+        }
+
+        try {
+            _set_current_domain_slot(rectangle, transformed_domain);
+        } catch (const std::exception& e) {
+            throw TileDBSOMAError(std::format(
+                "[SOMAColumn][set_current_domain_slot] Failed on \"{}\" with "
+                "error \"{}\"",
+                name(),
+                e.what()));
+        }
+    }
+
+    /**
+     * Set the multi-type current domain of this SOMAColumn.
+     *
+     * @tparam T
+     * @param rectangle The current domain rectangle to modify.
+     * @param domain A vector holding std::arrays with 2 elements each [min,
+     * max], casted as std::any
+     */
+    void set_current_domain_slot(
+        NDRectangle& rectangle, const std::vector<std::any>& domain) const {
+        if (!isIndexColumn()) {
+            throw TileDBSOMAError(std::format(
+                "[SOMAColumn][set_current_domain_slot] Column with name {} is "
+                "not an index column",
+                name()));
+        }
+
+        try {
+            _set_current_domain_slot(rectangle, domain);
+        } catch (const std::exception& e) {
+            throw TileDBSOMAError(std::format(
+                "[SOMAColumn][set_current_domain_slot] Failed on \"{}\" with "
+                "error \"{}\"",
+                name(),
+                e.what()));
+        }
+    }
+
+    /**
+     * Test if the multi-type current domain of this SOMAColumn can be set with
+     * the supplied new current domain.
+     *
+     * @tparam T
+     * @param rectangle The current domain rectangle to modify.
+     * @param domain A vector holding std::arrays with 2 elements each [min,
+     * max], casted as std::any
+     */
+    std::pair<bool, std::string> can_set_current_domain_slot(
+        std::optional<NDRectangle>& rectangle,
+        const std::vector<std::any>& domain) const {
+        if (!isIndexColumn()) {
+            throw TileDBSOMAError(std::format(
+                "[SOMAColumn][set_current_domain_slot] Column with name {} is "
+                "not an index column",
+                name()));
+        }
+
+        try {
+            return _can_set_current_domain_slot(rectangle, domain);
+        } catch (const std::exception& e) {
+            throw TileDBSOMAError(std::format(
+                "[SOMAColumn][can_set_current_domain_slot] Failed on \"{}\" "
+                "with error \"{}\"",
+                name(),
+                e.what()));
+        }
     }
 
     /**
@@ -178,6 +274,7 @@ class SOMAColumn {
      *
      * @tparam T
      * @param query
+     * @param ctx
      * @param point
      */
     template <typename T>
@@ -191,8 +288,20 @@ class SOMAColumn {
                 name()));
         }
 
-        this->_set_dim_points(
-            query, ctx, std::make_any<std::vector<T>>(std::vector<T>({point})));
+        T points[] = {point};
+
+        try {
+            this->_set_dim_points(
+                query,
+                ctx,
+                std::make_any<std::span<const T>>(std::span<const T>(points)));
+        } catch (const std::exception& e) {
+            throw TileDBSOMAError(std::format(
+                "[SOMAColumn][set_dim_point] Failed on \"{}\" with error "
+                "\"{}\"",
+                name(),
+                e.what()));
+        }
     }
 
     /**
@@ -202,21 +311,30 @@ class SOMAColumn {
      *
      * @tparam T
      * @param query
+     * @param ctx
      * @param points
      */
     template <typename T>
     void set_dim_points(
         const std::unique_ptr<ManagedQuery>& query,
         const SOMAContext& ctx,
-        const std::vector<T>& points) const {
+        std::span<const T> points) const {
         if (!isIndexColumn()) {
             throw TileDBSOMAError(std::format(
                 "[SOMAColumn] Column with name {} is not an index column",
                 name()));
         }
 
-        this->_set_dim_points(
-            query, ctx, std::make_any<std::vector<T>>(points));
+        try {
+            this->_set_dim_points(
+                query, ctx, std::make_any<std::span<const T>>(points));
+        } catch (const std::exception& e) {
+            throw TileDBSOMAError(std::format(
+                "[SOMAColumn][set_dim_points] Failed on \"{}\" with error "
+                "\"{}\"",
+                name(),
+                e.what()));
+        }
     }
 
     /**
@@ -239,8 +357,18 @@ class SOMAColumn {
                 name()));
         }
 
-        this->_set_dim_ranges(
-            query, ctx, std::make_any<std::vector<std::pair<T, T>>>(ranges));
+        try {
+            this->_set_dim_ranges(
+                query,
+                ctx,
+                std::make_any<std::vector<std::pair<T, T>>>(ranges));
+        } catch (const std::exception& e) {
+            throw TileDBSOMAError(std::format(
+                "[SOMAColumn][set_dim_ranges] Failed on \"{}\" with error "
+                "\"{}\"",
+                name(),
+                e.what()));
+        }
     }
 
     /**
@@ -262,7 +390,11 @@ class SOMAColumn {
         try {
             return std::any_cast<std::pair<T, T>>(_core_domain_slot());
         } catch (const std::exception& e) {
-            throw TileDBSOMAError(e.what());
+            throw TileDBSOMAError(std::format(
+                "[SOMAColumn][core_domain_slot] Failed on \"{}\" with error "
+                "\"{}\"",
+                name(),
+                e.what()));
         }
     }
 
@@ -277,8 +409,12 @@ class SOMAColumn {
             return std::any_cast<std::pair<T, T>>(
                 _non_empty_domain_slot(array));
         } catch (const std::exception& e) {
-            throw TileDBSOMAError(e.what());
-        };
+            throw TileDBSOMAError(std::format(
+                "[SOMAColumn][non_empty_domain_slot] Failed on \"{}\" with "
+                "error \"{}\"",
+                name(),
+                e.what()));
+        }
     }
 
     /**
@@ -302,6 +438,35 @@ class SOMAColumn {
             return std::any_cast<std::pair<T, T>>(
                 _core_current_domain_slot(ctx, array));
         } catch (const std::exception& e) {
+            throw TileDBSOMAError(std::format(
+                "[SOMAColumn][core_current_domain_slot] Failed on \"{}\" with "
+                "error \"{}\"",
+                name(),
+                e.what()));
+        }
+    }
+
+    /**
+     * Returns the core current domain of this column from the supplied
+     * NDRectangle.
+     *
+     * o For arrays with core current-domain support:
+     *   - soma domain is core current domain
+     *   - soma maxdomain is core domain
+     * o For arrays without core current-domain support:
+     *   - soma domain is core domain
+     *   - soma maxdomain is core domain
+     *   - core current domain is not accessed at the soma level
+     *
+     * @tparam T Domain datatype
+     * @return Pair of [lower, upper] inclusive bounds.
+     */
+    template <typename T>
+    std::pair<T, T> core_current_domain_slot(NDRectangle& ndrect) const {
+        try {
+            return std::any_cast<std::pair<T, T>>(
+                _core_current_domain_slot(ndrect));
+        } catch (const std::exception& e) {
             throw TileDBSOMAError(e.what());
         }
     }
@@ -318,8 +483,11 @@ class SOMAColumn {
         const std::any& ranges) const = 0;
 
     virtual void _set_current_domain_slot(
-        NDRectangle& rectangle,
-        const std::vector<const void*>& domain) const = 0;
+        NDRectangle& rectangle, std::span<const std::any> domain) const = 0;
+
+    virtual std::pair<bool, std::string> _can_set_current_domain_slot(
+        std::optional<NDRectangle>& rectangle,
+        std::span<const std::any> new_domain) const = 0;
 
     virtual std::any _core_domain_slot() const = 0;
 
@@ -327,6 +495,8 @@ class SOMAColumn {
 
     virtual std::any _core_current_domain_slot(
         const SOMAContext& ctx, Array& array) const = 0;
+
+    virtual std::any _core_current_domain_slot(NDRectangle& ndrect) const = 0;
 };
 
 template <>
