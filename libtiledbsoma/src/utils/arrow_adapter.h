@@ -1,6 +1,8 @@
 #ifndef ARROW_ADAPTER_H
 #define ARROW_ADAPTER_H
 
+#include <any>
+#include <format>
 #include <tiledb/tiledb>
 #include <tiledb/tiledb_experimental>
 
@@ -838,6 +840,248 @@ class ArrowAdapter {
             throw std::runtime_error(
                 "ArrowAdapter::get_array_string_column: expected "
                 "Arrow string, large_string, binary, or large_binary");
+        }
+    }
+
+    template <typename T, size_t Take, size_t Skip = 0>
+    static std::vector<std::array<T, Take>> get_table_column_by_name(
+        const ArrowTable& arrow_table, std::string column_name) {
+        std::vector<std::any> data = get_table_any_column_by_name<Take, Skip>(
+            arrow_table, column_name);
+        std::vector<std::array<T, Take>> result;
+
+        for (size_t i = 0; i < data.size(); ++i) {
+            result.push_back(std::any_cast<std::array<T, Take>>(data[i]));
+        }
+
+        return result;
+    }
+
+    /**
+     * Return a copy of the data in a specified column of an arrow table.
+     * Complex column types are supported. The for each sub column are an
+     * std::array<T, 2> casted as an std::any object.
+     */
+    template <size_t Take, size_t Skip = 0>
+    static std::vector<std::any> get_table_any_column_by_name(
+        const ArrowTable& arrow_table, std::string column_name) {
+        int64_t index = _get_column_index_from_name(arrow_table, column_name);
+        return get_table_any_column_by_index<Take, Skip>(arrow_table, index);
+    }
+
+    template <size_t Take, size_t Skip = 0>
+    static std::vector<std::any> get_table_any_column_by_index(
+        const ArrowTable& arrow_table, int64_t column_index) {
+        ArrowArray* arrow_array = arrow_table.first.get();
+        ArrowSchema* arrow_schema = arrow_table.second.get();
+        _check_shapes(arrow_array, arrow_schema);
+
+        if (arrow_array->n_children == 0) {
+            throw std::runtime_error(
+                "ArrowAdapter::get_table_any_column_by_index: expected "
+                "non-leaf "
+                "node");
+        }
+
+        if (arrow_schema->n_children <= column_index) {
+            throw std::runtime_error(
+                "ArrowAdapter::get_table_any_column_by_index: Column index out "
+                "fo bounds.");
+        }
+
+        std::vector<std::any> result;
+
+        ArrowArray* selected_array = arrow_array->children[column_index];
+        ArrowSchema* selected_schema = arrow_schema->children[column_index];
+
+        // Complex domain
+        if (selected_array->n_children != 0) {
+            for (int64_t i = 0; i < selected_schema->n_children; ++i) {
+                ArrowArray* array = selected_array->children[i];
+                ArrowSchema* schema = selected_schema->children[i];
+
+                result.push_back(
+                    get_table_any_column<Take, Skip>(array, schema));
+            }
+        } else {
+            result.push_back(get_table_any_column<Take, Skip>(
+                selected_array, selected_schema));
+        }
+
+        return result;
+    }
+
+    template <size_t Take, size_t Skip = 0>
+    static std::any get_table_any_column(
+        ArrowArray* array, ArrowSchema* schema) {
+        auto tdb_type = to_tiledb_format(schema->format, "");
+
+        if (array->n_children != 0) {
+            throw std::runtime_error(
+                "ArrowAdapter::get_table_any_column: expected leaf "
+                "node");
+        }
+
+        if (array->length < Skip + Take) {
+            throw std::runtime_error(std::format(
+                "ArrowAdapter::get_table_any_column: expected at least {} "
+                "elements",
+                Skip + Take));
+        }
+
+        if (strcmp(schema->format, "u") == 0 ||
+            strcmp(schema->format, "z") == 0 ||
+            strcmp(schema->format, "U") == 0 ||
+            strcmp(schema->format, "Z") == 0) {
+            if (array->n_buffers != 3) {
+                throw std::runtime_error(
+                    "ArrowAdapter::get_table_any_column: expected three "
+                    "buffers");
+            }
+
+            if (array->buffers[0] != nullptr) {
+                throw std::runtime_error(
+                    "ArrowAdapter::get_table_any_column: validity buffer "
+                    "unsupported here");
+            }
+            if (array->buffers[1] == nullptr) {
+                throw std::runtime_error(
+                    "ArrowAdapter::get_table_any_column: null "
+                    "offsets buffer");
+            }
+            if (array->buffers[2] == nullptr) {
+                throw std::runtime_error(
+                    "ArrowAdapter::get_table_any_column: null data "
+                    "buffer");
+            }
+        } else {
+            if (array->n_buffers != 2) {
+                throw std::runtime_error(
+                    "ArrowAdapter::get_table_any_column: expected two "
+                    "buffers");
+            }
+
+            if (array->buffers[0] != nullptr) {
+                throw std::runtime_error(
+                    "ArrowAdapter::get_table_any_column: validity buffer "
+                    "unsupported here");
+            }
+            if (array->buffers[1] == nullptr) {
+                throw std::runtime_error(
+                    "ArrowAdapter::get_table_any_column: null data buffer");
+            }
+        }
+
+        switch (tdb_type) {
+            case TILEDB_BOOL: {
+                return std::make_any<std::array<bool, Take>>(std::to_array(
+                    (bool(&)[Take])(*((bool*)array->buffers[1] + Skip))));
+            }
+            case TILEDB_UINT8: {
+                return std::make_any<std::array<uint8_t, Take>>(std::to_array(
+                    (uint8_t(&)[Take])(*((uint8_t*)array->buffers[1] + Skip))));
+            }
+            case TILEDB_UINT16: {
+                return std::make_any<std::array<uint16_t, Take>>(
+                    std::to_array((uint16_t(&)[Take])(
+                        *((uint16_t*)array->buffers[1] + Skip))));
+            }
+            case TILEDB_UINT32: {
+                return std::make_any<std::array<uint32_t, Take>>(
+                    std::to_array((uint32_t(&)[Take])(
+                        *((uint32_t*)array->buffers[1] + Skip))));
+            }
+            case TILEDB_UINT64: {
+                return std::make_any<std::array<uint64_t, Take>>(
+                    std::to_array((uint64_t(&)[Take])(
+                        *((uint64_t*)array->buffers[1] + Skip))));
+            }
+            case TILEDB_INT8: {
+                return std::make_any<std::array<int8_t, Take>>(std::to_array(
+                    (int8_t(&)[Take])(*((int8_t*)array->buffers[1] + Skip))));
+            }
+            case TILEDB_INT16: {
+                return std::make_any<std::array<int16_t, Take>>(std::to_array(
+                    (int16_t(&)[Take])(*((int16_t*)array->buffers[1] + Skip))));
+            }
+            case TILEDB_INT32: {
+                return std::make_any<std::array<int32_t, Take>>(std::to_array(
+                    (int32_t(&)[Take])(*((int32_t*)array->buffers[1] + Skip))));
+            }
+            case TILEDB_DATETIME_YEAR:
+            case TILEDB_DATETIME_MONTH:
+            case TILEDB_DATETIME_WEEK:
+            case TILEDB_DATETIME_DAY:
+            case TILEDB_DATETIME_HR:
+            case TILEDB_DATETIME_MIN:
+            case TILEDB_DATETIME_SEC:
+            case TILEDB_DATETIME_MS:
+            case TILEDB_DATETIME_US:
+            case TILEDB_DATETIME_NS:
+            case TILEDB_DATETIME_PS:
+            case TILEDB_DATETIME_FS:
+            case TILEDB_DATETIME_AS:
+            case TILEDB_INT64: {
+                return std::make_any<std::array<int64_t, Take>>(std::to_array(
+                    (int64_t(&)[Take])(*((int64_t*)array->buffers[1] + Skip))));
+            }
+            case TILEDB_FLOAT32: {
+                return std::make_any<std::array<float_t, Take>>(std::to_array(
+                    (float_t(&)[Take])(*((float_t*)array->buffers[1] + Skip))));
+            }
+            case TILEDB_FLOAT64: {
+                return std::make_any<std::array<double_t, Take>>(
+                    std::to_array((double_t(&)[Take])(
+                        *((double_t*)array->buffers[1] + Skip))));
+            }
+            case TILEDB_STRING_ASCII:
+            case TILEDB_STRING_UTF8:
+            case TILEDB_CHAR:
+            case TILEDB_BLOB:
+            case TILEDB_GEOM_WKT:
+            case TILEDB_GEOM_WKB: {
+                if (strcmp(schema->format, "u") == 0 ||
+                    strcmp(schema->format, "z") == 0) {
+                    uint32_t* offsets = (uint32_t*)array->buffers[1];
+                    char* data = (char*)array->buffers[2];
+
+                    std::array<std::string, Take> result;
+                    for (size_t i = Skip; i < Skip + Take; ++i) {
+                        if (offsets[i + 1] - offsets[i] != 0) {
+                            result[i - Skip] = std::string(
+                                &data[offsets[i]], &data[offsets[i + 1]]);
+                        }
+                    }
+
+                    return std::make_any<std::array<std::string, Take>>(result);
+                } else if (
+                    strcmp(schema->format, "U") == 0 ||
+                    strcmp(schema->format, "Z") == 0) {
+                    uint64_t* offsets = (uint64_t*)array->buffers[1];
+                    char* data = (char*)array->buffers[2];
+
+                    std::array<std::string, Take> result;
+                    for (size_t i = Skip; i < Skip + Take; ++i) {
+                        if (offsets[i + 1] - offsets[i] != 0) {
+                            result[i - Skip] = std::string(
+                                &data[offsets[i]], &data[offsets[i + 1]]);
+                        }
+                    }
+
+                    return std::make_any<std::array<std::string, Take>>(result);
+                } else {
+                    throw std::runtime_error(std::format(
+                        "ArrowAdapter::get_table_any_column: Unknown "
+                        "schema format {}",
+                        schema->format));
+                }
+            } break;
+            default:
+                throw std::runtime_error(std::format(
+                    "ArrowAdapter::get_table_any_column: Unknown "
+                    "datatype {}",
+                    tiledb::impl::type_to_str(tdb_type)));
+                break;
         }
     }
 
