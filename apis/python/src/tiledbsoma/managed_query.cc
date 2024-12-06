@@ -61,7 +61,6 @@ void load_managed_query(py::module& m) {
             py::arg("ctx"),
             py::arg("name") = "unnamed")
 
-        .def("setup_read", &ManagedQuery::setup_read)
         .def("is_empty_query", &ManagedQuery::is_empty_query)
         .def("is_complete", &ManagedQuery::is_complete)
 
@@ -117,20 +116,25 @@ void load_managed_query(py::module& m) {
             "names"_a,
             "if_not_empty"_a = false)
 
-        .def("submit_read", &ManagedQuery::submit_read)
         .def(
-            "results",
+            "next",
             [](ManagedQuery& mq) -> std::optional<py::object> {
+                // Release python GIL before reading data
+                py::gil_scoped_release release;
+                std::optional<std::shared_ptr<ArrayBuffers>> tbl;
                 try {
-                    // Release python GIL before reading data
-                    py::gil_scoped_release release;
-                    auto tbl = mq.results();
+                    tbl = mq.read_next();
                     // Acquire python GIL before accessing python objects
-                    py::gil_scoped_acquire acquire;
-                    return to_table(std::make_optional(tbl));
                 } catch (const std::exception& e) {
                     throw TileDBSOMAError(e.what());
                 }
+                py::gil_scoped_acquire acquire;
+
+                if (!tbl) {
+                    throw py::stop_iteration();
+                }
+
+                return to_table(tbl);
             })
 
         .def(
@@ -143,6 +147,7 @@ void load_managed_query(py::module& m) {
                 py_batch.attr("_export_to_c")(
                     arrow_array_ptr, arrow_schema_ptr);
 
+                py::gil_scoped_release release;
                 try {
                     mq.set_array_data(
                         std::make_unique<ArrowSchema>(arrow_schema),
@@ -150,6 +155,7 @@ void load_managed_query(py::module& m) {
                 } catch (const std::exception& e) {
                     TPY_ERROR_LOC(e.what());
                 }
+                py::gil_scoped_acquire acquire;
 
                 arrow_schema.release(&arrow_schema);
                 arrow_array.release(&arrow_array);
@@ -158,17 +164,21 @@ void load_managed_query(py::module& m) {
             "set_soma_data",
             [](ManagedQuery& mq, py::array data) {
                 py::buffer_info data_info = data.request();
+
+                py::gil_scoped_release release;
                 mq.setup_write_column(
                     "soma_data",
                     data.size(),
                     (const void*)data_info.ptr,
                     static_cast<uint64_t*>(nullptr),
                     static_cast<uint8_t*>(nullptr));
+                py::gil_scoped_acquire acquire;
             })
         .def(
             "submit_write",
             &ManagedQuery::submit_write,
-            "sort_coords"_a = false)
+            "sort_coords"_a = false,
+            py::call_guard<py::gil_scoped_release>())
 
         .def("reset", &ManagedQuery::reset)
         .def("close", &ManagedQuery::close)

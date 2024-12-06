@@ -266,27 +266,15 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
             * Negative indexing is unsupported.
         """
         del batch_size  # Currently unused.
-        handle: clib.SOMASparseNDArray = self._handle._handle
-
         self._check_open_read()
         _util.check_unpartitioned(partitions)
 
-        context = handle.context()
-        if platform_config is not None:
-            config = context.tiledb_config.copy()
-            config.update(platform_config)
-            context = clib.SOMAContext(config)
-
-        sr = clib.SOMASparseNDArray.open(
-            uri=handle.uri,
-            mode=clib.OpenMode.read,
-            context=context,
-            column_names=[],
+        return SparseNDArrayRead(
+            array=self,
+            coords=coords,
             result_order=_util.to_clib_result_order(result_order),
-            timestamp=handle.timestamp and (0, handle.timestamp),
+            platform_config=platform_config,
         )
-
-        return SparseNDArrayRead(sr, self, coords)
 
     def write(
         self,
@@ -525,18 +513,20 @@ class _SparseNDArrayReadBase(somacore.SparseRead):
 
     def __init__(
         self,
-        sr: clib.SOMAArray,
         array: SparseNDArray,
         coords: options.SparseNDCoords,
+        result_order: clib.ResultOrder,
+        platform_config: Optional[options.PlatformConfig],
     ):
         """
         Lifecycle:
             Maturing.
         """
-        self.sr = sr
-        self.shape = tuple(sr.shape)
         self.array = array
         self.coords = coords
+        self.shape = tuple(array._handle._handle.shape)
+        self.result_order = result_order
+        self.platform_config = platform_config
 
 
 class SparseNDArrayRead(_SparseNDArrayReadBase):
@@ -570,8 +560,13 @@ class SparseNDArrayRead(_SparseNDArrayReadBase):
         """
         if shape is not None and (len(shape) != len(self.shape)):
             raise ValueError(f"shape must be a tuple of size {len(self.shape)}")
-        _util._set_coords(self.sr, self.coords)
-        return SparseCOOTensorReadIter(self.sr, shape or self.shape)
+        return SparseCOOTensorReadIter(
+            self.array,
+            self.coords,
+            shape or self.shape,
+            self.result_order,
+            self.platform_config,
+        )
 
     def tables(self) -> TableReadIter:
         """
@@ -581,8 +576,14 @@ class SparseNDArrayRead(_SparseNDArrayReadBase):
         Lifecycle:
             Maturing.
         """
-        _util._set_coords(self.sr, self.coords)
-        return TableReadIter(self.sr)
+        return TableReadIter(
+            array=self.array,
+            coords=self.coords,
+            column_names=[],
+            result_order=self.result_order,
+            value_filter=None,
+            platform_config=self.platform_config,
+        )
 
     def blockwise(
         self,
@@ -653,10 +654,11 @@ class SparseNDArrayRead(_SparseNDArrayReadBase):
             Maturing.
         """
         return SparseNDArrayBlockwiseRead(
-            self.sr,
             self.array,
             self.coords,
             axis,
+            self.result_order,
+            self.platform_config,
             size=size,
             reindex_disable_on_axis=reindex_disable_on_axis,
             eager=eager,
@@ -666,16 +668,18 @@ class SparseNDArrayRead(_SparseNDArrayReadBase):
 class SparseNDArrayBlockwiseRead(_SparseNDArrayReadBase):
     def __init__(
         self,
-        sr: clib.SOMAArray,
         array: SparseNDArray,
         coords: options.SparseNDCoords,
         axis: Union[int, Sequence[int]],
+        result_order: clib.ResultOrder,
+        platform_config: Optional[options.PlatformConfig],
         *,
         size: Optional[Union[int, Sequence[int]]],
         reindex_disable_on_axis: Optional[Union[int, Sequence[int]]],
         eager: bool = True,
     ):
-        super().__init__(sr, array, coords)
+        super().__init__(array, coords, result_order, platform_config)
+        self.result_order = result_order
         self.axis = axis
         self.size = size
         self.reindex_disable_on_axis = reindex_disable_on_axis
@@ -696,9 +700,10 @@ class SparseNDArrayBlockwiseRead(_SparseNDArrayReadBase):
         """
         return BlockwiseTableReadIter(
             self.array,
-            self.sr,
             self.coords,
             self.axis,
+            self.result_order,
+            self.platform_config,
             size=self.size,
             reindex_disable_on_axis=self.reindex_disable_on_axis,
             eager=self.eager,
@@ -741,9 +746,10 @@ class SparseNDArrayBlockwiseRead(_SparseNDArrayReadBase):
         """
         return BlockwiseScipyReadIter(
             self.array,
-            self.sr,
             self.coords,
             self.axis,
+            self.result_order,
+            self.platform_config,
             size=self.size,
             compress=compress,
             reindex_disable_on_axis=self.reindex_disable_on_axis,

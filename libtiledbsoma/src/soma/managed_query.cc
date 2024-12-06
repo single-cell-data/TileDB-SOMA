@@ -129,6 +129,24 @@ void ManagedQuery::select_columns(
     }
 }
 
+void ManagedQuery::submit_write(bool sort_coords) {
+    _fill_in_subarrays_if_dense(false);
+
+    if (array_->schema().array_type() == TILEDB_DENSE) {
+        query_->set_subarray(*subarray_);
+    } else {
+        query_->set_layout(
+            sort_coords ? TILEDB_UNORDERED : TILEDB_GLOBAL_ORDER);
+    }
+
+    if (query_->query_layout() == TILEDB_GLOBAL_ORDER) {
+        query_->submit_and_finalize();
+    } else {
+        query_->submit();
+        query_->finalize();
+    }
+}
+
 void ManagedQuery::setup_read() {
     // If the query is complete, return so we do not submit it again
     auto status = query_->query_status();
@@ -171,25 +189,16 @@ void ManagedQuery::setup_read() {
     }
 }
 
-void ManagedQuery::submit_write(bool sort_coords) {
-    _fill_in_subarrays_if_dense(false);
-
-    if (array_->schema().array_type() == TILEDB_DENSE) {
-        query_->set_subarray(*subarray_);
-    } else {
-        query_->set_layout(
-            sort_coords ? TILEDB_UNORDERED : TILEDB_GLOBAL_ORDER);
+std::optional<std::shared_ptr<ArrayBuffers>> ManagedQuery::submit_read() {
+    if (is_empty_query() && !query_submitted_) {
+        query_submitted_ = true;
+        return buffers_;
     }
 
-    if (query_->query_layout() == TILEDB_GLOBAL_ORDER) {
-        query_->submit_and_finalize();
-    } else {
-        query_->submit();
-        query_->finalize();
+    if (is_complete(false)) {
+        return std::nullopt;
     }
-}
 
-void ManagedQuery::submit_read() {
     query_submitted_ = true;
     query_future_ = std::async(std::launch::async, [&]() {
         LOG_DEBUG("[ManagedQuery] submit thread start");
@@ -201,6 +210,92 @@ void ManagedQuery::submit_read() {
         LOG_DEBUG("[ManagedQuery] submit thread done");
         return StatusAndException(true, "success");
     });
+
+    return results();
+}
+
+std::shared_ptr<ArrayBuffers> ManagedQuery::results() {
+    if (query_future_.valid()) {
+        LOG_DEBUG(std::format("[ManagedQuery] [{}] Waiting for query", name_));
+        query_future_.wait();
+        LOG_DEBUG(
+            std::format("[ManagedQuery] [{}] Done waiting for query", name_));
+
+        auto retval = query_future_.get();
+        if (!retval.succeeded()) {
+            throw TileDBSOMAError(std::format(
+                "[ManagedQuery] [{}] Query FAILED: {}",
+                name_,
+                retval.message()));
+        }
+
+    } else {
+        throw TileDBSOMAError(
+            std::format("[ManagedQuery] [{}] 'query_future_' invalid", name_));
+    }
+
+    auto status = query_->query_status();
+
+    if (status == Query::Status::FAILED) {
+        throw TileDBSOMAError(
+            std::format("[ManagedQuery] [{}] Query FAILED", name_));
+    }
+
+    // If the query was ever incomplete, the result buffers contents are not
+    // complete.
+    if (status == Query::Status::INCOMPLETE) {
+        results_complete_ = false;
+    } else if (status == Query::Status::COMPLETE) {
+        results_complete_ = true;
+    }
+
+    // Update ColumnBuffer size to match query results
+    size_t num_cells = 0;
+    for (auto& name : buffers_->names()) {
+        num_cells = buffers_->at(name)->update_size(*query_);
+        LOG_DEBUG(std::format(
+            "[ManagedQuery] [{}] Buffer {} cells={}", name_, name, num_cells));
+    }
+    total_num_cells_ += num_cells;
+
+    // TODO: retry the query with larger buffers
+    if (status == Query::Status::INCOMPLETE && !num_cells) {
+        throw TileDBSOMAError(
+            std::format("[ManagedQuery] [{}] Buffers are too small.", name_));
+    }
+
+    // Visit all attributes and retrieve enumeration vectors
+    auto attribute_map = schema_->attributes();
+    for (auto& nmit : attribute_map) {
+        auto attrname = nmit.first;
+        auto attribute = nmit.second;
+        auto enumname = AttributeExperimental::get_enumeration_name(
+            *ctx_, attribute);
+        if (enumname != std::nullopt) {
+            auto enumeration = ArrayExperimental::get_enumeration(
+                *ctx_, *array_, enumname.value());
+            auto enumvec = enumeration.as_vector<std::string>();
+            if (!buffers_->contains(attrname)) {
+                continue;
+            }
+            auto colbuf = buffers_->at(attrname);
+            colbuf->add_enumeration(enumvec);
+            LOG_DEBUG(std::format(
+                "[ManagedQuery] got Enumeration '{}' for attribute '{}'",
+                enumname.value(),
+                attrname));
+        }
+    }
+    return buffers_;
+}
+
+std::optional<std::shared_ptr<ArrayBuffers>> ManagedQuery::read_next() {
+    // setup buffers
+    setup_read();
+
+    // return the result of the query. if it is an empty query, return empty
+    // buffers. if it complete, return std::nullopt.
+    return submit_read();
 }
 
 // Please see the header-file comments for context.
@@ -377,85 +472,6 @@ void ManagedQuery::_fill_in_subarrays_if_dense_with_new_shape(
         std::pair<int64_t, int64_t> lo_hi_pair(lo, hi);
         select_ranges(dim_name, std::vector({lo_hi_pair}));
     }
-}
-
-std::shared_ptr<ArrayBuffers> ManagedQuery::results() {
-    if (is_empty_query()) {
-        return buffers_;
-    }
-
-    if (query_future_.valid()) {
-        LOG_DEBUG(std::format("[ManagedQuery] [{}] Waiting for query", name_));
-        query_future_.wait();
-        LOG_DEBUG(
-            std::format("[ManagedQuery] [{}] Done waiting for query", name_));
-
-        auto retval = query_future_.get();
-        if (!retval.succeeded()) {
-            throw TileDBSOMAError(std::format(
-                "[ManagedQuery] [{}] Query FAILED: {}",
-                name_,
-                retval.message()));
-        }
-
-    } else {
-        throw TileDBSOMAError(
-            std::format("[ManagedQuery] [{}] 'query_future_' invalid", name_));
-    }
-
-    auto status = query_->query_status();
-
-    if (status == Query::Status::FAILED) {
-        throw TileDBSOMAError(
-            std::format("[ManagedQuery] [{}] Query FAILED", name_));
-    }
-
-    // If the query was ever incomplete, the result buffers contents are not
-    // complete.
-    if (status == Query::Status::INCOMPLETE) {
-        results_complete_ = false;
-    } else if (status == Query::Status::COMPLETE) {
-        results_complete_ = true;
-    }
-
-    // Update ColumnBuffer size to match query results
-    size_t num_cells = 0;
-    for (auto& name : buffers_->names()) {
-        num_cells = buffers_->at(name)->update_size(*query_);
-        LOG_DEBUG(std::format(
-            "[ManagedQuery] [{}] Buffer {} cells={}", name_, name, num_cells));
-    }
-    total_num_cells_ += num_cells;
-
-    // TODO: retry the query with larger buffers
-    if (status == Query::Status::INCOMPLETE && !num_cells) {
-        throw TileDBSOMAError(
-            std::format("[ManagedQuery] [{}] Buffers are too small.", name_));
-    }
-
-    // Visit all attributes and retrieve enumeration vectors
-    auto attribute_map = schema_->attributes();
-    for (auto& nmit : attribute_map) {
-        auto attrname = nmit.first;
-        auto attribute = nmit.second;
-        auto enumname = AttributeExperimental::get_enumeration_name(
-            *ctx_, attribute);
-        if (enumname != std::nullopt) {
-            auto enumeration = ArrayExperimental::get_enumeration(
-                *ctx_, *array_, enumname.value());
-            auto enumvec = enumeration.as_vector<std::string>();
-            if (!buffers_->contains(attrname)) {
-                continue;
-            }
-            auto colbuf = buffers_->at(attrname);
-            colbuf->add_enumeration(enumvec);
-            LOG_DEBUG(std::format(
-                "[ManagedQuery] got Enumeration '{}' for attribute '{}'",
-                enumname.value(),
-                attrname));
-        }
-    }
-    return buffers_;
 }
 
 void ManagedQuery::check_column_name(const std::string& name) {

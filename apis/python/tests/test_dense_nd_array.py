@@ -498,3 +498,45 @@ def test_read_to_unwritten_array(tmp_path, shape):
 
     with soma.DenseNDArray.open(uri, "r") as A:
         assert np.array_equal(np.ones(shape) * 255, A.read().to_numpy())
+
+
+def test_pass_configs(tmp_path):
+    uri = tmp_path.as_posix()
+
+    with soma.DenseNDArray.create(
+        tmp_path.as_posix(),
+        type=pa.uint8(),
+        shape=(2, 2),
+        context=SOMATileDBContext(timestamp=1),
+    ) as a:
+        a.write(
+            (slice(0, 2), slice(0, 2)),
+            pa.Tensor.from_numpy(np.zeros((2, 2), dtype=np.uint8)),
+        )
+
+    # Pass a custom config to open
+    with soma.DenseNDArray.open(
+        uri,
+        "r",
+        context=soma.SOMATileDBContext(
+            {"sm.mem.total_budget": "0", "sm.io_concurrency_level": "0"}
+        ),
+    ) as sdf:
+
+        # This errors out as 0 is not a valid value to set the total memory
+        # budget or nummber of threads
+        with pytest.raises(soma.SOMAError):
+            sdf.read()
+
+        # This still errors out because read still sees that the number of
+        # threads is 0 and therefore invalid
+        with pytest.raises(soma.SOMAError):
+            sdf.read(platform_config={"sm.mem.total_budget": "300000"})
+
+        # With correct values, this reads without issue
+        sdf.read(
+            platform_config={
+                "sm.mem.total_budget": "300000",
+                "sm.io_concurrency_level": "1",
+            }
+        )

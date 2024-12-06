@@ -28,7 +28,6 @@ from ._dataframe import (
     _revise_domain_for_extent,
 )
 from ._exception import SOMAError, map_exception_for_create
-from ._query_condition import QueryCondition
 from ._read_iters import TableReadIter
 from ._spatial_dataframe import SpatialDataFrame
 from ._spatial_util import (
@@ -332,30 +331,15 @@ class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
         _util.check_unpartitioned(partitions)
         self._check_open_read()
 
-        handle = self._handle._handle
-
-        context = handle.context()
-        if platform_config is not None:
-            config = context.tiledb_config.copy()
-            config.update(platform_config)
-            context = clib.SOMAContext(config)
-
-        sr = clib.SOMAPointCloudDataFrame.open(
-            uri=handle.uri,
-            mode=clib.OpenMode.read,
-            context=context,
-            column_names=column_names or [],
+        # TODO: batch_size
+        return TableReadIter(
+            array=self,
+            coords=coords,
+            column_names=column_names,
             result_order=_util.to_clib_result_order(result_order),
-            timestamp=handle.timestamp and (0, handle.timestamp),
+            value_filter=value_filter,
+            platform_config=platform_config,
         )
-
-        if value_filter is not None:
-            sr.set_condition(QueryCondition(value_filter), handle.schema)
-
-        _util._set_coords(sr, coords)
-
-        # # TODO: batch_size
-        return TableReadIter(sr)
 
     def read_spatial_region(
         self,
