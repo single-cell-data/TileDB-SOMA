@@ -281,6 +281,8 @@ class ManagedQuery {
      */
     void setup_read();
 
+    std::optional<std::shared_ptr<ArrayBuffers>> read_next();
+
     /**
      * @brief Check if the query is complete.
      *
