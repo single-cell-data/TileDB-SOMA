@@ -45,6 +45,7 @@
 #include "enums.h"
 #include "logger_public.h"
 #include "managed_query.h"
+#include "soma_column.h"
 #include "soma_object.h"
 
 // ================================================================
@@ -226,7 +227,8 @@ class SOMAArray : public SOMAObject {
         , meta_cache_arr_(other.meta_cache_arr_)
         , first_read_next_(other.first_read_next_)
         , submitted_(other.submitted_) {
-        fill_metadata_cache(timestamp_);
+        fill_metadata_cache();
+        fill_columns();
     }
 
     SOMAArray(
@@ -1536,7 +1538,8 @@ class SOMAArray : public SOMAObject {
     std::optional<int64_t> _maybe_soma_joinid_shape_via_tiledb_current_domain();
     std::optional<int64_t> _maybe_soma_joinid_shape_via_tiledb_domain();
 
-    void fill_metadata_cache(std::optional<TimestampRange> timestamp);
+    void fill_metadata_cache();
+    void fill_columns();
 
     // SOMAArray URI
     std::string uri_;
@@ -1580,6 +1583,8 @@ class SOMAArray : public SOMAObject {
     // array alive in order for the metadata value pointers in the cache to
     // be accessible
     std::shared_ptr<Array> meta_cache_arr_;
+
+    std::vector<std::shared_ptr<SOMAColumn>> columns_;
 
     // True if this is the first call to read_next()
     bool first_read_next_ = true;

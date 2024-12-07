@@ -33,6 +33,9 @@
 #include <tiledb/array_experimental.h>
 #include "../utils/logger.h"
 #include "../utils/util.h"
+#include "soma_attribute.h"
+#include "soma_dimension.h"
+#include "soma_geometry_column.h"
 
 namespace tiledbsoma {
 using namespace tiledb;
@@ -138,7 +141,8 @@ SOMAArray::SOMAArray(
     ctx_ = std::make_shared<SOMAContext>(platform_config);
     validate(mode, name, timestamp);
     reset(column_names, batch_size, result_order);
-    fill_metadata_cache(timestamp);
+    fill_metadata_cache();
+    fill_columns();
 }
 
 SOMAArray::SOMAArray(
@@ -156,7 +160,8 @@ SOMAArray::SOMAArray(
     , timestamp_(timestamp) {
     validate(mode, name, timestamp);
     reset(column_names, batch_size, result_order);
-    fill_metadata_cache(timestamp);
+    fill_metadata_cache();
+    fill_columns();
 }
 
 SOMAArray::SOMAArray(
@@ -172,7 +177,8 @@ SOMAArray::SOMAArray(
     , arr_(arr)
     , schema_(std::make_shared<ArraySchema>(arr->schema())) {
     reset({}, batch_size_, result_order_);
-    fill_metadata_cache(timestamp);
+    fill_metadata_cache();
+    fill_columns();
 }
 
 void SOMAArray::fill_metadata_cache(std::optional<TimestampRange> timestamp) {
@@ -220,7 +226,8 @@ void SOMAArray::open(OpenMode mode, std::optional<TimestampRange> timestamp) {
 
     validate(mode, name_, timestamp);
     reset(column_names(), batch_size_, result_order_);
-    fill_metadata_cache(timestamp);
+    fill_metadata_cache();
+    fill_columns();
 }
 
 std::unique_ptr<SOMAArray> SOMAArray::reopen(
@@ -1634,6 +1641,83 @@ void SOMAArray::_check_dims_are_int64() {
         throw TileDBSOMAError(
             "[SOMAArray] internal coding error: expected all dims to be "
             "int64");
+    }
+}
+
+void SOMAArray::fill_columns() {
+    columns_.clear();
+    std::deque<std::variant<Dimension, Attribute>> tdb_columns;
+
+    for (std::size_t i = 0; i < arr_->schema().domain().ndim(); ++i) {
+        tdb_columns.push_back(arr_->schema().domain().dimension(i));
+    }
+
+    // We need the correct order of attributes
+    for (std::size_t i = 0; i < arr_->schema().attribute_num(); ++i) {
+        tdb_columns.push_back(arr_->schema().attribute(i));
+    }
+
+    while (!tdb_columns.empty()) {
+        std::visit(
+            [&](auto&& arg) {
+                using T = std::decay_t<decltype(arg)>;
+                if constexpr (std::is_same_v<T, Attribute>) {
+                    columns_.push_back(std::make_shared<SOMAAttribute>(arg));
+                    tdb_columns.pop_front();
+                } else if constexpr (std::is_same_v<T, Dimension>) {
+                    if (arg.name().rfind(SOMA_GEOMETRY_DIMENSION_PREFIX, 0) ==
+                        0) {
+                        std::vector<Dimension> dims;
+                        for (std::size_t i = 0; i < tdb_columns.size(); ++i) {
+                            if (std::holds_alternative<Dimension>(
+                                    tdb_columns[i]) &&
+                                std::get<Dimension>(tdb_columns[i])
+                                        .name()
+                                        .rfind(
+                                            SOMA_GEOMETRY_DIMENSION_PREFIX,
+                                            0) == 0) {
+                                dims.push_back(
+                                    std::get<Dimension>(tdb_columns[i]));
+                            }
+                        }
+
+                        // Internal columns are all sequentially stored so we
+                        // can remove them all by once
+                        tdb_columns.erase(
+                            tdb_columns.begin(),
+                            tdb_columns.begin() + dims.size());
+
+                        auto attr = std::find_if(
+                            tdb_columns.begin(),
+                            tdb_columns.end(),
+                            [&](auto& col) {
+                                if (std::holds_alternative<Attribute>(col) &&
+                                    std::get<Attribute>(col).name().compare(
+                                        SOMA_GEOMETRY_COLUMN_NAME) == 0) {
+                                    return true;
+                                }
+                                return false;
+                            });
+
+                        if (attr == tdb_columns.end()) {
+                            throw TileDBSOMAError(std::format(
+                                "[SOMAArray] Missing required attribute {} for "
+                                "SOMAGeometryColumn",
+                                SOMA_GEOMETRY_COLUMN_NAME));
+                        }
+
+                        columns_.push_back(std::make_shared<SOMAGeometryColumn>(
+                            dims, std::get<Attribute>(*attr)));
+                        tdb_columns.erase(attr);
+                    } else {
+                        // Vanilla dimension
+                        columns_.push_back(
+                            std::make_shared<SOMADimension>(arg));
+                        tdb_columns.pop_front();
+                    }
+                }
+            },
+            tdb_columns.front());
     }
 }
 
