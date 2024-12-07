@@ -1520,7 +1520,8 @@ class SOMAArray : public SOMAObject {
     std::optional<int64_t> _maybe_soma_joinid_shape_via_tiledb_current_domain();
     std::optional<int64_t> _maybe_soma_joinid_shape_via_tiledb_domain();
 
-    void fill_metadata_cache(std::optional<TimestampRange> timestamp);
+    void fill_metadata_cache();
+    void fill_columns();
 
     void fill_columns();
 
@@ -1569,6 +1570,8 @@ class SOMAArray : public SOMAObject {
     // array alive in order for the metadata value pointers in the cache to
     // be accessible
     std::shared_ptr<Array> meta_cache_arr_;
+
+    std::vector<std::shared_ptr<SOMAColumn>> columns_;
 
     // True if this is the first call to read_next()
     bool first_read_next_ = true;
