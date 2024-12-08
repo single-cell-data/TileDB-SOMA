@@ -438,115 +438,19 @@ std::optional<TimestampRange> SOMAArray::timestamp() {
 // The domainish enum simply lets us re-use code which is common across
 // core domain, core current domain, and core non-empty domain.
 ArrowTable SOMAArray::_get_core_domainish(enum Domainish which_kind) {
-    int array_ndim = this->ndim();
-    auto dimensions = tiledb_schema()->domain().dimensions();
+    int array_ndim = std::count_if(
+        columns_.begin(), columns_.end(), [](const auto& col) {
+            return col->isIndexColumn();
+        });
 
-    // Create the schema for the info we return
-    std::vector<std::string> names(array_ndim);
-    std::vector<tiledb_datatype_t> tiledb_datatypes(array_ndim);
-
-    for (int i = 0; i < (int)array_ndim; i++) {
-        const Dimension& core_dim = dimensions[i];
-        names[i] = core_dim.name();
-        tiledb_datatypes[i] = core_dim.type();
-    }
-
-    auto arrow_schema = ArrowAdapter::make_arrow_schema(
-        names, tiledb_datatypes);
-
-    // Create the data for the info we return
+    auto arrow_schema = ArrowAdapter::make_arrow_schema_parent(array_ndim);
     auto arrow_array = ArrowAdapter::make_arrow_array_parent(array_ndim);
 
-    for (int i = 0; i < array_ndim; i++) {
-        auto core_dim = dimensions[i];
-        auto core_type_code = core_dim.type();
-
-        ArrowArray* child = nullptr;
-
-        switch (core_type_code) {
-            case TILEDB_INT64:
-            case TILEDB_DATETIME_YEAR:
-            case TILEDB_DATETIME_MONTH:
-            case TILEDB_DATETIME_WEEK:
-            case TILEDB_DATETIME_DAY:
-            case TILEDB_DATETIME_HR:
-            case TILEDB_DATETIME_MIN:
-            case TILEDB_DATETIME_SEC:
-            case TILEDB_DATETIME_MS:
-            case TILEDB_DATETIME_US:
-            case TILEDB_DATETIME_NS:
-            case TILEDB_DATETIME_PS:
-            case TILEDB_DATETIME_FS:
-            case TILEDB_DATETIME_AS:
-            case TILEDB_TIME_HR:
-            case TILEDB_TIME_MIN:
-            case TILEDB_TIME_SEC:
-            case TILEDB_TIME_MS:
-            case TILEDB_TIME_US:
-            case TILEDB_TIME_NS:
-            case TILEDB_TIME_PS:
-            case TILEDB_TIME_FS:
-            case TILEDB_TIME_AS:
-                child = ArrowAdapter::make_arrow_array_child(
-                    _core_domainish_slot<int64_t>(core_dim.name(), which_kind));
-                break;
-            case TILEDB_UINT64:
-                child = ArrowAdapter::make_arrow_array_child(
-                    _core_domainish_slot<uint64_t>(
-                        core_dim.name(), which_kind));
-                break;
-            case TILEDB_INT32:
-                child = ArrowAdapter::make_arrow_array_child(
-                    _core_domainish_slot<int32_t>(core_dim.name(), which_kind));
-                break;
-            case TILEDB_UINT32:
-                child = ArrowAdapter::make_arrow_array_child(
-                    _core_domainish_slot<uint32_t>(
-                        core_dim.name(), which_kind));
-                break;
-            case TILEDB_INT16:
-                child = ArrowAdapter::make_arrow_array_child(
-                    _core_domainish_slot<int16_t>(core_dim.name(), which_kind));
-                break;
-            case TILEDB_UINT16:
-                child = ArrowAdapter::make_arrow_array_child(
-                    _core_domainish_slot<uint16_t>(
-                        core_dim.name(), which_kind));
-                break;
-            case TILEDB_INT8:
-                child = ArrowAdapter::make_arrow_array_child(
-                    _core_domainish_slot<int8_t>(core_dim.name(), which_kind));
-                break;
-            case TILEDB_UINT8:
-                child = ArrowAdapter::make_arrow_array_child(
-                    _core_domainish_slot<uint8_t>(core_dim.name(), which_kind));
-                break;
-
-            case TILEDB_FLOAT64:
-                child = ArrowAdapter::make_arrow_array_child(
-                    _core_domainish_slot<double>(core_dim.name(), which_kind));
-                break;
-            case TILEDB_FLOAT32:
-                child = ArrowAdapter::make_arrow_array_child(
-                    _core_domainish_slot<float>(core_dim.name(), which_kind));
-                break;
-
-            case TILEDB_STRING_ASCII:
-            case TILEDB_CHAR:
-            case TILEDB_GEOM_WKB:
-            case TILEDB_GEOM_WKT:
-                child = ArrowAdapter::make_arrow_array_child_string(
-                    _core_domainish_slot_string(core_dim.name(), which_kind));
-                break;
-
-            default:
-                throw TileDBSOMAError(std::format(
-                    "SOMAArray::_get_core_domainish:dim {} has unhandled type "
-                    "{}",
-                    core_dim.name(),
-                    tiledb::impl::type_to_str(core_type_code)));
-        }
-        arrow_array->children[i] = child;
+    for (int64_t i = 0; i < array_ndim; ++i) {
+        arrow_schema->children[i] = columns_[i]->arrow_schema_slot(
+            *ctx_, *arr_);
+        arrow_array->children[i] = columns_[i]->arrow_domain_slot(
+            *ctx_, *arr_, which_kind);
     }
 
     return ArrowTable(std::move(arrow_array), std::move(arrow_schema));
@@ -1719,6 +1623,32 @@ void SOMAArray::fill_columns() {
             },
             tdb_columns.front());
     }
+}
+
+std::shared_ptr<SOMAColumn> SOMAArray::get_column(std::string_view name) const {
+    auto result = std::find_if(columns_.begin(), columns_.end(), [&](auto col) {
+        return col->name() == name;
+    });
+
+    if (result == columns_.end()) {
+        throw TileDBSOMAError(std::format(
+            "[SOMAArray] internal coding error: No column named {} found",
+            name));
+    }
+
+    return *result;
+}
+
+std::shared_ptr<SOMAColumn> SOMAArray::get_column(std::size_t index) const {
+    if (index >= columns_.size()) {
+        throw TileDBSOMAError(std::format(
+            "[SOMAArray] internal coding error: Column index outside of range. "
+            "Requested {}, but {} exist.",
+            index,
+            columns_.size()));
+    }
+
+    return columns_[index];
 }
 
 }  // namespace tiledbsoma
