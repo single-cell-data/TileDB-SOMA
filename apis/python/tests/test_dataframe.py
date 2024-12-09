@@ -21,10 +21,10 @@ def arrow_schema():
     def _schema():
         return pa.schema(
             [
-                pa.field("foo", pa.int64()),
-                pa.field("bar", pa.float64()),
-                pa.field("baz", pa.string()),
-                pa.field("quux", pa.bool_()),
+                pa.field("myint", pa.int64()),
+                pa.field("myfloat", pa.float64()),
+                pa.field("mystring", pa.string()),
+                pa.field("mybool", pa.bool_()),
             ]
         )
 
@@ -36,10 +36,10 @@ def test_dataframe(tmp_path, arrow_schema):
 
     asch = pa.schema(
         [
-            ("foo", pa.int32()),
-            ("bar", pa.float64()),
-            ("baz", pa.large_string()),
-            ("quux", pa.bool_()),
+            ("myint", pa.int32()),
+            ("myfloat", pa.float64()),
+            ("mystring", pa.large_string()),
+            ("mybool", pa.bool_()),
         ]
     )
 
@@ -55,7 +55,7 @@ def test_dataframe(tmp_path, arrow_schema):
         # nonexistent indexed column
         soma.DataFrame.create(uri, schema=asch, index_column_names=["bogus"])
     soma.DataFrame.create(
-        uri, schema=asch, index_column_names=["foo"], domain=[[0, 99]]
+        uri, schema=asch, index_column_names=["myint"], domain=[[0, 99]]
     ).close()
 
     assert soma.DataFrame.exists(uri)
@@ -67,7 +67,7 @@ def test_dataframe(tmp_path, arrow_schema):
         assert len(sdf) == 0
 
         assert sorted(sdf.schema.names) == sorted(
-            ["foo", "bar", "baz", "soma_joinid", "quux"]
+            ["myint", "myfloat", "mystring", "soma_joinid", "mybool"]
         )
         assert sorted(sdf.keys()) == sorted(sdf.schema.names)
 
@@ -76,10 +76,10 @@ def test_dataframe(tmp_path, arrow_schema):
         for _ in range(3):
             pydict = {}
             pydict["soma_joinid"] = [0, 1, 2, 3, 4]
-            pydict["foo"] = [10, 20, 30, 40, 50]
-            pydict["bar"] = [4.1, 5.2, 6.3, 7.4, 8.5]
-            pydict["baz"] = ["apple", "ball", "cat", "dog", "egg"]
-            pydict["quux"] = [True, False, False, True, False]
+            pydict["myint"] = [10, 20, 30, 40, 50]
+            pydict["myfloat"] = [4.1, 5.2, 6.3, 7.4, 8.5]
+            pydict["mystring"] = ["apple", "ball", "cat", "dog", "egg"]
+            pydict["mybool"] = [True, False, False, True, False]
             rb = pa.Table.from_pydict(pydict)
 
             sdf.tiledbsoma_resize_soma_joinid_shape(len(rb))
@@ -108,20 +108,20 @@ def test_dataframe(tmp_path, arrow_schema):
         assert table.num_rows == 5
         assert table.num_columns == 5
         assert [e.as_py() for e in table["soma_joinid"]] == pydict["soma_joinid"]
-        assert [e.as_py() for e in table["foo"]] == pydict["foo"]
-        assert [e.as_py() for e in table["bar"]] == pydict["bar"]
-        assert [e.as_py() for e in table["baz"]] == pydict["baz"]
-        assert [e.as_py() for e in table["quux"]] == pydict["quux"]
+        assert [e.as_py() for e in table["myint"]] == pydict["myint"]
+        assert [e.as_py() for e in table["myfloat"]] == pydict["myfloat"]
+        assert [e.as_py() for e in table["mystring"]] == pydict["mystring"]
+        assert [e.as_py() for e in table["mybool"]] == pydict["mybool"]
 
         # Read ids
         table = sdf.read(coords=[[30, 10]]).concat()
         assert table.num_rows == 2
         assert table.num_columns == 5
         assert sorted([e.as_py() for e in table["soma_joinid"]]) == [0, 2]
-        assert sorted([e.as_py() for e in table["foo"]]) == [10, 30]
-        assert sorted([e.as_py() for e in table["bar"]]) == [4.1, 6.3]
-        assert sorted([e.as_py() for e in table["baz"]]) == ["apple", "cat"]
-        assert [e.as_py() for e in table["quux"]] == [True, False]
+        assert sorted([e.as_py() for e in table["myint"]]) == [10, 30]
+        assert sorted([e.as_py() for e in table["myfloat"]]) == [4.1, 6.3]
+        assert sorted([e.as_py() for e in table["mystring"]]) == ["apple", "cat"]
+        assert [e.as_py() for e in table["mybool"]] == [True, False]
 
     # Open and read with bindings
     with contextlib.closing(
@@ -133,18 +133,18 @@ def test_dataframe(tmp_path, arrow_schema):
         assert table.num_rows == 5
         assert table.num_columns == 5
         assert [e.as_py() for e in table["soma_joinid"]] == pydict["soma_joinid"]
-        assert [e.as_py() for e in table["foo"]] == pydict["foo"]
-        assert [e.as_py() for e in table["bar"]] == pydict["bar"]
-        assert [e.as_py() for e in table["baz"]] == pydict["baz"]
-        assert [e.as_py() for e in table["quux"]] == pydict["quux"]
+        assert [e.as_py() for e in table["myint"]] == pydict["myint"]
+        assert [e.as_py() for e in table["myfloat"]] == pydict["myfloat"]
+        assert [e.as_py() for e in table["mystring"]] == pydict["mystring"]
+        assert [e.as_py() for e in table["mybool"]] == pydict["mybool"]
 
     with soma.DataFrame.open(uri) as A:
         cfg = A.config_options_from_schema()
         assert not cfg.allows_duplicates
-        assert json.loads(cfg.dims)["foo"]["filters"] == [
+        assert json.loads(cfg.dims)["myint"]["filters"] == [
             {"COMPRESSION_LEVEL": 3, "name": "ZSTD"}
         ]
-        assert json.loads(cfg.attrs)["bar"]["filters"] == [
+        assert json.loads(cfg.attrs)["myfloat"]["filters"] == [
             {"COMPRESSION_LEVEL": -1, "name": "ZSTD"}
         ]
 
@@ -202,16 +202,16 @@ def test_dataframe_reopen(tmp_path, arrow_schema):
 
 def test_dataframe_with_float_dim(tmp_path, arrow_schema):
     sdf = soma.DataFrame.create(
-        tmp_path.as_posix(), schema=arrow_schema(), index_column_names=("bar",)
+        tmp_path.as_posix(), schema=arrow_schema(), index_column_names=("myfloat",)
     )
-    assert sdf.index_column_names == ("bar",)
+    assert sdf.index_column_names == ("myfloat",)
 
 
 def test_dataframe_with_enumeration(tmp_path):
     schema = pa.schema(
         [
-            pa.field("foo", pa.dictionary(pa.int64(), pa.large_string())),
-            pa.field("bar", pa.dictionary(pa.int64(), pa.large_string())),
+            pa.field("myint", pa.dictionary(pa.int64(), pa.large_string())),
+            pa.field("myfloat", pa.dictionary(pa.int64(), pa.large_string())),
         ]
     )
     enums = {"enmr1": ("a", "bb", "ccc"), "enmr2": ("cat", "dog")}
@@ -220,19 +220,19 @@ def test_dataframe_with_enumeration(tmp_path):
     ) as sdf:
         data = {}
         data["soma_joinid"] = [0, 1, 2, 3, 4]
-        data["foo"] = ["a", "bb", "ccc", "bb", "a"]
-        data["bar"] = ["cat", "dog", "cat", "cat", "cat"]
+        data["myint"] = ["a", "bb", "ccc", "bb", "a"]
+        data["myfloat"] = ["cat", "dog", "cat", "cat", "cat"]
         with pytest.raises(soma.SOMAError):
             sdf.write(pa.Table.from_pydict(data))
 
-        data["foo"] = pd.Categorical(["a", "bb", "ccc", "bb", "a"])
-        data["bar"] = pd.Categorical(["cat", "dog", "cat", "cat", "cat"])
+        data["myint"] = pd.Categorical(["a", "bb", "ccc", "bb", "a"])
+        data["myfloat"] = pd.Categorical(["cat", "dog", "cat", "cat", "cat"])
         sdf.write(pa.Table.from_pydict(data))
 
     with soma.DataFrame.open(tmp_path.as_posix()) as sdf:
         df = sdf.read().concat()
-        np.testing.assert_array_equal(df["foo"].chunk(0).dictionary, enums["enmr1"])
-        np.testing.assert_array_equal(df["bar"].chunk(0).dictionary, enums["enmr2"])
+        np.testing.assert_array_equal(df["myint"].chunk(0).dictionary, enums["enmr1"])
+        np.testing.assert_array_equal(df["myfloat"].chunk(0).dictionary, enums["enmr2"])
 
 
 @pytest.fixture
@@ -1749,8 +1749,8 @@ def test_only_evolve_schema_when_enmr_is_extended(tmp_path):
 
     schema = pa.schema(
         [
-            pa.field("foo", pa.dictionary(pa.int64(), pa.large_string())),
-            pa.field("bar", pa.large_string()),
+            pa.field("myint", pa.dictionary(pa.int64(), pa.large_string())),
+            pa.field("myfloat", pa.large_string()),
         ]
     )
 
@@ -1759,32 +1759,32 @@ def test_only_evolve_schema_when_enmr_is_extended(tmp_path):
     with soma.DataFrame.create(uri, schema=schema, domain=[[0, 4]]) as sdf:
         data = {}
         data["soma_joinid"] = [0, 1, 2, 3, 4]
-        data["foo"] = pd.Categorical(["a", "bb", "ccc", "bb", "a"])
-        data["bar"] = ["cat", "dog", "cat", "cat", "cat"]
+        data["myint"] = pd.Categorical(["a", "bb", "ccc", "bb", "a"])
+        data["myfloat"] = ["cat", "dog", "cat", "cat", "cat"]
         sdf.write(pa.Table.from_pydict(data))
 
     # +1 evolving the schema
     with soma.DataFrame.open(uri, "w") as sdf:
         data = {}
         data["soma_joinid"] = [0, 1, 2, 3, 4]
-        data["foo"] = pd.Categorical(["a", "bb", "ccc", "d", "a"])
-        data["bar"] = ["cat", "dog", "cat", "cat", "cat"]
+        data["myint"] = pd.Categorical(["a", "bb", "ccc", "d", "a"])
+        data["myfloat"] = ["cat", "dog", "cat", "cat", "cat"]
         sdf.write(pa.Table.from_pydict(data))
 
     # +0 no changes to enumeration values
     with soma.DataFrame.open(uri, "w") as sdf:
         data = {}
         data["soma_joinid"] = [0, 1, 2, 3, 4]
-        data["foo"] = pd.Categorical(["a", "bb", "ccc", "d", "a"])
-        data["bar"] = ["cat", "dog", "cat", "cat", "cat"]
+        data["myint"] = pd.Categorical(["a", "bb", "ccc", "d", "a"])
+        data["myfloat"] = ["cat", "dog", "cat", "cat", "cat"]
         sdf.write(pa.Table.from_pydict(data))
 
     # +0 no changes enumeration values
     with soma.DataFrame.open(uri, "w") as sdf:
         data = {}
         data["soma_joinid"] = [0, 1, 2, 3, 4]
-        data["foo"] = pd.Categorical(["a", "bb", "ccc", "d", "d"])
-        data["bar"] = ["cat", "dog", "cat", "cat", "cat"]
+        data["myint"] = pd.Categorical(["a", "bb", "ccc", "d", "d"])
+        data["myfloat"] = ["cat", "dog", "cat", "cat", "cat"]
         sdf.write(pa.Table.from_pydict(data))
 
     # total 3 fragment files
@@ -1899,3 +1899,47 @@ def test_bounds_on_somajoinid_domain(tmp_path):
     )
 
     assert soma.DataFrame.exists(uri)
+
+
+def test_pass_configs(tmp_path, arrow_schema):
+    uri = tmp_path.as_posix()
+
+    with soma.DataFrame.create(uri, schema=arrow_schema()) as sdf:
+        pydict = {}
+        pydict["soma_joinid"] = [0, 1, 2, 3, 4]
+        pydict["myint"] = [10, 20, 30, 40, 50]
+        pydict["myfloat"] = [4.1, 5.2, 6.3, 7.4, 8.5]
+        pydict["mystring"] = ["apple", "ball", "cat", "dog", "egg"]
+        pydict["mybool"] = [True, False, False, True, False]
+        rb = pa.Table.from_pydict(pydict)
+        sdf.tiledbsoma_resize_soma_joinid_shape(len(rb))
+        sdf.write(rb)
+
+    # Pass a custom config to open
+    with soma.DataFrame.open(
+        uri,
+        "r",
+        context=soma.SOMATileDBContext(
+            {"sm.mem.total_budget": "0", "sm.io_concurrency_level": "0"}
+        ),
+    ) as sdf:
+
+        # This errors out as 0 is not a valid value to set the total memory
+        # budget or nummber of threads
+        with pytest.raises(soma.SOMAError):
+            next(sdf.read())
+
+        # This still errors out because read still sees that the number of
+        # threads is 0 and therefore invalid
+        with pytest.raises(soma.SOMAError):
+            next(sdf.read(platform_config={"sm.mem.total_budget": "10000"}))
+
+        # With correct values, this reads without issue
+        next(
+            sdf.read(
+                platform_config={
+                    "sm.mem.total_budget": "10000",
+                    "sm.io_concurrency_level": "1",
+                }
+            )
+        )

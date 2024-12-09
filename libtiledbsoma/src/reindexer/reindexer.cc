@@ -60,7 +60,7 @@ void IntIndexer::map_locations(const int64_t* keys, size_t size) {
     int64_t counter = 0;
     // Hash map construction
     LOG_DEBUG(
-        fmt::format("[Re-indexer] Start of Map locations with {} keys", size));
+        std::format("[Re-indexer] Start of Map locations with {} keys", size));
     for (size_t i = 0; i < size; i++) {
         k = kh_put(m64, hash_, keys[i], &ret);
         assert(k != kh_end(hash_));
@@ -71,10 +71,10 @@ void IntIndexer::map_locations(const int64_t* keys, size_t size) {
         throw std::runtime_error("There are duplicate keys.");
     }
     auto hsize = kh_size(hash_);
-    LOG_DEBUG(fmt::format("[Re-indexer] khash size = {}", hsize));
+    LOG_DEBUG(std::format("[Re-indexer] khash size = {}", hsize));
 
     LOG_DEBUG(
-        fmt::format("[Re-indexer] Thread pool started and hash table created"));
+        std::format("[Re-indexer] Thread pool started and hash table created"));
 }
 
 void IntIndexer::lookup(const int64_t* keys, int64_t* results, size_t size) {
@@ -95,7 +95,7 @@ void IntIndexer::lookup(const int64_t* keys, int64_t* results, size_t size) {
         }
         return;
     }
-    LOG_DEBUG(fmt::format(
+    LOG_DEBUG(std::format(
         "Lookup with thread concurrency {} on data size {}",
         context_->thread_pool()->concurrency_level(),
         size));
@@ -114,7 +114,7 @@ void IntIndexer::lookup(const int64_t* keys, int64_t* results, size_t size) {
         if (end > size) {
             end = size;
         }
-        LOG_DEBUG(fmt::format(
+        LOG_DEBUG(std::format(
             "Creating tileDB task for the range from {} to {} ", start, end));
         tiledbsoma::ThreadPool::Task task = context_->thread_pool()->execute(
             [this, start, end, &results, &keys]() {
@@ -131,7 +131,7 @@ void IntIndexer::lookup(const int64_t* keys, int64_t* results, size_t size) {
             });
         assert(task.valid());
         tasks.emplace_back(std::move(task));
-        LOG_DEBUG(fmt::format(
+        LOG_DEBUG(std::format(
             "Task for the range from {} to {} inserted in the queue",
             start,
             end));

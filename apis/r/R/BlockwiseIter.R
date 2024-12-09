@@ -346,10 +346,26 @@ BlockwiseSparseReadIter <- R6::R6Class(
     .zero_based = FALSE,
     soma_reader_transform = function(x) {
       tbl <- private$reindex_arrow_table(soma_array_to_arrow_table(x))
+      shape <- private$.shape
+      axis <- as.integer(self$axis)
+      axname <- sprintf("soma_dim_%i", axis)
+      stride <- self$coords[[axname]]$stride
+      # For re-indexed blockwise iterators, shape should reflect the re-indexed
+      # axes; this can generally be the stride of the iterator, but for the end
+      # of each iterator this needs to be the remainder (see ?`%%`).
+      # Note: this only applies to the major axis, minor axes always return
+      # the full domain.
+      if (self$reindexable && shape[axis + 1L] > stride) {
+        shape[axis + 1L] <- if (self$coords[[axname]]$has_next()) {
+          as.numeric(stride)
+        } else {
+          as.numeric(self$coords[[axname]]$end %% stride) + 1L
+        }
+      }
       mat <- arrow_table_to_sparse(
         tbl,
         repr = self$repr,
-        shape = private$.shape,
+        shape = shape,
         zero_based = private$.zero_based
       )
       attr(mat, "coords") <- attr(tbl, "coords", exact = TRUE)

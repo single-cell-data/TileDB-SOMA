@@ -516,7 +516,7 @@ def from_anndata(
     df_uri = _util.uri_joinpath(experiment_uri, "obs")
     with _write_dataframe(
         df_uri,
-        conversions.decategoricalize_obs_or_var(anndata.obs),
+        conversions.obs_or_var_to_tiledb_supported_array_type(anndata.obs),
         id_column_name=obs_id_name,
         axis_mapping=jidmaps.obs_axis,
         **ingest_platform_ctx,
@@ -566,7 +566,7 @@ def from_anndata(
             # MS/meas/VAR
             with _write_dataframe(
                 _util.uri_joinpath(measurement_uri, "var"),
-                conversions.decategoricalize_obs_or_var(anndata.var),
+                conversions.obs_or_var_to_tiledb_supported_array_type(anndata.var),
                 id_column_name=var_id_name,
                 # Layer existence is pre-checked in the registration phase
                 axis_mapping=jidmaps.var_axes[measurement_name],
@@ -701,7 +701,9 @@ def from_anndata(
 
                         with _write_dataframe(
                             _util.uri_joinpath(raw_uri, "var"),
-                            conversions.decategoricalize_obs_or_var(anndata.raw.var),
+                            conversions.obs_or_var_to_tiledb_supported_array_type(
+                                anndata.raw.var
+                            ),
                             id_column_name=var_id_name,
                             axis_mapping=jidmaps.var_axes["raw"],
                             **ingest_platform_ctx,
@@ -794,7 +796,7 @@ def append_obs(
 
     with _write_dataframe(
         exp.obs.uri,
-        conversions.decategoricalize_obs_or_var(new_obs),
+        conversions.obs_or_var_to_tiledb_supported_array_type(new_obs),
         id_column_name=obs_id_name,
         platform_config=platform_config,
         context=context,
@@ -859,7 +861,7 @@ def append_var(
 
     with _write_dataframe(
         sdf.uri,
-        conversions.decategoricalize_obs_or_var(new_var),
+        conversions.obs_or_var_to_tiledb_supported_array_type(new_var),
         id_column_name=var_id_name,
         platform_config=platform_config,
         context=context,
@@ -1068,6 +1070,130 @@ def _create_or_open_coll(
     )
 
 
+def _extract_new_values_for_append_aux(
+    previous_soma_dataframe: DataFrame,
+    arrow_table: pa.Table,
+) -> pa.Table:
+    """
+    Helper function for _extract_new_values_for_append.
+
+    This does two things:
+
+    * Retains only the 'new' rows compared to existing storage.
+      Example is append-mode updates to the var dataframe for
+      which it's likely that most/all gene IDs have already been seen.
+
+    * String vs categorical of string:
+
+      o If we're appending a plain-string column to existing
+        categorical-of-string storage, convert the about-to-be-written data
+        to categorical of string, to match.
+
+      o If we're appending a categorical-of-string column to existing
+        plain-string storage, convert the about-to-be-written data
+        to plain string, to match.
+
+    Context: https://github.com/single-cell-data/TileDB-SOMA/issues/3353.
+    Namely, we find that AnnData's to_h5ad/from_h5ad can categoricalize (without
+    the user's knowledge or intention) string columns.  For example, even
+    cell_id/barcode, for which there may be millions of distinct values, with no
+    gain to be had from dictionary encoding, will be converted to categorical.
+    We find that converting these high-cardinality enums to plain string is a
+    significant performance win for subsequent accesses. When we do an initial
+    ingest from AnnData to TileDB-SOMA, we convert from categorical-of-string to
+    plain string if the cardinality exceeds some threshold.
+
+    All well and good -- except for one more complication which is append mode.
+    Namely, if the new column has high enough cardinality that we would
+    downgrade to plain string, but the existing storage has
+    categorical-of-string, we must write the new data as categorical-of-string.
+    Likewise, if the new column has low enough cardinality that we would keep it
+    as categorical-of-string, but the existing storage has plain string, we must
+    write the new data as plain strings.
+    """
+
+    # Retain only the new rows.
+    previous_sjids_table = previous_soma_dataframe.read(
+        column_names=["soma_joinid"]
+    ).concat()
+    previous_join_ids = set(
+        int(e)
+        for e in get_dataframe_values(previous_sjids_table.to_pandas(), SOMA_JOINID)
+    )
+    mask = [e.as_py() not in previous_join_ids for e in arrow_table[SOMA_JOINID]]
+    arrow_table = arrow_table.filter(mask)
+
+    # This is a redundant, failsafe check. The append-mode registrar already
+    # ensure schema homogeneity before we get here.
+    old_schema = previous_soma_dataframe.schema
+    new_schema = arrow_table.schema
+
+    # Note: we may be doing an add-column that doesn't exist in tiledbsoma
+    # storage but is present in the new AnnData. We don't need to change
+    # anything in that case. Regardless, we can't assume that the old
+    # and new schema have the same column names.
+
+    # Helper functions for
+    def is_str_type(typ: pa.DataType) -> bool:
+        return cast(bool, typ == pa.string() or typ == pa.large_string())
+
+    def is_str_col(field: pa.Field) -> bool:
+        return is_str_type(field.type)
+
+    def is_str_cat_col(field: pa.Field) -> bool:
+        if not pa.types.is_dictionary(field.type):
+            return False
+        return is_str_type(field.type.value_type)
+
+    # Make a quick check of the old and new schemas to see if any columns need
+    # changing between plain string and categorical-of-string.  We're about to
+    # duplicate the new data -- and we must, since pyarrow.Table is immutable --
+    # so let's only do that if we need to.
+    any_to_change = False
+    for name in new_schema.names:
+        if name not in old_schema.names:
+            continue
+        if is_str_col(old_schema.field(name)) and is_str_cat_col(
+            new_schema.field(name)
+        ):
+            any_to_change = True
+            break
+        if is_str_cat_col(old_schema.field(name)) and is_str_col(
+            new_schema.field(name)
+        ):
+            any_to_change = True
+            break
+
+    if any_to_change:
+        fields_dict = {}
+        for name in new_schema.names:
+            if name not in old_schema.names:
+                continue
+            column = arrow_table.column(name)
+            old_info = old_schema.field(name)
+            new_info = new_schema.field(name)
+            if is_str_col(old_info) and is_str_cat_col(new_info):
+                # Convert from categorical-of-string to plain string.
+                column = column.to_pylist()
+            elif is_str_cat_col(old_info) and is_str_col(new_info):
+                # Convert from plain string to categorical-of-string.  Note:
+                # libtiledbsoma already merges the enum mappings, e.g if the
+                # storage has red, yellow, & green, but our new data has some
+                # yellow, green, and orange.
+                column = pa.array(
+                    column.to_pylist(),
+                    pa.dictionary(
+                        index_type=old_info.type.index_type,
+                        value_type=old_info.type.value_type,
+                        ordered=old_info.type.ordered,
+                    ),
+                )
+            fields_dict[name] = column
+        arrow_table = pa.Table.from_pydict(fields_dict)
+
+    return arrow_table
+
+
 def _extract_new_values_for_append(
     df_uri: str,
     arrow_table: pa.Table,
@@ -1098,15 +1224,10 @@ def _extract_new_values_for_append(
         with _factory.open(
             df_uri, "r", soma_type=DataFrame, context=context
         ) as previous_soma_dataframe:
-            previous_table = previous_soma_dataframe.read().concat()
-            previous_df = previous_table.to_pandas()
-            previous_join_ids = set(
-                int(e) for e in get_dataframe_values(previous_df, SOMA_JOINID)
+            return _extract_new_values_for_append_aux(
+                previous_soma_dataframe, arrow_table
             )
-            mask = [
-                e.as_py() not in previous_join_ids for e in arrow_table[SOMA_JOINID]
-            ]
-            return arrow_table.filter(mask)
+
     except DoesNotExistError:
         return arrow_table
 

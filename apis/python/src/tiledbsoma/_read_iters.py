@@ -13,7 +13,6 @@ from concurrent.futures import ThreadPoolExecutor
 from typing import (
     TYPE_CHECKING,
     Any,
-    Dict,
     Iterator,
     List,
     Optional,
@@ -39,11 +38,13 @@ from ._eager_iter import EagerIterator
 from ._exception import SOMAError
 from ._fastercsx import CompressedMatrix
 from ._indexer import IntIndexer
+from ._query_condition import QueryCondition
 from ._types import NTuple
 from .options import SOMATileDBContext
 
 if TYPE_CHECKING:
     from . import SparseNDArray
+    from ._soma_array import SOMAArray
 
 
 # Convenience types
@@ -66,8 +67,47 @@ IJDType = Tuple[
 class TableReadIter(somacore.ReadIter[pa.Table]):
     """Iterator over `Arrow Table <https://arrow.apache.org/docs/python/generated/pyarrow.Table.html>`_ elements"""
 
-    def __init__(self, sr: clib.SOMAArray):
-        self._reader = _arrow_table_reader(sr)
+    def __init__(
+        self,
+        array: SOMAArray,
+        coords: Union[
+            options.SparseDFCoords, options.SparseNDCoords, options.DenseNDCoords
+        ],
+        column_names: Optional[Sequence[str]],
+        result_order: clib.ResultOrder,
+        value_filter: Optional[str],
+        platform_config: Optional[options.PlatformConfig],
+    ):
+        """Initalizes a new TableReadIter for SOMAArrays.
+
+        Args:
+            array (SOMAArray):
+                The NDArray, DataFrame, or SpatialDataFrame being read.
+
+            coords (Union[
+                options.SparseDFCoords, options.SparseNDCoords, options.DenseNDCoords
+            ]):
+                for each index dimension, which rows to read.
+                ``()`` means no constraint -- all IDs.
+
+            column_names (Optional[Sequence[str]]):
+                The named columns to read and return.
+                ``None`` means no constraint -- all column names.
+
+            result_order (clib.ResultOrder):
+                Order of read results.
+                This can be one of automatic, rowmajor, or colmajor.
+
+            value_filter (Optional[str]):
+                An optional [value filter] to apply to the results.
+
+            platform_config (Optional[options.PlatformConfig]):
+                Pass in parameters for tuning reads.
+
+        """
+        self._reader = ArrowTableRead(
+            array, coords, column_names, result_order, value_filter, platform_config
+        )
 
     def __next__(self) -> pa.Table:
         return next(self._reader)
@@ -87,10 +127,11 @@ class BlockwiseReadIterBase(somacore.ReadIter[_RT], metaclass=abc.ABCMeta):
 
     def __init__(
         self,
-        array: "SparseNDArray",
-        sr: clib.SOMAArray,
+        array: SOMAArray,
         coords: options.SparseNDCoords,
         axis: Union[int, Sequence[int]],
+        result_order: clib.ResultOrder,
+        platform_config: Optional[options.PlatformConfig],
         *,
         size: Optional[Union[int, Sequence[int]]] = None,
         reindex_disable_on_axis: Optional[Union[int, Sequence[int]]] = None,
@@ -99,10 +140,12 @@ class BlockwiseReadIterBase(somacore.ReadIter[_RT], metaclass=abc.ABCMeta):
     ):
         super().__init__()
 
-        self.ndim = len(sr.shape)
         self.array = array
-        self.sr = sr
+        self.shape = array._handle._handle.shape
+        self.ndim = len(self.shape)
         self.eager = eager
+        self.result_order = result_order
+        self.platform_config = platform_config
 
         # Assign a thread pool from the context, or create a new one if no context
         # is available
@@ -115,7 +158,7 @@ class BlockwiseReadIterBase(somacore.ReadIter[_RT], metaclass=abc.ABCMeta):
 
         # raises on various error checks, AND normalizes args
         self.axis, self.size, self.reindex_disable_on_axis = self._validate_args(
-            sr.shape, axis, size, reindex_disable_on_axis
+            self.shape, axis, size, reindex_disable_on_axis
         )
 
         self.major_axis = self.axis[0]
@@ -125,11 +168,7 @@ class BlockwiseReadIterBase(somacore.ReadIter[_RT], metaclass=abc.ABCMeta):
         self.joinids: List[pa.Array] = [
             pa.array(
                 np.concatenate(
-                    list(
-                        _coords_strider(
-                            self.coords[d], self.sr.shape[d], self.sr.shape[d]
-                        )
-                    )
+                    list(_coords_strider(self.coords[d], self.shape[d], self.shape[d]))
                 )
                 if d != self.major_axis
                 else np.array([], dtype=np.int64)
@@ -230,20 +269,26 @@ class BlockwiseReadIterBase(somacore.ReadIter[_RT], metaclass=abc.ABCMeta):
 
     def _table_reader(self) -> Iterator[BlockwiseTableReadIterResult]:
         """Private. Blockwise table reader. Helper function for sub-class use"""
-        kwargs: Dict[str, object] = {"result_order": self.sr.result_order}
         for coord_chunk in _coords_strider(
             self.coords[self.major_axis],
-            self.sr.shape[self.major_axis],
+            self.shape[self.major_axis],
             self.size[0],
         ):
-            self.sr.reset(**kwargs)
             step_coords = list(self.coords)
             step_coords[self.major_axis] = coord_chunk
-            _util._set_coords(self.sr, step_coords)
 
             joinids = list(self.joinids)
             joinids[self.major_axis] = pa.array(coord_chunk)
-            yield pa.concat_tables(_arrow_table_reader(self.sr)), tuple(joinids)
+            yield pa.concat_tables(
+                ArrowTableRead(
+                    array=self.array,
+                    coords=step_coords,
+                    column_names=[],  # select all columns
+                    result_order=self.result_order,
+                    value_filter=None,
+                    platform_config=self.platform_config,
+                )
+            ), tuple(joinids)
 
     def _reindexed_table_reader(
         self,
@@ -286,10 +331,11 @@ class BlockwiseScipyReadIter(BlockwiseReadIterBase[BlockwiseScipyReadIterResult]
 
     def __init__(
         self,
-        array: "SparseNDArray",
-        sr: clib.SOMAArray,
+        array: SOMAArray,
         coords: options.SparseNDCoords,
         axis: Union[int, Sequence[int]],
+        result_order: clib.ResultOrder,
+        platform_config: Optional[options.PlatformConfig],
         *,
         size: Optional[Union[int, Sequence[int]]] = None,
         reindex_disable_on_axis: Optional[Union[int, Sequence[int]]] = None,
@@ -301,9 +347,10 @@ class BlockwiseScipyReadIter(BlockwiseReadIterBase[BlockwiseScipyReadIterResult]
         self.context = context
         super().__init__(
             array,
-            sr,
             coords,
             axis,
+            result_order,
+            platform_config,
             size=size,
             reindex_disable_on_axis=reindex_disable_on_axis,
             eager=eager,
@@ -311,7 +358,7 @@ class BlockwiseScipyReadIter(BlockwiseReadIterBase[BlockwiseScipyReadIterResult]
         )
 
         if (
-            len(self.sr.shape) != 2
+            len(self.shape) != 2
             or len(self.coords) > 2
             or self.major_axis not in [0, 1]
         ):
@@ -365,7 +412,7 @@ class BlockwiseScipyReadIter(BlockwiseReadIterBase[BlockwiseScipyReadIterResult]
         self, major_coords: npt.NDArray[np.int64], minor_coords: npt.NDArray[np.int64]
     ) -> Tuple[int, int]:
         """Private. Make shape of this iterator step"""
-        shape = cast(Tuple[int, int], tuple(self.sr.shape))
+        shape = cast(Tuple[int, int], tuple(self.shape))
         assert len(shape) == 2
         _sp_shape: List[int] = list(shape)
 
@@ -393,7 +440,7 @@ class BlockwiseScipyReadIter(BlockwiseReadIterBase[BlockwiseScipyReadIterResult]
             )
 
             # SOMA disallows duplicates. Canonical implies sorted row-major, no dups
-            if self.sr.result_order == clib.ResultOrder.rowmajor:
+            if self.result_order == clib.ResultOrder.rowmajor:
                 sp.has_canonical_format = True
 
             yield sp, indices
@@ -426,20 +473,41 @@ class BlockwiseScipyReadIter(BlockwiseReadIterBase[BlockwiseScipyReadIterResult]
 class SparseTensorReadIterBase(somacore.ReadIter[_RT], metaclass=abc.ABCMeta):
     """Private implementation class"""
 
-    def __init__(self, sr: clib.SOMAArray, shape: NTuple):
-        self.sr = sr
+    def __init__(
+        self,
+        array: SparseNDArray,
+        coords: options.SparseDFCoords,
+        shape: NTuple,
+        result_order: clib.ResultOrder,
+        platform_config: Optional[options.PlatformConfig],
+    ):
+        self.array = array
+        self.coords = coords
         self.shape = shape
+        self.result_order = result_order
+        self.platform_config = platform_config
+
+        clib_handle = array._handle._handle
+
+        if platform_config is not None:
+            cfg = clib_handle.context().config()
+            cfg.update(platform_config)
+            ctx = clib.SOMAContext(cfg)
+        else:
+            ctx = clib_handle.context()
+
+        self.mq = clib.ManagedQuery(clib_handle, ctx)
+
+        self.mq.set_layout(result_order)
+
+        _util._set_coords(self.mq, clib_handle, coords)
 
     @abc.abstractmethod
     def _from_table(self, arrow_table: pa.Table) -> _RT:
         raise NotImplementedError()
 
     def __next__(self) -> _RT:
-        arrow_table = self.sr.read_next()
-        if arrow_table is None:
-            raise StopIteration
-
-        return self._from_table(arrow_table)
+        return self._from_table(self.mq.next())
 
     def concat(self) -> _RT:
         """Returns all the requested data in a single operation.
@@ -447,7 +515,16 @@ class SparseTensorReadIterBase(somacore.ReadIter[_RT], metaclass=abc.ABCMeta):
         If some data has already been retrieved using ``next``, this will return
         the rest of the data after that is already returned.
         """
-        arrow_tables = pa.concat_tables(TableReadIter(self.sr))
+        arrow_tables = pa.concat_tables(
+            TableReadIter(
+                array=self.array,
+                coords=self.coords,
+                column_names=[],  # select all columns
+                result_order=self.result_order,
+                value_filter=None,
+                platform_config=self.platform_config,
+            )
+        )
         return self._from_table(arrow_tables)
 
 
@@ -465,12 +542,41 @@ class SparseCOOTensorReadIter(SparseTensorReadIterBase[pa.SparseCOOTensor]):
         return pa.SparseCOOTensor.from_numpy(coo_data, coo_coords, shape=self.shape)
 
 
-def _arrow_table_reader(sr: clib.SOMAArray) -> Iterator[pa.Table]:
-    """Private. Simple Table iterator on any Array"""
-    tbl = sr.read_next()
-    while tbl is not None:
-        yield tbl
-        tbl = sr.read_next()
+class ArrowTableRead(Iterator[pa.Table]):
+    def __init__(
+        self,
+        array: SOMAArray,
+        coords: Union[
+            options.SparseDFCoords, options.SparseNDCoords, options.DenseNDCoords
+        ],
+        column_names: Optional[Sequence[str]],
+        result_order: clib.ResultOrder,
+        value_filter: Optional[str],
+        platform_config: Optional[options.PlatformConfig],
+    ):
+        clib_handle = array._handle._handle
+
+        if platform_config is not None:
+            cfg = clib_handle.context().config()
+            cfg.update(platform_config)
+            ctx = clib.SOMAContext(cfg)
+        else:
+            ctx = clib_handle.context()
+
+        self.mq = clib.ManagedQuery(clib_handle, ctx)
+
+        self.mq.set_layout(result_order)
+
+        if column_names is not None:
+            self.mq.select_columns(list(column_names))
+
+        if value_filter is not None:
+            self.mq.set_condition(QueryCondition(value_filter), clib_handle.schema)
+
+        _util._set_coords(self.mq, clib_handle, coords)
+
+    def __next__(self) -> pa.Table:
+        return self.mq.next()
 
 
 def _coords_strider(

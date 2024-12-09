@@ -418,18 +418,29 @@ SEXP c_schema(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
 }
 
 // [[Rcpp::export]]
-void resize(
+std::string resize(
     const std::string& uri,
     Rcpp::NumericVector new_shape,
     std::string function_name_for_messages,
+    bool check_only,
     Rcpp::XPtr<somactx_wrap_t> ctxxp) {
     // This function is solely for SparseNDArray and DenseNDArray for which the
     // dims are required by the SOMA spec to be of type int64. Domain-resize for
     // variant-indexed dataframes is via upgrade_domain and change_domain.
     auto sr = tdbs::SOMAArray::open(OpenMode::write, uri, ctxxp->ctxptr);
     std::vector<int64_t> new_shape_i64 = i64_from_rcpp_numeric(new_shape);
-    sr->resize(new_shape_i64, function_name_for_messages);
+
+    std::string retval = "";
+    if (check_only) {
+        auto status_and_reason = sr->can_resize(
+            new_shape_i64, function_name_for_messages);
+        retval = status_and_reason.second;
+    } else {
+        sr->resize(new_shape_i64, function_name_for_messages);
+    }
+
     sr->close();
+    return retval;
 }
 
 // [[Rcpp::export]]
@@ -446,29 +457,40 @@ void resize_soma_joinid_shape(
 }
 
 // [[Rcpp::export]]
-void tiledbsoma_upgrade_shape(
+std::string tiledbsoma_upgrade_shape(
     const std::string& uri,
     Rcpp::NumericVector new_shape,
     std::string function_name_for_messages,
+    bool check_only,
     Rcpp::XPtr<somactx_wrap_t> ctxxp) {
     // This function is solely for SparseNDArray and DenseNDArray for which the
     // dims are required by the SOMA spec to be of type int64. Domain-resize for
     // variant-indexed dataframes is via upgrade_domain and change_domain.
     auto sr = tdbs::SOMAArray::open(OpenMode::write, uri, ctxxp->ctxptr);
     std::vector<int64_t> new_shape_i64 = i64_from_rcpp_numeric(new_shape);
-    sr->upgrade_shape(new_shape_i64, function_name_for_messages);
+
+    std::string retval = "";
+    if (check_only) {
+        auto status_and_reason = sr->can_upgrade_shape(
+            new_shape_i64, function_name_for_messages);
+        retval = status_and_reason.second;
+    } else {
+        sr->upgrade_shape(new_shape_i64, function_name_for_messages);
+    }
+
     sr->close();
+    return retval;
 }
 
 // [[Rcpp::export]]
-void upgrade_or_change_domain(
+std::string upgrade_or_change_domain(
     const std::string& uri,
     bool is_change_domain,
     naxpArray nadimap,
     naxpSchema nadimsp,
     std::string function_name_for_messages,
+    bool check_only,
     Rcpp::XPtr<somactx_wrap_t> ctxxp) {
-
     // This is pointer manipulation from R -> Rcpp SEXP -> libtiledbsoma:
     nanoarrow::UniqueArray apdim{nanoarrow_array_from_xptr(nadimap)};
     nanoarrow::UniqueSchema spdim{nanoarrow_schema_from_xptr(nadimsp)};
@@ -482,13 +504,27 @@ void upgrade_or_change_domain(
     tdbs::ArrowTable arrow_table(std::move(dimarr), std::move(dimsch));
 
     // Now call libtiledbsoma
+    std::string reason_string = "";
     auto sr = tdbs::SOMADataFrame::open(uri, OpenMode::write, ctxxp->ctxptr);
     if (is_change_domain) {
-      sr->change_domain(arrow_table, function_name_for_messages);
+        if (check_only) {
+            auto status_and_reason = sr->can_change_domain(
+                arrow_table, function_name_for_messages);
+            reason_string = status_and_reason.second;
+        } else {
+            sr->change_domain(arrow_table, function_name_for_messages);
+        }
     } else {
-      sr->upgrade_domain(arrow_table, function_name_for_messages);
+        if (check_only) {
+            auto status_and_reason = sr->can_upgrade_domain(
+                arrow_table, function_name_for_messages);
+            reason_string = status_and_reason.second;
+        } else {
+            sr->upgrade_domain(arrow_table, function_name_for_messages);
+        }
     }
     sr->close();
+    return reason_string;
 }
 
 // [[Rcpp::export]]

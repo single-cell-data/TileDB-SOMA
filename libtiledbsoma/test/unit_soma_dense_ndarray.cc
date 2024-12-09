@@ -30,6 +30,7 @@
  * This file manages unit tests for the SOMADenseNDArray class
  */
 
+#include <format>
 #include "common.h"
 
 TEST_CASE("SOMADenseNDArray: basic", "[SOMADenseNDArray]") {

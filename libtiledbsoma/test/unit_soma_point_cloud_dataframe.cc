@@ -30,6 +30,7 @@
  * This file manages unit tests for the SOMAPointCloudDataFrame class
  */
 
+#include <format>
 #include "common.h"
 
 const int64_t SOMA_JOINID_DIM_MAX = 99;

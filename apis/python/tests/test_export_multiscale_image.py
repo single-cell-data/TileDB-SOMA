@@ -48,17 +48,31 @@ def sample_multiscale_image_2d(tmp_path_factory, sample_2d_data):
 
 
 @pytest.mark.parametrize(
-    "level,transform,expected_transformation",
+    "level,transform,expected_transformation,expected_transformation_key",
     [
+        (
+            0,
+            None,
+            sd.transformations.Identity(),
+            "image",
+        ),
+        (
+            2,
+            None,
+            sd.transformations.Scale([4, 4], ("x", "y")),
+            "image",
+        ),
         (
             0,
             somacore.IdentityTransform(("x_scene", "y_scene"), ("x_image", "y_image")),
             sd.transformations.Identity(),
+            "scene0",
         ),
         (
             2,
             somacore.IdentityTransform(("x_scene", "y_scene"), ("x_image", "y_image")),
             sd.transformations.Scale([4, 4], ("x", "y")),
+            "scene0",
         ),
         (
             0,
@@ -66,6 +80,7 @@ def sample_multiscale_image_2d(tmp_path_factory, sample_2d_data):
                 ("x_scene", "y_scene"), ("x_image", "y_image"), [0.25, 0.5]
             ),
             sd.transformations.Scale([4, 2], ("x", "y")),
+            "scene0",
         ),
         (
             2,
@@ -73,6 +88,7 @@ def sample_multiscale_image_2d(tmp_path_factory, sample_2d_data):
                 ("x_scene", "y_scene"), ("x_image", "y_image"), [0.25, 0.5]
             ),
             sd.transformations.Scale([16, 8], ("x", "y")),
+            "scene0",
         ),
         (
             0,
@@ -84,6 +100,7 @@ def sample_multiscale_image_2d(tmp_path_factory, sample_2d_data):
                 ("x", "y"),
                 ("x", "y"),
             ),
+            "scene0",
         ),
         (
             2,
@@ -100,6 +117,7 @@ def sample_multiscale_image_2d(tmp_path_factory, sample_2d_data):
                     ),
                 ]
             ),
+            "scene0",
         ),
     ],
 )
@@ -109,10 +127,12 @@ def test_export_image_level_to_spatial_data(
     level,
     transform,
     expected_transformation,
+    expected_transformation_key,
 ):
     image2d = soma_outgest.to_spatial_data_image(
         sample_multiscale_image_2d,
         level=level,
+        key="image",
         scene_id="scene0",
         scene_dim_map={"x_scene": "x", "y_scene": "y"},
         transform=transform,
@@ -131,12 +151,23 @@ def test_export_image_level_to_spatial_data(
     # Check the metadata.
     metadata = dict(image2d.attrs)
     assert len(metadata) == 1
-    assert metadata["transform"] == {"scene0": expected_transformation}
+    assert metadata["transform"] == {
+        expected_transformation_key: expected_transformation
+    }
 
 
 @pytest.mark.parametrize(
-    "transform,expected_transformation",
+    "transform,expected_transformation,expected_transformation_key",
     [
+        (
+            None,
+            [
+                sd.transformations.Identity(),
+                sd.transformations.Scale([2, 2], ("x", "y")),
+                sd.transformations.Scale([4, 4], ("x", "y")),
+            ],
+            "image",
+        ),
         (
             somacore.IdentityTransform(("x_scene", "y_scene"), ("x_image", "y_image")),
             [
@@ -144,6 +175,7 @@ def test_export_image_level_to_spatial_data(
                 sd.transformations.Scale([2, 2], ("x", "y")),
                 sd.transformations.Scale([4, 4], ("x", "y")),
             ],
+            "scene0",
         ),
         (
             somacore.ScaleTransform(
@@ -154,6 +186,7 @@ def test_export_image_level_to_spatial_data(
                 sd.transformations.Scale([8, 4], ("x", "y")),
                 sd.transformations.Scale([16, 8], ("x", "y")),
             ],
+            "scene0",
         ),
         (
             somacore.AffineTransform(
@@ -186,14 +219,20 @@ def test_export_image_level_to_spatial_data(
                     ]
                 ),
             ],
+            "scene0",
         ),
     ],
 )
 def test_export_full_image_to_spatial_data(
-    sample_multiscale_image_2d, sample_2d_data, transform, expected_transformation
+    sample_multiscale_image_2d,
+    sample_2d_data,
+    transform,
+    expected_transformation,
+    expected_transformation_key,
 ):
     image2d = soma_outgest.to_spatial_data_multiscale_image(
         sample_multiscale_image_2d,
+        key="image",
         scene_id="scene0",
         scene_dim_map={"x_scene": "x", "y_scene": "y"},
         transform=transform,
@@ -216,4 +255,6 @@ def test_export_full_image_to_spatial_data(
         # Check the metadata.
         metadata = dict(data_array.attrs)
         assert len(metadata) == 1
-        assert metadata["transform"] == {"scene0": expected_transformation[index]}
+        assert metadata["transform"] == {
+            expected_transformation_key: expected_transformation[index]
+        }

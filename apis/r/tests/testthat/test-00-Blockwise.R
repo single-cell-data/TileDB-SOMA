@@ -152,6 +152,7 @@ test_that("Blockwise iterator for sparse matrices", {
   expect_error(bi$sparse_matrix("R"))
 
   expect_s3_class(it <- bi$sparse_matrix(), "BlockwiseSparseReadIter")
+  expect_false(it$reindexable)
   expect_false(it$read_complete())
 
   for (i in seq.int(1L, ceiling(it$coords_axis$length() / it$coords_axis$stride))) {
@@ -200,6 +201,7 @@ test_that("Sparse matrix blockwise iterator: re-indexed", {
   query <- exp$axis_query("RNA")
   xrqry <- query$X("data")
 
+  # Reindex only on major axis
   expect_s3_class(
     bi <- xrqry$blockwise(axis = ax, size = sz, reindex_disable_on_axis = NA),
     "SOMASparseNDArrayBlockwiseRead"
@@ -216,7 +218,11 @@ test_that("Sparse matrix blockwise iterator: re-indexed", {
   for (i in seq.int(1L, ceiling(it$coords_axis$length() / it$coords_axis$stride))) {
     mat <- it$read_next()
     expect_s4_class(mat, "TsparseMatrix")
-    expect_identical(dim(mat), rev(dim(obj)))
+    dims <- c(
+      ifelse(it$read_complete(), yes = ncol(obj) %% sz, no = sz),
+      nrow(obj)
+    )
+    expect_identical(dim(mat), dims)
     expect_true(min(mat@i) >= 0L)
     expect_true(max(mat@i) <= sz)
     strider <- attr(mat, "coords")$soma_dim_0
@@ -225,6 +231,7 @@ test_that("Sparse matrix blockwise iterator: re-indexed", {
     expect_true(strider$end < sz * i)
   }
 
+  # Reindex on all axes
   expect_s3_class(
     bi <- suppressWarnings(xrqry$blockwise(
       axis = ax,
@@ -242,7 +249,11 @@ test_that("Sparse matrix blockwise iterator: re-indexed", {
   for (i in seq.int(1L, ceiling(it$coords_axis$length() / it$coords_axis$stride))) {
     mat <- it$read_next()
     expect_s4_class(mat, "TsparseMatrix")
-    expect_identical(dim(mat), rev(dim(obj)))
+    dims <- c(
+      ifelse(it$read_complete(), yes = ncol(obj) %% sz, no = sz),
+      nrow(obj)
+    )
+    expect_identical(dim(mat), dims)
     expect_true(min(mat@i) >= 0L)
     expect_true(max(mat@i) <= sz)
   }
@@ -270,14 +281,19 @@ test_that("Blockwise iterate through full array", {
   obs_stride <- n_obs %/% n_chunks
   it <- exp$ms$get("RNA")$X$get(X_layer)$read()$blockwise(axis = 0L, size = obs_stride)$sparse_matrix()
   expect_false(it$read_complete())
+  i <- 1L
   while (!it$read_complete()) {
+    i <- i + 1L
     mat <- it$read_next()
     expect_s4_class(mat, "dgTMatrix")
     expect_identical(ncol(mat), n_var)
-    expect_identical(nrow(mat), n_obs)
+    nobs <- ifelse(it$read_complete(), yes = n_obs %% obs_stride, no = obs_stride)
+    expect_identical(nrow(mat), nobs, expected.label = nobs)
+    ncoords <- ifelse(it$read_complete(), yes = n_obs %% n_chunks, no = obs_stride)
     expect_identical(
       length(attr(mat, "coords")$soma_dim_0),
-      ifelse(it$read_complete(), yes = n_obs %% n_chunks, no = obs_stride)
+      ncoords,
+      expected.label = ncoords
     )
   }
   expect_true(it$read_complete())
@@ -289,11 +305,14 @@ test_that("Blockwise iterate through full array", {
   while (!it$read_complete()) {
     mat <- it$read_next()
     expect_s4_class(mat, "dgTMatrix")
-    expect_identical(ncol(mat), n_var)
+    nvar <- ifelse(it$read_complete(), yes = n_var %% var_stride, no = var_stride)
+    expect_identical(ncol(mat), nvar, expected.label = nvar)
     expect_identical(nrow(mat), n_obs)
+    ncoords <- ifelse(it$read_complete(), yes = n_var %% n_chunks, no = var_stride)
     expect_identical(
       length(attr(mat, "coords")$soma_dim_1),
-      ifelse(it$read_complete(), yes = n_var %% n_chunks, no = var_stride)
+      ncoords,
+      expected.label = ncoords
     )
   }
   expect_true(it$read_complete())

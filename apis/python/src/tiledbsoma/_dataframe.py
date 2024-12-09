@@ -28,7 +28,6 @@ from . import _arrow_types, _util
 from . import pytiledbsoma as clib
 from ._constants import SOMA_JOINID
 from ._exception import SOMAError, map_exception_for_create
-from ._query_condition import QueryCondition
 from ._read_iters import TableReadIter
 from ._soma_array import SOMAArray
 from ._tdb_handles import DataFrameWrapper
@@ -172,16 +171,21 @@ class DataFrame(SOMAArray, somacore.DataFrame):
                 index column name is required.
             domain:
                 An optional sequence of tuples specifying the domain of each
-                index column. Each tuple should be a pair consisting of the minimum and
-                maximum values storable in the index column. For example, if there is a
-                single int64-valued index column, then ``domain`` might be ``[(100,
-                200)]`` to indicate that values between 100 and 200, inclusive, can be
-                stored in that column.  If provided, this sequence must have the same
-                length as ``index_column_names``, and the index-column domain will be as
-                specified.  If omitted entirely, or if ``None`` in a given dimension,
-                the corresponding index-column domain will use the minimum and maximum
-                possible values for the column's datatype.  This makes a
-                :class:`DataFrame` growable.
+                index column. Each tuple must be a pair consisting of the
+                minimum and maximum values storable in the index column. For
+                example, if there is a single int64-valued index column, then
+                ``domain`` might be ``[(100, 200)]`` to indicate that values
+                between 100 and 200, inclusive, can be stored in that column.
+                If provided, this sequence must have the same length as
+                ``index_column_names``, and the index-column domain will be as
+                specified.  If omitted entirely, or if ``None`` in a given
+                dimension, the corresponding index-column domain will use an
+                empty range, and data writes after that will fail with "A range
+                was set outside of the current domain". Unless you have a
+                particular reason not to, you should always provide the desired
+                `domain` at create time: this is an optional but strongly
+                recommended parameter. See also ``change_domain`` which allows
+                you to expand the domain after create.
             platform_config:
                 Platform-specific options used to create this array.
                 This may be provided as settings in a dictionary, with options
@@ -621,6 +625,9 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         Lastly, it is an error to try to set the ``domain`` to be smaller than
         ``maxdomain`` along any index column.  The ``maxdomain`` of a dataframe is
         set at creation time, and cannot be extended afterward.
+
+        Lifecycle:
+            Maturing.
         """
         frame = inspect.currentframe()
         function_name_for_messages = frame.f_code.co_name if frame else "tiledbsoma"
@@ -714,30 +721,15 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         _util.check_unpartitioned(partitions)
         self._check_open_read()
 
-        handle = self._handle._handle
-
-        context = handle.context()
-        if platform_config is not None:
-            config = context.tiledb_config.copy()
-            config.update(platform_config)
-            context = clib.SOMAContext(config)
-
-        sr = clib.SOMADataFrame.open(
-            uri=handle.uri,
-            mode=clib.OpenMode.read,
-            context=context,
-            column_names=column_names or [],
-            result_order=_util.to_clib_result_order(result_order),
-            timestamp=handle.timestamp and (0, handle.timestamp),
-        )
-
-        if value_filter is not None:
-            sr.set_condition(QueryCondition(value_filter), handle.schema)
-
-        _util._set_coords(sr, coords)
-
         # TODO: batch_size
-        return TableReadIter(sr)
+        return TableReadIter(
+            array=self,
+            coords=coords,
+            column_names=column_names,
+            result_order=_util.to_clib_result_order(result_order),
+            value_filter=value_filter,
+            platform_config=platform_config,
+        )
 
     def write(
         self, values: pa.Table, platform_config: Optional[options.PlatformConfig] = None

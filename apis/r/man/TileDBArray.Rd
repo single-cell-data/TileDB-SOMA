@@ -206,8 +206,10 @@ A named list of \code{\link[tiledb:tiledb_dim]{tiledb::tiledb_dim}} objects
 \if{latex}{\out{\hypertarget{method-TileDBArray-shape}{}}}
 \subsection{Method \code{shape()}}{
 Retrieve the shape, i.e. the capacity of each dimension.
-This will not necessarily match the bounds of occupied cells within the
-array.  Rather, it is the bounds outside of which no data may be written.
+Attempted reads and writes outside the \code{shape} will result in a runtime
+error: this is the purpose of \code{shape}.  This will not necessarily match
+the bounds of occupied cells within the array. Using \code{resize}, this may be
+increased up to the hard limit which \code{maxshape} reports.
 (lifecycle: maturing)
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{TileDBArray$shape()}\if{html}{\out{</div>}}
@@ -221,7 +223,8 @@ A named vector of dimension length (and the same type as the dimension)
 \if{html}{\out{<a id="method-TileDBArray-maxshape"></a>}}
 \if{latex}{\out{\hypertarget{method-TileDBArray-maxshape}{}}}
 \subsection{Method \code{maxshape()}}{
-Retrieve the maxshape, i.e. maximum possible that the
+Retrieve the hard limit up to which the array may be resized
+using the \code{resize} method.
 (lifecycle: maturing)
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{TileDBArray$maxshape()}\if{html}{\out{</div>}}
