@@ -403,14 +403,34 @@ class SOMAColumn {
 
     /**
      * Retrieves the non-empty domain from the array. This is the union of the
-     * non-empty domains of the array fragments. Returns (0, 0) for empty
-     * domains.
+     * non-empty domains of the array fragments. Returns (0, 0) or ("", "") for
+     * empty domains.
      */
     template <typename T>
     std::pair<T, T> non_empty_domain_slot(Array& array) const {
         try {
             return std::any_cast<std::pair<T, T>>(
                 _non_empty_domain_slot(array));
+        } catch (const std::exception& e) {
+            throw TileDBSOMAError(std::format(
+                "[SOMAColumn][non_empty_domain_slot] Failed on \"{}\" with "
+                "error \"{}\"",
+                name(),
+                e.what()));
+        }
+    }
+
+    /**
+     * Retrieves the non-empty domain from the array. This is the union of the
+     * non-empty domains of the array fragments. Returns (0, 0) or ("", "") for
+     * empty domains.
+     */
+    template <typename T>
+    std::optional<std::pair<T, T>> non_empty_domain_slot_opt(
+        const SOMAContext& ctx, Array& array) const {
+        try {
+            return std::any_cast<std::optional<std::pair<T, T>>>(
+                _non_empty_domain_slot_opt(ctx, array));
         } catch (const std::exception& e) {
             throw TileDBSOMAError(std::format(
                 "[SOMAColumn][non_empty_domain_slot] Failed on \"{}\" with "
@@ -495,6 +515,9 @@ class SOMAColumn {
     virtual std::any _core_domain_slot() const = 0;
 
     virtual std::any _non_empty_domain_slot(Array& array) const = 0;
+
+    virtual std::any _non_empty_domain_slot_opt(
+        const SOMAContext& ctx, Array& array) const = 0;
 
     virtual std::any _core_current_domain_slot(
         const SOMAContext& ctx, Array& array) const = 0;
