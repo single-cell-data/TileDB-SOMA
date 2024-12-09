@@ -74,11 +74,8 @@ def to_tiledb_supported_array_type(name: str, x: _MT) -> _MT:
     # issues in subsequent processing.
     if isinstance(x, pd.Series) and isinstance(x.dtype, pd.CategoricalDtype):
         # Heuristic number
-        if (
-            pandas.api.types.is_string_dtype(x)
-            and len(x.cat.categories) > STRING_DECAT_THRESHOLD
-        ):
-            return x.astype(str)
+        if len(x.cat.categories) > STRING_DECAT_THRESHOLD:
+            return x.astype(x.cat.categories.dtype)
 
     return x
 
