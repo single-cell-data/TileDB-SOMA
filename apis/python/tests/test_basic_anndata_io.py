@@ -7,6 +7,7 @@ from typing import Optional, Tuple
 import anndata
 import numpy as np
 import pandas as pd
+import pyarrow as pa
 import pytest
 import scipy
 import somacore
@@ -1347,3 +1348,134 @@ def test_nan_append(conftest_pbmc_small, dtype, nans, new_obs_ids):
         measurement_name="RNA",
         registration_mapping=rd,
     )
+
+
+# This tests https://github.com/single-cell-data/TileDB-SOMA/pull/3354:
+# * High-cardinality categorical-of-string gets converted to plain string, for
+#   a significant performance benefit in subsequent processing
+# * Two particular case needing testing:
+#   o When a high-cardinality enum is appended to existing storage with categorical of string;
+#   o When a low-cardinality enum is appended to existing storage with plain string.
+def test_decat_append(tmp_path):
+
+    # Prepare the AnnData inputs
+    nobs_under = tiledbsoma.io.conversions.STRING_DECAT_THRESHOLD - 2
+    nobs_over = tiledbsoma.io.conversions.STRING_DECAT_THRESHOLD + 2
+    nvar = 100
+
+    obs_ids_under = [f"under_{e:08}" for e in range(nobs_under)]
+    obs_ids_over = [f"over_{e:08}" for e in range(nobs_over)]
+    var_ids = [f"gene_{e:08}" for e in range(nvar)]
+
+    enum_values_under = [f"enum_u_{e:06}" for e in range(nobs_under)]
+    enum_values_over = [f"enum_o_{e:06}" for e in range(nobs_over)]
+
+    obs_under = pd.DataFrame(
+        data={
+            "obs_id": np.asarray(obs_ids_under),
+            "is_primary_data": np.asarray([True] * nobs_under),
+            "myenum": pd.Series(np.asarray(enum_values_under), dtype="category"),
+        }
+    )
+    obs_under.set_index("obs_id", inplace=True)
+
+    obs_over = pd.DataFrame(
+        data={
+            "obs_id": np.asarray(obs_ids_over),
+            "is_primary_data": np.asarray([True] * nobs_over),
+            "myenum": pd.Series(np.asarray(enum_values_over), dtype="category"),
+        }
+    )
+    obs_over.set_index("obs_id", inplace=True)
+
+    var = pd.DataFrame(
+        data={
+            "var_id": np.asarray(var_ids),
+            "mybool": np.asarray([True] * nvar),
+        }
+    )
+    var.set_index("var_id", inplace=True)
+
+    X_under = scipy.sparse.random(
+        nobs_under, nvar, density=0.1, dtype=np.float64
+    ).tocsr()
+    X_over = scipy.sparse.random(nobs_over, nvar, density=0.1, dtype=np.float64).tocsr()
+
+    adata_under = anndata.AnnData(
+        X=X_under, obs=obs_under, var=var, dtype=X_under.dtype
+    )
+    adata_over = anndata.AnnData(X=X_over, obs=obs_over, var=var, dtype=X_over.dtype)
+
+    # Do the initial ingests from AnnData format to TileDB-SOMA format
+    path_under = (tmp_path / "under").as_posix()
+    path_over = (tmp_path / "over").as_posix()
+
+    tiledbsoma.io.from_anndata(path_under, adata_under, "RNA")
+    tiledbsoma.io.from_anndata(path_over, adata_over, "RNA")
+
+    # Check that the low-cardinality categorical-of-string in the AnnData has
+    # been ingested to TileDB-SOMA enum-of-string.
+    with tiledbsoma.Experiment.open(path_under) as exp_under:
+        assert pa.types.is_dictionary(exp_under.obs.schema.field("myenum").type)
+        obs_table = exp_under.obs.read().concat()
+        assert obs_table.column("myenum").to_pylist() == enum_values_under
+
+    # Check that the high-cardinality categorical-of-string in the AnnData has
+    # been ingested to TileDB-SOMA plain string.
+    with tiledbsoma.Experiment.open(path_over) as exp_over:
+        assert not pa.types.is_dictionary(exp_over.obs.schema.field("myenum").type)
+        obs_table = exp_over.obs.read().concat()
+        assert obs_table.column("myenum").to_pylist() == enum_values_over
+
+    # Append over-the-threshold AnnData to under-the-threshold TileDB-SOMA
+    # storage, and vice versa.
+    rd_under_over = tiledbsoma.io.register_anndatas(
+        experiment_uri=path_under,
+        adatas=[adata_over],
+        measurement_name="RNA",
+        obs_field_name="obs_id",
+        var_field_name="var_id",
+    )
+
+    rd_over_under = tiledbsoma.io.register_anndatas(
+        experiment_uri=path_over,
+        adatas=[adata_under],
+        measurement_name="RNA",
+        obs_field_name="obs_id",
+        var_field_name="var_id",
+    )
+
+    tiledbsoma.io.resize_experiment(
+        path_under,
+        nobs=rd_under_over.get_obs_shape(),
+        nvars=rd_under_over.get_var_shapes(),
+    )
+    tiledbsoma.io.resize_experiment(
+        path_over,
+        nobs=rd_over_under.get_obs_shape(),
+        nvars=rd_over_under.get_var_shapes(),
+    )
+
+    tiledbsoma.io.from_anndata(
+        path_under, adata_over, "RNA", registration_mapping=rd_under_over
+    )
+    tiledbsoma.io.from_anndata(
+        path_over, adata_under, "RNA", registration_mapping=rd_over_under
+    )
+
+    # Check that the appends happened successfully
+    with tiledbsoma.Experiment.open(path_under) as exp_under:
+        assert pa.types.is_dictionary(exp_under.obs.schema.field("myenum").type)
+        obs_table = exp_under.obs.read().concat()
+        assert (
+            obs_table.column("myenum").to_pylist()
+            == enum_values_under + enum_values_over
+        )
+
+    with tiledbsoma.Experiment.open(path_over) as exp_over:
+        assert not pa.types.is_dictionary(exp_over.obs.schema.field("myenum").type)
+        obs_table = exp_over.obs.read().concat()
+        assert (
+            obs_table.column("myenum").to_pylist()
+            == enum_values_over + enum_values_under
+        )
