@@ -1123,7 +1123,7 @@ def _extract_new_values_for_append_aux(
     mask = [e.as_py() not in previous_join_ids for e in arrow_table[SOMA_JOINID]]
     arrow_table = arrow_table.filter(mask)
 
-    # This is a redundant, failsafe check. The appebd-mode registrar already
+    # This is a redundant, failsafe check. The append-mode registrar already
     # ensure schema homogeneity before we get here.
     old_schema = previous_soma_dataframe.schema
     new_schema = arrow_table.schema
