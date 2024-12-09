@@ -487,7 +487,7 @@ def to_spatial_data(
         # Export obsl data to SpatialData.
         if "obsl" in scene:
             for key, df in scene.obsl.items():
-                output_key = f"{scene_id}_obsl_{key}"
+                output_key = f"{scene_id}_{key}"
                 transform = _get_transform_from_collection(key, scene.obsl.metadata)
                 if isinstance(df, PointCloudDataFrame):
                     if "soma_geometry" in df.metadata:
@@ -523,8 +523,8 @@ def to_spatial_data(
                 ):
                     continue
                 for key, df in subcoll.items():
-                    output_key = f"{scene_id}_varl_{key}"
-                    transform = _get_transform_from_collection(key, scene.varl.metadata)
+                    output_key = f"{scene_id}_{measurement_name}_{key}"
+                    transform = _get_transform_from_collection(key, subcoll.metadata)
                     if isinstance(df, PointCloudDataFrame):
                         if "soma_geometry" in df.metadata:
                             shapes[output_key] = to_spatial_data_shapes(
@@ -533,7 +533,7 @@ def to_spatial_data(
                                 scene_id=scene_id,
                                 scene_dim_map=scene_dim_map,
                                 transform=transform,
-                                soma_joinid_name=obs_id_name,
+                                soma_joinid_name=var_id_name,
                             )
                         else:
                             points[output_key] = to_spatial_data_points(
@@ -542,7 +542,7 @@ def to_spatial_data(
                                 scene_id=scene_id,
                                 scene_dim_map=scene_dim_map,
                                 transform=transform,
-                                soma_joinid_name=obs_id_name,
+                                soma_joinid_name=var_id_name,
                             )
                     else:
                         warnings.warn(
@@ -553,7 +553,7 @@ def to_spatial_data(
         # Export img data to SpatialData.
         if "img" in scene:
             for key, image in scene.img.items():
-                output_key = f"{scene_id}_img_{key}"
+                output_key = f"{scene_id}_{key}"
                 transform = _get_transform_from_collection(key, scene.img.metadata)
                 if not isinstance(image, MultiscaleImage):
                     warnings.warn(  # type: ignore[unreachable]
@@ -570,7 +570,7 @@ def to_spatial_data(
                         transform=transform,
                     )
                 else:
-                    images[f"{scene_id}_img_{key}"] = to_spatial_data_multiscale_image(
+                    images[f"{scene_id}_{key}"] = to_spatial_data_multiscale_image(
                         image,
                         key=output_key,
                         scene_id=scene_id,
