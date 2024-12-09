@@ -1331,7 +1331,6 @@ def _write_dataframe_impl(
             # Nominally, nil id_column_name only happens for uns append and we do not append uns,
             # which is a concern for our caller. This is a second-level check.
             raise ValueError("internal coding error: id_column_name unspecified")
-        # XXX
         arrow_table = _extract_new_values_for_append(df_uri, arrow_table, context)
 
     try:
