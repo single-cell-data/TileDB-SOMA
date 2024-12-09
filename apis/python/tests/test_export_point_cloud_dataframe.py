@@ -10,7 +10,7 @@ import somacore
 import tiledbsoma as soma
 
 gpd = pytest.importorskip("geopandas")
-soma_outgest = pytest.importorskip("tiledbsoma.experimental.outgest")
+soma_outgest = pytest.importorskip("tiledbsoma.io.spatial.outgest")
 spatialdata = pytest.importorskip("spatialdata")
 
 

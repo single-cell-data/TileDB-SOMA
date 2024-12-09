@@ -19,8 +19,8 @@ except ImportError as err:
     warnings.warn("Experimental spatial outgestor requires the geopandas package.")
     raise err
 
-from .. import MultiscaleImage, PointCloudDataFrame
-from .._constants import SOMA_JOINID
+from ... import MultiscaleImage, PointCloudDataFrame
+from ..._constants import SOMA_JOINID
 from ._xarray_backend import dense_nd_array_to_data_array, images_to_datatree
 
 if TYPE_CHECKING:
