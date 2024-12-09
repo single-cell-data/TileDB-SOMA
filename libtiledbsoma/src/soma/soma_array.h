@@ -769,31 +769,7 @@ class SOMAArray : public SOMAObject {
     template <typename T>
     std::optional<std::pair<T, T>> non_empty_domain_slot_opt(
         const std::string& name) const {
-        try {
-            int32_t is_empty;
-            T ned[2];
-
-            // TODO currently we need to use the TileDB C API in order to check
-            // if the domain is empty or not. The C++ API returns (0, 0)
-            // currently which could also represent a single point at coordinate
-            // 0. Replace this when the C++ API supports correct checking for
-            // empty domains
-            ctx_->tiledb_ctx()->handle_error(
-                tiledb_array_get_non_empty_domain_from_name(
-                    ctx_->tiledb_ctx()->ptr().get(),
-                    arr_->ptr().get(),
-                    name.c_str(),
-                    &ned,
-                    &is_empty));
-
-            if (is_empty == 1) {
-                return std::nullopt;
-            } else {
-                return std::make_pair(ned[0], ned[1]);
-            }
-        } catch (const std::exception& e) {
-            throw TileDBSOMAError(e.what());
-        }
+        return get_column(name)->non_empty_domain_slot_opt<T>(*ctx_, *arr_);
     }
 
     /**
