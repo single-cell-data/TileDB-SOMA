@@ -20,6 +20,7 @@ from . import pytiledbsoma as clib
 from ._arrow_types import pyarrow_to_carrow_type
 from ._common_nd_array import NDArray
 from ._exception import SOMAError, map_exception_for_create
+from ._read_iters import TableReadIter
 from ._tdb_handles import DenseNDArrayWrapper
 from ._types import OpenTimestamp, Slice
 from ._util import dense_indices_to_shape
@@ -232,42 +233,20 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
         data_shape = tuple(handle.shape if use_shape else ned)
         target_shape = dense_indices_to_shape(coords, data_shape, result_order)
 
-        context = handle.context()
-        if platform_config is not None:
-            config = context.tiledb_config.copy()
-            config.update(platform_config)
-            context = clib.SOMAContext(config)
-
-        sr = clib.SOMADenseNDArray.open(
-            uri=handle.uri,
-            mode=clib.OpenMode.read,
-            context=context,
+        arrow_table = TableReadIter(
+            array=self,
+            coords=coords,
             column_names=[],
             result_order=_util.to_clib_result_order(result_order),
-            timestamp=handle.timestamp and (0, handle.timestamp),
-        )
+            value_filter=None,
+            platform_config=platform_config,
+        ).concat()
 
-        _util._set_coords(sr, coords)
-
-        arrow_tables = []
-        while True:
-            arrow_table_piece = sr.read_next()
-            if not arrow_table_piece:
-                break
-            arrow_tables.append(arrow_table_piece)
-
-        # For dense arrays there is no zero-output case: attempting to make a test case
-        # to do that, say by indexing a 10x20 array by positions 888 and 999, results
-        # in read-time errors of the form
-        #
-        # [TileDB::Subarray] Error: Cannot add range to dimension 'soma_dim_0'; Range [888, 888] is
-        # out of domain bounds [0, 9]
-        if not arrow_tables:
+        if arrow_table is None:
             raise SOMAError(
                 "internal error: at least one table-piece should have been returned"
             )
 
-        arrow_table = pa.concat_tables(arrow_tables)
         npval = arrow_table.column("soma_data").to_numpy()
         # TODO: as currently coded we're looking at the non-empty domain upper
         # bound but not its lower bound. That works fine if data are written at
@@ -310,7 +289,7 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
         """
         _util.check_type("values", values, (pa.Tensor,))
 
-        clib_dense_array = self._handle._handle
+        clib_handle = self._handle._handle
 
         # Compute the coordinates for the dense array.
         new_coords: List[Union[int, Slice[int], None]] = []
@@ -331,13 +310,16 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
             if not input.flags.contiguous:
                 input = np.ascontiguousarray(input)
             order = clib.ResultOrder.rowmajor
-        clib_dense_array.reset(result_order=order)
-        _util._set_coords(clib_dense_array, new_coords)
-        clib_dense_array.write(input)
+
+        mq = clib.ManagedQuery(clib_handle, clib_handle.context())
+        mq.set_layout(order)
+        _util._set_coords(mq, clib_handle, new_coords)
+        mq.set_soma_data(input)
+        mq.submit_write()
 
         tiledb_write_options = TileDBWriteOptions.from_platform_config(platform_config)
         if tiledb_write_options.consolidate_and_vacuum:
-            clib_dense_array.consolidate_and_vacuum()
+            clib_handle.consolidate_and_vacuum()
         return self
 
     @classmethod
