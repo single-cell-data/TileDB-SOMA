@@ -39,7 +39,6 @@
 #include <catch2/matchers/catch_matchers_string.hpp>
 #include <catch2/matchers/catch_matchers_templated.hpp>
 #include <catch2/matchers/catch_matchers_vector.hpp>
-#include <format>
 #include <numeric>
 #include <random>
 
@@ -191,11 +190,14 @@ TEST_CASE("SOMAArray: nnz") {
     const char* dim_name = "d0";
     const char* attr_name = "a0";
 
-    SECTION(std::format(
-        "- fragments={}, overlap={}, allow_duplicates={}",
-        num_fragments,
-        overlap,
-        allow_duplicates)) {
+    // TODO this use to be formatted with fmt::format which is part of internal
+    // header spd/log/fmt/fmt.h and should not be used. In C++20, this can be
+    // replaced with std::format.
+    std::ostringstream section;
+    section << "- fragments=" << num_fragments << ", overlap" << overlap
+            << ", allow_duplicates=" << allow_duplicates;
+
+    SECTION(section.str()) {
         auto ctx = std::make_shared<SOMAContext>();
 
         // Create array
@@ -262,11 +264,14 @@ TEST_CASE("SOMAArray: nnz with timestamp") {
     auto allow_duplicates = true;
     int num_cells_per_fragment = 128;
 
-    SECTION(std::format(
-        "- fragments={}, overlap={}, allow_duplicates={}",
-        num_fragments,
-        overlap,
-        allow_duplicates)) {
+    // TODO this use to be formatted with fmt::format which is part of internal
+    // header spd/log/fmt/fmt.h and should not be used. In C++20, this can be
+    // replaced with std::format.
+    std::ostringstream section;
+    section << "- fragments=" << num_fragments << ", overlap" << overlap
+            << ", allow_duplicates=" << allow_duplicates;
+
+    SECTION(section.str()) {
         auto ctx = std::make_shared<SOMAContext>();
 
         // Create array
@@ -312,11 +317,14 @@ TEST_CASE("SOMAArray: nnz with consolidation") {
     auto vacuum = GENERATE(false, true);
     int num_cells_per_fragment = 128;
 
-    SECTION(std::format(
-        "- fragments={}, overlap={}, allow_duplicates={}",
-        num_fragments,
-        overlap,
-        allow_duplicates)) {
+    // TODO this use to be formatted with fmt::format which is part of internal
+    // header spd/log/fmt/fmt.h and should not be used. In C++20, this can be
+    // replaced with std::format.
+    std::ostringstream section;
+    section << "- fragments=" << num_fragments << ", overlap" << overlap
+            << ", allow_duplicates=" << allow_duplicates;
+
+    SECTION(section.str()) {
         auto ctx = std::make_shared<SOMAContext>();
 
         // Create array

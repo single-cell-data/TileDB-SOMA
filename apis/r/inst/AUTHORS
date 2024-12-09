@@ -11,6 +11,16 @@ The package also includes code written by other contributors as
 detailed below:
 
 
+-- libtiledbsoma/src/external/include/span/span.hpp ---------------------------------------------
+The span.hpp implements std::span, part of C++20, for use by C++11 or later. It
+was written by Tristan Brindle and is released at https://github.com/tcbrindle/span
+
+//          Copyright Tristan Brindle 2018.
+// Distributed under the Boost Software License, Version 1.0.
+//    (See accompanying file ../../LICENSE_1_0.txt or copy at
+//          https://www.boost.org/LICENSE_1_0.txt)
+
+
 -- libtiledbsoma/src/external/{src,include}/thread_pool/ ----------------------------------------
 The thread_pool implementation is from TileDB, Inc., and part of TileDB Embedded released at
 https://github.com/tiledb-inc/tiledb
