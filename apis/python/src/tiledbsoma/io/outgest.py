@@ -108,9 +108,10 @@ def _read_partitioned_sparse(X: SparseNDArray, d0_size: int) -> pa.Table:
     # density of matrix. Magic number determined empirically, as a tradeoff
     # between concurrency and fixed query overhead.
     tgt_point_count = 96 * 1024**2
+    nnz = X.nnz
     partition_sz = (
-        max(1024 * round(d0_size * tgt_point_count / X.nnz / 1024), 1024)
-        if X.nnz > 0
+        max(1024 * round(d0_size * tgt_point_count / nnz / 1024), 1024)
+        if nnz > 0
         else d0_size
     )
     partitions = [
