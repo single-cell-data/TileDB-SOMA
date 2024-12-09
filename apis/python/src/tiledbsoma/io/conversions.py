@@ -36,7 +36,11 @@ schema there.
 
 
 def obs_or_var_to_tiledb_supported_array_type(obs_or_var: pd.DataFrame) -> pd.DataFrame:
-    """Performs a typecast into types that TileDB can persist."""
+    """
+    Performs a typecast into types that TileDB can persist.  This includes, as a
+    performance improvement, converting high-cardinality categorical-of-string
+    columns (cardinality > 4096) to plain string.
+    """
     if len(obs_or_var.columns) == 0:
         return obs_or_var.copy()
 
@@ -56,8 +60,8 @@ def _to_tiledb_supported_dtype(dtype: _DT) -> _DT:
 
 
 def to_tiledb_supported_array_type(name: str, x: _MT) -> _MT:
-    """Converts datatypes unrepresentable by TileDB into datatypes it can represent.
-    E.g., float16 -> float32
+    """Converts datatypes unrepresentable by TileDB into datatypes it can represent,
+    e.g., float16 -> float32.
     """
     if isinstance(x, (np.ndarray, sp.spmatrix)) or not isinstance(
         x.dtype, pd.CategoricalDtype
