@@ -3,4 +3,4 @@ tifffile
 pillow
 spatialdata>=0.2.5
 xarray
-dask
+dask<=2024.11.2

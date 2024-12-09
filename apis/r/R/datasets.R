@@ -50,6 +50,7 @@ extract_dataset <- function(name, dir = tempdir()) {
 
   # Extract tar.gz file to dir
   tarfile <- dir(data_dir, pattern = name, full.names = TRUE)
+  tarfile <- file.path(data_dir, sprintf("%s.tar.gz", name))
   stopifnot("The specified dataset does not exist" = file.exists(tarfile))
 
   dataset_uri <- file.path(dir, name)

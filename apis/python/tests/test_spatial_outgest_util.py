@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 import somacore
 
-soma_outgest = pytest.importorskip("tiledbsoma.experimental.outgest")
+soma_outgest = pytest.importorskip("tiledbsoma.io.spatial.outgest")
 sd = pytest.importorskip("spatialdata")
 
 

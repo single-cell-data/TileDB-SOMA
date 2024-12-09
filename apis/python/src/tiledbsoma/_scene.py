@@ -6,6 +6,7 @@
 Implementation of a SOMA Scene
 """
 
+import warnings
 from typing import Any, List, Optional, Sequence, Tuple, Type, TypeVar, Union
 
 import somacore
@@ -17,9 +18,13 @@ from somacore import (
 from typing_extensions import Self
 
 from . import _funcs, _tdb_handles
+from . import pytiledbsoma as clib
 from ._collection import CollectionBase
-from ._constants import SOMA_COORDINATE_SPACE_METADATA_KEY
-from ._exception import SOMAError
+from ._constants import (
+    SOMA_COORDINATE_SPACE_METADATA_KEY,
+    SPATIAL_DISCLAIMER,
+)
+from ._exception import SOMAError, map_exception_for_create
 from ._geometry_dataframe import GeometryDataFrame
 from ._multiscale_image import MultiscaleImage
 from ._point_cloud_dataframe import PointCloudDataFrame
@@ -32,6 +37,7 @@ from ._spatial_util import (
 )
 from ._types import OpenTimestamp
 from .options import SOMATileDBContext
+from .options._soma_tiledb_context import _validate_soma_tiledb_context
 
 _spatial_element = Union[GeometryDataFrame, MultiscaleImage, PointCloudDataFrame]
 
@@ -97,16 +103,29 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
         Lifecycle:
             Experimental.
         """
-        if coordinate_space is not None:
-            raise NotImplementedError(
-                "Setting the coordinate space on create is not yet implemented."
+        warnings.warn(SPATIAL_DISCLAIMER)
+
+        context = _validate_soma_tiledb_context(context)
+        try:
+            timestamp_ms = context._open_timestamp_ms(tiledb_timestamp)
+            clib.SOMAScene.create(
+                ctx=context.native_context,
+                uri=uri,
+                timestamp=(0, timestamp_ms),
             )
-        return super().create(
-            uri=uri,
-            platform_config=platform_config,
-            context=context,
-            tiledb_timestamp=tiledb_timestamp,
-        )
+            handle = cls._wrapper_type.open(uri, "w", context, tiledb_timestamp)
+            if coordinate_space is not None:
+                if not isinstance(coordinate_space, CoordinateSpace):
+                    coordinate_space = CoordinateSpace.from_axis_names(coordinate_space)
+                handle.meta[SOMA_COORDINATE_SPACE_METADATA_KEY] = (
+                    coordinate_space_to_json(coordinate_space)
+                )
+            return cls(
+                handle,
+                _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code",
+            )
+        except SOMAError as e:
+            raise map_exception_for_create(e, uri) from None
 
     def __init__(
         self,

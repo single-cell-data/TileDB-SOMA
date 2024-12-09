@@ -24,7 +24,9 @@ row and is intended to act as a join key for other objects, such as
 \item \href{#method-SOMADataFrame-domain}{\code{SOMADataFrame$domain()}}
 \item \href{#method-SOMADataFrame-maxdomain}{\code{SOMADataFrame$maxdomain()}}
 \item \href{#method-SOMADataFrame-tiledbsoma_has_upgraded_domain}{\code{SOMADataFrame$tiledbsoma_has_upgraded_domain()}}
-\item \href{#method-SOMADataFrame-resize_soma_joinid_shape}{\code{SOMADataFrame$resize_soma_joinid_shape()}}
+\item \href{#method-SOMADataFrame-tiledbsoma_resize_soma_joinid_shape}{\code{SOMADataFrame$tiledbsoma_resize_soma_joinid_shape()}}
+\item \href{#method-SOMADataFrame-tiledbsoma_upgrade_domain}{\code{SOMADataFrame$tiledbsoma_upgrade_domain()}}
+\item \href{#method-SOMADataFrame-change_domain}{\code{SOMADataFrame$change_domain()}}
 \item \href{#method-SOMADataFrame-clone}{\code{SOMADataFrame$clone()}}
 }
 }
@@ -81,14 +83,22 @@ Create (lifecycle: maturing)
 index columns.  All named columns must exist in the schema, and at least
 one index column name is required.}
 
-\item{\code{domain}}{An optional list of 2-element vectors specifying the domain of each index
-column. Each vector should be a pair consisting of the minimum and maximum values storable in
-the index column. For example, if there is a single int64-valued index column, then \code{domain}
-might be \code{c(100, 200)} to indicate that values between 100 and 200, inclusive, can be stored
-in that column.  If provided, this list must have the same length as \code{index_column_names},
-and the index-column domain will be as specified.  If omitted entirely, or if \code{NULL} in a given
-dimension, the corresponding index-column domain will use the minimum and maximum possible
-values for the column's datatype.  This makes a \code{DataFrame} growable.}
+\item{\code{domain}}{An optional list specifying the domain of each
+index column. Each slot in the list must have its name being the name
+of an index column, and its value being be a length-two vector
+consisting of the minimum and maximum values storable in the index
+column. For example, if there is a single int64-valued index column
+\code{soma_joinid}, then \code{domain} might be \code{list(soma_joinid=c(100, 200))}
+to indicate that values between 100 and 200, inclusive, can be stored
+in that column.  If provided, this sequence must have the same length
+as \code{index_column_names}, and the index-column domain will be as
+specified.  If omitted entirely, or if \code{NULL} in a given dimension, the
+corresponding index-column domain will use an empty range, and data writes
+after that will fail with "A range was set outside of the current domain".
+Unless you have a particular reason not to, you should always provide the
+desired \code{domain} at create time: this is an optional but strongly
+recommended parameter.  See also \code{change_domain} which allows you to
+expand the domain after create.}
 
 \item{\code{platform_config}}{A \link[tiledbsoma:PlatformConfig]{platform configuration}
 object}
@@ -139,8 +149,8 @@ column, and optionally filtered.
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{coords}}{Optional named list of indices specifying the rows to read; each (named)
-list element corresponds to a dimension of the same name.}
+\item{\code{coords}}{Optional named list of indices specifying the rows to read;
+each (named) list element corresponds to a dimension of the same name.}
 
 \item{\code{column_names}}{Optional character vector of column names to return.}
 
@@ -280,9 +290,9 @@ Logical
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-SOMADataFrame-resize_soma_joinid_shape"></a>}}
-\if{latex}{\out{\hypertarget{method-SOMADataFrame-resize_soma_joinid_shape}{}}}
-\subsection{Method \code{resize_soma_joinid_shape()}}{
+\if{html}{\out{<a id="method-SOMADataFrame-tiledbsoma_resize_soma_joinid_shape"></a>}}
+\if{latex}{\out{\hypertarget{method-SOMADataFrame-tiledbsoma_resize_soma_joinid_shape}{}}}
+\subsection{Method \code{tiledbsoma_resize_soma_joinid_shape()}}{
 Increases the shape of the dataframe on the \code{soma_joinid}
 index column, if it indeed is an index column, leaving all other index
 columns as-is. If the \code{soma_joinid} is not an index column, no change is
@@ -292,7 +302,7 @@ domain expansion.  Raises an error if the dataframe doesn't already have a
 domain: in that case please call \code{tiledbsoma_upgrade_domain} (WIP for
 1.15).
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{SOMADataFrame$resize_soma_joinid_shape(new_shape)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{SOMADataFrame$tiledbsoma_resize_soma_joinid_shape(new_shape)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -300,6 +310,65 @@ domain: in that case please call \code{tiledbsoma_upgrade_domain} (WIP for
 \describe{
 \item{\code{new_shape}}{An integer, greater than or equal to 1 + the
 \code{soma_joinid} domain slot.}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+No return value
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SOMADataFrame-tiledbsoma_upgrade_domain"></a>}}
+\if{latex}{\out{\hypertarget{method-SOMADataFrame-tiledbsoma_upgrade_domain}{}}}
+\subsection{Method \code{tiledbsoma_upgrade_domain()}}{
+Allows you to set the domain of a \code{SOMADataFrame}, when the
+\code{SOMADataFrame} does not have a domain set yet.  The argument must be a
+tuple of pairs of low/high values for the desired domain, one pair per
+index column. For string index columns, you must offer the low/high pair
+as \verb{("", "")}, or as \code{NULL}.  If \code{check_only} is \code{True}, returns
+whether the operation would succeed if attempted, and a reason why it
+would not. The domain being requested must be contained within what
+\code{maxdomain} returns.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SOMADataFrame$tiledbsoma_upgrade_domain(new_domain)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{new_domain}}{A named list, keyed by index-column name, with values
+being two-element vectors containing the desired lower and upper bounds
+for the domain.}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+No return value
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SOMADataFrame-change_domain"></a>}}
+\if{latex}{\out{\hypertarget{method-SOMADataFrame-change_domain}{}}}
+\subsection{Method \code{change_domain()}}{
+Allows you to set the domain of a \code{SOMADataFrame}, when the
+\code{SOMADataFrame} already has a domain set yet.  The argument must be a
+tuple of pairs of low/high values for the desired domain, one pair per
+index column. For string index columns, you must offer the low/high pair
+as \verb{("", "")}, or as \code{NULL}.  If \code{check_only} is \code{True}, returns
+whether the operation would succeed if attempted, and a reason why it
+would not. The return value from \code{domain} must be contained within
+the requested \code{new_domain}, and the requested \code{new_domain} must be
+contained within the return value from \code{maxdomain}. (lifecycle: maturing)
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SOMADataFrame$change_domain(new_domain)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{new_domain}}{A named list, keyed by index-column name, with values
+being two-element vectors containing the desired lower and upper bounds
+for the domain.}
 }
 \if{html}{\out{</div>}}
 }

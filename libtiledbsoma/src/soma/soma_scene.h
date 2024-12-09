@@ -51,7 +51,7 @@ class SOMAScene : public SOMACollection {
      *
      * @param uri URI to create the SOMAScene
      * @param schema TileDB ArraySchema
-     * @param platform_config Optional config parameter dictionary
+     * @param timestamp Optional pair indicating timestamp start and end
      */
     static void create(
         std::string_view uri,

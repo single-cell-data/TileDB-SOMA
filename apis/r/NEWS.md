@@ -36,6 +36,14 @@
 * Run tests in closer to internal-dependency order by @johnkerl in [#3311](https://github.com/single-cell-data/TileDB-SOMA/pull/3311)
 * Use standard name `zzz.R` for init code by @johnkerl in [#3332](https://github.com/single-cell-data/TileDB-SOMA/pull/3332)
 * Address two more compiler warnings by @johnkerl in [#3320](https://github.com/single-cell-data/TileDB-SOMA/pull/3320)
+* Add support for writing Seurat v5 ragged arrays
+* Update docstrings for `domain` argument to `create` [#3396](https://github.com/single-cell-data/TileDB-SOMA/pull/3396)
+* Vignette for new-shape feature [#3302](https://github.com/single-cell-data/TileDB-SOMA/pull/3302)
+* Fix blockwise iterator + re-indexer to return re-indexed shape instead of full domain
+* Docstring audit for new shape [#3399](https://github.com/single-cell-data/TileDB-SOMA/pull/3399)
+* Add `check_only` support for domain/shape updates [#3400](https://github.com/single-cell-data/TileDB-SOMA/pull/3400)
+* Adjust blockwise + re-indexer to return condensed matrix, not full domain [#3395](https://github.com/single-cell-data/TileDB-SOMA/pull/3395)
+* [c++] Use core 2.27.0.rc5 (#3410) [#3410](https://github.com/single-cell-data/TileDB-SOMA/pull/3410)
 
 # tiledbsoma 1.14.5
 

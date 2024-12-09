@@ -9,10 +9,13 @@ offset (zero-based) \code{int64} integer indexing on each dimension with domain
 \verb{[0, maxInt64)}. The \code{SOMADenseNDArray} has a user-defined schema, which
 includes:
 \itemize{
-\item \strong{type}: a \code{primitive} type, expressed as an Arrow type (e.g., \code{int64},
-\code{float32}, etc), indicating the type of data contained within the array
-\item \strong{shape}: the shape of the array, i.e., number and length of each
-dimension
+\item \strong{type}: A \code{primitive} type, expressed as an Arrow type (e.g., \code{int64},
+\code{float32}, etc), indicating the type of data contained within the array.
+\item \strong{shape}: The shape of the array, i.e., number and length of each
+dimension. This is a soft limit which can be increased using \code{resize},
+up to the \code{maxshape}.
+\item \strong{maxshape}: The hard limit up to which \code{shape} may be increased using
+\code{resize}.
 }
 
 All dimensions must have a positive, non-zero length, and there must be 1 or
@@ -81,7 +84,7 @@ Read as an 'arrow::Table' (lifecycle: maturing)
 \if{html}{\out{<div class="r">}}\preformatted{SOMADenseNDArray$read_arrow_table(
   coords = NULL,
   result_order = "auto",
-  log_level = "warn"
+  log_level = "auto"
 )}\if{html}{\out{</div>}}
 }
 

@@ -281,6 +281,8 @@ class ManagedQuery {
      */
     void setup_read();
 
+    std::optional<std::shared_ptr<ArrayBuffers>> read_next();
+
     /**
      * @brief Check if the query is complete.
      *
@@ -421,6 +423,10 @@ class ManagedQuery {
      */
     Query::Status query_status() const {
         return query_->query_status();
+    }
+
+    bool is_first_read() const {
+        return !query_submitted_;
     }
 
    private:

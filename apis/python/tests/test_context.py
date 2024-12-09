@@ -1,4 +1,5 @@
 import datetime
+import importlib
 import time
 from unittest import mock
 
@@ -122,3 +123,40 @@ def test_malformed_concurrency_config_value():
         tiledbsoma.IntIndexer(np.arange(100, dtype=np.int64), context=ctx).get_indexer(
             np.array([0, 1])
         )
+
+
+@pytest.mark.skipif(
+    importlib.util.find_spec("tiledb") is not None, reason="TileDB-Py is installed"
+)
+def test_tiledb_ctx_without_tiledb():
+    # Test that tiledb_ctx errors out as expected without tiledb-py
+
+    with pytest.raises(ModuleNotFoundError):
+        tiledbsoma.SOMATileDBContext(tiledb_ctx="junk")
+
+    sctx = tiledbsoma.SOMATileDBContext()
+    with pytest.raises(ModuleNotFoundError):
+        sctx.tiledb_ctx
+
+    with pytest.raises(ModuleNotFoundError):
+        sctx.replace(tiledb_ctx="junk")
+
+
+@pytest.mark.skipif(
+    importlib.util.find_spec("tiledb") is None, reason="TileDB-Py is not installed"
+)
+def test_tiledb_ctx_with_tiledb():
+    # If tiledb-py is installed, test that tiledb_ctx works to handle tiledb.Ctx
+    import tiledb
+
+    # Default
+    sctx = tiledbsoma.SOMATileDBContext(tiledb_ctx=tiledb.Ctx())
+    assert sctx.tiledb_ctx.config() == tiledb.Ctx().config()
+
+    # Pass config
+    sctx = tiledbsoma.SOMATileDBContext(tiledb_ctx=tiledb.Ctx({"foo": "bar"}))
+    assert sctx.tiledb_ctx.config()["foo"] == "bar"
+
+    # Replace config
+    sctx = sctx.replace(tiledb_ctx=tiledb.Ctx({"foo": "baz"}))
+    assert sctx.tiledb_ctx.config()["foo"] == "baz"

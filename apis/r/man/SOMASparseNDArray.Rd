@@ -8,8 +8,13 @@
 (zero-based) integer indexing on each dimension. The \code{SOMASparseNDArray} has
 a user-defined schema, which includes:
 \itemize{
-\item type - a \code{primitive} type, expressed as an Arrow type (e.g., \code{int64}, \code{float32}, etc)
-\item shape - the shape of the array, i.e., number and length of each dimension
+\item \strong{type}: A \code{primitive} type, expressed as an Arrow type (e.g., \code{int64},
+\code{float32}, etc), indicating the type of data contained within the array.
+\item \strong{shape}: The shape of the array, i.e., number and length of each
+dimension. This is a soft limit which can be increased using \code{resize},
+up to the \code{maxshape}.
+\item \strong{maxshape}: The hard limit up to which \code{shape} may be increased using
+\code{resize}.
 }
 
 All dimensions must have a positive, non-zero length.
