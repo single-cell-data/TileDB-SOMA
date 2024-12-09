@@ -13,6 +13,13 @@ try:
 except ImportError as err:
     warnings.warn("Experimental spatial outgestor requires the spatialdata package.")
     raise err
+
+try:
+    import dask.dataframe as dd
+except ImportError as err:
+    warnings.warn("Experimental spatial outgestor requires the dask package.")
+    raise err
+
 try:
     import geopandas as gpd
 except ImportError as err:
@@ -101,7 +108,7 @@ def to_spatial_data_points(
     scene_dim_map: Dict[str, str],
     transform: Optional[somacore.CoordinateTransform],
     soma_joinid_name: str,
-) -> pd.DataFrame:
+) -> dd.DataFrame:
     """Export a :class:`PointCloudDataFrame` to a :class:`spatialdata.ShapesModel.
 
     Args:
@@ -134,8 +141,7 @@ def to_spatial_data_points(
     # Read the pandas dataframe, rename SOMA_JOINID, add metadata, and return.
     df: pd.DataFrame = points.read().concat().to_pandas()
     df.rename(columns={SOMA_JOINID: soma_joinid_name}, inplace=True)
-    df.attrs["transform"] = transforms
-    return df
+    return sd.models.PointsModel.parse(df, transformations=transforms)
 
 
 def to_spatial_data_shapes(
