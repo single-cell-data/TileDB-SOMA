@@ -427,10 +427,24 @@ def to_spatial_data(
     scene_names: Optional[Sequence[str]] = None,
     obs_id_name: str = "obs_id",
     var_id_name: str = "var_id",
-    default_X_layer_name: Optional[str] = "data",
-    table_kwargs: Optional[Dict[str, Any]] = None,
+    table_kwargs: Optional[Mapping[str, Dict[str, Any]]] = None,
 ) -> sd.SpatialData:
-    """TODO: Add docstring before merging"""
+    """Converts the experiment group to SpatialData format.
+
+    Args:
+        experiment:
+        measurement_names: The names of measurements to export. If ``None``, all
+            measurements are included. Defaults to ``None``.
+        scene_names: The names of the scenes to export. If ``None``, all scenes are
+            included. Defaults to ``None``.
+        obs_id_name: Column name to use for ``obs`` dataframes. Defaults to
+            ``"obs_id"``.
+        var_id_name: Column name to use for ``var`` dataframes. Defaults to
+            ``"var_id|``.
+        table_kwargs: Optional mapping from measurment name to keyword arguments to
+            pass to table conversions. See :method:`to_anndata` for possible keyword
+            arguments.
+    """
     warnings.warn(SPATIAL_DISCLAIMER)
 
     # Read non-spatial data into Anndata tables.
