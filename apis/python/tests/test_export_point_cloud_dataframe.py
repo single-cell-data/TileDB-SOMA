@@ -11,7 +11,7 @@ import tiledbsoma as soma
 
 gpd = pytest.importorskip("geopandas")
 soma_outgest = pytest.importorskip("tiledbsoma.io.spatial.outgest")
-spatialdata = pytest.importorskip("spatialdata")
+sd = pytest.importorskip("spatialdata")
 
 
 @pytest.fixture(scope="module")
@@ -38,12 +38,12 @@ def sample_point_cloud_dataframe_2d(tmp_path_factory):
 @pytest.mark.parametrize(
     "transform,expected_transformation",
     [
-        (None, {"point_cloud": spatialdata.transformations.Identity()}),
+        (None, {"point_cloud": sd.transformations.Identity()}),
         (
             somacore.IdentityTransform(
                 ("x_scene", "y_scene"), ("x_points", "y_points")
             ),
-            {"scene0": spatialdata.transformations.Identity()},
+            {"scene0": sd.transformations.Identity()},
         ),
     ],
 )
@@ -62,7 +62,8 @@ def test_export_to_shapes_2d(
     )
 
     # Check this is valid storage for the SpatialData "Shapes" model.
-    spatialdata.models.ShapesModel.validate(shape)
+    model_schema = sd.models.get_model(shape)
+    assert model_schema == sd.models.ShapesModel
 
     # Check the dataframe.
     expected = gpd.GeoDataFrame.from_dict(
@@ -85,12 +86,12 @@ def test_export_to_shapes_2d(
 @pytest.mark.parametrize(
     "transform,expected_transformation",
     [
-        (None, {"point_cloud": spatialdata.transformations.Identity()}),
+        (None, {"point_cloud": sd.transformations.Identity()}),
         (
             somacore.IdentityTransform(
                 ("x_scene", "y_scene"), ("x_points", "y_points")
             ),
-            {"scene0": spatialdata.transformations.Identity()},
+            {"scene0": sd.transformations.Identity()},
         ),
     ],
 )
@@ -109,7 +110,8 @@ def test_export_to_points_2d(
     )
 
     # Check this is valid storage for the SpatialData "Points" model.
-    spatialdata.models.PointsModel.validate(points)
+    model_schema = sd.models.get_model(points)
+    assert model_schema == sd.models.PointsModel
 
     # Check the dataframe.
     expected = pd.DataFrame.from_dict(
