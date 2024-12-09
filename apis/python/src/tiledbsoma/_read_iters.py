@@ -368,10 +368,10 @@ class BlockwiseScipyReadIter(BlockwiseReadIterBase[BlockwiseScipyReadIterResult]
 
         if self.compress and self.major_axis in self.reindex_disable_on_axis:
             raise SOMAError(
-                "Unable to disable reindexing of coordinates on CSC/Cclib_handle major axis"
+                "Unable to disable reindexing of coordinates on CSC/CSR major axis"
             )
 
-        # Sanity check: if CSC/Cclib_handle, we _must_ be reindexing
+        # Sanity check: if CSC/CSR, we _must_ be reindexing
         assert not self.compress or self.axes_to_reindex
 
     @property
