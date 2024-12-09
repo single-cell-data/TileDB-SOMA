@@ -136,36 +136,6 @@ void load_managed_query(py::module& m) {
                 }
             })
 
-        // .def(
-        //     "next",
-        //     [](ManagedQuery& mq) -> std::optional<py::object> {
-        //         // Release python GIL before reading data
-        //         py::gil_scoped_release release;
-
-        //         mq.setup_read();
-
-        //         if (mq.is_empty_query() && mq.is_first_read()) {
-        //             auto tbl = mq.results();
-        //             // Acquire python GIL before accessing python objects
-        //             py::gil_scoped_acquire acquire;
-        //             return to_table(std::make_optional(tbl));
-        //         }
-
-        //         if (mq.is_complete(false)) {
-        //             throw py::stop_iteration();
-        //         }
-
-        //         try {
-        //             mq.submit_read();
-        //             auto tbl = mq.results();
-        //             // Acquire python GIL before accessing python objects
-        //             py::gil_scoped_acquire acquire;
-        //             return to_table(std::make_optional(tbl));
-        //         } catch (const std::exception& e) {
-        //             throw TileDBSOMAError(e.what());
-        //         }
-        //     })
-
         .def(
             "next",
             [](ManagedQuery& mq) -> std::optional<py::object> {
