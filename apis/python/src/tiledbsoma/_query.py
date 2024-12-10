@@ -407,9 +407,11 @@ class ExperimentAxisQuery:
         try:
             obs_scene = self.experiment.obs_spatial_presence
         except KeyError as ke:
-            raise KeyError("Missing obs_scene") from ke
+            raise KeyError(
+                "No obs_spatial_presence dataframe in this experiment."
+            ) from ke
         if not isinstance(obs_scene, DataFrame):
-            raise TypeError("obs_scene must be a dataframe.")
+            raise TypeError("obs_spatial_presence must be a dataframe.")
 
         full_table = obs_scene.read(
             coords=((Axis.OBS.getattr_from(self._joinids), slice(None))),
@@ -428,9 +430,12 @@ class ExperimentAxisQuery:
         try:
             var_scene = self._ms.var_spatial_presence
         except KeyError as ke:
-            raise KeyError("Missing var_scene") from ke
+            raise KeyError(
+                f"No var_spatial_presence dataframe in measurement "
+                f"'{self.measurement_name}'."
+            ) from ke
         if not isinstance(var_scene, DataFrame):
-            raise TypeError("var_scene must be a dataframe.")
+            raise TypeError("var_spatial_presence must be a dataframe.")
 
         full_table = var_scene.read(
             coords=((Axis.OBS.getattr_from(self._joinids), slice(None))),
@@ -472,6 +477,60 @@ class ExperimentAxisQuery:
                     ad.var[name] = ad.var[name].cat.remove_unused_categories()
 
         return ad
+
+    def to_spatial_data(  # type: ignore[no-untyped-def]
+        self,
+        X_name: str,
+        *,
+        column_names: Optional[AxisColumnNames] = None,
+        X_layers: Sequence[str] = (),
+        obsm_layers: Sequence[str] = (),
+        obsp_layers: Sequence[str] = (),
+        varm_layers: Sequence[str] = (),
+        varp_layers: Sequence[str] = (),
+        drop_levels: bool = False,
+        scene_presence_mode: str = "obs",
+    ):
+        from spatialdata import SpatialData
+
+        from .io.spatial.outgest import _add_scene_to_spatial_data
+
+        # Get a list of scenes to add to SpatialData object.
+        if scene_presence_mode == "obs":
+            scene_ids = self.obs_scene_ids()
+        elif scene_presence_mode == "var":
+            scene_ids = self.var_scene_ids()
+        else:
+            raise ValueError(
+                f"Invalid scene presence mode '{scene_presence_mode}'. Valid options "
+                f"are 'obs' and 'var'."
+            )
+
+        # Get the anndata table.
+        ad = self.to_anndata(
+            X_name,
+            column_names=column_names,
+            X_layers=X_layers,
+            obsm_layers=obsm_layers,
+            obsp_layers=obsp_layers,
+            varm_layers=varm_layers,
+            varp_layers=varp_layers,
+            drop_levels=drop_levels,
+        )
+        sdata = SpatialData(tables={self.measurement_name: ad})
+
+        for scene_id in scene_ids:
+            scene = self.experiment.spatial[str(scene_id)]
+            _add_scene_to_spatial_data(
+                sdata,
+                scene_id=str(scene_id),
+                scene=scene,
+                obs_id_name="soma_joinid",
+                var_id_name="soma_joinid",
+                measurement_names=(self.measurement_name,),
+            )
+
+        return sdata
 
     # Context management
 
