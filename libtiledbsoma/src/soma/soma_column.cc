@@ -71,9 +71,36 @@ SOMAColumn::core_current_domain_slot<std::string>(
         if (current_domain.first == "" && (current_domain.second == "\x7f" ||
                                            current_domain.second == "\xff")) {
             return std::pair<std::string, std::string>("", "");
+        } else {
+            throw TileDBSOMAError(std::format(
+                "[SOMAColumn][core_current_domain_slot] unexpected current "
+                "domain returnd ({}, {})",
+                current_domain.first,
+                current_domain.second));
         }
+    } catch (const std::exception& e) {
+        throw TileDBSOMAError(e.what());
+    }
+}
 
-        return current_domain;
+template <>
+std::pair<std::string, std::string>
+SOMAColumn::core_current_domain_slot<std::string>(NDRectangle& ndrect) const {
+    try {
+        std::pair<std::string, std::string>
+            current_domain = std::any_cast<std::pair<std::string, std::string>>(
+                _core_current_domain_slot(ndrect));
+
+        if (current_domain.first == "" && (current_domain.second == "\x7f" ||
+                                           current_domain.second == "\xff")) {
+            return std::pair<std::string, std::string>("", "");
+        } else {
+            throw TileDBSOMAError(std::format(
+                "[SOMAColumn][core_current_domain_slot] unexpected current "
+                "domain returnd ({}, {})",
+                current_domain.first,
+                current_domain.second));
+        }
     } catch (const std::exception& e) {
         throw TileDBSOMAError(e.what());
     }
