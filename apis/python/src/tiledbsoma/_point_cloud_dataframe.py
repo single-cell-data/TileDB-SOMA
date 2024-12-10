@@ -28,7 +28,6 @@ from ._dataframe import (
     _revise_domain_for_extent,
 )
 from ._exception import SOMAError, map_exception_for_create
-from ._query_condition import QueryCondition
 from ._read_iters import TableReadIter
 from ._spatial_dataframe import SpatialDataFrame
 from ._spatial_util import (
@@ -95,13 +94,22 @@ class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
                 implementation, a ValueError will be raised.
             coordinate_space: Either the coordinate space or the axis names for the
                 coordinate space the point cloud is defined on.
-            domain: An optional sequence of tuples specifying the domain of each
-                index column. Each tuple should be a pair consisting of the minimum
-                and maximum values storable in the index column. If omitted entirely,
-                or if ``None`` in a given dimension, the corresponding index-column
-                domain will use the minimum and maximum possible values for the
-                column's datatype.  This makes a point cloud dataframe growable.
-
+            domain:
+                An optional sequence of tuples specifying the domain of each
+                index column. Each tuple must be a pair consisting of the
+                minimum and maximum values storable in the index column. For
+                example, if there is a single int64-valued index column, then
+                ``domain`` might be ``[(100, 200)]`` to indicate that values
+                between 100 and 200, inclusive, can be stored in that column.
+                If provided, this sequence must have the same length as
+                ``index_column_names``, and the index-column domain will be as
+                specified.  If omitted entirely, or if ``None`` in a given
+                dimension, the corresponding index-column domain will use an
+                empty range, and data writes after that will fail with "A range
+                was set outside of the current domain". Unless you have a
+                particular reason not to, you should always provide the desired
+                `domain` at create time: this is an optional but strongly
+                recommended parameter.
         Returns:
             The newly created point cloud, opened for writing.
 
@@ -323,30 +331,15 @@ class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
         _util.check_unpartitioned(partitions)
         self._check_open_read()
 
-        handle = self._handle._handle
-
-        context = handle.context()
-        if platform_config is not None:
-            config = context.tiledb_config.copy()
-            config.update(platform_config)
-            context = clib.SOMAContext(config)
-
-        sr = clib.SOMAPointCloudDataFrame.open(
-            uri=handle.uri,
-            mode=clib.OpenMode.read,
-            context=context,
-            column_names=column_names or [],
+        # TODO: batch_size
+        return TableReadIter(
+            array=self,
+            coords=coords,
+            column_names=column_names,
             result_order=_util.to_clib_result_order(result_order),
-            timestamp=handle.timestamp and (0, handle.timestamp),
+            value_filter=value_filter,
+            platform_config=platform_config,
         )
-
-        if value_filter is not None:
-            sr.set_condition(QueryCondition(value_filter), handle.schema)
-
-        _util._set_coords(sr, coords)
-
-        # # TODO: batch_size
-        return TableReadIter(sr)
 
     def read_spatial_region(
         self,

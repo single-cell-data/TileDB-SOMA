@@ -380,7 +380,7 @@ class SOMAArray : public SOMAObject {
         if (partition_index >= partition_count) {
             // TODO this use to be formatted with fmt::format which is part of
             // internal header spd/log/fmt/fmt.h and should not be used.
-            // In C++20, this can be replaced with std::format.
+            // In C++20, this can be replaced with fmt::format.
             std::ostringstream err;
             err << "[SOMAArray] partition_index (" << partition_index
                 << ") must be < partition_count (" << partition_count;
@@ -398,7 +398,7 @@ class SOMAArray : public SOMAObject {
 
             // TODO this use to be formatted with fmt::format which is part of
             // internal header spd/log/fmt/fmt.h and should not be used.
-            // In C++20, this can be replaced with std::format.
+            // In C++20, this can be replaced with fmt::format.
             std::ostringstream log_dbg;
             log_dbg << "[SOMAArray] set_dim_points partitioning:"
                     << " sizeof(T)=" << sizeof(T) << " dim=" << dim
