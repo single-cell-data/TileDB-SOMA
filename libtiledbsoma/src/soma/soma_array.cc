@@ -777,15 +777,18 @@ StatusAndReason SOMAArray::_can_set_soma_joinid_shape_helper(
         }
     }
 
+    auto joinid_column = get_column("soma_joinid");
+
     // OK if soma_joinid isn't a dim.
-    if (!has_dimension_name("soma_joinid")) {
+    if (!joinid_column->isIndexColumn()) {
         return std::pair(true, "");
     }
 
     // Fail if the newshape isn't within the array's core current domain.
     if (must_already_have) {
-        std::pair cur_dom_lo_hi = _core_current_domain_slot<int64_t>(
-            "soma_joinid");
+        std::pair cur_dom_lo_hi = joinid_column
+                                      ->core_current_domain_slot<int64_t>(
+                                          *ctx_, *arr_);
         if (newshape < cur_dom_lo_hi.second) {
             return std::pair(
                 false,
@@ -798,7 +801,7 @@ StatusAndReason SOMAArray::_can_set_soma_joinid_shape_helper(
     }
 
     // Fail if the newshape isn't within the array's core (max) domain.
-    std::pair dom_lo_hi = _core_domain_slot<int64_t>("soma_joinid");
+    std::pair dom_lo_hi = joinid_column->core_domain_slot<int64_t>();
     if (newshape > dom_lo_hi.second) {
         return std::pair(
             false,
