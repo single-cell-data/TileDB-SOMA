@@ -391,6 +391,12 @@ class SOMAColumn {
      */
     template <typename T>
     std::pair<T, T> core_domain_slot() const {
+        if (std::is_same_v<T, std::string>) {
+            throw std::runtime_error(
+                "SOMAArray::soma_domain_slot: template-specialization "
+                "failure.");
+        }
+
         try {
             return std::any_cast<std::pair<T, T>>(_core_domain_slot());
         } catch (const std::exception& e) {
@@ -458,6 +464,12 @@ class SOMAColumn {
     template <typename T>
     std::pair<T, T> core_current_domain_slot(
         const SOMAContext& ctx, Array& array) const {
+        if (std::is_same_v<T, std::string>) {
+            throw std::runtime_error(
+                "SOMAArray::soma_domain_slot: template-specialization "
+                "failure.");
+        }
+
         try {
             return std::any_cast<std::pair<T, T>>(
                 _core_current_domain_slot(ctx, array));
@@ -534,6 +546,10 @@ template <>
 std::pair<std::string, std::string>
 SOMAColumn::core_current_domain_slot<std::string>(
     const SOMAContext& ctx, Array& array) const;
+
+template <>
+std::pair<std::string, std::string>
+SOMAColumn::core_current_domain_slot<std::string>(NDRectangle& ndrect) const;
 
 }  // namespace tiledbsoma
 #endif
