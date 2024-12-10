@@ -116,4 +116,25 @@ const std::optional<std::string> SOMAObject::type() {
     return std::string(dtype, sz);
 }
 
+bool SOMAObject::check_type(std::string expected_type) {
+    auto soma_object_type = this->type();
+
+    if (!soma_object_type.has_value())
+        return false;
+
+    std::transform(
+        soma_object_type->begin(),
+        soma_object_type->end(),
+        soma_object_type->begin(),
+        [](unsigned char c) { return std::tolower(c); });
+
+    std::transform(
+        expected_type.begin(),
+        expected_type.end(),
+        expected_type.begin(),
+        [](unsigned char c) { return std::tolower(c); });
+
+    return soma_object_type == expected_type;
+};
+
 }  // namespace tiledbsoma

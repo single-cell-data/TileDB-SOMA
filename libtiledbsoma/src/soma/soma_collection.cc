@@ -58,7 +58,15 @@ std::unique_ptr<SOMACollection> SOMACollection::open(
     std::shared_ptr<SOMAContext> ctx,
     std::optional<TimestampRange> timestamp) {
     try {
-        return std::make_unique<SOMACollection>(mode, uri, ctx, timestamp);
+        auto group = std::make_unique<SOMACollection>(
+            mode, uri, ctx, timestamp);
+
+        if (!group->check_type("SOMACollection")) {
+            throw TileDBSOMAError(
+                "[SOMACollection::open] Object is not a SOMACollection");
+        }
+
+        return group;
     } catch (TileDBError& e) {
         throw TileDBSOMAError(e.what());
     }

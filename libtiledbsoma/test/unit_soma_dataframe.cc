@@ -377,10 +377,10 @@ TEST_CASE_METHOD(
 
     REQUIRE(!SOMADataFrame::exists(uri_, ctx_));
 
-    create(dim_infos, attr_infos, PlatformConfig(), TimestampRange(0, 2));
+    create(dim_infos, attr_infos, PlatformConfig(), TimestampRange(0, 1));
 
     auto sdf = open(
-        OpenMode::write, ResultOrder::automatic, TimestampRange(1, 1));
+        OpenMode::write, ResultOrder::automatic, TimestampRange(0, 2));
 
     int32_t val = 100;
     sdf->set_metadata("md", TILEDB_INT32, 1, &val);
@@ -398,8 +398,8 @@ TEST_CASE_METHOD(
     REQUIRE(*((const int32_t*)std::get<MetadataInfo::value>(*mdval)) == 100);
     sdf->close();
 
-    // md should not be available at (2, 2)
-    sdf->open(OpenMode::read, TimestampRange(2, 2));
+    // md should not be available at (0, 1)
+    sdf->open(OpenMode::read, TimestampRange(0, 1));
     REQUIRE(sdf->metadata_num() == 2);
     REQUIRE(sdf->has_metadata("soma_object_type"));
     REQUIRE(sdf->has_metadata("soma_encoding_version"));
@@ -407,7 +407,7 @@ TEST_CASE_METHOD(
     sdf->close();
 
     // Metadata should also be retrievable in write mode
-    sdf->open(OpenMode::write, TimestampRange(0, 2));
+    sdf->open(OpenMode::write);
     REQUIRE(sdf->metadata_num() == 3);
     REQUIRE(sdf->has_metadata("soma_object_type"));
     REQUIRE(sdf->has_metadata("soma_encoding_version"));
@@ -415,15 +415,14 @@ TEST_CASE_METHOD(
     mdval = sdf->get_metadata("md");
     REQUIRE(*((const int32_t*)std::get<MetadataInfo::value>(*mdval)) == 100);
 
-    // Delete and have it reflected when reading metadata while in
-    // write mode
+    // Delete and have it reflected when reading metadata while in write mode
     sdf->delete_metadata("md");
     mdval = sdf->get_metadata("md");
     REQUIRE(!mdval.has_value());
     sdf->close();
 
     // Confirm delete in read mode
-    sdf->open(OpenMode::read, TimestampRange(0, 2));
+    sdf->open(OpenMode::read);
     REQUIRE(!sdf->has_metadata("md"));
     REQUIRE(sdf->metadata_num() == 2);
 }

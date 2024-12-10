@@ -65,8 +65,15 @@ std::unique_ptr<SOMADataFrame> SOMADataFrame::open(
     std::vector<std::string> column_names,
     ResultOrder result_order,
     std::optional<TimestampRange> timestamp) {
-    return std::make_unique<SOMADataFrame>(
+    auto array = std::make_unique<SOMADataFrame>(
         mode, uri, ctx, column_names, result_order, timestamp);
+
+    if (!array->check_type("SOMADataFrame")) {
+        throw TileDBSOMAError(
+            "[SOMADataFrame::open] Object is not a SOMADataFrame");
+    }
+
+    return array;
 }
 
 std::unique_ptr<SOMADataFrame> SOMADataFrame::open(
@@ -74,7 +81,15 @@ std::unique_ptr<SOMADataFrame> SOMADataFrame::open(
     OpenMode mode,
     std::string_view name,
     std::map<std::string, std::string> platform_config) {
-    return std::make_unique<SOMADataFrame>(mode, uri, name, platform_config);
+    auto array = std::make_unique<SOMADataFrame>(
+        mode, uri, name, platform_config);
+
+    if (!array->check_type("SOMADataFrame")) {
+        throw TileDBSOMAError(
+            "[SOMADataFrame::open] Object is not a SOMADataFrame");
+    }
+
+    return array;
 }
 
 bool SOMADataFrame::exists(

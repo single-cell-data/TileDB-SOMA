@@ -97,6 +97,31 @@ def test_scene_basic(tmp_path):
     with pytest.raises(soma.DoesNotExistError):
         soma.Scene.open("bad uri")
 
+    # Ensure it cannot be opened by another type
+    with pytest.raises(soma.SOMAError):
+        soma.DataFrame.open(baseuri)
+
+    with pytest.raises(soma.SOMAError):
+        soma.SparseNDArray.open(baseuri)
+
+    with pytest.raises(soma.SOMAError):
+        soma.DenseNDArray.open(baseuri)
+
+    with pytest.raises(soma.SOMAError):
+        soma.PointCloudDataFrame.open(baseuri)
+
+    with pytest.raises(soma.SOMAError):
+        soma.Collection.open(baseuri)
+
+    with pytest.raises(soma.SOMAError):
+        soma.Experiment.open(baseuri)
+
+    with pytest.raises(soma.SOMAError):
+        soma.Measurement.open(baseuri)
+
+    with pytest.raises(soma.SOMAError):
+        soma.MultiscaleImage.open(baseuri)
+
 
 def test_measurement_with_var_scene(tmp_path):
     baseuri = tmp_path.as_uri()

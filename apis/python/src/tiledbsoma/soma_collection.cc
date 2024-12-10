@@ -71,10 +71,28 @@ void load_soma_collection(py::module& m) {
         .def("get", &SOMACollection::get);
 
     py::class_<SOMAExperiment, SOMACollection, SOMAGroup, SOMAObject>(
-        m, "SOMAExperiment");
+        m, "SOMAExperiment")
+        .def_static(
+            "open",
+            &SOMAExperiment::open,
+            "uri"_a,
+            py::kw_only(),
+            "mode"_a,
+            "context"_a,
+            "timestamp"_a = py::none(),
+            py::call_guard<py::gil_scoped_release>());
 
     py::class_<SOMAMeasurement, SOMACollection, SOMAGroup, SOMAObject>(
-        m, "SOMAMeasurement");
+        m, "SOMAMeasurement")
+        .def_static(
+            "open",
+            &SOMAMeasurement::open,
+            "uri"_a,
+            py::kw_only(),
+            "mode"_a,
+            "context"_a,
+            "timestamp"_a = py::none(),
+            py::call_guard<py::gil_scoped_release>());
 
     py::class_<SOMAScene, SOMACollection, SOMAGroup, SOMAObject>(m, "SOMAScene")
         .def_static(
@@ -91,9 +109,27 @@ void load_soma_collection(py::module& m) {
             py::kw_only(),
             "ctx"_a,
             "uri"_a,
-            "timestamp"_a = py::none());
+            "timestamp"_a = py::none())
+        .def_static(
+            "open",
+            &SOMAScene::open,
+            "uri"_a,
+            py::kw_only(),
+            "mode"_a,
+            "context"_a,
+            "timestamp"_a = py::none(),
+            py::call_guard<py::gil_scoped_release>());
 
     py::class_<SOMAMultiscaleImage, SOMACollection, SOMAGroup, SOMAObject>(
-        m, "SOMAMultiscaleImage");
+        m, "SOMAMultiscaleImage")
+        .def_static(
+            "open",
+            &SOMAMultiscaleImage::open,
+            "uri"_a,
+            py::kw_only(),
+            "mode"_a,
+            "context"_a,
+            "timestamp"_a = py::none(),
+            py::call_guard<py::gil_scoped_release>());
 }
 }  // namespace libtiledbsomacpp

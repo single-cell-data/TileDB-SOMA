@@ -160,6 +160,31 @@ def test_dataframe(tmp_path, arrow_schema):
     with soma.DataFrame.open(tmp_path.as_posix(), "w") as A:
         assert isinstance(A._handle._handle, soma.pytiledbsoma.SOMADataFrame)
 
+    # Ensure it cannot be opened by another type
+    with pytest.raises(soma.SOMAError):
+        soma.SparseNDArray.open(tmp_path.as_posix())
+
+    with pytest.raises(soma.SOMAError):
+        soma.DenseNDArray.open(tmp_path.as_posix())
+
+    with pytest.raises(soma.SOMAError):
+        soma.PointCloudDataFrame.open(tmp_path.as_posix())
+
+    with pytest.raises(soma.SOMAError):
+        soma.Collection.open(tmp_path.as_posix())
+
+    with pytest.raises(soma.SOMAError):
+        soma.Experiment.open(tmp_path.as_posix())
+
+    with pytest.raises(soma.SOMAError):
+        soma.Measurement.open(tmp_path.as_posix())
+
+    with pytest.raises(soma.SOMAError):
+        soma.Scene.open(tmp_path.as_posix())
+
+    with pytest.raises(soma.SOMAError):
+        soma.MultiscaleImage.open(tmp_path.as_posix())
+
 
 def test_dataframe_reopen(tmp_path, arrow_schema):
     soma.DataFrame.create(

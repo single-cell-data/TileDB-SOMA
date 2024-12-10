@@ -223,7 +223,7 @@ TEST_CASE("SOMASparseNDArray: metadata", "[SOMASparseNDArray]") {
             std::move(index_columns.first), std::move(index_columns.second)),
         ctx,
         PlatformConfig(),
-        TimestampRange(0, 2));
+        TimestampRange(0, 1));
 
     auto snda = SOMASparseNDArray::open(
         uri,
@@ -231,7 +231,7 @@ TEST_CASE("SOMASparseNDArray: metadata", "[SOMASparseNDArray]") {
         ctx,
         {},
         ResultOrder::automatic,
-        std::pair<uint64_t, uint64_t>(1, 1));
+        TimestampRange(0, 2));
 
     int32_t val = 100;
     snda->set_metadata("md", TILEDB_INT32, 1, &val);
@@ -249,8 +249,8 @@ TEST_CASE("SOMASparseNDArray: metadata", "[SOMASparseNDArray]") {
     REQUIRE(*((const int32_t*)std::get<MetadataInfo::value>(*mdval)) == 100);
     snda->close();
 
-    // md should not be available at (2, 2)
-    snda->open(OpenMode::read, TimestampRange(2, 2));
+    // md should not be available at (0, 1)
+    snda->open(OpenMode::read, TimestampRange(0, 1));
     REQUIRE(snda->metadata_num() == 2);
     REQUIRE(snda->has_metadata("soma_object_type"));
     REQUIRE(snda->has_metadata("soma_encoding_version"));
@@ -258,7 +258,7 @@ TEST_CASE("SOMASparseNDArray: metadata", "[SOMASparseNDArray]") {
     snda->close();
 
     // Metadata should also be retrievable in write mode
-    snda->open(OpenMode::write, TimestampRange(0, 2));
+    snda->open(OpenMode::write);
     REQUIRE(snda->metadata_num() == 3);
     REQUIRE(snda->has_metadata("soma_object_type"));
     REQUIRE(snda->has_metadata("soma_encoding_version"));
@@ -266,15 +266,16 @@ TEST_CASE("SOMASparseNDArray: metadata", "[SOMASparseNDArray]") {
     mdval = snda->get_metadata("md");
     REQUIRE(*((const int32_t*)std::get<MetadataInfo::value>(*mdval)) == 100);
 
-    // Delete and have it reflected when reading metadata while in write
-    // mode
+    // Delete and have it reflected when reading metadata while in write mode
     snda->delete_metadata("md");
+    REQUIRE(!snda->has_metadata("md"));
+    REQUIRE(snda->metadata_num() == 2);
     mdval = snda->get_metadata("md");
     REQUIRE(!mdval.has_value());
     snda->close();
 
     // Confirm delete in read mode
-    snda->open(OpenMode::read, TimestampRange(0, 2));
+    snda->open(OpenMode::read);
     REQUIRE(!snda->has_metadata("md"));
     REQUIRE(snda->metadata_num() == 2);
 }
