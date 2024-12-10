@@ -99,8 +99,15 @@ std::unique_ptr<SOMADenseNDArray> SOMADenseNDArray::open(
     std::vector<std::string> column_names,
     ResultOrder result_order,
     std::optional<TimestampRange> timestamp) {
-    return std::make_unique<SOMADenseNDArray>(
+    auto array = std::make_unique<SOMADenseNDArray>(
         mode, uri, ctx, column_names, result_order, timestamp);
+
+    if (!array->check_type("SOMADenseNDArray")) {
+        throw TileDBSOMAError(
+            "[SOMADenseNDArray::open] Object is not a SOMADenseNDArray");
+    }
+
+    return array;
 }
 
 bool SOMADenseNDArray::exists(
