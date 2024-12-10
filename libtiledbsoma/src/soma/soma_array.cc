@@ -628,7 +628,13 @@ StatusAndReason SOMAArray::_can_set_shape_helper(
     // E.g. it's an error to try to upgrade_domain or resize specifying
     // a 3-D shape on a 2-D array.
     auto arg_ndim = newshape.size();
-    auto array_ndim = schema_->domain().ndim();
+    size_t array_ndim = std::count_if(
+        columns_.begin(),
+        columns_.end(),
+        [](std::shared_ptr<SOMAColumn> column) {
+            return column->isIndexColumn();
+        });
+
     if (array_ndim != arg_ndim) {
         return std::pair(
             false,
@@ -702,29 +708,13 @@ StatusAndReason SOMAArray::_can_set_shape_domainish_subhelper(
     const std::vector<int64_t>& newshape,
     bool check_current_domain,
     std::string function_name_for_messages) {
-    Domain domain = schema_->domain();
+    _check_dims_are_int64();
 
-    for (unsigned i = 0; i < domain.ndim(); i++) {
-        const auto& dim = domain.dimension(i);
-
-        const std::string& dim_name = dim.name();
-
-        // These methods are only for SOMA NDArrays, and any other arrays for
-        // which the indices are entirely int64.  SOMA DataFrame objects, with
-        // multi-type dims, need to go through upgrade_domain -- and this is
-        // library-internal code, it's not the user's fault if we got here.
-        if (dim.type() != TILEDB_INT64) {
-            throw TileDBSOMAError(std::format(
-                "{}: internal error: expected {} dim to be {}; got {}",
-                function_name_for_messages,
-                dim_name,
-                tiledb::impl::type_to_str(TILEDB_INT64),
-                tiledb::impl::type_to_str(dim.type())));
-        }
-
+    for (size_t i = 0; i < newshape.size(); ++i) {
         if (check_current_domain) {
             std::pair<int64_t, int64_t>
-                cap = _core_current_domain_slot<int64_t>(dim_name);
+                cap = columns_[i]->core_current_domain_slot<int64_t>(
+                    *ctx_, *arr_);
             int64_t old_dim_shape = cap.second + 1;
 
             if (newshape[i] < old_dim_shape) {
@@ -733,14 +723,14 @@ StatusAndReason SOMAArray::_can_set_shape_domainish_subhelper(
                     std::format(
                         "{} for {}: new {} < existing shape {}",
                         function_name_for_messages,
-                        dim_name,
+                        columns_[i]->name(),
                         newshape[i],
                         old_dim_shape));
             }
 
         } else {
-            std::pair<int64_t, int64_t> cap = _core_domain_slot<int64_t>(
-                dim_name);
+            std::pair<int64_t, int64_t> cap = columns_[i]
+                                                  ->core_domain_slot<int64_t>();
             int64_t old_dim_shape = cap.second + 1;
 
             if (newshape[i] > old_dim_shape) {
@@ -749,12 +739,13 @@ StatusAndReason SOMAArray::_can_set_shape_domainish_subhelper(
                     std::format(
                         "{} for {}: new {} < maxshape {}",
                         function_name_for_messages,
-                        dim_name,
+                        columns_[i]->name(),
                         newshape[i],
                         old_dim_shape));
             }
         }
     }
+
     return std::pair(true, "");
 }
 
@@ -1440,10 +1431,16 @@ std::vector<int64_t> SOMAArray::_shape_via_tiledb_current_domain() {
 
     NDRectangle ndrect = current_domain.ndrectangle();
 
-    for (auto dimension_name : dimension_names()) {
-        auto range = ndrect.range<int64_t>(dimension_name);
-        result.push_back(range[1] - range[0] + 1);
+    for (auto column : columns_) {
+        if (!column->isIndexColumn()) {
+            break;
+        }
+
+        auto range = column->core_current_domain_slot<int64_t>(ndrect);
+
+        result.push_back(range.second + 1);
     }
+
     return result;
 }
 
@@ -1452,11 +1449,15 @@ std::vector<int64_t> SOMAArray::_shape_via_tiledb_domain() {
     _check_dims_are_int64();
 
     std::vector<int64_t> result;
-    auto dimensions = schema_->domain().dimensions();
 
-    for (const auto& dim : dimensions) {
-        result.push_back(
-            dim.domain<int64_t>().second - dim.domain<int64_t>().first + 1);
+    for (auto column : columns_) {
+        if (!column->isIndexColumn()) {
+            break;
+        }
+
+        auto domain = column->core_domain_slot<int64_t>();
+
+        result.push_back(domain.second - domain.first + 1);
     }
 
     return result;
@@ -1530,13 +1531,13 @@ std::optional<int64_t> SOMAArray::_maybe_soma_joinid_shape_via_tiledb_domain() {
 }
 
 bool SOMAArray::_dims_are_int64() {
-    ArraySchema schema = arr_->schema();
-    Domain domain = schema.domain();
-    for (auto dimension : domain.dimensions()) {
-        if (dimension.type() != TILEDB_INT64) {
+    for (auto column : columns_) {
+        if (column->isIndexColumn() &&
+            column->domain_type().value() != TILEDB_INT64) {
             return false;
         }
     }
+
     return true;
 }
 

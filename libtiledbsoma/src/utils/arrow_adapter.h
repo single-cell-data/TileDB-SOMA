@@ -1099,7 +1099,7 @@ class ArrowAdapter {
     }
 
    private:
-    static std::pair<const void*, std::size_t> _get_data_and_length(
+    static std::pair<const void*, size_t> _get_data_and_length(
         Enumeration& enmr, const void* dst);
 
     template <typename T>
