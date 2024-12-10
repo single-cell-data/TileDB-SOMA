@@ -29,10 +29,10 @@
  *   This file defines the SOMAArray class.
  */
 
-#include "soma_array.h"
 #include <tiledb/array_experimental.h>
 #include "../utils/logger.h"
 #include "../utils/util.h"
+#include "soma_array.h"
 
 #include <format>
 
@@ -1039,107 +1039,107 @@ void SOMAArray::_set_soma_joinid_shape_helper(
                 }
                 ndrect.set_range<int64_t>(dim_name, 0, newshape - 1);
                 continue;
+            }
 
-                switch (dim.type()) {
-                    case TILEDB_STRING_ASCII:
-                    case TILEDB_STRING_UTF8:
-                    case TILEDB_CHAR:
-                    case TILEDB_GEOM_WKB:
-                    case TILEDB_GEOM_WKT:
-                        // See comments in soma_array.h.
-                        ndrect.set_range(dim_name, "", "\x7f");
-                        break;
+            switch (dim.type()) {
+                case TILEDB_STRING_ASCII:
+                case TILEDB_STRING_UTF8:
+                case TILEDB_CHAR:
+                case TILEDB_GEOM_WKB:
+                case TILEDB_GEOM_WKT:
+                    // See comments in soma_array.h.
+                    ndrect.set_range(dim_name, "", "\x7f");
+                    break;
 
-                    case TILEDB_INT8:
-                        ndrect.set_range<int8_t>(
-                            dim_name,
-                            dim.domain<int8_t>().first,
-                            dim.domain<int8_t>().second);
-                        break;
-                    case TILEDB_BOOL:
-                    case TILEDB_UINT8:
-                        ndrect.set_range<uint8_t>(
-                            dim_name,
-                            dim.domain<uint8_t>().first,
-                            dim.domain<uint8_t>().second);
-                        break;
-                    case TILEDB_INT16:
-                        ndrect.set_range<int16_t>(
-                            dim_name,
-                            dim.domain<int16_t>().first,
-                            dim.domain<int16_t>().second);
-                        break;
-                    case TILEDB_UINT16:
-                        ndrect.set_range<uint16_t>(
-                            dim_name,
-                            dim.domain<uint16_t>().first,
-                            dim.domain<uint16_t>().second);
-                        break;
-                    case TILEDB_INT32:
-                        ndrect.set_range<int32_t>(
-                            dim_name,
-                            dim.domain<int32_t>().first,
-                            dim.domain<int32_t>().second);
-                        break;
-                    case TILEDB_UINT32:
-                        ndrect.set_range<uint32_t>(
-                            dim_name,
-                            dim.domain<uint32_t>().first,
-                            dim.domain<uint32_t>().second);
-                        break;
-                    case TILEDB_INT64:
-                    case TILEDB_DATETIME_YEAR:
-                    case TILEDB_DATETIME_MONTH:
-                    case TILEDB_DATETIME_WEEK:
-                    case TILEDB_DATETIME_DAY:
-                    case TILEDB_DATETIME_HR:
-                    case TILEDB_DATETIME_MIN:
-                    case TILEDB_DATETIME_SEC:
-                    case TILEDB_DATETIME_MS:
-                    case TILEDB_DATETIME_US:
-                    case TILEDB_DATETIME_NS:
-                    case TILEDB_DATETIME_PS:
-                    case TILEDB_DATETIME_FS:
-                    case TILEDB_DATETIME_AS:
-                    case TILEDB_TIME_HR:
-                    case TILEDB_TIME_MIN:
-                    case TILEDB_TIME_SEC:
-                    case TILEDB_TIME_MS:
-                    case TILEDB_TIME_US:
-                    case TILEDB_TIME_NS:
-                    case TILEDB_TIME_PS:
-                    case TILEDB_TIME_FS:
-                    case TILEDB_TIME_AS:
-                        ndrect.set_range<int64_t>(
-                            dim_name,
-                            dim.domain<int64_t>().first,
-                            dim.domain<int64_t>().second);
-                        break;
-                    case TILEDB_UINT64:
-                        ndrect.set_range<uint64_t>(
-                            dim_name,
-                            dim.domain<int64_t>().first,
-                            dim.domain<int64_t>().second);
-                        break;
-                    case TILEDB_FLOAT32:
-                        ndrect.set_range<float>(
-                            dim_name,
-                            dim.domain<float>().first,
-                            dim.domain<float>().second);
-                        break;
-                    case TILEDB_FLOAT64:
-                        ndrect.set_range<double>(
-                            dim_name,
-                            dim.domain<double>().first,
-                            dim.domain<double>().second);
-                        break;
-                    default:
-                        throw TileDBSOMAError(std::format(
-                            "{}: internal error: unhandled type {} for {}.",
-                            function_name_for_messages,
-                            tiledb::impl::type_to_str(dim.type()),
-                            dim_name));
-                }
+                case TILEDB_INT8:
+                    ndrect.set_range<int8_t>(
+                        dim_name,
+                        dim.domain<int8_t>().first,
+                        dim.domain<int8_t>().second);
+                    break;
+                case TILEDB_BOOL:
+                case TILEDB_UINT8:
+                    ndrect.set_range<uint8_t>(
+                        dim_name,
+                        dim.domain<uint8_t>().first,
+                        dim.domain<uint8_t>().second);
+                    break;
+                case TILEDB_INT16:
+                    ndrect.set_range<int16_t>(
+                        dim_name,
+                        dim.domain<int16_t>().first,
+                        dim.domain<int16_t>().second);
+                    break;
+                case TILEDB_UINT16:
+                    ndrect.set_range<uint16_t>(
+                        dim_name,
+                        dim.domain<uint16_t>().first,
+                        dim.domain<uint16_t>().second);
+                    break;
+                case TILEDB_INT32:
+                    ndrect.set_range<int32_t>(
+                        dim_name,
+                        dim.domain<int32_t>().first,
+                        dim.domain<int32_t>().second);
+                    break;
+                case TILEDB_UINT32:
+                    ndrect.set_range<uint32_t>(
+                        dim_name,
+                        dim.domain<uint32_t>().first,
+                        dim.domain<uint32_t>().second);
+                    break;
+                case TILEDB_INT64:
+                case TILEDB_DATETIME_YEAR:
+                case TILEDB_DATETIME_MONTH:
+                case TILEDB_DATETIME_WEEK:
+                case TILEDB_DATETIME_DAY:
+                case TILEDB_DATETIME_HR:
+                case TILEDB_DATETIME_MIN:
+                case TILEDB_DATETIME_SEC:
+                case TILEDB_DATETIME_MS:
+                case TILEDB_DATETIME_US:
+                case TILEDB_DATETIME_NS:
+                case TILEDB_DATETIME_PS:
+                case TILEDB_DATETIME_FS:
+                case TILEDB_DATETIME_AS:
+                case TILEDB_TIME_HR:
+                case TILEDB_TIME_MIN:
+                case TILEDB_TIME_SEC:
+                case TILEDB_TIME_MS:
+                case TILEDB_TIME_US:
+                case TILEDB_TIME_NS:
+                case TILEDB_TIME_PS:
+                case TILEDB_TIME_FS:
+                case TILEDB_TIME_AS:
+                    ndrect.set_range<int64_t>(
+                        dim_name,
+                        dim.domain<int64_t>().first,
+                        dim.domain<int64_t>().second);
+                    break;
+                case TILEDB_UINT64:
+                    ndrect.set_range<uint64_t>(
+                        dim_name,
+                        dim.domain<int64_t>().first,
+                        dim.domain<int64_t>().second);
+                    break;
+                case TILEDB_FLOAT32:
+                    ndrect.set_range<float>(
+                        dim_name,
+                        dim.domain<float>().first,
+                        dim.domain<float>().second);
+                    break;
+                case TILEDB_FLOAT64:
+                    ndrect.set_range<double>(
+                        dim_name,
+                        dim.domain<double>().first,
+                        dim.domain<double>().second);
+                    break;
+                default:
+                    throw TileDBSOMAError(std::format(
+                        "{}: internal error: unhandled type {} for {}.",
+                        function_name_for_messages,
+                        tiledb::impl::type_to_str(dim.type()),
+                        dim_name));
             }
         }
 
