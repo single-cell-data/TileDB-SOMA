@@ -846,15 +846,19 @@ void SOMAArray::_set_shape_helper(
     _check_dims_are_int64();
 
     auto tctx = ctx_->tiledb_ctx();
-    ArraySchema schema = arr_->schema();
-    Domain domain = schema.domain();
     ArraySchemaEvolution schema_evolution(*tctx);
     CurrentDomain new_current_domain(*tctx);
 
-    NDRectangle ndrect(*tctx, domain);
+    NDRectangle ndrect(*tctx, arr_->schema().domain());
 
-    unsigned n = domain.ndim();
-    if ((unsigned)newshape.size() != n) {
+    size_t n = std::count_if(
+        columns_.begin(),
+        columns_.end(),
+        [](std::shared_ptr<SOMAColumn> column) {
+            return column->isIndexColumn();
+        });
+
+    if (newshape.size() != n) {
         throw TileDBSOMAError(std::format(
             "[SOMAArray::resize]: newshape has dimension count {}; array has "
             "{} ",
@@ -862,9 +866,9 @@ void SOMAArray::_set_shape_helper(
             n));
     }
 
-    for (unsigned i = 0; i < n; i++) {
-        ndrect.set_range<int64_t>(
-            domain.dimension(i).name(), 0, newshape[i] - 1);
+    for (size_t i = 0; i < n; i++) {
+        columns_[i]->set_current_domain_slot<int64_t>(
+            ndrect, {0, newshape[i] - 1});
     }
 
     new_current_domain.set_ndrectangle(ndrect);
