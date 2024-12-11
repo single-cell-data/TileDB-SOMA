@@ -107,11 +107,15 @@ void ManagedQuery::set_layout(ResultOrder layout) {
 }
 
 void ManagedQuery::select_columns(
-    const std::vector<std::string>& names, bool if_not_empty) {
+    const std::vector<std::string>& names, bool if_not_empty, bool replace) {
     // Return if we are selecting all columns (columns_ is empty) and we want to
     // continue selecting all columns (if_not_empty == true).
     if (if_not_empty && columns_.empty()) {
         return;
+    }
+
+    if (replace) {
+        reset_columns();
     }
 
     for (auto& name : names) {
@@ -126,6 +130,10 @@ void ManagedQuery::select_columns(
             columns_.push_back(name);
         }
     }
+}
+
+void ManagedQuery::reset_columns() {
+    columns_.clear();
 }
 
 void ManagedQuery::setup_read() {
