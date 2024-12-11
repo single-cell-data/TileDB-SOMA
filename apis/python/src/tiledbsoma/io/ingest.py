@@ -1160,33 +1160,28 @@ def _extract_new_values_for_append_aux(
             column = arrow_table.column(name)
             old_field = old_schema.field(name)
             new_field = new_schema.field(name)
+
+            # Note from https://enpiar.com/arrow-site/docs/python/data.html#tables
+            # we have the assertion that pa.Table columns are necessarily of type
+            # pa.ChunkedArray.
+            assert isinstance(column, pa.ChunkedArray)
+
             if not is_cat(old_field) and is_cat(new_field):
                 # Convert from categorical to non-categorical.  Note that if
                 # this is a pa.ChunkedArray, there is no .dictionary_decode()
                 # for it, but each chunk does have a .dictionary_decode().
-
-                if isinstance(column, pa.ChunkedArray):
-                    column = pa.chunked_array(
-                        [chunk.dictionary_decode() for chunk in column.chunks]
-                    )
-                elif isinstance(column, pa.DictionaryArray):
-                    column = column.dictionary_decode()
-                else:
-                    raise SOMAError(f"Unrecognized Arrow field type {type(column)}")
+                column = pa.chunked_array(
+                    [chunk.dictionary_decode() for chunk in column.chunks]
+                )
 
             elif is_cat(old_field) and not is_cat(new_field):
                 # Convert from non-categorical to categorical.  Note:
                 # libtiledbsoma already merges the enum mappings, e.g if the
                 # storage has red, yellow, & green, but our new data has some
                 # yellow, green, and orange.
-                if isinstance(column, pa.ChunkedArray):
-                    column = pa.chunked_array(
-                        [chunk.dictionary_encode() for chunk in column.chunks]
-                    )
-                elif isinstance(column, pa.DictionaryArray):
-                    column = column.dictionary_encode()
-                else:
-                    raise SOMAError(f"Unrecognized Arrow field type {type(column)}")
+                column = pa.chunked_array(
+                    [chunk.dictionary_encode() for chunk in column.chunks]
+                )
 
             fields_dict[name] = column
         arrow_table = pa.Table.from_pydict(fields_dict)
