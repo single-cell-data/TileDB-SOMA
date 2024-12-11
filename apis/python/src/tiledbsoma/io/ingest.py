@@ -1172,7 +1172,7 @@ def _extract_new_values_for_append_aux(
                 elif isinstance(column, pa.DictionaryArray):
                     column = column.dictionary_decode()
                 else:
-                    column = column.to_pylist()
+                    raise SOMAError(f"Unrecognized Arrow field type {type(column)}")
 
             elif is_cat(old_field) and not is_cat(new_field):
                 # Convert from non-categorical to categorical.  Note:
@@ -1186,14 +1186,7 @@ def _extract_new_values_for_append_aux(
                 elif isinstance(column, pa.DictionaryArray):
                     column = column.dictionary_encode()
                 else:
-                    column = pa.array(
-                        column.to_pylist(),
-                        pa.dictionary(
-                            index_type=old_field.type.index_type,
-                            value_type=old_field.type.value_type,
-                            ordered=old_field.type.ordered,
-                        ),
-                    )
+                    raise SOMAError(f"Unrecognized Arrow field type {type(column)}")
 
             fields_dict[name] = column
         arrow_table = pa.Table.from_pydict(fields_dict)
