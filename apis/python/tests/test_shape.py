@@ -671,3 +671,62 @@ def test_canned_experiments(tmp_path, has_shapes):
         _check_ndarray(exp.ms["RNA"].obsm["X_pca"], True, (2639, 50))
         _check_ndarray(exp.ms["RNA"].obsp["connectivities"], True, (2639, 2639))
         _check_ndarray(exp.ms["RNA"].varm["PCs"], True, (1839, 50))
+
+
+def test_canned_nonstandard_dataframe_upgrade(tmp_path):
+    uri = tmp_path.as_posix()
+
+    tgz = TESTDATA / "nonstandard-dataframe-without-shapes.tgz"
+
+    with tarfile.open(tgz) as handle:
+        handle.extractall(uri)
+
+    # ----------------------------------------------------------------
+    # As of tiledbsoma 1.15 we no longer write dataframes/arrays without
+    # core current domain (soma domain/shape) so it is crucial that in order
+    # to test upgrade-shape, we test saved-off data written before 1.15.0.
+    #
+    # Here is a dataframe created with tiledbsoma 1.14.5:
+    # ----------------------------------------------------------------
+    # import tiledbsoma
+    # import pyarrow as pa
+    #
+    # schema = pa.schema([
+    #     ("soma_joinid", pa.int64()),
+    #     ("mystring", pa.string()),
+    #     ("myint", pa.int32()),
+    #     ("myfloat", pa.float32()),
+    # ])
+    #
+    # data = pa.Table.from_pydict({
+    #     "soma_joinid": [10, 20],
+    #     "mystring": ["hello", "world"],
+    #     "myint": [1330, 1440],
+    #     "myfloat": [4.5, 5.5],
+    # })
+    #
+    # with tiledbsoma.DataFrame.create(
+    #     uri="data-sdf-dom-multi-py",
+    #     schema=schema,
+    #     index_column_names=["soma_joinid", "myint", "mystring"],
+    #     domain=None,
+    # ) as sdf:
+    #     sdf.write(data)
+    # ----------------------------------------------------------------
+
+    with tiledbsoma.DataFrame.open(uri) as sdf:
+        assert not sdf.tiledbsoma_has_upgraded_domain
+        assert sdf.non_empty_domain() == ((10, 20), (1330, 1440), ("hello", "world"))
+        assert sdf.domain == ((0, 2147483646), (-2147483648, 2147481598), ("", ""))
+        assert sdf.maxdomain == ((0, 2147483646), (-2147483648, 2147481598), ("", ""))
+
+    with tiledbsoma.DataFrame.open(uri, "w") as sdf:
+        ok, msg = sdf.tiledbsoma_upgrade_soma_joinid_shape(1, check_only=True)
+
+        sdf.tiledbsoma_upgrade_soma_joinid_shape(100)
+
+    with tiledbsoma.DataFrame.open(uri) as sdf:
+        assert sdf.tiledbsoma_has_upgraded_domain
+        assert sdf.non_empty_domain() == ((10, 20), (1330, 1440), ("hello", "world"))
+        assert sdf.domain == ((0, 99), (-2147483648, 2147481598), ("", ""))
+        assert sdf.maxdomain == ((0, 2147483646), (-2147483648, 2147481598), ("", ""))
