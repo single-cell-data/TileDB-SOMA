@@ -1241,9 +1241,7 @@ class SOMAArray : public SOMAObject {
      * This is a code-dedupe helper for can_upgrade_domain.
      */
     StatusAndReason _can_set_dataframe_domainish_subhelper(
-        const ArrowTable& newdomain,
-        bool check_current_domain,
-        std::string function_name_for_messages);
+        const ArrowTable& newdomain, std::string function_name_for_messages);
 
     /**
      * This is a code-dedupe helper for can_resize_soma_joinid_shape and
@@ -1278,102 +1276,6 @@ class SOMAArray : public SOMAObject {
         const ArrowTable& newdomain,
         bool must_already_have,
         std::string function_name_for_messages);
-
-    /**
-     * This is a helper for can_upgrade_domain.
-     */
-    template <typename T>
-    StatusAndReason _can_set_dataframe_domainish_slot_checker_non_string(
-        bool check_current_domain,
-        const ArrowTable& domain_table,
-        std::string dim_name) {
-        std::pair<T, T> old_lo_hi = check_current_domain ?
-                                        _core_current_domain_slot<T>(dim_name) :
-                                        _core_domain_slot<T>(dim_name);
-        std::vector<T>
-            new_lo_hi = ArrowAdapter::get_table_non_string_column_by_name<T>(
-                domain_table, dim_name);
-        if (new_lo_hi.size() != 2) {
-            throw TileDBSOMAError(
-                "internal coding error detected at "
-                "_can_set_dataframe_domainish_slot_checker");
-        }
-
-        const T& old_lo = old_lo_hi.first;
-        const T& old_hi = old_lo_hi.second;
-        const T& new_lo = new_lo_hi[0];
-        const T& new_hi = new_lo_hi[1];
-
-        // If we're checking against the core current domain: the user-provided
-        // domain must contain the core current domain.
-        //
-        // If we're checking against the core (max) domain: the user-provided
-        // domain must be contained within the core (max) domain.
-
-        if (new_lo > new_hi) {
-            return std::pair(
-                false,
-                "index-column name " + dim_name + ": new lower > new upper");
-        }
-
-        if (check_current_domain) {
-            if (new_lo > old_lo) {
-                return std::pair(
-                    false,
-                    "index-column name " + dim_name +
-                        ": new lower > old lower (downsize is unsupported)");
-            }
-            if (new_hi < old_hi) {
-                return std::pair(
-                    false,
-                    "index-column name " + dim_name +
-                        ": new upper < old upper (downsize is unsupported)");
-            }
-        } else {
-            if (new_lo < old_lo) {
-                return std::pair(
-                    false,
-                    "index-column name " + dim_name +
-                        ": new lower < limit lower");
-            }
-            if (new_hi > old_hi) {
-                return std::pair(
-                    false,
-                    "index-column name " + dim_name +
-                        ": new upper > limit upper");
-            }
-        }
-        return std::pair(true, "");
-    }
-
-    /**
-     * This is a helper for can_upgrade_domain.
-     */
-    StatusAndReason _can_set_dataframe_domainish_slot_checker_string(
-        bool /*check_current_domain*/,
-        const ArrowTable& domain_table,
-        std::string dim_name) {
-        std::vector<std::string>
-            new_lo_hi = ArrowAdapter::get_table_string_column_by_name(
-                domain_table, dim_name);
-        if (new_lo_hi.size() != 2) {
-            throw TileDBSOMAError(
-                "internal coding error detected at "
-                "_can_set_dataframe_domainish_slot_checker");
-        }
-
-        const std::string& new_lo = new_lo_hi[0];
-        const std::string& new_hi = new_lo_hi[1];
-
-        if (new_lo != "" || new_hi != "") {
-            return std::pair(
-                false,
-                "domain cannot be set for string index columns: please use "
-                "(\"\", \"\")");
-        }
-
-        return std::pair(true, "");
-    }
 
     /**
      * While SparseNDArray, DenseNDArray, and default-indexed DataFrame
