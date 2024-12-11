@@ -26,12 +26,13 @@ _DT = TypeVar("_DT", bound=pdt.Dtype)
 _MT = TypeVar("_MT", NPNDArray, sp.spmatrix, PDSeries)
 _str_to_type = {"boolean": bool, "string": str, "bytes": bytes}
 
-COLUMN_DECAT_THRESHOLD = 4096
+COLUMN_DECAT_THRESHOLD = 32767
 """
 For enum-of-string columns with a cardinality higher than this, we convert from
 enum-of-string in the AnnData ``obs``/``var``, to plain string in TileDB-SOMA
 ``obs``/``var``. However, if we're appending to existing storage, we follow the
-schema there.
+schema there. Reasoning behind this choice: accommodate signed 16-bit index type.
+See also https://github.com/single-cell-data/TileDB-SOMA/pull/3415.
 """
 
 
