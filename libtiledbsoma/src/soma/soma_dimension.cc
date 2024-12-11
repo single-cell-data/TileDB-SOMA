@@ -347,12 +347,38 @@ std::pair<bool, std::string> SOMADimension::_can_set_current_domain_slot(
                     dimension.name()));
         }
 
-        // If we're checking against the core current domain: the user-provided
-        // domain must contain the core current domain.
+        // * For old-style dataframe without shape: core domain (soma maxdomain)
+        // may
+        //   be small (like 100) or big (like 2 billionish).
+        // * For new-style dataframe with shape: core current domain (soma
+        // domain)
+        //   will probably be small and core domain (soma maxdomain) will be
+        //   huge.
         //
-        // If we're checking against the core (max) domain: the user-provided
-        // domain must be contained within the core (max) domain.
+        // In either case, we need to check that the user's requested soma
+        // domain isn't outside the core domain, which is immutable. For
+        // old-style dataframes, if the requested domain fits in the array's
+        // core domain, it's good to go as a new soma domain.
+        auto core_dom = std::any_cast<std::pair<T, T>>(_core_domain_slot());
 
+        if (new_dom[0] < core_dom.first) {
+            return std::pair(
+                false,
+                std::format(
+                    "index-column name {}: new lower < limit lower",
+                    dimension.name()));
+        }
+        if (new_dom[1] > core_dom.second) {
+            return std::pair(
+                false,
+                std::format(
+                    "index-column name {}: new upper > limit upper",
+                    dimension.name()));
+        }
+
+        // For new-style dataframes, we need to additionally that the the
+        // requested soma domain (core current domain) isn't a downsize of the
+        // current one.
         if (rectangle.has_value()) {
             auto dom = rectangle.value().range<T>(dimension.name());
 
@@ -370,23 +396,6 @@ std::pair<bool, std::string> SOMADimension::_can_set_current_domain_slot(
                     std::format(
                         "index-column name {}: new upper < old upper (downsize "
                         "is unsupported)",
-                        dimension.name()));
-            }
-        } else {
-            auto dom = std::any_cast<std::pair<T, T>>(_core_domain_slot());
-
-            if (new_dom[0] < dom.first) {
-                return std::pair(
-                    false,
-                    std::format(
-                        "index-column name {}: new lower < limit lower",
-                        dimension.name()));
-            }
-            if (new_dom[1] > dom.second) {
-                return std::pair(
-                    false,
-                    std::format(
-                        "index-column name {}: new upper > limit upper",
                         dimension.name()));
             }
         }
