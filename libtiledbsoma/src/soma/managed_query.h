@@ -135,11 +135,22 @@ class ManagedQuery {
      * list of selected columns is empty. This prevents a `select_columns` call
      * from changing an empty list (all columns) to a subset of columns.
      *
+     * NB: you may only select a given column once. Selecting twice will
+     * generate an error in read_next.
+     *
      * @param names Vector of column names
      * @param if_not_empty Prevent changing an "empty" selection of all columns
+     * @param replace Column names will replace any existing selected columns.
      */
     void select_columns(
-        const std::vector<std::string>& names, bool if_not_empty = false);
+        const std::vector<std::string>& names,
+        bool if_not_empty = false,
+        bool replace = false);
+
+    /**
+     * @brief Reset column selection to none, aka "all".
+     */
+    void reset_columns();
 
     /**
      * @brief Returns the column names set by the query.

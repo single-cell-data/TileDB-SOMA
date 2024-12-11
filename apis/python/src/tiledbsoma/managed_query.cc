@@ -98,8 +98,7 @@ void load_managed_query(py::module& m) {
                              .ptr()
                              .get();
                 }
-                mq.reset();
-                mq.select_columns(column_names);
+                mq.select_columns(column_names, false, true);
 
                 // Release python GIL after we're done accessing python
                 // objects
@@ -115,7 +114,8 @@ void load_managed_query(py::module& m) {
             "select_columns",
             &ManagedQuery::select_columns,
             "names"_a,
-            "if_not_empty"_a = false)
+            "if_not_empty"_a = false,
+            "replace"_a = false)
 
         .def(
             "submit_read",
