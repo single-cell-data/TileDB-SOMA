@@ -135,8 +135,8 @@ class ManagedQuery {
      * list of selected columns is empty. This prevents a `select_columns` call
      * from changing an empty list (all columns) to a subset of columns.
      *
-     * NB: you may only select a given column once. Selecting twice will generate
-     * an error in read_next.
+     * NB: you may only select a given column once. Selecting twice will
+     * generate an error in read_next.
      *
      * @param names Vector of column names
      * @param if_not_empty Prevent changing an "empty" selection of all columns
