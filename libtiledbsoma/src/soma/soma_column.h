@@ -27,7 +27,10 @@
  *
  * @section DESCRIPTION
  *
- *   This file defines the SOMAColumn class.
+ *   This file defines the SOMAColumn class. SOMAColumn is an abstraction over
+ * TileDB dimensions, attributes and combinations of them. It is designed to add
+ * indexing capabilities to any datatype utilizing native TileDB dimensions
+ * without exposing the internal indexing to the end user.
  */
 
 #ifndef SOMA_COLUMN_H
