@@ -1038,8 +1038,7 @@ void SOMAArray::_set_soma_joinid_shape_helper(
                         tiledb::impl::type_to_str(dim.type())));
                 }
                 ndrect.set_range<int64_t>(dim_name, 0, newshape - 1);
-                continue;
-
+            } else {
                 switch (dim.type()) {
                     case TILEDB_STRING_ASCII:
                     case TILEDB_STRING_UTF8:
