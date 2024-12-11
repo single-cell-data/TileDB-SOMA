@@ -1161,21 +1161,40 @@ def _extract_new_values_for_append_aux(
             old_field = old_schema.field(name)
             new_field = new_schema.field(name)
             if not is_cat(old_field) and is_cat(new_field):
-                # Convert from categorical to non-categorical.
-                column = column.to_pylist()
+                # Convert from categorical to non-categorical.  Note that if
+                # this is a pa.ChunkedArray, there is no .dictionary_decode()
+                # for it, but each chunk does have a .dictionary_decode().
+
+                if isinstance(column, pa.ChunkedArray):
+                    column = pa.chunked_array(
+                        [chunk.dictionary_decode() for chunk in column.chunks]
+                    )
+                elif isinstance(column, pa.DictionaryArray):
+                    column = column.dictionary_decode()
+                else:
+                    column = column.to_pylist()
+
             elif is_cat(old_field) and not is_cat(new_field):
                 # Convert from non-categorical to categorical.  Note:
                 # libtiledbsoma already merges the enum mappings, e.g if the
                 # storage has red, yellow, & green, but our new data has some
                 # yellow, green, and orange.
-                column = pa.array(
-                    column.to_pylist(),
-                    pa.dictionary(
-                        index_type=old_field.type.index_type,
-                        value_type=old_field.type.value_type,
-                        ordered=old_field.type.ordered,
-                    ),
-                )
+                if isinstance(column, pa.ChunkedArray):
+                    column = pa.chunked_array(
+                        [chunk.dictionary_encode() for chunk in column.chunks]
+                    )
+                elif isinstance(column, pa.DictionaryArray):
+                    column = column.dictionary_encode()
+                else:
+                    column = pa.array(
+                        column.to_pylist(),
+                        pa.dictionary(
+                            index_type=old_field.type.index_type,
+                            value_type=old_field.type.value_type,
+                            ordered=old_field.type.ordered,
+                        ),
+                    )
+
             fields_dict[name] = column
         arrow_table = pa.Table.from_pydict(fields_dict)
 
