@@ -100,8 +100,15 @@ std::unique_ptr<SOMASparseNDArray> SOMASparseNDArray::open(
     std::vector<std::string> column_names,
     ResultOrder result_order,
     std::optional<TimestampRange> timestamp) {
-    return std::make_unique<SOMASparseNDArray>(
+    auto array = std::make_unique<SOMASparseNDArray>(
         mode, uri, ctx, column_names, result_order, timestamp);
+
+    if (!array->check_type("SOMASparseNDArray")) {
+        throw TileDBSOMAError(
+            "[SOMASparseNDArray::open] Object is not a SOMASparseNDArray");
+    }
+
+    return array;
 }
 
 bool SOMASparseNDArray::exists(

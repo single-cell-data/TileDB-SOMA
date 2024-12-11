@@ -62,7 +62,14 @@ std::unique_ptr<SOMAScene> SOMAScene::open(
     std::shared_ptr<SOMAContext> ctx,
     std::optional<TimestampRange> timestamp) {
     try {
-        return std::make_unique<SOMAScene>(mode, uri, ctx, timestamp);
+        auto group = std::make_unique<SOMAScene>(mode, uri, ctx, timestamp);
+
+        if (!group->check_type("SOMAScene")) {
+            throw TileDBSOMAError(
+                "[SOMAScene::open] Object is not a SOMAScene");
+        }
+
+        return group;
     } catch (TileDBError& e) {
         throw TileDBSOMAError(e.what());
     }
