@@ -26,7 +26,7 @@ _DT = TypeVar("_DT", bound=pdt.Dtype)
 _MT = TypeVar("_MT", NPNDArray, sp.spmatrix, PDSeries)
 _str_to_type = {"boolean": bool, "string": str, "bytes": bytes}
 
-STRING_DECAT_THRESHOLD = 4096
+COLUMN_DECAT_THRESHOLD = 4096
 """
 For enum-of-string columns with a cardinality higher than this, we convert from
 enum-of-string in the AnnData ``obs``/``var``, to plain string in TileDB-SOMA
@@ -74,11 +74,8 @@ def to_tiledb_supported_array_type(name: str, x: _MT) -> _MT:
     # issues in subsequent processing.
     if isinstance(x, pd.Series) and isinstance(x.dtype, pd.CategoricalDtype):
         # Heuristic number
-        if (
-            pandas.api.types.is_string_dtype(x)
-            and len(x.cat.categories) > STRING_DECAT_THRESHOLD
-        ):
-            return x.astype(str)
+        if len(x.cat.categories) > COLUMN_DECAT_THRESHOLD:
+            return x.astype(x.cat.categories.dtype)
 
     return x
 
