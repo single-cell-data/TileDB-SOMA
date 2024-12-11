@@ -143,7 +143,9 @@ class ManagedQuery {
      * @param replace Column names will replace any existing selected columns.
      */
     void select_columns(
-        const std::vector<std::string>& names, bool if_not_empty = false, bool replace = false);
+        const std::vector<std::string>& names,
+        bool if_not_empty = false,
+        bool replace = false);
 
     /**
      * @brief Reset column selection to none, aka "all".
