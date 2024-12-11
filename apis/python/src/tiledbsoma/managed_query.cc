@@ -98,7 +98,7 @@ void load_managed_query(py::module& m) {
                              .ptr()
                              .get();
                 }
-                mq.reset();
+                mq.reset_columns();
                 mq.select_columns(column_names);
 
                 // Release python GIL after we're done accessing python

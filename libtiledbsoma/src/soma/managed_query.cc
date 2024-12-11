@@ -129,6 +129,10 @@ void ManagedQuery::select_columns(
     }
 }
 
+void ManagedQuery::reset_columns() {
+    columns_.clear();
+}
+
 void ManagedQuery::setup_read() {
     // If the query is complete, return so we do not submit it again
     auto status = query_->query_status();
