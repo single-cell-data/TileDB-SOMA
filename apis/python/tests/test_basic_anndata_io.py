@@ -1,4 +1,5 @@
 import json
+import random
 import tempfile
 from copy import deepcopy
 from pathlib import Path
@@ -1359,22 +1360,34 @@ def test_nan_append(conftest_pbmc_small, dtype, nans, new_obs_ids):
 def test_decat_append(tmp_path):
 
     # Prepare the AnnData inputs
-    nobs_under = tiledbsoma.io.conversions.STRING_DECAT_THRESHOLD - 2
-    nobs_over = tiledbsoma.io.conversions.STRING_DECAT_THRESHOLD + 2
+    nobs_under = tiledbsoma.io.conversions.COLUMN_DECAT_THRESHOLD - 2
+    nobs_over = tiledbsoma.io.conversions.COLUMN_DECAT_THRESHOLD + 2
     nvar = 100
 
     obs_ids_under = [f"under_{e:08}" for e in range(nobs_under)]
     obs_ids_over = [f"over_{e:08}" for e in range(nobs_over)]
     var_ids = [f"gene_{e:08}" for e in range(nvar)]
 
-    enum_values_under = [f"enum_u_{e:06}" for e in range(nobs_under)]
-    enum_values_over = [f"enum_o_{e:06}" for e in range(nobs_over)]
+    string_enum_values_under = [f"enum_u_{e:06}" for e in range(nobs_under)]
+    string_enum_values_over = [f"enum_o_{e:06}" for e in range(nobs_over)]
+    float_enum_values_under = [1e6 + e for e in range(nobs_under)]
+    float_enum_values_over = [2e6 + e for e in range(nobs_over)]
+    bool_enum_values_under = random.choices([True, False], k=nobs_under)
+    bool_enum_values_over = random.choices([True, False], k=nobs_over)
 
     obs_under = pd.DataFrame(
         data={
             "obs_id": np.asarray(obs_ids_under),
             "is_primary_data": np.asarray([True] * nobs_under),
-            "myenum": pd.Series(np.asarray(enum_values_under), dtype="category"),
+            "string_enum": pd.Series(
+                np.asarray(string_enum_values_under), dtype="category"
+            ),
+            "float_enum": pd.Series(
+                np.asarray(float_enum_values_under), dtype="category"
+            ),
+            "bool_enum": pd.Series(
+                np.asarray(bool_enum_values_under), dtype="category"
+            ),
         }
     )
     obs_under.set_index("obs_id", inplace=True)
@@ -1383,7 +1396,13 @@ def test_decat_append(tmp_path):
         data={
             "obs_id": np.asarray(obs_ids_over),
             "is_primary_data": np.asarray([True] * nobs_over),
-            "myenum": pd.Series(np.asarray(enum_values_over), dtype="category"),
+            "string_enum": pd.Series(
+                np.asarray(string_enum_values_over), dtype="category"
+            ),
+            "float_enum": pd.Series(
+                np.asarray(float_enum_values_over), dtype="category"
+            ),
+            "bool_enum": pd.Series(np.asarray(bool_enum_values_over), dtype="category"),
         }
     )
     obs_over.set_index("obs_id", inplace=True)
@@ -1416,16 +1435,24 @@ def test_decat_append(tmp_path):
     # Check that the low-cardinality categorical-of-string in the AnnData has
     # been ingested to TileDB-SOMA enum-of-string.
     with tiledbsoma.Experiment.open(path_under) as exp_under:
-        assert pa.types.is_dictionary(exp_under.obs.schema.field("myenum").type)
+        assert pa.types.is_dictionary(exp_under.obs.schema.field("string_enum").type)
+        assert pa.types.is_dictionary(exp_under.obs.schema.field("float_enum").type)
+        assert pa.types.is_dictionary(exp_under.obs.schema.field("bool_enum").type)
         obs_table = exp_under.obs.read().concat()
-        assert obs_table.column("myenum").to_pylist() == enum_values_under
+        assert obs_table.column("string_enum").to_pylist() == string_enum_values_under
+        assert obs_table.column("float_enum").to_pylist() == float_enum_values_under
+        assert obs_table.column("bool_enum").to_pylist() == bool_enum_values_under
 
     # Check that the high-cardinality categorical-of-string in the AnnData has
     # been ingested to TileDB-SOMA plain string.
     with tiledbsoma.Experiment.open(path_over) as exp_over:
-        assert not pa.types.is_dictionary(exp_over.obs.schema.field("myenum").type)
+        assert not pa.types.is_dictionary(exp_over.obs.schema.field("string_enum").type)
+        assert not pa.types.is_dictionary(exp_over.obs.schema.field("float_enum").type)
+        assert pa.types.is_dictionary(exp_over.obs.schema.field("bool_enum").type)
         obs_table = exp_over.obs.read().concat()
-        assert obs_table.column("myenum").to_pylist() == enum_values_over
+        assert obs_table.column("string_enum").to_pylist() == string_enum_values_over
+        assert obs_table.column("float_enum").to_pylist() == float_enum_values_over
+        assert obs_table.column("bool_enum").to_pylist() == bool_enum_values_over
 
     # Append over-the-threshold AnnData to under-the-threshold TileDB-SOMA
     # storage, and vice versa.
@@ -1465,17 +1492,37 @@ def test_decat_append(tmp_path):
 
     # Check that the appends happened successfully
     with tiledbsoma.Experiment.open(path_under) as exp_under:
-        assert pa.types.is_dictionary(exp_under.obs.schema.field("myenum").type)
+        assert pa.types.is_dictionary(exp_under.obs.schema.field("string_enum").type)
+        assert pa.types.is_dictionary(exp_under.obs.schema.field("float_enum").type)
+        assert pa.types.is_dictionary(exp_under.obs.schema.field("bool_enum").type)
         obs_table = exp_under.obs.read().concat()
         assert (
-            obs_table.column("myenum").to_pylist()
-            == enum_values_under + enum_values_over
+            obs_table.column("string_enum").to_pylist()
+            == string_enum_values_under + string_enum_values_over
+        )
+        assert (
+            obs_table.column("float_enum").to_pylist()
+            == float_enum_values_under + float_enum_values_over
+        )
+        assert (
+            obs_table.column("bool_enum").to_pylist()
+            == bool_enum_values_under + bool_enum_values_over
         )
 
     with tiledbsoma.Experiment.open(path_over) as exp_over:
-        assert not pa.types.is_dictionary(exp_over.obs.schema.field("myenum").type)
+        assert not pa.types.is_dictionary(exp_over.obs.schema.field("string_enum").type)
+        assert not pa.types.is_dictionary(exp_over.obs.schema.field("float_enum").type)
+        assert pa.types.is_dictionary(exp_over.obs.schema.field("bool_enum").type)
         obs_table = exp_over.obs.read().concat()
         assert (
-            obs_table.column("myenum").to_pylist()
-            == enum_values_over + enum_values_under
+            obs_table.column("string_enum").to_pylist()
+            == string_enum_values_over + string_enum_values_under
+        )
+        assert (
+            obs_table.column("float_enum").to_pylist()
+            == float_enum_values_over + float_enum_values_under
+        )
+        assert (
+            obs_table.column("bool_enum").to_pylist()
+            == bool_enum_values_over + bool_enum_values_under
         )
