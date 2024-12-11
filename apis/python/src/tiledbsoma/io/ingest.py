@@ -1079,37 +1079,36 @@ def _extract_new_values_for_append_aux(
 
     This does two things:
 
-    * Retains only the 'new' rows compared to existing storage.
-      Example is append-mode updates to the var dataframe for
-      which it's likely that most/all gene IDs have already been seen.
+    * Retains only the 'new' rows compared to existing storage.  Example is
+      append-mode updates to the var dataframe for which it's likely that
+      most/all gene IDs have already been seen.
 
-    * String vs categorical of string:
+    * Categorical of type sometype vs plain sometype:
 
-      o If we're appending a plain-string column to existing
-        categorical-of-string storage, convert the about-to-be-written data
-        to categorical of string, to match.
+      o If we're appending a non-categorical column to existing categorical
+        storage, convert the about-to-be-written data to categorical of that
+        type, to match.
 
-      o If we're appending a categorical-of-string column to existing
-        plain-string storage, convert the about-to-be-written data
-        to plain string, to match.
+      o If we're appending a categorical column to existing non-categorical
+        storage, convert the about-to-be-written data to non-categorical, to
+        match.
 
     Context: https://github.com/single-cell-data/TileDB-SOMA/issues/3353.
     Namely, we find that AnnData's to_h5ad/from_h5ad can categoricalize (without
     the user's knowledge or intention) string columns.  For example, even
     cell_id/barcode, for which there may be millions of distinct values, with no
     gain to be had from dictionary encoding, will be converted to categorical.
-    We find that converting these high-cardinality enums to plain string is a
+    We find that converting these high-cardinality enums to non-enumerated is a
     significant performance win for subsequent accesses. When we do an initial
-    ingest from AnnData to TileDB-SOMA, we convert from categorical-of-string to
-    plain string if the cardinality exceeds some threshold.
+    ingest from AnnData to TileDB-SOMA, we decategoricalize if the cardinality
+    exceeds some threshold.
 
     All well and good -- except for one more complication which is append mode.
     Namely, if the new column has high enough cardinality that we would
-    downgrade to plain string, but the existing storage has
-    categorical-of-string, we must write the new data as categorical-of-string.
-    Likewise, if the new column has low enough cardinality that we would keep it
-    as categorical-of-string, but the existing storage has plain string, we must
-    write the new data as plain strings.
+    downgrade to non-categorical, but the existing storage has categorical, we
+    must write the new data as categorical.  Likewise, if the new column has low
+    enough cardinality that we would keep it as categorical, but the existing
+    storage has non-categorical, we must write the new data as non-categorical.
     """
 
     # Retain only the new rows.
@@ -1133,34 +1132,23 @@ def _extract_new_values_for_append_aux(
     # anything in that case. Regardless, we can't assume that the old
     # and new schema have the same column names.
 
-    # Helper functions for
-    def is_str_type(typ: pa.DataType) -> bool:
-        return cast(bool, typ == pa.string() or typ == pa.large_string())
-
-    def is_str_col(field: pa.Field) -> bool:
-        return is_str_type(field.type)
-
-    def is_str_cat_col(field: pa.Field) -> bool:
-        if not pa.types.is_dictionary(field.type):
-            return False
-        return is_str_type(field.type.value_type)
+    def is_cat(field: pa.Field) -> bool:
+        return cast(bool, pa.types.is_dictionary(field.type))
 
     # Make a quick check of the old and new schemas to see if any columns need
-    # changing between plain string and categorical-of-string.  We're about to
+    # changing between non-categorical and categorical.  We're about to
     # duplicate the new data -- and we must, since pyarrow.Table is immutable --
     # so let's only do that if we need to.
     any_to_change = False
     for name in new_schema.names:
         if name not in old_schema.names:
             continue
-        if is_str_col(old_schema.field(name)) and is_str_cat_col(
-            new_schema.field(name)
-        ):
+        old_field = old_schema.field(name)
+        new_field = new_schema.field(name)
+        if not is_cat(old_field) and is_cat(new_field):
             any_to_change = True
             break
-        if is_str_cat_col(old_schema.field(name)) and is_str_col(
-            new_schema.field(name)
-        ):
+        if is_cat(old_field) and not is_cat(new_field):
             any_to_change = True
             break
 
@@ -1170,24 +1158,31 @@ def _extract_new_values_for_append_aux(
             if name not in old_schema.names:
                 continue
             column = arrow_table.column(name)
-            old_info = old_schema.field(name)
-            new_info = new_schema.field(name)
-            if is_str_col(old_info) and is_str_cat_col(new_info):
-                # Convert from categorical-of-string to plain string.
-                column = column.to_pylist()
-            elif is_str_cat_col(old_info) and is_str_col(new_info):
-                # Convert from plain string to categorical-of-string.  Note:
+            old_field = old_schema.field(name)
+            new_field = new_schema.field(name)
+
+            # Note from https://enpiar.com/arrow-site/docs/python/data.html#tables
+            # we have the assertion that pa.Table columns are necessarily of type
+            # pa.ChunkedArray.
+            assert isinstance(column, pa.ChunkedArray)
+
+            if not is_cat(old_field) and is_cat(new_field):
+                # Convert from categorical to non-categorical.  Note that if
+                # this is a pa.ChunkedArray, there is no .dictionary_decode()
+                # for it, but each chunk does have a .dictionary_decode().
+                column = pa.chunked_array(
+                    [chunk.dictionary_decode() for chunk in column.chunks]
+                )
+
+            elif is_cat(old_field) and not is_cat(new_field):
+                # Convert from non-categorical to categorical.  Note:
                 # libtiledbsoma already merges the enum mappings, e.g if the
                 # storage has red, yellow, & green, but our new data has some
                 # yellow, green, and orange.
-                column = pa.array(
-                    column.to_pylist(),
-                    pa.dictionary(
-                        index_type=old_info.type.index_type,
-                        value_type=old_info.type.value_type,
-                        ordered=old_info.type.ordered,
-                    ),
+                column = pa.chunked_array(
+                    [chunk.dictionary_encode() for chunk in column.chunks]
                 )
+
             fields_dict[name] = column
         arrow_table = pa.Table.from_pydict(fields_dict)
 
