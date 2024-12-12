@@ -100,7 +100,7 @@ def open(
     except (RuntimeError, SOMAError) as tdbe:
         if is_does_not_exist_error(tdbe):
             raise DoesNotExistError(tdbe) from tdbe
-        raise
+        raise SOMAError(tdbe) from tdbe
 
     _type_to_class = {
         "somadataframe": DataFrameWrapper,
