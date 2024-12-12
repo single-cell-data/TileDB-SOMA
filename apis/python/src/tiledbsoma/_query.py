@@ -6,6 +6,7 @@
 """Implementation of a SOMA Experiment.
 """
 import enum
+import warnings
 from concurrent.futures import ThreadPoolExecutor
 from typing import (
     TYPE_CHECKING,
@@ -54,6 +55,7 @@ from typing_extensions import Self
 
 if TYPE_CHECKING:
     from ._experiment import Experiment
+from ._constants import SPATIAL_DISCLAIMER
 from ._fastercsx import CompressedMatrix
 from ._measurement import Measurement
 from ._sparse_nd_array import SparseNDArray
@@ -438,7 +440,7 @@ class ExperimentAxisQuery:
             raise TypeError("var_spatial_presence must be a dataframe.")
 
         full_table = var_scene.read(
-            coords=((Axis.OBS.getattr_from(self._joinids), slice(None))),
+            coords=((Axis.VAR.getattr_from(self._joinids), slice(None))),
             result_order=ResultOrder.COLUMN_MAJOR,
             value_filter="data != 0",
         ).concat()
@@ -494,6 +496,8 @@ class ExperimentAxisQuery:
         from spatialdata import SpatialData
 
         from .io.spatial.outgest import _add_scene_to_spatial_data
+
+        warnings.warn(SPATIAL_DISCLAIMER)
 
         # Get a list of scenes to add to SpatialData object.
         if scene_presence_mode == "obs":
