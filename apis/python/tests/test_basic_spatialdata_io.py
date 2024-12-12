@@ -45,7 +45,7 @@ def experiment_with_single_scene(tmp_path_factory, sample_2d_data) -> soma.Exper
         scene1.varl.add_new_collection("RNA")
         scene1.add_new_collection("img")
 
-        # Add point cloud with shape to scene 1.
+        # Add point cloud with shape to scene 1 obsl.
         points1 = scene1.add_new_point_cloud_dataframe(
             "points1",
             "obsl",
@@ -67,7 +67,27 @@ def experiment_with_single_scene(tmp_path_factory, sample_2d_data) -> soma.Exper
         points1.metadata["soma_geometry"] = 1.0
         points1.metadata["soma_geometry_type"] = "radius"
 
-        # Add point cloud without shape to scene 1.
+        # Add point cloud wihtout shape to scene 1 obsl
+        points3 = scene1.add_new_point_cloud_dataframe(
+            "points3",
+            "obsl",
+            transform=soma.UniformScaleTransform(
+                ("x_scene1", "y_scene1"), ("x", "y"), 4.0
+            ),
+            schema=pa.schema([("x", pa.float64()), ("y", pa.float64())]),
+            domain=[[-1, 0], [-1, 0]],
+        )
+        points3.write(
+            pa.Table.from_pydict(
+                {
+                    "soma_joinid": np.arange(4),
+                    "x": np.array([0, 0, -0.5, -0.5]),
+                    "y": np.array([0, -0.5, 0, -0.5]),
+                }
+            )
+        )
+
+        # Add point cloud without shape to scene 1 varl.
         points2 = scene1.add_new_point_cloud_dataframe(
             "points2",
             ["varl", "RNA"],
@@ -86,6 +106,28 @@ def experiment_with_single_scene(tmp_path_factory, sample_2d_data) -> soma.Exper
                 }
             )
         )
+
+        # Add point cloud with shape to scene 1 varl.
+        points4 = scene1.add_new_point_cloud_dataframe(
+            "points4",
+            ["varl", "RNA"],
+            transform=soma.UniformScaleTransform(
+                ("x_scene1", "y_scene1"), ("x", "y"), 0.25
+            ),
+            schema=pa.schema([("x", pa.float64()), ("y", pa.float64())]),
+            domain=[[0, 1], [0, 1]],
+        )
+        points4.write(
+            pa.Table.from_pydict(
+                {
+                    "soma_joinid": np.arange(4),
+                    "x": np.array([0, 0, 0.5, 0.5]),
+                    "y": np.array([0, 0.5, 0, 0.5]),
+                }
+            )
+        )
+        points4.metadata["soma_geometry"] = 2.0
+        points4.metadata["soma_geometry_type"] = "radius"
 
         # Add multiscale image with a single image.
         with scene1.add_new_multiscale_image(
@@ -167,8 +209,8 @@ def test_outgest_spatial_only(experiment_with_single_scene, sample_2d_data):
     # Check the number of assets is correct.
     assert len(sdata.tables) == 0
     assert len(sdata.images) == 2
-    assert len(sdata.shapes) == 1
-    assert len(sdata.points) == 1
+    assert len(sdata.shapes) == 2
+    assert len(sdata.points) == 2
 
     # Check image1.
     image1 = sdata.images["scene1_image1"]
@@ -221,4 +263,36 @@ def test_outgest_spatial_only(experiment_with_single_scene, sample_2d_data):
     assert all(points2_data == points2_expected)
     assert points2.attrs["transform"] == {
         "scene1": sd.transformations.Scale([-1.0, -1.0], ("x", "y"))
+    }
+
+    # Check points3.
+    points3 = sdata.points["scene1_points3"]
+    points3_expected = pd.DataFrame.from_dict(
+        {
+            "x": np.array([0, 0, -0.5, -0.5]),
+            "y": np.array([0, -0.5, 0, -0.5]),
+            "obs_id": np.arange(4),
+        }
+    )
+    points3_data = points3.compute()
+    print(points3_data)
+    assert all(points3_data == points3_expected)
+    assert points3.attrs["transform"] == {
+        "scene1": sd.transformations.Scale([0.25, 0.25], ("x", "y"))
+    }
+
+    # Check points4.
+    points4 = sdata.shapes["scene1_RNA_points4"]
+    points4_expected = gpd.GeoDataFrame.from_dict(
+        {
+            "var_id": np.arange(4),
+            "radius": np.ones((4,), dtype=np.float64),
+            "geometry": shapely.points(
+                [[0, 0], [0, 0.5], [0.5, 0], [0.5, 0.5]]
+            ).tolist(),
+        }
+    )
+    assert all(points4 == points4_expected)
+    assert points4.attrs["transform"] == {
+        "scene1": sd.transformations.Scale([4.0, 4.0], ("x", "y"))
     }
