@@ -50,6 +50,7 @@
 #include "soma/soma_array.h"
 #include "soma/soma_collection.h"
 #include "soma/soma_column.h"
+#include "soma/soma_attribute.h"
 #include "soma/soma_dimension.h"
 #include "soma/soma_dataframe.h"
 #include "soma/soma_group.h"
