@@ -88,6 +88,31 @@ def test_point_cloud_basic_read(tmp_path):
         assert [e.as_py() for e in table["x"]] == pydict["x"]
         assert [e.as_py() for e in table["y"]] == pydict["y"]
 
+    # Ensure it cannot be opened by another type
+    with pytest.raises(soma.SOMAError):
+        soma.DataFrame.open(urljoin(baseuri, "default"))
+
+    with pytest.raises(soma.SOMAError):
+        soma.SparseNDArray.open(urljoin(baseuri, "default"))
+
+    with pytest.raises(soma.SOMAError):
+        soma.DenseNDArray.open(urljoin(baseuri, "default"))
+
+    with pytest.raises(soma.SOMAError):
+        soma.Collection.open(urljoin(baseuri, "default"))
+
+    with pytest.raises(soma.SOMAError):
+        soma.Experiment.open(urljoin(baseuri, "default"))
+
+    with pytest.raises(soma.SOMAError):
+        soma.Measurement.open(urljoin(baseuri, "default"))
+
+    with pytest.raises(soma.SOMAError):
+        soma.Scene.open(urljoin(baseuri, "default"))
+
+    with pytest.raises(soma.SOMAError):
+        soma.MultiscaleImage.open(urljoin(baseuri, "default"))
+
 
 def test_point_cloud_coordinate_space(tmp_path):
     uri = tmp_path.as_uri()

@@ -90,7 +90,15 @@ std::unique_ptr<SOMAExperiment> SOMAExperiment::open(
     std::shared_ptr<SOMAContext> ctx,
     std::optional<TimestampRange> timestamp) {
     try {
-        return std::make_unique<SOMAExperiment>(mode, uri, ctx, timestamp);
+        auto group = std::make_unique<SOMAExperiment>(
+            mode, uri, ctx, timestamp);
+
+        if (!group->check_type("SOMAExperiment")) {
+            throw TileDBSOMAError(
+                "[SOMAExperiment::open] Object is not a SOMAExperiment");
+        }
+
+        return group;
     } catch (TileDBError& e) {
         throw TileDBSOMAError(e.what());
     }
