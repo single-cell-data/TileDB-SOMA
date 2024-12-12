@@ -6,6 +6,8 @@
 """Exceptions.
 """
 
+from typing import Union
+
 
 class SOMAError(Exception):
     """Base error type for SOMA-specific exceptions.
@@ -25,8 +27,9 @@ class DoesNotExistError(SOMAError):
     pass
 
 
-def is_does_not_exist_error(e: RuntimeError) -> bool:
-    """Given a RuntimeError, return true if it indicates the object does not exist
+def is_does_not_exist_error(e: Union[RuntimeError, SOMAError]) -> bool:
+    """Given a RuntimeError or SOMAError, return true if it indicates the object
+    does not exist
 
     Lifecycle: Maturing.
 
@@ -34,7 +37,7 @@ def is_does_not_exist_error(e: RuntimeError) -> bool:
         try:
             with tiledbsoma.open(uri):
                 ...
-        except RuntimeError as e:
+        except (RuntimeError, SOMAError) as e:
             if is_does_not_exist_error(e):
                 ...
             raise e
@@ -47,6 +50,7 @@ def is_does_not_exist_error(e: RuntimeError) -> bool:
         or "Unrecognized array" in stre
         or "HTTP code 401" in stre
         or "HTTP code 404" in stre
+        or "[SOMAObject::open] " in stre
     ):
         return True
 

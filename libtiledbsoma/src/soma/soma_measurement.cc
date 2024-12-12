@@ -118,7 +118,15 @@ std::unique_ptr<SOMAMeasurement> SOMAMeasurement::open(
     std::shared_ptr<SOMAContext> ctx,
     std::optional<TimestampRange> timestamp) {
     try {
-        return std::make_unique<SOMAMeasurement>(mode, uri, ctx, timestamp);
+        auto group = std::make_unique<SOMAMeasurement>(
+            mode, uri, ctx, timestamp);
+
+        if (!group->check_type("SOMAMeasurement")) {
+            throw TileDBSOMAError(
+                "[SOMAMeasurement::open] Object is not a SOMAMeasurement");
+        }
+
+        return group;
     } catch (TileDBError& e) {
         throw TileDBSOMAError(e.what());
     }

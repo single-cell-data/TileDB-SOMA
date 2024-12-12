@@ -162,6 +162,54 @@ def test_experiment_basic(tmp_path):
     with pytest.raises(soma.DoesNotExistError):
         soma.DataFrame.open("/nonesuch/no/nope/nope/never")
 
+    # Ensure it cannot be opened by another type
+    with pytest.raises(soma.SOMAError):
+        soma.DataFrame.open(experiment.uri)
+
+    with pytest.raises(soma.SOMAError):
+        soma.SparseNDArray.open(experiment.uri)
+
+    with pytest.raises(soma.SOMAError):
+        soma.DenseNDArray.open(experiment.uri)
+
+    with pytest.raises(soma.SOMAError):
+        soma.PointCloudDataFrame.open(experiment.uri)
+
+    with pytest.raises(soma.SOMAError):
+        soma.Collection.open(experiment.uri)
+
+    with pytest.raises(soma.SOMAError):
+        soma.Measurement.open(experiment.uri)
+
+    with pytest.raises(soma.SOMAError):
+        soma.Scene.open(experiment.uri)
+
+    with pytest.raises(soma.SOMAError):
+        soma.MultiscaleImage.open(experiment.uri)
+
+    with pytest.raises(soma.SOMAError):
+        soma.DataFrame.open(measurement.uri)
+
+    with pytest.raises(soma.SOMAError):
+        soma.SparseNDArray.open(measurement.uri)
+
+    with pytest.raises(soma.SOMAError):
+        soma.DenseNDArray.open(measurement.uri)
+
+    with pytest.raises(soma.SOMAError):
+        soma.PointCloudDataFrame.open(measurement.uri)
+
+    with pytest.raises(soma.SOMAError):
+        soma.Collection.open(measurement.uri)
+
+    with pytest.raises(soma.SOMAError):
+        soma.Experiment.open(measurement.uri)
+
+    with pytest.raises(soma.SOMAError):
+        soma.Scene.open(measurement.uri)
+
+    with pytest.raises(soma.SOMAError):
+        soma.MultiscaleImage.open(measurement.uri)
     # ----------------------------------------------------------------
     # TODO: check more things
 

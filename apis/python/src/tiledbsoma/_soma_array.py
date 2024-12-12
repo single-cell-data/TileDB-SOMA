@@ -3,19 +3,15 @@
 #
 # Licensed under the MIT License.
 
-from typing import Any, Optional, Tuple
+from typing import Any, Tuple
 
 import pyarrow as pa
-from somacore import options
-from typing_extensions import Self
 
 from . import _tdb_handles
 
 # This package's pybind11 code
 from . import pytiledbsoma as clib  # noqa: E402
 from ._soma_object import SOMAObject
-from ._types import OpenTimestamp
-from .options._soma_tiledb_context import SOMATileDBContext
 
 
 class SOMAArray(SOMAObject[_tdb_handles.SOMAArrayWrapper[Any]]):
@@ -26,27 +22,6 @@ class SOMAArray(SOMAObject[_tdb_handles.SOMAArrayWrapper[Any]]):
     """
 
     __slots__ = ()
-
-    @classmethod
-    def open(
-        cls,
-        uri: str,
-        mode: options.OpenMode = "r",
-        *,
-        tiledb_timestamp: Optional[OpenTimestamp] = None,
-        context: Optional[SOMATileDBContext] = None,
-        platform_config: Optional[options.PlatformConfig] = None,
-        clib_type: Optional[str] = None,
-    ) -> Self:
-        """Opens this specific type of SOMA object."""
-        return super().open(
-            uri,
-            mode,
-            tiledb_timestamp=tiledb_timestamp,
-            context=context,
-            platform_config=platform_config,
-            clib_type="SOMAArray",
-        )
 
     @property
     def schema(self) -> pa.Schema:

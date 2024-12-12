@@ -142,7 +142,7 @@ SOMAArray::SOMAArray(
     ctx_ = std::make_shared<SOMAContext>(platform_config);
     validate(mode, name, timestamp);
     reset(column_names, batch_size, result_order);
-    fill_metadata_cache();
+    fill_metadata_cache(timestamp);
 }
 
 SOMAArray::SOMAArray(
@@ -160,7 +160,7 @@ SOMAArray::SOMAArray(
     , timestamp_(timestamp) {
     validate(mode, name, timestamp);
     reset(column_names, batch_size, result_order);
-    fill_metadata_cache();
+    fill_metadata_cache(timestamp);
 }
 
 SOMAArray::SOMAArray(
@@ -176,17 +176,22 @@ SOMAArray::SOMAArray(
     , arr_(arr)
     , schema_(std::make_shared<ArraySchema>(arr->schema())) {
     reset({}, batch_size_, result_order_);
-    fill_metadata_cache();
+    fill_metadata_cache(timestamp);
 }
 
-void SOMAArray::fill_metadata_cache() {
+void SOMAArray::fill_metadata_cache(std::optional<TimestampRange> timestamp) {
     if (arr_->query_type() == TILEDB_WRITE) {
-        meta_cache_arr_ = std::make_shared<Array>(
-            *ctx_->tiledb_ctx(),
-            uri_,
-            TILEDB_READ,
-            TemporalPolicy(
-                TimestampStartEnd, timestamp()->first, timestamp()->second));
+        if (timestamp) {
+            meta_cache_arr_ = std::make_shared<Array>(
+                *ctx_->tiledb_ctx(),
+                uri_,
+                TILEDB_READ,
+                TemporalPolicy(
+                    TimestampStartEnd, timestamp->first, timestamp->second));
+        } else {
+            meta_cache_arr_ = std::make_shared<Array>(
+                *ctx_->tiledb_ctx(), uri_, TILEDB_READ);
+        }
     } else {
         meta_cache_arr_ = arr_;
     }
@@ -219,7 +224,7 @@ void SOMAArray::open(OpenMode mode, std::optional<TimestampRange> timestamp) {
 
     validate(mode, name_, timestamp);
     reset(column_names(), batch_size_, result_order_);
-    fill_metadata_cache();
+    fill_metadata_cache(timestamp);
 }
 
 std::unique_ptr<SOMAArray> SOMAArray::reopen(
@@ -236,8 +241,9 @@ std::unique_ptr<SOMAArray> SOMAArray::reopen(
 }
 
 void SOMAArray::close() {
-    if (arr_->query_type() == TILEDB_WRITE)
+    if (arr_->query_type() == TILEDB_WRITE) {
         meta_cache_arr_->close();
+    }
 
     // Close the array through the managed query to ensure any pending queries
     // are completed.

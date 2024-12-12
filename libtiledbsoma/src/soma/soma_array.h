@@ -234,7 +234,7 @@ class SOMAArray : public SOMAObject {
         , meta_cache_arr_(other.meta_cache_arr_)
         , first_read_next_(other.first_read_next_)
         , submitted_(other.submitted_) {
-        fill_metadata_cache();
+        fill_metadata_cache(timestamp_);
     }
 
     SOMAArray(
@@ -1533,7 +1533,7 @@ class SOMAArray : public SOMAObject {
     std::optional<int64_t> _maybe_soma_joinid_tiledb_current_domain();
     std::optional<int64_t> _maybe_soma_joinid_tiledb_domain();
 
-    void fill_metadata_cache();
+    void fill_metadata_cache(std::optional<TimestampRange> timestamp);
 
     // SOMAArray URI
     std::string uri_;

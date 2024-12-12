@@ -69,7 +69,7 @@ def test_platform_config(conftest_pbmc_small):
             ]
 
         var_arr_uri = str(Path(output_path) / "ms" / "RNA" / "var")
-        with tiledbsoma.SparseNDArray.open(var_arr_uri) as var_arr:
+        with tiledbsoma.DataFrame.open(var_arr_uri) as var_arr:
             cfg = var_arr.config_options_from_schema()
             assert json.loads(cfg.dims)["soma_joinid"]["filters"] == [
                 {"COMPRESSION_LEVEL": 1, "name": "ZSTD"}
