@@ -493,6 +493,29 @@ class ExperimentAxisQuery:
         drop_levels: bool = False,
         scene_presence_mode: str = "obs",
     ):
+        """Returns a SpatialData object containing the query results
+
+        This is a low-level routine intended to be used by loaders for other
+        in-core formats, such as AnnData, which can be created from the
+        resulting objects.
+
+        Args:
+            X_name: The X layer to read and return in the ``X`` slot.
+            column_names: The columns in the ``var`` and ``obs`` dataframes
+                to read.
+            X_layers: Additional X layers to read and return in the ``layers`` slot.
+            obsm_layers: Additional obsm layers to read and return in the obsm slot.
+            obsp_layers: Additional obsp layers to read and return in the obsp slot.
+            varm_layers: Additional varm layers to read and return in the varm slot.
+            varp_layers: Additional varp layers to read and return in the varp slot.
+            drop_levels: If ``True`` remove unused categories from the anndata table
+                with the measurement data.
+            scene_presence_mode: Method for determining what scenes to return data
+                from. Valid options are ``obs`` (use ``obs_spatial_presence``
+                dataframe) and ``var`` (use ``var_spatial_presence`` dataframe).
+                Defaults to ``obs``.
+        """
+
         from spatialdata import SpatialData
 
         from .io.spatial.outgest import _add_scene_to_spatial_data
