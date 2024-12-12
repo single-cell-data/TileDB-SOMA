@@ -164,7 +164,7 @@ def test_outgest_spatial_only(experiment_with_single_scene, sample_2d_data):
     # Export to SpatialData.
     sdata = spatial_outgest.to_spatial_data(experiment_with_single_scene)
 
-    # Check the number assets is correct.
+    # Check the number of assets is correct.
     assert len(sdata.tables) == 0
     assert len(sdata.images) == 2
     assert len(sdata.shapes) == 1

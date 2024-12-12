@@ -434,7 +434,11 @@ def _add_scene_to_spatial_data(
     Args:
         sdata: SpatialData object to update.
         scene_id: Name of the scene that will be added to the SpatialData object.
-        measurement_names: Measur
+        scene: The scene that is being added to the SpatialData object.
+        obs_id_name: Name to use for the ``soma_joinid`` in ``obsl``.
+        var_id_name: Name to use fo the ``soma_joinid in ``varl``.
+        measurement_names: The names of measurements to export. If ``None``, all
+            measurements are included. Defaults to ``None``.
 
     """
     # Cannot have spatial data if no coordinate space.
