@@ -494,8 +494,7 @@ std::unique_ptr<ArrowSchema> ArrowAdapter::arrow_schema_from_tiledb_attribute(
     arrow_schema->name = strdup(attribute.name().c_str());
     arrow_schema->metadata = nullptr;
     arrow_schema->flags = 0;
-    if (attribute.nullable() &&
-        attribute.name() != SOMA_GEOMETRY_COLUMN_NAME) {
+    if (attribute.nullable() && attribute.name() != SOMA_GEOMETRY_COLUMN_NAME) {
         arrow_schema->flags |= ARROW_FLAG_NULLABLE;
     } else {
         arrow_schema->flags &= ~ARROW_FLAG_NULLABLE;
