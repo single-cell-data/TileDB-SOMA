@@ -97,7 +97,11 @@ class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
         del platform_config  # unused
         context = _validate_soma_tiledb_context(context)
         handle = _tdb_handles.open(
-            uri, mode, context, tiledb_timestamp, clib_type=clib_type
+            uri,
+            mode,
+            context,
+            tiledb_timestamp,
+            clib_type=cls._wrapper_type._WRAPPED_TYPE.__name__,
         )
         if not isinstance(handle, cls._wrapper_type):
             handle = cls._wrapper_type.open(uri, mode, context, tiledb_timestamp)

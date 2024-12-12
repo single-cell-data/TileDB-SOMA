@@ -159,6 +159,31 @@ def test_multiscale_basic(tmp_path):
         assert np.array_equal(from_level(1).scale_factors, [2, 2])
         assert np.array_equal(from_level(2).scale_factors, [16, 16])
 
+    # Ensure it cannot be opened by another type
+    with pytest.raises(soma.SOMAError):
+        soma.DataFrame.open(image_uri)
+
+    with pytest.raises(soma.SOMAError):
+        soma.SparseNDArray.open(image_uri)
+
+    with pytest.raises(soma.SOMAError):
+        soma.DenseNDArray.open(image_uri)
+
+    with pytest.raises(soma.SOMAError):
+        soma.PointCloudDataFrame.open(image_uri)
+
+    with pytest.raises(soma.SOMAError):
+        soma.Collection.open(image_uri)
+
+    with pytest.raises(soma.SOMAError):
+        soma.Experiment.open(image_uri)
+
+    with pytest.raises(soma.SOMAError):
+        soma.Measurement.open(image_uri)
+
+    with pytest.raises(soma.SOMAError):
+        soma.Scene.open(image_uri)
+
 
 class TestSimpleMultiscale2D:
 
@@ -461,7 +486,7 @@ def test_multiscale_2d_read_region_with_channel(
     baseuri = urljoin(f"{tmp_path.as_uri()}/", "test_multiscale_read_region")
     image_uri = create_multiscale(baseuri, ("x", "y"), data_axis_order, True, shapes)
 
-    with soma.Collection.open(image_uri, mode="w") as image:
+    with soma.MultiscaleImage.open(image_uri, mode="w") as image:
         for i, shape in enumerate(shapes):
             data = np.arange(shape[0] * shape[1] * shape[2], dtype=np.uint8).reshape(
                 shape
@@ -526,7 +551,7 @@ def test_multiscale_2d_read_region_no_channel(tmp_path, shapes, region, scale_fa
     baseuri = urljoin(f"{tmp_path.as_uri()}/", "test_multiscale_read_region")
     image_uri = create_multiscale(baseuri, ("x", "y"), ("y", "x"), False, shapes)
 
-    with soma.Collection.open(image_uri, mode="w") as image:
+    with soma.MultiscaleImage.open(image_uri, mode="w") as image:
         for i, shape in enumerate(shapes):
             data = np.arange(shape[0] * shape[1], dtype=np.uint8).reshape(shape)
             image[f"level{i}"].write(

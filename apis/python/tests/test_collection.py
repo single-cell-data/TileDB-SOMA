@@ -87,6 +87,31 @@ def test_collection_basic(tmp_path):
     with readback_collection["snda"] as snda:
         assert len(snda.read().tables().concat()) == 3
 
+    # Ensure it cannot be opened by another type
+    with pytest.raises(soma.SOMAError):
+        soma.DataFrame.open(collection.uri)
+
+    with pytest.raises(soma.SOMAError):
+        soma.SparseNDArray.open(collection.uri)
+
+    with pytest.raises(soma.SOMAError):
+        soma.DenseNDArray.open(collection.uri)
+
+    with pytest.raises(soma.SOMAError):
+        soma.PointCloudDataFrame.open(collection.uri)
+
+    with pytest.raises(soma.SOMAError):
+        soma.Experiment.open(collection.uri)
+
+    with pytest.raises(soma.SOMAError):
+        soma.Measurement.open(collection.uri)
+
+    with pytest.raises(soma.SOMAError):
+        soma.Scene.open(collection.uri)
+
+    with pytest.raises(soma.SOMAError):
+        soma.MultiscaleImage.open(collection.uri)
+
 
 @pytest.fixture(
     scope="function",

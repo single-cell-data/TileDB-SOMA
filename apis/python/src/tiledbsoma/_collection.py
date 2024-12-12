@@ -110,7 +110,7 @@ class CollectionBase(  # type: ignore[misc]  # __eq__ false positive
             timestamp_ms = context._open_timestamp_ms(tiledb_timestamp)
             clib.SOMAGroup.create(
                 uri=uri,
-                soma_type=wrapper._GROUP_WRAPPED_TYPE.__name__,
+                soma_type=wrapper._WRAPPED_TYPE.__name__,
                 ctx=context.native_context,
                 timestamp=(0, timestamp_ms),
             )
@@ -121,27 +121,6 @@ class CollectionBase(  # type: ignore[misc]  # __eq__ false positive
             )
         except SOMAError as e:
             raise map_exception_for_create(e, uri) from None
-
-    @classmethod
-    def open(
-        cls,
-        uri: str,
-        mode: options.OpenMode = "r",
-        *,
-        tiledb_timestamp: Optional[OpenTimestamp] = None,
-        context: Optional[SOMATileDBContext] = None,
-        platform_config: Optional[options.PlatformConfig] = None,
-        clib_type: Optional[str] = None,
-    ) -> Self:
-        """Opens this specific type of SOMA object."""
-        return super().open(
-            uri,
-            mode,
-            tiledb_timestamp=tiledb_timestamp,
-            context=context,
-            platform_config=platform_config,
-            clib_type="SOMAGroup",
-        )
 
     # Subclass protocol to constrain which SOMA objects types  may be set on a
     # particular collection key. Used by Experiment and Measurement.

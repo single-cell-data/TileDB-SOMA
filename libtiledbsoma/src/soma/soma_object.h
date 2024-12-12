@@ -64,6 +64,8 @@ class SOMAObject {
      */
     const std::optional<std::string> type();
 
+    bool check_type(std::string expected_type);
+
     /**
      * @brief Get URI of the SOMAObject.
      *

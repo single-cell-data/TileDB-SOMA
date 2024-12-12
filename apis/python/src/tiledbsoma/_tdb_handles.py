@@ -57,6 +57,8 @@ RawHandle = Union[
 _RawHdl_co = TypeVar("_RawHdl_co", bound=RawHandle, covariant=True)
 """A raw TileDB object. Covariant because Handles are immutable enough."""
 
+_SOMAObjectType = TypeVar("_SOMAObjectType", bound=clib.SOMAObject)
+
 
 def open(
     uri: str,
@@ -70,16 +72,35 @@ def open(
 
     timestamp_ms = context._open_timestamp_ms(timestamp)
 
-    soma_object = clib.SOMAObject.open(
-        uri=uri,
-        mode=open_mode,
-        context=context.native_context,
-        timestamp=(0, timestamp_ms),
-        clib_type=clib_type,
-    )
+    _type_to_open = {
+        "somaarray": clib.SOMAArray.open,
+        "somagroup": clib.SOMAGroup.open,
+        "somadataframe": clib.SOMADataFrame.open,
+        "somapointclouddataframe": clib.SOMAPointCloudDataFrame.open,
+        "somadensendarray": clib.SOMADenseNDArray.open,
+        "somasparsendarray": clib.SOMASparseNDArray.open,
+        "somacollection": clib.SOMACollection.open,
+        "somaexperiment": clib.SOMAExperiment.open,
+        "somameasurement": clib.SOMAMeasurement.open,
+        "somascene": clib.SOMAScene.open,
+        "somamultiscaleimage": clib.SOMAMultiscaleImage.open,
+        None: clib.SOMAObject.open,
+    }
 
-    if not soma_object:
-        raise DoesNotExistError(f"{uri!r} does not exist")
+    if clib_type is not None:
+        clib_type = clib_type.lower()
+
+    try:
+        soma_object = _type_to_open[clib_type](
+            uri=uri,
+            mode=open_mode,
+            context=context.native_context,
+            timestamp=(0, timestamp_ms),
+        )
+    except (RuntimeError, SOMAError) as tdbe:
+        if is_does_not_exist_error(tdbe):
+            raise DoesNotExistError(tdbe) from tdbe
+        raise SOMAError(tdbe) from tdbe
 
     _type_to_class = {
         "somadataframe": DataFrameWrapper,
@@ -265,13 +286,10 @@ class GroupEntry:
         raise SOMAError(f"internal error: unknown object type {uri}")
 
 
-_GrpType = TypeVar("_GrpType", bound=clib.SOMAGroup)
-
-
-class SOMAGroupWrapper(Wrapper[_GrpType]):
+class SOMAGroupWrapper(Wrapper[_SOMAObjectType]):
     """Base class for Pybind11 SOMAGroupWrapper handles."""
 
-    _GROUP_WRAPPED_TYPE: Type[_GrpType]
+    _WRAPPED_TYPE: Type[_SOMAObjectType]
 
     clib_type = "SOMAGroup"
 
@@ -284,7 +302,7 @@ class SOMAGroupWrapper(Wrapper[_GrpType]):
         timestamp: int,
     ) -> clib.SOMAGroup:
         open_mode = clib.OpenMode.read if mode == "r" else clib.OpenMode.write
-        return cls._GROUP_WRAPPED_TYPE.open(
+        return cls._WRAPPED_TYPE.open(
             uri,
             mode=open_mode,
             context=context.native_context,
@@ -310,40 +328,37 @@ class SOMAGroupWrapper(Wrapper[_GrpType]):
 class CollectionWrapper(SOMAGroupWrapper[clib.SOMACollection]):
     """Wrapper around a Pybind11 CollectionWrapper handle."""
 
-    _GROUP_WRAPPED_TYPE = clib.SOMACollection
+    _WRAPPED_TYPE = clib.SOMACollection
 
 
 class ExperimentWrapper(SOMAGroupWrapper[clib.SOMAExperiment]):
     """Wrapper around a Pybind11 ExperimentWrapper handle."""
 
-    _GROUP_WRAPPED_TYPE = clib.SOMAExperiment
+    _WRAPPED_TYPE = clib.SOMAExperiment
 
 
 class MeasurementWrapper(SOMAGroupWrapper[clib.SOMAMeasurement]):
     """Wrapper around a Pybind11 MeasurementWrapper handle."""
 
-    _GROUP_WRAPPED_TYPE = clib.SOMAMeasurement
+    _WRAPPED_TYPE = clib.SOMAMeasurement
 
 
 class MultiscaleImageWrapper(SOMAGroupWrapper[clib.SOMAMultiscaleImage]):
     """Wrapper around a Pybind11 MultiscaleImage handle."""
 
-    _GROUP_WRAPPED_TYPE = clib.SOMAMultiscaleImage
+    _WRAPPED_TYPE = clib.SOMAMultiscaleImage
 
 
 class SceneWrapper(SOMAGroupWrapper[clib.SOMAScene]):
     """Wrapper around a Pybind11 SceneWrapper handle."""
 
-    _GROUP_WRAPPED_TYPE = clib.SOMAScene
+    _WRAPPED_TYPE = clib.SOMAScene
 
 
-_ArrType = TypeVar("_ArrType", bound=clib.SOMAArray)
-
-
-class SOMAArrayWrapper(Wrapper[_ArrType]):
+class SOMAArrayWrapper(Wrapper[_SOMAObjectType]):
     """Base class for Pybind11 SOMAArrayWrapper handles."""
 
-    _ARRAY_WRAPPED_TYPE: Type[_ArrType]
+    _WRAPPED_TYPE: Type[_SOMAObjectType]
 
     clib_type = "SOMAArray"
 
@@ -357,7 +372,7 @@ class SOMAArrayWrapper(Wrapper[_ArrType]):
     ) -> clib.SOMAArray:
         open_mode = clib.OpenMode.read if mode == "r" else clib.OpenMode.write
 
-        return cls._ARRAY_WRAPPED_TYPE.open(
+        return cls._WRAPPED_TYPE.open(
             uri,
             mode=open_mode,
             context=context.native_context,
@@ -517,7 +532,7 @@ class SOMAArrayWrapper(Wrapper[_ArrType]):
 class DataFrameWrapper(SOMAArrayWrapper[clib.SOMADataFrame]):
     """Wrapper around a Pybind11 SOMADataFrame handle."""
 
-    _ARRAY_WRAPPED_TYPE = clib.SOMADataFrame
+    _WRAPPED_TYPE = clib.SOMADataFrame
 
     @property
     def count(self) -> int:
@@ -607,7 +622,7 @@ class DataFrameWrapper(SOMAArrayWrapper[clib.SOMADataFrame]):
 class PointCloudDataFrameWrapper(SOMAArrayWrapper[clib.SOMAPointCloudDataFrame]):
     """Wrapper around a Pybind11 SOMAPointCloudDataFrame handle."""
 
-    _ARRAY_WRAPPED_TYPE = clib.SOMAPointCloudDataFrame
+    _WRAPPED_TYPE = clib.SOMAPointCloudDataFrame
 
     @property
     def count(self) -> int:
@@ -620,7 +635,7 @@ class PointCloudDataFrameWrapper(SOMAArrayWrapper[clib.SOMAPointCloudDataFrame])
 class DenseNDArrayWrapper(SOMAArrayWrapper[clib.SOMADenseNDArray]):
     """Wrapper around a Pybind11 DenseNDArrayWrapper handle."""
 
-    _ARRAY_WRAPPED_TYPE = clib.SOMADenseNDArray
+    _WRAPPED_TYPE = clib.SOMADenseNDArray
 
     @property
     def tiledbsoma_has_upgraded_shape(self) -> bool:
@@ -653,7 +668,7 @@ class DenseNDArrayWrapper(SOMAArrayWrapper[clib.SOMADenseNDArray]):
 class SparseNDArrayWrapper(SOMAArrayWrapper[clib.SOMASparseNDArray]):
     """Wrapper around a Pybind11 SparseNDArrayWrapper handle."""
 
-    _ARRAY_WRAPPED_TYPE = clib.SOMASparseNDArray
+    _WRAPPED_TYPE = clib.SOMASparseNDArray
 
     @property
     def nnz(self) -> int:
