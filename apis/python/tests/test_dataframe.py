@@ -1968,3 +1968,35 @@ def test_pass_configs(tmp_path, arrow_schema):
                 }
             )
         )
+
+
+def test_arrow_table_sliced_writer(tmp_path):
+    """Tests writes of sliced Arrow tables, with fixed-length and variable-length attributes"""
+    uri = tmp_path.as_posix()
+    num_rows = 50
+
+    schema = pa.schema(
+        [
+            ("myint", pa.int32()),
+            ("mystring", pa.large_string()),
+        ]
+    )
+
+    pydict = {
+        "soma_joinid": list(range(num_rows)),
+        "myint": [(e + 1) * 10 for e in range(num_rows)],
+        "mystring": ["s_%08d" % e for e in range(num_rows)],
+    }
+    table = pa.Table.from_pydict(pydict)
+
+    domain = [[0, len(table) - 1]]
+
+    with soma.DataFrame.create(uri, schema=schema, domain=domain) as sdf:
+        mid = num_rows // 2
+        sdf.write(table[:mid])
+        sdf.write(table[mid:])
+
+    with soma.DataFrame.open(uri) as sdf:
+        pdf = sdf.read().concat().to_pandas()
+        assert list(pdf["myint"]) == pydict["myint"]
+        assert list(pdf["mystring"]) == pydict["mystring"]
