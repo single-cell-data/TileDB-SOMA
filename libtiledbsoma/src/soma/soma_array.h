@@ -1528,10 +1528,10 @@ class SOMAArray : public SOMAObject {
      *
      * Here we distinguish between user-side API, and core-side implementation.
      */
-    std::vector<int64_t> _tiledb_domain();
-    std::vector<int64_t> _tiledb_current_domain();
-    std::optional<int64_t> _maybe_soma_joinid_tiledb_current_domain();
-    std::optional<int64_t> _maybe_soma_joinid_tiledb_domain();
+    std::vector<int64_t> _shape_via_tiledb_domain();
+    std::vector<int64_t> _shape_via_tiledb_current_domain();
+    std::optional<int64_t> _maybe_soma_joinid_shape_via_tiledb_current_domain();
+    std::optional<int64_t> _maybe_soma_joinid_shape_via_tiledb_domain();
 
     void fill_metadata_cache(std::optional<TimestampRange> timestamp);
 

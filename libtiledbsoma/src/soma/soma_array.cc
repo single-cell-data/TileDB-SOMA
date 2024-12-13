@@ -726,12 +726,13 @@ std::vector<int64_t> SOMAArray::shape() {
     // * Even after the new-shape feature is fully released, there will be old
     //   arrays on disk that were created before this feature existed.
     // So this is long-term code.
-    return _get_current_domain().is_empty() ? _tiledb_domain() :
-                                              _tiledb_current_domain();
+    return _get_current_domain().is_empty() ?
+               _shape_via_tiledb_domain() :
+               _shape_via_tiledb_current_domain();
 }
 
 std::vector<int64_t> SOMAArray::maxshape() {
-    return _tiledb_domain();
+    return _shape_via_tiledb_domain();
 }
 
 // This is a helper for can_upgrade_shape and can_resize, which have
@@ -1532,7 +1533,7 @@ void SOMAArray::_set_domain_helper(
     schema_evolution.array_evolve(uri_);
 }
 
-std::vector<int64_t> SOMAArray::_tiledb_current_domain() {
+std::vector<int64_t> SOMAArray::_shape_via_tiledb_current_domain() {
     // Variant-indexed dataframes must use a separate path
     _check_dims_are_int64();
 
@@ -1557,12 +1558,12 @@ std::vector<int64_t> SOMAArray::_tiledb_current_domain() {
 
     for (auto dimension_name : dimension_names()) {
         auto range = ndrect.range<int64_t>(dimension_name);
-        result.push_back(range[1] + 1);
+        result.push_back(range[1] - range[0] + 1);
     }
     return result;
 }
 
-std::vector<int64_t> SOMAArray::_tiledb_domain() {
+std::vector<int64_t> SOMAArray::_shape_via_tiledb_domain() {
     // Variant-indexed dataframes must use a separate path
     _check_dims_are_int64();
 
@@ -1579,15 +1580,16 @@ std::vector<int64_t> SOMAArray::_tiledb_domain() {
 
 std::optional<int64_t> SOMAArray::_maybe_soma_joinid_shape() {
     return _get_current_domain().is_empty() ?
-               _maybe_soma_joinid_tiledb_domain() :
-               _maybe_soma_joinid_tiledb_current_domain();
+               _maybe_soma_joinid_shape_via_tiledb_domain() :
+               _maybe_soma_joinid_shape_via_tiledb_current_domain();
 }
 
 std::optional<int64_t> SOMAArray::_maybe_soma_joinid_maxshape() {
-    return _maybe_soma_joinid_tiledb_domain();
+    return _maybe_soma_joinid_shape_via_tiledb_domain();
 }
 
-std::optional<int64_t> SOMAArray::_maybe_soma_joinid_tiledb_current_domain() {
+std::optional<int64_t>
+SOMAArray::_maybe_soma_joinid_shape_via_tiledb_current_domain() {
     const std::string dim_name = "soma_joinid";
 
     auto dom = schema_->domain();
@@ -1621,7 +1623,7 @@ std::optional<int64_t> SOMAArray::_maybe_soma_joinid_tiledb_current_domain() {
     return std::optional<int64_t>(max);
 }
 
-std::optional<int64_t> SOMAArray::_maybe_soma_joinid_tiledb_domain() {
+std::optional<int64_t> SOMAArray::_maybe_soma_joinid_shape_via_tiledb_domain() {
     const std::string dim_name = "soma_joinid";
 
     auto dom = schema_->domain();
