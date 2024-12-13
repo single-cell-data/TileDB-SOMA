@@ -31,11 +31,14 @@ ReadIter <- R6::R6Class(
       if (is.null(private$soma_reader_pointer)) {
         return(NULL)
       }
-      if (self$read_complete()) {
+
+      rl <- sr_next(private$soma_reader_pointer)
+
+      if (is.null(rl)){
         return(private$.readComplete())
       }
 
-      return(private$.read_next())
+      return(rl)
     },
 
     #' @description  Concatenate remainder of iterator
@@ -51,15 +54,6 @@ ReadIter <- R6::R6Class(
 
     # to be refined in derived classes
     soma_reader_transform = function(x) .NotYetImplemented(),
-
-    # Internal `read_next()` to avoid `self$read_complete()` checks
-    .read_next = function() {
-      if (is.null(private$soma_reader_pointer)) {
-        return(NULL)
-      }
-      rl <- sr_next(private$soma_reader_pointer)
-      return(private$soma_reader_transform(rl))
-    },
 
     # Throw a warning for read completion
     .readComplete = function() {

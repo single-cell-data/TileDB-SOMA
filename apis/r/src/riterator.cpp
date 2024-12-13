@@ -215,27 +215,16 @@ SEXP create_empty_arrow_table() {
 SEXP sr_next(Rcpp::XPtr<tdbs::SOMAArray> sr) {
     check_xptr_tag<tdbs::SOMAArray>(sr);
 
-    if (sr_complete(sr)) {
-        spdl::trace(
-            "[sr_next] complete {} num_cells {}",
-            sr->is_complete(true),
-            sr->total_num_cells());
-        return create_empty_arrow_table();
-    }
-
-    if (!sr->is_initial_read() && sr->total_num_cells() == 0) {
-        spdl::trace(
-            "[sr_next] is_initial_read {} num_cells {}",
-            sr->is_initial_read(),
-            sr->total_num_cells());
-        return create_empty_arrow_table();
-    }
-
     auto sr_data = sr->read_next();
+
     spdl::debug(
         "[sr_next] Read {} rows and {} cols",
         sr_data->get()->num_rows(),
         sr_data->get()->names().size());
+
+    if (!sr_data) {
+        return nullptr;
+    }
 
     const std::vector<std::string> names = sr_data->get()->names();
     auto ncol = names.size();
