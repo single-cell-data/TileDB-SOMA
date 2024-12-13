@@ -90,7 +90,7 @@ Rules:
   clean               Remove build artifacts
 
 Options:
-  build=BUILD_TYPE    Cmake build type = Release|Debug|RelWithDebInfo|Coverage [Release]
+  build=BUILD_TYPE    Cmake build type = Release|Debug|RelWithDebInfo|ASAN|TSAN|LSAN|UBSAN|MSAN|Coverage [Release]
   prefix=PREFIX       Install location [${PWD}/dist]
   tiledb=TILEDB_DIST  Absolute path to custom TileDB build
 
@@ -118,4 +118,3 @@ export HELP
 .PHONY: help
 help:
 	@printf "$${HELP}"
-
