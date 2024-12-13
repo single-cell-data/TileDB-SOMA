@@ -59,21 +59,23 @@ void SOMAGeometryColumn::_set_dim_points(
         transformed_points = _transform_points(
             std::any_cast<std::span<const std::vector<double_t>>>(points));
 
-    auto domain_limits = _limits(ctx, *query->schema());
+    // The limits of the current domain if it exists or the core domain
+    // otherwise.
+    auto limits = _limits(ctx, *query->schema());
 
     // Create a range object and reuse if for all dimensions
     std::vector<std::pair<double_t, double_t>> range(1);
-    size_t dimensionality = dimensions.size() / 2;
+    size_t dimensionality = dimensions.size() / TDB_DIM_PER_SPATIAL_AXIS;
 
     for (size_t i = 0; i < transformed_points.size(); ++i) {
         range[0] = std::make_pair(
-            domain_limits[i].first,
-            std::min(transformed_points[i].second, domain_limits[i].second));
+            limits[i].first,
+            std::min(transformed_points[i].second, limits[i].second));
         query->select_ranges(dimensions[i].name(), range);
 
         range[0] = std::make_pair(
-            std::max(transformed_points[i].first, domain_limits[i].first),
-            domain_limits[i].second);
+            std::max(transformed_points[i].first, limits[i].first),
+            limits[i].second);
         query->select_ranges(dimensions[i + dimensionality].name(), range);
     }
 }
@@ -88,59 +90,68 @@ void SOMAGeometryColumn::_set_dim_ranges(
                 std::pair<std::vector<double_t>, std::vector<double_t>>>>(
                 ranges));
 
-    auto domain_limits = _limits(ctx, *query->schema());
+    // The limits of the current domain if it exists or the core domain
+    // otherwise.
+    auto limits = _limits(ctx, *query->schema());
 
     // Create a range object and reuse if for all dimensions
     std::vector<std::pair<double_t, double_t>> range(1);
-    size_t dimensionality = dimensions.size() / 2;
+    size_t dimensionality = dimensions.size() / TDB_DIM_PER_SPATIAL_AXIS;
 
     for (size_t i = 0; i < transformed_ranges.size(); ++i) {
         range[0] = std::make_pair(
-            domain_limits[i].first,
-            std::min(transformed_ranges[i].second, domain_limits[i].second));
+            limits[i].first,
+            std::min(transformed_ranges[i].second, limits[i].second));
         query->select_ranges(dimensions[i].name(), range);
 
         range[0] = std::make_pair(
-            std::max(transformed_ranges[i].first, domain_limits[i].first),
-            domain_limits[i].second);
+            std::max(transformed_ranges[i].first, limits[i].first),
+            limits[i].second);
         query->select_ranges(dimensions[i + dimensionality].name(), range);
     }
 }
 
 void SOMAGeometryColumn::_set_current_domain_slot(
-    NDRectangle& rectangle, std::span<const std::any> domain) const {
-    if (2 * domain.size() != dimensions.size()) {
+    NDRectangle& rectangle,
+    std::span<const std::any> new_current_domain) const {
+    if (TDB_DIM_PER_SPATIAL_AXIS * new_current_domain.size() !=
+        dimensions.size()) {
         throw TileDBSOMAError(std::format(
             "[SOMAGeometryColumn] Dimension - Current Domain mismatch. "
             "Expected current domain of size {}, found {}",
-            dimensions.size() / 2,
-            domain.size()));
+            dimensions.size() / TDB_DIM_PER_SPATIAL_AXIS,
+            new_current_domain.size()));
     }
 
-    for (size_t i = 0; i < domain.size(); ++i) {
-        auto dom = std::any_cast<std::array<double_t, 2>>(domain[i]);
+    for (size_t i = 0; i < new_current_domain.size(); ++i) {
+        auto dom = std::any_cast<std::array<double_t, 2>>(
+            new_current_domain[i]);
         rectangle.set_range<double_t>(dimensions[i].name(), dom[0], dom[1]);
     }
 
-    for (size_t i = 0; i < domain.size(); ++i) {
-        auto dom = std::any_cast<std::array<double_t, 2>>(domain[i]);
+    for (size_t i = 0; i < new_current_domain.size(); ++i) {
+        auto dom = std::any_cast<std::array<double_t, 2>>(
+            new_current_domain[i]);
         rectangle.set_range<double_t>(
-            dimensions[i + domain.size()].name(), dom[0], dom[1]);
+            dimensions[i + new_current_domain.size()].name(), dom[0], dom[1]);
     }
 }
 
 std::pair<bool, std::string> SOMAGeometryColumn::_can_set_current_domain_slot(
     std::optional<NDRectangle>& rectangle,
-    std::span<const std::any> new_domain) const {
-    if (new_domain.size() != dimensions.size() / 2) {
+    std::span<const std::any> new_current_domain) const {
+    if (new_current_domain.size() !=
+        dimensions.size() / TDB_DIM_PER_SPATIAL_AXIS) {
         throw TileDBSOMAError(std::format(
-            "[SOMADimension][_can_set_current_domain_slot] Expected domain "
+            "[SOMADimension][_can_set_current_domain_slot] Expected current "
+            "domain "
             "size is 2, found {}",
-            new_domain.size()));
+            new_current_domain.size()));
     }
 
-    for (size_t i = 0; i < new_domain.size(); ++i) {
-        auto new_dom = std::any_cast<std::array<double_t, 2>>(new_domain[i]);
+    for (size_t i = 0; i < new_current_domain.size(); ++i) {
+        auto new_dom = std::any_cast<std::array<double_t, 2>>(
+            new_current_domain[i]);
 
         if (new_dom[0] > new_dom[1]) {
             return std::pair(
@@ -151,7 +162,8 @@ std::pair<bool, std::string> SOMAGeometryColumn::_can_set_current_domain_slot(
         }
 
         auto dimension_min = dimensions[i];
-        auto dimension_max = dimensions[i + dimensions.size() / 2];
+        auto dimension_max =
+            dimensions[i + dimensions.size() / TDB_DIM_PER_SPATIAL_AXIS];
 
         if (rectangle.has_value()) {
             auto dom_min = rectangle.value().range<double_t>(
@@ -220,21 +232,25 @@ std::vector<std::pair<double_t, double_t>> SOMAGeometryColumn::_limits(
     const SOMAContext& ctx, const ArraySchema& schema) const {
     std::vector<std::pair<double_t, double_t>> limits;
 
-    for (size_t i = 0; i < dimensions.size() / 2; ++i) {
-        if (ArraySchemaExperimental::current_domain(*ctx.tiledb_ctx(), schema)
-                .is_empty()) {
-            std::pair<double_t, double_t> domain = dimensions[i]
-                                                       .domain<double_t>();
+    if (ArraySchemaExperimental::current_domain(*ctx.tiledb_ctx(), schema)
+            .is_empty()) {
+        for (size_t i = 0; i < dimensions.size() / TDB_DIM_PER_SPATIAL_AXIS;
+             ++i) {
+            std::pair<double_t, double_t> dom = dimensions[i]
+                                                    .domain<double_t>();
 
-            limits.push_back(std::make_pair(domain.first, domain.second));
-        } else {
-            std::array<double_t, 2>
-                domain = ArraySchemaExperimental::current_domain(
-                             *ctx.tiledb_ctx(), schema)
-                             .ndrectangle()
-                             .range<double_t>(dimensions.at(i).name());
+            limits.push_back(std::make_pair(dom.first, dom.second));
+        }
+    } else {
+        NDRectangle ndrect = ArraySchemaExperimental::current_domain(
+                                 *ctx.tiledb_ctx(), schema)
+                                 .ndrectangle();
+        for (size_t i = 0; i < dimensions.size() / TDB_DIM_PER_SPATIAL_AXIS;
+             ++i) {
+            std::array<double_t, 2> dom = ndrect.range<double_t>(
+                dimensions.at(i).name());
 
-            limits.push_back(std::make_pair(domain[0], domain[1]));
+            limits.push_back(std::make_pair(dom[0], dom[1]));
         }
     }
 
@@ -247,13 +263,13 @@ SOMAGeometryColumn::_transform_ranges(
         ranges) const {
     if (ranges.size() != 1) {
         throw TileDBSOMAError(
-            "Multi ranges are not supported for geometry dimension");
+            "Multiranges are not supported for geometry dimension");
     }
 
     std::vector<std::pair<double_t, double_t>> transformed_ranges;
     std::vector<double_t> min_ranges = ranges.front().first;
     std::vector<double_t> max_ranges = ranges.front().second;
-    for (size_t i = 0; i < dimensions.size() / 2; ++i) {
+    for (size_t i = 0; i < dimensions.size() / TDB_DIM_PER_SPATIAL_AXIS; ++i) {
         transformed_ranges.push_back(
             std::make_pair(min_ranges[i], max_ranges[i]));
     }
@@ -266,11 +282,11 @@ SOMAGeometryColumn::_transform_points(
     const std::span<const std::vector<double_t>>& points) const {
     if (points.size() != 1) {
         throw TileDBSOMAError(
-            "Multi points are not supported for geometry dimension");
+            "Multipoints are not supported for geometry dimension");
     }
 
     std::vector<std::pair<double_t, double_t>> transformed_ranges;
-    for (size_t i = 0; i < dimensions.size() / 2; ++i) {
+    for (size_t i = 0; i < dimensions.size() / TDB_DIM_PER_SPATIAL_AXIS; ++i) {
         transformed_ranges.push_back(
             std::make_pair(points.front()[i], points.front()[i]));
     }
@@ -280,11 +296,11 @@ SOMAGeometryColumn::_transform_points(
 
 std::any SOMAGeometryColumn::_core_domain_slot() const {
     std::vector<double_t> min, max;
-    for (size_t i = 0; i < dimensions.size() / 2; ++i) {
-        std::pair<double_t, double_t> domain = dimensions[i].domain<double_t>();
+    for (size_t i = 0; i < dimensions.size() / TDB_DIM_PER_SPATIAL_AXIS; ++i) {
+        std::pair<double_t, double_t> dom = dimensions[i].domain<double_t>();
 
-        min.push_back(domain.first);
-        max.push_back(domain.second);
+        min.push_back(dom.first);
+        max.push_back(dom.second);
     }
 
     return std::make_any<
@@ -294,16 +310,16 @@ std::any SOMAGeometryColumn::_core_domain_slot() const {
 
 std::any SOMAGeometryColumn::_non_empty_domain_slot(Array& array) const {
     std::vector<double_t> min, max;
-    size_t dimensionality = dimensions.size() / 2;
-    for (size_t i = 0; i < dimensions.size() / 2; ++i) {
+    size_t dimensionality = dimensions.size() / TDB_DIM_PER_SPATIAL_AXIS;
+    for (size_t i = 0; i < dimensionality; ++i) {
         std::pair<double_t, double_t>
-            min_domain = array.non_empty_domain<double_t>(dimensions[i].name());
+            min_dom = array.non_empty_domain<double_t>(dimensions[i].name());
         std::pair<double_t, double_t>
-            max_domain = array.non_empty_domain<double_t>(
+            max_dom = array.non_empty_domain<double_t>(
                 dimensions[i + dimensionality].name());
 
-        min.push_back(min_domain.first);
-        max.push_back(max_domain.second);
+        min.push_back(min_dom.first);
+        max.push_back(max_dom.second);
     }
 
     return std::make_any<
@@ -325,12 +341,12 @@ std::any SOMAGeometryColumn::_core_current_domain_slot(
     NDRectangle& ndrect) const {
     std::vector<double_t> min, max;
 
-    for (size_t i = 0; i < dimensions.size() / 2; ++i) {
-        std::array<double_t, 2> domain = ndrect.range<double_t>(
+    for (size_t i = 0; i < dimensions.size() / TDB_DIM_PER_SPATIAL_AXIS; ++i) {
+        std::array<double_t, 2> range = ndrect.range<double_t>(
             dimensions[i].name());
 
-        min.push_back(domain[0]);
-        max.push_back(domain[1]);
+        min.push_back(range[0]);
+        max.push_back(range[1]);
     }
 
     return std::make_any<
