@@ -966,35 +966,45 @@ bool ManagedQuery::_cast_column_aux<std::string>(
     ArrowSchema* schema, ArrowArray* array, ArraySchemaEvolution se) {
     (void)se;  // se is unused in std::string specialization
 
-    const void* data = nullptr;
-    const void* offset = nullptr;
-    const void* validity = nullptr;
+    // A few things in play here:
+    // * Whether the column (array) has 3 buffers (validity, offset, data)
+    //   or 2 (validity, data).
+    // * The data is always char* and the validity is always uint8*
+    //   but the offsets are 32-bit or 64-bit.
+    // * The array-level offset might not be zero. (This happens
+    //   when people pass of things like arrow_table[:n] or arrow_table[n:]
+    //   from Python/R.)
 
-    if (array->n_buffers == 3) {
-        data = array->buffers[2];
-        offset = array->buffers[1];
-        validity = array->buffers[0];
-    } else {
-        data = array->buffers[1];
-        offset = nullptr;
-        validity = array->buffers[0];
+    if (array->n_buffers != 3) {
+        throw TileDBSOMAError(std::format(
+            "[ManagedQuery] internal error: Arrow-table string column should "
+            "have 3 buffers; got {}",
+            array->n_buffers));
     }
+
+    const char* data = (const char*)array->buffers[2];
+    uint8_t* validity = (uint8_t*)array->buffers[0];
+
+    // If this is a table-slice, slice into the validity buffer.
+    if (validity != nullptr) {
+        validity += array->offset;
+    }
+    // If this is a table-slice, do *not* slice into the data
+    // buffer since it is indexed via offsets, which we slice
+    // into below.
 
     if ((strcmp(schema->format, "U") == 0) ||
         (strcmp(schema->format, "Z") == 0)) {
+        // If this is a table-slice, slice into the offsets buffer.
+        uint64_t* offset = (uint64_t*)array->buffers[1] + array->offset;
         setup_write_column(
-            schema->name,
-            array->length,
-            (const void*)data,
-            (uint64_t*)offset,
-            (uint8_t*)validity);
+            schema->name, array->length, (const void*)data, offset, validity);
+
     } else {
+        // If this is a table-slice, slice into the offsets buffer.
+        uint32_t* offset = (uint32_t*)array->buffers[1] + array->offset;
         setup_write_column(
-            schema->name,
-            array->length,
-            (const void*)data,
-            (uint32_t*)offset,
-            (uint8_t*)validity);
+            schema->name, array->length, (const void*)data, offset, validity);
     }
     return false;
 }
