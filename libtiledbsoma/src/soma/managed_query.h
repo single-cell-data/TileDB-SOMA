@@ -614,10 +614,16 @@ class ManagedQuery {
         // additional processing steps
 
         UserType* buf;
+        // The array->offset is non-zero when we are passed sliced
+        // Arrow tables like arrow_table[:m] or arrow_table[m:].
         if (array->n_buffers == 3) {
             buf = (UserType*)array->buffers[2] + array->offset;
         } else {
             buf = (UserType*)array->buffers[1] + array->offset;
+        }
+        uint8_t* validity = (uint8_t*)array->buffers[0];
+        if (validity != nullptr) {
+            validity += array->offset;
         }
 
         bool has_attr = schema_->has_attribute(schema->name);
@@ -646,7 +652,7 @@ class ManagedQuery {
                 casted_values.size(),
                 (const void*)casted_values.data(),
                 (uint64_t*)nullptr,
-                (uint8_t*)array->buffers[0]);
+                validity);
 
             // Return false because we do not extend the enumeration
             return false;
