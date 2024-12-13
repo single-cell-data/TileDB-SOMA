@@ -413,7 +413,10 @@ class ExperimentAxisQuery:
                 "No obs_spatial_presence dataframe in this experiment."
             ) from ke
         if not isinstance(obs_scene, DataFrame):
-            raise TypeError("obs_spatial_presence must be a dataframe.")
+            raise TypeError(
+                f"obs_spatial_presence must be a dataframe; got "
+                f"{type(obs_scene).__name__}."
+            )
 
         full_table = obs_scene.read(
             coords=((Axis.OBS.getattr_from(self._joinids), slice(None))),
@@ -437,7 +440,10 @@ class ExperimentAxisQuery:
                 f"'{self.measurement_name}'."
             ) from ke
         if not isinstance(var_scene, DataFrame):
-            raise TypeError("var_spatial_presence must be a dataframe.")
+            raise TypeError(
+                f"var_spatial_presence must be a dataframe; got "
+                f"{type(var_scene).__name__}."
+            )
 
         full_table = var_scene.read(
             coords=((Axis.VAR.getattr_from(self._joinids), slice(None))),
@@ -508,7 +514,7 @@ class ExperimentAxisQuery:
             obsp_layers: Additional obsp layers to read and return in the obsp slot.
             varm_layers: Additional varm layers to read and return in the varm slot.
             varp_layers: Additional varp layers to read and return in the varp slot.
-            drop_levels: If ``True`` remove unused categories from the anndata table
+            drop_levels: If ``True`` remove unused categories from the AnnData table
                 with the measurement data.
             scene_presence_mode: Method for determining what scenes to return data
                 from. Valid options are ``obs`` (use ``obs_spatial_presence``
