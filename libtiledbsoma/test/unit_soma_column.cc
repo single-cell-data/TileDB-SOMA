@@ -27,13 +27,16 @@
  *
  * @section DESCRIPTION
  *
- * This file manages unit tests for implementation of SOMAColumn class. This is
- * temparary and to be removed once SOMAColumn is fully integrated.
+ * This file manages unit tests for implementation of SOMAColumn class
  */
 
 #include <format>
 #include <tiledb/tiledb>
 #include <tiledbsoma/tiledbsoma>
+#include "../src/soma/soma_attribute.h"
+#include "../src/soma/soma_column.h"
+#include "../src/soma/soma_dimension.h"
+#include "../src/soma/soma_geometry_column.h"
 #include "common.h"
 
 const int64_t SOMA_JOINID_DIM_MAX = 99;
@@ -280,6 +283,58 @@ TEST_CASE("SOMAColumn: SOMADimension") {
     REQUIRE(
         columns[3]->core_domain_slot<std::string>() ==
         std::make_pair<std::string, std::string>("", ""));
+}
+
+TEST_CASE("SOMAColumn: SOMAGeometryDimension") {
+    auto ctx = std::make_shared<SOMAContext>();
+    PlatformConfig platform_config{};
+
+    std::vector<helper::DimInfo> geom_dim_infos({helper::DimInfo(
+        {.name = "dimension",
+         .tiledb_datatype = TILEDB_GEOM_WKB,
+         .dim_max = 100,
+         .string_lo = "N/A",
+         .string_hi = "N/A"})});
+
+    std::vector<helper::DimInfo> spatial_dim_infos(
+        {helper::DimInfo(
+             {.name = "x",
+              .tiledb_datatype = TILEDB_FLOAT64,
+              .dim_max = 200,
+              .string_lo = "N/A",
+              .string_hi = "N/A"}),
+         helper::DimInfo(
+             {.name = "y",
+              .tiledb_datatype = TILEDB_FLOAT64,
+              .dim_max = 100,
+              .string_lo = "N/A",
+              .string_hi = "N/A"})});
+
+    auto geom_columns = helper::create_column_index_info(geom_dim_infos);
+    auto spatial_columns = helper::create_column_index_info(spatial_dim_infos);
+
+    auto geometry_column = SOMAGeometryColumn::create(
+        ctx->tiledb_ctx(),
+        geom_columns.second->children[0],
+        spatial_columns.second.get(),
+        spatial_columns.first.get(),
+        "SOMAGeometryDataFrame",
+        "WKB",
+        platform_config);
+
+    REQUIRE(
+        geometry_column->tiledb_dimensions().value().size() ==
+        spatial_dim_infos.size() * 2);
+    REQUIRE(
+        geometry_column->tiledb_attributes().value()[0].type() ==
+        TILEDB_GEOM_WKB);
+
+    auto domain = geometry_column->core_domain_slot<std::vector<double_t>>();
+    CHECK(domain.first == std::vector<double_t>({0, 0}));
+    CHECK(
+        domain.second ==
+        std::vector<double_t>(
+            {helper::CORE_DOMAIN_MAX, helper::CORE_DOMAIN_MAX}));
 }
 
 TEST_CASE_METHOD(
