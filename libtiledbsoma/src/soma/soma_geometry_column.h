@@ -91,11 +91,11 @@ class SOMAGeometryColumn : public virtual SOMAColumn {
 
     virtual void _set_current_domain_slot(
         NDRectangle& rectangle,
-        std::span<const std::any> domain) const override;
+        std::span<const std::any> new_current_domain) const override;
 
     virtual std::pair<bool, std::string> _can_set_current_domain_slot(
         std::optional<NDRectangle>& rectangle,
-        std::span<const std::any> new_domain) const override;
+        std::span<const std::any> new_current_domain) const override;
 
     virtual std::any _core_domain_slot() const override;
 
@@ -108,9 +108,20 @@ class SOMAGeometryColumn : public virtual SOMAColumn {
         NDRectangle& ndrect) const override;
 
    private:
+    /**
+     * The current implementation of SOMAGeometryColumn uses a pair of TileDB
+     * dimensions to store the min and max point of the bounding box per
+     * dimension. E.g. a 2D geometry will have 4 TileDB dimensions (2 *
+     * num_spatial_axes) to provide spatial indexing.
+     */
+    const size_t TDB_DIM_PER_SPATIAL_AXIS = 2;
     std::vector<Dimension> dimensions;
     Attribute attribute;
 
+    /**
+     * Compute the usable domain limits. If the array has a current domain then
+     * it is used to compute the limits, otherwise the core domain is used.
+     */
     std::vector<std::pair<double_t, double_t>> _limits(
         const SOMAContext& ctx, const ArraySchema& schema) const;
 
