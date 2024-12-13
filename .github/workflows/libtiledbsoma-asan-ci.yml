@@ -1,6 +1,9 @@
 name: libtiledbsoma ASAN
 
 on:
+  pull_request:
+    paths:
+      - '.github/workflows/libtiledbsoma-asan-ci.yml'
   schedule:
     - cron: 20 8 * * 0
   workflow_dispatch:
