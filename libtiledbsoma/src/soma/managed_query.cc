@@ -975,7 +975,7 @@ bool ManagedQuery::_cast_column_aux<std::string>(
     //   from Python/R.)
 
     if (array->n_buffers != 3) {
-        throw TileDBSOMAError(std::format(
+        throw TileDBSOMAError(fmt::format(
             "[ManagedQuery] internal error: Arrow-table string column should "
             "have 3 buffers; got {}",
             array->n_buffers));
