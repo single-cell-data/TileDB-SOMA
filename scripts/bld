@@ -12,7 +12,7 @@ build="Release"
 prefix=""
 tiledb=""
 cmake_verbose="false"
-no_tiledb_deprecated="false"
+allow_tiledb_deprecated="false"
 werror="false"
 
 while test $# != 0; do
@@ -21,7 +21,7 @@ while test $# != 0; do
   --prefix=*) prefix=$(arg "$1");;
   --tiledb=*) tiledb=$(arg "$1");;
   --cmake-verbose=*) cmake_verbose=$(arg "$1");;
-  --no-tiledb-deprecated=*) no_tiledb_deprecated=$(arg "$1");;
+  --allow-tiledb-deprecated=*) allow_tiledb_deprecated=$(arg "$1");;
   --werror=*) werror=$(arg "$1");;
   esac
   shift
@@ -70,8 +70,8 @@ elif [ "$werror" = "true" ]; then
 
 fi
 
-if [ "$no_tiledb_deprecated" = "true" ]; then
-    extra_opts+=" -DTILEDB_REMOVE_DEPRECATIONS=ON"
+if [ "$allow_tiledb_deprecated" = "true" ]; then
+    extra_opts+=" -DTILEDB_REMOVE_DEPRECATIONS=OFF"
 fi
 
 

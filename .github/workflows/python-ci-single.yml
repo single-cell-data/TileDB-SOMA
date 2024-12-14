@@ -104,7 +104,7 @@ jobs:
 #        key: libtiledbsoma-build-dist-${{ inputs.os }}-${{ inputs.python_version }}-${{ hashFiles('libtiledbsoma', 'scripts/bld') }}
 
     - name: Install tiledbsoma
-      run: pip -v install -e apis/python[all] -C "--build-option=--no-tiledb-deprecated"
+      run: pip -v install -e apis/python[all]
       env:
         CC: ${{ inputs.cc }}
         CXX: ${{ inputs.cxx }}
