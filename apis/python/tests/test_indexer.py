@@ -121,15 +121,15 @@ def test_expected_errors() -> None:
     context = SOMATileDBContext()
 
     # ndim != 1
-    with pytest.raises(SOMAError):
+    with pytest.raises(ValueError):
         IntIndexer(np.array([[0, 1], [2, 3]], dtype=np.int64), context=context)
-    with pytest.raises(SOMAError):
+    with pytest.raises(ValueError):
         IntIndexer(np.array([0, 1, 2, 3], dtype=np.int64), context=context).get_indexer(
             np.array([[0, 1]], dtype=np.int64)
         )
 
     # non-native byte order (one of the two must fail)
-    with pytest.raises(SOMAError):
+    with pytest.raises(TypeError):
         IntIndexer(np.array([0, 1, 2, 3], dtype=np.dtype("<i8")), context=context)
         IntIndexer(np.array([0, 1, 2, 3], dtype=np.dtype(">i8")), context=context)
     with pytest.raises(TypeError):
@@ -141,7 +141,7 @@ def test_expected_errors() -> None:
         )
 
     # unsupported dtype
-    with pytest.raises(SOMAError):
+    with pytest.raises(TypeError):
         IntIndexer(np.array([0, 1, 2], dtype=np.uint64), context=context)
     with pytest.raises(TypeError):
         IntIndexer(np.array([0, 1, 2], dtype=np.int64), context=context).get_indexer(

@@ -65,9 +65,9 @@ py::array_t<int64_t> get_indexer_general_aux(
 py::array_t<int64_t> get_indexer_general(
     IntIndexer& indexer, py::array_t<int64_t> lookups) {
     if (lookups.ndim() != 1)
-        throw TileDBSOMAError("IntIndexer only supports arrays of dimension 1");
+        throw std::invalid_argument("IntIndexer only supports arrays of dimension 1");
     if (lookups.dtype() != py::dtype::of<int64_t>())
-        throw TileDBSOMAError("IntIndexer only supports array of type int64");
+        throw py::type_error("IntIndexer only supports array of type int64");
 
     try {
         return get_indexer_general_aux(indexer, lookups);
@@ -182,10 +182,10 @@ void load_reindexer(py::module& m) {
             "map_locations",
             [](IntIndexer& indexer, py::array keys) {
                 if (keys.ndim() != 1)
-                    throw TileDBSOMAError(
+                    throw std::invalid_argument(
                         "IntIndexer only supports arrays of dimension 1");
                 if (keys.dtype() != py::dtype::of<int64_t>())
-                    throw TileDBSOMAError(
+                    throw py::type_error(
                         "IntIndexer only supports array of type int64");
 
                 auto keys_int64 = py::cast<py::array_t<int64_t>>(keys);
