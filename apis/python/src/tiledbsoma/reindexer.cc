@@ -31,13 +31,13 @@
  */
 
 #include <tiledbsoma/reindexer/reindexer.h>
-// #include <tiledbsoma/utils/carrow.h>
 #include "common.h"
 
 #define DENUM(x) .value(#x, TILEDB_##x)
 namespace libtiledbsomacpp {
 
 namespace py = pybind11;
+using npy_api = pybind11::detail::npy_api;
 using namespace py::literals;
 using namespace tiledbsoma;
 
@@ -64,6 +64,11 @@ py::array_t<int64_t> get_indexer_general_aux(
 }
 py::array_t<int64_t> get_indexer_general(
     IntIndexer& indexer, py::array_t<int64_t> lookups) {
+    if (lookups.ndim() != 1)
+        throw TileDBSOMAError("IntIndexer only supports arrays of dimension 1");
+    if (lookups.dtype() != py::dtype::of<int64_t>())
+        throw TileDBSOMAError("IntIndexer only supports array of type int64");
+
     try {
         return get_indexer_general_aux(indexer, lookups);
     } catch (const std::exception& e) {
@@ -120,8 +125,14 @@ py::array_t<int64_t> get_indexer_py_arrow_aux(
         extract_py_array_schema(array, arrow_array, arrow_schema);
         total_size += arrow_array.length;
 
+        bool type_ok = (strcmp(arrow_schema.format, "l") == 0);
+
         arrow_schema.release(&arrow_schema);
         arrow_array.release(&arrow_array);
+
+        if (!type_ok)
+            throw TileDBSOMAError(
+                "IntIndexer only supports array of type int64");
     }
 
     // Allocate the output
@@ -164,13 +175,23 @@ void load_reindexer(py::module& m) {
     // between 0 and number of keys - 1) based on khash
     py::class_<IntIndexer>(m, "IntIndexer")
         .def(py::init<>())
-        .def(py::init<std::shared_ptr<SOMAContext>>())
+        .def(
+            py::init<std::shared_ptr<SOMAContext>>(),
+            py::arg("context").noconvert())
         .def(
             "map_locations",
-            [](IntIndexer& indexer, py::array_t<int64_t> keys) {
+            [](IntIndexer& indexer, py::array keys) {
+                if (keys.ndim() != 1)
+                    throw TileDBSOMAError(
+                        "IntIndexer only supports arrays of dimension 1");
+                if (keys.dtype() != py::dtype::of<int64_t>())
+                    throw TileDBSOMAError(
+                        "IntIndexer only supports array of type int64");
+
+                auto keys_int64 = py::cast<py::array_t<int64_t>>(keys);
                 try {
-                    auto keys_p = keys.data();
-                    auto keys_sz = keys.size();
+                    auto keys_p = keys_int64.data();
+                    auto keys_sz = keys_int64.size();
 
                     py::gil_scoped_release release;
                     indexer.map_locations(keys_p, keys_sz);
@@ -179,13 +200,16 @@ void load_reindexer(py::module& m) {
                     throw TileDBSOMAError(e.what());
                 }
             })
+
         // Perform lookup for a large input array of keys and writes the
         // looked up values into previously allocated array (works for the
         // cases in which python and R pre-allocate the array)
-        .def("get_indexer_general", get_indexer_general)
+        .def("get_indexer_general", get_indexer_general, py::arg().noconvert())
+
         // If the input is not arrow (does not have _export_to_c attribute),
         // it will be handled using a general input method.
-        .def("get_indexer_pyarrow", get_indexer_py_arrow);
+        .def(
+            "get_indexer_pyarrow", get_indexer_py_arrow, py::arg().noconvert());
 }
 
 }  // namespace libtiledbsomacpp
