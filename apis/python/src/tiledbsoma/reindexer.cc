@@ -65,7 +65,8 @@ py::array_t<int64_t> get_indexer_general_aux(
 py::array_t<int64_t> get_indexer_general(
     IntIndexer& indexer, py::array_t<int64_t> lookups) {
     if (lookups.ndim() != 1)
-        throw std::invalid_argument("IntIndexer only supports arrays of dimension 1");
+        throw std::invalid_argument(
+            "IntIndexer only supports arrays of dimension 1");
     if (lookups.dtype() != py::dtype::of<int64_t>())
         throw py::type_error("IntIndexer only supports array of type int64");
 
