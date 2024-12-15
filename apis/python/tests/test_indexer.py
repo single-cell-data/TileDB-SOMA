@@ -147,3 +147,17 @@ def test_expected_errors() -> None:
         IntIndexer(np.array([0, 1, 2], dtype=np.int64), context=context).get_indexer(
             np.array([0, 1, 2], dtype=np.float64)
         )
+
+
+def test_arrow_offset_handling() -> None:
+    """Ensure accurate handling of slice offset/length"""
+    assert np.array_equal(
+        IntIndexer([0, 1]).get_indexer(pa.array([0, 1, 2]).slice(offset=1, length=1)),
+        np.array([1]),
+    )
+    assert np.array_equal(
+        IntIndexer([0, 1, 2, 3, 4, 5]).get_indexer(
+            pa.chunked_array([[0, 1], [2, 3]]).slice(offset=1, length=2)
+        ),
+        np.array([1, 2]),
+    )
