@@ -169,16 +169,17 @@ Rcpp::XPtr<tdbs::SOMAArray> sr_setup(
 // [[Rcpp::export]]
 bool sr_complete(Rcpp::XPtr<tdbs::SOMAArray> sr) {
     check_xptr_tag<tdbs::SOMAArray>(sr);
-    bool complt = sr->is_complete(true);
-    bool initial = sr->is_initial_read();
-    bool res = complt && !initial;  // completed transfer if query status
-                                    // complete and query ran once
-    spdl::debug(
-        "[sr_complete] Complete query test {} (compl {} initial {})",
-        res,
-        complt,
-        initial);
-    return res;
+    // bool complt = sr->is_complete(true);
+    // bool initial = sr->is_initial_read();
+    // bool res = complt && !initial;  // completed transfer if query status
+    //                                 // complete and query ran once
+    // spdl::debug(
+    //     "[sr_complete] Complete query test {} (compl {} initial {})",
+    //     res,
+    //     complt,
+    //     initial);
+    // return res;
+    return sr->results_complete();
 }
 
 //' @noRd
@@ -223,7 +224,7 @@ SEXP sr_next(Rcpp::XPtr<tdbs::SOMAArray> sr) {
         sr_data->get()->names().size());
 
     if (!sr_data) {
-        return nullptr;
+        return create_empty_arrow_table();
     }
 
     const std::vector<std::string> names = sr_data->get()->names();

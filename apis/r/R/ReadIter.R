@@ -32,13 +32,11 @@ ReadIter <- R6::R6Class(
         return(NULL)
       }
 
-      rl <- sr_next(private$soma_reader_pointer)
-
-      if (is.null(rl)){
+      if (self$read_complete()){
         return(private$.readComplete())
       }
 
-      return(rl)
+      return(sr_next(private$soma_reader_pointer))
     },
 
     #' @description  Concatenate remainder of iterator
