@@ -147,7 +147,7 @@ py::array_t<int64_t> get_indexer_py_arrow_aux(
         ArrowSchema arrow_schema;
         ArrowArray arrow_array;
         extract_py_array_schema(array, arrow_array, arrow_schema);
-        auto input_ptr = (int64_t*)arrow_array.buffers[1];
+        auto input_ptr = (int64_t*)arrow_array.buffers[1] + arrow_array.offset;
 
         py::gil_scoped_release release;
         indexer.lookup(
