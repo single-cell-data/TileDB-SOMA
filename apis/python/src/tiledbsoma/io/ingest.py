@@ -2152,17 +2152,6 @@ def _find_mean_nnz(matrix: Matrix, axis: int) -> int:
     for lo in range(0, extent, bsz):
         hi = min(extent, lo + bsz)
         coords[axis] = slice(lo, hi)
-        print()
-        print()
-        print("HEY")
-        foo1 = tuple(coords)
-        print(f"TUPLE COORDS <<{foo1}>>")
-        foo2 = matrix[tuple(coords)]
-        print(f"MATRIX TUPLE COORDS <<{foo2}>>")
-        foo3 = matrix[tuple(coords)].nnz
-        print(f"MATRIX TUPLE COORDS NNZ <<{foo3}>>")
-        print()
-        print()
         total_nnz += matrix[tuple(coords)].nnz
     return int(math.ceil(total_nnz / extent))
 
@@ -2397,12 +2386,6 @@ def _write_matrix_to_sparseNDArray(
         stride_axis = 1
 
     dim_max_size = matrix.shape[stride_axis]
-
-    print()
-    print()
-    print("HEYY SNDA URI", soma_ndarray.uri)
-    print()
-    print()
 
     eta_tracker = eta.Tracker()
     goal_chunk_nnz = tiledb_create_options.goal_chunk_nnz
