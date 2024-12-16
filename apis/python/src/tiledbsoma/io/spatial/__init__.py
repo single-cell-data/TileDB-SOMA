@@ -5,6 +5,6 @@ may be dropped.
 """
 
 from .ingest import VisiumPaths, from_visium
-from .outgest import to_spatial_data
+from .outgest import to_spatialdata
 
-__all__ = ["to_spatial_data", "from_visium", "VisiumPaths"]
+__all__ = ["to_spatialdata", "from_visium", "VisiumPaths"]

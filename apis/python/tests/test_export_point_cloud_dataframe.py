@@ -52,7 +52,7 @@ def test_export_to_shapes_2d(
 ):
     """Test exporting a simple point cloud to a SpatialData shape model."""
     # Export PointCloudDataFrame to shapes.
-    shape = soma_outgest.to_spatial_data_shapes(
+    shape = soma_outgest.to_spatialdata_shapes(
         sample_point_cloud_dataframe_2d,
         scene_id="scene0",
         key="point_cloud",
@@ -100,7 +100,7 @@ def test_export_to_points_2d(
 ):
     """Test exporting a simple point cloud to a SpatialData shape model."""
     # Export PointCloudDataFrame to shapes.
-    points = soma_outgest.to_spatial_data_points(
+    points = soma_outgest.to_spatialdata_points(
         sample_point_cloud_dataframe_2d,
         key="point_cloud",
         scene_id="scene0",

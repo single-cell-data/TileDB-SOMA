@@ -251,7 +251,7 @@ def test_spatial_experiment_query_none(soma_spatial_experiment):
         assert query.n_vars == 0
 
         # Read to SpatialData.
-        sdata = query.to_spatial_data("data")
+        sdata = query.to_spatialdata("data")
         assert len(sdata.tables) == 1
         assert len(sdata.points) == 0
         assert len(sdata.shapes) == 0
@@ -269,7 +269,7 @@ def test_spatial_experiment_query_all(soma_spatial_experiment):
         assert query.n_vars == 100
 
         # Read to SpatialData.
-        sdata = query.to_spatial_data("data")
+        sdata = query.to_spatialdata("data")
 
         # Verify the correct number of assets.
         assert len(sdata.tables) == 1
@@ -301,7 +301,7 @@ def test_spatial_experiment_query_obs_slice(
         assert query.n_vars == 100
 
         # Read to SpatialData.
-        sdata = query.to_spatial_data("data")
+        sdata = query.to_spatialdata("data")
 
         # Verify the correct number of assets.
         assert len(sdata.tables) == 1
@@ -330,7 +330,7 @@ def test_spatial_experiment_query_var_slice(
         assert query.n_vars == var_slice.stop - var_slice.start + 1
 
         # Read to SpatialData.
-        sdata = query.to_spatial_data("data", scene_presence_mode="var")
+        sdata = query.to_spatialdata("data", scene_presence_mode="var")
 
         # Verify the correct number of assets.
         assert len(sdata.tables) == 1
