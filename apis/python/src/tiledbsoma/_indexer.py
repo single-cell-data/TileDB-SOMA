@@ -66,9 +66,21 @@ class IntIndexer:
             Maturing.
         """
         self._context = context
-        self._reindexer = clib.IntIndexer(
-            None if self._context is None else self._context.native_context
+        self._reindexer = (
+            clib.IntIndexer()
+            if self._context is None
+            else clib.IntIndexer(self._context.native_context)
         )
+
+        # TODO: the map_locations interface does not accept chunked arrays. It would
+        # save a copy (reduce memory usage) if they were natively supported.
+        if isinstance(
+            data, (pa.Array, pa.ChunkedArray, pd.arrays.IntegerArray, pd.Series)
+        ):
+            data = data.to_numpy()
+        elif isinstance(data, list):
+            data = np.array(data, dtype=np.int64)
+
         self._reindexer.map_locations(data)
 
     def get_indexer(self, target: IndexerDataType) -> npt.NDArray[np.intp]:
@@ -79,8 +91,12 @@ class IntIndexer:
         Args:
             target: Data to return re-index data for.
         """
-        return (
-            self._reindexer.get_indexer_pyarrow(target)
-            if isinstance(target, (pa.Array, pa.ChunkedArray))
-            else self._reindexer.get_indexer_general(target)
-        )
+        if isinstance(target, (pa.ChunkedArray, pa.Array)):
+            return self._reindexer.get_indexer_pyarrow(target)
+
+        if isinstance(target, (pd.arrays.IntegerArray, pd.Series)):
+            target = target.to_numpy()
+        elif isinstance(target, list):
+            target = np.array(target, dtype=np.int64)
+
+        return self._reindexer.get_indexer_general(target)

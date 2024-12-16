@@ -114,3 +114,50 @@ def test_indexer(contextual: bool, keys: np.array, lookups: np.array):
     panda_results = panda_indexer.get_indexer(lookups)
     for i in range(num_threads):
         np.testing.assert_equal(all_results[i].all(), panda_results.all())
+
+
+def test_expected_errors() -> None:
+
+    context = SOMATileDBContext()
+
+    # ndim != 1
+    with pytest.raises(ValueError):
+        IntIndexer(np.array([[0, 1], [2, 3]], dtype=np.int64), context=context)
+    with pytest.raises(ValueError):
+        IntIndexer(np.array([0, 1, 2, 3], dtype=np.int64), context=context).get_indexer(
+            np.array([[0, 1]], dtype=np.int64)
+        )
+
+    # non-native byte order (one of the two must fail)
+    with pytest.raises(TypeError):
+        IntIndexer(np.array([0, 1, 2, 3], dtype=np.dtype("<i8")), context=context)
+        IntIndexer(np.array([0, 1, 2, 3], dtype=np.dtype(">i8")), context=context)
+    with pytest.raises(TypeError):
+        IntIndexer(np.array([0, 1, 2, 3], dtype=np.int64), context=context).get_indexer(
+            np.array([0], dtype=np.dtype("<i8"))
+        )
+        IntIndexer(np.array([0, 1, 2, 3], dtype=np.int64), context=context).get_indexer(
+            np.array([0], dtype=np.dtype(">i8"))
+        )
+
+    # unsupported dtype
+    with pytest.raises(TypeError):
+        IntIndexer(np.array([0, 1, 2], dtype=np.uint64), context=context)
+    with pytest.raises(TypeError):
+        IntIndexer(np.array([0, 1, 2], dtype=np.int64), context=context).get_indexer(
+            np.array([0, 1, 2], dtype=np.float64)
+        )
+
+
+def test_arrow_offset_handling() -> None:
+    """Ensure accurate handling of slice offset/length"""
+    assert np.array_equal(
+        IntIndexer([0, 1]).get_indexer(pa.array([0, 1, 2]).slice(offset=1, length=1)),
+        np.array([1]),
+    )
+    assert np.array_equal(
+        IntIndexer([0, 1, 2, 3, 4, 5]).get_indexer(
+            pa.chunked_array([[0, 1], [2, 3]]).slice(offset=1, length=2)
+        ),
+        np.array([1, 2]),
+    )
