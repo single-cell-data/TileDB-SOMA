@@ -63,7 +63,11 @@ void load_soma_object(py::module& m) {
                         uri, mode, context, timestamp, clib_type);
                 })();
 
-                auto soma_obj_type = soma_obj->type();
+                try {
+                    auto soma_obj_type = soma_obj->type();
+                } catch (const std::exception& e) {
+                    TPY_ERROR_LOC(e.what());
+                }
 
                 std::transform(
                     soma_obj_type->begin(),
@@ -92,10 +96,13 @@ void load_soma_object(py::module& m) {
                 else if (soma_obj_type == "somamultiscaleimage")
                     return py::cast(
                         dynamic_cast<SOMAMultiscaleImage&>(*soma_obj));
-                else {
-                    TPY_ERROR_LOC(
-                        *soma_obj_type + " SOMA object type not found");
-                }
+
+                assert(
+                    false &&
+                    "Unreachable code: All possible SOMA object types are "
+                    "already handled. This indicates a logic error or an "
+                    "unexpected failure to catch exceptions by "
+                    "SOMAObject::open");
             },
             "uri"_a,
             "mode"_a,
