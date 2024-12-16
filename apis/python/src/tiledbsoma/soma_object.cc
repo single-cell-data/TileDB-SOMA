@@ -63,10 +63,20 @@ void load_soma_object(py::module& m) {
                         uri, mode, context, timestamp, clib_type);
                 })();
 
+                std::optional<std::string> soma_obj_type;
                 try {
-                    auto soma_obj_type = soma_obj->type();
+                    soma_obj_type = soma_obj->type();
                 } catch (const std::exception& e) {
                     TPY_ERROR_LOC(e.what());
+                }
+
+                if (!soma_obj_type) {
+                    assert(
+                        false &&
+                        "Unreachable code: The missing soma_object_type case "
+                        "is already handled. This indicates an "
+                        "unexpected failure to catch exceptions by "
+                        "SOMAObject::open");
                 }
 
                 std::transform(
