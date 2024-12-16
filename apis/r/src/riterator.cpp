@@ -217,14 +217,14 @@ SEXP sr_next(Rcpp::XPtr<tdbs::SOMAArray> sr) {
 
     auto sr_data = sr->read_next();
 
+    if (!sr_data.has_value()) {
+        return R_NilValue;
+    }
+
     spdl::debug(
         "[sr_next] Read {} rows and {} cols",
         sr_data->get()->num_rows(),
         sr_data->get()->names().size());
-
-    if (!sr_data.has_value()) {
-        return R_NilValue;
-    }
 
     const std::vector<std::string> names = sr_data->get()->names();
     auto ncol = names.size();
