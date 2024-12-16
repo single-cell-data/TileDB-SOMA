@@ -224,7 +224,7 @@ SEXP sr_next(Rcpp::XPtr<tdbs::SOMAArray> sr) {
         sr_data->get()->names().size());
 
     if (!sr_data) {
-        return create_empty_arrow_table();
+        return R_NilValue;
     }
 
     const std::vector<std::string> names = sr_data->get()->names();

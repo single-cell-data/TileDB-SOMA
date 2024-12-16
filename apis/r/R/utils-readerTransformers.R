@@ -14,9 +14,10 @@ soma_array_to_arrow_table <- function(x) {
 soma_array_to_arrow_table_concat <- function(it) {
   stopifnot("'it' must be a 'ReadIter' object" = inherits(it, "ReadIter"))
   tbl <- it$read_next()
-  while (!it$read_complete()) {
-    nxt <- it$read_next()
+  nxt <- it$read_next()
+  while (!is.null(nxt)) {
     tbl <- arrow::concat_tables(tbl, nxt)
+    nxt <- it$read_next()
   }
   return(tbl)
 }
