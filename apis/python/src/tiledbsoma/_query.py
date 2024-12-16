@@ -486,7 +486,7 @@ class ExperimentAxisQuery:
 
         return ad
 
-    def to_spatial_data(  # type: ignore[no-untyped-def]
+    def to_spatialdata(  # type: ignore[no-untyped-def]
         self,
         X_name: str,
         *,
@@ -524,7 +524,7 @@ class ExperimentAxisQuery:
 
         from spatialdata import SpatialData
 
-        from .io.spatial.outgest import _add_scene_to_spatial_data
+        from .io.spatial.outgest import _add_scene_to_spatialdata
 
         warnings.warn(SPATIAL_DISCLAIMER)
 
@@ -554,7 +554,7 @@ class ExperimentAxisQuery:
 
         for scene_id in scene_ids:
             scene = self.experiment.spatial[str(scene_id)]
-            _add_scene_to_spatial_data(
+            _add_scene_to_spatialdata(
                 sdata,
                 scene_id=str(scene_id),
                 scene=scene,

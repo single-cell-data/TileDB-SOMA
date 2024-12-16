@@ -69,7 +69,7 @@ def _convert_axis_names(
     return spatial_data_axes, soma_dim_map
 
 
-def _transform_to_spatial_data(
+def _transform_to_spatialdata(
     transform: somacore.CoordinateTransform,
     input_dim_map: Dict[str, str],
     output_dim_map: Dict[str, str],
@@ -102,7 +102,7 @@ def _transform_to_spatial_data(
     )
 
 
-def to_spatial_data_points(
+def to_spatialdata_points(
     points: PointCloudDataFrame,
     *,
     key: str,
@@ -135,7 +135,7 @@ def to_spatial_data_points(
         transforms = {key: sd.transformations.Identity()}
     else:
         transforms = {
-            scene_id: _transform_to_spatial_data(
+            scene_id: _transform_to_spatialdata(
                 transform.inverse_transform(), points_dim_map, scene_dim_map
             )
         }
@@ -146,7 +146,7 @@ def to_spatial_data_points(
     return sd.models.PointsModel.parse(df, transformations=transforms)
 
 
-def to_spatial_data_shapes(
+def to_spatialdata_shapes(
     points: PointCloudDataFrame,
     *,
     key: str,
@@ -197,7 +197,7 @@ def to_spatial_data_shapes(
         transforms = {key: sd.transformations.Identity()}
     else:
         transforms = {
-            scene_id: _transform_to_spatial_data(
+            scene_id: _transform_to_spatialdata(
                 transform.inverse_transform(), points_dim_map, scene_dim_map
             )
         }
@@ -220,7 +220,7 @@ def to_spatial_data_shapes(
     return df
 
 
-def to_spatial_data_image(
+def to_spatialdata_image(
     image: MultiscaleImage,
     level: Optional[Union[str, int]] = None,
     *,
@@ -272,7 +272,7 @@ def to_spatial_data_image(
     if transform is None:
         # Get the transformation from the image level to the highest resolution of the multiscale image.
         scale_transform = image.get_transform_from_level(level)
-        sd_transform = _transform_to_spatial_data(
+        sd_transform = _transform_to_spatialdata(
             scale_transform, image_dim_map, image_dim_map
         )
         transformations = {key: sd_transform}
@@ -287,14 +287,14 @@ def to_spatial_data_image(
             scale_transform, somacore.IdentityTransform
         ):
             # inv_transform @ scale_transform -> applies scale_transform first
-            sd_transform = _transform_to_spatial_data(
+            sd_transform = _transform_to_spatialdata(
                 inv_transform @ scale_transform, image_dim_map, scene_dim_map
             )
         else:
-            sd_transform1 = _transform_to_spatial_data(
+            sd_transform1 = _transform_to_spatialdata(
                 scale_transform, image_dim_map, image_dim_map
             )
-            sd_transform2 = _transform_to_spatial_data(
+            sd_transform2 = _transform_to_spatialdata(
                 inv_transform, image_dim_map, scene_dim_map
             )
             # Sequence([sd_transform1, sd_transform2]) -> applies sd_transform1 first
@@ -310,7 +310,7 @@ def to_spatial_data_image(
     )
 
 
-def to_spatial_data_multiscale_image(
+def to_spatialdata_multiscale_image(
     image: MultiscaleImage,
     *,
     key: str,
@@ -350,7 +350,7 @@ def to_spatial_data_multiscale_image(
 
     if transform is None:
         spatial_data_transformations = tuple(
-            _transform_to_spatial_data(
+            _transform_to_spatialdata(
                 image.get_transform_from_level(level),
                 image_dim_map,
                 image_dim_map,
@@ -366,7 +366,7 @@ def to_spatial_data_multiscale_image(
         if isinstance(transform, somacore.ScaleTransform):
             # inv_transform @ scale_transform -> applies scale_transform first
             spatial_data_transformations = tuple(
-                _transform_to_spatial_data(
+                _transform_to_spatialdata(
                     inv_transform @ image.get_transform_from_level(level),
                     image_dim_map,
                     scene_dim_map,
@@ -375,12 +375,12 @@ def to_spatial_data_multiscale_image(
             )
         else:
             sd_scale_transforms = tuple(
-                _transform_to_spatial_data(
+                _transform_to_spatialdata(
                     image.get_transform_from_level(level), image_dim_map, image_dim_map
                 )
                 for level in range(1, image.level_count)
             )
-            sd_inv_transform = _transform_to_spatial_data(
+            sd_inv_transform = _transform_to_spatialdata(
                 inv_transform, image_dim_map, scene_dim_map
             )
 
@@ -420,7 +420,7 @@ def _get_transform_from_collection(
     return None
 
 
-def _add_scene_to_spatial_data(
+def _add_scene_to_spatialdata(
     sdata: sd.SpatialData,
     scene_id: str,
     scene: Scene,
@@ -456,7 +456,7 @@ def _add_scene_to_spatial_data(
             transform = _get_transform_from_collection(key, scene.obsl.metadata)
             if isinstance(df, PointCloudDataFrame):
                 if "soma_geometry" in df.metadata:
-                    sdata.shapes[output_key] = to_spatial_data_shapes(
+                    sdata.shapes[output_key] = to_spatialdata_shapes(
                         df,
                         key=output_key,
                         scene_id=scene_id,
@@ -465,7 +465,7 @@ def _add_scene_to_spatial_data(
                         soma_joinid_name=obs_id_name,
                     )
                 else:
-                    sdata.points[output_key] = to_spatial_data_points(
+                    sdata.points[output_key] = to_spatialdata_points(
                         df,
                         key=output_key,
                         scene_id=scene_id,
@@ -492,7 +492,7 @@ def _add_scene_to_spatial_data(
                 transform = _get_transform_from_collection(key, subcoll.metadata)
                 if isinstance(df, PointCloudDataFrame):
                     if "soma_geometry" in df.metadata:
-                        sdata.shapes[output_key] = to_spatial_data_shapes(
+                        sdata.shapes[output_key] = to_spatialdata_shapes(
                             df,
                             key=output_key,
                             scene_id=scene_id,
@@ -501,7 +501,7 @@ def _add_scene_to_spatial_data(
                             soma_joinid_name=var_id_name,
                         )
                     else:
-                        sdata.points[output_key] = to_spatial_data_points(
+                        sdata.points[output_key] = to_spatialdata_points(
                             df,
                             key=output_key,
                             scene_id=scene_id,
@@ -526,7 +526,7 @@ def _add_scene_to_spatial_data(
                     f"datatype {type(image).__name__}."
                 )
             if image.level_count == 1:
-                sdata.images[output_key] = to_spatial_data_image(
+                sdata.images[output_key] = to_spatialdata_image(
                     image,
                     0,
                     key=output_key,
@@ -535,7 +535,7 @@ def _add_scene_to_spatial_data(
                     transform=transform,
                 )
             else:
-                sdata.images[f"{scene_id}_{key}"] = to_spatial_data_multiscale_image(
+                sdata.images[f"{scene_id}_{key}"] = to_spatialdata_multiscale_image(
                     image,
                     key=output_key,
                     scene_id=scene_id,
@@ -544,7 +544,7 @@ def _add_scene_to_spatial_data(
                 )
 
 
-def to_spatial_data(
+def to_spatialdata(
     experiment: Experiment,
     *,
     measurement_names: Optional[Sequence[str]] = None,
@@ -614,7 +614,7 @@ def to_spatial_data(
 
     for scene_id in scene_names:
         scene = experiment.spatial[scene_id]
-        _add_scene_to_spatial_data(
+        _add_scene_to_spatialdata(
             sdata=sdata,
             scene_id=scene_id,
             scene=scene,

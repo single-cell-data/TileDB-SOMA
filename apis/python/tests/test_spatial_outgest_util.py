@@ -33,10 +33,10 @@ sd = pytest.importorskip("spatialdata")
         ),
     ],
 )
-def test_transform_to_spatial_data(transform, expected):
+def test_transform_to_spatialdata(transform, expected):
     input_dim_map = {"x1": "x", "y1": "y", "z1": "z"}
     output_dim_map = {"x2": "x", "y2": "y", "z2": "z"}
-    actual = soma_outgest._transform_to_spatial_data(
+    actual = soma_outgest._transform_to_spatialdata(
         transform, input_dim_map, output_dim_map
     )
     assert actual == expected
