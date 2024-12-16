@@ -26,7 +26,7 @@ def sample_2d_data():
 
 @pytest.fixture(scope="module")
 def experiment_with_single_scene(tmp_path_factory, sample_2d_data) -> soma.Experiment:
-    uri = tmp_path_factory.mktemp("experiment_with_spatial_data").as_uri()
+    uri = tmp_path_factory.mktemp("experiment_with_spatialdata").as_uri()
     with soma.Experiment.create(uri) as exp:
         assert exp.uri == uri
         # Create spatial folder.
@@ -173,7 +173,7 @@ def test_outgest_no_spatial(tmp_path, conftest_pbmc_small):
 
     # Read full experiment into SpatialData.
     with _factory.open(output_path) as exp:
-        sdata = spatial_outgest.to_spatial_data(exp)
+        sdata = spatial_outgest.to_spatialdata(exp)
 
     # Check the number of assets (exactly 1 table) is as expected.
     assert len(sdata.tables) == 2
@@ -204,7 +204,7 @@ def test_outgest_no_spatial(tmp_path, conftest_pbmc_small):
 
 def test_outgest_spatial_only(experiment_with_single_scene, sample_2d_data):
     # Export to SpatialData.
-    sdata = spatial_outgest.to_spatial_data(experiment_with_single_scene)
+    sdata = spatial_outgest.to_spatialdata(experiment_with_single_scene)
 
     # Check the number of assets is correct.
     assert len(sdata.tables) == 0
