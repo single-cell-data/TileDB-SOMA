@@ -223,7 +223,7 @@ SEXP sr_next(Rcpp::XPtr<tdbs::SOMAArray> sr) {
         sr_data->get()->num_rows(),
         sr_data->get()->names().size());
 
-    if (!sr_data) {
+    if (!sr_data.has_value()) {
         return R_NilValue;
     }
 
