@@ -28,13 +28,17 @@ ReadIter <- R6::R6Class(
     #' If read is complete, retunrs `NULL` and raises warning.
     #' @return \code{NULL} or one of arrow::\link[arrow]{Table}, \link{matrixZeroBasedView}
     read_next = function() {
+      if (is.null(private$soma_reader_pointer)){
+        return(NULL)
+      }
+
       tbl <- sr_next(private$soma_reader_pointer)
 
       if(is.null(tbl)){
         return(private$.readComplete())
       }
 
-      return(tbl)
+      return(private$soma_reader_transform(tbl))
     },
 
     #' @description  Concatenate remainder of iterator
