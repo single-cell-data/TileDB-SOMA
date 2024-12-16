@@ -12,9 +12,26 @@ jobs:
   asan:
     runs-on: ubuntu-24.04
     steps:
-    - name: Checkout TileDB-SOMA
-      uses: actions/checkout@v4
-    - name: Build libtiledbsoma
-      run: ./scripts/bld --build=ASAN --no-tiledb-deprecated=true --werror=true
-    - name: Run libTileDB-SOMA unittests
-      run: ctest --test-dir build/libtiledbsoma -C ASAN --verbose --rerun-failed --output-on-failure
+      - name: Checkout TileDB-SOMA
+        uses: actions/checkout@v4
+      - name: Install pre-built libtiledb
+        run: |
+          mkdir -p external
+            # Please do not edit manually -- let scripts/update-tiledb-version.py update this
+          wget --quiet https://github.com/TileDB-Inc/TileDB/releases/download/2.27.0/tiledb-linux-x86_64-2.27.0-2862c30.tar.gz
+          tar -C external -xzf tiledb-*.tar.gz
+          ls external/lib/
+      - name: Build and install libtiledbsoma
+        run: |
+          cmake -S libtiledbsoma -B build \
+            -D CMAKE_BUILD_TYPE=ASAN \
+            -D CMAKE_PREFIX_PATH=$(pwd)/external/ \
+            -D CMAKE_INSTALL_PREFIX:PATH=$(pwd)/external/ \
+            -D OVERRIDE_INSTALL_PREFIX=OFF \
+            -D DOWNLOAD_TILEDB_PREBUILT=OFF \
+            -D TILEDB_REMOVE_DEPRECATIONS=ON \
+            -D FORCE_BUILD_TILEDB=OFF
+          cmake --build build -j 2
+          ls external/lib/
+      - name: Run C++ unittests
+        run: ctest --test-dir build/libtiledbsoma -C ASAN --verbose --rerun-failed --output-on-failure
