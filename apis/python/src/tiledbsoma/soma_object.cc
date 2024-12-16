@@ -92,8 +92,9 @@ void load_soma_object(py::module& m) {
                 else if (soma_obj_type == "somamultiscaleimage")
                     return py::cast(
                         dynamic_cast<SOMAMultiscaleImage&>(*soma_obj));
-                else{
-                    TPY_ERROR_LOC(*soma_obj_type + " SOMA object type not found");
+                else {
+                    TPY_ERROR_LOC(
+                        *soma_obj_type + " SOMA object type not found");
                 }
             },
             "uri"_a,
