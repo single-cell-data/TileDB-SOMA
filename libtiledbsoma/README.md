@@ -46,7 +46,7 @@ This approach leverages the build-system defined in [pyproject.toml](../apis/pyt
 
 ## Python and C++ Development
 
-Developers who plan to modify the C++ code must use these build commands: 
+Developers who plan to modify the C++ code must use these build commands:
 
 ```
 # clean, build, and install
@@ -77,9 +77,9 @@ Rules:
   clean               Remove build artifacts
 
 Options:
-  build=BUILD_TYPE    Cmake build type = Release|Debug|RelWithDebInfo|Coverage [Release]
+  build=BUILD_TYPE    Cmake build type = Release|Debug|RelWithDebInfo|ASAN|TSAN|LSAN|UBSAN|MSAN|Coverage [Release]
   prefix=PREFIX       Install location [dist]
-  tiledb=TILEDB_DIST  Absolute path to custom TileDB build 
+  tiledb=TILEDB_DIST  Absolute path to custom TileDB build
 
 Examples:
   Install Release build
