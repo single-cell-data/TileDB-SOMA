@@ -1,4 +1,4 @@
-# Unreleased
+# tiledbsoma 1.15.0
 
 ## Changes
 
@@ -43,7 +43,8 @@
 * Docstring audit for new shape [#3399](https://github.com/single-cell-data/TileDB-SOMA/pull/3399)
 * Add `check_only` support for domain/shape updates [#3400](https://github.com/single-cell-data/TileDB-SOMA/pull/3400)
 * Adjust blockwise + re-indexer to return condensed matrix, not full domain [#3395](https://github.com/single-cell-data/TileDB-SOMA/pull/3395)
-* [c++] Use core 2.27.0.rc5 (#3410) [#3410](https://github.com/single-cell-data/TileDB-SOMA/pull/3410)
+* [c++] Use core 2.27.0.rc5 [#3410](https://github.com/single-cell-data/TileDB-SOMA/pull/3410)
+* [c++] Use core 2.27.0 [#3422](https://github.com/single-cell-data/TileDB-SOMA/pull/3422)
 
 # tiledbsoma 1.14.5
 
