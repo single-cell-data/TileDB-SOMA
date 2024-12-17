@@ -19,7 +19,7 @@ from tests.parametrize_cases import parametrize_cases
 from tests.test_basic_anndata_io import TEST_UNS, make_uns_adata
 
 ValidUpdates = Union[None, str, List[str], Dict[str, "ValidUpdates"]]
-Logs = List[str] | None
+Logs = Union[List[str], None]
 
 
 @dataclass
