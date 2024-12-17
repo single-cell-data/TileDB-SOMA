@@ -121,7 +121,7 @@ def sample_multiscale_image_2d(tmp_path_factory, sample_2d_data):
         ),
     ],
 )
-def test_export_image_level_to_spatial_data(
+def test_export_image_level_to_spatialdata(
     sample_multiscale_image_2d,
     sample_2d_data,
     level,
@@ -129,7 +129,7 @@ def test_export_image_level_to_spatial_data(
     expected_transformation,
     expected_transformation_key,
 ):
-    image2d = soma_outgest.to_spatial_data_image(
+    image2d = soma_outgest.to_spatialdata_image(
         sample_multiscale_image_2d,
         level=level,
         key="image",
@@ -223,14 +223,14 @@ def test_export_image_level_to_spatial_data(
         ),
     ],
 )
-def test_export_full_image_to_spatial_data(
+def test_export_full_image_to_spatialdata(
     sample_multiscale_image_2d,
     sample_2d_data,
     transform,
     expected_transformation,
     expected_transformation_key,
 ):
-    image2d = soma_outgest.to_spatial_data_multiscale_image(
+    image2d = soma_outgest.to_spatialdata_multiscale_image(
         sample_multiscale_image_2d,
         key="image",
         scene_id="scene0",

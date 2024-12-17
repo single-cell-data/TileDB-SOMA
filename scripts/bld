@@ -38,7 +38,7 @@ fi
 # set extra cmake options
 # -------------------------------------------------------------------
 extra_opts=""
-if [ "${build}" == "Debug" ] && [ -z "${tiledb}" ]; then
+if [ "${build}" != "Release" ] && [ -z "${tiledb}" ]; then
   # Debug build of TileDB from source
   extra_opts+=" -DDOWNLOAD_TILEDB_PREBUILT=OFF"
 fi
