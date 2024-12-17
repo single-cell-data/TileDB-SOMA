@@ -6,6 +6,7 @@
 """Implementation of a SOMA Experiment.
 """
 import enum
+import warnings
 from concurrent.futures import ThreadPoolExecutor
 from typing import (
     TYPE_CHECKING,
@@ -51,6 +52,8 @@ from somacore.query.query import (
 )
 from somacore.query.types import IndexFactory, IndexLike
 from typing_extensions import Self
+
+from ._constants import SPATIAL_DISCLAIMER
 
 if TYPE_CHECKING:
     from ._experiment import Experiment
