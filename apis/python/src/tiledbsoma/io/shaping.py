@@ -9,9 +9,11 @@ ability to process all dataframes/arrays contained within a TileDB-SOMA
 Experiment. Please also see
 https://github.com/single-cell-data/TileDB-SOMA/issues/2407.  """
 
+from __future__ import annotations
+
 import io
 import sys
-from typing import Any, Dict, Optional, Tuple, TypedDict, Union, cast
+from typing import Any, Dict, Tuple, TypedDict, Union, cast
 
 import tiledbsoma
 
@@ -23,13 +25,13 @@ class SizingArgs(TypedDict):
     upgrade/resize functions.
     """
 
-    nobs: Optional[int]
-    nvars: Optional[Dict[str, int]]
-    ms_name: Optional[str]
-    coll_name: Optional[str]
+    nobs: int | None
+    nvars: Dict[str, int] | None
+    ms_name: str | None
+    coll_name: str | None
     verbose: bool
     check_only: bool
-    context: Optional[tiledbsoma.SOMATileDBContext]
+    context: tiledbsoma.SOMATileDBContext | None
     output_handle: Printable
 
 
@@ -48,7 +50,7 @@ def _find_old_sparse_ndarray_bounds(
 def show_experiment_shapes(
     uri: str,
     *,
-    context: Optional[tiledbsoma.SOMATileDBContext] = None,
+    context: tiledbsoma.SOMATileDBContext | None = None,
     output_handle: Printable = cast(Printable, sys.stdout),
 ) -> bool:
     """For each dataframe/array contained within the SOMA ``Experiment`` pointed
@@ -105,7 +107,7 @@ def upgrade_experiment_shapes(
     *,
     verbose: bool = False,
     check_only: bool = False,
-    context: Optional[tiledbsoma.SOMATileDBContext] = None,
+    context: tiledbsoma.SOMATileDBContext | None = None,
     output_handle: Printable = cast(Printable, sys.stdout),
 ) -> bool:
     """For each dataframe contained within the SOMA ``Experiment`` pointed to by
@@ -168,7 +170,7 @@ def resize_experiment(
     nvars: Dict[str, int],
     verbose: bool = False,
     check_only: bool = False,
-    context: Optional[tiledbsoma.SOMATileDBContext] = None,
+    context: tiledbsoma.SOMATileDBContext | None = None,
     output_handle: Printable = cast(Printable, sys.stdout),
 ) -> bool:
     """For each dataframe contained within the SOMA ``Experiment`` pointed to by
@@ -260,7 +262,7 @@ def resize_experiment(
 def _treewalk(
     uri: str,
     *,
-    node_name: Optional[str] = None,
+    node_name: str | None = None,
     visitor: Any,
     args: SizingArgs,
 ) -> bool:

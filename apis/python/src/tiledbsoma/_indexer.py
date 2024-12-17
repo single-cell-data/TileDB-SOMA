@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import List, Optional, Union
+from typing import List, Union
 
 import numpy as np
 import numpy.typing as npt
@@ -25,7 +25,7 @@ IndexerDataType = Union[
 
 
 def tiledbsoma_build_index(
-    data: IndexerDataType, *, context: Optional[SOMATileDBContext] = None
+    data: IndexerDataType, *, context: SOMATileDBContext | None = None
 ) -> IndexLike:
     """Initialize re-indexer for provided indices (deprecated).
 
@@ -52,7 +52,7 @@ class IntIndexer:
     """
 
     def __init__(
-        self, data: IndexerDataType, *, context: Optional[SOMATileDBContext] = None
+        self, data: IndexerDataType, *, context: SOMATileDBContext | None = None
     ):
         """Initialize re-indexer for provided indices.
 

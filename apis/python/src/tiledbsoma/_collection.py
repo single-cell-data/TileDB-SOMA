@@ -13,7 +13,6 @@ from typing import (
     Callable,
     ClassVar,
     Dict,
-    Optional,
     Tuple,
     Type,
     TypeVar,
@@ -67,9 +66,9 @@ class CollectionBase(  # type: ignore[misc]  # __eq__ false positive
         cls,
         uri: str,
         *,
-        platform_config: Optional[options.PlatformConfig] = None,
-        context: Optional[SOMATileDBContext] = None,
-        tiledb_timestamp: Optional[OpenTimestamp] = None,
+        platform_config: options.PlatformConfig | None = None,
+        context: SOMATileDBContext | None = None,
+        tiledb_timestamp: OpenTimestamp | None = None,
     ) -> Self:
         """Creates and opens a new SOMA collection in storage.
 
@@ -147,8 +146,8 @@ class CollectionBase(  # type: ignore[misc]  # __eq__ false positive
         key: str,
         kind: None = None,
         *,
-        uri: Optional[str] = ...,
-        platform_config: Optional[options.PlatformConfig] = ...,
+        uri: str | None = ...,
+        platform_config: options.PlatformConfig | None = ...,
     ) -> "Collection[AnySOMAObject]": ...
 
     @overload
@@ -157,17 +156,17 @@ class CollectionBase(  # type: ignore[misc]  # __eq__ false positive
         key: str,
         kind: Type[_Coll],
         *,
-        uri: Optional[str] = ...,
-        platform_config: Optional[options.PlatformConfig] = ...,
+        uri: str | None = ...,
+        platform_config: options.PlatformConfig | None = ...,
     ) -> _Coll: ...
 
     def add_new_collection(
         self,
         key: str,
-        kind: Optional[Type[CollectionBase]] = None,  # type: ignore[type-arg]
+        kind: Type[CollectionBase] | None = None,  # type: ignore[type-arg]
         *,
-        uri: Optional[str] = None,
-        platform_config: Optional[options.PlatformConfig] = None,
+        uri: str | None = None,
+        platform_config: options.PlatformConfig | None = None,
     ) -> AnyTileDBCollection:
         """Adds a new sub-collection to this collection.
 
@@ -226,7 +225,7 @@ class CollectionBase(  # type: ignore[misc]  # __eq__ false positive
         DataFrame.create, exclude=("context", "tiledb_timestamp")
     )
     def add_new_dataframe(
-        self, key: str, *, uri: Optional[str] = None, **kwargs: Any
+        self, key: str, *, uri: str | None = None, **kwargs: Any
     ) -> DataFrame:
         """Adds a new DataFrame to this collection.
 
@@ -269,7 +268,7 @@ class CollectionBase(  # type: ignore[misc]  # __eq__ false positive
 
     @_funcs.forwards_kwargs_to(NDArray.create, exclude=("context", "tiledb_timestamp"))
     def _add_new_ndarray(
-        self, cls: Type[_NDArr], key: str, *, uri: Optional[str] = None, **kwargs: Any
+        self, cls: Type[_NDArr], key: str, *, uri: str | None = None, **kwargs: Any
     ) -> _NDArr:
         """Internal implementation of common NDArray-adding operations."""
         return self._add_new_element(
@@ -361,7 +360,7 @@ class CollectionBase(  # type: ignore[misc]  # __eq__ false positive
         key: str,
         kind: Type[_TDBO],
         factory: Callable[[str], _TDBO],
-        user_uri: Optional[str],
+        user_uri: str | None,
     ) -> _TDBO:
         """Handles the common parts of adding new elements.
 

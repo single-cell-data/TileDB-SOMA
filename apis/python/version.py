@@ -58,6 +58,8 @@ With that setup, a new release can be labelled by simply invoking:
     git tag -s v1.0
 """
 
+from __future__ import annotations
+
 __author__ = (
     "Douglas Creager <dcreager@dcreager.net>",
     "Michal Nazarewicz <mina86@mina86.com>",
@@ -75,7 +77,7 @@ import sys
 from datetime import date
 from os.path import basename, dirname, join, relpath
 from subprocess import DEVNULL, CalledProcessError, check_output
-from typing import List, Optional
+from typing import List
 
 GIT_RELPATH = "apis/python/version.py"
 RELEASE_VERSION_FILE = join(dirname(__file__), "RELEASE-VERSION")
@@ -95,7 +97,7 @@ def err(*args, **kwargs):
 
 def lines(
     *cmd, drop_trailing_newline: bool = True, stderr=DEVNULL, **kwargs
-) -> Optional[List[str]]:
+) -> List[str] | None:
     """Run a command, return its stdout as a list of lines.
 
     Strip each line's trailing newline, and drop the last line if it's empty, by default.
@@ -114,7 +116,7 @@ def lines(
     return lns
 
 
-def line(*cmd, **kwargs) -> Optional[str]:
+def line(*cmd, **kwargs) -> str | None:
     """Verify a command produces exactly one line of stdout, and return it, otherwise `None`."""
     lns = lines(*cmd, **kwargs)
     if lns is None:
@@ -125,13 +127,13 @@ def line(*cmd, **kwargs) -> Optional[str]:
     return lns[0]
 
 
-def get_latest_tag() -> Optional[str]:
+def get_latest_tag() -> str | None:
     """Return the most recent local Git tag of the form `[0-9].*.*` (or `None` if none exist)."""
     tags = lines("git", "tag", "--list", "--sort=v:refname", "[0-9].*.*")
     return tags[-1] if tags else None
 
 
-def get_latest_remote_tag(remote: str) -> Optional[str]:
+def get_latest_remote_tag(remote: str) -> str | None:
     """Return the most recent Git tag of the form `[0-9].*.*`, from a remote Git repository."""
     tags = lines("git", "ls-remote", "--tags", "--sort=v:refname", remote, "[0-9].*.*")
     if not tags:
@@ -148,7 +150,7 @@ def get_sha_base10() -> int:
     return int(sha, 16)
 
 
-def get_default_remote() -> Optional[str]:
+def get_default_remote() -> str | None:
     """Find a Git remote to parse a most recent release tag from.
 
     - If the current branch tracks a remote branch, use that remote
@@ -171,7 +173,7 @@ def get_default_remote() -> Optional[str]:
             return None
 
 
-def get_git_version() -> Optional[str]:
+def get_git_version() -> str | None:
     """Construct a PEP440-compatible version string that encodes various Git state.
 
     - If `git describe` returns a plain release tag, use that.
@@ -245,7 +247,7 @@ def get_git_version() -> Optional[str]:
             return ver
 
 
-def read_release_version() -> Optional[str]:
+def read_release_version() -> str | None:
     try:
         with open(RELEASE_VERSION_FILE) as fd:
             ver = fd.readline().strip()

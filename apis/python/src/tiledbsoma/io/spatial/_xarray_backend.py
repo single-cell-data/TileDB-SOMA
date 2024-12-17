@@ -2,9 +2,12 @@
 # Copyright (c) 2024 TileDB, Inc
 #
 # Licensed under the MIT License.
+
+from __future__ import annotations
+
 import json
 import warnings
-from typing import Any, Mapping, Optional, Sequence, Tuple, Union
+from typing import Any, Mapping, Sequence, Tuple, Union
 
 import dask.array as da
 import numpy as np
@@ -41,7 +44,7 @@ class DenseNDArrayWrapper:
         self,
         uri: str,
         *,
-        context: Optional[SOMATileDBContext] = None,
+        context: SOMATileDBContext | None = None,
     ):
         self._array = DenseNDArray.open(uri, context=context)
         self._dtype: np.typing.DTypeLike = self._array.schema.field(
@@ -123,9 +126,9 @@ def dense_nd_array_to_data_array(
     uri: str,
     *,
     dim_names: Tuple[str, ...],
-    chunks: Optional[Tuple[int, ...]] = None,
-    attrs: Optional[Mapping[str, Any]] = None,
-    context: Optional[SOMATileDBContext] = None,
+    chunks: Tuple[int, ...] | None = None,
+    attrs: Mapping[str, Any] | None = None,
+    context: SOMATileDBContext | None = None,
 ) -> xr.DataArray:
     """Create a :class:`xarray.DataArray` that accesses a SOMA :class:`DenseNDarray`
     through dask.

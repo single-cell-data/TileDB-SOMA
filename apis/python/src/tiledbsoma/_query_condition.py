@@ -6,8 +6,11 @@
 """A high level wrapper around the Pybind11 query_condition.cc implementation for
 filtering query results on attribute values.
 """
+
+from __future__ import annotations
+
 import ast
-from typing import Any, Callable, List, Optional, Tuple, Union
+from typing import Any, Callable, List, Tuple, Union
 
 import attrs
 import numpy as np
@@ -128,7 +131,7 @@ class QueryCondition:
     def init_query_condition(
         self,
         schema: pa.Schema,
-        query_attrs: Optional[List[str]],
+        query_attrs: List[str] | None,
     ):
         try:
             qctree = QueryConditionTree(schema, query_attrs)

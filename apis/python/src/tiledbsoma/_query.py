@@ -5,6 +5,9 @@
 
 """Implementation of a SOMA Experiment.
 """
+
+from __future__ import annotations
+
 import enum
 import warnings
 from concurrent.futures import ThreadPoolExecutor
@@ -15,7 +18,6 @@ from typing import (
     Dict,
     Literal,
     Mapping,
-    Optional,
     Protocol,
     Sequence,
     TypeVar,
@@ -120,8 +122,8 @@ class AxisIndexer(query.AxisIndexer):
 
     query: "ExperimentAxisQuery"
     _index_factory: IndexFactory
-    _cached_obs: Optional[IndexLike] = None
-    _cached_var: Optional[IndexLike] = None
+    _cached_obs: IndexLike | None = None
+    _cached_var: IndexLike | None = None
 
     @property
     def _obs_index(self) -> IndexLike:
@@ -243,11 +245,11 @@ class ExperimentAxisQuery:
     def obs(
         self,
         *,
-        column_names: Optional[Sequence[str]] = None,
+        column_names: Sequence[str] | None = None,
         batch_size: BatchSize = BatchSize(),
-        partitions: Optional[ReadPartitions] = None,
+        partitions: ReadPartitions | None = None,
         result_order: ResultOrderStr = _RO_AUTO,
-        platform_config: Optional[PlatformConfig] = None,
+        platform_config: PlatformConfig | None = None,
     ) -> ReadIter[pa.Table]:
         """Returns ``obs`` as an `Arrow table
         <https://arrow.apache.org/docs/python/generated/pyarrow.Table.html>`_
@@ -269,11 +271,11 @@ class ExperimentAxisQuery:
     def var(
         self,
         *,
-        column_names: Optional[Sequence[str]] = None,
+        column_names: Sequence[str] | None = None,
         batch_size: BatchSize = BatchSize(),
-        partitions: Optional[ReadPartitions] = None,
+        partitions: ReadPartitions | None = None,
         result_order: ResultOrderStr = _RO_AUTO,
-        platform_config: Optional[PlatformConfig] = None,
+        platform_config: PlatformConfig | None = None,
     ) -> ReadIter[pa.Table]:
         """Returns ``var`` as an `Arrow table
         <https://arrow.apache.org/docs/python/generated/pyarrow.Table.html>`_
@@ -335,9 +337,9 @@ class ExperimentAxisQuery:
         layer_name: str,
         *,
         batch_size: BatchSize = BatchSize(),
-        partitions: Optional[ReadPartitions] = None,
+        partitions: ReadPartitions | None = None,
         result_order: ResultOrderStr = _RO_AUTO,
-        platform_config: Optional[PlatformConfig] = None,
+        platform_config: PlatformConfig | None = None,
     ) -> SparseRead:
         """Returns an ``X`` layer as a sparse read.
 
@@ -457,7 +459,7 @@ class ExperimentAxisQuery:
         self,
         X_name: str,
         *,
-        column_names: Optional[AxisColumnNames] = None,
+        column_names: AxisColumnNames | None = None,
         X_layers: Sequence[str] = (),
         obsm_layers: Sequence[str] = (),
         obsp_layers: Sequence[str] = (),
@@ -490,7 +492,7 @@ class ExperimentAxisQuery:
         self,
         X_name: str,
         *,
-        column_names: Optional[AxisColumnNames] = None,
+        column_names: AxisColumnNames | None = None,
         X_layers: Sequence[str] = (),
         obsm_layers: Sequence[str] = (),
         obsp_layers: Sequence[str] = (),
@@ -851,8 +853,8 @@ class JoinIDCache:
 
     owner: ExperimentAxisQuery
 
-    _cached_obs: Optional[pa.IntegerArray] = None
-    _cached_var: Optional[pa.IntegerArray] = None
+    _cached_obs: pa.IntegerArray | None = None
+    _cached_var: pa.IntegerArray | None = None
 
     def _is_cached(self, axis: Axis) -> bool:
         field = "_cached_" + axis.value

@@ -1,9 +1,11 @@
+from __future__ import annotations
+
 import json
 import random
 import tempfile
 from copy import deepcopy
 from pathlib import Path
-from typing import Optional, Tuple
+from typing import Tuple
 
 import anndata
 import numpy as np
@@ -527,7 +529,7 @@ def test_add_matrix_to_collection_1_2_7(conftest_pbmc_small):
         X_layer_name: str,
         X_layer_data,  # E.g. a scipy.csr_matrix from scanpy analysis
         ingest_mode: str = "write",
-        use_relative_uri: Optional[bool] = None,
+        use_relative_uri: bool | None = None,
     ) -> None:
         if exp.closed or exp.mode != "w":
             raise tiledbsoma.SOMAError(f"Experiment must be open for write: {exp.uri}")
@@ -547,8 +549,8 @@ def test_add_matrix_to_collection_1_2_7(conftest_pbmc_small):
         matrix_name: str,
         matrix_data,  # E.g. a scipy.csr_matrix from scanpy analysis
         ingest_mode: str = "write",
-        use_relative_uri: Optional[bool] = None,
-        context: Optional[tiledbsoma.SOMATileDBContext] = None,
+        use_relative_uri: bool | None = None,
+        context: tiledbsoma.SOMATileDBContext | None = None,
     ) -> None:
         # For local disk and S3, creation and storage URIs are identical.  For
         # cloud, creation URIs look like tiledb://namespace/s3://bucket/path/to/obj
@@ -993,7 +995,7 @@ TEST_UNS: UnsDict = {
 def make_uns_adata(
     tmp_path: Path,
     measurement_name: str = "RNA",
-    uns: Optional[UnsMapping] = None,
+    uns: UnsMapping | None = None,
 ) -> Tuple[str, AnnData]:
     obs = pd.DataFrame(
         data={"obs_id": np.asarray(["a", "b", "c"])},

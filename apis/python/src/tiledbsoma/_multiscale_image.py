@@ -7,9 +7,11 @@
 Implementation of a SOMA MultiscaleImage.
 """
 
+from __future__ import annotations
+
 import json
 import warnings
-from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
+from typing import Any, Dict, List, Sequence, Tuple, Union
 
 import attrs
 import pyarrow as pa
@@ -119,16 +121,16 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
         type: pa.DataType,
         level_shape: Sequence[int],
         level_key: str = "level0",
-        level_uri: Optional[str] = None,
+        level_uri: str | None = None,
         coordinate_space: Union[Sequence[str], CoordinateSpace] = (
             "x",
             "y",
         ),
-        data_axis_order: Optional[Sequence[str]] = None,
+        data_axis_order: Sequence[str] | None = None,
         has_channel_axis: bool = True,
-        platform_config: Optional[options.PlatformConfig] = None,
-        context: Optional[SOMATileDBContext] = None,
-        tiledb_timestamp: Optional[OpenTimestamp] = None,
+        platform_config: options.PlatformConfig | None = None,
+        context: SOMATileDBContext | None = None,
+        tiledb_timestamp: OpenTimestamp | None = None,
     ) -> Self:
         """Creates a new ``MultiscaleImage`` at the given URI.
 
@@ -313,7 +315,7 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
         self,
         key: str,
         *,
-        uri: Optional[str] = None,
+        uri: str | None = None,
         shape: Sequence[int],
         **kwargs: Any,
     ) -> DenseNDArray:
@@ -389,7 +391,7 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
         key: str,
         value: DenseNDArray,
         *,
-        use_relative_uri: Optional[bool] = None,
+        use_relative_uri: bool | None = None,
     ) -> Self:
         """Sets a new level in the multi-scale image to be an existing SOMA
         :class:`DenseNDArray`.
@@ -422,14 +424,14 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
     def read_spatial_region(
         self,
         level: Union[int, str],
-        region: Optional[options.SpatialRegion] = None,
+        region: options.SpatialRegion | None = None,
         *,
         channel_coords: options.DenseCoord = None,
-        region_transform: Optional[CoordinateTransform] = None,
-        region_coord_space: Optional[CoordinateSpace] = None,
+        region_transform: CoordinateTransform | None = None,
+        region_coord_space: CoordinateSpace | None = None,
         result_order: options.ResultOrderStr = options.ResultOrder.ROW_MAJOR,
-        data_axis_order: Optional[Sequence[str]] = None,
-        platform_config: Optional[options.PlatformConfig] = None,
+        data_axis_order: Sequence[str] | None = None,
+        platform_config: options.PlatformConfig | None = None,
     ) -> somacore.SpatialRead[pa.Tensor]:
         """Reads a user-defined spatial region from a specific level of the ``MultiscaleImage``.
 

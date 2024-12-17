@@ -6,12 +6,12 @@
 """
 Implementation of SOMA SparseNDArray.
 """
+
 from __future__ import annotations
 
 import itertools
 from typing import (
     Dict,
-    Optional,
     Sequence,
     Tuple,
     Union,
@@ -116,9 +116,9 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
         *,
         type: pa.DataType,
         shape: Sequence[Union[int, None]],
-        platform_config: Optional[options.PlatformConfig] = None,
-        context: Optional[SOMATileDBContext] = None,
-        tiledb_timestamp: Optional[OpenTimestamp] = None,
+        platform_config: options.PlatformConfig | None = None,
+        context: SOMATileDBContext | None = None,
+        tiledb_timestamp: OpenTimestamp | None = None,
     ) -> Self:
         context = _validate_soma_tiledb_context(context)
 
@@ -228,8 +228,8 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
         *,
         result_order: options.ResultOrderStr = options.ResultOrder.AUTO,
         batch_size: options.BatchSize = _UNBATCHED,
-        partitions: Optional[options.ReadPartitions] = None,
-        platform_config: Optional[PlatformConfig] = None,
+        partitions: options.ReadPartitions | None = None,
+        platform_config: PlatformConfig | None = None,
     ) -> "SparseNDArrayRead":
         """Reads a user-defined slice of the :class:`SparseNDArray`.
 
@@ -285,7 +285,7 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
             pa.Table,
         ],
         *,
-        platform_config: Optional[PlatformConfig] = None,
+        platform_config: PlatformConfig | None = None,
     ) -> Self:
         """
         Writes an Arrow object to the SparseNDArray.
@@ -412,7 +412,7 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
     def _dim_capacity_and_extent(
         cls,
         dim_name: str,
-        dim_shape: Optional[int],
+        dim_shape: int | None,
         ndim: int,  # not needed for sparse
         create_options: TileDBCreateOptions,
     ) -> Tuple[int, int]:
@@ -516,7 +516,7 @@ class _SparseNDArrayReadBase(somacore.SparseRead):
         array: SparseNDArray,
         coords: options.SparseNDCoords,
         result_order: clib.ResultOrder,
-        platform_config: Optional[options.PlatformConfig],
+        platform_config: options.PlatformConfig | None,
     ):
         """
         Lifecycle:
@@ -546,7 +546,7 @@ class SparseNDArrayRead(_SparseNDArrayReadBase):
         Maturing.
     """
 
-    def coos(self, shape: Optional[NTuple] = None) -> SparseCOOTensorReadIter:
+    def coos(self, shape: NTuple | None = None) -> SparseCOOTensorReadIter:
         """
         Returns an iterator of
         `Arrow SparseCOOTensor <https://arrow.apache.org/docs/cpp/api/tensor.html>`_.
@@ -589,8 +589,8 @@ class SparseNDArrayRead(_SparseNDArrayReadBase):
         self,
         axis: Union[int, Sequence[int]],
         *,
-        size: Optional[Union[int, Sequence[int]]] = None,
-        reindex_disable_on_axis: Optional[Union[int, Sequence[int]]] = None,
+        size: int | Sequence[int] | None = None,
+        reindex_disable_on_axis: int | Sequence[int] | None = None,
         eager: bool = True,
     ) -> SparseNDArrayBlockwiseRead:
         """
@@ -672,10 +672,10 @@ class SparseNDArrayBlockwiseRead(_SparseNDArrayReadBase):
         coords: options.SparseNDCoords,
         axis: Union[int, Sequence[int]],
         result_order: clib.ResultOrder,
-        platform_config: Optional[options.PlatformConfig],
+        platform_config: options.PlatformConfig | None,
         *,
-        size: Optional[Union[int, Sequence[int]]],
-        reindex_disable_on_axis: Optional[Union[int, Sequence[int]]],
+        size: int | Sequence[int] | None,
+        reindex_disable_on_axis: int | Sequence[int] | None,
         eager: bool = True,
     ):
         super().__init__(array, coords, result_order, platform_config)
