@@ -13,12 +13,26 @@ soma_array_to_arrow_table <- function(x) {
 
 soma_array_to_arrow_table_concat <- function(it) {
   stopifnot("'it' must be a 'ReadIter' object" = inherits(it, "ReadIter"))
-  tbl <- it$read_next()
-  nxt <- it$read_next()
-  while (!is.null(nxt)) {
-    tbl <- arrow::concat_tables(tbl, nxt)
-    nxt <- it$read_next()
+
+  if (!is.function(it$read_next)) {
+    stop("Error: 'read_next' is not a function. Check 'it'.")
   }
+
+  tbl <- it$read_next()
+  if (is.null(tbl)) {
+    return(NULL)
+  }
+
+  repeat {
+    nxt <- it$read_next()
+
+    if (is.null(nxt)){
+      break
+    }   
+
+    tbl <- arrow::concat_tables(tbl, nxt)
+  }
+
   return(tbl)
 }
 
