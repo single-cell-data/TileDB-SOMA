@@ -221,9 +221,8 @@ SEXP sr_next(Rcpp::XPtr<tdbs::SOMAArray> sr) {
             sr->total_num_cells());
         return create_empty_arrow_table();
     }
-    
-    auto sr_data = sr->read_next();
 
+    auto sr_data = sr->read_next();
     spdl::debug(
         "[sr_next] Read {} rows and {} cols",
         sr_data->get()->num_rows(),
