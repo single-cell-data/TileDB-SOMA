@@ -85,9 +85,9 @@ size_t sum_over_size_(const std::vector<tcb::span<const T>>& v) noexcept {
  */
 template <typename Ti, typename Tj, typename Td>
 bool no_ragged_chunks(
-    const std::vector<std::span<const Ti>>& Ai,
-    const std::vector<std::span<const Tj>>& Aj,
-    const std::vector<std::span<const Td>>& Ad) {
+    const std::vector<tcb::span<const Ti>>& Ai,
+    const std::vector<tcb::span<const Tj>>& Aj,
+    const std::vector<tcb::span<const Td>>& Ad) {
     if ((Ai.size() != Aj.size()) || (Ai.size() != Ad.size()))
         return false;
 
