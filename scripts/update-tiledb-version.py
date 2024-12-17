@@ -121,6 +121,11 @@ def main(args):
     )
     update_version(filepath, new_version, new_hash)
 
+    filepath = (
+        f"{os.path.dirname(__file__)}/../.github/workflows/libtiledbsoma-asan-ci.yml"
+    )
+    update_version(filepath, new_version, new_hash)
+
 
 if __name__ == "__main__":
     description = (
