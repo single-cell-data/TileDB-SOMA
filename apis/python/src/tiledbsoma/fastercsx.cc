@@ -240,6 +240,7 @@ void compress_coo_validate_args_(
     4. num chunks/items in Ai/Aj/Ad is same size and type
     5. ensure B* are writeable
     6. Ensure each element in A* tuples are same type
+    7. Ensure each element in the A* tuples are the same length
     etc...
 
     Not checked:
@@ -261,6 +262,12 @@ void compress_coo_validate_args_(
                 throw pybind11::type_error(
                     "All chunks of COO arrays must be of same type.");
         }
+    }
+    for (uint64_t chunk_idx = 0; chunk_idx < n_chunks; chunk_idx++) {
+        if ((Ai[chunk_idx].size() != Aj[chunk_idx].size()) ||
+            (Ai[chunk_idx].size() != Ad[chunk_idx].size()))
+            throw std::length_error(
+                "All COO array tuple elements must be of the same size.");
     }
     if (Bp.ndim() != 1 || Bj.ndim() != 1 || Bd.ndim() != 1)
         throw std::length_error("All arrays must be of dimension rank 1.");
