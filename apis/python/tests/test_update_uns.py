@@ -1,8 +1,10 @@
+from __future__ import annotations
+
 import logging
 from copy import deepcopy
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Union
 
 import numpy as np
 from _pytest.logging import LogCaptureFixture
@@ -17,7 +19,7 @@ from tests.parametrize_cases import parametrize_cases
 from tests.test_basic_anndata_io import TEST_UNS, make_uns_adata
 
 ValidUpdates = Union[None, str, List[str], Dict[str, "ValidUpdates"]]
-Logs = Optional[List[str]]
+Logs = List[str] | None
 
 
 @dataclass
@@ -43,14 +45,14 @@ class Case:
     id: str
     uns_updates: UnsMapping
     strict: Strict = True
-    err: Optional[Err] = None
+    err: Err | None = None
     valid_updates: ValidUpdates = None
     logs: Logs = None
 
 
 def case(
     id: str,
-    err: Optional[Err] = None,
+    err: Err | None = None,
     valid_updates: ValidUpdates = None,
     logs: Logs = None,
     strict: Strict = True,
@@ -175,7 +177,7 @@ def test_update_uns(
     tmp_path: Path,
     uns_updates: UnsDict,
     strict: Strict,
-    err: Optional[Err],
+    err: Err | None,
     valid_updates: ValidUpdates,
     logs: Logs,
 ):

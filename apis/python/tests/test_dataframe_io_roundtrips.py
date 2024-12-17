@@ -1,12 +1,14 @@
 # The tests in this file verify issues where an ingest/outgest "round trip" modifies an AnnData's
 # "obs" or "var" DataFrames. See https://github.com/single-cell-data/TileDB-SOMA/issues/2829 for more info.
 
+from __future__ import annotations
+
 import json
 from copy import deepcopy
 from dataclasses import dataclass
 from os.path import join
 from pathlib import Path
-from typing import List, Optional
+from typing import List
 
 import numpy as np
 import pandas as pd
@@ -38,9 +40,9 @@ class RoundTrip:
     # also exist.
     persisted_column_names: List[str]
     # Expected "original index metadata" (attached to the persisted SOMA DataFrame)
-    persisted_metadata: Optional[str] = None
+    persisted_metadata: str | None = None
     # Argument passed to `_write_dataframe` on ingest (default here matches `from_anndata`'s "obs" path)
-    ingest_id_column_name: Optional[str] = "obs_id"
+    ingest_id_column_name: str | None = "obs_id"
 
 
 # fmt: off
@@ -108,7 +110,7 @@ ROUND_TRIPS = [
 
 
 def verify_metadata(
-    sdf: DataFrame, persisted_column_names: List[str], persisted_metadata: Optional[str]
+    sdf: DataFrame, persisted_column_names: List[str], persisted_metadata: str | None
 ):
     # Verify column names and types
     schema = sdf.schema
@@ -130,8 +132,8 @@ def test_adata_io_roundtrips(
     tmp_path: Path,
     original_df: pd.DataFrame,
     persisted_column_names: List[str],
-    persisted_metadata: Optional[str],
-    ingest_id_column_name: Optional[str],
+    persisted_metadata: str | None,
+    ingest_id_column_name: str | None,
     outgested_df: pd.DataFrame,
 ):
     """Given an `original_df`, set it as the `obs` DataFrame of an AnnData, ingest it, outgest it back, and compare the
@@ -172,8 +174,8 @@ def test_df_io_roundtrips(
     tmp_path: Path,
     original_df: pd.DataFrame,
     persisted_column_names: List[str],
-    persisted_metadata: Optional[str],
-    ingest_id_column_name: Optional[str],
+    persisted_metadata: str | None,
+    ingest_id_column_name: str | None,
     outgested_df: pd.DataFrame,
 ):
     uri = str(tmp_path)
