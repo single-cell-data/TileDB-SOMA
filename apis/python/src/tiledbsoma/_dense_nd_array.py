@@ -7,7 +7,9 @@
 Implementation of SOMA DenseNDArray.
 """
 
-from typing import List, Optional, Sequence, Tuple, Union
+from __future__ import annotations
+
+from typing import List, Sequence, Tuple, Union
 
 import numpy as np
 import pyarrow as pa
@@ -93,9 +95,9 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
         *,
         type: pa.DataType,
         shape: Sequence[Union[int, None]],
-        platform_config: Optional[options.PlatformConfig] = None,
-        context: Optional[SOMATileDBContext] = None,
-        tiledb_timestamp: Optional[OpenTimestamp] = None,
+        platform_config: options.PlatformConfig | None = None,
+        context: SOMATileDBContext | None = None,
+        tiledb_timestamp: OpenTimestamp | None = None,
     ) -> Self:
         context = _validate_soma_tiledb_context(context)
 
@@ -173,8 +175,8 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
         coords: options.DenseNDCoords = (),
         *,
         result_order: options.ResultOrderStr = somacore.ResultOrder.ROW_MAJOR,
-        partitions: Optional[options.ReadPartitions] = None,
-        platform_config: Optional[options.PlatformConfig] = None,
+        partitions: options.ReadPartitions | None = None,
+        platform_config: options.PlatformConfig | None = None,
     ) -> pa.Tensor:
         """Reads a user-defined dense slice of the array and return as an Arrow ``Tensor``.
 
@@ -262,7 +264,7 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
         coords: options.DenseNDCoords,
         values: pa.Tensor,
         *,
-        platform_config: Optional[options.PlatformConfig] = None,
+        platform_config: options.PlatformConfig | None = None,
     ) -> Self:
         """Writes a subarray, defined by ``coords`` and ``values``. Will overwrite existing
         values in the array.
@@ -326,7 +328,7 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
     def _dim_capacity_and_extent(
         cls,
         dim_name: str,
-        dim_shape: Optional[int],
+        dim_shape: int | None,
         ndim: int,
         create_options: TileDBCreateOptions,
     ) -> Tuple[int, int]:

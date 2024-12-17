@@ -3,9 +3,11 @@
 #
 # Licensed under the MIT License.
 
+from __future__ import annotations
+
 import datetime
 from contextlib import ExitStack
-from typing import Any, Generic, MutableMapping, Optional, Type, TypeVar, Union
+from typing import Any, Generic, MutableMapping, Type, TypeVar, Union
 
 import somacore
 from somacore import options
@@ -59,10 +61,10 @@ class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
         uri: str,
         mode: options.OpenMode = "r",
         *,
-        tiledb_timestamp: Optional[OpenTimestamp] = None,
-        context: Optional[SOMATileDBContext] = None,
-        platform_config: Optional[options.PlatformConfig] = None,
-        clib_type: Optional[str] = None,
+        tiledb_timestamp: OpenTimestamp | None = None,
+        context: SOMATileDBContext | None = None,
+        platform_config: options.PlatformConfig | None = None,
+        clib_type: str | None = None,
     ) -> Self:
         """Opens this specific type of SOMA object.
 
@@ -149,7 +151,7 @@ class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
         self._close_stack.enter_context(self._handle)
 
     def reopen(
-        self, mode: options.OpenMode, tiledb_timestamp: Optional[OpenTimestamp] = None
+        self, mode: options.OpenMode, tiledb_timestamp: OpenTimestamp | None = None
     ) -> Self:
         """
         Return a new copy of the SOMAObject with the given mode at the current
@@ -283,8 +285,8 @@ class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
     def exists(
         cls,
         uri: str,
-        context: Optional[SOMATileDBContext] = None,
-        tiledb_timestamp: Optional[OpenTimestamp] = None,
+        context: SOMATileDBContext | None = None,
+        tiledb_timestamp: OpenTimestamp | None = None,
     ) -> bool:
         """
         Finds whether an object of this type exists at the given URI.

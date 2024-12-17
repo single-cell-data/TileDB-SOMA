@@ -6,7 +6,10 @@
 """
 Implementation of a base class shared between GeometryDataFrame and PointCloudDataFrame
 """
-from typing import Any, Optional, Sequence, Tuple, Union
+
+from __future__ import annotations
+
+from typing import Any, Sequence, Tuple, Union
 
 import pyarrow as pa
 import somacore
@@ -68,13 +71,13 @@ class SpatialDataFrame(SOMAArray):
     def read(
         self,
         coords: options.SparseDFCoords = (),
-        column_names: Optional[Sequence[str]] = None,
+        column_names: Sequence[str] | None = None,
         *,
         result_order: options.ResultOrderStr = options.ResultOrder.AUTO,
-        value_filter: Optional[str] = None,
+        value_filter: str | None = None,
         batch_size: options.BatchSize = _UNBATCHED,
-        partitions: Optional[options.ReadPartitions] = None,
-        platform_config: Optional[options.PlatformConfig] = None,
+        partitions: options.ReadPartitions | None = None,
+        platform_config: options.PlatformConfig | None = None,
     ) -> TableReadIter:
         """Reads a user-defined slice of data into Arrow tables.
 
@@ -101,16 +104,16 @@ class SpatialDataFrame(SOMAArray):
 
     def read_spatial_region(
         self,
-        region: Optional[options.SpatialRegion] = None,
-        column_names: Optional[Sequence[str]] = None,
+        region: options.SpatialRegion | None = None,
+        column_names: Sequence[str] | None = None,
         *,
-        region_transform: Optional[CoordinateTransform] = None,
-        region_coord_space: Optional[CoordinateSpace] = None,
+        region_transform: CoordinateTransform | None = None,
+        region_coord_space: CoordinateSpace | None = None,
         batch_size: options.BatchSize = _UNBATCHED,
-        partitions: Optional[options.ReadPartitions] = None,
+        partitions: options.ReadPartitions | None = None,
         result_order: options.ResultOrderStr = options.ResultOrder.AUTO,
-        value_filter: Optional[str] = None,
-        platform_config: Optional[options.PlatformConfig] = None,
+        value_filter: str | None = None,
+        platform_config: options.PlatformConfig | None = None,
     ) -> somacore.SpatialRead[somacore.ReadIter[pa.Table]]:
         """Reads data intersecting an user-defined region of space into a
         :class:`SpatialRead` with data in Arrow tables.
@@ -151,7 +154,7 @@ class SpatialDataFrame(SOMAArray):
         self,
         values: Union[pa.RecordBatch, pa.Table],
         *,
-        platform_config: Optional[options.PlatformConfig] = None,
+        platform_config: options.PlatformConfig | None = None,
     ) -> Self:
         """Writes the data from an Arrow table to the persistent object.
 

@@ -7,10 +7,11 @@
 Collection.
 """
 
+from __future__ import annotations
+
 from typing import (
     Callable,
     Dict,
-    Optional,
     Type,
     TypeVar,
     Union,
@@ -55,9 +56,9 @@ def open(
     uri: str,
     mode: options.OpenMode = ...,
     *,
-    soma_type: Optional[str] = None,
-    context: Optional[SOMATileDBContext] = None,
-    tiledb_timestamp: Optional[OpenTimestamp] = None,
+    soma_type: str | None = None,
+    context: SOMATileDBContext | None = None,
+    tiledb_timestamp: OpenTimestamp | None = None,
 ) -> AnySOMAObject: ...
 
 
@@ -67,8 +68,8 @@ def open(
     mode: options.OpenMode,
     *,
     soma_type: Type[_Obj],
-    context: Optional[SOMATileDBContext] = None,
-    tiledb_timestamp: Optional[OpenTimestamp] = None,
+    context: SOMATileDBContext | None = None,
+    tiledb_timestamp: OpenTimestamp | None = None,
 ) -> _Obj: ...
 
 
@@ -78,8 +79,8 @@ def open(
     mode: options.OpenMode = "r",
     *,
     soma_type: Union[Type[SOMAObject], str, None] = None,  # type: ignore[type-arg]
-    context: Optional[SOMATileDBContext] = None,
-    tiledb_timestamp: Optional[OpenTimestamp] = None,
+    context: SOMATileDBContext | None = None,
+    tiledb_timestamp: OpenTimestamp | None = None,
 ) -> AnySOMAObject:
     """Opens a TileDB SOMA object.
 
@@ -145,12 +146,12 @@ def open(
 
 def _open_internal(
     opener: Callable[
-        [str, options.OpenMode, SOMATileDBContext, Optional[OpenTimestamp]], _Wrapper
+        [str, options.OpenMode, SOMATileDBContext, OpenTimestamp | None], _Wrapper
     ],
     uri: str,
     mode: options.OpenMode,
     context: SOMATileDBContext,
-    timestamp: Optional[OpenTimestamp],
+    timestamp: OpenTimestamp | None,
 ) -> SOMAObject[_Wrapper]:
     """Lower-level open function for internal use only."""
     handle = opener(uri, mode, context, timestamp)

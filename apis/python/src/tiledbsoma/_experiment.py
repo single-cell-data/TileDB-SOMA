@@ -5,8 +5,10 @@
 
 """Implementation of a SOMA Experiment.
 """
+
+from __future__ import annotations
+
 import functools
-from typing import Optional
 
 from somacore import experiment, query
 
@@ -81,8 +83,8 @@ class Experiment(  # type: ignore[misc]  # __eq__ false positive
         self,
         measurement_name: str,
         *,
-        obs_query: Optional[query.AxisQuery] = None,
-        var_query: Optional[query.AxisQuery] = None,
+        obs_query: query.AxisQuery | None = None,
+        var_query: query.AxisQuery | None = None,
     ) -> ExperimentAxisQuery:
         """Creates an axis query over this experiment.
         Lifecycle: Maturing.
