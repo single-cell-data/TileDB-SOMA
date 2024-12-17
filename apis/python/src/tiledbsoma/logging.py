@@ -3,8 +3,9 @@
 #
 # Licensed under the MIT License.
 
+from __future__ import annotations
+
 import logging
-from typing import Optional
 
 logger = logging.getLogger("tiledbsoma")
 
@@ -55,7 +56,7 @@ def log_io_same(message: str) -> None:
     log_io(message, message)
 
 
-def log_io(info_message: Optional[str], debug_message: str) -> None:
+def log_io(info_message: str | None, debug_message: str) -> None:
     """Data-ingestion timeframes range widely.
     Some folks won't want details for smaller uploads; some will want details for larger ones.
     For I/O and for I/O only, it's helpful to print a short message at INFO level,

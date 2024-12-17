@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 import json
-from typing import Any, Dict, Optional, Tuple, Type
+from typing import Any, Dict, Tuple, Type
 
 import numpy as np
 import pyarrow as pa
@@ -113,17 +115,17 @@ def transform_region(
 
 
 def process_image_region(
-    region: Optional[options.SpatialRegion],
+    region: options.SpatialRegion | None,
     transform: somacore.CoordinateTransform,
     channel_coords: options.DenseCoord,
     data_order: Tuple[int, ...],
 ) -> Tuple[
-    options.DenseNDCoords, Optional[options.SpatialRegion], somacore.CoordinateTransform
+    options.DenseNDCoords, options.SpatialRegion | None, somacore.CoordinateTransform
 ]:
 
     if region is None:
         # Select the full region.
-        data_region: Optional[options.SpatialRegion] = None
+        data_region: options.SpatialRegion | None = None
         x_coords: options.DenseCoord = None
         y_coords: options.DenseCoord = None
     else:
@@ -173,7 +175,7 @@ def process_image_region(
 
 
 def process_spatial_df_region(
-    region: Optional[options.SpatialRegion],
+    region: options.SpatialRegion | None,
     transform: somacore.CoordinateTransform,
     coords_by_name: Dict[str, options.SparseDFCoord],
     index_columns: Tuple[str, ...],
@@ -181,7 +183,7 @@ def process_spatial_df_region(
     schema: pa.Schema,
 ) -> Tuple[
     options.SparseDFCoords,
-    Optional[options.SpatialRegion],
+    options.SpatialRegion | None,
     somacore.CoordinateTransform,
 ]:
     # Check provided coords are valid.
@@ -194,7 +196,7 @@ def process_spatial_df_region(
     # to the coords_by_name map.
     if region is None:
         # Leave spatial coords as None - this will select the entire region.
-        data_region: Optional[options.SpatialRegion] = None
+        data_region: options.SpatialRegion | None = None
     else:
         # Restricted to guarantee data region is a box.
         if isinstance(region, shapely.GeometryType):

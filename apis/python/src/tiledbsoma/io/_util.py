@@ -2,12 +2,14 @@
 # Copyright (c) 2021-2024 TileDB, Inc.
 #
 # Licensed under the MIT License.
+
+from __future__ import annotations
+
 import pathlib
 from contextlib import contextmanager
 from typing import (
     ContextManager,
     Iterator,
-    Optional,
     Union,
 )
 from unittest import mock
@@ -42,7 +44,7 @@ _pa_type_to_str_fmt = {
 
 @contextmanager
 def read_h5ad(
-    input_path: Path, *, mode: str = "r", ctx: Optional[SOMATileDBContext] = None
+    input_path: Path, *, mode: str = "r", ctx: SOMATileDBContext | None = None
 ) -> Iterator[ad.AnnData]:
     """
     This lets us ingest H5AD with "r" (backed mode) from S3 URIs.

@@ -8,6 +8,8 @@
 ``open``, ``ArrayWrapper.open``, ``GroupWrapper.open`` are the important parts.
 """
 
+from __future__ import annotations
+
 import abc
 import enum
 from typing import (
@@ -18,7 +20,6 @@ from typing import (
     List,
     Mapping,
     MutableMapping,
-    Optional,
     Sequence,
     Tuple,
     Type,
@@ -64,8 +65,8 @@ def open(
     uri: str,
     mode: options.OpenMode,
     context: SOMATileDBContext,
-    timestamp: Optional[OpenTimestamp],
-    clib_type: Optional[str] = None,
+    timestamp: OpenTimestamp | None,
+    clib_type: str | None = None,
 ) -> "Wrapper[RawHandle]":
     """Determine whether the URI is an array or group, and open it."""
     open_mode = clib.OpenMode.read if mode == "r" else clib.OpenMode.write
@@ -140,7 +141,7 @@ class Wrapper(Generic[_RawHdl_co], metaclass=abc.ABCMeta):
     timestamp_ms: int
     _handle: _RawHdl_co
     closed: bool = attrs.field(default=False, init=False)
-    clib_type: Optional[str] = None
+    clib_type: str | None = None
 
     @classmethod
     def open(
@@ -148,7 +149,7 @@ class Wrapper(Generic[_RawHdl_co], metaclass=abc.ABCMeta):
         uri: str,
         mode: options.OpenMode,
         context: SOMATileDBContext,
-        timestamp: Optional[OpenTimestamp],
+        timestamp: OpenTimestamp | None,
     ) -> Self:
         if mode not in ("r", "w"):
             raise ValueError(f"Invalid open mode {mode!r}")
@@ -202,7 +203,7 @@ class Wrapper(Generic[_RawHdl_co], metaclass=abc.ABCMeta):
         raise NotImplementedError()
 
     def reopen(
-        self, mode: options.OpenMode, timestamp: Optional[OpenTimestamp]
+        self, mode: options.OpenMode, timestamp: OpenTimestamp | None
     ) -> clib.SOMAObject:
         if mode not in ("r", "w"):
             raise ValueError(
@@ -449,12 +450,12 @@ class SOMAArrayWrapper(Wrapper[_SOMAObjectType]):
         return cast(Tuple[int, ...], tuple(self._handle.maxshape))
 
     @property
-    def maybe_soma_joinid_shape(self) -> Optional[int]:
+    def maybe_soma_joinid_shape(self) -> int | None:
         """Only implemented for DataFrame."""
         raise NotImplementedError
 
     @property
-    def maybe_soma_joinid_maxshape(self) -> Optional[int]:
+    def maybe_soma_joinid_maxshape(self) -> int | None:
         """Only implemented for DataFrame."""
         raise NotImplementedError
 
@@ -548,14 +549,14 @@ class DataFrameWrapper(SOMAArrayWrapper[clib.SOMADataFrame]):
         self._handle.write(values)
 
     @property
-    def maybe_soma_joinid_shape(self) -> Optional[int]:
+    def maybe_soma_joinid_shape(self) -> int | None:
         """Wrapper-class internals"""
-        return cast(Optional[int], self._handle.maybe_soma_joinid_shape)
+        return cast(Union[int, None], self._handle.maybe_soma_joinid_shape)
 
     @property
-    def maybe_soma_joinid_maxshape(self) -> Optional[int]:
+    def maybe_soma_joinid_maxshape(self) -> int | None:
         """Wrapper-class internals"""
-        return cast(Optional[int], self._handle.maybe_soma_joinid_maxshape)
+        return cast(Union[int, None], self._handle.maybe_soma_joinid_maxshape)
 
     @property
     def tiledbsoma_has_upgraded_domain(self) -> bool:

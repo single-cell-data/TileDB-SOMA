@@ -6,8 +6,10 @@
 Implementation of a SOMA Geometry DataFrame
 """
 
+from __future__ import annotations
+
 import warnings
-from typing import Any, Optional, Sequence, Tuple, Union
+from typing import Any, Sequence, Tuple, Union
 
 import pyarrow as pa
 import somacore
@@ -45,10 +47,10 @@ class GeometryDataFrame(somacore.GeometryDataFrame):
         *,
         schema: pa.Schema,
         coordinate_space: Union[Sequence[str], CoordinateSpace] = ("x", "y"),
-        domain: Optional[Domain] = None,
-        platform_config: Optional[options.PlatformConfig] = None,
-        context: Optional[SOMATileDBContext] = None,
-        tiledb_timestamp: Optional[OpenTimestamp] = None,
+        domain: Domain | None = None,
+        platform_config: options.PlatformConfig | None = None,
+        context: SOMATileDBContext | None = None,
+        tiledb_timestamp: OpenTimestamp | None = None,
     ) -> Self:
         """Creates a new ``GeometryDataFrame`` at the given URI.
 
@@ -91,13 +93,13 @@ class GeometryDataFrame(somacore.GeometryDataFrame):
     def read(
         self,
         coords: options.SparseDFCoords = (),
-        column_names: Optional[Sequence[str]] = None,
+        column_names: Sequence[str] | None = None,
         *,
         batch_size: options.BatchSize = _UNBATCHED,
-        partitions: Optional[options.ReadPartitions] = None,
+        partitions: options.ReadPartitions | None = None,
         result_order: options.ResultOrderStr = options.ResultOrder.AUTO,
-        value_filter: Optional[str] = None,
-        platform_config: Optional[options.PlatformConfig] = None,
+        value_filter: str | None = None,
+        platform_config: options.PlatformConfig | None = None,
     ) -> TableReadIter:
         """Reads a user-defined slice of data into Arrow tables.
 
@@ -124,16 +126,16 @@ class GeometryDataFrame(somacore.GeometryDataFrame):
 
     def read_spatial_region(
         self,
-        region: Optional[options.SpatialRegion] = None,
-        column_names: Optional[Sequence[str]] = None,
+        region: options.SpatialRegion | None = None,
+        column_names: Sequence[str] | None = None,
         *,
-        region_transform: Optional[CoordinateTransform] = None,
-        region_coord_space: Optional[CoordinateSpace] = None,
+        region_transform: CoordinateTransform | None = None,
+        region_coord_space: CoordinateSpace | None = None,
         batch_size: options.BatchSize = _UNBATCHED,
-        partitions: Optional[options.ReadPartitions] = None,
+        partitions: options.ReadPartitions | None = None,
         result_order: options.ResultOrderStr = options.ResultOrder.AUTO,
-        value_filter: Optional[str] = None,
-        platform_config: Optional[options.PlatformConfig] = None,
+        value_filter: str | None = None,
+        platform_config: options.PlatformConfig | None = None,
     ) -> somacore.SpatialRead[somacore.ReadIter[pa.Table]]:
         """Reads data intersecting an user-defined region of space into a
         :class:`SpatialRead` with data in Arrow tables.
@@ -174,7 +176,7 @@ class GeometryDataFrame(somacore.GeometryDataFrame):
         self,
         values: Union[pa.RecordBatch, pa.Table],
         *,
-        platform_config: Optional[options.PlatformConfig] = None,
+        platform_config: options.PlatformConfig | None = None,
     ) -> Self:
         """Writes the data from an Arrow table to the persistent object.
 

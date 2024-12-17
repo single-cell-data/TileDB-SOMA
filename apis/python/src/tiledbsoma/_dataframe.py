@@ -6,12 +6,14 @@
 """
 Implementation of a SOMA DataFrame
 """
+
+from __future__ import annotations
+
 import inspect
 from typing import (
     Any,
     Dict,
     List,
-    Optional,
     Sequence,
     Tuple,
     Union,
@@ -151,10 +153,10 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         *,
         schema: pa.Schema,
         index_column_names: Sequence[str] = (SOMA_JOINID,),
-        domain: Optional[Domain] = None,
-        platform_config: Optional[options.PlatformConfig] = None,
-        context: Optional[SOMATileDBContext] = None,
-        tiledb_timestamp: Optional[OpenTimestamp] = None,
+        domain: Domain | None = None,
+        platform_config: options.PlatformConfig | None = None,
+        context: SOMATileDBContext | None = None,
+        tiledb_timestamp: OpenTimestamp | None = None,
     ) -> "DataFrame":
         """Creates the data structure on disk/S3/cloud.
 
@@ -407,7 +409,7 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         return cast(DataFrameWrapper, self._handle).count
 
     @property
-    def _maybe_soma_joinid_shape(self) -> Optional[int]:
+    def _maybe_soma_joinid_shape(self) -> int | None:
         """An internal helper method that returns the shape
         value along the ``soma_joinid`` index column, if the ``DataFrame
         has one, else ``None``.
@@ -419,7 +421,7 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         return self._handle.maybe_soma_joinid_shape
 
     @property
-    def _maybe_soma_joinid_maxshape(self) -> Optional[int]:
+    def _maybe_soma_joinid_maxshape(self) -> int | None:
         """An internal helper method that returns the maxshape
         value along the ``soma_joinid`` index column, if the ``DataFrame
         has one, else ``None``.
@@ -657,13 +659,13 @@ class DataFrame(SOMAArray, somacore.DataFrame):
     def read(
         self,
         coords: options.SparseDFCoords = (),
-        column_names: Optional[Sequence[str]] = None,
+        column_names: Sequence[str] | None = None,
         *,
         result_order: options.ResultOrderStr = options.ResultOrder.AUTO,
-        value_filter: Optional[str] = None,
+        value_filter: str | None = None,
         batch_size: options.BatchSize = _UNBATCHED,
-        partitions: Optional[options.ReadPartitions] = None,
-        platform_config: Optional[options.PlatformConfig] = None,
+        partitions: options.ReadPartitions | None = None,
+        platform_config: options.PlatformConfig | None = None,
     ) -> TableReadIter:
         """Reads a user-defined subset of data, addressed by the dataframe indexing columns,
         optionally filtered, and return results as one or more `Arrow tables <https://arrow.apache.org/docs/python/generated/pyarrow.Table.html>`_.
@@ -732,7 +734,7 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         )
 
     def write(
-        self, values: pa.Table, platform_config: Optional[options.PlatformConfig] = None
+        self, values: pa.Table, platform_config: options.PlatformConfig | None = None
     ) -> Self:
         """Writes an `Arrow table <https://arrow.apache.org/docs/python/generated/pyarrow.Table.html>`_
         to the persistent object. As duplicate index values are not allowed, index values already

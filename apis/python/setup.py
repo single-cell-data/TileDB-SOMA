@@ -13,6 +13,8 @@
 # Based on ideas from https://github.com/pybind/cmake_example
 # The `bld` script here is reused for pip install, CI, and local builds.
 
+from __future__ import annotations
+
 import ctypes
 import os
 import pathlib
@@ -20,7 +22,6 @@ import platform
 import shutil
 import subprocess
 import sys
-from typing import Optional
 
 import setuptools.command.bdist_wheel
 import setuptools.command.build_ext
@@ -43,8 +44,8 @@ import version  # noqa E402
 # tiledb_dir and tiledbsoma_dir may be specified by either environment variable
 # or command-line argument. If both are provided, the latter wins.
 
-tiledb_dir: Optional[pathlib.Path] = None
-tiledbsoma_dir: Optional[pathlib.Path] = None
+tiledb_dir: pathlib.Path | None = None
+tiledbsoma_dir: pathlib.Path | None = None
 no_tiledb_dep: bool = False
 
 args = sys.argv[:]

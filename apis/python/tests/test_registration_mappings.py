@@ -2,10 +2,12 @@
 Test join-id registrations for ingesting multiple AnnData objects into a single SOMA Experiment.
 """
 
+from __future__ import annotations
+
 import math
 import tempfile
 from contextlib import nullcontext
-from typing import List, Optional, Sequence, Tuple, Union
+from typing import List, Sequence, Tuple, Union
 
 import anndata as ad
 import numpy as np
@@ -26,7 +28,7 @@ def _create_anndata(
     obs_field_name: str,
     var_field_name: str,
     X_value_base: int,
-    raw_var_ids: Optional[Sequence[str]] = None,
+    raw_var_ids: Sequence[str] | None = None,
 ):
     n_obs = len(obs_ids)
     n_var = len(var_ids)
@@ -237,7 +239,7 @@ PANDAS_INDEXING_TEST_DF = pd.DataFrame(
     ]
 )
 def test_pandas_indexing(
-    index_col_and_name: Union[Tuple[Optional[str]], Tuple[str, Optional[str]]],
+    index_col_and_name: Union[Tuple[str | None], Tuple[str, str | None]],
     default_index_name: str,
     signature_col_names: List[Union[str, Tuple[str, str]]],
 ):
