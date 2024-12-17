@@ -346,7 +346,7 @@ TEST_CASE_METHOD(
                     .filter_type() == filter.second);
         }
 
-        auto config_options = sdf->config_options_from_schema();
+        auto config_options = sdf->schema_config_options();
         REQUIRE(config_options.capacity == 100000);
         REQUIRE(config_options.allows_duplicates == false);
         REQUIRE(config_options.tile_order == "row-major");

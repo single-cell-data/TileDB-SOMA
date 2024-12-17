@@ -434,7 +434,7 @@ def test_tile_extents(tmp_path):
     ).close()
 
     with soma.DenseNDArray.open(tmp_path.as_posix()) as A:
-        dim_info = json.loads(A.config_options_from_schema().dims)
+        dim_info = json.loads(A.schema_config_options().dims)
         # With new shape (tiledbsoma 1.15), core current domain is (100,10000)
         # but core domain is huge, and therefore dim 0 does not get its extent
         # squashed down to 100.

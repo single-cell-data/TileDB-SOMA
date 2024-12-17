@@ -3,6 +3,7 @@
 #
 # Licensed under the MIT License.
 
+import warnings
 from typing import Any, Tuple
 
 import pyarrow as pa
@@ -33,9 +34,41 @@ class SOMAArray(SOMAObject[_tdb_handles.SOMAArrayWrapper[Any]]):
         """
         return self._handle.schema
 
+    def schema_config_options(self) -> clib.PlatformSchemaConfig:
+        """Returns metadata about the array schema that is not encompassed within
+        the Arrow Schema, in the form of a PlatformConfig.
+
+        Available attributes are:
+            * capacity: int
+            * allows_duplicates: bool
+            * tile_order: str
+            * cell_order: str
+            * offsets_filters: str
+                * name (of filter): str
+                * compression_level: str
+            * validity_filters: str
+            * attrs: str
+                * name (of attribute): str
+                    * filters: str
+                        * name (of filter): str
+                        * compression_level: str
+            * dims: str
+                * name (of dimension): str
+                    * filters: str
+                        * name (of filter): str
+                        * compression_level: str
+                    * tile: int
+
+        Lifecycle:
+            Experimental.
+        """
+        return self._handle.schema_config_options()
+
     def config_options_from_schema(self) -> clib.PlatformConfig:
         """Returns metadata about the array that is not encompassed within the
-        Arrow Schema, in the form of a PlatformConfig.
+        Arrow Schema, in the form of a PlatformConfig (deprecated).
+
+        Use ``schema_config_options`` instead.
 
         Available attributes are:
             * dataframe_dim_zstd_level: int
@@ -64,7 +97,13 @@ class SOMAArray(SOMAObject[_tdb_handles.SOMAArrayWrapper[Any]]):
             * tile_order: str
             * cell_order: str
             * consolidate_and_vacuum: bool
+
+        Lifecycle:
+            Deprecated.
         """
+        warnings.warn(
+            "Deprecated. Use schema_config_options instead.", DeprecationWarning
+        )
         return self._handle.config_options_from_schema()
 
     def non_empty_domain(self) -> Tuple[Tuple[Any, Any], ...]:
