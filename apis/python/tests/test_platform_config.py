@@ -46,7 +46,7 @@ def test_platform_config(conftest_pbmc_small):
 
         x_arr_uri = str(Path(output_path) / "ms" / "RNA" / "X" / "data")
         with tiledbsoma.SparseNDArray.open(x_arr_uri) as x_arr:
-            cfg = x_arr.config_options_from_schema()
+            cfg = x_arr.schema_config_options()
             assert cfg.capacity == create_cfg["capacity"]
             assert cfg.cell_order == create_cfg["cell_order"]
             assert cfg.tile_order == create_cfg["tile_order"]
@@ -70,7 +70,7 @@ def test_platform_config(conftest_pbmc_small):
 
         var_arr_uri = str(Path(output_path) / "ms" / "RNA" / "var")
         with tiledbsoma.DataFrame.open(var_arr_uri) as var_arr:
-            cfg = var_arr.config_options_from_schema()
+            cfg = var_arr.schema_config_options()
             assert json.loads(cfg.dims)["soma_joinid"]["filters"] == [
                 {"COMPRESSION_LEVEL": 1, "name": "ZSTD"}
             ]

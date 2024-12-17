@@ -655,6 +655,17 @@ class SOMAArray : public SOMAObject {
     /**
      * @brief Get members of the schema (capacity, allows_duplicates,
      * tile_order, cell_order, offsets_filters, validity_filters, attr filters,
+     * and dim filters) in the form of a PlatformSchemaConfig.
+     *
+     * @return PlatformSchemaConfig
+     */
+    PlatformSchemaConfig schema_config_options() const {
+        return ArrowAdapter::platform_schema_config_from_tiledb(*schema_);
+    }
+
+    /**
+     * @brief Get members of the schema (capacity, allows_duplicates,
+     * tile_order, cell_order, offsets_filters, validity_filters, attr filters,
      * and dim filters) in the form of a PlatformConfig
      *
      * @return PlatformConfig

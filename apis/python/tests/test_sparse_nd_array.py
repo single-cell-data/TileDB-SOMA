@@ -352,7 +352,7 @@ def test_sparse_nd_array_read_write_sparse_tensor(
 
     with soma.SparseNDArray.open(tmp_path.as_posix()) as A:
         assert A.is_sparse
-        assert not A.config_options_from_schema().allows_duplicates
+        assert not A.schema_config_options().allows_duplicates
 
 
 @pytest.mark.parametrize("shape", [(10,), (23, 4), (5, 3, 1), (8, 4, 2, 30)])
@@ -376,7 +376,7 @@ def test_sparse_nd_array_read_write_table(
 
     with soma.SparseNDArray.open(tmp_path.as_posix()) as A:
         assert A.is_sparse
-        assert not A.config_options_from_schema().allows_duplicates
+        assert not A.schema_config_options().allows_duplicates
 
 
 @pytest.mark.parametrize("dtype", [np.float32, np.float64, np.int32, np.int64])
@@ -404,7 +404,7 @@ def test_sparse_nd_array_read_as_pandas(
 
     with soma.SparseNDArray.open(tmp_path.as_posix()) as A:
         assert A.is_sparse
-        assert not A.config_options_from_schema().allows_duplicates
+        assert not A.schema_config_options().allows_duplicates
 
 
 @pytest.mark.parametrize("shape_is_nones", [True, False])
@@ -1114,7 +1114,7 @@ def test_tile_extents(tmp_path):
     ).close()
 
     with soma.SparseNDArray.open(tmp_path.as_posix()) as A:
-        dim_info = json.loads(A.config_options_from_schema().dims)
+        dim_info = json.loads(A.schema_config_options().dims)
         assert int(dim_info["soma_dim_0"]["tile"]) == 2048
         assert int(dim_info["soma_dim_1"]["tile"]) == 2048
 
@@ -1157,7 +1157,7 @@ def test_create_platform_config_overrides(
     ).close()
 
     with soma.SparseNDArray.open(tmp_path.as_posix()) as A:
-        cfg = A.config_options_from_schema()
+        cfg = A.schema_config_options()
         assert expected_schema_fields["validity_filters"] == json.loads(
             cfg.validity_filters
         )
