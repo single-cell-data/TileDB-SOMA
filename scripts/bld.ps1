@@ -47,6 +47,8 @@ if ($Configuration -eq 'Debug' -and $TileDBLocation -ne '') {
 
 if ($Prefix -ne '') {
     $ExtraOpts += " -DCMAKE_INSTALL_PREFIX=$Prefix -DOVERRIDE_INSTALL_PREFIX=OFF"
+} else {
+    $ExtraOpts += " -DOVERRIDE_INSTALL_PREFIX=ON"
 }
 
 if ($TileDBLocation -ne '') {
