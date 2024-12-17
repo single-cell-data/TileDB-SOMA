@@ -53,10 +53,9 @@ from somacore.query.query import (
 from somacore.query.types import IndexFactory, IndexLike
 from typing_extensions import Self
 
-from ._constants import SPATIAL_DISCLAIMER
-
 if TYPE_CHECKING:
     from ._experiment import Experiment
+from ._constants import SPATIAL_DISCLAIMER
 from ._fastercsx import CompressedMatrix
 from ._measurement import Measurement
 from ._sparse_nd_array import SparseNDArray
@@ -410,9 +409,14 @@ class ExperimentAxisQuery:
         try:
             obs_scene = self.experiment.obs_spatial_presence
         except KeyError as ke:
-            raise KeyError("Missing obs_scene") from ke
+            raise KeyError(
+                "No obs_spatial_presence dataframe in this experiment."
+            ) from ke
         if not isinstance(obs_scene, DataFrame):
-            raise TypeError("obs_scene must be a dataframe.")
+            raise TypeError(
+                f"obs_spatial_presence must be a dataframe; got "
+                f"{type(obs_scene).__name__}."
+            )
 
         full_table = obs_scene.read(
             coords=((Axis.OBS.getattr_from(self._joinids), slice(None))),
@@ -431,12 +435,18 @@ class ExperimentAxisQuery:
         try:
             var_scene = self._ms.var_spatial_presence
         except KeyError as ke:
-            raise KeyError("Missing var_scene") from ke
+            raise KeyError(
+                f"No var_spatial_presence dataframe in measurement "
+                f"'{self.measurement_name}'."
+            ) from ke
         if not isinstance(var_scene, DataFrame):
-            raise TypeError("var_scene must be a dataframe.")
+            raise TypeError(
+                f"var_spatial_presence must be a dataframe; got "
+                f"{type(var_scene).__name__}."
+            )
 
         full_table = var_scene.read(
-            coords=((Axis.OBS.getattr_from(self._joinids), slice(None))),
+            coords=((Axis.VAR.getattr_from(self._joinids), slice(None))),
             result_order=ResultOrder.COLUMN_MAJOR,
             value_filter="data != 0",
         ).concat()
