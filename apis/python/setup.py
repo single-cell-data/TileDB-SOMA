@@ -343,7 +343,7 @@ setuptools.setup(
         # https://github.com/scverse/anndata/issues/1802
         "scipy<1.15.0",
         # Note: the somacore version is also in .pre-commit-config.yaml
-        "somacore==1.0.25",
+        "somacore==1.0.26",
         "typing-extensions",  # Note "-" even though `import typing_extensions`
     ],
     extras_require={
