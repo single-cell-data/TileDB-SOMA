@@ -169,16 +169,17 @@ Rcpp::XPtr<tdbs::SOMAArray> sr_setup(
 // [[Rcpp::export]]
 bool sr_complete(Rcpp::XPtr<tdbs::SOMAArray> sr) {
     check_xptr_tag<tdbs::SOMAArray>(sr);
-    bool complt = sr->is_complete(true);
-    bool initial = sr->is_initial_read();
-    bool res = complt && !initial;  // completed transfer if query status
-                                    // complete and query ran once
-    spdl::debug(
-        "[sr_complete] Complete query test {} (compl {} initial {})",
-        res,
-        complt,
-        initial);
-    return res;
+    // bool complt = sr->is_complete(true);
+    // bool initial = sr->is_initial_read();
+    // bool res = complt && !initial;  // completed transfer if query status
+    //                                 // complete and query ran once
+    // spdl::debug(
+    //     "[sr_complete] Complete query test {} (compl {} initial {})",
+    //     res,
+    //     complt,
+    //     initial);
+    // return res;
+    return sr->results_complete();
 }
 
 //' @noRd
