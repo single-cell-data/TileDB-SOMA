@@ -3,10 +3,13 @@
 offset (zero-based) int64 integer indexing on each dimension with domain
 [0, maxInt64). The SOMADenseNDArray has a user-defined schema, which
 includes:
-type: a primitive type, expressed as an Arrow type (e.g., int64,
-float32, etc), indicating the type of data contained within the array
-shape: the shape of the array, i.e., number and length of each
-dimension
+type: A primitive type, expressed as an Arrow type (e.g., int64,
+float32, etc), indicating the type of data contained within the array.
+shape: The shape of the array, i.e., number and length of each
+dimension. This is a soft limit which can be increased using resize,
+up to the maxshape.
+maxshape: The hard limit up to which shape may be increased using
+resize.
 
 
 All dimensions must have a positive, non-zero length, and there must be 1 or
@@ -18,10 +21,13 @@ The write method is currently limited to writing from 2-d matrices.
 offset (zero-based) int64 integer indexing on each dimension with domain
 [0, maxInt64). The SOMADenseNDArray has a user-defined schema, which
 includes:
-type: a primitive type, expressed as an Arrow type (e.g., int64,
-float32, etc), indicating the type of data contained within the array
-shape: the shape of the array, i.e., number and length of each
-dimension
+type: A primitive type, expressed as an Arrow type (e.g., int64,
+float32, etc), indicating the type of data contained within the array.
+shape: The shape of the array, i.e., number and length of each
+dimension. This is a soft limit which can be increased using resize,
+up to the maxshape.
+maxshape: The hard limit up to which shape may be increased using
+resize.
 
 
 All dimensions must have a positive, non-zero length, and there must be 1 or
@@ -37,7 +43,7 @@ The write method is currently limited to writing from 2-d matrices.
 
     <a class="navbar-brand me-2" href="../index.html">tiledbsoma</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.14.99.9</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.15.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -51,6 +57,7 @@ The write method is currently limited to writing from 2-d matrices.
   <ul class="dropdown-menu" aria-labelledby="dropdown-vignettes"><li><h6 class="dropdown-header" data-toc-skip>SOMA Introduction</h6></li>
     <li><a class="dropdown-item" href="../articles/soma-objects.html">SOMA Objects Overview</a></li>
     <li><a class="dropdown-item" href="../articles/soma-reading.html">Reading From SOMA Objects</a></li>
+    <li><a class="dropdown-item" href="../articles/soma-shapes.html">SOMA shapes</a></li>
     <li><a class="dropdown-item" href="../articles/soma-experiment-queries.html">Querying a SOMA Experiment</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>SOMA Configuration</h6></li>
@@ -69,7 +76,7 @@ The write method is currently limited to writing from 2-d matrices.
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>SOMADenseNDArray</h1>
-      <small class="dont-index">Source: <a href="https://github.com/single-cell-data/TileDB-SOMA/blob/1.15.0rc4/R/SOMADenseNDArray.R" class="external-link"><code>R/SOMADenseNDArray.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/single-cell-data/TileDB-SOMA/blob/release-1.15/R/SOMADenseNDArray.R" class="external-link"><code>R/SOMADenseNDArray.R</code></a></small>
       <div class="d-none name"><code>SOMADenseNDArray.Rd</code></div>
     </div>
 
@@ -77,10 +84,13 @@ The write method is currently limited to writing from 2-d matrices.
     <p><code>SOMADenseNDArray</code> is a dense, N-dimensional array of <code>primitive</code> type, with
 offset (zero-based) <code>int64</code> integer indexing on each dimension with domain
 <code>[0, maxInt64)</code>. The <code>SOMADenseNDArray</code> has a user-defined schema, which
-includes:</p><ul><li><p><strong>type</strong>: a <code>primitive</code> type, expressed as an Arrow type (e.g., <code>int64</code>,
-<code>float32</code>, etc), indicating the type of data contained within the array</p></li>
-<li><p><strong>shape</strong>: the shape of the array, i.e., number and length of each
-dimension</p></li>
+includes:</p><ul><li><p><strong>type</strong>: A <code>primitive</code> type, expressed as an Arrow type (e.g., <code>int64</code>,
+<code>float32</code>, etc), indicating the type of data contained within the array.</p></li>
+<li><p><strong>shape</strong>: The shape of the array, i.e., number and length of each
+dimension. This is a soft limit which can be increased using <code>resize</code>,
+up to the <code>maxshape</code>.</p></li>
+<li><p><strong>maxshape</strong>: The hard limit up to which <code>shape</code> may be increased using
+<code>resize</code>.</p></li>
 </ul><p>All dimensions must have a positive, non-zero length, and there must be 1 or
 more dimensions.</p>
 <p>The default "fill" value for <code>SOMADenseNDArray</code> is the zero or null value of
@@ -141,7 +151,7 @@ the array type (e.g., Arrow.float32 defaults to 0.0).</p>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SOMADenseNDArray</span><span class="op">$</span><span class="fu">read_arrow_table</span><span class="op">(</span></span>
 <span>  coords <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  result_order <span class="op">=</span> <span class="st">"auto"</span>,</span>
-<span>  log_level <span class="op">=</span> <span class="st">"warn"</span></span>
+<span>  log_level <span class="op">=</span> <span class="st">"auto"</span></span>
 <span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 

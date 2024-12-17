@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">tiledbsoma</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.14.99.9</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.15.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -21,6 +21,7 @@
   <ul class="dropdown-menu" aria-labelledby="dropdown-vignettes"><li><h6 class="dropdown-header" data-toc-skip>SOMA Introduction</h6></li>
     <li><a class="dropdown-item" href="../articles/soma-objects.html">SOMA Objects Overview</a></li>
     <li><a class="dropdown-item" href="../articles/soma-reading.html">Reading From SOMA Objects</a></li>
+    <li><a class="dropdown-item" href="../articles/soma-shapes.html">SOMA shapes</a></li>
     <li><a class="dropdown-item" href="../articles/soma-experiment-queries.html">Querying a SOMA Experiment</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>SOMA Configuration</h6></li>
@@ -39,9 +40,97 @@
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Changelog</h1>
-      <small>Source: <a href="https://github.com/single-cell-data/TileDB-SOMA/blob/1.15.0rc4/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
+      <small>Source: <a href="https://github.com/single-cell-data/TileDB-SOMA/blob/release-1.15/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.15.0" id="tiledbsoma-1150">tiledbsoma 1.15.0<a class="anchor" aria-label="anchor" href="#tiledbsoma-1150"></a></h2>
+<div class="section level3">
+<h3 id="changes-1-15-0">Changes<a class="anchor" aria-label="anchor" href="#changes-1-15-0"></a></h3>
+<ul><li>Remove unused <code>fragment_count</code> accessor <a href="https://github.com/single-cell-data/TileDB-SOMA/pull/3054" class="external-link">#3054</a>
+</li>
+<li>Implement missing <code>domain</code> argument to <code>SOMADataFrame</code> <code>create</code> <a href="https://github.com/single-cell-data/TileDB-SOMA/pull/3032" class="external-link">#3032</a>
+</li>
+<li>Use <code>libtiledbsoma</code> for R schema evolution <a href="https://github.com/single-cell-data/TileDB-SOMA/pull/3100" class="external-link">#3100</a>
+</li>
+<li>Push <code>attrnames</code> down to C++ <a href="https://github.com/single-cell-data/TileDB-SOMA/pull/3121" class="external-link">#3121</a>
+</li>
+<li>Push <code>schema</code> accessor down to <code>libtiledbsoma</code> <a href="https://github.com/single-cell-data/TileDB-SOMA/pull/3079" class="external-link">#3079</a>
+</li>
+<li>Handle <code>numeric</code> coords properly when reading arrays</li>
+<li>Remove two more <code><a href="https://tiledb-inc.github.io/TileDB-R/reference/generics.html" class="external-link">tiledb::schema</a></code> callsites <a href="https://github.com/single-cell-data/TileDB-SOMA/pull/3160" class="external-link">#3160</a>
+</li>
+<li>Add new Arrow-to-R type mapper</li>
+<li>Add transitional/non-exported <code>parse_query_condition_new</code> <a href="https://github.com/single-cell-data/TileDB-SOMA/pull/3162" class="external-link">#3162</a>
+</li>
+<li>Apply new <code>parse_query_condition</code> <a href="https://github.com/single-cell-data/TileDB-SOMA/pull/3174" class="external-link">#3174</a>
+</li>
+<li>Apply new <code>non_empty_domain</code> <a href="https://github.com/single-cell-data/TileDB-SOMA/pull/3176" class="external-link">#3176</a>
+</li>
+<li>Support for dense current domain with core 2.27 <a href="https://github.com/single-cell-data/TileDB-SOMA/pull/3180" class="external-link">#3180</a>
+</li>
+<li>Fix <code>is_named_list</code> bug for half-named lists <a href="https://github.com/single-cell-data/TileDB-SOMA/pull/3183" class="external-link">#3183</a>
+</li>
+<li>Expose block/random writer for sparse arrays <a href="https://github.com/single-cell-data/TileDB-SOMA/pull/3204" class="external-link">#3204</a>
+</li>
+<li>Min-sizing for dataframes/arrays with new shape feature <a href="https://github.com/single-cell-data/TileDB-SOMA/pull/3208" class="external-link">#3208</a>
+</li>
+<li>Proper prefixing for shape-related methods <a href="https://github.com/single-cell-data/TileDB-SOMA/pull/3237" class="external-link">#3237</a>
+</li>
+<li>Bindings for <code>upgrade_domain</code> <a href="https://github.com/single-cell-data/TileDB-SOMA/pull/3238" class="external-link">#3238</a>
+</li>
+<li>Apply <code>styler::style_pkg()</code> <a href="https://github.com/single-cell-data/TileDB-SOMA/pull/3239" class="external-link">#3239</a>
+</li>
+<li>Plumb old-style <code>SOMATileDBContext</code> into new-style <code><a href="../reference/soma_context.html">soma_context()</a></code> <a href="https://github.com/single-cell-data/TileDB-SOMA/pull/3252" class="external-link">#3252</a>
+</li>
+<li>Fixes for dense arrays and yet-to-be-released core 2.27 <a href="https://github.com/single-cell-data/TileDB-SOMA/pull/3270" class="external-link">#3270</a>
+</li>
+<li>More fixes for unit-test cases with dense + core 2.27 <a href="https://github.com/single-cell-data/TileDB-SOMA/pull/3280" class="external-link">#3280</a>
+</li>
+<li>Add initial support for ragged array writing for Seurat v5 by <a href="https://github.com/mojaveazure" class="external-link">@mojaveazure</a> in <a href="https://github.com/single-cell-data/TileDB-SOMA/pull/2523" class="external-link">#2523</a>
+</li>
+<li>Remove 2.27-related feature flag by <a href="https://github.com/johnkerl" class="external-link">@johnkerl</a> in <a href="https://github.com/single-cell-data/TileDB-SOMA/pull/3368" class="external-link">#3368</a>
+</li>
+<li>Revert <a href="https://github.com/single-cell-data/TileDB-SOMA/issues/3300" class="external-link">#3300</a> by <a href="https://github.com/johnkerl" class="external-link">@johnkerl</a> in <a href="https://github.com/single-cell-data/TileDB-SOMA/pull/3358" class="external-link">#3358</a>
+</li>
+<li>Enforce dataframe domain lower bound == 0 by <a href="https://github.com/johnkerl" class="external-link">@johnkerl</a> in <a href="https://github.com/single-cell-data/TileDB-SOMA/pull/3300" class="external-link">#3300</a>
+</li>
+<li>Data refresh for new shapes by <a href="https://github.com/johnkerl" class="external-link">@johnkerl</a> in <a href="https://github.com/single-cell-data/TileDB-SOMA/pull/3303" class="external-link">#3303</a>
+</li>
+<li>Move beyond the new-shape feature flag by <a href="https://github.com/johnkerl" class="external-link">@johnkerl</a> in <a href="https://github.com/single-cell-data/TileDB-SOMA/pull/3301" class="external-link">#3301</a>
+</li>
+<li>Note on dev installs and <code>spdlog</code> failures by <a href="https://github.com/johnkerl" class="external-link">@johnkerl</a> in <a href="https://github.com/single-cell-data/TileDB-SOMA/pull/3324" class="external-link">#3324</a>
+</li>
+<li>Remove tiledb-r specific install by <a href="https://github.com/mojaveazure" class="external-link">@mojaveazure</a> in <a href="https://github.com/single-cell-data/TileDB-SOMA/pull/3319" class="external-link">#3319</a>
+</li>
+<li>Try to unbreak <code>r-valgrind</code> CI by <a href="https://github.com/johnkerl" class="external-link">@johnkerl</a> in <a href="https://github.com/single-cell-data/TileDB-SOMA/pull/3318" class="external-link">#3318</a>
+</li>
+<li>Avoid log truncation with “Last 13 lines of output” by <a href="https://github.com/johnkerl" class="external-link">@johnkerl</a> in <a href="https://github.com/single-cell-data/TileDB-SOMA/pull/3313" class="external-link">#3313</a>
+</li>
+<li>Run tests in closer to internal-dependency order by <a href="https://github.com/johnkerl" class="external-link">@johnkerl</a> in <a href="https://github.com/single-cell-data/TileDB-SOMA/pull/3311" class="external-link">#3311</a>
+</li>
+<li>Use standard name <code>zzz.R</code> for init code by <a href="https://github.com/johnkerl" class="external-link">@johnkerl</a> in <a href="https://github.com/single-cell-data/TileDB-SOMA/pull/3332" class="external-link">#3332</a>
+</li>
+<li>Address two more compiler warnings by <a href="https://github.com/johnkerl" class="external-link">@johnkerl</a> in <a href="https://github.com/single-cell-data/TileDB-SOMA/pull/3320" class="external-link">#3320</a>
+</li>
+<li>Add support for writing Seurat v5 ragged arrays</li>
+<li>Update docstrings for <code>domain</code> argument to <code>create</code> <a href="https://github.com/single-cell-data/TileDB-SOMA/pull/3396" class="external-link">#3396</a>
+</li>
+<li>Vignette for new-shape feature <a href="https://github.com/single-cell-data/TileDB-SOMA/pull/3302" class="external-link">#3302</a>
+</li>
+<li>Fix blockwise iterator + re-indexer to return re-indexed shape instead of full domain</li>
+<li>Docstring audit for new shape <a href="https://github.com/single-cell-data/TileDB-SOMA/pull/3399" class="external-link">#3399</a>
+</li>
+<li>Add <code>check_only</code> support for domain/shape updates <a href="https://github.com/single-cell-data/TileDB-SOMA/pull/3400" class="external-link">#3400</a>
+</li>
+<li>Adjust blockwise + re-indexer to return condensed matrix, not full domain <a href="https://github.com/single-cell-data/TileDB-SOMA/pull/3395" class="external-link">#3395</a>
+</li>
+<li>[c++] Use core 2.27.0.rc5 <a href="https://github.com/single-cell-data/TileDB-SOMA/pull/3410" class="external-link">#3410</a>
+</li>
+<li>[c++] Use core 2.27.0 <a href="https://github.com/single-cell-data/TileDB-SOMA/pull/3422" class="external-link">#3422</a>
+</li>
+</ul></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.14.5" id="tiledbsoma-1145">tiledbsoma 1.14.5<a class="anchor" aria-label="anchor" href="#tiledbsoma-1145"></a></h2>
 <div class="section level3">

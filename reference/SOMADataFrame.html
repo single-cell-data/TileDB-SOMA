@@ -13,7 +13,7 @@ SOMASparseNDArray.  (lifecycle: maturing)"></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">tiledbsoma</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.14.99.9</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.15.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -27,6 +27,7 @@ SOMASparseNDArray.  (lifecycle: maturing)"></head><body>
   <ul class="dropdown-menu" aria-labelledby="dropdown-vignettes"><li><h6 class="dropdown-header" data-toc-skip>SOMA Introduction</h6></li>
     <li><a class="dropdown-item" href="../articles/soma-objects.html">SOMA Objects Overview</a></li>
     <li><a class="dropdown-item" href="../articles/soma-reading.html">Reading From SOMA Objects</a></li>
+    <li><a class="dropdown-item" href="../articles/soma-shapes.html">SOMA shapes</a></li>
     <li><a class="dropdown-item" href="../articles/soma-experiment-queries.html">Querying a SOMA Experiment</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>SOMA Configuration</h6></li>
@@ -45,7 +46,7 @@ SOMASparseNDArray.  (lifecycle: maturing)"></head><body>
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>SOMADataFrame</h1>
-      <small class="dont-index">Source: <a href="https://github.com/single-cell-data/TileDB-SOMA/blob/1.15.0rc4/R/SOMADataFrame.R" class="external-link"><code>R/SOMADataFrame.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/single-cell-data/TileDB-SOMA/blob/release-1.15/R/SOMADataFrame.R" class="external-link"><code>R/SOMADataFrame.R</code></a></small>
       <div class="d-none name"><code>SOMADataFrame.Rd</code></div>
     </div>
 
@@ -76,7 +77,9 @@ row and is intended to act as a join key for other objects, such as
 <li><p><a href="#method-SOMADataFrame-domain"><code>SOMADataFrame$domain()</code></a></p></li>
 <li><p><a href="#method-SOMADataFrame-maxdomain"><code>SOMADataFrame$maxdomain()</code></a></p></li>
 <li><p><a href="#method-SOMADataFrame-tiledbsoma_has_upgraded_domain"><code>SOMADataFrame$tiledbsoma_has_upgraded_domain()</code></a></p></li>
-<li><p><a href="#method-SOMADataFrame-resize_soma_joinid_shape"><code>SOMADataFrame$resize_soma_joinid_shape()</code></a></p></li>
+<li><p><a href="#method-SOMADataFrame-tiledbsoma_resize_soma_joinid_shape"><code>SOMADataFrame$tiledbsoma_resize_soma_joinid_shape()</code></a></p></li>
+<li><p><a href="#method-SOMADataFrame-tiledbsoma_upgrade_domain"><code>SOMADataFrame$tiledbsoma_upgrade_domain()</code></a></p></li>
+<li><p><a href="#method-SOMADataFrame-change_domain"><code>SOMADataFrame$change_domain()</code></a></p></li>
 <li><p><a href="#method-SOMADataFrame-clone"><code>SOMADataFrame$clone()</code></a></p></li>
 </ul></div><p><details><summary>Inherited methods</summary><ul><li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="class"><a href="TileDBObject.html#method-class"><code>tiledbsoma::TileDBObject$class()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="exists"><a href="TileDBObject.html#method-exists"><code>tiledbsoma::TileDBObject$exists()</code></a></span></li>
@@ -127,14 +130,22 @@ one index column name is required.</p></dd>
 
 
 <dt><code>domain</code></dt>
-<dd><p>An optional list of 2-element vectors specifying the domain of each index
-column. Each vector should be a pair consisting of the minimum and maximum values storable in
-the index column. For example, if there is a single int64-valued index column, then <code>domain</code>
-might be <code>c(100, 200)</code> to indicate that values between 100 and 200, inclusive, can be stored
-in that column.  If provided, this list must have the same length as <code>index_column_names</code>,
-and the index-column domain will be as specified.  If omitted entirely, or if <code>NULL</code> in a given
-dimension, the corresponding index-column domain will use the minimum and maximum possible
-values for the column's datatype.  This makes a <code>DataFrame</code> growable.</p></dd>
+<dd><p>An optional list specifying the domain of each
+index column. Each slot in the list must have its name being the name
+of an index column, and its value being be a length-two vector
+consisting of the minimum and maximum values storable in the index
+column. For example, if there is a single int64-valued index column
+<code>soma_joinid</code>, then <code>domain</code> might be <code>list(soma_joinid=c(100, 200))</code>
+to indicate that values between 100 and 200, inclusive, can be stored
+in that column.  If provided, this sequence must have the same length
+as <code>index_column_names</code>, and the index-column domain will be as
+specified.  If omitted entirely, or if <code>NULL</code> in a given dimension, the
+corresponding index-column domain will use an empty range, and data writes
+after that will fail with "A range was set outside of the current domain".
+Unless you have a particular reason not to, you should always provide the
+desired <code>domain</code> at create time: this is an optional but strongly
+recommended parameter.  See also <code>change_domain</code> which allows you to
+expand the domain after create.</p></dd>
 
 
 <dt><code>platform_config</code></dt>
@@ -187,8 +198,8 @@ column, and optionally filtered.</p><div class="section">
 <div class="section">
 <h4 id="arguments-2">Arguments<a class="anchor" aria-label="anchor" href="#arguments-2"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>coords</code></dt>
-<dd><p>Optional named list of indices specifying the rows to read; each (named)
-list element corresponds to a dimension of the same name.</p></dd>
+<dd><p>Optional named list of indices specifying the rows to read;
+each (named) list element corresponds to a dimension of the same name.</p></dd>
 
 
 <dt><code>column_names</code></dt>
@@ -332,8 +343,8 @@ or it has had <code>upgrade_domain</code> applied to it.
 <p>Logical</p>
 </div>
 
-</div><p></p><hr><a id="method-SOMADataFrame-resize_soma_joinid_shape"></a><div class="section">
-<h3 id="method-resize-soma-joinid-shape-">Method <code>resize_soma_joinid_shape()</code><a class="anchor" aria-label="anchor" href="#method-resize-soma-joinid-shape-"></a></h3>
+</div><p></p><hr><a id="method-SOMADataFrame-tiledbsoma_resize_soma_joinid_shape"></a><div class="section">
+<h3 id="method-tiledbsoma-resize-soma-joinid-shape-">Method <code>tiledbsoma_resize_soma_joinid_shape()</code><a class="anchor" aria-label="anchor" href="#method-tiledbsoma-resize-soma-joinid-shape-"></a></h3>
 <p>Increases the shape of the dataframe on the <code>soma_joinid</code>
 index column, if it indeed is an index column, leaving all other index
 columns as-is. If the <code>soma_joinid</code> is not an index column, no change is
@@ -343,7 +354,7 @@ domain expansion.  Raises an error if the dataframe doesn't already have a
 domain: in that case please call <code>tiledbsoma_upgrade_domain</code> (WIP for
 1.15).</p><div class="section">
 <h4 id="usage-9">Usage<a class="anchor" aria-label="anchor" href="#usage-9"></a></h4>
-<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SOMADataFrame</span><span class="op">$</span><span class="fu">resize_soma_joinid_shape</span><span class="op">(</span><span class="va">new_shape</span><span class="op">)</span></span></code></pre></div><p></p></div>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SOMADataFrame</span><span class="op">$</span><span class="fu">tiledbsoma_resize_soma_joinid_shape</span><span class="op">(</span><span class="va">new_shape</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
@@ -360,15 +371,74 @@ domain: in that case please call <code>tiledbsoma_upgrade_domain</code> (WIP for
 <p>No return value</p>
 </div>
 
-</div><p></p><hr><a id="method-SOMADataFrame-clone"></a><div class="section">
-<h3 id="method-clone-">Method <code>clone()</code><a class="anchor" aria-label="anchor" href="#method-clone-"></a></h3>
-<p>The objects of this class are cloneable with this method.</p><div class="section">
+</div><p></p><hr><a id="method-SOMADataFrame-tiledbsoma_upgrade_domain"></a><div class="section">
+<h3 id="method-tiledbsoma-upgrade-domain-">Method <code>tiledbsoma_upgrade_domain()</code><a class="anchor" aria-label="anchor" href="#method-tiledbsoma-upgrade-domain-"></a></h3>
+<p>Allows you to set the domain of a <code>SOMADataFrame</code>, when the
+<code>SOMADataFrame</code> does not have a domain set yet.  The argument must be a
+tuple of pairs of low/high values for the desired domain, one pair per
+index column. For string index columns, you must offer the low/high pair
+as <code>("", "")</code>, or as <code>NULL</code>.  If <code>check_only</code> is <code>True</code>, returns
+whether the operation would succeed if attempted, and a reason why it
+would not. The domain being requested must be contained within what
+<code>maxdomain</code> returns.</p><div class="section">
 <h4 id="usage-10">Usage<a class="anchor" aria-label="anchor" href="#usage-10"></a></h4>
-<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SOMADataFrame</span><span class="op">$</span><span class="fu">clone</span><span class="op">(</span>deep <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div><p></p></div>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SOMADataFrame</span><span class="op">$</span><span class="fu">tiledbsoma_upgrade_domain</span><span class="op">(</span><span class="va">new_domain</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
 <h4 id="arguments-5">Arguments<a class="anchor" aria-label="anchor" href="#arguments-5"></a></h4>
+<p></p><div class="arguments"><dl><dt><code>new_domain</code></dt>
+<dd><p>A named list, keyed by index-column name, with values
+being two-element vectors containing the desired lower and upper bounds
+for the domain.</p></dd>
+
+
+</dl><p></p></div>
+</div>
+<div class="section">
+<h4 id="returns-7">Returns<a class="anchor" aria-label="anchor" href="#returns-7"></a></h4>
+<p>No return value</p>
+</div>
+
+</div><p></p><hr><a id="method-SOMADataFrame-change_domain"></a><div class="section">
+<h3 id="method-change-domain-">Method <code>change_domain()</code><a class="anchor" aria-label="anchor" href="#method-change-domain-"></a></h3>
+<p>Allows you to set the domain of a <code>SOMADataFrame</code>, when the
+<code>SOMADataFrame</code> already has a domain set yet.  The argument must be a
+tuple of pairs of low/high values for the desired domain, one pair per
+index column. For string index columns, you must offer the low/high pair
+as <code>("", "")</code>, or as <code>NULL</code>.  If <code>check_only</code> is <code>True</code>, returns
+whether the operation would succeed if attempted, and a reason why it
+would not. The return value from <code>domain</code> must be contained within
+the requested <code>new_domain</code>, and the requested <code>new_domain</code> must be
+contained within the return value from <code>maxdomain</code>. (lifecycle: maturing)</p><div class="section">
+<h4 id="usage-11">Usage<a class="anchor" aria-label="anchor" href="#usage-11"></a></h4>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SOMADataFrame</span><span class="op">$</span><span class="fu">change_domain</span><span class="op">(</span><span class="va">new_domain</span><span class="op">)</span></span></code></pre></div><p></p></div>
+</div>
+
+<div class="section">
+<h4 id="arguments-6">Arguments<a class="anchor" aria-label="anchor" href="#arguments-6"></a></h4>
+<p></p><div class="arguments"><dl><dt><code>new_domain</code></dt>
+<dd><p>A named list, keyed by index-column name, with values
+being two-element vectors containing the desired lower and upper bounds
+for the domain.</p></dd>
+
+
+</dl><p></p></div>
+</div>
+<div class="section">
+<h4 id="returns-8">Returns<a class="anchor" aria-label="anchor" href="#returns-8"></a></h4>
+<p>No return value</p>
+</div>
+
+</div><p></p><hr><a id="method-SOMADataFrame-clone"></a><div class="section">
+<h3 id="method-clone-">Method <code>clone()</code><a class="anchor" aria-label="anchor" href="#method-clone-"></a></h3>
+<p>The objects of this class are cloneable with this method.</p><div class="section">
+<h4 id="usage-12">Usage<a class="anchor" aria-label="anchor" href="#usage-12"></a></h4>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SOMADataFrame</span><span class="op">$</span><span class="fu">clone</span><span class="op">(</span>deep <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div><p></p></div>
+</div>
+
+<div class="section">
+<h4 id="arguments-7">Arguments<a class="anchor" aria-label="anchor" href="#arguments-7"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>deep</code></dt>
 <dd><p>Whether to make a deep clone.</p></dd>
 
