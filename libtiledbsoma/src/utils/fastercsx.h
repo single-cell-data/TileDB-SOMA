@@ -78,6 +78,26 @@ size_t sum_over_size_(const std::vector<tcb::span<const T>>& v) noexcept {
             return a.size();
         });
 }
+
+/**
+ * @brief Return true if any of the tuple sub-arrays are not equal in size,
+ * false otherwise.  Used only in asserts.
+ */
+template <typename Ti, typename Tj, typename Td>
+bool no_ragged_chunks(
+    const std::vector<std::span<const Ti>>& Ai,
+    const std::vector<std::span<const Tj>>& Aj,
+    const std::vector<std::span<const Td>>& Ad) {
+    if ((Ai.size() != Aj.size()) || (Ai.size() != Ad.size()))
+        return false;
+
+    for (uint64_t chunk_idx = 0; chunk_idx < Ai.size(); chunk_idx++) {
+        if ((Ai[chunk_idx].size() != Aj[chunk_idx].size()) ||
+            (Ai[chunk_idx].size() != Ad[chunk_idx].size()))
+            return false;
+    }
+    return true;
+}
 #endif
 
 /**
@@ -324,6 +344,7 @@ void compress_coo(
     assert(sum_over_size_(Ai) == nnz);
     assert(sum_over_size_(Aj) == nnz);
     assert(sum_over_size_(Ad) == nnz);
+    assert(no_ragged_chunks(Ai, Aj, Ad));
     assert(Bp.size() == n_row + 1);
     assert(Bj.size() == nnz);
     assert(Bd.size() == nnz);
