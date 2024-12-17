@@ -84,18 +84,19 @@ size_t sum_over_size_(const std::vector<std::span<const T>>& v) noexcept {
  * false otherwise.  Used only in asserts.
  */
 template <typename Ti, typename Tj, typename Td>
-std::bool no_ragged_chunks(
+bool no_ragged_chunks(
     const std::vector<std::span<const Ti>>& Ai,
     const std::vector<std::span<const Tj>>& Aj,
     const std::vector<std::span<const Td>>& Ad) {
-    if (Ai.size() != Aj.size())
-        || (Ai.size() != Ad.size()) return false;
+    if ((Ai.size() != Aj.size()) || (Ai.size() != Ad.size()))
+        return false;
 
     for (uint64_t chunk_idx = 0; chunk_idx < Ai.size(); chunk_idx++) {
-        if (Ai[chunk_idx].size() != Aj[chunk_idx].size() ||
-            Ai[chunk_idx].size() != Ad[chunk_idx].size())
-            return False;
+        if ((Ai[chunk_idx].size() != Aj[chunk_idx].size()) ||
+            (Ai[chunk_idx].size() != Ad[chunk_idx].size()))
+            return false;
     }
+    return true;
 }
 #endif
 

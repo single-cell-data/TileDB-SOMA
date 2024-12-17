@@ -264,8 +264,8 @@ void compress_coo_validate_args_(
         }
     }
     for (uint64_t chunk_idx = 0; chunk_idx < n_chunks; chunk_idx++) {
-        if (Ai[chunk_idx].size() != Aj[chunk_idx].size() ||
-            Ai[chunk_idx].size() != Ad[chunk_idx].size())
+        if ((Ai[chunk_idx].size() != Aj[chunk_idx].size()) ||
+            (Ai[chunk_idx].size() != Ad[chunk_idx].size()))
             throw std::length_error(
                 "All COO array tuple elements must be of the same size.");
     }
