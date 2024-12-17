@@ -60,7 +60,7 @@ ReadIter <- R6::R6Class(
       rl <- sr_next(private$soma_reader_pointer)
       return(private$soma_reader_transform(rl))
     },
-    
+
     # Throw a warning for read completion
     .readComplete = function() {
       warning(warningCondition(
