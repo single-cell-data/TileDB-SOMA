@@ -1,5 +1,7 @@
 # Unreleased
 
+# tiledbsoma 1.15.0
+
 ## Changes
 
 * Remove unused `fragment_count` accessor [#3054](https://github.com/single-cell-data/TileDB-SOMA/pull/3054)
@@ -23,11 +25,28 @@
 * Plumb old-style `SOMATileDBContext` into new-style `soma_context()` [#3252](https://github.com/single-cell-data/TileDB-SOMA/pull/3252)
 * Fixes for dense arrays and yet-to-be-released core 2.27 [#3270](https://github.com/single-cell-data/TileDB-SOMA/pull/3270)
 * More fixes for unit-test cases with dense + core 2.27 [#3280](https://github.com/single-cell-data/TileDB-SOMA/pull/3280)
+* Add initial support for ragged array writing for Seurat v5 by @mojaveazure in [#2523](https://github.com/single-cell-data/TileDB-SOMA/pull/2523)
+* Remove 2.27-related feature flag by @johnkerl in [#3368](https://github.com/single-cell-data/TileDB-SOMA/pull/3368)
+* Revert #3300 by @johnkerl in [#3358](https://github.com/single-cell-data/TileDB-SOMA/pull/3358)
+* Enforce dataframe domain lower bound == 0 by @johnkerl in [#3300](https://github.com/single-cell-data/TileDB-SOMA/pull/3300)
+* Data refresh for new shapes by @johnkerl in [#3303](https://github.com/single-cell-data/TileDB-SOMA/pull/3303)
+* Move beyond the new-shape feature flag by @johnkerl in [#3301](https://github.com/single-cell-data/TileDB-SOMA/pull/3301)
+* Note on dev installs and `spdlog` failures by @johnkerl in [#3324](https://github.com/single-cell-data/TileDB-SOMA/pull/3324)
+* Remove tiledb-r specific install by @mojaveazure in [#3319](https://github.com/single-cell-data/TileDB-SOMA/pull/3319)
+* Try to unbreak `r-valgrind` CI by @johnkerl in [#3318](https://github.com/single-cell-data/TileDB-SOMA/pull/3318)
+* Avoid log truncation with "Last 13 lines of output" by @johnkerl in [#3313](https://github.com/single-cell-data/TileDB-SOMA/pull/3313)
+* Run tests in closer to internal-dependency order by @johnkerl in [#3311](https://github.com/single-cell-data/TileDB-SOMA/pull/3311)
+* Use standard name `zzz.R` for init code by @johnkerl in [#3332](https://github.com/single-cell-data/TileDB-SOMA/pull/3332)
+* Address two more compiler warnings by @johnkerl in [#3320](https://github.com/single-cell-data/TileDB-SOMA/pull/3320)
 * Add support for writing Seurat v5 ragged arrays
 * Update docstrings for `domain` argument to `create` [#3396](https://github.com/single-cell-data/TileDB-SOMA/pull/3396)
 * Vignette for new-shape feature [#3302](https://github.com/single-cell-data/TileDB-SOMA/pull/3302)
 * Fix blockwise iterator + re-indexer to return re-indexed shape instead of full domain
+* Docstring audit for new shape [#3399](https://github.com/single-cell-data/TileDB-SOMA/pull/3399)
 * Add `check_only` support for domain/shape updates [#3400](https://github.com/single-cell-data/TileDB-SOMA/pull/3400)
+* Adjust blockwise + re-indexer to return condensed matrix, not full domain [#3395](https://github.com/single-cell-data/TileDB-SOMA/pull/3395)
+* [c++] Use core 2.27.0.rc5 [#3410](https://github.com/single-cell-data/TileDB-SOMA/pull/3410)
+* [c++] Use core 2.27.0 [#3422](https://github.com/single-cell-data/TileDB-SOMA/pull/3422)
 
 # tiledbsoma 1.14.5
 
