@@ -1,9 +1,10 @@
+from __future__ import annotations
+
 from typing import (
     Any,
     Dict,
     Iterable,
     Mapping,
-    Optional,
     Sequence,
     Tuple,
     Type,
@@ -66,17 +67,17 @@ def _normalize_filters(inputs: Iterable[_FilterSpec]) -> Tuple[_DictFilterSpec, 
 # This exists because mypy does not currently (v1.3) support complex converters
 # like converters.optional(inner_converter).
 def _normalize_filters_optional(
-    inputs: Optional[Iterable[_FilterSpec]],
-) -> Optional[Tuple[_DictFilterSpec, ...]]:
+    inputs: Iterable[_FilterSpec] | None,
+) -> Tuple[_DictFilterSpec, ...] | None:
     return None if inputs is None else _normalize_filters(inputs)
 
 
 @attrs_.define(frozen=True, slots=True)
 class _ColumnConfig:
-    filters: Optional[Tuple[_DictFilterSpec, ...]] = attrs_.field(
+    filters: Tuple[_DictFilterSpec, ...] | None = attrs_.field(
         converter=_normalize_filters_optional
     )
-    tile: Optional[int] = attrs_.field(validator=vld.optional(vld.instance_of(int)))
+    tile: int | None = attrs_.field(validator=vld.optional(vld.instance_of(int)))
 
     @classmethod
     def from_dict(cls, input: _DictColumnSpec) -> Self:
@@ -132,17 +133,17 @@ class TileDBCreateOptions:
             "ZstdFilter",
         ),
     )
-    validity_filters: Optional[Tuple[_DictFilterSpec, ...]] = attrs_.field(
+    validity_filters: Tuple[_DictFilterSpec, ...] | None = attrs_.field(
         converter=_normalize_filters_optional, default=None
     )
     allows_duplicates: bool = attrs_.field(
         validator=vld.instance_of(bool),
         default=False,
     )
-    tile_order: Optional[str] = attrs_.field(
+    tile_order: str | None = attrs_.field(
         validator=vld.optional(vld.instance_of(str)), default=None
     )
-    cell_order: Optional[str] = attrs_.field(
+    cell_order: str | None = attrs_.field(
         validator=vld.optional(vld.instance_of(str)), default=None
     )
     dims: Mapping[str, _ColumnConfig] = attrs_.field(
@@ -176,7 +177,7 @@ class TileDBCreateOptions:
             return cls(**filtered_create_entry)
         return create_entry
 
-    def cell_tile_orders(self) -> Tuple[Optional[str], Optional[str]]:
+    def cell_tile_orders(self) -> Tuple[str | None, str | None]:
         """Returns the cell and tile orders that should be used.
 
         If *neither* ``cell_order`` nor ``tile_order`` is present, only in this
@@ -200,7 +201,7 @@ class TileDBWriteOptions:
     """Tuning options used when writing to SOMA arrays."""
 
     sort_coords: bool = attrs_.field(validator=vld.instance_of(bool), default=True)
-    consolidate_and_vacuum: Optional[bool] = attrs_.field(
+    consolidate_and_vacuum: bool | None = attrs_.field(
         validator=vld.instance_of(bool), default=False
     )
 

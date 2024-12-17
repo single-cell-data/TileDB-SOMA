@@ -9,6 +9,8 @@ This module contains methods to generate SOMA artifacts starting from
 other formats. Currently only ``.h5ad`` (`AnnData <https://anndata.readthedocs.io/>`_) is supported.
 """
 
+from __future__ import annotations
+
 import json
 import math
 import time
@@ -18,7 +20,6 @@ from typing import (
     List,
     Literal,
     Mapping,
-    Optional,
     Sequence,
     Tuple,
     Type,
@@ -135,7 +136,7 @@ class IngestionParams:
     def __init__(
         self,
         ingest_mode: _IngestMode,
-        label_mapping: Optional[ExperimentAmbientLabelMapping],
+        label_mapping: ExperimentAmbientLabelMapping | None,
     ) -> None:
         if ingest_mode == "schema_only":
             self.write_schema_no_data = True
@@ -186,14 +187,14 @@ class IngestionParams:
 # The tiledbsoma.io._registration package is private. These are the two sole user-facing API
 # entrypoints for append-mode soma_joinid registration.
 def register_h5ads(
-    experiment_uri: Optional[str],
+    experiment_uri: str | None,
     h5ad_file_names: Sequence[str],
     *,
     measurement_name: str,
     obs_field_name: str,
     var_field_name: str,
     append_obsm_varm: bool = False,
-    context: Optional[SOMATileDBContext] = None,
+    context: SOMATileDBContext | None = None,
 ) -> ExperimentAmbientLabelMapping:
     """Extends registration data from the baseline, already-written SOMA
     experiment to include multiple H5AD input files. See ``from_h5ad`` and
@@ -210,14 +211,14 @@ def register_h5ads(
 
 
 def register_anndatas(
-    experiment_uri: Optional[str],
+    experiment_uri: str | None,
     adatas: Sequence[ad.AnnData],
     *,
     measurement_name: str,
     obs_field_name: str,
     var_field_name: str,
     append_obsm_varm: bool = False,
-    context: Optional[SOMATileDBContext] = None,
+    context: SOMATileDBContext | None = None,
 ) -> ExperimentAmbientLabelMapping:
     """Extends registration data from the baseline, already-written SOMA
     experiment to include multiple H5AD input files. See ``from_h5ad`` and
@@ -238,17 +239,17 @@ def from_h5ad(
     input_path: Path,
     measurement_name: str,
     *,
-    context: Optional[SOMATileDBContext] = None,
-    platform_config: Optional[PlatformConfig] = None,
+    context: SOMATileDBContext | None = None,
+    platform_config: PlatformConfig | None = None,
     obs_id_name: str = "obs_id",
     var_id_name: str = "var_id",
     X_layer_name: str = "data",
     raw_X_layer_name: str = "data",
     ingest_mode: IngestMode = "write",
-    use_relative_uri: Optional[bool] = None,
+    use_relative_uri: bool | None = None,
     X_kind: Union[Type[SparseNDArray], Type[DenseNDArray]] = SparseNDArray,
-    registration_mapping: Optional[ExperimentAmbientLabelMapping] = None,
-    uns_keys: Optional[Sequence[str]] = None,
+    registration_mapping: ExperimentAmbientLabelMapping | None = None,
+    uns_keys: Sequence[str] | None = None,
     additional_metadata: AdditionalMetadata = None,
 ) -> str:
     """Reads an ``.h5ad`` file and writes it to an :class:`Experiment`.
@@ -396,7 +397,7 @@ def from_h5ad(
 class IngestCtx(TypedDict):
     """Convenience type-alias for kwargs passed to ingest functions."""
 
-    context: Optional[SOMATileDBContext]
+    context: SOMATileDBContext | None
     ingestion_params: IngestionParams
     additional_metadata: AdditionalMetadata
 
@@ -406,7 +407,7 @@ class IngestPlatformCtx(IngestCtx):
 
     Extends :class:`IngestCtx`, adds ``platform_config``."""
 
-    platform_config: Optional[PlatformConfig]
+    platform_config: PlatformConfig | None
 
 
 # ----------------------------------------------------------------
@@ -415,17 +416,17 @@ def from_anndata(
     anndata: ad.AnnData,
     measurement_name: str,
     *,
-    context: Optional[SOMATileDBContext] = None,
-    platform_config: Optional[PlatformConfig] = None,
+    context: SOMATileDBContext | None = None,
+    platform_config: PlatformConfig | None = None,
     obs_id_name: str = "obs_id",
     var_id_name: str = "var_id",
     X_layer_name: str = "data",
     raw_X_layer_name: str = "data",
     ingest_mode: IngestMode = "write",
-    use_relative_uri: Optional[bool] = None,
+    use_relative_uri: bool | None = None,
     X_kind: Union[Type[SparseNDArray], Type[DenseNDArray]] = SparseNDArray,
-    registration_mapping: Optional[ExperimentAmbientLabelMapping] = None,
-    uns_keys: Optional[Sequence[str]] = None,
+    registration_mapping: ExperimentAmbientLabelMapping | None = None,
+    uns_keys: Sequence[str] | None = None,
     additional_metadata: AdditionalMetadata = None,
 ) -> str:
     """Writes an `AnnData <https://anndata.readthedocs.io/>`_ object to an :class:`Experiment`.
@@ -630,7 +631,7 @@ def from_anndata(
                 def _ingest_obs_var_m_p(
                     ad_key: Literal["obsm", "varm", "obsp", "varp"],
                     axis_0_mapping: AxisIDMapping,
-                    axis_1_mapping: Optional[AxisIDMapping] = None,
+                    axis_1_mapping: AxisIDMapping | None = None,
                 ) -> None:
                     ad_val = getattr(anndata, ad_key)
                     if len(ad_val.keys()) > 0:  # do not create an empty collection
@@ -758,8 +759,8 @@ def append_obs(
     *,
     obs_id_name: str = "obs_id",
     registration_mapping: ExperimentAmbientLabelMapping,
-    context: Optional[SOMATileDBContext] = None,
-    platform_config: Optional[PlatformConfig] = None,
+    context: SOMATileDBContext | None = None,
+    platform_config: PlatformConfig | None = None,
 ) -> str:
     """
     Writes new rows to an existing ``obs`` dataframe. (This is distinct from ``update_obs``
@@ -816,8 +817,8 @@ def append_var(
     *,
     var_id_name: str = "var_id",
     registration_mapping: ExperimentAmbientLabelMapping,
-    context: Optional[SOMATileDBContext] = None,
-    platform_config: Optional[PlatformConfig] = None,
+    context: SOMATileDBContext | None = None,
+    platform_config: PlatformConfig | None = None,
 ) -> str:
     """
     Writes new rows to an existing ``var`` dataframe. (This is distinct from ``update_var``
@@ -884,8 +885,8 @@ def append_X(
     *,
     registration_mapping: ExperimentAmbientLabelMapping,
     X_kind: Union[Type[SparseNDArray], Type[DenseNDArray]] = SparseNDArray,
-    context: Optional[SOMATileDBContext] = None,
-    platform_config: Optional[PlatformConfig] = None,
+    context: SOMATileDBContext | None = None,
+    platform_config: PlatformConfig | None = None,
 ) -> str:
     """
     Appends new data to an existing ``X`` matrix. Nominally to be used in conjunction
@@ -960,7 +961,7 @@ def _maybe_set(
     key: str,
     value: AnySOMAObject,
     *,
-    use_relative_uri: Optional[bool],
+    use_relative_uri: bool | None,
 ) -> None:
     coll.verify_open_for_writing()
     try:
@@ -976,7 +977,7 @@ def _create_or_open_collection(
     uri: str,
     *,
     ingestion_params: IngestionParams,
-    context: Optional[SOMATileDBContext],
+    context: SOMATileDBContext | None,
     additional_metadata: AdditionalMetadata = None,
 ) -> Experiment: ...
 
@@ -987,7 +988,7 @@ def _create_or_open_collection(
     uri: str,
     *,
     ingestion_params: IngestionParams,
-    context: Optional[SOMATileDBContext],
+    context: SOMATileDBContext | None,
     additional_metadata: AdditionalMetadata = None,
 ) -> Measurement: ...
 
@@ -998,7 +999,7 @@ def _create_or_open_collection(
     uri: str,
     *,
     ingestion_params: IngestionParams,
-    context: Optional[SOMATileDBContext],
+    context: SOMATileDBContext | None,
     additional_metadata: AdditionalMetadata = None,
 ) -> Collection[_TDBO]: ...
 
@@ -1009,7 +1010,7 @@ def _create_or_open_collection(
     uri: str,
     *,
     ingestion_params: IngestionParams,
-    context: Optional[SOMATileDBContext],
+    context: SOMATileDBContext | None,
     additional_metadata: AdditionalMetadata = None,
 ) -> CollectionBase[_TDBO]:
     try:
@@ -1031,7 +1032,7 @@ def _create_or_open_coll(
     uri: str,
     *,
     ingest_mode: IngestMode,
-    context: Optional[SOMATileDBContext],
+    context: SOMATileDBContext | None,
 ) -> Experiment: ...
 
 
@@ -1041,7 +1042,7 @@ def _create_or_open_coll(
     uri: str,
     *,
     ingest_mode: IngestMode,
-    context: Optional[SOMATileDBContext],
+    context: SOMATileDBContext | None,
 ) -> Measurement: ...
 
 
@@ -1051,7 +1052,7 @@ def _create_or_open_coll(
     uri: str,
     *,
     ingest_mode: IngestMode,
-    context: Optional[SOMATileDBContext],
+    context: SOMATileDBContext | None,
 ) -> Collection[_TDBO]: ...
 
 
@@ -1060,7 +1061,7 @@ def _create_or_open_coll(
     uri: str,
     *,
     ingest_mode: IngestMode,
-    context: Optional[SOMATileDBContext],
+    context: SOMATileDBContext | None,
 ) -> Any:
     return _create_or_open_collection(
         cls,
@@ -1192,7 +1193,7 @@ def _extract_new_values_for_append_aux(
 def _extract_new_values_for_append(
     df_uri: str,
     arrow_table: pa.Table,
-    context: Optional[SOMATileDBContext] = None,
+    context: SOMATileDBContext | None = None,
 ) -> pa.Table:
     """
     For append mode: mostly we just go ahead and write the data, except var.
@@ -1259,12 +1260,12 @@ def _write_arrow_table(
 def _write_dataframe(
     df_uri: str,
     df: pd.DataFrame,
-    id_column_name: Optional[str],
+    id_column_name: str | None,
     *,
     ingestion_params: IngestionParams,
     additional_metadata: AdditionalMetadata = None,
-    platform_config: Optional[PlatformConfig] = None,
-    context: Optional[SOMATileDBContext] = None,
+    platform_config: PlatformConfig | None = None,
+    context: SOMATileDBContext | None = None,
     axis_mapping: AxisIDMapping,
 ) -> DataFrame:
     """
@@ -1300,14 +1301,14 @@ def _write_dataframe(
 def _write_dataframe_impl(
     df: pd.DataFrame,
     df_uri: str,
-    id_column_name: Optional[str],
+    id_column_name: str | None,
     *,
     shape: int,
     ingestion_params: IngestionParams,
     additional_metadata: AdditionalMetadata = None,
     original_index_metadata: OriginalIndexMetadata = None,
-    platform_config: Optional[PlatformConfig] = None,
-    context: Optional[SOMATileDBContext] = None,
+    platform_config: PlatformConfig | None = None,
+    context: SOMATileDBContext | None = None,
 ) -> DataFrame:
     """Save a Pandas DataFrame as a SOMA DataFrame.
 
@@ -1389,9 +1390,9 @@ def create_from_matrix(
     cls: Type[_NDArr],
     uri: str,
     matrix: Union[Matrix, h5py.Dataset],
-    platform_config: Optional[PlatformConfig] = None,
+    platform_config: PlatformConfig | None = None,
     ingest_mode: IngestMode = "write",
-    context: Optional[SOMATileDBContext] = None,
+    context: SOMATileDBContext | None = None,
 ) -> _NDArr:
     """
     Create and populate the ``soma_matrix`` from the contents of ``matrix``.
@@ -1418,8 +1419,8 @@ def _create_from_matrix(
     *,
     ingestion_params: IngestionParams,
     additional_metadata: AdditionalMetadata = None,
-    platform_config: Optional[PlatformConfig] = None,
-    context: Optional[SOMATileDBContext] = None,
+    platform_config: PlatformConfig | None = None,
+    context: SOMATileDBContext | None = None,
     axis_0_mapping: AxisIDMapping,
     axis_1_mapping: AxisIDMapping,
 ) -> _NDArr:
@@ -1512,8 +1513,8 @@ def update_obs(
     exp: Experiment,
     new_data: pd.DataFrame,
     *,
-    context: Optional[SOMATileDBContext] = None,
-    platform_config: Optional[PlatformConfig] = None,
+    context: SOMATileDBContext | None = None,
+    platform_config: PlatformConfig | None = None,
     default_index_name: str = "obs_id",
 ) -> None:
     """
@@ -1561,8 +1562,8 @@ def update_var(
     new_data: pd.DataFrame,
     measurement_name: str,
     *,
-    context: Optional[SOMATileDBContext] = None,
-    platform_config: Optional[PlatformConfig] = None,
+    context: SOMATileDBContext | None = None,
+    platform_config: PlatformConfig | None = None,
     default_index_name: str = "var_id",
 ) -> None:
     """
@@ -1618,8 +1619,8 @@ def _update_dataframe(
     new_data: pd.DataFrame,
     caller_name: str,
     *,
-    context: Optional[SOMATileDBContext] = None,
-    platform_config: Optional[PlatformConfig],
+    context: SOMATileDBContext | None = None,
+    platform_config: PlatformConfig | None,
     default_index_name: str,
 ) -> None:
     """
@@ -1720,8 +1721,8 @@ def update_matrix(
     soma_ndarray: Union[SparseNDArray, DenseNDArray],
     new_data: Union[Matrix, h5py.Dataset],
     *,
-    context: Optional[SOMATileDBContext] = None,
-    platform_config: Optional[PlatformConfig] = None,
+    context: SOMATileDBContext | None = None,
+    platform_config: PlatformConfig | None = None,
 ) -> None:
     """
     Given a ``SparseNDArray`` or ``DenseNDArray`` already opened for write,
@@ -1819,7 +1820,7 @@ def add_X_layer(
     # E.g. a scipy.csr_matrix from scanpy analysis:
     X_layer_data: Union[Matrix, h5py.Dataset],
     ingest_mode: IngestMode = "write",
-    use_relative_uri: Optional[bool] = None,
+    use_relative_uri: bool | None = None,
 ) -> None:
     """This is useful for adding X data, for example from
     `Scanpy <https://scanpy.readthedocs.io/>`_'s ``scanpy.pp.normalize_total``,
@@ -1850,8 +1851,8 @@ def add_matrix_to_collection(
     # E.g. a scipy.csr_matrix from scanpy analysis:
     matrix_data: Union[Matrix, h5py.Dataset],
     ingest_mode: IngestMode = "write",
-    use_relative_uri: Optional[bool] = None,
-    context: Optional[SOMATileDBContext] = None,
+    use_relative_uri: bool | None = None,
+    context: SOMATileDBContext | None = None,
 ) -> None:
     """This is useful for adding X/obsp/varm/etc data, for example from
     Scanpy's ``scanpy.pp.normalize_total``, ``scanpy.pp.log1p``, etc.
@@ -2541,7 +2542,7 @@ def _write_matrix_to_sparseNDArray(
 
 def _chunk_is_contained_in(
     chunk_bounds: Sequence[Tuple[int, int]],
-    storage_nonempty_domain: Sequence[Tuple[Optional[int], Optional[int]]],
+    storage_nonempty_domain: Sequence[Tuple[int | None, int | None]],
 ) -> bool:
     """
     Determines if a dim range is included within the array's non-empty domain.  Ranges are inclusive
@@ -2574,7 +2575,7 @@ def _chunk_is_contained_in(
 
 def _chunk_is_contained_in_axis(
     chunk_bounds: Sequence[Tuple[int, int]],
-    storage_nonempty_domain: Sequence[Tuple[Optional[int], Optional[int]]],
+    storage_nonempty_domain: Sequence[Tuple[int | None, int | None]],
     stride_axis: int,
 ) -> bool:
     """Helper function for ``_chunk_is_contained_in``."""
@@ -2599,11 +2600,11 @@ def _maybe_ingest_uns(
     m: Measurement,
     uns: UnsMapping,
     *,
-    platform_config: Optional[PlatformConfig],
-    context: Optional[SOMATileDBContext],
+    platform_config: PlatformConfig | None,
+    context: SOMATileDBContext | None,
     ingestion_params: IngestionParams,
-    use_relative_uri: Optional[bool],
-    uns_keys: Optional[Sequence[str]] = None,
+    use_relative_uri: bool | None,
+    uns_keys: Sequence[str] | None = None,
     additional_metadata: AdditionalMetadata = None,
 ) -> None:
     # Don't try to ingest an empty uns.
@@ -2627,11 +2628,11 @@ def _ingest_uns_dict(
     parent_key: str,
     dct: UnsMapping,
     *,
-    platform_config: Optional[PlatformConfig],
-    context: Optional[SOMATileDBContext],
+    platform_config: PlatformConfig | None,
+    context: SOMATileDBContext | None,
     ingestion_params: IngestionParams,
-    use_relative_uri: Optional[bool],
-    uns_keys: Optional[Sequence[str]] = None,
+    use_relative_uri: bool | None,
+    uns_keys: Sequence[str] | None = None,
     level: int = 0,
     additional_metadata: AdditionalMetadata = None,
 ) -> None:
@@ -2668,11 +2669,11 @@ def _ingest_uns_node(
     key: str,
     value: UnsNode,
     *,
-    platform_config: Optional[PlatformConfig],
-    context: Optional[SOMATileDBContext],
+    platform_config: PlatformConfig | None,
+    context: SOMATileDBContext | None,
     ingestion_params: IngestionParams,
     additional_metadata: AdditionalMetadata = None,
-    use_relative_uri: Optional[bool],
+    use_relative_uri: bool | None,
     level: int,
 ) -> None:
     if isinstance(value, np.generic):
@@ -2738,7 +2739,7 @@ def _ingest_uns_array(
     coll: AnyTileDBCollection,
     key: str,
     value: NPNDArray,
-    use_relative_uri: Optional[bool],
+    use_relative_uri: bool | None,
     ingest_platform_ctx: IngestPlatformCtx,
 ) -> None:
     """Ingest an uns Numpy array.
@@ -2776,10 +2777,10 @@ def _ingest_uns_string_array(
     coll: AnyTileDBCollection,
     key: str,
     value: NPNDArray,
-    platform_config: Optional[PlatformConfig],
-    context: Optional[SOMATileDBContext],
+    platform_config: PlatformConfig | None,
+    context: SOMATileDBContext | None,
     *,
-    use_relative_uri: Optional[bool],
+    use_relative_uri: bool | None,
     ingestion_params: IngestionParams,
     additional_metadata: AdditionalMetadata = None,
 ) -> None:
@@ -2820,10 +2821,10 @@ def _ingest_uns_1d_string_array(
     coll: AnyTileDBCollection,
     key: str,
     value: NPNDArray,
-    platform_config: Optional[PlatformConfig],
-    context: Optional[SOMATileDBContext],
+    platform_config: PlatformConfig | None,
+    context: SOMATileDBContext | None,
     *,
-    use_relative_uri: Optional[bool],
+    use_relative_uri: bool | None,
     ingestion_params: IngestionParams,
     additional_metadata: AdditionalMetadata = None,
 ) -> None:
@@ -2865,10 +2866,10 @@ def _ingest_uns_2d_string_array(
     coll: AnyTileDBCollection,
     key: str,
     value: NPNDArray,
-    platform_config: Optional[PlatformConfig],
-    context: Optional[SOMATileDBContext],
+    platform_config: PlatformConfig | None,
+    context: SOMATileDBContext | None,
     *,
-    use_relative_uri: Optional[bool],
+    use_relative_uri: bool | None,
     ingestion_params: IngestionParams,
     additional_metadata: AdditionalMetadata = None,
 ) -> None:
@@ -2911,10 +2912,10 @@ def _ingest_uns_ndarray(
     coll: AnyTileDBCollection,
     key: str,
     value: NPNDArray,
-    platform_config: Optional[PlatformConfig],
-    context: Optional[SOMATileDBContext],
+    platform_config: PlatformConfig | None,
+    context: SOMATileDBContext | None,
     *,
-    use_relative_uri: Optional[bool],
+    use_relative_uri: bool | None,
     ingestion_params: IngestionParams,
     additional_metadata: AdditionalMetadata = None,
 ) -> None:
