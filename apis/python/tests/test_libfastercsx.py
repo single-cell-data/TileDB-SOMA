@@ -311,3 +311,26 @@ def test_compress_coo_bad_args(
         fastercsx.compress_coo(
             context, sp.shape, (i,), (j,), (d[1:],), indptr, indices, data
         )
+
+
+def test_ragged_chunk_error(
+    rng: np.random.Generator, context: clib.SOMAContext
+) -> None:
+    # module assumes all chunks are regular across all input arrays. Check that this
+    # is enforced.
+    nnz = 3
+    shape = (100, 20)
+    indptr = np.empty(shape[0] + 1, dtype=np.int32)
+    indices = np.empty(nnz, dtype=np.int32)
+    data = np.empty(nnz, dtype=np.int8)
+    with pytest.raises(ValueError):
+        fastercsx.compress_coo(
+            context,
+            shape,
+            (np.array([0]), np.array([1, 2])),
+            (np.array([0]), np.array([1, 2])),
+            (np.array([0, 1], dtype=np.int8), np.array([2], dtype=np.int8)),
+            indptr,
+            indices,
+            data,
+        )
