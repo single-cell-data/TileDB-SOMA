@@ -1,5 +1,7 @@
 # Unreleased
 
+* Encode string metadata as `TILEDB_STRING_UTF8` instead of `TILEDB_STRING_ASCII`
+
 # tiledbsoma 1.15.0
 
 ## Changes
