@@ -254,7 +254,7 @@ void c_group_put_metadata(
             std::string s(v[0]);
             // We use TILEDB_CHAR interchangeably with TILEDB_STRING_ASCII is
             // this best string type?
-	    // Use TILEDB_STRING_UTF8 for compatibility with Python API
+            // Use TILEDB_STRING_UTF8 for compatibility with Python API
             xp->grpptr->set_metadata(
                 key, TILEDB_STRING_UTF8, s.length(), s.c_str());
             break;
