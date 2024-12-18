@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 from concurrent import futures
-from typing import Iterator, Optional, TypeVar
+from typing import Iterator, TypeVar
 
 _T = TypeVar("_T")
 
@@ -8,7 +10,7 @@ class EagerIterator(Iterator[_T]):
     def __init__(
         self,
         iterator: Iterator[_T],
-        pool: Optional[futures.Executor] = None,
+        pool: futures.Executor | None = None,
     ):
         super().__init__()
         self.iterator = iterator

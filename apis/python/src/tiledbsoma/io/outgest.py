@@ -8,6 +8,7 @@
 This module contains methods to export SOMA artifacts to other formats.
 Currently only ``.h5ad`` (`AnnData <https://anndata.readthedocs.io/>`_) is supported.
 """
+
 from __future__ import annotations
 
 import json
@@ -16,7 +17,6 @@ from typing import (
     Any,
     Dict,
     KeysView,
-    Optional,
     Sequence,
     Union,
     cast,
@@ -65,11 +65,11 @@ def to_h5ad(
     h5ad_path: Path,
     measurement_name: str,
     *,
-    X_layer_name: Optional[str] = "data",
-    obs_id_name: Optional[str] = None,
-    var_id_name: Optional[str] = None,
-    obsm_varm_width_hints: Optional[Dict[str, Dict[str, int]]] = None,
-    uns_keys: Optional[Sequence[str]] = None,
+    X_layer_name: str | None = "data",
+    obs_id_name: str | None = None,
+    var_id_name: str | None = None,
+    obsm_varm_width_hints: Dict[str, Dict[str, int]] | None = None,
+    uns_keys: Sequence[str] | None = None,
 ) -> None:
     """Converts the experiment group to AnnData format and writes it to the specified ``.h5ad`` file.
 
@@ -168,8 +168,8 @@ def _extract_X_key(
 
 def _read_dataframe(
     df: DataFrame,
-    default_index_name: Optional[str] = None,
-    fallback_index_name: Optional[str] = None,
+    default_index_name: str | None = None,
+    fallback_index_name: str | None = None,
 ) -> pd.DataFrame:
     """Outgest a SOMA DataFrame to Pandas, including restoring the original index{,.name}.
 
@@ -231,12 +231,12 @@ def to_anndata(
     experiment: Experiment,
     measurement_name: str,
     *,
-    X_layer_name: Optional[str] = "data",
-    extra_X_layer_names: Optional[Union[Sequence[str], KeysView[str]]] = None,
-    obs_id_name: Optional[str] = None,
-    var_id_name: Optional[str] = None,
-    obsm_varm_width_hints: Optional[Dict[str, Dict[str, int]]] = None,
-    uns_keys: Optional[Sequence[str]] = None,
+    X_layer_name: str | None = "data",
+    extra_X_layer_names: Sequence[str] | KeysView[str] | None = None,
+    obs_id_name: str | None = None,
+    var_id_name: str | None = None,
+    obsm_varm_width_hints: Dict[str, Dict[str, int]] | None = None,
+    uns_keys: Sequence[str] | None = None,
 ) -> ad.AnnData:
     """Converts the experiment group to AnnData format.
 
@@ -518,7 +518,7 @@ def _extract_obsm_or_varm(
 
 def _extract_uns(
     collection: Collection[Any],
-    uns_keys: Optional[Sequence[str]] = None,
+    uns_keys: Sequence[str] | None = None,
     level: int = 0,
 ) -> Dict[str, FutureUnsDictNode]:
     """

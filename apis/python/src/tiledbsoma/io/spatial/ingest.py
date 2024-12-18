@@ -9,13 +9,14 @@ This module contains experimental methods to generate Spatial SOMA artifacts
 start from other formats.
 """
 
+from __future__ import annotations
+
 import json
 import warnings
 from pathlib import Path
 from typing import (
     TYPE_CHECKING,
     List,
-    Optional,
     Sequence,
     Tuple,
     Type,
@@ -88,11 +89,11 @@ def path_validator(instance, attribute, value: Path) -> None:  # type: ignore[no
         raise OSError(f"Path {value} does not exist")
 
 
-def optional_path_converter(value: Optional[Union[str, Path]]) -> Optional[Path]:
+def optional_path_converter(value: str | Path | None) -> Path | None:
     return None if value is None else Path(value)
 
 
-def optional_path_validator(instance, attribute, x: Optional[Path]) -> None:  # type: ignore[no-untyped-def]
+def optional_path_validator(instance, attribute, x: Path | None) -> None:  # type: ignore[no-untyped-def]
     if x is not None and not x.exists():
         raise OSError(f"Path {x} does not exist")
 
@@ -105,14 +106,14 @@ class VisiumPaths:
         cls,
         base_path: Union[str, Path],
         *,
-        gene_expression: Optional[Union[str, Path]] = None,
-        scale_factors: Optional[Union[str, Path]] = None,
-        tissue_positions: Optional[Union[str, Path]] = None,
-        fullres_image: Optional[Union[str, Path]] = None,
-        hires_image: Optional[Union[str, Path]] = None,
-        lowres_image: Optional[Union[str, Path]] = None,
+        gene_expression: str | Path | None = None,
+        scale_factors: str | Path | None = None,
+        tissue_positions: str | Path | None = None,
+        fullres_image: str | Path | None = None,
+        hires_image: str | Path | None = None,
+        lowres_image: str | Path | None = None,
         use_raw_counts: bool = False,
-        version: Optional[Union[int, Tuple[int, int, int]]] = None,
+        version: int | Tuple[int, int, int] | None = None,
     ) -> Self:
         """Create ingestion files from Space Ranger output directory.
 
@@ -164,12 +165,12 @@ class VisiumPaths:
         spatial_dir: Union[str, Path],
         *,
         gene_expression: Union[str, Path],
-        scale_factors: Optional[Union[str, Path]] = None,
-        tissue_positions: Optional[Union[str, Path]] = None,
-        fullres_image: Optional[Union[str, Path]] = None,
-        hires_image: Optional[Union[str, Path]] = None,
-        lowres_image: Optional[Union[str, Path]] = None,
-        version: Optional[Union[int, Tuple[int, int, int]]] = None,
+        scale_factors: str | Path | None = None,
+        tissue_positions: str | Path | None = None,
+        fullres_image: str | Path | None = None,
+        hires_image: str | Path | None = None,
+        lowres_image: str | Path | None = None,
+        version: int | Tuple[int, int, int] | None = None,
     ) -> Self:
         """Create ingestion files from Space Ranger spatial output directory
         and the gene expression file.
@@ -236,21 +237,21 @@ class VisiumPaths:
     gene_expression: Path = attrs.field(converter=Path, validator=path_validator)
     scale_factors: Path = attrs.field(converter=Path, validator=path_validator)
     tissue_positions: Path = attrs.field(converter=Path, validator=path_validator)
-    fullres_image: Optional[Path] = attrs.field(
+    fullres_image: Path | None = attrs.field(
         converter=optional_path_converter, validator=optional_path_validator
     )
-    hires_image: Optional[Path] = attrs.field(
+    hires_image: Path | None = attrs.field(
         converter=optional_path_converter, validator=optional_path_validator
     )
 
-    lowres_image: Optional[Path] = attrs.field(
+    lowres_image: Path | None = attrs.field(
         converter=optional_path_converter, validator=optional_path_validator
     )
-    version: Optional[Union[int, Tuple[int, int, int]]] = attrs.field(default=None)
+    version: int | Tuple[int, int, int] | None = attrs.field(default=None)
 
     @version.validator
     def _validate_version(  # type: ignore[no-untyped-def]
-        self, attribute, value: Optional[Union[int, Tuple[int, int, int]]]
+        self, attribute, value: int | Tuple[int, int, int] | None
     ) -> None:
         major_version = value[0] if isinstance(value, tuple) else value
         if major_version is not None and major_version != 2:
@@ -273,8 +274,8 @@ def from_visium(
     measurement_name: str,
     scene_name: str,
     *,
-    context: Optional["SOMATileDBContext"] = None,
-    platform_config: Optional["PlatformConfig"] = None,
+    context: "SOMATileDBContext | None" = None,
+    platform_config: "PlatformConfig | None" = None,
     obs_id_name: str = "obs_id",
     var_id_name: str = "var_id",
     X_layer_name: str = "data",
@@ -282,10 +283,10 @@ def from_visium(
     image_name: str = "tissue",
     image_channel_first: bool = True,
     ingest_mode: IngestMode = "write",
-    use_relative_uri: Optional[bool] = None,
+    use_relative_uri: bool | None = None,
     X_kind: Union[Type[SparseNDArray], Type[DenseNDArray]] = SparseNDArray,
-    registration_mapping: Optional["ExperimentAmbientLabelMapping"] = None,
-    uns_keys: Optional[Sequence[str]] = None,
+    registration_mapping: "ExperimentAmbientLabelMapping | None" = None,
+    uns_keys: Sequence[str] | None = None,
     additional_metadata: "AdditionalMetadata" = None,
     use_raw_counts: bool = False,
     write_obs_spatial_presence: bool = False,
@@ -464,7 +465,7 @@ def from_visium(
 
     # Create a list of image paths.
     # -- Each item contains: level name, image path, and scale factors to fullres.
-    image_paths: List[Tuple[str, Path, Optional[float]]] = []
+    image_paths: List[Tuple[str, Path, float | None]] = []
     if input_paths.fullres_image is not None:
         image_paths.append(("fullres", Path(input_paths.fullres_image), None))
     if input_paths.hires_image is not None:
@@ -626,8 +627,8 @@ def _write_scene_presence_dataframe(
     *,
     ingestion_params: IngestionParams,
     additional_metadata: "AdditionalMetadata" = None,
-    platform_config: Optional["PlatformConfig"] = None,
-    context: Optional["SOMATileDBContext"] = None,
+    platform_config: "PlatformConfig | None" = None,
+    context: "SOMATileDBContext | None" = None,
 ) -> DataFrame:
     s = _util.get_start_stamp()
 
@@ -691,8 +692,8 @@ def _write_visium_spots(
     *,
     ingestion_params: IngestionParams,
     additional_metadata: "AdditionalMetadata" = None,
-    platform_config: Optional["PlatformConfig"] = None,
-    context: Optional["SOMATileDBContext"] = None,
+    platform_config: "PlatformConfig | None" = None,
+    context: "SOMATileDBContext | None" = None,
 ) -> PointCloudDataFrame:
     """Creates, opens, and writes data to a ``PointCloudDataFrame`` with the spot
     locations and metadata. Returns the open dataframe for writing.
@@ -753,7 +754,7 @@ def _create_or_open_scene(
     uri: str,
     *,
     ingestion_params: IngestionParams,
-    context: Optional["SOMATileDBContext"],
+    context: "SOMATileDBContext | None",
     additional_metadata: "AdditionalMetadata" = None,
 ) -> Scene:
     """Creates or opens a ``Scene`` and returns it open for writing."""
@@ -773,14 +774,14 @@ def _create_or_open_scene(
 
 def _create_visium_tissue_images(
     uri: str,
-    image_paths: List[Tuple[str, Path, Optional[float]]],
+    image_paths: List[Tuple[str, Path, float | None]],
     *,
     image_channel_first: bool,
     additional_metadata: "AdditionalMetadata" = None,
-    platform_config: Optional["PlatformConfig"] = None,
-    context: Optional["SOMATileDBContext"] = None,
+    platform_config: "PlatformConfig | None" = None,
+    context: "SOMATileDBContext | None" = None,
     ingestion_params: IngestionParams,
-    use_relative_uri: Optional[bool] = None,
+    use_relative_uri: bool | None = None,
 ) -> MultiscaleImage:
     """Creates, opens, and writes a ``MultiscaleImage`` with the provide
     visium resolutions levels and returns the open image for writing.

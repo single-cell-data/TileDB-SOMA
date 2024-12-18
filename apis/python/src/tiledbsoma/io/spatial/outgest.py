@@ -2,8 +2,11 @@
 # Copyright (c) 2024 TileDB, Inc
 #
 # Licensed under the MIT License.
+
+from __future__ import annotations
+
 import warnings
-from typing import TYPE_CHECKING, Any, Dict, Mapping, Optional, Sequence, Tuple, Union
+from typing import TYPE_CHECKING, Any, Dict, Mapping, Sequence, Tuple, Union
 
 import pandas as pd
 import somacore
@@ -38,7 +41,7 @@ if TYPE_CHECKING:
 
 def _convert_axis_names(
     coord_axis_names: Tuple[str, ...],
-    data_axis_names: Optional[Tuple[str, ...]] = None,
+    data_axis_names: Tuple[str, ...] | None = None,
 ) -> Tuple[Tuple[str, ...], Dict[str, str]]:
     """Convert SOMA axis names to SpatialData axis names.
 
@@ -108,7 +111,7 @@ def to_spatialdata_points(
     key: str,
     scene_id: str,
     scene_dim_map: Dict[str, str],
-    transform: Optional[somacore.CoordinateTransform],
+    transform: somacore.CoordinateTransform | None,
     soma_joinid_name: str,
 ) -> dd.DataFrame:
     """Export a :class:`PointCloudDataFrame` to a :class:`spatialdata.ShapesModel.
@@ -152,7 +155,7 @@ def to_spatialdata_shapes(
     key: str,
     scene_id: str,
     scene_dim_map: Dict[str, str],
-    transform: Optional[somacore.CoordinateTransform],
+    transform: somacore.CoordinateTransform | None,
     soma_joinid_name: str,
 ) -> gpd.GeoDataFrame:
     """Export a :class:`PointCloudDataFrame` to a :class:`spatialdata.ShapesModel.
@@ -222,12 +225,12 @@ def to_spatialdata_shapes(
 
 def to_spatialdata_image(
     image: MultiscaleImage,
-    level: Optional[Union[str, int]] = None,
+    level: Union[str, int] | None = None,
     *,
     key: str,
     scene_id: str,
     scene_dim_map: Dict[str, str],
-    transform: Optional[somacore.CoordinateTransform],
+    transform: somacore.CoordinateTransform | None,
 ) -> "DataArray":
     """Export a level of a :class:`MultiscaleImage` to a
     :class:`spatialdata.Image2DModel` or :class:`spatialdata.Image3DModel`.
@@ -316,7 +319,7 @@ def to_spatialdata_multiscale_image(
     key: str,
     scene_id: str,
     scene_dim_map: Dict[str, str],
-    transform: Optional[somacore.CoordinateTransform],
+    transform: somacore.CoordinateTransform | None,
 ) -> "DataTree":
     """Export a MultiscaleImage to a DataTree.
 
@@ -412,7 +415,7 @@ def to_spatialdata_multiscale_image(
 
 def _get_transform_from_collection(
     key: str, metadata: Mapping[str, Any]
-) -> Optional[somacore.CoordinateTransform]:
+) -> somacore.CoordinateTransform | None:
     transform_key = f"soma_scene_registry_{key}"
     if transform_key in metadata:
         transform_json = metadata[transform_key]
@@ -427,7 +430,7 @@ def _add_scene_to_spatialdata(
     *,
     obs_id_name: str,
     var_id_name: str,
-    measurement_names: Optional[Sequence[str]] = None,
+    measurement_names: Sequence[str] | None = None,
 ) -> None:
     """Adds items from a Scene to a SpatialData object.
 
@@ -547,11 +550,11 @@ def _add_scene_to_spatialdata(
 def to_spatialdata(
     experiment: Experiment,
     *,
-    measurement_names: Optional[Sequence[str]] = None,
-    scene_names: Optional[Sequence[str]] = None,
+    measurement_names: Sequence[str] | None = None,
+    scene_names: Sequence[str] | None = None,
     obs_id_name: str = "obs_id",
     var_id_name: str = "var_id",
-    table_kwargs: Optional[Mapping[str, Dict[str, Any]]] = None,
+    table_kwargs: Mapping[str, Dict[str, Any]] | None = None,
 ) -> sd.SpatialData:
     """Converts the experiment group to SpatialData format.
 

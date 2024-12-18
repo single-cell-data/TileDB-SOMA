@@ -6,8 +6,10 @@
 Implementation of a SOMA Point Cloud DataFrame
 """
 
+from __future__ import annotations
+
 import warnings
-from typing import Any, Optional, Sequence, Tuple, Union, cast
+from typing import Any, Sequence, Tuple, Union, cast
 
 import pyarrow as pa
 import somacore
@@ -69,10 +71,10 @@ class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
         *,
         schema: pa.Schema,
         coordinate_space: Union[Sequence[str], CoordinateSpace] = ("x", "y"),
-        domain: Optional[Domain] = None,
-        platform_config: Optional[options.PlatformConfig] = None,
-        context: Optional[SOMATileDBContext] = None,
-        tiledb_timestamp: Optional[OpenTimestamp] = None,
+        domain: Domain | None = None,
+        platform_config: options.PlatformConfig | None = None,
+        context: SOMATileDBContext | None = None,
+        tiledb_timestamp: OpenTimestamp | None = None,
     ) -> Self:
         """Creates a new ``PointCloudDataFrame`` at the given URI.
 
@@ -118,7 +120,7 @@ class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
         """
         warnings.warn(SPATIAL_DISCLAIMER)
 
-        axis_dtype: Optional[pa.DataType] = None
+        axis_dtype: pa.DataType | None = None
         if not isinstance(coordinate_space, CoordinateSpace):
             coordinate_space = CoordinateSpace.from_axis_names(coordinate_space)
         index_column_names = coordinate_space.axis_names
@@ -298,13 +300,13 @@ class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
     def read(
         self,
         coords: options.SparseDFCoords = (),
-        column_names: Optional[Sequence[str]] = None,
+        column_names: Sequence[str] | None = None,
         *,
         batch_size: options.BatchSize = _UNBATCHED,
-        partitions: Optional[options.ReadPartitions] = None,
+        partitions: options.ReadPartitions | None = None,
         result_order: options.ResultOrderStr = options.ResultOrder.AUTO,
-        value_filter: Optional[str] = None,
-        platform_config: Optional[options.PlatformConfig] = None,
+        value_filter: str | None = None,
+        platform_config: options.PlatformConfig | None = None,
     ) -> TableReadIter:
         """Reads a user-defined slice of data into Arrow tables.
 
@@ -343,16 +345,16 @@ class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
 
     def read_spatial_region(
         self,
-        region: Optional[options.SpatialRegion] = None,
-        column_names: Optional[Sequence[str]] = None,
+        region: options.SpatialRegion | None = None,
+        column_names: Sequence[str] | None = None,
         *,
-        region_transform: Optional[CoordinateTransform] = None,
-        region_coord_space: Optional[CoordinateSpace] = None,
+        region_transform: CoordinateTransform | None = None,
+        region_coord_space: CoordinateSpace | None = None,
         batch_size: options.BatchSize = _UNBATCHED,
-        partitions: Optional[options.ReadPartitions] = None,
+        partitions: options.ReadPartitions | None = None,
         result_order: options.ResultOrderStr = options.ResultOrder.AUTO,
-        value_filter: Optional[str] = None,
-        platform_config: Optional[options.PlatformConfig] = None,
+        value_filter: str | None = None,
+        platform_config: options.PlatformConfig | None = None,
     ) -> somacore.SpatialRead[somacore.ReadIter[pa.Table]]:
         """Reads data intersecting a user-defined region of space into a
         :class:`SpatialRead` with data in Arrow tables.
@@ -444,7 +446,7 @@ class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
         self,
         values: Union[pa.RecordBatch, pa.Table],
         *,
-        platform_config: Optional[options.PlatformConfig] = None,
+        platform_config: options.PlatformConfig | None = None,
     ) -> Self:
         """Writes the data from an Arrow table to the persistent object.
 

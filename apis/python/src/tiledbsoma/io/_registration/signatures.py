@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 import json
-from typing import Dict, Optional, Union
+from typing import Dict, Union
 
 import anndata as ad
 import attrs
@@ -82,7 +84,7 @@ OriginalIndexMetadata = Union[None, str]
 
 
 def _prepare_df_for_ingest(
-    df: pd.DataFrame, id_column_name: Optional[str]
+    df: pd.DataFrame, id_column_name: str | None
 ) -> OriginalIndexMetadata:
     """Prepare a `pd.DataFrame` for persisting as a SOMA DataFrame: demote its index to a column (to make way for a
     required `soma_joinid` index), and compute and return metadata for restoring the index column and name later (on
@@ -179,12 +181,12 @@ class Signature:
     # Note: string/string dicts are easier to serialize/deserialize than pa.Schema
     obs_schema: Dict[str, str]
     var_schema: Dict[str, str]
-    raw_var_schema: Optional[Dict[str, str]]
+    raw_var_schema: Dict[str, str] | None
 
     # TODO include 'raw' in X_dtypes or no? Different for AnnData and for SOMA. When in doubt,
     # lean SOMA.
     X_dtypes: Dict[str, str]
-    raw_X_dtype: Optional[str]
+    raw_X_dtype: str | None
 
     obsm_dtypes: Dict[str, str]
     varm_dtypes: Dict[str, str]
@@ -279,7 +281,7 @@ class Signature:
         cls,
         uri: str,
         measurement_name: str = "RNA",
-        context: Optional[SOMATileDBContext] = None,
+        context: SOMATileDBContext | None = None,
     ) -> Self:
         """
         Constructs a pre-check signature from a SOMA experiment, which can be compared against

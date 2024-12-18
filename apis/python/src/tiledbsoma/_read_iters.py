@@ -5,6 +5,7 @@
 
 """Read iterators.
 """
+
 from __future__ import annotations
 
 import abc
@@ -15,7 +16,6 @@ from typing import (
     Any,
     Iterator,
     List,
-    Optional,
     Sequence,
     Tuple,
     TypeVar,
@@ -73,10 +73,10 @@ class TableReadIter(somacore.ReadIter[pa.Table]):
         coords: Union[
             options.SparseDFCoords, options.SparseNDCoords, options.DenseNDCoords
         ],
-        column_names: Optional[Sequence[str]],
+        column_names: Sequence[str] | None,
         result_order: clib.ResultOrder,
-        value_filter: Optional[str],
-        platform_config: Optional[options.PlatformConfig],
+        value_filter: str | None,
+        platform_config: options.PlatformConfig | None,
     ):
         """Initalizes a new TableReadIter for SOMAArrays.
 
@@ -90,7 +90,7 @@ class TableReadIter(somacore.ReadIter[pa.Table]):
                 for each index dimension, which rows to read.
                 ``()`` means no constraint -- all IDs.
 
-            column_names (Optional[Sequence[str]]):
+            column_names (Sequence[str] | None):
                 The named columns to read and return.
                 ``None`` means no constraint -- all column names.
 
@@ -98,10 +98,10 @@ class TableReadIter(somacore.ReadIter[pa.Table]):
                 Order of read results.
                 This can be one of automatic, rowmajor, or colmajor.
 
-            value_filter (Optional[str]):
+            value_filter (str | None):
                 An optional [value filter] to apply to the results.
 
-            platform_config (Optional[options.PlatformConfig]):
+            platform_config (options.PlatformConfig | None):
                 Pass in parameters for tuning reads.
 
         """
@@ -131,12 +131,12 @@ class BlockwiseReadIterBase(somacore.ReadIter[_RT], metaclass=abc.ABCMeta):
         coords: options.SparseNDCoords,
         axis: Union[int, Sequence[int]],
         result_order: clib.ResultOrder,
-        platform_config: Optional[options.PlatformConfig],
+        platform_config: options.PlatformConfig | None,
         *,
-        size: Optional[Union[int, Sequence[int]]] = None,
-        reindex_disable_on_axis: Optional[Union[int, Sequence[int]]] = None,
+        size: int | Sequence[int] | None = None,
+        reindex_disable_on_axis: int | Sequence[int] | None = None,
         eager: bool = True,
-        context: Optional[SOMATileDBContext] = None,
+        context: SOMATileDBContext | None = None,
     ):
         super().__init__()
 
@@ -192,8 +192,8 @@ class BlockwiseReadIterBase(somacore.ReadIter[_RT], metaclass=abc.ABCMeta):
         cls,
         shape: Union[NTuple, Sequence[int]],
         axis: Union[int, Sequence[int]],
-        size: Optional[Union[int, Sequence[int]]] = None,
-        reindex_disable_on_axis: Optional[Union[int, Sequence[int]]] = None,
+        size: int | Sequence[int] | None = None,
+        reindex_disable_on_axis: int | Sequence[int] | None = None,
     ) -> Tuple[List[int], List[int], List[int]]:
         """
         Class method to validate and normalize common user-provided arguments axis, size and reindex_disable_on_axis.
@@ -262,7 +262,7 @@ class BlockwiseReadIterBase(somacore.ReadIter[_RT], metaclass=abc.ABCMeta):
         raise NotImplementedError("Blockwise iterators do not support concat operation")
 
     def _maybe_eager_iterator(
-        self, x: Iterator[_EagerRT], _pool: Optional[ThreadPoolExecutor] = None
+        self, x: Iterator[_EagerRT], _pool: ThreadPoolExecutor | None = None
     ) -> Iterator[_EagerRT]:
         """Private"""
         return EagerIterator(x, pool=_pool) if self.eager else x
@@ -292,7 +292,7 @@ class BlockwiseReadIterBase(somacore.ReadIter[_RT], metaclass=abc.ABCMeta):
 
     def _reindexed_table_reader(
         self,
-        _pool: Optional[ThreadPoolExecutor] = None,
+        _pool: ThreadPoolExecutor | None = None,
     ) -> Iterator[BlockwiseTableReadIterResult]:
         """Private. Blockwise table reader w/ reindexing. Helper function for sub-class use"""
         for tbl, coords in self._maybe_eager_iterator(self._table_reader(), _pool):
@@ -335,13 +335,13 @@ class BlockwiseScipyReadIter(BlockwiseReadIterBase[BlockwiseScipyReadIterResult]
         coords: options.SparseNDCoords,
         axis: Union[int, Sequence[int]],
         result_order: clib.ResultOrder,
-        platform_config: Optional[options.PlatformConfig],
+        platform_config: options.PlatformConfig | None,
         *,
-        size: Optional[Union[int, Sequence[int]]] = None,
-        reindex_disable_on_axis: Optional[Union[int, Sequence[int]]] = None,
+        size: int | Sequence[int] | None = None,
+        reindex_disable_on_axis: int | Sequence[int] | None = None,
         eager: bool = True,
         compress: bool = True,
-        context: Optional[SOMATileDBContext] = None,
+        context: SOMATileDBContext | None = None,
     ):
         self.compress = compress
         self.context = context
@@ -390,7 +390,7 @@ class BlockwiseScipyReadIter(BlockwiseReadIterBase[BlockwiseScipyReadIterResult]
         )
 
     def _sorted_tbl_reader(
-        self, _pool: Optional[ThreadPoolExecutor] = None
+        self, _pool: ThreadPoolExecutor | None = None
     ) -> Iterator[Tuple[IJDType, IndicesType]]:
         """Private. Read reindexed tables and sort them. Yield as ((i,j),d)"""
         for coo_tbl, indices in self._maybe_eager_iterator(
@@ -424,7 +424,7 @@ class BlockwiseScipyReadIter(BlockwiseReadIterBase[BlockwiseScipyReadIterResult]
         return cast(Tuple[int, int], tuple(_sp_shape))
 
     def _coo_reader(
-        self, _pool: Optional[ThreadPoolExecutor] = None
+        self, _pool: ThreadPoolExecutor | None = None
     ) -> Iterator[Tuple[sparse.coo_matrix, IndicesType]]:
         """Private. Uncompressed variants"""
         assert not self.compress
@@ -446,7 +446,7 @@ class BlockwiseScipyReadIter(BlockwiseReadIterBase[BlockwiseScipyReadIterResult]
             yield sp, indices
 
     def _cs_reader(
-        self, _pool: Optional[ThreadPoolExecutor] = None
+        self, _pool: ThreadPoolExecutor | None = None
     ) -> Iterator[Tuple[Union[sparse.csr_matrix, sparse.csc_matrix], IndicesType],]:
         """Private. Compressed sparse variants"""
         assert self.compress
@@ -479,7 +479,7 @@ class SparseTensorReadIterBase(somacore.ReadIter[_RT], metaclass=abc.ABCMeta):
         coords: options.SparseDFCoords,
         shape: NTuple,
         result_order: clib.ResultOrder,
-        platform_config: Optional[options.PlatformConfig],
+        platform_config: options.PlatformConfig | None,
     ):
         self.array = array
         self.coords = coords
@@ -549,10 +549,10 @@ class ArrowTableRead(Iterator[pa.Table]):
         coords: Union[
             options.SparseDFCoords, options.SparseNDCoords, options.DenseNDCoords
         ],
-        column_names: Optional[Sequence[str]],
+        column_names: Sequence[str] | None,
         result_order: clib.ResultOrder,
-        value_filter: Optional[str],
-        platform_config: Optional[options.PlatformConfig],
+        value_filter: str | None,
+        platform_config: options.PlatformConfig | None,
     ):
         clib_handle = array._handle._handle
 
@@ -628,6 +628,6 @@ def _coords_strider(
 _ElemT = TypeVar("_ElemT")
 
 
-def _pad_with_none(s: Sequence[_ElemT], to_length: int) -> Tuple[Optional[_ElemT], ...]:
+def _pad_with_none(s: Sequence[_ElemT], to_length: int) -> Tuple[_ElemT | None, ...]:
     """Given a sequence, pad length to a user-specified length, with None values"""
     return tuple(s[i] if i < len(s) else None for i in range(to_length))

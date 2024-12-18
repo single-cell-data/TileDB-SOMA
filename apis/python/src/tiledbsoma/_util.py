@@ -3,6 +3,8 @@
 #
 # Licensed under the MIT License.
 
+from __future__ import annotations
+
 import datetime
 import json
 import pathlib
@@ -15,7 +17,6 @@ from typing import (
     Dict,
     List,
     Mapping,
-    Optional,
     Sequence,
     Tuple,
     Type,
@@ -149,7 +150,7 @@ class NonNumericDimensionError(TypeError):
 
 def slice_to_numeric_range(
     slc: Slice[Any], domain: Tuple[_T, _T]
-) -> Optional[Tuple[_T, _T]]:
+) -> Tuple[_T, _T] | None:
     """Constrains the given slice to the ``domain`` for numeric dimensions.
 
     We assume the slice has already been validated by validate_slice.
@@ -244,7 +245,7 @@ def check_type(
         )
 
 
-def check_unpartitioned(partitions: Optional[options.ReadPartitions]) -> None:
+def check_unpartitioned(partitions: options.ReadPartitions | None) -> None:
     """Ensures that we're not being asked for a partitioned read.
 
     Because we currently don't support partitioned reads, we should reject all
@@ -325,7 +326,7 @@ def cast_values_to_target_schema(values: pa.Table, schema: pa.Schema) -> pa.Tabl
 
 
 def build_clib_platform_config(
-    platform_config: Optional[options.PlatformConfig],
+    platform_config: options.PlatformConfig | None,
 ) -> clib.PlatformConfig:
     """
     Copy over Python PlatformConfig values to the C++ clib.PlatformConfig
@@ -352,7 +353,7 @@ def build_clib_platform_config(
     return plt_cfg
 
 
-def _build_column_config(col: Optional[Mapping[str, _ColumnConfig]]) -> str:
+def _build_column_config(col: Mapping[str, _ColumnConfig] | None) -> str:
     column_config: Dict[str, Dict[str, Union[_JSONFilterList, int]]] = dict()
 
     if col is None:
@@ -370,7 +371,7 @@ def _build_column_config(col: Optional[Mapping[str, _ColumnConfig]]) -> str:
 
 
 def _build_filter_list(
-    filters: Optional[Tuple[_DictFilterSpec, ...]], return_json: bool = True
+    filters: Tuple[_DictFilterSpec, ...] | None, return_json: bool = True
 ) -> _JSONFilterList:
     _convert_filter = {
         "GzipFilter": "GZIP",

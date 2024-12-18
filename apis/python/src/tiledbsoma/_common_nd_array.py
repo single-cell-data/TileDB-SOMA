@@ -5,7 +5,9 @@
 
 """Common code shared by both NDArray implementations."""
 
-from typing import Optional, Sequence, Tuple, Union, cast
+from __future__ import annotations
+
+from typing import Sequence, Tuple, Union, cast
 
 import pyarrow as pa
 import somacore
@@ -32,9 +34,9 @@ class NDArray(SOMAArray, somacore.NDArray):
         *,
         type: pa.DataType,
         shape: Sequence[Union[int, None]],
-        platform_config: Optional[options.PlatformConfig] = None,
-        context: Optional[SOMATileDBContext] = None,
-        tiledb_timestamp: Optional[OpenTimestamp] = None,
+        platform_config: options.PlatformConfig | None = None,
+        context: SOMATileDBContext | None = None,
+        tiledb_timestamp: OpenTimestamp | None = None,
     ) -> Self:
         """Creates a SOMA ``NDArray`` at the given URI.
 
@@ -154,7 +156,7 @@ class NDArray(SOMAArray, somacore.NDArray):
     def _dim_capacity_and_extent(
         cls,
         dim_name: str,
-        dim_shape: Optional[int],
+        dim_shape: int | None,
         ndim: int,
         create_options: TileDBCreateOptions,
     ) -> Tuple[int, int]:

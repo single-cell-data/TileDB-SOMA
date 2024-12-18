@@ -4,7 +4,10 @@
 # Licensed under the MIT License.
 
 """Common constants and types used during ingestion/outgestion."""
-from typing import Dict, List, Mapping, Optional, Union
+
+from __future__ import annotations
+
+from typing import Dict, List, Mapping, Union
 
 import h5py
 import numpy as np
@@ -35,7 +38,7 @@ UnsMapping = Mapping[str, UnsNode]
 UnsDictNode = Union[UnsLeaf, Dict[str, "UnsDictNode"]]
 UnsDict = Dict[str, UnsDictNode]
 
-AdditionalMetadata = Optional[Dict[str, Metadatum]]
+AdditionalMetadata = Union[Dict[str, Metadatum], None]
 
 # Arrays of strings from AnnData's uns are stored in SOMA as SOMADataFrame,
 # since SOMA ND arrays are necessarily arrays *of numbers*. This is okay since
