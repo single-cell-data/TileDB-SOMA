@@ -11,8 +11,7 @@ class TestCharacterMetadataWritePythonReadR(TestWritePythonReadR):
 
     @pytest.fixture(scope="class")
     def experiment(self):
-        exp = tiledbsoma.Experiment.create(self.uri)
-        exp.close()
+        _ = tiledbsoma.Experiment.create(self.uri)
 
     def base_R_script(self):
         return f"""
