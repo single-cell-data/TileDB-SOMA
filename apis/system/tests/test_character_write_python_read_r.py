@@ -11,7 +11,8 @@ class TestCharacterMetadataWritePythonReadR(TestWritePythonReadR):
 
     @pytest.fixture(scope="class")
     def experiment(self):
-        _ = tiledbsoma.Experiment.create(self.uri)
+        exp = tiledbsoma.Experiment.create(self.uri)
+        exp.close
 
     def base_R_script(self):
         return f"""
@@ -21,7 +22,7 @@ class TestCharacterMetadataWritePythonReadR(TestWritePythonReadR):
         md <- exp$get_metadata()
         """
 
-    def test_r_character(self):
+    def test_r_character(self, experiment):
         self.r_assert(
             "stopifnot(all(vapply(md, \(x) is.character(x$name), logical(1L))))"
         )
