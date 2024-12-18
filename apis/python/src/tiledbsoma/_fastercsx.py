@@ -97,7 +97,7 @@ class CompressedMatrix:
         compress_coo(
             context.native_context, (n_major, n_minor), i, j, d, indptr, indices, data
         )
-        no_duplicates = None  # aka,unknown
+        no_duplicates = None  # aka, unknown
         if make_sorted:
             no_duplicates = sort_csx_indices(
                 context.native_context, indptr, indices, data
