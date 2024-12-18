@@ -14,10 +14,10 @@ from scipy import sparse
 from somacore import AxisQuery, options
 
 import tiledbsoma as soma
-from tiledbsoma import SOMATileDBContext, _factory, pytiledbsoma
+from tiledbsoma import ExperimentAxisQuery, SOMATileDBContext, _factory, pytiledbsoma
 from tiledbsoma._collection import CollectionBase
 from tiledbsoma._experiment import Experiment
-from tiledbsoma._query import Axis, ExperimentAxisQuery
+from tiledbsoma._query import Axis
 from tiledbsoma.experiment_query import X_as_series
 
 from tests._util import raises_no_typeguard
