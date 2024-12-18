@@ -15,19 +15,14 @@ class TestCharacterMetadataWritePythonReadR(TestWritePythonReadR):
         exp.close()
 
     def base_R_script(self):
-        return (
-            """
+        return f"""
         library(tiledbsoma)
 
-        exp <- SOMAExperimentOpen("%s")
+        exp <- SOMAExperimentOpen("{self.uri}")
         md <- exp$get_metadata()
-        for (i in seq_along(md)) {
-          stopifnot(is.character(md[[i]]$name))
-        }
-        exp$close()
         """
-            % self.uri
-        )
 
     def test_r_character(self):
-        self.r_assert("")
+        self.r_assert(
+            "stopifnot(all(vapply(md, \(x) is.character(x$name), logical(1L))))"
+        )
