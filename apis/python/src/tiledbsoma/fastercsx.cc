@@ -393,7 +393,7 @@ void compress_coo(
  * @brief Python binding for sort_csx_indices, which sorts minor dimension of a
  * compressed matrix
  */
-void sort_csx_indices(
+bool sort_csx_indices(
     std::shared_ptr<tiledbsoma::SOMAContext> ctx,
     py::array Bp,
     py::array Bj,
@@ -414,10 +414,10 @@ void sort_csx_indices(
         value_type_dispatch, Bd.dtype(), "CSx data array");
 
     // Dispatch by type
-    std::visit(
+    auto has_duplicates = std::visit(
         [&](auto value_type,
             auto csx_major_index_type,
-            auto csx_minor_index_type) {
+            auto csx_minor_index_type) -> bool {
             using CSX_MAJOR_INDEX =
                 typename decltype(csx_major_index_type)::type;
             using CSX_MINOR_INDEX =
@@ -446,6 +446,8 @@ void sort_csx_indices(
         value_type,
         csx_major_index_type,
         csx_minor_index_type);
+
+    return has_duplicates;
 };
 
 /**

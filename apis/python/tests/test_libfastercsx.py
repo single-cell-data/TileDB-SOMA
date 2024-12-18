@@ -85,7 +85,7 @@ def test_construction(
         indices,
         data,
     )
-    fastercsx.sort_csx_indices(context, indptr, indices, data)
+    assert not fastercsx.sort_csx_indices(context, indptr, indices, data)
 
     # Verify equality with SciPy constructed CSR
     csr = sp.tocsr()
@@ -144,7 +144,7 @@ def test_partitioning(
         indices,
         data,
     )
-    fastercsx.sort_csx_indices(context, indptr, indices, data)
+    assert not fastercsx.sort_csx_indices(context, indptr, indices, data)
 
     # Verify equality with SciPy constructed CSR
     csr = sp.tocsr()
@@ -194,7 +194,7 @@ def test_multichunk(
         indices,
         data,
     )
-    fastercsx.sort_csx_indices(context, indptr, indices, data)
+    assert not fastercsx.sort_csx_indices(context, indptr, indices, data)
 
     # Verify equality with SciPy constructed CSR
     csr = sp.tocsr()
