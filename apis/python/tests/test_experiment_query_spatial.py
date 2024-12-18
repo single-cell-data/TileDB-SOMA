@@ -300,6 +300,13 @@ def test_spatial_experiment_query_obs_slice(
         assert query.n_obs == obs_slice.stop - obs_slice.start + 1
         assert query.n_vars == 100
 
+        # Check the expected scenes are included.
+        scene_ids = set(str(val) for val in query.obs_scene_ids())
+        expected_scene_ids = set(
+            f"scene{index}" for index, val in enumerate(has_scene) if val
+        )
+        assert scene_ids == expected_scene_ids
+
         # Read to SpatialData.
         sdata = query.to_spatialdata("data")
 
@@ -328,6 +335,13 @@ def test_spatial_experiment_query_var_slice(
     ) as query:
         assert query.n_obs == 64
         assert query.n_vars == var_slice.stop - var_slice.start + 1
+
+        # Check the expected scenes are included.
+        scene_ids = set(str(val) for val in query.var_scene_ids())
+        expected_scene_ids = set(
+            f"scene{index}" for index, val in enumerate(has_scene) if val
+        )
+        assert scene_ids == expected_scene_ids
 
         # Read to SpatialData.
         sdata = query.to_spatialdata("data", scene_presence_mode="var")
