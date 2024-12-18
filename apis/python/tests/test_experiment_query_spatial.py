@@ -134,6 +134,7 @@ def add_scene(
 
     for key, shapes in images.items():
         add_multiscale_image(scene, key, shapes)
+    scene.close()
 
 
 @pytest.fixture(scope="module")
@@ -202,7 +203,14 @@ def soma_spatial_experiment(tmp_path_factory) -> soma.Experiment:
             scene_ids.flatten().tolist(),
         )
 
-    return soma.Experiment.open(uri)
+    exp = soma.Experiment.open(uri)
+
+    # Check coordinate spaces.
+    for index in range(4):
+        scene = exp.spatial[f"scene{index}"]
+        assert scene.coordinate_space is not None
+
+    return exp
 
 
 def check_for_scene_data(sdata, has_scenes: List[bool]):
@@ -270,6 +278,11 @@ def test_spatial_experiment_query_all(soma_spatial_experiment):
 
         # Read to SpatialData.
         sdata = query.to_spatialdata("data")
+
+        # Check the expected scenes are included.
+        scene_ids = set(str(val) for val in query.obs_scene_ids())
+        expected_scene_ids = {"scene0", "scene1", "scene2", "scene3"}
+        assert scene_ids == expected_scene_ids
 
         # Verify the correct number of assets.
         assert len(sdata.tables) == 1
