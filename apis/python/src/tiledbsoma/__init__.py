@@ -140,10 +140,10 @@ from somacore import (
     CoordinateSpace,
     IdentityTransform,
     ScaleTransform,
-    Axis,
     UniformScaleTransform,
 )
 from ._query import (
+    Axis,
     ExperimentAxisQuery,
 )
 from somacore.options import ResultOrder
