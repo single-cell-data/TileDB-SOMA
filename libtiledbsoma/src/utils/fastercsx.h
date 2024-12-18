@@ -436,7 +436,8 @@ bool index_lt_(
 /**
  * @brief In-place sort of minor axis, used to canonicalize the CSx ordering.
  *
- * Returns true if there are duplicate coordinates, false if not.
+ * Returns false if there are duplicate coordinates, true if all coordinates
+ * are unique.
  */
 template <class VALUE, class CSX_MINOR_IDX, class CSX_MAJOR_IDX>
 bool sort_csx_indices(
@@ -450,10 +451,10 @@ bool sort_csx_indices(
     assert(Bj.size() == nnz);
     assert(Bd.size() == nnz);
 
-    bool has_duplicates = false;
+    bool no_duplicates = true;
 
     auto status = parallel_for(
-        tp, 0ul, n_row, [&Bp, &Bj, &Bd, &nnz, &has_duplicates](uint64_t row) {
+        tp, 0ul, n_row, [&Bp, &Bj, &Bd, &nnz, &no_duplicates](uint64_t row) {
             uint64_t idx_start = Bp[row];
             uint64_t idx_end = Bp[row + 1];
 
@@ -473,15 +474,15 @@ bool sort_csx_indices(
                 Bj[idx] = temp[n].first;
                 Bd[idx] = temp[n].second;
 
-                if (n > 0 && Bj[idx] == Bj[idx - 1])
-                    has_duplicates = true;
+                if (n > 0 && Bj[idx] == Bj[idx - 1]) [[unikely]]
+                    no_duplicates = false;
             }
 
             return Status::Ok();
         });
 
     assert(status.ok());
-    return has_duplicates;
+    return no_duplicates;
 };
 
 /**

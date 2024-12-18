@@ -391,7 +391,10 @@ void compress_coo(
 
 /**
  * @brief Python binding for sort_csx_indices, which sorts minor dimension of a
- * compressed matrix
+ * compressed matrix.
+ *
+ * Returns false if the matrix contains duplicate coordinates, true if all
+ * coordinates are unique.
  */
 bool sort_csx_indices(
     std::shared_ptr<tiledbsoma::SOMAContext> ctx,
@@ -414,7 +417,7 @@ bool sort_csx_indices(
         value_type_dispatch, Bd.dtype(), "CSx data array");
 
     // Dispatch by type
-    auto has_duplicates = std::visit(
+    auto no_duplicates = std::visit(
         [&](auto value_type,
             auto csx_major_index_type,
             auto csx_minor_index_type) -> bool {
@@ -447,7 +450,7 @@ bool sort_csx_indices(
         csx_major_index_type,
         csx_minor_index_type);
 
-    return has_duplicates;
+    return no_duplicates;
 };
 
 /**

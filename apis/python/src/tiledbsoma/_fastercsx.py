@@ -99,7 +99,7 @@ class CompressedMatrix:
         )
         no_duplicates = None  # aka,unknown
         if make_sorted:
-            no_duplicates = not sort_csx_indices(
+            no_duplicates = sort_csx_indices(
                 context.native_context, indptr, indices, data
             )
         return CompressedMatrix(
