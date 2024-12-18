@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 import json
-from typing import Any, Dict, Optional, Sequence
+from typing import Any, Dict, Sequence
 
 import anndata as ad
 import attrs
@@ -61,7 +63,7 @@ class AxisAmbientLabelMapping:
         cls,
         df: pd.DataFrame,
         *,
-        index_field_name: Optional[str] = None,
+        index_field_name: str | None = None,
     ) -> Self:
         """Factory method to compute an axis label-to-SOMA-join-ID mapping for a single dataframe in
         isolation. This is used when a user is ingesting a single AnnData/H5AD to a single SOMA
@@ -139,8 +141,8 @@ class ExperimentAmbientLabelMapping:
         adata: ad.AnnData,
         *,
         measurement_name: str,
-        obs_field_name: Optional[str] = None,
-        var_field_name: Optional[str] = None,
+        obs_field_name: str | None = None,
+        var_field_name: str | None = None,
     ) -> Self:
         """Factory method to compute the label-to-SOMA-join-ID mappings for a single input file in
         isolation. This is used when a user is ingesting a single AnnData/H5AD to a single SOMA
@@ -186,9 +188,9 @@ class ExperimentAmbientLabelMapping:
         h5ad_file_name: str,
         *,
         measurement_name: str,
-        obs_field_name: Optional[str] = None,
-        var_field_name: Optional[str] = None,
-        context: Optional[SOMATileDBContext] = None,
+        obs_field_name: str | None = None,
+        var_field_name: str | None = None,
+        context: SOMATileDBContext | None = None,
     ) -> Self:
         """Factory method to compute label-to-SOMA-join-ID mappings for a single input file in
         isolation. This is used when a user is ingesting a single AnnData/H5AD to a single SOMA
@@ -206,11 +208,11 @@ class ExperimentAmbientLabelMapping:
     @classmethod
     def from_isolated_soma_experiment(
         cls,
-        experiment_uri: Optional[str] = None,
+        experiment_uri: str | None = None,
         *,
         obs_field_name: str = "obs_id",
         var_field_name: str = "var_id",
-        context: Optional[SOMATileDBContext] = None,
+        context: SOMATileDBContext | None = None,
     ) -> Self:
         """Factory method to compute label-to-SOMA-join-ID mappings for a single SOMA experiment in
         isolation. These are already committed to SOMA storage, so they are the unchangeable inputs
@@ -348,12 +350,12 @@ class ExperimentAmbientLabelMapping:
     @classmethod
     def _acquire_experiment_mappings(
         cls,
-        experiment_uri: Optional[str],
+        experiment_uri: str | None,
         *,
         measurement_name: str,
         obs_field_name: str,
         var_field_name: str,
-        context: Optional[SOMATileDBContext] = None,
+        context: SOMATileDBContext | None = None,
     ) -> Self:
         """Acquires label-to-ID mappings from the baseline, already-written SOMA experiment."""
 
@@ -388,14 +390,14 @@ class ExperimentAmbientLabelMapping:
     @classmethod
     def from_anndata_appends_on_experiment(
         cls,
-        experiment_uri: Optional[str],
+        experiment_uri: str | None,
         adatas: Sequence[ad.AnnData],
         *,
         measurement_name: str,
         obs_field_name: str,
         var_field_name: str,
         append_obsm_varm: bool = False,
-        context: Optional[SOMATileDBContext] = None,
+        context: SOMATileDBContext | None = None,
     ) -> Self:
         """Extends registration data from the baseline, already-written SOMA
         experiment to include multiple H5AD input files. If ``experiment_uri``
@@ -434,7 +436,7 @@ class ExperimentAmbientLabelMapping:
         obs_field_name: str = "obs_id",
         var_field_name: str = "var_id",
         append_obsm_varm: bool = False,
-        context: Optional[SOMATileDBContext] = None,
+        context: SOMATileDBContext | None = None,
     ) -> Self:
         """Extends registration data to one more H5AD input file."""
         tiledbsoma.logging.logger.info(f"Registration: registering {h5ad_file_name}.")
@@ -452,14 +454,14 @@ class ExperimentAmbientLabelMapping:
     @classmethod
     def from_h5ad_appends_on_experiment(
         cls,
-        experiment_uri: Optional[str],
+        experiment_uri: str | None,
         h5ad_file_names: Sequence[str],
         *,
         measurement_name: str,
         obs_field_name: str,
         var_field_name: str,
         append_obsm_varm: bool = False,
-        context: Optional[SOMATileDBContext] = None,
+        context: SOMATileDBContext | None = None,
     ) -> Self:
         """Extends registration data from the baseline, already-written SOMA
         experiment to include multiple H5AD input files."""

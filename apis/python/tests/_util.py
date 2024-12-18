@@ -1,7 +1,9 @@
+from __future__ import annotations
+
 import re
 from contextlib import contextmanager, nullcontext
 from pathlib import Path
-from typing import Any, List, Optional, Tuple, Type, Union
+from typing import Any, List, Tuple, Type, Union
 
 import numpy as np
 import pandas as pd
@@ -101,7 +103,7 @@ def assert_transform_equal(
         assert False
 
 
-def parse_col(col_str: str) -> Tuple[Optional[str], List[str]]:
+def parse_col(col_str: str) -> Tuple[str | None, List[str]]:
     """Parse a "column string" of the form ``val1,val2,...`` or ``name=val1,val2,...``."""
     pcs = col_str.split("=")
     if len(pcs) == 1:
@@ -114,7 +116,7 @@ def parse_col(col_str: str) -> Tuple[Optional[str], List[str]]:
         raise ValueError(f"Invalid column string: {col_str}")
 
 
-def make_pd_df(index_str: Optional[str] = None, **cols) -> pd.DataFrame:
+def make_pd_df(index_str: str | None = None, **cols) -> pd.DataFrame:
     """DataFrame construction helper, for tests.
 
     - index and columns are provided as strings of the form ``name=val1,val2,...``.
@@ -153,7 +155,7 @@ Err = Union[str, Type[E], Tuple[Type[E], str]]
 
 
 def maybe_raises(
-    expected_exception: Optional[Err],
+    expected_exception: Err | None,
     *args: Any,
     **kwargs: Any,
 ) -> Union[RaisesContext[E], ExceptionInfo[E], nullcontext]:
@@ -181,7 +183,7 @@ def maybe_raises(
         return nullcontext()
 
 
-def verify_logs(caplog: LogCaptureFixture, expected_logs: Optional[List[str]]) -> None:
+def verify_logs(caplog: LogCaptureFixture, expected_logs: List[str] | None) -> None:
     """Verify that expected log messages are present in a pytest "caplog" (captured logs) fixture."""
     if not expected_logs:
         return

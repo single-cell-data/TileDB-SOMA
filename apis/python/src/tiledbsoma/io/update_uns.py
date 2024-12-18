@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 from os.path import join
-from typing import Literal, Optional
+from typing import Literal
 
 import numpy as np
 import pandas as pd
@@ -26,11 +28,11 @@ def update_uns_by_uri(
     uns: UnsMapping,
     measurement_name: str,
     *,
-    use_relative_uri: Optional[bool] = None,
-    context: Optional[SOMATileDBContext] = None,
+    use_relative_uri: bool | None = None,
+    context: SOMATileDBContext | None = None,
     additional_metadata: AdditionalMetadata = None,
-    platform_config: Optional[PlatformConfig] = None,
-    default_index_name: Optional[str] = None,
+    platform_config: PlatformConfig | None = None,
+    default_index_name: str | None = None,
     strict: Strict = True,
 ) -> None:
     """Wrapper around :func:`_update_uns` that opens the experiment at the given URI.
@@ -61,11 +63,11 @@ def _update_uns(
     uns: UnsMapping,
     measurement_name: str,
     *,
-    use_relative_uri: Optional[bool] = None,
-    context: Optional[SOMATileDBContext] = None,
+    use_relative_uri: bool | None = None,
+    context: SOMATileDBContext | None = None,
     additional_metadata: AdditionalMetadata = None,
-    platform_config: Optional[PlatformConfig] = None,
-    default_index_name: Optional[str] = None,
+    platform_config: PlatformConfig | None = None,
+    default_index_name: str | None = None,
     strict: Strict = True,
 ) -> None:
     """
@@ -142,8 +144,8 @@ def _update_uns_dict(
     uns: UnsMapping,
     *,
     ingest_platform_ctx: IngestPlatformCtx,
-    use_relative_uri: Optional[bool],
-    default_index_name: Optional[str],
+    use_relative_uri: bool | None,
+    default_index_name: str | None,
     strict: Strict,
 ) -> None:
     for k, v in uns.items():

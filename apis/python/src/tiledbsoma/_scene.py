@@ -6,8 +6,10 @@
 Implementation of a SOMA Scene
 """
 
+from __future__ import annotations
+
 import warnings
-from typing import Any, List, Optional, Sequence, Tuple, Type, TypeVar, Union
+from typing import Any, List, Sequence, Tuple, Type, TypeVar, Union
 
 import somacore
 from somacore import (
@@ -71,10 +73,10 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
         cls,
         uri: str,
         *,
-        coordinate_space: Optional[Union[Sequence[str], CoordinateSpace]] = None,
-        platform_config: Optional[options.PlatformConfig] = None,
-        context: Optional[SOMATileDBContext] = None,
-        tiledb_timestamp: Optional[OpenTimestamp] = None,
+        coordinate_space: Sequence[str] | CoordinateSpace | None = None,
+        platform_config: options.PlatformConfig | None = None,
+        context: SOMATileDBContext | None = None,
+        tiledb_timestamp: OpenTimestamp | None = None,
     ) -> Self:
         """Creates a new scene at the given URI.
 
@@ -135,7 +137,7 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
         super().__init__(handle, **kwargs)
         coord_space = self.metadata.get(SOMA_COORDINATE_SPACE_METADATA_KEY)
         if coord_space is None:
-            self._coord_space: Optional[CoordinateSpace] = None
+            self._coord_space: CoordinateSpace | None = None
         else:
             self._coord_space = coordinate_space_from_json(coord_space)
 
@@ -168,7 +170,7 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
         key: str,
         transform: CoordinateTransform,
         subcollection: Union[str, Sequence[str]],
-        coordinate_space: Optional[CoordinateSpace],
+        coordinate_space: CoordinateSpace | None,
     ) -> _SE:
         # Check the transform is compatible with the coordinate spaces of the scene
         # and the new element coordinate space (if provided).
@@ -221,7 +223,7 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
         return elem
 
     @property
-    def coordinate_space(self) -> Optional[CoordinateSpace]:
+    def coordinate_space(self) -> CoordinateSpace | None:
         """Coordinate system for this scene.
 
         Lifecycle:
@@ -246,8 +248,8 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
         key: str,
         subcollection: Union[str, Sequence[str]],
         *,
-        transform: Optional[CoordinateTransform],
-        uri: Optional[str] = None,
+        transform: CoordinateTransform | None,
+        uri: str | None = None,
         **kwargs: Any,
     ) -> GeometryDataFrame:
         """Adds a ``GeometryDataFrame`` to the scene and sets a coordinate transform
@@ -290,8 +292,8 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
         key: str,
         subcollection: Union[str, Sequence[str]],
         *,
-        transform: Optional[CoordinateTransform],
-        uri: Optional[str] = None,
+        transform: CoordinateTransform | None,
+        uri: str | None = None,
         coordinate_space: Union[Sequence[str], CoordinateSpace] = ("x", "y"),
         **kwargs: Any,
     ) -> MultiscaleImage:
@@ -381,8 +383,8 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
         key: str,
         subcollection: Union[str, Sequence[str]],
         *,
-        transform: Optional[CoordinateTransform],
-        uri: Optional[str] = None,
+        transform: CoordinateTransform | None,
+        uri: str | None = None,
         coordinate_space: Union[Sequence[str], CoordinateSpace] = ("x", "y"),
         **kwargs: Any,
     ) -> PointCloudDataFrame:
@@ -473,7 +475,7 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
         subcollection: Union[str, Sequence[str]] = "obsl",
         *,
         transform: CoordinateTransform,
-        coordinate_space: Optional[CoordinateSpace] = None,
+        coordinate_space: CoordinateSpace | None = None,
     ) -> GeometryDataFrame:
         """Adds the coordinate transform for the scene coordinate space to
         a geometry dataframe stored in the scene.
@@ -508,7 +510,7 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
         subcollection: Union[str, Sequence[str]] = "img",
         *,
         transform: CoordinateTransform,
-        coordinate_space: Optional[CoordinateSpace] = None,
+        coordinate_space: CoordinateSpace | None = None,
     ) -> MultiscaleImage:
         """Adds the coordinate transform for the scene coordinate space to
         a multiscale image stored in the scene.
@@ -545,7 +547,7 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
         subcollection: Union[str, Sequence[str]] = "obsl",
         *,
         transform: CoordinateTransform,
-        coordinate_space: Optional[CoordinateSpace] = None,
+        coordinate_space: CoordinateSpace | None = None,
     ) -> PointCloudDataFrame:
         """Adds the coordinate transform for the scene coordinate space to
         a point cloud dataframe stored in the scene.
@@ -605,7 +607,7 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
         key: str,
         subcollection: str = "img",
         *,
-        level: Optional[Union[str, int]] = None,
+        level: str | int | None = None,
     ) -> CoordinateTransform:
         """Returns the coordinate transformation from the requested multiscale image to
         the scene.
@@ -701,7 +703,7 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
         key: str,
         subcollection: str = "img",
         *,
-        level: Optional[Union[str, int]] = None,
+        level: str | int | None = None,
     ) -> CoordinateTransform:
         """Returns the coordinate transformation from the scene to a requested
         multiscale image.

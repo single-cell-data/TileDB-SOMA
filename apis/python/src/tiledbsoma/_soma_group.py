@@ -3,6 +3,8 @@
 #
 # Licensed under the MIT License.
 
+from __future__ import annotations
+
 import re
 from typing import (
     Any,
@@ -10,7 +12,6 @@ from typing import (
     Generic,
     Iterable,
     Iterator,
-    Optional,
     Set,
     Type,
     TypeVar,
@@ -44,7 +45,7 @@ class _CachedElement:
     """Item we have loaded in the cache of a collection."""
 
     entry: _tdb_handles.GroupEntry
-    soma: Optional[AnySOMAObject] = None
+    soma: AnySOMAObject | None = None
     """The reified object, if it has been opened."""
 
 
@@ -188,7 +189,7 @@ class SOMAGroup(
         key: str,
         kind: Type[_TDBO],
         factory: Callable[[str], _TDBO],
-        user_uri: Optional[str],
+        user_uri: str | None,
     ) -> _TDBO:
         """Handles the common parts of adding new elements.
 
@@ -220,7 +221,7 @@ class SOMAGroup(
         self._close_stack.enter_context(child)
         return child
 
-    def _new_child_uri(self, *, key: str, user_uri: Optional[str]) -> "_ChildURI":
+    def _new_child_uri(self, *, key: str, user_uri: str | None) -> "_ChildURI":
         maybe_relative_uri = user_uri or _sanitize_for_path(key)
         if not is_relative_uri(maybe_relative_uri):
             # It's an absolute URI.
@@ -249,7 +250,7 @@ class SOMAGroup(
         key: str,
         value: CollectionElementType,
         *,
-        use_relative_uri: Optional[bool] = None,
+        use_relative_uri: bool | None = None,
     ) -> Self:
         """Adds an element to the collection.
 
