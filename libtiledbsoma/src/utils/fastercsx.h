@@ -215,16 +215,15 @@ void count_rows_(
     } else if (n_partitions > 0) {
         // for a single partition, just accumulate directly into the output
         // array
-        assert(Ai.size() == 1);
-        assert(
-            Ai[0].data() == partitions[0].views[0].data() &&
-            Ai[0].size() == partitions[0].views[0].size());
-        auto& Ai_view = Ai[0];
-        for (uint64_t n = 0; n < nnz; ++n) {
-            uint64_t row = Ai_view[n];
-            if ((row > n_row - 1) || (row < 0)) [[unlikely]]
-                throw std::out_of_range("Coordinate out of range.");
-            Bp[row]++;
+        for (auto& Ai_view : partitions[0].views) {
+            for (size_t n = 0; n < Ai_view.size(); n++) {
+                auto row = Ai_view[n];
+                if ((row < 0) ||
+                    (static_cast<std::make_unsigned_t<COO_IDX>>(row) >= n_row))
+                    [[unlikely]]
+                    throw std::out_of_range("Coordinate out of range.");
+                Bp[row]++;
+            }
         }
     }
     // else, zero length array
@@ -474,7 +473,7 @@ bool sort_csx_indices(
                 Bj[idx] = temp[n].first;
                 Bd[idx] = temp[n].second;
 
-                if (n > 0 && Bj[idx] == Bj[idx - 1]) [[unikely]]
+                if (n > 0 && Bj[idx] == Bj[idx - 1])
                     no_duplicates = false;
             }
 
