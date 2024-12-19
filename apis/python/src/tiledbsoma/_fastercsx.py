@@ -29,7 +29,16 @@ class CompressedMatrix:
     Export constructed matrix to SciPy (or comparable package) for use of the result.
     """
 
-    __slots__ = ("indptr", "indices", "data", "shape", "format", "sorted", "context")
+    __slots__ = (
+        "indptr",
+        "indices",
+        "data",
+        "shape",
+        "format",
+        "is_sorted",
+        "no_duplicates",
+        "context",
+    )
 
     def __init__(
         self,
@@ -38,7 +47,8 @@ class CompressedMatrix:
         data: NDArrayNumber,
         shape: Tuple[int, int],
         format: Literal["csc", "csr"],
-        sorted: bool,
+        is_sorted: bool,
+        no_duplicates: bool | None,
         context: SOMATileDBContext,
     ) -> None:
         """Construct from PJV format. Not intended for direct use - use instead the
@@ -54,7 +64,8 @@ class CompressedMatrix:
         self.indices = indices
         self.data = data
         self.format = format
-        self.sorted = sorted
+        self.is_sorted = is_sorted
+        self.no_duplicates = no_duplicates
         self.context = context
 
     @staticmethod
@@ -86,24 +97,14 @@ class CompressedMatrix:
         compress_coo(
             context.native_context, (n_major, n_minor), i, j, d, indptr, indices, data
         )
+        no_duplicates = None  # aka, unknown
         if make_sorted:
-            sort_csx_indices(context.native_context, indptr, indices, data)
+            no_duplicates = sort_csx_indices(
+                context.native_context, indptr, indices, data
+            )
         return CompressedMatrix(
-            indptr, indices, data, shape, format, make_sorted, context
+            indptr, indices, data, shape, format, make_sorted, no_duplicates, context
         )
-
-    @staticmethod
-    def from_pjd(
-        p: NDArrayIndex,
-        j: NDArrayIndex,
-        d: NDArrayNumber,
-        shape: Tuple[int, int],
-        format: Literal["csc", "csr"],
-        make_sorted: bool,
-        context: SOMATileDBContext,
-    ) -> CompressedMatrix:
-        """Factory method accepting pointers, indices and data vectors."""
-        return CompressedMatrix(p, j, d, shape, format, make_sorted, context)
 
     @staticmethod
     def from_soma(
@@ -156,12 +157,12 @@ class CompressedMatrix:
     def to_scipy(
         self, index: slice | None = None
     ) -> scipy.sparse.csr_matrix | scipy.sparse.csc_matrix:
-        """Extract a slice on the compressed dimension and return as a dense
+        """Extract a slice on the compressed dimension and return as a
         :class:`scipy.sparse.csr_matrix` or
         :class:`scipy.sparse.csc_matrix`.
 
         Optionally allows slicing on compressed dimension during conversion, in which case
-        an extra memory copy is avoided.
+        an extra memory copy is avoided for the SOMA fast path (no-dups).
         """
         index = index or slice(None)
         assert isinstance(index, slice)
@@ -194,7 +195,13 @@ class CompressedMatrix:
             else (self.shape[0], n_major)
         )
         return CompressedMatrix._to_scipy(
-            indptr, indices, data, shape, self.format, self.sorted
+            indptr,
+            indices,
+            data,
+            shape,
+            self.format,
+            self.is_sorted,
+            self.no_duplicates,
         )
 
     def to_numpy(self, index: slice | None = None) -> NDArrayNumber:
@@ -246,7 +253,8 @@ class CompressedMatrix:
         data: NDArrayNumber,
         shape: Tuple[int, int],
         format: Literal["csc", "csr"],
-        sorted: bool,
+        is_sorted: bool,
+        no_duplicates: bool | None,
     ) -> scipy.sparse.csr_matrix | scipy.sparse.csc_matrix:
         """
         This is to bypass the O(N) scan that :meth:`sparse._cs_matrix.__init__`
@@ -258,7 +266,8 @@ class CompressedMatrix:
             sparse.csr_matrix((data, indices, indptr), shape=shape)
         (or the equivalent for csc_matrix)
         """
-        if sorted:
+        if is_sorted and bool(no_duplicates):
+            # Fast path for SOMA common case.
             matrix = (
                 scipy.sparse.csr_matrix.__new__(scipy.sparse.csr_matrix)
                 if format == "csr"

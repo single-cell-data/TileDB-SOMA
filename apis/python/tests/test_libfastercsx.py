@@ -85,7 +85,7 @@ def test_construction(
         indices,
         data,
     )
-    fastercsx.sort_csx_indices(context, indptr, indices, data)
+    assert fastercsx.sort_csx_indices(context, indptr, indices, data)
 
     # Verify equality with SciPy constructed CSR
     csr = sp.tocsr()
@@ -144,7 +144,7 @@ def test_partitioning(
         indices,
         data,
     )
-    fastercsx.sort_csx_indices(context, indptr, indices, data)
+    assert fastercsx.sort_csx_indices(context, indptr, indices, data)
 
     # Verify equality with SciPy constructed CSR
     csr = sp.tocsr()
@@ -194,7 +194,7 @@ def test_multichunk(
         indices,
         data,
     )
-    fastercsx.sort_csx_indices(context, indptr, indices, data)
+    assert fastercsx.sort_csx_indices(context, indptr, indices, data)
 
     # Verify equality with SciPy constructed CSR
     csr = sp.tocsr()
@@ -334,3 +334,31 @@ def test_ragged_chunk_error(
             indices,
             data,
         )
+
+
+def test_empty_first_frag(rng: np.random.Generator, context: clib.SOMAContext) -> None:
+    fastercsx.compress_coo(
+        context,
+        shape := (56, 18),
+        (
+            np.array([], dtype=np.int32),
+            i := np.array([9, 35, 20, 7, 46, 41, 16, 28, 8, 19], dtype=np.int32),
+        ),
+        (
+            np.array([], dtype=np.int32),
+            j := np.array([15, 14, 11, 9, 4, 0, 0, 5, 3, 1], dtype=np.int32),
+        ),
+        (
+            np.array([], dtype=np.int8),
+            d := np.array([85, 63, 51, 26, 30, 4, 7, 1, 17, 81], dtype=np.int8),
+        ),
+        indptr := np.zeros(57, dtype=np.int32),
+        indices := np.empty((10,), dtype=np.int32),
+        data := np.empty((10,), dtype=np.int8),
+    )
+
+    csr = sparse.csr_matrix((d, (i, j)), shape=shape)
+    assert (csr != sparse.csr_matrix((data, indices, indptr), shape=shape)).nnz == 0
+    assert np.array_equal(csr.indptr, indptr)
+    assert np.array_equal(csr.indices, indices)
+    assert np.array_equal(csr.data, data)

@@ -56,7 +56,7 @@ def assert_eq(sp: sparse.spmatrix, cm: fastercsx.CompressedMatrix) -> bool:
     assert cm.indptr.shape == sp_csx.indptr.shape
 
     assert np.array_equal(cm.indptr, sp_csx.indptr)
-    if cm.sorted:
+    if cm.is_sorted:
         assert np.array_equal(cm.indices, sp_csx.indices)
         assert np.array_equal(cm.data, sp_csx.data)
 
@@ -91,22 +91,6 @@ def test_from_ijd(
     assert_eq(sp, cm)
     assert cm.nbytes == (cm.indptr.nbytes + cm.indices.nbytes + cm.data.nbytes)
     assert cm.to_scipy().has_canonical_format
-
-
-def test_from_pjd(context: soma.SOMATileDBContext, rng: np.random.Generator) -> None:
-    sp = sparse.random(
-        9970, 3124, density=0.01, dtype=np.float32, random_state=rng
-    ).tocsr()
-    cm = fastercsx.CompressedMatrix.from_pjd(
-        sp.indptr,
-        sp.indices,
-        sp.data,
-        sp.shape,
-        format="csr",
-        make_sorted=True,
-        context=context,
-    )
-    assert_eq(sp, cm)
 
 
 @pytest.mark.parametrize("format", ["csr", "csc"])
@@ -361,3 +345,24 @@ def test_bad_shapes(context: soma.SOMATileDBContext, rng: np.random.Generator) -
             fastercsx.CompressedMatrix.from_ijd(
                 sp.row, sp.col, sp.data, shp, "csr", True, context
             )
+
+
+@pytest.mark.parametrize("format", ["csr", "csc"])
+@pytest.mark.parametrize("make_sorted", [True, False])
+def test_duplicates(
+    format: str,
+    make_sorted: bool,
+    context: soma.SOMATileDBContext,
+    rng: np.random.Generator,
+) -> None:
+    shape = (10, 10)
+    i = np.array([0, 0, 1, 1], dtype=np.int64)
+    j = np.array([0, 0, 1, 1], dtype=np.int64)
+    d = np.arange(len(i), dtype=np.int8)
+
+    cm = fastercsx.CompressedMatrix.from_ijd(
+        i, j, d, shape, format, make_sorted, context
+    )
+    assert (
+        sparse.coo_matrix((d, (i, j)), shape=shape).asformat(format) != cm.to_scipy()
+    ).nnz == 0
