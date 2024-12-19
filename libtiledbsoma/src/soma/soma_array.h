@@ -249,7 +249,7 @@ class SOMAArray : public SOMAObject {
     }
 
     SOMAArray() = delete;
-    ~SOMAArray() = default;
+    virtual ~SOMAArray() = default;
 
     /**
      * @brief Get URI of the SOMAArray.
