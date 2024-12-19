@@ -41,12 +41,11 @@ using namespace tiledb;
 void SOMADenseNDArray::create(
     std::string_view uri,
     std::string_view format,
-    ArrowTable index_columns,
+    const ArrowTable& index_columns,
     std::shared_ptr<SOMAContext> ctx,
     PlatformConfig platform_config,
     std::optional<TimestampRange> timestamp) {
-    auto index_column_array = std::move(index_columns.first);
-    auto index_column_schema = std::move(index_columns.second);
+    auto& index_column_schema = index_columns.second;
     uint64_t index_column_size = index_column_schema->n_children;
 
     auto schema = std::make_unique<ArrowSchema>();
@@ -82,9 +81,8 @@ void SOMADenseNDArray::create(
 
     auto tiledb_schema = ArrowAdapter::tiledb_schema_from_arrow_schema(
         ctx->tiledb_ctx(),
-        std::move(schema),
-        ArrowTable(
-            std::move(index_column_array), std::move(index_column_schema)),
+        schema,
+        index_columns,
         "SOMADenseNDArray",
         false,
         platform_config);

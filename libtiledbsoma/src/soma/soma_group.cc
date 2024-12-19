@@ -44,7 +44,7 @@ using namespace tiledb;
 std::unique_ptr<SOMAGroup> SOMAGroup::create(
     std::shared_ptr<SOMAContext> ctx,
     std::string_view uri,
-    std::string soma_type,
+    std::string_view soma_type,
     std::optional<TimestampRange> timestamp) {
     try {
         Group::create(*ctx->tiledb_ctx(), std::string(uri));
@@ -59,7 +59,7 @@ std::unique_ptr<SOMAGroup> SOMAGroup::create(
             SOMA_OBJECT_TYPE_KEY,
             TILEDB_STRING_UTF8,
             static_cast<uint32_t>(soma_type.length()),
-            soma_type.c_str());
+            soma_type.data());
 
         group->put_metadata(
             ENCODING_VERSION_KEY,

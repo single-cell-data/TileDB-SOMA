@@ -63,7 +63,8 @@ void SOMAGeometryDataFrame::create(
         true,
         platform_config,
         spatial_columns);
-    auto array = SOMAArray::create(
+
+    SOMAArray::create(
         ctx, uri, tiledb_schema, "SOMAGeometryDataFrame", timestamp);
 }
 

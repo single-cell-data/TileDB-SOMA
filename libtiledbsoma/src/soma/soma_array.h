@@ -115,11 +115,11 @@ class SOMAArray : public SOMAObject {
      * @param soma_type SOMADataFrame, SOMADenseNDArray, or
      * SOMASparseNDArray
      */
-    static std::unique_ptr<SOMAArray> create(
+    static void create(
         std::shared_ptr<SOMAContext> ctx,
         std::string_view uri,
         ArraySchema schema,
-        std::string soma_type,
+        std::string_view soma_type,
         std::optional<TimestampRange> timestamp = std::nullopt);
 
     /**
