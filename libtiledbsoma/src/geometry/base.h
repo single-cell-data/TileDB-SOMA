@@ -20,6 +20,8 @@ struct BasePoint {
         , m(m) {
     }
 
+    virtual ~BasePoint() = default;
+
     double_t x;
     double_t y;
     std::optional<double_t> z;

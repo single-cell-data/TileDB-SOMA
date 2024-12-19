@@ -114,7 +114,7 @@ class SOMAGroup : public SOMAObject {
     SOMAGroup() = delete;
     SOMAGroup(const SOMAGroup&) = default;
     SOMAGroup(SOMAGroup&&) = default;
-    ~SOMAGroup() = default;
+    virtual ~SOMAGroup() = default;
 
     /**
      * Open the SOMAGroup object.

@@ -114,7 +114,7 @@ class SOMACollection : public SOMAGroup {
     SOMACollection() = delete;
     SOMACollection(const SOMACollection&) = default;
     SOMACollection(SOMACollection&&) = default;
-    ~SOMACollection() = default;
+    virtual ~SOMACollection() = default;
 
     using iterator =
         typename std::map<std::string, std::shared_ptr<SOMAObject>>::iterator;
