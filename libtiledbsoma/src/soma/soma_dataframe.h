@@ -62,8 +62,8 @@ class SOMADataFrame : public SOMAArray {
      */
     static void create(
         std::string_view uri,
-        std::unique_ptr<ArrowSchema> schema,
-        ArrowTable index_columns,
+        const std::unique_ptr<ArrowSchema>& schema,
+        const ArrowTable& index_columns,
         std::shared_ptr<SOMAContext> ctx,
         PlatformConfig platform_config = PlatformConfig(),
         std::optional<TimestampRange> timestamp = std::nullopt);

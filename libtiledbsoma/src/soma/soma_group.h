@@ -65,7 +65,7 @@ class SOMAGroup : public SOMAObject {
     static std::unique_ptr<SOMAGroup> create(
         std::shared_ptr<SOMAContext> ctx,
         std::string_view uri,
-        std::string soma_type,
+        std::string_view soma_type,
         std::optional<TimestampRange> timestamp = std::nullopt);
 
     /**
