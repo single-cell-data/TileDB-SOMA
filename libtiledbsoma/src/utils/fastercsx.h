@@ -30,6 +30,7 @@
  * Fast construction of CSX from COO.
  */
 
+#include <atomic>
 #include <cmath>
 #include <cstdint>
 #include <numeric>
@@ -450,7 +451,7 @@ bool sort_csx_indices(
     assert(Bj.size() == nnz);
     assert(Bd.size() == nnz);
 
-    bool no_duplicates = true;
+    std::atomic<bool> no_duplicates(true);
 
     auto status = parallel_for(
         tp, 0ul, n_row, [&Bp, &Bj, &Bd, &nnz, &no_duplicates](uint64_t row) {
