@@ -1,6 +1,5 @@
 import itertools
 from typing import Dict, List, Tuple, Union
-from urllib.parse import urljoin
 
 import numpy as np
 import pandas as pd
@@ -105,36 +104,33 @@ def add_scene(
     circles: Dict[Tuple[Union[str, Tuple[str, ...]], str], Dict[str, np.ndarray]],
     images: Dict[str, Tuple[Tuple[int, ...]]],
 ) -> None:
-    uri = urljoin(coll.uri, key)
-    coll[key] = soma.Scene.create(uri, coordinate_space=("x", "y"))
-    scene = coll[key]
-    scene.add_new_collection("obsl")
-    varl = scene.add_new_collection("varl")
-    varl.add_new_collection("RNA")
-    varl.add_new_collection("other")
-    scene.add_new_collection("img")
+    with coll.add_new_collection(key, soma.Scene, coordinate_space=("x", "y")) as scene:
+        scene.add_new_collection("obsl")
+        varl = scene.add_new_collection("varl")
+        varl.add_new_collection("RNA")
+        varl.add_new_collection("other")
+        scene.add_new_collection("img")
 
-    for (subcoll, key), data in points.items():
-        add_point_cloud_dataframe(
-            scene,
-            subcoll if isinstance(subcoll, str) else list(subcoll),
-            key,
-            data,
-            circles=False,
-        )
+        for (subcoll, key), data in points.items():
+            add_point_cloud_dataframe(
+                scene,
+                subcoll if isinstance(subcoll, str) else list(subcoll),
+                key,
+                data,
+                circles=False,
+            )
 
-    for (subcoll, key), data in circles.items():
-        add_point_cloud_dataframe(
-            scene,
-            subcoll if isinstance(subcoll, str) else list(subcoll),
-            key,
-            data,
-            circles=True,
-        )
+        for (subcoll, key), data in circles.items():
+            add_point_cloud_dataframe(
+                scene,
+                subcoll if isinstance(subcoll, str) else list(subcoll),
+                key,
+                data,
+                circles=True,
+            )
 
-    for key, shapes in images.items():
-        add_multiscale_image(scene, key, shapes)
-    scene.close()
+        for key, shapes in images.items():
+            add_multiscale_image(scene, key, shapes)
 
 
 @pytest.fixture(scope="module")
