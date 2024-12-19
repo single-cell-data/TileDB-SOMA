@@ -390,7 +390,7 @@ def test_ingest_uns(
     ingest_uns_keys,
 ):
     tmp_uri = tmp_path.as_uri()
-    adata_extended2 = anndata.read(conftest_pbmc3k_h5ad_path)
+    adata_extended2 = anndata.read_h5ad(conftest_pbmc3k_h5ad_path)
     uri = tiledbsoma.io.from_anndata(
         tmp_uri,
         adata_extended2,
