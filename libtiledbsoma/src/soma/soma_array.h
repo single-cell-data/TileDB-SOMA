@@ -1539,7 +1539,7 @@ class SOMAArray : public SOMAObject {
     std::string uri_;
 
     // SOMAArray name for debugging
-    std::string_view name_;
+    std::string name_;
 
     // SOMA context
     std::shared_ptr<SOMAContext> ctx_;
