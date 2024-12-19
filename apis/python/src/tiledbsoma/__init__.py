@@ -135,6 +135,7 @@ except ImportError:
         ctypes.CDLL(libtiledbsoma_name)
 from somacore import (
     AffineTransform,
+    Axis,
     AxisColumnNames,
     AxisQuery,
     CoordinateSpace,
@@ -143,7 +144,6 @@ from somacore import (
     UniformScaleTransform,
 )
 from ._query import (
-    Axis,
     ExperimentAxisQuery,
 )
 from somacore.options import ResultOrder
