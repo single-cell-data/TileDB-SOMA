@@ -43,8 +43,8 @@ using namespace tiledb;
 
 void SOMAMeasurement::create(
     std::string_view uri,
-    std::unique_ptr<ArrowSchema> schema,
-    ArrowTable index_columns,
+    const std::unique_ptr<ArrowSchema>& schema,
+    const ArrowTable& index_columns,
     std::shared_ptr<SOMAContext> ctx,
     PlatformConfig platform_config,
     std::optional<TimestampRange> timestamp) {
@@ -55,10 +55,8 @@ void SOMAMeasurement::create(
             ctx, measurement_uri.string(), "SOMAMeasurement", timestamp);
         SOMADataFrame::create(
             (measurement_uri / "var").string(),
-            std::move(schema),
-            ArrowTable(
-                std::move(index_columns.first),
-                std::move(index_columns.second)),
+            schema,
+            index_columns,
             ctx,
             platform_config,
             timestamp);
