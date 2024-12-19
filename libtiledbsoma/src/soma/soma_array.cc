@@ -43,11 +43,11 @@ using namespace tiledb;
 //= public static
 //===================================================================
 
-std::unique_ptr<SOMAArray> SOMAArray::create(
+void SOMAArray::create(
     std::shared_ptr<SOMAContext> ctx,
     std::string_view uri,
     ArraySchema schema,
-    std::string soma_type,
+    std::string_view soma_type,
     std::optional<TimestampRange> timestamp) {
     Array::create(std::string(uri), schema);
 
@@ -68,15 +68,13 @@ std::unique_ptr<SOMAArray> SOMAArray::create(
         SOMA_OBJECT_TYPE_KEY,
         TILEDB_STRING_UTF8,
         static_cast<uint32_t>(soma_type.length()),
-        soma_type.c_str());
+        soma_type.data());
 
     array->put_metadata(
         ENCODING_VERSION_KEY,
         TILEDB_STRING_UTF8,
         static_cast<uint32_t>(ENCODING_VERSION_VAL.length()),
         ENCODING_VERSION_VAL.c_str());
-
-    return std::make_unique<SOMAArray>(ctx, array, timestamp);
 }
 
 std::unique_ptr<SOMAArray> SOMAArray::open(
@@ -271,30 +269,7 @@ void SOMAArray::reset(
 }
 
 std::optional<std::shared_ptr<ArrayBuffers>> SOMAArray::read_next() {
-    // If the query is complete, return `std::nullopt`
-    if (mq_->is_complete(true)) {
-        return std::nullopt;
-    }
-
-    // Configure query and allocate result buffers
-    mq_->setup_read();
-
-    // Continue to submit the empty query on first read to return empty results
-    if (mq_->is_empty_query()) {
-        if (first_read_next_) {
-            first_read_next_ = false;
-            return mq_->results();
-        } else {
-            return std::nullopt;
-        }
-    }
-
-    first_read_next_ = false;
-
-    mq_->submit_read();
-
-    // Return the results, possibly incomplete
-    return mq_->results();
+    return mq_->read_next();
 }
 
 void SOMAArray::set_column_data(

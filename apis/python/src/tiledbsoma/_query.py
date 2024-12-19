@@ -80,7 +80,7 @@ class _HasObsVar(Protocol[_T_co]):
     def var(self) -> _T_co: ...
 
 
-class Axis(enum.Enum):
+class AxisName(enum.Enum):
     OBS = "obs"
     VAR = "var"
 
@@ -376,7 +376,7 @@ class ExperimentAxisQuery:
         Lifecycle: maturing
         """
         joinids = self._joinids.obs
-        return self._axisp_get_array(Axis.OBS, layer).read((joinids, joinids))
+        return self._axisp_get_array(AxisName.OBS, layer).read((joinids, joinids))
 
     def varp(self, layer: str) -> SparseRead:
         """Returns a ``varp`` layer as a sparse read.
@@ -384,13 +384,13 @@ class ExperimentAxisQuery:
         Lifecycle: maturing
         """
         joinids = self._joinids.var
-        return self._axisp_get_array(Axis.VAR, layer).read((joinids, joinids))
+        return self._axisp_get_array(AxisName.VAR, layer).read((joinids, joinids))
 
     def obsm(self, layer: str) -> SparseRead:
         """Returns an ``obsm`` layer as a sparse read.
         Lifecycle: maturing
         """
-        return self._axism_get_array(Axis.OBS, layer).read(
+        return self._axism_get_array(AxisName.OBS, layer).read(
             (self._joinids.obs, slice(None))
         )
 
@@ -398,7 +398,7 @@ class ExperimentAxisQuery:
         """Returns a ``varm`` layer as a sparse read.
         Lifecycle: maturing
         """
-        return self._axism_get_array(Axis.VAR, layer).read(
+        return self._axism_get_array(AxisName.VAR, layer).read(
             (self._joinids.var, slice(None))
         )
 
@@ -421,7 +421,7 @@ class ExperimentAxisQuery:
             )
 
         full_table = obs_scene.read(
-            coords=((Axis.OBS.getattr_from(self._joinids), slice(None))),
+            coords=((AxisName.OBS.getattr_from(self._joinids), slice(None))),
             result_order=ResultOrder.COLUMN_MAJOR,
             value_filter="data != 0",
         ).concat()
@@ -448,7 +448,7 @@ class ExperimentAxisQuery:
             )
 
         full_table = var_scene.read(
-            coords=((Axis.VAR.getattr_from(self._joinids), slice(None))),
+            coords=((AxisName.VAR.getattr_from(self._joinids), slice(None))),
             result_order=ResultOrder.COLUMN_MAJOR,
             value_filter="data != 0",
         ).concat()
@@ -625,7 +625,7 @@ class ExperimentAxisQuery:
 
         obs_table, var_table = tp.map(
             self._read_axis_dataframe,
-            (Axis.OBS, Axis.VAR),
+            (AxisName.OBS, AxisName.VAR),
             (column_names, column_names),
         )
         obs_joinids = self.obs_joinids()
@@ -645,19 +645,19 @@ class ExperimentAxisQuery:
         x_future = x_matrices.pop(X_name)
 
         obsm_future = {
-            key: tp.submit(self._axism_inner_ndarray, Axis.OBS, key)
+            key: tp.submit(self._axism_inner_ndarray, AxisName.OBS, key)
             for key in obsm_layers
         }
         varm_future = {
-            key: tp.submit(self._axism_inner_ndarray, Axis.VAR, key)
+            key: tp.submit(self._axism_inner_ndarray, AxisName.VAR, key)
             for key in varm_layers
         }
         obsp_future = {
-            key: tp.submit(self._axisp_inner_sparray, Axis.OBS, key)
+            key: tp.submit(self._axisp_inner_sparray, AxisName.OBS, key)
             for key in obsp_layers
         }
         varp_future = {
-            key: tp.submit(self._axisp_inner_sparray, Axis.VAR, key)
+            key: tp.submit(self._axisp_inner_sparray, AxisName.VAR, key)
             for key in varp_layers
         }
 
@@ -680,7 +680,7 @@ class ExperimentAxisQuery:
 
     def _read_axis_dataframe(
         self,
-        axis: Axis,
+        axis: AxisName,
         axis_column_names: AxisColumnNames,
     ) -> pa.Table:
         """Reads the specified axis. Will cache join IDs if not present."""
@@ -730,7 +730,7 @@ class ExperimentAxisQuery:
 
     def _axisp_get_array(
         self,
-        axis: Axis,
+        axis: AxisName,
         layer: str,
     ) -> SparseNDArray:
         p_name = f"{axis.value}p"
@@ -754,7 +754,7 @@ class ExperimentAxisQuery:
 
     def _axism_get_array(
         self,
-        axis: Axis,
+        axis: AxisName,
         layer: str,
     ) -> SparseNDArray:
         m_name = f"{axis.value}m"
@@ -776,7 +776,7 @@ class ExperimentAxisQuery:
         return axism_layer
 
     def _convert_to_ndarray(
-        self, axis: Axis, table: pa.Table, n_row: int, n_col: int
+        self, axis: AxisName, table: pa.Table, n_row: int, n_col: int
     ) -> npt.NDArray[np.float32]:
         indexer = cast(
             Callable[[Numpyable], npt.NDArray[np.intp]],
@@ -789,7 +789,7 @@ class ExperimentAxisQuery:
 
     def _axisp_inner_sparray(
         self,
-        axis: Axis,
+        axis: AxisName,
         layer: str,
     ) -> sp.csr_matrix:
         joinids = axis.getattr_from(self._joinids)
@@ -803,7 +803,7 @@ class ExperimentAxisQuery:
 
     def _axism_inner_ndarray(
         self,
-        axis: Axis,
+        axis: AxisName,
         layer: str,
     ) -> npt.NDArray[np.float32]:
         joinids = axis.getattr_from(self._joinids)
@@ -856,7 +856,7 @@ class JoinIDCache:
     _cached_obs: pa.IntegerArray | None = None
     _cached_var: pa.IntegerArray | None = None
 
-    def _is_cached(self, axis: Axis) -> bool:
+    def _is_cached(self, axis: AxisName) -> bool:
         field = "_cached_" + axis.value
         return getattr(self, field) is not None
 

@@ -133,16 +133,17 @@ except ImportError:
     except OSError:
         # Otherwise try loading by name only.
         ctypes.CDLL(libtiledbsoma_name)
-
 from somacore import (
-    Axis,
-    CoordinateSpace,
     AffineTransform,
-    ScaleTransform,
-    IdentityTransform,
-    UniformScaleTransform,
+    Axis,
     AxisColumnNames,
     AxisQuery,
+    CoordinateSpace,
+    IdentityTransform,
+    ScaleTransform,
+    UniformScaleTransform,
+)
+from ._query import (
     ExperimentAxisQuery,
 )
 from somacore.options import ResultOrder
