@@ -1,4 +1,4 @@
-# Unreleased
+# tiledbsoma 1.15.1
 
 * Encode string metadata as `TILEDB_STRING_UTF8` instead of `TILEDB_STRING_ASCII` [#3469](https://github.com/single-cell-data/TileDB-SOMA/pull/3469)
 
