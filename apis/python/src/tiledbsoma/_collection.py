@@ -148,6 +148,7 @@ class CollectionBase(  # type: ignore[misc]  # __eq__ false positive
         *,
         uri: str | None = ...,
         platform_config: options.PlatformConfig | None = ...,
+        **kwargs: Any,
     ) -> "Collection[AnySOMAObject]": ...
 
     @overload
@@ -158,6 +159,7 @@ class CollectionBase(  # type: ignore[misc]  # __eq__ false positive
         *,
         uri: str | None = ...,
         platform_config: options.PlatformConfig | None = ...,
+        **kwargs: Any,
     ) -> _Coll: ...
 
     def add_new_collection(
@@ -167,6 +169,7 @@ class CollectionBase(  # type: ignore[misc]  # __eq__ false positive
         *,
         uri: str | None = None,
         platform_config: options.PlatformConfig | None = None,
+        **kwargs: Any,
     ) -> AnyTileDBCollection:
         """Adds a new sub-collection to this collection.
 
@@ -190,6 +193,9 @@ class CollectionBase(  # type: ignore[misc]  # __eq__ false positive
                 Platform configuration options to use when
                 creating this sub-collection. This is passed directly to
                 ``[CurrentCollectionType].create()``.
+            kwargs:
+                Other keyword arguments to pass to the ``create`` method of the
+                new sub-collection type.
 
         Examples:
             >>> with tiledbsoma.Collection.create("/tmp/parent") as parent_collection:
@@ -217,6 +223,7 @@ class CollectionBase(  # type: ignore[misc]  # __eq__ false positive
                 platform_config=platform_config,
                 context=self.context,
                 tiledb_timestamp=self.tiledb_timestamp_ms,
+                **kwargs,
             ),
             uri,
         )
