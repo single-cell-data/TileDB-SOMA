@@ -78,6 +78,8 @@ fi
 # set installation path
 if [ -n "${prefix}"  ]; then
   extra_opts+=" -DCMAKE_INSTALL_PREFIX=${prefix} -DOVERRIDE_INSTALL_PREFIX=OFF"
+else
+  extra_opts+=" -DOVERRIDE_INSTALL_PREFIX=ON"
 fi
 
 # build with custom tiledb
