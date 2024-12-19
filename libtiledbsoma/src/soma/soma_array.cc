@@ -41,11 +41,11 @@ using namespace tiledb;
 //= public static
 //===================================================================
 
-std::unique_ptr<SOMAArray> SOMAArray::create(
+void SOMAArray::create(
     std::shared_ptr<SOMAContext> ctx,
     std::string_view uri,
     ArraySchema schema,
-    std::string soma_type,
+    std::string_view soma_type,
     std::optional<TimestampRange> timestamp) {
     Array::create(std::string(uri), schema);
 
@@ -66,15 +66,13 @@ std::unique_ptr<SOMAArray> SOMAArray::create(
         SOMA_OBJECT_TYPE_KEY,
         TILEDB_STRING_UTF8,
         static_cast<uint32_t>(soma_type.length()),
-        soma_type.c_str());
+        soma_type.data());
 
     array->put_metadata(
         ENCODING_VERSION_KEY,
         TILEDB_STRING_UTF8,
         static_cast<uint32_t>(ENCODING_VERSION_VAL.length()),
         ENCODING_VERSION_VAL.c_str());
-
-    return std::make_unique<SOMAArray>(ctx, array, timestamp);
 }
 
 std::unique_ptr<SOMAArray> SOMAArray::open(
