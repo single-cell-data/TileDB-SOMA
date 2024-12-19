@@ -61,7 +61,6 @@ void load_managed_query(py::module& m) {
             py::arg("ctx"),
             py::arg("name") = "unnamed")
 
-        .def("setup_read", &ManagedQuery::setup_read)
         .def("is_empty_query", &ManagedQuery::is_empty_query)
         .def("is_complete", &ManagedQuery::is_complete)
 
@@ -116,25 +115,6 @@ void load_managed_query(py::module& m) {
             "names"_a,
             "if_not_empty"_a = false,
             "replace"_a = false)
-
-        .def(
-            "submit_read",
-            &ManagedQuery::submit_read,
-            py::call_guard<py::gil_scoped_release>())
-        .def(
-            "results",
-            [](ManagedQuery& mq) -> std::optional<py::object> {
-                try {
-                    // Release python GIL before reading data
-                    py::gil_scoped_release release;
-                    auto tbl = mq.results();
-                    // Acquire python GIL before accessing python objects
-                    py::gil_scoped_acquire acquire;
-                    return to_table(std::make_optional(tbl));
-                } catch (const std::exception& e) {
-                    throw TileDBSOMAError(e.what());
-                }
-            })
 
         .def(
             "next",
