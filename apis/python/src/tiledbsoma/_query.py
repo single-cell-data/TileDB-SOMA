@@ -242,6 +242,28 @@ class ExperimentAxisQuery:
         )
         self._index_factory = index_factory
 
+    def close(self) -> None:
+        pass
+
+    # WIP
+    # To be restored from somacore 1.0.17:
+    #
+    #    def close(self) -> None:
+    #        """Releases resources associated with this query.
+    #
+    #        This method must be idempotent.
+    #
+    #        Lifecycle: maturing
+    #        """
+    #        # Because this may be called during ``__del__`` when we might be getting
+    #        # disassembled, sometimes ``_threadpool_`` is simply missing.
+    #        # Only try to shut it down if it still exists.
+    #        pool = getattr(self, "_threadpool_", None)
+    #        if pool is None:
+    #            return
+    #        pool.shutdown()
+    #        self._threadpool_ = None
+
     def obs(
         self,
         *,
