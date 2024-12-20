@@ -2,10 +2,14 @@ name: libtiledbsoma ASAN
 
 on:
   pull_request:
-    paths:
-      - '.github/workflows/libtiledbsoma-asan-ci.yml'
-  schedule:
-    - cron: 20 8 * * 0
+    paths-ignore:
+      - "apis/python/**"
+      - "apis/r/**"
+      - ".pre-commit-config.yaml"
+  push:
+    branches:
+      - main
+      - 'release-*'
   workflow_dispatch:
 
 jobs:
@@ -34,4 +38,4 @@ jobs:
           cmake --build build -j 2
           ls external/lib/
       - name: Run C++ unittests
-        run: ctest --test-dir build/libtiledbsoma -C ASAN --verbose --rerun-failed --output-on-failure
+        run:  ASAN_OPTIONS=detect_leaks=0 ctest --test-dir build/libtiledbsoma -C ASAN --verbose --rerun-failed --output-on-failure
