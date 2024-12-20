@@ -567,7 +567,8 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
 
         return sdata
 
-    # Context management
+    # Context management.
+    # Currently a no-op, but, part of public API so we retain it.
     def close(self) -> None:
         pass
 
