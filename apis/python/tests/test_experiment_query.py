@@ -545,6 +545,26 @@ def test_error_corners(soma_experiment: Experiment):
                 next(query.varp(lyr_name))
 
 
+@pytest.mark.parametrize("n_obs,n_vars", [(1001, 99)])
+def test_query_cleanup(soma_experiment: soma.Experiment):
+    """
+    Verify soma.Experiment.query works as context manager and stand-alone,
+    and that it cleans up correctly.
+    """
+    from contextlib import closing
+
+    context = SOMATileDBContext()
+    soma_experiment = get_soma_experiment_with_context(soma_experiment, context)
+
+    with soma_experiment.axis_query("RNA") as query:
+        assert query.n_obs == 1001
+        assert query.n_vars == 99
+        assert query.to_anndata("raw") is not None
+
+    with closing(soma_experiment.axis_query("RNA")) as query:
+        assert query.to_anndata("raw") is not None
+
+
 @pytest.mark.parametrize(
     "n_obs,n_vars,obsp_layer_names,varp_layer_names,obsm_layer_names,varm_layer_names",
     [(1001, 99, ["foo"], ["bar"], ["baz"], ["quux"])],
