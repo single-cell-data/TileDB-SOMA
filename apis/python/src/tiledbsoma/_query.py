@@ -188,7 +188,7 @@ class AxisQueryResult:
         )
 
 
-class ExperimentAxisQuery:
+class ExperimentAxisQuery(query.ExperimentAxisQuery):
     """Axis-based query against a SOMA Experiment.
 
     ExperimentAxisQuery allows easy selection and extraction of data from a
@@ -567,7 +567,10 @@ class ExperimentAxisQuery:
 
         return sdata
 
-    # Context management
+    # Context management.
+    # Currently a no-op, but, part of public API so we retain it.
+    def close(self) -> None:
+        pass
 
     def __enter__(self) -> Self:
         return self
