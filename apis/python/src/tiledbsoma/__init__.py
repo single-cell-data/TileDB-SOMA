@@ -96,7 +96,6 @@ import ctypes
 import os
 import sys
 
-
 # Load native libraries. On wheel builds, we may have a shared library
 # already linked. In this case, we can import directly
 try:
@@ -133,6 +132,8 @@ except ImportError:
     except OSError:
         # Otherwise try loading by name only.
         ctypes.CDLL(libtiledbsoma_name)
+
+# ruff: noqa: F401 (allow unused imports)
 from somacore import (
     AffineTransform,
     Axis,
@@ -143,17 +144,13 @@ from somacore import (
     ScaleTransform,
     UniformScaleTransform,
 )
-from ._query import (
-    ExperimentAxisQuery,
-)
 from somacore.options import ResultOrder
 
 # This is important since we need to do the above dll/dylib/so business
 # _before_ imports, but, ruff will tell us that imports need to be
 # at the top of the file:
 #
-# ruff: noqa
-
+# ruff: noqa: E402
 from ._collection import Collection
 from ._constants import SOMA_JOINID
 from ._dataframe import DataFrame
@@ -169,15 +166,16 @@ from ._factory import open
 from ._general_utilities import (
     get_implementation,
     get_implementation_version,
+    get_libtiledbsoma_core_version,
     get_SOMA_version,
     get_storage_engine,
     show_package_versions,
-    get_libtiledbsoma_core_version,
 )
 from ._indexer import IntIndexer, tiledbsoma_build_index
 from ._measurement import Measurement
 from ._multiscale_image import MultiscaleImage
 from ._point_cloud_dataframe import PointCloudDataFrame
+from ._query import ExperimentAxisQuery
 from ._scene import Scene
 from ._sparse_nd_array import SparseNDArray, SparseNDArrayRead
 from .options import SOMATileDBContext, TileDBCreateOptions, TileDBWriteOptions
