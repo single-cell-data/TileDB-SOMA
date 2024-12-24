@@ -1612,6 +1612,7 @@ void ArrowAdapter::set_current_domain_slot(
     NDRectangle& ndrect,
     std::string name) {
     switch (type) {
+        case TILEDB_STRING_UTF8:
         case TILEDB_STRING_ASCII:
             // Core domain must not be set for string dims.
             // Core current_domain can't _not_ be set for string dims.
@@ -1632,8 +1633,9 @@ void ArrowAdapter::set_current_domain_slot(
         case TILEDB_DATETIME_MS:
         case TILEDB_DATETIME_US:
         case TILEDB_DATETIME_NS: {
-            uint64_t lo = ((uint64_t*)buff)[3];
-            uint64_t hi = ((uint64_t*)buff)[4];
+            auto typed_buf = static_cast<const uint64_t*>(buff);
+            uint64_t lo = typed_buf[3];
+            uint64_t hi = typed_buf[4];
             ndrect.set_range<uint64_t>(name, lo, hi);
             LOG_DEBUG(std::format(
                 "[ArrowAdapter] {} current_domain uint64_t {} to {}",
@@ -1642,8 +1644,9 @@ void ArrowAdapter::set_current_domain_slot(
                 hi));
         } break;
         case TILEDB_INT8: {
-            int8_t lo = ((int8_t*)buff)[3];
-            int8_t hi = ((int8_t*)buff)[4];
+            auto typed_buf = static_cast<const int8_t*>(buff);
+            int8_t lo = typed_buf[3];
+            int8_t hi = typed_buf[4];
             ndrect.set_range<int8_t>(name, lo, hi);
             LOG_DEBUG(std::format(
                 "[ArrowAdapter] {} current_domain int8_t {} to {}",
@@ -1652,8 +1655,9 @@ void ArrowAdapter::set_current_domain_slot(
                 hi));
         } break;
         case TILEDB_UINT8: {
-            uint8_t lo = ((uint8_t*)buff)[3];
-            uint8_t hi = ((uint8_t*)buff)[4];
+            auto typed_buf = static_cast<const uint8_t*>(buff);
+            uint8_t lo = typed_buf[3];
+            uint8_t hi = typed_buf[4];
             ndrect.set_range<uint8_t>(name, lo, hi);
             LOG_DEBUG(std::format(
                 "[ArrowAdapter] {} current_domain uint8_t {} to {}",
@@ -1662,8 +1666,9 @@ void ArrowAdapter::set_current_domain_slot(
                 hi));
         } break;
         case TILEDB_INT16: {
-            int16_t lo = ((int16_t*)buff)[3];
-            int16_t hi = ((int16_t*)buff)[4];
+            auto typed_buf = static_cast<const int16_t*>(buff);
+            int16_t lo = typed_buf[3];
+            int16_t hi = typed_buf[4];
             ndrect.set_range<int16_t>(name, lo, hi);
             LOG_DEBUG(std::format(
                 "[ArrowAdapter] {} current_domain int16_t {} to {}",
@@ -1672,8 +1677,9 @@ void ArrowAdapter::set_current_domain_slot(
                 hi));
         } break;
         case TILEDB_UINT16: {
-            uint16_t lo = ((uint16_t*)buff)[3];
-            uint16_t hi = ((uint16_t*)buff)[4];
+            auto typed_buf = static_cast<const uint16_t*>(buff);
+            uint16_t lo = typed_buf[3];
+            uint16_t hi = typed_buf[4];
             ndrect.set_range<uint16_t>(name, lo, hi);
             LOG_DEBUG(std::format(
                 "[ArrowAdapter] {} current_domain uint16_t {} to {}",
@@ -1682,8 +1688,9 @@ void ArrowAdapter::set_current_domain_slot(
                 hi));
         } break;
         case TILEDB_INT32: {
-            int32_t lo = ((int32_t*)buff)[3];
-            int32_t hi = ((int32_t*)buff)[4];
+            auto typed_buf = static_cast<const int32_t*>(buff);
+            int32_t lo = typed_buf[3];
+            int32_t hi = typed_buf[4];
             ndrect.set_range<int32_t>(name, lo, hi);
             LOG_DEBUG(std::format(
                 "[ArrowAdapter] {} current_domain int32_t {} to {}",
@@ -1692,8 +1699,9 @@ void ArrowAdapter::set_current_domain_slot(
                 hi));
         } break;
         case TILEDB_UINT32: {
-            uint32_t lo = ((uint32_t*)buff)[3];
-            uint32_t hi = ((uint32_t*)buff)[4];
+            auto typed_buf = static_cast<const uint32_t*>(buff);
+            uint32_t lo = typed_buf[3];
+            uint32_t hi = typed_buf[4];
             ndrect.set_range<uint32_t>(name, lo, hi);
             LOG_DEBUG(std::format(
                 "[ArrowAdapter] {} current_domain uint32_t {} to {}",
@@ -1702,8 +1710,9 @@ void ArrowAdapter::set_current_domain_slot(
                 hi));
         } break;
         case TILEDB_INT64: {
-            int64_t lo = ((int64_t*)buff)[3];
-            int64_t hi = ((int64_t*)buff)[4];
+            auto typed_buf = static_cast<const int64_t*>(buff);
+            int64_t lo = typed_buf[3];
+            int64_t hi = typed_buf[4];
             ndrect.set_range<int64_t>(name, lo, hi);
             LOG_DEBUG(std::format(
                 "[ArrowAdapter] {} current_domain int64_t {} to {}",
@@ -1712,8 +1721,9 @@ void ArrowAdapter::set_current_domain_slot(
                 hi));
         } break;
         case TILEDB_UINT64: {
-            uint64_t lo = ((uint64_t*)buff)[3];
-            uint64_t hi = ((uint64_t*)buff)[4];
+            auto typed_buf = static_cast<const uint64_t*>(buff);
+            uint64_t lo = typed_buf[3];
+            uint64_t hi = typed_buf[4];
             ndrect.set_range<uint64_t>(name, lo, hi);
             LOG_DEBUG(std::format(
                 "[ArrowAdapter] {} current_domain uint64_t {} to {}",
@@ -1722,8 +1732,9 @@ void ArrowAdapter::set_current_domain_slot(
                 hi));
         } break;
         case TILEDB_FLOAT32: {
-            float lo = ((float*)buff)[3];
-            float hi = ((float*)buff)[4];
+            auto typed_buf = static_cast<const float_t*>(buff);
+            float lo = typed_buf[3];
+            float hi = typed_buf[4];
             ndrect.set_range<float>(name, lo, hi);
             LOG_DEBUG(std::format(
                 "[ArrowAdapter] {} current_domain float {} to {}",
@@ -1732,8 +1743,9 @@ void ArrowAdapter::set_current_domain_slot(
                 hi));
         } break;
         case TILEDB_FLOAT64: {
-            double lo = ((double*)buff)[3];
-            double hi = ((double*)buff)[4];
+            auto typed_buf = static_cast<const double_t*>(buff);
+            double lo = typed_buf[3];
+            double hi = typed_buf[4];
             ndrect.set_range<double>(name, lo, hi);
             LOG_DEBUG(std::format(
                 "[ArrowAdapter] {} current_domain double {} to {}",
