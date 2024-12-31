@@ -101,7 +101,7 @@ void load_soma_collection(py::module& m) {
                std::string_view uri,
                std::optional<TimestampRange> timestamp) {
                 try {
-                    SOMAScene::create(uri, ctx, timestamp);
+                    SOMAScene::create(uri, ctx, std::nullopt, timestamp);
                 } catch (const std::exception& e) {
                     TPY_ERROR_LOC(e.what());
                 }
