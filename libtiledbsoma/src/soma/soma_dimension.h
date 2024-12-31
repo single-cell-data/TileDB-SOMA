@@ -46,7 +46,7 @@ namespace tiledbsoma {
 
 using namespace tiledb;
 
-class SOMADimension : public virtual SOMAColumn {
+class SOMADimension : public SOMAColumn {
    public:
     static std::shared_ptr<SOMADimension> create(
         std::shared_ptr<Context> ctx,

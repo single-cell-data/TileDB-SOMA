@@ -295,6 +295,25 @@ void SOMADimension::_set_current_domain_slot(
         case TILEDB_BLOB:
         case TILEDB_GEOM_WKT:
         case TILEDB_GEOM_WKB: {
+            // Here is an intersection of a few oddities:
+            //
+            // * Core domain for string dims must be a nullptr pair; it cannot
+            // be
+            //   anything else.
+            // * TileDB-Py shows this by using an empty-string pair, which we
+            //   imitate.
+            // * Core current domain for string dims must _not_ be a nullptr
+            // pair.
+            // * In TileDB-SOMA, unless the user specifies otherwise, we use ""
+            // for
+            //   min and "\x7f" for max. (We could use "\x7f" but that causes
+            //   display problems in Python.)
+            //
+            // To work with all these factors, if the current domain is the
+            // default
+            // "" to "\7f", return an empty-string pair just as we do for
+            // domain. (There was some pre-1.15 software using "\xff" and it's
+            // super-cheap to check for that as well.)
             auto dom = std::any_cast<std::array<std::string, 2>>(domain[0]);
             if (dom[0] == "" && dom[1] == "") {
                 rectangle.set_range(dimension.name(), "", "\x7f");
