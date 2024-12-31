@@ -45,10 +45,10 @@
 namespace tiledbsoma {
 using namespace tiledb;
 
-class SOMAAttribute : public virtual SOMAColumn {
+class SOMAAttribute : public SOMAColumn {
    public:
     /**
-     * Create a ``SOMAAttribute`` shared pointer from an arrow schema
+     * Create a ``SOMAAttribute`` shared pointer from an Arrow schema
      */
     static std::shared_ptr<SOMAAttribute> create(
         std::shared_ptr<Context> ctx,
