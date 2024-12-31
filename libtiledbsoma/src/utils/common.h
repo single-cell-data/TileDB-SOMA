@@ -42,6 +42,7 @@ namespace tiledbsoma {
 const std::string SOMA_OBJECT_TYPE_KEY = "soma_object_type";
 const std::string ENCODING_VERSION_KEY = "soma_encoding_version";
 const std::string ENCODING_VERSION_VAL = "1.1.0";
+const std::string SOMA_COORDINATE_SPACE_KEY = "soma_coordinate_space";
 const std::string SOMA_GEOMETRY_COLUMN_NAME = "soma_geometry";
 const std::string SOMA_GEOMETRY_DIMENSION_PREFIX = "tiledb__internal__";
 const std::string ARROW_DATATYPE_METADATA_KEY = "dtype";
@@ -54,9 +55,9 @@ using TimestampRange = std::pair<uint64_t, uint64_t>;
 class TileDBSOMAError : public std::runtime_error {
    public:
     explicit TileDBSOMAError(const char* m)
-        : std::runtime_error(m){};
+        : std::runtime_error(m) {};
     explicit TileDBSOMAError(std::string m)
-        : std::runtime_error(m.c_str()){};
+        : std::runtime_error(m.c_str()) {};
 
    public:
     virtual const char* what() const noexcept override {
