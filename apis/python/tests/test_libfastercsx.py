@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import sys
 from typing import Any
 
 import numpy as np
@@ -10,6 +11,8 @@ from scipy import sparse
 
 import tiledbsoma.pytiledbsoma as clib
 import tiledbsoma.pytiledbsoma.fastercsx as fastercsx
+
+NON_NATIVE_BYTEORDER = ">" if sys.byteorder == "little" else "<"
 
 
 @pytest.fixture
@@ -243,6 +246,14 @@ def test_sort_csx_indices_bad_args(
         pbad[1] = -1
         fastercsx.sort_csx_indices(context, pbad, j, d)
 
+    # non-native byteorder should throw
+    with pytest.raises(ValueError):
+        fastercsx.sort_csx_indices(context, p.astype(f"{NON_NATIVE_BYTEORDER}i4"), j, d)
+    with pytest.raises(ValueError):
+        fastercsx.sort_csx_indices(context, p, j.astype(f"{NON_NATIVE_BYTEORDER}i4"), d)
+    with pytest.raises(ValueError):
+        fastercsx.sort_csx_indices(context, p, j, d.astype(f"{NON_NATIVE_BYTEORDER}i4"))
+
 
 def test_compress_coo_bad_args(
     rng: np.random.Generator, context: clib.SOMAContext
@@ -310,6 +321,74 @@ def test_compress_coo_bad_args(
     with pytest.raises(ValueError):
         fastercsx.compress_coo(
             context, sp.shape, (i,), (j,), (d[1:],), indptr, indices, data
+        )
+
+    # non-native byteorder should throw
+    with pytest.raises(ValueError):
+        fastercsx.compress_coo(
+            context,
+            sp.shape,
+            (i.astype(f"{NON_NATIVE_BYTEORDER}i4"),),
+            (j,),
+            (d,),
+            indptr,
+            indices,
+            data,
+        )
+    with pytest.raises(ValueError):
+        fastercsx.compress_coo(
+            context,
+            sp.shape,
+            (i,),
+            (j.astype(f"{NON_NATIVE_BYTEORDER}i4"),),
+            (d,),
+            indptr,
+            indices,
+            data,
+        )
+    with pytest.raises(ValueError):
+        fastercsx.compress_coo(
+            context,
+            sp.shape,
+            (i,),
+            (j,),
+            (d.astype(f"{NON_NATIVE_BYTEORDER}i4"),),
+            indptr,
+            indices,
+            data,
+        )
+    with pytest.raises(ValueError):
+        fastercsx.compress_coo(
+            context,
+            sp.shape,
+            (i,),
+            (j,),
+            (d,),
+            indptr.astype(f"{NON_NATIVE_BYTEORDER}i4"),
+            indices,
+            data,
+        )
+    with pytest.raises(ValueError):
+        fastercsx.compress_coo(
+            context,
+            sp.shape,
+            (i,),
+            (j,),
+            (d,),
+            indptr,
+            indices.astype(f"{NON_NATIVE_BYTEORDER}i4"),
+            data,
+        )
+    with pytest.raises(ValueError):
+        fastercsx.compress_coo(
+            context,
+            sp.shape,
+            (i,),
+            (j,),
+            (d,),
+            indptr,
+            indices,
+            data.astype(f"{NON_NATIVE_BYTEORDER}i4"),
         )
 
 
