@@ -78,8 +78,7 @@ class SOMADimension : public SOMAColumn {
         return soma_column_datatype_t::SOMA_COLUMN_DIMENSION;
     }
 
-    inline std::optional<tiledb_datatype_t> domain_type()
-        const override {
+    inline std::optional<tiledb_datatype_t> domain_type() const override {
         return dimension.type();
     }
 
@@ -87,13 +86,11 @@ class SOMADimension : public SOMAColumn {
         return std::nullopt;
     }
 
-    inline std::optional<std::vector<Dimension>> tiledb_dimensions()
-        override {
+    inline std::optional<std::vector<Dimension>> tiledb_dimensions() override {
         return std::vector({dimension});
     }
 
-    inline std::optional<std::vector<Attribute>> tiledb_attributes()
-        override {
+    inline std::optional<std::vector<Attribute>> tiledb_attributes() override {
         return std::nullopt;
     }
 
@@ -136,8 +133,7 @@ class SOMADimension : public SOMAColumn {
     std::any _core_current_domain_slot(
         const SOMAContext& ctx, Array& array) const override;
 
-    std::any _core_current_domain_slot(
-        NDRectangle& ndrect) const override;
+    std::any _core_current_domain_slot(NDRectangle& ndrect) const override;
 
    private:
     Dimension dimension;
