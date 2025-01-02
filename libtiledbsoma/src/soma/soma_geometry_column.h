@@ -50,7 +50,7 @@ class ArrayBuffers;
 
 using namespace tiledb;
 
-class SOMAGeometryColumn : public virtual SOMAColumn {
+class SOMAGeometryColumn : public SOMAColumn {
    public:
     static std::shared_ptr<SOMAGeometryColumn> create(
         std::shared_ptr<Context> ctx,
