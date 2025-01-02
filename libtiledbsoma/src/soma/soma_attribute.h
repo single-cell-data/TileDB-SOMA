@@ -63,44 +63,41 @@ class SOMAAttribute : public SOMAColumn {
         , enumeration(enumeration) {
     }
 
-    virtual inline std::string name() const override {
+    inline std::string name() const override {
         return attribute.name();
     }
 
-    virtual inline bool isIndexColumn() const override {
+    inline bool isIndexColumn() const override {
         return false;
     }
 
-    virtual inline void select_columns(
+    inline void select_columns(
         const std::unique_ptr<ManagedQuery>& query,
         bool if_not_empty = false) const override {
         query->select_columns(std::vector({attribute.name()}), if_not_empty);
     };
 
-    virtual inline soma_column_datatype_t type() const override {
+    inline soma_column_datatype_t type() const override {
         return soma_column_datatype_t::SOMA_COLUMN_ATTRIBUTE;
     }
 
-    virtual inline std::optional<tiledb_datatype_t> domain_type()
-        const override {
+    inline std::optional<tiledb_datatype_t> domain_type() const override {
         return std::nullopt;
     }
 
-    virtual inline std::optional<tiledb_datatype_t> data_type() const override {
+    inline std::optional<tiledb_datatype_t> data_type() const override {
         return attribute.type();
     }
 
-    virtual inline std::optional<std::vector<Dimension>> tiledb_dimensions()
-        override {
+    inline std::optional<std::vector<Dimension>> tiledb_dimensions() override {
         return std::nullopt;
     }
 
-    virtual inline std::optional<std::vector<Attribute>> tiledb_attributes()
-        override {
+    inline std::optional<std::vector<Attribute>> tiledb_attributes() override {
         return std::vector({attribute});
     }
 
-    virtual inline std::optional<std::vector<Enumeration>> tiledb_enumerations()
+    inline std::optional<std::vector<Enumeration>> tiledb_enumerations()
         override {
         if (!enumeration.has_value()) {
             return std::nullopt;
@@ -109,42 +106,41 @@ class SOMAAttribute : public SOMAColumn {
         return std::vector({enumeration.value()});
     }
 
-    virtual ArrowArray* arrow_domain_slot(
+    ArrowArray* arrow_domain_slot(
         const SOMAContext& ctx,
         Array& array,
         enum Domainish kind) const override;
 
-    virtual ArrowSchema* arrow_schema_slot(
+    ArrowSchema* arrow_schema_slot(
         const SOMAContext& ctx, Array& array) override;
 
    private:
-    virtual void _set_dim_points(
+    void _set_dim_points(
         const std::unique_ptr<ManagedQuery>& query,
         const SOMAContext& ctx,
         const std::any& points) const override;
 
-    virtual void _set_dim_ranges(
+    void _set_dim_ranges(
         const std::unique_ptr<ManagedQuery>& query,
         const SOMAContext& ctx,
         const std::any& ranges) const override;
 
-    virtual void _set_current_domain_slot(
+    void _set_current_domain_slot(
         NDRectangle& rectangle,
         std::span<const std::any> domain) const override;
 
-    virtual std::pair<bool, std::string> _can_set_current_domain_slot(
+    std::pair<bool, std::string> _can_set_current_domain_slot(
         std::optional<NDRectangle>& rectangle,
         std::span<const std::any> new_domain) const override;
 
-    virtual std::any _core_domain_slot() const override;
+    std::any _core_domain_slot() const override;
 
-    virtual std::any _non_empty_domain_slot(Array& array) const override;
+    std::any _non_empty_domain_slot(Array& array) const override;
 
-    virtual std::any _core_current_domain_slot(
+    std::any _core_current_domain_slot(
         const SOMAContext& ctx, Array& array) const override;
 
-    virtual std::any _core_current_domain_slot(
-        NDRectangle& ndrect) const override;
+    std::any _core_current_domain_slot(NDRectangle& ndrect) const override;
 
     Attribute attribute;
     std::optional<Enumeration> enumeration;
