@@ -14,7 +14,7 @@ from __future__ import annotations
 import json
 import warnings
 from pathlib import Path
-from typing import TYPE_CHECKING, List, Sequence, Tuple, Type
+from typing import TYPE_CHECKING, List, Sequence, Tuple, Type, Union
 
 import attrs
 import numpy as np
@@ -91,6 +91,21 @@ def optional_path_validator(instance, attribute, x: Path | None) -> None:  # typ
         raise OSError(f"Path {x} does not exist")
 
 
+def multi_path_converter(
+    value: str | Path | Sequence[str] | Sequence[Path],
+) -> Tuple[Path]:
+    if isinstance(value, Union[str, Path]):
+        return (Path(value),)
+    else:
+        return tuple(Path(_path) for _path in value)
+
+
+def multi_path_validator(instance, attribute, x: Tuple[Path]) -> None:  # type: ignore[no-untyped-def]
+    for _path in x:
+        if not _path.exists():
+            raise OSError(f"Path {_path} does not exist")
+
+
 @attrs.define(kw_only=True)
 class VisiumPaths:
 
@@ -156,7 +171,7 @@ class VisiumPaths:
     def from_spatial_folder(
         cls,
         spatial_dir: str | Path,
-        gene_expression: str | Path,
+        gene_expression: str | Path | Sequence[Path],
         *,
         scale_factors: str | Path | None = None,
         tissue_positions: str | Path | None = None,
@@ -177,14 +192,37 @@ class VisiumPaths:
         """
         spatial_dir = Path(spatial_dir)
 
-        # Attempt to read the Space Ranger version if it is not already set.
-        if version is None:
+        # Check the version number for all gene expression files are the same
+        # and that they match the expected version number (if provided).
+        gene_expression = multi_path_converter(gene_expression)
+        for _path in gene_expression:
             try:
-                version = _read_visium_software_version(gene_expression)
+                _version = _read_visium_software_version(_path)
             except (KeyError, ValueError):
                 raise ValueError(
-                    "Unable to determine Space Ranger vesion from gene expression file."
+                    f"Unable to determine Space Ranger version from gene expression "
+                    f"file {_path}."
                 )
+            if version is None:
+                version = _version
+            elif isinstance(version, int):
+                if _version[0] != version:
+                    raise ValueError(
+                        f"Unexpected version {_version} in gene expression file "
+                        f"{_path}. Expected version {version}."
+                    )
+                version = _version
+            else:
+                if _version != version:
+                    raise ValueError(
+                        f"Unexpected version {_version} in gene expression file "
+                        f"{_path}. Expected version {version}."
+                    )
+        if version is None:
+            raise ValueError(
+                "Unable to determine the Space Ranger version from Visium expression "
+                "paths."
+            )
 
         # Find the tissue positions file path if it wasn't supplied.
         if tissue_positions is None:
@@ -219,7 +257,9 @@ class VisiumPaths:
             version=version,
         )
 
-    gene_expression: Path = attrs.field(converter=Path, validator=path_validator)
+    gene_expression: Tuple[Path] = attrs.field(
+        converter=multi_path_converter, validator=multi_path_validator
+    )
     scale_factors: Path = attrs.field(converter=Path, validator=path_validator)
     tissue_positions: Path = attrs.field(converter=Path, validator=path_validator)
     fullres_image: Path | None = attrs.field(
@@ -422,9 +462,14 @@ def from_visium(
     ) as scale_factors_json:
         scale_factors = json.load(scale_factors_json)
 
+    if len(input_paths.gene_expression) > 1:
+        raise NotImplementedError()  # TODO Implement
+
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        adata = scanpy.read_10x_h5(input_paths.gene_expression)
+        adata = scanpy.read_10x_h5(
+            input_paths.gene_expression[0]
+        )  # TODO Support multi-file import
 
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
