@@ -14,14 +14,7 @@ from __future__ import annotations
 import json
 import warnings
 from pathlib import Path
-from typing import (
-    TYPE_CHECKING,
-    List,
-    Sequence,
-    Tuple,
-    Type,
-    Union,
-)
+from typing import TYPE_CHECKING, List, Sequence, Tuple, Type
 
 import attrs
 import numpy as np
@@ -104,7 +97,7 @@ class VisiumPaths:
     @classmethod
     def from_base_folder(
         cls,
-        base_path: Union[str, Path],
+        base_path: str | Path,
         *,
         gene_expression: str | Path | None = None,
         scale_factors: str | Path | None = None,
@@ -162,9 +155,9 @@ class VisiumPaths:
     @classmethod
     def from_spatial_folder(
         cls,
-        spatial_dir: Union[str, Path],
+        spatial_dir: str | Path,
+        gene_expression: str | Path,
         *,
-        gene_expression: Union[str, Path],
         scale_factors: str | Path | None = None,
         tissue_positions: str | Path | None = None,
         fullres_image: str | Path | None = None,
@@ -270,7 +263,7 @@ class VisiumPaths:
 
 def from_visium(
     experiment_uri: str,
-    input_path: Union[Path, VisiumPaths],
+    input_path: Path | VisiumPaths,
     measurement_name: str,
     scene_name: str,
     *,
@@ -284,7 +277,7 @@ def from_visium(
     image_channel_first: bool = True,
     ingest_mode: IngestMode = "write",
     use_relative_uri: bool | None = None,
-    X_kind: Union[Type[SparseNDArray], Type[DenseNDArray]] = SparseNDArray,
+    X_kind: Type[SparseNDArray] | Type[DenseNDArray] = SparseNDArray,
     registration_mapping: "ExperimentAmbientLabelMapping | None" = None,
     uns_keys: Sequence[str] | None = None,
     additional_metadata: "AdditionalMetadata" = None,
