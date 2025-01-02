@@ -565,6 +565,7 @@ def from_visium(
                     with _write_visium_spots(
                         loc_uri,
                         input_paths.tissue_positions,
+                        input_paths.major_version,
                         pixels_per_spot_diameter,
                         obs_df,
                         obs_id_name,
@@ -679,6 +680,7 @@ def _write_scene_presence_dataframe(
 def _write_visium_spots(
     df_uri: str,
     input_tissue_positions: Path,
+    major_version: int,
     spot_diameter: float,
     obs_df: pd.DataFrame,
     id_column_name: str,
@@ -691,8 +693,12 @@ def _write_visium_spots(
     """Creates, opens, and writes data to a ``PointCloudDataFrame`` with the spot
     locations and metadata. Returns the open dataframe for writing.
     """
+    if major_version == 1:
+        names = [id_column_name, "in_tissue", "array_row", "array_col", "y", "x"]
+    else:
+        names = None
     df = (
-        pd.read_csv(input_tissue_positions)
+        pd.read_csv(input_tissue_positions, names=names)
         .rename(
             columns={
                 "barcode": id_column_name,
