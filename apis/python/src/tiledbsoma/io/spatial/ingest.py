@@ -182,30 +182,22 @@ class VisiumPaths:
             try:
                 version = _read_visium_software_version(gene_expression)
             except (KeyError, ValueError):
-                warnings.warn(
+                raise ValueError(
                     "Unable to determine Space Ranger vesion from gene expression file."
                 )
-        major_version = version[0] if isinstance(version, tuple) else version
 
+        # Find the tissue positions file path if it wasn't supplied.
         if tissue_positions is None:
+            major_version = version[0] if isinstance(version, tuple) else version
             if major_version == 1:
-                possible_file_names = [
-                    "tissue_positions_list.csv",
-                    "tissue_positions.csv",
-                ]
+                possible_file_name = "tissue_positions_list.csv"
             else:
-                possible_file_names = [
-                    "tissue_positions.csv",
-                    "tissue_positions_list.csv",
-                ]
-            for possible in possible_file_names:
-                tissue_positions = spatial_dir / possible
-                if tissue_positions.exists():
-                    break
-            else:
+                possible_file_name = "tissue_positions.csv"
+            tissue_positions = spatial_dir / possible_file_name
+            if not tissue_positions.exists():
                 raise OSError(
-                    f"No tissue position file found in {spatial_dir}. Tried files: "
-                    f"{possible_file_names}. If the file has been renamed it can be "
+                    f"No tissue position file found in {spatial_dir}. Tried file: "
+                    f"{possible_file_name}. If the file has been renamed it can be "
                     f"directly specified using argument `tissue_positions`."
                 )
 
@@ -240,17 +232,7 @@ class VisiumPaths:
     lowres_image: Path | None = attrs.field(
         converter=optional_path_converter, validator=optional_path_validator
     )
-    version: int | Tuple[int, int, int] | None = attrs.field(default=None)
-
-    @version.validator
-    def _validate_version(  # type: ignore[no-untyped-def]
-        self, attribute, value: int | Tuple[int, int, int] | None
-    ) -> None:
-        major_version = value[0] if isinstance(value, tuple) else value
-        if major_version is not None and major_version != 2:
-            warnings.warn(
-                f"Support for Space Ranger version {value} has not been tests."
-            )
+    version: int | Tuple[int, int, int]
 
     @property
     def has_image(self) -> bool:
@@ -259,6 +241,10 @@ class VisiumPaths:
             or self.hires_image is not None
             or self.lowres_image is not None
         )
+
+    @property
+    def major_version(self) -> int:
+        return self.version[0] if isinstance(self.version, tuple) else self.version
 
 
 def from_visium(
@@ -415,6 +401,20 @@ def from_visium(
         if isinstance(input_path, VisiumPaths)
         else VisiumPaths.from_base_folder(input_path, use_raw_counts=use_raw_counts)
     )
+
+    # Check the version.
+    major_version = (
+        input_paths.version[0]
+        if isinstance(input_paths.version, tuple)
+        else input_paths.version
+    )
+    if major_version is None:
+        raise ValueError("Unable to determine version number of Visium input")
+    if major_version not in {1, 2, 3}:
+        raise ValueError(
+            f"Visium version {input_paths.version} is not supported. Expected major "
+            f"version 1, 2, or 3."
+        )
 
     # Get JSON scale factors.
     with open(
