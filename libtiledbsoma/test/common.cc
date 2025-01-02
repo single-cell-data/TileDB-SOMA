@@ -35,13 +35,6 @@
 
 namespace helper {
 
-// This non-obvious number is:
-// * Something that fits into signed 32-bit integer for R-friendliness;
-// * Is a comfortable tile-extent distance away from 2^31-1 for default
-//   core tile extent. (Using 2^31-1 exactly would result in a core
-//   array-creation error.)
-const int CORE_DOMAIN_MAX = 2147483646;
-
 static std::unique_ptr<ArrowArray> _create_index_cols_info_array(
     const std::vector<DimInfo>& dim_infos);
 
