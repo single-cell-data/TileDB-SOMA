@@ -113,6 +113,8 @@ endif()
 if(APPLE)
   set(CMAKE_MACOSX_RPATH ON)
 
+  set(CMAKE_OSX_DEPLOYMENT_TARGET 11)
+
   # Don't allow macOS .frameworks to be used for dependencies.
   set(CMAKE_FIND_FRAMEWORK NEVER)
 endif()
