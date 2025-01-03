@@ -166,8 +166,34 @@ struct PlatformConfig {
     /* Set the validity filters. */
     std::string validity_filters = "";
 
-    /* Set whether the TileDB Array allows duplicate values */
+    /* Set whether the TileDB Array allows duplicate values.
+     *
+     * This values only affects `SparseNDArray`, `DataFrame`, and
+     * `PointCloudDataFrame` types. It can be over-ridden by the type specific
+     * values `sparse_nd_array_allows_duplicates`,
+     * `dataframe_allows_duplicates`, and
+     * `point_cloud_dataframe_allows_duplicates`.
+     *
+     * Duplicates are always enabled for the `geometry_dataframe`.
+     *
+     * Duplicates are always disabled for `DenseNDArray` and `MultiscaleImage`.
+     */
     bool allows_duplicates = false;
+
+    /* Set whether the Sparse TileDB Array allows duplicate values. Overrides
+     * `allows_duplicates` for ``SparseNDArray`` classes.
+     */
+    std::optional<bool> sparse_nd_array_allows_duplicates = std::nullopt;
+
+    /* Set whether the Sparse TileDB Array allows duplicate values. Overrides
+     * `allows_duplicates` for ``DataFrame`` classes.
+     */
+    std::optional<bool> dataframe_allows_duplicates = std::nullopt;
+
+    /* Set whether the Sparse TileDB Array allows duplicate values. Overrides
+     * `allows_duplicates` for ``PointCloudDataFrame`` classes.
+     */
+    std::optional<bool> point_cloud_dataframe_allows_duplicates = std::nullopt;
 
     /* Set the tile order as "row", "row-major", "col", or "col-major" */
     std::optional<std::string> tile_order = std::nullopt;

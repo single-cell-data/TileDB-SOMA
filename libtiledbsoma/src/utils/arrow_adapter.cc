@@ -889,23 +889,47 @@ ArrowAdapter::tiledb_schema_from_arrow_schema(
 
     schema.set_capacity(platform_config.capacity);
 
+    // Set offset filters.
     if (!platform_config.offsets_filters.empty()) {
         schema.set_offsets_filter_list(ArrowAdapter::_create_filter_list(
             platform_config.offsets_filters, ctx));
     }
 
+    // Set validity filters.
     if (!platform_config.validity_filters.empty()) {
         schema.set_validity_filter_list(ArrowAdapter::_create_filter_list(
             platform_config.validity_filters, ctx));
     }
 
-    schema.set_allows_dups(platform_config.allows_duplicates);
+    // Set allows duplicates.
+    if (soma_type == "SOMASparseNDArray") {
+        schema.set_allows_dups(
+            platform_config.sparse_nd_array_allows_duplicates.value_or(
+                platform_config.allows_duplicates));
+    } else if (soma_type == "SOMADenseNDArray") {
+        schema.set_allows_dups(false);
+    } else if (soma_type == "SOMADataFrame") {
+        schema.set_allows_dups(
+            platform_config.dataframe_allows_duplicates.value_or(
+                platform_config.allows_duplicates));
+    } else if (soma_type == "SOMAPointCloudDataFrame") {
+        schema.set_allows_dups(
+            platform_config.point_cloud_dataframe_allows_duplicates.value_or(
+                platform_config.allows_duplicates));
+    } else if (soma_type == "SOMAGeometryDataFrame") {
+        schema.set_allows_dups(true);
+    } else {
+        throw TileDBSOMAError(std::format(
+            "[ArrowAdapter::tiledb_schema_from_arrow_schema: internal coding "
+            "error: Unrecognized SOMA type '{}'.",
+            soma_type));
+    }
 
+    // Set tile and cell order.
     if (platform_config.tile_order) {
         schema.set_tile_order(
             ArrowAdapter::_get_order(*platform_config.tile_order));
     }
-
     if (platform_config.cell_order) {
         schema.set_cell_order(
             ArrowAdapter::_get_order(*platform_config.cell_order));
