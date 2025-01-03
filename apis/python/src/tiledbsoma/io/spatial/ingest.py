@@ -14,14 +14,7 @@ from __future__ import annotations
 import json
 import warnings
 from pathlib import Path
-from typing import (
-    TYPE_CHECKING,
-    List,
-    Sequence,
-    Tuple,
-    Type,
-    Union,
-)
+from typing import TYPE_CHECKING, List, Sequence, Tuple, Type
 
 import attrs
 import numpy as np
@@ -104,7 +97,7 @@ class VisiumPaths:
     @classmethod
     def from_base_folder(
         cls,
-        base_path: Union[str, Path],
+        base_path: str | Path,
         *,
         gene_expression: str | Path | None = None,
         scale_factors: str | Path | None = None,
@@ -162,9 +155,9 @@ class VisiumPaths:
     @classmethod
     def from_spatial_folder(
         cls,
-        spatial_dir: Union[str, Path],
+        spatial_dir: str | Path,
+        gene_expression: str | Path,
         *,
-        gene_expression: Union[str, Path],
         scale_factors: str | Path | None = None,
         tissue_positions: str | Path | None = None,
         fullres_image: str | Path | None = None,
@@ -189,30 +182,22 @@ class VisiumPaths:
             try:
                 version = _read_visium_software_version(gene_expression)
             except (KeyError, ValueError):
-                warnings.warn(
+                raise ValueError(
                     "Unable to determine Space Ranger vesion from gene expression file."
                 )
-        major_version = version[0] if isinstance(version, tuple) else version
 
+        # Find the tissue positions file path if it wasn't supplied.
         if tissue_positions is None:
+            major_version = version[0] if isinstance(version, tuple) else version
             if major_version == 1:
-                possible_file_names = [
-                    "tissue_positions_list.csv",
-                    "tissue_positions.csv",
-                ]
+                possible_file_name = "tissue_positions_list.csv"
             else:
-                possible_file_names = [
-                    "tissue_positions.csv",
-                    "tissue_positions_list.csv",
-                ]
-            for possible in possible_file_names:
-                tissue_positions = spatial_dir / possible
-                if tissue_positions.exists():
-                    break
-            else:
+                possible_file_name = "tissue_positions.csv"
+            tissue_positions = spatial_dir / possible_file_name
+            if not tissue_positions.exists():
                 raise OSError(
-                    f"No tissue position file found in {spatial_dir}. Tried files: "
-                    f"{possible_file_names}. If the file has been renamed it can be "
+                    f"No tissue position file found in {spatial_dir}. Tried file: "
+                    f"{possible_file_name}. If the file has been renamed it can be "
                     f"directly specified using argument `tissue_positions`."
                 )
 
@@ -247,17 +232,7 @@ class VisiumPaths:
     lowres_image: Path | None = attrs.field(
         converter=optional_path_converter, validator=optional_path_validator
     )
-    version: int | Tuple[int, int, int] | None = attrs.field(default=None)
-
-    @version.validator
-    def _validate_version(  # type: ignore[no-untyped-def]
-        self, attribute, value: int | Tuple[int, int, int] | None
-    ) -> None:
-        major_version = value[0] if isinstance(value, tuple) else value
-        if major_version is not None and major_version != 2:
-            warnings.warn(
-                f"Support for Space Ranger version {value} has not been tests."
-            )
+    version: int | Tuple[int, int, int]
 
     @property
     def has_image(self) -> bool:
@@ -267,10 +242,14 @@ class VisiumPaths:
             or self.lowres_image is not None
         )
 
+    @property
+    def major_version(self) -> int:
+        return self.version[0] if isinstance(self.version, tuple) else self.version
+
 
 def from_visium(
     experiment_uri: str,
-    input_path: Union[Path, VisiumPaths],
+    input_path: Path | VisiumPaths,
     measurement_name: str,
     scene_name: str,
     *,
@@ -284,7 +263,7 @@ def from_visium(
     image_channel_first: bool = True,
     ingest_mode: IngestMode = "write",
     use_relative_uri: bool | None = None,
-    X_kind: Union[Type[SparseNDArray], Type[DenseNDArray]] = SparseNDArray,
+    X_kind: Type[SparseNDArray] | Type[DenseNDArray] = SparseNDArray,
     registration_mapping: "ExperimentAmbientLabelMapping | None" = None,
     uns_keys: Sequence[str] | None = None,
     additional_metadata: "AdditionalMetadata" = None,
@@ -422,6 +401,20 @@ def from_visium(
         if isinstance(input_path, VisiumPaths)
         else VisiumPaths.from_base_folder(input_path, use_raw_counts=use_raw_counts)
     )
+
+    # Check the version.
+    major_version = (
+        input_paths.version[0]
+        if isinstance(input_paths.version, tuple)
+        else input_paths.version
+    )
+    if major_version is None:
+        raise ValueError("Unable to determine version number of Visium input")
+    if major_version not in {1, 2, 3}:
+        raise ValueError(
+            f"Visium version {input_paths.version} is not supported. Expected major "
+            f"version 1, 2, or 3."
+        )
 
     # Get JSON scale factors.
     with open(
@@ -572,6 +565,7 @@ def from_visium(
                     with _write_visium_spots(
                         loc_uri,
                         input_paths.tissue_positions,
+                        input_paths.major_version,
                         pixels_per_spot_diameter,
                         obs_df,
                         obs_id_name,
@@ -686,6 +680,7 @@ def _write_scene_presence_dataframe(
 def _write_visium_spots(
     df_uri: str,
     input_tissue_positions: Path,
+    major_version: int,
     spot_diameter: float,
     obs_df: pd.DataFrame,
     id_column_name: str,
@@ -698,8 +693,12 @@ def _write_visium_spots(
     """Creates, opens, and writes data to a ``PointCloudDataFrame`` with the spot
     locations and metadata. Returns the open dataframe for writing.
     """
+    if major_version == 1:
+        names = [id_column_name, "in_tissue", "array_row", "array_col", "y", "x"]
+    else:
+        names = None
     df = (
-        pd.read_csv(input_tissue_positions)
+        pd.read_csv(input_tissue_positions, names=names)
         .rename(
             columns={
                 "barcode": id_column_name,
