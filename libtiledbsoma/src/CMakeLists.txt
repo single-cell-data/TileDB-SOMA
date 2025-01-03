@@ -127,13 +127,6 @@ target_include_directories(TILEDB_SOMA_GEOMETRY_OBJECTS
   PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}/vendor
-  ${CMAKE_CURRENT_SOURCE_DIR}/soma
-  ${CMAKE_CURRENT_SOURCE_DIR}/external/khash
-  ${CMAKE_CURRENT_SOURCE_DIR}/external/include
-  ${CMAKE_CURRENT_SOURCE_DIR}/external/include/nanoarrow
-  $<TARGET_PROPERTY:TileDB::tiledb_shared,INTERFACE_INCLUDE_DIRECTORIES>
-  $<TARGET_PROPERTY:spdlog::spdlog,INTERFACE_INCLUDE_DIRECTORIES>
-  ${pybind11_INCLUDE_DIRS}
 )
 
 # ###########################################################

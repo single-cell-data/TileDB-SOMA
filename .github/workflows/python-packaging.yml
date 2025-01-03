@@ -112,7 +112,7 @@ jobs:
           CIBW_ENVIRONMENT_LINUX : CC=/opt/rh/gcc-toolset-13/root/usr/bin/gcc CXX=/opt/rh/gcc-toolset-13/root/usr/bin/g++
           CIBW_TEST_SKIP: "*_arm64"
           CMAKE_OSX_ARCHITECTURES: ${{ matrix.cibw_archs_macos }}
-          MACOSX_DEPLOYMENT_TARGET: "11.0"
+          MACOSX_DEPLOYMENT_TARGET: "13.3"
       - name: Upload wheel-${{ matrix.wheel-name }}-${{ matrix.python-version }} to GitHub Actions storage
         uses: actions/upload-artifact@v4
         with:
