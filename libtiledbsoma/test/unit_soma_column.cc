@@ -27,13 +27,16 @@
  *
  * @section DESCRIPTION
  *
- * This file manages unit tests for implementation of SOMAColumn class. This is
- * temparary and to be removed once SOMAColumn is fully integrated.
+ * This file manages unit tests for implementation of SOMAColumn class
  */
 
 #include <format>
 #include <tiledb/tiledb>
 #include <tiledbsoma/tiledbsoma>
+#include "../src/soma/soma_attribute.h"
+#include "../src/soma/soma_column.h"
+#include "../src/soma/soma_dimension.h"
+#include "../src/soma/soma_geometry_column.h"
 #include "common.h"
 
 const int64_t SOMA_JOINID_DIM_MAX = 99;
@@ -285,7 +288,7 @@ TEST_CASE("SOMAColumn: SOMADimension") {
 TEST_CASE_METHOD(
     VariouslyIndexedDataFrameFixture,
     "SOMAColumn: query variant-indexed dataframe dim-str-u32 attr-sjid",
-    "[SOMADataFrame]") {
+    "[SOMAColumn]") {
     auto specify_domain = GENERATE(false, true);
     SECTION(std::format("- specify_domain={}", specify_domain)) {
         std::string suffix1 = specify_domain ? "true" : "false";
@@ -312,11 +315,6 @@ TEST_CASE_METHOD(
         for (auto dimension : sdf->tiledb_schema()->domain().dimensions()) {
             columns.push_back(
                 std::make_shared<SOMADimension>(SOMADimension(dimension)));
-        }
-
-        for (size_t i = 0; i < sdf->tiledb_schema()->attribute_num(); ++i) {
-            columns.push_back(std::make_shared<SOMAAttribute>(
-                SOMAAttribute(sdf->tiledb_schema()->attribute(i))));
         }
 
         CurrentDomain current_domain = sdf->get_current_domain_for_test();
