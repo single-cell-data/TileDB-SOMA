@@ -10,73 +10,67 @@ import tiledbsoma as soma
 from ._util import assert_transform_equal
 
 
-def create_and_populate_df(uri: str) -> soma.DataFrame:
-    obs_arrow_schema = pa.schema(
-        [
-            ("foo", pa.int32()),
-            ("bar", pa.float64()),
-            ("baz", pa.large_string()),
-        ]
-    )
-
-    with soma.DataFrame.create(uri, schema=obs_arrow_schema, domain=[[0, 9]]) as obs:
-        pydict = {}
-        pydict["soma_joinid"] = [0, 1, 2, 3, 4]
-        pydict["foo"] = [10, 20, 30, 40, 50]
-        pydict["bar"] = [4.1, 5.2, 6.3, 7.4, 8.5]
-        pydict["baz"] = ["apple", "ball", "cat", "dog", "egg"]
-        rb = pa.Table.from_pydict(pydict)
-        obs.write(rb)
-
-    return soma.DataFrame.open(uri)
-
-
 def test_scene_basic(tmp_path):
-    baseuri = tmp_path.as_uri()
+    uri = f"{tmp_path.as_uri()}/scene_basic"
 
-    with soma.Scene.create(baseuri) as scene:
-        assert scene.uri == baseuri
+    with soma.Scene.create(uri) as scene:
+        assert scene.uri == uri
 
+        # Test `obsl`, `varl`, and `img` throw type errors for invalid collection types.
         with pytest.raises(TypeError):
-            scene["obsl"] = soma.Experiment.create(urljoin(baseuri, "obs"))
-        obsl_uri = urljoin(baseuri, "obsl")
-        scene["obsl"] = soma.Collection.create(obsl_uri)
-        scene["obsl"]["df"] = create_and_populate_df(urljoin(obsl_uri, "df"))
-
+            scene["obsl"] = soma.Measurement.create(f"{uri}/obsl_")
         with pytest.raises(TypeError):
-            scene["varl"] = soma.Measurement.create(urljoin(baseuri, "var"))
-        varl_uri = urljoin(baseuri, "varl")
-        scene["varl"] = soma.Collection.create(varl_uri)
-        scene["varl"]["sparse"] = soma.SparseNDArray.create(
-            urljoin(varl_uri, "sparse"), type=pa.int64(), shape=(10,)
-        )
-        scene["varl"]["dense"] = soma.DenseNDArray.create(
-            urljoin(varl_uri, "dense"), type=pa.int64(), shape=(10,)
-        )
+            scene["varl"] = soma.Measurement.create(f"{uri}/varl_")
+        with pytest.raises(TypeError):
+            scene["img"] = soma.Measurement.create(f"{uri}/img_")
+        with pytest.raises(TypeError):
+            scene.add_new_collection("obsl", soma.Experiment)
+        with pytest.raises(TypeError):
+            scene.add_new_collection("varl", soma.Experiment)
+        with pytest.raises(TypeError):
+            scene.add_new_collection("img", soma.Experiment)
 
-        img_uri = urljoin(baseuri, "img")
-        scene["img"] = soma.Collection.create(img_uri)
-        scene["img"]["col"] = soma.Collection.create(urljoin(img_uri, "col"))
+        # Add obsl.
+        with scene.add_new_collection("obsl") as obsl:
+            obsl.add_new_dataframe(
+                "df",
+                schema=pa.schema(
+                    [
+                        ("foo", pa.int32()),
+                        ("bar", pa.float64()),
+                        ("baz", pa.large_string()),
+                    ]
+                ),
+                domain=[[0, 9]],
+            )
 
-    assert not soma.Collection.exists(baseuri)
-    assert soma.Scene.exists(baseuri)
-    assert soma.Collection.exists(obsl_uri)
-    assert soma.Collection.exists(varl_uri)
-    assert soma.Collection.exists(img_uri)
-    assert soma.Measurement.exists(urljoin(baseuri, "var"))
-    assert soma.SparseNDArray.exists(urljoin(varl_uri, "sparse"))
-    assert soma.DenseNDArray.exists(urljoin(varl_uri, "dense"))
-    assert soma.Collection.exists(urljoin(img_uri, "col"))
+        # Add varl.
+        with scene.add_new_collection("varl") as varl:
+            varl.add_new_collection("col")
 
-    with soma.Scene.open(baseuri) as scene:
+        # Add img
+        with scene.add_new_collection("img") as img:
+            img.add_new_sparse_ndarray("sparse", type=pa.int64(), shape=(10,))
+            img.add_new_dense_ndarray("dense", type=pa.int64(), shape=(10,))
+
+    assert not soma.Collection.exists(uri)
+    assert soma.Scene.exists(uri)
+    assert soma.Collection.exists(f"{uri}/obsl")
+    assert soma.DataFrame.exists(f"{uri}/obsl/df")
+    assert soma.Collection.exists(f"{uri}/varl")
+    assert soma.Collection.exists(f"{uri}/varl/col")
+    assert soma.Collection.exists(f"{uri}/img")
+    assert soma.SparseNDArray.exists(f"{uri}/img/sparse")
+    assert soma.DenseNDArray.exists(f"{uri}/img/dense")
+
+    with soma.Scene.open(uri) as scene:
         assert scene is not None
         assert scene.obsl is not None
         assert scene.obsl["df"] is not None
         assert scene.varl is not None
-        assert scene.varl["sparse"] is not None
-        assert scene.varl["dense"] is not None
-        assert scene.img is not None
-        assert scene.img["col"] is not None
+        assert scene.varl["col"] is not None
+        assert scene.img["sparse"] is not None
+        assert scene.img["dense"] is not None
 
         assert len(scene) == 3
         assert scene.soma_type == "SOMAScene"
@@ -86,54 +80,41 @@ def test_scene_basic(tmp_path):
         assert scene.obsl["df"] == scene["obsl"]["df"]
 
         assert scene.varl == scene["varl"]
-        assert len(scene.varl) == 2
-        assert scene.varl["sparse"] == scene["varl"]["sparse"]
-        assert scene.varl["dense"] == scene["varl"]["dense"]
+        assert len(scene.varl) == 1
+        assert scene.varl["col"] == scene["varl"]["col"]
 
         assert scene.img == scene["img"]
-        assert len(scene.img) == 1
-        assert scene.img["col"] == scene["img"]["col"]
+        assert len(scene.img) == 2
+        assert scene.img["sparse"] == scene["img"]["sparse"]
+        assert scene.img["dense"] == scene["img"]["dense"]
 
     with pytest.raises(soma.DoesNotExistError):
         soma.Scene.open("bad uri")
 
     # Ensure it cannot be opened by another type
     with pytest.raises(soma.SOMAError):
-        soma.DataFrame.open(baseuri)
+        soma.DataFrame.open(uri)
 
     with pytest.raises(soma.SOMAError):
-        soma.SparseNDArray.open(baseuri)
+        soma.SparseNDArray.open(uri)
 
     with pytest.raises(soma.SOMAError):
-        soma.DenseNDArray.open(baseuri)
+        soma.DenseNDArray.open(uri)
 
     with pytest.raises(soma.SOMAError):
-        soma.PointCloudDataFrame.open(baseuri)
+        soma.PointCloudDataFrame.open(uri)
 
     with pytest.raises(soma.SOMAError):
-        soma.Collection.open(baseuri)
+        soma.Collection.open(uri)
 
     with pytest.raises(soma.SOMAError):
-        soma.Experiment.open(baseuri)
+        soma.Experiment.open(uri)
 
     with pytest.raises(soma.SOMAError):
-        soma.Measurement.open(baseuri)
+        soma.Measurement.open(uri)
 
     with pytest.raises(soma.SOMAError):
-        soma.MultiscaleImage.open(baseuri)
-
-
-def test_measurement_with_var_scene(tmp_path):
-    baseuri = tmp_path.as_uri()
-    obs_scene_uri = urljoin(baseuri, "obs_scene")
-
-    with soma.Measurement.create(baseuri) as mea:
-        with pytest.raises(TypeError):
-            mea["obs_scene"] = soma.SparseNDArray.create(obs_scene_uri)
-        mea["obs_scene"] = create_and_populate_df(obs_scene_uri)
-
-    assert soma.Measurement.exists(baseuri)
-    assert soma.DataFrame.exists(obs_scene_uri)
+        soma.MultiscaleImage.open(uri)
 
 
 def test_scene_coord_space_at_create(tmp_path):
