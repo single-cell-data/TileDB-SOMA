@@ -490,7 +490,7 @@ class ManagedQuery:
             ctx = clib_handle.context()
 
         object.__setattr__(
-            self, "_handle", clib.ManagedQuery(self._array._handle._handle, ctx)
+            self, "_handle", clib.ManagedQuery(clib_handle, ctx)
         )
 
 
