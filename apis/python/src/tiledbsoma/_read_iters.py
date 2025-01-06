@@ -489,9 +489,7 @@ class ManagedQuery:
         else:
             ctx = clib_handle.context()
 
-        object.__setattr__(
-            self, "_handle", clib.ManagedQuery(clib_handle, ctx)
-        )
+        object.__setattr__(self, "_handle", clib.ManagedQuery(clib_handle, ctx))
 
 
 class SparseTensorReadIterBase(somacore.ReadIter[_RT], metaclass=abc.ABCMeta):
