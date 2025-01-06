@@ -23,6 +23,7 @@ from typing import (
     cast,
 )
 
+import attrs
 import numpy as np
 import numpy.typing as npt
 import pyarrow as pa
@@ -470,6 +471,27 @@ class BlockwiseScipyReadIter(BlockwiseReadIterBase[BlockwiseScipyReadIterResult]
             yield sp, indices
 
 
+@attrs.define(frozen=True)
+class ManagedQuery:
+    """Keep the lifetime of the SOMAArray tethered to ManagedQuery."""
+
+    _array: SOMAArray
+    _platform_config: options.PlatformConfig | None
+    _handle: clib.ManagedQuery = attrs.field(init=False)
+
+    def __attrs_post_init__(self) -> None:
+        clib_handle = self._array._handle._handle
+
+        if self._platform_config is not None:
+            cfg = clib_handle.context().config()
+            cfg.update(self._platform_config)
+            ctx = clib.SOMAContext(cfg)
+        else:
+            ctx = clib_handle.context()
+
+        object.__setattr__(self, "_handle", clib.ManagedQuery(clib_handle, ctx))
+
+
 class SparseTensorReadIterBase(somacore.ReadIter[_RT], metaclass=abc.ABCMeta):
     """Private implementation class"""
 
@@ -487,27 +509,18 @@ class SparseTensorReadIterBase(somacore.ReadIter[_RT], metaclass=abc.ABCMeta):
         self.result_order = result_order
         self.platform_config = platform_config
 
-        clib_handle = array._handle._handle
+        self.mq = ManagedQuery(array, platform_config)
 
-        if platform_config is not None:
-            cfg = clib_handle.context().config()
-            cfg.update(platform_config)
-            ctx = clib.SOMAContext(cfg)
-        else:
-            ctx = clib_handle.context()
+        self.mq._handle.set_layout(result_order)
 
-        self.mq = clib.ManagedQuery(clib_handle, ctx)
-
-        self.mq.set_layout(result_order)
-
-        _util._set_coords(self.mq, clib_handle, coords)
+        _util._set_coords(self.mq, coords)
 
     @abc.abstractmethod
     def _from_table(self, arrow_table: pa.Table) -> _RT:
         raise NotImplementedError()
 
     def __next__(self) -> _RT:
-        return self._from_table(self.mq.next())
+        return self._from_table(self.mq._handle.next())
 
     def concat(self) -> _RT:
         """Returns all the requested data in a single operation.
@@ -556,27 +569,22 @@ class ArrowTableRead(Iterator[pa.Table]):
     ):
         clib_handle = array._handle._handle
 
-        if platform_config is not None:
-            cfg = clib_handle.context().config()
-            cfg.update(platform_config)
-            ctx = clib.SOMAContext(cfg)
-        else:
-            ctx = clib_handle.context()
+        self.mq = ManagedQuery(array, platform_config)
 
-        self.mq = clib.ManagedQuery(clib_handle, ctx)
-
-        self.mq.set_layout(result_order)
+        self.mq._handle.set_layout(result_order)
 
         if column_names is not None:
-            self.mq.select_columns(list(column_names))
+            self.mq._handle.select_columns(list(column_names))
 
         if value_filter is not None:
-            self.mq.set_condition(QueryCondition(value_filter), clib_handle.schema)
+            self.mq._handle.set_condition(
+                QueryCondition(value_filter), clib_handle.schema
+            )
 
-        _util._set_coords(self.mq, clib_handle, coords)
+        _util._set_coords(self.mq, coords)
 
     def __next__(self) -> pa.Table:
-        return self.mq.next()
+        return self.mq._handle.next()
 
 
 def _coords_strider(

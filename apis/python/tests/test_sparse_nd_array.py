@@ -1952,3 +1952,30 @@ def test_pass_configs(tmp_path):
                 }
             ).tables()
         )
+
+
+def test_iter(tmp_path: pathlib.Path):
+    arrow_tensor = create_random_tensor("table", (1,), np.float32(), density=1)
+
+    with soma.SparseNDArray.create(
+        tmp_path.as_uri(), type=pa.float64(), shape=(1,)
+    ) as write_arr:
+        write_arr.write(arrow_tensor)
+
+    # Verify that the SOMAArray stays open as long as the ManagedQuery
+    # (i.e., `next`) is still active
+    a = soma.open(tmp_path.as_uri(), mode="r").read().tables()
+    assert next(a)
+    with pytest.raises(StopIteration):
+        next(a)
+
+    # Open two instances of the same array. Iterating through one should not
+    # affect the other
+    a = soma.open(tmp_path.as_uri(), mode="r").read().tables()
+    b = soma.open(tmp_path.as_uri(), mode="r").read().tables()
+    assert next(a)
+    assert next(b)
+    with pytest.raises(StopIteration):
+        next(a)
+    with pytest.raises(StopIteration):
+        next(b)

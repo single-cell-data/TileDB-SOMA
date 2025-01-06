@@ -22,7 +22,7 @@ from . import pytiledbsoma as clib
 from ._arrow_types import pyarrow_to_carrow_type
 from ._common_nd_array import NDArray
 from ._exception import SOMAError, map_exception_for_create
-from ._read_iters import TableReadIter
+from ._read_iters import ManagedQuery, TableReadIter
 from ._tdb_handles import DenseNDArrayWrapper
 from ._types import OpenTimestamp, Slice
 from ._util import dense_indices_to_shape
@@ -313,11 +313,11 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
                 input = np.ascontiguousarray(input)
             order = clib.ResultOrder.rowmajor
 
-        mq = clib.ManagedQuery(clib_handle, clib_handle.context())
-        mq.set_layout(order)
-        _util._set_coords(mq, clib_handle, new_coords)
-        mq.set_soma_data(input)
-        mq.submit_write()
+        mq = ManagedQuery(self, platform_config)
+        mq._handle.set_layout(order)
+        _util._set_coords(mq, new_coords)
+        mq._handle.set_soma_data(input)
+        mq._handle.submit_write()
 
         tiledb_write_options = TileDBWriteOptions.from_platform_config(platform_config)
         if tiledb_write_options.consolidate_and_vacuum:
