@@ -13,6 +13,7 @@ import urllib.parse
 from concurrent.futures import Future
 from itertools import zip_longest
 from typing import (
+    TYPE_CHECKING,
     Any,
     Dict,
     List,
@@ -37,6 +38,9 @@ from .options._tiledb_create_write_options import (
     _ColumnConfig,
     _DictFilterSpec,
 )
+
+if TYPE_CHECKING:
+    from ._read_iters import ManagedQuery
 
 _JSONFilter = Union[str, Dict[str, Union[str, Union[int, float]]]]
 _JSONFilterList = Union[str, List[_JSONFilter]]
@@ -465,40 +469,36 @@ def _cast_domainish(domainish: List[Any]) -> Tuple[Tuple[object, object], ...]:
     return tuple(result)
 
 
-def _set_coords(
-    mq: clib.ManagedQuery, sarr: clib.SOMAArray, coords: options.SparseNDCoords
-) -> None:
+def _set_coords(mq: ManagedQuery, coords: options.SparseNDCoords) -> None:
     if not is_nonstringy_sequence(coords):
         raise TypeError(
             f"coords type {type(coords)} must be a regular sequence,"
             " not str or bytes"
         )
 
-    if len(coords) > len(sarr.dimension_names):
+    if len(coords) > len(mq._array._handle._handle.dimension_names):
         raise ValueError(
             f"coords ({len(coords)} elements) must be shorter than ndim"
-            f" ({len(sarr.dimension_names)})"
+            f" ({len(mq._array._handle._handle.dimension_names)})"
         )
 
     for i, coord in enumerate(coords):
-        _set_coord(i, mq, sarr, coord)
+        _set_coord(i, mq, coord)
 
 
-def _set_coord(
-    dim_idx: int, mq: clib.ManagedQuery, sarr: clib.SOMAArray, coord: object
-) -> None:
+def _set_coord(dim_idx: int, mq: ManagedQuery, coord: object) -> None:
     if coord is None:
         return
 
-    dim = sarr.schema.field(dim_idx)
-    dom = _cast_domainish(sarr.domain())[dim_idx]
+    dim = mq._array._handle._handle.schema.field(dim_idx)
+    dom = _cast_domainish(mq._array._handle._handle.domain())[dim_idx]
 
     if isinstance(coord, (str, bytes)):
-        mq.set_dim_points_string_or_bytes(dim.name, [coord])
+        mq._handle.set_dim_points_string_or_bytes(dim.name, [coord])
         return
 
     if isinstance(coord, (pa.Array, pa.ChunkedArray)):
-        mq.set_dim_points_arrow(dim.name, coord)
+        mq._handle.set_dim_points_arrow(dim.name, coord)
         return
 
     if isinstance(coord, (Sequence, np.ndarray)):
@@ -506,7 +506,7 @@ def _set_coord(
         return
 
     if isinstance(coord, int):
-        mq.set_dim_points_int64(dim.name, [coord])
+        mq._handle.set_dim_points_int64(dim.name, [coord])
         return
 
     # Note: slice(None, None) matches the is_slice_of part, unless we also check
@@ -521,11 +521,11 @@ def _set_coord(
         if coord.stop is None:
             # There's no way to specify "to infinity" for strings.
             # We have to get the nonempty domain and use that as the end.\
-            ned = _cast_domainish(sarr.non_empty_domain())
+            ned = _cast_domainish(mq._array._handle._handle.non_empty_domain())
             _, stop = ned[dim_idx]
         else:
             stop = coord.stop
-        mq.set_dim_ranges_string_or_bytes(dim.name, [(start, stop)])
+        mq._handle.set_dim_ranges_string_or_bytes(dim.name, [(start, stop)])
         return
 
     # Note: slice(None, None) matches the is_slice_of part, unless we also check
@@ -548,7 +548,7 @@ def _set_coord(
         else:
             istop = ts_dom[1].as_py()
 
-        mq.set_dim_ranges_int64(dim.name, [(istart, istop)])
+        mq._handle.set_dim_ranges_int64(dim.name, [(istart, istop)])
         return
 
     if isinstance(coord, slice):
@@ -562,7 +562,7 @@ def _set_coord(
 
 
 def _set_coord_by_py_seq_or_np_array(
-    mq: clib.ManagedQuery, dim: pa.Field, coord: object
+    mq: ManagedQuery, dim: pa.Field, coord: object
 ) -> None:
     if isinstance(coord, np.ndarray):
         if coord.ndim != 1:
@@ -571,7 +571,7 @@ def _set_coord_by_py_seq_or_np_array(
             )
 
     try:
-        set_dim_points = getattr(mq, f"set_dim_points_{dim.type}")
+        set_dim_points = getattr(mq._handle, f"set_dim_points_{dim.type}")
     except AttributeError:
         # We have to handle this type specially below
         pass
@@ -580,7 +580,7 @@ def _set_coord_by_py_seq_or_np_array(
         return
 
     if pa_types_is_string_or_bytes(dim.type):
-        mq.set_dim_points_string_or_bytes(dim.name, coord)
+        mq._handle.set_dim_points_string_or_bytes(dim.name, coord)
         return
 
     if pa.types.is_timestamp(dim.type):
@@ -591,14 +591,14 @@ def _set_coord_by_py_seq_or_np_array(
         icoord = [
             int(e.astype("int64")) if isinstance(e, np.datetime64) else e for e in coord
         ]
-        mq.set_dim_points_int64(dim.name, icoord)
+        mq._handle.set_dim_points_int64(dim.name, icoord)
         return
 
     raise ValueError(f"unhandled type {dim.type} for index column named {dim.name}")
 
 
 def _set_coord_by_numeric_slice(
-    mq: clib.ManagedQuery, dim: pa.Field, dom: Tuple[object, object], coord: Slice[Any]
+    mq: ManagedQuery, dim: pa.Field, dom: Tuple[object, object], coord: Slice[Any]
 ) -> None:
     try:
         lo_hi = slice_to_numeric_range(coord, dom)
@@ -609,7 +609,7 @@ def _set_coord_by_numeric_slice(
         return
 
     try:
-        set_dim_range = getattr(mq, f"set_dim_ranges_{dim.type}")
+        set_dim_range = getattr(mq._handle, f"set_dim_ranges_{dim.type}")
         set_dim_range(dim.name, [lo_hi])
         return
     except AttributeError:
