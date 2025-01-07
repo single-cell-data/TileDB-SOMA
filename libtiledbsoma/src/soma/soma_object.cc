@@ -2,6 +2,7 @@
 #include <string>
 #include <tiledb/tiledb>
 
+#include "../utils/logger.h"  // for fmt
 #include "soma_array.h"
 #include "soma_collection.h"
 #include "soma_dataframe.h"
@@ -46,8 +47,8 @@ std::unique_ptr<SOMAObject> SOMAObject::open(
         auto array_type = array_->type();
 
         if (!array_type.has_value())
-            throw TileDBSOMAError(
-                "[SOMAObject::open] SOMAArray has no type info");
+            throw TileDBSOMAError(fmt::format(
+                "[SOMAObject::open] SOMAArray '{}' has no type info", uri));
 
         std::transform(
             array_type->begin(),
@@ -74,8 +75,8 @@ std::unique_ptr<SOMAObject> SOMAObject::open(
         auto group_type = group_->type();
 
         if (!group_type.has_value())
-            throw TileDBSOMAError(
-                "[SOMAObject::open] SOMAGroup has no type info");
+            throw TileDBSOMAError(fmt::format(
+                "[SOMAObject::open] SOMAGroup '{}' has no type info", uri));
 
         std::transform(
             group_type->begin(),
