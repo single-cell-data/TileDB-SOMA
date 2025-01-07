@@ -2,6 +2,7 @@
 #include <string>
 #include <tiledb/tiledb>
 
+#include "../utils/logger.h"  // for fmt
 #include "soma_array.h"
 #include "soma_collection.h"
 #include "soma_dataframe.h"
@@ -13,7 +14,6 @@
 #include "soma_point_cloud_dataframe.h"
 #include "soma_scene.h"
 #include "soma_sparse_ndarray.h"
-#include "../utils/logger.h" // for fmt
 
 namespace tiledbsoma {
 
