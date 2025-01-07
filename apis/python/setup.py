@@ -340,9 +340,7 @@ setuptools.setup(
         "pandas",
         "pyarrow",
         "scanpy>=1.9.2",
-        # https://github.com/single-cell-data/TileDB-SOMA/issues/3444
-        # https://github.com/scverse/anndata/issues/1802
-        "scipy<1.15.0",
+        "scipy",
         # Note: the somacore version is also in .pre-commit-config.yaml
         "somacore==1.0.26",
         "typing-extensions",  # Note "-" even though `import typing_extensions`
