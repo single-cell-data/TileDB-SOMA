@@ -114,7 +114,7 @@ if(APPLE)
   set(CMAKE_MACOSX_RPATH ON)
 
   # Set minimum macOS version to enable certain C++20 features
-  set(CMAKE_OSX_DEPLOYMENT_TARGET 13.3)
+  # set(CMAKE_OSX_DEPLOYMENT_TARGET 13.3)
 
   # Don't allow macOS .frameworks to be used for dependencies.
   set(CMAKE_FIND_FRAMEWORK NEVER)

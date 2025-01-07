@@ -37,6 +37,7 @@
 #include <memory>
 #include <stdexcept>
 #include <vector>
+#include <format>
 
 struct kh_m64_s;
 
