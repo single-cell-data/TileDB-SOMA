@@ -188,7 +188,7 @@ class IngestionParams:
 # entrypoints for append-mode soma_joinid registration.
 def register_h5ads(
     experiment_uri: str | None,
-    h5ad_file_names: Sequence[str],
+    h5ad_file_names: Sequence[str] | str,
     *,
     measurement_name: str,
     obs_field_name: str,
@@ -212,7 +212,7 @@ def register_h5ads(
 
 def register_anndatas(
     experiment_uri: str | None,
-    adatas: Sequence[ad.AnnData],
+    adatas: Sequence[ad.AnnData] | ad.AnnData,
     *,
     measurement_name: str,
     obs_field_name: str,

@@ -391,7 +391,7 @@ class ExperimentAmbientLabelMapping:
     def from_anndata_appends_on_experiment(
         cls,
         experiment_uri: str | None,
-        adatas: Sequence[ad.AnnData],
+        adatas: Sequence[ad.AnnData] | ad.AnnData,
         *,
         measurement_name: str,
         obs_field_name: str,
@@ -404,6 +404,13 @@ class ExperimentAmbientLabelMapping:
         is ``None`` then you will be computing registrations only for the input
         ``AnnData`` objects. If ``experiment_uri`` is not ``None`` then it is
         an error if the experiment is not accessible."""
+        # typeguard doesn't help at runtime. Check this crucial user-facing API.
+        if isinstance(adatas, ad.AnnData):
+            adatas = [adatas]
+        elif not isinstance(adatas, (list, tuple)):
+            raise ValueError(
+                f"adatas must be list or tuple of AnnData, or a single AnnData; got {type(adatas)}"
+            )
 
         registration_data = cls._acquire_experiment_mappings(
             experiment_uri,
@@ -455,7 +462,7 @@ class ExperimentAmbientLabelMapping:
     def from_h5ad_appends_on_experiment(
         cls,
         experiment_uri: str | None,
-        h5ad_file_names: Sequence[str],
+        h5ad_file_names: Sequence[str] | str,
         *,
         measurement_name: str,
         obs_field_name: str,
@@ -465,6 +472,13 @@ class ExperimentAmbientLabelMapping:
     ) -> Self:
         """Extends registration data from the baseline, already-written SOMA
         experiment to include multiple H5AD input files."""
+        # typeguard doesn't help at runtime. Check this crucial user-facing API.
+        if isinstance(h5ad_file_names, str):
+            h5ad_file_names = [h5ad_file_names]
+        elif not isinstance(h5ad_file_names, (list, tuple)):
+            raise ValueError(
+                f"h5ad_file_names must be list or tuple of string, or a single string; got {type(h5ad_file_names)}"
+            )
 
         registration_data = cls._acquire_experiment_mappings(
             experiment_uri,
