@@ -102,9 +102,12 @@ def test_indexer(contextual: bool, keys: np.array, lookups: np.array):
     num_threads = 10
 
     def target():
-        indexer = IntIndexer(keys, context=context)
-        results = indexer.get_indexer(lookups)
-        all_results.append(results)
+        try:
+            indexer = IntIndexer(keys, context=context)
+            results = indexer.get_indexer(lookups)
+            all_results.append(results)
+        except Exception as e:
+            all_results.append(e)
 
     for t in range(num_threads):
         thread = threading.Thread(target=target, args=())
@@ -113,6 +116,8 @@ def test_indexer(contextual: bool, keys: np.array, lookups: np.array):
     panda_indexer = pd.Index(keys)
     panda_results = panda_indexer.get_indexer(lookups)
     for i in range(num_threads):
+        if isinstance(all_results[i], Exception):
+            raise all_results[i]
         np.testing.assert_equal(all_results[i].all(), panda_results.all())
 
 
