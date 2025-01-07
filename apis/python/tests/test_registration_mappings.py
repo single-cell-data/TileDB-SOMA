@@ -1342,3 +1342,65 @@ def test_multimodal_names(tmp_path, conftest_pbmc3k_adata):
         assert exp.obs.count == len(adata_protein.obs)
         assert exp.ms["RNA"].var.count == len(adata_rna.var)
         assert exp.ms["protein"].var.count == len(adata_protein.var)
+
+
+def test_registration_lists_and_tuples(tmp_path):
+    obs_field_name = "cell_id"
+    var_field_name = "gene_id"
+
+    exp_uri = create_soma_canned(1, obs_field_name, var_field_name)
+    adata = create_anndata_canned(2, obs_field_name, var_field_name)
+    h5ad_file_name = create_h5ad_canned(2, obs_field_name, var_field_name)
+
+    rd1 = tiledbsoma.io.register_anndatas(
+        experiment_uri=exp_uri,
+        adatas=[adata],
+        measurement_name="measname",
+        obs_field_name=obs_field_name,
+        var_field_name=var_field_name,
+    )
+
+    rd2 = tiledbsoma.io.register_anndatas(
+        experiment_uri=exp_uri,
+        adatas=(adata,),
+        measurement_name="measname",
+        obs_field_name=obs_field_name,
+        var_field_name=var_field_name,
+    )
+
+    rd3 = tiledbsoma.io.register_anndatas(
+        experiment_uri=exp_uri,
+        adatas=adata,
+        measurement_name="measname",
+        obs_field_name=obs_field_name,
+        var_field_name=var_field_name,
+    )
+    assert rd1 == rd2
+    assert rd2 == rd3
+
+    rd4 = tiledbsoma.io.register_h5ads(
+        experiment_uri=exp_uri,
+        h5ad_file_names=[h5ad_file_name],
+        measurement_name="measname",
+        obs_field_name=obs_field_name,
+        var_field_name=var_field_name,
+    )
+
+    rd5 = tiledbsoma.io.register_h5ads(
+        experiment_uri=exp_uri,
+        h5ad_file_names=(h5ad_file_name,),
+        measurement_name="measname",
+        obs_field_name=obs_field_name,
+        var_field_name=var_field_name,
+    )
+
+    rd6 = tiledbsoma.io.register_h5ads(
+        experiment_uri=exp_uri,
+        h5ad_file_names=h5ad_file_name,
+        measurement_name="measname",
+        obs_field_name=obs_field_name,
+        var_field_name=var_field_name,
+    )
+
+    assert rd4 == rd5
+    assert rd5 == rd6
