@@ -13,6 +13,7 @@
 #include "soma_point_cloud_dataframe.h"
 #include "soma_scene.h"
 #include "soma_sparse_ndarray.h"
+#include "../utils/logger.h" // for fmt
 
 namespace tiledbsoma {
 
@@ -46,7 +47,7 @@ std::unique_ptr<SOMAObject> SOMAObject::open(
         auto array_type = array_->type();
 
         if (!array_type.has_value())
-            throw TileDBSOMAError(std::format(
+            throw TileDBSOMAError(fmt::format(
                 "[SOMAObject::open] SOMAArray '{}' has no type info", uri));
 
         std::transform(
@@ -74,7 +75,7 @@ std::unique_ptr<SOMAObject> SOMAObject::open(
         auto group_type = group_->type();
 
         if (!group_type.has_value())
-            throw TileDBSOMAError(std::format(
+            throw TileDBSOMAError(fmt::format(
                 "[SOMAObject::open] SOMAGroup '{}' has no type info", uri));
 
         std::transform(
