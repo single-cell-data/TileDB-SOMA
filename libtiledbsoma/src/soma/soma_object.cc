@@ -46,8 +46,8 @@ std::unique_ptr<SOMAObject> SOMAObject::open(
         auto array_type = array_->type();
 
         if (!array_type.has_value())
-            throw TileDBSOMAError(
-                "[SOMAObject::open] SOMAArray has no type info");
+            throw TileDBSOMAError(std::format(
+                "[SOMAObject::open] SOMAArray '{}' has no type info", uri));
 
         std::transform(
             array_type->begin(),
@@ -74,8 +74,8 @@ std::unique_ptr<SOMAObject> SOMAObject::open(
         auto group_type = group_->type();
 
         if (!group_type.has_value())
-            throw TileDBSOMAError(
-                "[SOMAObject::open] SOMAGroup has no type info");
+            throw TileDBSOMAError(std::format(
+                "[SOMAObject::open] SOMAGroup '{}' has no type info", uri));
 
         std::transform(
             group_type->begin(),
