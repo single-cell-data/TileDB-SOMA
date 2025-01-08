@@ -524,8 +524,7 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
                 Defaults to ``obs``.
         """
 
-        import dask.DataFrame as dd
-        from spatialdata import SpatialData
+        import spatialdata as sd
 
         from ._multiscale_image import MultiscaleImage
         from ._point_cloud_dataframe import PointCloudDataFrame
@@ -552,8 +551,8 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
             )
 
         # Create empty SpatialData instance and dict to store region/instance keys.
-        sdata = SpatialData()
-        region_joinids: Dict[str, dd.Series] = {}
+        sdata = sd.SpatialData()
+        region_joinids: Dict[str, Any] = {}
 
         # Add data from linked scenes.
         for scene_name in scene_names:
@@ -581,7 +580,9 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
                                 scene_dim_map=scene_dim_map,
                                 transform=transform,
                             )
-                            region_joinids[output_key] = sdata.shapes[SOMA_JOINID]
+                            region_joinids[output_key] = sdata.shapes[output_key][
+                                SOMA_JOINID
+                            ]
 
                         else:
                             sdata.points[output_key] = to_spatialdata_points(
@@ -591,7 +592,9 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
                                 scene_dim_map=scene_dim_map,
                                 transform=transform,
                             )
-                            region_joinids[output_key] = sdata.points[SOMA_JOINID]
+                            region_joinids[output_key] = sdata.points[output_key][
+                                SOMA_JOINID
+                            ]
 
                     else:
                         warnings.warn(
@@ -657,7 +660,7 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
                         )
 
         # Get the anndata table.
-        sdata.tables[self.measurement_name] = self.to_anndata(
+        ad = self.to_anndata(
             X_name,
             column_names=column_names,
             X_layers=X_layers,
@@ -669,16 +672,42 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
         )
 
         # Add joinids to region dataframe. Verify no overwrites.
-        # TODO: concatenate dask series into a single pandas dataframe then merge with obs.
-        regions = tuple(region_joinids.keys())
-        expected_length = sum(df.shape[0].compute() for df in region_joinids.values())
+        regions: list[str] | None = None
+        region_key: str | None = None
+        instance_key: str | None = None
+        if region_joinids:
+            region_df = pd.concat(
+                [
+                    pd.DataFrame.from_dict(
+                        {
+                            "soma_joinid": joinid_series,
+                            "region_key": key,
+                            "instance_key": joinid_series.index,
+                        }
+                    )
+                    for key, joinid_series in region_joinids.items()
+                ]
+            )
+            if not region_df.empty:
+                try:
+                    ad.obs = pd.merge(
+                        ad.obs,
+                        region_df,
+                        how="left",
+                        on="soma_joinid",
+                        validate="many_to_one",
+                    )
+                except pd.errors.MergeError as err:
+                    raise NotImplementedError(
+                        "Unable to export to SpatialData; exported assets have "
+                        "over-lapping observations."
+                    ) from err
+                regions = list(region_joinids.keys())
+                region_key = "region_key"
+                instance_key = "instance_key"
 
-        region_df = pd.DataFrame(
-            {
-                "soma_joinid": pd.Series(dtype=pd.Int8Dtype()),
-                "region_key": pd.Series(dtype="categorical"),
-                "instance_key": pd.Series(dtype=pd.Int8Dtype()),
-            }
+        sdata.tables[self.measurement_name] = sd.models.TableModel.parse(
+            ad, regions, region_key, instance_key
         )
 
         return sdata
