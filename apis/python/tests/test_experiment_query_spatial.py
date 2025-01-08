@@ -217,17 +217,21 @@ def check_for_scene_data(sdata, has_scenes: List[bool]):
         x, y = np.meshgrid(np.linspace(-1.0, 1.0, num=4), np.linspace(-1.0, 1.0, num=4))
         expected_points = pd.DataFrame.from_dict(
             {
-                "x": x.flatten(),
-                "y": y.flatten(),
-                "soma_joinid": np.arange(index * 16, (index + 1) * 16, dtype=np.int64),
+                "x": x.flatten()[:8],
+                "y": y.flatten()[:8],
+                "soma_joinid": np.arange(
+                    index * 16, (index + 1) * 16 - 8, dtype=np.int64
+                ),
             }
         )
         expected_shapes = pd.DataFrame.from_dict(
             {
-                "soma_joinid": np.arange(index * 16, (index + 1) * 16, dtype=np.int64),
-                "radius": 16 * [2.0],
+                "soma_joinid": np.arange(
+                    index * 16 + 8, (index + 1) * 16, dtype=np.int64
+                ),
+                "radius": 8 * [2.0],
                 "geometry": shapely.points(
-                    list(zip(x.flatten(), y.flatten()))
+                    list(zip(x.flatten()[8:], y.flatten()[8:]))
                 ).tolist(),
             }
         )
