@@ -33,6 +33,10 @@
  * It implements function to perform queries as well as core domain and current
  * domain operations. The purpose of this class is to provide a common interface
  * identical to TileDB dimensions, attributes and other composite columns.
+ *
+ * The current indexing mechanish adapts the idea of Priority R-tree on top of a
+ * TileDB Array using a set of TIleDB Dimensions to store the MBR corners of
+ * each geometry.
  */
 
 #ifndef SOMA_GEOMETRY_COLUMN_H

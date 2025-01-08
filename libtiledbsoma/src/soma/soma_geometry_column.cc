@@ -156,16 +156,18 @@ void SOMAGeometryColumn::_set_current_domain_slot(
     }
 
     for (size_t i = 0; i < new_current_domain.size(); ++i) {
-        auto dom = std::any_cast<std::array<double_t, 2>>(
+        auto range = std::any_cast<std::array<double_t, 2>>(
             new_current_domain[i]);
-        rectangle.set_range<double_t>(dimensions[i].name(), dom[0], dom[1]);
+        rectangle.set_range<double_t>(dimensions[i].name(), range[0], range[1]);
     }
 
     for (size_t i = 0; i < new_current_domain.size(); ++i) {
-        auto dom = std::any_cast<std::array<double_t, 2>>(
+        auto range = std::any_cast<std::array<double_t, 2>>(
             new_current_domain[i]);
         rectangle.set_range<double_t>(
-            dimensions[i + new_current_domain.size()].name(), dom[0], dom[1]);
+            dimensions[i + new_current_domain.size()].name(),
+            range[0],
+            range[1]);
     }
 }
 
@@ -182,10 +184,10 @@ std::pair<bool, std::string> SOMAGeometryColumn::_can_set_current_domain_slot(
     }
 
     for (size_t i = 0; i < new_current_domain.size(); ++i) {
-        auto new_dom = std::any_cast<std::array<double_t, 2>>(
+        auto range = std::any_cast<std::array<double_t, 2>>(
             new_current_domain[i]);
 
-        if (new_dom[0] > new_dom[1]) {
+        if (range[0] > range[1]) {
             return std::pair(
                 false,
                 std::format(
@@ -198,12 +200,12 @@ std::pair<bool, std::string> SOMAGeometryColumn::_can_set_current_domain_slot(
             dimensions[i + dimensions.size() / TDB_DIM_PER_SPATIAL_AXIS];
 
         if (rectangle.has_value()) {
-            auto dom_min = rectangle.value().range<double_t>(
+            auto range_min = rectangle.value().range<double_t>(
                 dimension_min.name());
-            auto dom_max = rectangle.value().range<double_t>(
+            auto range_max = rectangle.value().range<double_t>(
                 dimension_max.name());
 
-            if (new_dom[0] > dom_min[0]) {
+            if (range[0] > range_min[0]) {
                 return std::pair(
                     false,
                     std::format(
@@ -211,7 +213,7 @@ std::pair<bool, std::string> SOMAGeometryColumn::_can_set_current_domain_slot(
                         "is unsupported)",
                         dimension_min.name()));
             }
-            if (new_dom[0] > dom_max[0]) {
+            if (range[0] > range_max[0]) {
                 return std::pair(
                     false,
                     std::format(
@@ -219,7 +221,7 @@ std::pair<bool, std::string> SOMAGeometryColumn::_can_set_current_domain_slot(
                         "is unsupported)",
                         dimension_max.name()));
             }
-            if (new_dom[1] < dom_min[1]) {
+            if (range[1] < range_min[1]) {
                 return std::pair(
                     false,
                     std::format(
@@ -227,7 +229,7 @@ std::pair<bool, std::string> SOMAGeometryColumn::_can_set_current_domain_slot(
                         "is unsupported)",
                         dimension_min.name()));
             }
-            if (new_dom[1] < dom_max[1]) {
+            if (range[1] < range_max[1]) {
                 return std::pair(
                     false,
                     std::format(
@@ -236,18 +238,18 @@ std::pair<bool, std::string> SOMAGeometryColumn::_can_set_current_domain_slot(
                         dimension_max.name()));
             }
         } else {
-            auto dom = std::any_cast<
+            auto core_domain = std::any_cast<
                 std::pair<std::vector<double_t>, std::vector<double_t>>>(
                 _core_domain_slot());
 
-            if (new_dom[0] > dom.first[i]) {
+            if (range[0] > core_domain.first[i]) {
                 return std::pair(
                     false,
                     std::format(
                         "index-column name {}: new lower < limit lower",
                         dimension_min.name()));
             }
-            if (new_dom[1] < dom.second[i]) {
+            if (range[1] < core_domain.second[i]) {
                 return std::pair(
                     false,
                     std::format(
@@ -268,10 +270,11 @@ std::vector<std::pair<double_t, double_t>> SOMAGeometryColumn::_limits(
             .is_empty()) {
         for (size_t i = 0; i < dimensions.size() / TDB_DIM_PER_SPATIAL_AXIS;
              ++i) {
-            std::pair<double_t, double_t> dom = dimensions[i]
-                                                    .domain<double_t>();
+            std::pair<double_t, double_t> core_domain = dimensions[i]
+                                                            .domain<double_t>();
 
-            limits.push_back(std::make_pair(dom.first, dom.second));
+            limits.push_back(
+                std::make_pair(core_domain.first, core_domain.second));
         }
     } else {
         NDRectangle ndrect = ArraySchemaExperimental::current_domain(
@@ -279,10 +282,10 @@ std::vector<std::pair<double_t, double_t>> SOMAGeometryColumn::_limits(
                                  .ndrectangle();
         for (size_t i = 0; i < dimensions.size() / TDB_DIM_PER_SPATIAL_AXIS;
              ++i) {
-            std::array<double_t, 2> dom = ndrect.range<double_t>(
+            std::array<double_t, 2> range = ndrect.range<double_t>(
                 dimensions.at(i).name());
 
-            limits.push_back(std::make_pair(dom[0], dom[1]));
+            limits.push_back(std::make_pair(range[0], range[1]));
         }
     }
 
@@ -329,10 +332,11 @@ SOMAGeometryColumn::_transform_points(
 std::any SOMAGeometryColumn::_core_domain_slot() const {
     std::vector<double_t> min, max;
     for (size_t i = 0; i < dimensions.size() / TDB_DIM_PER_SPATIAL_AXIS; ++i) {
-        std::pair<double_t, double_t> dom = dimensions[i].domain<double_t>();
+        std::pair<double_t, double_t> core_domain = dimensions[i]
+                                                        .domain<double_t>();
 
-        min.push_back(dom.first);
-        max.push_back(dom.second);
+        min.push_back(core_domain.first);
+        max.push_back(core_domain.second);
     }
 
     return std::make_any<
@@ -345,13 +349,14 @@ std::any SOMAGeometryColumn::_non_empty_domain_slot(Array& array) const {
     size_t dimensionality = dimensions.size() / TDB_DIM_PER_SPATIAL_AXIS;
     for (size_t i = 0; i < dimensionality; ++i) {
         std::pair<double_t, double_t>
-            min_dom = array.non_empty_domain<double_t>(dimensions[i].name());
+            min_non_empty_dom = array.non_empty_domain<double_t>(
+                dimensions[i].name());
         std::pair<double_t, double_t>
-            max_dom = array.non_empty_domain<double_t>(
+            max_non_empty_dom = array.non_empty_domain<double_t>(
                 dimensions[i + dimensionality].name());
 
-        min.push_back(min_dom.first);
-        max.push_back(max_dom.second);
+        min.push_back(min_non_empty_dom.first);
+        max.push_back(max_non_empty_dom.second);
     }
 
     return std::make_any<
