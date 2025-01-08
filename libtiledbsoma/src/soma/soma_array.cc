@@ -34,8 +34,6 @@
 #include "../utils/logger.h"
 #include "../utils/util.h"
 
-#include <format>
-
 namespace tiledbsoma {
 using namespace tiledb;
 
