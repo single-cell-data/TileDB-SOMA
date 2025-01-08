@@ -34,10 +34,10 @@
 #define TILEDBSOMA_REINDEXER_H
 
 #include <assert.h>
+#include <format>
 #include <memory>
 #include <stdexcept>
 #include <vector>
-#include <format>
 
 struct kh_m64_s;
 
