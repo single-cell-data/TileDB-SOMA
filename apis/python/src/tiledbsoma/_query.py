@@ -57,7 +57,7 @@ from typing_extensions import Self
 
 if TYPE_CHECKING:
     from ._experiment import Experiment
-from ._constants import SPATIAL_DISCLAIMER
+from ._constants import SOMA_JOINID, SPATIAL_DISCLAIMER
 from ._fastercsx import CompressedMatrix
 from ._measurement import Measurement
 from ._sparse_nd_array import SparseNDArray
@@ -524,6 +524,7 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
                 Defaults to ``obs``.
         """
 
+        import dask.DataFrame as dd
         from spatialdata import SpatialData
 
         from ._multiscale_image import MultiscaleImage
@@ -550,10 +551,9 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
                 f"are 'obs' and 'var'."
             )
 
-        # Create empty SpatialData instance.
+        # Create empty SpatialData instance and dict to store region/instance keys.
         sdata = SpatialData()
-
-        # TODO Create table for storing region key and instance key.
+        region_joinids: Dict[str, dd.Series] = {}
 
         # Add data from linked scenes.
         for scene_name in scene_names:
@@ -581,7 +581,7 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
                                 scene_dim_map=scene_dim_map,
                                 transform=transform,
                             )
-                            # TODO: Append to region key table.
+                            region_joinids[output_key] = sdata.shapes[SOMA_JOINID]
 
                         else:
                             sdata.points[output_key] = to_spatialdata_points(
@@ -591,7 +591,7 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
                                 scene_dim_map=scene_dim_map,
                                 transform=transform,
                             )
-                            # TODO: Append to region key table.
+                            region_joinids[output_key] = sdata.points[SOMA_JOINID]
 
                     else:
                         warnings.warn(
@@ -667,7 +667,19 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
             varp_layers=varp_layers,
             drop_levels=drop_levels,
         )
-        # TODO: Add region info to obs and uns.
+
+        # Add joinids to region dataframe. Verify no overwrites.
+        # TODO: concatenate dask series into a single pandas dataframe then merge with obs.
+        regions = tuple(region_joinids.keys())
+        expected_length = sum(df.shape[0].compute() for df in region_joinids.values())
+
+        region_df = pd.DataFrame(
+            {
+                "soma_joinid": pd.Series(dtype=pd.Int8Dtype()),
+                "region_key": pd.Series(dtype="categorical"),
+                "instance_key": pd.Series(dtype=pd.Int8Dtype()),
+            }
+        )
 
         return sdata
 
