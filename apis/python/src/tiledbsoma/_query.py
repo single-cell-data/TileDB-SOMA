@@ -680,7 +680,7 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
                 [
                     pd.DataFrame.from_dict(
                         {
-                            "soma_joinid": joinid_series,
+                            SOMA_JOINID: joinid_series,
                             "region_key": key,
                             "instance_key": joinid_series.index,
                         }
@@ -694,13 +694,13 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
                         ad.obs,
                         region_df,
                         how="left",
-                        on="soma_joinid",
+                        on=SOMA_JOINID,
                         validate="many_to_one",
                     )
                 except pd.errors.MergeError as err:
                     raise NotImplementedError(
                         "Unable to export to SpatialData; exported assets have "
-                        "over-lapping observations."
+                        "overlapping observations."
                     ) from err
                 regions = list(region_joinids.keys())
                 region_key = "region_key"
