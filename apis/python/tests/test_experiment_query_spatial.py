@@ -150,9 +150,16 @@ def soma_spatial_experiment(tmp_path_factory) -> soma.Experiment:
                 np.linspace(-1.0, 1.0, num=4), np.linspace(-1.0, 1.0, num=4)
             )
             point_df = {
-                "x": x.flatten(),
-                "y": y.flatten(),
-                "soma_joinid": np.arange(index * 16, index * 16 + 16, dtype=np.int64),
+                "x": x.flatten()[:8],
+                "y": y.flatten()[:8],
+                "soma_joinid": np.arange(index * 16, index * 16 + 8, dtype=np.int64),
+            }
+            circle_df = {
+                "x": x.flatten()[8:],
+                "y": y.flatten()[8:],
+                "soma_joinid": np.arange(
+                    index * 16 + 8, (index + 1) * 16, dtype=np.int64
+                ),
             }
             add_scene(
                 spatial,
@@ -163,9 +170,9 @@ def soma_spatial_experiment(tmp_path_factory) -> soma.Experiment:
                     (("varl", "other"), "points3"): point_df,
                 },
                 circles={
-                    ("obsl", "shape1"): point_df,
-                    (("varl", "RNA"), "shape2"): point_df,
-                    (("varl", "other"), "shape3"): point_df,
+                    ("obsl", "shape1"): circle_df,
+                    (("varl", "RNA"), "shape2"): circle_df,
+                    (("varl", "other"), "shape3"): circle_df,
                 },
                 images={"tissue": ((3, 16, 8),)},
             )
