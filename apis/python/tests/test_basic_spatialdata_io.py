@@ -49,7 +49,7 @@ def experiment_with_single_scene(tmp_path_factory, sample_2d_data) -> soma.Exper
                         ("x_scene1", "y_scene1"), ("x", "y"), 2.0
                     ),
                     schema=pa.schema([("x", pa.float64()), ("y", pa.float64())]),
-                    domain=[[0, 1], [0, 1]],
+                    domain=[[0, 1], [0, 1], [0, 3]],
                 )
                 points1.write(
                     pa.Table.from_pydict(
@@ -71,7 +71,7 @@ def experiment_with_single_scene(tmp_path_factory, sample_2d_data) -> soma.Exper
                         ("x_scene1", "y_scene1"), ("x", "y"), 4.0
                     ),
                     schema=pa.schema([("x", pa.float64()), ("y", pa.float64())]),
-                    domain=[[-1, 0], [-1, 0]],
+                    domain=[[-1, 0], [-1, 0], [0, 3]],
                 )
                 points3.write(
                     pa.Table.from_pydict(
@@ -91,7 +91,7 @@ def experiment_with_single_scene(tmp_path_factory, sample_2d_data) -> soma.Exper
                         ("x_scene1", "y_scene1"), ("x", "y"), -1.0
                     ),
                     schema=pa.schema([("x", pa.float64()), ("y", pa.float64())]),
-                    domain=[[-1, 0], [-1, 0]],
+                    domain=[[-1, 0], [-1, 0], [0, 3]],
                 )
                 points2.write(
                     pa.Table.from_pydict(
@@ -111,7 +111,7 @@ def experiment_with_single_scene(tmp_path_factory, sample_2d_data) -> soma.Exper
                         ("x_scene1", "y_scene1"), ("x", "y"), 0.25
                     ),
                     schema=pa.schema([("x", pa.float64()), ("y", pa.float64())]),
-                    domain=[[0, 1], [0, 1]],
+                    domain=[[0, 1], [0, 1], [0, 3]],
                 )
                 points4.write(
                     pa.Table.from_pydict(
