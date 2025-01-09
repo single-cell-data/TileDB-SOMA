@@ -37,8 +37,6 @@
 #include <numeric>
 #include "span/span.hpp"
 
-#include "./logger.h"
-         "
 #include "parallel_functions.h"
 
 namespace tiledbsoma::fastercsx {
@@ -202,7 +200,7 @@ void count_rows_(
                         if ((row < 0) ||
                             (static_cast<std::make_unsigned_t<COO_IDX>>(row) >=
                              n_row)) [[unlikely]] {
-                            throw std::out_of_range(fmt::format(
+                            throw std::out_of_range(std::format(
                                 "First coordinate {} out of range {}.",
                                 row,
                                 0,
@@ -230,7 +228,7 @@ void count_rows_(
                 if ((row < 0) ||
                     (static_cast<std::make_unsigned_t<COO_IDX>>(row) >= n_row))
                     [[unlikely]] {
-                    throw std::out_of_range(fmt::format(
+                    throw std::out_of_range(std::format(
                         "First coordinate {} out of range {}.", row, 0, n_row));
                 }
                 Bp[row]++;
@@ -279,7 +277,7 @@ void compress_coo_inner_left_(
         if ((Aj_[n] < 0) ||
             (static_cast<std::make_unsigned_t<COO_IDX>>(Aj_[n]) >= n_col))
             [[unlikely]] {
-            throw std::out_of_range(fmt::format(
+            throw std::out_of_range(std::format(
                 "Second coordinate {} out of range {}.", Aj_[n], 0, n_col));
         }
         Bj[dest] = Aj_[n];
@@ -314,7 +312,7 @@ void compress_coo_inner_right_(
         if ((Aj_[n] < 0) ||
             (static_cast<std::make_unsigned_t<COO_IDX>>(Aj_[n]) >= n_col))
             [[unlikely]] {
-            throw std::out_of_range(fmt::format(
+            throw std::out_of_range(std::format(
                 "Second coordinate {} out of range {}.", Aj_[n], 0, n_col));
         }
 
