@@ -145,9 +145,21 @@ def upgrade_experiment_shapes(
           Dry run for: tiledbsoma_upgrade_shape((2700, 13714))
           OK
     """
+    # For resize, nobs and nvars are from the user. But for upgrade,
+    # they're from the experiment as-is.
+    nobs = None
+    nvars = {}
+    with tiledbsoma.Experiment.open(uri) as exp:
+        if "obs" in exp:
+            nobs = exp.obs.count
+        if "ms" in exp:
+            for name, measurement in exp.ms.items():
+                if "var" in measurement:
+                    nvars[name] = measurement.var.count
+
     args: SizingArgs = dict(
-        nobs=None,
-        nvars=None,
+        nobs=nobs,
+        nvars=nvars,
         ms_name=None,
         coll_name=None,
         verbose=verbose,
@@ -387,9 +399,18 @@ def _leaf_visitor_upgrade(
                 print("  Already upgraded", file=args["output_handle"])
 
     elif isinstance(item, tiledbsoma.SparseNDArray):
-        #### used_shape = item.used_shape()
+
+        # The used_shape is a tuple of (lo, hi) pairs
         used_shape = _find_old_sparse_ndarray_bounds(item)
-        new_shape = tuple(e[1] + 1 for e in used_shape)
+        # Make a tuple of hi+1
+        used_shape_counts = tuple(e[1] + 1 for e in used_shape)
+        # Get the right thing to do for X, obsm, obsp, varm, or varp.  Note that
+        # used_shape_counts can be the wrong thing in case a given sparse array
+        # has _no_ occupied cells in the last one or more rows.  E.g. if nobs is
+        # 1000 and nvars["RNA"] is 200 then each X needs to have shape like 1000
+        # x 200 but its used_shape might only be say 998 x 200 if there are no
+        # X-counts at the end of X.
+        new_shape = _get_new_ndarray_shape(args, used_shape_counts)
 
         _print_leaf_node_banner("SparseNDArray", node_name, item.uri, args)
         if check_only:
