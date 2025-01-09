@@ -200,7 +200,7 @@ void count_rows_(
                             (static_cast<std::make_unsigned_t<COO_IDX>>(row) >=
                              n_row)) [[unlikely]] {
                             throw std::out_of_range(std::format(
-                                "Coordinate {} out of range {}.",
+                                "First coordinate {} out of range {}.",
                                 row,
                                 0,
                                 n_row));
@@ -228,7 +228,7 @@ void count_rows_(
                     (static_cast<std::make_unsigned_t<COO_IDX>>(row) >= n_row))
                     [[unlikely]] {
                     throw std::out_of_range(std::format(
-                        "Coordinate {} out of range {}.", row, 0, n_row));
+                        "First coordinate {} out of range {}.", row, 0, n_row));
                 }
                 Bp[row]++;
             }
@@ -277,7 +277,7 @@ void compress_coo_inner_left_(
             (static_cast<std::make_unsigned_t<COO_IDX>>(Aj_[n]) >= n_col))
             [[unlikely]] {
             throw std::out_of_range(std::format(
-                "Coordinate {} out of range {}.", Aj_[n], 0, n_col));
+                "Second coordinate {} out of range {}.", Aj_[n], 0, n_col));
         }
         Bj[dest] = Aj_[n];
         Bd[dest] = Ad_[n];
@@ -312,7 +312,7 @@ void compress_coo_inner_right_(
             (static_cast<std::make_unsigned_t<COO_IDX>>(Aj_[n]) >= n_col))
             [[unlikely]] {
             throw std::out_of_range(std::format(
-                "Coordinate {} out of range {}.", Aj_[n], 0, n_col));
+                "Second coordinate {} out of range {}.", Aj_[n], 0, n_col));
         }
 
         Bj[dest] = Aj_[n];
