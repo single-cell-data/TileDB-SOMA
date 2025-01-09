@@ -37,8 +37,8 @@
 #include <numeric>
 #include "span/span.hpp"
 
+#include <spdlog/fmt/fmt.h>
 #include "parallel_functions.h"
-#include "utils/logger.h"
 
 namespace tiledbsoma::fastercsx {
 
