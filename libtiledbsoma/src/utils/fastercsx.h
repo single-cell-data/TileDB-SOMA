@@ -33,6 +33,7 @@
 #include <atomic>
 #include <cmath>
 #include <cstdint>
+#include <format>
 #include <numeric>
 #include <span>
 
@@ -198,8 +199,13 @@ void count_rows_(
                         auto row = Ai_view[n];
                         if ((row < 0) ||
                             (static_cast<std::make_unsigned_t<COO_IDX>>(row) >=
-                             n_row)) [[unlikely]]
-                            throw std::out_of_range("Coordinate out of range.");
+                             n_row)) [[unlikely]] {
+                            throw std::out_of_range(std::format(
+                                "First coordinate {} out of range {}.",
+                                row,
+                                0,
+                                n_row));
+                        }
                         counts[row]++;
                     }
                 }
@@ -221,8 +227,10 @@ void count_rows_(
                 auto row = Ai_view[n];
                 if ((row < 0) ||
                     (static_cast<std::make_unsigned_t<COO_IDX>>(row) >= n_row))
-                    [[unlikely]]
-                    throw std::out_of_range("Coordinate out of range.");
+                    [[unlikely]] {
+                    throw std::out_of_range(std::format(
+                        "First coordinate {} out of range {}.", row, 0, n_row));
+                }
                 Bp[row]++;
             }
         }
@@ -268,9 +276,10 @@ void compress_coo_inner_left_(
         const auto dest = Bp[row];
         if ((Aj_[n] < 0) ||
             (static_cast<std::make_unsigned_t<COO_IDX>>(Aj_[n]) >= n_col))
-            [[unlikely]]
-            throw std::out_of_range("Coordinate out of range.");
-
+            [[unlikely]] {
+            throw std::out_of_range(std::format(
+                "Second coordinate {} out of range {}.", Aj_[n], 0, n_col));
+        }
         Bj[dest] = Aj_[n];
         Bd[dest] = Ad_[n];
         Bp[row]++;
@@ -302,8 +311,10 @@ void compress_coo_inner_right_(
         const auto dest = Bp[row];
         if ((Aj_[n] < 0) ||
             (static_cast<std::make_unsigned_t<COO_IDX>>(Aj_[n]) >= n_col))
-            [[unlikely]]
-            throw std::out_of_range("Coordinate out of range.");
+            [[unlikely]] {
+            throw std::out_of_range(std::format(
+                "Second coordinate {} out of range {}.", Aj_[n], 0, n_col));
+        }
 
         Bj[dest] = Aj_[n];
         Bd[dest] = Ad_[n];
