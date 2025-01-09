@@ -170,9 +170,9 @@ def soma_spatial_experiment(tmp_path_factory) -> soma.Experiment:
                     (("varl", "other"), "points3"): point_df,
                 },
                 circles={
-                    ("obsl", "shape1"): circle_df,
-                    (("varl", "RNA"), "shape2"): circle_df,
-                    (("varl", "other"), "shape3"): circle_df,
+                    ("obsl", "shapes1"): circle_df,
+                    (("varl", "RNA"), "shapes2"): circle_df,
+                    (("varl", "other"), "shapes3"): circle_df,
                 },
                 images={"tissue": ((3, 16, 8),)},
             )
@@ -248,9 +248,9 @@ def check_for_scene_data(sdata, has_scenes: List[bool]):
         assert all(points1 == expected_points)
         points2 = sdata.points[f"{scene_id}_RNA_points2"]
         assert all(points2 == expected_points)
-        shapes1 = sdata.shapes[f"{scene_id}_shape1"]
+        shapes1 = sdata.shapes[f"{scene_id}_shapes1"]
         assert all(shapes1 == expected_shapes)
-        shapes2 = sdata.shapes[f"{scene_id}_RNA_shape2"]
+        shapes2 = sdata.shapes[f"{scene_id}_RNA_shapes2"]
         assert all(shapes2 == expected_shapes)
         image = sdata.images[f"{scene_id}_tissue"]
         assert image.shape == (3, 16, 8)
@@ -276,6 +276,11 @@ def test_spatial_experiment_query_none(soma_spatial_experiment):
         ad = sdata["RNA"]
         assert ad.n_obs == 0 and ad.n_vars == 0
 
+        # Check no region columns/metadata.
+        assert "region_key" not in ad.obs
+        assert "instance_key" not in ad.obs
+        assert "spatialdata_attrs" not in ad.uns
+
 
 def test_spatial_experiment_query_all(soma_spatial_experiment):
     with soma_spatial_experiment.axis_query("RNA") as query:
@@ -298,6 +303,47 @@ def test_spatial_experiment_query_all(soma_spatial_experiment):
         assert len(sdata.images) == 4
 
         check_for_scene_data(sdata, 4 * [True])
+
+        # Check table.
+        ad = sdata.tables["RNA"]
+
+        sd_attrs = ad.uns["spatialdata_attrs"]
+        assert sd_attrs["region"] == [
+            "scene0_points1",
+            "scene0_shapes1",
+            "scene1_points1",
+            "scene1_shapes1",
+            "scene2_points1",
+            "scene2_shapes1",
+            "scene3_points1",
+            "scene3_shapes1",
+        ]
+        assert sd_attrs["region_key"] == "region_key"
+        assert sd_attrs["instance_key"] == "instance_key"
+
+        region_df = ad.obs[["soma_joinid", "region_key", "instance_key"]]
+        for scene_index in range(4):
+            # Filter on points key and get the joinids and instance keys for the points.
+            points_key = f"scene{scene_index}_points1"
+            points_region_df = region_df[region_df["region_key"] == points_key]
+            instance_keys = points_region_df["instance_key"]
+            region_joinids = points_region_df["soma_joinid"].tolist()
+
+            # Check the joinids at the points instance key match expected joinids.
+            points = sdata.points[points_key].compute()
+            points_joinids = points.iloc[instance_keys]["soma_joinid"].tolist()
+            assert region_joinids == points_joinids
+
+            # Filter on shape key and get the joinids and instance keys for the shapes.
+            shapes_key = f"scene{scene_index}_shapes1"
+            shapes_region_df = region_df[region_df["region_key"] == shapes_key]
+            instance_keys = shapes_region_df["instance_key"]
+            region_joinids = shapes_region_df["soma_joinid"].tolist()
+
+            # Check the joinids at the shapes instance key match expected joinids.
+            shapes = sdata.shapes[shapes_key]
+            shapes_joinids = shapes.iloc[instance_keys]["soma_joinid"].to_list()
+            assert region_joinids == shapes_joinids
 
 
 @pytest.mark.parametrize(
