@@ -138,6 +138,15 @@ PYBIND11_MODULE(pytiledbsoma, m) {
         .def_readwrite("attrs", &PlatformConfig::attrs)
         .def_readwrite("dims", &PlatformConfig::dims)
         .def_readwrite("allows_duplicates", &PlatformConfig::allows_duplicates)
+        .def_readwrite(
+            "sparse_nd_array_allows_duplicates",
+            &PlatformConfig::sparse_nd_array_allows_duplicates)
+        .def_readwrite(
+            "dataframe_allows_duplicates",
+            &PlatformConfig::dataframe_allows_duplicates)
+        .def_readwrite(
+            "point_cloud_dataframe_allows_duplicates",
+            &PlatformConfig::point_cloud_dataframe_allows_duplicates)
         .def_readwrite("tile_order", &PlatformConfig::tile_order)
         .def_readwrite("cell_order", &PlatformConfig::cell_order)
         .def_readwrite(

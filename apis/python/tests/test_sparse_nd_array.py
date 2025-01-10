@@ -153,6 +153,38 @@ def test_sparse_nd_array_reopen(tmp_path):
                 assert A3.tiledb_timestamp <= now
 
 
+@pytest.mark.parametrize(
+    "allows_duplicates,sparse_nd_array_allows_duplicates,expected",
+    [
+        (True, None, True),
+        (False, None, False),
+        (True, False, False),
+        (False, True, True),
+    ],
+)
+def test_sparse_nd_array_create_allows_duplicates(
+    tmp_path, allows_duplicates, sparse_nd_array_allows_duplicates, expected
+):
+    uri = tmp_path.as_posix()
+    platform_config = {
+        "tiledb": {
+            "create": {
+                "allows_duplicates": allows_duplicates,
+                "sparse_nd_array_allows_duplicates": sparse_nd_array_allows_duplicates,
+            }
+        }
+    }
+
+    with soma.SparseNDArray.create(
+        uri, type=pa.float32(), shape=(100, 1000), platform_config=platform_config
+    ) as array:
+        config_result = array.schema_config_options()
+
+    result = config_result.allows_duplicates
+
+    assert result == expected
+
+
 @pytest.mark.parametrize("shape", [(10,)])
 @pytest.mark.parametrize("element_type", NDARRAY_ARROW_TYPES_NOT_SUPPORTED)
 def test_sparse_nd_array_create_fail(

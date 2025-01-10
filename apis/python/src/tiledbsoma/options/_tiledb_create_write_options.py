@@ -144,6 +144,19 @@ class TileDBCreateOptions:
         validator=vld.instance_of(bool),
         default=False,
     )
+    sparse_nd_array_allows_duplicates: bool | None = attrs_.field(
+        validator=vld.instance_of(Union[bool, None]),
+        default=None,
+    )
+    dataframe_allows_duplicates: bool | None = attrs_.field(
+        validator=vld.instance_of(Union[bool, None]),
+        default=None,
+    )
+    point_cloud_dataframe_allows_duplicates: bool | None = attrs_.field(
+        validator=vld.instance_of(Union[bool, None]),
+        default=None,
+    )
+
     tile_order: str | None = attrs_.field(
         validator=vld.optional(vld.instance_of(str)), default=None
     )
