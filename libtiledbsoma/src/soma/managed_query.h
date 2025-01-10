@@ -503,7 +503,7 @@ class ManagedQuery {
     // declaration order is significant.  Context (ctx_) MUST be declared
     // BEFORE Array (array_) so that ctx_ will be destructed last.
 
-    // TileDB context object. 
+    // TileDB context object
     std::shared_ptr<Context> ctx_;
 
     // TileDB array being queried.
