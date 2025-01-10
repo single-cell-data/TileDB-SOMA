@@ -115,10 +115,24 @@ bool is_native_byteorder(const char byteorder) {
         return true;
     if (byteorder == '|')  // not-applicable
         return true;
-    if constexpr (std::endian::native == std::endian::big)
+
+    // On the main branch we have C++ 20 and we use std::endian.
+    // On release-1.15, as of this writing, we have C++ 17 and
+    // we roll our own.
+    union {
+        uint8_t u8[4];
+        uint32_t u32;
+    } test;
+    test.u32 = 0xaabbccdd;
+    if (test.u8[0] == 0xaa) {
+        // Big-endian: u8[0]..u8[3] are aa, bb, cc, dd
         return byteorder == '>';  // big
-    else
+    } else if (test.u8[3] == 0xaa) {
+        // Little-endian: u8[0]..u8[3] are dd, cc, bb, aa
         return byteorder == '<';  // little
+    } else {
+        throw std::runtime_error("Internal coding error detecting  endianness");
+    }
 }
 
 /**
