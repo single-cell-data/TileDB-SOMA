@@ -80,8 +80,11 @@ class SOMAVFSFilebuf : public tiledb::impl::VFSFilebuf {
             return py::bytes("");
         }
 
+        py::gil_scoped_release release;
         std::string buffer(nbytes, '\0');
         offset_ += xsgetn(&buffer[0], nbytes);
+        py::gil_scoped_acquire acquire;
+
         return py::bytes(buffer);
     }
 
@@ -109,8 +112,7 @@ void load_soma_vfs(py::module& m) {
         .def(
             "read",
             &SOMAVFSFilebuf::read,
-            "size"_a = -1,
-            py::call_guard<py::gil_scoped_release>())
+            "size"_a = -1)
         .def(
             "tell",
             &SOMAVFSFilebuf::tell)
