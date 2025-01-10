@@ -335,6 +335,11 @@ def build_clib_platform_config(
     plt_cfg.offsets_filters = _build_filter_list(ops.offsets_filters)
     plt_cfg.validity_filters = _build_filter_list(ops.validity_filters)
     plt_cfg.allows_duplicates = ops.allows_duplicates
+    plt_cfg.sparse_nd_array_allows_duplicates = ops.sparse_nd_array_allows_duplicates
+    plt_cfg.dataframe_allows_duplicates = ops.dataframe_allows_duplicates
+    plt_cfg.point_cloud_dataframe_allows_duplicates = (
+        ops.point_cloud_dataframe_allows_duplicates
+    )
     plt_cfg.tile_order = ops.tile_order
     plt_cfg.cell_order = ops.cell_order
     plt_cfg.dims = _build_column_config(ops.dims)
