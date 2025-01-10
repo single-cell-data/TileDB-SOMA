@@ -1996,6 +1996,9 @@ def test_context_cleanup(tmp_path: pathlib.Path) -> None:
         return mq
 
     for _ in range(100):
+        # Run test multiple times. While the C++ this tests (dtor order)
+        # is deterministic, it is triggered by the Python GC, which makes
+        # no specific guarantees about when it will sweep any given object.
         _ = test(
             tmp_path.as_uri(),
             {
