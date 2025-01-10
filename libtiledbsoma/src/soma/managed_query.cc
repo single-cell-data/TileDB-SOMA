@@ -51,8 +51,8 @@ ManagedQuery::ManagedQuery(
     std::shared_ptr<Array> array,
     std::shared_ptr<Context> ctx,
     std::string_view name)
-    : array_(array)
-    , ctx_(ctx)
+    : ctx_(ctx)
+    , array_(array)
     , name_(name)
     , schema_(std::make_shared<ArraySchema>(array->schema())) {
     reset();
@@ -62,8 +62,8 @@ ManagedQuery::ManagedQuery(
     std::unique_ptr<SOMAArray> array,
     std::shared_ptr<Context> ctx,
     std::string_view name)
-    : array_(array->arr_)
-    , ctx_(ctx)
+    : ctx_(ctx)
+    , array_(array->arr_)
     , name_(name)
     , schema_(std::make_shared<ArraySchema>(array->arr_->schema())) {
     reset();
