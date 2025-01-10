@@ -34,7 +34,6 @@
 #define MANAGED_QUERY_H
 
 #include <future>
-#include <iostream>
 #include <span>
 #include <stdexcept>  // for windows: error C2039: 'runtime_error': is not a member of 'std'
 #include <unordered_set>
