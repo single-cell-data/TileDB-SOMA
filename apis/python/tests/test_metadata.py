@@ -188,6 +188,7 @@ def non_soma_metadata(obj) -> Dict[str, Any]:
         1.00000001,
         -3.1415,
         "",
+        "\x00",
         "a string",
         math.nan,
         math.inf,
@@ -199,15 +200,24 @@ def test_metadata_marshalling_OK(soma_object, test_value):
     Test the various data type marshalling we expect to work,
     which is any Arrow primitive and Arrow strings
     """
-    soma_object.metadata["test_value"] = test_value
-    assert "test_value" in soma_object.metadata
+    uri = soma_object.uri
 
-    val = soma_object.metadata["test_value"]
-    if isinstance(test_value, float) and math.isnan(test_value):
-        # By definition, NaN != NaN, so we can't just compare
-        assert math.isnan(val)
-    else:
-        assert val == test_value
+    with soma_object:
+        soma_object.metadata["test_value"] = test_value
+
+    with _factory.open(uri, "r") as read_soma_object:
+        assert "test_value" in read_soma_object.metadata
+
+        val = read_soma_object.metadata["test_value"]
+        if isinstance(test_value, float) and math.isnan(test_value):
+            # By definition, NaN != NaN, so we can't just compare
+            assert math.isnan(val)
+        else:
+            # Since an empty string is transformed to a NULL byte by numpy, passing a NULL byte is treated accordingly.
+            if test_value == "\x00":
+                assert val == ""
+            else:
+                assert val == test_value
 
 
 @pytest.mark.parametrize(
@@ -221,3 +231,27 @@ def test_metadata_marshalling_FAIL(soma_object, bad_value):
         soma_object.metadata["test_value"] = bad_value
 
     assert "test_value" not in soma_object.metadata
+
+
+@pytest.mark.parametrize(
+    "bad_key",
+    ["\x00", "AA\x00BB"],
+)
+def test_metadata_bad_key(soma_object, bad_key):
+    """Verify that unsupported metadata types raise an error immediately."""
+
+    with pytest.raises(soma.SOMAError):
+        with soma_object:
+            soma_object.metadata[bad_key] = "test_value"
+
+
+@pytest.mark.parametrize(
+    "bad_value",
+    ["AA\x00BB"],
+)
+def test_metadata_bad_string_value(soma_object, bad_value):
+    """Verify that unsupported metadata types raise an error immediately."""
+
+    with pytest.raises(soma.SOMAError):
+        with soma_object:
+            soma_object.metadata["test_key"] = bad_value
