@@ -113,8 +113,7 @@ void load_soma_vfs(py::module& m) {
             py::call_guard<py::gil_scoped_release>())
         .def(
             "tell",
-            &SOMAVFSFilebuf::tell,
-            py::call_guard<py::gil_scoped_release>())
+            &SOMAVFSFilebuf::tell)
         .def(
             "seek",
             &SOMAVFSFilebuf::seek,
