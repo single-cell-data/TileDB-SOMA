@@ -495,11 +495,21 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
         x_future = x_matrices.pop(X_name)
 
         obsm_future = {
-            key: tp.submit(self._axism_inner_ndarray, AxisName.OBS, key)
+            key: tp.submit(
+                _read_inner_ndarray,
+                self._get_annotation_layer("obsm", key),
+                obs_joinids,
+                self.indexer.by_obs,
+            )
             for key in obsm_layers
         }
         varm_future = {
-            key: tp.submit(self._axism_inner_ndarray, AxisName.VAR, key)
+            key: tp.submit(
+                _read_inner_ndarray,
+                self._get_annotation_layer("varm", key),
+                var_joinids,
+                self.indexer.by_var,
+            )
             for key in varm_layers
         }
         obsp_future = {
@@ -877,37 +887,6 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
             )
         return layer
 
-    def _convert_to_ndarray(
-        self, axis: AxisName, table: pa.Table, n_row: int, n_col: int
-    ) -> npt.NDArray[np.float32]:
-        idx = (
-            self.indexer.by_obs(table["soma_dim_0"])
-            if axis.value == "obs"
-            else self.indexer.by_var(table["soma_dim_0"])
-        )
-        z: npt.NDArray[np.float32] = np.zeros(n_row * n_col, dtype=np.float32)
-        np.put(z, idx * n_col + table["soma_dim_1"], table["soma_data"])
-        return z.reshape(n_row, n_col)
-
-    def _axism_inner_ndarray(
-        self,
-        axis: AxisName,
-        layer: str,
-    ) -> npt.NDArray[np.float32]:
-        joinids = axis.getattr_from(self._joinids)
-        annotation_name = f"{axis.value}m"
-        table = (
-            self._get_annotation_layer(annotation_name, layer)
-            .read((joinids, slice(None)))
-            .tables()
-            .concat()
-        )
-
-        n_row = len(joinids)
-        n_col = len(table["soma_dim_1"].unique())
-
-        return self._convert_to_ndarray(axis, table, n_row, n_col)
-
     @property
     def _obs_df(self) -> DataFrame:
         return self.experiment.obs
@@ -992,6 +971,22 @@ def load_joinids(df: DataFrame, axq: AxisQuery) -> pa.IntegerArray:
         column_names=["soma_joinid"],
     ).concat()
     return tbl.column("soma_joinid").combine_chunks()
+
+
+def _read_inner_ndarray(
+    matrix: SparseNDArray,
+    joinids: pa.IntegerArray,
+    indexer: Callable[[Numpyable], npt.NDArray[np.intp]],
+) -> npt.NDArray[np.float32]:
+    table = matrix.read((joinids, slice(None))).tables().concat()
+
+    n_row = len(joinids)
+    n_col = len(table["soma_dim_1"].unique())
+
+    idx = indexer(table["soma_dim_0"])
+    z: npt.NDArray[np.float32] = np.zeros(n_row * n_col, dtype=np.float32)
+    np.put(z, idx * n_col + table["soma_dim_1"], table["soma_data"])
+    return z.reshape(n_row, n_col)
 
 
 def _read_as_csr(
