@@ -104,10 +104,23 @@ void load_soma_vfs(py::module& m) {
             "open",
             [](SOMAVFSFilebuf& buf, const std::string& uri) {
                 return buf.open(uri, std::ios::in);
-            })
-        .def("read", &SOMAVFSFilebuf::read, "size"_a = -1)
-        .def("tell", &SOMAVFSFilebuf::tell)
-        .def("seek", &SOMAVFSFilebuf::seek, "offset"_a, "whence"_a = 0)
+            },
+            py::call_guard<py::gil_scoped_release>())
+        .def(
+            "read",
+            &SOMAVFSFilebuf::read,
+            "size"_a = -1,
+            py::call_guard<py::gil_scoped_release>())
+        .def(
+            "tell",
+            &SOMAVFSFilebuf::tell,
+            py::call_guard<py::gil_scoped_release>())
+        .def(
+            "seek",
+            &SOMAVFSFilebuf::seek,
+            "offset"_a,
+            "whence"_a = 0,
+            py::call_guard<py::gil_scoped_release>())
         .def("close", &SOMAVFSFilebuf::close, "should_throw"_a = true);
 }
 }  // namespace libtiledbsomacpp
