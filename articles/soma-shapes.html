@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">tiledbsoma</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.15.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.15.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -66,7 +66,7 @@
       <h1>SOMA shapes</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/single-cell-data/TileDB-SOMA/blob/1.15.2/vignettes/soma-shapes.Rmd" class="external-link"><code>vignettes/soma-shapes.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/single-cell-data/TileDB-SOMA/blob/release-1.15/vignettes/soma-shapes.Rmd" class="external-link"><code>vignettes/soma-shapes.Rmd</code></a></small>
       <div class="d-none name"><code>soma-shapes.Rmd</code></div>
     </div>
 
@@ -89,14 +89,12 @@ dataset</a> provided by SeuratObject. This will return a
 <code>SOMAExperiment</code> object.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/single-cell-data/TileDB-SOMA" class="external-link">tiledbsoma</a></span><span class="op">)</span></span>
-<span><span class="co">#&gt; Error in get(paste0(generic, ".", class), envir = get_method_env()) : </span></span>
-<span><span class="co">#&gt;   object 'type_sum.accel' not found</span></span>
 <span><span class="co">#&gt; TileDB Core version '2.26' used by TileDB-R package, but TileDB-SOMA uses '2.27'</span></span>
 <span></span>
 <span><span class="va">exp</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/example-datasets.html">load_dataset</a></span><span class="op">(</span><span class="st">"soma-exp-pbmc-small"</span><span class="op">)</span></span>
 <span><span class="va">exp</span></span>
 <span><span class="co">#&gt; &lt;SOMAExperiment&gt;</span></span>
-<span><span class="co">#&gt;   uri: /tmp/RtmplbzBVU/soma-exp-pbmc-small</span></span></code></pre></div>
+<span><span class="co">#&gt;   uri: /tmp/RtmpztHPV7/soma-exp-pbmc-small</span></span></code></pre></div>
 <p>The <code>obs</code> dataframe has a <code>domain</code>, which is a
 soft limit on what values can be written to it. (You’ll get an error if
 you try to read or write <code>soma_joinid</code> values outside this
@@ -376,7 +374,7 @@ method.</li>
 <code class="sourceCode R"><span><span class="va">exp</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/example-datasets.html">load_dataset</a></span><span class="op">(</span><span class="st">"soma-exp-pbmc-small-pre-1.15"</span><span class="op">)</span></span>
 <span><span class="va">exp</span></span>
 <span><span class="co">#&gt; &lt;SOMAExperiment&gt;</span></span>
-<span><span class="co">#&gt;   uri: /tmp/RtmplbzBVU/soma-exp-pbmc-small-pre-1.15</span></span></code></pre></div>
+<span><span class="co">#&gt;   uri: /tmp/RtmpztHPV7/soma-exp-pbmc-small-pre-1.15</span></span></code></pre></div>
 <p>Here we see that the X array has not been upgraded, and that its
 shape reports the same as maxshape:</p>
 <div class="sourceCode" id="cb32"><pre class="downlit sourceCode r">
