@@ -37,13 +37,57 @@ namespace libtiledbsomacpp {
 namespace py = pybind11;
 using namespace py::literals;
 using namespace tiledbsoma;
-using VFSFilebuf = tiledb::impl::VFSFilebuf;
 
 // TODO This temporary workaround prevents namespace clash with tiledb-py.
 // Bind tiledb::VFS directly once tiledb-py dependency is removed
 class SOMAVFS : public tiledb::VFS {
    public:
     using tiledb::VFS::VFS;
+    SOMAVFS(const tiledb::VFS& vfs)
+        : tiledb::VFS(vfs) {
+    }
+};
+
+class SOMAVFSFilebuf : public tiledb::impl::VFSFilebuf {
+   private:
+    std::streamsize offset_ = 0;
+    SOMAVFS vfs_;
+
+   public:
+    SOMAVFSFilebuf(const VFS& vfs)
+        : tiledb::impl::VFSFilebuf(vfs)
+        , vfs_(vfs){};
+
+    std::streamsize seek(std::streamsize offset, uint64_t whence) {
+        if (whence == 0) {
+            offset_ = seekoff(offset, std::ios::beg, std::ios::in);
+        } else if (whence == 1) {
+            offset_ += seekoff(offset, std::ios::cur, std::ios::in);
+        } else if (whence == 2) {
+            offset_ = vfs_.file_size(get_uri()) -
+                      seekoff(offset, std::ios::end, std::ios::in);
+        } else {
+            TPY_ERROR_LOC(
+                "whence must be equal to SEEK_SET, SEEK_CUR, SEEK_END");
+        }
+
+        return offset_;
+    }
+
+    py::bytes read(std::streamsize size) {
+        int64_t nbytes = (size < 0 || size > showmanyc()) ? showmanyc() : size;
+        if (nbytes <= 0) {
+            return py::bytes("");
+        }
+
+        std::string buffer(nbytes, '\0');
+        offset_ += xsgetn(&buffer[0], nbytes);
+        return py::bytes(buffer);
+    }
+
+    std::streamsize tell() {
+        return offset_;
+    }
 };
 
 void load_soma_vfs(py::module& m) {
@@ -54,13 +98,16 @@ void load_soma_vfs(py::module& m) {
             }),
             "ctx"_a);
 
-    py::class_<VFSFilebuf>(m, "SOMAVFSFilebuf")
+    py::class_<SOMAVFSFilebuf>(m, "SOMAVFSFilebuf")
         .def(py::init<const SOMAVFS&>())
         .def(
             "open",
-            [](VFSFilebuf& buf, const std::string& uri) {
+            [](SOMAVFSFilebuf& buf, const std::string& uri) {
                 return buf.open(uri, std::ios::in);
             })
-        .def("close", &VFSFilebuf::close, "should_throw"_a = true);
+        .def("read", &SOMAVFSFilebuf::read, "size"_a = -1)
+        .def("tell", &SOMAVFSFilebuf::tell)
+        .def("seek", &SOMAVFSFilebuf::seek, "offset"_a, "whence"_a = 0)
+        .def("close", &SOMAVFSFilebuf::close, "should_throw"_a = true);
 }
 }  // namespace libtiledbsomacpp
