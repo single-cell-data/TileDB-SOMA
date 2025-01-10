@@ -21,7 +21,6 @@ from typing import (
     Protocol,
     Sequence,
     TypeVar,
-    cast,
     overload,
 )
 
@@ -504,11 +503,25 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
             for key in varm_layers
         }
         obsp_future = {
-            key: tp.submit(self._axisp_inner_sparray, AxisName.OBS, key)
+            key: tp.submit(
+                _read_as_csr,
+                self._get_annotation_layer("obsp", key),
+                obs_joinids,
+                obs_joinids,
+                self.indexer.by_obs,
+                self.indexer.by_obs,
+            )
             for key in obsp_layers
         }
         varp_future = {
-            key: tp.submit(self._axisp_inner_sparray, AxisName.VAR, key)
+            key: tp.submit(
+                _read_as_csr,
+                self._get_annotation_layer("varp", key),
+                var_joinids,
+                var_joinids,
+                self.indexer.by_var,
+                self.indexer.by_var,
+            )
             for key in varp_layers
         }
 
@@ -875,25 +888,6 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
         z: npt.NDArray[np.float32] = np.zeros(n_row * n_col, dtype=np.float32)
         np.put(z, idx * n_col + table["soma_dim_1"], table["soma_data"])
         return z.reshape(n_row, n_col)
-
-    def _axisp_inner_sparray(
-        self,
-        axis: AxisName,
-        layer: str,
-    ) -> sp.csr_matrix:
-        joinids = axis.getattr_from(self._joinids)
-        indexer = cast(
-            Callable[[Numpyable], npt.NDArray[np.intp]],
-            axis.getattr_from(self.indexer, pre="by_"),
-        )
-        annotation_name = f"{axis.value}p"
-        return _read_as_csr(
-            self._get_annotation_layer(annotation_name, layer),
-            joinids,
-            joinids,
-            indexer,
-            indexer,
-        )
 
     def _axism_inner_ndarray(
         self,
