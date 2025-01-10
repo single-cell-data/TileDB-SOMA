@@ -783,9 +783,14 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
         """Reads the specified axis. Will cache join IDs if not present."""
         column_names = axis_column_names.get(axis.value)
 
-        axis_df = axis.getattr_from(self, pre="_", suf="_df")
+        if axis.value == "obs":
+            axis_df = self._obs_df
+            axis_query = self._matrix_axis_query.obs
+        else:
+            axis_df = self._var_df
+            axis_query = self._matrix_axis_query.var
+
         assert isinstance(axis_df, DataFrame)
-        axis_query = axis.getattr_from(self._matrix_axis_query)
 
         # If we can cache join IDs, prepare to add them to the cache.
         joinids_cached = self._joinids._is_cached(axis)
