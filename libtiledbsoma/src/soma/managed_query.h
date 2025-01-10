@@ -34,6 +34,7 @@
 #define MANAGED_QUERY_H
 
 #include <future>
+#include <iostream>
 #include <span>
 #include <stdexcept>  // for windows: error C2039: 'runtime_error': is not a member of 'std'
 #include <unordered_set>
@@ -98,8 +99,8 @@ class ManagedQuery {
     ManagedQuery(const ManagedQuery&) = delete;
 
     ManagedQuery(ManagedQuery&& other)
-        : array_(other.array_)
-        , ctx_(other.ctx_)
+        : ctx_(other.ctx_)
+        , array_(other.array_)
         , name_(other.name_)
         , schema_(other.schema_)
         , query_(std::make_unique<Query>(*other.ctx_, *other.array_))
@@ -499,11 +500,11 @@ class ManagedQuery {
         const CurrentDomain& current_domain, bool is_read);
     void _fill_in_subarrays_if_dense_without_new_shape(bool is_read);
 
-    // TileDB array being queried.
-    std::shared_ptr<Array> array_;
-
     // TileDB context object
     std::shared_ptr<Context> ctx_;
+
+    // TileDB array being queried.
+    std::shared_ptr<Array> array_;
 
     // Name displayed in log messages
     std::string name_;
