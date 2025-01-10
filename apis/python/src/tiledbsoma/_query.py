@@ -17,11 +17,9 @@ from typing import (
     Callable,
     Dict,
     Literal,
-    Mapping,
     Protocol,
     Sequence,
     TypeVar,
-    overload,
 )
 
 import attrs
@@ -87,30 +85,7 @@ class AxisName(enum.Enum):
 
     @property
     def value(self) -> Literal["obs", "var"]:
-        return super().value  # type: ignore[no-any-return]
-
-    @overload
-    def getattr_from(self, __source: _HasObsVar[_T]) -> _T: ...
-
-    @overload
-    def getattr_from(
-        self, __source: Any, *, pre: Literal[""], suf: Literal[""]
-    ) -> object: ...
-
-    @overload
-    def getattr_from(
-        self, __source: Any, *, pre: str = ..., suf: str = ...
-    ) -> object: ...
-
-    def getattr_from(self, __source: Any, *, pre: str = "", suf: str = "") -> object:
-        """Equivalent to ``something.<pre><obs/var><suf>``."""
-        return getattr(__source, pre + self.value + suf)
-
-    def getitem_from(
-        self, __source: Mapping[str, "_T"], *, pre: str = "", suf: str = ""
-    ) -> _T:
-        """Equivalent to ``something[pre + "obs"/"var" + suf]``."""
-        return __source[pre + self.value + suf]
+        return super().value
 
 
 @attrs.define
@@ -476,6 +451,8 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
         obs_table, var_table = tp.map(
             self._read_axis_dataframe,
             (AxisName.OBS, AxisName.VAR),
+            (self._obs_df, self._var_df),
+            (self._matrix_axis_query.obs, self._matrix_axis_query.var),
             (column_names, column_names),
         )
         obs_joinids = self.obs_joinids()
@@ -801,19 +778,12 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
     def _read_axis_dataframe(
         self,
         axis: AxisName,
+        axis_df: DataFrame,
+        axis_query: AxisQuery,
         axis_column_names: AxisColumnNames,
     ) -> pa.Table:
         """Reads the specified axis. Will cache join IDs if not present."""
         column_names = axis_column_names.get(axis.value)
-
-        if axis.value == "obs":
-            axis_df = self._obs_df
-            axis_query = self._matrix_axis_query.obs
-        else:
-            axis_df = self._var_df
-            axis_query = self._matrix_axis_query.var
-
-        assert isinstance(axis_df, DataFrame)
 
         # If we can cache join IDs, prepare to add them to the cache.
         joinids_cached = self._joinids._is_cached(axis)
