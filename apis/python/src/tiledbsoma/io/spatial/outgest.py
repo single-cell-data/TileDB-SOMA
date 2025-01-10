@@ -112,7 +112,7 @@ def to_spatialdata_points(
     scene_id: str,
     scene_dim_map: Dict[str, str],
     transform: somacore.CoordinateTransform | None,
-    soma_joinid_name: str,
+    soma_joinid_name: str = SOMA_JOINID,
 ) -> dd.DataFrame:
     """Export a :class:`PointCloudDataFrame` to a :class:`spatialdata.ShapesModel.
 
@@ -145,7 +145,8 @@ def to_spatialdata_points(
 
     # Read the pandas dataframe, rename SOMA_JOINID, add metadata, and return.
     df: pd.DataFrame = points.read().concat().to_pandas()
-    df.rename(columns={SOMA_JOINID: soma_joinid_name}, inplace=True)
+    if soma_joinid_name != SOMA_JOINID:
+        df.rename(columns={SOMA_JOINID: soma_joinid_name}, inplace=True)
     return sd.models.PointsModel.parse(df, transformations=transforms)
 
 
@@ -156,7 +157,7 @@ def to_spatialdata_shapes(
     scene_id: str,
     scene_dim_map: Dict[str, str],
     transform: somacore.CoordinateTransform | None,
-    soma_joinid_name: str,
+    soma_joinid_name: str = SOMA_JOINID,
 ) -> gpd.GeoDataFrame:
     """Export a :class:`PointCloudDataFrame` to a :class:`spatialdata.ShapesModel.
 
@@ -206,7 +207,8 @@ def to_spatialdata_shapes(
         }
 
     data = points.read().concat().to_pandas()
-    data.rename(columns={SOMA_JOINID: soma_joinid_name}, inplace=True)
+    if soma_joinid_name != SOMA_JOINID:
+        data.rename(columns={SOMA_JOINID: soma_joinid_name}, inplace=True)
     data.insert(len(data.columns), "radius", radius)
     ndim = len(orig_axis_names)
     if ndim == 2:
