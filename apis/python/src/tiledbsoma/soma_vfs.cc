@@ -60,14 +60,12 @@ class SOMAVFSFilebuf : public tiledb::impl::VFSFilebuf {
 
     std::streamsize seek(std::streamsize offset, uint64_t whence) {
         if (whence == 0) {
-            seekoff(offset, std::ios::beg, std::ios::in);
             offset_ = seekoff(offset, std::ios::beg, std::ios::in);
         } else if (whence == 1) {
-            seekoff(offset, std::ios::cur, std::ios::in);
-            offset_ += offset;
+            offset_ += seekoff(offset, std::ios::cur, std::ios::in);
         } else if (whence == 2) {
-            seekoff(offset, std::ios::end, std::ios::in);
-            offset_ = vfs_.file_size(get_uri()) - offset;
+            offset_ = vfs_.file_size(get_uri()) -
+                      seekoff(offset, std::ios::end, std::ios::in);
         } else {
             TPY_ERROR_LOC(
                 "whence must be equal to SEEK_SET, SEEK_CUR, SEEK_END");
