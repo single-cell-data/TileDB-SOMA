@@ -29,7 +29,7 @@
  *
  * Python bindings for CSX conversion primitives.
  */
-
+#include <bit>
 #include <variant>
 
 // Define to include extra debugging bindings (e.g., count_rows)
@@ -105,6 +105,45 @@ tcb::span<R> make_mutable_casted_span_(py::array arr) {
                                  .mutable_unchecked<std::remove_cv_t<T>, 1>()
                                  .data(0);
     return tcb::span<R>(reinterpret_cast<R*>(p), arr.size());
+}
+
+/**
+ * @brief Return true if the NP byteorder is native (or equivalent).
+ */
+bool is_native_byteorder(const char byteorder) {
+    if (byteorder == '=')  // native
+        return true;
+    if (byteorder == '|')  // not-applicable
+        return true;
+
+    // On the main branch we have C++ 20 and we use std::endian.
+    // On release-1.15, as of this writing, we have C++ 17 and
+    // we roll our own.
+    union {
+        uint8_t u8[4];
+        uint32_t u32;
+    } test;
+    test.u32 = 0xaabbccdd;
+    if (test.u8[0] == 0xaa) {
+        // Big-endian: u8[0]..u8[3] are aa, bb, cc, dd
+        return byteorder == '>';  // big
+    } else if (test.u8[3] == 0xaa) {
+        // Little-endian: u8[0]..u8[3] are dd, cc, bb, aa
+        return byteorder == '<';  // little
+    } else {
+        throw std::runtime_error("Internal coding error detecting  endianness");
+    }
+}
+
+/**
+ * @brief Check enddianness/byteorder is native, and raise exception if not.
+ * Necessary becuase we dispatch on dtype().num(), which doesn't confirm
+ * byteorder is native.
+ */
+void check_byteorder(const py::dtype& dtype) {
+    if (!is_native_byteorder(dtype.byteorder()))
+        throw invalid_argument(
+            "All arrays must have native byteorder (endianness).");
 }
 
 /*
@@ -208,6 +247,7 @@ T lookup_dtype_(
     const std::unordered_map<int, T>& index,
     const py::dtype& dtype,
     const std::string& array_name) {
+    check_byteorder(dtype);
     try {
         return index.at(dtype.num());
     } catch (const std::out_of_range& oor) {
@@ -240,6 +280,7 @@ void compress_coo_validate_args_(
     5. ensure B* are writeable
     6. Ensure each element in A* tuples are same type
     7. Ensure each element in the A* tuples are the same length
+    8. byteorder
     etc...
 
     Not checked:
@@ -260,6 +301,7 @@ void compress_coo_validate_args_(
             if (arr.dtype().num() != vec[0].dtype().num())
                 throw pybind11::type_error(
                     "All chunks of COO arrays must be of same type.");
+            check_byteorder(arr.dtype());
         }
     }
     for (uint64_t chunk_idx = 0; chunk_idx < n_chunks; chunk_idx++) {
@@ -268,8 +310,13 @@ void compress_coo_validate_args_(
             throw std::length_error(
                 "All COO array tuple elements must be of the same size.");
     }
+
     if (Bp.ndim() != 1 || Bj.ndim() != 1 || Bd.ndim() != 1)
         throw std::length_error("All arrays must be of dimension rank 1.");
+
+    check_byteorder(Bp.dtype());
+    check_byteorder(Bj.dtype());
+    check_byteorder(Bd.dtype());
 
     for (auto& arr : Ad)
         if (arr.dtype().num() != Bd.dtype().num())
@@ -406,6 +453,10 @@ bool sort_csx_indices(
         throw std::length_error("All arrays must be 1D");
     if (!Bp.writeable() || !Bj.writeable() || !Bd.writeable())
         throw std::invalid_argument("Output arrays must be writeable.");
+
+    check_byteorder(Bp.dtype());
+    check_byteorder(Bj.dtype());
+    check_byteorder(Bd.dtype());
 
     // Get dispatch types
     CsxIndexType csx_major_index_type = lookup_dtype_(
