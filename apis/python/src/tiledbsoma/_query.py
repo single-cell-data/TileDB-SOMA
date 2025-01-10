@@ -389,7 +389,7 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
             )
 
         full_table = obs_scene.read(
-            coords=((AxisName.OBS.getattr_from(self._joinids), slice(None))),
+            coords=(self._joinids.obs, slice(None)),
             result_order=ResultOrder.COLUMN_MAJOR,
             value_filter="data != 0",
         ).concat()
@@ -416,7 +416,7 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
             )
 
         full_table = var_scene.read(
-            coords=((AxisName.VAR.getattr_from(self._joinids), slice(None))),
+            coords=(self._joinids.var, slice(None)),
             result_order=ResultOrder.COLUMN_MAJOR,
             value_filter="data != 0",
         ).concat()
