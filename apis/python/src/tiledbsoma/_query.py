@@ -35,7 +35,9 @@ import scipy.sparse as sp
 from anndata import AnnData
 from somacore import (
     AxisQuery,
+    Collection,
     DataFrame,
+    NDArray,
     ReadIter,
     SparseRead,
     query,
@@ -342,7 +344,7 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
         Lifecycle: maturing
         """
         joinids = self._joinids.obs
-        return self._axisp_get_array(AxisName.OBS, layer).read((joinids, joinids))
+        return self._get_annotation_layer("obsp", layer).read((joinids, joinids))
 
     def varp(self, layer: str) -> SparseRead:
         """Returns a ``varp`` layer as a sparse read.
@@ -350,13 +352,13 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
         Lifecycle: maturing
         """
         joinids = self._joinids.var
-        return self._axisp_get_array(AxisName.VAR, layer).read((joinids, joinids))
+        return self._get_annotation_layer("varp", layer).read((joinids, joinids))
 
     def obsm(self, layer: str) -> SparseRead:
         """Returns an ``obsm`` layer as a sparse read.
         Lifecycle: maturing
         """
-        return self._axism_get_array(AxisName.OBS, layer).read(
+        return self._get_annotation_layer("obsm", layer).read(
             (self._joinids.obs, slice(None))
         )
 
@@ -364,7 +366,7 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
         """Returns a ``varm`` layer as a sparse read.
         Lifecycle: maturing
         """
-        return self._axism_get_array(AxisName.VAR, layer).read(
+        return self._get_annotation_layer("varm", layer).read(
             (self._joinids.var, slice(None))
         )
 
@@ -678,52 +680,39 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
             arrow_table = arrow_table.drop(["soma_joinid"])
         return arrow_table
 
-    def _axisp_get_array(
-        self,
-        axis: AxisName,
-        layer: str,
+    def _get_annotation_layer(
+        self, annotation_name: str, layer_name: str
     ) -> SparseNDArray:
-        p_name = f"{axis.value}p"
-        try:
-            ms = self._ms
-            axisp = ms.obsp if axis.value == "obs" else ms.varp
-        except (AttributeError, KeyError):
-            raise ValueError(f"Measurement does not contain {p_name} data")
+        """Helper function to make error messages consistent.
 
+        Args:
+            annotation_name:
+                Name of the annotation (e.g. obsm, varp).
+            layer_name:
+                Name of the layer.
+        """
         try:
-            axisp_layer = axisp[layer]
+            coll: Collection[NDArray] = self._ms[annotation_name]  # type: ignore
         except KeyError:
-            raise ValueError(f"layer {layer!r} is not available in {p_name}")
-        if not isinstance(axisp_layer, SparseNDArray):
+            raise ValueError(f"Measurement does not contain {annotation_name!r} data.")
+        if not isinstance(coll, Collection):
             raise TypeError(
-                f"Unexpected SOMA type {type(axisp_layer).__name__}"
-                f" stored in {p_name} layer {layer!r}"
+                f"Unexpected SOMA type {type(coll).__name__} for "
+                f"{annotation_name!r}."
             )
 
-        return axisp_layer
-
-    def _axism_get_array(
-        self,
-        axis: AxisName,
-        layer: str,
-    ) -> SparseNDArray:
-        m_name = f"{axis.value}m"
-
         try:
-            ms = self._ms
-            axism = ms.obsm if axis.value == "obs" else ms.varm
-        except (AttributeError, KeyError):
-            raise ValueError(f"Measurement does not contain {m_name} data")
-
-        try:
-            axism_layer = axism[layer]
+            layer = coll[layer_name]
         except KeyError:
-            raise ValueError(f"layer {layer!r} is not available in {m_name}")
-
-        if not isinstance(axism_layer, SparseNDArray):
-            raise TypeError(f"Unexpected SOMA type stored in '{m_name}' layer")
-
-        return axism_layer
+            raise ValueError(
+                f"layer {layer_name!r} is not available in {annotation_name!r}."
+            )
+        if not isinstance(layer, SparseNDArray):
+            raise TypeError(
+                f"Unexpected SOMA type {type(layer).__name__} stored in "
+                f"{annotation_name!r} layer {layer_name!r}."
+            )
+        return layer
 
     def _convert_to_ndarray(
         self, axis: AxisName, table: pa.Table, n_row: int, n_col: int
@@ -747,8 +736,13 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
             Callable[[Numpyable], npt.NDArray[np.intp]],
             axis.getattr_from(self.indexer, pre="by_"),
         )
+        annotation_name = f"{axis.value}p"
         return _read_as_csr(
-            self._axisp_get_array(axis, layer), joinids, joinids, indexer, indexer
+            self._get_annotation_layer(annotation_name, layer),
+            joinids,
+            joinids,
+            indexer,
+            indexer,
         )
 
     def _axism_inner_ndarray(
@@ -757,8 +751,9 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
         layer: str,
     ) -> npt.NDArray[np.float32]:
         joinids = axis.getattr_from(self._joinids)
+        annotation_name = f"{axis.value}m"
         table = (
-            self._axism_get_array(axis, layer)
+            self._get_annotation_layer(annotation_name, layer)
             .read((joinids, slice(None)))
             .tables()
             .concat()
