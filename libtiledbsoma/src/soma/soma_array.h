@@ -1554,6 +1554,10 @@ class SOMAArray : public SOMAObject {
     // SOMAArray name for debugging
     std::string name_;
 
+    // NB: the Array dtor REQUIRES that this context be alive, so member
+    // declaration order is significant.  Context (ctx_) MUST be declared
+    // BEFORE Array (arr_) so that ctx_ will be destructed last.
+
     // SOMA context
     std::shared_ptr<SOMAContext> ctx_;
 

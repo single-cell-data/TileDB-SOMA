@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import contextlib
 import datetime
+import gc
 import itertools
 import json
 import operator
@@ -1979,3 +1980,30 @@ def test_iter(tmp_path: pathlib.Path):
         next(a)
     with pytest.raises(StopIteration):
         next(b)
+
+
+def test_context_cleanup(tmp_path: pathlib.Path) -> None:
+    arrow_tensor = create_random_tensor("table", (1,), np.float32(), density=1)
+    with soma.SparseNDArray.create(
+        tmp_path.as_uri(), type=pa.float64(), shape=(1,)
+    ) as write_arr:
+        write_arr.write(arrow_tensor)
+
+    def test(path, tiledb_config):
+        context = soma.SOMATileDBContext().replace(tiledb_config=tiledb_config)
+        X = soma.SparseNDArray.open(path, context=context, mode="r")
+        mq = X.read().tables()
+        return mq
+
+    for _ in range(100):
+        # Run test multiple times. While the C++ this tests (dtor order)
+        # is deterministic, it is triggered by the Python GC, which makes
+        # no specific guarantees about when it will sweep any given object.
+        _ = test(
+            tmp_path.as_uri(),
+            {
+                "vfs.s3.no_sign_request": "true",
+                "vfs.s3.region": "us-west-2",
+            },
+        )
+        gc.collect()
