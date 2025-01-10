@@ -79,6 +79,15 @@ std::unordered_map<std::string, tiledb_datatype_t> _np_name_to_tdb_dtype = {
     {"bool", TILEDB_BOOL},
 };
 
+void sanitize_string(const std::string data) {
+    for (auto& byte : data) {
+        if (static_cast<uint8_t>(byte) == 0) {
+            throw TileDBSOMAError(
+                "[sanitize_string] String contains NULL bytes");
+        }
+    }
+}
+
 py::dtype tdb_to_np_dtype(tiledb_datatype_t type, uint32_t cell_val_num) {
     if (type == TILEDB_CHAR || type == TILEDB_STRING_UTF8 ||
         type == TILEDB_STRING_ASCII) {
@@ -196,9 +205,16 @@ py::dict meta(std::map<std::string, MetadataValue> metadata_mapping) {
         auto [tdb_type, value_num, value] = val;
 
         if (tdb_type == TILEDB_STRING_UTF8 || tdb_type == TILEDB_STRING_ASCII) {
-            auto py_buf = py::array(py::dtype("|S1"), value_num, value);
-            auto res = py_buf.attr("tobytes")().attr("decode")("UTF-8");
-            results[py::str(key)] = res;
+            // Empty strings stored as nullptr have a value_num of 1 and a \x00
+            // value
+            if (value_num == 1 && value == nullptr) {
+                results[py::str(key)] = "";
+            } else {
+                auto py_buf = py::array(py::dtype("|S1"), value_num, value);
+                auto res = py_buf.attr("tobytes")().attr("decode")("UTF-8");
+
+                results[py::str(key)] = res;
+            }
         } else {
             py::dtype value_type = tdb_to_np_dtype(tdb_type, 1);
             auto res = py::array(value_type, value_num, value).attr("item")(0);
@@ -230,6 +246,20 @@ void set_metadata(
         throw py::type_error("Only 1D Numpy arrays can be stored as metadata");
 
     auto value_num = is_tdb_str(value_type) ? value.nbytes() : value.size();
+
+    if (is_tdb_str(value_type) && value_num > 0) {
+        // If an empty string is passed by default results in a NULL byte
+        auto bytes = static_cast<const char*>(value.data());
+
+        if (value_num == 1 && bytes[0] == 0) {
+            value_num = 0;
+        } else {
+            sanitize_string(std::string(bytes, value_num));
+        }
+    }
+
+    sanitize_string(key);
+
     soma_object.set_metadata(
         key,
         value_type,
