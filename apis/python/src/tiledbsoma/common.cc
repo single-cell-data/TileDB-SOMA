@@ -79,15 +79,6 @@ std::unordered_map<std::string, tiledb_datatype_t> _np_name_to_tdb_dtype = {
     {"bool", TILEDB_BOOL},
 };
 
-void sanitize_string(const std::string data) {
-    for (auto& byte : data) {
-        if (static_cast<uint8_t>(byte) == 0) {
-            throw TileDBSOMAError(
-                "[sanitize_string] String contains NULL bytes");
-        }
-    }
-}
-
 py::dtype tdb_to_np_dtype(tiledb_datatype_t type, uint32_t cell_val_num) {
     if (type == TILEDB_CHAR || type == TILEDB_STRING_UTF8 ||
         type == TILEDB_STRING_ASCII) {
@@ -144,7 +135,7 @@ tiledb_datatype_t np_to_tdb_dtype(py::dtype type) {
     if (kind.is(py::str("S")))
         return TILEDB_STRING_ASCII;
     if (kind.is(py::str("U")))
-        return TILEDB_STRING_UTF8;
+        return TILEDB_STRING_UTF32;
 
     TPY_ERROR_LOC("could not handle numpy dtype");
 }
@@ -153,6 +144,7 @@ bool is_tdb_str(tiledb_datatype_t type) {
     switch (type) {
         case TILEDB_STRING_ASCII:
         case TILEDB_STRING_UTF8:
+        case TILEDB_STRING_UTF32:
         case TILEDB_CHAR:
             return true;
         default:
@@ -204,16 +196,20 @@ py::dict meta(std::map<std::string, MetadataValue> metadata_mapping) {
     for (auto [key, val] : metadata_mapping) {
         auto [tdb_type, value_num, value] = val;
 
-        if (tdb_type == TILEDB_STRING_UTF8 || tdb_type == TILEDB_STRING_ASCII) {
+        if (tdb_type == TILEDB_STRING_UTF8 || tdb_type == TILEDB_STRING_ASCII ||
+            tdb_type == TILEDB_STRING_UTF32) {
             // Empty strings stored as nullptr have a value_num of 1 and a \x00
             // value
             if (value_num == 1 && value == nullptr) {
                 results[py::str(key)] = "";
+            } else if (tdb_type == TILEDB_STRING_UTF32) {
+                auto py_buf = py::array(py::dtype("|U1"), value_num, value);
+                results[py::str(key)] = py_buf.attr("tobytes")().attr("decode")(
+                    "UTF-32");
             } else {
                 auto py_buf = py::array(py::dtype("|S1"), value_num, value);
-                auto res = py_buf.attr("tobytes")().attr("decode")("UTF-8");
-
-                results[py::str(key)] = res;
+                results[py::str(key)] = py_buf.attr("tobytes")().attr("decode")(
+                    "UTF-8");
             }
         } else {
             py::dtype value_type = tdb_to_np_dtype(tdb_type, 1);
@@ -245,20 +241,48 @@ void set_metadata(
     if (value_buffer.ndim != 1)
         throw py::type_error("Only 1D Numpy arrays can be stored as metadata");
 
-    auto value_num = is_tdb_str(value_type) ? value.nbytes() : value.size();
+    auto value_num = is_tdb_str(value_type) ?
+                         value.nbytes() /
+                             (value_type == TILEDB_STRING_UTF32 ? 4 : 1) :
+                         value.size();
 
     if (is_tdb_str(value_type) && value_num > 0) {
         // If an empty string is passed by default results in a NULL byte
-        auto bytes = static_cast<const char*>(value.data());
-
-        if (value_num == 1 && bytes[0] == 0) {
-            value_num = 0;
-        } else {
-            sanitize_string(std::string(bytes, value_num));
+        switch (value_type) {
+            case TILEDB_STRING_UTF8:
+                value_num = sanitize_string(
+                    std::span<const uint8_t>(
+                        static_cast<const uint8_t*>(value.data()), value_num),
+                    value_num);
+                break;
+            case TILEDB_STRING_UTF32:
+                value_num = sanitize_string(
+                    std::span<const uint32_t>(
+                        static_cast<const uint32_t*>(value.data()), value_num),
+                    value_num);
+                break;
+            default:
+                throw TileDBSOMAError(std::format(
+                    "[set_metadata] Unsupported string encoding {} for key "
+                    "\"{}\"",
+                    tiledb::impl::type_to_str(value_type),
+                    key));
         }
     }
 
-    sanitize_string(key);
+    // `sanitize_string` will return 0 if the firts byte is NULL and the string
+    // is length 1 to account for empty numpy ascii strings. But for keys this
+    // will never be the case since empty python strings are correctly converter
+    // to std::string. So detecting a difference in the passed key length and
+    // the sanitized length is an error.
+
+    // Moreover all python strings are utf-8 encoded so eny NULL byte included
+    // in the bytestream will be indeed a NULL byte
+    if (sanitize_string(
+            std::span<const char>(key.c_str(), key.length()), key.length()) !=
+        key.length()) {
+        throw TileDBSOMAError("[set_metadata] Key contains NULL bytes");
+    }
 
     soma_object.set_metadata(
         key,
