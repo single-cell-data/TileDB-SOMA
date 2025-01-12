@@ -189,6 +189,9 @@ def non_soma_metadata(obj) -> Dict[str, Any]:
         -3.1415,
         "",
         "\x00",
+        "\U00000000",  # get's casted to \x00
+        "\x10abc",
+        "\U00081a63×\x84\x94𘪩a\U000a4f44Î\x10m",
         "a string",
         math.nan,
         math.inf,
@@ -234,24 +237,36 @@ def test_metadata_marshalling_FAIL(soma_object, bad_value):
 
 
 @pytest.mark.parametrize(
+    "good_key",
+    ["", "\x10abc", "\U00081a63×\x84\x94𘪩a\U000a4f44Î\x10m", "a string"],
+)
+def test_metadata_good_key(soma_object, good_key):
+    """Verify that unsupported metadata types raise an error immediately."""
+
+    soma_object.metadata[good_key] = "test_value"
+
+
+@pytest.mark.parametrize(
     "bad_key",
-    ["\x00", "AA\x00BB"],
+    ["\x00", "AA\x00BB", "AA\U00000000BB"],
 )
 def test_metadata_bad_key(soma_object, bad_key):
     """Verify that unsupported metadata types raise an error immediately."""
 
+    soma_object.metadata[bad_key] = "test_value"
+
     with pytest.raises(soma.SOMAError):
-        with soma_object:
-            soma_object.metadata[bad_key] = "test_value"
+        soma_object._handle.metadata._write()
 
 
 @pytest.mark.parametrize(
     "bad_value",
-    ["AA\x00BB"],
+    ["AA\x00BB", "AA\U00000000BB"],
 )
 def test_metadata_bad_string_value(soma_object, bad_value):
     """Verify that unsupported metadata types raise an error immediately."""
 
+    soma_object.metadata["test_key"] = bad_value
+
     with pytest.raises(soma.SOMAError):
-        with soma_object:
-            soma_object.metadata["test_key"] = bad_value
+        soma_object._handle.metadata._write()
