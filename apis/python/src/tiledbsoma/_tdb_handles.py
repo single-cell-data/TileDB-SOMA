@@ -818,10 +818,9 @@ class MetadataWrapper(MutableMapping[str, Any]):
                     set_metadata = self.owner._handle.set_metadata
                     val = self.cache[key]
                     if isinstance(val, str):
-                        if val.isascii():
-                            set_metadata(key, np.array([val], "S"))
-                        else:
-                            set_metadata(key, np.array([val], "U"))
+                        set_metadata(key, np.array([val.encode("UTF-8")], "S"))
+                    elif isinstance(val, bytes):
+                        set_metadata(key, np.array([val], "V"))
                     else:
                         set_metadata(key, np.array([val]))
                 if mod is _DictMod.DELETED:

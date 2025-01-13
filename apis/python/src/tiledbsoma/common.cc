@@ -38,7 +38,7 @@ std::unordered_map<tiledb_datatype_t, std::string> _tdb_to_np_name_dtype = {
     {TILEDB_TIME_PS, "m8[ps]"},
     {TILEDB_TIME_FS, "m8[fs]"},
     {TILEDB_TIME_AS, "m8[as]"},
-    {TILEDB_BLOB, "byte"},
+    {TILEDB_BLOB, "V"},
     {TILEDB_BOOL, "bool"},
 };
 
@@ -80,6 +80,13 @@ std::unordered_map<std::string, tiledb_datatype_t> _np_name_to_tdb_dtype = {
 };
 
 py::dtype tdb_to_np_dtype(tiledb_datatype_t type, uint32_t cell_val_num) {
+    if (type == TILEDB_BLOB) {
+        std::string base_str = "|V";
+        if (cell_val_num < TILEDB_VAR_NUM)
+            base_str += std::to_string(cell_val_num);
+        return py::dtype(base_str);
+    }
+
     if (type == TILEDB_CHAR || type == TILEDB_STRING_UTF8 ||
         type == TILEDB_STRING_ASCII) {
         std::string base_str = (type == TILEDB_STRING_UTF8) ? "|U" : "|S";
@@ -132,19 +139,24 @@ tiledb_datatype_t np_to_tdb_dtype(py::dtype type) {
         return _np_name_to_tdb_dtype[name];
 
     auto kind = py::str(py::getattr(type, "kind"));
-    if (kind.is(py::str("S")))
-        return TILEDB_STRING_ASCII;
-    if (kind.is(py::str("U")))
-        return TILEDB_STRING_UTF32;
 
-    TPY_ERROR_LOC("could not handle numpy dtype");
+    if (kind.is(py::str("V")))
+        return TILEDB_BLOB;
+    if (kind.is(py::str("S")))
+        return TILEDB_STRING_UTF8;
+    if (kind.is(py::str("U")))
+        TPY_ERROR_LOC(
+            "[np_to_tdb_dtype] UTF-32 encoded strings are not supported");
+
+    TPY_ERROR_LOC(std::format(
+        "[np_to_tdb_dtype] Could not handle numpy dtype of kind \"{}\"",
+        kind.operator std::string()));
 }
 
 bool is_tdb_str(tiledb_datatype_t type) {
     switch (type) {
         case TILEDB_STRING_ASCII:
         case TILEDB_STRING_UTF8:
-        case TILEDB_STRING_UTF32:
         case TILEDB_CHAR:
             return true;
         default:
@@ -196,25 +208,24 @@ py::dict meta(std::map<std::string, MetadataValue> metadata_mapping) {
     for (auto [key, val] : metadata_mapping) {
         auto [tdb_type, value_num, value] = val;
 
-        if (tdb_type == TILEDB_STRING_UTF8 || tdb_type == TILEDB_STRING_ASCII ||
-            tdb_type == TILEDB_STRING_UTF32) {
+        if (tdb_type == TILEDB_STRING_UTF8) {
             // Empty strings stored as nullptr have a value_num of 1 and a \x00
             // value
             if (value_num == 1 && value == nullptr) {
                 results[py::str(key)] = "";
-            } else if (tdb_type == TILEDB_STRING_UTF32) {
-                auto py_buf = py::array(py::dtype("|U1"), value_num, value);
-                results[py::str(key)] = py_buf.attr("tobytes")().attr("decode")(
-                    "UTF-32");
             } else {
                 auto py_buf = py::array(py::dtype("|S1"), value_num, value);
                 results[py::str(key)] = py_buf.attr("tobytes")().attr("decode")(
                     "UTF-8");
             }
+        } else if (tdb_type == TILEDB_BLOB) {
+            py::dtype value_type = tdb_to_np_dtype(tdb_type, value_num);
+            results[py::str(key)] = py::array(value_type, value_num, value)
+                                        .attr("item")(0);
         } else {
             py::dtype value_type = tdb_to_np_dtype(tdb_type, 1);
-            auto res = py::array(value_type, value_num, value).attr("item")(0);
-            results[py::str(key)] = res;
+            results[py::str(key)] = py::array(value_type, value_num, value)
+                                        .attr("item")(0);
         }
     }
     return results;
@@ -241,9 +252,8 @@ void set_metadata(
     if (value_buffer.ndim != 1)
         throw py::type_error("Only 1D Numpy arrays can be stored as metadata");
 
-    auto value_num = is_tdb_str(value_type) ?
-                         value.nbytes() /
-                             (value_type == TILEDB_STRING_UTF32 ? 4 : 1) :
+    auto value_num = (is_tdb_str(value_type) || value_type == TILEDB_BLOB) ?
+                         value.nbytes() :
                          value.size();
 
     if (is_tdb_str(value_type) && value_num > 0) {
@@ -254,12 +264,7 @@ void set_metadata(
                     std::span<const uint8_t>(
                         static_cast<const uint8_t*>(value.data()), value_num),
                     value_num);
-                break;
-            case TILEDB_STRING_UTF32:
-                value_num = sanitize_string(
-                    std::span<const uint32_t>(
-                        static_cast<const uint32_t*>(value.data()), value_num),
-                    value_num);
+
                 break;
             default:
                 throw TileDBSOMAError(std::format(

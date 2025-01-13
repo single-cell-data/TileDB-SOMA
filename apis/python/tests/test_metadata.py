@@ -192,6 +192,9 @@ def non_soma_metadata(obj) -> Dict[str, Any]:
         "\U00000000",  # get's casted to \x00
         "\x10abc",
         "\U00081a63×\x84\x94𘪩a\U000a4f44Î\x10m",
+        b"foo",
+        b"\xc2",
+        b"\x00",
         "a string",
         math.nan,
         math.inf,
