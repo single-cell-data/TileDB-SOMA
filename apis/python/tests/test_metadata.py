@@ -195,6 +195,8 @@ def non_soma_metadata(obj) -> Dict[str, Any]:
         b"foo",
         b"\xc2",
         b"\x00",
+        np.str_("foo"),
+        np.bytes_("foo"),
         "a string",
         math.nan,
         math.inf,
@@ -264,7 +266,7 @@ def test_metadata_bad_key(soma_object, bad_key):
 
 @pytest.mark.parametrize(
     "bad_value",
-    ["AA\x00BB", "AA\U00000000BB"],
+    ["AA\x00BB", "AA\U00000000BB", np.str_("foo\x00bar")],
 )
 def test_metadata_bad_string_value(soma_object, bad_value):
     """Verify that unsupported metadata types raise an error immediately."""
