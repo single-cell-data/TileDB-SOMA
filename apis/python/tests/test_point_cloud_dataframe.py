@@ -88,6 +88,11 @@ def test_point_cloud_basic_read(tmp_path):
         assert [e.as_py() for e in table["x"]] == pydict["x"]
         assert [e.as_py() for e in table["y"]] == pydict["y"]
 
+        assert (
+            ptc.metadata[soma._constants.SOMA_SPATIAL_VERSION_METADATA_KEY]
+            == soma._constants.SOMA_SPATIAL_ENCODING_VERSION
+        )
+
     # Ensure it cannot be opened by another type
     with pytest.raises(soma.SOMAError):
         soma.DataFrame.open(urljoin(baseuri, "default"))
