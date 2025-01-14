@@ -108,6 +108,12 @@ def test_multiscale_basic(tmp_path):
             assert shape == expected_shapes[index]
             assert image.level_shape(index) == expected_shapes[index]
 
+        # Check the spatial version encoding was written.
+        assert (
+            image.metadata[soma._constants.SOMA_SPATIAL_VERSION_METADATA_KEY]
+            == soma._constants.SOMA_SPATIAL_ENCODING_VERSION
+        )
+
         # Check the levels mapping.
         levels = image.levels()
         assert len(levels) == 3
