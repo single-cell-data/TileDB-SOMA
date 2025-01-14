@@ -140,10 +140,9 @@ tiledb_datatype_t np_to_tdb_dtype(py::dtype type) {
 
     auto kind = py::str(py::getattr(type, "kind"));
 
-    if (kind.is(py::str("V")))
-        return TILEDB_BLOB;
     if (kind.is(py::str("S")))
         return TILEDB_STRING_UTF8;
+    // Numpy encodes strings as UTF-32
     if (kind.is(py::str("U")))
         TPY_ERROR_LOC(
             "[np_to_tdb_dtype] UTF-32 encoded strings are not supported");
