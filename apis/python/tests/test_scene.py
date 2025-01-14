@@ -75,6 +75,11 @@ def test_scene_basic(tmp_path):
         assert len(scene) == 3
         assert scene.soma_type == "SOMAScene"
 
+        assert (
+            scene.metadata[soma._constants.SOMA_SPATIAL_VERSION_METADATA_KEY]
+            == soma._constants.SOMA_SPATIAL_ENCODING_VERSION
+        )
+
         assert scene.obsl == scene["obsl"]
         assert len(scene.obsl) == 1
         assert scene.obsl["df"] == scene["obsl"]["df"]
