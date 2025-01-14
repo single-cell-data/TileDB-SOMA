@@ -561,9 +561,7 @@ TEST_CASE_METHOD(
         columns[1]->set_dim_point<uint32_t>(external_query, *ctx_, 1234);
 
         // Configure query and allocate result buffers
-        external_query->setup_read();
-        external_query->submit_read();
-        auto ext_res = external_query->results();
+        auto ext_res = external_query->read_next().value();
 
         REQUIRE(ext_res->num_rows() == 1);
 
@@ -577,9 +575,7 @@ TEST_CASE_METHOD(
                 {std::make_pair<std::string, std::string>("apple", "b")}));
 
         // Configure query and allocate result buffers
-        external_query->setup_read();
-        external_query->submit_read();
-        ext_res = external_query->results();
+        ext_res = external_query->read_next().value();
 
         REQUIRE(ext_res->num_rows() == 1);
     }

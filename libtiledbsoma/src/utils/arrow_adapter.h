@@ -872,8 +872,11 @@ class ArrowAdapter {
 
     /**
      * Return a copy of the data in a specified column of an arrow table.
-     * Complex column types are supported. The for each sub column are an
+     * Complex column types are supported. The type for each sub column is an
      * std::array<T, 2> casted as an std::any object.
+     *
+     * @tparam Take The number of elements to retrieve
+     * @tparam Skip The number of elements to skip
      */
     template <size_t Take, size_t Skip = 0>
     static std::vector<std::any> get_table_any_column_by_name(
