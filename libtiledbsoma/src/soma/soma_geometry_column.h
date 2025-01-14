@@ -122,7 +122,7 @@ class SOMAGeometryColumn : public SOMAColumn {
         const SOMAContext& ctx,
         const std::any& points) const override;
 
-    virtual void _set_dim_ranges(
+    void _set_dim_ranges(
         const std::unique_ptr<ManagedQuery>& query,
         const SOMAContext& ctx,
         const std::any& ranges) const override;
