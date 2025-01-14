@@ -20,6 +20,8 @@ from . import _arrow_types, _util
 from . import pytiledbsoma as clib
 from ._constants import (
     SOMA_COORDINATE_SPACE_METADATA_KEY,
+    SOMA_SPATIAL_ENCODING_VERSION,
+    SOMA_SPATIAL_VERSION_METADATA_KEY,
     SPATIAL_DISCLAIMER,
 )
 from ._dataframe import (
@@ -256,6 +258,9 @@ class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
             raise map_exception_for_create(e, uri) from None
 
         handle = cls._wrapper_type.open(uri, "w", context, tiledb_timestamp)
+        handle.metadata[SOMA_SPATIAL_VERSION_METADATA_KEY] = (
+            SOMA_SPATIAL_ENCODING_VERSION
+        )
         handle.meta[SOMA_COORDINATE_SPACE_METADATA_KEY] = coordinate_space_to_json(
             coordinate_space
         )
