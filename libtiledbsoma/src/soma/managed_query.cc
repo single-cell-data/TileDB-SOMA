@@ -1023,7 +1023,7 @@ bool ManagedQuery::_cast_column_aux<bool>(
     setup_write_column(
         schema->name,
         array->length,
-        (const void*)casted.data(),
+        (const void*)(casted.data()),
         (uint64_t*)nullptr,
         (uint8_t*)validity);
     return false;

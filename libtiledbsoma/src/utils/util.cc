@@ -83,18 +83,19 @@ std::vector<uint8_t> cast_bit_to_uint8(ArrowSchema* schema, ArrowArray* array) {
 
     uint8_t* data;
     if (array->n_buffers == 3) {
-        data = (uint8_t*)array->buffers[2] + array->offset;
+        data = (uint8_t*)array->buffers[2];
     } else {
-        data = (uint8_t*)array->buffers[1] + array->offset;
+        data = (uint8_t*)array->buffers[1];
     }
 
     std::vector<uint8_t> casted;
-    for (int64_t i = 0; i * 8 < array->length; ++i) {
+    for (int64_t i = 0; i * 8 < array->offset + array->length; ++i) {
         for (int64_t j = 0; j < 8; ++j) {
             casted.push_back(data[i] >> j & 0x01);
         }
     }
-    return casted;
+
+    return std::vector<uint8_t>(casted.begin() + array->offset, casted.end());
 }
 
 };  // namespace tiledbsoma::util

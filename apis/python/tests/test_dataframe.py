@@ -2041,10 +2041,11 @@ def test_arrow_table_sliced_writer(tmp_path):
 
     with soma.DataFrame.open(uri) as sdf:
         pdf = sdf.read().concat().to_pandas()
+        
         assert list(pdf["myint"]) == pydict["myint"]
         assert list(pdf["mystring"]) == pydict["mystring"]
         assert list(pdf["mybool"]) == pydict["mybool"]
-
+        
         np.testing.assert_array_equal(pdf["myenumint"], pydict["myenumint"])
         np.testing.assert_array_equal(pdf["myenumstr"], pydict["myenumstr"])
         np.testing.assert_array_equal(pdf["myenumbool"], pydict["myenumbool"])
