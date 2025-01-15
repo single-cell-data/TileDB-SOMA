@@ -185,8 +185,6 @@ class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
         else:
             ndom = len(soma_domain)
             nidx = len(index_column_names)
-            # Allow use to set domain for just spatial dimensions. Use default for
-            # the soma_joinid.
             if ndom != nidx:
                 raise ValueError(
                     f"if domain is specified, it must have the same length as "
