@@ -1023,7 +1023,7 @@ bool ManagedQuery::_cast_column_aux<bool>(
     setup_write_column(
         schema->name,
         array->length,
-        (const void*)(casted.data()),
+        (const void*)casted.data(),
         (uint64_t*)nullptr,
         (uint8_t*)validity);
     return false;
@@ -1122,7 +1122,6 @@ bool ManagedQuery::_extend_and_evolve_schema(
 
     // Find any new enumeration values
     std::vector<ValueType> extend_values;
-
     for (auto enum_val : enums_in_write) {
         if (std::find(enums_existing.begin(), enums_existing.end(), enum_val) ==
             enums_existing.end()) {
