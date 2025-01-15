@@ -7,18 +7,19 @@ from __future__ import annotations
 
 import re
 from abc import abstractmethod
-from typing import Any, Literal, Protocol, TypeAlias
+from typing import Any, Literal, Protocol, Union
 
 import numpy as np
 import pyarrow as pa
 from hypothesis import strategies as st
 from hypothesis.stateful import RuleBasedStateMachine, invariant, precondition, rule
+from typing_extensions import TypeAlias
 
 import tiledbsoma as soma
 
 from tests.ht._ht_test_config import HT_TEST_CONFIG
 
-SOMAArray: TypeAlias = soma.DataFrame | soma.SparseNDArray | soma.DenseNDArray
+SOMAArray: TypeAlias = Union[soma.DataFrame, soma.SparseNDArray, soma.DenseNDArray]
 
 
 class SOMAArrayStateMachine(RuleBasedStateMachine):
@@ -39,7 +40,7 @@ class SOMAArrayStateMachine(RuleBasedStateMachine):
         self.initial_metadata_keys: set[str] = set()
 
     def setup(self, A: SOMAArray) -> None:
-        assert isinstance(A, SOMAArray)
+        assert isinstance(A, (soma.DataFrame, soma.SparseNDArray, soma.DenseNDArray))
         assert A.mode == "w" and not A.closed
         self.A = A
         self.create_timestamp_ms = self.A.tiledb_timestamp_ms

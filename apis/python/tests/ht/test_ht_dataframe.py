@@ -2,16 +2,18 @@
 
 from __future__ import annotations
 
-from itertools import pairwise
-from typing import Any, Sequence
+from typing import Any, Sequence, Union
 
 import numpy as np
+import pandas as pd
 import pyarrow as pa
 import pytest
 from hypothesis import strategies as st
 from hypothesis.extra import numpy as ht_np
 from hypothesis.extra import pandas as ht_pd
 from hypothesis.stateful import initialize, invariant, precondition, rule
+from more_itertools import pairwise
+from packaging.version import Version
 
 import tiledbsoma as soma
 
@@ -44,13 +46,16 @@ DataFrameIndexTypes = [
     pa.large_binary(),
     pa.string(),
     pa.large_string(),
-    pa.timestamp("s"),
-    pa.timestamp("ms"),
-    pa.timestamp("us"),
     pa.timestamp("ns"),
 ]
+if Version(pd.__version__) >= Version("2.0.0"):
+    DataFrameIndexTypes += [
+        pa.timestamp("s"),
+        pa.timestamp("ms"),
+        pa.timestamp("us"),
+    ]
 
-AxisDomain = None | tuple[Any, Any] | list[Any]
+AxisDomain = Union[None, tuple[Any, Any], list[Any]]
 Domain = Sequence[AxisDomain]
 
 

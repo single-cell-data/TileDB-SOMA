@@ -5,4 +5,5 @@ ruff
 sparse
 typeguard==4.4.0
 types-setuptools
+more-itertools
 hypothesis

@@ -5,7 +5,7 @@ from __future__ import annotations
 import datetime
 import shutil
 import typing
-from typing import Any
+from typing import Any, Union
 
 import hypothesis as ht
 import numpy as np
@@ -153,8 +153,8 @@ def sparse_array(
         min_size=1,
         max_size=10,
     ),
-    platform_config=st.from_type(dict[str, str] | None),
-    context=st.from_type(soma.SOMATileDBContext | None),
+    platform_config=st.from_type(Union[dict[str, str], None]),
+    context=st.from_type(Union[soma.SOMATileDBContext, None]),
     tiledb_timestamp=tiledb_timestamps(),
 )
 @settings(suppress_health_check=(ht.HealthCheck.function_scoped_fixture,))

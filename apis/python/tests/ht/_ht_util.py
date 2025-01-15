@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import datetime
-from itertools import pairwise
 from typing import Any, Mapping, Sequence
 
 import hypothesis.extra.numpy as ht_np
@@ -12,6 +11,8 @@ import numpy.typing as npt
 import pandas as pd
 import pyarrow as pa
 from hypothesis import strategies as st
+from more_itertools import pairwise
+from packaging.version import Version
 
 from tests.ht._ht_test_config import HT_TEST_CONFIG
 
@@ -119,10 +120,19 @@ def arrow_floating_datatypes(draw: st.DrawFn) -> pa.DataType:
     return draw(st.sampled_from((pa.float16(), pa.float32(), pa.float64())))
 
 
+# pyarrow and pandas timestamp interop lacks support for anything other than `ns`
+# units prior to pandas 2. For info, see https://github.com/apache/arrow/issues/33321
+# The simple solution is to just to restrict types to 'ns' for pandas<2.
+if Version(pd.__version__) >= Version("2.0.0"):
+    TIMESTAMP_UNITS = ("s", "ms", "us", "ns")
+else:
+    TIMESTAMP_UNITS = ("ns",)
+
+
 @st.composite
 def arrow_timestamp_datatypes(draw: st.DrawFn) -> pa.DataType:
     return pa.timestamp(
-        unit=draw(st.sampled_from(("s", "ms", "us", "ns"))),
+        unit=draw(st.sampled_from(TIMESTAMP_UNITS)),
         tz=draw(st.sampled_from((None, "UTC", "Europe/London"))),
     )
 
@@ -372,51 +382,48 @@ def arrow_array_fast(
     length = shape[0]
 
     rng = np.random.default_rng(seed=draw(st.integers(min_value=0)))
-    match dtype.kind:
-        case "f":
-            low = min_value if min_value is not None else -np.finfo(dtype).max / 2
-            high = max_value if max_value is not None else np.finfo(dtype).max / 2
-            if unique:
-                nparr = gen_unique_floats(rng, low, high, length).astype(dtype)
+    if dtype.kind == "f":
+        low = min_value if min_value is not None else -np.finfo(dtype).max / 2
+        high = max_value if max_value is not None else np.finfo(dtype).max / 2
+        if unique:
+            nparr = gen_unique_floats(rng, low, high, length).astype(dtype)
+        else:
+            nparr = rng.uniform(low, high=high, size=length).astype(dtype)
+
+    elif dtype.kind == "i" or dtype.kind == "u":
+        # RNG draws max of int64
+        low = int(min_value) if min_value is not None else -np.iinfo(dtype).max
+        high = int(max_value) if max_value is not None else np.iinfo(dtype).max
+        if (high - low) < np.iinfo(np.int64).max:
+            if high > low:
+                nparr = rng.choice(high - low, size=length, replace=(not unique))
             else:
-                nparr = rng.uniform(low, high=high, size=length).astype(dtype)
-
-        case "i" | "u":
-            # RNG draws max of int64
-            low = int(min_value) if min_value is not None else -np.iinfo(dtype).max
-            high = int(max_value) if max_value is not None else np.iinfo(dtype).max
-            if (high - low) < np.iinfo(np.int64).max:
-                if high > low:
-                    nparr = rng.choice(high - low, size=length, replace=(not unique))
-                else:
-                    nparr = np.full(shape=shape, fill_value=low, dtype=dtype)
-                nparr += low
-            else:
-                nparr = rng.choice(
-                    np.iinfo(np.int64).max, size=length, replace=(not unique)
-                )
-                if min_value is not None:
-                    nparr += low
-                else:
-                    nparr -= np.iinfo(dtype).max // 2
-
-            nparr = nparr.astype(dtype)
-
-        case "M":
-            # TODO: implement min_value/max_value
-            assert min_value is None and max_value is None
+                nparr = np.full(shape=shape, fill_value=low, dtype=dtype)
+            nparr += low
+        else:
             nparr = rng.choice(
                 np.iinfo(np.int64).max, size=length, replace=(not unique)
             )
-            nparr = nparr.astype(dtype)
+            if min_value is not None:
+                nparr += low
+            else:
+                nparr -= np.iinfo(dtype).max // 2
 
-        case "b":
-            # TODO: implement min_value/max_value
-            assert min_value is None and max_value is None
-            nparr = rng.choice([True, False], size=length, replace=(not unique))
+        nparr = nparr.astype(dtype)
 
-        case _:
-            raise TypeError(f"Unsupported dtype: {dtype}")
+    elif dtype.kind == "M":
+        # TODO: implement min_value/max_value
+        assert min_value is None and max_value is None
+        nparr = rng.choice(np.iinfo(np.int64).max, size=length, replace=(not unique))
+        nparr = nparr.astype(dtype)
+
+    elif dtype.kind == "b":
+        # TODO: implement min_value/max_value
+        assert min_value is None and max_value is None
+        nparr = rng.choice([True, False], size=length, replace=(not unique))
+
+    else:
+        raise TypeError(f"Unsupported dtype: {dtype}")
 
     return pad_array(nparr, draw) if padding else pa.array(nparr)
 

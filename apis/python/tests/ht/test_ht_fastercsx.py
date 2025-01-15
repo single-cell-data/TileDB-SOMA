@@ -1,6 +1,8 @@
 """Hypothesis tests for fastercsx module."""
 
-from typing import Any, Literal, TypeAlias
+from __future__ import annotations
+
+from typing import Any, Literal, Union
 
 import numpy as np
 import numpy.typing as npt
@@ -9,6 +11,7 @@ import pytest
 import scipy.sparse as sparse
 from hypothesis import given, settings
 from hypothesis import strategies as st
+from typing_extensions import TypeAlias
 
 import tiledbsoma as soma
 import tiledbsoma._fastercsx as fastercsx
@@ -44,7 +47,7 @@ ValueTypes = sorted(
 )
 
 NDArrayIndex: TypeAlias = npt.NDArray[np.integer[Any]]
-NDArrayNumber: TypeAlias = npt.NDArray[np.integer[Any] | np.floating[Any]]
+NDArrayNumber: TypeAlias = npt.NDArray[Union[np.integer[Any], np.floating[Any]]]
 
 
 def limit_value_range_element_strategy(

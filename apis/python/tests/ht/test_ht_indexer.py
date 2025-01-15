@@ -105,7 +105,7 @@ def test_pytiledbsoma_IntIndexer_map_locations(
             ht_np.arrays(
                 dtype=ht_np.array_dtypes(), shape=ht_np.array_shapes(), unique=False
             ),
-            st.from_type(float | list | dict | str | bytearray),
+            st.from_type(Union[float, list, dict, str, bytearray]),
         )
     )
 )
