@@ -31,6 +31,7 @@
  */
 
 #include "soma_dataframe.h"
+#include <format>
 #include "../utils/logger.h"
 
 namespace tiledbsoma {
@@ -107,7 +108,9 @@ void SOMADataFrame::update_dataframe_schema(
     std::vector<std::string> drop_attrs,
     std::map<std::string, std::string> add_attrs,
     std::map<std::string, std::pair<std::string, bool>> add_enmrs) {
-    ArraySchemaEvolution se(*ctx->tiledb_ctx());
+    const auto& tctx = *ctx->tiledb_ctx();
+    tiledb::Array array(tctx, uri, TILEDB_READ);
+    ArraySchemaEvolution se(tctx);
     for (auto key_name : drop_attrs) {
         LOG_DEBUG(std::format(
             "[SOMADataFrame::update_dataframe_schema] drop col name {}",
@@ -118,16 +121,14 @@ void SOMADataFrame::update_dataframe_schema(
         auto [attr_name, attr_type] = add_attr;
 
         Attribute attr(
-            *ctx->tiledb_ctx(),
-            attr_name,
-            ArrowAdapter::to_tiledb_format(attr_type));
+            tctx, attr_name, ArrowAdapter::to_tiledb_format(attr_type));
 
         if (ArrowAdapter::arrow_is_var_length_type(attr_type.c_str())) {
             attr.set_cell_val_num(TILEDB_VAR_NUM);
         }
 
-        FilterList filter_list(*ctx->tiledb_ctx());
-        filter_list.add_filter(Filter(*ctx->tiledb_ctx(), TILEDB_FILTER_ZSTD));
+        FilterList filter_list(tctx);
+        filter_list.add_filter(Filter(tctx, TILEDB_FILTER_ZSTD));
         attr.set_filter_list(filter_list);
 
         // An update can create (or drop) columns, or mutate existing
@@ -180,17 +181,62 @@ void SOMADataFrame::update_dataframe_schema(
                 attr_type,
                 enmr_type,
                 ordered));
-            se.add_enumeration(Enumeration::create_empty(
-                *ctx->tiledb_ctx(),
-                attr_name,
-                ArrowAdapter::to_tiledb_format(enmr_type),
-                enmr_type == "u" || enmr_type == "z" || enmr_type == "U" ||
-                        enmr_type == "Z" ?
-                    TILEDB_VAR_NUM :
-                    1,
-                ordered));
-            AttributeExperimental::set_enumeration_name(
-                *ctx->tiledb_ctx(), attr, attr_name);
+
+            // First we need to check if the array has (ever had) an enumeration
+            // of this type in its history.
+            //
+            // Note that in core, attrs have names and enumerations have
+            // names, and the names need not match -- and multiple attrs can
+            // use the same enumeration. For tiledbsoma, though, we don't take
+            // advantage of this flexibility: we use the same name for an attr
+            // and its enumeration (if if has one).
+            //
+            // It's quite possible the array had this name as an enumerated
+            // column, and then that column was dropped, and it's now being
+            // re-added.
+            //
+            // * We need to check if this is the case.
+            // * If it is, we need to check if the enumeration is compatible.
+            try {
+                const auto existing_enmr = ArrayExperimental::get_enumeration(
+                    tctx, array, attr_name);
+                auto existing_type = ArrowAdapter::tdb_to_arrow_type(
+                    existing_enmr.type());
+                auto existing_ordered = existing_enmr.ordered();
+
+                if (ordered != existing_ordered || enmr_type != existing_type) {
+                    throw TileDBSOMAError(std::format(
+                        "[SOMADataFrame::update_dataframe_schema] requested "
+                        "enumeration [type='{}', ordered={}] incompatible with "
+                        "existing [type='{}', ordered={}]",
+                        enmr_type,
+                        ordered,
+                        existing_type,
+                        existing_ordered));
+                }
+
+            } catch (const TileDBError& e) {
+                // Make sure the exception was for the reason we're considering.
+                // If it was for some other reason, fail.
+                const std::string msg = e.what();
+                if (msg.find("already exists in this ArraySchema") !=
+                    std::string::npos) {
+                    throw(e);
+                }
+
+                se.add_enumeration(Enumeration::create_empty(
+                    tctx,
+                    attr_name,
+                    ArrowAdapter::to_tiledb_format(enmr_type),
+                    enmr_type == "u" || enmr_type == "z" || enmr_type == "U" ||
+                            enmr_type == "Z" ?
+                        TILEDB_VAR_NUM :
+                        1,
+                    ordered));
+                AttributeExperimental::set_enumeration_name(
+                    tctx, attr, attr_name);
+            }
+
         } else {
             LOG_DEBUG(std::format(
                 "[SOMADataFrame::update_dataframe_schema] add col name {} type "
