@@ -327,7 +327,8 @@ void SOMAArray::write(bool sort_coords) {
     }
     mq_->submit_write(sort_coords);
 
-    mq_->reset();
+    arr_ = std::make_shared<Array>(*ctx_->tiledb_ctx(), uri_, TILEDB_WRITE);
+    mq_ = std::make_unique<ManagedQuery>(arr_, ctx_->tiledb_ctx(), name_);
 }
 
 void SOMAArray::consolidate_and_vacuum(std::vector<std::string> modes) {

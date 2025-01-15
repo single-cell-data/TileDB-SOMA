@@ -1015,12 +1015,17 @@ bool ManagedQuery::_cast_column_aux<bool>(
     (void)se;  // se is unused in bool specialization
 
     auto casted = util::cast_bit_to_uint8(schema, array);
+    uint8_t* validity = (uint8_t*)array->buffers[0];
+    if (validity != nullptr) {
+        validity += array->offset;
+    }
+
     setup_write_column(
         schema->name,
         array->length,
         (const void*)casted.data(),
         (uint64_t*)nullptr,
-        (uint8_t*)array->buffers[0]);
+        (uint8_t*)validity);
     return false;
 }
 
@@ -1098,15 +1103,14 @@ bool ManagedQuery::_extend_and_evolve_schema(
         // Specially handle Boolean types as their representation in Arrow (bit)
         // is different from what is in TileDB (uint8_t)
         auto casted = util::cast_bit_to_uint8(value_schema, value_array);
-        enums_in_write.assign(
-            (ValueType*)casted.data(), (ValueType*)casted.data() + num_elems);
+        enums_in_write.assign(casted.data(), casted.data() + num_elems);
     } else {
         // General case
-        const void* data;
+        ValueType* data;
         if (value_array->n_buffers == 3) {
-            data = value_array->buffers[2];
+            data = (ValueType*)value_array->buffers[2] + value_array->offset;
         } else {
-            data = value_array->buffers[1];
+            data = (ValueType*)value_array->buffers[1] + value_array->offset;
         }
         enums_in_write.assign((ValueType*)data, (ValueType*)data + num_elems);
     }
@@ -1118,6 +1122,7 @@ bool ManagedQuery::_extend_and_evolve_schema(
 
     // Find any new enumeration values
     std::vector<ValueType> extend_values;
+
     for (auto enum_val : enums_in_write) {
         if (std::find(enums_existing.begin(), enums_existing.end(), enum_val) ==
             enums_existing.end()) {
