@@ -327,6 +327,8 @@ void SOMAArray::write(bool sort_coords) {
     }
     mq_->submit_write(sort_coords);
 
+    // When we evolve the schema, the ArraySchema needs to be updated to the
+    // latest version so re-open the Array
     arr_ = std::make_shared<Array>(*ctx_->tiledb_ctx(), uri_, TILEDB_WRITE);
     mq_ = std::make_unique<ManagedQuery>(arr_, ctx_->tiledb_ctx(), name_);
 }
