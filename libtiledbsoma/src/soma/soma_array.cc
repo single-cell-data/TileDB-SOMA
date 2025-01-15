@@ -261,7 +261,7 @@ void SOMAArray::open(OpenMode mode, std::optional<TimestampRange> timestamp) {
 
     validate(mode, name_, timestamp);
     reset(column_names(), batch_size_, result_order_);
-    fill_metadata_cache();
+    fill_metadata_cache(timestamp_);
     fill_columns();
 }
 

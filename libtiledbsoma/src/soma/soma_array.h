@@ -1383,7 +1383,8 @@ class SOMAArray : public SOMAObject {
     std::optional<int64_t> _maybe_soma_joinid_shape_via_tiledb_current_domain();
     std::optional<int64_t> _maybe_soma_joinid_shape_via_tiledb_domain();
 
-    void fill_metadata_cache();
+    void fill_metadata_cache(std::optional<TimestampRange> timestamp);
+
     void fill_columns();
 
     void fill_columns();
