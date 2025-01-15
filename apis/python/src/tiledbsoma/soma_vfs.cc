@@ -109,7 +109,7 @@ void load_soma_vfs(py::module& m) {
                 auto fb = buf.open(uri, std::ios::in);
                 if (fb == nullptr) {
                     TPY_ERROR_LOC(
-                        std::format("URI {} is not a valid file", uri));
+                        std::format("URI {} is not a valid URI", uri));
                 }
                 return fb;
             },
