@@ -20,7 +20,6 @@ from typing import (
     List,
     Mapping,
     MutableMapping,
-    MutableSequence,
     Sequence,
     Tuple,
     Type,
@@ -811,7 +810,7 @@ class MetadataWrapper(MutableMapping[str, Any]):
             return
         # Only try to get the writer if there are changes to be made.
 
-        errors: MutableSequence[Exception] = []
+        errors: list[Exception] = []
         for key, mod in self._mods.items():
             try:
                 if mod in (_DictMod.ADDED, _DictMod.UPDATED):

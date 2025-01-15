@@ -251,9 +251,7 @@ void set_metadata(
     if (value_buffer.ndim != 1)
         throw py::type_error("Only 1D Numpy arrays can be stored as metadata");
 
-    auto value_num = (is_tdb_str(value_type) || value_type == TILEDB_BLOB) ?
-                         value.nbytes() :
-                         value.size();
+    auto value_num = is_tdb_str(value_type) ? value.nbytes() : value.size();
 
     if (is_tdb_str(value_type) && value_num > 0) {
         // If an empty string is passed by default results in a NULL byte
