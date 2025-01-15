@@ -106,7 +106,12 @@ void load_soma_vfs(py::module& m) {
         .def(
             "open",
             [](SOMAVFSFilebuf& buf, const std::string& uri) {
-                return buf.open(uri, std::ios::in);
+                auto fb = buf.open(uri, std::ios::in);
+                if (fb == nullptr) {
+                    TPY_ERROR_LOC(
+                        std::format("URI {} is not a valid file", uri));
+                }
+                return fb;
             },
             py::call_guard<py::gil_scoped_release>())
         .def("read", &SOMAVFSFilebuf::read, "size"_a = -1)
