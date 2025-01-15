@@ -17,12 +17,6 @@ HT_TEST_CONFIG = {
     "sc-61123_workaround": True,
     # reopen w->r loses all metadata modifications
     "sc-61118_workaround": True,
-    # metadata VALUES with non-ASCII codepoints generate an error
-    "sc-61092_workaround": True,
-    # Zero-length strings as a metadata value are stored incorrectly
-    "sc-61093_workaround": True,
-    # metadata keys with a zero codepoint are saved as empty string
-    "sc-61094_workaround": True,
     # dataframe column names of \x00 silently mutated to empty Python string
     "sc-61291_workaround": True,
     # DataFrame.write creates 1+ fragments (one per table chunk)

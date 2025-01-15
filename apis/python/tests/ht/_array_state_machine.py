@@ -140,39 +140,19 @@ class SOMAArrayStateMachine(RuleBasedStateMachine):
     ##
     ## --- metadata
     ##
-    # TODO: sc-61092 causes SOMA to fail on writing a metadata value with a non-ASCII codepoint.
-    # TODO: due to sc-61093, zero length bytes and strings are mishandled (not written correctly). Remove the `min_size` when fixed.
-    # TODO: due to sc-61094, strings containing a zero code point also fail.
-
-    METADATA_KEY_ALPHABET = (
-        st.characters(codec="utf-8", exclude_characters=["\x00"])
-        if HT_TEST_CONFIG["sc-61094_workaround"]
-        else st.characters(codec="utf-8")
-    )
-    METADATA_KEYS = st.text(min_size=1, max_size=4096, alphabet=METADATA_KEY_ALPHABET)
-
-    METADATA_VALUE_ALPHABET = (
-        st.characters(codec="ascii", exclude_characters=["\x00"])
-        if (
-            HT_TEST_CONFIG["sc-61092_workaround"]
-            or HT_TEST_CONFIG["sc-61094_workaround"]
-        )
-        else st.characters(codepoint="utf-8")
-    )
+    METADATA_KEY_ALPHABET = st.characters(codec="utf-8", exclude_characters=["\x00"])
+    METADATA_KEYS = st.text(min_size=0, max_size=4096, alphabet=METADATA_KEY_ALPHABET)
+    METADATA_VALUE_ALPHABET = st.characters(codec="utf-8", exclude_characters=["\x00"])
     METADATA_VALUES = st.one_of(
-        st.text(
-            alphabet=METADATA_VALUE_ALPHABET,
-            min_size=1 if HT_TEST_CONFIG["sc-61093_workaround"] else 0,
-        )
+        st.text(alphabet=METADATA_VALUE_ALPHABET, min_size=0)
         | st.integers(
             min_value=np.iinfo(np.int64).min, max_value=np.iinfo(np.int64).max
         )
         | st.floats(
             allow_nan=False
-        )  # FIXME: disabled NaNs make assertions easier (they are supported)
+        )  # FIXME: disabled NaNs make assertions easier (they are supported and we should test!)
     )
-
-    IGNORE_KEYS = re.compile(r"^soma_dim_[0-9]+_domain_(upper|lower)$")
+    IGNORE_KEYS = re.compile(r"^soma_dim_.*$")
 
     @precondition(lambda self: not self.closed)
     @invariant()
