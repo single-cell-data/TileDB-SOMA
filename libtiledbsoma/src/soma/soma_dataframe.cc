@@ -169,9 +169,10 @@ void SOMADataFrame::update_dataframe_schema(
         //   o ordered: bool
 
         auto enmr_it = add_enmrs.find(attr_name);
-        bool has_enmr = enmr_it != add_enmrs.end();
+        bool request_has_enmr = enmr_it != add_enmrs.end();
+        bool array_already_has_it = false;
 
-        if (has_enmr) {
+        if (request_has_enmr) {
             auto [enmr_type, ordered] = enmr_it->second;
             LOG_DEBUG(std::format(
                 "[SOMADataFrame::update_dataframe_schema] add col name {} "
@@ -204,6 +205,9 @@ void SOMADataFrame::update_dataframe_schema(
                     existing_enmr.type());
                 auto existing_ordered = existing_enmr.ordered();
 
+                // It's there but it'll cause a problem further down in core.
+                // We cannot continue without intervention, but let's at least
+                // be as clear as possible why we can't continue.
                 if (ordered != existing_ordered || enmr_type != existing_type) {
                     throw TileDBSOMAError(std::format(
                         "[SOMADataFrame::update_dataframe_schema] requested "
@@ -214,6 +218,7 @@ void SOMADataFrame::update_dataframe_schema(
                         existing_type,
                         existing_ordered));
                 }
+                array_already_has_it = true;
 
             } catch (const TileDBError& e) {
                 // Make sure the exception was for the reason we're considering.
@@ -221,9 +226,18 @@ void SOMADataFrame::update_dataframe_schema(
                 const std::string msg = e.what();
                 if (msg.find("already exists in this ArraySchema") !=
                     std::string::npos) {
+                    array_already_has_it = true;
+                } else if (
+                    msg.find("Unable to check if unknown enumeration is "
+                             "loaded. No enumeration named") !=
+                    std::string::npos) {
+                    array_already_has_it = false;
+                } else {
                     throw(e);
                 }
+            }
 
+            if (!array_already_has_it) {
                 se.add_enumeration(Enumeration::create_empty(
                     tctx,
                     attr_name,
