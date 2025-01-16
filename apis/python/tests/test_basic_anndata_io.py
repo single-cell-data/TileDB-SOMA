@@ -1528,3 +1528,8 @@ def test_decat_append(tmp_path):
             obs_table.column("bool_enum").to_pylist()
             == bool_enum_values_over + bool_enum_values_under
         )
+
+
+def test_from_h5ad_bad_uri():
+    with pytest.raises(tiledbsoma.SOMAError, match="URI /nonesuch is not a valid URI"):
+        next(tiledbsoma.io._util.read_h5ad("/nonesuch").gen)
