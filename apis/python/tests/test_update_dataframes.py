@@ -335,6 +335,7 @@ def test_enmr_add_drop_readd(tmp_path, conftest_pbmc3k_adata):
 
     # Re-add
     with tiledbsoma.Experiment.open(uri, "w") as exp:
+        # Most importantly, we're implicitly checking for no throw here.
         tiledbsoma.io.update_obs(exp, conftest_pbmc3k_adata.obs)
 
     with tiledbsoma.Experiment.open(uri, "r") as exp:

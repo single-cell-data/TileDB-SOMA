@@ -220,7 +220,10 @@ void SOMADataFrame::update_dataframe_schema(
                 }
                 array_already_has_it = true;
 
-            } catch (const TileDBError& e) {
+            } catch (const std::exception& e) {
+                // Oddly, catch (tiledb::TileDBError& e) did not enter this
+                // block in unit test.
+                //
                 // Make sure the exception was for the reason we're considering.
                 // If it was for some other reason, fail.
                 const std::string msg = e.what();
