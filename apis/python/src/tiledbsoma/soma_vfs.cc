@@ -110,7 +110,7 @@ void load_soma_vfs(py::module& m) {
                 if (fb == nullptr) {
                     // No std::format in C++17, and fmt::format is overkill here
                     std::stringstream ss;
-                    ss << "URI {" << uri << "} is not a valid URI";
+                    ss << "URI " << uri << " is not a valid URI";
                     TPY_ERROR_LOC(ss.str());
                 }
                 return fb;
