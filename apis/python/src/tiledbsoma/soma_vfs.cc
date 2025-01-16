@@ -80,8 +80,11 @@ class SOMAVFSFilebuf : public tiledb::impl::VFSFilebuf {
             return py::bytes("");
         }
 
+        py::gil_scoped_release release;
         std::string buffer(nbytes, '\0');
         offset_ += xsgetn(&buffer[0], nbytes);
+        py::gil_scoped_acquire acquire;
+
         return py::bytes(buffer);
     }
 
@@ -103,11 +106,22 @@ void load_soma_vfs(py::module& m) {
         .def(
             "open",
             [](SOMAVFSFilebuf& buf, const std::string& uri) {
-                return buf.open(uri, std::ios::in);
-            })
+                auto fb = buf.open(uri, std::ios::in);
+                if (fb == nullptr) {
+                    TPY_ERROR_LOC(
+                        std::format("URI {} is not a valid URI", uri));
+                }
+                return fb;
+            },
+            py::call_guard<py::gil_scoped_release>())
         .def("read", &SOMAVFSFilebuf::read, "size"_a = -1)
         .def("tell", &SOMAVFSFilebuf::tell)
-        .def("seek", &SOMAVFSFilebuf::seek, "offset"_a, "whence"_a = 0)
+        .def(
+            "seek",
+            &SOMAVFSFilebuf::seek,
+            "offset"_a,
+            "whence"_a = 0,
+            py::call_guard<py::gil_scoped_release>())
         .def("close", &SOMAVFSFilebuf::close, "should_throw"_a = true);
 }
 }  // namespace libtiledbsomacpp
