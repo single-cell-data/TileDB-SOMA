@@ -99,9 +99,25 @@ void load_soma_collection(py::module& m) {
             "create",
             [](std::shared_ptr<SOMAContext> ctx,
                std::string_view uri,
+               std::optional<std::vector<std::string>> axis_names,
+               std::optional<std::vector<std::optional<std::string>>>
+                   axis_units,
                std::optional<TimestampRange> timestamp) {
+                if (axis_units.has_value() && !axis_names.has_value()) {
+                    throw TileDBSOMAError(
+                        "Cannot provide axis units without axis names.");
+                }
+                std::optional<SOMACoordinateSpace> coord_space{std::nullopt};
+                if (axis_names.has_value()) {
+                    if (axis_units.has_value()) {
+                        coord_space = SOMACoordinateSpace(
+                            axis_names.value(), axis_units.value());
+                    } else {
+                        coord_space = SOMACoordinateSpace(axis_names.value());
+                    }
+                }
                 try {
-                    SOMAScene::create(uri, ctx, std::nullopt, timestamp);
+                    SOMAScene::create(uri, ctx, coord_space, timestamp);
                 } catch (const std::exception& e) {
                     TPY_ERROR_LOC(e.what());
                 }
@@ -109,6 +125,8 @@ void load_soma_collection(py::module& m) {
             py::kw_only(),
             "ctx"_a,
             "uri"_a,
+            "axis_names"_a,
+            "axis_units"_a,
             "timestamp"_a = py::none())
         .def_static(
             "open",

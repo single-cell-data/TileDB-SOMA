@@ -110,23 +110,30 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
         warnings.warn(SPATIAL_DISCLAIMER)
 
         context = _validate_soma_tiledb_context(context)
+
+        if coordinate_space is None:
+            axis_names = None
+            axis_units = None
+        elif isinstance(coordinate_space, CoordinateSpace):
+            axis_names = tuple(axis.name for axis in coordinate_space)
+            axis_units = tuple(axis.unit for axis in coordinate_space)
+        else:
+            axis_names = tuple(coordinate_space)
+            axis_units = None
+
         try:
             timestamp_ms = context._open_timestamp_ms(tiledb_timestamp)
             clib.SOMAScene.create(
                 ctx=context.native_context,
                 uri=uri,
+                axis_names=axis_names,
+                axis_units=axis_units,
                 timestamp=(0, timestamp_ms),
             )
             handle = cls._wrapper_type.open(uri, "w", context, tiledb_timestamp)
             handle.metadata[SOMA_SPATIAL_VERSION_METADATA_KEY] = (
                 SOMA_SPATIAL_ENCODING_VERSION
             )
-            if coordinate_space is not None:
-                if not isinstance(coordinate_space, CoordinateSpace):
-                    coordinate_space = CoordinateSpace.from_axis_names(coordinate_space)
-                handle.meta[SOMA_COORDINATE_SPACE_METADATA_KEY] = (
-                    coordinate_space_to_json(coordinate_space)
-                )
             return cls(
                 handle,
                 _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code",
