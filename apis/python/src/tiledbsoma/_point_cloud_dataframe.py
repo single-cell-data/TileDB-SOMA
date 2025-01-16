@@ -20,6 +20,7 @@ from . import _arrow_types, _util
 from . import pytiledbsoma as clib
 from ._constants import (
     SOMA_COORDINATE_SPACE_METADATA_KEY,
+    SOMA_JOINID,
     SPATIAL_DISCLAIMER,
 )
 from ._dataframe import (
@@ -85,8 +86,8 @@ class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
         ``soma_joinid`` column is not provided, one will be added.
 
         The schema of the created point cloud must contain columns for the axes in the
-        ``coordinate_space``. These columns will be index columns for the point cloud
-        dataframe.
+        ``coordinate_space``. These columns followed by the ``soma_joinid`` will be
+        index columns for the point cloud dataframe.
 
         Args:
             uri: The URI where the dataframe will be created.
@@ -123,7 +124,6 @@ class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
         axis_dtype: pa.DataType | None = None
         if not isinstance(coordinate_space, CoordinateSpace):
             coordinate_space = CoordinateSpace.from_axis_names(coordinate_space)
-        index_column_names = coordinate_space.axis_names
         for column_name in coordinate_space.axis_names:
             # Check axis column type is valid and all axis columns have the same type.
             if axis_dtype is None:
@@ -151,6 +151,7 @@ class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
                     ) from ke
                 if column_dtype != axis_dtype:
                     raise ValueError("All spatial axes must have the same datatype.")
+        index_column_names = coordinate_space.axis_names + (SOMA_JOINID,)
 
         context = _validate_soma_tiledb_context(context)
         schema = _canonicalize_schema(schema, index_column_names)
@@ -184,7 +185,8 @@ class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
             nidx = len(index_column_names)
             if ndom != nidx:
                 raise ValueError(
-                    f"if domain is specified, it must have the same length as index_column_names; got {ndom} != {nidx}"
+                    f"if domain is specified, it must have the same length as "
+                    f"index_column_names; got {ndom} != {nidx}"
                 )
 
         index_column_schema = []
