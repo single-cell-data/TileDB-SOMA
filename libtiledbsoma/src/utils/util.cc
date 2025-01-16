@@ -88,35 +88,12 @@ std::vector<uint8_t> cast_bit_to_uint8(ArrowSchema* schema, ArrowArray* array) {
         data = (uint8_t*)array->buffers[1];
     }
 
-    std::vector<uint8_t> casted;
-    casted.reserve(array->length);
-
-    // head: handle the first byte if offset is not aligned to byte
-    auto head_offset = array->offset % 8;
-    if (head_offset != 0) {
-        auto head_length = std::min(8 - head_offset, array->length) + 1;
-        for (int64_t j = head_offset; j < head_length; ++j) {
-            casted.push_back((data[array->offset / 8] >> j) & 0x01);
-        }
-    }
-
-    // bulk: handle the full bytes
-    auto bulk_start = (array->offset + head_offset) / 8;
-    auto bulk_end = (array->offset + array->length) / 8;
-    for (int64_t i = bulk_start; i < bulk_end; ++i) {
-        for (int64_t j = 0; j < 8; ++j) {
-            casted.push_back((data[i] >> j) & 0x01);
-        }
-    }
-
-    // tail: handle the last byte if length does not fill byte
-    auto tail_length = (array->offset + array->length) % 8;
-    if (tail_length != 0) {
-        for (int64_t j = 0; j < tail_length; ++j) {
-            casted.push_back((data[bulk_end] >> j) & 0x01);
-        }
-    }
-
+    std::vector<uint8_t> casted(array->length);
+    ArrowBitsUnpackInt8(
+        data,
+        array->offset,
+        array->length,
+        reinterpret_cast<int8_t*>(casted.data()));
     return casted;
 }
 

@@ -1988,9 +1988,9 @@ def test_arrow_table_sliced_writer(tmp_path):
 
     pydict = {
         "soma_joinid": list(range(num_rows)),
-        "myint": [(e + 1) * 10 for e in range(num_rows)],
-        "mystring": ["s_%08d" % e for e in range(num_rows)],
-        "mybool": [bool(e % 2) for e in range(num_rows)],
+        "myint": np.random.randint(10, 100, size=num_rows),
+        "mystring": [f"s_{np.random.randint(1, 100000):08d}" for _ in range(num_rows)],
+        "mybool": np.random.choice([False, True], size=num_rows),
         "myenumint": pd.Categorical(
             np.random.choice([1, 2, 3], size=num_rows, replace=True)
         ),
@@ -2002,19 +2002,19 @@ def test_arrow_table_sliced_writer(tmp_path):
         ),
     }
 
-    pydict["myenumint"] = pa.array(pydict["myenumint"].codes, type=pa.int32())
     pydict["myenumint"] = pa.DictionaryArray.from_arrays(
-        pydict["myenumint"], pa.array([1, 2, 3], type=pa.int32())
+        pa.array(pydict["myenumint"].codes, type=pa.int32()),
+        pa.array([1, 2, 3], type=pa.int32()),
     )
 
-    pydict["myenumstr"] = pa.array(pydict["myenumstr"].codes, type=pa.int32())
     pydict["myenumstr"] = pa.DictionaryArray.from_arrays(
-        pydict["myenumstr"], pa.array(["a", "bb", "ccc"], type=pa.large_string())
+        pa.array(pydict["myenumstr"].codes, type=pa.int32()),
+        pa.array(["a", "bb", "ccc"], type=pa.large_string()),
     )
 
-    pydict["myenumbool"] = pa.array(pydict["myenumbool"].codes, type=pa.int32())
     pydict["myenumbool"] = pa.DictionaryArray.from_arrays(
-        pydict["myenumbool"], pa.array([False, True], type=pa.bool_())
+        pa.array(pydict["myenumbool"].codes, type=pa.int32()),
+        pa.array([False, True], type=pa.bool_()),
     )
 
     table = pa.Table.from_pydict(pydict)
@@ -2026,13 +2026,14 @@ def test_arrow_table_sliced_writer(tmp_path):
 
     with soma.DataFrame.open(uri) as sdf:
         pdf = sdf.read().concat().to_pandas()
-        assert list(pdf["myint"]) == pydict["myint"]
-        assert list(pdf["mystring"]) == pydict["mystring"]
-        assert list(pdf["mybool"]) == pydict["mybool"]
 
-        assert (pdf["myenumint"] == pydict["myenumint"]).all()
-        assert (pdf["myenumstr"] == pydict["myenumstr"]).all()
-        assert (pdf["myenumbool"] == pydict["myenumbool"]).all()
+        np.testing.assert_array_equal(pdf["myint"], pydict["myint"])
+        np.testing.assert_array_equal(pdf["mystring"], pydict["mystring"])
+        np.testing.assert_array_equal(pdf["mybool"], pydict["mybool"])
+
+        np.testing.assert_array_equal(pdf["myenumint"], pydict["myenumint"])
+        np.testing.assert_array_equal(pdf["myenumstr"], pydict["myenumstr"])
+        np.testing.assert_array_equal(pdf["myenumbool"], pydict["myenumbool"])
 
     with soma.DataFrame.open(uri, mode="w") as sdf:
         mid = num_rows // 2
@@ -2042,9 +2043,9 @@ def test_arrow_table_sliced_writer(tmp_path):
     with soma.DataFrame.open(uri) as sdf:
         pdf = sdf.read().concat().to_pandas()
 
-        assert list(pdf["myint"]) == pydict["myint"]
-        assert list(pdf["mystring"]) == pydict["mystring"]
-        assert list(pdf["mybool"]) == pydict["mybool"]
+        np.testing.assert_array_equal(pdf["myint"], pydict["myint"])
+        np.testing.assert_array_equal(pdf["mystring"], pydict["mystring"])
+        np.testing.assert_array_equal(pdf["mybool"], pydict["mybool"])
 
         np.testing.assert_array_equal(pdf["myenumint"], pydict["myenumint"])
         np.testing.assert_array_equal(pdf["myenumstr"], pydict["myenumstr"])
