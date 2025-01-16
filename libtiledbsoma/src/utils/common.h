@@ -42,6 +42,9 @@ namespace tiledbsoma {
 const std::string SOMA_OBJECT_TYPE_KEY = "soma_object_type";
 const std::string ENCODING_VERSION_KEY = "soma_encoding_version";
 const std::string ENCODING_VERSION_VAL = "1.1.0";
+const std::string
+    SPATIAL_ENCODING_VERSION_KEY = "soma_spatial_encoding_version";
+const std::string SPATIAL_ENCODING_VERSION_VAL = "0.2.0";
 const std::string SOMA_COORDINATE_SPACE_KEY = "soma_coordinate_space";
 const std::string SOMA_GEOMETRY_COLUMN_NAME = "soma_geometry";
 const std::string SOMA_GEOMETRY_DIMENSION_PREFIX = "tiledb__internal__";

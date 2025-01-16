@@ -24,8 +24,6 @@ from . import pytiledbsoma as clib
 from ._collection import CollectionBase
 from ._constants import (
     SOMA_COORDINATE_SPACE_METADATA_KEY,
-    SOMA_SPATIAL_ENCODING_VERSION,
-    SOMA_SPATIAL_VERSION_METADATA_KEY,
     SPATIAL_DISCLAIMER,
 )
 from ._exception import SOMAError, map_exception_for_create
@@ -130,12 +128,8 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
                 axis_units=axis_units,
                 timestamp=(0, timestamp_ms),
             )
-            handle = cls._wrapper_type.open(uri, "w", context, tiledb_timestamp)
-            handle.metadata[SOMA_SPATIAL_VERSION_METADATA_KEY] = (
-                SOMA_SPATIAL_ENCODING_VERSION
-            )
             return cls(
-                handle,
+                cls._wrapper_type.open(uri, "w", context, tiledb_timestamp),
                 _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code",
             )
         except SOMAError as e:

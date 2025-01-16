@@ -41,6 +41,8 @@ TEST_CASE("SOMAScene: basic", "[scene][spatial]") {
     CHECK(soma_scene->uri() == uri);
     CHECK(soma_scene->ctx() == ctx);
     CHECK(soma_scene->type() == "SOMAScene");
+    CHECK(soma_scene->has_metadata("soma_encoding_version"));
+    CHECK(soma_scene->has_metadata("soma_spatial_encoding_version"));
     CHECK(not soma_scene->coordinate_space().has_value());
     soma_scene->close();
 }
@@ -57,6 +59,8 @@ TEST_CASE("SOMAScene: with coordinates", "[scene][spatial]") {
     CHECK(soma_scene->uri() == uri);
     CHECK(soma_scene->ctx() == ctx);
     CHECK(soma_scene->type() == "SOMAScene");
+    CHECK(soma_scene->has_metadata("soma_encoding_version"));
+    CHECK(soma_scene->has_metadata("soma_spatial_encoding_version"));
     auto scene_coord_space = soma_scene->coordinate_space();
     REQUIRE(scene_coord_space.has_value());
 

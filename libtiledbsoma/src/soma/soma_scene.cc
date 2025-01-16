@@ -50,14 +50,24 @@ void SOMAScene::create(
         std::filesystem::path scene_uri(uri);
         auto group = SOMAGroup::create(
             ctx, scene_uri.string(), "SOMAScene", timestamp);
+
+        group->set_metadata(
+            SPATIAL_ENCODING_VERSION_KEY,
+            TILEDB_STRING_UTF8,
+            static_cast<uint32_t>(SPATIAL_ENCODING_VERSION_VAL.size()),
+            SPATIAL_ENCODING_VERSION_VAL.c_str(),
+            true);
+
         if (coordinate_space.has_value()) {
             const auto coord_space_metadata = coordinate_space->to_string();
             group->set_metadata(
                 SOMA_COORDINATE_SPACE_KEY,
                 TILEDB_STRING_UTF8,
                 static_cast<uint32_t>(coord_space_metadata.size()),
-                coord_space_metadata.c_str());
+                coord_space_metadata.c_str(),
+                true);
         }
+
         group->close();
     } catch (TileDBError& e) {
         throw TileDBSOMAError(e.what());
