@@ -307,3 +307,38 @@ def test_update_non_null_to_null(tmp_path, conftest_pbmc3k_adata, separate_inges
     conftest_pbmc3k_adata.obs["myfloat"] = np.nan
     # We need nan_safe since pd.NA != pd.NA
     verify_updates(uri, conftest_pbmc3k_adata.obs, conftest_pbmc3k_adata.var)
+
+
+def test_enmr_add_drop_readd(tmp_path, conftest_pbmc3k_adata):
+    uri = tmp_path.as_posix()
+
+    # Add
+    tiledbsoma.io.from_anndata(uri, conftest_pbmc3k_adata, measurement_name="RNA")
+
+    with tiledbsoma.Experiment.open(uri, "r") as exp:
+        schema = exp.obs.schema
+        assert "louvain" in schema.names
+        field = schema.field("louvain")
+        assert pa.types.is_dictionary(field.type)
+
+    # Drop
+    with tiledbsoma.Experiment.open(uri, "r") as exp:
+        obs = exp.obs.read().concat().to_pandas()
+    obs.drop(columns=["louvain"], inplace=True)
+
+    with tiledbsoma.Experiment.open(uri, "w") as exp:
+        tiledbsoma.io.update_obs(exp, obs)
+
+    with tiledbsoma.Experiment.open(uri, "r") as exp:
+        schema = exp.obs.schema
+        assert "louvain" not in schema.names
+
+    # Re-add
+    with tiledbsoma.Experiment.open(uri, "w") as exp:
+        # Most importantly, we're implicitly checking for no throw here.
+        tiledbsoma.io.update_obs(exp, conftest_pbmc3k_adata.obs)
+
+    with tiledbsoma.Experiment.open(uri, "r") as exp:
+        schema = exp.obs.schema
+        assert "louvain" in schema.names
+        assert pa.types.is_dictionary(field.type)

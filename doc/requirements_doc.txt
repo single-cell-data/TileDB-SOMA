@@ -9,5 +9,6 @@ pybind11==2.12.0
 setuptools==75.1.0
 setuptools-scm==8.1.0
 sphinx==7.3.7
+sphinxcontrib-jquery==4.1
 sphinx-rtd-theme==2.0.0
 wheel==0.43.0

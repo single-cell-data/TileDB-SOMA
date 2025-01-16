@@ -86,7 +86,7 @@ def add_point_cloud_dataframe(
         subcoll,
         transform=soma.IdentityTransform(("x", "y"), ("x", "y")),
         schema=pa.schema([("x", pa.float64()), ("y", pa.float64())]),
-        domain=[[-1, 1], [-1, 1]],
+        domain=[[-1, 1], [-1, 1], [0, 63]],
     ) as points:
 
         if circles:

@@ -478,9 +478,9 @@ def from_visium(
         obs_df = (
             exp.obs.read(column_names=["soma_joinid", "obs_id"]).concat().to_pandas()
         )
+        x_layer = exp.ms[measurement_name].X[X_layer_name]
+        (len_obs_id, len_var_id) = x_layer.shape
         if write_obs_spatial_presence or write_var_spatial_presence:
-            x_layer = exp.ms[measurement_name].X[X_layer_name]
-            (len_obs_id, len_var_id) = x_layer.shape
             x_layer_data = x_layer.read().tables().concat()
             if write_obs_spatial_presence:
                 obs_id = pacomp.unique(x_layer_data["soma_dim_0"])
@@ -569,6 +569,7 @@ def from_visium(
                         pixels_per_spot_diameter,
                         obs_df,
                         obs_id_name,
+                        len_obs_id,
                         **ingest_ctx,
                     ) as loc:
                         _maybe_set(obsl, "loc", loc, use_relative_uri=use_relative_uri)
@@ -684,6 +685,7 @@ def _write_visium_spots(
     spot_diameter: float,
     obs_df: pd.DataFrame,
     id_column_name: str,
+    max_joinid_len: int,
     *,
     ingestion_params: IngestionParams,
     additional_metadata: "AdditionalMetadata" = None,
@@ -711,7 +713,11 @@ def _write_visium_spots(
     df = pd.merge(obs_df, df, how="inner", on=id_column_name)
     df.drop(id_column_name, axis=1, inplace=True)
 
-    domain = ((df["x"].min(), df["x"].max()), (df["y"].min(), df["y"].max()))
+    domain = (
+        (df["x"].min(), df["x"].max()),
+        (df["y"].min(), df["y"].max()),
+        (0, max_joinid_len - 1),
+    )
 
     arrow_table = df_to_arrow(df)
 

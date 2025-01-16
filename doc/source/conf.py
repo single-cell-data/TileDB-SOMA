@@ -41,6 +41,7 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinx.ext.autosummary",
     "nbsphinx",
+    "sphinxcontrib.jquery",
 ]
 
 autosummary_generate = True
