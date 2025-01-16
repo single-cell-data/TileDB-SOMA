@@ -21,8 +21,6 @@ from . import pytiledbsoma as clib
 from ._constants import (
     SOMA_COORDINATE_SPACE_METADATA_KEY,
     SOMA_JOINID,
-    SOMA_SPATIAL_ENCODING_VERSION,
-    SOMA_SPATIAL_VERSION_METADATA_KEY,
     SPATIAL_DISCLAIMER,
 )
 from ._dataframe import (
