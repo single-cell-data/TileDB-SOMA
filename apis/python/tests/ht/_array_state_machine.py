@@ -5,6 +5,7 @@ Intended to be specialized for SparseNDArray, et al.
 
 from __future__ import annotations
 
+import math
 import re
 from abc import abstractmethod
 from typing import Any, Literal, Protocol, Union
@@ -18,6 +19,7 @@ from typing_extensions import TypeAlias
 import tiledbsoma as soma
 
 from tests.ht._ht_test_config import HT_TEST_CONFIG
+from tests.ht._ledger import Ledger, PyDictLedgerEntry
 
 SOMAArray: TypeAlias = Union[soma.DataFrame, soma.SparseNDArray, soma.DenseNDArray]
 
@@ -34,10 +36,6 @@ class SOMAArrayStateMachine(RuleBasedStateMachine):
         self.uri = self.TestCase.tmp_path_factory.mktemp(
             f"{self.__class__.__name__}-"
         ).as_posix()
-        self.metadata: dict[str, Any] = (
-            {}
-        )  # XXX TODO: should be a ledger to allow for time travel
-        self.initial_metadata_keys: set[str] = set()
 
     def setup(self, A: SOMAArray) -> None:
         assert isinstance(A, (soma.DataFrame, soma.SparseNDArray, soma.DenseNDArray))
@@ -46,8 +44,15 @@ class SOMAArrayStateMachine(RuleBasedStateMachine):
         self.create_timestamp_ms = self.A.tiledb_timestamp_ms
         self.closed = self.A.closed
         self.mode = self.A.mode
-        self.metadata = dict(self.A.metadata)
-        self.initial_metadata_keys = set(self.metadata)
+        self.metadata_ledger = Ledger[PyDictLedgerEntry](
+            initial_entry=PyDictLedgerEntry(
+                data=dict(self.A.metadata),
+                timestamp_ms=self.A.tiledb_timestamp_ms,
+                name="initial entry",
+            ),
+            allows_duplicates=False,
+        )
+        self.pending_metadata: dict[str, Any] | None = None
 
     def teardown(self) -> None:
         if self.A is not None:
@@ -81,6 +86,12 @@ class SOMAArrayStateMachine(RuleBasedStateMachine):
 
     def _close(self) -> None:
         assert not self.A.closed
+        if self.pending_metadata is not None:
+            self.metadata_ledger.write(
+                PyDictLedgerEntry(self.A.tiledb_timestamp_ms, "", self.pending_metadata)
+            )
+            self.pending_metadata = None
+
         self.A.close()
         self.closed = True
         self.mode = None
@@ -141,56 +152,72 @@ class SOMAArrayStateMachine(RuleBasedStateMachine):
     ## --- metadata
     ##
     METADATA_KEY_ALPHABET = st.characters(codec="utf-8", exclude_characters=["\x00"])
-    METADATA_KEYS = st.text(min_size=0, max_size=4096, alphabet=METADATA_KEY_ALPHABET)
+    METADATA_KEYS = st.text(
+        min_size=0, max_size=4096, alphabet=METADATA_KEY_ALPHABET
+    ).filter(lambda k: not k.startswith("soma_"))
     METADATA_VALUE_ALPHABET = st.characters(codec="utf-8", exclude_characters=["\x00"])
     METADATA_VALUES = st.one_of(
         st.text(alphabet=METADATA_VALUE_ALPHABET, min_size=0)
         | st.integers(
             min_value=np.iinfo(np.int64).min, max_value=np.iinfo(np.int64).max
         )
-        | st.floats(
-            allow_nan=False
-        )  # FIXME: disabled NaNs make assertions easier (they are supported and we should test!)
+        | st.floats()
     )
-    IGNORE_KEYS = re.compile(r"^soma_dim_.*$")
+    IGNORE_KEYS = re.compile(r"^soma_.*$")
+
+    @classmethod
+    def filter_metadata(cls, d: dict[str, Any]) -> dict[str, Any]:
+        """Apply the "ignore" regex to dict keys, returning the filtered dict."""
+        return {k: v for k, v in d.items() if not cls.IGNORE_KEYS.match(k)}
 
     @precondition(lambda self: not self.closed)
     @invariant()
     def check_metadata(self) -> None:
-        # Prior to tiledbsoma 1.16, the "used domain" keys were still included. Ignore them.
-        # TODO: we could generalize this by removing _all_ keys that are reserved soma_* keys.
-        array_metadata = {
-            k: v for k, v in self.A.metadata.items() if not self.IGNORE_KEYS.match(k)
-        }
-        assert array_metadata == self.metadata
+        array_metadata = self.filter_metadata(dict(self.A.metadata))
+        expected_metadata = self.filter_metadata(
+            self.metadata_ledger.read(timestamp_ms=self.A.tiledb_timestamp_ms).to_dict()
+            if self.pending_metadata is None
+            else self.pending_metadata
+        )
+        assert set(array_metadata.keys()) == set(expected_metadata.keys())
+        for k in array_metadata.keys():
+            if isinstance(array_metadata[k], float) and math.isnan(array_metadata[k]):
+                assert math.isnan(expected_metadata[k])
+                continue
+            assert array_metadata[k] == expected_metadata[k]
 
     @precondition(
-        lambda self: not self.closed and self.mode == "w" and len(self.metadata) < 100
+        lambda self: not self.closed and self.mode == "w" and len(self.A.metadata) < 100
     )
     @rule(k=METADATA_KEYS, v=METADATA_VALUES)
     def set_metadata(self, k: str, v: str | int | float) -> None:
-        self.metadata[k] = v
         self.A.metadata[k] = v
+        if self.pending_metadata is None:
+            self.pending_metadata = self.metadata_ledger.read(
+                self.A.tiledb_timestamp_ms
+            ).to_dict()
+        self.pending_metadata[k] = v
 
     @precondition(
         lambda self: not self.closed
         and self.mode == "w"
-        and len(self.metadata) > len(self.initial_metadata_keys)
+        and len(self.filter_metadata(self.A.metadata))
     )
     @precondition(lambda self: not self.closed)
     @rule(data=st.data())
     def del_metadata(self, data: st.DataObject) -> None:
+        if self.pending_metadata is None:
+            self.pending_metadata = self.metadata_ledger.read(
+                self.A.tiledb_timestamp_ms
+            ).to_dict()
+
         k = data.draw(
             st.sampled_from(
-                [
-                    kn
-                    for kn in self.metadata.keys()
-                    if kn not in self.initial_metadata_keys
-                ]
+                sorted(list(self.filter_metadata(self.pending_metadata).keys()))
             )
         )
-        del self.metadata[k]
         del self.A.metadata[k]
+        del self.pending_metadata[k]
 
 
 class ShapesFactory(Protocol):

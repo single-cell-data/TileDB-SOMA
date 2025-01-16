@@ -5,7 +5,7 @@ from __future__ import annotations
 import pathlib
 import re
 from abc import ABCMeta, abstractmethod
-from typing import Generic, Sequence, TypeVar
+from typing import Any, Generic, Sequence, TypeVar
 
 import numpy as np
 import pandas as pd
@@ -184,6 +184,31 @@ class ArrowTensorLedgerEntry(LedgerEntry[pa.Tensor]):
 
     def to_numpy(self) -> np.ndarray:
         return self.data.to_numpy()
+
+
+class PyDictLedgerEntry(LedgerEntry[dict[str, Any]]):
+    """Ledger entry based upon a Python dictionary."""
+
+    def __init__(
+        self,
+        timestamp_ms: int,
+        name: str,
+        data: dict[str, Any],
+    ) -> None:
+        super().__init__(timestamp_ms, name, data)
+
+    def __repr__(self) -> str:
+        return f"PyDictLedgerEntry(timestamp_ms={self.timestamp_ms}):\n{self.data}"
+
+    def consolidate_with(
+        self, other: PyDictLedgerEntry, allow_duplicates: bool
+    ) -> PyDictLedgerEntry:
+        assert not allow_duplicates, "Unsupported"
+        assert (self.timestamp_ms, self.name) < (other.timestamp_ms, other.name)
+        return other
+
+    def to_dict(self) -> dict[str, Any]:
+        return self.data
 
 
 def combine_first(first: pd.DataFrame, second: pd.DataFrame) -> pd.DataFrame:
