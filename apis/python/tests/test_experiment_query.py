@@ -22,7 +22,6 @@ from tiledbsoma import (
 )
 from tiledbsoma._collection import CollectionBase
 from tiledbsoma._experiment import Experiment
-from tiledbsoma._query import AxisName
 from tiledbsoma.experiment_query import X_as_series
 
 from tests._util import raises_no_typeguard
@@ -965,16 +964,3 @@ class IHaveObsVarStuff:
     var: int
     the_obs_suf: str
     the_var_suf: str
-
-
-def test_axis_helpers() -> None:
-    thing = IHaveObsVarStuff(obs=1, var=2, the_obs_suf="observe", the_var_suf="vary")
-    assert 1 == AxisName.OBS.getattr_from(thing)
-    assert 2 == AxisName.VAR.getattr_from(thing)
-    assert "observe" == AxisName.OBS.getattr_from(thing, pre="the_", suf="_suf")
-    assert "vary" == AxisName.VAR.getattr_from(thing, pre="the_", suf="_suf")
-    ovdict = {"obs": "erve", "var": "y", "i_obscure": "hide", "i_varcure": "???"}
-    assert "erve" == AxisName.OBS.getitem_from(ovdict)
-    assert "y" == AxisName.VAR.getitem_from(ovdict)
-    assert "hide" == AxisName.OBS.getitem_from(ovdict, pre="i_", suf="cure")
-    assert "???" == AxisName.VAR.getitem_from(ovdict, pre="i_", suf="cure")
