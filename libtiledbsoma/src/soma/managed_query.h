@@ -725,9 +725,9 @@ class ManagedQuery {
         // Get the user passed-in dictionary indexes
         IndexType* idxbuf;
         if (index_array->n_buffers == 3) {
-            idxbuf = (IndexType*)index_array->buffers[2];
+            idxbuf = (IndexType*)index_array->buffers[2] + index_array->offset;
         } else {
-            idxbuf = (IndexType*)index_array->buffers[1];
+            idxbuf = (IndexType*)index_array->buffers[1] + index_array->offset;
         }
         std::vector<IndexType> original_indexes(
             idxbuf, idxbuf + index_array->length);
@@ -794,12 +794,17 @@ class ManagedQuery {
         std::vector<DiskIndexType> casted_indexes(
             shifted_indexes.begin(), shifted_indexes.end());
 
+        uint8_t* validity = (uint8_t*)index_array->buffers[0];
+        if (validity != nullptr) {
+            validity += index_array->offset;
+        }
+
         setup_write_column(
             column_name,
             casted_indexes.size(),
             (const void*)casted_indexes.data(),
             (uint64_t*)nullptr,
-            (uint8_t*)index_array->buffers[0]);
+            (uint8_t*)validity);
     }
 
     bool _extend_enumeration(

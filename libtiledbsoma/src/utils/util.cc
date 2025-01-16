@@ -81,20 +81,19 @@ std::vector<uint8_t> cast_bit_to_uint8(ArrowSchema* schema, ArrowArray* array) {
             schema->format));
     }
 
-    const void* data;
+    uint8_t* data;
     if (array->n_buffers == 3) {
-        data = array->buffers[2];
+        data = (uint8_t*)array->buffers[2];
     } else {
-        data = array->buffers[1];
+        data = (uint8_t*)array->buffers[1];
     }
 
-    std::vector<uint8_t> casted;
-    for (int64_t i = 0; i * 8 < array->length; ++i) {
-        uint8_t byte = ((uint8_t*)data)[i];
-        for (int64_t j = 0; j < 8; ++j) {
-            casted.push_back((uint8_t)((byte >> j) & 0x01));
-        }
-    }
+    std::vector<uint8_t> casted(array->length);
+    ArrowBitsUnpackInt8(
+        data,
+        array->offset,
+        array->length,
+        reinterpret_cast<int8_t*>(casted.data()));
     return casted;
 }
 
