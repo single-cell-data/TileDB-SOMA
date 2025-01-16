@@ -32,7 +32,54 @@
 
 #include "soma_column.h"
 
+#include "soma_attribute.h"
+#include "soma_dimension.h"
+#include "soma_geometry_column.h"
+
 namespace tiledbsoma {
+
+std::map<uint32_t, SOMAColumn::Factory> SOMAColumn::deserialiser_map = {
+    {soma_column_datatype_t::SOMA_COLUMN_ATTRIBUTE, SOMAAttribute::deserialize},
+    {soma_column_datatype_t::SOMA_COLUMN_DIMENSION, SOMADimension::deserialize},
+    {soma_column_datatype_t::SOMA_COLUMN_GEOMETRY,
+     SOMAGeometryColumn::deserialize}};
+
+std::vector<std::shared_ptr<SOMAColumn>> SOMAColumn::deserialize(
+    nlohmann::json& soma_schema, const Context& ctx, const Array& array) {
+    std::vector<std::shared_ptr<SOMAColumn>> columns;
+
+    if (soma_schema.contains(TDB_SOMA_SCHEMA_COL_KEY)) {
+        for (auto& column : soma_schema[TDB_SOMA_SCHEMA_COL_KEY]) {
+            auto type = column[TDB_SOMA_SCHEMA_COL_TYPE_KEY]
+                            .template get<uint32_t>();
+
+            columns.push_back(deserialiser_map[type](column, ctx, array));
+        }
+    } else {
+        // All arrays before the introduction of SOMAColumn do not have
+        // composite columns, thus the metadata are trivially contructuble
+        for (auto& dimension : array.schema().domain().dimensions()) {
+            columns.push_back(std::make_shared<SOMADimension>(dimension));
+        }
+
+        for (auto& attribute : array.schema().attributes()) {
+            auto enumeration_name = AttributeExperimental::get_enumeration_name(
+                ctx, attribute.second);
+            auto enumeration = enumeration_name.has_value() ?
+                                   std::make_optional(
+                                       ArrayExperimental::get_enumeration(
+                                           ctx,
+                                           array,
+                                           attribute.second.name())) :
+                                   std::nullopt;
+
+            columns.push_back(
+                std::make_shared<SOMAAttribute>(attribute.second, enumeration));
+        }
+    }
+
+    return columns;
+}
 
 template <>
 std::pair<std::string, std::string> SOMAColumn::core_domain_slot<std::string>()

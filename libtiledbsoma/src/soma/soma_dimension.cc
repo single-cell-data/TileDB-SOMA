@@ -35,6 +35,30 @@
 
 namespace tiledbsoma {
 
+std::shared_ptr<SOMAColumn> SOMADimension::deserialize(
+    nlohmann::json& soma_schema, const Context& ctx, const Array& array) {
+    if (!soma_schema.contains(TDB_SOMA_SCHEMA_COL_DIM_KEY)) {
+        throw TileDBSOMAError(
+            "[SOMADimension][deserialize] Missing required field "
+            "'tiledb_dimensions'");
+    }
+
+    std::vector<std::string>
+        dimension_names = soma_schema[TDB_SOMA_SCHEMA_COL_DIM_KEY]
+                              .template get<std::vector<std::string>>();
+
+    if (dimension_names.size() != 1) {
+        throw TileDBSOMAError(std::format(
+            "[SOMADimension][deserialize] Invalid number of dimensions. "
+            "Epected 1, got {}",
+            dimension_names.size()));
+    }
+
+    auto dimension = array.schema().domain().dimension(dimension_names[0]);
+
+    return std::make_shared<SOMADimension>(dimension);
+}
+
 std::shared_ptr<SOMADimension> SOMADimension::create(
     std::shared_ptr<Context> ctx,
     ArrowSchema* schema,
@@ -764,4 +788,13 @@ ArrowSchema* SOMADimension::arrow_schema_slot(const SOMAContext&, Array&) {
         .release();
 }
 
+void SOMADimension::serialize(nlohmann::json& columns_schema) const {
+    nlohmann::json column;
+
+    column[TDB_SOMA_SCHEMA_COL_TYPE_KEY] = static_cast<uint32_t>(
+        soma_column_datatype_t::SOMA_COLUMN_DIMENSION);
+    column[TDB_SOMA_SCHEMA_COL_DIM_KEY] = {dimension.name()};
+
+    columns_schema.push_back(column);
+}
 }  // namespace tiledbsoma
