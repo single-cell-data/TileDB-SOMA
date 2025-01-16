@@ -9,7 +9,7 @@ import numpy.typing as npt
 import pyarrow as pa
 import pytest
 import scipy.sparse as sparse
-from hypothesis import given, settings
+from hypothesis import given
 from hypothesis import strategies as st
 from typing_extensions import TypeAlias
 
@@ -50,15 +50,13 @@ NDArrayIndex: TypeAlias = npt.NDArray[np.integer[Any]]
 NDArrayNumber: TypeAlias = npt.NDArray[Union[np.integer[Any], np.floating[Any]]]
 
 
-def limit_value_range_element_strategy(
-    dtype: np.dtype, divisor: float
-) -> dict[str, Any] | None:
+def limit_value_range_element_strategy(dtype: np.dtype) -> dict[str, Any] | None:
     if dtype.kind == "f":
         info = np.finfo(dtype)
-        return {"min_value": -info.max / divisor, "max_value": info.max / divisor}
+        return {"min_value": -1.0, "max_value": 1.0}
     if dtype.kind in ["i", "u"]:
         info = np.iinfo(dtype)
-        return {"min_value": info.min // divisor, "max_value": info.max // divisor}
+        return {"min_value": info.min // 128, "max_value": info.max // 128}
     return None
 
 
@@ -92,6 +90,14 @@ def coo_ijd(
     can easily cause some types to overflow, and others to lose precision,
     which makes equality comparisons tricky.
 
+    In addition, there is no (known) guarantee in scipy.sparse as to the
+    order of operations when summing dups. For floating point values, this
+    can result in cases where the sum is dependent on the order of data.
+    A concrete example might be a case where there are three dups at a single
+    coordinate:
+        max(float64) + 1.0 - max(float64) -> 0.0
+        max(float64) - max(float64) + 1.0 -> 1.0
+
     To avoid this, ONLY when `not unique`, constrain the range of generated
     values to a very limited range (currently 1/128th of the full range).
     This is extremely unlikely to overflow as it would require 128 identical
@@ -124,7 +130,7 @@ def coo_ijd(
             arrow_array(
                 dtype=dtype,
                 shape=nnz,
-                elements=limit_value_range_element_strategy(dtype, 128),
+                elements=limit_value_range_element_strategy(dtype),
             )
         )
 
@@ -160,7 +166,6 @@ def coo_ijd(
     ),
     context=st.from_type(soma.SOMATileDBContext),
 )
-@settings(max_examples=500)
 def test_fastercsx_clib_compress_coo(
     do: st.DataObject,
     value_dtype: np.dtype,
@@ -199,28 +204,6 @@ def test_fastercsx_clib_compress_coo(
 
     assert np.array_equal(csr.indptr, scipy_csr.indptr)
     assert np.array_equal(csr.indices, scipy_csr.indices)
-
-    # XXX the non-unique case has several issues:
-    #    - dups are added, which can overflow
-    #    - dups are added, which for floats may not be exactly eq in some situations
-    # XXX cleanup debug code
-    if not (
-        np.allclose(
-            csr.data,
-            scipy_csr.data,
-            equal_nan=True if value_dtype.kind == "f" else False,
-        )
-        if not unique
-        else np.array_equal(
-            csr.data,
-            scipy_csr.data,
-            equal_nan=True if value_dtype.kind == "f" else False,
-        )
-    ):
-        print(csr.data.dtype, scipy_csr.data.dtype)
-        print(csr.data)
-        print(scipy_csr.data)
-        print(csr.data - scipy_csr.data)
     assert (
         np.allclose(
             csr.data,
@@ -273,7 +256,6 @@ def test_fuzz_fastercsx_clib_compress_coo(
     data=st.from_type(npt.NDArray[Any]).filter(lambda a: a.dtype not in ValueTypes),
     context=st.from_type(soma.SOMATileDBContext),
 )
-@settings(max_examples=250)
 def test_fuzz_fastercsx_clib_sort_csx_indices(
     indptr: npt.NDArray[Any],
     indices: npt.NDArray[Any],
@@ -296,7 +278,6 @@ def test_fuzz_fastercsx_clib_sort_csx_indices(
     out=st.from_type(npt.NDArray[Any]),
     context=st.from_type(soma.SOMATileDBContext),
 )
-@settings(max_examples=250)
 def test_fuzz_fastercsx_clib_copy_csx_to_dense(
     major_idx_start: int,
     major_idx_end: int,
@@ -335,7 +316,6 @@ def test_fuzz_fastercsx_clib_copy_csx_to_dense(
     format=st.sampled_from(["csc", "csr"]),
     context=st.from_type(soma.SOMATileDBContext),
 )
-@settings(max_examples=500)
 def test_fastercsx_from_ijd(
     do: st.DataObject,
     value_dtype: np.dtype,
@@ -366,21 +346,6 @@ def test_fastercsx_from_ijd(
 
     assert np.array_equal(cm.indptr, scipy_cm.indptr)
     assert np.array_equal(cm.indices, scipy_cm.indices)
-
-    # XXX cleanup debug code
-    assert cm.data.dtype == scipy_cm.data.dtype
-    if not (
-        np.allclose(
-            cm.data, scipy_cm.data, equal_nan=True if value_dtype.kind == "f" else False
-        )
-        if not unique
-        else np.array_equal(
-            cm.data, scipy_cm.data, equal_nan=True if value_dtype.kind == "f" else False
-        )
-    ):
-        print(cm.data.dtype, scipy_cm.data.dtype)
-        print(cm.data)
-        print(scipy_cm.data)
     assert (
         np.allclose(
             cm.data, scipy_cm.data, equal_nan=True if value_dtype.kind == "f" else False
@@ -404,7 +369,6 @@ def test_fastercsx_from_ijd(
     format=st.sampled_from(["csc", "csr"]),
     context=st.from_type(soma.SOMATileDBContext),
 )
-@settings(max_examples=500)
 def test_fastercsx_to_scipy(
     do: st.DataObject,
     value_dtype: np.dtype,

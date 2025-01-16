@@ -14,6 +14,8 @@ mode:
 
 > pytest tests/ --hypothesis-profile=expensive
 
+In this mode, tests will run signicantly longer (very roughly, 100X longer than the default).
+
 ## For More Information
 
 See the [Hypothesis documentation](https://hypothesis.readthedocs.io/)
