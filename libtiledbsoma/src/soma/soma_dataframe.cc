@@ -209,7 +209,7 @@ void SOMADataFrame::update_dataframe_schema(
                 // We cannot continue without intervention, but let's at least
                 // be as clear as possible why we can't continue.
                 if (ordered != existing_ordered || enmr_type != existing_type) {
-                    throw TileDBSOMAError(std::format(
+                    throw TileDBSOMAError(fmt::format(
                         "[SOMADataFrame::update_dataframe_schema] requested "
                         "enumeration [type='{}', ordered={}] incompatible with "
                         "existing [type='{}', ordered={}]",
