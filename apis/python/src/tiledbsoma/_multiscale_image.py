@@ -260,7 +260,7 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
             spatial_encoding_version = self.metadata[SOMA_SPATIAL_VERSION_METADATA_KEY]
             if isinstance(spatial_encoding_version, bytes):
                 spatial_encoding_version = str(spatial_encoding_version, "utf-8")
-            if spatial_encoding_version != "0.1.0":
+            if spatial_encoding_version not in {"0.1.0", "0.2.0"}:
                 raise ValueError(
                     f"Unsupported MultiscaleImage with spatial encoding version "
                     f"{spatial_encoding_version}"

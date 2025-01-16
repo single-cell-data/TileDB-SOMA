@@ -21,7 +21,7 @@ def sample_point_cloud_dataframe_2d(tmp_path_factory):
     with soma.PointCloudDataFrame.create(
         uri,
         schema=pa.schema([("x", pa.float64()), ("y", pa.float64())]),
-        domain=[[0, 1], [0, 1]],
+        domain=[[0, 1], [0, 1], [0, 4]],
     ) as point_cloud:
         x_data = np.array([0, 0, 0.5, 0.5], dtype=np.float64)
         y_data = np.array([0, 0.5, 0, 0.5], dtype=np.float64)

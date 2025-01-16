@@ -38,7 +38,7 @@ def test_point_cloud_basic_read(tmp_path):
     with soma.PointCloudDataFrame.create(
         urljoin(baseuri, "default"),
         schema=asch,
-        domain=[[-10000, 10000], [-10000, 10000]],
+        domain=[[-10000, 10000], [-10000, 10000], [0, 10]],
     ) as ptc:
         pydict = {}
         pydict["soma_joinid"] = [1, 2, 3, 4, 5]
@@ -50,7 +50,7 @@ def test_point_cloud_basic_read(tmp_path):
 
     with soma.PointCloudDataFrame.open(urljoin(baseuri, "default"), "r") as ptc:
         assert set(ptc.schema.names) == {"soma_joinid", "x", "y"}
-        assert ptc.index_column_names == ("x", "y")
+        assert ptc.index_column_names == ("x", "y", "soma_joinid")
         assert ptc.axis_names == ("x", "y")
 
         table = ptc.read().concat()
@@ -65,7 +65,7 @@ def test_point_cloud_basic_read(tmp_path):
         urljoin(baseuri, "user_defined"),
         schema=asch,
         coordinate_space="x",
-        domain=((1, 10),),
+        domain=((1, 10), (0, 10)),
     ) as ptc:
         pydict = {}
         pydict["soma_joinid"] = [1, 2, 3, 4, 5]
@@ -77,9 +77,9 @@ def test_point_cloud_basic_read(tmp_path):
 
     with soma.PointCloudDataFrame.open(urljoin(baseuri, "user_defined"), "r") as ptc:
         assert set(ptc.schema.names) == set(["soma_joinid", "x", "y"])
-        assert ptc.index_column_names == ("x",)
+        assert ptc.index_column_names == ("x", "soma_joinid")
         assert ptc.axis_names == ("x",)
-        assert ptc.domain == ((1, 10),)
+        assert ptc.domain == ((1, 10), (0, 10))
 
         table = ptc.read().concat()
         assert ptc.count == len(ptc) == table.num_rows == 5
@@ -143,7 +143,7 @@ def test_point_cloud_bad_read_spatial_region(tmp_path):
     schema = pa.schema([("x", pa.float64()), ("y", pa.float64())])
 
     with soma.PointCloudDataFrame.create(
-        uri, schema=schema, domain=[[-10000, 10000], [-10000, 10000]]
+        uri, schema=schema, domain=[[-10000, 10000], [-10000, 10000], [0, 10]]
     ) as ptc:
         pydict = {
             "soma_joinid": [1, 2, 3, 4, 5],
@@ -299,7 +299,7 @@ def test_point_cloud_read_spatial_region_basic_2d(
     schema = pa.schema([("x", pa.float64()), ("y", pa.float64())])
 
     with soma.PointCloudDataFrame.create(
-        uri, schema=schema, domain=[[-10000, 10000], [-10000, 10000]]
+        uri, schema=schema, domain=[[-10000, 10000], [-10000, 10000], [0, 10]]
     ) as ptc:
         pydict = {
             "soma_joinid": [1, 2, 3, 4, 5],
@@ -424,7 +424,7 @@ def test_point_cloud_read_spatial_region_basic_3d(
         uri,
         schema=schema,
         coordinate_space=("x", "y", "z"),
-        domain=[[-10000, 10000], [-10000, 10000], [-10000, 10000]],
+        domain=[[-10000, 10000], [-10000, 10000], [-10000, 10000], [0, 10]],
     ) as ptc:
         pydict = {
             "soma_joinid": [1, 2, 3, 4, 5],
@@ -455,7 +455,7 @@ def test_point_cloud_read_spatial_region_2d_bad(tmp_path, name, region, exc_type
     schema = pa.schema([("x", pa.float64()), ("y", pa.float64())])
 
     with soma.PointCloudDataFrame.create(
-        uri, schema=schema, domain=[[-10000, 10000], [-10000, 10000]]
+        uri, schema=schema, domain=[[-10000, 10000], [-10000, 10000], [0, 10]]
     ) as ptc:
         pydict = {
             "soma_joinid": [1, 2, 3, 4, 5],
@@ -485,7 +485,9 @@ def test_point_cloud_read_spatial_region_3d_bad(tmp_path, name, region, exc_type
 
     schema = pa.schema([("x", pa.float64()), ("y", pa.float64()), ("z", pa.float64())])
 
-    with soma.PointCloudDataFrame.create(uri, schema=schema, domain=[[0, 9]]) as ptc:
+    with soma.PointCloudDataFrame.create(
+        uri, schema=schema, domain=[[0, 9], [0, 10]]
+    ) as ptc:
         pydict = {
             "soma_joinid": [1, 2, 3, 4, 5],
             "x": [10, 20, 30, 40, 50],
@@ -504,7 +506,7 @@ def point_cloud_read_spatial_region_transform_setup(uri, transform, input_axes, 
     schema = pa.schema([("x", pa.float64()), ("y", pa.float64())])
 
     with soma.PointCloudDataFrame.create(
-        uri, schema=schema, domain=[[-10000, 10000], [-10000, 10000]]
+        uri, schema=schema, domain=[[-10000, 10000], [-10000, 10000], [0, 10]]
     ) as ptc:
         pydict = {
             "soma_joinid": [1, 2, 3, 4, 5],
@@ -707,7 +709,7 @@ def test_point_cloud_read_spatial_region_region_coord_space(tmp_path):
     schema = pa.schema([("x", pa.float64()), ("y", pa.float64())])
 
     with soma.PointCloudDataFrame.create(
-        uri, schema=schema, domain=[[-10000, 10000], [-10000, 10000]]
+        uri, schema=schema, domain=[[-10000, 10000], [-10000, 10000], [0, 10]]
     ) as ptc:
         pydict = {
             "soma_joinid": [1, 2, 3, 4, 5],
