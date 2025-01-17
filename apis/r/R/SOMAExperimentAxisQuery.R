@@ -1637,14 +1637,14 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       # Create dummy layer to initialize v5 assay
       layer_name <- SeuratObject::RandomName(length = 7L)
       i <- 0L
-      while (lname %in% layers) {
-        lname <- SeuratObject::RandomName(length = 7L + i)
+      while (layer_name %in% layers) {
+        layer_name <- SeuratObject::RandomName(length = 7L + i)
         i <- i + 1L
       }
 
       # Get our metadata hints
       ragged_hint <- .ragged_array_hint()
-      default_hint <- names(.layer_hint(lname))
+      default_hint <- names(.layer_hint(layer_name))
       r_type_hint <- names(.type_hint(NULL))
       s4_type <- paste0('^', .standard_regexps()$valid_package_name, ':')
 
@@ -1685,7 +1685,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
         ncol = length(cells),
         sparse = TRUE
       ))
-      names(counts) <- lname
+      names(counts) <- layer_name
       obj <- SeuratObject::.CreateStdAssay(
         counts = counts,
         cells = cells,
@@ -1753,14 +1753,22 @@ SOMAExperimentAxisQuery <- R6::R6Class(
           if (is.null(tbl)) {
             next
           }
-          sdx <- vector("list", length = length(dnames))
-          names(sdx) <- dnames
+          soma_join_ids <- vector("list", length = length(dnames))
+          names(soma_join_ids) <- dnames
           for (i in dnames) {
-            sdx[[i]] <- sort(unique(tbl[[i]]$as_vector()))
-            tbl[[i]] <- match(tbl[[i]]$as_vector(), sdx[[i]]) - 1L
+            soma_join_ids[[i]] <- sort(unique(tbl[[i]]$as_vector()))
+            tbl[[i]] <- match(tbl[[i]]$as_vector(), soma_join_ids[[i]]) - 1L
           }
-          lcells <- lcells[match(sdx[[dnames[1L]]], self$obs_joinids()$as_vector())]
-          lfeatures <- lfeatures[match(sdx[[dnames[2L]]], self$var_joinids()$as_vector())]
+          layer_cells_idx <- match(
+            soma_join_ids[[dnames[1L]]],
+            self$obs_joinids()$as_vector()
+          )
+          layer_cells <- layer_cells[layer_cells_idx]
+          layer_features_idx <- match(
+            soma_join_ids[[dnames[2L]]],
+            self$var_joinids()$as_vector()
+          )
+          layer_features <- layer_features[layer_features_idx]
           mat <- Matrix::t(Matrix::sparseMatrix(
             i = tbl[[dnames[1L]]]$as_vector(),
             j = tbl[[dnames[2L]]]$as_vector(),
@@ -1775,8 +1783,8 @@ SOMAExperimentAxisQuery <- R6::R6Class(
         SeuratObject::LayerData(
           obj,
           layer = lyr,
-          features = lfeatures,
-          cells = lcells
+          features = layer_features,
+          cells = layer_cells
         ) <- mat
       }
 
@@ -1789,9 +1797,9 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       }
       SeuratObject::DefaultLayer(obj) <- default_layers %||% setdiff(
         SeuratObject::Layers(obj),
-        lname
+        layer_name
       )[1L]
-      SeuratObject::LayerData(obj, layer = lname) <- NULL
+      SeuratObject::LayerData(obj, layer = layer_name) <- NULL
 
       return(obj)
     }
