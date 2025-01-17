@@ -72,7 +72,7 @@ TEST_CASE("SOMACoordinateSpace: compare constructors", "[metadata][spatial]") {
     std::vector<std::string> names1{"x", "y"};
     std::vector<std::optional<std::string>> units1{std::nullopt, std::nullopt};
     SOMACoordinateSpace expected1(
-        {SOMAAxis("x", std::nullopt), SOMAAxis("y", std::nullopt)});
+        {SOMAAxis{"x", std::nullopt}, SOMAAxis{"y", std::nullopt}});
 
     CHECK(SOMACoordinateSpace() == expected1);
     CHECK(SOMACoordinateSpace(names1) == expected1);
@@ -94,17 +94,17 @@ TEST_CASE("SOMACoordinateSpace: from_metadata", "[metadata][spatial]") {
     std::pair<std::string, SOMACoordinateSpace> test_data = GENERATE(
         std::make_pair(
             "[{\"name\":\"x\",\"unit\":null},{\"name\":\"y\",\"unit\":null}]",
-            SOMACoordinateSpace({SOMAAxis("x"), SOMAAxis("y")})),
+            SOMACoordinateSpace({SOMAAxis{"x"}, SOMAAxis{"y"}})),
         std::make_pair(
             "[{\"name\":\"z\",\"unit\":null},{\"name\":\"t\",\"unit\":"
             "\"hour\"}]",
             SOMACoordinateSpace(
-                {SOMAAxis("z", std::nullopt), SOMAAxis("t", "hour")})),
+                {SOMAAxis{"z", std::nullopt}, SOMAAxis{"t", "hour"}})),
         std::make_pair(
             "[{\"name\":\"z\",\"unit\":\"meter\"},{\"name\":\"t\",\"unit\":"
             "\"hour\"}]",
             SOMACoordinateSpace(
-                {SOMAAxis("z", "meter"), SOMAAxis("t", "hour")})));
+                {SOMAAxis{"z", "meter"}, SOMAAxis{"t", "hour"}})));
     const auto& metadata = test_data.first;
     const auto& expected_coord_space = test_data.second;
 
@@ -121,17 +121,17 @@ TEST_CASE("SOMACoordinateSpace: to_string", "[metadata][spatial]") {
     std::pair<std::string, SOMACoordinateSpace> test_data = GENERATE(
         std::make_pair(
             "[{\"name\":\"x\",\"unit\":null},{\"name\":\"y\",\"unit\":null}]",
-            SOMACoordinateSpace({SOMAAxis("x"), SOMAAxis("y")})),
+            SOMACoordinateSpace({SOMAAxis{"x"}, SOMAAxis{"y"}})),
         std::make_pair(
             "[{\"name\":\"z\",\"unit\":null},{\"name\":\"t\",\"unit\":"
             "\"hour\"}]",
             SOMACoordinateSpace(
-                {SOMAAxis("z", std::nullopt), SOMAAxis("t", "hour")})),
+                {SOMAAxis{"z", std::nullopt}, SOMAAxis{"t", "hour"}})),
         std::make_pair(
             "[{\"name\":\"z\",\"unit\":\"meter\"},{\"name\":\"t\",\"unit\":"
             "\"hour\"}]",
             SOMACoordinateSpace(
-                {SOMAAxis("z", "meter"), SOMAAxis("t", "hour")})));
+                {SOMAAxis{"z", "meter"}, SOMAAxis{"t", "hour"}})));
     const auto& expected_metadata = test_data.first;
     const auto& coord_space = test_data.second;
 
@@ -144,10 +144,10 @@ TEST_CASE(
     auto coord_space = GENERATE(
         SOMACoordinateSpace(),
         SOMACoordinateSpace(
-            {SOMAAxis("x_axis", "meter"),
-             SOMAAxis("y_axis", "meter"),
-             SOMAAxis("z_axis", "meter")}),
-        SOMACoordinateSpace({SOMAAxis("z_axis"), SOMAAxis("x_axis", "meter")}));
+            {SOMAAxis{"x_axis", "meter"},
+             SOMAAxis{"y_axis", "meter"},
+             SOMAAxis{"z_axis", "meter"}}),
+        SOMACoordinateSpace({SOMAAxis{"z_axis"}, SOMAAxis{"x_axis", "meter"}}));
 
     auto coord_json = coord_space.to_string();
 
