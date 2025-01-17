@@ -229,6 +229,7 @@ class SOMAArray : public SOMAObject {
         , first_read_next_(other.first_read_next_)
         , submitted_(other.submitted_) {
         fill_metadata_cache(timestamp_);
+        fill_columns();
     }
 
     SOMAArray(
@@ -1540,7 +1541,7 @@ class SOMAArray : public SOMAObject {
 
     void fill_metadata_cache(std::optional<TimestampRange> timestamp);
 
-    void fill_columns(const nlohmann::json& soma_schema_extension);
+    void fill_columns();
 
     // SOMAArray URI
     std::string uri_;
