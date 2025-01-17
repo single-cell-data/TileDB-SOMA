@@ -358,11 +358,9 @@ create_and_populate_ragged_experiment <- function(
   )
   ms_rna$X <- SOMACollectionCreate(file.path(ms_rna$uri, "X"))
 
-  obsv <- seq.int(to = n_obs)
-  varv <- seq.int(to = n_var)
-  nd <- seq(from = 0L, to = 1L, by = 0.1)
-  nd <- rev(nd[nd > 0L])
-  nd <- rep_len(nd, length.out = length(X_layer_names))
+  ragged_density <- seq(from = 0L, to = 1L, by = 0.1)
+  ragged_density <- rev(ragged_density[ragged_density > 0L])
+  ragged_density <- rep_len(ragged_density, length.out = length(X_layer_names))
 
   if (!is.na(seed)) {
     set.seed(seed)
@@ -372,8 +370,8 @@ create_and_populate_ragged_experiment <- function(
     layer_name <- X_layer_names[i]
 
     mat <- Matrix::rsparsematrix(
-      nrow = ceiling(n_obs * nd[i]),
-      ncol = ceiling(n_var * nd[i]),
+      nrow = ceiling(n_obs * ragged_density[i]),
+      ncol = ceiling(n_var * ragged_density[i]),
       density = 0.6,
       rand.x = function(n) as.integer(runif(n, min = 1, max = 100)),
       repr = 'T'
@@ -385,7 +383,7 @@ create_and_populate_ragged_experiment <- function(
       shape = dim(mat)
     )
     ndarray$write(mat)
-    if (nd[i] != 1L) {
+    if (ragged_density[i] != 1L) {
       ndarray$set_metadata(.ragged_array_hint())
     }
     ndarray$set_metadata(.type_hint(class(mat)))
