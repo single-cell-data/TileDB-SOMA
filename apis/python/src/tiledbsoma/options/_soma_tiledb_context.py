@@ -374,6 +374,6 @@ def _validate_soma_tiledb_context(context: Any) -> SOMATileDBContext:
         )
 
     if not isinstance(context, SOMATileDBContext):
-        raise TypeError("context is not a SOMATileDBContext")
+        raise TypeError(f"context is not a SOMATileDBContext: got {type(context)}")
 
     return context

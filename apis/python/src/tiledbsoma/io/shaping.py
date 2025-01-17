@@ -98,6 +98,7 @@ def show_experiment_shapes(
         uri,
         visitor=_leaf_visitor_show_shapes,
         args=args,
+        context=context,
     )
     return ok
 
@@ -149,7 +150,7 @@ def upgrade_experiment_shapes(
     # they're from the experiment as-is.
     nobs = None
     nvars = {}
-    with tiledbsoma.Experiment.open(uri) as exp:
+    with tiledbsoma.Experiment.open(uri, context=context) as exp:
         if "obs" in exp:
             nobs = exp.obs.count
         if "ms" in exp:
@@ -171,6 +172,7 @@ def upgrade_experiment_shapes(
         uri,
         visitor=_leaf_visitor_upgrade,
         args=args,
+        context=context,
     )
     return ok
 
@@ -258,7 +260,7 @@ def resize_experiment(
     # If the user hasn't provided a key -- e.g. a from-anndata-append-with-resize
     # on one measurement while the experiment's other measurements aren't being
     # updated -- then we need to find those other measurements' var-shapes.
-    with tiledbsoma.Experiment.open(uri) as exp:
+    with tiledbsoma.Experiment.open(uri, context=context) as exp:
         for ms_key in exp.ms.keys():
             if ms_key not in nvars.keys():
                 nvars[ms_key] = exp.ms[ms_key].var._maybe_soma_joinid_shape or 1
@@ -267,6 +269,7 @@ def resize_experiment(
         uri,
         visitor=_leaf_visitor_resize,
         args=args,
+        context=context,
     )
     return ok
 
@@ -277,26 +280,39 @@ def _treewalk(
     node_name: str | None = None,
     visitor: Any,
     args: SizingArgs,
+    context: tiledbsoma.SOMATileDBContext | None,
 ) -> bool:
     retval = True
-    with tiledbsoma.open(uri) as item:
+    with tiledbsoma.open(uri, context=context) as item:
 
         if isinstance(item, tiledbsoma.Experiment):
             if "obs" in item:
                 ok = _treewalk(
-                    item["obs"].uri, node_name="obs", visitor=visitor, args=args
+                    item["obs"].uri,
+                    node_name="obs",
+                    visitor=visitor,
+                    args=args,
+                    context=context,
                 )
                 retval = retval and ok
             if "ms" in item:
                 ok = _treewalk(
-                    item["ms"].uri, node_name="ms", visitor=visitor, args=args
+                    item["ms"].uri,
+                    node_name="ms",
+                    visitor=visitor,
+                    args=args,
+                    context=context,
                 )
                 retval = retval and ok
 
         elif isinstance(item, tiledbsoma.Measurement):
             if "var" in item:
                 ok = _treewalk(
-                    item["var"].uri, node_name="var", visitor=visitor, args=args
+                    item["var"].uri,
+                    node_name="var",
+                    visitor=visitor,
+                    args=args,
+                    context=context,
                 )
                 retval = retval and ok
 
@@ -310,6 +326,7 @@ def _treewalk(
                         node_name=coll_name,
                         visitor=visitor,
                         args=args,
+                        context=context,
                     )
                     retval = retval and ok
 
@@ -320,11 +337,17 @@ def _treewalk(
                 if node_name == "ms":
                     args["ms_name"] = key
 
-                ok = _treewalk(item[key].uri, node_name=key, visitor=visitor, args=args)
+                ok = _treewalk(
+                    item[key].uri,
+                    node_name=key,
+                    visitor=visitor,
+                    args=args,
+                    context=context,
+                )
                 retval = retval and ok
 
         else:
-            ok = visitor(item, node_name=node_name, args=args)
+            ok = visitor(item, node_name=node_name, args=args, context=context)
             retval = retval and ok
 
     return retval
@@ -335,6 +358,7 @@ def _leaf_visitor_show_shapes(
     *,
     node_name: str,
     args: SizingArgs,
+    context: tiledbsoma.SOMATileDBContext | None,
 ) -> bool:
     retval = True
     if isinstance(item, tiledbsoma.DataFrame):
@@ -366,6 +390,7 @@ def _leaf_visitor_upgrade(
     *,
     node_name: str,
     args: SizingArgs,
+    context: tiledbsoma.SOMATileDBContext | None,
 ) -> bool:
     verbose = args["verbose"]
     check_only = args["check_only"]
@@ -392,7 +417,7 @@ def _leaf_visitor_upgrade(
                     f"  Applying tiledbsoma_upgrade_soma_joinid_shape({count})",
                     file=args["output_handle"],
                 )
-            with tiledbsoma.DataFrame.open(item.uri, "w") as writer:
+            with tiledbsoma.DataFrame.open(item.uri, "w", context=context) as writer:
                 writer.tiledbsoma_upgrade_soma_joinid_shape(count)
         else:
             if verbose:
@@ -427,7 +452,9 @@ def _leaf_visitor_upgrade(
                     f"  Applying tiledbsoma_upgrade_shape({new_shape})",
                     file=args["output_handle"],
                 )
-            with tiledbsoma.SparseNDArray.open(item.uri, "w") as writer:
+            with tiledbsoma.SparseNDArray.open(
+                item.uri, "w", context=context
+            ) as writer:
                 writer.tiledbsoma_upgrade_shape(new_shape)
         else:
             if verbose:
@@ -448,6 +475,7 @@ def _leaf_visitor_resize(
     *,
     node_name: str,
     args: SizingArgs,
+    context: tiledbsoma.SOMATileDBContext | None,
 ) -> bool:
     verbose = args["verbose"]
     check_only = args["check_only"]
@@ -487,7 +515,7 @@ def _leaf_visitor_resize(
                     f"  Applying tiledbsoma_resize_soma_joinid_shape({new_soma_joinid_shape})",
                     file=args["output_handle"],
                 )
-            with tiledbsoma.DataFrame.open(item.uri, "w") as writer:
+            with tiledbsoma.DataFrame.open(item.uri, "w", context=context) as writer:
                 writer.tiledbsoma_resize_soma_joinid_shape(new_soma_joinid_shape)
 
     elif isinstance(item, tiledbsoma.SparseNDArray):
@@ -504,7 +532,9 @@ def _leaf_visitor_resize(
         else:
             if verbose:
                 print(f"  Applying resize({new_shape})", file=args["output_handle"])
-            with tiledbsoma.SparseNDArray.open(item.uri, "w") as writer:
+            with tiledbsoma.SparseNDArray.open(
+                item.uri, "w", context=context
+            ) as writer:
                 writer.resize(new_shape)
 
     elif isinstance(item, tiledbsoma.DenseNDArray):
