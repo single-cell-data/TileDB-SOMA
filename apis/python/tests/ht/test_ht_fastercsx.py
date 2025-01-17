@@ -66,7 +66,7 @@ def coo_ijd(
     dtype: npt.DTypeLike | pa.DataType | st.SearchStrategy[npt.DTypeLike | pa.DataType],
     shape: tuple[int, int] | st.SearchStrategy[tuple[int, int]],
     *,
-    density: float | st.SearchStrategy[float] = 0.01,
+    density: float | st.SearchStrategy[float] | None = None,
     unique: bool = False,
 ) -> tuple[
     tuple[npt.NDArray[Any], ...],
@@ -77,33 +77,41 @@ def coo_ijd(
     dtype = resolve_dtype(draw, dtype)
     shape = draw(shape) if isinstance(shape, st.SearchStrategy) else shape
     assert isinstance(shape, tuple) and len(shape) == 2
+    if density is None:
+        nnz = draw(st.integers(min_value=0, max_value=min(np.prod(shape), 2**18)))
+    elif isinstance(density, st.SearchStrategy):
+        density = draw(density)
+        assert isinstance(density, float) and 0 < density <= 1
+        nnz = int(shape[0] * shape[1] * density)
+    else:
+        assert isinstance(density, float) and 0 < density <= 1
+        nnz = int(shape[0] * shape[1] * density)
 
-    density = draw(density) if isinstance(density, st.SearchStrategy) else density
-    assert isinstance(density, float) and 0 < density <= 1
-
-    nnz = int(shape[0] * shape[1] * density)
     coord_dtype = draw(st.sampled_from(CooIndexTypes))
 
     """
-    if not unique, we need to be cognizant of the potential to overflow
-    when duplicates are summed (the default behavior for `to_scipy`). This
-    can easily cause some types to overflow, and others to lose precision,
-    which makes equality comparisons tricky.
+    if not unique, we need to be cognizant of the potential to overflow or
+    have precision-related issues when duplicates are summed. Most types can
+    overflow, and floating point types have finite precision, making comparison
+    of "summed dups" tricky.
 
     In addition, there is no (known) guarantee in scipy.sparse as to the
     order of operations when summing dups. For floating point values, this
     can result in cases where the sum is dependent on the order of data.
-    A concrete example might be a case where there are three dups at a single
+    An extreme example might be a case where there are three dups at a single
     coordinate:
         max(float64) + 1.0 - max(float64) -> 0.0
         max(float64) - max(float64) + 1.0 -> 1.0
+    This can also occur in situations where overflow does not occur (the
+    difference in sum is due to limitations of precision).
 
     To avoid this, ONLY when `not unique`, constrain the range of generated
-    values to a very limited range (currently 1/128th of the full range).
-    This is extremely unlikely to overflow as it would require 128 identical
-    coordinates to be drawn.
+    values: currently 1/128th of the full range for integral scalars, and
+    [-1,1] for floating point scalars. This removes the likelihood of overflow
+    errors, but DOES NOT remove the precision-related issues for floats.
 
-    In the case of `unique`, draw from the full range for the type.
+    In the case of `unique`, draw from the full range for the type as there
+    will be no dups (no summing).
 
     Currently, the only edge case that fails to do the right thing is timestamp
     generation (datetime64), as the underlying search strategy used does not
@@ -158,11 +166,11 @@ def coo_ijd(
 
 @given(
     do=st.data(),
-    value_dtype=st.just(np.dtype(np.float32)),  # st.sampled_from(ValueTypes),
-    unique=st.just(False),  # st.booleans(),
+    value_dtype=st.sampled_from(ValueTypes),
+    unique=st.booleans(),
     shape=st.tuples(
-        st.integers(min_value=0, max_value=1024),
-        st.integers(min_value=0, max_value=1024),
+        st.integers(min_value=0, max_value=2**16),
+        st.integers(min_value=0, max_value=2**16),
     ),
     context=st.from_type(soma.SOMATileDBContext),
 )
@@ -187,8 +195,7 @@ def test_fastercsx_clib_compress_coo(
         context.native_context, shape, i, j, d, indptr, indices, data
     )
 
-    # check with the oracle. Be careful if dups allowed, as summing dups
-    # in floats will be _approximately_ equal, not exactly equal
+    # compare to oracle
     csr = sparse.csr_matrix(
         (data, indices, indptr), shape=shape, dtype=value_dtype, copy=False
     )
@@ -209,8 +216,8 @@ def test_fastercsx_clib_compress_coo(
             csr.data,
             scipy_csr.data,
             equal_nan=True if value_dtype.kind == "f" else False,
-            atol=1e-07,
-            rtol=1e-05,
+            atol=1e-06,
+            rtol=1e-04,
         )
         if not unique
         else np.array_equal(
@@ -311,8 +318,8 @@ def test_fuzz_fastercsx_clib_copy_csx_to_dense(
     value_dtype=st.sampled_from(ValueTypes),
     unique=st.booleans(),
     shape=st.tuples(
-        st.integers(min_value=0, max_value=1024),
-        st.integers(min_value=0, max_value=1024),
+        st.integers(min_value=0, max_value=2**16),
+        st.integers(min_value=0, max_value=2**16),
     ),
     make_sorted=st.booleans(),
     format=st.sampled_from(["csc", "csr"]),
@@ -353,8 +360,8 @@ def test_fastercsx_from_ijd(
             cm.data,
             scipy_cm.data,
             equal_nan=True if value_dtype.kind == "f" else False,
-            atol=1e-07,
-            rtol=1e-05,
+            atol=1e-06,
+            rtol=1e-04,
         )
         if not unique
         else np.array_equal(
@@ -368,8 +375,8 @@ def test_fastercsx_from_ijd(
     value_dtype=st.sampled_from(ValueTypes),
     unique=st.booleans(),
     shape=st.tuples(
-        st.integers(min_value=0, max_value=1024),
-        st.integers(min_value=0, max_value=1024),
+        st.integers(min_value=0, max_value=2**16),
+        st.integers(min_value=0, max_value=2**16),
     ),
     make_sorted=st.booleans(),
     format=st.sampled_from(["csc", "csr"]),
@@ -417,8 +424,8 @@ def test_fastercsx_to_scipy(
             cm_slc.data,
             scipy_slc.data,
             equal_nan=True if value_dtype.kind == "f" else False,
-            atol=1e-07,
-            rtol=1e-05,
+            atol=1e-06,
+            rtol=1e-04,
         )
         if not unique
         else np.array_equal(
