@@ -78,4 +78,22 @@ std::vector<uint8_t> cast_bit_to_uint8(ArrowSchema* schema, ArrowArray* array) {
     return casted;
 }
 
+std::shared_ptr<SOMAColumn> find_column_by_name(
+    std::span<const std::shared_ptr<SOMAColumn>> columns,
+    std::string_view name) {
+    auto column_it = std::find_if(
+        columns.begin(), columns.end(), [&](auto col) {
+            return col->name() == name;
+        });
+
+    if (column_it == columns.end()) {
+        throw TileDBSOMAError(std::format(
+            "[ArrowAdapter][tiledb_schema_from_arrow_schema] Index column "
+            "'{}' missing",
+            name));
+    }
+
+    return *column_it;
+}
+
 };  // namespace tiledbsoma::util
