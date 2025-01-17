@@ -388,7 +388,7 @@ TEST_CASE_METHOD(
 
     // Read metadata
     sdf->open(OpenMode::read, TimestampRange(0, 2));
-    REQUIRE(sdf->metadata_num() == 3);
+    REQUIRE(sdf->metadata_num() == 4);
     REQUIRE(sdf->has_metadata("soma_object_type"));
     REQUIRE(sdf->has_metadata("soma_encoding_version"));
     REQUIRE(sdf->has_metadata("md"));
@@ -400,7 +400,7 @@ TEST_CASE_METHOD(
 
     // md should not be available at (0, 1)
     sdf->open(OpenMode::read, TimestampRange(0, 1));
-    REQUIRE(sdf->metadata_num() == 2);
+    REQUIRE(sdf->metadata_num() == 3);
     REQUIRE(sdf->has_metadata("soma_object_type"));
     REQUIRE(sdf->has_metadata("soma_encoding_version"));
     REQUIRE(!sdf->has_metadata("md"));
@@ -408,7 +408,7 @@ TEST_CASE_METHOD(
 
     // Metadata should also be retrievable in write mode
     sdf->open(OpenMode::write);
-    REQUIRE(sdf->metadata_num() == 3);
+    REQUIRE(sdf->metadata_num() == 4);
     REQUIRE(sdf->has_metadata("soma_object_type"));
     REQUIRE(sdf->has_metadata("soma_encoding_version"));
     REQUIRE(sdf->has_metadata("md"));
@@ -424,7 +424,7 @@ TEST_CASE_METHOD(
     // Confirm delete in read mode
     sdf->open(OpenMode::read);
     REQUIRE(!sdf->has_metadata("md"));
-    REQUIRE(sdf->metadata_num() == 2);
+    REQUIRE(sdf->metadata_num() == 3);
 }
 
 TEST_CASE_METHOD(
