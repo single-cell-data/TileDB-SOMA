@@ -776,7 +776,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
           isFALSE(drop_levels)
       )
       assay_hint <- names(.assay_version_hint())
-      # Get the assay version
+      # Get the Seurat assay version
       version <- version %||%
         self$ms$get_metadata(assay_hint) %||%
         'v3'
@@ -1635,7 +1635,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       check_package('SeuratObject', version = '5.0.2')
 
       # Create dummy layer to initialize v5 assay
-      lname <- SeuratObject::RandomName(length = 7L)
+      layer_name <- SeuratObject::RandomName(length = 7L)
       i <- 0L
       while (lname %in% layers) {
         lname <- SeuratObject::RandomName(length = 7L + i)
@@ -1732,8 +1732,8 @@ SOMAExperimentAxisQuery <- R6::R6Class(
             }
           }
         }
-        lcells <- cells
-        lfeatures <- features
+        layer_cells <- cells
+        layer_features <- features
         if (is.null(lyr_hint) || lyr_hint != ragged_hint[[1L]]) {
           mat <- Matrix::t(self$to_sparse_matrix(
             collection = 'X',
