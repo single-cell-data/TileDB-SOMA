@@ -45,11 +45,13 @@ std::map<uint32_t, SOMAColumn::Factory> SOMAColumn::deserialiser_map = {
      SOMAGeometryColumn::deserialize}};
 
 std::vector<std::shared_ptr<SOMAColumn>> SOMAColumn::deserialize(
-    nlohmann::json& soma_schema, const Context& ctx, const Array& array) {
+    const nlohmann::json& soma_schema_columns,
+    const Context& ctx,
+    const Array& array) {
     std::vector<std::shared_ptr<SOMAColumn>> columns;
 
-    if (soma_schema.contains(TDB_SOMA_SCHEMA_COL_KEY)) {
-        for (auto& column : soma_schema[TDB_SOMA_SCHEMA_COL_KEY]) {
+    if (!soma_schema_columns.empty()) {
+        for (auto& column : soma_schema_columns) {
             auto type = column[TDB_SOMA_SCHEMA_COL_TYPE_KEY]
                             .template get<uint32_t>();
 

@@ -48,14 +48,21 @@ void SOMADataFrame::create(
     std::shared_ptr<SOMAContext> ctx,
     PlatformConfig platform_config,
     std::optional<TimestampRange> timestamp) {
-    auto tiledb_schema = ArrowAdapter::tiledb_schema_from_arrow_schema(
-        ctx->tiledb_ctx(),
-        schema,
-        index_columns,
+    auto [tiledb_schema, soma_schema_extension] =
+        ArrowAdapter::tiledb_schema_from_arrow_schema(
+            ctx->tiledb_ctx(),
+            schema,
+            index_columns,
+            "SOMADataFrame",
+            true,
+            platform_config);
+    SOMAArray::create(
+        ctx,
+        uri,
+        tiledb_schema,
         "SOMADataFrame",
-        true,
-        platform_config);
-    SOMAArray::create(ctx, uri, tiledb_schema, "SOMADataFrame", timestamp);
+        soma_schema_extension.dump(),
+        timestamp);
 }
 
 std::unique_ptr<SOMADataFrame> SOMADataFrame::open(

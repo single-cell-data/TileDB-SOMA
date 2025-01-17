@@ -54,7 +54,7 @@ using namespace tiledb;
 
 class SOMAColumn {
     typedef std::shared_ptr<SOMAColumn> (*Factory)(
-        nlohmann::json&, const Context&, const Array&);
+        const nlohmann::json&, const Context&, const Array&);
 
    public:
     //===================================================================
@@ -62,7 +62,9 @@ class SOMAColumn {
     //===================================================================
 
     static std::vector<std::shared_ptr<SOMAColumn>> deserialize(
-        nlohmann::json& soma_schema, const Context& ctx, const Array& array);
+        const nlohmann::json& soma_schema,
+        const Context& ctx,
+        const Array& array);
 
     //===================================================================
     //= public non-static

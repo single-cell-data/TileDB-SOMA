@@ -52,7 +52,9 @@ class SOMAAttribute : public SOMAColumn {
     //===================================================================
 
     static std::shared_ptr<SOMAColumn> deserialize(
-        nlohmann::json& soma_schema, const Context& ctx, const Array& array);
+        const nlohmann::json& soma_schema,
+        const Context& ctx,
+        const Array& array);
 
     /**
      * Create a ``SOMAAttribute`` shared pointer from an Arrow schema

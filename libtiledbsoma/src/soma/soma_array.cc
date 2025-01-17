@@ -46,6 +46,7 @@ void SOMAArray::create(
     std::string_view uri,
     ArraySchema schema,
     std::string_view soma_type,
+    std::string_view soma_schema,
     std::optional<TimestampRange> timestamp) {
     Array::create(std::string(uri), schema);
 
@@ -73,6 +74,12 @@ void SOMAArray::create(
         TILEDB_STRING_UTF8,
         static_cast<uint32_t>(ENCODING_VERSION_VAL.length()),
         ENCODING_VERSION_VAL.c_str());
+
+    array->put_metadata(
+        TDB_SOMA_SCHEMA_KEY,
+        TILEDB_STRING_UTF8,
+        static_cast<uint32_t>(soma_schema.length()),
+        soma_schema.data());
 }
 
 std::unique_ptr<SOMAArray> SOMAArray::open(
@@ -205,6 +212,24 @@ void SOMAArray::fill_metadata_cache(std::optional<TimestampRange> timestamp) {
         std::pair<std::string, const MetadataValue> mdpair(key, mdval);
         metadata_.insert(mdpair);
     }
+}
+
+void SOMAArray::fill_columns(const nlohmann::json& soma_schema_extension) {
+    if (!soma_schema_extension.contains(TDB_SOMA_SCHEMA_COL_KEY)) {
+        LOG_WARN(std::format(
+            "[SOMAArray][fill_columns] Missing '{}' key from '{}'",
+            TDB_SOMA_SCHEMA_COL_KEY,
+            TDB_SOMA_SCHEMA_KEY));
+    }
+
+    soma_schema_extension.value(
+        TDB_SOMA_SCHEMA_COL_KEY, nlohmann::json::array());
+
+    columns_ = SOMAColumn::deserialize(
+        soma_schema_extension.value(
+            TDB_SOMA_SCHEMA_COL_KEY, nlohmann::json::array()),
+        *ctx_->tiledb_ctx(),
+        *arr_);
 }
 
 const std::string SOMAArray::uri() const {

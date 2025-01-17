@@ -45,6 +45,7 @@
 #include "enums.h"
 #include "logger_public.h"
 #include "managed_query.h"
+#include "soma_column.h"
 #include "soma_object.h"
 
 // ================================================================
@@ -112,6 +113,7 @@ class SOMAArray : public SOMAObject {
         std::string_view uri,
         ArraySchema schema,
         std::string_view soma_type,
+        std::string_view soma_schema,
         std::optional<TimestampRange> timestamp = std::nullopt);
 
     /**
@@ -1538,6 +1540,8 @@ class SOMAArray : public SOMAObject {
 
     void fill_metadata_cache(std::optional<TimestampRange> timestamp);
 
+    void fill_columns(const nlohmann::json& soma_schema_extension);
+
     // SOMAArray URI
     std::string uri_;
 
@@ -1559,6 +1563,9 @@ class SOMAArray : public SOMAObject {
 
     // Metadata cache
     std::map<std::string, MetadataValue> metadata_;
+
+    // SOMAColumn list
+    std::vector<std::shared_ptr<SOMAColumn>> columns_;
 
     // Read timestamp range (start, end)
     std::optional<TimestampRange> timestamp_;
