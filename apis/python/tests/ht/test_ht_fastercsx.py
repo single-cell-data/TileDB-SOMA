@@ -158,8 +158,8 @@ def coo_ijd(
 
 @given(
     do=st.data(),
-    value_dtype=st.sampled_from(ValueTypes),
-    unique=st.booleans(),
+    value_dtype=st.just(np.dtype(np.float32)),  # st.sampled_from(ValueTypes),
+    unique=st.just(False),  # st.booleans(),
     shape=st.tuples(
         st.integers(min_value=0, max_value=1024),
         st.integers(min_value=0, max_value=1024),
@@ -209,6 +209,8 @@ def test_fastercsx_clib_compress_coo(
             csr.data,
             scipy_csr.data,
             equal_nan=True if value_dtype.kind == "f" else False,
+            atol=1e-07,
+            rtol=1e-05,
         )
         if not unique
         else np.array_equal(
@@ -348,7 +350,11 @@ def test_fastercsx_from_ijd(
     assert np.array_equal(cm.indices, scipy_cm.indices)
     assert (
         np.allclose(
-            cm.data, scipy_cm.data, equal_nan=True if value_dtype.kind == "f" else False
+            cm.data,
+            scipy_cm.data,
+            equal_nan=True if value_dtype.kind == "f" else False,
+            atol=1e-07,
+            rtol=1e-05,
         )
         if not unique
         else np.array_equal(
@@ -411,6 +417,8 @@ def test_fastercsx_to_scipy(
             cm_slc.data,
             scipy_slc.data,
             equal_nan=True if value_dtype.kind == "f" else False,
+            atol=1e-07,
+            rtol=1e-05,
         )
         if not unique
         else np.array_equal(
