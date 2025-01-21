@@ -21,6 +21,7 @@
       ~ExperimentAxisQuery.obsm
       ~ExperimentAxisQuery.obsp
       ~ExperimentAxisQuery.to_anndata
+      ~ExperimentAxisQuery.to_spatialdata
       ~ExperimentAxisQuery.var
       ~ExperimentAxisQuery.var_joinids
       ~ExperimentAxisQuery.var_scene_ids
@@ -35,4 +36,3 @@
       ~ExperimentAxisQuery.indexer
       ~ExperimentAxisQuery.n_obs
       ~ExperimentAxisQuery.n_vars
-
