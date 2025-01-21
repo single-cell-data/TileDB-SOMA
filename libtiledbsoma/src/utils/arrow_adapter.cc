@@ -1060,17 +1060,18 @@ ArraySchema ArrowAdapter::tiledb_schema_from_arrow_schema(
             std::vector<std::any> cdslot;
             for (int64_t j = 0; j < spatial_column_info.first->n_children;
                  ++j) {
-                cdslot.push_back(ArrowAdapter::get_table_any_column<2, 3>(
+                cdslot.push_back(ArrowAdapter::get_table_any_column<2>(
                     spatial_column_info.first->children[j],
-                    spatial_column_info.second->children[j]));
+                    spatial_column_info.second->children[j],
+                    3));
             }
 
             column->set_current_domain_slot(ndrect, cdslot);
         } else {
             column->set_current_domain_slot(
                 ndrect,
-                get_table_any_column_by_name<2, 3>(
-                    index_column_info, column->name()));
+                get_table_any_column_by_name<2>(
+                    index_column_info, column->name(), 3));
         }
     }
     current_domain.set_ndrectangle(ndrect);
