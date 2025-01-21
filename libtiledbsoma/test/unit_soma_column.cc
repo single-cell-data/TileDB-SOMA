@@ -314,14 +314,15 @@ TEST_CASE_METHOD(
 
         // Can we write empty strings in this range?
         REQUIRE(str_range[0] <= "");
-        REQUIRE(str_external.first <= "");
         REQUIRE(str_range[1] >= "");
-        REQUIRE(str_external.second >= "");
         // Can we write ASCII values in this range?
         REQUIRE(str_range[0] < " ");
-        REQUIRE(str_external.first <= " ");
         REQUIRE(str_range[1] > "~");
-        // REQUIRE(str_external.second >= "~");
+
+        // SOMAColumn return the current domain to return to the user directly
+        // ("", "") and not the internal values (e.g. \xff or \x7f)
+        REQUIRE(str_external.first == "");
+        REQUIRE(str_external.second == "");
 
         std::array<uint32_t, 2> u32_range = ndrect.range<uint32_t>(
             dim_infos[1].name);
