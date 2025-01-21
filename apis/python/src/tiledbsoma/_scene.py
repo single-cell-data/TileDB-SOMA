@@ -127,13 +127,6 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
                 axis_units=axis_units,
                 timestamp=(0, timestamp_ms),
             )
-            handle = cls._wrapper_type.open(uri, "w", context, tiledb_timestamp)
-            if coordinate_space is not None:
-                if not isinstance(coordinate_space, CoordinateSpace):
-                    coordinate_space = CoordinateSpace.from_axis_names(coordinate_space)
-                handle.meta[SOMA_COORDINATE_SPACE_METADATA_KEY] = (
-                    coordinate_space_to_json(coordinate_space)
-                )
             return cls(
                 cls._wrapper_type.open(uri, "w", context, tiledb_timestamp),
                 _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code",
