@@ -117,36 +117,29 @@ def test_scene_basic(tmp_path):
         soma.MultiscaleImage.open(uri)
 
 
-def test_scene_coord_space_at_create(tmp_path):
+@pytest.mark.parametrize(
+    "input,expected",
+    (
+        (["x", "y"], soma.CoordinateSpace.from_axis_names(("x", "y"))),
+        (
+            soma.CoordinateSpace([soma.Axis("x", "meters"), soma.Axis("y", "meters")]),
+            soma.CoordinateSpace([soma.Axis("x", "meters"), soma.Axis("y", "meters")]),
+        ),
+    ),
+)
+def test_scene_coord_space_at_create(tmp_path, input, expected):
     uri = tmp_path.as_uri()
 
-    coord_space = soma.CoordinateSpace(
-        [
-            soma.Axis(name="x"),
-            soma.Axis(name="y"),
-        ]
-    )
-    coord_space_json = """
-    [
-        {"name": "x", "unit": null},
-        {"name": "y", "unit": null}
-    ]
-    """
-
-    with soma.Scene.create(uri, coordinate_space=("x", "y")) as scene:
+    with soma.Scene.create(uri, coordinate_space=input) as scene:
 
         # Reserved metadata key should not be settable?
         # with pytest.raises(soma.SOMAError):
-        #     scene.metadata["soma_coordinate_space"] = coord_space_json
+        #     scene.metadata["soma_coordinate_space"] = "user_metadata"
 
-        scene.coordinate_space = coord_space
-        assert scene.coordinate_space == coord_space
-        assert json.loads(scene.metadata["soma_coordinate_space"]) == json.loads(
-            coord_space_json
-        )
+        assert scene.coordinate_space == expected
 
     with soma.Scene.open(uri) as scene:
-        assert scene.coordinate_space == coord_space
+        assert scene.coordinate_space == expected
 
 
 def test_scene_coord_space_after_create(tmp_path):

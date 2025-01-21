@@ -33,6 +33,7 @@ add_executable(unit_soma
     unit_soma_geometry_dataframe.cc
     unit_soma_point_cloud_dataframe.cc
     unit_soma_multiscale_image.cc
+    unit_soma_coordinates.cc
     test_indexer.cc
 # TODO: uncomment when thread_pool is enabled
 #    unit_thread_pool.cc
@@ -157,6 +158,11 @@ if (WIN32)
     COMMAND_EXPAND_LISTS
   )
 endif()
+
+
+############################################################
+# Target for all unit tests
+############################################################
 
 add_custom_target(build_tests)
 add_dependencies(build_tests

@@ -32,6 +32,7 @@
 
 #include "soma_scene.h"
 #include "soma_collection.h"
+#include "utils/common.h"
 
 namespace tiledbsoma {
 using namespace tiledb;
@@ -43,13 +44,30 @@ using namespace tiledb;
 void SOMAScene::create(
     std::string_view uri,
     std::shared_ptr<SOMAContext> ctx,
+    const std::optional<SOMACoordinateSpace>& coordinate_space,
     std::optional<TimestampRange> timestamp) {
     try {
         std::filesystem::path scene_uri(uri);
         auto group = SOMAGroup::create(
             ctx, scene_uri.string(), "SOMAScene", timestamp);
-        // TODO: Set extra metadata.
-        // (See story: https://app.shortcut.com/tiledb-inc/story/59915)
+
+        group->set_metadata(
+            SPATIAL_ENCODING_VERSION_KEY,
+            TILEDB_STRING_UTF8,
+            static_cast<uint32_t>(SPATIAL_ENCODING_VERSION_VAL.size()),
+            SPATIAL_ENCODING_VERSION_VAL.c_str(),
+            true);
+
+        if (coordinate_space.has_value()) {
+            const auto coord_space_metadata = coordinate_space->to_string();
+            group->set_metadata(
+                SOMA_COORDINATE_SPACE_KEY,
+                TILEDB_STRING_UTF8,
+                static_cast<uint32_t>(coord_space_metadata.size()),
+                coord_space_metadata.c_str(),
+                true);
+        }
+
         group->close();
     } catch (TileDBError& e) {
         throw TileDBSOMAError(e.what());
@@ -67,6 +85,15 @@ std::unique_ptr<SOMAScene> SOMAScene::open(
         if (!group->check_type("SOMAScene")) {
             throw TileDBSOMAError(
                 "[SOMAScene::open] Object is not a SOMAScene");
+        }
+
+        auto coord_space_metadata = group->get_metadata(
+            SOMA_COORDINATE_SPACE_KEY);
+        if (coord_space_metadata.has_value()) {
+            group->coord_space_ = SOMACoordinateSpace::from_metadata(
+                std::get<0>(coord_space_metadata.value()),
+                std::get<1>(coord_space_metadata.value()),
+                std::get<2>(coord_space_metadata.value()));
         }
 
         return group;
