@@ -1,3 +1,7 @@
+# Copyright (c) TileDB, Inc. and The Chan Zuckerberg Initiative Foundation
+#
+# Licensed under the MIT License.
+
 """
 Support for soma_joinid remapping for append-mode ingestion.
 
