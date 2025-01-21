@@ -30,6 +30,7 @@ set_property(TARGET TILEDBSOMA_NANOARROW_OBJECT PROPERTY POSITION_INDEPENDENT_CO
 add_library(TILEDB_SOMA_OBJECTS OBJECT
   ${CMAKE_CURRENT_SOURCE_DIR}/reindexer/reindexer.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/managed_query.cc
+  ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_coordinates.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_array.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_group.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_object.cc
@@ -186,6 +187,7 @@ endif()
 #   ${CMAKE_CURRENT_SOURCE_DIR}/cpp_api/soma_experiment.h
 #   ${CMAKE_CURRENT_SOURCE_DIR}/cpp_api/soma_measurement.h
 #   ${CMAKE_CURRENT_SOURCE_DIR}/cpp_api/soma_scene.h
+#   ${CMAKE_CURRENT_SOURCE_DIR}/cpp_api/soma_coordinates.h
 #   ${CMAKE_CURRENT_SOURCE_DIR}/cpp_api/soma_geometry_dataframe.h
 #   ${CMAKE_CURRENT_SOURCE_DIR}/cpp_api/soma_point_cloud_dataframe.h
 #   ${CMAKE_CURRENT_SOURCE_DIR}/cpp_api/soma_multiscale_image.h
@@ -199,6 +201,7 @@ install(FILES
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/logger_public.h
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_context.h
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/managed_query.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_coordinates.h
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/array_buffers.h
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/column_buffer.h
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_array.h
