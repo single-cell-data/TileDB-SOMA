@@ -88,6 +88,10 @@ jobs:
       #  if: ${{ matrix.os != 'macOS-latest' }}
       #  run: cd apis/r && Rscript -e "options(bspm.version.check=TRUE); install.packages('tiledb', repos = c('https://eddelbuettel.r-universe.dev/bin/linux/jammy/4.3/', 'https://cloud.r-project.org'))"
 
+      - name: R Package Type (macOS)
+        if: ${{ matrix.os == 'macOS-latest' }}
+        run: echo 'options(pkgType = "binary")' | tee -a "$(R RHOME)/etc/Rprofile.site"
+
       - name: Dependencies
         run: cd apis/r && Rscript -e "remotes::install_deps(dependencies = TRUE, upgrade = FALSE)"
 
