@@ -203,7 +203,10 @@ def _read_soma_type(hdl: _tdb_handles.AnyWrapper) -> str:
         encoding_version = str(encoding_version, "utf-8")
 
     if encoding_version not in {"1", "1.1.0"}:
-        raise ValueError(f"Unsupported SOMA object encoding version {encoding_version}")
+        raise ValueError(
+            f"Unsupported SOMA object encoding version {encoding_version}. The TileDB-SOMA "
+            f"client library needs to be updated to a more recent version."
+        )
 
     return obj_type
 
