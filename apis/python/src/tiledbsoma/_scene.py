@@ -23,6 +23,8 @@ from . import pytiledbsoma as clib
 from ._collection import CollectionBase
 from ._constants import (
     SOMA_COORDINATE_SPACE_METADATA_KEY,
+    SOMA_SPATIAL_ENCODING_VERSION,
+    SOMA_SPATIAL_VERSION_METADATA_KEY,
     SPATIAL_DISCLAIMER,
 )
 from ._exception import SOMAError, map_exception_for_create
@@ -115,6 +117,9 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
                 timestamp=(0, timestamp_ms),
             )
             handle = cls._wrapper_type.open(uri, "w", context, tiledb_timestamp)
+            handle.metadata[SOMA_SPATIAL_VERSION_METADATA_KEY] = (
+                SOMA_SPATIAL_ENCODING_VERSION
+            )
             if coordinate_space is not None:
                 if not isinstance(coordinate_space, CoordinateSpace):
                     coordinate_space = CoordinateSpace.from_axis_names(coordinate_space)
