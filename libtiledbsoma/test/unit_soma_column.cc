@@ -39,9 +39,6 @@
 #include "../src/soma/soma_geometry_column.h"
 #include "common.h"
 
-const int64_t SOMA_JOINID_DIM_MAX = 99;
-const int64_t SOMA_JOINID_RESIZE_DIM_MAX = 199;
-
 // This is a keystroke-reduction fixture for some similar unit-test cases For
 // convenience there are dims/attrs of type int64, uint32, and string. (Feel
 // free to add more types.) The main value-adds of this fixture are (a) simple
@@ -61,7 +58,7 @@ struct VariouslyIndexedDataFrameFixture {
 
     //  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     // Helpers for setting up dim/attr configs and data
-    static const inline int64_t i64_dim_max = SOMA_JOINID_DIM_MAX;
+    static const inline int64_t i64_dim_max = 99;
     static const inline int64_t u32_dim_max = 9999;
     static const inline int64_t str_dim_max = 0;  // not used for string dims
 
