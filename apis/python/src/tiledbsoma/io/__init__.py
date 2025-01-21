@@ -1,3 +1,7 @@
+# Copyright (c) TileDB, Inc. and The Chan Zuckerberg Initiative Foundation
+#
+# Licensed under the MIT License.
+
 from ._registration import (
     ExperimentAmbientLabelMapping,
 )

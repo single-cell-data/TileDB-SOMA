@@ -1,7 +1,7 @@
-# Copyright (c) 2024 The Chan Zuckerberg Initiative Foundation
-# Copyright (c) 2024 TileDB, Inc
+# Copyright (c) TileDB, Inc. and The Chan Zuckerberg Initiative Foundation
 #
 # Licensed under the MIT License.
+
 from pathlib import Path
 from typing import Tuple, Union
 

@@ -1,4 +1,4 @@
-# Copyright (c) 2024 TileDB, Inc.
+# Copyright (c) TileDB, Inc. and The Chan Zuckerberg Initiative Foundation
 #
 # Licensed under the MIT License.
 
