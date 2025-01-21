@@ -1,3 +1,7 @@
+# Copyright (c) TileDB, Inc. and The Chan Zuckerberg Initiative Foundation
+#
+# Licensed under the MIT License.
+
 """SOMA powered by TileDB
 
 SOMA --- stack of matrices, annotated --- is a flexible, extensible, and
