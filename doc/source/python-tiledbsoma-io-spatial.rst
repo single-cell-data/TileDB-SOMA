@@ -3,7 +3,7 @@ The tiledbsoma.io.spatial module
 
 .. currentmodule:: tiledbsoma.io.spatial
 
-.. automodule:: tiledbsoma.io
+.. automodule:: tiledbsoma.io.spatial
 
 Functions
 ---------
@@ -16,4 +16,4 @@ Functions
 
 
     tiledbsoma.io.spatial.from_visium
-    tiledbsoma.io.to_spatialdata
+    tiledbsoma.io.spatial.to_spatialdata
