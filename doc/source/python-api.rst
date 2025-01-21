@@ -24,4 +24,5 @@ Features:
 
    python-tiledbsoma
    python-tiledbsoma-io
+   python-tiledbsoma-io-spatial
    python-tiledbsoma-logging
