@@ -752,6 +752,7 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
                         "Unable to export to SpatialData; exported assets have "
                         "overlapping observations."
                     ) from err
+                ad.obs["region_key"] = pd.Categorical(ad.obs["region_key"])
                 regions = list(region_joinids.keys())
                 region_key = "region_key"
                 instance_key = "instance_key"
