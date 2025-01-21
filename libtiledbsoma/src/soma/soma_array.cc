@@ -224,10 +224,8 @@ void SOMAArray::fill_columns() {
 
     if (!has_metadata(TDB_SOMA_SCHEMA_KEY)) {
         LOG_DEBUG(std::format(
-            "[SOMAArray][fill_columns] Generating '{}' metadata for existing "
-            "array '{}'",
-            TDB_SOMA_SCHEMA_KEY,
-            uri()));
+            "[SOMAArray][fill_columns] Missing '{}' metadata key",
+            TDB_SOMA_SCHEMA_KEY));
 
         generate_metadata = true;
     } else {
@@ -262,28 +260,37 @@ void SOMAArray::fill_columns() {
         columns_ = SOMAColumn::deserialize(
             nlohmann::json::array(), *ctx_->tiledb_ctx(), *arr_);
 
-        nlohmann::json soma_schema_extension = {
-            {TDB_SOMA_SCHEMA_COL_KEY, nlohmann::json::array()},
-            {"version", TDB_SOMA_SCHEMA_VERSION},
-        };
+        if (mode() == OpenMode::write) {
+            LOG_DEBUG(std::format(
+                "[SOMAArray][fill_columns] Generating '{}' metadata for "
+                "existing "
+                "array '{}'",
+                TDB_SOMA_SCHEMA_KEY,
+                uri()));
 
-        std::for_each(
-            columns_.cbegin(),
-            columns_.cend(),
-            [&soma_schema_extension](
-                const std::shared_ptr<SOMAColumn>& column) {
-                column->serialize(
-                    soma_schema_extension[TDB_SOMA_SCHEMA_COL_KEY]);
-            });
+            nlohmann::json soma_schema_extension = {
+                {TDB_SOMA_SCHEMA_COL_KEY, nlohmann::json::array()},
+                {"version", TDB_SOMA_SCHEMA_VERSION},
+            };
 
-        LOG_DEBUG("[SOMAArray][fill_columns] Writing generated metadata");
+            std::for_each(
+                columns_.cbegin(),
+                columns_.cend(),
+                [&soma_schema_extension](
+                    const std::shared_ptr<SOMAColumn>& column) {
+                    column->serialize(
+                        soma_schema_extension[TDB_SOMA_SCHEMA_COL_KEY]);
+                });
 
-        auto soma_schema_extension_str = soma_schema_extension.dump();
-        set_metadata(
-            TDB_SOMA_SCHEMA_KEY,
-            TILEDB_STRING_UTF8,
-            soma_schema_extension_str.length(),
-            soma_schema_extension_str.c_str());
+            LOG_DEBUG("[SOMAArray][fill_columns] Writing generated metadata");
+
+            auto soma_schema_extension_str = soma_schema_extension.dump();
+            set_metadata(
+                TDB_SOMA_SCHEMA_KEY,
+                TILEDB_STRING_UTF8,
+                soma_schema_extension_str.length(),
+                soma_schema_extension_str.c_str());
+        }
     }
 }
 
