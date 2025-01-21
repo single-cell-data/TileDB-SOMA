@@ -53,9 +53,6 @@ namespace tiledbsoma {
 using namespace tiledb;
 
 class SOMAColumn {
-    typedef std::shared_ptr<SOMAColumn> (*Factory)(
-        const nlohmann::json&, const Context&, const Array&);
-
    public:
     //===================================================================
     //= public static
@@ -517,6 +514,9 @@ class SOMAColumn {
     virtual std::any _core_current_domain_slot(NDRectangle& ndrect) const = 0;
 
    private:
+    typedef std::shared_ptr<SOMAColumn> (*Factory)(
+        const nlohmann::json&, const Context&, const Array&);
+
     static std::map<uint32_t, Factory> deserialiser_map;
 };
 
