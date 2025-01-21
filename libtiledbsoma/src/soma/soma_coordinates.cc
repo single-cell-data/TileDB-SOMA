@@ -7,7 +7,7 @@
  *
  * The MIT License
  *
- * @copyright Copyright (c) 2024 TileDB, Inc.
+ * @copyright Copyright (c) 2025 TileDB, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -136,6 +136,11 @@ SOMACoordinateSpace SOMACoordinateSpace::from_metadata(
             tiledb::impl::type_to_str(TILEDB_STRING_UTF8),
             tiledb::impl::type_to_str(TILEDB_STRING_ASCII),
             tiledb::impl::type_to_str(value_type)));
+    }
+    if (value == nullptr) {
+        throw TileDBSOMAError(
+            "[SOMACoordinateSpace]: Missing value for coordinate space "
+            "metadata.");
     }
     std::string value_str(static_cast<const char*>(value), value_num);
     auto value_json = json::parse(value_str);
