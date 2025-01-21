@@ -23,8 +23,6 @@ from . import pytiledbsoma as clib
 from ._collection import CollectionBase
 from ._constants import (
     SOMA_COORDINATE_SPACE_METADATA_KEY,
-    SOMA_SPATIAL_ENCODING_VERSION,
-    SOMA_SPATIAL_VERSION_METADATA_KEY,
     SPATIAL_DISCLAIMER,
 )
 from ._exception import SOMAError, map_exception_for_create
