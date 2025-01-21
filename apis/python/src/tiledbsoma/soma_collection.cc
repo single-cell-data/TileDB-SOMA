@@ -122,6 +122,21 @@ void load_soma_collection(py::module& m) {
     py::class_<SOMAMultiscaleImage, SOMACollection, SOMAGroup, SOMAObject>(
         m, "SOMAMultiscaleImage")
         .def_static(
+            "create",
+            [](std::shared_ptr<SOMAContext> ctx,
+               std::string_view uri,
+               std::optional<TimestampRange> timestamp) {
+                try {
+                    SOMAMultiscaleImage::create(uri, ctx, timestamp);
+                } catch (const std::exception& e) {
+                    TPY_ERROR_LOC(e.what());
+                }
+            },
+            py::kw_only(),
+            "ctx"_a,
+            "uri"_a,
+            "timestamp"_a = py::none())
+        .def_static(
             "open",
             &SOMAMultiscaleImage::open,
             "uri"_a,

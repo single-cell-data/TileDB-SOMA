@@ -216,9 +216,8 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
         coord_space_str = coordinate_space_to_json(coordinate_space)
         try:
             timestamp_ms = context._open_timestamp_ms(tiledb_timestamp)
-            clib.SOMAGroup.create(
+            clib.SOMAMultiscaleImage.create(
                 uri=uri,
-                soma_type=somacore.MultiscaleImage.soma_type,
                 ctx=context.native_context,
                 timestamp=(0, timestamp_ms),
             )
