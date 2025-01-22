@@ -2073,7 +2073,7 @@ def test_arrow_table_validity_with_slicing(tmp_path):
     pydict["myenum"] = pd.Categorical(
         ["g1", "g2", "g3", None, "g2", "g3", "g1", None, "g3", "g1"]
     )
-    
+
     table = pa.Table.from_pydict(pydict)
     domain = ((0, np.iinfo(np.int64).max - 2050),)
 
