@@ -314,7 +314,12 @@ void SOMAArray::set_column_data(
     const void* data,
     uint64_t* offsets,
     uint8_t* validity) {
-    mq_->setup_write_column(name, num_elems, data, offsets, validity);
+    mq_->setup_write_column(
+        name,
+        num_elems,
+        data,
+        offsets,
+        util::bitmap_to_uint8(validity, num_elems));
 };
 
 void SOMAArray::set_column_data(
@@ -323,7 +328,12 @@ void SOMAArray::set_column_data(
     const void* data,
     uint32_t* offsets,
     uint8_t* validity) {
-    mq_->setup_write_column(name, num_elems, data, offsets, validity);
+    mq_->setup_write_column(
+        name,
+        num_elems,
+        data,
+        offsets,
+        util::bitmap_to_uint8(validity, num_elems));
 };
 
 uint64_t SOMAArray::ndim() const {

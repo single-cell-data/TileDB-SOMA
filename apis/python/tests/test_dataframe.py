@@ -2050,3 +2050,51 @@ def test_arrow_table_sliced_writer(tmp_path):
         np.testing.assert_array_equal(pdf["myenumint"], pydict["myenumint"])
         np.testing.assert_array_equal(pdf["myenumstr"], pydict["myenumstr"])
         np.testing.assert_array_equal(pdf["myenumbool"], pydict["myenumbool"])
+
+
+def test_arrow_table_validity_with_slicing(tmp_path):
+    uri = tmp_path.as_posix()
+    num_rows = 10
+
+    schema = pa.schema(
+        [
+            ("myint", pa.int32()),
+            ("mystring", pa.large_string()),
+            ("mybool", pa.bool_()),
+            ("myenumstr", pa.dictionary(pa.int64(), pa.large_string())),
+        ]
+    )
+
+    pydict = {}
+    pydict["soma_joinid"] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+    pydict["myint"] = [1, 2, 3, 4, 5, 6, None, 8, None, None]
+    pydict["mystring"] = ["g1", "g2", "g3", None, "g2", "g3", "g1", None, "g3", "g1"]
+    pydict["mybool"] = [True, True, True, False, True, False, None, False, None, None]
+    pydict["myenum"] = pd.Categorical(
+        ["g1", "g2", "g3", None, "g2", "g3", "g1", None, "g3", "g1"]
+    )
+    
+    table = pa.Table.from_pydict(pydict)
+    domain = ((0, np.iinfo(np.int64).max - 2050),)
+
+    with soma.DataFrame.create(uri, schema=schema, domain=domain) as A:
+        A.write(table)
+
+    with soma.DataFrame.open(uri) as A:
+        pdf = A.read().concat().to_pandas()
+        assert pdf["myint"].compare(table["myint"].to_pandas()).empty
+        assert pdf["mystring"].compare(table["mystring"].to_pandas()).empty
+        assert pdf["mybool"].compare(table["mybool"].to_pandas()).empty
+        assert pdf["myenum"].compare(table["myenum"].to_pandas()).empty
+
+    with soma.DataFrame.open(uri, "w") as A:
+        mid = num_rows // 2
+        A.write(table[:mid])
+        A.write(table[mid:])
+
+    with soma.DataFrame.open(uri) as A:
+        pdf = A.read().concat().to_pandas()
+        assert pdf["myint"].compare(table["myint"].to_pandas()).empty
+        assert pdf["mystring"].compare(table["mystring"].to_pandas()).empty
+        assert pdf["mybool"].compare(table["mybool"].to_pandas()).empty
+        assert pdf["myenum"].compare(table["myenum"].to_pandas()).empty

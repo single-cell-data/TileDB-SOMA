@@ -52,15 +52,16 @@ bool is_tiledb_uri(std::string_view uri);
 std::string rstrip_uri(std::string_view uri);
 
 /**
- * @brief Take an arrow schema and array containing bool
- * data in bits and return a vector containing the uint8_t
- * representation
+ * @brief Take a bitmap and return a vector containing the uint8_t
+ * representation. If the bitmap is null, then return a nullopt.
  *
- * @param schema the ArrowSchema which must be format 'b'
- * @param array the ArrowArray holding Boolean data
- * @return std::vector<uint8_t>
+ * @param bitmap Pointer to the start of the bitmap
+ * @param length Total number of elements
+ * @param offset Optionally offset the data
+ * @return std::optional<std::vector<uint8_t>>
  */
-std::vector<uint8_t> cast_bit_to_uint8(ArrowSchema* schema, ArrowArray* array);
+std::optional<std::vector<uint8_t>> bitmap_to_uint8(
+    uint8_t* bitmap, size_t length, size_t offset = 0);
 
 std::shared_ptr<SOMAColumn> find_column_by_name(
     std::span<const std::shared_ptr<SOMAColumn>> columns,
