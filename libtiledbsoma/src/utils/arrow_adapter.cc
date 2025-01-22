@@ -885,7 +885,8 @@ tiledb_layout_t ArrowAdapter::_get_order(std::string order) {
     }
 }
 
-ArraySchema ArrowAdapter::tiledb_schema_from_arrow_schema(
+std::tuple<ArraySchema, nlohmann::json>
+ArrowAdapter::tiledb_schema_from_arrow_schema(
     std::shared_ptr<Context> ctx,
     const std::unique_ptr<ArrowSchema>& arrow_schema,
     const ArrowTable& index_column_info,
@@ -1085,8 +1086,17 @@ ArraySchema ArrowAdapter::tiledb_schema_from_arrow_schema(
     LOG_DEBUG(std::format("[ArrowAdapter] check"));
     schema.check();
 
+    LOG_DEBUG(std::format("[ArrowAdapter] Additional schema metadata"));
+    nlohmann::json soma_schema_extension;
+
+    soma_schema_extension[TDB_SOMA_SCHEMA_COL_KEY] = nlohmann::json::array();
+    for (const auto& column : columns) {
+        column->serialize(soma_schema_extension[TDB_SOMA_SCHEMA_COL_KEY]);
+    }
+    soma_schema_extension["version"] = TDB_SOMA_SCHEMA_VERSION;
+
     LOG_DEBUG(std::format("[ArrowAdapter] returning"));
-    return schema;
+    return std::make_tuple(schema, soma_schema_extension);
 }
 
 Dimension ArrowAdapter::tiledb_dimension_from_arrow_schema(

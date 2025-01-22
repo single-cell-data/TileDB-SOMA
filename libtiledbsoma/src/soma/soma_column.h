@@ -38,6 +38,7 @@
 
 #include <any>
 #include <format>
+#include <map>
 #include <optional>
 #include <span>
 #include <string>
@@ -53,6 +54,15 @@ using namespace tiledb;
 
 class SOMAColumn {
    public:
+    //===================================================================
+    //= public static
+    //===================================================================
+
+    static std::vector<std::shared_ptr<SOMAColumn>> deserialize(
+        const nlohmann::json& soma_schema,
+        const Context& ctx,
+        const Array& array);
+
     //===================================================================
     //= public non-static
     //===================================================================
@@ -474,6 +484,8 @@ class SOMAColumn {
         }
     }
 
+    virtual void serialize(nlohmann::json&) const = 0;
+
    protected:
     virtual void _set_dim_points(
         const std::unique_ptr<ManagedQuery>& query,
@@ -500,6 +512,12 @@ class SOMAColumn {
         const SOMAContext& ctx, Array& array) const = 0;
 
     virtual std::any _core_current_domain_slot(NDRectangle& ndrect) const = 0;
+
+   private:
+    typedef std::shared_ptr<SOMAColumn> (*Factory)(
+        const nlohmann::json&, const Context&, const Array&);
+
+    static std::map<uint32_t, Factory> deserialiser_map;
 };
 
 template <>

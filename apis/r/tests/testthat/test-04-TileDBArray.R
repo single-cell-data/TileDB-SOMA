@@ -33,7 +33,7 @@ test_that("TileDBArray helper functions", {
   tdba$open(mode = "READ", internal_use_only = "allowed_use")
   expect_equal(tdba$get_metadata(key = "int_column"), "float_column")
   expect_equal(tdba$get_metadata(key = "string_column"), "qux")
-  expect_equal(length(tdba$get_metadata()), 2)
+  expect_equal(length(tdba$get_metadata()), 3)
   tdba$close()
 
   # The SOMA spec requires the ability to read back metadata even when the
@@ -41,7 +41,7 @@ test_that("TileDBArray helper functions", {
   tdba$open(mode = "WRITE", internal_use_only = "allowed_use")
   expect_equal(tdba$get_metadata(key = "int_column"), "float_column")
   expect_equal(tdba$get_metadata(key = "string_column"), "qux")
-  expect_equal(length(tdba$get_metadata()), 2)
+  expect_equal(length(tdba$get_metadata()), 3)
   tdba$close()
 
   ## shape
