@@ -29,6 +29,15 @@ using namespace tiledb;
 
 class SOMADimension : public SOMAColumn {
    public:
+    //===================================================================
+    //= public static
+    //===================================================================
+
+    static std::shared_ptr<SOMAColumn> deserialize(
+        const nlohmann::json& soma_schema,
+        const Context& ctx,
+        const Array& array);
+
     static std::shared_ptr<SOMADimension> create(
         std::shared_ptr<Context> ctx,
         ArrowSchema* schema,
@@ -87,6 +96,8 @@ class SOMADimension : public SOMAColumn {
 
     ArrowSchema* arrow_schema_slot(
         const SOMAContext& ctx, Array& array) override;
+
+    void serialize(nlohmann::json&) const override;
 
    protected:
     void _set_dim_points(

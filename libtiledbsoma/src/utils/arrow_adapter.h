@@ -386,7 +386,9 @@ class ArrowAdapter {
         ArraySchema tiledb_schema);
 
     /**
-     * @brief Create a TileDB ArraySchema from ArrowSchema
+     * @brief Create a TileDB ArraySchema from ArrowSchema and additional JSON
+     * encoded metadata to handle higher level SOMA construct not supported by
+     * TileDB (e.g. SOMAColumn)
      *
      * The number of rows in index_column_info was three without core
      * current-domain support, and is five with core current-domain support:
@@ -397,9 +399,10 @@ class ArrowAdapter {
      * - Slot 3: core current-domain low value (inclusive)
      * - Slot 4: core current-domain high value (inclusive)
      *
-     * @return tiledb::ArraySchema
+     * @return std::tuple<tiledb::ArraySchema, nlohmann::json>
      */
-    static ArraySchema tiledb_schema_from_arrow_schema(
+    static std::tuple<ArraySchema, nlohmann::json>
+    tiledb_schema_from_arrow_schema(
         std::shared_ptr<Context> ctx,
         const std::unique_ptr<ArrowSchema>& arrow_schema,
         const ArrowTable& index_column_info,
