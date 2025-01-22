@@ -808,20 +808,32 @@ class MetadataWrapper(MutableMapping[str, Any]):
             # There were no changes (e.g., it's a read handle).  Do nothing.
             return
         # Only try to get the writer if there are changes to be made.
+
+        errors: list[Exception] = []
         for key, mod in self._mods.items():
-            if mod in (_DictMod.ADDED, _DictMod.UPDATED):
-                set_metadata = self.owner._handle.set_metadata
-                val = self.cache[key]
-                if isinstance(val, str):
-                    set_metadata(key, np.array([val], "S"))
-                else:
-                    set_metadata(key, np.array([val]))
-            if mod is _DictMod.DELETED:
-                self.owner._handle.delete_metadata(key)
+            try:
+                if mod in (_DictMod.ADDED, _DictMod.UPDATED):
+                    set_metadata = self.owner._handle.set_metadata
+                    val = self.cache[key]
+                    if isinstance(val, str):
+                        set_metadata(key, np.array([val.encode("UTF-8")], "S"))
+                    elif isinstance(val, bytes):
+                        set_metadata(key, np.array([val], "V"))
+                    else:
+                        set_metadata(key, np.array([val]))
+                if mod is _DictMod.DELETED:
+                    self.owner._handle.delete_metadata(key)
+            except Exception as e:
+                errors.append(e)
 
         # Temporary hack: When we flush writes, note that the cache
         # is back in sync with disk.
         self._mods.clear()
+
+        if errors:
+            raise SOMAError(
+                f"[MetadataWrapper][_write] {len(errors)} errors occured while writing metadata to disk."
+            )
 
     def __repr__(self) -> str:
         prefix = f"{type(self).__name__}({self.owner})"

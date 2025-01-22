@@ -17,6 +17,22 @@ namespace py = pybind11;
 
 namespace tiledbsoma {
 
+template <typename T>
+size_t sanitize_string(std::span<const T> string_raw, size_t num_elements) {
+    if (num_elements == 1 && string_raw[0] == 0) {
+        return 0;
+    }
+
+    for (const T& element : string_raw) {
+        if (element == 0) {
+            throw TileDBSOMAError(
+                "[sanitize_string] String contains NULL bytes");
+        }
+    }
+
+    return num_elements;
+}
+
 py::dtype tdb_to_np_dtype(tiledb_datatype_t type, uint32_t cell_val_num);
 
 tiledb_datatype_t np_to_tdb_dtype(py::dtype type);
