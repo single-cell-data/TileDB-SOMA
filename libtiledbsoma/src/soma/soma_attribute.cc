@@ -52,6 +52,11 @@ std::shared_ptr<SOMAColumn> SOMAAttribute::deserialize(
             attribute_names.size()));
     }
 
+    if (!array.schema().has_attribute(attribute_names[0])) {
+        // Attribute probably dropped so skip column reconstruction.
+        return nullptr;
+    }
+
     auto attribute = array.schema().attribute(attribute_names[0]);
     auto enumeration_name = AttributeExperimental::get_enumeration_name(
         ctx, attribute);

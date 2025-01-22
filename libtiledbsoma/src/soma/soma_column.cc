@@ -55,7 +55,48 @@ std::vector<std::shared_ptr<SOMAColumn>> SOMAColumn::deserialize(
             auto type = column[TDB_SOMA_SCHEMA_COL_TYPE_KEY]
                             .template get<uint32_t>();
 
-            columns.push_back(deserialiser_map[type](column, ctx, array));
+            auto col = deserialiser_map[type](column, ctx, array);
+
+            if (col) {
+                // Deserialized column can be null in case the array is modified
+                // and the column no longer exists.
+                columns.push_back(deserialiser_map[type](column, ctx, array));
+            }
+        }
+
+        // Check for any newly added attributes
+        std::unordered_set<std::string> used_attribute_names;
+
+        std::for_each(
+            columns.cbegin(),
+            columns.cend(),
+            [&used_attribute_names](const std::shared_ptr<SOMAColumn>& col) {
+                if (col->tiledb_attributes().has_value()) {
+                    auto attributes = col->tiledb_attributes().value();
+                    for (const auto& attribute : attributes) {
+                        used_attribute_names.insert(attribute.name());
+                    }
+                }
+            });
+
+        for (size_t i = 0; i < array.schema().attribute_num(); ++i) {
+            auto attribute = array.schema().attribute(i);
+
+            // Attribute is already used by another attribute so we skip
+            if (used_attribute_names.contains(attribute.name())) {
+                continue;
+            }
+
+            auto enumeration_name = AttributeExperimental::get_enumeration_name(
+                ctx, attribute);
+            auto enumeration = enumeration_name.has_value() ?
+                                   std::make_optional(
+                                       ArrayExperimental::get_enumeration(
+                                           ctx, array, attribute.name())) :
+                                   std::nullopt;
+
+            columns.push_back(
+                std::make_shared<SOMAAttribute>(attribute, enumeration));
         }
     } else {
         // All arrays before the introduction of SOMAColumn do not have
