@@ -634,7 +634,7 @@ class ManagedQuery {
                 casted_values.size(),
                 (const void*)casted_values.data(),
                 (uint64_t*)nullptr,
-                _shift_validity_buffer(array));
+                _cast_validity_buffer(array));
 
             // Return false because we do not extend the enumeration
             return false;
@@ -777,7 +777,7 @@ class ManagedQuery {
             casted_indexes.size(),
             (const void*)casted_indexes.data(),
             (uint64_t*)nullptr,
-            _shift_validity_buffer(index_array));
+            _cast_validity_buffer(index_array));
     }
 
     bool _extend_enumeration(
@@ -846,7 +846,7 @@ class ManagedQuery {
      * @param array the ArrowArray holding offset to shift
      * @return std::optional<std::vector<uint8_t>>
      */
-    std::optional<std::vector<uint8_t>> _shift_validity_buffer(
+    std::optional<std::vector<uint8_t>> _cast_validity_buffer(
         ArrowArray* array);
 };
 

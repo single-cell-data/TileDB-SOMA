@@ -858,8 +858,7 @@ void ManagedQuery::_cast_dictionary_values<bool>(
     auto value_array = array->dictionary;
 
     std::vector<int64_t> indexes = _get_index_vector(schema, array);
-    std::vector<uint8_t> values = _cast_bool_data(
-        value_schema, value_array);
+    std::vector<uint8_t> values = _cast_bool_data(value_schema, value_array);
     std::vector<uint8_t> index_to_value;
 
     for (auto i : indexes) {
@@ -965,8 +964,7 @@ bool ManagedQuery::_cast_column_aux<std::string>(
     }
 
     const void* data = array->buffers[2];
-    std::optional<std::vector<uint8_t>> validity = _shift_validity_buffer(
-        array);
+    std::optional<std::vector<uint8_t>> validity = _cast_validity_buffer(array);
 
     // If this is a table-slice, do *not* slice into the data
     // buffer since it is indexed via offsets, which we slice
@@ -998,7 +996,7 @@ bool ManagedQuery::_cast_column_aux<bool>(
         array->length,
         (const void*)casted.data(),
         (uint64_t*)nullptr,
-        _shift_validity_buffer(array));
+        _cast_validity_buffer(array));
     return false;
 }
 
@@ -1250,7 +1248,7 @@ std::vector<uint8_t> ManagedQuery::_cast_bool_data(
     return *util::bitmap_to_uint8(data, array->length, array->offset);
 }
 
-std::optional<std::vector<uint8_t>> ManagedQuery::_shift_validity_buffer(
+std::optional<std::vector<uint8_t>> ManagedQuery::_cast_validity_buffer(
     ArrowArray* array) {
     uint8_t* validity = (uint8_t*)array->buffers[0];
     return util::bitmap_to_uint8(validity, array->length, array->offset);
