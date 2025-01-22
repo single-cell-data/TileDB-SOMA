@@ -18,7 +18,7 @@ namespace py = pybind11;
 namespace tiledbsoma {
 
 template <typename T>
-size_t sanitize_string(std::span<const T> string_raw, size_t num_elements) {
+size_t sanitize_string(tcb::span<const T> string_raw, size_t num_elements) {
     if (num_elements == 1 && string_raw[0] == 0) {
         return 0;
     }
