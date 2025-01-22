@@ -2050,3 +2050,4 @@ def test_arrow_table_sliced_writer(tmp_path):
         np.testing.assert_array_equal(pdf["myenumint"], pydict["myenumint"])
         np.testing.assert_array_equal(pdf["myenumstr"], pydict["myenumstr"])
         np.testing.assert_array_equal(pdf["myenumbool"], pydict["myenumbool"])
+
