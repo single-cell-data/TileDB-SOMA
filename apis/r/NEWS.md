@@ -1,3 +1,7 @@
+# tiledbsoma 1.15.4
+
+* This release contains Python-only updates for spatial transcriptomics
+
 # tiledbsoma 1.15.3
 
 * This release contains Python-only bugfixes
