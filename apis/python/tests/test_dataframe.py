@@ -2061,7 +2061,7 @@ def test_arrow_table_validity_with_slicing(tmp_path):
             ("myint", pa.int32()),
             ("mystring", pa.large_string()),
             ("mybool", pa.bool_()),
-            ("myenumstr", pa.dictionary(pa.int64(), pa.large_string())),
+            ("myenum", pa.dictionary(pa.int64(), pa.large_string())),
         ]
     )
 
