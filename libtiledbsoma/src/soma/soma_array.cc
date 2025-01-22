@@ -285,7 +285,7 @@ void SOMAArray::fill_columns() {
             LOG_DEBUG("[SOMAArray][fill_columns] Writing generated metadata");
 
             auto soma_schema_extension_str = soma_schema_extension.dump();
-            set_metadata(
+            arr_->put_metadata(
                 TDB_SOMA_SCHEMA_KEY,
                 TILEDB_STRING_UTF8,
                 soma_schema_extension_str.length(),
