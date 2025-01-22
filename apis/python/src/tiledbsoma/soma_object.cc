@@ -113,6 +113,9 @@ void load_soma_object(py::module& m) {
                     "already handled. This indicates a logic error or an "
                     "unexpected failure to catch exceptions by "
                     "SOMAObject::open");
+
+                return py::none();  // Unreached, but appeases a compiler
+                                    // warning
             },
             "uri"_a,
             "mode"_a,
