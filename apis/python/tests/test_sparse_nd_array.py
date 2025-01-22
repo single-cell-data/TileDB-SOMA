@@ -2007,3 +2007,15 @@ def test_context_cleanup(tmp_path: pathlib.Path) -> None:
             },
         )
         gc.collect()
+
+
+def test_sparse_nd_array_null(tmp_path):
+    uri = tmp_path.as_posix()
+
+    arrow_array = pa.array([None], type=pa.float64())
+    values = pa.Table.from_arrays([arrow_array], names=["soma_data"])
+
+    with soma.SparseNDArray.create(uri, type=pa.int64(), shape=(1,)) as a:
+        # Cannot write null values
+        with pytest.raises(soma.SOMAError):
+            a.write(values=values)

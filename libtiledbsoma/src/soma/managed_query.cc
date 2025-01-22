@@ -1238,13 +1238,7 @@ std::vector<uint8_t> ManagedQuery::_cast_bool_data(
             schema->format));
     }
 
-    uint8_t* data;
-    if (array->n_buffers == 3) {
-        data = (uint8_t*)array->buffers[2];
-    } else {
-        data = (uint8_t*)array->buffers[1];
-    }
-
+    uint8_t* data = (uint8_t*)array->buffers[1];
     return *util::bitmap_to_uint8(data, array->length, array->offset);
 }
 
