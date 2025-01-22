@@ -65,7 +65,7 @@ fi
 if [ -n "$reinstall" ] || [ -n "$made_venv" ]; then
   pip install -r doc/requirements_doc.txt || die "could not install doc dependencies"
   pushd "$ext_dir"
-  pip install -e . || die "could not install tiledbsoma-py"
+  pip install -e '.[spatial]' || die "could not install tiledbsoma-py"
   popd
 fi
 
