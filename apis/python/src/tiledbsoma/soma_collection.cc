@@ -125,9 +125,13 @@ void load_soma_collection(py::module& m) {
             "create",
             [](std::shared_ptr<SOMAContext> ctx,
                std::string_view uri,
+               const std::vector<std::string>& axis_names,
+               const std::vector<std::optional<std::string>>& axis_units,
                std::optional<TimestampRange> timestamp) {
+                SOMACoordinateSpace coord_space{axis_names, axis_units};
                 try {
-                    SOMAMultiscaleImage::create(uri, ctx, timestamp);
+                    SOMAMultiscaleImage::create(
+                        uri, ctx, coord_space, timestamp);
                 } catch (const std::exception& e) {
                     TPY_ERROR_LOC(e.what());
                 }
@@ -135,6 +139,8 @@ void load_soma_collection(py::module& m) {
             py::kw_only(),
             "ctx"_a,
             "uri"_a,
+            "axis_names"_a,
+            "axis_units"_a,
             "timestamp"_a = py::none())
         .def_static(
             "open",

@@ -17,6 +17,7 @@
 #include <tiledb/tiledb>
 
 #include "soma_collection.h"
+#include "soma_coordinates.h"
 
 namespace tiledbsoma {
 
@@ -37,6 +38,7 @@ class SOMAMultiscaleImage : public SOMACollection {
     static void create(
         std::string_view uri,
         std::shared_ptr<SOMAContext> ctx,
+        const SOMACoordinateSpace& coordinate_space,
         std::optional<TimestampRange> timestamp = std::nullopt);
 
     /**
@@ -76,10 +78,16 @@ class SOMAMultiscaleImage : public SOMACollection {
     SOMAMultiscaleImage(SOMAMultiscaleImage&&) = default;
     ~SOMAMultiscaleImage() = default;
 
+    inline const SOMACoordinateSpace& coordinate_space() const {
+        return coord_space_;
+    }
+
    private:
     //===================================================================
     //= private non-static
     //===================================================================
+
+    SOMACoordinateSpace coord_space_;
 };
 }  // namespace tiledbsoma
 
