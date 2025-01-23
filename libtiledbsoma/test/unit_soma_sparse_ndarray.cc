@@ -220,7 +220,7 @@ TEST_CASE("SOMASparseNDArray: metadata", "[SOMASparseNDArray]") {
 
     // Read metadata
     snda->open(OpenMode::read, TimestampRange(0, 2));
-    REQUIRE(snda->metadata_num() == 4);
+    REQUIRE(snda->metadata_num() == 3);
     REQUIRE(snda->has_metadata("soma_object_type"));
     REQUIRE(snda->has_metadata("soma_encoding_version"));
     REQUIRE(snda->has_metadata("md"));
@@ -232,7 +232,7 @@ TEST_CASE("SOMASparseNDArray: metadata", "[SOMASparseNDArray]") {
 
     // md should not be available at (0, 1)
     snda->open(OpenMode::read, TimestampRange(0, 1));
-    REQUIRE(snda->metadata_num() == 3);
+    REQUIRE(snda->metadata_num() == 2);
     REQUIRE(snda->has_metadata("soma_object_type"));
     REQUIRE(snda->has_metadata("soma_encoding_version"));
     REQUIRE(!snda->has_metadata("md"));
@@ -240,7 +240,7 @@ TEST_CASE("SOMASparseNDArray: metadata", "[SOMASparseNDArray]") {
 
     // Metadata should also be retrievable in write mode
     snda->open(OpenMode::write);
-    REQUIRE(snda->metadata_num() == 4);
+    REQUIRE(snda->metadata_num() == 3);
     REQUIRE(snda->has_metadata("soma_object_type"));
     REQUIRE(snda->has_metadata("soma_encoding_version"));
     REQUIRE(snda->has_metadata("md"));
@@ -250,7 +250,7 @@ TEST_CASE("SOMASparseNDArray: metadata", "[SOMASparseNDArray]") {
     // Delete and have it reflected when reading metadata while in write mode
     snda->delete_metadata("md");
     REQUIRE(!snda->has_metadata("md"));
-    REQUIRE(snda->metadata_num() == 3);
+    REQUIRE(snda->metadata_num() == 2);
     mdval = snda->get_metadata("md");
     REQUIRE(!mdval.has_value());
     snda->close();
@@ -258,7 +258,7 @@ TEST_CASE("SOMASparseNDArray: metadata", "[SOMASparseNDArray]") {
     // Confirm delete in read mode
     snda->open(OpenMode::read);
     REQUIRE(!snda->has_metadata("md"));
-    REQUIRE(snda->metadata_num() == 3);
+    REQUIRE(snda->metadata_num() == 2);
 }
 
 TEST_CASE(

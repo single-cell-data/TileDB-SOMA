@@ -161,7 +161,7 @@ TEST_CASE("SOMADenseNDArray: metadata", "[SOMADenseNDArray]") {
 
     // Read metadata
     dnda->open(OpenMode::read, TimestampRange(0, 2));
-    REQUIRE(dnda->metadata_num() == 4);
+    REQUIRE(dnda->metadata_num() == 3);
     REQUIRE(dnda->has_metadata("soma_object_type"));
     REQUIRE(dnda->has_metadata("soma_encoding_version"));
     REQUIRE(dnda->has_metadata("md"));
@@ -173,7 +173,7 @@ TEST_CASE("SOMADenseNDArray: metadata", "[SOMADenseNDArray]") {
 
     // md should not be available at (0, 1)
     dnda->open(OpenMode::read, TimestampRange(0, 1));
-    REQUIRE(dnda->metadata_num() == 3);
+    REQUIRE(dnda->metadata_num() == 2);
     REQUIRE(dnda->has_metadata("soma_object_type"));
     REQUIRE(dnda->has_metadata("soma_encoding_version"));
     REQUIRE(!dnda->has_metadata("md"));
@@ -181,7 +181,7 @@ TEST_CASE("SOMADenseNDArray: metadata", "[SOMADenseNDArray]") {
 
     // Metadata should also be retrievable in write mode
     dnda->open(OpenMode::write);
-    REQUIRE(dnda->metadata_num() == 4);
+    REQUIRE(dnda->metadata_num() == 3);
     REQUIRE(dnda->has_metadata("soma_object_type"));
     REQUIRE(dnda->has_metadata("soma_encoding_version"));
     REQUIRE(dnda->has_metadata("md"));
@@ -197,5 +197,5 @@ TEST_CASE("SOMADenseNDArray: metadata", "[SOMADenseNDArray]") {
     // Confirm delete in read mode
     dnda->open(OpenMode::read);
     REQUIRE(!dnda->has_metadata("md"));
-    REQUIRE(dnda->metadata_num() == 3);
+    REQUIRE(dnda->metadata_num() == 2);
 }
