@@ -59,7 +59,7 @@ void SOMAPointCloudDataFrame::create(
         uri,
         tiledb_schema,
         "SOMAPointCloudDataFrame",
-        soma_schema_extension.dump(),
+        std::nullopt,
         timestamp);
 }
 

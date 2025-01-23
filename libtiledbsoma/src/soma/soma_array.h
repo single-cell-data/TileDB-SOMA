@@ -113,7 +113,7 @@ class SOMAArray : public SOMAObject {
         std::string_view uri,
         ArraySchema schema,
         std::string_view soma_type,
-        std::string_view soma_schema,
+        std::optional<std::string_view> soma_schema = std::nullopt,
         std::optional<TimestampRange> timestamp = std::nullopt);
 
     /**
