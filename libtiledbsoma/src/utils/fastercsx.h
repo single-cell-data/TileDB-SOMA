@@ -33,7 +33,6 @@
 #include <atomic>
 #include <cmath>
 #include <cstdint>
-#include <format>
 #include <numeric>
 #include "span/span.hpp"
 

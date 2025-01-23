@@ -31,7 +31,6 @@
  */
 
 #include "soma_dataframe.h"
-#include <format>
 #include "../utils/logger.h"
 
 namespace tiledbsoma {
