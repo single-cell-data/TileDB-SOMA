@@ -28,6 +28,10 @@ HT_TEST_CONFIG = {
     "sc-61743_workaround": True,
     # Read of new array returns incorrect info
     "sc-61676_workaround": True,
+    # index columns of type binary/large_binary are reported as large_string
+    "sc-62236_workaround": True,
+    # string index values starting with 0x7F barf
+    "sc-62265_workaround": True,
     #
     # Enable/disable partially implemented features
     #

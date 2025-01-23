@@ -10,6 +10,7 @@ import numpy as np
 import numpy.typing as npt
 import pandas as pd
 import pyarrow as pa
+from hypothesis import note
 from hypothesis import strategies as st
 from more_itertools import pairwise
 from packaging.version import Version
@@ -194,16 +195,30 @@ def arrow_datatypes(draw: st.DrawFn) -> pa.DataType:
 
 
 def ndarray_datatype() -> st.SearchStrategy:
+    """Return a type that can be stored in a SOMA NDArray."""
     return st.from_type(pa.DataType).filter(
         lambda t: (
             pa.types.is_primitive(t)
             and not (pa.types.is_timestamp(t) and t.tz is not None)
             and not pa.types.is_time(t)
             and not pa.types.is_date(t)
-            and t
-            not in [
-                pa.float16(),
-            ]
+            and t not in [pa.float16()]
+        )
+    )
+
+
+def dataframe_datatype() -> st.SearchStrategy:
+    """Return type that can be stored in a DataFrame column."""
+    return st.from_type(pa.DataType).filter(
+        lambda t: (
+            (
+                pa.types.is_primitive(t)
+                or t in [pa.string(), pa.large_string(), pa.binary(), pa.large_binary()]
+            )
+            and not (pa.types.is_timestamp(t) and t.tz is not None)
+            and not pa.types.is_time(t)
+            and not pa.types.is_date(t)
+            and t not in [pa.float16()]
         )
     )
 
@@ -539,16 +554,45 @@ def contiguous_slices(draw: Any, size: int) -> slice:
     return slice(start, stop + 1 if stop is not None else stop, step)
 
 
-def schemas_equal(s1: pa.Schema, s2: pa.Schema, ignore_field_order=False) -> bool:
-    """NB: assumes all field names are unique! Raises if not."""
-    if not ignore_field_order:
-        return s1 == s2
-    else:
-        if len(s2) != len(s1):
+def schemas_equal(
+    s1: pa.Schema,
+    s2: pa.Schema,
+    *,
+    ignore_field_order=False,
+    large_type_equivalence=False,
+) -> bool:
+    """NB: assumes all field names are unique! Raises if not.
+
+    Compares schema, returns true if "equal" - defined as:
+    * string/binary can be upcast to large equivalent
+    * ignore_field_order option
+    """
+
+    def _to_large_type_equivalent(f: pa.Field):
+        if pa.types.is_string(f.type):
+            return f.with_type(pa.large_string())
+        if pa.types.is_binary(f.type):
+            return f.with_type(pa.large_binary())
+        return f
+
+    s1_names = sorted(s1.names) if ignore_field_order else s1.names
+    s2_names = sorted(s2.names) if ignore_field_order else s2.names
+    if s1_names != s2_names:
+        return False
+    if len(s1) != len(s2):
+        return False
+
+    for field_name in s1.names:
+        f1 = s1.field(field_name)
+        f2 = s2.field(field_name)
+        if large_type_equivalence:
+            f1 = _to_large_type_equivalent(f1)
+            f2 = _to_large_type_equivalent(f2)
+
+        if f1 != f2:
             return False
-        return all(
-            s1.field(field_name) == s2.field(field_name) for field_name in s1.names
-        )
+
+    return True
 
 
 def arrays_equal(
@@ -558,17 +602,28 @@ def arrays_equal(
 
     # TODO: handle nullable arrays
 
-    if (read.type != expected.type) or (len(read) != len(expected)):
+    if read.type != expected.type:
+        note("arrays_equal: types not eq {read.type} != {expected.type}")
+        return False
+
+    if len(read) != len(expected):
+        note(f"arrays_equal: length not eq {len(read)} != {len(expected)}")
         return False
 
     if not pa.types.is_floating(expected.type):
-        return expected.equals(read)
+        is_eq = expected.equals(read)
+        if not is_eq:
+            note("arrays_equal: contents not eq (non-float)")
+    else:
+        # Floating point path, to allow for NaN. Implemented with NumPy for convenience only
+        is_eq = all(
+            np.array_equal(r.to_numpy(), e.to_numpy(), equal_nan=equal_nan)
+            for r, e in zip(read.chunks, expected.chunks)
+        )
+        if not is_eq:
+            note("arrays_equal: contents not eq (float)")
 
-    # Floating point path, to allow for NaN. Implemented with NumPy for convenience only
-    return all(
-        np.array_equal(r.to_numpy(), e.to_numpy(), equal_nan=equal_nan)
-        for r, e in zip(read.chunks, expected.chunks)
-    )
+    return is_eq
 
 
 def tables_equal(
@@ -583,6 +638,7 @@ def tables_equal(
 
     # checking field order and length up front simplifies code below
     if [f.name for f in read_schema] != [f.name for f in expected_schema]:
+        note(f"tables_equal: field names not eq: {read_schema} != {expected_schema}")
         return False
 
     if HT_TEST_CONFIG["sc-61222_workaround"]:
@@ -602,12 +658,34 @@ def tables_equal(
                     fidx, read_schema.field(fidx).with_type(field.type)
                 )
 
-    if (read_schema != expected_schema) or len(read) != len(expected):
+    def _upcast_to_large(schema: pa.Schema) -> pa.Schema:
+        for fidx, field in enumerate(schema):
+            if pa.types.is_string(field.type):
+                schema = schema.set(
+                    fidx, schema.field(fidx).with_type(pa.large_string())
+                )
+            if pa.types.is_binary(field.type):
+                schema = schema.set(
+                    fidx, schema.field(fidx).with_type(pa.large_binary())
+                )
+        return schema
+
+    # TileDB upcasts variable length types to large - so treat as equivalent
+    read_schema = _upcast_to_large(read_schema)
+    expected_schema = _upcast_to_large(expected_schema)
+    if not schemas_equal(read_schema, expected_schema, large_type_equivalence=True):
+        note(f"tables_equal: not eq: {read_schema} != {expected_schema}")
+        return False
+
+    if len(read) != len(expected):
+        note(f"tables_equal: length not eq: {len(read)} != {len(expected)}")
         return False
 
     expected = expected.cast(expected_schema)
     read = read.cast(read_schema)
     is_eq = all(arrays_equal(r, e, equal_nan=equal_nan) for r, e in zip(read, expected))
+    if not is_eq:
+        note(f"tables_equal: contents not eq: {read} != {expected}")
     return is_eq
 
 

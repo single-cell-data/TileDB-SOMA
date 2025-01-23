@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 import pyarrow as pa
 import pytest
-from hypothesis import strategies as st
+from hypothesis import strategies as st, reproduce_failure
 from hypothesis.extra import numpy as ht_np
 from hypothesis.extra import pandas as ht_pd
 from hypothesis.stateful import initialize, invariant, precondition, rule
@@ -21,6 +21,7 @@ from tests.ht._array_state_machine import SOMAArrayStateMachine
 from tests.ht._ht_test_config import HT_TEST_CONFIG
 from tests.ht._ht_util import (
     arrow_schema,
+    dataframe_datatype,
     df_to_table,
     from_datatype,
     pad_array,
@@ -42,12 +43,16 @@ DataFrameIndexTypes = [
     pa.uint64(),
     pa.float32(),
     pa.float64(),
-    pa.binary(),
-    pa.large_binary(),
     pa.string(),
     pa.large_string(),
     pa.timestamp("ns"),
 ]
+if not HT_TEST_CONFIG["sc-62236_workaround"]:
+    DataFrameIndexTypes += [
+        pa.binary(),
+        pa.large_binary(),
+    ]
+
 if Version(pd.__version__) >= Version("2.0.0"):
     DataFrameIndexTypes += [
         pa.timestamp("s"),
@@ -75,18 +80,7 @@ def dataframe_schema(draw: st.DrawFn) -> tuple[Sequence[str], pa.Schema]:
         arrow_schema(
             required_fields=(pa.field("soma_joinid", pa.int64(), nullable=False),),
             unique_field_names=True,
-            elements=st.from_type(pa.DataType).filter(
-                lambda t: (
-                    pa.types.is_primitive(t)
-                    and not (pa.types.is_timestamp(t) and t.tz is not None)
-                    and not pa.types.is_time(t)
-                    and not pa.types.is_date(t)
-                    and t
-                    not in [
-                        pa.float16(),
-                    ]
-                )
-            ),
+            elements=dataframe_datatype(),
         )
     )
     assert len(schema) > 1
@@ -181,6 +175,7 @@ def dataframe_domain(
     index_column_names: Sequence[str],
     max_domain: Domain | None = None,
     current_domain: Domain | None = None,
+    apply_defaults: bool = False,
 ) -> Domain:
     """Strategy to generate DataFrame domains.
 
@@ -200,9 +195,7 @@ def dataframe_domain(
     new_domain = []
     for field_index, field_name in enumerate(index_column_names):
         field = schema.field(field_name)
-        if not pa.types.is_primitive(field.type):
-            new_domain.append(None)  # i.e., noop, use default
-        else:
+        if pa.types.is_primitive(field.type):
             zero = (
                 np.datetime64(0, field.type.unit)
                 if pa.types.is_timestamp(field.type)
@@ -264,6 +257,10 @@ def dataframe_domain(
             assert max_upper >= upper >= current_upper
             new_domain.append((lower, upper))
 
+        else:
+            # no idea what this is, so specify default
+            new_domain.append(None)
+
     assert len(new_domain) == len(index_column_names)
     return tuple(new_domain)
 
@@ -282,16 +279,23 @@ def arrow_table(
     * have unique values in the index columns
     * have values within the domain for the index columns
     """
-    index_domains = {k: v for k, v in zip(index_column_names, domain)}
+    index_domains = {
+        k: v if v is not None else (None, None)
+        for k, v in zip(index_column_names, domain)
+    }
     columns = []
     for field in schema:
         name = field.name
-        dtype = np.dtype(field.type.to_pandas_dtype())
         unique = name in index_column_names or name == "soma_joinid"
         elements = None
 
         min_value, max_value = index_domains.get(name, (None, None))
         assert name in index_domains or (min_value is None and max_value is None)
+
+        # special case - limit even if it isn't an index
+        if name == "soma_joinid" and min_value is None:
+            min_value = 0
+            max_value = 2**56 - 1
 
         if pa.types.is_timestamp(field.type):
             # don't generate NaT. ht_np.from_dtype doesn't obey min/max value
@@ -306,6 +310,7 @@ def arrow_table(
                 if max_value is None
                 else min(2**63 - 1, int(max_value.astype(np.int64)))
             )
+            dtype = np.dtype(field.type.to_pandas_dtype())
             elements = st.builds(
                 dtype.type,
                 st.integers(min_value=min_value, max_value=max_value),
@@ -313,6 +318,7 @@ def arrow_table(
             )
 
         elif pa.types.is_primitive(field.type):
+            dtype = np.dtype(field.type.to_pandas_dtype())
             elements = ht_np.from_dtype(dtype, min_value=min_value, max_value=max_value)
             # Array dimensions do not de-dup -0. and 0. as the same. Disable any generation
             # of negative zero until this is resolved. NB: ledger de-dup treats them a equivalent
@@ -322,7 +328,28 @@ def arrow_table(
             ):
                 elements = elements.filter(lambda x: not (x == 0 and np.signbit(x)))
 
-        # else, use default
+        elif field.type in [pa.string(), pa.large_string()]:
+            dtype = np.dtype(str)
+            if name in index_column_names:
+                # TileDB string index columns are restricted to "ASCII", and in
+                # actuality to [0,128). These tests use Pandas indexing, which are
+                # foobared on anything containing a null.  So in practice, use [1,126]
+                if HT_TEST_CONFIG["sc-62265_workaround"]:
+                    elements = st.text(
+                        alphabet=st.characters(codec="ascii", min_codepoint=1, max_codepoint=126)
+                    )
+                else:
+                    elements = st.text(alphabet=st.characters(codec="ascii", min_codepoint=1))
+            else:
+                # Disallow surrogate codepoints.  Arrow doesn't implement them in the
+                # encoder/decoder, and will throw if they are present.
+                elements = st.text(alphabet=st.characters(exclude_categories=["C"]))
+
+        elif field.type in [pa.binary(), pa.large_binary()]:
+            dtype = np.dtype(bytes)
+
+        else:  # use default
+            dtype = np.dtype(field.type.to_pandas_dtype())
 
         columns.append(
             ht_pd.column(name=name, dtype=dtype, unique=unique, elements=elements)
@@ -395,8 +422,6 @@ class SOMADataFrameStateMachine(SOMAArrayStateMachine):
         self.domain = self.A.domain
         assert not self.A.closed
         assert self.A.mode == "w"
-        assert schemas_equal(self.schema, self.A.schema, ignore_field_order=True)
-
         self.data_ledger = Ledger[ArrowTableLedgerEntry](
             initial_entry=ArrowTableLedgerEntry(
                 data=self.schema.empty_table(),
@@ -428,7 +453,12 @@ class SOMADataFrameStateMachine(SOMAArrayStateMachine):
     def check_schema(self) -> None:
         assert isinstance(self.A, soma.DataFrame)
         assert self.A.soma_type == "SOMADataFrame"
-        assert schemas_equal(self.schema, self.A.schema, ignore_field_order=True)
+        assert schemas_equal(
+            self.schema,
+            self.A.schema,
+            ignore_field_order=True,
+            large_type_equivalence=True,
+        )
         assert sorted(self.schema.names) == sorted(self.A.keys())
         assert self.index_column_names == self.A.index_column_names
 
@@ -439,8 +469,26 @@ class SOMADataFrameStateMachine(SOMAArrayStateMachine):
     @precondition(lambda self: not self.closed)
     @invariant()
     def check_domain(self) -> None:
-        assert (
-            self.A.domain == self.domain
+        domain = []
+        for iname, idomain in zip(self.index_column_names, self.domain):
+            if idomain is not None:
+                domain.append(idomain)
+            else:
+                type = self.schema.field(iname).type
+                if type in [
+                    pa.string(),
+                    pa.large_string(),
+                    pa.binary(),
+                    pa.large_binary(),
+                ]:
+                    domain.append(("", ""))
+                elif pa.type.is_primitive(type):
+                    domain.append((0, 0))
+                else:
+                    domain.append(None)
+
+        assert self.A.domain == tuple(
+            domain
         ), f"Unexpected domain in {self.A}: had {self.A.domain}, expected {self.domain}"
 
     @precondition(lambda self: self.closed or self.mode == "w")
@@ -453,6 +501,7 @@ class SOMADataFrameStateMachine(SOMAArrayStateMachine):
                 index_column_names=self.index_column_names,
                 current_domain=self.domain,
                 max_domain=self.A.maxdomain,
+                apply_defaults=True,
             )
         )
         if self.closed:
