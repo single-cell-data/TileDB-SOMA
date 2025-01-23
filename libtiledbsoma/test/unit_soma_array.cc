@@ -92,7 +92,12 @@ std::tuple<std::string, uint64_t> create_array(
 
     // Create array
     SOMAArray::create(
-        ctx, uri, std::move(schema), "NONE", "", TimestampRange(0, 2));
+        ctx,
+        uri,
+        std::move(schema),
+        "NONE",
+        std::nullopt,
+        TimestampRange(0, 2));
 
     uint64_t nnz = num_fragments * num_cells_per_fragment;
 
@@ -386,7 +391,7 @@ TEST_CASE("SOMAArray: metadata") {
 
     // Read metadata
     soma_array->open(OpenMode::read, TimestampRange(0, 2));
-    REQUIRE(soma_array->metadata_num() == 4);
+    REQUIRE(soma_array->metadata_num() == 3);
     REQUIRE(soma_array->has_metadata("soma_object_type"));
     REQUIRE(soma_array->has_metadata("soma_encoding_version"));
     REQUIRE(soma_array->has_metadata("md"));
@@ -398,7 +403,7 @@ TEST_CASE("SOMAArray: metadata") {
 
     // md should not be available at (2, 2)
     soma_array->open(OpenMode::read, TimestampRange(2, 2));
-    REQUIRE(soma_array->metadata_num() == 3);
+    REQUIRE(soma_array->metadata_num() == 2);
     REQUIRE(soma_array->has_metadata("soma_object_type"));
     REQUIRE(soma_array->has_metadata("soma_encoding_version"));
     REQUIRE(!soma_array->has_metadata("md"));
@@ -406,7 +411,7 @@ TEST_CASE("SOMAArray: metadata") {
 
     // Metadata should also be retrievable in write mode
     soma_array->open(OpenMode::write, TimestampRange(0, 2));
-    REQUIRE(soma_array->metadata_num() == 4);
+    REQUIRE(soma_array->metadata_num() == 3);
     REQUIRE(soma_array->has_metadata("soma_object_type"));
     REQUIRE(soma_array->has_metadata("soma_encoding_version"));
     REQUIRE(soma_array->has_metadata("md"));
@@ -422,7 +427,7 @@ TEST_CASE("SOMAArray: metadata") {
     // Confirm delete in read mode
     soma_array->open(OpenMode::read, TimestampRange(0, 2));
     REQUIRE(!soma_array->has_metadata("md"));
-    REQUIRE(soma_array->metadata_num() == 3);
+    REQUIRE(soma_array->metadata_num() == 2);
 }
 
 TEST_CASE("SOMAArray: Test buffer size") {
