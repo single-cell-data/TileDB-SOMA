@@ -1,3 +1,16 @@
+/**
+ * @file   arrow_adapter.h
+ *
+ * @section LICENSE
+ *
+ * Licensed under the MIT License.
+ * Copyright (c) TileDB, Inc. and The Chan Zuckerberg Initiative Foundation
+ *
+ * @section DESCRIPTION
+ *
+ * This file defines the ArrowAdapter class.
+ */
+
 #ifndef ARROW_ADAPTER_H
 #define ARROW_ADAPTER_H
 
