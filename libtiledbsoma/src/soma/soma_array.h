@@ -1387,8 +1387,6 @@ class SOMAArray : public SOMAObject {
 
     void fill_columns();
 
-    void fill_columns();
-
     // SOMAArray URI
     std::string uri_;
 
@@ -1434,8 +1432,6 @@ class SOMAArray : public SOMAObject {
     // array alive in order for the metadata value pointers in the cache to
     // be accessible
     std::shared_ptr<Array> meta_cache_arr_;
-
-    std::vector<std::shared_ptr<SOMAColumn>> columns_;
 
     // True if this is the first call to read_next()
     bool first_read_next_ = true;
