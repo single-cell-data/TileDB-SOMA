@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 import pyarrow as pa
 import pytest
-from hypothesis import strategies as st, reproduce_failure
+from hypothesis import strategies as st
 from hypothesis.extra import numpy as ht_np
 from hypothesis.extra import pandas as ht_pd
 from hypothesis.stateful import initialize, invariant, precondition, rule
@@ -336,10 +336,14 @@ def arrow_table(
                 # foobared on anything containing a null.  So in practice, use [1,126]
                 if HT_TEST_CONFIG["sc-62265_workaround"]:
                     elements = st.text(
-                        alphabet=st.characters(codec="ascii", min_codepoint=1, max_codepoint=126)
+                        alphabet=st.characters(
+                            codec="ascii", min_codepoint=1, max_codepoint=126
+                        )
                     )
                 else:
-                    elements = st.text(alphabet=st.characters(codec="ascii", min_codepoint=1))
+                    elements = st.text(
+                        alphabet=st.characters(codec="ascii", min_codepoint=1)
+                    )
             else:
                 # Disallow surrogate codepoints.  Arrow doesn't implement them in the
                 # encoder/decoder, and will throw if they are present.
