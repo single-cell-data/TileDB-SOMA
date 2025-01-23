@@ -29,7 +29,6 @@ from ._arrow_types import carrow_type_to_pyarrow, pyarrow_to_carrow_type
 from ._constants import (
     SOMA_COORDINATE_SPACE_METADATA_KEY,
     SOMA_MULTISCALE_IMAGE_SCHEMA,
-    SOMA_SPATIAL_ENCODING_VERSION,
     SOMA_SPATIAL_VERSION_METADATA_KEY,
     SPATIAL_DISCLAIMER,
 )
@@ -172,8 +171,12 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
         context = _validate_soma_tiledb_context(context)
 
         # Create the coordinate space.
-        if not isinstance(coordinate_space, CoordinateSpace):
-            coordinate_space = CoordinateSpace.from_axis_names(coordinate_space)
+        if isinstance(coordinate_space, CoordinateSpace):
+            axis_names = tuple(axis.name for axis in coordinate_space)
+            axis_units = tuple(axis.unit for axis in coordinate_space)
+        else:
+            axis_names = tuple(coordinate_space)
+            axis_units = tuple(len(axis_names) * [None])
 
         ndim = len(coordinate_space)
         if has_channel_axis:
@@ -191,9 +194,7 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
         if data_axis_order is None:
             axis_permutation = tuple(range(ndim - 1, -1, -1))
         else:
-            axis_indices = {
-                name: index for index, name in enumerate(coordinate_space.axis_names)
-            }
+            axis_indices = {name: index for index, name in enumerate(axis_names)}
             if has_channel_axis:
                 axis_indices["soma_channel"] = len(coordinate_space)
             if set(data_axis_order) != set(axis_indices.keys()):
@@ -213,23 +214,19 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
         )
 
         _image_meta_str = image_meta.to_json()
-        coord_space_str = coordinate_space_to_json(coordinate_space)
         try:
             timestamp_ms = context._open_timestamp_ms(tiledb_timestamp)
-            clib.SOMAGroup.create(
+            clib.SOMAMultiscaleImage.create(
                 uri=uri,
-                soma_type=somacore.MultiscaleImage.soma_type,
+                axis_names=axis_names,
+                axis_units=axis_units,
                 ctx=context.native_context,
                 timestamp=(0, timestamp_ms),
             )
             handle = _tdb_handles.MultiscaleImageWrapper.open(
                 uri, "w", context, tiledb_timestamp
             )
-            handle.metadata[SOMA_SPATIAL_VERSION_METADATA_KEY] = (
-                SOMA_SPATIAL_ENCODING_VERSION
-            )
             handle.metadata[SOMA_MULTISCALE_IMAGE_SCHEMA] = _image_meta_str
-            handle.metadata[SOMA_COORDINATE_SPACE_METADATA_KEY] = coord_space_str
             multiscale = cls(
                 handle,
                 _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code",

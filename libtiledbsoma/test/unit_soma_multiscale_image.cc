@@ -12,15 +12,17 @@
  */
 #include "common.h"
 
-TEST_CASE("SOMAMultiscaleImage: basic") {
+TEST_CASE("SOMAMultiscaleImage: basic", "[multiscale_image][spatial]") {
     auto ctx = std::make_shared<SOMAContext>();
     std::string uri = "mem://unit-test-multiscale-image-basic";
 
-    SOMAMultiscaleImage::create(uri, ctx, std::nullopt);
+    SOMACoordinateSpace coord_space{};
+    SOMAMultiscaleImage::create(uri, ctx, coord_space, std::nullopt);
     auto soma_image = SOMAMultiscaleImage::open(
         uri, OpenMode::read, ctx, std::nullopt);
     REQUIRE(soma_image->uri() == uri);
     REQUIRE(soma_image->ctx() == ctx);
     REQUIRE(soma_image->type() == "SOMAMultiscaleImage");
+    REQUIRE(soma_image->coordinate_space() == coord_space);
     soma_image->close();
 }
