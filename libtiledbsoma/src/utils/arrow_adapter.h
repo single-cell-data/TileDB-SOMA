@@ -860,7 +860,7 @@ class ArrowAdapter {
     }
 
     /**
-     * Return a copy of the data in a specified column of an arrow table.
+     * Return a copy of the data in a specified column of an Arrow table.
      * Complex column types are supported. The type for each subcolumn is an
      * std::array<T, 2> casted as an std::any object.
      *
@@ -889,8 +889,8 @@ class ArrowAdapter {
 
         if (arrow_schema->n_children <= column_index) {
             throw std::runtime_error(
-                "ArrowAdapter::get_table_any_column_by_index: Column index out "
-                "fo bounds.");
+                "ArrowAdapter::get_table_any_column_by_index: column index out "
+                "of bounds.");
         }
 
         std::vector<std::any> result;
@@ -916,37 +916,36 @@ class ArrowAdapter {
     }
 
     /**
-     * Read a part of am Arrow array to an std::array and cast in to an
+     * Read a part of an Arrow array to an std::array and cast into an
      * std::any object.
      *
      * @example get_table_any_column<3>(array, schema, offset) will return an
      * std::array<T, 3> where T is the appropriate type based on the Arrow array
      * format casted as an std::any object. The std::array will skip as many
-     * elements as dictated by `offset` and copy the next 3 from the Arrow
+     * elements as specified by `offset` and copy the next 3 from the Arrow
      * array.
      *
      * @tparam S The number of elements to read.
      *
      * @param array The Arrow array to read the data from. The array should be
-     * an leaf node with no subarrays.
+     * a leaf node with no subarrays.
      * @param schema The Arrow schema of the given array.
      * @param offset The number of elements to skip from the beginning of the
      * Arrow array
      *
      * @remarks This method's usage is to extract specific subranges of
      * ArrowArray data and they come in handy during ArrowSchema -> TileDBSchema
-     * where the arrow array provided has 5 values per dimension and we only
+     * where the Arrow array provided has 5 values per dimension and we only
      * need the last 2 to set the current domain.
      *
-     * `S` is required to be a template parameter to specify the compile time
+     * `S` is required to be a template parameter to specify the compile-time
      * size of the underlying std::array that will hold the extracted data.
      *
      * As to using std::variant, adding more SOMAColumn types would require
      * changing multiple variants. The use of std::any here is to enable runtime
      * polymorphism and indirectly introduces a runtime type check (via
      * any_cast, make_any) between the templated function and the actual
-     * dimension type. std::variant can provide all the above it is just a
-     * different style.
+     * dimension type. std::variant can provide all the above; this is a stylistic choice.
      */
     template <size_t S>
     static std::any get_table_any_column(

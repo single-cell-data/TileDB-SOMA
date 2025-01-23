@@ -81,7 +81,7 @@ std::vector<std::shared_ptr<SOMAColumn>> SOMAColumn::deserialize(
         }
     } else {
         // All arrays before the introduction of SOMAColumn do not have
-        // composite columns, thus the metadata are trivially contructuble
+        // composite columns, thus the metadata are trivially constructible
         for (auto& dimension : array.schema().domain().dimensions()) {
             columns.push_back(std::make_shared<SOMADimension>(dimension));
         }

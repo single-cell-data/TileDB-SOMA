@@ -238,7 +238,7 @@ void SOMAArray::fill_columns() {
             *arr_);
 
     } else {
-        // Non geometry dataframes have trivially constructible columns and do
+        // Non-geometry dataframes have trivially constructible columns and do
         // not require a schema
         columns_ = SOMAColumn::deserialize(
             nlohmann::json::array(), *ctx_->tiledb_ctx(), *arr_);

@@ -37,14 +37,14 @@ std::shared_ptr<SOMAColumn> SOMAGeometryColumn::deserialize(
 
     if (dimension_names.size() % 2 != 0) {
         throw TileDBSOMAError(std::format(
-            "[SOMAGeometryColumn][deserialize] Invalid number of dimensions. "
-            "Epected number divisible by 2, got {}",
+            "[SOMAGeometryColumn][deserialize] Invalid number of dimensions: "
+            "expected number divisible by 2, got {}",
             dimension_names.size()));
     }
     if (attribute_names.size() != 1) {
         throw TileDBSOMAError(std::format(
-            "[SOMAGeometryColumn][deserialize] Invalid number of attributes. "
-            "Epected 1, got {}",
+            "[SOMAGeometryColumn][deserialize] Invalid number of attributes: "
+            "expected 1, got {}",
             attribute_names.size()));
     }
 

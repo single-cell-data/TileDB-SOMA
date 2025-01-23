@@ -30,8 +30,8 @@ std::shared_ptr<SOMAColumn> SOMADimension::deserialize(
 
     if (dimension_names.size() != 1) {
         throw TileDBSOMAError(std::format(
-            "[SOMADimension][deserialize] Invalid number of dimensions. "
-            "Epected 1, got {}",
+            "[SOMADimension][deserialize] Invalid number of dimensions: "
+            "expected 1, got {}",
             dimension_names.size()));
     }
 

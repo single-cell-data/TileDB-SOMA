@@ -969,7 +969,7 @@ ArrowAdapter::tiledb_schema_from_arrow_schema(
     }
 
     // Unit tests expect dimension order should match the index column schema
-    // and NOT the arrow schema
+    // and NOT the Arrow schema
     for (int64_t i = 0; i < index_column_schema->n_children; ++i) {
         LOG_DEBUG(std::format("[ArrowAdapter] child {}", i));
         const auto column = util::find_column_by_name(
