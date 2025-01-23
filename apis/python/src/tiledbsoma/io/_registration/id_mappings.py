@@ -1,3 +1,7 @@
+# Copyright (c) TileDB, Inc. and The Chan Zuckerberg Initiative Foundation
+#
+# Licensed under the MIT License.
+
 from typing import Dict, List, Tuple
 
 import anndata as ad

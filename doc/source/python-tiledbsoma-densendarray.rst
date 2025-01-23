@@ -38,7 +38,6 @@
       ~DenseNDArray.is_sparse
 
       ~DenseNDArray.ndim
-      ~DenseNDArray.nnz
       ~DenseNDArray.shape
       ~DenseNDArray.maxshape
       ~DenseNDArray.tiledbsoma_has_upgraded_shape

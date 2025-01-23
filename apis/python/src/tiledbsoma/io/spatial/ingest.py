@@ -1,5 +1,4 @@
-# Copyright (c) 2024 The Chan Zuckerberg Initiative Foundation
-# Copyright (c) 2024 TileDB, Inc.
+# Copyright (c) TileDB, Inc. and The Chan Zuckerberg Initiative Foundation
 #
 # Licensed under the MIT License.
 
@@ -268,7 +267,7 @@ def from_visium(
     uns_keys: Sequence[str] | None = None,
     additional_metadata: "AdditionalMetadata" = None,
     use_raw_counts: bool = False,
-    write_obs_spatial_presence: bool = False,
+    write_obs_spatial_presence: bool = True,
     write_var_spatial_presence: bool = False,
 ) -> str:
     """Reads a 10x Visium dataset and writes it to an :class:`Experiment`.
@@ -375,7 +374,7 @@ def from_visium(
             not a ``VisiumPaths`` object. Defaults to ``False``.
 
         write_obs_spatial_presence: If ``True`` create and write data to the ``obs``
-            presence matrix. Defaults to ``False``.
+            presence matrix. Defaults to ``True``.
 
         write_var_spatial_presence: If ``True`` create and write data to the ``var``
             presence matrix. Defaults to ``False``.

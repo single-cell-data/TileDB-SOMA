@@ -1,3 +1,7 @@
+# Copyright (c) TileDB, Inc. and The Chan Zuckerberg Initiative Foundation
+#
+# Licenced under the MIT License.
+
 from __future__ import annotations
 
 from concurrent import futures
