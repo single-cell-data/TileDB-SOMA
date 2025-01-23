@@ -38,7 +38,7 @@ class SOMAVFSFilebuf : public tiledb::impl::VFSFilebuf {
    public:
     SOMAVFSFilebuf(const VFS& vfs)
         : tiledb::impl::VFSFilebuf(vfs)
-        , vfs_(vfs) {};
+        , vfs_(vfs){};
 
     std::streamsize seek(std::streamsize offset, uint64_t whence) {
         if (whence == 0) {
