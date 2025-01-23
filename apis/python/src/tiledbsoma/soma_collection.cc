@@ -80,8 +80,8 @@ void load_soma_collection(py::module& m) {
             "create",
             [](std::shared_ptr<SOMAContext> ctx,
                std::string_view uri,
-               std::optional<std::vector<std::string>> axis_names,
-               std::optional<std::vector<std::optional<std::string>>>
+               const std::optional<std::vector<std::string>>& axis_names,
+               const std::optional<std::vector<std::optional<std::string>>>&
                    axis_units,
                std::optional<TimestampRange> timestamp) {
                 if (axis_units.has_value() && !axis_names.has_value()) {
