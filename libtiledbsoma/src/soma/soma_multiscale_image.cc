@@ -31,7 +31,7 @@ void SOMAMultiscaleImage::create(
         auto group = SOMAGroup::create(
             ctx, image_uri.string(), "SOMAMultiscaleImage", timestamp);
 
-        // Set spatial encoding metadata.
+        // Set spatial-encoding metadata.
         group->set_metadata(
             SPATIAL_ENCODING_VERSION_KEY,
             TILEDB_STRING_UTF8,
