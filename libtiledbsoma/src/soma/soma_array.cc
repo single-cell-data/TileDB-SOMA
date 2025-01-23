@@ -27,6 +27,7 @@ void SOMAArray::create(
     std::string_view uri,
     ArraySchema schema,
     std::string_view soma_type,
+    std::optional<std::string_view> soma_schema,
     std::optional<TimestampRange> timestamp) {
     Array::create(std::string(uri), schema);
 
@@ -54,6 +55,14 @@ void SOMAArray::create(
         TILEDB_STRING_UTF8,
         static_cast<uint32_t>(ENCODING_VERSION_VAL.length()),
         ENCODING_VERSION_VAL.c_str());
+
+    if (soma_schema.has_value()) {
+        array->put_metadata(
+            TILEDB_SOMA_SCHEMA_KEY,
+            TILEDB_STRING_UTF8,
+            static_cast<uint32_t>(soma_schema->length()),
+            soma_schema->data());
+    }
 }
 
 std::unique_ptr<SOMAArray> SOMAArray::open(
@@ -120,6 +129,7 @@ SOMAArray::SOMAArray(
     validate(mode, name, timestamp);
     reset(column_names, batch_size, result_order);
     fill_metadata_cache(timestamp);
+    fill_columns();
 }
 
 SOMAArray::SOMAArray(
@@ -138,6 +148,7 @@ SOMAArray::SOMAArray(
     validate(mode, name, timestamp);
     reset(column_names, batch_size, result_order);
     fill_metadata_cache(timestamp);
+    fill_columns();
 }
 
 SOMAArray::SOMAArray(
@@ -154,6 +165,7 @@ SOMAArray::SOMAArray(
     , schema_(std::make_shared<ArraySchema>(arr->schema())) {
     reset({}, batch_size_, result_order_);
     fill_metadata_cache(timestamp);
+    fill_columns();
 }
 
 void SOMAArray::fill_metadata_cache(std::optional<TimestampRange> timestamp) {
@@ -185,6 +197,51 @@ void SOMAArray::fill_metadata_cache(std::optional<TimestampRange> timestamp) {
         MetadataValue mdval(value_type, value_num, value);
         std::pair<std::string, const MetadataValue> mdpair(key, mdval);
         metadata_.insert(mdpair);
+    }
+}
+
+void SOMAArray::fill_columns() {
+    // Clear columns in case of reopen
+    columns_.clear();
+
+    if (type().value_or("") == "SOMAGeometryDataFrame") {
+        if (!has_metadata(TILEDB_SOMA_SCHEMA_KEY)) {
+            throw TileDBSOMAError(std::format(
+                "[SOMAArray][fill_columns] Missing required metadata key '{}' "
+                "from SOMAGeometryDataFrame '{}'",
+                TILEDB_SOMA_SCHEMA_KEY,
+                uri()));
+        }
+
+        auto soma_schema_extension_raw = get_metadata(TILEDB_SOMA_SCHEMA_KEY)
+                                             .value();
+        auto data = static_cast<const char*>(
+            std::get<2>(soma_schema_extension_raw));
+        auto soma_schema_extension = data != nullptr ?
+                                         nlohmann::json::parse(std::string(
+                                             data,
+                                             std::get<1>(
+                                                 soma_schema_extension_raw))) :
+                                         nlohmann::json::object();
+
+        if (!soma_schema_extension.contains(TILEDB_SOMA_SCHEMA_COL_KEY)) {
+            throw TileDBSOMAError(std::format(
+                "[SOMAArray][fill_columns] Missing '{}' key from '{}'",
+                TILEDB_SOMA_SCHEMA_COL_KEY,
+                TILEDB_SOMA_SCHEMA_KEY));
+        }
+
+        columns_ = SOMAColumn::deserialize(
+            soma_schema_extension.value(
+                TILEDB_SOMA_SCHEMA_COL_KEY, nlohmann::json::array()),
+            *ctx_->tiledb_ctx(),
+            *arr_);
+
+    } else {
+        // Non-geometry dataframes have trivially constructible columns and do
+        // not require a schema
+        columns_ = SOMAColumn::deserialize(
+            nlohmann::json::array(), *ctx_->tiledb_ctx(), *arr_);
     }
 }
 

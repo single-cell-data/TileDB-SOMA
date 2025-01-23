@@ -14,6 +14,43 @@
 #include "soma_attribute.h"
 
 namespace tiledbsoma {
+std::shared_ptr<SOMAColumn> SOMAAttribute::deserialize(
+    const nlohmann::json& soma_schema, const Context& ctx, const Array& array) {
+    if (!soma_schema.contains(TILEDB_SOMA_SCHEMA_COL_ATTR_KEY)) {
+        throw TileDBSOMAError(
+            "[SOMAAttribute][deserialize] Missing required field "
+            "'tiledb_attributes'");
+    }
+
+    std::vector<std::string>
+        attribute_names = soma_schema[TILEDB_SOMA_SCHEMA_COL_ATTR_KEY]
+                              .template get<std::vector<std::string>>();
+
+    if (attribute_names.size() != 1) {
+        throw TileDBSOMAError(std::format(
+            "[SOMAAttribute][deserialize] Invalid number of attributes. "
+            "Epected 1, got {}",
+            attribute_names.size()));
+    }
+
+    if (!array.schema().has_attribute(attribute_names[0])) {
+        // Attribute probably dropped so skip column reconstruction.
+        return nullptr;
+    }
+
+    auto attribute = array.schema().attribute(attribute_names[0]);
+    auto enumeration_name = AttributeExperimental::get_enumeration_name(
+        ctx, attribute);
+
+    std::optional<Enumeration>
+        enumeration = enumeration_name ?
+                          std::make_optional(ArrayExperimental::get_enumeration(
+                              ctx, array, attribute.name())) :
+                          std::nullopt;
+
+    return std::make_shared<SOMAAttribute>(attribute, enumeration);
+}
+
 std::shared_ptr<SOMAAttribute> SOMAAttribute::create(
     std::shared_ptr<Context> ctx,
     ArrowSchema* schema,
@@ -104,5 +141,15 @@ ArrowSchema* SOMAAttribute::arrow_schema_slot(
     return ArrowAdapter::arrow_schema_from_tiledb_attribute(
                attribute, *ctx.tiledb_ctx(), array)
         .release();
+}
+
+void SOMAAttribute::serialize(nlohmann::json& columns_schema) const {
+    nlohmann::json column;
+
+    column[TILEDB_SOMA_SCHEMA_COL_TYPE_KEY] = static_cast<uint32_t>(
+        soma_column_datatype_t::SOMA_COLUMN_ATTRIBUTE);
+    column[TILEDB_SOMA_SCHEMA_COL_ATTR_KEY] = {attribute.name()};
+
+    columns_schema.push_back(column);
 }
 }  // namespace tiledbsoma

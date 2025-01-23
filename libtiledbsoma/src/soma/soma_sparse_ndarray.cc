@@ -61,15 +61,17 @@ void SOMASparseNDArray::create(
     attr->metadata = nullptr;
     attr->release = &ArrowAdapter::release_schema;
 
-    auto tiledb_schema = ArrowAdapter::tiledb_schema_from_arrow_schema(
-        ctx->tiledb_ctx(),
-        schema,
-        index_columns,
-        "SOMASparseNDArray",
-        true,
-        platform_config);
+    auto [tiledb_schema, soma_schema_extension] =
+        ArrowAdapter::tiledb_schema_from_arrow_schema(
+            ctx->tiledb_ctx(),
+            schema,
+            index_columns,
+            "SOMASparseNDArray",
+            true,
+            platform_config);
 
-    SOMAArray::create(ctx, uri, tiledb_schema, "SOMASparseNDArray", timestamp);
+    SOMAArray::create(
+        ctx, uri, tiledb_schema, "SOMASparseNDArray", std::nullopt, timestamp);
 }
 
 std::unique_ptr<SOMASparseNDArray> SOMASparseNDArray::open(

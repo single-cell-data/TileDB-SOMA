@@ -14,6 +14,8 @@
 #ifndef ARROW_ADAPTER_H
 #define ARROW_ADAPTER_H
 
+#include <any>
+#include <format>
 #include <tiledb/tiledb>
 #include <tiledb/tiledb_experimental>
 
@@ -384,7 +386,9 @@ class ArrowAdapter {
         ArraySchema tiledb_schema);
 
     /**
-     * @brief Create a TileDB ArraySchema from ArrowSchema
+     * @brief Create a TileDB ArraySchema from ArrowSchema and additional JSON
+     * encoded metadata to handle higher level SOMA construct not supported by
+     * TileDB (e.g. SOMAColumn)
      *
      * The number of rows in index_column_info was three without core
      * current-domain support, and is five with core current-domain support:
@@ -395,9 +399,10 @@ class ArrowAdapter {
      * - Slot 3: core current-domain low value (inclusive)
      * - Slot 4: core current-domain high value (inclusive)
      *
-     * @return tiledb::ArraySchema
+     * @return std::tuple<tiledb::ArraySchema, nlohmann::json>
      */
-    static ArraySchema tiledb_schema_from_arrow_schema(
+    static std::tuple<ArraySchema, nlohmann::json>
+    tiledb_schema_from_arrow_schema(
         std::shared_ptr<Context> ctx,
         const std::unique_ptr<ArrowSchema>& arrow_schema,
         const ArrowTable& index_column_info,
@@ -854,11 +859,327 @@ class ArrowAdapter {
         }
     }
 
-    static void set_current_domain_slot(
-        tiledb_datatype_t type,
-        const void* buff,
-        NDRectangle& ndrect,
-        std::string name);
+    /**
+     * Return a copy of the data in a specified column of an Arrow table.
+     * Complex column types are supported. The type for each subcolumn is an
+     * std::array<T, 2> casted as an std::any object.
+     *
+     * @tparam S The number of elements to retrieve
+     */
+    template <size_t S>
+    static std::vector<std::any> get_table_any_column_by_name(
+        const ArrowTable& arrow_table, std::string column_name, size_t offset) {
+        int64_t index = _get_column_index_from_name(arrow_table, column_name);
+        return get_table_any_column_by_index<S>(arrow_table, index, offset);
+    }
+
+    template <size_t S>
+    static std::vector<std::any> get_table_any_column_by_index(
+        const ArrowTable& arrow_table, int64_t column_index, size_t offset) {
+        ArrowArray* arrow_array = arrow_table.first.get();
+        ArrowSchema* arrow_schema = arrow_table.second.get();
+        _check_shapes(arrow_array, arrow_schema);
+
+        if (arrow_array->n_children == 0) {
+            throw std::runtime_error(
+                "ArrowAdapter::get_table_any_column_by_index: expected "
+                "non-leaf "
+                "node");
+        }
+
+        if (arrow_schema->n_children <= column_index) {
+            throw std::runtime_error(
+                "ArrowAdapter::get_table_any_column_by_index: column index out "
+                "of bounds.");
+        }
+
+        std::vector<std::any> result;
+
+        ArrowArray* selected_array = arrow_array->children[column_index];
+        ArrowSchema* selected_schema = arrow_schema->children[column_index];
+
+        // Complex domain
+        if (selected_array->n_children != 0) {
+            for (int64_t i = 0; i < selected_schema->n_children; ++i) {
+                ArrowArray* array = selected_array->children[i];
+                ArrowSchema* schema = selected_schema->children[i];
+
+                result.push_back(
+                    get_table_any_column<S>(array, schema, offset));
+            }
+        } else {
+            result.push_back(get_table_any_column<S>(
+                selected_array, selected_schema, offset));
+        }
+
+        return result;
+    }
+
+    /**
+     * Read a part of an Arrow array to an std::array and cast into an
+     * std::any object.
+     *
+     * @example get_table_any_column<3>(array, schema, offset) will return an
+     * std::array<T, 3> where T is the appropriate type based on the Arrow array
+     * format casted as an std::any object. The std::array will skip as many
+     * elements as specified by `offset` and copy the next 3 from the Arrow
+     * array.
+     *
+     * @tparam S The number of elements to read.
+     *
+     * @param array The Arrow array to read the data from. The array should be
+     * a leaf node with no subarrays.
+     * @param schema The Arrow schema of the given array.
+     * @param offset The number of elements to skip from the beginning of the
+     * Arrow array
+     *
+     * @remarks This method's usage is to extract specific subranges of
+     * ArrowArray data and they come in handy during ArrowSchema -> TileDBSchema
+     * where the Arrow array provided has 5 values per dimension and we only
+     * need the last 2 to set the current domain.
+     *
+     * `S` is required to be a template parameter to specify the compile-time
+     * size of the underlying std::array that will hold the extracted data.
+     *
+     * As to using std::variant, adding more SOMAColumn types would require
+     * changing multiple variants. The use of std::any here is to enable runtime
+     * polymorphism and indirectly introduces a runtime type check (via
+     * any_cast, make_any) between the templated function and the actual
+     * dimension type. std::variant can provide all the above; this is a
+     * stylistic choice.
+     */
+    template <size_t S>
+    static std::any get_table_any_column(
+        ArrowArray* array, ArrowSchema* schema, size_t offset) {
+        auto tdb_type = to_tiledb_format(schema->format, "");
+
+        if (array->n_children != 0) {
+            throw std::runtime_error(
+                "ArrowAdapter::get_table_any_column: expected leaf "
+                "node");
+        }
+
+        if (array->length < static_cast<int64_t>(S + offset)) {
+            throw std::runtime_error(std::format(
+                "ArrowAdapter::get_table_any_column: expected at least {} "
+                "elements",
+                S + offset));
+        }
+
+        if (strcmp(schema->format, "u") == 0 ||
+            strcmp(schema->format, "z") == 0 ||
+            strcmp(schema->format, "U") == 0 ||
+            strcmp(schema->format, "Z") == 0) {
+            if (array->n_buffers != 3) {
+                throw std::runtime_error(
+                    "ArrowAdapter::get_table_any_column: expected three "
+                    "buffers");
+            }
+
+            if (array->buffers[0] != nullptr) {
+                throw std::runtime_error(
+                    "ArrowAdapter::get_table_any_column: validity buffer "
+                    "unsupported here");
+            }
+            if (array->buffers[1] == nullptr) {
+                throw std::runtime_error(
+                    "ArrowAdapter::get_table_any_column: null "
+                    "offsets buffer");
+            }
+            if (array->buffers[2] == nullptr) {
+                throw std::runtime_error(
+                    "ArrowAdapter::get_table_any_column: null data "
+                    "buffer");
+            }
+        } else {
+            if (array->n_buffers != 2) {
+                throw std::runtime_error(
+                    "ArrowAdapter::get_table_any_column: expected two "
+                    "buffers");
+            }
+
+            if (array->buffers[0] != nullptr) {
+                throw std::runtime_error(
+                    "ArrowAdapter::get_table_any_column: validity buffer "
+                    "unsupported here");
+            }
+            if (array->buffers[1] == nullptr) {
+                throw std::runtime_error(
+                    "ArrowAdapter::get_table_any_column: null data buffer");
+            }
+        }
+
+        size_t arrow_offset = static_cast<size_t>(array->offset);
+
+        switch (tdb_type) {
+            case TILEDB_BOOL: {
+                std::array<bool, S> result;
+                for (size_t i = 0; i < S; ++i) {
+                    result[i] = static_cast<bool>(ArrowBitGet(
+                        static_cast<const uint8_t*>(array->buffers[1]),
+                        i + arrow_offset + offset));
+                }
+                return std::make_any<std::array<bool, S>>(result);
+            }
+            case TILEDB_UINT8:
+                return std::make_any<std::array<uint8_t, S>>(
+                    std::to_array((uint8_t(&)[S])(*(
+                        (uint8_t*)array->buffers[1] + arrow_offset + offset))));
+            case TILEDB_UINT16:
+                return std::make_any<std::array<uint16_t, S>>(std::to_array((
+                    uint16_t(&)[S])(
+                    *((uint16_t*)array->buffers[1] + arrow_offset + offset))));
+            case TILEDB_UINT32:
+                return std::make_any<std::array<uint32_t, S>>(std::to_array((
+                    uint32_t(&)[S])(
+                    *((uint32_t*)array->buffers[1] + arrow_offset + offset))));
+            case TILEDB_UINT64:
+                return std::make_any<std::array<uint64_t, S>>(std::to_array((
+                    uint64_t(&)[S])(
+                    *((uint64_t*)array->buffers[1] + arrow_offset + offset))));
+            case TILEDB_INT8:
+                return std::make_any<std::array<int8_t, S>>(
+                    std::to_array((int8_t(&)[S])(*(
+                        (int8_t*)array->buffers[1] + arrow_offset + offset))));
+            case TILEDB_INT16:
+                return std::make_any<std::array<int16_t, S>>(
+                    std::to_array((int16_t(&)[S])(*(
+                        (int16_t*)array->buffers[1] + arrow_offset + offset))));
+            case TILEDB_INT32:
+                return std::make_any<std::array<int32_t, S>>(
+                    std::to_array((int32_t(&)[S])(*(
+                        (int32_t*)array->buffers[1] + arrow_offset + offset))));
+            case TILEDB_DATETIME_YEAR:
+            case TILEDB_DATETIME_MONTH:
+            case TILEDB_DATETIME_WEEK:
+            case TILEDB_DATETIME_DAY:
+            case TILEDB_DATETIME_HR:
+            case TILEDB_DATETIME_MIN:
+            case TILEDB_DATETIME_SEC:
+            case TILEDB_DATETIME_MS:
+            case TILEDB_DATETIME_US:
+            case TILEDB_DATETIME_NS:
+            case TILEDB_DATETIME_PS:
+            case TILEDB_DATETIME_FS:
+            case TILEDB_DATETIME_AS:
+            case TILEDB_INT64:
+                return std::make_any<std::array<int64_t, S>>(
+                    std::to_array((int64_t(&)[S])(*(
+                        (int64_t*)array->buffers[1] + arrow_offset + offset))));
+            case TILEDB_FLOAT32:
+                return std::make_any<std::array<float_t, S>>(
+                    std::to_array((float_t(&)[S])(*(
+                        (float_t*)array->buffers[1] + arrow_offset + offset))));
+            case TILEDB_FLOAT64:
+                return std::make_any<std::array<double_t, S>>(std::to_array((
+                    double_t(&)[S])(
+                    *((double_t*)array->buffers[1] + arrow_offset + offset))));
+            case TILEDB_STRING_ASCII:
+            case TILEDB_STRING_UTF8:
+            case TILEDB_CHAR:
+            case TILEDB_GEOM_WKT: {
+                if (strcmp(schema->format, "u") == 0 ||
+                    strcmp(schema->format, "z") == 0) {
+                    auto offsets = static_cast<const uint32_t*>(
+                        array->buffers[1]);
+                    auto data = static_cast<const char*>(array->buffers[2]);
+
+                    std::array<std::string, S> result;
+                    for (size_t i = arrow_offset + offset;
+                         i < arrow_offset + S + offset;
+                         ++i) {
+                        if (offsets[i + 1] - offsets[i] != 0) {
+                            result[i - arrow_offset - offset] = std::string(
+                                &data[offsets[i]], &data[offsets[i + 1]]);
+                        }
+                    }
+
+                    return std::make_any<std::array<std::string, S>>(result);
+                } else if (
+                    strcmp(schema->format, "U") == 0 ||
+                    strcmp(schema->format, "Z") == 0) {
+                    auto offsets = static_cast<const uint64_t*>(
+                        array->buffers[1]);
+                    auto data = static_cast<const char*>(array->buffers[2]);
+
+                    std::array<std::string, S> result;
+                    for (size_t i = arrow_offset + offset;
+                         i < arrow_offset + S + offset;
+                         ++i) {
+                        if (offsets[i + 1] - offsets[i] != 0) {
+                            result[i - arrow_offset - offset] = std::string(
+                                &data[offsets[i]], &data[offsets[i + 1]]);
+                        }
+                    }
+
+                    return std::make_any<std::array<std::string, S>>(result);
+                } else {
+                    throw std::runtime_error(std::format(
+                        "ArrowAdapter::get_table_any_column: Unknown "
+                        "schema format '{}'",
+                        schema->format));
+                }
+            } break;
+            case TILEDB_BLOB:
+            case TILEDB_GEOM_WKB: {
+                if (strcmp(schema->format, "u") == 0 ||
+                    strcmp(schema->format, "z") == 0) {
+                    auto offsets = static_cast<const uint32_t*>(
+                        array->buffers[1]);
+                    auto data = static_cast<const std::byte*>(
+                        array->buffers[2]);
+
+                    std::array<std::vector<std::byte>, S> result;
+                    for (size_t i = arrow_offset + offset;
+                         i < arrow_offset + S + offset;
+                         ++i) {
+                        if (offsets[i + 1] - offsets[i] != 0) {
+                            std::copy(
+                                &data[offsets[i]],
+                                &data[offsets[i + 1]],
+                                result[i - arrow_offset - offset].begin());
+                        }
+                    }
+
+                    return std::make_any<std::array<std::vector<std::byte>, S>>(
+                        result);
+                } else if (
+                    strcmp(schema->format, "U") == 0 ||
+                    strcmp(schema->format, "Z") == 0) {
+                    auto offsets = static_cast<const uint64_t*>(
+                        array->buffers[1]);
+                    auto data = static_cast<const std::byte*>(
+                        array->buffers[2]);
+
+                    std::array<std::vector<std::byte>, S> result;
+                    for (size_t i = arrow_offset + offset;
+                         i < arrow_offset + S + offset;
+                         ++i) {
+                        if (offsets[i + 1] - offsets[i] != 0) {
+                            std::copy(
+                                &data[offsets[i]],
+                                &data[offsets[i + 1]],
+                                result[i - arrow_offset - offset].begin());
+                        }
+                    }
+
+                    return std::make_any<std::array<std::vector<std::byte>, S>>(
+                        result);
+                } else {
+                    throw std::runtime_error(std::format(
+                        "ArrowAdapter::get_table_any_column: Unknown "
+                        "schema format '{}'",
+                        schema->format));
+                }
+            } break;
+            default:
+                throw std::runtime_error(std::format(
+                    "ArrowAdapter::get_table_any_column: Unknown "
+                    "datatype '{}'",
+                    tiledb::impl::type_to_str(tdb_type)));
+                break;
+        }
+    }
 
    private:
     static std::pair<const void*, std::size_t> _get_data_and_length(
@@ -877,12 +1198,6 @@ class ArrowAdapter {
         std::string name,
         const void* buff,
         std::shared_ptr<Context> ctx);
-
-    static void _set_current_domain_slot(
-        tiledb_datatype_t type,
-        const void* buff,
-        NDRectangle& ndrect,
-        std::string name);
 
     template <typename T>
     static Dimension _create_dim_aux(
@@ -940,13 +1255,6 @@ class ArrowAdapter {
         int64_t column_index,
         int64_t expected_n_buffers);
 
-    static void _set_spatial_dimensions(
-        std::map<std::string, Dimension>& dims,
-        const ArrowTable& spatial_column_info,
-        std::string_view type_metadata,
-        std::string soma_type,
-        std::shared_ptr<Context> ctx,
-        PlatformConfig platform_config);
 };  // class ArrowAdapter
 };  // namespace tiledbsoma
 #endif

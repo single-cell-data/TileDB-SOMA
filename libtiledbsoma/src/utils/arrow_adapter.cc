@@ -14,6 +14,11 @@
 #include "arrow_adapter.h"
 #include "../soma/column_buffer.h"
 #include "logger.h"
+#include "util.h"
+
+#include "../soma/soma_attribute.h"
+#include "../soma/soma_dimension.h"
+#include "../soma/soma_geometry_column.h"
 
 namespace tiledbsoma {
 
@@ -835,148 +840,6 @@ Dimension ArrowAdapter::_create_dim(
     }
 }
 
-void ArrowAdapter::_set_current_domain_slot(
-    tiledb_datatype_t type,
-    const void* buff,
-    NDRectangle& ndrect,
-    std::string name) {
-    switch (type) {
-        case TILEDB_STRING_ASCII:
-            // Core domain must not be set for string dims.
-            // Core current_domain can't _not_ be set for string dims.
-            // For TileDB-SOMA, we set a broad initial range for string
-            // dims (because we have to) but there has never been support
-            // for user specification of domain for string dims, and we do not
-            // introduce support for user specification of current domain for
-            // string dims.
-            throw TileDBSOMAError(
-                "Internal error: _set_current_domain_slot must not be called "
-                "for string dimensions.");
-            break;
-        case TILEDB_TIME_SEC:
-        case TILEDB_TIME_MS:
-        case TILEDB_TIME_US:
-        case TILEDB_TIME_NS:
-        case TILEDB_DATETIME_SEC:
-        case TILEDB_DATETIME_MS:
-        case TILEDB_DATETIME_US:
-        case TILEDB_DATETIME_NS: {
-            uint64_t lo = ((uint64_t*)buff)[3];
-            uint64_t hi = ((uint64_t*)buff)[4];
-            ndrect.set_range<uint64_t>(name, lo, hi);
-            LOG_DEBUG(std::format(
-                "[ArrowAdapter] {} current_domain uint64_t {} to {}",
-                name,
-                lo,
-                hi));
-        } break;
-        case TILEDB_INT8: {
-            int8_t lo = ((int8_t*)buff)[3];
-            int8_t hi = ((int8_t*)buff)[4];
-            ndrect.set_range<int8_t>(name, lo, hi);
-            LOG_DEBUG(std::format(
-                "[ArrowAdapter] {} current_domain int8_t {} to {}",
-                name,
-                lo,
-                hi));
-        } break;
-        case TILEDB_UINT8: {
-            uint8_t lo = ((uint8_t*)buff)[3];
-            uint8_t hi = ((uint8_t*)buff)[4];
-            ndrect.set_range<uint8_t>(name, lo, hi);
-            LOG_DEBUG(std::format(
-                "[ArrowAdapter] {} current_domain uint8_t {} to {}",
-                name,
-                lo,
-                hi));
-        } break;
-        case TILEDB_INT16: {
-            int16_t lo = ((int16_t*)buff)[3];
-            int16_t hi = ((int16_t*)buff)[4];
-            ndrect.set_range<int16_t>(name, lo, hi);
-            LOG_DEBUG(std::format(
-                "[ArrowAdapter] {} current_domain int16_t {} to {}",
-                name,
-                lo,
-                hi));
-        } break;
-        case TILEDB_UINT16: {
-            uint16_t lo = ((uint16_t*)buff)[3];
-            uint16_t hi = ((uint16_t*)buff)[4];
-            ndrect.set_range<uint16_t>(name, lo, hi);
-            LOG_DEBUG(std::format(
-                "[ArrowAdapter] {} current_domain uint16_t {} to {}",
-                name,
-                lo,
-                hi));
-        } break;
-        case TILEDB_INT32: {
-            int32_t lo = ((int32_t*)buff)[3];
-            int32_t hi = ((int32_t*)buff)[4];
-            ndrect.set_range<int32_t>(name, lo, hi);
-            LOG_DEBUG(std::format(
-                "[ArrowAdapter] {} current_domain int32_t {} to {}",
-                name,
-                lo,
-                hi));
-        } break;
-        case TILEDB_UINT32: {
-            uint32_t lo = ((uint32_t*)buff)[3];
-            uint32_t hi = ((uint32_t*)buff)[4];
-            ndrect.set_range<uint32_t>(name, lo, hi);
-            LOG_DEBUG(std::format(
-                "[ArrowAdapter] {} current_domain uint32_t {} to {}",
-                name,
-                lo,
-                hi));
-        } break;
-        case TILEDB_INT64: {
-            int64_t lo = ((int64_t*)buff)[3];
-            int64_t hi = ((int64_t*)buff)[4];
-            ndrect.set_range<int64_t>(name, lo, hi);
-            LOG_DEBUG(std::format(
-                "[ArrowAdapter] {} current_domain int64_t {} to {}",
-                name,
-                lo,
-                hi));
-        } break;
-        case TILEDB_UINT64: {
-            uint64_t lo = ((uint64_t*)buff)[3];
-            uint64_t hi = ((uint64_t*)buff)[4];
-            ndrect.set_range<uint64_t>(name, lo, hi);
-            LOG_DEBUG(std::format(
-                "[ArrowAdapter] {} current_domain uint64_t {} to {}",
-                name,
-                lo,
-                hi));
-        } break;
-        case TILEDB_FLOAT32: {
-            float lo = ((float*)buff)[3];
-            float hi = ((float*)buff)[4];
-            ndrect.set_range<float>(name, lo, hi);
-            LOG_DEBUG(std::format(
-                "[ArrowAdapter] {} current_domain float {} to {}",
-                name,
-                std::to_string(lo),
-                std::to_string(hi)));
-        } break;
-        case TILEDB_FLOAT64: {
-            double lo = ((double*)buff)[3];
-            double hi = ((double*)buff)[4];
-            ndrect.set_range<double>(name, lo, hi);
-            LOG_DEBUG(std::format(
-                "[ArrowAdapter] {} current_domain double {} to {}",
-                name,
-                std::to_string(lo),
-                std::to_string(hi)));
-        } break;
-        default:
-            throw TileDBSOMAError(std::format(
-                "ArrowAdapter: Unsupported TileDB dimension: {} ",
-                tiledb::impl::type_to_str(type)));
-    }
-}
-
 tiledb_layout_t ArrowAdapter::_get_order(std::string order) {
     std::transform(
         order.begin(), order.end(), order.begin(), [](unsigned char c) {
@@ -1003,7 +866,8 @@ tiledb_layout_t ArrowAdapter::_get_order(std::string order) {
     }
 }
 
-ArraySchema ArrowAdapter::tiledb_schema_from_arrow_schema(
+std::tuple<ArraySchema, nlohmann::json>
+ArrowAdapter::tiledb_schema_from_arrow_schema(
     std::shared_ptr<Context> ctx,
     const std::unique_ptr<ArrowSchema>& arrow_schema,
     const ArrowTable& index_column_info,
@@ -1041,7 +905,7 @@ ArraySchema ArrowAdapter::tiledb_schema_from_arrow_schema(
             ArrowAdapter::_get_order(*platform_config.cell_order));
     }
 
-    std::map<std::string, Dimension> dims;
+    std::vector<std::shared_ptr<SOMAColumn>> columns;
 
     for (int64_t sch_idx = 0; sch_idx < arrow_schema->n_children; ++sch_idx) {
         auto child = arrow_schema->children[sch_idx];
@@ -1060,7 +924,7 @@ ArraySchema ArrowAdapter::tiledb_schema_from_arrow_schema(
         }
 
         LOG_DEBUG(std::format(
-            "[ArrowAdapter] schema pass for child {} name {}",
+            "[ArrowAdapter] schema pass for child {} name '{}'",
             sch_idx,
             std::string(child->name)));
 
@@ -1072,68 +936,87 @@ ArraySchema ArrowAdapter::tiledb_schema_from_arrow_schema(
                 if (strcmp(child->name, SOMA_GEOMETRY_COLUMN_NAME.c_str()) ==
                         0 &&
                     spatial_column_info.first.get() != nullptr) {
-                    _set_spatial_dimensions(
-                        dims,
-                        spatial_column_info,
-                        type_metadata,
-                        soma_type,
+                    columns.push_back(SOMAGeometryColumn::create(
                         ctx,
-                        platform_config);
-
-                    // Do not set the `isattr` flag to false to add the
-                    // `soma_geometry` as attribute
+                        child,
+                        spatial_column_info.second.get(),
+                        spatial_column_info.first.get(),
+                        soma_type,
+                        type_metadata,
+                        platform_config));
                 } else {
-                    auto dim = tiledb_dimension_from_arrow_schema(
+                    columns.push_back(SOMADimension::create(
                         ctx,
                         index_column_schema->children[i],
                         index_column_array->children[i],
                         soma_type,
                         type_metadata,
-                        "",
-                        "",
-                        platform_config);
-                    dims.insert({dim.name(), dim});
-                    isattr = false;
+                        platform_config));
                 }
-
+                isattr = false;
+                LOG_DEBUG(std::format(
+                    "[ArrowAdapter] adding dimension {}", child->name));
                 break;
             }
         }
 
         if (isattr) {
-            auto attr = tiledb_attribute_from_arrow_schema(
-                ctx, child, type_metadata, platform_config);
-            if (attr.second.has_value()) {
-                ArraySchemaExperimental::add_enumeration(
-                    *ctx, schema, attr.second.value());
-            }
-
+            columns.push_back(SOMAAttribute::create(
+                ctx, child, type_metadata, platform_config));
             LOG_DEBUG(
                 std::format("[ArrowAdapter] adding attribute {}", child->name));
-
-            schema.add_attribute(attr.first);
         }
     }
 
+    // Unit tests expect dimension order should match the index column schema
+    // and NOT the Arrow schema
     for (int64_t i = 0; i < index_column_schema->n_children; ++i) {
         LOG_DEBUG(std::format("[ArrowAdapter] child {}", i));
-        auto col_name = index_column_schema->children[i]->name;
-        if (strcmp(col_name, SOMA_GEOMETRY_COLUMN_NAME.c_str()) == 0) {
-            for (auto& dim : dims) {
-                if (dim.first.substr(std::max(0ul, dim.first.size() - 5)) ==
-                    std::string("__min")) {
-                    domain.add_dimension(dim.second);
-                }
-            }
+        const auto column = util::find_column_by_name(
+            columns, index_column_schema->children[i]->name);
 
-            for (auto& dim : dims) {
-                if (dim.first.substr(std::max(0ul, dim.first.size() - 5)) ==
-                    std::string("__max")) {
-                    domain.add_dimension(dim.second);
-                }
+        if (column->tiledb_dimensions().has_value()) {
+            // Intermediate variable required to avoid lifetime issues
+            auto dimensions = column->tiledb_dimensions().value();
+            for (const auto& dimension : dimensions) {
+                domain.add_dimension(dimension);
             }
-        } else {
-            domain.add_dimension(dims.at(col_name));
+        }
+
+        if (column->tiledb_enumerations().has_value()) {
+            auto enumerations = column->tiledb_enumerations().value();
+            for (const auto& enumeration : enumerations) {
+                ArraySchemaExperimental::add_enumeration(
+                    *ctx, schema, enumeration);
+            }
+        }
+
+        if (column->tiledb_attributes().has_value()) {
+            auto attributes = column->tiledb_attributes().value();
+            for (const auto& attribute : attributes) {
+                schema.add_attribute(attribute);
+            }
+        }
+    }
+
+    for (auto column : columns) {
+        if (column->isIndexColumn()) {
+            continue;
+        }
+
+        if (column->tiledb_enumerations().has_value()) {
+            auto enumerations = column->tiledb_enumerations().value();
+            for (const auto& enumeration : enumerations) {
+                ArraySchemaExperimental::add_enumeration(
+                    *ctx, schema, enumeration);
+            }
+        }
+
+        if (column->tiledb_attributes().has_value()) {
+            auto attributes = column->tiledb_attributes().value();
+            for (const auto& attribute : attributes) {
+                schema.add_attribute(attribute);
+            }
         }
     }
 
@@ -1150,84 +1033,29 @@ ArraySchema ArrowAdapter::tiledb_schema_from_arrow_schema(
     CurrentDomain current_domain(*ctx);
     NDRectangle ndrect(*ctx, domain);
 
-    for (int64_t sch_idx = 0; sch_idx < arrow_schema->n_children; ++sch_idx) {
-        auto child = arrow_schema->children[sch_idx];
-        auto type = ArrowAdapter::to_tiledb_format(child->format);
+    for (auto column : columns) {
+        if (!column->isIndexColumn()) {
+            continue;
+        }
 
-        for (int64_t i = 0; i < index_column_schema->n_children; ++i) {
-            auto col_name = index_column_schema->children[i]->name;
-            if (strcmp(child->name, col_name) != 0) {
-                continue;
+        if (column->name() == SOMA_GEOMETRY_COLUMN_NAME) {
+            std::vector<std::any> cdslot;
+            for (int64_t j = 0; j < spatial_column_info.first->n_children;
+                 ++j) {
+                cdslot.push_back(ArrowAdapter::get_table_any_column<2>(
+                    spatial_column_info.first->children[j],
+                    spatial_column_info.second->children[j],
+                    3));
             }
 
-            if (strcmp(child->name, SOMA_GEOMETRY_COLUMN_NAME.c_str()) == 0 &&
-                spatial_column_info.first.get() != nullptr) {
-                for (int64_t j = 0; j < spatial_column_info.first->n_children;
-                     ++j) {
-                    auto col_name = SOMA_GEOMETRY_DIMENSION_PREFIX +
-                                    std::string(
-                                        spatial_column_info.second->children[j]
-                                            ->name);
-                    const void* buff = spatial_column_info.first->children[j]
-                                           ->buffers[1];
-                    auto type = ArrowAdapter::to_tiledb_format(
-                        spatial_column_info.second->children[j]->format);
-
-                    _set_current_domain_slot(
-                        type, buff, ndrect, col_name + "__min");
-                    _set_current_domain_slot(
-                        type, buff, ndrect, col_name + "__max");
-                }
-            } else if (ArrowAdapter::arrow_is_var_length_type(child->format)) {
-                // In the core API:
-                //
-                // * domain for strings must be set as (nullptr, nullptr)
-                // * current_domain for strings cannot be set as (nullptr,
-                //   nullptr)
-                //
-                // Fortunately, these are ASCII dims and we can range
-                // these accordingly.
-
-                ArrowArray* child_array = index_column_array->children[i];
-                ArrowSchema* child_schema = index_column_schema->children[i];
-
-                std::vector<std::string>
-                    strings = ArrowAdapter::get_array_string_column(
-                        child_array, child_schema);
-                if (strings.size() != 5) {
-                    throw TileDBSOMAError(std::format(
-                        "ArrowAdapter::tiledb_schema_from_arrow_schema: "
-                        "internal error: "
-                        "expected 5 strings, got {}",
-                        strings.size()));
-                }
-
-                std::string lo = strings[3];
-                std::string hi = strings[4];
-                if (lo == "" && hi == "") {
-                    // These mean "I the caller don't care, you
-                    // libtiledbsoma make it as big as possible"
-                    ndrect.set_range(col_name, "", "\x7f");
-                } else {
-                    ndrect.set_range(col_name, lo, hi);
-                    LOG_DEBUG(std::format(
-                        "[ArrowAdapter] index_column_info nbuf {}",
-                        index_column_array->children[i]->n_buffers));
-                }
-
-                LOG_DEBUG(std::format(
-                    "[ArrowAdapter] current domain {} \"{}\"-\"{}\"",
-                    child_schema->name,
-                    lo,
-                    hi));
-            } else {
-                const void* buff = index_column_array->children[i]->buffers[1];
-                _set_current_domain_slot(type, buff, ndrect, col_name);
-            }
-            break;
+            column->set_current_domain_slot(ndrect, cdslot);
+        } else {
+            column->set_current_domain_slot(
+                ndrect,
+                get_table_any_column_by_name<2>(
+                    index_column_info, column->name(), 3));
         }
     }
-
     current_domain.set_ndrectangle(ndrect);
 
     LOG_DEBUG(std::format(
@@ -1239,8 +1067,17 @@ ArraySchema ArrowAdapter::tiledb_schema_from_arrow_schema(
     LOG_DEBUG(std::format("[ArrowAdapter] check"));
     schema.check();
 
+    LOG_DEBUG(std::format("[ArrowAdapter] Additional schema metadata"));
+    nlohmann::json soma_schema_extension;
+
+    soma_schema_extension[TILEDB_SOMA_SCHEMA_COL_KEY] = nlohmann::json::array();
+    for (const auto& column : columns) {
+        column->serialize(soma_schema_extension[TILEDB_SOMA_SCHEMA_COL_KEY]);
+    }
+    soma_schema_extension["version"] = TILEDB_SOMA_SCHEMA_VERSION;
+
     LOG_DEBUG(std::format("[ArrowAdapter] returning"));
-    return schema;
+    return std::make_tuple(schema, soma_schema_extension);
 }
 
 Dimension ArrowAdapter::tiledb_dimension_from_arrow_schema(
@@ -1266,7 +1103,7 @@ Dimension ArrowAdapter::tiledb_dimension_from_arrow_schema(
     if (array->length != 5) {
         throw TileDBSOMAError(std::format(
             "ArrowAdapter: unexpected length {} != 5 for name "
-            "{}",
+            "'{}'",
             array->length,
             col_name));
     }
@@ -1317,7 +1154,7 @@ ArrowAdapter::tiledb_attribute_from_arrow_schema(
         AttributeExperimental::set_enumeration_name(
             *ctx, attr, arrow_schema->name);
         LOG_DEBUG(std::format(
-            "[ArrowAdapter] dictionary for {} as {} {}",
+            "[ArrowAdapter] dictionary for '{}' as '{}' '{}'",
             std::string(arrow_schema->name),
             tiledb::impl::type_to_str(enmr_type),
             std::string(enmr_format)));
@@ -1585,160 +1422,6 @@ ArrowAdapter::to_arrow(std::shared_ptr<ColumnBuffer> column) {
     }
 
     return std::pair(std::move(array), std::move(schema));
-}
-
-void ArrowAdapter::set_current_domain_slot(
-    tiledb_datatype_t type,
-    const void* buff,
-    NDRectangle& ndrect,
-    std::string name) {
-    switch (type) {
-        case TILEDB_STRING_UTF8:
-        case TILEDB_STRING_ASCII:
-            // Core domain must not be set for string dims.
-            // Core current_domain can't _not_ be set for string dims.
-            // For TileDB-SOMA, we set a broad initial range for string
-            // dims (because we have to) but there has never been support
-            // for user specification of domain for string dims, and we do not
-            // introduce support for user specification of current domain for
-            // string dims.
-            throw TileDBSOMAError(
-                "Internal error: _set_current_domain_slot must not be called "
-                "for string dimensions.");
-            break;
-        case TILEDB_TIME_SEC:
-        case TILEDB_TIME_MS:
-        case TILEDB_TIME_US:
-        case TILEDB_TIME_NS:
-        case TILEDB_DATETIME_SEC:
-        case TILEDB_DATETIME_MS:
-        case TILEDB_DATETIME_US:
-        case TILEDB_DATETIME_NS: {
-            auto typed_buf = static_cast<const uint64_t*>(buff);
-            uint64_t lo = typed_buf[3];
-            uint64_t hi = typed_buf[4];
-            ndrect.set_range<uint64_t>(name, lo, hi);
-            LOG_DEBUG(std::format(
-                "[ArrowAdapter] {} current_domain uint64_t {} to {}",
-                name,
-                lo,
-                hi));
-        } break;
-        case TILEDB_INT8: {
-            auto typed_buf = static_cast<const int8_t*>(buff);
-            int8_t lo = typed_buf[3];
-            int8_t hi = typed_buf[4];
-            ndrect.set_range<int8_t>(name, lo, hi);
-            LOG_DEBUG(std::format(
-                "[ArrowAdapter] {} current_domain int8_t {} to {}",
-                name,
-                lo,
-                hi));
-        } break;
-        case TILEDB_UINT8: {
-            auto typed_buf = static_cast<const uint8_t*>(buff);
-            uint8_t lo = typed_buf[3];
-            uint8_t hi = typed_buf[4];
-            ndrect.set_range<uint8_t>(name, lo, hi);
-            LOG_DEBUG(std::format(
-                "[ArrowAdapter] {} current_domain uint8_t {} to {}",
-                name,
-                lo,
-                hi));
-        } break;
-        case TILEDB_INT16: {
-            auto typed_buf = static_cast<const int16_t*>(buff);
-            int16_t lo = typed_buf[3];
-            int16_t hi = typed_buf[4];
-            ndrect.set_range<int16_t>(name, lo, hi);
-            LOG_DEBUG(std::format(
-                "[ArrowAdapter] {} current_domain int16_t {} to {}",
-                name,
-                lo,
-                hi));
-        } break;
-        case TILEDB_UINT16: {
-            auto typed_buf = static_cast<const uint16_t*>(buff);
-            uint16_t lo = typed_buf[3];
-            uint16_t hi = typed_buf[4];
-            ndrect.set_range<uint16_t>(name, lo, hi);
-            LOG_DEBUG(std::format(
-                "[ArrowAdapter] {} current_domain uint16_t {} to {}",
-                name,
-                lo,
-                hi));
-        } break;
-        case TILEDB_INT32: {
-            auto typed_buf = static_cast<const int32_t*>(buff);
-            int32_t lo = typed_buf[3];
-            int32_t hi = typed_buf[4];
-            ndrect.set_range<int32_t>(name, lo, hi);
-            LOG_DEBUG(std::format(
-                "[ArrowAdapter] {} current_domain int32_t {} to {}",
-                name,
-                lo,
-                hi));
-        } break;
-        case TILEDB_UINT32: {
-            auto typed_buf = static_cast<const uint32_t*>(buff);
-            uint32_t lo = typed_buf[3];
-            uint32_t hi = typed_buf[4];
-            ndrect.set_range<uint32_t>(name, lo, hi);
-            LOG_DEBUG(std::format(
-                "[ArrowAdapter] {} current_domain uint32_t {} to {}",
-                name,
-                lo,
-                hi));
-        } break;
-        case TILEDB_INT64: {
-            auto typed_buf = static_cast<const int64_t*>(buff);
-            int64_t lo = typed_buf[3];
-            int64_t hi = typed_buf[4];
-            ndrect.set_range<int64_t>(name, lo, hi);
-            LOG_DEBUG(std::format(
-                "[ArrowAdapter] {} current_domain int64_t {} to {}",
-                name,
-                lo,
-                hi));
-        } break;
-        case TILEDB_UINT64: {
-            auto typed_buf = static_cast<const uint64_t*>(buff);
-            uint64_t lo = typed_buf[3];
-            uint64_t hi = typed_buf[4];
-            ndrect.set_range<uint64_t>(name, lo, hi);
-            LOG_DEBUG(std::format(
-                "[ArrowAdapter] {} current_domain uint64_t {} to {}",
-                name,
-                lo,
-                hi));
-        } break;
-        case TILEDB_FLOAT32: {
-            auto typed_buf = static_cast<const float_t*>(buff);
-            float lo = typed_buf[3];
-            float hi = typed_buf[4];
-            ndrect.set_range<float>(name, lo, hi);
-            LOG_DEBUG(std::format(
-                "[ArrowAdapter] {} current_domain float {} to {}",
-                name,
-                lo,
-                hi));
-        } break;
-        case TILEDB_FLOAT64: {
-            auto typed_buf = static_cast<const double_t*>(buff);
-            double lo = typed_buf[3];
-            double hi = typed_buf[4];
-            ndrect.set_range<double>(name, lo, hi);
-            LOG_DEBUG(std::format(
-                "[ArrowAdapter] {} current_domain double {} to {}",
-                name,
-                lo,
-                hi));
-        } break;
-        default:
-            throw TileDBSOMAError(std::format(
-                "ArrowAdapter: Unsupported TileDB dimension: {} ",
-                tiledb::impl::type_to_str(type)));
-    }
 }
 
 bool ArrowAdapter::arrow_is_var_length_type(const char* format) {
@@ -2042,48 +1725,6 @@ ArrowArray* ArrowAdapter::_get_and_check_column(
     }
 
     return child;
-}
-
-void ArrowAdapter::_set_spatial_dimensions(
-    std::map<std::string, Dimension>& dims,
-    const ArrowTable& spatial_column_info,
-    std::string_view type_metadata,
-    std::string soma_type,
-    std::shared_ptr<Context> ctx,
-    PlatformConfig platform_config) {
-    if (type_metadata.compare("WKB") != 0) {
-        throw TileDBSOMAError(std::format(
-            "ArrowAdapter::tiledb_attribute_from_arrow_schema: "
-            "Unkwown type metadata for `{}`: "
-            "Expected 'WKB', got {}",
-            SOMA_GEOMETRY_COLUMN_NAME,
-            type_metadata));
-    }
-
-    for (int64_t j = 0; j < spatial_column_info.second->n_children; ++j) {
-        auto min_dim = tiledb_dimension_from_arrow_schema(
-            ctx,
-            spatial_column_info.second->children[j],
-            spatial_column_info.first->children[j],
-            soma_type,
-            type_metadata,
-            SOMA_GEOMETRY_DIMENSION_PREFIX,
-            "__min",
-            platform_config);
-
-        auto max_dim = tiledb_dimension_from_arrow_schema(
-            ctx,
-            spatial_column_info.second->children[j],
-            spatial_column_info.first->children[j],
-            soma_type,
-            type_metadata,
-            SOMA_GEOMETRY_DIMENSION_PREFIX,
-            "__max",
-            platform_config);
-
-        dims.insert({min_dim.name(), min_dim});
-        dims.insert({max_dim.name(), max_dim});
-    }
 }
 
 }  // namespace tiledbsoma

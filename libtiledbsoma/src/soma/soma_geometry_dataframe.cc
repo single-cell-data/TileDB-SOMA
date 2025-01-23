@@ -36,17 +36,23 @@ void SOMAGeometryDataFrame::create(
     PlatformConfig platform_config,
     std::optional<TimestampRange> timestamp) {
     std::vector<std::string> spatial_axes;
-    auto tiledb_schema = ArrowAdapter::tiledb_schema_from_arrow_schema(
-        ctx->tiledb_ctx(),
-        schema,
-        index_columns,
-        "SOMAGeometryDataFrame",
-        true,
-        platform_config,
-        spatial_columns);
+    auto [tiledb_schema, soma_schema_extension] =
+        ArrowAdapter::tiledb_schema_from_arrow_schema(
+            ctx->tiledb_ctx(),
+            schema,
+            index_columns,
+            "SOMAGeometryDataFrame",
+            true,
+            platform_config,
+            spatial_columns);
 
     SOMAArray::create(
-        ctx, uri, tiledb_schema, "SOMAGeometryDataFrame", timestamp);
+        ctx,
+        uri,
+        tiledb_schema,
+        "SOMAGeometryDataFrame",
+        soma_schema_extension.dump(),
+        timestamp);
 }
 
 std::unique_ptr<SOMAGeometryDataFrame> SOMAGeometryDataFrame::open(

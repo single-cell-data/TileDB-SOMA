@@ -18,8 +18,9 @@
 #include <span>
 #include <stdexcept>  // for windows: error C2039: 'runtime_error': is not a member of 'std'
 
-#include "arrow_adapter.h"
+#include "../soma/soma_column.h"
 #include "common.h"
+#include "nanoarrow/nanoarrow.hpp"
 
 namespace tiledbsoma::util {
 
@@ -60,6 +61,10 @@ std::string rstrip_uri(std::string_view uri);
  * @return std::vector<uint8_t>
  */
 std::vector<uint8_t> cast_bit_to_uint8(ArrowSchema* schema, ArrowArray* array);
+
+std::shared_ptr<SOMAColumn> find_column_by_name(
+    std::span<const std::shared_ptr<SOMAColumn>> columns,
+    std::string_view name);
 
 }  // namespace tiledbsoma::util
 

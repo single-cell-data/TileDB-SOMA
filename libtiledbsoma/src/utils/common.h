@@ -31,6 +31,14 @@ const std::string SOMA_GEOMETRY_COLUMN_NAME = "soma_geometry";
 const std::string SOMA_GEOMETRY_DIMENSION_PREFIX = "tiledb__internal__";
 const std::string ARROW_DATATYPE_METADATA_KEY = "dtype";
 
+// SOMAColumn metadata keys
+const std::string TILEDB_SOMA_SCHEMA_KEY = "tiledb_soma_schema";
+const std::string TILEDB_SOMA_SCHEMA_VERSION = "0.0.1";
+const std::string TILEDB_SOMA_SCHEMA_COL_KEY = "tiledb_columns";
+const std::string TILEDB_SOMA_SCHEMA_COL_TYPE_KEY = "tiledb_column_type";
+const std::string TILEDB_SOMA_SCHEMA_COL_DIM_KEY = "tiledb_dimensions";
+const std::string TILEDB_SOMA_SCHEMA_COL_ATTR_KEY = "tiledb_attributes";
+
 using MetadataValue = std::tuple<tiledb_datatype_t, uint32_t, const void*>;
 enum MetadataInfo { dtype = 0, num, value };
 

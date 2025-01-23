@@ -14,6 +14,52 @@
 #include "soma_geometry_column.h"
 
 namespace tiledbsoma {
+std::shared_ptr<SOMAColumn> SOMAGeometryColumn::deserialize(
+    const nlohmann::json& soma_schema, const Context&, const Array& array) {
+    if (!soma_schema.contains(TILEDB_SOMA_SCHEMA_COL_DIM_KEY)) {
+        throw TileDBSOMAError(
+            "[SOMAGeometryColumn][deserialize] Missing required field "
+            "'tiledb_dimensions'");
+    }
+    if (!soma_schema.contains(TILEDB_SOMA_SCHEMA_COL_ATTR_KEY)) {
+        throw TileDBSOMAError(
+            "[SOMAGeometryColumn][deserialize] Missing required field "
+            "'tiledb_attributes'");
+    }
+
+    std::vector<std::string>
+        dimension_names = soma_schema[TILEDB_SOMA_SCHEMA_COL_DIM_KEY]
+                              .template get<std::vector<std::string>>();
+
+    std::vector<std::string>
+        attribute_names = soma_schema[TILEDB_SOMA_SCHEMA_COL_ATTR_KEY]
+                              .template get<std::vector<std::string>>();
+
+    if (dimension_names.size() % 2 != 0) {
+        throw TileDBSOMAError(std::format(
+            "[SOMAGeometryColumn][deserialize] Invalid number of dimensions: "
+            "expected number divisible by 2, got {}",
+            dimension_names.size()));
+    }
+    if (attribute_names.size() != 1) {
+        throw TileDBSOMAError(std::format(
+            "[SOMAGeometryColumn][deserialize] Invalid number of attributes: "
+            "expected 1, got {}",
+            attribute_names.size()));
+    }
+
+    std::vector<Dimension> dimensions;
+    std::for_each(
+        dimension_names.cbegin(),
+        dimension_names.cend(),
+        [&array, &dimensions](const std::string& name) {
+            dimensions.push_back(array.schema().domain().dimension(name));
+        });
+
+    auto attribute = array.schema().attribute(attribute_names[0]);
+
+    return std::make_shared<SOMAGeometryColumn>(dimensions, attribute);
+}
 
 std::shared_ptr<SOMAGeometryColumn> SOMAGeometryColumn::create(
     std::shared_ptr<Context> ctx,
@@ -396,4 +442,21 @@ ArrowSchema* SOMAGeometryColumn::arrow_schema_slot(
         .release();
 }
 
+void SOMAGeometryColumn::serialize(nlohmann::json& columns_schema) const {
+    nlohmann::json column;
+
+    column[TILEDB_SOMA_SCHEMA_COL_TYPE_KEY] = static_cast<uint32_t>(
+        soma_column_datatype_t::SOMA_COLUMN_GEOMETRY);
+
+    column[TILEDB_SOMA_SCHEMA_COL_DIM_KEY] = nlohmann::json::array();
+    std::for_each(
+        dimensions.cbegin(),
+        dimensions.cend(),
+        [&column](const Dimension& dim) {
+            column[TILEDB_SOMA_SCHEMA_COL_DIM_KEY].push_back(dim.name());
+        });
+    column[TILEDB_SOMA_SCHEMA_COL_ATTR_KEY] = {attribute.name()};
+
+    columns_schema.push_back(column);
+}
 }  // namespace tiledbsoma
