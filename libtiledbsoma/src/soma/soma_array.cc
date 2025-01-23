@@ -487,8 +487,8 @@ ArrowTable SOMAArray::_get_core_domainish(enum Domainish which_kind) {
 
     size_t child_index = 0;
     for (const auto& column :
-         columns_ | std::ranges::views::filter(
-                        [](auto col) { return col->isIndexColumn(); })) {
+         columns_ | std::views::filter(
+                        [](const auto& col) { return col->isIndexColumn(); })) {
         arrow_schema->children[child_index] = column->arrow_schema_slot(
             *ctx_, *arr_);
         arrow_array->children[child_index] = column->arrow_domain_slot(
