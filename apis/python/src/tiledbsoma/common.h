@@ -1,3 +1,16 @@
+/**
+ * @file  common.h
+ *
+ * @section LICENSE
+ *
+ * Licensed under the MIT License.
+ * Copyright (c) TileDB, Inc. and The Chan Zuckerberg Initiative Foundation
+ *
+ * @section DESCRIPTION
+ *
+ * This file defines common functions for the SOMA PyBind layer.
+ */
+
 #include <exception>
 
 #include <pybind11/numpy.h>
