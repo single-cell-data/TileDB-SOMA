@@ -70,12 +70,7 @@ void SOMADenseNDArray::create(
             platform_config);
 
     SOMAArray::create(
-        ctx,
-        uri,
-        tiledb_schema,
-        "SOMADenseNDArray",
-        soma_schema_extension.dump(),
-        timestamp);
+        ctx, uri, tiledb_schema, "SOMADenseNDArray", std::nullopt, timestamp);
 }
 
 std::unique_ptr<SOMADenseNDArray> SOMADenseNDArray::open(

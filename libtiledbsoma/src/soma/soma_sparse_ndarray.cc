@@ -71,12 +71,7 @@ void SOMASparseNDArray::create(
             platform_config);
 
     SOMAArray::create(
-        ctx,
-        uri,
-        tiledb_schema,
-        "SOMASparseNDArray",
-        soma_schema_extension.dump(),
-        timestamp);
+        ctx, uri, tiledb_schema, "SOMASparseNDArray", std::nullopt, timestamp);
 }
 
 std::unique_ptr<SOMASparseNDArray> SOMASparseNDArray::open(
