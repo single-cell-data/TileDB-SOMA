@@ -1070,11 +1070,11 @@ ArrowAdapter::tiledb_schema_from_arrow_schema(
     LOG_DEBUG(std::format("[ArrowAdapter] Additional schema metadata"));
     nlohmann::json soma_schema_extension;
 
-    soma_schema_extension[TDB_SOMA_SCHEMA_COL_KEY] = nlohmann::json::array();
+    soma_schema_extension[TILEDB_SOMA_SCHEMA_COL_KEY] = nlohmann::json::array();
     for (const auto& column : columns) {
-        column->serialize(soma_schema_extension[TDB_SOMA_SCHEMA_COL_KEY]);
+        column->serialize(soma_schema_extension[TILEDB_SOMA_SCHEMA_COL_KEY]);
     }
-    soma_schema_extension["version"] = TDB_SOMA_SCHEMA_VERSION;
+    soma_schema_extension["version"] = TILEDB_SOMA_SCHEMA_VERSION;
 
     LOG_DEBUG(std::format("[ArrowAdapter] returning"));
     return std::make_tuple(schema, soma_schema_extension);

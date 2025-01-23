@@ -16,23 +16,23 @@
 namespace tiledbsoma {
 std::shared_ptr<SOMAColumn> SOMAGeometryColumn::deserialize(
     const nlohmann::json& soma_schema, const Context&, const Array& array) {
-    if (!soma_schema.contains(TDB_SOMA_SCHEMA_COL_DIM_KEY)) {
+    if (!soma_schema.contains(TILEDB_SOMA_SCHEMA_COL_DIM_KEY)) {
         throw TileDBSOMAError(
             "[SOMAGeometryColumn][deserialize] Missing required field "
             "'tiledb_dimensions'");
     }
-    if (!soma_schema.contains(TDB_SOMA_SCHEMA_COL_ATTR_KEY)) {
+    if (!soma_schema.contains(TILEDB_SOMA_SCHEMA_COL_ATTR_KEY)) {
         throw TileDBSOMAError(
             "[SOMAGeometryColumn][deserialize] Missing required field "
             "'tiledb_attributes'");
     }
 
     std::vector<std::string>
-        dimension_names = soma_schema[TDB_SOMA_SCHEMA_COL_DIM_KEY]
+        dimension_names = soma_schema[TILEDB_SOMA_SCHEMA_COL_DIM_KEY]
                               .template get<std::vector<std::string>>();
 
     std::vector<std::string>
-        attribute_names = soma_schema[TDB_SOMA_SCHEMA_COL_ATTR_KEY]
+        attribute_names = soma_schema[TILEDB_SOMA_SCHEMA_COL_ATTR_KEY]
                               .template get<std::vector<std::string>>();
 
     if (dimension_names.size() % 2 != 0) {
@@ -445,17 +445,17 @@ ArrowSchema* SOMAGeometryColumn::arrow_schema_slot(
 void SOMAGeometryColumn::serialize(nlohmann::json& columns_schema) const {
     nlohmann::json column;
 
-    column[TDB_SOMA_SCHEMA_COL_TYPE_KEY] = static_cast<uint32_t>(
+    column[TILEDB_SOMA_SCHEMA_COL_TYPE_KEY] = static_cast<uint32_t>(
         soma_column_datatype_t::SOMA_COLUMN_GEOMETRY);
 
-    column[TDB_SOMA_SCHEMA_COL_DIM_KEY] = nlohmann::json::array();
+    column[TILEDB_SOMA_SCHEMA_COL_DIM_KEY] = nlohmann::json::array();
     std::for_each(
         dimensions.cbegin(),
         dimensions.cend(),
         [&column](const Dimension& dim) {
-            column[TDB_SOMA_SCHEMA_COL_DIM_KEY].push_back(dim.name());
+            column[TILEDB_SOMA_SCHEMA_COL_DIM_KEY].push_back(dim.name());
         });
-    column[TDB_SOMA_SCHEMA_COL_ATTR_KEY] = {attribute.name()};
+    column[TILEDB_SOMA_SCHEMA_COL_ATTR_KEY] = {attribute.name()};
 
     columns_schema.push_back(column);
 }

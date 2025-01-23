@@ -16,14 +16,14 @@
 namespace tiledbsoma {
 std::shared_ptr<SOMAColumn> SOMAAttribute::deserialize(
     const nlohmann::json& soma_schema, const Context& ctx, const Array& array) {
-    if (!soma_schema.contains(TDB_SOMA_SCHEMA_COL_ATTR_KEY)) {
+    if (!soma_schema.contains(TILEDB_SOMA_SCHEMA_COL_ATTR_KEY)) {
         throw TileDBSOMAError(
             "[SOMAAttribute][deserialize] Missing required field "
             "'tiledb_attributes'");
     }
 
     std::vector<std::string>
-        attribute_names = soma_schema[TDB_SOMA_SCHEMA_COL_ATTR_KEY]
+        attribute_names = soma_schema[TILEDB_SOMA_SCHEMA_COL_ATTR_KEY]
                               .template get<std::vector<std::string>>();
 
     if (attribute_names.size() != 1) {
@@ -146,9 +146,9 @@ ArrowSchema* SOMAAttribute::arrow_schema_slot(
 void SOMAAttribute::serialize(nlohmann::json& columns_schema) const {
     nlohmann::json column;
 
-    column[TDB_SOMA_SCHEMA_COL_TYPE_KEY] = static_cast<uint32_t>(
+    column[TILEDB_SOMA_SCHEMA_COL_TYPE_KEY] = static_cast<uint32_t>(
         soma_column_datatype_t::SOMA_COLUMN_ATTRIBUTE);
-    column[TDB_SOMA_SCHEMA_COL_ATTR_KEY] = {attribute.name()};
+    column[TILEDB_SOMA_SCHEMA_COL_ATTR_KEY] = {attribute.name()};
 
     columns_schema.push_back(column);
 }

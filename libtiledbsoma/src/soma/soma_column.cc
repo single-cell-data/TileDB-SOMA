@@ -33,7 +33,7 @@ std::vector<std::shared_ptr<SOMAColumn>> SOMAColumn::deserialize(
 
     if (!soma_schema_columns.empty()) {
         for (auto& column : soma_schema_columns) {
-            auto type = column[TDB_SOMA_SCHEMA_COL_TYPE_KEY]
+            auto type = column[TILEDB_SOMA_SCHEMA_COL_TYPE_KEY]
                             .template get<uint32_t>();
 
             auto col = deserialiser_map[type](column, ctx, array);

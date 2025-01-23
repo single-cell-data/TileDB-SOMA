@@ -58,7 +58,7 @@ void SOMAArray::create(
 
     if (soma_schema.has_value()) {
         array->put_metadata(
-            TDB_SOMA_SCHEMA_KEY,
+            TILEDB_SOMA_SCHEMA_KEY,
             TILEDB_STRING_UTF8,
             static_cast<uint32_t>(soma_schema->length()),
             soma_schema->data());
@@ -205,15 +205,15 @@ void SOMAArray::fill_columns() {
     columns_.clear();
 
     if (type().value_or("") == "SOMAGeometryDataFrame") {
-        if (!has_metadata(TDB_SOMA_SCHEMA_KEY)) {
+        if (!has_metadata(TILEDB_SOMA_SCHEMA_KEY)) {
             throw TileDBSOMAError(std::format(
                 "[SOMAArray][fill_columns] Missing required metadata key '{}' "
                 "from SOMAGeometryDataFrame '{}'",
-                TDB_SOMA_SCHEMA_KEY,
+                TILEDB_SOMA_SCHEMA_KEY,
                 uri()));
         }
 
-        auto soma_schema_extension_raw = get_metadata(TDB_SOMA_SCHEMA_KEY)
+        auto soma_schema_extension_raw = get_metadata(TILEDB_SOMA_SCHEMA_KEY)
                                              .value();
         auto data = static_cast<const char*>(
             std::get<2>(soma_schema_extension_raw));
@@ -224,16 +224,16 @@ void SOMAArray::fill_columns() {
                                                  soma_schema_extension_raw))) :
                                          nlohmann::json::object();
 
-        if (!soma_schema_extension.contains(TDB_SOMA_SCHEMA_COL_KEY)) {
+        if (!soma_schema_extension.contains(TILEDB_SOMA_SCHEMA_COL_KEY)) {
             throw TileDBSOMAError(std::format(
                 "[SOMAArray][fill_columns] Missing '{}' key from '{}'",
-                TDB_SOMA_SCHEMA_COL_KEY,
-                TDB_SOMA_SCHEMA_KEY));
+                TILEDB_SOMA_SCHEMA_COL_KEY,
+                TILEDB_SOMA_SCHEMA_KEY));
         }
 
         columns_ = SOMAColumn::deserialize(
             soma_schema_extension.value(
-                TDB_SOMA_SCHEMA_COL_KEY, nlohmann::json::array()),
+                TILEDB_SOMA_SCHEMA_COL_KEY, nlohmann::json::array()),
             *ctx_->tiledb_ctx(),
             *arr_);
 

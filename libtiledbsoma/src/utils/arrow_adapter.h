@@ -945,7 +945,8 @@ class ArrowAdapter {
      * changing multiple variants. The use of std::any here is to enable runtime
      * polymorphism and indirectly introduces a runtime type check (via
      * any_cast, make_any) between the templated function and the actual
-     * dimension type. std::variant can provide all the above; this is a stylistic choice.
+     * dimension type. std::variant can provide all the above; this is a
+     * stylistic choice.
      */
     template <size_t S>
     static std::any get_table_any_column(
