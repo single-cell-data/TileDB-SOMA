@@ -56,7 +56,7 @@ void SOMASparseNDArray::create(
     attr->format = strdup(std::string(format).c_str());
     attr->name = strdup("soma_data");
     attr->n_children = 0;
-    attr->flags = ARROW_FLAG_NULLABLE;
+    attr->flags = 0;
     attr->dictionary = nullptr;
     attr->metadata = nullptr;
     attr->release = &ArrowAdapter::release_schema;

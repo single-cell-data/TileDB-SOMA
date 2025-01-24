@@ -2092,9 +2092,9 @@ def test_arrow_table_validity_with_slicing(tmp_path):
     )
     table = pa.Table.from_pydict(pydict)
 
-    with raises_no_typeguard(soma.SOMAError):
-        # soma_joinid cannot be nullable
-        with soma.DataFrame.open(uri, "w") as A:
+    with soma.DataFrame.open(uri, "w") as A:
+        with raises_no_typeguard(soma.SOMAError):
+            # soma_joinid cannot be nullable
             A.write(table)
 
     pydict["soma_joinid"] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]

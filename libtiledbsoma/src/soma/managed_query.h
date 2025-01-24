@@ -259,7 +259,9 @@ class ManagedQuery {
 
     /**
      * @brief Set the write buffers for an Arrow Table or Batch as represented
-     * by an ArrowSchema and ArrowArray.
+     * by an ArrowSchema and ArrowArray. Nulls values are not allowed for
+     * dimensions and will error out. Any null values present in non-nullable
+     * attributes will be casted to fill values for the given TileDB datatype.
      *
      * @param arrow_schema
      * @param arrow_array
