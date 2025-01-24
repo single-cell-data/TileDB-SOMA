@@ -56,7 +56,7 @@ std::string rstrip_uri(std::string_view uri) {
 }
 
 std::optional<std::vector<uint8_t>> bitmap_to_uint8(
-    uint8_t* bitmap, size_t length, size_t offset) {
+    const uint8_t* bitmap, size_t length, size_t offset) {
     if (bitmap == nullptr) {
         return std::nullopt;
     }

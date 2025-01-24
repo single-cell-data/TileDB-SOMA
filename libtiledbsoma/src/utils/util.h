@@ -61,7 +61,7 @@ std::string rstrip_uri(std::string_view uri);
  * @return std::optional<std::vector<uint8_t>>
  */
 std::optional<std::vector<uint8_t>> bitmap_to_uint8(
-    uint8_t* bitmap, size_t length, size_t offset = 0);
+    const uint8_t* bitmap, size_t length, size_t offset = 0);
 
 std::shared_ptr<SOMAColumn> find_column_by_name(
     std::span<const std::shared_ptr<SOMAColumn>> columns,
