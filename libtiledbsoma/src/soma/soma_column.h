@@ -430,11 +430,10 @@ class SOMAColumn {
                 _non_empty_domain_slot_opt(ctx, array));
         } catch (const std::exception& e) {
             throw TileDBSOMAError(std::format(
-                "[SOMAColumn][non_empty_domain_slot] Failed on \"{}\" with "
-                "error \"{}\", type '{}'",
+                "[SOMAColumn][non_empty_domain_slot_opt] Failed on \"{}\" with "
+                "error \"{}\"",
                 name(),
-                e.what(),
-                typeid(T).name()));
+                e.what()));
         }
     }
 
