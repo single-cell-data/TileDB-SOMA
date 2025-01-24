@@ -290,9 +290,6 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
         """
         _util.check_type("values", values, (pa.Tensor,))
 
-        if np.isnan(values).any():
-            raise SOMAError("soma_data cannot contain nulls")
-
         clib_handle = self._handle._handle
 
         # Compute the coordinates for the dense array.

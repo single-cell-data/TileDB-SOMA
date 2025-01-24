@@ -2012,10 +2012,18 @@ def test_context_cleanup(tmp_path: pathlib.Path) -> None:
 def test_sparse_nd_array_null(tmp_path):
     uri = tmp_path.as_posix()
 
-    arrow_array = pa.array([None], type=pa.float64())
-    values = pa.Table.from_arrays([arrow_array], names=["soma_data"])
+    pydict = {
+        "soma_dim_0": pa.array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]),
+        "soma_data": pa.array(
+            [None, 0, None, 1, 2, None, None, 3, 4, 5], type=pa.float64()
+        ),
+    }
+    table = pa.Table.from_pydict(pydict)
 
-    with soma.SparseNDArray.create(uri, type=pa.int64(), shape=(1,)) as a:
-        # Cannot write null values
-        with pytest.raises(soma.SOMAError):
-            a.write(values=values)
+    with soma.SparseNDArray.create(uri, type=pa.int64(), shape=(10,)) as A:
+        A.write(table[:5])
+        A.write(table[5:])
+
+    with soma.SparseNDArray.open(uri) as A:
+        pdf = A.read().tables().concat()
+        np.testing.assert_array_equal(pdf["soma_data"], table["soma_data"])

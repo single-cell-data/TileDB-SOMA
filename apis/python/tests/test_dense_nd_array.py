@@ -565,14 +565,3 @@ def test_pass_configs(tmp_path):
                 "sm.io_concurrency_level": "1",
             }
         )
-
-
-def test_dense_nd_array_null(tmp_path):
-    uri = tmp_path.as_posix()
-
-    data = pa.Tensor.from_numpy(np.array([np.nan]))
-
-    with soma.DenseNDArray.create(uri, type=pa.int64(), shape=(1,)) as a:
-        # Cannot write null values
-        with pytest.raises(soma.SOMAError):
-            a.write(coords=(0,), values=data)

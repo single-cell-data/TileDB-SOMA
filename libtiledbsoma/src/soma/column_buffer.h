@@ -153,11 +153,11 @@ class ColumnBuffer {
                 validity_.assign(num_elems, 1);  // Default all to valid (1)
             }
         } else {
-            if (validity.has_value()) {
-                throw TileDBSOMAError(
-                    "[ColumnBuffer] Validity buffer passed for non-nullable "
-                    "column");
-            }
+            throw TileDBSOMAError(std::format(
+                "[ColumnBuffer] Validity buffer passed for non-nullable "
+                "column '{}'. Saw values: {}",
+                name_,
+                validity_values));
         }
     }
 
