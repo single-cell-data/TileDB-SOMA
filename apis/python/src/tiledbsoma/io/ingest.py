@@ -514,7 +514,6 @@ def from_anndata(
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # OBS
     df_uri = _util.uri_joinpath(experiment_uri, "obs")
-    # XXX good
     with _write_dataframe(
         df_uri,
         conversions.obs_or_var_to_tiledb_supported_array_type(anndata.obs),
@@ -566,7 +565,6 @@ def from_anndata(
             # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
             # MS/meas/VAR
             with _write_dataframe(
-                # XXX good
                 _util.uri_joinpath(measurement_uri, "var"),
                 conversions.obs_or_var_to_tiledb_supported_array_type(anndata.var),
                 id_column_name=var_id_name,
@@ -604,7 +602,6 @@ def from_anndata(
                 if has_X:
                     with _create_from_matrix(
                         X_kind,
-                        # XXX good
                         _util.uri_joinpath(measurement_X_uri, X_layer_name),
                         anndata.X,
                         axis_0_mapping=jidmaps.obs_axis,
@@ -618,7 +615,6 @@ def from_anndata(
                 for layer_name, layer in anndata.layers.items():
                     with _create_from_matrix(
                         X_kind,
-                        # XXX good
                         _util.uri_joinpath(measurement_X_uri, layer_name),
                         layer,
                         axis_0_mapping=jidmaps.obs_axis,
@@ -663,7 +659,6 @@ def from_anndata(
                                     # consider a use-dense flag at the tiledbsoma.io API
                                     # DenseNDArray,
                                     SparseNDArray,
-                                    # XXX good
                                     _util.uri_joinpath(ad_val_uri, key),
                                     conversions.to_tiledb_supported_array_type(
                                         key, val
@@ -735,7 +730,6 @@ def from_anndata(
 
                             with _create_from_matrix(
                                 SparseNDArray,
-                                # XXX good
                                 _util.uri_joinpath(raw_X_uri, raw_X_layer_name),
                                 anndata.raw.X,
                                 axis_0_mapping=jidmaps.obs_axis,
@@ -1943,7 +1937,7 @@ def add_matrix_to_collection(
 
             with _create_from_matrix(
                 SparseNDArray,
-                matrix_uri,  # XXX good
+                matrix_uri,
                 matrix_data,
                 ingestion_params=ingestion_params,
                 context=context,
