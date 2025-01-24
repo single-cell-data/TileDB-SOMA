@@ -20,8 +20,6 @@ from . import pytiledbsoma as clib
 from ._constants import (
     SOMA_COORDINATE_SPACE_METADATA_KEY,
     SOMA_JOINID,
-    SOMA_SPATIAL_ENCODING_VERSION,
-    SOMA_SPATIAL_VERSION_METADATA_KEY,
     SPATIAL_DISCLAIMER,
 )
 from ._dataframe import (
@@ -123,9 +121,16 @@ class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
         warnings.warn(SPATIAL_DISCLAIMER)
 
         axis_dtype: pa.DataType | None = None
-        if not isinstance(coordinate_space, CoordinateSpace):
-            coordinate_space = CoordinateSpace.from_axis_names(coordinate_space)
-        for column_name in coordinate_space.axis_names:
+
+        # Get coordinate space axis data.
+        if isinstance(coordinate_space, CoordinateSpace):
+            axis_names = tuple(axis.name for axis in coordinate_space)
+            axis_units = tuple(axis.unit for axis in coordinate_space)
+        else:
+            axis_names = tuple(coordinate_space)
+            axis_units = tuple(len(axis_names) * [None])
+
+        for column_name in axis_names:
             # Check axis column type is valid and all axis columns have the same type.
             if axis_dtype is None:
                 try:
@@ -152,7 +157,7 @@ class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
                     ) from ke
                 if column_dtype != axis_dtype:
                     raise ValueError("All spatial axes must have the same datatype.")
-        index_column_names = coordinate_space.axis_names + (SOMA_JOINID,)
+        index_column_names = axis_names + (SOMA_JOINID,)
 
         context = _validate_soma_tiledb_context(context)
         schema = _canonicalize_schema(schema, index_column_names)
@@ -251,6 +256,8 @@ class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
                 uri,
                 schema=schema,
                 index_column_info=index_column_info,
+                axis_names=axis_names,
+                axis_units=axis_units,
                 ctx=context.native_context,
                 platform_config=plt_cfg,
                 timestamp=(0, timestamp_ms),
@@ -258,15 +265,8 @@ class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
         except SOMAError as e:
             raise map_exception_for_create(e, uri) from None
 
-        handle = cls._wrapper_type.open(uri, "w", context, tiledb_timestamp)
-        handle.metadata[SOMA_SPATIAL_VERSION_METADATA_KEY] = (
-            SOMA_SPATIAL_ENCODING_VERSION
-        )
-        handle.meta[SOMA_COORDINATE_SPACE_METADATA_KEY] = coordinate_space_to_json(
-            coordinate_space
-        )
         return cls(
-            handle,
+            cls._wrapper_type.open(uri, "w", context, tiledb_timestamp),
             _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code",
         )
 
