@@ -431,9 +431,10 @@ class SOMAColumn {
         } catch (const std::exception& e) {
             throw TileDBSOMAError(std::format(
                 "[SOMAColumn][non_empty_domain_slot] Failed on \"{}\" with "
-                "error \"{}\"",
+                "error \"{}\", type '{}'",
                 name(),
-                e.what()));
+                e.what(),
+                typeid(T).name()));
         }
     }
 
