@@ -308,6 +308,7 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
         Lifecycle:
             Maturing.
         """
+        
         write_options: Union[TileDBCreateOptions, TileDBWriteOptions]
         sort_coords = None
         if isinstance(platform_config, TileDBCreateOptions):
