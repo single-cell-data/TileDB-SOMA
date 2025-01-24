@@ -1811,6 +1811,52 @@ def update_matrix(
         _util.format_elapsed(s, f"FINISH UPDATING {soma_ndarray.uri}"),
     )
 
+def add_obs_layer(
+    exp: Experiment,
+    obs_data: Union[pd.DataFrame, pa.Table],
+    ingest_mode: IngestMode = "write",
+    use_relative_uri: bool | None = None,
+) -> None:
+    """Add observation (cell) metadata to an existing TileDB-SOMA Experiment.
+    
+    This is useful for adding new cell-level metadata, for example from clustering results
+    or other analyses.
+
+    Use ``ingest_mode="resume"`` to not error out if the schema already exists.
+
+    Args:
+        exp: The TileDB-SOMA Experiment to add obs data to
+        obs_data: Cell metadata as a pandas DataFrame or Arrow Table
+        ingest_mode: One of "write" (default) or "resume"
+        use_relative_uri: Whether to use relative URIs for internal references
+            
+    Raises:
+        SOMAError: If the experiment is not open for writing
+        
+    Lifecycle:
+        Maturing.
+    """
+    exp.verify_open_for_writing()
+    
+    # Convert pandas DataFrame to Arrow Table if needed
+    if isinstance(obs_data, pd.DataFrame):
+        obs_data = pa.Table.from_pandas(obs_data)
+    
+    # Validate the input data
+    if not isinstance(obs_data, pa.Table):
+        raise TypeError(
+            f"obs_data must be a pandas DataFrame or Arrow Table, got {type(obs_data)}"
+        )
+    
+    # Add the data to the obs collection
+    if exp.obs is None:
+        raise SOMAError(f"Experiment {exp.uri} has no obs collection")
+        
+    # Write the data
+    exp.obs.write(
+        value=obs_data,
+        ingest_mode=ingest_mode
+    )
 
 def add_X_layer(
     exp: Experiment,
