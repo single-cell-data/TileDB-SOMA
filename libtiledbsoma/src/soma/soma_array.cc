@@ -29,40 +29,48 @@ void SOMAArray::create(
     std::string_view soma_type,
     std::optional<std::string_view> soma_schema,
     std::optional<TimestampRange> timestamp) {
+    _create(ctx, uri, schema, soma_type, soma_schema, timestamp);
+}
+
+Array SOMAArray::_create(
+    std::shared_ptr<SOMAContext> ctx,
+    std::string_view uri,
+    ArraySchema schema,
+    std::string_view soma_type,
+    std::optional<std::string_view> soma_schema,
+    std::optional<TimestampRange> timestamp) {
+    // Create TileDB array.
     Array::create(std::string(uri), schema);
 
-    std::shared_ptr<Array> array;
-    if (timestamp) {
-        array = std::make_shared<Array>(
-            *ctx->tiledb_ctx(),
-            std::string(uri),
-            TILEDB_WRITE,
-            TemporalPolicy(
-                TimestampStartEnd, timestamp->first, timestamp->second));
-    } else {
-        array = std::make_shared<Array>(
-            *ctx->tiledb_ctx(), std::string(uri), TILEDB_WRITE);
-    }
+    // Open TileDB array at requested time.
+    auto temporal_policy = timestamp.has_value() ? TemporalPolicy(
+                                                       TimestampStartEnd,
+                                                       timestamp->first,
+                                                       timestamp->second) :
+                                                   TemporalPolicy();
+    Array array{
+        *ctx->tiledb_ctx(), std::string(uri), TILEDB_WRITE, temporal_policy};
 
-    array->put_metadata(
+    // Set SOMA metadata.
+    array.put_metadata(
         SOMA_OBJECT_TYPE_KEY,
         TILEDB_STRING_UTF8,
         static_cast<uint32_t>(soma_type.length()),
         soma_type.data());
-
-    array->put_metadata(
+    array.put_metadata(
         ENCODING_VERSION_KEY,
         TILEDB_STRING_UTF8,
         static_cast<uint32_t>(ENCODING_VERSION_VAL.length()),
         ENCODING_VERSION_VAL.c_str());
-
     if (soma_schema.has_value()) {
-        array->put_metadata(
+        array.put_metadata(
             TILEDB_SOMA_SCHEMA_KEY,
             TILEDB_STRING_UTF8,
             static_cast<uint32_t>(soma_schema->length()),
             soma_schema->data());
     }
+    // Return internal TileDB array.
+    return array;
 }
 
 std::unique_ptr<SOMAArray> SOMAArray::open(
