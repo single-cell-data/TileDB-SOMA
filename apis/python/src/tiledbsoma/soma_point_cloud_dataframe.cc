@@ -36,6 +36,8 @@ void load_soma_point_cloud_dataframe(py::module& m) {
             [](std::string_view uri,
                py::object py_schema,
                py::object index_column_info,
+               std::vector<std::string> axis_names,
+               std::vector<std::optional<std::string>> axis_units,
                std::shared_ptr<SOMAContext> context,
                PlatformConfig platform_config,
                std::optional<std::pair<uint64_t, uint64_t>> timestamp) {
@@ -80,6 +82,8 @@ void load_soma_point_cloud_dataframe(py::module& m) {
                 index_column_info.attr("_export_to_c")(
                     index_column_array_ptr, index_column_schema_ptr);
 
+                SOMACoordinateSpace coord_space{axis_names, axis_units};
+
                 try {
                     SOMAPointCloudDataFrame::create(
                         uri,
@@ -87,6 +91,7 @@ void load_soma_point_cloud_dataframe(py::module& m) {
                         ArrowTable(
                             std::make_unique<ArrowArray>(index_column_array),
                             std::make_unique<ArrowSchema>(index_column_schema)),
+                        coord_space,
                         context,
                         platform_config,
                         timestamp);
@@ -101,6 +106,8 @@ void load_soma_point_cloud_dataframe(py::module& m) {
             py::kw_only(),
             "schema"_a,
             "index_column_info"_a,
+            "axis_names"_a,
+            "axis_units"_a,
             "ctx"_a,
             "platform_config"_a,
             "timestamp"_a = py::none())

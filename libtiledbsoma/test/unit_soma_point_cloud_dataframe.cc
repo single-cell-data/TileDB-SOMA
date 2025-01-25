@@ -16,7 +16,8 @@
 
 const int64_t SOMA_JOINID_DIM_MAX = 99;
 
-TEST_CASE("SOMAPointCloudDataFrame: basic", "[SOMAPointCloudDataFrame]") {
+TEST_CASE(
+    "SOMAPointCloudDataFrame: basic", "[point_cloud_dataframe][spatial]") {
     auto ctx = std::make_shared<SOMAContext>();
     std::string uri{"mem://unit-test-point-cloud-basic"};
     PlatformConfig platform_config{};
@@ -51,11 +52,13 @@ TEST_CASE("SOMAPointCloudDataFrame: basic", "[SOMAPointCloudDataFrame]") {
     // Create the point cloud.
     auto [schema, index_columns] =
         helper::create_arrow_schema_and_index_columns(dim_infos, attr_infos);
+    SOMACoordinateSpace coord_space{};
     SOMAPointCloudDataFrame::create(
         uri,
         std::move(schema),
         ArrowTable(
             std::move(index_columns.first), std::move(index_columns.second)),
+        coord_space,
         ctx,
         platform_config,
         std::nullopt);
@@ -127,6 +130,10 @@ TEST_CASE("SOMAPointCloudDataFrame: basic", "[SOMAPointCloudDataFrame]") {
         CHECK(d2 == std::vector<uint32_t>(d2span.begin(), d2span.end()));
         CHECK(a0 == std::vector<double>(a0span.begin(), a0span.end()));
     }
+    CHECK(soma_point_cloud->has_metadata("soma_encoding_version"));
+    CHECK(soma_point_cloud->has_metadata("soma_spatial_encoding_version"));
+    auto point_cloud_coord_space = soma_point_cloud->coordinate_space();
+    CHECK(point_cloud_coord_space == coord_space);
     soma_point_cloud->close();
 
     auto soma_object = SOMAObject::open(uri, OpenMode::read, ctx);
