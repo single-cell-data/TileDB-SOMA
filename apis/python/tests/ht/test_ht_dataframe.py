@@ -11,7 +11,6 @@ import pyarrow as pa
 import pytest
 from hypothesis import strategies as st
 from hypothesis.extra import numpy as ht_np
-from hypothesis.extra import pandas as ht_pd
 from hypothesis.stateful import initialize, invariant, precondition, rule
 from more_itertools import pairwise
 from packaging.version import Version
