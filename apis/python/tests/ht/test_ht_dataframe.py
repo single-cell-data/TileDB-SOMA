@@ -603,10 +603,7 @@ def arrow_table2(
     if draw(st.booleans()) and not HT_TEST_CONFIG["sc-61239_workaround"]:
         batches = tbl.to_batches()
         batch_to_pad = draw(st.integers(min_value=0, max_value=len(batches) - 1))
-        batch_arrays = [
-            pad_array(arr.to_numpy(zero_copy_only=(arr.type != pa.bool_())), draw)
-            for arr in batches[batch_to_pad].columns
-        ]
+        batch_arrays = [pad_array(arr, draw) for arr in batches[batch_to_pad].columns]
         batches[batch_to_pad] = pa.RecordBatch.from_arrays(
             batch_arrays, schema=tbl.schema
         )

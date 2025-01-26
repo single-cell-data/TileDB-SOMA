@@ -342,25 +342,51 @@ def arrow_slice(draw: st.DrawFn, size: int) -> ArrowSlice:
     return (offset, length)
 
 
-def pad_array(arr: npt.NDArray[Any], draw: st.DrawFn) -> pa.Array:
-    """Strategy helper: add padding to one or both ends of the array. This tests for Arrow array "offset" handling."""
+def pad_array(arr: pa.Array | npt.NDArray[Any], draw: st.DrawFn) -> pa.Array:
+    """Strategy helper: add padding to one or both ends of the array. This tests for Arrow array
+    offset & length handling."""
 
     if HT_TEST_CONFIG.get("sc-61239_workaround", False):
         return pa.array(arr)
 
+    if not isinstance(arr, pa.Array):
+        arr = pa.array(arr)
+
     head = draw(st.integers(min_value=0, max_value=16))
     tail = draw(st.integers(min_value=0, max_value=16))
     if not bool(head or tail):
-        return pa.array(arr)
+        return arr
 
-    padding = draw(st.from_type(arr.dtype.type))
+    if pa.types.is_dictionary(arr.type):
+        padding = draw(st.integers(min_value=0, max_value=len(arr.dictionary) - 1))
+        head_arr = pa.DictionaryArray.from_arrays(
+            indices=pa.array([padding] * head, type=arr.type.index_type),
+            dictionary=arr.dictionary,
+            ordered=arr.type.ordered,
+        )
+        tail_arr = pa.DictionaryArray.from_arrays(
+            indices=pa.array([padding] * tail, type=arr.type.index_type),
+            dictionary=arr.dictionary,
+            ordered=arr.type.ordered,
+        )
 
-    shape = (arr.shape[0] + head + tail, *arr.shape[1:])
-    padded_arr = np.empty_like(arr, shape=shape)
-    padded_arr[0:head] = padding
-    padded_arr[head : head + len(arr)] = arr
-    padded_arr[head + len(arr) :] = padding
-    return pa.array(padded_arr)[head : head + len(arr)]
+    else:
+        if pa.types.is_large_string(arr.type) or pa.types.is_string(arr.type):
+            pad_type = str
+        elif pa.types.is_large_binary(arr.type) or pa.types.is_binary(arr.type):
+            pad_type = bytes
+        elif pa.types.is_timestamp(arr.type):
+            pad_type = np.int64
+        else:
+            pad_type = np.dtype(arr.type.to_pandas_dtype()).type
+
+        padding = draw(st.from_type(pad_type))
+        head_arr = pa.array([padding] * head).cast(arr.type)
+        tail_arr = pa.array([padding] * tail).cast(arr.type)
+
+    assert arr.type == head_arr.type == tail_arr.type
+    padded_arr = pa.chunked_array([head_arr, arr, tail_arr]).combine_chunks()
+    return padded_arr.slice(head, len(arr))
 
 
 @st.composite
