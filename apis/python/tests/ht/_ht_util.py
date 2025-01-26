@@ -15,6 +15,7 @@ from hypothesis import strategies as st
 from more_itertools import pairwise
 from packaging.version import Version
 
+from tests.ht._arrow_util import combine_chunks
 from tests.ht._ht_test_config import HT_TEST_CONFIG
 
 Shape = tuple[int, ...]
@@ -108,6 +109,7 @@ def tiledb_timestamps(from_future: bool = False):
 
 @st.composite
 def arrow_integer_datatypes(draw: st.DrawFn) -> pa.DataType:
+    """Strategy returns an arrow integer datatype."""
     return draw(st.sampled_from((pa.int8(), pa.int16(), pa.int32(), pa.int64())))
 
 
@@ -171,7 +173,7 @@ def arrow_decimal_datatypes(draw: st.DrawFn) -> pa.DataType:
 
 
 @st.composite
-def arrow_datatypes(draw: st.DrawFn) -> pa.DataType:
+def arrow_nondict_datatypes(draw: st.DrawFn) -> pa.DataType:
     return draw(
         st.one_of(
             arrow_integer_datatypes(),
@@ -194,6 +196,26 @@ def arrow_datatypes(draw: st.DrawFn) -> pa.DataType:
     )
 
 
+@st.composite
+def arrow_dictionary_datatypes(draw: st.DraFn) -> pa.DataType:
+    index_type = draw(
+        st.one_of((arrow_integer_datatypes(), arrow_unsigned_integer_datatypes()))
+    )
+    value_type = draw(arrow_nondict_datatypes())
+    ordered = draw(st.booleans())
+    return pa.dictionary(index_type=index_type, value_type=value_type, ordered=ordered)
+
+
+@st.composite
+def arrow_datatypes(draw: st.DrawFn) -> pa.DataType:
+    return draw(
+        st.one_of(
+            arrow_nondict_datatypes(),
+            arrow_dictionary_datatypes(),
+        )
+    )
+
+
 def ndarray_datatype() -> st.SearchStrategy:
     """Return a type that can be stored in a SOMA NDArray."""
     return st.from_type(pa.DataType).filter(
@@ -209,18 +231,39 @@ def ndarray_datatype() -> st.SearchStrategy:
 
 def dataframe_datatype() -> st.SearchStrategy:
     """Return type that can be stored in a DataFrame column."""
-    return st.from_type(pa.DataType).filter(
-        lambda t: (
+
+    def is_dataframe_value_type(dt: pa.DataType) -> bool:
+        return (
             (
-                pa.types.is_primitive(t)
-                or t in [pa.string(), pa.large_string(), pa.binary(), pa.large_binary()]
+                pa.types.is_primitive(dt)
+                or dt
+                in [pa.string(), pa.large_string(), pa.binary(), pa.large_binary()]
             )
-            and not (pa.types.is_timestamp(t) and t.tz is not None)
-            and not pa.types.is_time(t)
-            and not pa.types.is_date(t)
-            and t not in [pa.float16()]
+            and not (pa.types.is_timestamp(dt) and dt.tz is not None)
+            and not pa.types.is_time(dt)
+            and not pa.types.is_date(dt)
+            and dt not in [pa.float16()]
         )
-    )
+
+    def is_dataframe_column_type(dt: pa.DataType) -> bool:
+        if is_dataframe_value_type(dt):
+            return True
+
+        if pa.types.is_dictionary(dt):
+            # Arrow can't convert unsigned index types into Pandas
+            if pa.types.is_unsigned_integer(dt.index_type):
+                return False
+
+            if HT_TEST_CONFIG["sc-62364_workaround"] and pa.types.is_timestamp(
+                dt.value_type
+            ):
+                return False
+
+            return is_dataframe_value_type(dt.value_type)
+
+        return False
+
+    return st.from_type(pa.DataType).filter(is_dataframe_column_type)
 
 
 @st.composite
@@ -554,6 +597,36 @@ def contiguous_slices(draw: Any, size: int) -> slice:
     return slice(start, stop + 1 if stop is not None else stop, step)
 
 
+def field_to_large_type_equivalent(f: pa.Field) -> pa.Field:
+    """Upcast string and binary to large equivalents."""
+
+    if pa.types.is_dictionary(f.type):
+        if pa.types.is_string(f.type.value_type):
+            return f.with_type(
+                pa.dictionary(
+                    index_type=f.type.index_type,
+                    value_type=pa.large_string(),
+                    ordered=f.type.ordered,
+                )
+            )
+        elif pa.types.is_binary(f.type.value_type):
+            return f.with_type(
+                pa.dictionary(
+                    index_type=f.type.index_type,
+                    value_type=pa.large_binary(),
+                    ordered=f.type.ordered,
+                )
+            )
+        else:
+            return f
+    elif pa.types.is_string(f.type):
+        return f.with_type(pa.large_string())
+    elif pa.types.is_binary(f.type):
+        return f.with_type(pa.large_binary())
+    else:
+        return f
+
+
 def schemas_equal(
     s1: pa.Schema,
     s2: pa.Schema,
@@ -567,29 +640,24 @@ def schemas_equal(
     * string/binary can be upcast to large equivalent
     * ignore_field_order option
     """
-
-    def _to_large_type_equivalent(f: pa.Field):
-        if pa.types.is_string(f.type):
-            return f.with_type(pa.large_string())
-        if pa.types.is_binary(f.type):
-            return f.with_type(pa.large_binary())
-        return f
-
     s1_names = sorted(s1.names) if ignore_field_order else s1.names
     s2_names = sorted(s2.names) if ignore_field_order else s2.names
     if s1_names != s2_names:
+        note(f"Schema names not eq, {s1_names} != {s2_names}")
         return False
     if len(s1) != len(s2):
+        note(f"Schema length not eq, {len(s1)} != {len(s2)}")
         return False
 
     for field_name in s1.names:
         f1 = s1.field(field_name)
         f2 = s2.field(field_name)
         if large_type_equivalence:
-            f1 = _to_large_type_equivalent(f1)
-            f2 = _to_large_type_equivalent(f2)
+            f1 = field_to_large_type_equivalent(f1)
+            f2 = field_to_large_type_equivalent(f2)
 
         if f1 != f2:
+            note(f"Schema fields not eq, {f1} != {f2}")
             return False
 
     return True
@@ -603,18 +671,14 @@ def arrays_equal(
     # TODO: handle nullable arrays
 
     if read.type != expected.type:
-        note("arrays_equal: types not eq {read.type} != {expected.type}")
+        note(f"arrays_equal: types not eq {read.type} != {expected.type}")
         return False
 
     if len(read) != len(expected):
         note(f"arrays_equal: length not eq {len(read)} != {len(expected)}")
         return False
 
-    if not pa.types.is_floating(expected.type):
-        is_eq = expected.equals(read)
-        if not is_eq:
-            note("arrays_equal: contents not eq (non-float)")
-    else:
+    if pa.types.is_floating(expected.type):
         # Floating point path, to allow for NaN. Implemented with NumPy for convenience only
         is_eq = all(
             np.array_equal(r.to_numpy(), e.to_numpy(), equal_nan=equal_nan)
@@ -622,6 +686,23 @@ def arrays_equal(
         )
         if not is_eq:
             note("arrays_equal: contents not eq (float)")
+
+    elif pa.types.is_dictionary(expected.type):
+        # weak equivalence for dictionary encoded arrays. Just check that values,
+        # regardless of dictionary, are equal.
+        is_eq = pa.compute.all(
+            pa.compute.equal(
+                combine_chunks(read).dictionary_decode(),
+                combine_chunks(expected).dictionary_decode(),
+            )
+        )
+        if not is_eq:
+            note("arrays_equal: dictionary arrays not equal")
+
+    else:
+        is_eq = expected.equals(read)
+        if not is_eq:
+            note("arrays_equal: contents not eq (non-float)")
 
     return is_eq
 
@@ -660,14 +741,10 @@ def tables_equal(
 
     def _upcast_to_large(schema: pa.Schema) -> pa.Schema:
         for fidx, field in enumerate(schema):
-            if pa.types.is_string(field.type):
-                schema = schema.set(
-                    fidx, schema.field(fidx).with_type(pa.large_string())
-                )
-            if pa.types.is_binary(field.type):
-                schema = schema.set(
-                    fidx, schema.field(fidx).with_type(pa.large_binary())
-                )
+            f_large = field_to_large_type_equivalent(field)
+            if f_large != field:
+                schema = schema.set(fidx, f_large)
+
         return schema
 
     # TileDB upcasts variable length types to large - so treat as equivalent
@@ -687,22 +764,6 @@ def tables_equal(
     if not is_eq:
         note(f"tables_equal: contents not eq: {read} != {expected}")
     return is_eq
-
-
-def df_to_table(df: pd.DataFrame, *, schema: pa.Schema | None = None) -> pa.Table:
-
-    # Table.from_pandas attempts to infer nulled values (e.g., NaN->null, NaT->null).
-    # We often do not want this behavior, so explicitly override it with `from_pandas=False`
-    # paramter of pa.array().
-
-    # NB: this doesn't work with NaT/timestamp64. We could pass a `mask` param to `to_numpy`,
-    # but NaT is such a strange beast, leaving as is for now.
-
-    schema = pa.Schema.from_pandas(df).remove_metadata() if schema is None else schema
-    tbl = pa.Table.from_pydict(
-        {k: pa.array(v, from_pandas=False) for k, v in df.items()}, schema=schema
-    )
-    return tbl
 
 
 def posix_filename() -> st.SearchStrategy:

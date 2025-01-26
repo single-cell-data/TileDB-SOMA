@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
-from typing import Any, Sequence, Union
+from typing import Any, Generic, Sequence, TypeVar, Union
 
+import attrs
 import numpy as np
 import pandas as pd
 import pyarrow as pa
@@ -20,9 +21,10 @@ import tiledbsoma as soma
 from tests.ht._array_state_machine import SOMAArrayStateMachine
 from tests.ht._ht_test_config import HT_TEST_CONFIG
 from tests.ht._ht_util import (
+    arrow_array,
     arrow_schema,
     dataframe_datatype,
-    df_to_table,
+    # df_to_table,
     from_datatype,
     pad_array,
     schemas_equal,
@@ -64,8 +66,55 @@ AxisDomain = Union[None, tuple[Any, Any], list[Any]]
 Domain = Sequence[AxisDomain]
 
 
+T = TypeVar("T")
+
+
+@attrs.define(kw_only=True, frozen=True)
+class EnumerationMetadata(Generic[T]):
+    type: pa.DictionaryType
+    max_categories: int = attrs.field(init=False)
+    categories: tuple[T] = attrs.field(factory=tuple)
+
+    def __attrs_post_init__(self):
+        # we are frozen, so use __setattr__ to bypass.
+        max_categories = np.iinfo(self.type.index_type.to_pandas_dtype()).max
+
+        # catch the corner case where the cardinality of the value type
+        # is smaller than the index type.
+        if pa.types.is_integer(self.type.value_type):
+            max_categories = min(
+                max_categories, np.iinfo(self.type.value_type.to_pandas_dtype()).max
+            )
+        object.__setattr__(self, "max_categories", max_categories)
+
+    @property
+    def ordered(self) -> bool:
+        return self.type.ordered != 0
+
+    @property
+    def index_type(self) -> pa.DataType:
+        return self.type.index_type
+
+    @property
+    def value_type(self) -> pa.DataType:
+        return self.type.value_type
+
+    @property
+    def num_categories(self) -> int:
+        return len(self.categories)
+
+    def extend_categories(
+        self, additional_categories: Sequence[T]
+    ) -> EnumerationMetadata[T]:
+        return attrs.evolve(
+            self, categories=tuple(list(self.categories) + list(additional_categories))
+        )
+
+
 @st.composite
-def dataframe_schema(draw: st.DrawFn) -> tuple[Sequence[str], pa.Schema]:
+def dataframe_schema(
+    draw: st.DrawFn,
+) -> tuple[tuple[str], pa.Schema, dict[str, EnumerationMetadata[Any]]]:
     """Strategy will generate a legal DataFrame schema and accompanying index names.
 
     Will comply with SOMA/TileDB conventions:
@@ -123,11 +172,20 @@ def dataframe_schema(draw: st.DrawFn) -> tuple[Sequence[str], pa.Schema]:
     ]
     schema = pa.schema(reordered_fields)
 
+    # define enumerations metadata
+    enumeration_metadata: dict[str, EnumerationMetadata[Any]] = {}
+    for field_idx, field in enumerate(schema):
+        if field.name in index_column_names:
+            continue
+        if not pa.types.is_dictionary(field.type):
+            continue
+        enumeration_metadata[field.name] = EnumerationMetadata(type=field.type)
+
     assert len(schema) > 1
     assert len(index_column_names) > 0
     assert len(index_column_names) < len(schema)
 
-    return index_column_names, schema
+    return index_column_names, schema, enumeration_metadata
 
 
 def default_max_domain(datatype: pa.DataType) -> AxisDomain:
@@ -266,107 +324,269 @@ def dataframe_domain(
 
 
 @st.composite
-def arrow_table(
+def column_values(
+    draw: st.DrawFn,
+    type: pa.DataType,
+    size: int,
+    is_index: bool,
+    unique: bool,
+    domain: tuple[int, int] | tuple[None, None],
+    is_dict_value: bool = False,  # only used for bug workarounds
+) -> pa.Array:
+
+    min_value, max_value = domain
+
+    if pa.types.is_timestamp(type):
+        # don't generate NaT. ht_np.from_dtype doesn't obey min/max value
+        # params, so draw ints, and then convert. NEB-7 says NaT is -2**63.
+        min_value = (
+            -(2**63) + 1
+            if min_value is None
+            else max(-(2**63) + 1, int(min_value.astype(np.int64)))
+        )
+        max_value = (
+            2**63 - 1
+            if max_value is None
+            else min(2**63 - 1, int(max_value.astype(np.int64)))
+        )
+        dtype = np.dtype(type.to_pandas_dtype())
+        elements = st.builds(
+            dtype.type,
+            st.integers(min_value=min_value, max_value=max_value),
+            st.just(type.unit),
+        )
+        return draw(
+            arrow_array(type, size, elements=elements, unique=unique, padding=False)
+        )
+
+    elif pa.types.is_floating(type) and (
+        HT_TEST_CONFIG["sc-61506_workaround"] or HT_TEST_CONFIG["sc-62449_workaround"]
+    ):
+        dtype = np.dtype(type.to_pandas_dtype())
+        elements = ht_np.from_dtype(dtype, min_value=min_value, max_value=max_value)
+        if HT_TEST_CONFIG["sc-61506_workaround"]:
+            # Array dimensions do not de-dup -0. and 0. as the same. Disable any generation
+            # of negative zero until this is resolved. NB: ledger de-dup treats them a equivalent
+            # per IEEE 754 semantics.
+            elements = elements.filter(lambda x: not (x == 0 and np.signbit(x)))
+
+        if HT_TEST_CONFIG["sc-62449_workaround"] and is_dict_value:
+            # NaN as categorical values fails to evolve the enum correctly, do disable NaN values
+            # ONLY when generating cat values.
+            elements = elements.filter(lambda x: not np.isnan(x))
+
+        return draw(
+            arrow_array(type, size, elements=elements, unique=unique, padding=False)
+        )
+
+    elif pa.types.is_primitive(type):
+        dtype = np.dtype(type.to_pandas_dtype())
+        elements = ht_np.from_dtype(dtype, min_value=min_value, max_value=max_value)
+        return draw(
+            arrow_array(type, size, elements=elements, unique=unique, padding=False)
+        )
+
+    elif type in [pa.binary(), pa.large_binary()]:
+        if HT_TEST_CONFIG["sc-62447_workaround"]:
+            return draw(
+                arrow_array(
+                    np.dtype(bytes),
+                    size,
+                    elements=st.binary(min_size=1).filter(lambda b: b"\x00" not in b),
+                    unique=unique,
+                    padding=False,
+                )
+            )
+        else:
+            return draw(
+                arrow_array(np.dtype(bytes), size, unique=unique, padding=False)
+            )
+
+    elif type in [pa.string(), pa.large_string()]:
+        dtype = np.dtype(str)
+        if is_index:
+            # TileDB string index columns are restricted to "7 bit ASCII". These tests use
+            # Pandas indexing, which are foobared on anything containing a null.
+            # So in practice, use [1,127]
+            if HT_TEST_CONFIG["sc-62265_workaround"]:
+                elements = st.text(
+                    alphabet=st.characters(
+                        codec="ascii", min_codepoint=1, max_codepoint=126
+                    )
+                )
+            else:
+                elements = st.text(
+                    alphabet=st.characters(codec="ascii", min_codepoint=1)
+                )
+        else:
+            # Disallow surrogate codepoints.  Arrow doesn't implement them in the
+            # encoder/decoder, and will throw if they are present.
+            if is_dict_value and HT_TEST_CONFIG["sc-62447_workaround"]:
+                # don't allow empty string due to sc-62447
+                elements = st.text(
+                    alphabet=st.characters(exclude_categories=["C"]), min_size=1
+                )
+            else:
+                elements = st.text(alphabet=st.characters(exclude_categories=["C"]))
+
+        return draw(
+            arrow_array(dtype, size, elements=elements, unique=unique, padding=False)
+        )
+
+    assert False, f"Unknown type: no arrow_table strategy for this type {type}"
+
+
+def setdiff(a: set[Any], b: set[Any]) -> set[Any]:
+    """Set diff (a-b) with nan equivalence."""
+
+    def wo_nan(s):
+        return {v for v in s if v == v}  # v!=v means Nan
+
+    a_wo_nan, b_wo_nan = wo_nan(a), wo_nan(b)
+    if a_wo_nan != a and b_wo_nan != b:
+        # both had a Nan, so diff the wo_nan sets
+        return a_wo_nan - b_wo_nan
+    elif a_wo_nan == a and b_wo_nan == b:
+        # neither had a NaN, so diff the original sets
+        return a - b
+    elif a_wo_nan != a and b_wo_nan == b:
+        # a had a NaN, b did not, diff the wo sets and add a NaN.
+        # this handles the case where set a had multiple (different)
+        # NaNs
+        return (a_wo_nan - b_wo_nan) | {np.nan}
+    else:
+        # b had a NaN, a did not, so just diff the wo sets
+        return a_wo_nan - b_wo_nan
+
+
+@st.composite
+def arrow_table2(
     draw: st.DrawFn,
     schema: pa.Schema,
     index_column_names: Sequence[str],
+    enumeration_metadata: dict[str, EnumerationMetadata[Any]],
     domain: Domain,
     *,
-    min_size: int | None = None,
-) -> pa.Table:
-    """Strategy to generate Arrow Tables which:
-    * match the schema
-    * have unique values in the index columns
-    * have values within the domain for the index columns
-    """
+    min_size: int = 0,
+) -> tuple[pa.Table, dict[str, EnumerationMetadata[Any]]]:
+
     index_domains = {
         k: v if v is not None else (None, None)
         for k, v in zip(index_column_names, domain)
     }
-    columns = []
+    is_unique = {
+        f.name: (f.name in index_domains or f.name == "soma_joinid") for f in schema
+    }
+
+    # First, decide if we have any dictionary/categoricals that we want to extend
     for field in schema:
-        name = field.name
-        unique = name in index_column_names or name == "soma_joinid"
-        elements = None
+        field_name = field.name
+        if pa.types.is_dictionary(field.type):
+            assert field_name not in index_domains
+            enmr = enumeration_metadata[field_name]
+            assert enmr.type == field.type
 
-        min_value, max_value = index_domains.get(name, (None, None))
-        assert name in index_domains or (min_value is None and max_value is None)
-
-        # special case - limit even if it isn't an index
-        if name == "soma_joinid" and min_value is None:
-            min_value = 0
-            max_value = 2**56 - 1
-
-        if pa.types.is_timestamp(field.type):
-            # don't generate NaT. ht_np.from_dtype doesn't obey min/max value
-            # params, so draw ints, and then convert. NEB-7 says NaT is -2**63.
-            min_value = (
-                -(2**63) + 1
-                if min_value is None
-                else max(-(2**63) + 1, int(min_value.astype(np.int64)))
-            )
-            max_value = (
-                2**63 - 1
-                if max_value is None
-                else min(2**63 - 1, int(max_value.astype(np.int64)))
-            )
-            dtype = np.dtype(field.type.to_pandas_dtype())
-            elements = st.builds(
-                dtype.type,
-                st.integers(min_value=min_value, max_value=max_value),
-                st.just(field.type.unit),
-            )
-
-        elif pa.types.is_primitive(field.type):
-            dtype = np.dtype(field.type.to_pandas_dtype())
-            elements = ht_np.from_dtype(dtype, min_value=min_value, max_value=max_value)
-            # Array dimensions do not de-dup -0. and 0. as the same. Disable any generation
-            # of negative zero until this is resolved. NB: ledger de-dup treats them a equivalent
-            # per IEEE 754 semantics.
-            if HT_TEST_CONFIG["sc-61506_workaround"] and pa.types.is_floating(
-                field.type
+            # extend enum categories if it is len == 0 or draw says to do it
+            if enmr.num_categories == 0 or (
+                (enmr.num_categories < enmr.max_categories) and draw(st.booleans())
             ):
-                elements = elements.filter(lambda x: not (x == 0 and np.signbit(x)))
+                MAX_CATEGORIES = 129
+                new_cat_count = enmr.num_categories + draw(
+                    st.integers(
+                        min_value=1,
+                        max_value=min(
+                            MAX_CATEGORIES, enmr.max_categories - enmr.num_categories
+                        ),
+                    )
+                )
+                assert new_cat_count <= enmr.max_categories
 
-        elif field.type in [pa.string(), pa.large_string()]:
-            dtype = np.dtype(str)
-            if name in index_column_names:
-                # TileDB string index columns are restricted to "ASCII", and in
-                # actuality to [0,128). These tests use Pandas indexing, which are
-                # foobared on anything containing a null.  So in practice, use [1,126]
-                if HT_TEST_CONFIG["sc-62265_workaround"]:
-                    elements = st.text(
-                        alphabet=st.characters(
-                            codec="ascii", min_codepoint=1, max_codepoint=126
+                # draw until we have sufficient unique values
+                while enmr.num_categories < new_cat_count:
+                    new_cats = draw(
+                        column_values(
+                            field.type.value_type,
+                            new_cat_count - enmr.num_categories,
+                            is_index=False,
+                            unique=True,
+                            domain=(None, None),
+                            is_dict_value=True,
                         )
                     )
-                else:
-                    elements = st.text(
-                        alphabet=st.characters(codec="ascii", min_codepoint=1)
+                    new_unique_cats = setdiff(
+                        set(new_cats.to_pylist()), set(enmr.categories)
                     )
-            else:
-                # Disallow surrogate codepoints.  Arrow doesn't implement them in the
-                # encoder/decoder, and will throw if they are present.
-                elements = st.text(alphabet=st.characters(exclude_categories=["C"]))
+                    enmr = enmr.extend_categories(new_unique_cats)
 
-        elif field.type in [pa.binary(), pa.large_binary()]:
-            dtype = np.dtype(bytes)
+                enumeration_metadata[field_name] = enmr
 
-        else:  # use default
-            dtype = np.dtype(field.type.to_pandas_dtype())
+    # Second, calculate size of table based upon uniqueness requirements
+    def get_max_size() -> int:
+        """max_size is mininimum of:
+        * domain range of all int/uint/ts index domains
+        * number of categories for any column with a unique draw
+        """
+        max_size = 1024  # default max
+        for f in schema:
+            if not is_unique[f.name]:
+                continue
+            if f.name in index_domains:
+                d = index_domains[f.name]
+                if pa.types.is_integer(f.type):
+                    max_size = min(max_size, d[1] - d[0] + 1)
+                elif pa.types.is_floating(f.type):
+                    max_size = int(
+                        min(
+                            max_size,
+                            (d[1] - d[0]) / np.finfo(f.type.to_pandas_dtype()).tiny + 1,
+                        )
+                    )
+                elif pa.types.is_timestamp(f.type):
+                    delta = int(d[1].astype(np.int64)) - int(d[0].astype(np.int64))
+                    assert delta >= 0
+                    max_size = min(max_size, delta + 1)
+            elif pa.types.is_dictionary(f.type):
+                max_size = min(max_size, enumeration_metadata[f.name].num_categories)
 
-        columns.append(
-            ht_pd.column(name=name, dtype=dtype, unique=unique, elements=elements)
-        )
+        return max_size
 
-    df = draw(
-        ht_pd.data_frames(columns=columns, index=ht_pd.range_indexes(min_size=min_size))
-    )
-    assert min_size is None or len(df) >= min_size
-    tbl = df_to_table(df, schema=schema)
-    assert schemas_equal(schema, tbl.schema)
-    if len(tbl) == 0:
-        return tbl
+    size = draw(st.integers(min_value=min_size, max_value=get_max_size()))
+
+    # Third, draw table columns
+    columns = {}
+    for field in schema:
+        field_name = field.name
+        is_index = field_name in index_domains
+
+        if pa.types.is_dictionary(field.type):
+            assert not is_index
+            enmr = enumeration_metadata[field_name]
+
+            dictionary = pa.array(enmr.categories, type=field.type.value_type)
+            indices = draw(
+                ht_np.arrays(
+                    dtype=field.type.index_type.to_pandas_dtype(),
+                    shape=(size,),
+                    unique=is_unique[field_name],
+                    elements=st.integers(
+                        min_value=0, max_value=enmr.num_categories - 1
+                    ),
+                )
+            )
+            columns[field_name] = pa.DictionaryArray.from_arrays(
+                indices, dictionary, ordered=field.type.ordered
+            )
+        else:
+            domain = index_domains.get(field_name, (None, None))
+            if field_name == "soma_joinid" and domain == (None, None):
+                domain = (0, 2**56 - 1)
+            columns[field_name] = draw(
+                column_values(field.type, size, is_index, is_unique[field_name], domain)
+            )
+
+    assert all(len(columns[k]) == size for k in columns)
+    tbl = pa.Table.from_pydict(columns, schema)
+    assert tbl.schema == schema
 
     # split, sometimes
     if (
@@ -393,7 +613,7 @@ def arrow_table(
         )
         tbl = pa.Table.from_batches(batches)
 
-    return tbl
+    return tbl, enumeration_metadata
 
 
 class SOMADataFrameStateMachine(SOMAArrayStateMachine):
@@ -401,13 +621,20 @@ class SOMADataFrameStateMachine(SOMAArrayStateMachine):
     def __init__(self) -> None:
         super().__init__()
 
-    @initialize(data=st.data(), index_cols_and_schema=dataframe_schema())
+    @initialize(data=st.data(), dataframe_schema=dataframe_schema())
     def setup(
         self,
         data: st.DataObject,
-        index_cols_and_schema: tuple[Sequence[str], pa.Schema],
+        dataframe_schema: tuple[
+            Sequence[str], pa.Schema, dict[str, EnumerationMetadata[Any]]
+        ],
     ) -> None:
-        self.index_column_names, self.schema = index_cols_and_schema
+        # Schema in total includes:  arrow schema, index column names and current enumerations for
+        # any dictionary columns. These must be evolved as a unit, as there are lots of cross-
+        # dependencies (e.g, some types may not be an index column).
+        self.index_column_names, self.schema, self.enumeration_metadata = (
+            dataframe_schema
+        )
         self.domain = data.draw(  # TODO XXX: should be a ledger
             dataframe_domain(
                 schema=self.schema, index_column_names=self.index_column_names
@@ -549,8 +776,14 @@ class SOMADataFrameStateMachine(SOMAArrayStateMachine):
     )  # only one write per timestamp until sc-61223 and sc-61226 are fixed
     @rule(data=st.data())
     def write(self, data: st.DataObject) -> None:
-        df_tbl = data.draw(
-            arrow_table(self.schema, self.index_column_names, self.domain, min_size=1)
+        df_tbl, self.enumeration_metadata = data.draw(
+            arrow_table2(
+                self.schema,
+                self.index_column_names,
+                self.enumeration_metadata,
+                self.domain,
+                min_size=1,
+            )
         )
         fragments_before_write = get_entries(f"{self.uri}/__fragments")
         self.A.write(df_tbl)

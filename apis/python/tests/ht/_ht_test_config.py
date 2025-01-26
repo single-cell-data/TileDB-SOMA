@@ -32,6 +32,12 @@ HT_TEST_CONFIG = {
     "sc-62236_workaround": True,
     # string index values starting with 0x7F barf
     "sc-62265_workaround": True,
+    # dictionary of timestamps is not working
+    "sc-62364_workaround": True,
+    # string categories of value '' fail in write
+    "sc-62447_workaround": True,
+    # float categoricals fail with NaN
+    "sc-62449_workaround": True,
     #
     # Enable/disable partially implemented features
     #

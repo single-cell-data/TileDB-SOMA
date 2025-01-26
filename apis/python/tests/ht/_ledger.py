@@ -217,10 +217,21 @@ def combine_first(first: pd.DataFrame, second: pd.DataFrame) -> pd.DataFrame:
 
     NB: the two dataframes MUST have the same structure, and we aren't
     too careful about checking for that.
+
+    NB: there is a modest attempt to combine categories for categorical/dictionary
+    types, but there are corner cases where the "right" answer is not obvious (e.g.,
+    conflicting ordering of ordered categories).
     """
 
     assert first.columns.equals(second.columns)
-    assert first.dtypes.equals(second.dtypes)
+    assert len(first.dtypes) == len(second.dtypes)
+    for (_1, s1), (_2, s2) in zip(first.items(), second.items()):
+        if s1.dtype == "category":
+            assert s2.dtype == "category"
+            assert s1.cat.ordered == s2.cat.ordered
+            assert s1.cat.categories.dtype == s2.cat.categories.dtype
+        else:
+            assert s1.dtype == s2.dtype
     assert first.index.nlevels == second.index.nlevels
 
     new_index = first.index.union(second.index)
@@ -238,8 +249,26 @@ def combine_first(first: pd.DataFrame, second: pd.DataFrame) -> pd.DataFrame:
         if first_series.dtype.kind == "M" and second_series.dtype.kind == "M":
             second_series = pd.to_datetime(second_series)
 
-        combined_series = pd.concat([first_series, second_series])
-        combined_series = combined_series.reindex(new_index, copy=False)
+        if not len(first_series):
+            combined_series = second_series
+        elif not len(second_series):
+            combined_series = first_series
+        else:
+            combined_series = pd.concat([first_series, second_series])
+            combined_series = combined_series.reindex(new_index, copy=False)
+
+        # Pandas concat will drop categorical information. Re-categoricalize.
+        if first_series.dtype == "category":
+            assert first_series.cat.ordered == second_series.cat.ordered
+            merged_categories = list(
+                dict.fromkeys(first_series.cat.categories)
+                | dict.fromkeys(second_series.cat.categories)
+            )
+            combined_series = combined_series.astype(
+                pd.CategoricalDtype(
+                    categories=merged_categories, ordered=first_series.cat.ordered
+                )
+            )
 
         new_data[col] = combined_series
 
