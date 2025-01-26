@@ -3,27 +3,8 @@
  *
  * @section LICENSE
  *
- * The MIT License
- *
- * @copyright Copyright (c) 2024 TileDB, Inc.
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
+ * Licensed under the MIT License.
+ * Copyright (c) TileDB, Inc. and The Chan Zuckerberg Initiative Foundation
  *
  * @section DESCRIPTION
  *
@@ -32,7 +13,97 @@
 
 #include "soma_column.h"
 
+#include "soma_attribute.h"
+#include "soma_dimension.h"
+#include "soma_geometry_column.h"
+
 namespace tiledbsoma {
+
+std::map<uint32_t, SOMAColumn::Factory> SOMAColumn::deserialiser_map = {
+    {soma_column_datatype_t::SOMA_COLUMN_ATTRIBUTE, SOMAAttribute::deserialize},
+    {soma_column_datatype_t::SOMA_COLUMN_DIMENSION, SOMADimension::deserialize},
+    {soma_column_datatype_t::SOMA_COLUMN_GEOMETRY,
+     SOMAGeometryColumn::deserialize}};
+
+std::vector<std::shared_ptr<SOMAColumn>> SOMAColumn::deserialize(
+    const nlohmann::json& soma_schema_columns,
+    const Context& ctx,
+    const Array& array) {
+    std::vector<std::shared_ptr<SOMAColumn>> columns;
+
+    if (!soma_schema_columns.empty()) {
+        for (auto& column : soma_schema_columns) {
+            auto type = column[TILEDB_SOMA_SCHEMA_COL_TYPE_KEY]
+                            .template get<uint32_t>();
+
+            auto col = deserialiser_map[type](column, ctx, array);
+
+            if (col) {
+                // Deserialized column can be null in case the array is modified
+                // and the column no longer exists.
+                columns.push_back(deserialiser_map[type](column, ctx, array));
+            }
+        }
+
+        // Check for any newly added attributes
+        std::unordered_set<std::string> used_attribute_names;
+
+        std::for_each(
+            columns.cbegin(),
+            columns.cend(),
+            [&used_attribute_names](const std::shared_ptr<SOMAColumn>& col) {
+                if (col->tiledb_attributes().has_value()) {
+                    auto attributes = col->tiledb_attributes().value();
+                    for (const auto& attribute : attributes) {
+                        used_attribute_names.insert(attribute.name());
+                    }
+                }
+            });
+
+        for (size_t i = 0; i < array.schema().attribute_num(); ++i) {
+            auto attribute = array.schema().attribute(i);
+
+            // Attribute is already used by another attribute so we skip
+            if (used_attribute_names.contains(attribute.name())) {
+                continue;
+            }
+
+            auto enumeration_name = AttributeExperimental::get_enumeration_name(
+                ctx, attribute);
+            auto enumeration = enumeration_name.has_value() ?
+                                   std::make_optional(
+                                       ArrayExperimental::get_enumeration(
+                                           ctx, array, attribute.name())) :
+                                   std::nullopt;
+
+            columns.push_back(
+                std::make_shared<SOMAAttribute>(attribute, enumeration));
+        }
+    } else {
+        // All arrays before the introduction of SOMAColumn do not have
+        // composite columns, thus the metadata are trivially constructible
+        for (auto& dimension : array.schema().domain().dimensions()) {
+            columns.push_back(std::make_shared<SOMADimension>(dimension));
+        }
+
+        for (auto& attribute : array.schema().attributes()) {
+            auto enumeration_name = AttributeExperimental::get_enumeration_name(
+                ctx, attribute.second);
+            auto enumeration = enumeration_name.has_value() ?
+                                   std::make_optional(
+                                       ArrayExperimental::get_enumeration(
+                                           ctx,
+                                           array,
+                                           attribute.second.name())) :
+                                   std::nullopt;
+
+            columns.push_back(
+                std::make_shared<SOMAAttribute>(attribute.second, enumeration));
+        }
+    }
+
+    return columns;
+}
 
 template <>
 std::pair<std::string, std::string> SOMAColumn::core_domain_slot<std::string>()

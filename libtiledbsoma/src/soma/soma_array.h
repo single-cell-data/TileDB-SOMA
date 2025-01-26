@@ -3,27 +3,8 @@
  *
  * @section LICENSE
  *
- * The MIT License
- *
- * @copyright Copyright (c) 2022-2024 TileDB, Inc.
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
+ * Licensed under the MIT License.
+ * Copyright (c) TileDB, Inc. and The Chan Zuckerberg Initiative Foundation
  *
  * @section DESCRIPTION
  *
@@ -45,6 +26,7 @@
 #include "enums.h"
 #include "logger_public.h"
 #include "managed_query.h"
+#include "soma_column.h"
 #include "soma_object.h"
 
 // ================================================================
@@ -112,6 +94,7 @@ class SOMAArray : public SOMAObject {
         std::string_view uri,
         ArraySchema schema,
         std::string_view soma_type,
+        std::optional<std::string_view> soma_schema = std::nullopt,
         std::optional<TimestampRange> timestamp = std::nullopt);
 
     /**
@@ -227,6 +210,7 @@ class SOMAArray : public SOMAObject {
         , first_read_next_(other.first_read_next_)
         , submitted_(other.submitted_) {
         fill_metadata_cache(timestamp_);
+        fill_columns();
     }
 
     SOMAArray(
@@ -1538,6 +1522,8 @@ class SOMAArray : public SOMAObject {
 
     void fill_metadata_cache(std::optional<TimestampRange> timestamp);
 
+    void fill_columns();
+
     // SOMAArray URI
     std::string uri_;
 
@@ -1559,6 +1545,9 @@ class SOMAArray : public SOMAObject {
 
     // Metadata cache
     std::map<std::string, MetadataValue> metadata_;
+
+    // SOMAColumn list
+    std::vector<std::shared_ptr<SOMAColumn>> columns_;
 
     // Read timestamp range (start, end)
     std::optional<TimestampRange> timestamp_;

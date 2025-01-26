@@ -3,27 +3,8 @@
  *
  * @section LICENSE
  *
- * The MIT License
- *
- * @copyright Copyright (c) 2024 TileDB, Inc.
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
+ * Licensed under the MIT License.
+ * Copyright (c) TileDB, Inc. and The Chan Zuckerberg Initiative Foundation
  *
  * @section DESCRIPTION
  *
@@ -99,8 +80,8 @@ void load_soma_collection(py::module& m) {
             "create",
             [](std::shared_ptr<SOMAContext> ctx,
                std::string_view uri,
-               std::optional<std::vector<std::string>> axis_names,
-               std::optional<std::vector<std::optional<std::string>>>
+               const std::optional<std::vector<std::string>>& axis_names,
+               const std::optional<std::vector<std::optional<std::string>>>&
                    axis_units,
                std::optional<TimestampRange> timestamp) {
                 if (axis_units.has_value() && !axis_names.has_value()) {
@@ -140,6 +121,27 @@ void load_soma_collection(py::module& m) {
 
     py::class_<SOMAMultiscaleImage, SOMACollection, SOMAGroup, SOMAObject>(
         m, "SOMAMultiscaleImage")
+        .def_static(
+            "create",
+            [](std::shared_ptr<SOMAContext> ctx,
+               std::string_view uri,
+               const std::vector<std::string>& axis_names,
+               const std::vector<std::optional<std::string>>& axis_units,
+               std::optional<TimestampRange> timestamp) {
+                SOMACoordinateSpace coord_space{axis_names, axis_units};
+                try {
+                    SOMAMultiscaleImage::create(
+                        uri, ctx, coord_space, timestamp);
+                } catch (const std::exception& e) {
+                    TPY_ERROR_LOC(e.what());
+                }
+            },
+            py::kw_only(),
+            "ctx"_a,
+            "uri"_a,
+            "axis_names"_a,
+            "axis_units"_a,
+            "timestamp"_a = py::none())
         .def_static(
             "open",
             &SOMAMultiscaleImage::open,

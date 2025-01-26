@@ -3,27 +3,8 @@
  *
  * @section LICENSE
  *
- * The MIT License
- *
- * @copyright Copyright (c) 2024-2025 TileDB, Inc.
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
+ * Licensed under the MIT License.
+ * Copyright (c) TileDB, Inc. and The Chan Zuckerberg Initiative Foundation
  *
  * @section DESCRIPTION
  *
@@ -33,6 +14,43 @@
 #include "soma_attribute.h"
 
 namespace tiledbsoma {
+std::shared_ptr<SOMAColumn> SOMAAttribute::deserialize(
+    const nlohmann::json& soma_schema, const Context& ctx, const Array& array) {
+    if (!soma_schema.contains(TILEDB_SOMA_SCHEMA_COL_ATTR_KEY)) {
+        throw TileDBSOMAError(
+            "[SOMAAttribute][deserialize] Missing required field "
+            "'tiledb_attributes'");
+    }
+
+    std::vector<std::string>
+        attribute_names = soma_schema[TILEDB_SOMA_SCHEMA_COL_ATTR_KEY]
+                              .template get<std::vector<std::string>>();
+
+    if (attribute_names.size() != 1) {
+        throw TileDBSOMAError(std::format(
+            "[SOMAAttribute][deserialize] Invalid number of attributes. "
+            "Epected 1, got {}",
+            attribute_names.size()));
+    }
+
+    if (!array.schema().has_attribute(attribute_names[0])) {
+        // Attribute probably dropped so skip column reconstruction.
+        return nullptr;
+    }
+
+    auto attribute = array.schema().attribute(attribute_names[0]);
+    auto enumeration_name = AttributeExperimental::get_enumeration_name(
+        ctx, attribute);
+
+    std::optional<Enumeration>
+        enumeration = enumeration_name ?
+                          std::make_optional(ArrayExperimental::get_enumeration(
+                              ctx, array, attribute.name())) :
+                          std::nullopt;
+
+    return std::make_shared<SOMAAttribute>(attribute, enumeration);
+}
+
 std::shared_ptr<SOMAAttribute> SOMAAttribute::create(
     std::shared_ptr<Context> ctx,
     ArrowSchema* schema,
@@ -123,5 +141,15 @@ ArrowSchema* SOMAAttribute::arrow_schema_slot(
     return ArrowAdapter::arrow_schema_from_tiledb_attribute(
                attribute, *ctx.tiledb_ctx(), array)
         .release();
+}
+
+void SOMAAttribute::serialize(nlohmann::json& columns_schema) const {
+    nlohmann::json column;
+
+    column[TILEDB_SOMA_SCHEMA_COL_TYPE_KEY] = static_cast<uint32_t>(
+        soma_column_datatype_t::SOMA_COLUMN_ATTRIBUTE);
+    column[TILEDB_SOMA_SCHEMA_COL_ATTR_KEY] = {attribute.name()};
+
+    columns_schema.push_back(column);
 }
 }  // namespace tiledbsoma

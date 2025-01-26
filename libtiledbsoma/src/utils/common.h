@@ -3,27 +3,8 @@
  *
  * @section LICENSE
  *
- * The MIT License
- *
- * @copyright Copyright (c) 2022 TileDB, Inc.
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
+ * Licensed under the MIT License.
+ * Copyright (c) TileDB, Inc. and The Chan Zuckerberg Initiative Foundation
  *
  * @section DESCRIPTION
  *
@@ -49,6 +30,14 @@ const std::string SOMA_COORDINATE_SPACE_KEY = "soma_coordinate_space";
 const std::string SOMA_GEOMETRY_COLUMN_NAME = "soma_geometry";
 const std::string SOMA_GEOMETRY_DIMENSION_PREFIX = "tiledb__internal__";
 const std::string ARROW_DATATYPE_METADATA_KEY = "dtype";
+
+// SOMAColumn metadata keys
+const std::string TILEDB_SOMA_SCHEMA_KEY = "tiledb_soma_schema";
+const std::string TILEDB_SOMA_SCHEMA_VERSION = "0.0.1";
+const std::string TILEDB_SOMA_SCHEMA_COL_KEY = "tiledb_columns";
+const std::string TILEDB_SOMA_SCHEMA_COL_TYPE_KEY = "tiledb_column_type";
+const std::string TILEDB_SOMA_SCHEMA_COL_DIM_KEY = "tiledb_dimensions";
+const std::string TILEDB_SOMA_SCHEMA_COL_ATTR_KEY = "tiledb_attributes";
 
 using MetadataValue = std::tuple<tiledb_datatype_t, uint32_t, const void*>;
 enum MetadataInfo { dtype = 0, num, value };

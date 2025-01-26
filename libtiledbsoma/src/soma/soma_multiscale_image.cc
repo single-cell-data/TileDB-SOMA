@@ -3,27 +3,8 @@
  *
  * @section LICENSE
  *
- * The MIT License
- *
- * @copyright Copyright (c) 2024 TileDB, Inc.
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
+ * Licensed under the MIT License.
+ * Copyright (c) TileDB, Inc. and The Chan Zuckerberg Initiative Foundation
  *
  * @section DESCRIPTION
  *
@@ -43,11 +24,30 @@ using namespace tiledb;
 void SOMAMultiscaleImage::create(
     std::string_view uri,
     std::shared_ptr<SOMAContext> ctx,
+    const SOMACoordinateSpace& coordinate_space,
     std::optional<TimestampRange> timestamp) {
     try {
         std::filesystem::path image_uri(uri);
-        SOMAGroup::create(
+        auto group = SOMAGroup::create(
             ctx, image_uri.string(), "SOMAMultiscaleImage", timestamp);
+
+        // Set spatial-encoding metadata.
+        group->set_metadata(
+            SPATIAL_ENCODING_VERSION_KEY,
+            TILEDB_STRING_UTF8,
+            static_cast<uint32_t>(SPATIAL_ENCODING_VERSION_VAL.size()),
+            SPATIAL_ENCODING_VERSION_VAL.c_str(),
+            true);
+
+        // Set coordinate space metadata.
+        const auto coord_space_metadata = coordinate_space.to_string();
+        group->set_metadata(
+            SOMA_COORDINATE_SPACE_KEY,
+            TILEDB_STRING_UTF8,
+            static_cast<uint32_t>(coord_space_metadata.size()),
+            coord_space_metadata.c_str(),
+            true);
+
     } catch (TileDBError& e) {
         throw TileDBSOMAError(e.what());
     }

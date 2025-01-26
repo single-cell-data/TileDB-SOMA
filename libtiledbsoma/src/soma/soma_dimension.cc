@@ -3,27 +3,8 @@
  *
  * @section LICENSE
  *
- * The MIT License
- *
- * @copyright Copyright (c) 2024 TileDB, Inc.
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
+ * Licensed under the MIT License.
+ * Copyright (c) TileDB, Inc. and The Chan Zuckerberg Initiative Foundation
  *
  * @section DESCRIPTION
  *
@@ -34,6 +15,30 @@
 #include "utils/arrow_adapter.h"
 
 namespace tiledbsoma {
+
+std::shared_ptr<SOMAColumn> SOMADimension::deserialize(
+    const nlohmann::json& soma_schema, const Context&, const Array& array) {
+    if (!soma_schema.contains(TILEDB_SOMA_SCHEMA_COL_DIM_KEY)) {
+        throw TileDBSOMAError(
+            "[SOMADimension][deserialize] Missing required field "
+            "'tiledb_dimensions'");
+    }
+
+    std::vector<std::string>
+        dimension_names = soma_schema[TILEDB_SOMA_SCHEMA_COL_DIM_KEY]
+                              .template get<std::vector<std::string>>();
+
+    if (dimension_names.size() != 1) {
+        throw TileDBSOMAError(std::format(
+            "[SOMADimension][deserialize] Invalid number of dimensions: "
+            "expected 1, got {}",
+            dimension_names.size()));
+    }
+
+    auto dimension = array.schema().domain().dimension(dimension_names[0]);
+
+    return std::make_shared<SOMADimension>(dimension);
+}
 
 std::shared_ptr<SOMADimension> SOMADimension::create(
     std::shared_ptr<Context> ctx,
@@ -764,4 +769,13 @@ ArrowSchema* SOMADimension::arrow_schema_slot(const SOMAContext&, Array&) {
         .release();
 }
 
+void SOMADimension::serialize(nlohmann::json& columns_schema) const {
+    nlohmann::json column;
+
+    column[TILEDB_SOMA_SCHEMA_COL_TYPE_KEY] = static_cast<uint32_t>(
+        soma_column_datatype_t::SOMA_COLUMN_DIMENSION);
+    column[TILEDB_SOMA_SCHEMA_COL_DIM_KEY] = {dimension.name()};
+
+    columns_schema.push_back(column);
+}
 }  // namespace tiledbsoma

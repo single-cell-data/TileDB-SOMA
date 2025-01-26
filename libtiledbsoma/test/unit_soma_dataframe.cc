@@ -3,27 +3,8 @@
  *
  * @section LICENSE
  *
- * The MIT License
- *
- * @copyright Copyright (c) 2024 TileDB, Inc.
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
+ * Licensed under the MIT License.
+ * Copyright (c) TileDB, Inc. and The Chan Zuckerberg Initiative Foundation
  *
  * @section DESCRIPTION
  *
@@ -972,8 +953,8 @@ TEST_CASE_METHOD(
                 "mem://unit-test-variant-indexed-dataframe-3-" + suffix1 + "-" +
                     suffix2);
 
-            std::string string_lo = specify_domain ? "apple" : "";
-            std::string string_hi = specify_domain ? "zebra" : "";
+            std::string string_lo = "";
+            std::string string_hi = "";
             std::vector<helper::DimInfo> dim_infos(
                 {i64_dim_info(), str_dim_info(string_lo, string_hi)});
             std::vector<helper::AttrInfo> attr_infos({u32_attr_info()});
@@ -996,17 +977,13 @@ TEST_CASE_METHOD(
 
             std::array<std::string, 2> str_range = ndrect.range<std::string>(
                 dim_infos[1].name);
-            if (specify_domain) {
-                REQUIRE(str_range[0] == dim_infos[1].string_lo);
-                REQUIRE(str_range[1] == dim_infos[1].string_hi);
-            } else {
-                // Can we write empty strings in this range?
-                REQUIRE(str_range[0] <= "");
-                REQUIRE(str_range[1] >= "");
-                // Can we write ASCII values in this range?
-                REQUIRE(str_range[0] < " ");
-                REQUIRE(str_range[1] > "~");
-            }
+
+            // Can we write empty strings in this range?
+            REQUIRE(str_range[0] <= "");
+            REQUIRE(str_range[1] >= "");
+            // Can we write ASCII values in this range?
+            REQUIRE(str_range[0] < " ");
+            REQUIRE(str_range[1] > "~");
 
             // Check shape before write
             int64_t expect = dim_infos[0].dim_max + 1;
@@ -1236,8 +1213,8 @@ TEST_CASE_METHOD(
                 "mem://unit-test-variant-indexed-dataframe-4-" + suffix1 + "-" +
                     suffix2);
 
-            std::string string_lo = specify_domain ? "apple" : "";
-            std::string string_hi = specify_domain ? "zebra" : "";
+            std::string string_lo = "";
+            std::string string_hi = "";
             std::vector<helper::DimInfo> dim_infos(
                 {str_dim_info(string_lo, string_hi), u32_dim_info()});
             std::vector<helper::AttrInfo> attr_infos({i64_attr_info()});
@@ -1255,17 +1232,13 @@ TEST_CASE_METHOD(
 
             std::array<std::string, 2> str_range = ndrect.range<std::string>(
                 dim_infos[0].name);
-            if (specify_domain) {
-                REQUIRE(str_range[0] == dim_infos[0].string_lo);
-                REQUIRE(str_range[1] == dim_infos[0].string_hi);
-            } else {
-                // Can we write empty strings in this range?
-                REQUIRE(str_range[0] <= "");
-                REQUIRE(str_range[1] >= "");
-                // Can we write ASCII values in this range?
-                REQUIRE(str_range[0] < " ");
-                REQUIRE(str_range[1] > "~");
-            }
+
+            // Can we write empty strings in this range?
+            REQUIRE(str_range[0] <= "");
+            REQUIRE(str_range[1] >= "");
+            // Can we write ASCII values in this range?
+            REQUIRE(str_range[0] < " ");
+            REQUIRE(str_range[1] > "~");
 
             std::array<uint32_t, 2> u32_range = ndrect.range<uint32_t>(
                 dim_infos[1].name);
