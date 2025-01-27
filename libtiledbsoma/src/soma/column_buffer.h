@@ -107,7 +107,7 @@ class ColumnBuffer {
         uint64_t num_elems,
         const void* data,
         T* offsets,
-        uint8_t* validity = nullptr) {
+        const std::optional<std::vector<uint8_t>>& validity = std::nullopt) {
         num_cells_ = num_elems;
 
         // Ensure the offset type is either uint32_t* or uint64_t*
@@ -127,14 +127,10 @@ class ColumnBuffer {
                 (std::byte*)data, (std::byte*)data + num_elems * type_size_);
         }
 
-        if (is_nullable_) {
-            if (validity != nullptr) {
-                for (uint64_t i = 0; i < num_elems; ++i) {
-                    uint8_t byte = validity[i / 8];
-                    uint8_t bit = (byte >> (i % 8)) & 0x01;
-                    validity_.push_back(bit);
-                }
-            } else {
+        if (validity.has_value()) {
+            validity_ = *validity;
+        } else {
+            if (is_nullable_) {
                 validity_.assign(num_elems, 1);  // Default all to valid (1)
             }
         }

@@ -152,7 +152,7 @@ void load_managed_query(py::module& m) {
                     data.size(),
                     (const void*)data_info.ptr,
                     static_cast<uint64_t*>(nullptr),
-                    static_cast<uint8_t*>(nullptr));
+                    std::nullopt);
                 py::gil_scoped_acquire acquire;
             })
         .def(
