@@ -142,27 +142,40 @@ void load_managed_query(py::module& m) {
                 arrow_array.release(&arrow_array);
             })
         .def(
-            "set_soma_data",
-            [](ManagedQuery& mq, py::array data) {
+            "set_column_data",
+            [](ManagedQuery& mq, std::string name, py::array data) {
                 py::buffer_info data_info = data.request();
 
                 py::gil_scoped_release release;
-                mq.setup_write_column(
-                    "soma_data",
-                    data.size(),
-                    (const void*)data_info.ptr,
-                    static_cast<uint64_t*>(nullptr),
-                    std::nullopt);
+                try {
+                    mq.setup_write_column(
+                        name,
+                        data.size(),
+                        (const void*)data_info.ptr,
+                        static_cast<uint64_t*>(nullptr),
+                        std::nullopt);
+                } catch (const std::exception& e) {
+                    TPY_ERROR_LOC(e.what());
+                }
                 py::gil_scoped_acquire acquire;
             })
         .def(
             "submit_write",
-            &ManagedQuery::submit_write,
+            [](ManagedQuery& mq, bool sort_coords) {
+                try {
+                    mq.submit_write(sort_coords);
+                } catch (const std::exception& e) {
+                    TPY_ERROR_LOC(e.what());
+                }
+            },
             "sort_coords"_a = false,
             py::call_guard<py::gil_scoped_release>())
 
         .def("reset", &ManagedQuery::reset)
         .def("close", &ManagedQuery::close)
+
+        .def_property_readonly("result_order", &ManagedQuery::result_order)
+        .def_property_readonly("column_names", &ManagedQuery::column_names)
 
         // The following short functions are expected to be invoked when the
         // coords are Python list/tuple, or NumPy arrays.  Arrow arrays are in

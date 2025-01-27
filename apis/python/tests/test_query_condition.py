@@ -20,18 +20,23 @@ if VERBOSE:
 
 def pandas_query(uri, condition):
     sr = clib.SOMAArray(uri)
-    arrow_table = sr.read_next()
-    assert sr.results_complete()
+    mq = clib.ManagedQuery(sr, sr.context())
+    arrow_table = mq.next()
+
+    with pytest.raises(StopIteration):
+        mq.next()
 
     return arrow_table.to_pandas().query(condition)
 
 
 def soma_query(uri, condition):
-    qc = QueryCondition(condition)
     sr = clib.SOMAArray(uri)
-    sr.set_condition(qc, sr.schema)
-    arrow_table = sr.read_next()
-    assert sr.results_complete()
+    mq = clib.ManagedQuery(sr, sr.context())
+    mq.set_condition(QueryCondition(condition), sr.schema)
+    arrow_table = mq.next()
+
+    with pytest.raises(StopIteration):
+        mq.next()
 
     return arrow_table
 
@@ -106,12 +111,15 @@ def test_query_condition_select_columns():
     uri = os.path.join(SOMA_URI, "obs")
     condition = "percent_mito > 0.02"
 
-    sr = clib.SOMAArray(uri, column_names=["n_genes"])
-    qc = QueryCondition(condition)
-    sr.set_condition(qc, sr.schema)
-    arrow_table = sr.read_next()
+    sr = clib.SOMAArray(uri)
+    mq = clib.ManagedQuery(sr, sr.context())
+    mq.select_columns(["n_genes"])
+    mq.set_condition(QueryCondition(condition), sr.schema)
+    arrow_table = mq.next()
 
-    assert sr.results_complete()
+    with pytest.raises(StopIteration):
+        mq.next()
+
     assert arrow_table.num_rows == 1332
     assert arrow_table.num_columns == 2
 
@@ -120,13 +128,14 @@ def test_query_condition_all_columns():
     uri = os.path.join(SOMA_URI, "obs")
     condition = "percent_mito > 0.02"
 
-    qc = QueryCondition(condition)
-
     sr = clib.SOMAArray(uri)
-    sr.set_condition(qc, sr.schema)
-    arrow_table = sr.read_next()
+    mq = clib.ManagedQuery(sr, sr.context())
+    mq.set_condition(QueryCondition(condition), sr.schema)
+    arrow_table = mq.next()
 
-    assert sr.results_complete()
+    with pytest.raises(StopIteration):
+        mq.next()
+
     assert arrow_table.num_rows == 1332
     assert arrow_table.num_columns == 7
 
@@ -135,26 +144,29 @@ def test_query_condition_reset():
     uri = os.path.join(SOMA_URI, "obs")
     condition = "percent_mito > 0.02"
 
-    qc = QueryCondition(condition)
-
     sr = clib.SOMAArray(uri)
-    sr.set_condition(qc, sr.schema)
-    arrow_table = sr.read_next()
+    mq = clib.ManagedQuery(sr, sr.context())
+    mq.set_condition(QueryCondition(condition), sr.schema)
+    arrow_table = mq.next()
 
-    assert sr.results_complete()
+    with pytest.raises(StopIteration):
+        mq.next()
+
     assert arrow_table.num_rows == 1332
     assert arrow_table.num_columns == 7
 
     # reset and submit new query with open array
     # ---------------------------------------------------------------
     condition = "percent_mito < 0.02"
-    qc = QueryCondition(condition)
-    sr.reset(column_names=["percent_mito"])
-    sr.set_condition(qc, sr.schema)
 
-    arrow_table = sr.read_next()
+    mq = clib.ManagedQuery(sr, sr.context())
+    mq.select_columns(["percent_mito"])
+    mq.set_condition(QueryCondition(condition), sr.schema)
+    arrow_table = mq.next()
 
-    assert sr.results_complete()
+    with pytest.raises(StopIteration):
+        mq.next()
+
     assert arrow_table.num_rows == 1306
     assert arrow_table.num_columns == 1
 
@@ -217,7 +229,8 @@ def test_eval_error_conditions(malformed_condition):
 
     with pytest.raises(SOMAError):
         sr = clib.SOMAArray(uri)
-        sr.set_condition(qc, sr.schema)
+        mq = clib.ManagedQuery(sr, sr.context())
+        mq.set_condition(qc, sr.schema)
 
     with pytest.raises(SOMAError):
         # test function directly for codecov
