@@ -8,6 +8,7 @@ Implementation of SOMA DenseNDArray.
 
 from __future__ import annotations
 
+import warnings
 from typing import List, Sequence, Tuple, Union
 
 import numpy as np
@@ -190,7 +191,7 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
                 The coordinates for slicing the array.
             result_order:
                 Order of read results.
-                This can be one of 'row-major', 'col-major', or 'auto'.
+                This can be one of 'row-major' (default) or 'column-major'
             partitions:
                 An optional :class:`ReadPartitions` hint to indicate
                 how results should be organized.
@@ -219,6 +220,15 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
         # The only exception is if the array has been created but no data have been written at
         # all, in which case the best we can do is use the schema shape.
         handle: clib.SOMADenseNDArray = self._handle._handle
+
+        if result_order == options.ResultOrder.AUTO:
+            warnings.warn(
+                "The use of 'result_order=\"auto\"' is deprecated and will be "
+                "removed in future versions. Please use 'row-order' (the default "
+                "if no option is provided) or 'col-order' instead.",
+                DeprecationWarning,
+            )
+            result_order = somacore.ResultOrder.ROW_MAJOR
 
         ned = []
         for dim_name in handle.dimension_names:
