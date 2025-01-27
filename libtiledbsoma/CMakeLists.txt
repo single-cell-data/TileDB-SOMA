@@ -89,6 +89,8 @@ set(CMAKE_CXX_EXTENSIONS OFF) # Don't use GNU extensions
 # Build with fPIC
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
+set(CMAKE_VERBOSE_MAKEFILE ON)
+
 # Set default builds/configuration to be Release.
 get_property(is_multi_config GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
 if (is_multi_config)
@@ -221,7 +223,7 @@ if(MSVC)
   )
 else()
 
-  set(TILEDBSOMA_COMPILE_OPTIONS -Wall -Wextra -DSPDLOG_USE_STD_FORMAT)
+  set(TILEDBSOMA_COMPILE_OPTIONS -Wall -Wextra -DSPDLOG_USE_STD_FORMAT -D_LIBCPP_TYPEINFO_COMPARISON_IMPLEMENTATION=2)
 
   if(${TILEDBSOMA_ENABLE_WERROR})
     set(TILEDBSOMA_WERROR_OPTION -Werror)

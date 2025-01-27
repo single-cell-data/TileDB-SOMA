@@ -122,6 +122,9 @@ class SOMADimension : public SOMAColumn {
 
     std::any _non_empty_domain_slot(Array& array) const override;
 
+    std::any _non_empty_domain_slot_opt(
+        const SOMAContext& ctx, Array& array) const override;
+
     std::any _core_current_domain_slot(
         const SOMAContext& ctx, Array& array) const override;
 
