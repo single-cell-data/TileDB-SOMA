@@ -12,6 +12,8 @@
  */
 
 #include "soma_point_cloud_dataframe.h"
+#include <tiledb/tiledb>
+#include "utils/common.h"
 
 namespace tiledbsoma {
 using namespace tiledb;
@@ -24,9 +26,11 @@ void SOMAPointCloudDataFrame::create(
     std::string_view uri,
     const std::unique_ptr<ArrowSchema>& schema,
     const ArrowTable& index_columns,
+    const SOMACoordinateSpace& coordinate_space,
     std::shared_ptr<SOMAContext> ctx,
     PlatformConfig platform_config,
     std::optional<TimestampRange> timestamp) {
+    // Create TileDB array that is open for writing.
     auto [tiledb_schema, soma_schema_extension] =
         ArrowAdapter::tiledb_schema_from_arrow_schema(
             ctx->tiledb_ctx(),
@@ -35,13 +39,26 @@ void SOMAPointCloudDataFrame::create(
             "SOMAPointCloudDataFrame",
             true,
             platform_config);
-    SOMAArray::create(
+    auto array = SOMAArray::_create(
         ctx,
         uri,
         tiledb_schema,
         "SOMAPointCloudDataFrame",
         std::nullopt,
         timestamp);
+
+    // Add additional point cloud dataframe metadata.
+    array.put_metadata(
+        SPATIAL_ENCODING_VERSION_KEY,
+        TILEDB_STRING_UTF8,
+        static_cast<uint32_t>(SPATIAL_ENCODING_VERSION_VAL.size()),
+        SPATIAL_ENCODING_VERSION_VAL.c_str());
+    const auto coord_space_metadata = coordinate_space.to_string();
+    array.put_metadata(
+        SOMA_COORDINATE_SPACE_KEY,
+        TILEDB_STRING_UTF8,
+        static_cast<uint32_t>(coord_space_metadata.size()),
+        coord_space_metadata.c_str());
 }
 
 std::unique_ptr<SOMAPointCloudDataFrame> SOMAPointCloudDataFrame::open(

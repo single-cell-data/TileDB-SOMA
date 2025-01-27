@@ -17,6 +17,7 @@
 #include <filesystem>
 
 #include "soma_array.h"
+#include "soma_coordinates.h"
 
 namespace tiledbsoma {
 
@@ -37,6 +38,8 @@ class SOMAPointCloudDataFrame : public SOMAArray {
      * @param schema Arrow schema
      * @param index_columns The index column names with associated domains
      * and tile extents per dimension
+     * @param coordinate_space The coordinate space the PointCloudDataFrame
+     * spatial axes are defined on.
      * @param ctx SOMAContext
      * @param platform_config Optional config parameter dictionary
      * @param timestamp Optional the timestamp range to write SOMA metadata info
@@ -45,6 +48,7 @@ class SOMAPointCloudDataFrame : public SOMAArray {
         std::string_view uri,
         const std::unique_ptr<ArrowSchema>& schema,
         const ArrowTable& index_columns,
+        const SOMACoordinateSpace& coordinate_space,
         std::shared_ptr<SOMAContext> ctx,
         PlatformConfig platform_config = PlatformConfig(),
         std::optional<TimestampRange> timestamp = std::nullopt);
@@ -124,6 +128,10 @@ class SOMAPointCloudDataFrame : public SOMAArray {
 
     using SOMAArray::open;
 
+    inline const SOMACoordinateSpace& coordinate_space() const {
+        return coord_space_;
+    };
+
     /**
      * Return the data schema, in the form of a ArrowSchema.
      *
@@ -144,6 +152,9 @@ class SOMAPointCloudDataFrame : public SOMAArray {
      * @return int64_t
      */
     uint64_t count();
+
+   private:
+    SOMACoordinateSpace coord_space_;
 };
 }  // namespace tiledbsoma
 

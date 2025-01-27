@@ -32,10 +32,10 @@ void SOMAGeometryDataFrame::create(
     const std::unique_ptr<ArrowSchema>& schema,
     const ArrowTable& index_columns,
     const ArrowTable& spatial_columns,
+    const SOMACoordinateSpace& coordinate_space,
     std::shared_ptr<SOMAContext> ctx,
     PlatformConfig platform_config,
     std::optional<TimestampRange> timestamp) {
-    std::vector<std::string> spatial_axes;
     auto [tiledb_schema, soma_schema_extension] =
         ArrowAdapter::tiledb_schema_from_arrow_schema(
             ctx->tiledb_ctx(),
@@ -46,13 +46,26 @@ void SOMAGeometryDataFrame::create(
             platform_config,
             spatial_columns);
 
-    SOMAArray::create(
+    auto array = SOMAArray::_create(
         ctx,
         uri,
         tiledb_schema,
         "SOMAGeometryDataFrame",
         soma_schema_extension.dump(),
         timestamp);
+
+    // Add additional geometry dataframe metadata.
+    array.put_metadata(
+        SPATIAL_ENCODING_VERSION_KEY,
+        TILEDB_STRING_UTF8,
+        static_cast<uint32_t>(SPATIAL_ENCODING_VERSION_VAL.size()),
+        SPATIAL_ENCODING_VERSION_VAL.c_str());
+    const auto coord_space_metadata = coordinate_space.to_string();
+    array.put_metadata(
+        SOMA_COORDINATE_SPACE_KEY,
+        TILEDB_STRING_UTF8,
+        static_cast<uint32_t>(coord_space_metadata.size()),
+        coord_space_metadata.c_str());
 }
 
 std::unique_ptr<SOMAGeometryDataFrame> SOMAGeometryDataFrame::open(
@@ -89,24 +102,6 @@ const std::vector<std::string> SOMAGeometryDataFrame::index_column_names()
     return this->dimension_names();
 }
 
-const std::vector<std::string> SOMAGeometryDataFrame::spatial_column_names()
-    const {
-    std::vector<std::string> names;
-    std::unordered_set<std::string> unique_names;
-    std::regex rgx("tiledb__internal__(\\S+)__");
-    std::smatch matches;
-    for (auto dimension : this->dimension_names()) {
-        if (std::regex_search(dimension, matches, rgx)) {
-            if (unique_names.count(matches[1].str()) == 0) {
-                unique_names.insert(matches[1].str());
-                names.push_back(matches[1].str());
-            }
-        }
-    }
-
-    return names;
-}
-
 uint64_t SOMAGeometryDataFrame::count() {
     return this->nnz();
 }
@@ -114,8 +109,6 @@ uint64_t SOMAGeometryDataFrame::count() {
 void SOMAGeometryDataFrame::set_array_data(
     std::unique_ptr<ArrowSchema> arrow_schema,
     std::unique_ptr<ArrowArray> arrow_array) {
-    std::vector<std::string> spatial_axes = this->spatial_column_names();
-
     for (auto i = 0; i < arrow_schema->n_children; ++i) {
         /**
          * If `soma_geometry` conforms to specific formats automatically convert
@@ -164,11 +157,24 @@ void SOMAGeometryDataFrame::set_array_data(
 //= private non-static
 //===================================================================
 
+void SOMAGeometryDataFrame::initialize() {
+    auto coordinate_space_meta = get_metadata(SOMA_COORDINATE_SPACE_KEY);
+
+    if (!coordinate_space_meta.has_value()) {
+        throw TileDBSOMAError(std::format(
+            "[SOMAGeometryDataFrame][initialize] Missing required '{}' "
+            "metadata key.",
+            SOMA_COORDINATE_SPACE_KEY));
+    }
+
+    coord_space_ = std::apply(
+        SOMACoordinateSpace::from_metadata, coordinate_space_meta.value());
+}
+
 std::vector<ArrowTable> SOMAGeometryDataFrame::_cast_polygon_vertex_list_to_wkb(
     ArrowArray* array) {
     // Initialize a vector to hold all the Arrow tables containing the
     // transformed geometry data
-    std::vector<std::string> spatial_axes = this->spatial_column_names();
     std::vector<ArrowTable> tables;
     tables.push_back(ArrowTable(
         std::make_unique<ArrowArray>(ArrowArray{}),
@@ -181,7 +187,9 @@ std::vector<ArrowTable> SOMAGeometryDataFrame::_cast_polygon_vertex_list_to_wkb(
     NANOARROW_THROW_NOT_OK(
         ArrowSchemaSetName(tables.front().second.get(), "soma_geometry"));
 
-    for (const auto& axis : spatial_axes) {
+    for (size_t i = 0; i < coord_space_.size(); ++i) {
+        const auto axis = coord_space_.axis(i);
+
         // Min spatial axis
         tables.push_back(ArrowTable(
             std::make_unique<ArrowArray>(ArrowArray{}),
@@ -192,7 +200,7 @@ std::vector<ArrowTable> SOMAGeometryDataFrame::_cast_polygon_vertex_list_to_wkb(
             tables.back().second.get(), ArrowType::NANOARROW_TYPE_DOUBLE));
         NANOARROW_THROW_NOT_OK(ArrowSchemaSetName(
             tables.back().second.get(),
-            (SOMA_GEOMETRY_DIMENSION_PREFIX + axis + "__min").c_str()));
+            (SOMA_GEOMETRY_DIMENSION_PREFIX + axis.name + "__min").c_str()));
 
         // Max spatial axis
         tables.push_back(ArrowTable(
@@ -203,7 +211,7 @@ std::vector<ArrowTable> SOMAGeometryDataFrame::_cast_polygon_vertex_list_to_wkb(
             tables.back().second.get(), ArrowType::NANOARROW_TYPE_DOUBLE));
         NANOARROW_THROW_NOT_OK(ArrowSchemaSetName(
             tables.back().second.get(),
-            (SOMA_GEOMETRY_DIMENSION_PREFIX + axis + "__max").c_str()));
+            (SOMA_GEOMETRY_DIMENSION_PREFIX + axis.name + "__max").c_str()));
     }
 
     // Large list of doubles
@@ -250,7 +258,7 @@ std::vector<ArrowTable> SOMAGeometryDataFrame::_cast_polygon_vertex_list_to_wkb(
         NANOARROW_THROW_NOT_OK(
             ArrowArrayAppendBytes(tables.front().first.get(), wkb_view));
 
-        for (size_t i = 0; i < spatial_axes.size(); ++i) {
+        for (size_t i = 0; i < coord_space_.size(); ++i) {
             NANOARROW_THROW_NOT_OK(ArrowArrayAppendDouble(
                 tables[2 * i + 1].first.get(), envelope.range.at(i).first));
             NANOARROW_THROW_NOT_OK(ArrowArrayAppendDouble(
@@ -269,7 +277,6 @@ std::vector<ArrowTable> SOMAGeometryDataFrame::_cast_polygon_vertex_list_to_wkb(
 
 ArrowTable SOMAGeometryDataFrame::_reconstruct_geometry_data_table(
     ArrowTable original_data, const std::vector<ArrowTable>& wkb_data) {
-    std::vector<std::string> spatial_axes = this->spatial_column_names();
     std::unordered_set<std::string> unique_column_names;
     std::unique_ptr<ArrowSchema> arrow_schema = std::make_unique<ArrowSchema>(
         ArrowSchema{});
