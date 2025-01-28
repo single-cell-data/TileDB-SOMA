@@ -758,7 +758,8 @@ void load_soma_array(py::module& m) {
                             array.non_empty_domain_slot<float>(name));
                     case TILEDB_STRING_UTF8:
                     case TILEDB_STRING_ASCII:
-                        return py::cast(array.non_empty_domain_slot_var(name));
+                        return py::cast(
+                            array.non_empty_domain_slot<std::string>(name));
                     default:
                         throw TileDBSOMAError(
                             "Unsupported dtype for nonempty domain.");
@@ -814,7 +815,8 @@ void load_soma_array(py::module& m) {
                             array.non_empty_domain_slot_opt<float>(name));
                     case TILEDB_STRING_UTF8:
                     case TILEDB_STRING_ASCII:
-                        return py::cast(array.non_empty_domain_slot_var(name));
+                        return py::cast(
+                            array.non_empty_domain_slot_opt<std::string>(name));
                     default:
                         throw TileDBSOMAError(
                             "Unsupported dtype for nonempty domain.");

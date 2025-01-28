@@ -123,8 +123,6 @@ void SOMADimension::_set_dim_points(
             break;
         case TILEDB_STRING_UTF8:
         case TILEDB_STRING_ASCII:
-        case TILEDB_CHAR:
-        case TILEDB_BLOB:
             query->select_points(
                 dimension.name(),
                 std::any_cast<std::span<const std::string>>(points));
@@ -215,10 +213,6 @@ void SOMADimension::_set_dim_ranges(
             break;
         case TILEDB_STRING_UTF8:
         case TILEDB_STRING_ASCII:
-        case TILEDB_CHAR:
-        case TILEDB_BLOB:
-        case TILEDB_GEOM_WKT:
-        case TILEDB_GEOM_WKB:
             query->select_ranges(
                 dimension.name(),
                 std::any_cast<std::vector<std::pair<std::string, std::string>>>(
@@ -296,10 +290,7 @@ void SOMADimension::_set_current_domain_slot(
         } break;
         case TILEDB_STRING_ASCII:
         case TILEDB_STRING_UTF8:
-        case TILEDB_CHAR:
-        case TILEDB_BLOB:
-        case TILEDB_GEOM_WKT:
-        case TILEDB_GEOM_WKB: {
+        case TILEDB_GEOM_WKT: {
             // Here is an intersection of a few oddities:
             //
             // * Core domain for string dims must be a nullptr pair; it cannot
@@ -453,11 +444,7 @@ std::pair<bool, std::string> SOMADimension::_can_set_current_domain_slot(
             return comparator(
                 std::any_cast<std::array<double_t, 2>>(new_domain[0]));
         case TILEDB_STRING_ASCII:
-        case TILEDB_STRING_UTF8:
-        case TILEDB_CHAR:
-        case TILEDB_BLOB:
-        case TILEDB_GEOM_WKT:
-        case TILEDB_GEOM_WKB: {
+        case TILEDB_STRING_UTF8: {
             auto dom = std::any_cast<std::array<std::string, 2>>(new_domain[0]);
             if (dom[0] != "" || dom[1] != "") {
                 return std::pair(
@@ -575,15 +562,204 @@ std::any SOMADimension::_non_empty_domain_slot(Array& array) const {
                 array.non_empty_domain<double_t>(dimension.name()));
         case TILEDB_STRING_ASCII:
         case TILEDB_STRING_UTF8:
-        case TILEDB_BLOB:
-        case TILEDB_CHAR:
-        case TILEDB_GEOM_WKB:
-        case TILEDB_GEOM_WKT:
             return std::make_any<std::pair<std::string, std::string>>(
                 array.non_empty_domain_var(dimension.name()));
         default:
             throw TileDBSOMAError(std::format(
                 "[SOMADimension][_non_empty_domain_slot] Unknown dimension "
+                "type {}",
+                impl::type_to_str(dimension.type())));
+    }
+}
+
+std::any SOMADimension::_non_empty_domain_slot_opt(
+    const SOMAContext& ctx, Array& array) const {
+    int32_t is_empty;
+
+    if (dimension.type() == TILEDB_STRING_ASCII ||
+        dimension.type() == TILEDB_STRING_UTF8) {
+        void* var_start;
+        void* var_end;
+        uint64_t size_start, size_end;
+        ctx.tiledb_ctx()->handle_error(
+            tiledb_array_get_non_empty_domain_var_size_from_name(
+                ctx.tiledb_ctx()->ptr().get(),
+                array.ptr().get(),
+                dimension.name().c_str(),
+                &size_start,
+                &size_end,
+                &is_empty));
+
+        if (is_empty) {
+            return std::make_any<
+                std::optional<std::pair<std::string, std::string>>>(
+                std::nullopt);
+        }
+
+        var_start = malloc(size_start);
+        var_end = malloc(size_end);
+
+        ctx.tiledb_ctx()->handle_error(
+            tiledb_array_get_non_empty_domain_var_from_name(
+                ctx.tiledb_ctx()->ptr().get(),
+                array.ptr().get(),
+                dimension.name().c_str(),
+                var_start,
+                var_end,
+                &is_empty));
+
+        auto ned = std::make_pair(
+            std::string((char*)var_start, size_start),
+            std::string((char*)var_end, size_end));
+        free(var_start);
+        free(var_end);
+
+        return std::make_any<
+            std::optional<std::pair<std::string, std::string>>>(ned);
+    }
+
+    void* fixed_ned = malloc(16);
+    ctx.tiledb_ctx()->handle_error(tiledb_array_get_non_empty_domain_from_name(
+        ctx.tiledb_ctx()->ptr().get(),
+        array.ptr().get(),
+        dimension.name().c_str(),
+        fixed_ned,
+        &is_empty));
+
+    if (is_empty) {
+        // We free buffer here and return later the correctly typed optional
+        free(fixed_ned);
+    }
+
+    switch (dimension.type()) {
+        case TILEDB_UINT8: {
+            if (is_empty) {
+                return std::make_any<
+                    std::optional<std::pair<uint8_t, uint8_t>>>(std::nullopt);
+            } else {
+                auto data = std::make_pair(
+                    ((uint8_t*)fixed_ned)[0], ((uint8_t*)fixed_ned)[1]);
+                free(fixed_ned);
+                return std::make_any<
+                    std::optional<std::pair<uint8_t, uint8_t>>>(data);
+            }
+        }
+        case TILEDB_UINT16:
+            if (is_empty) {
+                return std::make_any<
+                    std::optional<std::pair<uint16_t, uint16_t>>>(std::nullopt);
+            } else {
+                auto data = std::make_pair(
+                    ((uint16_t*)fixed_ned)[0], ((uint16_t*)fixed_ned)[1]);
+                free(fixed_ned);
+                return std::make_any<
+                    std::optional<std::pair<uint16_t, uint16_t>>>(data);
+            }
+        case TILEDB_UINT32:
+            if (is_empty) {
+                return std::make_any<
+                    std::optional<std::pair<uint32_t, uint32_t>>>(std::nullopt);
+            } else {
+                auto data = std::make_pair(
+                    ((uint32_t*)fixed_ned)[0], ((uint32_t*)fixed_ned)[1]);
+                free(fixed_ned);
+                return std::make_any<
+                    std::optional<std::pair<uint32_t, uint32_t>>>(data);
+            }
+        case TILEDB_UINT64:
+            if (is_empty) {
+                return std::make_any<
+                    std::optional<std::pair<uint64_t, uint64_t>>>(std::nullopt);
+            } else {
+                auto data = std::make_pair(
+                    ((uint64_t*)fixed_ned)[0], ((uint64_t*)fixed_ned)[1]);
+                free(fixed_ned);
+                return std::make_any<
+                    std::optional<std::pair<uint64_t, uint64_t>>>(data);
+            }
+        case TILEDB_INT8:
+            if (is_empty) {
+                return std::make_any<std::optional<std::pair<int8_t, int8_t>>>(
+                    std::nullopt);
+            } else {
+                auto data = std::make_pair(
+                    ((int8_t*)fixed_ned)[0], ((int8_t*)fixed_ned)[1]);
+                free(fixed_ned);
+                return std::make_any<std::optional<std::pair<int8_t, int8_t>>>(
+                    data);
+            }
+        case TILEDB_INT16:
+            if (is_empty) {
+                return std::make_any<
+                    std::optional<std::pair<int16_t, int16_t>>>(std::nullopt);
+            } else {
+                auto data = std::make_pair(
+                    ((int16_t*)fixed_ned)[0], ((int16_t*)fixed_ned)[1]);
+                free(fixed_ned);
+                return std::make_any<
+                    std::optional<std::pair<int16_t, int16_t>>>(data);
+            }
+        case TILEDB_INT32:
+            if (is_empty) {
+                return std::make_any<
+                    std::optional<std::pair<int32_t, int32_t>>>(std::nullopt);
+            } else {
+                auto data = std::make_pair(
+                    ((int32_t*)fixed_ned)[0], ((int32_t*)fixed_ned)[1]);
+                free(fixed_ned);
+                return std::make_any<
+                    std::optional<std::pair<int32_t, int32_t>>>(data);
+            }
+        case TILEDB_DATETIME_YEAR:
+        case TILEDB_DATETIME_MONTH:
+        case TILEDB_DATETIME_WEEK:
+        case TILEDB_DATETIME_DAY:
+        case TILEDB_DATETIME_HR:
+        case TILEDB_DATETIME_MIN:
+        case TILEDB_DATETIME_SEC:
+        case TILEDB_DATETIME_MS:
+        case TILEDB_DATETIME_US:
+        case TILEDB_DATETIME_NS:
+        case TILEDB_DATETIME_PS:
+        case TILEDB_DATETIME_FS:
+        case TILEDB_DATETIME_AS:
+        case TILEDB_INT64:
+            if (is_empty) {
+                return std::make_any<
+                    std::optional<std::pair<int64_t, int64_t>>>(std::nullopt);
+            } else {
+                auto data = std::make_pair(
+                    ((int64_t*)fixed_ned)[0], ((int64_t*)fixed_ned)[1]);
+                free(fixed_ned);
+                return std::make_any<
+                    std::optional<std::pair<int64_t, int64_t>>>(data);
+            }
+        case TILEDB_FLOAT32:
+            if (is_empty) {
+                return std::make_any<
+                    std::optional<std::pair<float_t, float_t>>>(std::nullopt);
+            } else {
+                auto data = std::make_pair(
+                    ((float_t*)fixed_ned)[0], ((float_t*)fixed_ned)[1]);
+                free(fixed_ned);
+                return std::make_any<
+                    std::optional<std::pair<float_t, float_t>>>(data);
+            }
+        case TILEDB_FLOAT64:
+            if (is_empty) {
+                return std::make_any<
+                    std::optional<std::pair<double_t, double_t>>>(std::nullopt);
+            } else {
+                auto data = std::make_pair(
+                    ((double_t*)fixed_ned)[0], ((double_t*)fixed_ned)[1]);
+                free(fixed_ned);
+                return std::make_any<
+                    std::optional<std::pair<double_t, double_t>>>(data);
+            }
+        default:
+            throw TileDBSOMAError(std::format(
+                "[SOMADimension][_non_empty_domain_slot] Unknown "
+                "dimension "
                 "type {}",
                 impl::type_to_str(dimension.type())));
     }
@@ -675,11 +851,7 @@ std::any SOMADimension::_core_current_domain_slot(NDRectangle& ndrect) const {
                 std::make_pair(domain[0], domain[1]));
         }
         case TILEDB_STRING_UTF8:
-        case TILEDB_STRING_ASCII:
-        case TILEDB_CHAR:
-        case TILEDB_BLOB:
-        case TILEDB_GEOM_WKT:
-        case TILEDB_GEOM_WKB: {
+        case TILEDB_STRING_ASCII: {
             std::array<std::string, 2> domain = ndrect.range<std::string>(
                 dimension.name());
             return std::make_any<std::pair<std::string, std::string>>(
@@ -749,9 +921,6 @@ ArrowArray* SOMADimension::arrow_domain_slot(
                 domain_slot<float>(ctx, array, kind));
         case TILEDB_STRING_ASCII:
         case TILEDB_STRING_UTF8:
-        case TILEDB_CHAR:
-        case TILEDB_GEOM_WKB:
-        case TILEDB_GEOM_WKT:
             return ArrowAdapter::make_arrow_array_child_string(
                 domain_slot<std::string>(ctx, array, kind));
         default:

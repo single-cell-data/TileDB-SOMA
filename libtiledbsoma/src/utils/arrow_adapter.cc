@@ -11,10 +11,16 @@
  * This file defines the ArrowAdapter class.
  */
 
-#include "arrow_adapter.h"
+#include <ranges>
+
 #include "../soma/column_buffer.h"
+#include "arrow_adapter.h"
 #include "logger.h"
 #include "util.h"
+
+#include "../soma/soma_attribute.h"
+#include "../soma/soma_dimension.h"
+#include "../soma/soma_geometry_column.h"
 
 #include "../soma/soma_attribute.h"
 #include "../soma/soma_dimension.h"
@@ -968,12 +974,21 @@ ArrowAdapter::tiledb_schema_from_arrow_schema(
         }
     }
 
+    LOG_DEBUG(std::format("[ArrowAdapter] Additional schema metadata"));
+    nlohmann::json soma_schema_extension;
+    soma_schema_extension[TILEDB_SOMA_SCHEMA_COL_KEY] = nlohmann::json::array();
+    soma_schema_extension["version"] = TILEDB_SOMA_SCHEMA_VERSION;
+
     // Unit tests expect dimension order should match the index column schema
     // and NOT the Arrow schema
+    // We generate the additional schema metadata here to ensure that the
+    // serialized column order matches the expected schema order
     for (int64_t i = 0; i < index_column_schema->n_children; ++i) {
         LOG_DEBUG(std::format("[ArrowAdapter] child {}", i));
         const auto column = util::find_column_by_name(
             columns, index_column_schema->children[i]->name);
+
+        column->serialize(soma_schema_extension[TILEDB_SOMA_SCHEMA_COL_KEY]);
 
         if (column->tiledb_dimensions().has_value()) {
             // Intermediate variable required to avoid lifetime issues
@@ -999,10 +1014,10 @@ ArrowAdapter::tiledb_schema_from_arrow_schema(
         }
     }
 
-    for (auto column : columns) {
-        if (column->isIndexColumn()) {
-            continue;
-        }
+    for (const auto& column : columns | std::views::filter([](const auto& col) {
+                                  return !col->isIndexColumn();
+                              })) {
+        column->serialize(soma_schema_extension[TILEDB_SOMA_SCHEMA_COL_KEY]);
 
         if (column->tiledb_enumerations().has_value()) {
             auto enumerations = column->tiledb_enumerations().value();
@@ -1066,15 +1081,6 @@ ArrowAdapter::tiledb_schema_from_arrow_schema(
 
     LOG_DEBUG(std::format("[ArrowAdapter] check"));
     schema.check();
-
-    LOG_DEBUG(std::format("[ArrowAdapter] Additional schema metadata"));
-    nlohmann::json soma_schema_extension;
-
-    soma_schema_extension[TILEDB_SOMA_SCHEMA_COL_KEY] = nlohmann::json::array();
-    for (const auto& column : columns) {
-        column->serialize(soma_schema_extension[TILEDB_SOMA_SCHEMA_COL_KEY]);
-    }
-    soma_schema_extension["version"] = TILEDB_SOMA_SCHEMA_VERSION;
 
     LOG_DEBUG(std::format("[ArrowAdapter] returning"));
     return std::make_tuple(schema, soma_schema_extension);
@@ -1600,6 +1606,31 @@ std::unique_ptr<ArrowSchema> ArrowAdapter::make_arrow_schema(
                 std::string((char*)buffer->data, buffer->size_bytes).c_str());
         }
     }
+
+    return arrow_schema;
+}
+
+std::unique_ptr<ArrowSchema> ArrowAdapter::make_arrow_schema_parent(
+    int num_columns) {
+    auto arrow_schema = std::make_unique<ArrowSchema>();
+    arrow_schema->format = "+s";  // structure, i.e. non-leaf node
+    arrow_schema->name = strdup("parent");
+    arrow_schema->metadata = nullptr;
+    arrow_schema->flags = 0;
+    arrow_schema->n_children = num_columns;  // non-leaf node
+    arrow_schema->children = (ArrowSchema**)malloc(
+        arrow_schema->n_children * sizeof(ArrowSchema*));
+    arrow_schema->dictionary = nullptr;
+    arrow_schema->release = &ArrowAdapter::release_schema;
+    arrow_schema->private_data = nullptr;
+
+    for (int i = 0; i < num_columns; i++) {
+        arrow_schema->children[i] = nullptr;
+    }
+
+    LOG_DEBUG(std::format(
+        "[ArrowAdapter] make_arrow_schema n_children {}",
+        arrow_schema->n_children));
 
     return arrow_schema;
 }
