@@ -240,12 +240,13 @@ class CollectionBase(  # type: ignore[misc]  # __eq__ false positive
         :meth:`DataFrame.create` unchanged.
 
         Examples:
+            >>> import tiledbsoma
             >>> import pandas as pd
             >>> import pyarrow as pa
             >>> df = pd.DataFrame(data={"soma_joinid": [0, 1], "col1": [1, 2], "col2": [3, 4]})
             ... with tiledbsoma.Collection.create("/tmp/collection") as soma_collection:
             ...     soma_df = soma_collection.add_new_dataframe(
-            ...         "a_dataframe", schema=pa.Schema.from_pandas(df)
+            ...         "a_dataframe", schema=pa.Schema.from_pandas(df), domain=[[0,9]],
             ...     )
             ...     soma_df.write(pa.Table.from_pandas(df, preserve_index=False))
             ...
