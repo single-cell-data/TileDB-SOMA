@@ -148,14 +148,23 @@ ColumnBuffer::~ColumnBuffer() {
 
 void ColumnBuffer::attach(Query& query, std::optional<Subarray> subarray) {
     auto is_write = query.query_type() == TILEDB_WRITE;
-    bool is_dense = query.array().schema().array_type() == TILEDB_DENSE;
-    auto is_dim = query.array().schema().domain().has_dimension(name_);
+    auto schema = query.array().schema();
+    bool is_dense = schema.array_type() == TILEDB_DENSE;
+    auto is_dim = schema.domain().has_dimension(name_);
     auto use_subarray = is_write && is_dense && is_dim;
 
     if (use_subarray && !subarray.has_value()) {
         throw TileDBSOMAError(
-            "Subarray must be provided to ColumnBuffer to attach to Query");
+            "[ColumnBuffer::attach] Subarray must be provided to ColumnBuffer "
+            "to attach to Query");
     }
+
+    if (!validity_.empty() && is_dim) {
+        throw TileDBSOMAError(std::format(
+            "[ColumnBuffer::attach] Validity buffer passed for dimension '{}'",
+            name_));
+    }
+
     return use_subarray ? attach_subarray(*subarray) : attach_buffer(query);
 }
 

@@ -55,26 +55,15 @@ std::string rstrip_uri(std::string_view uri) {
     return std::regex_replace(std::string(uri), std::regex("/+$"), "");
 }
 
-std::vector<uint8_t> cast_bit_to_uint8(ArrowSchema* schema, ArrowArray* array) {
-    if (strcmp(schema->format, "b") != 0) {
-        throw TileDBSOMAError(std::format(
-            "_cast_bit_to_uint8 expected column format to be 'b' but saw {}",
-            schema->format));
+std::optional<std::vector<uint8_t>> bitmap_to_uint8(
+    const uint8_t* bitmap, size_t length, size_t offset) {
+    if (bitmap == nullptr) {
+        return std::nullopt;
     }
 
-    uint8_t* data;
-    if (array->n_buffers == 3) {
-        data = (uint8_t*)array->buffers[2];
-    } else {
-        data = (uint8_t*)array->buffers[1];
-    }
-
-    std::vector<uint8_t> casted(array->length);
+    std::vector<uint8_t> casted(length);
     ArrowBitsUnpackInt8(
-        data,
-        array->offset,
-        array->length,
-        reinterpret_cast<int8_t*>(casted.data()));
+        bitmap, offset, length, reinterpret_cast<int8_t*>(casted.data()));
     return casted;
 }
 

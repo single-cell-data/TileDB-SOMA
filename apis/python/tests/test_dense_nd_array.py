@@ -565,3 +565,20 @@ def test_pass_configs(tmp_path):
                 "sm.io_concurrency_level": "1",
             }
         )
+
+
+def test_read_result_order(tmp_path):
+    uri = tmp_path.as_posix()
+    data = np.arange(0, 8).reshape(4, 2)
+
+    with soma.DenseNDArray.create(uri, type=pa.int8(), shape=(4, 2)) as A:
+        A.write((slice(None), slice(None)), pa.Tensor.from_numpy(data))
+
+    with soma.DenseNDArray.open(uri, mode="r") as A:
+        assert np.array_equal(A.read(), data)
+        assert np.array_equal(A.read(result_order="row-major"), data)
+        assert np.array_equal(A.read(result_order="column-major"), data.T)
+        with pytest.warns(
+            DeprecationWarning, match="The use of 'result_order=\"auto\"' is deprecated"
+        ):
+            assert np.array_equal(A.read(result_order="auto"), data)

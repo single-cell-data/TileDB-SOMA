@@ -1298,6 +1298,14 @@ class SOMAArray : public SOMAObject {
     std::optional<int64_t> _maybe_soma_joinid_shape();
     std::optional<int64_t> _maybe_soma_joinid_maxshape();
 
+    static Array _create(
+        std::shared_ptr<SOMAContext> ctx,
+        std::string_view uri,
+        ArraySchema schema,
+        std::string_view soma_type,
+        std::optional<std::string_view> soma_schema,
+        std::optional<TimestampRange> timestamp);
+
    private:
     //===================================================================
     //= private non-static
