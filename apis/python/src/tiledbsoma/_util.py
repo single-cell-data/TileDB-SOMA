@@ -203,7 +203,7 @@ def dense_indices_to_shape(
         dense_index_to_shape(coord, extent)
         for coord, extent in zip_longest(coords, array_shape)
     )
-    if result_order is somacore.ResultOrder.ROW_MAJOR:
+    if result_order == somacore.ResultOrder.ROW_MAJOR:
         return shape
     return tuple(reversed(shape))
 
