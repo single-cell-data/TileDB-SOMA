@@ -209,8 +209,6 @@ class SOMADenseNDArrayStateMachine(SOMANDArrayStateMachine):
     ## --- data
     ##
     @precondition(lambda self: not self.closed and self.mode == "r")
-    # sc-61920 -- while the API accepts `auto` as a result_order, the read result
-    # is then nondeterministic. For now, don't do `auto`
     @rule(result_order=st.sampled_from(["row-major", "column-major"]))
     def check_read_all(self, result_order: str) -> None:
         tensor = self.A.read(result_order=result_order)
