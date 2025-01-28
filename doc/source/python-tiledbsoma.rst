@@ -25,6 +25,10 @@ Classes
     python-tiledbsoma-multiscaleimage
     python-tiledbsoma-pointclouddataframe
     python-tiledbsoma-scene
+    python-tiledbsoma-affine-transform
+    python-tiledbsoma-identity-transform
+    python-tiledbsoma-scale-transform
+    python-tiledbsoma-uniform-scale-transform
 
     python-tiledbsoma-resultorder
 

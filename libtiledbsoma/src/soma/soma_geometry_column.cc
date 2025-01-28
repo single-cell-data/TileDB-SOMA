@@ -391,6 +391,52 @@ std::any SOMAGeometryColumn::_non_empty_domain_slot(Array& array) const {
         std::make_pair(min, max));
 }
 
+std::any SOMAGeometryColumn::_non_empty_domain_slot_opt(
+    const SOMAContext& ctx, Array& array) const {
+    std::vector<double_t> min, max;
+    size_t dimensionality = dimensions.size() / 2;
+    int32_t is_empty;
+    double_t fixed_ned[2];
+
+    for (size_t i = 0; i < dimensionality; ++i) {
+        ctx.tiledb_ctx()->handle_error(
+            tiledb_array_get_non_empty_domain_from_name(
+                ctx.tiledb_ctx()->ptr().get(),
+                array.ptr().get(),
+                dimensions[i].name().c_str(),  // Min dimension
+                fixed_ned,
+                &is_empty));
+
+        if (is_empty) {
+            return std::make_any<std::optional<
+                std::pair<std::vector<double_t>, std::vector<double_t>>>>(
+                std::nullopt);
+        }
+
+        min.push_back(fixed_ned[0]);
+
+        ctx.tiledb_ctx()->handle_error(
+            tiledb_array_get_non_empty_domain_from_name(
+                ctx.tiledb_ctx()->ptr().get(),
+                array.ptr().get(),
+                dimensions[i].name().c_str(),  // Max dimension
+                fixed_ned,
+                &is_empty));
+
+        if (is_empty) {
+            return std::make_any<std::optional<
+                std::pair<std::vector<double_t>, std::vector<double_t>>>>(
+                std::nullopt);
+        }
+
+        min.push_back(fixed_ned[1]);
+    }
+
+    return std::make_any<
+        std::optional<std::pair<std::vector<double_t>, std::vector<double_t>>>>(
+        std::make_pair(min, max));
+}
+
 std::any SOMAGeometryColumn::_core_current_domain_slot(
     const SOMAContext& ctx, Array& array) const {
     CurrentDomain

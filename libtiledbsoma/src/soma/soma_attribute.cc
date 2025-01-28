@@ -113,6 +113,14 @@ std::any SOMAAttribute::_non_empty_domain_slot(Array&) const {
         name()));
 }
 
+std::any SOMAAttribute::_non_empty_domain_slot_opt(
+    const SOMAContext&, Array&) const {
+    throw TileDBSOMAError(std::format(
+        "[SOMAAttribute][_non_empty_domain_slot] Column with name {} is not an "
+        "index column",
+        name()));
+}
+
 std::any SOMAAttribute::_core_current_domain_slot(
     const SOMAContext&, Array&) const {
     throw TileDBSOMAError(std::format(
