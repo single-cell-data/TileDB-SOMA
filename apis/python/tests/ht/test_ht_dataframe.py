@@ -534,12 +534,13 @@ def arrow_table2(
                 if pa.types.is_integer(f.type):
                     max_size = min(max_size, d[1] - d[0] + 1)
                 elif pa.types.is_floating(f.type):
-                    max_size = int(
-                        min(
-                            max_size,
-                            (d[1] - d[0]) / np.finfo(f.type.to_pandas_dtype()).tiny + 1,
+                    with np.errstate(over="ignore"):
+                        max_size = int(
+                            min(
+                                max_size,
+                                (d[1] - d[0]) / np.finfo(f.type.to_pandas_dtype()).tiny + 1,
+                            )
                         )
-                    )
                 elif pa.types.is_timestamp(f.type):
                     delta = int(d[1].astype(np.int64)) - int(d[0].astype(np.int64))
                     assert delta >= 0
