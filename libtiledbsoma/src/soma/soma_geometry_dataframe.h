@@ -18,6 +18,7 @@
 #include <vector>
 
 #include "soma_array.h"
+#include "soma_coordinates.h"
 
 namespace tiledbsoma {
 
@@ -49,6 +50,7 @@ class SOMAGeometryDataFrame : virtual public SOMAArray {
         const std::unique_ptr<ArrowSchema>& schema,
         const ArrowTable& index_columns,
         const ArrowTable& spatial_columns,
+        const SOMACoordinateSpace& coordinate_space,
         std::shared_ptr<SOMAContext> ctx,
         PlatformConfig platform_config = PlatformConfig(),
         std::optional<TimestampRange> timestamp = std::nullopt);
@@ -115,10 +117,12 @@ class SOMAGeometryDataFrame : virtual public SOMAArray {
               "auto",  // batch_size
               result_order,
               timestamp) {
+        initialize();
     }
 
     SOMAGeometryDataFrame(const SOMAArray& other)
         : SOMAArray(other) {
+        initialize();
     }
 
     SOMAGeometryDataFrame() = delete;
@@ -142,12 +146,9 @@ class SOMAGeometryDataFrame : virtual public SOMAArray {
      */
     const std::vector<std::string> index_column_names() const;
 
-    /**
-     * Return the spatial column names.
-     *
-     * @return std::vector<std::string>
-     */
-    const std::vector<std::string> spatial_column_names() const;
+    inline const SOMACoordinateSpace& coordinate_space() const {
+        return coord_space_;
+    };
 
     /**
      * Return the number of rows.
@@ -166,6 +167,12 @@ class SOMAGeometryDataFrame : virtual public SOMAArray {
     //===================================================================
 
     /**
+     * @brief Initialized GeometryDataframe specific additional fields
+     * serialized and stored in metadata.
+     */
+    void initialize();
+
+    /**
      * @brief Cast an array containing the outer rings of polygons to an Arrow
      * array holding the WKB encoded polygons and generate the additional index
      * column arrays based on the spatial axes.
@@ -181,6 +188,8 @@ class SOMAGeometryDataFrame : virtual public SOMAArray {
      */
     ArrowTable _reconstruct_geometry_data_table(
         ArrowTable original_data, const std::vector<ArrowTable>& wkb_data);
+
+    SOMACoordinateSpace coord_space_;
 };
 }  // namespace tiledbsoma
 

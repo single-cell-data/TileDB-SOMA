@@ -18,6 +18,8 @@
 #include "common.h"
 
 const int64_t SOMA_JOINID_DIM_MAX = 99;
+const SOMACoordinateSpace coord_space(
+    {SOMAAxis{"x", std::nullopt}, SOMAAxis{"y", std::nullopt}});
 
 TEST_CASE("SOMAGeometryDataFrame: basic", "[SOMAGeometryDataFrame]") {
     auto ctx = std::make_shared<SOMAContext>();
@@ -71,6 +73,7 @@ TEST_CASE("SOMAGeometryDataFrame: basic", "[SOMAGeometryDataFrame]") {
         ArrowTable(
             std::move(spatial_columns.first),
             std::move(spatial_columns.second)),
+        coord_space,
         ctx,
         platform_config,
         std::nullopt);
@@ -102,8 +105,7 @@ TEST_CASE("SOMAGeometryDataFrame: basic", "[SOMAGeometryDataFrame]") {
     std::vector<std::string> expected_spatial_column_names = {
         spatial_dim_infos[0].name, spatial_dim_infos[1].name};
     REQUIRE(soma_geometry->index_column_names() == expected_index_column_names);
-    REQUIRE(
-        soma_geometry->spatial_column_names() == expected_spatial_column_names);
+    REQUIRE(soma_geometry->coordinate_space() == coord_space);
     REQUIRE(soma_geometry->nnz() == 0);
     soma_geometry->close();
 
@@ -161,6 +163,7 @@ TEST_CASE("SOMAGeometryDataFrame: Roundtrip", "[SOMAGeometryDataFrame]") {
         ArrowTable(
             std::move(spatial_columns.first),
             std::move(spatial_columns.second)),
+        coord_space,
         ctx,
         platform_config,
         std::nullopt);
