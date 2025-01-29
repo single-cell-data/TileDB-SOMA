@@ -21,6 +21,7 @@ void load_soma_object(py::module&);
 void load_soma_array(py::module&);
 void load_soma_dataframe(py::module&);
 void load_soma_point_cloud_dataframe(py::module&);
+void load_soma_geometry_dataframe(py::module&);
 void load_soma_dense_ndarray(py::module&);
 void load_soma_sparse_ndarray(py::module&);
 void load_soma_group(py::module&);
@@ -166,6 +167,7 @@ PYBIND11_MODULE(pytiledbsoma, m) {
     load_soma_dense_ndarray(m);
     load_soma_sparse_ndarray(m);
     load_soma_point_cloud_dataframe(m);
+    load_soma_geometry_dataframe(m);
     load_soma_group(m);
     load_soma_collection(m);
     load_query_condition(m);

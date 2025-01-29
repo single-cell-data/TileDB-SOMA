@@ -179,6 +179,7 @@ from ._indexer import IntIndexer, tiledbsoma_build_index
 from ._measurement import Measurement
 from ._multiscale_image import MultiscaleImage
 from ._point_cloud_dataframe import PointCloudDataFrame
+from ._geometry_dataframe import GeometryDataFrame
 from ._query import ExperimentAxisQuery
 from ._scene import Scene
 from ._sparse_nd_array import SparseNDArray, SparseNDArrayRead
@@ -209,6 +210,7 @@ __all__ = [
     "DoesNotExistError",
     "Experiment",
     "ExperimentAxisQuery",
+    "GeometryDataFrame",
     "get_implementation_version",
     "get_implementation",
     "get_SOMA_version",

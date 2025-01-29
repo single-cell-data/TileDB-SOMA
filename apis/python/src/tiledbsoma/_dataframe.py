@@ -27,7 +27,7 @@ from typing_extensions import Self
 
 from . import _arrow_types, _util
 from . import pytiledbsoma as clib
-from ._constants import SOMA_JOINID
+from ._constants import SOMA_GEOMETRY, SOMA_JOINID
 from ._exception import SOMAError, map_exception_for_create
 from ._read_iters import ManagedQuery, TableReadIter
 from ._soma_array import SOMAArray
@@ -811,9 +811,20 @@ def _canonicalize_schema(
         # add SOMA_JOINID
         schema = schema.append(pa.field(SOMA_JOINID, pa.int64()))
 
+    if SOMA_GEOMETRY in schema.names:
+        geometry_type = schema.field(SOMA_GEOMETRY).type
+        if geometry_type != pa.binary() and geometry_type != pa.large_binary():
+            raise ValueError(
+                f"{SOMA_GEOMETRY} field must be of type Arrow binary or large_binary but is {geometry_type}"
+            )
+        schema.set(schema.get_field_index(SOMA_GEOMETRY), schema.field(SOMA_GEOMETRY).with_metadata({"dtype": "WKB"}))
+    else:
+        # add SOMA_GEOMETRY
+        schema = schema.append(pa.field(SOMA_GEOMETRY, pa.large_binary(), metadata={"dtype": "WKB"}))
+
     # verify no illegal use of soma_ prefix
     for field_name in schema.names:
-        if field_name.startswith("soma_") and field_name != SOMA_JOINID:
+        if field_name.startswith("soma_") and field_name != SOMA_JOINID and field_name != SOMA_GEOMETRY:
             raise ValueError(
                 f"DataFrame schema may not contain fields with name prefix ``soma_``: got ``{field_name}``"
             )
@@ -821,7 +832,7 @@ def _canonicalize_schema(
     # verify that all index_column_names are present in the schema
     schema_names_set = set(schema.names)
     for index_column_name in index_column_names:
-        if index_column_name.startswith("soma_") and index_column_name != SOMA_JOINID:
+        if index_column_name.startswith("soma_") and index_column_name != SOMA_JOINID and index_column_name != SOMA_GEOMETRY:
             raise ValueError(
                 f'index_column_name other than "soma_joinid" must not begin with "soma_"; got "{index_column_name}"'
             )
@@ -873,7 +884,31 @@ def _fill_out_slot_soma_domain(
     Returns a boolean for whether the underlying datatype's max range was used.
     """
     saturated_range = False
-    if slot_domain is not None:
+    if index_column_name == SOMA_GEOMETRY:
+        # SOMA_GEOMETRY domain should be either a list on None or a list of tuple[float, float]
+        lo = []
+        hi = []
+        if isinstance(slot_domain, list):
+            finfo: NPFInfo = np.finfo(np.float64)
+            for axis_domain in slot_domain:
+                if axis_domain is None:
+                    lo.append(finfo.min)
+                    hi.append(finfo.max)
+                    saturated_range = True
+                elif not isinstance(axis_domain, tuple) or len(axis_domain) != 2:
+                    raise ValueError(
+                        "Axis domain should be a tuple[float, float]"
+                    )
+                else:
+                    if np.issubdtype(type(axis_domain[0]), NPFloating) or np.issubdtype(type(axis_domain[1]), NPFloating):
+                        raise ValueError(
+                            "Axis domain should be a tuple[float, float]"
+                        )
+                
+                    lo.append(axis_domain[0])
+                    hi.append(axis_domain[1])
+            slot_domain = lo, hi
+    elif slot_domain is not None:
         # User-specified; go with it when possible
         if (
             (
@@ -1007,6 +1042,9 @@ def _find_extent_for_domain(
     if isinstance(dtype, np.dtype) and dtype.itemsize == 1:
         extent = 1
 
+    if index_column_name == SOMA_GEOMETRY:
+        return extent
+
     # Core string dims have no extent and no (core) domain.  We return "" here
     # simply so we can pass libtiledbsoma "" for domain and extent, while it
     # will (and must) ignore these when creating the TileDB schema.
@@ -1056,6 +1094,10 @@ def _revise_domain_for_extent(
     domain: Tuple[Any, Any], extent: Any, saturated_range: bool
 ) -> Tuple[Any, Any]:
     if saturated_range:
-        return (domain[0], domain[1] - extent)
+        # Handle SOMA_GEOMETRY domain with is tuple[list[float], list[float]]
+        if isinstance(domain[1], list):
+            return (domain[0], [dim_max - extent for dim_max in domain[1]],)
+        else:
+            return (domain[0], domain[1] - extent)
     else:
         return domain

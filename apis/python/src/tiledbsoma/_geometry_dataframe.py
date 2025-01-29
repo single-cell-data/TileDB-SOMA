@@ -13,18 +13,31 @@ from typing import Any, Sequence, Tuple, Union
 import pyarrow as pa
 import somacore
 from somacore import CoordinateSpace, CoordinateTransform, options
+from tiledbsoma._tdb_handles import GeometryDataFrameWrapper
+from tiledbsoma.options._soma_tiledb_context import _validate_soma_tiledb_context
+from tiledbsoma.options._tiledb_create_write_options import TileDBCreateOptions
 from typing_extensions import Self
 
-from ._constants import SPATIAL_DISCLAIMER
-from ._dataframe import Domain
+from . import _arrow_types, _util
+from . import pytiledbsoma as clib
+from ._constants import SOMA_COORDINATE_SPACE_METADATA_KEY, SOMA_GEOMETRY, SOMA_JOINID, SPATIAL_DISCLAIMER
+from ._dataframe import Domain, _canonicalize_schema, _fill_out_slot_soma_domain, _find_extent_for_domain, _revise_domain_for_extent
 from ._read_iters import TableReadIter
 from ._types import OpenTimestamp
 from .options import SOMATileDBContext
 
+from ._exception import SOMAError, map_exception_for_create
+from ._spatial_dataframe import SpatialDataFrame
+from ._spatial_util import (
+    coordinate_space_from_json,
+    coordinate_space_to_json,
+    process_spatial_df_region,
+)
+
 _UNBATCHED = options.BatchSize()
 
 
-class GeometryDataFrame(somacore.GeometryDataFrame):
+class GeometryDataFrame(SpatialDataFrame, somacore.GeometryDataFrame):
     """A specialized SOMA object for storing complex geometries with spatial indexing.
 
     The ``GeometryDataFrame`` class is designed to store and manage geometric shapes
@@ -35,7 +48,8 @@ class GeometryDataFrame(somacore.GeometryDataFrame):
         Experimental.
     """
 
-    __slots__ = ()
+    __slots__ = ("_coord_space",)
+    _wrapper_type = GeometryDataFrameWrapper
 
     # Lifecycle
 
@@ -85,7 +99,176 @@ class GeometryDataFrame(somacore.GeometryDataFrame):
             Experimental.
         """
         warnings.warn(SPATIAL_DISCLAIMER)
-        raise NotImplementedError()
+
+        # Get coordinate space axis data.
+        if isinstance(coordinate_space, CoordinateSpace):
+            axis_names = tuple(axis.name for axis in coordinate_space)
+            axis_units = tuple(axis.unit for axis in coordinate_space)
+        else:
+            axis_names = tuple(coordinate_space)
+            axis_units = tuple(len(axis_names) * [None])
+
+        index_column_names = (SOMA_GEOMETRY, SOMA_JOINID,)
+        
+        context = _validate_soma_tiledb_context(context)
+        schema = _canonicalize_schema(schema, index_column_names)
+
+        # SOMA-to-core mappings:
+        #
+        # Before the current-domain feature was enabled (possible after core 2.25):
+        #
+        # * SOMA domain <-> core domain, AKA "max domain" which is a name we'll use for clarity
+        # * core current domain did not exist
+        #
+        # After the current-domain feature was enabled:
+        #
+        # * SOMA max_domain <-> core domain
+        # * SOMA domain <-> core current domain
+        #
+        # As far as the user is concerned, the SOMA-level domain is the only
+        # thing they see and care about. Before 2.25 support, it was immutable
+        # (since it was implemented by core domain). After 2.25 support, it is
+        # mutable/up-resizeable (since it is implemented by core current domain).
+
+        # At this point shift from API terminology "domain" to specifying a soma_ or core_
+        # prefix for these variables. This is crucial to avoid developer confusion.
+        soma_domain = domain
+        domain = None
+
+        # Check if domain has the right size (number of axis + 1 for SOMA_JOINID)
+        
+        if soma_domain is None:
+            soma_domain = tuple(None for _ in index_column_names)
+        else:
+            ndom = len(soma_domain)
+            nidx = len(index_column_names)
+            if ndom != nidx:
+                raise ValueError(
+                    f"if domain is specified, it must have the same length as "
+                    f"index_column_names; got {ndom} != {nidx}"
+                )
+        
+        mutable_soma_domain = list(soma_domain)
+        soma_geometry_domain = mutable_soma_domain[index_column_names.index(SOMA_GEOMETRY)]
+
+        if soma_geometry_domain is None:
+            soma_geometry_domain = [None for _ in axis_names]
+        elif not isinstance(soma_geometry_domain, list):
+            raise ValueError(f"'{SOMA_GEOMETRY}' domain should be a list of tuple[float, float]")
+        elif len(soma_geometry_domain) != len(axis_names):
+            raise ValueError(f"Dimension mishmatch between '{SOMA_GEOMETRY}' domain and coordinate system")
+        
+        mutable_soma_domain[index_column_names.index(SOMA_GEOMETRY)] = soma_geometry_domain
+        soma_domain = tuple(mutable_soma_domain)
+        
+        index_column_schema = []
+        index_column_data = {}
+
+        for index_column_name, slot_soma_domain in zip(index_column_names, soma_domain):
+            pa_field = schema.field(index_column_name)
+            dtype = _arrow_types.tiledb_type_from_arrow_type(
+                pa_field.type, is_indexed_column=True
+            )
+
+            (slot_core_current_domain, saturated_cd) = _fill_out_slot_soma_domain(
+                slot_soma_domain, False, index_column_name, pa_field.type, dtype
+            )
+
+            if index_column_name == SOMA_GEOMETRY:
+                (slot_core_max_domain, saturated_md) = _fill_out_slot_soma_domain(
+                    [None for _ in axis_names], True, index_column_name, pa_field.type, dtype
+                )
+            else:
+                (slot_core_max_domain, saturated_md) = _fill_out_slot_soma_domain(
+                    None, True, index_column_name, pa_field.type, dtype
+                )
+
+            extent = _find_extent_for_domain(
+                index_column_name,
+                TileDBCreateOptions.from_platform_config(platform_config),
+                dtype,
+                slot_core_current_domain,
+            )
+
+            # Necessary to avoid core array-creation error "Reduce domain max by
+            # 1 tile extent to allow for expansion."
+            slot_core_current_domain = _revise_domain_for_extent(
+                slot_core_current_domain, extent, saturated_cd
+            )
+            slot_core_max_domain = _revise_domain_for_extent(
+                slot_core_max_domain, extent, saturated_md
+            )
+
+            # Here is our Arrow data API for communicating schema info between
+            # Python/R and C++ libtiledbsoma:
+            #
+            # [0] core max domain lo
+            # [1] core max domain hi
+            # [2] core extent parameter
+            # If present, these next two signal to use the current-domain feature:
+            # [3] core current domain lo
+            # [4] core current domain hi
+            if index_column_name == SOMA_GEOMETRY:
+                # SOMA_GEOMETRY has a specific schema
+                index_column_schema.append(pa.field(pa_field.name, pa.struct({axis:pa.list_(pa.float64()) for axis in axis_names}), nullable=True))
+                struct = []
+                for idx, axis in enumerate(axis_names):
+                    struct.append((axis,
+                        [
+                            *[float(max_domain[idx]) for max_domain in slot_core_max_domain],
+                            extent,
+                            *[float(current_domain[idx]) for current_domain in slot_core_current_domain]
+                        ]
+                    ))
+
+                index_column_data[pa_field.name] = [struct, None, None, None, None]
+            else:
+                index_column_schema.append(pa_field)
+                index_column_data[pa_field.name] = [
+                    *slot_core_max_domain,
+                    extent,
+                    *slot_core_current_domain,
+                ]
+
+        index_column_info = pa.RecordBatch.from_pydict(
+            index_column_data, schema=pa.schema(index_column_schema)
+        )
+
+        plt_cfg = _util.build_clib_platform_config(platform_config)
+        timestamp_ms = context._open_timestamp_ms(tiledb_timestamp)
+        try:
+            clib.SOMAGeometryDataFrame.create(
+                uri,
+                schema=schema,
+                index_column_info=index_column_info,
+                axis_names=axis_names,
+                axis_units=axis_units,
+                ctx=context.native_context,
+                platform_config=plt_cfg,
+                timestamp=(0, timestamp_ms),
+            )
+        except SOMAError as e:
+            raise map_exception_for_create(e, uri) from None
+
+        return cls(
+            cls._wrapper_type.open(uri, "w", context, tiledb_timestamp),
+            _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code",
+        )
+    
+    def __init__(
+        self,
+        handle: GeometryDataFrameWrapper,
+        **kwargs: Any,
+    ):
+        super().__init__(handle, **kwargs)
+
+        # Get and validate coordinate space.
+        try:
+            coord_space = self.metadata[SOMA_COORDINATE_SPACE_METADATA_KEY]
+        except KeyError as ke:
+            raise SOMAError("Missing coordinate space metadata") from ke
+        self._coord_space = coordinate_space_from_json(coord_space)
+
 
     # Data operations
 
@@ -197,31 +380,13 @@ class GeometryDataFrame(somacore.GeometryDataFrame):
     # Metadata operations
 
     @property
-    def schema(self) -> pa.Schema:
-        """The schema of the data in this dataframe.
-
-        Lifecycle:
-            Experimental.
-        """
-        raise NotImplementedError()
-
-    @property
-    def index_column_names(self) -> Tuple[str, ...]:
-        """The names of the index (dimension) columns.
-
-        Lifecycle:
-            Experimental.
-        """
-        raise NotImplementedError()
-
-    @property
     def axis_names(self) -> Tuple[str, ...]:
         """The names of the axes of the coordinate space the data is defined on.
 
         Lifecycle:
             Experimental.
         """
-        raise NotImplementedError()
+        return self._coord_space.axis_names
 
     @property
     def coordinate_space(self) -> CoordinateSpace:
@@ -230,7 +395,7 @@ class GeometryDataFrame(somacore.GeometryDataFrame):
         Lifecycle:
             Experimental.
         """
-        raise NotImplementedError()
+        return self._coord_space
 
     @coordinate_space.setter
     def coordinate_space(self, value: CoordinateSpace) -> None:
@@ -239,7 +404,17 @@ class GeometryDataFrame(somacore.GeometryDataFrame):
         Lifecycle:
             Experimental.
         """
-        raise NotImplementedError()
+        if self._coord_space is not None:
+            if value.axis_names != self._coord_space.axis_names:
+                raise ValueError(
+                    f"Cannot change axis names of a geometry dataframe. Existing "
+                    f"axis names are {self._coord_space.axis_names}. New coordinate "
+                    f"space has axis names {value.axis_names}."
+                )
+        self.metadata[SOMA_COORDINATE_SPACE_METADATA_KEY] = coordinate_space_to_json(
+            value
+        )
+        self._coord_space = value
 
     @property
     def domain(self) -> Tuple[Tuple[Any, Any], ...]:
