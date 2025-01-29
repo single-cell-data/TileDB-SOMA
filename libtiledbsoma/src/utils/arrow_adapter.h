@@ -408,10 +408,7 @@ class ArrowAdapter {
         const ArrowTable& index_column_info,
         std::string soma_type,
         bool is_sparse = true,
-        PlatformConfig platform_config = PlatformConfig(),
-        const ArrowTable& spatial_column_info = {
-            std::unique_ptr<ArrowArray>(nullptr),
-            std::unique_ptr<ArrowSchema>(nullptr)});
+        PlatformConfig platform_config = PlatformConfig());
 
     /**
      * @brief Get a TileDB dimension from an Arrow schema.
@@ -419,6 +416,26 @@ class ArrowAdapter {
      * @return std::pair<Dimension, bool> The TileDB dimension.
      */
     static Dimension tiledb_dimension_from_arrow_schema(
+        std::shared_ptr<Context> ctx,
+        ArrowSchema* schema,
+        ArrowArray* array,
+        std::string soma_type,
+        std::string_view type_metadata,
+        std::string prefix = std::string(),
+        std::string suffix = std::string(),
+        PlatformConfig platform_config = PlatformConfig());
+
+    /**
+     * @brief Get a TileDB dimension from an Arrow schema.
+     *
+     * @remarks This is a list variation which expects a schemaand a data array
+     * to describe a list instead of a simple columns. Used especialy with
+     * nested domains where it is described by a struct and each nested
+     * dimension is described by a list.
+     *
+     * @return std::pair<Dimension, bool> The TileDB dimension.
+     */
+    static Dimension tiledb_dimension_from_arrow_schema_ext(
         std::shared_ptr<Context> ctx,
         ArrowSchema* schema,
         ArrowArray* array,
@@ -909,11 +926,19 @@ class ArrowAdapter {
         ArrowArray* selected_array = arrow_array->children[column_index];
         ArrowSchema* selected_schema = arrow_schema->children[column_index];
 
-        // Complex domain
-        if (selected_array->n_children != 0) {
+        if (strcmp(selected_schema->format, "+s") == 0) {
+            // Complex domain like the ones required by `GeometryColumn` expect
+            // a struct containing lists of values
             for (int64_t i = 0; i < selected_schema->n_children; ++i) {
-                ArrowArray* array = selected_array->children[i];
-                ArrowSchema* schema = selected_schema->children[i];
+                if (strcmp(selected_schema->children[i]->format, "+l") != 0) {
+                    throw std::runtime_error(std::format(
+                        "[ArrowAdapter][get_table_any_column_by_index] Complex "
+                        "column struct should contain list but found '{}'",
+                        selected_schema->children[i]->format));
+                }
+
+                ArrowArray* array = selected_array->children[i]->children[0];
+                ArrowSchema* schema = selected_schema->children[i]->children[0];
 
                 result.push_back(
                     get_table_any_column<S>(array, schema, offset));

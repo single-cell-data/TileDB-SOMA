@@ -74,13 +74,13 @@ std::shared_ptr<SOMAGeometryColumn> SOMAGeometryColumn::create(
         throw TileDBSOMAError(std::format(
             "[SOMAGeometryColumn] "
             "Unkwown type metadata for `{}`: "
-            "Expected 'WKB', got {}",
+            "Expected 'WKB', got '{}'",
             SOMA_GEOMETRY_COLUMN_NAME,
             type_metadata));
     }
 
     for (int64_t j = 0; j < spatial_schema->n_children; ++j) {
-        dims.push_back(ArrowAdapter::tiledb_dimension_from_arrow_schema(
+        dims.push_back(ArrowAdapter::tiledb_dimension_from_arrow_schema_ext(
             ctx,
             spatial_schema->children[j],
             spatial_array->children[j],
@@ -92,7 +92,7 @@ std::shared_ptr<SOMAGeometryColumn> SOMAGeometryColumn::create(
     }
 
     for (int64_t j = 0; j < spatial_schema->n_children; ++j) {
-        dims.push_back(ArrowAdapter::tiledb_dimension_from_arrow_schema(
+        dims.push_back(ArrowAdapter::tiledb_dimension_from_arrow_schema_ext(
             ctx,
             spatial_schema->children[j],
             spatial_array->children[j],

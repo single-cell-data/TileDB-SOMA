@@ -31,7 +31,6 @@ void SOMAGeometryDataFrame::create(
     std::string_view uri,
     const std::unique_ptr<ArrowSchema>& schema,
     const ArrowTable& index_columns,
-    const ArrowTable& spatial_columns,
     const SOMACoordinateSpace& coordinate_space,
     std::shared_ptr<SOMAContext> ctx,
     PlatformConfig platform_config,
@@ -43,8 +42,7 @@ void SOMAGeometryDataFrame::create(
             index_columns,
             "SOMAGeometryDataFrame",
             true,
-            platform_config,
-            spatial_columns);
+            platform_config);
 
     auto array = SOMAArray::_create(
         ctx,

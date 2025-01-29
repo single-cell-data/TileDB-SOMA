@@ -70,9 +70,6 @@ TEST_CASE("SOMAGeometryDataFrame: basic", "[SOMAGeometryDataFrame]") {
         std::move(schema),
         ArrowTable(
             std::move(index_columns.first), std::move(index_columns.second)),
-        ArrowTable(
-            std::move(spatial_columns.first),
-            std::move(spatial_columns.second)),
         coord_space,
         ctx,
         platform_config,
@@ -156,9 +153,6 @@ TEST_CASE("SOMAGeometryDataFrame: Roundtrip", "[SOMAGeometryDataFrame]") {
         std::move(schema),
         ArrowTable(
             std::move(index_columns.first), std::move(index_columns.second)),
-        ArrowTable(
-            std::move(spatial_columns.first),
-            std::move(spatial_columns.second)),
         coord_space,
         ctx,
         platform_config,
