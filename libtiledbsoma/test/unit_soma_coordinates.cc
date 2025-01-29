@@ -20,9 +20,9 @@ TEST_CASE(
     std::vector<SOMAAxis> empty_axes_{};
     std::vector<std::string> empty_axis_names_{};
     std::vector<std::optional<std::string>> empty_axis_units_{};
-    REQUIRE_THROWS_AS(SOMACoordinateSpace(empty_axes_), TileDBSOMAError);
-    REQUIRE_THROWS_AS(SOMACoordinateSpace(empty_axis_names_), TileDBSOMAError);
-    REQUIRE_THROWS_AS(
+    CHECK_THROWS_AS(SOMACoordinateSpace(empty_axes_), TileDBSOMAError);
+    CHECK_THROWS_AS(SOMACoordinateSpace(empty_axis_names_), TileDBSOMAError);
+    CHECK_THROWS_AS(
         SOMACoordinateSpace(empty_axis_names_, empty_axis_units_),
         TileDBSOMAError);
 
@@ -31,9 +31,9 @@ TEST_CASE(
         {"x_axis", "meter"}, {"x_axis", "nanometer"}};
     std::vector<std::string> repeat_axis_names_{"x_axis", "x_axis"};
     std::vector<std::optional<std::string>> repeat_axis_units_{};
-    REQUIRE_THROWS_AS(SOMACoordinateSpace(repeat_axes_), TileDBSOMAError);
-    REQUIRE_THROWS_AS(SOMACoordinateSpace(repeat_axis_names_), TileDBSOMAError);
-    REQUIRE_THROWS_AS(
+    CHECK_THROWS_AS(SOMACoordinateSpace(repeat_axes_), TileDBSOMAError);
+    CHECK_THROWS_AS(SOMACoordinateSpace(repeat_axis_names_), TileDBSOMAError);
+    CHECK_THROWS_AS(
         SOMACoordinateSpace(repeat_axis_names_, repeat_axis_units_),
         TileDBSOMAError);
 
@@ -41,12 +41,21 @@ TEST_CASE(
     // sizes.
     std::vector<std::string> axis_names_len3_{"x", "y", "z"};
     std::vector<std::optional<std::string>> axis_units_len2_{"meter", "meter"};
-    REQUIRE_THROWS_AS(
+    CHECK_THROWS_AS(
         SOMACoordinateSpace(axis_names_len3_, axis_units_len2_),
         TileDBSOMAError);
-    REQUIRE_THROWS_AS(
+    CHECK_THROWS_AS(
         SOMACoordinateSpace(axis_names_len3_, empty_axis_units_),
         TileDBSOMAError);
+
+    // Check valid axis names.
+    std::vector<std::string> axis_names_reserved_{"x", "soma_y"};
+    std::vector<SOMAAxis> axis_reserved_{{"soma_x", "meter"}, {"y", "meter"}};
+    CHECK_THROWS_AS(SOMACoordinateSpace(axis_names_reserved_), TileDBSOMAError);
+    CHECK_THROWS_AS(
+        SOMACoordinateSpace(axis_names_reserved_, axis_units_len2_),
+        TileDBSOMAError);
+    CHECK_THROWS_AS(SOMACoordinateSpace(axis_reserved_), TileDBSOMAError);
 }
 
 TEST_CASE("SOMACoordinateSpace: compare constructors", "[metadata][spatial]") {
