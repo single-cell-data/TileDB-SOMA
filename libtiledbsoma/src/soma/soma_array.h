@@ -1224,7 +1224,6 @@ class SOMAArray : public SOMAObject {
      */
     StatusAndReason _can_set_shape_domainish_subhelper(
         const std::vector<int64_t>& newshape,
-        bool check_current_domain,
         std::string function_name_for_messages);
 
     /**

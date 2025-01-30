@@ -689,8 +689,9 @@ StatusAndReason SOMAArray::_can_set_shape_helper(
     std::string function_name_for_messages) {
     // E.g. it's an error to try to upgrade_domain or resize specifying
     // a 3-D shape on a 2-D array.
-    auto arg_ndim = newshape.size();
-    auto array_ndim = schema_->domain().ndim();
+    size_t arg_ndim = newshape.size();
+    size_t array_ndim = static_cast<size_t>(ndim());
+
     if (array_ndim != arg_ndim) {
         return std::pair(
             false,
@@ -738,20 +739,12 @@ StatusAndReason SOMAArray::_can_set_shape_helper(
     //
     // if the requested shape fits in the array's core domain, it's good to go
     // as a new shape.
-    auto domain_check = _can_set_shape_domainish_subhelper(
-        newshape, false, function_name_for_messages);
-    if (!domain_check.first) {
-        return domain_check;
-    }
-
     // For new-style arrays, we need to additionally that the the requested
     // shape (core current domain) isn't a downsize of the current one.
-    if (has_shape) {
-        auto current_domain_check = _can_set_shape_domainish_subhelper(
-            newshape, true, function_name_for_messages);
-        if (!current_domain_check.first) {
-            return current_domain_check;
-        }
+    auto domain_check = _can_set_shape_domainish_subhelper(
+        newshape, function_name_for_messages);
+    if (!domain_check.first) {
+        return domain_check;
     }
 
     return std::pair(true, "");
@@ -762,61 +755,31 @@ StatusAndReason SOMAArray::_can_set_shape_helper(
 // domain.
 StatusAndReason SOMAArray::_can_set_shape_domainish_subhelper(
     const std::vector<int64_t>& newshape,
-    bool check_current_domain,
     std::string function_name_for_messages) {
-    Domain domain = schema_->domain();
+    std::optional<NDRectangle> ndrect = has_current_domain() ?
+                                            std::make_optional<NDRectangle>(
+                                                NDRectangle(
+                                                    *ctx_->tiledb_ctx(),
+                                                    arr_->schema().domain())) :
+                                            std::nullopt;
 
-    for (unsigned i = 0; i < domain.ndim(); i++) {
-        const auto& dim = domain.dimension(i);
+    size_t idx = 0;
+    for (const auto& column :
+         columns_ | std::views::filter(
+                        [](const auto& col) { return col->isIndexColumn(); })) {
+        auto status = column->can_set_current_domain_slot(
+            ndrect,
+            std::vector({std::make_any<std::array<int64_t, 2>>(
+                std::array<int64_t, 2>({0, newshape[idx]}))}));
 
-        const std::string& dim_name = dim.name();
+        if (status.first == false) {
+            status.second = std::format(
+                "'{}' : '{}'", function_name_for_messages, status.second);
 
-        // These methods are only for SOMA NDArrays, and any other arrays for
-        // which the indices are entirely int64.  SOMA DataFrame objects, with
-        // multi-type dims, need to go through upgrade_domain -- and this is
-        // library-internal code, it's not the user's fault if we got here.
-        if (dim.type() != TILEDB_INT64) {
-            throw TileDBSOMAError(std::format(
-                "{}: internal error: expected {} dim to be {}; got {}",
-                function_name_for_messages,
-                dim_name,
-                tiledb::impl::type_to_str(TILEDB_INT64),
-                tiledb::impl::type_to_str(dim.type())));
-        }
-
-        if (check_current_domain) {
-            std::pair<int64_t, int64_t>
-                cap = _core_current_domain_slot<int64_t>(dim_name);
-            int64_t old_dim_shape = cap.second + 1;
-
-            if (newshape[i] < old_dim_shape) {
-                return std::pair(
-                    false,
-                    std::format(
-                        "{} for {}: new {} < existing shape {}",
-                        function_name_for_messages,
-                        dim_name,
-                        newshape[i],
-                        old_dim_shape));
-            }
-
-        } else {
-            std::pair<int64_t, int64_t> cap = _core_domain_slot<int64_t>(
-                dim_name);
-            int64_t old_dim_shape = cap.second + 1;
-
-            if (newshape[i] > old_dim_shape) {
-                return std::pair(
-                    false,
-                    std::format(
-                        "{} for {}: new {} < maxshape {}",
-                        function_name_for_messages,
-                        dim_name,
-                        newshape[i],
-                        old_dim_shape));
-            }
+            return status;
         }
     }
+
     return std::pair(true, "");
 }
 
