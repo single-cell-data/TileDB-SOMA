@@ -1502,10 +1502,13 @@ std::vector<int64_t> SOMAArray::_shape_via_tiledb_current_domain() {
 
     NDRectangle ndrect = current_domain.ndrectangle();
 
-    for (auto dimension_name : dimension_names()) {
-        auto range = ndrect.range<int64_t>(dimension_name);
-        result.push_back(range[1] - range[0] + 1);
+    for (const auto& column :
+         columns_ | std::views::filter(
+                        [](const auto& col) { return col->isIndexColumn(); })) {
+        auto current_domain = column->core_current_domain_slot<int64_t>(ndrect);
+        result.push_back(current_domain.second - current_domain.first + 1);
     }
+
     return result;
 }
 
@@ -1514,11 +1517,11 @@ std::vector<int64_t> SOMAArray::_shape_via_tiledb_domain() {
     _check_dims_are_int64();
 
     std::vector<int64_t> result;
-    auto dimensions = schema_->domain().dimensions();
-
-    for (const auto& dim : dimensions) {
-        result.push_back(
-            dim.domain<int64_t>().second - dim.domain<int64_t>().first + 1);
+    for (const auto& column :
+         columns_ | std::views::filter(
+                        [](const auto& col) { return col->isIndexColumn(); })) {
+        auto core_domain = column->core_domain_slot<int64_t>();
+        result.push_back(core_domain.second - core_domain.first + 1);
     }
 
     return result;
@@ -1592,10 +1595,11 @@ std::optional<int64_t> SOMAArray::_maybe_soma_joinid_shape_via_tiledb_domain() {
 }
 
 bool SOMAArray::_dims_are_int64() {
-    ArraySchema schema = arr_->schema();
-    Domain domain = schema.domain();
-    for (auto dimension : domain.dimensions()) {
-        if (dimension.type() != TILEDB_INT64) {
+    for (const auto& column :
+         columns_ | std::views::filter(
+                        [](const auto& col) { return col->isIndexColumn(); })) {
+        if (column->type() != soma_column_datatype_t::SOMA_COLUMN_DIMENSION ||
+            column->domain_type().value_or(TILEDB_ANY) != TILEDB_INT64) {
             return false;
         }
     }
