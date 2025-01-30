@@ -15,6 +15,8 @@
 
 namespace tiledbsoma {
 
+using namespace pybind11::literals;  // to bring in the `_a` literal
+
 std::unordered_map<tiledb_datatype_t, std::string> _tdb_to_np_name_dtype = {
     {TILEDB_INT32, "int32"},
     {TILEDB_INT64, "int64"},
@@ -185,8 +187,8 @@ bool is_tdb_str(tiledb_datatype_t type) {
 py::object _buffer_to_table(std::shared_ptr<ArrayBuffers> buffers) {
     auto pa = py::module::import("pyarrow");
     auto pa_table_from_arrays = pa.attr("Table").attr("from_arrays");
-    auto pa_array_import = pa.attr("Array").attr("_import_from_c");
-    auto pa_schema_import = pa.attr("Schema").attr("_import_from_c");
+    auto py_array_importer = pa.attr("Array").attr("_import_from_c");
+    auto pa_schema_importer = pa.attr("Schema").attr("_import_from_c");
 
     py::list array_list;
     py::list names;
@@ -194,13 +196,26 @@ py::object _buffer_to_table(std::shared_ptr<ArrayBuffers> buffers) {
     for (auto& name : buffers->names()) {
         auto column = buffers->at(name);
         auto [pa_array, pa_schema] = ArrowAdapter::to_arrow(column);
-        auto array = pa_array_import(
+        auto array = py_array_importer(
             py::capsule(pa_array.get()), py::capsule(pa_schema.get()));
         array_list.append(array);
         names.append(name);
     }
 
-    return pa_table_from_arrays(array_list, names);
+    auto py_arrow_table = pa_table_from_arrays(array_list, names);
+
+    // Set Arrow-table metadata so that when someone does .to_pandas()
+    // on our data, they'll more likely get the intended column nullabilities.
+    // Seee also https://github.com/single-cell-data/TileDB-SOMA/issues/3642.
+    ArrowSchema c_arrow_schema;
+    uintptr_t c_arrow_schema_ptr = (uintptr_t)(&c_arrow_schema);
+    py_arrow_table.attr("schema").attr("_export_to_c")(c_arrow_schema_ptr);
+    ArrowAdapter::set_metadata_for_pandas(&c_arrow_schema);
+    auto py_arrow_schema = pa_schema_importer(py::capsule(&c_arrow_schema));
+    py_arrow_table = pa_table_from_arrays(
+        array_list, "schema"_a = py_arrow_schema);
+
+    return py_arrow_table;
 }
 
 std::optional<py::object> to_table(

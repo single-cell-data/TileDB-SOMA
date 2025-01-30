@@ -16,7 +16,9 @@
 #include "../soma/column_buffer.h"
 #include "arrow_adapter.h"
 #include "logger.h"
+#include "nlohmann/json.hpp"
 #include "util.h"
+#include "version.h"
 
 #include "../soma/soma_attribute.h"
 #include "../soma/soma_dimension.h"
@@ -348,6 +350,127 @@ json ArrowAdapter::_get_filter_list_json(FilterList filter_list) {
     return filter_list_as_json;
 }
 
+// Here we are setting Arrow-table metadata so that when someone does
+// .to_pandas() on it they'll more likely get the desired column nullabilities.
+void ArrowAdapter::set_metadata_for_pandas(ArrowSchema* arrow_schema) {
+    // Lookup tables
+    // clang-format off
+    static std::map<std::string, std::string> arrow_format_to_pandas_type = {
+      { "c", "int8"},
+      { "s", "int16"},
+      { "i", "int32"},
+      { "l", "int64"},
+      { "C", "uint8"},
+      { "S", "uint16"},
+      { "I", "uint32"},
+      { "L", "uint64"},
+      { "f", "float32"},
+      { "g", "float64"},
+      { "u", "string"},
+      { "z", "binary"},
+      { "b", "bool"},
+      // { "tss:", xxx}, // TILEDB_DATETIME_SEC,
+      // { "tsm:", xxx}, // TILEDB_DATETIME_MS,
+      // { "tsu:", xxx}, // TILEDB_DATETIME_US,
+      // { "tsn:", xxx}, // TILEDB_DATETIME_NS,
+    };
+    static std::map<std::string, std::string> arrow_format_to_numpy_type = {
+      { "c", "Int8"},
+      { "s", "Int16"},
+      { "i", "Int32"},
+      { "l", "Int64"},
+      { "C", "UInt8"},
+      { "S", "UInt16"},
+      { "I", "UInt32"},
+      { "L", "UInt64"},
+      { "f", "Float32"},
+      { "g", "Float64"},
+      { "u", "string"},
+      { "z", "binary"},
+      { "b", "bool"},
+    };
+    // clang-format on
+
+    arrow_schema->metadata = nullptr;
+
+    nlohmann::json creator = {
+        {"library", "tiledbsoma"},
+        // This gets us "2.28.0", not "1.15.5" ... where that latter is
+        // not available directly in C++ (unless we take it as a function
+        // argument).
+        {"version", tiledbsoma::version::as_string().c_str()}};
+
+    std::vector<nlohmann::json> columns;
+    for (auto i = 0; i < arrow_schema->n_children; i++) {
+        if (arrow_schema->children[i] == nullptr) {
+            continue;
+        }
+        auto child = arrow_schema->children[i];
+
+        auto arrow_format = std::string(child->format);
+
+        std::string numpy_type = "object";
+        auto it = arrow_format_to_numpy_type.find(arrow_format);
+        if (it != arrow_format_to_numpy_type.end()) {
+            numpy_type = it->second;
+        }
+
+        std::string pandas_type = "object";
+        nlohmann::json metadata_info;  // JSON null
+        if (child->dictionary == nullptr) {
+            it = arrow_format_to_pandas_type.find(arrow_format);
+            if (it != arrow_format_to_pandas_type.end()) {
+                pandas_type = it->second;
+            }
+        } else {
+            numpy_type = pandas_type;  // empirically determined
+            pandas_type = "categorical";
+            metadata_info = {
+                // There is also a "num_categories" key but we don't have access
+                // to that information here
+                {"ordered",
+                 (child->flags & ARROW_FLAG_DICTIONARY_ORDERED) ? true : false},
+            };
+        }
+
+        // clang-format off
+        nlohmann::json column = {
+          {"name",        child->name},
+          {"field_name",  child->name},
+          {"pandas_type", pandas_type.c_str()},
+          {"numpy_type",  numpy_type.c_str()},
+          {"metadata",    metadata_info},
+        };
+        // clang-format on
+        columns.push_back(column);
+    }
+
+    // clang-format off
+    nlohmann::json pandas_info = {
+      {"columns", columns},
+      {"creator", creator},
+      // Any template type will do, as all we want to produce is empty `[]`:
+      {"index_columns", std::vector<int>({})},
+      // Any template type will do, as all we want to produce is empty `[]`:
+      {"column_indices", std::vector<int>({})},
+      // Announce that this is the API version we're conforming to:
+      {"pandas_version", "2.2.3"}
+    };
+    // clang-format on
+
+    nanoarrow::UniqueBuffer buffer;
+    ArrowMetadataBuilderInit(buffer.get(), nullptr);
+
+    ArrowMetadataBuilderAppend(
+        buffer.get(),
+        ArrowCharView("pandas"),
+        ArrowCharView(pandas_info.dump(2).c_str()));
+
+    ArrowSchemaSetMetadata(
+        arrow_schema,
+        std::string((char*)buffer->data, buffer->size_bytes).c_str());
+}
+
 std::unique_ptr<ArrowSchema> ArrowAdapter::arrow_schema_from_tiledb_array(
     std::shared_ptr<Context> ctx, std::shared_ptr<Array> tiledb_array) {
     auto tiledb_schema = tiledb_array->schema();
@@ -357,7 +480,7 @@ std::unique_ptr<ArrowSchema> ArrowAdapter::arrow_schema_from_tiledb_array(
     std::unique_ptr<ArrowSchema> arrow_schema = std::make_unique<ArrowSchema>();
     arrow_schema->format = strdup("+s");
     arrow_schema->name = strdup("parent");
-    arrow_schema->metadata = nullptr;
+
     arrow_schema->flags = 0;
     arrow_schema->n_children = ndim + nattr;
     arrow_schema->dictionary = nullptr;
@@ -452,6 +575,8 @@ std::unique_ptr<ArrowSchema> ArrowAdapter::arrow_schema_from_tiledb_array(
         }
         child->release = &ArrowAdapter::release_schema;
     }
+
+    set_metadata_for_pandas(arrow_schema.get());
 
     return arrow_schema;
 }
@@ -1559,7 +1684,7 @@ std::unique_ptr<ArrowSchema> ArrowAdapter::make_arrow_schema(
     auto arrow_schema = std::make_unique<ArrowSchema>();
     arrow_schema->format = "+s";  // structure, i.e. non-leaf node
     arrow_schema->name = strdup("parent");
-    arrow_schema->metadata = nullptr;
+
     arrow_schema->flags = 0;
     arrow_schema->n_children = num_names;  // non-leaf node
     arrow_schema->children = (ArrowSchema**)malloc(
@@ -1607,6 +1732,8 @@ std::unique_ptr<ArrowSchema> ArrowAdapter::make_arrow_schema(
         }
     }
 
+    set_metadata_for_pandas(arrow_schema.get());
+
     return arrow_schema;
 }
 
@@ -1615,7 +1742,7 @@ std::unique_ptr<ArrowSchema> ArrowAdapter::make_arrow_schema_parent(
     auto arrow_schema = std::make_unique<ArrowSchema>();
     arrow_schema->format = "+s";  // structure, i.e. non-leaf node
     arrow_schema->name = strdup("parent");
-    arrow_schema->metadata = nullptr;
+
     arrow_schema->flags = 0;
     arrow_schema->n_children = num_columns;  // non-leaf node
     arrow_schema->children = (ArrowSchema**)malloc(
@@ -1631,6 +1758,8 @@ std::unique_ptr<ArrowSchema> ArrowAdapter::make_arrow_schema_parent(
     LOG_DEBUG(std::format(
         "[ArrowAdapter] make_arrow_schema n_children {}",
         arrow_schema->n_children));
+
+    set_metadata_for_pandas(arrow_schema.get());
 
     return arrow_schema;
 }

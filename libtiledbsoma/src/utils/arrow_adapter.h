@@ -1191,6 +1191,15 @@ class ArrowAdapter {
         }
     }
 
+    /**
+     * This sets the Arrow table's metadata in a way that helps users
+     * get the Arrow table's column nullabilities preserved in Pandas
+     * when they do a `.to_pandas()` on Arrow tables we produce.
+     * See for context
+     * https://github.com/single-cell-data/TileDB-SOMA/issues/3642
+     */
+    static void set_metadata_for_pandas(ArrowSchema* arrow_schema);
+
    private:
     static std::pair<const void*, std::size_t> _get_data_and_length(
         Enumeration& enmr, const void* dst);
