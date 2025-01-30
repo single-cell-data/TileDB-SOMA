@@ -770,7 +770,7 @@ StatusAndReason SOMAArray::_can_set_shape_domainish_subhelper(
         auto status = column->can_set_current_domain_slot(
             ndrect,
             std::vector({std::make_any<std::array<int64_t, 2>>(
-                std::array<int64_t, 2>({0, newshape[idx]}))}));
+                std::array<int64_t, 2>({0, newshape[idx] - 1}))}));
 
         if (status.first == false) {
             status.second = std::format(
@@ -778,6 +778,8 @@ StatusAndReason SOMAArray::_can_set_shape_domainish_subhelper(
 
             return status;
         }
+
+        ++idx;
     }
 
     return std::pair(true, "");
@@ -884,18 +886,22 @@ void SOMAArray::_set_shape_helper(
 
     NDRectangle ndrect(*tctx, domain);
 
-    unsigned n = domain.ndim();
-    if ((unsigned)newshape.size() != n) {
+    size_t array_ndim = domain.ndim();
+    if (newshape.size() != array_ndim) {
         throw TileDBSOMAError(std::format(
             "[SOMAArray::resize]: newshape has dimension count {}; array has "
             "{} ",
             newshape.size(),
-            n));
+            array_ndim));
     }
 
-    for (unsigned i = 0; i < n; i++) {
-        ndrect.set_range<int64_t>(
-            domain.dimension(i).name(), 0, newshape[i] - 1);
+    size_t idx = 0;
+    for (const auto& column :
+         columns_ | std::views::filter(
+                        [](const auto& col) { return col->isIndexColumn(); })) {
+        column->set_current_domain_slot(
+            ndrect, std::vector<int64_t>({0, newshape[idx] - 1}));
+        ++idx;
     }
 
     new_current_domain.set_ndrectangle(ndrect);
