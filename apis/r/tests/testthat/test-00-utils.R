@@ -65,7 +65,7 @@ test_that("validate read coords with dimension names and schema", {
   # integer coordinates corresponding to int64 dimensions are cast to int64
   expect_equal(
     validate_read_coords(1:10, dimnames = "soma_joinid", schema = asch),
-    list(soma_joinid = as.integer64(1:10))
+    list(soma_joinid = bit64::as.integer64(1:10))
   )
 
   # casting is selective and only applies to int64 dimensions
@@ -76,7 +76,7 @@ test_that("validate read coords with dimension names and schema", {
   )
 
   expect_equal(test_coords$int_column, 1:10)
-  expect_equal(test_coords$soma_joinid, as.integer64(1:10))
+  expect_equal(test_coords$soma_joinid, bit64::as.integer64(1:10))
 })
 
 test_that("half-named lists are not treated as named", {

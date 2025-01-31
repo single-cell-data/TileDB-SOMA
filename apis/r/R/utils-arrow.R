@@ -206,8 +206,9 @@ r_type_from_arrow_type.DataType <- function(x) {
 }
 
 #' Retrieve limits for Arrow types
-#' @importFrom bit64 lim.integer64
+#'
 #' @noRd
+#'
 arrow_type_range <- function(x) {
   stopifnot(is_arrow_data_type(x))
 

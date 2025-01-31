@@ -210,7 +210,7 @@ write_soma.data.frame <- function(
     x$soma_joinid <- if (nrow(x) == 1L) {
       bit64::integer64(length = 1L)
     } else {
-      bit64::seq.integer64(from = 0L, to = nrow(x) - 1L)
+      seq(bit64::as.integer64(0L), to = nrow(x) - 1L)
     }
   }
   # Check `index_column_names`

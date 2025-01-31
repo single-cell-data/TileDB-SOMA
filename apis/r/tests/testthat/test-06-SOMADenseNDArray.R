@@ -78,7 +78,7 @@ test_that("SOMADenseNDArray creation", {
   expect_false(tiledb::is.sparse(sch))
 
   ## shape
-  expect_equal(ndarray$shape(), as.integer64(c(10, 5)))
+  expect_equal(ndarray$shape(), bit64::as.integer64(c(10, 5)))
 
   ## ndim
   expect_equal(ndarray$ndim(), 2L)

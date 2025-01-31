@@ -30,7 +30,11 @@ test_that("Iterated Interface from SOMAArrayReader", {
   rm(sr)
   gc()
 
-  sr <- sr_setup(uri, ctxxp = somactx, dim_points = list(soma_dim_0 = as.integer64(1)))
+  sr <- sr_setup(
+    uri,
+    ctxxp = somactx,
+    dim_points = list(soma_dim_0 = bit64::as.integer64(1))
+  )
   expect_true(inherits(sr, "externalptr"))
 
   rl <- data.frame()
@@ -50,7 +54,10 @@ test_that("Iterated Interface from SOMAArrayReader", {
 
   sr <- sr_setup(uri,
     ctxxp = somactx,
-    dim_range = list(soma_dim_1 = cbind(as.integer64(1), as.integer64(2)))
+    dim_range = list(soma_dim_1 = cbind(
+      bit64::as.integer64(1),
+      bit64::as.integer64(2)
+    ))
   )
   expect_true(inherits(sr, "externalptr"))
 

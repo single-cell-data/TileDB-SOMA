@@ -1,6 +1,7 @@
 # Unreleased
 
 * Encode string metadata as `TILEDB_STRING_UTF8` instead of `TILEDB_STRING_ASCII`
+* Use S3 method dispatch on `integer64` instead of directly calling the S3 methods
 
 # tiledbsoma 1.15.0
 

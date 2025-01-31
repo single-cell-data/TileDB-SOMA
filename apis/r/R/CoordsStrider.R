@@ -47,7 +47,7 @@ CoordsStrider <- R6::R6Class(
         )
         private$.start <- bit64::as.integer64(start)
         private$.end <- bit64::as.integer64(end)
-        stride <- stride %||% bit64::abs.integer64(self$end - self$start + 1L)
+        stride <- stride %||% abs(self$end - self$start + 1L)
         private$.index <- 0L
       } else {
         stopifnot(
@@ -122,11 +122,11 @@ CoordsStrider <- R6::R6Class(
           return(bit64::as.integer64(start))
         }
         by <- ifelse(start <= end, 1L, -1L)
-        return(bit64::seq.integer64(from = start, to = end, by = by))
+        return(seq(from = bit64::as.integer64(start), to = end, by = by))
       }
       start <- private$.index
-      end <- as.integer(bit64::min.integer64(
-        private$.index + self$stride - 1L,
+      end <- as.integer(min(
+        bit64::as.integer64(private$.index) + self$stride - 1L,
         length(self$coords)
       ))
       private$.index <- end + 1L
@@ -144,7 +144,7 @@ CoordsStrider <- R6::R6Class(
       if (is.null(self$coords)) {
         private$.start
       } else {
-        bit64::min.integer64(self$coords)
+        min(self$coords)
       }
     },
     #' @field end If set, the end point of the iterated coordinates;
@@ -154,7 +154,7 @@ CoordsStrider <- R6::R6Class(
       if (is.null(self$coords)) {
         private$.end
       } else {
-        bit64::max.integer64(self$coords)
+        max(self$coords)
       }
     },
     #' @field stride The stride, or how many coordinates to generate per
