@@ -211,7 +211,7 @@ py::dict meta(std::map<std::string, MetadataValue> metadata_mapping) {
     for (auto [key, val] : metadata_mapping) {
         auto [tdb_type, value_num, value] = val;
 
-        if (tdb_type == TILEDB_STRING_UTF8) {
+        if (tdb_type == TILEDB_STRING_UTF8 || tdb_type == TILEDB_STRING_ASCII) {
             // Empty strings stored as nullptr have a value_num of 1 and a \x00
             // value
             if (value_num == 1 && value == nullptr) {
@@ -226,7 +226,7 @@ py::dict meta(std::map<std::string, MetadataValue> metadata_mapping) {
             results[py::str(key)] = py::array(value_type, value_num, value)
                                         .attr("item")(0);
         } else {
-            py::dtype value_type = tdb_to_np_dtype(tdb_type, 1);
+            py::dtype value_type = tdb_to_np_dtype(tdb_type, value_num);
             results[py::str(key)] = py::array(value_type, value_num, value)
                                         .attr("item")(0);
         }
