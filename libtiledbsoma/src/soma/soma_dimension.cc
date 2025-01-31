@@ -337,7 +337,8 @@ std::pair<bool, std::string> SOMADimension::_can_set_current_domain_slot(
     if (new_domain.size() != 1) {
         throw TileDBSOMAError(std::format(
             "[SOMADimension][_can_set_current_domain_slot] Expected domain "
-            "size is 1, found {}",
+            "size for '{}' is 1, found {}",
+            name(),
             new_domain.size()));
     }
 
@@ -348,8 +349,10 @@ std::pair<bool, std::string> SOMADimension::_can_set_current_domain_slot(
             return std::pair(
                 false,
                 std::format(
-                    "index-column name {}: new lower > new upper",
-                    dimension.name()));
+                    "index-column name '{}': new lower {} > new upper {}",
+                    dimension.name(),
+                    new_dom[0],
+                    new_dom[1]));
         }
 
         // If we're checking against the core current domain: the user-provided
@@ -365,17 +368,23 @@ std::pair<bool, std::string> SOMADimension::_can_set_current_domain_slot(
                 return std::pair(
                     false,
                     std::format(
-                        "index-column name {}: new lower > old lower (downsize "
+                        "index-column name '{}': new lower {} > old lower {} "
+                        "(downsize "
                         "is unsupported)",
-                        dimension.name()));
+                        dimension.name(),
+                        new_dom[0],
+                        dom[0]));
             }
             if (new_dom[1] < dom[1]) {
                 return std::pair(
                     false,
                     std::format(
-                        "index-column name {}: new upper < old upper (downsize "
+                        "index-column name '{}': new upper {} < old upper {} "
+                        "(downsize "
                         "is unsupported)",
-                        dimension.name()));
+                        dimension.name(),
+                        new_dom[1],
+                        dom[1]));
             }
         } else {
             auto dom = std::any_cast<std::pair<T, T>>(_core_domain_slot());
@@ -384,15 +393,19 @@ std::pair<bool, std::string> SOMADimension::_can_set_current_domain_slot(
                 return std::pair(
                     false,
                     std::format(
-                        "index-column name {}: new lower < limit lower",
-                        dimension.name()));
+                        "index-column name '{}': new lower {} < limit lower {}",
+                        dimension.name(),
+                        new_dom[0],
+                        dom.first));
             }
             if (new_dom[1] > dom.second) {
                 return std::pair(
                     false,
                     std::format(
-                        "index-column name {}: new upper > limit upper",
-                        dimension.name()));
+                        "index-column name '{}': new upper {} > limit upper {}",
+                        dimension.name(),
+                        new_dom[1],
+                        dom.second));
             }
         }
 

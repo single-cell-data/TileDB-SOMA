@@ -381,8 +381,8 @@ TEST_CASE("SOMASparseNDArray: can_resize", "[SOMASparseNDArray]") {
     REQUIRE(check.first == false);
     REQUIRE(
         check.second ==
-        "[testing] index-column name soma_dim_0: new upper < old upper "
-        "(downsize is unsupported)");
+        "[testing] index-column name 'soma_dim_0': new upper 39 < old upper "
+        "999 (downsize is unsupported)");
 
     check = snda->can_resize(newshape_good, "testing");
     REQUIRE(check.first == true);
