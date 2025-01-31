@@ -756,12 +756,13 @@ StatusAndReason SOMAArray::_can_set_shape_helper(
 StatusAndReason SOMAArray::_can_set_shape_domainish_subhelper(
     const std::vector<int64_t>& newshape,
     std::string function_name_for_messages) {
-    std::optional<NDRectangle> ndrect = has_current_domain() ?
-                                            std::make_optional<NDRectangle>(
-                                                NDRectangle(
-                                                    *ctx_->tiledb_ctx(),
-                                                    arr_->schema().domain())) :
-                                            std::nullopt;
+    std::optional<NDRectangle>
+        ndrect = has_current_domain() ?
+                     std::make_optional<NDRectangle>(
+                         tiledb::ArraySchemaExperimental::current_domain(
+                             *ctx_->tiledb_ctx(), arr_->schema())
+                             .ndrectangle()) :
+                     std::nullopt;
 
     size_t idx = 0;
     for (const auto& column :
@@ -774,7 +775,7 @@ StatusAndReason SOMAArray::_can_set_shape_domainish_subhelper(
 
         if (status.first == false) {
             status.second = std::format(
-                "'{}' : '{}'", function_name_for_messages, status.second);
+                "[{}] {}", function_name_for_messages, status.second);
 
             return status;
         }

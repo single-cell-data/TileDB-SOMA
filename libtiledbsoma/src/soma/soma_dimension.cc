@@ -359,7 +359,7 @@ std::pair<bool, std::string> SOMADimension::_can_set_current_domain_slot(
         // domain must be contained within the core (max) domain.
 
         if (rectangle.has_value()) {
-            auto dom = rectangle.value().range<T>(dimension.name());
+            auto dom = rectangle->range<T>(dimension.name());
 
             if (new_dom[0] > dom[0]) {
                 return std::pair(
