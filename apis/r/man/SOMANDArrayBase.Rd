@@ -130,18 +130,22 @@ shape exceeds \code{maxshape} in any dimension. Raises an error if the array
 doesn't already have a shape: in that case please call
 \code{tiledbsoma_upgrade_shape}. (lifecycle: maturing)
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{SOMANDArrayBase$resize(new_shape)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{SOMANDArrayBase$resize(new_shape, check_only = FALSE)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
 \item{\code{new_shape}}{A vector of integerish, of the same length as the array's \code{ndim}.}
+
+\item{\code{check_only}}{If true, does not apply the operation, but only reports
+whether it would have succeeded.}
 }
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-No return value
+No return value if \code{check_only} is \code{FALSE}. If \code{check_only} is \code{TRUE},
+returns the empty string if no error is detected, else a description of the error.
 }
 }
 \if{html}{\out{<hr>}}
@@ -156,18 +160,22 @@ call on a pre-1.15 array the first time a shape is set on it; the latter must
 be used for subsequent resizes on any array which already has upgraded shape.
 (lifecycle: maturing)
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{SOMANDArrayBase$tiledbsoma_upgrade_shape(shape)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{SOMANDArrayBase$tiledbsoma_upgrade_shape(shape, check_only = FALSE)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
 \item{\code{shape}}{A vector of integerish, of the same length as the array's \code{ndim}.}
+
+\item{\code{check_only}}{If true, does not apply the operation, but only reports
+whether it would have succeeded.}
 }
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-No return value
+No return value if \code{check_only} is \code{FALSE}. If \code{check_only} is \code{TRUE},
+returns the empty string if no error is detected, else a description of the error.
 }
 }
 \if{html}{\out{<hr>}}

@@ -63,7 +63,7 @@ create_and_populate_var <- function(
   mode = NULL
 ) {
   tbl <- arrow::arrow_table(
-    soma_joinid = bit64::seq.integer64(from = 0L, to = nrows - 1L),
+    soma_joinid = seq(bit64::as.integer64(0L), to = nrows - 1L),
     quux = as.character(seq.int(nrows) + 1000L),
     xyzzy = runif(nrows),
     schema = arrow::schema(

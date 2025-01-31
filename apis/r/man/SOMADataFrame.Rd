@@ -330,7 +330,7 @@ whether the operation would succeed if attempted, and a reason why it
 would not. The domain being requested must be contained within what
 \code{maxdomain} returns.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{SOMADataFrame$tiledbsoma_upgrade_domain(new_domain)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{SOMADataFrame$tiledbsoma_upgrade_domain(new_domain, check_only = FALSE)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -339,11 +339,15 @@ would not. The domain being requested must be contained within what
 \item{\code{new_domain}}{A named list, keyed by index-column name, with values
 being two-element vectors containing the desired lower and upper bounds
 for the domain.}
+
+\item{\code{check_only}}{If true, does not apply the operation, but only reports
+whether it would have succeeded.}
 }
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-No return value
+No return value if \code{check_only} is \code{FALSE}. If \code{check_only} is \code{TRUE},
+returns the empty string if no error is detected, else a description of the error.
 }
 }
 \if{html}{\out{<hr>}}
@@ -360,7 +364,7 @@ would not. The return value from \code{domain} must be contained within
 the requested \code{new_domain}, and the requested \code{new_domain} must be
 contained within the return value from \code{maxdomain}. (lifecycle: maturing)
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{SOMADataFrame$change_domain(new_domain)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{SOMADataFrame$change_domain(new_domain, check_only = FALSE)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -369,11 +373,15 @@ contained within the return value from \code{maxdomain}. (lifecycle: maturing)
 \item{\code{new_domain}}{A named list, keyed by index-column name, with values
 being two-element vectors containing the desired lower and upper bounds
 for the domain.}
+
+\item{\code{check_only}}{If true, does not apply the operation, but only reports
+whether it would have succeeded.}
 }
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-No return value
+No return value if \code{check_only} is \code{FALSE}. If \code{check_only} is \code{TRUE},
+returns the empty string if no error is detected, else a description of the error.
 }
 }
 \if{html}{\out{<hr>}}

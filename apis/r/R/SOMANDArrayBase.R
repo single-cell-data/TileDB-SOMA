@@ -6,8 +6,7 @@
 #'
 #' @keywords internal
 #' @export
-#' @importFrom bit64 as.integer64
-
+#'
 SOMANDArrayBase <- R6::R6Class(
   classname = "SOMANDArrayBase",
   inherit = SOMAArrayBase,
@@ -119,7 +118,7 @@ SOMANDArrayBase <- R6::R6Class(
       if (isTRUE(check_only)) {
         return(reason_string)
       }
-      
+
       # The return value from resize without check_only is always "", or it
       # raises an error trying.
       return(invisible(NULL))

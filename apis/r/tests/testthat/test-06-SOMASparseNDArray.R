@@ -56,7 +56,7 @@ test_that("SOMASparseNDArray creation", {
   expect_true(tiledb::is.sparse(sch))
   expect_false(tiledb::allows_dups(sch))
 
-  expect_equal(ndarray$shape(), as.integer64(c(10, 10)))
+  expect_equal(ndarray$shape(), bit64::as.integer64(c(10, 10)))
 
   expect_true(ndarray$tiledbsoma_has_upgraded_shape())
   shape <- ndarray$shape()

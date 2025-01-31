@@ -156,7 +156,7 @@ TileDBArray <- R6::R6Class(
     #' (lifecycle: maturing)
     #' @return A named vector of dimension length (and the same type as the dimension)
     shape = function() {
-      as.integer64(shape(self$uri, private$.soma_context))
+      return(bit64::as.integer64(shape(self$uri, private$.soma_context)))
     },
 
     #' @description Retrieve the hard limit up to which the array may be resized
@@ -164,7 +164,7 @@ TileDBArray <- R6::R6Class(
     #' (lifecycle: maturing)
     #' @return A named vector of dimension length (and the same type as the dimension)
     maxshape = function() {
-      as.integer64(maxshape(self$uri, private$.soma_context))
+      return(bit64::as.integer64(maxshape(self$uri, private$.soma_context)))
     },
 
     #' @description Retrieve the range of indexes for a dimension that were
