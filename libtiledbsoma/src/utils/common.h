@@ -16,9 +16,12 @@
 
 #include <stdexcept>  // for windows: error C2039: 'runtime_error': is not a member of 'std'
 #include <string>
+#include <string_view>
 #include <tiledb/tiledb>
 
 namespace tiledbsoma {
+
+constexpr std::string_view SOMA_JOINID = "soma_joinid";
 
 const std::string SOMA_OBJECT_TYPE_KEY = "soma_object_type";
 const std::string ENCODING_VERSION_KEY = "soma_encoding_version";

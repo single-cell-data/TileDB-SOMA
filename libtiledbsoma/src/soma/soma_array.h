@@ -316,7 +316,7 @@ class SOMAArray : public SOMAObject {
      *
      * @return bool
      */
-    bool has_dimension_name(const std::string& name) const;
+    bool has_dimension_name(std::string_view name) const;
 
     /**
      * @brief Get the name of each attribute.

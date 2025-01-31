@@ -366,7 +366,7 @@ std::vector<std::string> SOMAArray::dimension_names() const {
     return result;
 }
 
-bool SOMAArray::has_dimension_name(const std::string& name) const {
+bool SOMAArray::has_dimension_name(std::string_view name) const {
     for (const auto& column :
          columns_ | std::views::filter(
                         [](const auto& col) { return col->isIndexColumn(); })) {
@@ -821,7 +821,7 @@ StatusAndReason SOMAArray::_can_set_soma_joinid_shape_helper(
     }
 
     // OK if soma_joinid isn't a dim.
-    if (!has_dimension_name("soma_joinid")) {
+    if (!has_dimension_name(SOMA_JOINID)) {
         return std::pair(true, "");
     }
 
@@ -1515,57 +1515,40 @@ std::optional<int64_t> SOMAArray::_maybe_soma_joinid_maxshape() {
 
 std::optional<int64_t>
 SOMAArray::_maybe_soma_joinid_shape_via_tiledb_current_domain() {
-    const std::string dim_name = "soma_joinid";
-
-    auto dom = schema_->domain();
-    if (!dom.has_dimension(dim_name)) {
+    if (!has_dimension_name(SOMA_JOINID)) {
         return std::nullopt;
     }
 
-    auto current_domain = _get_current_domain();
-    if (current_domain.is_empty()) {
-        throw TileDBSOMAError("internal coding error");
-    }
-
-    auto t = current_domain.type();
-    if (t != TILEDB_NDRECTANGLE) {
-        throw TileDBSOMAError("current_domain type is not NDRECTANGLE");
-    }
-
-    NDRectangle ndrect = current_domain.ndrectangle();
-
-    auto dim = dom.dimension(dim_name);
-    if (dim.type() != TILEDB_INT64) {
+    auto column = get_column(SOMA_JOINID);
+    if (column->domain_type().value() != TILEDB_INT64) {
         throw TileDBSOMAError(std::format(
             "expected {} dim to be {}; got {}",
-            dim_name,
+            SOMA_JOINID,
             tiledb::impl::type_to_str(TILEDB_INT64),
-            tiledb::impl::type_to_str(dim.type())));
+            tiledb::impl::type_to_str(column->domain_type().value())));
     }
 
-    auto range = ndrect.range<int64_t>(dim_name);
-    auto max = range[1] + 1;
+    auto max = column->core_current_domain_slot<int64_t>(*ctx_, *arr_).second +
+               1;
+
     return std::optional<int64_t>(max);
 }
 
 std::optional<int64_t> SOMAArray::_maybe_soma_joinid_shape_via_tiledb_domain() {
-    const std::string dim_name = "soma_joinid";
-
-    auto dom = schema_->domain();
-    if (!dom.has_dimension(dim_name)) {
+    if (!has_dimension_name(SOMA_JOINID)) {
         return std::nullopt;
     }
 
-    auto dim = dom.dimension(dim_name);
-    if (dim.type() != TILEDB_INT64) {
+    auto column = get_column(SOMA_JOINID);
+    if (column->domain_type().value() != TILEDB_INT64) {
         throw TileDBSOMAError(std::format(
             "expected {} dim to be {}; got {}",
-            dim_name,
+            SOMA_JOINID,
             tiledb::impl::type_to_str(TILEDB_INT64),
-            tiledb::impl::type_to_str(dim.type())));
+            tiledb::impl::type_to_str(column->domain_type().value())));
     }
 
-    auto max = dim.domain<int64_t>().second + 1;
+    auto max = column->core_domain_slot<int64_t>().second + 1;
 
     return std::optional<int64_t>(max);
 }
