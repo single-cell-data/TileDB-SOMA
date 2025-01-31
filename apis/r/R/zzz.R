@@ -8,7 +8,7 @@
   ## create a slot for somactx in per-package enviroment, do no fill it yet to allow 'lazy load'
   .pkgenv[["somactx"]] <- NULL
 
-  rpkg_lib <- tiledb::tiledb_version(compact = FALSE)
+  rpkg_lib <- get_tiledb_version(compact = FALSE)
   # Check major and minor but not micro: sc-50464
   rpkg_lib_version <- paste(rpkg_lib[["major"]], rpkg_lib[["minor"]], sep = ".")
   soma_lib_version <- libtiledbsoma_version(compact = TRUE, major_minor_only = TRUE)
@@ -27,7 +27,7 @@
   if (interactive()) {
     packageStartupMessage(
       "TileDB-SOMA R package ", packageVersion(pkgname),
-      " with TileDB Embedded ", format(tiledb::tiledb_version(TRUE)),
+      " with TileDB Embedded ", format(get_tiledb_version(TRUE)),
       " on ", utils::osVersion,
       ".\nSee https://github.com/single-cell-data for more information ",
       "about the SOMA project."
