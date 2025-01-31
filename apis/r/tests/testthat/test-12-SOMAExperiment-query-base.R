@@ -193,7 +193,7 @@ test_that("query by value filters with enums", {
   # Test enum query with present and missing level
   core <- list(
     tiledbsoma = numeric_version(tiledbsoma:::libtiledbsoma_version(TRUE)),
-    tiledb.r = numeric_version(paste(tiledb::tiledb_version(), collapse = "."))
+    tiledb.r = numeric_version(paste(get_tiledb_version(), collapse = "."))
   )
   skip_if(
     any(vapply(core, \(x) x < "2.21", FUN.VALUE = logical(1L))),
