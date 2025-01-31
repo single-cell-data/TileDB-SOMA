@@ -235,7 +235,7 @@ py::dict meta(std::map<std::string, MetadataValue> metadata_mapping) {
             results[py::str(key)] = py::array(value_type, value_num, value)
                                         .attr("item")(0);
         } else {
-            py::dtype value_type = tdb_to_np_dtype(tdb_type, 1);
+            py::dtype value_type = tdb_to_np_dtype(tdb_type, value_num);
             results[py::str(key)] = py::array(value_type, value_num, value)
                                         .attr("item")(0);
         }
