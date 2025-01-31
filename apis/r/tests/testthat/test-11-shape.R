@@ -445,7 +445,7 @@ test_that("SOMASparseNDArray shape", {
     ndarray <- SOMASparseNDArrayOpen(uri)
     expect_equal(ndarray$ndim(), length(arg_shape))
 
-    expect_equal(ndarray$shape(), as.integer64(arg_shape))
+    expect_equal(ndarray$shape(), bit64::as.integer64(arg_shape))
 
     # More generally after current-domain support:
     readback_shape <- ndarray$shape()
@@ -529,7 +529,7 @@ test_that("SOMADenseNDArray shape", {
 
     expect_equal(ndarray$ndim(), length(arg_shape))
 
-    expect_equal(ndarray$shape(), as.integer64(arg_shape))
+    expect_equal(ndarray$shape(), bit64::as.integer64(arg_shape))
 
     # More generally after current-domain support:
     readback_shape <- ndarray$shape()

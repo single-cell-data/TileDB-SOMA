@@ -313,7 +313,7 @@ test_that("creation with ordered factors", {
   uri <- withr::local_tempdir("soma-dataframe-ordered")
   n <- 10L
   df <- data.frame(
-    soma_joinid = bit64::seq.integer64(from = 0L, to = n - 1L),
+    soma_joinid = seq(bit64::as.integer64(0L), to = n - 1L),
     int = seq_len(length.out = n),
     bool = rep_len(c(TRUE, FALSE), length.out = n),
     ord = ordered(rep_len(c("g1", "g2", "g3"), length.out = n))
@@ -340,7 +340,7 @@ test_that("explicit casting of ordered factors to regular factors", {
   uri <- withr::local_tempdir("soma-dataframe-unordered")
   n <- 10L
   df <- data.frame(
-    soma_joinid = bit64::seq.integer64(from = 0L, to = n - 1L),
+    soma_joinid = seq(bit64::as.integer64(0L), to = n - 1L),
     int = seq_len(length.out = n),
     bool = rep_len(c(TRUE, FALSE), length.out = n),
     ord = ordered(rep_len(c("g1", "g2", "g3"), length.out = n))
@@ -885,7 +885,7 @@ test_that("missing levels in enums", {
   uri <- withr::local_tempdir("soma-dataframe-missing-levels")
   n <- 10L
   df <- data.frame(
-    soma_joinid = bit64::seq.integer64(from = 0L, to = n - 1L),
+    soma_joinid = seq(bit64::as.integer64(0L), to = n - 1L),
     int = seq_len(length.out = n),
     enum = factor(
       x = rep_len(c("g1", "g2", "g3"), length.out = n),

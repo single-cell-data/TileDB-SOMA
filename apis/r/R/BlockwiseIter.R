@@ -57,11 +57,11 @@ BlockwiseReadIterBase <- R6::R6Class(
       # Check reindex_disable_on_axis
       if (is_scalar_logical(reindex_disable_on_axis)) {
         reindex_disable_on_axis <- if (isTRUE(reindex_disable_on_axis)) { # TRUE
-          bit64::seq.integer64(0L, ndim)
+          seq(bit64::as.integer64(0L), ndim)
         } else if (isFALSE(reindex_disable_on_axis)) { # FALSE
           NULL
         } else { # NA
-          ax <- bit64::seq.integer64(0L, ndim)
+          ax <- seq(bit64::as.integer64(0L), ndim)
           ax[ax != self$axis]
         }
       }
@@ -133,7 +133,7 @@ BlockwiseReadIterBase <- R6::R6Class(
     #' @field axes_to_reindex The axes to re-index
     #'
     axes_to_reindex = function() {
-      ax <- bit64::seq.integer64(0L, self$array$ndim() - 1L)
+      ax <- seq(bit64::as.integer64(0L), self$array$ndim() - 1L)
       ax <- ax[!ax %in% self$reindex_disable_on_axis]
       if (length(ax)) {
         ax <- ax[ax != self$axis]

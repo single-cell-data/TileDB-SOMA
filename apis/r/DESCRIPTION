@@ -33,7 +33,7 @@ Imports:
     methods,
     Matrix,
     stats,
-    bit64,
+    bit64 (>= 4.6.0.1),
     tiledb (>= 0.30.0),
     arrow (>= 14.0.0),
     utils,

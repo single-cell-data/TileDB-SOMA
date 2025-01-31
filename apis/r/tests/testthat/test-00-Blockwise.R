@@ -317,3 +317,7 @@ test_that("Blockwise iterate through full array", {
   }
   expect_true(it$read_complete())
 })
+
+# test-06-SOMADataFrame.R
+# test-11-shape.R
+# test-13-write-soma-objects.R
