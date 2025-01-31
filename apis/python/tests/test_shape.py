@@ -123,7 +123,10 @@ def test_sparse_nd_array_basics(
     with tiledbsoma.SparseNDArray.open(uri, "w") as snda:
         (ok, msg) = snda.resize(new_shape, check_only=True)
         assert not ok
-        assert msg == "[can_resize] index-column name 'soma_dim_0': new upper 49 < old upper 99 (downsize is unsupported)"
+        assert (
+            msg
+            == "[can_resize] index-column name 'soma_dim_0': new upper 49 < old upper 99 (downsize is unsupported)"
+        )
         # TODO: check draft spec
         # with pytest.raises(ValueError):
         with pytest.raises(tiledbsoma.SOMAError):
@@ -175,7 +178,10 @@ def test_sparse_nd_array_basics(
         too_small = tuple(e - 1 for e in new_shape)
         (ok, msg) = snda.resize(too_small, check_only=True)
         assert not ok
-        assert msg == "[can_resize] index-column name 'soma_dim_0': new upper 148 < old upper 149 (downsize is unsupported)"
+        assert (
+            msg
+            == "[can_resize] index-column name 'soma_dim_0': new upper 148 < old upper 149 (downsize is unsupported)"
+        )
 
     with tiledbsoma.SparseNDArray.open(uri, "w") as snda:
         (ok, msg) = snda.resize(new_shape, check_only=True)

@@ -350,22 +350,27 @@ void SOMAArray::set_column_data(
 };
 
 uint64_t SOMAArray::ndim() const {
-    return tiledb_schema()->domain().ndim();
+    return std::count_if(
+        columns_.cbegin(), columns_.cend(), [](const auto& col) {
+            return col->isIndexColumn();
+        });
 }
 
 std::vector<std::string> SOMAArray::dimension_names() const {
     std::vector<std::string> result;
-    auto dimensions = tiledb_schema()->domain().dimensions();
-    for (const auto& dim : dimensions) {
-        result.push_back(dim.name());
+    for (const auto& column :
+         columns_ | std::views::filter(
+                        [](const auto& col) { return col->isIndexColumn(); })) {
+        result.push_back(column->name());
     }
     return result;
 }
 
 bool SOMAArray::has_dimension_name(const std::string& name) const {
-    auto dimensions = tiledb_schema()->domain().dimensions();
-    for (const auto& dim : dimensions) {
-        if (dim.name() == name) {
+    for (const auto& column :
+         columns_ | std::views::filter(
+                        [](const auto& col) { return col->isIndexColumn(); })) {
+        if (column->name() == name) {
             return true;
         }
     }
@@ -374,10 +379,11 @@ bool SOMAArray::has_dimension_name(const std::string& name) const {
 
 std::vector<std::string> SOMAArray::attribute_names() const {
     std::vector<std::string> result;
-    auto schema = tiledb_schema();
-    unsigned n = schema->attribute_num();
-    for (unsigned i = 0; i < n; i++) {
-        result.push_back(schema->attribute(i).name());
+    for (const auto& column :
+         columns_ | std::views::filter([](const auto& col) {
+             return !col->isIndexColumn();
+         })) {
+        result.push_back(column->name());
     }
     return result;
 }
