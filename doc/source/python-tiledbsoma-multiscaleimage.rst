@@ -32,11 +32,15 @@
       ~MultiscaleImage.pop
       ~MultiscaleImage.popitem
 
-      ~MultiscaleImage.add_new_level
       ~MultiscaleImage.get_transform_from_level
       ~MultiscaleImage.get_transform_to_level
       ~MultiscaleImage.level_shape
+      ~MultiscaleImage.level_uri
+      ~MultiscaleImage.levels
+      ~MultiscaleImage.mro
       ~MultiscaleImage.read_spatial_region
+      ~MultiscaleImage.register
+      ~MultiscaleImage.add_new_level
 
    .. rubric:: Attributes
 
@@ -58,4 +62,3 @@
       ~MultiscaleImage.has_channel_axis
       ~MultiscaleImage.level_count
       ~MultiscaleImage.nchannels
-
