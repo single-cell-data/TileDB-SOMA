@@ -37,7 +37,7 @@
       ~MultiscaleImage.level_shape
       ~MultiscaleImage.level_uri
       ~MultiscaleImage.levels
-      ~MultiscaleImage.mro
+      ~MultiscaleImage.set
       ~MultiscaleImage.read_spatial_region
       ~MultiscaleImage.register
       ~MultiscaleImage.add_new_level
