@@ -3,7 +3,13 @@ test_that("SOMASparseNDArray creation", {
   uri <- tempfile(pattern = "sparse-ndarray")
   ndarray <- SOMASparseNDArrayCreate(uri, arrow::int32(), shape = c(10, 10))
 
-  expect_equal(tiledb::tiledb_object_type(uri), "ARRAY")
+  expect_match(
+    get_tiledb_object_type(
+      ndarray$uri,
+      ndarray$.__enclos_env__$private$.soma_context
+    ),
+    "ARRAY"
+  )
   expect_equal(ndarray$dimnames(), c("soma_dim_0", "soma_dim_1"))
 
   expect_equal(ndarray$attrnames(), "soma_data")
