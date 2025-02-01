@@ -5,9 +5,6 @@ HT_TEST_CONFIG = {
     #
     # Defect work-arounds, while awaiting a fix
     #
-    # data corruption due to incorrect Arrow array offset handling
-    # See also sc-62104
-    "sc-61239_workaround": False,
     # creating array with timestamp==0 fails in 1.15 (regression)
     "sc-61054_workaround": True,
     # Tables returned by SparseNDArray.read have incorrect nullability in schema fields

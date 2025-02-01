@@ -590,11 +590,7 @@ def arrow_table2(
     assert tbl.schema == schema
 
     # split, sometimes
-    if (
-        len(tbl) > 3
-        and draw(st.booleans())
-        and not HT_TEST_CONFIG["sc-61239_workaround"]
-    ):
+    if len(tbl) > 3 and draw(st.booleans()):
         n_splits = draw(st.integers(min_value=0, max_value=max(0, len(tbl) // 10)))
         if n_splits > 0:
             split_points = draw(splitss(n_splits=n_splits, max_value=len(tbl)))
@@ -602,7 +598,7 @@ def arrow_table2(
             tbl = pa.concat_tables([tbl[st:sp] for st, sp in pairwise(split_points)])
 
     # pad, sometimes
-    if draw(st.booleans()) and not HT_TEST_CONFIG["sc-61239_workaround"]:
+    if draw(st.booleans()):
         batches = tbl.to_batches()
         batch_to_pad = draw(st.integers(min_value=0, max_value=len(batches) - 1))
         batch_arrays = [pad_array(arr, draw) for arr in batches[batch_to_pad].columns]

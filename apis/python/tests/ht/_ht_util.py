@@ -346,9 +346,6 @@ def pad_array(arr: pa.Array | npt.NDArray[Any], draw: st.DrawFn) -> pa.Array:
     """Strategy helper: add padding to one or both ends of the array. This tests for Arrow array
     offset & length handling."""
 
-    if HT_TEST_CONFIG.get("sc-61239_workaround", False):
-        return pa.array(arr)
-
     if not isinstance(arr, pa.Array):
         arr = pa.array(arr)
 
