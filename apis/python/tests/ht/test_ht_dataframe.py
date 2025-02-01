@@ -538,7 +538,8 @@ def arrow_table2(
                         max_size = int(
                             min(
                                 max_size,
-                                (d[1] - d[0]) / np.finfo(f.type.to_pandas_dtype()).tiny + 1,
+                                (d[1] - d[0]) / np.finfo(f.type.to_pandas_dtype()).tiny
+                                + 1,
                             )
                         )
                 elif pa.types.is_timestamp(f.type):
