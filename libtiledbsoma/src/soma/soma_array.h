@@ -1230,9 +1230,7 @@ class SOMAArray : public SOMAObject {
      * This is a code-dedupe helper for can_upgrade_domain.
      */
     StatusAndReason _can_set_dataframe_domainish_subhelper(
-        const ArrowTable& newdomain,
-        bool check_current_domain,
-        std::string function_name_for_messages);
+        const ArrowTable& newdomain, std::string function_name_for_messages);
 
     /**
      * This is a code-dedupe helper for can_resize_soma_joinid_shape and
