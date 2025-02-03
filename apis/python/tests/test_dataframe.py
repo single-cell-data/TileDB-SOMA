@@ -9,6 +9,7 @@ import pandas as pd
 import pyarrow as pa
 import pytest
 import somacore
+from numpy.testing import assert_array_equal
 from pandas.api.types import union_categoricals
 
 import tiledbsoma as soma
@@ -256,8 +257,8 @@ def test_dataframe_with_enumeration(tmp_path):
 
     with soma.DataFrame.open(tmp_path.as_posix()) as sdf:
         df = sdf.read().concat()
-        np.testing.assert_array_equal(df["myint"].chunk(0).dictionary, enums["enmr1"])
-        np.testing.assert_array_equal(df["myfloat"].chunk(0).dictionary, enums["enmr2"])
+        assert_array_equal(df["myint"].chunk(0).dictionary, enums["enmr1"])
+        assert_array_equal(df["myfloat"].chunk(0).dictionary, enums["enmr2"])
 
 
 @pytest.fixture
@@ -2025,15 +2026,15 @@ def test_arrow_table_sliced_writer(tmp_path):
         sdf.write(table[:])
 
     with soma.DataFrame.open(uri) as sdf:
-        pdf = sdf.read().concat().to_pandas()
+        pdf = sdf.read().concat()
 
-        np.testing.assert_array_equal(pdf["myint"], pydict["myint"])
-        np.testing.assert_array_equal(pdf["mystring"], pydict["mystring"])
-        np.testing.assert_array_equal(pdf["mybool"], pydict["mybool"])
+        assert_array_equal(pdf["myint"], pydict["myint"])
+        assert_array_equal(pdf["mystring"], pydict["mystring"])
+        assert_array_equal(pdf["mybool"], pydict["mybool"])
 
-        np.testing.assert_array_equal(pdf["myenumint"], pydict["myenumint"])
-        np.testing.assert_array_equal(pdf["myenumstr"], pydict["myenumstr"])
-        np.testing.assert_array_equal(pdf["myenumbool"], pydict["myenumbool"])
+        assert_array_equal(pdf["myenumint"], pydict["myenumint"])
+        assert_array_equal(pdf["myenumstr"], pydict["myenumstr"])
+        assert_array_equal(pdf["myenumbool"], pydict["myenumbool"])
 
     with soma.DataFrame.open(uri, mode="w") as sdf:
         mid = num_rows // 2
@@ -2041,12 +2042,84 @@ def test_arrow_table_sliced_writer(tmp_path):
         sdf.write(table[mid:])
 
     with soma.DataFrame.open(uri) as sdf:
-        pdf = sdf.read().concat().to_pandas()
+        pdf = sdf.read().concat()
 
-        np.testing.assert_array_equal(pdf["myint"], pydict["myint"])
-        np.testing.assert_array_equal(pdf["mystring"], pydict["mystring"])
-        np.testing.assert_array_equal(pdf["mybool"], pydict["mybool"])
+        assert_array_equal(pdf["myint"], pydict["myint"])
+        assert_array_equal(pdf["mystring"], pydict["mystring"])
+        assert_array_equal(pdf["mybool"], pydict["mybool"])
 
-        np.testing.assert_array_equal(pdf["myenumint"], pydict["myenumint"])
-        np.testing.assert_array_equal(pdf["myenumstr"], pydict["myenumstr"])
-        np.testing.assert_array_equal(pdf["myenumbool"], pydict["myenumbool"])
+        assert_array_equal(pdf["myenumint"], pydict["myenumint"])
+        assert_array_equal(pdf["myenumstr"], pydict["myenumstr"])
+        assert_array_equal(pdf["myenumbool"], pydict["myenumbool"])
+
+
+def test_arrow_table_validity_with_slicing(tmp_path):
+    uri = tmp_path.as_posix()
+    num_rows = 10
+    domain = ((0, np.iinfo(np.int64).max - 2050),)
+
+    schema = pa.schema(
+        [
+            ("myint", pa.int32()),
+            ("mystring", pa.large_string()),
+            ("mybool", pa.bool_()),
+            ("mydatetime", pa.timestamp("s")),
+            ("myenum", pa.dictionary(pa.int64(), pa.large_string())),
+        ]
+    )
+
+    soma.DataFrame.create(uri, schema=schema, domain=domain)
+
+    pydict = {}
+    pydict["soma_joinid"] = [None, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+    pydict["myint"] = [1, 2, 3, 4, 5, 6, None, 8, None, None]
+    pydict["mystring"] = ["g1", "g2", "g3", None, "g2", "g3", "g1", None, "g3", "g1"]
+    pydict["mybool"] = [True, True, True, False, True, False, None, False, None, None]
+    pydict["mydatetime"] = [
+        np.datetime64("NaT", "s"),
+        np.datetime64(1, "s"),
+        np.datetime64(2, "s"),
+        np.datetime64("NaT", "s"),
+        np.datetime64(4, "s"),
+        np.datetime64(5, "s"),
+        np.datetime64(6, "s"),
+        np.datetime64(7, "s"),
+        np.datetime64("NaT", "s"),
+        np.datetime64(9, "s"),
+    ]
+    pydict["myenum"] = pd.Categorical(
+        ["g1", "g2", "g3", None, "g2", "g3", "g1", None, "g3", "g1"]
+    )
+    table = pa.Table.from_pydict(pydict)
+
+    with soma.DataFrame.open(uri, "w") as A:
+        with raises_no_typeguard(soma.SOMAError):
+            # soma_joinid cannot be nullable
+            A.write(table)
+
+    pydict["soma_joinid"] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+    table = pa.Table.from_pydict(pydict)
+
+    with soma.DataFrame.open(uri, "w") as A:
+        A.write(table)
+
+    with soma.DataFrame.open(uri) as A:
+        pdf = A.read().concat()
+        assert_array_equal(pdf["myint"], table["myint"])
+        assert_array_equal(pdf["mystring"], table["mystring"])
+        assert_array_equal(pdf["mybool"], table["mybool"])
+        assert_array_equal(pdf["mydatetime"], table["mydatetime"])
+        assert_array_equal(pdf["myenum"], table["myenum"])
+
+    with soma.DataFrame.open(uri, "w") as A:
+        mid = num_rows // 2
+        A.write(table[:mid])
+        A.write(table[mid:])
+
+    with soma.DataFrame.open(uri) as A:
+        pdf = A.read().concat()
+        assert_array_equal(pdf["myint"], table["myint"])
+        assert_array_equal(pdf["mystring"], table["mystring"])
+        assert_array_equal(pdf["mybool"], table["mybool"])
+        assert_array_equal(pdf["mydatetime"], table["mydatetime"])
+        assert_array_equal(pdf["myenum"], table["myenum"])

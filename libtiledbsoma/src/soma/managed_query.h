@@ -249,8 +249,9 @@ class ManagedQuery {
      * @param name Column name
      * @param num_elems Number of array elements in buffer
      * @param data Pointer to the data buffer
+     *  If the data type is Boolean, the data has already been casted to uint8
      * @param offsets Pointer to the offsets buffer
-     * @param validity Pointer to the validity buffer
+     * @param validity Vector of validity buffer casted to uint8
      */
     template <typename T>
     void setup_write_column(
@@ -258,7 +259,7 @@ class ManagedQuery {
         uint64_t num_elems,
         const void* data,
         T* offsets,
-        uint8_t* validity) {
+        std::optional<std::vector<uint8_t>> validity = std::nullopt) {
         // Ensure the offset type is either uint32_t* or uint64_t*
         static_assert(
             std::is_same_v<T, uint32_t> || std::is_same_v<T, uint64_t>,
@@ -277,7 +278,9 @@ class ManagedQuery {
 
     /**
      * @brief Set the write buffers for an Arrow Table or Batch as represented
-     * by an ArrowSchema and ArrowArray.
+     * by an ArrowSchema and ArrowArray. Nulls values are not allowed for
+     * dimensions and will error out. Any null values present in non-nullable
+     * attributes will be casted to fill values for the given TileDB datatype.
      *
      * @param arrow_schema
      * @param arrow_array
@@ -625,10 +628,6 @@ class ManagedQuery {
         } else {
             buf = (UserType*)array->buffers[1] + array->offset;
         }
-        uint8_t* validity = (uint8_t*)array->buffers[0];
-        if (validity != nullptr) {
-            validity += array->offset;
-        }
 
         bool has_attr = schema_->has_attribute(schema->name);
         if (has_attr && attr_has_enum(schema->name)) {
@@ -656,7 +655,7 @@ class ManagedQuery {
                 casted_values.size(),
                 (const void*)casted_values.data(),
                 (uint64_t*)nullptr,
-                validity);
+                _cast_validity_buffer(array));
 
             // Return false because we do not extend the enumeration
             return false;
@@ -794,17 +793,12 @@ class ManagedQuery {
         std::vector<DiskIndexType> casted_indexes(
             shifted_indexes.begin(), shifted_indexes.end());
 
-        uint8_t* validity = (uint8_t*)index_array->buffers[0];
-        if (validity != nullptr) {
-            validity += index_array->offset;
-        }
-
         setup_write_column(
             column_name,
             casted_indexes.size(),
             (const void*)casted_indexes.data(),
             (uint64_t*)nullptr,
-            (uint8_t*)validity);
+            _cast_validity_buffer(index_array));
     }
 
     bool _extend_enumeration(
@@ -851,6 +845,30 @@ class ManagedQuery {
     bool attr_has_enum(std::string attr_name) {
         return get_enum_label_on_attr(attr_name).has_value();
     }
+
+    /**
+     * @brief Take an arrow schema and array containing bool
+     * data in bits and return a vector containing the uint8_t
+     * representation
+     *
+     * @param schema the ArrowSchema which must be format 'b'
+     * @param array the ArrowArray holding Boolean data
+     * @return std::vector<uint8_t>
+     */
+    std::vector<uint8_t> _cast_bool_data(
+        ArrowSchema* schema, ArrowArray* array);
+
+    /**
+     * @brief Take a validity buffer (in bits) and shift according to the
+     * offset. This function returns a copy of the shifted bitmap as a
+     * std::vector<uint8_t>. If the validity buffer is null, then return a
+     * nullopt.
+     *
+     * @param array the ArrowArray holding offset to shift
+     * @return std::optional<std::vector<uint8_t>>
+     */
+    std::optional<std::vector<uint8_t>> _cast_validity_buffer(
+        ArrowArray* array);
 };
 
 // These are all specializations to string/bool of various methods

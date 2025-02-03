@@ -38,6 +38,7 @@
 #include "utils/common.h"
 #include "utils/logger.h"
 #include "utils/util.h"
+
 namespace tiledbsoma {
 
 using namespace tiledb;
@@ -805,7 +806,7 @@ void ManagedQuery::_cast_dictionary_values(
         array->length,
         (const void*)index_to_value.data(),
         (uint64_t*)nullptr,
-        (uint8_t*)value_array->buffers[0]);
+        std::nullopt);  // validities are set by index column
 }
 
 template <>
@@ -862,7 +863,7 @@ void ManagedQuery::_cast_dictionary_values<std::string>(
         value_offsets.size() - 1,
         (const void*)index_to_value.data(),
         (uint64_t*)value_offsets.data(),
-        (uint8_t*)value_array->buffers[0]);
+        std::nullopt);  // validities are set by index column
 }
 
 template <>
@@ -875,8 +876,7 @@ void ManagedQuery::_cast_dictionary_values<bool>(
     auto value_array = array->dictionary;
 
     std::vector<int64_t> indexes = _get_index_vector(schema, array);
-    std::vector<uint8_t> values = util::cast_bit_to_uint8(
-        value_schema, value_array);
+    std::vector<uint8_t> values = _cast_bool_data(value_schema, value_array);
     std::vector<uint8_t> index_to_value;
 
     for (auto i : indexes) {
@@ -888,7 +888,7 @@ void ManagedQuery::_cast_dictionary_values<bool>(
         array->length,
         (const void*)index_to_value.data(),
         (uint64_t*)nullptr,
-        (uint8_t*)value_array->buffers[0]);
+        std::nullopt);  // validities are set by index column
 }
 
 template <typename UserType>
@@ -981,13 +981,9 @@ bool ManagedQuery::_cast_column_aux<std::string>(
             array->n_buffers));
     }
 
-    const char* data = (const char*)array->buffers[2];
-    uint8_t* validity = (uint8_t*)array->buffers[0];
+    const void* data = array->buffers[2];
+    std::optional<std::vector<uint8_t>> validity = _cast_validity_buffer(array);
 
-    // If this is a table-slice, slice into the validity buffer.
-    if (validity != nullptr) {
-        validity += array->offset;
-    }
     // If this is a table-slice, do *not* slice into the data
     // buffer since it is indexed via offsets, which we slice
     // into below.
@@ -996,14 +992,12 @@ bool ManagedQuery::_cast_column_aux<std::string>(
         (strcmp(schema->format, "Z") == 0)) {
         // If this is a table-slice, slice into the offsets buffer.
         uint64_t* offset = (uint64_t*)array->buffers[1] + array->offset;
-        setup_write_column(
-            schema->name, array->length, (const void*)data, offset, validity);
+        setup_write_column(schema->name, array->length, data, offset, validity);
 
     } else {
         // If this is a table-slice, slice into the offsets buffer.
         uint32_t* offset = (uint32_t*)array->buffers[1] + array->offset;
-        setup_write_column(
-            schema->name, array->length, (const void*)data, offset, validity);
+        setup_write_column(schema->name, array->length, data, offset, validity);
     }
     return false;
 }
@@ -1013,18 +1007,14 @@ bool ManagedQuery::_cast_column_aux<bool>(
     ArrowSchema* schema, ArrowArray* array, ArraySchemaEvolution se) {
     (void)se;  // se is unused in bool specialization
 
-    auto casted = util::cast_bit_to_uint8(schema, array);
-    uint8_t* validity = (uint8_t*)array->buffers[0];
-    if (validity != nullptr) {
-        validity += array->offset;
-    }
+    auto casted = _cast_bool_data(schema, array);
 
     setup_write_column(
         schema->name,
         array->length,
         (const void*)casted.data(),
         (uint64_t*)nullptr,
-        (uint8_t*)validity);
+        _cast_validity_buffer(array));
     return false;
 }
 
@@ -1101,7 +1091,7 @@ bool ManagedQuery::_extend_and_evolve_schema(
     if (strcmp(value_schema->format, "b") == 0) {
         // Specially handle Boolean types as their representation in Arrow (bit)
         // is different from what is in TileDB (uint8_t)
-        auto casted = util::cast_bit_to_uint8(value_schema, value_array);
+        auto casted = _cast_bool_data(value_schema, value_array);
         enums_in_write.assign(casted.data(), casted.data() + num_elems);
     } else {
         // General case
@@ -1255,5 +1245,25 @@ bool ManagedQuery::_extend_and_evolve_schema<std::string>(
             column_name, enmr, enums_in_write, index_schema, index_array);
     }
     return false;
+}
+
+std::vector<uint8_t> ManagedQuery::_cast_bool_data(
+    ArrowSchema* schema, ArrowArray* array) {
+    if (strcmp(schema->format, "b") != 0) {
+        throw TileDBSOMAError(fmt::format(
+            "_cast_bit_to_uint8 expected column format to be 'b' but saw "
+            "{}",
+            schema->format));
+    }
+
+    const uint8_t* data = reinterpret_cast<const uint8_t*>(array->buffers[1]);
+    return *util::bitmap_to_uint8(data, array->length, array->offset);
+}
+
+std::optional<std::vector<uint8_t>> ManagedQuery::_cast_validity_buffer(
+    ArrowArray* array) {
+    const uint8_t* validity = reinterpret_cast<const uint8_t*>(
+        array->buffers[0]);
+    return util::bitmap_to_uint8(validity, array->length, array->offset);
 }
 };  // namespace tiledbsoma
