@@ -198,6 +198,7 @@ __version__ = get_implementation_version()
 
 __all__ = [
     "AlreadyExistsError",
+    "AffineTransform",
     "Axis",
     "AxisColumnNames",
     "AxisQuery",
@@ -212,6 +213,7 @@ __all__ = [
     "get_implementation",
     "get_SOMA_version",
     "get_storage_engine",
+    "IdentityTransform",
     "IntIndexer",
     "Measurement",
     "MultiscaleImage",
@@ -219,6 +221,7 @@ __all__ = [
     "open",
     "PointCloudDataFrame",
     "ResultOrder",
+    "ScaleTransform",
     "Scene",
     "show_package_versions",
     "SOMA_JOINID",
@@ -235,4 +238,5 @@ __all__ = [
     "tiledbsoma_stats_reset",
     "tiledbsoma_stats_as_py",
     "tiledbsoma_stats_json",
+    "UniformScaleTransform",
 ]
