@@ -35,6 +35,7 @@ from ._exception import SOMAError, map_exception_for_create
 from ._read_iters import (
     BlockwiseScipyReadIter,
     BlockwiseTableReadIter,
+    ManagedQuery,
     SparseCOOTensorReadIter,
     TableReadIter,
 )
@@ -324,19 +325,23 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
         if isinstance(values, pa.SparseCOOTensor):
             # Write bulk data
             data, coords = values.to_numpy()
-            clib_sparse_array.write_coords(
-                [
+
+            mq = ManagedQuery(self, platform_config)
+            for i, c in enumerate(coords.T):
+                mq._handle.set_column_data(
+                    f"soma_dim_{i}",
                     np.array(
                         c,
                         dtype=self.schema.field(f"soma_dim_{i}").type.to_pandas_dtype(),
-                    )
-                    for i, c in enumerate(coords.T)
-                ],
+                    ),
+                )
+            mq._handle.set_column_data(
+                "soma_data",
                 np.array(
                     data, dtype=self.schema.field("soma_data").type.to_pandas_dtype()
                 ),
-                sort_coords or True,
             )
+            mq._handle.submit_write(sort_coords or True)
 
             # Write bounding-box metadata. Note COO can be N-dimensional.
             maxes = [e - 1 for e in values.shape]
@@ -356,19 +361,23 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
             # Write bulk data
             # TODO: the ``to_scipy`` function is not zero copy. Need to explore zero-copy options.
             sp = values.to_scipy().tocoo()
-            clib_sparse_array.write_coords(
-                [
+
+            mq = ManagedQuery(self, platform_config)
+            for i, c in enumerate([sp.row, sp.col]):
+                mq._handle.set_column_data(
+                    f"soma_dim_{i}",
                     np.array(
                         c,
                         dtype=self.schema.field(f"soma_dim_{i}").type.to_pandas_dtype(),
-                    )
-                    for i, c in enumerate([sp.row, sp.col])
-                ],
+                    ),
+                )
+            mq._handle.set_column_data(
+                "soma_data",
                 np.array(
                     sp.data, dtype=self.schema.field("soma_data").type.to_pandas_dtype()
                 ),
-                sort_coords or True,
             )
+            mq._handle.submit_write(sort_coords or True)
 
             # Write bounding-box metadata. Note CSR and CSC are necessarily 2-dimensional.
             nr, nc = values.shape
@@ -382,9 +391,11 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
 
         if isinstance(values, pa.Table):
             # Write bulk data
-            values = _util.cast_values_to_target_schema(values, self.schema)
             for batch in values.to_batches():
-                clib_sparse_array.write(batch, sort_coords or False)
+                # clib_sparse_array.write(batch, sort_coords or False)
+                mq = ManagedQuery(self, None)
+                mq._handle.set_array_data(batch)
+                mq._handle.submit_write(sort_coords or False)
 
             # Write bounding-box metadata
             maxes = []

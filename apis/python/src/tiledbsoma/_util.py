@@ -314,20 +314,6 @@ def pa_types_is_string_or_bytes(dtype: pa.DataType) -> bool:
     )
 
 
-def cast_values_to_target_schema(values: pa.Table, schema: pa.Schema) -> pa.Table:
-    """
-    When writing data to a SOMAArray, the values that the user passes in may not
-    match the schema on disk. Cast the values to the correct dtypes.
-    """
-    # Ensure fields are in the correct order
-    # target_schema = []
-    # for input_field in values.schema:
-    #     target_schema.append(schema.field(input_field.name))
-
-    # return values.cast(pa.schema(target_schema, values.schema.metadata))
-    return values
-
-
 def build_clib_platform_config(
     platform_config: options.PlatformConfig | None,
 ) -> clib.PlatformConfig:

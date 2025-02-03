@@ -30,7 +30,7 @@ from ._dataframe import (
     _revise_domain_for_extent,
 )
 from ._exception import SOMAError, map_exception_for_create
-from ._read_iters import TableReadIter
+from ._read_iters import ManagedQuery, TableReadIter
 from ._spatial_dataframe import SpatialDataFrame
 from ._spatial_util import (
     coordinate_space_from_json,
@@ -484,7 +484,9 @@ class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
         clib_dataframe = self._handle._handle
 
         for batch in values.to_batches():
-            clib_dataframe.write(batch, sort_coords or False)
+            mq = ManagedQuery(self, None)
+            mq._handle.set_array_data(batch)
+            mq._handle.submit_write(sort_coords or False)
 
         if write_options.consolidate_and_vacuum:
             clib_dataframe.consolidate_and_vacuum()
