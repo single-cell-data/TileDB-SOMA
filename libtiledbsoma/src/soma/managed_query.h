@@ -225,6 +225,13 @@ class ManagedQuery {
     void set_layout(ResultOrder layout);
 
     /**
+     * @brief Returns the result order set by the query.
+     *
+     * @return ResultOrder
+     */
+    ResultOrder result_order();
+
+    /**
      * @brief Set column data for write query.
      *
      * @param name Column name

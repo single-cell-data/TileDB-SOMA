@@ -89,6 +89,22 @@ void ManagedQuery::set_layout(ResultOrder layout) {
     }
 }
 
+ResultOrder ManagedQuery::result_order() {
+    if (array_->query_type() != TILEDB_READ) {
+        throw TileDBSOMAError("[ManagedQuery] result_order only in read mode");
+    }
+
+    switch (query_->query_layout()) {
+        case TILEDB_ROW_MAJOR:
+            return ResultOrder::rowmajor;
+        case TILEDB_COL_MAJOR:
+            return ResultOrder::colmajor;
+        default:
+            throw std::invalid_argument(
+                std::format("[ManagedQuery] unrecognized result_order"));
+    }
+}
+
 void ManagedQuery::select_columns(
     const std::vector<std::string>& names, bool if_not_empty, bool replace) {
     // Return if we are selecting all columns (columns_ is empty) and we want to

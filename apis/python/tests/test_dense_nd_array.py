@@ -168,7 +168,8 @@ def test_dense_nd_array_read_write_tensor(tmp_path, shape: Tuple[int, ...]):
             soma.pytiledbsoma.SOMAContext(),
         )
     ) as a:
-        table = a.read_next()["soma_data"]
+        mq = soma.pytiledbsoma.ManagedQuery(a, a.context())
+        table = mq.next()["soma_data"]
         assert np.array_equal(data, table.combine_chunks().to_numpy().reshape(shape))
 
     # write a single-value sub-array and recheck

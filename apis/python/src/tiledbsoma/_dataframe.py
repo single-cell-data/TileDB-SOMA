@@ -29,7 +29,7 @@ from . import _arrow_types, _util
 from . import pytiledbsoma as clib
 from ._constants import SOMA_JOINID
 from ._exception import SOMAError, map_exception_for_create
-from ._read_iters import TableReadIter
+from ._read_iters import ManagedQuery, TableReadIter
 from ._soma_array import SOMAArray
 from ._tdb_handles import DataFrameWrapper
 from ._types import (
@@ -770,7 +770,6 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         _util.check_type("values", values, (pa.Table,))
 
         write_options: Union[TileDBCreateOptions, TileDBWriteOptions]
-        sort_coords = None
         if isinstance(platform_config, TileDBCreateOptions):
             raise ValueError(
                 "As of TileDB-SOMA 1.13, the write method takes "
@@ -779,13 +778,13 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         write_options = TileDBWriteOptions.from_platform_config(platform_config)
         sort_coords = write_options.sort_coords
 
-        clib_dataframe = self._handle._handle
-
         for batch in values.to_batches():
-            clib_dataframe.write(batch, sort_coords or False)
+            mq = ManagedQuery(self)
+            mq._handle.set_array_data(batch)
+            mq._handle.submit_write(sort_coords or False)
 
         if write_options.consolidate_and_vacuum:
-            clib_dataframe.consolidate_and_vacuum()
+            self._handle._handle.consolidate_and_vacuum()
 
         return self
 

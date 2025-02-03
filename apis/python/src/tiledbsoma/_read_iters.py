@@ -475,7 +475,7 @@ class ManagedQuery:
     """Keep the lifetime of the SOMAArray tethered to ManagedQuery."""
 
     _array: SOMAArray
-    _platform_config: options.PlatformConfig | None
+    _platform_config: options.PlatformConfig | None = None
     _handle: clib.ManagedQuery = attrs.field(init=False)
 
     def __attrs_post_init__(self) -> None:

@@ -130,7 +130,8 @@ def test_dataframe(tmp_path, arrow_schema):
             uri, soma.pytiledbsoma.OpenMode.read, soma.pytiledbsoma.SOMAContext()
         )
     ) as sdf:
-        table = sdf.read_next()
+        mq = soma.pytiledbsoma.ManagedQuery(sdf, sdf.context())
+        table = mq.next()
         assert table.num_rows == 5
         assert table.num_columns == 5
         assert [e.as_py() for e in table["soma_joinid"]] == pydict["soma_joinid"]
