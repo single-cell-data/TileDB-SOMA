@@ -177,7 +177,7 @@ void ColumnBuffer::attach(Query& query, std::optional<Subarray> subarray) {
     }
 
     if (!validity_.empty() && is_dim) {
-        throw TileDBSOMAError(std::format(
+        throw TileDBSOMAError(fmt::format(
             "[ColumnBuffer::attach] Validity buffer passed for dimension '{}'",
             name_));
     }

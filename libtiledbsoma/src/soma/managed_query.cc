@@ -1250,7 +1250,7 @@ bool ManagedQuery::_extend_and_evolve_schema<std::string>(
 std::vector<uint8_t> ManagedQuery::_cast_bool_data(
     ArrowSchema* schema, ArrowArray* array) {
     if (strcmp(schema->format, "b") != 0) {
-        throw TileDBSOMAError(std::format(
+        throw TileDBSOMAError(fmt::format(
             "_cast_bit_to_uint8 expected column format to be 'b' but saw "
             "{}",
             schema->format));
