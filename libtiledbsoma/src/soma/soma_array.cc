@@ -1186,6 +1186,8 @@ StatusAndReason SOMAArray::_can_set_dataframe_domainish_subhelper(
         if (status.first == false) {
             status.second = std::format(
                 "[{}] {}", function_name_for_messages, status.second);
+
+            return status;
         }
     }
 

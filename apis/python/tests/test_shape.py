@@ -524,7 +524,7 @@ def test_canned_experiments(tmp_path, has_shapes):
             assert "dataframe already has a domain" in msg
         else:
             assert not ok
-            assert "new lower > new upper" in msg
+            assert "new lower 10 > new upper 4" in msg
 
         ok, msg = exp.obs.tiledbsoma_upgrade_domain([[0, 1]], check_only=True)
         if has_shapes:
