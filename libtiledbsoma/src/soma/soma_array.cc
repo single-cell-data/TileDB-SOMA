@@ -501,10 +501,7 @@ std::optional<TimestampRange> SOMAArray::timestamp() {
 // The domainish enum simply lets us re-use code which is common across
 // core domain, core current domain, and core non-empty domain.
 ArrowTable SOMAArray::_get_core_domainish(enum Domainish which_kind) {
-    int array_ndim = std::count_if(
-        columns_.begin(), columns_.end(), [](const auto& col) {
-            return col->isIndexColumn();
-        });
+    size_t array_ndim = static_cast<size_t>(ndim());
 
     auto arrow_schema = ArrowAdapter::make_arrow_schema_parent(array_ndim);
     auto arrow_array = ArrowAdapter::make_arrow_array_parent(array_ndim);
@@ -810,7 +807,6 @@ StatusAndReason SOMAArray::_can_set_soma_joinid_shape_helper(
 
     } else {
         // Resizing an array's existing current domain
-
         if (!has_current_domain()) {
             return std::pair(
                 false,
