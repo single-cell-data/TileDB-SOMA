@@ -782,6 +782,23 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         clib_dataframe = self._handle._handle
 
         for batch in values.to_batches():
+            print()
+            print("---------------------- BATCH", self.uri)
+            print("type:")
+            print(type(batch))
+            print()
+            print("data:")
+            print(batch)
+            print()
+            print("schema:")
+            print(batch.schema)
+            print()
+            print("sjid field:")
+            print(batch.schema.field('soma_joinid'))
+            print()
+            print("sjid field nullable:")
+            print(batch.schema.field('soma_joinid').nullable)
+            print()
             clib_dataframe.write(batch, sort_coords or False)
 
         if write_options.consolidate_and_vacuum:
