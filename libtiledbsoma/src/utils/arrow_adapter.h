@@ -498,7 +498,7 @@ class ArrowAdapter {
      * ArrowSchema. This constructs the parent and not the children.
      */
     static std::unique_ptr<ArrowSchema> make_arrow_schema_parent(
-        int num_columns);
+        size_t num_columns);
 
     /**
      * @brief Creates a nanoarrow ArrowArray which accommodates
@@ -507,7 +507,8 @@ class ArrowAdapter {
      * Note that the parents and children in nanoarrow are both of type
      * ArrowArray. This constructs the parent and not the children.
      */
-    static std::unique_ptr<ArrowArray> make_arrow_array_parent(int num_columns);
+    static std::unique_ptr<ArrowArray> make_arrow_array_parent(
+        size_t num_columns);
 
     /**
      * @brief Creates a nanoarrow ArrowArray for a single column.

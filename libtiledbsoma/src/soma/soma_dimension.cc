@@ -106,6 +106,15 @@ void SOMADimension::_set_dim_points(
         case TILEDB_DATETIME_PS:
         case TILEDB_DATETIME_FS:
         case TILEDB_DATETIME_AS:
+        case TILEDB_TIME_HR:
+        case TILEDB_TIME_MIN:
+        case TILEDB_TIME_SEC:
+        case TILEDB_TIME_MS:
+        case TILEDB_TIME_US:
+        case TILEDB_TIME_NS:
+        case TILEDB_TIME_PS:
+        case TILEDB_TIME_FS:
+        case TILEDB_TIME_AS:
         case TILEDB_INT64:
             query->select_points(
                 dimension.name(),
@@ -193,6 +202,15 @@ void SOMADimension::_set_dim_ranges(
         case TILEDB_DATETIME_PS:
         case TILEDB_DATETIME_FS:
         case TILEDB_DATETIME_AS:
+        case TILEDB_TIME_HR:
+        case TILEDB_TIME_MIN:
+        case TILEDB_TIME_SEC:
+        case TILEDB_TIME_MS:
+        case TILEDB_TIME_US:
+        case TILEDB_TIME_NS:
+        case TILEDB_TIME_PS:
+        case TILEDB_TIME_FS:
+        case TILEDB_TIME_AS:
         case TILEDB_INT64:
             query->select_ranges(
                 dimension.name(),
@@ -276,6 +294,15 @@ void SOMADimension::_set_current_domain_slot(
         case TILEDB_DATETIME_PS:
         case TILEDB_DATETIME_FS:
         case TILEDB_DATETIME_AS:
+        case TILEDB_TIME_HR:
+        case TILEDB_TIME_MIN:
+        case TILEDB_TIME_SEC:
+        case TILEDB_TIME_MS:
+        case TILEDB_TIME_US:
+        case TILEDB_TIME_NS:
+        case TILEDB_TIME_PS:
+        case TILEDB_TIME_FS:
+        case TILEDB_TIME_AS:
         case TILEDB_INT64: {
             auto dom = std::any_cast<std::array<int64_t, 2>>(domain[0]);
             rectangle.set_range<int64_t>(dimension.name(), dom[0], dom[1]);
@@ -337,7 +364,8 @@ std::pair<bool, std::string> SOMADimension::_can_set_current_domain_slot(
     if (new_domain.size() != 1) {
         throw TileDBSOMAError(std::format(
             "[SOMADimension][_can_set_current_domain_slot] Expected domain "
-            "size is 1, found {}",
+            "size for '{}' is 1, found {}",
+            name(),
             new_domain.size()));
     }
 
@@ -348,8 +376,10 @@ std::pair<bool, std::string> SOMADimension::_can_set_current_domain_slot(
             return std::pair(
                 false,
                 std::format(
-                    "index-column name {}: new lower > new upper",
-                    dimension.name()));
+                    "index-column name '{}': new lower {} > new upper {}",
+                    dimension.name(),
+                    new_dom[0],
+                    new_dom[1]));
         }
 
         // If we're checking against the core current domain: the user-provided
@@ -359,23 +389,29 @@ std::pair<bool, std::string> SOMADimension::_can_set_current_domain_slot(
         // domain must be contained within the core (max) domain.
 
         if (rectangle.has_value()) {
-            auto dom = rectangle.value().range<T>(dimension.name());
+            auto dom = rectangle->range<T>(dimension.name());
 
             if (new_dom[0] > dom[0]) {
                 return std::pair(
                     false,
                     std::format(
-                        "index-column name {}: new lower > old lower (downsize "
+                        "index-column name '{}': new lower {} > old lower {} "
+                        "(downsize "
                         "is unsupported)",
-                        dimension.name()));
+                        dimension.name(),
+                        new_dom[0],
+                        dom[0]));
             }
             if (new_dom[1] < dom[1]) {
                 return std::pair(
                     false,
                     std::format(
-                        "index-column name {}: new upper < old upper (downsize "
+                        "index-column name '{}': new upper {} < old upper {} "
+                        "(downsize "
                         "is unsupported)",
-                        dimension.name()));
+                        dimension.name(),
+                        new_dom[1],
+                        dom[1]));
             }
         } else {
             auto dom = std::any_cast<std::pair<T, T>>(_core_domain_slot());
@@ -384,15 +420,19 @@ std::pair<bool, std::string> SOMADimension::_can_set_current_domain_slot(
                 return std::pair(
                     false,
                     std::format(
-                        "index-column name {}: new lower < limit lower",
-                        dimension.name()));
+                        "index-column name '{}': new lower {} < limit lower {}",
+                        dimension.name(),
+                        new_dom[0],
+                        dom.first));
             }
             if (new_dom[1] > dom.second) {
                 return std::pair(
                     false,
                     std::format(
-                        "index-column name {}: new upper > limit upper",
-                        dimension.name()));
+                        "index-column name '{}': new upper {} > limit upper {}",
+                        dimension.name(),
+                        new_dom[1],
+                        dom.second));
             }
         }
 
@@ -434,6 +474,15 @@ std::pair<bool, std::string> SOMADimension::_can_set_current_domain_slot(
         case TILEDB_DATETIME_PS:
         case TILEDB_DATETIME_FS:
         case TILEDB_DATETIME_AS:
+        case TILEDB_TIME_HR:
+        case TILEDB_TIME_MIN:
+        case TILEDB_TIME_SEC:
+        case TILEDB_TIME_MS:
+        case TILEDB_TIME_US:
+        case TILEDB_TIME_NS:
+        case TILEDB_TIME_PS:
+        case TILEDB_TIME_FS:
+        case TILEDB_TIME_AS:
         case TILEDB_INT64:
             return comparator(
                 std::any_cast<std::array<int64_t, 2>>(new_domain[0]));
@@ -499,6 +548,15 @@ std::any SOMADimension::_core_domain_slot() const {
         case TILEDB_DATETIME_PS:
         case TILEDB_DATETIME_FS:
         case TILEDB_DATETIME_AS:
+        case TILEDB_TIME_HR:
+        case TILEDB_TIME_MIN:
+        case TILEDB_TIME_SEC:
+        case TILEDB_TIME_MS:
+        case TILEDB_TIME_US:
+        case TILEDB_TIME_NS:
+        case TILEDB_TIME_PS:
+        case TILEDB_TIME_FS:
+        case TILEDB_TIME_AS:
         case TILEDB_INT64:
             return std::make_any<std::pair<int64_t, int64_t>>(
                 dimension.domain<int64_t>());
@@ -551,6 +609,15 @@ std::any SOMADimension::_non_empty_domain_slot(Array& array) const {
         case TILEDB_DATETIME_PS:
         case TILEDB_DATETIME_FS:
         case TILEDB_DATETIME_AS:
+        case TILEDB_TIME_HR:
+        case TILEDB_TIME_MIN:
+        case TILEDB_TIME_SEC:
+        case TILEDB_TIME_MS:
+        case TILEDB_TIME_US:
+        case TILEDB_TIME_NS:
+        case TILEDB_TIME_PS:
+        case TILEDB_TIME_FS:
+        case TILEDB_TIME_AS:
         case TILEDB_INT64:
             return std::make_any<std::pair<int64_t, int64_t>>(
                 array.non_empty_domain<int64_t>(dimension.name()));
@@ -723,6 +790,15 @@ std::any SOMADimension::_non_empty_domain_slot_opt(
         case TILEDB_DATETIME_PS:
         case TILEDB_DATETIME_FS:
         case TILEDB_DATETIME_AS:
+        case TILEDB_TIME_HR:
+        case TILEDB_TIME_MIN:
+        case TILEDB_TIME_SEC:
+        case TILEDB_TIME_MS:
+        case TILEDB_TIME_US:
+        case TILEDB_TIME_NS:
+        case TILEDB_TIME_PS:
+        case TILEDB_TIME_FS:
+        case TILEDB_TIME_AS:
         case TILEDB_INT64:
             if (is_empty) {
                 return std::make_any<
@@ -832,6 +908,15 @@ std::any SOMADimension::_core_current_domain_slot(NDRectangle& ndrect) const {
         case TILEDB_DATETIME_PS:
         case TILEDB_DATETIME_FS:
         case TILEDB_DATETIME_AS:
+        case TILEDB_TIME_HR:
+        case TILEDB_TIME_MIN:
+        case TILEDB_TIME_SEC:
+        case TILEDB_TIME_MS:
+        case TILEDB_TIME_US:
+        case TILEDB_TIME_NS:
+        case TILEDB_TIME_PS:
+        case TILEDB_TIME_FS:
+        case TILEDB_TIME_AS:
         case TILEDB_INT64: {
             std::array<int64_t, 2> domain = ndrect.range<int64_t>(
                 dimension.name());
@@ -867,7 +952,6 @@ std::any SOMADimension::_core_current_domain_slot(NDRectangle& ndrect) const {
 ArrowArray* SOMADimension::arrow_domain_slot(
     const SOMAContext& ctx, Array& array, enum Domainish kind) const {
     switch (domain_type().value()) {
-        case TILEDB_INT64:
         case TILEDB_DATETIME_YEAR:
         case TILEDB_DATETIME_MONTH:
         case TILEDB_DATETIME_WEEK:
@@ -890,6 +974,7 @@ ArrowArray* SOMADimension::arrow_domain_slot(
         case TILEDB_TIME_PS:
         case TILEDB_TIME_FS:
         case TILEDB_TIME_AS:
+        case TILEDB_INT64:
             return ArrowAdapter::make_arrow_array_child(
                 domain_slot<int64_t>(ctx, array, kind));
         case TILEDB_UINT64:

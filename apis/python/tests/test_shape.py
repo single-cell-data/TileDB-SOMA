@@ -123,7 +123,10 @@ def test_sparse_nd_array_basics(
     with tiledbsoma.SparseNDArray.open(uri, "w") as snda:
         (ok, msg) = snda.resize(new_shape, check_only=True)
         assert not ok
-        assert msg == "can_resize for soma_dim_0: new 50 < existing shape 100"
+        assert (
+            msg
+            == "[can_resize] index-column name 'soma_dim_0': new upper 49 < old upper 99 (downsize is unsupported)"
+        )
         # TODO: check draft spec
         # with pytest.raises(ValueError):
         with pytest.raises(tiledbsoma.SOMAError):
@@ -175,7 +178,10 @@ def test_sparse_nd_array_basics(
         too_small = tuple(e - 1 for e in new_shape)
         (ok, msg) = snda.resize(too_small, check_only=True)
         assert not ok
-        assert msg == "can_resize for soma_dim_0: new 149 < existing shape 150"
+        assert (
+            msg
+            == "[can_resize] index-column name 'soma_dim_0': new upper 148 < old upper 149 (downsize is unsupported)"
+        )
 
     with tiledbsoma.SparseNDArray.open(uri, "w") as snda:
         (ok, msg) = snda.resize(new_shape, check_only=True)
@@ -518,7 +524,7 @@ def test_canned_experiments(tmp_path, has_shapes):
             assert "dataframe already has a domain" in msg
         else:
             assert not ok
-            assert "new lower > new upper" in msg
+            assert "new lower 10 > new upper 4" in msg
 
         ok, msg = exp.obs.tiledbsoma_upgrade_domain([[0, 1]], check_only=True)
         if has_shapes:
@@ -597,7 +603,7 @@ def test_canned_experiments(tmp_path, has_shapes):
         )
     else:
         assert (
-            "Not OK: can_resize for soma_dim_1: new 13713 < existing shape 13714"
+            "Not OK: [can_resize] index-column name 'soma_dim_1': new upper 13712 < old upper 13713 (downsize is unsupported)"
             in body
         )
 

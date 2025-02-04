@@ -380,7 +380,9 @@ TEST_CASE("SOMASparseNDArray: can_resize", "[SOMASparseNDArray]") {
     check = snda->can_resize(newshape_too_small, "testing");
     REQUIRE(check.first == false);
     REQUIRE(
-        check.second == "testing for soma_dim_0: new 40 < existing shape 1000");
+        check.second ==
+        "[testing] index-column name 'soma_dim_0': new upper 39 < old upper "
+        "999 (downsize is unsupported)");
 
     check = snda->can_resize(newshape_good, "testing");
     REQUIRE(check.first == true);
