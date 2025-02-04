@@ -24,6 +24,7 @@ import pyarrow as pa
 import somacore
 from somacore import options
 from typing_extensions import Self
+import json
 
 from . import _arrow_types, _util
 from . import pytiledbsoma as clib
@@ -798,6 +799,8 @@ class DataFrame(SOMAArray, somacore.DataFrame):
             print()
             print("sjid field nullable:")
             print(batch.schema.field('soma_joinid').nullable)
+            print("arrow-schema metadata")
+            print(json.dumps(json.loads(batch.schema.metadata.get(b"pandas").decode('utf-8')),indent=2))
             print()
             clib_dataframe.write(batch, sort_coords or False)
 
