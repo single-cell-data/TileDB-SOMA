@@ -244,6 +244,8 @@ LIB_DIRS = [
     str(tiledb_dir / "lib"),
 ]
 
+# Debug (ineffectual on MacOS):
+# CXX_FLAGS = ["-g", "-O0"]
 CXX_FLAGS = ["-O3"]
 
 if platform.machine() == "x86_64":
