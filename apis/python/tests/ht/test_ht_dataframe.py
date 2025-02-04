@@ -595,7 +595,9 @@ def arrow_table2(
         if n_splits > 0:
             split_points = draw(splitss(n_splits=n_splits, max_value=len(tbl)))
             split_points = [0] + split_points + [len(tbl)]
-            tbl = pa.concat_tables([tbl[st:sp] for st, sp in pairwise(split_points)])
+            tbl = pa.concat_tables(
+                [tbl[start:end] for start, end in pairwise(split_points)]
+            )
 
     # pad, sometimes
     if draw(st.booleans()):
