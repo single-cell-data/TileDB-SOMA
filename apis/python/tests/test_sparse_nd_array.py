@@ -2022,11 +2022,14 @@ def test_sparse_nd_array_null(tmp_path):
 
     soma.SparseNDArray.create(uri, type=pa.int64(), shape=(10,))
 
-    with soma.SparseNDArray.open(uri, "w") as A:
-        with raises_no_typeguard(soma.SOMAError):
-            # soma_joinid cannot be nullable
-            A.write(table[:5])
-            A.write(table[5:])
+    # As of version 1.15.6 we were throwing in this case. However, we found
+    # a compatibility issue with pyarrow versions below 17. Thus this is
+    # now non-fatal.
+    # with soma.SparseNDArray.open(uri, "w") as A:
+    #    with raises_no_typeguard(soma.SOMAError):
+    #        # soma_joinid cannot be nullable
+    #        A.write(table[:5])
+    #        A.write(table[5:])
 
     pydict["soma_dim_0"] = pa.array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
     table = pa.Table.from_pydict(pydict)
