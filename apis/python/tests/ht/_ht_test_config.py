@@ -1,9 +1,9 @@
-"""Config settings for all Hypothesis tests. Primarily used to toggle bug work-arounds, etc.
+"""Config settings for all Hypothesis tests. Primarily used to toggle bug workarounds, etc.
 """
 
 HT_TEST_CONFIG = {
     #
-    # Defect work-arounds, while awaiting a fix
+    # Defect workarounds, while awaiting fixes
     #
     # creating array with timestamp==0 fails in 1.15 (regression)
     "sc-61054_workaround": True,
