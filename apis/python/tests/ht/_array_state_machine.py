@@ -235,7 +235,7 @@ class SOMANDArrayStateMachine(SOMAArrayStateMachine):
         super().__init__()
         self.shapes_factory = shapes_factory
 
-    def setup(self, type, shape, array) -> None:
+    def setup(self, type: pa.DataType, shape: tuple[int, ...], array) -> None:
         super().setup(array)
         self.type = type
         self.schema = pa.schema(

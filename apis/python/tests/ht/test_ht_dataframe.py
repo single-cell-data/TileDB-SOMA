@@ -73,7 +73,7 @@ T = TypeVar("T")
 class EnumerationMetadata(Generic[T]):
     type: pa.DictionaryType
     max_categories: int = attrs.field(init=False)
-    categories: tuple[T] = attrs.field(factory=tuple)
+    categories: tuple[T, ...] = attrs.field(factory=tuple)
 
     def __attrs_post_init__(self):
         # we are frozen, so use __setattr__ to bypass.

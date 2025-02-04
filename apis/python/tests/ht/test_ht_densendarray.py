@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from typing import Any
 
-import hypothesis as ht
 import hypothesis.extra.numpy as ht_np
 import numpy as np
 import pyarrow as pa
@@ -72,7 +71,7 @@ def dense_array_shape(
 
 
 @st.composite
-def dense_indices(draw: st.DrawFn, shape: tuple[int, ...]) -> tuple[int | slice]:
+def dense_indices(draw: st.DrawFn, shape: tuple[int, ...]) -> tuple[int | slice, ...]:
     """Strategy to return DenseNDArray slicing, which currently allows:
     * None - synonym for slice(None)
     * slice - with step == 1 ONLY
@@ -119,7 +118,7 @@ def fill_value_for_type(type: pa.DataType) -> Any:
     return DEFAULT_FILL_VALUE[type]
 
 
-def densendarray_datatype() -> ht.SearchStrategy[pa.DataType]:
+def densendarray_datatype() -> st.SearchStrategy[pa.DataType]:
     # Arrow Tensor doesn't support bool_ or timestamp, and that is the only
     # read accessor we have. So for now, don't test those types.
     if HT_TEST_CONFIG["sc-61743_workaround"]:
