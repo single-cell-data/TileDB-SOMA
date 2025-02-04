@@ -14,10 +14,10 @@ import numpy as np
 import pyarrow as pa
 from hypothesis import strategies as st
 from hypothesis.stateful import RuleBasedStateMachine, invariant, precondition, rule
+from somacore.options import OpenMode
 from typing_extensions import TypeAlias
 
 import tiledbsoma as soma
-from somacore.options import OpenMode
 
 from tests.ht._ht_test_config import HT_TEST_CONFIG
 from tests.ht._ledger import Ledger, PyDictLedgerEntry
