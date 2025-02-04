@@ -658,7 +658,7 @@ class SOMADataFrameStateMachine(SOMAArrayStateMachine):
         )
 
     def _array_exists(
-        uri: str, context: soma.SOMATileDBContext, tiledb_timestamp: int | None
+        self, uri: str, context: soma.SOMATileDBContext, tiledb_timestamp: int | None
     ) -> bool:
         return soma.DataFrame.exists(
             uri, context=context, tiledb_timestamp=tiledb_timestamp
