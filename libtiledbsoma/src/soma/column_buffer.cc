@@ -150,6 +150,14 @@ void ColumnBuffer::attach(Query& query, std::optional<Subarray> subarray) {
     bool is_dense = schema.array_type() == TILEDB_DENSE;
     auto is_dim = schema.domain().has_dimension(name_);
     auto use_subarray = is_write && is_dense && is_dim;
+    // clang-format off
+    std::cout
+      << "ColumnBuffer::attach"
+      << " name_=" << name_
+      << " is_dim=" << is_dim
+      << " use_subarray=" << use_subarray
+      << "\n";
+    // clang-format on
 
     if (use_subarray && !subarray.has_value()) {
         throw TileDBSOMAError(
