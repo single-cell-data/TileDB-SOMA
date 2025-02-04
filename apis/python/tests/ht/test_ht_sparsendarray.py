@@ -20,7 +20,6 @@ from hypothesis.stateful import (
 )
 from somacore.options import OpenMode
 
-import tiledbsoma
 import tiledbsoma as soma
 import tiledbsoma._sparse_nd_array
 

@@ -24,7 +24,6 @@ from tests.ht._ht_util import (
     arrow_array,
     arrow_schema,
     dataframe_datatype,
-    # df_to_table,
     from_datatype,
     pad_array,
     schemas_equal,

@@ -17,9 +17,7 @@ from hypothesis.stateful import (
 )
 from somacore.options import OpenMode
 
-import tiledbsoma
 import tiledbsoma as soma
-import tiledbsoma._sparse_nd_array
 
 from tests.ht._array_state_machine import SOMANDArrayStateMachine
 from tests.ht._ht_test_config import HT_TEST_CONFIG
