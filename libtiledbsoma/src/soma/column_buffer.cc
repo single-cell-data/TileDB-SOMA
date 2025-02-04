@@ -163,7 +163,8 @@ void ColumnBuffer::attach(Query& query, std::optional<Subarray> subarray) {
     if (!validity_.empty() && is_dim) {
         LOG_DEBUG(fmt::format(
             "[ColumnBuffer::attach] Validity buffer passed for dimension '{}' "
-            "is being ignored"));
+            "is being ignored",
+            name_));
     }
 
     return use_subarray ? attach_subarray(*subarray) : attach_buffer(query);
