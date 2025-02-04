@@ -2093,10 +2093,13 @@ def test_arrow_table_validity_with_slicing(tmp_path):
     )
     table = pa.Table.from_pydict(pydict)
 
-    with soma.DataFrame.open(uri, "w") as A:
-        with raises_no_typeguard(soma.SOMAError):
-            # soma_joinid cannot be nullable
-            A.write(table)
+    # As of version 1.15.6 we were throwing in this case. However, we found
+    # a compatibility issue with pyarrow versions below 17. Thus this is
+    # now non-fatal.
+    # with soma.DataFrame.open(uri, "w") as A:
+    #    with raises_no_typeguard(soma.SOMAError):
+    #        # soma_joinid cannot be nullable
+    #        A.write(table)
 
     pydict["soma_joinid"] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
     table = pa.Table.from_pydict(pydict)
@@ -2124,3 +2127,44 @@ def test_arrow_table_validity_with_slicing(tmp_path):
         assert_array_equal(pdf["mybool"], table["mybool"])
         assert_array_equal(pdf["mydatetime"], table["mydatetime"])
         assert_array_equal(pdf["myenum"], table["myenum"])
+
+
+def test_enum_regression_62887(tmp_path):
+    uri = tmp_path.as_posix()
+
+    schema = pa.schema(
+        [
+            pa.field("soma_joinid", pa.int64(), nullable=False),
+            pa.field("A", pa.dictionary(pa.int8(), pa.int8())),
+        ]
+    )
+
+    tbl = pa.Table.from_pydict(
+        {
+            "soma_joinid": pa.chunked_array([[0, 1, 2, 3, 4, 5, 6, 7], [8, 9]]),
+            "A": pa.chunked_array(
+                [
+                    pa.DictionaryArray.from_arrays(
+                        indices=pa.array([0, 0, 0, 0, 0, 0, 0, 0], type=pa.int8()),
+                        dictionary=pa.array(
+                            [0, 1, 2, 3, 4, 5, 6, 7, 8], type=pa.int8()
+                        ),
+                    ),
+                    pa.DictionaryArray.from_arrays(
+                        indices=pa.array([0, 0], type=pa.int8()),
+                        dictionary=pa.array(
+                            [0, 1, 2, 3, 4, 5, 6, 7, 8], type=pa.int8()
+                        ),
+                    ),
+                ]
+            ),
+        }
+    )
+
+    with soma.DataFrame.create(
+        uri, schema=schema, index_column_names=["soma_joinid"], domain=[(0, 10000000)]
+    ) as A:
+        A.write(tbl)
+
+    with soma.open(uri) as A:
+        assert_array_equal(A.read().concat()["A"], tbl["A"])

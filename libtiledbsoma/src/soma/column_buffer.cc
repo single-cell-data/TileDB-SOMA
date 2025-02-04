@@ -159,9 +159,13 @@ void ColumnBuffer::attach(Query& query, std::optional<Subarray> subarray) {
             "to attach to Query");
     }
 
+    // As of version 1.15.6 we were throwing here. However, we found a
+    // compatibility issue with pyarrow versions below 17. Thus we log and
+    // continue.
     if (!validity_.empty() && is_dim) {
-        throw TileDBSOMAError(std::format(
-            "[ColumnBuffer::attach] Validity buffer passed for dimension '{}'",
+        LOG_DEBUG(std::format(
+            "[ColumnBuffer::attach] Validity buffer passed for dimension '{}' "
+            "is being ignored",
             name_));
     }
 
