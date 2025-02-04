@@ -12,6 +12,7 @@
  */
 
 #include "soma_sparse_ndarray.h"
+#include "soma_coordinates.h"
 
 namespace tiledbsoma {
 using namespace tiledb;
@@ -66,6 +67,7 @@ void SOMASparseNDArray::create(
             ctx->tiledb_ctx(),
             schema,
             index_columns,
+            {},
             "SOMASparseNDArray",
             true,
             platform_config);

@@ -466,7 +466,7 @@ TEST_CASE("SOMAArray: Write and read back Boolean") {
     schema.add_attribute(attr);
     schema.set_allows_dups(true);
 
-    SOMAArray::create(ctx, uri, std::move(schema), "NONE", "");
+    SOMAArray::create(ctx, uri, std::move(schema), "NONE");
     auto soma_array = SOMAArray::open(OpenMode::write, uri, ctx);
 
     auto arrow_schema = std::make_unique<ArrowSchema>();

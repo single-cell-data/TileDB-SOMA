@@ -19,10 +19,7 @@
 #include "util.h"
 
 #include "../soma/soma_attribute.h"
-#include "../soma/soma_dimension.h"
-#include "../soma/soma_geometry_column.h"
-
-#include "../soma/soma_attribute.h"
+#include "../soma/soma_coordinates.h"
 #include "../soma/soma_dimension.h"
 #include "../soma/soma_geometry_column.h"
 
@@ -479,7 +476,7 @@ std::unique_ptr<ArrowSchema> ArrowAdapter::arrow_schema_from_tiledb_dimension(
 }
 
 std::unique_ptr<ArrowSchema> ArrowAdapter::arrow_schema_from_tiledb_attribute(
-    Attribute& attribute, const Context& ctx, const Array& tiledb_array) {
+    const Attribute& attribute, const Context& ctx, const Array& tiledb_array) {
     std::unique_ptr<ArrowSchema> arrow_schema = std::make_unique<ArrowSchema>();
     arrow_schema->format = strdup(
         ArrowAdapter::to_arrow_format(attribute.type()).data());
@@ -502,9 +499,10 @@ std::unique_ptr<ArrowSchema> ArrowAdapter::arrow_schema_from_tiledb_attribute(
         "name {}",
         arrow_schema->format,
         arrow_schema->name));
-
+    // We shouldn;t have to cast constness away. Maybe missing const qualifier
+    // from AttributeExperimental::get_enumeration_name
     auto enmr_name = AttributeExperimental::get_enumeration_name(
-        ctx, attribute);
+        ctx, const_cast<Attribute&>(attribute));
     if (enmr_name.has_value()) {
         auto enmr = ArrayExperimental::get_enumeration(
             ctx, tiledb_array, attribute.name());
@@ -877,6 +875,7 @@ ArrowAdapter::tiledb_schema_from_arrow_schema(
     std::shared_ptr<Context> ctx,
     const std::unique_ptr<ArrowSchema>& arrow_schema,
     const ArrowTable& index_column_info,
+    const std::optional<SOMACoordinateSpace>& coordinate_space,
     std::string soma_type,
     bool is_sparse,
     PlatformConfig platform_config) {
@@ -945,6 +944,7 @@ ArrowAdapter::tiledb_schema_from_arrow_schema(
                         child,
                         index_column_schema->children[i],
                         index_column_array->children[i],
+                        coordinate_space.value(),
                         soma_type,
                         type_metadata,
                         platform_config));
@@ -1662,10 +1662,10 @@ std::unique_ptr<ArrowSchema> ArrowAdapter::make_arrow_schema(
 }
 
 std::unique_ptr<ArrowSchema> ArrowAdapter::make_arrow_schema_parent(
-    size_t num_columns) {
+    size_t num_columns, std::string_view name) {
     auto arrow_schema = std::make_unique<ArrowSchema>();
     arrow_schema->format = strdup("+s");  // structure, i.e. non-leaf node
-    arrow_schema->name = strdup("parent");
+    arrow_schema->name = strdup(name.data());
     arrow_schema->metadata = nullptr;
     arrow_schema->flags = 0;
     arrow_schema->n_children = static_cast<int64_t>(

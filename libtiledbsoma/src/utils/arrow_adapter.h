@@ -58,6 +58,7 @@ using namespace tiledb;
 using json = nlohmann::json;
 
 class ColumnBuffer;
+class SOMACoordinateSpace;
 
 /**
  * @brief The ArrowBuffer holds a shared pointer to a ColumnBuffer, which
@@ -366,7 +367,9 @@ class ArrowAdapter {
      * @return ArrowSchema
      */
     static std::unique_ptr<ArrowSchema> arrow_schema_from_tiledb_attribute(
-        Attribute& attribute, const Context& ctx, const Array& tiledb_array);
+        const Attribute& attribute,
+        const Context& ctx,
+        const Array& tiledb_array);
 
     /**
      * @brief Get members of the TileDB Schema in the form of a
@@ -406,6 +409,7 @@ class ArrowAdapter {
         std::shared_ptr<Context> ctx,
         const std::unique_ptr<ArrowSchema>& arrow_schema,
         const ArrowTable& index_column_info,
+        const std::optional<SOMACoordinateSpace>& coordinate_space,
         std::string soma_type,
         bool is_sparse = true,
         PlatformConfig platform_config = PlatformConfig());
@@ -515,7 +519,7 @@ class ArrowAdapter {
      * ArrowSchema. This constructs the parent and not the children.
      */
     static std::unique_ptr<ArrowSchema> make_arrow_schema_parent(
-        size_t num_columns);
+        size_t num_columns, std::string_view name = "parent");
 
     /**
      * @brief Creates a nanoarrow ArrowArray which accommodates

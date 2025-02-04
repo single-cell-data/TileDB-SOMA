@@ -16,6 +16,7 @@
 #include "../geometry/operators/envelope.h"
 #include "../geometry/operators/io/write.h"
 #include "../utils/util.h"
+#include "soma_geometry_column.h"
 
 #include <regex>
 #include <unordered_set>
@@ -40,6 +41,7 @@ void SOMAGeometryDataFrame::create(
             ctx->tiledb_ctx(),
             schema,
             index_columns,
+            std::make_optional(coordinate_space),
             "SOMAGeometryDataFrame",
             true,
             platform_config);

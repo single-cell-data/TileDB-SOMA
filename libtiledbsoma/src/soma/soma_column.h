@@ -40,9 +40,9 @@ class SOMAColumn {
     //===================================================================
 
     static std::vector<std::shared_ptr<SOMAColumn>> deserialize(
-        const nlohmann::json& soma_schema,
         const Context& ctx,
-        const Array& array);
+        const Array& array,
+        const std::map<std::string, tiledbsoma::MetadataValue>& metadata);
 
     //===================================================================
     //= public non-static
@@ -121,7 +121,7 @@ class SOMAColumn {
      * @param array
      * @param which_kind
      */
-    virtual ArrowArray* arrow_domain_slot(
+    virtual std::pair<ArrowArray*, ArrowSchema*> arrow_domain_slot(
         const SOMAContext& ctx,
         Array& array,
         enum Domainish which_kind) const = 0;
@@ -133,7 +133,7 @@ class SOMAColumn {
      * @param array
      */
     virtual ArrowSchema* arrow_schema_slot(
-        const SOMAContext& ctx, Array& array) = 0;
+        const SOMAContext& ctx, Array& array) const = 0;
 
     /**
      * Get the domain kind of the SOMAColumn.
@@ -531,7 +531,10 @@ class SOMAColumn {
 
    private:
     typedef std::shared_ptr<SOMAColumn> (*Factory)(
-        const nlohmann::json&, const Context&, const Array&);
+        const nlohmann::json&,
+        const Context&,
+        const Array&,
+        const std::map<std::string, tiledbsoma::MetadataValue>&);
 
     static std::map<uint32_t, Factory> deserialiser_map;
 };

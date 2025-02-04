@@ -28,6 +28,7 @@
 
 #include <tiledb/tiledb>
 #include "soma_column.h"
+#include "soma_coordinates.h"
 
 namespace tiledbsoma {
 
@@ -43,20 +44,26 @@ class SOMAGeometryColumn : public SOMAColumn {
     static std::shared_ptr<SOMAColumn> deserialize(
         const nlohmann::json& soma_schema,
         const Context& ctx,
-        const Array& array);
+        const Array& array,
+        const std::map<std::string, tiledbsoma::MetadataValue>&);
 
     static std::shared_ptr<SOMAGeometryColumn> create(
         std::shared_ptr<Context> ctx,
         ArrowSchema* schema,
         ArrowSchema* spatial_schema,
         ArrowArray* spatial_array,
+        const SOMACoordinateSpace& coordinate_space,
         const std::string& soma_type,
         std::string_view type_metadata,
         PlatformConfig platform_config);
 
-    SOMAGeometryColumn(std::vector<Dimension> dimensions, Attribute attribute)
+    SOMAGeometryColumn(
+        std::vector<Dimension> dimensions,
+        Attribute attribute,
+        SOMACoordinateSpace coordinate_space)
         : dimensions(dimensions)
-        , attribute(attribute){};
+        , attribute(attribute)
+        , coordinate_space(coordinate_space){};
 
     inline std::string name() const override {
         return SOMA_GEOMETRY_COLUMN_NAME;
@@ -97,15 +104,19 @@ class SOMAGeometryColumn : public SOMAColumn {
         return std::nullopt;
     }
 
-    ArrowArray* arrow_domain_slot(
+    std::pair<ArrowArray*, ArrowSchema*> arrow_domain_slot(
         const SOMAContext& ctx,
         Array& array,
         enum Domainish kind) const override;
 
     ArrowSchema* arrow_schema_slot(
-        const SOMAContext& ctx, Array& array) override;
+        const SOMAContext& ctx, Array& array) const override;
 
     void serialize(nlohmann::json&) const override;
+
+    inline SOMACoordinateSpace get_coordinate_space() const {
+        return coordinate_space;
+    }
 
    protected:
     void _set_dim_points(
@@ -148,6 +159,7 @@ class SOMAGeometryColumn : public SOMAColumn {
     const size_t TDB_DIM_PER_SPATIAL_AXIS = 2;
     std::vector<Dimension> dimensions;
     Attribute attribute;
+    SOMACoordinateSpace coordinate_space;
 
     /**
      * Compute the usable domain limits. If the array has a current domain then

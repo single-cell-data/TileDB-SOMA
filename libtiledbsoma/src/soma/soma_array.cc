@@ -224,37 +224,9 @@ void SOMAArray::fill_columns() {
                 TILEDB_SOMA_SCHEMA_KEY,
                 uri()));
         }
-
-        auto soma_schema_extension_raw = get_metadata(TILEDB_SOMA_SCHEMA_KEY)
-                                             .value();
-        auto data = static_cast<const char*>(
-            std::get<2>(soma_schema_extension_raw));
-        auto soma_schema_extension = data != nullptr ?
-                                         nlohmann::json::parse(std::string(
-                                             data,
-                                             std::get<1>(
-                                                 soma_schema_extension_raw))) :
-                                         nlohmann::json::object();
-
-        if (!soma_schema_extension.contains(TILEDB_SOMA_SCHEMA_COL_KEY)) {
-            throw TileDBSOMAError(std::format(
-                "[SOMAArray][fill_columns] Missing '{}' key from '{}'",
-                TILEDB_SOMA_SCHEMA_COL_KEY,
-                TILEDB_SOMA_SCHEMA_KEY));
-        }
-
-        columns_ = SOMAColumn::deserialize(
-            soma_schema_extension.value(
-                TILEDB_SOMA_SCHEMA_COL_KEY, nlohmann::json::array()),
-            *ctx_->tiledb_ctx(),
-            *arr_);
-
-    } else {
-        // Non-geometry dataframes have trivially constructible columns and do
-        // not require a schema
-        columns_ = SOMAColumn::deserialize(
-            nlohmann::json::array(), *ctx_->tiledb_ctx(), *arr_);
     }
+
+    columns_ = SOMAColumn::deserialize(*ctx_->tiledb_ctx(), *arr_, metadata_);
 }
 
 const std::string SOMAArray::uri() const {
@@ -509,10 +481,11 @@ ArrowTable SOMAArray::_get_core_domainish(enum Domainish which_kind) {
     for (const auto& column :
          columns_ | std::views::filter(
                         [](const auto& col) { return col->isIndexColumn(); })) {
-        arrow_schema->children[child_index] = column->arrow_schema_slot(
-            *ctx_, *arr_);
-        arrow_array->children[child_index] = column->arrow_domain_slot(
+        auto kind_domain_slot = column->arrow_domain_slot(
             *ctx_, *arr_, which_kind);
+
+        arrow_array->children[child_index] = kind_domain_slot.first;
+        arrow_schema->children[child_index] = kind_domain_slot.second;
 
         ++child_index;
     }

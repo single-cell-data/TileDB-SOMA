@@ -14,6 +14,7 @@
 #include <format>
 #include <tiledb/tiledb>
 #include <tiledbsoma/tiledbsoma>
+#include <tuple>
 #include "../src/soma/soma_attribute.h"
 #include "../src/soma/soma_column.h"
 #include "../src/soma/soma_dimension.h"
@@ -342,33 +343,30 @@ TEST_CASE_METHOD(
             ned_str = ArrowAdapter::get_table_string_column_by_name(
                 non_empty_domain, "mystring");
 
-        std::vector<std::string>
-            ned_str_col = ArrowAdapter::get_array_string_column(
-                columns[0]->arrow_domain_slot(
-                    *ctx_, raw_array, Domainish::kind_non_empty_domain),
-                columns[0]->arrow_schema_slot(*ctx_, raw_array));
+        std::vector<std::string> ned_str_col = std::apply(
+            ArrowAdapter::get_array_string_column,
+            columns[0]->arrow_domain_slot(
+                *ctx_, raw_array, Domainish::kind_non_empty_domain));
 
         ArrowTable soma_domain = sdf->get_soma_domain();
         std::vector<std::string>
             dom_str = ArrowAdapter::get_table_string_column_by_name(
                 soma_domain, "mystring");
 
-        std::vector<std::string>
-            dom_str_col = ArrowAdapter::get_array_string_column(
-                columns[0]->arrow_domain_slot(
-                    *ctx_, raw_array, Domainish::kind_core_current_domain),
-                columns[0]->arrow_schema_slot(*ctx_, raw_array));
+        std::vector<std::string> dom_str_col = std::apply(
+            ArrowAdapter::get_array_string_column,
+            columns[0]->arrow_domain_slot(
+                *ctx_, raw_array, Domainish::kind_core_current_domain));
 
         ArrowTable soma_maxdomain = sdf->get_soma_maxdomain();
         std::vector<std::string>
             maxdom_str = ArrowAdapter::get_table_string_column_by_name(
                 soma_maxdomain, "mystring");
 
-        std::vector<std::string>
-            maxdom_str_col = ArrowAdapter::get_array_string_column(
-                columns[0]->arrow_domain_slot(
-                    *ctx_, raw_array, Domainish::kind_core_domain),
-                columns[0]->arrow_schema_slot(*ctx_, raw_array));
+        std::vector<std::string> maxdom_str_col = std::apply(
+            ArrowAdapter::get_array_string_column,
+            columns[0]->arrow_domain_slot(
+                *ctx_, raw_array, Domainish::kind_core_domain));
 
         REQUIRE(ned_str == std::vector<std::string>({"", ""}));
 
@@ -501,33 +499,30 @@ TEST_CASE_METHOD(
             ned_str = ArrowAdapter::get_table_string_column_by_name(
                 non_empty_domain, "mystring");
 
-        std::vector<std::string>
-            ned_str_col = ArrowAdapter::get_array_string_column(
-                columns[0]->arrow_domain_slot(
-                    *ctx_, raw_array, Domainish::kind_non_empty_domain),
-                columns[0]->arrow_schema_slot(*ctx_, raw_array));
+        std::vector<std::string> ned_str_col = std::apply(
+            ArrowAdapter::get_array_string_column,
+            columns[0]->arrow_domain_slot(
+                *ctx_, raw_array, Domainish::kind_non_empty_domain));
 
         ArrowTable soma_domain = sdf->get_soma_domain();
         std::vector<std::string>
             dom_str = ArrowAdapter::get_table_string_column_by_name(
                 soma_domain, "mystring");
 
-        std::vector<std::string>
-            dom_str_col = ArrowAdapter::get_array_string_column(
-                columns[0]->arrow_domain_slot(
-                    *ctx_, raw_array, Domainish::kind_core_current_domain),
-                columns[0]->arrow_schema_slot(*ctx_, raw_array));
+        std::vector<std::string> dom_str_col = std::apply(
+            ArrowAdapter::get_array_string_column,
+            columns[0]->arrow_domain_slot(
+                *ctx_, raw_array, Domainish::kind_core_current_domain));
 
         ArrowTable soma_maxdomain = sdf->get_soma_maxdomain();
         std::vector<std::string>
             maxdom_str = ArrowAdapter::get_table_string_column_by_name(
                 soma_maxdomain, "mystring");
 
-        std::vector<std::string>
-            maxdom_str_col = ArrowAdapter::get_array_string_column(
-                columns[0]->arrow_domain_slot(
-                    *ctx_, raw_array, Domainish::kind_core_domain),
-                columns[0]->arrow_schema_slot(*ctx_, raw_array));
+        std::vector<std::string> maxdom_str_col = std::apply(
+            ArrowAdapter::get_array_string_column,
+            columns[0]->arrow_domain_slot(
+                *ctx_, raw_array, Domainish::kind_core_domain));
 
         REQUIRE(ned_str == std::vector<std::string>({"", ""}));
 

@@ -36,7 +36,8 @@ class SOMADimension : public SOMAColumn {
     static std::shared_ptr<SOMAColumn> deserialize(
         const nlohmann::json& soma_schema,
         const Context& ctx,
-        const Array& array);
+        const Array& array,
+        const std::map<std::string, tiledbsoma::MetadataValue>& metadata);
 
     static std::shared_ptr<SOMADimension> create(
         std::shared_ptr<Context> ctx,
@@ -89,13 +90,13 @@ class SOMADimension : public SOMAColumn {
         return std::nullopt;
     }
 
-    ArrowArray* arrow_domain_slot(
+    std::pair<ArrowArray*, ArrowSchema*> arrow_domain_slot(
         const SOMAContext& ctx,
         Array& array,
         enum Domainish kind) const override;
 
     ArrowSchema* arrow_schema_slot(
-        const SOMAContext& ctx, Array& array) override;
+        const SOMAContext& ctx, Array& array) const override;
 
     void serialize(nlohmann::json&) const override;
 

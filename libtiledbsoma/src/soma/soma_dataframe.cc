@@ -14,6 +14,7 @@
 #include "soma_dataframe.h"
 #include <format>
 #include "../utils/logger.h"
+#include "soma_coordinates.h"
 
 namespace tiledbsoma {
 using namespace tiledb;
@@ -34,6 +35,7 @@ void SOMADataFrame::create(
             ctx->tiledb_ctx(),
             schema,
             index_columns,
+            std::nullopt,
             "SOMADataFrame",
             true,
             platform_config);
