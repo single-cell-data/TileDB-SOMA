@@ -16,7 +16,7 @@ from more_itertools import pairwise
 from packaging.version import Version
 
 import tiledbsoma as soma
-
+from somacore.options import OpenMode
 from tests.ht._array_state_machine import SOMAArrayStateMachine
 from tests.ht._ht_test_config import HT_TEST_CONFIG
 from tests.ht._ht_util import (
@@ -664,7 +664,7 @@ class SOMADataFrameStateMachine(SOMAArrayStateMachine):
             uri, context=context, tiledb_timestamp=tiledb_timestamp
         )
 
-    def _array_open(self, *, mode: str, tiledb_timestamp: int | None = None) -> None:
+    def _array_open(self, *, mode: OpenMode, tiledb_timestamp: int | None = None) -> None:
         self.A = soma.DataFrame.open(
             self.uri, mode=mode, context=self.context, tiledb_timestamp=tiledb_timestamp
         )

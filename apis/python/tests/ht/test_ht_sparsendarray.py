@@ -23,6 +23,7 @@ from hypothesis.stateful import (
 import tiledbsoma
 import tiledbsoma as soma
 import tiledbsoma._sparse_nd_array
+from somacore.options import OpenMode
 
 from tests.ht._array_state_machine import SOMANDArrayStateMachine
 from tests.ht._ht_util import (
@@ -225,7 +226,7 @@ class SOMASparseNDArrayStateMachine(SOMANDArrayStateMachine):
             uri, context=context, tiledb_timestamp=tiledb_timestamp
         )
 
-    def _array_open(self, *, mode: str, tiledb_timestamp: int | None = None) -> None:
+    def _array_open(self, *, mode: OpenMode, tiledb_timestamp: int | None = None) -> None:
         self.A = soma.SparseNDArray.open(
             self.uri, mode=mode, context=self.context, tiledb_timestamp=tiledb_timestamp
         )
