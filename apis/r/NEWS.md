@@ -1,3 +1,7 @@
+# tiledbsoma 1.15.7
+
+* This release contains Python-only bugfixes
+
 # tiledbsoma 1.15.6
 
 * This release contains Python-only bugfixes
