@@ -2092,10 +2092,13 @@ def test_arrow_table_validity_with_slicing(tmp_path):
     )
     table = pa.Table.from_pydict(pydict)
 
-    with soma.DataFrame.open(uri, "w") as A:
-        with raises_no_typeguard(soma.SOMAError):
-            # soma_joinid cannot be nullable
-            A.write(table)
+    # As of version 1.15.6 we were throwing in this case. However, we found
+    # a compatibility issue with pyarrow versions below 17. Thus this is
+    # now non-fatal.
+    # with soma.DataFrame.open(uri, "w") as A:
+    #    with raises_no_typeguard(soma.SOMAError):
+    #        # soma_joinid cannot be nullable
+    #        A.write(table)
 
     pydict["soma_joinid"] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
     table = pa.Table.from_pydict(pydict)
