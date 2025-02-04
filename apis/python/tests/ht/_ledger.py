@@ -24,7 +24,7 @@ def get_entries(path: str | pathlib.Path) -> set[str]:
     children = [p.relative_to(dir).as_posix() for p in dir.iterdir()]
     entries = [c for c in children if re.match(r"__[0-9]+_[0-9]+_[0-9a-fA-F]+", c)]
     entries.sort()
-    return entries
+    return set(entries)
 
 
 LedgerEntryDataType = TypeVar("LedgerEntryDataType")
