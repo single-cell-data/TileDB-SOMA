@@ -216,7 +216,7 @@ def arrow_datatypes(draw: st.DrawFn) -> pa.DataType:
     )
 
 
-def ndarray_datatype() -> st.SearchStrategy:
+def ndarray_datatype() -> st.SearchStrategy[pa.DataType]:
     """Return a type that can be stored in a SOMA NDArray."""
     return st.from_type(pa.DataType).filter(
         lambda t: (
@@ -229,7 +229,7 @@ def ndarray_datatype() -> st.SearchStrategy:
     )
 
 
-def dataframe_datatype() -> st.SearchStrategy:
+def dataframe_datatype() -> st.SearchStrategy[pa.DataType]:
     """Return type that can be stored in a DataFrame column."""
 
     def is_dataframe_value_type(dt: pa.DataType) -> bool:
@@ -654,8 +654,8 @@ def schemas_equal(
     s1: pa.Schema,
     s2: pa.Schema,
     *,
-    ignore_field_order=False,
-    large_type_equivalence=False,
+    ignore_field_order: bool = False,
+    large_type_equivalence: bool = False,
 ) -> bool:
     """NB: assumes all field names are unique! Raises if not.
 

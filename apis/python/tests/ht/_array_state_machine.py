@@ -14,6 +14,7 @@ import numpy as np
 import pyarrow as pa
 from hypothesis import strategies as st
 from hypothesis.stateful import RuleBasedStateMachine, invariant, precondition, rule
+from somacore.options import OpenMode
 from typing_extensions import TypeAlias
 
 import tiledbsoma as soma
@@ -68,15 +69,15 @@ class SOMAArrayStateMachine(RuleBasedStateMachine):
 
     @abstractmethod
     def _array_exists(
-        uri: str, context: soma.SOMATileDBContext, tiledb_timestamp: int | None
+        self, uri: str, context: soma.SOMATileDBContext, tiledb_timestamp: int | None
     ) -> bool:
         pass
 
     @abstractmethod
-    def _array_open(self, mode: str) -> None:
+    def _array_open(self, mode: OpenMode, tiledb_timestamp: int | None = None) -> None:
         pass
 
-    def _open(self, *, mode: str, tiledb_timestamp: int | None = None) -> None:
+    def _open(self, *, mode: OpenMode, tiledb_timestamp: int | None = None) -> None:
         assert self.A.closed
         tiledb_timestamp = None  # TODO/XXX: no time-travel for now. FIXME
         self._array_open(mode=mode, tiledb_timestamp=tiledb_timestamp)
@@ -95,10 +96,6 @@ class SOMAArrayStateMachine(RuleBasedStateMachine):
         self.A.close()
         self.closed = True
         self.mode = None
-
-    @abstractmethod
-    def _reopen(self, mode: str) -> None:
-        pass
 
     ##
     ## ---- Open/close state
@@ -125,7 +122,7 @@ class SOMAArrayStateMachine(RuleBasedStateMachine):
 
     @precondition(lambda self: self.closed)
     @rule(mode=st.sampled_from(["r", "w"]))
-    def open(self, mode: str) -> None:
+    def open(self, mode: OpenMode) -> None:
         # TODO: time travel
         self._open(mode=mode)
 
@@ -137,7 +134,7 @@ class SOMAArrayStateMachine(RuleBasedStateMachine):
         lambda self: not HT_TEST_CONFIG["sc-61118_workaround"] or self.mode != "w"
     )  # TODO - fails due to loss of metadata on reopen from w->r. See sc-61118. Remove when fixed.
     @rule(mode=st.sampled_from(["r", "w"]))
-    def reopen(self, mode: str) -> None:
+    def reopen(self, mode: OpenMode) -> None:
         assert not self.A.closed
         assert not self.closed
         assert self.mode is not None
@@ -238,7 +235,7 @@ class SOMANDArrayStateMachine(SOMAArrayStateMachine):
         super().__init__()
         self.shapes_factory = shapes_factory
 
-    def setup(self, type, shape, array) -> None:
+    def setup(self, type: pa.DataType, shape: tuple[int, ...], array) -> None:
         super().setup(array)
         self.type = type
         self.schema = pa.schema(

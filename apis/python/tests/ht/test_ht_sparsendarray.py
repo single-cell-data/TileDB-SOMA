@@ -4,8 +4,7 @@ from __future__ import annotations
 
 import datetime
 import shutil
-import typing
-from typing import Any, Union
+from typing import Any, Dict, Mapping, Optional, Sequence, Tuple, Union
 
 import hypothesis as ht
 import numpy as np
@@ -19,8 +18,8 @@ from hypothesis.stateful import (
     precondition,
     rule,
 )
+from somacore.options import OpenMode
 
-import tiledbsoma
 import tiledbsoma as soma
 import tiledbsoma._sparse_nd_array
 
@@ -162,8 +161,8 @@ def test_fuzz_SparseNDArray_create(
     tmp_path,
     uri: str,
     type: pa.DataType,
-    shape: typing.Sequence[typing.Optional[int]],
-    platform_config: typing.Dict[str, typing.Mapping[str, Any]] | object | None,
+    shape: Sequence[Optional[int]],
+    platform_config: Dict[str, Mapping[str, Any]] | object | None,
     context: tiledbsoma.SOMATileDBContext | None,
     tiledb_timestamp: int | datetime.datetime | None,
 ) -> None:
@@ -196,7 +195,7 @@ class SOMASparseNDArrayStateMachine(SOMANDArrayStateMachine):
         super().__init__(shapes_factory=sparse_array_shape)
 
     @initialize(type=ndarray_datatype(), shape=sparse_array_shape(allow_none=True))
-    def setup(self, type, shape) -> None:
+    def setup(self, type: pa.DataType, shape: Tuple[int | None, ...]) -> None:
         super().setup(
             type,
             shape,
@@ -219,13 +218,15 @@ class SOMASparseNDArrayStateMachine(SOMANDArrayStateMachine):
         )
 
     def _array_exists(
-        uri: str, context: soma.SOMATileDBContext, tiledb_timestamp: int | None
+        self, uri: str, context: soma.SOMATileDBContext, tiledb_timestamp: int | None
     ) -> bool:
         return soma.SparseNDArray.exists(
             uri, context=context, tiledb_timestamp=tiledb_timestamp
         )
 
-    def _array_open(self, *, mode: str, tiledb_timestamp: int | None = None) -> None:
+    def _array_open(
+        self, *, mode: OpenMode, tiledb_timestamp: int | None = None
+    ) -> None:
         self.A = soma.SparseNDArray.open(
             self.uri, mode=mode, context=self.context, tiledb_timestamp=tiledb_timestamp
         )

@@ -10,8 +10,7 @@ may not immediately reproduce if you re-run a test. The test log files should co
 information to reproduce the error, including the random number seed used for test selection, and the
 so-called "blob" that allows Hypothesis to recreate a particular test.
 
-The [Hypothesis documentation](https://hypothesis.readthedocs.io/) has information on reproducing
-test failures.
+The [Hypothesis documentation] has information on reproducing test failures.
 
 ## Exhaustive testing
 
@@ -34,8 +33,11 @@ can repeat this invocation until you are satisfied with your test coverage.
 ## Configuration
 
 The `_ht_test_config.py` file is used to configure the tests. The most common use case is a config flag
-which enables a defect work-around, while the issue is being resolved.
+which enables a defect workaround, while the issue is being resolved.
 
 ## For More Information
 
-See the [Hypothesis documentation](https://hypothesis.readthedocs.io/)
+See the [Hypothesis documentation].
+
+
+[Hypothesis documentation]: https://hypothesis.readthedocs.io/

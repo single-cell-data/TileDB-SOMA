@@ -24,7 +24,7 @@ def get_entries(path: str | pathlib.Path) -> set[str]:
     children = [p.relative_to(dir).as_posix() for p in dir.iterdir()]
     entries = [c for c in children if re.match(r"__[0-9]+_[0-9]+_[0-9a-fA-F]+", c)]
     entries.sort()
-    return entries
+    return set(entries)
 
 
 LedgerEntryDataType = TypeVar("LedgerEntryDataType")
@@ -45,14 +45,17 @@ class LedgerEntry(Generic[LedgerEntryDataType], metaclass=ABCMeta):
         pass
 
 
-class Ledger(Generic[LedgerEntryDataType]):
+LedgerEntryType = TypeVar("LedgerEntryType", bound="LedgerEntry")
+
+
+class Ledger(Generic[LedgerEntryType]):
     def __init__(
         self,
-        initial_entry: LedgerEntry[LedgerEntryDataType],
+        initial_entry: LedgerEntryType,
         *,
         allows_duplicates: bool = False,
     ) -> None:
-        self.entries: list[LedgerEntry[LedgerEntryDataType]] = [initial_entry]
+        self.entries: list[LedgerEntryType] = [initial_entry]
         self.initial_entry = (
             initial_entry  # XXX: do we need this or can we use entries[0]?
         )
@@ -72,7 +75,7 @@ class Ledger(Generic[LedgerEntryDataType]):
             + "\n"
         )
 
-    def read(self, timestamp_ms: int) -> LedgerEntry[LedgerEntryDataType]:
+    def read(self, timestamp_ms: int) -> LedgerEntryType:
         """Return a single ledger entry representing all writes <= timestamp"""
         assert len(self.entries) > 0
         entries_to_consolidate = sorted(
@@ -86,7 +89,7 @@ class Ledger(Generic[LedgerEntryDataType]):
             )
         return consolidated_result
 
-    def write(self, entry: LedgerEntry[LedgerEntryDataType]) -> None:
+    def write(self, entry: LedgerEntryType) -> None:
         """Write new entry to the ledger."""
         assert entry.timestamp_ms >= 0
         assert type(entry) is type(self.initial_entry)

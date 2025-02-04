@@ -14,6 +14,7 @@ from hypothesis.extra import numpy as ht_np
 from hypothesis.stateful import initialize, invariant, precondition, rule
 from more_itertools import pairwise
 from packaging.version import Version
+from somacore.options import OpenMode
 
 import tiledbsoma as soma
 
@@ -23,7 +24,6 @@ from tests.ht._ht_util import (
     arrow_array,
     arrow_schema,
     dataframe_datatype,
-    # df_to_table,
     from_datatype,
     pad_array,
     schemas_equal,
@@ -72,7 +72,7 @@ T = TypeVar("T")
 class EnumerationMetadata(Generic[T]):
     type: pa.DictionaryType
     max_categories: int = attrs.field(init=False)
-    categories: tuple[T] = attrs.field(factory=tuple)
+    categories: tuple[T, ...] = attrs.field(factory=tuple)
 
     def __attrs_post_init__(self):
         # we are frozen, so use __setattr__ to bypass.
@@ -595,7 +595,9 @@ def arrow_table2(
         if n_splits > 0:
             split_points = draw(splitss(n_splits=n_splits, max_value=len(tbl)))
             split_points = [0] + split_points + [len(tbl)]
-            tbl = pa.concat_tables([tbl[st:sp] for st, sp in pairwise(split_points)])
+            tbl = pa.concat_tables(
+                [tbl[start:end] for start, end in pairwise(split_points)]
+            )
 
     # pad, sometimes
     if draw(st.booleans()):
@@ -658,13 +660,15 @@ class SOMADataFrameStateMachine(SOMAArrayStateMachine):
         )
 
     def _array_exists(
-        uri: str, context: soma.SOMATileDBContext, tiledb_timestamp: int | None
+        self, uri: str, context: soma.SOMATileDBContext, tiledb_timestamp: int | None
     ) -> bool:
         return soma.DataFrame.exists(
             uri, context=context, tiledb_timestamp=tiledb_timestamp
         )
 
-    def _array_open(self, *, mode: str, tiledb_timestamp: int | None = None) -> None:
+    def _array_open(
+        self, *, mode: OpenMode, tiledb_timestamp: int | None = None
+    ) -> None:
         self.A = soma.DataFrame.open(
             self.uri, mode=mode, context=self.context, tiledb_timestamp=tiledb_timestamp
         )
