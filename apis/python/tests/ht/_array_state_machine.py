@@ -97,10 +97,6 @@ class SOMAArrayStateMachine(RuleBasedStateMachine):
         self.closed = True
         self.mode = None
 
-    @abstractmethod
-    def _reopen(self, mode: str) -> None:
-        pass
-
     ##
     ## ---- Open/close state
     ##
