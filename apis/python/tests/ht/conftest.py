@@ -31,18 +31,8 @@ def ht_test_config() -> dict[str, Any]:
 
 
 @pytest.fixture
-def concurrency() -> int | None:
-    return None
-
-
-@pytest.fixture
-def context(concurrency: int | None) -> soma.SOMATileDBContext:
-    if concurrency is None:
-        return soma.SOMATileDBContext()
-    else:
-        return soma.SOMATileDBContext(
-            tiledb_config={"soma.compute_concurrency_level": f"{concurrency}"}
-        )
+def context() -> soma.SOMATileDBContext:
+    return soma.SOMATileDBContext()
 
 
 # Register Hypothesis strategies for use with `strategies.from_type()`
