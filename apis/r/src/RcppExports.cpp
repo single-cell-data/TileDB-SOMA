@@ -627,9 +627,9 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
-// sr_setup
-Rcpp::XPtr<tdbs::SOMAArray> sr_setup(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp, Rcpp::Nullable<Rcpp::CharacterVector> colnames, Rcpp::Nullable<Rcpp::XPtr<tiledb::QueryCondition>> qc, Rcpp::Nullable<Rcpp::List> dim_points, Rcpp::Nullable<Rcpp::List> dim_ranges, std::string batch_size, std::string result_order, Rcpp::Nullable<Rcpp::DatetimeVector> timestamprange, const std::string& loglevel);
-RcppExport SEXP _tiledbsoma_sr_setup(SEXP uriSEXP, SEXP ctxxpSEXP, SEXP colnamesSEXP, SEXP qcSEXP, SEXP dim_pointsSEXP, SEXP dim_rangesSEXP, SEXP batch_sizeSEXP, SEXP result_orderSEXP, SEXP timestamprangeSEXP, SEXP loglevelSEXP) {
+// mq_setup
+Rcpp::XPtr<tdbs::ManagedQuery> mq_setup(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp, Rcpp::Nullable<Rcpp::CharacterVector> colnames, Rcpp::Nullable<Rcpp::XPtr<tiledb::QueryCondition>> qc, Rcpp::Nullable<Rcpp::List> dim_points, Rcpp::Nullable<Rcpp::List> dim_ranges, std::string batch_size, std::string result_order, Rcpp::Nullable<Rcpp::DatetimeVector> timestamprange, const std::string& loglevel);
+RcppExport SEXP _tiledbsoma_mq_setup(SEXP uriSEXP, SEXP ctxxpSEXP, SEXP colnamesSEXP, SEXP qcSEXP, SEXP dim_pointsSEXP, SEXP dim_rangesSEXP, SEXP batch_sizeSEXP, SEXP result_orderSEXP, SEXP timestamprangeSEXP, SEXP loglevelSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -643,18 +643,18 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< std::string >::type result_order(result_orderSEXP);
     Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::DatetimeVector> >::type timestamprange(timestamprangeSEXP);
     Rcpp::traits::input_parameter< const std::string& >::type loglevel(loglevelSEXP);
-    rcpp_result_gen = Rcpp::wrap(sr_setup(uri, ctxxp, colnames, qc, dim_points, dim_ranges, batch_size, result_order, timestamprange, loglevel));
+    rcpp_result_gen = Rcpp::wrap(mq_setup(uri, ctxxp, colnames, qc, dim_points, dim_ranges, batch_size, result_order, timestamprange, loglevel));
     return rcpp_result_gen;
 END_RCPP
 }
-// sr_complete
-bool sr_complete(Rcpp::XPtr<tdbs::SOMAArray> sr);
-RcppExport SEXP _tiledbsoma_sr_complete(SEXP srSEXP) {
+// mq_complete
+bool mq_complete(Rcpp::XPtr<tdbs::ManagedQuery> mq);
+RcppExport SEXP _tiledbsoma_mq_complete(SEXP mqSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Rcpp::XPtr<tdbs::SOMAArray> >::type sr(srSEXP);
-    rcpp_result_gen = Rcpp::wrap(sr_complete(sr));
+    Rcpp::traits::input_parameter< Rcpp::XPtr<tdbs::ManagedQuery> >::type mq(mqSEXP);
+    rcpp_result_gen = Rcpp::wrap(mq_complete(mq));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -668,36 +668,36 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// sr_next
-SEXP sr_next(Rcpp::XPtr<tdbs::SOMAArray> sr);
-RcppExport SEXP _tiledbsoma_sr_next(SEXP srSEXP) {
+// mq_next
+SEXP mq_next(Rcpp::XPtr<tdbs::ManagedQuery> mq);
+RcppExport SEXP _tiledbsoma_mq_next(SEXP mqSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Rcpp::XPtr<tdbs::SOMAArray> >::type sr(srSEXP);
-    rcpp_result_gen = Rcpp::wrap(sr_next(sr));
+    Rcpp::traits::input_parameter< Rcpp::XPtr<tdbs::ManagedQuery> >::type mq(mqSEXP);
+    rcpp_result_gen = Rcpp::wrap(mq_next(mq));
     return rcpp_result_gen;
 END_RCPP
 }
-// sr_reset
-void sr_reset(Rcpp::XPtr<tdbs::SOMAArray> sr);
-RcppExport SEXP _tiledbsoma_sr_reset(SEXP srSEXP) {
+// mq_reset
+void mq_reset(Rcpp::XPtr<tdbs::ManagedQuery> mq);
+RcppExport SEXP _tiledbsoma_mq_reset(SEXP mqSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Rcpp::XPtr<tdbs::SOMAArray> >::type sr(srSEXP);
-    sr_reset(sr);
+    Rcpp::traits::input_parameter< Rcpp::XPtr<tdbs::ManagedQuery> >::type mq(mqSEXP);
+    mq_reset(mq);
     return R_NilValue;
 END_RCPP
 }
-// sr_set_dim_points
-void sr_set_dim_points(Rcpp::XPtr<tdbs::SOMAArray> sr, std::string dim, Rcpp::NumericVector points);
-RcppExport SEXP _tiledbsoma_sr_set_dim_points(SEXP srSEXP, SEXP dimSEXP, SEXP pointsSEXP) {
+// mq_set_dim_points
+void mq_set_dim_points(Rcpp::XPtr<tdbs::ManagedQuery> mq, std::string dim, Rcpp::NumericVector points);
+RcppExport SEXP _tiledbsoma_mq_set_dim_points(SEXP mqSEXP, SEXP dimSEXP, SEXP pointsSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Rcpp::XPtr<tdbs::SOMAArray> >::type sr(srSEXP);
+    Rcpp::traits::input_parameter< Rcpp::XPtr<tdbs::ManagedQuery> >::type mq(mqSEXP);
     Rcpp::traits::input_parameter< std::string >::type dim(dimSEXP);
     Rcpp::traits::input_parameter< Rcpp::NumericVector >::type points(pointsSEXP);
-    sr_set_dim_points(sr, dim, points);
+    mq_set_dim_points(mq, dim, points);
     return R_NilValue;
 END_RCPP
 }
@@ -845,12 +845,12 @@ static const R_CallMethodDef CallEntries[] = {
     {"_tiledbsoma_tiledbsoma_upgrade_shape", (DL_FUNC) &_tiledbsoma_tiledbsoma_upgrade_shape, 5},
     {"_tiledbsoma_upgrade_or_change_domain", (DL_FUNC) &_tiledbsoma_upgrade_or_change_domain, 7},
     {"_tiledbsoma_c_update_dataframe_schema", (DL_FUNC) &_tiledbsoma_c_update_dataframe_schema, 6},
-    {"_tiledbsoma_sr_setup", (DL_FUNC) &_tiledbsoma_sr_setup, 10},
-    {"_tiledbsoma_sr_complete", (DL_FUNC) &_tiledbsoma_sr_complete, 1},
+    {"_tiledbsoma_mq_setup", (DL_FUNC) &_tiledbsoma_mq_setup, 10},
+    {"_tiledbsoma_mq_complete", (DL_FUNC) &_tiledbsoma_mq_complete, 1},
     {"_tiledbsoma_create_empty_arrow_table", (DL_FUNC) &_tiledbsoma_create_empty_arrow_table, 0},
-    {"_tiledbsoma_sr_next", (DL_FUNC) &_tiledbsoma_sr_next, 1},
-    {"_tiledbsoma_sr_reset", (DL_FUNC) &_tiledbsoma_sr_reset, 1},
-    {"_tiledbsoma_sr_set_dim_points", (DL_FUNC) &_tiledbsoma_sr_set_dim_points, 3},
+    {"_tiledbsoma_mq_next", (DL_FUNC) &_tiledbsoma_mq_next, 1},
+    {"_tiledbsoma_mq_reset", (DL_FUNC) &_tiledbsoma_mq_reset, 1},
+    {"_tiledbsoma_mq_set_dim_points", (DL_FUNC) &_tiledbsoma_mq_set_dim_points, 3},
     {"_tiledbsoma_tiledbsoma_stats_enable", (DL_FUNC) &_tiledbsoma_tiledbsoma_stats_enable, 0},
     {"_tiledbsoma_tiledbsoma_stats_disable", (DL_FUNC) &_tiledbsoma_tiledbsoma_stats_disable, 0},
     {"_tiledbsoma_tiledbsoma_stats_reset", (DL_FUNC) &_tiledbsoma_tiledbsoma_stats_reset, 0},

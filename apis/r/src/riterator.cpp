@@ -21,14 +21,14 @@
 namespace tdbs = tiledbsoma;
 
 // clang-format off
-//' Iterator-Style Access to SOMA Array via SOMAArray
+//' Iterator-Style Access to SOMA Array via ManagedQuery
 //'
-//' The `sr_*` functions provide low-level access to an instance of the SOMAArray
+//' The `mq_*` functions provide low-level access to an instance of a ManagedQuery
 //' class so that iterative access over parts of a (large) array is possible.
 //' \describe{
-//'   \item{\code{sr_setup}}{instantiates and by default also submits a query}
-//'   \item{\code{sr_complete}}{checks if more data is available}
-//'   \item{\code{sr_next}}{returns the next chunk}
+//'   \item{\code{mq_setup}}{instantiates and by default also submits a query}
+//'   \item{\code{mq_complete}}{checks if more data is available}
+//'   \item{\code{mq_next}}{returns the next chunk}
 //' }
 //'
 //' @param uri Character value with URI path to a SOMA data set
@@ -52,20 +52,20 @@ namespace tdbs = tiledbsoma;
 //' new logging level.
 //' @param timestamprange Optional POSIXct (i.e. Datetime) vector with start
 //' and end of ' interval for which data is considered.
-//' @param sr An external pointer to a TileDB SOMAArray object.
+//' @param mq An external pointer to a ManagedQuery object.
 //'
-//' @return \code{sr_setup} returns an external pointer to a SOMAArray.
-//' \code{sr_complete} ' returns a boolean, and \code{sr_next} returns an Arrow
+//' @return \code{mq_setup} returns an external pointer to a ManagedQuery object.
+//' \code{mq_complete} ' returns a boolean, and \code{mq_next} returns an Arrow
 //' array helper object.
 //'
 //' @examples
 //' \dontrun{
 //' uri <- extract_dataset("soma-dataframe-pbmc3k-processed-obs")
 //' ctxcp <- soma_context()
-//' sr <- sr_setup(uri, ctxxp)
+//' mq <- mq_setup(uri, ctxxp)
 //' rl <- data.frame()
-//' while (!sr_complete(sr)) {
-//'   dat <- sr_next(sr)
+//' while (!mq_complete(mq)) {
+//'   dat <- mq_next(mq)
 //'   rb <- arrow::RecordBatch$import_from_c(dat$array_data, dat$schema)
 //'   rl <- rbind(rl, as.data.frame(rb))
 //' }
@@ -74,7 +74,7 @@ namespace tdbs = tiledbsoma;
 //' @noRd
 // clang-format on
 // [[Rcpp::export]]
-Rcpp::XPtr<tdbs::SOMAArray> sr_setup(
+Rcpp::XPtr<tdbs::ManagedQuery> mq_setup(
     const std::string& uri,
     Rcpp::XPtr<somactx_wrap_t> ctxxp,
     Rcpp::Nullable<Rcpp::CharacterVector> colnames = R_NilValue,
@@ -90,7 +90,7 @@ Rcpp::XPtr<tdbs::SOMAArray> sr_setup(
         tdbs::LOG_SET_LEVEL(loglevel);
     }
 
-    spdl::debug("[sr_setup] Setting up {}", uri);
+    spdl::debug("[mq_setup] Setting up {}", uri);
 
     std::string_view name = "unnamed";
     std::vector<std::string> column_names = {};
@@ -114,7 +114,7 @@ Rcpp::XPtr<tdbs::SOMAArray> sr_setup(
 
     auto tdb_result_order = get_tdb_result_order(result_order);
 
-    auto ptr = new tdbs::SOMAArray(
+    auto arr = tdbs::SOMAArray(
         OpenMode::read,
         uri,
         somactx,
@@ -124,14 +124,16 @@ Rcpp::XPtr<tdbs::SOMAArray> sr_setup(
         tdb_result_order,
         tsrng);
 
+    auto mq = new tdbs::ManagedQuery(arr, somactx->tiledb_ctx());
+
     std::unordered_map<std::string, std::shared_ptr<tiledb::Dimension>>
         name2dim;
-    std::shared_ptr<tiledb::ArraySchema> schema = ptr->tiledb_schema();
+    std::shared_ptr<tiledb::ArraySchema> schema = arr.tiledb_schema();
     tiledb::Domain domain = schema->domain();
     std::vector<tiledb::Dimension> dims = domain.dimensions();
     for (auto& dim : dims) {
         spdl::debug(
-            "[sr_setup] Dimension {} type {} domain {} extent {}",
+            "[mq_setup] Dimension {} type {} domain {} extent {}",
             dim.name(),
             tiledb::impl::to_str(dim.type()),
             dim.domain_to_str(),
@@ -142,9 +144,9 @@ Rcpp::XPtr<tdbs::SOMAArray> sr_setup(
 
     // If we have a query condition, apply it
     if (!qc.isNull()) {
-        spdl::debug("[sr_setup] Applying query condition");
+        spdl::debug("[mq_setup] Applying query condition");
         Rcpp::XPtr<tiledb::QueryCondition> qcxp(qc);
-        ptr->set_condition(*qcxp);
+        mq->set_condition(*qcxp);
     }
 
     // If we have dimension points, apply them
@@ -153,23 +155,23 @@ Rcpp::XPtr<tdbs::SOMAArray> sr_setup(
     // point is applied to the named dimension
     if (!dim_points.isNull()) {
         Rcpp::List lst(dim_points);
-        apply_dim_points(ptr, name2dim, lst);
+        apply_dim_points(mq, name2dim, lst);
     }
 
     // If we have a dimension points, apply them
     if (!dim_ranges.isNull()) {
         Rcpp::List lst(dim_ranges);
-        apply_dim_ranges(ptr, name2dim, lst);
+        apply_dim_ranges(mq, name2dim, lst);
     }
 
-    Rcpp::XPtr<tdbs::SOMAArray> xptr = make_xptr<tdbs::SOMAArray>(ptr);
+    Rcpp::XPtr<tdbs::ManagedQuery> xptr = make_xptr<tdbs::ManagedQuery>(mq);
     return xptr;
 }
 
 // [[Rcpp::export]]
-bool sr_complete(Rcpp::XPtr<tdbs::SOMAArray> sr) {
-    check_xptr_tag<tdbs::SOMAArray>(sr);
-    return sr->results_complete();
+bool mq_complete(Rcpp::XPtr<tdbs::ManagedQuery> mq) {
+    check_xptr_tag<tdbs::ManagedQuery>(mq);
+    return mq->results_complete();
 }
 
 //' @noRd
@@ -203,32 +205,29 @@ SEXP create_empty_arrow_table() {
 }
 
 // [[Rcpp::export]]
-SEXP sr_next(Rcpp::XPtr<tdbs::SOMAArray> sr) {
-    check_xptr_tag<tdbs::SOMAArray>(sr);
+SEXP mq_next(Rcpp::XPtr<tdbs::ManagedQuery> mq) {
+    check_xptr_tag<tdbs::ManagedQuery>(mq);
 
-    if (sr_complete(sr)) {
+    if (mq_complete(mq)) {
         spdl::trace(
-            "[sr_next] complete {} num_cells {}",
-            sr->is_complete(true),
-            sr->total_num_cells());
+            "[mq_next] complete {} num_cells {}",
+            mq->is_complete(true),
+            mq->total_num_cells());
         return create_empty_arrow_table();
     }
 
-    if (!sr->is_initial_read() && sr->total_num_cells() == 0) {
-        spdl::trace(
-            "[sr_next] is_initial_read {} num_cells {}",
-            sr->is_initial_read(),
-            sr->total_num_cells());
-        return create_empty_arrow_table();
-    }
-
-    auto sr_data = sr->read_next();
+    auto mq_data = mq->read_next();
     spdl::debug(
-        "[sr_next] Read {} rows and {} cols",
-        sr_data->get()->num_rows(),
-        sr_data->get()->names().size());
+        "[mq_next] Read {} rows and {} cols",
+        mq_data->get()->num_rows(),
+        mq_data->get()->names().size());
 
-    const std::vector<std::string> names = sr_data->get()->names();
+    if(!mq_data){
+        spdl::trace("[mq_next] complete - mq_data read no data");
+        return create_empty_arrow_table();
+    }
+
+    const std::vector<std::string> names = mq_data->get()->names();
     auto ncol = names.size();
     // Schema first
     auto schemaxp = nanoarrow_schema_owning_xptr();
@@ -250,10 +249,10 @@ SEXP sr_next(Rcpp::XPtr<tdbs::SOMAArray> sr) {
     arr->length = 0;  // initial value
 
     for (size_t i = 0; i < ncol; i++) {
-        spdl::trace("[sr_next] Accessing {} at {}", names[i], i);
+        spdl::trace("[mq_next] Accessing {} at {}", names[i], i);
 
         // now buf is a shared_ptr to ColumnBuffer
-        auto buf = sr_data->get()->at(names[i]);
+        auto buf = mq_data->get()->at(names[i]);
 
         // this is pair of array and schema pointer
         auto pp = tdbs::ArrowAdapter::to_arrow(buf);
@@ -269,31 +268,31 @@ SEXP sr_next(Rcpp::XPtr<tdbs::SOMAArray> sr) {
         }
     }
 
-    spdl::debug("[sr_next] Exporting chunk with {} rows", arr->length);
+    spdl::debug("[mq_next] Exporting chunk with {} rows", arr->length);
     // Nanoarrow special: stick schema into xptr tag to return single SEXP
     array_xptr_set_schema(arrayxp, schemaxp);  // embed schema in array
     return arrayxp;
 }
 
 // [[Rcpp::export]]
-void sr_reset(Rcpp::XPtr<tdbs::SOMAArray> sr) {
-    check_xptr_tag<tdbs::SOMAArray>(sr);
-    sr->reset();
-    spdl::debug("[sr_reset] Reset SOMAArray object");
+void mq_reset(Rcpp::XPtr<tdbs::ManagedQuery> mq) {
+    check_xptr_tag<tdbs::ManagedQuery>(mq);
+    mq->reset();
+    spdl::debug("[mq_reset] Reset SOMAArray object");
 }
 
 // [[Rcpp::export]]
-void sr_set_dim_points(
-    Rcpp::XPtr<tdbs::SOMAArray> sr,
+void mq_set_dim_points(
+    Rcpp::XPtr<tdbs::ManagedQuery> mq,
     std::string dim,
     Rcpp::NumericVector points) {
-    check_xptr_tag<tdbs::SOMAArray>(sr);
+    check_xptr_tag<tdbs::ManagedQuery>(mq);
     // check args ?
 
     std::vector<int64_t> vec = Rcpp::fromInteger64(points);
-    sr->set_dim_points<int64_t>(dim, vec);
+    mq->select_points<int64_t>(dim, vec);
     spdl::debug(
-        "[sr_set_dim_points] Set on dim '{}' for {} points, first two are {} "
+        "[mq_set_dim_points] Set on dim '{}' for {} points, first two are {} "
         "and {}",
         dim,
         points.length(),

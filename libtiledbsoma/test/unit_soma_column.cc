@@ -397,7 +397,7 @@ TEST_CASE_METHOD(
         sdf->close();
 
         auto external_query = std::make_unique<ManagedQuery>(
-            open(OpenMode::read), ctx_->tiledb_ctx());
+            *open(OpenMode::read), ctx_->tiledb_ctx());
 
         columns[1]->select_columns(external_query);
         columns[1]->set_dim_point<uint32_t>(external_query, *ctx_, 1234);
@@ -556,7 +556,7 @@ TEST_CASE_METHOD(
         sdf->close();
 
         auto external_query = std::make_unique<ManagedQuery>(
-            open(OpenMode::read), ctx_->tiledb_ctx());
+            *open(OpenMode::read), ctx_->tiledb_ctx());
 
         columns[1]->select_columns(external_query);
         columns[1]->set_dim_point<uint32_t>(external_query, *ctx_, 1234);

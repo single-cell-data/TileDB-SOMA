@@ -100,6 +100,8 @@ SEXP soma_array_reader(
         tdb_result_order,
         tsrng);
 
+    auto mq = tdbs::ManagedQuery(*sr, somactx->tiledb_ctx());
+
     std::unordered_map<std::string, std::shared_ptr<tiledb::Dimension>>
         name2dim;
     std::shared_ptr<tiledb::ArraySchema> schema = sr->tiledb_schema();
@@ -120,7 +122,7 @@ SEXP soma_array_reader(
     if (!qc.isNull()) {
         spdl::info("[soma_array_reader_impl] Applying query condition");
         Rcpp::XPtr<tiledb::QueryCondition> qcxp(qc);
-        sr->set_condition(*qcxp);
+        mq.set_condition(*qcxp);
     }
 
     // If we have dimension points, apply them
@@ -129,18 +131,18 @@ SEXP soma_array_reader(
     // point is applied to the named dimension
     if (!dim_points.isNull()) {
         Rcpp::List lst(dim_points);
-        apply_dim_points(sr.get(), name2dim, lst);
+        apply_dim_points(&mq, name2dim, lst);
     }
 
     // If we have a dimension points, apply them
     if (!dim_ranges.isNull()) {
         Rcpp::List lst(dim_ranges);
-        apply_dim_ranges(sr.get(), name2dim, lst);
+        apply_dim_ranges(&mq, name2dim, lst);
     }
 
     // Getting next batch:  std::optional<std::shared_ptr<ArrayBuffers>>
-    auto sr_data = sr->read_next();
-    if (!sr->results_complete()) {
+    auto sr_data = mq.read_next();
+    if (!mq.results_complete()) {
         Rcpp::stop(
             "Read of '%s' is incomplete.\nConsider increasing the memory "
             "allocation via the configuration\noption "
@@ -226,7 +228,8 @@ void set_log_level(const std::string& level) {
 Rcpp::CharacterVector get_column_types(
     const std::string& uri, const std::vector<std::string>& colnames) {
     auto sr = tdbs::SOMAArray::open(OpenMode::read, uri);
-    auto sr_data = sr->read_next();
+    auto mq = tdbs::ManagedQuery(*sr, sr->ctx()->tiledb_ctx());
+    auto sr_data = mq.read_next();
     size_t n = colnames.size();
     Rcpp::CharacterVector vs(n);
     for (size_t i = 0; i < n; i++) {

@@ -328,7 +328,7 @@ uns_hint <- function(type = c("1d", "2d")) {
   }
   x$reopen("READ", tiledb_timestamp = x$tiledb_timestamp)
   dimname <- x$dimnames()[axis + 1L]
-  sr <- sr_setup(
+  sr <- mq_setup(
     uri = x$uri,
     soma_context(),
     colnames = dimname,

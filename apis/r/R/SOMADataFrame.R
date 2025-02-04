@@ -228,10 +228,10 @@ SOMADataFrame <- R6::R6Class(
         value_filter <- parsed@ptr
       }
       spdl::debug(
-        "[SOMADataFrame$read] calling sr_setup for {} at ({},{})", self$uri,
+        "[SOMADataFrame$read] calling mq_setup for {} at ({},{})", self$uri,
         private$tiledb_timestamp[1], private$tiledb_timestamp[2]
       )
-      sr <- sr_setup(
+      sr <- mq_setup(
         uri = self$uri,
         private$.soma_context,
         colnames = column_names,

@@ -183,7 +183,7 @@ BlockwiseReadIterBase <- R6::R6Class(
       if (is.null(private$soma_reader_pointer)) {
         return(NULL)
       }
-      sr_reset(private$soma_reader_pointer)
+      mq_reset(private$soma_reader_pointer)
       return(invisible(NULL))
     },
     # @description Re-index an Arrow table
@@ -237,7 +237,7 @@ BlockwiseReadIterBase <- R6::R6Class(
       if (is.null(private$soma_reader_pointer)) {
         return(NULL)
       }
-      sr_set_dim_points(private$soma_reader_pointer, dimname, points)
+      mq_set_dim_points(private$soma_reader_pointer, dimname, points)
       return(invisible(NULL))
     }
   )

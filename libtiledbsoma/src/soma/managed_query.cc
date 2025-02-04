@@ -41,13 +41,11 @@ ManagedQuery::ManagedQuery(
 }
 
 ManagedQuery::ManagedQuery(
-    std::unique_ptr<SOMAArray> array,
-    std::shared_ptr<Context> ctx,
-    std::string_view name)
+    SOMAArray array, std::shared_ptr<Context> ctx, std::string_view name)
     : ctx_(ctx)
-    , array_(array->arr_)
+    , array_(array.arr_)
     , name_(name)
-    , schema_(std::make_shared<ArraySchema>(array->arr_->schema())) {
+    , schema_(std::make_shared<ArraySchema>(array.arr_->schema())) {
     reset();
 }
 

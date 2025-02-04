@@ -222,7 +222,7 @@ void writeArrayFromArrow(
     // optional timestamp range
     std::optional<tdbs::TimestampRange> tsrng = makeTimestampRange(tsvec);
 
-    std::shared_ptr<tdbs::SOMAArray> arrup;
+    std::unique_ptr<tdbs::SOMAArray> arrup;
     if (arraytype == "SOMADataFrame") {
         arrup = tdbs::SOMADataFrame::open(
             OpenMode::write,
@@ -257,7 +257,8 @@ void writeArrayFromArrow(
         Rcpp::stop(tfm::format("Unexpected array type '%s'", arraytype));
     }
 
-    arrup.get()->set_array_data(std::move(schema), std::move(array));
-    arrup.get()->write();
-    arrup.get()->close();
+    auto mq = tdbs::ManagedQuery(*arrup, somactx->tiledb_ctx());
+    mq.set_array_data(std::move(schema), std::move(array));
+    mq.submit_write();
+    mq.close();
 }

@@ -20,7 +20,7 @@ ReadIter <- R6::R6Class(
       if (is.null(private$soma_reader_pointer)) {
         TRUE
       } else {
-        sr_complete(private$soma_reader_pointer)
+        mq_complete(private$soma_reader_pointer)
       }
     },
 
@@ -57,7 +57,7 @@ ReadIter <- R6::R6Class(
       if (is.null(private$soma_reader_pointer)) {
         return(NULL)
       }
-      rl <- sr_next(private$soma_reader_pointer)
+      rl <- mq_next(private$soma_reader_pointer)
       return(private$soma_reader_transform(rl))
     },
 
