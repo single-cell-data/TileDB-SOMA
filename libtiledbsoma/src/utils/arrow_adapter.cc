@@ -1611,20 +1611,21 @@ std::unique_ptr<ArrowSchema> ArrowAdapter::make_arrow_schema(
 }
 
 std::unique_ptr<ArrowSchema> ArrowAdapter::make_arrow_schema_parent(
-    int num_columns) {
+    size_t num_columns) {
     auto arrow_schema = std::make_unique<ArrowSchema>();
-    arrow_schema->format = "+s";  // structure, i.e. non-leaf node
+    arrow_schema->format = strdup("+s");  // structure, i.e. non-leaf node
     arrow_schema->name = strdup("parent");
     arrow_schema->metadata = nullptr;
     arrow_schema->flags = 0;
-    arrow_schema->n_children = num_columns;  // non-leaf node
+    arrow_schema->n_children = static_cast<int64_t>(
+        num_columns);  // non-leaf node
     arrow_schema->children = (ArrowSchema**)malloc(
         arrow_schema->n_children * sizeof(ArrowSchema*));
     arrow_schema->dictionary = nullptr;
     arrow_schema->release = &ArrowAdapter::release_schema;
     arrow_schema->private_data = nullptr;
 
-    for (int i = 0; i < num_columns; i++) {
+    for (size_t i = 0; i < num_columns; i++) {
         arrow_schema->children[i] = nullptr;
     }
 
@@ -1636,7 +1637,7 @@ std::unique_ptr<ArrowSchema> ArrowAdapter::make_arrow_schema_parent(
 }
 
 std::unique_ptr<ArrowArray> ArrowAdapter::make_arrow_array_parent(
-    int num_columns) {
+    size_t num_columns) {
     auto arrow_array = std::make_unique<ArrowArray>();
 
     // All zero/null since this is a parent ArrowArray, and each
@@ -1645,7 +1646,7 @@ std::unique_ptr<ArrowArray> ArrowAdapter::make_arrow_array_parent(
     arrow_array->null_count = 0;
     arrow_array->offset = 0;
     arrow_array->n_buffers = 0;
-    arrow_array->n_children = num_columns;
+    arrow_array->n_children = static_cast<int64_t>(num_columns);
     arrow_array->buffers = nullptr;
     arrow_array->dictionary = nullptr;
     arrow_array->release = &ArrowAdapter::release_array;
@@ -1653,7 +1654,7 @@ std::unique_ptr<ArrowArray> ArrowAdapter::make_arrow_array_parent(
 
     arrow_array->children = (ArrowArray**)malloc(
         num_columns * sizeof(ArrowArray*));
-    for (int i = 0; i < num_columns; i++) {
+    for (size_t i = 0; i < num_columns; i++) {
         arrow_array->children[i] = nullptr;
     }
 

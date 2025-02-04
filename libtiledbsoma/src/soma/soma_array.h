@@ -316,7 +316,7 @@ class SOMAArray : public SOMAObject {
      *
      * @return bool
      */
-    bool has_dimension_name(const std::string& name) const;
+    bool has_dimension_name(std::string_view name) const;
 
     /**
      * @brief Get the name of each attribute.
@@ -757,7 +757,7 @@ class SOMAArray : public SOMAObject {
      * domains.
      */
     template <typename T>
-    std::pair<T, T> non_empty_domain_slot(const std::string& name) const {
+    std::pair<T, T> non_empty_domain_slot(std::string_view name) const {
         return get_column(name)->non_empty_domain_slot<T>(*arr_);
     }
 
@@ -768,7 +768,7 @@ class SOMAArray : public SOMAObject {
      */
     template <typename T>
     std::optional<std::pair<T, T>> non_empty_domain_slot_opt(
-        const std::string& name) const {
+        std::string_view name) const {
         return get_column(name)->non_empty_domain_slot_opt<T>(*ctx_, *arr_);
     }
 
@@ -807,7 +807,7 @@ class SOMAArray : public SOMAObject {
      * @return Pair of [lower, upper] inclusive bounds.
      */
     template <typename T>
-    std::pair<T, T> _core_current_domain_slot(const std::string& name) const {
+    std::pair<T, T> _core_current_domain_slot(std::string_view name) const {
         return get_column(name)->core_current_domain_slot<T>(*ctx_, *arr_);
     }
 
@@ -826,8 +826,8 @@ class SOMAArray : public SOMAObject {
      * @return Pair of [lower, upper] inclusive bounds.
      */
     template <typename T>
-    std::pair<T, T> _core_domain_slot(const std::string& name) const {
-        return schema_->domain().dimension(name).domain<T>();
+    std::pair<T, T> _core_domain_slot(std::string_view name) const {
+        return get_column(name)->core_domain_slot<T>();
     }
 
     /**
@@ -839,7 +839,7 @@ class SOMAArray : public SOMAObject {
      *   - soma domain is core domain
      */
     template <typename T>
-    std::pair<T, T> soma_domain_slot(const std::string& name) const {
+    std::pair<T, T> soma_domain_slot(std::string_view name) const {
         if (has_current_domain()) {
             return _core_current_domain_slot<T>(name);
         } else {
@@ -856,7 +856,7 @@ class SOMAArray : public SOMAObject {
      *   - soma maxdomain is core domain
      */
     template <typename T>
-    std::pair<T, T> soma_maxdomain_slot(const std::string& name) const {
+    std::pair<T, T> soma_maxdomain_slot(std::string_view name) const {
         return _core_domain_slot<T>(name);
     }
 
@@ -922,7 +922,7 @@ class SOMAArray : public SOMAObject {
      */
     template <typename T>
     std::pair<T, T> _core_domainish_slot(
-        const std::string& name, enum Domainish which_kind) const {
+        std::string_view name, enum Domainish which_kind) const {
         return get_column(name)->domain_slot<T>(*ctx_, *arr_, which_kind);
     }
 
@@ -1224,16 +1224,13 @@ class SOMAArray : public SOMAObject {
      */
     StatusAndReason _can_set_shape_domainish_subhelper(
         const std::vector<int64_t>& newshape,
-        bool check_current_domain,
         std::string function_name_for_messages);
 
     /**
      * This is a code-dedupe helper for can_upgrade_domain.
      */
     StatusAndReason _can_set_dataframe_domainish_subhelper(
-        const ArrowTable& newdomain,
-        bool check_current_domain,
-        std::string function_name_for_messages);
+        const ArrowTable& newdomain, std::string function_name_for_messages);
 
     /**
      * This is a code-dedupe helper for can_resize_soma_joinid_shape and

@@ -86,19 +86,18 @@ std::vector<std::shared_ptr<SOMAColumn>> SOMAColumn::deserialize(
             columns.push_back(std::make_shared<SOMADimension>(dimension));
         }
 
-        for (auto& attribute : array.schema().attributes()) {
+        for (size_t i = 0; i < array.schema().attribute_num(); ++i) {
+            auto attribute = array.schema().attribute(i);
             auto enumeration_name = AttributeExperimental::get_enumeration_name(
-                ctx, attribute.second);
+                ctx, attribute);
             auto enumeration = enumeration_name.has_value() ?
                                    std::make_optional(
                                        ArrayExperimental::get_enumeration(
-                                           ctx,
-                                           array,
-                                           attribute.second.name())) :
+                                           ctx, array, attribute.name())) :
                                    std::nullopt;
 
             columns.push_back(
-                std::make_shared<SOMAAttribute>(attribute.second, enumeration));
+                std::make_shared<SOMAAttribute>(attribute, enumeration));
         }
     }
 
