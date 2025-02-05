@@ -1,12 +1,9 @@
-from urllib.parse import urljoin
-
 import numpy as np
 import pyarrow as pa
 import pytest
-import shapely
-import typeguard
 
 import tiledbsoma as soma
+
 
 @pytest.mark.parametrize("domain", [None, [[(-1000, 1000), (0, 100)], [0, 100]]])
 def test_geometry_domain(tmp_path, domain):
@@ -27,10 +24,14 @@ def test_geometry_domain(tmp_path, domain):
                 assert len(soma_domain[idx][1]) == 2
 
                 for axis_idx, axis_name in enumerate(geom.coordinate_space.axis_names):
-                    assert soma_domain[idx][0][axis_name] == (f64info.min if domain is None else domain[0][axis_idx][0])
+                    assert soma_domain[idx][0][axis_name] == (
+                        f64info.min if domain is None else domain[0][axis_idx][0]
+                    )
 
                 for axis_idx, axis_name in enumerate(geom.coordinate_space.axis_names):
-                    assert soma_domain[idx][1][axis_name] == (f64info.max if domain is None else domain[0][axis_idx][1])
+                    assert soma_domain[idx][1][axis_name] == (
+                        f64info.max if domain is None else domain[0][axis_idx][1]
+                    )
 
 
 def test_geometry_coordinate_space(tmp_path):
@@ -54,4 +55,3 @@ def test_geometry_coordinate_space(tmp_path):
         )
         assert geom.coordinate_space[0] == soma.Axis(name="x", unit="m")
         assert geom.coordinate_space[1] == soma.Axis(name="y", unit="in")
-
