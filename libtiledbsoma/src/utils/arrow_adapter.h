@@ -934,15 +934,8 @@ class ArrowAdapter {
             // Complex domain like the ones required by `GeometryColumn` expect
             // a struct containing lists of values
             for (int64_t i = 0; i < selected_schema->n_children; ++i) {
-                if (strcmp(selected_schema->children[i]->format, "+l") != 0) {
-                    throw std::runtime_error(std::format(
-                        "[ArrowAdapter][get_table_any_column_by_index] Complex "
-                        "column struct should contain list but found '{}'",
-                        selected_schema->children[i]->format));
-                }
-
-                ArrowArray* array = selected_array->children[i]->children[0];
-                ArrowSchema* schema = selected_schema->children[i]->children[0];
+                ArrowArray* array = selected_array->children[i];
+                ArrowSchema* schema = selected_schema->children[i];
 
                 result.push_back(
                     get_table_any_column<S>(array, schema, offset));

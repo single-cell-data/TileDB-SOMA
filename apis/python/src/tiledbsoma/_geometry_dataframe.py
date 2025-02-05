@@ -210,18 +210,14 @@ class GeometryDataFrame(SpatialDataFrame, somacore.GeometryDataFrame):
             # [4] core current domain hi
             if index_column_name == SOMA_GEOMETRY:
                 # SOMA_GEOMETRY has a specific schema
-                index_column_schema.append(pa.field(pa_field.name, pa.struct({axis:pa.list_(pa.float64()) for axis in axis_names}), nullable=True))
-                struct = []
-                for idx, axis in enumerate(axis_names):
-                    struct.append((axis,
-                        [
-                            *[float(max_domain[idx]) for max_domain in slot_core_max_domain],
-                            extent,
-                            *[float(current_domain[idx]) for current_domain in slot_core_current_domain]
-                        ]
-                    ))
-
-                index_column_data[pa_field.name] = [struct, None, None, None, None]
+                index_column_schema.append(pa.field(pa_field.name, pa.struct({axis:pa.float64() for axis in axis_names})))
+                index_column_data[pa_field.name] = [
+                    [(axis, slot_core_max_domain[0][idx]) for idx, axis in enumerate(axis_names)],
+                    [(axis, slot_core_max_domain[1][idx]) for idx, axis in enumerate(axis_names)],
+                    [(axis, extent) for axis in axis_names],
+                    [(axis, slot_core_current_domain[0][idx]) for idx, axis in enumerate(axis_names)],
+                    [(axis, slot_core_current_domain[0][idx]) for idx, axis in enumerate(axis_names)]
+                ]
             else:
                 index_column_schema.append(pa_field)
                 index_column_data[pa_field.name] = [
@@ -415,15 +411,3 @@ class GeometryDataFrame(SpatialDataFrame, somacore.GeometryDataFrame):
             value
         )
         self._coord_space = value
-
-    @property
-    def domain(self) -> Tuple[Tuple[Any, Any], ...]:
-        """The allowable range of values in each index column.
-
-        Returns: a tuple of minimum and maximum values, inclusive,
-            storable on each index column of the dataframe.
-
-        Lifecycle:
-            Experimental.
-        """
-        raise NotImplementedError()

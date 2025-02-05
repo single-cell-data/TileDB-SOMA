@@ -96,7 +96,7 @@ std::shared_ptr<SOMAGeometryColumn> SOMAGeometryColumn::create(
     }
 
     for (int64_t j = 0; j < spatial_schema->n_children; ++j) {
-        dims.push_back(ArrowAdapter::tiledb_dimension_from_arrow_schema_ext(
+        dims.push_back(ArrowAdapter::tiledb_dimension_from_arrow_schema(
             ctx,
             spatial_schema->children[j],
             spatial_array->children[j],
@@ -108,7 +108,7 @@ std::shared_ptr<SOMAGeometryColumn> SOMAGeometryColumn::create(
     }
 
     for (int64_t j = 0; j < spatial_schema->n_children; ++j) {
-        dims.push_back(ArrowAdapter::tiledb_dimension_from_arrow_schema_ext(
+        dims.push_back(ArrowAdapter::tiledb_dimension_from_arrow_schema(
             ctx,
             spatial_schema->children[j],
             spatial_array->children[j],
@@ -488,6 +488,11 @@ std::pair<ArrowArray*, ArrowSchema*> SOMAGeometryColumn::arrow_domain_slot(
                 TDB_DIM_PER_SPATIAL_AXIS, name());
             auto parent_array = ArrowAdapter::make_arrow_array_parent(
                 TDB_DIM_PER_SPATIAL_AXIS);
+
+            parent_array->length = 2;
+            parent_array->n_buffers = 1;
+            parent_array->buffers = (const void**)malloc(sizeof(void*));
+            parent_array->buffers[0] = nullptr;
 
             auto kind_domain = domain_slot<std::vector<double_t>>(
                 ctx, array, kind);
