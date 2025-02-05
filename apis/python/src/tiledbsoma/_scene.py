@@ -213,7 +213,7 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
         # Either set the new coordinate space or check the axes of the current
         # coordinate space the element is defined on.
         if coordinate_space is None:
-            elem_axis_names: Tuple[str, ...] = elem.coordinate_space.axis_names  # type: ignore[attr-defined]
+            elem_axis_names: Tuple[str, ...] = elem.coordinate_space.axis_names
             if elem_axis_names != transform.output_axes:
                 raise ValueError(
                     f"The name of transform output axes, {transform.output_axes}, do "
@@ -221,7 +221,7 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
                     f" space, {elem_axis_names}."
                 )
         else:
-            elem.coordinate_space = coordinate_space  # type: ignore[attr-defined]
+            elem.coordinate_space = coordinate_space
 
         # Set the transform metadata and return the multisclae image.
         coll.metadata[f"soma_scene_registry_{key}"] = transform_to_json(transform)

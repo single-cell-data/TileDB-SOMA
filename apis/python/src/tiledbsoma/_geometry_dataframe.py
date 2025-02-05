@@ -13,26 +13,36 @@ from typing import Any, Sequence, Tuple, Union
 import pyarrow as pa
 import somacore
 from somacore import CoordinateSpace, CoordinateTransform, options
+from typing_extensions import Self
+
 from tiledbsoma._tdb_handles import GeometryDataFrameWrapper
 from tiledbsoma.options._soma_tiledb_context import _validate_soma_tiledb_context
 from tiledbsoma.options._tiledb_create_write_options import TileDBCreateOptions
-from typing_extensions import Self
 
 from . import _arrow_types, _util
 from . import pytiledbsoma as clib
-from ._constants import SOMA_COORDINATE_SPACE_METADATA_KEY, SOMA_GEOMETRY, SOMA_JOINID, SPATIAL_DISCLAIMER
-from ._dataframe import Domain, _canonicalize_schema, _fill_out_slot_soma_domain, _find_extent_for_domain, _revise_domain_for_extent
-from ._read_iters import TableReadIter
-from ._types import OpenTimestamp
-from .options import SOMATileDBContext
-
+from ._constants import (
+    SOMA_COORDINATE_SPACE_METADATA_KEY,
+    SOMA_GEOMETRY,
+    SOMA_JOINID,
+    SPATIAL_DISCLAIMER,
+)
+from ._dataframe import (
+    Domain,
+    _canonicalize_schema,
+    _fill_out_slot_soma_domain,
+    _find_extent_for_domain,
+    _revise_domain_for_extent,
+)
 from ._exception import SOMAError, map_exception_for_create
+from ._read_iters import TableReadIter
 from ._spatial_dataframe import SpatialDataFrame
 from ._spatial_util import (
     coordinate_space_from_json,
     coordinate_space_to_json,
-    process_spatial_df_region,
 )
+from ._types import OpenTimestamp
+from .options import SOMATileDBContext
 
 _UNBATCHED = options.BatchSize()
 
@@ -108,8 +118,11 @@ class GeometryDataFrame(SpatialDataFrame, somacore.GeometryDataFrame):
             axis_names = tuple(coordinate_space)
             axis_units = tuple(len(axis_names) * [None])
 
-        index_column_names = (SOMA_GEOMETRY, SOMA_JOINID,)
-        
+        index_column_names = (
+            SOMA_GEOMETRY,
+            SOMA_JOINID,
+        )
+
         context = _validate_soma_tiledb_context(context)
         schema = _canonicalize_schema(schema, index_column_names)
 
@@ -136,7 +149,7 @@ class GeometryDataFrame(SpatialDataFrame, somacore.GeometryDataFrame):
         domain = None
 
         # Check if domain has the right size (number of axis + 1 for SOMA_JOINID)
-        
+
         if soma_domain is None:
             soma_domain = tuple(None for _ in index_column_names)
         else:
@@ -147,20 +160,28 @@ class GeometryDataFrame(SpatialDataFrame, somacore.GeometryDataFrame):
                     f"if domain is specified, it must have the same length as "
                     f"index_column_names; got {ndom} != {nidx}"
                 )
-        
+
         mutable_soma_domain = list(soma_domain)
-        soma_geometry_domain = mutable_soma_domain[index_column_names.index(SOMA_GEOMETRY)]
+        soma_geometry_domain = mutable_soma_domain[
+            index_column_names.index(SOMA_GEOMETRY)
+        ]
 
         if soma_geometry_domain is None:
             soma_geometry_domain = [None for _ in axis_names]
         elif not isinstance(soma_geometry_domain, list):
-            raise ValueError(f"'{SOMA_GEOMETRY}' domain should be a list of tuple[float, float]")
+            raise ValueError(
+                f"'{SOMA_GEOMETRY}' domain should be a list of tuple[float, float]"
+            )
         elif len(soma_geometry_domain) != len(axis_names):
-            raise ValueError(f"Dimension mishmatch between '{SOMA_GEOMETRY}' domain and coordinate system")
-        
-        mutable_soma_domain[index_column_names.index(SOMA_GEOMETRY)] = soma_geometry_domain
+            raise ValueError(
+                f"Dimension mishmatch between '{SOMA_GEOMETRY}' domain and coordinate system"
+            )
+
+        mutable_soma_domain[index_column_names.index(SOMA_GEOMETRY)] = (
+            soma_geometry_domain
+        )
         soma_domain = tuple(mutable_soma_domain)
-        
+
         index_column_schema = []
         index_column_data = {}
 
@@ -176,7 +197,11 @@ class GeometryDataFrame(SpatialDataFrame, somacore.GeometryDataFrame):
 
             if index_column_name == SOMA_GEOMETRY:
                 (slot_core_max_domain, saturated_md) = _fill_out_slot_soma_domain(
-                    [None for _ in axis_names], True, index_column_name, pa_field.type, dtype
+                    [None for _ in axis_names],
+                    True,
+                    index_column_name,
+                    pa_field.type,
+                    dtype,
                 )
             else:
                 (slot_core_max_domain, saturated_md) = _fill_out_slot_soma_domain(
@@ -210,13 +235,30 @@ class GeometryDataFrame(SpatialDataFrame, somacore.GeometryDataFrame):
             # [4] core current domain hi
             if index_column_name == SOMA_GEOMETRY:
                 # SOMA_GEOMETRY has a specific schema
-                index_column_schema.append(pa.field(pa_field.name, pa.struct({axis:pa.float64() for axis in axis_names})))
+                index_column_schema.append(
+                    pa.field(
+                        pa_field.name,
+                        pa.struct({axis: pa.float64() for axis in axis_names}),
+                    )
+                )
                 index_column_data[pa_field.name] = [
-                    [(axis, slot_core_max_domain[0][idx]) for idx, axis in enumerate(axis_names)],
-                    [(axis, slot_core_max_domain[1][idx]) for idx, axis in enumerate(axis_names)],
+                    [
+                        (axis, slot_core_max_domain[0][idx])
+                        for idx, axis in enumerate(axis_names)
+                    ],
+                    [
+                        (axis, slot_core_max_domain[1][idx])
+                        for idx, axis in enumerate(axis_names)
+                    ],
                     [(axis, extent) for axis in axis_names],
-                    [(axis, slot_core_current_domain[0][idx]) for idx, axis in enumerate(axis_names)],
-                    [(axis, slot_core_current_domain[0][idx]) for idx, axis in enumerate(axis_names)]
+                    [
+                        (axis, slot_core_current_domain[0][idx])
+                        for idx, axis in enumerate(axis_names)
+                    ],
+                    [
+                        (axis, slot_core_current_domain[0][idx])
+                        for idx, axis in enumerate(axis_names)
+                    ],
                 ]
             else:
                 index_column_schema.append(pa_field)
@@ -250,7 +292,7 @@ class GeometryDataFrame(SpatialDataFrame, somacore.GeometryDataFrame):
             cls._wrapper_type.open(uri, "w", context, tiledb_timestamp),
             _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code",
         )
-    
+
     def __init__(
         self,
         handle: GeometryDataFrameWrapper,
@@ -264,7 +306,6 @@ class GeometryDataFrame(SpatialDataFrame, somacore.GeometryDataFrame):
         except KeyError as ke:
             raise SOMAError("Missing coordinate space metadata") from ke
         self._coord_space = coordinate_space_from_json(coord_space)
-
 
     # Data operations
 

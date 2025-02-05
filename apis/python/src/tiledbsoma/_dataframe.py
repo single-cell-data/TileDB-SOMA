@@ -817,14 +817,23 @@ def _canonicalize_schema(
             raise ValueError(
                 f"{SOMA_GEOMETRY} field must be of type Arrow binary or large_binary but is {geometry_type}"
             )
-        schema.set(schema.get_field_index(SOMA_GEOMETRY), schema.field(SOMA_GEOMETRY).with_metadata({"dtype": "WKB"}))
+        schema.set(
+            schema.get_field_index(SOMA_GEOMETRY),
+            schema.field(SOMA_GEOMETRY).with_metadata({"dtype": "WKB"}),
+        )
     else:
         # add SOMA_GEOMETRY
-        schema = schema.append(pa.field(SOMA_GEOMETRY, pa.large_binary(), metadata={"dtype": "WKB"}))
+        schema = schema.append(
+            pa.field(SOMA_GEOMETRY, pa.large_binary(), metadata={"dtype": "WKB"})
+        )
 
     # verify no illegal use of soma_ prefix
     for field_name in schema.names:
-        if field_name.startswith("soma_") and field_name != SOMA_JOINID and field_name != SOMA_GEOMETRY:
+        if (
+            field_name.startswith("soma_")
+            and field_name != SOMA_JOINID
+            and field_name != SOMA_GEOMETRY
+        ):
             raise ValueError(
                 f"DataFrame schema may not contain fields with name prefix ``soma_``: got ``{field_name}``"
             )
@@ -832,7 +841,11 @@ def _canonicalize_schema(
     # verify that all index_column_names are present in the schema
     schema_names_set = set(schema.names)
     for index_column_name in index_column_names:
-        if index_column_name.startswith("soma_") and index_column_name != SOMA_JOINID and index_column_name != SOMA_GEOMETRY:
+        if (
+            index_column_name.startswith("soma_")
+            and index_column_name != SOMA_JOINID
+            and index_column_name != SOMA_GEOMETRY
+        ):
             raise ValueError(
                 f'index_column_name other than "soma_joinid" must not begin with "soma_"; got "{index_column_name}"'
             )
@@ -885,29 +898,31 @@ def _fill_out_slot_soma_domain(
     """
     saturated_range = False
     if index_column_name == SOMA_GEOMETRY:
-        # SOMA_GEOMETRY domain should be either a list on None or a list of tuple[float, float]
-        lo = []
-        hi = []
+        # SOMA_GEOMETRY domain should be either a list of None or a list of tuple[float, float]
+        axes_lo = []
+        axes_hi = []
         if isinstance(slot_domain, list):
-            finfo: NPFInfo = np.finfo(np.float64)
+            f64info: NPFInfo = np.finfo(np.float64)
             for axis_domain in slot_domain:
                 if axis_domain is None:
-                    lo.append(finfo.min)
-                    hi.append(finfo.max)
+                    axes_lo.append(f64info.min)
+                    axes_hi.append(f64info.max)
                     saturated_range = True
                 elif not isinstance(axis_domain, tuple) or len(axis_domain) != 2:
-                    raise ValueError(
-                        "Axis domain should be a tuple[float, float]"
-                    )
+                    raise ValueError("Axis domain should be a tuple[float, float]")
                 else:
-                    if np.issubdtype(type(axis_domain[0]), NPFloating) or np.issubdtype(type(axis_domain[1]), NPFloating):
-                        raise ValueError(
-                            "Axis domain should be a tuple[float, float]"
-                        )
-                
-                    lo.append(axis_domain[0])
-                    hi.append(axis_domain[1])
-            slot_domain = lo, hi
+                    if np.issubdtype(type(axis_domain[0]), NPFloating) or np.issubdtype(
+                        type(axis_domain[1]), NPFloating
+                    ):
+                        raise ValueError("Axis domain should be a tuple[float, float]")
+
+                    axes_lo.append(axis_domain[0])
+                    axes_hi.append(axis_domain[1])
+            slot_domain = tuple(axes_lo), tuple(axes_hi)
+        else:
+            raise ValueError(
+                f"{SOMA_GEOMETRY} domain should be either a list of None or a list of tuple[float, float]"
+            )
     elif slot_domain is not None:
         # User-specified; go with it when possible
         if (
@@ -1096,7 +1111,10 @@ def _revise_domain_for_extent(
     if saturated_range:
         # Handle SOMA_GEOMETRY domain with is tuple[list[float], list[float]]
         if isinstance(domain[1], list):
-            return (domain[0], [dim_max - extent for dim_max in domain[1]],)
+            return (
+                domain[0],
+                [dim_max - extent for dim_max in domain[1]],
+            )
         else:
             return (domain[0], domain[1] - extent)
     else:
