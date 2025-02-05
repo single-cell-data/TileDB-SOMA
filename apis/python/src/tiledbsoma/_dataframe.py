@@ -790,7 +790,9 @@ class DataFrame(SOMAArray, somacore.DataFrame):
 
 
 def _canonicalize_schema(
-    schema: pa.Schema, index_column_names: Sequence[str]
+    schema: pa.Schema,
+    index_column_names: Sequence[str],
+    required_columns: Sequence[str] = [SOMA_JOINID],
 ) -> pa.Schema:
     """Turns an Arrow schema into the canonical version and checks for errors.
 
@@ -807,7 +809,7 @@ def _canonicalize_schema(
             raise ValueError(
                 f"{SOMA_JOINID} field must be of type Arrow int64 but is {joinid_type}"
             )
-    else:
+    elif SOMA_JOINID in required_columns:
         # add SOMA_JOINID
         schema = schema.append(pa.field(SOMA_JOINID, pa.int64()))
 
@@ -821,7 +823,7 @@ def _canonicalize_schema(
             schema.get_field_index(SOMA_GEOMETRY),
             schema.field(SOMA_GEOMETRY).with_metadata({"dtype": "WKB"}),
         )
-    else:
+    elif SOMA_GEOMETRY in required_columns:
         # add SOMA_GEOMETRY
         schema = schema.append(
             pa.field(SOMA_GEOMETRY, pa.large_binary(), metadata={"dtype": "WKB"})

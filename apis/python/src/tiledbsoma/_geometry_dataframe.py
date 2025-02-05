@@ -124,7 +124,9 @@ class GeometryDataFrame(SpatialDataFrame, somacore.GeometryDataFrame):
         )
 
         context = _validate_soma_tiledb_context(context)
-        schema = _canonicalize_schema(schema, index_column_names)
+        schema = _canonicalize_schema(
+            schema, index_column_names, [SOMA_JOINID, SOMA_GEOMETRY]
+        )
 
         # SOMA-to-core mappings:
         #
