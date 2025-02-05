@@ -258,7 +258,7 @@ class GeometryDataFrame(SpatialDataFrame, somacore.GeometryDataFrame):
                         for idx, axis in enumerate(axis_names)
                     ],
                     [
-                        (axis, slot_core_current_domain[0][idx])
+                        (axis, slot_core_current_domain[1][idx])
                         for idx, axis in enumerate(axis_names)
                     ],
                 ]

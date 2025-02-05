@@ -1112,7 +1112,7 @@ def _revise_domain_for_extent(
 ) -> Tuple[Any, Any]:
     if saturated_range:
         # Handle SOMA_GEOMETRY domain with is tuple[list[float], list[float]]
-        if isinstance(domain[1], list):
+        if isinstance(domain[1], tuple):
             return (
                 domain[0],
                 [dim_max - extent for dim_max in domain[1]],
