@@ -58,6 +58,11 @@ SOMACoordinateSpace::SOMACoordinateSpace(const std::vector<SOMAAxis>& axes)
     }
     std::unordered_set<std::string> axis_names;
     for (const auto& axis : axes_) {
+        if (axis.name.starts_with("soma_")) {
+            throw TileDBSOMAError(
+                "The name for coordinate space axes cannot start with "
+                "'soma_'.");
+        }
         axis_names.emplace(axis.name);
     }
     if (axes_.size() != axis_names.size()) {
@@ -79,6 +84,11 @@ SOMACoordinateSpace::SOMACoordinateSpace(
     }
     axes_.reserve(axis_names.size());
     for (const auto& name : axis_names) {
+        if (name.starts_with("soma_")) {
+            throw TileDBSOMAError(
+                "The name for coordinate space axes cannot start with "
+                "'soma_'.");
+        }
         axes_.push_back({name, std::nullopt});
     }
 }
@@ -102,6 +112,11 @@ SOMACoordinateSpace::SOMACoordinateSpace(
     }
     axes_.reserve(num_axes);
     for (size_t index{0}; index < num_axes; ++index) {
+        if (axis_names[index].starts_with("soma_")) {
+            throw TileDBSOMAError(
+                "The name for coordinate space axes cannot start with "
+                "'soma_'.");
+        }
         axes_.push_back({axis_names[index], axis_units[index]});
     }
 }
