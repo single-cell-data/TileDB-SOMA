@@ -14,6 +14,14 @@
 #ifndef TILEDBSOMA_REINDEXER_H
 #define TILEDBSOMA_REINDEXER_H
 
+#ifndef __clang__
+#ifdef __GNUC__
+#if __GNUC__ < 13
+#error If compiled with GCC, TileDB-SOMA requires GCC 13 or greater.
+#endif
+#endif
+#endif
+
 #include <assert.h>
 #include <format>
 #include <memory>

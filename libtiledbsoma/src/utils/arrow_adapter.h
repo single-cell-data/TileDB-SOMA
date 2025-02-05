@@ -14,6 +14,14 @@
 #ifndef ARROW_ADAPTER_H
 #define ARROW_ADAPTER_H
 
+#ifndef __clang__
+#ifdef __GNUC__
+#if __GNUC__ < 13
+#error If compiled with GCC, TileDB-SOMA requires GCC 13 or greater.
+#endif
+#endif
+#endif
+
 #include <any>
 #include <format>
 #include <tiledb/tiledb>
