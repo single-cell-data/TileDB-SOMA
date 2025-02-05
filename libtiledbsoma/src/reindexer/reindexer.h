@@ -18,6 +18,7 @@
 #ifdef __GNUC__
 #if __GNUC__ < 13
 #error If compiled with GCC, TileDB-SOMA requires GCC 13 or greater.
+#include <stop/the/build>
 #endif
 #endif
 #endif
