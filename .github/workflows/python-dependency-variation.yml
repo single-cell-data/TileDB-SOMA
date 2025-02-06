@@ -1,16 +1,15 @@
 name: TileDB-SOMA Python CI with varying dependencies
 
 on:
-  pull_request:
+  push:
     branches:
       - main
       - 'release-*'
-    paths:
-      - '**'
-      - '!**.md'
-      - '!apis/r/**'
-      - '!docs/**'
-      - '!.github/**'
+  pull_request:
+    paths-ignore:
+      - '**.md'
+      - 'apis/r/**'
+      - 'docs/**'
   workflow_dispatch:
 
 jobs:
@@ -89,16 +88,7 @@ jobs:
         run: pip list
 
       - name: Install tiledbsoma
-        # If you'reiterating on the testing framework itself, install from PyPI to avoid the
-        # time-consuming build. If you're trying to evaluate the code modified by a PR,
-        # install from source.
-        #
-        # From PyPI:
-        # run: pip install tiledbsoma==1.15.7
-        #
-        # From source:
         run: pip -v install -e apis/python[all] -C "--build-option=--no-tiledb-deprecated"
-        #
         env:
           CC: ${{ matrix.cc }}
           CXX: ${{ matrix.cxx }}
