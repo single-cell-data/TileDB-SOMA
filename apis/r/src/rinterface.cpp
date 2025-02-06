@@ -101,6 +101,7 @@ SEXP soma_array_reader(
         tsrng);
 
     auto mq = tdbs::ManagedQuery(*sr, somactx->tiledb_ctx());
+    mq.set_layout(tdb_result_order);
 
     std::unordered_map<std::string, std::shared_ptr<tiledb::Dimension>>
         name2dim;
