@@ -126,6 +126,9 @@ Rcpp::XPtr<tdbs::ManagedQuery> mq_setup(
 
     auto mq = new tdbs::ManagedQuery(arr, somactx->tiledb_ctx());
     mq->set_layout(tdb_result_order);
+    if(!column_names.empty()){
+        mq->select_columns(column_names);
+    }
 
     std::unordered_map<std::string, std::shared_ptr<tiledb::Dimension>>
         name2dim;
