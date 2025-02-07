@@ -1,6 +1,6 @@
 ---
-title: Daily GitHub Actions build fail on {{ date | date('ddd, MMMM Do YYYY') }}
-assignees: nguyenv, ryan-williams, johnkerl
+title: Daily GitHub Actions fail for remote tests on {{ date | date('ddd, MMMM Do YYYY') }}
+assignees: nguyenv, johnkerl
 labels: bug
 ---
 

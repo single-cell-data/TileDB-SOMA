@@ -1865,6 +1865,7 @@ def add_X_layer(
     X_layer_data: Union[Matrix, h5py.Dataset],
     ingest_mode: IngestMode = "write",
     use_relative_uri: bool | None = None,
+    context: SOMATileDBContext | None = None,
 ) -> None:
     """This is useful for adding X data, for example from
     `Scanpy <https://scanpy.readthedocs.io/>`_'s ``scanpy.pp.normalize_total``,
@@ -1884,6 +1885,7 @@ def add_X_layer(
         matrix_data=X_layer_data,
         ingest_mode=ingest_mode,
         use_relative_uri=use_relative_uri,
+        context=context,
     )
 
 

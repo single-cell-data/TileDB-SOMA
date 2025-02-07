@@ -20,6 +20,7 @@ on:
       - '!.github/**'
       - '.github/workflows/python-ci-minimal.yml'
       - '.github/workflows/python-ci-single.yml'
+      - ".github/workflows/python-remote-storage.yml"
   workflow_dispatch:
 
 jobs:

@@ -10,6 +10,7 @@ on:
       - '**.md'
       - 'apis/r/**'
       - 'docs/**'
+      - ".github/workflows/python-remote-storage.yml"
   workflow_dispatch:
 
 jobs:
