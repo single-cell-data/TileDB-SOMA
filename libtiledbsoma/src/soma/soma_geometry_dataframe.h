@@ -166,23 +166,6 @@ class SOMAGeometryDataFrame : virtual public SOMAArray {
      */
     void initialize();
 
-    /**
-     * @brief Cast an array containing the outer rings of polygons to an Arrow
-     * array holding the WKB encoded polygons and generate the additional index
-     * column arrays based on the spatial axes.
-     */
-    std::vector<ArrowTable> _cast_polygon_vertex_list_to_wkb(ArrowArray* array);
-
-    /**
-     * @brief Create a new ArrowTable by merging the generated WKB and spatial
-     * index arrays and the original data.
-     *
-     * @remark Generated columns have predefined names. Any generated column
-     * with name already present in the original data will be skipped.
-     */
-    ArrowTable _reconstruct_geometry_data_table(
-        ArrowTable original_data, const std::vector<ArrowTable>& wkb_data);
-
     SOMACoordinateSpace coord_space_;
 };
 }  // namespace tiledbsoma
