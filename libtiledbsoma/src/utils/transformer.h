@@ -9,20 +9,27 @@
  * @section DESCRIPTION
  *
  * This file defines the Transformer class. A class implementing the Transformer
- * class provides methods to transform data stored in Arrow Tables. The
- * transformation can be in place to the same Arrow Table or return a new Arrow
- * Table.
+ * class provides a generic method to transform data stored in Arrow Tables. The
+ * transformation can be in place to the same Arrow Table and multiple
+ * transformations can be chained with using the TransformerPipeline.
  */
 
 #include "arrow_adapter.h"
 
+#include <concepts>
 #include <functional>
 
 #ifndef SOMA_TRANSFORMER_H
 #define SOMA_TRANSFORMER_H
 
 namespace tiledbsoma::transformer {
-class SOMACoordinateSpace;
+class tiledbsoma::SOMACoordinateSpace;
+
+template <class... Ts>
+class Transformer {
+   public:
+    virtual void apply(ArrowArray*, ArrowSchema*, Ts...) = 0;
+};
 
 class TransformerPipeline {
    public:
@@ -30,22 +37,25 @@ class TransformerPipeline {
         std::unique_ptr<ArrowArray> array, std::unique_ptr<ArrowSchema> schema);
     ~TransformerPipeline();
 
-    template <class... Ts>
-    TransformerPipeline& transform(
-        std::function<void(ArrowArray*, ArrowSchema*, Ts...)> transformer,
-        Ts... args) {
-        transformer(array.get(), schema.get(), args...);
+    template <class T, class... Ts>
+        requires std::derived_from<T, Transformer<Ts...>>
+    TransformerPipeline& transform(T transformer, Ts... args) {
+        transformer.apply(array.get(), schema.get(), args...);
 
         return *this;
     }
 
     ArrowTable asTable();
 
+   private:
     std::unique_ptr<ArrowArray> array;
     std::unique_ptr<ArrowSchema> schema;
 };
 
-void OutlineTransformer(ArrowArray* array, ArrowSchema* schema, const SOMACoordinateSpace& coordinate_space);
+class OutlineTransformer : public Transformer<tiledbsoma::SOMACoordinateSpace> {
+    void apply(
+        ArrowArray*, ArrowSchema*, tiledbsoma::SOMACoordinateSpace) override;
+};
 
 }  // namespace tiledbsoma::transformer
 

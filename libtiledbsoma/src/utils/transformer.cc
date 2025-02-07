@@ -1,8 +1,8 @@
 #include "transformer.h"
-#include "../soma/soma_coordinates.h"
 #include "../geometry/geometry.h"
 #include "../geometry/operators/envelope.h"
 #include "../geometry/operators/io/write.h"
+#include "../soma/soma_coordinates.h"
 
 #include <unordered_set>
 
@@ -20,7 +20,10 @@ ArrowTable TransformerPipeline::asTable() {
     return std::make_pair(std::move(array), std::move(schema));
 }
 
-void OutlineTransformer(ArrowArray* array, ArrowSchema* schema, const tiledbsoma::SOMACoordinateSpace& coordinate_space) {
+void OutlineTransformer::apply(
+    ArrowArray* array,
+    ArrowSchema* schema,
+    tiledbsoma::SOMACoordinateSpace coordinate_space) {
     // Initialize a vector to hold all the Arrow tables containing the
     // transformed geometry data
     std::vector<ArrowTable> tables;
@@ -32,8 +35,8 @@ void OutlineTransformer(ArrowArray* array, ArrowSchema* schema, const tiledbsoma
         tables.front().first.get(), ArrowType::NANOARROW_TYPE_LARGE_BINARY));
     NANOARROW_THROW_NOT_OK(ArrowSchemaInitFromType(
         tables.front().second.get(), ArrowType::NANOARROW_TYPE_LARGE_BINARY));
-    NANOARROW_THROW_NOT_OK(
-        ArrowSchemaSetName(tables.front().second.get(), SOMA_GEOMETRY_COLUMN_NAME.c_str()));
+    NANOARROW_THROW_NOT_OK(ArrowSchemaSetName(
+        tables.front().second.get(), SOMA_GEOMETRY_COLUMN_NAME.c_str()));
 
     for (size_t i = 0; i < coordinate_space.size(); ++i) {
         const auto axis = coordinate_space.axis(i);
@@ -120,75 +123,31 @@ void OutlineTransformer(ArrowArray* array, ArrowSchema* schema, const tiledbsoma
             ArrowArrayFinishBuildingDefault(tables[i].first.get(), &error));
     }
 
-    ///////////////////////////////////////////////////////////////////////////////////////////
-
-    std::unordered_set<std::string> unique_column_names;
-    std::unique_ptr<ArrowSchema> arrow_schema = std::make_unique<ArrowSchema>(
-        ArrowSchema{});
-    std::unique_ptr<ArrowArray> arrow_array = std::make_unique<ArrowArray>(
-        ArrowArray{});
-
-    for (int64_t i = 0; i < original_data.second->n_children; ++i) {
-        unique_column_names.insert(original_data.second->children[i]->name);
-    }
-    for (size_t i = 0; i < wkb_data.size(); ++i) {
-        unique_column_names.insert(wkb_data[i].second->name);
-    }
-
-    NANOARROW_THROW_NOT_OK(ArrowSchemaInitFromType(
-        arrow_schema.get(), ArrowType::NANOARROW_TYPE_STRUCT));
-    NANOARROW_THROW_NOT_OK(ArrowSchemaAllocateChildren(
-        arrow_schema.get(), unique_column_names.size()));
-    NANOARROW_THROW_NOT_OK(ArrowArrayInitFromType(
-        arrow_array.get(), ArrowType::NANOARROW_TYPE_STRUCT));
-    NANOARROW_THROW_NOT_OK(ArrowArrayAllocateChildren(
-        arrow_array.get(), unique_column_names.size()));
-
-    // First add the wkb data columns so that already existing columns in the
-    // original data except `soma_geometry` can overwrite the generated columns.
-
-    for (size_t i = 0; i < wkb_data.size(); ++i) {
-        ArrowSchemaMove(wkb_data[i].second.get(), arrow_schema->children[i]);
-        ArrowArrayMove(wkb_data[i].first.get(), arrow_array->children[i]);
-    }
-
-    int64_t index = wkb_data.size();
-    for (int64_t i = 0; i < original_data.second->n_children; ++i) {
-        if (strcmp(original_data.second->children[i]->name, "soma_geometry") ==
+    int64_t soma_gometry_index = -1;
+    for (int64_t i = 0; i < schema->n_children; ++i) {
+        if (strcmp(
+                schema->children[i]->name, SOMA_GEOMETRY_COLUMN_NAME.c_str()) ==
             0) {
-            continue;
-        }
-
-        bool replaced = false;
-        for (size_t j = 0; j < wkb_data.size(); ++j) {
-            if (strcmp(
-                    arrow_schema->children[j]->name,
-                    original_data.second->children[i]->name) == 0) {
-                arrow_schema->children[j]->release(arrow_schema->children[j]);
-                arrow_array->children[j]->release(arrow_array->children[j]);
-
-                ArrowSchemaMove(
-                    original_data.second->children[i],
-                    arrow_schema->children[j]);
-                ArrowArrayMove(
-                    original_data.first->children[i], arrow_array->children[j]);
-
-                replaced = true;
-                break;
-            }
-        }
-
-        if (!replaced) {
-            ArrowSchemaMove(
-                original_data.second->children[i],
-                arrow_schema->children[index]);
-            ArrowArrayMove(
-                original_data.first->children[i], arrow_array->children[index]);
-
-            ++index;
+            soma_gometry_index = i;
+            break;
         }
     }
 
+    if (soma_gometry_index == -1) {
+        throw std::runtime_error(std::format(
+            "[OutlineTransformer][apply] Missing schema child with name {}",
+            SOMA_GEOMETRY_COLUMN_NAME));
+    }
+
+    for (size_t i = 0; i < tables.size(); ++i) {
+        ArrowAdapter::arrow_array_insert_at_index(
+            array, tables[i].first.release(), soma_gometry_index + i + 1);
+        ArrowAdapter::arrow_schema_insert_at_index(
+            schema, tables[i].second.release(), soma_gometry_index + i + 1);
+    }
+
+    ArrowAdapter::arrow_array_remove_at_index(array, soma_gometry_index);
+    ArrowAdapter::arrow_schema_remove_at_index(schema, soma_gometry_index);
 }
 
 }  // namespace tiledbsoma::transformer
