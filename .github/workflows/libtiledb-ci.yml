@@ -1,18 +1,15 @@
 name: libTileDB-SOMA CodeCov
 
 on:
-# XXX TEMP
-#  pull_request:
-#    paths-ignore:
-#      - "apis/python/**"
-#      - "apis/r/**"
-#      - ".pre-commit-config.yaml"
-#      # XXX TEMP
-#      - ".github/workflows/python-remote-storage.yml"
-#  push:
-#    branches:
-#      - main
-#      - 'release-*'
+  pull_request:
+    paths-ignore:
+      - "apis/python/**"
+      - "apis/r/**"
+      - ".pre-commit-config.yaml"
+  push:
+    branches:
+      - main
+      - 'release-*'
   workflow_dispatch:
 
 jobs:

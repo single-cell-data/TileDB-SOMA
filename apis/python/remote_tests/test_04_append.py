@@ -28,9 +28,14 @@ def test_basic_append(conftest_context, conftest_namespace, conftest_default_s3_
 
     adata1 = sc.datasets.pbmc3k()
     adata1.obs["when"] = ["Monday"] * len(adata1.obs)
-    tiledbsoma.io.from_anndata(creation_uri, adata1, measurement_name=measurement_name)
+    tiledbsoma.io.from_anndata(
+        creation_uri,
+        adata1,
+        measurement_name=measurement_name,
+        context=conftest_context,
+    )
 
-    with tiledbsoma.Experiment.open(readback_uri) as exp:
+    with tiledbsoma.Experiment.open(readback_uri, context=conftest_context) as exp:
         assert exp.obs.count == 2700
         assert exp.ms["RNA"].var.count == 32738
         assert exp.ms["RNA"].X["data"].shape == (2700, 32738)
@@ -46,12 +51,14 @@ def test_basic_append(conftest_context, conftest_namespace, conftest_default_s3_
         measurement_name=measurement_name,
         obs_field_name="obs_id",
         var_field_name="var_id",
+        context=conftest_context,
     )
 
     tiledbsoma.io.resize_experiment(
         creation_uri,
         nobs=rd.get_obs_shape(),
         nvars=rd.get_var_shapes(),
+        context=conftest_context,
     )
 
     tiledbsoma.io.from_anndata(
@@ -59,9 +66,10 @@ def test_basic_append(conftest_context, conftest_namespace, conftest_default_s3_
         adata2,
         measurement_name=measurement_name,
         registration_mapping=rd,
+        context=conftest_context,
     )
 
-    with tiledbsoma.Experiment.open(readback_uri) as exp:
+    with tiledbsoma.Experiment.open(readback_uri, context=conftest_context) as exp:
         assert exp.obs.count == 5400
         assert exp.ms["RNA"].var.count == 32738
         assert exp.ms["RNA"].X["data"].shape == (5400, 32738)

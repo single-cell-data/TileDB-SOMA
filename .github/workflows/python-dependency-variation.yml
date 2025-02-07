@@ -1,16 +1,15 @@
 name: TileDB-SOMA Python CI with varying dependencies
 
 on:
-# XXX TEMP
-#  push:
-#    branches:
-#      - main
-#      - 'release-*'
-#  pull_request:
-#    paths-ignore:
-#      - '**.md'
-#      - 'apis/r/**'
-#      - 'docs/**'
+  push:
+    branches:
+      - main
+      - 'release-*'
+  pull_request:
+    paths-ignore:
+      - '**.md'
+      - 'apis/r/**'
+      - 'docs/**'
   workflow_dispatch:
 
 jobs:

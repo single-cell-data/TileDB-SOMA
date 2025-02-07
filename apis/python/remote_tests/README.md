@@ -1,8 +1,11 @@
 # How to run these tests
 
+These are nominally a nightly cron. However, you can run them manually if you want.
+
 ```
-export TILEDB_REST_TOKEN="..."   # Get the token for the Saas `unittest` user
-unsetTILEDB_REST_PAYER_NAMESPACE # If you have that set
+export TILEDB_REST_UNITTEST_TOKEN="..."  # Get the token for the Saas `unittest` user
+unset TILEDB_REST_TOKEN                  # If you have that set
+unset TILEDB_REST_PAYER_NAMESPACE        # If you have that set
 ```
 
 As of 2025-02-07, use Python 3.9 to run UDF tests; otherwise they will be skipped.

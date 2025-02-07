@@ -1,13 +1,18 @@
 name: TileDB-SOMA Python CI (remote storage)
 
 on:
+  # Not for regular use, but you can uncomment this when putting up PRs on this
+  # file. Just remember to take it back out. There's no need to run
+  # remote-storage tests on every single PR push to our repo.
+  #
+  # pull_request:
+  #
+  # Allows for 'as needed' manual trigger:
   workflow_dispatch:
   #
-  # Not for regular use:
-  # TEMP
-  pull_request:
-  #
-  # TODO: a nightly cron
+  # Use a regular nighly build as well (time is UTC):
+  schedule:
+    - cron: "25 5 * * *"
 
 env:
   # Don't name this "TILEDB_REST_TOKEN" since that will map into a core
@@ -28,8 +33,8 @@ jobs:
           # in GitHub Actions as of 2025-02-06.
           - name: linux
             os: ubuntu-24.04
-            # TODO: also on 3.12. But 3.9 is higher-pri, until we drop support
-            # for it. (Note our main CI tests across a broader set of Python
+            # TO DO: also on 3.12. But 3.9 is higher-pri, until we drop support
+            # for it. (Note our main CI run tests across a broader set of Python
             # versions.)
             python_version: 3.9
             cc: gcc-13
@@ -102,3 +107,18 @@ jobs:
       - name: Run pytests for Python
         shell: bash
         run: python -m pytest apis/python/remote_tests -v --durations=20 --maxfail=50
+
+  # File a bug report if anything fails, but don't file tickets for manual runs
+  # -- only for scheduled ones.
+  create_issue_on_fail:
+    needs: [ci]
+    if: (failure() || cancelled()) && github.event_name != 'workflow_dispatch'
+    steps:
+      - name: Checkout TileDB-SOMA `main`
+        uses: actions/checkout@v2
+      - name: Create Issue if Build Fails
+        uses: JasonEtco/create-an-issue@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          filename: .github/workflows/daily-remote-tests-issue-template.md
