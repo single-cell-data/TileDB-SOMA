@@ -1,22 +1,20 @@
-#
-#```
 ## ================================================================
 ### UDFs
-#def remote_obs_schema(exp_uri):
+# def remote_obs_schema(exp_uri):
 #    import tiledbsoma
 #    exp = tiledbsoma.Experiment.open(exp_uri)
 #    return exp.obs.schema
-#import tiledb.cloud
-#import tiledb.cloud.udf
-#tiledb.cloud.udf.exec(
+# import tiledb.cloud
+# import tiledb.cloud.udf
+# tiledb.cloud.udf.exec(
 #    remote_obs_schema,
 #    soma_pbmc3k_uri,
-#)
+# )
 #
-#def remote_query(exp_uri):
+# def remote_query(exp_uri):
 #    import tiledbsoma
 #    exp = tiledbsoma.Experiment.open(exp_uri)
-#    
+#
 #    query = tiledbsoma.ExperimentAxisQuery(
 #        experiment=exp,
 #        measurement_name="RNA",
@@ -27,17 +25,17 @@
 #            value_filter="n_cells_by_counts > 100",
 #        ),
 #    )
-#    
+#
 #    return (query.n_obs, query.n_vars)
-#tiledb.cloud.udf.exec(
+# tiledb.cloud.udf.exec(
 #    remote_query,    soma_pbmc3k_uri,
-#)
+# )
 #
 ## ================================================================
 ## Collection-mapper test
-#from tiledb.cloud.taskgraphs import client_executor as executor
-#soco_uri = 'tiledb://TileDB-Inc/stack-small-soco-staging'
-#res = tiledb.cloud.udf.exec(
+# from tiledb.cloud.taskgraphs import client_executor as executor
+# soco_uri = 'tiledb://TileDB-Inc/stack-small-soco-staging'
+# res = tiledb.cloud.udf.exec(
 #    'TileDB-Inc/soma_experiment_collection_mapper',
 #    soco_uri=soco_uri,
 #    measurement_name="RNA",
@@ -50,15 +48,14 @@
 #    reducer = lambda x: x,
 #    obs_attrs = ['obs_id', 'cell_type', 'is_primary_data'],
 #    var_attrs = ['var_id', 'means'],
-#)
-#dag = executor.LocalExecutor(res, namespace = "TileDB-Inc")
-#dag.visualize()
+# )
+# dag = executor.LocalExecutor(res, namespace = "TileDB-Inc")
+# dag.visualize()
 ##%%time
-#dag.execute()
-#dag.wait()
-#dag.node("output").result()
-#```
+# dag.execute()
+# dag.wait()
+# dag.node("output").result()
 
-#* Make small stack; provenance
-#* Append mode: Monday/Tuesday is fine
-#* Show, upgrade, resize
+# * Make small stack; provenance
+# * Append mode: Monday/Tuesday is fine
+# * Show, upgrade, resize

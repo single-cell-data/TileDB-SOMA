@@ -1,5 +1,6 @@
-# These are test that need to run first to check basic functionality, before we go on to test other,
-# more complex things.
+# These are test that need to run first to check basic functionality, before we
+# go on to test other, more complex things.
+
 from __future__ import annotations
 
 import os

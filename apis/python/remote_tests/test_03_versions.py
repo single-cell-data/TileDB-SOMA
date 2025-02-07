@@ -1,5 +1,3 @@
-# These are test that need to run first to check basic functionality, before we go on to test other,
-# more complex things.
 from __future__ import annotations
 
 import os
@@ -112,8 +110,3 @@ def test_experiment_queries(conftest_context, uri_and_info):
         )
 
         assert (query.n_obs, query.n_vars) == (530, 4)
-
-
-# tiledbsoma.io.show_experiment_shapes
-# tiledbsoma.io.upgrade_experiment_shapes
-# tiledbsoma.io.resize_experiment
