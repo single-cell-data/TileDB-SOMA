@@ -1,17 +1,21 @@
-name: TileDB-SOMA Python CI with varying dependencies
+name: TileDB-SOMA Python CI (remote storage)
 
 on:
-# XXX TEMP
-#  push:
-#    branches:
-#      - main
-#      - 'release-*'
-#  pull_request:
-#    paths-ignore:
-#      - '**.md'
-#      - 'apis/r/**'
-#      - 'docs/**'
   workflow_dispatch:
+  #
+  # Not for regular use:
+  # TEMP
+  pull_request:
+  #
+  # TODO: a nightly cron
+
+env:
+  # Don't name this "TILEDB_REST_TOKEN" since that will map into a core
+  # env/config override, as if config key "rest.token" had been set.  One of the
+  # purposes of this CI is to run tests where all config is passed via context
+  # arguments and none via environment variables, in order to flush out
+  # callsites within the code which aren't passing context as they should.
+  TILEDB_REST_UNITTEST_TOKEN: ${{ secrets.TILEDB_REST_UNITTEST_TOKEN}}
 
 jobs:
   ci:
@@ -19,34 +23,17 @@ jobs:
       fail-fast: false
       matrix:
         include:
-
-          - name: ensemble1
+          # This could be run on MacOS too, but, we have enough OS redundancy,
+          # and MacOS-runner availability is a more tightly constrained resource
+          # in GitHub Actions as of 2025-02-06.
+          - name: linux
             os: ubuntu-24.04
+            # TODO: also on 3.12. But 3.9 is higher-pri, until we drop support
+            # for it. (Note our main CI tests across a broader set of Python
+            # versions.)
             python_version: 3.9
             cc: gcc-13
             cxx: g++-13
-
-            anndata: 0.10.8
-            numba:   0.60.0
-            numpy:   1.25.0
-            pandas:  1.5.3
-            pyarrow: 11.0.0
-            scanpy:  1.9.8
-            scipy:   1.13.1
-
-          - name: ensemble2
-            os: ubuntu-24.04
-            python_version: 3.9
-            cc: gcc-13
-            cxx: g++-13
-
-            anndata:  0.10.9
-            numba:    0.60.0
-            numpy:    1.25.0
-            pandas:   1.5.3
-            pyarrow:  12.0.1
-            scanpy:   1.10.3
-            scipy:    1.13.1
 
     runs-on: ${{ matrix.os }}
 
@@ -89,36 +76,29 @@ jobs:
         run: pip list
 
       - name: Install tiledbsoma
+        # If you'reiterating on the testing framework itself, install from PyPI to avoid the
+        # time-consuming build. If you're trying to evaluate the code modified by a PR,
+        # install from source.
+        #
+        # From PyPI:
+        # run: pip install tiledbsoma==1.15.7
+        #
+        # From source:
         run: pip -v install -e apis/python[all] -C "--build-option=--no-tiledb-deprecated"
+        #
         env:
           CC: ${{ matrix.cc }}
           CXX: ${{ matrix.cxx }}
 
       - name: Install dependencies
-        run: pip install --prefer-binary pytest typeguard
-
-      - name: Install variant dependencies
-        run: |
-          pip install  \
-            anndata==${{matrix.anndata}} \
-            numba==${{matrix.numba}} \
-            numpy==${{matrix.numpy}} \
-            pandas==${{matrix.pandas}} \
-            pyarrow==${{matrix.pyarrow}} \
-            scanpy==${{matrix.scanpy}} \
-            scipy==${{matrix.scipy}}
+        run: pip install --prefer-binary pytest typeguard tiledb.cloud
 
       - name: Show package versions
         run: python scripts/show-versions.py
 
-      - name: Obtain test data
-        shell: bash
-        run: |
-          cd test
-          rm -rf soco
-          tar zxf soco.tgz
-          cd ..
+      - name: Show tiledb.cloud version
+        run: python -c 'import tiledb.cloud; print(tiledb.cloud.version.version)'
 
       - name: Run pytests for Python
         shell: bash
-        run: python -m pytest apis/python/tests/*.py -v --durations=20 --maxfail=50
+        run: python -m pytest apis/python/remote_tests -v --durations=20 --maxfail=50

@@ -1,17 +1,21 @@
 name: TileDB-SOMA R-Python interop testing
 
 on:
-  pull_request:
-    # TODO: leave this enabled for pre-merge signal for now. At some point we may want to go back to
-    # only having this signal post-merge.
-    #paths:
-    #  - "apis/python/**"
-    #  - "apis/r/**"
-    #  - "apis/system/**"
-  push:
-    branches:
-      - main
-      - "release-*"
+# XXX TEMP
+#  pull_request:
+#    paths-ignore:
+#      # XXX TEMP
+#      - ".github/workflows/python-remote-storage.yml"
+#    # TODO: leave this enabled for pre-merge signal for now. At some point we may want to go back to
+#    # only having this signal post-merge.
+#    #paths:
+#    #  - "apis/python/**"
+#    #  - "apis/r/**"
+#    #  - "apis/system/**"
+#  push:
+#    branches:
+#      - main
+#      - "release-*"
   workflow_dispatch:
 
 jobs:
