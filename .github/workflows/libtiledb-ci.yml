@@ -6,6 +6,7 @@ on:
       - "apis/python/**"
       - "apis/r/**"
       - ".pre-commit-config.yaml"
+      - ".github/workflows/python-remote-storage.yml"
   push:
     branches:
       - main
