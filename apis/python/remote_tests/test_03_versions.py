@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import io
 import os
 
 import pytest
@@ -116,20 +117,76 @@ def test_experiment_queries(conftest_context, uri_and_info):
     "uri_and_info",
     util_pbmc3k_unprocessed_versions(),
 )
-def test_resize_information(conftest_context, uri_and_info):
+def test_upgrade_experiment_shapes(conftest_context, uri_and_info):
     uri, info = uri_and_info
-    print()
-    print("URI")
-    print(uri)
 
+    handle = io.StringIO()
     upgradeable = tiledbsoma.io.upgrade_experiment_shapes(
-        uri, check_only=True, context=conftest_context
+        uri, check_only=True, context=conftest_context, output_handle=handle
     )
+    handle.seek(0)
+    lines = handle.readlines()
+    handle.close()
+    body = "\n".join(lines)
+
+    assert "Dry run" in body
     if info["shape"] == "old":
         assert upgradeable
     else:
         assert not upgradeable
+        assert "dataframe already has its domain set" in body
 
-    # tiledbsoma.io.show_experiment_shapes
-    # tiledbsoma.io.upgrade_experiment_shapes
-    # tiledbsoma.io.resize_experiment
+
+@pytest.mark.parametrize(
+    "uri_and_info",
+    util_pbmc3k_unprocessed_versions(),
+)
+def test_resize_experiment_too_small(conftest_context, uri_and_info):
+    uri, info = uri_and_info
+
+    handle = io.StringIO()
+    ok = tiledbsoma.io.resize_experiment(
+        uri,
+        nobs=10,
+        nvars={"RNA": 20},
+        check_only=True,
+        context=conftest_context,
+        output_handle=handle,
+    )
+
+    handle.seek(0)
+    lines = handle.readlines()
+    handle.close()
+    body = "\n".join(lines)
+
+    assert "Dry run" in body
+    assert not ok
+
+
+@pytest.mark.parametrize(
+    "uri_and_info",
+    util_pbmc3k_unprocessed_versions(),
+)
+def test_resize_experiment_ok(conftest_context, uri_and_info):
+    uri, info = uri_and_info
+
+    handle = io.StringIO()
+    ok = tiledbsoma.io.resize_experiment(
+        uri,
+        nobs=100_000,
+        nvars={"RNA": 200_000},
+        check_only=True,
+        context=conftest_context,
+        output_handle=handle,
+    )
+
+    handle.seek(0)
+    lines = handle.readlines()
+    handle.close()
+    body = "\n".join(lines)
+
+    if info["shape"] == "old":
+        assert not ok
+        assert "dataframe currently has no domain set" in body
+    else:
+        assert ok
