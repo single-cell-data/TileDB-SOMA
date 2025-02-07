@@ -38,7 +38,7 @@ aws s3 cp s3://tiledb-unittest/soma-prod-test-data/h5ad .
 
 Then use `tiledbsoma.io.from_h5ad` with the following sources and data:
 
-* Preferr a bare Docker image
+* Prefer a bare Docker image
 * Repeat for all desired TileDB-SOMA versions:
   * `pip install tiledbsoma==1.15.7` (or whichever version)
   * Ingest to `s3://tiledb-unittest/soma-prod-test-data/1.15.7/pbmc3k_unprocessed_1.15.7`
