@@ -110,3 +110,26 @@ def test_experiment_queries(conftest_context, uri_and_info):
         )
 
         assert (query.n_obs, query.n_vars) == (530, 4)
+
+
+@pytest.mark.parametrize(
+    "uri_and_info",
+    util_pbmc3k_unprocessed_versions(),
+)
+def test_resize_information(conftest_context, uri_and_info):
+    uri, info = uri_and_info
+    print()
+    print("URI")
+    print(uri)
+
+    upgradeable = tiledbsoma.io.upgrade_experiment_shapes(
+        uri, check_only=True, context=conftest_context
+    )
+    if info["shape"] == "old":
+        assert upgradeable
+    else:
+        assert not upgradeable
+
+    # tiledbsoma.io.show_experiment_shapes
+    # tiledbsoma.io.upgrade_experiment_shapes
+    # tiledbsoma.io.resize_experiment

@@ -3,10 +3,10 @@ from __future__ import annotations
 import os
 
 import pytest
+import scanpy as sc
 
 import tiledbsoma
 import tiledbsoma.io
-import scanpy as sc
 
 from .util import util_make_uri
 
@@ -27,8 +27,8 @@ def test_basic_append(conftest_context, conftest_namespace, conftest_default_s3_
     measurement_name = "RNA"
 
     adata1 = sc.datasets.pbmc3k()
-    adata1 .obs["when"] = ["Monday"] * len(adata1 .obs)
-    tiledbsoma.io.from_anndata(creation_uri, adata1 , measurement_name=measurement_name)
+    adata1.obs["when"] = ["Monday"] * len(adata1.obs)
+    tiledbsoma.io.from_anndata(creation_uri, adata1, measurement_name=measurement_name)
 
     with tiledbsoma.Experiment.open(readback_uri) as exp:
         assert exp.obs.count == 2700
@@ -36,7 +36,7 @@ def test_basic_append(conftest_context, conftest_namespace, conftest_default_s3_
         assert exp.ms["RNA"].X["data"].shape == (2700, 32738)
 
     adata2 = sc.datasets.pbmc3k()
-    adata2.obs.index = [e.replace("-1", "-2") for e in adata1 .obs.index]
+    adata2.obs.index = [e.replace("-1", "-2") for e in adata1.obs.index]
     adata2.obs["when"] = ["Tuesday"] * len(adata2.obs)
     adata2.X *= 10
 

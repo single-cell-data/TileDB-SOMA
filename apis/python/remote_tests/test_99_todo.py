@@ -56,6 +56,4 @@
 # dag.wait()
 # dag.node("output").result()
 
-# * Make small stack; provenance
-# * Append mode: Monday/Tuesday is fine
 # * Show, upgrade, resize
