@@ -1214,6 +1214,17 @@ class ArrowAdapter {
         }
     }
 
+    static void arrow_array_insert_at_index(
+        ArrowArray* parent_array, ArrowArray* child_array, int64_t index);
+
+    static void arrow_schema_insert_at_index(
+        ArrowSchema* parent_schema, ArrowSchema* child_schema, int64_t index);
+
+    static void arrow_array_remove_at_index(ArrowArray* array, int64_t index);
+
+    static void arrow_schema_remove_at_index(
+        ArrowSchema* schema, int64_t index);
+
    private:
     static std::pair<const void*, std::size_t> _get_data_and_length(
         Enumeration& enmr, const void* dst);
