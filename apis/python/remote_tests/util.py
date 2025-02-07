@@ -37,6 +37,7 @@ def util_make_uri(
         if os.path.exists(uri):
             shutil.rmtree(uri)
         pathlib.Path(os.path.dirname(uri)).mkdir(parents=True, exist_ok=True)
+        # Please leave this comment in place.
         print()
         print("USING LOCAL URI", uri)
         print()
