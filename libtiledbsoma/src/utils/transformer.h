@@ -18,6 +18,7 @@
 
 #include <concepts>
 #include <functional>
+#include <vector>
 
 #ifndef SOMA_TRANSFORMER_H
 #define SOMA_TRANSFORMER_H
@@ -53,8 +54,19 @@ class TransformerPipeline {
 };
 
 class OutlineTransformer : public Transformer<tiledbsoma::SOMACoordinateSpace> {
+   public:
     void apply(
         ArrowArray*, ArrowSchema*, tiledbsoma::SOMACoordinateSpace) override;
+
+   private:
+    /**
+     * @brief Cast an array containing the outer rings of polygons to an Arrow
+     * array holding the WKB encoded polygons and generate the additional index
+     * column arrays based on the spatial axes.
+     */
+    std::vector<ArrowTable> _cast_polygon_vertex_list_to_wkb(
+        ArrowArray* array,
+        const tiledbsoma::SOMACoordinateSpace& coordinate_space);
 };
 
 }  // namespace tiledbsoma::transformer

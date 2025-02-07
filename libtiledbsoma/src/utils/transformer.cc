@@ -24,6 +24,73 @@ void OutlineTransformer::apply(
     ArrowArray* array,
     ArrowSchema* schema,
     tiledbsoma::SOMACoordinateSpace coordinate_space) {
+    std::vector<ArrowTable> tables;
+    for (int64_t i = 0; i < schema->n_children; ++i) {
+        /**
+         * If `soma_geometry` conforms to specific formats automatically convert
+         * to WKB and create additional index columns for spatial axes.
+         *
+         * If the `soma_geometry` array is a WKB binary users are expected to
+         * provide the additional index columns for spatial axes.
+         */
+
+        if (strcmp(schema->children[i]->name, "soma_geometry") == 0 &&
+            strcmp(schema->children[i]->format, "+l") == 0) {
+            std::string_view type_metadata;
+
+            if (ArrowMetadataHasKey(
+                    schema->children[i]->metadata,
+                    ArrowCharView("geometry_type"))) {
+                ArrowStringView out;
+                NANOARROW_THROW_NOT_OK(ArrowMetadataGetValue(
+                    schema->children[i]->metadata,
+                    ArrowCharView("geometry_type"),
+                    &out));
+
+                type_metadata = std::string_view(out.data, out.size_bytes);
+            }
+
+            if (type_metadata == "polygon_ring") {
+                tables = _cast_polygon_vertex_list_to_wkb(
+                    array->children[i], coordinate_space);
+            } else {
+                throw std::runtime_error("Unknown geometry type");
+            }
+
+            break;
+        }
+    }
+
+    int64_t soma_gometry_index = -1;
+    for (int64_t i = 0; i < schema->n_children; ++i) {
+        if (strcmp(
+                schema->children[i]->name, SOMA_GEOMETRY_COLUMN_NAME.c_str()) ==
+            0) {
+            soma_gometry_index = i;
+            break;
+        }
+    }
+
+    if (soma_gometry_index == -1) {
+        throw std::runtime_error(std::format(
+            "[OutlineTransformer][apply] Missing schema child with name {}",
+            SOMA_GEOMETRY_COLUMN_NAME));
+    }
+
+    for (size_t i = 0; i < tables.size(); ++i) {
+        ArrowAdapter::arrow_array_insert_at_index(
+            array, tables[i].first.release(), soma_gometry_index + i + 1);
+        ArrowAdapter::arrow_schema_insert_at_index(
+            schema, tables[i].second.release(), soma_gometry_index + i + 1);
+    }
+
+    ArrowAdapter::arrow_array_remove_at_index(array, soma_gometry_index);
+    ArrowAdapter::arrow_schema_remove_at_index(schema, soma_gometry_index);
+}
+
+std::vector<ArrowTable> OutlineTransformer::_cast_polygon_vertex_list_to_wkb(
+    ArrowArray* array,
+    const tiledbsoma::SOMACoordinateSpace& coordinate_space) {
     // Initialize a vector to hold all the Arrow tables containing the
     // transformed geometry data
     std::vector<ArrowTable> tables;
@@ -35,8 +102,8 @@ void OutlineTransformer::apply(
         tables.front().first.get(), ArrowType::NANOARROW_TYPE_LARGE_BINARY));
     NANOARROW_THROW_NOT_OK(ArrowSchemaInitFromType(
         tables.front().second.get(), ArrowType::NANOARROW_TYPE_LARGE_BINARY));
-    NANOARROW_THROW_NOT_OK(ArrowSchemaSetName(
-        tables.front().second.get(), SOMA_GEOMETRY_COLUMN_NAME.c_str()));
+    NANOARROW_THROW_NOT_OK(
+        ArrowSchemaSetName(tables.front().second.get(), "soma_geometry"));
 
     for (size_t i = 0; i < coordinate_space.size(); ++i) {
         const auto axis = coordinate_space.axis(i);
@@ -123,31 +190,7 @@ void OutlineTransformer::apply(
             ArrowArrayFinishBuildingDefault(tables[i].first.get(), &error));
     }
 
-    int64_t soma_gometry_index = -1;
-    for (int64_t i = 0; i < schema->n_children; ++i) {
-        if (strcmp(
-                schema->children[i]->name, SOMA_GEOMETRY_COLUMN_NAME.c_str()) ==
-            0) {
-            soma_gometry_index = i;
-            break;
-        }
-    }
-
-    if (soma_gometry_index == -1) {
-        throw std::runtime_error(std::format(
-            "[OutlineTransformer][apply] Missing schema child with name {}",
-            SOMA_GEOMETRY_COLUMN_NAME));
-    }
-
-    for (size_t i = 0; i < tables.size(); ++i) {
-        ArrowAdapter::arrow_array_insert_at_index(
-            array, tables[i].first.release(), soma_gometry_index + i + 1);
-        ArrowAdapter::arrow_schema_insert_at_index(
-            schema, tables[i].second.release(), soma_gometry_index + i + 1);
-    }
-
-    ArrowAdapter::arrow_array_remove_at_index(array, soma_gometry_index);
-    ArrowAdapter::arrow_schema_remove_at_index(schema, soma_gometry_index);
+    return tables;
 }
 
 }  // namespace tiledbsoma::transformer
