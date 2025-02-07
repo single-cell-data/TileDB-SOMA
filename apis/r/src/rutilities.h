@@ -18,14 +18,14 @@ namespace tdbs = tiledbsoma;
 
 // Applies (named list of) vectors of points to the named dimensions
 void apply_dim_points(
-    tdbs::SOMAArray* sr,
+    tdbs::ManagedQuery* mq,
     std::unordered_map<std::string, std::shared_ptr<tiledb::Dimension>>&
         name2dim,
     Rcpp::List lst);
 
 // Applies (named list of) matrices of points to the named dimensions
 void apply_dim_ranges(
-    tdbs::SOMAArray* sr,
+    tdbs::ManagedQuery* mq,
     std::unordered_map<std::string, std::shared_ptr<tiledb::Dimension>>&
         name2dim,
     Rcpp::List lst);

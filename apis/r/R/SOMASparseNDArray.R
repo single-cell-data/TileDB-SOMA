@@ -46,7 +46,7 @@ SOMASparseNDArray <- R6::R6Class(
         coords <- private$.convert_coords(coords)
       }
 
-      sr <- sr_setup(
+      sr <- mq_setup(
         uri = self$uri,
         private$.soma_context,
         dim_points = coords,

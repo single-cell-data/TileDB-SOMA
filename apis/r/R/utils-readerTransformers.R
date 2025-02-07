@@ -1,7 +1,7 @@
 #' Transformer function: SOMAArray to Arrow table
 #'
 #' @description Converts the results of a \link{soma_array_reader} or
-#' \link{sr_next} to an arrow::\link[arrow]{Table}
+#' \link{mq_next} to an arrow::\link[arrow]{Table}
 #' @param x A nanoarrow_array object which is itself a wrapper around the external pointer
 #' to the Arrow array data; the schema external pointer is added to it as well
 #' @return arrow::\link[arrow]{Table}

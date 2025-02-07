@@ -17,7 +17,7 @@
 namespace tdbs = tiledbsoma;
 
 void apply_dim_points(
-    tdbs::SOMAArray* sr,
+    tdbs::ManagedQuery* mq,
     std::unordered_map<std::string, std::shared_ptr<tiledb::Dimension>>&
         name2dim,
     Rcpp::List lst) {
@@ -34,7 +34,7 @@ void apply_dim_points(
             for (size_t i = 0; i < iv.size(); i++) {
                 uv[i] = static_cast<uint64_t>(iv[i]);
                 if (uv[i] >= pr.first && uv[i] <= pr.second) {
-                    sr->set_dim_point<uint64_t>(
+                    mq->select_point<uint64_t>(
                         nm, uv[i]);  // bonked when use with vector
                     spdl::info(
                         "[apply_dim_points] Applying dim point {} on {}",
@@ -49,7 +49,7 @@ void apply_dim_points(
             const std::pair<int64_t, int64_t> pr = dm->domain<int64_t>();
             for (size_t i = 0; i < iv.size(); i++) {
                 if (iv[i] >= pr.first && iv[i] <= pr.second) {
-                    sr->set_dim_point<int64_t>(nm, iv[i]);
+                    mq->select_point<int64_t>(nm, iv[i]);
                     spdl::debug(
                         "[apply_dim_points] Applying dim point {} on {}",
                         iv[i],
@@ -63,7 +63,7 @@ void apply_dim_points(
             for (R_xlen_t i = 0; i < payload.size(); i++) {
                 float v = static_cast<float>(payload[i]);
                 if (v >= pr.first && v <= pr.second) {
-                    sr->set_dim_point<float>(nm, v);
+                    mq->select_point<float>(nm, v);
                     spdl::debug(
                         "[apply_dim_points] Applying dim point {} on {}",
                         v,
@@ -76,7 +76,7 @@ void apply_dim_points(
             const std::pair<double, double> pr = dm->domain<double>();
             for (R_xlen_t i = 0; i < payload.size(); i++) {
                 if (payload[i] >= pr.first && payload[i] <= pr.second) {
-                    sr->set_dim_point<double>(nm, payload[i]);
+                    mq->select_point<double>(nm, payload[i]);
                     spdl::debug(
                         "[apply_dim_points] Applying dim point {} on {}",
                         payload[i],
@@ -89,7 +89,7 @@ void apply_dim_points(
             const std::pair<int32_t, int32_t> pr = dm->domain<int32_t>();
             for (R_xlen_t i = 0; i < payload.size(); i++) {
                 if (payload[i] >= pr.first && payload[i] <= pr.second) {
-                    sr->set_dim_point<int32_t>(nm, payload[i]);
+                    mq->select_point<int32_t>(nm, payload[i]);
                     spdl::debug(
                         "[apply_dim_points] Applying dim point {} on {}",
                         payload[i],
@@ -111,7 +111,7 @@ void apply_dim_points(
 }
 
 void apply_dim_ranges(
-    tdbs::SOMAArray* sr,
+    tdbs::ManagedQuery* mq,
     std::unordered_map<std::string, std::shared_ptr<tiledb::Dimension>>&
         name2dim,
     Rcpp::List lst) {
@@ -145,7 +145,7 @@ void apply_dim_ranges(
                                           // more than min
             }
             if (suitable)
-                sr->set_dim_ranges<uint64_t>(nm, vp);
+                mq->select_ranges<uint64_t>(nm, vp);
         } else if (tp == TILEDB_INT64) {
             Rcpp::NumericMatrix mm = lst[nm];
             std::vector<int64_t> lo = Rcpp::fromInteger64(mm.column(0), false);
@@ -167,7 +167,7 @@ void apply_dim_ranges(
                                               // higher more than min
             }
             if (suitable)
-                sr->set_dim_ranges<int64_t>(nm, vp);
+                mq->select_ranges<int64_t>(nm, vp);
         } else if (tp == TILEDB_FLOAT32) {
             Rcpp::NumericMatrix mm = lst[nm];
             Rcpp::NumericMatrix::Column lo = mm.column(
@@ -193,7 +193,7 @@ void apply_dim_ranges(
                                           // more than min
             }
             if (suitable)
-                sr->set_dim_ranges<float>(nm, vp);
+                mq->select_ranges<float>(nm, vp);
         } else if (tp == TILEDB_FLOAT64) {
             Rcpp::NumericMatrix mm = lst[nm];
             Rcpp::NumericMatrix::Column lo = mm.column(
@@ -217,7 +217,7 @@ void apply_dim_ranges(
                                               // higher more than min
             }
             if (suitable)
-                sr->set_dim_ranges<double>(nm, vp);
+                mq->select_ranges<double>(nm, vp);
         } else if (tp == TILEDB_INT32) {
             Rcpp::IntegerMatrix mm = lst[nm];
             Rcpp::IntegerMatrix::Column lo = mm.column(
@@ -241,7 +241,7 @@ void apply_dim_ranges(
                                               // higher more than min
             }
             if (suitable)
-                sr->set_dim_ranges<int32_t>(nm, vp);
+                mq->select_ranges<int32_t>(nm, vp);
         } else {
             Rcpp::stop(
                 "Currently unsupported type: ", tiledb::impl::to_str(tp));

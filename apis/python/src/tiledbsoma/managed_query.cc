@@ -33,10 +33,7 @@ void load_managed_query(py::module& m) {
             py::init([](SOMAArray array,
                         std::shared_ptr<SOMAContext> ctx,
                         std::string_view name) {
-                return ManagedQuery(
-                    std::make_unique<SOMAArray>(array),
-                    ctx->tiledb_ctx(),
-                    name);
+                return ManagedQuery(array, ctx->tiledb_ctx(), name);
             }),
             py::arg("array"),
             py::arg("ctx"),

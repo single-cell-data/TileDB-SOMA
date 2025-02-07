@@ -222,42 +222,20 @@ void writeArrayFromArrow(
     // optional timestamp range
     std::optional<tdbs::TimestampRange> tsrng = makeTimestampRange(tsvec);
 
-    std::shared_ptr<tdbs::SOMAArray> arrup;
-    if (arraytype == "SOMADataFrame") {
-        arrup = tdbs::SOMADataFrame::open(
-            OpenMode::write,
-            uri,
-            somactx,
-            "unnamed",
-            {},
-            "auto",
-            ResultOrder::automatic,
-            tsrng);
-    } else if (arraytype == "SOMADenseNDArray") {
-        arrup = tdbs::SOMADenseNDArray::open(
-            OpenMode::write,
-            uri,
-            somactx,
-            "unnamed",
-            {},
-            "auto",
-            ResultOrder::colmajor,
-            tsrng);
-    } else if (arraytype == "SOMASparseNDArray") {
-        arrup = tdbs::SOMASparseNDArray::open(
-            OpenMode::write,
-            uri,
-            somactx,
-            "unnamed",
-            {},
-            "auto",
-            ResultOrder::automatic,
-            tsrng);
-    } else {  // not reached
-        Rcpp::stop(tfm::format("Unexpected array type '%s'", arraytype));
-    }
+    std::unique_ptr<tdbs::SOMAArray> arrup = tdbs::SOMAArray::open(
+        OpenMode::write,
+        uri,
+        somactx,
+        "unnamed",
+        {},
+        "auto",
+        ResultOrder::automatic,
+        tsrng);
 
-    arrup.get()->set_array_data(std::move(schema), std::move(array));
-    arrup.get()->write();
-    arrup.get()->close();
+    auto mq = tdbs::ManagedQuery(*arrup, somactx->tiledb_ctx());
+    mq.set_layout(arraytype == "SOMADenseNDArray" ? 
+                  ResultOrder::colmajor : ResultOrder::automatic);
+    mq.set_array_data(std::move(schema), std::move(array));
+    mq.submit_write();
+    mq.close();
 }

@@ -168,7 +168,7 @@ SOMANDArrayBase <- R6::R6Class(
     },
 
     #  @description Converts a list of vectors corresponding to coords to a
-    #  format acceptable for sr_setup and soma_array_reader
+    #  format acceptable for mq_setup and soma_array_reader
     .convert_coords = function(coords) {
       # Ensure coords is a named list, use to select dim points
       stopifnot(

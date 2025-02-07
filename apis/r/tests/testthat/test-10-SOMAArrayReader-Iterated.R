@@ -13,12 +13,12 @@ test_that("Iterated Interface from SOMAArrayReader", {
   expect_true(dir.exists(uri))
 
   somactx <- soma_context()
-  sr <- sr_setup(uri, ctxxp = somactx, loglevel = "warn")
+  sr <- mq_setup(uri, ctxxp = somactx, loglevel = "warn")
   expect_true(inherits(sr, "externalptr"))
 
   rl <- data.frame()
-  while (!tiledbsoma:::sr_complete(sr)) {
-    dat <- sr_next(sr)
+  while (!tiledbsoma:::mq_complete(sr)) {
+    dat <- mq_next(sr)
     D <- soma_array_to_arrow_table(dat)
     expect_true(nrow(D) > 0)
     expect_true(is_arrow_table(D))
@@ -30,7 +30,7 @@ test_that("Iterated Interface from SOMAArrayReader", {
   rm(sr)
   gc()
 
-  sr <- sr_setup(
+  sr <- mq_setup(
     uri,
     ctxxp = somactx,
     dim_points = list(soma_dim_0 = bit64::as.integer64(1))
@@ -38,8 +38,8 @@ test_that("Iterated Interface from SOMAArrayReader", {
   expect_true(inherits(sr, "externalptr"))
 
   rl <- data.frame()
-  while (!tiledbsoma:::sr_complete(sr)) {
-    dat <- sr_next(sr)
+  while (!tiledbsoma:::mq_complete(sr)) {
+    dat <- mq_next(sr)
     D <- soma_array_to_arrow_table(dat)
     expect_true(nrow(D) > 0)
     expect_true(is_arrow_table(D))
@@ -52,7 +52,7 @@ test_that("Iterated Interface from SOMAArrayReader", {
   rm(sr)
   gc()
 
-  sr <- sr_setup(uri,
+  sr <- mq_setup(uri,
     ctxxp = somactx,
     dim_range = list(soma_dim_1 = cbind(
       bit64::as.integer64(1),
@@ -62,8 +62,8 @@ test_that("Iterated Interface from SOMAArrayReader", {
   expect_true(inherits(sr, "externalptr"))
 
   rl <- data.frame()
-  while (!tiledbsoma:::sr_complete(sr)) {
-    dat <- sr_next(sr)
+  while (!tiledbsoma:::mq_complete(sr)) {
+    dat <- mq_next(sr)
     D <- soma_array_to_arrow_table(dat)
     expect_true(nrow(D) > 0)
     expect_true(is_arrow_table(D))
@@ -75,11 +75,11 @@ test_that("Iterated Interface from SOMAArrayReader", {
 
   ## test completeness predicate on shorter data
   uri <- extract_dataset("soma-dataframe-pbmc3k-processed-obs")
-  sr <- sr_setup(uri, somactx)
+  sr <- mq_setup(uri, somactx)
 
-  expect_false(tiledbsoma:::sr_complete(sr))
-  dat <- sr_next(sr)
-  expect_true(tiledbsoma:::sr_complete(sr))
+  expect_false(tiledbsoma:::mq_complete(sr))
+  dat <- mq_next(sr)
+  expect_true(tiledbsoma:::mq_complete(sr))
 
   rm(sr)
   gc()
@@ -222,9 +222,9 @@ test_that("Dimension Point and Ranges Bounds", {
     soma_dim_0 = bit64::as.integer64(0:5),
     soma_dim_1 = bit64::as.integer64(0:5)
   )
-  sr <- sr_setup(uri = X$uri, ctxxp = somactx, dim_points = coords)
+  sr <- mq_setup(uri = X$uri, ctxxp = somactx, dim_points = coords)
 
-  chunk <- sr_next(sr)
+  chunk <- mq_next(sr)
   at <- arrow::as_arrow_table(chunk)
   expect_equal(at$num_rows, 5)
   expect_equal(at$num_columns, 3)
@@ -236,9 +236,9 @@ test_that("Dimension Point and Ranges Bounds", {
     soma_dim_0 = matrix(bit64::as.integer64(c(1, 4)), 1),
     soma_dim_1 = matrix(bit64::as.integer64(c(1, 4)), 1)
   )
-  sr <- sr_setup(uri = X$uri, somactx, dim_ranges = ranges)
+  sr <- mq_setup(uri = X$uri, somactx, dim_ranges = ranges)
 
-  chunk <- sr_next(sr)
+  chunk <- mq_next(sr)
   at <- arrow::as_arrow_table(chunk)
   expect_equal(at$num_rows, 2)
   expect_equal(at$num_columns, 3)
@@ -248,14 +248,14 @@ test_that("Dimension Point and Ranges Bounds", {
     soma_dim_0 = bit64::as.integer64(81:86),
     soma_dim_1 = bit64::as.integer64(0:5)
   )
-  expect_error(sr_setup(uri = X$uri, dim_points = coords))
+  expect_error(mq_setup(uri = X$uri, dim_points = coords))
 
   ## 'bad case' with unsuitable dim range
   ranges <- list(
     soma_dim_0 = matrix(bit64::as.integer64(c(91, 94)), 1),
     soma_dim_1 = matrix(bit64::as.integer64(c(1, 4)), 1)
   )
-  expect_error(sr_setup(uri = X$uri, dim_ranges = ranges))
+  expect_error(mq_setup(uri = X$uri, dim_ranges = ranges))
   rm(sr)
   gc()
 })

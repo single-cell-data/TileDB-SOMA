@@ -258,14 +258,14 @@ c_update_dataframe_schema <- function(uri, ctxxp, column_names_to_drop, add_cols
     invisible(.Call(`_tiledbsoma_c_update_dataframe_schema`, uri, ctxxp, column_names_to_drop, add_cols_types, add_cols_enum_value_types, add_cols_enum_ordered))
 }
 
-#' Iterator-Style Access to SOMA Array via SOMAArray
+#' Iterator-Style Access to SOMA Array via ManagedQuery
 #'
-#' The `sr_*` functions provide low-level access to an instance of the SOMAArray
+#' The `mq_*` functions provide low-level access to an instance of a ManagedQuery
 #' class so that iterative access over parts of a (large) array is possible.
 #' \describe{
-#'   \item{\code{sr_setup}}{instantiates and by default also submits a query}
-#'   \item{\code{sr_complete}}{checks if more data is available}
-#'   \item{\code{sr_next}}{returns the next chunk}
+#'   \item{\code{mq_setup}}{instantiates and by default also submits a query}
+#'   \item{\code{mq_complete}}{checks if more data is available}
+#'   \item{\code{mq_next}}{returns the next chunk}
 #' }
 #'
 #' @param uri Character value with URI path to a SOMA data set
@@ -289,20 +289,20 @@ c_update_dataframe_schema <- function(uri, ctxxp, column_names_to_drop, add_cols
 #' new logging level.
 #' @param timestamprange Optional POSIXct (i.e. Datetime) vector with start
 #' and end of ' interval for which data is considered.
-#' @param sr An external pointer to a TileDB SOMAArray object.
+#' @param mq An external pointer to a ManagedQuery object.
 #'
-#' @return \code{sr_setup} returns an external pointer to a SOMAArray.
-#' \code{sr_complete} ' returns a boolean, and \code{sr_next} returns an Arrow
+#' @return \code{mq_setup} returns an external pointer to a ManagedQuery object.
+#' \code{mq_complete} ' returns a boolean, and \code{mq_next} returns an Arrow
 #' array helper object.
 #'
 #' @examples
 #' \dontrun{
 #' uri <- extract_dataset("soma-dataframe-pbmc3k-processed-obs")
 #' ctxcp <- soma_context()
-#' sr <- sr_setup(uri, ctxxp)
+#' mq <- mq_setup(uri, ctxxp)
 #' rl <- data.frame()
-#' while (!sr_complete(sr)) {
-#'   dat <- sr_next(sr)
+#' while (!mq_complete(mq)) {
+#'   dat <- mq_next(mq)
 #'   rb <- arrow::RecordBatch$import_from_c(dat$array_data, dat$schema)
 #'   rl <- rbind(rl, as.data.frame(rb))
 #' }
@@ -311,12 +311,12 @@ c_update_dataframe_schema <- function(uri, ctxxp, column_names_to_drop, add_cols
 #' @noRd
 NULL
 
-sr_setup <- function(uri, ctxxp, colnames = NULL, qc = NULL, dim_points = NULL, dim_ranges = NULL, batch_size = "auto", result_order = "auto", timestamprange = NULL, loglevel = "auto") {
-    .Call(`_tiledbsoma_sr_setup`, uri, ctxxp, colnames, qc, dim_points, dim_ranges, batch_size, result_order, timestamprange, loglevel)
+mq_setup <- function(uri, ctxxp, colnames = NULL, qc = NULL, dim_points = NULL, dim_ranges = NULL, batch_size = "auto", result_order = "auto", timestamprange = NULL, loglevel = "auto") {
+    .Call(`_tiledbsoma_mq_setup`, uri, ctxxp, colnames, qc, dim_points, dim_ranges, batch_size, result_order, timestamprange, loglevel)
 }
 
-sr_complete <- function(sr) {
-    .Call(`_tiledbsoma_sr_complete`, sr)
+mq_complete <- function(mq) {
+    .Call(`_tiledbsoma_mq_complete`, mq)
 }
 
 #' @noRd
@@ -325,16 +325,16 @@ create_empty_arrow_table <- function() {
     .Call(`_tiledbsoma_create_empty_arrow_table`)
 }
 
-sr_next <- function(sr) {
-    .Call(`_tiledbsoma_sr_next`, sr)
+mq_next <- function(mq) {
+    .Call(`_tiledbsoma_mq_next`, mq)
 }
 
-sr_reset <- function(sr) {
-    invisible(.Call(`_tiledbsoma_sr_reset`, sr))
+mq_reset <- function(mq) {
+    invisible(.Call(`_tiledbsoma_mq_reset`, mq))
 }
 
-sr_set_dim_points <- function(sr, dim, points) {
-    invisible(.Call(`_tiledbsoma_sr_set_dim_points`, sr, dim, points))
+mq_set_dim_points <- function(mq, dim, points) {
+    invisible(.Call(`_tiledbsoma_mq_set_dim_points`, mq, dim, points))
 }
 
 #' TileDB SOMA statistics

@@ -70,7 +70,7 @@ class ManagedQuery {
         std::string_view name = "unnamed");
 
     ManagedQuery(
-        std::unique_ptr<SOMAArray> array,
+        SOMAArray array,
         std::shared_ptr<Context> ctx,
         std::string_view name = "unnamed");
 
