@@ -20,6 +20,7 @@
 
 #include "utils/arrow_adapter.h"
 #include "utils/common.h"
+#include "utils/transformer.h"
 #include "utils/stats.h"
 #include "utils/version.h"
 #include "soma/enums.h"

@@ -1825,6 +1825,7 @@ void ArrowAdapter::arrow_array_insert_at_index(
 
     for (int64_t i = 0; i < parent_array->n_children; ++i) {
         int64_t idx = i <= index ? i : i - 1;
+        parent_array->children[i] = (ArrowArray*)malloc(sizeof(ArrowArray));
 
         if (i != index) {
             ArrowArrayMove(children[idx], parent_array->children[i]);
@@ -1832,6 +1833,12 @@ void ArrowAdapter::arrow_array_insert_at_index(
             ArrowArrayMove(child_array, parent_array->children[i]);
         }
     }
+
+    for (int64_t i = 0; i < parent_array->n_children - 1; ++i) {
+        free(children[i]);
+    }
+
+    free(children);
 }
 
 void ArrowAdapter::arrow_schema_insert_at_index(
@@ -1849,6 +1856,7 @@ void ArrowAdapter::arrow_schema_insert_at_index(
 
     for (int64_t i = 0; i < parent_schema->n_children; ++i) {
         int64_t idx = i <= index ? i : i - 1;
+        parent_schema->children[i] = (ArrowSchema*)malloc(sizeof(ArrowSchema));
 
         if (i != index) {
             ArrowSchemaMove(children[idx], parent_schema->children[i]);
@@ -1856,6 +1864,12 @@ void ArrowAdapter::arrow_schema_insert_at_index(
             ArrowSchemaMove(child_schema, parent_schema->children[i]);
         }
     }
+
+    for (int64_t i = 0; i < parent_schema->n_children - 1; ++i) {
+        free(children[i]);
+    }
+
+    free(children);
 }
 
 void ArrowAdapter::arrow_array_remove_at_index(
@@ -1875,11 +1889,18 @@ void ArrowAdapter::arrow_array_remove_at_index(
         int64_t idx = i <= index ? i : i - 1;
 
         if (i != index) {
+            array->children[idx] = (ArrowArray*)malloc(sizeof(ArrowArray));
             ArrowArrayMove(children[i], array->children[idx]);
         } else {
             array->release(children[i]);
         }
     }
+
+    for (int64_t i = 0; i < array->n_children + 1; ++i) {
+        free(children[i]);
+    }
+
+    free(children);
 }
 
 void ArrowAdapter::arrow_schema_remove_at_index(
@@ -1899,11 +1920,18 @@ void ArrowAdapter::arrow_schema_remove_at_index(
         int64_t idx = i <= index ? i : i - 1;
 
         if (i != index) {
+            schema->children[idx] = (ArrowSchema*)malloc(sizeof(ArrowSchema));
             ArrowSchemaMove(children[i], schema->children[idx]);
         } else {
             schema->release(children[i]);
         }
     }
+
+    for (int64_t i = 0; i < schema->n_children + 1; ++i) {
+        free(children[i]);
+    }
+
+    free(children);
 }
 
 }  // namespace tiledbsoma
