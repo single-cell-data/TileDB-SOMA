@@ -111,6 +111,7 @@ jobs:
   # File a bug report if anything fails, but don't file tickets for manual runs
   # -- only for scheduled ones.
   create_issue_on_fail:
+    runs-on: ubuntu-24.04
     needs: [ci]
     if: (failure() || cancelled()) && github.event_name != 'workflow_dispatch'
     steps:
