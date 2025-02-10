@@ -118,8 +118,6 @@ std::shared_ptr<SOMADataFrame> SOMAMeasurement::var(
             (std::filesystem::path(uri()) / "var").string(),
             OpenMode::read,
             ctx(),
-            column_names,
-            result_order,
             timestamp());
     }
     return var_;

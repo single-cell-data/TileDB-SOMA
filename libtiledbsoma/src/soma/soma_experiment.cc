@@ -90,8 +90,6 @@ std::shared_ptr<SOMADataFrame> SOMAExperiment::obs(
             (std::filesystem::path(uri()) / "obs").string(),
             OpenMode::read,
             ctx(),
-            column_names,
-            result_order,
             timestamp());
     }
     return obs_;

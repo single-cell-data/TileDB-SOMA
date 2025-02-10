@@ -187,7 +187,7 @@ std::shared_ptr<SOMADataFrame> SOMACollection::add_new_dataframe(
     // unique_ptr because we place the SOMA object into the `children_` cache
     // in addition to returning the SOMA object to the user.
     std::shared_ptr<SOMADataFrame> member = SOMADataFrame::open(
-        uri, OpenMode::read, ctx, column_names, result_order, timestamp);
+        uri, OpenMode::read, ctx, timestamp);
     this->set(std::string(uri), uri_type, std::string(key), "SOMAArray");
     children_[std::string(key)] = member;
     return member;
@@ -221,7 +221,7 @@ std::shared_ptr<SOMADenseNDArray> SOMACollection::add_new_dense_ndarray(
     // unique_ptr because we place the SOMA object into the `children_` cache
     // in addition to returning the SOMA object to the user.
     std::shared_ptr<SOMADenseNDArray> member = SOMADenseNDArray::open(
-        uri, OpenMode::read, ctx, column_names, result_order, timestamp);
+        uri, OpenMode::read, ctx, timestamp);
     this->set(std::string(uri), uri_type, std::string(key), "SOMAArray");
     children_[std::string(key)] = member;
     return member;
@@ -255,7 +255,7 @@ std::shared_ptr<SOMASparseNDArray> SOMACollection::add_new_sparse_ndarray(
     // unique_ptr because we place the SOMA object into the `children_` cache
     // in addition to returning the SOMA object to the user.
     std::shared_ptr<SOMASparseNDArray> member = SOMASparseNDArray::open(
-        uri, OpenMode::read, ctx, column_names, result_order, timestamp);
+        uri, OpenMode::read, ctx, timestamp);
     this->set(std::string(uri), uri_type, std::string(key), "SOMAArray");
     children_[std::string(key)] = member;
     return member;
