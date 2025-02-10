@@ -8,7 +8,7 @@ import scanpy as sc
 import tiledbsoma
 import tiledbsoma.io
 
-from .util import util_make_uri
+from .util import util_make_uri, util_tear_down_uri
 
 if os.getenv("TILEDB_REST_UNITTEST_TOKEN") is None:
     pytest.skip(
@@ -73,3 +73,5 @@ def test_basic_append(conftest_context, conftest_namespace, conftest_default_s3_
         assert exp.obs.count == 5400
         assert exp.ms["RNA"].var.count == 32738
         assert exp.ms["RNA"].X["data"].shape == (5400, 32738)
+
+    util_tear_down_uri(readback_uri)
