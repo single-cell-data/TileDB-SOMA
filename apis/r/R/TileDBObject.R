@@ -29,7 +29,8 @@ TileDBObject <- R6::R6Class(
         ), call. = FALSE)
       }
       if (missing(uri)) stop("Must specify a `uri`", call. = FALSE)
-      private$tiledb_uri <- TileDBURI$new(uri)
+      # private$tiledb_uri <- TileDBURI$new(uri)
+      private$tiledb_uri <- uri
 
       # Set platform config
       platform_config <- platform_config %||% PlatformConfig$new()
@@ -195,7 +196,7 @@ TileDBObject <- R6::R6Class(
     #' The URI of the TileDB object.
     uri = function(value) {
       if (missing(value)) {
-        return(private$tiledb_uri$uri)
+        return(private$tiledb_uri)
       }
       stop(sprintf("'%s' is a read-only field.", "uri"), call. = FALSE)
     },
