@@ -39,7 +39,6 @@ Imports:
     utils,
     fs,
     glue,
-    urltools,
     Rcpp,
     data.table,
     spdl,
