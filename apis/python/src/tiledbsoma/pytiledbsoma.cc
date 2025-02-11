@@ -31,6 +31,8 @@ void load_query_condition(py::module&);
 void load_reindexer(py::module&);
 void load_soma_vfs(py::module&);
 void load_managed_query(py::module&);
+void load_fastercsx(py::module&);
+void load_transformers(py::module&);
 
 PYBIND11_MODULE(pytiledbsoma, m) {
     py::register_exception<TileDBSOMAError>(m, "SOMAError");
@@ -173,6 +175,8 @@ PYBIND11_MODULE(pytiledbsoma, m) {
     load_reindexer(m);
     load_soma_vfs(m);
     load_managed_query(m);
+    load_fastercsx(m);
+    load_transformers(m);
 }
 
 };  // namespace libtiledbsomacpp
