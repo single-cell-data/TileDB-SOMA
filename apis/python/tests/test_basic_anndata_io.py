@@ -742,10 +742,14 @@ def test_null_obs(conftest_pbmc_small, tmp_path: Path):
     # https://github.com/single-cell-data/TileDB-SOMA/issues/3685.
     # The TL;DR is that:
     # * If one is not careful, it type-infers as categorical-of-double.
-    # * If one is verycareful, it can be made to type-infer as categorical-of-string.
+    # * If one is very careful, it can be made to type-infer as categorical-of-string.
     # * The latter case is by far the most common case, and we must bias toward it.
-    conftest_pbmc_small.obs["empty_categorical_all"] = pd.Categorical(
+    conftest_pbmc_small.obs["nan_categorical_all"] = pd.Categorical(
         [np.nan] * conftest_pbmc_small.n_obs,
+        dtype=pd.CategoricalDtype(categories=[], ordered=False),
+    )
+    conftest_pbmc_small.obs["none_categorical_all"] = pd.Categorical(
+        [None] * conftest_pbmc_small.n_obs,
         dtype=pd.CategoricalDtype(categories=[], ordered=False),
     )
     conftest_pbmc_small.obs["empty_extension_all"] = pd.Series(
@@ -775,13 +779,15 @@ def test_null_obs(conftest_pbmc_small, tmp_path: Path):
         getter = exp.obs.schema.field
 
         # Explicitly check columns created above
-        assert getter("empty_categorical_all").nullable
+        assert getter("nan_categorical_all").nullable
+        assert getter("none_categorical_all").nullable
         assert getter("empty_categorical_partial").nullable
         assert getter("empty_extension_all").nullable
         assert getter("empty_extension_partial").nullable
 
         # https://github.com/single-cell-data/TileDB-SOMA/issues/3685.
-        assert getter("empty_categorical_all").type.value_type == pa.string()
+        assert getter("nan_categorical_all").type.value_type == pa.string()
+        assert getter("none_categorical_all").type.value_type == pa.string()
 
         # For every column in the data frame ensure that `isnullable` reflects
         # he null-ness of the Pandas data frame
