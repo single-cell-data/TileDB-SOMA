@@ -320,9 +320,9 @@ class GeometryDataFrame(SpatialDataFrame, somacore.GeometryDataFrame):
 
     @property
     def count(self) -> int:
-        """Returns the number of rows in the dataframe."""
+        """Returns the number of rows in the geometry dataframe."""
         self._check_open_read()
-        # if is it in read open mode, then it is a PointCloudDataFrameWrapper
+        # if is it in read open mode, then it is a GeometryDataFrameWrapper
         return cast(GeometryDataFrameWrapper, self._handle).count
 
     def read(
@@ -476,10 +476,12 @@ class GeometryDataFrame(SpatialDataFrame, somacore.GeometryDataFrame):
         )
 
         for batch in values.to_batches():
-            pipeline = clib.TransformerPipeline(batch)
-            pipeline = pipeline.transform(outline_transformer)
-            data = pipeline.asTable()
-            self.write(data, platform_config=platform_config)
+            self.write(
+                clib.TransformerPipeline(batch)
+                .transform(outline_transformer)
+                .asTable(),
+                platform_config=platform_config,
+            )
 
         return self
 
