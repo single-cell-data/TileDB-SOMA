@@ -17,7 +17,10 @@ from typing_extensions import Self
 
 from tiledbsoma._tdb_handles import GeometryDataFrameWrapper
 from tiledbsoma.options._soma_tiledb_context import _validate_soma_tiledb_context
-from tiledbsoma.options._tiledb_create_write_options import TileDBCreateOptions, TileDBWriteOptions
+from tiledbsoma.options._tiledb_create_write_options import (
+    TileDBCreateOptions,
+    TileDBWriteOptions,
+)
 
 from . import _arrow_types, _util
 from . import pytiledbsoma as clib
@@ -314,7 +317,7 @@ class GeometryDataFrame(SpatialDataFrame, somacore.GeometryDataFrame):
     def __len__(self) -> int:
         """Returns the number of rows in the geometry dataframe."""
         return self.count
-    
+
     @property
     def count(self) -> int:
         """Returns the number of rows in the dataframe."""
@@ -460,16 +463,17 @@ class GeometryDataFrame(SpatialDataFrame, somacore.GeometryDataFrame):
             clib_dataframe.consolidate_and_vacuum()
 
         return self
-    
 
     # Write helpers with automatic transformations
-    def from_outlines(       
+    def from_outlines(
         self,
         values: Union[pa.RecordBatch, pa.Table],
         *,
         platform_config: options.PlatformConfig | None = None,
     ) -> Self:
-        outline_transformer = clib.OutlineTransformer(coordinate_space_to_json(self._coord_space))
+        outline_transformer = clib.OutlineTransformer(
+            coordinate_space_to_json(self._coord_space)
+        )
 
         for batch in values.to_batches():
             pipeline = clib.TransformerPipeline(batch)
@@ -478,8 +482,6 @@ class GeometryDataFrame(SpatialDataFrame, somacore.GeometryDataFrame):
             self.write(data, platform_config=platform_config)
 
         return self
-
-        
 
     # Metadata operations
 
