@@ -1214,16 +1214,21 @@ class ArrowAdapter {
         }
     }
 
-    static void arrow_array_insert_at_index(
-        ArrowArray* parent_array, ArrowArray* child_array, int64_t index);
+    static std::unique_ptr<ArrowArray> arrow_array_insert_at_index(
+        std::unique_ptr<ArrowArray> parent_array,
+        std::vector<std::unique_ptr<ArrowArray>> child_arrays,
+        int64_t index);
 
-    static void arrow_schema_insert_at_index(
-        ArrowSchema* parent_schema, ArrowSchema* child_schema, int64_t index);
+    static std::unique_ptr<ArrowSchema> arrow_schema_insert_at_index(
+        std::unique_ptr<ArrowSchema> parent_schema,
+        std::vector<std::unique_ptr<ArrowSchema>> child_schemas,
+        int64_t index);
 
-    static void arrow_array_remove_at_index(ArrowArray* array, int64_t index);
+    static std::unique_ptr<ArrowArray> arrow_array_remove_at_index(
+        std::unique_ptr<ArrowArray> array, int64_t index);
 
-    static void arrow_schema_remove_at_index(
-        ArrowSchema* schema, int64_t index);
+    static std::unique_ptr<ArrowSchema> arrow_schema_remove_at_index(
+        std::unique_ptr<ArrowSchema> schema, int64_t index);
 
    private:
     static std::pair<const void*, std::size_t> _get_data_and_length(
