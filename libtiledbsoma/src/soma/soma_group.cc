@@ -145,7 +145,9 @@ void SOMAGroup::fill_caches() {
             default:
                 throw TileDBSOMAError("Saw invalid TileDB type");
         }
-        members_map_[mem.name().value()] = SOMAGroupEntry(mem.uri(), soma_type);
+        std::string key = mem.name().has_value() ? mem.name().value() :
+                                                   mem.uri();
+        members_map_[key] = SOMAGroupEntry(mem.uri(), soma_type);
     }
 }
 
