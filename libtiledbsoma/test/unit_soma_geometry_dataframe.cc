@@ -40,20 +40,6 @@ TEST_CASE("SOMAGeometryDataFrame: basic", "[SOMAGeometryDataFrame]") {
               .string_lo = "N/A",
               .string_hi = "N/A"})});
 
-    std::vector<helper::DimInfo> spatial_dim_infos(
-        {helper::DimInfo(
-             {.name = "x",
-              .tiledb_datatype = TILEDB_FLOAT64,
-              .dim_max = 200,
-              .string_lo = "N/A",
-              .string_hi = "N/A"}),
-         helper::DimInfo(
-             {.name = "y",
-              .tiledb_datatype = TILEDB_FLOAT64,
-              .dim_max = 100,
-              .string_lo = "N/A",
-              .string_hi = "N/A"})});
-
     std::vector<helper::AttrInfo> attr_infos({helper::AttrInfo(
         {.name = "quality", .tiledb_datatype = TILEDB_FLOAT64})});
 
@@ -62,17 +48,14 @@ TEST_CASE("SOMAGeometryDataFrame: basic", "[SOMAGeometryDataFrame]") {
 
     // Create the geometry dataframe.
     auto [schema, index_columns] =
-        helper::create_arrow_schema_and_index_columns(dim_infos, attr_infos);
-    auto spatial_columns = helper::create_column_index_info(spatial_dim_infos);
+        helper::create_arrow_schema_and_index_columns(
+            dim_infos, attr_infos, coord_space);
 
     SOMAGeometryDataFrame::create(
         uri,
         std::move(schema),
         ArrowTable(
             std::move(index_columns.first), std::move(index_columns.second)),
-        ArrowTable(
-            std::move(spatial_columns.first),
-            std::move(spatial_columns.second)),
         coord_space,
         ctx,
         platform_config,
@@ -98,8 +81,6 @@ TEST_CASE("SOMAGeometryDataFrame: basic", "[SOMAGeometryDataFrame]") {
     std::vector<std::string> expected_index_column_names = {
         dim_infos[0].name, dim_infos[1].name};
 
-    std::vector<std::string> expected_spatial_column_names = {
-        spatial_dim_infos[0].name, spatial_dim_infos[1].name};
     REQUIRE(soma_geometry->index_column_names() == expected_index_column_names);
     REQUIRE(soma_geometry->coordinate_space() == coord_space);
     REQUIRE(soma_geometry->nnz() == 0);
@@ -130,35 +111,18 @@ TEST_CASE("SOMAGeometryDataFrame: Roundtrip", "[SOMAGeometryDataFrame]") {
               .string_lo = "N/A",
               .string_hi = "N/A"})});
 
-    std::vector<helper::DimInfo> spatial_dim_infos(
-        {helper::DimInfo(
-             {.name = "x",
-              .tiledb_datatype = TILEDB_FLOAT64,
-              .dim_max = 200,
-              .string_lo = "N/A",
-              .string_hi = "N/A"}),
-         helper::DimInfo(
-             {.name = "y",
-              .tiledb_datatype = TILEDB_FLOAT64,
-              .dim_max = 100,
-              .string_lo = "N/A",
-              .string_hi = "N/A"})});
-
     std::vector<helper::AttrInfo> attr_infos({helper::AttrInfo(
         {.name = "quality", .tiledb_datatype = TILEDB_FLOAT64})});
 
     auto [schema, index_columns] =
-        helper::create_arrow_schema_and_index_columns(dim_infos, attr_infos);
-    auto spatial_columns = helper::create_column_index_info(spatial_dim_infos);
+        helper::create_arrow_schema_and_index_columns(
+            dim_infos, attr_infos, coord_space);
 
     SOMAGeometryDataFrame::create(
         uri,
         std::move(schema),
         ArrowTable(
             std::move(index_columns.first), std::move(index_columns.second)),
-        ArrowTable(
-            std::move(spatial_columns.first),
-            std::move(spatial_columns.second)),
         coord_space,
         ctx,
         platform_config,
@@ -263,25 +227,13 @@ TEST_CASE("SOMAGeometryDataFrame: Roundtrip", "[SOMAGeometryDataFrame]") {
     while (auto batch = soma_geometry->read_next()) {
         auto arrbuf = batch.value();
         auto d0span = arrbuf->at(dim_infos[0].name)->data<int64_t>();
-        auto d1span = arrbuf
-                          ->at(
-                              SOMA_GEOMETRY_DIMENSION_PREFIX +
-                              spatial_dim_infos[0].name + "__min")
+        auto d1span = arrbuf->at(SOMA_GEOMETRY_DIMENSION_PREFIX + "x__min")
                           ->data<double_t>();
-        auto d2span = arrbuf
-                          ->at(
-                              SOMA_GEOMETRY_DIMENSION_PREFIX +
-                              spatial_dim_infos[0].name + "__max")
+        auto d2span = arrbuf->at(SOMA_GEOMETRY_DIMENSION_PREFIX + "x__max")
                           ->data<double_t>();
-        auto d3span = arrbuf
-                          ->at(
-                              SOMA_GEOMETRY_DIMENSION_PREFIX +
-                              spatial_dim_infos[1].name + "__min")
+        auto d3span = arrbuf->at(SOMA_GEOMETRY_DIMENSION_PREFIX + "y__min")
                           ->data<double_t>();
-        auto d4span = arrbuf
-                          ->at(
-                              SOMA_GEOMETRY_DIMENSION_PREFIX +
-                              spatial_dim_infos[1].name + "__max")
+        auto d4span = arrbuf->at(SOMA_GEOMETRY_DIMENSION_PREFIX + "y__max")
                           ->data<double_t>();
         auto wkbs = arrbuf->at(dim_infos[1].name)->binaries();
         auto a0span = arrbuf->at(attr_infos[0].name)->data<double>();

@@ -26,22 +26,46 @@ std::map<uint32_t, SOMAColumn::Factory> SOMAColumn::deserialiser_map = {
      SOMAGeometryColumn::deserialize}};
 
 std::vector<std::shared_ptr<SOMAColumn>> SOMAColumn::deserialize(
-    const nlohmann::json& soma_schema_columns,
     const Context& ctx,
-    const Array& array) {
+    const Array& array,
+    const std::map<std::string, tiledbsoma::MetadataValue>& metadata) {
     std::vector<std::shared_ptr<SOMAColumn>> columns;
+
+    nlohmann::json soma_schema_columns = nlohmann::json::array();
+
+    if (metadata.contains(TILEDB_SOMA_SCHEMA_KEY)) {
+        auto soma_schema_extension_raw = metadata.at(TILEDB_SOMA_SCHEMA_KEY);
+        auto data = static_cast<const char*>(
+            std::get<2>(soma_schema_extension_raw));
+        auto soma_schema_extension = data != nullptr ?
+                                         nlohmann::json::parse(std::string(
+                                             data,
+                                             std::get<1>(
+                                                 soma_schema_extension_raw))) :
+                                         nlohmann::json::object();
+
+        if (!soma_schema_extension.contains(TILEDB_SOMA_SCHEMA_COL_KEY)) {
+            throw TileDBSOMAError(std::format(
+                "[SOMAArray][fill_columns] Missing '{}' key from '{}'",
+                TILEDB_SOMA_SCHEMA_COL_KEY,
+                TILEDB_SOMA_SCHEMA_KEY));
+        }
+
+        soma_schema_columns = soma_schema_extension.value(
+            TILEDB_SOMA_SCHEMA_COL_KEY, nlohmann::json::array());
+    }
 
     if (!soma_schema_columns.empty()) {
         for (auto& column : soma_schema_columns) {
             auto type = column[TILEDB_SOMA_SCHEMA_COL_TYPE_KEY]
                             .template get<uint32_t>();
 
-            auto col = deserialiser_map[type](column, ctx, array);
+            auto col = deserialiser_map[type](column, ctx, array, metadata);
 
             if (col) {
                 // Deserialized column can be null in case the array is modified
                 // and the column no longer exists.
-                columns.push_back(deserialiser_map[type](column, ctx, array));
+                columns.push_back(col);
             }
         }
 

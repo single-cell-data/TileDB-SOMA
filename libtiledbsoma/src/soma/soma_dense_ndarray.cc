@@ -11,6 +11,7 @@
  *   This file defines the SOMADenseNDArray class.
  */
 #include "soma_dense_ndarray.h"
+#include "soma_coordinates.h"
 
 namespace tiledbsoma {
 using namespace tiledb;
@@ -65,6 +66,7 @@ void SOMADenseNDArray::create(
             ctx->tiledb_ctx(),
             schema,
             index_columns,
+            std::nullopt,
             "SOMADenseNDArray",
             false,
             platform_config);

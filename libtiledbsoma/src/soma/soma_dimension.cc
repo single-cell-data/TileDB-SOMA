@@ -17,7 +17,10 @@
 namespace tiledbsoma {
 
 std::shared_ptr<SOMAColumn> SOMADimension::deserialize(
-    const nlohmann::json& soma_schema, const Context&, const Array& array) {
+    const nlohmann::json& soma_schema,
+    const Context&,
+    const Array& array,
+    const std::map<std::string, tiledbsoma::MetadataValue>&) {
     if (!soma_schema.contains(TILEDB_SOMA_SCHEMA_COL_DIM_KEY)) {
         throw TileDBSOMAError(
             "[SOMADimension][deserialize] Missing required field "
@@ -949,8 +952,10 @@ std::any SOMADimension::_core_current_domain_slot(NDRectangle& ndrect) const {
     }
 }
 
-ArrowArray* SOMADimension::arrow_domain_slot(
+std::pair<ArrowArray*, ArrowSchema*> SOMADimension::arrow_domain_slot(
     const SOMAContext& ctx, Array& array, enum Domainish kind) const {
+    ArrowArray* arrow_array;
+
     switch (domain_type().value()) {
         case TILEDB_DATETIME_YEAR:
         case TILEDB_DATETIME_MONTH:
@@ -975,39 +980,50 @@ ArrowArray* SOMADimension::arrow_domain_slot(
         case TILEDB_TIME_FS:
         case TILEDB_TIME_AS:
         case TILEDB_INT64:
-            return ArrowAdapter::make_arrow_array_child(
+            arrow_array = ArrowAdapter::make_arrow_array_child(
                 domain_slot<int64_t>(ctx, array, kind));
+            break;
         case TILEDB_UINT64:
-            return ArrowAdapter::make_arrow_array_child(
+            arrow_array = ArrowAdapter::make_arrow_array_child(
                 domain_slot<uint64_t>(ctx, array, kind));
+            break;
         case TILEDB_INT32:
-            return ArrowAdapter::make_arrow_array_child(
+            arrow_array = ArrowAdapter::make_arrow_array_child(
                 domain_slot<int32_t>(ctx, array, kind));
+            break;
         case TILEDB_UINT32:
-            return ArrowAdapter::make_arrow_array_child(
+            arrow_array = ArrowAdapter::make_arrow_array_child(
                 domain_slot<uint32_t>(ctx, array, kind));
+            break;
         case TILEDB_INT16:
-            return ArrowAdapter::make_arrow_array_child(
+            arrow_array = ArrowAdapter::make_arrow_array_child(
                 domain_slot<int16_t>(ctx, array, kind));
+            break;
         case TILEDB_UINT16:
-            return ArrowAdapter::make_arrow_array_child(
+            arrow_array = ArrowAdapter::make_arrow_array_child(
                 domain_slot<uint16_t>(ctx, array, kind));
+            break;
         case TILEDB_INT8:
-            return ArrowAdapter::make_arrow_array_child(
+            arrow_array = ArrowAdapter::make_arrow_array_child(
                 domain_slot<int8_t>(ctx, array, kind));
+            break;
         case TILEDB_UINT8:
-            return ArrowAdapter::make_arrow_array_child(
+            arrow_array = ArrowAdapter::make_arrow_array_child(
                 domain_slot<uint8_t>(ctx, array, kind));
+            break;
         case TILEDB_FLOAT64:
-            return ArrowAdapter::make_arrow_array_child(
+            arrow_array = ArrowAdapter::make_arrow_array_child(
                 domain_slot<double>(ctx, array, kind));
+            break;
         case TILEDB_FLOAT32:
-            return ArrowAdapter::make_arrow_array_child(
+            arrow_array = ArrowAdapter::make_arrow_array_child(
                 domain_slot<float>(ctx, array, kind));
+            break;
         case TILEDB_STRING_ASCII:
         case TILEDB_STRING_UTF8:
-            return ArrowAdapter::make_arrow_array_child_string(
+            arrow_array = ArrowAdapter::make_arrow_array_child_string(
                 domain_slot<std::string>(ctx, array, kind));
+            break;
         default:
             throw TileDBSOMAError(std::format(
                 "[SOMADimension][arrow_domain_slot] dim {} has unhandled "
@@ -1016,9 +1032,12 @@ ArrowArray* SOMADimension::arrow_domain_slot(
                 name(),
                 tiledb::impl::type_to_str(domain_type().value())));
     }
+
+    return std::make_pair(arrow_array, arrow_schema_slot(ctx, array));
 }
 
-ArrowSchema* SOMADimension::arrow_schema_slot(const SOMAContext&, Array&) {
+ArrowSchema* SOMADimension::arrow_schema_slot(
+    const SOMAContext&, Array&) const {
     return ArrowAdapter::arrow_schema_from_tiledb_dimension(dimension)
         .release();
 }

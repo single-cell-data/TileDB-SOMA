@@ -17,7 +17,8 @@
 namespace helper {
 
 static std::unique_ptr<ArrowArray> _create_index_cols_info_array(
-    const std::vector<DimInfo>& dim_infos);
+    const std::vector<DimInfo>& dim_infos,
+    std::optional<SOMACoordinateSpace> coordinate_space = std::nullopt);
 
 // Core PR: https://github.com/TileDB-Inc/TileDB/pull/5303
 bool have_dense_current_domain_support() {
@@ -64,7 +65,8 @@ bool have_dense_current_domain_support() {
 std::pair<std::unique_ptr<ArrowSchema>, ArrowTable>
 create_arrow_schema_and_index_columns(
     const std::vector<DimInfo>& dim_infos,
-    const std::vector<AttrInfo>& attr_infos) {
+    const std::vector<AttrInfo>& attr_infos,
+    std::optional<SOMACoordinateSpace> coordinate_space) {
     int ndim = dim_infos.size();
     int nattr = attr_infos.size();
     int nfield = ndim + nattr;
@@ -84,8 +86,10 @@ create_arrow_schema_and_index_columns(
     auto arrow_schema = ArrowAdapter::make_arrow_schema(
         names, tiledb_datatypes);
 
-    auto index_cols_info_schema = create_index_cols_info_schema(dim_infos);
-    auto index_cols_info_array = _create_index_cols_info_array(dim_infos);
+    auto index_cols_info_schema = create_index_cols_info_schema(
+        dim_infos, coordinate_space);
+    auto index_cols_info_array = _create_index_cols_info_array(
+        dim_infos, coordinate_space);
 
     return std::pair(
         std::move(arrow_schema),
@@ -112,7 +116,8 @@ ArrowTable create_column_index_info(const std::vector<DimInfo>& dim_infos) {
 }
 
 std::unique_ptr<ArrowSchema> create_index_cols_info_schema(
-    const std::vector<DimInfo>& dim_infos) {
+    const std::vector<DimInfo>& dim_infos,
+    std::optional<SOMACoordinateSpace> coordinate_space) {
     auto ndim = dim_infos.size();
 
     std::vector<std::string> names(ndim);
@@ -127,18 +132,31 @@ std::unique_ptr<ArrowSchema> create_index_cols_info_schema(
     auto schema = ArrowAdapter::make_arrow_schema(names, tiledb_datatypes);
 
     for (size_t i = 0; i < static_cast<size_t>(schema->n_children); ++i) {
-        if (strcmp(schema->children[i]->name, "soma_geometry")) {
-            nanoarrow::UniqueBuffer buffer;
-            ArrowMetadataBuilderInit(buffer.get(), nullptr);
-            ArrowMetadataBuilderAppend(
-                buffer.get(),
-                ArrowCharView("dtype"),
-                ArrowCharView(
-                    dim_infos[i].tiledb_datatype == TILEDB_GEOM_WKB ? "WKB" :
-                                                                      "WKT"));
-            ArrowSchemaSetMetadata(
-                schema->children[i],
-                std::string((char*)buffer->data, buffer->size_bytes).c_str());
+        if (strcmp(schema->children[i]->name, "soma_geometry") == 0) {
+            // Recreate schema for WKB domain (struct of floats)
+            auto geometry_schema = ArrowAdapter::make_arrow_schema_parent(
+                coordinate_space->size(), "soma_geometry");
+            for (size_t j = 0; j < coordinate_space->size(); ++j) {
+                ArrowSchema* dim_schema = (ArrowSchema*)malloc(
+                    sizeof(ArrowSchema));
+                auto arrow_type_name = ArrowAdapter::tdb_to_arrow_type(
+                    TILEDB_FLOAT64);
+                dim_schema->name = strdup(
+                    coordinate_space->axis(j).name.c_str());
+                dim_schema->format = strdup(arrow_type_name.c_str());
+                dim_schema->metadata = nullptr;
+                dim_schema->flags = 0;
+                dim_schema->n_children = 0;      // leaf node
+                dim_schema->children = nullptr;  // leaf node
+                dim_schema->dictionary = nullptr;
+                dim_schema->release = &ArrowAdapter::release_schema;
+                dim_schema->private_data = nullptr;
+
+                geometry_schema->children[j] = dim_schema;
+            }
+
+            schema->release(schema->children[i]);
+            schema->children[i] = geometry_schema.release();
         }
     }
 
@@ -146,7 +164,8 @@ std::unique_ptr<ArrowSchema> create_index_cols_info_schema(
 }
 
 static std::unique_ptr<ArrowArray> _create_index_cols_info_array(
-    const std::vector<DimInfo>& dim_infos) {
+    const std::vector<DimInfo>& dim_infos,
+    std::optional<SOMACoordinateSpace> coordinate_space) {
     int ndim = dim_infos.size();
 
     auto index_cols_info_array = ArrowAdapter::make_arrow_array_parent(ndim);
@@ -179,7 +198,23 @@ static std::unique_ptr<ArrowArray> _create_index_cols_info_array(
         } else if (info.tiledb_datatype == TILEDB_GEOM_WKB) {
             // No domain can be set for WKB. The domain will be set to the
             // individual spatial axes.
-            dim_array = ArrowAdapter::make_arrow_array_child_binary();
+            dim_array = ArrowAdapter::make_arrow_array_parent(
+                            coordinate_space->size())
+                            .release();
+            dim_array->n_buffers = 1;
+            dim_array->buffers = (const void**)malloc(sizeof(void*));
+            dim_array->buffers[0] = nullptr;
+            dim_array->length = 5;
+            for (size_t j = 0; j < coordinate_space->size(); ++j) {
+                std::vector<double_t> dom(
+                    {0,
+                     (double_t)CORE_DOMAIN_MAX,
+                     1,
+                     0,
+                     (double_t)info.dim_max});
+                dim_array->children[j] = ArrowAdapter::make_arrow_array_child(
+                    dom);
+            }
         } else if (info.tiledb_datatype == TILEDB_FLOAT64) {
             // domain big; current_domain small
             std::vector<double_t> dom(

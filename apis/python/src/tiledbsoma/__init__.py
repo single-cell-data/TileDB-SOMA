@@ -175,6 +175,7 @@ from ._general_utilities import (
     get_storage_engine,
     show_package_versions,
 )
+from ._geometry_dataframe import GeometryDataFrame
 from ._indexer import IntIndexer, tiledbsoma_build_index
 from ._measurement import Measurement
 from ._multiscale_image import MultiscaleImage
@@ -209,6 +210,7 @@ __all__ = [
     "DoesNotExistError",
     "Experiment",
     "ExperimentAxisQuery",
+    "GeometryDataFrame",
     "get_implementation_version",
     "get_implementation",
     "get_SOMA_version",

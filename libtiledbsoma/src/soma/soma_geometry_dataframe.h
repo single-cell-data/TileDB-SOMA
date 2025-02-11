@@ -49,7 +49,6 @@ class SOMAGeometryDataFrame : virtual public SOMAArray {
         std::string_view uri,
         const std::unique_ptr<ArrowSchema>& schema,
         const ArrowTable& index_columns,
-        const ArrowTable& spatial_columns,
         const SOMACoordinateSpace& coordinate_space,
         std::shared_ptr<SOMAContext> ctx,
         PlatformConfig platform_config = PlatformConfig(),

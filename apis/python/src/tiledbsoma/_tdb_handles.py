@@ -45,6 +45,7 @@ RawHandle = Union[
     clib.SOMAArray,
     clib.SOMADataFrame,
     clib.SOMAPointCloudDataFrame,
+    clib.SOMAGeometryDataFrame,
     clib.SOMASparseNDArray,
     clib.SOMADenseNDArray,
     clib.SOMAGroup,
@@ -77,6 +78,7 @@ def open(
         "somagroup": clib.SOMAGroup.open,
         "somadataframe": clib.SOMADataFrame.open,
         "somapointclouddataframe": clib.SOMAPointCloudDataFrame.open,
+        "somageometrydataframe": clib.SOMAGeometryDataFrame.open,
         "somadensendarray": clib.SOMADenseNDArray.open,
         "somasparsendarray": clib.SOMASparseNDArray.open,
         "somacollection": clib.SOMACollection.open,
@@ -105,6 +107,7 @@ def open(
     _type_to_class = {
         "somadataframe": DataFrameWrapper,
         "somapointclouddataframe": PointCloudDataFrameWrapper,
+        "somageometrydataframe": GeometryDataFrameWrapper,
         "somadensendarray": DenseNDArrayWrapper,
         "somasparsendarray": SparseNDArrayWrapper,
         "somacollection": CollectionWrapper,
@@ -629,6 +632,19 @@ class PointCloudDataFrameWrapper(SOMAArrayWrapper[clib.SOMAPointCloudDataFrame])
     """Wrapper around a Pybind11 SOMAPointCloudDataFrame handle."""
 
     _WRAPPED_TYPE = clib.SOMAPointCloudDataFrame
+
+    @property
+    def count(self) -> int:
+        return int(self._handle.count)
+
+    def write(self, values: pa.RecordBatch) -> None:
+        self._handle.write(values)
+
+
+class GeometryDataFrameWrapper(SOMAArrayWrapper[clib.SOMAGeometryDataFrame]):
+    """Wrapper around a Pybind11 SOMAGeometryDataFrame handle."""
+
+    _WRAPPED_TYPE = clib.SOMAGeometryDataFrame
 
     @property
     def count(self) -> int:

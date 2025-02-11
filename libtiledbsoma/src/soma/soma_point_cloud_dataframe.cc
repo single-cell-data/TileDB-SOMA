@@ -36,6 +36,7 @@ void SOMAPointCloudDataFrame::create(
             ctx->tiledb_ctx(),
             schema,
             index_columns,
+            std::make_optional(coordinate_space),
             "SOMAPointCloudDataFrame",
             true,
             platform_config);

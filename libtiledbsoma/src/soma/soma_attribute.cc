@@ -15,7 +15,10 @@
 
 namespace tiledbsoma {
 std::shared_ptr<SOMAColumn> SOMAAttribute::deserialize(
-    const nlohmann::json& soma_schema, const Context& ctx, const Array& array) {
+    const nlohmann::json& soma_schema,
+    const Context& ctx,
+    const Array& array,
+    const std::map<std::string, tiledbsoma::MetadataValue>&) {
     if (!soma_schema.contains(TILEDB_SOMA_SCHEMA_COL_ATTR_KEY)) {
         throw TileDBSOMAError(
             "[SOMAAttribute][deserialize] Missing required field "
@@ -136,7 +139,7 @@ std::any SOMAAttribute::_core_current_domain_slot(NDRectangle&) const {
         name()));
 }
 
-ArrowArray* SOMAAttribute::arrow_domain_slot(
+std::pair<ArrowArray*, ArrowSchema*> SOMAAttribute::arrow_domain_slot(
     const SOMAContext&, Array&, enum Domainish) const {
     throw TileDBSOMAError(std::format(
         "[SOMAAttribute][arrow_domain_slot] Column with name {} is not an "
@@ -145,7 +148,7 @@ ArrowArray* SOMAAttribute::arrow_domain_slot(
 }
 
 ArrowSchema* SOMAAttribute::arrow_schema_slot(
-    const SOMAContext& ctx, Array& array) {
+    const SOMAContext& ctx, Array& array) const {
     return ArrowAdapter::arrow_schema_from_tiledb_attribute(
                attribute, *ctx.tiledb_ctx(), array)
         .release();

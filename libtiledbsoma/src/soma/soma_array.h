@@ -624,8 +624,13 @@ class SOMAArray : public SOMAObject {
      * @return std::unique_ptr<ArrowSchema> Schema
      */
     std::unique_ptr<ArrowSchema> arrow_schema() const {
-        return ArrowAdapter::arrow_schema_from_tiledb_array(
-            ctx_->tiledb_ctx(), arr_);
+        auto schema = ArrowAdapter::make_arrow_schema_parent(columns_.size());
+
+        for (size_t i = 0; i < columns_.size(); ++i) {
+            schema->children[i] = columns_[i]->arrow_schema_slot(*ctx_, *arr_);
+        }
+
+        return schema;
     }
 
     /**

@@ -15,7 +15,10 @@
 
 namespace tiledbsoma {
 std::shared_ptr<SOMAColumn> SOMAGeometryColumn::deserialize(
-    const nlohmann::json& soma_schema, const Context&, const Array& array) {
+    const nlohmann::json& soma_schema,
+    const Context&,
+    const Array& array,
+    const std::map<std::string, tiledbsoma::MetadataValue>& metadata) {
     if (!soma_schema.contains(TILEDB_SOMA_SCHEMA_COL_DIM_KEY)) {
         throw TileDBSOMAError(
             "[SOMAGeometryColumn][deserialize] Missing required field "
@@ -58,7 +61,19 @@ std::shared_ptr<SOMAColumn> SOMAGeometryColumn::deserialize(
 
     auto attribute = array.schema().attribute(attribute_names[0]);
 
-    return std::make_shared<SOMAGeometryColumn>(dimensions, attribute);
+    if (!metadata.contains(SOMA_COORDINATE_SPACE_KEY)) {
+        throw TileDBSOMAError(std::format(
+            "[SOMAGeometryColumn][deserialize] Missing required '{}' "
+            "metadata key.",
+            SOMA_COORDINATE_SPACE_KEY));
+    }
+
+    auto coordinate_space = std::apply(
+        SOMACoordinateSpace::from_metadata,
+        metadata.at(SOMA_COORDINATE_SPACE_KEY));
+
+    return std::make_shared<SOMAGeometryColumn>(
+        dimensions, attribute, coordinate_space);
 }
 
 std::shared_ptr<SOMAGeometryColumn> SOMAGeometryColumn::create(
@@ -66,6 +81,7 @@ std::shared_ptr<SOMAGeometryColumn> SOMAGeometryColumn::create(
     ArrowSchema* schema,
     ArrowSchema* spatial_schema,
     ArrowArray* spatial_array,
+    const SOMACoordinateSpace& coordinate_space,
     const std::string& soma_type,
     std::string_view type_metadata,
     PlatformConfig platform_config) {
@@ -74,7 +90,7 @@ std::shared_ptr<SOMAGeometryColumn> SOMAGeometryColumn::create(
         throw TileDBSOMAError(std::format(
             "[SOMAGeometryColumn] "
             "Unkwown type metadata for `{}`: "
-            "Expected 'WKB', got {}",
+            "Expected 'WKB', got '{}'",
             SOMA_GEOMETRY_COLUMN_NAME,
             type_metadata));
     }
@@ -107,7 +123,7 @@ std::shared_ptr<SOMAGeometryColumn> SOMAGeometryColumn::create(
         ctx, schema, type_metadata, platform_config);
 
     return std::make_shared<SOMAGeometryColumn>(
-        SOMAGeometryColumn(dims, attribute.first));
+        SOMAGeometryColumn(dims, attribute.first, coordinate_space));
 }
 
 void SOMAGeometryColumn::_set_dim_points(
@@ -464,13 +480,49 @@ std::any SOMAGeometryColumn::_core_current_domain_slot(
         std::make_pair(min, max));
 }
 
-ArrowArray* SOMAGeometryColumn::arrow_domain_slot(
+std::pair<ArrowArray*, ArrowSchema*> SOMAGeometryColumn::arrow_domain_slot(
     const SOMAContext& ctx, Array& array, enum Domainish kind) const {
     switch (domain_type().value()) {
-        case TILEDB_FLOAT64:
-            return ArrowAdapter::make_arrow_array_child_var(
-                domain_slot<std::vector<double_t>>(ctx, array, kind));
-            break;
+        case TILEDB_FLOAT64: {
+            auto parent_schema = ArrowAdapter::make_arrow_schema_parent(
+                TDB_DIM_PER_SPATIAL_AXIS, name());
+            auto parent_array = ArrowAdapter::make_arrow_array_parent(
+                TDB_DIM_PER_SPATIAL_AXIS);
+
+            parent_array->length = 2;
+            parent_array->n_buffers = 1;
+            parent_array->buffers = (const void**)malloc(sizeof(void*));
+            parent_array->buffers[0] = nullptr;
+
+            auto kind_domain = domain_slot<std::vector<double_t>>(
+                ctx, array, kind);
+
+            for (size_t i = 0; i < TDB_DIM_PER_SPATIAL_AXIS; ++i) {
+                // Generate coordinate space axie schema
+                auto child_schema = static_cast<ArrowSchema*>(
+                    malloc(sizeof(ArrowSchema)));
+                child_schema->format = strdup(
+                    ArrowAdapter::to_arrow_format(TILEDB_FLOAT64).data());
+                child_schema->name = strdup(
+                    coordinate_space.axis(i).name.c_str());
+                child_schema->metadata = nullptr;
+                child_schema->flags = 0;
+                child_schema->n_children = 0;
+                child_schema->children = nullptr;
+                child_schema->dictionary = nullptr;
+                child_schema->release = &ArrowAdapter::release_schema;
+                child_schema->private_data = nullptr;
+
+                parent_schema->children[i] = child_schema;
+
+                parent_array->children[i] =
+                    ArrowAdapter::make_arrow_array_child<double_t>(std::vector(
+                        {kind_domain.first[i], kind_domain.second[i]}));
+            }
+
+            return std::make_pair(
+                parent_array.release(), parent_schema.release());
+        } break;
         default:
             throw TileDBSOMAError(std::format(
                 "[SOMAGeometryColumn][arrow_domain_slot] dim {} has unhandled "
@@ -482,7 +534,7 @@ ArrowArray* SOMAGeometryColumn::arrow_domain_slot(
 }
 
 ArrowSchema* SOMAGeometryColumn::arrow_schema_slot(
-    const SOMAContext& ctx, Array& array) {
+    const SOMAContext& ctx, Array& array) const {
     return ArrowAdapter::arrow_schema_from_tiledb_attribute(
                attribute, *ctx.tiledb_ctx(), array)
         .release();
