@@ -237,11 +237,34 @@ def df_to_arrow(df: pd.DataFrame) -> pa.Table:
         #   anndata.obs['new_col'] = pd.Series(data=np.nan, dtype=np.dtype(str))
         # the dtype comes in to us via `tiledbsoma.io.from_anndata` not
         # as `pd.StringDtype()` but rather as `object`.
+        #
+        # Note: we're working around a subtle issue involving Pandas, and Arrow's
+        # from_pandas, and categoricals.
+        #
+        # * If you do this:
+        #     pd.Series(["a", "b", "c", "d"], dtype=pd.CategoricalDtype())
+        #   then you get Pandas categorical of string with no nulls -- as desired.
+        # * If you do this:
+        #     pd.Series(["a", "b", None, "d"], dtype=pd.CategoricalDtype())
+        #   or
+        #     pd.Series(["a", "b", np.nan, "d"], dtype=pd.CategoricalDtype())
+        #   then you get Pandas categorical of string, with some nulls -- as desired
+        # * If you do this:
+        #     pd.Series([None] * 4, dtype=pd.CategoricalDtype())
+        #   or
+        #     pd.Series([np.nan] * 4, dtype=pd.CategoricalDtype())
+        #   then you get Pandas categorical of double -- with NaN values -- not as desired.
         if df[key].isnull().all():
             if df[key].dtype.name == "object":
                 df[key] = pd.Series([None] * df.shape[0], dtype=pd.StringDtype())
             elif df[key].dtype.name == "category":
-                df[key] = pd.Series([None] * df.shape[0], dtype=pd.CategoricalDtype())
+                # This is a trick to avoid getting float64 value type in the Pandas categorical.
+                # That's the good news. The bad news is that pa.Table.from_pandas() of this
+                # will result in Arrow value-type of pa.null().  Part two, to deal with
+                # this, is below.
+                df[key] = pd.Series(
+                    ["X"] * df.shape[0], dtype=pd.CategoricalDtype()
+                ).cat.remove_categories(["X"])
 
     # For categoricals, it's possible to get
     #   TypeError: Object of type bool_ is not JSON serializable
@@ -281,9 +304,17 @@ def df_to_arrow(df: pd.DataFrame) -> pa.Table:
                 if old_index_type in [pa.int8(), pa.int16()]
                 else old_index_type
             )
+            # This is part two of what we need to do to get null-filled Pandas
+            # categorical-of-string conveyed to Arrow. An entirely null-filled
+            # Pandas categorical-of-string series, after py.Table.from_pandas(),
+            # will have type pa.null.
+            old_value_type = field.type.value_type
+            new_value_type = (
+                pa.large_string() if old_value_type == pa.null() else old_value_type
+            )
             new_map[field.name] = pa.dictionary(
                 new_index_type,
-                field.type.value_type,
+                new_value_type,
                 field.type.ordered,
             )
         else:
