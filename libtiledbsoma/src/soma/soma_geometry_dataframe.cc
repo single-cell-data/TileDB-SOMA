@@ -12,12 +12,10 @@
  */
 
 #include "soma_geometry_dataframe.h"
-#include "../geometry/geometry.h"
-#include "../geometry/operators/envelope.h"
-#include "../geometry/operators/io/write.h"
 #include "../utils/transformer.h"
 #include "../utils/util.h"
 #include "soma_geometry_column.h"
+#include "soma_transformers.h"
 
 #include <regex>
 #include <unordered_set>
@@ -110,12 +108,10 @@ uint64_t SOMAGeometryDataFrame::count() {
 void SOMAGeometryDataFrame::set_array_data(
     std::unique_ptr<ArrowSchema> arrow_schema,
     std::unique_ptr<ArrowArray> arrow_array) {
-    ArrowTable casted_data = transformer::TransformerPipeline(
+    ArrowTable casted_data = TransformerPipeline(
                                  std::move(arrow_array),
                                  std::move(arrow_schema))
-                                 .transform(
-                                     transformer::OutlineTransformer(),
-                                     coord_space_)
+                                 .transform(OutlineTransformer(coord_space_))
                                  .asTable();
 
     SOMAArray::set_array_data(
