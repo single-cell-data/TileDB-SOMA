@@ -14,34 +14,68 @@
  * transformations can be chained with using the TransformerPipeline.
  */
 
+#ifndef TRANSFORMER_H
+#define TRANSFORMER_H
+
 #include "arrow_adapter.h"
 
 #include <concepts>
 #include <functional>
 #include <vector>
 
-#ifndef SOMA_TRANSFORMER_H
-#define SOMA_TRANSFORMER_H
+namespace tiledbsoma {
 
-namespace tiledbsoma::transformer {
-class tiledbsoma::SOMACoordinateSpace;
-
-template <class... Ts>
 class Transformer {
    public:
-    virtual void apply(ArrowArray*, ArrowSchema*, Ts...) = 0;
+    virtual ~Transformer();
+
+    virtual ArrowTable apply(
+        std::unique_ptr<ArrowArray>, std::unique_ptr<ArrowSchema>) = 0;
 };
 
 class TransformerPipeline {
    public:
     TransformerPipeline(
         std::unique_ptr<ArrowArray> array, std::unique_ptr<ArrowSchema> schema);
-    ~TransformerPipeline();
 
-    template <class T, class... Ts>
-        requires std::derived_from<T, Transformer<Ts...>>
+    TransformerPipeline(TransformerPipeline&& other);
+
+    virtual ~TransformerPipeline();
+
+    TransformerPipeline& operator=(TransformerPipeline&& other);
+
+    TransformerPipeline& transform(std::shared_ptr<Transformer> transformer) {
+        std::tie(array, schema) = transformer->apply(
+            std::move(array), std::move(schema));
+
+        return *this;
+    }
+
+    template <class T>
+        requires std::derived_from<T, Transformer>
+    TransformerPipeline& transform(T transformer) {
+        std::tie(array, schema) = transformer.apply(
+            std::move(array), std::move(schema));
+
+        return *this;
+    }
+
+    template <typename T, class... Ts>
+        requires std::invocable<
+                     T,
+                     std::unique_ptr<ArrowArray>,
+                     std::unique_ptr<ArrowSchema>,
+                     Ts...> &&
+                 std::same_as<
+                     std::invoke_result_t<
+                         T,
+                         std::unique_ptr<ArrowArray>,
+                         std::unique_ptr<ArrowSchema>,
+                         Ts...>,
+                     ArrowTable>
     TransformerPipeline& transform(T transformer, Ts... args) {
-        transformer.apply(array.get(), schema.get(), args...);
+        std::tie(array, schema) = transformer(
+            std::move(array), std::move(schema), args...);
 
         return *this;
     }
@@ -52,23 +86,6 @@ class TransformerPipeline {
     std::unique_ptr<ArrowArray> array;
     std::unique_ptr<ArrowSchema> schema;
 };
-
-class OutlineTransformer : public Transformer<tiledbsoma::SOMACoordinateSpace> {
-   public:
-    void apply(
-        ArrowArray*, ArrowSchema*, tiledbsoma::SOMACoordinateSpace) override;
-
-   private:
-    /**
-     * @brief Cast an array containing the outer rings of polygons to an Arrow
-     * array holding the WKB encoded polygons and generate the additional index
-     * column arrays based on the spatial axes.
-     */
-    std::vector<ArrowTable> _cast_polygon_vertex_list_to_wkb(
-        ArrowArray* array,
-        const tiledbsoma::SOMACoordinateSpace& coordinate_space);
-};
-
-}  // namespace tiledbsoma::transformer
+}  // namespace tiledbsoma
 
 #endif
