@@ -735,7 +735,15 @@ def test_ingest_additional_metadata(conftest_pbmc_small):
 def test_null_obs(conftest_pbmc_small, tmp_path: Path):
     output_path = tmp_path.as_uri()
     seed = 42
-    #   Create column of all null values
+    # Create column of all null values
+
+    # Note: categorical all-nan goes through some type-inference hijinx on the
+    # Pandas -> Arrow path as detailed in
+    # https://github.com/single-cell-data/TileDB-SOMA/issues/3685.
+    # The TL;DR is that:
+    # * If one is not careful, it type-infers as categorical-of-double.
+    # * If one is verycareful, it can be made to type-infer as categorical-of-string.
+    # * The latter case is by far the most common case, and we must bias toward it.
     conftest_pbmc_small.obs["empty_categorical_all"] = pd.Categorical(
         [np.nan] * conftest_pbmc_small.n_obs,
         dtype=pd.CategoricalDtype(categories=[], ordered=False),
@@ -743,7 +751,7 @@ def test_null_obs(conftest_pbmc_small, tmp_path: Path):
     conftest_pbmc_small.obs["empty_extension_all"] = pd.Series(
         [np.nan] * conftest_pbmc_small.n_obs, dtype=pd.Int64Dtype()
     )
-    #   Create column of partially-null values
+    # Create column of partially-null values
     rng = np.random.RandomState(seed)
 
     conftest_pbmc_small.obs["empty_categorical_partial"] = rng.choice(
@@ -764,18 +772,21 @@ def test_null_obs(conftest_pbmc_small, tmp_path: Path):
     assert_adata_equal(original, conftest_pbmc_small)
 
     with tiledbsoma.Experiment.open(uri) as exp:
-        schema = exp.obs.schema.field
+        getter = exp.obs.schema.field
 
         # Explicitly check columns created above
-        assert schema("empty_categorical_all").nullable
-        assert schema("empty_categorical_partial").nullable
-        assert schema("empty_extension_all").nullable
-        assert schema("empty_extension_partial").nullable
+        assert getter("empty_categorical_all").nullable
+        assert getter("empty_categorical_partial").nullable
+        assert getter("empty_extension_all").nullable
+        assert getter("empty_extension_partial").nullable
+
+        # https://github.com/single-cell-data/TileDB-SOMA/issues/3685.
+        assert getter("empty_categorical_all").type.value_type == pa.string()
 
         # For every column in the data frame ensure that `isnullable` reflects
         # he null-ness of the Pandas data frame
         for k in conftest_pbmc_small.obs:
-            assert schema(k).nullable
+            assert getter(k).nullable
 
 
 def test_export_obsm_with_holes(h5ad_file_with_obsm_holes, tmp_path):
