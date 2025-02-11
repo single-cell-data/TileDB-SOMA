@@ -55,3 +55,22 @@ def test_geometry_coordinate_space(tmp_path):
         )
         assert geom.coordinate_space[0] == soma.Axis(name="x", unit="m")
         assert geom.coordinate_space[1] == soma.Axis(name="y", unit="in")
+
+def test_geometry_basic_read(tmp_path):
+    uri = tmp_path.as_uri()
+
+    asch = pa.schema([("quality", pa.float32())])
+
+    with soma.GeometryDataFrame.create(uri, schema=asch, domain=[[(-10, 10), (-10, 10)], [0, 100]]) as geom:
+        pydict = {}
+        pydict["soma_geometry"] = [[0.0, 0, 0, 1, 1, 0], [0.0, 0, 0, 1, 1, 1, 1, 0]]
+        pydict["soma_joinid"] = [1, 2]
+        pydict["quality"] = [4.1, 5.2]
+
+        rb = pa.Table.from_pydict(pydict)
+        geom.from_outlines(rb)
+
+    with soma.GeometryDataFrame.open(uri) as geom:
+        result = geom.read()
+
+        geom.domain
