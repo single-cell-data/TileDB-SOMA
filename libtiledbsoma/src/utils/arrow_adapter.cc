@@ -422,7 +422,7 @@ std::unique_ptr<ArrowSchema> ArrowAdapter::arrow_schema_from_tiledb_array(
             *ctx, attr);
         if (enmr_name.has_value()) {
             auto enmr = ArrayExperimental::get_enumeration(
-                *ctx, *tiledb_array, attr.name());
+                *ctx, *tiledb_array, enmr_name.value());
             auto dict = (ArrowSchema*)malloc(sizeof(ArrowSchema));
             dict->format = strdup(
                 ArrowAdapter::to_arrow_format(enmr.type(), false).data());
@@ -505,7 +505,7 @@ std::unique_ptr<ArrowSchema> ArrowAdapter::arrow_schema_from_tiledb_attribute(
         ctx, const_cast<Attribute&>(attribute));
     if (enmr_name.has_value()) {
         auto enmr = ArrayExperimental::get_enumeration(
-            ctx, tiledb_array, attribute.name());
+            ctx, tiledb_array, *enmr_name);
         auto dict = (ArrowSchema*)malloc(sizeof(ArrowSchema));
         dict->format = strdup(
             ArrowAdapter::to_arrow_format(enmr.type(), false).data());
@@ -1200,16 +1200,17 @@ ArrowAdapter::tiledb_attribute_from_arrow_schema(
     if (arrow_schema->dictionary != nullptr) {
         auto enmr_format = arrow_schema->dictionary->format;
         auto enmr_type = ArrowAdapter::to_tiledb_format(enmr_format);
+        auto enmr_label = util::get_enmr_label(
+            arrow_schema, arrow_schema->dictionary);
         enmr = Enumeration::create_empty(
             *ctx,
-            arrow_schema->name,
+            enmr_label,
             enmr_type,
             ArrowAdapter::arrow_is_var_length_type(enmr_format) ?
                 TILEDB_VAR_NUM :
                 1,
             arrow_schema->flags & ARROW_FLAG_DICTIONARY_ORDERED);
-        AttributeExperimental::set_enumeration_name(
-            *ctx, attr, arrow_schema->name);
+        AttributeExperimental::set_enumeration_name(*ctx, attr, enmr_label);
         LOG_DEBUG(std::format(
             "[ArrowAdapter] dictionary for '{}' as '{}' '{}'",
             std::string(arrow_schema->name),

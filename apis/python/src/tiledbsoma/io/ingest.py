@@ -61,7 +61,6 @@ from .. import (
     eta,
     logging,
 )
-from .. import pytiledbsoma as clib
 from .._collection import AnyTileDBCollection, CollectionBase
 from .._common_nd_array import NDArray
 from .._constants import SOMA_JOINID
@@ -1708,45 +1707,45 @@ def _update_dataframe(
                 f"{caller_name}: old data soma_joinid must be [0,{num_old_data}), found {len(jid_diffs)} diffs: {', '.join(jid_diff_strs)}"
             )
 
-    old_keys = set(old_sig.keys())
-    new_keys = set(new_sig.keys())
-    drop_keys = old_keys.difference(new_keys)
-    add_keys = new_keys.difference(old_keys)
-    common_keys = old_keys.intersection(new_keys)
+        old_keys = set(old_sig.keys())
+        new_keys = set(new_sig.keys())
+        drop_keys = old_keys.difference(new_keys)
+        add_keys = new_keys.difference(old_keys)
+        common_keys = old_keys.intersection(new_keys)
 
-    msgs = []
-    for key in common_keys:
-        old_type = old_sig[key]
-        new_type = new_sig[key]
+        msgs = []
+        for key in common_keys:
+            old_type = old_sig[key]
+            new_type = new_sig[key]
 
-        if old_type != new_type:
-            msgs.append(f"{key} type {old_type} != {new_type}")
-    if msgs:
-        msg = ", ".join(msgs)
-        raise ValueError(f"unsupported type updates: {msg}")
+            if old_type != new_type:
+                msgs.append(f"{key} type {old_type} != {new_type}")
+        if msgs:
+            msg = ", ".join(msgs)
+            raise ValueError(f"unsupported type updates: {msg}")
 
-    arrow_table = conversions.df_to_arrow(new_data)
-    arrow_schema = arrow_table.schema.remove_metadata()
+        arrow_table = conversions.df_to_arrow(new_data)
+        arrow_schema = arrow_table.schema.remove_metadata()
 
-    add_attrs = dict()
-    add_enmrs = dict()
-    for add_key in add_keys:
-        # Don't directly use the new dataframe's dtypes. Go through the
-        # to-Arrow-schema logic, and back, as this recapitulates the original
-        # schema-creation logic.
-        atype = arrow_schema.field(add_key).type
-        if pa.types.is_dictionary(arrow_table.schema.field(add_key).type):
-            add_attrs[add_key] = get_arrow_str_format(atype.index_type)
-            add_enmrs[add_key] = (
-                get_arrow_str_format(atype.value_type),
-                atype.ordered,
-            )
-        else:
-            add_attrs[add_key] = get_arrow_str_format(atype)
+        add_attrs = dict()
+        add_enmrs = dict()
+        for add_key in add_keys:
+            # Don't directly use the new dataframe's dtypes. Go through the
+            # to-Arrow-schema logic, and back, as this recapitulates the original
+            # schema-creation logic.
+            atype = arrow_schema.field(add_key).type
+            if pa.types.is_dictionary(arrow_table.schema.field(add_key).type):
+                add_attrs[add_key] = get_arrow_str_format(atype.index_type)
 
-    clib._update_dataframe_schema(
-        sdf.uri, sdf.context.native_context, list(drop_keys), add_attrs, add_enmrs
-    )
+                enmr_format = get_arrow_str_format(atype.value_type)
+                enmr_label = f"{add_key}_{enmr_format}"
+                add_enmrs[add_key] = (enmr_format, atype.ordered)
+            else:
+                add_attrs[add_key] = get_arrow_str_format(atype)
+
+        sdf_r._handle._handle._update_dataframe_schema(
+            list(drop_keys), add_attrs, add_enmrs
+        )
 
     _write_dataframe(
         df_uri=sdf.uri,

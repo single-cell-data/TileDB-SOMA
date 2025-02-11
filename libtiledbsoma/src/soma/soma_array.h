@@ -195,16 +195,18 @@ class SOMAArray : public SOMAObject {
         std::optional<TimestampRange> timestamp = std::nullopt);
 
     SOMAArray(const SOMAArray& other)
+        // Ensure protected attributes initalized first in a consistent ordering
         : uri_(other.uri_)
-        , name_(other.name_)
         , ctx_(other.ctx_)
+        , arr_(other.arr_)
+        , mq_(std::make_unique<ManagedQuery>(
+              other.arr_, other.ctx_->tiledb_ctx(), other.name_))
+        // Initialize private attributes next to control the order of destructio
+        , name_(other.name_)
         , batch_size_(other.batch_size_)
         , result_order_(other.result_order_)
         , metadata_(other.metadata_)
         , timestamp_(other.timestamp_)
-        , mq_(std::make_unique<ManagedQuery>(
-              other.arr_, other.ctx_->tiledb_ctx(), other.name_))
-        , arr_(other.arr_)
         , schema_(other.schema_)
         , meta_cache_arr_(other.meta_cache_arr_)
         , first_read_next_(other.first_read_next_)
@@ -1174,6 +1176,18 @@ class SOMAArray : public SOMAObject {
         std::optional<std::string_view> soma_schema,
         std::optional<TimestampRange> timestamp);
 
+    // SOMAArray URI
+    std::string uri_;
+
+    // SOMA context
+    std::shared_ptr<SOMAContext> ctx_;
+
+    // Array associated with mq_
+    std::shared_ptr<Array> arr_;
+
+    // Managed query for the array
+    std::unique_ptr<ManagedQuery> mq_;
+
    private:
     //===================================================================
     //= private non-static
@@ -1397,18 +1411,12 @@ class SOMAArray : public SOMAObject {
 
     void fill_columns();
 
-    // SOMAArray URI
-    std::string uri_;
-
     // SOMAArray name for debugging
     std::string name_;
 
     // NB: the Array dtor REQUIRES that this context be alive, so member
     // declaration order is significant.  Context (ctx_) MUST be declared
     // BEFORE Array (arr_) so that ctx_ will be destructed last.
-
-    // SOMA context
-    std::shared_ptr<SOMAContext> ctx_;
 
     // Batch size
     std::string batch_size_;
@@ -1424,12 +1432,6 @@ class SOMAArray : public SOMAObject {
 
     // Read timestamp range (start, end)
     std::optional<TimestampRange> timestamp_;
-
-    // Managed query for the array
-    std::unique_ptr<ManagedQuery> mq_;
-
-    // Array associated with mq_
-    std::shared_ptr<Array> arr_;
 
     // The TileDB ArraySchema. The schema is inaccessible when the TileDB Array
     // is closed or opened in write mode which means we cannot use arr->schema()

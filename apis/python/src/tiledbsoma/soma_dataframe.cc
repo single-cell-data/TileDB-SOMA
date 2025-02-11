@@ -301,7 +301,11 @@ void load_soma_dataframe(py::module& m) {
                 }
             },
             "pyarrow_domain_table"_a,
-            "function_name_for_messages"_a);
+            "function_name_for_messages"_a)
+
+        .def(
+            "_update_dataframe_schema",
+            &SOMADataFrame::update_dataframe_schema);
 }
 
 }  // namespace libtiledbsomacpp

@@ -1026,9 +1026,8 @@ bool ManagedQuery::_extend_enumeration(
     ArrowArray* index_array,
     ArraySchemaEvolution se) {
     // For columns with dictionaries, we need to identify whether the
-
-    auto enmr = ArrayExperimental::get_enumeration(
-        *ctx_, *array_, index_schema->name);
+    auto enumname = util::get_enmr_label(index_schema, value_schema);
+    auto enmr = ArrayExperimental::get_enumeration(*ctx_, *array_, enumname);
     auto value_type = enmr.type();
 
     switch (value_type) {
@@ -1106,8 +1105,8 @@ bool ManagedQuery::_extend_and_evolve_schema(
     }
 
     // Get all the enumeration values in the on-disk TileDB attribute
-    std::string column_name = index_schema->name;
-    auto enmr = ArrayExperimental::get_enumeration(*ctx_, *array_, column_name);
+    auto enumname = util::get_enmr_label(index_schema, value_schema);
+    auto enmr = ArrayExperimental::get_enumeration(*ctx_, *array_, enumname);
     std::vector<ValueType> enums_existing = enmr.as_vector<ValueType>();
 
     // Find any new enumeration values
@@ -1119,6 +1118,7 @@ bool ManagedQuery::_extend_and_evolve_schema(
         }
     }
 
+    std::string column_name = index_schema->name;
     // extend_values = {true, false};
     if (extend_values.size() != 0) {
         // We have new enumeration values; additional processing needed
@@ -1199,8 +1199,8 @@ bool ManagedQuery::_extend_and_evolve_schema<std::string>(
         enums_in_write.push_back(data_v.substr(beg, sz));
     }
 
-    std::string column_name = index_schema->name;
-    auto enmr = ArrayExperimental::get_enumeration(*ctx_, *array_, column_name);
+    auto enumname = util::get_enmr_label(index_schema, value_schema);
+    auto enmr = ArrayExperimental::get_enumeration(*ctx_, *array_, enumname);
     std::vector<std::string> extend_values;
     auto enums_existing = enmr.as_vector<std::string>();
     for (auto enum_val : enums_in_write) {
@@ -1210,6 +1210,7 @@ bool ManagedQuery::_extend_and_evolve_schema<std::string>(
         }
     }
 
+    std::string column_name = index_schema->name;
     if (extend_values.size() != 0) {
         // Check that we extend the enumeration values without
         // overflowing
