@@ -12,12 +12,10 @@
  */
 
 #include "soma_geometry_dataframe.h"
-#include "../geometry/geometry.h"
-#include "../geometry/operators/envelope.h"
-#include "../geometry/operators/io/write.h"
 #include "../utils/transformer.h"
 #include "../utils/util.h"
 #include "soma_geometry_column.h"
+#include "soma_transformers.h"
 
 #include <regex>
 #include <unordered_set>
@@ -110,9 +108,7 @@ ArrowTable SOMAGeometryDataFrame::cast_array_data(
     return transformer::TransformerPipeline(
                                  std::move(arrow_array),
                                  std::move(arrow_schema))
-                                 .transform(
-                                     transformer::OutlineTransformer(),
-                                     coord_space_)
+                                 .transform(OutlineTransformer(coord_space_))
                                  .asTable();
 }
 

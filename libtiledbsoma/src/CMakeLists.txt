@@ -49,6 +49,7 @@ add_library(TILEDB_SOMA_OBJECTS OBJECT
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_dataframe.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_dense_ndarray.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_sparse_ndarray.cc
+  ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_transformers.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/array_buffers.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/column_buffer.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/utils/arrow_adapter.cc
@@ -227,6 +228,7 @@ install(FILES
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_point_cloud_dataframe.h
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_multiscale_image.h
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_object.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_transformers.h
   DESTINATION "include/tiledbsoma/soma"
 )
 
