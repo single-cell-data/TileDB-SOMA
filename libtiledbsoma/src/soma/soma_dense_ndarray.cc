@@ -66,7 +66,7 @@ void SOMADenseNDArray::create(
             ctx->tiledb_ctx(),
             schema,
             index_columns,
-            {},
+            std::nullopt,
             "SOMADenseNDArray",
             false,
             platform_config);

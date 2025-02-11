@@ -67,7 +67,7 @@ void SOMASparseNDArray::create(
             ctx->tiledb_ctx(),
             schema,
             index_columns,
-            {},
+            std::nullopt,
             "SOMASparseNDArray",
             true,
             platform_config);
