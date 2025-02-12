@@ -441,12 +441,12 @@ class SOMAArray : public SOMAObject {
      * @param if_not_empty Prevent changing an "empty" selection of all
      * columns
      */
-    void select_columns(
-        const std::vector<std::string>& names, bool if_not_empty = false) {
-        for (const std::string& name : names) {
-            get_column(name)->select_columns(mq_, if_not_empty);
-        }
-    }
+    // void select_columns(
+    //     const std::vector<std::string>& names, bool if_not_empty = false) {
+    //     for (const std::string& name : names) {
+    //         get_column(name)->select_columns(mq_, if_not_empty);
+    //     }
+    // }
 
     /**
      * @brief Returns the column names set by the query.
