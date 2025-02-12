@@ -478,8 +478,10 @@ def _set_coord(dim_idx: int, mq: ManagedQuery, coord: object) -> None:
     dim = mq._array._handle._handle.schema.field(dim_idx)
     dom = _cast_domainish(mq._array._handle._handle.domain())[dim_idx]
 
+    column = mq._array._handle._handle.get_column(dim.name)
+
     if isinstance(coord, (str, bytes)):
-        mq._handle.set_dim_points_string_or_bytes(dim.name, [coord])
+        mq._handle.set_dim_points_string_or_bytes(column, [coord])
         return
 
     if isinstance(coord, (pa.Array, pa.ChunkedArray)):
@@ -491,7 +493,7 @@ def _set_coord(dim_idx: int, mq: ManagedQuery, coord: object) -> None:
         return
 
     if isinstance(coord, int):
-        mq._handle.set_dim_points_int64(dim.name, [coord])
+        mq._handle.set_dim_points_int64(column, [coord])
         return
 
     # Note: slice(None, None) matches the is_slice_of part, unless we also check
@@ -555,17 +557,19 @@ def _set_coord_by_py_seq_or_np_array(
                 f"only 1D numpy arrays may be used to index; got {coord.ndim}"
             )
 
+    column = mq._array._handle._handle.get_column(dim.name)
+
     try:
         set_dim_points = getattr(mq._handle, f"set_dim_points_{dim.type}")
     except AttributeError:
         # We have to handle this type specially below
         pass
     else:
-        set_dim_points(dim.name, coord)
+        set_dim_points(column, coord)
         return
 
     if pa_types_is_string_or_bytes(dim.type):
-        mq._handle.set_dim_points_string_or_bytes(dim.name, coord)
+        mq._handle.set_dim_points_string_or_bytes(column, coord)
         return
 
     if pa.types.is_timestamp(dim.type):
@@ -576,7 +580,7 @@ def _set_coord_by_py_seq_or_np_array(
         icoord = [
             int(e.astype("int64")) if isinstance(e, np.datetime64) else e for e in coord
         ]
-        mq._handle.set_dim_points_int64(dim.name, icoord)
+        mq._handle.set_dim_points_int64(column, icoord)
         return
 
     raise ValueError(f"unhandled type {dim.type} for index column named {dim.name}")
