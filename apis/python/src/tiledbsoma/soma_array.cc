@@ -49,6 +49,8 @@ py::list domainish_to_list(ArrowArray* arrow_array, ArrowSchema* arrow_schema) {
 }
 
 void load_soma_array(py::module& m) {
+    py::class_<SOMAColumn, std::shared_ptr<SOMAColumn>>(m, "SOMAColumn");
+
     py::class_<SOMAArray, SOMAObject>(m, "SOMAArray")
         .def(
             py::init(
@@ -446,6 +448,16 @@ void load_soma_array(py::module& m) {
                     throw TileDBSOMAError(e.what());
                 }
             },
-            "newshape"_a);
+            "newshape"_a)
+        .def(
+            "get_column",
+            [](SOMAArray& array, const std::string name) {
+                try {
+                    return array.get_column(name);
+                } catch (const std::exception& e) {
+                    throw TileDBSOMAError(e.what());
+                }
+            },
+            "name"_a);
 }
 }  // namespace libtiledbsomacpp

@@ -198,10 +198,11 @@ void load_managed_query(py::module& m) {
         .def(
             "set_dim_points_string_or_bytes",
             [](ManagedQuery& mq,
-               const std::string& dim,
+               std::shared_ptr<SOMAColumn> column,
                const std::vector<std::string>& points) {
                 try {
-                    mq.select_points(dim, points);
+                    column->set_dim_points<std::string>(mq, points);
+                    // mq.select_points(dim, points);
                 } catch (const std::exception& e) {
                     throw TileDBSOMAError(e.what());
                 }
@@ -210,10 +211,11 @@ void load_managed_query(py::module& m) {
         .def(
             "set_dim_points_double",
             [](ManagedQuery& mq,
-               const std::string& dim,
-               const std::vector<double>& points) {
+               std::shared_ptr<SOMAColumn> column,
+               const std::vector<double_t>& points) {
                 try {
-                    mq.select_points(dim, points);
+                    column->set_dim_points<double_t>(mq, points);
+                    // mq.select_points(dim, points);
                 } catch (const std::exception& e) {
                     throw TileDBSOMAError(e.what());
                 }
@@ -222,10 +224,11 @@ void load_managed_query(py::module& m) {
         .def(
             "set_dim_points_float",
             [](ManagedQuery& mq,
-               const std::string& dim,
-               const std::vector<float>& points) {
+               std::shared_ptr<SOMAColumn> column,
+               const std::vector<float_t>& points) {
                 try {
-                    mq.select_points(dim, points);
+                    column->set_dim_points<float_t>(mq, points);
+                    // mq.select_points(dim, points);
                 } catch (const std::exception& e) {
                     throw TileDBSOMAError(e.what());
                 }
@@ -234,10 +237,11 @@ void load_managed_query(py::module& m) {
         .def(
             "set_dim_points_int64",
             [](ManagedQuery& mq,
-               const std::string& dim,
+               std::shared_ptr<SOMAColumn> column,
                const std::vector<int64_t>& points) {
                 try {
-                    mq.select_points(dim, points);
+                    column->set_dim_points<int64_t>(mq, points);
+                    // mq.select_points(dim, points);
                 } catch (const std::exception& e) {
                     throw TileDBSOMAError(e.what());
                 }
@@ -246,10 +250,11 @@ void load_managed_query(py::module& m) {
         .def(
             "set_dim_points_int32",
             [](ManagedQuery& mq,
-               const std::string& dim,
+               std::shared_ptr<SOMAColumn> column,
                const std::vector<int32_t>& points) {
                 try {
-                    mq.select_points(dim, points);
+                    column->set_dim_points<int32_t>(mq, points);
+                    // mq.select_points(dim, points);
                 } catch (const std::exception& e) {
                     throw TileDBSOMAError(e.what());
                 }
@@ -258,10 +263,11 @@ void load_managed_query(py::module& m) {
         .def(
             "set_dim_points_int16",
             [](ManagedQuery& mq,
-               const std::string& dim,
+               std::shared_ptr<SOMAColumn> column,
                const std::vector<int16_t>& points) {
                 try {
-                    mq.select_points(dim, points);
+                    column->set_dim_points<int16_t>(mq, points);
+                    // mq.select_points(dim, points);
                 } catch (const std::exception& e) {
                     throw TileDBSOMAError(e.what());
                 }
@@ -270,10 +276,11 @@ void load_managed_query(py::module& m) {
         .def(
             "set_dim_points_int8",
             [](ManagedQuery& mq,
-               const std::string& dim,
+               std::shared_ptr<SOMAColumn> column,
                const std::vector<int8_t>& points) {
                 try {
-                    mq.select_points(dim, points);
+                    column->set_dim_points<int8_t>(mq, points);
+                    // mq.select_points(dim, points);
                 } catch (const std::exception& e) {
                     throw TileDBSOMAError(e.what());
                 }
@@ -282,10 +289,11 @@ void load_managed_query(py::module& m) {
         .def(
             "set_dim_points_uint64",
             [](ManagedQuery& mq,
-               const std::string& dim,
+               std::shared_ptr<SOMAColumn> column,
                const std::vector<uint64_t>& points) {
                 try {
-                    mq.select_points(dim, points);
+                    column->set_dim_points<uint64_t>(mq, points);
+                    // mq.select_points(dim, points);
                 } catch (const std::exception& e) {
                     throw TileDBSOMAError(e.what());
                 }
@@ -294,10 +302,11 @@ void load_managed_query(py::module& m) {
         .def(
             "set_dim_points_uint32",
             [](ManagedQuery& mq,
-               const std::string& dim,
+               std::shared_ptr<SOMAColumn> column,
                const std::vector<uint32_t>& points) {
                 try {
-                    mq.select_points(dim, points);
+                    column->set_dim_points<uint32_t>(mq, points);
+                    // mq.select_points(dim, points);
                 } catch (const std::exception& e) {
                     throw TileDBSOMAError(e.what());
                 }
@@ -306,10 +315,11 @@ void load_managed_query(py::module& m) {
         .def(
             "set_dim_points_uint16",
             [](ManagedQuery& mq,
-               const std::string& dim,
+               std::shared_ptr<SOMAColumn> column,
                const std::vector<uint16_t>& points) {
                 try {
-                    mq.select_points(dim, points);
+                    column->set_dim_points<uint16_t>(mq, points);
+                    // mq.select_points(dim, points);
                 } catch (const std::exception& e) {
                     throw TileDBSOMAError(e.what());
                 }
@@ -318,10 +328,11 @@ void load_managed_query(py::module& m) {
         .def(
             "set_dim_points_uint8",
             [](ManagedQuery& mq,
-               const std::string& dim,
+               std::shared_ptr<SOMAColumn> column,
                const std::vector<uint8_t>& points) {
                 try {
-                    mq.select_points(dim, points);
+                    column->set_dim_points<uint8_t>(mq, points);
+                    // mq.select_points(dim, points);
                 } catch (const std::exception& e) {
                     throw TileDBSOMAError(e.what());
                 }
@@ -578,5 +589,13 @@ void load_managed_query(py::module& m) {
             "py_arrow_array"_a,
             "partition_index"_a = 0,
             "partition_count"_a = 1);
+
+    py::class_<SOMAColumn, std::shared_ptr<SOMAColumn>>(m.attr("SOMAColumn"))
+        .def(
+            "select_columns",
+            [](std::shared_ptr<SOMAColumn>& column, ManagedQuery& query) {
+                column->select_columns(query);
+            },
+            "query"_a);
 }
 }  // namespace libtiledbsomacpp
