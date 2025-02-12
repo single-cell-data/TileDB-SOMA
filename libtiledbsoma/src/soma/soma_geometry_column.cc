@@ -127,16 +127,14 @@ std::shared_ptr<SOMAGeometryColumn> SOMAGeometryColumn::create(
 }
 
 void SOMAGeometryColumn::_set_dim_points(
-    const std::unique_ptr<ManagedQuery>& query,
-    const SOMAContext& ctx,
-    const std::any& points) const {
+    ManagedQuery& query, const std::any& points) const {
     std::vector<std::pair<double_t, double_t>>
         transformed_points = _transform_points(
             std::any_cast<std::span<const std::vector<double_t>>>(points));
 
     // The limits of the current domain if it exists or the core domain
     // otherwise.
-    auto limits = _limits(ctx, *query->schema());
+    auto limits = _limits(*query.ctx(), *query.schema());
 
     // Create a range object and reuse if for all dimensions
     std::vector<std::pair<double_t, double_t>> range(1);
@@ -146,19 +144,17 @@ void SOMAGeometryColumn::_set_dim_points(
         range[0] = std::make_pair(
             limits[i].first,
             std::min(transformed_points[i].second, limits[i].second));
-        query->select_ranges(dimensions[i].name(), range);
+        query.select_ranges(dimensions[i].name(), range);
 
         range[0] = std::make_pair(
             std::max(transformed_points[i].first, limits[i].first),
             limits[i].second);
-        query->select_ranges(dimensions[i + dimensionality].name(), range);
+        query.select_ranges(dimensions[i + dimensionality].name(), range);
     }
 }
 
 void SOMAGeometryColumn::_set_dim_ranges(
-    const std::unique_ptr<ManagedQuery>& query,
-    const SOMAContext& ctx,
-    const std::any& ranges) const {
+    ManagedQuery& query, const std::any& ranges) const {
     std::vector<std::pair<double_t, double_t>>
         transformed_ranges = _transform_ranges(
             std::any_cast<std::vector<
@@ -167,7 +163,7 @@ void SOMAGeometryColumn::_set_dim_ranges(
 
     // The limits of the current domain if it exists or the core domain
     // otherwise.
-    auto limits = _limits(ctx, *query->schema());
+    auto limits = _limits(*query.ctx(), *query.schema());
 
     // Create a range object and reuse if for all dimensions
     std::vector<std::pair<double_t, double_t>> range(1);
@@ -177,12 +173,12 @@ void SOMAGeometryColumn::_set_dim_ranges(
         range[0] = std::make_pair(
             limits[i].first,
             std::min(transformed_ranges[i].second, limits[i].second));
-        query->select_ranges(dimensions[i].name(), range);
+        query.select_ranges(dimensions[i].name(), range);
 
         range[0] = std::make_pair(
             std::max(transformed_ranges[i].first, limits[i].first),
             limits[i].second);
-        query->select_ranges(dimensions[i + dimensionality].name(), range);
+        query.select_ranges(dimensions[i + dimensionality].name(), range);
     }
 }
 
@@ -306,11 +302,10 @@ std::pair<bool, std::string> SOMAGeometryColumn::_can_set_current_domain_slot(
 }
 
 std::vector<std::pair<double_t, double_t>> SOMAGeometryColumn::_limits(
-    const SOMAContext& ctx, const ArraySchema& schema) const {
+    const Context& ctx, const ArraySchema& schema) const {
     std::vector<std::pair<double_t, double_t>> limits;
 
-    if (ArraySchemaExperimental::current_domain(*ctx.tiledb_ctx(), schema)
-            .is_empty()) {
+    if (ArraySchemaExperimental::current_domain(ctx, schema).is_empty()) {
         for (size_t i = 0; i < dimensions.size() / TDB_DIM_PER_SPATIAL_AXIS;
              ++i) {
             std::pair<double_t, double_t> core_domain = dimensions[i]
@@ -321,7 +316,7 @@ std::vector<std::pair<double_t, double_t>> SOMAGeometryColumn::_limits(
         }
     } else {
         NDRectangle ndrect = ArraySchemaExperimental::current_domain(
-                                 *ctx.tiledb_ctx(), schema)
+                                 ctx, schema)
                                  .ndrectangle();
         for (size_t i = 0; i < dimensions.size() / TDB_DIM_PER_SPATIAL_AXIS;
              ++i) {
