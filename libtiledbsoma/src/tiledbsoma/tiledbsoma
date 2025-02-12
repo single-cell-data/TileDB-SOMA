@@ -32,6 +32,7 @@
 #include "soma/soma_coordinates.h"
 #include "soma/soma_array.h"
 #include "soma/soma_collection.h"
+#include "soma/soma_column.h"
 #include "soma/soma_dataframe.h"
 #include "soma/soma_group.h"
 #include "soma/soma_experiment.h"
@@ -45,5 +46,6 @@
 #include "soma/soma_dense_ndarray.h"
 #include "soma/soma_sparse_ndarray.h"
 #include "soma/soma_transformers.h"
+
 
 #endif
