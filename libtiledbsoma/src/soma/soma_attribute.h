@@ -63,9 +63,8 @@ class SOMAAttribute : public SOMAColumn {
     }
 
     inline void select_columns(
-        const std::unique_ptr<ManagedQuery>& query,
-        bool if_not_empty = false) const override {
-        query->select_columns(std::vector({attribute.name()}), if_not_empty);
+        ManagedQuery& query, bool if_not_empty = false) const override {
+        query.select_columns(std::vector({attribute.name()}), if_not_empty);
     };
 
     inline soma_column_datatype_t type() const override {
@@ -109,14 +108,10 @@ class SOMAAttribute : public SOMAColumn {
 
    private:
     void _set_dim_points(
-        const std::unique_ptr<ManagedQuery>& query,
-        const SOMAContext& ctx,
-        const std::any& points) const override;
+        ManagedQuery& query, const std::any& points) const override;
 
     void _set_dim_ranges(
-        const std::unique_ptr<ManagedQuery>& query,
-        const SOMAContext& ctx,
-        const std::any& ranges) const override;
+        ManagedQuery& query, const std::any& ranges) const override;
 
     void _set_current_domain_slot(
         NDRectangle& rectangle,

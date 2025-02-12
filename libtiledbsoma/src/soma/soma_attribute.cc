@@ -66,20 +66,14 @@ std::shared_ptr<SOMAAttribute> SOMAAttribute::create(
         SOMAAttribute(attribute.first, attribute.second));
 }
 
-void SOMAAttribute::_set_dim_points(
-    const std::unique_ptr<ManagedQuery>&,
-    const SOMAContext&,
-    const std::any&) const {
+void SOMAAttribute::_set_dim_points(ManagedQuery&, const std::any&) const {
     throw TileDBSOMAError(std::format(
         "[SOMAAttribute][_set_dim_points] Column with name {} is not an index "
         "column",
         name()));
 }
 
-void SOMAAttribute::_set_dim_ranges(
-    const std::unique_ptr<ManagedQuery>&,
-    const SOMAContext&,
-    const std::any&) const {
+void SOMAAttribute::_set_dim_ranges(ManagedQuery&, const std::any&) const {
     throw TileDBSOMAError(std::format(
         "[SOMAAttribute][_set_dim_ranges] Column with name {} is not an index "
         "column",
