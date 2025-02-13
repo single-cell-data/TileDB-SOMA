@@ -177,6 +177,13 @@ def arrow_table():
             "default01234",
         ],
         [
+            "STRING-ALL",
+            ["string"],
+            [["", ""]],
+            [],
+            "default01234",
+        ],
+        [
             "string-py-list",
             ["string"],
             [None],
@@ -265,6 +272,13 @@ def arrow_table():
             "bytes-pa-array-typed",
             ["bytes"],
             [None],
+            [pa.array([b"cat", b"dog"], pa.binary())],
+            "default23",
+        ],
+        [
+            "bytes-pa-array-typed",
+            ["bytes"],
+            [["", ""]],
             [pa.array([b"cat", b"dog"], pa.binary())],
             "default23",
         ],

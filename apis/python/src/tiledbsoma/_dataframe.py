@@ -937,7 +937,7 @@ def _fill_out_slot_soma_domain(
             or pa_type == pa.large_string()
             or pa_type == pa.binary()
             or pa_type == pa.large_binary()
-        ) and slot_domain != ("", ""):
+        ) and tuple(slot_domain) != ("", ""):
             # TileDB Embedded won't raise an error if the user asks for, say
             # domain=[("a", "z")].  But it will simply _ignore_ the request and
             # use [("", "")]. The decision here is to explicitly reject an
