@@ -3,7 +3,7 @@ import pandas as pd
 import pyarrow as pa
 import pytest
 
-import tiledbsoma
+from tiledbsoma.io.conversions import df_to_arrow
 
 
 @pytest.mark.parametrize(
@@ -27,5 +27,5 @@ import tiledbsoma
     ],
 )
 def test_df_to_arrow(input_df: pd.DataFrame, expected: pa.Table):
-    actual = tiledbsoma._arrow_types.df_to_arrow(input_df)
+    actual = df_to_arrow(input_df)
     assert actual == expected
