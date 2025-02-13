@@ -271,9 +271,15 @@ def test_axis_mappings(obs_field_name, var_field_name):
         data={"a": 10, "b": 20, "c": 30},
         field_name=obs_field_name,
     )
-    assert dictionary.id_mapping_from_values(["a", "b", "c"]).data == (10, 20, 30)
-    assert dictionary.id_mapping_from_values(["c", "a"]).data == (30, 10)
-    assert dictionary.id_mapping_from_values([]).data == ()
+
+    for reload in [False, True]:
+        if reload:
+            dictionary = registration.AxisAmbientLabelMapping.from_json(
+                dictionary.to_json()
+            )
+        assert dictionary.id_mapping_from_values(["a", "b", "c"]).data == (10, 20, 30)
+        assert dictionary.id_mapping_from_values(["c", "a"]).data == (30, 10)
+        assert dictionary.id_mapping_from_values([]).data == ()
 
     d = registration.AxisAmbientLabelMapping.from_isolated_dataframe(
         anndata1.obs,
@@ -292,6 +298,11 @@ def test_isolated_anndata_mappings(obs_field_name, var_field_name):
     rd = registration.ExperimentAmbientLabelMapping.from_isolated_anndata(
         anndata1, measurement_name="measname"
     )
+
+    for reload in [False, True]:
+        if reload:
+            rd = registration.ExperimentAmbientLabelMapping.from_json(rd.to_json())
+
     assert rd.obs_axis.id_mapping_from_values([]).data == ()
     assert rd.obs_axis.id_mapping_from_values(["AGAG", "ACTG"]).data == (2, 1)
     assert rd.var_axes["measname"].id_mapping_from_values(["TP53", "VEGFA"]).data == (

@@ -93,10 +93,14 @@ class AxisAmbientLabelMapping:
             return 1 + max(self.data.values())
 
     def to_json(self) -> str:
+        """The ``to_json`` and ``from_json`` methods allow you to persist
+        the registration mappings to disk."""
         return json.dumps(self, default=attrs.asdict, sort_keys=True, indent=4)
 
     @classmethod
     def from_json(cls, s: str) -> Self:
+        """The ``to_json`` and ``from_json`` methods allow you to persist
+        the registration mappings to disk."""
         dikt = json.loads(s)
         return cls(**dikt)
 
@@ -528,10 +532,14 @@ class ExperimentAmbientLabelMapping:
         return retval
 
     def to_json(self) -> str:
+        """The ``to_json`` and ``from_json`` methods allow you to persist
+        the registration mappings to disk."""
         return json.dumps(self, default=attrs.asdict, sort_keys=True, indent=4)
 
     @classmethod
     def from_json(cls, s: str) -> Self:
+        """The ``to_json`` and ``from_json`` methods allow you to persist
+        the registration mappings to disk."""
         dikt = json.loads(s)
         obs_axis = AxisAmbientLabelMapping(
             data=dikt["obs_axis"]["data"], field_name=dikt["obs_axis"]["field_name"]
