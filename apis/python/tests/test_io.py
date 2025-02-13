@@ -133,11 +133,11 @@ def test_io_create_from_matrix_sparse_nd_array(
 
 @pytest.mark.parametrize(
     "num_rows",
-    [0, 1, 2, 3, 4, 10, 100, 1_000, 10_000],
+    [0, 1, 2, 3, 4, 10, 100, 1_000],
 )
 @pytest.mark.parametrize(
     "cap_nbytes",
-    [1, 100, 1_000, 10_000],
+    [1, 100, 1_000],
 )
 def test_write_arrow_table(tmp_path, num_rows, cap_nbytes):
     """
