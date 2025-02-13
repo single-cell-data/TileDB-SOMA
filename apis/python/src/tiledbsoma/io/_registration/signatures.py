@@ -15,8 +15,8 @@ from typing_extensions import Self
 
 import tiledbsoma
 import tiledbsoma.logging
-from tiledbsoma._arrow_types import df_to_arrow
 from tiledbsoma.io._util import read_h5ad  # Allow us to read over S3 in backed mode
+from tiledbsoma.io.conversions import df_to_arrow
 from tiledbsoma.options import SOMATileDBContext
 
 _EQUIVALENCES = {

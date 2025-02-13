@@ -44,7 +44,6 @@ from ... import (
     _util,
     logging,
 )
-from ..._arrow_types import df_to_arrow
 from ..._constants import SPATIAL_DISCLAIMER
 from ..._exception import (
     AlreadyExistsError,
@@ -57,7 +56,7 @@ from ...options._tiledb_create_write_options import (
     TileDBCreateOptions,
     TileDBWriteOptions,
 )
-from .. import from_anndata
+from .. import conversions, from_anndata
 from ..ingest import (
     IngestCtx,
     IngestionParams,
@@ -718,7 +717,7 @@ def _write_visium_spots(
         (0, max_joinid_len - 1),
     )
 
-    arrow_table = df_to_arrow(df)
+    arrow_table = conversions.df_to_arrow(df)
 
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")

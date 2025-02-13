@@ -62,7 +62,6 @@ from .. import (
     logging,
 )
 from .. import pytiledbsoma as clib
-from .._arrow_types import df_to_arrow
 from .._collection import AnyTileDBCollection, CollectionBase
 from .._common_nd_array import NDArray
 from .._constants import SOMA_JOINID
@@ -1322,7 +1321,7 @@ def _write_dataframe_impl(
     s = _util.get_start_stamp()
     logging.log_io(None, f"START  WRITING {df_uri}")
 
-    arrow_table = df_to_arrow(df)
+    arrow_table = conversions.df_to_arrow(df)
 
     # Don't many-layer the almost-always-repeated var dataframe.
     # And for obs, if there are duplicate values for whatever reason, don't write them
@@ -1726,7 +1725,7 @@ def _update_dataframe(
         msg = ", ".join(msgs)
         raise ValueError(f"unsupported type updates: {msg}")
 
-    arrow_table = df_to_arrow(new_data)
+    arrow_table = conversions.df_to_arrow(new_data)
     arrow_schema = arrow_table.schema.remove_metadata()
 
     add_attrs = dict()
