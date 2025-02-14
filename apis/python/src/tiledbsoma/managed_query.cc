@@ -596,6 +596,114 @@ void load_managed_query(py::module& m) {
             [](std::shared_ptr<SOMAColumn>& column, ManagedQuery& query) {
                 column->select_columns(query);
             },
-            "query"_a);
+            "query"_a)
+        .def(
+            "set_dim_points_string",
+            [](std::shared_ptr<SOMAColumn>& column,
+               ManagedQuery& mq,
+               const std::vector<std::string>& points) {
+                column->set_dim_points<std::string>(mq, points);
+            },
+            "mq"_a,
+            "points"_a)
+        .def(
+            "set_dim_points_bytes",
+            [](std::shared_ptr<SOMAColumn>& column,
+               ManagedQuery& mq,
+               const std::vector<std::vector<std::byte>>& points) {
+                column->set_dim_points<std::vector<std::byte>>(mq, points);
+            },
+            "mq"_a,
+            "points"_a)
+        .def(
+            "set_dim_points_double",
+            [](std::shared_ptr<SOMAColumn>& column,
+               ManagedQuery& mq,
+               const std::vector<double_t>& points) {
+                column->set_dim_points<double_t>(mq, points);
+            },
+            "mq"_a,
+            "points"_a)
+        .def(
+            "set_dim_points_float",
+            [](std::shared_ptr<SOMAColumn>& column,
+               ManagedQuery& mq,
+               const std::vector<float_t>& points) {
+                column->set_dim_points<float_t>(mq, points);
+            },
+            "mq"_a,
+            "points"_a)
+        .def(
+            "set_dim_points_int64",
+            [](std::shared_ptr<SOMAColumn>& column,
+               ManagedQuery& mq,
+               const std::vector<int64_t>& points) {
+                column->set_dim_points<int64_t>(mq, points);
+            },
+            "mq"_a,
+            "points"_a)
+        .def(
+            "set_dim_points_int32",
+            [](std::shared_ptr<SOMAColumn>& column,
+               ManagedQuery& mq,
+               const std::vector<int32_t>& points) {
+                column->set_dim_points<int32_t>(mq, points);
+            },
+            "mq"_a,
+            "points"_a)
+        .def(
+            "set_dim_points_int16",
+            [](std::shared_ptr<SOMAColumn>& column,
+               ManagedQuery& mq,
+               const std::vector<int16_t>& points) {
+                column->set_dim_points<int16_t>(mq, points);
+            },
+            "mq"_a,
+            "points"_a)
+        .def(
+            "set_dim_points_int8",
+            [](std::shared_ptr<SOMAColumn>& column,
+               ManagedQuery& mq,
+               const std::vector<int8_t>& points) {
+                column->set_dim_points<int8_t>(mq, points);
+            },
+            "mq"_a,
+            "points"_a)
+        .def(
+            "set_dim_points_uint64",
+            [](std::shared_ptr<SOMAColumn>& column,
+               ManagedQuery& mq,
+               const std::vector<uint64_t>& points) {
+                column->set_dim_points<uint64_t>(mq, points);
+            },
+            "mq"_a,
+            "points"_a)
+        .def(
+            "set_dim_points_uint32",
+            [](std::shared_ptr<SOMAColumn>& column,
+               ManagedQuery& mq,
+               const std::vector<uint32_t>& points) {
+                column->set_dim_points<uint32_t>(mq, points);
+            },
+            "mq"_a,
+            "points"_a)
+        .def(
+            "set_dim_points_uint16",
+            [](std::shared_ptr<SOMAColumn>& column,
+               ManagedQuery& mq,
+               const std::vector<uint16_t>& points) {
+                column->set_dim_points<uint16_t>(mq, points);
+            },
+            "mq"_a,
+            "points"_a)
+        .def(
+            "set_dim_points_uint8",
+            [](std::shared_ptr<SOMAColumn>& column,
+               ManagedQuery& mq,
+               const std::vector<uint8_t>& points) {
+                column->set_dim_points<uint8_t>(mq, points);
+            },
+            "mq"_a,
+            "points"_a);
 }
 }  // namespace libtiledbsomacpp
