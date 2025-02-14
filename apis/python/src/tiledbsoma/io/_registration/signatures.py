@@ -6,10 +6,7 @@ from __future__ import annotations
 
 from typing import Dict, Union
 
-import pandas as pd
 import pyarrow as pa
-
-from tiledbsoma.io.conversions import _prepare_df_for_ingest, df_to_arrow_table
 
 _EQUIVALENCES = {
     "large_string": "string",
@@ -32,8 +29,10 @@ def _stringify_type(t: pa.DataType) -> str:
 
 def _string_dict_from_arrow_schema(schema: pa.Schema) -> Dict[str, str]:
     """
-    Converts an Arrow schema to a string/string dict, which is easier on the eyes,
-    easier to convert from/to JSON for distributed logging, and easier to do del-key on.
+    Converts an Arrow schema to a string/string dict.
+
+    This is easier on the eyes, easier to convert from/to JSON for distributed logging,
+    and easier to do del-key on.
     """
     retval = {}
     for name in schema.names:
@@ -47,30 +46,6 @@ def _string_dict_from_arrow_schema(schema: pa.Schema) -> Dict[str, str]:
     # var.
     retval.pop("soma_joinid", None)
     return retval
-
-
-def _string_dict_from_pandas_dataframe(
-    df: pd.DataFrame,
-    default_index_name: str,
-) -> Dict[str, str]:
-    """
-    Here we provide compatibility with the ingestor.
-
-    SOMA experiments are indexed by int64 soma_joinid and this is SOMA-only.
-
-    AnnData inputs have a column offered as the index. This can be: named explicitly "obs_id",
-    "var_id", etc.; unnamed: adata.obs.index.name is None; named "index".
-
-    In the latter two cases the ingestor allows a rename to the user's choice
-    such as "obs_id" and "var_id". Here in the appender pre-check logic, we
-    allow the same.
-    """
-
-    df = df.head(1).copy()  # since reset_index can be expensive on full data
-    _prepare_df_for_ingest(df, default_index_name)
-    arrow_table = df_to_arrow_table(df)
-    arrow_schema = arrow_table.schema.remove_metadata()
-    return _string_dict_from_arrow_schema(arrow_schema)
 
 
 # Metadata indicating a SOMA DataFrame's original index column name, serialized as a JSON string or `null`.

@@ -1673,14 +1673,11 @@ def _update_dataframe(
     """
     See ``update_obs`` and ``update_var``. This is common helper code shared by both.
     """
-    # Further operations are in-place for parsimony of memory usage:
-    new_data = new_data.copy()
 
     sdf.verify_open_for_writing()
     old_sig = signatures._string_dict_from_arrow_schema(sdf.schema)
-    new_sig = signatures._string_dict_from_pandas_dataframe(
-        new_data, default_index_name
-    )
+    new_schema = conversions.df_to_arrow_schema(new_data, default_index_name)
+    new_sig = signatures._string_dict_from_arrow_schema(new_schema)
 
     with DataFrame.open(
         sdf.uri, mode="r", context=context, platform_config=platform_config
@@ -1730,6 +1727,8 @@ def _update_dataframe(
             msg = ", ".join(msgs)
             raise ValueError(f"unsupported type updates: {msg}")
 
+        # Further operations are in-place for parsimony of memory usage:
+        new_data = new_data.copy()
         arrow_table = conversions.df_to_arrow_table(new_data)
         arrow_schema = arrow_table.schema.remove_metadata()
 

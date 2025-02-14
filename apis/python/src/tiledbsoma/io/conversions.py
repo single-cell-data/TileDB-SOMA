@@ -310,3 +310,15 @@ def df_to_arrow_table(df: pd.DataFrame) -> pa.Table:
     arrow_table = pa.Table.from_pandas(df, schema=new_schema)
 
     return arrow_table
+
+
+def df_to_arrow_schema(df: pd.DataFrame, default_index_name: str) -> pa.Schema:
+    """Creates the arrow schema from a pandas dataframe.
+
+    This function does not mutate the input ``pandas.DataFrame``.
+    """
+    df = df.head(1).copy()  # since reset_index can be expensive on full data
+    _prepare_df_for_ingest(df, default_index_name)
+    arrow_table = df_to_arrow_table(df)
+    arrow_schema = arrow_table.schema.remove_metadata()
+    return arrow_schema
