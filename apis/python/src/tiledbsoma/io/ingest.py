@@ -108,7 +108,7 @@ from ._registration import (
     get_dataframe_values,
     signatures,
 )
-from ._registration.signatures import OriginalIndexMetadata, _prepare_df_for_ingest
+from ._registration.signatures import OriginalIndexMetadata
 from ._util import get_arrow_str_format, read_h5ad
 
 _NDArr = TypeVar("_NDArr", bound=NDArray)
@@ -1286,7 +1286,7 @@ def _write_dataframe(
     NOTE: this function mutates the input dataframe, for parsimony of memory usage. Callers should
     copy any user-provided ``pd.DataFrame``s (adata obs, var, uns, etc.) before passing them here.
     """
-    original_index_metadata = _prepare_df_for_ingest(df, id_column_name)
+    original_index_metadata = conversions._prepare_df_for_ingest(df, id_column_name)
     df[SOMA_JOINID] = np.asarray(axis_mapping.data, dtype=np.int64)
     df.set_index(SOMA_JOINID, inplace=True)
 
