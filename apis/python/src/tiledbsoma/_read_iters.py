@@ -576,8 +576,6 @@ class ArrowTableRead(Iterator[pa.Table]):
             for name in column_names:
                 clib_handle.get_column(name).select_columns(self.mq._handle)
 
-            # self.mq._handle.select_columns(list(column_names))
-
         if value_filter is not None:
             self.mq._handle.set_condition(
                 QueryCondition(value_filter), clib_handle.schema
