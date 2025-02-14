@@ -1738,7 +1738,6 @@ def _update_dataframe(
                 add_attrs[add_key] = get_arrow_str_format(atype.index_type)
 
                 enmr_format = get_arrow_str_format(atype.value_type)
-                enmr_label = f"{add_key}_{enmr_format}"
                 add_enmrs[add_key] = (enmr_format, atype.ordered)
             else:
                 add_attrs[add_key] = get_arrow_str_format(atype)
