@@ -1124,6 +1124,10 @@ def _extract_new_values_for_append_aux(
     mask = [e.as_py() not in previous_join_ids for e in arrow_table[SOMA_JOINID]]
     arrow_table = arrow_table.filter(mask)
 
+    # Check if any new data.
+    if any(column.num_chunks == 0 for column in arrow_table.columns):
+        return arrow_table
+
     # This is a redundant, failsafe check. The append-mode registrar already
     # ensure schema homogeneity before we get here.
     old_schema = previous_soma_dataframe.schema
@@ -1399,7 +1403,9 @@ def _write_dataframe_impl(
     tiledb_create_options = TileDBCreateOptions.from_platform_config(platform_config)
     tiledb_write_options = TileDBWriteOptions.from_platform_config(platform_config)
 
-    if arrow_table:
+    if arrow_table and not any(
+        column.num_chunks == 0 for column in arrow_table.columns
+    ):
         _write_arrow_table(
             arrow_table, soma_df, tiledb_create_options, tiledb_write_options
         )
