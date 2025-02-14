@@ -9,7 +9,7 @@ from typing import Dict, Union
 import pandas as pd
 import pyarrow as pa
 
-from tiledbsoma.io.conversions import _prepare_df_for_ingest, df_to_arrow
+from tiledbsoma.io.conversions import _prepare_df_for_ingest, df_to_arrow_table
 
 _EQUIVALENCES = {
     "large_string": "string",
@@ -68,7 +68,7 @@ def _string_dict_from_pandas_dataframe(
 
     df = df.head(1).copy()  # since reset_index can be expensive on full data
     _prepare_df_for_ingest(df, default_index_name)
-    arrow_table = df_to_arrow(df)
+    arrow_table = df_to_arrow_table(df)
     arrow_schema = arrow_table.schema.remove_metadata()
     return _string_dict_from_arrow_schema(arrow_schema)
 

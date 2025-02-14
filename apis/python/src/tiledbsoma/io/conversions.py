@@ -180,7 +180,7 @@ def csr_from_coo_table(
     return s
 
 
-def df_to_arrow(df: pd.DataFrame) -> pa.Table:
+def df_to_arrow_table(df: pd.DataFrame) -> pa.Table:
     """
     Handle special cases where pa.Table.from_pandas is not sufficient.
     """
@@ -188,7 +188,7 @@ def df_to_arrow(df: pd.DataFrame) -> pa.Table:
     # Not for name, col in df.items() since we need df[k] on the left-hand sides
     for key in df:
         # Make attributes nullable. Context:
-        # * df_to_arrow is _solely_ for use of tiledbsoma.io
+        # * this is _solely_ for use of tiledbsoma.io
         #   o Anyone calling the SOMA API directly has user-provided Arrow
         #     schema which must be respected
         #   o Anyone calling tiledbsoma.io -- including from_h5ad/from_anndata,

@@ -717,7 +717,7 @@ def _write_visium_spots(
         (0, max_joinid_len - 1),
     )
 
-    arrow_table = conversions.df_to_arrow(df)
+    arrow_table = conversions.df_to_arrow_table(df)
 
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
