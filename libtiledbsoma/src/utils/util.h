@@ -67,6 +67,19 @@ std::shared_ptr<SOMAColumn> find_column_by_name(
     std::span<const std::shared_ptr<SOMAColumn>> columns,
     std::string_view name);
 
+/**
+ * @brief Construct the enumeration label given a dictionary's index and value
+ * ArrowSchemas. The name is extracted from the index schema. The datatype is
+ * extracted from the value schema. If the format string is u or z (regular
+ * string or regular binary), then convert that to U or Z (large string or large
+ * binary).
+ *
+ * @param schema ArrowSchema representing the dictionary values
+ * @return enmr dtype as Arrow format string
+ */
+std::string get_enmr_label(
+    ArrowSchema* index_schema, ArrowSchema* value_schema);
+
 }  // namespace tiledbsoma::util
 
 #endif

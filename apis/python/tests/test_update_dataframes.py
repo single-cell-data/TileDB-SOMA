@@ -333,10 +333,29 @@ def test_enmr_add_drop_readd(tmp_path, conftest_pbmc3k_adata):
         schema = exp.obs.schema
         assert "louvain" not in schema.names
 
-    # Re-add
+    # Add column with same name and same type
     with tiledbsoma.Experiment.open(uri, "w") as exp:
         # Most importantly, we're implicitly checking for no throw here.
         tiledbsoma.io.update_obs(exp, conftest_pbmc3k_adata.obs)
+
+    with tiledbsoma.Experiment.open(uri, "r") as exp:
+        schema = exp.obs.schema
+        assert "louvain" in schema.names
+        assert pa.types.is_dictionary(field.type)
+
+    # Drop
+    with tiledbsoma.Experiment.open(uri, "r") as exp:
+        obs = exp.obs.read().concat().to_pandas()
+    obs.drop(columns=["louvain"], inplace=True)
+
+    with tiledbsoma.Experiment.open(uri, "w") as exp:
+        tiledbsoma.io.update_obs(exp, obs)
+
+    # Add column with same name but different categorical type (str to int)
+    obs["louvain"] = pd.Categorical(np.random.randint(1, 4, size=len(obs)))
+    with tiledbsoma.Experiment.open(uri, "w") as exp:
+        # Most importantly, we're implicitly checking for no throw here.
+        tiledbsoma.io.update_obs(exp, obs)
 
     with tiledbsoma.Experiment.open(uri, "r") as exp:
         schema = exp.obs.schema

@@ -97,7 +97,9 @@ std::vector<std::shared_ptr<SOMAColumn>> SOMAColumn::deserialize(
             auto enumeration = enumeration_name.has_value() ?
                                    std::make_optional(
                                        ArrayExperimental::get_enumeration(
-                                           ctx, array, attribute.name())) :
+                                           ctx,
+                                           array,
+                                           enumeration_name.value())) :
                                    std::nullopt;
 
             columns.push_back(
@@ -117,7 +119,9 @@ std::vector<std::shared_ptr<SOMAColumn>> SOMAColumn::deserialize(
             auto enumeration = enumeration_name.has_value() ?
                                    std::make_optional(
                                        ArrayExperimental::get_enumeration(
-                                           ctx, array, attribute.name())) :
+                                           ctx,
+                                           array,
+                                           enumeration_name.value())) :
                                    std::nullopt;
 
             columns.push_back(

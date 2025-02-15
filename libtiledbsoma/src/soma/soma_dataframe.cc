@@ -88,13 +88,10 @@ bool SOMADataFrame::exists(
 }
 
 void SOMADataFrame::update_dataframe_schema(
-    std::string uri,
-    std::shared_ptr<SOMAContext> ctx,
     std::vector<std::string> drop_attrs,
     std::map<std::string, std::string> add_attrs,
     std::map<std::string, std::pair<std::string, bool>> add_enmrs) {
-    const auto& tctx = *ctx->tiledb_ctx();
-    tiledb::Array array(tctx, uri, TILEDB_READ);
+    const auto& tctx = *ctx_->tiledb_ctx();
     ArraySchemaEvolution se(tctx);
     for (auto key_name : drop_attrs) {
         LOG_DEBUG(std::format(
@@ -159,6 +156,13 @@ void SOMADataFrame::update_dataframe_schema(
 
         if (request_has_enmr) {
             auto [enmr_type, ordered] = enmr_it->second;
+
+            // SOMA converts string and binary to large string and large binary
+            auto enmr_name = attr_name + "_" +
+                             ((enmr_type == "u") ?
+                                  "U" :
+                                  (enmr_type == "z" ? "Z" : enmr_type));
+
             LOG_DEBUG(std::format(
                 "[SOMADataFrame::update_dataframe_schema] add col name {} "
                 "index_type "
@@ -175,7 +179,7 @@ void SOMADataFrame::update_dataframe_schema(
             // names, and the names need not match -- and multiple attrs can
             // use the same enumeration. For tiledbsoma, though, we don't take
             // advantage of this flexibility: we use the same name for an attr
-            // and its enumeration (if if has one).
+            // and its enumeration (if it has one).
             //
             // It's quite possible the array had this name as an enumerated
             // column, and then that column was dropped, and it's now being
@@ -185,7 +189,7 @@ void SOMADataFrame::update_dataframe_schema(
             // * If it is, we need to check if the enumeration is compatible.
             try {
                 const auto existing_enmr = ArrayExperimental::get_enumeration(
-                    tctx, array, attr_name);
+                    tctx, *arr_, enmr_name);
                 auto existing_type = ArrowAdapter::tdb_to_arrow_type(
                     existing_enmr.type());
                 auto existing_ordered = existing_enmr.ordered();
@@ -203,8 +207,8 @@ void SOMADataFrame::update_dataframe_schema(
                         existing_type,
                         existing_ordered));
                 }
-                array_already_has_it = true;
 
+                array_already_has_it = true;
             } catch (const std::exception& e) {
                 // Oddly, catch (tiledb::TileDBError& e) did not enter this
                 // block in unit test.
@@ -228,7 +232,7 @@ void SOMADataFrame::update_dataframe_schema(
             if (!array_already_has_it) {
                 se.add_enumeration(Enumeration::create_empty(
                     tctx,
-                    attr_name,
+                    enmr_name,
                     ArrowAdapter::to_tiledb_format(enmr_type),
                     enmr_type == "u" || enmr_type == "z" || enmr_type == "U" ||
                             enmr_type == "Z" ?
@@ -236,7 +240,7 @@ void SOMADataFrame::update_dataframe_schema(
                         1,
                     ordered));
                 AttributeExperimental::set_enumeration_name(
-                    tctx, attr, attr_name);
+                    tctx, attr, enmr_name);
             }
 
         } else {
@@ -249,7 +253,15 @@ void SOMADataFrame::update_dataframe_schema(
 
         se.add_attribute(attr);
     }
-    se.array_evolve(uri);
+
+    se.array_evolve(uri_);
+
+    // When we evolve the schema, the ArraySchema needs to be updated to the
+    // latest version so re-open the Array. tiledb::Array::open will reopen
+    // the array at the set timestamp
+    auto mode = arr_->query_type();
+    arr_->close();
+    arr_->open(mode);
 }
 
 //===================================================================

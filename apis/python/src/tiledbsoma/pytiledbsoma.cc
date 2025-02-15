@@ -17,6 +17,7 @@ template <typename... Args>
 using overload_cast_ = pybind11::detail::overload_cast_impl<Args...>;
 
 void load_soma_context(py::module&);
+void load_fastercsx(py::module&);
 void load_soma_object(py::module&);
 void load_soma_array(py::module&);
 void load_soma_dataframe(py::module&);
@@ -30,7 +31,6 @@ void load_query_condition(py::module&);
 void load_reindexer(py::module&);
 void load_soma_vfs(py::module&);
 void load_managed_query(py::module&);
-void load_fastercsx(py::module&);
 
 PYBIND11_MODULE(pytiledbsoma, m) {
     py::register_exception<TileDBSOMAError>(m, "SOMAError");
@@ -158,9 +158,8 @@ PYBIND11_MODULE(pytiledbsoma, m) {
         .def_readwrite("tile_order", &PlatformSchemaConfig::tile_order)
         .def_readwrite("cell_order", &PlatformSchemaConfig::cell_order);
 
-    m.def("_update_dataframe_schema", &SOMADataFrame::update_dataframe_schema);
-
     load_soma_context(m);
+    load_fastercsx(m);
     load_soma_object(m);
     load_soma_array(m);
     load_soma_dataframe(m);
@@ -174,7 +173,6 @@ PYBIND11_MODULE(pytiledbsoma, m) {
     load_reindexer(m);
     load_soma_vfs(m);
     load_managed_query(m);
-    load_fastercsx(m);
 }
 
 };  // namespace libtiledbsomacpp
