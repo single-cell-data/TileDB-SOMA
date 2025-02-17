@@ -15,6 +15,7 @@
 
 #include "../utils/logger.h"
 #include "soma_attribute.h"
+#include "soma_binary_column.h"
 #include "soma_dimension.h"
 #include "soma_geometry_column.h"
 

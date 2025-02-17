@@ -430,26 +430,6 @@ class ArrowAdapter {
         PlatformConfig platform_config = PlatformConfig());
 
     /**
-     * @brief Get a TileDB dimension from an Arrow schema.
-     *
-     * @remarks This is a list variation which expects a schemaand a data array
-     * to describe a list instead of a simple columns. Used especialy with
-     * nested domains where it is described by a struct and each nested
-     * dimension is described by a list.
-     *
-     * @return std::pair<Dimension, bool> The TileDB dimension.
-     */
-    static Dimension tiledb_dimension_from_arrow_schema_ext(
-        std::shared_ptr<Context> ctx,
-        ArrowSchema* schema,
-        ArrowArray* array,
-        std::string soma_type,
-        std::string_view type_metadata,
-        std::string prefix = std::string(),
-        std::string suffix = std::string(),
-        PlatformConfig platform_config = PlatformConfig());
-
-    /**
      * @brief Get a TileDB attribute with its enumeration from an Arrow schema.
      *
      * @return std::pair<Attribute, std::optional<Enumeration>>
@@ -573,12 +553,62 @@ class ArrowAdapter {
         return make_arrow_array_child_string(v);
     }
 
-    static ArrowArray* make_arrow_array_child_binary() {
+    static ArrowArray* make_arrow_array_child_binary(
+        const std::pair<std::vector<std::byte>, std::vector<std::byte>>& pair) {
+        std::vector<std::vector<std::byte>> v({pair.first, pair.second});
+        return make_arrow_array_child_binary(v);
+    }
+
+    static ArrowArray* make_arrow_array_child_binary(
+        const std::vector<std::vector<std::byte>>& binaries) {
         // Use malloc here, not new, to match ArrowAdapter::release_array
         auto arrow_array = (ArrowArray*)malloc(sizeof(ArrowArray));
 
-        ArrowArrayInitFromType(
-            arrow_array, ArrowType::NANOARROW_TYPE_LARGE_BINARY);
+        size_t n = binaries.size();
+
+        arrow_array->length = n;  // Number of strings, not number of bytes
+        arrow_array->null_count = 0;
+        arrow_array->offset = 0;
+
+        // Three-buffer model for string data:
+        // * Slot 0 is the Arrow uint8_t* validity buffer
+        // * Slot 1 is the Arrow offsets buffer: uint32_t* for Arrow string
+        //   or uint64_t* for Arrow large_string
+        // * Slot 2 is data, void* but will be derefrenced as T*
+        arrow_array->n_buffers = 3;
+        arrow_array->buffers = (const void**)malloc(3 * sizeof(void*));
+        arrow_array->n_children = 0;      // leaf/child node
+        arrow_array->children = nullptr;  // leaf/child node
+        arrow_array->dictionary = nullptr;
+
+        arrow_array->release = &ArrowAdapter::release_array;
+        arrow_array->private_data = nullptr;
+
+        size_t nbytes = 0;
+        for (auto e : binaries) {
+            nbytes += e.size();
+        }
+
+        // This function produces arrow large_string, which has 64-bit offsets.
+        uint64_t* offsets = (uint64_t*)malloc((n + 1) * sizeof(uint64_t));
+
+        // Data
+        char* data = (char*)malloc(nbytes * sizeof(char));
+        uint64_t dest_start = 0;
+
+        offsets[0] = dest_start;
+        for (size_t i = 0; i < n; i++) {
+            const std::vector<std::byte>& elem = binaries[i];
+            size_t elem_len = elem.size();
+
+            memcpy(&data[dest_start], elem.data(), elem_len);
+            dest_start += elem_len;
+            offsets[i + 1] = dest_start;
+        }
+
+        arrow_array->buffers[0] = nullptr;  // validity
+        arrow_array->buffers[1] = offsets;
+        arrow_array->buffers[2] = data;
 
         return arrow_array;
     }
@@ -1181,8 +1211,7 @@ class ArrowAdapter {
             case TILEDB_STRING_UTF8:
             case TILEDB_CHAR:
             case TILEDB_GEOM_WKT: {
-                if (strcmp(schema->format, "u") == 0 ||
-                    strcmp(schema->format, "z") == 0) {
+                if (strcmp(schema->format, "u") == 0) {
                     auto offsets = static_cast<const uint32_t*>(
                         array->buffers[1]);
                     auto data = static_cast<const char*>(array->buffers[2]);
@@ -1198,9 +1227,7 @@ class ArrowAdapter {
                     }
 
                     return std::make_any<std::array<std::string, S>>(result);
-                } else if (
-                    strcmp(schema->format, "U") == 0 ||
-                    strcmp(schema->format, "Z") == 0) {
+                } else if (strcmp(schema->format, "U") == 0) {
                     auto offsets = static_cast<const uint64_t*>(
                         array->buffers[1]);
                     auto data = static_cast<const char*>(array->buffers[2]);
@@ -1225,8 +1252,7 @@ class ArrowAdapter {
             } break;
             case TILEDB_BLOB:
             case TILEDB_GEOM_WKB: {
-                if (strcmp(schema->format, "u") == 0 ||
-                    strcmp(schema->format, "z") == 0) {
+                if (strcmp(schema->format, "z") == 0) {
                     auto offsets = static_cast<const uint32_t*>(
                         array->buffers[1]);
                     auto data = static_cast<const std::byte*>(
@@ -1246,9 +1272,7 @@ class ArrowAdapter {
 
                     return std::make_any<std::array<std::vector<std::byte>, S>>(
                         result);
-                } else if (
-                    strcmp(schema->format, "U") == 0 ||
-                    strcmp(schema->format, "Z") == 0) {
+                } else if (strcmp(schema->format, "Z") == 0) {
                     auto offsets = static_cast<const uint64_t*>(
                         array->buffers[1]);
                     auto data = static_cast<const std::byte*>(
