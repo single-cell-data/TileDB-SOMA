@@ -341,10 +341,8 @@ void ManagedQuery::_fill_in_subarrays_if_dense_without_new_shape(bool is_read) {
     LOG_TRACE(
         "[ManagedQuery] _fill_in_subarrays_if_dense_without_new_shape enter");
     // Dense array must have a subarray set for read. If the array is dense and
-    // no ranges have been set, add a range for the array's entire non-empty
-    // domain on dimension 0. In the case that the non-empty domain does not
-    // exist (when the array has not been written to yet), use dimension 0's
-    // full domain
+    // no ranges have been set, add a range for the array's entire full
+    // domain on dimension 0
     if (_has_any_subarray_range_set()) {
         return;
     }
@@ -359,25 +357,7 @@ void ManagedQuery::_fill_in_subarrays_if_dense_without_new_shape(bool is_read) {
         return;
     }
 
-    if (is_read) {
-        // Check if the array has been written to by using the C API as
-        // there is no way to to check for an empty domain using the current
-        // C++ API.
-        int32_t is_empty;
-        int64_t ned[2];
-        ctx_->handle_error(tiledb_array_get_non_empty_domain_from_index(
-            ctx_->ptr().get(), array_->ptr().get(), 0, &ned, &is_empty));
-
-        if (is_empty == 1) {
-            array_shape = schema.domain().dimension(0).domain<int64_t>();
-        } else {
-            array_shape = std::make_pair(ned[0], ned[1]);
-        }
-    } else {
-        // Non-empty domain is not avaiable for access at write time.
-        array_shape = schema.domain().dimension(0).domain<int64_t>();
-    }
-
+    array_shape = schema.domain().dimension(0).domain<int64_t>();
     subarray_->add_range(0, array_shape.first, array_shape.second);
     LOG_TRACE(std::format(
         "[ManagedQuery] Add full range to dense subarray dim0 = ({}, {})",
@@ -436,41 +416,20 @@ void ManagedQuery::_fill_in_subarrays_if_dense_with_new_shape(
             cd_hi));
 
         if (is_read) {
-            // Check if the array has been written to by using the C API as
-            // there is no way to to check for an empty domain using the current
-            // C++ API.
-            //
-            // Non-empty domain is not avaliable at write time (the core array
-            // isn't open for read) -- but, we don't need to do this calculation
-            // for writes anyway.
-            int32_t is_empty;
-            int64_t ned[2];
-            ctx_->handle_error(tiledb_array_get_non_empty_domain_from_name(
-                ctx_->ptr().get(),
-                array_->ptr().get(),
-                dim_name.c_str(),
-                &ned,
-                &is_empty));
-            if (is_empty == 1) {
-                LOG_TRACE(std::format(
-                    "[ManagedQuery] _fill_in_subarrays_if_dense_with_new_shape "
-                    "dim name {} non-empty domain is absent",
-                    dim_name));
-            } else {
-                int64_t ned_lo = ned[0];
-                int64_t ned_hi = ned[1];
-                LOG_TRACE(std::format(
-                    "[ManagedQuery] _fill_in_subarrays_if_dense_with_new_shape "
-                    "dim name {} non-empty domain ({}, {})",
-                    dim_name,
-                    ned_lo,
-                    ned_hi));
-                if (ned_lo > cd_lo) {
-                    lo = ned_lo;
-                }
-                if (ned_hi < cd_hi) {
-                    hi = ned_hi;
-                }
+            auto [dom_lo, dom_hi] = schema.domain()
+                                        .dimension(0)
+                                        .domain<int64_t>();
+            LOG_TRACE(std::format(
+                "[ManagedQuery] _fill_in_subarrays_if_dense_with_new_shape "
+                "dim name {} non-empty domain ({}, {})",
+                dim_name,
+                dom_lo,
+                dom_hi));
+            if (dom_lo > cd_lo) {
+                lo = dom_lo;
+            }
+            if (dom_hi < cd_hi) {
+                hi = dom_hi;
             }
         }
 
