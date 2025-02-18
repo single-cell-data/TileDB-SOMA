@@ -77,9 +77,6 @@ class _FSPathWrapper(pathlib.Path):
     def __new__(cls, _obj: object, path: Path) -> "_FSPathWrapper":
         return super().__new__(cls, path)
 
-    # ``pathlib.Path`` construction references this attribute (``PosixFlavour`` or ``WindowsFlavour``)
-    _flavour = pathlib.Path().__class__._flavour  # type: ignore[attr-defined]
-
     def __init__(self, obj: object, path: Path) -> None:
         super().__init__()
         self._obj = obj
