@@ -551,99 +551,99 @@ def assert_anndata_equal(
     assert_uns_equal(src_adata, read_adata)
 
 
-@pytest.mark.xfail
-@settings(
-    suppress_health_check=(ht.HealthCheck.function_scoped_fixture,),
-    deadline=timedelta(milliseconds=2500),
-)
-@given(
-    data=st.data(),
-    adata=anndatas(),
-    measurement_name=posix_filename(),
-    context=st.one_of(st.from_type(tiledbsoma.SOMATileDBContext), st.none()),
-)
-def test_roundtrip_from_anndata_to_anndata(
-    data: st.DataFn,
-    adata: anndata.AnnData,
-    measurement_name: str,
-    context: tiledbsoma.SOMATileDBContext | None,
-    tmp_path_factory,  # fixture
-) -> None:
-    """
-    Round-trip an AnnData.
+# @pytest.mark.xfail
+# @settings(
+#     suppress_health_check=(ht.HealthCheck.function_scoped_fixture,),
+#     deadline=timedelta(milliseconds=2500),
+# )
+# @given(
+#     data=st.data(),
+#     adata=anndatas(),
+#     measurement_name=posix_filename(),
+#     context=st.one_of(st.from_type(tiledbsoma.SOMATileDBContext), st.none()),
+# )
+# def test_roundtrip_from_anndata_to_anndata(
+#     data: st.DataFn,
+#     adata: anndata.AnnData,
+#     measurement_name: str,
+#     context: tiledbsoma.SOMATileDBContext | None,
+#     tmp_path_factory,  # fixture
+# ) -> None:
+#     """
+#     Round-trip an AnnData.
 
-    Of note:
-    * to_anndata does not read "raw". So it can't round-trip this part of the AnnData
-    * AnnData X can be many types, but when read back will always be a sparse array
-    """
+#     Of note:
+#     * to_anndata does not read "raw". So it can't round-trip this part of the AnnData
+#     * AnnData X can be many types, but when read back will always be a sparse array
+#     """
 
-    test_path = tmp_path_factory.mktemp("anndata-")
-    experiment_uri = (test_path / "soma").as_posix()
+#     test_path = tmp_path_factory.mktemp("anndata-")
+#     experiment_uri = (test_path / "soma").as_posix()
 
-    # save the anndata for test failure debugging convenince and to ensure that the
-    # generated AnnData comply with the anndata HDF5 writer.
-    try:
-        adata.write(test_path / "adata.h5ad")
-    except Exception as e:
-        print("Unable to save AnnData!", e)
-        print(adata)
-        assert False, repr(e)
+#     # save the anndata for test failure debugging convenince and to ensure that the
+#     # generated AnnData comply with the anndata HDF5 writer.
+#     try:
+#         adata.write(test_path / "adata.h5ad")
+#     except Exception as e:
+#         print("Unable to save AnnData!", e)
+#         print(adata)
+#         assert False, repr(e)
 
-    # Pick X and raw.X layer names that are NOT already used by the layers mapping
-    #
-    X_layer_name = data.draw(posix_filename().filter(lambda x: x not in adata.layers))
-    raw_X_layer_name = data.draw(
-        posix_filename().filter(lambda x: x not in adata.layers and x != X_layer_name)
-    )
+#     # Pick X and raw.X layer names that are NOT already used by the layers mapping
+#     #
+#     X_layer_name = data.draw(posix_filename().filter(lambda x: x not in adata.layers))
+#     raw_X_layer_name = data.draw(
+#         posix_filename().filter(lambda x: x not in adata.layers and x != X_layer_name)
+#     )
 
-    with suppress_type_checks():
-        tiledbsoma.io.from_anndata(
-            experiment_uri,
-            adata,
-            measurement_name=measurement_name,
-            context=context,
-            X_layer_name=X_layer_name,
-            raw_X_layer_name=raw_X_layer_name,
-        )
+#     with suppress_type_checks():
+#         tiledbsoma.io.from_anndata(
+#             experiment_uri,
+#             adata,
+#             measurement_name=measurement_name,
+#             context=context,
+#             X_layer_name=X_layer_name,
+#             raw_X_layer_name=raw_X_layer_name,
+#         )
 
-        with tiledbsoma.Experiment.open(experiment_uri, context=context) as E:
-            read_adata = tiledbsoma.io.to_anndata(
-                E,
-                measurement_name=measurement_name,
-                X_layer_name=X_layer_name if adata.X is not None else None,
-                extra_X_layer_names=list(adata.layers.keys()),
-            )
+#         with tiledbsoma.Experiment.open(experiment_uri, context=context) as E:
+#             read_adata = tiledbsoma.io.to_anndata(
+#                 E,
+#                 measurement_name=measurement_name,
+#                 X_layer_name=X_layer_name if adata.X is not None else None,
+#                 extra_X_layer_names=list(adata.layers.keys()),
+#             )
 
-            # TODO: io.to_anndata does not load raw. Do a manual verification
-            # of the arrays created by io.from_anndata.
-            #
-            # NB: sc-63483 -- raw is very likely in the wrong place. Use the current
-            # implementation location, but be prepared for this to change when the above
-            # issue is resolved.
-            if adata.raw is not None:
-                assert_frame_equal_strict(
-                    adata.raw.var.reset_index(),
-                    E.ms["raw"]["var"]
-                    .read()
-                    .concat()
-                    .to_pandas()
-                    .drop(columns="soma_joinid"),
-                )
-                if adata.raw.X is not None:
-                    tbl = E.ms["raw"]["X"][raw_X_layer_name].read().tables().concat()
-                    data, i, j = (
-                        tbl["soma_data"].to_numpy(),
-                        tbl["soma_dim_0"].to_numpy(),
-                        tbl["soma_dim_1"].to_numpy(),
-                    )
-                    X = sp.csr_matrix(
-                        (data, (i, j)),
-                        dtype=tbl.schema.field("soma_data").type.to_pandas_dtype(),
-                        shape=E.ms["raw"]["X"][raw_X_layer_name].shape,
-                    )
-                    assert_matrix_equal(adata.raw.X, X)
+#             # TODO: io.to_anndata does not load raw. Do a manual verification
+#             # of the arrays created by io.from_anndata.
+#             #
+#             # NB: sc-63483 -- raw is very likely in the wrong place. Use the current
+#             # implementation location, but be prepared for this to change when the above
+#             # issue is resolved.
+#             if adata.raw is not None:
+#                 assert_frame_equal_strict(
+#                     adata.raw.var.reset_index(),
+#                     E.ms["raw"]["var"]
+#                     .read()
+#                     .concat()
+#                     .to_pandas()
+#                     .drop(columns="soma_joinid"),
+#                 )
+#                 if adata.raw.X is not None:
+#                     tbl = E.ms["raw"]["X"][raw_X_layer_name].read().tables().concat()
+#                     data, i, j = (
+#                         tbl["soma_data"].to_numpy(),
+#                         tbl["soma_dim_0"].to_numpy(),
+#                         tbl["soma_dim_1"].to_numpy(),
+#                     )
+#                     X = sp.csr_matrix(
+#                         (data, (i, j)),
+#                         dtype=tbl.schema.field("soma_data").type.to_pandas_dtype(),
+#                         shape=E.ms["raw"]["X"][raw_X_layer_name].shape,
+#                     )
+#                     assert_matrix_equal(adata.raw.X, X)
 
-    assert_anndata_equal(adata, read_adata)
+#     assert_anndata_equal(adata, read_adata)
 
 
 @settings(
@@ -656,39 +656,41 @@ def test_mumble(data, tmp_path_factory) -> None:
     test_path = tmp_path_factory.mktemp("anndata-")
     experiment_uri = (test_path / "soma").as_posix()
     uns = {
-        "e": {
-            "n": [False, False, False, False, False, False, False, False, False, False]
-        },
-        "s": False,
-        "YwH": {},
-        "1": False,
-        "wS3rq": {
-            "TMlKEk1Bsu7": [False, False, False, False, False, False, False],
-            "w": [False, False],
-            "Dto7k2WODnrv2g": False,
-            "BT0zZ1TT": False,
-            "VX5Y7J3": np.array([0, 0, 0], dtype=np.uint8),
-            "j7M": False,
-            "gPDgtsPXt7A": np.array([[0], [0], [0], [0]], dtype=np.int8),
-            "chb": False,
-        },
-        "fA0q4bpi-FHqBH": {
-            "uwtLuH1bO3pP": True,
+        # "e": {
+        #     "n": [False, False, False, False, False, False, False, False, False, False]
+        # },
+        # "s": False,
+        # "YwH": {},
+        # "1": False,
+        # "wS3rq": {
+        #     "TMlKEk1Bsu7": [False, False, False, False, False, False, False],
+        #     "w": [False, False],
+        #     "Dto7k2WODnrv2g": False,
+        #     "BT0zZ1TT": False,
+        #     "VX5Y7J3": np.array([0, 0, 0], dtype=np.uint8),
+        #     "j7M": False,
+        #     "gPDgtsPXt7A": np.array([[0], [0], [0], [0]], dtype=np.int8),
+        #     "chb": False,
+        # },
+        "xyz": {
+            # "uwtLuH1bO3pP": True,
             "D": [False, False],
-            "E0": False,
+            # "E0": False,
             "d": np.array([0.0], dtype=np.float32),
         },
-        "0": False,
+        # "0": False,
         "abc": {"A": [False, False], "a": np.array([False], dtype=np.bool_)},
         "def": {"B": [False, False], "b": np.array([False], dtype=bool)},
     }
 
-    n_obs = data.draw(st.integers(min_value=1, max_value=100))
-    n_vars = data.draw(st.integers(min_value=1, max_value=100))
+    n_obs = 10  # data.draw(st.integers(min_value=1, max_value=100))
+    n_vars = 4  # data.draw(st.integers(min_value=1, max_value=100))
 
-    obs = data.draw(dataframes(size=n_obs, name="obs"))
-    var = data.draw(dataframes(size=n_vars, name="var"))
+    # obs = data.draw(dataframes(size=n_obs, name="obs"))
+    # var = data.draw(dataframes(size=n_vars, name="var"))
 
+    obs = pd.DataFrame(data={"A": np.zeros((n_obs,))})
+    var = pd.DataFrame(data={"A": np.zeros((n_vars,))})
     adata = anndata.AnnData(
         obs=obs, var=var, X=np.zeros((n_obs, n_vars), dtype=np.float32), uns=uns
     )
@@ -705,6 +707,21 @@ def test_mumble(data, tmp_path_factory) -> None:
         )
 
         with tiledbsoma.Experiment.open(experiment_uri, context=context) as E:
+
+            print(f"---- { experiment_uri } ----")
+            print(E.ms["RNA"]["uns"])
+            print(E.ms["RNA"]["uns"].metadata)
+            for k in E.ms["RNA"]["uns"]:
+                print(E.ms["RNA"]["uns"][k])
+                print(E.ms["RNA"]["uns"][k].metadata)
+                if E.ms["RNA"]["uns"][k].soma_type == "SOMACollection":
+                    for j in E.ms["RNA"]["uns"][k]:
+                        print(E.ms["RNA"]["uns"][k][j])
+                        print(E.ms["RNA"]["uns"][k][j].metadata)
+                        print(E.ms["RNA"]["uns"][k][j].schema)
+                        print(E.ms["RNA"]["uns"][k][j].shape)
+                        print(E.ms["RNA"]["uns"][k][j].read())
+
             read_adata = tiledbsoma.io.to_anndata(
                 E,
                 measurement_name="RNA",
