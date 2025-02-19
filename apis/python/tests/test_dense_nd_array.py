@@ -212,19 +212,16 @@ def test_dense_nd_array_requires_shape(tmp_path, shape_is_numeric):
 
 def test_dense_nd_array_ned_write(tmp_path):
     uri = tmp_path.as_posix()
+    input = np.asarray([100, 101, 102, 103])
 
-    with soma.DenseNDArray.create(
-        uri=uri,
-        type=pa.int32(),
-        shape=[1000000],
-    ) as dnda:
-        dnda.write(
-            (slice(0, 4),),
-            pa.Tensor.from_numpy(np.asarray([100, 101, 102, 103])),
-        )
+    with soma.DenseNDArray.create(uri=uri, type=pa.int32(), shape=[1000000]) as dnda:
+        dnda.write((slice(10, 14),), pa.Tensor.from_numpy(input))
 
     with soma.DenseNDArray.open(uri) as dnda:
-        assert (dnda.read().to_numpy() == np.asarray([100, 101, 102, 103])).all()
+        np.array_equal(dnda.read((slice(10, 14),)), input)
+
+        # default reads should return the entire array
+        np.array_equal(dnda.read((slice(0, 1000000),)), dnda.read())
 
 
 @pytest.mark.parametrize(
@@ -583,3 +580,39 @@ def test_read_result_order(tmp_path):
             DeprecationWarning, match="The use of 'result_order=\"auto\"' is deprecated"
         ):
             assert np.array_equal(A.read(result_order="auto"), data)
+
+
+def test_subset_slice(tmp_path):
+    uri = tmp_path.as_posix()
+
+    soma.DenseNDArray.create(uri, type=pa.int32(), shape=(10, 3))
+
+    with soma.open(uri, mode="r") as A:
+        expected = A.read((slice(0, 9), slice(0, 2))).to_numpy().copy()
+        expected[0][0] = 0
+
+    with soma.open(uri, mode="w") as A:
+        A.write((0, 0), pa.Tensor.from_numpy(np.array([[0]], dtype=np.int32)))
+
+    with soma.open(uri, mode="r") as A:
+        actual = A.read((slice(0, 9), slice(0, 2)))
+        assert np.array_equal(expected, actual)
+
+        actual = A.read()
+        assert np.array_equal(expected, actual)
+
+
+def test_slice_with_resize(tmp_path):
+    uri = tmp_path.as_posix()
+
+    with soma.DenseNDArray.create(uri, type=pa.int8(), shape=(1,)) as A:
+        A.write((0,), pa.Tensor.from_numpy(np.array([-127], dtype=np.int8)))
+
+    with soma.open(uri, mode="r") as A:
+        assert A.read().shape == (1,)
+
+    with soma.open(uri, mode="w") as A:
+        A.resize((2,))
+
+    with soma.open(uri, mode="r") as A:
+        assert A.read().shape == (2,)

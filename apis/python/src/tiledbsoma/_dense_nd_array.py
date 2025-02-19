@@ -230,19 +230,7 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
             )
             result_order = somacore.ResultOrder.ROW_MAJOR
 
-        ned = []
-        for dim_name in handle.dimension_names:
-            dtype = np.dtype(self.schema.field(dim_name).type.to_pandas_dtype())
-            slot = handle.non_empty_domain_slot_opt(dim_name, dtype)
-            if slot is None:
-                use_shape = True
-                break
-            ned.append(slot[1] + 1)
-        else:
-            use_shape = False
-
-        data_shape = tuple(handle.shape if use_shape else ned)
-        target_shape = dense_indices_to_shape(coords, data_shape, result_order)
+        target_shape = dense_indices_to_shape(coords, tuple(handle.shape), result_order)
 
         arrow_table = TableReadIter(
             array=self,
