@@ -795,6 +795,8 @@ def posix_filename() -> st.SearchStrategy:
             codec="ascii",
             categories=["Lu", "Ll", "Nd"],
             include_characters=["_", "-", "."],
+            exclude_characters=["#"] if HT_TEST_CONFIG["sc-63410_workaround"] else None,
         ),
         min_size=1,
+        max_size=20,
     ).filter(lambda fn: fn not in [".", ".."])

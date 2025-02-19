@@ -56,4 +56,8 @@ st.register_type_strategy(soma.SOMATileDBContext, st.just(soma.SOMATileDBContext
 
 
 # Register hypothesis profile for extensive/expensive test runs
-ht.settings.register_profile("expensive", max_examples=10000, print_blob=True)
+ht.settings.register_profile(
+    "expensive",
+    max_examples=10000,
+    print_blob=True,
+)
