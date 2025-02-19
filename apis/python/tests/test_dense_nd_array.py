@@ -582,7 +582,7 @@ def test_read_result_order(tmp_path):
             assert np.array_equal(A.read(result_order="auto"), data)
 
 
-def test_slice_with_offset(tmp_path):
+def test_subset_slice(tmp_path):
     uri = tmp_path.as_posix()
 
     soma.DenseNDArray.create(uri, type=pa.int32(), shape=(10, 3))
@@ -596,10 +596,10 @@ def test_slice_with_offset(tmp_path):
 
     with soma.open(uri, mode="r") as A:
         actual = A.read((slice(0, 9), slice(0, 2)))
-        np.array_equal(expected, actual)
+        assert np.array_equal(expected, actual)
 
         actual = A.read()
-        np.array_equal(expected, actual)
+        assert np.array_equal(expected, actual)
 
 
 def test_slice_with_resize(tmp_path):
