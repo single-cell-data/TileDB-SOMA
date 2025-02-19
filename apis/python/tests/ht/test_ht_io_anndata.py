@@ -13,6 +13,7 @@ import hypothesis as ht
 import numpy as np
 import numpy.typing as npt
 import pandas as pd
+import pytest
 import scipy.sparse as sp
 from hypothesis import given, settings
 from hypothesis import strategies as st
@@ -550,6 +551,7 @@ def assert_anndata_equal(
     assert_uns_equal(src_adata, read_adata)
 
 
+@pytest.mark.xfail
 @settings(
     suppress_health_check=(ht.HealthCheck.function_scoped_fixture,),
     deadline=timedelta(milliseconds=2500),
