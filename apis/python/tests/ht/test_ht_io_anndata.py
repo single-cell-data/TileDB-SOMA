@@ -482,13 +482,6 @@ def assert_uns_equal(src_adata: anndata.AnnData, read_adata: anndata.Anndata) ->
 
     diff = deepdiff.DeepDiff(src_uns, read_uns, ignore_nan_inequality=True)
 
-    if diff != {}:
-        print("----- BEFORE CLEAN -----")
-        print(repr(diff))
-        print("======")
-        print(src_adata.uns)
-        print(read_adata.uns)
-
     # Ignore expected differences
     for key in list(diff.get("type_changes", ())):
         chng = diff["type_changes"][key]
@@ -520,6 +513,9 @@ def assert_uns_equal(src_adata: anndata.AnnData, read_adata: anndata.Anndata) ->
     if diff != {}:
         print("----- AFTER CLEAN -----")
         print(repr(diff))
+        print("======")
+        print(src_adata.uns)
+        print(read_adata.uns)
 
     assert diff == {}, repr(diff.to_dict())
 
@@ -644,5 +640,73 @@ def test_roundtrip_from_anndata_to_anndata(
                         shape=E.ms["raw"]["X"][raw_X_layer_name].shape,
                     )
                     assert_matrix_equal(adata.raw.X, X)
+
+    assert_anndata_equal(adata, read_adata)
+
+
+@settings(
+    suppress_health_check=(ht.HealthCheck.function_scoped_fixture,),
+    deadline=timedelta(milliseconds=2500),
+)
+@given(data=st.data())
+def test_mumble(data, tmp_path_factory) -> None:
+    context = tiledbsoma.SOMATileDBContext()
+    test_path = tmp_path_factory.mktemp("anndata-")
+    experiment_uri = (test_path / "soma").as_posix()
+    uns = {
+        "e": {
+            "n": [False, False, False, False, False, False, False, False, False, False]
+        },
+        "s": False,
+        "YwH": {},
+        "1": False,
+        "wS3rq": {
+            "TMlKEk1Bsu7": [False, False, False, False, False, False, False],
+            "w": [False, False],
+            "Dto7k2WODnrv2g": False,
+            "BT0zZ1TT": False,
+            "VX5Y7J3": np.array([0, 0, 0], dtype=np.uint8),
+            "j7M": False,
+            "gPDgtsPXt7A": np.array([[0], [0], [0], [0]], dtype=np.int8),
+            "chb": False,
+        },
+        "fA0q4bpi-FHqBH": {
+            "uwtLuH1bO3pP": True,
+            "D": [False, False],
+            "E0": False,
+            "d": np.array([0.0], dtype=np.float32),
+        },
+        "0": False,
+        "abc": {"A": [False, False], "a": np.array([False], dtype=np.bool_)},
+        "def": {"B": [False, False], "b": np.array([False], dtype=bool)},
+    }
+
+    n_obs = data.draw(st.integers(min_value=1, max_value=100))
+    n_vars = data.draw(st.integers(min_value=1, max_value=100))
+
+    obs = data.draw(dataframes(size=n_obs, name="obs"))
+    var = data.draw(dataframes(size=n_vars, name="var"))
+
+    adata = anndata.AnnData(
+        obs=obs, var=var, X=np.zeros((n_obs, n_vars), dtype=np.float32), uns=uns
+    )
+    assert_uns_equal(adata, adata)
+
+    with suppress_type_checks():
+
+        tiledbsoma.io.from_anndata(
+            experiment_uri,
+            adata,
+            measurement_name="RNA",
+            X_layer_name="data",
+            context=context,
+        )
+
+        with tiledbsoma.Experiment.open(experiment_uri, context=context) as E:
+            read_adata = tiledbsoma.io.to_anndata(
+                E,
+                measurement_name="RNA",
+                X_layer_name="data" if adata.X is not None else None,
+            )
 
     assert_anndata_equal(adata, read_adata)
