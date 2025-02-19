@@ -574,7 +574,7 @@ void c_update_dataframe_schema(
 
     // For enum columns, two more things: value type (e.g. string) and
     // is-ordered-enum boolean. These come into us as separate lists but
-    // we will reshape them into a map from enum-attr name to pair of
+    // we will reshape them into a map from enum-attr name to tuple of
     // (value_type, ordered).
 
     // First do integrity checks.
@@ -606,11 +606,11 @@ void c_update_dataframe_schema(
                 add_cols_enum_value_types[i]);
             type_name = remap_arrow_type_code_r_to_c(type_name);
             bool ordered = Rcpp::as<bool>(add_cols_enum_ordered[i]);
-
-            add_enmrs.emplace(key, std::pair(type_name, ordered));
+            add_enmrs.emplace(key, std::make_pair(type_name, ordered));
         }
     }
 
-    tdbs::SOMADataFrame::update_dataframe_schema(
-        uri, ctxxp->ctxptr, drop_attrs, add_attrs, add_enmrs);
+    auto sdf = tdbs::SOMADataFrame::open(uri, OpenMode::write, ctxxp->ctxptr);
+    sdf->update_dataframe_schema(drop_attrs, add_attrs, add_enmrs);
+    sdf->close();
 }

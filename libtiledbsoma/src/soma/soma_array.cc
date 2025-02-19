@@ -167,13 +167,15 @@ SOMAArray::SOMAArray(
     std::shared_ptr<SOMAContext> ctx,
     std::shared_ptr<Array> arr,
     std::optional<TimestampRange> timestamp)
+    // Ensure protected attributes initalized first in a consistent ordering
     : uri_(util::rstrip_uri(arr->uri()))
     , ctx_(ctx)
+    , arr_(arr)
+    , mq_(std::make_unique<ManagedQuery>(arr, ctx_->tiledb_ctx(), name_))
+    // Initialize private attributes next to control the order of destruction
     , batch_size_("auto")
     , result_order_(ResultOrder::automatic)
     , timestamp_(timestamp)
-    , mq_(std::make_unique<ManagedQuery>(arr, ctx_->tiledb_ctx(), name_))
-    , arr_(arr)
     , schema_(std::make_shared<ArraySchema>(arr->schema())) {
     reset({}, batch_size_, result_order_);
     fill_metadata_cache(timestamp);

@@ -121,13 +121,11 @@ class SOMADataFrame : public SOMAArray {
      * o drop_cols: attr_name
      * o add_attrs: attr_name -> Arrow type string for the index
      *   type, e.g. 'c' for int8
-     * o add_enmrs: attr_name -> pair of:
+     * o add_enmrs: attr_name -> tuple of:
      *   - Arrow type string the value type, e.g. "f" or "U"
      *   - bool ordered
      */
-    static void update_dataframe_schema(
-        std::string uri,
-        std::shared_ptr<SOMAContext> ctx,
+    void update_dataframe_schema(
         std::vector<std::string> drop_attrs,
         std::map<std::string, std::string> add_attrs,
         std::map<std::string, std::pair<std::string, bool>> add_enmrs);

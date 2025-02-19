@@ -46,9 +46,9 @@ std::shared_ptr<SOMAColumn> SOMAAttribute::deserialize(
         ctx, attribute);
 
     std::optional<Enumeration>
-        enumeration = enumeration_name ?
+        enumeration = enumeration_name.has_value() ?
                           std::make_optional(ArrayExperimental::get_enumeration(
-                              ctx, array, attribute.name())) :
+                              ctx, array, enumeration_name.value())) :
                           std::nullopt;
 
     return std::make_shared<SOMAAttribute>(attribute, enumeration);

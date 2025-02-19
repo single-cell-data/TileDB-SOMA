@@ -85,4 +85,11 @@ std::shared_ptr<SOMAColumn> find_column_by_name(
     return *column_it;
 }
 
+std::string get_enmr_label(
+    ArrowSchema* index_schema, ArrowSchema* value_schema) {
+    std::string format(value_schema->format);
+    format = (format == "u") ? "U" : (format == "z" ? "Z" : format);
+    return std::string(index_schema->name) + "_" + format;
+}
+
 };  // namespace tiledbsoma::util
