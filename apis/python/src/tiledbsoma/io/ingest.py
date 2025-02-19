@@ -593,7 +593,7 @@ def from_anndata(
                 try:
                     has_X = anndata.X is not None
                 except (NameError, KeyError):
-                    # We need to check both -- different exception types occur dependinng
+                    # We need to check both -- different exception types occur depending
                     # on whether the anndata object is read in backing mode or not.
                     has_X = False
 
@@ -2460,7 +2460,7 @@ def _write_matrix_to_sparseNDArray(
             non_stride_axis = 1 - stride_axis
             chunk_size = int(math.ceil(goal_chunk_nnz / matrix.shape[non_stride_axis]))
         else:
-            chunk_size = _find_sparse_chunk_size(  # type: ignore [unreachable]
+            chunk_size = _find_sparse_chunk_size(  # type: ignore[unreachable]
                 matrix, i, stride_axis, goal_chunk_nnz, mean_nnz
             )
         if chunk_size == -1:  # completely empty array; nothing to write
@@ -2498,7 +2498,7 @@ def _write_matrix_to_sparseNDArray(
         #   to estimate a chunk size that satisfies the goal chunk nnz.
         # * Acquire the full chunk nnz (which is much more performant at the
         #   AnnData level than getting each of the individual row nnz values)
-        # * Adapt that downard.
+        # * Adapt that downward.
         #
         # In a future C++-only matrix-writer implementation where buffer sizes
         # are exposed to the implementation langauge -- a benefit we do not
