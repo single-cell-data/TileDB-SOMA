@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 import pathlib
+import sys
 from contextlib import contextmanager
 from typing import (
     ContextManager,
@@ -76,6 +77,16 @@ class _FSPathWrapper(pathlib.Path):
 
     def __new__(cls, _obj: object, path: Path) -> "_FSPathWrapper":
         return super().__new__(cls, path)
+
+    # This is an essential part of the monkeypatch. Note that Python 3.13 replaces
+    # __class__._flavour with __class__.__orig_class__.
+    #
+    # ``pathlib.Path`` construction references this attribute (``PosixFlavour`` or ``WindowsFlavour``)
+    major_minor = (sys.version_info.major, sys.version_info.minor)
+    if major_minor < (3, 13):
+        _flavour = pathlib.Path().__class__._flavour  # type: ignore[attr-defined]
+    else:
+        __orig_class__ = pathlib.Path().__class__.__orig_class__  # type: ignore[attr-defined]
 
     def __init__(self, obj: object, path: Path) -> None:
         super().__init__()
