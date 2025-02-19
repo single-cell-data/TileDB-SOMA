@@ -485,7 +485,7 @@ def assert_uns_equal(src_adata: anndata.AnnData, read_adata: anndata.Anndata) ->
     if diff != {}:
         print("----- BEFORE CLEAN -----")
         print(repr(diff))
-        print('======')
+        print("======")
         print(src_adata.uns)
         print(read_adata.uns)
 
@@ -516,7 +516,6 @@ def assert_uns_equal(src_adata: anndata.AnnData, read_adata: anndata.Anndata) ->
 
     if diff.get("type_changes", None) == {}:
         del diff["type_changes"]
-
 
     if diff != {}:
         print("----- AFTER CLEAN -----")
