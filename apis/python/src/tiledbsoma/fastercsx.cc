@@ -220,8 +220,10 @@ T lookup_dtype_(
         return index.at(dtype.num());
     } catch (const std::out_of_range& oor) {
         // will bubble up as a ValueError
+        std::string name = dtype.attr("name").cast<std::string>();
         throw std::invalid_argument(
-            "Unsupported type: " + array_name + " has an unsupported dtype");
+            "Unsupported type: " + array_name + " has an unsupported dtype: '" +
+            name + "'");
     }
 }
 
