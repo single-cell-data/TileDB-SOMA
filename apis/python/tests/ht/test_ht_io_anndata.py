@@ -177,12 +177,12 @@ def keys() -> st.SearchStrategy[str]:
         )
 
 
+# AnnData <= 0.10 does not support scipy sparse_array
 if Version(anndata.__version__) >= Version("0.11.0"):
     MatrixFormats = Literal[
         "csr_matrix", "csc_matrix", "csr_array", "csc_array", "ndarray", "ma"
     ]
 else:
-    # AnnData <= 0.10 does not support scipy sparse_array
     MatrixFormats = Literal["csr_matrix", "csc_matrix", "ndarray", "ma"]
 
 
@@ -190,7 +190,7 @@ else:
 def matrixes(
     draw: st.DrawFn,
     shape: tuple[int, int] | st.SearchStrategy[tuple[int, ...]],
-    formats: MatrixFormats | None = None,
+    formats: "MatrixFormats" | None = None,
 ) -> sp.csr_matrix | sp.csc_matrix | np.ndarray | np.ma.MaskedArray:
     """Random 2D array in a variety of formats supported by AnnData."""
 
@@ -290,7 +290,7 @@ def matrix_shapes(
 def map_of_matrixes(
     draw: st.DrawFn,
     shape_prelude: tuple[int, ...],
-    formats: MatrixFormats | None = None,
+    formats: "MatrixFormats" | None = None,
     excluded_keys: Sequence[str] = (),
 ) -> dict[str, np.ndarray | sp.sparray | sp.spmatrix | np.ma.MaskedArray]:
     return draw(
@@ -482,6 +482,13 @@ def assert_uns_equal(src_adata: anndata.AnnData, read_adata: anndata.Anndata) ->
 
     diff = deepdiff.DeepDiff(src_uns, read_uns, ignore_nan_inequality=True)
 
+    if diff != {}:
+        print("----- BEFORE CLEAN -----")
+        print(repr(diff))
+        print('======')
+        print(src_adata.uns)
+        print(read_adata.uns)
+
     # Ignore expected differences
     for key in list(diff.get("type_changes", ())):
         chng = diff["type_changes"][key]
@@ -510,6 +517,11 @@ def assert_uns_equal(src_adata: anndata.AnnData, read_adata: anndata.Anndata) ->
     if diff.get("type_changes", None) == {}:
         del diff["type_changes"]
 
+
+    if diff != {}:
+        print("----- AFTER CLEAN -----")
+        print(repr(diff))
+
     assert diff == {}, repr(diff.to_dict())
 
 
@@ -521,7 +533,7 @@ def assert_anndata_equal(
         src_adata.shape == read_adata.shape
         and src_adata.n_obs == read_adata.n_obs
         and src_adata.n_vars == read_adata.n_vars
-    )
+    ), f"AnnData shape is not eq. Got {read_adata.shape}, expected {src_adata.shape}"
     assert src_adata.X is None or sp.issparse(read_adata.X)
 
     assert_frame_equal_strict(src_adata.obs, read_adata.obs)
