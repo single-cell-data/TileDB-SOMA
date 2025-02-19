@@ -565,14 +565,14 @@ def test_roundtrip_from_anndata_to_anndata(
     test_path = tmp_path_factory.mktemp("anndata-")
     experiment_uri = (test_path / "soma").as_posix()
 
-    # # save the anndata for test failure debugging convenince
-    # try:
-    #     adata.write(test_path / "adata.h5ad")
-    # except Exception as e:
-    #     print("Unable to save AnnData!", e)
-    #     print(adata)
-    #     pprint.pprint(adata.uns)
-    #     assert False, repr(e)
+    # save the anndata for test failure debugging convenince and to ensure that the
+    # generated AnnData comply with the anndata HDF5 writer.
+    try:
+        adata.write(test_path / "adata.h5ad")
+    except Exception as e:
+        print("Unable to save AnnData!", e)
+        print(adata)
+        assert False, repr(e)
 
     # Pick X and raw.X layer names that are NOT already used by the layers mapping
     #
