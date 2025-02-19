@@ -13,7 +13,6 @@ import hypothesis as ht
 import numpy as np
 import numpy.typing as npt
 import pandas as pd
-import pytest
 import scipy.sparse as sp
 from hypothesis import given, settings
 from hypothesis import strategies as st
