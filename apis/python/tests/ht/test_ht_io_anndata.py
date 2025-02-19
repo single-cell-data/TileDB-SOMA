@@ -19,6 +19,7 @@ from hypothesis import strategies as st
 from hypothesis.extra import numpy as ht_np
 from hypothesis.extra import pandas as ht_pd
 from numpy.testing import assert_allclose
+from packaging.version import Version
 from pandas.testing import assert_frame_equal
 from typeguard import suppress_type_checks
 
@@ -176,9 +177,13 @@ def keys() -> st.SearchStrategy[str]:
         )
 
 
-MatrixFormats = Literal[
-    "csr_matrix", "csc_matrix", "csr_array", "csc_array", "ndarray", "ma"
-]
+if Version(anndata.__version__) >= Version("0.11.0"):
+    MatrixFormats = Literal[
+        "csr_matrix", "csc_matrix", "csr_array", "csc_array", "ndarray", "ma"
+    ]
+else:
+    # AnnData <= 0.10 does not support scipy sparse_array
+    MatrixFormats = Literal["csr_matrix", "csc_matrix", "ndarray", "ma"]
 
 
 @st.composite
@@ -346,6 +351,7 @@ def unses(draw: st.DrawFn) -> dict[str, Any]:
     )
     base = st.one_of(
         *value_types,
+        # from_anndata saves "list" as a TileDB array, which must be monomorphic
         monomorphic_list(value_types, min_size=1),
         ht_np.arrays(
             dtype=np_dtypes,
