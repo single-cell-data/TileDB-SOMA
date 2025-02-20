@@ -616,3 +616,62 @@ def test_slice_with_resize(tmp_path):
 
     with soma.open(uri, mode="r") as A:
         assert A.read().shape == (2,)
+
+
+@pytest.mark.parametrize(
+    "shape, coords, subarray",
+    [
+        (
+            [4],
+            (slice(0, 4),),
+            [100, 101, 102, 103],
+        ),
+        (
+            [10],
+            (slice(0, 4),),
+            [100, 101, 102, 103],
+        ),
+        (
+            [20],
+            (slice(10, 14),),
+            [100, 101, 102, 103],
+        ),
+        (
+            [2, 4],
+            (slice(0, 2), slice(0, 4)),
+            [[100, 101, 102, 103], [201, 202, 203, 204]],
+        ),
+        (
+            [20, 10],
+            (slice(0, 2), slice(0, 4)),
+            [[100, 101, 102, 103], [201, 202, 203, 204]],
+        ),
+        (
+            [20, 10],
+            (slice(10, 12), slice(0, 4)),
+            [[100, 101, 102, 103], [201, 202, 203, 204]],
+        ),
+        (
+            [10, 20],
+            (slice(0, 2), slice(10, 14)),
+            [[100, 101, 102, 103], [201, 202, 203, 204]],
+        ),
+        (
+            [20, 10],
+            (slice(10, 12), slice(4, 8)),
+            [[100, 101, 102, 103], [201, 202, 203, 204]],
+        ),
+    ],
+)
+def test_subarray_at_coords(tmp_path, shape, coords, subarray):
+    uri = tmp_path.as_posix()
+
+    tensor = pa.Tensor.from_numpy(np.asarray(subarray))
+
+    with soma.DenseNDArray.create(uri, type=pa.int32(), shape=shape) as dnda:
+        dnda.write(coords, tensor)
+
+    with soma.DenseNDArray.open(uri) as dnda:
+        expected = np.full(shape, -2147483648)
+        expected[coords] = subarray
+        assert np.array_equal(dnda.read(), expected)
