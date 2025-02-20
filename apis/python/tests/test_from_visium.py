@@ -1,10 +1,13 @@
 import os
 
+import numpy as np
 import pytest
 
-from tiledbsoma.io.spatial import VisiumPaths
+import tiledbsoma as soma
 
 from ._util import ROOT_DATA_DIR
+
+spatial_io = pytest.importorskip("tiledbsoma.io.spatial")
 
 
 @pytest.fixture(scope="module")
@@ -36,7 +39,7 @@ def visium_v2_path():
 
 def test_visium_paths_v2(visium_v2_path):
     """Test ``VisiumPaths`` for Visium v2 in standard structure."""
-    visium_paths = VisiumPaths.from_base_folder(visium_v2_path)
+    visium_paths = spatial_io.VisiumPaths.from_base_folder(visium_v2_path)
     assert os.path.isfile(visium_paths.gene_expression)
     assert os.path.isfile(visium_paths.tissue_positions)
     assert visium_paths.fullres_image is None
@@ -45,3 +48,65 @@ def test_visium_paths_v2(visium_v2_path):
     assert visium_paths.version == (2, 0, 0)
     assert visium_paths.has_image
     assert visium_paths.major_version == 2
+
+
+@pytest.mark.slow
+def test_from_visium_for_visium_v2(tmp_path, visium_v2_path):
+    """Test `from_visium` runs without error."""
+    PIL = pytest.importorskip("PIL")
+    uri = f"{tmp_path.as_uri()}/from_visium_for_visium_v2"
+    exp_uri = spatial_io.from_visium(
+        uri,
+        visium_v2_path,
+        "RNA",
+        "fresh_frozen_mouse_brain",
+        write_obs_spatial_presence=True,
+        write_var_spatial_presence=True,
+    )
+    with soma.Experiment.open(exp_uri) as exp:
+
+        # Check for the existance of obs, RNA/X, and RNA/var
+        assert isinstance(exp.obs, soma.DataFrame)
+        assert isinstance(exp.ms["RNA"].X["data"], soma.SparseNDArray)
+        assert isinstance(exp.ms["RNA"].var, soma.DataFrame)
+
+        # Check for the existance of the presence matrices.
+        assert isinstance(exp.obs_spatial_presence, soma.DataFrame)
+        assert isinstance(exp.ms["RNA"].var_spatial_presence, soma.DataFrame)
+
+        # Check for scene.
+        assert isinstance(exp.spatial["fresh_frozen_mouse_brain"], soma.Scene)
+
+        # Check expected datatypes in scene.
+        scene = exp.spatial["fresh_frozen_mouse_brain"]
+        assert isinstance(scene.obsl["loc"], soma.PointCloudDataFrame)
+        assert len(scene.varl.items()) == 0
+        assert isinstance(scene.img["tissue"], soma.MultiscaleImage)
+
+        # Check point cloud dataframe data.
+        output_points_df = scene.obsl["loc"].read().concat().to_pandas()
+        assert output_points_df.columns.tolist() == [
+            "x",
+            "y",
+            "soma_joinid",
+            "in_tissue",
+            "array_row",
+            "array_col",
+            "spot_diameter_fullres",
+        ]
+        assert len(output_points_df) == 2797
+
+        # Check image.
+        image = scene.img["tissue"]
+        hires_data = np.moveaxis(image["hires"].read().to_numpy(), 0, -1)
+        with PIL.Image.open(
+            visium_v2_path / "spatial" / "tissue_hires_image.png"
+        ) as input_hires:
+            expected = np.array(input_hires)
+            np.testing.assert_equal(expected, hires_data)
+        lowres_data = np.moveaxis(image["lowres"].read().to_numpy(), 0, -1)
+        with PIL.Image.open(
+            visium_v2_path / "spatial" / "tissue_lowres_image.png"
+        ) as input_lowres:
+            expected = np.array(input_lowres)
+            np.testing.assert_equal(expected, lowres_data)
