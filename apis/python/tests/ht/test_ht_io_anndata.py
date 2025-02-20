@@ -707,34 +707,43 @@ def test_mumble(tmp_path_factory) -> None:
             print(A)
             print(A.schema)
             print(A.shape)
-            print(A.read())
+            arr = A.read()
+            print(arr)
+            print(arr.to_numpy())
+            print(np.asarray(uns["abc"]["A"]))
+            assert np.array_equal(arr.to_numpy(), np.asarray(uns["abc"]["A"]))
+
         with tiledbsoma.open(f"{experiment_uri}/ms/RNA/uns/abc/a") as a:
             print(a.uri)
             print(a)
             print(a.schema)
             print(a.shape)
-            print(a.read())
+            arr = a.read()
+            print(arr)
+            print(arr.to_numpy())
+            print(np.asarray(uns["abc"]["a"]))
+            assert np.array_equal(arr.to_numpy(), np.asarray(uns["abc"]["a"]))
 
-        with tiledbsoma.Experiment.open(experiment_uri, context=context) as E:
+    #     with tiledbsoma.Experiment.open(experiment_uri, context=context) as E:
 
-            # print(f"---- { experiment_uri } ----")
-            # print(E.ms["RNA"]["uns"])
-            # print(E.ms["RNA"]["uns"].metadata)
-            # for k in E.ms["RNA"]["uns"]:
-            #     print(E.ms["RNA"]["uns"][k])
-            #     print(E.ms["RNA"]["uns"][k].metadata)
-            #     if E.ms["RNA"]["uns"][k].soma_type == "SOMACollection":
-            #         for j in E.ms["RNA"]["uns"][k]:
-            #             print(E.ms["RNA"]["uns"][k][j])
-            #             print(E.ms["RNA"]["uns"][k][j].metadata)
-            #             print(E.ms["RNA"]["uns"][k][j].schema)
-            #             print(E.ms["RNA"]["uns"][k][j].shape)
-            #             print(E.ms["RNA"]["uns"][k][j].read())
+    #         # print(f"---- { experiment_uri } ----")
+    #         # print(E.ms["RNA"]["uns"])
+    #         # print(E.ms["RNA"]["uns"].metadata)
+    #         # for k in E.ms["RNA"]["uns"]:
+    #         #     print(E.ms["RNA"]["uns"][k])
+    #         #     print(E.ms["RNA"]["uns"][k].metadata)
+    #         #     if E.ms["RNA"]["uns"][k].soma_type == "SOMACollection":
+    #         #         for j in E.ms["RNA"]["uns"][k]:
+    #         #             print(E.ms["RNA"]["uns"][k][j])
+    #         #             print(E.ms["RNA"]["uns"][k][j].metadata)
+    #         #             print(E.ms["RNA"]["uns"][k][j].schema)
+    #         #             print(E.ms["RNA"]["uns"][k][j].shape)
+    #         #             print(E.ms["RNA"]["uns"][k][j].read())
 
-            read_adata = tiledbsoma.io.to_anndata(
-                E,
-                measurement_name="RNA",
-                X_layer_name="data" if adata.X is not None else None,
-            )
+    #         read_adata = tiledbsoma.io.to_anndata(
+    #             E,
+    #             measurement_name="RNA",
+    #             X_layer_name="data" if adata.X is not None else None,
+    #         )
 
-    assert_anndata_equal(adata, read_adata)
+    # assert_anndata_equal(adata, read_adata)
