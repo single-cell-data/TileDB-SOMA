@@ -4,17 +4,14 @@ import math
 import string
 from collections import OrderedDict
 from collections.abc import Mapping
-from datetime import timedelta
 from typing import Any, Literal, Sequence, get_args
 
 import anndata
 import deepdiff
-import hypothesis as ht
 import numpy as np
 import numpy.typing as npt
 import pandas as pd
 import scipy.sparse as sp
-from hypothesis import given, settings
 from hypothesis import strategies as st
 from hypothesis.extra import numpy as ht_np
 from hypothesis.extra import pandas as ht_pd
