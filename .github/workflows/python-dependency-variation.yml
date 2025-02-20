@@ -113,11 +113,7 @@ jobs:
 
       - name: Obtain test data
         shell: bash
-        run: |
-          cd test
-          rm -rf soco
-          tar zxf soco.tgz
-          cd ..
+        run: make data
 
       - name: Run pytests for Python
         shell: bash
