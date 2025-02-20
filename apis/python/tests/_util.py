@@ -134,7 +134,10 @@ def make_pd_df(index_str: str | None = None, **cols) -> pd.DataFrame:
 
 HERE = Path(__file__).parent
 PY_ROOT = HERE.parent
+PROJECT_ROOT = PY_ROOT.parent.parent
 TESTDATA = PY_ROOT / "testdata"
+
+ROOT_DATA_DIR = PROJECT_ROOT / "data"
 
 
 @contextmanager
