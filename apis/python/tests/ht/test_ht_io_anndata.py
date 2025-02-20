@@ -645,12 +645,12 @@ def assert_anndata_equal(
 #     assert_anndata_equal(adata, read_adata)
 
 
-@settings(
-    suppress_health_check=(ht.HealthCheck.function_scoped_fixture,),
-    deadline=timedelta(milliseconds=2500),
-)
-@given(data=st.data())
-def test_mumble(data, tmp_path_factory) -> None:
+# @settings(
+#     suppress_health_check=(ht.HealthCheck.function_scoped_fixture,),
+#     deadline=timedelta(milliseconds=2500),
+# )
+# @given(data=st.data())
+def test_mumble(tmp_path_factory) -> None:
     context = tiledbsoma.SOMATileDBContext()
     test_path = tmp_path_factory.mktemp("anndata-")
     experiment_uri = (test_path / "soma").as_posix()
@@ -671,15 +671,15 @@ def test_mumble(data, tmp_path_factory) -> None:
         #     "gPDgtsPXt7A": np.array([[0], [0], [0], [0]], dtype=np.int8),
         #     "chb": False,
         # },
-        "xyz": {
-            # "uwtLuH1bO3pP": True,
-            "D": [False, False],
-            # "E0": False,
-            "d": np.array([0.0], dtype=np.float32),
-        },
+        # "xyz": {
+        #     # "uwtLuH1bO3pP": True,
+        #     "D": [False, False],
+        #     # "E0": False,
+        #     "d": np.array([0.0], dtype=np.float32),
+        # },
         # "0": False,
         "abc": {"A": [False, False], "a": np.array([False], dtype=np.bool_)},
-        "def": {"B": [False, False], "b": np.array([False], dtype=bool)},
+        # "def": {"B": [False, False], "b": np.array([False], dtype=bool)},
     }
 
     n_obs = 10  # data.draw(st.integers(min_value=1, max_value=100))
@@ -705,21 +705,34 @@ def test_mumble(data, tmp_path_factory) -> None:
             context=context,
         )
 
+        with tiledbsoma.open(f"{experiment_uri}/ms/RNA/uns/abc/A") as A:
+            print(A.uri)
+            print(A)
+            print(A.schema)
+            print(A.shape)
+            print(A.read())
+        with tiledbsoma.open(f"{experiment_uri}/ms/RNA/uns/abc/a") as a:
+            print(a.uri)
+            print(a)
+            print(a.schema)
+            print(a.shape)
+            print(a.read())
+
         with tiledbsoma.Experiment.open(experiment_uri, context=context) as E:
 
-            print(f"---- { experiment_uri } ----")
-            print(E.ms["RNA"]["uns"])
-            print(E.ms["RNA"]["uns"].metadata)
-            for k in E.ms["RNA"]["uns"]:
-                print(E.ms["RNA"]["uns"][k])
-                print(E.ms["RNA"]["uns"][k].metadata)
-                if E.ms["RNA"]["uns"][k].soma_type == "SOMACollection":
-                    for j in E.ms["RNA"]["uns"][k]:
-                        print(E.ms["RNA"]["uns"][k][j])
-                        print(E.ms["RNA"]["uns"][k][j].metadata)
-                        print(E.ms["RNA"]["uns"][k][j].schema)
-                        print(E.ms["RNA"]["uns"][k][j].shape)
-                        print(E.ms["RNA"]["uns"][k][j].read())
+            # print(f"---- { experiment_uri } ----")
+            # print(E.ms["RNA"]["uns"])
+            # print(E.ms["RNA"]["uns"].metadata)
+            # for k in E.ms["RNA"]["uns"]:
+            #     print(E.ms["RNA"]["uns"][k])
+            #     print(E.ms["RNA"]["uns"][k].metadata)
+            #     if E.ms["RNA"]["uns"][k].soma_type == "SOMACollection":
+            #         for j in E.ms["RNA"]["uns"][k]:
+            #             print(E.ms["RNA"]["uns"][k][j])
+            #             print(E.ms["RNA"]["uns"][k][j].metadata)
+            #             print(E.ms["RNA"]["uns"][k][j].schema)
+            #             print(E.ms["RNA"]["uns"][k][j].shape)
+            #             print(E.ms["RNA"]["uns"][k][j].read())
 
             read_adata = tiledbsoma.io.to_anndata(
                 E,
