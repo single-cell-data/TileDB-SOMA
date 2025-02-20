@@ -45,6 +45,8 @@ HT_TEST_CONFIG = {
     "sc-63447_workaround": True,
     # tiledbsoma.io.from_anndata ignores byte order
     "sc-63459_workaround": True,
+    # path generated from key in collections
+    "sc-63402_workaround": True,
     #
     # Enable/disable partially implemented features
     #

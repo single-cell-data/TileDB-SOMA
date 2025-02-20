@@ -1,11 +1,21 @@
 from __future__ import annotations
 
 import math
+import operator
 import string
 from collections import OrderedDict
 from collections.abc import Mapping
 from datetime import timedelta
-from typing import Any, Literal, Sequence, get_args
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    Hashable,
+    Literal,
+    Sequence,
+    TypeVar,
+    get_args,
+)
 
 import anndata
 import deepdiff
@@ -28,6 +38,13 @@ import tiledbsoma.io
 
 from tests.ht._ht_test_config import HT_TEST_CONFIG
 from tests.ht._ht_util import posix_filename
+
+if TYPE_CHECKING:
+    Ex = TypeVar("Ex", covariant=True, default=Any)
+else:
+    Ex = TypeVar("Ex", covariant=True)
+
+T = TypeVar("T")
 
 
 def df_col_dtypes() -> st.SearchStrategy[npt.DTypeLike]:
@@ -323,6 +340,35 @@ def monomorphic_list(
     return draw(st.lists(elmt_type, min_size=min_size, max_size=max_size))
 
 
+def dictionaries_unique_by(
+    keys: st.SearchStrategy[Ex],
+    values: st.SearchStrategy[T],
+    *,
+    dict_class: type = dict,
+    min_size: int = 0,
+    max_size: int | None = None,
+    unique_by: (
+        Callable[[Ex], Hashable] | tuple[Callable[[Ex], Hashable], ...] | None
+    ) = None,
+) -> st.SearchStrategy[dict[Ex, T]]:
+    """
+    Identical to hypothesis.strategies.dictionaries, except it allows user-configurable
+    `unique_by` param, AND has less error checking.
+    """
+    if max_size == 0:
+        return st.fixed_dictionaries(dict_class())
+
+    if unique_by is None:
+        unique_by = operator.itemgetter(0)
+
+    return st.lists(
+        st.tuples(keys, values),
+        min_size=min_size,
+        max_size=max_size,
+        unique_by=unique_by,
+    ).map(dict_class)
+
+
 @st.composite
 def unses(draw: st.DrawFn) -> dict[str, Any]:
     # the types AnnData.write will allow
@@ -361,16 +407,22 @@ def unses(draw: st.DrawFn) -> dict[str, Any]:
         ),
     )
 
+    def key_unique_by(i: str) -> str:
+        return i[0].lower() if HT_TEST_CONFIG["sc-63402_workaround"] else i[0]
+
     return draw(
         st.one_of(
             st.none(),
-            st.dictionaries(
+            dictionaries_unique_by(
                 keys=keys(),
                 values=st.recursive(
                     base,
-                    lambda children: st.dictionaries(keys(), children),
+                    lambda children: dictionaries_unique_by(
+                        keys(), children, unique_by=key_unique_by
+                    ),
                     max_leaves=10,
                 ),
+                unique_by=key_unique_by,
             ),
         )
     )
