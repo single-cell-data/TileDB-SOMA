@@ -60,6 +60,12 @@ add_library(TILEDB_SOMA_OBJECTS OBJECT
   ${CMAKE_CURRENT_SOURCE_DIR}/external/src/thread_pool/status.cc
 )
 
+if(SPDLOG_LINK_SHARED)
+  target_link_libraries(TILEDB_SOMA_OBJECTS PUBLIC spdlog::spdlog)
+else()
+  target_include_directories(TILEDB_SOMA_OBJECTS PRIVATE $<TARGET_PROPERTY:spdlog::spdlog,INTERFACE_INCLUDE_DIRECTORIES>)
+endif()
+
 target_compile_definitions(TILEDB_SOMA_OBJECTS
   PRIVATE
     -DTILEDB_NO_API_DEPRECATION_WARNINGS
@@ -76,7 +82,6 @@ target_link_options(TILEDB_SOMA_OBJECTS
     ${TILEDBSOMA_SANITIZER_FLAG}
 )
 
-
 set_property(TARGET TILEDB_SOMA_OBJECTS PROPERTY POSITION_INDEPENDENT_CODE ON)
 target_include_directories(TILEDB_SOMA_OBJECTS
   PRIVATE
@@ -87,7 +92,6 @@ target_include_directories(TILEDB_SOMA_OBJECTS
   ${CMAKE_CURRENT_SOURCE_DIR}/external/include
   ${CMAKE_CURRENT_SOURCE_DIR}/external/include/nanoarrow
   $<TARGET_PROPERTY:TileDB::tiledb_shared,INTERFACE_INCLUDE_DIRECTORIES>
-  $<TARGET_PROPERTY:spdlog::spdlog,INTERFACE_INCLUDE_DIRECTORIES>
   ${pybind11_INCLUDE_DIRS}
 )
 
@@ -164,6 +168,7 @@ else()
     $<TARGET_OBJECTS:TILEDB_SOMA_GEOMETRY_OBJECTS>
     $<TARGET_OBJECTS:TILEDBSOMA_NANOARROW_OBJECT>
   )
+
   list(APPEND TILEDBSOMA_INSTALL_TARGETS tiledbsoma)
   target_link_libraries(tiledbsoma
     PUBLIC
@@ -312,7 +317,7 @@ if(TILEDBSOMA_BUILD_CLI)
   target_link_libraries(tiledbsoma-cli
     PUBLIC
       # CLI11::CLI11
-      # spdlog::spdlog
+      spdlog::spdlog
       tiledbsoma
       TileDB::tiledb_shared
   )

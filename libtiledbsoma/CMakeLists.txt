@@ -57,6 +57,7 @@ option(CMAKE_IDE "(Used for CLion builds). Disables superbuild and sets the EP i
 option(FORCE_BUILD_TILEDB "Forces a local build of TileDB instead of searching system paths." OFF)
 option(TILEDB_FORCE_ALL_DEPS "Forces a local build of TileDB instead of searching system paths." OFF)
 option(DOWNLOAD_TILEDB_PREBUILT "If tiledb is being super built, this controls downloading prebuilt artifacts or building from source" ON)
+option(SPDLOG_LINK_SHARED "Link installed spdlog as an shared library instead of using it as header only" OFF)
 
 # TileDB BUILD Options
 # NOTE: TileDB Embedded version is controlled in cmake/Modules/FindTileDB_EP.cmake
@@ -234,7 +235,13 @@ if(MSVC)
   )
 else()
 
-  set(TILEDBSOMA_COMPILE_OPTIONS -Wall -Wextra -DSPDLOG_USE_STD_FORMAT -D_LIBCPP_TYPEINFO_COMPARISON_IMPLEMENTATION=2)
+  set(TILEDBSOMA_COMPILE_OPTIONS -Wall -Wextra -D_LIBCPP_TYPEINFO_COMPARISON_IMPLEMENTATION=2)
+
+  if (NOT SPDLOG_LINK_SHARED)
+    list(APPEND TILEDBSOMA_COMPILE_OPTIONS -DSPDLOG_USE_STD_FORMAT)
+  else()
+    add_definitions(-DSPDLOG_COMPILED_LIB)
+  endif()
 
   if(${TILEDBSOMA_ENABLE_WERROR})
     set(TILEDBSOMA_WERROR_OPTION -Werror)
