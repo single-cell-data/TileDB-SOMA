@@ -1,5 +1,5 @@
 /**
- * @file   managed_query.cc
+ * @file   transformer.cc
  *
  * @section LICENSE
  *
@@ -8,7 +8,8 @@
  *
  * @section DESCRIPTION
  *
- * This file defines the ManagedQuery bindings.
+ * This file defines the TransformerPipeline, Transformer and derived classes
+ * bindings.
  */
 
 #include <pybind11/numpy.h>
