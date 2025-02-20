@@ -1360,7 +1360,7 @@ ArrowAdapter::to_arrow(std::shared_ptr<ColumnBuffer> column) {
     array->release = &release_array;
     if (array->private_data != nullptr) {  // as we use nanoarrow's init
         free(array->private_data);         // free what was allocated before
-    }  // assigning our ArrowBuffer pointer
+    }                                      // assigning our ArrowBuffer pointer
     array->private_data = (void*)arrow_buffer;
 
     LOG_TRACE(std::format(
@@ -1514,6 +1514,93 @@ std::string_view ArrowAdapter::to_arrow_format(
     }
 }
 
+static const char* ArrowSchemaFormatTemplate(enum ArrowType type) {
+    switch (type) {
+        case NANOARROW_TYPE_UNINITIALIZED:
+            return NULL;
+        case NANOARROW_TYPE_NA:
+            return "n";
+        case NANOARROW_TYPE_BOOL:
+            return "b";
+
+        case NANOARROW_TYPE_UINT8:
+            return "C";
+        case NANOARROW_TYPE_INT8:
+            return "c";
+        case NANOARROW_TYPE_UINT16:
+            return "S";
+        case NANOARROW_TYPE_INT16:
+            return "s";
+        case NANOARROW_TYPE_UINT32:
+            return "I";
+        case NANOARROW_TYPE_INT32:
+            return "i";
+        case NANOARROW_TYPE_UINT64:
+            return "L";
+        case NANOARROW_TYPE_INT64:
+            return "l";
+
+        case NANOARROW_TYPE_HALF_FLOAT:
+            return "e";
+        case NANOARROW_TYPE_FLOAT:
+            return "f";
+        case NANOARROW_TYPE_DOUBLE:
+            return "g";
+
+        case NANOARROW_TYPE_STRING:
+            return "u";
+        case NANOARROW_TYPE_LARGE_STRING:
+            return "U";
+        case NANOARROW_TYPE_BINARY:
+            return "z";
+        case NANOARROW_TYPE_LARGE_BINARY:
+            return "Z";
+
+        case NANOARROW_TYPE_DATE32:
+            return "tdD";
+        case NANOARROW_TYPE_DATE64:
+            return "tdm";
+        case NANOARROW_TYPE_INTERVAL_MONTHS:
+            return "tiM";
+        case NANOARROW_TYPE_INTERVAL_DAY_TIME:
+            return "tiD";
+        case NANOARROW_TYPE_INTERVAL_MONTH_DAY_NANO:
+            return "tin";
+
+        case NANOARROW_TYPE_LIST:
+            return "+l";
+        case NANOARROW_TYPE_LARGE_LIST:
+            return "+L";
+        case NANOARROW_TYPE_STRUCT:
+            return "+s";
+        case NANOARROW_TYPE_MAP:
+            return "+m";
+
+        default:
+            return NULL;
+    }
+}
+
+std::string arrow_short_name_to_long_name(std::string_view short_name) {
+    // XXX cache a one-time lookup table
+    for (int i = (int)NANOARROW_TYPE_UNINITIALIZED;
+         i <= (int)NANOARROW_TYPE_INTERVAL_MONTH_DAY_NANO;
+         i++) {
+        enum ArrowType e = (enum ArrowType)i;
+        const char* entry_short_name = ArrowSchemaFormatTemplate(e);
+        if (entry_short_name == nullptr) {
+            continue;
+        }
+        printf("XXX %d %s\n", i, entry_short_name);
+        if (strcmp(entry_short_name, std::string(short_name).c_str()) == 0) {
+            return std::string(ArrowTypeString(e));
+        }
+    }
+
+    throw std::out_of_range(std::format(
+        "ArrowAdapter: Unrecognized Arrow format: {} ", short_name));
+}
+
 tiledb_datatype_t ArrowAdapter::to_tiledb_format(
     std::string_view arrow_dtype, std::string_view arrow_dtype_metadata) {
     std::map<std::string_view, tiledb_datatype_t> _to_tiledb_format_map = {
@@ -1542,12 +1629,17 @@ tiledb_datatype_t ArrowAdapter::to_tiledb_format(
 
         return dtype;
     } catch (const std::out_of_range& e) {
+        std::string long_name = arrow_short_name_to_long_name(
+            std::string(arrow_dtype));
         throw std::out_of_range(std::format(
-            "ArrowAdapter: Unsupported Arrow type: {} ", arrow_dtype));
+            "ArrowAdapter: Unsupported Arrow type: {} ({}) ",
+            long_name,
+            arrow_dtype));
     }
 }
 
 // FIXME: Add more types, maybe make it a map
+// xxx return some indication of supported/unsupported
 enum ArrowType ArrowAdapter::to_nanoarrow_type(std::string_view sv) {
     if (sv == "i")
         return NANOARROW_TYPE_INT32;
