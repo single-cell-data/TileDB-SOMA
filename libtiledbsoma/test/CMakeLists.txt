@@ -40,6 +40,12 @@ add_executable(unit_soma
 #    unit_thread_pool.cc
 )
 
+if(SPDLOG_LINK_SHARED)
+  target_link_libraries(unit_soma PRIVATE spdlog::spdlog)
+else()
+  target_include_directories(unit_soma PRIVATE $<TARGET_PROPERTY:spdlog::spdlog,INTERFACE_INCLUDE_DIRECTORIES>)
+endif()
+
 target_link_libraries(unit_soma
   PRIVATE
     Catch2::Catch2WithMain
@@ -108,6 +114,12 @@ add_executable(unit_geometry
 #    unit_thread_pool.cc
 )
 
+if(SPDLOG_LINK_SHARED)
+  target_link_libraries(unit_geometry PRIVATE spdlog::spdlog)
+else()
+  target_include_directories(unit_geometry PRIVATE $<TARGET_PROPERTY:spdlog::spdlog,INTERFACE_INCLUDE_DIRECTORIES>)
+endif()
+
 target_link_libraries(unit_geometry
   PRIVATE
     Catch2::Catch2WithMain
@@ -125,7 +137,6 @@ target_include_directories(unit_geometry
     ${CMAKE_CURRENT_SOURCE_DIR}/../src/external/include
     ${pybind11_INCLUDE_DIRS}
     ${TILEDB_SOMA_EXPORT_HEADER_DIR}
-    $<TARGET_PROPERTY:spdlog::spdlog,INTERFACE_INCLUDE_DIRECTORIES>
 )
 
 target_compile_definitions(unit_geometry
