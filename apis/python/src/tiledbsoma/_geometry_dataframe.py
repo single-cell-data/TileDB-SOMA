@@ -465,12 +465,33 @@ class GeometryDataFrame(SpatialDataFrame, somacore.GeometryDataFrame):
         return self
 
     # Write helpers with automatic transformations
+
     def from_outlines(
         self,
         values: Union[pa.RecordBatch, pa.Table],
         *,
         platform_config: options.PlatformConfig | None = None,
     ) -> Self:
+        """Writes the data from an Arrow table to the persistent object
+        applying a data transformation to transform the given outline
+        of each polygon to the appropriate WKB encoded polygon.
+
+        Geometry data provided are expected to be a list of point coordinates
+        per polygon in the form of [x0, y0, x1, y1, ..., x0, y0] and will
+        be converted automatically to a list of WKB encoded polygons.
+
+        Args:
+            values: An Arrow table containing all columns, including
+                the index columns. The schema for the values must match
+                the schema for the ``DataFrame``. `soma_geometry` column
+                should contain lists of floating point numbers which are
+                the point coordinates of the outline of each polygon in
+                the form [x0, y0, x1, y1, ..., x0, y0].
+
+        Returns: ``self``, to enable method chaining.
+
+        """
+
         outline_transformer = clib.OutlineTransformer(
             coordinate_space_to_json(self._coord_space)
         )
