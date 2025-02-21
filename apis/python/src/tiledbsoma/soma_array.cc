@@ -49,8 +49,6 @@ py::list domainish_to_list(ArrowArray* arrow_array, ArrowSchema* arrow_schema) {
 }
 
 void load_soma_array(py::module& m) {
-    py::class_<SOMAColumn, std::shared_ptr<SOMAColumn>>(m, "SOMAColumn");
-
     py::class_<SOMAArray, SOMAObject>(m, "SOMAArray")
         .def(
             py::init(
