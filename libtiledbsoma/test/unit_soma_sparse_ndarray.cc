@@ -79,6 +79,13 @@ TEST_CASE("SOMASparseNDArray: basic", "[SOMASparseNDArray]") {
         d0[j] = j;
     std::vector<int32_t> a0(10, 1);
 
+    // A write in read mode should fail
+    snda->open(OpenMode::read);
+    snda->set_column_data(dim_name, d0.size(), d0.data());
+    snda->set_column_data(attr_name, a0.size(), a0.data());
+    REQUIRE_THROWS(snda->write());
+    snda->close();
+
     snda->open(OpenMode::write);
     snda->set_column_data(dim_name, d0.size(), d0.data());
     snda->set_column_data(attr_name, a0.size(), a0.data());

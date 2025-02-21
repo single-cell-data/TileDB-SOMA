@@ -208,6 +208,13 @@ TEST_CASE_METHOD(
         d0[j] = j;
     std::vector<uint32_t> a0(10, 1);
 
+    // A write in read mode should fail
+    sdf = open(OpenMode::read);
+    sdf->set_column_data(dim_infos[0].name, d0.size(), d0.data());
+    sdf->set_column_data(attr_infos[0].name, a0.size(), a0.data());
+    REQUIRE_THROWS(sdf->write());
+    sdf->close();
+
     sdf = open(OpenMode::write);
     sdf->set_column_data(dim_infos[0].name, d0.size(), d0.data());
     sdf->set_column_data(attr_infos[0].name, a0.size(), a0.data());
