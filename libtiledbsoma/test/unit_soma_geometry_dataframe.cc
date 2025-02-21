@@ -202,7 +202,14 @@ TEST_CASE("SOMAGeometryDataFrame: Roundtrip", "[SOMAGeometryDataFrame]") {
     auto [casted_schema, casted_data] = soma_geometry->cast_array_data(
         std::move(data_schema), std::move(data_array));
     auto mq = ManagedQuery(*soma_geometry, ctx->tiledb_ctx());
-    mq.set_array_data(std::move(casted_data), std::move(casted_schema));
+    std::tie(data_array, data_schema) = TransformerPipeline(
+        std::move(data_array),
+        std::move(data_schema))
+        .transform(
+            OutlineTransformer(coord_space))
+        .asTable();
+
+    mq.set_array_data(std::move(data_schema), std::move(data_array));
     mq.submit_write();
     soma_geometry->close();
 
