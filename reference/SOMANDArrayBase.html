@@ -9,7 +9,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">tiledbsoma</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.15.7</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.16.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -42,7 +42,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>SOMA NDArray Base Class</h1>
-      <small class="dont-index">Source: <a href="https://github.com/single-cell-data/TileDB-SOMA/blob/1.15.7/R/SOMANDArrayBase.R" class="external-link"><code>R/SOMANDArrayBase.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/single-cell-data/TileDB-SOMA/blob/release-1.16/R/SOMANDArrayBase.R" class="external-link"><code>R/SOMANDArrayBase.R</code></a></small>
       <div class="d-none name"><code>SOMANDArrayBase.Rd</code></div>
     </div>
 
@@ -92,7 +92,6 @@
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="shape"><a href="TileDBArray.html#method-shape"><code>tiledbsoma::TileDBArray$shape()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="tiledb_array"><a href="TileDBArray.html#method-tiledb_array"><code>tiledbsoma::TileDBArray$tiledb_array()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="tiledb_schema"><a href="TileDBArray.html#method-tiledb_schema"><code>tiledbsoma::TileDBArray$tiledb_schema()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="used_shape"><a href="TileDBArray.html#method-used_shape"><code>tiledbsoma::TileDBArray$used_shape()</code></a></span></li>
 </ul></details></p><hr><a id="method-SOMANDArrayBase-create"></a><div class="section">
 <h3 id="method-create-">Method <code>create()</code><a class="anchor" aria-label="anchor" href="#method-create-"></a></h3>
 <p>Create a SOMA NDArray named with the URI. (lifecycle:
@@ -171,7 +170,7 @@ shape exceeds <code>maxshape</code> in any dimension. Raises an error if the arr
 doesn't already have a shape: in that case please call
 <code>tiledbsoma_upgrade_shape</code>. (lifecycle: maturing)</p><div class="section">
 <h4 id="usage-3">Usage<a class="anchor" aria-label="anchor" href="#usage-3"></a></h4>
-<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SOMANDArrayBase</span><span class="op">$</span><span class="fu">resize</span><span class="op">(</span><span class="va">new_shape</span><span class="op">)</span></span></code></pre></div><p></p></div>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SOMANDArrayBase</span><span class="op">$</span><span class="fu">resize</span><span class="op">(</span><span class="va">new_shape</span>, check_only <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
@@ -180,11 +179,17 @@ doesn't already have a shape: in that case please call
 <dd><p>A vector of integerish, of the same length as the array's <code>ndim</code>.</p></dd>
 
 
+<dt><code>check_only</code></dt>
+<dd><p>If true, does not apply the operation, but only reports
+whether it would have succeeded.</p></dd>
+
+
 </dl><p></p></div>
 </div>
 <div class="section">
 <h4 id="returns-1">Returns<a class="anchor" aria-label="anchor" href="#returns-1"></a></h4>
-<p>No return value</p>
+<p>No return value if <code>check_only</code> is <code>FALSE</code>. If <code>check_only</code> is <code>TRUE</code>,
+returns the empty string if no error is detected, else a description of the error.</p>
 </div>
 
 </div><p></p><hr><a id="method-SOMANDArrayBase-tiledbsoma_upgrade_shape"></a><div class="section">
@@ -197,7 +202,7 @@ call on a pre-1.15 array the first time a shape is set on it; the latter must
 be used for subsequent resizes on any array which already has upgraded shape.
 (lifecycle: maturing)</p><div class="section">
 <h4 id="usage-4">Usage<a class="anchor" aria-label="anchor" href="#usage-4"></a></h4>
-<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SOMANDArrayBase</span><span class="op">$</span><span class="fu">tiledbsoma_upgrade_shape</span><span class="op">(</span><span class="va">shape</span><span class="op">)</span></span></code></pre></div><p></p></div>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SOMANDArrayBase</span><span class="op">$</span><span class="fu">tiledbsoma_upgrade_shape</span><span class="op">(</span><span class="va">shape</span>, check_only <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
@@ -206,11 +211,17 @@ be used for subsequent resizes on any array which already has upgraded shape.
 <dd><p>A vector of integerish, of the same length as the array's <code>ndim</code>.</p></dd>
 
 
+<dt><code>check_only</code></dt>
+<dd><p>If true, does not apply the operation, but only reports
+whether it would have succeeded.</p></dd>
+
+
 </dl><p></p></div>
 </div>
 <div class="section">
 <h4 id="returns-2">Returns<a class="anchor" aria-label="anchor" href="#returns-2"></a></h4>
-<p>No return value</p>
+<p>No return value if <code>check_only</code> is <code>FALSE</code>. If <code>check_only</code> is <code>TRUE</code>,
+returns the empty string if no error is detected, else a description of the error.</p>
 </div>
 
 </div><p></p><hr><a id="method-SOMANDArrayBase-clone"></a><div class="section">

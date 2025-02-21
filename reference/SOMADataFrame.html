@@ -13,7 +13,7 @@ SOMASparseNDArray.  (lifecycle: maturing)"></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">tiledbsoma</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.15.7</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.16.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -46,7 +46,7 @@ SOMASparseNDArray.  (lifecycle: maturing)"></head><body>
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>SOMADataFrame</h1>
-      <small class="dont-index">Source: <a href="https://github.com/single-cell-data/TileDB-SOMA/blob/1.15.7/R/SOMADataFrame.R" class="external-link"><code>R/SOMADataFrame.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/single-cell-data/TileDB-SOMA/blob/release-1.16/R/SOMADataFrame.R" class="external-link"><code>R/SOMADataFrame.R</code></a></small>
       <div class="d-none name"><code>SOMADataFrame.Rd</code></div>
     </div>
 
@@ -103,7 +103,6 @@ row and is intended to act as a join key for other objects, such as
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="set_metadata"><a href="TileDBArray.html#method-set_metadata"><code>tiledbsoma::TileDBArray$set_metadata()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="tiledb_array"><a href="TileDBArray.html#method-tiledb_array"><code>tiledbsoma::TileDBArray$tiledb_array()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="tiledb_schema"><a href="TileDBArray.html#method-tiledb_schema"><code>tiledbsoma::TileDBArray$tiledb_schema()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="used_shape"><a href="TileDBArray.html#method-used_shape"><code>tiledbsoma::TileDBArray$used_shape()</code></a></span></li>
 </ul></details></p><hr><a id="method-SOMADataFrame-create"></a><div class="section">
 <h3 id="method-create-">Method <code>create()</code><a class="anchor" aria-label="anchor" href="#method-create-"></a></h3>
 <p>Create (lifecycle: maturing)</p><div class="section">
@@ -382,7 +381,7 @@ whether the operation would succeed if attempted, and a reason why it
 would not. The domain being requested must be contained within what
 <code>maxdomain</code> returns.</p><div class="section">
 <h4 id="usage-10">Usage<a class="anchor" aria-label="anchor" href="#usage-10"></a></h4>
-<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SOMADataFrame</span><span class="op">$</span><span class="fu">tiledbsoma_upgrade_domain</span><span class="op">(</span><span class="va">new_domain</span><span class="op">)</span></span></code></pre></div><p></p></div>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SOMADataFrame</span><span class="op">$</span><span class="fu">tiledbsoma_upgrade_domain</span><span class="op">(</span><span class="va">new_domain</span>, check_only <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
@@ -393,11 +392,17 @@ being two-element vectors containing the desired lower and upper bounds
 for the domain.</p></dd>
 
 
+<dt><code>check_only</code></dt>
+<dd><p>If true, does not apply the operation, but only reports
+whether it would have succeeded.</p></dd>
+
+
 </dl><p></p></div>
 </div>
 <div class="section">
 <h4 id="returns-7">Returns<a class="anchor" aria-label="anchor" href="#returns-7"></a></h4>
-<p>No return value</p>
+<p>No return value if <code>check_only</code> is <code>FALSE</code>. If <code>check_only</code> is <code>TRUE</code>,
+returns the empty string if no error is detected, else a description of the error.</p>
 </div>
 
 </div><p></p><hr><a id="method-SOMADataFrame-change_domain"></a><div class="section">
@@ -412,7 +417,7 @@ would not. The return value from <code>domain</code> must be contained within
 the requested <code>new_domain</code>, and the requested <code>new_domain</code> must be
 contained within the return value from <code>maxdomain</code>. (lifecycle: maturing)</p><div class="section">
 <h4 id="usage-11">Usage<a class="anchor" aria-label="anchor" href="#usage-11"></a></h4>
-<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SOMADataFrame</span><span class="op">$</span><span class="fu">change_domain</span><span class="op">(</span><span class="va">new_domain</span><span class="op">)</span></span></code></pre></div><p></p></div>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SOMADataFrame</span><span class="op">$</span><span class="fu">change_domain</span><span class="op">(</span><span class="va">new_domain</span>, check_only <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
@@ -423,11 +428,17 @@ being two-element vectors containing the desired lower and upper bounds
 for the domain.</p></dd>
 
 
+<dt><code>check_only</code></dt>
+<dd><p>If true, does not apply the operation, but only reports
+whether it would have succeeded.</p></dd>
+
+
 </dl><p></p></div>
 </div>
 <div class="section">
 <h4 id="returns-8">Returns<a class="anchor" aria-label="anchor" href="#returns-8"></a></h4>
-<p>No return value</p>
+<p>No return value if <code>check_only</code> is <code>FALSE</code>. If <code>check_only</code> is <code>TRUE</code>,
+returns the empty string if no error is detected, else a description of the error.</p>
 </div>
 
 </div><p></p><hr><a id="method-SOMADataFrame-clone"></a><div class="section">
