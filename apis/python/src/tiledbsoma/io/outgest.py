@@ -487,12 +487,7 @@ def _extract_obsm_or_varm(
     if num_cols is None:
         if soma_nd_array.tiledbsoma_has_upgraded_shape:
             num_cols = soma_nd_array.shape[1]
-        else:
-            try:
-                used_shape = soma_nd_array.used_shape()
-                num_cols = used_shape[1][1] + 1
-            except SOMAError:
-                pass  # We tried; moving on to next option
+        # Else: we tried; moving on to next option
 
     if num_cols is None:
         num_rows_times_width, coo_column_count = matrix_tbl.shape

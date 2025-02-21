@@ -648,7 +648,6 @@ def test_multiples_without_experiment(
         assert all(actual_X == expect_X)
 
         X = exp.ms["measname"].X["data"]
-        assert X.used_shape() == ((0, 11), (0, 6))
         assert X.non_empty_domain() == ((0, 11), (0, 6))
 
 

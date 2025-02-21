@@ -25,7 +25,6 @@
       ~SparseNDArray.non_empty_domain
       ~SparseNDArray.tiledbsoma_upgrade_shape
       ~SparseNDArray.resize
-      ~SparseNDArray.used_shape
 
       ~SparseNDArray.config_options_from_schema
 

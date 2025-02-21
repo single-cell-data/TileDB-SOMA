@@ -167,58 +167,6 @@ TileDBArray <- R6::R6Class(
       return(bit64::as.integer64(maxshape(self$uri, private$.soma_context)))
     },
 
-    #' @description Retrieve the range of indexes for a dimension that were
-    #'  explicitly written.  This method is deprecated as of TileDB-SOMA 1.13, and will be
-    #' removed in TileDB-SOMA 1.16.
-    #' @param simplify Return a vector of [`bit64::integer64`]s containing only
-    #' the upper bounds.
-    #' @param index1 Return the used shape with 1-based indices (0-based indices are returned by default)
-    #' @return A list containing the lower and upper bounds for the used shape.
-    #' If `simplify = TRUE`, returns a vector of only the upper bounds.
-    used_shape = function(simplify = FALSE, index1 = FALSE) {
-      stopifnot(
-        isTRUE(simplify) || isFALSE(simplify),
-        isTRUE(index1) || isFALSE(index1)
-      )
-      .Deprecated(new = "shape", msg = "The 'used_shape' function will be removed in TileDB-SOMA 1.16.")
-      dims <- self$dimnames()
-      utilized <- vector(mode = "list", length = length(dims))
-      names(utilized) <- dims
-      for (i in seq_along(along.with = utilized)) {
-        key <- paste0(dims[i], "_domain")
-        dom <- bit64::integer64(2L)
-        names(dom) <- c("_lower", "_upper")
-        for (type in names(dom)) {
-          dom[type] <- self$get_metadata(paste0(key, type)) %||% bit64::NA_integer64_
-          if (any(is.na(dom))) {
-            dom <- bit64::NA_integer64_
-          }
-          utilized[[i]] <- unname(dom)
-        }
-        # utilized[[i]] <- self$get_metadata(key) %||% bit64::NA_integer64_
-      }
-      if (any(vapply_lgl(utilized, rlang::is_na))) {
-        stop(
-          "This array was not written with bounding box support; for an approximation, please use `$non_empty_domain()` instead",
-          call. = FALSE
-        )
-      }
-      if (index1) {
-        for (i in seq_along(utilized)) {
-          utilized[[i]] <- utilized[[i]] + 1L
-        }
-      }
-      if (simplify) {
-        tmp <- utilized
-        utilized <- bit64::integer64(length(utilized))
-        names(utilized) <- names(tmp)
-        for (i in seq_along(utilized)) {
-          utilized[i] <- tmp[[i]][2L]
-        }
-      }
-      return(utilized)
-    },
-
     #' @description Returns a named list of minimum/maximum pairs, one per index
     #' column, which are the smallest and largest values written on that
     #' index column.

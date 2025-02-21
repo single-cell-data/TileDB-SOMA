@@ -37,13 +37,7 @@ class SizingArgs(TypedDict):
 def _find_old_sparse_ndarray_bounds(
     snda: tiledbsoma.SparseNDArray,
 ) -> Tuple[Tuple[int, int], ...]:
-    # New arrays (created by tiledbsoma 1.15 and above) will have the new shape.
-    # Older will have used_shape ...
-    # ... except _really_ old won't even have that.
-    try:
-        return snda.used_shape()
-    except tiledbsoma.SOMAError:
-        return snda.non_empty_domain()
+    return snda.non_empty_domain()
 
 
 def show_experiment_shapes(
@@ -53,9 +47,9 @@ def show_experiment_shapes(
     output_handle: Printable = cast(Printable, sys.stdout),
 ) -> bool:
     """For each dataframe/array contained within the SOMA ``Experiment`` pointed
-    to by the given URI, shows the deprecated ``used_shape`` (for N-D arrays) or
-    the ``non_empty_domain`` (for dataframes), along with the ``shape`` and ``maxshape``
-    (for arrays) or ``domain`` and ``maxdomain`` (for dataframes).
+    to by the given URI, shows the ``non_empty_domain`` (for dataframes), along
+    with the ``shape`` and ``maxshape`` (for arrays) or ``domain`` and
+    ``maxdomain`` (for dataframes).
 
     Args:
         uri: The URI of a SOMA :class:`Experiment`.
@@ -113,7 +107,7 @@ def upgrade_experiment_shapes(
     """For each dataframe contained within the SOMA ``Experiment`` pointed to by
     the given URI, sets the ``domain`` to match the dataframe's current
     ``non_empty_domain``.  For each N-D array, sets the ``shape`` to match the array's
-    current ``used_shape``. If ``verbose`` is set to ``True``, an activity log
+    ``non_empty_domain``. If ``verbose`` is set to ``True``, an activity log
     is printed. If ``check_only`` is true, only does a dry run and reports any
     reasons the upgrade would fail.
 
@@ -369,8 +363,7 @@ def _leaf_visitor_show_shapes(
 
     elif isinstance(item, tiledbsoma.SparseNDArray):
         _print_leaf_node_banner("SparseNDArray", node_name, item.uri, args)
-        ####_bannerize(args, "used_shape", item.used_shape())
-        _bannerize(args, "used_shape", _find_old_sparse_ndarray_bounds(item))
+        _bannerize(args, "non_empty_domain", _find_old_sparse_ndarray_bounds(item))
         _bannerize(args, "shape", item.shape)
         _bannerize(args, "maxshape", item.maxshape)
         _bannerize(args, "upgraded", item.tiledbsoma_has_upgraded_shape)
@@ -424,17 +417,16 @@ def _leaf_visitor_upgrade(
 
     elif isinstance(item, tiledbsoma.SparseNDArray):
 
-        # The used_shape is a tuple of (lo, hi) pairs
-        used_shape = _find_old_sparse_ndarray_bounds(item)
+        old_bounds = _find_old_sparse_ndarray_bounds(item)
         # Make a tuple of hi+1
-        used_shape_counts = tuple(e[1] + 1 for e in used_shape)
+        counts_from_old_bounds = tuple(e[1] + 1 for e in old_bounds)
         # Get the right thing to do for X, obsm, obsp, varm, or varp.  Note that
-        # used_shape_counts can be the wrong thing in case a given sparse array
+        # counts_from_old_bounds can be the wrong thing in case a given sparse array
         # has _no_ occupied cells in the last one or more rows.  E.g. if nobs is
         # 1000 and nvars["RNA"] is 200 then each X needs to have shape like 1000
-        # x 200 but its used_shape might only be say 998 x 200 if there are no
+        # x 200 but its old bounds might only be say 998 x 200 if there are no
         # X-counts at the end of X.
-        new_shape = _get_new_ndarray_shape(args, used_shape_counts)
+        new_shape = _get_new_ndarray_shape(args, counts_from_old_bounds)
 
         _print_leaf_node_banner("SparseNDArray", node_name, item.uri, args)
         if check_only:

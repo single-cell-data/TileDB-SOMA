@@ -172,10 +172,6 @@ def test_import_anndata(conftest_pbmc_small, ingest_modes, X_kind):
                     assert table.shape[0] == orig.X.shape[0] * orig.X.shape[1]
                 else:
                     assert table.shape[0] == 0
-                # Only sparse arrays have used_shape
-                if ingest_mode != "schema_only":
-                    # E.g. AnnData X shape is (80,20). We expect used_shape ((0,79),(0,19)).
-                    assert X.used_shape() == tuple([(0, e - 1) for e in orig.shape])
             else:
                 assert X.metadata.get(metakey) == "SOMADenseNDArray"
                 matrix = X.read(coords=all2d)
@@ -810,27 +806,6 @@ def test_export_obsm_with_holes(h5ad_file_with_obsm_holes, tmp_path):
 
     assert_adata_equal(original, adata)
 
-    # Verify the bounding box on the SOMA SparseNDArray
-    with tiledbsoma.Experiment.open(output_path) as exp:
-        meta = exp.ms["RNA"].obsm["X_pca"].metadata
-        assert meta["soma_dim_0_domain_lower"] == 0
-        assert meta["soma_dim_0_domain_upper"] == 2637
-        assert meta["soma_dim_1_domain_lower"] == 0
-        assert meta["soma_dim_1_domain_upper"] == 49
-
-        # With the bounding box present, all is well for outgest to AnnData format.
-        try1 = tiledbsoma.io.to_anndata(exp, "RNA")
-        assert try1.obsm["X_pca"].shape == (2638, 50)
-
-    # Now remove the bounding box to simulate reading older data that lacks a bounding box.
-    with tiledbsoma.Experiment.open(output_path, "w") as exp:
-        meta = exp.ms["RNA"].obsm["X_pca"].metadata
-        del meta["soma_dim_0_domain_lower"]
-        del meta["soma_dim_0_domain_upper"]
-        del meta["soma_dim_1_domain_lower"]
-        del meta["soma_dim_1_domain_upper"]
-
-    # Re-open to simulate opening afresh a bounding-box-free array.
     with tiledbsoma.Experiment.open(output_path) as exp:
         meta = exp.ms["RNA"].obsm["X_pca"].metadata
         with pytest.raises(KeyError):
