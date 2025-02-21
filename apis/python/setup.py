@@ -318,6 +318,7 @@ setuptools.setup(
                 "src/tiledbsoma/soma_context.cc",
                 "src/tiledbsoma/soma_array.cc",
                 "src/tiledbsoma/soma_object.cc",
+                "src/tiledbsoma/soma_column.cc",
                 "src/tiledbsoma/soma_dataframe.cc",
                 "src/tiledbsoma/soma_point_cloud_dataframe.cc",
                 "src/tiledbsoma/soma_geometry_dataframe.cc",
@@ -333,7 +334,7 @@ setuptools.setup(
             library_dirs=LIB_DIRS,
             libraries=["tiledbsoma"] + (["tiledb"] if os.name == "nt" else []),
             extra_link_args=CXX_FLAGS,
-            extra_compile_args=["-std=c++20" if os.name != "nt" else "/std:c++20"]
+            extra_compile_args=["-std=c++20" if os.name != "nt" else "/std:c++20", "-g"]
             + CXX_FLAGS,
             language="c++",
         )
