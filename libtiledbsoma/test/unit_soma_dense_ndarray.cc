@@ -147,6 +147,8 @@ TEST_CASE("SOMADenseNDArray: metadata", "[SOMADenseNDArray]") {
         PlatformConfig(),
         TimestampRange(0, 1));
 
+    // TO DO: do more data writes and readbacks here in C++ tests.
+    // https://github.com/single-cell-data/TileDB-SOMA/issues/3721
     auto dnda = SOMADenseNDArray::open(
         uri,
         OpenMode::write,

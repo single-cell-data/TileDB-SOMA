@@ -50,6 +50,9 @@ test_that("Basic mechanics", {
 
   expect_error(sdf$shape(), class = "notYetImplementedError")
 
+  # Dataframe write should fail if array opened in read mode
+  expect_error(sdf$write(tbl0))
+
   expect_equivalent(
     tiledb::tiledb_array(sdf$uri, return_as = "asis")[],
     as.list(tbl0),

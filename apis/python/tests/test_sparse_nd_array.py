@@ -324,10 +324,12 @@ def test_sparse_nd_array_read_write_sparse_tensor(
     format: str,
     test_enumeration: int,
 ):
+    uri = tmp_path.as_posix()
+
     # Test sanity: Tensor only, and CSC and CSR only support 2D, so fail any nonsense configs
     assert format == "coo"
 
-    a = soma.SparseNDArray.create(tmp_path.as_posix(), type=pa.float64(), shape=shape)
+    a = soma.SparseNDArray.create(uri, type=pa.float64(), shape=shape)
     assert a.shape == shape
 
     # Make a random sample in the desired format
@@ -339,10 +341,16 @@ def test_sparse_nd_array_read_write_sparse_tensor(
         # non-arrow write
         a.write(data.to_numpy())
     a.write(data)
+    a.close()
     del a
 
+    # Array write should fail if array opened in read mode
+    with soma.SparseNDArray.open(uri) as a:
+        with pytest.raises(soma.SOMAError):
+            a.write(data)
+
     # Read back and validate
-    with soma.SparseNDArray.open(tmp_path.as_posix()) as b:
+    with soma.SparseNDArray.open(uri) as b:
         t = b.read((slice(None),) * len(shape)).coos().concat()
 
         assert tensors_are_same_value(t, data)
@@ -351,7 +359,7 @@ def test_sparse_nd_array_read_write_sparse_tensor(
 
         assert t.shape == shape
 
-    with soma.SparseNDArray.open(tmp_path.as_posix()) as A:
+    with soma.SparseNDArray.open(uri) as A:
         assert A.is_sparse
         assert not A.schema_config_options().allows_duplicates
 

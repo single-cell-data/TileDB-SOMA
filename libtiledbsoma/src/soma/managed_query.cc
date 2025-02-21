@@ -178,6 +178,11 @@ void ManagedQuery::setup_read() {
 void ManagedQuery::submit_write(bool sort_coords) {
     _fill_in_subarrays_if_dense(false);
 
+    if (array_->query_type() != TILEDB_WRITE) {
+        throw TileDBSOMAError(
+            "[ManagedQuery] write requires array to be opened in write mode");
+    }
+
     if (array_->schema().array_type() == TILEDB_DENSE) {
         query_->set_subarray(*subarray_);
     } else {
