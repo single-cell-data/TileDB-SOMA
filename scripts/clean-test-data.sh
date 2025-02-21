@@ -13,4 +13,4 @@ cd "$(dirname "$0")/../data"
 
 # Remove prepared test data.
 rm -rf soco
-rm -rf example-visium-v2
+rm -rf example-visium-v2 example-visium-v1
