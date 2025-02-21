@@ -156,10 +156,6 @@ class SOMAGeometryDataFrame : virtual public SOMAArray {
      */
     uint64_t count();
 
-    void set_array_data(
-        std::unique_ptr<ArrowSchema> arrow_schema,
-        std::unique_ptr<ArrowArray> arrow_array) override;
-
    private:
     //===================================================================
     //= private non-static

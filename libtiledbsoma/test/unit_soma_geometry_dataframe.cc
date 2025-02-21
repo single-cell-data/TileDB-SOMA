@@ -210,9 +210,21 @@ TEST_CASE("SOMAGeometryDataFrame: Roundtrip", "[SOMAGeometryDataFrame]") {
         ResultOrder::automatic,
         std::nullopt);
 
-    soma_geometry->set_array_data(
-        std::move(data_schema), std::move(data_array));
-    soma_geometry->write();
+    ManagedQuery mq_write(*soma_geometry.get(), ctx->tiledb_ctx());
+
+    std::tie(data_array, data_schema) = TransformerPipeline(
+                                            std::move(data_array),
+                                            std::move(data_schema))
+                                            .transform(
+                                                OutlineTransformer(coord_space))
+                                            .asTable();
+
+    mq_write.set_array_data(std::move(data_schema), std::move(data_array));
+    mq_write.submit_write();
+
+    // soma_geometry->set_array_data(
+    //     std::move(data_schema), std::move(data_array));
+    // soma_geometry->write();
     soma_geometry->close();
 
     // Read back the data.
@@ -224,7 +236,9 @@ TEST_CASE("SOMAGeometryDataFrame: Roundtrip", "[SOMAGeometryDataFrame]") {
         ResultOrder::automatic,
         std::nullopt);
 
-    while (auto batch = soma_geometry->read_next()) {
+    ManagedQuery mq_read(*soma_geometry.get(), ctx->tiledb_ctx());
+
+    while (auto batch = mq_read.read_next()) {
         auto arrbuf = batch.value();
         auto d0span = arrbuf->at(dim_infos[0].name)->data<int64_t>();
         auto d1span = arrbuf->at(SOMA_GEOMETRY_DIMENSION_PREFIX + "x__min")
