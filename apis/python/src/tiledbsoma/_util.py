@@ -485,7 +485,7 @@ def _set_coord(dim_idx: int, mq: ManagedQuery, coord: object) -> None:
         return
 
     if isinstance(coord, (pa.Array, pa.ChunkedArray)):
-        column.set_dim_points_arrow(mq, coord)
+        column.set_dim_points_arrow(mq._handle, coord)
         return
 
     if isinstance(coord, (Sequence, np.ndarray)):
@@ -512,7 +512,7 @@ def _set_coord(dim_idx: int, mq: ManagedQuery, coord: object) -> None:
             _, stop = ned[dim_idx]
         else:
             stop = coord.stop
-        column.set_dim_ranges_string_or_bytes(mq, [(start, stop)])
+        column.set_dim_ranges_string_or_bytes(mq._handle, [(start, stop)])
         return
 
     # Note: slice(None, None) matches the is_slice_of part, unless we also check
@@ -535,7 +535,7 @@ def _set_coord(dim_idx: int, mq: ManagedQuery, coord: object) -> None:
         else:
             istop = ts_dom[1].as_py()
 
-        column.set_dim_ranges_int64(mq, [(istart, istop)])
+        column.set_dim_ranges_int64(mq._handle, [(istart, istop)])
         return
 
     if isinstance(coord, slice):
@@ -603,7 +603,7 @@ def _set_coord_by_numeric_slice(
 
     try:
         set_dim_range = getattr(column, f"set_dim_ranges_{dim.type}")
-        set_dim_range(mq, [lo_hi])
+        set_dim_range(mq._handle, [lo_hi])
         return
     except AttributeError:
         return
