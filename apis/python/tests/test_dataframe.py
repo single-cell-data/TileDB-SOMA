@@ -72,24 +72,27 @@ def test_dataframe(tmp_path, arrow_schema):
         )
         assert sorted(sdf.keys()) == sorted(sdf.schema.names)
 
+    pydict = {}
+    pydict["soma_joinid"] = [0, 1, 2, 3, 4]
+    pydict["myint"] = [10, 20, 30, 40, 50]
+    pydict["myfloat"] = [4.1, 5.2, 6.3, 7.4, 8.5]
+    pydict["mystring"] = ["apple", "ball", "cat", "dog", "egg"]
+    pydict["mybool"] = [True, False, False, True, False]
+    rb = pa.Table.from_pydict(pydict)
+
     with soma.DataFrame.open(uri, "w") as sdf:
         # Write
         for _ in range(3):
-            pydict = {}
-            pydict["soma_joinid"] = [0, 1, 2, 3, 4]
-            pydict["myint"] = [10, 20, 30, 40, 50]
-            pydict["myfloat"] = [4.1, 5.2, 6.3, 7.4, 8.5]
-            pydict["mystring"] = ["apple", "ball", "cat", "dog", "egg"]
-            pydict["mybool"] = [True, False, False, True, False]
-            rb = pa.Table.from_pydict(pydict)
-
             sdf.tiledbsoma_resize_soma_joinid_shape(len(rb))
-
             sdf.write(rb)
-
             with raises_no_typeguard(TypeError):
                 # non-arrow write
                 sdf.write(rb.to_pandas)
+
+    # Array write should fail if array opened in read mode
+    with soma.DataFrame.open(uri, "r") as sdf:
+        with pytest.raises(soma.SOMAError):
+            sdf.write(rb)
 
     with soma.DataFrame.open(uri) as sdf:
         assert sdf.count == 5

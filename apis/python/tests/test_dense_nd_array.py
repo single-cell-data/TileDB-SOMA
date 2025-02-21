@@ -141,7 +141,9 @@ def test_dense_nd_array_create_fail(
 
 @pytest.mark.parametrize("shape", [(10,), (10, 20), (10, 20, 2), (2, 4, 6, 8)])
 def test_dense_nd_array_read_write_tensor(tmp_path, shape: Tuple[int, ...]):
-    a = soma.DenseNDArray.create(tmp_path.as_posix(), type=pa.float64(), shape=shape)
+    uri = tmp_path.as_posix()
+
+    a = soma.DenseNDArray.create(uri, type=pa.float64(), shape=shape)
     ndim = len(shape)
 
     # random sample -- written to entire array
@@ -150,10 +152,17 @@ def test_dense_nd_array_read_write_tensor(tmp_path, shape: Tuple[int, ...]):
     with raises_no_typeguard(TypeError):
         a.write(coords, data)
     a.write(coords, pa.Tensor.from_numpy(data))
+    a.close()
+
+    # Array write should fail if array opened in read mode
+    with soma.DenseNDArray.open(uri) as a:
+        with pytest.raises(soma.SOMAError):
+            a.write(coords, pa.Tensor.from_numpy(data))
+
     del a
 
     # check multiple read paths
-    with soma.DenseNDArray.open(tmp_path.as_posix()) as b:
+    with soma.DenseNDArray.open(uri) as b:
         t = b.read((slice(None),) * ndim, result_order="row-major")
         assert t.equals(pa.Tensor.from_numpy(data))
 
@@ -163,7 +172,7 @@ def test_dense_nd_array_read_write_tensor(tmp_path, shape: Tuple[int, ...]):
     # Open and read with bindings
     with contextlib.closing(
         soma.pytiledbsoma.SOMADenseNDArray.open(
-            tmp_path.as_posix(),
+            uri,
             soma.pytiledbsoma.OpenMode.read,
             soma.pytiledbsoma.SOMAContext(),
         )
@@ -173,14 +182,14 @@ def test_dense_nd_array_read_write_tensor(tmp_path, shape: Tuple[int, ...]):
         assert np.array_equal(data, table.combine_chunks().to_numpy().reshape(shape))
 
     # write a single-value sub-array and recheck
-    with soma.DenseNDArray.open(tmp_path.as_posix(), "w") as c:
+    with soma.DenseNDArray.open(uri, "w") as c:
         assert not c.is_sparse
         c.write(
             (0,) * len(shape),
             pa.Tensor.from_numpy(np.zeros((1,) * len(shape), dtype=np.float64)),
         )
         data[(0,) * len(shape)] = 0.0
-    with soma.DenseNDArray.open(tmp_path.as_posix()) as c:
+    with soma.DenseNDArray.open(uri) as c:
         t = c.read((slice(None),) * ndim)
     assert t.equals(pa.Tensor.from_numpy(data))
 
