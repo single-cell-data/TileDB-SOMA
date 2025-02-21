@@ -1,6 +1,4 @@
----
-title: Encoding Specification
----
+# Encoding Specification
 
 ## TileDB-SOMA encoding version 1.1.0
 
