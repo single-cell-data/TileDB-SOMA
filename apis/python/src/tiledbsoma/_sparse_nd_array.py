@@ -8,9 +8,7 @@ Implementation of SOMA SparseNDArray.
 
 from __future__ import annotations
 
-import itertools
 from typing import (
-    Dict,
     Sequence,
     Tuple,
     Union,
@@ -19,7 +17,6 @@ from typing import (
 
 import numpy as np
 import pyarrow as pa
-import pyarrow.compute as pacomp
 import somacore
 from somacore import options
 from somacore.options import PlatformConfig
@@ -343,11 +340,6 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
             )
             mq._handle.submit_write(sort_coords or True)
 
-            # Write bounding-box metadata. Note COO can be N-dimensional.
-            maxes = [e - 1 for e in values.shape]
-            bounding_box = self._compute_bounding_box_metadata(maxes)
-            self._set_bounding_box_metadata(bounding_box)
-
             if write_options.consolidate_and_vacuum:
                 # Consolidate non-bulk data
                 clib_sparse_array.consolidate_and_vacuum()
@@ -379,11 +371,6 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
             )
             mq._handle.submit_write(sort_coords or True)
 
-            # Write bounding-box metadata. Note CSR and CSC are necessarily 2-dimensional.
-            nr, nc = values.shape
-            bounding_box = self._compute_bounding_box_metadata([nr - 1, nc - 1])
-            self._set_bounding_box_metadata(bounding_box)
-
             if write_options.consolidate_and_vacuum:
                 # Consolidate non-bulk data
                 clib_sparse_array.consolidate_and_vacuum()
@@ -396,18 +383,6 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
                 mq = ManagedQuery(self, None)
                 mq._handle.set_array_data(batch)
                 mq._handle.submit_write(sort_coords or False)
-
-            # Write bounding-box metadata
-            maxes = []
-            coord_tbl = values.drop(["soma_data"])
-            for i in range(coord_tbl.num_columns):
-                coords = values.column(f"soma_dim_{i}")
-                if coords:
-                    maxes.append(pacomp.max(coords).as_py())
-                else:  # completely empty X
-                    maxes.append(0)
-            bounding_box = self._compute_bounding_box_metadata(maxes)
-            self._set_bounding_box_metadata(bounding_box)
 
             if write_options.consolidate_and_vacuum:
                 # Consolidate non-bulk data
@@ -448,74 +423,6 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
             dim_extent = min(dim_shape, create_options.dim_tile(dim_name, 2048))
 
         return (dim_capacity, dim_extent)
-
-    def used_shape(self) -> Tuple[Tuple[int, int], ...]:
-        """
-        Retrieve the range of indexes for a dimension that were explicitly written (deprecated).
-        Compare this to ``shape`` which returns the available/writable capacity.
-
-        This method is deprecated as of TileDB-SOMA 1.13, and will be removed in TileDB-SOMA 1.16.
-        """
-        retval = []
-        for i in itertools.count():
-            lower_key = f"soma_dim_{i}_domain_lower"
-            lower_val = self.metadata.get(lower_key)
-            upper_key = f"soma_dim_{i}_domain_upper"
-            upper_val = self.metadata.get(upper_key)
-            if lower_val is None or upper_val is None:
-                break
-            retval.append((lower_val, upper_val))
-        if not retval:
-            raise SOMAError(
-                f"Array {self.uri} was not written with bounding box support. "
-                "For an approximation, please use `non_empty_domain()` instead"
-            )
-
-        # In the unlikely event that a previous data update succeeded but the
-        # subsequent metadata update did not, take the union of the core non-empty domain
-        # (which is done as part of the data update) and the metadata bounding box.
-        ned = self.non_empty_domain() or ()
-        for i, nedslot in enumerate(ned):
-            ned_lower, ned_upper = nedslot
-            bbox_lower, bbox_upper = retval[i]
-            retval[i] = (min(ned_lower, bbox_lower), max(ned_upper, bbox_upper))
-        return tuple(retval)
-
-    def _compute_bounding_box_metadata(
-        self,
-        maxes: Sequence[int],
-    ) -> Dict[str, int]:
-        """
-        This computes a bounding box for create or update. The former applies to initial ingest;
-        the latter applies to append mode.
-        """
-        new_bounding_box = {}
-        for i, slotmax in enumerate(maxes):
-            lower_key = f"soma_dim_{i}_domain_lower"
-            upper_key = f"soma_dim_{i}_domain_upper"
-            old_lower = self.metadata.get(lower_key)
-            old_upper = self.metadata.get(upper_key)
-
-            if old_lower is None:
-                new_lower = 0
-            else:
-                new_lower = min(0, old_lower)
-
-            if old_upper is None:
-                new_upper = slotmax
-            else:
-                new_upper = max(slotmax, old_upper)
-
-            new_bounding_box[lower_key] = new_lower
-            new_bounding_box[upper_key] = new_upper
-        return new_bounding_box
-
-    def _set_bounding_box_metadata(
-        self,
-        bounding_box: Dict[str, int],
-    ) -> None:
-        """Writes the bounding box to metadata storage."""
-        self.metadata.update(bounding_box)
 
 
 class _SparseNDArrayReadBase(somacore.SparseRead):

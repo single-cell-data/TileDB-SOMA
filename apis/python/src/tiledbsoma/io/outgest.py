@@ -476,24 +476,20 @@ def _extract_obsm_or_varm(
     # Three ways to get the number of columns for obsm/varm sparse matrices:
     #
     # * Explicit user specification
-    # * Bounding-box metadata, if present
+    # * Shape information, if present
     # * Try arithmetic on nnz / num_rows, for densely occupied sparse matrices
     # Beyond that, we have to throw.
 
     description = f'{collection_name}["{element_name}"]'
 
+    # First, try width config
     num_cols = width_configs.get(element_name, None)
 
-    if num_cols is None:
-        if soma_nd_array.tiledbsoma_has_upgraded_shape:
-            num_cols = soma_nd_array.shape[1]
-        else:
-            try:
-                used_shape = soma_nd_array.used_shape()
-                num_cols = used_shape[1][1] + 1
-            except SOMAError:
-                pass  # We tried; moving on to next option
+    # Second, try the shape feature introduced in TileDB-SOMA 1.15
+    if num_cols is None and soma_nd_array.tiledbsoma_has_upgraded_shape:
+        num_cols = soma_nd_array.shape[1]
 
+    # Third, try arithmetic on nnz / num_rows
     if num_cols is None:
         num_rows_times_width, coo_column_count = matrix_tbl.shape
 

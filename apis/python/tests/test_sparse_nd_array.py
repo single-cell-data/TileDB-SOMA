@@ -928,6 +928,8 @@ def test_csr_csc_2d_read(tmp_path, shape):
     ids=lambda io: io.get("name"),
 )
 def test_sparse_nd_array_table_slicing(tmp_path, io, write_format, read_format):
+    uri = tmp_path.as_posix()
+
     if (write_format == "csr" or write_format == "csc") and len(io["shape"]) != 2:
         return  # Not supported by create_random_tensor
     if (read_format == "csr" or read_format == "csc") and len(io["shape"]) != 2:
@@ -941,12 +943,10 @@ def test_sparse_nd_array_table_slicing(tmp_path, io, write_format, read_format):
         density=1.0,
     )
 
-    with soma.SparseNDArray.create(
-        tmp_path.as_posix(), type=pa.float64(), shape=io["shape"]
-    ) as snda_w:
+    with soma.SparseNDArray.create(uri, type=pa.float64(), shape=io["shape"]) as snda_w:
         snda_w.write(arrow_tensor)
 
-    with soma.SparseNDArray.open(tmp_path.as_posix()) as snda:
+    with soma.SparseNDArray.open(uri) as snda:
         if read_format == "table":
             if io["throws"] is not None:
                 with pytest.raises(io["throws"]):

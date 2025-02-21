@@ -287,16 +287,6 @@ test_that("Resume-mode sparse arrays", {
     label = "matc",
     expected.label = "knex"
   )
-  bbox <- tryCatch(
-    as.integer(suppressWarnings(
-      ssac$used_shape(simplify = TRUE, index1 = TRUE),
-      classes = "deprecatedWarning"
-    )),
-    error = function(...) NULL
-  )
-  if (!is.null(bbox)) {
-    expect_identical(bbox, dim(knex))
-  }
 
   gc()
 })
