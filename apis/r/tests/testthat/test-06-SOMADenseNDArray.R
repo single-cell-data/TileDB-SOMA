@@ -24,6 +24,10 @@ test_that("SOMADenseNDArray creation", {
 
   # Read result in column-major order to match R matrix layout
   ndarray <- SOMADenseNDArrayOpen(uri)
+
+  # Array write should fail if array opened in read mode
+  expect_error(ndarray$write(mat))
+
   tbl <- ndarray$read_arrow_table(result_order = "COL_MAJOR")
   expect_true(is_arrow_table(tbl))
   expect_equal(tbl$ColumnNames(), c("soma_data"))

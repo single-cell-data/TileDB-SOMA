@@ -21,6 +21,9 @@ test_that("SOMASparseNDArray creation", {
 
   ndarray <- SOMASparseNDArrayOpen(uri)
 
+  # Array write should fail if array opened in read mode
+  expect_error(ndarray$write(mat))
+
   tbl <- ndarray$read(result_order = "COL_MAJOR")$tables()$concat()
   expect_true(is_arrow_table(tbl))
   expect_equal(tbl$ColumnNames(), c("soma_dim_0", "soma_dim_1", "soma_data"))
