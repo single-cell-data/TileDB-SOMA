@@ -480,17 +480,12 @@ def _set_coord(dim_idx: int, mq: ManagedQuery, coord: object) -> None:
 
     column = mq._array._handle._handle.get_column(dim.name)
 
-    if isinstance(coord, str):
-        column.set_dim_points_string(mq._handle, [coord])
-        # mq._handle.set_dim_points_string_or_bytes(column, [coord])
-        return
-    if isinstance(coord, bytes):
-        column.set_dim_points_bytes(mq._handle, [coord])
-        # mq._handle.set_dim_points_string_or_bytes(column, [coord])
+    if isinstance(coord, (str, bytes)):
+        column.set_dim_points_string_or_bytes(mq._handle, [coord])
         return
 
     if isinstance(coord, (pa.Array, pa.ChunkedArray)):
-        mq._handle.set_dim_points_arrow(dim.name, coord)
+        column.set_dim_points_arrow(mq, coord)
         return
 
     if isinstance(coord, (Sequence, np.ndarray)):
@@ -499,7 +494,6 @@ def _set_coord(dim_idx: int, mq: ManagedQuery, coord: object) -> None:
 
     if isinstance(coord, int):
         column.set_dim_points_int64(mq._handle, [coord])
-        # mq._handle.set_dim_points_int64(column, [coord])
         return
 
     # Note: slice(None, None) matches the is_slice_of part, unless we also check
@@ -518,7 +512,7 @@ def _set_coord(dim_idx: int, mq: ManagedQuery, coord: object) -> None:
             _, stop = ned[dim_idx]
         else:
             stop = coord.stop
-        mq._handle.set_dim_ranges_string_or_bytes(dim.name, [(start, stop)])
+        column.set_dim_ranges_string_or_bytes(mq, [(start, stop)])
         return
 
     # Note: slice(None, None) matches the is_slice_of part, unless we also check
@@ -541,7 +535,7 @@ def _set_coord(dim_idx: int, mq: ManagedQuery, coord: object) -> None:
         else:
             istop = ts_dom[1].as_py()
 
-        mq._handle.set_dim_ranges_int64(dim.name, [(istart, istop)])
+        column.set_dim_ranges_int64(mq, [(istart, istop)])
         return
 
     if isinstance(coord, slice):
@@ -576,17 +570,8 @@ def _set_coord_by_py_seq_or_np_array(
         # set_dim_points(column, coord)
         return
 
-    # if pa_types_is_string_or_bytes(dim.type):
-    #     column.set_dim_points_string(mq._handle, coord)
-    #     #mq._handle.set_dim_points_string_or_bytes(column, coord)
-    #     return
-
-    if pa.types.is_large_string(dim.type) or pa.types.is_string(dim.type):
-        column.set_dim_points_string(mq._handle, coord)
-        return
-
-    if pa.types.is_large_binary(dim.type) or pa.types.is_binary(dim.type):
-        column.set_dim_points_bytes(mq._handle, coord)
+    if pa_types_is_string_or_bytes(dim.type):
+        column.set_dim_points_string_or_bytes(mq._handle, coord)
         return
 
     if pa.types.is_timestamp(dim.type):
@@ -598,7 +583,6 @@ def _set_coord_by_py_seq_or_np_array(
             int(e.astype("int64")) if isinstance(e, np.datetime64) else e for e in coord
         ]
         column.set_dim_points_int64(mq._handle, icoord)
-        # mq._handle.set_dim_points_int64(column, icoord)
         return
 
     raise ValueError(f"unhandled type {dim.type} for index column named {dim.name}")
@@ -615,9 +599,11 @@ def _set_coord_by_numeric_slice(
     if not lo_hi:
         return
 
+    column = mq._array._handle._handle.get_column(dim.name)
+
     try:
-        set_dim_range = getattr(mq._handle, f"set_dim_ranges_{dim.type}")
-        set_dim_range(dim.name, [lo_hi])
+        set_dim_range = getattr(column, f"set_dim_ranges_{dim.type}")
+        set_dim_range(mq, [lo_hi])
         return
     except AttributeError:
         return
