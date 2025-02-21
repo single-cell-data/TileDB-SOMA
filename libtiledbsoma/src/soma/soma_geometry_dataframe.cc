@@ -105,19 +105,6 @@ uint64_t SOMAGeometryDataFrame::count() {
     return this->nnz();
 }
 
-void SOMAGeometryDataFrame::set_array_data(
-    std::unique_ptr<ArrowSchema> arrow_schema,
-    std::unique_ptr<ArrowArray> arrow_array) {
-    ArrowTable casted_data = TransformerPipeline(
-                                 std::move(arrow_array),
-                                 std::move(arrow_schema))
-                                 .transform(OutlineTransformer(coord_space_))
-                                 .asTable();
-
-    SOMAArray::set_array_data(
-        std::move(casted_data.second), std::move(casted_data.first));
-}
-
 //===================================================================
 //= private non-static
 //===================================================================
