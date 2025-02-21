@@ -1,3 +1,7 @@
+"""
+Hypothesis-based tests of some.io.{to_from}_anndata.
+"""
+
 from __future__ import annotations
 
 import math
@@ -187,11 +191,7 @@ def keys() -> st.SearchStrategy[str]:
     if HT_TEST_CONFIG["sc-63410_workaround"]:
         return posix_filename()
     else:
-        return st.text(
-            string.printable,
-            min_size=1,
-            max_size=20,
-        )
+        return st.text(string.printable, min_size=1, max_size=20)
 
 
 # AnnData <= 0.10 does not support scipy sparse_array
@@ -308,12 +308,15 @@ def map_of_matrixes(
     draw: st.DrawFn,
     shape_prelude: tuple[int, ...],
     formats: "MatrixFormats" | None = None,
-    excluded_keys: Sequence[str] = (),
 ) -> dict[str, np.ndarray | sp.sparray | sp.spmatrix | np.ma.MaskedArray]:
+
+    def key_unique_by(i: str) -> str:
+        return i[0].lower() if HT_TEST_CONFIG["sc-63402_workaround"] else i[0]
+
     return draw(
         st.one_of(
-            st.dictionaries(
-                keys=keys().filter(lambda k: k not in excluded_keys),
+            dictionaries_unique_by(
+                keys=keys(),
                 values=matrixes(
                     shape=matrix_shapes(
                         prelude=shape_prelude,
@@ -323,6 +326,7 @@ def map_of_matrixes(
                     formats=formats,
                 ),
                 max_size=3,
+                unique_by=key_unique_by,
             ),
             st.none(),
         ),
@@ -336,6 +340,7 @@ def monomorphic_list(
     min_size: int = 0,
     max_size: int = 10,
 ) -> list[Any]:
+    """List of elements of a single type. from_anndata saving of `uns` does not support save anything polymorphic."""
     elmt_type = draw(st.sampled_from(element_type))
     return draw(st.lists(elmt_type, min_size=min_size, max_size=max_size))
 
@@ -418,7 +423,7 @@ def unses(draw: st.DrawFn) -> dict[str, Any]:
                 values=st.recursive(
                     base,
                     lambda children: dictionaries_unique_by(
-                        keys(), children, unique_by=key_unique_by
+                        keys=keys(), values=children, unique_by=key_unique_by
                     ),
                     max_leaves=10,
                 ),
@@ -562,13 +567,6 @@ def assert_uns_equal(src_adata: anndata.AnnData, read_adata: anndata.Anndata) ->
     if diff.get("type_changes", None) == {}:
         del diff["type_changes"]
 
-    if diff != {}:
-        print("----- AFTER CLEAN -----")
-        print(repr(diff))
-        print("======")
-        print(src_adata.uns)
-        print(read_adata.uns)
-
     assert diff == {}, repr(diff.to_dict())
 
 
@@ -667,9 +665,8 @@ def test_roundtrip_from_anndata_to_anndata(
             # TODO: io.to_anndata does not load raw. Do a manual verification
             # of the arrays created by io.from_anndata.
             #
-            # NB: sc-63483 -- raw is very likely in the wrong place. Use the current
-            # implementation location, but be prepared for this to change when the above
-            # issue is resolved.
+            # NB: from_anndata allows user-specified naming of the X layer of raw,
+            # but NOT the actual collection name. Hard-wire for now. See sc-63483
             if adata.raw is not None:
                 assert_frame_equal_strict(
                     adata.raw.var.reset_index(),
