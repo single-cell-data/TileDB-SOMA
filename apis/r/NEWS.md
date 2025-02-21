@@ -1,9 +1,37 @@
-# Unreleased
+# tiledbsoma 1.16.0
 
 * Encode string metadata as `TILEDB_STRING_UTF8` instead of `TILEDB_STRING_ASCII`
 * Use S3 method dispatch on `integer64` instead of directly calling the S3 methods
 * [c++] Replace `SOMAArray` read and write calls with `ManagedQuery` [#3678](https://github.com/single-cell-data/TileDB-SOMA/pull/3678)
 * Remove `used_shape`, which was deprecated in 1.15 with scheduled removal in 1.16 [#3723](https://github.com/single-cell-data/TileDB-SOMA/pull/3723)
+
+# tiledbsoma 1.15.7
+
+* This release contains Python-only bugfixes
+
+# tiledbsoma 1.15.6
+
+* This release contains Python-only bugfixes
+
+# tiledbsoma 1.15.5
+
+* This release contains a Python-only bugfix
+
+# tiledbsoma 1.15.4
+
+* This release contains Python-only updates for spatial transcriptomics
+
+# tiledbsoma 1.15.3
+
+* This release contains Python-only bugfixes
+
+# tiledbsoma 1.15.2
+
+* This release contains a Python-only bugfix
+
+# tiledbsoma 1.15.1
+
+* Encode string metadata as `TILEDB_STRING_UTF8` instead of `TILEDB_STRING_ASCII` [#3469](https://github.com/single-cell-data/TileDB-SOMA/pull/3469)
 
 # tiledbsoma 1.15.0
 
