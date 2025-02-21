@@ -35,6 +35,18 @@ HT_TEST_CONFIG = {
     "sc-62447_workaround": True,
     # float categoricals fail with NaN
     "sc-62449_workaround": True,
+    # enum handling fails with an enum of ''
+    "sc-63404_workaround": True,
+    # from_anndata fails on any high-D obms/varm/obsp/varp/uns
+    "sc-63409_workaround": True,
+    # Non-posix path names used as obsm/varm/obsp/varp keys fails
+    "sc-63410_workaround": True,
+    # soma.io.to_anndata incorrectly reads bool_ arrays in uns
+    "sc-63447_workaround": True,
+    # tiledbsoma.io.from_anndata ignores byte order
+    "sc-63459_workaround": True,
+    # path generated from key in collections
+    "sc-63402_workaround": True,
     #
     # Enable/disable partially implemented features
     #
