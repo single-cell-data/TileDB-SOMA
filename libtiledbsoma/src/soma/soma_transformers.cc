@@ -18,10 +18,10 @@ ArrowTable OutlineTransformer::apply(
 
     for (int64_t i = 0; i < schema->n_children; ++i) {
         /**
-         * If `soma_geometry` conforms to specific formats automatically convert
+         * If `soma_geometry` conforms to specific formats, automatically convert
          * to WKB and create additional index columns for spatial axes.
          *
-         * If the `soma_geometry` array is a WKB binary users are expected to
+         * If the `soma_geometry` array is a WKB binary, users are expected to
          * provide the additional index columns for spatial axes.
          */
 

@@ -18,8 +18,8 @@ class OutlineTransformer : public Transformer {
    private:
     /**
      * @brief Cast an array containing the outer rings of polygons to an Arrow
-     * array holding the WKB encoded polygons and generate the additional index
-     * column arrays based on the spatial axes.
+     * array holding the WKB-encoded polygons and generate the additional
+     * index-column arrays based on the spatial axes.
      */
     std::pair<
         std::vector<std::unique_ptr<ArrowArray>>,

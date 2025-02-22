@@ -8,8 +8,7 @@
  *
  * @section DESCRIPTION
  *
- * This file defines the TransformerPipeline, Transformer and derived classes
- * bindings.
+ * This file defines the TransformerPipeline, Transformer, and bindings for derived classes.
  */
 
 #include <pybind11/numpy.h>
@@ -60,7 +59,7 @@ void load_transformers(py::module& m) {
 
             for (int64_t i = 0; i < schema->n_children; ++i) {
                 // Should happen before pyarrow array construction because
-                // py::capsule get ownership of the memory
+                // py::capsule gets ownership of the memory
                 names.append(std::string(schema->children[i]->name));
 
                 auto pa_array = pa_array_import(
