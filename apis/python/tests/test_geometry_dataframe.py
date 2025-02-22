@@ -80,7 +80,7 @@ def test_geometry_basic_read(tmp_path):
     with soma.GeometryDataFrame.open(uri) as geom:
         result = geom.read().concat()
 
-        # Internal columns will be hidden in subsequent PR
+        # Internal columns will be hidden in a subsequent PR
         assert (result[0].to_numpy() == [0, 0]).all()
         assert (result[1].to_numpy() == [0, 0]).all()
         assert (result[2].to_numpy() == [1, 1]).all()
