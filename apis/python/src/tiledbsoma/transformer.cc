@@ -8,7 +8,8 @@
  *
  * @section DESCRIPTION
  *
- * This file defines the TransformerPipeline, Transformer, and bindings for derived classes.
+ * This file defines the TransformerPipeline, Transformer, and bindings for
+ * derived classes.
  */
 
 #include <pybind11/numpy.h>
