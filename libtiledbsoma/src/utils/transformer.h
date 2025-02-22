@@ -8,10 +8,10 @@
  *
  * @section DESCRIPTION
  *
- * This file defines the Transformer base class. A class extending the Transformer
- * class provides a generic method to transform data stored in Arrow tables. The
- * transformation can be in-place to the same Arrow table, and multiple
- * transformations may be chained with using the TransformerPipeline.
+ * This file defines the Transformer base class. A class extending the
+ * Transformer class provides a generic method to transform data stored in Arrow
+ * tables. The transformation can be in-place to the same Arrow table, and
+ * multiple transformations may be chained with using the TransformerPipeline.
  */
 
 #ifndef TRANSFORMER_H
