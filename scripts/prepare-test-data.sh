@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
-# A script to download and extract test data.Skips data that is already present in the
-# directory.
+# A script to download and extract test data. Skips data that is already present in the
+# directory. Make sure to update `clean-test-data.sh` after modifying this script.
 #
 # See ../data/README.md for instructions on updating this script with new data.
 #
