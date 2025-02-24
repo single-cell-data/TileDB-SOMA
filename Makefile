@@ -48,7 +48,7 @@ ctest_update:
 data:
 	@./scripts/prepare-test-data.sh
 
-.PHONE: clean_data
+.PHONY: clean_data
 clean_data:
 	@./scripts/clean-test-data.sh
 
