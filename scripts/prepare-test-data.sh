@@ -1,15 +1,17 @@
 #!/usr/bin/env bash
 #
-# A script to download and extract test data.
+# A script to download and extract test data.Skips data that is already present in the
+# directory.
 #
-# Skips data that is already present in the directory.
+# See [the README in the `data/` directory](../data/README.md) for instructions on
+# updating this script with new data.
 #
 
 set -euo pipefail
 
 echo "Begin preparing data."
 
-# Change directory to the `test` folder.
+# Change directory to the `data` folder.
 cd "$(dirname "$0")/../data"
 
 

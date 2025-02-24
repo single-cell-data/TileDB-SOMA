@@ -4,9 +4,11 @@ This folder contains data for use in tests and examples.
 
 ## How to add new data
 
-### Add new data to TileDB-SOMA-Test-Data
+### Check new data and upload to GitHub for hosting
 
-Add new data to a [TileDB-SOMA-Test-Data](https://github.com/single-cell-data/TileDB-SOMA-Test-Data) release as described in that project's [README](https://github.com/single-cell-data/TileDB-SOMA-Test-Data/blob/main/README.md).
+Temporarily add a copy of your data to this directory in the way you will eventually want to use it. Create your new tests or examples and check that the data serves your purpose.
+
+Once you have verified the data works as intended, add it to a [TileDB-SOMA-Test-Data](https://github.com/single-cell-data/TileDB-SOMA-Test-Data) release as described in that project's [README](https://github.com/single-cell-data/TileDB-SOMA-Test-Data/blob/main/README.md).
 
 ### Update `make data` to include new dataset
 
