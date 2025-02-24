@@ -169,7 +169,7 @@ def create_anndata_canned(which: int, obs_field_name: str, var_field_name: str):
 
 
 def create_h5ad_canned(which: int, obs_field_name: str, var_field_name: str):
-    tmp_path = tempfile.TemporaryDirectory()
+    tmp_path = tempfile.TemporaryDirectory(prefix="create_h5ad_canned_")
     anndata = create_anndata_canned(which, obs_field_name, var_field_name)
     return create_h5ad(
         anndata,
@@ -178,7 +178,7 @@ def create_h5ad_canned(which: int, obs_field_name: str, var_field_name: str):
 
 
 def create_soma_canned(which: int, obs_field_name, var_field_name):
-    tmp_path = tempfile.TemporaryDirectory()
+    tmp_path = tempfile.TemporaryDirectory(prefix="create_soma_canned_")
     h5ad = create_h5ad_canned(which, obs_field_name, var_field_name)
     uri = tmp_path.name + f"soma{which}"
     tiledbsoma.io.from_h5ad(uri, h5ad, "measname")
@@ -198,7 +198,7 @@ def anndata_larger():
 
 @pytest.fixture
 def soma_larger(anndata_larger):
-    tmp_path = tempfile.TemporaryDirectory()
+    tmp_path = tempfile.TemporaryDirectory(prefix="soma_larger_")
     uri = tmp_path.name + "soma-larger"
     tiledbsoma.io.from_anndata(uri, anndata_larger, "measname")
     return uri

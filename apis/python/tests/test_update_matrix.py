@@ -5,7 +5,7 @@ import tiledbsoma.io
 
 
 def test_update_matrix_X(conftest_pbmc3k_adata):
-    tempdir = tempfile.TemporaryDirectory()
+    tempdir = tempfile.TemporaryDirectory(prefix="test_update_matrix_X_")
     output_path = tempdir.name
 
     tiledbsoma.io.from_anndata(
@@ -39,7 +39,7 @@ def test_update_matrix_X(conftest_pbmc3k_adata):
 
 # Magical conftest.py fixture
 def test_update_matrix_obsm(conftest_pbmc3k_adata):
-    tempdir = tempfile.TemporaryDirectory()
+    tempdir = tempfile.TemporaryDirectory(prefix="test_update_matrix_obsm_")
     output_path = tempdir.name
 
     tiledbsoma.io.from_anndata(

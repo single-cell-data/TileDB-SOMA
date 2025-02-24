@@ -47,7 +47,9 @@ def multiple_fixtures_with_readback(request, conftest_pbmc_small) -> TestCase:
         AnnData/Pandas.
     * Each `TestCase` member is also exposed directly as its own `fixture` below.
     """
-    with tempfile.TemporaryDirectory() as experiment_path:
+    with tempfile.TemporaryDirectory(
+        "multiple_fixtures_with_readback_"
+    ) as experiment_path:
         old_anndata = conftest_pbmc_small.copy()
         tiledbsoma.io.from_anndata(
             experiment_path, conftest_pbmc_small, measurement_name="RNA"
