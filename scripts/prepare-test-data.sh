@@ -5,22 +5,23 @@
 # Skips data that is already present in the directory.
 #
 
+set -euo pipefail
+
 echo "Begin preparing data."
 
 # Change directory to the `test` folder.
-cd "$(dirname "$0")/../test"
+cd "$(dirname "$0")/../data"
+
 
 # Extract saco dataset.
-if [ -d soco ]; then
-    echo "-- Skipping dataset 'test/soco'; directory 'test/soco' already exists."
+if [ -d ../test/soco ]; then
+    echo "-- Skipping dataset 'data/soco'; directory 'data/soco' already exists."
 else
-    echo "-- Preparing dataset 'test/soco' ..."
-    tar zxf soco.tgz
+    echo "-- Preparing dataset 'data/soco' ..."
+    tar zxf ../test/soco.tgz
     echo "   ... finished preparing 'test/soco.tgz'."
 fi
 
-# Change directory to the `data` folder.
-cd "../data"
 
 # Download and extract Visium v2 dataset.
 if [ -d example-visium-v2 ]; then

@@ -96,7 +96,7 @@ int main(int argc, char** argv) {
 
     if (argc < 2) {
         printf("Run with CI test SOMA:\n\n");
-        printf("  %s test/soco/pbmc3k_processed\n", argv[0]);
+        printf("  %s data/soco/pbmc3k_processed\n", argv[0]);
         return 0;
     }
 
