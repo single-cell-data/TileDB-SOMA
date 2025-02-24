@@ -3,8 +3,7 @@
 # A script to download and extract test data.Skips data that is already present in the
 # directory.
 #
-# See [the README in the `data/` directory](../data/README.md) for instructions on
-# updating this script with new data.
+# See ../data/README.md for instructions on updating this script with new data.
 #
 
 set -euo pipefail

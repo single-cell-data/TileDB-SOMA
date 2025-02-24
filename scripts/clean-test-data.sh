@@ -2,8 +2,7 @@
 #
 # A script to download and untar test data
 #
-# See [the README in the `data/` directory](../data/README.md) for instructions on
-# updating this script with new data.
+# See ../data/README.md for instructions on updating this script with new data.
 #
 
 set -euo pipefail
