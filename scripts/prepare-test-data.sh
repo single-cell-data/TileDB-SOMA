@@ -54,3 +54,26 @@ else
     cd ..
     echo "   ... finished preparing dataset 'data/$name'."
 fi
+
+# Download and extra soma-experiment-versions
+# Nominal use case in CI:
+# * Download the .tgz
+# * Untar it
+# * Test cases use it
+# For development:
+# * If the directory is there, use it
+# * Else if the .tgz is there, untar it to make the directory
+# * Else get the .tgz from cloud storage
+# * This enables the developer to try out any modified data files _before_ making
+#   a new release tag on the TileDB-SOMA-Test-Data repo
+name="soma-experiment-versions"
+echo "-- Preparing dataset 'data/$name' ..."
+if [ -d $name ]; then
+    echo "-- Skipping dataset 'data/$name'; directory 'data/$name' already exists."
+else
+    if [ ! -f $name.tgz ]; then
+        wget https://github.com/single-cell-data/TileDB-SOMA-Test-Data/releases/download/dataset-2025-02-24/$name.tgz
+    fi
+    tar zxf $name.tgz
+fi
+echo "   ... finished preparing dataset 'data/$name'."
