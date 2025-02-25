@@ -67,7 +67,7 @@ jobs:
           extra-repositories: https://tiledb-inc.r-universe.dev
 
       - name: P3M Bioconductor
-        run: >
+        run: |
           echo -e 'options(BioC_mirror = "https://packagemanager.posit.co/bioconductor/latest")\n' \
           'options(BIOCONDUCTOR_CONFIG_FILE = "https://packagemanager.posit.co/bioconductor/latest/config.yaml")' | \
           tee -a "$(R RHOME)/etc/Rprofile.site"
