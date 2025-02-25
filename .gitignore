@@ -73,6 +73,9 @@ apis/r/src/cmake_log.txt
 apis/r/.editorconfig
 !apis/r/man/roxygen/*
 apis/r/**/local/*
+apis/r/.Rproj*
+apis/r/*.Rproj
+apis/r/.Rhistory
 
 # Coverage/codecov
 .coverage

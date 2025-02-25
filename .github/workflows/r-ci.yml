@@ -20,6 +20,8 @@ on:
 env:
   COVERAGE_FLAGS: "r"
   COVERAGE_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+  GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+  R_KEEP_PKG_SOURCE: yes
   _R_CHECK_TESTS_NLINES_: 0
   CATCHSEGV: "TRUE"
   R_REMOTES_UPGRADE: "never"
@@ -57,47 +59,18 @@ jobs:
         if: ${{ matrix.os == 'macOS-latest' }}
         run: sysctl -a | grep cpu
 
-      - name: Bootstrap
-        run: cd apis/r && tools/r-ci.sh bootstrap
-
-      - name: Install BioConductor package SingleCellExperiment
-        run: cd apis/r && tools/r-ci.sh install_bioc SingleCellExperiment
-
-      # Uncomment these next two stanzas as needed whenever we've just released a new tiledb-r for
-      # which source is available but CRAN releases (and hence update r2u binaries) are not yet:
-      #
-      # IMPORTANT: these two stanzas should remain uncommented _only_ during the propagation time
-      # between (a) publication of source for a new TileDB-R _upon which_ TileDB-SOMA depends in its
-      # apis/R/DESCRIPTION file and (b) appearance of binaries.
-      #
-      # Please see https://github.com/single-cell-data/TileDB-SOMA/wiki/Branches-and-releases which
-      # is crucial for anyone doing releases of TileDB-SOMA.
-      #
-      # Please edit both files in the same way:
-      # * r-ci.yml
-      # * r-python-interop-testing.yml
-      #
-      # Do not remove these comments until such time as we have eliminated our dependency on
-      # the TileDB-R package.
-
-      #- name: Install r-universe build of tiledb-r (macOS)
-      #  if: ${{ matrix.os == 'macOS-latest' }}
-      #  run: cd apis/r && Rscript -e "install.packages('tiledb', repos = c('https://eddelbuettel.r-universe.dev', 'https://cloud.r-project.org'))"
-
-      #- name: Install r-universe build of tiledb-r (linux)
-      #  if: ${{ matrix.os != 'macOS-latest' }}
-      #  run: cd apis/r && Rscript -e "options(bspm.version.check=TRUE); install.packages('tiledb', repos = c('https://eddelbuettel.r-universe.dev/bin/linux/jammy/4.3/', 'https://cloud.r-project.org'))"
-
       - name: R Package Type (macOS)
         if: ${{ matrix.os == 'macOS-latest' }}
         run: echo 'options(pkgType = "binary")' | tee -a "$(R RHOME)/etc/Rprofile.site"
 
-      - name: Dependencies
-        run: cd apis/r && Rscript -e "remotes::install_deps(dependencies = TRUE, upgrade = FALSE)"
+      - uses: r-lib/actions/setup-pandoc@v2
 
-      # - name: Install dataset packages from source (macOS)
-      #   if: ${{ matrix.os == 'macOS-latest' }}
-      #   run: cd apis/r && _CI_PKG_TYPE_=both _CI_USE_BIOC_=true Rscript tools/install_missing_deps.R
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          use-public-rspm: true
+          extra-repositories: https://tiledb-inc.r-universe.dev
+
+      - uses: r-lib/actions/setup-r-dependencies@v2
 
       # - name: CMake
       #   uses: lukka/get-cmake@latest
