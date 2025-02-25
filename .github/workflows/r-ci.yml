@@ -71,6 +71,8 @@ jobs:
         run: echo 'options(pkgType = "binary")' | tee -a "$(R RHOME)/etc/Rprofile.site"
 
       - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          working-directory: 'apis/r/'
 
       # - name: CMake
       #   uses: lukka/get-cmake@latest
