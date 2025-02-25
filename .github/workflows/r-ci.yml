@@ -68,9 +68,14 @@ jobs:
 
       - name: P3M Bioconductor
         run: |
-          echo -e 'options(BioC_mirror = "https://packagemanager.posit.co/bioconductor/latest")\n' \
-          'options(BIOCONDUCTOR_CONFIG_FILE = "https://packagemanager.posit.co/bioconductor/latest/config.yaml")' | \
-          tee -a "$(R RHOME)/etc/Rprofile.site"
+          cat(
+            'options(BioC_mirror = "https://packagemanager.posit.co/bioconductor/latest")\n',
+            'options(BIOCONDUCTOR_CONFIG_FILE = "https://packagemanager.posit.co/bioconductor/latest/config.yaml")\n',
+            sep = '',
+            file = file.path(R.home('etc'), 'Rprofile.site'),
+            append = TRUE
+          )
+        shell: Rscript {0}
 
       - name: R Package Type (macOS)
         if: ${{ matrix.os == 'macOS-latest' }}
