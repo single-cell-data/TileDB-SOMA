@@ -72,7 +72,7 @@ jobs:
             'options(BioC_mirror = "https://packagemanager.posit.co/bioconductor/latest")\n',
             'options(BIOCONDUCTOR_CONFIG_FILE = "https://packagemanager.posit.co/bioconductor/latest/config.yaml")\n',
             sep = '',
-            file = file.path(R.home('etc'), 'Rprofile.site'),
+            file = '~/.Rprofile',
             append = TRUE
           )
         shell: Rscript {0}
