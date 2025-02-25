@@ -473,11 +473,16 @@ def _extract_obsm_or_varm(
     # * obsm is nobs x some number -- number of PCA components, etc.
     # * varm is nvar x some number -- number of PCs, etc.
     #
-    # Three ways to get the number of columns for obsm/varm sparse matrices:
+    # Four ways to get the number of columns for obsm/varm sparse matrices:
     #
-    # * Explicit user specification
-    # * Shape information, if present
-    # * Try arithmetic on nnz / num_rows, for densely occupied sparse matrices
+    # * Explicit user specification.
+    # * Shape information, if present -- this was introduced in TileDB-SOMA 1.15
+    #   and solves the problem completely. However, we don't have that available
+    #   for experiments created before 1.15 that have not been upgraded to have
+    #   the new-shape feature.
+    # * Try arithmetic on nnz / num_rows, for densely occupied sparse matrices.
+    # * Try non-empty domain.
+    #
     # Beyond that, we have to throw.
 
     description = f'{collection_name}["{element_name}"]'
@@ -491,6 +496,12 @@ def _extract_obsm_or_varm(
 
     # Third, try arithmetic on nnz / num_rows
     if num_cols is None:
+        # Example:
+        # * True num_rows is 100 -- this is known
+        # * True num_cols is  56 -- this is unknown and needs to be solved for
+        # * COO data is 5600 x 3
+        # * 5600 / 100 is 56
+        # This only works if the matrix is entirely occupied
         num_rows_times_width, coo_column_count = matrix_tbl.shape
 
         if coo_column_count != 3:
@@ -499,12 +510,13 @@ def _extract_obsm_or_varm(
             )
 
         if num_rows_times_width % num_rows == 0:
-            num_cols = num_rows_times_width // coo_column_count
+            num_cols = num_rows_times_width // num_rows
 
+    # Fourth, try non-empty domain
     if num_cols is None:
-        raise SOMAError(
-            f"could not determine outgest width for {description}: please try to_anndata's obsm_varm_width_hints option"
-        )
+        ned = soma_nd_array.non_empty_domain()
+        num_rows = ned[0][1] + 1
+        num_cols = ned[1][1] + 1
 
     return conversions.csr_from_coo_table(
         matrix_tbl, num_rows, num_cols, soma_nd_array.context
