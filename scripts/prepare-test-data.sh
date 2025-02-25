@@ -25,30 +25,32 @@ fi
 
 
 # Download and extract Visium v2 dataset.
-if [ -d example-visium-v2 ]; then
-    echo "-- Skipping dataset 'data/example-visium-vs'; directory 'data/example-visium-v2' already exists."
+name="example-visium-v2"
+if [ -d $name ]; then
+    echo "-- Skipping dataset 'data/$name'; directory 'data/$name' already exists."
 else
-    echo "-- Preparing dataset 'data/example-visium-v2' ..."
-    mkdir example-visium-v2 && cd example-visium-v2
+    echo "-- Preparing dataset 'data/$name' ..."
+    mkdir $name && cd $name
     wget https://github.com/single-cell-data/TileDB-SOMA-Test-Data/releases/download/dataset-2025-02-19/filtered_feature_bc_matrix.h5
     wget https://github.com/single-cell-data/TileDB-SOMA-Test-Data/releases/download/dataset-2025-02-19/raw_feature_bc_matrix.h5
     wget https://github.com/single-cell-data/TileDB-SOMA-Test-Data/releases/download/dataset-2025-02-19/spatial.tar.gz
     tar zxf spatial.tar.gz
     cd ..
-    echo "   ... finished preparing dataset 'data/example-visium-v2'."
+    echo "   ... finished preparing dataset 'data/$name'."
 fi
 
 
 # Download and extract Visium v2 dataset.
-if [ -d example-visium-v1 ]; then
-    echo "-- Skipping dataset 'data/example-visium-v1'; directory 'data/example-visium-v1' already exists."
+name="example-visium-v1"
+if [ -d $name ]; then
+    echo "-- Skipping dataset 'data/$name'; directory 'data/$name' already exists."
 else
-    echo "-- Preparing dataset 'data/example-visium-v1' ..."
-    mkdir example-visium-v1 && cd example-visium-v1
+    echo "-- Preparing dataset 'data/$name' ..."
+    mkdir $name && cd $name
     wget https://github.com/single-cell-data/TileDB-SOMA-Test-Data/releases/download/dataset-2025-02-21/filtered_feature_bc_matrix.h5
     wget https://github.com/single-cell-data/TileDB-SOMA-Test-Data/releases/download/dataset-2025-02-21/raw_feature_bc_matrix.h5
     wget https://github.com/single-cell-data/TileDB-SOMA-Test-Data/releases/download/dataset-2025-02-21/spatial.tar.gz
     tar zxf spatial.tar.gz
     cd ..
-    echo "   ... finished preparing dataset 'data/example-visium-v1'."
+    echo "   ... finished preparing dataset 'data/$name'."
 fi
