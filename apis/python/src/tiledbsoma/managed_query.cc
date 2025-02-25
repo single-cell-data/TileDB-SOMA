@@ -211,7 +211,7 @@ void load_managed_query(py::module& m) {
             "set_dim_points_double",
             [](ManagedQuery& mq,
                const std::string& dim,
-               const std::vector<double>& points) {
+               const std::vector<double_t>& points) {
                 try {
                     mq.select_points(dim, points);
                 } catch (const std::exception& e) {
@@ -223,7 +223,7 @@ void load_managed_query(py::module& m) {
             "set_dim_points_float",
             [](ManagedQuery& mq,
                const std::string& dim,
-               const std::vector<float>& points) {
+               const std::vector<float_t>& points) {
                 try {
                     mq.select_points(dim, points);
                 } catch (const std::exception& e) {

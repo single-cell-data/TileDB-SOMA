@@ -175,7 +175,7 @@ class ColumnBuffer {
     /**
      * @brief Return data in a vector of binary buffers.
      *
-     * @return std::vector<std::vector<uint8_t>>
+     * @return std::vector<std::vector<std::byte>>
      */
     std::vector<std::vector<std::byte>> binaries();
 
