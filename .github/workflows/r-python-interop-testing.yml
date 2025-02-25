@@ -29,11 +29,27 @@ jobs:
         with:
           fetch-depth: 0 # ensure we get all tags to inform package version determination
 
-      - name: Bootstrap
-        run: cd apis/r && tools/r-ci.sh bootstrap
+      - uses: r-lib/actions/setup-pandoc@v2
 
-      - name: Dependencies
-        run: cd apis/r && Rscript -e "remotes::install_deps(dependencies = TRUE, upgrade = FALSE)"
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          use-public-rspm: true
+          extra-repositories: https://tiledb-inc.r-universe.dev
+
+      - name: P3M Bioconductor
+        run: |
+          cat(
+            'options(BioC_mirror = "https://packagemanager.posit.co/bioconductor/latest")\n',
+            'options(BIOCONDUCTOR_CONFIG_FILE = "https://packagemanager.posit.co/bioconductor/latest/config.yaml")\n',
+            sep = '',
+            file = '~/.Rprofile',
+            append = TRUE
+          )
+        shell: Rscript {0}
+
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          working-directory: 'apis/r/'
 
       - name: Build Package
         run: cd apis/r && R CMD build --no-build-vignettes --no-manual .
@@ -83,9 +99,6 @@ jobs:
         run: |
           python -c 'import tiledbsoma; tiledbsoma.show_package_versions()'
           python scripts/show-versions.py
-
-      - name: Update Packages
-        run: Rscript -e 'update.packages(ask=FALSE)'
 
       - name: Interop tests
         run: python -m pytest apis/system/tests/
