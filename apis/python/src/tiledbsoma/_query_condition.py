@@ -19,7 +19,7 @@ from . import pytiledbsoma as clib
 from ._exception import SOMAError
 from ._util import pa_types_is_string_or_bytes
 
-QueryConditionNodeElem = Union[ast.Name, ast.Constant, ast.NameConstant, ast.Call]
+QueryConditionNodeElem = Union[ast.Name, ast.Constant, ast.Call]
 
 
 @attrs.define
@@ -301,7 +301,7 @@ class QueryConditionTree(ast.NodeVisitor):
             if att.func.id != "attr":
                 return False
 
-            return isinstance(att.args[0], (ast.Constant, ast.NameConstant))
+            return isinstance(att.args[0], ast.Constant)
 
         return isinstance(att, ast.Name)
 
@@ -373,7 +373,7 @@ class QueryConditionTree(ast.NodeVisitor):
             else:
                 raise SOMAError(f"Incorrect type for cast value: {node.func.id}")
 
-        if isinstance(val_node, ast.Constant) or isinstance(val_node, ast.NameConstant):
+        if isinstance(val_node, ast.Constant):
             val = val_node.value
         else:
             raise SOMAError(
@@ -484,7 +484,7 @@ class QueryConditionTree(ast.NodeVisitor):
     def visit_Constant(self, node: ast.Constant) -> ast.Constant:
         return node
 
-    def visit_NameConstant(self, node: ast.NameConstant) -> ast.NameConstant:
+    def visit_NameConstant(self, node: ast.Constant) -> ast.Constant:
         return node
 
     def visit_UnaryOp(self, node: ast.UnaryOp, sign: int = 1):
@@ -497,16 +497,12 @@ class QueryConditionTree(ast.NodeVisitor):
 
         if isinstance(node.operand, ast.UnaryOp):
             return self.visit_UnaryOp(node.operand, sign)
-        else:
-            if isinstance(node.operand, ast.Constant) or isinstance(
-                node.operand, ast.NameConstant
-            ):
-                node.operand.value *= sign
-            elif isinstance(node.operand, ast.Num):
-                node.operand.n *= sign
-            else:
-                raise SOMAError(
-                    f"Unexpected node type following UnaryOp. Saw {ast.dump(node)}."
-                )
 
-            return node.operand
+        if isinstance(node.operand, ast.Constant):
+            node.operand.value *= sign
+        else:
+            raise SOMAError(
+                f"Unexpected node type following UnaryOp. Saw {ast.dump(node)}."
+            )
+
+        return node.operand
