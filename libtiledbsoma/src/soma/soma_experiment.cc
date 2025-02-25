@@ -83,8 +83,7 @@ std::unique_ptr<SOMAExperiment> SOMAExperiment::open(
     }
 }
 
-std::shared_ptr<SOMADataFrame> SOMAExperiment::obs(
-    std::vector<std::string> column_names, ResultOrder result_order) {
+std::shared_ptr<SOMADataFrame> SOMAExperiment::obs() {
     if (obs_ == nullptr) {
         obs_ = SOMADataFrame::open(
             (std::filesystem::path(uri()) / "obs").string(),

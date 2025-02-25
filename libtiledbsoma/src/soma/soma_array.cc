@@ -513,7 +513,8 @@ uint64_t SOMAArray::_nnz_slow() {
         "counting cells...");
 
     uint64_t total_cell_num = 0;
-    auto mq = ManagedQuery(arr_, ctx_->tiledb_ctx(), "count_cells");
+    auto sr = SOMAArray::open(OpenMode::read, uri_, ctx_, timestamp_);
+    auto mq = ManagedQuery(*sr, ctx_->tiledb_ctx(), "count_cells");
     while (auto batch = mq.read_next()) {
         total_cell_num += (*batch)->num_rows();
     }

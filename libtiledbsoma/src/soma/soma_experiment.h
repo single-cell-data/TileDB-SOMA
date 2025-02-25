@@ -93,9 +93,7 @@ class SOMAExperiment : public SOMACollection {
      *
      * @return std::shared_ptr<SOMADataFrame>
      */
-    std::shared_ptr<SOMADataFrame> obs(
-        std::vector<std::string> column_names = {},
-        ResultOrder result_order = ResultOrder::automatic);
+    std::shared_ptr<SOMADataFrame> obs();
 
     /**
      * @brief Get the collection of named measurements

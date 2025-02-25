@@ -70,9 +70,6 @@ void load_soma_array(py::module& m) {
                         uri,
                         std::make_shared<SOMAContext>(platform_config),
                         name,
-                        column_names,
-                        batch_size,
-                        result_order,
                         timestamp);
                 }),
             "uri"_a,
@@ -91,26 +88,6 @@ void load_soma_array(py::module& m) {
                py::object exc_type,
                py::object exc_value,
                py::object traceback) { array.close(); })
-
-        .def(
-            "reset",
-            [](SOMAArray& array,
-               std::optional<std::vector<std::string>> column_names_in,
-               std::string_view batch_size,
-               ResultOrder result_order) {
-                // Handle optional args
-                std::vector<std::string> column_names;
-                if (column_names_in) {
-                    column_names = *column_names_in;
-                }
-
-                // Reset state of the existing SOMAArray object
-                array.reset(column_names, batch_size, result_order);
-            },
-            py::kw_only(),
-            "column_names"_a = py::none(),
-            "batch_size"_a = "auto",
-            "result_order"_a = ResultOrder::automatic)
 
         .def("reopen", &SOMAArray::reopen)
         .def("close", &SOMAArray::close)

@@ -89,8 +89,8 @@ class SOMADataFrame : public SOMAArray {
     static std::unique_ptr<SOMADataFrame> open(
         std::string_view uri,
         OpenMode mode,
-        std::string_view name,
-        std::map<std::string, std::string> platform_config);
+        std::map<std::string, std::string> platform_config,
+        std::optional<TimestampRange> timestamp = std::nullopt);
 
     /**
      * @brief Check if the SOMADataFrame exists at the URI.
@@ -159,8 +159,13 @@ class SOMADataFrame : public SOMAArray {
     SOMADataFrame(
         OpenMode mode,
         std::string_view uri,
-        std::map<std::string, std::string> platform_config)
-        : SOMAArray(mode, uri, std::make_shared<SOMAContext>(platform_config)) {
+        std::map<std::string, std::string> platform_config,
+        std::optional<TimestampRange> timestamp = std::nullopt)
+        : SOMAArray(
+              mode,
+              uri,
+              std::make_shared<SOMAContext>(platform_config),
+              timestamp) {
     }
 
     SOMADataFrame(const SOMAArray& other)

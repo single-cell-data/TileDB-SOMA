@@ -72,11 +72,8 @@ std::unique_ptr<SOMAGeometryDataFrame> SOMAGeometryDataFrame::open(
     std::string_view uri,
     OpenMode mode,
     std::shared_ptr<SOMAContext> ctx,
-    std::vector<std::string> column_names,
-    ResultOrder result_order,
     std::optional<TimestampRange> timestamp) {
-    return std::make_unique<SOMAGeometryDataFrame>(
-        mode, uri, ctx, column_names, result_order, timestamp);
+    return std::make_unique<SOMAGeometryDataFrame>(mode, uri, ctx, timestamp);
 }
 
 bool SOMAGeometryDataFrame::exists(
@@ -106,52 +103,54 @@ uint64_t SOMAGeometryDataFrame::count() {
     return this->nnz();
 }
 
-void SOMAGeometryDataFrame::set_array_data(
-    std::unique_ptr<ArrowSchema> arrow_schema,
-    std::unique_ptr<ArrowArray> arrow_array) {
-    for (auto i = 0; i < arrow_schema->n_children; ++i) {
-        /**
-         * If `soma_geometry` conforms to specific formats automatically convert
-         * to WKB and create additional index columns for spatial axes.
-         *
-         * If the `soma_geometry` array is a WKB binary users are expected to
-         * provide the additional index columns for spatial axes.
-         */
+// void SOMAGeometryDataFrame::set_array_data(
+//     std::unique_ptr<ArrowSchema> arrow_schema,
+//     std::unique_ptr<ArrowArray> arrow_array) {
+//     for (auto i = 0; i < arrow_schema->n_children; ++i) {
+//         /**
+//          * If `soma_geometry` conforms to specific formats automatically
+//          convert
+//          * to WKB and create additional index columns for spatial axes.
+//          *
+//          * If the `soma_geometry` array is a WKB binary users are expected to
+//          * provide the additional index columns for spatial axes.
+//          */
 
-        if (strcmp(arrow_schema->children[i]->name, "soma_geometry") == 0 &&
-            strcmp(arrow_schema->children[i]->format, "+l") == 0) {
-            std::string_view type_metadata;
+//         if (strcmp(arrow_schema->children[i]->name, "soma_geometry") == 0 &&
+//             strcmp(arrow_schema->children[i]->format, "+l") == 0) {
+//             std::string_view type_metadata;
 
-            if (ArrowMetadataHasKey(
-                    arrow_schema->children[i]->metadata,
-                    ArrowCharView("geometry_type"))) {
-                ArrowStringView out;
-                NANOARROW_THROW_NOT_OK(ArrowMetadataGetValue(
-                    arrow_schema->children[i]->metadata,
-                    ArrowCharView("geometry_type"),
-                    &out));
+//             if (ArrowMetadataHasKey(
+//                     arrow_schema->children[i]->metadata,
+//                     ArrowCharView("geometry_type"))) {
+//                 ArrowStringView out;
+//                 NANOARROW_THROW_NOT_OK(ArrowMetadataGetValue(
+//                     arrow_schema->children[i]->metadata,
+//                     ArrowCharView("geometry_type"),
+//                     &out));
 
-                type_metadata = std::string_view(out.data, out.size_bytes);
-            }
+//                 type_metadata = std::string_view(out.data, out.size_bytes);
+//             }
 
-            ArrowTable casted_data;
-            if (type_metadata == "polygon_ring") {
-                auto wkb_data = _cast_polygon_vertex_list_to_wkb(
-                    arrow_array->children[i]);
-                casted_data = _reconstruct_geometry_data_table(
-                    ArrowTable(std::move(arrow_array), std::move(arrow_schema)),
-                    wkb_data);
-            } else {
-                throw std::runtime_error("Unknown geometry type");
-            }
+//             ArrowTable casted_data;
+//             if (type_metadata == "polygon_ring") {
+//                 auto wkb_data = _cast_polygon_vertex_list_to_wkb(
+//                     arrow_array->children[i]);
+//                 casted_data = _reconstruct_geometry_data_table(
+//                     ArrowTable(std::move(arrow_array),
+//                     std::move(arrow_schema)), wkb_data);
+//             } else {
+//                 throw std::runtime_error("Unknown geometry type");
+//             }
 
-            return SOMAArray::set_array_data(
-                std::move(casted_data.second), std::move(casted_data.first));
-        }
-    }
+//             return SOMAArray::set_array_data(
+//                 std::move(casted_data.second), std::move(casted_data.first));
+//         }
+//     }
 
-    SOMAArray::set_array_data(std::move(arrow_schema), std::move(arrow_array));
-}
+//     SOMAArray::set_array_data(std::move(arrow_schema),
+//     std::move(arrow_array));
+// }
 
 //===================================================================
 //= private non-static

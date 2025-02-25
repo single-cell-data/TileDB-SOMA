@@ -61,10 +61,10 @@ std::unique_ptr<SOMADataFrame> SOMADataFrame::open(
 std::unique_ptr<SOMADataFrame> SOMADataFrame::open(
     std::string_view uri,
     OpenMode mode,
-    std::string_view name,
-    std::map<std::string, std::string> platform_config) {
+    std::map<std::string, std::string> platform_config,
+    std::optional<TimestampRange> timestamp) {
     auto array = std::make_unique<SOMADataFrame>(
-        mode, uri, name, platform_config);
+        mode, uri, platform_config, timestamp);
 
     if (!array->check_type("SOMADataFrame")) {
         throw TileDBSOMAError(

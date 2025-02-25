@@ -167,8 +167,6 @@ std::shared_ptr<SOMADataFrame> SOMACollection::add_new_dataframe(
     std::unique_ptr<ArrowSchema> schema,
     ArrowTable index_columns,
     PlatformConfig platform_config,
-    std::vector<std::string> column_names,
-    ResultOrder result_order,
     std::optional<TimestampRange> timestamp) {
     if (!timestamp) {
         timestamp = this->timestamp();
@@ -201,8 +199,6 @@ std::shared_ptr<SOMADenseNDArray> SOMACollection::add_new_dense_ndarray(
     std::string_view format,
     ArrowTable index_columns,
     PlatformConfig platform_config,
-    std::vector<std::string> column_names,
-    ResultOrder result_order,
     std::optional<TimestampRange> timestamp) {
     if (!timestamp) {
         timestamp = this->timestamp();
@@ -235,8 +231,6 @@ std::shared_ptr<SOMASparseNDArray> SOMACollection::add_new_sparse_ndarray(
     std::string_view format,
     ArrowTable index_columns,
     PlatformConfig platform_config,
-    std::vector<std::string> column_names,
-    ResultOrder result_order,
     std::optional<TimestampRange> timestamp) {
     if (!timestamp) {
         timestamp = this->timestamp();

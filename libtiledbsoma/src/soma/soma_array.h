@@ -168,7 +168,8 @@ class SOMAArray : public SOMAObject {
         , arr_(other.arr_)
         , mq_(std::make_unique<ManagedQuery>(
               other.arr_, other.ctx_->tiledb_ctx(), other.name_))
-        // Initialize private attributes next to control the order of destruction
+        // Initialize private attributes next to control the order of
+        // destruction
         , name_(other.name_)
         , batch_size_(other.batch_size_)
         , result_order_(other.result_order_)
