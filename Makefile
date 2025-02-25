@@ -46,7 +46,11 @@ ctest_update:
 
 .PHONY: data
 data:
-	cd test && rm -rf soco && tar zxf soco.tgz && cd ..
+	@./scripts/prepare-test-data.sh
+
+.PHONY: clean_data
+clean_data:
+	@./scripts/clean-test-data.sh
 
 # format
 # -------------------------------------------------------------------

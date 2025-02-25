@@ -87,6 +87,9 @@ jobs:
       with:
         fetch-depth: 0  # ensure we get all tags to inform package version determination
 
+    - name: Set Up Test Data
+      run: make data
+
     - name: Set up Python ${{ inputs.python_version }}
       uses: actions/setup-python@v5
       with:
