@@ -71,12 +71,7 @@ TEST_CASE(
     REQUIRE(!SOMADataFrame::exists(uri, ctx));
 
     auto soma_point_cloud = SOMAPointCloudDataFrame::open(
-        uri,
-        OpenMode::read,
-        ctx,
-        {},  // column_names,
-        ResultOrder::automatic,
-        std::nullopt);
+        uri, OpenMode::read, ctx, std::nullopt);
     REQUIRE(soma_point_cloud->uri() == uri);
     REQUIRE(soma_point_cloud->ctx() == ctx);
     REQUIRE(soma_point_cloud->type() == "SOMAPointCloudDataFrame");
@@ -97,29 +92,24 @@ TEST_CASE(
     std::vector<double> a0(10, 1.0);
 
     // Write to point cloud.
-    soma_point_cloud = SOMAPointCloudDataFrame::open(
-        uri,
-        OpenMode::write,
-        ctx,
-        {},  // column_names
-        ResultOrder::automatic,
-        std::nullopt);
-    soma_point_cloud->set_column_data(dim_infos[0].name, d0.size(), d0.data());
-    soma_point_cloud->set_column_data(dim_infos[1].name, d1.size(), d1.data());
-    soma_point_cloud->set_column_data(dim_infos[2].name, d2.size(), d2.data());
-    soma_point_cloud->set_column_data(attr_infos[0].name, a0.size(), a0.data());
-    soma_point_cloud->write();
+    soma_point_cloud = SOMAPointCloudDataFrame::open(uri, OpenMode::write, ctx);
+    auto mq = ManagedQuery(*soma_point_cloud, ctx->tiledb_ctx());
+    mq.setup_write_column(
+        dim_infos[0].name, d0.size(), d0.data(), (uint64_t*)nullptr);
+    mq.setup_write_column(
+        dim_infos[1].name, d1.size(), d1.data(), (uint64_t*)nullptr);
+    mq.setup_write_column(
+        dim_infos[2].name, d2.size(), d2.data(), (uint64_t*)nullptr);
+    mq.setup_write_column(
+        attr_infos[0].name, a0.size(), a0.data(), (uint64_t*)nullptr);
+    mq.submit_write();
     soma_point_cloud->close();
 
     // Read back the data.
     soma_point_cloud = SOMAPointCloudDataFrame::open(
-        uri,
-        OpenMode::read,
-        ctx,
-        {},  // column_names,
-        ResultOrder::automatic,
-        std::nullopt);
-    while (auto batch = soma_point_cloud->read_next()) {
+        uri, OpenMode::read, ctx, std::nullopt);
+    mq = ManagedQuery(*soma_point_cloud, ctx->tiledb_ctx());
+    while (auto batch = mq.read_next()) {
         auto arrbuf = batch.value();
         auto d0span = arrbuf->at(dim_infos[0].name)->data<int64_t>();
         auto d1span = arrbuf->at(dim_infos[1].name)->data<uint32_t>();
