@@ -73,8 +73,6 @@ class SOMAGeometryDataFrame : virtual public SOMAArray {
         std::string_view uri,
         OpenMode mode,
         std::shared_ptr<SOMAContext> ctx,
-        std::vector<std::string> column_names = {},
-        ResultOrder result_order = ResultOrder::automatic,
         std::optional<TimestampRange> timestamp = std::nullopt);
 
     /**
@@ -104,18 +102,8 @@ class SOMAGeometryDataFrame : virtual public SOMAArray {
         OpenMode mode,
         std::string_view uri,
         std::shared_ptr<SOMAContext> ctx,
-        std::vector<std::string> column_names,
-        ResultOrder result_order,
         std::optional<TimestampRange> timestamp = std::nullopt)
-        : SOMAArray(
-              mode,
-              uri,
-              ctx,
-              std::filesystem::path(uri).filename().string(),  // array name
-              column_names,
-              "auto",  // batch_size
-              result_order,
-              timestamp) {
+        : SOMAArray(mode, uri, ctx, timestamp) {
         initialize();
     }
 
@@ -156,9 +144,16 @@ class SOMAGeometryDataFrame : virtual public SOMAArray {
      */
     uint64_t count();
 
-    void set_array_data(
+    /**
+     * SOMAGeometryDataFrame requires special casting when writing.
+     *
+     * @param arrow_schema ArrowSchema of the Arrow Table to write
+     * @param arrow_array ArrowArray of the Arrow Table to write
+     *
+     */
+    ArrowTable cast_array_data(
         std::unique_ptr<ArrowSchema> arrow_schema,
-        std::unique_ptr<ArrowArray> arrow_array) override;
+        std::unique_ptr<ArrowArray> arrow_array);
 
    private:
     //===================================================================

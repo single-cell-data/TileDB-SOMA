@@ -196,8 +196,6 @@ class SOMACollection : public SOMAGroup {
         std::unique_ptr<ArrowSchema> schema,
         ArrowTable index_columns,
         PlatformConfig platform_config = PlatformConfig(),
-        std::vector<std::string> column_names = {},
-        ResultOrder result_order = ResultOrder::automatic,
         std::optional<TimestampRange> timestamp = std::nullopt);
 
     /**
@@ -222,8 +220,6 @@ class SOMACollection : public SOMAGroup {
         std::string_view format,
         ArrowTable index_columns,
         PlatformConfig platform_config = PlatformConfig(),
-        std::vector<std::string> column_names = {},
-        ResultOrder result_order = ResultOrder::automatic,
         std::optional<TimestampRange> timestamp = std::nullopt);
 
     /**
@@ -248,8 +244,6 @@ class SOMACollection : public SOMAGroup {
         std::string_view format,
         ArrowTable index_columns,
         PlatformConfig platform_config = PlatformConfig(),
-        std::vector<std::string> column_names = {},
-        ResultOrder result_order = ResultOrder::automatic,
         std::optional<TimestampRange> timestamp = std::nullopt);
 
    protected:

@@ -72,11 +72,8 @@ std::unique_ptr<SOMAGeometryDataFrame> SOMAGeometryDataFrame::open(
     std::string_view uri,
     OpenMode mode,
     std::shared_ptr<SOMAContext> ctx,
-    std::vector<std::string> column_names,
-    ResultOrder result_order,
     std::optional<TimestampRange> timestamp) {
-    return std::make_unique<SOMAGeometryDataFrame>(
-        mode, uri, ctx, column_names, result_order, timestamp);
+    return std::make_unique<SOMAGeometryDataFrame>(mode, uri, ctx, timestamp);
 }
 
 bool SOMAGeometryDataFrame::exists(
@@ -106,12 +103,13 @@ uint64_t SOMAGeometryDataFrame::count() {
     return this->nnz();
 }
 
-void SOMAGeometryDataFrame::set_array_data(
+ArrowTable SOMAGeometryDataFrame::cast_array_data(
     std::unique_ptr<ArrowSchema> arrow_schema,
     std::unique_ptr<ArrowArray> arrow_array) {
     for (auto i = 0; i < arrow_schema->n_children; ++i) {
         /**
-         * If `soma_geometry` conforms to specific formats automatically convert
+         * If `soma_geometry` conforms to specific formats automatically
+         convert
          * to WKB and create additional index columns for spatial axes.
          *
          * If the `soma_geometry` array is a WKB binary users are expected to
@@ -145,12 +143,11 @@ void SOMAGeometryDataFrame::set_array_data(
                 throw std::runtime_error("Unknown geometry type");
             }
 
-            return SOMAArray::set_array_data(
-                std::move(casted_data.second), std::move(casted_data.first));
+            return casted_data;
         }
     }
 
-    SOMAArray::set_array_data(std::move(arrow_schema), std::move(arrow_array));
+    return ArrowTable(std::move(arrow_array), std::move(arrow_schema));
 }
 
 //===================================================================
