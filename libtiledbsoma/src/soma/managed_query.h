@@ -536,6 +536,9 @@ class ManagedQuery {
     // Future for asyncronous query
     std::future<StatusAndException> query_future_;
 
+    // Query layout
+    ResultOrder layout_ = ResultOrder::automatic;
+
     /**
      * Convenience function for creating an ArraySchemaEvolution object
      * referencing this array's context pointer, along with its open-at

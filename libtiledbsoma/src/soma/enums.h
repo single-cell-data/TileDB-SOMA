@@ -19,7 +19,7 @@ enum class OpenMode { read = 0, write };
 
 /** Defines whether the result should be opened in row-major or column-major
  * order */
-enum class ResultOrder { automatic = 0, rowmajor, colmajor };
+enum class ResultOrder { automatic = 0, rowmajor, colmajor, unordered, global };
 
 /** Defines whether the SOMAGroup URI is absolute or relative */
 enum class URIType { automatic = 0, absolute, relative };
