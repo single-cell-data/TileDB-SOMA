@@ -1,0 +1,121 @@
+{
+  "total_num_allocations": 2817405,
+  "total_bytes_allocated": 79445672565,
+  "allocation_size_histogram": [
+    {
+      "min_bytes": 0,
+      "max_bytes": 7,
+      "count": 129445
+    },
+    {
+      "min_bytes": 8,
+      "max_bytes": 63,
+      "count": 1734908
+    },
+    {
+      "min_bytes": 64,
+      "max_bytes": 511,
+      "count": 481879
+    },
+    {
+      "min_bytes": 512,
+      "max_bytes": 4095,
+      "count": 108151
+    },
+    {
+      "min_bytes": 4096,
+      "max_bytes": 32767,
+      "count": 49216
+    },
+    {
+      "min_bytes": 32768,
+      "max_bytes": 262143,
+      "count": 308151
+    },
+    {
+      "min_bytes": 262144,
+      "max_bytes": 2097151,
+      "count": 4658
+    },
+    {
+      "min_bytes": 2097152,
+      "max_bytes": 16777215,
+      "count": 949
+    },
+    {
+      "min_bytes": 16777216,
+      "max_bytes": 134217727,
+      "count": 10
+    },
+    {
+      "min_bytes": 134217728,
+      "max_bytes": 1073741831,
+      "count": 38
+    }
+  ],
+  "allocator_type_distribution": {
+    "MALLOC": 2713677,
+    "REALLOC": 53232,
+    "CALLOC": 33997,
+    "ALIGNED_ALLOC": 15374,
+    "MMAP": 1125
+  },
+  "top_allocations_by_size": [
+    {
+      "location": "__next__:/home/ubuntu/TileDB-SOMA/apis/python/src/tiledbsoma/_read_iters.py:586",
+      "size": 39731118823
+    },
+    {
+      "location": "<stack trace unavailable>",
+      "size": 28155633549
+    },
+    {
+      "location": "dump:/home/ubuntu/.pyenv/versions/3.12.6/lib/python3.12/site-packages/cloudpickle/cloudpickle.py:1303",
+      "size": 5469468804
+    },
+    {
+      "location": "_normalize_pickle:/home/ubuntu/.pyenv/versions/3.12.6/lib/python3.12/site-packages/dask/tokenize.py:242",
+      "size": 2450689608
+    },
+    {
+      "location": "packb:/home/ubuntu/.pyenv/versions/3.12.6/lib/python3.12/site-packages/msgpack/__init__.py:36",
+      "size": 1564047119
+    }
+  ],
+  "top_allocations_by_count": [
+    {
+      "location": "<stack trace unavailable>",
+      "count": 2477133
+    },
+    {
+      "location": "open:/home/ubuntu/TileDB-SOMA/apis/python/src/tiledbsoma/_tdb_handles.py:96",
+      "count": 108588
+    },
+    {
+      "location": "native_context:/home/ubuntu/TileDB-SOMA/apis/python/src/tiledbsoma/options/_soma_tiledb_context.py:208",
+      "count": 44876
+    },
+    {
+      "location": "_normalize_pickle:/home/ubuntu/.pyenv/versions/3.12.6/lib/python3.12/site-packages/dask/tokenize.py:242",
+      "count": 32136
+    },
+    {
+      "location": "__next__:/home/ubuntu/TileDB-SOMA/apis/python/src/tiledbsoma/_read_iters.py:586",
+      "count": 25513
+    }
+  ],
+  "metadata": {
+    "start_time": "2025-02-24 16:26:46.664000+00:00",
+    "end_time": "2025-02-24 16:27:38.648000+00:00",
+    "total_allocations": 5282072,
+    "total_frames": 4067,
+    "peak_memory": 41129078785,
+    "command_line": "./dsk.py hvg -c100k -w8 -W2 -T4 -theart -oout/hvg/heart",
+    "pid": 18481,
+    "main_thread_id": 1,
+    "python_allocator": "pymalloc",
+    "has_native_traces": true,
+    "trace_python_allocators": false,
+    "file_format": 0
+  }
+}
