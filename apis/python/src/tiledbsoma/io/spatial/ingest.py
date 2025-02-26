@@ -178,7 +178,7 @@ class VisiumPaths:
                 version = _read_visium_software_version(gene_expression)
             except (KeyError, ValueError):
                 raise ValueError(
-                    "Unable to determine Space Ranger vesion from gene expression file."
+                    "Unable to determine Space Ranger version from gene expression file."
                 )
 
         # Find the tissue positions file path if it wasn't supplied.
