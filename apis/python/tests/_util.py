@@ -17,6 +17,7 @@ from pandas._testing import assert_frame_equal, assert_series_equal
 from scipy.sparse import spmatrix
 from somacore import (
     AffineTransform,
+    AxisQuery,
     CoordinateTransform,
     IdentityTransform,
     ScaleTransform,
@@ -199,3 +200,8 @@ def verify_logs(caplog: LogCaptureFixture, expected_logs: List[str] | None) -> N
                 break
         if not found:
             raise AssertionError(f"Expected log message not found: {expected_log}")
+
+
+def filter(value_filter: str) -> AxisQuery:
+    """Short-hand for creating an ``AxisQuery`` with a value_filter, in tests."""
+    return AxisQuery(value_filter=value_filter)
