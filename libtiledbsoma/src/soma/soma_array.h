@@ -103,23 +103,14 @@ class SOMAArray : public SOMAObject {
      *
      * @param mode read or write
      * @param uri URI of the array
-     * @param name Name of the array
      * @param platform_config Config parameter dictionary
-     * @param column_names Columns to read
-     * @param batch_size Read batch size
-     * @param result_order Read result order: automatic (default), rowmajor,
-     * or colmajor
      * @param timestamp Optional pair indicating timestamp start and end
      * @return std::unique_ptr<SOMAArray> SOMAArray
      */
     static std::unique_ptr<SOMAArray> open(
         OpenMode mode,
         std::string_view uri,
-        std::string_view name = "unnamed",
         std::map<std::string, std::string> platform_config = {},
-        std::vector<std::string> column_names = {},
-        std::string_view batch_size = "auto",
-        ResultOrder result_order = ResultOrder::automatic,
         std::optional<TimestampRange> timestamp = std::nullopt);
 
     /**
@@ -129,10 +120,6 @@ class SOMAArray : public SOMAObject {
      * @param mode read or write
      * @param uri URI of the array
      * @param ctx SOMAContext
-     * @param column_names Columns to read
-     * @param batch_size Read batch size
-     * @param result_order Read result order: automatic (default), rowmajor,
-     * or colmajor
      * @param timestamp Optional pair indicating timestamp start and end
      * @return std::unique_ptr<SOMAArray> SOMAArray
      */
@@ -140,10 +127,6 @@ class SOMAArray : public SOMAObject {
         OpenMode mode,
         std::string_view uri,
         std::shared_ptr<SOMAContext> ctx,
-        std::string_view name = "unnamed",
-        std::vector<std::string> column_names = {},
-        std::string_view batch_size = "auto",
-        ResultOrder result_order = ResultOrder::automatic,
         std::optional<TimestampRange> timestamp = std::nullopt);
 
     //===================================================================
@@ -155,21 +138,13 @@ class SOMAArray : public SOMAObject {
      *
      * @param mode read or write
      * @param uri URI of the array
-     * @param name name of the array
      * @param platform_config Config parameter dictionary
-     * @param column_names Columns to read
-     * @param batch_size Batch size
-     * @param result_order Result order
      * @param timestamp Timestamp
      */
     SOMAArray(
         OpenMode mode,
         std::string_view uri,
-        std::string_view name,
         std::map<std::string, std::string> platform_config,
-        std::vector<std::string> column_names,
-        std::string_view batch_size,
-        ResultOrder result_order,
         std::optional<TimestampRange> timestamp = std::nullopt);
 
     /**
@@ -178,20 +153,12 @@ class SOMAArray : public SOMAObject {
      * @param mode read or write
      * @param uri URI of the array
      * @param ctx SOMAContext
-     * @param name name of the array
-     * @param column_names Columns to read
-     * @param batch_size Batch size
-     * @param result_order Result order
      * @param timestamp Timestamp
      */
     SOMAArray(
         OpenMode mode,
         std::string_view uri,
         std::shared_ptr<SOMAContext> ctx,
-        std::string_view name,
-        std::vector<std::string> column_names,
-        std::string_view batch_size,
-        ResultOrder result_order,
         std::optional<TimestampRange> timestamp = std::nullopt);
 
     SOMAArray(const SOMAArray& other)
@@ -199,18 +166,12 @@ class SOMAArray : public SOMAObject {
         : uri_(other.uri_)
         , ctx_(other.ctx_)
         , arr_(other.arr_)
-        , mq_(std::make_unique<ManagedQuery>(
-              other.arr_, other.ctx_->tiledb_ctx(), other.name_))
-        // Initialize private attributes next to control the order of destructio
-        , name_(other.name_)
-        , batch_size_(other.batch_size_)
-        , result_order_(other.result_order_)
+        // Initialize private attributes next to control the order of
+        // destruction
         , metadata_(other.metadata_)
         , timestamp_(other.timestamp_)
         , schema_(other.schema_)
-        , meta_cache_arr_(other.meta_cache_arr_)
-        , first_read_next_(other.first_read_next_)
-        , submitted_(other.submitted_) {
+        , meta_cache_arr_(other.meta_cache_arr_) {
         fill_metadata_cache(timestamp_);
         fill_columns();
     }
@@ -461,10 +422,7 @@ class SOMAArray : public SOMAObject {
     /**
      * Validates input parameters before opening array.
      */
-    void validate(
-        OpenMode mode,
-        std::string_view name,
-        std::optional<TimestampRange> timestamp);
+    void validate(OpenMode mode, std::optional<TimestampRange> timestamp);
 
     /**
      * Return optional timestamp pair SOMAArray was opened with.
@@ -892,14 +850,15 @@ class SOMAArray : public SOMAObject {
     // SOMAArray URI
     std::string uri_;
 
+    // NB: the Array dtor REQUIRES that this context be alive, so member
+    // declaration order is significant.  Context (ctx_) MUST be declared
+    // BEFORE Array (arr_) so that ctx_ will be destructed last.
+
     // SOMA context
     std::shared_ptr<SOMAContext> ctx_;
 
-    // Array associated with mq_
+    // Array associated with SOMAArray
     std::shared_ptr<Array> arr_;
-
-    // Managed query for the array
-    std::unique_ptr<ManagedQuery> mq_;
 
    private:
     //===================================================================
@@ -1124,19 +1083,6 @@ class SOMAArray : public SOMAObject {
 
     void fill_columns();
 
-    // SOMAArray name for debugging
-    std::string name_;
-
-    // NB: the Array dtor REQUIRES that this context be alive, so member
-    // declaration order is significant.  Context (ctx_) MUST be declared
-    // BEFORE Array (arr_) so that ctx_ will be destructed last.
-
-    // Batch size
-    std::string batch_size_;
-
-    // Result order
-    ResultOrder result_order_;
-
     // Metadata cache
     std::map<std::string, MetadataValue> metadata_;
 
@@ -1157,12 +1103,6 @@ class SOMAArray : public SOMAObject {
     // array alive in order for the metadata value pointers in the cache to
     // be accessible
     std::shared_ptr<Array> meta_cache_arr_;
-
-    // True if this is the first call to read_next()
-    bool first_read_next_ = true;
-
-    // True if the query was submitted
-    bool submitted_ = false;
 
     // Unoptimized method for computing nnz() (issue `count_cells` query)
     uint64_t _nnz_slow();

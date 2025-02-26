@@ -80,45 +80,22 @@ Array SOMAArray::_create(
 std::unique_ptr<SOMAArray> SOMAArray::open(
     OpenMode mode,
     std::string_view uri,
-    std::string_view name,
     std::map<std::string, std::string> platform_config,
-    std::vector<std::string> column_names,
-    std::string_view batch_size,
-    ResultOrder result_order,
     std::optional<TimestampRange> timestamp) {
     LOG_DEBUG(
         std::format("[SOMAArray] static method 'cfg' opening array '{}'", uri));
     return std::make_unique<SOMAArray>(
-        mode,
-        uri,
-        std::make_shared<SOMAContext>(platform_config),
-        name,
-        column_names,
-        batch_size,
-        result_order,
-        timestamp);
+        mode, uri, std::make_shared<SOMAContext>(platform_config), timestamp);
 }
 
 std::unique_ptr<SOMAArray> SOMAArray::open(
     OpenMode mode,
     std::string_view uri,
     std::shared_ptr<SOMAContext> ctx,
-    std::string_view name,
-    std::vector<std::string> column_names,
-    std::string_view batch_size,
-    ResultOrder result_order,
     std::optional<TimestampRange> timestamp) {
     LOG_DEBUG(
         std::format("[SOMAArray] static method 'ctx' opening array '{}'", uri));
-    return std::make_unique<SOMAArray>(
-        mode,
-        uri,
-        ctx,
-        name,
-        column_names,
-        batch_size,
-        result_order,
-        timestamp);
+    return std::make_unique<SOMAArray>(mode, uri, ctx, timestamp);
 }
 
 //===================================================================
@@ -128,14 +105,9 @@ std::unique_ptr<SOMAArray> SOMAArray::open(
 SOMAArray::SOMAArray(
     OpenMode mode,
     std::string_view uri,
-    std::string_view name,
     std::map<std::string, std::string> platform_config,
-    std::vector<std::string> column_names,
-    std::string_view batch_size,
-    ResultOrder result_order,
     std::optional<TimestampRange> timestamp)
     : uri_(util::rstrip_uri(uri))
-    , result_order_(result_order)
     , timestamp_(timestamp) {
     ctx_ = std::make_shared<SOMAContext>(platform_config);
     validate(mode, timestamp);
@@ -147,14 +119,9 @@ SOMAArray::SOMAArray(
     OpenMode mode,
     std::string_view uri,
     std::shared_ptr<SOMAContext> ctx,
-    std::string_view name,
-    std::vector<std::string> column_names,
-    std::string_view batch_size,
-    ResultOrder result_order,
     std::optional<TimestampRange> timestamp)
     : uri_(util::rstrip_uri(uri))
     , ctx_(ctx)
-    , result_order_(result_order)
     , timestamp_(timestamp) {
     validate(mode, timestamp);
     fill_metadata_cache(timestamp);
@@ -169,10 +136,7 @@ SOMAArray::SOMAArray(
     : uri_(util::rstrip_uri(arr->uri()))
     , ctx_(ctx)
     , arr_(arr)
-    , mq_(std::make_unique<ManagedQuery>(arr, ctx_->tiledb_ctx(), name_))
     // Initialize private attributes next to control the order of destruction
-    , batch_size_("auto")
-    , result_order_(ResultOrder::automatic)
     , timestamp_(timestamp)
     , schema_(std::make_shared<ArraySchema>(arr->schema())) {
     fill_metadata_cache(timestamp);
@@ -239,23 +203,14 @@ std::shared_ptr<SOMAContext> SOMAArray::ctx() {
 void SOMAArray::open(OpenMode mode, std::optional<TimestampRange> timestamp) {
     timestamp_ = timestamp;
 
-    validate(mode, name_, timestamp);
-    reset(column_names(), batch_size_, result_order_);
+    validate(mode, timestamp);
     fill_metadata_cache(timestamp_);
     fill_columns();
 }
 
 std::unique_ptr<SOMAArray> SOMAArray::reopen(
     OpenMode mode, std::optional<TimestampRange> timestamp) {
-    return std::make_unique<SOMAArray>(
-        mode,
-        uri_,
-        ctx_,
-        name_,
-        column_names(),
-        batch_size_,
-        result_order_,
-        timestamp);
+    return std::make_unique<SOMAArray>(mode, uri_, ctx_, timestamp);
 }
 
 void SOMAArray::close() {
@@ -368,9 +323,7 @@ uint64_t SOMAArray::metadata_num() const {
 }
 
 void SOMAArray::validate(
-    OpenMode mode,
-    std::string_view name,
-    std::optional<TimestampRange> timestamp) {
+    OpenMode mode, std::optional<TimestampRange> timestamp) {
     // Validate parameters
     auto tdb_mode = mode == OpenMode::read ? TILEDB_READ : TILEDB_WRITE;
 
