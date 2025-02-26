@@ -13,7 +13,7 @@ from __future__ import annotations
 import json
 import warnings
 from pathlib import Path
-from typing import List, Sequence, Tuple, Type
+from typing import Sequence
 
 import attrs
 import numpy as np
@@ -101,7 +101,7 @@ class VisiumPaths:
         hires_image: str | Path | None = None,
         lowres_image: str | Path | None = None,
         use_raw_counts: bool = False,
-        version: int | Tuple[int, int, int] | None = None,
+        version: int | tuple[int, int, int] | None = None,
     ) -> Self:
         """Create ingestion files from Space Ranger output directory.
 
@@ -158,7 +158,7 @@ class VisiumPaths:
         fullres_image: str | Path | None = None,
         hires_image: str | Path | None = None,
         lowres_image: str | Path | None = None,
-        version: int | Tuple[int, int, int] | None = None,
+        version: int | tuple[int, int, int] | None = None,
     ) -> Self:
         """Create ingestion files from Space Ranger spatial output directory
         and the gene expression file.
@@ -227,7 +227,7 @@ class VisiumPaths:
     lowres_image: Path | None = attrs.field(
         converter=optional_path_converter, validator=optional_path_validator
     )
-    version: int | Tuple[int, int, int]
+    version: int | tuple[int, int, int]
 
     @property
     def has_image(self) -> bool:
@@ -258,7 +258,7 @@ def from_visium(
     image_channel_first: bool = True,
     ingest_mode: IngestMode = "write",
     use_relative_uri: bool | None = None,
-    X_kind: Type[SparseNDArray] | Type[DenseNDArray] = SparseNDArray,
+    X_kind: type[SparseNDArray] | type[DenseNDArray] = SparseNDArray,
     registration_mapping: ExperimentAmbientLabelMapping | None = None,
     uns_keys: Sequence[str] | None = None,
     additional_metadata: AdditionalMetadata = None,
@@ -453,7 +453,7 @@ def from_visium(
 
     # Create a list of image paths.
     # -- Each item contains: level name, image path, and scale factors to fullres.
-    image_paths: List[Tuple[str, Path, float | None]] = []
+    image_paths: list[tuple[str, Path, float | None]] = []
     if input_paths.fullres_image is not None:
         image_paths.append(("fullres", Path(input_paths.fullres_image), None))
     if input_paths.hires_image is not None:
@@ -774,7 +774,7 @@ def _create_or_open_scene(
 
 def _create_visium_tissue_images(
     uri: str,
-    image_paths: List[Tuple[str, Path, float | None]],
+    image_paths: list[tuple[str, Path, float | None]],
     *,
     image_channel_first: bool,
     additional_metadata: AdditionalMetadata = None,
@@ -796,7 +796,7 @@ def _create_visium_tissue_images(
         im_data_numpy = np.moveaxis(im_data_numpy, -1, 0)
     else:
         data_axis_order = ("y", "x", "soma_channel")
-    ref_shape: Tuple[int, ...] = im_data_numpy.shape
+    ref_shape: tuple[int, ...] = im_data_numpy.shape
 
     # Create the multiscale image.
     with warnings.catch_warnings():
