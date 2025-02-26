@@ -54,30 +54,26 @@ def _string_dict_from_arrow_schema(schema: pa.Schema) -> Dict[str, str]:
         "large_binary": "binary",
     }
 
-    def _stringify_type(t: pa.DataType) -> str:
+    def _stringify_type(arrow_type: pa.DataType) -> str:
         """Turns an Arrow data type into a string.
 
         Note: Arrow string and large_string must map to TileDB string, which is
         large-only. Similarly for Arrow binary and large_binary.
         """
-        str_t = str(t)
-        return _EQUIVALENCES.get(str_t, str_t)
-
-    retval = {}
-    for name in schema.names:
-        # Skip the soma_joinid field. It is specific to SOMA data and does not exist
-        # in AnnData/H5AD.
-        if name == "soma_joinid":
-            continue
-        arrow_type = schema.field(name).type
         if pa.types.is_dictionary(arrow_type):
             arrow_type = arrow_type.index_type
-        retval[name] = _stringify_type(arrow_type)
+        str_type = str(arrow_type)
+        return _EQUIVALENCES.get(str_type, str_type)
 
-    # The soma_joinid field is specific to SOMA data but does not exist in
-    # AnnData/H5AD.
-    retval.pop("soma_joinid", None)
-    return retval
+    # Stringify types skipping the soma_joinid field (it is specific to SOMA data
+    # and does not exist in AnnData/H5AD).
+    arrow_columns = {
+        name: _stringify_type(schema.field(name).type)
+        for name in schema.names
+        if name != "soma_joinid"
+    }
+
+    return arrow_columns
 
 
 def _prepare_df_for_ingest(df: pd.DataFrame, id_column_name: str | None) -> str | None:
