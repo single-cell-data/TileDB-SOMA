@@ -1,6 +1,7 @@
 import os
 
 import numpy as np
+import pandas as pd
 import pytest
 
 import tiledbsoma as soma
@@ -99,7 +100,7 @@ def test_from_visium_for_visium_v1(tmp_path, visium_v1_path):
         uri,
         visium_v1_path,
         "RNA",
-        "fresh_frozen_mouse_brain",
+        "human_lymph_node",
         write_obs_spatial_presence=True,
         write_var_spatial_presence=True,
     )
@@ -114,30 +115,53 @@ def test_from_visium_for_visium_v1(tmp_path, visium_v1_path):
         assert isinstance(exp.obs_spatial_presence, soma.DataFrame)
         assert isinstance(exp.ms["RNA"].var_spatial_presence, soma.DataFrame)
 
-        # Check for scene.
-        assert isinstance(exp.spatial["fresh_frozen_mouse_brain"], soma.Scene)
+        # Define some expected data.
+        pixel_coord_space = soma.CoordinateSpace(
+            (soma.Axis("x", "pixels"), soma.Axis("y", "pixels"))
+        )
 
-        # Check expected datatypes in scene.
-        scene = exp.spatial["fresh_frozen_mouse_brain"]
+        # Check the scene exists and has the desired metadata.
+        assert isinstance(exp.spatial["human_lymph_node"], soma.Scene)
+        scene = exp.spatial["human_lymph_node"]
+        assert scene.coordinate_space == pixel_coord_space
+
+        # Check the scene subcollections:
+        # - `obsl` only has a point cloud dataframe named `loc`,
+        # - `varl` is empty,
+        # - `img` only has a multiscale image named `tissue`.
+        assert len(scene.obsl.items()) == 1
         assert isinstance(scene.obsl["loc"], soma.PointCloudDataFrame)
         assert len(scene.varl.items()) == 0
+        assert len(scene.img.items()) == 1
         assert isinstance(scene.img["tissue"], soma.MultiscaleImage)
 
-        # Check point cloud dataframe data.
-        output_points_df = scene.obsl["loc"].read().concat().to_pandas()
-        assert output_points_df.columns.tolist() == [
-            "x",
-            "y",
-            "soma_joinid",
-            "in_tissue",
-            "array_row",
-            "array_col",
-            "spot_diameter_fullres",
-        ]
-        assert len(output_points_df) == 4035
+        # Check transform to `loc`.
+        loc_transform = scene.get_transform_to_point_cloud_dataframe("loc", "obsl")
+        assert isinstance(loc_transform, soma.IdentityTransform)
+        assert loc_transform.input_axes == ("x", "y")
+        assert loc_transform.output_axes == ("x", "y")
 
-        # Check image.
+        # Check transform to `img`.
+        img_transform = scene.get_transform_to_multiscale_image("tissue", "img")
+        assert isinstance(img_transform, soma.ScaleTransform)
+        assert img_transform.input_axes == ("x", "y")
+        assert img_transform.output_axes == ("x", "y")
+        np.testing.assert_allclose(
+            img_transform.scale_factors,
+            np.array([0.170105, 0.170111], dtype=np.float64),
+            atol=0.000001,
+        )
+
+        # Check spot locations.
+        loc = scene.obsl["loc"]
+        assert loc.coordinate_space == pixel_coord_space
+        actual_loc_data = loc.read().concat().to_pandas()
+        expected_loc_data = pd.read_csv(visium_v1_path / "filtered_visium1_loc.csv")
+        pd.testing.assert_frame_equal(actual_loc_data, expected_loc_data)
+
+        # Check tissue image.
         image = scene.img["tissue"]
+        assert image.coordinate_space == pixel_coord_space
         hires_data = np.moveaxis(image["hires"].read().to_numpy(), 0, -1)
         with PIL.Image.open(
             visium_v1_path / "spatial" / "tissue_hires_image.png"
