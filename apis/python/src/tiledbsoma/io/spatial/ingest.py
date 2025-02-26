@@ -13,7 +13,7 @@ from __future__ import annotations
 import json
 import warnings
 from pathlib import Path
-from typing import TYPE_CHECKING, List, Sequence, Tuple, Type
+from typing import List, Sequence, Tuple, Type
 
 import attrs
 import numpy as np
@@ -31,6 +31,7 @@ except ImportError as err:
 
 
 from somacore import Axis, CoordinateSpace, IdentityTransform, ScaleTransform
+from somacore.options import PlatformConfig
 
 from ... import (
     Collection,
@@ -52,11 +53,14 @@ from ..._exception import (
 )
 from ..._soma_object import AnySOMAObject
 from ..._types import IngestMode
+from ...options import SOMATileDBContext
 from ...options._tiledb_create_write_options import (
     TileDBCreateOptions,
     TileDBWriteOptions,
 )
 from .. import conversions, from_anndata
+from .._common import AdditionalMetadata
+from .._registration import ExperimentAmbientLabelMapping
 from ..ingest import (
     IngestCtx,
     IngestionParams,
@@ -66,13 +70,6 @@ from ..ingest import (
     add_metadata,
 )
 from ._util import _read_visium_software_version
-
-if TYPE_CHECKING:
-    from somacore.options import PlatformConfig
-
-    from ...options import SOMATileDBContext
-    from .._common import AdditionalMetadata
-    from .._registration import ExperimentAmbientLabelMapping
 
 
 def path_validator(instance, attribute, value: Path) -> None:  # type: ignore[no-untyped-def]
@@ -251,8 +248,8 @@ def from_visium(
     measurement_name: str,
     scene_name: str,
     *,
-    context: "SOMATileDBContext | None" = None,
-    platform_config: "PlatformConfig | None" = None,
+    context: SOMATileDBContext | None = None,
+    platform_config: PlatformConfig | None = None,
     obs_id_name: str = "obs_id",
     var_id_name: str = "var_id",
     X_layer_name: str = "data",
@@ -262,9 +259,9 @@ def from_visium(
     ingest_mode: IngestMode = "write",
     use_relative_uri: bool | None = None,
     X_kind: Type[SparseNDArray] | Type[DenseNDArray] = SparseNDArray,
-    registration_mapping: "ExperimentAmbientLabelMapping | None" = None,
+    registration_mapping: ExperimentAmbientLabelMapping | None = None,
     uns_keys: Sequence[str] | None = None,
-    additional_metadata: "AdditionalMetadata" = None,
+    additional_metadata: AdditionalMetadata = None,
     use_raw_counts: bool = False,
     write_obs_spatial_presence: bool = True,
     write_var_spatial_presence: bool = False,
@@ -619,9 +616,9 @@ def _write_scene_presence_dataframe(
     df_uri: str,
     *,
     ingestion_params: IngestionParams,
-    additional_metadata: "AdditionalMetadata" = None,
-    platform_config: "PlatformConfig | None" = None,
-    context: "SOMATileDBContext | None" = None,
+    additional_metadata: AdditionalMetadata = None,
+    platform_config: PlatformConfig | None = None,
+    context: SOMATileDBContext | None = None,
 ) -> DataFrame:
     s = _util.get_start_stamp()
 
@@ -686,9 +683,9 @@ def _write_visium_spots(
     max_joinid_len: int,
     *,
     ingestion_params: IngestionParams,
-    additional_metadata: "AdditionalMetadata" = None,
-    platform_config: "PlatformConfig | None" = None,
-    context: "SOMATileDBContext | None" = None,
+    additional_metadata: AdditionalMetadata = None,
+    platform_config: PlatformConfig | None = None,
+    context: SOMATileDBContext | None = None,
 ) -> PointCloudDataFrame:
     """Creates, opens, and writes data to a ``PointCloudDataFrame`` with the spot
     locations and metadata. Returns the open dataframe for writing.
@@ -757,8 +754,8 @@ def _create_or_open_scene(
     uri: str,
     *,
     ingestion_params: IngestionParams,
-    context: "SOMATileDBContext | None",
-    additional_metadata: "AdditionalMetadata" = None,
+    context: SOMATileDBContext | None,
+    additional_metadata: AdditionalMetadata = None,
 ) -> Scene:
     """Creates or opens a ``Scene`` and returns it open for writing."""
     try:
@@ -780,9 +777,9 @@ def _create_visium_tissue_images(
     image_paths: List[Tuple[str, Path, float | None]],
     *,
     image_channel_first: bool,
-    additional_metadata: "AdditionalMetadata" = None,
-    platform_config: "PlatformConfig | None" = None,
-    context: "SOMATileDBContext | None" = None,
+    additional_metadata: AdditionalMetadata = None,
+    platform_config: PlatformConfig | None = None,
+    context: SOMATileDBContext | None = None,
     ingestion_params: IngestionParams,
     use_relative_uri: bool | None = None,
 ) -> MultiscaleImage:
