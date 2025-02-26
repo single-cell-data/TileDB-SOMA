@@ -21,7 +21,7 @@ from ._scene import Scene
 from ._soma_object import AnySOMAObject
 
 
-class Experiment(  # type: ignore[misc]  # __eq__ false positive
+class Experiment(  # type: ignore[misc]  # `SOMAObject.__eq__`, `SOMAGroup.set` false positives
     CollectionBase[AnySOMAObject],
     experiment.Experiment[  # type: ignore[type-var]
         DataFrame,
