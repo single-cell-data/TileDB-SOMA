@@ -106,9 +106,7 @@ from ._registration import (
     ExperimentAmbientLabelMapping,
     ExperimentIDMapping,
     get_dataframe_values,
-    signatures,
 )
-from ._registration.signatures import OriginalIndexMetadata
 from ._util import get_arrow_str_format, read_h5ad
 
 _NDArr = TypeVar("_NDArr", bound=NDArray)
@@ -1312,7 +1310,7 @@ def _write_dataframe_impl(
     shape: int,
     ingestion_params: IngestionParams,
     additional_metadata: AdditionalMetadata = None,
-    original_index_metadata: OriginalIndexMetadata = None,
+    original_index_metadata: str | None = None,
     platform_config: PlatformConfig | None = None,
     context: SOMATileDBContext | None = None,
     must_exist: bool = False,
@@ -1675,9 +1673,9 @@ def _update_dataframe(
     """
 
     sdf.verify_open_for_writing()
-    old_sig = signatures._string_dict_from_arrow_schema(sdf.schema)
+    old_sig = conversions._string_dict_from_arrow_schema(sdf.schema)
     new_schema = conversions.df_to_arrow_schema(new_data, default_index_name)
-    new_sig = signatures._string_dict_from_arrow_schema(new_schema)
+    new_sig = conversions._string_dict_from_arrow_schema(new_schema)
 
     with DataFrame.open(
         sdf.uri, mode="r", context=context, platform_config=platform_config
