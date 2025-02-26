@@ -1,0 +1,55 @@
+{
+  "peak_mem": 41173619224,
+  "top_allocs": [
+    {
+      "location": "__next__:/home/ubuntu/TileDB-SOMA/apis/python/src/tiledbsoma/_read_iters.py:586",
+      "size": 39731156874,
+      "iec": "37 GiB"
+    },
+    {
+      "location": "dump:/home/ubuntu/.pyenv/versions/3.12.6/lib/python3.12/site-packages/cloudpickle/cloudpickle.py:1303",
+      "size": 27077714786,
+      "iec": "25.2 GiB"
+    },
+    {
+      "location": "packb:/home/ubuntu/.pyenv/versions/3.12.6/lib/python3.12/site-packages/msgpack/__init__.py:36",
+      "size": 6790978430,
+      "iec": "6.32 GiB"
+    },
+    {
+      "location": "_normalize_pickle:/home/ubuntu/.pyenv/versions/3.12.6/lib/python3.12/site-packages/dask/tokenize.py:242",
+      "size": 5838702026,
+      "iec": "5.44 GiB"
+    },
+    {
+      "location": "<stack trace unavailable>",
+      "size": 5073026498,
+      "iec": "4.72 GiB"
+    }
+  ],
+  "tracked_allocs": 126584889,
+  "tracked_bytes": 93043098938,
+  "total_allocs": 237704364,
+  "total_frames": 25063,
+  "times": {
+    "start": 0.7528050920009264,
+    "dask": 9.18043348900028,
+    "query": 0.8984935570006201,
+    "to_anndata": 45.87313319600071,
+    "normalize": 7.456656987000315,
+    "log1p": 0.010199583000940038,
+    "hvg": 130.20834897000168
+  },
+  "total_time": 194.38007087400547,
+  "tissue": "lung",
+  "cmd": "HVG",
+  "n_obs": 3677225,
+  "obs_per_s": 18917.705829953768,
+  "no_dask_mem_mgmt": true,
+  "dask_chunk_size": 100000,
+  "n_dask_workers": 4,
+  "n_dask_threads_per_worker": 4,
+  "tdb_concurrency": 4,
+  "hvg_obs_per_s": 28241.08460853908,
+  "mem_total_budget": 2147483648
+}
