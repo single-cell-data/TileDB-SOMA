@@ -138,8 +138,6 @@ PROJECT_ROOT = PY_ROOT.parent.parent
 TESTDATA = PY_ROOT / "testdata"
 ROOT_DATA_DIR = PROJECT_ROOT / "data"
 
-ROOT_DATA_DIR = PROJECT_ROOT / "data"
-
 
 @contextmanager
 def raises_no_typeguard(exc: Type[Exception], *args: Any, **kwargs: Any):
