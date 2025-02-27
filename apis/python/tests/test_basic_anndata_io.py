@@ -16,14 +16,16 @@ import scipy
 import somacore
 from anndata import AnnData
 from scipy.sparse import csr_matrix
+from somacore import AxisQuery
 
 import tiledbsoma
 import tiledbsoma.io
 from tiledbsoma import Experiment, _constants, _factory
+from tiledbsoma._dask import DaskConfig, load_daskarray
 from tiledbsoma._soma_object import SOMAObject
 from tiledbsoma.io._common import _TILEDBSOMA_TYPE, UnsDict, UnsMapping
 
-from ._util import TESTDATA, assert_adata_equal, make_pd_df
+from ._util import TESTDATA, assert_adata_equal, assert_array_equal, filter, make_pd_df
 
 
 @pytest.fixture
@@ -1525,3 +1527,64 @@ def test_decat_append(tmp_path):
 def test_from_h5ad_bad_uri():
     with pytest.raises(tiledbsoma.SOMAError, match="URI /nonesuch is not a valid URI"):
         next(tiledbsoma.io._util.read_h5ad("/nonesuch").gen)
+
+
+def test_dask_outgest(conftest_pbmc_small_exp):
+    import dask
+
+    with dask.config.set(scheduler="single-threaded"):
+        layer = conftest_pbmc_small_exp.ms["RNA"].X["data"]
+        X = load_daskarray(
+            layer=layer,
+            chunk_size=20,
+        )
+        X = X.compute()
+        assert X.shape == (80, 20)
+        assert X.nnz == 1600
+
+
+# fmt: off
+@pytest.mark.parametrize(
+    "obs_query,var_query,dask_chunk_size,shape,nnz",
+    [
+        *[
+            (obs_query, var_query, (obs_chunk_size, var_chunk_size), shape, nnz)
+            for obs_query, var_query, shape, nnz in [
+                (AxisQuery(), AxisQuery(), (80, 20), 1600),
+                (filter("nCount_RNA > 100"), AxisQuery(), (62, 20), 1240),
+                (AxisQuery(), filter('attr("vst.variance.standardized") > 2.0'), (80, 5), 400),
+                (filter("nCount_RNA > 100"), filter('attr("vst.variance.standardized") > 2.0'), (62, 5), 310),
+            ]
+            for obs_chunk_size in [ 20, 30, 80, 100, ]
+            for var_chunk_size in [ 3, 10, 20 ]
+        ],
+    ],
+)
+# fmt: on
+def test_dask_query(
+    conftest_pbmc_small_exp, obs_query, var_query, dask_chunk_size, shape, nnz
+):
+    query = conftest_pbmc_small_exp.axis_query(
+        measurement_name="RNA",
+        obs_query=obs_query,
+        var_query=var_query,
+    )
+    ad1 = query.to_anndata(X_name="data")
+    X1 = ad1.X
+    assert X1.shape == shape
+    assert X1.nnz == nnz
+    nobs, nvar = X1.shape
+
+    ad2 = query.to_anndata(
+        X_name="data",
+        dask=DaskConfig(chunk_size=dask_chunk_size),
+    )
+    obs_chunk_size, var_chunk_size = dask_chunk_size
+    obs_chunks, var_chunks = ad2.X.chunks
+    assert len(obs_chunks) == (nobs + obs_chunk_size - 1) // obs_chunk_size
+    assert len(var_chunks) == (nvar + var_chunk_size - 1) // var_chunk_size
+    X2 = ad2.X.compute()
+    assert X2.shape == shape
+    assert X2.nnz == nnz
+
+    assert_array_equal(X1, X2)
