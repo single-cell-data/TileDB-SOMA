@@ -314,10 +314,23 @@ void load_soma_column(py::module& m) {
                         } else if (
                             !strcmp(arrow_schema.format, "z") ||
                             !strcmp(arrow_schema.format, "Z")) {
+                            auto bytes = coords.cast<std::vector<py::bytes>>();
+                            std::vector<std::vector<std::byte>> casted_points;
+                            casted_points.reserve(bytes.size());
+
+                            for (const auto& element : bytes) {
+                                py::buffer_info info(
+                                    py::buffer(element).request());
+                                const std::byte*
+                                    data = reinterpret_cast<const std::byte*>(
+                                        info.ptr);
+                                size_t length = static_cast<size_t>(info.size);
+                                casted_points.push_back(std::vector<std::byte>(
+                                    data, data + length));
+                            }
+
                             column->set_dim_points<std::vector<std::byte>>(
-                                mq,
-                                coords.cast<
-                                    std::vector<std::vector<std::byte>>>());
+                                mq, casted_points);
                         } else {
                             TPY_ERROR_LOC(
                                 "[pytiledbsoma] set_dim_points: type={} not "
