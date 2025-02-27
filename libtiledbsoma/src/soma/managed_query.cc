@@ -625,6 +625,9 @@ void ManagedQuery::_promote_indexes_to_values(
         case TILEDB_STRING_UTF8:
         case TILEDB_CHAR:
             return _cast_dictionary_values<std::string>(schema, array);
+        case TILEDB_BLOB:
+            return _cast_dictionary_values<std::vector<std::byte>>(
+                schema, array);
         case TILEDB_BOOL:
             return _cast_dictionary_values<bool>(schema, array);
         case TILEDB_INT8:
@@ -705,17 +708,21 @@ void ManagedQuery::_cast_dictionary_values<std::string>(
     uint64_t num_elems = value_array->length;
 
     std::vector<uint64_t> offsets_v;
-    if ((strcmp(value_schema->format, "U") == 0) ||
-        (strcmp(value_schema->format, "Z") == 0)) {
+    if (strcmp(value_schema->format, "U") == 0) {
         uint64_t* offsets = (uint64_t*)value_array->buffers[1];
         offsets_v.resize(num_elems + 1);
         offsets_v.assign(offsets, offsets + num_elems + 1);
-    } else {
+    } else if (strcmp(value_schema->format, "u") == 0) {
         uint32_t* offsets = (uint32_t*)value_array->buffers[1];
         std::vector<uint32_t> offset_holder(offsets, offsets + num_elems + 1);
         for (auto offset : offset_holder) {
             offsets_v.push_back((uint64_t)offset);
         }
+    } else {
+        throw TileDBSOMAError(std::format(
+            "[ManagedQuery][_extend_and_evolve_schema] Unknown arrow array "
+            "type. Expected 'U' or 'u', found '{}'",
+            value_schema->format));
     }
 
     std::string_view data(
@@ -735,6 +742,68 @@ void ManagedQuery::_cast_dictionary_values<std::string>(
     uint64_t offset_sum = 0;
     std::vector<uint64_t> value_offsets = {0};
     std::string index_to_value;
+    for (auto i : indexes) {
+        auto value = values[i];
+        offset_sum += value.size();
+        value_offsets.push_back(offset_sum);
+        index_to_value.insert(index_to_value.end(), value.begin(), value.end());
+    }
+
+    setup_write_column(
+        schema->name,
+        value_offsets.size() - 1,
+        (const void*)index_to_value.data(),
+        (uint64_t*)value_offsets.data(),
+        std::nullopt);  // validities are set by index column
+}
+
+template <>
+void ManagedQuery::_cast_dictionary_values<std::vector<std::byte>>(
+    ArrowSchema* schema, ArrowArray* array) {
+    // String types require special handling due to large vs regular
+    // string/binary
+
+    auto value_schema = schema->dictionary;
+    auto value_array = array->dictionary;
+
+    uint64_t num_elems = value_array->length;
+
+    std::vector<uint64_t> offsets_v;
+    if (strcmp(value_schema->format, "Z") == 0) {
+        uint64_t* offsets = (uint64_t*)value_array->buffers[1];
+        offsets_v.resize(num_elems + 1);
+        offsets_v.assign(offsets, offsets + num_elems + 1);
+    } else if (strcmp(value_schema->format, "z") == 0) {
+        uint32_t* offsets = (uint32_t*)value_array->buffers[1];
+        std::vector<uint32_t> offset_holder(offsets, offsets + num_elems + 1);
+        for (auto offset : offset_holder) {
+            offsets_v.push_back((uint64_t)offset);
+        }
+    } else {
+        throw TileDBSOMAError(std::format(
+            "[ManagedQuery][_extend_and_evolve_schema] Unknown arrow array "
+            "type. Expected 'Z' or 'z', found '{}'",
+            value_schema->format));
+    }
+
+    std::span<const std::byte> data(
+        static_cast<const std::byte*>(value_array->buffers[2]),
+        offsets_v.back());
+
+    std::vector<std::span<const std::byte>> values;
+    for (size_t offset_idx = 0; offset_idx < offsets_v.size() - 1;
+         ++offset_idx) {
+        auto beg = offsets_v[offset_idx];
+        auto sz = offsets_v[offset_idx + 1] - beg;
+        values.push_back(data.subspan(beg, sz));
+    }
+
+    std::vector<int64_t> indexes = ManagedQuery::_get_index_vector(
+        schema, array);
+
+    uint64_t offset_sum = 0;
+    std::vector<uint64_t> value_offsets = {0};
+    std::vector<std::byte> index_to_value;
     for (auto i : indexes) {
         auto value = values[i];
         offset_sum += value.size();
@@ -1219,17 +1288,21 @@ ManagedQuery::_extend_and_evolve_schema_with_details<std::string>(
     // offsets to specify the starts and ends of n string values within a
     // column.
     std::vector<uint64_t> offsets_v;
-    if ((strcmp(value_schema->format, "U") == 0) ||
-        (strcmp(value_schema->format, "Z") == 0)) {
+    if (strcmp(value_schema->format, "U") == 0) {
         uint64_t* offsets = (uint64_t*)value_array->buffers[1];
         offsets_v.assign(
             offsets + value_array->offset,
             offsets + value_array->offset + num_elems + 1);
-    } else {
+    } else if (strcmp(value_schema->format, "u") == 0) {
         uint32_t* offsets = (uint32_t*)value_array->buffers[1];
         for (size_t i = 0; i < num_elems + 1; ++i) {
             offsets_v.push_back((uint64_t)offsets[i + value_array->offset]);
         }
+    } else {
+        throw TileDBSOMAError(std::format(
+            "[ManagedQuery][_extend_and_evolve_schema] Unknown arrow array "
+            "type. Expected 'U' or 'u', found '{}'",
+            value_schema->format));
     }
 
     std::string_view data_as_char(

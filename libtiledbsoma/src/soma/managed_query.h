@@ -1266,6 +1266,10 @@ void ManagedQuery::_cast_dictionary_values<std::string>(
     ArrowSchema* schema, ArrowArray* array);
 
 template <>
+void ManagedQuery::_cast_dictionary_values<std::vector<std::byte>>(
+    ArrowSchema* schema, ArrowArray* array);
+
+template <>
 void ManagedQuery::_cast_dictionary_values<bool>(
     ArrowSchema* schema, ArrowArray* array);
 
