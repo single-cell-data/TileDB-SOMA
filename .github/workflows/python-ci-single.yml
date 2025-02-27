@@ -118,14 +118,6 @@ jobs:
     - name: Show XCode version
       run: clang --version
 
-    - name: Obtain test data
-      shell: bash
-      run: |
-        cd test
-        rm -rf soco
-        tar zxf soco.tgz
-        cd ..
-
     - name: Run libtiledbsoma unit tests
       run: ctest --output-on-failure --test-dir build/libtiledbsoma -C Release --verbose
       env:
