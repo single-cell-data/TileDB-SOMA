@@ -3,6 +3,7 @@ name: libTileDB-SOMA CodeCov
 on:
   pull_request:
     paths-ignore:
+      - '.github/**'
       - "apis/python/**"
       - "apis/r/**"
       - ".pre-commit-config.yaml"

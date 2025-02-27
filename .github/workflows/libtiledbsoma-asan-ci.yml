@@ -3,6 +3,7 @@ name: libtiledbsoma ASAN
 on:
   pull_request:
     paths-ignore:
+      - ".github/**"
       - "apis/python/**"
       - "apis/r/**"
       - ".pre-commit-config.yaml"
