@@ -15,12 +15,12 @@ cd "$(dirname "$0")/../data"
 
 
 # Extract saco dataset.
-if [ -d ../test/soco ]; then
+if [ -d ../data/soco ]; then
     echo "-- Skipping dataset 'data/soco'; directory 'data/soco' already exists."
 else
     echo "-- Preparing dataset 'data/soco' ..."
     tar zxf ../test/soco.tgz
-    echo "   ... finished preparing 'test/soco.tgz'."
+    echo "   ... finished preparing 'data/soco'."
 fi
 
 
