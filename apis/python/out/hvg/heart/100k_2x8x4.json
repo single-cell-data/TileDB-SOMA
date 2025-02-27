@@ -1,15 +1,56 @@
 {
-  "peak_mem": 41239061137,
+  "peak_mem": 40498796925,
+  "top_allocs": [
+    {
+      "location": "__next__:/home/ubuntu/TileDB-SOMA/apis/python/src/tiledbsoma/_read_iters.py:586",
+      "size": 39731156874,
+      "iec": "37 GiB"
+    },
+    {
+      "location": "dump:/home/ubuntu/.pyenv/versions/3.12.6/lib/python3.12/site-packages/cloudpickle/cloudpickle.py:1303",
+      "size": 5563527739,
+      "iec": "5.18 GiB"
+    },
+    {
+      "location": "<stack trace unavailable>",
+      "size": 2949778268,
+      "iec": "2.75 GiB"
+    },
+    {
+      "location": "_normalize_pickle:/home/ubuntu/.pyenv/versions/3.12.6/lib/python3.12/site-packages/dask/tokenize.py:242",
+      "size": 2527270137,
+      "iec": "2.35 GiB"
+    },
+    {
+      "location": "packb:/home/ubuntu/.pyenv/versions/3.12.6/lib/python3.12/site-packages/msgpack/__init__.py:36",
+      "size": 1419398224,
+      "iec": "1.32 GiB"
+    }
+  ],
+  "tracked_allocs": 61115357,
+  "tracked_bytes": 56038827535,
+  "total_allocs": 115255284,
+  "total_frames": 25285,
   "times": {
-    "start": 0.6990102119998483,
-    "dask": 3.5230646850000085,
-    "query": 0.268182164999871,
-    "to_anndata": 21.473437691000072,
-    "normalize": 0.2432133470001645,
-    "log1p": 0.0036696429997391533,
-    "hvg": 30.957305719000033
+    "start": 0.7381042540000635,
+    "dask": 9.11636763000024,
+    "query": 0.6323726560003706,
+    "to_anndata": 34.403689273000055,
+    "normalize": 3.444987211998523,
+    "log1p": 0.008195016000172473,
+    "hvg": 68.94444054499945,
+    "stats": 19.158831693999673
   },
-  "total_time": 57.167883461999736,
-  "obs_per_s": 27287.594109320766,
-  "hvg_obs_per_s": 50391.14237394912
+  "total_time": 136.44698827999855,
+  "tissue": "heart",
+  "cmd": "HVG",
+  "n_obs": 1559974,
+  "obs_per_s": 11432.821051343593,
+  "no_dask_mem_mgmt": true,
+  "dask_chunk_size": 100000,
+  "n_dask_workers": 2,
+  "n_dask_threads_per_worker": 8,
+  "tdb_concurrency": 4,
+  "hvg_obs_per_s": 22626.537943720323,
+  "mem_total_budget": 2147483648
 }
