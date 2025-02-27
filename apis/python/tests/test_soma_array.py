@@ -30,11 +30,11 @@ def test_soma_array_basic_getters():
     ]
     result_order = clib.ResultOrder.colmajor
 
-    sr = clib.SOMAArray(uri=uri, name=name)
+    sr = clib.SOMAArray(uri=uri)
     assert sr.uri == uri
     assert sr.nnz() == 2638
 
-    mq = clib.ManagedQuery(sr, sr.context())
+    mq = clib.ManagedQuery(sr, sr.context(), name)
     mq.set_layout(result_order)
     mq.select_columns(column_names)
     assert mq.result_order == result_order

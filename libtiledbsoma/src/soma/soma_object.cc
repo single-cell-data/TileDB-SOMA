@@ -41,8 +41,7 @@ std::unique_ptr<SOMAObject> SOMAObject::open(
     }
 
     if (soma_type == "SOMAArray") {
-        auto array_ = SOMAArray::open(
-            mode, uri, ctx, "", {}, "auto", ResultOrder::automatic, timestamp);
+        auto array_ = SOMAArray::open(mode, uri, ctx, timestamp);
         auto array_type = array_->type();
 
         if (!array_type.has_value())

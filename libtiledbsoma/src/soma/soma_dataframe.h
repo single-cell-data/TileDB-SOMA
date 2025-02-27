@@ -62,11 +62,6 @@ class SOMADataFrame : public SOMAArray {
      * @param uri URI to create the SOMADataFrame
      * @param mode read or write
      * @param ctx SOMAContext
-     * @param column_names A list of column names to use as user-defined index
-     * columns (e.g., ``['cell_type', 'tissue_type']``). All named columns must
-     * exist in the schema, and at least one index column name is required.
-     * @param result_order Read result order: automatic (default), rowmajor, or
-     * colmajor
      * @param timestamp If specified, overrides the default timestamp used to
      * open this object. If unset, uses the timestamp provided by the context.
      * @return std::unique_ptr<SOMADataFrame> SOMADataFrame
@@ -75,8 +70,6 @@ class SOMADataFrame : public SOMAArray {
         std::string_view uri,
         OpenMode mode,
         std::shared_ptr<SOMAContext> ctx,
-        std::vector<std::string> column_names = {},
-        ResultOrder result_order = ResultOrder::automatic,
         std::optional<TimestampRange> timestamp = std::nullopt);
 
     /**
@@ -96,8 +89,8 @@ class SOMADataFrame : public SOMAArray {
     static std::unique_ptr<SOMADataFrame> open(
         std::string_view uri,
         OpenMode mode,
-        std::string_view name,
-        std::map<std::string, std::string> platform_config);
+        std::map<std::string, std::string> platform_config,
+        std::optional<TimestampRange> timestamp = std::nullopt);
 
     /**
      * @brief Check if the SOMADataFrame exists at the URI.
@@ -140,27 +133,14 @@ class SOMADataFrame : public SOMAArray {
      * @param mode read or write
      * @param uri URI of the array
      * @param ctx TileDB context
-     * @param column_names Columns to read
-     * @param result_order Read result order: automatic (default), rowmajor, or
-     * colmajor
      * @param timestamp Timestamp
      */
     SOMADataFrame(
         OpenMode mode,
         std::string_view uri,
         std::shared_ptr<SOMAContext> ctx,
-        std::vector<std::string> column_names,
-        ResultOrder result_order,
         std::optional<TimestampRange> timestamp = std::nullopt)
-        : SOMAArray(
-              mode,
-              uri,
-              ctx,
-              std::filesystem::path(uri).filename().string(),  // array name
-              column_names,
-              "auto",  // batch_size
-              result_order,
-              timestamp) {
+        : SOMAArray(mode, uri, ctx, timestamp) {
     }
 
     /**
@@ -173,23 +153,19 @@ class SOMADataFrame : public SOMAArray {
      *
      * @param uri URI to create the SOMADataFrame
      * @param mode read or write
-     * @param name Name of the array
      * @param platform_config Config parameter dictionary
      * @return std::unique_ptr<SOMADataFrame> SOMADataFrame
      */
     SOMADataFrame(
         OpenMode mode,
         std::string_view uri,
-        std::string_view name,
-        std::map<std::string, std::string> platform_config)
+        std::map<std::string, std::string> platform_config,
+        std::optional<TimestampRange> timestamp = std::nullopt)
         : SOMAArray(
               mode,
               uri,
               std::make_shared<SOMAContext>(platform_config),
-              name,
-              {},
-              "auto",
-              ResultOrder::automatic) {
+              timestamp) {
     }
 
     SOMADataFrame(const SOMAArray& other)

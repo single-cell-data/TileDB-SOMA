@@ -31,15 +31,17 @@ void test_sdf(const std::string& uri) {
     // config["sm.mem.total_budget"] = "1118388608";
 
     // Read all values from the obs array
-    auto obs = SOMAArray::open(OpenMode::read, uri + "/obs", ctx, "obs");
-    auto obs_data = obs->read_next();
+    auto obs = SOMAArray::open(OpenMode::read, uri + "/obs", ctx);
+    auto obs_mq = ManagedQuery(*obs, ctx->tiledb_ctx(), "obs");
+    auto obs_data = obs_mq.read_next();
 
     // Read all values from the var array
-    auto var = SOMAArray::open(OpenMode::read, uri + "/ms/RNA/var", ctx, "var");
-    auto var_data = var->read_next();
+    auto var = SOMAArray::open(OpenMode::read, uri + "/ms/RNA/var", ctx);
+    auto var_mq = ManagedQuery(*var, ctx->tiledb_ctx(), "var");
+    auto var_data = var_mq.read_next();
 
     // Check if obs and var reads are complete
-    if (obs->results_complete() && var->results_complete()) {
+    if (obs_mq.results_complete() && var_mq.results_complete()) {
         LOG_INFO("var and obs queries are complete");
     }
 
@@ -47,14 +49,14 @@ void test_sdf(const std::string& uri) {
     auto x_data = SOMAArray::open(
         OpenMode::read,
         uri + "/ms/RNA/X/data",
-        std::make_shared<SOMAContext>(config),
-        "X/data");
+        std::make_shared<SOMAContext>(config));
+    auto x_mq = ManagedQuery(*x_data, ctx->tiledb_ctx(), "X/data");
 
     int batches = 0;
     int total_num_rows = 0;
 
     // Handle incomplete queries
-    while (auto batch = x_data->read_next()) {
+    while (auto batch = x_mq.read_next()) {
         batches++;
         total_num_rows += (*batch)->num_rows();
     }
@@ -65,12 +67,13 @@ void test_sdf(const std::string& uri) {
 
 namespace tdbs = tiledbsoma;
 void test_arrow(const std::string& uri) {
+    auto ctx = std::make_shared<SOMAContext>();
     const std::vector<std::string>& colnames{"n_counts", "n_genes", "louvain"};
-    auto obs = tdbs::SOMAArray::open(
-        OpenMode::read, uri, std::make_shared<SOMAContext>(), "", colnames);
+    auto obs = tdbs::SOMAArray::open(OpenMode::read, uri, ctx);
+    auto obs_mq = ManagedQuery(*obs, ctx->tiledb_ctx(), "");
     // Getting next batch:  std::optional<std::shared_ptr<ArrayBuffers>>
-    auto obs_data = obs->read_next();
-    if (!obs->results_complete()) {
+    auto obs_data = obs_mq.read_next();
+    if (!obs_mq.results_complete()) {
         tdbs::LOG_WARN(std::format("Read of '{}' incomplete", uri));
         exit(-1);
     }

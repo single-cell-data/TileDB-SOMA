@@ -80,11 +80,8 @@ std::unique_ptr<SOMASparseNDArray> SOMASparseNDArray::open(
     std::string_view uri,
     OpenMode mode,
     std::shared_ptr<SOMAContext> ctx,
-    std::vector<std::string> column_names,
-    ResultOrder result_order,
     std::optional<TimestampRange> timestamp) {
-    auto array = std::make_unique<SOMASparseNDArray>(
-        mode, uri, ctx, column_names, result_order, timestamp);
+    auto array = std::make_unique<SOMASparseNDArray>(mode, uri, ctx, timestamp);
 
     if (!array->check_type("SOMASparseNDArray")) {
         throw TileDBSOMAError(
