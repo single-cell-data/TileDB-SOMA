@@ -861,8 +861,8 @@ def test_X_none(h5ad_file_X_none):
         # TODO: more
 
 
-# There exist in the wild AnnData files with categorical-int columns where the "not in the category"
-# is indicated by the presence of floating-point math.NaN in cells. Here we test that we can ingest
+# There exist in the wild AnnData files with categorical-int columns where "not in the category" is
+# indicated by the presence of floating-point math.NaN in cells. Here we test that we can ingest
 # this.
 def test_obs_with_categorical_int_nan_enumeration(
     tmp_path, h5ad_file_categorical_int_nan

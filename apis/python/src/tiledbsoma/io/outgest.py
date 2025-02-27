@@ -14,7 +14,6 @@ import json
 from concurrent.futures import Future
 from typing import (
     Any,
-    Dict,
     KeysView,
     Sequence,
     Union,
@@ -55,7 +54,7 @@ from ._common import (
 )
 
 FutureUnsLeaf = Union[UnsLeaf, Future[UnsLeaf]]
-FutureUnsDictNode = Union[FutureUnsLeaf, Dict[str, "FutureUnsDictNode"]]
+FutureUnsDictNode = Union[FutureUnsLeaf, dict[str, "FutureUnsDictNode"]]
 
 
 # ----------------------------------------------------------------
@@ -67,7 +66,7 @@ def to_h5ad(
     X_layer_name: str | None = "data",
     obs_id_name: str | None = None,
     var_id_name: str | None = None,
-    obsm_varm_width_hints: Dict[str, Dict[str, int]] | None = None,
+    obsm_varm_width_hints: dict[str, dict[str, int]] | None = None,
     uns_keys: Sequence[str] | None = None,
 ) -> None:
     """Converts the experiment group to AnnData format and writes it to the specified ``.h5ad`` file.
@@ -234,7 +233,7 @@ def to_anndata(
     extra_X_layer_names: Sequence[str] | KeysView[str] | None = None,
     obs_id_name: str | None = None,
     var_id_name: str | None = None,
-    obsm_varm_width_hints: Dict[str, Dict[str, int]] | None = None,
+    obsm_varm_width_hints: dict[str, dict[str, int]] | None = None,
     uns_keys: Sequence[str] | None = None,
 ) -> ad.AnnData:
     """Converts the experiment group to AnnData format.
@@ -395,7 +394,7 @@ def to_anndata(
         for key in measurement.varp.keys():
             varp[key] = tp.submit(load_varp, measurement, key, nvar)
 
-    uns_future: Future[Dict[str, FutureUnsDictNode]] | None = None
+    uns_future: Future[dict[str, FutureUnsDictNode]] | None = None
     if "uns" in measurement:
         s = _util.get_start_stamp()
         uns_coll = cast(Collection[Any], measurement["uns"])
@@ -411,7 +410,7 @@ def to_anndata(
     varm = _resolve_futures(varm)
     obsp = _resolve_futures(obsp)
     varp = _resolve_futures(varp)
-    anndata_X = anndata_X_future.result() if anndata_X_future is not None else None
+    anndata_X = anndata_X_future.result() if anndata_X_future else None
     anndata_layers = _resolve_futures(anndata_layers_futures)
     uns: UnsDict = (
         _resolve_futures(uns_future.result(), deep=True)
@@ -442,7 +441,7 @@ def _extract_obsm_or_varm(
     collection_name: str,
     element_name: str,
     num_rows: int,
-    width_configs: Dict[str, int],
+    width_configs: dict[str, int],
 ) -> Matrix:
     """
     This is a helper function for ``to_anndata`` of ``obsm`` and ``varm`` elements.
@@ -527,11 +526,11 @@ def _extract_uns(
     collection: Collection[Any],
     uns_keys: Sequence[str] | None = None,
     level: int = 0,
-) -> Dict[str, FutureUnsDictNode]:
+) -> dict[str, FutureUnsDictNode]:
     """
     This is a helper function for ``to_anndata`` of ``uns`` elements.
     """
-    extracted: Dict[str, FutureUnsDictNode] = {}
+    extracted: dict[str, FutureUnsDictNode] = {}
     tp = collection.context.threadpool
     for key in collection.keys():
         if level == 0 and uns_keys is not None and key not in uns_keys:
