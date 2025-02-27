@@ -53,7 +53,7 @@ from ..._exception import (
     SOMAError,
 )
 from ..._soma_object import AnySOMAObject
-from ..._types import INGEST_MODES, IngestMode
+from ..._types import IngestMode
 from ...options import SOMATileDBContext
 from ...options._soma_tiledb_context import _validate_soma_tiledb_context
 from ...options._tiledb_create_write_options import (
@@ -370,33 +370,43 @@ def from_visium(
         Experimental
     """
 
+    # Disclaimer about the experimental nature of the generated experiment.
+    warnings.warn(SPATIAL_DISCLAIMER, stacklevel=2)
+
+    # Check ingestion mode and create Ingestion params class.
     if ingest_mode != "write":
         raise NotImplementedError(
             f'the only ingest_mode currently supported is "write"; got "{ingest_mode}"'
         )
+    ingestion_params = IngestionParams(ingest_mode, registration_mapping)
+    if ingestion_params.appending and X_kind == DenseNDArray:
+        raise ValueError("dense X is not supported for append mode")
+    if ingestion_params.appending:
+        raise NotImplementedError("")
 
-    # Disclaimer about the experimental nature of the generated experiment.
-    warnings.warn(SPATIAL_DISCLAIMER, stacklevel=2)
+    # Check context and create keyword argument dicts.
+    # - Create `ingest_ctx` for keyword args for creating SOMAGroup objects.
+    # - Create `ingestion_platform_ctx` for keyword args for creating SOMAArray objects.
+    context = _validate_soma_tiledb_context(context)
+    ingest_ctx: IngestCtx = {
+        "context": context,
+        "ingestion_params": IngestionParams(ingest_mode, registration_mapping),
+        "additional_metadata": additional_metadata,
+    }
+    ingest_platform_ctx: IngestPlatformCtx = dict(
+        **ingest_ctx, platform_config=platform_config
+    )
 
-    # Get input file locations.
+    # Get input file locations and check the version is compatible.
     input_paths = (
         input_path
         if isinstance(input_path, VisiumPaths)
         else VisiumPaths.from_base_folder(input_path, use_raw_counts=use_raw_counts)
     )
-
-    # Check the version.
-    major_version = (
-        input_paths.version[0]
-        if isinstance(input_paths.version, tuple)
-        else input_paths.version
-    )
-    if major_version is None:
-        raise ValueError("Unable to determine version number of Visium input")
-    if major_version not in {1, 2, 3}:
+    if input_paths.major_version not in {1, 2}:
         raise ValueError(
             f"Visium version {input_paths.version} is not supported. Expected major "
-            f"version 1, 2, or 3."
+            f"version 1 or 2."
         )
 
     # Get JSON scale factors.
@@ -427,28 +437,30 @@ def from_visium(
 
     # Read 10x HDF5 gene expression file.
     # -- Currently this uses ScanPy. It creates an AnnData with only obs, X, and var.
+    start_time = _util.get_start_stamp()
+    logging.log_io(None, f"START READING {input_paths.gene_expression}")
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         anndata = scanpy.read_10x_h5(input_paths.gene_expression)
-
-    # Set the ingestion parameters.
-    ingest_ctx: IngestCtx = {
-        "context": context,
-        "ingestion_params": IngestionParams(ingest_mode, registration_mapping),
-        "additional_metadata": additional_metadata,
-    }
-
-    # -- START ---
-    if ingest_mode not in INGEST_MODES:
-        raise SOMAError(
-            f"Expected ingest_mode to be one of {INGEST_MODES}; got '{ingest_mode}'."
+        # Without _at least_ one index, there is nothing to indicate the dimension indices.
+    if anndata.obs.index.empty:
+        raise NotImplementedError(
+            f"Input gene expression file '{input_paths.gene_expression}' has no obs data. "
+            f"Ingesting 10x data without obs values is unsupported."
         )
+    if anndata.var.index.empty:
+        raise NotImplementedError(
+            f"Input gene expression file '{input_paths.gene_expression}' has no var data. "
+            f"Ingesting 10x data without var values is unsupported."
+        )
+    logging.log_io(None, _util.format_elapsed(start_time, "FINISHED READING"))
 
-    # Map the user-level ingest mode to a set of implementation-level boolean flags
-    ingestion_params = IngestionParams(ingest_mode, registration_mapping)
-
-    if ingestion_params.appending and X_kind == DenseNDArray:
-        raise ValueError("dense X is not supported for append mode")
+    # Deduplicate obs and var names.
+    start_time = _util.get_start_stamp()
+    logging.log_io(None, "START  DECATEGORICALIZING")
+    anndata.obs_names_make_unique()
+    anndata.var_names_make_unique()
+    logging.log_io(None, _util.format_elapsed(start_time, "FINISH DECATEGORICALIZING"))
 
     # Create registration mapping if none was provided.
     if registration_mapping is None:
@@ -456,32 +468,11 @@ def from_visium(
             anndata, measurement_name=measurement_name
         )
     else:
-        joinid_maps = registration_mapping.id_mappings_for_anndata(
-            anndata, measurement_name=measurement_name
-        )
+        raise NotImplementedError("Support for appending is not yet implemented.")
 
-    context = _validate_soma_tiledb_context(context)
-
-    # Without _at least_ one index, there is nothing to indicate the dimension indices.
-    if anndata.obs.index.empty or anndata.var.index.empty:
-        raise NotImplementedError("Empty AnnData.obs or AnnData.var unsupported.")
-
-    s = _util.get_start_stamp()
-    logging.log_io(None, "START  DECATEGORICALIZING")
-
-    anndata.obs_names_make_unique()
-    anndata.var_names_make_unique()
-
-    logging.log_io(None, _util.format_elapsed(s, "FINISH DECATEGORICALIZING"))
-
-    s = _util.get_start_stamp()
+    # Write the new experiment.
+    start_time = _util.get_start_stamp()
     logging.log_io(None, f"START  WRITING {experiment_uri}")
-
-    ingest_platform_ctx: IngestPlatformCtx = dict(
-        **ingest_ctx, platform_config=platform_config
-    )
-
-    # Must be done first, to create the parent directory.
     with _create_or_open_collection(
         Experiment, experiment_uri, **ingest_ctx
     ) as experiment:
@@ -691,6 +682,12 @@ def from_visium(
                 var_spatial_presence,
                 use_relative_uri=use_relative_uri,
             )
+
+    logging.log_io(
+        f"Wrote   {experiment.uri}",
+        _util.format_elapsed(start_time, f"FINISH WRITING {experiment.uri}"),
+    )
+
     return experiment.uri
 
 
@@ -705,8 +702,8 @@ def _write_scene_presence_dataframe(
     platform_config: PlatformConfig | None = None,
     context: SOMATileDBContext | None = None,
 ) -> DataFrame:
-    s = _util.get_start_stamp()
-
+    start_time = _util.get_start_stamp()
+    logging.log_io(None, "START WRITING Presence matrix")
     try:
         soma_df = DataFrame.create(
             df_uri,
@@ -730,7 +727,7 @@ def _write_scene_presence_dataframe(
     if ingestion_params.write_schema_no_data:
         logging.log_io(
             f"Wrote schema {df_uri}",
-            _util.format_elapsed(s, f"FINISH WRITING SCHEMA {df_uri}"),
+            _util.format_elapsed(start_time, f"FINISH WRITING SCHEMA {df_uri}"),
         )
         add_metadata(soma_df, additional_metadata)
         return soma_df
@@ -753,7 +750,7 @@ def _write_scene_presence_dataframe(
 
     logging.log_io(
         f"Wrote   {df_uri}",
-        _util.format_elapsed(s, f"FINISH WRITING {df_uri}"),
+        _util.format_elapsed(start_time, f"FINISH WRITING {df_uri}"),
     )
     return soma_df
 
@@ -775,6 +772,8 @@ def _write_visium_spots(
     """Creates, opens, and writes data to a ``PointCloudDataFrame`` with the spot
     locations and metadata. Returns the open dataframe for writing.
     """
+    start_time = _util.get_start_stamp()
+    logging.log_io(None, "START WRITING loc")
     if major_version == 1:
         names = [id_column_name, "in_tissue", "array_row", "array_col", "y", "x"]
     else:
@@ -832,6 +831,7 @@ def _write_visium_spots(
         )
 
     add_metadata(soma_point_cloud, additional_metadata)
+    logging.log_io(None, _util.format_elapsed(start_time, "FINISH WRITING loc"))
     return soma_point_cloud
 
 
@@ -871,6 +871,8 @@ def _create_visium_tissue_images(
     """Creates, opens, and writes a ``MultiscaleImage`` with the provide
     visium resolutions levels and returns the open image for writing.
     """
+    start_time = _util.get_start_stamp()
+    logging.log_io(None, "START WRITING IMAGES")
 
     # Open the first image to get the base size.
     with Image.open(image_paths[0][1]) as im:
@@ -924,4 +926,5 @@ def _create_visium_tissue_images(
         )
         im_array.close()
 
+    logging.log_io(None, _util.format_elapsed(start_time, "FINISH WRITING IMAGES"))
     return image_pyramid
