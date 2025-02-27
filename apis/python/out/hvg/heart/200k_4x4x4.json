@@ -1,5 +1,5 @@
 {
-  "peak_mem": 40499667417,
+  "peak_mem": 40498233303,
   "top_allocs": [
     {
       "location": "__next__:/home/ubuntu/TileDB-SOMA/apis/python/src/tiledbsoma/_read_iters.py:586",
@@ -8,49 +8,49 @@
     },
     {
       "location": "dump:/home/ubuntu/.pyenv/versions/3.12.6/lib/python3.12/site-packages/cloudpickle/cloudpickle.py:1303",
-      "size": 5475156468,
-      "iec": "5.1 GiB"
+      "size": 3352867914,
+      "iec": "3.12 GiB"
     },
     {
       "location": "<stack trace unavailable>",
-      "size": 2947662737,
-      "iec": "2.75 GiB"
+      "size": 2941463889,
+      "iec": "2.74 GiB"
     },
     {
       "location": "_normalize_pickle:/home/ubuntu/.pyenv/versions/3.12.6/lib/python3.12/site-packages/dask/tokenize.py:242",
-      "size": 2527215265,
-      "iec": "2.35 GiB"
+      "size": 2706032849,
+      "iec": "2.52 GiB"
     },
     {
       "location": "packb:/home/ubuntu/.pyenv/versions/3.12.6/lib/python3.12/site-packages/msgpack/__init__.py:36",
-      "size": 1497304341,
-      "iec": "1.39 GiB"
+      "size": 808568092,
+      "iec": "771 MiB"
     }
   ],
-  "tracked_allocs": 54906494,
-  "tracked_bytes": 55523756107,
-  "total_allocs": 102841553,
-  "total_frames": 25274,
+  "tracked_allocs": 61113435,
+  "tracked_bytes": 53249320751,
+  "total_allocs": 116911779,
+  "total_frames": 24944,
   "times": {
-    "start": 0.718328428998575,
-    "dask": 9.398051963000398,
-    "query": 0.7285602370011475,
-    "to_anndata": 21.38322230400081,
-    "normalize": 3.324013528999785,
-    "log1p": 0.00820116000068083,
-    "hvg": 56.80528594399948,
-    "stats": 15.624198193001575
+    "start": 0.7298794769994856,
+    "dask": 9.424372254001355,
+    "query": 0.7087802090009063,
+    "to_anndata": 20.0488670499999,
+    "normalize": 3.3124913070005277,
+    "log1p": 0.00862788599988562,
+    "hvg": 62.789506576998974,
+    "stats": 18.639810992001003
   },
-  "total_time": 107.98986175900245,
+  "total_time": 115.66233575200204,
   "tissue": "heart",
   "cmd": "HVG",
   "n_obs": 1559974,
-  "obs_per_s": 14445.559745981938,
+  "obs_per_s": 13487.31192274057,
   "no_dask_mem_mgmt": true,
-  "dask_chunk_size": 100000,
-  "n_dask_workers": 8,
-  "n_dask_threads_per_worker": 2,
+  "dask_chunk_size": 200000,
+  "n_dask_workers": 4,
+  "n_dask_threads_per_worker": 4,
   "tdb_concurrency": 4,
-  "hvg_obs_per_s": 27461.775327350235,
+  "hvg_obs_per_s": 24844.50165390293,
   "mem_total_budget": 2147483648
 }
