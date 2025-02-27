@@ -22,15 +22,7 @@ std::unique_ptr<tdbs::SOMAObject> getObjectUniquePointer(
     std::optional<tdbs::TimestampRange> tsrng = makeTimestampRange(tsvec);
 
     if (is_array) {
-        return tdbs::SOMAArray::open(
-            mode,
-            uri,
-            ctx,
-            "unnamed",
-            {},
-            "auto",
-            ResultOrder::automatic,
-            tsrng);
+        return tdbs::SOMAArray::open(mode, uri, ctx, tsrng);
     } else {
         return tdbs::SOMAGroup::open(mode, uri, ctx, "unnamed", tsrng);
     }

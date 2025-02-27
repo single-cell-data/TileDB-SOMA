@@ -223,16 +223,9 @@ void writeArrayFromArrow(
     std::optional<tdbs::TimestampRange> tsrng = makeTimestampRange(tsvec);
 
     std::unique_ptr<tdbs::SOMAArray> arrup = tdbs::SOMAArray::open(
-        OpenMode::write,
-        uri,
-        somactx,
-        "unnamed",
-        {},
-        "auto",
-        ResultOrder::automatic,
-        tsrng);
+        OpenMode::write, uri, somactx, tsrng);
 
-    auto mq = tdbs::ManagedQuery(*arrup, somactx->tiledb_ctx());
+    auto mq = tdbs::ManagedQuery(*arrup, somactx->tiledb_ctx(), "unnamed");
     mq.set_layout(arraytype == "SOMADenseNDArray" ? 
                   ResultOrder::colmajor : ResultOrder::automatic);
     mq.set_array_data(std::move(schema), std::move(array));

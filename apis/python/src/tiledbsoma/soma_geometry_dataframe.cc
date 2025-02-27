@@ -118,17 +118,14 @@ void load_soma_geometry_dataframe(py::module& m) {
                 std::string_view,
                 OpenMode,
                 std::shared_ptr<SOMAContext>,
-                std::vector<std::string>,
-                ResultOrder,
                 std::optional<std::pair<uint64_t, uint64_t>>>(
                 &SOMAGeometryDataFrame::open),
             "uri"_a,
             "mode"_a,
             "context"_a,
             py::kw_only(),
-            "column_names"_a = py::tuple(),
-            "result_order"_a = ResultOrder::automatic,
-            "timestamp"_a = py::none())
+            "timestamp"_a = py::none(),
+            py::call_guard<py::gil_scoped_release>())
 
         .def_static("exists", &SOMAGeometryDataFrame::exists)
         .def_property_readonly(

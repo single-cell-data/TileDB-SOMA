@@ -81,19 +81,22 @@ TEST_CASE("SOMASparseNDArray: basic", "[SOMASparseNDArray]") {
 
     // A write in read mode should fail
     snda->open(OpenMode::read);
-    snda->set_column_data(dim_name, d0.size(), d0.data());
-    snda->set_column_data(attr_name, a0.size(), a0.data());
-    REQUIRE_THROWS(snda->write());
+    auto mq = ManagedQuery(*snda, ctx->tiledb_ctx());
+    mq.setup_write_column(dim_name, d0.size(), d0.data(), (uint64_t*)nullptr);
+    mq.setup_write_column(attr_name, a0.size(), a0.data(), (uint64_t*)nullptr);
+    REQUIRE_THROWS(mq.submit_write());
     snda->close();
 
     snda->open(OpenMode::write);
-    snda->set_column_data(dim_name, d0.size(), d0.data());
-    snda->set_column_data(attr_name, a0.size(), a0.data());
-    snda->write();
+    mq = ManagedQuery(*snda, ctx->tiledb_ctx());
+    mq.setup_write_column(dim_name, d0.size(), d0.data(), (uint64_t*)nullptr);
+    mq.setup_write_column(attr_name, a0.size(), a0.data(), (uint64_t*)nullptr);
+    mq.submit_write();
     snda->close();
 
     snda->open(OpenMode::read);
-    while (auto batch = snda->read_next()) {
+    mq = ManagedQuery(*snda, ctx->tiledb_ctx());
+    while (auto batch = mq.read_next()) {
         auto arrbuf = batch.value();
         auto d0span = arrbuf->at(dim_name)->data<int64_t>();
         auto a0span = arrbuf->at(attr_name)->data<int32_t>();
@@ -111,9 +114,11 @@ TEST_CASE("SOMASparseNDArray: basic", "[SOMASparseNDArray]") {
     // * With current domain support: this should throw since it's outside
     // the (mutable) current domain.
     snda = SOMASparseNDArray::open(uri, OpenMode::write, ctx);
-    snda->set_column_data(dim_name, d0b.size(), d0b.data());
-    snda->set_column_data(attr_name, a0b.size(), a0b.data());
-    REQUIRE_THROWS(snda->write());
+    mq = ManagedQuery(*snda, ctx->tiledb_ctx());
+    mq.setup_write_column(dim_name, d0b.size(), d0b.data(), (uint64_t*)nullptr);
+    mq.setup_write_column(
+        attr_name, a0b.size(), a0b.data(), (uint64_t*)nullptr);
+    REQUIRE_THROWS(mq.submit_write());
     snda->close();
 
     auto new_shape = std::vector<int64_t>({shape * 2});
@@ -127,10 +132,12 @@ TEST_CASE("SOMASparseNDArray: basic", "[SOMASparseNDArray]") {
 
     // Try out-of-bounds write after resize.
     snda->open(OpenMode::write);
-    snda->set_column_data(dim_name, d0b.size(), d0b.data());
-    snda->set_column_data(attr_name, a0b.size(), a0b.data());
+    mq = ManagedQuery(*snda, ctx->tiledb_ctx());
+    mq.setup_write_column(dim_name, d0b.size(), d0b.data(), (uint64_t*)nullptr);
+    mq.setup_write_column(
+        attr_name, a0b.size(), a0b.data(), (uint64_t*)nullptr);
     // Implicitly checking for no throw
-    snda->write();
+    mq.submit_write();
     snda->close();
 
     snda->open(OpenMode::read);
@@ -214,12 +221,7 @@ TEST_CASE("SOMASparseNDArray: metadata", "[SOMASparseNDArray]") {
         TimestampRange(0, 1));
 
     auto snda = SOMASparseNDArray::open(
-        uri,
-        OpenMode::write,
-        ctx,
-        {},
-        ResultOrder::automatic,
-        TimestampRange(0, 2));
+        uri, OpenMode::write, ctx, TimestampRange(0, 2));
 
     int32_t val = 100;
     snda->set_metadata("md", TILEDB_INT32, 1, &val);

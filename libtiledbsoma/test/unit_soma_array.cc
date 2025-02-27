@@ -116,10 +116,6 @@ std::tuple<std::vector<int64_t>, std::vector<int32_t>> write_array(
             OpenMode::write,
             uri,
             ctx,
-            "",
-            {},
-            "auto",
-            ResultOrder::automatic,
             TimestampRange(timestamp + i, timestamp + i));
 
         std::vector<int64_t> d0(num_cells_per_fragment);
@@ -134,9 +130,14 @@ std::tuple<std::vector<int64_t>, std::vector<int32_t>> write_array(
         std::vector<int32_t> a0(num_cells_per_fragment, frag_num);
 
         // Write data to array
-        soma_array->set_column_data(attr_name, a0.size(), a0.data());
-        soma_array->set_column_data(dim_name, d0.size(), d0.data());
-        soma_array->write();
+        auto mq = ManagedQuery(*soma_array, ctx->tiledb_ctx(), "");
+        mq.set_layout(ResultOrder::unordered);
+        mq.setup_write_column(
+            attr_name, a0.size(), a0.data(), (uint64_t*)nullptr);
+        mq.setup_write_column(
+            dim_name, d0.size(), d0.data(), (uint64_t*)nullptr);
+        mq.submit_write();
+        mq.close();
         soma_array->close();
     }
 
@@ -208,10 +209,6 @@ TEST_CASE("SOMAArray: nnz") {
             OpenMode::read,
             uri,
             ctx,
-            "",
-            {},
-            "auto",
-            ResultOrder::automatic,
             TimestampRange(timestamp, timestamp + num_fragments - 1));
 
         uint64_t nnz = soma_array->nnz();
@@ -222,8 +219,10 @@ TEST_CASE("SOMAArray: nnz") {
         REQUIRE(shape[0] == std::numeric_limits<int64_t>::max());
 
         // Check that data from SOMAArray::read_next matches expected data
-        while (auto batch = soma_array->read_next()) {
-            auto arrbuf = batch.value();
+        auto mq = ManagedQuery(*soma_array, ctx->tiledb_ctx());
+        mq.set_layout(ResultOrder::unordered);
+        while (!mq.results_complete()) {
+            auto arrbuf = mq.read_next().value();
             REQUIRE(
                 arrbuf->names() ==
                 std::vector<std::string>({dim_name, attr_name}));
@@ -238,6 +237,7 @@ TEST_CASE("SOMAArray: nnz") {
             REQUIRE(d0col == expected_d0);
             REQUIRE(a0col == expected_a0);
         }
+        mq.close();
         soma_array->close();
     }
 }
@@ -276,15 +276,7 @@ TEST_CASE("SOMAArray: nnz with timestamp") {
 
         // Get total cell num at timestamp (0, 20)
         TimestampRange timestamp{0, 20};
-        auto soma_array = SOMAArray::open(
-            OpenMode::read,
-            uri,
-            ctx,
-            "nnz",
-            {},
-            "auto",
-            ResultOrder::automatic,
-            timestamp);
+        auto soma_array = SOMAArray::open(OpenMode::read, uri, ctx, timestamp);
 
         uint64_t nnz = soma_array->nnz();
         REQUIRE(nnz == expected_nnz);
@@ -332,14 +324,7 @@ TEST_CASE("SOMAArray: nnz with consolidation") {
         }
 
         // Get total cell num
-        auto soma_array = SOMAArray::open(
-            OpenMode::read,
-            uri,
-            ctx,
-            "nnz",
-            {},
-            "auto",
-            ResultOrder::automatic);
+        auto soma_array = SOMAArray::open(OpenMode::read, uri, ctx);
 
         uint64_t nnz = soma_array->nnz();
         if (allow_duplicates) {
@@ -357,14 +342,7 @@ TEST_CASE("SOMAArray: metadata") {
     const auto& [uri, expected_nnz] = create_array(base_uri, ctx);
 
     auto soma_array = SOMAArray::open(
-        OpenMode::write,
-        uri,
-        ctx,
-        "metadata_test",
-        {},
-        "auto",
-        ResultOrder::automatic,
-        TimestampRange(1, 1));
+        OpenMode::write, uri, ctx, TimestampRange(1, 1));
 
     int32_t val = 100;
     soma_array->set_metadata("md", TILEDB_INT32, 1, &val);
@@ -425,11 +403,12 @@ TEST_CASE("SOMAArray: Test buffer size") {
     auto [uri, expected_nnz] = create_array(base_uri, ctx);
     auto [expected_d0, expected_a0] = write_array(uri, ctx);
     auto soma_array = SOMAArray::open(OpenMode::read, uri, ctx);
+    auto mq = ManagedQuery(*soma_array, ctx->tiledb_ctx());
 
     size_t loops = 0;
-    while (auto batch = soma_array->read_next())
+    while (auto batch = mq.read_next())
         ++loops;
-    REQUIRE(loops == 10);
+    REQUIRE(loops == 11);
     soma_array->close();
 }
 
@@ -439,14 +418,14 @@ TEST_CASE("SOMAArray: ResultOrder") {
     auto [uri, expected_nnz] = create_array(base_uri, ctx);
     auto [expected_d0, expected_a0] = write_array(uri, ctx);
     auto soma_array = SOMAArray::open(OpenMode::read, uri, ctx);
-    REQUIRE(soma_array->result_order() == ResultOrder::automatic);
-    soma_array->reset({}, "auto", ResultOrder::rowmajor);
-    REQUIRE(soma_array->result_order() == ResultOrder::rowmajor);
-    soma_array->reset({}, "auto", ResultOrder::colmajor);
-    REQUIRE(soma_array->result_order() == ResultOrder::colmajor);
+    auto mq = ManagedQuery(*soma_array, ctx->tiledb_ctx());
+    REQUIRE(mq.result_order() == ResultOrder::automatic);
+    mq.set_layout(ResultOrder::rowmajor);
+    REQUIRE(mq.result_order() == ResultOrder::rowmajor);
+    mq.set_layout(ResultOrder::colmajor);
+    REQUIRE(mq.result_order() == ResultOrder::colmajor);
     REQUIRE_THROWS_AS(
-        soma_array->reset({}, "auto", static_cast<ResultOrder>(3)),
-        std::invalid_argument);
+        mq.set_layout(static_cast<ResultOrder>(10)), std::invalid_argument);
 }
 
 TEST_CASE("SOMAArray: Write and read back Boolean") {
@@ -525,12 +504,15 @@ TEST_CASE("SOMAArray: Write and read back Boolean") {
     uint8_t a0_data = 0b10101010;
     std::memcpy((void*)a0_expected->buffers[1], &a0_data, sizeof(uint8_t));
 
-    soma_array->set_array_data(std::move(arrow_schema), std::move(arrow_array));
-    soma_array->write();
+    auto mq_write = ManagedQuery(*soma_array, ctx->tiledb_ctx());
+    mq_write.set_array_data(std::move(arrow_schema), std::move(arrow_array));
+    mq_write.submit_write();
+    mq_write.close();
     soma_array->close();
 
     soma_array = SOMAArray::open(OpenMode::read, uri, ctx);
-    auto arrbuf = soma_array->read_next().value();
+    auto mq_read = ManagedQuery(*soma_array, ctx->tiledb_ctx());
+    auto arrbuf = mq_read.read_next().value();
 
     auto d0_span = arrbuf->at(dim_name)->data<int64_t>();
     REQUIRE(

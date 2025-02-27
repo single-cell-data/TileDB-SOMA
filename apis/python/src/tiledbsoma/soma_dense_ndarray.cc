@@ -28,11 +28,18 @@ using namespace py::literals;
 using namespace tiledbsoma;
 
 void write(SOMAArray& array, py::array data) {
+    ManagedQuery mq(array, array.ctx()->tiledb_ctx());
+
     py::buffer_info data_info = data.request();
-    array.set_column_data("soma_data", data.size(), (const void*)data_info.ptr);
+    mq.setup_write_column(
+        "soma_data",
+        data.size(),
+        (const void*)data_info.ptr,
+        (uint64_t*)nullptr);
 
     try {
-        array.write();
+        mq.submit_write();
+        mq.close();
     } catch (const std::exception& e) {
         TPY_ERROR_LOC(e.what());
     }
@@ -91,16 +98,12 @@ void load_soma_dense_ndarray(py::module& m) {
                 std::string_view,
                 OpenMode,
                 std::shared_ptr<SOMAContext>,
-                std::vector<std::string>,
-                ResultOrder,
                 std::optional<std::pair<uint64_t, uint64_t>>>(
                 &SOMADenseNDArray::open),
             "uri"_a,
             "mode"_a,
             "context"_a,
             py::kw_only(),
-            "column_names"_a = py::tuple(),
-            "result_order"_a = ResultOrder::automatic,
             "timestamp"_a = py::none(),
             py::call_guard<py::gil_scoped_release>())
 

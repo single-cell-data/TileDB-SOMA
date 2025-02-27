@@ -150,12 +150,7 @@ TEST_CASE("SOMADenseNDArray: metadata", "[SOMADenseNDArray]") {
     // TO DO: do more data writes and readbacks here in C++ tests.
     // https://github.com/single-cell-data/TileDB-SOMA/issues/3721
     auto dnda = SOMADenseNDArray::open(
-        uri,
-        OpenMode::write,
-        ctx,
-        {},
-        ResultOrder::automatic,
-        TimestampRange(0, 2));
+        uri, OpenMode::write, ctx, TimestampRange(0, 2));
 
     int32_t val = 100;
     dnda->set_metadata("md", TILEDB_INT32, 1, &val);

@@ -55,11 +55,6 @@ class SOMASparseNDArray : public SOMAArray {
      * @param uri URI to create the SOMASparseNDArray
      * @param mode read or write
      * @param ctx SOMAContext
-     * @param column_names A list of column names to use as user-defined index
-     * columns (e.g., ``['cell_type', 'tissue_type']``). All named columns must
-     * exist in the schema, and at least one index column name is required.
-     * @param result_order Read result order: automatic (default), rowmajor, or
-     * colmajor
      * @param timestamp If specified, overrides the default timestamp used to
      * open this object. If unset, uses the timestamp provided by the context.
      * @return std::unique_ptr<SOMASparseNDArray> SOMASparseNDArray
@@ -68,8 +63,6 @@ class SOMASparseNDArray : public SOMAArray {
         std::string_view uri,
         OpenMode mode,
         std::shared_ptr<SOMAContext> ctx,
-        std::vector<std::string> column_names = {},
-        ResultOrder result_order = ResultOrder::automatic,
         std::optional<TimestampRange> timestamp = std::nullopt);
 
     /**
@@ -89,27 +82,14 @@ class SOMASparseNDArray : public SOMAArray {
      * @param mode read or write
      * @param uri URI of the array
      * @param ctx TileDB context
-     * @param column_names Columns to read
-     * @param result_order Read result order: automatic (default), rowmajor, or
-     * colmajor
      * @param timestamp Timestamp
      */
     SOMASparseNDArray(
         OpenMode mode,
         std::string_view uri,
         std::shared_ptr<SOMAContext> ctx,
-        std::vector<std::string> column_names,
-        ResultOrder result_order,
         std::optional<TimestampRange> timestamp)
-        : SOMAArray(
-              mode,
-              uri,
-              ctx,
-              std::filesystem::path(uri).filename().string(),  // array name
-              column_names,
-              "auto",  // batch_size
-              result_order,
-              timestamp) {
+        : SOMAArray(mode, uri, ctx, timestamp) {
     }
 
     SOMASparseNDArray(const SOMAArray& other)

@@ -136,15 +136,8 @@ struct VariouslyIndexedDataFrameFixture {
 
     std::unique_ptr<SOMADataFrame> open(
         OpenMode mode,
-        ResultOrder result_order = ResultOrder::automatic,
         std::optional<TimestampRange> timestamp_range = std::nullopt) {
-        return SOMADataFrame::open(
-            uri_,
-            mode,
-            ctx_,
-            {},  // column_names
-            result_order,
-            timestamp_range);
+        return SOMADataFrame::open(uri_, mode, ctx_, timestamp_range);
     }
 
     void write_sjid_u32_str_data_from(int64_t sjid_base) {
@@ -171,11 +164,14 @@ struct VariouslyIndexedDataFrameFixture {
         }
         char_offsets.push_back(offset);
 
-        sdf->set_column_data(i64_name, i64_data.size(), i64_data.data());
-        sdf->set_column_data(
+        auto mq = ManagedQuery(*sdf, ctx_->tiledb_ctx());
+        mq.setup_write_column(
+            i64_name, i64_data.size(), i64_data.data(), (uint64_t*)nullptr);
+        mq.setup_write_column(
             str_name, strings.size(), char_data.data(), char_offsets.data());
-        sdf->set_column_data(u32_name, u32_data.size(), u32_data.data());
-        sdf->write();
+        mq.setup_write_column(
+            u32_name, u32_data.size(), u32_data.data(), (uint64_t*)nullptr);
+        mq.submit_write();
 
         sdf->close();
     }

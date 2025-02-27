@@ -111,15 +111,12 @@ std::unique_ptr<SOMAMeasurement> SOMAMeasurement::open(
     }
 }
 
-std::shared_ptr<SOMADataFrame> SOMAMeasurement::var(
-    std::vector<std::string> column_names, ResultOrder result_order) {
+std::shared_ptr<SOMADataFrame> SOMAMeasurement::var() {
     if (var_ == nullptr) {
         var_ = SOMADataFrame::open(
             (std::filesystem::path(uri()) / "var").string(),
             OpenMode::read,
             ctx(),
-            column_names,
-            result_order,
             timestamp());
     }
     return var_;

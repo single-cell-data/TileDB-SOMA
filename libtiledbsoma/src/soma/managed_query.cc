@@ -74,6 +74,12 @@ void ManagedQuery::set_layout(ResultOrder layout) {
             else
                 query_->set_layout(TILEDB_ROW_MAJOR);
             break;
+        case ResultOrder::unordered:
+            query_->set_layout(TILEDB_UNORDERED);
+            break;
+        case ResultOrder::global:
+            query_->set_layout(TILEDB_GLOBAL_ORDER);
+            break;
         case ResultOrder::rowmajor:
             query_->set_layout(TILEDB_ROW_MAJOR);
             break;
@@ -85,22 +91,12 @@ void ManagedQuery::set_layout(ResultOrder layout) {
                 "[ManagedQuery] invalid ResultOrder({}) passed",
                 static_cast<int>(layout)));
     }
+
+    layout_ = layout;
 }
 
 ResultOrder ManagedQuery::result_order() {
-    if (array_->query_type() != TILEDB_READ) {
-        throw TileDBSOMAError("[ManagedQuery] result_order only in read mode");
-    }
-
-    switch (query_->query_layout()) {
-        case TILEDB_ROW_MAJOR:
-            return ResultOrder::rowmajor;
-        case TILEDB_COL_MAJOR:
-            return ResultOrder::colmajor;
-        default:
-            throw std::invalid_argument(
-                std::format("[ManagedQuery] unrecognized result_order"));
-    }
+    return layout_;
 }
 
 void ManagedQuery::select_columns(

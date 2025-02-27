@@ -90,17 +90,9 @@ SEXP soma_array_reader(
     }
 
     // Read selected columns from the uri (return is unique_ptr<SOMAArray>)
-    auto sr = tdbs::SOMAArray::open(
-        OpenMode::read,
-        uri,
-        somactx,
-        "unnamed",  // name parameter could be added
-        column_names,
-        batch_size,
-        tdb_result_order,
-        tsrng);
+    auto sr = tdbs::SOMAArray::open(OpenMode::read, uri, somactx, tsrng);
 
-    auto mq = tdbs::ManagedQuery(*sr, somactx->tiledb_ctx());
+    auto mq = tdbs::ManagedQuery(*sr, somactx->tiledb_ctx(), "unnamed");
     mq.set_layout(tdb_result_order);
     if(!column_names.empty()){
         mq.select_columns(column_names);
