@@ -38,6 +38,7 @@ from ... import (
     DataFrame,
     DenseNDArray,
     Experiment,
+    Measurement,
     MultiscaleImage,
     PointCloudDataFrame,
     Scene,
@@ -52,21 +53,25 @@ from ..._exception import (
     SOMAError,
 )
 from ..._soma_object import AnySOMAObject
-from ..._types import IngestMode
+from ..._types import INGEST_MODES, IngestMode
 from ...options import SOMATileDBContext
+from ...options._soma_tiledb_context import _validate_soma_tiledb_context
 from ...options._tiledb_create_write_options import (
     TileDBCreateOptions,
     TileDBWriteOptions,
 )
-from .. import conversions, from_anndata
+from .. import conversions
 from .._common import AdditionalMetadata
-from .._registration import ExperimentAmbientLabelMapping
+from .._registration import ExperimentAmbientLabelMapping, ExperimentIDMapping
 from ..ingest import (
     IngestCtx,
     IngestionParams,
+    IngestPlatformCtx,
+    _create_from_matrix,
     _create_or_open_collection,
     _maybe_set,
     _write_arrow_table,
+    _write_dataframe,
     add_metadata,
 )
 from ._util import _read_visium_software_version
@@ -395,40 +400,11 @@ def from_visium(
         )
 
     # Get JSON scale factors.
+    # -- Get the spot diameters from teh scale factors file.
     with open(
         input_paths.scale_factors, mode="r", encoding="utf-8"
     ) as scale_factors_json:
         scale_factors = json.load(scale_factors_json)
-
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
-        adata = scanpy.read_10x_h5(input_paths.gene_expression)
-
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
-        uri = from_anndata(
-            experiment_uri,
-            adata,
-            measurement_name,
-            context=context,
-            platform_config=platform_config,
-            X_layer_name=X_layer_name,
-            raw_X_layer_name=raw_X_layer_name,
-            ingest_mode=ingest_mode,
-            use_relative_uri=use_relative_uri,
-            X_kind=X_kind,
-            registration_mapping=registration_mapping,
-            additional_metadata=additional_metadata,
-        )
-
-    # Set the ingestion parameters.
-    ingest_ctx: IngestCtx = {
-        "context": context,
-        "ingestion_params": IngestionParams(ingest_mode, registration_mapping),
-        "additional_metadata": additional_metadata,
-    }
-
-    # Get the spot diameters from teh scale factors file.
     pixels_per_spot_diameter = scale_factors["spot_diameter_fullres"]
 
     # Create a list of image paths.
@@ -449,7 +425,133 @@ def from_visium(
         (Axis(name="x", unit="pixels"), Axis(name="y", unit="pixels"))  # type: ignore[arg-type]
     )
 
-    with Experiment.open(uri, mode="r", context=context) as exp:
+    # Read 10x HDF5 gene expression file.
+    # -- Currently this uses ScanPy. It creates an AnnData with only obs, X, and var.
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        anndata = scanpy.read_10x_h5(input_paths.gene_expression)
+
+    # Set the ingestion parameters.
+    ingest_ctx: IngestCtx = {
+        "context": context,
+        "ingestion_params": IngestionParams(ingest_mode, registration_mapping),
+        "additional_metadata": additional_metadata,
+    }
+
+    # -- START ---
+    if ingest_mode not in INGEST_MODES:
+        raise SOMAError(
+            f"Expected ingest_mode to be one of {INGEST_MODES}; got '{ingest_mode}'."
+        )
+
+    # Map the user-level ingest mode to a set of implementation-level boolean flags
+    ingestion_params = IngestionParams(ingest_mode, registration_mapping)
+
+    if ingestion_params.appending and X_kind == DenseNDArray:
+        raise ValueError("dense X is not supported for append mode")
+
+    # Create registration mapping if none was provided.
+    if registration_mapping is None:
+        joinid_maps = ExperimentIDMapping.from_isolated_anndata(
+            anndata, measurement_name=measurement_name
+        )
+    else:
+        joinid_maps = registration_mapping.id_mappings_for_anndata(
+            anndata, measurement_name=measurement_name
+        )
+
+    context = _validate_soma_tiledb_context(context)
+
+    # Without _at least_ one index, there is nothing to indicate the dimension indices.
+    if anndata.obs.index.empty or anndata.var.index.empty:
+        raise NotImplementedError("Empty AnnData.obs or AnnData.var unsupported.")
+
+    s = _util.get_start_stamp()
+    logging.log_io(None, "START  DECATEGORICALIZING")
+
+    anndata.obs_names_make_unique()
+    anndata.var_names_make_unique()
+
+    logging.log_io(None, _util.format_elapsed(s, "FINISH DECATEGORICALIZING"))
+
+    s = _util.get_start_stamp()
+    logging.log_io(None, f"START  WRITING {experiment_uri}")
+
+    ingest_platform_ctx: IngestPlatformCtx = dict(
+        **ingest_ctx, platform_config=platform_config
+    )
+
+    # Must be done first, to create the parent directory.
+    with _create_or_open_collection(
+        Experiment, experiment_uri, **ingest_ctx
+    ) as experiment:
+
+        # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+        # OBS
+        df_uri = _util.uri_joinpath(experiment_uri, "obs")
+        with _write_dataframe(
+            df_uri,
+            conversions.obs_or_var_to_tiledb_supported_array_type(anndata.obs),
+            id_column_name="obs_id",
+            axis_mapping=joinid_maps.obs_axis,
+            **ingest_platform_ctx,
+        ) as obs:
+            _maybe_set(experiment, "obs", obs, use_relative_uri=use_relative_uri)
+
+        # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+        # MS
+        experiment_ms_uri = _util.uri_joinpath(experiment_uri, "ms")
+
+        with _create_or_open_collection(
+            Collection[Measurement], experiment_ms_uri, **ingest_ctx
+        ) as ms:
+            _maybe_set(experiment, "ms", ms, use_relative_uri=use_relative_uri)
+
+            # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+            # MS/meas
+            measurement_uri = _util.uri_joinpath(experiment_ms_uri, measurement_name)
+            with _create_or_open_collection(
+                Measurement, measurement_uri, **ingest_ctx
+            ) as measurement:
+                _maybe_set(
+                    ms, measurement_name, measurement, use_relative_uri=use_relative_uri
+                )
+
+                # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                # MS/meas/VAR
+                with _write_dataframe(
+                    _util.uri_joinpath(measurement_uri, "var"),
+                    conversions.obs_or_var_to_tiledb_supported_array_type(anndata.var),
+                    id_column_name="var_id",
+                    axis_mapping=joinid_maps.var_axes[measurement_name],
+                    **ingest_platform_ctx,
+                ) as var:
+                    _maybe_set(
+                        measurement, "var", var, use_relative_uri=use_relative_uri
+                    )
+
+                # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                # MS/meas/X/DATA
+                measurement_X_uri = _util.uri_joinpath(measurement_uri, "X")
+                with _create_or_open_collection(
+                    Collection, measurement_X_uri, **ingest_ctx
+                ) as x:
+                    _maybe_set(measurement, "X", x, use_relative_uri=use_relative_uri)
+                    with _create_from_matrix(
+                        X_kind,
+                        _util.uri_joinpath(measurement_X_uri, X_layer_name),
+                        anndata.X,
+                        axis_0_mapping=joinid_maps.obs_axis,
+                        axis_1_mapping=joinid_maps.var_axes[measurement_name],
+                        **ingest_platform_ctx,
+                    ) as data:
+                        _maybe_set(
+                            x, X_layer_name, data, use_relative_uri=use_relative_uri
+                        )
+                # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+    # TEMPORARY: Close and re-open experiment to read data if necessary.
+    with Experiment.open(experiment.uri, mode="r", context=context) as exp:
         obs_df = (
             exp.obs.read(column_names=["soma_joinid", "obs_id"]).concat().to_pandas()
         )
@@ -463,8 +565,7 @@ def from_visium(
             if write_var_spatial_presence:
                 var_id = pacomp.unique(x_layer_data["soma_dim_1"])
 
-    # Add spatial information to the experiment.
-    with Experiment.open(experiment_uri, mode="w", context=context) as exp:
+    with Experiment.open(experiment.uri, mode="w", context=context) as exp:
         spatial_uri = _util.uri_joinpath(experiment_uri, "spatial")
         with _create_or_open_collection(
             Collection[Scene], spatial_uri, **ingest_ctx
@@ -561,7 +662,9 @@ def from_visium(
 
         # Create the obs presence matrix.
         if write_obs_spatial_presence:
-            obs_spatial_presence_uri = _util.uri_joinpath(uri, "obs_spatial_presence")
+            obs_spatial_presence_uri = _util.uri_joinpath(
+                experiment_uri, "obs_spatial_presence"
+            )
             obs_spatial_presence = _write_scene_presence_dataframe(
                 obs_id, len_obs_id, scene_name, obs_spatial_presence_uri, **ingest_ctx
             )
@@ -573,7 +676,9 @@ def from_visium(
             )
         if write_var_spatial_presence:
             var_spatial_presence_uri = _util.uri_joinpath(
-                _util.uri_joinpath(_util.uri_joinpath(uri, "ms"), measurement_name),
+                _util.uri_joinpath(
+                    _util.uri_joinpath(experiment_uri, "ms"), measurement_name
+                ),
                 "var_spatial_presence",
             )
             var_spatial_presence = _write_scene_presence_dataframe(
@@ -586,7 +691,7 @@ def from_visium(
                 var_spatial_presence,
                 use_relative_uri=use_relative_uri,
             )
-    return uri
+    return experiment.uri
 
 
 def _write_scene_presence_dataframe(
