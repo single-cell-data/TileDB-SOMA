@@ -1,7 +1,7 @@
 soco.tgz was created by running the following from the repo base directory (.. from here):
 
 ```
-apis/python/devtools/ingestor --debug --soco -o test/soco -n \
+apis/python/devtools/ingestor --debug --soco -o data/soco -n \
   data/pbmc3k_processed.h5ad data/10x-pbmc-multiome-v1.0/subset_100_100.h5ad
 ```
 
