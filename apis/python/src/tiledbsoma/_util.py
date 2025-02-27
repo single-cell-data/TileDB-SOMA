@@ -511,8 +511,12 @@ def _set_coord(
             )
             return
 
-    if isinstance(coord, (str, bytes)):
-        column.set_dim_points_string_or_bytes(mq._handle, [coord])
+    if isinstance(coord, str):
+        column.set_dim_points_string(mq._handle, [coord])
+        return
+
+    if isinstance(coord, bytes):
+        column.set_dim_points_bytes(mq._handle, [coord])
         return
 
     if isinstance(coord, (pa.Array, pa.ChunkedArray)):
@@ -543,8 +547,14 @@ def _set_coord(
             _, stop = ned[dim_idx]
         else:
             stop = coord.stop
-        column.set_dim_ranges_string_or_bytes(mq._handle, [(start, stop)])
-        return
+
+        if pa.types.is_large_string(dim.type) or pa.types.is_string(dim.type):
+            column.set_dim_ranges_string(mq._handle, [(start, stop)])
+            return
+
+        if pa.types.is_large_binary(dim.type) or pa.types.is_binary(dim.type):
+            column.set_dim_ranges_bytes(mq._handle, [(start, stop)])
+            return
 
     # Note: slice(None, None) matches the is_slice_of part, unless we also check
     # the dim-type part.
@@ -634,8 +644,12 @@ def _set_coord_by_py_seq_or_np_array(
         set_dim_points(mq._handle, coord)
         return
 
-    if pa_types_is_string_or_bytes(dim.type):
-        column.set_dim_points_string_or_bytes(mq._handle, coord)
+    if pa.types.is_large_string(dim.type) or pa.types.is_string(dim.type):
+        column.set_dim_points_string(mq._handle, coord)
+        return
+
+    if pa.types.is_large_binary(dim.type) or pa.types.is_binary(dim.type):
+        column.set_dim_points_bytes(mq._handle, coord)
         return
 
     if pa.types.is_timestamp(dim.type):
