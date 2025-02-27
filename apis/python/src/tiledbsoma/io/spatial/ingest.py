@@ -270,8 +270,6 @@ def from_visium(
     *,
     context: SOMATileDBContext | None = None,
     platform_config: PlatformConfig | None = None,
-    obs_id_name: str = "obs_id",
-    var_id_name: str = "var_id",
     X_layer_name: str = "data",
     raw_X_layer_name: str = "data",
     image_name: str = "tissue",
@@ -280,7 +278,6 @@ def from_visium(
     use_relative_uri: bool | None = None,
     X_kind: type[SparseNDArray] | type[DenseNDArray] = SparseNDArray,
     registration_mapping: ExperimentAmbientLabelMapping | None = None,
-    uns_keys: Sequence[str] | None = None,
     additional_metadata: AdditionalMetadata = None,
     use_raw_counts: bool = False,
     write_obs_spatial_presence: bool = True,
@@ -295,42 +292,19 @@ def from_visium(
 
     Args:
         experiment_uri: The experiment to create or update.
-
         input_path: A path to the base directory storing SpaceRanger output or
             a ``VisiumPaths`` object.
-
         measurement_name: The name of the measurement to store data in.
-
         context: Optional :class:`SOMATileDBContext` containing storage parameters, etc.
-
-        platform_config: Platform-specific options used to create this array, provided in the form
-          ``{\"tiledb\": {\"create\": {\"sparse_nd_array_dim_zstd_level\": 7}}}``.
-
-        obs_id_name/var_id_name: Which AnnData ``obs`` and ``var`` columns, respectively, to use
-          for append mode.
-
-          Values of this column will be used to decide which obs/var rows in appended
-          inputs are distinct from the ones already stored, for the assignment of ``soma_joinid``.  If
-          this column exists in the input data, as a named index or a non-index column name, it will
-          be used. If this column doesn't exist in the input data, and if the index is nameless or
-          named ``index``, that index will be given this name when written to the SOMA experiment's
-          ``obs`` / ``var``.
-
-          NOTE: it is not necessary for this column to be the index-column
-          name in the input AnnData objects ``obs``/``var``.
-
+        platform_config: Platform-specific options used to specify TileDB options when
+            creating and writing to SOMA objects.
         X_layer_name: SOMA array name for the AnnData's ``X`` matrix.
-
         raw_X_layer_name: SOMA array name for the AnnData's ``raw/X`` matrix.
-
         image_name: SOMA multiscale image name for the multiscale image of the
             Space Ranger output images.
-
         image_channel_first: If ``True``, the image is ingested in channel-first format.
             Otherwise, it is ingested into channel-last format. Defaults to ``True``.
-
         ingest_mode: The ingestion type to perform:
-
             - ``write``: Writes all data, creating new layers if the SOMA already exists.
             - ``resume``: Adds data to an existing SOMA, skipping writing data
               that was previously written. Useful for continuing after a partial
@@ -338,60 +312,49 @@ def from_visium(
             - ``schema_only``: Creates groups and the array schema, without
               writing any data to the array. Useful to prepare for appending
               multiple H5AD files to a single SOMA.
-
         X_kind: Which type of matrix is used to store dense X data from the
-          H5AD file: ``DenseNDArray`` or ``SparseNDArray``.
+            H5AD file: ``DenseNDArray`` or ``SparseNDArray``.
+        registration_mapping: Mapping for ``soma_joinid`` when ingesting multiple
+            Visium datasets or ingesting into an existing :class:`Experiment`. This
+            is done by first registering the Visium dataset(s):
 
-        registration_mapping: Does not need to be supplied when ingesting a single
-          H5AD/AnnData object into a single :class:`Experiment`. When multiple inputs
-          are to be ingested into a single experiment, there are two steps. First:
+            .. code-block:: python
 
-          .. code-block:: python
+                import tiledbsoma.io.spatial
+                rd = tiledbsoma.io.register_h5ads(
+                    experiment_uri,
+                    visium_paths,
+                    measurement_name="RNA",
+                    context=context,
+                )
 
-              import tiledbsoma.io
-              rd = tiledbsoma.io.register_h5ads(
-                  experiment_uri,
-                  h5ad_file_names,
-                  measurement_name="RNA",
-                  obs_field_name="obs_id",
-                  var_field_name="var_id",
-                  context=context,
-              )
+            Once they are registered, the Visium datasets can be ingested in any order
+            using:
 
-          Once that's been done, the data ingests per se may be done in any order,
-          or in parallel, via for each ``h5ad_file_name``:
+            .. code-block:: python
 
-          .. code-block:: python
+                tiledbsoma.io.from_visium(
+                    experiment_uri,
+                    visium_path,
+                    measurement_name="RNA",
+                    ingest_mode="write",
+                    registration_mapping=rd,
+                )
+        additional_metadata: Optional metadata to add to the :class:`Experiment` and
+            all descendents. This is a coarse-grained mechanism for setting key-value
+            pairs on all SOMA objects in an :class:`Experiment` hierarchy. Metadata
+            for particular objects is more commonly set like:
 
-              tiledbsoma.io.from_h5ad(
-                  experiment_uri,
-                  h5ad_file_name,
-                  measurement_name="RNA",
-                  ingest_mode="write",
-                  registration_mapping=rd,
-              )
+            .. code-block:: python
 
-        uns_keys: Only ingest the specified top-level ``uns`` keys.
-          The default is to ingest them all. Use ``uns_keys=[]``
-          to not ingest any ``uns`` keys.
-
-        additional_metadata: Optional metadata to add to the ``Experiment`` and all descendents.
-          This is a coarse-grained mechanism for setting key-value pairs on all SOMA objects in an
-          ``Experiment`` hierarchy. Metadata for particular objects is more commonly set like:
-
-          .. code-block:: python
-
-              with soma.open(uri, 'w') as exp:
-                  exp.metadata.update({"aaa": "BBB"})
-                  exp.obs.metadata.update({"ccc": 123})
-
+                with soma.open(uri, 'w') as exp:
+                    exp.metadata.update({"aaa": "BBB"})
+                    exp.obs.metadata.update({"ccc": 123})
         use_raw_counts: If ``True`` ingest the raw gene expression data, otherwise
             use the filtered gene expression data. Only used if ``input_path`` is
             not a ``VisiumPaths`` object. Defaults to ``False``.
-
         write_obs_spatial_presence: If ``True`` create and write data to the ``obs``
             presence matrix. Defaults to ``True``.
-
         write_var_spatial_presence: If ``True`` create and write data to the ``var``
             presence matrix. Defaults to ``False``.
 
@@ -449,15 +412,12 @@ def from_visium(
             measurement_name,
             context=context,
             platform_config=platform_config,
-            obs_id_name=obs_id_name,
-            var_id_name=var_id_name,
             X_layer_name=X_layer_name,
             raw_X_layer_name=raw_X_layer_name,
             ingest_mode=ingest_mode,
             use_relative_uri=use_relative_uri,
             X_kind=X_kind,
             registration_mapping=registration_mapping,
-            uns_keys=uns_keys,
             additional_metadata=additional_metadata,
         )
 
@@ -583,7 +543,7 @@ def from_visium(
                         input_paths.major_version,
                         pixels_per_spot_diameter,
                         obs_df,
-                        obs_id_name,
+                        "obs_id",
                         len_obs_id,
                         **ingest_ctx,
                     ) as loc:
