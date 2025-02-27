@@ -34,6 +34,7 @@ else
     wget https://github.com/single-cell-data/TileDB-SOMA-Test-Data/releases/download/dataset-2025-02-19/filtered_feature_bc_matrix.h5
     wget https://github.com/single-cell-data/TileDB-SOMA-Test-Data/releases/download/dataset-2025-02-19/raw_feature_bc_matrix.h5
     wget https://github.com/single-cell-data/TileDB-SOMA-Test-Data/releases/download/dataset-2025-02-19/spatial.tar.gz
+    wget https://github.com/single-cell-data/TileDB-SOMA-Test-Data/releases/download/dataset-2025-02-19/filtered_visium2_loc.csv
     tar zxf spatial.tar.gz
     cd ..
     echo "   ... finished preparing dataset 'data/$name'."
@@ -49,6 +50,7 @@ else
     mkdir $name && cd $name
     wget https://github.com/single-cell-data/TileDB-SOMA-Test-Data/releases/download/dataset-2025-02-21/filtered_feature_bc_matrix.h5
     wget https://github.com/single-cell-data/TileDB-SOMA-Test-Data/releases/download/dataset-2025-02-21/raw_feature_bc_matrix.h5
+    wget https://github.com/single-cell-data/TileDB-SOMA-Test-Data/releases/download/dataset-2025-02-21/filtered_visium1_loc.csv
     wget https://github.com/single-cell-data/TileDB-SOMA-Test-Data/releases/download/dataset-2025-02-21/spatial.tar.gz
     tar zxf spatial.tar.gz
     cd ..
