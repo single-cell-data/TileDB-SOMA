@@ -242,6 +242,26 @@ class VisiumPaths:
         return self.version[0] if isinstance(self.version, tuple) else self.version
 
 
+def register_visium_datasets(
+    experiment_uri: str | None,
+    visium_paths: Sequence[VisiumPaths | Path] | VisiumPaths | Path,
+    *,
+    measurement_name: str,
+    context: SOMATileDBContext | None = None,
+) -> ExperimentAmbientLabelMapping:
+    """Create registration for adding one or more Visium datasets to
+    a single :class:`Experiment`.
+
+    Args:
+        experiment_uri: The experiment to append data to.
+        visium_paths: A path or paths to Visium datasets.
+        measurement_name: Name of the measurement to store data in.
+        context: Optional :class:`SOMATileDBContext` for opening the existing
+            :class:`Experiment`.
+    """
+    raise NotImplementedError()
+
+
 def from_visium(
     experiment_uri: str,
     input_path: Path | VisiumPaths,
