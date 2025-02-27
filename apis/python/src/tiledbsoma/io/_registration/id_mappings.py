@@ -97,6 +97,6 @@ def get_dataframe_values(df: pd.DataFrame, field_name: str) -> List[str]:
     # Check the values are unique.
     if len(values) != len(set(values)):
         raise ValueError(
-            "non-unique registration values have been provided in field {field_name}"
+            f"non-unique registration values have been provided in field {field_name}"
         )
     return values
