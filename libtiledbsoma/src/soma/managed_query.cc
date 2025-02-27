@@ -617,6 +617,8 @@ bool ManagedQuery::_cast_column(
         case TILEDB_STRING_UTF8:
         case TILEDB_CHAR:
             return _cast_column_aux<std::string>(schema, array, se);
+        case TILEDB_BLOB:
+            return _cast_column_aux<std::vector<std::byte>>(schema, array, se);
         case TILEDB_BOOL:
             return _cast_column_aux<bool>(schema, array, se);
         case TILEDB_INT8:
@@ -920,8 +922,10 @@ bool ManagedQuery::_cast_column_aux(
     }
 }
 
-template <>
-bool ManagedQuery::_cast_column_aux<std::string>(
+template <typename UserType>
+    requires std::same_as<UserType, std::string> ||
+             std::same_as<UserType, std::vector<std::byte>>
+bool ManagedQuery::_cast_column_aux(
     ArrowSchema* schema, ArrowArray* array, ArraySchemaEvolution se) {
     (void)se;  // se is unused in std::string specialization
 
@@ -994,6 +998,9 @@ bool ManagedQuery::_extend_enumeration(
         case TILEDB_STRING_UTF8:
         case TILEDB_CHAR:
             return _extend_and_evolve_schema<std::string>(
+                value_schema, value_array, index_schema, index_array, se);
+        case TILEDB_BLOB:
+            return _extend_and_evolve_schema<std::vector<std::byte>>(
                 value_schema, value_array, index_schema, index_array, se);
         case TILEDB_INT8:
             return _extend_and_evolve_schema<int8_t>(
@@ -1208,6 +1215,123 @@ bool ManagedQuery::_extend_and_evolve_schema<std::string>(
     return false;
 }
 
+template <>
+bool ManagedQuery::_extend_and_evolve_schema<std::vector<std::byte>>(
+    ArrowSchema* value_schema,
+    ArrowArray* value_array,
+    ArrowSchema* index_schema,
+    ArrowArray* index_array,
+    ArraySchemaEvolution se) {
+    uint64_t num_elems = value_array->length;
+
+    std::vector<uint64_t> offsets_v;
+    if (strcmp(value_schema->format, "Z") == 0) {
+        uint64_t* offsets = (uint64_t*)value_array->buffers[1];
+        offsets_v.assign(offsets, offsets + num_elems + 1);
+    } else if (strcmp(value_schema->format, "z") == 0) {
+        uint32_t* offsets = (uint32_t*)value_array->buffers[1];
+        for (size_t i = 0; i < num_elems + 1; ++i) {
+            offsets_v.push_back((uint64_t)offsets[i]);
+        }
+    } else {
+        throw TileDBSOMAError(std::format(
+            "[ManagedQuery][_extend_and_evolve_schema] Unknown arrow array "
+            "type. Expected 'Z' or 'z', found '{}'",
+            value_schema->format));
+    }
+
+    std::span<const std::byte> data(
+        static_cast<const std::byte*>(value_array->buffers[2]),
+        offsets_v[num_elems]);
+
+    std::vector<std::span<const std::byte>> enums_in_write(num_elems);
+    for (size_t i = 0; i < num_elems; ++i) {
+        auto beg = offsets_v[i];
+        auto sz = offsets_v[i + 1] - beg;
+        enums_in_write[i] = data.subspan(beg, sz);
+    }
+
+    auto enumname = util::get_enmr_label(index_schema, value_schema);
+    auto enmr = ArrayExperimental::get_enumeration(*ctx_, *array_, enumname);
+    std::vector<std::span<const std::byte>> extend_values;
+    size_t total_size = 0;
+
+    auto enums_existing = _enumeration_values_view<std::span<const std::byte>>(
+        enmr);
+    for (const auto& enum_val : enums_in_write) {
+        bool found = false;
+        for (const auto& existing_enum_val : enums_existing) {
+            if (std::equal(
+                    enum_val.begin(),
+                    enum_val.end(),
+                    existing_enum_val.begin())) {
+                found = true;
+                break;
+            }
+        }
+
+        if (!found) {
+            extend_values.push_back(enum_val);
+            total_size += enum_val.size_bytes();
+        }
+    }
+
+    std::string column_name = index_schema->name;
+    if (extend_values.size() != 0) {
+        // Check that we extend the enumeration values without
+        // overflowing
+        auto disk_index_type = schema_->attribute(column_name).type();
+        uint64_t max_capacity = ManagedQuery::_get_max_capacity(
+            disk_index_type);
+        auto free_capacity = max_capacity - enums_existing.size();
+        if (free_capacity < extend_values.size()) {
+            throw TileDBSOMAError(
+                "Cannot extend enumeration; reached maximum capacity");
+        }
+
+        std::vector<uint8_t> extend_data(total_size);
+        std::vector<uint64_t> extend_offsets;
+        extend_offsets.reserve(extend_values.size());
+        size_t curr_offset = 0;
+        for (const auto& enum_val : extend_values) {
+            std::memcpy(
+                extend_data.data() + curr_offset,
+                enum_val.data(),
+                enum_val.size_bytes());
+            extend_offsets.push_back(curr_offset);
+            curr_offset += enum_val.size_bytes();
+        }
+
+        auto extended_enmr = enmr.extend(
+            extend_data.data(),
+            extend_data.size(),
+            extend_offsets.data(),
+            extend_values.size() * sizeof(uint64_t));
+        se.extend_enumeration(extended_enmr);
+
+        ManagedQuery::_remap_indexes(
+            column_name,
+            extended_enmr,
+            enums_in_write,
+            index_schema,
+            index_array);
+
+        return true;
+    } else {
+        // Example:
+        //
+        // * Already on storage/schema there are values a,b,c with indices
+        //   0,1,2.
+        // * User appends values b,c which, within the Arrow data coming in
+        //   from the user, have indices 0,1.
+        // * We need to remap those to 1,2.
+
+        ManagedQuery::_remap_indexes(
+            column_name, enmr, enums_in_write, index_schema, index_array);
+    }
+    return false;
+}
+
 std::vector<uint8_t> ManagedQuery::_cast_bool_data(
     ArrowSchema* schema, ArrowArray* array) {
     if (strcmp(schema->format, "b") != 0) {
@@ -1226,5 +1350,72 @@ std::optional<std::vector<uint8_t>> ManagedQuery::_cast_validity_buffer(
     const uint8_t* validity = reinterpret_cast<const uint8_t*>(
         array->buffers[0]);
     return util::bitmap_to_uint8(validity, array->length, array->offset);
+}
+
+template <>
+std::vector<std::span<const std::byte>> ManagedQuery::_enumeration_values_view(
+    Enumeration& enumeration) {
+    const void* data;
+    uint64_t data_size;
+
+    ctx_->handle_error(tiledb_enumeration_get_data(
+        ctx_->ptr().get(), enumeration.ptr().get(), &data, &data_size));
+
+    const void* offsets;
+    uint64_t offsets_size;
+    ctx_->handle_error(tiledb_enumeration_get_offsets(
+        ctx_->ptr().get(), enumeration.ptr().get(), &offsets, &offsets_size));
+
+    std::span<const std::byte> byte_data(
+        static_cast<const std::byte*>(data), data_size);
+    const uint64_t* elems = static_cast<const uint64_t*>(offsets);
+    size_t count = offsets_size / sizeof(uint64_t);
+
+    std::vector<std::span<const std::byte>> ret(count);
+    for (size_t i = 0; i < count; i++) {
+        uint64_t len;
+        if (i + 1 < count) {
+            len = elems[i + 1] - elems[i];
+        } else {
+            len = data_size - elems[i];
+        }
+
+        ret[i] = byte_data.subspan(elems[i], len);
+    }
+
+    return ret;
+}
+
+template <>
+std::vector<std::string_view> ManagedQuery::_enumeration_values_view(
+    Enumeration& enumeration) {
+    const void* data;
+    uint64_t data_size;
+
+    ctx_->handle_error(tiledb_enumeration_get_data(
+        ctx_->ptr().get(), enumeration.ptr().get(), &data, &data_size));
+
+    const void* offsets;
+    uint64_t offsets_size;
+    ctx_->handle_error(tiledb_enumeration_get_offsets(
+        ctx_->ptr().get(), enumeration.ptr().get(), &offsets, &offsets_size));
+
+    std::string_view char_data(static_cast<const char*>(data), data_size);
+    const uint64_t* elems = static_cast<const uint64_t*>(offsets);
+    size_t count = offsets_size / sizeof(uint64_t);
+
+    std::vector<std::string_view> ret(count);
+    for (size_t i = 0; i < count; i++) {
+        uint64_t len;
+        if (i + 1 < count) {
+            len = elems[i + 1] - elems[i];
+        } else {
+            len = data_size - elems[i];
+        }
+
+        ret[i] = char_data.substr(elems[i], len);
+    }
+
+    return ret;
 }
 };  // namespace tiledbsoma
