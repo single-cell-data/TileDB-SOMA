@@ -40,7 +40,12 @@ void SOMADataFrame::create(
             true,
             platform_config);
     SOMAArray::create(
-        ctx, uri, tiledb_schema, "SOMADataFrame", std::nullopt, timestamp);
+        ctx,
+        uri,
+        tiledb_schema,
+        "SOMADataFrame",
+        soma_schema_extension.dump(),
+        timestamp);
 }
 
 std::unique_ptr<SOMADataFrame> SOMADataFrame::open(

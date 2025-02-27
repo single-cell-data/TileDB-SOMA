@@ -575,6 +575,8 @@ bool ManagedQuery::_cast_column(
         case TILEDB_STRING_UTF8:
         case TILEDB_CHAR:
             return _cast_column_aux<std::string>(schema, array, se);
+        case TILEDB_BLOB:
+            return _cast_column_aux<std::vector<std::byte>>(schema, array, se);
         case TILEDB_BOOL:
             return _cast_column_aux<bool>(schema, array, se);
         case TILEDB_INT8:
@@ -774,8 +776,10 @@ void ManagedQuery::_cast_dictionary_values<bool>(
         std::nullopt);  // validities are set by index column
 }
 
-template <>
-bool ManagedQuery::_cast_column_aux<std::string>(
+template <typename UserType>
+    requires std::same_as<UserType, std::string> ||
+             std::same_as<UserType, std::vector<std::byte>>
+bool ManagedQuery::_cast_column_aux(
     ArrowSchema* schema, ArrowArray* array, ArraySchemaEvolution se) {
     (void)se;  // se is unused in std::string specialization
 
@@ -789,7 +793,7 @@ bool ManagedQuery::_cast_column_aux<std::string>(
     //   from Python/R.)
 
     if (array->n_buffers != 3) {
-        throw TileDBSOMAError(fmt::format(
+        throw TileDBSOMAError(std::format(
             "[ManagedQuery] internal error: Arrow-table string column should "
             "have 3 buffers; got {}",
             array->n_buffers));
@@ -910,7 +914,10 @@ bool ManagedQuery::_extend_and_write_enumeration(
         case TILEDB_STRING_UTF8:
         case TILEDB_CHAR:
             return _extend_and_evolve_schema_and_write<std::string>(
-                value_schema, value_array, index_schema, index_array, enmr, se);
+                value_schema, value_array, index_schema, index_array, se);
+        case TILEDB_BLOB:
+            return _extend_and_evolve_schema_and_write<std::vector<std::byte>>(
+                value_schema, value_array, index_schema, index_array, se);
         case TILEDB_INT8:
             return _extend_and_evolve_schema_and_write<int8_t>(
                 value_schema, value_array, index_schema, index_array, enmr, se);
@@ -1574,6 +1581,40 @@ std::optional<std::vector<uint8_t>> ManagedQuery::_cast_validity_buffer(
     const uint8_t* validity = reinterpret_cast<const uint8_t*>(
         array->buffers[0]);
     return util::bitmap_to_uint8(validity, array->length, array->offset);
+}
+
+template <>
+std::vector<std::span<const std::byte>> ManagedQuery::_enumeration_values_view(
+    Enumeration& enumeration) {
+    const void* data;
+    uint64_t data_size;
+
+    ctx_->handle_error(tiledb_enumeration_get_data(
+        ctx_->ptr().get(), enumeration.ptr().get(), &data, &data_size));
+
+    const void* offsets;
+    uint64_t offsets_size;
+    ctx_->handle_error(tiledb_enumeration_get_offsets(
+        ctx_->ptr().get(), enumeration.ptr().get(), &offsets, &offsets_size));
+
+    std::span<const std::byte> byte_data(
+        static_cast<const std::byte*>(data), data_size);
+    const uint64_t* elems = static_cast<const uint64_t*>(offsets);
+    size_t count = offsets_size / sizeof(uint64_t);
+
+    std::vector<std::span<const std::byte>> ret(count);
+    for (size_t i = 0; i < count; i++) {
+        uint64_t len;
+        if (i + 1 < count) {
+            len = elems[i + 1] - elems[i];
+        } else {
+            len = data_size - elems[i];
+        }
+
+        ret[i] = byte_data.subspan(elems[i], len);
+    }
+
+    return ret;
 }
 
 template <>
