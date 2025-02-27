@@ -92,6 +92,22 @@ def test_query_condition(condition):
         ["n_genes > val(100.0)", "n_genes > 100.0"],
         ["is_b_cell == val(True)", "is_b_cell == True"],
         ["louvain == val('B cells')", "louvain == 'B cells'"],
+        [
+            "louvain == 'B cells' or louvain == 'NK cells'",
+            "louvain == 'B cells' or louvain == 'NK cells'",
+        ],
+        [
+            "attr('louvain') == 'B cells' or attr('louvain') == 'NK cells'",
+            "louvain == 'B cells' or louvain == 'NK cells'",
+        ],
+        [
+            "louvain in ['B cells', 'NK cells']",
+            "louvain == 'B cells' or louvain == 'NK cells'",
+        ],
+        [
+            "attr('louvain') in ['B cells', 'NK cells']",
+            "louvain == 'B cells' or louvain == 'NK cells'",
+        ],
     ],
 )
 def test_query_condition_extensions(condition, pandas_equivalent_condition):
