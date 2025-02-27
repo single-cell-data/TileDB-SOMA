@@ -16,7 +16,7 @@ import pytest
 
 import tiledbsoma.io
 import tiledbsoma.io._registration as registration
-from tiledbsoma.io._registration import signatures
+from tiledbsoma.io import conversions
 
 from ._util import assert_adata_equal
 
@@ -254,7 +254,8 @@ def test_pandas_indexing(
         if len(index_col_and_name) == 2:
             df.index.name = index_col_and_name[1]
 
-    actual_signature = signatures._string_dict_from_pandas_dataframe(df, default_index_name)
+    arrow_schema = conversions.df_to_arrow_schema(df, default_index_name)
+    actual_signature = conversions._string_dict_from_arrow_schema(arrow_schema)
     expected_signature = dict((col, "string") for col in signature_col_names)
     assert actual_signature == expected_signature
 # fmt: on
