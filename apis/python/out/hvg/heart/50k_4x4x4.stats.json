@@ -1,46 +1,46 @@
 {
-  "total_num_allocations": 61115357,
-  "total_bytes_allocated": 56038827535,
+  "total_num_allocations": 63984739,
+  "total_bytes_allocated": 62068737533,
   "allocation_size_histogram": [
     {
       "min_bytes": 0,
       "max_bytes": 7,
-      "count": 244871
+      "count": 251130
     },
     {
       "min_bytes": 8,
       "max_bytes": 63,
-      "count": 47325187
+      "count": 48097355
     },
     {
       "min_bytes": 64,
       "max_bytes": 511,
-      "count": 13376114
+      "count": 15442225
     },
     {
       "min_bytes": 512,
       "max_bytes": 4095,
-      "count": 81592
+      "count": 85848
     },
     {
       "min_bytes": 4096,
       "max_bytes": 32767,
-      "count": 39683
+      "count": 42764
     },
     {
       "min_bytes": 32768,
       "max_bytes": 262143,
-      "count": 43226
+      "count": 59598
     },
     {
       "min_bytes": 262144,
       "max_bytes": 2097151,
-      "count": 3672
+      "count": 4102
     },
     {
       "min_bytes": 2097152,
       "max_bytes": 16777215,
-      "count": 964
+      "count": 1669
     },
     {
       "min_bytes": 16777216,
@@ -54,14 +54,14 @@
     }
   ],
   "allocator_type_distribution": {
-    "PYMALLOC_MALLOC": 59228372,
-    "MALLOC": 1063493,
-    "PYMALLOC_REALLOC": 468556,
-    "PYMALLOC_CALLOC": 324762,
+    "PYMALLOC_MALLOC": 62022837,
+    "MALLOC": 1061630,
+    "PYMALLOC_REALLOC": 491363,
+    "PYMALLOC_CALLOC": 378730,
     "ALIGNED_ALLOC": 15374,
-    "REALLOC": 11014,
+    "REALLOC": 11013,
     "CALLOC": 3678,
-    "MMAP": 108
+    "MMAP": 114
   },
   "top_allocations_by_size": [
     {
@@ -70,51 +70,51 @@
     },
     {
       "location": "dump:/home/ubuntu/.pyenv/versions/3.12.6/lib/python3.12/site-packages/cloudpickle/cloudpickle.py:1303",
-      "size": 5563527739
+      "size": 9726223839
     },
     {
       "location": "<stack trace unavailable>",
-      "size": 2949778268
-    },
-    {
-      "location": "_normalize_pickle:/home/ubuntu/.pyenv/versions/3.12.6/lib/python3.12/site-packages/dask/tokenize.py:242",
-      "size": 2527270137
+      "size": 2949718335
     },
     {
       "location": "packb:/home/ubuntu/.pyenv/versions/3.12.6/lib/python3.12/site-packages/msgpack/__init__.py:36",
-      "size": 1419398224
+      "size": 2669324120
+    },
+    {
+      "location": "_normalize_pickle:/home/ubuntu/.pyenv/versions/3.12.6/lib/python3.12/site-packages/dask/tokenize.py:242",
+      "size": 2471619267
     }
   ],
   "top_allocations_by_count": [
     {
       "location": "_normalize_pickle:/home/ubuntu/.pyenv/versions/3.12.6/lib/python3.12/site-packages/dask/tokenize.py:242",
-      "count": 24358101
+      "count": 24366480
     },
     {
       "location": "_astype_nansafe:/home/ubuntu/.pyenv/versions/3.12.6/lib/python3.12/site-packages/pandas/core/dtypes/astype.py:96",
-      "count": 8101016
-    },
-    {
-      "location": "<stack trace unavailable>",
-      "count": 2532028
+      "count": 8101015
     },
     {
       "location": "_find_imported_submodules:/home/ubuntu/.pyenv/versions/3.12.6/lib/python3.12/site-packages/cloudpickle/cloudpickle.py:379",
-      "count": 2424240
+      "count": 4244250
+    },
+    {
+      "location": "<stack trace unavailable>",
+      "count": 2529509
     },
     {
       "location": "loads:/home/ubuntu/.pyenv/versions/3.12.6/lib/python3.12/site-packages/distributed/protocol/pickle.py:90",
-      "count": 1625254
+      "count": 1626436
     }
   ],
   "metadata": {
-    "start_time": "2025-02-27 18:46:25.467000+00:00",
-    "end_time": "2025-02-27 18:48:22.792000+00:00",
-    "total_allocations": 115255284,
-    "total_frames": 25285,
-    "peak_memory": 40498796925,
-    "command_line": "./dsk.py hvg -c100k -DMM -b2GiB -w2 -W8 -T4 -theart -oout/hvg/heart",
-    "pid": 31684,
+    "start_time": "2025-02-27 18:56:15.188000+00:00",
+    "end_time": "2025-02-27 18:58:04.608000+00:00",
+    "total_allocations": 122604155,
+    "total_frames": 25052,
+    "peak_memory": 40503966150,
+    "command_line": "./dsk.py hvg -c50k -DMM -b2GiB -w4 -W4 -T4 -theart -oout/hvg/heart",
+    "pid": 35358,
     "main_thread_id": 1,
     "python_allocator": "pymalloc",
     "has_native_traces": true,
