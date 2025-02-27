@@ -72,7 +72,7 @@ void ArrowAdapter::release_schema(struct ArrowSchema* schema) {
                         "release",
                         name_for_log,
                         i));
-                    release_schema(schema->children[i]);
+                    schema->children[i]->release(schema->children[i]);
                 }
                 LOG_TRACE(std::format(
                     "[ArrowAdapter] release_schema name {} schema->child {} "
@@ -138,7 +138,8 @@ void ArrowAdapter::release_array(struct ArrowArray* array) {
                     LOG_TRACE(std::format(
                         "[ArrowAdapter] release_schema array->child {} release",
                         i));
-                    release_array(array->children[i]);
+
+                    array->children[i]->release(array->children[i]);
                 }
                 LOG_TRACE(std::format(
                     "[ArrowAdapter] release_schema array->child {} free", i));
@@ -1809,6 +1810,124 @@ ArrowArray* ArrowAdapter::_get_and_check_column(
     }
 
     return child;
+}
+
+std::unique_ptr<ArrowArray> ArrowAdapter::arrow_array_insert_at_index(
+    std::unique_ptr<ArrowArray> parent_array,
+    std::vector<std::unique_ptr<ArrowArray>> child_arrays,
+    int64_t index) {
+    if (parent_array->n_children < index || index < 0) {
+        throw std::runtime_error(
+            "[ArrowAdapter][arrow_array_insert_at_index] Invalid index to "
+            "insert array");
+    }
+
+    if (child_arrays.size() == 0) {
+        return parent_array;
+    }
+
+    auto array = make_arrow_array_parent(
+        static_cast<size_t>(parent_array->n_children) + child_arrays.size());
+
+    for (int64_t i = 0; i < array->n_children; ++i) {
+        int64_t idx = i <= index ? i : i - child_arrays.size();
+        array->children[i] = (ArrowArray*)malloc(sizeof(ArrowArray));
+
+        if (i >= index &&
+            i < index + static_cast<int64_t>(child_arrays.size())) {
+            ArrowArrayMove(
+                child_arrays[i - index].release(), array->children[i]);
+        } else {
+            ArrowArrayMove(parent_array->children[idx], array->children[i]);
+        }
+    }
+
+    parent_array->release(parent_array.get());
+
+    return array;
+}
+
+std::unique_ptr<ArrowSchema> ArrowAdapter::arrow_schema_insert_at_index(
+    std::unique_ptr<ArrowSchema> parent_schema,
+    std::vector<std::unique_ptr<ArrowSchema>> child_schemas,
+    int64_t index) {
+    if (parent_schema->n_children < index || index < 0) {
+        throw std::runtime_error(
+            "[ArrowAdapter][arrow_schema_insert_at_index] Invalid index to "
+            "insert schema");
+    }
+
+    if (child_schemas.size() == 0) {
+        return parent_schema;
+    }
+
+    auto schema = make_arrow_schema_parent(
+        parent_schema->n_children + child_schemas.size());
+
+    for (int64_t i = 0; i < schema->n_children; ++i) {
+        int64_t idx = i <= index ? i : i - child_schemas.size();
+        schema->children[i] = (ArrowSchema*)malloc(sizeof(ArrowSchema));
+
+        if (i >= index &&
+            i < index + static_cast<int64_t>(child_schemas.size())) {
+            ArrowSchemaMove(
+                child_schemas[i - index].release(), schema->children[i]);
+        } else {
+            ArrowSchemaMove(parent_schema->children[idx], schema->children[i]);
+        }
+    }
+
+    parent_schema->release(parent_schema.get());
+
+    return schema;
+}
+
+std::unique_ptr<ArrowArray> ArrowAdapter::arrow_array_remove_at_index(
+    std::unique_ptr<ArrowArray> array, int64_t index) {
+    if (array->n_children <= index || index < 0) {
+        throw std::runtime_error(
+            "[ArrowAdapter][arrow_array_remove_at_index] Invalid index to "
+            "remove child array");
+    }
+
+    auto array_new = make_arrow_array_parent(array->n_children - 1);
+    for (int64_t i = 0; i < array->n_children; ++i) {
+        int64_t idx = i <= index ? i : i - 1;
+
+        if (i != index) {
+            array_new->children[idx] = (ArrowArray*)malloc(sizeof(ArrowArray));
+            ArrowArrayMove(array->children[i], array_new->children[idx]);
+        }
+    }
+
+    array->release(array.get());
+
+    return array_new;
+}
+
+std::unique_ptr<ArrowSchema> ArrowAdapter::arrow_schema_remove_at_index(
+    std::unique_ptr<ArrowSchema> schema, int64_t index) {
+    if (schema->n_children <= index || index < 0) {
+        throw std::runtime_error(
+            "[ArrowAdapter][arrow_schema_remove_at_index] Invalid index to "
+            "remove child schema");
+    }
+
+    auto schema_new = make_arrow_schema_parent(schema->n_children - 1);
+
+    for (int64_t i = 0; i < schema->n_children; ++i) {
+        int64_t idx = i <= index ? i : i - 1;
+
+        if (i != index) {
+            schema_new->children[idx] = (ArrowSchema*)malloc(
+                sizeof(ArrowSchema));
+            ArrowSchemaMove(schema->children[i], schema_new->children[idx]);
+        }
+    }
+
+    schema->release(schema.get());
+
+    return schema_new;
 }
 
 }  // namespace tiledbsoma
