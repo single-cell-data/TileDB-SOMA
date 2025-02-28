@@ -2,6 +2,7 @@
 
 import json
 from contextlib import nullcontext
+from dataclasses import asdict, dataclass
 from functools import wraps
 from os import cpu_count, makedirs
 from os.path import dirname, join, splitext
@@ -13,7 +14,7 @@ import h5py
 import pyarrow as pa
 import scanpy as sc
 from anndata import AnnData
-from click import argument, group, option
+from click import BadParameter, Context, Parameter, argument, group, option
 from dask.distributed import Client, LocalCluster
 from humanfriendly import parse_size
 from prometheus_client.decorator import getfullargspec
@@ -25,7 +26,7 @@ from utz.cli import number
 from utz.mem import Tracker
 
 from tiledbsoma import Experiment, SparseNDArray
-from tiledbsoma._dask import DaskConfig, make_context
+from tiledbsoma._dask.load import DaskConfig, make_context
 from tiledbsoma._fastercsx import CompressedMatrix
 from tiledbsoma._indexer import IntIndexer
 
@@ -56,10 +57,64 @@ def _census_version_opt(*opt_args, **opt_kwargs):
     return opt
 
 
+@dataclass
+class DaskProcs:
+    procs: int
+    threads_per_proc: int
+
+    @property
+    def n_workers(self) -> int:
+        return self.procs
+
+    @property
+    def kwargs(self):
+        return dict(
+            n_workers=self.procs,
+            threads_per_worker=self.threads_per_proc,
+        )
+
+    def __str__(self):
+        return f"{self.procs}x{self.threads_per_proc}"
+
+
+@dataclass
+class DaskThreads:
+    threads: int
+
+    @property
+    def n_workers(self) -> int:
+        return self.threads
+
+    @property
+    def kwargs(self):
+        return dict(
+            processes=False,
+            threads_per_worker=self.threads,
+            # n_workers=self.threads,
+        )
+
+    def __str__(self):
+        return f"{self.threads}"
+
+
+DaskWorkers = DaskProcs | DaskThreads
+
+
+def parse_dask_workers(ctx: Context, param: Parameter, value: str):
+    pcs = [int(pc) for pc in value.split("x")]
+    if len(pcs) == 1:
+        return DaskThreads(pcs[0])
+    elif len(pcs) == 2:
+        return DaskProcs(*pcs)
+    else:
+        raise BadParameter(f"unrecognized value {value}", ctx, param)
+
+
 # fmt: off
 mem_budget_opt = option("-b", "--mem-total-budget", callback=lambda ctx, param, val: parse_size(val) if val else None)
 dask_chunk_size_opt = number("-c", "--dask-chunk-size", default="100k")
 census_version_opt = _census_version_opt("-C", default="2024-07-01", help="Exclusive with -H/--h5ad-path.")
+dask_workers_opt = option('-d', '--dask-workers', callback=parse_dask_workers, help="`<n>` (Dask threads) or `<m>x<n>` (Dask processes x threads)")
 no_dask_mem_mgmt_opt = option("-D", "--no-dask-mem-mgmt", is_flag=True)
 h5ad_path_opt = option("-H", "--h5ad-path", help="When passed, read a Dask-AnnData from this .h5ad (instead of a TileDB-SOMA-backed Census query). Exclusive with -C/--census-version, -t/--tissue, and -T/--tdb-concurrency.")
 no_keep_memray_bin_opt = option("-K", "--no-keep-memray-bin", is_flag=True)
@@ -73,8 +128,6 @@ tissue_opt = option("-t", "--tissue", help="Query Census cells with this `tissue
 tdb_concurrency_opt = option("-T", "--tdb-concurrency", type=int, help='Short-hand for several TileDB{,-SOMA} concurrency configs: "sm.io_concurrency_level", "sm.compute_concurrency_level", and the SOMA context threadpool size. Exclusive with -H/--h5ad-path.')
 verbosity_opt = option("-v", "--verbosity", default=2)
 var_filter_opt = option("-V", "--var-filter")
-dask_workers_opt = option("-w", "--n-dask-workers", type=int)
-dask_threads_per_worker_opt = option("-W", "--n-dask-threads-per-worker", type=int)
 
 hvg_inplace_opt = option("--hvg-inplace/--no-hvg-inplace", default=True)
 hvg_subset_opt = option("--hvg-subset/--no-hvg-subset", default=False)
@@ -174,6 +227,10 @@ def memray_cmd(
                 else:
                     name += f"_{dask_chunk_size}"
 
+                if "dask_workers" in kwargs:
+                    dask_workers = kwargs["dask_workers"]
+                    name += f"_d{dask_workers}"
+
                 if h5ad_path:
                     if tdb_concurrency is not None:
                         raise ValueError(
@@ -184,16 +241,7 @@ def memray_cmd(
                         tdb_concurrency = 1
                     elif tdb_concurrency == 0:
                         tdb_concurrency = cpu_count()
-
-                if "n_dask_workers" in kwargs and "n_dask_threads_per_worker" in kwargs:
-                    n_dask_workers = kwargs["n_dask_workers"]
-                    n_dask_threads_per_worker = kwargs["n_dask_threads_per_worker"]
-                    name += f"_{n_dask_workers}x{n_dask_threads_per_worker}"
-                    if not h5ad_path:
-                        name += f"x{tdb_concurrency}"
-                else:
-                    if tdb_concurrency != 1:
-                        name += f"_{tdb_concurrency}"
+                    name += f"_T{tdb_concurrency}"
 
                 memray_bin_path = join(out_dir or kwargs[out_path_kwarg], f"{name}.bin")
 
@@ -258,8 +306,7 @@ def query_to_anndata_dask(
     tdb_concurrency: int,
     var_filter: str | None,
     no_dask_mem_mgmt: bool,
-    n_dask_workers: int | None,
-    n_dask_threads_per_worker: int | None,
+    dask_workers: DaskWorkers | None,
     normalize: bool = True,
     log1p: bool = True,
 ) -> AnnData:
@@ -274,15 +321,19 @@ def query_to_anndata_dask(
                     "distributed.worker.memory.terminate": False,
                 }
             )
-        if n_dask_workers is None:
-            n_dask_workers = cpu_count() // tdb_concurrency // n_dask_threads_per_worker
-        cluster = LocalCluster(
-            n_workers=n_dask_workers,
-            threads_per_worker=n_dask_threads_per_worker,
-            dashboard_address=f":{dask_dashboard_port}",
-        )
-        err(f"{n_dask_workers=}, {n_dask_threads_per_worker=}, {tdb_concurrency=}")
-        client = Client(cluster)
+        err(f"{dask_workers.kwargs=}")
+        if isinstance(dask_workers, DaskThreads):
+            client = Client(
+                **dask_workers.kwargs,
+                dashboard_address=f":{dask_dashboard_port}",
+            )
+        else:
+            cluster = LocalCluster(
+                **dask_workers.kwargs,
+                dashboard_address=f":{dask_dashboard_port}",
+            )
+            err(f"{dask_workers=}, {tdb_concurrency=}")
+            client = Client(cluster)
         err(f"Dask client: {client}, dashboard: {client.dashboard_link}")
     else:
         dask_chunk_size = None
@@ -353,8 +404,7 @@ def process_mem(
     mem_total_budget: str | None,
     no_dask_mem_mgmt: bool,
     dask_chunk_size: int,
-    n_dask_workers: int,
-    n_dask_threads_per_worker: int,
+    dask_workers: DaskWorkers,
     tdb_concurrency: int,
 ):
     mem_kwargs = {}
@@ -396,9 +446,10 @@ def process_mem(
         n_obs=n_obs,
         obs_per_s=obs_per_s,
         **({"no_dask_mem_mgmt": no_dask_mem_mgmt} if no_dask_mem_mgmt else {}),
-        dask_chunk_size=dask_chunk_size,
-        n_dask_workers=n_dask_workers,
-        n_dask_threads_per_worker=n_dask_threads_per_worker,
+        dask=dict(
+            chunk_size=dask_chunk_size,
+            **asdict(dask_workers),
+        ),
         tdb_concurrency=tdb_concurrency,
         **{key_obs_per_s_key: key_obs_per_s},
         **({"mem_total_budget": mem_total_budget} if mem_total_budget else {}),
@@ -422,7 +473,6 @@ def process_mem(
 @var_filter_opt
 @no_dask_mem_mgmt_opt
 @dask_workers_opt
-@dask_threads_per_worker_opt
 def hvg(
     mem_total_budget: str | None,
     dask_chunk_size: int,
@@ -440,8 +490,7 @@ def hvg(
     tdb_concurrency: int,
     var_filter: str | None,
     no_dask_mem_mgmt: bool,
-    n_dask_workers: int | None,
-    n_dask_threads_per_worker: int | None,
+    dask_workers: DaskWorkers | None,
 ):
     """Run Scanpy HVG on an AnnData whose ``X`` array is a Dask-backed TileDB-SOMA CELLxGENE Census query."""
     with mem_ctx:
@@ -458,8 +507,7 @@ def hvg(
             tdb_concurrency=tdb_concurrency,
             var_filter=var_filter,
             no_dask_mem_mgmt=no_dask_mem_mgmt,
-            n_dask_workers=n_dask_workers,
-            n_dask_threads_per_worker=n_dask_threads_per_worker,
+            dask_workers=dask_workers,
         )
         n_obs = add.shape[0]
         err("Running Scanpy HVG")
@@ -479,8 +527,7 @@ def hvg(
         mem_total_budget=mem_total_budget,
         no_dask_mem_mgmt=no_dask_mem_mgmt,
         dask_chunk_size=dask_chunk_size,
-        n_dask_workers=n_dask_workers,
-        n_dask_threads_per_worker=n_dask_threads_per_worker,
+        dask_workers=dask_workers,
         tdb_concurrency=tdb_concurrency,
     )
 
@@ -496,7 +543,6 @@ def hvg(
 @var_filter_opt
 @no_dask_mem_mgmt_opt
 @dask_workers_opt
-@dask_threads_per_worker_opt
 def pca(
     mem_total_budget: str | None,
     dask_chunk_size: int,
@@ -514,8 +560,7 @@ def pca(
     tdb_concurrency: int | None,
     var_filter: str | None,
     no_dask_mem_mgmt: bool,
-    n_dask_workers: int | None,
-    n_dask_threads_per_worker: int | None,
+    dask_workers: DaskWorkers | None,
 ):
     """Run Scanpy PCA on an AnnData whose ``X`` array is a Dask-backed TileDB-SOMA CELLxGENE Census query."""
     with mem_ctx:
@@ -532,8 +577,7 @@ def pca(
             tdb_concurrency=tdb_concurrency,
             var_filter=var_filter,
             no_dask_mem_mgmt=no_dask_mem_mgmt,
-            n_dask_workers=n_dask_workers,
-            n_dask_threads_per_worker=n_dask_threads_per_worker,
+            dask_workers=dask_workers,
         )
         n_obs = add.shape[0]
         err("Running Scanpy HVG")
@@ -557,8 +601,7 @@ def pca(
         mem_total_budget=mem_total_budget,
         no_dask_mem_mgmt=no_dask_mem_mgmt,
         dask_chunk_size=dask_chunk_size,
-        n_dask_workers=n_dask_workers,
-        n_dask_threads_per_worker=n_dask_threads_per_worker,
+        dask_workers=dask_workers,
         tdb_concurrency=tdb_concurrency,
     )
 

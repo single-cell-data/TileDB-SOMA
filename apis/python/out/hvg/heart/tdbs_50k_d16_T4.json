@@ -1,0 +1,24 @@
+{
+  "times": {
+    "start": 1.0700998245738447e-05,
+    "dask": 0.5891024380034651,
+    "query": 0.18879978599579772,
+    "to_anndata": 7.226503070000035,
+    "normalize": 0.2047092889988562,
+    "log1p": 0.0014664620030089281,
+    "hvg": 32.150321482004074
+  },
+  "total_time": 40.36091322800348,
+  "tissue": "heart",
+  "cmd": "HVG",
+  "n_obs": 1559974,
+  "obs_per_s": 38650.61207083016,
+  "no_dask_mem_mgmt": true,
+  "dask": {
+    "chunk_size": 50000,
+    "threads": 16
+  },
+  "tdb_concurrency": 4,
+  "hvg_obs_per_s": 48521.256649740964,
+  "mem_total_budget": 2147483648
+}
