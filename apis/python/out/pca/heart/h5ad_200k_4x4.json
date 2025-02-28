@@ -1,0 +1,24 @@
+{
+  "times": {
+    "start": 1.143000008596573e-05,
+    "dask": 3.1601278280013503,
+    "open": 0.00042977500015695114,
+    "anndata": 3.184029370000644,
+    "X": 0.004891988999588648,
+    "normalize": 0.014158957001200179,
+    "log1p": 0.0015190359990810975,
+    "hvg": 54.16637652800091,
+    "pca": 85.33441160099937
+  },
+  "total_time": 145.8659565140024,
+  "tissue": null,
+  "cmd": "PCA",
+  "n_obs": 1559974,
+  "obs_per_s": 10694.572176272333,
+  "no_dask_mem_mgmt": true,
+  "dask_chunk_size": 200000,
+  "n_dask_workers": 4,
+  "n_dask_threads_per_worker": 4,
+  "tdb_concurrency": 64,
+  "pca_obs_per_s": 18280.714318322327
+}
