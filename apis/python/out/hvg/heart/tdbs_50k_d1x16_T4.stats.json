@@ -1,0 +1,124 @@
+{
+  "total_num_allocations": 70585946,
+  "total_bytes_allocated": 62535771633,
+  "allocation_size_histogram": [
+    {
+      "min_bytes": 0,
+      "max_bytes": 7,
+      "count": 297240
+    },
+    {
+      "min_bytes": 8,
+      "max_bytes": 63,
+      "count": 51224531
+    },
+    {
+      "min_bytes": 64,
+      "max_bytes": 511,
+      "count": 18861083
+    },
+    {
+      "min_bytes": 512,
+      "max_bytes": 4095,
+      "count": 95228
+    },
+    {
+      "min_bytes": 4096,
+      "max_bytes": 32767,
+      "count": 44118
+    },
+    {
+      "min_bytes": 32768,
+      "max_bytes": 262143,
+      "count": 57927
+    },
+    {
+      "min_bytes": 262144,
+      "max_bytes": 2097151,
+      "count": 4102
+    },
+    {
+      "min_bytes": 2097152,
+      "max_bytes": 16777215,
+      "count": 1669
+    },
+    {
+      "min_bytes": 16777216,
+      "max_bytes": 134217727,
+      "count": 10
+    },
+    {
+      "min_bytes": 134217728,
+      "max_bytes": 1073741831,
+      "count": 38
+    }
+  ],
+  "allocator_type_distribution": {
+    "PYMALLOC_MALLOC": 68606586,
+    "MALLOC": 905602,
+    "PYMALLOC_REALLOC": 616903,
+    "PYMALLOC_CALLOC": 427843,
+    "ALIGNED_ALLOC": 15374,
+    "REALLOC": 9924,
+    "CALLOC": 3609,
+    "MMAP": 105
+  },
+  "top_allocations_by_size": [
+    {
+      "location": "__next__:/home/ubuntu/TileDB-SOMA/apis/python/src/tiledbsoma/_read_iters.py:586",
+      "size": 39731156874
+    },
+    {
+      "location": "dump:/home/ubuntu/.pyenv/versions/3.12.6/lib/python3.12/site-packages/cloudpickle/cloudpickle.py:1303",
+      "size": 9725741317
+    },
+    {
+      "location": "<stack trace unavailable>",
+      "size": 2940554438
+    },
+    {
+      "location": "packb:/home/ubuntu/.pyenv/versions/3.12.6/lib/python3.12/site-packages/msgpack/__init__.py:36",
+      "size": 2582877755
+    },
+    {
+      "location": "_normalize_pickle:/home/ubuntu/.pyenv/versions/3.12.6/lib/python3.12/site-packages/dask/tokenize.py:242",
+      "size": 2471623547
+    }
+  ],
+  "top_allocations_by_count": [
+    {
+      "location": "_normalize_pickle:/home/ubuntu/.pyenv/versions/3.12.6/lib/python3.12/site-packages/dask/tokenize.py:242",
+      "count": 24366591
+    },
+    {
+      "location": "_astype_nansafe:/home/ubuntu/.pyenv/versions/3.12.6/lib/python3.12/site-packages/pandas/core/dtypes/astype.py:96",
+      "count": 8101017
+    },
+    {
+      "location": "_find_imported_submodules:/home/ubuntu/.pyenv/versions/3.12.6/lib/python3.12/site-packages/cloudpickle/cloudpickle.py:379",
+      "count": 4244240
+    },
+    {
+      "location": "<stack trace unavailable>",
+      "count": 2449937
+    },
+    {
+      "location": "loads:/home/ubuntu/.pyenv/versions/3.12.6/lib/python3.12/site-packages/distributed/protocol/pickle.py:90",
+      "count": 1626434
+    }
+  ],
+  "metadata": {
+    "start_time": "2025-02-28 16:38:26.282000+00:00",
+    "end_time": "2025-02-28 16:40:40.184000+00:00",
+    "total_allocations": 135807688,
+    "total_frames": 24839,
+    "peak_memory": 40502427099,
+    "command_line": "./dsk.py hvg -c50k -MMDd1x16 -T4 -theart -b2GiB -oout/hvg/heart",
+    "pid": 115214,
+    "main_thread_id": 1,
+    "python_allocator": "pymalloc",
+    "has_native_traces": true,
+    "trace_python_allocators": true,
+    "file_format": 0
+  }
+}
