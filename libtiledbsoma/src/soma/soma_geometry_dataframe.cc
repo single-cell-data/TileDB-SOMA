@@ -105,11 +105,9 @@ uint64_t SOMAGeometryDataFrame::count() {
 ArrowTable SOMAGeometryDataFrame::cast_array_data(
     std::unique_ptr<ArrowSchema> arrow_schema,
     std::unique_ptr<ArrowArray> arrow_array) {
-    return transformer::TransformerPipeline(
-                                 std::move(arrow_array),
-                                 std::move(arrow_schema))
-                                 .transform(OutlineTransformer(coord_space_))
-                                 .asTable();
+    return TransformerPipeline(std::move(arrow_array), std::move(arrow_schema))
+        .transform(OutlineTransformer(coord_space_))
+        .asTable();
 }
 
 //===================================================================
