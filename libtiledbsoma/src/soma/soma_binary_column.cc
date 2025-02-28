@@ -225,7 +225,7 @@ std::any SOMABinaryColumn::_core_domain_slot() const {
 
     return std::make_any<
         std::pair<std::vector<std::byte>, std::vector<std::byte>>>(
-        std::make_pair(std::vector<std::byte>(), std::vector<std::byte>()));
+        std::vector<std::byte>(), std::vector<std::byte>());
 }
 
 std::any SOMABinaryColumn::_non_empty_domain_slot(Array& array) const {
@@ -342,14 +342,17 @@ std::any SOMABinaryColumn::_core_current_domain_slot(
 
     std::array<std::string, 2> domain = ndrect.range<std::string>(name());
 
-    auto min_data_ptr = reinterpret_cast<std::byte*>(domain[0].data());
-    auto max_data_ptr = reinterpret_cast<std::byte*>(domain[1].data());
-
-    std::vector<std::byte> min(min_data_ptr, min_data_ptr + domain[0].size());
-    std::vector<std::byte> max(max_data_ptr, max_data_ptr + domain[1].size());
-
-    return std::make_any<
-        std::pair<std::vector<std::byte>, std::vector<std::byte>>>(min, max);
+    if (domain[0] == "" && (domain[1] == "\x7f" || domain[1] == "\xff")) {
+        return std::make_any<
+            std::pair<std::vector<std::byte>, std::vector<std::byte>>>(
+            std::vector<std::byte>(), std::vector<std::byte>());
+    } else {
+        throw TileDBSOMAError(std::format(
+            "[SOMAColumn][core_current_domain_slot] unexpected current "
+            "domain returnd ({}, {})",
+            domain[0],
+            domain[1]));
+    }
 }
 
 std::pair<ArrowArray*, ArrowSchema*> SOMABinaryColumn::arrow_domain_slot(
