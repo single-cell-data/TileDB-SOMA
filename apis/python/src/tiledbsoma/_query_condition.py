@@ -136,7 +136,7 @@ class QueryCondition:
             qctree = QueryConditionTree(schema, query_attrs)
             self.c_obj = qctree.visit(self.tree.body)
         except Exception as pex:
-            raise SOMAError(pex)
+            raise SOMAError(pex) from pex
 
         if not isinstance(self.c_obj, clib.PyQueryCondition):
             raise SOMAError(
@@ -236,7 +236,33 @@ class QueryConditionTree(ast.NodeVisitor):
                     "`in` operator syntax must be written as `attr in ['l', 'i', 's', 't']`"
                 )
 
-            variable = node.left.id
+            # For 'my_string in ["red", "yellow"]': node.left is ast.Name
+            # For 'attr(my.string) in ["red", "yellow"]': node.left is ast.Call
+            if isinstance(node.left, ast.Call):
+                if node.left.func.id != "attr":
+                    raise SOMAError(
+                        f"query condition left-hand side function call must be 'attr'; got '{node.left.func.id}'"
+                    )
+
+                if len(node.left.args) != 1:
+                    raise SOMAError(
+                        f"query condition left-hand side 'attr' function call must have one argument; got '{len(node.left.args)}'"
+                    )
+
+                arg = node.left.args[0]
+                if not isinstance(arg, ast.Constant):
+                    raise SOMAError(
+                        "query condition left-hand side 'attr' argument must be a constant"
+                    )
+                variable = arg.value
+
+            elif isinstance(node.left, ast.Name):
+                variable = node.left.id
+            else:
+                raise SOMAError(
+                    f"cannot handle query condition left-hand side of type '{type(node.left)}'"
+                )
+
             values = [self.get_val_from_node(val) for val in self.visit(rhs)]
             if len(values) == 0:
                 raise SOMAError(
@@ -260,7 +286,7 @@ class QueryConditionTree(ast.NodeVisitor):
                 self.query_attrs.append(att)
 
             op = clib.TILEDB_IN if isinstance(operator, ast.In) else clib.TILEDB_NOT_IN
-            result = self.create_pyqc(dtype)(node.left.id, values, op)
+            result = self.create_pyqc(dtype)(variable, values, op)
 
         else:
             raise SOMAError(f"unrecognized operator in <<{ast.dump(node)}>>")
