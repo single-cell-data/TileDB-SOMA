@@ -36,6 +36,12 @@ except ImportError:
     # read&install our requirements without loading setup.py.
     from setuptools import Extension as Pybind11Extension
 
+try:
+    from pybind11.setup_helpers import ParallelCompile
+    ParallelCompile("MY_BUILD_JOBS", default=8, max=12).install()
+except Exception as e:
+    pass
+
 this_dir = pathlib.Path(__file__).parent.absolute()
 sys.path.insert(0, str(this_dir))
 

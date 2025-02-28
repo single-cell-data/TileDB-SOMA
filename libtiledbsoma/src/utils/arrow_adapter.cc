@@ -27,9 +27,57 @@ namespace tiledbsoma {
 
 using namespace tiledb;
 
+static void dump_schema(ArrowSchema* schema, std::string op, std::string name) {
+    printf("  %s:SCHEMA:BEGIN %s\n", op.c_str(), name.c_str());
+    printf("    %s format     %s\n", name.c_str(), schema->format);
+    printf("    %s name       %s\n", name.c_str(), schema->name);
+    printf("    %s flags      %lld\n", name.c_str(), (long long)schema->flags);
+    printf("    %s n_children %lld\n", name.c_str(), (long long)schema->n_children);
+    printf("  %s:SCHEMA:END   %s\n", op.c_str(), name.c_str());
+    // struct ArrowSchema {
+    //   const char* format;
+    //   const char* name;
+    //   const char* metadata;
+    //   int64_t flags;
+    //   int64_t n_children;
+    //   struct ArrowSchema** children;
+    //   struct ArrowSchema* dictionary;
+    //
+    //   void (*release)(struct ArrowSchema*);
+    //   void* private_data;
+    // };
+}
+
+static void dump_array(ArrowArray* array, std::string op, std::string name) {
+    printf("  %s:ARRAY:BEGIN %s\n", op.c_str(), name.c_str());
+    printf("    %s length     %lld\n", name.c_str(), (long long)array->length);
+    printf("    %s null_count %lld\n", name.c_str(), (long long)array->null_count);
+    printf("    %s offset     %lld\n", name.c_str(), (long long)array->offset);
+    printf("    %s n_buffers  %lld\n", name.c_str(), (long long)array->n_buffers);
+    printf("    %s n_children %lld\n", name.c_str(), (long long)array->n_children);
+    printf("  %s:ARRAY:END   %s\n", op.c_str(), name.c_str());
+    // struct ArrowArray {
+    //   int64_t length;
+    //   int64_t null_count;
+    //   int64_t offset;
+    //   int64_t n_buffers;
+    //   int64_t n_children;
+    //   const void** buffers;
+    //   struct ArrowArray** children;
+    //   struct ArrowArray* dictionary;
+    //
+    //   void (*release)(struct ArrowArray*);
+    //   void* private_data;
+    // };
+}
+
 void ArrowAdapter::release_schema(struct ArrowSchema* schema) {
     std::string name_for_log(
         schema->name == nullptr ? "anonymous" : schema->name);
+
+    printf("ENTER ArrowAdapter::release_schema\n");
+    dump_schema(schema, "ArrowAdapter::release_schema", name_for_log);
+
     if (schema->name != nullptr)
         LOG_DEBUG(std::format(
             "[ArrowAdapter] release_schema start for {}", schema->name));
@@ -110,9 +158,14 @@ void ArrowAdapter::release_schema(struct ArrowSchema* schema) {
     schema->release = nullptr;
     LOG_TRACE(std::format(
         "[ArrowAdapter] release_schema name {} done", name_for_log));
+
+    printf("EXIT  ArrowAdapter::release_schema\n");
 }
 
 void ArrowAdapter::release_array(struct ArrowArray* array) {
+    printf("ENTER ArrowAdapter::release_array\n");
+    dump_array(array, "ArrowAdapter::release_array", "array");
+
     auto arrow_buffer = static_cast<ArrowBuffer*>(array->private_data);
     if (arrow_buffer != nullptr) {
         LOG_TRACE(std::format(
@@ -165,6 +218,8 @@ void ArrowAdapter::release_array(struct ArrowArray* array) {
 
     array->release = nullptr;
     LOG_TRACE(std::format("[ArrowAdapter] release_array done"));
+
+    printf("EXIT  ArrowAdapter::release_array\n");
 }
 
 PlatformConfig ArrowAdapter::platform_config_from_tiledb_schema(
@@ -1306,6 +1361,10 @@ inline void exitIfError(const ArrowErrorCode ec, const std::string& msg) {
 
 std::pair<std::unique_ptr<ArrowArray>, std::unique_ptr<ArrowSchema>>
 ArrowAdapter::to_arrow(std::shared_ptr<ColumnBuffer> column) {
+    //
+    std::string column_name(column->name());
+    bool verbose = true;  // column_name == "organism_ontology_term_id";
+    //
     std::unique_ptr<ArrowSchema> schema = std::make_unique<ArrowSchema>();
     std::unique_ptr<ArrowArray> array = std::make_unique<ArrowArray>();
     auto sch = schema.get();
@@ -1477,6 +1536,77 @@ ArrowAdapter::to_arrow(std::shared_ptr<ColumnBuffer> column) {
 
         schema->dictionary = dict_sch;
         array->dictionary = dict_arr;
+    }
+
+    if (verbose) {
+        printf("  TO_ARROW:ARRAY:BEGIN %s\n", column_name.c_str());
+        printf(
+            "   %s length     %lld\n",
+            column_name.c_str(),
+            (long long)array->length);
+        printf(
+            "   %s null_count %lld\n",
+            column_name.c_str(),
+            (long long)array->null_count);
+        printf(
+            "   %s offset     %lld\n",
+            column_name.c_str(),
+            (long long)array->offset);
+        printf(
+            "   %s n_buffers  %lld\n",
+            column_name.c_str(),
+            (long long)array->n_buffers);
+        printf(
+            "   %s n_children %lld\n",
+            column_name.c_str(),
+            (long long)array->n_children);
+        printf("  TO_ARROW:ARRAY:END   %s\n", column_name.c_str());
+
+        // struct ArrowArray {
+        //   // Array data description
+        //   int64_t length;
+        //   int64_t null_count;
+        //   int64_t offset;
+        //   int64_t n_buffers;
+        //   int64_t n_children;
+        //   const void** buffers;
+        //   struct ArrowArray** children;
+        //   struct ArrowArray* dictionary;
+        //
+        //   // Release callback
+        //   void (*release)(struct ArrowArray*);
+        //   // Opaque producer-specific data
+        //   void* private_data;
+        // };
+
+        printf("  TO_ARROW:SCHEMA:BEGIN %s\n", column_name.c_str());
+        printf("   %s format     %s\n", column_name.c_str(), schema->format);
+        printf("   %s name       %s\n", column_name.c_str(), schema->name);
+        printf(
+            "   %s flags      %lld\n",
+            column_name.c_str(),
+            (long long)schema->flags);
+        printf(
+            "   %s n_children %lld\n",
+            column_name.c_str(),
+            (long long)schema->n_children);
+        printf("  TO_ARROW:SCHEMA:END   %s\n", column_name.c_str());
+
+        // struct ArrowSchema {
+        //   // Array type description
+        //   const char* format;
+        //   const char* name;
+        //   const char* metadata;
+        //   int64_t flags;
+        //   int64_t n_children;
+        //   struct ArrowSchema** children;
+        //   struct ArrowSchema* dictionary;
+        //
+        //   // Release callback
+        //   void (*release)(struct ArrowSchema*);
+        //   // Opaque producer-specific data
+        //   void* private_data;
+        // };
     }
 
     return std::pair(std::move(array), std::move(schema));

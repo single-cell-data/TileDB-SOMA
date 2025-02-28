@@ -101,7 +101,9 @@ void load_managed_query(py::module& m) {
                 py::gil_scoped_release release;
                 std::optional<std::shared_ptr<ArrayBuffers>> tbl;
                 try {
+                    printf("BEFORE MQ.READ_NEXT\n");
                     tbl = mq.read_next();
+                    printf("AFTER  MQ.READ_NEXT\n");
                     // Acquire python GIL before accessing python objects
                 } catch (const std::exception& e) {
                     throw TileDBSOMAError(e.what());
@@ -112,7 +114,8 @@ void load_managed_query(py::module& m) {
                     throw py::stop_iteration();
                 }
 
-                return to_table(tbl);
+                auto ret = to_table(tbl);
+                return ret;
             })
 
         .def(

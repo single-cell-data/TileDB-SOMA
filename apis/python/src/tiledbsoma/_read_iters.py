@@ -583,7 +583,10 @@ class ArrowTableRead(Iterator[pa.Table]):
         _util._set_coords(self.mq, coords)
 
     def __next__(self) -> pa.Table:
-        return self.mq._handle.next()
+        print("ATR01")
+        ret = self.mq._handle.next()
+        print("ATR02")
+        return ret
 
 
 def _coords_strider(

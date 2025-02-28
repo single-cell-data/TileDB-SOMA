@@ -19,6 +19,11 @@ install: clean
 	@./scripts/bld --prefix=${prefix} --tiledb=${tiledb} --build=${build} --cmake-verbose=${cmake_verbose}
 	@TILEDB_PATH=${tiledb} pip install -v -e apis/python
 
+.PHONY: iter
+iter:
+	@./scripts/bld --prefix=${prefix} --tiledb=${tiledb} --build=${build} --cmake-verbose=${cmake_verbose}
+	@TILEDB_PATH=${tiledb} pip install -v -e apis/python
+
 .PHONY: r-build
 r-build: clean
 	@./scripts/bld --prefix=${prefix} --tiledb=${tiledb} --build=${build} --r-build

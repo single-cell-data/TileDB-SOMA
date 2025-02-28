@@ -172,8 +172,7 @@ bool is_tdb_str(tiledb_datatype_t type) {
         case TILEDB_CHAR:
             return true;
         default:
-            return false;
-    }
+            return false; }
 }
 
 /**
@@ -193,21 +192,31 @@ py::object _buffer_to_table(std::shared_ptr<ArrayBuffers> buffers) {
 
     for (auto& name : buffers->names()) {
         auto column = buffers->at(name);
+        printf("BEFORE TO_ARROW '%s'\n", name.c_str());
         auto [pa_array, pa_schema] = ArrowAdapter::to_arrow(column);
+        printf("AFTER  TO_ARROW '%s'\n", name.c_str());
+
+        printf("BEFORE PA_ARRAY_IMPORT '%s'\n", name.c_str());
         auto array = pa_array_import(
             py::capsule(pa_array.get()), py::capsule(pa_schema.get()));
+        printf("AFTER  PA_ARRAY_IMPORT '%s'\n", name.c_str());
         array_list.append(array);
         names.append(name);
     }
 
-    return pa_table_from_arrays(array_list, names);
+    printf("BEFORE PA_TABLE_FROM_ARRAYS\n");
+    auto ret = pa_table_from_arrays(array_list, names);
+    printf("AFTER  PA_TABLE_FROM_ARRAYS\n");
+    printf("B2T14\n");
+    return ret;
 }
 
 std::optional<py::object> to_table(
     std::optional<std::shared_ptr<ArrayBuffers>> buffers) {
     // If more data was read, convert it to an arrow table and return
     if (buffers.has_value()) {
-        return _buffer_to_table(*buffers);
+        auto ret = _buffer_to_table(*buffers);
+        return ret;
     }
 
     // No data was read, the query is complete, return nullopt
