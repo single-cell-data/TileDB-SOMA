@@ -254,7 +254,12 @@ if os.name != "nt":
     CXX_FLAGS.append(f'-Wl,-rpath,{str(tiledb_dir / "lib")}')
 
 if sys.platform == "darwin":
-    CXX_FLAGS.append("-mmacosx-version-min=11.0")
+    CXX_FLAGS.append("-mmacosx-version-min=13.3")
+
+    # This is necessary for clang to enable templated function calls
+    # between pybind modules and libtiledbsoma where dynamic_cast or
+    # std::any_cast is involved
+    CXX_FLAGS.append("-D_LIBCPP_TYPEINFO_COMPARISON_IMPLEMENTATION=2")
 
 if os.name == "posix" and sys.platform != "darwin":
     LIB_DIRS.append(str(tiledbsoma_dir / "lib" / "x86_64-linux-gnu"))
@@ -315,6 +320,7 @@ setuptools.setup(
                 "src/tiledbsoma/soma_object.cc",
                 "src/tiledbsoma/soma_dataframe.cc",
                 "src/tiledbsoma/soma_point_cloud_dataframe.cc",
+                "src/tiledbsoma/soma_geometry_dataframe.cc",
                 "src/tiledbsoma/soma_dense_ndarray.cc",
                 "src/tiledbsoma/soma_sparse_ndarray.cc",
                 "src/tiledbsoma/soma_group.cc",
@@ -326,7 +332,7 @@ setuptools.setup(
             library_dirs=LIB_DIRS,
             libraries=["tiledbsoma"] + (["tiledb"] if os.name == "nt" else []),
             extra_link_args=CXX_FLAGS,
-            extra_compile_args=["-std=c++17" if os.name != "nt" else "/std:c++17"]
+            extra_compile_args=["-std=c++20" if os.name != "nt" else "/std:c++20"]
             + CXX_FLAGS,
             language="c++",
         )

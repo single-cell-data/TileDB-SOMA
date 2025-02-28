@@ -171,7 +171,7 @@ TEST_CASE("SOMAArray: nnz") {
     const char* dim_name = "d0";
     const char* attr_name = "a0";
 
-    // TODO this use to be formatted with fmt::format which is part of internal
+    // TODO this use to be formatted with std::format which is part of internal
     // header spd/log/fmt/fmt.h and should not be used. In C++20, this can be
     // replaced with std::format.
     std::ostringstream section;
@@ -245,7 +245,7 @@ TEST_CASE("SOMAArray: nnz with timestamp") {
     auto allow_duplicates = true;
     int num_cells_per_fragment = 128;
 
-    // TODO this use to be formatted with fmt::format which is part of internal
+    // TODO this use to be formatted with std::format which is part of internal
     // header spd/log/fmt/fmt.h and should not be used. In C++20, this can be
     // replaced with std::format.
     std::ostringstream section;
@@ -298,7 +298,7 @@ TEST_CASE("SOMAArray: nnz with consolidation") {
     auto vacuum = GENERATE(false, true);
     int num_cells_per_fragment = 128;
 
-    // TODO this use to be formatted with fmt::format which is part of internal
+    // TODO this use to be formatted with std::format which is part of internal
     // header spd/log/fmt/fmt.h and should not be used. In C++20, this can be
     // replaced with std::format.
     std::ostringstream section;

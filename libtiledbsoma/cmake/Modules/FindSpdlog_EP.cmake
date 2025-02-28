@@ -39,6 +39,10 @@ else()
 endif()
 
 if (NOT SPDLOG_FOUND)
+  if(SPDLOG_LINK_SHARED) 
+    message(FATAL_ERROR "Unable to find installed spdlog")
+  endif()
+
   if(SUPERBUILD)
     if (WIN32)
       find_package(Git REQUIRED)

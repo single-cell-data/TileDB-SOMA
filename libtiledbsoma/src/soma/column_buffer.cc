@@ -14,6 +14,8 @@
 #include "column_buffer.h"
 #include "../utils/logger.h"
 
+#include <format>
+
 namespace tiledbsoma {
 
 using namespace tiledb;
@@ -84,7 +86,7 @@ std::shared_ptr<ColumnBuffer> ColumnBuffer::create(
     throw TileDBSOMAError("[ColumnBuffer] Column name not found: " + name_str);
 }
 
-void ColumnBuffer::to_bitmap(tcb::span<uint8_t> bytemap) {
+void ColumnBuffer::to_bitmap(std::span<uint8_t> bytemap) {
     int i_dst = 0;
     for (unsigned int i_src = 0; i_src < bytemap.size(); i_src++) {
         // Overwrite every 8 bytes with a one-byte bitmap
@@ -122,7 +124,7 @@ ColumnBuffer::ColumnBuffer(
     , is_nullable_(is_nullable)
     , enumeration_(enumeration)
     , is_ordered_(is_ordered) {
-    LOG_DEBUG(fmt::format(
+    LOG_DEBUG(std::format(
         "[ColumnBuffer] '{}' {} bytes is_var={} is_nullable={}",
         name,
         num_bytes,
@@ -141,7 +143,7 @@ ColumnBuffer::ColumnBuffer(
 }
 
 ColumnBuffer::~ColumnBuffer() {
-    LOG_TRACE(fmt::format("[ColumnBuffer] release '{}'", name_));
+    LOG_TRACE(std::format("[ColumnBuffer] release '{}'", name_));
 }
 
 void ColumnBuffer::attach(Query& query, std::optional<Subarray> subarray) {
@@ -161,7 +163,7 @@ void ColumnBuffer::attach(Query& query, std::optional<Subarray> subarray) {
     // compatibility issue with pyarrow versions below 17. Thus we log and
     // continue.
     if (!validity_.empty() && is_dim) {
-        LOG_DEBUG(fmt::format(
+        LOG_DEBUG(std::format(
             "[ColumnBuffer::attach] Validity buffer passed for dimension '{}' "
             "is being ignored",
             name_));
@@ -293,7 +295,7 @@ std::shared_ptr<ColumnBuffer> ColumnBuffer::alloc(
         try {
             num_bytes = std::stoull(value_str);
         } catch (const std::exception& e) {
-            throw TileDBSOMAError(fmt::format(
+            throw TileDBSOMAError(std::format(
                 "[ColumnBuffer] Error parsing {}: '{}' ({})",
                 CONFIG_KEY_INIT_BYTES,
                 value_str,

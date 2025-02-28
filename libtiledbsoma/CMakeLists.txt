@@ -57,6 +57,7 @@ option(CMAKE_IDE "(Used for CLion builds). Disables superbuild and sets the EP i
 option(FORCE_BUILD_TILEDB "Forces a local build of TileDB instead of searching system paths." OFF)
 option(TILEDB_FORCE_ALL_DEPS "Forces a local build of TileDB instead of searching system paths." OFF)
 option(DOWNLOAD_TILEDB_PREBUILT "If tiledb is being super built, this controls downloading prebuilt artifacts or building from source" ON)
+option(SPDLOG_LINK_SHARED "Link installed spdlog as an shared library instead of using it as header only" OFF)
 
 # TileDB BUILD Options
 # NOTE: TileDB Embedded version is controlled in cmake/Modules/FindTileDB_EP.cmake
@@ -82,7 +83,7 @@ if(CCACHE_FOUND)
 endif()
 
 # Set C++20 as required standard for all C++ targets (C++17 minimum is required to use the TileDB C++ API).
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF) # Don't use GNU extensions
 
@@ -112,6 +113,9 @@ endif()
 # Use @rpath on macOS for building shared libraries.
 if(APPLE)
   set(CMAKE_MACOSX_RPATH ON)
+
+  # Set minimum macOS version to enable certain C++20 features
+  # set(CMAKE_OSX_DEPLOYMENT_TARGET 13.3)
 
   # Don't allow macOS .frameworks to be used for dependencies.
   set(CMAKE_FIND_FRAMEWORK NEVER)
@@ -170,6 +174,19 @@ message(STATUS "Starting TileDB-SOMA regular build.")
 set(EP_SOURCE_DIR "${EP_BASE}/src")
 set(EP_INSTALL_PREFIX "${EP_BASE}/install")
 
+
+# ###########################################################
+# Check compiler version supports full C++20 standard.
+# ###########################################################
+
+set(GCC_MIN 13.0)
+if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    if (CMAKE_CXX_COMPILER_VERSION VERSION_LESS GCC_MIN)
+        message(FATAL_ERROR "GNU GCC must be at least version ${GCC_MIN}. Found version ${CMAKE_CXX_COMPILER_VERSION}.")
+    endif()
+endif()
+
+
 # ###########################################################
 # Compile options/definitions for all targets
 # ###########################################################
@@ -218,7 +235,13 @@ if(MSVC)
   )
 else()
 
-  set(TILEDBSOMA_COMPILE_OPTIONS -Wall -Wextra)
+  set(TILEDBSOMA_COMPILE_OPTIONS -Wall -Wextra -D_LIBCPP_TYPEINFO_COMPARISON_IMPLEMENTATION=2)
+
+  if (NOT SPDLOG_LINK_SHARED)
+    list(APPEND TILEDBSOMA_COMPILE_OPTIONS -DSPDLOG_USE_STD_FORMAT)
+  else()
+    add_definitions(-DSPDLOG_COMPILED_LIB)
+  endif()
 
   if(${TILEDBSOMA_ENABLE_WERROR})
     set(TILEDBSOMA_WERROR_OPTION -Werror)

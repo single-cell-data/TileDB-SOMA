@@ -13,6 +13,7 @@
  */
 
 #include "common.h"
+#include <format>
 
 namespace libtiledbsomacpp {
 
@@ -90,10 +91,8 @@ void load_soma_vfs(py::module& m) {
             [](SOMAVFSFilebuf& buf, const std::string& uri) {
                 auto fb = buf.open(uri, std::ios::in);
                 if (fb == nullptr) {
-                    // No std::format in C++17, and fmt::format is overkill here
-                    std::stringstream ss;
-                    ss << "URI " << uri << " is not a valid URI";
-                    TPY_ERROR_LOC(ss.str());
+                    TPY_ERROR_LOC(
+                        std::format("URI {} is not a valid URI", uri));
                 }
                 return fb;
             },

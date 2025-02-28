@@ -274,7 +274,7 @@ TEST_CASE_METHOD(
         std::make_pair(R"("BYTESHUFFLE")", TILEDB_FILTER_BYTESHUFFLE),
         std::make_pair(R"("NOOP")", TILEDB_FILTER_NONE));
 
-    // TODO this used to be formatted with fmt::format which is part of internal
+    // TODO this used to be formatted with std::format which is part of internal
     // header spd/log/fmt/fmt.h and should not be used. In C++20, this can be
     // replaced with std::format.
     std::ostringstream section;

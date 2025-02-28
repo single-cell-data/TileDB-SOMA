@@ -109,7 +109,7 @@ SOMACoordinateSpace::SOMACoordinateSpace(
 SOMACoordinateSpace SOMACoordinateSpace::from_metadata(
     tiledb_datatype_t value_type, uint32_t value_num, const void* value) {
     if (value_type != TILEDB_STRING_UTF8 && value_type != TILEDB_STRING_ASCII) {
-        throw TileDBSOMAError(fmt::format(
+        throw TileDBSOMAError(std::format(
             "[SOMACoordinateSpace]: Unexpected datatype for coordinate space "
             "metadata. Expected {} or {}; got {}",
             tiledb::impl::type_to_str(TILEDB_STRING_UTF8),

@@ -92,7 +92,7 @@ void SOMADataFrame::update_dataframe_schema(
     tiledb::Array array(tctx, uri, TILEDB_READ);
     ArraySchemaEvolution se(tctx);
     for (auto key_name : drop_attrs) {
-        LOG_DEBUG(fmt::format(
+        LOG_DEBUG(std::format(
             "[SOMADataFrame::update_dataframe_schema] drop col name {}",
             key_name));
         se.drop_attribute(key_name);
@@ -154,7 +154,7 @@ void SOMADataFrame::update_dataframe_schema(
 
         if (request_has_enmr) {
             auto [enmr_type, ordered] = enmr_it->second;
-            LOG_DEBUG(fmt::format(
+            LOG_DEBUG(std::format(
                 "[SOMADataFrame::update_dataframe_schema] add col name {} "
                 "index_type "
                 "{} value_type {} ordered {}",
@@ -189,7 +189,7 @@ void SOMADataFrame::update_dataframe_schema(
                 // We cannot continue without intervention, but let's at least
                 // be as clear as possible why we can't continue.
                 if (ordered != existing_ordered || enmr_type != existing_type) {
-                    throw TileDBSOMAError(fmt::format(
+                    throw TileDBSOMAError(std::format(
                         "[SOMADataFrame::update_dataframe_schema] requested "
                         "enumeration [type='{}', ordered={}] incompatible with "
                         "existing [type='{}', ordered={}]",
@@ -235,7 +235,7 @@ void SOMADataFrame::update_dataframe_schema(
             }
 
         } else {
-            LOG_DEBUG(fmt::format(
+            LOG_DEBUG(std::format(
                 "[SOMADataFrame::update_dataframe_schema] add col name {} type "
                 "{}",
                 attr_name,

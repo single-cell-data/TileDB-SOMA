@@ -12,6 +12,7 @@
  */
 
 #include "common.h"
+#include <format>
 
 namespace tiledbsoma {
 
@@ -160,13 +161,9 @@ tiledb_datatype_t np_to_tdb_dtype(py::dtype type) {
         TPY_ERROR_LOC(
             "[np_to_tdb_dtype] UTF-32 encoded strings are not supported");
 
-    // No std::format in C++17, and, including logger/fmt headers
-    // is tetchy here.
-    std::stringstream ss;
-    ss << "[np_to_tdb_dtype] Could not handle numpy dtype of kind '";
-    ss << kind.operator std::string();
-    ss << "'";
-    TPY_ERROR_LOC(ss.str());
+    TPY_ERROR_LOC(std::format(
+        "[np_to_tdb_dtype] Could not handle numpy dtype of kind \"{}\"",
+        kind.operator std::string()));
 }
 
 bool is_tdb_str(tiledb_datatype_t type) {
@@ -275,19 +272,17 @@ void set_metadata(
         switch (value_type) {
             case TILEDB_STRING_UTF8:
                 value_num = sanitize_string(
-                    tcb::span<const uint8_t>(
+                    std::span<const uint8_t>(
                         static_cast<const uint8_t*>(value.data()), value_num),
                     value_num);
 
                 break;
             default:
-                // No std::format in C++17, and, including logger/fmt headers
-                // is tetchy here.
-                std::stringstream ss;
-                ss << "[set_metadata] Unsupported string encoding '"
-                   << tiledb::impl::type_to_str(value_type) << "' for key '"
-                   << key << "'";
-                throw TileDBSOMAError(ss.str());
+                throw TileDBSOMAError(std::format(
+                    "[set_metadata] Unsupported string encoding {} for key "
+                    "\"{}\"",
+                    tiledb::impl::type_to_str(value_type),
+                    key));
         }
     }
 
@@ -300,7 +295,7 @@ void set_metadata(
     // Moreover all python strings are utf-8 encoded so eny NULL byte included
     // in the bytestream will be indeed a NULL byte
     if (sanitize_string(
-            tcb::span<const char>(key.c_str(), key.length()), key.length()) !=
+            std::span<const char>(key.c_str(), key.length()), key.length()) !=
         key.length()) {
         throw TileDBSOMAError("[set_metadata] Key contains NULL bytes");
     }
