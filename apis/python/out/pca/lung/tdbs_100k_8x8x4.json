@@ -1,0 +1,24 @@
+{
+  "times": {
+    "start": 1.1001000530086458e-05,
+    "dask": 3.4444239740005287,
+    "query": 0.15538680000099703,
+    "to_anndata": 13.859978846001468,
+    "normalize": 0.4562630039981741,
+    "log1p": 0.0016912600003706757,
+    "hvg": 50.41701206900325,
+    "pca": 116.43911431800007
+  },
+  "total_time": 184.77388127200538,
+  "tissue": "lung",
+  "cmd": "PCA",
+  "n_obs": 3677225,
+  "obs_per_s": 19901.216420229663,
+  "no_dask_mem_mgmt": true,
+  "dask_chunk_size": 100000,
+  "n_dask_workers": 8,
+  "n_dask_threads_per_worker": 8,
+  "tdb_concurrency": 4,
+  "pca_obs_per_s": 31580.667901314893,
+  "mem_total_budget": 2147483648
+}
