@@ -20,7 +20,7 @@ import numpy as np
 import pandas as pd
 import pyarrow as pa
 import pyarrow.compute as pacomp
-import scanpy
+import scipy.sparse as sp
 from typing_extensions import Self
 
 try:
@@ -62,7 +62,11 @@ from ...options._tiledb_create_write_options import (
 )
 from .. import conversions
 from .._common import AdditionalMetadata
-from .._registration import ExperimentAmbientLabelMapping, ExperimentIDMapping
+from .._registration import (
+    AxisIDMapping,
+    ExperimentAmbientLabelMapping,
+    ExperimentIDMapping,
+)
 from ..ingest import (
     IngestCtx,
     IngestionParams,
@@ -74,7 +78,7 @@ from ..ingest import (
     _write_dataframe,
     add_metadata,
 )
-from ._util import _read_visium_software_version
+from ._util import TenXCountMatrixReader, _read_visium_software_version
 
 
 def path_validator(instance, attribute, value: Path) -> None:  # type: ignore[no-untyped-def]
@@ -276,7 +280,6 @@ def from_visium(
     context: SOMATileDBContext | None = None,
     platform_config: PlatformConfig | None = None,
     X_layer_name: str = "data",
-    raw_X_layer_name: str = "data",
     image_name: str = "tissue",
     image_channel_first: bool = True,
     ingest_mode: IngestMode = "write",
@@ -303,8 +306,7 @@ def from_visium(
         context: Optional :class:`SOMATileDBContext` containing storage parameters, etc.
         platform_config: Platform-specific options used to specify TileDB options when
             creating and writing to SOMA objects.
-        X_layer_name: SOMA array name for the AnnData's ``X`` matrix.
-        raw_X_layer_name: SOMA array name for the AnnData's ``raw/X`` matrix.
+        X_layer_name: SOMA array name for the ``X`` matrix.
         image_name: SOMA multiscale image name for the multiscale image of the
             Space Ranger output images.
         image_channel_first: If ``True``, the image is ingested in channel-first format.
@@ -436,30 +438,40 @@ def from_visium(
     )
 
     # Read 10x HDF5 gene expression file.
-    # -- Currently this uses ScanPy. It creates an AnnData with only obs, X, and var.
     start_time = _util.get_start_stamp()
     logging.log_io(None, f"START READING {input_paths.gene_expression}")
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        anndata = scanpy.read_10x_h5(input_paths.gene_expression)
-        # Without _at least_ one index, there is nothing to indicate the dimension indices.
-    if anndata.obs.index.empty:
-        raise NotImplementedError(
-            f"Input gene expression file '{input_paths.gene_expression}' has no obs data. "
-            f"Ingesting 10x data without obs values is unsupported."
-        )
-    if anndata.var.index.empty:
-        raise NotImplementedError(
-            f"Input gene expression file '{input_paths.gene_expression}' has no var data. "
-            f"Ingesting 10x data without var values is unsupported."
-        )
+
+    with TenXCountMatrixReader(input_paths.gene_expression) as reader:
+        reader.load()
+
+    nobs = reader.nobs
+    nvar = reader.nvar
+
+    # TODO: Placeholder - convert to PyTable
+    obs_df = pd.DataFrame.from_dict({"obs_id": reader._barcodes})
+    var_df = pd.DataFrame.from_dict(
+        {
+            "var_id": reader._var_name,
+            "gene_ids": reader._gene_id,
+            "feature_types": reader._feature_type,
+            "genome": reader._genome,
+        }
+    )
+    X_mat = sp.csr_matrix(
+        (reader._data, reader._feature_indices, reader._barcode_indptr),
+        shape=(nobs, nvar),
+    )
+
     logging.log_io(None, _util.format_elapsed(start_time, "FINISHED READING"))
 
     # Create registration mapping if none was provided and get obs/var data needed
     # for spatial indexing.
     if registration_mapping is None:
-        joinid_maps = ExperimentIDMapping.from_isolated_anndata(
-            anndata, measurement_name=measurement_name
+        joinid_maps = ExperimentIDMapping(
+            obs_axis=AxisIDMapping(data=tuple(range(nobs))),
+            var_axes={measurement_name: AxisIDMapping(data=tuple(range(nvar)))},
         )
     else:
         raise NotImplementedError("Support for appending is not yet implemented.")
@@ -476,7 +488,7 @@ def from_visium(
         df_uri = _util.uri_joinpath(experiment_uri, "obs")
         with _write_dataframe(
             df_uri,
-            conversions.obs_or_var_to_tiledb_supported_array_type(anndata.obs),
+            obs_df,
             id_column_name="obs_id",
             axis_mapping=joinid_maps.obs_axis,
             **ingest_platform_ctx,
@@ -506,7 +518,7 @@ def from_visium(
                 # MS/meas/VAR
                 with _write_dataframe(
                     _util.uri_joinpath(measurement_uri, "var"),
-                    conversions.obs_or_var_to_tiledb_supported_array_type(anndata.var),
+                    var_df,
                     id_column_name="var_id",
                     axis_mapping=joinid_maps.var_axes[measurement_name],
                     **ingest_platform_ctx,
@@ -525,7 +537,7 @@ def from_visium(
                     with _create_from_matrix(
                         X_kind,
                         _util.uri_joinpath(measurement_X_uri, X_layer_name),
-                        anndata.X,
+                        X_mat,
                         axis_0_mapping=joinid_maps.obs_axis,
                         axis_1_mapping=joinid_maps.var_axes[measurement_name],
                         **ingest_platform_ctx,
@@ -541,7 +553,6 @@ def from_visium(
             exp.obs.read(column_names=["soma_joinid", "obs_id"]).concat().to_pandas()
         )
         x_layer = exp.ms[measurement_name].X[X_layer_name]
-        (len_obs_id, len_var_id) = x_layer.shape
         if write_obs_spatial_presence or write_var_spatial_presence:
             x_layer_data = x_layer.read().tables().concat()
             if write_obs_spatial_presence:
@@ -630,7 +641,7 @@ def from_visium(
                         pixels_per_spot_diameter,
                         obs_df,
                         "obs_id",
-                        len_obs_id,
+                        nobs,
                         **ingest_ctx,
                     ) as loc:
                         _maybe_set(obsl, "loc", loc, use_relative_uri=use_relative_uri)
@@ -651,7 +662,7 @@ def from_visium(
                 experiment_uri, "obs_spatial_presence"
             )
             obs_spatial_presence = _write_scene_presence_dataframe(
-                obs_id, len_obs_id, scene_name, obs_spatial_presence_uri, **ingest_ctx
+                obs_id, nobs, scene_name, obs_spatial_presence_uri, **ingest_ctx
             )
             _maybe_set(
                 exp,
@@ -667,7 +678,7 @@ def from_visium(
                 "var_spatial_presence",
             )
             var_spatial_presence = _write_scene_presence_dataframe(
-                var_id, len_var_id, scene_name, var_spatial_presence_uri, **ingest_ctx
+                var_id, nvar, scene_name, var_spatial_presence_uri, **ingest_ctx
             )
             meas = exp.ms[measurement_name]
             _maybe_set(
