@@ -74,7 +74,7 @@ from ..ingest import (
     _write_dataframe,
     add_metadata,
 )
-from ._util import _read_visium_software_version
+from ._util import SpaceRangerMatrixReader
 
 
 def path_validator(instance, attribute, value: Path) -> None:  # type: ignore[no-untyped-def]
@@ -179,12 +179,8 @@ class VisiumPaths:
 
         # Attempt to read the Space Ranger version if it is not already set.
         if version is None:
-            try:
-                version = _read_visium_software_version(gene_expression)
-            except (KeyError, ValueError):
-                raise ValueError(
-                    "Unable to determine Space Ranger version from gene expression file."
-                )
+            with SpaceRangerMatrixReader(gene_expression) as reader:
+                version = reader.version
 
         # Find the tissue positions file path if it wasn't supplied.
         if tissue_positions is None:
