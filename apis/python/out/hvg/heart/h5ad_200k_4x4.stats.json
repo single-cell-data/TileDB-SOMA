@@ -1,0 +1,123 @@
+{
+  "total_num_allocations": 59367090,
+  "total_bytes_allocated": 7746809287,
+  "allocation_size_histogram": [
+    {
+      "min_bytes": 0,
+      "max_bytes": 4,
+      "count": 55206
+    },
+    {
+      "min_bytes": 5,
+      "max_bytes": 31,
+      "count": 20433968
+    },
+    {
+      "min_bytes": 32,
+      "max_bytes": 186,
+      "count": 33812919
+    },
+    {
+      "min_bytes": 187,
+      "max_bytes": 1068,
+      "count": 4971640
+    },
+    {
+      "min_bytes": 1069,
+      "max_bytes": 6117,
+      "count": 43659
+    },
+    {
+      "min_bytes": 6118,
+      "max_bytes": 34993,
+      "count": 38603
+    },
+    {
+      "min_bytes": 34994,
+      "max_bytes": 200137,
+      "count": 9537
+    },
+    {
+      "min_bytes": 200138,
+      "max_bytes": 1144623,
+      "count": 1381
+    },
+    {
+      "min_bytes": 1144624,
+      "max_bytes": 6546296,
+      "count": 82
+    },
+    {
+      "min_bytes": 6546297,
+      "max_bytes": 37439376,
+      "count": 95
+    }
+  ],
+  "allocator_type_distribution": {
+    "PYMALLOC_MALLOC": 54690492,
+    "MALLOC": 3360529,
+    "PYMALLOC_REALLOC": 780504,
+    "PYMALLOC_CALLOC": 509730,
+    "REALLOC": 24372,
+    "CALLOC": 1362,
+    "MMAP": 101
+  },
+  "top_allocations_by_size": [
+    {
+      "location": "__getitem__:/home/ubuntu/.pyenv/versions/3.12.6/lib/python3.12/site-packages/h5py/_hl/dataset.py:252",
+      "size": 1082944283
+    },
+    {
+      "location": "__getitem__:/home/ubuntu/.pyenv/versions/3.12.6/lib/python3.12/site-packages/h5py/_hl/dataset.py:781",
+      "size": 651360028
+    },
+    {
+      "location": "__getitem__:/home/ubuntu/.pyenv/versions/3.12.6/lib/python3.12/site-packages/h5py/_hl/dataset.py:864",
+      "size": 483660337
+    },
+    {
+      "location": "packb:/home/ubuntu/.pyenv/versions/3.12.6/lib/python3.12/site-packages/msgpack/__init__.py:36",
+      "size": 330973597
+    },
+    {
+      "location": "_take_nd_ndarray:/home/ubuntu/.pyenv/versions/3.12.6/lib/python3.12/site-packages/pandas/core/array_algos/take.py:131",
+      "size": 262562080
+    }
+  ],
+  "top_allocations_by_count": [
+    {
+      "location": "__getitem__:/home/ubuntu/.pyenv/versions/3.12.6/lib/python3.12/site-packages/h5py/_hl/dataset.py:252",
+      "count": 16554925
+    },
+    {
+      "location": "__getitem__:/home/ubuntu/.pyenv/versions/3.12.6/lib/python3.12/site-packages/h5py/_hl/dataset.py:864",
+      "count": 6634128
+    },
+    {
+      "location": "ref:/home/ubuntu/.pyenv/versions/3.12.6/lib/python3.12/site-packages/bokeh/model/model.py:232",
+      "count": 1867454
+    },
+    {
+      "location": "_find_imported_submodules:/home/ubuntu/.pyenv/versions/3.12.6/lib/python3.12/site-packages/cloudpickle/cloudpickle.py:379",
+      "count": 1477434
+    },
+    {
+      "location": "__init__:/home/ubuntu/.pyenv/versions/3.12.6/lib/python3.12/site-packages/bokeh/core/serialization.py:220",
+      "count": 1363379
+    }
+  ],
+  "metadata": {
+    "start_time": "2025-02-28 03:52:00.992000+00:00",
+    "end_time": "2025-02-28 03:53:58.859000+00:00",
+    "total_allocations": 115128044,
+    "total_frames": 24637,
+    "peak_memory": 654025055,
+    "command_line": "./dsk.py hvg -c200k -DMM -w4 -W4 -H data/heart.h5ad -oout/hvg/heart",
+    "pid": 19835,
+    "main_thread_id": 1,
+    "python_allocator": "pymalloc",
+    "has_native_traces": true,
+    "trace_python_allocators": true,
+    "file_format": 0
+  }
+}

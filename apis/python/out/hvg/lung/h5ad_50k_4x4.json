@@ -1,0 +1,56 @@
+{
+  "peak_mem": 1546921041,
+  "top_allocs": [
+    {
+      "location": "__getitem__:/home/ubuntu/.pyenv/versions/3.12.6/lib/python3.12/site-packages/h5py/_hl/dataset.py:252",
+      "size": 2451418400,
+      "iec": "2.28 GiB"
+    },
+    {
+      "location": "__getitem__:/home/ubuntu/.pyenv/versions/3.12.6/lib/python3.12/site-packages/h5py/_hl/dataset.py:781",
+      "size": 1542412252,
+      "iec": "1.44 GiB"
+    },
+    {
+      "location": "__getitem__:/home/ubuntu/.pyenv/versions/3.12.6/lib/python3.12/site-packages/h5py/_hl/dataset.py:864",
+      "size": 1132701963,
+      "iec": "1.05 GiB"
+    },
+    {
+      "location": "packb:/home/ubuntu/.pyenv/versions/3.12.6/lib/python3.12/site-packages/msgpack/__init__.py:36",
+      "size": 700859079,
+      "iec": "668 MiB"
+    },
+    {
+      "location": "_find_imported_submodules:/home/ubuntu/.pyenv/versions/3.12.6/lib/python3.12/site-packages/cloudpickle/cloudpickle.py:379",
+      "size": 655020000,
+      "iec": "625 MiB"
+    }
+  ],
+  "tracked_allocs": 108854833,
+  "tracked_bytes": 14884098144,
+  "total_allocs": 209779922,
+  "total_frames": 24757,
+  "times": {
+    "start": 0.038756867999836686,
+    "dask": 9.1225042570004,
+    "open": 0.00275711700123793,
+    "anndata": 100.34102350099965,
+    "X": 0.030826903999695787,
+    "normalize": 0.15618191399880743,
+    "log1p": 0.00839511799858883,
+    "hvg": 81.39960262399836,
+    "stats": 38.68303976899915
+  },
+  "total_time": 229.78308807199573,
+  "tissue": null,
+  "cmd": "HVG",
+  "n_obs": 3677225,
+  "obs_per_s": 16003.027162938337,
+  "no_dask_mem_mgmt": true,
+  "dask_chunk_size": 50000,
+  "n_dask_workers": 4,
+  "n_dask_threads_per_worker": 4,
+  "tdb_concurrency": 64,
+  "hvg_obs_per_s": 45174.97483354881
+}

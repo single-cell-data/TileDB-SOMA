@@ -1,0 +1,56 @@
+{
+  "peak_mem": 654025055,
+  "top_allocs": [
+    {
+      "location": "__getitem__:/home/ubuntu/.pyenv/versions/3.12.6/lib/python3.12/site-packages/h5py/_hl/dataset.py:252",
+      "size": 1082944283,
+      "iec": "1.01 GiB"
+    },
+    {
+      "location": "__getitem__:/home/ubuntu/.pyenv/versions/3.12.6/lib/python3.12/site-packages/h5py/_hl/dataset.py:781",
+      "size": 651360028,
+      "iec": "621 MiB"
+    },
+    {
+      "location": "__getitem__:/home/ubuntu/.pyenv/versions/3.12.6/lib/python3.12/site-packages/h5py/_hl/dataset.py:864",
+      "size": 483660337,
+      "iec": "461 MiB"
+    },
+    {
+      "location": "packb:/home/ubuntu/.pyenv/versions/3.12.6/lib/python3.12/site-packages/msgpack/__init__.py:36",
+      "size": 330973597,
+      "iec": "316 MiB"
+    },
+    {
+      "location": "_take_nd_ndarray:/home/ubuntu/.pyenv/versions/3.12.6/lib/python3.12/site-packages/pandas/core/array_algos/take.py:131",
+      "size": 262562080,
+      "iec": "250 MiB"
+    }
+  ],
+  "tracked_allocs": 59367090,
+  "tracked_bytes": 7746809287,
+  "total_allocs": 115128044,
+  "total_frames": 24637,
+  "times": {
+    "start": 0.04515731299943582,
+    "dask": 9.451427985000919,
+    "open": 0.0054190670016396325,
+    "anndata": 46.13164814999982,
+    "X": 0.02468753100038157,
+    "normalize": 0.15162761500141642,
+    "log1p": 0.014686312999401707,
+    "hvg": 62.00189108400082,
+    "stats": 22.674752848000935
+  },
+  "total_time": 140.50129790600477,
+  "tissue": null,
+  "cmd": "HVG",
+  "n_obs": 1559974,
+  "obs_per_s": 11102.91522747086,
+  "no_dask_mem_mgmt": true,
+  "dask_chunk_size": 200000,
+  "n_dask_workers": 4,
+  "n_dask_threads_per_worker": 4,
+  "tdb_concurrency": 64,
+  "hvg_obs_per_s": 25160.10355049543
+}
