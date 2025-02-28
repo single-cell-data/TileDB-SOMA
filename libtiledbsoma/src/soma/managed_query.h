@@ -814,6 +814,80 @@ class ManagedQuery {
         }
     }
 
+    template <typename ValueType, typename IndexType>
+        requires std::same_as<ValueType, std::string_view>
+    void _remap_indexes_aux(
+        std::string column_name,
+        Enumeration extended_enmr,
+        std::vector<ValueType> enums_in_write,
+        ArrowArray* index_array) {
+        // Get the user passed-in dictionary indexes
+        IndexType* idxbuf;
+        if (index_array->n_buffers == 3) {
+            idxbuf = (IndexType*)index_array->buffers[2] + index_array->offset;
+        } else {
+            idxbuf = (IndexType*)index_array->buffers[1] + index_array->offset;
+        }
+        std::vector<IndexType> original_indexes(
+            idxbuf, idxbuf + index_array->length);
+
+        // Shift the dictionary indexes to match the on-disk extended
+        // enumerations
+        std::vector<IndexType> shifted_indexes;
+        auto enmr_vec = _enumeration_values_view<ValueType>(extended_enmr);
+        std::unordered_map<ValueType, IndexType> enmr_map;
+        IndexType idx = 0;
+        for (const auto& enmr_value : enmr_vec) {
+            enmr_map.insert(std::make_pair(enmr_value, idx));
+            ++idx;
+        }
+
+        for (auto i : original_indexes) {
+            // For nullable columns, when the value is NULL, the associated
+            // index may be a negative integer, so do not index into
+            // enums_in_write or it will segfault
+            if (0 > i) {
+                shifted_indexes.push_back(i);
+            } else {
+                shifted_indexes.push_back(enmr_map[enums_in_write[i]]);
+            }
+        }
+
+        // Cast the user passed-in index type to be what is on-disk before we
+        // set the write buffers. Here we identify the on-disk type
+        auto attr = schema_->attribute(column_name);
+        switch (attr.type()) {
+            case TILEDB_INT8:
+                return _cast_shifted_indexes<IndexType, int8_t>(
+                    column_name, shifted_indexes, index_array);
+            case TILEDB_UINT8:
+                return _cast_shifted_indexes<IndexType, uint8_t>(
+                    column_name, shifted_indexes, index_array);
+            case TILEDB_INT16:
+                return _cast_shifted_indexes<IndexType, int16_t>(
+                    column_name, shifted_indexes, index_array);
+            case TILEDB_UINT16:
+                return _cast_shifted_indexes<IndexType, uint16_t>(
+                    column_name, shifted_indexes, index_array);
+            case TILEDB_INT32:
+                return _cast_shifted_indexes<IndexType, int32_t>(
+                    column_name, shifted_indexes, index_array);
+            case TILEDB_UINT32:
+                return _cast_shifted_indexes<IndexType, uint32_t>(
+                    column_name, shifted_indexes, index_array);
+            case TILEDB_INT64:
+                return _cast_shifted_indexes<IndexType, int64_t>(
+                    column_name, shifted_indexes, index_array);
+            case TILEDB_UINT64:
+                return _cast_shifted_indexes<IndexType, uint64_t>(
+                    column_name, shifted_indexes, index_array);
+            default:
+                throw TileDBSOMAError(
+                    "Saw invalid enumeration index type when trying to extend"
+                    "enumeration");
+        }
+    }
+
     template <typename UserIndexType, typename DiskIndexType>
     void _cast_shifted_indexes(
         std::string column_name,

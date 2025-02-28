@@ -288,6 +288,7 @@ std::optional<std::shared_ptr<ArrayBuffers>> ManagedQuery::read_next() {
 
     // Visit all attributes and retrieve enumeration vectors
     auto attribute_map = schema_->attributes();
+    // PERF: No apparent reason to do that
     for (auto& nmit : attribute_map) {
         auto attrname = nmit.first;
         auto attribute = nmit.second;
@@ -296,12 +297,12 @@ std::optional<std::shared_ptr<ArrayBuffers>> ManagedQuery::read_next() {
         if (enumname != std::nullopt) {
             auto enumeration = ArrayExperimental::get_enumeration(
                 *ctx_, *array_, enumname.value());
-            auto enumvec = enumeration.as_vector<std::string>();
+            // auto enumvec = enumeration.as_vector<std::string>();
             if (!buffers_->contains(attrname)) {
                 continue;
             }
             auto colbuf = buffers_->at(attrname);
-            colbuf->add_enumeration(enumvec);
+            colbuf->add_enumeration(std::vector<std::string>());
             LOG_DEBUG(std::format(
                 "[ManagedQuery] got Enumeration '{}' for attribute '{}'",
                 enumname.value(),
@@ -795,15 +796,15 @@ void ManagedQuery::_cast_dictionary_values<std::string>(
         }
     }
 
-    char* data = (char*)value_array->buffers[2];
-    std::string data_v(data, data + offsets_v[offsets_v.size() - 1]);
+    std::string_view data(
+        static_cast<const char*>(value_array->buffers[2]), offsets_v.back());
 
-    std::vector<std::string> values;
+    std::vector<std::string_view> values;
     for (size_t offset_idx = 0; offset_idx < offsets_v.size() - 1;
          ++offset_idx) {
         auto beg = offsets_v[offset_idx];
         auto sz = offsets_v[offset_idx + 1] - beg;
-        values.push_back(data_v.substr(beg, sz));
+        values.push_back(data.substr(beg, sz));
     }
 
     std::vector<int64_t> indexes = ManagedQuery::_get_index_vector(
@@ -1149,24 +1150,37 @@ bool ManagedQuery::_extend_and_evolve_schema<std::string>(
         }
     }
 
-    char* data = (char*)value_array->buffers[2];
-    std::string data_v(data, data + offsets_v[num_elems]);
+    std::string_view data(
+        static_cast<const char*>(value_array->buffers[2]), offsets_v.back());
 
-    std::vector<std::string> enums_in_write;
+    std::vector<std::string_view> enums_in_write;
     for (size_t i = 0; i < num_elems; ++i) {
         auto beg = offsets_v[i];
         auto sz = offsets_v[i + 1] - beg;
-        enums_in_write.push_back(data_v.substr(beg, sz));
+        enums_in_write.push_back(data.substr(beg, sz));
     }
 
     auto enumname = util::get_enmr_label(index_schema, value_schema);
     auto enmr = ArrayExperimental::get_enumeration(*ctx_, *array_, enumname);
-    std::vector<std::string> extend_values;
-    auto enums_existing = enmr.as_vector<std::string>();
+    std::vector<std::string_view> extend_values;
+    size_t total_size = 0;
+
+    auto enums_existing = _enumeration_values_view<std::string_view>(enmr);
     for (auto enum_val : enums_in_write) {
-        if (std::find(enums_existing.begin(), enums_existing.end(), enum_val) ==
-            enums_existing.end()) {
+        bool found = false;
+        for (const auto& existing_enum_val : enums_existing) {
+            if (std::equal(
+                    enum_val.begin(),
+                    enum_val.end(),
+                    existing_enum_val.begin())) {
+                found = true;
+                break;
+            }
+        }
+
+        if (!found) {
             extend_values.push_back(enum_val);
+            total_size += enum_val.size();
         }
     }
 
@@ -1183,7 +1197,24 @@ bool ManagedQuery::_extend_and_evolve_schema<std::string>(
                 "Cannot extend enumeration; reached maximum capacity");
         }
 
-        auto extended_enmr = enmr.extend(extend_values);
+        std::vector<uint8_t> extend_data(total_size);
+        std::vector<uint64_t> extend_offsets;
+        extend_offsets.reserve(extend_values.size());
+        size_t curr_offset = 0;
+        for (const auto& enum_val : extend_values) {
+            std::memcpy(
+                extend_data.data() + curr_offset,
+                enum_val.data(),
+                enum_val.size());
+            extend_offsets.push_back(curr_offset);
+            curr_offset += enum_val.size();
+        }
+
+        auto extended_enmr = enmr.extend(
+            extend_data.data(),
+            extend_data.size(),
+            extend_offsets.data(),
+            extend_values.size() * sizeof(uint64_t));
         se.extend_enumeration(extended_enmr);
 
         ManagedQuery::_remap_indexes(
