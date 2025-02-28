@@ -561,13 +561,11 @@ def _set_coord_by_py_seq_or_np_array(
 
     try:
         set_dim_points = getattr(column, f"set_dim_points_{dim.type}")
-        # set_dim_points = getattr(mq._handle, f"set_dim_points_{dim.type}")
     except AttributeError:
         # We have to handle this type specially below
         pass
     else:
         set_dim_points(mq._handle, coord)
-        # set_dim_points(column, coord)
         return
 
     if pa_types_is_string_or_bytes(dim.type):
