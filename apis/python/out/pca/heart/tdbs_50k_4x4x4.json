@@ -1,0 +1,24 @@
+{
+  "times": {
+    "start": 1.0650001058820635e-05,
+    "dask": 3.2601927380001143,
+    "query": 0.14688895200015395,
+    "to_anndata": 6.040493054999388,
+    "normalize": 0.21996331800073676,
+    "log1p": 0.0014608429992222227,
+    "hvg": 26.370212781999726,
+    "pca": 42.538325313000314
+  },
+  "total_time": 78.57754765100071,
+  "tissue": "heart",
+  "cmd": "PCA",
+  "n_obs": 1559974,
+  "obs_per_s": 19852.66843562702,
+  "no_dask_mem_mgmt": true,
+  "dask_chunk_size": 50000,
+  "n_dask_workers": 4,
+  "n_dask_threads_per_worker": 4,
+  "tdb_concurrency": 4,
+  "pca_obs_per_s": 36672.200621947144,
+  "mem_total_budget": 2147483648
+}
