@@ -199,15 +199,13 @@ TEST_CASE("SOMAGeometryDataFrame: Roundtrip", "[SOMAGeometryDataFrame]") {
     // Write to point cloud.
     auto soma_geometry = SOMAGeometryDataFrame::open(
         uri, OpenMode::write, ctx, std::nullopt);
-    auto [casted_schema, casted_data] = soma_geometry->cast_array_data(
-        std::move(data_schema), std::move(data_array));
     auto mq = ManagedQuery(*soma_geometry, ctx->tiledb_ctx());
     std::tie(data_array, data_schema) = TransformerPipeline(
-        std::move(data_array),
-        std::move(data_schema))
-        .transform(
-            OutlineTransformer(coord_space))
-        .asTable();
+                                            std::move(data_array),
+                                            std::move(data_schema))
+                                            .transform(
+                                                OutlineTransformer(coord_space))
+                                            .asTable();
 
     mq.set_array_data(std::move(data_schema), std::move(data_array));
     mq.submit_write();
