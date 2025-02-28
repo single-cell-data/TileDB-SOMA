@@ -895,7 +895,7 @@ tiledb_layout_t ArrowAdapter::_get_order(std::string order) {
     }
 }
 
-std::tuple<ArraySchema, nlohmann::json>
+std::tuple<ArraySchema, nlohmann::json, bool>
 ArrowAdapter::tiledb_schema_from_arrow_schema(
     std::shared_ptr<Context> ctx,
     const std::unique_ptr<ArrowSchema>& arrow_schema,
@@ -906,6 +906,7 @@ ArrowAdapter::tiledb_schema_from_arrow_schema(
     PlatformConfig platform_config) {
     auto& index_column_array = index_column_info.first;
     auto& index_column_schema = index_column_info.second;
+    bool required_soma_column_metadata = false;
 
     ArraySchema schema(*ctx, is_sparse ? TILEDB_SPARSE : TILEDB_DENSE);
     Domain domain(*ctx);
@@ -965,6 +966,7 @@ ArrowAdapter::tiledb_schema_from_arrow_schema(
                 auto dtype = to_tiledb_format(child->format, type_metadata);
                 switch (dtype) {
                     case TILEDB_BLOB:
+                        required_soma_column_metadata = true;
                         columns.push_back(SOMABinaryColumn::create(
                             ctx,
                             index_column_schema->children[i],
@@ -975,6 +977,7 @@ ArrowAdapter::tiledb_schema_from_arrow_schema(
                             platform_config));
                         break;
                     case TILEDB_GEOM_WKB:
+                        required_soma_column_metadata = true;
                         columns.push_back(SOMAGeometryColumn::create(
                             ctx,
                             child,
@@ -1106,8 +1109,9 @@ ArrowAdapter::tiledb_schema_from_arrow_schema(
     LOG_DEBUG(fmt::format("[ArrowAdapter] check"));
     schema.check();
 
-    LOG_DEBUG(fmt::format("[ArrowAdapter] returning"));
-    return std::make_tuple(schema, soma_schema_extension);
+    LOG_DEBUG(std::format("[ArrowAdapter] returning"));
+    return std::make_tuple(
+        schema, soma_schema_extension, required_soma_column_metadata);
 }
 
 Dimension ArrowAdapter::tiledb_dimension_from_arrow_schema(
