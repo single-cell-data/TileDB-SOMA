@@ -278,7 +278,7 @@ def arrow_table():
         [
             "bytes-pa-array-typed",
             ["bytes"],
-            [["", ""]],
+            [[b"", b""]],
             [pa.array([b"cat", b"dog"], pa.binary())],
             "default23",
         ],
