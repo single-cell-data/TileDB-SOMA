@@ -326,6 +326,7 @@ setuptools.setup(
                 "src/tiledbsoma/soma_group.cc",
                 "src/tiledbsoma/soma_collection.cc",
                 "src/tiledbsoma/managed_query.cc",
+                "src/tiledbsoma/transformer.cc",
                 "src/tiledbsoma/pytiledbsoma.cc",
             ],
             include_dirs=INC_DIRS,
