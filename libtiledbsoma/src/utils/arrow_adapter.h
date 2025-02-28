@@ -404,7 +404,7 @@ class ArrowAdapter {
      *
      * @return std::tuple<tiledb::ArraySchema, nlohmann::json>
      */
-    static std::tuple<ArraySchema, nlohmann::json>
+    static std::tuple<ArraySchema, nlohmann::json, bool>
     tiledb_schema_from_arrow_schema(
         std::shared_ptr<Context> ctx,
         const std::unique_ptr<ArrowSchema>& arrow_schema,
