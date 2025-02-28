@@ -7,7 +7,9 @@ from os import cpu_count, makedirs
 from os.path import dirname, join, splitext
 from sys import stderr, stdout
 
+import anndata as ad
 import dask
+import h5py
 import pyarrow as pa
 import scanpy as sc
 from anndata import AnnData
@@ -45,7 +47,7 @@ def _census_version_opt(*opt_args, **opt_kwargs):
     def opt(fn):
         @option(*opt_args, "--census-version", "census_version", **opt_kwargs)
         @wraps(fn)
-        def _fn(*args, census_version, **kwargs):
+        def _fn(*args, census_version: str, **kwargs):
             exp_uri = f"{CENSUS_S3}/{census_version}/soma/census_data/homo_sapiens"
             return fn(*args, exp_uri=exp_uri, **kwargs)
 
@@ -57,8 +59,9 @@ def _census_version_opt(*opt_args, **opt_kwargs):
 # fmt: off
 mem_budget_opt = option("-b", "--mem-total-budget", callback=lambda ctx, param, val: parse_size(val) if val else None)
 dask_chunk_size_opt = number("-c", "--dask-chunk-size", default="100k")
-census_version_opt = _census_version_opt("-C", default="2024-07-01")
+census_version_opt = _census_version_opt("-C", default="2024-07-01", help="Exclusive with -H/--h5ad-path.")
 no_dask_mem_mgmt_opt = option("-D", "--no-dask-mem-mgmt", is_flag=True)
+h5ad_path_opt = option("-H", "--h5ad-path", help="When passed, read a Dask-AnnData from this .h5ad (instead of a TileDB-SOMA-backed Census query). Exclusive with -C/--census-version, -t/--tissue, and -T/--tdb-concurrency.")
 no_keep_memray_bin_opt = option("-K", "--no-keep-memray-bin", is_flag=True)
 x_layer_opt = option("-l", "--x-layer", default="raw")
 memray_bin_opt = option("-m", "--memray-bin-path")
@@ -66,8 +69,8 @@ memray_level_opt = option("-M", "--memray-level", count=True, help="0x: no memra
 method_opt = option("-M", "--method", count=True, help='0x: "naive" reindexing+CSR-construction, 1x: .blockwise().scipy, 2x: IntIndexer/fastercsx')
 out_dir_opt = option("-o", "--out-dir")
 dask_dashboard_port_opt = option("-p", "--dask-dashboard-port", type=int, default=8787)
-tissue_opt = option("-t", "--tissue", default="nose")
-tdb_concurrency_opt = option("-T", "--tdb-concurrency", type=int, default=1)
+tissue_opt = option("-t", "--tissue", help="Query Census cells with this `tissue_general` value. Exclusive with -H/--h5ad-path.")
+tdb_concurrency_opt = option("-T", "--tdb-concurrency", type=int, help='Short-hand for several TileDB{,-SOMA} concurrency configs: "sm.io_concurrency_level", "sm.compute_concurrency_level", and the SOMA context threadpool size. Exclusive with -H/--h5ad-path.')
 verbosity_opt = option("-v", "--verbosity", default=2)
 var_filter_opt = option("-V", "--var-filter")
 dask_workers_opt = option("-w", "--n-dask-workers", type=int)
@@ -136,50 +139,67 @@ def joinids(
         err()
 
 
-def memray_cmd(out_path_kwarg: str):
+def memray_cmd(
+    out_path_kwarg: str,
+):
     """Decorator for dsk.py subcommands that instrument Memray profiling."""
 
     def rv(fn):
         @cli.command
         @dask_chunk_size_opt
+        @h5ad_path_opt
         @no_keep_memray_bin_opt
         @memray_bin_opt
         @memray_level_opt
         @out_dir_opt
-        @tdb_concurrency_opt
+        @tdb_concurrency_opt  # Exclusive with h5ad_path
         @verbosity_opt
         @wraps(fn)
         def _fn(
             *args,
             dask_chunk_size: int,
+            h5ad_path: str | None,
             no_keep_memray_bin: bool,
             memray_bin_path: str | None,
             memray_level: int,
             out_dir: str | None,
-            tdb_concurrency: int,
+            tdb_concurrency: int | None,
             verbosity: int,
             **kwargs,
         ):
+            name = "h5ad" if h5ad_path else "tdbs"
             if memray_bin_path is None:
                 if dask_chunk_size % 1000 == 0:
-                    name = f"{dask_chunk_size // 1000}k"
+                    name += f"_{dask_chunk_size // 1000}k"
                 else:
-                    name = f"{dask_chunk_size}"
+                    name += f"_{dask_chunk_size}"
 
-                if tdb_concurrency == 0:
-                    tdb_concurrency = cpu_count()
+                if h5ad_path:
+                    if tdb_concurrency is not None:
+                        raise ValueError(
+                            "Received -T/--tdb-concurrency and -H/--h5ad-path"
+                        )
+                else:
+                    if tdb_concurrency is None:
+                        tdb_concurrency = 1
+                    elif tdb_concurrency == 0:
+                        tdb_concurrency = cpu_count()
 
                 if "n_dask_workers" in kwargs and "n_dask_threads_per_worker" in kwargs:
                     n_dask_workers = kwargs["n_dask_workers"]
                     n_dask_threads_per_worker = kwargs["n_dask_threads_per_worker"]
-                    name += f"_{n_dask_workers}x{n_dask_threads_per_worker}x{tdb_concurrency}"
-                elif tdb_concurrency != 1:
-                    name += f"_{tdb_concurrency}"
+                    name += f"_{n_dask_workers}x{n_dask_threads_per_worker}"
+                    if not h5ad_path:
+                        name += f"x{tdb_concurrency}"
+                else:
+                    if tdb_concurrency != 1:
+                        name += f"_{tdb_concurrency}"
+
                 memray_bin_path = join(out_dir or kwargs[out_path_kwarg], f"{name}.bin")
 
             out_stem = splitext(memray_bin_path)[0]
 
-            time = Time()
+            time = Time(log=True)
 
             if not tdb_concurrency:
                 tdb_concurrency = cpu_count()
@@ -190,6 +210,7 @@ def memray_cmd(out_path_kwarg: str):
             arg_ks = spec.args + (wrapped_spec.args if wrapped_spec else [])
             opt_kwargs = dict(
                 dask_chunk_size=dask_chunk_size,
+                h5ad_path=h5ad_path,
                 out_dir=out_dir,
                 tdb_concurrency=tdb_concurrency,
                 out_stem=out_stem,
@@ -229,6 +250,7 @@ def query_to_anndata_dask(
     tiledb_config: dict[str, str],
     mem_total_budget: str | None,
     dask_chunk_size: int,
+    h5ad_path: str | None,
     x_layer: str,
     dask_dashboard_port: int,
     time: Time,
@@ -241,20 +263,6 @@ def query_to_anndata_dask(
     normalize: bool = True,
     log1p: bool = True,
 ) -> AnnData:
-    if mem_total_budget:
-        tiledb_config.update(**{"sm.mem.total_budget": mem_total_budget})
-    context = make_context(
-        tiledb_config=tiledb_config,
-        tdb_concurrency=tdb_concurrency,
-    )
-    exp = Experiment.open(
-        uri,
-        context=context,
-    )
-    obs_filter = "is_primary_data == True"
-    if tissue:
-        obs_filter = f'tissue_general == "{tissue}" and {obs_filter}'
-
     time("dask")
     if dask_chunk_size:
         if no_dask_mem_mgmt:
@@ -279,28 +287,56 @@ def query_to_anndata_dask(
     else:
         dask_chunk_size = None
 
-    err("Running query")
-    time("query")
-    query = exp.axis_query(
-        measurement_name="RNA",
-        obs_query=AxisQuery(value_filter=obs_filter) if obs_filter else None,
-        var_query=AxisQuery(value_filter=var_filter) if var_filter else None,
-    )
-    time("to_anndata")
-    add = query.to_anndata(
-        x_layer,
-        dask=DaskConfig(
-            chunk_size=dask_chunk_size,
+    if h5ad_path:
+        time("open")
+        with h5py.File(h5ad_path, "r") as f:
+            time("anndata")
+            add = AnnData(
+                obs=ad.io.read_elem(f["obs"]),
+                var=ad.io.read_elem(f["var"]),
+            )
+            time("X")
+            add.X = ad.experimental.read_elem_as_dask(
+                f["X"], chunks=(dask_chunk_size, add.shape[1])
+            )
+            time()
+    else:
+        if mem_total_budget:
+            tiledb_config.update(**{"sm.mem.total_budget": mem_total_budget})
+        context = make_context(
+            tiledb_config=tiledb_config,
             tdb_concurrency=tdb_concurrency,
-            tdb_configs=tiledb_config,
-        ),
-    )
+        )
+        exp = Experiment.open(
+            uri,
+            context=context,
+        )
+        obs_filter = "is_primary_data == True"
+        if tissue:
+            obs_filter = f'tissue_general == "{tissue}" and {obs_filter}'
+        else:
+            err("Querying all tissues")
+
+        time("query")
+        query = exp.axis_query(
+            measurement_name="RNA",
+            obs_query=AxisQuery(value_filter=obs_filter) if obs_filter else None,
+            var_query=AxisQuery(value_filter=var_filter) if var_filter else None,
+        )
+        time("to_anndata")
+        add = query.to_anndata(
+            x_layer,
+            dask=DaskConfig(
+                chunk_size=dask_chunk_size,
+                tdb_concurrency=tdb_concurrency,
+                tdb_configs=tiledb_config,
+            ),
+        )
+        time()
     if normalize:
-        err("normalize...")
         time("normalize")
         sc.pp.normalize_total(add)
     if log1p:
-        err("log1p...")
         time("log1p")
         sc.pp.log1p(add)
     time()
@@ -309,7 +345,7 @@ def query_to_anndata_dask(
 
 def process_mem(
     key: str,
-    tissue: str,
+    tissue: str | None,
     mem: Tracker | None,
     time: Time,
     out_stem: str | None,
@@ -390,6 +426,7 @@ def process_mem(
 def hvg(
     mem_total_budget: str | None,
     dask_chunk_size: int,
+    h5ad_path: str | None,
     hvg_inplace: bool,
     hvg_subset: bool,
     x_layer: str,
@@ -399,7 +436,7 @@ def hvg(
     time: Time,
     mem: Tracker | None,
     mem_ctx: Tracker | nullcontext,
-    tissue: str,
+    tissue: str | None,
     tdb_concurrency: int,
     var_filter: str | None,
     no_dask_mem_mgmt: bool,
@@ -413,6 +450,7 @@ def hvg(
             tiledb_config=DEFAULT_CONFIG,
             mem_total_budget=mem_total_budget,
             dask_chunk_size=dask_chunk_size,
+            h5ad_path=h5ad_path,
             x_layer=x_layer,
             dask_dashboard_port=dask_dashboard_port,
             time=time,
@@ -427,7 +465,8 @@ def hvg(
         err("Running Scanpy HVG")
         time("hvg")
         sc.pp.highly_variable_genes(add, inplace=hvg_inplace, subset=hvg_subset)
-        time("stats")
+        if mem:
+            time("stats")
     time()
 
     process_mem(
@@ -461,6 +500,7 @@ def hvg(
 def pca(
     mem_total_budget: str | None,
     dask_chunk_size: int,
+    h5ad_path: str | None,
     hvg_inplace: bool,
     hvg_subset: bool,
     x_layer: str,
@@ -470,24 +510,21 @@ def pca(
     time: Time,
     mem: Tracker | None,
     mem_ctx: Tracker | nullcontext,
-    tissue: str,
-    tdb_concurrency: int,
+    tissue: str | None,
+    tdb_concurrency: int | None,
     var_filter: str | None,
     no_dask_mem_mgmt: bool,
     n_dask_workers: int | None,
     n_dask_threads_per_worker: int | None,
 ):
     """Run Scanpy PCA on an AnnData whose ``X`` array is a Dask-backed TileDB-SOMA CELLxGENE Census query."""
-    tiledb_config = {
-        "vfs.s3.no_sign_request": "true",
-        "vfs.s3.region": "us-west-2",
-    }
     with mem_ctx:
         add = query_to_anndata_dask(
             uri=exp_uri,
-            tiledb_config=tiledb_config,
+            tiledb_config=DEFAULT_CONFIG,
             mem_total_budget=mem_total_budget,
             dask_chunk_size=dask_chunk_size,
+            h5ad_path=h5ad_path,
             x_layer=x_layer,
             dask_dashboard_port=dask_dashboard_port,
             time=time,
@@ -502,10 +539,12 @@ def pca(
         err("Running Scanpy HVG")
         time("hvg")
         sc.pp.highly_variable_genes(add, inplace=hvg_inplace, subset=hvg_subset)
+        time()
         err("Running Scanpy PCA")
         time("pca")
         sc.pp.pca(add)
-        time("stats")
+        if mem:
+            time("stats")
     time()
 
     process_mem(
