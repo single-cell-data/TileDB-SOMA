@@ -412,6 +412,15 @@ class ManagedQuery {
     }
 
     /**
+     * @brief Get the context of the query.
+     *
+     * @return std::shared_ptr<Context> Ctx
+     */
+    std::shared_ptr<Context> ctx() const {
+        return ctx_;
+    }
+
+    /**
      * @brief Return true if the only ranges selected were empty.
      *
      * @return true if the query contains only empty ranges.

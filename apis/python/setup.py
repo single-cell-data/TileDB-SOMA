@@ -318,6 +318,7 @@ setuptools.setup(
                 "src/tiledbsoma/soma_context.cc",
                 "src/tiledbsoma/soma_array.cc",
                 "src/tiledbsoma/soma_object.cc",
+                "src/tiledbsoma/soma_column.cc",
                 "src/tiledbsoma/soma_dataframe.cc",
                 "src/tiledbsoma/soma_point_cloud_dataframe.cc",
                 "src/tiledbsoma/soma_geometry_dataframe.cc",

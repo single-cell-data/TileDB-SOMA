@@ -446,6 +446,16 @@ void load_soma_array(py::module& m) {
                     throw TileDBSOMAError(e.what());
                 }
             },
-            "newshape"_a);
+            "newshape"_a)
+        .def(
+            "get_column",
+            [](SOMAArray& array, const std::string name) {
+                try {
+                    return array.get_column(name);
+                } catch (const std::exception& e) {
+                    throw TileDBSOMAError(e.what());
+                }
+            },
+            "name"_a);
 }
 }  // namespace libtiledbsomacpp

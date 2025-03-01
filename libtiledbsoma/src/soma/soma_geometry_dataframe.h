@@ -144,17 +144,6 @@ class SOMAGeometryDataFrame : virtual public SOMAArray {
      */
     uint64_t count();
 
-    /**
-     * SOMAGeometryDataFrame requires special casting when writing.
-     *
-     * @param arrow_schema ArrowSchema of the Arrow Table to write
-     * @param arrow_array ArrowArray of the Arrow Table to write
-     *
-     */
-    ArrowTable cast_array_data(
-        std::unique_ptr<ArrowSchema> arrow_schema,
-        std::unique_ptr<ArrowArray> arrow_array);
-
    private:
     //===================================================================
     //= private non-static

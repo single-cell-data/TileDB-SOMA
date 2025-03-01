@@ -390,28 +390,29 @@ TEST_CASE_METHOD(
 
         sdf->close();
 
-        auto external_query = std::make_unique<ManagedQuery>(
-            *open(OpenMode::read), ctx_->tiledb_ctx());
+        ManagedQuery external_query(*open(OpenMode::read), ctx_->tiledb_ctx());
 
         columns[1]->select_columns(external_query);
-        columns[1]->set_dim_point<uint32_t>(external_query, *ctx_, 1234);
+        columns[1]->set_dim_point<uint32_t>(external_query, 1234);
 
         // Configure query and allocate result buffers
-        auto ext_res = external_query->read_next().value();
+        auto ext_res = external_query.read_next().value();
 
         REQUIRE(ext_res->num_rows() == 1);
 
-        external_query->reset();
+        external_query.reset();
+
+        const std::vector a(
+            {std::make_pair<std::string, std::string>("apple", "b")});
 
         columns[0]->select_columns(external_query);
-        columns[0]->set_dim_ranges<std::string>(
+        columns[0]->set_dim_ranges(
             external_query,
-            *ctx_,
             std::vector(
                 {std::make_pair<std::string, std::string>("apple", "b")}));
 
         // Configure query and allocate result buffers
-        ext_res = external_query->read_next().value();
+        ext_res = external_query.read_next().value();
 
         REQUIRE(ext_res->num_rows() == 1);
     }
@@ -546,28 +547,26 @@ TEST_CASE_METHOD(
 
         sdf->close();
 
-        auto external_query = std::make_unique<ManagedQuery>(
-            *open(OpenMode::read), ctx_->tiledb_ctx());
+        ManagedQuery external_query(*open(OpenMode::read), ctx_->tiledb_ctx());
 
         columns[1]->select_columns(external_query);
-        columns[1]->set_dim_point<uint32_t>(external_query, *ctx_, 1234);
+        columns[1]->set_dim_point<uint32_t>(external_query, 1234);
 
         // Configure query and allocate result buffers
-        auto ext_res = external_query->read_next().value();
+        auto ext_res = external_query.read_next().value();
 
         REQUIRE(ext_res->num_rows() == 1);
 
-        external_query->reset();
+        external_query.reset();
 
         columns[0]->select_columns(external_query);
         columns[0]->set_dim_ranges<std::string>(
             external_query,
-            *ctx_,
             std::vector(
                 {std::make_pair<std::string, std::string>("apple", "b")}));
 
         // Configure query and allocate result buffers
-        ext_res = external_query->read_next().value();
+        ext_res = external_query.read_next().value();
 
         REQUIRE(ext_res->num_rows() == 1);
     }
