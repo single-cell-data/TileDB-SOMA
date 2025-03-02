@@ -43,6 +43,7 @@ from ._spatial_dataframe import SpatialDataFrame
 from ._spatial_util import (
     coordinate_space_from_json,
     coordinate_space_to_json,
+    process_spatial_df_region,
 )
 from ._types import OpenTimestamp
 from .options import SOMATileDBContext
@@ -369,6 +370,7 @@ class GeometryDataFrame(SpatialDataFrame, somacore.GeometryDataFrame):
             result_order=_util.to_clib_result_order(result_order),
             value_filter=value_filter,
             platform_config=platform_config,
+            coord_space=self._coord_space,
         )
 
     def read_spatial_region(
@@ -417,7 +419,60 @@ class GeometryDataFrame(SpatialDataFrame, somacore.GeometryDataFrame):
         Lifecycle:
             Experimental.
         """
-        raise NotImplementedError()
+        # Set/check transform and region coordinate space.
+        if region_transform is None:
+            region_transform = somacore.IdentityTransform(
+                self.axis_names, self.axis_names
+            )
+            if region_coord_space is not None:
+                raise ValueError(
+                    "Cannot specify the output coordinate space when region transform "
+                    "is ``None``."
+                )
+            region_coord_space = self._coord_space
+        else:
+            if region_coord_space is None:
+                region_coord_space = CoordinateSpace.from_axis_names(
+                    region_transform.input_axes
+                )
+            elif region_transform.input_axes != region_coord_space.axis_names:
+                raise ValueError(
+                    f"The input axes '{region_transform.input_axes}' of the region "
+                    f"transform must match the axes '{region_coord_space.axis_names}' "
+                    f"of the coordinate space the requested region is defined in."
+                )
+            if region_transform.output_axes != self._coord_space.axis_names:
+                raise ValueError(
+                    f"The output axes of '{region_transform.output_axes}' of the "
+                    f"transform must match the axes '{self._coord_space.axis_names}' "
+                    f"of the coordinate space of this point cloud dataframe."
+                )
+
+        # Process the user provided region.
+        coords, data_region, inv_transform = process_spatial_df_region(
+            region,
+            region_transform,
+            dict(),  # Move index value_filters into this dict to optimize queries
+            self.index_column_names,
+            self._coord_space.axis_names,
+            self._handle.schema,
+            spatial_column=SOMA_GEOMETRY,
+        )
+
+        return somacore.SpatialRead(
+            self.read(
+                coords,
+                column_names,
+                result_order=result_order,
+                value_filter=value_filter,
+                batch_size=batch_size,
+                partitions=partitions,
+                platform_config=platform_config,
+            ),
+            self.coordinate_space,
+            region_coord_space,
+            inv_transform,
+        )
 
     def write(
         self,

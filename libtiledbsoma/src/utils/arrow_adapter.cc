@@ -495,6 +495,17 @@ std::unique_ptr<ArrowSchema> ArrowAdapter::arrow_schema_from_tiledb_attribute(
     arrow_schema->release = &ArrowAdapter::release_schema;
     arrow_schema->private_data = nullptr;
 
+    if (attribute.type() == TILEDB_GEOM_WKB) {
+        nanoarrow::UniqueBuffer metadata_buffer;
+        ArrowMetadataBuilderInit(metadata_buffer.get(), nullptr);
+        ArrowMetadataBuilderAppend(
+            metadata_buffer.get(),
+            ArrowCharView("dtype"),
+            ArrowCharView("WKB"));
+        ArrowSchemaSetMetadata(
+            arrow_schema.get(), reinterpret_cast<char*>(metadata_buffer->data));
+    }
+
     LOG_TRACE(std::format(
         "[ArrowAdapter] arrow_schema_from_tiledb_array format {} "
         "name {}",

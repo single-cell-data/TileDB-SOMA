@@ -28,7 +28,7 @@ import numpy.typing as npt
 import pyarrow as pa
 import somacore
 from scipy import sparse
-from somacore import options
+from somacore import CoordinateSpace, options
 
 # This package's pybind11 code
 import tiledbsoma.pytiledbsoma as clib
@@ -77,6 +77,8 @@ class TableReadIter(somacore.ReadIter[pa.Table]):
         result_order: clib.ResultOrder,
         value_filter: str | None,
         platform_config: options.PlatformConfig | None,
+        *,
+        coord_space: CoordinateSpace | None = None,
     ):
         """Initalizes a new TableReadIter for SOMAArrays.
 
@@ -106,7 +108,13 @@ class TableReadIter(somacore.ReadIter[pa.Table]):
 
         """
         self._reader = ArrowTableRead(
-            array, coords, column_names, result_order, value_filter, platform_config
+            array,
+            coords,
+            column_names,
+            result_order,
+            value_filter,
+            platform_config,
+            coord_space=coord_space,
         )
 
     def __next__(self) -> pa.Table:
@@ -565,6 +573,8 @@ class ArrowTableRead(Iterator[pa.Table]):
         result_order: clib.ResultOrder,
         value_filter: str | None,
         platform_config: options.PlatformConfig | None,
+        *,
+        coord_space: CoordinateSpace | None = None,
     ):
         clib_handle = array._handle._handle
 
@@ -572,16 +582,18 @@ class ArrowTableRead(Iterator[pa.Table]):
 
         self.mq._handle.set_layout(result_order)
 
-        if column_names is not None:
-            for name in column_names:
-                clib_handle.get_column(name).select_columns(self.mq._handle)
+        column_names = column_names or array.schema.names
+        for name in column_names:
+            clib_handle.get_column(name).select_columns(self.mq._handle)
 
         if value_filter is not None:
             self.mq._handle.set_condition(
                 QueryCondition(value_filter), clib_handle.schema
             )
 
-        _util._set_coords(self.mq, coords)
+        _util._set_coords(
+            self.mq, coords, coord_space.axis_names if coord_space else None
+        )
 
     def __next__(self) -> pa.Table:
         return self.mq._handle.next()
