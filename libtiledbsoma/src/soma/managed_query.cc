@@ -16,6 +16,8 @@
 #include <tiledb/array_experimental.h>
 #include <tiledb/attribute_experimental.h>
 #include <format>
+#include <unordered_set>
+
 #include "soma_array.h"
 #include "utils/common.h"
 #include "utils/logger.h"
@@ -1166,19 +1168,13 @@ bool ManagedQuery::_extend_and_evolve_schema<std::string>(
     size_t total_size = 0;
 
     auto enums_existing = _enumeration_values_view<std::string_view>(enmr);
-    for (auto enum_val : enums_in_write) {
-        bool found = false;
-        for (const auto& existing_enum_val : enums_existing) {
-            if (std::equal(
-                    enum_val.begin(),
-                    enum_val.end(),
-                    existing_enum_val.begin())) {
-                found = true;
-                break;
-            }
-        }
+    std::unordered_set<std::string_view> existing_enums_set;
+    for (const auto& existing_enum_val : enums_existing) {
+        existing_enums_set.insert(existing_enum_val);
+    }
 
-        if (!found) {
+    for (const auto& enum_val : enums_in_write) {
+        if (!existing_enums_set.contains(enum_val)) {
             extend_values.push_back(enum_val);
             total_size += enum_val.size();
         }
