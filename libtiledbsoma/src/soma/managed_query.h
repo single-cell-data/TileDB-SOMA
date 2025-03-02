@@ -14,6 +14,7 @@
 #ifndef MANAGED_QUERY_H
 #define MANAGED_QUERY_H
 
+#include <concepts>
 #include <future>
 #include <span>
 #include <stdexcept>  // for windows: error C2039: 'runtime_error': is not a member of 'std'
@@ -644,6 +645,12 @@ class ManagedQuery {
     bool _cast_column_aux(
         ArrowSchema* schema, ArrowArray* array, ArraySchemaEvolution se);
 
+    template <typename UserType>
+        requires std::same_as<UserType, std::string> ||
+                 std::same_as<UserType, std::vector<std::byte>>
+    bool _cast_column_aux(
+        ArrowSchema* schema, ArrowArray* array, ArraySchemaEvolution se);
+
     template <typename UserType, typename DiskType>
     bool _set_column(
         ArrowSchema* schema, ArrowArray* array, ArraySchemaEvolution se) {
@@ -814,6 +821,84 @@ class ManagedQuery {
         }
     }
 
+    template <typename ValueType, typename IndexType>
+        requires std::same_as<ValueType, std::span<const std::byte>>
+    void _remap_indexes_aux(
+        std::string column_name,
+        Enumeration extended_enmr,
+        std::vector<ValueType> enums_in_write,
+        ArrowArray* index_array) {
+        // Get the user passed-in dictionary indexes
+        IndexType* idxbuf;
+        if (index_array->n_buffers == 3) {
+            idxbuf = (IndexType*)index_array->buffers[2] + index_array->offset;
+        } else {
+            idxbuf = (IndexType*)index_array->buffers[1] + index_array->offset;
+        }
+        std::vector<IndexType> original_indexes(
+            idxbuf, idxbuf + index_array->length);
+
+        // Shift the dictionary indexes to match the on-disk extended
+        // enumerations
+        std::vector<IndexType> shifted_indexes;
+        auto enmr_vec = _enumeration_values_view<ValueType>(extended_enmr);
+        for (auto i : original_indexes) {
+            // For nullable columns, when the value is NULL, the associated
+            // index may be a negative integer, so do not index into
+            // enums_in_write or it will segfault
+            if (0 > i) {
+                shifted_indexes.push_back(i);
+            } else {
+                IndexType index = 0;
+                for (const auto& enum_val : enmr_vec) {
+                    if (std::equal(
+                            enum_val.begin(),
+                            enum_val.end(),
+                            enums_in_write[i].begin())) {
+                        shifted_indexes.push_back(index);
+                        break;
+                    }
+
+                    ++index;
+                }
+            }
+        }
+
+        // Cast the user passed-in index type to be what is on-disk before we
+        // set the write buffers. Here we identify the on-disk type
+        auto attr = schema_->attribute(column_name);
+        switch (attr.type()) {
+            case TILEDB_INT8:
+                return _cast_shifted_indexes<IndexType, int8_t>(
+                    column_name, shifted_indexes, index_array);
+            case TILEDB_UINT8:
+                return _cast_shifted_indexes<IndexType, uint8_t>(
+                    column_name, shifted_indexes, index_array);
+            case TILEDB_INT16:
+                return _cast_shifted_indexes<IndexType, int16_t>(
+                    column_name, shifted_indexes, index_array);
+            case TILEDB_UINT16:
+                return _cast_shifted_indexes<IndexType, uint16_t>(
+                    column_name, shifted_indexes, index_array);
+            case TILEDB_INT32:
+                return _cast_shifted_indexes<IndexType, int32_t>(
+                    column_name, shifted_indexes, index_array);
+            case TILEDB_UINT32:
+                return _cast_shifted_indexes<IndexType, uint32_t>(
+                    column_name, shifted_indexes, index_array);
+            case TILEDB_INT64:
+                return _cast_shifted_indexes<IndexType, int64_t>(
+                    column_name, shifted_indexes, index_array);
+            case TILEDB_UINT64:
+                return _cast_shifted_indexes<IndexType, uint64_t>(
+                    column_name, shifted_indexes, index_array);
+            default:
+                throw TileDBSOMAError(
+                    "Saw invalid enumeration index type when trying to extend"
+                    "enumeration");
+        }
+    }
+
     template <typename UserIndexType, typename DiskIndexType>
     void _cast_shifted_indexes(
         std::string column_name,
@@ -900,6 +985,9 @@ class ManagedQuery {
      */
     std::optional<std::vector<uint8_t>> _cast_validity_buffer(
         ArrowArray* array);
+
+    template <typename T>
+    std::vector<T> _enumeration_values_view(Enumeration& enumeration);
 };
 
 // These are all specializations to string/bool of various methods
@@ -917,12 +1005,12 @@ void ManagedQuery::_cast_dictionary_values<std::string>(
     ArrowSchema* schema, ArrowArray* array);
 
 template <>
-void ManagedQuery::_cast_dictionary_values<bool>(
+void ManagedQuery::_cast_dictionary_values<std::vector<std::byte>>(
     ArrowSchema* schema, ArrowArray* array);
 
 template <>
-bool ManagedQuery::_cast_column_aux<std::string>(
-    ArrowSchema* schema, ArrowArray* array, ArraySchemaEvolution se);
+void ManagedQuery::_cast_dictionary_values<bool>(
+    ArrowSchema* schema, ArrowArray* array);
 
 template <>
 bool ManagedQuery::_cast_column_aux<bool>(
@@ -935,6 +1023,22 @@ bool ManagedQuery::_extend_and_evolve_schema<std::string>(
     ArrowSchema* index_schema,
     ArrowArray* index_array,
     ArraySchemaEvolution se);
+
+template <>
+bool ManagedQuery::_extend_and_evolve_schema<std::vector<std::byte>>(
+    ArrowSchema* value_schema,
+    ArrowArray* value_array,
+    ArrowSchema* index_schema,
+    ArrowArray* index_array,
+    ArraySchemaEvolution se);
+
+template <>
+std::vector<std::span<const std::byte>> ManagedQuery::_enumeration_values_view(
+    Enumeration& enumeration);
+
+template <>
+std::vector<std::string_view> ManagedQuery::_enumeration_values_view(
+    Enumeration& enumeration);
 
 };  // namespace tiledbsoma
 
