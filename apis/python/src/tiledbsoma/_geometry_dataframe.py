@@ -426,7 +426,7 @@ class GeometryDataFrame(SpatialDataFrame, somacore.GeometryDataFrame):
             )
             if region_coord_space is not None:
                 raise ValueError(
-                    "Cannot specify the output coordinate space when region transform i"
+                    "Cannot specify the output coordinate space when region transform "
                     "is ``None``."
                 )
             region_coord_space = self._coord_space

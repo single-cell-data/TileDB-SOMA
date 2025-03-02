@@ -582,12 +582,9 @@ class ArrowTableRead(Iterator[pa.Table]):
 
         self.mq._handle.set_layout(result_order)
 
-        if column_names is not None:
-            for name in column_names:
-                clib_handle.get_column(name).select_columns(self.mq._handle)
-        else:
-            for name in array.schema.names:
-                clib_handle.get_column(name).select_columns(self.mq._handle)
+        column_names = column_names or array.schema.names
+        for name in column_names:
+            clib_handle.get_column(name).select_columns(self.mq._handle)
 
         if value_filter is not None:
             self.mq._handle.set_condition(
