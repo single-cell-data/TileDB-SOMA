@@ -185,6 +185,7 @@ def process_spatial_df_region(
     index_columns: Tuple[str, ...],
     axis_names: Tuple[str, ...],
     schema: pa.Schema,
+    spatial_column: str | None = None,
 ) -> Tuple[
     options.SparseDFCoords,
     options.SpatialRegion | None,
@@ -195,6 +196,8 @@ def process_spatial_df_region(
         raise KeyError("Extra coords cannot contain a spatial index column.")
     if not set(index_columns).issuperset(coords_by_name):
         raise KeyError("Extra coords must be index columns.")
+    if spatial_column is not None and spatial_column not in index_columns:
+        raise KeyError("Spatial column must be an index column.")
 
     # Transform the region into the data region and add the spatial coordinates
     # to the coords_by_name map.
@@ -227,12 +230,19 @@ def process_spatial_df_region(
         # Add the transform region to coords. This gets the bounding box for the
         # requested region.
         (x_min, y_min, x_max, y_max) = shapely.bounds(data_region)
-        coords_by_name[axis_names[0]] = axis_slice(
-            x_min, x_max, schema.field(axis_names[0]).type
-        )
-        coords_by_name[axis_names[1]] = axis_slice(
-            y_min, y_max, schema.field(axis_names[1]).type
-        )
+
+        if spatial_column is None:
+            coords_by_name[axis_names[0]] = axis_slice(
+                x_min, x_max, schema.field(axis_names[0]).type
+            )
+            coords_by_name[axis_names[1]] = axis_slice(
+                y_min, y_max, schema.field(axis_names[1]).type
+            )
+        else:
+            coords_by_name[spatial_column] = [
+                axis_slice(x_min, x_max, pa.float64()),
+                axis_slice(y_min, y_max, pa.float64()),
+            ]
 
     coords = tuple(coords_by_name.get(index_name) for index_name in index_columns)
     inv_transform = transform.inverse_transform()

@@ -112,6 +112,13 @@ void load_soma_column(py::module& m) {
                 column->set_dim_points<uint8_t>(mq, points);
             })
         .def(
+            "set_dim_points_double_array",
+            [](std::shared_ptr<SOMAColumn>& column,
+               ManagedQuery& mq,
+               const std::vector<std::vector<double_t>>& points) {
+                column->set_dim_points<std::vector<double_t>>(mq, points);
+            })
+        .def(
             "set_dim_ranges_string_or_bytes",
             [](std::shared_ptr<SOMAColumn>& column,
                ManagedQuery& mq,
@@ -187,6 +194,15 @@ void load_soma_column(py::module& m) {
                ManagedQuery& mq,
                const std::vector<std::pair<uint8_t, uint8_t>>& ranges) {
                 column->set_dim_ranges<uint8_t>(mq, ranges);
+            })
+        .def(
+            "set_dim_ranges_double_array",
+            [](std::shared_ptr<SOMAColumn>& column,
+               ManagedQuery& mq,
+               const std::vector<
+                   std::pair<std::vector<double_t>, std::vector<double_t>>>&
+                   ranges) {
+                column->set_dim_ranges<std::vector<double_t>>(mq, ranges);
             })
         .def(
             "set_dim_points_arrow",
