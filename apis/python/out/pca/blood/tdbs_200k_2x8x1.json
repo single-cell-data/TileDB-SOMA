@@ -1,0 +1,24 @@
+{
+  "times": {
+    "start": 1.0700001439545304e-05,
+    "dask": 3.4026581720027025,
+    "query": 0.19462686499900883,
+    "to_anndata": 48.426877580997825,
+    "normalize": 1.3213127720009652,
+    "log1p": 0.0016878759997780435,
+    "hvg": 221.01682503300253,
+    "pca": 251.83000898200407
+  },
+  "total_time": 526.1940079810083,
+  "tissue": "blood",
+  "cmd": "PCA",
+  "n_obs": 9863575,
+  "obs_per_s": 18745.129838795125,
+  "no_dask_mem_mgmt": true,
+  "dask_chunk_size": 200000,
+  "n_dask_workers": 2,
+  "n_dask_threads_per_worker": 8,
+  "tdb_concurrency": 1,
+  "pca_obs_per_s": 39167.5918206589,
+  "mem_total_budget": 2147483648
+}
