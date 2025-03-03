@@ -458,13 +458,18 @@ def from_visium(
     anndata.var_names_make_unique()
     logging.log_io(None, _util.format_elapsed(start_time, "FINISH DECATEGORICALIZING"))
 
-    # Create registration mapping if none was provided.
+    # Create registration mapping if none was provided and get obs/var data needed
+    # for spatial indexing.
     if registration_mapping is None:
         joinid_maps = ExperimentIDMapping.from_isolated_anndata(
             anndata, measurement_name=measurement_name
         )
     else:
         raise NotImplementedError("Support for appending is not yet implemented.")
+    (len_obs_id, len_var_id) = anndata.X.shape
+    # TODO: Add here.
+    # if write_obs_spatial_presence:
+    # if write_var_spatial_presence:
 
     # Write the new experiment.
     start_time = _util.get_start_stamp()
@@ -542,9 +547,8 @@ def from_visium(
         obs_df = (
             exp.obs.read(column_names=["soma_joinid", "obs_id"]).concat().to_pandas()
         )
-        x_layer = exp.ms[measurement_name].X[X_layer_name]
-        (len_obs_id, len_var_id) = x_layer.shape
         if write_obs_spatial_presence or write_var_spatial_presence:
+            x_layer = exp.ms[measurement_name].X[X_layer_name]
             x_layer_data = x_layer.read().tables().concat()
             if write_obs_spatial_presence:
                 obs_id = pacomp.unique(x_layer_data["soma_dim_0"])
