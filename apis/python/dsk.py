@@ -1,27 +1,31 @@
 #!/usr/bin/env python
-
+import asyncio
 import json
-from contextlib import nullcontext
+from asyncio import gather
+from contextlib import nullcontext, contextmanager, AsyncExitStack, asynccontextmanager
 from dataclasses import asdict, dataclass
 from functools import wraps
-from os import cpu_count, makedirs
-from os.path import dirname, join, splitext
+from os import cpu_count, makedirs, listdir, remove
+from os.path import dirname, join, splitext, exists, isdir
 from sys import stderr, stdout
+from typing import AsyncContextManager
 
 import anndata as ad
 import dask
 import h5py
 import pyarrow as pa
 import scanpy as sc
+import utz
 from anndata import AnnData
 from click import BadParameter, Context, Parameter, argument, group, option
 from dask.distributed import Client, LocalCluster
+from distributed.diagnostics.memray import memray_workers, memray_scheduler
 from humanfriendly import parse_size
-from prometheus_client.decorator import getfullargspec
 from pyarrow import feather
 from scipy.sparse import csr_matrix, vstack
 from somacore import AxisQuery
-from utz import Time, err, iec
+from utz import Time, err, iec, with_exit_hook, acontexts
+from utz.aio import proc
 from utz.cli import number
 from utz.mem import Tracker
 
@@ -119,13 +123,13 @@ no_dask_mem_mgmt_opt = option("-D", "--no-dask-mem-mgmt", is_flag=True)
 h5ad_path_opt = option("-H", "--h5ad-path", help="When passed, read a Dask-AnnData from this .h5ad (instead of a TileDB-SOMA-backed Census query). Exclusive with -C/--census-version, -t/--tissue, and -T/--tdb-concurrency.")
 no_keep_memray_bin_opt = option("-K", "--no-keep-memray-bin", is_flag=True)
 x_layer_opt = option("-l", "--x-layer", default="raw")
-memray_bin_opt = option("-m", "--memray-bin-path")
-memray_level_opt = option("-M", "--memray-level", count=True, help="0x: no memray, 1x: memray, 2x: memray with `trace_python_allocators` (slower)")
+memray_level_opt = option("-m", "--memray-level", count=True, help="0x: no memray, 1x: memray, 2x: memray with `trace_python_allocators` (slower)")
+memray_workers_level_opt = option("-M", "--memray-workers-level", count=True, help="0x: no memray, 1x: memray, 2x: memray with `trace_python_allocators` (slower)")
 method_opt = option("-M", "--method", count=True, help='0x: "naive" reindexing+CSR-construction, 1x: .blockwise().scipy, 2x: IntIndexer/fastercsx')
 out_dir_opt = option("-o", "--out-dir")
 dask_dashboard_port_opt = option("-p", "--dask-dashboard-port", type=int, default=8787)
 tissue_opt = option("-t", "--tissue", help="Query Census cells with this `tissue_general` value. Exclusive with -H/--h5ad-path.")
-tdb_concurrency_opt = option("-T", "--tdb-concurrency", type=int, help='Short-hand for several TileDB{,-SOMA} concurrency configs: "sm.io_concurrency_level", "sm.compute_concurrency_level", and the SOMA context threadpool size. Exclusive with -H/--h5ad-path.')
+tdb_concurrency_opt = option("-T", "--tdb-concurrency", type=int, help='Short-hand for several TileDB{,-SOMA} concurrency configs: "soma.compute_concurrency_level", "sm.io_concurrency_level", "sm.compute_concurrency_level", and the SOMA context threadpool size. Exclusive with -H/--h5ad-path.')
 verbosity_opt = option("-v", "--verbosity", default=2)
 var_filter_opt = option("-V", "--var-filter")
 
@@ -192,6 +196,53 @@ def joinids(
         err()
 
 
+async def process_worker_mems(
+    dask_memray_dir: str,
+    n_procs: int,
+    keep: bool,
+):
+    coros = []
+    bin_paths = []
+    if isdir(dask_memray_dir):
+        for i in range(n_procs):
+            bin_path = join(dask_memray_dir, f'{i}.memray')
+            if not exists(bin_path):
+                err(f"{bin_path=} doesn't exist")
+                continue
+            stem = splitext(bin_path)[0]
+            bin_path = f'{stem}.memray'
+            bin_paths.append(bin_path)
+            stats_path = f'{stem}.json'
+            html_path = f'{stem}.html'
+            stats = proc.run('memray', 'stats', '--json', '-fo', stats_path, bin_path)
+            html = proc.run('memray', 'flamegraph', '--temporal', '--leaks', '-fo', html_path, bin_path)
+            coros += [ stats, html ]
+        await gather(*coros)
+    if not keep:
+        for bin_path in bin_paths:
+            err(f"Removing {bin_path}")
+            remove(bin_path)
+
+
+@asynccontextmanager
+async def mem_workers(
+    dask_memray_dir: str,
+    n_procs: int,
+    keep: bool,
+    **memray_kwargs: str | bool,
+):
+    try:
+        with memray_workers(
+            dask_memray_dir,
+            # Return raw `.memray` files, in order to run both `stats` and `flamegraph`
+            report_args=False,
+            **memray_kwargs,
+        ):
+            yield
+    finally:
+        await process_worker_mems(dask_memray_dir, n_procs=n_procs, keep=keep)
+
+
 def memray_cmd(
     out_path_kwarg: str,
 ):
@@ -200,95 +251,151 @@ def memray_cmd(
     def rv(fn):
         @cli.command
         @dask_chunk_size_opt
+        @dask_dashboard_port_opt
         @h5ad_path_opt
         @no_keep_memray_bin_opt
-        @memray_bin_opt
         @memray_level_opt
+        @memray_workers_level_opt
         @out_dir_opt
         @tdb_concurrency_opt  # Exclusive with h5ad_path
+        @no_dask_mem_mgmt_opt
+        @dask_workers_opt
         @verbosity_opt
         @wraps(fn)
         def _fn(
             *args,
             dask_chunk_size: int,
+            dask_dashboard_port: int,
             h5ad_path: str | None,
             no_keep_memray_bin: bool,
-            memray_bin_path: str | None,
             memray_level: int,
+            memray_workers_level: int,
             out_dir: str | None,
             tdb_concurrency: int | None,
+            no_dask_mem_mgmt: bool,
+            dask_workers: DaskWorkers | None,
             verbosity: int,
             **kwargs,
         ):
             name = "h5ad" if h5ad_path else "tdbs"
-            if memray_bin_path is None:
-                if dask_chunk_size % 1000 == 0:
-                    name += f"_{dask_chunk_size // 1000}k"
-                else:
-                    name += f"_{dask_chunk_size}"
+            if dask_chunk_size % 1000 == 0:
+                name += f"_{dask_chunk_size // 1000}k"
+            else:
+                name += f"_{dask_chunk_size}"
 
-                if "dask_workers" in kwargs:
-                    dask_workers = kwargs["dask_workers"]
-                    name += f"_d{dask_workers}"
+            if dask_workers:
+                name += f"_d{dask_workers}"
 
-                if h5ad_path:
-                    if tdb_concurrency is not None:
-                        raise ValueError(
-                            "Received -T/--tdb-concurrency and -H/--h5ad-path"
-                        )
-                else:
-                    if tdb_concurrency is None:
-                        tdb_concurrency = 1
-                    elif tdb_concurrency == 0:
-                        tdb_concurrency = cpu_count()
-                    name += f"_T{tdb_concurrency}"
+            if h5ad_path:
+                if tdb_concurrency is not None:
+                    raise ValueError(
+                        "Received -T/--tdb-concurrency and -H/--h5ad-path"
+                    )
+            else:
+                if tdb_concurrency is None:
+                    tdb_concurrency = 1
+                elif tdb_concurrency == 0:
+                    tdb_concurrency = cpu_count()
+                name += f"_T{tdb_concurrency}"
 
-                memray_bin_path = join(out_dir or kwargs[out_path_kwarg], f"{name}.bin")
+            memray_bin_path = join(out_dir or kwargs[out_path_kwarg], f"{name}.memray")
 
             out_stem = splitext(memray_bin_path)[0]
 
             time = Time(log=True)
 
+            time("dask")
+            if dask_chunk_size:
+                if no_dask_mem_mgmt:
+                    dask.config.set(
+                        {
+                            # "distributed.worker.memory.target": 0.7,
+                            "distributed.worker.memory.spill": False,
+                            "distributed.worker.memory.pause": False,
+                            "distributed.worker.memory.terminate": False,
+                        }
+                    )
+                err(f"{dask_workers.kwargs=}")
+                if isinstance(dask_workers, DaskThreads):
+                    client = Client(
+                        **dask_workers.kwargs,
+                        dashboard_address=f":{dask_dashboard_port}",
+                    )
+                else:
+                    cluster = LocalCluster(
+                        **dask_workers.kwargs,
+                        dashboard_address=f":{dask_dashboard_port}",
+                    )
+                    err(f"{dask_workers=}, {tdb_concurrency=}")
+                    client = Client(cluster)
+                err(f"Dask client: {client}, dashboard: {client.dashboard_link}")
+            else:
+                dask_chunk_size = None
+
             if not tdb_concurrency:
                 tdb_concurrency = cpu_count()
 
-            spec = getfullargspec(fn)
-            wrapped = getattr(fn, "__wrapped__", None)
-            wrapped_spec = getfullargspec(wrapped) if wrapped else None
-            arg_ks = spec.args + (wrapped_spec.args if wrapped_spec else [])
             opt_kwargs = dict(
                 dask_chunk_size=dask_chunk_size,
                 h5ad_path=h5ad_path,
                 out_dir=out_dir,
                 tdb_concurrency=tdb_concurrency,
                 out_stem=out_stem,
+                no_dask_mem_mgmt=no_dask_mem_mgmt,
+                dask_workers=dask_workers,
+                memray_workers_level=memray_workers_level,
             )
 
-            if not memray_level:
-                mem = None
-                mem_ctx = nullcontext()
-            else:
+            memray_kwargs = dict(
+                native_traces=True,
+                follow_fork=True,
+                keep=not no_keep_memray_bin,
+            )
+            ctxs = []
+            if memray_level:
                 opt_kwargs["memray_bin_path"] = memray_bin_path
-                mem = mem_ctx = Tracker(
+                mem = Tracker(
                     memray_bin_path,
-                    native_traces=True,
-                    follow_fork=True,
+                    **memray_kwargs,
                     trace_python_allocators=memray_level > 1,
-                    keep=not no_keep_memray_bin,
                     log=verbosity,
                 )
+                ctxs.append(with_exit_hook(mem, time.ctx("memray_scheduler")))
+            else:
+                mem = None
 
-            opt_kwargs = {k: v for k, v in opt_kwargs.items() if k in arg_ks}
+            if memray_workers_level:
+                if isinstance(dask_workers, DaskProcs):
+                    ctxs.append(
+                        with_exit_hook(
+                            mem_workers(
+                                out_stem,
+                                n_procs=dask_workers.procs,
+                                trace_python_allocators=memray_workers_level > 1,
+                                **memray_kwargs,
+                            ),
+                            time.ctx("memray_workers"),
+                        )
+                    )
+                else:
+                    raise ValueError(f"Can't instrument memray_workers without worker processes")
+
+            if not ctxs:
+                mem_ctx = AsyncExitStack()
+            else:
+                mem_ctx = acontexts(*ctxs)
+
+            opt_kwargs = utz.args(fn, opt_kwargs)
 
             time("start")
-            return fn(
+            asyncio.run(fn(
                 *args,
                 **opt_kwargs,
                 time=time,
                 mem=mem,
                 mem_ctx=mem_ctx,
                 **kwargs,
-            )
+            ))
 
     return rv
 
@@ -300,44 +407,13 @@ def query_to_anndata_dask(
     dask_chunk_size: int,
     h5ad_path: str | None,
     x_layer: str,
-    dask_dashboard_port: int,
     time: Time,
     tissue: str,
     tdb_concurrency: int,
     var_filter: str | None,
-    no_dask_mem_mgmt: bool,
-    dask_workers: DaskWorkers | None,
     normalize: bool = True,
     log1p: bool = True,
 ) -> AnnData:
-    time("dask")
-    if dask_chunk_size:
-        if no_dask_mem_mgmt:
-            dask.config.set(
-                {
-                    # "distributed.worker.memory.target": 0.7,
-                    "distributed.worker.memory.spill": False,
-                    "distributed.worker.memory.pause": False,
-                    "distributed.worker.memory.terminate": False,
-                }
-            )
-        err(f"{dask_workers.kwargs=}")
-        if isinstance(dask_workers, DaskThreads):
-            client = Client(
-                **dask_workers.kwargs,
-                dashboard_address=f":{dask_dashboard_port}",
-            )
-        else:
-            cluster = LocalCluster(
-                **dask_workers.kwargs,
-                dashboard_address=f":{dask_dashboard_port}",
-            )
-            err(f"{dask_workers=}, {tdb_concurrency=}")
-            client = Client(cluster)
-        err(f"Dask client: {client}, dashboard: {client.dashboard_link}")
-    else:
-        dask_chunk_size = None
-
     if h5ad_path:
         time("open")
         with h5py.File(h5ad_path, "r") as f:
@@ -394,6 +470,29 @@ def query_to_anndata_dask(
     return add
 
 
+def summary_stats(stats):
+    obj = {}
+    md = stats["metadata"]
+    peak_mem = obj["peak_mem"] = md["peak_memory"]
+    err(f"Peak memory use: {sz(peak_mem)}")
+
+    # Copy some memray stats, include IEC string reprs (e.g. "2.1 GiB")
+    top_allocs = [
+        {**alloc, "iec": iec(alloc["size"])}
+        for alloc in stats["top_allocations_by_size"]
+    ]
+    obj.update(
+        {
+            "top_allocs": top_allocs,
+            "tracked_allocs": stats["total_num_allocations"],
+            "tracked_bytes": stats["total_bytes_allocated"],
+            "total_allocs": md["total_allocations"],
+            "total_frames": md["total_frames"],
+        }
+    )
+    return obj
+
+
 def process_mem(
     key: str,
     tissue: str | None,
@@ -406,28 +505,18 @@ def process_mem(
     dask_chunk_size: int,
     dask_workers: DaskWorkers,
     tdb_concurrency: int,
+    memray_workers_level: int,
 ):
     mem_kwargs = {}
     if mem:
-        peak_mem = mem.peak_mem
-        mem_kwargs["peak_mem"] = peak_mem
-        err(f"Peak memory use: {sz(peak_mem)}")
+        mem_kwargs["scheduler"] = summary_stats(mem.stats)
 
-        # Copy some memray stats, include IEC string reprs (e.g. "2.1 GiB")
-        stats = mem.stats
-        top_allocs = [
-            {**alloc, "iec": iec(alloc["size"])}
-            for alloc in stats["top_allocations_by_size"]
-        ]
-        mem_kwargs.update(
-            {
-                "top_allocs": top_allocs,
-                "tracked_allocs": stats["total_num_allocations"],
-                "tracked_bytes": stats["total_bytes_allocated"],
-                "total_allocs": stats["metadata"]["total_allocations"],
-                "total_frames": stats["metadata"]["total_frames"],
-            }
-        )
+    if memray_workers_level and isinstance(dask_workers, DaskProcs):
+        for i in range(dask_workers.n_workers):
+            stats_path = join(out_stem, f"{i}.json")
+            with open(stats_path, 'r') as f:
+                stats = json.load(f)
+            mem_kwargs[f"worker_{i}"] = summary_stats(stats)
 
     total_measured_time = sum(time.times.values())
     obs_per_s = n_obs / total_measured_time
@@ -438,7 +527,7 @@ def process_mem(
     )
     out_json_path = f"{out_stem}.json"
     stats = dict(
-        **mem_kwargs,
+        mem=mem_kwargs,
         times=time.times,
         total_time=total_measured_time,
         tissue=tissue,
@@ -468,12 +557,9 @@ def process_mem(
 @hvg_inplace_opt
 @hvg_subset_opt
 @x_layer_opt
-@dask_dashboard_port_opt
 @tissue_opt
 @var_filter_opt
-@no_dask_mem_mgmt_opt
-@dask_workers_opt
-def hvg(
+async def hvg(
     mem_total_budget: str | None,
     dask_chunk_size: int,
     h5ad_path: str | None,
@@ -481,19 +567,19 @@ def hvg(
     hvg_subset: bool,
     x_layer: str,
     out_stem: str,
-    dask_dashboard_port: int,
     exp_uri: str,
     time: Time,
     mem: Tracker | None,
-    mem_ctx: Tracker | nullcontext,
+    mem_ctx: AsyncContextManager,
     tissue: str | None,
     tdb_concurrency: int,
     var_filter: str | None,
     no_dask_mem_mgmt: bool,
     dask_workers: DaskWorkers | None,
+    memray_workers_level: int,
 ):
     """Run Scanpy HVG on an AnnData whose ``X`` array is a Dask-backed TileDB-SOMA CELLxGENE Census query."""
-    with mem_ctx:
+    async with mem_ctx:
         add = query_to_anndata_dask(
             uri=exp_uri,
             tiledb_config=DEFAULT_CONFIG,
@@ -501,13 +587,10 @@ def hvg(
             dask_chunk_size=dask_chunk_size,
             h5ad_path=h5ad_path,
             x_layer=x_layer,
-            dask_dashboard_port=dask_dashboard_port,
             time=time,
             tissue=tissue,
             tdb_concurrency=tdb_concurrency,
             var_filter=var_filter,
-            no_dask_mem_mgmt=no_dask_mem_mgmt,
-            dask_workers=dask_workers,
         )
         n_obs = add.shape[0]
         err("Running Scanpy HVG")
@@ -529,6 +612,7 @@ def hvg(
         dask_chunk_size=dask_chunk_size,
         dask_workers=dask_workers,
         tdb_concurrency=tdb_concurrency,
+        memray_workers_level=memray_workers_level,
     )
 
 
@@ -538,12 +622,9 @@ def hvg(
 @hvg_inplace_opt
 @hvg_subset_opt
 @x_layer_opt
-@dask_dashboard_port_opt
 @tissue_opt
 @var_filter_opt
-@no_dask_mem_mgmt_opt
-@dask_workers_opt
-def pca(
+async def pca(
     mem_total_budget: str | None,
     dask_chunk_size: int,
     h5ad_path: str | None,
@@ -551,11 +632,10 @@ def pca(
     hvg_subset: bool,
     x_layer: str,
     out_stem: str,
-    dask_dashboard_port: int,
     exp_uri: str,
     time: Time,
     mem: Tracker | None,
-    mem_ctx: Tracker | nullcontext,
+    mem_ctx: AsyncContextManager,
     tissue: str | None,
     tdb_concurrency: int | None,
     var_filter: str | None,
@@ -563,7 +643,7 @@ def pca(
     dask_workers: DaskWorkers | None,
 ):
     """Run Scanpy PCA on an AnnData whose ``X`` array is a Dask-backed TileDB-SOMA CELLxGENE Census query."""
-    with mem_ctx:
+    async with mem_ctx:
         add = query_to_anndata_dask(
             uri=exp_uri,
             tiledb_config=DEFAULT_CONFIG,
@@ -571,13 +651,10 @@ def pca(
             dask_chunk_size=dask_chunk_size,
             h5ad_path=h5ad_path,
             x_layer=x_layer,
-            dask_dashboard_port=dask_dashboard_port,
             time=time,
             tissue=tissue,
             tdb_concurrency=tdb_concurrency,
             var_filter=var_filter,
-            no_dask_mem_mgmt=no_dask_mem_mgmt,
-            dask_workers=dask_workers,
         )
         n_obs = add.shape[0]
         err("Running Scanpy HVG")
