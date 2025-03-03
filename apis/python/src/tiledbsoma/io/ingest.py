@@ -2072,9 +2072,9 @@ def _write_matrix_to_denseNDArray(
         else:
             tensor = pa.Tensor.from_numpy(chunk.toarray())
         if matrix.ndim == 2:
-            soma_ndarray.write((slice(i, i2), slice(0, ncol)), tensor)
+            soma_ndarray.write((slice(i, i2 - 1), slice(0, ncol - 1)), tensor)
         else:
-            soma_ndarray.write((slice(i, i2),), tensor)
+            soma_ndarray.write((slice(i, i2 - 1),), tensor)
 
         t2 = time.time()
         chunk_seconds = t2 - t1

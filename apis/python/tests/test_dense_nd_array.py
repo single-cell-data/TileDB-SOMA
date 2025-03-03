@@ -224,10 +224,10 @@ def test_dense_nd_array_ned_write(tmp_path):
     input = np.asarray([100, 101, 102, 103])
 
     with soma.DenseNDArray.create(uri=uri, type=pa.int32(), shape=[1000000]) as dnda:
-        dnda.write((slice(10, 14),), pa.Tensor.from_numpy(input))
+        dnda.write((slice(10, 13),), pa.Tensor.from_numpy(input))
 
     with soma.DenseNDArray.open(uri) as dnda:
-        np.array_equal(dnda.read((slice(10, 14),)), input)
+        np.array_equal(dnda.read((slice(10, 13),)), input)
 
         # default reads should return the entire array
         np.array_equal(dnda.read((slice(0, 1000000),)), dnda.read())
@@ -458,7 +458,7 @@ def test_timestamped_ops(tmp_path):
         context=SOMATileDBContext(timestamp=1),
     ) as a:
         a.write(
-            (slice(0, 2), slice(0, 2)),
+            (slice(0, 1), slice(0, 1)),
             pa.Tensor.from_numpy(np.zeros((2, 2), dtype=np.uint8)),
         )
 
@@ -467,7 +467,7 @@ def test_timestamped_ops(tmp_path):
         tmp_path.as_posix(), mode="w", context=SOMATileDBContext(timestamp=10)
     ) as a:
         a.write(
-            (slice(0, 1), slice(0, 1)),
+            (0, 0),
             pa.Tensor.from_numpy(np.ones((1, 1), dtype=np.uint8)),
         )
 
@@ -476,7 +476,7 @@ def test_timestamped_ops(tmp_path):
         uri=tmp_path.as_posix(), mode="w", context=SOMATileDBContext(timestamp=20)
     ) as a:
         a.write(
-            (slice(1, 2), slice(1, 2)),
+            (1, 1),
             pa.Tensor.from_numpy(np.ones((1, 1), dtype=np.uint8)),
         )
 
@@ -632,42 +632,42 @@ def test_slice_with_resize(tmp_path):
     [
         (
             [4],
-            (slice(0, 4),),
+            (slice(0, 3),),
             [100, 101, 102, 103],
         ),
         (
             [10],
-            (slice(0, 4),),
+            (slice(0, 3),),
             [100, 101, 102, 103],
         ),
         (
             [20],
-            (slice(10, 14),),
+            (slice(10, 13),),
             [100, 101, 102, 103],
         ),
         (
             [2, 4],
-            (slice(0, 2), slice(0, 4)),
+            (slice(0, 1), slice(0, 3)),
             [[100, 101, 102, 103], [201, 202, 203, 204]],
         ),
         (
             [20, 10],
-            (slice(0, 2), slice(0, 4)),
+            (slice(0, 1), slice(0, 3)),
             [[100, 101, 102, 103], [201, 202, 203, 204]],
         ),
         (
             [20, 10],
-            (slice(10, 12), slice(0, 4)),
+            (slice(10, 11), slice(0, 3)),
             [[100, 101, 102, 103], [201, 202, 203, 204]],
         ),
         (
             [10, 20],
-            (slice(0, 2), slice(10, 14)),
+            (slice(0, 1), slice(10, 13)),
             [[100, 101, 102, 103], [201, 202, 203, 204]],
         ),
         (
             [20, 10],
-            (slice(10, 12), slice(4, 8)),
+            (slice(10, 11), slice(4, 7)),
             [[100, 101, 102, 103], [201, 202, 203, 204]],
         ),
     ],
@@ -682,5 +682,24 @@ def test_subarray_at_coords(tmp_path, shape, coords, subarray):
 
     with soma.DenseNDArray.open(uri) as dnda:
         expected = np.full(shape, -2147483648)
-        expected[coords] = subarray
+        inclusive_coords = tuple(
+            slice(s.start, s.stop + 1) if isinstance(s, slice) else s for s in coords
+        )
+        expected[inclusive_coords] = subarray
         assert np.array_equal(dnda.read(), expected)
+
+
+def test_use_same_slicing_semantics_61815(tmp_path):
+    uri = tmp_path.as_posix()
+    coords = (0, slice(0, 4))
+    subarray = pa.Tensor.from_numpy(
+        np.array([[100, 101, 102, 103, 104]], dtype=np.int8)
+    )
+
+    soma.DenseNDArray.create(uri, type=pa.int8(), shape=(10, 5))
+
+    with soma.open(uri, mode="w") as A:
+        A.write(coords, subarray)
+
+    with soma.open(uri, mode="r") as A:
+        assert np.array_equal(A.read(coords), subarray)
