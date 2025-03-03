@@ -14,9 +14,8 @@
 #include <atomic>
 #include <cmath>
 #include <cstdint>
-#include <format>
 #include <numeric>
-#include <span>
+#include "span/span.hpp"
 
 #include "parallel_functions.h"
 
@@ -55,9 +54,9 @@ std::pair<T, T> get_split_(T n_elements, T n_sections, T section) noexcept {
  * @brief Sum size over all elements in vector - used only in asserts.
  */
 template <typename T>
-size_t sum_over_size_(const std::vector<std::span<const T>>& v) noexcept {
+size_t sum_over_size_(const std::vector<tcb::span<const T>>& v) noexcept {
     return std::transform_reduce(
-        v.cbegin(), v.cend(), 0ul, std::plus<>{}, [](std::span<const T> a) {
+        v.cbegin(), v.cend(), 0ul, std::plus<>{}, [](tcb::span<const T> a) {
             return a.size();
         });
 }
@@ -68,9 +67,9 @@ size_t sum_over_size_(const std::vector<std::span<const T>>& v) noexcept {
  */
 template <typename Ti, typename Tj, typename Td>
 bool no_ragged_chunks(
-    const std::vector<std::span<const Ti>>& Ai,
-    const std::vector<std::span<const Tj>>& Aj,
-    const std::vector<std::span<const Td>>& Ad) {
+    const std::vector<tcb::span<const Ti>>& Ai,
+    const std::vector<tcb::span<const Tj>>& Aj,
+    const std::vector<tcb::span<const Td>>& Ad) {
     if ((Ai.size() != Aj.size()) || (Ai.size() != Ad.size()))
         return false;
 
@@ -98,13 +97,13 @@ bool no_ragged_chunks(
 template <typename COO_IDX>
 struct Partition {
     size_t size;  // sum of views[n].size for all n
-    std::vector<std::span<COO_IDX>> views;
+    std::vector<tcb::span<COO_IDX>> views;
 };
 
 template <typename COO_IDX>
 void bin_view_(
     std::vector<Partition<COO_IDX>>& partitions,
-    const std::span<COO_IDX>& view) {
+    const tcb::span<COO_IDX>& view) {
     // find minimum size partition and add the span to that partition.
     size_t min_idx = 0;
     for (size_t pidx = 1; pidx < partitions.size(); ++pidx) {
@@ -117,7 +116,7 @@ void bin_view_(
 
 template <typename COO_IDX>
 std::vector<Partition<COO_IDX>> partition_views_(
-    std::vector<std::span<COO_IDX>> const& Ai,
+    std::vector<tcb::span<COO_IDX>> const& Ai,
     const size_t max_partitions,
     const size_t partition_size) {
     assert(max_partitions > 0);
@@ -152,8 +151,8 @@ void count_rows_(
     ThreadPool* const tp,
     uint64_t n_row,
     uint64_t nnz,
-    std::vector<std::span<COO_IDX const>> const& Ai,
-    std::span<CSX_MAJOR_IDX>& Bp) {
+    std::vector<tcb::span<COO_IDX const>> const& Ai,
+    tcb::span<CSX_MAJOR_IDX>& Bp) {
     assert(nnz == sum_over_size_(Ai));
     assert(Bp.size() == n_row + 1);
     assert(tp->concurrency_level() >= 1);
@@ -181,11 +180,19 @@ void count_rows_(
                         if ((row < 0) ||
                             (static_cast<std::make_unsigned_t<COO_IDX>>(row) >=
                              n_row)) [[unlikely]] {
-                            throw std::out_of_range(std::format(
-                                "First coordinate {} out of range {}.",
-                                row,
-                                0,
-                                n_row));
+                            // std::format isn't until C++ 20, and including
+                            // utils/logger.h or spdlog/fmt/fmt.h is fiddly
+                            // inside of a header file (fastercsx.h). For
+                            // the moment (release-1.15, with C++ 17, as of
+                            // 2025-01-10), we use stringstream.
+                            // This is all temporary, this-branch-only, and
+                            // will go away entirely once we have
+                            // https://github.com/single-cell-data/TileDB-SOMA/issues/3154
+                            // resolved.
+                            std::stringstream ss;
+                            ss << "First coordinate " << row << " out of range "
+                               << n_row << ".";
+                            throw std::out_of_range(ss.str());
                         }
                         counts[row]++;
                     }
@@ -209,8 +216,10 @@ void count_rows_(
                 if ((row < 0) ||
                     (static_cast<std::make_unsigned_t<COO_IDX>>(row) >= n_row))
                     [[unlikely]] {
-                    throw std::out_of_range(std::format(
-                        "First coordinate {} out of range {}.", row, 0, n_row));
+                    std::stringstream ss;
+                    ss << "First coordinate " << row << " out of range "
+                       << n_row << ".";
+                    throw std::out_of_range(ss.str());
                 }
                 Bp[row]++;
             }
@@ -225,7 +234,7 @@ void count_rows_(
  * always zero).
  */
 template <typename CSX_MAJOR_IDX>
-void sum_rows_to_pointers_(std::span<CSX_MAJOR_IDX>& Bp) {
+void sum_rows_to_pointers_(tcb::span<CSX_MAJOR_IDX>& Bp) {
     CSX_MAJOR_IDX cumsum = 0;
     for (uint64_t i = 0; i < Bp.size(); i++) {
         auto temp = Bp[i];
@@ -243,12 +252,12 @@ void compress_coo_inner_left_(
     const uint64_t& row_partition,
     const int& partition_bits,
     const uint64_t& n_col,
-    std::span<COO_IDX const>& Ai_,
-    std::span<COO_IDX const>& Aj_,
-    std::span<VALUE const>& Ad_,
-    std::span<CSX_MAJOR_IDX>& Bp,
-    std::span<CSX_MINOR_IDX>& Bj,
-    std::span<VALUE>& Bd) {
+    tcb::span<COO_IDX const>& Ai_,
+    tcb::span<COO_IDX const>& Aj_,
+    tcb::span<VALUE const>& Ad_,
+    tcb::span<CSX_MAJOR_IDX>& Bp,
+    tcb::span<CSX_MINOR_IDX>& Bj,
+    tcb::span<VALUE>& Bd) {
     for (auto n = 0UL; n < (Ai_.size() / 2); ++n) {
         const std::make_unsigned_t<COO_IDX> row = Ai_[n];
         if ((row >> partition_bits) != row_partition)
@@ -258,8 +267,10 @@ void compress_coo_inner_left_(
         if ((Aj_[n] < 0) ||
             (static_cast<std::make_unsigned_t<COO_IDX>>(Aj_[n]) >= n_col))
             [[unlikely]] {
-            throw std::out_of_range(std::format(
-                "Second coordinate {} out of range {}.", Aj_[n], 0, n_col));
+            std::stringstream ss;
+            ss << "Second coordinate " << Aj_[n] << " out of range " << n_col
+               << ".";
+            throw std::out_of_range(ss.str());
         }
         Bj[dest] = Aj_[n];
         Bd[dest] = Ad_[n];
@@ -276,12 +287,12 @@ void compress_coo_inner_right_(
     unsigned int row_partition,
     unsigned int partition_bits,
     uint64_t n_col,
-    std::span<COO_IDX const>& Ai_,
-    std::span<COO_IDX const>& Aj_,
-    std::span<VALUE const>& Ad_,
-    std::span<CSX_MAJOR_IDX>& Bp,
-    std::span<CSX_MINOR_IDX>& Bj,
-    std::span<VALUE>& Bd) {
+    tcb::span<COO_IDX const>& Ai_,
+    tcb::span<COO_IDX const>& Aj_,
+    tcb::span<VALUE const>& Ad_,
+    tcb::span<CSX_MAJOR_IDX>& Bp,
+    tcb::span<CSX_MINOR_IDX>& Bj,
+    tcb::span<VALUE>& Bd) {
     for (auto n = (Ai_.size() / 2); n < Ai_.size(); ++n) {
         const std::make_unsigned_t<COO_IDX> row = Ai_[n];
         if ((row >> partition_bits) != row_partition) {
@@ -293,8 +304,10 @@ void compress_coo_inner_right_(
         if ((Aj_[n] < 0) ||
             (static_cast<std::make_unsigned_t<COO_IDX>>(Aj_[n]) >= n_col))
             [[unlikely]] {
-            throw std::out_of_range(std::format(
-                "Second coordinate {} out of range {}.", Aj_[n], 0, n_col));
+            std::stringstream ss;
+            ss << "Second coordinate " << Aj_[n] << " out of range " << n_col
+               << ".";
+            throw std::out_of_range(ss.str());
         }
 
         Bj[dest] = Aj_[n];
@@ -324,12 +337,12 @@ void compress_coo(
     ThreadPool* const tp,
     const Shape& shape,
     uint64_t nnz,
-    const std::vector<std::span<const COO_IDX>>& Ai,
-    const std::vector<std::span<const COO_IDX>>& Aj,
-    const std::vector<std::span<const VALUE>>& Ad,
-    std::span<CSX_MAJOR_IDX> Bp,
-    std::span<CSX_MINOR_IDX> Bj,
-    std::span<VALUE> Bd) {
+    const std::vector<tcb::span<const COO_IDX>>& Ai,
+    const std::vector<tcb::span<const COO_IDX>>& Aj,
+    const std::vector<tcb::span<const VALUE>>& Ad,
+    tcb::span<CSX_MAJOR_IDX> Bp,
+    tcb::span<CSX_MINOR_IDX> Bj,
+    tcb::span<VALUE> Bd) {
     auto n_row = shape.first;
     auto n_col = shape.second;
     assert(Ai.size() == Aj.size() && Aj.size() == Ad.size());
@@ -349,8 +362,8 @@ void compress_coo(
 
     std::vector<CSX_MAJOR_IDX> Bp_left(Bp.begin(), Bp.end() - 1);
     std::vector<CSX_MAJOR_IDX> Bp_right(Bp.begin() + 1, Bp.end());
-    std::span<CSX_MAJOR_IDX> Bp_left_span{Bp_left};
-    std::span<CSX_MAJOR_IDX> Bp_right_span{Bp_right};
+    tcb::span<CSX_MAJOR_IDX> Bp_left_span{Bp_left};
+    tcb::span<CSX_MAJOR_IDX> Bp_right_span{Bp_right};
 
     // Parallel, lock-free copy of all minor index and data values. Partitioned
     // by contiguous major dimension (Ai) values, minimizing the write
@@ -436,9 +449,9 @@ bool sort_csx_indices(
     ThreadPool* const tp,
     uint64_t n_row,
     uint64_t nnz,
-    const std::span<CSX_MAJOR_IDX> Bp,
-    std::span<CSX_MINOR_IDX> Bj,
-    std::span<VALUE> Bd) {
+    const tcb::span<CSX_MAJOR_IDX> Bp,
+    tcb::span<CSX_MINOR_IDX> Bj,
+    tcb::span<VALUE> Bd) {
     assert(Bp.size() == n_row + 1);
     assert(Bj.size() == nnz);
     assert(Bd.size() == nnz);
@@ -489,10 +502,10 @@ void copy_csx_to_dense(
     uint64_t major_end,
     const Shape& shape,
     Format cm_format,
-    const std::span<const CSX_MAJOR_IDX>& Bp,
-    const std::span<const CSX_MINOR_IDX>& Bj,
-    const std::span<const VALUE>& Bd,
-    std::span<VALUE> out) {
+    const tcb::span<const CSX_MAJOR_IDX>& Bp,
+    const tcb::span<const CSX_MINOR_IDX>& Bj,
+    const tcb::span<const VALUE>& Bd,
+    tcb::span<VALUE> out) {
     auto [n_row, n_col] = shape;
     assert(Bp.size() > ((cm_format == Format::CSR) ? n_row : n_col));
     assert(major_start <= ((cm_format == Format::CSR) ? n_row : n_col));

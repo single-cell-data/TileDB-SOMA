@@ -16,7 +16,7 @@
 
 #include <regex>
 #include <stdexcept>  // for windows: error C2039: 'runtime_error': is not a member of 'std'
-#include <span>
+#include "span/span.hpp"
 
 #include "arrow_adapter.h"
 #include "common.h"
@@ -29,7 +29,7 @@ template <typename T>
 VarlenBufferPair to_varlen_buffers(std::vector<T> data, bool arrow = true);
 
 template <class T>
-std::vector<T> to_vector(const std::span<T>& s) {
+std::vector<T> to_vector(const tcb::span<T>& s) {
     return std::vector<T>(s.begin(), s.end());
 }
 

@@ -17,7 +17,7 @@
 #include <stdexcept>  // for windows: error C2039: 'runtime_error': is not a member of 'std'
 
 #include <future>
-#include <span>
+#include "span/span.hpp"
 
 #include <tiledb/tiledb>
 #include <tiledb/tiledb_experimental>
@@ -354,14 +354,14 @@ class SOMAArray : public SOMAObject {
     template <typename T>
     void set_dim_points(
         const std::string& dim,
-        const std::span<T> points,
+        const tcb::span<T> points,
         int partition_index,
         int partition_count) {
         // Validate partition inputs
         if (partition_index >= partition_count) {
-            // TODO this use to be formatted with std::format which is part of
+            // TODO this use to be formatted with fmt::format which is part of
             // internal header spd/log/fmt/fmt.h and should not be used.
-            // In C++20, this can be replaced with std::format.
+            // In C++20, this can be replaced with fmt::format.
             std::ostringstream err;
             err << "[SOMAArray] partition_index (" << partition_index
                 << ") must be < partition_count (" << partition_count;
@@ -377,9 +377,9 @@ class SOMAArray : public SOMAObject {
                 partition_size = points.size() - start;
             }
 
-            // TODO this use to be formatted with std::format which is part of
+            // TODO this use to be formatted with fmt::format which is part of
             // internal header spd/log/fmt/fmt.h and should not be used.
-            // In C++20, this can be replaced with std::format.
+            // In C++20, this can be replaced with fmt::format.
             std::ostringstream log_dbg;
             log_dbg << "[SOMAArray] set_dim_points partitioning:"
                     << " sizeof(T)=" << sizeof(T) << " dim=" << dim
@@ -390,7 +390,7 @@ class SOMAArray : public SOMAObject {
             LOG_DEBUG(log_dbg.str());
 
             mq_->select_points(
-                dim, std::span<T>{&points[start], partition_size});
+                dim, tcb::span<T>{&points[start], partition_size});
         } else {
             mq_->select_points(dim, points);
         }
