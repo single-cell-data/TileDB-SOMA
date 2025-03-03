@@ -1,11 +1,12 @@
 #!/usr/bin/env python
-
+import asyncio
 import json
+from asyncio import gather
 from contextlib import nullcontext, contextmanager
 from dataclasses import asdict, dataclass
 from functools import wraps
-from os import cpu_count, makedirs, listdir, rename
-from os.path import dirname, join, splitext
+from os import cpu_count, makedirs, listdir, rename, remove
+from os.path import dirname, join, splitext, exists
 from sys import stderr, stdout
 
 import anndata as ad
@@ -23,6 +24,7 @@ from pyarrow import feather
 from scipy.sparse import csr_matrix, vstack
 from somacore import AxisQuery
 from utz import Time, err, iec, ctxs
+from utz.aio import proc
 from utz.cli import number
 from utz.mem import Tracker
 
@@ -193,20 +195,56 @@ def joinids(
         err()
 
 
+async def process_worker_mems(
+    dask_memray_dir: str,
+    n_procs: int,
+):
+    coros = []
+    bin_paths = []
+    err(f"Scanning {dask_memray_dir=}: {', '.join(listdir(dask_memray_dir))}")
+    for i in range(n_procs):
+        bin_path = join(dask_memray_dir, f'{i}.memray')
+        if not exists(bin_path):
+            err(f"{bin_path=} doesn't exist")
+            continue
+        stem = splitext(bin_path)[0]
+        bin_path = f'{stem}.bin'
+        bin_paths.append(bin_path)
+        stats_path = f'{stem}.json'
+        html_path = f'{stem}.html'
+        stats = proc.run('memray', 'stats', '--json', '-fo', stats_path, bin_path)
+        html = proc.run('memray', 'flamegraph', '--temporal', '--leaks', '-fo', html_path, bin_path)
+        coros += [ stats, html ]
+    await gather(*coros)
+    for bin_path in bin_paths:
+        err(f"Removing {bin_path}")
+        remove(bin_path)
+
+
 @contextmanager
-def mem_workers(dask_memray_dir, **memray_kwargs):
+def mem_workers(
+    dask_memray_dir: str,
+    n_procs: int,
+    **memray_kwargs: str,
+):
     try:
         yield memray_workers(
             dask_memray_dir,
-            report_args=('stats', '--json', '-fo', dask_memray_dir),
+            report_args=False,
+            # report_args=('stats', '--json', '-fo', dask_memray_dir),
             **memray_kwargs,
         )
     finally:
-        for html_base in listdir(dask_memray_dir):
-            html_path = join(dask_memray_dir, html_base)
-            stats_path = f'{splitext(html_path)[0]}.json'
-            err(f"Rename {html_path} to {stats_path}")
-            rename(html_path, stats_path)
+        asyncio.run(process_worker_mems(dask_memray_dir, n_procs=n_procs))
+        # for bin_base in listdir(dask_memray_dir):
+        #     bin_path = join(dask_memray_dir, bin_base)
+        #     stats_path = f'{splitext(bin_path)[0]}.json'
+        #     html_path = f'{splitext(bin_path)[0]}.html'
+        #     proc.run('memray', 'stats', '--json', '-fo', stats_path, bin_path)
+        #     proc.run('memray', 'flamegraph', '--temporal', '--leaks', bin_path)
+        #     remove(bin_path)
+            # err(f"Rename {bin_path} to {stats_path}")
+            # rename(bin_path, stats_path)
 
 
 def memray_cmd(
@@ -328,14 +366,23 @@ def memray_cmd(
                     keep=not no_keep_memray_bin,
                     log=verbosity,
                 )
-                dask_memray_dir = splitext(memray_bin_path)[0]
-                mem_ctx = ctxs(
-                    mem,
-                    mem_workers(
+                if isinstance(dask_workers, DaskProcs):
+                    dask_memray_dir = splitext(memray_bin_path)[0]
+                    mem_ctx = mem_workers(
                         dask_memray_dir,
+                        n_procs=dask_workers.procs,
                         **memray_kwargs,
-                    ),
-                )
+                    )
+                    # mem_ctx = ctxs(
+                    #     mem,
+                    #     mem_workers(
+                    #         dask_memray_dir,
+                    #         n_procs=dask_workers.procs,
+                    #         **memray_kwargs,
+                    #     ),
+                    # )
+                else:
+                    mem_ctx = mem
 
             opt_kwargs = utz.args(fn, opt_kwargs)
 
