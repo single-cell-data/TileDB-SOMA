@@ -16,6 +16,7 @@ import scanpy as sc
 from anndata import AnnData
 from click import BadParameter, Context, Parameter, argument, group, option
 from dask.distributed import Client, LocalCluster
+from distributed.diagnostics.memray import memray_workers, memray_scheduler
 from humanfriendly import parse_size
 from prometheus_client.decorator import getfullargspec
 from pyarrow import feather
@@ -493,7 +494,7 @@ def hvg(
     dask_workers: DaskWorkers | None,
 ):
     """Run Scanpy HVG on an AnnData whose ``X`` array is a Dask-backed TileDB-SOMA CELLxGENE Census query."""
-    with mem_ctx:
+    with mem_ctx, memray_scheduler(), memray_workers():
         add = query_to_anndata_dask(
             uri=exp_uri,
             tiledb_config=DEFAULT_CONFIG,
@@ -563,7 +564,7 @@ def pca(
     dask_workers: DaskWorkers | None,
 ):
     """Run Scanpy PCA on an AnnData whose ``X`` array is a Dask-backed TileDB-SOMA CELLxGENE Census query."""
-    with mem_ctx:
+    with mem_ctx, memray_scheduler(), memray_workers():
         add = query_to_anndata_dask(
             uri=exp_uri,
             tiledb_config=DEFAULT_CONFIG,
