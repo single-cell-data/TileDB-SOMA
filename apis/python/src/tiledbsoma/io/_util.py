@@ -60,47 +60,41 @@ def read_h5ad(
         input_handle.close()
 
 
-major_minor = (sys.version_info.major, sys.version_info.minor)
-if major_minor < (3, 13):
+# This trick lets us ingest H5AD with "r" (backed mode) from S3 URIs.  While h5ad
+# supports any file-like object, AnnData specifically wants only an `os.PathLike`
+# object. The only thing it does with the PathLike is to use it to get the filename.
+class _FSPathWrapper(pathlib.Path):
+    """Tricks anndata into thinking a file-like object is an ``os.PathLike``.
 
-    # This trick lets us ingest H5AD with "r" (backed mode) from S3 URIs.  While h5ad
-    # supports any file-like object, AnnData specifically wants only an `os.PathLike`
-    # object. The only thing it does with the PathLike is to use it to get the filename.
-    class _FSPathWrapper(pathlib.Path):
-        """Tricks anndata into thinking a file-like object is an ``os.PathLike``.
+    While h5ad supports any file-like object, anndata specifically wants
+    an ``os.PathLike object``, which it uses *exclusively* to get the "filename"
+    of the opened file.
 
-        While h5ad supports any file-like object, anndata specifically wants
-        an ``os.PathLike object``, which it uses *exclusively* to get the "filename"
-        of the opened file.
+    We need to provide ``__fspath__`` as a real class method, so simply
+    setting ``some_file_obj.__fspath__ = lambda: "some/path"`` won't work,
+    so here we just proxy all attributes except ``__fspath__``.
+    """
 
-        We need to provide ``__fspath__`` as a real class method, so simply
-        setting ``some_file_obj.__fspath__ = lambda: "some/path"`` won't work,
-        so here we just proxy all attributes except ``__fspath__``.
-        """
+    def __new__(cls, _obj: object, path: Path) -> "_FSPathWrapper":
+        return super().__new__(cls, path)
 
-        def __new__(cls, _obj: object, path: Path) -> "_FSPathWrapper":
-            return super().__new__(cls, path)
-
-        # This is an essential part of the monkeypatch. Note that Python 3.13 replaces
-        # __class__._flavour with __class__.__orig_class__.
-        #
-        # ``pathlib.Path`` construction references this attribute (``PosixFlavour`` or ``WindowsFlavour``)
+    # ``pathlib.Path`` construction references this attribute (``PosixFlavour`` or ``WindowsFlavour``)
+    if (sys.version_info.major, sys.version_info.minor) < (3, 13):
         _flavour = pathlib.Path().__class__._flavour  # type: ignore[attr-defined]
+    else:
+        parser = pathlib.Path().__class__.parser  # type: ignore[attr-defined]
 
-        def __init__(self, obj: object, path: Path) -> None:
-            super().__init__()
-            self._obj = obj
-            self._path = path
+    def __init__(self, obj: object, path: Path) -> None:
+        super().__init__()
+        self._obj = obj
+        self._path = path
 
-        def __fspath__(self) -> str:
-            return self._path if isinstance(self._path, str) else str(self._path)
+    def __fspath__(self) -> str:
+        return self._path if isinstance(self._path, str) else str(self._path)
 
-        def __getattr__(self, name: str) -> object:
-            return getattr(self._obj, name)
+    def __getattr__(self, name: str) -> object:
+        return getattr(self._obj, name)
 
-else:
-    from pathlib_abc import PathBase
-    class _FSPathWrapper(pathlib.Path):
 
 # @typeguard_ignore
 def _hack_patch_anndata() -> ContextManager[object]:
