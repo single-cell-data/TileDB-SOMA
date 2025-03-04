@@ -1234,6 +1234,9 @@ class ArrowAdapter {
     static std::pair<const void*, std::size_t> _get_data_and_length(
         Enumeration& enmr, const void* dst);
 
+    static size_t _set_dictionary_buffers(
+        Enumeration& enumeration, const Context& ctx, const void** buffers);
+
     template <typename T>
     static const void* _fill_data_buffer(std::vector<T> src, const void* dst) {
         auto sz = src.size() * sizeof(T);

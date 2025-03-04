@@ -974,6 +974,9 @@ class ManagedQuery {
      */
     std::optional<std::vector<uint8_t>> _cast_validity_buffer(
         ArrowArray* array);
+
+    template <typename T>
+    std::vector<T> _enumeration_values_view(Enumeration& enumeration);
 };
 
 // These are all specializations to string/bool of various methods
@@ -1009,6 +1012,10 @@ bool ManagedQuery::_extend_and_evolve_schema<std::string>(
     ArrowSchema* index_schema,
     ArrowArray* index_array,
     ArraySchemaEvolution se);
+
+template <>
+std::vector<std::string_view> ManagedQuery::_enumeration_values_view(
+    Enumeration& enumeration);
 
 };  // namespace tiledbsoma
 
