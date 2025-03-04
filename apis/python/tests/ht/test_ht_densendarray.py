@@ -265,12 +265,12 @@ class SOMADenseNDArrayStateMachine(SOMANDArrayStateMachine):
             data.draw(st.integers(min_value=0, max_value=s - 1)) for s in self.shape
         )
         top_left = tuple(min(first[i], second[i]) for i in range(ndim))
-        bot_right = tuple(max(first[i], second[i]) + 1 for i in range(ndim))
+        bot_right = tuple(max(first[i], second[i]) for i in range(ndim))
         coords = tuple(slice(top_left[i], bot_right[i]) for i in range(ndim))
         subarray = data.draw(
             ht_np.arrays(
                 self.type.to_pandas_dtype(),
-                shape=tuple(bot_right[i] - top_left[i] for i in range(ndim)),
+                shape=tuple(bot_right[i] - top_left[i] + 1 for i in range(ndim)),
             )
         )
 
@@ -287,7 +287,10 @@ class SOMADenseNDArrayStateMachine(SOMANDArrayStateMachine):
         merged_array = self.data_ledger.read(
             timestamp_ms=self.A.tiledb_timestamp_ms
         ).to_numpy()
-        merged_array[coords] = subarray
+        inclusive_coords = tuple(
+            slice(s.start, s.stop + 1) if isinstance(s, slice) else s for s in coords
+        )
+        merged_array[inclusive_coords] = subarray
         self.data_ledger.write(
             ArrowTensorLedgerEntry(
                 timestamp_ms=self.A.tiledb_timestamp_ms,
