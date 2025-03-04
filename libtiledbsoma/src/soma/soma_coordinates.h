@@ -39,6 +39,8 @@ class SOMACoordinateSpace {
     static SOMACoordinateSpace from_metadata(
         tiledb_datatype_t value_type, uint32_t value_num, const void* value);
 
+    static SOMACoordinateSpace from_string(std::string_view metadata);
+
     SOMACoordinateSpace();
 
     SOMACoordinateSpace(const std::vector<SOMAAxis>& axes);

@@ -454,7 +454,7 @@ def test_timestamped_ops(tmp_path):
     # add array A to it @ t=20
     with soma.Collection.open(tmp_path.as_uri(), mode="w", tiledb_timestamp=20) as sc:
         darr = sc.add_new_dense_ndarray("A", type=pa.uint8(), shape=(2, 2)).write(
-            (slice(0, 2), slice(0, 2)),
+            (slice(0, 1), slice(0, 1)),
             pa.Tensor.from_numpy(np.zeros((2, 2), dtype=np.uint8)),
         )
         assert darr.tiledb_timestamp_ms == 20
@@ -462,7 +462,7 @@ def test_timestamped_ops(tmp_path):
     # access A via collection @ t=30 and write something into it
     with soma.Collection.open(tmp_path.as_uri(), mode="w", tiledb_timestamp=30) as sc:
         darr = sc["A"].write(
-            (slice(0, 1), slice(0, 1)),
+            (0, 0),
             pa.Tensor.from_numpy(np.ones((1, 1), dtype=np.uint8)),
         )
         assert darr.tiledb_timestamp.isoformat() == "1970-01-01T00:00:00.030000+00:00"

@@ -14,7 +14,6 @@ from typing import (
     TYPE_CHECKING,
     Any,
     Callable,
-    Dict,
     Literal,
     Protocol,
     Sequence,
@@ -436,7 +435,7 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
         tp = self._threadpool
         x_collection = self._ms.X
         all_x_names = [X_name] + list(X_layers)
-        all_x_arrays: Dict[str, SparseNDArray] = {}
+        all_x_arrays: dict[str, SparseNDArray] = {}
         for _xname in all_x_names:
             if not isinstance(_xname, str) or not _xname:
                 raise ValueError("X layer names must be specified as a string.")
@@ -601,7 +600,7 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
 
         # Create empty SpatialData instance and dict to store region/instance keys.
         sdata = sd.SpatialData()
-        region_joinids: Dict[str, Any] = {}
+        region_joinids: dict[str, Any] = {}
 
         # Add data from linked scenes.
         for scene_name in scene_names:

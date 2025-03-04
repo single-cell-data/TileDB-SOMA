@@ -76,9 +76,7 @@ class ManagedQuery {
 
     ManagedQuery() = delete;
 
-    ManagedQuery(const ManagedQuery&) = delete;
-
-    ManagedQuery(ManagedQuery&& other)
+    ManagedQuery(const ManagedQuery& other)
         : ctx_(other.ctx_)
         , array_(other.array_)
         , name_(other.name_)
@@ -92,6 +90,39 @@ class ManagedQuery {
         , total_num_cells_(other.total_num_cells_)
         , buffers_(other.buffers_)
         , query_submitted_(other.query_submitted_) {
+    }
+
+    ManagedQuery& operator=(const ManagedQuery& other) {
+        ctx_ = other.ctx_;
+        array_ = other.array_;
+        name_ = other.name_;
+        schema_ = other.schema_;
+        query_ = std::make_unique<Query>(*other.ctx_, *other.array_);
+        subarray_ = std::make_unique<Subarray>(*other.ctx_, *other.array_);
+        subarray_range_set_ = other.subarray_range_set_;
+        subarray_range_empty_ = other.subarray_range_empty_;
+        columns_ = other.columns_;
+        results_complete_ = other.results_complete_;
+        total_num_cells_ = other.total_num_cells_;
+        buffers_ = other.buffers_;
+        query_submitted_ = other.query_submitted_;
+        return *this;
+    }
+
+    ManagedQuery(ManagedQuery&& other)
+        : ctx_(std::move(other.ctx_))
+        , array_(std::move(other.array_))
+        , name_(std::move(other.name_))
+        , schema_(std::move(other.schema_))
+        , query_(std::move(other.query_))
+        , subarray_(std::move(other.subarray_))
+        , subarray_range_set_(std::move(other.subarray_range_set_))
+        , subarray_range_empty_(std::move(other.subarray_range_empty_))
+        , columns_(std::move(other.columns_))
+        , results_complete_(std::move(other.results_complete_))
+        , total_num_cells_(std::move(other.total_num_cells_))
+        , buffers_(std::move(other.buffers_))
+        , query_submitted_(std::move(other.query_submitted_)) {
     }
 
     ~ManagedQuery() = default;
@@ -381,6 +412,15 @@ class ManagedQuery {
     }
 
     /**
+     * @brief Get the context of the query.
+     *
+     * @return std::shared_ptr<Context> Ctx
+     */
+    std::shared_ptr<Context> ctx() const {
+        return ctx_;
+    }
+
+    /**
      * @brief Return true if the only ranges selected were empty.
      *
      * @return true if the query contains only empty ranges.
@@ -535,6 +575,9 @@ class ManagedQuery {
 
     // Future for asyncronous query
     std::future<StatusAndException> query_future_;
+
+    // Query layout
+    ResultOrder layout_ = ResultOrder::automatic;
 
     /**
      * Convenience function for creating an ArraySchemaEvolution object

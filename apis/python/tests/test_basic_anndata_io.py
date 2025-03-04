@@ -96,7 +96,7 @@ def test_import_anndata(conftest_pbmc_small, ingest_modes, X_kind):
 
     have_ingested = False
 
-    tempdir = tempfile.TemporaryDirectory()
+    tempdir = tempfile.TemporaryDirectory(prefix="test_import_anndata_")
     output_path = tempdir.name
 
     conftest_pbmc_small.layers["plus1"] = conftest_pbmc_small.X + 1
@@ -233,7 +233,7 @@ def test_import_anndata(conftest_pbmc_small, ingest_modes, X_kind):
     ],
 )
 def test_named_X_layers(conftest_pbmc_small_h5ad_path, X_layer_name):
-    tempdir = tempfile.TemporaryDirectory()
+    tempdir = tempfile.TemporaryDirectory(prefix="test_named_X_layers_")
     soma_path = tempdir.name
 
     if X_layer_name is None:
@@ -281,13 +281,13 @@ def test_resume_mode(resume_mode_h5ad_file):
     anything new
     """
 
-    tempdir1 = tempfile.TemporaryDirectory()
+    tempdir1 = tempfile.TemporaryDirectory(prefix="test_resume_mode_1_")
     output_path1 = tempdir1.name
     tiledbsoma.io.from_h5ad(
         output_path1, resume_mode_h5ad_file.as_posix(), "RNA", ingest_mode="write"
     )
 
-    tempdir2 = tempfile.TemporaryDirectory()
+    tempdir2 = tempfile.TemporaryDirectory(prefix="test_resume_mode_2_")
     output_path2 = tempdir2.name
     tiledbsoma.io.from_h5ad(
         output_path2, resume_mode_h5ad_file.as_posix(), "RNA", ingest_mode="write"
@@ -334,7 +334,7 @@ def test_resume_mode(resume_mode_h5ad_file):
 
 @pytest.mark.parametrize("use_relative_uri", [False, True, None])
 def test_ingest_relative(conftest_pbmc3k_h5ad_path, use_relative_uri):
-    tempdir = tempfile.TemporaryDirectory()
+    tempdir = tempfile.TemporaryDirectory(prefix="test_ingest_relative_")
     output_path = tempdir.name
 
     tiledbsoma.io.from_h5ad(
@@ -432,7 +432,7 @@ def test_ingest_uns(
 
 
 def test_ingest_uns_string_arrays(h5ad_file_uns_string_arrays):
-    tempdir = tempfile.TemporaryDirectory()
+    tempdir = tempfile.TemporaryDirectory(prefix="test_ingest_uns_string_arrays_")
     output_path = tempdir.name
 
     tiledbsoma.io.from_h5ad(
@@ -458,7 +458,7 @@ def test_ingest_uns_string_arrays(h5ad_file_uns_string_arrays):
 
 
 def test_add_matrix_to_collection(conftest_pbmc_small):
-    tempdir = tempfile.TemporaryDirectory()
+    tempdir = tempfile.TemporaryDirectory(prefix="test_add_matrix_to_collection_")
     output_path = tempdir.name
 
     original = conftest_pbmc_small.copy()
@@ -589,7 +589,7 @@ def test_add_matrix_to_collection_1_2_7(conftest_pbmc_small):
                         use_relative_uri=use_relative_uri,
                     )
 
-    tempdir = tempfile.TemporaryDirectory()
+    tempdir = tempfile.TemporaryDirectory(prefix="test_add_matrix_to_collection_1_2_7_")
     output_path = tempdir.name
     original = conftest_pbmc_small.copy()
 
@@ -654,7 +654,7 @@ def test_add_matrix_to_collection_1_2_7(conftest_pbmc_small):
 
 
 def test_export_anndata(conftest_pbmc_small):
-    tempdir = tempfile.TemporaryDirectory()
+    tempdir = tempfile.TemporaryDirectory(prefix="test_export_anndata_")
     output_path = tempdir.name
 
     original = conftest_pbmc_small.copy()
@@ -696,7 +696,7 @@ def test_export_anndata(conftest_pbmc_small):
 
 
 def test_ingest_additional_metadata(conftest_pbmc_small):
-    tempdir = tempfile.TemporaryDirectory()
+    tempdir = tempfile.TemporaryDirectory(prefix="test_ingest_additional_metadata_")
     output_path = tempdir.name
 
     additional_metadata = {"key1": "val1", "key2": "val2"}
@@ -829,7 +829,7 @@ def test_export_obsm_with_holes(h5ad_file_with_obsm_holes, tmp_path):
 
 
 def test_X_empty(h5ad_file_X_empty):
-    tempdir = tempfile.TemporaryDirectory()
+    tempdir = tempfile.TemporaryDirectory(prefix="test_X_empty_")
     output_path = tempdir.name
     tiledbsoma.io.from_h5ad(
         output_path, h5ad_file_X_empty.as_posix(), measurement_name="RNA"
@@ -846,7 +846,7 @@ def test_X_empty(h5ad_file_X_empty):
 
 
 def test_X_none(h5ad_file_X_none):
-    tempdir = tempfile.TemporaryDirectory()
+    tempdir = tempfile.TemporaryDirectory(prefix="test_X_none_")
     output_path = tempdir.name
     tiledbsoma.io.from_h5ad(
         output_path, h5ad_file_X_none.as_posix(), measurement_name="RNA"
@@ -861,8 +861,8 @@ def test_X_none(h5ad_file_X_none):
         # TODO: more
 
 
-# There exist in the wild AnnData files with categorical-int columns where the "not in the category"
-# is indicated by the presence of floating-point math.NaN in cells. Here we test that we can ingest
+# There exist in the wild AnnData files with categorical-int columns where "not in the category" is
+# indicated by the presence of floating-point math.NaN in cells. Here we test that we can ingest
 # this.
 def test_obs_with_categorical_int_nan_enumeration(
     tmp_path, h5ad_file_categorical_int_nan
@@ -1145,7 +1145,7 @@ def test_index_names_io(tmp_path, obs_index_name, var_index_name):
 
 
 def test_obsm_data_type(conftest_pbmc_small):
-    tempdir = tempfile.TemporaryDirectory()
+    tempdir = tempfile.TemporaryDirectory(prefix="test_obsm_data_type_")
     soma_path = tempdir.name
     bdata = anndata.AnnData(
         X=conftest_pbmc_small.X,

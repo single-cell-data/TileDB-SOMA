@@ -8,7 +8,7 @@ Implementation of a SOMA Geometry DataFrame
 from __future__ import annotations
 
 import warnings
-from typing import Any, Sequence, Tuple, Union
+from typing import Any, Sequence, Tuple, Union, cast
 
 import pyarrow as pa
 import somacore
@@ -17,7 +17,10 @@ from typing_extensions import Self
 
 from tiledbsoma._tdb_handles import GeometryDataFrameWrapper
 from tiledbsoma.options._soma_tiledb_context import _validate_soma_tiledb_context
-from tiledbsoma.options._tiledb_create_write_options import TileDBCreateOptions
+from tiledbsoma.options._tiledb_create_write_options import (
+    TileDBCreateOptions,
+    TileDBWriteOptions,
+)
 
 from . import _arrow_types, _util
 from . import pytiledbsoma as clib
@@ -35,11 +38,12 @@ from ._dataframe import (
     _revise_domain_for_extent,
 )
 from ._exception import SOMAError, map_exception_for_create
-from ._read_iters import TableReadIter
+from ._read_iters import ManagedQuery, TableReadIter
 from ._spatial_dataframe import SpatialDataFrame
 from ._spatial_util import (
     coordinate_space_from_json,
     coordinate_space_to_json,
+    process_spatial_df_region,
 )
 from ._types import OpenTimestamp
 from .options import SOMATileDBContext
@@ -311,6 +315,17 @@ class GeometryDataFrame(SpatialDataFrame, somacore.GeometryDataFrame):
 
     # Data operations
 
+    def __len__(self) -> int:
+        """Returns the number of rows in the geometry dataframe."""
+        return self.count
+
+    @property
+    def count(self) -> int:
+        """Returns the number of rows in the geometry dataframe."""
+        self._check_open_read()
+        # if is it in read open mode, then it is a GeometryDataFrameWrapper
+        return cast(GeometryDataFrameWrapper, self._handle).count
+
     def read(
         self,
         coords: options.SparseDFCoords = (),
@@ -343,7 +358,20 @@ class GeometryDataFrame(SpatialDataFrame, somacore.GeometryDataFrame):
         Lifecycle:
             Experimental.
         """
-        raise NotImplementedError()
+        del batch_size  # Currently unused.
+        _util.check_unpartitioned(partitions)
+        self._check_open_read()
+
+        # TODO: batch_size
+        return TableReadIter(
+            array=self,
+            coords=coords,
+            column_names=column_names,
+            result_order=_util.to_clib_result_order(result_order),
+            value_filter=value_filter,
+            platform_config=platform_config,
+            coord_space=self._coord_space,
+        )
 
     def read_spatial_region(
         self,
@@ -391,7 +419,60 @@ class GeometryDataFrame(SpatialDataFrame, somacore.GeometryDataFrame):
         Lifecycle:
             Experimental.
         """
-        raise NotImplementedError()
+        # Set/check transform and region coordinate space.
+        if region_transform is None:
+            region_transform = somacore.IdentityTransform(
+                self.axis_names, self.axis_names
+            )
+            if region_coord_space is not None:
+                raise ValueError(
+                    "Cannot specify the output coordinate space when region transform "
+                    "is ``None``."
+                )
+            region_coord_space = self._coord_space
+        else:
+            if region_coord_space is None:
+                region_coord_space = CoordinateSpace.from_axis_names(
+                    region_transform.input_axes
+                )
+            elif region_transform.input_axes != region_coord_space.axis_names:
+                raise ValueError(
+                    f"The input axes '{region_transform.input_axes}' of the region "
+                    f"transform must match the axes '{region_coord_space.axis_names}' "
+                    f"of the coordinate space the requested region is defined in."
+                )
+            if region_transform.output_axes != self._coord_space.axis_names:
+                raise ValueError(
+                    f"The output axes of '{region_transform.output_axes}' of the "
+                    f"transform must match the axes '{self._coord_space.axis_names}' "
+                    f"of the coordinate space of this point cloud dataframe."
+                )
+
+        # Process the user provided region.
+        coords, data_region, inv_transform = process_spatial_df_region(
+            region,
+            region_transform,
+            dict(),  # Move index value_filters into this dict to optimize queries
+            self.index_column_names,
+            self._coord_space.axis_names,
+            self._handle.schema,
+            spatial_column=SOMA_GEOMETRY,
+        )
+
+        return somacore.SpatialRead(
+            self.read(
+                coords,
+                column_names,
+                result_order=result_order,
+                value_filter=value_filter,
+                batch_size=batch_size,
+                partitions=partitions,
+                platform_config=platform_config,
+            ),
+            self.coordinate_space,
+            region_coord_space,
+            inv_transform,
+        )
 
     def write(
         self,
@@ -414,7 +495,71 @@ class GeometryDataFrame(SpatialDataFrame, somacore.GeometryDataFrame):
         Lifecycle:
             Experimental.
         """
-        raise NotImplementedError()
+        _util.check_type("values", values, (pa.Table,))
+
+        write_options: Union[TileDBCreateOptions, TileDBWriteOptions]
+        sort_coords = None
+        if isinstance(platform_config, TileDBCreateOptions):
+            raise ValueError(
+                "As of TileDB-SOMA 1.13, the write method takes "
+                "TileDBWriteOptions instead of TileDBCreateOptions"
+            )
+        write_options = TileDBWriteOptions.from_platform_config(platform_config)
+        sort_coords = write_options.sort_coords
+
+        clib_dataframe = self._handle._handle
+
+        for batch in values.to_batches():
+            mq = ManagedQuery(self, None)
+            mq._handle.set_array_data(batch)
+            mq._handle.submit_write(sort_coords or False)
+
+        if write_options.consolidate_and_vacuum:
+            clib_dataframe.consolidate_and_vacuum()
+
+        return self
+
+    # Write helpers with automatic transformations
+
+    def from_outlines(
+        self,
+        values: Union[pa.RecordBatch, pa.Table],
+        *,
+        platform_config: options.PlatformConfig | None = None,
+    ) -> Self:
+        """Writes the data from an Arrow table to the persistent object,
+        applying a data transformation to transform the given outline
+        of each polygon to the appropriate WKB-encoded polygon.
+
+        Geometry data provided are expected to be a list of point coordinates
+        per polygon in the form of [x0, y0, x1, y1, ..., x0, y0] and will
+        be converted automatically to a list of WKB-encoded polygons.
+
+        Args:
+            values: An Arrow table containing all columns, including
+                the index columns. The schema for the values must match
+                the schema for the ``DataFrame``. The ``soma_geometry`` column
+                should contain lists of floating-point numbers which are
+                the point coordinates of the outline of each polygon in
+                the form [x0, y0, x1, y1, ..., x0, y0].
+
+        Returns: ``self``, to enable method chaining.
+
+        """
+
+        outline_transformer = clib.OutlineTransformer(
+            coordinate_space_to_json(self._coord_space)
+        )
+
+        for batch in values.to_batches():
+            self.write(
+                clib.TransformerPipeline(batch)
+                .transform(outline_transformer)
+                .asTable(),
+                platform_config=platform_config,
+            )
+
+        return self
 
     # Metadata operations
 
