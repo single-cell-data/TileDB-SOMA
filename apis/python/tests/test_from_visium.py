@@ -97,7 +97,7 @@ def test_visium_paths_v2(visium_v2_path):
 def test_from_visium_for_visium_v1(tmp_path, visium_v1_path):
     """Test `from_visium` runs without error."""
     PIL = pytest.importorskip("PIL")
-    uri = f"{tmp_path.as_uri()}/from_visium_for_visium_v2"
+    uri = f"{tmp_path.as_uri()}/from_visium_for_visium_v1"
     exp_uri = spatial_io.from_visium(
         uri,
         visium_v1_path,
@@ -108,10 +108,26 @@ def test_from_visium_for_visium_v1(tmp_path, visium_v1_path):
     )
     with soma.Experiment.open(exp_uri) as exp:
 
-        # Check for the existance of obs, RNA/X, and RNA/var
+        # Check obs schema and domain.
         assert isinstance(exp.obs, soma.DataFrame)
+        obs_data = exp.obs.read().concat().to_pandas()
+        assert obs_data.columns.tolist() == ["soma_joinid", "obs_id"]
+        assert len(obs_data) == 4035
+
+        # Check RNA/X.
         assert isinstance(exp.ms["RNA"].X["data"], soma.SparseNDArray)
+
+        # Check RNA/var.
         assert isinstance(exp.ms["RNA"].var, soma.DataFrame)
+        var_data = exp.ms["RNA"].var.read().concat().to_pandas()
+        assert var_data.columns.tolist() == [
+            "soma_joinid",
+            "var_id",
+            "gene_ids",
+            "feature_types",
+            "genome",
+        ]
+        len(var_data) == 1
 
         # Check for the existance of the presence matrices.
         assert isinstance(exp.obs_spatial_presence, soma.DataFrame)
@@ -193,14 +209,26 @@ def test_from_visium_for_visium_v2(tmp_path, visium_v2_path):
     )
     with soma.Experiment.open(exp_uri) as exp:
 
-        # Check for the existance of obs, RNA/X, and RNA/var
+        # Check obs schema and domain.
         assert isinstance(exp.obs, soma.DataFrame)
-        assert isinstance(exp.ms["RNA"].X["data"], soma.SparseNDArray)
-        assert isinstance(exp.ms["RNA"].var, soma.DataFrame)
+        obs_data = exp.obs.read().concat().to_pandas()
+        assert obs_data.columns.tolist() == ["soma_joinid", "obs_id"]
+        assert len(obs_data) == 2797
 
-        # Check for the existance of the presence matrices.
-        assert isinstance(exp.obs_spatial_presence, soma.DataFrame)
-        assert isinstance(exp.ms["RNA"].var_spatial_presence, soma.DataFrame)
+        # Check RNA/X.
+        assert isinstance(exp.ms["RNA"].X["data"], soma.SparseNDArray)
+
+        # Check RNA/var.
+        assert isinstance(exp.ms["RNA"].var, soma.DataFrame)
+        var_data = exp.ms["RNA"].var.read().concat().to_pandas()
+        assert var_data.columns.tolist() == [
+            "soma_joinid",
+            "var_id",
+            "gene_ids",
+            "feature_types",
+            "genome",
+        ]
+        len(var_data) == 19465
 
         # Define some expected data.
         pixel_coord_space = soma.CoordinateSpace(
