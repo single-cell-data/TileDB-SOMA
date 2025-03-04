@@ -73,8 +73,6 @@ class SOMAGeometryDataFrame : virtual public SOMAArray {
         std::string_view uri,
         OpenMode mode,
         std::shared_ptr<SOMAContext> ctx,
-        std::vector<std::string> column_names = {},
-        ResultOrder result_order = ResultOrder::automatic,
         std::optional<TimestampRange> timestamp = std::nullopt);
 
     /**
@@ -104,18 +102,8 @@ class SOMAGeometryDataFrame : virtual public SOMAArray {
         OpenMode mode,
         std::string_view uri,
         std::shared_ptr<SOMAContext> ctx,
-        std::vector<std::string> column_names,
-        ResultOrder result_order,
         std::optional<TimestampRange> timestamp = std::nullopt)
-        : SOMAArray(
-              mode,
-              uri,
-              ctx,
-              std::filesystem::path(uri).filename().string(),  // array name
-              column_names,
-              "auto",  // batch_size
-              result_order,
-              timestamp) {
+        : SOMAArray(mode, uri, ctx, timestamp) {
         initialize();
     }
 
@@ -156,10 +144,6 @@ class SOMAGeometryDataFrame : virtual public SOMAArray {
      */
     uint64_t count();
 
-    void set_array_data(
-        std::unique_ptr<ArrowSchema> arrow_schema,
-        std::unique_ptr<ArrowArray> arrow_array) override;
-
    private:
     //===================================================================
     //= private non-static
@@ -170,23 +154,6 @@ class SOMAGeometryDataFrame : virtual public SOMAArray {
      * serialized and stored in metadata.
      */
     void initialize();
-
-    /**
-     * @brief Cast an array containing the outer rings of polygons to an Arrow
-     * array holding the WKB encoded polygons and generate the additional index
-     * column arrays based on the spatial axes.
-     */
-    std::vector<ArrowTable> _cast_polygon_vertex_list_to_wkb(ArrowArray* array);
-
-    /**
-     * @brief Create a new ArrowTable by merging the generated WKB and spatial
-     * index arrays and the original data.
-     *
-     * @remark Generated columns have predefined names. Any generated column
-     * with name already present in the original data will be skipped.
-     */
-    ArrowTable _reconstruct_geometry_data_table(
-        ArrowTable original_data, const std::vector<ArrowTable>& wkb_data);
 
     SOMACoordinateSpace coord_space_;
 };

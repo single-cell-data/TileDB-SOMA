@@ -80,45 +80,22 @@ Array SOMAArray::_create(
 std::unique_ptr<SOMAArray> SOMAArray::open(
     OpenMode mode,
     std::string_view uri,
-    std::string_view name,
     std::map<std::string, std::string> platform_config,
-    std::vector<std::string> column_names,
-    std::string_view batch_size,
-    ResultOrder result_order,
     std::optional<TimestampRange> timestamp) {
     LOG_DEBUG(
         std::format("[SOMAArray] static method 'cfg' opening array '{}'", uri));
     return std::make_unique<SOMAArray>(
-        mode,
-        uri,
-        std::make_shared<SOMAContext>(platform_config),
-        name,
-        column_names,
-        batch_size,
-        result_order,
-        timestamp);
+        mode, uri, std::make_shared<SOMAContext>(platform_config), timestamp);
 }
 
 std::unique_ptr<SOMAArray> SOMAArray::open(
     OpenMode mode,
     std::string_view uri,
     std::shared_ptr<SOMAContext> ctx,
-    std::string_view name,
-    std::vector<std::string> column_names,
-    std::string_view batch_size,
-    ResultOrder result_order,
     std::optional<TimestampRange> timestamp) {
     LOG_DEBUG(
         std::format("[SOMAArray] static method 'ctx' opening array '{}'", uri));
-    return std::make_unique<SOMAArray>(
-        mode,
-        uri,
-        ctx,
-        name,
-        column_names,
-        batch_size,
-        result_order,
-        timestamp);
+    return std::make_unique<SOMAArray>(mode, uri, ctx, timestamp);
 }
 
 //===================================================================
@@ -128,18 +105,12 @@ std::unique_ptr<SOMAArray> SOMAArray::open(
 SOMAArray::SOMAArray(
     OpenMode mode,
     std::string_view uri,
-    std::string_view name,
     std::map<std::string, std::string> platform_config,
-    std::vector<std::string> column_names,
-    std::string_view batch_size,
-    ResultOrder result_order,
     std::optional<TimestampRange> timestamp)
     : uri_(util::rstrip_uri(uri))
-    , result_order_(result_order)
     , timestamp_(timestamp) {
     ctx_ = std::make_shared<SOMAContext>(platform_config);
-    validate(mode, name, timestamp);
-    reset(column_names, batch_size, result_order);
+    validate(mode, timestamp);
     fill_metadata_cache(timestamp);
     fill_columns();
 }
@@ -148,17 +119,11 @@ SOMAArray::SOMAArray(
     OpenMode mode,
     std::string_view uri,
     std::shared_ptr<SOMAContext> ctx,
-    std::string_view name,
-    std::vector<std::string> column_names,
-    std::string_view batch_size,
-    ResultOrder result_order,
     std::optional<TimestampRange> timestamp)
     : uri_(util::rstrip_uri(uri))
     , ctx_(ctx)
-    , result_order_(result_order)
     , timestamp_(timestamp) {
-    validate(mode, name, timestamp);
-    reset(column_names, batch_size, result_order);
+    validate(mode, timestamp);
     fill_metadata_cache(timestamp);
     fill_columns();
 }
@@ -171,13 +136,9 @@ SOMAArray::SOMAArray(
     : uri_(util::rstrip_uri(arr->uri()))
     , ctx_(ctx)
     , arr_(arr)
-    , mq_(std::make_unique<ManagedQuery>(arr, ctx_->tiledb_ctx(), name_))
     // Initialize private attributes next to control the order of destruction
-    , batch_size_("auto")
-    , result_order_(ResultOrder::automatic)
     , timestamp_(timestamp)
     , schema_(std::make_shared<ArraySchema>(arr->schema())) {
-    reset({}, batch_size_, result_order_);
     fill_metadata_cache(timestamp);
     fill_columns();
 }
@@ -242,23 +203,14 @@ std::shared_ptr<SOMAContext> SOMAArray::ctx() {
 void SOMAArray::open(OpenMode mode, std::optional<TimestampRange> timestamp) {
     timestamp_ = timestamp;
 
-    validate(mode, name_, timestamp);
-    reset(column_names(), batch_size_, result_order_);
+    validate(mode, timestamp);
     fill_metadata_cache(timestamp_);
     fill_columns();
 }
 
 std::unique_ptr<SOMAArray> SOMAArray::reopen(
     OpenMode mode, std::optional<TimestampRange> timestamp) {
-    return std::make_unique<SOMAArray>(
-        mode,
-        uri_,
-        ctx_,
-        name_,
-        column_names(),
-        batch_size_,
-        result_order_,
-        timestamp);
+    return std::make_unique<SOMAArray>(mode, uri_, ctx_, timestamp);
 }
 
 void SOMAArray::close() {
@@ -266,62 +218,9 @@ void SOMAArray::close() {
         meta_cache_arr_->close();
     }
 
-    // Close the array through the managed query to ensure any pending queries
-    // are completed.
-    mq_->close();
+    arr_->close();
     metadata_.clear();
 }
-
-void SOMAArray::reset(
-    std::vector<std::string> column_names,
-    std::string_view batch_size,
-    ResultOrder result_order) {
-    // Reset managed query
-    mq_->reset();
-
-    if (!column_names.empty()) {
-        mq_->select_columns(column_names);
-    }
-
-    mq_->set_layout(result_order);
-
-    batch_size_ = batch_size;
-    result_order_ = result_order;
-    first_read_next_ = true;
-    submitted_ = false;
-}
-
-std::optional<std::shared_ptr<ArrayBuffers>> SOMAArray::read_next() {
-    return mq_->read_next();
-}
-
-void SOMAArray::set_column_data(
-    std::string_view name,
-    uint64_t num_elems,
-    const void* data,
-    uint64_t* offsets,
-    uint8_t* validity) {
-    mq_->setup_write_column(
-        name,
-        num_elems,
-        data,
-        offsets,
-        util::bitmap_to_uint8(validity, num_elems));
-};
-
-void SOMAArray::set_column_data(
-    std::string_view name,
-    uint64_t num_elems,
-    const void* data,
-    uint32_t* offsets,
-    uint8_t* validity) {
-    mq_->setup_write_column(
-        name,
-        num_elems,
-        data,
-        offsets,
-        util::bitmap_to_uint8(validity, num_elems));
-};
 
 uint64_t SOMAArray::ndim() const {
     return std::count_if(
@@ -360,17 +259,6 @@ std::vector<std::string> SOMAArray::attribute_names() const {
         result.push_back(column->name());
     }
     return result;
-}
-
-void SOMAArray::write(bool sort_coords) {
-    if (arr_->query_type() != TILEDB_WRITE) {
-        throw TileDBSOMAError("[SOMAArray] array must be opened in write mode");
-    }
-    mq_->submit_write(sort_coords);
-
-    // ManagedQuery::submit_write re-opens the array so reset the ManagedQuery
-    // with the latest version of the array
-    mq_ = std::make_unique<ManagedQuery>(arr_, ctx_->tiledb_ctx(), name_);
 }
 
 void SOMAArray::consolidate_and_vacuum(std::vector<std::string> modes) {
@@ -435,9 +323,7 @@ uint64_t SOMAArray::metadata_num() const {
 }
 
 void SOMAArray::validate(
-    OpenMode mode,
-    std::string_view name,
-    std::optional<TimestampRange> timestamp) {
+    OpenMode mode, std::optional<TimestampRange> timestamp) {
     // Validate parameters
     auto tdb_mode = mode == OpenMode::read ? TILEDB_READ : TILEDB_WRITE;
 
@@ -457,7 +343,6 @@ void SOMAArray::validate(
         ArrayExperimental::load_all_enumerations(
             *ctx_->tiledb_ctx(), *(arr_.get()));
         schema_ = std::make_shared<ArraySchema>(arr_->schema());
-        mq_ = std::make_unique<ManagedQuery>(arr_, ctx_->tiledb_ctx(), name);
     } catch (const std::exception& e) {
         throw TileDBSOMAError(
             std::format("Error opening array: '{}'\n  {}", uri_, e.what()));
@@ -624,18 +509,10 @@ uint64_t SOMAArray::_nnz_slow() {
         "[SOMAArray] nnz() found consolidated or overlapping fragments, "
         "counting cells...");
 
-    auto sr = SOMAArray::open(
-        OpenMode::read,
-        uri_,
-        ctx_,
-        "count_cells",
-        {schema_->domain().dimension(0).name()},
-        batch_size_,
-        result_order_,
-        timestamp_);
-
     uint64_t total_cell_num = 0;
-    while (auto batch = sr->read_next()) {
+    auto sr = SOMAArray::open(OpenMode::read, uri_, ctx_, timestamp_);
+    auto mq = ManagedQuery(*sr, ctx_->tiledb_ctx(), "count_cells");
+    while (auto batch = mq.read_next()) {
         total_cell_num += (*batch)->num_rows();
     }
 

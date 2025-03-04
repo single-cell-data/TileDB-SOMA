@@ -69,12 +69,7 @@ TEST_CASE("SOMAGeometryDataFrame: basic", "[SOMAGeometryDataFrame]") {
     REQUIRE(!SOMADataFrame::exists(uri, ctx));
 
     auto soma_geometry = SOMAGeometryDataFrame::open(
-        uri,
-        OpenMode::read,
-        ctx,
-        {},  // column_names,
-        ResultOrder::automatic,
-        std::nullopt);
+        uri, OpenMode::read, ctx, std::nullopt);
     REQUIRE(soma_geometry->uri() == uri);
     REQUIRE(soma_geometry->ctx() == ctx);
     REQUIRE(soma_geometry->type() == "SOMAGeometryDataFrame");
@@ -203,28 +198,24 @@ TEST_CASE("SOMAGeometryDataFrame: Roundtrip", "[SOMAGeometryDataFrame]") {
 
     // Write to point cloud.
     auto soma_geometry = SOMAGeometryDataFrame::open(
-        uri,
-        OpenMode::write,
-        ctx,
-        {},  // column_names
-        ResultOrder::automatic,
-        std::nullopt);
+        uri, OpenMode::write, ctx, std::nullopt);
+    auto mq = ManagedQuery(*soma_geometry, ctx->tiledb_ctx());
+    std::tie(data_array, data_schema) = TransformerPipeline(
+                                            std::move(data_array),
+                                            std::move(data_schema))
+                                            .transform(
+                                                OutlineTransformer(coord_space))
+                                            .asTable();
 
-    soma_geometry->set_array_data(
-        std::move(data_schema), std::move(data_array));
-    soma_geometry->write();
+    mq.set_array_data(std::move(data_schema), std::move(data_array));
+    mq.submit_write();
     soma_geometry->close();
 
     // Read back the data.
     soma_geometry = SOMAGeometryDataFrame::open(
-        uri,
-        OpenMode::read,
-        ctx,
-        {},  // column_names,
-        ResultOrder::automatic,
-        std::nullopt);
-
-    while (auto batch = soma_geometry->read_next()) {
+        uri, OpenMode::read, ctx, std::nullopt);
+    mq = ManagedQuery(*soma_geometry, ctx->tiledb_ctx());
+    while (auto batch = mq.read_next()) {
         auto arrbuf = batch.value();
         auto d0span = arrbuf->at(dim_infos[0].name)->data<int64_t>();
         auto d1span = arrbuf->at(SOMA_GEOMETRY_DIMENSION_PREFIX + "x__min")

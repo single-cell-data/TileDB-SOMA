@@ -74,9 +74,8 @@ class SOMAGeometryColumn : public SOMAColumn {
     }
 
     inline void select_columns(
-        const std::unique_ptr<ManagedQuery>& query,
-        bool if_not_empty = false) const override {
-        query->select_columns(std::vector({attribute.name()}), if_not_empty);
+        ManagedQuery& query, bool if_not_empty = false) const override {
+        query.select_columns(std::vector({attribute.name()}), if_not_empty);
     };
 
     inline soma_column_datatype_t type() const override {
@@ -120,14 +119,10 @@ class SOMAGeometryColumn : public SOMAColumn {
 
    protected:
     void _set_dim_points(
-        const std::unique_ptr<ManagedQuery>& query,
-        const SOMAContext& ctx,
-        const std::any& points) const override;
+        ManagedQuery& query, const std::any& points) const override;
 
     void _set_dim_ranges(
-        const std::unique_ptr<ManagedQuery>& query,
-        const SOMAContext& ctx,
-        const std::any& ranges) const override;
+        ManagedQuery& query, const std::any& ranges) const override;
 
     void _set_current_domain_slot(
         NDRectangle& rectangle,
@@ -166,7 +161,7 @@ class SOMAGeometryColumn : public SOMAColumn {
      * it is used to compute the limits, otherwise the core domain is used.
      */
     std::vector<std::pair<double_t, double_t>> _limits(
-        const SOMAContext& ctx, const ArraySchema& schema) const;
+        const Context& ctx, const ArraySchema& schema) const;
 
     std::vector<std::pair<double_t, double_t>> _transform_ranges(
         const std::vector<

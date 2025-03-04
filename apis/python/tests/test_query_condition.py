@@ -12,7 +12,7 @@ from tiledbsoma._query_condition import QueryCondition
 VERBOSE = False
 
 TEST_DIR = os.path.dirname(__file__)
-SOMA_URI = f"{TEST_DIR}/../../../test/soco/pbmc3k_processed"
+SOMA_URI = f"{TEST_DIR}/../../../data/soco/pbmc3k_processed"
 
 if VERBOSE:
     clib.config_logging("debug")
@@ -92,6 +92,22 @@ def test_query_condition(condition):
         ["n_genes > val(100.0)", "n_genes > 100.0"],
         ["is_b_cell == val(True)", "is_b_cell == True"],
         ["louvain == val('B cells')", "louvain == 'B cells'"],
+        [
+            "louvain == 'B cells' or louvain == 'NK cells'",
+            "louvain == 'B cells' or louvain == 'NK cells'",
+        ],
+        [
+            "attr('louvain') == 'B cells' or attr('louvain') == 'NK cells'",
+            "louvain == 'B cells' or louvain == 'NK cells'",
+        ],
+        [
+            "louvain in ['B cells', 'NK cells']",
+            "louvain == 'B cells' or louvain == 'NK cells'",
+        ],
+        [
+            "attr('louvain') in ['B cells', 'NK cells']",
+            "louvain == 'B cells' or louvain == 'NK cells'",
+        ],
     ],
 )
 def test_query_condition_extensions(condition, pandas_equivalent_condition):

@@ -164,7 +164,6 @@ def test_from_soma_chunked_array(
         format="coo",
     )
 
-    tables = []
     i = np.array_split(sp.row.astype(np.int64), n_tables)
     j = np.array_split(sp.col.astype(np.int64), n_tables)
     d = np.array_split(sp.data, n_tables)
@@ -350,7 +349,7 @@ def test_bad_shapes(context: soma.SOMATileDBContext, rng: np.random.Generator) -
 @pytest.mark.parametrize("format", ["csr", "csc"])
 @pytest.mark.parametrize("make_sorted", [True, False])
 def test_duplicates(
-    format: str,
+    format: Literal["csc", "csr"],
     make_sorted: bool,
     context: soma.SOMATileDBContext,
     rng: np.random.Generator,

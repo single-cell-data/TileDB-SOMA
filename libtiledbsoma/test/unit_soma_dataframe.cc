@@ -132,15 +132,8 @@ struct VariouslyIndexedDataFrameFixture {
 
     std::unique_ptr<SOMADataFrame> open(
         OpenMode mode,
-        ResultOrder result_order = ResultOrder::automatic,
         std::optional<TimestampRange> timestamp_range = std::nullopt) {
-        return SOMADataFrame::open(
-            uri_,
-            mode,
-            ctx_,
-            {},  // column_names
-            result_order,
-            timestamp_range);
+        return SOMADataFrame::open(uri_, mode, ctx_, timestamp_range);
     }
 
     void write_sjid_u32_str_data_from(int64_t sjid_base) {
@@ -167,11 +160,14 @@ struct VariouslyIndexedDataFrameFixture {
         }
         char_offsets.push_back(offset);
 
-        sdf->set_column_data(i64_name, i64_data.size(), i64_data.data());
-        sdf->set_column_data(
+        auto mq = ManagedQuery(*sdf, ctx_->tiledb_ctx());
+        mq.setup_write_column(
+            i64_name, i64_data.size(), i64_data.data(), (uint64_t*)nullptr);
+        mq.setup_write_column(
             str_name, strings.size(), char_data.data(), char_offsets.data());
-        sdf->set_column_data(u32_name, u32_data.size(), u32_data.data());
-        sdf->write();
+        mq.setup_write_column(
+            u32_name, u32_data.size(), u32_data.data(), (uint64_t*)nullptr);
+        mq.submit_write();
 
         sdf->close();
     }
@@ -210,19 +206,26 @@ TEST_CASE_METHOD(
 
     // A write in read mode should fail
     sdf = open(OpenMode::read);
-    sdf->set_column_data(dim_infos[0].name, d0.size(), d0.data());
-    sdf->set_column_data(attr_infos[0].name, a0.size(), a0.data());
-    REQUIRE_THROWS(sdf->write());
+    auto mq = ManagedQuery(*sdf, ctx_->tiledb_ctx());
+    mq.setup_write_column(
+        dim_infos[0].name, d0.size(), d0.data(), (uint64_t*)nullptr);
+    mq.setup_write_column(
+        attr_infos[0].name, a0.size(), a0.data(), (uint64_t*)nullptr);
+    REQUIRE_THROWS(mq.submit_write());
     sdf->close();
 
     sdf = open(OpenMode::write);
-    sdf->set_column_data(dim_infos[0].name, d0.size(), d0.data());
-    sdf->set_column_data(attr_infos[0].name, a0.size(), a0.data());
-    sdf->write();
+    mq = ManagedQuery(*sdf, ctx_->tiledb_ctx());
+    mq.setup_write_column(
+        dim_infos[0].name, d0.size(), d0.data(), (uint64_t*)nullptr);
+    mq.setup_write_column(
+        attr_infos[0].name, a0.size(), a0.data(), (uint64_t*)nullptr);
+    mq.submit_write();
     sdf->close();
 
     sdf = open(OpenMode::read);
-    while (auto batch = sdf->read_next()) {
+    mq = ManagedQuery(*sdf, ctx_->tiledb_ctx());
+    while (auto batch = mq.read_next()) {
         auto arrbuf = batch.value();
         auto d0span = arrbuf->at(dim_infos[0].name)->data<int64_t>();
         auto a0span = arrbuf->at(attr_infos[0].name)->data<uint32_t>();
@@ -367,8 +370,7 @@ TEST_CASE_METHOD(
 
     create(dim_infos, attr_infos, PlatformConfig(), TimestampRange(0, 1));
 
-    auto sdf = open(
-        OpenMode::write, ResultOrder::automatic, TimestampRange(0, 2));
+    auto sdf = open(OpenMode::write, TimestampRange(0, 2));
 
     int32_t val = 100;
     sdf->set_metadata("md", TILEDB_INT32, 1, &val);
@@ -432,13 +434,16 @@ TEST_CASE_METHOD(
     create(dim_infos, attr_infos);
 
     auto sdf = open(OpenMode::write);
+    auto mq = ManagedQuery(*sdf, ctx_->tiledb_ctx());
 
     std::vector<int64_t> d0({old_max + 1, old_max + 2});
     std::vector<double> a0({1.5, 2.5});
-    sdf->set_column_data(dim_infos[0].name, d0.size(), d0.data());
-    sdf->set_column_data(attr_infos[0].name, a0.size(), a0.data());
+    mq.setup_write_column(
+        dim_infos[0].name, d0.size(), d0.data(), (uint64_t*)nullptr);
+    mq.setup_write_column(
+        attr_infos[0].name, a0.size(), a0.data(), (uint64_t*)nullptr);
     // Writing outside the current domain should fail
-    REQUIRE_THROWS(sdf->write());
+    REQUIRE_THROWS(mq.submit_write());
     sdf->close();
 
     sdf = open(OpenMode::write);
@@ -446,10 +451,13 @@ TEST_CASE_METHOD(
     sdf->close();
 
     sdf = open(OpenMode::write);
-    sdf->set_column_data(dim_infos[0].name, d0.size(), d0.data());
-    sdf->set_column_data(attr_infos[0].name, a0.size(), a0.data());
+    mq = ManagedQuery(*sdf, ctx_->tiledb_ctx());
+    mq.setup_write_column(
+        dim_infos[0].name, d0.size(), d0.data(), (uint64_t*)nullptr);
+    mq.setup_write_column(
+        attr_infos[0].name, a0.size(), a0.data(), (uint64_t*)nullptr);
     // Writing after resize should succeed
-    sdf->write();
+    mq.submit_write();
 
     sdf->close();
 }

@@ -136,8 +136,14 @@ SOMACoordinateSpace SOMACoordinateSpace::from_metadata(
             "[SOMACoordinateSpace]: Missing value for coordinate space "
             "metadata.");
     }
-    std::string value_str(static_cast<const char*>(value), value_num);
-    auto value_json = json::parse(value_str);
+
+    return SOMACoordinateSpace::from_string(
+        std::string_view(static_cast<const char*>(value), value_num));
+}
+
+SOMACoordinateSpace SOMACoordinateSpace::from_string(
+    std::string_view metadata) {
+    auto value_json = json::parse(metadata);
     auto axes = value_json.template get<std::vector<SOMAAxis>>();
 
     return SOMACoordinateSpace(axes);

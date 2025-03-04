@@ -16,7 +16,7 @@ import pytest
 
 import tiledbsoma.io
 import tiledbsoma.io._registration as registration
-from tiledbsoma.io._registration import signatures
+from tiledbsoma.io import conversions
 
 from ._util import assert_adata_equal
 
@@ -169,7 +169,7 @@ def create_anndata_canned(which: int, obs_field_name: str, var_field_name: str):
 
 
 def create_h5ad_canned(which: int, obs_field_name: str, var_field_name: str):
-    tmp_path = tempfile.TemporaryDirectory()
+    tmp_path = tempfile.TemporaryDirectory(prefix="create_h5ad_canned_")
     anndata = create_anndata_canned(which, obs_field_name, var_field_name)
     return create_h5ad(
         anndata,
@@ -178,7 +178,7 @@ def create_h5ad_canned(which: int, obs_field_name: str, var_field_name: str):
 
 
 def create_soma_canned(which: int, obs_field_name, var_field_name):
-    tmp_path = tempfile.TemporaryDirectory()
+    tmp_path = tempfile.TemporaryDirectory(prefix="create_soma_canned_")
     h5ad = create_h5ad_canned(which, obs_field_name, var_field_name)
     uri = tmp_path.name + f"soma{which}"
     tiledbsoma.io.from_h5ad(uri, h5ad, "measname")
@@ -198,7 +198,7 @@ def anndata_larger():
 
 @pytest.fixture
 def soma_larger(anndata_larger):
-    tmp_path = tempfile.TemporaryDirectory()
+    tmp_path = tempfile.TemporaryDirectory(prefix="soma_larger_")
     uri = tmp_path.name + "soma-larger"
     tiledbsoma.io.from_anndata(uri, anndata_larger, "measname")
     return uri
@@ -254,7 +254,8 @@ def test_pandas_indexing(
         if len(index_col_and_name) == 2:
             df.index.name = index_col_and_name[1]
 
-    actual_signature = signatures._string_dict_from_pandas_dataframe(df, default_index_name)
+    arrow_schema = conversions.df_to_arrow_schema(df, default_index_name)
+    actual_signature = conversions._string_dict_from_arrow_schema(arrow_schema)
     expected_signature = dict((col, "string") for col in signature_col_names)
     assert actual_signature == expected_signature
 # fmt: on

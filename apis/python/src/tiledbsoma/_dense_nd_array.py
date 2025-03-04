@@ -294,7 +294,7 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
         new_coords: List[Union[int, Slice[int], None]] = []
         for c in coords:
             if isinstance(c, slice) and isinstance(c.stop, int):
-                new_coords.append(slice(c.start, c.stop - 1, c.step))
+                new_coords.append(slice(c.start, c.stop, c.step))
             else:
                 new_coords.append(c)
 

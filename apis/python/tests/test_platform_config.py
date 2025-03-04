@@ -14,7 +14,7 @@ from ._util import assert_adata_equal
 def test_platform_config(conftest_pbmc_small):
     # Set up anndata input path and tiledb-group output path
     original = conftest_pbmc_small.copy()
-    with tempfile.TemporaryDirectory() as output_path:
+    with tempfile.TemporaryDirectory(prefix="test_platform_config_") as output_path:
         # Ingest
         create_cfg = {
             "capacity": 8888,
