@@ -455,14 +455,8 @@ def from_visium(
         )
     logging.log_io(None, _util.format_elapsed(start_time, "FINISHED READING"))
 
-    # Deduplicate obs and var names.
-    start_time = _util.get_start_stamp()
-    logging.log_io(None, "START  DECATEGORICALIZING")
-    anndata.obs_names_make_unique()
-    anndata.var_names_make_unique()
-    logging.log_io(None, _util.format_elapsed(start_time, "FINISH DECATEGORICALIZING"))
-
-    # Create registration mapping if none was provided.
+    # Create registration mapping if none was provided and get obs/var data needed
+    # for spatial indexing.
     if registration_mapping is None:
         joinid_maps = ExperimentIDMapping.from_isolated_anndata(
             anndata, measurement_name=measurement_name
