@@ -11,6 +11,7 @@ from . import _tdb_handles
 
 # This package's pybind11 code
 from . import pytiledbsoma as clib  # noqa: E402
+from ._read_iters import ManagedQuery
 from ._soma_object import SOMAObject
 
 
@@ -159,3 +160,48 @@ class SOMAArray(SOMAObject[_tdb_handles.SOMAArrayWrapper[Any]]):
           resized up to core (max) domain.
         """
         return self._handle.maxdomain
+
+    def _write_table(self, values: pa.Table, sort_coords: bool) -> None:
+        """Helper function that sets the correct result order for the layout
+        and allows for multiple submissions before calling `submit` and `finalize`
+        for unordered write or `submit_and_finalize` for global order writes.
+
+        Args:
+            values:
+                An `Arrow table <https://arrow.apache.org/docs/python/generated/pyarrow.Table.html>`_
+                containing all columns, including the index columns. The schema for the values must
+                match the schema for the :class:`DataFrame`.
+
+                If a column is of categorical type in the schema and a flattened/non-categorical
+                column is presented for data on write, a ``ValueError`` is raised.  If a column is
+                of non-categorical type in the schema and a categorical column is presented for data
+                on write, the data are written as an array of category values, and the category-type
+                information is not saved.
+            sort_coords:
+                Whether the coordinates need to be sorted (False) or are already
+                sorted in global order (True). For Arrow Tables, the coordinates
+                are already in order, so this is defaulted to False unless
+                explicitly set by the user in the PlatformConfig.
+        """
+        batches = values.to_batches()
+        if not batches:
+            return
+
+        layout = (
+            clib.ResultOrder.unordered if sort_coords else clib.ResultOrder.globalorder
+        )
+
+        if layout == clib.ResultOrder.unordered:
+            for batch in batches:
+                mq = ManagedQuery(self)._handle
+                mq.set_layout(layout)
+                mq.set_array_data(batch)
+                mq.submit_write()
+        else:
+            mq = ManagedQuery(self)._handle
+            mq.set_layout(layout)
+            for batch in batches[:-1]:
+                mq.set_array_data(batch)
+                mq.submit_write()
+            mq.set_array_data(batches[-1])
+            mq.submit_and_finalize()
