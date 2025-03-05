@@ -1392,9 +1392,9 @@ ArrowAdapter::to_arrow(std::shared_ptr<ColumnBuffer> column) {
             "Bad array children alloc");
 
         // The release function should be the default nanoarrow release
-        // function. The dictionary buffers should be released the be parent
-        // array release function that we provide. The arrow array is becoming
-        // the owner of new buffers should be responsible for cleaning the up
+        // function. The dictionary buffers should be released by the parent
+        // array release function that we provide. The arrow array as
+        // the owner of new buffers should be responsible for clean-up.
         if (enmr->type() == TILEDB_STRING_ASCII ||
             enmr->type() == TILEDB_STRING_UTF8 || enmr->type() == TILEDB_CHAR ||
             enmr->type() == TILEDB_BLOB) {
