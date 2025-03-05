@@ -171,27 +171,23 @@ void ManagedQuery::setup_read() {
     }
 }
 
-void ManagedQuery::submit_write(bool sort_coords) {
-    _fill_in_subarrays_if_dense(false);
-
+void ManagedQuery::_setup_write() {
     if (array_->query_type() != TILEDB_WRITE) {
         throw TileDBSOMAError(
-            "[ManagedQuery] write requires array to be opened in write mode");
+            "[ManagedQuery] write requires array to be opened in write "
+            "mode");
     }
+
+    _fill_in_subarrays_if_dense(false);
 
     if (array_->schema().array_type() == TILEDB_DENSE) {
         query_->set_subarray(*subarray_);
-    } else {
-        query_->set_layout(
-            sort_coords ? TILEDB_UNORDERED : TILEDB_GLOBAL_ORDER);
     }
+}
 
-    if (query_->query_layout() == TILEDB_GLOBAL_ORDER) {
-        query_->submit_and_finalize();
-    } else {
-        query_->submit();
-        query_->finalize();
-    }
+void ManagedQuery::_teardown_write() {
+    // Reset
+    reset();
 
     // When we evolve the schema, the ArraySchema needs to be updated to the
     // latest version so re-open the Array

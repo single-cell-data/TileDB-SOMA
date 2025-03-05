@@ -12,6 +12,7 @@ from . import _tdb_handles
 # This package's pybind11 code
 from . import pytiledbsoma as clib  # noqa: E402
 from ._soma_object import SOMAObject
+from ._read_iters import ManagedQuery
 
 
 class SOMAArray(SOMAObject[_tdb_handles.SOMAArrayWrapper[Any]]):
@@ -159,3 +160,31 @@ class SOMAArray(SOMAObject[_tdb_handles.SOMAArrayWrapper[Any]]):
           resized up to core (max) domain.
         """
         return self._handle.maxdomain
+
+    def _write_table(self, values, sort_coords: bool):
+        batches = values.to_batches()
+        
+        if not batches:
+            return
+        
+        mq = ManagedQuery(self)
+        
+        layout = (
+            clib.ResultOrder.unordered
+            if sort_coords or False
+            else clib.ResultOrder.globalorder
+        )
+        
+        mq._handle.set_layout(layout)
+
+        for batch in batches[:-1]:
+            mq._handle.set_array_data(batch)
+            mq._handle.submit_write()
+                
+        mq._handle.set_array_data(batches[-1])
+
+        if layout == clib.ResultOrder.unordered:
+            mq._handle.submit_write()
+            mq._handle.finalize()
+        else:
+            mq._handle.submit_and_finalize()

@@ -777,11 +777,8 @@ class DataFrame(SOMAArray, somacore.DataFrame):
             )
         write_options = TileDBWriteOptions.from_platform_config(platform_config)
         sort_coords = write_options.sort_coords
-
-        for batch in values.to_batches():
-            mq = ManagedQuery(self)
-            mq._handle.set_array_data(batch)
-            mq._handle.submit_write(sort_coords or False)
+        
+        self._write_table(values, sort_coords)
 
         if write_options.consolidate_and_vacuum:
             self._handle._handle.consolidate_and_vacuum()
