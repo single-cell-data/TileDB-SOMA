@@ -1231,19 +1231,14 @@ class ArrowAdapter {
         std::unique_ptr<ArrowSchema> schema, int64_t index);
 
    private:
-    static std::pair<const void*, std::size_t> _get_data_and_length(
-        Enumeration& enmr, const void* dst);
+    static size_t _set_var_dictionary_buffers(
+        Enumeration& enumeration, const Context& ctx, const void** buffers);
 
     static size_t _set_dictionary_buffers(
         Enumeration& enumeration, const Context& ctx, const void** buffers);
 
-    template <typename T>
-    static const void* _fill_data_buffer(std::vector<T> src, const void* dst) {
-        auto sz = src.size() * sizeof(T);
-        dst = (const void*)malloc(sz);
-        std::memcpy((void*)dst, src.data(), sz);
-        return dst;
-    }
+    static size_t _set_bool_dictionary_buffers(
+        Enumeration& enumeration, const Context& ctx, const void** buffers);
 
     static Dimension _create_dim(
         tiledb_datatype_t type,

@@ -288,29 +288,6 @@ std::optional<std::shared_ptr<ArrayBuffers>> ManagedQuery::read_next() {
             std::format("[ManagedQuery] [{}] Buffers are too small.", name_));
     }
 
-    // Visit all attributes and retrieve enumeration vectors
-    auto attribute_map = schema_->attributes();
-    // PERF: No apparent reason to do that
-    for (auto& nmit : attribute_map) {
-        auto attrname = nmit.first;
-        auto attribute = nmit.second;
-        auto enumname = AttributeExperimental::get_enumeration_name(
-            *ctx_, attribute);
-        if (enumname != std::nullopt) {
-            auto enumeration = ArrayExperimental::get_enumeration(
-                *ctx_, *array_, enumname.value());
-            // auto enumvec = enumeration.as_vector<std::string>();
-            if (!buffers_->contains(attrname)) {
-                continue;
-            }
-            auto colbuf = buffers_->at(attrname);
-            colbuf->add_enumeration(std::vector<std::string>());
-            LOG_DEBUG(std::format(
-                "[ManagedQuery] got Enumeration '{}' for attribute '{}'",
-                enumname.value(),
-                attrname));
-        }
-    }
     return buffers_;
 }
 
@@ -504,28 +481,6 @@ std::shared_ptr<ArrayBuffers> ManagedQuery::results() {
             std::format("[ManagedQuery] [{}] Buffers are too small.", name_));
     }
 
-    // Visit all attributes and retrieve enumeration vectors
-    auto attribute_map = schema_->attributes();
-    for (auto& nmit : attribute_map) {
-        auto attrname = nmit.first;
-        auto attribute = nmit.second;
-        auto enumname = AttributeExperimental::get_enumeration_name(
-            *ctx_, attribute);
-        if (enumname != std::nullopt) {
-            auto enumeration = ArrayExperimental::get_enumeration(
-                *ctx_, *array_, enumname.value());
-            auto enumvec = enumeration.as_vector<std::string>();
-            if (!buffers_->contains(attrname)) {
-                continue;
-            }
-            auto colbuf = buffers_->at(attrname);
-            colbuf->add_enumeration(enumvec);
-            LOG_DEBUG(std::format(
-                "[ManagedQuery] got Enumeration '{}' for attribute '{}'",
-                enumname.value(),
-                attrname));
-        }
-    }
     return buffers_;
 }
 

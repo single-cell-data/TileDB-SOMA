@@ -153,13 +153,19 @@ void ArrowAdapter::release_array(struct ArrowArray* array) {
     }
 
     if (array->dictionary != nullptr) {
-        // TODO: This can lead to segfault on some data sets, could be caused
-        //       by how we fill arrow data structures.  This should pass.
-        // if (array->dictionary->release != nullptr) {
-        //    LOG_TRACE("[ArrowAdapter] release_array array->dict release");
-        //    release_array(array->dictionary);
-        //}
-        LOG_TRACE("[ArrowAdapter] release_array array->dict free");
+        // Dictionary arrays are allocated differently than data arrays
+        // We need to free the buffers one at a time, then we can call the
+        // release schema to continue the cleanup properly
+        for (size_t i = 0; i < array->dictionary->n_buffers; ++i) {
+            if (array->dictionary->buffers[i] != nullptr) {
+                free(const_cast<void*>(array->dictionary->buffers[i]));
+                array->dictionary->buffers[i] = nullptr;
+            }
+        }
+
+        LOG_TRACE("[ArrowAdapter] release_array array->dict release");
+
+        array->dictionary->release(array->dictionary);
         free(array->dictionary);
         array->dictionary = nullptr;
     }
@@ -1233,83 +1239,6 @@ ArrowAdapter::tiledb_attribute_from_arrow_schema(
     return {attr, enmr};
 }
 
-std::pair<const void*, std::size_t> ArrowAdapter::_get_data_and_length(
-    Enumeration& enmr, const void* dst) {
-    switch (enmr.type()) {
-        case TILEDB_BOOL: {
-            // We must handle this specially because vector<bool> does
-            // not store elements contiguously in memory
-            auto data = enmr.as_vector<bool>();
-
-            // Represent the Boolean vector with, at most, the last two
-            // bits. In Arrow, Boolean values are LSB packed
-            uint8_t src = 0;
-            for (size_t i = 0; i < data.size(); ++i)
-                src |= (data[i] << i);
-
-            // Allocate a single byte to copy the bits into
-            size_t sz = 1;
-            dst = malloc(sz);
-            std::memcpy((void*)dst, &src, sz);
-
-            return std::pair(dst, data.size());
-        }
-        case TILEDB_INT8: {
-            auto data = enmr.as_vector<int8_t>();
-            return std::pair(_fill_data_buffer(data, dst), data.size());
-        }
-        case TILEDB_UINT8: {
-            auto data = enmr.as_vector<uint8_t>();
-            return std::pair(
-                ArrowAdapter::_fill_data_buffer(data, dst), data.size());
-        }
-        case TILEDB_INT16: {
-            auto data = enmr.as_vector<int16_t>();
-            return std::pair(
-                ArrowAdapter::_fill_data_buffer(data, dst), data.size());
-        }
-        case TILEDB_UINT16: {
-            auto data = enmr.as_vector<uint16_t>();
-            return std::pair(
-                ArrowAdapter::_fill_data_buffer(data, dst), data.size());
-        }
-        case TILEDB_INT32: {
-            auto data = enmr.as_vector<int32_t>();
-            return std::pair(
-                ArrowAdapter::_fill_data_buffer(data, dst), data.size());
-        }
-        case TILEDB_UINT32: {
-            auto data = enmr.as_vector<uint32_t>();
-            return std::pair(
-                ArrowAdapter::_fill_data_buffer(data, dst), data.size());
-        }
-        case TILEDB_INT64: {
-            auto data = enmr.as_vector<int64_t>();
-            return std::pair(
-                ArrowAdapter::_fill_data_buffer(data, dst), data.size());
-        }
-        case TILEDB_UINT64: {
-            auto data = enmr.as_vector<uint64_t>();
-            return std::pair(
-                ArrowAdapter::_fill_data_buffer(data, dst), data.size());
-        }
-        case TILEDB_FLOAT32: {
-            auto data = enmr.as_vector<float>();
-            return std::pair(
-                ArrowAdapter::_fill_data_buffer(data, dst), data.size());
-        }
-        case TILEDB_FLOAT64: {
-            auto data = enmr.as_vector<double>();
-            return std::pair(
-                ArrowAdapter::_fill_data_buffer(data, dst), data.size());
-        }
-        default:
-            throw TileDBSOMAError(std::format(
-                "ArrowAdapter: Unsupported TileDB dict datatype: {} ",
-                tiledb::impl::type_to_str(enmr.type())));
-    }
-}
-
 inline void exitIfError(const ArrowErrorCode ec, const std::string& msg) {
     if (ec != NANOARROW_OK)
         throw TileDBSOMAError(
@@ -1440,11 +1369,11 @@ ArrowAdapter::to_arrow(std::shared_ptr<ColumnBuffer> column) {
             sizeof(int32_t) * n);
     }
 
-    if (column->has_enumeration()) {
+    auto enmr = column->get_enumeration_info();
+    if (enmr.has_value()) {
         auto dict_sch = (ArrowSchema*)malloc(sizeof(ArrowSchema));
         auto dict_arr = (ArrowArray*)malloc(sizeof(ArrowArray));
 
-        auto enmr = column->get_enumeration_info();
         auto dcoltype = to_arrow_format(enmr->type(), false).data();
         auto dnatype = to_nanoarrow_type(dcoltype);
 
@@ -1462,7 +1391,7 @@ ArrowAdapter::to_arrow(std::shared_ptr<ColumnBuffer> column) {
             ArrowArrayAllocateChildren(dict_arr, 0),
             "Bad array children alloc");
         // hook up our custom release function
-        dict_arr->release = &release_array;
+        // dict_arr->release = &release_array;
 
         // TODO string types currently get the data and offset
         // buffers from ColumnBuffer::enum_offsets and
@@ -1476,13 +1405,14 @@ ArrowAdapter::to_arrow(std::shared_ptr<ColumnBuffer> column) {
         if (enmr->type() == TILEDB_STRING_ASCII ||
             enmr->type() == TILEDB_STRING_UTF8 || enmr->type() == TILEDB_CHAR ||
             enmr->type() == TILEDB_BLOB) {
-            dict_arr->length = _set_dictionary_buffers(
+            dict_arr->length = _set_var_dictionary_buffers(
+                enmr.value(), enmr->context(), dict_arr->buffers);
+        } else if (enmr->type() == TILEDB_BOOL) {
+            dict_arr->length = _set_bool_dictionary_buffers(
                 enmr.value(), enmr->context(), dict_arr->buffers);
         } else {
-            auto [dict_data, dict_length] = _get_data_and_length(
-                *enmr, dict_arr->buffers[1]);
-            dict_arr->buffers[1] = dict_data;
-            dict_arr->length = dict_length;
+            dict_arr->length = _set_dictionary_buffers(
+                enmr.value(), enmr->context(), dict_arr->buffers);
         }
 
         schema->dictionary = dict_sch;
@@ -1939,7 +1869,7 @@ std::unique_ptr<ArrowSchema> ArrowAdapter::arrow_schema_remove_at_index(
     return schema_new;
 }
 
-size_t ArrowAdapter::_set_dictionary_buffers(
+size_t ArrowAdapter::_set_var_dictionary_buffers(
     Enumeration& enumeration, const Context& ctx, const void** buffers) {
     const void* data;
     uint64_t data_size;
@@ -1967,6 +1897,69 @@ size_t ArrowAdapter::_set_dictionary_buffers(
     }
     small_offsets[count] = static_cast<uint32_t>(data_size);
     buffers[1] = small_offsets;
+
+    return count;
+}
+
+size_t ArrowAdapter::_set_dictionary_buffers(
+    Enumeration& enumeration, const Context& ctx, const void** buffers) {
+    const void* data;
+    uint64_t data_size;
+
+    ctx.handle_error(tiledb_enumeration_get_data(
+        ctx.ptr().get(), enumeration.ptr().get(), &data, &data_size));
+
+    buffers[1] = malloc(data_size);
+    std::memcpy(const_cast<void*>(buffers[1]), data, data_size);
+
+    switch (enumeration.type()) {
+        case TILEDB_INT8:
+            return data_size / sizeof(int8_t);
+        case TILEDB_UINT8:
+            return data_size / sizeof(uint8_t);
+        case TILEDB_INT16:
+            return data_size / sizeof(int16_t);
+        case TILEDB_UINT16:
+            return data_size / sizeof(uint16_t);
+        case TILEDB_INT32:
+            return data_size / sizeof(int32_t);
+        case TILEDB_UINT32:
+            return data_size / sizeof(uint32_t);
+        case TILEDB_INT64:
+            return data_size / sizeof(int64_t);
+        case TILEDB_UINT64:
+            return data_size / sizeof(uint64_t);
+        case TILEDB_FLOAT32:
+            return data_size / sizeof(float_t);
+        case TILEDB_FLOAT64:
+            return data_size / sizeof(double_t);
+        default:
+            throw TileDBSOMAError(std::format(
+                "ArrowAdapter: Unsupported TileDB dict datatype: {} ",
+                tiledb::impl::type_to_str(enumeration.type())));
+    }
+}
+
+size_t ArrowAdapter::_set_bool_dictionary_buffers(
+    Enumeration& enumeration, const Context& ctx, const void** buffers) {
+    const void* data;
+    uint64_t data_size;
+
+    ctx.handle_error(tiledb_enumeration_get_data(
+        ctx.ptr().get(), enumeration.ptr().get(), &data, &data_size));
+
+    std::span<const bool> data_v(static_cast<const bool*>(data), data_size);
+    size_t count = data_size / sizeof(bool);
+
+    // Represent the Boolean vector with, at most, the last two
+    // bits. In Arrow, Boolean values are LSB packed
+    uint8_t packed_data = 0;
+    for (size_t i = 0; i < count; ++i)
+        packed_data |= (data_v[i] << i);
+
+    // Allocate a single byte to copy the bits into
+    buffers[1] = malloc(1);
+    std::memcpy(const_cast<void*>(buffers[1]), &packed_data, 1);
 
     return count;
 }
