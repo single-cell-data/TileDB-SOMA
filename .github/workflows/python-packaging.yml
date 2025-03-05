@@ -194,6 +194,11 @@ jobs:
     name: Publish package to TestPyPI
     needs: smoke-test
     runs-on: ubuntu-24.04
+    # Configuration: https://github.com/single-cell-data/SOMA/settings/environments
+    environment: test-pypi
+    # Configuration: https://pypi.org/manage/project/somacore/settings/publishing
+    permissions:
+      id-token: write
     if: github.event_name == 'workflow_dispatch'
     steps:
       - name: Download artifacts
@@ -208,7 +213,6 @@ jobs:
         uses: pypa/gh-action-pypi-publish@release/v1
         continue-on-error: true
         with:
-          password: ${{ secrets.TEST_PYPI_TOKEN }}
           repository-url: https://test.pypi.org/legacy/
           packages_dir: dist
           verbose: true
@@ -218,6 +222,11 @@ jobs:
     name: Publish package to PyPI
     needs: smoke-test
     runs-on: ubuntu-24.04
+    # Configuration: https://github.com/single-cell-data/SOMA/settings/environments
+    environment: pypi
+    # Configuration: https://pypi.org/manage/project/somacore/settings/publishing
+    permissions:
+      id-token: write
     if: github.event_name == 'release'
     steps:
       - name: Download artifacts
@@ -231,7 +240,6 @@ jobs:
       - name: Publish packages to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
-          password: ${{ secrets.PYPI_TOKEN }}
           packages_dir: dist
           verbose: true
 
