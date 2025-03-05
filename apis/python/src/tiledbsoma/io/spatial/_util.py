@@ -10,10 +10,43 @@ from typing import Any, Tuple, Union
 
 import h5py
 import numpy as np
+import numpy.typing as npt
 import pyarrow as pa
+import pyarrow.compute as pacomp
 from typing_extensions import Self
 
 from ..._exception import SOMAError
+
+
+def _expand_ptr(indptr: npt.NDArray, nval: int) -> npt.NDArray:
+    """Expand CSR or CSC pointers into COO indices.
+
+    Args:
+        indptr: Array of row/column pointers to be expanded.
+        nval: Number of total non-zero values in the sparse matrix.
+    """
+    indices = np.empty(nval, dtype=np.int64)
+    for index in range(len(indptr) - 1):
+        indices[indptr[index] : indptr[index + 1]] = index
+    return indices
+
+
+def _unique_ptr(indptr: npt.NDArray) -> npt.NDArray:
+    """Returns the unit indices for CSR or CSC points.
+
+    Args:
+        indptr: Array of row/column pointers.
+    """
+    return np.array(
+        [
+            index
+            for index, (prev_nval, total_nval) in enumerate(
+                zip(indptr[:-1], indptr[1:])
+            )
+            if total_nval - prev_nval > 0
+        ],
+        dtype=np.int64,
+    )
 
 
 def _str_to_int(value: str) -> int:
@@ -51,26 +84,27 @@ class SpaceRangerMatrixReader:
     HDF5 Metadata (called attributes):
 
     Matrix: Expression matrix stored in CSC format
-        /matrix/data
-        /matrix/indices
-        /matrix/indptr
+      * /matrix/data: (int64) Count of feature per barcode stored.
+      * /matrix/indices: (int64) Indices for the features.
+      * /matrix/indptr: (int64) Compressed indices for the barcodes.
+      * /matrix/shape: (int32) Length 2 array with the shape of the matrix.
 
     Observation Data:
-        /matrix/barcodes: h5 string
+      * /matrix/barcodes: Barcodes for obs data.
 
     Variable Data:
-        /matrix/features/_all_tag_keys
-        /matrix/features/feature_type  #
-        /matrix/features/id  # Unique idenitier for variable
-        /matrix/features/name  # Human-readable name for variable
-        # TODO: Finish this
+      * /matrix/features/feature_type: The type of feature reference the feature
+        belongs to (for example "Gene Expression" or "Antibody Capture".
+      * /matrix/features/id: Unique idenitier for feature.
+      * /matrix/features/name: Human-readable name for variable. Used as `var_id` in scanpy.
+      * /matrix/feature/genome: The genome reference for each feature.
 
     """
 
     def __init__(self, input_path: Union[str, Path]):
         # File management.
         self._path = input_path
-        self._dataset: h5py.File | None = None
+        self._root: h5py.File | None = None
 
         # Metadatata.
         self._version: tuple[int, int, int] | None = None
@@ -78,23 +112,19 @@ class SpaceRangerMatrixReader:
         self._nvar: int | None = None
 
         # X matrix.
-        self._data: pa.Array | None = None
-        self._indices: pa.Array | None = None  # Row indices for features.
-        self._indptr: pa.Array | None = None  # Compressed column ptrs for barcodes.
+        self._data: npt.NDArray | None = None  # matrix/data
+        self._feature_indices: npt.NDArray | None = None  # matrix/indices
+        self._barcode_indptr: npt.NDArray | None = None  # matrix/indptr
+        self._barcode_indices: npt.NDArray | None = None
 
         # Obs values.
-        self._barcodes: pa.Array | None = None
+        self._barcodes: npt.NDArray | None = None  # matrix/barcodes
 
         # Var values.
-        self._var_names: pa.Array | None = None  # features/name
-        self._feature_types: pa.Array | None = None  # features/feature_type
-        self._gene_ids: pa.Array | None = None  # features/id
-        self._genome: pa.Array | None = None  # features/genome
-
-    def open(self) -> None:
-        if self._dataset is None:
-            self._dataset = h5py.File(self._path, "r")
-        self._nvar, self._nobs = self._dataset["matrix"]["shape"]
+        self._var_name: npt.NDArray | None = None  # features/name
+        self._gene_id: npt.NDArray | None = None  # features/id (unique identifier)
+        self._feature_type: npt.NDArray | None = None  # features/feature_type
+        self._genome: npt.NDArray | None = None  # features/genome
 
     def __enter__(self) -> Self:
         self.open()
@@ -103,21 +133,11 @@ class SpaceRangerMatrixReader:
     def __exit__(self, *_: Any) -> None:
         self.close()
 
-    def _read_dataset(
-        self,
-        group: h5py.Group,
-        name: str,
-        desired_type: np.typing.DTypeLike | None = None,
-    ) -> np.typing.NDArray:
-        if desired_type is None:
-            return group[name]
-        return group[name].astype(desired_type)
-
     def _read_version(self) -> tuple[int, int, int]:
-        if self._dataset is None:
-            raise RuntimeError("Open dataset to read version.")
+        if self._root is None:
+            raise RuntimeError(f"[internal] File '{self._path}' is not open reading.")
         try:
-            version = self._dataset.attrs["software_version"]
+            version = self._root.attrs["software_version"]
         except KeyError as ke:
             raise SOMAError(
                 f"Unable to read software version from gene expression file "
@@ -147,27 +167,132 @@ class SpaceRangerMatrixReader:
                 f"Unexpected value {version} for software version in gene expresion "
                 f"file {self._version}."
             )
-        self._version = (major, minor, patch)
-        return self._version
+        return (major, minor, patch)
 
     def close(self) -> None:
-        if self._dataset is not None:
-            self._dataset.close()
+        if self._root is not None:
+            self._root.close()
+            self._root = None
+
+    @property
+    def data(self) -> pa.Array:
+        if self._data is None:
+            self._data = self.matrix_group["data"][()]
+        return pa.array(self._data)
+
+    @property
+    def feature_group(self) -> h5py.Group:
+        """Returns the /matrix group in the HDF5 file."""
+        if self._root is None:
+            raise RuntimeError(f"[internal] File '{self._path}' is not open reading.")
+        return self._root["matrix"]["features"]
+
+    @property
+    def feature_type(self) -> pa.Array:
+        if self._feature_type is None:
+            self._feature_types = self.feature_group["feature_type"][()]
+        return pa.array(self._feature_type)
+
+    @property
+    def gene_id(self) -> pa.Array:
+        if self._gene_id is None:
+            self._gene_id = self.feature_group["id"][()].astype(str)
+        return pa.array(self._gene_id)
+
+    @property
+    def genome(self) -> pa.Array:
+        if self._genome is None:
+            self._genome = self.feature_group["genome"][()].astype(str)
+        return pa.array(self._genome)
+
+    @property
+    def matrix_group(self) -> h5py.Group:
+        """Returns the /matrix group in the HDF5 file."""
+        if self._root is None:
+            raise RuntimeError(f"[internal] File '{self._path}' is not open reading.")
+        return self._root["matrix"]
+
+    @property
+    def obs_id(self) -> pa.Array:
+        if self._barcodes is None:
+            self._barcodes = self.matrix_group["barcodes"][()]
+        return pa.array(self._barcodes)
+
+    @property
+    def obs_indices(self) -> pa.Array:
+        if self._barcode_indices is None:
+            self._barcode_indptr = self.matrix_group["indptr"][()]
+            self._barcode_indices = _expand_ptr(
+                self._barcode_indptr, self.var_indices.size
+            )
+        return pa.array(self._barcode_indices)
+
+    def open(self) -> None:
+        if self._root is None:
+            self._root = h5py.File(self._path, "r")
+
+    def load(self) -> None:
+        # Groups
+        if self._root is None:
+            raise RuntimeError("Cannot load data. Open reader first.")
+        matrix_group = self._root["matrix"]
+        feature_group = matrix_group["features"]
+
+        # Shape
+        self._nvar, self._nobs = matrix_group["shape"]
+
+        # X matrix
+        self._data = matrix_group["data"][()]
+        self._feature_indices = matrix_group["indices"][()]
+        self._barcode_indptr = matrix_group["indptr"][()]
+        self._barcode_indices = _expand_ptr(self._barcode_indptr, self._data.size)
+
+        # obs data
+        self._barcodes = matrix_group["barcodes"][()]
+
+        # var data
+        self._var_name = feature_group["name"][()].astype(str)
+        self._gene_id = feature_group["id"][()].astype(str)
+        self._feature_type = feature_group["feature_type"][()].astype(str)
+        self._genome = feature_group["genome"][()].astype(str)
 
     @property
     def nobs(self) -> int:
         if self._nobs is None:
-            raise RuntimeError("Open reader to read nobs.")
+            self._nvar, self._nobs = self.matrix_group["shape"]
         return self._nobs
 
     @property
     def nvar(self) -> int:
         if self._nvar is None:
-            raise RuntimeError("Open reader to read nvar.")
+            self._nvar, self._nobs = self.matrix_group["shape"]
         return self._nvar
+
+    def unique_obs_indices(self) -> pa.Array:
+        """Returns the unique obs indices that have non-zero values in the X matrix."""
+        if self._barcode_indptr is None:
+            self._barcode_indptr = self.matrix_group["indptr"][()]
+        indices = _unique_ptr(self._barcode_indptr)
+        return pa.array(indices)
+
+    def unique_var_indices(self) -> pa.Array:
+        """Returns the unique var indices that have non-zero values in the X matrix."""
+        return pacomp.unique(pa.array(self.var_indices))
+
+    @property
+    def var_id(self) -> pa.Array:
+        if self._var_name is None:
+            self._var_name = self.feature_group["name"].astype(str)
+        return pa.array(self._var_name)
+
+    @property
+    def var_indices(self) -> pa.Array:
+        if self._feature_indices is None:
+            self._feature_indices = self.matrix_group["indices"][()]
+        return pa.array(self._feature_indices)
 
     @property
     def version(self) -> tuple[int, int, int]:
         if self._version is None:
-            return self._read_version()
+            self._version = self._read_version()
         return self._version
