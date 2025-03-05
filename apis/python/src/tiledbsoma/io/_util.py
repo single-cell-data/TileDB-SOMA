@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 import pathlib
+import sys
 from contextlib import contextmanager
 from typing import (
     ContextManager,
@@ -78,7 +79,10 @@ class _FSPathWrapper(pathlib.Path):
         return super().__new__(cls, path)
 
     # ``pathlib.Path`` construction references this attribute (``PosixFlavour`` or ``WindowsFlavour``)
-    _flavour = pathlib.Path().__class__._flavour  # type: ignore[attr-defined]
+    if (sys.version_info.major, sys.version_info.minor) < (3, 13):
+        _flavour = pathlib.Path().__class__._flavour  # type: ignore[attr-defined]
+    else:
+        parser = pathlib.Path().__class__.parser  # type: ignore[attr-defined]
 
     def __init__(self, obj: object, path: Path) -> None:
         super().__init__()
