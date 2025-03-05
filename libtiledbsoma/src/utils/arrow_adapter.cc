@@ -1390,18 +1390,11 @@ ArrowAdapter::to_arrow(std::shared_ptr<ColumnBuffer> column) {
         exitIfError(
             ArrowArrayAllocateChildren(dict_arr, 0),
             "Bad array children alloc");
-        // hook up our custom release function
-        // dict_arr->release = &release_array;
 
-        // TODO string types currently get the data and offset
-        // buffers from ColumnBuffer::enum_offsets and
-        // ColumnBuffer::enum_string which is retrieved via
-        // ColumnBuffer::convert_enumeration. This may be refactored
-        // to all use ColumnBuffer::get_enumeration_info. Note that
-        // ColumnBuffer::has_enumeration may also be removed in a
-        // future refactor as ColumnBuffer::get_enumeration_info
-        // returns std::optional where std::nullopt indicates the
-        // column does not contain enumerated values.
+        // The release function should be the default nanoarrow release
+        // function. The dictionary buffers should be released the be parent
+        // array release function that we provide. The arrow array is becoming
+        // the owner of new buffers should be responsible for cleaning the up
         if (enmr->type() == TILEDB_STRING_ASCII ||
             enmr->type() == TILEDB_STRING_UTF8 || enmr->type() == TILEDB_CHAR ||
             enmr->type() == TILEDB_BLOB) {
