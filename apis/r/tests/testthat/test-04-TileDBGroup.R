@@ -23,7 +23,10 @@ test_that("Create empty", {
   expect_true(file.exists(file.path(uri, "__group")))
   expect_true(group$exists())
   fp <- file.path(uri, "__group")
-  expect_match(tiledb::tiledb_object_type(uri), "GROUP")
+  expect_match(
+    get_tiledb_object_type(group$uri, group$.__enclos_env__$private$.soma_context),
+    "GROUP"
+  )
   group$close()
 })
 
