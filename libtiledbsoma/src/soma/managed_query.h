@@ -1073,7 +1073,8 @@ class ManagedQuery {
     }
 
     template <typename ValueType, typename IndexType>
-    requires std::same_as<ValueType, std::string_view> || std::same_as<ValueType, std::span<const std::byte>>
+        requires std::same_as<ValueType, std::string_view> ||
+                 std::same_as<ValueType, std::span<const std::byte>>
     void _remap_indexes_aux(
         std::string column_name,
         Enumeration extended_enmr,
