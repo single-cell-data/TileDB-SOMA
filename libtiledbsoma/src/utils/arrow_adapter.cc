@@ -157,7 +157,7 @@ void ArrowAdapter::release_array(struct ArrowArray* array) {
         // Dictionary arrays are allocated differently than data arrays
         // We need to free the buffers one at a time, then we can call the
         // release schema to continue the cleanup properly
-        for (size_t i = 0; i < array->dictionary->n_buffers; ++i) {
+        for (int64_t i = 0; i < array->dictionary->n_buffers; ++i) {
             if (array->dictionary->buffers[i] != nullptr) {
                 free(const_cast<void*>(array->dictionary->buffers[i]));
                 array->dictionary->buffers[i] = nullptr;
@@ -1351,7 +1351,7 @@ ArrowAdapter::to_arrow(std::shared_ptr<ColumnBuffer> column) {
         // the owner of new buffers should be responsible for clean-up.
         if (enmr->type() == TILEDB_STRING_ASCII ||
             enmr->type() == TILEDB_STRING_UTF8 || enmr->type() == TILEDB_CHAR ||
-            enmr->type() == TILEDB_BLOB) {
+            enmr->type() == TILEDB_BLOB || enmr->type() == TILEDB_GEOM_WKB) {
             dict_arr->length = _set_var_dictionary_buffers(
                 enmr.value(), enmr->context(), dict_arr->buffers);
         } else if (enmr->type() == TILEDB_BOOL) {

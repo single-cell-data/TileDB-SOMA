@@ -577,6 +577,7 @@ bool ManagedQuery::_cast_column(
         case TILEDB_CHAR:
             return _cast_column_aux<std::string>(schema, array, se);
         case TILEDB_BLOB:
+        case TILEDB_GEOM_WKB:
             return _cast_column_aux<std::vector<std::byte>>(schema, array, se);
         case TILEDB_BOOL:
             return _cast_column_aux<bool>(schema, array, se);
@@ -645,6 +646,7 @@ void ManagedQuery::_promote_indexes_to_values(
         case TILEDB_CHAR:
             return _cast_dictionary_values<std::string>(schema, array);
         case TILEDB_BLOB:
+        case TILEDB_GEOM_WKB:
             return _cast_dictionary_values<std::vector<std::byte>>(
                 schema, array);
         case TILEDB_BOOL:
@@ -1028,6 +1030,7 @@ bool ManagedQuery::_extend_enumeration(
             return _extend_and_evolve_schema<std::string>(
                 value_schema, value_array, index_schema, index_array, se);
         case TILEDB_BLOB:
+        case TILEDB_GEOM_WKB:
             return _extend_and_evolve_schema<std::vector<std::byte>>(
                 value_schema, value_array, index_schema, index_array, se);
         case TILEDB_INT8:
@@ -1314,21 +1317,15 @@ bool ManagedQuery::_extend_and_evolve_schema<std::vector<std::byte>>(
 
     auto enums_existing = _enumeration_values_view<std::span<const std::byte>>(
         enmr);
-    for (const auto& enum_val : enums_in_write) {
-        bool found = false;
-        for (const auto& existing_enum_val : enums_existing) {
-            if (std::equal(
-                    enum_val.begin(),
-                    enum_val.end(),
-                    existing_enum_val.begin())) {
-                found = true;
-                break;
-            }
-        }
+    std::unordered_set<std::span<const std::byte>> existing_enums_set;
+    for (const auto& existing_enum_val : enums_existing) {
+        existing_enums_set.insert(existing_enum_val);
+    }
 
-        if (!found) {
+    for (const auto& enum_val : enums_in_write) {
+        if (!existing_enums_set.contains(enum_val)) {
             extend_values.push_back(enum_val);
-            total_size += enum_val.size_bytes();
+            total_size += enum_val.size();
         }
     }
 
