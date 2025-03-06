@@ -75,19 +75,25 @@ class _FSPathWrapper(pathlib.Path):
     so here we just proxy all attributes except ``__fspath__``.
     """
 
-    def __new__(cls, _obj: object, path: Path) -> "_FSPathWrapper":
-        return super().__new__(cls, path)
+    if sys.version_info >= (3, 12):
 
-    # ``pathlib.Path`` construction references this attribute (``PosixFlavour`` or ``WindowsFlavour``)
-    if (sys.version_info.major, sys.version_info.minor) < (3, 13):
-        _flavour = pathlib.Path().__class__._flavour  # type: ignore[attr-defined]
+        def __init__(self, obj: object, path: Path) -> None:
+            super().__init__(path)
+            self._obj = obj
+            self._path = path
+
     else:
-        parser = pathlib.Path().__class__.parser  # type: ignore[attr-defined]
 
-    def __init__(self, obj: object, path: Path) -> None:
-        super().__init__()
-        self._obj = obj
-        self._path = path
+        def __new__(cls, _obj: object, path: Path) -> "_FSPathWrapper":
+            return super().__new__(cls, path)
+
+        # ``pathlib.Path`` construction references this attribute (``PosixFlavour`` or ``WindowsFlavour``)
+        _flavour = pathlib.Path().__class__._flavour  # type: ignore[attr-defined]
+
+        def __init__(self, obj: object, path: Path) -> None:
+            super().__init__()
+            self._obj = obj
+            self._path = path
 
     def __fspath__(self) -> str:
         return self._path if isinstance(self._path, str) else str(self._path)
