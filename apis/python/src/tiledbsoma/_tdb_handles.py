@@ -379,8 +379,6 @@ class SOMAArrayWrapper(Wrapper[_SOMAObjectType]):
             uri,
             mode=open_mode,
             context=context.native_context,
-            column_names=[],
-            result_order=clib.ResultOrder.automatic,
             timestamp=(0, timestamp),
         )
 

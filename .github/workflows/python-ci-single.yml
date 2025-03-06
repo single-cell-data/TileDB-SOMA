@@ -87,6 +87,9 @@ jobs:
       with:
         fetch-depth: 0  # ensure we get all tags to inform package version determination
 
+    - name: Set Up Test Data
+      run: make data
+
     - name: Set up Python ${{ inputs.python_version }}
       uses: actions/setup-python@v5
       with:
@@ -114,14 +117,6 @@ jobs:
 
     - name: Show XCode version
       run: clang --version
-
-    - name: Obtain test data
-      shell: bash
-      run: |
-        cd test
-        rm -rf soco
-        tar zxf soco.tgz
-        cd ..
 
     - name: Run libtiledbsoma unit tests
       run: ctest --output-on-failure --test-dir build/libtiledbsoma -C Release --verbose

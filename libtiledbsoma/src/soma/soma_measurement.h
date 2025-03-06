@@ -93,9 +93,7 @@ class SOMAMeasurement : public SOMACollection {
      *
      * @return std::shared_ptr<SOMADataFrame>
      */
-    std::shared_ptr<SOMADataFrame> var(
-        std::vector<std::string> column_names = {},
-        ResultOrder result_order = ResultOrder::automatic);
+    std::shared_ptr<SOMADataFrame> var();
 
     /**
      * @brief Get collection of matrices, each containing measured

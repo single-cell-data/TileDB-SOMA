@@ -1,0 +1,8 @@
+# Ignore everything by default.
+*
+
+# Explicitly track the following files and directories.
+!.gitignore
+!README.md
+!10x-pbmc-multiome-v1.0
+!pbmc3k_processed.h5ad

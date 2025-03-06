@@ -57,42 +57,40 @@ std::shared_ptr<SOMADimension> SOMADimension::create(
 }
 
 void SOMADimension::_set_dim_points(
-    const std::unique_ptr<ManagedQuery>& query,
-    const SOMAContext&,
-    const std::any& points) const {
+    ManagedQuery& query, const std::any& points) const {
     switch (dimension.type()) {
         case TILEDB_UINT8:
-            query->select_points(
+            query.select_points(
                 dimension.name(),
                 std::any_cast<std::span<const uint8_t>>(points));
             break;
         case TILEDB_UINT16:
-            query->select_points(
+            query.select_points(
                 dimension.name(),
                 std::any_cast<std::span<const uint16_t>>(points));
             break;
         case TILEDB_UINT32:
-            query->select_points(
+            query.select_points(
                 dimension.name(),
                 std::any_cast<std::span<const uint32_t>>(points));
             break;
         case TILEDB_UINT64:
-            query->select_points(
+            query.select_points(
                 dimension.name(),
                 std::any_cast<std::span<const uint64_t>>(points));
             break;
         case TILEDB_INT8:
-            query->select_points(
+            query.select_points(
                 dimension.name(),
                 std::any_cast<std::span<const int8_t>>(points));
             break;
         case TILEDB_INT16:
-            query->select_points(
+            query.select_points(
                 dimension.name(),
                 std::any_cast<std::span<const int16_t>>(points));
             break;
         case TILEDB_INT32:
-            query->select_points(
+            query.select_points(
                 dimension.name(),
                 std::any_cast<std::span<const int32_t>>(points));
             break;
@@ -119,23 +117,23 @@ void SOMADimension::_set_dim_points(
         case TILEDB_TIME_FS:
         case TILEDB_TIME_AS:
         case TILEDB_INT64:
-            query->select_points(
+            query.select_points(
                 dimension.name(),
                 std::any_cast<std::span<const int64_t>>(points));
             break;
         case TILEDB_FLOAT32:
-            query->select_points(
+            query.select_points(
                 dimension.name(),
                 std::any_cast<std::span<const float_t>>(points));
             break;
         case TILEDB_FLOAT64:
-            query->select_points(
+            query.select_points(
                 dimension.name(),
                 std::any_cast<std::span<const double_t>>(points));
             break;
         case TILEDB_STRING_UTF8:
         case TILEDB_STRING_ASCII:
-            query->select_points(
+            query.select_points(
                 dimension.name(),
                 std::any_cast<std::span<const std::string>>(points));
             break;
@@ -147,47 +145,45 @@ void SOMADimension::_set_dim_points(
 }
 
 void SOMADimension::_set_dim_ranges(
-    const std::unique_ptr<ManagedQuery>& query,
-    const SOMAContext&,
-    const std::any& ranges) const {
+    ManagedQuery& query, const std::any& ranges) const {
     switch (dimension.type()) {
         case TILEDB_UINT8:
-            query->select_ranges(
+            query.select_ranges(
                 dimension.name(),
                 std::any_cast<std::vector<std::pair<uint8_t, uint8_t>>>(
                     ranges));
             break;
         case TILEDB_UINT16:
-            query->select_ranges(
+            query.select_ranges(
                 dimension.name(),
                 std::any_cast<std::vector<std::pair<uint16_t, uint16_t>>>(
                     ranges));
             break;
         case TILEDB_UINT32:
-            query->select_ranges(
+            query.select_ranges(
                 dimension.name(),
                 std::any_cast<std::vector<std::pair<uint32_t, uint32_t>>>(
                     ranges));
             break;
         case TILEDB_UINT64:
-            query->select_ranges(
+            query.select_ranges(
                 dimension.name(),
                 std::any_cast<std::vector<std::pair<uint64_t, uint64_t>>>(
                     ranges));
             break;
         case TILEDB_INT8:
-            query->select_ranges(
+            query.select_ranges(
                 dimension.name(),
                 std::any_cast<std::vector<std::pair<int8_t, int8_t>>>(ranges));
             break;
         case TILEDB_INT16:
-            query->select_ranges(
+            query.select_ranges(
                 dimension.name(),
                 std::any_cast<std::vector<std::pair<int16_t, int16_t>>>(
                     ranges));
             break;
         case TILEDB_INT32:
-            query->select_ranges(
+            query.select_ranges(
                 dimension.name(),
                 std::any_cast<std::vector<std::pair<int32_t, int32_t>>>(
                     ranges));
@@ -215,26 +211,26 @@ void SOMADimension::_set_dim_ranges(
         case TILEDB_TIME_FS:
         case TILEDB_TIME_AS:
         case TILEDB_INT64:
-            query->select_ranges(
+            query.select_ranges(
                 dimension.name(),
                 std::any_cast<std::vector<std::pair<int64_t, int64_t>>>(
                     ranges));
             break;
         case TILEDB_FLOAT32:
-            query->select_ranges(
+            query.select_ranges(
                 dimension.name(),
                 std::any_cast<std::vector<std::pair<float_t, float_t>>>(
                     ranges));
             break;
         case TILEDB_FLOAT64:
-            query->select_ranges(
+            query.select_ranges(
                 dimension.name(),
                 std::any_cast<std::vector<std::pair<double_t, double_t>>>(
                     ranges));
             break;
         case TILEDB_STRING_UTF8:
         case TILEDB_STRING_ASCII:
-            query->select_ranges(
+            query.select_ranges(
                 dimension.name(),
                 std::any_cast<std::vector<std::pair<std::string, std::string>>>(
                     ranges));

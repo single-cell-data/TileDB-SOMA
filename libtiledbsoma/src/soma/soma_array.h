@@ -103,23 +103,14 @@ class SOMAArray : public SOMAObject {
      *
      * @param mode read or write
      * @param uri URI of the array
-     * @param name Name of the array
      * @param platform_config Config parameter dictionary
-     * @param column_names Columns to read
-     * @param batch_size Read batch size
-     * @param result_order Read result order: automatic (default), rowmajor,
-     * or colmajor
      * @param timestamp Optional pair indicating timestamp start and end
      * @return std::unique_ptr<SOMAArray> SOMAArray
      */
     static std::unique_ptr<SOMAArray> open(
         OpenMode mode,
         std::string_view uri,
-        std::string_view name = "unnamed",
         std::map<std::string, std::string> platform_config = {},
-        std::vector<std::string> column_names = {},
-        std::string_view batch_size = "auto",
-        ResultOrder result_order = ResultOrder::automatic,
         std::optional<TimestampRange> timestamp = std::nullopt);
 
     /**
@@ -129,10 +120,6 @@ class SOMAArray : public SOMAObject {
      * @param mode read or write
      * @param uri URI of the array
      * @param ctx SOMAContext
-     * @param column_names Columns to read
-     * @param batch_size Read batch size
-     * @param result_order Read result order: automatic (default), rowmajor,
-     * or colmajor
      * @param timestamp Optional pair indicating timestamp start and end
      * @return std::unique_ptr<SOMAArray> SOMAArray
      */
@@ -140,10 +127,6 @@ class SOMAArray : public SOMAObject {
         OpenMode mode,
         std::string_view uri,
         std::shared_ptr<SOMAContext> ctx,
-        std::string_view name = "unnamed",
-        std::vector<std::string> column_names = {},
-        std::string_view batch_size = "auto",
-        ResultOrder result_order = ResultOrder::automatic,
         std::optional<TimestampRange> timestamp = std::nullopt);
 
     //===================================================================
@@ -155,21 +138,13 @@ class SOMAArray : public SOMAObject {
      *
      * @param mode read or write
      * @param uri URI of the array
-     * @param name name of the array
      * @param platform_config Config parameter dictionary
-     * @param column_names Columns to read
-     * @param batch_size Batch size
-     * @param result_order Result order
      * @param timestamp Timestamp
      */
     SOMAArray(
         OpenMode mode,
         std::string_view uri,
-        std::string_view name,
         std::map<std::string, std::string> platform_config,
-        std::vector<std::string> column_names,
-        std::string_view batch_size,
-        ResultOrder result_order,
         std::optional<TimestampRange> timestamp = std::nullopt);
 
     /**
@@ -178,20 +153,12 @@ class SOMAArray : public SOMAObject {
      * @param mode read or write
      * @param uri URI of the array
      * @param ctx SOMAContext
-     * @param name name of the array
-     * @param column_names Columns to read
-     * @param batch_size Batch size
-     * @param result_order Result order
      * @param timestamp Timestamp
      */
     SOMAArray(
         OpenMode mode,
         std::string_view uri,
         std::shared_ptr<SOMAContext> ctx,
-        std::string_view name,
-        std::vector<std::string> column_names,
-        std::string_view batch_size,
-        ResultOrder result_order,
         std::optional<TimestampRange> timestamp = std::nullopt);
 
     SOMAArray(const SOMAArray& other)
@@ -199,18 +166,12 @@ class SOMAArray : public SOMAObject {
         : uri_(other.uri_)
         , ctx_(other.ctx_)
         , arr_(other.arr_)
-        , mq_(std::make_unique<ManagedQuery>(
-              other.arr_, other.ctx_->tiledb_ctx(), other.name_))
-        // Initialize private attributes next to control the order of destructio
-        , name_(other.name_)
-        , batch_size_(other.batch_size_)
-        , result_order_(other.result_order_)
+        // Initialize private attributes next to control the order of
+        // destruction
         , metadata_(other.metadata_)
         , timestamp_(other.timestamp_)
         , schema_(other.schema_)
-        , meta_cache_arr_(other.meta_cache_arr_)
-        , first_read_next_(other.first_read_next_)
-        , submitted_(other.submitted_) {
+        , meta_cache_arr_(other.meta_cache_arr_) {
         fill_metadata_cache(timestamp_);
         fill_columns();
     }
@@ -287,19 +248,6 @@ class SOMAArray : public SOMAObject {
     }
 
     /**
-     * @brief Reset the state of this SOMAArray object to prepare for a
-     * new query, while holding the array open.
-     *
-     * @param column_names
-     * @param batch_size
-     * @param result_order
-     */
-    void reset(
-        std::vector<std::string> column_names = {},
-        std::string_view batch_size = "auto",
-        ResultOrder result_order = ResultOrder::automatic);
-
-    /**
      * @brief Get the number of dimensions.
      *
      * @return uint64_t Number of dimensions.
@@ -328,232 +276,6 @@ class SOMAArray : public SOMAObject {
     std::vector<std::string> attribute_names() const;
 
     /**
-     * @brief Set the dimension slice using one point
-     *
-     * @note Partitioning is not supported
-     *
-     * @tparam T
-     * @param dim
-     * @param point
-     */
-    template <typename T>
-    void set_dim_point(const std::string& dim, const T& point) {
-        get_column(dim)->set_dim_point(mq_, *ctx_, point);
-    }
-
-    /**
-     * @brief Set the dimension slice using multiple points, with support
-     * for partitioning.
-     *
-     * @tparam T
-     * @param dim
-     * @param points
-     */
-    template <typename T>
-    void set_dim_points(
-        const std::string& dim,
-        const std::span<T> points,
-        int partition_index,
-        int partition_count) {
-        // Validate partition inputs
-        if (partition_index >= partition_count) {
-            throw TileDBSOMAError(std::format(
-                "[SOMAArray] partition_index ({}) must be < partition_count "
-                "({})",
-                partition_index,
-                partition_count));
-        }
-
-        if (partition_count > 1) {
-            auto partition_size = points.size() / partition_count;
-            auto start = partition_index * partition_size;
-
-            // If this is the last partition, cover the rest of the points.
-            if (partition_index == partition_count - 1) {
-                partition_size = points.size() - start;
-            }
-
-            LOG_DEBUG(std::format(
-                "[SOMAArray] set_dim_points partitioning: sizeof(T)={} dim={} "
-                "index={} count={} range =[{}, {}] of {} points",
-                sizeof(T),
-                dim,
-                partition_index,
-                partition_count,
-                start,
-                start + partition_size - 1,
-                points.size()));
-
-            get_column(dim)->set_dim_points(
-                mq_, *ctx_, std::span<T>{&points[start], partition_size});
-        } else {
-            get_column(dim)->set_dim_points(mq_, *ctx_, points);
-        }
-    }
-
-    /**
-     * @brief Set the dimension slice using multiple points
-     *
-     * @note Partitioning is not supported
-     *
-     * @tparam T
-     * @param dim
-     * @param points
-     */
-    template <typename T>
-    void set_dim_points(const std::string& dim, const std::vector<T>& points) {
-        LOG_DEBUG(
-            "[SOMAArray] set_dim_points: sizeof(T)=" +
-            std::to_string(sizeof(T)));
-        get_column(dim)->set_dim_points(mq_, *ctx_, std::span<const T>(points));
-    }
-
-    /**
-     * @brief Set the dimension slice using multiple ranges
-     *
-     * @note Partitioning is not supported
-     *
-     * @tparam T
-     * @param dim
-     * @param ranges
-     */
-    template <typename T>
-    void set_dim_ranges(
-        const std::string& dim, const std::vector<std::pair<T, T>>& ranges) {
-        get_column(dim)->set_dim_ranges(mq_, *ctx_, ranges);
-    }
-
-    /**
-     * @brief Set a query condition.
-     *
-     * @param qc Query condition
-     */
-    void set_condition(QueryCondition& qc) {
-        mq_->set_condition(qc);
-    }
-
-    /**
-     * @brief Select columns names to query (dim and attr). If the
-     * `if_not_empty` parameter is `true`, the column will be selected iff
-     * the list of selected columns is empty. This prevents a
-     * `select_columns` call from changing an empty list (all columns) to a
-     * subset of columns.
-     *
-     * @param names Vector of column names
-     * @param if_not_empty Prevent changing an "empty" selection of all
-     * columns
-     */
-    void select_columns(
-        const std::vector<std::string>& names, bool if_not_empty = false) {
-        for (const std::string& name : names) {
-            get_column(name)->select_columns(mq_, if_not_empty);
-        }
-    }
-
-    /**
-     * @brief Returns the column names set by the query.
-     *
-     * @return std::vector<std::string>
-     */
-    std::vector<std::string> column_names() {
-        return mq_->column_names();
-    }
-
-    /**
-     * @brief Returns the result order set by the query.
-     *
-     * @return ResultOrder
-     */
-    ResultOrder result_order() {
-        return result_order_;
-    }
-
-    /**
-     * @brief Read the next chunk of results from the query. If all results
-     * have already been read, std::nullopt is returned.
-     *
-     * An example use model:
-     *
-     *   auto reader = SOMAArray::open(TILEDB_READ, uri);
-     *   while (auto batch = x_data->read_next()) {
-     *       ...process batch ...
-     *   }
-     *
-     * @return std::optional<std::shared_ptr<ArrayBuffers>>
-     */
-    std::optional<std::shared_ptr<ArrayBuffers>> read_next();
-
-    /**
-     * @brief Set the write buffers for a single column.
-     *
-     * @param name Name of the column
-     * @param num_elems Number of elements to write
-     * @param data Pointer to the beginning of the data buffer
-     * @param offsets Optional pointer to the beginning of the offsets buffer
-     * @param validity Optional pointer to the beginning of the validities
-     * buffer
-     */
-    void set_column_data(
-        std::string_view name,
-        uint64_t num_elems,
-        const void* data,
-        uint64_t* offsets = nullptr,
-        uint8_t* validity = nullptr);
-
-    /**
-     * @brief Set the write buffers for string or binary with 32-bit offsets
-     * (as opposed to large string or large binary with 64-bit offsets).
-     *
-     * @param name Name of the column
-     * @param num_elems Number of elements to write
-     * @param data Pointer to the beginning of the data buffer
-     * @param offsets Pointer to the beginning of the offsets buffer
-     * @param validity Optional pointer to the beginning of the validities
-     * buffer
-     */
-    void set_column_data(
-        std::string_view name,
-        uint64_t num_elems,
-        const void* data,
-        uint32_t* offsets,
-        uint8_t* validity = nullptr);
-
-    /**
-     * @brief Set the write buffers for an Arrow Table or Batch as represented
-     * by an ArrowSchema and ArrowArray.
-     *
-     * @param arrow_schema
-     * @param arrow_array
-     */
-    virtual void set_array_data(
-        std::unique_ptr<ArrowSchema> arrow_schema,
-        std::unique_ptr<ArrowArray> arrow_array) {
-        if (arr_->query_type() != TILEDB_WRITE) {
-            throw TileDBSOMAError(
-                "[SOMAArray] array must be opened in write mode");
-        }
-
-        // Clear any existing columns set in the ArrayBuffers
-        reset(column_names(), batch_size_, result_order_);
-
-        mq_->set_array_data(std::move(arrow_schema), std::move(arrow_array));
-    }
-
-    /**
-     * @brief Write ArrayBuffers data to the array after setting write buffers.
-     *
-     * An example use model:
-     *
-     *   auto array = SOMAArray::open(TILEDB_WRITE, uri);
-     *   array.set_array_data(
-     *      std::make_unique<ArrowSchema>(arrow_schema),
-     *      std::make_unique<ArrowArray>(arrow_array));
-     *   array.write();
-     *   array.close();
-     */
-    void write(bool sort_coords = true);
-
-    /**
      * @brief Consolidates and vacuums fragment metadata and commit files.
      *
      * @param modes List of modes to apply. By default, apply to fragment_meta
@@ -561,54 +283,6 @@ class SOMAArray : public SOMAObject {
      */
     void consolidate_and_vacuum(
         std::vector<std::string> modes = {"fragment_meta", "commits"});
-
-    /**
-     * @brief Check if the query is complete.
-     *
-     * If `query_status_only` is true, return true if the query status is
-     * complete.
-     *
-     * If `query_status_only` is false, return true if the query status
-     * is complete or if the query is empty (no ranges have been added to
-     * the query).
-     *
-     * @param query_status_only Query complete mode.
-     * @return true if the query is complete, as described above
-     */
-    bool is_complete(bool query_status_only = false) {
-        return mq_->is_complete(query_status_only);
-    }
-
-    /**
-     * @brief Return true if `read_next` returned all results from the
-     * query. The return value is false if the query was incomplete.
-     *
-     * @return True if last call to `read_next` returned all results of the
-     * query
-     */
-    bool results_complete() {
-        return mq_->results_complete();
-    }
-
-    /**
-     * @brief Return the total number of cells read so far, including any
-     * previous incomplete queries.
-     *
-     * @return size_t Total number of cells read
-     */
-    std::size_t total_num_cells() {
-        return mq_->total_num_cells();
-    }
-
-    /**
-     * @brief Return whether next read is the initial read, or a subsequent
-     * read of a previous incomplete query.
-     *
-     * @return bool Logical value if initial read or not
-     */
-    bool is_initial_read() {
-        return first_read_next_;
-    }
 
     /**
      * @brief Get the TileDB ArraySchema. This should eventually
@@ -748,10 +422,7 @@ class SOMAArray : public SOMAObject {
     /**
      * Validates input parameters before opening array.
      */
-    void validate(
-        OpenMode mode,
-        std::string_view name,
-        std::optional<TimestampRange> timestamp);
+    void validate(OpenMode mode, std::optional<TimestampRange> timestamp);
 
     /**
      * Return optional timestamp pair SOMAArray was opened with.
@@ -1179,14 +850,15 @@ class SOMAArray : public SOMAObject {
     // SOMAArray URI
     std::string uri_;
 
+    // NB: the Array dtor REQUIRES that this context be alive, so member
+    // declaration order is significant.  Context (ctx_) MUST be declared
+    // BEFORE Array (arr_) so that ctx_ will be destructed last.
+
     // SOMA context
     std::shared_ptr<SOMAContext> ctx_;
 
-    // Array associated with mq_
+    // Array associated with SOMAArray
     std::shared_ptr<Array> arr_;
-
-    // Managed query for the array
-    std::unique_ptr<ManagedQuery> mq_;
 
    private:
     //===================================================================
@@ -1411,19 +1083,6 @@ class SOMAArray : public SOMAObject {
 
     void fill_columns();
 
-    // SOMAArray name for debugging
-    std::string name_;
-
-    // NB: the Array dtor REQUIRES that this context be alive, so member
-    // declaration order is significant.  Context (ctx_) MUST be declared
-    // BEFORE Array (arr_) so that ctx_ will be destructed last.
-
-    // Batch size
-    std::string batch_size_;
-
-    // Result order
-    ResultOrder result_order_;
-
     // Metadata cache
     std::map<std::string, MetadataValue> metadata_;
 
@@ -1444,12 +1103,6 @@ class SOMAArray : public SOMAObject {
     // array alive in order for the metadata value pointers in the cache to
     // be accessible
     std::shared_ptr<Array> meta_cache_arr_;
-
-    // True if this is the first call to read_next()
-    bool first_read_next_ = true;
-
-    // True if the query was submitted
-    bool submitted_ = false;
 
     // Unoptimized method for computing nnz() (issue `count_cells` query)
     uint64_t _nnz_slow();

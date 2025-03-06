@@ -319,6 +319,7 @@ setuptools.setup(
                 "src/tiledbsoma/soma_context.cc",
                 "src/tiledbsoma/soma_array.cc",
                 "src/tiledbsoma/soma_object.cc",
+                "src/tiledbsoma/soma_column.cc",
                 "src/tiledbsoma/soma_dataframe.cc",
                 "src/tiledbsoma/soma_point_cloud_dataframe.cc",
                 "src/tiledbsoma/soma_geometry_dataframe.cc",
@@ -327,6 +328,7 @@ setuptools.setup(
                 "src/tiledbsoma/soma_group.cc",
                 "src/tiledbsoma/soma_collection.cc",
                 "src/tiledbsoma/managed_query.cc",
+                "src/tiledbsoma/transformer.cc",
                 "src/tiledbsoma/pytiledbsoma.cc",
             ],
             include_dirs=INC_DIRS,
@@ -349,7 +351,7 @@ setuptools.setup(
         "scanpy>=1.9.2",
         "scipy",
         # Note: the somacore version is also in .pre-commit-config.yaml
-        "somacore==1.0.26",
+        "somacore==1.0.28",
         "typing-extensions",  # Note "-" even though `import typing_extensions`
     ],
     extras_require={

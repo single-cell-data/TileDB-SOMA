@@ -76,9 +76,7 @@ class ManagedQuery {
 
     ManagedQuery() = delete;
 
-    ManagedQuery(const ManagedQuery&) = delete;
-
-    ManagedQuery(ManagedQuery&& other)
+    ManagedQuery(const ManagedQuery& other)
         : ctx_(other.ctx_)
         , array_(other.array_)
         , name_(other.name_)
@@ -92,6 +90,39 @@ class ManagedQuery {
         , total_num_cells_(other.total_num_cells_)
         , buffers_(other.buffers_)
         , query_submitted_(other.query_submitted_) {
+    }
+
+    ManagedQuery& operator=(const ManagedQuery& other) {
+        ctx_ = other.ctx_;
+        array_ = other.array_;
+        name_ = other.name_;
+        schema_ = other.schema_;
+        query_ = std::make_unique<Query>(*other.ctx_, *other.array_);
+        subarray_ = std::make_unique<Subarray>(*other.ctx_, *other.array_);
+        subarray_range_set_ = other.subarray_range_set_;
+        subarray_range_empty_ = other.subarray_range_empty_;
+        columns_ = other.columns_;
+        results_complete_ = other.results_complete_;
+        total_num_cells_ = other.total_num_cells_;
+        buffers_ = other.buffers_;
+        query_submitted_ = other.query_submitted_;
+        return *this;
+    }
+
+    ManagedQuery(ManagedQuery&& other)
+        : ctx_(std::move(other.ctx_))
+        , array_(std::move(other.array_))
+        , name_(std::move(other.name_))
+        , schema_(std::move(other.schema_))
+        , query_(std::move(other.query_))
+        , subarray_(std::move(other.subarray_))
+        , subarray_range_set_(std::move(other.subarray_range_set_))
+        , subarray_range_empty_(std::move(other.subarray_range_empty_))
+        , columns_(std::move(other.columns_))
+        , results_complete_(std::move(other.results_complete_))
+        , total_num_cells_(std::move(other.total_num_cells_))
+        , buffers_(std::move(other.buffers_))
+        , query_submitted_(std::move(other.query_submitted_)) {
     }
 
     ~ManagedQuery() = default;
@@ -381,6 +412,15 @@ class ManagedQuery {
     }
 
     /**
+     * @brief Get the context of the query.
+     *
+     * @return std::shared_ptr<Context> Ctx
+     */
+    std::shared_ptr<Context> ctx() const {
+        return ctx_;
+    }
+
+    /**
      * @brief Return true if the only ranges selected were empty.
      *
      * @return true if the query contains only empty ranges.
@@ -535,6 +575,9 @@ class ManagedQuery {
 
     // Future for asyncronous query
     std::future<StatusAndException> query_future_;
+
+    // Query layout
+    ResultOrder layout_ = ResultOrder::automatic;
 
     /**
      * Convenience function for creating an ArraySchemaEvolution object
@@ -771,6 +814,80 @@ class ManagedQuery {
         }
     }
 
+    template <typename ValueType, typename IndexType>
+        requires std::same_as<ValueType, std::string_view>
+    void _remap_indexes_aux(
+        std::string column_name,
+        Enumeration extended_enmr,
+        std::vector<ValueType> enums_in_write,
+        ArrowArray* index_array) {
+        // Get the user passed-in dictionary indexes
+        IndexType* idxbuf;
+        if (index_array->n_buffers == 3) {
+            idxbuf = (IndexType*)index_array->buffers[2] + index_array->offset;
+        } else {
+            idxbuf = (IndexType*)index_array->buffers[1] + index_array->offset;
+        }
+        std::vector<IndexType> original_indexes(
+            idxbuf, idxbuf + index_array->length);
+
+        // Shift the dictionary indexes to match the on-disk extended
+        // enumerations
+        std::vector<IndexType> shifted_indexes;
+        auto enmr_vec = _enumeration_values_view<ValueType>(extended_enmr);
+        std::unordered_map<ValueType, IndexType> enmr_map;
+        IndexType idx = 0;
+        for (const auto& enmr_value : enmr_vec) {
+            enmr_map.insert(std::make_pair(enmr_value, idx));
+            ++idx;
+        }
+
+        for (auto i : original_indexes) {
+            // For nullable columns, when the value is NULL, the associated
+            // index may be a negative integer, so do not index into
+            // enums_in_write or it will segfault
+            if (0 > i) {
+                shifted_indexes.push_back(i);
+            } else {
+                shifted_indexes.push_back(enmr_map[enums_in_write[i]]);
+            }
+        }
+
+        // Cast the user passed-in index type to be what is on-disk before we
+        // set the write buffers. Here we identify the on-disk type
+        auto attr = schema_->attribute(column_name);
+        switch (attr.type()) {
+            case TILEDB_INT8:
+                return _cast_shifted_indexes<IndexType, int8_t>(
+                    column_name, shifted_indexes, index_array);
+            case TILEDB_UINT8:
+                return _cast_shifted_indexes<IndexType, uint8_t>(
+                    column_name, shifted_indexes, index_array);
+            case TILEDB_INT16:
+                return _cast_shifted_indexes<IndexType, int16_t>(
+                    column_name, shifted_indexes, index_array);
+            case TILEDB_UINT16:
+                return _cast_shifted_indexes<IndexType, uint16_t>(
+                    column_name, shifted_indexes, index_array);
+            case TILEDB_INT32:
+                return _cast_shifted_indexes<IndexType, int32_t>(
+                    column_name, shifted_indexes, index_array);
+            case TILEDB_UINT32:
+                return _cast_shifted_indexes<IndexType, uint32_t>(
+                    column_name, shifted_indexes, index_array);
+            case TILEDB_INT64:
+                return _cast_shifted_indexes<IndexType, int64_t>(
+                    column_name, shifted_indexes, index_array);
+            case TILEDB_UINT64:
+                return _cast_shifted_indexes<IndexType, uint64_t>(
+                    column_name, shifted_indexes, index_array);
+            default:
+                throw TileDBSOMAError(
+                    "Saw invalid enumeration index type when trying to extend"
+                    "enumeration");
+        }
+    }
+
     template <typename UserIndexType, typename DiskIndexType>
     void _cast_shifted_indexes(
         std::string column_name,
@@ -857,6 +974,9 @@ class ManagedQuery {
      */
     std::optional<std::vector<uint8_t>> _cast_validity_buffer(
         ArrowArray* array);
+
+    template <typename T>
+    std::vector<T> _enumeration_values_view(Enumeration& enumeration);
 };
 
 // These are all specializations to string/bool of various methods
@@ -892,6 +1012,10 @@ bool ManagedQuery::_extend_and_evolve_schema<std::string>(
     ArrowSchema* index_schema,
     ArrowArray* index_array,
     ArraySchemaEvolution se);
+
+template <>
+std::vector<std::string_view> ManagedQuery::_enumeration_values_view(
+    Enumeration& enumeration);
 
 };  // namespace tiledbsoma
 

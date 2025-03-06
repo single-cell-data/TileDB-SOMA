@@ -9,7 +9,7 @@ import functools
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
-from typing import Any, Dict, Literal, Mapping
+from typing import Any, Literal, Mapping, Optional, Union, cast
 
 from somacore import ContextBase
 from typing_extensions import Self
@@ -41,15 +41,20 @@ def _check_tiledb_ctx() -> None:
         )
 
 
-def _default_config(override: Mapping[str, str | float]) -> Dict[str, str | float]:
+ConfigVal = Union[str, float]
+ConfigDict = dict[str, ConfigVal]
+ConfigMap = Mapping[str, ConfigVal]
+ReplaceConfig = dict[str, Optional[ConfigVal]]
+"""Replacing a value with ``None`` serves to delete that key."""
+
+
+def _default_config(override: ConfigMap) -> ConfigDict:
     """Returns a fresh dictionary with TileDB config values.
 
     These should be reasonable defaults that can be used out-of-the-box.
     ``override`` does exactly what it says: overrides default entries.
     """
-    cfg: Dict[str, str | float] = {
-        "sm.mem.reader.sparse_global_order.ratio_array_data": 0.3
-    }
+    cfg: ConfigDict = {"sm.mem.reader.sparse_global_order.ratio_array_data": 0.3}
     cfg.update(override)
     return cfg
 
@@ -85,7 +90,7 @@ class SOMATileDBContext(ContextBase):
 
     def __init__(
         self,
-        tiledb_config: Dict[str, str | float] | None = None,
+        tiledb_config: ConfigDict | None = None,
         tiledb_ctx: TileDBCtx | None = None,
         timestamp: OpenTimestamp | None = None,
         threadpool: ThreadPoolExecutor | None = None,
@@ -158,7 +163,7 @@ class SOMATileDBContext(ContextBase):
         self._lock = threading.Lock()
         """A lock to ensure single initialization of ``_tiledb_ctx``."""
 
-        self._initial_config = (
+        self._initial_config: ConfigDict | None = (
             None if tiledb_config is None else _default_config(tiledb_config)
         )
         """A dictionary of options to override the default TileDB config.
@@ -247,7 +252,7 @@ class SOMATileDBContext(ContextBase):
         return self._tiledb_ctx
 
     @property
-    def tiledb_config(self) -> Dict[str, str | float]:
+    def tiledb_config(self) -> ConfigDict:
         """The TileDB configuration dictionary for this SOMA context.
 
         If this ``SOMATileDBContext`` already has a ``tiledb_ctx``, this will
@@ -261,7 +266,7 @@ class SOMATileDBContext(ContextBase):
         with self._lock:
             return self._internal_tiledb_config()
 
-    def _internal_tiledb_config(self) -> Dict[str, str | float]:
+    def _internal_tiledb_config(self) -> ConfigDict:
         """Internal function for getting the TileDB Config.
 
         Returns a new dict with the contents. Caller must hold ``_lock``.
@@ -286,7 +291,7 @@ class SOMATileDBContext(ContextBase):
     def replace(
         self,
         *,
-        tiledb_config: Dict[str, Any] | None = None,
+        tiledb_config: ReplaceConfig | None = None,
         tiledb_ctx: TileDBCtx | None = None,
         timestamp: OpenTimestamp | _Unset | None = _UNSET,
         threadpool: ThreadPoolExecutor | _Unset | None = _UNSET,
@@ -325,9 +330,13 @@ class SOMATileDBContext(ContextBase):
                         "Either tiledb_config or tiledb_ctx may be provided"
                         " to replace(), but not both."
                     )
-                new_config = self._internal_tiledb_config()
+                new_config = cast(ReplaceConfig, self._internal_tiledb_config())
                 new_config.update(tiledb_config)
-                tiledb_config = {k: v for (k, v) in new_config.items() if v is not None}
+                new_tiledb_config: ConfigDict | None = {
+                    k: v for k, v in new_config.items() if v is not None
+                }
+            else:
+                new_tiledb_config = None
 
             if tiledb_ctx is not None:
                 _check_tiledb_ctx()
@@ -341,7 +350,7 @@ class SOMATileDBContext(ContextBase):
 
         assert timestamp is None or isinstance(timestamp, (datetime.datetime, int))
         return type(self)(
-            tiledb_config=tiledb_config,
+            tiledb_config=new_tiledb_config,
             tiledb_ctx=tiledb_ctx,
             timestamp=timestamp,
             threadpool=threadpool,

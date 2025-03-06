@@ -1214,17 +1214,31 @@ class ArrowAdapter {
         }
     }
 
-   private:
-    static std::pair<const void*, std::size_t> _get_data_and_length(
-        Enumeration& enmr, const void* dst);
+    static std::unique_ptr<ArrowArray> arrow_array_insert_at_index(
+        std::unique_ptr<ArrowArray> parent_array,
+        std::vector<std::unique_ptr<ArrowArray>> child_arrays,
+        int64_t index);
 
-    template <typename T>
-    static const void* _fill_data_buffer(std::vector<T> src, const void* dst) {
-        auto sz = src.size() * sizeof(T);
-        dst = (const void*)malloc(sz);
-        std::memcpy((void*)dst, src.data(), sz);
-        return dst;
-    }
+    static std::unique_ptr<ArrowSchema> arrow_schema_insert_at_index(
+        std::unique_ptr<ArrowSchema> parent_schema,
+        std::vector<std::unique_ptr<ArrowSchema>> child_schemas,
+        int64_t index);
+
+    static std::unique_ptr<ArrowArray> arrow_array_remove_at_index(
+        std::unique_ptr<ArrowArray> array, int64_t index);
+
+    static std::unique_ptr<ArrowSchema> arrow_schema_remove_at_index(
+        std::unique_ptr<ArrowSchema> schema, int64_t index);
+
+   private:
+    static size_t _set_var_dictionary_buffers(
+        Enumeration& enumeration, const Context& ctx, const void** buffers);
+
+    static size_t _set_dictionary_buffers(
+        Enumeration& enumeration, const Context& ctx, const void** buffers);
+
+    static size_t _set_bool_dictionary_buffers(
+        Enumeration& enumeration, const Context& ctx, const void** buffers);
 
     static Dimension _create_dim(
         tiledb_datatype_t type,

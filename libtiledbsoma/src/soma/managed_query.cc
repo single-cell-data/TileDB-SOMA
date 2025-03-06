@@ -16,6 +16,8 @@
 #include <tiledb/array_experimental.h>
 #include <tiledb/attribute_experimental.h>
 #include <format>
+#include <unordered_set>
+
 #include "soma_array.h"
 #include "utils/common.h"
 #include "utils/logger.h"
@@ -74,6 +76,12 @@ void ManagedQuery::set_layout(ResultOrder layout) {
             else
                 query_->set_layout(TILEDB_ROW_MAJOR);
             break;
+        case ResultOrder::unordered:
+            query_->set_layout(TILEDB_UNORDERED);
+            break;
+        case ResultOrder::global:
+            query_->set_layout(TILEDB_GLOBAL_ORDER);
+            break;
         case ResultOrder::rowmajor:
             query_->set_layout(TILEDB_ROW_MAJOR);
             break;
@@ -85,22 +93,12 @@ void ManagedQuery::set_layout(ResultOrder layout) {
                 "[ManagedQuery] invalid ResultOrder({}) passed",
                 static_cast<int>(layout)));
     }
+
+    layout_ = layout;
 }
 
 ResultOrder ManagedQuery::result_order() {
-    if (array_->query_type() != TILEDB_READ) {
-        throw TileDBSOMAError("[ManagedQuery] result_order only in read mode");
-    }
-
-    switch (query_->query_layout()) {
-        case TILEDB_ROW_MAJOR:
-            return ResultOrder::rowmajor;
-        case TILEDB_COL_MAJOR:
-            return ResultOrder::colmajor;
-        default:
-            throw std::invalid_argument(
-                std::format("[ManagedQuery] unrecognized result_order"));
-    }
+    return layout_;
 }
 
 void ManagedQuery::select_columns(
@@ -290,28 +288,6 @@ std::optional<std::shared_ptr<ArrayBuffers>> ManagedQuery::read_next() {
             std::format("[ManagedQuery] [{}] Buffers are too small.", name_));
     }
 
-    // Visit all attributes and retrieve enumeration vectors
-    auto attribute_map = schema_->attributes();
-    for (auto& nmit : attribute_map) {
-        auto attrname = nmit.first;
-        auto attribute = nmit.second;
-        auto enumname = AttributeExperimental::get_enumeration_name(
-            *ctx_, attribute);
-        if (enumname != std::nullopt) {
-            auto enumeration = ArrayExperimental::get_enumeration(
-                *ctx_, *array_, enumname.value());
-            auto enumvec = enumeration.as_vector<std::string>();
-            if (!buffers_->contains(attrname)) {
-                continue;
-            }
-            auto colbuf = buffers_->at(attrname);
-            colbuf->add_enumeration(enumvec);
-            LOG_DEBUG(std::format(
-                "[ManagedQuery] got Enumeration '{}' for attribute '{}'",
-                enumname.value(),
-                attrname));
-        }
-    }
     return buffers_;
 }
 
@@ -505,28 +481,6 @@ std::shared_ptr<ArrayBuffers> ManagedQuery::results() {
             std::format("[ManagedQuery] [{}] Buffers are too small.", name_));
     }
 
-    // Visit all attributes and retrieve enumeration vectors
-    auto attribute_map = schema_->attributes();
-    for (auto& nmit : attribute_map) {
-        auto attrname = nmit.first;
-        auto attribute = nmit.second;
-        auto enumname = AttributeExperimental::get_enumeration_name(
-            *ctx_, attribute);
-        if (enumname != std::nullopt) {
-            auto enumeration = ArrayExperimental::get_enumeration(
-                *ctx_, *array_, enumname.value());
-            auto enumvec = enumeration.as_vector<std::string>();
-            if (!buffers_->contains(attrname)) {
-                continue;
-            }
-            auto colbuf = buffers_->at(attrname);
-            colbuf->add_enumeration(enumvec);
-            LOG_DEBUG(std::format(
-                "[ManagedQuery] got Enumeration '{}' for attribute '{}'",
-                enumname.value(),
-                attrname));
-        }
-    }
     return buffers_;
 }
 
@@ -799,15 +753,15 @@ void ManagedQuery::_cast_dictionary_values<std::string>(
         }
     }
 
-    char* data = (char*)value_array->buffers[2];
-    std::string data_v(data, data + offsets_v[offsets_v.size() - 1]);
+    std::string_view data(
+        static_cast<const char*>(value_array->buffers[2]), offsets_v.back());
 
-    std::vector<std::string> values;
+    std::vector<std::string_view> values;
     for (size_t offset_idx = 0; offset_idx < offsets_v.size() - 1;
          ++offset_idx) {
         auto beg = offsets_v[offset_idx];
         auto sz = offsets_v[offset_idx + 1] - beg;
-        values.push_back(data_v.substr(beg, sz));
+        values.push_back(data.substr(beg, sz));
     }
 
     std::vector<int64_t> indexes = ManagedQuery::_get_index_vector(
@@ -1153,24 +1107,31 @@ bool ManagedQuery::_extend_and_evolve_schema<std::string>(
         }
     }
 
-    char* data = (char*)value_array->buffers[2];
-    std::string data_v(data, data + offsets_v[num_elems]);
+    std::string_view data(
+        static_cast<const char*>(value_array->buffers[2]), offsets_v.back());
 
-    std::vector<std::string> enums_in_write;
+    std::vector<std::string_view> enums_in_write;
     for (size_t i = 0; i < num_elems; ++i) {
         auto beg = offsets_v[i];
         auto sz = offsets_v[i + 1] - beg;
-        enums_in_write.push_back(data_v.substr(beg, sz));
+        enums_in_write.push_back(data.substr(beg, sz));
     }
 
     auto enumname = util::get_enmr_label(index_schema, value_schema);
     auto enmr = ArrayExperimental::get_enumeration(*ctx_, *array_, enumname);
-    std::vector<std::string> extend_values;
-    auto enums_existing = enmr.as_vector<std::string>();
-    for (auto enum_val : enums_in_write) {
-        if (std::find(enums_existing.begin(), enums_existing.end(), enum_val) ==
-            enums_existing.end()) {
+    std::vector<std::string_view> extend_values;
+    size_t total_size = 0;
+
+    auto enums_existing = _enumeration_values_view<std::string_view>(enmr);
+    std::unordered_set<std::string_view> existing_enums_set;
+    for (const auto& existing_enum_val : enums_existing) {
+        existing_enums_set.insert(existing_enum_val);
+    }
+
+    for (const auto& enum_val : enums_in_write) {
+        if (!existing_enums_set.contains(enum_val)) {
             extend_values.push_back(enum_val);
+            total_size += enum_val.size();
         }
     }
 
@@ -1187,7 +1148,24 @@ bool ManagedQuery::_extend_and_evolve_schema<std::string>(
                 "Cannot extend enumeration; reached maximum capacity");
         }
 
-        auto extended_enmr = enmr.extend(extend_values);
+        std::vector<uint8_t> extend_data(total_size);
+        std::vector<uint64_t> extend_offsets;
+        extend_offsets.reserve(extend_values.size());
+        size_t curr_offset = 0;
+        for (const auto& enum_val : extend_values) {
+            std::memcpy(
+                extend_data.data() + curr_offset,
+                enum_val.data(),
+                enum_val.size());
+            extend_offsets.push_back(curr_offset);
+            curr_offset += enum_val.size();
+        }
+
+        auto extended_enmr = enmr.extend(
+            extend_data.data(),
+            extend_data.size(),
+            extend_offsets.data(),
+            extend_values.size() * sizeof(uint64_t));
         se.extend_enumeration(extended_enmr);
 
         ManagedQuery::_remap_indexes(
@@ -1231,5 +1209,38 @@ std::optional<std::vector<uint8_t>> ManagedQuery::_cast_validity_buffer(
     const uint8_t* validity = reinterpret_cast<const uint8_t*>(
         array->buffers[0]);
     return util::bitmap_to_uint8(validity, array->length, array->offset);
+}
+
+template <>
+std::vector<std::string_view> ManagedQuery::_enumeration_values_view(
+    Enumeration& enumeration) {
+    const void* data;
+    uint64_t data_size;
+
+    ctx_->handle_error(tiledb_enumeration_get_data(
+        ctx_->ptr().get(), enumeration.ptr().get(), &data, &data_size));
+
+    const void* offsets;
+    uint64_t offsets_size;
+    ctx_->handle_error(tiledb_enumeration_get_offsets(
+        ctx_->ptr().get(), enumeration.ptr().get(), &offsets, &offsets_size));
+
+    std::string_view char_data(static_cast<const char*>(data), data_size);
+    const uint64_t* elems = static_cast<const uint64_t*>(offsets);
+    size_t count = offsets_size / sizeof(uint64_t);
+
+    std::vector<std::string_view> ret(count);
+    for (size_t i = 0; i < count; i++) {
+        uint64_t len;
+        if (i + 1 < count) {
+            len = elems[i + 1] - elems[i];
+        } else {
+            len = data_size - elems[i];
+        }
+
+        ret[i] = char_data.substr(elems[i], len);
+    }
+
+    return ret;
 }
 };  // namespace tiledbsoma

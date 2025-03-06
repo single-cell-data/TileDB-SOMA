@@ -110,8 +110,7 @@ class SOMAColumn {
      * @param if_not_empty Prevent changing an "empty" selection of all columns
      */
     virtual void select_columns(
-        const std::unique_ptr<ManagedQuery>& query,
-        bool if_not_empty = false) const = 0;
+        ManagedQuery& query, bool if_not_empty = false) const = 0;
 
     /**
      * Get the domain kind of the SOMAColumn as an ArrowArray for use with
@@ -272,10 +271,7 @@ class SOMAColumn {
      * @param point
      */
     template <typename T>
-    void set_dim_point(
-        const std::unique_ptr<ManagedQuery>& query,
-        const SOMAContext& ctx,
-        const T& point) const {
+    void set_dim_point(ManagedQuery& query, const T& point) const {
         if (!isIndexColumn()) {
             throw TileDBSOMAError(std::format(
                 "[SOMAColumn] Column with name {} is not an index column",
@@ -287,7 +283,6 @@ class SOMAColumn {
         try {
             this->_set_dim_points(
                 query,
-                ctx,
                 std::make_any<std::span<const T>>(std::span<const T>(points)));
         } catch (const std::exception& e) {
             throw TileDBSOMAError(std::format(
@@ -309,10 +304,7 @@ class SOMAColumn {
      * @param points
      */
     template <typename T>
-    void set_dim_points(
-        const std::unique_ptr<ManagedQuery>& query,
-        const SOMAContext& ctx,
-        std::span<const T> points) const {
+    void set_dim_points(ManagedQuery& query, std::span<const T> points) const {
         if (!isIndexColumn()) {
             throw TileDBSOMAError(std::format(
                 "[SOMAColumn] Column with name {} is not an index column",
@@ -321,7 +313,7 @@ class SOMAColumn {
 
         try {
             this->_set_dim_points(
-                query, ctx, std::make_any<std::span<const T>>(points));
+                query, std::make_any<std::span<const T>>(points));
         } catch (const std::exception& e) {
             throw TileDBSOMAError(std::format(
                 "[SOMAColumn][set_dim_points] Failed on \"{}\" with error "
@@ -342,9 +334,7 @@ class SOMAColumn {
      */
     template <typename T>
     void set_dim_ranges(
-        const std::unique_ptr<ManagedQuery>& query,
-        const SOMAContext& ctx,
-        const std::vector<std::pair<T, T>>& ranges) const {
+        ManagedQuery& query, const std::vector<std::pair<T, T>>& ranges) const {
         if (!isIndexColumn()) {
             throw TileDBSOMAError(std::format(
                 "[SOMAColumn] Column with name {} is not an index column",
@@ -353,9 +343,7 @@ class SOMAColumn {
 
         try {
             this->_set_dim_ranges(
-                query,
-                ctx,
-                std::make_any<std::vector<std::pair<T, T>>>(ranges));
+                query, std::make_any<std::vector<std::pair<T, T>>>(ranges));
         } catch (const std::exception& e) {
             throw TileDBSOMAError(std::format(
                 "[SOMAColumn][set_dim_ranges] Failed on \"{}\" with error "
@@ -501,14 +489,10 @@ class SOMAColumn {
 
    protected:
     virtual void _set_dim_points(
-        const std::unique_ptr<ManagedQuery>& query,
-        const SOMAContext& ctx,
-        const std::any& points) const = 0;
+        ManagedQuery& query, const std::any& points) const = 0;
 
     virtual void _set_dim_ranges(
-        const std::unique_ptr<ManagedQuery>& query,
-        const SOMAContext& ctx,
-        const std::any& ranges) const = 0;
+        ManagedQuery& query, const std::any& ranges) const = 0;
 
     virtual void _set_current_domain_slot(
         NDRectangle& rectangle, std::span<const std::any> domain) const = 0;

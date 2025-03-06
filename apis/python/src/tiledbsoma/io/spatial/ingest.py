@@ -13,7 +13,7 @@ from __future__ import annotations
 import json
 import warnings
 from pathlib import Path
-from typing import TYPE_CHECKING, List, Sequence, Tuple, Type
+from typing import Sequence
 
 import attrs
 import numpy as np
@@ -31,6 +31,7 @@ except ImportError as err:
 
 
 from somacore import Axis, CoordinateSpace, IdentityTransform, ScaleTransform
+from somacore.options import PlatformConfig
 
 from ... import (
     Collection,
@@ -52,11 +53,14 @@ from ..._exception import (
 )
 from ..._soma_object import AnySOMAObject
 from ..._types import IngestMode
+from ...options import SOMATileDBContext
 from ...options._tiledb_create_write_options import (
     TileDBCreateOptions,
     TileDBWriteOptions,
 )
 from .. import conversions, from_anndata
+from .._common import AdditionalMetadata
+from .._registration import ExperimentAmbientLabelMapping
 from ..ingest import (
     IngestCtx,
     IngestionParams,
@@ -66,13 +70,6 @@ from ..ingest import (
     add_metadata,
 )
 from ._util import _read_visium_software_version
-
-if TYPE_CHECKING:
-    from somacore.options import PlatformConfig
-
-    from ...options import SOMATileDBContext
-    from .._common import AdditionalMetadata
-    from .._registration import ExperimentAmbientLabelMapping
 
 
 def path_validator(instance, attribute, value: Path) -> None:  # type: ignore[no-untyped-def]
@@ -104,7 +101,7 @@ class VisiumPaths:
         hires_image: str | Path | None = None,
         lowres_image: str | Path | None = None,
         use_raw_counts: bool = False,
-        version: int | Tuple[int, int, int] | None = None,
+        version: int | tuple[int, int, int] | None = None,
     ) -> Self:
         """Create ingestion files from Space Ranger output directory.
 
@@ -161,7 +158,7 @@ class VisiumPaths:
         fullres_image: str | Path | None = None,
         hires_image: str | Path | None = None,
         lowres_image: str | Path | None = None,
-        version: int | Tuple[int, int, int] | None = None,
+        version: int | tuple[int, int, int] | None = None,
     ) -> Self:
         """Create ingestion files from Space Ranger spatial output directory
         and the gene expression file.
@@ -181,7 +178,7 @@ class VisiumPaths:
                 version = _read_visium_software_version(gene_expression)
             except (KeyError, ValueError):
                 raise ValueError(
-                    "Unable to determine Space Ranger vesion from gene expression file."
+                    "Unable to determine Space Ranger version from gene expression file."
                 )
 
         # Find the tissue positions file path if it wasn't supplied.
@@ -230,7 +227,7 @@ class VisiumPaths:
     lowres_image: Path | None = attrs.field(
         converter=optional_path_converter, validator=optional_path_validator
     )
-    version: int | Tuple[int, int, int]
+    version: int | tuple[int, int, int]
 
     @property
     def has_image(self) -> bool:
@@ -245,26 +242,43 @@ class VisiumPaths:
         return self.version[0] if isinstance(self.version, tuple) else self.version
 
 
+def register_visium_datasets(
+    experiment_uri: str | None,
+    visium_paths: Sequence[VisiumPaths | Path] | VisiumPaths | Path,
+    *,
+    measurement_name: str,
+    context: SOMATileDBContext | None = None,
+) -> ExperimentAmbientLabelMapping:
+    """Create registration for adding one or more Visium datasets to
+    a single :class:`Experiment`.
+
+    Args:
+        experiment_uri: The experiment to append data to.
+        visium_paths: A path or paths to Visium datasets.
+        measurement_name: Name of the measurement to store data in.
+        context: Optional :class:`SOMATileDBContext` for opening the existing
+            :class:`Experiment`.
+    """
+    raise NotImplementedError()
+
+
 def from_visium(
     experiment_uri: str,
     input_path: Path | VisiumPaths,
     measurement_name: str,
     scene_name: str,
     *,
-    context: "SOMATileDBContext | None" = None,
-    platform_config: "PlatformConfig | None" = None,
-    obs_id_name: str = "obs_id",
-    var_id_name: str = "var_id",
+    context: SOMATileDBContext | None = None,
+    platform_config: PlatformConfig | None = None,
     X_layer_name: str = "data",
     raw_X_layer_name: str = "data",
     image_name: str = "tissue",
     image_channel_first: bool = True,
     ingest_mode: IngestMode = "write",
     use_relative_uri: bool | None = None,
-    X_kind: Type[SparseNDArray] | Type[DenseNDArray] = SparseNDArray,
-    registration_mapping: "ExperimentAmbientLabelMapping | None" = None,
-    uns_keys: Sequence[str] | None = None,
-    additional_metadata: "AdditionalMetadata" = None,
+    X_kind: type[SparseNDArray] | type[DenseNDArray] = SparseNDArray,
+    registration_mapping: ExperimentAmbientLabelMapping | None = None,
+    additional_metadata: AdditionalMetadata = None,
     use_raw_counts: bool = False,
     write_obs_spatial_presence: bool = True,
     write_var_spatial_presence: bool = False,
@@ -278,42 +292,19 @@ def from_visium(
 
     Args:
         experiment_uri: The experiment to create or update.
-
         input_path: A path to the base directory storing SpaceRanger output or
             a ``VisiumPaths`` object.
-
         measurement_name: The name of the measurement to store data in.
-
         context: Optional :class:`SOMATileDBContext` containing storage parameters, etc.
-
-        platform_config: Platform-specific options used to create this array, provided in the form
-          ``{\"tiledb\": {\"create\": {\"sparse_nd_array_dim_zstd_level\": 7}}}``.
-
-        obs_id_name/var_id_name: Which AnnData ``obs`` and ``var`` columns, respectively, to use
-          for append mode.
-
-          Values of this column will be used to decide which obs/var rows in appended
-          inputs are distinct from the ones already stored, for the assignment of ``soma_joinid``.  If
-          this column exists in the input data, as a named index or a non-index column name, it will
-          be used. If this column doesn't exist in the input data, and if the index is nameless or
-          named ``index``, that index will be given this name when written to the SOMA experiment's
-          ``obs`` / ``var``.
-
-          NOTE: it is not necessary for this column to be the index-column
-          name in the input AnnData objects ``obs``/``var``.
-
+        platform_config: Platform-specific options used to specify TileDB options when
+            creating and writing to SOMA objects.
         X_layer_name: SOMA array name for the AnnData's ``X`` matrix.
-
         raw_X_layer_name: SOMA array name for the AnnData's ``raw/X`` matrix.
-
         image_name: SOMA multiscale image name for the multiscale image of the
             Space Ranger output images.
-
         image_channel_first: If ``True``, the image is ingested in channel-first format.
             Otherwise, it is ingested into channel-last format. Defaults to ``True``.
-
         ingest_mode: The ingestion type to perform:
-
             - ``write``: Writes all data, creating new layers if the SOMA already exists.
             - ``resume``: Adds data to an existing SOMA, skipping writing data
               that was previously written. Useful for continuing after a partial
@@ -321,60 +312,49 @@ def from_visium(
             - ``schema_only``: Creates groups and the array schema, without
               writing any data to the array. Useful to prepare for appending
               multiple H5AD files to a single SOMA.
-
         X_kind: Which type of matrix is used to store dense X data from the
-          H5AD file: ``DenseNDArray`` or ``SparseNDArray``.
+            H5AD file: ``DenseNDArray`` or ``SparseNDArray``.
+        registration_mapping: Mapping for ``soma_joinid`` when ingesting multiple
+            Visium datasets or ingesting into an existing :class:`Experiment`. This
+            is done by first registering the Visium dataset(s):
 
-        registration_mapping: Does not need to be supplied when ingesting a single
-          H5AD/AnnData object into a single :class:`Experiment`. When multiple inputs
-          are to be ingested into a single experiment, there are two steps. First:
+            .. code-block:: python
 
-          .. code-block:: python
+                import tiledbsoma.io.spatial
+                rd = tiledbsoma.io.register_h5ads(
+                    experiment_uri,
+                    visium_paths,
+                    measurement_name="RNA",
+                    context=context,
+                )
 
-              import tiledbsoma.io
-              rd = tiledbsoma.io.register_h5ads(
-                  experiment_uri,
-                  h5ad_file_names,
-                  measurement_name="RNA",
-                  obs_field_name="obs_id",
-                  var_field_name="var_id",
-                  context=context,
-              )
+            Once they are registered, the Visium datasets can be ingested in any order
+            using:
 
-          Once that's been done, the data ingests per se may be done in any order,
-          or in parallel, via for each ``h5ad_file_name``:
+            .. code-block:: python
 
-          .. code-block:: python
+                tiledbsoma.io.from_visium(
+                    experiment_uri,
+                    visium_path,
+                    measurement_name="RNA",
+                    ingest_mode="write",
+                    registration_mapping=rd,
+                )
+        additional_metadata: Optional metadata to add to the :class:`Experiment` and
+            all descendents. This is a coarse-grained mechanism for setting key-value
+            pairs on all SOMA objects in an :class:`Experiment` hierarchy. Metadata
+            for particular objects is more commonly set like:
 
-              tiledbsoma.io.from_h5ad(
-                  experiment_uri,
-                  h5ad_file_name,
-                  measurement_name="RNA",
-                  ingest_mode="write",
-                  registration_mapping=rd,
-              )
+            .. code-block:: python
 
-        uns_keys: Only ingest the specified top-level ``uns`` keys.
-          The default is to ingest them all. Use ``uns_keys=[]``
-          to not ingest any ``uns`` keys.
-
-        additional_metadata: Optional metadata to add to the ``Experiment`` and all descendents.
-          This is a coarse-grained mechanism for setting key-value pairs on all SOMA objects in an
-          ``Experiment`` hierarchy. Metadata for particular objects is more commonly set like:
-
-          .. code-block:: python
-
-              with soma.open(uri, 'w') as exp:
-                  exp.metadata.update({"aaa": "BBB"})
-                  exp.obs.metadata.update({"ccc": 123})
-
+                with soma.open(uri, 'w') as exp:
+                    exp.metadata.update({"aaa": "BBB"})
+                    exp.obs.metadata.update({"ccc": 123})
         use_raw_counts: If ``True`` ingest the raw gene expression data, otherwise
             use the filtered gene expression data. Only used if ``input_path`` is
             not a ``VisiumPaths`` object. Defaults to ``False``.
-
         write_obs_spatial_presence: If ``True`` create and write data to the ``obs``
             presence matrix. Defaults to ``True``.
-
         write_var_spatial_presence: If ``True`` create and write data to the ``var``
             presence matrix. Defaults to ``False``.
 
@@ -432,15 +412,12 @@ def from_visium(
             measurement_name,
             context=context,
             platform_config=platform_config,
-            obs_id_name=obs_id_name,
-            var_id_name=var_id_name,
             X_layer_name=X_layer_name,
             raw_X_layer_name=raw_X_layer_name,
             ingest_mode=ingest_mode,
             use_relative_uri=use_relative_uri,
             X_kind=X_kind,
             registration_mapping=registration_mapping,
-            uns_keys=uns_keys,
             additional_metadata=additional_metadata,
         )
 
@@ -456,7 +433,7 @@ def from_visium(
 
     # Create a list of image paths.
     # -- Each item contains: level name, image path, and scale factors to fullres.
-    image_paths: List[Tuple[str, Path, float | None]] = []
+    image_paths: list[tuple[str, Path, float | None]] = []
     if input_paths.fullres_image is not None:
         image_paths.append(("fullres", Path(input_paths.fullres_image), None))
     if input_paths.hires_image is not None:
@@ -566,7 +543,7 @@ def from_visium(
                         input_paths.major_version,
                         pixels_per_spot_diameter,
                         obs_df,
-                        obs_id_name,
+                        "obs_id",
                         len_obs_id,
                         **ingest_ctx,
                     ) as loc:
@@ -619,9 +596,9 @@ def _write_scene_presence_dataframe(
     df_uri: str,
     *,
     ingestion_params: IngestionParams,
-    additional_metadata: "AdditionalMetadata" = None,
-    platform_config: "PlatformConfig | None" = None,
-    context: "SOMATileDBContext | None" = None,
+    additional_metadata: AdditionalMetadata = None,
+    platform_config: PlatformConfig | None = None,
+    context: SOMATileDBContext | None = None,
 ) -> DataFrame:
     s = _util.get_start_stamp()
 
@@ -686,9 +663,9 @@ def _write_visium_spots(
     max_joinid_len: int,
     *,
     ingestion_params: IngestionParams,
-    additional_metadata: "AdditionalMetadata" = None,
-    platform_config: "PlatformConfig | None" = None,
-    context: "SOMATileDBContext | None" = None,
+    additional_metadata: AdditionalMetadata = None,
+    platform_config: PlatformConfig | None = None,
+    context: SOMATileDBContext | None = None,
 ) -> PointCloudDataFrame:
     """Creates, opens, and writes data to a ``PointCloudDataFrame`` with the spot
     locations and metadata. Returns the open dataframe for writing.
@@ -717,7 +694,7 @@ def _write_visium_spots(
         (0, max_joinid_len - 1),
     )
 
-    arrow_table = conversions.df_to_arrow(df)
+    arrow_table = conversions.df_to_arrow_table(df)
 
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
@@ -757,8 +734,8 @@ def _create_or_open_scene(
     uri: str,
     *,
     ingestion_params: IngestionParams,
-    context: "SOMATileDBContext | None",
-    additional_metadata: "AdditionalMetadata" = None,
+    context: SOMATileDBContext | None,
+    additional_metadata: AdditionalMetadata = None,
 ) -> Scene:
     """Creates or opens a ``Scene`` and returns it open for writing."""
     try:
@@ -777,12 +754,12 @@ def _create_or_open_scene(
 
 def _create_visium_tissue_images(
     uri: str,
-    image_paths: List[Tuple[str, Path, float | None]],
+    image_paths: list[tuple[str, Path, float | None]],
     *,
     image_channel_first: bool,
-    additional_metadata: "AdditionalMetadata" = None,
-    platform_config: "PlatformConfig | None" = None,
-    context: "SOMATileDBContext | None" = None,
+    additional_metadata: AdditionalMetadata = None,
+    platform_config: PlatformConfig | None = None,
+    context: SOMATileDBContext | None = None,
     ingestion_params: IngestionParams,
     use_relative_uri: bool | None = None,
 ) -> MultiscaleImage:
@@ -799,7 +776,7 @@ def _create_visium_tissue_images(
         im_data_numpy = np.moveaxis(im_data_numpy, -1, 0)
     else:
         data_axis_order = ("y", "x", "soma_channel")
-    ref_shape: Tuple[int, ...] = im_data_numpy.shape
+    ref_shape: tuple[int, ...] = im_data_numpy.shape
 
     # Create the multiscale image.
     with warnings.catch_warnings():

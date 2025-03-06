@@ -106,9 +106,7 @@ from ._registration import (
     ExperimentAmbientLabelMapping,
     ExperimentIDMapping,
     get_dataframe_values,
-    signatures,
 )
-from ._registration.signatures import OriginalIndexMetadata, _prepare_df_for_ingest
 from ._util import get_arrow_str_format, read_h5ad
 
 _NDArr = TypeVar("_NDArr", bound=NDArray)
@@ -472,11 +470,11 @@ def from_anndata(
     #
     # * Here we select out the renumberings for the obs, var, X, etc. array indices
     if registration_mapping is None:
-        jidmaps = ExperimentIDMapping.from_isolated_anndata(
+        joinid_maps = ExperimentIDMapping.from_isolated_anndata(
             anndata, measurement_name=measurement_name
         )
     else:
-        jidmaps = registration_mapping.id_mappings_for_anndata(
+        joinid_maps = registration_mapping.id_mappings_for_anndata(
             anndata, measurement_name=measurement_name
         )
 
@@ -516,7 +514,7 @@ def from_anndata(
         df_uri,
         conversions.obs_or_var_to_tiledb_supported_array_type(anndata.obs),
         id_column_name=obs_id_name,
-        axis_mapping=jidmaps.obs_axis,
+        axis_mapping=joinid_maps.obs_axis,
         **ingest_platform_ctx,
     ) as obs:
         _maybe_set(experiment, "obs", obs, use_relative_uri=use_relative_uri)
@@ -567,7 +565,7 @@ def from_anndata(
                 conversions.obs_or_var_to_tiledb_supported_array_type(anndata.var),
                 id_column_name=var_id_name,
                 # Layer existence is pre-checked in the registration phase
-                axis_mapping=jidmaps.var_axes[measurement_name],
+                axis_mapping=joinid_maps.var_axes[measurement_name],
                 **ingest_platform_ctx,
             ) as var:
                 _maybe_set(measurement, "var", var, use_relative_uri=use_relative_uri)
@@ -602,8 +600,8 @@ def from_anndata(
                         X_kind,
                         _util.uri_joinpath(measurement_X_uri, X_layer_name),
                         anndata.X,
-                        axis_0_mapping=jidmaps.obs_axis,
-                        axis_1_mapping=jidmaps.var_axes[measurement_name],
+                        axis_0_mapping=joinid_maps.obs_axis,
+                        axis_1_mapping=joinid_maps.var_axes[measurement_name],
                         **ingest_platform_ctx,
                     ) as data:
                         _maybe_set(
@@ -615,8 +613,8 @@ def from_anndata(
                         X_kind,
                         _util.uri_joinpath(measurement_X_uri, layer_name),
                         layer,
-                        axis_0_mapping=jidmaps.obs_axis,
-                        axis_1_mapping=jidmaps.var_axes[measurement_name],
+                        axis_0_mapping=joinid_maps.obs_axis,
+                        axis_1_mapping=joinid_maps.var_axes[measurement_name],
                         **ingest_platform_ctx,
                     ) as layer_data:
                         _maybe_set(
@@ -672,13 +670,13 @@ def from_anndata(
                                         use_relative_uri=use_relative_uri,
                                     )
 
-                _ingest_obs_var_m_p("obsm", jidmaps.obs_axis)
-                _ingest_obs_var_m_p("varm", jidmaps.var_axes[measurement_name])
-                _ingest_obs_var_m_p("obsp", jidmaps.obs_axis, jidmaps.obs_axis)
+                _ingest_obs_var_m_p("obsm", joinid_maps.obs_axis)
+                _ingest_obs_var_m_p("varm", joinid_maps.var_axes[measurement_name])
+                _ingest_obs_var_m_p("obsp", joinid_maps.obs_axis, joinid_maps.obs_axis)
                 _ingest_obs_var_m_p(
                     "varp",
-                    jidmaps.var_axes[measurement_name],
-                    jidmaps.var_axes[measurement_name],
+                    joinid_maps.var_axes[measurement_name],
+                    joinid_maps.var_axes[measurement_name],
                 )
 
                 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -703,7 +701,7 @@ def from_anndata(
                                 anndata.raw.var
                             ),
                             id_column_name=var_id_name,
-                            axis_mapping=jidmaps.var_axes["raw"],
+                            axis_mapping=joinid_maps.var_axes["raw"],
                             **ingest_platform_ctx,
                         ) as var:
                             _maybe_set(
@@ -730,8 +728,8 @@ def from_anndata(
                                 SparseNDArray,
                                 _util.uri_joinpath(raw_X_uri, raw_X_layer_name),
                                 anndata.raw.X,
-                                axis_0_mapping=jidmaps.obs_axis,
-                                axis_1_mapping=jidmaps.var_axes["raw"],
+                                axis_0_mapping=joinid_maps.obs_axis,
+                                axis_1_mapping=joinid_maps.var_axes["raw"],
                                 **ingest_platform_ctx,
                             ) as rm_x_data:
                                 _maybe_set(
@@ -787,7 +785,7 @@ def append_obs(
     # See comments in from_anndata.
     context = _validate_soma_tiledb_context(context)
     ingestion_params = IngestionParams("write", registration_mapping)
-    jidmap = registration_mapping.obs_axis.id_mapping_from_dataframe(new_obs)
+    joinid_map = registration_mapping.obs_axis.id_mapping_from_dataframe(new_obs)
 
     s = _util.get_start_stamp()
     logging.log_io_same(f"Start  writing obs for {exp.obs.uri}")
@@ -799,7 +797,7 @@ def append_obs(
         platform_config=platform_config,
         context=context,
         ingestion_params=ingestion_params,
-        axis_mapping=jidmap,
+        axis_mapping=joinid_map,
         must_exist=True,
     ):
         logging.log_io_same(
@@ -851,9 +849,9 @@ def append_var(
     # See comments in from_anndata.
     context = _validate_soma_tiledb_context(context)
     ingestion_params = IngestionParams("write", registration_mapping)
-    jidmap = registration_mapping.var_axes[measurement_name].id_mapping_from_dataframe(
-        new_var
-    )
+    joinid_map = registration_mapping.var_axes[
+        measurement_name
+    ].id_mapping_from_dataframe(new_var)
 
     s = _util.get_start_stamp()
     logging.log_io_same(f"Start  writing var for {sdf.uri}")
@@ -865,7 +863,7 @@ def append_var(
         platform_config=platform_config,
         context=context,
         ingestion_params=ingestion_params,
-        axis_mapping=jidmap,
+        axis_mapping=joinid_map,
         must_exist=True,
     ):
         logging.log_io_same(
@@ -1286,7 +1284,7 @@ def _write_dataframe(
     NOTE: this function mutates the input dataframe, for parsimony of memory usage. Callers should
     copy any user-provided ``pd.DataFrame``s (adata obs, var, uns, etc.) before passing them here.
     """
-    original_index_metadata = _prepare_df_for_ingest(df, id_column_name)
+    original_index_metadata = conversions._prepare_df_for_ingest(df, id_column_name)
     df[SOMA_JOINID] = np.asarray(axis_mapping.data, dtype=np.int64)
     df.set_index(SOMA_JOINID, inplace=True)
 
@@ -1312,7 +1310,7 @@ def _write_dataframe_impl(
     shape: int,
     ingestion_params: IngestionParams,
     additional_metadata: AdditionalMetadata = None,
-    original_index_metadata: OriginalIndexMetadata = None,
+    original_index_metadata: str | None = None,
     platform_config: PlatformConfig | None = None,
     context: SOMATileDBContext | None = None,
     must_exist: bool = False,
@@ -1324,7 +1322,7 @@ def _write_dataframe_impl(
     s = _util.get_start_stamp()
     logging.log_io(None, f"START  WRITING {df_uri}")
 
-    arrow_table = conversions.df_to_arrow(df)
+    arrow_table = conversions.df_to_arrow_table(df)
 
     # Don't many-layer the almost-always-repeated var dataframe.
     # And for obs, if there are duplicate values for whatever reason, don't write them
@@ -1673,14 +1671,11 @@ def _update_dataframe(
     """
     See ``update_obs`` and ``update_var``. This is common helper code shared by both.
     """
-    # Further operations are in-place for parsimony of memory usage:
-    new_data = new_data.copy()
 
     sdf.verify_open_for_writing()
-    old_sig = signatures._string_dict_from_arrow_schema(sdf.schema)
-    new_sig = signatures._string_dict_from_pandas_dataframe(
-        new_data, default_index_name
-    )
+    old_sig = conversions._string_dict_from_arrow_schema(sdf.schema)
+    new_schema = conversions.df_to_arrow_schema(new_data, default_index_name)
+    new_sig = conversions._string_dict_from_arrow_schema(new_schema)
 
     with DataFrame.open(
         sdf.uri, mode="r", context=context, platform_config=platform_config
@@ -1730,7 +1725,9 @@ def _update_dataframe(
             msg = ", ".join(msgs)
             raise ValueError(f"unsupported type updates: {msg}")
 
-        arrow_table = conversions.df_to_arrow(new_data)
+        # Further operations are in-place for parsimony of memory usage:
+        new_data = new_data.copy()
+        arrow_table = conversions.df_to_arrow_table(new_data)
         arrow_schema = arrow_table.schema.remove_metadata()
 
         add_attrs = dict()
@@ -2075,9 +2072,9 @@ def _write_matrix_to_denseNDArray(
         else:
             tensor = pa.Tensor.from_numpy(chunk.toarray())
         if matrix.ndim == 2:
-            soma_ndarray.write((slice(i, i2), slice(0, ncol)), tensor)
+            soma_ndarray.write((slice(i, i2 - 1), slice(0, ncol - 1)), tensor)
         else:
-            soma_ndarray.write((slice(i, i2),), tensor)
+            soma_ndarray.write((slice(i, i2 - 1),), tensor)
 
         t2 = time.time()
         chunk_seconds = t2 - t1
