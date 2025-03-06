@@ -251,8 +251,10 @@ class SpaceRangerMatrixReader:
         matrix_group = self._root["matrix"]
         feature_group = matrix_group["features"]
 
-        # Shape
-        self._nvar, self._nobs = matrix_group["shape"]
+        # Shape (convert from np.int32 -> int).
+        shape = matrix_group["shape"]
+        self._nvar = int(shape[0])
+        self._nobs = int(shape[1])
 
         # X matrix
         self._data = matrix_group["data"][()]
@@ -261,7 +263,7 @@ class SpaceRangerMatrixReader:
         self._barcode_indices = _expand_ptr(self._barcode_indptr, self._data.size)
 
         # obs data
-        self._barcodes = matrix_group["barcodes"][()]
+        self._barcodes = matrix_group["barcodes"][()].astype(str)
 
         # var data
         self._var_name = feature_group["name"][()].astype(str)
@@ -272,13 +274,13 @@ class SpaceRangerMatrixReader:
     @property
     def nobs(self) -> int:
         if self._nobs is None:
-            self._nvar, self._nobs = self.matrix_group["shape"]
+            self._nobs = int(self.matrix_group["shape"][1])
         return self._nobs
 
     @property
     def nvar(self) -> int:
         if self._nvar is None:
-            self._nvar, self._nobs = self.matrix_group["shape"]
+            self._nvar = int(self.matrix_group["shape"][0])
         return self._nvar
 
     def unique_obs_indices(self) -> pa.Array:

@@ -73,21 +73,25 @@ def check_reader(reader, data):
     assert reader.nvar == data.nvar
 
     # Check X matrix.
+
     actual_X = sp.coo_matrix(
-        (reader.data, reader.obs_indices, reader.obs_indices),
+        (reader.data, (reader.obs_indices, reader.var_indices)),
         shape=(reader.nobs, reader.nvar),
     )
     expected_X = sp.coo_matrix(
-        (data.data, data.obs_indices, data.var_indices),
+        (data.data, (data.obs_indices, data.var_indices)),
         shape=(data.nobs, data.nvar),
     )
-    assert actual_X == expected_X
+    np.testing.assert_equal(actual_X.todense(), expected_X.todense())
 
     # Check obs data.
-    # TODO
+    np.testing.assert_equal(reader.obs_id, data.barcodes.astype(str))
 
     # Check var data.
-    # TODO
+    np.testing.assert_equal(reader.var_id, data.var_name.astype(str))
+    np.testing.assert_equal(reader.gene_id, data.gene_id.astype(str))
+    np.testing.assert_equal(reader.feature_type, data.feature_type.astype(str))
+    np.testing.assert_equal(reader.genome, data.genome.astype(str))
 
     # Check unique obs indices.
     actual_unique_obs_ind = np.sort(reader.unique_obs_indices().to_numpy())
