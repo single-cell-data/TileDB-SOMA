@@ -199,7 +199,7 @@ class SpaceRangerMatrixReader:
     @property
     def feature_type(self) -> pa.Array:
         if self._feature_type is None:
-            self._feature_types = self.feature_group["feature_type"][()]
+            self._feature_type = self.feature_group["feature_type"][()].astype("str")
         return pa.array(self._feature_type)
 
     @property
@@ -224,16 +224,15 @@ class SpaceRangerMatrixReader:
     @property
     def obs_id(self) -> pa.Array:
         if self._barcodes is None:
-            self._barcodes = self.matrix_group["barcodes"][()]
+            self._barcodes = self.matrix_group["barcodes"][()].astype(str)
         return pa.array(self._barcodes)
 
     @property
     def obs_indices(self) -> pa.Array:
         if self._barcode_indices is None:
             self._barcode_indptr = self.matrix_group["indptr"][()]
-            self._barcode_indices = _expand_ptr(
-                self._barcode_indptr, self.var_indices.size
-            )
+            nvalues = self.matrix_group["data"].size
+            self._barcode_indices = _expand_ptr(self._barcode_indptr, nvalues)
         return pa.array(self._barcode_indices)
 
     def open(self) -> None:
@@ -297,7 +296,7 @@ class SpaceRangerMatrixReader:
     @property
     def var_id(self) -> pa.Array:
         if self._var_name is None:
-            self._var_name = self.feature_group["name"].astype(str)
+            self._var_name = self.feature_group["name"][()].astype(str)
         return pa.array(self._var_name)
 
     @property

@@ -29,8 +29,11 @@ class SpaceRangerMatrixData:
     feature_type: np.ndarray[str]
     genome: np.ndarray[str]
 
-    def to_hdf5(self, filename):
-        with h5py.File(filename, "w") as root:
+    # file
+    filepath: str
+
+    def __attrs_post_init__(self):
+        with h5py.File(self.filepath, "w") as root:
             root.attrs["software_version"] = (
                 f"spaceranger-{self.version[0]}.{self.version[1]}.{self.version[2]}"
             )
@@ -59,54 +62,10 @@ class SpaceRangerMatrixData:
             features_group.create_dataset("name", data=self.var_name, dtype="S17")
 
 
-def check_reader(reader, data):
-    """Check the data read by the :class:`SpaceRangerMatrixReader` against
-    :class:`SpaceRangerMatrixData`.
-
-    Either the data must already be loaded or :class:`SpaceRangerMatrixReader`
-    must be open.
-    """
-    assert reader.version == data.version
-
-    # Check shape.
-    assert reader.nobs == data.nobs
-    assert reader.nvar == data.nvar
-
-    # Check X matrix.
-
-    actual_X = sp.coo_matrix(
-        (reader.data, (reader.obs_indices, reader.var_indices)),
-        shape=(reader.nobs, reader.nvar),
-    )
-    expected_X = sp.coo_matrix(
-        (data.data, (data.obs_indices, data.var_indices)),
-        shape=(data.nobs, data.nvar),
-    )
-    np.testing.assert_equal(actual_X.todense(), expected_X.todense())
-
-    # Check obs data.
-    np.testing.assert_equal(reader.obs_id, data.barcodes.astype(str))
-
-    # Check var data.
-    np.testing.assert_equal(reader.var_id, data.var_name.astype(str))
-    np.testing.assert_equal(reader.gene_id, data.gene_id.astype(str))
-    np.testing.assert_equal(reader.feature_type, data.feature_type.astype(str))
-    np.testing.assert_equal(reader.genome, data.genome.astype(str))
-
-    # Check unique obs indices.
-    actual_unique_obs_ind = np.sort(reader.unique_obs_indices().to_numpy())
-    expected_unique_obs_ind = np.sort(np.unique(data.obs_indices))
-    np.testing.assert_equal(actual_unique_obs_ind, expected_unique_obs_ind)
-
-    # Check unique var indices.
-    actual_unique_var_ind = np.sort(reader.unique_var_indices().to_numpy())
-    expected_unique_var_ind = np.sort(np.unique(data.var_indices))
-    np.testing.assert_equal(actual_unique_var_ind, expected_unique_var_ind)
-
-
-def test_space_ranger_matrix_reader(tmp_path):
+@pytest.fixture(scope="session")
+def fake_space_ranger_matrix_1(tmp_path_factory):
     # Create filepath.
-    h5path = tmp_path / "fake_space_ranger_matrix_1.h5"
+    h5path = tmp_path_factory.mktemp("space_ranger") / "fake_space_ranger_matrix_1.h5"
 
     # Create test data.
     test_data = SpaceRangerMatrixData(
@@ -167,15 +126,69 @@ def test_space_ranger_matrix_reader(tmp_path):
             ],
             dtype="S6",
         ),
+        filepath=h5path,
     )
+    return test_data
 
-    test_data.to_hdf5(h5path)
+
+def check_reader(reader, data):
+    """Check the data read by the :class:`SpaceRangerMatrixReader` against
+    :class:`SpaceRangerMatrixData`.
+
+    Either the data must already be loaded or :class:`SpaceRangerMatrixReader`
+    must be open.
+    """
+    assert reader.version == data.version
+
+    # Check shape.
+    assert reader.nobs == data.nobs
+    assert reader.nvar == data.nvar
+
+    # Check X matrix.
+
+    actual_X = sp.coo_matrix(
+        (reader.data, (reader.obs_indices, reader.var_indices)),
+        shape=(reader.nobs, reader.nvar),
+    )
+    expected_X = sp.coo_matrix(
+        (data.data, (data.obs_indices, data.var_indices)),
+        shape=(data.nobs, data.nvar),
+    )
+    np.testing.assert_equal(actual_X.todense(), expected_X.todense())
+
+    # Check obs data.
+    np.testing.assert_equal(reader.obs_id, data.barcodes.astype(str))
+
+    # Check var data.
+    np.testing.assert_equal(reader.var_id, data.var_name.astype(str))
+    np.testing.assert_equal(reader.gene_id, data.gene_id.astype(str))
+    np.testing.assert_equal(reader.feature_type, data.feature_type.astype(str))
+    np.testing.assert_equal(reader.genome, data.genome.astype(str))
+
+    # Check unique obs indices.
+    actual_unique_obs_ind = np.sort(reader.unique_obs_indices().to_numpy())
+    expected_unique_obs_ind = np.sort(np.unique(data.obs_indices))
+    np.testing.assert_equal(actual_unique_obs_ind, expected_unique_obs_ind)
+
+    # Check unique var indices.
+    actual_unique_var_ind = np.sort(reader.unique_var_indices().to_numpy())
+    expected_unique_var_ind = np.sort(np.unique(data.var_indices))
+    np.testing.assert_equal(actual_unique_var_ind, expected_unique_var_ind)
+
+
+def test_space_ranger_matrix_reader_direct_load(fake_space_ranger_matrix_1):
 
     # Open the reader, load the version and other data and close.
-    reader = ioutil.SpaceRangerMatrixReader(h5path)
+    reader = ioutil.SpaceRangerMatrixReader(fake_space_ranger_matrix_1.filepath)
     reader.open()
     reader.version
     reader.load()
     reader.close()
 
-    check_reader(reader, test_data)
+    check_reader(reader, fake_space_ranger_matrix_1)
+
+
+def test_space_ranger_matrix_reader_lazy_load(fake_space_ranger_matrix_1):
+
+    with ioutil.SpaceRangerMatrixReader(fake_space_ranger_matrix_1.filepath) as reader:
+        check_reader(reader, fake_space_ranger_matrix_1)
