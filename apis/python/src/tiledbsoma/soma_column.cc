@@ -147,10 +147,35 @@ void load_soma_column(py::module& m) {
             "set_dim_ranges_bytes",
             [](std::shared_ptr<SOMAColumn>& column,
                ManagedQuery& mq,
-               const std::vector<
-                   std::pair<std::vector<std::byte>, std::vector<std::byte>>>&
-                   ranges) {
-                column->set_dim_ranges<std::vector<std::byte>>(mq, ranges);
+               const std::vector<std::pair<py::bytes, py::bytes>>& ranges) {
+                std::vector<
+                    std::pair<std::vector<std::byte>, std::vector<std::byte>>>
+                    casted_ranges;
+                for (const auto& range : ranges) {
+                    py::buffer_info info_first(
+                        py::buffer(range.first).request());
+                    py::buffer_info info_second(
+                        py::buffer(range.second).request());
+
+                    const std::byte*
+                        data_first = reinterpret_cast<const std::byte*>(
+                            info_first.ptr);
+                    size_t length_first = static_cast<size_t>(info_first.size);
+
+                    const std::byte*
+                        data_second = reinterpret_cast<const std::byte*>(
+                            info_second.ptr);
+                    size_t length_second = static_cast<size_t>(
+                        info_second.size);
+
+                    casted_ranges.push_back(std::make_pair(
+                        std::vector<std::byte>(
+                            data_first, data_first + length_first),
+                        std::vector<std::byte>(
+                            data_second, data_second + length_second)));
+                }
+                column->set_dim_ranges<std::vector<std::byte>>(
+                    mq, casted_ranges);
             })
         .def(
             "set_dim_ranges_double",
