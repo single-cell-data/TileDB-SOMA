@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Literal
+from typing import Any
 
 import numpy as np
 import pyarrow as pa
@@ -12,6 +12,7 @@ from typeguard import suppress_type_checks
 
 import tiledbsoma as soma
 import tiledbsoma._fastercsx as fastercsx
+from tiledbsoma._fastercsx import Format
 
 NP_VALUE_TYPES = [  # supported types - see fastercsx.h
     np.float32,
@@ -77,7 +78,7 @@ def assert_eq(sp: sparse.spmatrix, cm: fastercsx.CompressedMatrix) -> bool:
 def test_from_ijd(
     shape: tuple[int, int],
     value_dtype: np.dtype[Any],
-    format: Literal["csc", "csr"],
+    format: Format,
     context: soma.SOMATileDBContext,
     rng: np.random.Generator,
 ) -> None:
@@ -104,7 +105,7 @@ def test_from_soma_array(
     n_tables: int,
     shape: tuple[int, int],
     value_dtype: np.dtype[Any],
-    format: Literal["csc", "csr"],
+    format: Format,
     context: soma.SOMATileDBContext,
     rng: np.random.Generator,
 ) -> None:
@@ -151,7 +152,7 @@ def test_from_soma_chunked_array(
     n_chunks: int,
     shape: tuple[int, int],
     value_dtype: np.dtype[Any],
-    format: Literal["csc", "csr"],
+    format: Format,
     context: soma.SOMATileDBContext,
     rng: np.random.Generator,
 ) -> None:
@@ -193,7 +194,7 @@ def test_from_soma_chunked_array(
     "index", [None, slice(None), slice(0), slice(10), slice(0, 1), slice(1, -1)]
 )
 def test_to_scipy(
-    format: Literal["csc", "csr"],
+    format: Format,
     sorted: bool,
     index: slice | None,
     context: soma.SOMATileDBContext,
@@ -232,7 +233,7 @@ def test_to_scipy(
     "index", [None, slice(None), slice(0), slice(10), slice(0, 1), slice(1, -1)]
 )
 def test_to_numpy(
-    format: Literal["csc", "csr"],
+    format: Format,
     sorted: bool,
     shape: tuple[int, int],
     index: slice | None,
@@ -349,7 +350,7 @@ def test_bad_shapes(context: soma.SOMATileDBContext, rng: np.random.Generator) -
 @pytest.mark.parametrize("format", ["csr", "csc"])
 @pytest.mark.parametrize("make_sorted", [True, False])
 def test_duplicates(
-    format: Literal["csc", "csr"],
+    format: Format,
     make_sorted: bool,
     context: soma.SOMATileDBContext,
     rng: np.random.Generator,

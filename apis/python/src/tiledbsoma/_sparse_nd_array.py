@@ -9,6 +9,7 @@ Implementation of SOMA SparseNDArray.
 from __future__ import annotations
 
 from typing import (
+    TYPE_CHECKING,
     Sequence,
     Tuple,
     Union,
@@ -28,6 +29,7 @@ from . import _util
 from . import pytiledbsoma as clib
 from ._arrow_types import pyarrow_to_carrow_type
 from ._common_nd_array import NDArray
+from ._dask.util import DaskConfig
 from ._exception import SOMAError, map_exception_for_create
 from ._read_iters import (
     BlockwiseScipyReadIter,
@@ -46,6 +48,13 @@ from .options._tiledb_create_write_options import (
     TileDBCreateOptions,
     TileDBWriteOptions,
 )
+
+if TYPE_CHECKING:
+    try:
+        import dask.array as da
+    except ImportError:
+        pass
+
 
 _UNBATCHED = options.BatchSize()
 
@@ -462,6 +471,21 @@ class SparseNDArrayRead(_SparseNDArrayReadBase):
     Lifecycle:
         Maturing.
     """
+
+    def dask_array(
+        self,
+        config: DaskConfig,
+    ) -> "da.Array":
+        """Load a TileDB-SOMA X layer as a Dask array."""
+        from tiledbsoma._dask.load import load_daskarray
+
+        return load_daskarray(
+            layer=self.array,
+            coords=self.coords,
+            result_order=self.result_order,
+            platform_config=self.platform_config,
+            config=config,
+        )
 
     def coos(self, shape: NTuple | None = None) -> SparseCOOTensorReadIter:
         """
