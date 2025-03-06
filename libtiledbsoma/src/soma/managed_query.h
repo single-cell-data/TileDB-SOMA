@@ -812,6 +812,7 @@ class ManagedQuery {
     }
 
     template <typename ValueType, typename IndexType>
+        requires std::integral<ValueType> || std::floating_point<ValueType>
     void _remap_indexes_aux(
         std::string column_name,
         Enumeration extended_enmr,
