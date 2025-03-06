@@ -107,10 +107,16 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       )
 
       # TODO: Stop converting to vectors when SOMAArrayReader supports arrow arrays
-      x_layer$read(coords = list(
-        self$obs_joinids()$as_vector(),
-        self$var_joinids()$as_vector()
-      ))
+      coords <- list(
+        soma_dim_0 = self$obs_joinids()$as_vector(),
+        soma_dim_1 = self$var_joinids()$as_vector()
+      )
+      # Handle ragged arrays
+      shape <- x_layer$shape()
+      for (i in seq_along(along.with = coords)) {
+        coords[[i]] <- coords[[i]][coords[[i]] < shape[i]]
+      }
+      return(x_layer$read(coords))
     },
 
     #' @description Retrieves an `obsm` layer as a \code{\link{SOMASparseNDArrayRead}}
@@ -244,7 +250,6 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       var_ids <- self$var_joinids()$as_vector()
       return(varp_layer$read(coords = list(var_ids, var_ids)))
     },
-
 
     #' @description Reads the entire query result as a list of
     #' [`arrow::Table`]s. This is a low-level routine intended to be used by
@@ -516,6 +521,8 @@ SOMAExperimentAxisQuery <- R6::R6Class(
     #' @param varm_layers \Sexpr[results=rd]{tiledbsoma:::rd_outgest_mlayers(axis = 'varm')}
     #' @param obsp_layers \Sexpr[results=rd]{tiledbsoma:::rd_outgest_players()}
     #' @param drop_levels Drop unused levels from \code{obs} and \code{var} factor columns
+    #' @param version Assay version to read query in as; by default, will try to
+    #' infer assay type from the measurement itself
     #'
     #' @return A \code{\link[SeuratObject]{Seurat}} object
     #'
@@ -528,7 +535,8 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       obsm_layers = NULL,
       varm_layers = NULL,
       obsp_layers = NULL,
-      drop_levels = FALSE
+      drop_levels = FALSE,
+      version = NULL
     ) {
       check_package("SeuratObject", version = .MINIMUM_SEURAT_VERSION())
       op <- options(Seurat.object.assay.version = "v3")
@@ -572,7 +580,8 @@ SOMAExperimentAxisQuery <- R6::R6Class(
         X_layers = X_layers,
         obs_index = obs_index,
         var_index = var_index,
-        var_column_names = var_column_names
+        var_column_names = var_column_names,
+        version = version
       )
       op <- options(Seurat.object.assay.calcn = FALSE)
       on.exit(options(op), add = TRUE, after = FALSE)
@@ -739,6 +748,8 @@ SOMAExperimentAxisQuery <- R6::R6Class(
     #' @param var_index \Sexpr[results=rd]{tiledbsoma:::rd_outgest_index(axis = 'var')}
     #' @param var_column_names \Sexpr[results=rd]{tiledbsoma:::rd_outgest_metadata_names(axis = 'var')}
     #' @param drop_levels Drop unused levels from \code{var} factor columns
+    #' @param version Assay version to read query in as; by default, will try to
+    #' infer assay type from the measurement itself
     #'
     #' @return An \code{\link[SeuratObject]{Assay}} object
     #'
@@ -747,16 +758,13 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       obs_index = NULL,
       var_index = NULL,
       var_column_names = NULL,
-      drop_levels = FALSE
+      drop_levels = FALSE,
+      version = NULL
     ) {
-      version <- "v3"
-      check_package("SeuratObject", version = .MINIMUM_SEURAT_VERSION())
-      op <- options(Seurat.object.assay.version = "v3")
-      on.exit(options(op), add = TRUE)
+      check_package('SeuratObject', version = .MINIMUM_SEURAT_VERSION())
       stopifnot(
-        "'X_layers' must be a named character vector" = is.character(X_layers) &&
-          is_named(X_layers, allow_empty = FALSE),
-        "'version' must be a single character value" = is_scalar_character(version),
+        "'version' must be a single character value" = is.null(version) ||
+          is_scalar_character(version),
         "'obs_index' must be a single character value" = is.null(obs_index) ||
           (is_scalar_character(obs_index) && !is.na(obs_index)),
         "'var_index' must be a single character value" = is.null(var_index) ||
@@ -767,7 +775,23 @@ SOMAExperimentAxisQuery <- R6::R6Class(
         "'drop_levels' must be TRUE or FALSE" = isTRUE(drop_levels) ||
           isFALSE(drop_levels)
       )
-      match.arg(version, choices = "v3")
+      assay_hint <- names(.assay_version_hint())
+      # Get the Seurat assay version
+      version <- version %||%
+        self$ms$get_metadata(assay_hint) %||%
+        'v3'
+      match.arg(version, choices = c('v3', 'v5'))
+      op <- options(Seurat.object.assay.version = version)
+      on.exit(options(op), add = TRUE)
+      # Check our X_layers
+      if (version == 'v3') {
+        stopifnot(
+          "'X_layers' must be a named character vector" = is.character(X_layers) &&
+            is_named(X_layers, allow_empty = FALSE)
+        )
+      } else {
+        stopifnot("'X_layers' must be a character vector" = is.character(X_layers))
+      }
       features <- if (is.null(var_index)) {
         paste0("feature", self$var_joinids()$as_vector())
       } else {
@@ -801,6 +825,18 @@ SOMAExperimentAxisQuery <- R6::R6Class(
             counts = tryCatch(expr = X_layers[["counts"]], error = null),
             data = tryCatch(expr = X_layers[["data"]], error = null),
             scale_data = tryCatch(expr = X_layers[["scale.data"]], error = null),
+            cells = cells,
+            features = features
+          )
+        },
+        v5 = {
+          cells_hint <- .assay_obs_hint(private$.measurement_name)
+          if (cells_hint %in% private$.experiment$obs$colnames()) {
+            cells_idx <- private$.load_df('obs', column_names = cells_hint)[[cells_hint]]
+            cells <- cells[cells_idx]
+          }
+          private$.to_seurat_assay_v5(
+            layers = X_layers,
             cells = cells,
             features = features
           )
@@ -1593,6 +1629,178 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       }
       # Return the assay
       validObject(obj)
+      return(obj)
+    },
+    .to_seurat_assay_v5 = function(layers, cells, features) {
+      check_package('SeuratObject', version = '5.0.2')
+
+      # Create dummy layer to initialize v5 assay
+      layer_name <- SeuratObject::RandomName(length = 7L)
+      i <- 0L
+      while (layer_name %in% layers) {
+        layer_name <- SeuratObject::RandomName(length = 7L + i)
+        i <- i + 1L
+      }
+
+      # Get our metadata hints
+      ragged_hint <- .ragged_array_hint()
+      default_hint <- names(.layer_hint(layer_name))
+      r_type_hint <- names(.type_hint(NULL))
+      s4_type <- paste0('^', .standard_regexps()$valid_package_name, ':')
+
+      # Check arguments
+      stopifnot(
+        "'layers' must be a character vector" = is.character(x = layers),
+        "'cells' must be a character vector" = is.character(cells),
+        "'features' must be a character vector" = is.character(features)
+      )
+
+      # Check our dimnames
+      if (length(cells) > self$n_obs) {
+        stop(
+          "'cells' must have a length less than or equal to ",
+          self$n_obs,
+          call. = FALSE
+        )
+      }
+      if (length(features) > self$n_vars) {
+        stop(
+          "'features' must have a length less than or equal to ",
+          self$n_vars,
+          call. = FALSE
+        )
+      }
+
+      # Find the default layers
+      default_layers <- self$ms$X$get_metadata(default_hint)
+      if (!is.null(default_layers) && grepl(pattern = '^\\[', x = default_layers)) {
+        check_package('jsonlite')
+        default_layers <- jsonlite::fromJSON(default_layers)
+      }
+
+      # Initialize our dummy layer
+      counts <- list(Matrix::Matrix(
+        data = 0L,
+        nrow = length(features),
+        ncol = length(cells),
+        sparse = TRUE
+      ))
+      names(counts) <- layer_name
+      obj <- SeuratObject::.CreateStdAssay(
+        counts = counts,
+        cells = cells,
+        features = features,
+        transpose = FALSE
+      )
+
+      # Read in layers
+      for (lyr in layers) {
+        lyr_hint <- self$ms$X$get(lyr)$get_metadata(names(ragged_hint))
+        type_hint <- self$ms$X$get(lyr)$get_metadata(r_type_hint)
+        dnames <- self$ms$X$get(lyr)$dimnames()
+        attrn <- self$ms$X$get(lyr)$attrnames()
+        pkg <- NULL
+        if (!is.null(type_hint)) {
+          if (grepl(pattern = '^\\[', x = type_hint)) {
+            if (!requireNamespace('jsonlite', quietly = TRUE)) {
+              warning(warningCondition(
+                sprintf(
+                  "Layer '%s' is typed as '%s', but package 'jsonlite' is unavailable",
+                  lyr,
+                  type_hint
+                ),
+                class = "packageNotFoundWarning"
+              ))
+              next
+            }
+            type_hint <- jsonlite::fromJSON(type_hint)
+          } else if (grepl(pattern = s4_type, x = type_hint)) {
+            pkg <- strsplit(type_hint, split = ':')[[1L]][1L]
+            type_hint <- strsplit(type_hint, split = ':')[[1L]][2L]
+            if (!requireNamespace(pkg, quietly = TRUE)) {
+              warning(warningCondition(
+                sprintf(
+                  "Layer '%s' is typed as '%s:%s', but package '%s' is unavailable",
+                  lyr,
+                  pkg,
+                  type_hint,
+                  pkg
+                ),
+                class = "packageNotFoundWarning"
+              ))
+              next
+            }
+          }
+        }
+        layer_cells <- cells
+        layer_features <- features
+        if (is.null(lyr_hint) || lyr_hint != ragged_hint[[1L]]) {
+          mat <- Matrix::t(self$to_sparse_matrix(
+            collection = 'X',
+            layer_name = lyr
+          ))
+        } else {
+          tbl <- tryCatch(
+            self$X(lyr)$tables()$concat(),
+            error = function(...) {
+              warning(warningCondition(
+                sprintf("Layer '%s' falls outside the query condition, skipping...", lyr),
+                class = "unqueryableLayerWarning"
+              ))
+              return(NULL)
+            }
+          )
+          if (is.null(tbl)) {
+            next
+          }
+          soma_join_ids <- vector("list", length = length(dnames))
+          names(soma_join_ids) <- dnames
+          for (i in dnames) {
+            soma_join_ids[[i]] <- sort(unique(tbl[[i]]$as_vector()))
+            tbl[[i]] <- match(tbl[[i]]$as_vector(), soma_join_ids[[i]]) - 1L
+          }
+          layer_cells_idx <- match(
+            soma_join_ids[[dnames[1L]]],
+            self$obs_joinids()$as_vector()
+          )
+          layer_cells <- layer_cells[layer_cells_idx]
+          layer_features_idx <- match(
+            soma_join_ids[[dnames[2L]]],
+            self$var_joinids()$as_vector()
+          )
+          layer_features <- layer_features[layer_features_idx]
+          mat <- Matrix::t(Matrix::sparseMatrix(
+            i = tbl[[dnames[1L]]]$as_vector(),
+            j = tbl[[dnames[2L]]]$as_vector(),
+            x = tbl[[attrn[1L]]]$as_vector(),
+            index1 = FALSE,
+            repr = "T"
+          ))
+        }
+        if (!is.null(type_hint)) {
+          mat <- suppressWarnings(methods::as(mat, type_hint))
+        }
+        SeuratObject::LayerData(
+          obj,
+          layer = lyr,
+          features = layer_features,
+          cells = layer_cells
+        ) <- mat
+      }
+
+      # Remove dummy layer
+      if (length(SeuratObject::Layers(obj)) == 1L) {
+        stop(errorCondition(
+          "None of the requested layers were queryable",
+          class = "unqueryableLayerError"
+        ))
+      }
+      SeuratObject::DefaultLayer(obj) <- default_layers %||% setdiff(
+        SeuratObject::Layers(obj),
+        layer_name
+      )[1L]
+      SeuratObject::LayerData(obj, layer = layer_name) <- NULL
+
       return(obj)
     }
   )
