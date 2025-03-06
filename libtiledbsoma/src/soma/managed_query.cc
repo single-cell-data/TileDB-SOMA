@@ -576,6 +576,7 @@ bool ManagedQuery::_cast_column(
         case TILEDB_CHAR:
             return _cast_column_aux<std::string>(schema, array, se);
         case TILEDB_BLOB:
+        case TILEDB_GEOM_WKB:
             return _cast_column_aux<std::vector<std::byte>>(schema, array, se);
         case TILEDB_BOOL:
             return _cast_column_aux<bool>(schema, array, se);
@@ -626,6 +627,7 @@ void ManagedQuery::_promote_indexes_to_values(
         case TILEDB_CHAR:
             return _cast_dictionary_values<std::string>(schema, array);
         case TILEDB_BLOB:
+        case TILEDB_GEOM_WKB:
             return _cast_dictionary_values<std::vector<std::byte>>(
                 schema, array);
         case TILEDB_BOOL:
