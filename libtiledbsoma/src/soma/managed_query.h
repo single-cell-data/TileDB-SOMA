@@ -999,7 +999,7 @@ class ManagedQuery {
 
     template <typename T>
     std::vector<T> _enumeration_values_view(Enumeration& enumeration);
-    
+
     /**
      * @brief Check if the array is opened in write mode and set the subarray
      * for dense arrays.
