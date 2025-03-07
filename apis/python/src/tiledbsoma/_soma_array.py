@@ -169,19 +169,19 @@ class SOMAArray(SOMAObject[_tdb_handles.SOMAArrayWrapper[Any]]):
         Args:
             values:
                 An `Arrow table <https://arrow.apache.org/docs/python/generated/pyarrow.Table.html>`_
-                containing all columns, including the index columns. The schema for the values must
-                match the schema for the :class:`DataFrame`.
+                containing all columns, including the index columns. The schema
+                for the values must match the schema for the :class:`DataFrame`.
 
-                If a column is of categorical type in the schema and a flattened/non-categorical
-                column is presented for data on write, a ``ValueError`` is raised.  If a column is
-                of non-categorical type in the schema and a categorical column is presented for data
-                on write, the data are written as an array of category values, and the category-type
-                information is not saved.
+                If a column is of categorical type in the schema and a
+                flattened/non-categorical column is presented for data on write,
+                a ``ValueError`` is raised.  If a column is of non-categorical
+                type in the schema and a categorical column is presented for data
+                on write, the data are written as an array of category values,
+                and the category-type information is not saved.
             sort_coords:
-                Whether the coordinates need to be sorted (False) or are already
-                sorted in global order (True). For Arrow Tables, the coordinates
-                are already in order, so this is defaulted to False unless
-                explicitly set by the user in the PlatformConfig.
+                Whether the coordinates need to be sorted (True) or are already
+                sorted in global order (False). In the PlatformConfig, this is
+                is to True by default.
         """
         batches = values.to_batches()
         if not batches:
@@ -193,15 +193,25 @@ class SOMAArray(SOMAObject[_tdb_handles.SOMAArrayWrapper[Any]]):
 
         if layout == clib.ResultOrder.unordered:
             for batch in batches:
+                # Create new ManagedQuery per each batch
                 mq = ManagedQuery(self)._handle
                 mq.set_layout(layout)
                 mq.set_array_data(batch)
+
+                # Submit and flush every batch
                 mq.submit_write()
-        else:
+                mq.finalize()
+
+        else:  # globalorder
+            # Create a single ManagedQuery at the beginning
             mq = ManagedQuery(self)._handle
             mq.set_layout(layout)
+
+            # Submit for each batch but don't finalize
             for batch in batches[:-1]:
                 mq.set_array_data(batch)
                 mq.submit_write()
+
+            # Only finalize at the last batch
             mq.set_array_data(batches[-1])
             mq.submit_and_finalize()
