@@ -202,7 +202,7 @@ class SOMAArray(SOMAObject[_tdb_handles.SOMAArrayWrapper[Any]]):
                 mq.submit_write()
                 mq.finalize()
 
-        else:  # globalorder
+        else:  # global order
             # Create a single ManagedQuery at the beginning
             mq = ManagedQuery(self)._handle
             mq.set_layout(layout)
