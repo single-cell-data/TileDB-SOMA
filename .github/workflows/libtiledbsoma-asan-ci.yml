@@ -6,7 +6,8 @@ on:
       - "apis/python/**"
       - "apis/r/**"
       - ".pre-commit-config.yaml"
-      - ".github/workflows/python-remote-storage.yml"
+      - ".github/workflows/**"
+      - "!.github/workflows/libtiledbsoma-asan-ci.yml"
   push:
     branches:
       - main
