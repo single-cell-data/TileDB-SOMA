@@ -2,9 +2,13 @@ name: TileDB-SOMA R-Python interop testing
 
 on:
   pull_request:
+    paths:
+      - '**'
+      - '!.github/**'
+      - '.github/workflows/r-python-interop-testing.yml'
+      - '!docker/**'
     # TODO: leave this enabled for pre-merge signal for now. At some point we may want to go back to
     # only having this signal post-merge.
-    #paths:
     #  - "apis/python/**"
     #  - "apis/r/**"
     #  - "apis/system/**"
