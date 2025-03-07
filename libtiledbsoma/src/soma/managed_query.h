@@ -408,7 +408,6 @@ class ManagedQuery {
 
     /**
      * @brief Finalize the write query.
-     *
      */
     void finalize() {
         query_->finalize();
@@ -416,7 +415,6 @@ class ManagedQuery {
 
     /**
      * @brief Submit and finalize the write query.
-     *
      */
     void submit_and_finalize() {
         _setup_write();
@@ -1001,8 +999,8 @@ class ManagedQuery {
     std::vector<T> _enumeration_values_view(Enumeration& enumeration);
 
     /**
-     * @brief Check if the array is opened in write mode and set the subarray
-     * for dense arrays.
+     * @brief Check if the array is opened in write mode -- throws
+     * TileDBSOMAError if not -- and set the subarray for dense arrays.
      */
     void _setup_write();
 
