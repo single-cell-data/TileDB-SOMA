@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Literal, Union
+from typing import Any, Union
 
 import numpy as np
 import numpy.typing as npt
@@ -16,6 +16,7 @@ from typing_extensions import TypeAlias
 import tiledbsoma as soma
 import tiledbsoma._fastercsx as fastercsx
 import tiledbsoma.pytiledbsoma.fastercsx as clib_fastercsx
+from tiledbsoma._fastercsx import Format
 
 from tests.ht._ht_util import (
     arrow_array,
@@ -330,7 +331,7 @@ def test_fastercsx_from_ijd(
     value_dtype: np.dtype,
     unique: bool,
     shape: tuple[int, int],
-    format: Literal["csc", "csr"],
+    format: Format,
     make_sorted: bool,
     context: soma.SOMATileDBContext,
 ) -> None:
@@ -387,7 +388,7 @@ def test_fastercsx_to_scipy(
     value_dtype: np.dtype,
     unique: bool,
     shape: tuple[int, int],
-    format: Literal["csc", "csr"],
+    format: Format,
     make_sorted: bool,
     context: soma.SOMATileDBContext,
 ) -> None:
