@@ -356,6 +356,7 @@ def _leaf_visitor_show_shapes(
     retval = True
     if isinstance(item, tiledbsoma.DataFrame):
         _print_leaf_node_banner("DataFrame", node_name, item.uri, args)
+        _bannerize(args, "count", item.count)
         _bannerize(args, "non_empty_domain", item.non_empty_domain())
         _bannerize(args, "domain", item.domain)
         _bannerize(args, "maxdomain", item.maxdomain)
