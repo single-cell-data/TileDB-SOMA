@@ -10,7 +10,7 @@ on:
   # Allows for 'as needed' manual trigger:
   workflow_dispatch:
   #
-  # Use a regular nighly build as well (time is UTC):
+  # Use a regular nightly build as well (time is UTC):
   schedule:
     - cron: "25 5 * * *"
 

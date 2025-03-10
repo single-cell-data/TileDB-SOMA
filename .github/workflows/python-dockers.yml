@@ -1,0 +1,38 @@
+# Workflow to build example Docker images with TileDB-SOMA installed
+name: TileDB-SOMA docker builds
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "42 9 * * *"
+  pull_request:
+    paths:
+      - .github/workflows/python-dockers.yml
+      - docker/**
+jobs:
+  docker:
+    strategy:
+      matrix:
+        os:
+          - ubuntu-24.04
+          - ubuntu-24.04-arm
+          # TODO: currently impossible(?) to build Docker images on macOS runners
+          #
+          # "Nested virtualization" is only supported on macOS-15 and ≥M3, but the current macos-15 runners
+          # [only have M1][^1] (or [possibly M2 Pro?][^2]) chips.
+          #
+          # [^1]: https://docs.github.com/en/actions/using-github-hosted-runners/using-github-hosted-runners/about-github-hosted-runners#standard-github-hosted-runners-for-public-repositories
+          # [^2]: https://github.com/douglascamata/setup-docker-macos-action/issues/35#issuecomment-2384104416:
+          #
+          # - macos-15
+        name:
+          - pypi
+          - src
+          - langchain
+    name: ${{ matrix.os }}-${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -f ${{ matrix.name }}.dockerfile -t ${{ matrix.name }} .
+        working-directory: docker
+      - run: docker run ${{ matrix.name }}
+        working-directory: docker
