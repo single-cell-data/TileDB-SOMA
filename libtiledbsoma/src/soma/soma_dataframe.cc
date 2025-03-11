@@ -38,7 +38,9 @@ void SOMADataFrame::create(
             std::nullopt,
             "SOMADataFrame",
             true,
-            platform_config);
+            platform_config,
+            timestamp);
+
     SOMAArray::create(
         ctx, uri, tiledb_schema, "SOMADataFrame", std::nullopt, timestamp);
 }

@@ -412,7 +412,9 @@ class ArrowAdapter {
         const std::optional<SOMACoordinateSpace>& coordinate_space,
         std::string soma_type,
         bool is_sparse = true,
-        PlatformConfig platform_config = PlatformConfig());
+        PlatformConfig platform_config = PlatformConfig(),
+        std::optional<std::pair<int64_t, int64_t>> timestamp_range =
+            std::nullopt);
 
     /**
      * @brief Get a TileDB dimension from an Arrow schema.
