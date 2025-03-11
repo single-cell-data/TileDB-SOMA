@@ -4,8 +4,9 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
-from typing import Any
+from typing import Any, Tuple, Union
 
 import h5py
 import numpy as np
@@ -335,3 +336,31 @@ class TenXCountMatrixReader:
         if self._feature_indices is None:
             self._feature_indices = self.matrix_group["indices"][()]
         return pa.array(self._feature_indices)
+
+def _read_xenium_software_version(
+    xenium_experiment_path: Union[str, Path]
+) -> Tuple[int, int, int]:
+    with open(xenium_experiment_path) as xenium_experiment:
+        experiment_json = json.load(xenium_experiment)
+
+        try:
+            major = experiment_json['major_version']
+            minor = experiment_json['minor_version']
+        except KeyError as ke:
+            raise SOMAError(
+                f"Unable to read software version from xenium experiment file "
+                f"{xenium_experiment_path}."
+            ) from ke
+
+    if not isinstance(major, int):
+        raise SOMAError(
+            f"Unexpected type {type(major)!r} for major software version in xenium "
+            f"experiment file {xenium_experiment_path}. Expected a string."
+        )
+    if not isinstance(minor, int):
+        raise SOMAError(
+            f"Unexpected type {type(minor)!r} for minor software version in xenium "
+            f"experiment file {xenium_experiment_path}. Expected a string."
+        )
+    
+    return (major, minor, 0)
