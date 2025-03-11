@@ -2053,3 +2053,11 @@ def test_sparse_nd_array_null(tmp_path):
         # any null values present in non-nullable attributes get casted to
         # fill values. In the case for float64, the fill value is 0
         np.testing.assert_array_equal(pdf["soma_data"], table["soma_data"].fill_null(0))
+
+
+def test_reopen_metadata_sc61118(tmp_path):
+    uri = tmp_path.as_posix()
+    with soma.SparseNDArray.create(uri, type=pa.int64(), shape=(10,)) as A1:
+        A1.metadata["foo"] = "bar"
+        with A1.reopen(mode="r") as A2:
+            assert dict(A1.metadata) == dict(A2.metadata)
