@@ -74,7 +74,59 @@ void load_soma_array(py::module& m) {
                py::object exc_value,
                py::object traceback) { array.close(); })
 
-        .def("reopen", &SOMAArray::reopen)
+        .def(
+            "reopen",
+            [](SOMAArray& array,
+               OpenMode mode,
+               std::optional<TimestampRange> timestamp) -> py::object {
+                auto new_array = array.reopen(mode, timestamp);
+
+                std::optional<std::string> soma_obj_type;
+                try {
+                    soma_obj_type = new_array->type();
+                } catch (const std::exception& e) {
+                    TPY_ERROR_LOC(e.what());
+                }
+
+                if (!soma_obj_type) {
+                    assert(
+                        false &&
+                        "Unreachable code: The missing soma_object_type case "
+                        "is already handled. This indicates an "
+                        "unexpected failure to catch exceptions by "
+                        "SOMAArray::reopenopen");
+                }
+
+                std::transform(
+                    soma_obj_type->begin(),
+                    soma_obj_type->end(),
+                    soma_obj_type->begin(),
+                    [](unsigned char c) { return std::tolower(c); });
+
+                if (soma_obj_type == "somadataframe")
+                    return py::cast(SOMADataFrame(*new_array));
+                else if (soma_obj_type == "somapointclouddataframe")
+                    return py::cast(SOMAPointCloudDataFrame(*new_array));
+                else if (soma_obj_type == "somageometrydataframe")
+                    return py::cast(SOMAGeometryDataFrame(*new_array));
+                else if (soma_obj_type == "somasparsendarray")
+                    return py::cast(SOMASparseNDArray(*new_array));
+                else if (soma_obj_type == "somadensendarray")
+                    return py::cast(SOMADenseNDArray(*new_array));
+
+                assert(
+                    false &&
+                    "Unreachable code: All possible SOMA object types are "
+                    "already handled. This indicates a logic error or an "
+                    "unexpected failure to catch exceptions by "
+                    "SOMAArray::reopen");
+
+                return py::none();  // Unreached, but appeases a compiler
+                                    // warning
+            },
+            "mode"_a,
+            "timestamp"_a = py::none())
+
         .def("close", &SOMAArray::close)
         .def_property_readonly(
             "closed",

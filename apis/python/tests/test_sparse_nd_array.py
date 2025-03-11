@@ -2061,3 +2061,11 @@ def test_reopen_metadata_sc61118(tmp_path):
         A1.metadata["foo"] = "bar"
         with A1.reopen(mode="r") as A2:
             assert dict(A1.metadata) == dict(A2.metadata)
+
+
+def test_reopen_shape_sc61123(tmp_path):
+    uri = tmp_path.as_posix()
+    with soma.SparseNDArray.create(uri, type=pa.int64(), shape=(10,)) as A:
+        assert A.shape == (10,)
+        A = A.reopen(mode="r")
+        assert A.shape == (10,)
