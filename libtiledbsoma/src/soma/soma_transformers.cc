@@ -5,8 +5,11 @@
 #include "../utils/logger.h"
 
 namespace tiledbsoma {
-OutlineTransformer::OutlineTransformer(SOMACoordinateSpace coordinate_space)
-    : coordinate_space(coordinate_space) {
+OutlineTransformer::OutlineTransformer(
+    SOMACoordinateSpace coordinate_space,
+    const std::vector<std::pair<std::string, bool>>& columns)
+    : coordinate_space(coordinate_space)
+    , columns(columns) {
 }
 
 OutlineTransformer::~OutlineTransformer() {
@@ -17,51 +20,50 @@ ArrowTable OutlineTransformer::apply(
     std::vector<std::unique_ptr<ArrowArray>> generated_arrays;
     std::vector<std::unique_ptr<ArrowSchema>> generated_schemas;
 
-    for (int64_t i = 0; i < schema->n_children; ++i) {
-        /**
-         * If `soma_geometry` conforms to specific formats, automatically
-         * convert to WKB and create additional index columns for spatial axes.
-         *
-         * If the `soma_geometry` array is a WKB binary, users are expected to
-         * provide the additional index columns for spatial axes.
-         */
+    for (const auto& column : columns) {
+        auto [name, generate_dimensions] = column;
 
-        if (strcmp(schema->children[i]->name, "soma_geometry") == 0 &&
-            strcmp(schema->children[i]->format, "+l") == 0) {
-            std::tie(generated_arrays, generated_schemas) =
-                _cast_polygon_vertex_list_to_wkb(
-                    array->children[i], coordinate_space);
+        for (int64_t i = 0; i < schema->n_children; ++i) {
+            if (strcmp(schema->children[i]->name, name.c_str()) == 0 &&
+                strcmp(schema->children[i]->format, "+l") == 0) {
+                std::tie(generated_arrays, generated_schemas) =
+                    _cast_polygon_vertex_list_to_wkb(
+                        array->children[i],
+                        schema->children[i],
+                        coordinate_space,
+                        generate_dimensions);
 
-            break;
+                break;
+            }
         }
-    }
 
-    int64_t soma_gometry_index = -1;
-    for (int64_t i = 0; i < schema->n_children; ++i) {
-        if (strcmp(
-                schema->children[i]->name, SOMA_GEOMETRY_COLUMN_NAME.c_str()) ==
-            0) {
-            soma_gometry_index = i;
-            break;
+        int64_t soma_gometry_index = -1;
+        for (int64_t i = 0; i < schema->n_children; ++i) {
+            if (strcmp(schema->children[i]->name, name.c_str()) == 0) {
+                soma_gometry_index = i;
+                break;
+            }
         }
+
+        if (soma_gometry_index == -1) {
+            throw std::runtime_error(fmt::format(
+                "[OutlineTransformer][apply] Missing schema child with name {}",
+                name));
+        }
+
+        array = ArrowAdapter::arrow_array_remove_at_index(
+            std::move(array), soma_gometry_index);
+        schema = ArrowAdapter::arrow_schema_remove_at_index(
+            std::move(schema), soma_gometry_index);
+
+        array = ArrowAdapter::arrow_array_insert_at_index(
+            std::move(array), std::move(generated_arrays), soma_gometry_index);
+
+        schema = ArrowAdapter::arrow_schema_insert_at_index(
+            std::move(schema),
+            std::move(generated_schemas),
+            soma_gometry_index);
     }
-
-    if (soma_gometry_index == -1) {
-        throw std::runtime_error(fmt::format(
-            "[OutlineTransformer][apply] Missing schema child with name {}",
-            SOMA_GEOMETRY_COLUMN_NAME));
-    }
-
-    array = ArrowAdapter::arrow_array_remove_at_index(
-        std::move(array), soma_gometry_index);
-    schema = ArrowAdapter::arrow_schema_remove_at_index(
-        std::move(schema), soma_gometry_index);
-
-    array = ArrowAdapter::arrow_array_insert_at_index(
-        std::move(array), std::move(generated_arrays), soma_gometry_index);
-
-    schema = ArrowAdapter::arrow_schema_insert_at_index(
-        std::move(schema), std::move(generated_schemas), soma_gometry_index);
 
     return std::make_pair(std::move(array), std::move(schema));
 }
@@ -71,45 +73,10 @@ std::pair<
     std::vector<std::unique_ptr<ArrowSchema>>>
 OutlineTransformer::_cast_polygon_vertex_list_to_wkb(
     ArrowArray* array,
-    const tiledbsoma::SOMACoordinateSpace& coordinate_space) {
-    // Initialize a vector to hold all the Arrow tables containing the
-    // transformed geometry data
-    std::vector<std::unique_ptr<ArrowArray>> arrays;
-    std::vector<std::unique_ptr<ArrowSchema>> schemas;
-
-    arrays.push_back(std::make_unique<ArrowArray>(ArrowArray{}));
-    schemas.push_back(std::make_unique<ArrowSchema>(ArrowSchema{}));
-
-    NANOARROW_THROW_NOT_OK(ArrowArrayInitFromType(
-        arrays.front().get(), ArrowType::NANOARROW_TYPE_LARGE_BINARY));
-    NANOARROW_THROW_NOT_OK(ArrowSchemaInitFromType(
-        schemas.front().get(), ArrowType::NANOARROW_TYPE_LARGE_BINARY));
-    schemas.front()->name = strdup("soma_geometry");
-
-    for (size_t i = 0; i < coordinate_space.size(); ++i) {
-        const auto axis = coordinate_space.axis(i);
-
-        // Min spatial axis
-        arrays.push_back(std::make_unique<ArrowArray>(ArrowArray{}));
-        schemas.push_back(std::make_unique<ArrowSchema>(ArrowSchema{}));
-        NANOARROW_THROW_NOT_OK(ArrowArrayInitFromType(
-            arrays.back().get(), ArrowType::NANOARROW_TYPE_DOUBLE));
-        NANOARROW_THROW_NOT_OK(ArrowSchemaInitFromType(
-            schemas.back().get(), ArrowType::NANOARROW_TYPE_DOUBLE));
-        schemas.back()->name = strdup(
-            (SOMA_GEOMETRY_DIMENSION_PREFIX + axis.name + "__min").c_str());
-
-        // Max spatial axis
-        arrays.push_back(std::make_unique<ArrowArray>(ArrowArray{}));
-        schemas.push_back(std::make_unique<ArrowSchema>(ArrowSchema{}));
-        NANOARROW_THROW_NOT_OK(ArrowArrayInitFromType(
-            arrays.back().get(), ArrowType::NANOARROW_TYPE_DOUBLE));
-        NANOARROW_THROW_NOT_OK(ArrowSchemaInitFromType(
-            schemas.back().get(), ArrowType::NANOARROW_TYPE_DOUBLE));
-        schemas.back()->name = strdup(
-            (SOMA_GEOMETRY_DIMENSION_PREFIX + axis.name + "__max").c_str());
-    }
-
+    ArrowSchema* schema,
+    const tiledbsoma::SOMACoordinateSpace& coordinate_space,
+    bool generate_dimensions) {
+    // Generate geometry data
     // Large list of doubles
     const uint32_t* offset = static_cast<const uint32_t*>(array->buffers[1]);
     const double_t* data = static_cast<const double_t*>(
@@ -133,18 +100,57 @@ OutlineTransformer::_cast_polygon_vertex_list_to_wkb(
         wkb_buffer_size += wkb_size(geometries.back());
     }
 
+    // Initialize a vector to hold all the Arrow tables containing the
+    // transformed geometry data
+    std::vector<std::unique_ptr<ArrowArray>> arrays;
+    std::vector<std::unique_ptr<ArrowSchema>> schemas;
+
+    arrays.push_back(std::make_unique<ArrowArray>(ArrowArray{}));
+    schemas.push_back(std::make_unique<ArrowSchema>(ArrowSchema{}));
+
+    NANOARROW_THROW_NOT_OK(ArrowArrayInitFromType(
+        arrays.front().get(), ArrowType::NANOARROW_TYPE_LARGE_BINARY));
+    NANOARROW_THROW_NOT_OK(ArrowSchemaInitFromType(
+        schemas.front().get(), ArrowType::NANOARROW_TYPE_LARGE_BINARY));
+    schemas.front()->name = strdup(schema->name);
+
     NANOARROW_THROW_NOT_OK(
         ArrowArrayReserve(arrays.front().get(), wkb_buffer_size));
     NANOARROW_THROW_NOT_OK(ArrowArrayStartAppending(arrays.front().get()));
-    for (size_t i = 1; i < arrays.size(); ++i) {
-        NANOARROW_THROW_NOT_OK(
-            ArrowArrayReserve(arrays[i].get(), array->length));
-        NANOARROW_THROW_NOT_OK(ArrowArrayStartAppending(arrays[i].get()));
+
+    if (generate_dimensions) {
+        for (size_t i = 0; i < coordinate_space.size(); ++i) {
+            const auto axis = coordinate_space.axis(i);
+
+            // Min spatial axis
+            arrays.push_back(std::make_unique<ArrowArray>(ArrowArray{}));
+            schemas.push_back(std::make_unique<ArrowSchema>(ArrowSchema{}));
+            NANOARROW_THROW_NOT_OK(ArrowArrayInitFromType(
+                arrays.back().get(), ArrowType::NANOARROW_TYPE_DOUBLE));
+            NANOARROW_THROW_NOT_OK(ArrowSchemaInitFromType(
+                schemas.back().get(), ArrowType::NANOARROW_TYPE_DOUBLE));
+            schemas.back()->name = strdup(
+                (SOMA_GEOMETRY_DIMENSION_PREFIX + axis.name + "__min").c_str());
+
+            // Max spatial axis
+            arrays.push_back(std::make_unique<ArrowArray>(ArrowArray{}));
+            schemas.push_back(std::make_unique<ArrowSchema>(ArrowSchema{}));
+            NANOARROW_THROW_NOT_OK(ArrowArrayInitFromType(
+                arrays.back().get(), ArrowType::NANOARROW_TYPE_DOUBLE));
+            NANOARROW_THROW_NOT_OK(ArrowSchemaInitFromType(
+                schemas.back().get(), ArrowType::NANOARROW_TYPE_DOUBLE));
+            schemas.back()->name = strdup(
+                (SOMA_GEOMETRY_DIMENSION_PREFIX + axis.name + "__max").c_str());
+
+            NANOARROW_THROW_NOT_OK(
+                ArrowArrayReserve(arrays.back().get(), array->length));
+            NANOARROW_THROW_NOT_OK(
+                ArrowArrayStartAppending(arrays.back().get()));
+        }
     }
 
     for (const auto& geometry : geometries) {
         geometry::BinaryBuffer wkb = geometry::to_wkb(geometry);
-        geometry::Envelope envelope = geometry::envelope(geometry);
 
         ArrowBufferView wkb_view;
         wkb_view.data.data = wkb.data();
@@ -153,11 +159,15 @@ OutlineTransformer::_cast_polygon_vertex_list_to_wkb(
         NANOARROW_THROW_NOT_OK(
             ArrowArrayAppendBytes(arrays.front().get(), wkb_view));
 
-        for (size_t i = 0; i < coordinate_space.size(); ++i) {
-            NANOARROW_THROW_NOT_OK(ArrowArrayAppendDouble(
-                arrays[2 * i + 1].get(), envelope.range.at(i).first));
-            NANOARROW_THROW_NOT_OK(ArrowArrayAppendDouble(
-                arrays[2 * i + 2].get(), envelope.range.at(i).second));
+        if (generate_dimensions) {
+            geometry::Envelope envelope = geometry::envelope(geometry);
+
+            for (size_t i = 0; i < coordinate_space.size(); ++i) {
+                NANOARROW_THROW_NOT_OK(ArrowArrayAppendDouble(
+                    arrays[2 * i + 1].get(), envelope.range.at(i).first));
+                NANOARROW_THROW_NOT_OK(ArrowArrayAppendDouble(
+                    arrays[2 * i + 2].get(), envelope.range.at(i).second));
+            }
         }
     }
 
