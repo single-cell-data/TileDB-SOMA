@@ -2990,3 +2990,44 @@ def test_extents(tmp_path, pa_type, tile):
     with soma.DataFrame.open(tmp_path.as_posix()) as A:
         dim_info = json.loads(A.schema_config_options().dims)
         assert dim_info["dim"]["tile"] == tile
+
+
+def test_append_enumerations_at_timestamp_2879(tmp_path):
+    # https://github.com/single-cell-data/TileDB-SOMA/issues/2879
+
+    uri = tmp_path.as_posix()
+    asch = pa.schema([("foo", pa.dictionary(pa.int8(), pa.large_string()))])
+    soma.DataFrame.create(uri, schema=asch, tiledb_timestamp=1, domain=[(0, 4)])
+
+    pydict1 = {}
+    pydict1["soma_joinid"] = [0, 1, 2]
+    pydict1["foo"] = pd.Series(["a", "b", "a"], dtype="category")
+    rb1 = pa.Table.from_pydict(pydict1)
+
+    with soma.DataFrame.open(uri, "w", tiledb_timestamp=2) as sdf:
+        sdf.write(rb1)
+
+    pydict2 = {}
+    pydict2["soma_joinid"] = [3, 4]
+    pydict2["foo"] = pd.Series(["b", "b"], dtype="category")
+    rb2 = pa.Table.from_pydict(pydict2)
+
+    rb3 = pa.Table.from_pandas(
+        pd.concat([rb1.to_pandas(), rb2.to_pandas()], ignore_index=True),
+        schema=rb1.schema,
+    )
+
+    with soma.DataFrame.open(uri, "w", tiledb_timestamp=3) as sdf:
+        sdf.write(rb2)
+
+    with soma.DataFrame.open(uri) as sdf:
+        assert sdf.read().concat() == rb3
+
+    with soma.DataFrame.open(uri, tiledb_timestamp=1) as sdf:
+        assert len(sdf.read().concat()) == 0
+
+    with soma.DataFrame.open(uri, tiledb_timestamp=2) as sdf:
+        assert sdf.read().concat() == rb1
+
+    with soma.DataFrame.open(uri, tiledb_timestamp=3) as sdf:
+        assert sdf.read().concat() == rb3
