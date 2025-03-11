@@ -2,6 +2,7 @@
 #
 # Licensed under the MIT License.
 
+import json
 from pathlib import Path
 from typing import Tuple, Union
 
@@ -73,3 +74,31 @@ def _read_visium_software_version(
             f"file {gene_expression_path}."
         )
     return (major, minor, patch)
+
+def _read_xenium_software_version(
+    xenium_experiment_path: Union[str, Path]
+) -> Tuple[int, int, int]:
+    with open(xenium_experiment_path) as xenium_experiment:
+        experiment_json = json.load(xenium_experiment)
+
+        try:
+            major = experiment_json['major_version']
+            minor = experiment_json['minor_version']
+        except KeyError as ke:
+            raise SOMAError(
+                f"Unable to read software version from xenium experiment file "
+                f"{xenium_experiment_path}."
+            ) from ke
+
+    if not isinstance(major, int):
+        raise SOMAError(
+            f"Unexpected type {type(major)!r} for major software version in xenium "
+            f"experiment file {xenium_experiment_path}. Expected a string."
+        )
+    if not isinstance(minor, int):
+        raise SOMAError(
+            f"Unexpected type {type(minor)!r} for minor software version in xenium "
+            f"experiment file {xenium_experiment_path}. Expected a string."
+        )
+    
+    return (major, minor, 0)
