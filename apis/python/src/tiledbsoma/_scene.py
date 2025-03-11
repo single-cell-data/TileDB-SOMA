@@ -507,7 +507,13 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
 
         Lifecycle: experimental
         """
-        raise NotImplementedError()
+        return self._set_transform_to_element(
+            GeometryDataFrame,
+            key=key,
+            transform=transform,
+            subcollection=subcollection,
+            coordinate_space=coordinate_space,
+        )
 
     def set_transform_to_multiscale_image(
         self,
