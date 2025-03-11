@@ -906,11 +906,27 @@ ArrowAdapter::tiledb_schema_from_arrow_schema(
     const std::optional<SOMACoordinateSpace>& coordinate_space,
     std::string soma_type,
     bool is_sparse,
-    PlatformConfig platform_config) {
+    PlatformConfig platform_config,
+    std::optional<std::pair<int64_t, int64_t>> timestamp_range) {
     auto& index_column_array = index_column_info.first;
     auto& index_column_schema = index_column_info.second;
 
-    ArraySchema schema(*ctx, is_sparse ? TILEDB_SPARSE : TILEDB_DENSE);
+    tiledb_array_schema_t* c_schema;
+    if (timestamp_range.has_value()) {
+        ctx->handle_error(tiledb_array_schema_alloc_at_timestamp(
+            ctx->ptr().get(),
+            is_sparse ? TILEDB_SPARSE : TILEDB_DENSE,
+            timestamp_range.value().first,
+            timestamp_range.value().second,
+            &c_schema));
+    } else {
+        ctx->handle_error(tiledb_array_schema_alloc(
+            ctx->ptr().get(),
+            is_sparse ? TILEDB_SPARSE : TILEDB_DENSE,
+            &c_schema));
+    }
+    ArraySchema schema(*ctx, c_schema);
+
     Domain domain(*ctx);
 
     schema.set_capacity(platform_config.capacity);
@@ -1311,7 +1327,7 @@ ArrowAdapter::to_arrow(std::shared_ptr<ColumnBuffer> column) {
     array->release = &release_array;
     if (array->private_data != nullptr) {  // as we use nanoarrow's init
         free(array->private_data);         // free what was allocated before
-    }  // assigning our ArrowBuffer pointer
+    }                                      // assigning our ArrowBuffer pointer
     array->private_data = (void*)arrow_buffer;
 
     LOG_TRACE(fmt::format(
