@@ -1,0 +1,608 @@
+{
+  "mem": {
+    "scheduler": {
+      "peak_mem": 41149832586,
+      "top_allocs": [
+        {
+          "location": "__next__:/home/ubuntu/TileDB-SOMA/apis/python/src/tiledbsoma/_read_iters.py:599",
+          "size": 39731155128,
+          "iec": "37 GiB"
+        },
+        {
+          "location": "host_array:/home/ubuntu/.pyenv/versions/3.11.8/lib/python3.11/site-packages/distributed/protocol/utils.py:29",
+          "size": 10912192762,
+          "iec": "10.2 GiB"
+        },
+        {
+          "location": "<stack trace unavailable>",
+          "size": 5106422186,
+          "iec": "4.76 GiB"
+        },
+        {
+          "location": "_deserialize_bytes:/home/ubuntu/.pyenv/versions/3.11.8/lib/python3.11/site-packages/distributed/protocol/serialize.py:803",
+          "size": 3688343279,
+          "iec": "3.44 GiB"
+        },
+        {
+          "location": "packb:/home/ubuntu/.pyenv/versions/3.11.8/lib/python3.11/site-packages/msgpack/__init__.py:36",
+          "size": 2324202244,
+          "iec": "2.16 GiB"
+        }
+      ],
+      "tracked_allocs": 111407729,
+      "tracked_bytes": 78891191996,
+      "total_allocs": 215002847,
+      "total_frames": 7539
+    },
+    "worker_0": {
+      "peak_mem": 11619919841,
+      "top_allocs": [
+        {
+          "location": "<stack trace unavailable>",
+          "size": 45530219800,
+          "iec": "42.4 GiB"
+        },
+        {
+          "location": "__next__:/home/ubuntu/TileDB-SOMA/apis/python/src/tiledbsoma/_read_iters.py:599",
+          "size": 16109879768,
+          "iec": "15 GiB"
+        },
+        {
+          "location": "get_indexer:/home/ubuntu/TileDB-SOMA/apis/python/src/tiledbsoma/_indexer.py:99",
+          "size": 7287184073,
+          "iec": "6.79 GiB"
+        },
+        {
+          "location": "_with_data:/home/ubuntu/.pyenv/versions/3.11.8/lib/python3.11/site-packages/scipy/sparse/_compressed.py:1347",
+          "size": 3607010291,
+          "iec": "3.36 GiB"
+        },
+        {
+          "location": "_binopt:/home/ubuntu/.pyenv/versions/3.11.8/lib/python3.11/site-packages/scipy/sparse/_compressed.py:1373",
+          "size": 3606989816,
+          "iec": "3.36 GiB"
+        }
+      ],
+      "tracked_allocs": 56813253,
+      "tracked_bytes": 99765947136,
+      "total_allocs": 113462463,
+      "total_frames": 3296
+    },
+    "worker_1": {
+      "peak_mem": 10475510155,
+      "top_allocs": [
+        {
+          "location": "<stack trace unavailable>",
+          "size": 28619677350,
+          "iec": "26.7 GiB"
+        },
+        {
+          "location": "__next__:/home/ubuntu/TileDB-SOMA/apis/python/src/tiledbsoma/_read_iters.py:599",
+          "size": 12887480388,
+          "iec": "12 GiB"
+        },
+        {
+          "location": "get_indexer:/home/ubuntu/TileDB-SOMA/apis/python/src/tiledbsoma/_indexer.py:99",
+          "size": 5644727575,
+          "iec": "5.26 GiB"
+        },
+        {
+          "location": "host_array:/home/ubuntu/.pyenv/versions/3.11.8/lib/python3.11/site-packages/distributed/protocol/utils.py:29",
+          "size": 4007941180,
+          "iec": "3.73 GiB"
+        },
+        {
+          "location": "_with_data:/home/ubuntu/.pyenv/versions/3.11.8/lib/python3.11/site-packages/scipy/sparse/_compressed.py:1347",
+          "size": 2787794686,
+          "iec": "2.6 GiB"
+        }
+      ],
+      "tracked_allocs": 47352349,
+      "tracked_bytes": 75914093664,
+      "total_allocs": 94550717,
+      "total_frames": 3457
+    },
+    "worker_2": {
+      "peak_mem": 9926862859,
+      "top_allocs": [
+        {
+          "location": "<stack trace unavailable>",
+          "size": 31666229211,
+          "iec": "29.5 GiB"
+        },
+        {
+          "location": "__next__:/home/ubuntu/TileDB-SOMA/apis/python/src/tiledbsoma/_read_iters.py:599",
+          "size": 12888766236,
+          "iec": "12 GiB"
+        },
+        {
+          "location": "get_indexer:/home/ubuntu/TileDB-SOMA/apis/python/src/tiledbsoma/_indexer.py:99",
+          "size": 5109693193,
+          "iec": "4.76 GiB"
+        },
+        {
+          "location": "_with_data:/home/ubuntu/.pyenv/versions/3.11.8/lib/python3.11/site-packages/scipy/sparse/_compressed.py:1347",
+          "size": 2520331610,
+          "iec": "2.35 GiB"
+        },
+        {
+          "location": "method:/home/ubuntu/.pyenv/versions/3.11.8/lib/python3.11/site-packages/scipy/sparse/_data.py:144",
+          "size": 2520311400,
+          "iec": "2.35 GiB"
+        }
+      ],
+      "tracked_allocs": 50331050,
+      "tracked_bytes": 71213382839,
+      "total_allocs": 100512837,
+      "total_frames": 3339
+    },
+    "worker_3": {
+      "peak_mem": 11376581558,
+      "top_allocs": [
+        {
+          "location": "<stack trace unavailable>",
+          "size": 41386796479,
+          "iec": "38.5 GiB"
+        },
+        {
+          "location": "__next__:/home/ubuntu/TileDB-SOMA/apis/python/src/tiledbsoma/_read_iters.py:599",
+          "size": 16109201683,
+          "iec": "15 GiB"
+        },
+        {
+          "location": "get_indexer:/home/ubuntu/TileDB-SOMA/apis/python/src/tiledbsoma/_indexer.py:99",
+          "size": 6299035229,
+          "iec": "5.87 GiB"
+        },
+        {
+          "location": "_with_data:/home/ubuntu/.pyenv/versions/3.11.8/lib/python3.11/site-packages/scipy/sparse/_compressed.py:1347",
+          "size": 3114601185,
+          "iec": "2.9 GiB"
+        },
+        {
+          "location": "method:/home/ubuntu/.pyenv/versions/3.11.8/lib/python3.11/site-packages/scipy/sparse/_data.py:144",
+          "size": 3114571912,
+          "iec": "2.9 GiB"
+        }
+      ],
+      "tracked_allocs": 63444004,
+      "tracked_bytes": 89523856570,
+      "total_allocs": 126736931,
+      "total_frames": 3366
+    },
+    "worker_4": {
+      "peak_mem": 10615289821,
+      "top_allocs": [
+        {
+          "location": "<stack trace unavailable>",
+          "size": 35416384455,
+          "iec": "33 GiB"
+        },
+        {
+          "location": "__next__:/home/ubuntu/TileDB-SOMA/apis/python/src/tiledbsoma/_read_iters.py:599",
+          "size": 16110889579,
+          "iec": "15 GiB"
+        },
+        {
+          "location": "get_indexer:/home/ubuntu/TileDB-SOMA/apis/python/src/tiledbsoma/_indexer.py:99",
+          "size": 5933008805,
+          "iec": "5.53 GiB"
+        },
+        {
+          "location": "_with_data:/home/ubuntu/.pyenv/versions/3.11.8/lib/python3.11/site-packages/scipy/sparse/_compressed.py:1347",
+          "size": 2931139617,
+          "iec": "2.73 GiB"
+        },
+        {
+          "location": "method:/home/ubuntu/.pyenv/versions/3.11.8/lib/python3.11/site-packages/scipy/sparse/_data.py:144",
+          "size": 2931110448,
+          "iec": "2.73 GiB"
+        }
+      ],
+      "tracked_allocs": 64012730,
+      "tracked_bytes": 81797265669,
+      "total_allocs": 127869871,
+      "total_frames": 3355
+    },
+    "worker_5": {
+      "peak_mem": 10838140922,
+      "top_allocs": [
+        {
+          "location": "<stack trace unavailable>",
+          "size": 34166761581,
+          "iec": "31.8 GiB"
+        },
+        {
+          "location": "__next__:/home/ubuntu/TileDB-SOMA/apis/python/src/tiledbsoma/_read_iters.py:599",
+          "size": 12889727004,
+          "iec": "12 GiB"
+        },
+        {
+          "location": "get_indexer:/home/ubuntu/TileDB-SOMA/apis/python/src/tiledbsoma/_indexer.py:99",
+          "size": 5741862273,
+          "iec": "5.35 GiB"
+        },
+        {
+          "location": "_with_data:/home/ubuntu/.pyenv/versions/3.11.8/lib/python3.11/site-packages/scipy/sparse/_compressed.py:1347",
+          "size": 2831142058,
+          "iec": "2.64 GiB"
+        },
+        {
+          "location": "method:/home/ubuntu/.pyenv/versions/3.11.8/lib/python3.11/site-packages/scipy/sparse/_data.py:144",
+          "size": 2831121560,
+          "iec": "2.64 GiB"
+        }
+      ],
+      "tracked_allocs": 52804246,
+      "tracked_bytes": 77112708001,
+      "total_allocs": 105460606,
+      "total_frames": 3340
+    },
+    "worker_6": {
+      "peak_mem": 9413950158,
+      "top_allocs": [
+        {
+          "location": "<stack trace unavailable>",
+          "size": 28515709919,
+          "iec": "26.6 GiB"
+        },
+        {
+          "location": "__next__:/home/ubuntu/TileDB-SOMA/apis/python/src/tiledbsoma/_read_iters.py:599",
+          "size": 9666491344,
+          "iec": "9 GiB"
+        },
+        {
+          "location": "get_indexer:/home/ubuntu/TileDB-SOMA/apis/python/src/tiledbsoma/_indexer.py:99",
+          "size": 4941665519,
+          "iec": "4.6 GiB"
+        },
+        {
+          "location": "_binopt:/home/ubuntu/.pyenv/versions/3.11.8/lib/python3.11/site-packages/scipy/sparse/_compressed.py:1373",
+          "size": 2756556584,
+          "iec": "2.57 GiB"
+        },
+        {
+          "location": "_binopt:/home/ubuntu/.pyenv/versions/3.11.8/lib/python3.11/site-packages/scipy/sparse/_compressed.py:1367",
+          "size": 2756555016,
+          "iec": "2.57 GiB"
+        }
+      ],
+      "tracked_allocs": 48155863,
+      "tracked_bytes": 65223330577,
+      "total_allocs": 96166586,
+      "total_frames": 3467
+    },
+    "worker_7": {
+      "peak_mem": 11809643255,
+      "top_allocs": [
+        {
+          "location": "<stack trace unavailable>",
+          "size": 36863813703,
+          "iec": "34.3 GiB"
+        },
+        {
+          "location": "__next__:/home/ubuntu/TileDB-SOMA/apis/python/src/tiledbsoma/_read_iters.py:599",
+          "size": 19328772900,
+          "iec": "18 GiB"
+        },
+        {
+          "location": "get_indexer:/home/ubuntu/TileDB-SOMA/apis/python/src/tiledbsoma/_indexer.py:99",
+          "size": 8471411119,
+          "iec": "7.89 GiB"
+        },
+        {
+          "location": "_with_data:/home/ubuntu/.pyenv/versions/3.11.8/lib/python3.11/site-packages/scipy/sparse/_compressed.py:1347",
+          "size": 4199244521,
+          "iec": "3.91 GiB"
+        },
+        {
+          "location": "_binopt:/home/ubuntu/.pyenv/versions/3.11.8/lib/python3.11/site-packages/scipy/sparse/_compressed.py:1373",
+          "size": 4199215696,
+          "iec": "3.91 GiB"
+        }
+      ],
+      "tracked_allocs": 59047067,
+      "tracked_bytes": 99482578453,
+      "total_allocs": 117942049,
+      "total_frames": 3278
+    },
+    "worker_8": {
+      "peak_mem": 10437212646,
+      "top_allocs": [
+        {
+          "location": "<stack trace unavailable>",
+          "size": 25890604702,
+          "iec": "24.1 GiB"
+        },
+        {
+          "location": "__next__:/home/ubuntu/TileDB-SOMA/apis/python/src/tiledbsoma/_read_iters.py:599",
+          "size": 9666174904,
+          "iec": "9 GiB"
+        },
+        {
+          "location": "get_indexer:/home/ubuntu/TileDB-SOMA/apis/python/src/tiledbsoma/_indexer.py:99",
+          "size": 4966561167,
+          "iec": "4.63 GiB"
+        },
+        {
+          "location": "_with_data:/home/ubuntu/.pyenv/versions/3.11.8/lib/python3.11/site-packages/scipy/sparse/_compressed.py:1347",
+          "size": 2447727156,
+          "iec": "2.28 GiB"
+        },
+        {
+          "location": "method:/home/ubuntu/.pyenv/versions/3.11.8/lib/python3.11/site-packages/scipy/sparse/_data.py:144",
+          "size": 2447703952,
+          "iec": "2.28 GiB"
+        }
+      ],
+      "tracked_allocs": 46844036,
+      "tracked_bytes": 62304267215,
+      "total_allocs": 93543218,
+      "total_frames": 3456
+    },
+    "worker_9": {
+      "peak_mem": 9399744529,
+      "top_allocs": [
+        {
+          "location": "<stack trace unavailable>",
+          "size": 34288292504,
+          "iec": "31.9 GiB"
+        },
+        {
+          "location": "__next__:/home/ubuntu/TileDB-SOMA/apis/python/src/tiledbsoma/_read_iters.py:599",
+          "size": 12887478602,
+          "iec": "12 GiB"
+        },
+        {
+          "location": "get_indexer:/home/ubuntu/TileDB-SOMA/apis/python/src/tiledbsoma/_indexer.py:99",
+          "size": 6599572913,
+          "iec": "6.15 GiB"
+        },
+        {
+          "location": "_with_data:/home/ubuntu/.pyenv/versions/3.11.8/lib/python3.11/site-packages/scipy/sparse/_compressed.py:1347",
+          "size": 3264498025,
+          "iec": "3.04 GiB"
+        },
+        {
+          "location": "_binopt:/home/ubuntu/.pyenv/versions/3.11.8/lib/python3.11/site-packages/scipy/sparse/_compressed.py:1373",
+          "size": 3264468824,
+          "iec": "3.04 GiB"
+        }
+      ],
+      "tracked_allocs": 60735993,
+      "tracked_bytes": 81235408780,
+      "total_allocs": 121323442,
+      "total_frames": 3290
+    },
+    "worker_10": {
+      "peak_mem": 9411181460,
+      "top_allocs": [
+        {
+          "location": "<stack trace unavailable>",
+          "size": 25695926237,
+          "iec": "23.9 GiB"
+        },
+        {
+          "location": "__next__:/home/ubuntu/TileDB-SOMA/apis/python/src/tiledbsoma/_read_iters.py:599",
+          "size": 9666163456,
+          "iec": "9 GiB"
+        },
+        {
+          "location": "host_array:/home/ubuntu/.pyenv/versions/3.11.8/lib/python3.11/site-packages/distributed/protocol/utils.py:29",
+          "size": 5647710144,
+          "iec": "5.26 GiB"
+        },
+        {
+          "location": "get_indexer:/home/ubuntu/TileDB-SOMA/apis/python/src/tiledbsoma/_indexer.py:99",
+          "size": 4817706781,
+          "iec": "4.49 GiB"
+        },
+        {
+          "location": "_with_data:/home/ubuntu/.pyenv/versions/3.11.8/lib/python3.11/site-packages/scipy/sparse/_compressed.py:1347",
+          "size": 3294202619,
+          "iec": "3.07 GiB"
+        }
+      ],
+      "tracked_allocs": 46949886,
+      "tracked_bytes": 73017563968,
+      "total_allocs": 93728897,
+      "total_frames": 3620
+    },
+    "worker_11": {
+      "peak_mem": 10485013897,
+      "top_allocs": [
+        {
+          "location": "<stack trace unavailable>",
+          "size": 30484483087,
+          "iec": "28.4 GiB"
+        },
+        {
+          "location": "__next__:/home/ubuntu/TileDB-SOMA/apis/python/src/tiledbsoma/_read_iters.py:599",
+          "size": 12889219185,
+          "iec": "12 GiB"
+        },
+        {
+          "location": "get_indexer:/home/ubuntu/TileDB-SOMA/apis/python/src/tiledbsoma/_indexer.py:99",
+          "size": 5074271731,
+          "iec": "4.73 GiB"
+        },
+        {
+          "location": "_with_data:/home/ubuntu/.pyenv/versions/3.11.8/lib/python3.11/site-packages/scipy/sparse/_compressed.py:1347",
+          "size": 2501436812,
+          "iec": "2.33 GiB"
+        },
+        {
+          "location": "_binopt:/home/ubuntu/.pyenv/versions/3.11.8/lib/python3.11/site-packages/scipy/sparse/_compressed.py:1373",
+          "size": 2501413080,
+          "iec": "2.33 GiB"
+        }
+      ],
+      "tracked_allocs": 50360034,
+      "tracked_bytes": 70768232287,
+      "total_allocs": 100570707,
+      "total_frames": 3448
+    },
+    "worker_12": {
+      "peak_mem": 10659459702,
+      "top_allocs": [
+        {
+          "location": "<stack trace unavailable>",
+          "size": 27922367096,
+          "iec": "26 GiB"
+        },
+        {
+          "location": "__next__:/home/ubuntu/TileDB-SOMA/apis/python/src/tiledbsoma/_read_iters.py:599",
+          "size": 12887465772,
+          "iec": "12 GiB"
+        },
+        {
+          "location": "get_indexer:/home/ubuntu/TileDB-SOMA/apis/python/src/tiledbsoma/_indexer.py:99",
+          "size": 5359848463,
+          "iec": "4.99 GiB"
+        },
+        {
+          "location": "host_array:/home/ubuntu/.pyenv/versions/3.11.8/lib/python3.11/site-packages/distributed/protocol/utils.py:29",
+          "size": 4196135569,
+          "iec": "3.91 GiB"
+        },
+        {
+          "location": "_with_data:/home/ubuntu/.pyenv/versions/3.11.8/lib/python3.11/site-packages/scipy/sparse/_compressed.py:1347",
+          "size": 2645231245,
+          "iec": "2.46 GiB"
+        }
+      ],
+      "tracked_allocs": 47045833,
+      "tracked_bytes": 74086163125,
+      "total_allocs": 93938651,
+      "total_frames": 3453
+    },
+    "worker_13": {
+      "peak_mem": 10342507152,
+      "top_allocs": [
+        {
+          "location": "<stack trace unavailable>",
+          "size": 27937737475,
+          "iec": "26 GiB"
+        },
+        {
+          "location": "__next__:/home/ubuntu/TileDB-SOMA/apis/python/src/tiledbsoma/_read_iters.py:599",
+          "size": 9666969424,
+          "iec": "9 GiB"
+        },
+        {
+          "location": "get_indexer:/home/ubuntu/TileDB-SOMA/apis/python/src/tiledbsoma/_indexer.py:99",
+          "size": 4745623517,
+          "iec": "4.42 GiB"
+        },
+        {
+          "location": "_binopt:/home/ubuntu/.pyenv/versions/3.11.8/lib/python3.11/site-packages/scipy/sparse/_compressed.py:1373",
+          "size": 1747539096,
+          "iec": "1.63 GiB"
+        },
+        {
+          "location": "_binopt:/home/ubuntu/.pyenv/versions/3.11.8/lib/python3.11/site-packages/scipy/sparse/_compressed.py:1367",
+          "size": 1747538056,
+          "iec": "1.63 GiB"
+        }
+      ],
+      "tracked_allocs": 48264453,
+      "tracked_bytes": 59804370825,
+      "total_allocs": 96375805,
+      "total_frames": 3462
+    },
+    "worker_14": {
+      "peak_mem": 11000584159,
+      "top_allocs": [
+        {
+          "location": "<stack trace unavailable>",
+          "size": 30811523832,
+          "iec": "28.7 GiB"
+        },
+        {
+          "location": "__next__:/home/ubuntu/TileDB-SOMA/apis/python/src/tiledbsoma/_read_iters.py:599",
+          "size": 12887465340,
+          "iec": "12 GiB"
+        },
+        {
+          "location": "get_indexer:/home/ubuntu/TileDB-SOMA/apis/python/src/tiledbsoma/_indexer.py:99",
+          "size": 6102670767,
+          "iec": "5.68 GiB"
+        },
+        {
+          "location": "_with_data:/home/ubuntu/.pyenv/versions/3.11.8/lib/python3.11/site-packages/scipy/sparse/_compressed.py:1347",
+          "size": 3015423956,
+          "iec": "2.81 GiB"
+        },
+        {
+          "location": "_binopt:/home/ubuntu/.pyenv/versions/3.11.8/lib/python3.11/site-packages/scipy/sparse/_compressed.py:1373",
+          "size": 3015400528,
+          "iec": "2.81 GiB"
+        }
+      ],
+      "tracked_allocs": 47972665,
+      "tracked_bytes": 76176816006,
+      "total_allocs": 95798886,
+      "total_frames": 3479
+    },
+    "worker_15": {
+      "peak_mem": 9966647760,
+      "top_allocs": [
+        {
+          "location": "<stack trace unavailable>",
+          "size": 26322178075,
+          "iec": "24.5 GiB"
+        },
+        {
+          "location": "__next__:/home/ubuntu/TileDB-SOMA/apis/python/src/tiledbsoma/_read_iters.py:599",
+          "size": 12885175178,
+          "iec": "12 GiB"
+        },
+        {
+          "location": "get_indexer:/home/ubuntu/TileDB-SOMA/apis/python/src/tiledbsoma/_indexer.py:99",
+          "size": 6276067095,
+          "iec": "5.85 GiB"
+        },
+        {
+          "location": "_with_data:/home/ubuntu/.pyenv/versions/3.11.8/lib/python3.11/site-packages/scipy/sparse/_compressed.py:1347",
+          "size": 3100169041,
+          "iec": "2.89 GiB"
+        },
+        {
+          "location": "_binopt:/home/ubuntu/.pyenv/versions/3.11.8/lib/python3.11/site-packages/scipy/sparse/_compressed.py:1373",
+          "size": 3100140480,
+          "iec": "2.89 GiB"
+        }
+      ],
+      "tracked_allocs": 54570639,
+      "tracked_bytes": 72046351567,
+      "total_allocs": 108988192,
+      "total_frames": 3330
+    }
+  },
+  "times": {
+    "dask": 2.6755274009992718,
+    "start": 1.149341454001842,
+    "query": 0.2443166479934007,
+    "to_anndata": 32.76800093399652,
+    "normalize": 0.1301461469993228,
+    "log1p": 0.010831964995304588,
+    "hvg": 334.54544914299913,
+    "stats": 0.0004924320019199513,
+    "memray_scheduler": 44.9501002399993,
+    "memray_workers": 125.81838130799588
+  },
+  "total_time": 542.2925876719819,
+  "tissue": "lung",
+  "cmd": "HVG",
+  "n_obs": 3677225,
+  "obs_per_s": 6780.887446361804,
+  "no_dask_mem_mgmt": true,
+  "dask": {
+    "chunk_size": 100000,
+    "procs": 16,
+    "threads_per_proc": 1
+  },
+  "tdb_concurrency": 4,
+  "hvg_obs_per_s": 10991.705340544613,
+  "mem_total_budget": 2147483648
+}
