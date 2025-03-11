@@ -78,11 +78,13 @@ void load_transformers(py::module& m) {
         OutlineTransformer,
         Transformer,
         std::shared_ptr<OutlineTransformer>>(m, "OutlineTransformer")
-        .def(py::init([](std::string coord_space) {
+        .def(py::init([](std::string coord_space,
+                         std::vector<std::pair<std::string, bool>> columns) {
             auto coordinate_space = SOMACoordinateSpace::from_string(
                 coord_space);
 
-            return std::make_shared<OutlineTransformer>(coordinate_space);
+            return std::make_shared<OutlineTransformer>(
+                coordinate_space, columns);
         }));
 }
 }  // namespace libtiledbsomacpp
