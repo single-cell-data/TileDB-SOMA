@@ -98,6 +98,7 @@ def _make_context(
             {
                 "sm.io_concurrency_level": tdb_concurrency,
                 "sm.compute_concurrency_level": tdb_concurrency,
+                "soma.compute_concurrency_level": tdb_concurrency,
             }
         )
         threadpool = ThreadPoolExecutor(max_workers=tdb_concurrency)
