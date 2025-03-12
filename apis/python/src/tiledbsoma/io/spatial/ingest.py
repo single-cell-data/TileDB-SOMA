@@ -29,7 +29,7 @@ except ImportError as err:
     raise err
 
 
-from somacore import Axis, CoordinateSpace, IdentityTransform, ScaleTransform
+from somacore import Axis, CoordinateSpace, IdentityTransform, ScaleTransform, UniformScaleTransform
 from somacore.options import PlatformConfig
 
 from ... import (
@@ -1067,6 +1067,7 @@ class XeniumPaths:
         cells: str | Path | None = None,
         cell_boundaries: str | Path | None = None,
         nucleus_boundaries: str | Path | None = None,
+        transcripts: str | Path | None = None,
         version: int | tuple[int, int, int] | None = None,
     ) -> Self:
         """Create ingestion files from Xenium output directory.
@@ -1099,12 +1100,16 @@ class XeniumPaths:
         if nucleus_boundaries is None:
             nucleus_boundaries = base_path / "nucleus_boundaries.parquet"
 
+        if transcripts is None:
+            transcripts = base_path / "transcripts.parquet"
+
         return cls(
             xenium_experiment=xenium_experiment,
             cell_feature_matrix=cell_feature_matrix,
             cells=cells,
             cell_boundaries=cell_boundaries,
             nucleus_boundaries=nucleus_boundaries,
+            transcripts=transcripts,
             version=version,
         )
 
@@ -1115,6 +1120,9 @@ class XeniumPaths:
         converter=optional_path_converter, validator=optional_path_validator
     )
     cell_boundaries: Path | None = attrs.field(
+        converter=optional_path_converter, validator=optional_path_validator
+    )
+    transcripts: Path | None = attrs.field(
         converter=optional_path_converter, validator=optional_path_validator
     )
     version: int | tuple[int, int, int]
@@ -1238,6 +1246,9 @@ def from_xenium(
         else XeniumPaths.from_base_folder(input_path)
     )
 
+    with open(input_paths.xenium_experiment) as xenium_exp:
+        experiment_manifest = json.load(xenium_exp)
+
     # Check the version.
     major_version = (
         input_paths.version[0]
@@ -1254,7 +1265,7 @@ def from_xenium(
     
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        adata = scanpy.read_10x_h5(input_paths.cell_feature_matrix)
+        adata = scanpy.read_10x_h5(input_paths.cell_feature_matrix, gex_only=False)
 
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
@@ -1290,6 +1301,7 @@ def from_xenium(
         obs_df = (
             exp.obs.read(column_names=["soma_joinid", "obs_id"]).concat().to_pandas()
         )
+        var_df = exp.ms[measurement_name].var.read(column_names=["soma_joinid", "var_id"]).concat().to_pandas()
         x_layer = exp.ms[measurement_name].X[X_layer_name]
         (len_obs_id, len_var_id) = x_layer.shape
         if write_obs_spatial_presence or write_var_spatial_presence:
@@ -1320,7 +1332,7 @@ def from_xenium(
                 ) as obsl:
                     _maybe_set(scene, "obsl", obsl, use_relative_uri=use_relative_uri)
 
-                    # Write spot data and add to the scene.
+                    # Write geometry data and add to the scene.
                     cells_uri = _util.uri_joinpath(obsl_uri, "cells")
                     with _write_xenium_geometry(
                         cells_uri,
@@ -1333,15 +1345,43 @@ def from_xenium(
                         **ingest_ctx
                     ) as cells:
                         _maybe_set(obsl, "cells", cells, use_relative_uri=use_relative_uri)
-                        scene.set_transform_to_geometry_dataframe("cells", transform=IdentityTransform(("x", "y"), ("x", "y")))
-                        cells.coordinate_space = coord_space
+                        geometry_coord_space = CoordinateSpace(
+                            (Axis(name="x", unit="μm"), Axis(name="y", unit="μm"))  # type: ignore[arg-type]
+                        )
+                        scene.set_transform_to_geometry_dataframe("cells", transform=UniformScaleTransform(("x", "y"), ("x", "y"), float(experiment_manifest.get('pixel_size', 1))))
+                        cells.coordinate_space = geometry_coord_space
+                
+                varl_uri = _util.uri_joinpath(scene_uri, "varl")
+                with _create_or_open_collection(
+                    Collection[AnySOMAObject], varl_uri, **ingest_ctx
+                ) as varl:
+                    _maybe_set(scene, "varl", varl, use_relative_uri=use_relative_uri)
+
+                    rna_uri = _util.uri_joinpath(varl_uri, "RNA")
+                    with _create_or_open_collection(
+                        Collection[AnySOMAObject], rna_uri, **ingest_ctx
+                    ) as rna:
+                        _maybe_set(varl, "RNA", rna, use_relative_uri=use_relative_uri)
+
+                        # Write transcripts data and add to the scene.
+                        transcripts_uri = _util.uri_joinpath(rna_uri, "transcripts")
+                        with _write_xenium_transcripts(
+                            transcripts_uri,
+                            input_paths.transcripts,
+                            var_df,
+                            "var_id",
+                            len_var_id,
+                            **ingest_ctx
+                        ) as transcripts:
+                            _maybe_set(rna, "transcripts", transcripts, use_relative_uri=use_relative_uri)
+
     return uri
 
 
 def _write_xenium_transcripts(
     df_uri: str,
     input_transcripts: Path,
-    obs_df: pd.DataFrame,
+    var_df: pd.DataFrame,
     id_column_name: str,
     max_joinid_len: int,
     *,
@@ -1357,14 +1397,15 @@ def _write_xenium_transcripts(
         pd.read_parquet(input_transcripts)
         .rename(
             columns={
-                "cell_id": id_column_name,
+                "feature_name": id_column_name,
                 "z_location": "z",
                 "y_location": "y",
                 "x_location": "x",
             }
         )
+        .astype({id_column_name: "string"})
     )
-    df = pd.merge(obs_df, df, how="inner", on=id_column_name)
+    df = pd.merge(var_df, df, how="inner", on=id_column_name)
     df.drop(id_column_name, axis=1, inplace=True)
 
     arrow_table = conversions.df_to_arrow_table(df)
@@ -1373,6 +1414,7 @@ def _write_xenium_transcripts(
         soma_point_cloud = PointCloudDataFrame.create(
             df_uri,
             schema=arrow_table.schema,
+            coordinate_space=["x", "y", "z"],
             platform_config=platform_config,
             context=context,
         )
