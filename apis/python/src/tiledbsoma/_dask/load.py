@@ -122,9 +122,13 @@ def load_daskarray(
     if config:
         chunk_size = chunk_size if chunk_size is not None else config.chunk_size
         tiledb_concurrency = (
-            tiledb_concurrency if tiledb_concurrency is not None else config.tiledb_concurrency
+            tiledb_concurrency
+            if tiledb_concurrency is not None
+            else config.tiledb_concurrency
         )
-        tiledb_configs = tiledb_configs if tiledb_configs is not None else config.tiledb_configs
+        tiledb_configs = (
+            tiledb_configs if tiledb_configs is not None else config.tiledb_configs
+        )
     else:
         if chunk_size is None:
             raise ValueError("chunk_size required (directly or via `config`)")
