@@ -204,5 +204,5 @@ def verify_logs(caplog: LogCaptureFixture, expected_logs: List[str] | None) -> N
 
 
 def filter(value_filter: str) -> AxisQuery:
-    """Short-hand for creating an ``AxisQuery`` with a value_filter, in tests."""
+    """Shorthand for creating an ``AxisQuery`` with a value_filter, in tests."""
     return AxisQuery(value_filter=value_filter)

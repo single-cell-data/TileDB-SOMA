@@ -34,8 +34,8 @@ JoinIDs: TypeAlias = NDArray[int64]
 @dataclass
 class DaskConfig:
     chunk_size: ChunkSize
-    tdb_concurrency: int | None = 1
-    tdb_configs: dict[str, ConfigVal] = field(default_factory=dict)
+    tiledb_concurrency: int | None = 1
+    tiledb_configs: dict[str, ConfigVal] = field(default_factory=dict)
 
 
 def chunk_ids_sizes(
@@ -57,7 +57,7 @@ def chunk_ids_sizes(
 
 
 def make_context(
-    tdb_concurrency: int | None,
+    tiledb_concurrency: int | None,
     tiledb_config: dict[str, Any],
 ) -> SOMATileDBContext:
     """Create and cache a ``SOMATileDBContext``, optionally setting several TileDB concurrency configs.
@@ -69,14 +69,14 @@ def make_context(
     This wrapper just flattens the ``tiledb_config`` ``dict`` into hashable ``tuple``s (for use with ``cache``).
     """
     return _make_context(
-        tdb_concurrency=tdb_concurrency,
+        tiledb_concurrency=tiledb_concurrency,
         tiledb_configs=tuple(tiledb_config.items()),
     )
 
 
 @cache
 def _make_context(
-    tdb_concurrency: int | None,
+    tiledb_concurrency: int | None,
     tiledb_configs: tuple[tuple[str, Any], ...],
 ) -> SOMATileDBContext:
     """Create and cache a ``SOMATileDBContext``, optionally setting several TileDB concurrency configs.
@@ -87,20 +87,20 @@ def _make_context(
 
     ``tiledb_config`` is conceptually a ``dict``, but flattened into hashable ``tuple``s here, for use with ``cache``.
     """
-    if tdb_concurrency == 0:
-        tdb_concurrency = cpu_count()
+    if tiledb_concurrency == 0:
+        tiledb_concurrency = cpu_count()
 
     tiledb_config = dict(tiledb_configs)
     threadpool = None
-    if tdb_concurrency is not None:
-        # `0` omits these kwargs altogether
+    if tiledb_concurrency:
+        # Passing `None` skips setting these configs
         tiledb_config.update(
             {
-                "sm.io_concurrency_level": tdb_concurrency,
-                "sm.compute_concurrency_level": tdb_concurrency,
+                "sm.io_concurrency_level": tiledb_concurrency,
+                "sm.compute_concurrency_level": tiledb_concurrency,
             }
         )
-        threadpool = ThreadPoolExecutor(max_workers=tdb_concurrency)
+        threadpool = ThreadPoolExecutor(max_workers=tiledb_concurrency)
 
     return SOMATileDBContext(
         tiledb_config=tiledb_config,

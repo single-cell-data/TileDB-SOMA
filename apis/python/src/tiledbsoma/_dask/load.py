@@ -54,7 +54,7 @@ def sparse_chunk(
     block_info: dict[int | None, Any],
     uri: str,
     tiledb_config: ConfigDict,
-    tdb_concurrency: int | None = None,
+    tiledb_concurrency: int | None = None,
     format: Format = "csr",
     result_order: ResultOrderStr = ResultOrder.AUTO,
     platform_config: PlatformConfig | None = None,
@@ -70,7 +70,7 @@ def sparse_chunk(
 
     soma_ctx = make_context(
         tiledb_config=tiledb_config,
-        tdb_concurrency=tdb_concurrency,
+        tiledb_concurrency=tiledb_concurrency,
     )
     with SparseNDArray.open(uri, context=soma_ctx) as arr:
         tbls = arr.read(
@@ -106,11 +106,12 @@ def sparse_chunk(
 
 def load_daskarray(
     layer: SparseNDArray | DenseNDArray,
+    *,
     coords: SparseNDCoords | None = None,
     config: DaskConfig | None = None,
     chunk_size: ChunkSize | None = None,
-    tdb_concurrency: int | None = None,
-    tdb_configs: dict[str, ConfigVal] | None = None,
+    tiledb_concurrency: int | None = None,
+    tiledb_configs: dict[str, ConfigVal] | None = None,
     format: Format = "csr",
     result_order: ResultOrderStr = ResultOrder.AUTO,
     platform_config: PlatformConfig | None = None,
@@ -120,15 +121,15 @@ def load_daskarray(
 
     if config:
         chunk_size = chunk_size if chunk_size is not None else config.chunk_size
-        tdb_concurrency = (
-            tdb_concurrency if tdb_concurrency is not None else config.tdb_concurrency
+        tiledb_concurrency = (
+            tiledb_concurrency if tiledb_concurrency is not None else config.tiledb_concurrency
         )
-        tdb_configs = tdb_configs if tdb_configs is not None else config.tdb_configs
+        tiledb_configs = tiledb_configs if tiledb_configs is not None else config.tiledb_configs
     else:
         if chunk_size is None:
             raise ValueError("chunk_size required (directly or via `config`)")
-        if tdb_concurrency is None:
-            tdb_concurrency = 1
+        if tiledb_concurrency is None:
+            tiledb_concurrency = 1
 
     _, _, data_dtype = layer.schema.types
     dtype = data_dtype.to_pandas_dtype()
@@ -152,9 +153,9 @@ def load_daskarray(
             arr[obs_chunk_idx, var_chunk_idx] = (obs_chunk_ids, var_chunk_ids)
 
     if isinstance(layer, SparseNDArray):
-        if tdb_configs:
+        if tiledb_configs:
             tiledb_config = {**layer.context.tiledb_config}
-            tiledb_config.update(**tdb_configs)
+            tiledb_config.update(**tiledb_configs)
         else:
             tiledb_config = layer.context.tiledb_config
 
@@ -171,7 +172,7 @@ def load_daskarray(
             meta=meta,
             uri=layer.uri,
             format=format,
-            tdb_concurrency=tdb_concurrency,
+            tiledb_concurrency=tiledb_concurrency,
             tiledb_config=tiledb_config,
             result_order=result_order,
             platform_config=platform_config,
