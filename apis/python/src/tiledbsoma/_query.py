@@ -305,7 +305,6 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
             raise TypeError("X layers may only be sparse arrays")
 
         self._joinids.preload(self._threadpool)
-        # TODO: Dask export
         return x_layer.read(
             (self._joinids.obs, self._joinids.var),
             batch_size=batch_size,
