@@ -8,7 +8,7 @@ from functools import wraps
 from os import cpu_count, makedirs, listdir, remove
 from os.path import dirname, join, splitext, exists, isdir
 from sys import stderr, stdout
-from typing import AsyncContextManager
+from typing import AsyncContextManager, Literal
 
 import anndata as ad
 import dask
@@ -23,8 +23,8 @@ from distributed.diagnostics.memray import memray_workers, memray_scheduler
 from humanfriendly import parse_size
 from pyarrow import feather
 from scipy.sparse import csr_matrix, vstack
-from somacore import AxisQuery
-from utz import Time, err, iec, with_exit_hook, acontexts
+from somacore import AxisQuery, AxisColumnNames
+from utz import Time, err, iec, with_exit_hook, acontexts, asyncnullcontext
 from utz.aio import proc
 from utz.cli import number
 from utz.mem import Tracker
@@ -33,6 +33,7 @@ from tiledbsoma import Experiment, SparseNDArray
 from tiledbsoma._dask.load import DaskConfig, make_context
 from tiledbsoma._fastercsx import CompressedMatrix
 from tiledbsoma._indexer import IntIndexer
+from tiledbsoma._query import AxisName
 
 
 def sz(size: int) -> str:
@@ -144,58 +145,6 @@ DEFAULT_CONFIG = {
 }
 
 
-@cli.command
-@tissue_opt
-@tdb_concurrency_opt
-@argument("joinids_dir")
-def joinids(
-    tissue: str,
-    tdb_concurrency: int | None,
-    joinids_dir: str,
-):
-    """Output feather files containing the obs and var joinids responsive to a CELLxGENE Census query."""
-    time = Time(log=True)
-    makedirs(joinids_dir, exist_ok=True)
-    obs_path = join(joinids_dir, "obs.feather")
-    var_path = join(joinids_dir, "var.feather")
-    context = make_context(
-        tdb_concurrency=tdb_concurrency,
-        tiledb_config=DEFAULT_CONFIG,
-    )
-    time("open")
-    with Experiment.open(CENSUS, "r", context=context) as exp:
-        time("query")
-        query = exp.axis_query(
-            measurement_name="RNA",
-            obs_query=AxisQuery(
-                value_filter=f'is_primary_data == True and tissue_general == "{tissue}"'
-            ),
-        )
-        time("obs_joinids")
-        obs_joinids = query.obs_joinids()
-        time("obs_tbl")
-        obs_tbl = pa.Table.from_arrays([obs_joinids], names=["obs_joinids"])
-        time("obs_save")
-        feather.write_feather(obs_tbl, obs_path)
-        time()
-        err(f"Wrote {len(obs_joinids):,} obs joinids to {obs_path}")
-        time("var_joinids")
-        var_joinids = query.var_joinids()
-        time("var_tbl")
-        var_tbl = pa.Table.from_arrays([var_joinids], names=["var_joinids"])
-        time("var_save")
-        feather.write_feather(var_tbl, var_path)
-        time()
-        err(f"Wrote {len(var_joinids):,} var joinids to {var_path}")
-
-        json.dump(
-            time.fmt(),
-            stderr,
-            indent=2,
-        )
-        err()
-
-
 async def process_worker_mems(
     dask_memray_dir: str,
     n_procs: int,
@@ -244,6 +193,71 @@ async def mem_workers(
 
 
 def memray_cmd(
+    out_path_kwarg: str,
+):
+    """Decorator for dsk.py subcommands that instrument Memray profiling."""
+
+    def rv(fn):
+        @cli.command
+        @no_keep_memray_bin_opt
+        @memray_level_opt
+        @out_dir_opt
+        @tdb_concurrency_opt
+        @verbosity_opt
+        @wraps(fn)
+        def _fn(
+            *args,
+            no_keep_memray_bin: bool,
+            memray_level: int,
+            out_dir: str | None,
+            tdb_concurrency: int | None,
+            verbosity: int,
+            **kwargs,
+        ):
+            memray_bin_path = join(out_dir or kwargs[out_path_kwarg], f"{name}.memray")
+
+            out_stem = splitext(memray_bin_path)[0]
+
+            time = Time(log=True)
+
+            if not tdb_concurrency:
+                tdb_concurrency = cpu_count()
+
+            opt_kwargs = dict(
+                out_dir=out_dir,
+                tdb_concurrency=tdb_concurrency,
+                out_stem=out_stem,
+            )
+
+            if memray_level:
+                opt_kwargs["memray_bin_path"] = memray_bin_path
+                mem = Tracker(
+                    memray_bin_path,
+                    keep=not no_keep_memray_bin,
+                    trace_python_allocators=memray_level > 1,
+                    log=verbosity,
+                )
+                mem_ctx = with_exit_hook(mem, time.ctx("memray_scheduler"))
+            else:
+                mem = None
+                mem_ctx = asyncnullcontext()
+
+            opt_kwargs = utz.args(fn, opt_kwargs)
+
+            time("start")
+            asyncio.run(fn(
+                *args,
+                **opt_kwargs,
+                time=time,
+                mem=mem,
+                mem_ctx=mem_ctx,
+                **kwargs,
+            ))
+
+    return rv
+
+
+def dask_memray_cmd(
     out_path_kwarg: str,
 ):
     """Decorator for dsk.py subcommands that instrument Memray profiling."""
@@ -346,17 +360,12 @@ def memray_cmd(
                 memray_workers_level=memray_workers_level,
             )
 
-            memray_kwargs = dict(
-                native_traces=True,
-                follow_fork=True,
-                keep=not no_keep_memray_bin,
-            )
             ctxs = []
             if memray_level:
                 opt_kwargs["memray_bin_path"] = memray_bin_path
                 mem = Tracker(
                     memray_bin_path,
-                    **memray_kwargs,
+                    keep=not no_keep_memray_bin,
                     trace_python_allocators=memray_level > 1,
                     log=verbosity,
                 )
@@ -371,8 +380,8 @@ def memray_cmd(
                             mem_workers(
                                 out_stem,
                                 n_procs=dask_workers.procs,
+                                keep=not no_keep_memray_bin,
                                 trace_python_allocators=memray_workers_level > 1,
-                                **memray_kwargs,
                             ),
                             time.ctx("memray_workers"),
                         )
@@ -429,7 +438,7 @@ def query_to_anndata_dask(
             time()
     else:
         if mem_total_budget:
-            tiledb_config.update(**{"sm.mem.total_budget": mem_total_budget})
+            tiledb_config = {**tiledb_config, "sm.mem.total_budget": mem_total_budget}
         context = make_context(
             tiledb_config=tiledb_config,
             tdb_concurrency=tdb_concurrency,
@@ -473,8 +482,7 @@ def query_to_anndata_dask(
 def summary_stats(stats):
     obj = {}
     md = stats["metadata"]
-    peak_mem = obj["peak_mem"] = md["peak_memory"]
-    err(f"Peak memory use: {sz(peak_mem)}")
+    obj["peak_mem"] = md["peak_memory"]
 
     # Copy some memray stats, include IEC string reprs (e.g. "2.1 GiB")
     top_allocs = [
@@ -551,7 +559,7 @@ def process_mem(
         print(file=f)
 
 
-@memray_cmd(out_path_kwarg="tissue")
+@dask_memray_cmd(out_path_kwarg="tissue")
 @mem_budget_opt
 @census_version_opt
 @hvg_inplace_opt
@@ -616,7 +624,7 @@ async def hvg(
     )
 
 
-@memray_cmd(out_path_kwarg="tissue")
+@dask_memray_cmd(out_path_kwarg="tissue")
 @mem_budget_opt
 @census_version_opt
 @hvg_inplace_opt
@@ -683,7 +691,157 @@ async def pca(
     )
 
 
-@memray_cmd("joinids_dir")
+@cli.command
+@mem_budget_opt
+@no_keep_memray_bin_opt
+@memray_level_opt
+@tissue_opt
+@tdb_concurrency_opt
+@verbosity_opt
+@argument("joinids_dir")
+def joinids(
+    mem_total_budget: str | None,
+    no_keep_memray_bin: bool,
+    memray_level: int,
+    tissue: str,
+    tdb_concurrency: int | None,
+    verbosity: int,
+    joinids_dir: str,
+):
+    """Output feather files containing the obs and var joinids responsive to a CELLxGENE Census query."""
+    time = Time(log=True)
+    makedirs(joinids_dir, exist_ok=True)
+    obs_path = join(joinids_dir, "obs.feather")
+    var_path = join(joinids_dir, "var.feather")
+    context = make_context(
+        tdb_concurrency=tdb_concurrency,
+        tiledb_config={
+            **({"sm.mem.total_budget": mem_total_budget} if mem_total_budget else {}),
+            **DEFAULT_CONFIG,
+        },
+    )
+    memray_bin_path = join(joinids_dir, "joinids.memray")
+    with Tracker(
+        memray_bin_path,
+        keep=not no_keep_memray_bin,
+        trace_python_allocators=memray_level > 1,
+        log=verbosity,
+    ):
+        time("open")
+        with Experiment.open(CENSUS, "r", context=context) as exp:
+            time("query")
+            query = exp.axis_query(
+                measurement_name="RNA",
+                obs_query=AxisQuery(
+                    value_filter=f'is_primary_data == True and tissue_general == "{tissue}"'
+                ),
+            )
+            time("obs_joinids")
+            obs_joinids = query.obs_joinids()
+            time("obs_tbl")
+            obs_tbl = pa.Table.from_arrays([obs_joinids], names=["obs_joinids"])
+            time("obs_save")
+            feather.write_feather(obs_tbl, obs_path)
+            time()
+            err(f"Wrote {len(obs_joinids):,} obs joinids to {obs_path}")
+            time("var_joinids")
+            var_joinids = query.var_joinids()
+            time("var_tbl")
+            var_tbl = pa.Table.from_arrays([var_joinids], names=["var_joinids"])
+            time("var_save")
+            feather.write_feather(var_tbl, var_path)
+            time()
+            err(f"Wrote {len(var_joinids):,} var joinids to {var_path}")
+
+            json.dump(
+                time.fmt(),
+                stderr,
+                indent=2,
+            )
+            err()
+
+
+@cli.command("obs-var")
+@mem_budget_opt
+@no_keep_memray_bin_opt
+@memray_level_opt
+@tissue_opt
+@tdb_concurrency_opt
+@verbosity_opt
+@argument("joinids_dir")
+def obs_var(
+    mem_total_budget: str | None,
+    no_keep_memray_bin: bool,
+    memray_level: int,
+    tissue: str,
+    tdb_concurrency: int | None,
+    verbosity: int,
+    joinids_dir: str,
+):
+    """Output feather files containing the obs and var joinids responsive to a CELLxGENE Census query."""
+    time = Time(log=True)
+    makedirs(joinids_dir, exist_ok=True)
+    context = make_context(
+        tdb_concurrency=tdb_concurrency,
+        tiledb_config={
+            **({"sm.mem.total_budget": mem_total_budget} if mem_total_budget else {}),
+            **DEFAULT_CONFIG,
+        },
+    )
+    memray_bin_path = join(joinids_dir, "joinids.memray")
+    with (mem := Tracker(
+        memray_bin_path,
+        keep=not no_keep_memray_bin,
+        trace_python_allocators=memray_level > 1,
+        log=verbosity,
+    )):
+        time("open")
+        with Experiment.open(CENSUS, "r", context=context) as exp:
+            time("query")
+            obs_query = AxisQuery(value_filter=f'is_primary_data == True and tissue_general == "{tissue}"')
+            var_query = AxisQuery()
+            query = exp.axis_query(
+                measurement_name="RNA",
+                obs_query=obs_query,
+                var_query=var_query,
+            )
+            time("obs_joinids")
+            obs_joinids = query.obs_joinids()
+            time("var_joinids")
+            var_joinids = query.var_joinids()
+            time("obs")
+            obs = query._read_axis_dataframe(
+                axis=AxisName.OBS,
+                axis_df=query._obs_df,
+                axis_query=obs_query,
+                axis_column_names=AxisColumnNames(obs=None, var=None),
+            )
+            time("obs-df")
+            obs_df = obs.to_pandas()
+            time("var")
+            var = query._read_axis_dataframe(
+                axis=AxisName.VAR,
+                axis_df=query._var_df,
+                axis_query=var_query,
+                axis_column_names=AxisColumnNames(obs=None, var=None),
+            )
+            time("var-df")
+            var_df = var.to_pandas()
+            time()
+            print(f"obs: {obs_df.shape}")
+            print(f"var: {var_df.shape}")
+
+    stats = summary_stats(mem.stats)
+    json.dump(
+        stats,
+        stdout,
+        indent=2,
+    )
+    print()
+    print(f"Peak memory use: {sz(mem.peak_mem)}")
+
+
+@dask_memray_cmd(out_path_kwarg="joinids_dir")
 @mem_budget_opt
 @census_version_opt
 @method_opt
