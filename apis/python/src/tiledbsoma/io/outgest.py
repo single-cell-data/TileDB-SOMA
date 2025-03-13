@@ -39,7 +39,7 @@ from .. import (
 from .._constants import SOMA_JOINID
 from .._exception import SOMAError
 from .._types import NPNDArray, Path
-from .._util import _resolve_futures
+from .._util import MISSING, Sentinel, _resolve_futures
 from . import conversions
 from ._common import (
     _DATAFRAME_ORIGINAL_INDEX_NAME_JSON,
@@ -222,14 +222,6 @@ def _read_dataframe(
             pdf.index.name = None
 
     return pdf
-
-
-# ----------------------------------------------------------------
-class Sentinel:
-    pass
-
-
-MISSING = Sentinel()
 
 
 def to_anndata(
