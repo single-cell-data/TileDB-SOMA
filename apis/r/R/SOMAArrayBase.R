@@ -51,8 +51,26 @@ SOMAArrayBase <- R6::R6Class(
     #' @return \code{TRUE} if the underlying TileDB array is sparse;
     #' otherwise \code{FALSE}.
     #'
-    is_sparse = \() c_is_sparse(self$uri, private$.soma_context)
+    is_sparse = \() c_is_sparse(self$uri, private$.soma_context),
 
+    #' @description Retrieve the array schema as an Arrow schema
+    #' (lifecycle: maturing)
+    #'
+    #' @return An Arrow \code{\link[arrow:Schema]{Schema}} object
+    #'
+    schema = \() arrow::as_schema(c_schema(self$uri, private$.soma_context)),
+
+    #' @description Retrieve attribute names (lifecycle: maturing)
+    #'
+    #' @return A character vector with the array's attribute names
+    #'
+    attrnames = \() c_attrnames(self$uri, private$.soma_context),
+
+    #' @description Retrieve dimension names (lifecycle: maturing)
+    #' @return A character vector with the array's dimension names
+    dimnames = function() {
+      c_dimnames(self$uri, private$.soma_context)
+    }
   ),
   active = list(
     #' @field soma_type Retrieve the SOMA object type.
@@ -66,7 +84,6 @@ SOMAArrayBase <- R6::R6Class(
     }
   ),
   private = list(
-
     # Cache object's SOMA_OBJECT_TYPE_METADATA_KEY
     soma_type_cache = NULL,
     update_soma_type_cache = function() {
