@@ -212,6 +212,7 @@ class Wrapper(Generic[_RawHdl_co], metaclass=abc.ABCMeta):
                 f"Invalid mode '{mode}' passed. " "Valid modes are 'r' and 'w'."
             )
         ts = self.context._open_timestamp_ms(timestamp)
+        self.metadata._write()
         return self._handle.reopen(
             clib.OpenMode.read if mode == "r" else clib.OpenMode.write, (0, ts)
         )
