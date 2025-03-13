@@ -60,10 +60,8 @@ test_that("SOMASparseNDArray creation", {
   )
 
   # Validate TileDB array schema
-  arr <- tiledb::tiledb_array(uri)
-  sch <- tiledb::schema(arr)
-  expect_true(tiledb::is.sparse(sch))
-  expect_false(tiledb::allows_dups(sch))
+  expect_true(ndarray$is_sparse())
+  expect_false(ndarray$allows_duplicates())
 
   expect_equal(ndarray$shape(), bit64::as.integer64(c(10, 10)))
 
