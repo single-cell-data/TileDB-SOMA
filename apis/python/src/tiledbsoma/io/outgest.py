@@ -225,11 +225,18 @@ def _read_dataframe(
 
 
 # ----------------------------------------------------------------
+class Sentinel:
+    pass
+
+
+MISSING = Sentinel()
+
+
 def to_anndata(
     experiment: Experiment,
     measurement_name: str,
     *,
-    X_layer_name: str | None = "data",
+    X_layer_name: str | Sentinel | None = MISSING,
     extra_X_layer_names: Sequence[str] | KeysView[str] | None = None,
     obs_id_name: str | None = None,
     var_id_name: str | None = None,
@@ -247,10 +254,13 @@ def to_anndata(
 
     The ``X_layer_name`` is the name of the TileDB-SOMA measurement's ``X``
     collection which will be outgested to the resulting AnnData object's
-    ``adata.X``. If this is ``None``, then the return value's ``adata.X`` will
-    be None, and ``adata.layers`` will be unpopulated. If this is not ``None``,
-    then ``adata.X`` will be taken from this layer name within the input
-    measurement.
+    ``adata.X``.  If ``X_layer_name`` is unspecified, and the Measurement
+    contains an X layer named "data", it will be returned.  If ``X_layer_name``
+    is ``None``, then the return value's ``adata.X`` will be None, and
+    ``adata.layers`` will be unpopulated.  If ``X_layer_name`` is a string, then
+    ``adata.X`` will be taken from this layer name within the input measurement,
+    and it will be an error if the measurement's ``X`` does not contain that
+    layer name.
 
     The ``extra_X_layer_names`` are used to specify how the output ``adata``
     object's ``adata.layers`` is populated.  The default behavior --
@@ -324,6 +334,13 @@ def to_anndata(
         )
 
     # Problem: when the specified layer name does not exist.
+    # * If they didn't specify X_layer_name at all:
+    #   o Default to "data" if the measurement has that X layer name
+    # * Else if they did specify X_layer_name as None:
+    #   o They don't want one to be outgested
+    # * Else, they specified an X_layer_name as a string:
+    #   o It's an error if it doesn't exist
+
     # * This might be an error: if they explicitly requested X_layer_name "foo"
     #   and the X doesn't have that layer.
     # * But it might not be an error: if they didn't explicitly specify
@@ -333,16 +350,18 @@ def to_anndata(
     # * Our consolation: check if the layer name is the _default_,
     #   and the experiment doesn't have it.
     anndata_X_future: Future[Matrix] | None = None
-    if X_layer_name is not None:
-        if X_layer_name in measurement.X:
-            # X layer present in the data -- proceed
-            anndata_X_future = _extract_X_key(measurement, X_layer_name, nobs, nvar)
-        else:
-            # X layer absent in the data -- error unless the name is "data"
-            if X_layer_name != "data":
-                raise ValueError(
-                    f"X_layer_name {X_layer_name} not found in data: {measurement.X.keys()}"
-                )
+
+    if X_layer_name == MISSING:
+        if "data" in measurement.X:
+            anndata_X_future = _extract_X_key(measurement, "data", nobs, nvar)
+    elif X_layer_name is not None:
+        if X_layer_name not in measurement.X:
+            raise ValueError(
+                f"X_layer_name '{X_layer_name}' not found in measurement: {measurement.X.keys()}"
+            )
+        anndata_X_future = _extract_X_key(
+            measurement, cast(str, X_layer_name), nobs, nvar
+        )
 
     if extra_X_layer_names is not None:
         for extra_X_layer_name in extra_X_layer_names:

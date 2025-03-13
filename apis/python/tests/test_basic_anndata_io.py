@@ -693,6 +693,14 @@ def test_export_anndata(conftest_pbmc_small):
     for key in conftest_pbmc_small.varp.keys():
         assert readback.varp[key].shape == conftest_pbmc_small.varp[key].shape
 
+    with _factory.open(output_path) as exp:
+        readback = tiledbsoma.io.to_anndata(
+            exp, measurement_name="RNA", X_layer_name=None
+        )
+        assert readback.obs.shape == conftest_pbmc_small.obs.shape
+        assert readback.var.shape == conftest_pbmc_small.var.shape
+        assert readback.X is None
+
 
 def test_ingest_additional_metadata(conftest_pbmc_small):
     tempdir = tempfile.TemporaryDirectory(prefix="test_ingest_additional_metadata_")
@@ -856,22 +864,18 @@ def test_X_none(h5ad_file_X_none):
         assert exp.ms["RNA"].var.count == 1838
         assert list(exp.ms["RNA"].X.keys()) == []
 
-        adata = tiledbsoma.io.to_anndata(exp, measurement_name="RNA", X_layer_name=None)
-        assert adata.obs is not None
-        assert adata.var is not None
-        assert adata.X is None
-
         adata = tiledbsoma.io.to_anndata(exp, measurement_name="RNA")
         assert adata.obs is not None
         assert adata.var is not None
         assert adata.X is None
 
-        adata = tiledbsoma.io.to_anndata(
-            exp, measurement_name="RNA", X_layer_name="data"
-        )
+        adata = tiledbsoma.io.to_anndata(exp, measurement_name="RNA", X_layer_name=None)
         assert adata.obs is not None
         assert adata.var is not None
         assert adata.X is None
+
+        with pytest.raises(ValueError):
+            tiledbsoma.io.to_anndata(exp, measurement_name="RNA", X_layer_name="data")
 
         with pytest.raises(ValueError):
             adata = tiledbsoma.io.to_anndata(
