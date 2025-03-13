@@ -210,6 +210,12 @@ void SOMAArray::open(OpenMode mode, std::optional<TimestampRange> timestamp) {
 
 std::unique_ptr<SOMAArray> SOMAArray::reopen(
     OpenMode mode, std::optional<TimestampRange> timestamp) {
+    if (arr_->query_type() == TILEDB_READ) {
+        arr_->reopen();
+    } else {
+        arr_->close();
+        arr_->open(TILEDB_WRITE);
+    }
     return std::make_unique<SOMAArray>(mode, uri_, ctx_, timestamp);
 }
 
