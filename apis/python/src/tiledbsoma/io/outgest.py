@@ -323,9 +323,26 @@ def to_anndata(
             "If X_layer_name is None, extra_X_layer_names must not be provided"
         )
 
+    # Problem: when the specified layer name does not exist.
+    # * This might be an error: if they explicitly requested X_layer_name "foo"
+    #   and the X doesn't have that layer.
+    # * But it might not be an error: if they didn't explicitly specify
+    #   X_layer_name, and it defaulted to "data", and the experiment doesn't have that.
+    # How to detect the latter?
+    # * We could use **kwargs -- but that would bork the online help docs.
+    # * Our consolation: check if the layer name is the _default_,
+    #   and the experiment doesn't have it.
     anndata_X_future: Future[Matrix] | None = None
     if X_layer_name is not None:
-        anndata_X_future = _extract_X_key(measurement, X_layer_name, nobs, nvar)
+        if X_layer_name in measurement.X:
+            # X layer present in the data -- proceed
+            anndata_X_future = _extract_X_key(measurement, X_layer_name, nobs, nvar)
+        else:
+            # X layer absent in the data -- error unless the name is "data"
+            if X_layer_name != "data":
+                raise ValueError(
+                    f"X_layer_name {X_layer_name} not found in data: {measurement.X.keys()}"
+                )
 
     if extra_X_layer_names is not None:
         for extra_X_layer_name in extra_X_layer_names:
