@@ -26,6 +26,7 @@ from typing import (
 )
 
 import numpy as np
+import pandas as pd
 import pyarrow as pa
 import somacore
 from somacore import options
@@ -690,6 +691,34 @@ def _resolve_futures(unresolved: Dict[str, Any], deep: bool = False) -> Dict[str
         resolved[k] = v
 
     return resolved
+
+
+def _df_set_index(
+    df: pd.DataFrame,
+    default_index_name: str | None = None,
+    fallback_index_name: str | None = None,
+) -> None:
+    if default_index_name is not None:
+        # One or both of the following was true:
+        # - Original DataFrame had an index name (other than "index") ⇒ that name was written as `OriginalIndexMetadata`
+        # - `default_index_name` was provided (e.g. `{obs,var}_id_name` args to `to_anndata`)
+        #
+        # ⇒ Verify a column with that name exists, and set it as index (keeping its name).
+        if default_index_name not in df.keys():
+            raise ValueError(
+                f"Requested ID column name {default_index_name} not found in input: {df.keys()}"
+            )
+        df.set_index(default_index_name, inplace=True)
+    else:
+        # The assumption here is that the original index was unnamed, and was given a "fallback name" (e.g. "obs_id",
+        # "var_id") during ingest that matches the `fallback_index_name` arg here. In this case, we restore that column
+        # as index, and remove the name.
+        #
+        # NOTE: several edge cases result in the outgested DF not matching the original DF; see
+        # https://github.com/single-cell-data/TileDB-SOMA/issues/2829.
+        if fallback_index_name is not None and fallback_index_name in df:
+            df.set_index(fallback_index_name, inplace=True)
+            df.index.name = None
 
 
 class Sentinel:

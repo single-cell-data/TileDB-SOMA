@@ -58,7 +58,7 @@ from ._constants import SOMA_JOINID, SPATIAL_DISCLAIMER
 from ._fastercsx import CompressedMatrix
 from ._measurement import Measurement
 from ._sparse_nd_array import SparseNDArray
-from ._util import _resolve_futures
+from ._util import _df_set_index, _resolve_futures
 
 _T = TypeVar("_T")
 _T_co = TypeVar("_T_co", covariant=True)
@@ -399,6 +399,8 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
         self,
         X_name: str,
         *,
+        obs_id_name: str | None = None,
+        var_id_name: str | None = None,
         column_names: AxisColumnNames | None = None,
         X_layers: Sequence[str] = (),
         obsm_layers: Sequence[str] = (),
@@ -511,10 +513,10 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
         }
 
         obs = obs_table.to_pandas()
-        obs.index = obs.index.astype(str)
+        _df_set_index(obs, obs_id_name, "obs_id")
 
         var = var_table.to_pandas()
-        var.index = var.index.astype(str)
+        _df_set_index(var, var_id_name, "obs_id")
 
         # Drop unused categories on axis dataframes if requested
         if drop_levels:

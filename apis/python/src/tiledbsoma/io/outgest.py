@@ -39,7 +39,7 @@ from .. import (
 from .._constants import SOMA_JOINID
 from .._exception import SOMAError
 from .._types import NPNDArray, Path
-from .._util import MISSING, Sentinel, _resolve_futures
+from .._util import MISSING, Sentinel, _df_set_index, _resolve_futures
 from . import conversions
 from ._common import (
     _DATAFRAME_ORIGINAL_INDEX_NAME_JSON,
@@ -199,27 +199,7 @@ def _read_dataframe(
     pdf.drop(columns=SOMA_JOINID, inplace=True)
 
     default_index_name = default_index_name or original_index_metadata
-    if default_index_name is not None:
-        # One or both of the following was true:
-        # - Original DataFrame had an index name (other than "index") ⇒ that name was written as `OriginalIndexMetadata`
-        # - `default_index_name` was provided (e.g. `{obs,var}_id_name` args to `to_anndata`)
-        #
-        # ⇒ Verify a column with that name exists, and set it as index (keeping its name).
-        if default_index_name not in pdf.keys():
-            raise ValueError(
-                f"Requested ID column name {default_index_name} not found in input: {pdf.keys()}"
-            )
-        pdf.set_index(default_index_name, inplace=True)
-    else:
-        # The assumption here is that the original index was unnamed, and was given a "fallback name" (e.g. "obs_id",
-        # "var_id") during ingest that matches the `fallback_index_name` arg here. In this case, we restore that column
-        # as index, and remove the name.
-        #
-        # NOTE: several edge cases result in the outgested DF not matching the original DF; see
-        # https://github.com/single-cell-data/TileDB-SOMA/issues/2829.
-        if fallback_index_name is not None and fallback_index_name in pdf:
-            pdf.set_index(fallback_index_name, inplace=True)
-            pdf.index.name = None
+    _df_set_index(pdf, default_index_name, fallback_index_name)
 
     return pdf
 
