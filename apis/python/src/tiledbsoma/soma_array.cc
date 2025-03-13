@@ -94,7 +94,7 @@ void load_soma_array(py::module& m) {
                         "Unreachable code: The missing soma_object_type case "
                         "is already handled. This indicates an "
                         "unexpected failure to catch exceptions by "
-                        "SOMAArray::reopenopen");
+                        "SOMAArray::reopen");
                 }
 
                 std::transform(
