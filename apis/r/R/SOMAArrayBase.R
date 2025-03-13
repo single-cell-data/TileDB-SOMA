@@ -7,6 +7,23 @@
 SOMAArrayBase <- R6::R6Class(
   classname = "SOMAArrayBase",
   inherit = TileDBArray,
+  public = list(
+
+    #' @description Does an array allow duplicates?
+    #'
+    #' @return \code{TRUE} if the underlying TileDB array allows duplicates;
+    #' otherwise \code{FALSE}
+    #'
+    allows_duplicates = \() c_allows_dups(self$uri, private$.soma_context),
+
+    #' @description Is an array sparse?
+    #'
+    #' @return \code{TRUE} if the underlying TileDB array is sparse;
+    #' otherwise \code{FALSE}
+    #'
+    is_sparse = \() c_is_sparse(self$uri, private$.soma_context)
+
+  ),
   active = list(
     #' @field soma_type Retrieve the SOMA object type.
     soma_type = function(value) {

@@ -552,6 +552,30 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// c_is_sparse
+bool c_is_sparse(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp);
+RcppExport SEXP _tiledbsoma_c_is_sparse(SEXP uriSEXP, SEXP ctxxpSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const std::string& >::type uri(uriSEXP);
+    Rcpp::traits::input_parameter< Rcpp::XPtr<somactx_wrap_t> >::type ctxxp(ctxxpSEXP);
+    rcpp_result_gen = Rcpp::wrap(c_is_sparse(uri, ctxxp));
+    return rcpp_result_gen;
+END_RCPP
+}
+// c_allows_dups
+bool c_allows_dups(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp);
+RcppExport SEXP _tiledbsoma_c_allows_dups(SEXP uriSEXP, SEXP ctxxpSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const std::string& >::type uri(uriSEXP);
+    Rcpp::traits::input_parameter< Rcpp::XPtr<somactx_wrap_t> >::type ctxxp(ctxxpSEXP);
+    rcpp_result_gen = Rcpp::wrap(c_allows_dups(uri, ctxxp));
+    return rcpp_result_gen;
+END_RCPP
+}
 // resize
 std::string resize(const std::string& uri, Rcpp::NumericVector new_shape, std::string function_name_for_messages, bool check_only, Rcpp::XPtr<somactx_wrap_t> ctxxp);
 RcppExport SEXP _tiledbsoma_resize(SEXP uriSEXP, SEXP new_shapeSEXP, SEXP function_name_for_messagesSEXP, SEXP check_onlySEXP, SEXP ctxxpSEXP) {
@@ -840,6 +864,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_tiledbsoma_c_dimnames", (DL_FUNC) &_tiledbsoma_c_dimnames, 2},
     {"_tiledbsoma_c_attrnames", (DL_FUNC) &_tiledbsoma_c_attrnames, 2},
     {"_tiledbsoma_c_schema", (DL_FUNC) &_tiledbsoma_c_schema, 2},
+    {"_tiledbsoma_c_is_sparse", (DL_FUNC) &_tiledbsoma_c_is_sparse, 2},
+    {"_tiledbsoma_c_allows_dups", (DL_FUNC) &_tiledbsoma_c_allows_dups, 2},
     {"_tiledbsoma_resize", (DL_FUNC) &_tiledbsoma_resize, 5},
     {"_tiledbsoma_resize_soma_joinid_shape", (DL_FUNC) &_tiledbsoma_resize_soma_joinid_shape, 4},
     {"_tiledbsoma_tiledbsoma_upgrade_shape", (DL_FUNC) &_tiledbsoma_tiledbsoma_upgrade_shape, 5},
