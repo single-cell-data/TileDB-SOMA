@@ -4,8 +4,13 @@
 \alias{SOMAArrayBase}
 \title{SOMA Array Base Class}
 \description{
-Adds SOMA-specific functionality to the \code{\link{TileDBArray}} class.  (lifecycle:
-maturing)
+SOMA Array Base Class
+
+SOMA Array Base Class
+}
+\details{
+Adds SOMA-specific functionality to the \code{\link{TileDBArray}} class.
+(lifecycle: maturing)
 }
 \keyword{internal}
 \section{Super classes}{
@@ -21,6 +26,9 @@ maturing)
 \section{Methods}{
 \subsection{Public methods}{
 \itemize{
+\item \href{#method-SOMAArrayBase-schema}{\code{SOMAArrayBase$schema()}}
+\item \href{#method-SOMAArrayBase-attrnames}{\code{SOMAArrayBase$attrnames()}}
+\item \href{#method-SOMAArrayBase-dimnames}{\code{SOMAArrayBase$dimnames()}}
 \item \href{#method-SOMAArrayBase-clone}{\code{SOMAArrayBase$clone()}}
 }
 }
@@ -34,11 +42,9 @@ maturing)
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="mode"><a href='../../tiledbsoma/html/TileDBObject.html#method-TileDBObject-mode'><code>tiledbsoma::TileDBObject$mode()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="reopen"><a href='../../tiledbsoma/html/TileDBObject.html#method-TileDBObject-reopen'><code>tiledbsoma::TileDBObject$reopen()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="attributes"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-attributes'><code>tiledbsoma::TileDBArray$attributes()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="attrnames"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-attrnames'><code>tiledbsoma::TileDBArray$attrnames()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="close"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-close'><code>tiledbsoma::TileDBArray$close()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="colnames"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-colnames'><code>tiledbsoma::TileDBArray$colnames()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="dimensions"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-dimensions'><code>tiledbsoma::TileDBArray$dimensions()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="dimnames"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-dimnames'><code>tiledbsoma::TileDBArray$dimnames()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="get_metadata"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-get_metadata'><code>tiledbsoma::TileDBArray$get_metadata()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="index_column_names"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-index_column_names'><code>tiledbsoma::TileDBArray$index_column_names()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="maxshape"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-maxshape'><code>tiledbsoma::TileDBArray$maxshape()</code></a></span></li>
@@ -46,7 +52,6 @@ maturing)
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="non_empty_domain"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-non_empty_domain'><code>tiledbsoma::TileDBArray$non_empty_domain()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="open"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-open'><code>tiledbsoma::TileDBArray$open()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="print"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-print'><code>tiledbsoma::TileDBArray$print()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="schema"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-schema'><code>tiledbsoma::TileDBArray$schema()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="set_metadata"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-set_metadata'><code>tiledbsoma::TileDBArray$set_metadata()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="shape"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-shape'><code>tiledbsoma::TileDBArray$shape()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="tiledb_array"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-tiledb_array'><code>tiledbsoma::TileDBArray$tiledb_array()</code></a></span></li>
@@ -54,6 +59,46 @@ maturing)
 </ul>
 </details>
 }}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SOMAArrayBase-schema"></a>}}
+\if{latex}{\out{\hypertarget{method-SOMAArrayBase-schema}{}}}
+\subsection{Method \code{schema()}}{
+Retrieve the array schema as an Arrow schema
+(lifecycle: maturing)
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SOMAArrayBase$schema()}\if{html}{\out{</div>}}
+}
+
+\subsection{Returns}{
+An Arrow \code{\link[arrow:Schema]{Schema}} object
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SOMAArrayBase-attrnames"></a>}}
+\if{latex}{\out{\hypertarget{method-SOMAArrayBase-attrnames}{}}}
+\subsection{Method \code{attrnames()}}{
+Retrieve attribute names (lifecycle: maturing)
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SOMAArrayBase$attrnames()}\if{html}{\out{</div>}}
+}
+
+\subsection{Returns}{
+A character vector with the array's attribute names
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SOMAArrayBase-dimnames"></a>}}
+\if{latex}{\out{\hypertarget{method-SOMAArrayBase-dimnames}{}}}
+\subsection{Method \code{dimnames()}}{
+Retrieve dimension names (lifecycle: maturing)
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SOMAArrayBase$dimnames()}\if{html}{\out{</div>}}
+}
+
+\subsection{Returns}{
+A character vector with the array's dimension names
+}
+}
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-SOMAArrayBase-clone"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMAArrayBase-clone}{}}}
