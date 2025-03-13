@@ -5,7 +5,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, Tuple, Union
+from typing import Any, Union
 
 import h5py
 import numpy as np
@@ -54,7 +54,7 @@ def _str_to_int(value: str) -> int:
     return int(value)
 
 
-def _version_less_than(version: str, upper_bound: Tuple[int, int, int]) -> bool:
+def _version_less_than(version: str, upper_bound: tuple[int, int, int]) -> bool:
     split_version = version.split(".")
     try:
         major = _str_to_int(split_version[0])
@@ -75,14 +75,15 @@ def _version_less_than(version: str, upper_bound: Tuple[int, int, int]) -> bool:
 
 def _read_visium_software_version(
     gene_expression_path: Union[str, Path]
-) -> Tuple[int, int, int]:
-    with SpaceRangerMatrixReader(gene_expression_path) as reader:
-        version = reader.version
+) -> tuple[int, int, int]:
+    with TenXCountMatrixReader(gene_expression_path) as reader:
+        version = reader.software_version
     return version
 
 
-class SpaceRangerMatrixReader:
-    """Reader for the SpaceRanger HDF5 matrix group.
+class TenXCountMatrixReader:
+    """Reader for the SpaceRanger, CellRanger, and XeniumRanger HDF5 count matrix
+    group.
 
     The matrix is stored with features (var) on the rows and spot-barcodes (obs) on the
     columns. The data is not loaded until the user either explicitly loads all data with
@@ -105,18 +106,20 @@ class SpaceRangerMatrixReader:
       * /matrix/features/feature_type: The type of feature reference the feature
         belongs to (for example "Gene Expression" or "Antibody Capture".
       * /matrix/features/id: Unique idenitier for feature.
-      * /matrix/features/name: Human-readable name for variable. Used as `var_id` in scanpy.
+      * /matrix/features/name: Human-readable name for variable. Used as
+        `var_id` in scanpy.
       * /matrix/feature/genome: The genome reference for each feature.
 
     """
 
-    def __init__(self, input_path: Union[str, Path]):
+    def __init__(self, input_path: str | Path):
         # File management.
         self._path = input_path
         self._root: h5py.File | None = None
 
         # Metadatata.
-        self._version: tuple[int, int, int] | None = None
+        self._software_name: str | None = None
+        self._software_version: tuple[int, int, int] | None = None
         self._nobs: int | None = None
         self._nvar: int | None = None
 
@@ -142,30 +145,38 @@ class SpaceRangerMatrixReader:
     def __exit__(self, *_: Any) -> None:
         self.close()
 
-    def _read_version(self) -> tuple[int, int, int]:
+    def _read_software_version(self) -> tuple[int, int, int]:
         if self._root is None:
             raise RuntimeError(f"[internal] File '{self._path}' is not open reading.")
         try:
-            version = self._root.attrs["software_version"]
+            raw_version = self._root.attrs["software_version"]
         except KeyError as ke:
             raise SOMAError(
                 f"Unable to read software version from gene expression file "
                 f"{self._path}."
             ) from ke
-        if not isinstance(version, str):
+        if not isinstance(raw_version, str):
             raise SOMAError(
-                f"Unexpected type {type(version)!r} for software version in gene "
+                f"Unexpected type {type(raw_version)!r} for software version in gene "
                 f"expression file {self._path}. Expected a string."
             )
-        version_prefix = "spaceranger-"
-        if version.startswith(version_prefix):
-            version = version[len(version_prefix) :].split(".")
+        version: str | list[str] = raw_version.split("-")
+        if len(version) == 1:
+            version = version[0]
+        elif len(version) == 2:
+            self._software = version[0]
+            version = version[1]
         else:
-            version = version.split(".")
+            raise SOMAError(
+                f"Unexpected value {raw_version} for 'software_version' in gene "
+                f"expression file {self._path}."
+            )
+
+        version = version.split(".")
         if len(version) not in {3, 4}:
             raise SOMAError(
-                f"Unexpected value {version} for software version in gene expresion "
-                f"file {self._path}."
+                f"Unexpected value {raw_version} for 'software_version' in gene "
+                f"expression file {self._path}."
             )
         try:
             major = _str_to_int(version[0])
@@ -173,8 +184,8 @@ class SpaceRangerMatrixReader:
             patch = _str_to_int(version[2])
         except ValueError:
             raise SOMAError(
-                f"Unexpected value {version} for software version in gene expresion "
-                f"file {self._version}."
+                f"Unexpected value {raw_version} for 'software_version' in gene "
+                f"expression file {self._path}."
             )
         return (major, minor, patch)
 
@@ -282,6 +293,12 @@ class SpaceRangerMatrixReader:
             self._nvar = int(self.matrix_group["shape"][0])
         return self._nvar
 
+    @property
+    def software_version(self) -> tuple[int, int, int]:
+        if self._software_version is None:
+            self._software_version = self._read_software_version()
+        return self._software_version
+
     def unique_obs_indices(self) -> pa.Array:
         """Returns the unique obs indices that have non-zero values in the X matrix."""
         if self._barcode_indptr is None:
@@ -304,9 +321,3 @@ class SpaceRangerMatrixReader:
         if self._feature_indices is None:
             self._feature_indices = self.matrix_group["indices"][()]
         return pa.array(self._feature_indices)
-
-    @property
-    def version(self) -> tuple[int, int, int]:
-        if self._version is None:
-            self._version = self._read_version()
-        return self._version

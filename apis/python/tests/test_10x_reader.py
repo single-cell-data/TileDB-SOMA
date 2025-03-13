@@ -132,13 +132,13 @@ def fake_space_ranger_matrix_1(tmp_path_factory):
 
 
 def check_reader(reader, data):
-    """Check the data read by the :class:`SpaceRangerMatrixReader` against
+    """Check the data read by the :class:`TenXCountMatrixReader` against
     :class:`SpaceRangerMatrixData`.
 
     Either the data must already be loaded or :class:`SpaceRangerMatrixReader`
     must be open.
     """
-    assert reader.version == data.version
+    assert reader.software_version == data.version
 
     # Check shape.
     assert reader.nobs == data.nobs
@@ -179,9 +179,9 @@ def check_reader(reader, data):
 def test_space_ranger_matrix_reader_direct_load(fake_space_ranger_matrix_1):
 
     # Open the reader, load the version and other data and close.
-    reader = ioutil.SpaceRangerMatrixReader(fake_space_ranger_matrix_1.filepath)
+    reader = ioutil.TenXCountMatrixReader(fake_space_ranger_matrix_1.filepath)
     reader.open()
-    reader.version
+    reader.software_version
     reader.load()
     reader.close()
 
@@ -190,5 +190,5 @@ def test_space_ranger_matrix_reader_direct_load(fake_space_ranger_matrix_1):
 
 def test_space_ranger_matrix_reader_lazy_load(fake_space_ranger_matrix_1):
 
-    with ioutil.SpaceRangerMatrixReader(fake_space_ranger_matrix_1.filepath) as reader:
+    with ioutil.TenXCountMatrixReader(fake_space_ranger_matrix_1.filepath) as reader:
         check_reader(reader, fake_space_ranger_matrix_1)
