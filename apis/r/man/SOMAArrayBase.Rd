@@ -4,6 +4,11 @@
 \alias{SOMAArrayBase}
 \title{SOMA Array Base Class}
 \description{
+SOMA Array Base Class
+
+SOMA Array Base Class
+}
+\details{
 Adds SOMA-specific functionality to the \code{\link{TileDBArray}} class.  (lifecycle:
 maturing)
 }
@@ -21,6 +26,8 @@ maturing)
 \section{Methods}{
 \subsection{Public methods}{
 \itemize{
+\item \href{#method-SOMAArrayBase-allows_duplicates}{\code{SOMAArrayBase$allows_duplicates()}}
+\item \href{#method-SOMAArrayBase-is_sparse}{\code{SOMAArrayBase$is_sparse()}}
 \item \href{#method-SOMAArrayBase-clone}{\code{SOMAArrayBase$clone()}}
 }
 }
@@ -54,6 +61,34 @@ maturing)
 </ul>
 </details>
 }}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SOMAArrayBase-allows_duplicates"></a>}}
+\if{latex}{\out{\hypertarget{method-SOMAArrayBase-allows_duplicates}{}}}
+\subsection{Method \code{allows_duplicates()}}{
+Does an array allow duplicates?
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SOMAArrayBase$allows_duplicates()}\if{html}{\out{</div>}}
+}
+
+\subsection{Returns}{
+\code{TRUE} if the underlying TileDB array allows duplicates;
+otherwise \code{FALSE}
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SOMAArrayBase-is_sparse"></a>}}
+\if{latex}{\out{\hypertarget{method-SOMAArrayBase-is_sparse}{}}}
+\subsection{Method \code{is_sparse()}}{
+Is an array sparse?
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SOMAArrayBase$is_sparse()}\if{html}{\out{</div>}}
+}
+
+\subsection{Returns}{
+\code{TRUE} if the underlying TileDB array is sparse;
+otherwise \code{FALSE}
+}
+}
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-SOMAArrayBase-clone"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMAArrayBase-clone}{}}}

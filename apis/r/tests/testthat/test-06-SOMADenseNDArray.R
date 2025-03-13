@@ -83,9 +83,7 @@ test_that("SOMADenseNDArray creation", {
   )
 
   # Validate TileDB array schema
-  arr <- tiledb::tiledb_array(uri)
-  sch <- tiledb::schema(arr)
-  expect_false(tiledb::is.sparse(sch))
+  expect_false(ndarray$is_sparse())
 
   ## shape
   expect_equal(ndarray$shape(), bit64::as.integer64(c(10, 5)))
