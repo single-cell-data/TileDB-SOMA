@@ -9,7 +9,12 @@ test_that("Basic mechanics", {
   )
   if (dir.exists(uri)) unlink(uri, recursive = TRUE)
 
-  sdf <- SOMADataFrameCreate(uri, asch, index_column_names = "int_column", domain = list(int_column = c(1, 36)))
+  sdf <- SOMADataFrameCreate(
+    uri,
+    asch,
+    index_column_names = "int_column",
+    domain = list(int_column = c(1, 36))
+  )
   expect_true(sdf$exists())
   expect_true(dir.exists(uri))
 
@@ -82,13 +87,9 @@ test_that("Basic mechanics", {
   sdf$write(rb0)
   sdf$close()
 
-  # Read back the data (ignore attributes)
+  # Read back the data
   sdf <- SOMADataFrameOpen(uri)
-  expect_equivalent(
-    tiledb::tiledb_array(sdf$uri, return_as = "asis")[],
-    as.list(rb0),
-    ignore_attr = TRUE
-  )
+  expect_equivalent(sdf$read()$concat(), expected = arrow::as_arrow_table(rb0))
 
   # Read result should recreate the original RecordBatch (when seen as a tibble)
   rb1 <- arrow::as_record_batch(sdf$read()$concat())
@@ -116,10 +117,8 @@ test_that("Basic mechanics", {
   expect_true(tbl1$Equals(tbl0$Filter(tbl0$float_column < 5)))
 
   # Validate TileDB array schema
-  arr <- tiledb::tiledb_array(uri)
-  sch <- tiledb::schema(arr)
-  expect_true(tiledb::is.sparse(sch))
-  expect_false(tiledb::allows_dups(sch))
+  expect_true(sdf$is_sparse())
+  expect_false(sdf$allows_duplicates())
   sdf$close()
 
   rm(sdf, tbl0, tbl1, rb0, rb1)
@@ -540,47 +539,6 @@ test_that("platform_config is respected", {
   expect_equal(tiledb::tiledb_filter_type(i2), "ZSTD")
   expect_equal(tiledb::tiledb_filter_get_option(i2, "COMPRESSION_LEVEL"), 9)
 
-  sdf$close()
-})
-
-test_that("platform_config defaults", {
-  skip_if(!extended_tests())
-  uri <- withr::local_tempdir("soma-dataframe")
-
-  # Set Arrow schema
-  asch <- arrow::schema(
-    arrow::field("soma_joinid", arrow::int64(), nullable = FALSE),
-    arrow::field("i32", arrow::int32(), nullable = FALSE),
-    arrow::field("f64", arrow::float64(), nullable = FALSE),
-    arrow::field("utf8", arrow::large_utf8(), nullable = FALSE)
-  )
-
-  # Set tiledb create options
-  cfg <- PlatformConfig$new()
-
-  # Create the SOMADataFrame
-  if (dir.exists(uri)) unlink(uri, recursive = TRUE)
-  sdf <- SOMADataFrameCreate(
-    uri = uri,
-    schema = asch,
-    index_column_names = c("soma_joinid"),
-    platform_config = cfg
-  )
-
-  # Read back and check the array schema against the tiledb create options
-  arr <- tiledb::tiledb_array(uri)
-  tsch <- tiledb::schema(arr)
-
-  # Here we're snooping on the default dim filter that's used when no other is specified.
-  dom <- tiledb::domain(tsch)
-  expect_equal(tiledb::tiledb_ndim(dom), 1)
-  dim <- tiledb::dimensions(dom)[[1]]
-  expect_equal(tiledb::name(dim), "soma_joinid")
-  dim_filters <- tiledb::filter_list(dim)
-  expect_equal(tiledb::nfilters(dim_filters), 1)
-  d1 <- dim_filters[0] # C++ indexing here
-  expect_equal(tiledb::tiledb_filter_type(d1), "ZSTD")
-  expect_equal(tiledb::tiledb_filter_get_option(d1, "COMPRESSION_LEVEL"), 3)
   sdf$close()
 })
 

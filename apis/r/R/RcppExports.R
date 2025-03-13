@@ -238,6 +238,14 @@ c_schema <- function(uri, ctxxp) {
     .Call(`_tiledbsoma_c_schema`, uri, ctxxp)
 }
 
+c_is_sparse <- function(uri, ctxxp) {
+    .Call(`_tiledbsoma_c_is_sparse`, uri, ctxxp)
+}
+
+c_allows_dups <- function(uri, ctxxp) {
+    .Call(`_tiledbsoma_c_allows_dups`, uri, ctxxp)
+}
+
 resize <- function(uri, new_shape, function_name_for_messages, check_only, ctxxp) {
     .Call(`_tiledbsoma_resize`, uri, new_shape, function_name_for_messages, check_only, ctxxp)
 }

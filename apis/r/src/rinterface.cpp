@@ -97,7 +97,7 @@ SEXP soma_array_reader(
     if(!column_names.empty()){
         mq.select_columns(column_names);
     }
-    
+
     std::unordered_map<std::string, std::shared_ptr<tiledb::Dimension>>
         name2dim;
     std::shared_ptr<tiledb::ArraySchema> schema = sr->tiledb_schema();
@@ -414,6 +414,24 @@ SEXP c_schema(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
     }
 
     return schemaxp;
+}
+
+// [[Rcpp::export]]
+bool c_is_sparse(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
+    auto sr = tdbs::SOMAArray::open(OpenMode::read, uri, ctxxp->ctxptr);
+    std::shared_ptr<tiledb::ArraySchema> sch = sr->tiledb_schema();
+    sr->close();
+
+    return sch->array_type() == TILEDB_SPARSE;
+}
+
+// [[Rcpp::export]]
+bool c_allows_dups(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
+    auto sr = tdbs::SOMAArray::open(OpenMode::read, uri, ctxxp->ctxptr);
+    std::shared_ptr<tiledb::ArraySchema> sch = sr->tiledb_schema();
+    sr->close();
+
+    return sch->allows_dups();
 }
 
 // [[Rcpp::export]]
