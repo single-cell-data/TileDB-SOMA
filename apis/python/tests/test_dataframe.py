@@ -34,16 +34,6 @@ def arrow_schema():
 
 def test_dataframe(tmp_path, arrow_schema):
     uri = tmp_path.as_posix()
-
-    asch = pa.schema(
-        [
-            ("myint", pa.int32()),
-            ("myfloat", pa.float64()),
-            ("mystring", pa.large_string()),
-            ("mybool", pa.bool_()),
-        ]
-    )
-
     # Create
     asch = arrow_schema()
     with pytest.raises(ValueError):

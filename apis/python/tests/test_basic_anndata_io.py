@@ -5,7 +5,6 @@ import random
 import tempfile
 from copy import deepcopy
 from pathlib import Path
-from typing import Tuple
 
 import anndata
 import numpy as np
@@ -1011,7 +1010,7 @@ def make_uns_adata(
     tmp_path: Path,
     measurement_name: str = "RNA",
     uns: UnsMapping | None = None,
-) -> Tuple[str, AnnData]:
+) -> tuple[str, AnnData]:
     obs = pd.DataFrame(
         data={"obs_id": np.asarray(["a", "b", "c"])},
         index=np.arange(3).astype(str),
