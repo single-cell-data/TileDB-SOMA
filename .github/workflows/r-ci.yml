@@ -36,8 +36,11 @@ jobs:
           - name: linux
             os: ubuntu-24.04
             covr: 'no'
-          - name: macos
+          - name: macos (arm)
             os: macOS-latest
+            covr: 'no'
+          - name: macos (x86)
+            os: macOS-13
             covr: 'no'
           - name: coverage
             os: ubuntu-24.04
