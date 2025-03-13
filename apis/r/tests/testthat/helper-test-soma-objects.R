@@ -524,30 +524,14 @@ create_and_populate_32bit_sparse_nd_array <- function(uri) {
     soma_data = c(1L, 2L, 3L)
   )
 
-  tdb_dims <- mapply(
-    tiledb::tiledb_dim,
-    name = c("soma_dim_0", "soma_dim_1"),
-    MoreArgs = list(
-      domain = c(bit64::as.integer64(0), 2^31 - 1),
-      tile = bit64::as.integer64(2),
-      type = "INT64"
-    ),
-    SIMPLIFY = FALSE
+  arr <- SOMASparseNDArrayCreate(
+    uri = uri,
+    type = arrow::int32(),
+    shape = rep_len(2 ^ 31, length.out = 2L)
   )
+  on.exit(arr$close(), add = TRUE, after = FALSE)
 
-  tdb_attr <- tiledb::tiledb_attr(
-    name = "soma_data",
-    type = "INT32",
-  )
+  arr$.write_coordinates(df)
 
-  tdb_schema <- tiledb::tiledb_array_schema(
-    domain = tiledb::tiledb_domain(tdb_dims),
-    attrs = tdb_attr,
-    sparse = TRUE
-  )
-
-  tiledb::tiledb_array_create(uri, schema = tdb_schema)
-  arr <- tiledb::tiledb_array(uri, "WRITE")
-  arr[] <- df
-  uri
+  return(uri)
 }
