@@ -89,8 +89,7 @@ void load_soma_array(py::module& m) {
                 }
 
                 if (!soma_obj_type) {
-                    assert(
-                        false &&
+                    throw TileDBSOMAError(
                         "Unreachable code: The missing soma_object_type case "
                         "is already handled. This indicates an "
                         "unexpected failure to catch exceptions by "
@@ -114,8 +113,7 @@ void load_soma_array(py::module& m) {
                 else if (soma_obj_type == "somadensendarray")
                     return py::cast(SOMADenseNDArray(*new_array));
 
-                assert(
-                    false &&
+                throw TileDBSOMAError(
                     "Unreachable code: All possible SOMA object types are "
                     "already handled. This indicates a logic error or an "
                     "unexpected failure to catch exceptions by "
