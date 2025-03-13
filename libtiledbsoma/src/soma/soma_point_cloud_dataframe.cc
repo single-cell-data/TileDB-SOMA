@@ -31,21 +31,24 @@ void SOMAPointCloudDataFrame::create(
     PlatformConfig platform_config,
     std::optional<TimestampRange> timestamp) {
     // Create TileDB array that is open for writing.
-    auto [tiledb_schema, soma_schema_extension] =
-        ArrowAdapter::tiledb_schema_from_arrow_schema(
-            ctx->tiledb_ctx(),
-            schema,
-            index_columns,
-            std::make_optional(coordinate_space),
-            "SOMAPointCloudDataFrame",
-            true,
-            platform_config);
+    auto
+        [tiledb_schema, soma_schema_extension, required_soma_schema_extension] =
+            ArrowAdapter::tiledb_schema_from_arrow_schema(
+                ctx->tiledb_ctx(),
+                schema,
+                index_columns,
+                std::make_optional(coordinate_space),
+                "SOMAPointCloudDataFrame",
+                true,
+                platform_config);
     auto array = SOMAArray::_create(
         ctx,
         uri,
         tiledb_schema,
         "SOMAPointCloudDataFrame",
-        std::nullopt,
+        required_soma_schema_extension ?
+            std::make_optional(soma_schema_extension.dump()) :
+            std::nullopt,
         timestamp);
 
     // Add additional point cloud dataframe metadata.

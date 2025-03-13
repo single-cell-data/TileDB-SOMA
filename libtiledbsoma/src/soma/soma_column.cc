@@ -14,6 +14,7 @@
 #include "soma_column.h"
 
 #include "soma_attribute.h"
+#include "soma_binary_column.h"
 #include "soma_dimension.h"
 #include "soma_geometry_column.h"
 
@@ -23,7 +24,9 @@ std::map<uint32_t, SOMAColumn::Factory> SOMAColumn::deserialiser_map = {
     {soma_column_datatype_t::SOMA_COLUMN_ATTRIBUTE, SOMAAttribute::deserialize},
     {soma_column_datatype_t::SOMA_COLUMN_DIMENSION, SOMADimension::deserialize},
     {soma_column_datatype_t::SOMA_COLUMN_GEOMETRY,
-     SOMAGeometryColumn::deserialize}};
+     SOMAGeometryColumn::deserialize},
+    {soma_column_datatype_t::SOMA_COLUMN_BINARY,
+     SOMABinaryColumn::deserialize}};
 
 std::vector<std::shared_ptr<SOMAColumn>> SOMAColumn::deserialize(
     const Context& ctx,
