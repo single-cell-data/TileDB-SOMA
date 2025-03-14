@@ -360,6 +360,10 @@ std::optional<TimestampRange> SOMAArray::timestamp() {
 }
 
 ArrowTable SOMAArray::get_column_enumeration_values(std::string column_name) {
+
+    // SDF schema: std::unique_ptr<ArrowSchema> arrow_schema()
+    // XXX find column name within
+
     // XXX TEMP ITERATING
     tiledb_datatype_t dtype = TILEDB_STRING_UTF8;  // XXX TEMPSTUB
     std::unique_ptr<ArrowSchema> arrow_schema(

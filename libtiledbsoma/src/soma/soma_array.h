@@ -309,6 +309,19 @@ class SOMAArray : public SOMAObject {
         return schema;
     }
 
+    std::unique_ptr<ArrowSchema> arrow_schema_for_column(
+        std::string column_name) const {
+        for (size_t i = 0; i < columns_.size(); ++i) {
+            if (columns_[i]->name() == column_name) {
+                return std::unique_ptr<ArrowSchema>(
+                    columns_[i]->arrow_schema_slot(*ctx_, *arr_));
+            }
+        }
+        throw TileDBSOMAError(std::format(
+            "[arrow_schema_for_column] column name '{}' not present in schema",
+            column_name));
+    }
+
     /**
      * @brief Get members of the schema (capacity, allows_duplicates,
      * tile_order, cell_order, offsets_filters, validity_filters, attr filters,
