@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING, Any, Dict, Mapping, Tuple
 
 import pandas as pd
 import somacore
+from anndata import AnnData
 
 try:
     import spatialdata as sd
@@ -29,7 +30,7 @@ except ImportError as err:
     raise err
 
 
-from ... import MultiscaleImage, PointCloudDataFrame
+from ... import Collection, MultiscaleImage, PointCloudDataFrame, Scene
 from ..._constants import SOMA_JOINID
 from ..._spatial_util import transform_from_json
 from ._xarray_backend import dense_nd_array_to_data_array, images_to_datatree
@@ -422,3 +423,177 @@ def to_spatialdata_multiscale_image(
     )
 
     return images_to_datatree(image_data_arrays)
+
+
+def _spatial_to_spatialdata(
+    spatial: Collection[Scene],
+    anndatas: dict[str, AnnData],
+    *,
+    scene_names: tuple[str, ...],
+    measurement_names: tuple[str, ...],
+) -> sd.SpatialData:
+    # Create empty SpatialData instance and dict to store region/instance keys.
+    sdata = sd.SpatialData()
+    region_joinids: dict[str, Any] = {}
+
+    # Add data from linked scenes.
+    for scene_name in scene_names:
+        scene = spatial[scene_name]
+
+        # Cannot have spatial data if no coordinate space.
+        if scene.coordinate_space is None:
+            continue
+
+        # Get the map from Scene dimension names to SpatialData dimension names.
+        input_axis_names = scene.coordinate_space.axis_names
+        _, scene_dim_map = _convert_axis_names(input_axis_names, input_axis_names)
+
+        # Export obsl data to SpatialData.
+        if "obsl" in scene:
+            for key, df in scene.obsl.items():
+                output_key = f"{scene_name}_{key}"
+                transform = _get_transform_from_collection(key, scene.obsl.metadata)
+                if isinstance(df, PointCloudDataFrame):
+                    if "soma_geometry" in df.metadata:
+                        sdata.shapes[output_key] = to_spatialdata_shapes(
+                            df,
+                            key=output_key,
+                            scene_id=scene_name,
+                            scene_dim_map=scene_dim_map,
+                            transform=transform,
+                        )
+                        region_joinids[output_key] = sdata.shapes[output_key][
+                            SOMA_JOINID
+                        ]
+
+                    else:
+                        sdata.points[output_key] = to_spatialdata_points(
+                            df,
+                            key=output_key,
+                            scene_id=scene_name,
+                            scene_dim_map=scene_dim_map,
+                            transform=transform,
+                        )
+                        region_joinids[output_key] = sdata.points[output_key][
+                            SOMA_JOINID
+                        ]
+
+                else:
+                    warnings.warn(
+                        f"Skipping obsl[{key}] in Scene {scene_name}; unexpected "
+                        f"datatype {type(df).__name__}."
+                    )
+
+        # Export varl data to SpatialData.
+        if "varl" in scene:
+            for measurement_name in measurement_names:
+                if measurement_name not in scene.varl:
+                    continue
+
+                subcoll = scene.varl[measurement_name]
+                for key, df in subcoll.items():
+                    output_key = f"{scene_name}_{measurement_name}_{key}"
+                    transform = _get_transform_from_collection(key, subcoll.metadata)
+                    if isinstance(df, PointCloudDataFrame):
+                        if "soma_geometry" in df.metadata:
+                            sdata.shapes[output_key] = to_spatialdata_shapes(
+                                df,
+                                key=output_key,
+                                scene_id=scene_name,
+                                scene_dim_map=scene_dim_map,
+                                transform=transform,
+                            )
+                        else:
+                            sdata.points[output_key] = to_spatialdata_points(
+                                df,
+                                key=output_key,
+                                scene_id=scene_name,
+                                scene_dim_map=scene_dim_map,
+                                transform=transform,
+                            )
+                    else:
+                        warnings.warn(
+                            f"Skipping varl[{measurement_name}][{key}] in Scene "
+                            f"{scene_name}; unexpected datatype {type(df).__name__}."
+                        )
+
+        # Export img data to SpatialData.
+        if "img" in scene:
+            for key, image in scene.img.items():
+                output_key = f"{scene_name}_{key}"
+                transform = _get_transform_from_collection(key, scene.img.metadata)
+                if not isinstance(image, MultiscaleImage):
+                    warnings.warn(  # type: ignore[unreachable]
+                        f"Skipping img[{image}] in Scene {scene_name}; unexpected "
+                        f"datatype {type(image).__name__}."
+                    )
+                if image.level_count == 1:
+                    sdata.images[output_key] = to_spatialdata_image(
+                        image,
+                        0,
+                        key=output_key,
+                        scene_id=scene_name,
+                        scene_dim_map=scene_dim_map,
+                        transform=transform,
+                    )
+                else:
+                    sdata.images[output_key] = to_spatialdata_multiscale_image(
+                        image,
+                        key=output_key,
+                        scene_id=scene_name,
+                        scene_dim_map=scene_dim_map,
+                        transform=transform,
+                    )
+
+    # Add joinids to region dataframe. Verify no overwrites.
+    # Note: It is unlikely we will ever use this on more than one measurement,
+    # but the way it is implemented does support exporting to multiple measurements
+    # with no assumption on those measurements having identical obs.
+    regions: list[str] | None = None
+    region_key: str | None = None
+    instance_key: str | None = None
+    for measurement_name, adata in anndatas.items():
+        # Reset regions and keys.
+        regions = None
+        region_key = None
+        instance_key = None
+
+        # Get the region joinids.
+        if region_joinids:
+            region_df = pd.concat(
+                [
+                    pd.DataFrame.from_dict(
+                        {
+                            SOMA_JOINID: joinid_series,
+                            "region_key": key,
+                            "instance_key": joinid_series.index,
+                        }
+                    )
+                    for key, joinid_series in region_joinids.items()
+                ]
+            )
+            if not region_df.empty:
+                try:
+                    adata.obs = pd.merge(
+                        adata.obs,
+                        region_df,
+                        how="left",
+                        on=SOMA_JOINID,
+                        validate="many_to_one",
+                    )
+                except pd.errors.MergeError as err:
+                    raise NotImplementedError(
+                        "Unable to export to SpatialData; exported assets have "
+                        "overlapping observations."
+                    ) from err
+                adata.obs["region_key"] = pd.Categorical(adata.obs["region_key"])
+                regions = list(region_joinids.keys())
+                region_key = "region_key"
+                instance_key = "instance_key"
+
+        # Add the table to SpatialData.
+        sdata.tables[measurement_name] = sd.models.TableModel.parse(
+            adata, regions, region_key, instance_key
+        )
+
+    return sdata
