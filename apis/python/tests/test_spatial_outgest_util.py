@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 import somacore
 
-soma_outgest = pytest.importorskip("tiledbsoma.io.spatial.outgest")
+soma_outgest = pytest.importorskip("tiledbsoma.io.spatial._spatialdata_util")
 sd = pytest.importorskip("spatialdata")
 
 
@@ -33,6 +33,7 @@ sd = pytest.importorskip("spatialdata")
         ),
     ],
 )
+@pytest.mark.spatialdata
 def test_transform_to_spatialdata(transform, expected):
     input_dim_map = {"x1": "x", "y1": "y", "z1": "z"}
     output_dim_map = {"x2": "x", "y2": "y", "z2": "z"}
