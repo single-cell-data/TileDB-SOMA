@@ -35,7 +35,7 @@ JoinIDs: TypeAlias = NDArray[int64]
 class DaskConfig:
     chunk_size: ChunkSize
     tiledb_concurrency: int | None = 1
-    tiledb_configs: dict[str, ConfigVal] = field(default_factory=dict)
+    tiledb_config: dict[str, ConfigVal] = field(default_factory=dict)
 
 
 def chunk_ids_sizes(

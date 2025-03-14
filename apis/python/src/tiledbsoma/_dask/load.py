@@ -111,7 +111,7 @@ def load_daskarray(
     config: DaskConfig | None = None,
     chunk_size: ChunkSize | None = None,
     tiledb_concurrency: int | None = None,
-    tiledb_configs: dict[str, ConfigVal] | None = None,
+    tiledb_config: dict[str, ConfigVal] | None = None,
     format: Format = "csr",
     result_order: ResultOrderStr = ResultOrder.AUTO,
     platform_config: PlatformConfig | None = None,
@@ -126,8 +126,8 @@ def load_daskarray(
             if tiledb_concurrency is not None
             else config.tiledb_concurrency
         )
-        tiledb_configs = (
-            tiledb_configs if tiledb_configs is not None else config.tiledb_configs
+        tiledb_config = (
+            tiledb_config if tiledb_config is not None else config.tiledb_config
         )
     else:
         if chunk_size is None:
@@ -157,9 +157,9 @@ def load_daskarray(
             arr[obs_chunk_idx, var_chunk_idx] = (obs_chunk_ids, var_chunk_ids)
 
     if isinstance(layer, SparseNDArray):
-        if tiledb_configs:
+        if tiledb_config:
             tiledb_config = {**layer.context.tiledb_config}
-            tiledb_config.update(**tiledb_configs)
+            tiledb_config.update(**tiledb_config)
         else:
             tiledb_config = layer.context.tiledb_config
 
