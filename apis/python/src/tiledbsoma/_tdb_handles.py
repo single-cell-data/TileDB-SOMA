@@ -455,6 +455,9 @@ class SOMAArrayWrapper(Wrapper[_SOMAObjectType]):
         """Only implemented for DataFrame."""
         raise NotImplementedError
 
+    def column_enumeration_values(self, column_name: str) -> pa.Array:
+        raise NotImplementedError
+
     @property
     def maybe_soma_joinid_maxshape(self) -> int | None:
         """Only implemented for DataFrame."""
@@ -548,6 +551,9 @@ class DataFrameWrapper(SOMAArrayWrapper[clib.SOMADataFrame]):
 
     def write(self, values: pa.RecordBatch) -> None:
         self._handle.write(values)
+
+    def column_enumeration_values(self, column_name: str) -> pa.Array:
+        return self._handle.column_enumeration_values(column_name)
 
     @property
     def maybe_soma_joinid_shape(self) -> int | None:

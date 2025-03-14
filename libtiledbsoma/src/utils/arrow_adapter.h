@@ -512,6 +512,15 @@ class ArrowAdapter {
         const std::vector<tiledb_datatype_t>& tiledb_datatypes);
 
     /**
+     * @brief Creates a nanoarrow ArrowSchema given a names and a TileDB
+     * datatype.
+     *
+     * This constructs the child element, for a single column/attribute.
+     */
+    static ArrowSchema* make_arrow_schema_child(
+        std::string name, tiledb_datatype_t tiledb_datatype);
+
+    /**
      * @brief Creates a nanoarrow ArrowSchema which accommodates
      * a varying number of columns.
      *
