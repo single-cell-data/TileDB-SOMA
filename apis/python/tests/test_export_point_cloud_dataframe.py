@@ -47,6 +47,7 @@ def sample_point_cloud_dataframe_2d(tmp_path_factory):
         ),
     ],
 )
+@pytest.mark.spatialdata
 def test_export_to_shapes_2d(
     sample_point_cloud_dataframe_2d, transform, expected_transformation
 ):
@@ -95,6 +96,7 @@ def test_export_to_shapes_2d(
         ),
     ],
 )
+@pytest.mark.spatialdata
 def test_export_to_points_2d(
     sample_point_cloud_dataframe_2d, transform, expected_transformation
 ):
