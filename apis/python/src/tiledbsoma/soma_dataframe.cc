@@ -123,6 +123,18 @@ void load_soma_dataframe(py::module& m) {
         .def_property_readonly(
             "index_column_names", &SOMADataFrame::index_column_names)
 
+        .def(
+            "column_enumeration_values",
+            [](SOMADataFrame& sdf, std::string column_name) {
+                try {
+                    py::tuple retval = py::make_tuple("red", "yellow", "green");
+                    return retval;
+                } catch (const std::exception& e) {
+                    throw TileDBSOMAError(e.what());
+                }
+            },
+            "column_name"_a)
+
         .def_property_readonly(
             "count",
             &SOMADataFrame::count,

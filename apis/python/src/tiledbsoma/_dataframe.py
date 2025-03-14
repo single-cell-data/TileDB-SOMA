@@ -382,6 +382,9 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         schema, or if the specified column is not of Arrow dictionary type."""
         self._check_open_read()
 
+        # These assertions could be done in C++. However, it's easier here
+        # to do the exception-type multiplexing, raising ValueError for one
+        # thing, TileDBSOMAError for another.
         if column_name not in self.schema.names:
             raise ValueError(
                 f"column name '{column_name}' is not present in the schema"
@@ -390,7 +393,7 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         if not isinstance(field.type, pa.DictionaryType):
             raise ValueError(f"column name '{column_name}' is not of dictionary type")
 
-        return self.handle.column_enumeration_values(column_name)
+        return self._handle.column_enumeration_values(column_name)
 
     @property
     def domain(self) -> Tuple[Tuple[Any, Any], ...]:
