@@ -359,6 +359,27 @@ std::optional<TimestampRange> SOMAArray::timestamp() {
     return timestamp_;
 }
 
+ArrowTable SOMAArray::get_column_enumeration_values(std::string column_name) {
+    auto arrow_schema = std::make_unique<ArrowSchema>();
+
+    // XXX TEMP ITERATING
+    auto arrow_type_name = ArrowAdapter::tdb_to_arrow_type(TILEDB_STRING_UTF8);
+    arrow_schema->name = strdup(column_name.c_str());
+    arrow_schema->format = strdup(arrow_type_name.c_str());
+    arrow_schema->metadata = nullptr;
+    arrow_schema->flags = 0;
+    arrow_schema->n_children = 0;      // leaf node
+    arrow_schema->children = nullptr;  // leaf node
+    arrow_schema->dictionary = nullptr;
+    arrow_schema->release = &ArrowAdapter::release_schema;
+    arrow_schema->private_data = nullptr;
+
+    std::vector<std::string> a({"red", "yellow", "green"});
+    auto arrow_array = ArrowAdapter::make_arrow_array_child_string(a);
+
+    return ArrowTable(std::move(arrow_array), std::move(arrow_schema));
+}
+
 // Note that ArrowTable is simply our libtiledbsoma pairing of ArrowArray and
 // ArrowSchema from nanoarrow.
 //

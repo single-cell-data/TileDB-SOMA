@@ -430,6 +430,13 @@ class SOMAArray : public SOMAObject {
     std::optional<TimestampRange> timestamp();
 
     /**
+     * WRITE ME PLZ KTHX
+     * @tparam std::string column name
+     * @return ArrowTable with one column
+     */
+    ArrowTable get_column_enumeration_values(std::string column_name);
+
+    /**
      * Retrieves the non-empty domain from the array. This is the union of the
      * non-empty domains of the array fragments. Returns (0, 0) for empty
      * domains.

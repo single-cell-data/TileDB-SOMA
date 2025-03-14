@@ -230,8 +230,9 @@ def test_dataframe_with_float_dim(tmp_path, arrow_schema):
 def test_dataframe_with_enumeration(tmp_path):
     schema = pa.schema(
         [
-            pa.field("myint", pa.dictionary(pa.int64(), pa.large_string())),
-            pa.field("myfloat", pa.dictionary(pa.int64(), pa.large_string())),
+            pa.field("mystring", pa.large_string()),
+            pa.field("myenum1", pa.dictionary(pa.int64(), pa.large_string())),
+            pa.field("myenum2", pa.dictionary(pa.int64(), pa.large_string())),
         ]
     )
     enums = {"enmr1": ("a", "bb", "ccc"), "enmr2": ("cat", "dog")}
@@ -240,24 +241,30 @@ def test_dataframe_with_enumeration(tmp_path):
     ) as sdf:
         data = {}
         data["soma_joinid"] = [0, 1, 2, 3, 4]
-        data["myint"] = ["a", "bb", "ccc", "bb", "a"]
-        data["myfloat"] = ["cat", "dog", "cat", "cat", "cat"]
+        data["mystring"] = ["X", "YY", "ZZZ", "YY", "X"]
+        data["myenum1"] = ["a", "bb", "ccc", "bb", "a"]
+        data["myenum2"] = ["cat", "dog", "cat", "cat", "cat"]
         with pytest.raises(soma.SOMAError):
             sdf.write(pa.Table.from_pydict(data))
 
-        data["myint"] = pd.Categorical(["a", "bb", "ccc", "bb", "a"])
-        data["myfloat"] = pd.Categorical(["cat", "dog", "cat", "cat", "cat"])
+        data["myenum1"] = pd.Categorical(["a", "bb", "ccc", "bb", "a"])
+        data["myenum2"] = pd.Categorical(["cat", "dog", "cat", "cat", "cat"])
         sdf.write(pa.Table.from_pydict(data))
 
     with soma.DataFrame.open(tmp_path.as_posix()) as sdf:
         df = sdf.read().concat()
-        assert_array_equal(df["myint"].chunk(0).dictionary, enums["enmr1"])
-        assert_array_equal(df["myfloat"].chunk(0).dictionary, enums["enmr2"])
+        assert_array_equal(df["myenum1"].chunk(0).dictionary, enums["enmr1"])
+        assert_array_equal(df["myenum2"].chunk(0).dictionary, enums["enmr2"])
 
         with pytest.raises(ValueError):
             sdf.column_enumeration_values("nonesuch")
-            sdf.column_enumeration_values("myfloat")
-            assert sdf.column_enumeration_values("emnr2") == ("red", "yellow", "green")
+
+        with pytest.raises(ValueError):
+            sdf.column_enumeration_values("mystring")
+
+        assert sdf.column_enumeration_values("myenum2") == pa.array(
+            ["red", "yellow", "green"], pa.large_string()
+        )
 
 
 @pytest.fixture

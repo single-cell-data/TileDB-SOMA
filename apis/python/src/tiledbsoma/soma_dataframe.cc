@@ -127,8 +127,19 @@ void load_soma_dataframe(py::module& m) {
             "column_enumeration_values",
             [](SOMADataFrame& sdf, std::string column_name) {
                 try {
-                    py::tuple retval = py::make_tuple("red", "yellow", "green");
-                    return retval;
+                    ArrowTable t = sdf.get_column_enumeration_values(
+                        column_name);
+
+                    auto pa = py::module::import("pyarrow");
+                    auto pa_array_import = pa.attr("Array").attr(
+                        "_import_from_c");
+                    auto arrow_array = t.first.get();
+                    auto arrow_schema = t.second.get();
+
+                    auto pa_array = pa_array_import(
+                        py::capsule(arrow_array), py::capsule(arrow_schema));
+
+                    return pa_array;
                 } catch (const std::exception& e) {
                     throw TileDBSOMAError(e.what());
                 }
