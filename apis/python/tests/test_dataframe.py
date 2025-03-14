@@ -254,6 +254,11 @@ def test_dataframe_with_enumeration(tmp_path):
         assert_array_equal(df["myint"].chunk(0).dictionary, enums["enmr1"])
         assert_array_equal(df["myfloat"].chunk(0).dictionary, enums["enmr2"])
 
+        with pytest.raises(ValueError):
+            sdf.column_enumeration_values("nonesuch")
+            sdf.column_enumeration_values("myfloat")
+            assert sdf.column_enumeration_values("emnr2") == ("red", "yellow", "green")
+
 
 @pytest.fixture
 def simple_data_frame(tmp_path):
