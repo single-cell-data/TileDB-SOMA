@@ -36,4 +36,7 @@ no-lines-before = ["tiledb"]
 
 [tool.pytest.ini_options]
 filterwarnings = ["ignore:Support for spatial types is experimental"]
-markers = ["slow: mark test as slow"]
+markers = [
+    "slow: mark test as slow",
+    "spatialdata: test of SpatialData integration",
+]

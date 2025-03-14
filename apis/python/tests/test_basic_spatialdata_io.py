@@ -161,6 +161,7 @@ def experiment_with_single_scene(tmp_path_factory, sample_2d_data) -> soma.Exper
     return soma.Experiment.open(uri, mode="r")
 
 
+@pytest.mark.spatialdata
 def test_outgest_no_spatial(tmp_path, conftest_pbmc_small):
     # Create the SOMA Experiment.
     output_path = urljoin(f"{tmp_path.as_uri()}/", "outgest_no_spatial")
@@ -197,6 +198,7 @@ def test_outgest_no_spatial(tmp_path, conftest_pbmc_small):
     assert raw.X.shape == conftest_pbmc_small.raw.shape
 
 
+@pytest.mark.spatialdata
 def test_outgest_spatial_only(experiment_with_single_scene, sample_2d_data):
     # Export to SpatialData.
     sdata = spatial_outgest.to_spatialdata(experiment_with_single_scene)

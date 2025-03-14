@@ -256,6 +256,7 @@ def check_for_scene_data(sdata, has_scenes: List[bool]):
         assert image.shape == (3, 16, 8)
 
 
+@pytest.mark.spatialdata
 def test_spatial_experiment_query_none(soma_spatial_experiment):
     with soma_spatial_experiment.axis_query(
         "RNA",
@@ -282,6 +283,7 @@ def test_spatial_experiment_query_none(soma_spatial_experiment):
         assert "spatialdata_attrs" not in ad.uns
 
 
+@pytest.mark.spatialdata
 def test_spatial_experiment_query_all(soma_spatial_experiment):
     with soma_spatial_experiment.axis_query("RNA") as query:
         # Check all obs/var read.
@@ -392,6 +394,7 @@ def test_spatial_experiment_query_obs_slice(
         (slice(30, 70), [True, True, True, True]),
     ],
 )
+@pytest.mark.spatialdata
 def test_spatial_experiment_query_var_slice(
     soma_spatial_experiment, var_slice, has_scene
 ):
