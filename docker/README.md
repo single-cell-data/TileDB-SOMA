@@ -1,6 +1,6 @@
 # Building/Installing TileDB-SOMA in Docker images
 
-Sample Dockerfiles that `pip install tiledbsoma` (including installing required system deps).
+Sample Dockerfiles that `pip install tiledbsoma` (including installing required system dependencies).
 
 ## Debugging Tips
 
