@@ -66,8 +66,6 @@ def sparse_chunk(
     obs_joinids, var_joinids = joinids
     obs_joinids = obs_joinids.astype("int64")
     var_joinids = var_joinids.astype("int64")
-    # TODO: create sequence of tables for CM.from_soma; use record batches (idiomatic Arrow)
-
     soma_ctx = make_context(
         tiledb_config=tiledb_config,
         tiledb_concurrency=tiledb_concurrency,
