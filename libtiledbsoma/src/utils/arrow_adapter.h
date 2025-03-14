@@ -518,8 +518,7 @@ class ArrowAdapter {
      * This constructs the child element, for a single column/attribute.
      */
     static ArrowSchema* make_arrow_schema_child(
-        std::string name,
-        tiledb_datatype_t tiledb_datatype);
+        std::string name, tiledb_datatype_t tiledb_datatype);
 
     /**
      * @brief Creates a nanoarrow ArrowSchema which accommodates

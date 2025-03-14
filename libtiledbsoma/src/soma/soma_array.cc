@@ -360,22 +360,58 @@ std::optional<TimestampRange> SOMAArray::timestamp() {
 }
 
 ArrowTable SOMAArray::get_column_enumeration_values(std::string column_name) {
-    auto arrow_schema = std::make_unique<ArrowSchema>();
-
     // XXX TEMP ITERATING
-    auto arrow_type_name = ArrowAdapter::tdb_to_arrow_type(TILEDB_STRING_UTF8);
-    arrow_schema->name = strdup(column_name.c_str());
-    arrow_schema->format = strdup(arrow_type_name.c_str());
-    arrow_schema->metadata = nullptr;
-    arrow_schema->flags = 0;
-    arrow_schema->n_children = 0;      // leaf node
-    arrow_schema->children = nullptr;  // leaf node
-    arrow_schema->dictionary = nullptr;
-    arrow_schema->release = &ArrowAdapter::release_schema;
-    arrow_schema->private_data = nullptr;
+    tiledb_datatype_t dtype = TILEDB_STRING_UTF8;  // XXX TEMPSTUB
+    std::unique_ptr<ArrowSchema> arrow_schema(
+        ArrowAdapter::make_arrow_schema_child(column_name, dtype));
 
     std::vector<std::string> a({"red", "yellow", "green"});
     auto arrow_array = ArrowAdapter::make_arrow_array_child_string(a);
+
+    //     ArrowSchema* index_schema,
+    //     ArrowSchema* value_schema,
+
+    //     switch (value_type) {
+    //         case TILEDB_STRING_ASCII:
+    //         case TILEDB_STRING_UTF8:
+    //         case TILEDB_CHAR:
+    //             ...
+    //         case TILEDB_INT8:
+    //             ...
+    //         case TILEDB_BOOL:
+    //         case TILEDB_UINT8:
+    //             ...
+    //         case TILEDB_INT16:
+    //             ...
+    //         case TILEDB_UINT16:
+    //             ...
+    //         case TILEDB_INT32:
+    //             ...
+    //         case TILEDB_UINT32:
+    //             ...
+    //         case TILEDB_INT64:
+    //             ...
+    //         case TILEDB_UINT64:
+    //             ...
+    //         case TILEDB_FLOAT32:
+    //             ...
+    //         case TILEDB_FLOAT64:
+    //             ...
+    //         default:
+    //             throw TileDBSOMAError(std::format(
+    //                 "ArrowAdapter: Unsupported TileDB dict datatype: {} ",
+    //                 tiledb::impl::type_to_str(value_type)));
+    //     }
+    // }
+
+    //    auto enumname = util::get_enmr_label(index_schema, value_schema);
+    //
+    //    auto enmr = ArrayExperimental::get_enumeration(*ctx_, *array_,
+    //    enumname);
+    //
+    //    auto value_type = enmr.type();
+    //
+    //    std::vector<ValueType> enums_existing = enmr.as_vector<ValueType>();
 
     return ArrowTable(std::move(arrow_array), std::move(arrow_schema));
 }
