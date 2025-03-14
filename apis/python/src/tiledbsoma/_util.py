@@ -702,3 +702,16 @@ def _resolve_futures(unresolved: Dict[str, Any], deep: bool = False) -> Dict[str
         resolved[k] = v
 
     return resolved
+
+
+class Sentinel:
+    """This is used to help detect when a kwarg is supplied or not.  Often,
+    kwarg ``foo = None`` is adequate, and should be used. This helps for cases
+    when ``None`` is actually a valid option, and we want to distinguish between
+    the user passing ``foo=None`` and the user not passing any ``foo`` at all.
+    """
+
+    pass
+
+
+MISSING = Sentinel()
