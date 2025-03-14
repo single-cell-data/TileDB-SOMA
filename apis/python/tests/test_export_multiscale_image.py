@@ -7,7 +7,7 @@ import somacore
 
 import tiledbsoma as soma
 
-soma_outgest = pytest.importorskip("tiledbsoma.io.spatial.outgest")
+soma_outgest = pytest.importorskip("tiledbsoma.io.spatial._spatialdata_util")
 sd = pytest.importorskip("spatialdata")
 
 

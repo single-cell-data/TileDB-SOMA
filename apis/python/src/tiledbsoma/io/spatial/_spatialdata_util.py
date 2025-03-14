@@ -430,7 +430,9 @@ def _spatial_to_spatialdata(
     anndatas: dict[str, AnnData],
     *,
     scene_names: tuple[str, ...],
-    measurement_names: tuple[str, ...],
+    measurement_names: tuple[str, ...] | None,
+    obs_id_name: str = SOMA_JOINID,
+    var_id_name: str = SOMA_JOINID,
 ) -> sd.SpatialData:
     # Create empty SpatialData instance and dict to store region/instance keys.
     sdata = sd.SpatialData()
@@ -461,9 +463,10 @@ def _spatial_to_spatialdata(
                             scene_id=scene_name,
                             scene_dim_map=scene_dim_map,
                             transform=transform,
+                            soma_joinid_name=obs_id_name,
                         )
                         region_joinids[output_key] = sdata.shapes[output_key][
-                            SOMA_JOINID
+                            obs_id_name
                         ]
 
                     else:
@@ -473,9 +476,10 @@ def _spatial_to_spatialdata(
                             scene_id=scene_name,
                             scene_dim_map=scene_dim_map,
                             transform=transform,
+                            soma_joinid_name=obs_id_name,
                         )
                         region_joinids[output_key] = sdata.points[output_key][
-                            SOMA_JOINID
+                            obs_id_name
                         ]
 
                 else:
@@ -486,7 +490,11 @@ def _spatial_to_spatialdata(
 
         # Export varl data to SpatialData.
         if "varl" in scene:
-            for measurement_name in measurement_names:
+            if measurement_names is None:
+                measurements = tuple(scene.varl.keys())
+            else:
+                measurements = measurement_names
+            for measurement_name in measurements:
                 if measurement_name not in scene.varl:
                     continue
 
@@ -502,6 +510,7 @@ def _spatial_to_spatialdata(
                                 scene_id=scene_name,
                                 scene_dim_map=scene_dim_map,
                                 transform=transform,
+                                soma_joinid_name=var_id_name,
                             )
                         else:
                             sdata.points[output_key] = to_spatialdata_points(
@@ -510,6 +519,7 @@ def _spatial_to_spatialdata(
                                 scene_id=scene_name,
                                 scene_dim_map=scene_dim_map,
                                 transform=transform,
+                                soma_joinid_name=var_id_name,
                             )
                     else:
                         warnings.warn(
@@ -564,7 +574,7 @@ def _spatial_to_spatialdata(
                 [
                     pd.DataFrame.from_dict(
                         {
-                            SOMA_JOINID: joinid_series,
+                            obs_id_name: joinid_series,
                             "region_key": key,
                             "instance_key": joinid_series.index,
                         }
@@ -578,7 +588,7 @@ def _spatial_to_spatialdata(
                         adata.obs,
                         region_df,
                         how="left",
-                        on=SOMA_JOINID,
+                        on=obs_id_name,
                         validate="many_to_one",
                     )
                 except pd.errors.MergeError as err:
