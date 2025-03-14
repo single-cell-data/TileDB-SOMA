@@ -23,3 +23,5 @@ SPATIAL_DISCLAIMER = (
     "Support for spatial types is experimental. Changes to both the API and data "
     "storage may not be backwards compatible."
 )
+
+_DATAFRAME_ORIGINAL_INDEX_NAME_JSON = "soma_dataframe_original_index_name"

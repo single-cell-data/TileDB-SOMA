@@ -50,4 +50,3 @@ _UNS_OUTGEST_COLUMN_NAME_1D = "values"
 _UNS_OUTGEST_COLUMN_PREFIX_2D = "values_"
 
 _TILEDBSOMA_TYPE = "soma_tiledbsoma_type"
-_DATAFRAME_ORIGINAL_INDEX_NAME_JSON = "soma_dataframe_original_index_name"

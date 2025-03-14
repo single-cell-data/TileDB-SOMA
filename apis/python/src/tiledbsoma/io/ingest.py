@@ -63,7 +63,7 @@ from .. import (
 )
 from .._collection import AnyTileDBCollection, CollectionBase
 from .._common_nd_array import NDArray
-from .._constants import SOMA_JOINID
+from .._constants import _DATAFRAME_ORIGINAL_INDEX_NAME_JSON, SOMA_JOINID
 from .._exception import (
     AlreadyExistsError,
     DoesNotExistError,
@@ -89,7 +89,6 @@ from ..options._tiledb_create_write_options import (
 )
 from . import conversions
 from ._common import (
-    _DATAFRAME_ORIGINAL_INDEX_NAME_JSON,
     _TILEDBSOMA_TYPE,
     _UNS_OUTGEST_COLUMN_NAME_1D,
     _UNS_OUTGEST_HINT_1D,

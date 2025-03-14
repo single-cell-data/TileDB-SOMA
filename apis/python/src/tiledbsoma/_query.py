@@ -8,6 +8,7 @@
 from __future__ import annotations
 
 import enum
+import json
 import warnings
 from concurrent.futures import ThreadPoolExecutor
 from typing import (
@@ -54,11 +55,15 @@ from typing_extensions import Self
 
 if TYPE_CHECKING:
     from ._experiment import Experiment
-from ._constants import SOMA_JOINID, SPATIAL_DISCLAIMER
+from ._constants import (
+    _DATAFRAME_ORIGINAL_INDEX_NAME_JSON,
+    SOMA_JOINID,
+    SPATIAL_DISCLAIMER,
+)
 from ._fastercsx import CompressedMatrix
 from ._measurement import Measurement
 from ._sparse_nd_array import SparseNDArray
-from ._util import _resolve_futures
+from ._util import _df_set_index, _resolve_futures
 
 _T = TypeVar("_T")
 _T_co = TypeVar("_T_co", covariant=True)
@@ -399,6 +404,8 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
         self,
         X_name: str,
         *,
+        obs_id_name: str | None = None,
+        var_id_name: str | None = None,
         column_names: AxisColumnNames | None = None,
         X_layers: Sequence[str] = (),
         obsm_layers: Sequence[str] = (),
@@ -446,12 +453,14 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
                 raise NotImplementedError("Dense array unsupported")
             all_x_arrays[_xname] = x_array
 
-        obs_table, var_table = tp.map(
+        obs, var = tp.map(
             self._read_axis_dataframe,
             (AxisName.OBS, AxisName.VAR),
             (self._obs_df, self._var_df),
             (self._matrix_axis_query.obs, self._matrix_axis_query.var),
             (column_names, column_names),
+            (obs_id_name, var_id_name),
+            ("obs_id", "var_id"),
         )
         obs_joinids = self.obs_joinids()
         var_joinids = self.var_joinids()
@@ -509,12 +518,6 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
             )
             for key in varp_layers
         }
-
-        obs = obs_table.to_pandas()
-        obs.index = obs.index.astype(str)
-
-        var = var_table.to_pandas()
-        var.index = var.index.astype(str)
 
         # Drop unused categories on axis dataframes if requested
         if drop_levels:
@@ -780,7 +783,9 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
         axis_df: DataFrame,
         axis_query: AxisQuery,
         axis_column_names: AxisColumnNames,
-    ) -> pa.Table:
+        default_index_name: str | None = None,
+        fallback_index_name: str | None = None,
+    ) -> pd.DataFrame:
         """Reads the specified axis. Will cache join IDs if not present."""
         column_names = axis_column_names.get(axis.value)
 
@@ -820,7 +825,24 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
         # the joinid cache.
         if added_soma_joinid_to_columns:
             arrow_table = arrow_table.drop(["soma_joinid"])
-        return arrow_table
+
+        # Read and validate the "original index metadata" stored alongside this SOMA DataFrame.
+        original_index_metadata = json.loads(
+            axis_df.metadata.get(_DATAFRAME_ORIGINAL_INDEX_NAME_JSON, "null")
+        )
+        if not (
+            original_index_metadata is None or isinstance(original_index_metadata, str)
+        ):
+            raise ValueError(
+                f"{axis_df.uri}: invalid {_DATAFRAME_ORIGINAL_INDEX_NAME_JSON} metadata: {original_index_metadata}"
+            )
+
+        pdf: pd.DataFrame = arrow_table.to_pandas()
+
+        default_index_name = default_index_name or original_index_metadata
+        _df_set_index(pdf, default_index_name, fallback_index_name)
+
+        return pdf
 
     def _get_annotation_layer(
         self, annotation_name: str, layer_name: str
