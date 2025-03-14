@@ -36,13 +36,12 @@ from .. import (
     _util,
     logging,
 )
-from .._constants import SOMA_JOINID
+from .._constants import _DATAFRAME_ORIGINAL_INDEX_NAME_JSON, SOMA_JOINID
 from .._exception import SOMAError
 from .._types import NPNDArray, Path
 from .._util import MISSING, Sentinel, _df_set_index, _resolve_futures
 from . import conversions
 from ._common import (
-    _DATAFRAME_ORIGINAL_INDEX_NAME_JSON,
     _UNS_OUTGEST_COLUMN_NAME_1D,
     _UNS_OUTGEST_COLUMN_PREFIX_2D,
     _UNS_OUTGEST_HINT_1D,

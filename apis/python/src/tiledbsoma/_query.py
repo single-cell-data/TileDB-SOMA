@@ -53,11 +53,13 @@ from somacore.query.query import (
 from somacore.query.types import IndexFactory, IndexLike
 from typing_extensions import Self
 
-from tiledbsoma.io._common import _DATAFRAME_ORIGINAL_INDEX_NAME_JSON
-
 if TYPE_CHECKING:
     from ._experiment import Experiment
-from ._constants import SOMA_JOINID, SPATIAL_DISCLAIMER
+from ._constants import (
+    _DATAFRAME_ORIGINAL_INDEX_NAME_JSON,
+    SOMA_JOINID,
+    SPATIAL_DISCLAIMER,
+)
 from ._fastercsx import CompressedMatrix
 from ._measurement import Measurement
 from ._sparse_nd_array import SparseNDArray

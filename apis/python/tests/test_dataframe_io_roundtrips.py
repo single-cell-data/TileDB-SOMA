@@ -18,7 +18,7 @@ from pandas._testing import assert_frame_equal
 from scipy.sparse import csr_matrix
 
 from tiledbsoma import SOMA_JOINID, DataFrame, Experiment
-from tiledbsoma.io._common import _DATAFRAME_ORIGINAL_INDEX_NAME_JSON
+from tiledbsoma._constants import _DATAFRAME_ORIGINAL_INDEX_NAME_JSON
 from tiledbsoma.io._registration import AxisIDMapping
 from tiledbsoma.io.ingest import IngestionParams, _write_dataframe, from_anndata
 from tiledbsoma.io.outgest import _read_dataframe, to_anndata
