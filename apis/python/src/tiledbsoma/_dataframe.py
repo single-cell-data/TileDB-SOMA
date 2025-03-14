@@ -390,7 +390,7 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         if not isinstance(field.type, pa.DictionaryType):
             raise ValueError(f"column name '{column_name}' is not of dictionary type")
 
-        return pa.array(["red", "yellow", "green"])
+        return self.handle.column_enumeration_values(column_name)
 
     @property
     def domain(self) -> Tuple[Tuple[Any, Any], ...]:

@@ -549,6 +549,9 @@ class DataFrameWrapper(SOMAArrayWrapper[clib.SOMADataFrame]):
     def write(self, values: pa.RecordBatch) -> None:
         self._handle.write(values)
 
+    def column_enumeration_values(self, column_name: str) -> pa.Array:
+        return ("red", "yellow", "green")
+
     @property
     def maybe_soma_joinid_shape(self) -> int | None:
         """Wrapper-class internals"""
