@@ -106,7 +106,6 @@ def load_daskarray(
     layer: SparseNDArray | DenseNDArray,
     *,
     coords: SparseNDCoords | None = None,
-    config: DaskConfig | None = None,
     chunk_size: ChunkSize | None = None,
     tiledb_concurrency: int | None = None,
     tiledb_config: dict[str, ConfigVal] | None = None,
@@ -117,21 +116,10 @@ def load_daskarray(
     """Load a TileDB-SOMA X layer as a Dask array."""
     import dask.array as da
 
-    if config:
-        chunk_size = chunk_size if chunk_size is not None else config.chunk_size
-        tiledb_concurrency = (
-            tiledb_concurrency
-            if tiledb_concurrency is not None
-            else config.tiledb_concurrency
-        )
-        tiledb_config = (
-            tiledb_config if tiledb_config is not None else config.tiledb_config
-        )
-    else:
-        if chunk_size is None:
-            raise ValueError("chunk_size required (directly or via `config`)")
-        if tiledb_concurrency is None:
-            tiledb_concurrency = 1
+    if chunk_size is None:
+        raise ValueError("chunk_size required (directly or via `config`)")
+    if tiledb_concurrency is None:
+        tiledb_concurrency = 1
 
     _, _, data_dtype = layer.schema.types
     dtype = data_dtype.to_pandas_dtype()

@@ -8,12 +8,12 @@
 from __future__ import annotations
 
 from concurrent.futures import ThreadPoolExecutor
-from dataclasses import dataclass, field
 from functools import cache
 from os import cpu_count
 from typing import (
     Any,
     Sequence,
+    TypedDict,
     Union,
 )
 
@@ -31,11 +31,10 @@ ChunkSize = Union[int, tuple[Union[int, None], int]]
 JoinIDs: TypeAlias = NDArray[int64]
 
 
-@dataclass
-class DaskConfig:
+class DaskConfig(TypedDict, total=False):
     chunk_size: ChunkSize
-    tiledb_concurrency: int | None = 1
-    tiledb_config: dict[str, ConfigVal] = field(default_factory=dict)
+    tiledb_concurrency: int | None
+    tiledb_config: dict[str, ConfigVal]
 
 
 def chunk_ids_sizes(

@@ -477,7 +477,7 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
                 else load_daskarray(
                     layer=layer,
                     coords=(obs_joinids, var_joinids),
-                    config=dask,
+                    **dask,
                 )
             )
             for _xname, layer in all_x_arrays.items()

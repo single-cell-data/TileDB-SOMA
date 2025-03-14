@@ -159,7 +159,7 @@ def _extract_X_key(
         return load_daskarray(
             layer=X,
             coords=None,
-            config=dask,
+            **dask,
         )
     # Read data from SOMA into memory
     elif isinstance(X, DenseNDArray):
