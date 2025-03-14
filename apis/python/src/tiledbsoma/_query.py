@@ -576,7 +576,7 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
 
         from ._multiscale_image import MultiscaleImage
         from ._point_cloud_dataframe import PointCloudDataFrame
-        from .io.spatial.outgest import (
+        from .io.spatial._spatialdata_util import (
             _convert_axis_names,
             _get_transform_from_collection,
             to_spatialdata_image,
