@@ -263,7 +263,7 @@ def test_dataframe_with_enumeration(tmp_path):
             sdf.column_enumeration_values("mystring")
 
         assert sdf.column_enumeration_values("myenum2") == pa.array(
-            ["red", "yellow", "green"], pa.large_string()
+            ["cat", "dog"], pa.large_string()
         )
 
 
