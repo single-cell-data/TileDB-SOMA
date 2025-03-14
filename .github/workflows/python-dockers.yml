@@ -36,3 +36,17 @@ jobs:
         working-directory: docker
       - run: docker run ${{ matrix.name }}
         working-directory: docker
+  # File an issue if anything fails, but only for scheduled ones (not manual "workflow_dispatch" runs).
+  create_issue_on_fail:
+    runs-on: ubuntu-24.04
+    needs: [docker]
+    if: (failure() || cancelled()) && github.event_name != 'workflow_dispatch'
+    steps:
+      - name: Checkout TileDB-SOMA `main`
+        uses: actions/checkout@v4
+      - name: Create Issue if Build Fails
+        uses: JasonEtco/create-an-issue@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          filename: .github/workflows/daily-test-build-issue-template.md
