@@ -2,6 +2,7 @@
 #include "../geometry/geometry.h"
 #include "../geometry/operators/envelope.h"
 #include "../geometry/operators/io/write.h"
+#include "../utils/logger.h"
 
 namespace tiledbsoma {
 OutlineTransformer::OutlineTransformer(SOMACoordinateSpace coordinate_space)
@@ -46,7 +47,7 @@ ArrowTable OutlineTransformer::apply(
     }
 
     if (soma_gometry_index == -1) {
-        throw std::runtime_error(std::format(
+        throw std::runtime_error(fmt::format(
             "[OutlineTransformer][apply] Missing schema child with name {}",
             SOMA_GEOMETRY_COLUMN_NAME));
     }

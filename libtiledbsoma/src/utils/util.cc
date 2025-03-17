@@ -76,7 +76,7 @@ std::shared_ptr<SOMAColumn> find_column_by_name(
         });
 
     if (column_it == columns.end()) {
-        throw TileDBSOMAError(std::format(
+        throw TileDBSOMAError(fmt::format(
             "[ArrowAdapter][tiledb_schema_from_arrow_schema] Index column "
             "'{}' missing",
             name));
