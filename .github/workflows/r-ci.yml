@@ -9,6 +9,7 @@ on:
       - '.github/workflows/r-ci.yml'
       - '!.pre-commit-config.yaml'
       - '!apis/python/**'
+      - '!docker/**'
       - '!docs/**'
       - '!LICENSE'
   push:
