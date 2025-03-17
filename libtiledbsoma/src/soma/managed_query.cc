@@ -943,9 +943,24 @@ bool ManagedQuery::_extend_enumeration(
     ArrowSchema* index_schema,
     ArrowArray* index_array,
     ArraySchemaEvolution se) {
-    // For columns with dictionaries, we need to identify whether the
-    auto enumname = util::get_enmr_label(index_schema, value_schema);
-    auto enmr = ArrayExperimental::get_enumeration(*ctx_, *array_, enumname);
+    // For columns with dictionaries, we need to identify the data type of the
+    // enumeration to extend any new enumeration values
+
+    // As of 1.16, and enumeration names are in the format of
+    // {index name}_{value dtype}. Prior to 1.16, enum labels are the same as
+    // the index name. If the new format doesn't work then fall back to the old
+    // format
+    Enumeration enmr = [&]() {
+        try {
+            return ArrayExperimental::get_enumeration(
+                *ctx_,
+                *array_,
+                util::get_enmr_label(index_schema, value_schema));
+        } catch (const TileDBError& e) {
+            return ArrayExperimental::get_enumeration(
+                *ctx_, *array_, index_schema->name);
+        }
+    }();
     auto value_type = enmr.type();
 
     switch (value_type) {
@@ -1023,8 +1038,22 @@ bool ManagedQuery::_extend_and_evolve_schema(
     }
 
     // Get all the enumeration values in the on-disk TileDB attribute
-    auto enumname = util::get_enmr_label(index_schema, value_schema);
-    auto enmr = ArrayExperimental::get_enumeration(*ctx_, *array_, enumname);
+
+    // As of 1.16, and enumeration names are in the format of
+    // {index name}_{value dtype}. Prior to 1.16, enum labels are the same as
+    // the index name. If the new format doesn't work then fall back to the old
+    // format
+    Enumeration enmr = [&]() {
+        try {
+            return ArrayExperimental::get_enumeration(
+                *ctx_,
+                *array_,
+                util::get_enmr_label(index_schema, value_schema));
+        } catch (const TileDBError& e) {
+            return ArrayExperimental::get_enumeration(
+                *ctx_, *array_, index_schema->name);
+        }
+    }();
     std::vector<ValueType> enums_existing = enmr.as_vector<ValueType>();
 
     // Find any new enumeration values
@@ -1117,8 +1146,21 @@ bool ManagedQuery::_extend_and_evolve_schema<std::string>(
         enums_in_write.push_back(data.substr(beg, sz));
     }
 
-    auto enumname = util::get_enmr_label(index_schema, value_schema);
-    auto enmr = ArrayExperimental::get_enumeration(*ctx_, *array_, enumname);
+    // As of 1.16, and enumeration names are in the format of
+    // {index name}_{value dtype}. Prior to 1.16, enum labels are the same as
+    // the index name. If the new format doesn't work then fall back to the old
+    // format
+    Enumeration enmr = [&]() {
+        try {
+            return ArrayExperimental::get_enumeration(
+                *ctx_,
+                *array_,
+                util::get_enmr_label(index_schema, value_schema));
+        } catch (const TileDBError& e) {
+            return ArrayExperimental::get_enumeration(
+                *ctx_, *array_, index_schema->name);
+        }
+    }();
     std::vector<std::string_view> extend_values;
     size_t total_size = 0;
 

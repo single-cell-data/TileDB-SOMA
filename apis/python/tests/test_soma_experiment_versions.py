@@ -21,7 +21,7 @@ def test_to_anndata(version, name_and_expected_shape):
     uri = str(path)
     if not os.path.isdir(uri):
         raise RuntimeError(
-            "Missing '" + uri + "' directory. Try running `make data` "
+            f"Missing '{uri}' directory. Try running `make data` "
             "from the TileDB-SOMA project root directory."
         )
 
