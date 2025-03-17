@@ -5,7 +5,6 @@ import random
 import tempfile
 from copy import deepcopy
 from pathlib import Path
-from typing import Tuple
 
 import anndata
 import numpy as np
@@ -694,6 +693,14 @@ def test_export_anndata(conftest_pbmc_small):
     for key in conftest_pbmc_small.varp.keys():
         assert readback.varp[key].shape == conftest_pbmc_small.varp[key].shape
 
+    with _factory.open(output_path) as exp:
+        readback = tiledbsoma.io.to_anndata(
+            exp, measurement_name="RNA", X_layer_name=None
+        )
+        assert readback.obs.shape == conftest_pbmc_small.obs.shape
+        assert readback.var.shape == conftest_pbmc_small.var.shape
+        assert readback.X is None
+
 
 def test_ingest_additional_metadata(conftest_pbmc_small):
     tempdir = tempfile.TemporaryDirectory(prefix="test_ingest_additional_metadata_")
@@ -857,8 +864,23 @@ def test_X_none(h5ad_file_X_none):
         assert exp.ms["RNA"].var.count == 1838
         assert list(exp.ms["RNA"].X.keys()) == []
 
-        tiledbsoma.io.to_anndata(exp, measurement_name="RNA", X_layer_name=None)
-        # TODO: more
+        adata = tiledbsoma.io.to_anndata(exp, measurement_name="RNA")
+        assert adata.obs is not None
+        assert adata.var is not None
+        assert adata.X is None
+
+        adata = tiledbsoma.io.to_anndata(exp, measurement_name="RNA", X_layer_name=None)
+        assert adata.obs is not None
+        assert adata.var is not None
+        assert adata.X is None
+
+        with pytest.raises(ValueError):
+            tiledbsoma.io.to_anndata(exp, measurement_name="RNA", X_layer_name="data")
+
+        with pytest.raises(ValueError):
+            adata = tiledbsoma.io.to_anndata(
+                exp, measurement_name="RNA", X_layer_name="nonesuch"
+            )
 
 
 # There exist in the wild AnnData files with categorical-int columns where "not in the category" is
@@ -988,7 +1010,7 @@ def make_uns_adata(
     tmp_path: Path,
     measurement_name: str = "RNA",
     uns: UnsMapping | None = None,
-) -> Tuple[str, AnnData]:
+) -> tuple[str, AnnData]:
     obs = pd.DataFrame(
         data={"obs_id": np.asarray(["a", "b", "c"])},
         index=np.arange(3).astype(str),

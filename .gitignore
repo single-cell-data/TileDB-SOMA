@@ -44,6 +44,8 @@ examples/cmake_project/build
 *.so
 *.dylib
 
+.hypothesis
+
 # Python distribution / packaging
 .eggs
 *.egg-info
