@@ -956,7 +956,7 @@ bool ManagedQuery::_extend_enumeration(
                 *ctx_,
                 *array_,
                 util::get_enmr_label(index_schema, value_schema));
-        } catch (const TileDBError& e) {
+        } catch (const std::exception& e) {
             return ArrayExperimental::get_enumeration(
                 *ctx_, *array_, index_schema->name);
         }
@@ -1049,7 +1049,7 @@ bool ManagedQuery::_extend_and_evolve_schema(
                 *ctx_,
                 *array_,
                 util::get_enmr_label(index_schema, value_schema));
-        } catch (const TileDBError& e) {
+        } catch (const std::exception& e) {
             return ArrayExperimental::get_enumeration(
                 *ctx_, *array_, index_schema->name);
         }
@@ -1156,7 +1156,7 @@ bool ManagedQuery::_extend_and_evolve_schema<std::string>(
                 *ctx_,
                 *array_,
                 util::get_enmr_label(index_schema, value_schema));
-        } catch (const TileDBError& e) {
+        } catch (const std::exception& e) {
             return ArrayExperimental::get_enumeration(
                 *ctx_, *array_, index_schema->name);
         }

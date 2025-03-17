@@ -2164,19 +2164,14 @@ def test_enum_regression_62887(tmp_path):
 
 
 @pytest.mark.parametrize("version", ["1.7.3", "1.12.3", "1.14.5", "1.15.0", "1.15.7"])
-def test_extend_enmr_to_older_experiments_64521(tmp_path, version):
+def test_extend_enmr_to_older_experiments_6452(tmp_path, version):
     import os
+    import shutil
 
     from ._util import ROOT_DATA_DIR
 
-    uri = (tmp_path / version).as_posix()
-
     original_data_uri = str(
-        ROOT_DATA_DIR
-        / "soma-experiment-versions"
-        / version
-        / "pbmc3k_unprocessed"
-        / "obs"
+        ROOT_DATA_DIR / "soma-experiment-versions" / version / "pbmc3k_unprocessed"
     )
 
     if not os.path.isdir(original_data_uri):
@@ -2185,34 +2180,27 @@ def test_extend_enmr_to_older_experiments_64521(tmp_path, version):
             "from the TileDB-SOMA project root directory."
         )
 
-    # Make a copy of the obs dataframe to not write over the data in ROOT_DATA_DIR
-    with soma.DataFrame.open(original_data_uri, "r") as sdf:
-        original_data = sdf.read().concat()
+    with soma.Experiment.open(original_data_uri) as exp:
+        assert exp.obs.count == 2700
 
-    with soma.DataFrame.create(
-        uri, schema=original_data.schema, domain=[[0, 2700]]
-    ) as sdf:
-        sdf.write(original_data)
+    # Make a copy of the Experiment as to not write over the data in ROOT_DATA_DIR
+    uri = (tmp_path / version).as_posix()
+    shutil.copytree(original_data_uri, uri)
 
-    with soma.DataFrame.open(uri, "r") as sdf:
-        assert sdf.read().concat() == original_data
+    with soma.Experiment.open(uri) as exp:
+        assert exp.obs.count == 2700
+        obs = exp.obs.read().concat().to_pandas()
+        assert "new_ident" not in obs["orig.ident"].cat.categories
 
-    append_data = pd.DataFrame(
-        {
-            "soma_joinid": pd.Series([2700], dtype=np.int64),
-            "obs_id": pd.Series(["AAACATACAACCAC"], dtype=str),
-            "orig.ident": pd.Series(["new_ident"], dtype="category"),
-            "nCount_RNA": pd.Series([1], dtype=np.float64),
-            "nFeature_RNA": pd.Series([1], dtype=np.int32),
-            "seurat_annotations": pd.Series(["new_anno"], dtype="category"),
-        }
-    )
+    obs2 = obs.copy()
+    del obs2["soma_joinid"]
+    obs2["orig.ident"] = pd.Series(["new_ident"] * len(obs2), dtype="category")
+    obs2["obs_id"] = obs["obs_id"] + "_2"
 
-    with soma.DataFrame.open(uri, "w") as sdf:
-        sdf.write(pa.Table.from_pandas(append_data, preserve_index=False))
+    with soma.Experiment.open(uri, "w") as exp:
+        soma.io.update_obs(exp, obs2)
 
-    with soma.DataFrame.open(uri, "r") as sdf:
-        df = sdf.read().concat().to_pandas()
-        assert df["soma_joinid"][2700] == 2700
-        assert df["orig.ident"][2700] == "new_ident"
-        assert df["seurat_annotations"][2700] == "new_anno"
+    with soma.Experiment.open(uri) as exp:
+        assert exp.obs.count == 2700
+        obs = exp.obs.read().concat().to_pandas()
+        assert "new_ident" in obs["orig.ident"].cat.categories
