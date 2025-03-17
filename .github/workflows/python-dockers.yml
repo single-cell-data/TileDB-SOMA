@@ -28,6 +28,7 @@ jobs:
           - pypi
           - src
           - langchain
+          - bookworm
     name: ${{ matrix.os }}-${{ matrix.name }}
     runs-on: ${{ matrix.os }}
     steps:
