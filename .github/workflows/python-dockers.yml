@@ -19,6 +19,8 @@ jobs:
             suffix: ' (ARM)'
           # TODO: currently impossible(?) to build Docker images on macOS runners: https://github.com/single-cell-data/TileDB-SOMA/issues/3781
           # - macos-15
+          # TODO: try x86 macOS builds, once https://github.com/single-cell-data/TileDB-SOMA/issues/3787 is resolved
+          # - macos-13
         img:
           - name: ubuntu-src
           - name: ubuntu
