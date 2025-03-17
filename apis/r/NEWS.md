@@ -1,3 +1,7 @@
+# tiledbsoma 1.16.1
+
+* This release contains a Python-only bugfix
+
 # tiledbsoma 1.16.0
 
 * Encode string metadata as `TILEDB_STRING_UTF8` instead of `TILEDB_STRING_ASCII`
