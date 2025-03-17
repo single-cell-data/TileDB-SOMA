@@ -9,8 +9,10 @@ on:
     paths-ignore:
       - '**.md'
       - 'apis/r/**'
+      - 'docker/**'
       - 'docs/**'
-      - ".github/workflows/python-remote-storage.yml"
+      - '.github/**'
+      - '!.github/workflows/python-dependency-variation.yml'
   workflow_dispatch:
 
 jobs:
