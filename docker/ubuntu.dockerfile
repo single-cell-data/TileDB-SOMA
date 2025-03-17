@@ -1,6 +1,6 @@
 # Example Ubuntu 24.04 image with `tiledbsoma` installed from PyPI
-ARG FROM=ubuntu:24.04
-FROM $FROM
+ARG ubuntu=24.04
+FROM ubuntu:$ubuntu
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -15,7 +15,6 @@ RUN apt update -y \
  && python -m venv .venv
 ENV PATH="/.venv/bin:$PATH" VCPKG_FORCE_SYSTEM_BINARIES=1
 
-ARG v=""
-RUN if [ -z "$v" ]; then pip install tiledbsoma; else pip install tiledbsoma==$v; fi
-
+ARG v=''
+RUN if [ -z $v ]; then pip install tiledbsoma; else pip install tiledbsoma==$v; fi
 ENTRYPOINT [ "python", "-c", "import tiledbsoma; tiledbsoma.show_package_versions()" ]

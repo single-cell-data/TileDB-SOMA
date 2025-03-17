@@ -1,6 +1,6 @@
 # Example Ubuntu 24.04 image with `tiledbsoma` installed from source
-ARG FROM=ubuntu:24.04
-FROM $FROM
+ARG ubuntu=24.04
+FROM ubuntu:$ubuntu
 
 ENV DEBIAN_FRONTEND=noninteractive
 

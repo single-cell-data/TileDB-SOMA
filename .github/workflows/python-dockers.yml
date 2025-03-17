@@ -13,29 +13,40 @@ jobs:
     strategy:
       matrix:
         os:
-          - ubuntu-24.04
-          - ubuntu-24.04-arm
-          # TODO: currently impossible(?) to build Docker images on macOS runners
-          #
-          # "Nested virtualization" is only supported on macOS-15 and ≥M3, but the current macos-15 runners
-          # [only have M1][^1] (or [possibly M2 Pro?][^2]) chips.
-          #
-          # [^1]: https://docs.github.com/en/actions/using-github-hosted-runners/using-github-hosted-runners/about-github-hosted-runners#standard-github-hosted-runners-for-public-repositories
-          # [^2]: https://github.com/douglascamata/setup-docker-macos-action/issues/35#issuecomment-2384104416:
-          #
+          - runs-on: ubuntu-24.04
+            suffix: ''
+          - runs-on: ubuntu-24.04-arm
+            suffix: ' (ARM)'
+          # TODO: currently impossible(?) to build Docker images on macOS runners: https://github.com/single-cell-data/TileDB-SOMA/issues/3781
           # - macos-15
-        name:
-          - pypi
-          - src
-          - langchain
-          - bookworm
-    name: ${{ matrix.os }}-${{ matrix.name }}
-    runs-on: ${{ matrix.os }}
+        img:
+          - name: ubuntu-src
+          - name: ubuntu
+            args: v=1.15.7
+          - name: ubuntu
+            args: v=1.16.0
+          - name: bookworm
+            args: gcc=12 v=1.15.7
+          - name: bookworm
+            args: gcc=13 v=1.15.7
+          - name: bookworm
+            args: gcc=13 v=1.16.0
+          - name: langchain
+    name: ${{ matrix.img.name }} ${{ matrix.img.args }}${{ matrix.os.suffix }}
+    runs-on: ${{ matrix.os.runs-on }}
     steps:
       - uses: actions/checkout@v4
-      - run: docker build -f ${{ matrix.name }}.dockerfile -t ${{ matrix.name }} .
+      - name: docker build
+        run: |
+          args=()
+          for arg in ${{ matrix.img.args }}; do
+            args+=(--build-arg $arg)
+          done
+          cmd=(docker build -f ${{ matrix.img.name }}.dockerfile -t ${{ matrix.img.name }} "${args[@]}" .)
+          echo "Running: ${cmd[*]}"
+          "${cmd[@]}"
         working-directory: docker
-      - run: docker run ${{ matrix.name }}
+      - run: docker run ${{ matrix.img.name }}
         working-directory: docker
   # File an issue if anything fails, but only for scheduled ones (not manual "workflow_dispatch" runs).
   create_issue_on_fail:
