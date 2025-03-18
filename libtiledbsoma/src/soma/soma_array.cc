@@ -83,7 +83,7 @@ std::unique_ptr<SOMAArray> SOMAArray::open(
     std::map<std::string, std::string> platform_config,
     std::optional<TimestampRange> timestamp) {
     LOG_DEBUG(
-        std::format("[SOMAArray] static method 'cfg' opening array '{}'", uri));
+        fmt::format("[SOMAArray] static method 'cfg' opening array '{}'", uri));
     return std::make_unique<SOMAArray>(
         mode, uri, std::make_shared<SOMAContext>(platform_config), timestamp);
 }
@@ -94,7 +94,7 @@ std::unique_ptr<SOMAArray> SOMAArray::open(
     std::shared_ptr<SOMAContext> ctx,
     std::optional<TimestampRange> timestamp) {
     LOG_DEBUG(
-        std::format("[SOMAArray] static method 'ctx' opening array '{}'", uri));
+        fmt::format("[SOMAArray] static method 'ctx' opening array '{}'", uri));
     return std::make_unique<SOMAArray>(mode, uri, ctx, timestamp);
 }
 
@@ -181,7 +181,7 @@ void SOMAArray::fill_columns() {
 
     if (type().value_or("") == "SOMAGeometryDataFrame") {
         if (!has_metadata(TILEDB_SOMA_SCHEMA_KEY)) {
-            throw TileDBSOMAError(std::format(
+            throw TileDBSOMAError(fmt::format(
                 "[SOMAArray][fill_columns] Missing required metadata key '{}' "
                 "from SOMAGeometryDataFrame '{}'",
                 TILEDB_SOMA_SCHEMA_KEY,
@@ -334,7 +334,7 @@ void SOMAArray::validate(
     auto tdb_mode = mode == OpenMode::read ? TILEDB_READ : TILEDB_WRITE;
 
     try {
-        LOG_DEBUG(std::format("[SOMAArray] opening array '{}'", uri_));
+        LOG_DEBUG(fmt::format("[SOMAArray] opening array '{}'", uri_));
         if (timestamp) {
             arr_ = std::make_shared<Array>(
                 *ctx_->tiledb_ctx(),
@@ -345,13 +345,13 @@ void SOMAArray::validate(
         } else {
             arr_ = std::make_shared<Array>(*ctx_->tiledb_ctx(), uri_, tdb_mode);
         }
-        LOG_TRACE(std::format("[SOMAArray] loading enumerations"));
+        LOG_TRACE(fmt::format("[SOMAArray] loading enumerations"));
         ArrayExperimental::load_all_enumerations(
             *ctx_->tiledb_ctx(), *(arr_.get()));
         schema_ = std::make_shared<ArraySchema>(arr_->schema());
     } catch (const std::exception& e) {
         throw TileDBSOMAError(
-            std::format("Error opening array: '{}'\n  {}", uri_, e.what()));
+            fmt::format("Error opening array: '{}'\n  {}", uri_, e.what()));
     }
 }
 
@@ -397,7 +397,7 @@ uint64_t SOMAArray::nnz() {
     FragmentInfo fragment_info(*ctx_->tiledb_ctx(), uri_);
     fragment_info.load();
 
-    LOG_DEBUG(std::format("[SOMAArray] Fragment info for array '{}'", uri_));
+    LOG_DEBUG(fmt::format("[SOMAArray] Fragment info for array '{}'", uri_));
     if (LOG_DEBUG_ENABLED()) {
         fragment_info.dump();
     }
@@ -461,7 +461,7 @@ uint64_t SOMAArray::nnz() {
     auto type_code = dim.type();
     if ((dim_name != "soma_joinid" && dim_name != "soma_dim_0") ||
         type_code != TILEDB_INT64) {
-        LOG_DEBUG(std::format(
+        LOG_DEBUG(fmt::format(
             "[SOMAArray::nnz] dim 0 (type={} name={}) isn't int64 "
             "soma_joinid or int64 soma_dim_0: using _nnz_slow",
             tiledb::impl::type_to_str(type_code),
@@ -478,7 +478,7 @@ uint64_t SOMAArray::nnz() {
         fragment_info.get_non_empty_domain(
             relevant_fragments[i], 0, &non_empty_domains[i]);
 
-        LOG_DEBUG(std::format(
+        LOG_DEBUG(fmt::format(
             "[SOMAArray] fragment {} non-empty domain = [{}, {}]",
             i,
             non_empty_domains[i][0],
@@ -492,7 +492,7 @@ uint64_t SOMAArray::nnz() {
     // the next non-empty domain, there is an overlap
     bool overlap = false;
     for (uint32_t i = 0; i < fragment_count - 1; i++) {
-        LOG_DEBUG(std::format(
+        LOG_DEBUG(fmt::format(
             "[SOMAArray] Checking {} < {}",
             non_empty_domains[i][1],
             non_empty_domains[i + 1][0]));
@@ -556,7 +556,7 @@ StatusAndReason SOMAArray::_can_set_shape_helper(
     if (array_ndim != arg_ndim) {
         return std::pair(
             false,
-            std::format(
+            fmt::format(
                 "{}: provided shape has ndim {}, while the array has {}",
                 function_name_for_messages,
                 arg_ndim,
@@ -573,7 +573,7 @@ StatusAndReason SOMAArray::_can_set_shape_helper(
         if (!has_shape) {
             return std::pair(
                 false,
-                std::format(
+                fmt::format(
                     "{}: array currently has no shape: please "
                     "upgrade the array.",
                     function_name_for_messages));
@@ -584,7 +584,7 @@ StatusAndReason SOMAArray::_can_set_shape_helper(
         if (has_shape) {
             return std::pair(
                 false,
-                std::format(
+                fmt::format(
                     "{}: array already has a shape: please use resize",
                     function_name_for_messages));
         }
@@ -635,7 +635,7 @@ StatusAndReason SOMAArray::_can_set_shape_domainish_subhelper(
                 std::array<int64_t, 2>({0, newshape[idx] - 1}))}));
 
         if (status.first == false) {
-            status.second = std::format(
+            status.second = fmt::format(
                 "[{}] {}", function_name_for_messages, status.second);
 
             return status;
@@ -658,7 +658,7 @@ StatusAndReason SOMAArray::_can_set_soma_joinid_shape_helper(
         if (has_current_domain()) {
             return std::pair(
                 false,
-                std::format(
+                fmt::format(
                     "{}: dataframe already has its domain set.",
                     function_name_for_messages));
         }
@@ -668,7 +668,7 @@ StatusAndReason SOMAArray::_can_set_soma_joinid_shape_helper(
         if (!has_current_domain()) {
             return std::pair(
                 false,
-                std::format(
+                fmt::format(
                     "{}: dataframe currently has no domain set.",
                     function_name_for_messages));
         }
@@ -686,7 +686,7 @@ StatusAndReason SOMAArray::_can_set_soma_joinid_shape_helper(
         if (newshape < cur_dom_lo_hi.second) {
             return std::pair(
                 false,
-                std::format(
+                fmt::format(
                     "{}: new soma_joinid shape {} < existing shape {}",
                     function_name_for_messages,
                     newshape,
@@ -699,7 +699,7 @@ StatusAndReason SOMAArray::_can_set_soma_joinid_shape_helper(
     if (newshape > dom_lo_hi.second) {
         return std::pair(
             false,
-            std::format(
+            fmt::format(
                 "{}: new soma_joinid shape {} > maxshape {}",
                 function_name_for_messages,
                 newshape,
@@ -715,7 +715,7 @@ void SOMAArray::_set_shape_helper(
     bool must_already_have,
     std::string function_name_for_messages) {
     if (arr_->query_type() != TILEDB_WRITE) {
-        throw TileDBSOMAError(std::format(
+        throw TileDBSOMAError(fmt::format(
             "{} array must be opened in write mode",
             function_name_for_messages));
     }
@@ -723,14 +723,14 @@ void SOMAArray::_set_shape_helper(
     if (!must_already_have) {
         // Upgrading an array to install a current domain
         if (!_get_current_domain().is_empty()) {
-            throw TileDBSOMAError(std::format(
+            throw TileDBSOMAError(fmt::format(
                 "{}: array must not already have a shape: please upgrade it",
                 function_name_for_messages));
         }
     } else {
         // Expanding an array's current domain
         if (_get_current_domain().is_empty()) {
-            throw TileDBSOMAError(std::format(
+            throw TileDBSOMAError(fmt::format(
                 "{} array must already have a shape: please upgrade it",
                 function_name_for_messages));
         }
@@ -747,7 +747,7 @@ void SOMAArray::_set_shape_helper(
 
     size_t array_ndim = static_cast<size_t>(ndim());
     if (newshape.size() != array_ndim) {
-        throw TileDBSOMAError(std::format(
+        throw TileDBSOMAError(fmt::format(
             "[SOMAArray::resize]: newshape has dimension count {}; array has "
             "{} ",
             newshape.size(),
@@ -773,7 +773,7 @@ void SOMAArray::_set_soma_joinid_shape_helper(
     bool must_already_have,
     std::string function_name_for_messages) {
     if (arr_->query_type() != TILEDB_WRITE) {
-        throw TileDBSOMAError(std::format(
+        throw TileDBSOMAError(fmt::format(
             "{}: array must be opened in write mode",
             function_name_for_messages));
     }
@@ -781,14 +781,14 @@ void SOMAArray::_set_soma_joinid_shape_helper(
     if (!must_already_have) {
         // Upgrading an array to install a current domain
         if (!_get_current_domain().is_empty()) {
-            throw TileDBSOMAError(std::format(
+            throw TileDBSOMAError(fmt::format(
                 "{}: array must not already have a shape",
                 function_name_for_messages));
         }
     } else {
         // Expanding an array's current domain
         if (_get_current_domain().is_empty()) {
-            throw TileDBSOMAError(std::format(
+            throw TileDBSOMAError(fmt::format(
                 "{} array must already have a shape",
                 function_name_for_messages));
         }
@@ -811,7 +811,7 @@ void SOMAArray::_set_soma_joinid_shape_helper(
              })) {
             if (column->name() == SOMA_JOINID) {
                 if (column->domain_type().value() != TILEDB_INT64) {
-                    throw TileDBSOMAError(std::format(
+                    throw TileDBSOMAError(fmt::format(
                         "{}: expected soma_joinid to be of type {}; got {}",
                         function_name_for_messages,
                         tiledb::impl::type_to_str(TILEDB_INT64),
@@ -821,7 +821,7 @@ void SOMAArray::_set_soma_joinid_shape_helper(
 
                 if (column->type() !=
                     soma_column_datatype_t::SOMA_COLUMN_DIMENSION) {
-                    throw TileDBSOMAError(std::format(
+                    throw TileDBSOMAError(fmt::format(
                         "{}: expected soma_joinid type to be of type "
                         "SOMA_COLUMN_DIMENSION",
                         function_name_for_messages));
@@ -876,7 +876,7 @@ StatusAndReason SOMAArray::_can_set_domain_helper(
         if (!has_current_domain()) {
             return std::pair(
                 false,
-                std::format(
+                fmt::format(
                     "{}: dataframe does not have a domain: please upgrade it",
                     function_name_for_messages));
         }
@@ -884,7 +884,7 @@ StatusAndReason SOMAArray::_can_set_domain_helper(
         if (has_current_domain()) {
             return std::pair(
                 false,
-                std::format(
+                fmt::format(
                     "{}: dataframe already has a domain",
                     function_name_for_messages));
         }
@@ -922,7 +922,7 @@ StatusAndReason SOMAArray::_can_set_dataframe_domainish_subhelper(
     if (newdomain.second->n_children != static_cast<int64_t>(ndim())) {
         return std::pair(
             false,
-            std::format(
+            fmt::format(
                 "{}: requested domain has ndim={} but the dataframe has "
                 "ndim={}",
                 function_name_for_messages,
@@ -933,7 +933,7 @@ StatusAndReason SOMAArray::_can_set_dataframe_domainish_subhelper(
     if (newdomain.second->n_children != newdomain.first->n_children) {
         return std::pair(
             false,
-            std::format(
+            fmt::format(
                 "{}: internal coding error", function_name_for_messages));
     }
 
@@ -954,7 +954,7 @@ StatusAndReason SOMAArray::_can_set_dataframe_domainish_subhelper(
                 newdomain, column->name(), 0));
 
         if (status.first == false) {
-            status.second = std::format(
+            status.second = fmt::format(
                 "[{}] {}", function_name_for_messages, status.second);
 
             return status;
@@ -969,27 +969,27 @@ void SOMAArray::_set_domain_helper(
     bool must_already_have,
     std::string function_name_for_messages) {
     if (arr_->query_type() != TILEDB_WRITE) {
-        throw TileDBSOMAError(std::format(
+        throw TileDBSOMAError(fmt::format(
             "{}: array must be opened in write mode",
             function_name_for_messages));
     }
 
     if (must_already_have) {
         if (!has_current_domain()) {
-            throw TileDBSOMAError(std::format(
+            throw TileDBSOMAError(fmt::format(
                 "{}: dataframe does not have a domain: please upgrade it",
                 function_name_for_messages));
         }
     } else {
         if (has_current_domain()) {
-            throw TileDBSOMAError(std::format(
+            throw TileDBSOMAError(fmt::format(
                 "{}: dataframe already has a domain",
                 function_name_for_messages));
         }
     }
 
     if (newdomain.second->n_children != static_cast<int64_t>(ndim())) {
-        throw TileDBSOMAError(std::format(
+        throw TileDBSOMAError(fmt::format(
             "{}: requested domain has ndim={} but the dataframe has "
             "ndim={}",
             function_name_for_messages,
@@ -998,7 +998,7 @@ void SOMAArray::_set_domain_helper(
     }
 
     if (newdomain.second->n_children != newdomain.first->n_children) {
-        throw TileDBSOMAError(std::format(
+        throw TileDBSOMAError(fmt::format(
             "{}: internal coding error", function_name_for_messages));
     }
 
@@ -1088,7 +1088,7 @@ SOMAArray::_maybe_soma_joinid_shape_via_tiledb_current_domain() {
 
     auto column = get_column(SOMA_JOINID);
     if (column->domain_type().value() != TILEDB_INT64) {
-        throw TileDBSOMAError(std::format(
+        throw TileDBSOMAError(fmt::format(
             "expected {} dim to be {}; got {}",
             SOMA_JOINID,
             tiledb::impl::type_to_str(TILEDB_INT64),
@@ -1108,7 +1108,7 @@ std::optional<int64_t> SOMAArray::_maybe_soma_joinid_shape_via_tiledb_domain() {
 
     auto column = get_column(SOMA_JOINID);
     if (column->domain_type().value() != TILEDB_INT64) {
-        throw TileDBSOMAError(std::format(
+        throw TileDBSOMAError(fmt::format(
             "expected {} dim to be {}; got {}",
             SOMA_JOINID,
             tiledb::impl::type_to_str(TILEDB_INT64),
@@ -1146,7 +1146,7 @@ std::shared_ptr<SOMAColumn> SOMAArray::get_column(std::string_view name) const {
     });
 
     if (result == columns_.end()) {
-        throw TileDBSOMAError(std::format(
+        throw TileDBSOMAError(fmt::format(
             "[SOMAArray] internal coding error: No column named {} found",
             name));
     }
@@ -1156,7 +1156,7 @@ std::shared_ptr<SOMAColumn> SOMAArray::get_column(std::string_view name) const {
 
 std::shared_ptr<SOMAColumn> SOMAArray::get_column(std::size_t index) const {
     if (index >= columns_.size()) {
-        throw TileDBSOMAError(std::format(
+        throw TileDBSOMAError(fmt::format(
             "[SOMAArray] internal coding error: Column index outside of range. "
             "Requested {}, but {} exist.",
             index,

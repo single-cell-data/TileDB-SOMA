@@ -11,7 +11,6 @@
  * This file manages unit tests for the SOMASparseNDArray class
  */
 
-#include <format>
 #include "common.h"
 
 TEST_CASE("SOMASparseNDArray: basic", "[SOMASparseNDArray]") {
