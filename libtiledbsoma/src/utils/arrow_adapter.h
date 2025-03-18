@@ -15,7 +15,7 @@
 #define ARROW_ADAPTER_H
 
 #include <any>
-#include <format>
+
 #include <tiledb/tiledb>
 #include <tiledb/tiledb_experimental>
 
@@ -993,10 +993,9 @@ class ArrowAdapter {
         }
 
         if (array->length < static_cast<int64_t>(S + offset)) {
-            throw std::runtime_error(std::format(
-                "ArrowAdapter::get_table_any_column: expected at least {} "
-                "elements",
-                S + offset));
+            throw std::runtime_error(
+                "ArrowAdapter::get_table_any_column: expected at least " +
+                std::to_string(S + offset) + " elements");
         }
 
         if (strcmp(schema->format, "u") == 0 ||
@@ -1147,10 +1146,10 @@ class ArrowAdapter {
 
                     return std::make_any<std::array<std::string, S>>(result);
                 } else {
-                    throw std::runtime_error(std::format(
+                    throw std::runtime_error(
                         "ArrowAdapter::get_table_any_column: Unknown "
-                        "schema format '{}'",
-                        schema->format));
+                        "schema format '" +
+                        std::string(schema->format) + "'");
                 }
             } break;
             case TILEDB_BLOB:
@@ -1199,17 +1198,17 @@ class ArrowAdapter {
                     return std::make_any<std::array<std::vector<std::byte>, S>>(
                         result);
                 } else {
-                    throw std::runtime_error(std::format(
+                    throw std::runtime_error(
                         "ArrowAdapter::get_table_any_column: Unknown "
-                        "schema format '{}'",
-                        schema->format));
+                        "schema format '" +
+                        std::string(schema->format) + "'");
                 }
             } break;
             default:
-                throw std::runtime_error(std::format(
+                throw std::runtime_error(
                     "ArrowAdapter::get_table_any_column: Unknown "
-                    "datatype '{}'",
-                    tiledb::impl::type_to_str(tdb_type)));
+                    "datatype '" +
+                    tiledb::impl::type_to_str(tdb_type) + "'");
                 break;
         }
     }

@@ -12,7 +12,7 @@
  */
 
 #include "soma_dataframe.h"
-#include <format>
+
 #include "../utils/logger.h"
 #include "soma_coordinates.h"
 
@@ -91,7 +91,7 @@ void SOMADataFrame::update_dataframe_schema(
     const auto& tctx = *ctx_->tiledb_ctx();
     ArraySchemaEvolution se(tctx);
     for (auto key_name : drop_attrs) {
-        LOG_DEBUG(std::format(
+        LOG_DEBUG(fmt::format(
             "[SOMADataFrame::update_dataframe_schema] drop col name {}",
             key_name));
         se.drop_attribute(key_name);
@@ -160,7 +160,7 @@ void SOMADataFrame::update_dataframe_schema(
                                   "U" :
                                   (enmr_type == "z" ? "Z" : enmr_type));
 
-            LOG_DEBUG(std::format(
+            LOG_DEBUG(fmt::format(
                 "[SOMADataFrame::update_dataframe_schema] add col name {} "
                 "index_type "
                 "{} value_type {} ordered {}",
@@ -195,7 +195,7 @@ void SOMADataFrame::update_dataframe_schema(
                 // We cannot continue without intervention, but let's at least
                 // be as clear as possible why we can't continue.
                 if (ordered != existing_ordered || enmr_type != existing_type) {
-                    throw TileDBSOMAError(std::format(
+                    throw TileDBSOMAError(fmt::format(
                         "[SOMADataFrame::update_dataframe_schema] requested "
                         "enumeration [type='{}', ordered={}] incompatible with "
                         "existing [type='{}', ordered={}]",
@@ -241,7 +241,7 @@ void SOMADataFrame::update_dataframe_schema(
             }
 
         } else {
-            LOG_DEBUG(std::format(
+            LOG_DEBUG(fmt::format(
                 "[SOMADataFrame::update_dataframe_schema] add col name {} type "
                 "{}",
                 attr_name,
