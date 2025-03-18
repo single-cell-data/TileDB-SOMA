@@ -1,0 +1,66 @@
+# Workflow to build example Docker images with TileDB-SOMA installed
+name: TileDB-SOMA docker builds
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "42 9 * * *"
+  pull_request:
+    paths:
+      - .github/workflows/python-dockers.yml
+      - docker/**
+jobs:
+  docker:
+    strategy:
+      matrix:
+        os:
+          - runs-on: ubuntu-24.04
+            suffix: ''
+          - runs-on: ubuntu-24.04-arm
+            suffix: ' (ARM)'
+          # TODO: currently impossible(?) to build Docker images on macOS runners: https://github.com/single-cell-data/TileDB-SOMA/issues/3781
+          # - macos-15
+          # TODO: try x86 macOS builds, once https://github.com/single-cell-data/TileDB-SOMA/issues/3787 is resolved
+          # - macos-13
+        img:
+          - name: ubuntu-src
+          - name: ubuntu
+            args: v=1.15.7
+          - name: ubuntu
+            args: v=1.16.0
+          - name: bookworm
+            args: gcc=12 v=1.15.7
+          - name: bookworm
+            args: gcc=13 v=1.15.7
+          - name: bookworm
+            args: gcc=13 v=1.16.0
+          - name: langchain
+    name: ${{ matrix.img.name }} ${{ matrix.img.args }}${{ matrix.os.suffix }}
+    runs-on: ${{ matrix.os.runs-on }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: docker build
+        run: |
+          args=()
+          for arg in ${{ matrix.img.args }}; do
+            args+=(--build-arg $arg)
+          done
+          cmd=(docker build -f ${{ matrix.img.name }}.dockerfile -t ${{ matrix.img.name }} "${args[@]}" .)
+          echo "Running: ${cmd[*]}"
+          "${cmd[@]}"
+        working-directory: docker
+      - run: docker run ${{ matrix.img.name }}
+        working-directory: docker
+  # File an issue if anything fails, but only for scheduled ones (not manual "workflow_dispatch" runs).
+  create_issue_on_fail:
+    runs-on: ubuntu-24.04
+    needs: [docker]
+    if: (failure() || cancelled()) && github.event_name == 'schedule'
+    steps:
+      - name: Checkout TileDB-SOMA `main`
+        uses: actions/checkout@v4
+      - name: Create Issue if Build Fails
+        uses: JasonEtco/create-an-issue@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          filename: .github/workflows/daily-test-build-issue-template.md

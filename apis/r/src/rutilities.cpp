@@ -36,7 +36,7 @@ void apply_dim_points(
                 if (uv[i] >= pr.first && uv[i] <= pr.second) {
                     mq->select_point<uint64_t>(
                         nm, uv[i]);  // bonked when use with vector
-                    spdl::info(
+                    spdlog::info(
                         "[apply_dim_points] Applying dim point {} on {}",
                         uv[i],
                         nm);
@@ -50,7 +50,7 @@ void apply_dim_points(
             for (size_t i = 0; i < iv.size(); i++) {
                 if (iv[i] >= pr.first && iv[i] <= pr.second) {
                     mq->select_point<int64_t>(nm, iv[i]);
-                    spdl::debug(
+                    spdlog::debug(
                         "[apply_dim_points] Applying dim point {} on {}",
                         iv[i],
                         nm);
@@ -64,7 +64,7 @@ void apply_dim_points(
                 float v = static_cast<float>(payload[i]);
                 if (v >= pr.first && v <= pr.second) {
                     mq->select_point<float>(nm, v);
-                    spdl::debug(
+                    spdlog::debug(
                         "[apply_dim_points] Applying dim point {} on {}",
                         v,
                         nm);
@@ -77,7 +77,7 @@ void apply_dim_points(
             for (R_xlen_t i = 0; i < payload.size(); i++) {
                 if (payload[i] >= pr.first && payload[i] <= pr.second) {
                     mq->select_point<double>(nm, payload[i]);
-                    spdl::debug(
+                    spdlog::debug(
                         "[apply_dim_points] Applying dim point {} on {}",
                         payload[i],
                         nm);
@@ -90,7 +90,7 @@ void apply_dim_points(
             for (R_xlen_t i = 0; i < payload.size(); i++) {
                 if (payload[i] >= pr.first && payload[i] <= pr.second) {
                     mq->select_point<int32_t>(nm, payload[i]);
-                    spdl::debug(
+                    spdlog::debug(
                         "[apply_dim_points] Applying dim point {} on {}",
                         payload[i],
                         nm);
@@ -133,7 +133,7 @@ void apply_dim_ranges(
                 uint64_t h = static_cast<uint64_t>(Rcpp::fromInteger64(hi[i]));
                 vp[i] = std::make_pair(
                     std::max(l, pr.first), std::min(h, pr.second));
-                spdl::debug(
+                spdlog::debug(
                     "[apply_dim_ranges] Applying dim point {} on {} with {} - "
                     "{}",
                     i,
@@ -155,7 +155,7 @@ void apply_dim_ranges(
             for (int i = 0; i < mm.nrow(); i++) {
                 vp[i] = std::make_pair(
                     std::max(lo[i], pr.first), std::min(hi[i], pr.second));
-                spdl::debug(
+                spdlog::debug(
                     "[apply_dim_ranges] Applying dim point {} on {} with {} - "
                     "{}",
                     i,
@@ -181,7 +181,7 @@ void apply_dim_ranges(
                 float h = static_cast<float>(hi[i]);
                 vp[i] = std::make_pair(
                     std::max(l, pr.first), std::min(h, pr.second));
-                spdl::debug(
+                spdlog::debug(
                     "[apply_dim_ranges] Applying dim point {} on {} with {} - "
                     "{}",
                     i,
@@ -205,7 +205,7 @@ void apply_dim_ranges(
             for (int i = 0; i < mm.nrow(); i++) {
                 vp[i] = std::make_pair(
                     std::max(lo[i], pr.first), std::min(hi[i], pr.second));
-                spdl::debug(
+                spdlog::debug(
                     "[apply_dim_ranges] Applying dim point {} on {} with {} - "
                     "{}",
                     i,
@@ -229,7 +229,7 @@ void apply_dim_ranges(
             for (int i = 0; i < mm.nrow(); i++) {
                 vp[i] = std::make_pair(
                     std::max(lo[i], pr.first), std::min(hi[i], pr.second));
-                spdl::debug(
+                spdlog::debug(
                     "[apply_dim_ranges] Applying dim point {} on {} with {} - "
                     "{}",
                     i,
@@ -475,7 +475,7 @@ SEXP convert_domainish(const tdbs::ArrowTable& arrow_table) {
             std::vector<std::string>
                 lohi = tiledbsoma::ArrowAdapter::get_array_string_column(
                     arrow_array->children[i], arrow_schema->children[i]);
-            spdl::info(
+            spdlog::info(
                 "[domainish] name {} format {} length {} lo {} hi {}",
                 std::string(arrow_schema->children[i]->name),
                 std::string(arrow_schema->children[i]->format),
@@ -485,7 +485,7 @@ SEXP convert_domainish(const tdbs::ArrowTable& arrow_table) {
         } else {
             // Arrow semantics: non-variable-length: buffers 0,1 are validity &
             // data
-            spdl::info(
+            spdlog::info(
                 "[domainish] name {} format {} length {}",
                 std::string(arrow_schema->children[i]->name),
                 std::string(arrow_schema->children[i]->format),

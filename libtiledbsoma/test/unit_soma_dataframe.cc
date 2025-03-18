@@ -11,7 +11,6 @@
  * This file manages unit tests for the SOMADataFrame class
  */
 
-#include <format>
 #include "common.h"
 
 const int64_t SOMA_JOINID_DIM_MAX = 99;
@@ -285,7 +284,7 @@ TEST_CASE_METHOD(
         std::make_pair(R"("BYTESHUFFLE")", TILEDB_FILTER_BYTESHUFFLE),
         std::make_pair(R"("NOOP")", TILEDB_FILTER_NONE));
 
-    SECTION(std::format("- filter={}", filter.first)) {
+    SECTION("- filter=" + filter.first) {
         set_up(
             std::make_shared<SOMAContext>(),
             "mem://unit-test-dataframe-platform-config");

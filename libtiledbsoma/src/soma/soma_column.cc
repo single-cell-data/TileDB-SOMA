@@ -13,6 +13,7 @@
 
 #include "soma_column.h"
 
+#include "../utils/logger.h"
 #include "soma_attribute.h"
 #include "soma_dimension.h"
 #include "soma_geometry_column.h"
@@ -45,7 +46,7 @@ std::vector<std::shared_ptr<SOMAColumn>> SOMAColumn::deserialize(
                                          nlohmann::json::object();
 
         if (!soma_schema_extension.contains(TILEDB_SOMA_SCHEMA_COL_KEY)) {
-            throw TileDBSOMAError(std::format(
+            throw TileDBSOMAError(fmt::format(
                 "[SOMAArray][fill_columns] Missing '{}' key from '{}'",
                 TILEDB_SOMA_SCHEMA_COL_KEY,
                 TILEDB_SOMA_SCHEMA_KEY));
@@ -167,7 +168,7 @@ SOMAColumn::core_current_domain_slot<std::string>(
                                            current_domain.second == "\xff")) {
             return std::pair<std::string, std::string>("", "");
         } else {
-            throw TileDBSOMAError(std::format(
+            throw TileDBSOMAError(fmt::format(
                 "[SOMAColumn][core_current_domain_slot] unexpected current "
                 "domain returnd ({}, {})",
                 current_domain.first,
@@ -190,7 +191,7 @@ SOMAColumn::core_current_domain_slot<std::string>(NDRectangle& ndrect) const {
                                            current_domain.second == "\xff")) {
             return std::pair<std::string, std::string>("", "");
         } else {
-            throw TileDBSOMAError(std::format(
+            throw TileDBSOMAError(fmt::format(
                 "[SOMAColumn][core_current_domain_slot] unexpected current "
                 "domain returnd ({}, {})",
                 current_domain.first,
