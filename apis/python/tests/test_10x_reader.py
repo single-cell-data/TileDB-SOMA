@@ -20,7 +20,7 @@ class SpaceRangerMatrixData:
     obs_indices: np.ndarray[np.int64]
     var_indices: np.ndarray[np.int64]
 
-    # obs (each should be lenght nobs)
+    # obs (each should be length nobs)
     barcodes: np.ndarray[str]
 
     # var data (each should be length nvar)
@@ -178,7 +178,7 @@ def check_reader(reader, data):
 
 def test_space_ranger_matrix_reader_direct_load(fake_space_ranger_matrix_1):
 
-    # Open the reader, load the version and other data and close.
+    # Open the reader, load the version and other data, and close.
     reader = ioutil.TenXCountMatrixReader(fake_space_ranger_matrix_1.filepath)
     reader.open()
     reader.software_version
