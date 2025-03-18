@@ -53,7 +53,7 @@ def _convert_axis_names(
 
     Returns:
         A tuple of axis names to use for SpatialData and a mapping from SOMA axis
-        names to SpatialData axis names
+        names to SpatialData axis names.
 
     """
     # Create
