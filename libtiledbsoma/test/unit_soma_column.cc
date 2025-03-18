@@ -11,7 +11,6 @@
  * This file manages unit tests for implementation of SOMAColumn class
  */
 
-#include <format>
 #include <tiledb/tiledb>
 #include <tiledbsoma/tiledbsoma>
 #include <tuple>
@@ -265,7 +264,7 @@ TEST_CASE_METHOD(
     "SOMAColumn: query variant-indexed dataframe dim-str-u32 attr-sjid",
     "[SOMAColumn]") {
     auto specify_domain = GENERATE(false, true);
-    SECTION(std::format("- specify_domain={}", specify_domain)) {
+    SECTION("- specify_domain=" + std::to_string(specify_domain)) {
         std::string suffix1 = specify_domain ? "true" : "false";
         set_up(
             std::make_shared<SOMAContext>(),
@@ -423,7 +422,7 @@ TEST_CASE_METHOD(
     "SOMAColumn: query variant-indexed dataframe dim-str-u32 attr-sjid",
     "[SOMADataFrame]") {
     auto specify_domain = GENERATE(false, true);
-    SECTION(std::format("- specify_domain={}", specify_domain)) {
+    SECTION("- specify_domain=" + std::to_string(specify_domain)) {
         std::string suffix1 = specify_domain ? "true" : "false";
         set_up(
             std::make_shared<SOMAContext>(),
