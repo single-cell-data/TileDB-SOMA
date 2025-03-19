@@ -1,4 +1,4 @@
-# Encoding Specification
+# Encoding specification
 
 ## TileDB-SOMA encoding version 1.1.0
 
@@ -79,7 +79,7 @@ JSON serialization of the multiscale image schema is given by
 | Serialization Key       | Description                                                                                                               |
 | :---------------------- | :------------------------------------------------------------------------------------------------------------------------ |
 | "data_axis_permutation" | The permutation of the coordinate space axis with the channel stored last to the order of the channels as stored on disk. |
-| "has_channel_axis"      | If the image has a dimension specifically for channel information.                                                        |
+| "has_channel_axis"      | Whether the image has a dimension specifically for channel information.                                                        |
 | "shape"                 | The shape of the level 0 image.                                                                                           |
 | "datatype"              | The datatype of the image data stored using the PyArrow C-convention.                                                     |
 
