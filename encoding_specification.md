@@ -4,9 +4,9 @@
 
 ### SOMA abstract specification support
 
-- TileDB-SOMA encoding version 1.1.0 with spatial encoding version 0.1.0 satisfies the requirements for SOMA abstract specification 0.3.0-dev.
+- TileDB-SOMA encoding version 1.1.0 with spatial encoding version 0.1.0 satisfies the requirements for [SOMA abstract specification](https://github.com/single-cell-data/SOMA/blob/main/abstract_specification.md) 0.3.0-dev.
 
-- TileDB-SOMA encoding version 1.1.0 with spatial encoding version 0.2.0 satifies the requirements for SOMA abstract 0.3.1-dev.
+- TileDB-SOMA encoding version 1.1.0 with spatial encoding version 0.2.0 satifies the requirements for [SOMA abstract specification](https://github.com/single-cell-data/SOMA/blob/main/abstract_specification.md) 0.3.1-dev.
 
 ### Collection encoding version 1.1.0
 
