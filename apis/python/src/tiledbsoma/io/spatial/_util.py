@@ -17,8 +17,8 @@ from typing_extensions import Self
 from ..._exception import SOMAError
 
 
-def _expand_ptr(indptr: npt.NDArray, nval: int) -> npt.NDArray:
-    """Expand CSR or CSC pointers into COO indices.
+def _expand_compressed_index_pointers(indptr: npt.NDArray, nval: int) -> npt.NDArray:
+    """Expand CSR or CSC index pointers into COO indices.
 
     Args:
         indptr: Array of row/column pointers to be expanded.
@@ -243,7 +243,7 @@ class TenXCountMatrixReader:
         if self._barcode_indices is None:
             self._barcode_indptr = self.matrix_group["indptr"][()]
             nvalues = self.matrix_group["data"].size
-            self._barcode_indices = _expand_ptr(self._barcode_indptr, nvalues)
+            self._barcode_indices = _expand_compressed_index_pointers(self._barcode_indptr, nvalues)
         return pa.array(self._barcode_indices)
 
     def open(self) -> None:
@@ -270,7 +270,7 @@ class TenXCountMatrixReader:
         self._data = matrix_group["data"][()]
         self._feature_indices = matrix_group["indices"][()]
         self._barcode_indptr = matrix_group["indptr"][()]
-        self._barcode_indices = _expand_ptr(self._barcode_indptr, self._data.size)
+        self._barcode_indices = _expand_compressed_index_pointers(self._barcode_indptr, self._data.size)
 
         # obs data
         self._barcodes = matrix_group["barcodes"][()].astype(str)
