@@ -19,7 +19,6 @@ import attrs
 import numpy as np
 import pandas as pd
 import pyarrow as pa
-import pyarrow.compute as pacomp
 import scipy.sparse as sp
 from typing_extensions import Self
 
@@ -499,6 +498,23 @@ def from_visium(
             _maybe_set(experiment, "obs", obs, use_relative_uri=use_relative_uri)
 
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+        # OBS
+        if write_obs_spatial_presence:
+            obs_spatial_presence_uri = _util.uri_joinpath(
+                experiment_uri, "obs_spatial_presence"
+            )
+            unique_obs_id = reader.unique_obs_indices()
+            obs_spatial_presence = _write_scene_presence_dataframe(
+                unique_obs_id, nobs, scene_name, obs_spatial_presence_uri, **ingest_ctx
+            )
+            _maybe_set(
+                experiment,
+                "obs_spatial_presence",
+                obs_spatial_presence,
+                use_relative_uri=use_relative_uri,
+            )
+
+        # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         # MS
         experiment_ms_uri = _util.uri_joinpath(experiment_uri, "ms")
 
@@ -531,6 +547,28 @@ def from_visium(
                     )
 
                 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                # MS/meas/VAR_SPATIAL_PRESENCE
+                if write_var_spatial_presence:
+                    var_spatial_presence_uri = _util.uri_joinpath(
+                        measurement_uri,
+                        "var_spatial_presence",
+                    )
+                    unique_var_id = reader.unique_var_indices()
+                    var_spatial_presence = _write_scene_presence_dataframe(
+                        unique_var_id,
+                        nvar,
+                        scene_name,
+                        var_spatial_presence_uri,
+                        **ingest_ctx,
+                    )
+                    _maybe_set(
+                        measurement,
+                        "var_spatial_presence",
+                        var_spatial_presence,
+                        use_relative_uri=use_relative_uri,
+                    )
+
+                # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
                 # MS/meas/X/DATA
                 measurement_X_uri = _util.uri_joinpath(measurement_uri, "X")
                 with _create_or_open_collection(
@@ -548,28 +586,16 @@ def from_visium(
                         _maybe_set(
                             x, X_layer_name, data, use_relative_uri=use_relative_uri
                         )
-                # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    # TEMPORARY: Close and re-open experiment to read data if necessary.
-    with Experiment.open(experiment.uri, mode="r", context=context) as exp:
-        obs_df = (
-            exp.obs.read(column_names=["soma_joinid", "obs_id"]).concat().to_pandas()
-        )
-        x_layer = exp.ms[measurement_name].X[X_layer_name]
-        if write_obs_spatial_presence or write_var_spatial_presence:
-            x_layer_data = x_layer.read().tables().concat()
-            if write_obs_spatial_presence:
-                obs_id = pacomp.unique(x_layer_data["soma_dim_0"])
-
-            if write_var_spatial_presence:
-                var_id = pacomp.unique(x_layer_data["soma_dim_1"])
-
-    with Experiment.open(experiment.uri, mode="w", context=context) as exp:
+        # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+        # SPATIAL
         spatial_uri = _util.uri_joinpath(experiment_uri, "spatial")
         with _create_or_open_collection(
             Collection[Scene], spatial_uri, **ingest_ctx
         ) as spatial:
-            _maybe_set(exp, "spatial", spatial, use_relative_uri=use_relative_uri)
+            _maybe_set(
+                experiment, "spatial", spatial, use_relative_uri=use_relative_uri
+            )
             scene_uri = _util.uri_joinpath(spatial_uri, scene_name)
             with _create_or_open_scene(scene_uri, **ingest_ctx) as scene:
                 _maybe_set(
@@ -658,38 +684,6 @@ def from_visium(
                     Collection[Collection[AnySOMAObject]], varl_uri, **ingest_ctx
                 ) as varl:
                     _maybe_set(scene, "varl", varl, use_relative_uri=use_relative_uri)
-
-        # Create the obs presence matrix.
-        if write_obs_spatial_presence:
-            obs_spatial_presence_uri = _util.uri_joinpath(
-                experiment_uri, "obs_spatial_presence"
-            )
-            obs_spatial_presence = _write_scene_presence_dataframe(
-                obs_id, nobs, scene_name, obs_spatial_presence_uri, **ingest_ctx
-            )
-            _maybe_set(
-                exp,
-                "obs_spatial_presence",
-                obs_spatial_presence,
-                use_relative_uri=use_relative_uri,
-            )
-        if write_var_spatial_presence:
-            var_spatial_presence_uri = _util.uri_joinpath(
-                _util.uri_joinpath(
-                    _util.uri_joinpath(experiment_uri, "ms"), measurement_name
-                ),
-                "var_spatial_presence",
-            )
-            var_spatial_presence = _write_scene_presence_dataframe(
-                var_id, nvar, scene_name, var_spatial_presence_uri, **ingest_ctx
-            )
-            meas = exp.ms[measurement_name]
-            _maybe_set(
-                meas,
-                "var_spatial_presence",
-                var_spatial_presence,
-                use_relative_uri=use_relative_uri,
-            )
 
     logging.log_io(
         f"Wrote   {experiment.uri}",
