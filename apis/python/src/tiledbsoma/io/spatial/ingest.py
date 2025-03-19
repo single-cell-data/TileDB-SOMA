@@ -74,7 +74,6 @@ from ..ingest import (
     _create_or_open_collection,
     _maybe_set,
     _write_arrow_table,
-    _write_dataframe_impl,
     add_metadata,
 )
 from ._util import TenXCountMatrixReader, _read_visium_software_version
@@ -441,30 +440,30 @@ def from_visium(
     logging.log_io(None, f"START READING {input_paths.gene_expression}")
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-
     with TenXCountMatrixReader(input_paths.gene_expression) as reader:
         reader.load()
-
-    nobs = reader.nobs
-    nvar = reader.nvar
-
-    # TODO: Placeholder - convert to PyTable
-    obs_df = pd.DataFrame.from_dict(
-        {SOMA_JOINID: np.arange(nobs, dtype=np.int64), "obs_id": reader._barcodes}
-    )
-    var_df = pd.DataFrame.from_dict(
-        {
-            SOMA_JOINID: np.arange(nvar, dtype=np.int64),
-            "var_id": reader._var_name,
-            "gene_ids": reader._gene_id,
-            "feature_types": reader._feature_type,
-            "genome": reader._genome,
-        }
-    )
-    X_mat = sp.csr_matrix(
-        (reader._data, reader._feature_indices, reader._barcode_indptr),
-        shape=(nobs, nvar),
-    )
+        nobs = reader.nobs
+        nvar = reader.nvar
+        obs_data = pa.Table.from_pydict(
+            {
+                SOMA_JOINID: pa.array(np.arange(nobs, dtype=np.int64)),
+                "obs_id": reader.obs_id,
+            }
+        )
+        var_data = pa.Table.from_pydict(
+            {
+                SOMA_JOINID: np.arange(nvar, dtype=np.int64),
+                "var_id": reader.var_id,
+                "gene_ids": reader.gene_id,
+                "feature_types": reader.feature_type,
+                "genome": reader.genome,
+            }
+        )
+        # TODO: Convert X matrix to pyarrow tensors
+        X_mat = sp.csr_matrix(
+            (reader._data, reader._feature_indices, reader._barcode_indptr),
+            shape=(nobs, nvar),
+        )
 
     logging.log_io(None, _util.format_elapsed(start_time, "FINISHED READING"))
 
@@ -488,12 +487,8 @@ def from_visium(
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         # OBS
         df_uri = _util.uri_joinpath(experiment_uri, "obs")
-        with _write_dataframe_impl(
-            obs_df,
-            df_uri,
-            id_column_name="obs_id",
-            shape=nobs,
-            **ingest_platform_ctx,
+        with _write_arrow_to_dataframe(
+            df_uri, obs_data, max_size=nobs, **ingest_platform_ctx
         ) as obs:
             _maybe_set(experiment, "obs", obs, use_relative_uri=use_relative_uri)
 
@@ -535,12 +530,9 @@ def from_visium(
 
                 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
                 # MS/meas/VAR
-                with _write_dataframe_impl(
-                    var_df,
-                    _util.uri_joinpath(measurement_uri, "var"),
-                    id_column_name="var_id",
-                    shape=nvar,
-                    **ingest_platform_ctx,
+                var_uri = _util.uri_joinpath(measurement_uri, "var")
+                with _write_arrow_to_dataframe(
+                    var_uri, var_data, max_size=nvar, **ingest_platform_ctx
                 ) as var:
                     _maybe_set(
                         measurement, "var", var, use_relative_uri=use_relative_uri
@@ -668,7 +660,7 @@ def from_visium(
                         input_paths.tissue_positions,
                         input_paths.major_version,
                         pixels_per_spot_diameter,
-                        obs_df,
+                        obs_data,
                         "obs_id",
                         nobs,
                         **ingest_ctx,
@@ -691,6 +683,52 @@ def from_visium(
     )
 
     return experiment.uri
+
+
+def _write_arrow_to_dataframe(
+    df_uri: str,
+    arrow_table: pa.Table,
+    max_size: int,
+    *,
+    ingestion_params: IngestionParams,
+    additional_metadata: AdditionalMetadata = None,
+    platform_config: PlatformConfig | None = None,
+    context: SOMATileDBContext | None = None,
+) -> DataFrame:
+    # Start timer
+    start_time = _util.get_start_stamp()
+    logging.log_io(None, f"START WRITING {df_uri}")
+
+    try:
+        soma_df = DataFrame.create(
+            df_uri,
+            schema=arrow_table.schema,
+            domain=[[0, max_size - 1]],
+            platform_config=platform_config,
+            context=context,
+        )
+    except (AlreadyExistsError, NotCreateableError):
+        raise SOMAError(f"{df_uri} already exists")
+
+    if not ingestion_params.write_schema_no_data:
+        tiledb_create_options = TileDBCreateOptions.from_platform_config(
+            platform_config
+        )
+        tiledb_write_options = TileDBWriteOptions.from_platform_config(platform_config)
+        _write_arrow_table(
+            arrow_table,
+            soma_df,
+            tiledb_create_options,
+            tiledb_write_options,
+        )
+
+    add_metadata(soma_df, additional_metadata)
+
+    logging.log_io(
+        f"Wrote {df_uri}",
+        _util.format_elapsed(start_time, f"FINISH WRITING {df_uri}"),
+    )
+    return soma_df
 
 
 def _write_scene_presence_dataframe(
@@ -762,7 +800,7 @@ def _write_visium_spots(
     input_tissue_positions: Path,
     major_version: int,
     spot_diameter: float,
-    obs_df: pd.DataFrame,
+    obs_data: pa.Table,
     id_column_name: str,
     max_joinid_len: int,
     *,
@@ -791,6 +829,7 @@ def _write_visium_spots(
         )
         .assign(spot_diameter_fullres=np.double(spot_diameter))
     )
+    obs_df = obs_data.to_pandas()
     df = pd.merge(obs_df, df, how="inner", on=id_column_name)
     df.drop(id_column_name, axis=1, inplace=True)
 
