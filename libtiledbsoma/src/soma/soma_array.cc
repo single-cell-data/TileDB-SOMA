@@ -644,8 +644,6 @@ uint64_t SOMAArray::nnz(bool raise_if_slow) {
         // TODO[perf]: Reading fragment info is not supported on TileDB Cloud
         // yet, but reading one fragment at a time will be slow. Is there
         // another way?
-        total_cell_num += fragment_info.cell_num(relevant_fragments[i]);
-
         fragment_info.get_non_empty_domain(
             relevant_fragments[i], 0, &non_empty_domains[i]);
 
@@ -661,27 +659,56 @@ uint64_t SOMAArray::nnz(bool raise_if_slow) {
 
     // After sorting, if the end of a non-empty domain is >= the beginning of
     // the next non-empty domain, there is an overlap
+
+    // TODO: We only need to apply the ``_nzz_slow`` on overlapping fragments
+    std::vector<std::pair<int64_t, int64_t>> overlapping_ranges;
+    std::array<uint64_t, 2> current_range = non_empty_domains[0];
+    uint64_t cell_count = fragment_info.cell_num(relevant_fragments[0]);
+
     bool overlap = false;
-    for (uint32_t i = 0; i < fragment_count - 1; i++) {
-        LOG_DEBUG(fmt::format(
-            "[SOMAArray] Checking {} < {}",
-            non_empty_domains[i][1],
-            non_empty_domains[i + 1][0]));
-        if (non_empty_domains[i][1] >= non_empty_domains[i + 1][0]) {
+    for (uint32_t i = 1; i < fragment_count; ++i) {
+        if (current_range[1] < non_empty_domains[i][0]) {
+            // Fragment is not overlapping
+            // Current range was overlapping with previous tiles
+            // and we need to add it to the ovelapping ranges
+            if (overlap) {
+                overlapping_ranges.push_back(
+                    std::make_pair(current_range[0], current_range[1]));
+            } else {
+                total_cell_num += cell_count;
+            }
+
+            current_range = non_empty_domains[i];
+            cell_count = fragment_info.cell_num(relevant_fragments[0]);
+            overlap = false;
+        } else if (current_range[1] >= non_empty_domains[i][1]) {
+            // Check if range is included completely
             overlap = true;
-            break;
+        } else if (current_range[1] < non_empty_domains[i][1]) {
+            // Check if range is partially overlapping
+            current_range[1] = non_empty_domains[i][1];
+            overlap = true;
         }
     }
 
-    // If relevant fragments do not overlap, return the total cell_num
-    if (!overlap) {
-        return total_cell_num;
+    if (overlap) {
+        overlapping_ranges.push_back(
+            std::make_pair(current_range[0], current_range[1]));
+    } else {
+        total_cell_num += cell_count;
     }
+
     // Found relevant fragments with overlap, count cells
-    return _nnz_slow(raise_if_slow);
+    if (!overlapping_ranges.empty()) {
+        total_cell_num += _nnz_slow(raise_if_slow, overlapping_ranges);
+    }
+
+    return total_cell_num;
 }
 
-uint64_t SOMAArray::_nnz_slow(bool raise_if_slow) {
+uint64_t SOMAArray::_nnz_slow(
+    bool raise_if_slow,
+    const std::vector<std::pair<int64_t, int64_t>>& ranges) {
     if (raise_if_slow) {
         throw TileDBSOMAError(
             "NNZ slow path called with 'raise_if_slow==true'");
@@ -695,6 +722,11 @@ uint64_t SOMAArray::_nnz_slow(bool raise_if_slow) {
     auto sr = SOMAArray::open(OpenMode::read, uri_, ctx_, timestamp_);
     auto mq = ManagedQuery(*sr, ctx_->tiledb_ctx(), "count_cells");
     mq.select_columns({schema_->domain().dimension(0).name()});
+
+    if (!ranges.empty()) {
+        mq.select_ranges(schema_->domain().dimension(0).name(), ranges);
+    }
+
     while (auto batch = mq.read_next()) {
         total_cell_num += (*batch)->num_rows();
     }
