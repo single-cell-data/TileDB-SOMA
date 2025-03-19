@@ -46,7 +46,7 @@ from ... import (
     _util,
     logging,
 )
-from ..._constants import SPATIAL_DISCLAIMER
+from ..._constants import SOMA_JOINID, SPATIAL_DISCLAIMER
 from ..._exception import (
     AlreadyExistsError,
     NotCreateableError,
@@ -75,7 +75,7 @@ from ..ingest import (
     _create_or_open_collection,
     _maybe_set,
     _write_arrow_table,
-    _write_dataframe,
+    _write_dataframe_impl,
     add_metadata,
 )
 from ._util import TenXCountMatrixReader, _read_visium_software_version
@@ -450,9 +450,12 @@ def from_visium(
     nvar = reader.nvar
 
     # TODO: Placeholder - convert to PyTable
-    obs_df = pd.DataFrame.from_dict({"obs_id": reader._barcodes})
+    obs_df = pd.DataFrame.from_dict(
+        {SOMA_JOINID: np.arange(nobs, dtype=np.int64), "obs_id": reader._barcodes}
+    )
     var_df = pd.DataFrame.from_dict(
         {
+            SOMA_JOINID: np.arange(nvar, dtype=np.int64),
             "var_id": reader._var_name,
             "gene_ids": reader._gene_id,
             "feature_types": reader._feature_type,
@@ -486,11 +489,11 @@ def from_visium(
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         # OBS
         df_uri = _util.uri_joinpath(experiment_uri, "obs")
-        with _write_dataframe(
-            df_uri,
+        with _write_dataframe_impl(
             obs_df,
+            df_uri,
             id_column_name="obs_id",
-            axis_mapping=joinid_maps.obs_axis,
+            shape=nobs,
             **ingest_platform_ctx,
         ) as obs:
             _maybe_set(experiment, "obs", obs, use_relative_uri=use_relative_uri)
@@ -516,11 +519,11 @@ def from_visium(
 
                 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
                 # MS/meas/VAR
-                with _write_dataframe(
-                    _util.uri_joinpath(measurement_uri, "var"),
+                with _write_dataframe_impl(
                     var_df,
+                    _util.uri_joinpath(measurement_uri, "var"),
                     id_column_name="var_id",
-                    axis_mapping=joinid_maps.var_axes[measurement_name],
+                    shape=nvar,
                     **ingest_platform_ctx,
                 ) as var:
                     _maybe_set(
