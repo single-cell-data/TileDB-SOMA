@@ -92,4 +92,22 @@ std::string get_enmr_label(
     return std::string(index_schema->name) + "_" + format;
 }
 
+Enumeration get_enumeration(
+    std::shared_ptr<Context> ctx,
+    std::shared_ptr<Array> arr,
+    ArrowSchema* index_schema,
+    ArrowSchema* value_schema) {
+    try {
+        // New-style names of the form {attr_name}_{arrow_format}, e.g. "foo_U"
+        // for attributes written by tiledbsoma >= 1.16.0
+        return ArrayExperimental::get_enumeration(
+            *ctx, *arr, util::get_enmr_label(index_schema, value_schema));
+    } catch (const std::exception& e) {
+        // Old-style names of the form {attr_name}, e.g. "foo"
+        // for attributes written by tiledbsoma < 1.16.0
+        return ArrayExperimental::get_enumeration(
+            *ctx, *arr, index_schema->name);
+    }
+}
+
 };  // namespace tiledbsoma::util

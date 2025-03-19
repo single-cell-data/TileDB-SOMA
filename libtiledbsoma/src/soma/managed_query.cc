@@ -950,17 +950,9 @@ bool ManagedQuery::_extend_enumeration(
     // {index name}_{value dtype}. Prior to 1.16, enum labels are the same as
     // the index name. If the new format doesn't work then fall back to the old
     // format
-    Enumeration enmr = [&]() {
-        try {
-            return ArrayExperimental::get_enumeration(
-                *ctx_,
-                *array_,
-                util::get_enmr_label(index_schema, value_schema));
-        } catch (const std::exception& e) {
-            return ArrayExperimental::get_enumeration(
-                *ctx_, *array_, index_schema->name);
-        }
-    }();
+    Enumeration enmr = util::get_enumeration(
+        ctx_, array_, index_schema, value_schema);
+
     auto value_type = enmr.type();
 
     switch (value_type) {
@@ -1043,17 +1035,8 @@ bool ManagedQuery::_extend_and_evolve_schema(
     // {index name}_{value dtype}. Prior to 1.16, enum labels are the same as
     // the index name. If the new format doesn't work then fall back to the old
     // format
-    Enumeration enmr = [&]() {
-        try {
-            return ArrayExperimental::get_enumeration(
-                *ctx_,
-                *array_,
-                util::get_enmr_label(index_schema, value_schema));
-        } catch (const std::exception& e) {
-            return ArrayExperimental::get_enumeration(
-                *ctx_, *array_, index_schema->name);
-        }
-    }();
+    Enumeration enmr = util::get_enumeration(
+        ctx_, array_, index_schema, value_schema);
     std::vector<ValueType> enums_existing = enmr.as_vector<ValueType>();
 
     // Find any new enumeration values
@@ -1150,17 +1133,8 @@ bool ManagedQuery::_extend_and_evolve_schema<std::string>(
     // {index name}_{value dtype}. Prior to 1.16, enum labels are the same as
     // the index name. If the new format doesn't work then fall back to the old
     // format
-    Enumeration enmr = [&]() {
-        try {
-            return ArrayExperimental::get_enumeration(
-                *ctx_,
-                *array_,
-                util::get_enmr_label(index_schema, value_schema));
-        } catch (const std::exception& e) {
-            return ArrayExperimental::get_enumeration(
-                *ctx_, *array_, index_schema->name);
-        }
-    }();
+    Enumeration enmr = util::get_enumeration(
+        ctx_, array_, index_schema, value_schema);
     std::vector<std::string_view> extend_values;
     size_t total_size = 0;
 
