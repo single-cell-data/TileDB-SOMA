@@ -176,17 +176,19 @@ class TenXCountMatrixReader:
         if len(version) not in {3, 4}:
             raise SOMAError(
                 f"Unexpected value {raw_version} for 'software_version' in gene "
-                f"expression file {self._path}."
+                f"expression file {self._path}. Expected a version in the form "
+                f"'software_name-major.minor.patch'."
             )
         try:
             major = _str_to_int(version[0])
             minor = _str_to_int(version[1])
             patch = _str_to_int(version[2])
-        except ValueError:
+        except ValueError as err:
             raise SOMAError(
                 f"Unexpected value {raw_version} for 'software_version' in gene "
-                f"expression file {self._path}."
-            )
+                f"expression file {self._path}. Expected a version in the form "
+                f"'software_name-major.minor.patch'."
+            ) from err
         return (major, minor, patch)
 
     def close(self) -> None:
@@ -243,7 +245,9 @@ class TenXCountMatrixReader:
         if self._barcode_indices is None:
             self._barcode_indptr = self.matrix_group["indptr"][()]
             nvalues = self.matrix_group["data"].size
-            self._barcode_indices = _expand_compressed_index_pointers(self._barcode_indptr, nvalues)
+            self._barcode_indices = _expand_compressed_index_pointers(
+                self._barcode_indptr, nvalues
+            )
         return pa.array(self._barcode_indices)
 
     def open(self) -> None:
@@ -270,7 +274,9 @@ class TenXCountMatrixReader:
         self._data = matrix_group["data"][()]
         self._feature_indices = matrix_group["indices"][()]
         self._barcode_indptr = matrix_group["indptr"][()]
-        self._barcode_indices = _expand_compressed_index_pointers(self._barcode_indptr, self._data.size)
+        self._barcode_indices = _expand_compressed_index_pointers(
+            self._barcode_indptr, self._data.size
+        )
 
         # obs data
         self._barcodes = matrix_group["barcodes"][()].astype(str)

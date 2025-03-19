@@ -145,7 +145,6 @@ def check_reader(reader, data):
     assert reader.nvar == data.nvar
 
     # Check X matrix.
-
     actual_X = sp.coo_matrix(
         (reader.data, (reader.obs_indices, reader.var_indices)),
         shape=(reader.nobs, reader.nvar),
