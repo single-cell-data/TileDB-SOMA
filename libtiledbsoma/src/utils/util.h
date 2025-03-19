@@ -80,6 +80,20 @@ std::shared_ptr<SOMAColumn> find_column_by_name(
 std::string get_enmr_label(
     ArrowSchema* index_schema, ArrowSchema* value_schema);
 
+/**
+ * Given the Arrow index and value schemas for a column of enumerated
+ * type, returns the core enumeration for that column. Throws if this
+ * cannot be found. Handles new-style names of the form
+ * {attr_name}_{arrow_format}, e.g. "foo_U" for columns written by
+ * tiledbsoma >= 1.16.0 as well as old-style names of the form {attr_name},
+ * e.g. "foo" for attributes written by tiledbsoma < 1.16.0.
+ */
+Enumeration get_enumeration(
+    std::shared_ptr<Context> ctx_,
+    std::shared_ptr<Array> array_,
+    ArrowSchema* index_schema,
+    ArrowSchema* value_schema);
+
 }  // namespace tiledbsoma::util
 
 #endif
