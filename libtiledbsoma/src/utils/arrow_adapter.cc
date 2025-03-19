@@ -1558,38 +1558,43 @@ std::unique_ptr<ArrowSchema> ArrowAdapter::make_arrow_schema(
         arrow_schema->n_children));
 
     for (int i = 0; i < (int)num_names; i++) {
-        ArrowSchema* dim_schema = (ArrowSchema*)malloc(sizeof(ArrowSchema));
-        auto arrow_type_name = ArrowAdapter::tdb_to_arrow_type(
-            tiledb_datatypes[i]);
-        dim_schema->name = strdup(names[i].c_str());
-        dim_schema->format = strdup(arrow_type_name.c_str());
-        dim_schema->metadata = nullptr;
-        dim_schema->flags = 0;
-        dim_schema->n_children = 0;      // leaf node
-        dim_schema->children = nullptr;  // leaf node
-        dim_schema->dictionary = nullptr;
-        dim_schema->release = &ArrowAdapter::release_schema;
-        dim_schema->private_data = nullptr;
-
-        arrow_schema->children[i] = dim_schema;
-        LOG_TRACE(fmt::format(
+        auto dim_schema = make_arrow_schema_child(
+            names[i], tiledb_datatypes[i]);
+        LOG_TRACE(std::format(
             "[ArrowAdapter] make_arrow_schema child {} format {} name {}",
             i,
             dim_schema->format,
             dim_schema->name));
+        arrow_schema->children[i] = dim_schema;
+    }
 
-        if (strcmp(dim_schema->name, SOMA_GEOMETRY_COLUMN_NAME.c_str()) == 0) {
-            nanoarrow::UniqueBuffer buffer;
-            ArrowMetadataBuilderInit(buffer.get(), nullptr);
-            ArrowMetadataBuilderAppend(
-                buffer.get(),
-                ArrowCharView(ARROW_DATATYPE_METADATA_KEY.c_str()),
-                ArrowCharView(
-                    tiledb_datatypes[i] == TILEDB_GEOM_WKB ? "WKB" : "WKT"));
-            ArrowSchemaSetMetadata(
-                dim_schema,
-                std::string((char*)buffer->data, buffer->size_bytes).c_str());
-        }
+    return arrow_schema;
+}
+
+ArrowSchema* ArrowAdapter::make_arrow_schema_child(
+    std::string name, tiledb_datatype_t tiledb_datatype) {
+    ArrowSchema* arrow_schema = (ArrowSchema*)malloc(sizeof(ArrowSchema));
+    auto arrow_type_name = ArrowAdapter::tdb_to_arrow_type(tiledb_datatype);
+    arrow_schema->name = strdup(name.c_str());
+    arrow_schema->format = strdup(arrow_type_name.c_str());
+    arrow_schema->metadata = nullptr;
+    arrow_schema->flags = 0;
+    arrow_schema->n_children = 0;      // leaf node
+    arrow_schema->children = nullptr;  // leaf node
+    arrow_schema->dictionary = nullptr;
+    arrow_schema->release = &ArrowAdapter::release_schema;
+    arrow_schema->private_data = nullptr;
+
+    if (strcmp(arrow_schema->name, SOMA_GEOMETRY_COLUMN_NAME.c_str()) == 0) {
+        nanoarrow::UniqueBuffer buffer;
+        ArrowMetadataBuilderInit(buffer.get(), nullptr);
+        ArrowMetadataBuilderAppend(
+            buffer.get(),
+            ArrowCharView(ARROW_DATATYPE_METADATA_KEY.c_str()),
+            ArrowCharView(tiledb_datatype == TILEDB_GEOM_WKB ? "WKB" : "WKT"));
+        ArrowSchemaSetMetadata(
+            arrow_schema,
+            std::string((char*)buffer->data, buffer->size_bytes).c_str());
     }
 
     return arrow_schema;
