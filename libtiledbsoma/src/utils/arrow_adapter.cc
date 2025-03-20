@@ -156,7 +156,7 @@ void ArrowAdapter::release_array(struct ArrowArray* array) {
         // Dictionary arrays are allocated differently than data arrays
         // We need to free the buffers one at a time, then we can call the
         // release schema to continue the cleanup properly
-        for (size_t i = 0; i < array->dictionary->n_buffers; ++i) {
+        for (int64_t i = 0; i < array->dictionary->n_buffers; ++i) {
             if (array->dictionary->buffers[i] != nullptr) {
                 free(const_cast<void*>(array->dictionary->buffers[i]));
                 array->dictionary->buffers[i] = nullptr;
