@@ -90,9 +90,8 @@ OutlineTransformer::_cast_polygon_vertex_list_to_wkb(
         const auto axis = coordinate_space.axis(i);
 
         // Min spatial axis
-        arrays.push_back(std::move(std::make_unique<ArrowArray>(ArrowArray{})));
-        schemas.push_back(
-            std::move(std::make_unique<ArrowSchema>(ArrowSchema{})));
+        arrays.push_back(std::make_unique<ArrowArray>(ArrowArray{}));
+        schemas.push_back(std::make_unique<ArrowSchema>(ArrowSchema{}));
         NANOARROW_THROW_NOT_OK(ArrowArrayInitFromType(
             arrays.back().get(), ArrowType::NANOARROW_TYPE_DOUBLE));
         NANOARROW_THROW_NOT_OK(ArrowSchemaInitFromType(
