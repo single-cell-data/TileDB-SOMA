@@ -1514,3 +1514,87 @@ def test_registration_lists_and_tuples(tmp_path):
 
     assert rd4 == rd5
     assert rd5 == rd6
+
+
+@pytest.mark.parametrize(
+    "version_and_shaped",
+    [
+        ["1.7.3", False],
+        ["1.12.3", False],
+        ["1.14.5", False],
+        ["1.15.0", True],
+        ["1.15.7", True],
+    ],
+)
+def test_extend_enmr_to_older_experiments_64521(tmp_path, version_and_shaped):
+    version, shaped = version_and_shaped
+
+    import os
+    import shutil
+
+    from ._util import ROOT_DATA_DIR
+
+    original_data_uri = str(
+        ROOT_DATA_DIR / "soma-experiment-versions" / version / "pbmc3k_unprocessed"
+    )
+
+    if not os.path.isdir(original_data_uri):
+        raise RuntimeError(
+            f"Missing '{original_data_uri}' directory. Try running `make data` "
+            "from the TileDB-SOMA project root directory."
+        )
+
+    with tiledbsoma.Experiment.open(original_data_uri) as exp:
+        assert exp.obs.count == 2700
+
+    # Make a copy of the Experiment as to not write over the data in ROOT_DATA_DIR
+    uri = (tmp_path / version).as_posix()
+    shutil.copytree(original_data_uri, uri)
+
+    with tiledbsoma.Experiment.open(uri) as exp:
+        assert exp.obs.count == 2700
+        obs = exp.obs.read().concat().to_pandas()
+        assert "new_ident" not in obs["orig.ident"].cat.categories
+
+    with tiledbsoma.Experiment.open(uri) as exp:
+        adata = tiledbsoma.io.to_anndata(exp, "RNA")
+
+    # Make obs_id accessible via adata["obs_id]]
+    adata.obs.reset_index(inplace=True)
+
+    adata.obs["orig.ident"] = pd.Series(
+        ["new_ident"] * len(adata.obs), dtype="category"
+    )
+    adata.obs["obs_id"] = adata.obs["obs_id"] + "_2"
+
+    rd = tiledbsoma.io.register_anndatas(
+        experiment_uri=uri,
+        adatas=[adata],
+        measurement_name="RNA",
+        obs_field_name="obs_id",
+        var_field_name="var_id",
+    )
+
+    assert rd.get_obs_shape() == 5400
+
+    if shaped:
+        tiledbsoma.io.resize_experiment(
+            uri,
+            nobs=rd.get_obs_shape(),
+            nvars=rd.get_var_shapes(),
+        )
+
+    tiledbsoma.io.from_anndata(
+        experiment_uri=uri,
+        anndata=adata,
+        measurement_name="RNA",
+        registration_mapping=rd,
+    )
+
+    with tiledbsoma.Experiment.open(uri) as exp:
+        assert "RNA" in exp.ms
+
+        assert exp.obs.count == 5400
+        obs = exp.obs.read().concat().to_pandas()
+        assert "pbmc3k" in obs["orig.ident"].cat.categories
+        assert "new_ident" in obs["orig.ident"].cat.categories
