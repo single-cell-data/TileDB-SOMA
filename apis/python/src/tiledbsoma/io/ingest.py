@@ -14,6 +14,7 @@ import json
 import math
 import os
 import time
+from concurrent.futures import ProcessPoolExecutor
 from functools import partial
 from itertools import repeat
 from typing import (
@@ -194,12 +195,15 @@ def register_h5ads(
     var_field_name: str,
     append_obsm_varm: bool = False,
     context: SOMATileDBContext | None = None,
+    use_multiprocessing: bool = True,
 ) -> ExperimentAmbientLabelMapping:
     """Extends registration data from the baseline, already-written SOMA
     experiment to include multiple H5AD input files. See ``from_h5ad`` and
     ``from_anndata`` on-line help.
 
-    This function will use multiprocessing to process each H5AD in parallel. You
+    If enabled via the ``use_multiprocessing`` parameter, this function will use multiprocessing
+    to register each H5AD in parallel. In cases with many files, this can produce a performance
+    benefit. Regardless of ``use_multiprocessing``, H5ADs will be registered concurrently -- you
     can control the concurrency using the ``soma.compute_concurrency_level`` configuration
     parameter in the ``context`` argument.
     """
@@ -221,40 +225,42 @@ def register_h5ads(
             ),
         )
 
-    # Flakey, is your middle name.
-    # with ProcessPoolExecutor(max_workers=concurrency_level) as ppe:
-    #     axes_metadata = list(
-    #         ppe.map(
-    #             ExperimentAmbientLabelMapping._load_axes_metadata_from_h5ads,
-    #             batched(
-    #                 h5ad_file_names, math.ceil(len(h5ad_file_names) / concurrency_level)
-    #             ),
-    #             repeat(obs_field_name),
-    #             repeat(var_field_name),
-    #             repeat(
-    #                 partial(
-    #                     ExperimentAmbientLabelMapping._validate_anndata,
-    #                     append_obsm_varm,
-    #                 )
-    #             ),
-    #         )
-    #     )
-    axes_metadata = list(
-        context.threadpool.map(
-            ExperimentAmbientLabelMapping._load_axes_metadata_from_h5ads,
-            batched(
-                h5ad_file_names, math.ceil(len(h5ad_file_names) / concurrency_level)
-            ),
-            repeat(obs_field_name),
-            repeat(var_field_name),
-            repeat(
-                partial(
-                    ExperimentAmbientLabelMapping._validate_anndata,
-                    append_obsm_varm,
+    if use_multiprocessing:
+        with ProcessPoolExecutor(max_workers=concurrency_level) as ppe:
+            axes_metadata = list(
+                ppe.map(
+                    ExperimentAmbientLabelMapping._load_axes_metadata_from_h5ads,
+                    batched(
+                        h5ad_file_names,
+                        math.ceil(len(h5ad_file_names) / concurrency_level),
+                    ),
+                    repeat(obs_field_name),
+                    repeat(var_field_name),
+                    repeat(
+                        partial(
+                            ExperimentAmbientLabelMapping._validate_anndata,
+                            append_obsm_varm,
+                        )
+                    ),
                 )
-            ),
+            )
+    else:
+        axes_metadata = list(
+            context.threadpool.map(
+                ExperimentAmbientLabelMapping._load_axes_metadata_from_h5ads,
+                batched(
+                    h5ad_file_names, math.ceil(len(h5ad_file_names) / concurrency_level)
+                ),
+                repeat(obs_field_name),
+                repeat(var_field_name),
+                repeat(
+                    partial(
+                        ExperimentAmbientLabelMapping._validate_anndata,
+                        append_obsm_varm,
+                    )
+                ),
+            )
         )
-    )
 
     logging.log_io(None, "Loaded per-axis metadata")
 
