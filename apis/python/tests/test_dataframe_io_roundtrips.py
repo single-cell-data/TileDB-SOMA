@@ -183,7 +183,7 @@ def test_df_io_roundtrips(
         uri,
         original_df,
         id_column_name=ingest_id_column_name,
-        axis_mapping=AxisIDMapping(data=tuple(range(len(original_df)))),
+        axis_mapping=AxisIDMapping.identity(len(original_df)),
         ingestion_params=IngestionParams("write", None),
     ).close()
 

@@ -1,42 +1,39 @@
 # Copyright (c) TileDB, Inc. and The Chan Zuckerberg Initiative Foundation
 #
 # Licensed under the MIT License.
+from __future__ import annotations
 
-from typing import Dict, List, Tuple
+from typing import cast
 
 import anndata as ad
 import attrs
+import numpy as np
+import numpy.typing as npt
 import pandas as pd
 from typing_extensions import Self
 
-import tiledbsoma
-import tiledbsoma.logging
 
-
-@attrs.define(kw_only=True)
+@attrs.define(kw_only=True, frozen=True)
 class AxisIDMapping:
-    """
-    For a single to-be-appended AnnData/H5AD input in SOMA multi-file append-mode ingestion, this
-    class tracks the mapping of input-data ``obs`` or ``var`` 0-up offsets to SOMA join ID values
-    for the destination SOMA experiment.
+    """Private class"""
 
-    See module-level comments for more information.
-    """
+    data: npt.NDArray[np.int64]
 
-    # Tuple not List so this can't be modified by accident when passed into some function somewhere
-    data: Tuple[int, ...]
-
-    def is_identity(self) -> bool:
-        for i, data in enumerate(self.data):
-            if data != i:
-                return False
-        return True
+    def __attrs_post_init__(self) -> None:
+        self.data.setflags(write=False)
 
     def get_shape(self) -> int:
         if len(self.data) == 0:
             return 0
         else:
-            return 1 + max(self.data)
+            return int(self.data.max() + 1)
+
+    def is_identity(self) -> bool:
+        # fast rejection first
+        if self.get_shape() != len(self.data) or self.data[0] != 0:
+            return False
+
+        return np.array_equal(self.data, np.arange(0, len(self.data)))
 
     @classmethod
     def identity(cls, n: int) -> Self:
@@ -44,58 +41,41 @@ class AxisIDMapping:
         important for uns arrays which we never grow on ingest --- rather, we
         sub-nest the entire recursive ``uns`` data structure.
         """
-        return cls(data=tuple(range(n)))
+        return cls(data=np.arange(n, dtype=np.int64))
 
 
-@attrs.define(kw_only=True)
+@attrs.define(kw_only=True, frozen=True)
 class ExperimentIDMapping:
-    """
-    For a single to-be-appended AnnData/H5AD input in SOMA multi-file append-mode ingestion, this
-    class contains an ``ExperimentIDMapping`` for ``obs``, and one ``ExperimentIDMapping`` for
-    ``var`` in each measurement.
-
-    See module-level comments for more information.
-    """
+    """Private class"""
 
     obs_axis: AxisIDMapping
-    var_axes: Dict[str, AxisIDMapping]
+    var_axes: dict[str, AxisIDMapping]
 
     @classmethod
-    def from_isolated_anndata(
-        cls,
-        adata: ad.AnnData,
-        measurement_name: str,
-    ) -> Self:
-        """Factory method to compute offset-to-SOMA-join-ID mappings for a single input file in
-        isolation. This is used when a user is ingesting a single AnnData/H5AD to a single SOMA
-        experiment, not in append mode, allowing us to still have the bulk of the ingestor code to
-        be non-duplicated between non-append mode and append mode.
+    def from_anndata(cls, adata: ad.AnnData, *, measurement_name: str = "RNA") -> Self:
+        """Create a new ID mapping from an AnnData.
+
+        This is useful for creating a new Experiment from a single AnnData.
         """
-        tiledbsoma.logging.logger.info(
-            "Registration: registering isolated AnnData object."
-        )
-
-        obs_mapping = AxisIDMapping(data=tuple(range(len(adata.obs))))
-        var_axes = {}
-        var_axes[measurement_name] = AxisIDMapping(data=tuple(range(len(adata.var))))
+        obs_axis = AxisIDMapping.identity(len(adata.obs))
+        var_axes = {measurement_name: AxisIDMapping.identity(len(adata.var))}
         if adata.raw is not None:
-            var_axes["raw"] = AxisIDMapping(data=tuple(range(len(adata.raw.var))))
+            var_axes["raw"] = AxisIDMapping.identity(len(adata.raw.var))
+        return cls(obs_axis=obs_axis, var_axes=var_axes)
 
-        return cls(obs_axis=obs_mapping, var_axes=var_axes)
 
-
-def get_dataframe_values(df: pd.DataFrame, field_name: str) -> List[str]:
+def get_dataframe_values(df: pd.DataFrame, field_name: str) -> pd.Series:  # type: ignore[type-arg]
     """Extracts the label values (e.g. cell barcode, gene symbol) from an AnnData/H5AD
     ``obs`` or ``var`` dataframe."""
     if field_name in df:
-        values = [str(e) for e in df[field_name]]
+        values = cast(pd.Series, df[field_name].astype(str))  # type: ignore[type-arg]
     elif df.index.name in (field_name, "index", None):
-        values = list(df.index)
+        values = cast(pd.Series, df.index.to_series().astype(str))  # type: ignore[type-arg]
     else:
         raise ValueError(f"could not find field name {field_name} in dataframe")
 
     # Check the values are unique.
-    if len(values) != len(set(values)):
+    if not values.is_unique:
         raise ValueError(
             f"non-unique registration values have been provided in field {field_name}"
         )
