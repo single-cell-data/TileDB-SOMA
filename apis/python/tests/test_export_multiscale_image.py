@@ -7,7 +7,7 @@ import somacore
 
 import tiledbsoma as soma
 
-soma_outgest = pytest.importorskip("tiledbsoma.io.spatial.outgest")
+soma_outgest = pytest.importorskip("tiledbsoma.io.spatial._spatialdata_util")
 sd = pytest.importorskip("spatialdata")
 
 
@@ -121,6 +121,7 @@ def sample_multiscale_image_2d(tmp_path_factory, sample_2d_data):
         ),
     ],
 )
+@pytest.mark.spatialdata
 def test_export_image_level_to_spatialdata(
     sample_multiscale_image_2d,
     sample_2d_data,
@@ -223,6 +224,7 @@ def test_export_image_level_to_spatialdata(
         ),
     ],
 )
+@pytest.mark.spatialdata
 def test_export_full_image_to_spatialdata(
     sample_multiscale_image_2d,
     sample_2d_data,
