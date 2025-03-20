@@ -452,6 +452,29 @@ class ManagedQuery {
         return !query_submitted_;
     }
 
+    /**
+     * This delegates to util::get_enumeration.
+     * * There is (as of this writing) a situation where get_enumeration needs
+     *   to be called from a header file.
+     * * The code in that header file needs to be in a header file because of
+     *   templating.
+     * * Many, many source files include that header file.
+     * * Some of them are doing `using namespace tiledb` and some of them are
+     *   not.
+     * * As a result if we put a call to util::get_enumeration in that header
+     *   file, many source files will have compilation failures due to some
+     *   needing, and some not needing, tiledb::Array and tiledb::Context rather
+     *   than (implicit-using) Array and Context.
+     *
+     * TL;DR ManagedQuery::get_enumeration is an encapsulated way to call
+     * util::get_enumeration.
+     */
+    static Enumeration get_enumeration(
+        std::shared_ptr<Context> ctx,
+        std::shared_ptr<Array> arr,
+        ArrowSchema* index_schema,
+        ArrowSchema* value_schema);
+
    private:
     //===================================================================
     //= private non-static
@@ -667,12 +690,20 @@ class ManagedQuery {
             // values added, we need to extend and and evolve the TileDB
             // ArraySchema
 
+            // As of 1.16, and enumeration names are in the format of
+            // {index name}_{value dtype}. Prior to 1.16, enum labels are the
+            // same as the index name. If the new format doesn't work then fall
+            // back to the old format.
+            Enumeration enmr = get_enumeration(
+                ctx_, array_, schema, schema->dictionary);
+
             // Return whether we extended the enumeration for this attribute
             return _extend_enumeration(
                 schema->dictionary,  // value schema
                 array->dictionary,   // value array
                 schema,              // index schema
                 array,               // index array
+                enmr,
                 se);
         } else {
             // In the general case, we can just cast the values and set the
@@ -699,7 +730,8 @@ class ManagedQuery {
         ArrowArray* value_array,
         ArrowSchema* index_schema,
         ArrowArray* index_array,
-        ArraySchemaEvolution se);
+        Enumeration& enmr,
+        ArraySchemaEvolution& se);
 
     template <typename ValueType>
     void _remap_indexes(
@@ -911,7 +943,8 @@ class ManagedQuery {
         ArrowArray* value_array,
         ArrowSchema* index_schema,
         ArrowArray* index_array,
-        ArraySchemaEvolution se);
+        Enumeration& enmr,
+        ArraySchemaEvolution& se);
 
     /**
      * @brief Get the mapping of attributes to Enumerations.
@@ -1011,7 +1044,8 @@ bool ManagedQuery::_extend_and_evolve_schema<std::string>(
     ArrowArray* value_array,
     ArrowSchema* index_schema,
     ArrowArray* index_array,
-    ArraySchemaEvolution se);
+    Enumeration& enmr,
+    ArraySchemaEvolution& se);
 
 template <>
 std::vector<std::string_view> ManagedQuery::_enumeration_values_view(

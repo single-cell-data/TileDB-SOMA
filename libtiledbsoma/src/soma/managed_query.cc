@@ -942,16 +942,10 @@ bool ManagedQuery::_extend_enumeration(
     ArrowArray* value_array,
     ArrowSchema* index_schema,
     ArrowArray* index_array,
-    ArraySchemaEvolution se) {
+    Enumeration& enmr,
+    ArraySchemaEvolution& se) {
     // For columns with dictionaries, we need to identify the data type of the
     // enumeration to extend any new enumeration values
-
-    // As of 1.16, and enumeration names are in the format of
-    // {index name}_{value dtype}. Prior to 1.16, enum labels are the same as
-    // the index name. If the new format doesn't work then fall back to the old
-    // format
-    Enumeration enmr = util::get_enumeration(
-        ctx_, array_, index_schema, value_schema);
 
     auto value_type = enmr.type();
 
@@ -960,38 +954,38 @@ bool ManagedQuery::_extend_enumeration(
         case TILEDB_STRING_UTF8:
         case TILEDB_CHAR:
             return _extend_and_evolve_schema<std::string>(
-                value_schema, value_array, index_schema, index_array, se);
+                value_schema, value_array, index_schema, index_array, enmr, se);
         case TILEDB_INT8:
             return _extend_and_evolve_schema<int8_t>(
-                value_schema, value_array, index_schema, index_array, se);
+                value_schema, value_array, index_schema, index_array, enmr, se);
         case TILEDB_BOOL:
         case TILEDB_UINT8:
             return _extend_and_evolve_schema<uint8_t>(
-                value_schema, value_array, index_schema, index_array, se);
+                value_schema, value_array, index_schema, index_array, enmr, se);
         case TILEDB_INT16:
             return _extend_and_evolve_schema<int16_t>(
-                value_schema, value_array, index_schema, index_array, se);
+                value_schema, value_array, index_schema, index_array, enmr, se);
         case TILEDB_UINT16:
             return _extend_and_evolve_schema<uint16_t>(
-                value_schema, value_array, index_schema, index_array, se);
+                value_schema, value_array, index_schema, index_array, enmr, se);
         case TILEDB_INT32:
             return _extend_and_evolve_schema<int32_t>(
-                value_schema, value_array, index_schema, index_array, se);
+                value_schema, value_array, index_schema, index_array, enmr, se);
         case TILEDB_UINT32:
             return _extend_and_evolve_schema<uint32_t>(
-                value_schema, value_array, index_schema, index_array, se);
+                value_schema, value_array, index_schema, index_array, enmr, se);
         case TILEDB_INT64:
             return _extend_and_evolve_schema<int64_t>(
-                value_schema, value_array, index_schema, index_array, se);
+                value_schema, value_array, index_schema, index_array, enmr, se);
         case TILEDB_UINT64:
             return _extend_and_evolve_schema<uint64_t>(
-                value_schema, value_array, index_schema, index_array, se);
+                value_schema, value_array, index_schema, index_array, enmr, se);
         case TILEDB_FLOAT32:
             return _extend_and_evolve_schema<float>(
-                value_schema, value_array, index_schema, index_array, se);
+                value_schema, value_array, index_schema, index_array, enmr, se);
         case TILEDB_FLOAT64:
             return _extend_and_evolve_schema<double>(
-                value_schema, value_array, index_schema, index_array, se);
+                value_schema, value_array, index_schema, index_array, enmr, se);
         default:
             throw TileDBSOMAError(fmt::format(
                 "ArrowAdapter: Unsupported TileDB dict datatype: {} ",
@@ -1005,7 +999,8 @@ bool ManagedQuery::_extend_and_evolve_schema(
     ArrowArray* value_array,
     ArrowSchema* index_schema,
     ArrowArray* index_array,
-    ArraySchemaEvolution se) {
+    Enumeration& enmr,
+    ArraySchemaEvolution& se) {
     // We need to check if we are writing any new enumeration values. If so,
     // extend and evolve the schema. If not, just set the write buffers to the
     // dictionary's indexes as-is
@@ -1031,12 +1026,6 @@ bool ManagedQuery::_extend_and_evolve_schema(
 
     // Get all the enumeration values in the on-disk TileDB attribute
 
-    // As of 1.16, and enumeration names are in the format of
-    // {index name}_{value dtype}. Prior to 1.16, enum labels are the same as
-    // the index name. If the new format doesn't work then fall back to the old
-    // format
-    Enumeration enmr = util::get_enumeration(
-        ctx_, array_, index_schema, value_schema);
     std::vector<ValueType> enums_existing = enmr.as_vector<ValueType>();
 
     // Find any new enumeration values
@@ -1104,7 +1093,8 @@ bool ManagedQuery::_extend_and_evolve_schema<std::string>(
     ArrowArray* value_array,
     ArrowSchema* index_schema,
     ArrowArray* index_array,
-    ArraySchemaEvolution se) {
+    Enumeration& enmr,
+    ArraySchemaEvolution& se) {
     uint64_t num_elems = value_array->length;
 
     std::vector<uint64_t> offsets_v;
@@ -1129,12 +1119,6 @@ bool ManagedQuery::_extend_and_evolve_schema<std::string>(
         enums_in_write.push_back(data.substr(beg, sz));
     }
 
-    // As of 1.16, and enumeration names are in the format of
-    // {index name}_{value dtype}. Prior to 1.16, enum labels are the same as
-    // the index name. If the new format doesn't work then fall back to the old
-    // format
-    Enumeration enmr = util::get_enumeration(
-        ctx_, array_, index_schema, value_schema);
     std::vector<std::string_view> extend_values;
     size_t total_size = 0;
 
@@ -1258,5 +1242,13 @@ std::vector<std::string_view> ManagedQuery::_enumeration_values_view(
     }
 
     return ret;
+}
+
+Enumeration ManagedQuery::get_enumeration(
+    std::shared_ptr<Context> ctx,
+    std::shared_ptr<Array> arr,
+    ArrowSchema* index_schema,
+    ArrowSchema* value_schema) {
+    return util::get_enumeration(ctx, arr, index_schema, value_schema);
 }
 };  // namespace tiledbsoma
