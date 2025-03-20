@@ -179,7 +179,7 @@ set(EP_INSTALL_PREFIX "${EP_BASE}/install")
 # Check compiler version supports full C++20 standard.
 # ###########################################################
 
-set(GCC_MIN 13.0)
+set(GCC_MIN 11.0)
 if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     if (CMAKE_CXX_COMPILER_VERSION VERSION_LESS GCC_MIN)
         message(FATAL_ERROR "GNU GCC must be at least version ${GCC_MIN}. Found version ${CMAKE_CXX_COMPILER_VERSION}.")
