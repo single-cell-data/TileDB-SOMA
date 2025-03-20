@@ -5,8 +5,10 @@ on:
     paths-ignore:
       - "apis/python/**"
       - "apis/r/**"
+      - "docker/**"
       - ".pre-commit-config.yaml"
-      - ".github/workflows/python-remote-storage.yml"
+      - ".github/workflows/**"
+      - "!.github/workflows/libtiledbsoma-asan-ci.yml"
   push:
     branches:
       - main
