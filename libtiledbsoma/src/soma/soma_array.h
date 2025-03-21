@@ -465,6 +465,14 @@ class SOMAArray : public SOMAObject {
         std::string column_name);
 
     /**
+     * WRITE ME PLZ KTHX
+     *
+     * @tparam xxx
+     * @return ArrowTable with as many columns as the size of column_names.
+     */
+    void extend_enumeration_values(const ArrowTable& values, bool dupes_ok);
+
+    /**
      * Retrieves the non-empty domain from the array. This is the union of the
      * non-empty domains of the array fragments. Returns (0, 0) for empty
      * domains.

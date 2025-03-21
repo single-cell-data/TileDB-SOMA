@@ -460,6 +460,11 @@ class SOMAArrayWrapper(Wrapper[_SOMAObjectType]):
     ) -> dict[str, pa.Array]:
         raise NotImplementedError
 
+    def extend_enumeration_values(
+        self, values: dict[str, pa.Array], dupes_ok: bool
+    ) -> None:
+        raise NotImplementedError
+
     @property
     def maybe_soma_joinid_maxshape(self) -> int | None:
         """Only implemented for DataFrame."""
@@ -558,6 +563,11 @@ class DataFrameWrapper(SOMAArrayWrapper[clib.SOMADataFrame]):
         self, column_names: Sequence[str]
     ) -> dict[str, pa.Array]:
         return cast(dict[str, Any], self._handle.get_enumeration_values(column_names))
+
+    def extend_enumeration_values(
+        self, values: dict[str, pa.Array], dupes_ok: bool
+    ) -> None:
+        self._handle.extend_enumeration_values(values, dupes_ok)
 
     @property
     def maybe_soma_joinid_shape(self) -> int | None:
