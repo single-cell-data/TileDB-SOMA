@@ -1560,7 +1560,7 @@ std::unique_ptr<ArrowSchema> ArrowAdapter::make_arrow_schema(
     for (int i = 0; i < (int)num_names; i++) {
         auto dim_schema = make_arrow_schema_child(
             names[i], tiledb_datatypes[i]);
-        LOG_TRACE(std::format(
+        LOG_TRACE(fmt::format(
             "[ArrowAdapter] make_arrow_schema child {} format {} name {}",
             i,
             dim_schema->format,
