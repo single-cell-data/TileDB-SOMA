@@ -388,15 +388,16 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         # to do the exception-type multiplexing, raising ValueError for one
         # thing, TileDBSOMAError for another.
         for column_name in column_names:
-            if column_name not in self.schema.names:
-                raise ValueError(
-                    f"column name '{column_name}' is not present in the schema"
-                )
+            # We could check:
+            #   if column_name not in self.schema.names: ...
+            # but pyarrow already raises KeyError. We could
+            # do that check anyway and provide a really clear
+            # error message, but fortunately (not all libraries do this)
+            # their error message is sufficiently clear:
+            #   KeyError: 'Column nonesuch does not exist in schema'
             field = self.schema.field(column_name)
             if not isinstance(field.type, pa.DictionaryType):
-                raise ValueError(
-                    f"column name '{column_name}' is not of dictionary type"
-                )
+                raise KeyError(f"column name '{column_name}' is not of dictionary type")
 
         return self._handle.get_enumeration_values(column_names)
 

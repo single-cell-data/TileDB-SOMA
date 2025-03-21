@@ -276,11 +276,11 @@ def test_get_enumeration_values(tmp_path, mode):
         pass
 
     with soma.DataFrame.open(uri, mode) as sdf:
-        with pytest.raises(ValueError):
+        with pytest.raises(KeyError):
             sdf.get_enumeration_values(["nonesuch"])
-        with pytest.raises(ValueError):
+        with pytest.raises(KeyError):
             sdf.get_enumeration_values(["not_an_enum"])
-        with pytest.raises(ValueError):
+        with pytest.raises(KeyError):
             sdf.get_enumeration_values(["string_ordered", "not_an_enum"])
 
         actual = sdf.get_enumeration_values(
@@ -316,11 +316,11 @@ def test_get_enumeration_values(tmp_path, mode):
         sdf.write(arrow_data)
 
     with soma.DataFrame.open(uri, mode) as sdf:
-        with pytest.raises(ValueError):
+        with pytest.raises(KeyError):
             sdf.get_enumeration_values(["nonesuch"])
-        with pytest.raises(ValueError):
+        with pytest.raises(KeyError):
             sdf.get_enumeration_values(["not_an_enum"])
-        with pytest.raises(ValueError):
+        with pytest.raises(KeyError):
             sdf.get_enumeration_values(["string_ordered", "not_an_enum"])
 
         actual = sdf.get_enumeration_values(
@@ -348,11 +348,11 @@ def test_get_enumeration_values(tmp_path, mode):
         sdf.write(arrow_data)
 
     with soma.DataFrame.open(uri, mode) as sdf:
-        with pytest.raises(ValueError):
+        with pytest.raises(KeyError):
             sdf.get_enumeration_values(["nonesuch"])
-        with pytest.raises(ValueError):
+        with pytest.raises(KeyError):
             sdf.get_enumeration_values(["not_an_enum"])
-        with pytest.raises(ValueError):
+        with pytest.raises(KeyError):
             sdf.get_enumeration_values(["string_ordered", "not_an_enum"])
 
         actual = sdf.get_enumeration_values(
