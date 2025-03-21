@@ -376,6 +376,135 @@ def test_get_enumeration_values(tmp_path, mode):
         assert actual == expect
 
 
+def test_extend_enumeration_values(tmp_path):
+    uri = tmp_path.as_posix()
+
+    schema = pa.schema(
+        [
+            pa.field("not_an_enum", pa.large_string()),
+            pa.field("string_ordered", pa.dictionary(pa.int32(), pa.large_string())),
+            pa.field("string_unordered", pa.dictionary(pa.int32(), pa.large_string())),
+            pa.field("int64_ordered", pa.dictionary(pa.int32(), pa.int64())),
+            pa.field("int64_unordered", pa.dictionary(pa.int32(), pa.int64())),
+        ]
+    )
+
+    domain = [[0, 7]]
+
+    # Create the dataframe with no levels for any enumerated column
+    with soma.DataFrame.create(uri, schema=schema, domain=domain) as sdf:
+        pass
+
+    with soma.DataFrame.open(uri) as sdf:
+        with pytest.raises(ValueError):
+            sdf.get_enumeration_values(["nonesuch"])
+        with pytest.raises(ValueError):
+            sdf.get_enumeration_values(["not_an_enum"])
+        with pytest.raises(ValueError):
+            sdf.get_enumeration_values(["string_ordered", "not_an_enum"])
+
+        actual = sdf.get_enumeration_values(
+            ["string_ordered", "string_unordered", "int64_ordered", "int64_unordered"]
+        )
+        for v in actual.values():
+            assert len(v) == 0
+
+    string_values = pa.array(["red", "yellow", "green"], type=pa.large_string())
+    int64_values = pa.array([111111111, 3333333, 99999], type=pa.int64())
+
+    # The dataframe must be open for write
+    with soma.DataFrame.open(uri) as sdf:
+        with pytest.raises(ValueError):
+            sdf.extend_enumeration_values({"string_ordered": string_values})
+
+    with soma.DataFrame.open(uri, "w") as sdf:
+        # The column must exist
+        with pytest.raises(ValueError):
+            sdf.extend_enumeration_values({"nonesuch": string_values})
+
+        # The column must be of enumerated type
+        with pytest.raises(ValueError):
+            sdf.extend_enumeration_values({"not_an_enum": string_values})
+
+    # Extend
+    with soma.DataFrame.open(uri, "w") as sdf:
+        sdf.extend_enumeration_values(
+            {
+                "string_ordered": string_values,
+                "string_unordered": string_values,
+                "int64_ordered": int64_values,
+                "int64_unordered": int64_values,
+            }
+        )
+
+    # Check the extension
+    with soma.DataFrame.open(uri) as sdf:
+        actual = sdf.get_enumeration_values(
+            ["string_ordered", "string_unordered", "int64_ordered", "int64_unordered"]
+        )
+        expect = {
+            "string_ordered": pa.array(
+                ["red", "yellow", "green"], type=pa.large_string()
+            ),
+            "string_unordered": pa.array(
+                ["red", "yellow", "green"], type=pa.large_string()
+            ),
+            "int64_ordered": pa.array([111111111, 3333333, 99999], type=pa.int64()),
+            "int64_unordered": pa.array([111111111, 3333333, 99999], type=pa.int64()),
+        }
+        assert actual == expect
+
+    with soma.DataFrame.open(uri, "w") as sdf:
+
+        other_int64_values = pa.array([888, 888, 888], type=pa.int64())
+        with pytest.raises(soma.SOMAError):
+            sdf.extend_enumeration_values({"int64_ordered": other_int64_values})
+
+        # Does not throw:
+        # other_string_values = pa.array(["red", "red", "red"], type=pa.large_string())
+        # with pytest.raises(soma.SOMAError):
+        #     sdf.extend_enumeration_values({"string_ordered": other_string_values})
+
+    # Extend
+    with soma.DataFrame.open(uri, "w") as sdf:
+        sdf.extend_enumeration_values(
+            {
+                "string_ordered": string_values,
+                "string_unordered": string_values,
+                "int64_ordered": int64_values,
+                "int64_unordered": int64_values,
+            }
+        )
+
+    # Check the extension
+    with soma.DataFrame.open(uri) as sdf:
+        actual = sdf.get_enumeration_values(
+            ["string_ordered", "string_unordered", "int64_ordered", "int64_unordered"]
+        )
+        expect = {
+            "string_ordered": pa.array(
+                ["red", "yellow", "green"], type=pa.large_string()
+            ),
+            "string_unordered": pa.array(
+                ["red", "yellow", "green"], type=pa.large_string()
+            ),
+            "int64_ordered": pa.array([111111111, 3333333, 99999], type=pa.int64()),
+            "int64_unordered": pa.array([111111111, 3333333, 99999], type=pa.int64()),
+        }
+        assert actual == expect
+
+    with soma.DataFrame.open(uri, "w") as sdf:
+
+        int64_values = pa.array([888, 888, 888], type=pa.int64())
+        with pytest.raises(soma.SOMAError):
+            sdf.extend_enumeration_values({"int64_ordered": int64_values})
+
+        # Does not throw:
+        # string_values = pa.array(["red", "red", "red"], type=pa.large_string())
+        # with pytest.raises(soma.SOMAError):
+        #     sdf.extend_enumeration_values({"string_ordered": string_values})
+
+
 @pytest.fixture
 def simple_data_frame(tmp_path):
     """
