@@ -19,6 +19,7 @@ from .pytiledbsoma.fastercsx import compress_coo, copy_csx_to_dense, sort_csx_in
 
 NDArrayIndex: TypeAlias = npt.NDArray[np.integer[Any]]
 NDArrayNumber: TypeAlias = npt.NDArray[Union[np.integer[Any], np.floating[Any]]]
+Format = Literal["csc", "csr"]
 
 
 class CompressedMatrix:
@@ -45,7 +46,7 @@ class CompressedMatrix:
         indices: NDArrayIndex,
         data: NDArrayNumber,
         shape: Tuple[int, int],
-        format: Literal["csc", "csr"],
+        format: Format,
         is_sorted: bool,
         no_duplicates: bool | None,
         context: SOMATileDBContext,
@@ -73,7 +74,7 @@ class CompressedMatrix:
         j: NDArrayIndex | Sequence[NDArrayIndex],
         d: NDArrayNumber | Sequence[NDArrayNumber],
         shape: Tuple[int, int],
-        format: Literal["csc", "csr"],
+        format: Format,
         make_sorted: bool,
         context: SOMATileDBContext,
     ) -> CompressedMatrix:
@@ -109,7 +110,7 @@ class CompressedMatrix:
     def from_soma(
         tables: pa.Table | Sequence[pa.Table],
         shape: Tuple[int, int],
-        format: Literal["csc", "csr"],
+        format: Format,
         make_sorted: bool,
         context: SOMATileDBContext,
     ) -> CompressedMatrix:
@@ -251,7 +252,7 @@ class CompressedMatrix:
         indices: NDArrayNumber,
         data: NDArrayNumber,
         shape: Tuple[int, int],
-        format: Literal["csc", "csr"],
+        format: Format,
         is_sorted: bool,
         no_duplicates: bool | None,
     ) -> scipy.sparse.csr_matrix | scipy.sparse.csc_matrix:
