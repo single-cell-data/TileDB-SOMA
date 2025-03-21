@@ -49,7 +49,7 @@ Imports:
     nanoarrow
 LinkingTo:
     Rcpp,
-    RcppSpdlog (>= 0.0.19),
+    RcppSpdlog (>= 0.0.20),
     RcppInt64,
     nanoarrow
 Additional_repositories: https://tiledb-inc.r-universe.dev

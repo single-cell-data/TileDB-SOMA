@@ -179,7 +179,7 @@ set(EP_INSTALL_PREFIX "${EP_BASE}/install")
 # Check compiler version supports full C++20 standard.
 # ###########################################################
 
-set(GCC_MIN 13.0)
+set(GCC_MIN 11.0)
 if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     if (CMAKE_CXX_COMPILER_VERSION VERSION_LESS GCC_MIN)
         message(FATAL_ERROR "GNU GCC must be at least version ${GCC_MIN}. Found version ${CMAKE_CXX_COMPILER_VERSION}.")
@@ -237,9 +237,7 @@ else()
 
   set(TILEDBSOMA_COMPILE_OPTIONS -Wall -Wextra -D_LIBCPP_TYPEINFO_COMPARISON_IMPLEMENTATION=2)
 
-  if (NOT SPDLOG_LINK_SHARED)
-    list(APPEND TILEDBSOMA_COMPILE_OPTIONS -DSPDLOG_USE_STD_FORMAT)
-  else()
+  if (SPDLOG_LINK_SHARED)
     add_definitions(-DSPDLOG_COMPILED_LIB)
   endif()
 

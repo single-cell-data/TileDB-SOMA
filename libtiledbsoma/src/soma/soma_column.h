@@ -18,7 +18,7 @@
 #define SOMA_COLUMN_H
 
 #include <any>
-#include <format>
+
 #include <map>
 #include <optional>
 #include <span>
@@ -171,17 +171,17 @@ class SOMAColumn {
     void set_current_domain_slot(
         NDRectangle& rectangle, const std::vector<T>& domain) const {
         if (!isIndexColumn()) {
-            throw TileDBSOMAError(std::format(
+            throw TileDBSOMAError(
                 "[SOMAColumn][set_current_domain_slot] Column with name {} is "
-                "not an index column",
-                name()));
+                "not an index column " +
+                name());
         }
 
         if (domain.size() % 2 != 0) {
-            throw TileDBSOMAError(std::format(
+            throw TileDBSOMAError(
                 "[SOMAColumn][set_current_domain_slot] Provided domain for "
-                "column {} has missing values",
-                name()));
+                "column {} has missing values " +
+                name());
         }
 
         std::vector<std::any> transformed_domain;
@@ -194,11 +194,11 @@ class SOMAColumn {
         try {
             _set_current_domain_slot(rectangle, transformed_domain);
         } catch (const std::exception& e) {
-            throw TileDBSOMAError(std::format(
-                "[SOMAColumn][set_current_domain_slot] Failed on \"{}\" with "
-                "error \"{}\"",
-                name(),
-                e.what()));
+            throw TileDBSOMAError(
+                "[SOMAColumn][set_current_domain_slot] Failed on \"" + name() +
+                "\" with "
+                "error \"" +
+                e.what() + "\"");
         }
     }
 
@@ -213,20 +213,21 @@ class SOMAColumn {
     void set_current_domain_slot(
         NDRectangle& rectangle, const std::vector<std::any>& domain) const {
         if (!isIndexColumn()) {
-            throw TileDBSOMAError(std::format(
-                "[SOMAColumn][set_current_domain_slot] Column with name {} is "
-                "not an index column",
-                name()));
+            throw TileDBSOMAError(
+                "[SOMAColumn][set_current_domain_slot] Column with name '" +
+                name() +
+                "' is "
+                "not an index column");
         }
 
         try {
             _set_current_domain_slot(rectangle, domain);
         } catch (const std::exception& e) {
-            throw TileDBSOMAError(std::format(
-                "[SOMAColumn][set_current_domain_slot] Failed on \"{}\" with "
-                "error \"{}\"",
-                name(),
-                e.what()));
+            throw TileDBSOMAError(
+                "[SOMAColumn][set_current_domain_slot] Failed on \"" + name() +
+                "\" with "
+                "error \"" +
+                e.what() + "\"");
         }
     }
 
@@ -243,20 +244,22 @@ class SOMAColumn {
         std::optional<NDRectangle>& rectangle,
         const std::vector<std::any>& domain) const {
         if (!isIndexColumn()) {
-            throw TileDBSOMAError(std::format(
-                "[SOMAColumn][set_current_domain_slot] Column with name {} is "
-                "not an index column",
-                name()));
+            throw TileDBSOMAError(
+                "[SOMAColumn][set_current_domain_slot] Column with name '" +
+                name() +
+                "' is "
+                "not an index column");
         }
 
         try {
             return _can_set_current_domain_slot(rectangle, domain);
         } catch (const std::exception& e) {
-            throw TileDBSOMAError(std::format(
-                "[SOMAColumn][can_set_current_domain_slot] Failed on \"{}\" "
-                "with error \"{}\"",
-                name(),
-                e.what()));
+            throw TileDBSOMAError(
+                "[SOMAColumn][can_set_current_domain_slot] Failed on \"" +
+                name() +
+                "\" "
+                "with error \"" +
+                e.what() + "\"");
         }
     }
 
@@ -273,9 +276,9 @@ class SOMAColumn {
     template <typename T>
     void set_dim_point(ManagedQuery& query, const T& point) const {
         if (!isIndexColumn()) {
-            throw TileDBSOMAError(std::format(
-                "[SOMAColumn] Column with name {} is not an index column",
-                name()));
+            throw TileDBSOMAError(
+                "[SOMAColumn] Column with name '" + name() +
+                "' is not an index column");
         }
 
         T points[] = {point};
@@ -285,11 +288,11 @@ class SOMAColumn {
                 query,
                 std::make_any<std::span<const T>>(std::span<const T>(points)));
         } catch (const std::exception& e) {
-            throw TileDBSOMAError(std::format(
-                "[SOMAColumn][set_dim_point] Failed on \"{}\" with error "
-                "\"{}\"",
-                name(),
-                e.what()));
+            throw TileDBSOMAError(
+                "[SOMAColumn][set_dim_point] Failed on \"" + name() +
+                "\" with error "
+                "\"" +
+                e.what() + "\"");
         }
     }
 
@@ -306,20 +309,20 @@ class SOMAColumn {
     template <typename T>
     void set_dim_points(ManagedQuery& query, std::span<const T> points) const {
         if (!isIndexColumn()) {
-            throw TileDBSOMAError(std::format(
-                "[SOMAColumn] Column with name {} is not an index column",
-                name()));
+            throw TileDBSOMAError(
+                "[SOMAColumn] Column with name '" + name() +
+                "' is not an index column");
         }
 
         try {
             this->_set_dim_points(
                 query, std::make_any<std::span<const T>>(points));
         } catch (const std::exception& e) {
-            throw TileDBSOMAError(std::format(
-                "[SOMAColumn][set_dim_points] Failed on \"{}\" with error "
-                "\"{}\"",
-                name(),
-                e.what()));
+            throw TileDBSOMAError(
+                "[SOMAColumn][set_dim_points] Failed on \"" + name() +
+                "\" with error "
+                "\"" +
+                e.what() + "\"");
         }
     }
 
@@ -336,20 +339,20 @@ class SOMAColumn {
     void set_dim_ranges(
         ManagedQuery& query, const std::vector<std::pair<T, T>>& ranges) const {
         if (!isIndexColumn()) {
-            throw TileDBSOMAError(std::format(
-                "[SOMAColumn] Column with name {} is not an index column",
-                name()));
+            throw TileDBSOMAError(
+                "[SOMAColumn] Column with name '" + name() +
+                "' is not an index column");
         }
 
         try {
             this->_set_dim_ranges(
                 query, std::make_any<std::vector<std::pair<T, T>>>(ranges));
         } catch (const std::exception& e) {
-            throw TileDBSOMAError(std::format(
-                "[SOMAColumn][set_dim_ranges] Failed on \"{}\" with error "
-                "\"{}\"",
-                name(),
-                e.what()));
+            throw TileDBSOMAError(
+                "[SOMAColumn][set_dim_ranges] Failed on \"" + name() +
+                "\" with error "
+                "\"" +
+                e.what() + "\"");
         }
     }
 
@@ -378,11 +381,11 @@ class SOMAColumn {
         try {
             return std::any_cast<std::pair<T, T>>(_core_domain_slot());
         } catch (const std::exception& e) {
-            throw TileDBSOMAError(std::format(
-                "[SOMAColumn][core_domain_slot] Failed on \"{}\" with error "
-                "\"{}\"",
-                name(),
-                e.what()));
+            throw TileDBSOMAError(
+                "[SOMAColumn][core_domain_slot] Failed on \"" + name() +
+                "\" with error "
+                "\"" +
+                e.what() + "\"");
         }
     }
 
@@ -397,11 +400,11 @@ class SOMAColumn {
             return std::any_cast<std::pair<T, T>>(
                 _non_empty_domain_slot(array));
         } catch (const std::exception& e) {
-            throw TileDBSOMAError(std::format(
-                "[SOMAColumn][non_empty_domain_slot] Failed on \"{}\" with "
-                "error \"{}\"",
-                name(),
-                e.what()));
+            throw TileDBSOMAError(
+                "[SOMAColumn][non_empty_domain_slot] Failed on \"" + name() +
+                "\" with "
+                "error \"" +
+                e.what() + "\"");
         }
     }
 
@@ -417,11 +420,12 @@ class SOMAColumn {
             return std::any_cast<std::optional<std::pair<T, T>>>(
                 _non_empty_domain_slot_opt(ctx, array));
         } catch (const std::exception& e) {
-            throw TileDBSOMAError(std::format(
-                "[SOMAColumn][non_empty_domain_slot_opt] Failed on \"{}\" with "
-                "error \"{}\"",
-                name(),
-                e.what()));
+            throw TileDBSOMAError(
+                "[SOMAColumn][non_empty_domain_slot_opt] Failed on \"" +
+                name() +
+                "\" with "
+                "error \"" +
+                e.what() + "\"");
         }
     }
 
@@ -452,11 +456,11 @@ class SOMAColumn {
             return std::any_cast<std::pair<T, T>>(
                 _core_current_domain_slot(ctx, array));
         } catch (const std::exception& e) {
-            throw TileDBSOMAError(std::format(
-                "[SOMAColumn][core_current_domain_slot] Failed on \"{}\" with "
-                "error \"{}\"",
-                name(),
-                e.what()));
+            throw TileDBSOMAError(
+                "[SOMAColumn][core_current_domain_slot] Failed on \"" + name() +
+                "\" with "
+                "error \"" +
+                e.what() + "\"");
         }
     }
 

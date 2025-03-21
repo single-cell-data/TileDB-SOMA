@@ -7,7 +7,6 @@ on:
   push:
     paths:
       - '.github/workflows/python-ci-packaging.yml'
-      - ".github/workflows/python-remote-storage.yml"
       - 'apis/python/MANIFEST.in'
       - 'apis/python/pyproject.toml'
       - 'apis/python/setup.py'
@@ -22,7 +21,6 @@ on:
   pull_request:
     paths:
       - '.github/workflows/python-ci-packaging.yml'
-      - ".github/workflows/python-remote-storage.yml"
       - 'apis/python/MANIFEST.in'
       - 'apis/python/pyproject.toml'
       - 'apis/python/setup.py'

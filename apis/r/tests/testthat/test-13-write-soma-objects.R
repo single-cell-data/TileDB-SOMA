@@ -377,6 +377,8 @@ test_that("write_soma.character scalar", {
 })
 
 test_that("get_{some,tiledb}_object_type", {
+  skip_if_not_installed("SeuratObject", minimum_version = .MINIMUM_SEURAT_VERSION("c"))
+
   suppressMessages({
     library(SeuratObject)
     library(tiledbsoma)

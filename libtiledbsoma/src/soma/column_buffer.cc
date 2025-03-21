@@ -14,8 +14,6 @@
 #include "column_buffer.h"
 #include "../utils/logger.h"
 
-#include <format>
-
 namespace tiledbsoma {
 
 using namespace tiledb;
@@ -124,7 +122,7 @@ ColumnBuffer::ColumnBuffer(
     , is_nullable_(is_nullable)
     , enumeration_(enumeration)
     , is_ordered_(is_ordered) {
-    LOG_DEBUG(std::format(
+    LOG_DEBUG(fmt::format(
         "[ColumnBuffer] '{}' {} bytes is_var={} is_nullable={}",
         name,
         num_bytes,
@@ -143,7 +141,7 @@ ColumnBuffer::ColumnBuffer(
 }
 
 ColumnBuffer::~ColumnBuffer() {
-    LOG_TRACE(std::format("[ColumnBuffer] release '{}'", name_));
+    LOG_TRACE(fmt::format("[ColumnBuffer] release '{}'", name_));
 }
 
 void ColumnBuffer::attach(Query& query, std::optional<Subarray> subarray) {
@@ -163,7 +161,7 @@ void ColumnBuffer::attach(Query& query, std::optional<Subarray> subarray) {
     // compatibility issue with pyarrow versions below 17. Thus we log and
     // continue.
     if (!validity_.empty() && is_dim) {
-        LOG_DEBUG(std::format(
+        LOG_DEBUG(fmt::format(
             "[ColumnBuffer::attach] Validity buffer passed for dimension '{}' "
             "is being ignored",
             name_));
@@ -295,7 +293,7 @@ std::shared_ptr<ColumnBuffer> ColumnBuffer::alloc(
         try {
             num_bytes = std::stoull(value_str);
         } catch (const std::exception& e) {
-            throw TileDBSOMAError(std::format(
+            throw TileDBSOMAError(fmt::format(
                 "[ColumnBuffer] Error parsing {}: '{}' ({})",
                 CONFIG_KEY_INIT_BYTES,
                 value_str,

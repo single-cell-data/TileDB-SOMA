@@ -76,7 +76,7 @@ std::shared_ptr<SOMAColumn> find_column_by_name(
         });
 
     if (column_it == columns.end()) {
-        throw TileDBSOMAError(std::format(
+        throw TileDBSOMAError(fmt::format(
             "[ArrowAdapter][tiledb_schema_from_arrow_schema] Index column "
             "'{}' missing",
             name));
@@ -90,6 +90,24 @@ std::string get_enmr_label(
     std::string format(value_schema->format);
     format = (format == "u") ? "U" : (format == "z" ? "Z" : format);
     return std::string(index_schema->name) + "_" + format;
+}
+
+Enumeration get_enumeration(
+    std::shared_ptr<Context> ctx,
+    std::shared_ptr<Array> arr,
+    ArrowSchema* index_schema,
+    ArrowSchema* value_schema) {
+    try {
+        // New-style names of the form {attr_name}_{arrow_format}, e.g. "foo_U"
+        // for attributes written by tiledbsoma >= 1.16.0
+        return ArrayExperimental::get_enumeration(
+            *ctx, *arr, util::get_enmr_label(index_schema, value_schema));
+    } catch (const std::exception& e) {
+        // Old-style names of the form {attr_name}, e.g. "foo"
+        // for attributes written by tiledbsoma < 1.16.0
+        return ArrayExperimental::get_enumeration(
+            *ctx, *arr, index_schema->name);
+    }
 }
 
 };  // namespace tiledbsoma::util
