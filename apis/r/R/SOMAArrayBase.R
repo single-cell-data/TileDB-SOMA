@@ -16,6 +16,30 @@ SOMAArrayBase <- R6::R6Class(
     #'
     allows_duplicates = \() c_allows_dups(self$uri, private$.soma_context),
 
+    #' @description Retrieve the array attributes
+    #'
+    #' @return A named list of array attributes; each entry contains the
+    #' following named entries:
+    #' \itemize{
+    #'  \item \dQuote{\code{name}}: name of the attribute
+    #'  \item \dQuote{\code{type}}: datatype of the attribute
+    #'  \item \dQuote{\code{ncells}}: number of values per dimension cell
+    #'  \item \dQuote{\code{nullable}}: is the attribute nullable
+    #'  \item \dQuote{\code{filter_list}}: a list with filter information; this
+    #'   list contains the following entries:
+    #'   \itemize{
+    #'    \item \dQuote{\code{filter_type}}
+    #'    \item \dQuote{\code{compression_level}}
+    #'    \item \dQuote{\code{bit_width}}
+    #'    \item \dQuote{\code{positive_delta}}
+    #'    \item \dQuote{\code{float_bytewidth}}
+    #'    \item \dQuote{\code{float_factor}}
+    #'    \item \dQuote{\code{float_offset}}
+    #'   }
+    #' }
+    #'
+    attributes = \() c_attributes(self$uri, private$.soma_context),
+
     #' @description Is an array sparse?
     #'
     #' @return \code{TRUE} if the underlying TileDB array is sparse;
