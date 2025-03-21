@@ -426,6 +426,196 @@ bool c_allows_dups(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
     return sch->allows_dups();
 }
 
+// Taken from tiledb-r
+// https://github.com/TileDB-Inc/TileDB-R/blob/525bdfc0f34aadb74a312a5d8428bd07819a8f83/src/libtiledb.cpp#L31C1-L110C2
+const char *_tiledb_datatype_to_string(tiledb_datatype_t dtype) {
+    switch (dtype) {
+    case TILEDB_INT8:
+        return "INT8";
+    case TILEDB_UINT8:
+        return "UINT8";
+    case TILEDB_INT16:
+        return "INT16";
+    case TILEDB_UINT16:
+        return "UINT16";
+    case TILEDB_INT32:
+        return "INT32";
+    case TILEDB_UINT32:
+        return "UINT32";
+    case TILEDB_INT64:
+        return "INT64";
+    case TILEDB_UINT64:
+        return "UINT64";
+    case TILEDB_FLOAT32:
+        return "FLOAT32";
+    case TILEDB_FLOAT64:
+        return "FLOAT64";
+    case TILEDB_CHAR:
+        return "CHAR";
+    case TILEDB_STRING_ASCII:
+        return "ASCII";
+    case TILEDB_STRING_UTF8:
+        return "UTF8";
+    case TILEDB_STRING_UTF16:
+        return "UTF16";
+    case TILEDB_STRING_UTF32:
+        return "UTF32";
+    case TILEDB_STRING_UCS2:
+        return "UCS2";
+    case TILEDB_STRING_UCS4:
+        return "UCS4";
+    case TILEDB_ANY:
+        return "ANY";
+    case TILEDB_DATETIME_YEAR:
+        return "DATETIME_YEAR";
+    case TILEDB_DATETIME_MONTH:
+        return "DATETIME_MONTH";
+    case TILEDB_DATETIME_WEEK:
+        return "DATETIME_WEEK";
+    case TILEDB_DATETIME_DAY:
+        return "DATETIME_DAY";
+    case TILEDB_DATETIME_HR:
+        return "DATETIME_HR";
+    case TILEDB_DATETIME_MIN:
+        return "DATETIME_MIN";
+    case TILEDB_DATETIME_SEC:
+        return "DATETIME_SEC";
+    case TILEDB_DATETIME_MS:
+        return "DATETIME_MS";
+    case TILEDB_DATETIME_US:
+        return "DATETIME_US";
+    case TILEDB_DATETIME_NS:
+        return "DATETIME_NS";
+    case TILEDB_DATETIME_PS:
+        return "DATETIME_PS";
+    case TILEDB_DATETIME_FS:
+        return "DATETIME_FS";
+    case TILEDB_DATETIME_AS:
+        return "DATETIME_AS";
+    case TILEDB_BLOB:
+        return "BLOB";
+    case TILEDB_BOOL:
+        return "BOOL";
+    case TILEDB_GEOM_WKB:
+        return "GEOM_WKB";
+    case TILEDB_GEOM_WKT:
+        return "GEOM_WKT";
+    default:
+        Rcpp::stop("unknown tiledb_datatype_t (%d)", dtype);
+    }
+}
+
+// Taken from tiledb-r
+// https://github.com/TileDB-Inc/TileDB-R/blob/525bdfc0f34aadb74a312a5d8428bd07819a8f83/src/libtiledb.cpp#L323C1-L367C2
+const char *_tiledb_filter_to_string(tiledb_filter_type_t filter) {
+    switch (filter) {
+    case TILEDB_FILTER_NONE:
+        return "NONE";
+    case TILEDB_FILTER_GZIP:
+        return "GZIP";
+    case TILEDB_FILTER_ZSTD:
+        return "ZSTD";
+    case TILEDB_FILTER_LZ4:
+        return "LZ4";
+    case TILEDB_FILTER_RLE:
+        return "RLE";
+    case TILEDB_FILTER_BZIP2:
+        return "BZIP2";
+    case TILEDB_FILTER_DOUBLE_DELTA:
+        return "DOUBLE_DELTA";
+    case TILEDB_FILTER_BIT_WIDTH_REDUCTION:
+        return "BIT_WIDTH_REDUCTION";
+    case TILEDB_FILTER_BITSHUFFLE:
+        return "BITSHUFFLE";
+    case TILEDB_FILTER_BYTESHUFFLE:
+        return "BYTESHUFFLE";
+    case TILEDB_FILTER_POSITIVE_DELTA:
+        return "POSITIVE_DELTA";
+    case TILEDB_FILTER_CHECKSUM_MD5:
+        return "CHECKSUM_MD5";
+    case TILEDB_FILTER_CHECKSUM_SHA256:
+        return "CHECKSUM_SHA256";
+    case TILEDB_FILTER_DICTIONARY:
+        return "DICTIONARY_ENCODING";
+    case TILEDB_FILTER_SCALE_FLOAT:
+        return "SCALE_FLOAT";
+    case TILEDB_FILTER_XOR:
+        return "FILTER_XOR";
+    default: {
+        Rcpp::stop("unknown tiledb_filter_t (%d)", filter);
+    }
+    }
+}
+
+// [[Rcpp::export]]
+Rcpp::List c_attributes(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
+    auto sr = tdbs::SOMAArray::open(OpenMode::read, uri, ctxxp->ctxptr);
+    std::shared_ptr<tiledb::ArraySchema> sch = sr->tiledb_schema();
+    sr->close();
+
+    Rcpp::List result;
+    int nattr = sch->attribute_num();
+    for (auto i = 0; i < nattr; i++) {
+        auto attr = make_xptr<tiledb::Attribute>(new tiledb::Attribute(sch->attribute(i)));
+        auto name = attr->name();
+
+        // identify ncells
+        // taken from tiledb-r
+        // https://github.com/TileDB-Inc/TileDB-R/blob/525bdfc0f34aadb74a312a5d8428bd07819a8f83/src/libtiledb.cpp#L1590-L1599
+        int ncells;
+        if (attr->cell_val_num() == TILEDB_VAR_NUM) {
+            ncells = R_NaInt;
+        } else if (attr->cell_val_num() > std::numeric_limits<int32_t>::max()) {
+            Rcpp::stop("tiledb_attr ncells value not representable as an R integer");
+        } else {
+            ncells = static_cast<int32_t>(attr->cell_val_num());
+        }
+
+        // identify the filters
+        // filter options taken from tiledb-r
+        // https://github.com/TileDB-Inc/TileDB-R/blob/525bdfc0f34aadb74a312a5d8428bd07819a8f83/src/libtiledb.cpp#L369-L388
+        Rcpp::List filters;
+        auto filter_list = make_xptr<tiledb::FilterList>(new tiledb::FilterList(attr->filter_list()));
+        int nfilters = static_cast<int32_t>(filter_list->nfilters());
+        for (auto j = 0; j < nfilters; j++) {
+            auto filter = make_xptr<tiledb::Filter>(new tiledb::Filter(filter_list->filter(j)));
+            auto filter_type = _tiledb_filter_to_string(filter->filter_type());
+
+            // catches are intentionally blank to leave the values as NA
+            int compression = R_NaInt, bytewidth = R_NaInt, factor = R_NaInt, offset = R_NaInt;
+            uint32_t bit_width = R_NaInt, positive_delta = R_NaInt;
+            try {filter->get_option(TILEDB_COMPRESSION_LEVEL, &compression);} catch (...) {};
+            try {filter->get_option(TILEDB_BIT_WIDTH_MAX_WINDOW, &bit_width);} catch (...) {};
+            try {filter->get_option(TILEDB_POSITIVE_DELTA_MAX_WINDOW, &positive_delta);} catch (...) {};
+            try {filter->get_option(TILEDB_SCALE_FLOAT_BYTEWIDTH, &bytewidth);} catch (...) {};
+            try {filter->get_option(TILEDB_SCALE_FLOAT_FACTOR, &factor);} catch (...) {};
+            try {filter->get_option(TILEDB_SCALE_FLOAT_OFFSET, &offset);} catch (...) {};
+
+            // assemble the filter information
+            filters[filter_type] = Rcpp::List::create(
+                Rcpp::Named("filter_type") = filter_type,
+                Rcpp::Named("compression_level") = compression,
+                Rcpp::Named("bit_width") = static_cast<int32_t>(bit_width),
+                Rcpp::Named("positive_delta") = static_cast<int32_t>(positive_delta),
+                Rcpp::Named("float_bytewidth") = bytewidth,
+                Rcpp::Named("float_factor") = factor,
+                Rcpp::Named("float_offset") = offset
+            );
+        }
+
+        // assemble the attribute information list
+        result[name] = Rcpp::List::create(
+            Rcpp::Named("name") = name,
+            Rcpp::Named("type") = _tiledb_datatype_to_string(attr->type()),
+            Rcpp::Named("ncells") = ncells,
+            Rcpp::Named("nullable") = attr->nullable(),
+            Rcpp::Named("filter_list") = filters
+        );
+    }
+
+    return result;
+}
+
 // [[Rcpp::export]]
 std::string resize(
     const std::string& uri,
