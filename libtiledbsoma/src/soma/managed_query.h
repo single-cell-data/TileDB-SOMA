@@ -452,6 +452,14 @@ class ManagedQuery {
         return !query_submitted_;
     }
 
+    bool _extend_and_write_enumeration(
+        ArrowSchema* value_schema,
+        ArrowArray* value_array,
+        ArrowSchema* index_schema,
+        ArrowArray* index_array,
+        Enumeration enmr,
+        ArraySchemaEvolution& se);
+
     /**
      * This delegates to util::get_enumeration.
      * * There is (as of this writing) a situation where get_enumeration needs
@@ -730,7 +738,25 @@ class ManagedQuery {
         ArrowArray* value_array,
         ArrowSchema* index_schema,
         ArrowArray* index_array,
-        Enumeration& enmr,
+        Enumeration enmr,
+        ArraySchemaEvolution& se);
+
+    // The two type names are because for string we need std::string and
+    // std::string_view within the implementation. For other datatypes,
+    // ValueType and ValueViewType will be the same.
+    template <typename ValueType, typename ValueViewType>
+    std::tuple<
+        bool,                        // was_extended
+        std::vector<ValueViewType>,  // enum_values_in_write
+        std::vector<ValueViewType>,  // enum_values_existing
+        std::vector<ValueViewType>,  // enum_values_added
+        size_t,                      // total_size
+        Enumeration>                 //  extended_enmr
+    _extend_and_evolve_schema_with_details(
+        ArrowSchema* value_schema,
+        ArrowArray* value_array,
+        std::string column_name,
+        Enumeration enmr,
         ArraySchemaEvolution& se);
 
     template <typename ValueType>
@@ -938,14 +964,6 @@ class ManagedQuery {
             _cast_validity_buffer(index_array));
     }
 
-    bool _extend_and_write_enumeration(
-        ArrowSchema* value_schema,
-        ArrowArray* value_array,
-        ArrowSchema* index_schema,
-        ArrowArray* index_array,
-        Enumeration& enmr,
-        ArraySchemaEvolution& se);
-
     /**
      * @brief Get the mapping of attributes to Enumerations.
      *
@@ -1044,7 +1062,22 @@ bool ManagedQuery::_extend_and_evolve_schema_and_write<std::string>(
     ArrowArray* value_array,
     ArrowSchema* index_schema,
     ArrowArray* index_array,
-    Enumeration& enmr,
+    Enumeration enmr,
+    ArraySchemaEvolution& se);
+
+template <>
+std::tuple<
+    bool,                           // was_extended
+    std::vector<std::string_view>,  // enum_values_in_write
+    std::vector<std::string_view>,  // enum_values_existing
+    std::vector<std::string_view>,  // enum_values_added
+    size_t,                         // total_size
+    Enumeration>                    // extended_enmr
+ManagedQuery::_extend_and_evolve_schema_with_details<std::string>(
+    ArrowSchema* value_schema,
+    ArrowArray* value_array,
+    std::string column_name,
+    Enumeration enmr,
     ArraySchemaEvolution& se);
 
 template <>
