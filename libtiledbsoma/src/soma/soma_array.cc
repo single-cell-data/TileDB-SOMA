@@ -202,6 +202,7 @@ std::shared_ptr<SOMAContext> SOMAArray::ctx() {
 
 void SOMAArray::open(OpenMode mode, std::optional<TimestampRange> timestamp) {
     timestamp_ = timestamp;
+
     validate(mode, timestamp);
     fill_metadata_cache(timestamp_);
     fill_columns();
