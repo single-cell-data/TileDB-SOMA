@@ -359,6 +359,119 @@ std::optional<TimestampRange> SOMAArray::timestamp() {
     return timestamp_;
 }
 
+Enumeration SOMAArray::get_existing_enumeration_for_column(
+    std::string column_name) {
+    auto tctx = ctx_->tiledb_ctx();
+    auto attribute = schema_->attribute(column_name);
+    auto enumeration_name = AttributeExperimental::get_enumeration_name(
+        *tctx, attribute);
+    if (!enumeration_name.has_value()) {
+        throw TileDBSOMAError(fmt::format(
+            "[SOMAArray::extend_enumeration_values] column_name '{}' is "
+            "non-enumerated",
+            column_name));
+    }
+    return ArrayExperimental::get_enumeration(
+        *tctx, *arr_, enumeration_name.value());
+}
+
+ArrowTable SOMAArray::get_enumeration_values(
+    std::vector<std::string> column_names) {
+    auto ncol = column_names.size();
+    auto arrow_schema = ArrowAdapter::make_arrow_schema_parent(ncol);
+    auto arrow_array = ArrowAdapter::make_arrow_array_parent(ncol);
+    // TBD thread-pooling opportunity -- TBD if it will be worthwhile
+    for (size_t i = 0; i < ncol; i++) {
+        const auto column_name = column_names[i];
+        auto pair = get_enumeration_values_for_column(column_name);
+
+        arrow_array->children[i] = pair.first;
+        arrow_schema->children[i] = pair.second;
+    }
+    return ArrowTable(std::move(arrow_array), std::move(arrow_schema));
+}
+
+std::pair<ArrowArray*, ArrowSchema*>
+SOMAArray::get_enumeration_values_for_column(std::string column_name) {
+    // This will throw if column name is not found
+    std::unique_ptr<ArrowSchema> up_column_schema = arrow_schema_for_column(
+        column_name);
+    ArrowSchema* column_schema = up_column_schema.get();
+
+    // Throw if this column is not of dictionary type
+    if (column_schema->dictionary == nullptr) {
+        throw TileDBSOMAError(fmt::format(
+            "[get_get_enumeration_values] column named '{}' is not of "
+            "dictionary type",
+            column_name));
+    }
+
+    Enumeration core_enum = get_existing_enumeration_for_column(column_name);
+    auto value_dtype = core_enum.type();
+
+    ArrowSchema* output_arrow_schema = ArrowAdapter::make_arrow_schema_child(
+        column_name, value_dtype);
+
+    ArrowArray* output_arrow_array = nullptr;
+
+    switch (value_dtype) {
+        case TILEDB_STRING_UTF8:
+        case TILEDB_STRING_ASCII:
+        case TILEDB_CHAR:
+            output_arrow_array = ArrowAdapter::make_arrow_array_child_string(
+                core_enum.as_vector<std::string>());
+            break;
+        case TILEDB_INT8:
+            output_arrow_array = ArrowAdapter::make_arrow_array_child(
+                core_enum.as_vector<int8_t>());
+            break;
+        case TILEDB_BOOL:
+        case TILEDB_UINT8:
+            output_arrow_array = ArrowAdapter::make_arrow_array_child(
+                core_enum.as_vector<uint8_t>());
+            break;
+        case TILEDB_INT16:
+            output_arrow_array = ArrowAdapter::make_arrow_array_child(
+                core_enum.as_vector<int16_t>());
+            break;
+        case TILEDB_UINT16:
+            output_arrow_array = ArrowAdapter::make_arrow_array_child(
+                core_enum.as_vector<uint16_t>());
+            break;
+        case TILEDB_INT32:
+            output_arrow_array = ArrowAdapter::make_arrow_array_child(
+                core_enum.as_vector<int32_t>());
+            break;
+        case TILEDB_UINT32:
+            output_arrow_array = ArrowAdapter::make_arrow_array_child(
+                core_enum.as_vector<uint32_t>());
+            break;
+        case TILEDB_INT64:
+            output_arrow_array = ArrowAdapter::make_arrow_array_child(
+                core_enum.as_vector<int64_t>());
+            break;
+        case TILEDB_UINT64:
+            output_arrow_array = ArrowAdapter::make_arrow_array_child(
+                core_enum.as_vector<uint64_t>());
+            break;
+        case TILEDB_FLOAT32:
+            output_arrow_array = ArrowAdapter::make_arrow_array_child(
+                core_enum.as_vector<float>());
+            break;
+        case TILEDB_FLOAT64:
+            output_arrow_array = ArrowAdapter::make_arrow_array_child(
+                core_enum.as_vector<double>());
+            break;
+
+        default:
+            throw TileDBSOMAError(fmt::format(
+                "ArrowAdapter: Unsupported TileDB dict datatype: {} ",
+                tiledb::impl::type_to_str(value_dtype)));
+    }
+
+    return std::pair(output_arrow_array, output_arrow_schema);
+}
+
 // Note that ArrowTable is simply our libtiledbsoma pairing of ArrowArray and
 // ArrowSchema from nanoarrow.
 //

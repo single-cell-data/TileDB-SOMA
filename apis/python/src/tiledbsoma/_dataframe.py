@@ -376,6 +376,31 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         """
         return self._tiledb_dim_names()
 
+    def get_enumeration_values(
+        self: DataFrame, column_names: Sequence[str]
+    ) -> dict[str, pa.Array]:
+        """Returns an Arrow array of the specified columns'
+        enumeration/dictionary/categorical values. Raises ``ValueError`` if any
+        of the the specified column names is not in the schema, or if any is not
+        of Arrow dictionary type."""
+        self._check_open_read()
+
+        # These assertions could be done in C++. However, it's easier here
+        # to do the exception-type multiplexing, raising ValueError for one
+        # thing, TileDBSOMAError for another.
+        for column_name in column_names:
+            if column_name not in self.schema.names:
+                raise ValueError(
+                    f"column name '{column_name}' is not present in the schema"
+                )
+            field = self.schema.field(column_name)
+            if not isinstance(field.type, pa.DictionaryType):
+                raise ValueError(
+                    f"column name '{column_name}' is not of dictionary type"
+                )
+
+        return self._handle.get_enumeration_values(column_names)
+
     @property
     def domain(self) -> Tuple[Tuple[Any, Any], ...]:
         """Returns tuples of minimum and maximum values, one tuple per index column, currently storable
