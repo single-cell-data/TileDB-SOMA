@@ -698,7 +698,7 @@ class ManagedQuery {
                 ctx_, array_, schema, schema->dictionary);
 
             // Return whether we extended the enumeration for this attribute
-            return _extend_enumeration(
+            return _extend_and_write_enumeration(
                 schema->dictionary,  // value schema
                 array->dictionary,   // value array
                 schema,              // index schema
@@ -725,7 +725,7 @@ class ManagedQuery {
     }
 
     template <typename ValueType>
-    bool _extend_and_evolve_schema(
+    bool _extend_and_evolve_schema_and_write(
         ArrowSchema* value_schema,
         ArrowArray* value_array,
         ArrowSchema* index_schema,
@@ -938,7 +938,7 @@ class ManagedQuery {
             _cast_validity_buffer(index_array));
     }
 
-    bool _extend_enumeration(
+    bool _extend_and_write_enumeration(
         ArrowSchema* value_schema,
         ArrowArray* value_array,
         ArrowSchema* index_schema,
@@ -1039,7 +1039,7 @@ bool ManagedQuery::_cast_column_aux<bool>(
     ArrowSchema* schema, ArrowArray* array, ArraySchemaEvolution se);
 
 template <>
-bool ManagedQuery::_extend_and_evolve_schema<std::string>(
+bool ManagedQuery::_extend_and_evolve_schema_and_write<std::string>(
     ArrowSchema* value_schema,
     ArrowArray* value_array,
     ArrowSchema* index_schema,
