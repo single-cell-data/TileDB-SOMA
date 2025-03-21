@@ -54,7 +54,7 @@ jobs:
   create_issue_on_fail:
     runs-on: ubuntu-24.04
     needs: [docker]
-    if: (failure() || cancelled()) && github.event_name == 'schedule'
+    if: (failure() || cancelled()) && github.event_name == 'schedule' && github.run_attempt == 1
     steps:
       - name: Checkout TileDB-SOMA `main`
         uses: actions/checkout@v4
