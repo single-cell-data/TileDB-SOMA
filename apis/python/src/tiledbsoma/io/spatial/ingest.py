@@ -13,7 +13,7 @@ from __future__ import annotations
 import json
 import warnings
 from pathlib import Path
-from typing import Sequence
+from typing import Sequence, Type, TypeVar
 
 import attrs
 import numpy as np
@@ -45,6 +45,7 @@ from ... import (
     _util,
     logging,
 )
+from ..._common_nd_array import NDArray
 from ..._constants import SOMA_JOINID, SPATIAL_DISCLAIMER
 from ..._exception import (
     AlreadyExistsError,
@@ -70,13 +71,16 @@ from ..ingest import (
     IngestCtx,
     IngestionParams,
     IngestPlatformCtx,
-    _create_from_matrix,
     _create_or_open_collection,
     _maybe_set,
     _write_arrow_table,
+    _write_matrix_to_denseNDArray,
+    _write_matrix_to_sparseNDArray,
     add_metadata,
 )
 from ._util import TenXCountMatrixReader, _read_visium_software_version
+
+_NDArr = TypeVar("_NDArr", bound=NDArray)
 
 
 def path_validator(instance, attribute, value: Path) -> None:  # type: ignore[no-untyped-def]
@@ -376,13 +380,16 @@ def from_visium(
     # Check ingestion mode and create Ingestion params class.
     if ingest_mode != "write":
         raise NotImplementedError(
-            f'the only ingest_mode currently supported is "write"; got "{ingest_mode}"'
+            f"Support for ingest mode '{ingest_mode}' is not implemented. Currently, "
+            f"only support for 'write' mode is implemented."
         )
     ingestion_params = IngestionParams(ingest_mode, registration_mapping)
     if ingestion_params.appending and X_kind == DenseNDArray:
-        raise ValueError("dense X is not supported for append mode")
+        raise NotImplementedError(
+            "Support for appending to `X_kind=DenseNDArray` is not implemented."
+        )
     if ingestion_params.appending:
-        raise NotImplementedError("")
+        raise NotImplementedError("Suport for appending is not implemented.")
 
     # Check context and create keyword argument dicts.
     # - Create `ingest_ctx` for keyword args for creating SOMAGroup objects.
@@ -459,12 +466,6 @@ def from_visium(
                 "genome": reader.genome,
             }
         )
-        # TODO: Convert X matrix to pyarrow tensors
-        X_mat = sp.csr_matrix(
-            (reader._data, reader._feature_indices, reader._barcode_indptr),
-            shape=(nobs, nvar),
-        )
-
     logging.log_io(None, _util.format_elapsed(start_time, "FINISHED READING"))
 
     # Create registration mapping if none was provided and get obs/var data needed
@@ -500,7 +501,11 @@ def from_visium(
             )
             unique_obs_id = reader.unique_obs_indices()
             obs_spatial_presence = _write_scene_presence_dataframe(
-                unique_obs_id, nobs, scene_name, obs_spatial_presence_uri, **ingest_ctx
+                unique_obs_id,
+                nobs,
+                scene_name,
+                obs_spatial_presence_uri,
+                **ingest_platform_ctx,
             )
             _maybe_set(
                 experiment,
@@ -567,12 +572,13 @@ def from_visium(
                     Collection, measurement_X_uri, **ingest_ctx
                 ) as x:
                     _maybe_set(measurement, "X", x, use_relative_uri=use_relative_uri)
-                    with _create_from_matrix(
+                    X_layer_uri = _util.uri_joinpath(measurement_X_uri, X_layer_name)
+                    with _write_X_layer(
                         X_kind,
-                        _util.uri_joinpath(measurement_X_uri, X_layer_name),
-                        X_mat,
-                        axis_0_mapping=joinid_maps.obs_axis,
-                        axis_1_mapping=joinid_maps.var_axes[measurement_name],
+                        X_layer_uri,
+                        reader,
+                        joinid_maps.obs_axis,
+                        joinid_maps.var_axes[measurement_name],
                         **ingest_platform_ctx,
                     ) as data:
                         _maybe_set(
@@ -609,7 +615,7 @@ def from_visium(
                             image_paths,
                             image_channel_first=image_channel_first,
                             use_relative_uri=use_relative_uri,
-                            **ingest_ctx,
+                            **ingest_platform_ctx,
                         ) as tissue_image:
                             _maybe_set(
                                 img,
@@ -663,7 +669,7 @@ def from_visium(
                         obs_data,
                         "obs_id",
                         nobs,
-                        **ingest_ctx,
+                        **ingest_platform_ctx,
                     ) as loc:
                         _maybe_set(obsl, "loc", loc, use_relative_uri=use_relative_uri)
                         scene.set_transform_to_point_cloud_dataframe(
@@ -729,6 +735,89 @@ def _write_arrow_to_dataframe(
         _util.format_elapsed(start_time, f"FINISH WRITING {df_uri}"),
     )
     return soma_df
+
+
+def _write_X_layer(
+    cls: Type[_NDArr],
+    uri: str,
+    reader: TenXCountMatrixReader,
+    axis_0_mapping: AxisIDMapping,
+    axis_1_mapping: AxisIDMapping,
+    *,
+    ingestion_params: IngestionParams,
+    additional_metadata: AdditionalMetadata,
+    platform_config: PlatformConfig | None,
+    context: SOMATileDBContext | None,
+) -> _NDArr:
+    start_time = _util.get_start_stamp()
+    logging.log_io(None, f"START  WRITING {uri}")
+
+    # TODO: Convert X matrix to pyarrow tensors
+    reader.open()
+    shape = reader.nobs, reader.nvar
+    matrix = sp.csr_matrix(
+        (reader._data, reader._feature_indices, reader._barcode_indptr),
+        shape=shape,
+    )
+    reader.close()
+
+    try:
+
+        soma_ndarray = cls.create(
+            uri,
+            type=pa.from_numpy_dtype(matrix.dtype),
+            shape=shape,
+            platform_config=platform_config,
+            context=context,
+        )
+    except (AlreadyExistsError, NotCreateableError):
+        if ingestion_params.error_if_already_exists:
+            raise SOMAError(f"{uri} already exists")
+        soma_ndarray = cls.open(
+            uri, "w", platform_config=platform_config, context=context
+        )
+
+    logging.log_io(
+        f"Writing {uri}",
+        _util.format_elapsed(start_time, f"START  WRITING {uri}"),
+    )
+
+    if isinstance(soma_ndarray, DenseNDArray):
+        _write_matrix_to_denseNDArray(
+            soma_ndarray,
+            matrix,
+            tiledb_create_options=TileDBCreateOptions.from_platform_config(
+                platform_config
+            ),
+            tiledb_write_options=TileDBWriteOptions.from_platform_config(
+                platform_config
+            ),
+            ingestion_params=ingestion_params,
+            additional_metadata=additional_metadata,
+        )
+    elif isinstance(soma_ndarray, SparseNDArray):  # SOMASparseNDArray
+        _write_matrix_to_sparseNDArray(
+            soma_ndarray,
+            matrix,
+            tiledb_create_options=TileDBCreateOptions.from_platform_config(
+                platform_config
+            ),
+            tiledb_write_options=TileDBWriteOptions.from_platform_config(
+                platform_config
+            ),
+            ingestion_params=ingestion_params,
+            additional_metadata=additional_metadata,
+            axis_0_mapping=axis_0_mapping,
+            axis_1_mapping=axis_1_mapping,
+        )
+    else:
+        raise TypeError(f"Unknown array type {type(soma_ndarray)}.")
+
+    logging.log_io(
+        f"Wrote   {uri}",
+        _util.format_elapsed(start_time, f"FINISH WRITING {uri}"),
+    )
+    return soma_ndarray
 
 
 def _write_scene_presence_dataframe(
