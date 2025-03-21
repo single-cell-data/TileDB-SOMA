@@ -22,7 +22,7 @@ rtd_version = rtd_version if rtd_version in ["stable", "latest"] else "stable"
 # -- Project information -----------------------------------------------------
 
 project = "TileDB-SOMA-Py"
-copyright = "2021-2023, TileDB, Inc."
+copyright = "TileDB, Inc."
 author = "TileDB, Inc."
 
 # -- General configuration ---------------------------------------------------
