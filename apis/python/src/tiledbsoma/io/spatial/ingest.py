@@ -75,7 +75,6 @@ from ..ingest import (
     _maybe_set,
     _write_arrow_table,
     _write_matrix_to_denseNDArray,
-    _write_matrix_to_sparseNDArray,
     add_metadata,
 )
 from ._util import TenXCountMatrixReader, _read_visium_software_version
@@ -752,20 +751,14 @@ def _write_X_layer(
     start_time = _util.get_start_stamp()
     logging.log_io(None, f"START  WRITING {uri}")
 
-    # TODO: Convert X matrix to pyarrow tensors
-    reader.open()
-    shape = reader.nobs, reader.nvar
-    matrix = sp.csr_matrix(
-        (reader._data, reader._feature_indices, reader._barcode_indptr),
-        shape=shape,
-    )
-    reader.close()
-
+    shape = (reader.nobs, reader.nvar)
+    assert reader._data is not None
+    matrix_type = pa.from_numpy_dtype(reader._data.dtype)
     try:
 
         soma_ndarray = cls.create(
             uri,
-            type=pa.from_numpy_dtype(matrix.dtype),
+            type=matrix_type,
             shape=shape,
             platform_config=platform_config,
             context=context,
@@ -783,6 +776,13 @@ def _write_X_layer(
     )
 
     if isinstance(soma_ndarray, DenseNDArray):
+        reader.open()
+        matrix = sp.csr_matrix(
+            (reader._data, reader._feature_indices, reader._barcode_indptr),
+            shape=shape,
+        )
+        reader.close()
+
         _write_matrix_to_denseNDArray(
             soma_ndarray,
             matrix,
@@ -796,20 +796,15 @@ def _write_X_layer(
             additional_metadata=additional_metadata,
         )
     elif isinstance(soma_ndarray, SparseNDArray):  # SOMASparseNDArray
-        _write_matrix_to_sparseNDArray(
-            soma_ndarray,
-            matrix,
-            tiledb_create_options=TileDBCreateOptions.from_platform_config(
-                platform_config
-            ),
-            tiledb_write_options=TileDBWriteOptions.from_platform_config(
-                platform_config
-            ),
-            ingestion_params=ingestion_params,
-            additional_metadata=additional_metadata,
-            axis_0_mapping=axis_0_mapping,
-            axis_1_mapping=axis_1_mapping,
+        add_metadata(soma_ndarray, additional_metadata)
+        data = pa.Table.from_pydict(
+            {
+                "soma_data": reader.data,
+                "soma_dim_0": reader.obs_indices,
+                "soma_dim_1": reader.var_indices,
+            }
         )
+        soma_ndarray.write(data, platform_config=platform_config)
     else:
         raise TypeError(f"Unknown array type {type(soma_ndarray)}.")
 
