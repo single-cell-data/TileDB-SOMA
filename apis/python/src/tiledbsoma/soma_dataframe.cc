@@ -202,7 +202,8 @@ void load_soma_dataframe(py::module& m) {
                     throw TileDBSOMAError(e.what());
                 }
             },
-            "values"_a)
+            "values"_a,
+            "dupes_ok"_a)
 
         .def_property_readonly(
             "count",

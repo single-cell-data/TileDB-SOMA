@@ -1013,7 +1013,7 @@ bool ManagedQuery::_extend_and_evolve_schema_and_write<std::string>(
             _extend_and_evolve_schema_with_details<
                 std::string,
                 std::string_view>(
-                value_schema, value_array, column_name, enmr, se);
+                value_schema, value_array, column_name, true, enmr, se);
 
     if (was_extended) {
         ManagedQuery::_remap_indexes(
@@ -1057,7 +1057,7 @@ bool ManagedQuery::_extend_and_evolve_schema_and_write(
          total_size,
          extended_enmr] =
             _extend_and_evolve_schema_with_details<ValueType, ValueType>(
-                value_schema, value_array, column_name, enmr, se);
+                value_schema, value_array, column_name, true, enmr, se);
 
     if (was_extended) {
         // If the passed-in enumerations are only a subset of the new extended
@@ -1107,39 +1107,39 @@ bool ManagedQuery::_extend_enumeration(
         case TILEDB_STRING_UTF8:
         case TILEDB_CHAR:
             return _extend_and_evolve_schema_string(
-                value_schema, value_array, column_name, enmr, se);
+                value_schema, value_array, column_name, dupes_ok, enmr, se);
 
         case TILEDB_INT8:
             return _extend_and_evolve_schema<int8_t>(
-                value_schema, value_array, column_name, enmr, se);
+                value_schema, value_array, column_name, dupes_ok, enmr, se);
         case TILEDB_BOOL:
         case TILEDB_UINT8:
             return _extend_and_evolve_schema<uint8_t>(
-                value_schema, value_array, column_name, enmr, se);
+                value_schema, value_array, column_name, dupes_ok, enmr, se);
         case TILEDB_INT16:
             return _extend_and_evolve_schema<int16_t>(
-                value_schema, value_array, column_name, enmr, se);
+                value_schema, value_array, column_name, dupes_ok, enmr, se);
         case TILEDB_UINT16:
             return _extend_and_evolve_schema<uint16_t>(
-                value_schema, value_array, column_name, enmr, se);
+                value_schema, value_array, column_name, dupes_ok, enmr, se);
         case TILEDB_INT32:
             return _extend_and_evolve_schema<int32_t>(
-                value_schema, value_array, column_name, enmr, se);
+                value_schema, value_array, column_name, dupes_ok, enmr, se);
         case TILEDB_UINT32:
             return _extend_and_evolve_schema<uint32_t>(
-                value_schema, value_array, column_name, enmr, se);
+                value_schema, value_array, column_name, dupes_ok, enmr, se);
         case TILEDB_INT64:
             return _extend_and_evolve_schema<int64_t>(
-                value_schema, value_array, column_name, enmr, se);
+                value_schema, value_array, column_name, dupes_ok, enmr, se);
         case TILEDB_UINT64:
             return _extend_and_evolve_schema<uint64_t>(
-                value_schema, value_array, column_name, enmr, se);
+                value_schema, value_array, column_name, dupes_ok, enmr, se);
         case TILEDB_FLOAT32:
             return _extend_and_evolve_schema<float>(
-                value_schema, value_array, column_name, enmr, se);
+                value_schema, value_array, column_name, dupes_ok, enmr, se);
         case TILEDB_FLOAT64:
             return _extend_and_evolve_schema<double>(
-                value_schema, value_array, column_name, enmr, se);
+                value_schema, value_array, column_name, dupes_ok, enmr, se);
         default:
             throw TileDBSOMAError(fmt::format(
                 "ArrowAdapter: Unsupported TileDB dict datatype: {} ",
@@ -1151,11 +1151,12 @@ bool ManagedQuery::_extend_and_evolve_schema_string(
     ArrowSchema* value_schema,
     ArrowArray* value_array,
     std::string column_name,
+    bool dupes_ok,
     Enumeration enmr,
     ArraySchemaEvolution& se) {
     const auto [was_extended, _1, _2, _3, _4, _5] =
         _extend_and_evolve_schema_with_details<std::string, std::string_view>(
-            value_schema, value_array, column_name, enmr, se);
+            value_schema, value_array, column_name, dupes_ok, enmr, se);
     return was_extended;
 }
 
@@ -1164,11 +1165,12 @@ bool ManagedQuery::_extend_and_evolve_schema(
     ArrowSchema* value_schema,
     ArrowArray* value_array,
     std::string column_name,
+    bool dupes_ok,
     Enumeration enmr,
     ArraySchemaEvolution& se) {
     const auto [was_extended, _1, _2, _3, _4, _5] =
         _extend_and_evolve_schema_with_details<ValueType, ValueType>(
-            value_schema, value_array, column_name, enmr, se);
+            value_schema, value_array, column_name, dupes_ok, enmr, se);
     return was_extended;
 }
 
@@ -1184,6 +1186,7 @@ ManagedQuery::_extend_and_evolve_schema_with_details<std::string>(
     ArrowSchema* value_schema,
     ArrowArray* value_array,
     std::string column_name,
+    bool dupes_ok,
     Enumeration enmr,
     ArraySchemaEvolution& se) {
     uint64_t num_elems = value_array->length;
@@ -1228,6 +1231,15 @@ ManagedQuery::_extend_and_evolve_schema_with_details<std::string>(
     }
 
     if (enum_values_to_add.size() != 0) {
+        if (!dupes_ok &&
+            enum_values_to_add.size() != enum_values_in_write.size()) {
+            throw TileDBSOMAError(fmt::format(
+                "[extend_enumeration] one or more values provided are already "
+                "present in the enumeration for column '{}', and dupes_ok was "
+                "not specified",
+                column_name));
+        }
+
         // Check that we extend the enumeration values without
         // overflowing
         auto disk_index_type = schema_->attribute(column_name).type();
@@ -1258,6 +1270,7 @@ ManagedQuery::_extend_and_evolve_schema_with_details<std::string>(
             extend_offsets.data(),
             enum_values_to_add.size() * sizeof(uint64_t));
         se.extend_enumeration(extended_enmr);
+
         return std::tuple{
             true,
             enum_values_in_write,
@@ -1289,6 +1302,7 @@ ManagedQuery::_extend_and_evolve_schema_with_details(
     ArrowSchema* value_schema,
     ArrowArray* value_array,
     std::string column_name,
+    bool dupes_ok,
     Enumeration enmr,
     ArraySchemaEvolution& se) {
     // We need to check if we are writing any new enumeration values. If so,
@@ -1331,6 +1345,14 @@ ManagedQuery::_extend_and_evolve_schema_with_details(
 
     if (enum_values_to_add.size() != 0) {
         // We have new enumeration values; additional processing needed
+        if (!dupes_ok &&
+            enum_values_to_add.size() != enum_values_in_write.size()) {
+            throw TileDBSOMAError(fmt::format(
+                "[extend_enumeration] one or more values provided are already "
+                "present in the enumeration for column '{}', and dupes_ok was "
+                "not specified",
+                column_name));
+        }
 
         // Check if the number of new enumeration will cause an overflow if
         // extended

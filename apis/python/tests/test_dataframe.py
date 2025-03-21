@@ -376,7 +376,8 @@ def test_get_enumeration_values(tmp_path, mode):
         assert actual == expect
 
 
-def test_extend_enumeration_values(tmp_path):
+@pytest.mark.parametrize("dupes_ok", [True, False])
+def test_extend_enumeration_values(tmp_path, dupes_ok):
     uri = tmp_path.as_posix()
 
     schema = pa.schema(
@@ -396,11 +397,11 @@ def test_extend_enumeration_values(tmp_path):
         pass
 
     with soma.DataFrame.open(uri) as sdf:
-        with pytest.raises(ValueError):
+        with pytest.raises(KeyError):
             sdf.get_enumeration_values(["nonesuch"])
-        with pytest.raises(ValueError):
+        with pytest.raises(KeyError):
             sdf.get_enumeration_values(["not_an_enum"])
-        with pytest.raises(ValueError):
+        with pytest.raises(KeyError):
             sdf.get_enumeration_values(["string_ordered", "not_an_enum"])
 
         actual = sdf.get_enumeration_values(
@@ -415,18 +416,18 @@ def test_extend_enumeration_values(tmp_path):
     # The dataframe must be open for write
     with soma.DataFrame.open(uri) as sdf:
         with pytest.raises(ValueError):
-            sdf.extend_enumeration_values({"string_ordered": string_values})
+            sdf.extend_enumeration_values({})
 
     with soma.DataFrame.open(uri, "w") as sdf:
         # The column must exist
-        with pytest.raises(ValueError):
+        with pytest.raises(KeyError):
             sdf.extend_enumeration_values({"nonesuch": string_values})
 
         # The column must be of enumerated type
-        with pytest.raises(ValueError):
+        with pytest.raises(KeyError):
             sdf.extend_enumeration_values({"not_an_enum": string_values})
 
-    # Extend
+    # Extend one time
     with soma.DataFrame.open(uri, "w") as sdf:
         sdf.extend_enumeration_values(
             {
@@ -434,7 +435,8 @@ def test_extend_enumeration_values(tmp_path):
                 "string_unordered": string_values,
                 "int64_ordered": int64_values,
                 "int64_unordered": int64_values,
-            }
+            },
+            dupes_ok=dupes_ok,
         )
 
     # Check the extension
@@ -465,7 +467,7 @@ def test_extend_enumeration_values(tmp_path):
         # with pytest.raises(soma.SOMAError):
         #     sdf.extend_enumeration_values({"string_ordered": other_string_values})
 
-    # Extend
+    # Extend again
     with soma.DataFrame.open(uri, "w") as sdf:
         sdf.extend_enumeration_values(
             {
@@ -473,7 +475,8 @@ def test_extend_enumeration_values(tmp_path):
                 "string_unordered": string_values,
                 "int64_ordered": int64_values,
                 "int64_unordered": int64_values,
-            }
+            },
+            dupes_ok=dupes_ok,
         )
 
     # Check the extension

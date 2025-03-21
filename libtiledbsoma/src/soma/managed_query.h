@@ -754,6 +754,7 @@ class ManagedQuery {
         ArrowSchema* value_schema,
         ArrowArray* value_array,
         std::string column_name,
+        bool dupes_ok,
         Enumeration enmr,
         ArraySchemaEvolution& se);
 
@@ -761,6 +762,7 @@ class ManagedQuery {
         ArrowSchema* value_schema,
         ArrowArray* value_array,
         std::string column_name,
+        bool dupes_ok,
         Enumeration enmr,
         ArraySchemaEvolution& se);
 
@@ -779,6 +781,7 @@ class ManagedQuery {
         ArrowSchema* value_schema,
         ArrowArray* value_array,
         std::string column_name,
+        bool dupes_ok,
         Enumeration enmr,
         ArraySchemaEvolution& se);
 
@@ -1100,6 +1103,7 @@ ManagedQuery::_extend_and_evolve_schema_with_details<std::string>(
     ArrowSchema* value_schema,
     ArrowArray* value_array,
     std::string column_name,
+    bool dupes_ok,
     Enumeration enmr,
     ArraySchemaEvolution& se);
 
