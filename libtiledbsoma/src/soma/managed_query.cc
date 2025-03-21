@@ -1090,6 +1090,87 @@ bool ManagedQuery::_extend_and_evolve_schema_and_write(
     }
 }
 
+bool ManagedQuery::_extend_enumeration(
+    ArrowSchema* value_schema,
+    ArrowArray* value_array,
+    std::string column_name,
+    Enumeration enmr,
+    ArraySchemaEvolution& se) {
+    // For columns with dictionaries, we need to identify the data type of the
+    // enumeration to extend any new enumeration values
+
+    auto value_type = enmr.type();
+
+    switch (value_type) {
+        case TILEDB_STRING_ASCII:
+        case TILEDB_STRING_UTF8:
+        case TILEDB_CHAR:
+            return _extend_and_evolve_schema_string(
+                value_schema, value_array, column_name, enmr, se);
+
+        case TILEDB_INT8:
+            return _extend_and_evolve_schema<int8_t>(
+                value_schema, value_array, column_name, enmr, se);
+        case TILEDB_BOOL:
+        case TILEDB_UINT8:
+            return _extend_and_evolve_schema<uint8_t>(
+                value_schema, value_array, column_name, enmr, se);
+        case TILEDB_INT16:
+            return _extend_and_evolve_schema<int16_t>(
+                value_schema, value_array, column_name, enmr, se);
+        case TILEDB_UINT16:
+            return _extend_and_evolve_schema<uint16_t>(
+                value_schema, value_array, column_name, enmr, se);
+        case TILEDB_INT32:
+            return _extend_and_evolve_schema<int32_t>(
+                value_schema, value_array, column_name, enmr, se);
+        case TILEDB_UINT32:
+            return _extend_and_evolve_schema<uint32_t>(
+                value_schema, value_array, column_name, enmr, se);
+        case TILEDB_INT64:
+            return _extend_and_evolve_schema<int64_t>(
+                value_schema, value_array, column_name, enmr, se);
+        case TILEDB_UINT64:
+            return _extend_and_evolve_schema<uint64_t>(
+                value_schema, value_array, column_name, enmr, se);
+        case TILEDB_FLOAT32:
+            return _extend_and_evolve_schema<float>(
+                value_schema, value_array, column_name, enmr, se);
+        case TILEDB_FLOAT64:
+            return _extend_and_evolve_schema<double>(
+                value_schema, value_array, column_name, enmr, se);
+        default:
+            throw TileDBSOMAError(fmt::format(
+                "ArrowAdapter: Unsupported TileDB dict datatype: {} ",
+                tiledb::impl::type_to_str(value_type)));
+    }
+}
+
+bool ManagedQuery::_extend_and_evolve_schema_string(
+    ArrowSchema* value_schema,
+    ArrowArray* value_array,
+    std::string column_name,
+    Enumeration enmr,
+    ArraySchemaEvolution& se) {
+    const auto [was_extended, _1, _2, _3, _4, _5] =
+        _extend_and_evolve_schema_with_details<std::string, std::string_view>(
+            value_schema, value_array, column_name, enmr, se);
+    return was_extended;
+}
+
+template <typename ValueType>
+bool ManagedQuery::_extend_and_evolve_schema(
+    ArrowSchema* value_schema,
+    ArrowArray* value_array,
+    std::string column_name,
+    Enumeration enmr,
+    ArraySchemaEvolution& se) {
+    const auto [was_extended, _1, _2, _3, _4, _5] =
+        _extend_and_evolve_schema_with_details<ValueType, ValueType>(
+            value_schema, value_array, column_name, enmr, se);
+    return was_extended;
+}
+
 template <>
 std::tuple<
     bool,                           // was_extended

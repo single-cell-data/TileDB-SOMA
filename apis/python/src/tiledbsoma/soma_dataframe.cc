@@ -156,6 +156,53 @@ void load_soma_dataframe(py::module& m) {
             },
             "column_names"_a)
 
+        .def(
+            "extend_enumeration_values",
+            [](SOMADataFrame& sdf,
+               std::map<std::string, py::object> values) -> py::none {
+                try {
+                    auto pa = py::module::import("pyarrow");
+                    auto pa_array_import = pa.attr("Array").attr(
+                        "_import_from_c");
+
+                    auto ncol = values.size();
+                    auto arrow_schema = ArrowAdapter::make_arrow_schema_parent(
+                        ncol);
+                    auto arrow_array = ArrowAdapter::make_arrow_array_parent(
+                        ncol);
+
+                    int i = 0;
+                    ArrowArray pa_arrays[ncol];
+                    ArrowSchema pa_schemas[ncol];
+                    for (auto item : values) {
+                        std::string column_name = item.first;
+
+                        uintptr_t
+                            nanoarrow_array_ptr = (uintptr_t)(&pa_arrays[i]);
+                        uintptr_t
+                            nanoarrow_schema_ptr = (uintptr_t)(&pa_schemas[i]);
+                        item.second.attr("_export_to_c")(
+                            nanoarrow_array_ptr, nanoarrow_schema_ptr);
+
+                        arrow_array->children[i] = &pa_arrays[i];
+                        arrow_schema->children[i] = &pa_schemas[i];
+                        arrow_schema->children[i]->name = strdup(
+                            column_name.c_str());
+
+                        i++;
+                    }
+
+                    ArrowTable t(
+                        std::move(arrow_array), std::move(arrow_schema));
+                    sdf.extend_enumeration_values(t);
+
+                    return py::none();
+                } catch (const std::exception& e) {
+                    throw TileDBSOMAError(e.what());
+                }
+            },
+            "values"_a)
+
         .def_property_readonly(
             "count",
             &SOMADataFrame::count,
