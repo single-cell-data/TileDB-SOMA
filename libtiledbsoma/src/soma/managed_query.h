@@ -741,6 +741,9 @@ class ManagedQuery {
         Enumeration enmr,
         ArraySchemaEvolution& se);
 
+    // The two type names are because for string we need std::string and
+    // std::string_view within the implementation. For other datatypes,
+    // ValueType and ValueViewType will be the same.
     template <typename ValueType, typename ValueViewType>
     std::tuple<
         bool,                        // was_extended
