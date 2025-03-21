@@ -255,6 +255,126 @@ def test_dataframe_with_enumeration(tmp_path):
         assert_array_equal(df["myfloat"].chunk(0).dictionary, enums["enmr2"])
 
 
+def test_get_enumeration_values(tmp_path):
+    uri = tmp_path.as_posix()
+
+    schema = pa.schema(
+        [
+            pa.field("not_an_enum", pa.large_string()),
+            pa.field("string_ordered", pa.dictionary(pa.int32(), pa.large_string())),
+            pa.field("string_unordered", pa.dictionary(pa.int32(), pa.large_string())),
+            pa.field("int64_ordered", pa.dictionary(pa.int32(), pa.int64())),
+            pa.field("int64_unordered", pa.dictionary(pa.int32(), pa.int64())),
+        ]
+    )
+
+    domain = [[0, 7]]
+
+    # Create the dataframe with no levels for any enumerated column
+    with soma.DataFrame.create(uri, schema=schema, domain=domain) as sdf:
+        pass
+
+    with soma.DataFrame.open(uri) as sdf:
+        with pytest.raises(ValueError):
+            sdf.get_enumeration_values(["nonesuch"])
+        with pytest.raises(ValueError):
+            sdf.get_enumeration_values(["not_an_enum"])
+        with pytest.raises(ValueError):
+            sdf.get_enumeration_values(["string_ordered", "not_an_enum"])
+
+        actual = sdf.get_enumeration_values(
+            ["string_ordered", "string_unordered", "int64_ordered", "int64_unordered"]
+        )
+        expect = {
+            "string_ordered": pa.array([], type=pa.large_string()),
+            "string_unordered": pa.array([], type=pa.large_string()),
+            "int64_ordered": pa.array([], type=pa.int64()),
+            "int64_unordered": pa.array([], type=pa.int64()),
+        }
+        assert actual == expect
+
+    # Write once
+    pd_data = {
+        "soma_joinid": [0, 1, 2, 3, 4],
+        "not_an_enum": pd.Categorical(["a", "nn", "zzz", "nn", "a"]),
+        "string_ordered": pd.Categorical(["a", "nn", "zzz", "nn", "a"], ordered=True),
+        "string_unordered": pd.Categorical(
+            ["a", "nn", "zzz", "nn", "a"], ordered=False
+        ),
+        "int64_ordered": pd.Categorical(
+            [111111111, 99999, 3333333, 111111111, 99999], ordered=True
+        ),
+        "int64_unordered": pd.Categorical(
+            [111111111, 99999, 3333333, 111111111, 99999],
+            ordered=False,
+        ),
+    }
+    arrow_data = pa.Table.from_pydict(pd_data)
+
+    with soma.DataFrame.open(uri, "w") as sdf:
+        sdf.write(arrow_data)
+
+    with soma.DataFrame.open(uri) as sdf:
+        with pytest.raises(ValueError):
+            sdf.get_enumeration_values(["nonesuch"])
+        with pytest.raises(ValueError):
+            sdf.get_enumeration_values(["not_an_enum"])
+        with pytest.raises(ValueError):
+            sdf.get_enumeration_values(["string_ordered", "not_an_enum"])
+
+        actual = sdf.get_enumeration_values(
+            ["string_ordered", "string_unordered", "int64_ordered", "int64_unordered"]
+        )
+        expect = {
+            "string_ordered": pa.array(["a", "nn", "zzz"], type=pa.large_string()),
+            "string_unordered": pa.array(["a", "nn", "zzz"], type=pa.large_string()),
+            "int64_ordered": pa.array([111111111, 3333333, 99999], type=pa.int64()),
+            "int64_unordered": pa.array([111111111, 3333333, 99999], type=pa.int64()),
+        }
+
+    # Write again
+    pd_data = {
+        "soma_joinid": [5, 6, 7],
+        "not_an_enum": pd.Categorical(["dddd", "nn", "zzz"]),
+        "string_ordered": pd.Categorical(["dddd", "nn", "zzz"], ordered=True),
+        "string_unordered": pd.Categorical(["dddd", "nn", "zzz"], ordered=False),
+        "int64_ordered": pd.Categorical([555555555, 111111111, 99999], ordered=True),
+        "int64_unordered": pd.Categorical([555555555, 111111111, 99999], ordered=False),
+    }
+    arrow_data = pa.Table.from_pydict(pd_data)
+
+    with soma.DataFrame.open(uri, "w") as sdf:
+        sdf.write(arrow_data)
+
+    with soma.DataFrame.open(uri) as sdf:
+        with pytest.raises(ValueError):
+            sdf.get_enumeration_values(["nonesuch"])
+        with pytest.raises(ValueError):
+            sdf.get_enumeration_values(["not_an_enum"])
+        with pytest.raises(ValueError):
+            sdf.get_enumeration_values(["string_ordered", "not_an_enum"])
+
+        actual = sdf.get_enumeration_values(
+            ["string_ordered", "string_unordered", "int64_ordered", "int64_unordered"]
+        )
+        expect = {
+            "string_ordered": pa.array(
+                ["a", "nn", "zzz", "dddd"], type=pa.large_string()
+            ),
+            "string_unordered": pa.array(
+                ["a", "nn", "zzz", "dddd"], type=pa.large_string()
+            ),
+            "int64_ordered": pa.array(
+                [99999, 3333333, 111111111, 555555555], type=pa.int64()
+            ),
+            "int64_unordered": pa.array(
+                [99999, 3333333, 111111111, 555555555], type=pa.int64()
+            ),
+        }
+
+        assert actual == expect
+
+
 @pytest.fixture
 def simple_data_frame(tmp_path):
     """
