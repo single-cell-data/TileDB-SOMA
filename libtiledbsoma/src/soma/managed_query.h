@@ -464,6 +464,7 @@ class ManagedQuery {
         ArrowSchema* value_schema,
         ArrowArray* value_array,
         std::string column_name,
+        bool dupes_ok,
         Enumeration enmr,
         ArraySchemaEvolution& se);
 

@@ -401,7 +401,9 @@ class DataFrame(SOMAArray, somacore.DataFrame):
 
         return self._handle.get_enumeration_values(column_names)
 
-    def extend_enumeration_values(self: DataFrame, values: dict[str, pa.Array]) -> None:
+    def extend_enumeration_values(
+        self: DataFrame, values: dict[str, pa.Array], dupes_ok: bool = False
+    ) -> None:
         """Extend enumeration values for each column defined in `values`
 
         enumeration/dictionary/categorical values. Raises ``ValueError`` if any
@@ -423,7 +425,7 @@ class DataFrame(SOMAArray, somacore.DataFrame):
                     f"column name '{column_name}' is not of dictionary type"
                 )
 
-        self._handle.extend_enumeration_values(values)
+        self._handle.extend_enumeration_values(values, dupes_ok)
 
     @property
     def domain(self) -> Tuple[Tuple[Any, Any], ...]:

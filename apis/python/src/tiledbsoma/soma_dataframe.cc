@@ -159,7 +159,8 @@ void load_soma_dataframe(py::module& m) {
         .def(
             "extend_enumeration_values",
             [](SOMADataFrame& sdf,
-               std::map<std::string, py::object> values) -> py::none {
+               std::map<std::string, py::object> values,
+               bool dupes_ok) -> py::none {
                 try {
                     auto pa = py::module::import("pyarrow");
                     auto pa_array_import = pa.attr("Array").attr(
@@ -194,7 +195,7 @@ void load_soma_dataframe(py::module& m) {
 
                     ArrowTable t(
                         std::move(arrow_array), std::move(arrow_schema));
-                    sdf.extend_enumeration_values(t);
+                    sdf.extend_enumeration_values(t, dupes_ok);
 
                     return py::none();
                 } catch (const std::exception& e) {

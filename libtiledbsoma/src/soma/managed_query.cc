@@ -1094,6 +1094,7 @@ bool ManagedQuery::_extend_enumeration(
     ArrowSchema* value_schema,
     ArrowArray* value_array,
     std::string column_name,
+    bool dupes_ok,
     Enumeration enmr,
     ArraySchemaEvolution& se) {
     // For columns with dictionaries, we need to identify the data type of the

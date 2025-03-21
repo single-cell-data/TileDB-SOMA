@@ -472,7 +472,8 @@ SOMAArray::get_enumeration_values_for_column(std::string column_name) {
     return std::pair(output_arrow_array, output_arrow_schema);
 }
 
-void SOMAArray::extend_enumeration_values(const ArrowTable& values) {
+void SOMAArray::extend_enumeration_values(
+    const ArrowTable& values, bool dupes_ok) {
     auto values_array = values.first.get();
     auto values_schema = values.second.get();
 
@@ -505,6 +506,7 @@ void SOMAArray::extend_enumeration_values(const ArrowTable& values) {
             values_schema->children[i],
             values_array->children[i],
             column_name,
+            dupes_ok,
             core_enum,
             schema_evolution);
     }
