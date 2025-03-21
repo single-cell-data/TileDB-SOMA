@@ -9,10 +9,16 @@ test_that("SOMADenseNDArray creation", {
   ndarray$close()
   ndarray <- SOMADenseNDArrayOpen(uri, "WRITE")
 
-  expect_equal(tiledb::tiledb_object_type(uri), "ARRAY")
+  expect_match(
+    get_tiledb_object_type(
+      ndarray$uri,
+      ndarray$.__enclos_env__$private$.soma_context
+    ),
+    "ARRAY"
+  )
   expect_equal(ndarray$dimnames(), c("soma_dim_0", "soma_dim_1"))
   expect_equal(ndarray$attrnames(), "soma_data")
-  expect_equal(tiledb::datatype(ndarray$attributes()$soma_data), "INT32")
+  expect_equal(ndarray$attributes()$soma_data$type, "INT32")
 
   mat <- create_dense_matrix_with_int_dims(10, 5)
   ndarray$write(mat)
@@ -77,9 +83,7 @@ test_that("SOMADenseNDArray creation", {
   )
 
   # Validate TileDB array schema
-  arr <- tiledb::tiledb_array(uri)
-  sch <- tiledb::schema(arr)
-  expect_false(tiledb::is.sparse(sch))
+  expect_false(ndarray$is_sparse())
 
   ## shape
   expect_equal(ndarray$shape(), bit64::as.integer64(c(10, 5)))
