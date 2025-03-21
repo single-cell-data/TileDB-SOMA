@@ -13,7 +13,7 @@ test_that("SOMASparseNDArray creation", {
   expect_equal(ndarray$dimnames(), c("soma_dim_0", "soma_dim_1"))
 
   expect_equal(ndarray$attrnames(), "soma_data")
-  expect_equal(tiledb::datatype(ndarray$attributes()$soma_data), "INT32")
+  expect_equal(ndarray$attributes()$soma_data$type, "INT32")
 
   mat <- create_sparse_matrix_with_int_dims(10, 10)
   vals <- as.vector(t(as.matrix(mat)))

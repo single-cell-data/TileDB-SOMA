@@ -423,7 +423,7 @@ test_that("soma_joinid is added on creation", {
   sdf <- SOMADataFrameCreate(uri, asch, index_column_names = "int_column")
 
   expect_true("soma_joinid" %in% sdf$attrnames())
-  expect_equal(tiledb::datatype(sdf$attributes()$soma_joinid), "INT64")
+  expect_equal(sdf$attributes()$soma_joinid$type, "INT64")
   sdf$close()
 })
 
