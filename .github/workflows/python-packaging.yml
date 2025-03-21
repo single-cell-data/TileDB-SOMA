@@ -248,10 +248,10 @@ jobs:
   create_issue_on_fail:
     runs-on: ubuntu-24.04
     needs: [smoke-test, publish-to-test-pypi, publish-to-pypi]
-    if: (failure() || cancelled()) && github.event_name != 'workflow_dispatch'
+    if: (failure() || cancelled()) && github.event_name != 'workflow_dispatch' && github.run_attempt == 1
     steps:
       - name: Checkout TileDB-SOMA `main`
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
       - name: Create Issue if Build Fails
         uses: JasonEtco/create-an-issue@v2
         env:
