@@ -255,7 +255,8 @@ def test_dataframe_with_enumeration(tmp_path):
         assert_array_equal(df["myfloat"].chunk(0).dictionary, enums["enmr2"])
 
 
-def test_get_enumeration_values(tmp_path):
+@pytest.mark.parametrize("mode", ["r", "w"])
+def test_get_enumeration_values(tmp_path, mode):
     uri = tmp_path.as_posix()
 
     schema = pa.schema(
@@ -274,7 +275,7 @@ def test_get_enumeration_values(tmp_path):
     with soma.DataFrame.create(uri, schema=schema, domain=domain) as sdf:
         pass
 
-    with soma.DataFrame.open(uri) as sdf:
+    with soma.DataFrame.open(uri, mode) as sdf:
         with pytest.raises(ValueError):
             sdf.get_enumeration_values(["nonesuch"])
         with pytest.raises(ValueError):
@@ -314,7 +315,7 @@ def test_get_enumeration_values(tmp_path):
     with soma.DataFrame.open(uri, "w") as sdf:
         sdf.write(arrow_data)
 
-    with soma.DataFrame.open(uri) as sdf:
+    with soma.DataFrame.open(uri, mode) as sdf:
         with pytest.raises(ValueError):
             sdf.get_enumeration_values(["nonesuch"])
         with pytest.raises(ValueError):
@@ -346,7 +347,7 @@ def test_get_enumeration_values(tmp_path):
     with soma.DataFrame.open(uri, "w") as sdf:
         sdf.write(arrow_data)
 
-    with soma.DataFrame.open(uri) as sdf:
+    with soma.DataFrame.open(uri, mode) as sdf:
         with pytest.raises(ValueError):
             sdf.get_enumeration_values(["nonesuch"])
         with pytest.raises(ValueError):

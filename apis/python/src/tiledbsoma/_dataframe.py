@@ -383,7 +383,6 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         enumeration/dictionary/categorical values. Raises ``ValueError`` if any
         of the the specified column names is not in the schema, or if any is not
         of Arrow dictionary type."""
-        self._check_open_read()
 
         # These assertions could be done in C++. However, it's easier here
         # to do the exception-type multiplexing, raising ValueError for one
