@@ -108,7 +108,8 @@ def _hack_patch_anndata() -> ContextManager[object]:
 
     @file_backing.AnnDataFileManager.filename.setter  # type: ignore[misc]
     def filename(
-        self: file_backing.AnnDataFileManager, filename: Union[Path, _FSPathWrapper, None]
+        self: file_backing.AnnDataFileManager,
+        filename: Union[Path, _FSPathWrapper, None],
     ) -> None:
         self._filename = filename
 
