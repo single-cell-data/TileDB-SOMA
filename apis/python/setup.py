@@ -254,7 +254,7 @@ if os.name != "nt":
     CXX_FLAGS.append(f'-Wl,-rpath,{str(tiledb_dir / "lib")}')
 
 if sys.platform == "darwin":
-    CXX_FLAGS.append("-mmacosx-version-min=13.3")
+    CXX_FLAGS.append("-mmacosx-version-min=11.0")
 
     # This is necessary for clang to enable templated function calls
     # between pybind modules and libtiledbsoma where dynamic_cast or

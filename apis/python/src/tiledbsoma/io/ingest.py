@@ -2541,7 +2541,7 @@ def _write_matrix_to_sparseNDArray(
         # provides opportunities as well as challenges.
         #
         # * Backed mode is crucial for our ability to ingest larger H5AD files
-        #   -- those whose file sizes complete with host RAM.
+        #   -- those whose file sizes compete with host RAM.
         # * Semantics of AnnData backed-mode matrices is such that it is
         #   prohibitive (i.e. it ruins performance, and by a significant amount)
         #   to compute row nnz for every row -- which is precisely the
