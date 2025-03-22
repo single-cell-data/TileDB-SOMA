@@ -10,16 +10,18 @@ other formats. Currently only ``.h5ad`` (`AnnData <https://anndata.readthedocs.i
 
 from __future__ import annotations
 
+import contextlib
 import json
 import math
 import os
 import time
-from concurrent.futures import ProcessPoolExecutor
+from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 from functools import partial
 from itertools import repeat
 from typing import (
     Any,
     Dict,
+    Iterable,
     List,
     Literal,
     Mapping,
@@ -195,7 +197,7 @@ def register_h5ads(
     var_field_name: str,
     append_obsm_varm: bool = False,
     context: SOMATileDBContext | None = None,
-    use_multiprocessing: bool = True,
+    use_multiprocessing: bool = False,
 ) -> ExperimentAmbientLabelMapping:
     """Extends registration data from the baseline, already-written SOMA
     experiment to include multiple H5AD input files. See ``from_h5ad`` and
@@ -212,44 +214,24 @@ def register_h5ads(
         h5ad_file_names = [h5ad_file_names]
 
     context = _validate_soma_tiledb_context(context)
+    concurrency_level = _concurrency_level(context)
 
     logging.log_io(None, f"Loading per-axis metadata for {len(h5ad_file_names)} files.")
-    concurrency_level: int = os.cpu_count() or 1
-    if context is not None:
-        concurrency_level = min(
-            concurrency_level,
-            int(
-                context.tiledb_config.get(
-                    "soma.compute_concurrency_level", concurrency_level
-                )
-            ),
-        )
-
+    executor_context: contextlib.AbstractContextManager[
+        ProcessPoolExecutor | ThreadPoolExecutor
+    ]
     if use_multiprocessing:
-        with ProcessPoolExecutor(max_workers=concurrency_level) as ppe:
-            axes_metadata = list(
-                ppe.map(
-                    ExperimentAmbientLabelMapping._load_axes_metadata_from_h5ads,
-                    batched(
-                        h5ad_file_names,
-                        math.ceil(len(h5ad_file_names) / concurrency_level),
-                    ),
-                    repeat(obs_field_name),
-                    repeat(var_field_name),
-                    repeat(
-                        partial(
-                            ExperimentAmbientLabelMapping._validate_anndata,
-                            append_obsm_varm,
-                        )
-                    ),
-                )
-            )
+        executor_context = ProcessPoolExecutor(max_workers=concurrency_level)
     else:
+        executor_context = contextlib.nullcontext(enter_result=context.threadpool)
+
+    with executor_context as executor:
         axes_metadata = list(
-            context.threadpool.map(
+            executor.map(
                 ExperimentAmbientLabelMapping._load_axes_metadata_from_h5ads,
                 batched(
-                    h5ad_file_names, math.ceil(len(h5ad_file_names) / concurrency_level)
+                    h5ad_file_names,
+                    math.ceil(len(h5ad_file_names) / concurrency_level),
                 ),
                 repeat(obs_field_name),
                 repeat(var_field_name),
@@ -261,7 +243,6 @@ def register_h5ads(
                 ),
             )
         )
-
     logging.log_io(None, "Loaded per-axis metadata")
 
     return ExperimentAmbientLabelMapping._register_common(
@@ -276,7 +257,7 @@ def register_h5ads(
 
 def register_anndatas(
     experiment_uri: str | None,
-    adatas: Sequence[ad.AnnData] | ad.AnnData,
+    adatas: Iterable[ad.AnnData] | ad.AnnData,
     *,
     measurement_name: str,
     obs_field_name: str,
@@ -555,6 +536,10 @@ def from_anndata(
             anndata, measurement_name=measurement_name
         )
     else:
+        if not registration_mapping.prepared and Experiment.exists(experiment_uri):
+            raise SOMAError(
+                "Experiment must be prepared prior to ingestion. Please call ``registration_map.prepare_experiment`` method."
+            )
         joinid_maps = registration_mapping.id_mappings_for_anndata(
             anndata, measurement_name=measurement_name
         )
@@ -3099,3 +3084,17 @@ def _ingest_uns_ndarray(
 
     msg = f"Wrote   {soma_arr.uri} (uns ndarray)"
     logging.log_io(msg, msg)
+
+
+def _concurrency_level(context: SOMATileDBContext) -> int:
+    concurrency_level: int = os.cpu_count() or 1
+    if context is not None:
+        concurrency_level = min(
+            concurrency_level,
+            int(
+                context.tiledb_config.get(
+                    "soma.compute_concurrency_level", concurrency_level
+                )
+            ),
+        )
+    return concurrency_level

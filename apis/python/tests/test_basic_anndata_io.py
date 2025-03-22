@@ -1354,9 +1354,7 @@ def test_nan_append(conftest_pbmc_small, dtype, nans, new_obs_ids):
         var_field_name="var_id",
     )
 
-    nobs = rd.get_obs_shape()
-    nvars = rd.get_var_shapes()
-    tiledbsoma.io.resize_experiment(SOMA_URI, nobs=nobs, nvars=nvars)
+    rd.prepare_experiment(experiment_uri=SOMA_URI)
 
     # Append the second anndata object
     tiledbsoma.io.from_anndata(
@@ -1488,16 +1486,8 @@ def test_decat_append(tmp_path):
         var_field_name="var_id",
     )
 
-    tiledbsoma.io.resize_experiment(
-        path_under,
-        nobs=rd_under_over.get_obs_shape(),
-        nvars=rd_under_over.get_var_shapes(),
-    )
-    tiledbsoma.io.resize_experiment(
-        path_over,
-        nobs=rd_over_under.get_obs_shape(),
-        nvars=rd_over_under.get_var_shapes(),
-    )
+    rd_under_over.prepare_experiment(experiment_uri=path_under)
+    rd_over_under.prepare_experiment(experiment_uri=path_over)
 
     tiledbsoma.io.from_anndata(
         path_under, adata_over, "RNA", registration_mapping=rd_under_over

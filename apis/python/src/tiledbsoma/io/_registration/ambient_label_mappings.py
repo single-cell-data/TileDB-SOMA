@@ -19,10 +19,13 @@ import pyarrow as pa
 from typing_extensions import Self
 
 import tiledbsoma
+import tiledbsoma.io
 import tiledbsoma.logging as logging
 from tiledbsoma import DataFrame, Experiment, SOMAError
 from tiledbsoma.options import SOMATileDBContext
+from tiledbsoma.options._soma_tiledb_context import _validate_soma_tiledb_context
 
+from .._util import read_h5ad
 from .enum import _extend_enumeration, _get_enumeration
 from .id_mappings import AxisIDMapping, ExperimentIDMapping, get_dataframe_values
 
@@ -154,6 +157,7 @@ class ExperimentAmbientLabelMapping:
 
     obs_axis: AxisAmbientLabelMapping
     var_axes: dict[str, AxisAmbientLabelMapping]
+    prepared: bool = False
 
     def id_mappings_for_anndata(
         self, adata: ad.AnnData, *, measurement_name: str = "RNA"
@@ -212,11 +216,11 @@ class ExperimentAmbientLabelMapping:
     def subset_for_h5ad(self, h5ad_path: str) -> Self:
         """Subset this plan to only contain ID maps useful for this H5AD. See ``subset_for_anndata``
         for more information."""
-        adata = ad.read_h5ad(h5ad_path, backed="r")
-        return self.subset_for_anndata(adata)
+        with read_h5ad(h5ad_path, mode="r") as adata:
+            return self.subset_for_anndata(adata)
 
     def prepare_experiment(
-        self, experiment_uri: str, context: SOMATileDBContext
+        self, experiment_uri: str, context: SOMATileDBContext | None = None
     ) -> None:
         """Prepare experiment for ingestion.
 
@@ -227,6 +231,8 @@ class ExperimentAmbientLabelMapping:
 
         This operation must be performed before any writes to the experiment.
         """
+        context = _validate_soma_tiledb_context(context)
+
         tiledbsoma.io.resize_experiment(
             experiment_uri, nobs=self.get_obs_shape(), nvars=self.get_var_shapes()
         )
@@ -238,6 +244,8 @@ class ExperimentAmbientLabelMapping:
             for ms_name, var_axis in self.var_axes.items():
                 for k, v in var_axis.enum_values.items():
                     _extend_enumeration(E.ms[ms_name].var, k, pa.array(v.categories))
+
+        object.__setattr__(self, "prepared", True)
 
     def to_json(self) -> str:
         """The ``to_json`` and ``from_json`` methods allow you to persist
@@ -349,12 +357,30 @@ class ExperimentAmbientLabelMapping:
 
         Return (obs, var, raw.var)
         """
-        return ExperimentAmbientLabelMapping._load_axes_metadata_from_anndatas(
-            (ad.read_h5ad(path, backed="r") for path in paths),  # lazy open
-            obs_field_name,
-            var_field_name,
-            validate_anndata,
+        obs_metadata: list[AxisMetadata] = []
+        var_metadata: list[AxisMetadata] = []
+        raw_var_metadata: list[AxisMetadata] = []
+
+        for p in paths:
+            with read_h5ad(p, mode="r") as adata:
+                obs, var, raw_var = (
+                    ExperimentAmbientLabelMapping._load_axes_metadata_from_anndatas(
+                        [adata], obs_field_name, var_field_name, validate_anndata
+                    )
+                )
+            obs_metadata.append(obs)
+            var_metadata.append(var)
+            if raw_var is not None:
+                raw_var_metadata.append(raw_var)
+
+        obs, var, raw_var = (
+            AxisMetadata.reduce(obs_metadata),
+            AxisMetadata.reduce(var_metadata),
+            AxisMetadata.reduce(raw_var_metadata),
         )
+        assert obs is not None
+        assert var is not None
+        return obs, var, raw_var
 
     @staticmethod
     def _load_existing_experiment_metadata(
@@ -585,7 +611,7 @@ class ExperimentAmbientLabelMapping:
         """Pre-checks performed on all AnnData"""
 
         def check_df(df: pd.DataFrame | None, df_name: str) -> None:
-            if df is None or df.empty:
+            if df is None or df.index.empty:
                 raise ValueError(
                     f"Unable to ingest AnnData with empty {df_name} dataframe"
                 )

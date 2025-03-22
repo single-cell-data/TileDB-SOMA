@@ -435,10 +435,7 @@ def test_multiples_without_experiment(
             obs_field_name=obs_field_name,
             var_field_name=var_field_name,
         )
-
-        nobs = rd.get_obs_shape()
-        nvars = rd.get_var_shapes()
-        tiledbsoma.io.resize_experiment(experiment_uri, nobs=nobs, nvars=nvars)
+        rd.prepare_experiment(experiment_uri)
 
     else:
         # "Append" all the H5ADs where no experiment exists yet.
@@ -539,11 +536,7 @@ def test_multiples_without_experiment(
     ]:
 
         if tiledbsoma.Experiment.exists(experiment_uri):
-            tiledbsoma.io.resize_experiment(
-                experiment_uri,
-                nobs=rd.get_obs_shape(),
-                nvars=rd.get_var_shapes(),
-            )
+            rd.prepare_experiment(experiment_uri)
 
         tiledbsoma.io.from_h5ad(
             experiment_uri,
@@ -836,11 +829,7 @@ def test_append_items_with_experiment(obs_field_name, var_field_name):
 
     original = adata2.copy()
 
-    tiledbsoma.io.resize_experiment(
-        soma1,
-        nobs=rd.get_obs_shape(),
-        nvars=rd.get_var_shapes(),
-    )
+    rd.prepare_experiment(soma1)
 
     with tiledbsoma.Experiment.open(soma1, "w") as exp1:
         tiledbsoma.io.append_obs(
@@ -965,11 +954,7 @@ def test_append_with_disjoint_measurements(
         var_field_name=var_field_name,
     )
 
-    tiledbsoma.io.resize_experiment(
-        soma_uri,
-        nobs=rd.get_obs_shape(),
-        nvars=rd.get_var_shapes(),
-    )
+    rd.prepare_experiment(soma_uri)
 
     tiledbsoma.io.from_anndata(
         soma_uri,
@@ -1327,11 +1312,7 @@ def test_enum_bit_width_append(tmp_path, all_at_once, nobs_a, nobs_b):
             soma_uri, adata, measurement_name=measurement_name, registration_mapping=rd
         )
 
-        tiledbsoma.io.resize_experiment(
-            soma_uri,
-            nobs=rd.get_obs_shape(),
-            nvars=rd.get_var_shapes(),
-        )
+        rd.prepare_experiment(soma_uri)
 
         tiledbsoma.io.from_anndata(
             soma_uri, bdata, measurement_name=measurement_name, registration_mapping=rd
@@ -1351,11 +1332,7 @@ def test_enum_bit_width_append(tmp_path, all_at_once, nobs_a, nobs_b):
         assert rd.get_obs_shape() == nobs_a + nobs_b
         assert rd.get_var_shapes() == {"meas": 4}
 
-        tiledbsoma.io.resize_experiment(
-            soma_uri,
-            nobs=rd.get_obs_shape(),
-            nvars=rd.get_var_shapes(),
-        )
+        rd.prepare_experiment(soma_uri)
 
         tiledbsoma.io.from_anndata(
             soma_uri, bdata, measurement_name=measurement_name, registration_mapping=rd
@@ -1434,6 +1411,7 @@ def test_multimodal_names(tmp_path, conftest_pbmc3k_adata):
 
     assert rd.get_obs_shape() == 2638
     assert rd.get_var_shapes() == {"protein": 500, "raw": 13714}
+    rd.prepare_experiment(uri)
 
     # Ingest the second anndata object into the protein measurement
     tiledbsoma.io.from_anndata(
@@ -1578,11 +1556,7 @@ def test_extend_enmr_to_older_experiments_64521(tmp_path, version_and_shaped):
     assert rd.get_obs_shape() == 5400
 
     if shaped:
-        tiledbsoma.io.resize_experiment(
-            uri,
-            nobs=rd.get_obs_shape(),
-            nvars=rd.get_var_shapes(),
-        )
+        rd.prepare_experiment(uri)
 
     tiledbsoma.io.from_anndata(
         experiment_uri=uri,

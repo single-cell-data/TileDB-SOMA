@@ -23,6 +23,12 @@ def _get_enumeration(df: DataFrame, column_name: str) -> pd.CategoricalDtype:
 
 
 def _extend_enumeration(df: DataFrame, column_name: str, values: pa.Array) -> None:
+
+    # first confirm we are a dictionary. If we have been decategorical-ized, we
+    # will just be a plain-ol-array of value type.
+    if not pa.types.is_dictionary(df.schema.field(column_name).type):
+        return
+
     import tiledb
 
     # determine if we have any new enum values
