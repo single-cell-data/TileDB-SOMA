@@ -233,11 +233,22 @@ class ExperimentAmbientLabelMapping:
         """
         context = _validate_soma_tiledb_context(context)
 
-        tiledbsoma.io.resize_experiment(
-            experiment_uri, nobs=self.get_obs_shape(), nvars=self.get_var_shapes()
-        )
-
         with Experiment.open(experiment_uri, context=context) as E:
+
+            # Resize is done only if we have an Experiment supporting current domain.
+            # Code assumes that if obs is of a given era, so are all other arrays in
+            # the experiment.
+            ok_to_resize, _ = E.obs.tiledbsoma_resize_soma_joinid_shape(
+                self.get_obs_shape(), check_only=True
+            )
+            if ok_to_resize:
+                tiledbsoma.io.resize_experiment(
+                    experiment_uri,
+                    nobs=self.get_obs_shape(),
+                    nvars=self.get_var_shapes(),
+                )
+
+            # Enumerations
             for k, v in self.obs_axis.enum_values.items():
                 _extend_enumeration(E.obs, k, pa.array(v.categories))
 

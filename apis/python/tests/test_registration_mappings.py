@@ -1554,9 +1554,7 @@ def test_extend_enmr_to_older_experiments_64521(tmp_path, version_and_shaped):
     )
 
     assert rd.get_obs_shape() == 5400
-
-    if shaped:
-        rd.prepare_experiment(uri)
+    rd.prepare_experiment(uri)
 
     tiledbsoma.io.from_anndata(
         experiment_uri=uri,
