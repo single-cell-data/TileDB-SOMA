@@ -1177,7 +1177,7 @@ ManagedQuery::_extend_and_evolve_schema_with_details<std::string>(
             enum_values_to_add.size() * sizeof(uint64_t));
         se.extend_enumeration(extended_enmr);
         return std::tuple{
-            true, // was_extended
+            true,  // was_extended
             enum_values_in_write,
             enum_values_existing,
             enum_values_to_add,
@@ -1186,7 +1186,7 @@ ManagedQuery::_extend_and_evolve_schema_with_details<std::string>(
 
     } else {
         return std::tuple{
-            false, // was_extended
+            false,  // was_extended
             enum_values_in_write,
             enum_values_existing,
             enum_values_to_add,
@@ -1265,7 +1265,7 @@ ManagedQuery::_extend_and_evolve_schema_with_details(
         auto extended_enmr = enmr.extend(enum_values_to_add);
         se.extend_enumeration(extended_enmr);
         return std::tuple{
-            true, // was_extended
+            true,  // was_extended
             enum_values_in_write,
             enum_values_existing,
             enum_values_to_add,
@@ -1275,7 +1275,7 @@ ManagedQuery::_extend_and_evolve_schema_with_details(
     } else {
         // The enumeration was not extended
         return std::tuple{
-            false, // was_extended
+            false,  // was_extended
             enum_values_in_write,
             enum_values_existing,
             enum_values_to_add,
