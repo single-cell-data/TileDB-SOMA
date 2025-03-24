@@ -246,6 +246,7 @@ class ExperimentAmbientLabelMapping:
                     experiment_uri,
                     nobs=self.get_obs_shape(),
                     nvars=self.get_var_shapes(),
+                    context=context,
                 )
 
             # Enumerations

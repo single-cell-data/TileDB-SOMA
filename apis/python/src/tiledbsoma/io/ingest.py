@@ -16,6 +16,7 @@ import math
 import multiprocessing
 import os
 import time
+import warnings
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 from functools import partial
 from itertools import repeat
@@ -89,7 +90,6 @@ from .._types import (
     Path,
     _IngestMode,
 )
-from ..logging import logger
 from ..options import SOMATileDBContext
 from ..options._soma_tiledb_context import _validate_soma_tiledb_context
 from ..options._tiledb_create_write_options import (
@@ -114,7 +114,6 @@ from ._registration import (
     AxisIDMapping,
     ExperimentAmbientLabelMapping,
     ExperimentIDMapping,
-    get_dataframe_values,
 )
 from ._util import get_arrow_str_format, read_h5ad
 
@@ -224,8 +223,8 @@ def register_h5ads(
     ]
     if use_multiprocessing:
         if multiprocessing.get_start_method() == "fork":
-            logger.warning(
-                "Multiprocessing `fork` start method is inherently unsafe -- use `spawn`. See `multiprocessing.set_start_method()`"
+            warnings.warn(
+                "Multiprocessing `fork` start method is inherently unsafe -- use `spawn`. See `multiprocessing.set_start_method()`",
             )
         executor_context = ProcessPoolExecutor(max_workers=concurrency_level)
     else:
@@ -1191,7 +1190,7 @@ def _extract_new_values_for_append_aux(
         np.isin(
             arrow_table[SOMA_JOINID].to_numpy(),
             previous_sjids_table[SOMA_JOINID].to_numpy(),
-            invert=True
+            invert=True,
         )
     )
 
