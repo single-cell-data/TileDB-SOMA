@@ -22,9 +22,6 @@ import pyarrow as pa
 import scipy.sparse as sp
 from typing_extensions import Self
 
-from tiledbsoma.io._registration.id_mappings import AxisIDMapping, ExperimentIDMapping
-from tiledbsoma.options._soma_tiledb_context import _validate_soma_tiledb_context
-
 try:
     from PIL import Image
 except ImportError as err:
@@ -86,8 +83,13 @@ from ..ingest import (
     _write_matrix_to_denseNDArray,
     add_metadata,
 )
+from ._util import (
+    TenXCountMatrixReader,
+    _read_visium_software_version,
+    _read_xenium_software_version,
+)
+
 _NDArr = TypeVar("_NDArr", bound=NDArray)
-from ._util import TenXCountMatrixReader, _read_visium_software_version, _read_xenium_software_version
 
 
 def path_validator(instance, attribute, value: Path) -> None:  # type: ignore[no-untyped-def]
@@ -1744,128 +1746,3 @@ def _write_geometry_outline_arrow_table(
             f"Write Arrow table num_rows={len(arrow_table)} num_bytes={arrow_table.nbytes} cap={cap}",
         )
         handle.from_outlines(arrow_table, platform_config=tiledb_write_options)
-
-
-def _write_arrow_to_dataframe(
-    df_uri: str,
-    arrow_table: pa.Table,
-    max_size: int,
-    *,
-    ingestion_params: IngestionParams,
-    additional_metadata: AdditionalMetadata = None,
-    platform_config: PlatformConfig | None = None,
-    context: SOMATileDBContext | None = None,
-) -> DataFrame:
-    # Start timer
-    start_time = _util.get_start_stamp()
-    logging.log_io(None, f"START WRITING {df_uri}")
-
-    try:
-        soma_df = DataFrame.create(
-            df_uri,
-            schema=arrow_table.schema,
-            domain=[[0, max_size - 1]],
-            platform_config=platform_config,
-            context=context,
-        )
-    except (AlreadyExistsError, NotCreateableError):
-        raise SOMAError(f"{df_uri} already exists")
-
-    if not ingestion_params.write_schema_no_data:
-        tiledb_create_options = TileDBCreateOptions.from_platform_config(
-            platform_config
-        )
-        tiledb_write_options = TileDBWriteOptions.from_platform_config(platform_config)
-        _write_arrow_table(
-            arrow_table,
-            soma_df,
-            tiledb_create_options,
-            tiledb_write_options,
-        )
-
-    add_metadata(soma_df, additional_metadata)
-
-    logging.log_io(
-        f"Wrote {df_uri}",
-        _util.format_elapsed(start_time, f"FINISH WRITING {df_uri}"),
-    )
-    return soma_df
-
-
-def _write_X_layer(
-    cls: Type[_NDArr],
-    uri: str,
-    reader: TenXCountMatrixReader,
-    axis_0_mapping: AxisIDMapping,
-    axis_1_mapping: AxisIDMapping,
-    *,
-    ingestion_params: IngestionParams,
-    additional_metadata: AdditionalMetadata,
-    platform_config: PlatformConfig | None,
-    context: SOMATileDBContext | None,
-) -> _NDArr:
-    start_time = _util.get_start_stamp()
-    logging.log_io(None, f"START  WRITING {uri}")
-
-    shape = (reader.nobs, reader.nvar)
-    assert reader._data is not None
-    matrix_type = pa.from_numpy_dtype(reader._data.dtype)
-    try:
-
-        soma_ndarray = cls.create(
-            uri,
-            type=matrix_type,
-            shape=shape,
-            platform_config=platform_config,
-            context=context,
-        )
-    except (AlreadyExistsError, NotCreateableError):
-        if ingestion_params.error_if_already_exists:
-            raise SOMAError(f"{uri} already exists")
-        soma_ndarray = cls.open(
-            uri, "w", platform_config=platform_config, context=context
-        )
-
-    logging.log_io(
-        f"Writing {uri}",
-        _util.format_elapsed(start_time, f"START  WRITING {uri}"),
-    )
-
-    if isinstance(soma_ndarray, DenseNDArray):
-        reader.open()
-        matrix = sp.csr_matrix(
-            (reader._data, reader._feature_indices, reader._barcode_indptr),
-            shape=shape,
-        )
-        reader.close()
-
-        _write_matrix_to_denseNDArray(
-            soma_ndarray,
-            matrix,
-            tiledb_create_options=TileDBCreateOptions.from_platform_config(
-                platform_config
-            ),
-            tiledb_write_options=TileDBWriteOptions.from_platform_config(
-                platform_config
-            ),
-            ingestion_params=ingestion_params,
-            additional_metadata=additional_metadata,
-        )
-    elif isinstance(soma_ndarray, SparseNDArray):  # SOMASparseNDArray
-        add_metadata(soma_ndarray, additional_metadata)
-        data = pa.Table.from_pydict(
-            {
-                "soma_data": reader.data,
-                "soma_dim_0": reader.obs_indices,
-                "soma_dim_1": reader.var_indices,
-            }
-        )
-        soma_ndarray.write(data, platform_config=platform_config)
-    else:
-        raise TypeError(f"Unknown array type {type(soma_ndarray)}.")
-
-    logging.log_io(
-        f"Wrote   {uri}",
-        _util.format_elapsed(start_time, f"FINISH WRITING {uri}"),
-    )
-    return soma_ndarray
