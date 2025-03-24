@@ -122,8 +122,6 @@ _NDArr = TypeVar("_NDArr", bound=NDArray)
 _TDBO = TypeVar("_TDBO", bound=SOMAObject[RawHandle])
 
 
-
-
 def add_metadata(obj: SOMAObject[Any], additional_metadata: AdditionalMetadata) -> None:
     if additional_metadata:
         obj.verify_open_for_writing()
@@ -1188,11 +1186,15 @@ def _extract_new_values_for_append_aux(
     previous_sjids_table = previous_soma_dataframe.read(
         column_names=["soma_joinid"]
     ).concat()
-    previous_join_ids = set(
-        int(e)
-        for e in get_dataframe_values(previous_sjids_table.to_pandas(), SOMA_JOINID)
+    # use numpy.isin over pyarrow.compute.is_in, as it is MUCH faster
+    mask = pa.array(
+        np.isin(
+            arrow_table[SOMA_JOINID].to_numpy(),
+            previous_sjids_table[SOMA_JOINID].to_numpy(),
+            invert=True
+        )
     )
-    mask = [e.as_py() not in previous_join_ids for e in arrow_table[SOMA_JOINID]]
+
     arrow_table = arrow_table.filter(mask)
 
     # Check if any new data.
