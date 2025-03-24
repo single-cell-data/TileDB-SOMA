@@ -551,13 +551,14 @@ class GeometryDataFrame(SpatialDataFrame, somacore.GeometryDataFrame):
         """
         columns = []
         for field in self.schema:
-            if field.metadata is not None and b'dtype' in field.metadata:
-                if field.metadata[b'dtype'] == b'WKB':
-                    columns.append((field.name, True if field.name == SOMA_GEOMETRY else False))
+            if field.metadata is not None and b"dtype" in field.metadata:
+                if field.metadata[b"dtype"] == b"WKB":
+                    columns.append(
+                        (field.name, True if field.name == SOMA_GEOMETRY else False)
+                    )
 
         outline_transformer = clib.OutlineTransformer(
-            coordinate_space_to_json(self._coord_space),
-            columns
+            coordinate_space_to_json(self._coord_space), columns
         )
 
         for batch in values.to_batches():
