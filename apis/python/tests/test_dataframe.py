@@ -255,17 +255,24 @@ def test_dataframe_with_enumeration(tmp_path):
         assert_array_equal(df["myfloat"].chunk(0).dictionary, enums["enmr2"])
 
 
+# The functionality being tested here doesn't depend on whether the enumerations
+# are ordered or not.  (There are no conditional on ordered within the test
+# function.) We vary it anyway.
+#
+# Users should be able to access the schema even when the dataframe is opened in
+# write mode.
+@pytest.mark.parametrize("ordered", [True, False])
 @pytest.mark.parametrize("mode", ["r", "w"])
-def test_get_enumeration_values(tmp_path, mode):
+def test_get_enumeration_values(tmp_path, ordered, mode):
     uri = tmp_path.as_posix()
 
     schema = pa.schema(
         [
             pa.field("not_an_enum", pa.large_string()),
-            pa.field("string_ordered", pa.dictionary(pa.int32(), pa.large_string())),
-            pa.field("string_unordered", pa.dictionary(pa.int32(), pa.large_string())),
-            pa.field("int64_ordered", pa.dictionary(pa.int32(), pa.int64())),
-            pa.field("int64_unordered", pa.dictionary(pa.int32(), pa.int64())),
+            pa.field("string_enum", pa.dictionary(pa.int32(), pa.large_string())),
+            pa.field("int64_enum", pa.dictionary(pa.int32(), pa.int64())),
+            pa.field("float32_enum", pa.dictionary(pa.int16(), pa.float32())),
+            pa.field("bool_enum", pa.dictionary(pa.int8(), pa.bool_())),
         ]
     )
 
@@ -281,16 +288,16 @@ def test_get_enumeration_values(tmp_path, mode):
         with pytest.raises(KeyError):
             sdf.get_enumeration_values(["not_an_enum"])
         with pytest.raises(KeyError):
-            sdf.get_enumeration_values(["string_ordered", "not_an_enum"])
+            sdf.get_enumeration_values(["string_enum", "not_an_enum"])
 
         actual = sdf.get_enumeration_values(
-            ["string_ordered", "string_unordered", "int64_ordered", "int64_unordered"]
+            ["string_enum", "int64_enum", "float32_enum", "bool_enum"]
         )
         expect = {
-            "string_ordered": pa.array([], type=pa.large_string()),
-            "string_unordered": pa.array([], type=pa.large_string()),
-            "int64_ordered": pa.array([], type=pa.int64()),
-            "int64_unordered": pa.array([], type=pa.int64()),
+            "string_enum": pa.array([], type=pa.large_string()),
+            "int64_enum": pa.array([], type=pa.int64()),
+            "float32_enum": pa.array([], type=pa.float32()),
+            "bool_enum": pa.array([], type=pa.bool_()),
         }
         assert actual == expect
 
@@ -298,16 +305,16 @@ def test_get_enumeration_values(tmp_path, mode):
     pd_data = {
         "soma_joinid": [0, 1, 2, 3, 4],
         "not_an_enum": pd.Categorical(["a", "nn", "zzz", "nn", "a"]),
-        "string_ordered": pd.Categorical(["a", "nn", "zzz", "nn", "a"], ordered=True),
-        "string_unordered": pd.Categorical(
-            ["a", "nn", "zzz", "nn", "a"], ordered=False
+        "string_enum": pd.Categorical(["a", "nn", "zzz", "nn", "a"], ordered=ordered),
+        "int64_enum": pd.Categorical(
+            [111111111, 99999, 3333333, 111111111, 99999], ordered=ordered
         ),
-        "int64_ordered": pd.Categorical(
-            [111111111, 99999, 3333333, 111111111, 99999], ordered=True
+        "float32_enum": pd.Categorical(
+            np.array([1.5, 0.5, 99.0, 1.5, 99.0], dtype=np.float32), ordered=ordered
         ),
-        "int64_unordered": pd.Categorical(
-            [111111111, 99999, 3333333, 111111111, 99999],
-            ordered=False,
+        "bool_enum": pd.Categorical(
+            [True, True, True, True, True],
+            ordered=ordered,
         ),
     }
     arrow_data = pa.Table.from_pydict(pd_data)
@@ -321,26 +328,28 @@ def test_get_enumeration_values(tmp_path, mode):
         with pytest.raises(KeyError):
             sdf.get_enumeration_values(["not_an_enum"])
         with pytest.raises(KeyError):
-            sdf.get_enumeration_values(["string_ordered", "not_an_enum"])
+            sdf.get_enumeration_values(["string_enum", "not_an_enum"])
 
         actual = sdf.get_enumeration_values(
-            ["string_ordered", "string_unordered", "int64_ordered", "int64_unordered"]
+            ["string_enum", "int64_enum", "float32_enum", "bool_enum"]
         )
         expect = {
-            "string_ordered": pa.array(["a", "nn", "zzz"], type=pa.large_string()),
-            "string_unordered": pa.array(["a", "nn", "zzz"], type=pa.large_string()),
-            "int64_ordered": pa.array([111111111, 3333333, 99999], type=pa.int64()),
-            "int64_unordered": pa.array([111111111, 3333333, 99999], type=pa.int64()),
+            "string_enum": pa.array(["a", "nn", "zzz"], type=pa.large_string()),
+            "int64_enum": pa.array([111111111, 3333333, 99999], type=pa.int64()),
+            "float32_enum": pa.array([1.5, 0.5, 99.0], type=pa.float32()),
+            "bool_enum": pa.array([False, True, False], type=pa.bool_()),
         }
 
     # Write again
     pd_data = {
         "soma_joinid": [5, 6, 7],
         "not_an_enum": pd.Categorical(["dddd", "nn", "zzz"]),
-        "string_ordered": pd.Categorical(["dddd", "nn", "zzz"], ordered=True),
-        "string_unordered": pd.Categorical(["dddd", "nn", "zzz"], ordered=False),
-        "int64_ordered": pd.Categorical([555555555, 111111111, 99999], ordered=True),
-        "int64_unordered": pd.Categorical([555555555, 111111111, 99999], ordered=False),
+        "string_enum": pd.Categorical(["dddd", "nn", "zzz"], ordered=ordered),
+        "int64_enum": pd.Categorical([555555555, 111111111, 99999], ordered=ordered),
+        "float32_enum": pd.Categorical(
+            np.array([44.25, 0.5, 99.0], dtype=np.float32), ordered=ordered
+        ),
+        "bool_enum": pd.Categorical([True, False, True], ordered=ordered),
     }
     arrow_data = pa.Table.from_pydict(pd_data)
 
@@ -353,24 +362,18 @@ def test_get_enumeration_values(tmp_path, mode):
         with pytest.raises(KeyError):
             sdf.get_enumeration_values(["not_an_enum"])
         with pytest.raises(KeyError):
-            sdf.get_enumeration_values(["string_ordered", "not_an_enum"])
+            sdf.get_enumeration_values(["string_enum", "not_an_enum"])
 
         actual = sdf.get_enumeration_values(
-            ["string_ordered", "string_unordered", "int64_ordered", "int64_unordered"]
+            ["string_enum", "int64_enum", "float32_enum", "bool_enum"]
         )
         expect = {
-            "string_ordered": pa.array(
-                ["a", "nn", "zzz", "dddd"], type=pa.large_string()
-            ),
-            "string_unordered": pa.array(
-                ["a", "nn", "zzz", "dddd"], type=pa.large_string()
-            ),
-            "int64_ordered": pa.array(
+            "string_enum": pa.array(["a", "nn", "zzz", "dddd"], type=pa.large_string()),
+            "int64_enum": pa.array(
                 [99999, 3333333, 111111111, 555555555], type=pa.int64()
             ),
-            "int64_unordered": pa.array(
-                [99999, 3333333, 111111111, 555555555], type=pa.int64()
-            ),
+            "float32_enum": pa.array([0.5, 1.5, 99.0, 44.25], type=pa.float32()),
+            "bool_enum": pa.array([True, False], type=pa.bool_()),
         }
 
         assert actual == expect
