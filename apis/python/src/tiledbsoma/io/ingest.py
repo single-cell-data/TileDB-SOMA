@@ -279,16 +279,18 @@ def register_anndatas(
 
     context = _validate_soma_tiledb_context(context)
 
-    axes_metadata = ExperimentAmbientLabelMapping._load_axes_metadata_from_anndatas(
-        adatas,
-        obs_field_name,
-        var_field_name,
-        partial(ExperimentAmbientLabelMapping._validate_anndata, append_obsm_varm),
-    )
+    axes_metadata = [
+        ExperimentAmbientLabelMapping._load_axes_metadata_from_anndatas(
+            adatas,
+            obs_field_name,
+            var_field_name,
+            partial(ExperimentAmbientLabelMapping._validate_anndata, append_obsm_varm),
+        )
+    ]
 
     return ExperimentAmbientLabelMapping._register_common(
         experiment_uri,
-        [axes_metadata],
+        axes_metadata,
         measurement_name=measurement_name,
         obs_field_name=obs_field_name,
         var_field_name=var_field_name,
