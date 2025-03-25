@@ -593,7 +593,8 @@ class ArrowAdapter {
         // if callsites don't use t.
         if (std::is_same_v<T, std::string>) {
             throw std::runtime_error(
-                "ArrowAdapter::make_arrow_array_child: template-specialization "
+                "[ArrowAdapter::make_arrow_array_child] "
+                "template-specialization "
                 "failure.");
         }
 
@@ -731,7 +732,7 @@ class ArrowAdapter {
 
         if (std::is_same_v<T, std::string>) {
             throw std::runtime_error(
-                "SOMAArray::get_table_non_string_column_by_index: "
+                "[ArrowAdapter::get_table_non_string_column_by_index] "
                 "template-specialization failure.");
         }
 
@@ -774,20 +775,19 @@ class ArrowAdapter {
         const ArrowArray* arrow_array) {
         if (arrow_array->n_children != 0) {
             throw std::runtime_error(
-                "ArrowAdapter::get_array_non_string_column: expected leaf "
+                "[ArrowAdapter::get_array_non_string_column] expected leaf "
                 "node");
         }
         if (arrow_array->n_buffers != 2) {
             throw std::runtime_error(
-                "ArrowAdapter::get_array_non_string_column: expected two "
+                "[ArrowAdapter::get_array_non_string_column] expected two "
                 "buffers");
         }
 
         if (std::is_same_v<T, std::string>) {
             throw std::runtime_error(
-                "SOMAArray::get_array_non_string_column: "
-                "template-specialization "
-                "failure.");
+                "[ArrowAdapter::get_array_non_string_column] "
+                "template-specialization failure.");
         }
 
         // Two-buffer model for non-string data:
@@ -800,18 +800,18 @@ class ArrowAdapter {
         // support arrow-nulls, we can work on that.
         if (arrow_array->buffers[0] != nullptr) {
             throw std::runtime_error(
-                "ArrowAdapter::get_array_non_string_column: validity buffer "
+                "[ArrowAdapter::get_array_non_string_column] validity buffer "
                 "unsupported here");
         }
         if (arrow_array->buffers[1] == nullptr) {
             throw std::runtime_error(
-                "ArrowAdapter::get_array_non_string_column: null data buffer");
+                "[ArrowAdapter::get_array_non_string_column] null data buffer");
         }
 
         const void* vdata = arrow_array->buffers[1];
         if (vdata == nullptr) {
             throw std::runtime_error(
-                "ArrowAdapter::get_array_non_string_column: null data buffer");
+                "[ArrowAdapter::get_array_non_string_column] null data buffer");
         }
 
         const T* data = (T*)vdata;
@@ -834,12 +834,12 @@ class ArrowAdapter {
         const ArrowArray* arrow_array, const ArrowSchema* arrow_schema) {
         if (arrow_array->n_children != 0 || arrow_schema->n_children != 0) {
             throw std::runtime_error(
-                "ArrowAdapter::get_array_string_column: expected leaf "
+                "[ArrowAdapter::get_array_string_column] expected leaf "
                 "node");
         }
         if (arrow_array->n_buffers != 3) {
             throw std::runtime_error(
-                "ArrowAdapter::get_array_string_column: expected three "
+                "[ArrowAdapter::get_array_string_column] expected three "
                 "buffers");
         }
 
@@ -854,17 +854,17 @@ class ArrowAdapter {
         // support arrow-nulls, we can work on that.
         if (arrow_array->buffers[0] != nullptr) {
             throw std::runtime_error(
-                "ArrowAdapter::get_array_string_column: validity buffer "
+                "[ArrowAdapter::get_array_string_column] validity buffer "
                 "unsupported here");
         }
         if (arrow_array->buffers[1] == nullptr) {
             throw std::runtime_error(
-                "ArrowAdapter::get_array_string_column: null "
+                "[ArrowAdapter::get_array_string_column] null "
                 "offsets buffer");
         }
         if (arrow_array->buffers[2] == nullptr) {
             throw std::runtime_error(
-                "ArrowAdapter::get_array_string_column: null data "
+                "[ArrowAdapter::get_array_string_column] null data "
                 "buffer");
         }
 
@@ -895,7 +895,7 @@ class ArrowAdapter {
 
         } else {
             throw std::runtime_error(
-                "ArrowAdapter::get_array_string_column: expected "
+                "[ArrowAdapter::get_array_string_column] expected "
                 "Arrow string, large_string, binary, or large_binary");
         }
     }
@@ -923,14 +923,15 @@ class ArrowAdapter {
 
         if (arrow_array->n_children == 0) {
             throw std::runtime_error(
-                "ArrowAdapter::get_table_any_column_by_index: expected "
+                "[ArrowAdapter::get_table_any_column_by_index] expected "
                 "non-leaf "
                 "node");
         }
 
         if (arrow_schema->n_children <= column_index) {
             throw std::runtime_error(
-                "ArrowAdapter::get_table_any_column_by_index: column index out "
+                "[ArrowAdapter::get_table_any_column_by_index] column index "
+                "out "
                 "of bounds.");
         }
 
@@ -997,13 +998,13 @@ class ArrowAdapter {
 
         if (array->n_children != 0) {
             throw std::runtime_error(
-                "ArrowAdapter::get_table_any_column: expected leaf "
+                "[ArrowAdapter::get_table_any_column] expected leaf "
                 "node");
         }
 
         if (array->length < static_cast<int64_t>(S + offset)) {
             throw std::runtime_error(
-                "ArrowAdapter::get_table_any_column: expected at least " +
+                "[ArrowAdapter::get_table_any_column] expected at least " +
                 std::to_string(S + offset) + " elements");
         }
 
@@ -1013,40 +1014,40 @@ class ArrowAdapter {
             strcmp(schema->format, "Z") == 0) {
             if (array->n_buffers != 3) {
                 throw std::runtime_error(
-                    "ArrowAdapter::get_table_any_column: expected three "
+                    "[ArrowAdapter::get_table_any_column] expected three "
                     "buffers");
             }
 
             if (array->buffers[0] != nullptr) {
                 throw std::runtime_error(
-                    "ArrowAdapter::get_table_any_column: validity buffer "
+                    "[ArrowAdapter::get_table_any_column] validity buffer "
                     "unsupported here");
             }
             if (array->buffers[1] == nullptr) {
                 throw std::runtime_error(
-                    "ArrowAdapter::get_table_any_column: null "
+                    "[ArrowAdapter::get_table_any_column] null "
                     "offsets buffer");
             }
             if (array->buffers[2] == nullptr) {
                 throw std::runtime_error(
-                    "ArrowAdapter::get_table_any_column: null data "
+                    "[ArrowAdapter::get_table_any_column] null data "
                     "buffer");
             }
         } else {
             if (array->n_buffers != 2) {
                 throw std::runtime_error(
-                    "ArrowAdapter::get_table_any_column: expected two "
+                    "[ArrowAdapter::get_table_any_column] expected two "
                     "buffers");
             }
 
             if (array->buffers[0] != nullptr) {
                 throw std::runtime_error(
-                    "ArrowAdapter::get_table_any_column: validity buffer "
+                    "[ArrowAdapter::get_table_any_column] validity buffer "
                     "unsupported here");
             }
             if (array->buffers[1] == nullptr) {
                 throw std::runtime_error(
-                    "ArrowAdapter::get_table_any_column: null data buffer");
+                    "[ArrowAdapter::get_table_any_column] null data buffer");
             }
         }
 
@@ -1156,7 +1157,7 @@ class ArrowAdapter {
                     return std::make_any<std::array<std::string, S>>(result);
                 } else {
                     throw std::runtime_error(
-                        "ArrowAdapter::get_table_any_column: Unknown "
+                        "[ArrowAdapter::get_table_any_column] Unknown "
                         "schema format '" +
                         std::string(schema->format) + "'");
                 }
@@ -1208,14 +1209,14 @@ class ArrowAdapter {
                         result);
                 } else {
                     throw std::runtime_error(
-                        "ArrowAdapter::get_table_any_column: Unknown "
+                        "[ArrowAdapter::get_table_any_column] Unknown "
                         "schema format '" +
                         std::string(schema->format) + "'");
                 }
             } break;
             default:
                 throw std::runtime_error(
-                    "ArrowAdapter::get_table_any_column: Unknown "
+                    "[ArrowAdapter::get_table_any_column] Unknown "
                     "datatype '" +
                     tiledb::impl::type_to_str(tdb_type) + "'");
                 break;

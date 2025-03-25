@@ -549,7 +549,7 @@ bool ManagedQuery::_cast_column(
     if (has_attr && attr_has_enum(schema->name)) {
         if (schema->dictionary == nullptr || array->dictionary == nullptr) {
             throw std::invalid_argument(
-                "[SOMAArray] " + std::string(schema->name) +
+                "[ManagedQuery] " + std::string(schema->name) +
                 " requires dictionary entry");
         }
     }
@@ -988,7 +988,7 @@ bool ManagedQuery::_extend_and_write_enumeration(
                 value_schema, value_array, index_schema, index_array, enmr, se);
         default:
             throw TileDBSOMAError(fmt::format(
-                "ArrowAdapter: Unsupported TileDB dict datatype: {} ",
+                "[ManagedQuery] Unsupported TileDB dict datatype: {} ",
                 tiledb::impl::type_to_str(value_type)));
     }
 }
@@ -1288,8 +1288,8 @@ std::vector<uint8_t> ManagedQuery::_cast_bool_data(
     ArrowSchema* schema, ArrowArray* array) {
     if (strcmp(schema->format, "b") != 0) {
         throw TileDBSOMAError(fmt::format(
-            "_cast_bit_to_uint8 expected column format to be 'b' but saw "
-            "{}",
+            "[ManagedQuery::_cast_bool_data] expected column format to be 'b' "
+            "but saw {}",
             schema->format));
     }
 

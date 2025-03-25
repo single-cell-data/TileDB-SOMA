@@ -973,7 +973,7 @@ class SOMAArray : public SOMAObject {
         if (new_lo_hi.size() != 2) {
             throw TileDBSOMAError(
                 "internal coding error detected at "
-                "_can_set_dataframe_domainish_slot_checker");
+                "_can_set_dataframe_domainish_slot_checker_non_string");
         }
 
         const T& old_lo = old_lo_hi.first;
@@ -1036,7 +1036,7 @@ class SOMAArray : public SOMAObject {
         if (new_lo_hi.size() != 2) {
             throw TileDBSOMAError(
                 "internal coding error detected at "
-                "_can_set_dataframe_domainish_slot_checker");
+                "_can_set_dataframe_domainish_slot_checker_string");
         }
 
         const std::string& new_lo = new_lo_hi[0];

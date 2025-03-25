@@ -1034,8 +1034,7 @@ std::vector<int64_t> SOMAArray::_shape_via_tiledb_current_domain() {
     if (current_domain.is_empty()) {
         throw TileDBSOMAError(
             "Internal error: current domain requested for an array which "
-            "does "
-            "not support it");
+            "does not support it");
     }
 
     auto t = current_domain.type();

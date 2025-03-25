@@ -1129,7 +1129,7 @@ Dimension ArrowAdapter::tiledb_dimension_from_arrow_schema(
 
     if (array->length != 5) {
         throw TileDBSOMAError(fmt::format(
-            "ArrowAdapter: unexpected length {} != 5 for name "
+            "[ArrowAdapter] unexpected length {} != 5 for name "
             "'{}'",
             array->length,
             col_name));
@@ -1177,7 +1177,7 @@ Dimension ArrowAdapter::tiledb_dimension_from_arrow_schema_ext(
 
     if (array->length != 5) {
         throw TileDBSOMAError(fmt::format(
-            "ArrowAdapter: unexpected length {} != 5 for name "
+            "[ArrowAdapter] unexpected length {} != 5 for name "
             "'{}'",
             array->length,
             col_name));
@@ -1242,7 +1242,7 @@ ArrowAdapter::tiledb_attribute_from_arrow_schema(
 inline void exitIfError(const ArrowErrorCode ec, const std::string& msg) {
     if (ec != NANOARROW_OK)
         throw TileDBSOMAError(
-            fmt::format("ArrowAdapter: Arrow Error {} ", msg));
+            fmt::format("[ArrowAdapter] Arrow Error {} ", msg));
 }
 
 std::pair<std::unique_ptr<ArrowArray>, std::unique_ptr<ArrowSchema>>
@@ -1442,7 +1442,7 @@ std::string_view ArrowAdapter::to_arrow_format(
         return _to_arrow_format_map.at(tiledb_dtype);
     } catch (const std::out_of_range& e) {
         throw std::out_of_range(fmt::format(
-            "ArrowAdapter: Unsupported TileDB type: {} ",
+            "[ArrowAdapter] Unsupported TileDB type: {} ",
             tiledb::impl::type_to_str(tiledb_dtype)));
     }
 }
@@ -1476,7 +1476,7 @@ tiledb_datatype_t ArrowAdapter::to_tiledb_format(
         return dtype;
     } catch (const std::out_of_range& e) {
         throw std::out_of_range(fmt::format(
-            "ArrowAdapter: Unsupported Arrow type: {} ", arrow_dtype));
+            "[ArrowAdapter] Unsupported Arrow type: {} ", arrow_dtype));
     }
 }
 
@@ -1524,7 +1524,7 @@ enum ArrowType ArrowAdapter::to_nanoarrow_type(std::string_view sv) {
         return NANOARROW_TYPE_LARGE_BINARY;
     else
         throw TileDBSOMAError(
-            fmt::format("ArrowAdapter: Unsupported Arrow format: {} ", sv));
+            fmt::format("[ArrowAdapter] Unsupported Arrow format: {} ", sv));
 }
 
 std::unique_ptr<ArrowSchema> ArrowAdapter::make_arrow_schema(
@@ -1535,7 +1535,8 @@ std::unique_ptr<ArrowSchema> ArrowAdapter::make_arrow_schema(
 
     if (num_names != num_types) {
         throw TileDBSOMAError(fmt::format(
-            "ArrowAdapter::make_arrow_schema: internal coding error: num_types "
+            "[ArrowAdapter::make_arrow_schema] internal coding error: "
+            "num_types "
             "{} != num_names {}",
             num_names,
             num_types));
@@ -1666,7 +1667,7 @@ void ArrowAdapter::_check_shapes(
     ArrowArray* arrow_array, ArrowSchema* arrow_schema) {
     if (arrow_array->n_children != arrow_schema->n_children) {
         throw std::runtime_error(
-            "ArrowAdapter::_check_shapes: internal coding error: data/schema "
+            "[ArrowAdapter::_check_shapes] internal coding error: data/schema "
             "mismatch");
     }
     for (int64_t i = 0; i < arrow_array->n_children; i++) {
@@ -1683,7 +1684,7 @@ int64_t ArrowAdapter::_get_column_index_from_name(
 
     if (arrow_schema->n_children == 0) {
         throw std::runtime_error(
-            "ArrowAdapter::_check_shapes: internal coding error: childless "
+            "[ArrowAdapter::_check_shapes] internal coding error: childless "
             "table");
     }
 
@@ -1694,7 +1695,7 @@ int64_t ArrowAdapter::_get_column_index_from_name(
     }
 
     throw std::runtime_error(fmt::format(
-        "ArrowAdapter::_check_shapes: column {} not found", column_name));
+        "[ArrowAdapter::_check_shapes] column {} not found", column_name));
 }
 
 ArrowArray* ArrowAdapter::_get_and_check_column(
@@ -1704,7 +1705,7 @@ ArrowArray* ArrowAdapter::_get_and_check_column(
     ArrowArray* arrow_array = arrow_table.first.get();
     if (column_index < 0 || column_index >= arrow_array->n_children) {
         throw std::runtime_error(fmt::format(
-            "ArrowAdapter::_get_and_check_column: column index {} out of "
+            "[ArrowAdapter::_get_and_check_column] column index {} out of "
             "bounds {}..{}",
             column_index,
             0,
@@ -1715,7 +1716,7 @@ ArrowArray* ArrowAdapter::_get_and_check_column(
 
     if (child->n_children != 0) {
         throw std::runtime_error(fmt::format(
-            "ArrowAdapter::_get_and_check_column: column index {} is "
+            "[ArrowAdapter::_get_and_check_column] column index {} is "
             "non-terminal",
             column_index));
     }
@@ -1723,7 +1724,7 @@ ArrowArray* ArrowAdapter::_get_and_check_column(
     if (expected_n_buffers == 2) {
         if (child->n_buffers != 2) {
             throw std::runtime_error(fmt::format(
-                "ArrowAdapter::_get_and_check_column: column index {} "
+                "[ArrowAdapter::_get_and_check_column] column index {} "
                 "has buffer count {}; expected 2 for non-string data",
                 column_index,
                 child->n_buffers));
@@ -1732,7 +1733,7 @@ ArrowArray* ArrowAdapter::_get_and_check_column(
     } else if (expected_n_buffers == 3) {
         if (child->n_buffers != 3) {
             throw std::runtime_error(fmt::format(
-                "ArrowAdapter::_get_and_check_column: column index {} is "
+                "[ArrowAdapter::_get_and_check_column] column index {} is "
                 "has buffer count {}; expected 3 for string data",
                 column_index,
                 child->n_buffers));
@@ -1740,7 +1741,7 @@ ArrowArray* ArrowAdapter::_get_and_check_column(
 
     } else {
         throw std::runtime_error(fmt::format(
-            "ArrowAdapter::_get_and_check_column: internal coding error: "
+            "[ArrowAdapter::_get_and_check_column] internal coding error: "
             "expected_n_buffers {} is "
             "neither 2 nor 3.",
             expected_n_buffers));
@@ -1755,7 +1756,7 @@ std::unique_ptr<ArrowArray> ArrowAdapter::arrow_array_insert_at_index(
     int64_t index) {
     if (parent_array->n_children < index || index < 0) {
         throw std::runtime_error(
-            "[ArrowAdapter][arrow_array_insert_at_index] Invalid index to "
+            "[ArrowAdapter::arrow_array_insert_at_index] Invalid index to "
             "insert array");
     }
 
@@ -1790,7 +1791,7 @@ std::unique_ptr<ArrowSchema> ArrowAdapter::arrow_schema_insert_at_index(
     int64_t index) {
     if (parent_schema->n_children < index || index < 0) {
         throw std::runtime_error(
-            "[ArrowAdapter][arrow_schema_insert_at_index] Invalid index to "
+            "[ArrowAdapter::arrow_schema_insert_at_index] Invalid index to "
             "insert schema");
     }
 
@@ -1823,7 +1824,7 @@ std::unique_ptr<ArrowArray> ArrowAdapter::arrow_array_remove_at_index(
     std::unique_ptr<ArrowArray> array, int64_t index) {
     if (array->n_children <= index || index < 0) {
         throw std::runtime_error(
-            "[ArrowAdapter][arrow_array_remove_at_index] Invalid index to "
+            "[ArrowAdapter::arrow_array_remove_at_index] Invalid index to "
             "remove child array");
     }
 
@@ -1846,7 +1847,7 @@ std::unique_ptr<ArrowSchema> ArrowAdapter::arrow_schema_remove_at_index(
     std::unique_ptr<ArrowSchema> schema, int64_t index) {
     if (schema->n_children <= index || index < 0) {
         throw std::runtime_error(
-            "[ArrowAdapter][arrow_schema_remove_at_index] Invalid index to "
+            "[ArrowAdapter::arrow_schema_remove_at_index] Invalid index to "
             "remove child schema");
     }
 
@@ -1933,7 +1934,7 @@ size_t ArrowAdapter::_set_dictionary_buffers(
             return data_size / sizeof(double_t);
         default:
             throw TileDBSOMAError(fmt::format(
-                "ArrowAdapter: Unsupported TileDB dict datatype: {} ",
+                "[ArrowAdapter] Unsupported TileDB dict datatype: {} ",
                 tiledb::impl::type_to_str(enumeration.type())));
     }
 }
