@@ -942,7 +942,7 @@ bool ManagedQuery::_extend_and_write_enumeration(
     ArrowArray* value_array,
     ArrowSchema* index_schema,
     ArrowArray* index_array,
-    Enumeration& enmr,
+    Enumeration enmr,
     ArraySchemaEvolution& se) {
     // For columns with dictionaries, we need to identify the data type of the
     // enumeration to extend any new enumeration values
@@ -999,7 +999,110 @@ bool ManagedQuery::_extend_and_evolve_schema_and_write<std::string>(
     ArrowArray* value_array,
     ArrowSchema* index_schema,
     ArrowArray* index_array,
-    Enumeration& enmr,
+    Enumeration enmr,
+    ArraySchemaEvolution& se) {
+    std::string column_name = index_schema->name;
+
+    const auto
+        [was_extended,
+         enum_values_in_write,
+         enum_values_existing,
+         enum_values_to_add,
+         total_size,
+         extended_enmr] =
+            _extend_and_evolve_schema_with_details<
+                std::string,
+                std::string_view>(
+                value_schema, value_array, column_name, enmr, se);
+
+    if (was_extended) {
+        ManagedQuery::_remap_indexes(
+            column_name,
+            extended_enmr,
+            enum_values_in_write,
+            index_schema,
+            index_array);
+
+        return true;
+    } else {
+        // Example:
+        //
+        // * Already on storage/schema there are values a,b,c with indices
+        //   0,1,2.
+        // * User appends values b,c which, within the Arrow data coming in
+        //   from the user, have indices 0,1.
+        // * We need to remap those to 1,2.
+
+        ManagedQuery::_remap_indexes(
+            column_name, enmr, enum_values_in_write, index_schema, index_array);
+    }
+    return false;
+}
+
+template <typename ValueType>
+bool ManagedQuery::_extend_and_evolve_schema_and_write(
+    ArrowSchema* value_schema,
+    ArrowArray* value_array,
+    ArrowSchema* index_schema,
+    ArrowArray* index_array,
+    Enumeration enmr,
+    ArraySchemaEvolution& se) {
+    std::string column_name = index_schema->name;
+
+    const auto
+        [was_extended,
+         enum_values_in_write,
+         enum_values_existing,
+         enum_values_to_add,
+         total_size,
+         extended_enmr] =
+            _extend_and_evolve_schema_with_details<ValueType, ValueType>(
+                value_schema, value_array, column_name, enmr, se);
+
+    if (was_extended) {
+        // If the passed-in enumerations are only a subset of the new extended
+        // enumerations, then we will need to remap the indexes. ie. the user
+        // passes in values [B, C] which maps to indexes [0, 1]. However, the
+        // full set of extended enumerations is [A, B, C] which means we need to
+        // remap [B, C] to be indexes [1, 2]
+        ManagedQuery::_remap_indexes(
+            column_name,
+            extended_enmr,
+            enum_values_in_write,
+            index_schema,
+            index_array);
+
+        // The enumeration was extended
+        return true;
+    } else {
+        // Example:
+        //
+        // * Already on storage/schema there are values a,b,c with indices
+        //   0,1,2.
+        // * User appends values b,c which, within the Arrow data coming in
+        //   from the user, have indices 0,1.
+        // * We need to remap those to 1,2.
+        ManagedQuery::_remap_indexes(
+            column_name, enmr, enum_values_in_write, index_schema, index_array);
+
+        // The enumeration was not extended
+        return false;
+    }
+}
+
+template <>
+std::tuple<
+    bool,                           // was_extended
+    std::vector<std::string_view>,  // enum_values_in_write
+    std::vector<std::string_view>,  // enum_values_existing
+    std::vector<std::string_view>,  // enum_values_added
+    size_t,                         // total_size
+    Enumeration>                    // extended_enmr
+ManagedQuery::_extend_and_evolve_schema_with_details<std::string>(
+    ArrowSchema* value_schema,
+    ArrowArray* value_array,
+    std::string column_name,
+    Enumeration enmr,
     ArraySchemaEvolution& se) {
     uint64_t num_elems = value_array->length;
 
@@ -1042,7 +1145,6 @@ bool ManagedQuery::_extend_and_evolve_schema_and_write<std::string>(
         }
     }
 
-    std::string column_name = index_schema->name;
     if (enum_values_to_add.size() != 0) {
         // Check that we extend the enumeration values without
         // overflowing
@@ -1074,37 +1176,38 @@ bool ManagedQuery::_extend_and_evolve_schema_and_write<std::string>(
             extend_offsets.data(),
             enum_values_to_add.size() * sizeof(uint64_t));
         se.extend_enumeration(extended_enmr);
-
-        ManagedQuery::_remap_indexes(
-            column_name,
-            extended_enmr,
+        return std::tuple{
+            true,  // was_extended
             enum_values_in_write,
-            index_schema,
-            index_array);
+            enum_values_existing,
+            enum_values_to_add,
+            total_size,
+            extended_enmr};
 
-        return true;
     } else {
-        // Example:
-        //
-        // * Already on storage/schema there are values a,b,c with indices
-        //   0,1,2.
-        // * User appends values b,c which, within the Arrow data coming in
-        //   from the user, have indices 0,1.
-        // * We need to remap those to 1,2.
-
-        ManagedQuery::_remap_indexes(
-            column_name, enmr, enum_values_in_write, index_schema, index_array);
+        return std::tuple{
+            false,  // was_extended
+            enum_values_in_write,
+            enum_values_existing,
+            enum_values_to_add,
+            total_size,
+            enmr};
     }
-    return false;
 }
 
-template <typename ValueType>
-bool ManagedQuery::_extend_and_evolve_schema_and_write(
+template <typename ValueType, typename ValueViewType>
+std::tuple<
+    bool,                        // was_extended
+    std::vector<ValueViewType>,  // enum_values_in_write
+    std::vector<ValueViewType>,  // enum_values_existing
+    std::vector<ValueViewType>,  // enum_values_added
+    size_t,                      // total_size
+    Enumeration>                 //  extended_enmr
+ManagedQuery::_extend_and_evolve_schema_with_details(
     ArrowSchema* value_schema,
     ArrowArray* value_array,
-    ArrowSchema* index_schema,
-    ArrowArray* index_array,
-    Enumeration& enmr,
+    std::string column_name,
+    Enumeration enmr,
     ArraySchemaEvolution& se) {
     // We need to check if we are writing any new enumeration values. If so,
     // extend and evolve the schema. If not, just set the write buffers to the
@@ -1131,7 +1234,6 @@ bool ManagedQuery::_extend_and_evolve_schema_and_write(
     }
 
     // Get all the enumeration values in the on-disk TileDB attribute
-
     std::vector<ValueType> enum_values_existing = enmr.as_vector<ValueType>();
 
     // Find any new enumeration values
@@ -1145,7 +1247,6 @@ bool ManagedQuery::_extend_and_evolve_schema_and_write(
         }
     }
 
-    std::string column_name = index_schema->name;
     if (enum_values_to_add.size() != 0) {
         // We have new enumeration values; additional processing needed
 
@@ -1163,34 +1264,23 @@ bool ManagedQuery::_extend_and_evolve_schema_and_write(
         // enumeration values
         auto extended_enmr = enmr.extend(enum_values_to_add);
         se.extend_enumeration(extended_enmr);
-
-        // If the passed-in enumerations are only a subset of the new extended
-        // enumerations, then we will need to remap the indexes. ie. the user
-        // passes in values [B, C] which maps to indexes [0, 1]. However, the
-        // full set of extended enumerations is [A, B, C] which means we need to
-        // remap [B, C] to be indexes [1, 2]
-        ManagedQuery::_remap_indexes(
-            column_name,
-            extended_enmr,
+        return std::tuple{
+            true,  // was_extended
             enum_values_in_write,
-            index_schema,
-            index_array);
+            enum_values_existing,
+            enum_values_to_add,
+            0,  // total_size is only used for string columns
+            extended_enmr};
 
-        // The enumeration was extended
-        return true;
     } else {
-        // Example:
-        //
-        // * Already on storage/schema there are values a,b,c with indices
-        //   0,1,2.
-        // * User appends values b,c which, within the Arrow data coming in
-        //   from the user, have indices 0,1.
-        // * We need to remap those to 1,2.
-        ManagedQuery::_remap_indexes(
-            column_name, enmr, enum_values_in_write, index_schema, index_array);
-
         // The enumeration was not extended
-        return false;
+        return std::tuple{
+            false,  // was_extended
+            enum_values_in_write,
+            enum_values_existing,
+            enum_values_to_add,
+            0,  // total_size is only used for string columns
+            enmr};
     }
 }
 
