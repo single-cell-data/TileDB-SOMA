@@ -444,8 +444,8 @@ class SOMAArray : public SOMAObject {
     /**
      * Retrieves the enumeration values from the array's TileDB schema,
      * for specified column names. Throws if any of the column names
-     * is not present in the schema, or if any of them is present but
-     * is for a non-enumerated column.
+     * are not present in the schema, or if any of them are present but
+     * none are for a non-enumerated column.
      *
      * @tparam std::vector<std::string> column names
      * @return ArrowTable with as many columns as the size of column_names.

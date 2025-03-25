@@ -401,7 +401,7 @@ SOMAArray::get_enumeration_values_for_column(std::string column_name) {
     // Throw if this column is not of dictionary type
     if (column_schema->dictionary == nullptr) {
         throw TileDBSOMAError(fmt::format(
-            "[get_get_enumeration_values] column named '{}' is not of "
+            "[get_enumeration_values_for_column] column named '{}' is not of "
             "dictionary type",
             column_name));
     }
