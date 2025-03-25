@@ -2,8 +2,7 @@
 #
 # Licensed under the MIT License.
 
-"""Exceptions.
-"""
+"""Exceptions."""
 
 from typing import Union
 

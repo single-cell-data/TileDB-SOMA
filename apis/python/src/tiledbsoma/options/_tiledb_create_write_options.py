@@ -89,7 +89,7 @@ class _ColumnConfig:
 
 
 def _normalize_columns(
-    input: Mapping[str, _DictColumnSpec]
+    input: Mapping[str, _DictColumnSpec],
 ) -> Mapping[str, _ColumnConfig]:
     if not isinstance(input, Mapping):
         raise TypeError("column configuration must be a dictionary")
