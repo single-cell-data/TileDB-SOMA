@@ -1,5 +1,4 @@
-"""Config settings for all Hypothesis tests. Primarily used to toggle bug workarounds, etc.
-"""
+"""Config settings for all Hypothesis tests. Primarily used to toggle bug workarounds, etc."""
 
 HT_TEST_CONFIG = {
     #
