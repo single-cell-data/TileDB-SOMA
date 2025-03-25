@@ -272,7 +272,7 @@ def test_get_enumeration_values(tmp_path, ordered, mode):
             pa.field("not_an_enum", pa.large_string()),
             pa.field("string_enum", pa.dictionary(pa.int32(), pa.large_string())),
             pa.field("int64_enum", pa.dictionary(pa.int32(), pa.int64())),
-            pa.field("float32_enum", pa.dictionary(pa.int16(), pa.float32())),
+            pa.field("float64_enum", pa.dictionary(pa.int16(), pa.float64())),
             pa.field("bool_enum", pa.dictionary(pa.int8(), pa.bool_())),
         ]
     )
@@ -292,12 +292,12 @@ def test_get_enumeration_values(tmp_path, ordered, mode):
             sdf.get_enumeration_values(["string_enum", "not_an_enum"])
 
         actual = sdf.get_enumeration_values(
-            ["string_enum", "int64_enum", "float32_enum", "bool_enum"]
+            ["string_enum", "int64_enum", "float64_enum", "bool_enum"]
         )
         expect = {
             "string_enum": pa.array([], type=pa.large_string()),
             "int64_enum": pa.array([], type=pa.int64()),
-            "float32_enum": pa.array([], type=pa.float32()),
+            "float64_enum": pa.array([], type=pa.float64()),
             "bool_enum": pa.array([], type=pa.bool_()),
         }
         assert actual == expect
@@ -310,8 +310,17 @@ def test_get_enumeration_values(tmp_path, ordered, mode):
         "int64_enum": pd.Categorical(
             [111111111, 99999, 3333333, 111111111, 99999], ordered=ordered
         ),
-        "float32_enum": pd.Categorical(
-            np.array([1.5, 0.5, 99.0, 1.5, 99.0], dtype=np.float32), ordered=ordered
+        # Note: some older versions (I can vouch for pandas 1.5.3 and numpy 1.25.0) do something
+        # very sad here:
+        #
+        # >>> pd.Categorical(np.array([1.5, 0.5, 99.0, 1.5, 99.0], dtype=np.float64), ordered=ordered)
+        # [1.5, 0.5, 99.0, 1.5, 99.0]
+        # Categories (3, float64): [0.5, 1.5, 99.0]
+        #
+        # Namely we _cannot_ construct a categorical of type float64 _even when we explicitly ask
+        # for it.
+        "float64_enum": pd.Categorical(
+            np.array([1.5, 0.5, 99.0, 1.5, 99.0], dtype=np.float64), ordered=ordered
         ),
         "bool_enum": pd.Categorical(
             [True, True, True, True, True],
@@ -333,12 +342,12 @@ def test_get_enumeration_values(tmp_path, ordered, mode):
             sdf.get_enumeration_values(["string_enum", "not_an_enum"])
 
         actual = sdf.get_enumeration_values(
-            ["string_enum", "int64_enum", "float32_enum", "bool_enum"]
+            ["string_enum", "int64_enum", "float64_enum", "bool_enum"]
         )
         expect = {
             "string_enum": pa.array(["a", "nn", "zzz"], type=pa.large_string()),
             "int64_enum": pa.array([111111111, 3333333, 99999], type=pa.int64()),
-            "float32_enum": pa.array([1.5, 0.5, 99.0], type=pa.float32()),
+            "float64_enum": pa.array([1.5, 0.5, 99.0], type=pa.float64()),
             "bool_enum": pa.array([False, True, False], type=pa.bool_()),
         }
 
@@ -348,8 +357,8 @@ def test_get_enumeration_values(tmp_path, ordered, mode):
         "not_an_enum": pd.Categorical(["dddd", "nn", "zzz"]),
         "string_enum": pd.Categorical(["dddd", "nn", "zzz"], ordered=ordered),
         "int64_enum": pd.Categorical([555555555, 111111111, 99999], ordered=ordered),
-        "float32_enum": pd.Categorical(
-            np.array([44.25, 0.5, 99.0], dtype=np.float32), ordered=ordered
+        "float64_enum": pd.Categorical(
+            np.array([44.25, 0.5, 99.0], dtype=np.float64), ordered=ordered
         ),
         "bool_enum": pd.Categorical([True, False, True], ordered=ordered),
     }
@@ -367,14 +376,14 @@ def test_get_enumeration_values(tmp_path, ordered, mode):
             sdf.get_enumeration_values(["string_enum", "not_an_enum"])
 
         actual = sdf.get_enumeration_values(
-            ["string_enum", "int64_enum", "float32_enum", "bool_enum"]
+            ["string_enum", "int64_enum", "float64_enum", "bool_enum"]
         )
         expect = {
             "string_enum": pa.array(["a", "nn", "zzz", "dddd"], type=pa.large_string()),
             "int64_enum": pa.array(
                 [99999, 3333333, 111111111, 555555555], type=pa.int64()
             ),
-            "float32_enum": pa.array([0.5, 1.5, 99.0, 44.25], type=pa.float32()),
+            "float64_enum": pa.array([0.5, 1.5, 99.0, 44.25], type=pa.float64()),
             "bool_enum": pa.array([True, False], type=pa.bool_()),
         }
 
@@ -390,12 +399,12 @@ def test_get_enumeration_values(tmp_path, ordered, mode):
             sdf.get_enumeration_values(["string_enum", "not_an_enum"])
 
         actual = sdf.get_enumeration_values(
-            ["string_enum", "int64_enum", "float32_enum", "bool_enum"]
+            ["string_enum", "int64_enum", "float64_enum", "bool_enum"]
         )
         expect = {
             "string_enum": pa.array(["a", "nn", "zzz"], type=pa.large_string()),
             "int64_enum": pa.array([111111111, 3333333, 99999], type=pa.int64()),
-            "float32_enum": pa.array([1.5, 0.5, 99.0], type=pa.float32()),
+            "float64_enum": pa.array([1.5, 0.5, 99.0], type=pa.float64()),
             "bool_enum": pa.array([False, True, False], type=pa.bool_()),
         }
 
