@@ -97,16 +97,24 @@ Enumeration get_enumeration(
     std::shared_ptr<Array> arr,
     ArrowSchema* index_schema,
     ArrowSchema* value_schema) {
+    std::string new_way = util::get_enmr_label(index_schema, value_schema);
+    std::string old_way = std::string(index_schema->name);
     try {
         // New-style names of the form {attr_name}_{arrow_format}, e.g. "foo_U"
         // for attributes written by tiledbsoma >= 1.16.0
-        return ArrayExperimental::get_enumeration(
-            *ctx, *arr, util::get_enmr_label(index_schema, value_schema));
+        return ArrayExperimental::get_enumeration(*ctx, *arr, new_way);
     } catch (const std::exception& e) {
         // Old-style names of the form {attr_name}, e.g. "foo"
         // for attributes written by tiledbsoma < 1.16.0
-        return ArrayExperimental::get_enumeration(
-            *ctx, *arr, index_schema->name);
+        try {
+            return ArrayExperimental::get_enumeration(*ctx, *arr, old_way);
+        } catch (const std::exception& e) {
+            throw TileDBSOMAError(fmt::format(
+                "[get_enumeration] Could not find enumeration with name '{} or "
+                "'{}'",
+                new_way,
+                old_way));
+        }
     }
 }
 
