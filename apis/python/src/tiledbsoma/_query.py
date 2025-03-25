@@ -2,8 +2,7 @@
 #
 # Licensed under the MIT License.
 
-"""Implementation of a SOMA Experiment.
-"""
+"""Implementation of a SOMA Experiment."""
 
 from __future__ import annotations
 

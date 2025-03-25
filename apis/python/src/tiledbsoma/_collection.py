@@ -2,8 +2,7 @@
 #
 # Licensed under the MIT License.
 
-"""Implementation of a SOMA Collection
-"""
+"""Implementation of a SOMA Collection"""
 from __future__ import annotations
 
 import itertools

@@ -2,8 +2,7 @@
 #
 # Licensed under the MIT License.
 
-"""Conversion utility methods.
-"""
+"""Conversion utility methods."""
 
 from __future__ import annotations
 
