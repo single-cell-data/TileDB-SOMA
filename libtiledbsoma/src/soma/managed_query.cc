@@ -1239,10 +1239,30 @@ ManagedQuery::_extend_and_evolve_schema_with_details(
     // Find any new enumeration values
     std::vector<ValueType> enum_values_to_add;
     for (auto enum_val : enum_values_in_write) {
-        if (std::find(
-                enum_values_existing.begin(),
-                enum_values_existing.end(),
-                enum_val) == enum_values_existing.end()) {
+        bool is_new_value = false;
+
+        if (std::isnan(enum_val)) {
+            // Special case: check if the value is NaN. We cannot use std::find
+            // below because NaN != NaN
+            for (auto existing_val : enum_values_existing) {
+                if (std::isnan(existing_val)) {
+                    is_new_value = true;
+                    break;
+                }
+            }
+
+        } else {
+            // Typical case: use std::find to check if the value already exists
+            if (std::find(
+                    enum_values_existing.begin(),
+                    enum_values_existing.end(),
+                    enum_val) != enum_values_existing.end()) {
+                is_new_value = true;
+            }
+        }
+
+        // If it is a new enumeration value, add to the list
+        if (!is_new_value) {
             enum_values_to_add.push_back(enum_val);
         }
     }

@@ -2315,3 +2315,40 @@ def test_enum_regression_62887(tmp_path):
 
     with soma.open(uri) as A:
         assert_array_equal(A.read().concat()["A"], tbl["A"])
+
+
+def test_enum_handling_category_of_nan_62449(tmp_path):
+    uri = tmp_path.as_posix()
+
+    schema = pa.schema(
+        [
+            pa.field("soma_joinid", pa.int64(), nullable=False),
+            pa.field("A", pa.dictionary(pa.int32(), pa.float32())),
+        ]
+    )
+
+    tbl = pa.Table.from_pydict(
+        {
+            "soma_joinid": [0, 1, 2, 3],
+            "A": pa.DictionaryArray.from_arrays(
+                indices=pa.array([0, 1, 2, 0], type=pa.int32()),
+                dictionary=pa.array([0.0, 1.0, np.math.nan], type=pa.float32()),
+            ),
+        }
+    )
+
+    with soma.DataFrame.create(
+        uri, schema=schema, index_column_names=["soma_joinid"], domain=[(0, 3)]
+    ) as A:
+        A.write(tbl)
+
+    with soma.open(uri) as A:
+        dict_vals = A.read().concat()["A"].chunk(0).dictionary.to_pylist()
+        assert any(np.isnan(val) for val in dict_vals)
+
+    with soma.open(uri, mode="w") as A:
+        A.write(tbl)
+
+    with soma.open(uri) as A:
+        dict_vals = A.read().concat()["A"].chunk(0).dictionary.to_pylist()
+        assert any(np.isnan(val) for val in dict_vals)
