@@ -1,4 +1,4 @@
-""" Various utilities for dealing with Arrow data."""
+"""Various utilities for dealing with Arrow data."""
 
 from __future__ import annotations
 

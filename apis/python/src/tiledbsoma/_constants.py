@@ -2,8 +2,7 @@
 #
 # Licensed under the MIT License.
 
-"""Global package constants
-"""
+"""Global package constants"""
 
 
 SOMA_JOINID = "soma_joinid"
