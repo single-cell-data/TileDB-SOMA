@@ -123,6 +123,39 @@ void load_soma_dataframe(py::module& m) {
         .def_property_readonly(
             "index_column_names", &SOMADataFrame::index_column_names)
 
+        .def(
+            "get_enumeration_values",
+            [](SOMADataFrame& sdf,
+               std::vector<std::string> column_names) -> py::dict {
+                try {
+                    auto pa = py::module::import("pyarrow");
+                    auto pa_array_import = pa.attr("Array").attr(
+                        "_import_from_c");
+
+                    ArrowTable t = sdf.get_enumeration_values(column_names);
+                    auto ncol = t.second->n_children;
+
+                    py::dict retval;
+                    for (auto i = 0; i < ncol; i++) {
+                        auto column_arrow_array = t.first->children[i];
+                        auto column_arrow_schema = t.second->children[i];
+
+                        // Get this column_name before pa_array_import, while
+                        // the memory is still valid / untransferred.
+                        std::string column_name(column_arrow_schema->name);
+
+                        auto pa_array = pa_array_import(
+                            py::capsule(column_arrow_array),
+                            py::capsule(column_arrow_schema));
+                        retval[py::str(column_name)] = pa_array;
+                    }
+                    return retval;
+                } catch (const std::exception& e) {
+                    throw TileDBSOMAError(e.what());
+                }
+            },
+            "column_names"_a)
+
         .def_property_readonly(
             "count",
             &SOMADataFrame::count,

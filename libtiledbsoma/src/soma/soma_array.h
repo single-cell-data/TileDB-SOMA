@@ -308,6 +308,19 @@ class SOMAArray : public SOMAObject {
         return schema;
     }
 
+    std::unique_ptr<ArrowSchema> arrow_schema_for_column(
+        std::string column_name) const {
+        for (size_t i = 0; i < columns_.size(); ++i) {
+            if (columns_[i]->name() == column_name) {
+                return std::unique_ptr<ArrowSchema>(
+                    columns_[i]->arrow_schema_slot(*ctx_, *arr_));
+            }
+        }
+        throw TileDBSOMAError(
+            "[arrow_schema_for_column] column name '" + column_name +
+            "' not present in schema");
+    }
+
     /**
      * @brief Get members of the schema (capacity, allows_duplicates,
      * tile_order, cell_order, offsets_filters, validity_filters, attr filters,
@@ -427,6 +440,29 @@ class SOMAArray : public SOMAObject {
      * Return optional timestamp pair SOMAArray was opened with.
      */
     std::optional<TimestampRange> timestamp();
+
+    /**
+     * Retrieves the enumeration values from the array's TileDB schema,
+     * for specified column names. Throws if any of the column names
+     * are not present in the schema, or if any of them are present but
+     * none are for a non-enumerated column.
+     *
+     * @tparam std::vector<std::string> column names
+     * @return ArrowTable with as many columns as the size of column_names.
+     */
+    ArrowTable get_enumeration_values(std::vector<std::string> column_names);
+
+    /**
+     * Retrieves the enumeration values from the array's TileDB schema,
+     * for the specified column name. Throws if the column name is not
+     * present in the schema, or if it is present but is for a non-enumerated
+     * column.
+     *
+     * @tparam std::string column name
+     * @return ArrowTable with one column
+     */
+    std::pair<ArrowArray*, ArrowSchema*> get_enumeration_values_for_column(
+        std::string column_name);
 
     /**
      * Retrieves the non-empty domain from the array. This is the union of the
@@ -863,6 +899,15 @@ class SOMAArray : public SOMAObject {
     //===================================================================
     //= private non-static
     //===================================================================
+
+    /**
+     * This can only be used when getting the enumeration for a column
+     * which already exists, which is of enumerated type, and for which
+     * the core enumeration already exists. Example uses including
+     * getting the list of distinct enumeration values, or extending
+     * the existing enumeration.
+     */
+    Enumeration get_existing_enumeration_for_column(std::string column_name);
 
     /**
      * The caller must check the return value for .is_empty() to see if this is
