@@ -16,8 +16,10 @@
 
 #include <any>
 
+#include <spdlog/fmt/fmt.h>
 #include <tiledb/tiledb>
 #include <tiledb/tiledb_experimental>
+#include "common.h"
 
 // https://arrow.apache.org/docs/format/CDataInterface.html
 // https://arrow.apache.org/docs/format/Columnar.html#buffer-listing-for-each-layout
@@ -592,9 +594,9 @@ class ArrowAdapter {
         // (a) have a separate `..._string` variant; (b) throw here
         // if callsites don't use t.
         if (std::is_same_v<T, std::string>) {
-            throw std::runtime_error(
-                "ArrowAdapter::make_arrow_array_child: template-specialization "
-                "failure.");
+            throw TileDBSOMAError(
+                "Template specialization failed in "
+                "ArrowAdapter::make_arrow_array_child.");
         }
 
         // Use malloc here, not new, to match ArrowAdapter::release_array
@@ -730,15 +732,17 @@ class ArrowAdapter {
         _check_shapes(arrow_array, arrow_schema);
 
         if (std::is_same_v<T, std::string>) {
-            throw std::runtime_error(
-                "SOMAArray::get_table_non_string_column_by_index: "
-                "template-specialization failure.");
+            throw TileDBSOMAError(fmt::format(
+                "Template specialization failed in "
+                "SOMAArray::get_table_non_string_column_by_index for the "
+                "column at index={}.",
+                column_index));
         }
 
         ArrowArray* child_array = _get_and_check_column(
             arrow_table, column_index, 2);
 
-        return get_array_non_string_column<T>(child_array);
+        return get_array_non_string_column<T>(child_array, column_index);
     }
 
     /**
@@ -768,26 +772,35 @@ class ArrowAdapter {
      * This is a helper for get_table_non_string_column_by_index; also exposed
      * for callsites which have access to child objects which are not top-level
      * ArrowTables.
+     *
+     * @tparam T The type of data in the arrow array.
+     * @param arrow_array The arrow array that data will be copied out of.
+     * @param column_index The column index this array is defined on.
      */
     template <typename T>
     static std::vector<T> get_array_non_string_column(
-        const ArrowArray* arrow_array) {
+        const ArrowArray* arrow_array, int64_t column_index) {
         if (arrow_array->n_children != 0) {
-            throw std::runtime_error(
-                "ArrowAdapter::get_array_non_string_column: expected leaf "
-                "node");
+            throw TileDBSOMAError(fmt::format(
+                "Failed to read data from Arrow array for the column at "
+                "index={}. Provide an input Arrow array with no childern.",
+                column_index));
         }
         if (arrow_array->n_buffers != 2) {
-            throw std::runtime_error(
-                "ArrowAdapter::get_array_non_string_column: expected two "
-                "buffers");
+            throw TileDBSOMAError(fmt::format(
+                "Failed to read data from Arrow array for the column at "
+                "index={}. Expected 2 buffers, but received and array with {} "
+                "buffers.",
+                column_index,
+                arrow_array->n_buffers));
         }
 
         if (std::is_same_v<T, std::string>) {
-            throw std::runtime_error(
-                "SOMAArray::get_array_non_string_column: "
-                "template-specialization "
-                "failure.");
+            throw TileDBSOMAError(fmt::format(
+                "Template specialization failed in "
+                "SOMAArray::get_array_non_string_column for the "
+                "column at index={}.",
+                column_index));
         }
 
         // Two-buffer model for non-string data:
@@ -799,19 +812,19 @@ class ArrowAdapter {
         // validity buffers. If this class needs to be extended someday to
         // support arrow-nulls, we can work on that.
         if (arrow_array->buffers[0] != nullptr) {
-            throw std::runtime_error(
-                "ArrowAdapter::get_array_non_string_column: validity buffer "
-                "unsupported here");
-        }
-        if (arrow_array->buffers[1] == nullptr) {
-            throw std::runtime_error(
-                "ArrowAdapter::get_array_non_string_column: null data buffer");
+            throw TileDBSOMAError(fmt::format(
+                "Failed to read data from Arrow array for the column at "
+                "index={}. Reading from an Arrow array with a validity "
+                "buffer is unsupported.",
+                column_index));
         }
 
         const void* vdata = arrow_array->buffers[1];
         if (vdata == nullptr) {
-            throw std::runtime_error(
-                "ArrowAdapter::get_array_non_string_column: null data buffer");
+            throw TileDBSOMAError(fmt::format(
+                "Failed to read data from Arrow array for the column at "
+                "index={}. Data buffer is null.",
+                column_index));
         }
 
         const T* data = (T*)vdata;
@@ -833,14 +846,15 @@ class ArrowAdapter {
     static std::vector<std::string> get_array_string_column(
         const ArrowArray* arrow_array, const ArrowSchema* arrow_schema) {
         if (arrow_array->n_children != 0 || arrow_schema->n_children != 0) {
-            throw std::runtime_error(
-                "ArrowAdapter::get_array_string_column: expected leaf "
-                "node");
+            throw TileDBSOMAError(
+                "Failed to read data for string column. Provide an input array "
+                "with no childern.");
         }
         if (arrow_array->n_buffers != 3) {
-            throw std::runtime_error(
-                "ArrowAdapter::get_array_string_column: expected three "
-                "buffers");
+            throw TileDBSOMAError(fmt::format(
+                "Failed to read data for column. The input array must have 3 "
+                "buffers, but an array with {} buffers was provided.",
+                arrow_array->n_buffers));
         }
 
         // Three-buffer model for string data:
