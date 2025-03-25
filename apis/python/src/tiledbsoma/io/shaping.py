@@ -6,7 +6,7 @@
 Provides support for the new shape feature in TileDB-SOMA 1.15, including the
 ability to process all dataframes/arrays contained within a TileDB-SOMA
 Experiment. Please also see
-https://github.com/single-cell-data/TileDB-SOMA/issues/2407.  """
+https://github.com/single-cell-data/TileDB-SOMA/issues/2407."""
 
 from __future__ import annotations
 
