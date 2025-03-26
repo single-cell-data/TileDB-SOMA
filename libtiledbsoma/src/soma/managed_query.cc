@@ -1241,17 +1241,17 @@ ManagedQuery::_extend_and_evolve_schema_with_details(
     for (auto enum_val : enum_values_in_write) {
         // Check if the value already exists using bitwise comparison.
         // - We cannot use std::find because NaN != NaN
-        // - We cannot use std::isnan because multiple bit representations
-        //   exist for NaN. For example, in float32 (little-endian), both
-        //   0x7fc00000 and 0x7fc00100 represent NaN
+        // - We cannot use std::isnan because multiple bit representations exist
+        //   for NaN. For example, in float32 (little-endian), both 0x7fc00000
+        //   and 0x7fc00100 represent NaN
         // - TileDB and Arrow treat NaNs with different bit patterns as distinct
         //   values
         bool is_new_value = std::none_of(
             enum_values_existing.begin(),
             enum_values_existing.end(),
-            [enum_val](float existing_val) {
-                return std::memcmp(&enum_val, &existing_val, sizeof(float)) ==
-                       0;
+            [enum_val](ValueType existing_val) {
+                return std::memcmp(
+                           &enum_val, &existing_val, sizeof(ValueType)) == 0;
             });
 
         // If it is a new enumeration value, add to the list
