@@ -1,6 +1,7 @@
 import contextlib
 import datetime
 import json
+import math
 import time
 from pathlib import Path
 from typing import Any, Dict, List
@@ -2332,7 +2333,7 @@ def test_enum_handling_category_of_nan_62449(tmp_path):
             "soma_joinid": [0, 1, 2, 3],
             "A": pa.DictionaryArray.from_arrays(
                 indices=pa.array([0, 1, 2, 0], type=pa.int32()),
-                dictionary=pa.array([0.0, 1.0, np.math.nan], type=pa.float32()),
+                dictionary=pa.array([0.0, 1.0, math.nan], type=pa.float32()),
             ),
         }
     )
