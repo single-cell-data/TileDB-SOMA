@@ -182,15 +182,11 @@ test_that("platform_config is respected", {
   d1 <- dim1_filters[0] # C++ indexing here
   expect_equal(tiledb::tiledb_filter_type(d1), "RLE")
 
-  expect_equal(length(tiledb::attrs(tsch)), 1)
-  soma_data_filters <- tiledb::filter_list(tiledb::attrs(tsch)$soma_data)
-  expect_equal(tiledb::nfilters(soma_data_filters), 2)
-
-  a1 <- soma_data_filters[0] # C++ indexing here
-  a2 <- soma_data_filters[1] # C++ indexing here
-  expect_equal(tiledb::tiledb_filter_type(a1), "BITSHUFFLE")
-  expect_equal(tiledb::tiledb_filter_type(a2), "ZSTD")
-  expect_equal(tiledb::tiledb_filter_get_option(a2, "COMPRESSION_LEVEL"), 9)
+  expect_length(attrs <- dnda$attributes(), n = 1L)
+  expect_length(attrs$soma_data$filter_list, n = 2L)
+  expect_equal(attrs$soma_data$filter_list[[1L]]$filter_type, "BITSHUFFLE")
+  expect_equal(attrs$soma_data$filter_list[[2L]]$filter_type, "ZSTD")
+  expect_equal(attrs$soma_data$filter_list[[2L]]$compression_level, 9L)
 
   dnda$close()
 })

@@ -527,17 +527,12 @@ test_that("platform_config is respected", {
   expect_equal(tiledb::tiledb_filter_type(d3), "NONE")
   expect_equal(tiledb::tiledb_filter_get_option(d2, "COMPRESSION_LEVEL"), 8)
 
-  expect_equal(length(tiledb::attrs(tsch)), 3)
-  i32_filters <- tiledb::filter_list(tiledb::attrs(tsch)$i32)
-  f64_filters <- tiledb::filter_list(tiledb::attrs(tsch)$f64)
-  expect_equal(tiledb::nfilters(i32_filters), 2)
-  expect_equal(tiledb::nfilters(f64_filters), 0)
-
-  i1 <- i32_filters[0] # C++ indexing here
-  i2 <- i32_filters[1] # C++ indexing here
-  expect_equal(tiledb::tiledb_filter_type(i1), "RLE")
-  expect_equal(tiledb::tiledb_filter_type(i2), "ZSTD")
-  expect_equal(tiledb::tiledb_filter_get_option(i2, "COMPRESSION_LEVEL"), 9)
+  expect_length(attrs <- sdf$attributes(), n = 3L)
+  expect_length(attrs$i32$filter_list, n = 2L)
+  expect_equal(attrs$i32$filter_list[[1L]]$filter_type, "RLE")
+  expect_equal(attrs$i32$filter_list[[2L]]$filter_type, "ZSTD")
+  expect_equal(attrs$i32$filter_list[[2L]]$compression_level, 9L)
+  expect_length(attrs$f64$filter_list, n = 0L)
 
   sdf$close()
 })
