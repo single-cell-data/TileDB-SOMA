@@ -246,6 +246,18 @@ c_allows_dups <- function(uri, ctxxp) {
     .Call(`_tiledbsoma_c_allows_dups`, uri, ctxxp)
 }
 
+c_capacity <- function(uri, ctxxp) {
+    .Call(`_tiledbsoma_c_capacity`, uri, ctxxp)
+}
+
+c_tile_order <- function(uri, ctxxp) {
+    .Call(`_tiledbsoma_c_tile_order`, uri, ctxxp)
+}
+
+c_cell_order <- function(uri, ctxxp) {
+    .Call(`_tiledbsoma_c_cell_order`, uri, ctxxp)
+}
+
 c_attributes <- function(uri, ctxxp) {
     .Call(`_tiledbsoma_c_attributes`, uri, ctxxp)
 }
