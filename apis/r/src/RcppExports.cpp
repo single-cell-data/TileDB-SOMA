@@ -636,6 +636,31 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// c_attribute_enumerated
+Rcpp::LogicalVector c_attribute_enumerated(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp);
+RcppExport SEXP _tiledbsoma_c_attribute_enumerated(SEXP uriSEXP, SEXP ctxxpSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const std::string& >::type uri(uriSEXP);
+    Rcpp::traits::input_parameter< Rcpp::XPtr<somactx_wrap_t> >::type ctxxp(ctxxpSEXP);
+    rcpp_result_gen = Rcpp::wrap(c_attribute_enumerated(uri, ctxxp));
+    return rcpp_result_gen;
+END_RCPP
+}
+// c_attribute_enumeration_levels
+Rcpp::CharacterVector c_attribute_enumeration_levels(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp, const std::string& name);
+RcppExport SEXP _tiledbsoma_c_attribute_enumeration_levels(SEXP uriSEXP, SEXP ctxxpSEXP, SEXP nameSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const std::string& >::type uri(uriSEXP);
+    Rcpp::traits::input_parameter< Rcpp::XPtr<somactx_wrap_t> >::type ctxxp(ctxxpSEXP);
+    Rcpp::traits::input_parameter< const std::string& >::type name(nameSEXP);
+    rcpp_result_gen = Rcpp::wrap(c_attribute_enumeration_levels(uri, ctxxp, name));
+    return rcpp_result_gen;
+END_RCPP
+}
 // resize
 std::string resize(const std::string& uri, Rcpp::NumericVector new_shape, std::string function_name_for_messages, bool check_only, Rcpp::XPtr<somactx_wrap_t> ctxxp);
 RcppExport SEXP _tiledbsoma_resize(SEXP uriSEXP, SEXP new_shapeSEXP, SEXP function_name_for_messagesSEXP, SEXP check_onlySEXP, SEXP ctxxpSEXP) {
@@ -931,6 +956,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_tiledbsoma_c_cell_order", (DL_FUNC) &_tiledbsoma_c_cell_order, 2},
     {"_tiledbsoma_c_schema_filters", (DL_FUNC) &_tiledbsoma_c_schema_filters, 2},
     {"_tiledbsoma_c_attributes", (DL_FUNC) &_tiledbsoma_c_attributes, 2},
+    {"_tiledbsoma_c_attribute_enumerated", (DL_FUNC) &_tiledbsoma_c_attribute_enumerated, 2},
+    {"_tiledbsoma_c_attribute_enumeration_levels", (DL_FUNC) &_tiledbsoma_c_attribute_enumeration_levels, 3},
     {"_tiledbsoma_resize", (DL_FUNC) &_tiledbsoma_resize, 5},
     {"_tiledbsoma_resize_soma_joinid_shape", (DL_FUNC) &_tiledbsoma_resize_soma_joinid_shape, 4},
     {"_tiledbsoma_tiledbsoma_upgrade_shape", (DL_FUNC) &_tiledbsoma_tiledbsoma_upgrade_shape, 5},
