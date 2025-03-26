@@ -412,6 +412,50 @@ def test_get_enumeration_values(tmp_path, ordered, mode):
             "bool_enum": pa.array([False, True, False], type=pa.bool_()),
         }
 
+@pytest.mark.parametrize("bools", [
+    [[True, True], [True]],
+    [[True, False], [True, False]],
+    [[False, True], [True, False]],
+    [[False, False], [False]],
+])
+def test_fml(tmp_path, bools):
+    uri = tmp_path.as_posix()
+
+    data, levels = bools
+
+    schema = pa.schema(
+        [
+            pa.field("bool_enum", pa.dictionary(pa.int8(), pa.bool_())),
+        ]
+    )
+
+    domain = [[0, 1]]
+
+    # Create the dataframe with no levels for any enumerated column
+    with soma.DataFrame.create(uri, schema=schema, domain=domain) as sdf:
+        pass
+
+    # Write once
+    pd_data = {
+        "soma_joinid": [0, 1],
+        "bool_enum": pd.Categorical(data),
+    }
+    arrow_data = pa.Table.from_pydict(pd_data)
+
+    with soma.DataFrame.open(uri, "w") as sdf:
+        sdf.write(arrow_data)
+
+    with soma.DataFrame.open(uri) as sdf:
+        actual = sdf.get_enumeration_values(["bool_enum"])
+        expect = {
+            "bool_enum": pa.array(levels, type=pa.bool_()),
+        }
+        print()
+        print("XXX ACTUAL", actual["bool_enum"].to_pylist())
+        print("XXX EXPECT", expect["bool_enum"].to_pylist())
+        print()
+        assert actual == expect
+
 
 @pytest.fixture
 def simple_data_frame(tmp_path):
