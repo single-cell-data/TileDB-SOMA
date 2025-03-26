@@ -1011,7 +1011,7 @@ class ManagedQuery {
      * @param array the ArrowArray holding Boolean data
      * @return std::vector<uint8_t>
      */
-    std::vector<uint8_t> _cast_bool_data(
+    std::vector<uint8_t> _bool_data_bits_to_bytes(
         ArrowSchema* schema, ArrowArray* array);
 
     /**
