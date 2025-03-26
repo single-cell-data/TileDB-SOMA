@@ -12,7 +12,9 @@ from typing import List, Sequence, Tuple, Union
 import anndata as ad
 import numpy as np
 import pandas as pd
+import pyarrow as pa
 import pytest
+import scipy.sparse as sp
 from numpy.testing import assert_array_equal
 from pandas.testing import assert_frame_equal
 
@@ -1570,3 +1572,101 @@ def test_extend_enmr_to_older_experiments_64521(tmp_path, version_and_shaped):
         obs = exp.obs.read().concat().to_pandas()
         assert "pbmc3k" in obs["orig.ident"].cat.categories
         assert "new_ident" in obs["orig.ident"].cat.categories
+
+
+def test_prepare_experiment(tmp_path):
+    soma_uri = tmp_path.as_posix()
+    adatas = [
+        ad.AnnData(
+            X=sp.random(8, 6, format="csr", dtype=np.float32),
+            obs=pd.DataFrame(
+                data={
+                    "A": pd.Categorical(["red", "green"] * 4),
+                    "B": pd.Categorical([True, False] * 4),
+                },
+                index=[f"AD1:{i}" for i in range(8)],
+            ),
+            var=pd.DataFrame(data={}, index=[f"feature:{i}" for i in range(1, 7)]),
+        ),
+        ad.AnnData(
+            X=None,
+            obs=pd.DataFrame(
+                data={
+                    "A": pd.Categorical(["red", "blue"] * 4),
+                    "B": pd.Categorical([False] * 8),
+                },
+                index=[f"AD2:{i}" for i in range(8)],
+            ),
+            var=pd.DataFrame(data={}, index=[f"feature:{i}" for i in range(0, 6)]),
+        ),
+        ad.AnnData(
+            X=None,
+            obs=pd.DataFrame(
+                data={
+                    "A": pd.Categorical(["black", "white"] * 4),
+                    "B": pd.Categorical([True] * 8),
+                },
+                index=[f"AD3:{i}" for i in range(8)],
+            ),
+            var=pd.DataFrame(data={}, index=[f"feature:{i}" for i in range(12, 5, -1)]),
+        ),
+    ]
+
+    # create experiment
+    tiledbsoma.io.from_anndata(
+        soma_uri, adatas[0], measurement_name="RNA", ingest_mode="schema_only"
+    )
+
+    with tiledbsoma.open(soma_uri) as E:
+        assert pa.types.is_dictionary(E.obs.schema.field("A").type)
+        assert pa.types.is_dictionary(E.obs.schema.field("B").type)
+        assert E.obs.schema.field("A").type.value_type == pa.string()
+        assert E.obs.schema.field("B").type.value_type == pa.bool_()
+
+    # register
+    rd = tiledbsoma.io.register_anndatas(
+        soma_uri,
+        adatas,
+        measurement_name="RNA",
+        obs_field_name="obs_id",
+        var_field_name="var_id",
+    )
+    assert rd.get_obs_shape() == sum(len(ad.obs) for ad in adatas)
+    assert rd.get_var_shapes() == {
+        "RNA": len(pd.concat(ad.var.index.to_series() for ad in adatas).unique())
+    }
+    assert sorted(rd.obs_axis.enum_values.keys()) == sorted(["A", "B"])
+    for ms in rd.var_axes:
+        assert rd.var_axes[ms].enum_values == {}
+
+    assert rd.obs_axis.enum_values["A"] == pd.CategoricalDtype(
+        categories=np.array(["red", "green", "blue", "black", "white"]), ordered=False
+    )
+    assert rd.obs_axis.enum_values["B"] == pd.CategoricalDtype(
+        categories=[True, False], ordered=False
+    )
+
+    # prepare
+    rd.prepare_experiment(soma_uri)
+
+    with tiledbsoma.open(soma_uri) as E:
+        # check shapes
+        assert E.obs.domain[0] == (0, rd.get_obs_shape() - 1)
+        for k in E.ms.keys():
+            assert E.ms[k].var.domain[0] == (0, rd.get_var_shapes()[k] - 1)
+        assert E.ms["RNA"].X["data"].shape == (
+            rd.get_obs_shape(),
+            rd.get_var_shapes()["RNA"],
+        )
+
+        # check enums
+        for k, cat_dtype in rd.obs_axis.enum_values.items():
+            values = E.obs.get_enumeration_values([k]).to_numpy()
+            assert_array_equal(cat_dtype.values, values)
+            assert E.obs.schema.field(k).type.ordered == cat_dtype.ordered
+
+        for ms in rd.var_axes:
+            for k, cat_dtype in rd.var_axes[ms].enum_values.items():
+                values = E.ms[ms].var.get_enumeration_values([k]).to_numpy()
+                assert_array_equal(cat_dtype.values, values)
+                assert E.ms[ms].var.schema.field(k).type.ordered == cat_dtype.ordered
