@@ -412,16 +412,25 @@ def test_get_enumeration_values(tmp_path, ordered, mode):
             "bool_enum": pa.array([False, True, False], type=pa.bool_()),
         }
 
-@pytest.mark.parametrize("bools", [
-    [[True, True], [True]],
-    [[True, False], [True, False]],
-    [[False, True], [True, False]],
-    [[False, False], [False]],
-])
-def test_fml(tmp_path, bools):
+
+@pytest.mark.parametrize(
+    "data_and_expected_levels",
+    [
+        [[True], [True]],
+        [[False], [False]],
+        [[True, True], [True]],
+        [[True, False], [False, True]],
+        [[False, True], [False, True]],
+        [[False, False], [False]],
+        [[False, True, False, True, False], [False, True]],
+    ],
+)
+def test_bool_enums(tmp_path, data_and_expected_levels):
     uri = tmp_path.as_posix()
 
-    data, levels = bools
+    data, expected_levels = data_and_expected_levels
+    n = len(data)
+    domain = [[0, n - 1]]
 
     schema = pa.schema(
         [
@@ -429,15 +438,12 @@ def test_fml(tmp_path, bools):
         ]
     )
 
-    domain = [[0, 1]]
-
-    # Create the dataframe with no levels for any enumerated column
+    # Create the dataframe with no expected_levels for any enumerated column
     with soma.DataFrame.create(uri, schema=schema, domain=domain) as sdf:
         pass
 
-    # Write once
     pd_data = {
-        "soma_joinid": [0, 1],
+        "soma_joinid": list(range(n)),
         "bool_enum": pd.Categorical(data),
     }
     arrow_data = pa.Table.from_pydict(pd_data)
@@ -448,12 +454,8 @@ def test_fml(tmp_path, bools):
     with soma.DataFrame.open(uri) as sdf:
         actual = sdf.get_enumeration_values(["bool_enum"])
         expect = {
-            "bool_enum": pa.array(levels, type=pa.bool_()),
+            "bool_enum": pa.array(expected_levels, type=pa.bool_()),
         }
-        print()
-        print("XXX ACTUAL", actual["bool_enum"].to_pylist())
-        print("XXX EXPECT", expect["bool_enum"].to_pylist())
-        print()
         assert actual == expect
 
 
