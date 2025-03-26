@@ -12,6 +12,7 @@
  */
 
 #include "soma_binary_column.h"
+#include "../utils/logger.h"
 
 namespace tiledbsoma {
 std::shared_ptr<SOMAColumn> SOMABinaryColumn::deserialize(
@@ -25,7 +26,7 @@ std::shared_ptr<SOMAColumn> SOMABinaryColumn::deserialize(
                                   .template get<std::vector<std::string>>();
 
         if (attribute_names.size() != 1) {
-            throw TileDBSOMAError(std::format(
+            throw TileDBSOMAError(fmt::format(
                 "[SOMABinaryColumn][deserialize] Invalid number of attributes. "
                 "Epected 1, got {}",
                 attribute_names.size()));
@@ -55,7 +56,7 @@ std::shared_ptr<SOMAColumn> SOMABinaryColumn::deserialize(
                                   .template get<std::vector<std::string>>();
 
         if (dimension_names.size() != 1) {
-            throw TileDBSOMAError(std::format(
+            throw TileDBSOMAError(fmt::format(
                 "[SOMABinaryColumn][deserialize] Invalid number of dimensions: "
                 "expected 1, got {}",
                 dimension_names.size()));
@@ -104,7 +105,7 @@ std::shared_ptr<SOMABinaryColumn> SOMABinaryColumn::create(
 void SOMABinaryColumn::_set_dim_points(
     ManagedQuery& query, const std::any& points) const {
     if (!isIndexColumn()) {
-        throw TileDBSOMAError(std::format(
+        throw TileDBSOMAError(fmt::format(
             "[SOMABinaryColumn][_set_dim_points] Column with name {} is not an "
             "index "
             "column",
@@ -125,7 +126,7 @@ void SOMABinaryColumn::_set_dim_points(
 void SOMABinaryColumn::_set_dim_ranges(
     ManagedQuery& query, const std::any& ranges) const {
     if (!isIndexColumn()) {
-        throw TileDBSOMAError(std::format(
+        throw TileDBSOMAError(fmt::format(
             "[SOMABinaryColumn][_set_dim_ranges] Column with name {} is not an "
             "index "
             "column",
@@ -152,7 +153,7 @@ void SOMABinaryColumn::_set_dim_ranges(
 void SOMABinaryColumn::_set_current_domain_slot(
     NDRectangle& rectangle, std::span<const std::any> domain) const {
     if (!isIndexColumn()) {
-        throw TileDBSOMAError(std::format(
+        throw TileDBSOMAError(fmt::format(
             "[SOMABinaryColumn][_set_current_domain_slot] Column with name {} "
             "is "
             "not "
@@ -161,7 +162,7 @@ void SOMABinaryColumn::_set_current_domain_slot(
     }
 
     if (domain.size() != 1) {
-        throw TileDBSOMAError(std::format(
+        throw TileDBSOMAError(fmt::format(
             "[SOMABinaryColumn][_set_current_domain_slot] Invalid domain size. "
             "Expected 1, got {}",
             domain.size()));
@@ -171,7 +172,7 @@ void SOMABinaryColumn::_set_current_domain_slot(
     if (dom[0].size() == 0 && dom[1].size() == 0) {
         rectangle.set_range(name(), "", "\x7f");
     } else {
-        throw TileDBSOMAError(std::format(
+        throw TileDBSOMAError(fmt::format(
             "[SOMABinaryColumn][_set_current_domain_slot] domain (\"{}\", "
             "\"{}\") cannot be set for "
             "binary index columns: please use "
@@ -186,7 +187,7 @@ void SOMABinaryColumn::_set_current_domain_slot(
 std::pair<bool, std::string> SOMABinaryColumn::_can_set_current_domain_slot(
     std::optional<NDRectangle>&, std::span<const std::any> new_domain) const {
     if (!isIndexColumn()) {
-        throw TileDBSOMAError(std::format(
+        throw TileDBSOMAError(fmt::format(
             "[SOMABinaryColumn][_set_current_domain_slot] Column with name {} "
             "is "
             "not "
@@ -195,7 +196,7 @@ std::pair<bool, std::string> SOMABinaryColumn::_can_set_current_domain_slot(
     }
 
     if (new_domain.size() != 1) {
-        throw TileDBSOMAError(std::format(
+        throw TileDBSOMAError(fmt::format(
             "[SOMABinaryColumn][_can_set_current_domain_slot] Expected domain "
             "size for '{}' is 1, found {}",
             name(),
@@ -216,7 +217,7 @@ std::pair<bool, std::string> SOMABinaryColumn::_can_set_current_domain_slot(
 
 std::any SOMABinaryColumn::_core_domain_slot() const {
     if (!isIndexColumn()) {
-        throw TileDBSOMAError(std::format(
+        throw TileDBSOMAError(fmt::format(
             "[SOMABinaryColumn][_core_domain_slot] Column with name {} is not "
             "an "
             "index column",
@@ -230,7 +231,7 @@ std::any SOMABinaryColumn::_core_domain_slot() const {
 
 std::any SOMABinaryColumn::_non_empty_domain_slot(Array& array) const {
     if (!isIndexColumn()) {
-        throw TileDBSOMAError(std::format(
+        throw TileDBSOMAError(fmt::format(
             "[SOMABinaryColumn][_non_empty_domain_slot] Column with name {} is "
             "not "
             "an "
@@ -257,7 +258,7 @@ std::any SOMABinaryColumn::_non_empty_domain_slot(Array& array) const {
 std::any SOMABinaryColumn::_non_empty_domain_slot_opt(
     const SOMAContext& ctx, Array& array) const {
     if (!isIndexColumn()) {
-        throw TileDBSOMAError(std::format(
+        throw TileDBSOMAError(fmt::format(
             "[SOMABinaryColumn][_non_empty_domain_slot] Column with name {} is "
             "not "
             "an "
@@ -313,7 +314,7 @@ std::any SOMABinaryColumn::_non_empty_domain_slot_opt(
 std::any SOMABinaryColumn::_core_current_domain_slot(
     const SOMAContext& ctx, Array& array) const {
     if (!isIndexColumn()) {
-        throw TileDBSOMAError(std::format(
+        throw TileDBSOMAError(fmt::format(
             "[SOMABinaryColumn][_core_current_domain_slot] Column with name {} "
             "is "
             "not "
@@ -332,7 +333,7 @@ std::any SOMABinaryColumn::_core_current_domain_slot(
 std::any SOMABinaryColumn::_core_current_domain_slot(
     NDRectangle& ndrect) const {
     if (!isIndexColumn()) {
-        throw TileDBSOMAError(std::format(
+        throw TileDBSOMAError(fmt::format(
             "[SOMABinaryColumn][_core_current_domain_slot] Column with name {} "
             "is "
             "not "
@@ -347,7 +348,7 @@ std::any SOMABinaryColumn::_core_current_domain_slot(
             std::pair<std::vector<std::byte>, std::vector<std::byte>>>(
             std::vector<std::byte>(), std::vector<std::byte>());
     } else {
-        throw TileDBSOMAError(std::format(
+        throw TileDBSOMAError(fmt::format(
             "[SOMAColumn][core_current_domain_slot] unexpected current "
             "domain returnd ({}, {})",
             domain[0],
@@ -358,7 +359,7 @@ std::any SOMABinaryColumn::_core_current_domain_slot(
 std::pair<ArrowArray*, ArrowSchema*> SOMABinaryColumn::arrow_domain_slot(
     const SOMAContext& ctx, Array& array, enum Domainish kind) const {
     if (!isIndexColumn()) {
-        throw TileDBSOMAError(std::format(
+        throw TileDBSOMAError(fmt::format(
             "[SOMABinaryColumn][arrow_domain_slot] Column with name {} is not "
             "an "
             "index column",

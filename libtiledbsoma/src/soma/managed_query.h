@@ -676,12 +676,6 @@ class ManagedQuery {
     bool _cast_column_aux(
         ArrowSchema* schema, ArrowArray* array, ArraySchemaEvolution se);
 
-    template <typename UserType>
-        requires std::same_as<UserType, std::string> ||
-                 std::same_as<UserType, std::vector<std::byte>>
-    bool _cast_column_aux(
-        ArrowSchema* schema, ArrowArray* array, ArraySchemaEvolution se);
-
     template <typename UserType, typename DiskType>
     bool _set_column(
         ArrowSchema* schema, ArrowArray* array, ArraySchemaEvolution se) {
@@ -881,8 +875,7 @@ class ManagedQuery {
     }
 
     template <typename ValueType, typename IndexType>
-        requires std::same_as<ValueType, std::string_view> ||
-                 std::same_as<ValueType, std::span<const std::byte>>
+        requires std::same_as<ValueType, std::string_view>
     void _remap_indexes_aux(
         std::string column_name,
         Enumeration extended_enmr,
@@ -1054,15 +1047,15 @@ void ManagedQuery::_cast_dictionary_values<std::string>(
     ArrowSchema* schema, ArrowArray* array);
 
 template <>
-void ManagedQuery::_cast_dictionary_values<std::vector<std::byte>>(
-    ArrowSchema* schema, ArrowArray* array);
-
-template <>
 void ManagedQuery::_cast_dictionary_values<bool>(
     ArrowSchema* schema, ArrowArray* array);
 
 template <>
 bool ManagedQuery::_cast_column_aux<bool>(
+    ArrowSchema* schema, ArrowArray* array, ArraySchemaEvolution se);
+
+template <>
+bool ManagedQuery::_cast_column_aux<std::string>(
     ArrowSchema* schema, ArrowArray* array, ArraySchemaEvolution se);
 
 template <>
@@ -1088,14 +1081,6 @@ ManagedQuery::_extend_and_evolve_schema_with_details<std::string>(
     std::string column_name,
     Enumeration enmr,
     ArraySchemaEvolution& se);
-
-template <>
-bool ManagedQuery::_extend_and_evolve_schema<std::vector<std::byte>>(
-    ArrowSchema* value_schema,
-    ArrowArray* value_array,
-    ArrowSchema* index_schema,
-    ArrowArray* index_array,
-    ArraySchemaEvolution se);
 
 template <>
 std::vector<std::span<const std::byte>> ManagedQuery::_enumeration_values_view(
