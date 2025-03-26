@@ -795,7 +795,8 @@ void ManagedQuery::_cast_dictionary_values<bool>(
     auto value_array = array->dictionary;
 
     std::vector<int64_t> indexes = _get_index_vector(schema, array);
-    std::vector<uint8_t> values = _cast_bool_data(value_schema, value_array);
+    std::vector<uint8_t> values = _bool_data_bits_to_bytes(
+        value_schema, value_array);
     std::vector<uint8_t> index_to_value;
 
     for (auto i : indexes) {
@@ -852,6 +853,22 @@ bool ManagedQuery::_cast_column_aux<std::string>(
     return false;
 }
 
+template <>
+bool ManagedQuery::_cast_column_aux<bool>(
+    ArrowSchema* schema, ArrowArray* array, ArraySchemaEvolution se) {
+    (void)se;  // se is unused in bool specialization
+
+    auto casted = _bool_data_bits_to_bytes(schema, array);
+
+    setup_write_column(
+        schema->name,
+        array->length,
+        (const void*)casted.data(),
+        (uint64_t*)nullptr,
+        _cast_validity_buffer(array));
+    return false;
+}
+
 template <typename UserType>
 bool ManagedQuery::_cast_column_aux(
     ArrowSchema* schema, ArrowArray* array, ArraySchemaEvolution se) {
@@ -871,6 +888,16 @@ bool ManagedQuery::_cast_column_aux(
     // false
     switch (disk_type) {
         case TILEDB_BOOL:
+            throw TileDBSOMAError(
+                "internal coding error: template-specialization failure for "
+                "boolean in _cast_column_aux");
+        case TILEDB_STRING_ASCII:
+        case TILEDB_STRING_UTF8:
+        case TILEDB_CHAR:
+            throw TileDBSOMAError(
+                "internal coding error: template-specialization failure for "
+                "string in _cast_column_aux");
+
         case TILEDB_INT8:
             return _set_column<UserType, int8_t>(schema, array, se);
         case TILEDB_UINT8:
@@ -919,22 +946,6 @@ bool ManagedQuery::_cast_column_aux(
                 "column: " +
                 tiledb::impl::type_to_str(disk_type));
     }
-}
-
-template <>
-bool ManagedQuery::_cast_column_aux<bool>(
-    ArrowSchema* schema, ArrowArray* array, ArraySchemaEvolution se) {
-    (void)se;  // se is unused in bool specialization
-
-    auto casted = _cast_bool_data(schema, array);
-
-    setup_write_column(
-        schema->name,
-        array->length,
-        (const void*)casted.data(),
-        (uint64_t*)nullptr,
-        _cast_validity_buffer(array));
-    return false;
 }
 
 bool ManagedQuery::_extend_and_write_enumeration(
@@ -1219,8 +1230,9 @@ ManagedQuery::_extend_and_evolve_schema_with_details(
     if (strcmp(value_schema->format, "b") == 0) {
         // Specially handle Boolean types as their representation in Arrow (bit)
         // is different from what is in TileDB (uint8_t)
-        auto casted = _cast_bool_data(value_schema, value_array);
-        enum_values_in_write.assign(casted.data(), casted.data() + num_elems);
+        auto expanded = _bool_data_bits_to_bytes(value_schema, value_array);
+        enum_values_in_write.assign(
+            expanded.data(), expanded.data() + num_elems);
     } else {
         // General case
         ValueType* data;
@@ -1284,7 +1296,7 @@ ManagedQuery::_extend_and_evolve_schema_with_details(
     }
 }
 
-std::vector<uint8_t> ManagedQuery::_cast_bool_data(
+std::vector<uint8_t> ManagedQuery::_bool_data_bits_to_bytes(
     ArrowSchema* schema, ArrowArray* array) {
     if (strcmp(schema->format, "b") != 0) {
         throw TileDBSOMAError(fmt::format(
