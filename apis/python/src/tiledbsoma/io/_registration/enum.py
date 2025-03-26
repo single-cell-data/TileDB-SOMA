@@ -8,23 +8,9 @@ from tiledbsoma import DataFrame
 
 
 def _get_enumeration(df: DataFrame, column_name: str) -> pd.CategoricalDtype:
-    import tiledb
-
-    with tiledb.open(
-        df.uri,
-        timestamp=df.tiledb_timestamp_ms,
-        mode="r",
-        config=df.context.tiledb_config,
-    ) as A:
-        if column_name not in A.schema.attr_names:
-            raise ValueError("Column not found in schema")
-
-        enum_label = A.schema.attr(column_name).enum_label
-        if enum_label is None:
-            raise ValueError("Column is not an enumeration")
-
-        enum = A.enum(enum_label)
-        return pd.CategoricalDtype(categories=enum.values(), ordered=enum.ordered)
+    values = df.get_enumeration_values((column_name,))[column_name]
+    ordered = df.schema.field(column_name).type.ordered
+    return pd.CategoricalDtype(categories=values, ordered=ordered)
 
 
 def _extend_enumeration(df: DataFrame, column_name: str, values: pa.Array) -> None:

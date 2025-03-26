@@ -1661,12 +1661,12 @@ def test_prepare_experiment(tmp_path):
 
         # check enums
         for k, cat_dtype in rd.obs_axis.enum_values.items():
-            values = E.obs.get_enumeration_values([k]).to_numpy()
-            assert_array_equal(cat_dtype.values, values)
+            values = E.obs.get_enumeration_values([k])[k].to_pylist()
+            assert_array_equal(cat_dtype.categories, values)
             assert E.obs.schema.field(k).type.ordered == cat_dtype.ordered
 
         for ms in rd.var_axes:
             for k, cat_dtype in rd.var_axes[ms].enum_values.items():
-                values = E.ms[ms].var.get_enumeration_values([k]).to_numpy()
-                assert_array_equal(cat_dtype.values, values)
+                values = E.ms[ms].var.get_enumeration_values([k])[k].to_pylist()
+                assert_array_equal(cat_dtype.categories, values)
                 assert E.ms[ms].var.schema.field(k).type.ordered == cat_dtype.ordered
