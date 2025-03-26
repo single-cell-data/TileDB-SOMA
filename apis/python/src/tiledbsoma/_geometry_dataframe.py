@@ -322,7 +322,7 @@ class GeometryDataFrame(SpatialDataFrame, somacore.GeometryDataFrame):
     @property
     def count(self) -> int:
         """Returns the number of rows in the geometry dataframe."""
-        self._check_open_read()
+        self._verify_open_for_reading()
         # if is it in read open mode, then it is a GeometryDataFrameWrapper
         return cast(GeometryDataFrameWrapper, self._handle).count
 
@@ -360,7 +360,7 @@ class GeometryDataFrame(SpatialDataFrame, somacore.GeometryDataFrame):
         """
         del batch_size  # Currently unused.
         _util.check_unpartitioned(partitions)
-        self._check_open_read()
+        self._verify_open_for_reading()
 
         # TODO: batch_size
         return TableReadIter(
