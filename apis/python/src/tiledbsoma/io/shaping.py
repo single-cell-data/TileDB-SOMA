@@ -51,14 +51,11 @@ def show_experiment_shapes(
     context: tiledbsoma.SOMATileDBContext | None = None,
     output_handle: Printable = cast(Printable, sys.stdout),
 ) -> bool:
-    """For each dataframe/array contained within the SOMA ``Experiment`` pointed
-    to by the given URI, shows the ``non_empty_domain`` (for dataframes), along
-    with the ``shape`` and ``maxshape`` (for arrays) or ``domain`` and
-    ``maxdomain`` (for dataframes).
+    """Outputs the current shapes of the main elements in the ``Experiment``.
 
-    Args:
-        uri: The URI of a SOMA :class:`Experiment`.
-        context: Optional :class:`SOMATileDBContext`.
+    For main dataframes and arrays contained within the SOMA ``Experiment``, shows
+    the ``non_empty_domain`` (for dataframes), along with the ``shape`` and ``maxshape``
+    (for arrays) or ``domain`` and ``maxdomain`` (for dataframes).
 
     Example::
 
@@ -80,6 +77,29 @@ def show_experiment_shapes(
           shape                (2700, 13714)
           maxshape             (9223372036854773759, 9223372036854773759)
           upgraded             True
+
+    The shapes of the following elements are output:
+
+      * the ``obs`` dataframe in the experiment,
+
+    for each measurement:
+
+      * the ``var`` dataframe,
+      * all ``X`` arrays,
+      * all ``obsm`` arrays,
+      * all ``varm`` arrays,
+      * all ``obsp`` arrays,
+      * all ``varm`` arrays,
+      * all ``varp`` arrays.
+
+    Args:
+        uri: The URI of a SOMA :class:`Experiment`.
+        context: Optional :class:`SOMATileDBContext`.
+        output_handle: The handle to print the output to.
+
+    Returns:
+        ``True`` if outputing the shape works for elements. ``False`` if any element
+        fails to successfully output its shape.
     """
     args: SizingArgs = dict(
         nobs=None,
@@ -109,24 +129,33 @@ def upgrade_experiment_shapes(
     context: tiledbsoma.SOMATileDBContext | None = None,
     output_handle: Printable = cast(Printable, sys.stdout),
 ) -> bool:
-    """For each dataframe contained within the SOMA ``Experiment`` pointed to by
-    the given URI, sets the ``domain`` to match the dataframe's current
-    ``non_empty_domain``.  For each N-D array, sets the ``shape`` to match the array's
-    ``non_empty_domain``. If ``verbose`` is set to ``True``, an activity log
-    is printed. If ``check_only`` is true, only does a dry run and reports any
-    reasons the upgrade would fail.
+    """Upgrade the main elements inside a SOMA ``Experiment`` to use the
+    ``shape`` feature introduced in TileDB-SOMA 1.15.
 
-    This makes an experiment created before TileDB-SOMA 1.15 look like an
-    experiment created by TileDB-SOMA 1.15 or later. You can use
-    ``tiledbsoma.io.show_experiment_shapes`` before and after to see
-    the difference.
+    A new shape feature was introduced in TileDB-SOMA in release 1.15. This
+    will update the main elements in TileDB-SOMA to use the new feature. It  makes
+    an experiment created before TileDB-SOMA 1.15 look like an experiment created by
+    TileDB-SOMA 1.15 or later. You can use ``tiledbsoma.io.show_experiment_shapes``
+    before and after to see the difference.
 
-    Args:
-        uri: The URI of a SOMA :class:`Experiment`.
-        verbose: If ``True``, produce per-array output as the upgrade runs.
-        check_only: If ``True``,  don't apply the upgrades, but show what would
-            be attempted, and show why each one would fail.
-        context: Optional :class:`SOMATileDBContext`.
+    For each dataframe and N-D array that is being upgraded, if the dataframe does
+    not currently support the new shape feature, upgrade to add the feature and set
+    the domain to the dataframe's current ``non_empty_domain``. If the new ``shape``
+    feature is already enable, nothing is changed.
+
+    The following elements are updated:
+
+      * the ``obs`` dataframe in the experiment,
+
+    for each measurement:
+
+      * the ``var`` dataframe,
+      * all ``X`` arrays,
+      * all ``obsm`` arrays,
+      * all ``varm`` arrays,
+      * all ``obsp`` arrays,
+      * all ``varm`` arrays,
+      * all ``varp`` arrays.
 
     Example::
 
@@ -143,6 +172,17 @@ def upgrade_experiment_shapes(
           URI file:///data/pbmc3k_unprocessed_old/ms/RNA/X/data
           Dry run for: tiledbsoma_upgrade_shape((2700, 13714))
           OK
+
+    Args:
+        uri: The URI of a SOMA :class:`Experiment`.
+        verbose: If ``True``, produce per-array output as the upgrade runs.
+        check_only: If ``True``,  don't apply the upgrades, but show what would
+            be attempted, and show why each one would fail.
+        context: Optional :class:`SOMATileDBContext`.
+
+    Returns:
+        ``True`` if all upgrade operations succeed. ``False`` if any upgrade
+        operation fails.
     """
     # For resize, nobs and nvars are from the user. But for upgrade,
     # they're from the experiment as-is.
@@ -247,7 +287,7 @@ def resize_experiment(
         context: Optional :class:`SOMATileDBContext`.
 
     Returns:
-        ``True`` if all resize operations succeed. ``False`` if any resize operations
+        ``True`` if all resize operations succeed. ``False`` if any resize operation
         fails.
     """
     args: SizingArgs = dict(
