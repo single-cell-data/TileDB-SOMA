@@ -428,7 +428,7 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         Lifecycle:
             Maturing.
         """
-        self._check_open_read()
+        self._verify_open_for_reading()
         # if is it in read open mode, then it is a DataFrameWrapper
         return cast(DataFrameWrapper, self._handle).count
 
@@ -745,7 +745,7 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         """
         del batch_size  # Currently unused.
         _util.check_unpartitioned(partitions)
-        self._check_open_read()
+        self._verify_open_for_reading()
 
         # TODO: batch_size
         return TableReadIter(
