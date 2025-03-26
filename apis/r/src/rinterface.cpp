@@ -444,25 +444,6 @@ double c_capacity(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
     return static_cast<double>(cap);
 }
 
-// Taken from tiledb-r
-// https://github.com/TileDB-Inc/TileDB-R/blob/525bdfc0f34aadb74a312a5d8428bd07819a8f83/src/libtiledb.cpp#L246C1-L261C2
-const char *_tiledb_layout_to_string(tiledb_layout_t layout) {
-    switch (layout) {
-    case TILEDB_ROW_MAJOR:
-        return "ROW_MAJOR";
-    case TILEDB_COL_MAJOR:
-        return "COL_MAJOR";
-    case TILEDB_GLOBAL_ORDER:
-        return "GLOBAL_ORDER";
-    case TILEDB_UNORDERED:
-        return "UNORDERED";
-    case TILEDB_HILBERT:
-        return "HILBERT";
-    default:
-        Rcpp::stop("unknown tiledb_layout_t (%d)", layout);
-    }
-}
-
 // [[Rcpp::export]]
 std::string c_tile_order(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
     auto sr = tdbs::SOMAArray::open(OpenMode::read, uri, ctxxp->ctxptr);
