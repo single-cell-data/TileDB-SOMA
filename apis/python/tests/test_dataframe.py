@@ -2,6 +2,7 @@ import contextlib
 import datetime
 import json
 import math
+import struct
 import time
 from pathlib import Path
 from typing import Any, Dict, List
@@ -2321,6 +2322,17 @@ def test_enum_regression_62887(tmp_path):
 def test_enum_handling_category_of_nan_62449(tmp_path):
     uri = tmp_path.as_posix()
 
+    quiet_nan = struct.unpack(">f", b"\x7f\xc0\x00\x00")[0]
+    negative_nan = struct.unpack(">f", b"\xff\xc0\x00\x00")[0]
+    signaling_nan = struct.unpack(">f", b"\x7f\x80\x00\x01")[0]
+
+    def nan_check(expected_nan, dict_vals):
+        return any(
+            math.isnan(val)
+            and struct.pack(">f", val) == struct.pack(">f", expected_nan)
+            for val in dict_vals
+        )
+
     schema = pa.schema(
         [
             pa.field("soma_joinid", pa.int64(), nullable=False),
@@ -2330,26 +2342,34 @@ def test_enum_handling_category_of_nan_62449(tmp_path):
 
     tbl = pa.Table.from_pydict(
         {
-            "soma_joinid": [0, 1, 2, 3],
+            "soma_joinid": [0, 1, 2, 3, 4],
             "A": pa.DictionaryArray.from_arrays(
-                indices=pa.array([0, 1, 2, 0], type=pa.int32()),
-                dictionary=pa.array([0.0, 1.0, math.nan], type=pa.float32()),
+                indices=pa.array([0, 1, 2, 0, 3], type=pa.int32()),
+                dictionary=pa.array(
+                    [0.0, negative_nan, quiet_nan, signaling_nan], type=pa.float32()
+                ),
             ),
         }
     )
 
     with soma.DataFrame.create(
-        uri, schema=schema, index_column_names=["soma_joinid"], domain=[(0, 3)]
+        uri, schema=schema, index_column_names=["soma_joinid"], domain=[(0, 4)]
     ) as A:
         A.write(tbl)
 
     with soma.open(uri) as A:
         dict_vals = A.read().concat()["A"].chunk(0).dictionary.to_pylist()
-        assert any(np.isnan(val) for val in dict_vals)
+        assert len(dict_vals) == 4
+        assert nan_check(quiet_nan, dict_vals)
+        assert nan_check(negative_nan, dict_vals)
+        assert nan_check(signaling_nan, dict_vals)
 
     with soma.open(uri, mode="w") as A:
         A.write(tbl)
 
     with soma.open(uri) as A:
         dict_vals = A.read().concat()["A"].chunk(0).dictionary.to_pylist()
-        assert any(np.isnan(val) for val in dict_vals)
+        assert len(dict_vals) == 4
+        assert nan_check(quiet_nan, dict_vals)
+        assert nan_check(negative_nan, dict_vals)
+        assert nan_check(signaling_nan, dict_vals)

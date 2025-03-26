@@ -1239,30 +1239,23 @@ ManagedQuery::_extend_and_evolve_schema_with_details(
     // Find any new enumeration values
     std::vector<ValueType> enum_values_to_add;
     for (auto enum_val : enum_values_in_write) {
-        bool is_new_value = false;
-
-        if (std::isnan(enum_val)) {
-            // Special case: check if the value is NaN. We cannot use std::find
-            // below because NaN != NaN
-            for (auto existing_val : enum_values_existing) {
-                if (std::isnan(existing_val)) {
-                    is_new_value = true;
-                    break;
-                }
-            }
-
-        } else {
-            // Typical case: use std::find to check if the value already exists
-            if (std::find(
-                    enum_values_existing.begin(),
-                    enum_values_existing.end(),
-                    enum_val) != enum_values_existing.end()) {
-                is_new_value = true;
-            }
-        }
+        // Check if the value already exists using bitwise comparison.
+        // - We cannot use std::find because NaN != NaN
+        // - We cannot use std::isnan because multiple bit representations
+        //   exist for NaN. For example, in float32 (little-endian), both
+        //   0x7fc00000 and 0x7fc00100 represent NaN
+        // - TileDB and Arrow treat NaNs with different bit patterns as distinct
+        //   values
+        bool is_new_value = std::none_of(
+            enum_values_existing.begin(),
+            enum_values_existing.end(),
+            [enum_val](float existing_val) {
+                return std::memcmp(&enum_val, &existing_val, sizeof(float)) ==
+                       0;
+            });
 
         // If it is a new enumeration value, add to the list
-        if (!is_new_value) {
+        if (is_new_value) {
             enum_values_to_add.push_back(enum_val);
         }
     }
