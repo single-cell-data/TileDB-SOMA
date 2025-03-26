@@ -2322,6 +2322,7 @@ def test_enum_regression_62887(tmp_path):
 def test_enum_handling_category_of_nan_62449(tmp_path):
     uri = tmp_path.as_posix()
 
+    # Different representations of single-precision NaNs
     quiet_nan = struct.unpack(">f", b"\x7f\xc0\x00\x00")[0]
     negative_nan = struct.unpack(">f", b"\xff\xc0\x00\x00")[0]
     signaling_nan = struct.unpack(">f", b"\x7f\x80\x00\x01")[0]
