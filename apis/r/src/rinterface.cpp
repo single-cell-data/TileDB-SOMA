@@ -582,6 +582,22 @@ const char *_tiledb_datatype_to_string(tiledb_datatype_t dtype) {
     }
 }
 
+// identify ncells
+// taken from tiledb-r
+// https://github.com/TileDB-Inc/TileDB-R/blob/525bdfc0f34aadb74a312a5d8428bd07819a8f83/src/libtiledb.cpp#L1590-L1599
+template <typename AttrOrDim>
+int _get_ncells(AttrOrDim x) {
+    int ncells;
+    if (x->cell_val_num() == TILEDB_VAR_NUM) {
+        ncells = R_NaInt;
+    } else if (x->cell_val_num() > std::numeric_limits<int32_t>::max()) {
+        Rcpp::stop("tiledb_attr ncells value not representable as an R integer");
+    } else {
+        ncells = static_cast<int32_t>(x->cell_val_num());
+    }
+    return ncells;
+}
+
 // [[Rcpp::export]]
 Rcpp::List c_attributes(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
     auto sr = tdbs::SOMAArray::open(OpenMode::read, uri, ctxxp->ctxptr);
@@ -594,18 +610,6 @@ Rcpp::List c_attributes(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp
         auto attr = make_xptr<tiledb::Attribute>(new tiledb::Attribute(sch->attribute(i)));
         auto name = attr->name();
 
-        // identify ncells
-        // taken from tiledb-r
-        // https://github.com/TileDB-Inc/TileDB-R/blob/525bdfc0f34aadb74a312a5d8428bd07819a8f83/src/libtiledb.cpp#L1590-L1599
-        int ncells;
-        if (attr->cell_val_num() == TILEDB_VAR_NUM) {
-            ncells = R_NaInt;
-        } else if (attr->cell_val_num() > std::numeric_limits<int32_t>::max()) {
-            Rcpp::stop("tiledb_attr ncells value not representable as an R integer");
-        } else {
-            ncells = static_cast<int32_t>(attr->cell_val_num());
-        }
-
         // identify the filters
         // filter options taken from tiledb-r
         // https://github.com/TileDB-Inc/TileDB-R/blob/525bdfc0f34aadb74a312a5d8428bd07819a8f83/src/libtiledb.cpp#L369-L388
@@ -614,35 +618,15 @@ Rcpp::List c_attributes(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp
         int nfilters = static_cast<int32_t>(filter_list->nfilters());
         for (auto j = 0; j < nfilters; j++) {
             auto filter = make_xptr<tiledb::Filter>(new tiledb::Filter(filter_list->filter(j)));
-            auto filter_type = tiledb::Filter::to_str(filter->filter_type());
-
-            // catches are intentionally blank to leave the values as NA
-            int compression = R_NaInt, bytewidth = R_NaInt, factor = R_NaInt, offset = R_NaInt;
-            uint32_t bit_width = R_NaInt, positive_delta = R_NaInt;
-            try {filter->get_option(TILEDB_COMPRESSION_LEVEL, &compression);} catch (...) {};
-            try {filter->get_option(TILEDB_BIT_WIDTH_MAX_WINDOW, &bit_width);} catch (...) {};
-            try {filter->get_option(TILEDB_POSITIVE_DELTA_MAX_WINDOW, &positive_delta);} catch (...) {};
-            try {filter->get_option(TILEDB_SCALE_FLOAT_BYTEWIDTH, &bytewidth);} catch (...) {};
-            try {filter->get_option(TILEDB_SCALE_FLOAT_FACTOR, &factor);} catch (...) {};
-            try {filter->get_option(TILEDB_SCALE_FLOAT_OFFSET, &offset);} catch (...) {};
-
-            // assemble the filter information
-            filters[filter_type] = Rcpp::List::create(
-                Rcpp::Named("filter_type") = filter_type,
-                Rcpp::Named("compression_level") = compression,
-                Rcpp::Named("bit_width") = static_cast<int32_t>(bit_width),
-                Rcpp::Named("positive_delta") = static_cast<int32_t>(positive_delta),
-                Rcpp::Named("float_bytewidth") = bytewidth,
-                Rcpp::Named("float_factor") = factor,
-                Rcpp::Named("float_offset") = offset
-            );
+            auto filter_type = _tiledb_filter_to_string(filter->filter_type());
+            filters[filter_type] = _get_filter_opts(filter);
         }
 
         // assemble the attribute information list
         result[name] = Rcpp::List::create(
             Rcpp::Named("name") = name,
             Rcpp::Named("type") = _tiledb_datatype_to_string(attr->type()),
-            Rcpp::Named("ncells") = ncells,
+            Rcpp::Named("ncells") = _get_ncells<Rcpp::XPtr<tiledb::Attribute>>(attr),
             Rcpp::Named("nullable") = attr->nullable(),
             Rcpp::Named("filter_list") = filters
         );
@@ -706,6 +690,50 @@ Rcpp::CharacterVector c_attribute_enumeration_levels(
     }
 
     return enumerations;
+}
+
+// [[Rcpp::export]]
+Rcpp::List c_domain(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
+    auto sr = tdbs::SOMAArray::open(OpenMode::read, uri, ctxxp->ctxptr);
+    std::shared_ptr<tiledb::ArraySchema> sch = sr->tiledb_schema();
+    sr->close();
+
+    Rcpp::List result;
+    auto domain = make_xptr<tiledb::Domain>(new tiledb::Domain(sch->domain()));
+    // adapted from tiledb-r
+    // https://github.com/TileDB-Inc/TileDB-R/blob/525bdfc0f34aadb74a312a5d8428bd07819a8f83/src/libtiledb.cpp#L1262C3-L1264C4
+    uint32_t rank = domain->ndim();
+    if (rank > std::numeric_limits<int32_t>::max()) {
+        Rcpp::stop("tiledb::Domain rank is not representable by an R integer");
+    }
+    int ndim = static_cast<int32_t>(rank);
+    for (int i = 0; i < ndim; i++) {
+        auto dim = make_xptr<tiledb::Dimension>(new tiledb::Dimension(domain->dimension(i)));
+        auto name = dim->name();
+
+        // identify the filters
+        Rcpp::List filters;
+        auto filter_list = make_xptr<tiledb::FilterList>(new tiledb::FilterList(dim->filter_list()));
+        int nfilters = static_cast<int32_t>(filter_list->nfilters());
+        for (auto j = 0; j < nfilters; j++) {
+            auto filter = make_xptr<tiledb::Filter>(new tiledb::Filter(filter_list->filter(j)));
+            auto filter_type = _tiledb_filter_to_string(filter->filter_type());
+            filters[filter_type] = _get_filter_opts(filter);
+        }
+
+        // assemble the dimension information list
+        result[name] = Rcpp::List::create(
+            Rcpp::Named("name") = name,
+            Rcpp::Named("type") = _tiledb_datatype_to_string(dim->type()),
+            Rcpp::Named("ncells") = _get_ncells<Rcpp::XPtr<tiledb::Dimension>>(dim),
+            // TODO: add domain and tile to return value
+            // Rcpp::Named("domain") = "",
+            // Rcpp::Named("tile") = "",
+            Rcpp::Named("filters") = filters
+        );
+    }
+
+    return result;
 }
 
 // [[Rcpp::export]]

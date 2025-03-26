@@ -639,6 +639,9 @@ END_RCPP
 // c_attributes_enumerated
 Rcpp::LogicalVector c_attributes_enumerated(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp);
 RcppExport SEXP _tiledbsoma_c_attributes_enumerated(SEXP uriSEXP, SEXP ctxxpSEXP) {
+// c_domain
+Rcpp::List c_domain(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp);
+RcppExport SEXP _tiledbsoma_c_domain(SEXP uriSEXP, SEXP ctxxpSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -658,6 +661,7 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< Rcpp::XPtr<somactx_wrap_t> >::type ctxxp(ctxxpSEXP);
     Rcpp::traits::input_parameter< const std::string& >::type name(nameSEXP);
     rcpp_result_gen = Rcpp::wrap(c_attribute_enumeration_levels(uri, ctxxp, name));
+    rcpp_result_gen = Rcpp::wrap(c_domain(uri, ctxxp));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -958,6 +962,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_tiledbsoma_c_attributes", (DL_FUNC) &_tiledbsoma_c_attributes, 2},
     {"_tiledbsoma_c_attributes_enumerated", (DL_FUNC) &_tiledbsoma_c_attributes_enumerated, 2},
     {"_tiledbsoma_c_attribute_enumeration_levels", (DL_FUNC) &_tiledbsoma_c_attribute_enumeration_levels, 3},
+    {"_tiledbsoma_c_domain", (DL_FUNC) &_tiledbsoma_c_domain, 2},
     {"_tiledbsoma_resize", (DL_FUNC) &_tiledbsoma_resize, 5},
     {"_tiledbsoma_resize_soma_joinid_shape", (DL_FUNC) &_tiledbsoma_resize_soma_joinid_shape, 4},
     {"_tiledbsoma_tiledbsoma_upgrade_shape", (DL_FUNC) &_tiledbsoma_tiledbsoma_upgrade_shape, 5},
