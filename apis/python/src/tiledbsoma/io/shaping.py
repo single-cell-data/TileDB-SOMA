@@ -12,11 +12,16 @@ from __future__ import annotations
 
 import io
 import sys
-from typing import Any, Dict, Tuple, TypedDict, Union, cast
+from collections.abc import Callable
+from typing import Any, Dict, Tuple, TypedDict, TypeVar, Union, cast
 
 import tiledbsoma
 
+from .._soma_object import SOMAObject
+
 Printable = Union[io.TextIOWrapper, io.StringIO]
+
+_SOMAObjectType = TypeVar("_SOMAObjectType", bound=SOMAObject)  # type: ignore[type-arg]
 
 
 class SizingArgs(TypedDict):
@@ -271,79 +276,72 @@ def _treewalk(
     uri: str,
     *,
     node_name: str | None = None,
-    visitor: Any,
+    visitor: Callable[..., bool],
     args: SizingArgs,
     context: tiledbsoma.SOMATileDBContext | None,
 ) -> bool:
-    retval = True
+    """Apply visitor function to the main ``Experiment`` elements.
+
+    Args:
+        uri: URI of the element to visit and visit the children of.
+        node_name: Name of the element to visit and visit the children of.
+        args: Arguments to pass to visitor.
+        context: TileDB context to pass to the visitor.
+    """
+
+    def _recurse(
+        parent: (
+            tiledbsoma.Experiment
+            | tiledbsoma.Measurement
+            | tiledbsoma.Collection[_SOMAObjectType]
+        ),
+        name: str,
+        sizing_args: SizingArgs,
+    ) -> bool:
+        """Applies ``_treewalk`` to the requested child element.
+
+        Args:
+            parent: The parent item to get child from.
+            name: Name of the child element to attempt to visit.
+            sizing_args: Arguments to pass to the visitor.
+
+        Returns:
+            The status of the call. If the child exists, return the status of
+            ``_treewalk`, otherwise return ``True``.
+        """
+        if name in parent:
+            return _treewalk(
+                parent[name].uri,
+                node_name=name,
+                visitor=visitor,
+                args=sizing_args,
+                context=context,
+            )
+        return True
+
     with tiledbsoma.open(uri, context=context) as item:
 
         if isinstance(item, tiledbsoma.Experiment):
-            if "obs" in item:
-                ok = _treewalk(
-                    item["obs"].uri,
-                    node_name="obs",
-                    visitor=visitor,
-                    args=args,
-                    context=context,
-                )
-                retval = retval and ok
-            if "ms" in item:
-                ok = _treewalk(
-                    item["ms"].uri,
-                    node_name="ms",
-                    visitor=visitor,
-                    args=args,
-                    context=context,
-                )
-                retval = retval and ok
+            status = _recurse(item, "obs", args)
+            status &= _recurse(item, "ms", args)
+            return status
 
-        elif isinstance(item, tiledbsoma.Measurement):
-            if "var" in item:
-                ok = _treewalk(
-                    item["var"].uri,
-                    node_name="var",
-                    visitor=visitor,
-                    args=args,
-                    context=context,
-                )
-                retval = retval and ok
-
+        if isinstance(item, tiledbsoma.Measurement):
+            status = _recurse(item, "var", args)
             for coll_name in ["X", "obsm", "obsp", "varm", "varp"]:
-                if coll_name in item:
+                args["coll_name"] = coll_name
+                status &= _recurse(item, coll_name, args)
+            return status
 
-                    args["coll_name"] = coll_name
-
-                    ok = _treewalk(
-                        item[coll_name].uri,
-                        node_name=coll_name,
-                        visitor=visitor,
-                        args=args,
-                        context=context,
-                    )
-                    retval = retval and ok
-
-        elif isinstance(item, tiledbsoma.Collection):
-
+        if isinstance(item, tiledbsoma.Collection):
+            status = True
             for key in item:
-
                 if node_name == "ms":
                     args["ms_name"] = key
+                status &= _recurse(item, key, args)
+            return status
 
-                ok = _treewalk(
-                    item[key].uri,
-                    node_name=key,
-                    visitor=visitor,
-                    args=args,
-                    context=context,
-                )
-                retval = retval and ok
-
-        else:
-            ok = visitor(item, node_name=node_name, args=args, context=context)
-            retval = retval and ok
-
-    return retval
+        return visitor(item, node_name=node_name, args=args, context=context)
 
 
 def _leaf_visitor_show_shapes(
