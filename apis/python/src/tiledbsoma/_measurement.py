@@ -2,8 +2,7 @@
 #
 # Licensed under the MIT License.
 
-"""Implementation of a SOMA Measurement.
-"""
+"""Implementation of a SOMA Measurement."""
 
 from typing import Union
 

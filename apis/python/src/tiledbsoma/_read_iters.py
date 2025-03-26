@@ -2,8 +2,7 @@
 #
 # Licensed under the MIT License.
 
-"""Read iterators.
-"""
+"""Read iterators."""
 
 from __future__ import annotations
 
