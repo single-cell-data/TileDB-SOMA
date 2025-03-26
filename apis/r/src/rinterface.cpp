@@ -465,6 +465,114 @@ std::string c_cell_order(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxx
 }
 
 // Taken from tiledb-r
+// https://github.com/TileDB-Inc/TileDB-R/blob/525bdfc0f34aadb74a312a5d8428bd07819a8f83/src/libtiledb.cpp#L323C1-L367C2
+const char *_tiledb_filter_to_string(tiledb_filter_type_t filter) {
+    switch (filter) {
+    case TILEDB_FILTER_NONE:
+        return "NONE";
+    case TILEDB_FILTER_GZIP:
+        return "GZIP";
+    case TILEDB_FILTER_ZSTD:
+        return "ZSTD";
+    case TILEDB_FILTER_LZ4:
+        return "LZ4";
+    case TILEDB_FILTER_RLE:
+        return "RLE";
+    case TILEDB_FILTER_BZIP2:
+        return "BZIP2";
+    case TILEDB_FILTER_DOUBLE_DELTA:
+        return "DOUBLE_DELTA";
+    case TILEDB_FILTER_BIT_WIDTH_REDUCTION:
+        return "BIT_WIDTH_REDUCTION";
+    case TILEDB_FILTER_BITSHUFFLE:
+        return "BITSHUFFLE";
+    case TILEDB_FILTER_BYTESHUFFLE:
+        return "BYTESHUFFLE";
+    case TILEDB_FILTER_POSITIVE_DELTA:
+        return "POSITIVE_DELTA";
+    case TILEDB_FILTER_CHECKSUM_MD5:
+        return "CHECKSUM_MD5";
+    case TILEDB_FILTER_CHECKSUM_SHA256:
+        return "CHECKSUM_SHA256";
+    case TILEDB_FILTER_DICTIONARY:
+        return "DICTIONARY_ENCODING";
+    case TILEDB_FILTER_SCALE_FLOAT:
+        return "SCALE_FLOAT";
+    case TILEDB_FILTER_XOR:
+        return "FILTER_XOR";
+    default: {
+        Rcpp::stop("unknown tiledb_filter_t (%d)", filter);
+    }
+    }
+}
+
+// internal helper function
+// filter options taken from tiledb-r
+// https://github.com/TileDB-Inc/TileDB-R/blob/525bdfc0f34aadb74a312a5d8428bd07819a8f83/src/libtiledb.cpp#L369-L388
+Rcpp::List _get_filter_opts(Rcpp::XPtr<tiledb::Filter> filter) {
+    auto filter_type = _tiledb_filter_to_string(filter->filter_type());
+
+    // catches are intentionally blank to leave the values as NA
+    int compression = R_NaInt, bytewidth = R_NaInt, factor = R_NaInt, offset = R_NaInt;
+    uint32_t bit_width = R_NaInt, positive_delta = R_NaInt;
+    try {filter->get_option(TILEDB_COMPRESSION_LEVEL, &compression);} catch (...) {};
+    try {filter->get_option(TILEDB_BIT_WIDTH_MAX_WINDOW, &bit_width);} catch (...) {};
+    try {filter->get_option(TILEDB_POSITIVE_DELTA_MAX_WINDOW, &positive_delta);} catch (...) {};
+    try {filter->get_option(TILEDB_SCALE_FLOAT_BYTEWIDTH, &bytewidth);} catch (...) {};
+    try {filter->get_option(TILEDB_SCALE_FLOAT_FACTOR, &factor);} catch (...) {};
+    try {filter->get_option(TILEDB_SCALE_FLOAT_OFFSET, &offset);} catch (...) {};
+
+    // assemble the filter options into a list
+    return Rcpp::List::create(
+        Rcpp::Named("filter_type") = filter_type,
+        Rcpp::Named("compression_level") = compression,
+        Rcpp::Named("bit_width") = static_cast<int32_t>(bit_width),
+        Rcpp::Named("positive_delta") = static_cast<int32_t>(positive_delta),
+        Rcpp::Named("float_bytewidth") = bytewidth,
+        Rcpp::Named("float_factor") = factor,
+        Rcpp::Named("float_offset") = offset
+    );
+}
+
+// [[Rcpp::export]]
+Rcpp::List c_schema_filters(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
+    auto sr = tdbs::SOMAArray::open(OpenMode::read, uri, ctxxp->ctxptr);
+    std::shared_ptr<tiledb::ArraySchema> sch = sr->tiledb_schema();
+    sr->close();
+
+    Rcpp::List filter_list, coord_filters, offset_filters, validity_filters;
+
+    auto coords_filter_list = make_xptr<tiledb::FilterList>(new tiledb::FilterList(sch->coords_filter_list()));
+    int ncoords_filters = static_cast<int32_t>(coords_filter_list->nfilters());
+    for (int i = 0; i < ncoords_filters; i++) {
+        auto filter = make_xptr<tiledb::Filter>(new tiledb::Filter(coords_filter_list->filter(i)));
+        auto filter_type = _tiledb_filter_to_string(filter->filter_type());
+        coord_filters[filter_type] = _get_filter_opts(filter);
+    }
+    filter_list["coords"] = coord_filters;
+
+    auto offset_filter_list = make_xptr<tiledb::FilterList>(new tiledb::FilterList(sch->offsets_filter_list()));
+    int noffset_filters = static_cast<int32_t>(offset_filter_list->nfilters());
+    for (int i = 0; i < noffset_filters; i++) {
+        auto filter = make_xptr<tiledb::Filter>(new tiledb::Filter(offset_filter_list->filter(i)));
+        auto filter_type = _tiledb_filter_to_string(filter->filter_type());
+        offset_filters[filter_type] = _get_filter_opts(filter);
+    }
+    filter_list["offsets"] = offset_filters;
+
+    auto validity_filter_list = make_xptr<tiledb::FilterList>(new tiledb::FilterList(sch->validity_filter_list()));
+    int nvalidity_filters = static_cast<int32_t>(validity_filter_list->nfilters());
+    for (int i = 0; i < nvalidity_filters; i++) {
+        auto filter = make_xptr<tiledb::Filter>(new tiledb::Filter(validity_filter_list->filter(i)));
+        auto filter_type = _tiledb_filter_to_string(filter->filter_type());
+        validity_filters[filter_type] = _get_filter_opts(filter);
+    }
+    filter_list["validity"] = validity_filters;
+
+    return filter_list;
+}
+
+// Taken from tiledb-r
 // https://github.com/TileDB-Inc/TileDB-R/blob/525bdfc0f34aadb74a312a5d8428bd07819a8f83/src/libtiledb.cpp#L31C1-L110C2
 const char *_tiledb_datatype_to_string(tiledb_datatype_t dtype) {
     switch (dtype) {
@@ -540,48 +648,6 @@ const char *_tiledb_datatype_to_string(tiledb_datatype_t dtype) {
         return "GEOM_WKT";
     default:
         Rcpp::stop("unknown tiledb_datatype_t (%d)", dtype);
-    }
-}
-
-// Taken from tiledb-r
-// https://github.com/TileDB-Inc/TileDB-R/blob/525bdfc0f34aadb74a312a5d8428bd07819a8f83/src/libtiledb.cpp#L323C1-L367C2
-const char *_tiledb_filter_to_string(tiledb_filter_type_t filter) {
-    switch (filter) {
-    case TILEDB_FILTER_NONE:
-        return "NONE";
-    case TILEDB_FILTER_GZIP:
-        return "GZIP";
-    case TILEDB_FILTER_ZSTD:
-        return "ZSTD";
-    case TILEDB_FILTER_LZ4:
-        return "LZ4";
-    case TILEDB_FILTER_RLE:
-        return "RLE";
-    case TILEDB_FILTER_BZIP2:
-        return "BZIP2";
-    case TILEDB_FILTER_DOUBLE_DELTA:
-        return "DOUBLE_DELTA";
-    case TILEDB_FILTER_BIT_WIDTH_REDUCTION:
-        return "BIT_WIDTH_REDUCTION";
-    case TILEDB_FILTER_BITSHUFFLE:
-        return "BITSHUFFLE";
-    case TILEDB_FILTER_BYTESHUFFLE:
-        return "BYTESHUFFLE";
-    case TILEDB_FILTER_POSITIVE_DELTA:
-        return "POSITIVE_DELTA";
-    case TILEDB_FILTER_CHECKSUM_MD5:
-        return "CHECKSUM_MD5";
-    case TILEDB_FILTER_CHECKSUM_SHA256:
-        return "CHECKSUM_SHA256";
-    case TILEDB_FILTER_DICTIONARY:
-        return "DICTIONARY_ENCODING";
-    case TILEDB_FILTER_SCALE_FLOAT:
-        return "SCALE_FLOAT";
-    case TILEDB_FILTER_XOR:
-        return "FILTER_XOR";
-    default: {
-        Rcpp::stop("unknown tiledb_filter_t (%d)", filter);
-    }
     }
 }
 

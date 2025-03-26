@@ -256,6 +256,9 @@ c_tile_order <- function(uri, ctxxp) {
 
 c_cell_order <- function(uri, ctxxp) {
     .Call(`_tiledbsoma_c_cell_order`, uri, ctxxp)
+
+c_schema_filters <- function(uri, ctxxp) {
+    .Call(`_tiledbsoma_c_schema_filters`, uri, ctxxp)
 }
 
 c_attributes <- function(uri, ctxxp) {
@@ -426,4 +429,3 @@ get_soma_object_type <- function(uri, ctxxp) {
 get_tiledb_object_type <- function(uri, ctxxp) {
     .Call(`_tiledbsoma_get_tiledb_object_type`, uri, ctxxp)
 }
-
