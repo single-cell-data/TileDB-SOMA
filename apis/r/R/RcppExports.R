@@ -266,6 +266,14 @@ c_attributes <- function(uri, ctxxp) {
     .Call(`_tiledbsoma_c_attributes`, uri, ctxxp)
 }
 
+c_attribute_enumerated <- function(uri, ctxxp) {
+    .Call(`_tiledbsoma_c_attribute_enumerated`, uri, ctxxp)
+}
+
+c_attribute_enumeration_levels <- function(uri, ctxxp, name) {
+    .Call(`_tiledbsoma_c_attribute_enumeration_levels`, uri, ctxxp, name)
+}
+
 resize <- function(uri, new_shape, function_name_for_messages, check_only, ctxxp) {
     .Call(`_tiledbsoma_resize`, uri, new_shape, function_name_for_messages, check_only, ctxxp)
 }

@@ -879,7 +879,10 @@ test_that("missing levels in enums", {
 
   # Test missingness is preserved
   expect_s3_class(sdf <- SOMADataFrameOpen(uri), "SOMADataFrame")
-  expect_true(tiledb::tiledb_array_has_enumeration(sdf$object)["enum"])
+  expect_true(c_attribute_enumerated(
+    sdf$uri,
+    sdf$.__enclos_env__$private$.soma_context
+  )["enum"])
   expect_s4_class(
     attr <- tiledb::attrs(sdf$tiledb_schema())$enum,
     "tiledb_attr"
@@ -888,7 +891,7 @@ test_that("missing levels in enums", {
     tiledb::tiledb_attribute_get_enumeration(attr, sdf$object),
     levels(df$enum)
   )
-  expect_true(tiledb::tiledb_attribute_get_nullable(attr))
+  expect_true(sdf$attributes()$enum$nullable)
 
   # Test reading preserves missingness
   expect_identical(sdf$object[]$enum, df$enum)
