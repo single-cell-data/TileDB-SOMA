@@ -888,12 +888,15 @@ bool ManagedQuery::_cast_column_aux(
     // false
     switch (disk_type) {
         case TILEDB_BOOL:
+            throw TileDBSOMAError(
+                "internal coding error: template-specialization failure for "
+                "boolean in _cast_column_aux");
         case TILEDB_STRING_ASCII:
         case TILEDB_STRING_UTF8:
         case TILEDB_CHAR:
             throw TileDBSOMAError(
                 "internal coding error: template-specialization failure for "
-                "boolean in _cast_column_aux");
+                "string in _cast_column_aux");
 
         case TILEDB_INT8:
             return _set_column<UserType, int8_t>(schema, array, se);
