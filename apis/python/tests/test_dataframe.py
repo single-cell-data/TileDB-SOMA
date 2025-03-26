@@ -302,6 +302,10 @@ def test_get_enumeration_values(tmp_path, ordered, mode):
         }
         assert actual == expect
 
+    # Check with the dataframe closed
+    with pytest.raises(soma.SOMAError):
+        sdf.get_enumeration_values(["bool_enum"])
+
     # Write once
     pd_data = {
         "soma_joinid": [0, 1, 2, 3, 4],
