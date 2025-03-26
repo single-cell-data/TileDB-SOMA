@@ -107,24 +107,4 @@ class ScopedExecutor final {
 
 };  // namespace tiledbsoma
 
-template <>
-struct std::hash<std::span<const std::byte>> {
-    std::size_t operator()(const std::span<const std::byte>& s) const noexcept {
-        return std::hash<std::string_view>{}(std::string_view(
-            reinterpret_cast<const char*>(s.data()), s.size()));
-    }
-};
-
-template <>
-struct std::equal_to<std::span<const std::byte>> {
-    bool operator()(
-        const std::span<const std::byte>& lhs,
-        const std::span<const std::byte>& rhs) const noexcept {
-        return std::string_view(
-                   reinterpret_cast<const char*>(lhs.data()), lhs.size()) ==
-               std::string_view(
-                   reinterpret_cast<const char*>(rhs.data()), rhs.size());
-    }
-};
-
 #endif  // TILEDBSOMA_COMMON_H

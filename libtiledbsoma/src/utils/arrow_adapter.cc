@@ -1109,7 +1109,7 @@ ArrowAdapter::tiledb_schema_from_arrow_schema(
     LOG_DEBUG(fmt::format("[ArrowAdapter] check"));
     schema.check();
 
-    LOG_DEBUG(std::format("[ArrowAdapter] returning"));
+    LOG_DEBUG(fmt::format("[ArrowAdapter] returning"));
     return std::make_tuple(
         schema, soma_schema_extension, required_soma_column_metadata);
 }
