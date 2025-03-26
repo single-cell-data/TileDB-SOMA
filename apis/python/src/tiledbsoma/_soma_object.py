@@ -267,7 +267,18 @@ class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
             )
         if self.mode != "w":
             raise SOMAError(
-                f"{self.__class__.__name__} ({self.uri}) must be open for writing (open for reading)"
+                f"{self.__class__.__name__} ({self.uri}) must be open for writing"
+            )
+
+    def _verify_open_for_reading(self) -> None:
+        """Raises an error if the object is not open for reading."""
+        if self.closed:
+            raise SOMAError(
+                f"{self.__class__.__name__} ({self.uri}) must be open for reading (closed)"
+            )
+        if self.mode != "r":
+            raise SOMAError(
+                f"{self.__class__.__name__} ({self.uri}) must be open for writing"
             )
 
     @property
@@ -328,10 +339,6 @@ class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
                 return md_type.lower() == cls.soma_type.lower()
         except (RuntimeError, SOMAError):
             return False
-
-    def _check_open_read(self) -> None:
-        if self.mode != "r":
-            raise ValueError(f"{self} is open for writing, not reading")
 
 
 AnySOMAObject = SOMAObject[_tdb_handles.AnyWrapper]
