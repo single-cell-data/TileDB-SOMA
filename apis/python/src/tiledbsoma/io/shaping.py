@@ -185,38 +185,33 @@ def resize_experiment(
     context: tiledbsoma.SOMATileDBContext | None = None,
     output_handle: Printable = cast(Printable, sys.stdout),
 ) -> bool:
-    """For each dataframe contained within the SOMA ``Experiment`` pointed to by
-    the given URI, resizes the ``domain`` for the ``soma_joinid`` index column
-    (if it is an indexed column) to match the desired new value.
+    """Resize the elements in the SOMA ``Experiment`` to fit the requested number
+    of observations and variables.
 
-    The desired new value may be the same size as at present, or bigger, but not
-    exceeding ``maxdomain`` for the ``soma_joinid`` index column.
+    A dataframe will be resized if the ``soma_joinid`` column is an index column
+    and the current domain of the ``soma_joinid`` column is smaller than requested
+    size.  If the new domain of the ``soma_joinid`` column does not fit inside the
+    ``maxshape``, the resize fails.
 
-    For each N-D array contained within the SOMA ``Experiment``, resizes the ``shape``
-    to match the desired values.
+    An N-D matrix will be resized if either dimension of the new ``shape`` is larger
+    than the current shape. If either dimension of the new ``shape`` is larger
+    than ``maxshape``, the resize fails.
 
-    * For ``X`` arrays, the resize is to new ``nobs`` x the measurement's new ``nvar``.
-    * For ``obsm`` arrays, the resize is to new ``nobs`` x the array's existing ``soma_dim_1`` shape.
-    * For ``obsp`` arrays, the resize is to new ``nobs`` x that same ``nobs``.
-    * For ``varm`` arrays, the resize is to new ``nvar`` x the array's existing ``soma_dim_1`` shape.
-    * For ``varp`` arrays, the resize is to new ``nvar`` x that same ``nvar``.
+    The following base elements are resized:
 
-    In all cases, the desired new ``shape`` value may be the same size on the
-    given dimension, or bigger, but not exceeding ``maxshape`` for the given
-    dimension.
+      * ``obs`` dataframe: ``soma_joinid`` resized to fit ``nobs``.
 
-    If any array has not been upgraded, then the experiment's ``resize`` will fail.
+    For each ``measurement_name`` in the experiment the elements are resized as follows
+    where ``nvar[measurement_name]`` is the current size if ``measurement_name`` if
+    no value is provided by the user:
 
-    Args:
-        uri: The URI of a SOMA :class:`Experiment`.
-        nobs: The desired new shape of the experiment's ``obs`` dataframe.
-        nvars: The desired new shapes of the experiment's ``var`` dataframes.
-            This should be a dict from measurement name to shape, e.g.
-            ``{"RNA": 10000, "raw": 20000}``.
-        verbose: If ``True``, produce per-array output as the upgrade runs.
-        check_only: If ``True``,  don't apply the upgrades, but show what would
-            be attempted, and show why each one would fail.
-        context: Optional :class:`SOMATileDBContext`.
+      * ``var`` dataframe: ``soma_joinid`` resized to fit ``nvar[measurement_name]``.
+      * ``X`` arrays: ``shape`` at least (``nobs``, ``nvar[measurement_name]``).
+      * ``obsm`` arrays: ``shape`` at least (``nobs``, current ``soma_dim_1``).
+      * ``varm`` arrays: ``shape`` at least (``nvar``, current ``soma_dim_1``).
+      * ``obsp`` arrays: ``shape`` at least (``nobs``, ``nobs``).
+      * ``varm`` arrays: ``shape`` at least (``nvar``, existing ``soma_dim_1``).
+      * ``varp`` arrays: ``shape`` at least ( ``nvar``, ``nvar``).
 
     Example::
 
@@ -238,6 +233,22 @@ def resize_experiment(
           URI file:///data/pbmc3k_unprocessed/ms/RNA/X/data
           Dry run for: resize((5600, 13714))
           OK
+
+
+    Args:
+        uri: The URI of a SOMA :class:`Experiment`.
+        nobs: The desired new shape of the experiment's ``obs`` dataframe.
+        nvars: The desired new shapes of the experiment's ``var`` dataframes.
+            This should be a dict from measurement name to shape, e.g.
+            ``{"RNA": 10000, "raw": 20000}``.
+        verbose: If ``True``, produce per-array output as the upgrade runs.
+        check_only: If ``True``,  don't apply the upgrades, but show what would
+            be attempted, and show why each one would fail.
+        context: Optional :class:`SOMATileDBContext`.
+
+    Returns:
+        ``True`` if all resize operations succeed. ``False`` if any resize operations
+        fails.
     """
     args: SizingArgs = dict(
         nobs=nobs,
