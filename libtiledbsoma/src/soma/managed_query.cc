@@ -852,6 +852,22 @@ bool ManagedQuery::_cast_column_aux<std::string>(
     return false;
 }
 
+template <>
+bool ManagedQuery::_cast_column_aux<bool>(
+    ArrowSchema* schema, ArrowArray* array, ArraySchemaEvolution se) {
+    (void)se;  // se is unused in bool specialization
+
+    auto casted = _cast_bool_data(schema, array);
+
+    setup_write_column(
+        schema->name,
+        array->length,
+        (const void*)casted.data(),
+        (uint64_t*)nullptr,
+        _cast_validity_buffer(array));
+    return false;
+}
+
 template <typename UserType>
 bool ManagedQuery::_cast_column_aux(
     ArrowSchema* schema, ArrowArray* array, ArraySchemaEvolution se) {
@@ -919,22 +935,6 @@ bool ManagedQuery::_cast_column_aux(
                 "column: " +
                 tiledb::impl::type_to_str(disk_type));
     }
-}
-
-template <>
-bool ManagedQuery::_cast_column_aux<bool>(
-    ArrowSchema* schema, ArrowArray* array, ArraySchemaEvolution se) {
-    (void)se;  // se is unused in bool specialization
-
-    auto casted = _cast_bool_data(schema, array);
-
-    setup_write_column(
-        schema->name,
-        array->length,
-        (const void*)casted.data(),
-        (uint64_t*)nullptr,
-        _cast_validity_buffer(array));
-    return false;
 }
 
 bool ManagedQuery::_extend_and_write_enumeration(
