@@ -29,9 +29,9 @@ void c_group_create(
     std::optional<tdbs::TimestampRange> tsrng = makeTimestampRange(timestamp);
     if (timestamp.isNotNull()) {
         Rcpp::DatetimeVector v(timestamp);
-        spdlog::debug("[c_group_create] uri {} ts ({},{})", uri, v[0], v[1]);
+        spdl::debug("[c_group_create] uri {} ts ({},{})", uri, v[0], v[1]);
     } else {
-        spdlog::debug("[c_group_create] uri {}", uri);
+        spdl::debug("[c_group_create] uri {}", uri);
     }
 
     tdbs::SOMAGroup::create(sctx, uri, type, tsrng);

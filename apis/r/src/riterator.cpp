@@ -90,7 +90,7 @@ Rcpp::XPtr<tdbs::ManagedQuery> mq_setup(
         tdbs::LOG_SET_LEVEL(loglevel);
     }
 
-    spdlog::debug("[mq_setup] Setting up {}", uri);
+    spdl::debug("[mq_setup] Setting up {}", uri);
 
     std::string_view name = "unnamed";
     std::vector<std::string> column_names = {};
@@ -128,7 +128,7 @@ Rcpp::XPtr<tdbs::ManagedQuery> mq_setup(
     tiledb::Domain domain = schema->domain();
     std::vector<tiledb::Dimension> dims = domain.dimensions();
     for (auto& dim : dims) {
-        spdlog::debug(
+        spdl::debug(
             "[mq_setup] Dimension {} type {} domain {} extent {}",
             dim.name(),
             tiledb::impl::to_str(dim.type()),
@@ -140,7 +140,7 @@ Rcpp::XPtr<tdbs::ManagedQuery> mq_setup(
 
     // If we have a query condition, apply it
     if (!qc.isNull()) {
-        spdlog::debug("[mq_setup] Applying query condition");
+        spdl::debug("[mq_setup] Applying query condition");
         Rcpp::XPtr<tiledb::QueryCondition> qcxp(qc);
         mq->set_condition(*qcxp);
     }
@@ -205,7 +205,7 @@ SEXP mq_next(Rcpp::XPtr<tdbs::ManagedQuery> mq) {
     check_xptr_tag<tdbs::ManagedQuery>(mq);
 
     if (mq_complete(mq)) {
-        spdlog::trace(
+        spdl::trace(
             "[mq_next] complete {} num_cells {}",
             mq->is_complete(true),
             mq->total_num_cells());
@@ -213,13 +213,13 @@ SEXP mq_next(Rcpp::XPtr<tdbs::ManagedQuery> mq) {
     }
 
     auto mq_data = mq->read_next();
-    spdlog::debug(
+    spdl::debug(
         "[mq_next] Read {} rows and {} cols",
         mq_data->get()->num_rows(),
         mq_data->get()->names().size());
 
     if(!mq_data){
-        spdlog::trace("[mq_next] complete - mq_data read no data");
+        spdl::trace("[mq_next] complete - mq_data read no data");
         return create_empty_arrow_table();
     }
 
@@ -245,7 +245,7 @@ SEXP mq_next(Rcpp::XPtr<tdbs::ManagedQuery> mq) {
     arr->length = 0;  // initial value
 
     for (size_t i = 0; i < ncol; i++) {
-        spdlog::trace("[mq_next] Accessing {} at {}", names[i], i);
+        spdl::trace("[mq_next] Accessing {} at {}", names[i], i);
 
         // now buf is a shared_ptr to ColumnBuffer
         auto buf = mq_data->get()->at(names[i]);
@@ -257,14 +257,14 @@ SEXP mq_next(Rcpp::XPtr<tdbs::ManagedQuery> mq) {
         ArrowSchemaMove(pp.second.get(), sch->children[i]);
 
         if (pp.first->length > arr->length) {
-            spdlog::debug(
+            spdl::debug(
                 "[soma_array_reader] Setting array length to {}",
                 pp.first->length);
             arr->length = pp.first->length;
         }
     }
 
-    spdlog::debug("[mq_next] Exporting chunk with {} rows", arr->length);
+    spdl::debug("[mq_next] Exporting chunk with {} rows", arr->length);
     // Nanoarrow special: stick schema into xptr tag to return single SEXP
     array_xptr_set_schema(arrayxp, schemaxp);  // embed schema in array
     return arrayxp;
@@ -274,7 +274,7 @@ SEXP mq_next(Rcpp::XPtr<tdbs::ManagedQuery> mq) {
 void mq_reset(Rcpp::XPtr<tdbs::ManagedQuery> mq) {
     check_xptr_tag<tdbs::ManagedQuery>(mq);
     mq->reset();
-    spdlog::debug("[mq_reset] Reset SOMAArray object");
+    spdl::debug("[mq_reset] Reset SOMAArray object");
 }
 
 // [[Rcpp::export]]
@@ -287,7 +287,7 @@ void mq_set_dim_points(
 
     std::vector<int64_t> vec = Rcpp::fromInteger64(points);
     mq->select_points<int64_t>(dim, vec);
-    spdlog::debug(
+    spdl::debug(
         "[mq_set_dim_points] Set on dim '{}' for {} points, first two are {} "
         "and {}",
         dim,

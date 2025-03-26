@@ -193,7 +193,7 @@ void set_metadata(
     if (type == "character") {
         const tiledb_datatype_t value_type = TILEDB_STRING_UTF8;
         std::string value = Rcpp::as<std::string>(valuesxp);
-        spdlog::debug(
+        spdl::debug(
             "[set_metadata] key {} value {} is_array {} type {}",
             key,
             value,
@@ -205,7 +205,7 @@ void set_metadata(
         const tiledb_datatype_t value_type = TILEDB_INT64;
         double dv = Rcpp::as<double>(valuesxp);
         int64_t value = Rcpp::fromInteger64(dv);
-        spdlog::debug(
+        spdl::debug(
             "[set_metadata] key {} value {} is_array {} type {}",
             key,
             value,
