@@ -331,7 +331,7 @@ class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
 
     def _check_open_read(self) -> None:
         if self.mode != "r":
-            raise ValueError(f"{self} is open for writing, not reading")
+            raise ValueError(f"{self} is not open reading")
 
 
 AnySOMAObject = SOMAObject[_tdb_handles.AnyWrapper]
