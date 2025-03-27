@@ -421,11 +421,15 @@ SOMAArray::get_enumeration_values_for_column(std::string column_name) {
             output_arrow_array = ArrowAdapter::make_arrow_array_child_string(
                 core_enum.as_vector<std::string>());
             break;
+        case TILEDB_BOOL:
+            // TileDB bools are 8-bit; Arrow bools are 1-bit.
+            output_arrow_array = ArrowAdapter::make_arrow_array_child_bool(
+                core_enum.as_vector<uint8_t>());
+            break;
         case TILEDB_INT8:
             output_arrow_array = ArrowAdapter::make_arrow_array_child(
                 core_enum.as_vector<int8_t>());
             break;
-        case TILEDB_BOOL:
         case TILEDB_UINT8:
             output_arrow_array = ArrowAdapter::make_arrow_array_child(
                 core_enum.as_vector<uint8_t>());
