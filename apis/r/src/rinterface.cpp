@@ -434,6 +434,36 @@ bool c_allows_dups(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
     return sch->allows_dups();
 }
 
+// [[Rcpp::export]]
+double c_capacity(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
+    auto sr = tdbs::SOMAArray::open(OpenMode::read, uri, ctxxp->ctxptr);
+    std::shared_ptr<tiledb::ArraySchema> sch = sr->tiledb_schema();
+    sr->close();
+
+    uint64_t cap = sch->capacity();
+    return static_cast<double>(cap);
+}
+
+// [[Rcpp::export]]
+std::string c_tile_order(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
+    auto sr = tdbs::SOMAArray::open(OpenMode::read, uri, ctxxp->ctxptr);
+    std::shared_ptr<tiledb::ArraySchema> sch = sr->tiledb_schema();
+    sr->close();
+
+    auto order = sch->tile_order();
+    return _tiledb_layout_to_string(order);
+}
+
+// [[Rcpp::export]]
+std::string c_cell_order(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
+    auto sr = tdbs::SOMAArray::open(OpenMode::read, uri, ctxxp->ctxptr);
+    std::shared_ptr<tiledb::ArraySchema> sch = sr->tiledb_schema();
+    sr->close();
+
+    auto order = sch->cell_order();
+    return _tiledb_layout_to_string(order);
+}
+
 // Taken from tiledb-r
 // https://github.com/TileDB-Inc/TileDB-R/blob/525bdfc0f34aadb74a312a5d8428bd07819a8f83/src/libtiledb.cpp#L31C1-L110C2
 const char *_tiledb_datatype_to_string(tiledb_datatype_t dtype) {
