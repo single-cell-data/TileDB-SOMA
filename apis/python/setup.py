@@ -345,6 +345,7 @@ setuptools.setup(
     install_requires=[
         "anndata>=0.10.1",
         "attrs>=22.2",
+        "more-itertools",
         "numpy",
         "pandas",
         "pyarrow",
