@@ -71,6 +71,10 @@ std::vector<std::shared_ptr<SOMAColumn>> SOMAColumn::deserialize(
                     col = SOMAGeometryColumn::deserialize(
                         column, ctx, array, metadata);
                     break;
+                case soma_column_datatype_t::SOMA_COLUMN_BINARY:
+                    col = SOMABinaryColumn::deserialize(
+                        column, ctx, array, metadata);
+                    break;
                 default:
                     throw TileDBSOMAError(fmt::format(
                         "[SOMAColumn][deserialize] Unknown column type {}",
