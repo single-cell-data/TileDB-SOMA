@@ -2365,6 +2365,7 @@ def test_enum_handling_category_of_nan_62449(tmp_path):
         assert len(actual_dict_vals) == 3
         assert nan_check(quiet_nan, actual_dict_vals)
         assert nan_check(negative_nan, actual_dict_vals)
+        assert nan_check(signaling_nan, actual_dict_vals)
         assert_array_equal(expected_data1["A"], actual_data)
 
     # Ensure that the dictionary indexes get shifted correctly when appending
