@@ -1251,10 +1251,11 @@ ManagedQuery::_extend_and_evolve_schema_with_details(
     // Find any new enumeration values
     std::vector<ValueType> enum_values_to_add;
     for (auto enum_val : enum_values_in_write) {
-        if (std::find(
-                enum_values_existing.begin(),
-                enum_values_existing.end(),
-                enum_val) == enum_values_existing.end()) {
+        // Find the value in the list of already existing enums
+        auto it = _find_enum_match(enum_values_existing, enum_val);
+
+        // If not found, append to the to-add list
+        if (it == enum_values_existing.end()) {
             enum_values_to_add.push_back(enum_val);
         }
     }
