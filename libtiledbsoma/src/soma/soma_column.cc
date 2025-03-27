@@ -20,12 +20,6 @@
 
 namespace tiledbsoma {
 
-std::map<uint32_t, SOMAColumn::Factory> SOMAColumn::deserialiser_map = {
-    {soma_column_datatype_t::SOMA_COLUMN_ATTRIBUTE, SOMAAttribute::deserialize},
-    {soma_column_datatype_t::SOMA_COLUMN_DIMENSION, SOMADimension::deserialize},
-    {soma_column_datatype_t::SOMA_COLUMN_GEOMETRY,
-     SOMAGeometryColumn::deserialize}};
-
 std::vector<std::shared_ptr<SOMAColumn>> SOMAColumn::deserialize(
     const Context& ctx,
     const Array& array,
@@ -61,7 +55,26 @@ std::vector<std::shared_ptr<SOMAColumn>> SOMAColumn::deserialize(
             auto type = column[TILEDB_SOMA_SCHEMA_COL_TYPE_KEY]
                             .template get<uint32_t>();
 
-            auto col = deserialiser_map[type](column, ctx, array, metadata);
+            std::shared_ptr<SOMAColumn> col;
+
+            switch (static_cast<soma_column_datatype_t>(type)) {
+                case soma_column_datatype_t::SOMA_COLUMN_ATTRIBUTE:
+                    col = SOMAAttribute::deserialize(
+                        column, ctx, array, metadata);
+                    break;
+                case soma_column_datatype_t::SOMA_COLUMN_DIMENSION:
+                    col = SOMADimension::deserialize(
+                        column, ctx, array, metadata);
+                    break;
+                case soma_column_datatype_t::SOMA_COLUMN_GEOMETRY:
+                    col = SOMAGeometryColumn::deserialize(
+                        column, ctx, array, metadata);
+                    break;
+                default:
+                    throw TileDBSOMAError(fmt::format(
+                        "[SOMAColumn][deserialize] Unknown column type {}",
+                        type));
+            }
 
             if (col) {
                 // Deserialized column can be null in case the array is modified
