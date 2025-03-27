@@ -12,11 +12,16 @@ from __future__ import annotations
 
 import io
 import sys
-from typing import Any, Dict, Tuple, TypedDict, Union, cast
+from collections.abc import Callable
+from typing import Any, Dict, Tuple, TypedDict, TypeVar, Union, cast
 
 import tiledbsoma
 
+from .._soma_object import SOMAObject
+
 Printable = Union[io.TextIOWrapper, io.StringIO]
+
+_SOMAObjectType = TypeVar("_SOMAObjectType", bound=SOMAObject)  # type: ignore[type-arg]
 
 
 class SizingArgs(TypedDict):
@@ -46,14 +51,26 @@ def show_experiment_shapes(
     context: tiledbsoma.SOMATileDBContext | None = None,
     output_handle: Printable = cast(Printable, sys.stdout),
 ) -> bool:
-    """For each dataframe/array contained within the SOMA ``Experiment`` pointed
-    to by the given URI, shows the ``non_empty_domain`` (for dataframes), along
-    with the ``shape`` and ``maxshape`` (for arrays) or ``domain`` and
-    ``maxdomain`` (for dataframes).
+    """Outputs the current shapes of the elements in the ``Experiment``.
 
-    Args:
-        uri: The URI of a SOMA :class:`Experiment`.
-        context: Optional :class:`SOMATileDBContext`.
+    Outputs the ``non_empty_domain``, ``domain``, and ``maxdomain`` of dataframes and
+    the ``non_empty_domain``, ``shape``, and ``maxshape`` of arrays. This method is
+    applied to the following elements inside the SOMA ``Experiment``:
+
+    The shapes of the following elements are output:
+
+      * the ``obs`` dataframe in the experiment,
+
+    and for each measurement:
+
+      * the ``var`` dataframe,
+      * all ``X`` arrays,
+      * all ``obsm`` arrays,
+      * all ``varm`` arrays,
+      * all ``obsp`` arrays,
+      * all ``varm`` arrays,
+      * all ``varp`` arrays.
+
 
     Example::
 
@@ -75,6 +92,15 @@ def show_experiment_shapes(
           shape                (2700, 13714)
           maxshape             (9223372036854773759, 9223372036854773759)
           upgraded             True
+
+    Args:
+        uri: The URI of a SOMA :class:`Experiment`.
+        context: Optional :class:`SOMATileDBContext`.
+        output_handle: The handle to print the output to.
+
+    Returns:
+        ``True`` if outputting the shape works for elements. ``False`` if any element
+        fails to successfully output its shape.
     """
     args: SizingArgs = dict(
         nobs=None,
@@ -104,24 +130,33 @@ def upgrade_experiment_shapes(
     context: tiledbsoma.SOMATileDBContext | None = None,
     output_handle: Printable = cast(Printable, sys.stdout),
 ) -> bool:
-    """For each dataframe contained within the SOMA ``Experiment`` pointed to by
-    the given URI, sets the ``domain`` to match the dataframe's current
-    ``non_empty_domain``.  For each N-D array, sets the ``shape`` to match the array's
-    ``non_empty_domain``. If ``verbose`` is set to ``True``, an activity log
-    is printed. If ``check_only`` is true, only does a dry run and reports any
-    reasons the upgrade would fail.
+    """Upgrade the elements inside a SOMA ``Experiment`` to use the ``shape`` feature
+    introduced in TileDB-SOMA 1.15.
 
-    This makes an experiment created before TileDB-SOMA 1.15 look like an
-    experiment created by TileDB-SOMA 1.15 or later. You can use
-    ``tiledbsoma.io.show_experiment_shapes`` before and after to see
+    A new shape feature was introduced in TileDB-SOMA in release 1.15. This updates
+    the elements in TileDB-SOMA to use the new feature. It makes an experiment created
+    before TileDB-SOMA 1.15 look like an experiment created by TileDB-SOMA 1.15 or
+    later. You can use ``tiledbsoma.io.show_experiment_shapes`` before and after to see
     the difference.
 
-    Args:
-        uri: The URI of a SOMA :class:`Experiment`.
-        verbose: If ``True``, produce per-array output as the upgrade runs.
-        check_only: If ``True``,  don't apply the upgrades, but show what would
-            be attempted, and show why each one would fail.
-        context: Optional :class:`SOMATileDBContext`.
+    For each dataframe and N-D array that is being upgraded, if the dataframe does
+    not currently support the new shape feature, upgrades to add the feature and sets
+    the domain to the dataframe's current ``non_empty_domain``. If the new ``shape``
+    feature is already enable, nothing is changed.
+
+    The following elements are updated:
+
+      * the ``obs`` dataframe in the experiment,
+
+    for each measurement:
+
+      * the ``var`` dataframe,
+      * all ``X`` arrays,
+      * all ``obsm`` arrays,
+      * all ``varm`` arrays,
+      * all ``obsp`` arrays,
+      * all ``varm`` arrays,
+      * all ``varp`` arrays.
 
     Example::
 
@@ -138,6 +173,17 @@ def upgrade_experiment_shapes(
           URI file:///data/pbmc3k_unprocessed_old/ms/RNA/X/data
           Dry run for: tiledbsoma_upgrade_shape((2700, 13714))
           OK
+
+    Args:
+        uri: The URI of a SOMA :class:`Experiment`.
+        verbose: If ``True``, produce per-array output as the upgrade runs.
+        check_only: If ``True``,  don't apply the upgrades, but show what would
+            be attempted, and show why each one would fail.
+        context: Optional :class:`SOMATileDBContext`.
+
+    Returns:
+        ``True`` if all upgrade operations succeed. ``False`` if any upgrade
+        operation fails.
     """
     # For resize, nobs and nvars are from the user. But for upgrade,
     # they're from the experiment as-is.
@@ -180,38 +226,33 @@ def resize_experiment(
     context: tiledbsoma.SOMATileDBContext | None = None,
     output_handle: Printable = cast(Printable, sys.stdout),
 ) -> bool:
-    """For each dataframe contained within the SOMA ``Experiment`` pointed to by
-    the given URI, resizes the ``domain`` for the ``soma_joinid`` index column
-    (if it is an indexed column) to match the desired new value.
+    """Resize the elements in the SOMA ``Experiment`` to fit the requested number
+    of observations and variables.
 
-    The desired new value may be the same size as at present, or bigger, but not
-    exceeding ``maxdomain`` for the ``soma_joinid`` index column.
+    A dataframe will be resized if the ``soma_joinid`` column is an index column
+    and the current domain of the ``soma_joinid`` column is smaller than requested
+    size.  If the new domain of the ``soma_joinid`` column does not fit inside the
+    ``maxshape``, the resize fails.
 
-    For each N-D array contained within the SOMA ``Experiment``, resizes the ``shape``
-    to match the desired values.
+    An N-D array will be resized if either dimension of the new ``shape`` is larger
+    than the current shape. If either dimension of the new ``shape`` is larger
+    than ``maxshape``, the resize fails.
 
-    * For ``X`` arrays, the resize is to new ``nobs`` x the measurement's new ``nvar``.
-    * For ``obsm`` arrays, the resize is to new ``nobs`` x the array's existing ``soma_dim_1`` shape.
-    * For ``obsp`` arrays, the resize is to new ``nobs`` x that same ``nobs``.
-    * For ``varm`` arrays, the resize is to new ``nvar`` x the array's existing ``soma_dim_1`` shape.
-    * For ``varp`` arrays, the resize is to new ``nvar`` x that same ``nvar``.
+    The following base elements are resized:
 
-    In all cases, the desired new ``shape`` value may be the same size on the
-    given dimension, or bigger, but not exceeding ``maxshape`` for the given
-    dimension.
+      * ``obs`` dataframe: ``soma_joinid`` resized to fit ``nobs``.
 
-    If any array has not been upgraded, then the experiment's ``resize`` will fail.
+    For each ``measurement_name`` in the experiment the elements are resized as follows
+    where ``nvar[measurement_name]`` is the current size if ``measurement_name`` or
+    no value is provided by the user:
 
-    Args:
-        uri: The URI of a SOMA :class:`Experiment`.
-        nobs: The desired new shape of the experiment's ``obs`` dataframe.
-        nvars: The desired new shapes of the experiment's ``var`` dataframes.
-            This should be a dict from measurement name to shape, e.g.
-            ``{"RNA": 10000, "raw": 20000}``.
-        verbose: If ``True``, produce per-array output as the upgrade runs.
-        check_only: If ``True``,  don't apply the upgrades, but show what would
-            be attempted, and show why each one would fail.
-        context: Optional :class:`SOMATileDBContext`.
+      * ``var`` dataframe: ``soma_joinid`` resized to fit ``nvar[measurement_name]``.
+      * ``X`` arrays: ``shape`` at least (``nobs``, ``nvar[measurement_name]``).
+      * ``obsm`` arrays: ``shape`` at least (``nobs``, current ``soma_dim_1``).
+      * ``varm`` arrays: ``shape`` at least (``nvar``, current ``soma_dim_1``).
+      * ``obsp`` arrays: ``shape`` at least (``nobs``, ``nobs``).
+      * ``varm`` arrays: ``shape`` at least (``nvar``, existing ``soma_dim_1``).
+      * ``varp`` arrays: ``shape`` at least ( ``nvar``, ``nvar``).
 
     Example::
 
@@ -233,6 +274,22 @@ def resize_experiment(
           URI file:///data/pbmc3k_unprocessed/ms/RNA/X/data
           Dry run for: resize((5600, 13714))
           OK
+
+
+    Args:
+        uri: The URI of a SOMA :class:`Experiment`.
+        nobs: The desired new shape of the experiment's ``obs`` dataframe.
+        nvars: The desired new shapes of the experiment's ``var`` dataframes.
+            This should be a dict from measurement name to shape, e.g.
+            ``{"RNA": 10000, "raw": 20000}``.
+        verbose: If ``True``, produce per-array output as the upgrade runs.
+        check_only: If ``True``,  don't apply the upgrades, but show what would
+            be attempted, and show why each one would fail.
+        context: Optional :class:`SOMATileDBContext`.
+
+    Returns:
+        ``True`` if all resize operations succeed. ``False`` if any resize operation
+        fails.
     """
     args: SizingArgs = dict(
         nobs=nobs,
@@ -271,79 +328,86 @@ def _treewalk(
     uri: str,
     *,
     node_name: str | None = None,
-    visitor: Any,
+    visitor: Callable[..., bool],
     args: SizingArgs,
     context: tiledbsoma.SOMATileDBContext | None,
 ) -> bool:
-    retval = True
+    """Apply visitor function to the ``Experiment`` elements.
+
+    The following elements are visited:
+
+      * the ``obs`` dataframe in the experiment,
+
+    for each measurement:
+
+      * the ``var`` dataframe,
+      * all ``X`` arrays,
+      * all ``obsm`` arrays,
+      * all ``varm`` arrays,
+      * all ``obsp`` arrays,
+      * all ``varm`` arrays,
+      * all ``varp`` arrays.
+
+    Args:
+        uri: URI of the element to visit and visit the children of.
+        node_name: Name of the element to visit and visit the children of.
+        args: Arguments to pass to visitor.
+        context: TileDB context to pass to the visitor.
+    """
+
+    def _recurse(
+        parent: (
+            tiledbsoma.Experiment
+            | tiledbsoma.Measurement
+            | tiledbsoma.Collection[_SOMAObjectType]
+        ),
+        name: str,
+        sizing_args: SizingArgs,
+    ) -> bool:
+        """Applies ``_treewalk`` to the requested child element.
+
+        Args:
+            parent: The parent item to get child from.
+            name: Name of the child element to attempt to visit.
+            sizing_args: Arguments to pass to the visitor.
+
+        Returns:
+            The status of the call. If the child exists, return the status of
+            ``_treewalk`, otherwise return ``True``.
+        """
+        if name in parent:
+            return _treewalk(
+                parent[name].uri,
+                node_name=name,
+                visitor=visitor,
+                args=sizing_args,
+                context=context,
+            )
+        return True
+
     with tiledbsoma.open(uri, context=context) as item:
 
         if isinstance(item, tiledbsoma.Experiment):
-            if "obs" in item:
-                ok = _treewalk(
-                    item["obs"].uri,
-                    node_name="obs",
-                    visitor=visitor,
-                    args=args,
-                    context=context,
-                )
-                retval = retval and ok
-            if "ms" in item:
-                ok = _treewalk(
-                    item["ms"].uri,
-                    node_name="ms",
-                    visitor=visitor,
-                    args=args,
-                    context=context,
-                )
-                retval = retval and ok
+            status = _recurse(item, "obs", args)
+            status &= _recurse(item, "ms", args)
+            return status
 
-        elif isinstance(item, tiledbsoma.Measurement):
-            if "var" in item:
-                ok = _treewalk(
-                    item["var"].uri,
-                    node_name="var",
-                    visitor=visitor,
-                    args=args,
-                    context=context,
-                )
-                retval = retval and ok
-
+        if isinstance(item, tiledbsoma.Measurement):
+            status = _recurse(item, "var", args)
             for coll_name in ["X", "obsm", "obsp", "varm", "varp"]:
-                if coll_name in item:
+                args["coll_name"] = coll_name
+                status &= _recurse(item, coll_name, args)
+            return status
 
-                    args["coll_name"] = coll_name
-
-                    ok = _treewalk(
-                        item[coll_name].uri,
-                        node_name=coll_name,
-                        visitor=visitor,
-                        args=args,
-                        context=context,
-                    )
-                    retval = retval and ok
-
-        elif isinstance(item, tiledbsoma.Collection):
-
+        if isinstance(item, tiledbsoma.Collection):
+            status = True
             for key in item:
-
                 if node_name == "ms":
                     args["ms_name"] = key
+                status &= _recurse(item, key, args)
+            return status
 
-                ok = _treewalk(
-                    item[key].uri,
-                    node_name=key,
-                    visitor=visitor,
-                    args=args,
-                    context=context,
-                )
-                retval = retval and ok
-
-        else:
-            ok = visitor(item, node_name=node_name, args=args, context=context)
-            retval = retval and ok
-
-    return retval
+        return visitor(item, node_name=node_name, args=args, context=context)
 
 
 def _leaf_visitor_show_shapes(
