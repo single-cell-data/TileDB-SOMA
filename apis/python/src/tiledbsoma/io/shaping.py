@@ -98,7 +98,7 @@ def show_experiment_shapes(
         output_handle: The handle to print the output to.
 
     Returns:
-        ``True`` if outputing the shape works for elements. ``False`` if any element
+        ``True`` if outputting the shape works for elements. ``False`` if any element
         fails to successfully output its shape.
     """
     args: SizingArgs = dict(
@@ -133,13 +133,13 @@ def upgrade_experiment_shapes(
     ``shape`` feature introduced in TileDB-SOMA 1.15.
 
     A new shape feature was introduced in TileDB-SOMA in release 1.15. This
-    will update the main elements in TileDB-SOMA to use the new feature. It  makes
+    updates the main elements in TileDB-SOMA to use the new feature. It  makes
     an experiment created before TileDB-SOMA 1.15 look like an experiment created by
     TileDB-SOMA 1.15 or later. You can use ``tiledbsoma.io.show_experiment_shapes``
     before and after to see the difference.
 
     For each dataframe and N-D array that is being upgraded, if the dataframe does
-    not currently support the new shape feature, upgrade to add the feature and set
+    not currently support the new shape feature, upgrades to add the feature and sets
     the domain to the dataframe's current ``non_empty_domain``. If the new ``shape``
     feature is already enable, nothing is changed.
 
@@ -233,7 +233,7 @@ def resize_experiment(
     size.  If the new domain of the ``soma_joinid`` column does not fit inside the
     ``maxshape``, the resize fails.
 
-    An N-D matrix will be resized if either dimension of the new ``shape`` is larger
+    An N-D array will be resized if either dimension of the new ``shape`` is larger
     than the current shape. If either dimension of the new ``shape`` is larger
     than ``maxshape``, the resize fails.
 
@@ -242,7 +242,7 @@ def resize_experiment(
       * ``obs`` dataframe: ``soma_joinid`` resized to fit ``nobs``.
 
     For each ``measurement_name`` in the experiment the elements are resized as follows
-    where ``nvar[measurement_name]`` is the current size if ``measurement_name`` if
+    where ``nvar[measurement_name]`` is the current size if ``measurement_name`` or
     no value is provided by the user:
 
       * ``var`` dataframe: ``soma_joinid`` resized to fit ``nvar[measurement_name]``.
