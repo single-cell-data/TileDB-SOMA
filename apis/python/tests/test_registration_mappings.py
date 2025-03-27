@@ -1574,7 +1574,7 @@ def test_extend_enmr_to_older_experiments_64521(tmp_path, version_and_shaped):
         assert "new_ident" in obs["orig.ident"].cat.categories
 
 
-def test_prepare_experiment(tmp_path):
+def test_prepare_experiment(tmp_path) -> None:
     soma_uri = tmp_path.as_posix()
     adatas = [
         ad.AnnData(
@@ -1670,3 +1670,64 @@ def test_prepare_experiment(tmp_path):
                 values = E.ms[ms].var.get_enumeration_values([k])[k].to_pylist()
                 assert_array_equal(cat_dtype.categories, values)
                 assert E.ms[ms].var.schema.field(k).type.ordered == cat_dtype.ordered
+
+
+def test_subset_from() -> None:
+    # Test uses internal interfaces
+
+    rng = np.random.default_rng()
+
+    # starting with the base canned anndata, add some additional columns for enum tests
+    adatas = [create_anndata_canned(i, "obs_id", "var_id") for i in range(1, 5)]
+    # obs
+    for i, catvals in enumerate(
+        [["red", "green"], ["blue"], ["blue", "yellow"], ["green", "red"]]
+    ):
+        adatas[i].obs["cat_str"] = pd.Categorical(
+            rng.choice(catvals, size=len(adatas[i].obs))
+        )
+    # var
+    for i, catvals in enumerate([[False], [True], [True, False], [False, True]]):
+        adatas[i].var["cat_bool"] = pd.Categorical(
+            rng.choice(catvals, size=len(adatas[i].var))
+        )
+    # raw.var
+    for i, catvals in enumerate(
+        [[1.0, 2.0], [9.0, 99.0], [100.0, -100.0], [float(f) for f in range(4, 16)]]
+    ):
+        adatas[i].raw.var["cat_float"] = pd.Categorical(
+            rng.choice(catvals, size=len(adatas[i].raw.var))
+        )
+
+    rd = tiledbsoma.io.register_anndatas(
+        None,
+        adatas,
+        measurement_name="RNA",
+        obs_field_name="obs_id",
+        var_field_name="var_id",
+    )
+
+    for adata in adatas:
+        srd = rd.subset_for_anndata(adata)
+
+        # confirm all of our joinids are present in the subset registration
+        assert adata.obs.index.difference(srd.obs_axis.joinid_map.index).empty
+        assert adata.var.index.difference(srd.var_axes["RNA"].joinid_map.index).empty
+        if adata.raw is not None:
+            assert adata.raw.var.index.difference(
+                srd.var_axes["raw"].joinid_map.index
+            ).empty
+
+        # enums
+        assert not (
+            set(adata.obs.cat_str.cat.categories)
+            - set(srd.obs_axis.enum_values["cat_str"].categories)
+        )
+        assert not (
+            set(adata.var.cat_bool.cat.categories)
+            - set(srd.var_axes["RNA"].enum_values["cat_bool"].categories)
+        )
+        assert not (
+            set(adata.raw.var.cat_float.cat.categories)
+            - set(srd.var_axes["raw"].enum_values["cat_float"].categories)
+        )
