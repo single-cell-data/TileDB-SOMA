@@ -831,7 +831,7 @@ class ManagedQuery {
             if (0 > i) {
                 shifted_indexes.push_back(i);
             } else {
-                auto it = _find_enum_match(enums_in_write[i], enmr_vec);
+                auto it = _find_enum_match(enmr_vec, enums_in_write[i]);
                 shifted_indexes.push_back(it - enmr_vec.begin());
             }
         }

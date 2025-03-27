@@ -1240,7 +1240,7 @@ ManagedQuery::_extend_and_evolve_schema_with_details(
     std::vector<ValueType> enum_values_to_add;
     for (auto enum_val : enum_values_in_write) {
         // Find the value in the list of already existing enums
-        auto it = _find_enum_match(enum_val, enum_values_existing);
+        auto it = _find_enum_match(enum_values_existing, enum_val);
 
         // If not found, append to the to-add list
         if (it == enum_values_existing.end()) {
