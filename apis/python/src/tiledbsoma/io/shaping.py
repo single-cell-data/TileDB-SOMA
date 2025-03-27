@@ -51,11 +51,26 @@ def show_experiment_shapes(
     context: tiledbsoma.SOMATileDBContext | None = None,
     output_handle: Printable = cast(Printable, sys.stdout),
 ) -> bool:
-    """Outputs the current shapes of the main elements in the ``Experiment``.
+    """Outputs the current shapes of the elements in the ``Experiment``.
 
-    For main dataframes and arrays contained within the SOMA ``Experiment``, shows
-    the ``non_empty_domain`` (for dataframes), along with the ``shape`` and ``maxshape``
-    (for arrays) or ``domain`` and ``maxdomain`` (for dataframes).
+    Outputs the ``non_empty_domain``, ``domain``, and ``maxdomain`` of dataframes and
+    the ``non_empty_domain``, ``shape``, and ``maxshape`` of arrays. This method is
+    applied to the following elements inside the SOMA ``Experiment``:
+
+    The shapes of the following elements are output:
+
+      * the ``obs`` dataframe in the experiment,
+
+    and for each measurement:
+
+      * the ``var`` dataframe,
+      * all ``X`` arrays,
+      * all ``obsm`` arrays,
+      * all ``varm`` arrays,
+      * all ``obsp`` arrays,
+      * all ``varm`` arrays,
+      * all ``varp`` arrays.
+
 
     Example::
 
@@ -77,20 +92,6 @@ def show_experiment_shapes(
           shape                (2700, 13714)
           maxshape             (9223372036854773759, 9223372036854773759)
           upgraded             True
-
-    The shapes of the following elements are output:
-
-      * the ``obs`` dataframe in the experiment,
-
-    for each measurement:
-
-      * the ``var`` dataframe,
-      * all ``X`` arrays,
-      * all ``obsm`` arrays,
-      * all ``varm`` arrays,
-      * all ``obsp`` arrays,
-      * all ``varm`` arrays,
-      * all ``varp`` arrays.
 
     Args:
         uri: The URI of a SOMA :class:`Experiment`.
@@ -129,14 +130,14 @@ def upgrade_experiment_shapes(
     context: tiledbsoma.SOMATileDBContext | None = None,
     output_handle: Printable = cast(Printable, sys.stdout),
 ) -> bool:
-    """Upgrade the main elements inside a SOMA ``Experiment`` to use the
-    ``shape`` feature introduced in TileDB-SOMA 1.15.
+    """Upgrade the elements inside a SOMA ``Experiment`` to use the ``shape`` feature
+    introduced in TileDB-SOMA 1.15.
 
-    A new shape feature was introduced in TileDB-SOMA in release 1.15. This
-    updates the main elements in TileDB-SOMA to use the new feature. It  makes
-    an experiment created before TileDB-SOMA 1.15 look like an experiment created by
-    TileDB-SOMA 1.15 or later. You can use ``tiledbsoma.io.show_experiment_shapes``
-    before and after to see the difference.
+    A new shape feature was introduced in TileDB-SOMA in release 1.15. This updates
+    the elements in TileDB-SOMA to use the new feature. It makes an experiment created
+    before TileDB-SOMA 1.15 look like an experiment created by TileDB-SOMA 1.15 or
+    later. You can use ``tiledbsoma.io.show_experiment_shapes`` before and after to see
+    the difference.
 
     For each dataframe and N-D array that is being upgraded, if the dataframe does
     not currently support the new shape feature, upgrades to add the feature and sets
@@ -331,7 +332,21 @@ def _treewalk(
     args: SizingArgs,
     context: tiledbsoma.SOMATileDBContext | None,
 ) -> bool:
-    """Apply visitor function to the main ``Experiment`` elements.
+    """Apply visitor function to the ``Experiment`` elements.
+
+    The following elements are visited:
+
+      * the ``obs`` dataframe in the experiment,
+
+    for each measurement:
+
+      * the ``var`` dataframe,
+      * all ``X`` arrays,
+      * all ``obsm`` arrays,
+      * all ``varm`` arrays,
+      * all ``obsp`` arrays,
+      * all ``varm`` arrays,
+      * all ``varp`` arrays.
 
     Args:
         uri: URI of the element to visit and visit the children of.
