@@ -1597,40 +1597,6 @@ std::optional<std::vector<uint8_t>> ManagedQuery::_cast_validity_buffer(
 }
 
 template <>
-std::vector<std::span<const std::byte>> ManagedQuery::_enumeration_values_view(
-    Enumeration& enumeration) {
-    const void* data;
-    uint64_t data_size;
-
-    ctx_->handle_error(tiledb_enumeration_get_data(
-        ctx_->ptr().get(), enumeration.ptr().get(), &data, &data_size));
-
-    const void* offsets;
-    uint64_t offsets_size;
-    ctx_->handle_error(tiledb_enumeration_get_offsets(
-        ctx_->ptr().get(), enumeration.ptr().get(), &offsets, &offsets_size));
-
-    std::span<const std::byte> byte_data(
-        static_cast<const std::byte*>(data), data_size);
-    const uint64_t* elems = static_cast<const uint64_t*>(offsets);
-    size_t count = offsets_size / sizeof(uint64_t);
-
-    std::vector<std::span<const std::byte>> ret(count);
-    for (size_t i = 0; i < count; i++) {
-        uint64_t len;
-        if (i + 1 < count) {
-            len = elems[i + 1] - elems[i];
-        } else {
-            len = data_size - elems[i];
-        }
-
-        ret[i] = byte_data.subspan(elems[i], len);
-    }
-
-    return ret;
-}
-
-template <>
 std::vector<std::string_view> ManagedQuery::_enumeration_values_view(
     Enumeration& enumeration) {
     const void* data;

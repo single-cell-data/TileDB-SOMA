@@ -1296,10 +1296,6 @@ ManagedQuery::_extend_and_evolve_schema_with_details<std::string>(
     ArraySchemaEvolution& se);
 
 template <>
-std::vector<std::span<const std::byte>> ManagedQuery::_enumeration_values_view(
-    Enumeration& enumeration);
-
-template <>
 std::vector<std::string_view> ManagedQuery::_enumeration_values_view(
     Enumeration& enumeration);
 
