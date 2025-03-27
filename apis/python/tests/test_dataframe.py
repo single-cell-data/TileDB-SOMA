@@ -2341,7 +2341,8 @@ def test_enum_handling_category_of_nan_62449(tmp_path):
         ]
     )
 
-    tbl1 = pa.Table.from_pydict(
+    # Ensure that unique NaN values are respected as different dictionary values
+    expected_data1 = pa.Table.from_pydict(
         {
             "soma_joinid": [0, 1, 2, 3],
             "A": pa.DictionaryArray.from_arrays(
@@ -2356,16 +2357,19 @@ def test_enum_handling_category_of_nan_62449(tmp_path):
     with soma.DataFrame.create(
         uri, schema=schema, index_column_names=["soma_joinid"], domain=[(0, 5)]
     ) as A:
-        A.write(tbl1)
+        A.write(expected_data1)
 
     with soma.open(uri) as A:
-        dict_vals = A.read().concat()["A"].chunk(0).dictionary.to_pylist()
-        assert len(dict_vals) == 3
-        assert nan_check(quiet_nan, dict_vals)
-        assert nan_check(negative_nan, dict_vals)
-        assert_array_equal(A.read().concat()["A"], tbl1["A"])
+        actual_data = A.read().concat()["A"]
+        actual_dict_vals = actual_data.chunk(0).dictionary.to_pylist()
+        assert len(actual_dict_vals) == 3
+        assert nan_check(quiet_nan, actual_dict_vals)
+        assert nan_check(negative_nan, actual_dict_vals)
+        assert_array_equal(expected_data1["A"], actual_data)
 
-    tbl2 = pa.Table.from_pydict(
+    # Ensure that the dictionary indexes get shifted correctly when appending
+    # to the dataframe
+    expected_data2 = pa.Table.from_pydict(
         {
             "soma_joinid": [4, 5],
             "A": pa.DictionaryArray.from_arrays(
@@ -2376,13 +2380,14 @@ def test_enum_handling_category_of_nan_62449(tmp_path):
     )
 
     with soma.open(uri, mode="w") as A:
-        A.write(tbl2)
+        A.write(expected_data2)
 
     with soma.open(uri) as A:
-        dict_vals = A.read().concat()["A"].chunk(0).dictionary.to_pylist()
-        assert len(dict_vals) == 3
-        assert nan_check(quiet_nan, dict_vals)
-        assert nan_check(negative_nan, dict_vals)
-        assert nan_check(signaling_nan, dict_vals)
-        assert_array_equal(A.read().concat()["A"][:4], tbl1["A"])
-        assert_array_equal(A.read().concat()["A"][4:], tbl2["A"])
+        actual_data = A.read().concat()["A"]
+        actual_dict_vals = actual_data.chunk(0).dictionary.to_pylist()
+        assert len(actual_dict_vals) == 3
+        assert nan_check(quiet_nan, actual_dict_vals)
+        assert nan_check(negative_nan, actual_dict_vals)
+        assert nan_check(signaling_nan, actual_dict_vals)
+        assert_array_equal(expected_data1["A"], actual_data[:4])
+        assert_array_equal(expected_data2["A"], actual_data[4:])
