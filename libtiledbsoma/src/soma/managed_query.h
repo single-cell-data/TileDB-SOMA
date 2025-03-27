@@ -1043,7 +1043,7 @@ class ManagedQuery {
      */
     template <typename T>
     typename std::vector<T>::const_iterator _find_enum_match(
-        const T& target, const std::vector<T>& values) {
+        const std::vector<T>& values, const T& target) {
         return std::find_if(
             values.begin(), values.end(), [&target](const T& candidate) {
                 return std::memcmp(&target, &candidate, sizeof(T)) == 0;
