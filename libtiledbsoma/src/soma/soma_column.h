@@ -516,13 +516,6 @@ class SOMAColumn {
         const SOMAContext& ctx, Array& array) const = 0;
 
     virtual std::any _core_current_domain_slot(NDRectangle& ndrect) const = 0;
-
-   private:
-    typedef std::shared_ptr<SOMAColumn> (*Factory)(
-        const nlohmann::json&,
-        const Context&,
-        const Array&,
-        const std::map<std::string, tiledbsoma::MetadataValue>&);
 };
 
 template <>
