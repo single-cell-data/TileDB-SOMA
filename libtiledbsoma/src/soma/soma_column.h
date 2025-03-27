@@ -523,8 +523,6 @@ class SOMAColumn {
         const Context&,
         const Array&,
         const std::map<std::string, tiledbsoma::MetadataValue>&);
-
-    static std::map<uint32_t, Factory> deserialiser_map;
 };
 
 template <>
