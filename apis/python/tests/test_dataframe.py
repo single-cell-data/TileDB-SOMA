@@ -309,7 +309,7 @@ def test_get_enumeration_values(tmp_path, ordered, mode):
     # Write once
     pd_data = {
         "soma_joinid": [0, 1, 2, 3, 4],
-        "not_an_enum": pd.Categorical(["a", "nn", "zzz", "nn", "a"]),
+        "not_an_enum": ["a", "nn", "zzz", "nn", "a"],
         "string_enum": pd.Categorical(["a", "nn", "zzz", "nn", "a"], ordered=ordered),
         "int64_enum": pd.Categorical(
             [111111111, 99999, 3333333, 111111111, 99999], ordered=ordered
@@ -358,7 +358,7 @@ def test_get_enumeration_values(tmp_path, ordered, mode):
     # Write again
     pd_data = {
         "soma_joinid": [5, 6, 7],
-        "not_an_enum": pd.Categorical(["dddd", "nn", "zzz"]),
+        "not_an_enum": ["dddd", "nn", "zzz"],
         "string_enum": pd.Categorical(["dddd", "nn", "zzz"], ordered=ordered),
         "int64_enum": pd.Categorical([555555555, 111111111, 99999], ordered=ordered),
         "float64_enum": pd.Categorical(
