@@ -1239,20 +1239,11 @@ ManagedQuery::_extend_and_evolve_schema_with_details(
     // Find any new enumeration values
     std::vector<ValueType> enum_values_to_add;
     for (auto enum_val : enum_values_in_write) {
-        // Check if the value already exists using bitwise comparison.
-        // - We cannot use std::find because NaN != NaN
-        // - We cannot use std::isnan because TileDB and Arrow treat NaNs with 
-        //   different bit patterns as distinct values
-        bool is_new_value = std::none_of(
-            enum_values_existing.begin(),
-            enum_values_existing.end(),
-            [enum_val](ValueType existing_val) {
-                return std::memcmp(
-                           &enum_val, &existing_val, sizeof(ValueType)) == 0;
-            });
+        // Find the value in the list of already existing enums
+        auto it = _find_enum_match(enum_val, enum_values_existing);
 
-        // If it is a new enumeration value, add to the list
-        if (is_new_value) {
+        // If not found, append to the to-add list
+        if (it == enum_values_existing.end()) {
             enum_values_to_add.push_back(enum_val);
         }
     }

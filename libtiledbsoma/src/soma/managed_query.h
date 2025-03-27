@@ -831,8 +831,7 @@ class ManagedQuery {
             if (0 > i) {
                 shifted_indexes.push_back(i);
             } else {
-                auto it = std::find(
-                    enmr_vec.begin(), enmr_vec.end(), enums_in_write[i]);
+                auto it = _find_enum_match(enums_in_write[i], enmr_vec);
                 shifted_indexes.push_back(it - enmr_vec.begin());
             }
         }
@@ -1028,6 +1027,28 @@ class ManagedQuery {
 
     template <typename T>
     std::vector<T> _enumeration_values_view(Enumeration& enumeration);
+
+    /**
+     * @brief Finds an enumeration value in a vector of already
+     * existing enumeration values. This helper method support
+     * comparing NaN values. Since NaN != NaN, we cannot use
+     * std::find. Also since TileDB and Arrow treat NaNs with
+     * different bit patterns as distinct values, we also cannot
+     * rely onstd::isnan and must use to bitwise comparisons.
+     *
+     * @param values the vector of values to search through
+     * @param target the value to search for
+     * @return typename std::vector<T>::const_iterator iterator
+     * to the found element or values.end() if not found
+     */
+    template <typename T>
+    typename std::vector<T>::const_iterator _find_enum_match(
+        const T& target, const std::vector<T>& values) {
+        return std::find_if(
+            values.begin(), values.end(), [&target](const T& candidate) {
+                return std::memcmp(&target, &candidate, sizeof(T)) == 0;
+            });
+    }
 };
 
 // These are all specializations to string/bool of various methods

@@ -2341,36 +2341,50 @@ def test_enum_handling_category_of_nan_62449(tmp_path):
         ]
     )
 
-    tbl = pa.Table.from_pydict(
+    tbl1 = pa.Table.from_pydict(
         {
-            "soma_joinid": [0, 1, 2, 3, 4],
+            "soma_joinid": [0, 1, 2, 3],
             "A": pa.DictionaryArray.from_arrays(
-                indices=pa.array([0, 1, 2, 0, 3], type=pa.int32()),
+                indices=pa.array([0, 1, 2, 0], type=pa.int32()),
                 dictionary=pa.array(
-                    [0.0, negative_nan, quiet_nan, signaling_nan], type=pa.float32()
+                    [negative_nan, quiet_nan, signaling_nan], type=pa.float32()
                 ),
             ),
         }
     )
 
     with soma.DataFrame.create(
-        uri, schema=schema, index_column_names=["soma_joinid"], domain=[(0, 4)]
+        uri, schema=schema, index_column_names=["soma_joinid"], domain=[(0, 5)]
     ) as A:
-        A.write(tbl)
+        A.write(tbl1)
 
     with soma.open(uri) as A:
         dict_vals = A.read().concat()["A"].chunk(0).dictionary.to_pylist()
-        assert len(dict_vals) == 4
+        assert len(dict_vals) == 3
         assert nan_check(quiet_nan, dict_vals)
         assert nan_check(negative_nan, dict_vals)
-        assert nan_check(signaling_nan, dict_vals)
+        assert_array_equal(A.read().concat()["A"], tbl1["A"])
+
+    tbl2 = pa.Table.from_pydict(
+        {
+            "soma_joinid": [4, 5],
+            "A": pa.DictionaryArray.from_arrays(
+                indices=pa.array([1, 0], type=pa.int32()),
+                dictionary=pa.array(
+                    [quiet_nan, signaling_nan], type=pa.float32()
+                ),
+            ),
+        }
+    )
 
     with soma.open(uri, mode="w") as A:
-        A.write(tbl)
+        A.write(tbl2)
 
     with soma.open(uri) as A:
         dict_vals = A.read().concat()["A"].chunk(0).dictionary.to_pylist()
-        assert len(dict_vals) == 4
+        assert len(dict_vals) == 3
         assert nan_check(quiet_nan, dict_vals)
         assert nan_check(negative_nan, dict_vals)
         assert nan_check(signaling_nan, dict_vals)
+        assert_array_equal(A.read().concat()["A"][:4], tbl1["A"])
+        assert_array_equal(A.read().concat()["A"][4:], tbl2["A"])
