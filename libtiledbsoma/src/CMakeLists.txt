@@ -36,6 +36,7 @@ add_library(TILEDB_SOMA_OBJECTS OBJECT
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_object.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_column.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_attribute.cc
+  ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_binary_column.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_dimension.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_geometry_column.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_collection.cc
@@ -215,6 +216,7 @@ install(FILES
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_group.h
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_column.h
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_attribute.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_binary_column.h
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_dimension.h
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_geometry_column.h
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_collection.h

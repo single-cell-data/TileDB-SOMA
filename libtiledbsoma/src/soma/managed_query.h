@@ -14,6 +14,7 @@
 #ifndef MANAGED_QUERY_H
 #define MANAGED_QUERY_H
 
+#include <concepts>
 #include <future>
 #include <span>
 #include <stdexcept>  // for windows: error C2039: 'runtime_error': is not a member of 'std'
@@ -805,6 +806,7 @@ class ManagedQuery {
     }
 
     template <typename ValueType, typename IndexType>
+        requires std::integral<ValueType> || std::floating_point<ValueType>
     void _remap_indexes_aux(
         std::string column_name,
         Enumeration extended_enmr,
@@ -1070,11 +1072,11 @@ void ManagedQuery::_cast_dictionary_values<bool>(
     ArrowSchema* schema, ArrowArray* array);
 
 template <>
-bool ManagedQuery::_cast_column_aux<std::string>(
+bool ManagedQuery::_cast_column_aux<bool>(
     ArrowSchema* schema, ArrowArray* array, ArraySchemaEvolution se);
 
 template <>
-bool ManagedQuery::_cast_column_aux<bool>(
+bool ManagedQuery::_cast_column_aux<std::string>(
     ArrowSchema* schema, ArrowArray* array, ArraySchemaEvolution se);
 
 template <>

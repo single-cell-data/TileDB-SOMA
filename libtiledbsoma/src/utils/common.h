@@ -14,6 +14,7 @@
 #ifndef TILEDBSOMA_COMMON_H
 #define TILEDBSOMA_COMMON_H
 
+#include <span>
 #include <stdexcept>  // for windows: error C2039: 'runtime_error': is not a member of 'std'
 #include <string>
 #include <string_view>
@@ -59,7 +60,6 @@ class TileDBSOMAError : public std::runtime_error {
         return std::runtime_error::what();
     }
 };
-
 };  // namespace tiledbsoma
 
 #endif  // TILEDBSOMA_COMMON_H

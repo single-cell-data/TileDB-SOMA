@@ -575,6 +575,8 @@ bool ManagedQuery::_cast_column(
         case TILEDB_STRING_ASCII:
         case TILEDB_STRING_UTF8:
         case TILEDB_CHAR:
+        case TILEDB_BLOB:
+        case TILEDB_GEOM_WKB:
             return _cast_column_aux<std::string>(schema, array, se);
         case TILEDB_BOOL:
             return _cast_column_aux<bool>(schema, array, se);
@@ -641,6 +643,8 @@ void ManagedQuery::_promote_indexes_to_values(
         case TILEDB_STRING_ASCII:
         case TILEDB_STRING_UTF8:
         case TILEDB_CHAR:
+        case TILEDB_BLOB:
+        case TILEDB_GEOM_WKB:
             return _cast_dictionary_values<std::string>(schema, array);
         case TILEDB_BOOL:
             return _cast_dictionary_values<bool>(schema, array);
@@ -740,17 +744,24 @@ void ManagedQuery::_cast_dictionary_values<std::string>(
     uint64_t num_elems = value_array->length;
 
     std::vector<uint64_t> offsets_v;
-    if ((strcmp(value_schema->format, "U") == 0) ||
-        (strcmp(value_schema->format, "Z") == 0)) {
+    if (strcmp(value_schema->format, "U") == 0 ||
+        strcmp(value_schema->format, "Z") == 0) {
         uint64_t* offsets = (uint64_t*)value_array->buffers[1];
         offsets_v.resize(num_elems + 1);
         offsets_v.assign(offsets, offsets + num_elems + 1);
-    } else {
+    } else if (
+        strcmp(value_schema->format, "u") == 0 ||
+        strcmp(value_schema->format, "z") == 0) {
         uint32_t* offsets = (uint32_t*)value_array->buffers[1];
         std::vector<uint32_t> offset_holder(offsets, offsets + num_elems + 1);
         for (auto offset : offset_holder) {
             offsets_v.push_back((uint64_t)offset);
         }
+    } else {
+        throw TileDBSOMAError(fmt::format(
+            "[ManagedQuery][_extend_and_evolve_schema] Unknown arrow array "
+            "type. Expected 'U', 'Z', 'u' or 'z', found '{}'",
+            value_schema->format));
     }
 
     std::string_view data(
@@ -964,6 +975,8 @@ bool ManagedQuery::_extend_and_write_enumeration(
         case TILEDB_STRING_ASCII:
         case TILEDB_STRING_UTF8:
         case TILEDB_CHAR:
+        case TILEDB_BLOB:
+        case TILEDB_GEOM_WKB:
             return _extend_and_evolve_schema_and_write<std::string>(
                 value_schema, value_array, index_schema, index_array, enmr, se);
         case TILEDB_INT8:
@@ -1118,15 +1131,22 @@ ManagedQuery::_extend_and_evolve_schema_with_details<std::string>(
     uint64_t num_elems = value_array->length;
 
     std::vector<uint64_t> offsets_v;
-    if ((strcmp(value_schema->format, "U") == 0) ||
-        (strcmp(value_schema->format, "Z") == 0)) {
+    if (strcmp(value_schema->format, "U") == 0 ||
+        strcmp(value_schema->format, "Z") == 0) {
         uint64_t* offsets = (uint64_t*)value_array->buffers[1];
         offsets_v.assign(offsets, offsets + num_elems + 1);
-    } else {
+    } else if (
+        strcmp(value_schema->format, "u") == 0 ||
+        strcmp(value_schema->format, "z") == 0) {
         uint32_t* offsets = (uint32_t*)value_array->buffers[1];
         for (size_t i = 0; i < num_elems + 1; ++i) {
             offsets_v.push_back((uint64_t)offsets[i]);
         }
+    } else {
+        throw TileDBSOMAError(fmt::format(
+            "[ManagedQuery][_extend_and_evolve_schema] Unknown arrow array "
+            "type. Expected 'U', 'Z', 'u' or 'z', found '{}'",
+            value_schema->format));
     }
 
     std::string_view data(
