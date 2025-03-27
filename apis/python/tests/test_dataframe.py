@@ -2370,9 +2370,7 @@ def test_enum_handling_category_of_nan_62449(tmp_path):
             "soma_joinid": [4, 5],
             "A": pa.DictionaryArray.from_arrays(
                 indices=pa.array([1, 0], type=pa.int32()),
-                dictionary=pa.array(
-                    [quiet_nan, signaling_nan], type=pa.float32()
-                ),
+                dictionary=pa.array([quiet_nan, signaling_nan], type=pa.float32()),
             ),
         }
     )
