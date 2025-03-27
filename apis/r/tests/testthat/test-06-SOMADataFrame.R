@@ -495,9 +495,19 @@ test_that("platform_config is respected", {
   arr <- tiledb::tiledb_array(uri)
   tsch <- tiledb::schema(arr)
 
-  expect_equal(tiledb::capacity(tsch), 8000)
-  expect_equal(tiledb::tile_order(tsch), "COL_MAJOR")
-  expect_equal(tiledb::cell_order(tsch), "ROW_MAJOR")
+  expect_equal(
+    c_capacity(sdf$uri, sdf$.__enclos_env__$private$.soma_context),
+    8000L
+  )
+  expect_equal(
+    c_tile_order(sdf$uri, sdf$.__enclos_env__$private$.soma_context),
+    "COL_MAJOR"
+  )
+  expect_equal(
+    c_cell_order(sdf$uri, sdf$.__enclos_env__$private$.soma_context),
+    "ROW_MAJOR"
+  )
+
 
   offsets_filters <- tiledb::filter_list(tsch)$offsets
   expect_equal(tiledb::nfilters(offsets_filters), 1)
