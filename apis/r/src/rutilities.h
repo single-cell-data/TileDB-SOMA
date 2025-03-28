@@ -83,3 +83,6 @@ std::string remap_arrow_type_code_r_to_c(std::string input);
 
 // Maps tiledb layouts to string identifiers
 const char *_tiledb_layout_to_string(tiledb_layout_t layout);
+
+// Maps tiledb filter types to string representations
+const char *_tiledb_filter_to_string(tiledb_filter_type_t filter);

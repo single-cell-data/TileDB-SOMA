@@ -544,3 +544,44 @@ const char *_tiledb_layout_to_string(tiledb_layout_t layout) {
         Rcpp::stop("unknown tiledb_layout_t (%d)", layout);
     }
 }
+
+// https://github.com/TileDB-Inc/TileDB-R/blob/525bdfc0f34aadb74a312a5d8428bd07819a8f83/src/libtiledb.cpp#L323C1-L367C2
+const char *_tiledb_filter_to_string(tiledb_filter_type_t filter) {
+    switch (filter) {
+    case TILEDB_FILTER_NONE:
+        return "NONE";
+    case TILEDB_FILTER_GZIP:
+        return "GZIP";
+    case TILEDB_FILTER_ZSTD:
+        return "ZSTD";
+    case TILEDB_FILTER_LZ4:
+        return "LZ4";
+    case TILEDB_FILTER_RLE:
+        return "RLE";
+    case TILEDB_FILTER_BZIP2:
+        return "BZIP2";
+    case TILEDB_FILTER_DOUBLE_DELTA:
+        return "DOUBLE_DELTA";
+    case TILEDB_FILTER_BIT_WIDTH_REDUCTION:
+        return "BIT_WIDTH_REDUCTION";
+    case TILEDB_FILTER_BITSHUFFLE:
+        return "BITSHUFFLE";
+    case TILEDB_FILTER_BYTESHUFFLE:
+        return "BYTESHUFFLE";
+    case TILEDB_FILTER_POSITIVE_DELTA:
+        return "POSITIVE_DELTA";
+    case TILEDB_FILTER_CHECKSUM_MD5:
+        return "CHECKSUM_MD5";
+    case TILEDB_FILTER_CHECKSUM_SHA256:
+        return "CHECKSUM_SHA256";
+    case TILEDB_FILTER_DICTIONARY:
+        return "DICTIONARY_ENCODING";
+    case TILEDB_FILTER_SCALE_FLOAT:
+        return "SCALE_FLOAT";
+    case TILEDB_FILTER_XOR:
+        return "FILTER_XOR";
+    default: {
+        Rcpp::stop("unknown tiledb_filter_t (%d)", filter);
+    }
+    }
+}
