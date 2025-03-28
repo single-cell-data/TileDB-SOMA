@@ -461,7 +461,7 @@ class SOMAArrayWrapper(Wrapper[_SOMAObjectType]):
         raise NotImplementedError
 
     def extend_enumeration_values(
-        self, values: pa.RecordBatch, deduplicate: bool
+        self, values: dict[str, pa.Array], deduplicate: bool
     ) -> None:
         raise NotImplementedError
 
@@ -567,7 +567,7 @@ class DataFrameWrapper(SOMAArrayWrapper[clib.SOMADataFrame]):
         )
 
     def extend_enumeration_values(
-        self, values: pa.RecordBatch, deduplicate: bool
+        self, values: dict[str, pa.Array], deduplicate: bool
     ) -> None:
         self._handle.extend_enumeration_values(values, deduplicate)
 

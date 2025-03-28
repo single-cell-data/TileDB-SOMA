@@ -430,8 +430,7 @@ class DataFrame(SOMAArray, somacore.DataFrame):
                 # TO DISCUSS IN CODE REVIEW: alternatively:
                 # values[column_name] = values[column_name].dictionary
 
-        batch = pa.RecordBatch.from_pydict(values)
-        self._handle.extend_enumeration_values(batch, deduplicate)
+        self._handle.extend_enumeration_values(values, deduplicate)
 
     @property
     def domain(self) -> Tuple[Tuple[Any, Any], ...]:
