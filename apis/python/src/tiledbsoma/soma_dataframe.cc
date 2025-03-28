@@ -132,7 +132,10 @@ void load_soma_dataframe(py::module& m) {
                     auto pa_array_import = pa.attr("Array").attr(
                         "_import_from_c");
 
+                    py::gil_scoped_release release;
                     ArrowTable t = sdf.get_enumeration_values(column_names);
+                    py::gil_scoped_acquire acquire;
+
                     auto ncol = t.second->n_children;
 
                     py::dict retval;
@@ -155,6 +158,38 @@ void load_soma_dataframe(py::module& m) {
                 }
             },
             "column_names"_a)
+
+        .def(
+            "extend_enumeration_values",
+            [](SOMADataFrame& sdf,
+               py::handle values,
+               bool deduplicate) -> py::none {
+                ArrowSchema arrow_schema;
+                ArrowArray arrow_array;
+                uintptr_t arrow_schema_ptr = (uintptr_t)(&arrow_schema);
+                uintptr_t arrow_array_ptr = (uintptr_t)(&arrow_array);
+                values.attr("_export_to_c")(arrow_array_ptr, arrow_schema_ptr);
+
+                py::gil_scoped_release release;
+                try {
+                    sdf.extend_enumeration_values(
+                        std::make_unique<ArrowSchema>(arrow_schema),
+                        std::make_unique<ArrowArray>(arrow_array),
+                        deduplicate);
+                } catch (std::range_error& e) {
+                    throw py::value_error(e.what());
+                } catch (const std::exception& e) {
+                    TPY_ERROR_LOC(e.what());
+                }
+                py::gil_scoped_acquire acquire;
+
+                arrow_schema.release(&arrow_schema);
+                arrow_array.release(&arrow_array);
+
+                return py::none();
+            },
+            "values"_a,
+            "deduplicate"_a)
 
         .def_property_readonly(
             "count",

@@ -461,6 +461,213 @@ def test_bool_enums(tmp_path, data_and_expected_levels):
         assert actual == expect
 
 
+@pytest.mark.parametrize("extend_not_write", [False, True])
+def test_extend_enumeration_values(tmp_path, extend_not_write):
+    """Compares the older create+write path against create+extend path"""
+    uri = tmp_path.as_posix()
+    domain = [[0, 2]]
+
+    schema = pa.schema(
+        {
+            "soma_joinid": pa.int64(),
+            "not_an_enum": pa.large_string(),
+            "int64_enum1": pa.dictionary(pa.int8(), pa.int64()),
+            "int64_enum2": pa.dictionary(pa.int8(), pa.int64()),
+            "int64_enum3": pa.dictionary(pa.int8(), pa.int64()),
+            "float32_enum": pa.dictionary(pa.int8(), pa.float32()),
+            "string_enum1": pa.dictionary(pa.int32(), pa.large_string()),
+            "string_enum2": pa.dictionary(pa.int32(), pa.large_string()),
+            "bool_enum1": pa.dictionary(pa.int32(), pa.bool_()),
+            "bool_enum2": pa.dictionary(pa.int32(), pa.bool_()),
+        }
+    )
+    enum_column_names = [
+        name for name in schema.names if pa.types.is_dictionary(schema.field(name).type)
+    ]
+
+    pandas_data = {
+        "soma_joinid": [0, 1, 2],
+        "not_an_enum": ["quick", "brown", "fox"],
+        "int64_enum1": pd.Categorical([55555, 55555, 7777777]),
+        "int64_enum2": pd.Categorical(np.array([55555, 55555, 7777777])),
+        "int64_enum3": pd.Categorical(
+            np.array([7777777, 55555, 55555], dtype=np.int64)
+        ),
+        "float32_enum": pd.Categorical(np.array([2.5, 8.875, 2.5], dtype=np.float32)),
+        "string_enum1": pd.Categorical(["hello", "hello", "goodbye"]),
+        "string_enum2": pd.Categorical(["goodbye", "goodbye", "hello"]),
+        "bool_enum1": pd.Categorical([True, True, False]),
+        "bool_enum2": pd.Categorical([False, False, True]),
+    }
+    arrow_data = pa.Table.from_pydict(pandas_data)
+
+    expected_levels = {
+        "int64_enum1": [55555, 7777777],
+        "int64_enum2": [55555, 7777777],
+        "int64_enum3": [55555, 7777777],
+        "float32_enum": [2.5, 8.875],
+        "string_enum1": ["goodbye", "hello"],
+        "string_enum2": ["goodbye", "hello"],
+        "bool_enum1": [False, True],
+        "bool_enum2": [False, True],
+    }
+    arrow_data = pa.Table.from_pydict(pandas_data)
+
+    # Note: doing the .categories bit is implicitly deduplicating the data
+    # before it's send to tiledbsoma. Other tests, not this one, stress the
+    # deduplicate-or-not logic.
+    values = {
+        name: pa.array(pandas_data[name].categories) for name in enum_column_names
+    }
+
+    # Do the extend without write, or write with implicit extend
+    with soma.DataFrame.create(
+        uri,
+        schema=schema,
+        domain=domain,
+        index_column_names=["soma_joinid"],
+    ) as sdf:
+        if extend_not_write:
+            sdf.extend_enumeration_values(values)
+        else:
+            sdf.write(arrow_data)
+
+    # The dataframe must be open for write
+    with soma.DataFrame.open(uri) as sdf:
+        with pytest.raises(soma.SOMAError):
+            sdf.extend_enumeration_values({})
+    with pytest.raises(soma.SOMAError):
+        assert sdf.closed
+        sdf.extend_enumeration_values({})
+
+    with soma.DataFrame.open(uri, "w") as sdf:
+        # The column must exist
+        with pytest.raises(KeyError):
+            sdf.extend_enumeration_values({"nonesuch": pa.array(["abc"])})
+
+        # The column must be of enumerated type
+        with pytest.raises(KeyError):
+            sdf.extend_enumeration_values({"not_an_enum": pa.array(["abc"])})
+
+        # Types must match
+        type_mismatch_pandas_data = {
+            "int64_enum3": pd.Categorical(np.array([4444, 333, 333], dtype=np.int32)),
+        }
+        type_mismatch_values = {
+            name: pa.array(type_mismatch_pandas_data[name].categories)
+            for name in type_mismatch_pandas_data.keys()
+        }
+        with pytest.raises(soma.SOMAError):
+            sdf.extend_enumeration_values(type_mismatch_values)
+
+    # Verify
+    with soma.DataFrame.open(uri) as sdf:
+        table = sdf.read(column_names=enum_column_names).concat()
+        for column_name in values.keys():
+            field = sdf.schema.field(column_name)
+            assert pa.types.is_dictionary(field.type)
+
+            chunk = table.column(column_name).chunk(0)
+            assert sorted(chunk.dictionary.to_pylist()) == expected_levels[column_name]
+            if extend_not_write:
+                assert len(chunk) == 0
+            else:
+                assert len(chunk) == 3
+
+
+@pytest.mark.parametrize("deduplicate", [False, True])
+def test_extend_enumeration_values_deduplication(tmp_path, deduplicate):
+    uri = tmp_path.as_posix()
+    domain = [[0, 0]]
+
+    schema = pa.schema(
+        {
+            "soma_joinid": pa.int64(),
+            "not_an_enum": pa.large_string(),
+            "string_enum": pa.dictionary(pa.int32(), pa.large_string()),
+            "int64_enum": pa.dictionary(pa.int8(), pa.int64()),
+            "float32_enum": pa.dictionary(pa.int8(), pa.float32()),
+            "bool_enum": pa.dictionary(pa.int32(), pa.bool_()),
+        }
+    )
+
+    with soma.DataFrame.create(
+        uri,
+        schema=schema,
+        domain=domain,
+    ) as sdf:
+
+        # Dupes in the inputs are disallowed regardless of the deduplicate flag.
+        values_list = [
+            {"string_enum": pa.array(["hello", "hello", "goodbye"], type=pa.string())},
+            {"int64_enum": pa.array([55555, 55555, 7777777], type=pa.int64())},
+            {"float32_enum": pa.array([2.25, 3.75, 2.25], type=pa.float32())},
+            {"bool_enum": pa.array([True, True], type=pa.bool_())},
+        ]
+        for values in values_list:
+            # Run separate asserts for each column name. We want to make sure _each_ of them throws.
+            with pytest.raises(ValueError):
+                sdf.extend_enumeration_values(values, deduplicate=deduplicate)
+
+        values = {"float32_enum": pa.array([2.25, 3.75, 2.25], type=pa.float64())}
+        with pytest.raises(soma.SOMAError):
+            sdf.extend_enumeration_values(values)
+
+        # Success
+        values = {
+            "string_enum": pa.array(["hello", "goodbye"], type=pa.large_string()),
+            "int64_enum": pa.array([55555, 7777777], type=pa.int64()),
+            "float32_enum": pa.array([2.25, 3.75], type=pa.float32()),
+            # WIP 2025-03-28
+            # "bool_enum": pa.array([True], type=pa.bool_()),
+        }
+        sdf.extend_enumeration_values(values)
+
+    with soma.DataFrame.open(uri, "w") as sdf:
+
+        # Dupes between the inputs and the existing schema are allowed only
+        # if the deduplicate flag is set.
+        values_list = [
+            {"string_enum": pa.array(["farewell", "goodbye"], type=pa.string())},
+            {"int64_enum": pa.array([4444, 7777777], type=pa.int64())},
+            {"float32_enum": pa.array([9.00, 2.25], type=pa.float32())},
+            # WIP 2025-03-28
+            # {"bool_enum": pa.array([False, True], type=pa.bool_())},
+        ]
+        for values in values_list:
+            # Run separate asserts for each column name. We want to make sure _each_ of them throws.
+            if deduplicate:
+                sdf.extend_enumeration_values(values, deduplicate=deduplicate)
+            else:
+                with pytest.raises(soma.SOMAError):
+                    sdf.extend_enumeration_values(values, deduplicate=deduplicate)
+
+    if deduplicate:
+        expect = {
+            "string_enum": pa.array(
+                ["hello", "goodbye", "farewell"], type=pa.large_string()
+            ),
+            "int64_enum": pa.array([55555, 7777777, 4444], type=pa.int64()),
+            "float32_enum": pa.array([2.25, 3.75, 9], type=pa.float32()),
+            # WIP 2025-03-28
+            "bool_enum": pa.array([], type=pa.bool_()),
+        }
+    else:
+        expect = {
+            "string_enum": pa.array(["hello", "goodbye"], type=pa.large_string()),
+            "int64_enum": pa.array([55555, 7777777], type=pa.int64()),
+            "float32_enum": pa.array([2.25, 3.75], type=pa.float32()),
+            # WIP 2025-03-28
+            "bool_enum": pa.array([], type=pa.bool_()),
+        }
+
+    with soma.DataFrame.open(uri) as sdf:
+        actual = sdf.get_enumeration_values(
+            ["string_enum", "int64_enum", "float32_enum", "bool_enum"]
+        )
+        assert actual == expect
+
+
 @pytest.fixture
 def simple_data_frame(tmp_path):
     """

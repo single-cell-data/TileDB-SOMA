@@ -465,6 +465,23 @@ class SOMAArray : public SOMAObject {
         std::string column_name);
 
     /**
+     * Given an Arrow table mapping column names to Arrow arrays of
+     * values, extends the enumeration to include those new values.
+     * The values provided for each column must not already exist
+     * in the output of get_enumeration_values for that column,
+     * unless deduplicate is true.
+     *
+     * @tparam values An Arrowtable mapping column names to Arrow
+     * arrays of values.
+     * @tparam deduplicate If set to false, new and existing values must
+     * be disjoint.
+     */
+    void extend_enumeration_values(
+        std::unique_ptr<ArrowSchema> values_schema,
+        std::unique_ptr<ArrowArray> values_array,
+        bool deduplicate);
+
+    /**
      * Retrieves the non-empty domain from the array. This is the union of the
      * non-empty domains of the array fragments. Returns (0, 0) for empty
      * domains.
