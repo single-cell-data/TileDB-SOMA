@@ -319,12 +319,19 @@ def test_get_enumeration_values(tmp_path, ordered, mode):
         # Note: some older versions (I can vouch for pandas 1.5.3 and numpy 1.25.0) do something
         # very sad here:
         #
-        # >>> pd.Categorical(np.array([1.5, 0.5, 99.0, 1.5, 99.0], dtype=np.float64), ordered=ordered)
+        # >>> pd.Categorical(np.array([1.5, 0.5, 99.0, 1.5, 99.0], dtype=np.float32))
         # [1.5, 0.5, 99.0, 1.5, 99.0]
         # Categories (3, float64): [0.5, 1.5, 99.0]
         #
-        # Namely we _cannot_ construct a categorical of type float64 _even when we explicitly ask
-        # for it.
+        # >>> pd.Categorical(np.array([1.5, 0.5, 99.0, 1.5, 99.0], dtype=np.float64))
+        # [1.5, 0.5, 99.0, 1.5, 99.0]
+        # Categories (3, float64): [0.5, 1.5, 99.0]
+        #
+        # i.e. you ask for float32 or float64, you get float64 either way.
+        # So we _cannot_ construct a categorical of type float32 _even when we explicitly ask
+        # for it. And for as long as this suite must pass on these older versions
+        # of pandas/numpy, we must not insist that it do something which it is
+        # demonstrably incapable of doing.
         "float64_enum": pd.Categorical(
             np.array([1.5, 0.5, 99.0, 1.5, 99.0], dtype=np.float64), ordered=ordered
         ),
@@ -474,7 +481,7 @@ def test_extend_enumeration_values(tmp_path, extend_not_write):
             "int64_enum1": pa.dictionary(pa.int8(), pa.int64()),
             "int64_enum2": pa.dictionary(pa.int8(), pa.int64()),
             "int64_enum3": pa.dictionary(pa.int8(), pa.int64()),
-            "float32_enum": pa.dictionary(pa.int8(), pa.float32()),
+            "float64_enum": pa.dictionary(pa.int8(), pa.float64()),
             "string_enum1": pa.dictionary(pa.int32(), pa.large_string()),
             "string_enum2": pa.dictionary(pa.int32(), pa.large_string()),
             "bool_enum1": pa.dictionary(pa.int32(), pa.bool_()),
@@ -493,7 +500,7 @@ def test_extend_enumeration_values(tmp_path, extend_not_write):
         "int64_enum3": pd.Categorical(
             np.array([7777777, 55555, 55555], dtype=np.int64)
         ),
-        "float32_enum": pd.Categorical(np.array([2.5, 8.875, 2.5], dtype=np.float32)),
+        "float64_enum": pd.Categorical(np.array([2.5, 8.875, 2.5], dtype=np.float64)),
         "string_enum1": pd.Categorical(["hello", "hello", "goodbye"]),
         "string_enum2": pd.Categorical(["goodbye", "goodbye", "hello"]),
         "bool_enum1": pd.Categorical([True, True, False]),
@@ -505,7 +512,7 @@ def test_extend_enumeration_values(tmp_path, extend_not_write):
         "int64_enum1": [55555, 7777777],
         "int64_enum2": [55555, 7777777],
         "int64_enum3": [55555, 7777777],
-        "float32_enum": [2.5, 8.875],
+        "float64_enum": [2.5, 8.875],
         "string_enum1": ["goodbye", "hello"],
         "string_enum2": ["goodbye", "hello"],
         "bool_enum1": [False, True],
@@ -613,13 +620,21 @@ def test_extend_enumeration_values_deduplication(tmp_path, deduplicate):
         with pytest.raises(soma.SOMAError):
             sdf.extend_enumeration_values(values)
 
+        # WIP 2025-03-28
+        # Different representations of single-precision NaNs
+        # quiet_nan = struct.unpack(">f", b"\x7f\xc0\x00\x00")[0]
+        # negative_nan = struct.unpack(">f", b"\xff\xc0\x00\x00")[0]
+        # signaling_nan = struct.unpack(">f", b"\x7f\x80\x00\x01")[0]
+
         # Success
         values = {
             "string_enum": pa.array(["hello", "goodbye"], type=pa.large_string()),
             "int64_enum": pa.array([55555, 7777777], type=pa.int64()),
             "float32_enum": pa.array([2.25, 3.75], type=pa.float32()),
+            #
             # WIP 2025-03-28
             # "bool_enum": pa.array([True], type=pa.bool_()),
+            #
         }
         sdf.extend_enumeration_values(values)
 
