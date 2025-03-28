@@ -460,6 +460,14 @@ class ManagedQuery {
         Enumeration enmr,
         ArraySchemaEvolution& se);
 
+    bool _extend_enumeration(
+        ArrowSchema* value_schema,
+        ArrowArray* value_array,
+        std::string column_name,
+        bool deduplicate,
+        Enumeration enmr,
+        ArraySchemaEvolution& se);
+
     /**
      * This delegates to util::get_enumeration.
      * * There is (as of this writing) a situation where get_enumeration needs
@@ -741,6 +749,23 @@ class ManagedQuery {
         Enumeration enmr,
         ArraySchemaEvolution& se);
 
+    template <typename ValueType>
+    bool _extend_and_evolve_schema(
+        ArrowSchema* value_schema,
+        ArrowArray* value_array,
+        std::string column_name,
+        bool deduplicate,
+        Enumeration enmr,
+        ArraySchemaEvolution& se);
+
+    bool _extend_and_evolve_schema_string(
+        ArrowSchema* value_schema,
+        ArrowArray* value_array,
+        std::string column_name,
+        bool deduplicate,
+        Enumeration enmr,
+        ArraySchemaEvolution& se);
+
     // The two type names are because for string we need std::string and
     // std::string_view within the implementation. For other datatypes,
     // ValueType and ValueViewType will be the same.
@@ -756,6 +781,7 @@ class ManagedQuery {
         ArrowSchema* value_schema,
         ArrowArray* value_array,
         std::string column_name,
+        bool deduplicate,
         Enumeration enmr,
         ArraySchemaEvolution& se);
 
@@ -1098,6 +1124,7 @@ ManagedQuery::_extend_and_evolve_schema_with_details<std::string>(
     ArrowSchema* value_schema,
     ArrowArray* value_array,
     std::string column_name,
+    bool deduplicate,
     Enumeration enmr,
     ArraySchemaEvolution& se);
 
