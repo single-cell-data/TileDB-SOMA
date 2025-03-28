@@ -579,9 +579,6 @@ END_RCPP
 // c_capacity
 double c_capacity(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp);
 RcppExport SEXP _tiledbsoma_c_capacity(SEXP uriSEXP, SEXP ctxxpSEXP) {
-// c_schema_filters
-Rcpp::List c_schema_filters(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp);
-RcppExport SEXP _tiledbsoma_c_schema_filters(SEXP uriSEXP, SEXP ctxxpSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -612,6 +609,17 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const std::string& >::type uri(uriSEXP);
     Rcpp::traits::input_parameter< Rcpp::XPtr<somactx_wrap_t> >::type ctxxp(ctxxpSEXP);
     rcpp_result_gen = Rcpp::wrap(c_cell_order(uri, ctxxp));
+    return rcpp_result_gen;
+END_RCPP
+}
+// c_schema_filters
+Rcpp::List c_schema_filters(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp);
+RcppExport SEXP _tiledbsoma_c_schema_filters(SEXP uriSEXP, SEXP ctxxpSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const std::string& >::type uri(uriSEXP);
+    Rcpp::traits::input_parameter< Rcpp::XPtr<somactx_wrap_t> >::type ctxxp(ctxxpSEXP);
     rcpp_result_gen = Rcpp::wrap(c_schema_filters(uri, ctxxp));
     return rcpp_result_gen;
 END_RCPP
