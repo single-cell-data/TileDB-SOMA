@@ -477,8 +477,7 @@ class SOMAArray : public SOMAObject {
      * be disjoint.
      */
     void extend_enumeration_values(
-        std::unique_ptr<ArrowSchema> values_schema,
-        std::unique_ptr<ArrowArray> values_array,
+        std::map<std::string, std::pair<ArrowSchema*, ArrowArray*>>,
         bool deduplicate);
 
     /**

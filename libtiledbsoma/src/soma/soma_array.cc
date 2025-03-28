@@ -478,16 +478,18 @@ SOMAArray::get_enumeration_values_for_column(std::string column_name) {
 }
 
 void SOMAArray::extend_enumeration_values(
-    std::unique_ptr<ArrowSchema> values_schema,
-    std::unique_ptr<ArrowArray> values_array,
+    std::map<std::string, std::pair<ArrowSchema*, ArrowArray*>> values,
     bool deduplicate) {
     auto tctx = ctx_->tiledb_ctx();
     auto mq = ManagedQuery(arr_, tctx, "extend_enumeration_values");
     ArraySchemaEvolution schema_evolution(*tctx);
 
     // TBD thread-pooling opportunity -- TBD if it will be worthwhile
-    for (auto i = 0; i < values_schema->n_children; i++) {
-        std::string column_name(values_schema->children[i]->name);
+    for (const auto& pair : values) {
+        std::string column_name = pair.first;
+        ArrowSchema* values_schema = pair.second.first;
+        ArrowArray* values_array = pair.second.second;
+
         if (column_name == "") {
             throw TileDBSOMAError(
                 "[SOMAArray::extend_enumeration_values] column_name is the "
@@ -507,8 +509,8 @@ void SOMAArray::extend_enumeration_values(
             column_name);
 
         mq._extend_enumeration(
-            values_schema->children[i],
-            values_array->children[i],
+            values_schema,
+            values_array,
             column_name,
             deduplicate,
             core_enum,

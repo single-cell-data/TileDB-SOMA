@@ -607,7 +607,7 @@ def test_extend_enumeration_values_deduplication(tmp_path, deduplicate):
         # Dupes in the inputs are disallowed regardless of the deduplicate flag.
         values_list = [
             {"string_enum": pa.array(["hello", "hello", "goodbye"], type=pa.string())},
-            {"int64_enum": pa.array([55555, 55555, 7777777], type=pa.int64())},
+            {"int64_enum": pa.array([55555, 55555, 22, 333, 7777777], type=pa.int64())},
             {"float32_enum": pa.array([2.25, 3.75, 2.25], type=pa.float32())},
             {"bool_enum": pa.array([True, True], type=pa.bool_())},
         ]
@@ -629,12 +629,9 @@ def test_extend_enumeration_values_deduplication(tmp_path, deduplicate):
         # Success
         values = {
             "string_enum": pa.array(["hello", "goodbye"], type=pa.large_string()),
-            "int64_enum": pa.array([55555, 7777777], type=pa.int64()),
+            "int64_enum": pa.array([55555, 22, 333, 7777777], type=pa.int64()),
             "float32_enum": pa.array([2.25, 3.75], type=pa.float32()),
-            #
-            # WIP 2025-03-28
-            # "bool_enum": pa.array([True], type=pa.bool_()),
-            #
+            "bool_enum": pa.array([True], type=pa.bool_()),
         }
         sdf.extend_enumeration_values(values)
 
@@ -646,8 +643,7 @@ def test_extend_enumeration_values_deduplication(tmp_path, deduplicate):
             {"string_enum": pa.array(["farewell", "goodbye"], type=pa.string())},
             {"int64_enum": pa.array([4444, 7777777], type=pa.int64())},
             {"float32_enum": pa.array([9.00, 2.25], type=pa.float32())},
-            # WIP 2025-03-28
-            # {"bool_enum": pa.array([False, True], type=pa.bool_())},
+            {"bool_enum": pa.array([False, True], type=pa.bool_())},
         ]
         for values in values_list:
             # Run separate asserts for each column name. We want to make sure _each_ of them throws.
@@ -662,18 +658,16 @@ def test_extend_enumeration_values_deduplication(tmp_path, deduplicate):
             "string_enum": pa.array(
                 ["hello", "goodbye", "farewell"], type=pa.large_string()
             ),
-            "int64_enum": pa.array([55555, 7777777, 4444], type=pa.int64()),
+            "int64_enum": pa.array([55555, 22, 333, 7777777, 4444], type=pa.int64()),
             "float32_enum": pa.array([2.25, 3.75, 9], type=pa.float32()),
-            # WIP 2025-03-28
-            "bool_enum": pa.array([], type=pa.bool_()),
+            "bool_enum": pa.array([True, False], type=pa.bool_()),
         }
     else:
         expect = {
             "string_enum": pa.array(["hello", "goodbye"], type=pa.large_string()),
-            "int64_enum": pa.array([55555, 7777777], type=pa.int64()),
+            "int64_enum": pa.array([55555, 22, 333, 7777777], type=pa.int64()),
             "float32_enum": pa.array([2.25, 3.75], type=pa.float32()),
-            # WIP 2025-03-28
-            "bool_enum": pa.array([], type=pa.bool_()),
+            "bool_enum": pa.array([True], type=pa.bool_()),
         }
 
     with soma.DataFrame.open(uri) as sdf:
