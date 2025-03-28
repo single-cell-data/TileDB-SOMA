@@ -465,14 +465,14 @@ class SOMAArray : public SOMAObject {
         std::string column_name);
 
     /**
-     * Given an Arrow table mapping column names to Arrow arrays of
-     * values, extends the enumeration to include those new values.
-     * The values provided for each column must not already exist
-     * in the output of get_enumeration_values for that column,
+     * Given a mapping of column names to Arrow tables of
+     * enumeration values for each given column, extends the enumeration to
+     * include those new values. The values provided for each column must not
+     * already exist in the output of get_enumeration_values for that column,
      * unless deduplicate is true.
      *
-     * @tparam values An Arrowtable mapping column names to Arrow
-     * arrays of values.
+     * @tparam values An  mapping of column names to Arrow
+     * tables of enumeration values.
      * @tparam deduplicate If set to false, new and existing values must
      * be disjoint.
      */

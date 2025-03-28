@@ -1424,15 +1424,31 @@ ManagedQuery::_extend_and_evolve_schema_with_details(
 
     // Separate out the values already in the array schema from the
     // values not already in the array schema.
-    std::unordered_set<ValueType> existing_enums_set;
+    //
+    // One might think it would be simpler to use
+    //
+    //   std::unordered_set<ValueType> existing_enums_set;
+    //
+    // and one would be correct. However, core uses bitwise comparisons, and
+    // floating-point NaNs have the following properties: (1) NaN != NaN, and
+    // (2) there are multiple floating-point bit patterns which are NaN.  It's
+    // simplest to just use the same logic core does, making std::string_view on
+    // our elements.
+    std::unordered_set<std::string_view> existing_enums_set;
     for (const auto& enum_value_existing : enum_values_existing) {
-        existing_enums_set.insert(enum_value_existing);
+        auto sv = std::string_view(
+            static_cast<char*>((char*)&enum_value_existing),
+            sizeof(enum_value_existing));
+        existing_enums_set.insert(sv);
     }
 
     // Find any new enumeration values
     std::vector<ValueType> enum_values_to_add;
     for (const auto& enum_value_in_write : enum_values_in_write) {
-        if (!existing_enums_set.contains(enum_value_in_write)) {
+        auto sv = std::string_view(
+            static_cast<char*>((char*)&enum_value_in_write),
+            sizeof(enum_value_in_write));
+        if (!existing_enums_set.contains(sv)) {
             enum_values_to_add.push_back(enum_value_in_write);
         }
     }

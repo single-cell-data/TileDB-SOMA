@@ -521,7 +521,7 @@ def test_extend_enumeration_values(tmp_path, extend_not_write):
     arrow_data = pa.Table.from_pydict(pandas_data)
 
     # Note: doing the .categories bit is implicitly deduplicating the data
-    # before it's send to tiledbsoma. Other tests, not this one, stress the
+    # before it's sent to tiledbsoma. Other tests, not this one, stress the
     # deduplicate-or-not logic.
     values = {
         name: pa.array(pandas_data[name].categories) for name in enum_column_names
@@ -620,12 +620,6 @@ def test_extend_enumeration_values_deduplication(tmp_path, deduplicate):
         with pytest.raises(soma.SOMAError):
             sdf.extend_enumeration_values(values)
 
-        # WIP 2025-03-28
-        # Different representations of single-precision NaNs
-        # quiet_nan = struct.unpack(">f", b"\x7f\xc0\x00\x00")[0]
-        # negative_nan = struct.unpack(">f", b"\xff\xc0\x00\x00")[0]
-        # signaling_nan = struct.unpack(">f", b"\x7f\x80\x00\x01")[0]
-
         # Success
         values = {
             "string_enum": pa.array(["hello", "goodbye"], type=pa.large_string()),
@@ -659,7 +653,7 @@ def test_extend_enumeration_values_deduplication(tmp_path, deduplicate):
                 ["hello", "goodbye", "farewell"], type=pa.large_string()
             ),
             "int64_enum": pa.array([55555, 22, 333, 7777777, 4444], type=pa.int64()),
-            "float32_enum": pa.array([2.25, 3.75, 9], type=pa.float32()),
+            "float32_enum": pa.array([2.25, 3.75, 9.0], type=pa.float32()),
             "bool_enum": pa.array([True, False], type=pa.bool_()),
         }
     else:
@@ -675,6 +669,26 @@ def test_extend_enumeration_values_deduplication(tmp_path, deduplicate):
             ["string_enum", "int64_enum", "float32_enum", "bool_enum"]
         )
         assert actual == expect
+
+    # Different representations of single-precision NaNs.  There are
+    # single-precision and double-precision NaNs, of course, but np.nan ia
+    # single-precision.
+    quiet_nan = struct.unpack(">f", b"\x7f\xc0\x00\x00")[0]
+    negative_nan = struct.unpack(">f", b"\xff\xc0\x00\x00")[0]
+
+    with soma.DataFrame.open(uri, "w") as sdf:
+        values = {
+            "float32_enum": pa.array([quiet_nan, quiet_nan], type=pa.float32()),
+        }
+        with pytest.raises(soma.SOMAError):
+            sdf.extend_enumeration_values(values)
+
+        # Core treats these as distinct so we do too
+        values = {
+            "float32_enum": pa.array([quiet_nan, negative_nan], type=pa.float32()),
+        }
+        # Implicit check for no throw
+        sdf.extend_enumeration_values(values)
 
 
 @pytest.fixture
