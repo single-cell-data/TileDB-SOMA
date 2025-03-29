@@ -53,7 +53,9 @@ def read_h5ad(
     ctx = ctx or SOMATileDBContext()
     vfs = clib.SOMAVFS(ctx.native_context)
     input_handle = CachingReader(
-        clib.SOMAVFSFilebuf(vfs).open(str(input_path)), memory_budget=128 * 1024**2
+        clib.SOMAVFSFilebuf(vfs).open(str(input_path)),
+        memory_budget=1024**3,
+        cache_block_size=8 * 1024**2,
     )
     try:
         with _hack_patch_anndata():
