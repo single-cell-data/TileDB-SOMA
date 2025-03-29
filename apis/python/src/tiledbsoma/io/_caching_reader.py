@@ -13,6 +13,7 @@ from typing_extensions import Buffer
 
 @attrs.define
 class CacheStats:
+    hit: int = 0
     miss: int = 0
 
 
@@ -35,7 +36,7 @@ class CachingReader:
         self,
         file: Any,  # file-like object. Unfortunately, Python lacks a good typing signature for this concept.
         *,
-        memory_budget: int = 128 * 1024**2,
+        memory_budget: int = 64 * 1024**2,
         cache_block_size: int = 1024**2,
     ):
         if not file.readable():
@@ -46,27 +47,25 @@ class CachingReader:
         self._file = file
         self._file_length = file.seek(0, io.SEEK_END)
         file.seek(0)
-        self._offset = 0
+        self._pos = 0
 
         self._cache_block_size = cache_block_size
         self._max_cache_blocks = max(1, memory_budget // cache_block_size)
-        self._n_blocks = (self._file_length + cache_block_size - 1) // cache_block_size
+        _n_blocks = (self._file_length + cache_block_size - 1) // cache_block_size
 
         self._cache_lock = threading.Lock()
-        self._cache_lru: OrderedDict[int, pa.UInt8Array] = OrderedDict()
-        self._cache_stats: list[CacheStats] = [
-            CacheStats() for _ in range(self._n_blocks)
-        ]
+        self._cache: OrderedDict[int, pa.UInt8Array] = OrderedDict()
+        self._cache_stats: list[CacheStats] = [CacheStats() for _ in range(_n_blocks)]
 
-    def _read_block(self, block: int) -> pa.UInt8Array:
+    def _read_block(self, block_idx: int) -> pa.UInt8Array:
         nbytes = min(
             self._cache_block_size,
-            self._file_length - block * self._cache_block_size,
+            self._file_length - block_idx * self._cache_block_size,
         )
         assert nbytes > 0
         buffer = pa.allocate_buffer(nbytes)
         ctypes.memset(buffer.address, 0, len(buffer))  # better safe than sorry
-        self._file.seek(block * self._cache_block_size)
+        self._file.seek(block_idx * self._cache_block_size)
         bytes_read = self._file.readinto(memoryview(buffer))
         assert nbytes == bytes_read == len(buffer)
         a = pa.UInt8Array.from_buffers(pa.uint8(), len(buffer), [None, buffer])
@@ -78,50 +77,60 @@ class CachingReader:
         end_block = (end + self._cache_block_size - 1) // self._cache_block_size
         with self._cache_lock:
             missing_blocks = [
-                i for i in range(start_block, end_block) if i not in self._cache_lru
+                i for i in range(start_block, end_block) if i not in self._cache
             ]
-            for block in missing_blocks:
-                self._cache_stats[block].miss += 1
-                self._cache_lru[block] = self._read_block(block)
+            for block_idx in missing_blocks:
+                self._cache_stats[block_idx].miss += 1
+                self._cache[block_idx] = self._read_block(block_idx)
 
             requested_blocks = [
-                self._cache_lru[i] for i in range(start_block, end_block)
+                self._cache[block_idx] for block_idx in range(start_block, end_block)
             ]
 
             self._mark_and_sweep_blocks(start_block, end_block)
 
-        assert all(b is not None for b in requested_blocks)
         return requested_blocks
 
     def _mark_and_sweep_blocks(self, start: int, stop: int) -> None:
         for block_idx in range(start, stop):
-            self._cache_lru.move_to_end(block_idx)
+            self._cache.move_to_end(block_idx)
+            self._cache_stats[block_idx].hit += 1
 
-        for i in range(max(0, len(self._cache_lru) - self._max_cache_blocks)):
-            self._cache_lru.popitem(last=False)
+        for i in range(max(0, len(self._cache) - self._max_cache_blocks)):
+            self._cache.popitem(last=False)
 
     def _reset_cache(self) -> None:
         with self._cache_lock:
-            self._cache_lru.clear()
+            self._cache.clear()
 
     def read(self, size: int = -1) -> bytes:
-        if size == -1:
-            size = self._file_length - self._offset
-        blocks = self._load_cache(self._offset, self._offset + size)
+        if size is None:
+            size = -1  # type: ignore[unreachable]
+        if size < 0:
+            size = self._file_length - self._pos
+        if size == 0:
+            return b""
 
-        start = self._offset % self._cache_block_size
+        blocks = self._load_cache(self._pos, self._pos + size)
+
+        start = self._pos % self._cache_block_size
         end = start + size
         arr = pa.chunked_array(blocks)[start:end].combine_chunks()  # NB: copy
         assert arr.offset == 0
         b = arr.buffers()[1].to_pybytes()  # NB: copy
-        self._offset += size
+        self._pos += len(b)
         return cast(bytes, b)
 
-    def readinto(self, buf: Buffer) -> int:
-        buf = memoryview(buf)
-        size = len(buf)
-        blocks = self._load_cache(self._offset, self._offset + size)
-        start = self._offset % self._cache_block_size
+    def readinto(self, buf: Buffer) -> int | None:
+        if not isinstance(buf, memoryview):
+            buf = memoryview(buf)
+        if buf.nbytes == 0:
+            return 0
+        buf = buf.cast("B")
+
+        size = buf.nbytes
+        blocks = self._load_cache(self._pos, self._pos + size)
+        start = self._pos % self._cache_block_size
         end = start + size
         carr = pa.chunked_array(blocks)[start:end]
 
@@ -134,7 +143,7 @@ class CachingReader:
             dstidx += count
 
         assert dstidx == len(carr)
-        self._offset += dstidx
+        self._pos += dstidx
         return dstidx
 
     def close(self) -> None:
@@ -142,7 +151,7 @@ class CachingReader:
         self._file.close()
 
     def tell(self) -> int:
-        return self._offset
+        return self._pos
 
     def seek(self, offset: int, whence: int = 0) -> int:
         if whence not in [io.SEEK_SET, io.SEEK_CUR, io.SEEK_END]:
@@ -151,12 +160,22 @@ class CachingReader:
         if whence == io.SEEK_END:
             offset = self._file_length + offset
         elif whence == io.SEEK_CUR:
-            offset += self._offset
+            offset += self._pos
         elif whence == io.SEEK_SET:
             offset = offset
 
         if offset < 0:
             raise OSError("seek() returned invalid position")
 
-        self._offset = offset
+        self._pos = offset
         return offset
+
+    @property
+    def closed(self) -> bool:
+        return bool(self._file.closed)
+
+    def readable(self) -> bool:
+        return bool(self._file.readable())
+
+    def seekable(self) -> bool:
+        return bool(self._file.seekable())
