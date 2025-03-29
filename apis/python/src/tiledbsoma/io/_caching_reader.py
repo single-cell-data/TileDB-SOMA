@@ -6,8 +6,14 @@ import threading
 from collections import OrderedDict
 from typing import Any, cast
 
+import attrs
 import pyarrow as pa
 from typing_extensions import Buffer
+
+
+@attrs.define
+class CacheStats:
+    miss: int = 0
 
 
 class CachingReader:
@@ -47,8 +53,10 @@ class CachingReader:
         self._n_blocks = (self._file_length + cache_block_size - 1) // cache_block_size
 
         self._cache_lock = threading.Lock()
-        self._cached_blocks: list[bytes | None] = [None] * self._n_blocks
-        self._cache_lru: OrderedDict[int, None] = OrderedDict()
+        self._cache_lru: OrderedDict[int, pa.UInt8Array] = OrderedDict()
+        self._cache_stats: list[CacheStats] = [
+            CacheStats() for _ in range(self._n_blocks)
+        ]
 
     def _read_block(self, block: int) -> pa.UInt8Array:
         nbytes = min(
@@ -70,38 +78,30 @@ class CachingReader:
         end_block = (end + self._cache_block_size - 1) // self._cache_block_size
         with self._cache_lock:
             missing_blocks = [
-                i
-                for i in range(start_block, end_block)
-                if self._cached_blocks[i] is None
+                i for i in range(start_block, end_block) if i not in self._cache_lru
             ]
             for block in missing_blocks:
-                self._cached_blocks[block] = self._read_block(block)
+                self._cache_stats[block].miss += 1
+                self._cache_lru[block] = self._read_block(block)
 
             requested_blocks = [
-                self._cached_blocks[i] for i in range(start_block, end_block)
+                self._cache_lru[i] for i in range(start_block, end_block)
             ]
 
             self._mark_and_sweep_blocks(start_block, end_block)
 
         assert all(b is not None for b in requested_blocks)
-        return cast(list[pa.UInt8Array], requested_blocks)
+        return requested_blocks
 
     def _mark_and_sweep_blocks(self, start: int, stop: int) -> None:
         for block_idx in range(start, stop):
-            if block_idx in self._cache_lru:
-                self._cache_lru.move_to_end(block_idx)
+            self._cache_lru.move_to_end(block_idx)
 
-            elif len(self._cache_lru) < self._max_cache_blocks:
-                self._cache_lru[block_idx] = None
-
-            else:
-                remove_idx = self._cache_lru.popitem(last=False)
-                self._cache_lru[block_idx] = None
-                self._cached_blocks[remove_idx[0]] = None
+        for i in range(max(0, len(self._cache_lru) - self._max_cache_blocks)):
+            self._cache_lru.popitem(last=False)
 
     def _reset_cache(self) -> None:
         with self._cache_lock:
-            self._cached_blocks = [None] * self._n_blocks
             self._cache_lru.clear()
 
     def read(self, size: int = -1) -> bytes:

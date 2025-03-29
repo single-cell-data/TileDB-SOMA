@@ -12,7 +12,6 @@
  * This file defines the VFS bindings.
  */
 
-#include <spdlog/fmt/fmt.h>
 #include "common.h"
 
 namespace libtiledbsomacpp {
@@ -44,8 +43,13 @@ class SOMAVFSFilebuf : public tiledb::impl::VFSFilebuf {
 
     SOMAVFSFilebuf* open(const std::string& uri, std::ios::openmode openmode) {
         openmode_ = openmode;
-        if (tiledb::impl::VFSFilebuf::open(uri, openmode) == nullptr)
-            return nullptr;
+        if (tiledb::impl::VFSFilebuf::open(uri, openmode) == nullptr) {
+            // No std::format in C++17, and fmt::format is overkill
+            // here
+            std::stringstream ss;
+            ss << "URI " << uri << " is not a valid URI";
+            TPY_ERROR_LOC(ss.str());
+        }
         return this;
     }
 
@@ -133,15 +137,7 @@ void load_soma_vfs(py::module& m) {
         .def(
             "open",
             [](SOMAVFSFilebuf& buf, const std::string& uri) {
-                auto fb = buf.open(uri, std::ios::in);
-                if (fb == nullptr) {
-                    // No std::format in C++17, and fmt::format is overkill
-                    // here
-                    std::stringstream ss;
-                    ss << "URI " << uri << " is not a valid URI";
-                    TPY_ERROR_LOC(ss.str());
-                }
-                return fb;
+                return buf.open(uri, std::ios::in);  // hardwired to read-only
             },
             py::call_guard<py::gil_scoped_release>())
         .def("read", &SOMAVFSFilebuf::read, "size"_a = -1)
