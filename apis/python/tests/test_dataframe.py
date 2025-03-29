@@ -558,7 +558,7 @@ def test_extend_enumeration_values(tmp_path, extend_not_write):
 
         # Types must match
         type_mismatch_pandas_data = {
-            "int64_enum3": pd.Categorical(np.array([4444, 333, 333], dtype=np.int32)),
+            "int64_enum3": pd.Categorical(np.array([4444, 333, 333], dtype=np.float32)),
         }
         type_mismatch_values = {
             name: pa.array(type_mismatch_pandas_data[name].categories)
@@ -671,7 +671,7 @@ def test_extend_enumeration_values_deduplication(tmp_path, deduplicate):
         assert actual == expect
 
     # Different representations of single-precision NaNs.  There are
-    # single-precision and double-precision NaNs, of course, but np.nan ia
+    # single-precision and double-precision NaNs, of course, but np.nan is
     # single-precision.
     quiet_nan = struct.unpack(">f", b"\x7f\xc0\x00\x00")[0]
     negative_nan = struct.unpack(">f", b"\xff\xc0\x00\x00")[0]

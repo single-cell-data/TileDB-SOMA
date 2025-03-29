@@ -1221,12 +1221,13 @@ ManagedQuery::_extend_and_evolve_schema_with_details<std::string>(
             value_array->n_buffers));
     }
 
-    // Set up input values as a char buffer, and offsets within it.
-    // This is zero-copy since the Arrow buffer is already contiguous.
-    std::vector<uint64_t> offsets_v;
-
+    // Set up input values as a char buffer, and offsets within it.  This is
+    // zero-copy on the data buffers, since the Arrow data buffers are already
+    // contiguous.
+    //
     // Arrow var-sized cells can have 32-bit or 64-bit offsets.  TileDB only has
     // 64-bit offsets. Convert from the former to the latter.
+    std::vector<uint64_t> offsets_v;
     if ((strcmp(value_schema->format, "U") == 0) ||
         (strcmp(value_schema->format, "Z") == 0)) {
         uint64_t* offsets = (uint64_t*)value_array->buffers[1];
