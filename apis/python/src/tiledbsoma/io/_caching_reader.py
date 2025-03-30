@@ -132,7 +132,7 @@ class CachingReader:
         self._pos += len(b)
         return cast(bytes, b)
 
-    def readinto(self, buf: Buffer) -> int | None:
+    def readinto(self, buf: Buffer | memoryview) -> int | None:
         if not isinstance(buf, memoryview):
             buf = memoryview(buf)
         if buf.nbytes == 0:
