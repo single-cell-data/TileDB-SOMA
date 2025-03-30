@@ -118,6 +118,9 @@ jobs:
     - name: Show XCode version
       run: clang --version
 
+    - name: Log pip dependencies
+      run: pip list
+
     - name: Run libtiledbsoma unit tests
       run: ctest --output-on-failure --test-dir build/libtiledbsoma -C Release --verbose
       env:
