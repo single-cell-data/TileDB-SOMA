@@ -305,8 +305,8 @@ class ManagedQuery {
      * @param arrow_array
      */
     void set_array_data(
-        std::unique_ptr<ArrowSchema> arrow_schema,
-        std::unique_ptr<ArrowArray> arrow_array);
+        const std::unique_ptr<ArrowSchema>& arrow_schema,
+        const std::unique_ptr<ArrowArray>& arrow_array);
 
     std::optional<std::shared_ptr<ArrayBuffers>> read_next();
 

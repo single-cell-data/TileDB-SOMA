@@ -100,8 +100,8 @@ std::shared_ptr<SOMAExperiment> SOMACollection::add_new_experiment(
     std::string_view uri,
     URIType uri_type,
     std::shared_ptr<SOMAContext> ctx,
-    std::unique_ptr<ArrowSchema> schema,
-    ArrowTable index_columns,
+    const std::unique_ptr<ArrowSchema>& schema,
+    const ArrowTable& index_columns,
     PlatformConfig platform_config,
     std::optional<TimestampRange> timestamp) {
     if (!timestamp) {
@@ -109,13 +109,7 @@ std::shared_ptr<SOMAExperiment> SOMACollection::add_new_experiment(
     }
 
     SOMAExperiment::create(
-        uri,
-        std::move(schema),
-        ArrowTable(
-            std::move(index_columns.first), std::move(index_columns.second)),
-        ctx,
-        platform_config,
-        timestamp);
+        uri, schema, index_columns, ctx, platform_config, timestamp);
 
     // Note that we must return a shared_ptr to the member, instead of a
     // unique_ptr because we place the SOMA object into the `children_` cache
@@ -132,8 +126,8 @@ std::shared_ptr<SOMAMeasurement> SOMACollection::add_new_measurement(
     std::string_view uri,
     URIType uri_type,
     std::shared_ptr<SOMAContext> ctx,
-    std::unique_ptr<ArrowSchema> schema,
-    ArrowTable index_columns,
+    const std::unique_ptr<ArrowSchema>& schema,
+    const ArrowTable& index_columns,
     PlatformConfig platform_config,
     std::optional<TimestampRange> timestamp) {
     if (!timestamp) {
@@ -141,13 +135,7 @@ std::shared_ptr<SOMAMeasurement> SOMACollection::add_new_measurement(
     }
 
     SOMAMeasurement::create(
-        uri,
-        std::move(schema),
-        ArrowTable(
-            std::move(index_columns.first), std::move(index_columns.second)),
-        ctx,
-        platform_config,
-        timestamp);
+        uri, schema, index_columns, ctx, platform_config, timestamp);
 
     // Note that we must return a shared_ptr to the member, instead of a
     // unique_ptr because we place the SOMA object into the `children_` cache
@@ -164,8 +152,8 @@ std::shared_ptr<SOMADataFrame> SOMACollection::add_new_dataframe(
     std::string_view uri,
     URIType uri_type,
     std::shared_ptr<SOMAContext> ctx,
-    std::unique_ptr<ArrowSchema> schema,
-    ArrowTable index_columns,
+    const std::unique_ptr<ArrowSchema>& schema,
+    const ArrowTable& index_columns,
     PlatformConfig platform_config,
     std::optional<TimestampRange> timestamp) {
     if (!timestamp) {
@@ -173,13 +161,7 @@ std::shared_ptr<SOMADataFrame> SOMACollection::add_new_dataframe(
     }
 
     SOMADataFrame::create(
-        uri,
-        std::move(schema),
-        ArrowTable(
-            std::move(index_columns.first), std::move(index_columns.second)),
-        ctx,
-        platform_config,
-        timestamp);
+        uri, schema, index_columns, ctx, platform_config, timestamp);
 
     // Note that we must return a shared_ptr to the member, instead of a
     // unique_ptr because we place the SOMA object into the `children_` cache
@@ -197,7 +179,7 @@ std::shared_ptr<SOMADenseNDArray> SOMACollection::add_new_dense_ndarray(
     URIType uri_type,
     std::shared_ptr<SOMAContext> ctx,
     std::string_view format,
-    ArrowTable index_columns,
+    const ArrowTable& index_columns,
     PlatformConfig platform_config,
     std::optional<TimestampRange> timestamp) {
     if (!timestamp) {
@@ -205,13 +187,7 @@ std::shared_ptr<SOMADenseNDArray> SOMACollection::add_new_dense_ndarray(
     }
 
     SOMADenseNDArray::create(
-        uri,
-        format,
-        ArrowTable(
-            std::move(index_columns.first), std::move(index_columns.second)),
-        ctx,
-        platform_config,
-        timestamp);
+        uri, format, index_columns, ctx, platform_config, timestamp);
 
     // Note that we must return a shared_ptr to the member, instead of a
     // unique_ptr because we place the SOMA object into the `children_` cache
@@ -229,7 +205,7 @@ std::shared_ptr<SOMASparseNDArray> SOMACollection::add_new_sparse_ndarray(
     URIType uri_type,
     std::shared_ptr<SOMAContext> ctx,
     std::string_view format,
-    ArrowTable index_columns,
+    const ArrowTable& index_columns,
     PlatformConfig platform_config,
     std::optional<TimestampRange> timestamp) {
     if (!timestamp) {
@@ -237,13 +213,7 @@ std::shared_ptr<SOMASparseNDArray> SOMACollection::add_new_sparse_ndarray(
     }
 
     SOMASparseNDArray::create(
-        uri,
-        format,
-        ArrowTable(
-            std::move(index_columns.first), std::move(index_columns.second)),
-        ctx,
-        platform_config,
-        timestamp);
+        uri, format, index_columns, ctx, platform_config, timestamp);
 
     // Note that we must return a shared_ptr to the member, instead of a
     // unique_ptr because we place the SOMA object into the `children_` cache

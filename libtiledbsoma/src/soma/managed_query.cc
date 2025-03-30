@@ -524,8 +524,8 @@ ArraySchemaEvolution ManagedQuery::_make_se() {
 }
 
 void ManagedQuery::set_array_data(
-    std::unique_ptr<ArrowSchema> arrow_schema,
-    std::unique_ptr<ArrowArray> arrow_array) {
+    const std::unique_ptr<ArrowSchema>& arrow_schema,
+    const std::unique_ptr<ArrowArray>& arrow_array) {
     // Go through all columns in the ArrowTable and cast the values to what is
     // in the ArraySchema on disk
     ArraySchemaEvolution se = _make_se();
