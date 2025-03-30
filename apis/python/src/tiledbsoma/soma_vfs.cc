@@ -75,7 +75,6 @@ class SOMAVFSFilebuf : public tiledb::impl::VFSFilebuf {
             return py::bytes("");
         }
 
-        auto oldoffset = offset_;
         py::gil_scoped_release release;
         std::string buffer(nbytes, '\0');
         offset_ += xsgetn(&buffer[0], nbytes);
