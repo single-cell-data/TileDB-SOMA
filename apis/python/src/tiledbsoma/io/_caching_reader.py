@@ -2,13 +2,20 @@ from __future__ import annotations
 
 import ctypes
 import io
+import sys
 import threading
 from collections import OrderedDict
-from typing import Any, cast
+from typing import Any, Union, cast
 
 import attrs
 import pyarrow as pa
-from typing_extensions import Buffer
+from typing_extensions import Buffer, TypeAlias
+
+# typeguard and cython memoryview incompat in older versions
+if sys.version_info >= (3, 12):
+    WritableBuffer: TypeAlias = Union[memoryview, Buffer]
+else:
+    WritableBuffer: TypeAlias = Any
 
 
 @attrs.define
@@ -132,7 +139,7 @@ class CachingReader:
         self._pos += len(b)
         return cast(bytes, b)
 
-    def readinto(self, buf: Buffer | memoryview) -> int | None:
+    def readinto(self, buf: WritableBuffer) -> int | None:
         if not isinstance(buf, memoryview):
             buf = memoryview(buf)
         if buf.nbytes == 0:
