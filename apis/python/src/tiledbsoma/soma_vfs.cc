@@ -39,7 +39,7 @@ class SOMAVFSFilebuf : public tiledb::impl::VFSFilebuf {
    public:
     SOMAVFSFilebuf(const VFS& vfs)
         : tiledb::impl::VFSFilebuf(vfs)
-        , vfs_(vfs) {};
+        , vfs_(vfs){};
 
     SOMAVFSFilebuf* open(const std::string& uri, std::ios::openmode openmode) {
         openmode_ = openmode;
