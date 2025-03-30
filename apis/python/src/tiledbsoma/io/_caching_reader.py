@@ -13,22 +13,31 @@ from typing_extensions import Buffer
 
 @attrs.define
 class CacheStats:
+    block_idx: int
     hit: int = 0
     miss: int = 0
 
 
 class CachingReader:
-    """Buffering reader which will maintain an LRU cache of previously read data, wrapping
-    and presenting a file-like interface.
+    """Buffering reader which maintains a LRU cache of previously read data, wrapping
+    and presenting a file-like interface. Typical use is similar to ``io.BufferedReader``:
 
-    Much like ``io.BufferedReader``, wraps file-like object. Class assumes that the underlying
-    file is not changing concurrent with read. Any read to the file-like object will be a
-    minimum of "cache block" size bytes.
+        f = CachingReader(open("a file", mode="rb"), memory_budget=64*1024**2, cache_block_size=1024**2)
+
+    The LRU cache is user-defined by:
+        * memory budget - total cache size in bytes
+        * block_size - the unit of cached data. Also the read size
+
+    Instances present as a file-like object, and all public methods conform to the normal Python
+    ``io`` package semantics. Most, but not all methods required for io.RawIOBase (read-only) are
+    implemented.
+
+    Class assumes that the underlying file is not changing concurrent with read.
 
     Primary use case is wrapping a VFS FileBuffer object, to improve performance of read
     operations by doing fewer, larger reads.
 
-    Cached read bytes are stored as PyArrow arrays, primarily to benefit from the
+    The implemtation stores cached data as PyArrow arrays, primarily to benefit from the
     easy, minimal-copy concat and slice operations upon underlying buffers.
     """
 
@@ -55,7 +64,9 @@ class CachingReader:
 
         self._cache_lock = threading.Lock()
         self._cache: OrderedDict[int, pa.UInt8Array] = OrderedDict()
-        self._cache_stats: list[CacheStats] = [CacheStats() for _ in range(_n_blocks)]
+        self._cache_stats: list[CacheStats] = [
+            CacheStats(block_idx) for block_idx in range(_n_blocks)
+        ]
 
     def _read_block(self, block_idx: int) -> pa.UInt8Array:
         nbytes = min(

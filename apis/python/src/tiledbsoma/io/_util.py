@@ -54,7 +54,7 @@ def read_h5ad(
     vfs = clib.SOMAVFS(ctx.native_context)
     input_handle = CachingReader(
         clib.SOMAVFSFilebuf(vfs).open(str(input_path)),
-        memory_budget=1024**3,
+        memory_budget=64 * 1024**2,
         cache_block_size=8 * 1024**2,
     )
     try:
