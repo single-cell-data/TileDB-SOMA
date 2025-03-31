@@ -488,11 +488,14 @@ test_that("platform_config is respected", {
   expect_equal(coord_filters$validity[[2L]]$filter_type, "NOOP")
 
   expect_length(
-    domain <- c_domain(sdf$uri, sdf$.__enclos_env__$private$.soma_context),
-    n = 1L
+    domain <- c_domain(snda$uri, snda$.__enclos_env__$private$.soma_context),
+    n = 2L
   )
-  dim <- domain[[1]]
-  expect_equal(dim$name, "soma_joinid")
+  expect_named(domain, dims <- sprintf("soma_dim_%i", 0:1))
+  expect_equal(
+    vapply(domain, FUN = '[[', FUN.VALUE = character(1L), "name", USE.NAMES = FALSE),
+    dims
+  )
   # TODO: As noted above, check this when we are able to.
   # expect_equal(tiledb::tile(dim), 999)
   expect_length(dim$filters, n = 3L)
