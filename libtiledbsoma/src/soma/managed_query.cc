@@ -1221,6 +1221,12 @@ ManagedQuery::_extend_and_evolve_schema_with_details<std::string>(
             value_array->n_buffers));
     }
 
+    if (value_array->null_count != 0) {
+        throw std::invalid_argument(fmt::format(
+            "[ManagedQuery] _extend_and_evolve_schema_with_details non-string: "
+            "null values are not supported"));
+    }
+
     // Set up input values as a char buffer, and offsets within it.  This is
     // zero-copy on the data buffers, since the Arrow data buffers are already
     // contiguous.
@@ -1384,6 +1390,12 @@ ManagedQuery::_extend_and_evolve_schema_with_details(
             "[ManagedQuery] _extend_and_evolve_schema_with_details non-string: "
             "internal coding error: expected n_buffers == 2; got {}",
             value_array->n_buffers));
+    }
+
+    if (value_array->null_count != 0) {
+        throw std::invalid_argument(fmt::format(
+            "[ManagedQuery] _extend_and_evolve_schema_with_details non-string: "
+            "null values are not supported"));
     }
 
     // Get all the enumeration values in the passed-in column

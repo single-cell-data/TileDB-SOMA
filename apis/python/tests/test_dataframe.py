@@ -577,6 +577,17 @@ def test_extend_enumeration_values(tmp_path, extend_not_write, ordered):
         ):
             sdf.extend_enumeration_values(xvalues)
 
+        # The values provided must all be non-null
+        for nvalues in [
+            {"string_enum1": pa.array(["greetings", None])},
+            {"int64_enum1": pa.array([54321, None])},
+        ]:
+            with pytest.raises(
+                soma.SOMAError,
+                match=r"null values are not supported",
+            ):
+                sdf.extend_enumeration_values(nvalues)
+
         # Types must match
         type_mismatch_pandas_data = {
             "int64_enum3": pd.Categorical(np.array([4444, 333, 333], dtype=np.float32)),
