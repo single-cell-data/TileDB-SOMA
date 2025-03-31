@@ -1,6 +1,8 @@
 import contextlib
 import datetime
 import json
+import math
+import struct
 import time
 from pathlib import Path
 from typing import Any, Dict, List
@@ -2365,3 +2367,78 @@ def test_enum_regression_62887(tmp_path):
 
     with soma.open(uri) as A:
         assert_array_equal(A.read().concat()["A"], tbl["A"])
+
+
+def test_enum_handling_category_of_nan_62449(tmp_path):
+    uri = tmp_path.as_posix()
+
+    # Different representations of single-precision NaNs
+    quiet_nan = struct.unpack(">f", b"\x7f\xc0\x00\x00")[0]
+    negative_nan = struct.unpack(">f", b"\xff\xc0\x00\x00")[0]
+    signaling_nan = struct.unpack(">f", b"\x7f\x80\x00\x01")[0]
+
+    def nan_check(expected_nan, dict_vals):
+        return any(
+            math.isnan(val)
+            and struct.pack(">f", val) == struct.pack(">f", expected_nan)
+            for val in dict_vals
+        )
+
+    schema = pa.schema(
+        [
+            pa.field("soma_joinid", pa.int64(), nullable=False),
+            pa.field("A", pa.dictionary(pa.int32(), pa.float32())),
+        ]
+    )
+
+    # Ensure that unique NaN values are respected as different dictionary values
+    expected_data1 = pa.Table.from_pydict(
+        {
+            "soma_joinid": [0, 1, 2, 3],
+            "A": pa.DictionaryArray.from_arrays(
+                indices=pa.array([0, 1, 2, 0], type=pa.int32()),
+                dictionary=pa.array(
+                    [negative_nan, quiet_nan, signaling_nan], type=pa.float32()
+                ),
+            ),
+        }
+    )
+
+    with soma.DataFrame.create(
+        uri, schema=schema, index_column_names=["soma_joinid"], domain=[(0, 5)]
+    ) as A:
+        A.write(expected_data1)
+
+    with soma.open(uri) as A:
+        actual_data = A.read().concat()["A"]
+        actual_dict_vals = actual_data.chunk(0).dictionary.to_pylist()
+        assert len(actual_dict_vals) == 3
+        assert nan_check(quiet_nan, actual_dict_vals)
+        assert nan_check(negative_nan, actual_dict_vals)
+        assert nan_check(signaling_nan, actual_dict_vals)
+        assert_array_equal(expected_data1["A"], actual_data)
+
+    # Ensure that the dictionary indexes get shifted correctly when appending
+    # to the dataframe
+    expected_data2 = pa.Table.from_pydict(
+        {
+            "soma_joinid": [4, 5],
+            "A": pa.DictionaryArray.from_arrays(
+                indices=pa.array([1, 0], type=pa.int32()),
+                dictionary=pa.array([quiet_nan, signaling_nan], type=pa.float32()),
+            ),
+        }
+    )
+
+    with soma.open(uri, mode="w") as A:
+        A.write(expected_data2)
+
+    with soma.open(uri) as A:
+        actual_data = A.read().concat()["A"]
+        actual_dict_vals = actual_data.chunk(0).dictionary.to_pylist()
+        assert len(actual_dict_vals) == 3
+        assert nan_check(quiet_nan, actual_dict_vals)
+        assert nan_check(negative_nan, actual_dict_vals)
+        assert nan_check(signaling_nan, actual_dict_vals)
+        assert_array_equal(expected_data1["A"], actual_data[:4])
+        assert_array_equal(expected_data2["A"], actual_data[4:])
