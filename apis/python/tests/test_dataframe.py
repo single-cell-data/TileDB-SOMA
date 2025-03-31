@@ -527,7 +527,8 @@ def test_extend_enumeration_values(tmp_path, extend_not_write):
         name: pa.array(pandas_data[name].categories) for name in enum_column_names
     }
 
-    # Do the extend without write, or write with implicit extend
+    # Do the extend without write, or write with implicit extend.
+    # Note: this function does not test multiple extensions, but another one does.
     with soma.DataFrame.create(
         uri,
         schema=schema,
