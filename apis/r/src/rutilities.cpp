@@ -545,43 +545,48 @@ const char *_tiledb_layout_to_string(tiledb_layout_t layout) {
     }
 }
 
-// https://github.com/TileDB-Inc/TileDB-R/blob/525bdfc0f34aadb74a312a5d8428bd07819a8f83/src/libtiledb.cpp#L323C1-L367C2
-const char *_tiledb_filter_to_string(tiledb_filter_type_t filter) {
-    switch (filter) {
-    case TILEDB_FILTER_NONE:
-        return "NONE";
-    case TILEDB_FILTER_GZIP:
-        return "GZIP";
-    case TILEDB_FILTER_ZSTD:
-        return "ZSTD";
-    case TILEDB_FILTER_LZ4:
-        return "LZ4";
-    case TILEDB_FILTER_RLE:
-        return "RLE";
-    case TILEDB_FILTER_BZIP2:
-        return "BZIP2";
-    case TILEDB_FILTER_DOUBLE_DELTA:
-        return "DOUBLE_DELTA";
-    case TILEDB_FILTER_BIT_WIDTH_REDUCTION:
-        return "BIT_WIDTH_REDUCTION";
-    case TILEDB_FILTER_BITSHUFFLE:
-        return "BITSHUFFLE";
-    case TILEDB_FILTER_BYTESHUFFLE:
-        return "BYTESHUFFLE";
-    case TILEDB_FILTER_POSITIVE_DELTA:
-        return "POSITIVE_DELTA";
-    case TILEDB_FILTER_CHECKSUM_MD5:
-        return "CHECKSUM_MD5";
-    case TILEDB_FILTER_CHECKSUM_SHA256:
-        return "CHECKSUM_SHA256";
-    case TILEDB_FILTER_DICTIONARY:
-        return "DICTIONARY_ENCODING";
-    case TILEDB_FILTER_SCALE_FLOAT:
-        return "SCALE_FLOAT";
-    case TILEDB_FILTER_XOR:
-        return "FILTER_XOR";
-    default: {
-        Rcpp::stop("unknown tiledb_filter_t (%d)", filter);
+// internal helper function for
+// `_get_filter_opts()`
+// <Numeric> should be `int32_t` or `double`
+template <typename Numeric>
+Numeric _get_filter_opt(Rcpp::XPtr<tiledb::Filter> filter, tiledb_filter_option_t option) {
+    try {
+        switch (option) {
+        case TILEDB_BIT_WIDTH_MAX_WINDOW: case TILEDB_POSITIVE_DELTA_MAX_WINDOW:
+            return static_cast<Numeric>(filter->get_option<uint32_t>(option));
+        case TILEDB_SCALE_FLOAT_BYTEWIDTH:
+            return static_cast<Numeric>(filter->get_option<uint64_t>(option));
+        default:
+            return filter->get_option<Numeric>(option);
+        }
+    } catch (const tiledb::TileDBError& e) {
+        const std::string msg = e.what();
+        if (msg.find("unknown option") != std::string::npos) {
+            if (std::is_same<Numeric, double>::value) {
+                return R_NaReal;
+            }
+            return R_NaInt;
+        }
+        if (msg.find("Filter does not support options") != std::string::npos) {
+            if (std::is_same<Numeric, double>::value) {
+                return R_NaReal;
+            }
+            return R_NaInt;
+        }
+        throw(e);
     }
-    }
+}
+
+// filter options taken from tiledb-r
+// https://github.com/TileDB-Inc/TileDB-R/blob/525bdfc0f34aadb74a312a5d8428bd07819a8f83/src/libtiledb.cpp#L369-L388
+Rcpp::List _get_filter_opts(Rcpp::XPtr<tiledb::Filter> filter) {
+    return Rcpp::List::create(
+        Rcpp::Named("filter_type") = tiledb::Filter::to_str(filter->filter_type()),
+        Rcpp::Named("compression_level") = _get_filter_opt<int32_t>(filter, TILEDB_COMPRESSION_LEVEL),
+        Rcpp::Named("bit_width") = _get_filter_opt<int32_t>(filter, TILEDB_BIT_WIDTH_MAX_WINDOW),
+        Rcpp::Named("positive_delta") = _get_filter_opt<int32_t>(filter, TILEDB_POSITIVE_DELTA_MAX_WINDOW),
+        Rcpp::Named("float_bytewidth") = _get_filter_opt<double>(filter, TILEDB_SCALE_FLOAT_BYTEWIDTH),
+        Rcpp::Named("float_factor") = _get_filter_opt<double>(filter, TILEDB_SCALE_FLOAT_FACTOR),
+        Rcpp::Named("float_offset") = _get_filter_opt<double>(filter, TILEDB_SCALE_FLOAT_OFFSET)
+    );
 }

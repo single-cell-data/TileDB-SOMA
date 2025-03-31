@@ -2,6 +2,7 @@
 #include <nanoarrow/r.h>            // for C interface to Arrow (via R package)
 #include <RcppInt64>                // for fromInteger64
 #include <nanoarrow/nanoarrow.hpp>  // for C/C++ interface to Arrow
+#include <type_traits>
 
 // we currently get deprecation warnings by default which are noisy
 #ifndef TILEDB_NO_API_DEPRECATION_WARNINGS
@@ -464,34 +465,6 @@ std::string c_cell_order(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxx
     return _tiledb_layout_to_string(order);
 }
 
-// internal helper function
-// filter options taken from tiledb-r
-// https://github.com/TileDB-Inc/TileDB-R/blob/525bdfc0f34aadb74a312a5d8428bd07819a8f83/src/libtiledb.cpp#L369-L388
-Rcpp::List _get_filter_opts(Rcpp::XPtr<tiledb::Filter> filter) {
-    auto filter_type = _tiledb_filter_to_string(filter->filter_type());
-
-    // catches are intentionally blank to leave the values as NA
-    int compression = R_NaInt, bytewidth = R_NaInt, factor = R_NaInt, offset = R_NaInt;
-    uint32_t bit_width = R_NaInt, positive_delta = R_NaInt;
-    try {filter->get_option(TILEDB_COMPRESSION_LEVEL, &compression);} catch (...) {};
-    try {filter->get_option(TILEDB_BIT_WIDTH_MAX_WINDOW, &bit_width);} catch (...) {};
-    try {filter->get_option(TILEDB_POSITIVE_DELTA_MAX_WINDOW, &positive_delta);} catch (...) {};
-    try {filter->get_option(TILEDB_SCALE_FLOAT_BYTEWIDTH, &bytewidth);} catch (...) {};
-    try {filter->get_option(TILEDB_SCALE_FLOAT_FACTOR, &factor);} catch (...) {};
-    try {filter->get_option(TILEDB_SCALE_FLOAT_OFFSET, &offset);} catch (...) {};
-
-    // assemble the filter options into a list
-    return Rcpp::List::create(
-        Rcpp::Named("filter_type") = filter_type,
-        Rcpp::Named("compression_level") = compression,
-        Rcpp::Named("bit_width") = static_cast<int32_t>(bit_width),
-        Rcpp::Named("positive_delta") = static_cast<int32_t>(positive_delta),
-        Rcpp::Named("float_bytewidth") = bytewidth,
-        Rcpp::Named("float_factor") = factor,
-        Rcpp::Named("float_offset") = offset
-    );
-}
-
 // [[Rcpp::export]]
 Rcpp::List c_schema_filters(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
     auto sr = tdbs::SOMAArray::open(OpenMode::read, uri, ctxxp->ctxptr);
@@ -504,7 +477,7 @@ Rcpp::List c_schema_filters(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> c
     int ncoords_filters = static_cast<int32_t>(coords_filter_list->nfilters());
     for (int i = 0; i < ncoords_filters; i++) {
         auto filter = make_xptr<tiledb::Filter>(new tiledb::Filter(coords_filter_list->filter(i)));
-        auto filter_type = _tiledb_filter_to_string(filter->filter_type());
+        auto filter_type = tiledb::Filter::to_str(filter->filter_type());
         coord_filters[filter_type] = _get_filter_opts(filter);
     }
     filter_list["coords"] = coord_filters;
@@ -513,7 +486,7 @@ Rcpp::List c_schema_filters(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> c
     int noffset_filters = static_cast<int32_t>(offset_filter_list->nfilters());
     for (int i = 0; i < noffset_filters; i++) {
         auto filter = make_xptr<tiledb::Filter>(new tiledb::Filter(offset_filter_list->filter(i)));
-        auto filter_type = _tiledb_filter_to_string(filter->filter_type());
+        auto filter_type = tiledb::Filter::to_str(filter->filter_type());
         offset_filters[filter_type] = _get_filter_opts(filter);
     }
     filter_list["offsets"] = offset_filters;
@@ -522,7 +495,7 @@ Rcpp::List c_schema_filters(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> c
     int nvalidity_filters = static_cast<int32_t>(validity_filter_list->nfilters());
     for (int i = 0; i < nvalidity_filters; i++) {
         auto filter = make_xptr<tiledb::Filter>(new tiledb::Filter(validity_filter_list->filter(i)));
-        auto filter_type = _tiledb_filter_to_string(filter->filter_type());
+        auto filter_type = tiledb::Filter::to_str(filter->filter_type());
         validity_filters[filter_type] = _get_filter_opts(filter);
     }
     filter_list["validity"] = validity_filters;
@@ -641,7 +614,7 @@ Rcpp::List c_attributes(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp
         int nfilters = static_cast<int32_t>(filter_list->nfilters());
         for (auto j = 0; j < nfilters; j++) {
             auto filter = make_xptr<tiledb::Filter>(new tiledb::Filter(filter_list->filter(j)));
-            auto filter_type = _tiledb_filter_to_string(filter->filter_type());
+            auto filter_type = tiledb::Filter::to_str(filter->filter_type());
 
             // catches are intentionally blank to leave the values as NA
             int compression = R_NaInt, bytewidth = R_NaInt, factor = R_NaInt, offset = R_NaInt;
