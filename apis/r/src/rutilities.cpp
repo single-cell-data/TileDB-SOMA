@@ -552,7 +552,8 @@ template <typename Numeric>
 Numeric _get_filter_option(Rcpp::XPtr<tiledb::Filter> filter, tiledb_filter_option_t option) {
     try {
         switch (option) {
-        case TILEDB_BIT_WIDTH_MAX_WINDOW: case TILEDB_POSITIVE_DELTA_MAX_WINDOW:
+        case TILEDB_BIT_WIDTH_MAX_WINDOW:
+        case TILEDB_POSITIVE_DELTA_MAX_WINDOW:
             return static_cast<Numeric>(filter->get_option<uint32_t>(option));
         case TILEDB_SCALE_FLOAT_BYTEWIDTH:
             return static_cast<Numeric>(filter->get_option<uint64_t>(option));
