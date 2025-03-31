@@ -1223,7 +1223,7 @@ ManagedQuery::_extend_and_evolve_schema_with_details<std::string>(
 
     if (value_array->null_count != 0) {
         throw std::invalid_argument(fmt::format(
-            "[ManagedQuery] _extend_and_evolve_schema_with_details non-string: "
+            "[ManagedQuery] _extend_and_evolve_schema_with_details string: "
             "null values are not supported"));
     }
 
@@ -1237,11 +1237,13 @@ ManagedQuery::_extend_and_evolve_schema_with_details<std::string>(
     if ((strcmp(value_schema->format, "U") == 0) ||
         (strcmp(value_schema->format, "Z") == 0)) {
         uint64_t* offsets = (uint64_t*)value_array->buffers[1];
-        offsets_v.assign(offsets, offsets + num_elems + 1);
+        offsets_v.assign(
+            offsets + value_array->offset,
+            offsets + value_array->offset + num_elems + 1);
     } else {
         uint32_t* offsets = (uint32_t*)value_array->buffers[1];
         for (size_t i = 0; i < num_elems + 1; ++i) {
-            offsets_v.push_back((uint64_t)offsets[i]);
+            offsets_v.push_back((uint64_t)offsets[i + value_array->offset]);
         }
     }
 

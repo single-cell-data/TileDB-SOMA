@@ -753,6 +753,53 @@ def test_extend_enumeration_values_deduplication(
         sdf.extend_enumeration_values(values)
 
 
+@pytest.mark.parametrize("ordered", [False, True])
+def test_extend_enumeration_values_offsets(tmp_path, ordered):
+    uri = tmp_path.as_posix()
+    domain = [[0, 0]]
+
+    schema = pa.schema(
+        {
+            "soma_joinid": pa.int64(),
+            "not_an_enum": pa.large_string(),
+            "string_enum": pa.dictionary(
+                pa.int32(), pa.large_string(), ordered=ordered
+            ),
+            "int64_enum": pa.dictionary(pa.int8(), pa.int64(), ordered=ordered),
+            "float32_enum": pa.dictionary(pa.int8(), pa.float32(), ordered=ordered),
+            "bool_enum": pa.dictionary(pa.int32(), pa.bool_(), ordered=ordered),
+        }
+    )
+
+    values = {
+        "string_enum": pa.array(
+            ["auf", "wieder", "sehen", "Freunde"], type=pa.large_string()
+        )[1:3],
+        "int64_enum": pa.array([1234, 2345, 3456, 4567], type=pa.int64())[1:3],
+        "float32_enum": pa.array([25.0, 26.0, 27.0, 28.0], type=pa.float32())[1:3],
+        "bool_enum": pa.array([False, True, True, False], type=pa.bool_())[1:2],
+    }
+
+    with soma.DataFrame.create(
+        uri,
+        schema=schema,
+        domain=domain,
+    ) as sdf:
+        sdf.extend_enumeration_values(values)
+
+    expect = {
+        "string_enum": pa.array(["wieder", "sehen"], type=pa.large_string()),
+        "int64_enum": pa.array([2345, 3456], type=pa.int64()),
+        "float32_enum": pa.array([26.0, 27.0], type=pa.float32()),
+        "bool_enum": pa.array([True], type=pa.bool_()),
+    }
+    with soma.DataFrame.open(uri) as sdf:
+        actual = sdf.get_enumeration_values(
+            ["string_enum", "int64_enum", "float32_enum", "bool_enum"]
+        )
+        assert actual == expect
+
+
 @pytest.fixture
 def simple_data_frame(tmp_path):
     """
