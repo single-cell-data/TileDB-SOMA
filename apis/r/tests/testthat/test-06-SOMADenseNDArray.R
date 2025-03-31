@@ -168,7 +168,7 @@ test_that("platform_config is respected", {
 
   expect_length(coord_filters$validity, n = 2L)
   expect_equal(coord_filters$validity[[1L]]$filter_type, "RLE")
-  expect_equal(coord_filters$validity[[2L]]$filter_type, "NONE")
+  expect_equal(coord_filters$validity[[2L]]$filter_type, "NOOP")
 
   dom <- tiledb::domain(tsch)
   expect_equal(tiledb::tiledb_ndim(dom), 2)
