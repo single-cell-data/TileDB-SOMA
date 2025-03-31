@@ -35,6 +35,7 @@ def xenium_v1_path():
     return xenium_path
 
 
+@pytest.mark.skip(reason="Missing test dataset")
 @pytest.mark.slow
 def test_from_xenium_for_xenium_v1(tmp_path, xenium_v1_path):
     """Test `from_xenium` runs without error."""
@@ -59,27 +60,37 @@ def test_from_xenium_for_xenium_v1(tmp_path, xenium_v1_path):
         assert isinstance(exp.ms["RNA"].var_spatial_presence, soma.DataFrame)
 
         # Define some expected data.
-        pixel_coord_space = soma.CoordinateSpace(
-            (soma.Axis("x", "pixels"), soma.Axis("y", "pixels"))
+        scene_coord_space = soma.CoordinateSpace(
+            (
+                soma.Axis("x", "micrometre"),
+                soma.Axis("y", "micrometre"),
+                soma.Axis("z", "micrometre"),
+            )
         )
 
         # Check the scene exists and has the desired metadata.
         assert isinstance(exp.spatial["human_lymph_node"], soma.Scene)
         scene = exp.spatial["human_lymph_node"]
-        assert scene.coordinate_space == pixel_coord_space
+        assert scene.coordinate_space == scene_coord_space
 
         # Check the scene subcollections:
         # - `obsl` only has a point cloud dataframe named `loc`,
         # - `varl` is empty,
         # - `img` only has a multiscale image named `tissue`.
         assert len(scene.obsl.items()) == 1
-        assert isinstance(scene.obsl["loc"], soma.PointCloudDataFrame)
-        assert len(scene.varl.items()) == 0
-        assert len(scene.img.items()) == 1
-        assert isinstance(scene.img["tissue"], soma.MultiscaleImage)
+        assert isinstance(scene.obsl["cells"], soma.GeometryDataFrame)
+        assert len(scene.varl.items()) == 1
+        assert len(scene.varl["RNA"].items()) == 1
+        assert isinstance(scene.varl["RNA"]["transcripts"], soma.PointCloudDataFrame)
+        assert len(scene.img.items()) == 0
 
-        # Check transform to `loc`.
-        loc_transform = scene.get_transform_to_point_cloud_dataframe("loc", "obsl")
-        assert isinstance(loc_transform, soma.IdentityTransform)
-        assert loc_transform.input_axes == ("x", "y")
-        assert loc_transform.output_axes == ("x", "y")
+        # Check transform to `cells`.
+        # TODO: Add projection trnasformation
+        # cells_transform = scene.get_transform_from_geometry_dataframe("cells", "obsl")
+
+        transcripts_transform = scene.get_transform_from_point_cloud_dataframe(
+            "transcripts", ["varl", "RNA"]
+        )
+        assert isinstance(transcripts_transform, soma.IdentityTransform)
+        assert transcripts_transform.input_axes == ("x", "y", "z")
+        assert transcripts_transform.output_axes == ("x", "y", "z")
