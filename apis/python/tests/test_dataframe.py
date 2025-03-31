@@ -469,7 +469,8 @@ def test_bool_enums(tmp_path, data_and_expected_levels):
 
 
 @pytest.mark.parametrize("extend_not_write", [False, True])
-def test_extend_enumeration_values(tmp_path, extend_not_write):
+@pytest.mark.parametrize("ordered", [True, False])
+def test_extend_enumeration_values(tmp_path, extend_not_write, ordered):
     """Compares the older create+write path against create+extend path"""
     uri = tmp_path.as_posix()
     domain = [[0, 2]]
@@ -478,14 +479,18 @@ def test_extend_enumeration_values(tmp_path, extend_not_write):
         {
             "soma_joinid": pa.int64(),
             "not_an_enum": pa.large_string(),
-            "int64_enum1": pa.dictionary(pa.int8(), pa.int64()),
-            "int64_enum2": pa.dictionary(pa.int8(), pa.int64()),
-            "int64_enum3": pa.dictionary(pa.int8(), pa.int64()),
-            "float64_enum": pa.dictionary(pa.int8(), pa.float64()),
-            "string_enum1": pa.dictionary(pa.int32(), pa.large_string()),
-            "string_enum2": pa.dictionary(pa.int32(), pa.large_string()),
-            "bool_enum1": pa.dictionary(pa.int32(), pa.bool_()),
-            "bool_enum2": pa.dictionary(pa.int32(), pa.bool_()),
+            "int64_enum1": pa.dictionary(pa.int8(), pa.int64(), ordered=ordered),
+            "int64_enum2": pa.dictionary(pa.int8(), pa.int64(), ordered=ordered),
+            "int64_enum3": pa.dictionary(pa.int8(), pa.int64(), ordered=ordered),
+            "float64_enum": pa.dictionary(pa.int8(), pa.float64(), ordered=ordered),
+            "string_enum1": pa.dictionary(
+                pa.int32(), pa.large_string(), ordered=ordered
+            ),
+            "string_enum2": pa.dictionary(
+                pa.int32(), pa.large_string(), ordered=ordered
+            ),
+            "bool_enum1": pa.dictionary(pa.int32(), pa.bool_(), ordered=ordered),
+            "bool_enum2": pa.dictionary(pa.int32(), pa.bool_(), ordered=ordered),
         }
     )
     enum_column_names = [
@@ -495,16 +500,23 @@ def test_extend_enumeration_values(tmp_path, extend_not_write):
     pandas_data = {
         "soma_joinid": [0, 1, 2],
         "not_an_enum": ["quick", "brown", "fox"],
-        "int64_enum1": pd.Categorical([55555, 55555, 7777777]),
-        "int64_enum2": pd.Categorical(np.array([55555, 55555, 7777777])),
-        "int64_enum3": pd.Categorical(
-            np.array([7777777, 55555, 55555], dtype=np.int64)
+        "int64_enum1": pd.Categorical([55555, 55555, 7777777], ordered=ordered),
+        "int64_enum2": pd.Categorical(
+            np.array([55555, 55555, 7777777]), ordered=ordered
         ),
-        "float64_enum": pd.Categorical(np.array([2.5, 8.875, 2.5], dtype=np.float64)),
-        "string_enum1": pd.Categorical(["hello", "hello", "goodbye"]),
-        "string_enum2": pd.Categorical(["goodbye", "goodbye", "hello"]),
-        "bool_enum1": pd.Categorical([True, True, False]),
-        "bool_enum2": pd.Categorical([False, False, True]),
+        "int64_enum3": pd.Categorical(
+            np.array([7777777, 55555, 55555], dtype=np.int64),
+            ordered=ordered,
+        ),
+        "float64_enum": pd.Categorical(
+            np.array([2.5, 8.875, 2.5], dtype=np.float64), ordered=ordered
+        ),
+        "string_enum1": pd.Categorical(["hello", "hello", "goodbye"], ordered=ordered),
+        "string_enum2": pd.Categorical(
+            ["goodbye", "goodbye", "hello"], ordered=ordered
+        ),
+        "bool_enum1": pd.Categorical([True, True, False], ordered=ordered),
+        "bool_enum2": pd.Categorical([False, False, True], ordered=ordered),
     }
     arrow_data = pa.Table.from_pydict(pandas_data)
 
@@ -584,7 +596,8 @@ def test_extend_enumeration_values(tmp_path, extend_not_write):
 
 
 @pytest.mark.parametrize("deduplicate", [False, True])
-def test_extend_enumeration_values_deduplication(tmp_path, deduplicate):
+@pytest.mark.parametrize("ordered", [False, True])
+def test_extend_enumeration_values_deduplication(tmp_path, deduplicate, ordered):
     uri = tmp_path.as_posix()
     domain = [[0, 0]]
 
@@ -592,10 +605,12 @@ def test_extend_enumeration_values_deduplication(tmp_path, deduplicate):
         {
             "soma_joinid": pa.int64(),
             "not_an_enum": pa.large_string(),
-            "string_enum": pa.dictionary(pa.int32(), pa.large_string()),
-            "int64_enum": pa.dictionary(pa.int8(), pa.int64()),
-            "float32_enum": pa.dictionary(pa.int8(), pa.float32()),
-            "bool_enum": pa.dictionary(pa.int32(), pa.bool_()),
+            "string_enum": pa.dictionary(
+                pa.int32(), pa.large_string(), ordered=ordered
+            ),
+            "int64_enum": pa.dictionary(pa.int8(), pa.int64(), ordered=ordered),
+            "float32_enum": pa.dictionary(pa.int8(), pa.float32(), ordered=ordered),
+            "bool_enum": pa.dictionary(pa.int32(), pa.bool_(), ordered=ordered),
         }
     )
 
