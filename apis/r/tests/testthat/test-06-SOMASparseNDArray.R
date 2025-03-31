@@ -498,11 +498,16 @@ test_that("platform_config is respected", {
   )
   # TODO: As noted above, check this when we are able to.
   # expect_equal(tiledb::tile(dim), 999)
-  expect_length(dim$filters, n = 3L)
-  expect_equal(dim$filters[[1L]]$filter_type, "RLE")
-  expect_equal(dim$filters[[2L]]$filter_type, "ZSTD")
-  expect_equal(dim$filters[[2L]]$compression_level, 8L)
-  expect_equal(dim$filters[[3L]]$filter_type, "NONE")
+  dim0 <- domain$soma_dim_0
+  expect_length(dim0$filters, n = 3L)
+  expect_equal(dim0$filters[[1L]]$filter_type, "RLE")
+  expect_equal(dim0$filters[[2L]]$filter_type, "ZSTD")
+  expect_equal(dim0$filters[[2L]]$compression_level, 8L)
+  expect_equal(dim0$filters[[3L]]$filter_type, "NONE")
+
+  dim1 <- domain$soma_dim_1
+  expect_length(dim1$filters, n = 1L)
+  expect_equal(dim1$filters[[1L]]$filter_type, "RLE")
 
   expect_length(attrs <- snda$attributes(), n = 1L)
   expect_length(attrs$soma_data$filter_list, n = 2L)
