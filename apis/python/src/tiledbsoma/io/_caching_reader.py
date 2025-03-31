@@ -173,7 +173,7 @@ class CachingReader:
 
     def seek(self, offset: int, whence: int = 0) -> int:
         if whence not in [io.SEEK_SET, io.SEEK_CUR, io.SEEK_END]:
-            raise ValueError("Invalid whence value")
+            raise ValueError("Invalid whence value {whence})")
 
         if whence == io.SEEK_END:
             offset = self._file_length + offset
