@@ -478,7 +478,7 @@ Rcpp::List c_schema_filters(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> c
     for (int i = 0; i < ncoords_filters; i++) {
         auto filter = make_xptr<tiledb::Filter>(new tiledb::Filter(coords_filter_list->filter(i)));
         auto filter_type = tiledb::Filter::to_str(filter->filter_type());
-        coord_filters[filter_type] = _get_filter_opts(filter);
+        coord_filters[filter_type] = _get_filter_options(filter);
     }
     filter_list["coords"] = coord_filters;
 
@@ -487,7 +487,7 @@ Rcpp::List c_schema_filters(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> c
     for (int i = 0; i < noffset_filters; i++) {
         auto filter = make_xptr<tiledb::Filter>(new tiledb::Filter(offset_filter_list->filter(i)));
         auto filter_type = tiledb::Filter::to_str(filter->filter_type());
-        offset_filters[filter_type] = _get_filter_opts(filter);
+        offset_filters[filter_type] = _get_filter_options(filter);
     }
     filter_list["offsets"] = offset_filters;
 
@@ -496,7 +496,7 @@ Rcpp::List c_schema_filters(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> c
     for (int i = 0; i < nvalidity_filters; i++) {
         auto filter = make_xptr<tiledb::Filter>(new tiledb::Filter(validity_filter_list->filter(i)));
         auto filter_type = tiledb::Filter::to_str(filter->filter_type());
-        validity_filters[filter_type] = _get_filter_opts(filter);
+        validity_filters[filter_type] = _get_filter_options(filter);
     }
     filter_list["validity"] = validity_filters;
 

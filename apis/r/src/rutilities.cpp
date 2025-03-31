@@ -546,7 +546,7 @@ const char *_tiledb_layout_to_string(tiledb_layout_t layout) {
 }
 
 // internal helper function for
-// `_get_filter_opts()`
+// `_get_filter_options()`
 // <Numeric> should be `int32_t` or `double`
 template <typename Numeric>
 Numeric _get_filter_option(Rcpp::XPtr<tiledb::Filter> filter, tiledb_filter_option_t option) {
@@ -580,14 +580,14 @@ Numeric _get_filter_option(Rcpp::XPtr<tiledb::Filter> filter, tiledb_filter_opti
 
 // filter options taken from tiledb-r
 // https://github.com/TileDB-Inc/TileDB-R/blob/525bdfc0f34aadb74a312a5d8428bd07819a8f83/src/libtiledb.cpp#L369-L388
-Rcpp::List _get_filter_opts(Rcpp::XPtr<tiledb::Filter> filter) {
+Rcpp::List _get_filter_options(Rcpp::XPtr<tiledb::Filter> filter) {
     return Rcpp::List::create(
         Rcpp::Named("filter_type") = tiledb::Filter::to_str(filter->filter_type()),
-        Rcpp::Named("compression_level") = _get_filter_opt<int32_t>(filter, TILEDB_COMPRESSION_LEVEL),
-        Rcpp::Named("bit_width") = _get_filter_opt<int32_t>(filter, TILEDB_BIT_WIDTH_MAX_WINDOW),
-        Rcpp::Named("positive_delta") = _get_filter_opt<int32_t>(filter, TILEDB_POSITIVE_DELTA_MAX_WINDOW),
-        Rcpp::Named("float_bytewidth") = _get_filter_opt<double>(filter, TILEDB_SCALE_FLOAT_BYTEWIDTH),
-        Rcpp::Named("float_factor") = _get_filter_opt<double>(filter, TILEDB_SCALE_FLOAT_FACTOR),
-        Rcpp::Named("float_offset") = _get_filter_opt<double>(filter, TILEDB_SCALE_FLOAT_OFFSET)
+        Rcpp::Named("compression_level") = _get_filter_option<int32_t>(filter, TILEDB_COMPRESSION_LEVEL),
+        Rcpp::Named("bit_width") = _get_filter_option<int32_t>(filter, TILEDB_BIT_WIDTH_MAX_WINDOW),
+        Rcpp::Named("positive_delta") = _get_filter_option<int32_t>(filter, TILEDB_POSITIVE_DELTA_MAX_WINDOW),
+        Rcpp::Named("float_bytewidth") = _get_filter_option<double>(filter, TILEDB_SCALE_FLOAT_BYTEWIDTH),
+        Rcpp::Named("float_factor") = _get_filter_option<double>(filter, TILEDB_SCALE_FLOAT_FACTOR),
+        Rcpp::Named("float_offset") = _get_filter_option<double>(filter, TILEDB_SCALE_FLOAT_OFFSET)
     );
 }
