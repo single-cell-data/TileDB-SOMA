@@ -556,21 +556,19 @@ test_that("platform_config is respected", {
   expect_equal(coord_filters$validity[[1L]]$filter_type, "RLE")
   expect_equal(coord_filters$validity[[2L]]$filter_type, "NOOP")
 
-  dom <- tiledb::domain(tsch)
-  expect_equal(tiledb::tiledb_ndim(dom), 1)
-  dim <- tiledb::dimensions(dom)[[1]]
-  expect_equal(tiledb::name(dim), "soma_joinid")
+  expect_length(
+    domain <- c_domain(sdf$uri, sdf$.__enclos_env__$private$.soma_context),
+    n = 1L
+  )
+  dim <- domain[[1]]
+  expect_equal(dim$name, "soma_joinid")
   # TODO: As noted above, check this when we are able to.
   # expect_equal(tiledb::tile(dim), 999)
-  dim_filters <- tiledb::filter_list(dim)
-  expect_equal(tiledb::nfilters(dim_filters), 3)
-  d1 <- dim_filters[0] # C++ indexing here
-  d2 <- dim_filters[1] # C++ indexing here
-  d3 <- dim_filters[2] # C++ indexing here
-  expect_equal(tiledb::tiledb_filter_type(d1), "RLE")
-  expect_equal(tiledb::tiledb_filter_type(d2), "ZSTD")
-  expect_equal(tiledb::tiledb_filter_type(d3), "NONE")
-  expect_equal(tiledb::tiledb_filter_get_option(d2, "COMPRESSION_LEVEL"), 8)
+  expect_length(dim$filters, n = 3L)
+  expect_equal(dim$filters[[1L]]$filter_type, "RLE")
+  expect_equal(dim$filters[[2L]]$filter_type, "ZSTD")
+  expect_equal(dim$filters[[2L]]$compression_level, 8L)
+  expect_equal(dim$filters[[3L]]$filter_type, "NONE")
 
   expect_length(attrs <- sdf$attributes(), n = 3L)
   expect_length(attrs$i32$filter_list, n = 2L)
