@@ -1610,6 +1610,12 @@ def _write_xenium_transcripts(
             context=context,
         )
 
+    add_metadata(soma_point_cloud, additional_metadata)
+    soma_point_cloud.coordinate_space = coord_space
+
+    if ingestion_params.write_schema_no_data:
+        return soma_point_cloud
+
     tiledb_create_options = TileDBCreateOptions.from_platform_config(platform_config)
     tiledb_write_options = TileDBWriteOptions.from_platform_config(platform_config)
 
@@ -1618,7 +1624,6 @@ def _write_xenium_transcripts(
             arrow_table, soma_point_cloud, tiledb_create_options, tiledb_write_options
         )
 
-    add_metadata(soma_point_cloud, additional_metadata)
     return soma_point_cloud
 
 
@@ -1706,6 +1711,12 @@ def _write_xenium_geometry(
             context=context,
         )
 
+    add_metadata(soma_geometry_df, additional_metadata)
+    soma_geometry_df.coordinate_space = coord_space
+
+    if ingestion_params.write_schema_no_data:
+        return soma_geometry_df
+
     tiledb_create_options = TileDBCreateOptions.from_platform_config(platform_config)
     tiledb_write_options = TileDBWriteOptions.from_platform_config(platform_config)
 
@@ -1713,8 +1724,6 @@ def _write_xenium_geometry(
         _write_geometry_outline_arrow_table(
             arrow_table, soma_geometry_df, tiledb_create_options, tiledb_write_options
         )
-
-    soma_geometry_df.coordinate_space = coord_space
 
     return soma_geometry_df
 
