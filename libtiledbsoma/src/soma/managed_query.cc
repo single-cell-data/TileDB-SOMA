@@ -1377,9 +1377,12 @@ ManagedQuery::_extend_and_evolve_schema_with_details(
     Enumeration enmr,
     ArraySchemaEvolution& se) {
     if (value_array->n_buffers != 2) {
+        // Higher-level code should be catching this with an error message which
+        // is intended to be user-facing. Here is a low-level check before we
+        // dereference buffers[1] and buffers[2].
         throw std::invalid_argument(fmt::format(
             "[ManagedQuery] _extend_and_evolve_schema_with_details non-string: "
-            "expected n_buffers == 2; got {}",
+            "internal coding error: expected n_buffers == 2; got {}",
             value_array->n_buffers));
     }
 
