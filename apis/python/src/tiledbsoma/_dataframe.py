@@ -1133,29 +1133,23 @@ def _find_extent_for_domain(
     if np.issubdtype(dtype, NPInteger) or np.issubdtype(dtype, NPFloating):
         return min(extent, hi - lo + 1)
 
+    def get_datetime_extent(
+        lo: Union[int, pa.TimestampScalar, np.datetime64],
+        hi: Union[int, pa.TimestampScalar, np.datetime64],
+    ) -> int:
+        return min(extent, _util.to_unix_ts(hi) - _util.to_unix_ts(lo) + 1)
+
     if dtype == "datetime64[s]":
-        ilo = int(lo.astype("int64"))
-        ihi = int(hi.astype("int64"))
-        iextent = min(extent, ihi - ilo + 1)
-        return np.datetime64(iextent, "s")
+        return np.datetime64(get_datetime_extent(lo, hi), "s")
 
     if dtype == "datetime64[ms]":
-        ilo = int(lo.astype("int64"))
-        ihi = int(hi.astype("int64"))
-        iextent = min(extent, ihi - ilo + 1)
-        return np.datetime64(iextent, "ms")
+        return np.datetime64(get_datetime_extent(lo, hi), "ms")
 
     if dtype == "datetime64[us]":
-        ilo = int(lo.astype("int64"))
-        ihi = int(hi.astype("int64"))
-        iextent = min(extent, ihi - ilo + 1)
-        return np.datetime64(iextent, "us")
+        return np.datetime64(get_datetime_extent(lo, hi), "us")
 
     if dtype == "datetime64[ns]":
-        ilo = int(lo.astype("int64"))
-        ihi = int(hi.astype("int64"))
-        iextent = min(extent, ihi - ilo + 1)
-        return np.datetime64(iextent, "ns")
+        return np.datetime64(get_datetime_extent(lo, hi), "ns")
 
     return extent
 
