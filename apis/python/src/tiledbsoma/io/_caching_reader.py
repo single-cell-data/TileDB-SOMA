@@ -56,9 +56,11 @@ class CachingReader:
         cache_block_size: int = 1024**2,
     ):
         if not file.readable():
-            raise io.UnsupportedOperation("file must be readable")
+            raise io.UnsupportedOperation("File must be readable")
         if memory_budget < cache_block_size:
-            raise ValueError("memory_budget must be >= cache_block_size")
+            raise ValueError(
+                "The memory_budget parameter must be greater than or equal to the cache_block_size"
+            )
 
         self._file = file
         self._file_length = file.seek(0, io.SEEK_END)
@@ -122,6 +124,11 @@ class CachingReader:
             self._cache.clear()
 
     def read(self, size: int = -1) -> bytes:
+        """Read up to size bytes from the object and return them. As a convenience, if size
+        is unspecified or -1, all bytes until EOF are returned. Fewer than size bytes may be
+        returned if the operating system call returns fewer than size bytes.
+
+        If 0 bytes are returned, and size was not 0, this indicates end of file."""
         if size is None:
             size = -1  # type: ignore[unreachable]
         if size < 0:
@@ -140,6 +147,8 @@ class CachingReader:
         return cast(bytes, b)
 
     def readinto(self, buf: WritableBuffer) -> int | None:
+        """Read bytes into a pre-allocated, writable bytes-like object b,
+        and return the number of bytes read."""
         if not isinstance(buf, memoryview):
             buf = memoryview(buf)
         if buf.nbytes == 0:
@@ -165,13 +174,27 @@ class CachingReader:
         return dstidx
 
     def close(self) -> None:
+        """Close the file handle."""
         self._reset_cache()
         self._file.close()
 
     def tell(self) -> int:
+        """Return integer indicating the file object's current position in the file.
+        See ``io.RawIOBase.tell``
+        """
         return self._pos
 
     def seek(self, offset: int, whence: int = 0) -> int:
+        """
+        Change the stream position to the given byte offset, interpreted relative to the position
+        indicated by whence, and return the new absolute position. Values for whence are:
+
+          os.SEEK_SET or 0 - start of the stream (the default); offset should be zero or positive
+          os.SEEK_CUR or 1 - current stream position; offset may be negative
+          os.SEEK_END or 2 - end of the stream; offset is usually negative
+
+        """
+
         if whence not in [io.SEEK_SET, io.SEEK_CUR, io.SEEK_END]:
             raise ValueError("Invalid whence value {whence})")
 
@@ -190,10 +213,13 @@ class CachingReader:
 
     @property
     def closed(self) -> bool:
+        """Return True if the stream is closed."""
         return bool(self._file.closed)
 
     def readable(self) -> bool:
+        """Return True if the stream can be read from."""
         return bool(self._file.readable())
 
     def seekable(self) -> bool:
+        """Return True if the file can be seeked."""
         return bool(self._file.seekable())
