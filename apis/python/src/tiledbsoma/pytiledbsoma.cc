@@ -68,7 +68,9 @@ PYBIND11_MODULE(pytiledbsoma, m) {
     py::enum_<ResultOrder>(m, "ResultOrder")
         .value("automatic", ResultOrder::automatic)
         .value("rowmajor", ResultOrder::rowmajor)
-        .value("colmajor", ResultOrder::colmajor);
+        .value("colmajor", ResultOrder::colmajor)
+        .value("unordered", ResultOrder::unordered)
+        .value("globalorder", ResultOrder::global);
 
     py::enum_<URIType>(m, "URIType")
         .value("automatic", URIType::automatic)
