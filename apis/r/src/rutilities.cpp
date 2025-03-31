@@ -549,7 +549,7 @@ const char *_tiledb_layout_to_string(tiledb_layout_t layout) {
 // `_get_filter_opts()`
 // <Numeric> should be `int32_t` or `double`
 template <typename Numeric>
-Numeric _get_filter_opt(Rcpp::XPtr<tiledb::Filter> filter, tiledb_filter_option_t option) {
+Numeric _get_filter_option(Rcpp::XPtr<tiledb::Filter> filter, tiledb_filter_option_t option) {
     try {
         switch (option) {
         case TILEDB_BIT_WIDTH_MAX_WINDOW: case TILEDB_POSITIVE_DELTA_MAX_WINDOW:
