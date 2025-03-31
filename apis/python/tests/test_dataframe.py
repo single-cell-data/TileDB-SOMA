@@ -605,9 +605,12 @@ def test_extend_enumeration_values(tmp_path, extend_not_write, ordered):
 
 @pytest.mark.parametrize("deduplicate", [False, True])
 @pytest.mark.parametrize("ordered", [False, True])
-def test_extend_enumeration_values_deduplication(tmp_path, deduplicate, ordered):
+@pytest.mark.parametrize("extend_not_first_write", [False, True])
+def test_extend_enumeration_values_deduplication(
+    tmp_path, deduplicate, ordered, extend_not_first_write
+):
     uri = tmp_path.as_posix()
-    domain = [[0, 0]]
+    domain = [[0, 9]]
 
     schema = pa.schema(
         {
@@ -651,7 +654,31 @@ def test_extend_enumeration_values_deduplication(tmp_path, deduplicate, ordered)
             "float32_enum": pa.array([2.25, 3.75], type=pa.float32()),
             "bool_enum": pa.array([True], type=pa.bool_()),
         }
-        sdf.extend_enumeration_values(values)
+
+        if extend_not_first_write:
+            sdf.extend_enumeration_values(values)
+        else:
+            data = pa.Table.from_pydict(
+                {
+                    "soma_joinid": pa.array([0, 1, 2, 3], type=pa.int64()),
+                    "not_an_enum": pa.array(
+                        ["the", "quick", "brown", "fox"], type=pa.large_string()
+                    ),
+                    "string_enum": pa.DictionaryArray.from_arrays(
+                        [0, 1, 0, 1], values["string_enum"]
+                    ),
+                    "int64_enum": pa.DictionaryArray.from_arrays(
+                        [0, 2, 3, 1], values["int64_enum"]
+                    ),
+                    "float32_enum": pa.DictionaryArray.from_arrays(
+                        [0, 0, 0, 1], values["float32_enum"]
+                    ),
+                    "bool_enum": pa.DictionaryArray.from_arrays(
+                        [0, 0, 0, 0], values["bool_enum"]
+                    ),
+                }
+            )
+            sdf.write(data)
 
     with soma.DataFrame.open(uri, "w") as sdf:
 
