@@ -1435,6 +1435,13 @@ ManagedQuery::_extend_and_evolve_schema_with_details(
     // (2) there are multiple floating-point bit patterns which are NaN.  It's
     // simplest to just use the same logic core does, making std::string_view on
     // our elements.
+    //
+    // Specifically, please see
+    // https://github.com/TileDB-Inc/TileDB/blob/2.27.2/tiledb/sm/array_schema/enumeration.cc#L417-L456
+    //
+    // It is important that we use core's logic here, so that when we are
+    // able to access its hashmap directly without constructing our own,
+    // that transition will be seamless.
     std::unordered_set<std::string_view> existing_enums_set;
     for (const auto& enum_value_existing : enum_values_existing) {
         auto sv = std::string_view(
