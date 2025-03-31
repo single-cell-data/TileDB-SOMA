@@ -1408,13 +1408,6 @@ ManagedQuery::_extend_and_evolve_schema_with_details(
         enum_values_in_write.assign(
             (ValueType*)data, (ValueType*)data + num_elems);
     }
-
-    //    std::unordered_set<ValueType> unique_values_in_write;
-    //    for (auto enum_value_in_write : enum_values_in_write) {
-    //        unique_values_in_write.insert(enum_value_in_write);
-    //    }
-    //
-    // XXX TEMP
     std::unordered_set<ValueType> unique_values_in_write(
         enum_values_in_write.begin(), enum_values_in_write.end());
 
