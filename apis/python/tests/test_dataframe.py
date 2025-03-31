@@ -569,6 +569,14 @@ def test_extend_enumeration_values(tmp_path, extend_not_write, ordered):
         with pytest.raises(KeyError):
             sdf.extend_enumeration_values({"not_an_enum": pa.array(["abc"])})
 
+        # The values provided must be non-dictionary
+        xvalues = {name: pa.array(pandas_data[name]) for name in enum_column_names}
+        with pytest.raises(
+            ValueError,
+            match=r"is of dictionary type: pass its dictionary array instead",
+        ):
+            sdf.extend_enumeration_values(xvalues)
+
         # Types must match
         type_mismatch_pandas_data = {
             "int64_enum3": pd.Categorical(np.array([4444, 333, 333], dtype=np.float32)),
