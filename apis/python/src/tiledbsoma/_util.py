@@ -138,6 +138,17 @@ def validate_slice(slc: Slice[Any]) -> None:
     if slc.start is None or slc.stop is None:
         # All half-specified slices are valid.
         return
+
+    if isinstance(slc.stop, pa.TimestampScalar) or isinstance(
+        slc.start, pa.TimestampScalar
+    ):
+        if to_unix_ts(slc.stop) < to_unix_ts(slc.start):
+            raise ValueError(
+                f"slice start ({slc.start!r}) must be <= slice stop ({slc.stop!r})"
+            )
+        else:
+            return
+
     if slc.stop < slc.start:
         raise ValueError(
             f"slice start ({slc.start!r}) must be <= slice stop ({slc.stop!r})"
@@ -166,6 +177,7 @@ def slice_to_numeric_range(
         # Strings don't have a real "domain" so we can't handle them
         # the same way that we handle numeric types.
         raise NonNumericDimensionError("only numeric dimensions supported")
+
     # TODO: with future C++ improvements, move half-slice logic to SOMAArrayReader
     start = domain_start if slc.start is None else max(slc.start, domain_start)
     stop = domain_stop if slc.stop is None else min(slc.stop, domain_stop)
@@ -438,16 +450,9 @@ def _build_filter_list(
 def _cast_domainish(domainish: List[Any]) -> Tuple[Tuple[object, object], ...]:
     result = []
     for slot in domainish:
-
         arrow_type = slot[0].type
         if pa.types.is_timestamp(arrow_type):
-            pandas_type = np.dtype(arrow_type.to_pandas_dtype())
-            result.append(
-                tuple(
-                    pandas_type.type(e.cast(pa.int64()).as_py(), arrow_type.unit)
-                    for e in slot
-                )
-            )
+            result.append(tuple(pa.scalar(e, type=arrow_type) for e in slot))
         else:
             result.append(tuple(e.as_py() for e in slot))
 
@@ -546,7 +551,11 @@ def _set_coord(
 
     # Note: slice(None, None) matches the is_slice_of part, unless we also check
     # the dim-type part.
-    if is_slice_of(coord, np.datetime64) and pa.types.is_timestamp(dim.type):
+    if (
+        is_slice_of(coord, np.datetime64)
+        or is_slice_of(coord, pa.TimestampScalar)
+        or is_slice_of(coord, int)
+    ) and pa.types.is_timestamp(dim.type):
         validate_slice(coord)
 
         # These timestamp types are stored in Arrow as well as TileDB as 64-bit
@@ -555,12 +564,12 @@ def _set_coord(
         ts_dom = pa.array(dom, type=dim.type).cast(pa.int64())
 
         if coord.start is not None:
-            istart = int(coord.start.astype("int64"))
+            istart = to_unix_ts(coord.start)
         else:
             istart = ts_dom[0].as_py()
 
         if coord.stop is not None:
-            istop = int(coord.stop.astype("int64"))
+            istop = to_unix_ts(coord.stop)
         else:
             istop = ts_dom[1].as_py()
 
@@ -647,9 +656,8 @@ def _set_coord_by_py_seq_or_np_array(
             raise ValueError(
                 f"unhandled coord type {type(coord)} for index column named {dim.name}"
             )
-        icoord = [
-            int(e.astype("int64")) if isinstance(e, np.datetime64) else e for e in coord
-        ]
+
+        icoord = [to_unix_ts(e) for e in coord]
         column.set_dim_points_int64(mq._handle, icoord)
         return
 
@@ -690,6 +698,14 @@ def _resolve_futures(unresolved: Dict[str, Any], deep: bool = False) -> Dict[str
         resolved[k] = v
 
     return resolved
+
+
+def to_unix_ts(dt: Union[int, pa.TimestampScalar, np.datetime64]) -> int:
+    if isinstance(dt, pa.TimestampScalar):
+        return int(dt.cast("int64").as_py())
+    if isinstance(dt, np.datetime64):
+        return int(dt.astype("int64"))
+    return dt
 
 
 class Sentinel:

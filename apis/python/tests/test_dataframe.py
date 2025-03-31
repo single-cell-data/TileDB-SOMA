@@ -2795,3 +2795,31 @@ def test_enum_handling_category_of_nan_62449(tmp_path):
         assert nan_check(signaling_nan, actual_dict_vals)
         assert_array_equal(expected_data1["A"], actual_data[:4])
         assert_array_equal(expected_data2["A"], actual_data[4:])
+
+
+def test_return_datetime_type_for_domain_and_maxdomain_62887(tmp_path):
+    uri = tmp_path.as_posix()
+
+    schema = pa.schema([("A", pa.timestamp("s"))])
+    index_column_names = ("soma_joinid", "A")
+    domain = (
+        (0, 1000),
+        (np.datetime64("2000-01-01T00:00:00"), np.datetime64("2025-01-04T09:16:49")),
+    )
+
+    soma.DataFrame.create(
+        uri, schema=schema, index_column_names=index_column_names, domain=domain
+    )
+
+    with soma.DataFrame.open(uri) as A:
+        assert A.index_column_names == index_column_names
+        assert A.schema.field("A").type == pa.timestamp("s")
+
+        assert A.domain[1] == (
+            pa.scalar(domain[1][0], pa.timestamp("s")),
+            pa.scalar(domain[1][1], pa.timestamp("s")),
+        )
+        assert A.maxdomain[1] == (
+            pa.scalar(-9223372036854775807, pa.timestamp("s")),
+            pa.scalar(9223372036853775807, pa.timestamp("s")),
+        )
