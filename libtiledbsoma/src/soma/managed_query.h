@@ -400,29 +400,7 @@ class ManagedQuery {
      * @brief Submit the write query.
      *
      */
-    void submit_write() {
-        _setup_write();
-        query_->submit();
-        _teardown_write();
-    }
-
-    /**
-     * @brief Finalize the write query.
-     *
-     */
-    void finalize() {
-        query_->finalize();
-    }
-
-    /**
-     * @brief Submit and finalize the write query.
-     *
-     */
-    void submit_and_finalize() {
-        _setup_write();
-        query_->submit_and_finalize();
-        _teardown_write();
-    }
+    void submit_write(bool sort_coords = true);
 
     /**
      * @brief Get the schema of the array.
@@ -1071,19 +1049,6 @@ class ManagedQuery {
                 return std::memcmp(&target, &candidate, sizeof(T)) == 0;
             });
     }
-
-    /**
-     * @brief Check if the array is opened in write mode and set the subarray
-     * for dense arrays.
-     */
-    void _setup_write();
-
-    /**
-     * @brief Reset the ManagedQuery options and update the ArraySchema
-     * on-disk by re-opening the Array (required when doing schema evolution
-     * when extending enumerations).
-     */
-    void _teardown_write();
 };
 
 // These are all specializations to string/bool of various methods
