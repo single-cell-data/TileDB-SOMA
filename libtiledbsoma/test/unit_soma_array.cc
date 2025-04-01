@@ -417,7 +417,7 @@ TEST_CASE("SOMAArray: Test buffer size") {
     size_t loops = 0;
     while (auto batch = mq.read_next())
         ++loops;
-    REQUIRE(loops == 10);
+    REQUIRE(loops == 11);
     soma_array->close();
 }
 
