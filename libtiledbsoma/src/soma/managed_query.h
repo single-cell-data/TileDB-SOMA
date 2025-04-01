@@ -758,14 +758,6 @@ class ManagedQuery {
         Enumeration enmr,
         ArraySchemaEvolution& se);
 
-    bool _extend_and_evolve_schema_string(
-        ArrowSchema* value_schema,
-        ArrowArray* value_array,
-        std::string column_name,
-        bool deduplicate,
-        Enumeration enmr,
-        ArraySchemaEvolution& se);
-
     // The two type names are because for string we need std::string and
     // std::string_view within the implementation. For other datatypes,
     // ValueType and ValueViewType will be the same.
@@ -1109,6 +1101,15 @@ bool ManagedQuery::_extend_and_evolve_schema_and_write<std::string>(
     ArrowArray* value_array,
     ArrowSchema* index_schema,
     ArrowArray* index_array,
+    Enumeration enmr,
+    ArraySchemaEvolution& se);
+
+template <>
+bool ManagedQuery::_extend_and_evolve_schema(
+    ArrowSchema* value_schema,
+    ArrowArray* value_array,
+    std::string column_name,
+    bool deduplicate,
     Enumeration enmr,
     ArraySchemaEvolution& se);
 

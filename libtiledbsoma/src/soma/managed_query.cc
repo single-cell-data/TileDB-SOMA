@@ -1126,7 +1126,7 @@ bool ManagedQuery::_extend_enumeration(
         case TILEDB_STRING_ASCII:
         case TILEDB_STRING_UTF8:
         case TILEDB_CHAR:
-            return _extend_and_evolve_schema_string(
+            return _extend_and_evolve_schema<std::string>(
                 value_schema, value_array, column_name, deduplicate, enmr, se);
 
         case TILEDB_INT8:
@@ -1167,7 +1167,8 @@ bool ManagedQuery::_extend_enumeration(
     }
 }
 
-bool ManagedQuery::_extend_and_evolve_schema_string(
+template <>
+bool ManagedQuery::_extend_and_evolve_schema(
     ArrowSchema* value_schema,
     ArrowArray* value_array,
     std::string column_name,
