@@ -752,6 +752,21 @@ def test_extend_enumeration_values_deduplication(
         # Implicit check for no throw
         sdf.extend_enumeration_values(values)
 
+    with soma.DataFrame.open(uri) as sdf:
+        readback = sdf.get_enumeration_values(["float32_enum"])["float32_enum"]
+        if deduplicate:
+            assert len(readback) == 5
+            assert readback[:3].to_pylist() == [2.25, 3.75, 9.0]
+            nans = readback[3:]
+        else:
+            assert len(readback) == 4
+            assert readback[:2].to_pylist() == [2.25, 3.75]
+            nans = readback[2:]
+        assert len(nans) == 2
+        assert struct.pack(">f", nans[0].as_py()) == struct.pack(">f", quiet_nan)
+        assert struct.pack(">f", nans[1].as_py()) == struct.pack(">f", negative_nan)
+
+
 @pytest.mark.parametrize("ordered", [False, True])
 def test_extend_enumeration_values_offsets(tmp_path, ordered):
     uri = tmp_path.as_posix()
