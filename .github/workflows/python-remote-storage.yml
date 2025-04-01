@@ -1,18 +1,19 @@
 name: TileDB-SOMA Python CI (remote storage)
 
 on:
-  # Not for regular use, but you can uncomment this when putting up PRs on this
-  # file. Just remember to take it back out. There's no need to run
-  # remote-storage tests on every single PR push to our repo.
-  #
-  # pull_request:
-  #
-  # Allows for 'as needed' manual trigger:
+  push:
+    branches:
+      - main
+      - 'release-*'
+  pull_request:
+    paths-ignore:
+      - '**.md'
+      - 'apis/r/**'
+      - 'docker/**'
+      - 'docs/**'
+      - '.github/**'
+      - '!.github/workflows/python-remote-storage.yml'
   workflow_dispatch:
-  #
-  # Use a regular nightly build as well (time is UTC):
-  schedule:
-    - cron: "25 5 * * *"
 
 env:
   # Don't name this "TILEDB_REST_TOKEN" since that will map into a core
