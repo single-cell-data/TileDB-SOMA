@@ -26,10 +26,10 @@ jobs:
         # https://github.com/single-cell-data/TileDB-SOMA/issues/1849
         python-version: ['3.9', '3.10', '3.11', '3.12', '3.13']
         include:
-          - runs-on: ubuntu-24.04
+          - os: ubuntu-24.04
             cc: gcc-13
             cxx: g++-13
-          - runs-on: macos-latest
+          - os: macos-latest
             cc: clang
             cxx: clang++
     uses: ./.github/workflows/python-ci-single.yml
