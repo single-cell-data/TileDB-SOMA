@@ -604,20 +604,19 @@ test_that("platform_config defaults", {
     platform_config = cfg
   )
 
-  # Read back and check the array schema against the tiledb create options
-  arr <- tiledb::tiledb_array(uri)
-  tsch <- tiledb::schema(arr)
-
   # Here we're snooping on the default dim filter that's used when no other is specified.
-  dom <- tiledb::domain(tsch)
-  expect_equal(tiledb::tiledb_ndim(dom), 1)
-  dim <- tiledb::dimensions(dom)[[1]]
-  expect_equal(tiledb::name(dim), "soma_joinid")
-  dim_filters <- tiledb::filter_list(dim)
-  expect_equal(tiledb::nfilters(dim_filters), 1)
-  d1 <- dim_filters[0] # C++ indexing here
-  expect_equal(tiledb::tiledb_filter_type(d1), "ZSTD")
-  expect_equal(tiledb::tiledb_filter_get_option(d1, "COMPRESSION_LEVEL"), 3)
+  expect_length(
+    domain <- c_domain(sdf$uri, sdf$.__enclos_env__$private$.soma_context),
+    n = 1L
+  )
+  expect_named(domain, "soma_joinid")
+  expect_equal(domain[[1L]]$name, "soma_joinid")
+
+  dim <- domain$soma_joinid
+  expect_length(dim$filters, n = 1L)
+  expect_equal(dim$filters[[1L]]$filter_type, "ZSTD")
+  expect_equal(dim$filters[[1L]]$compression_level, 3L)
+
   sdf$close()
 })
 
