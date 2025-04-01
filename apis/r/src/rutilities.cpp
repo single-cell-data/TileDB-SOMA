@@ -545,6 +545,22 @@ const char *_tiledb_layout_to_string(tiledb_layout_t layout) {
     }
 }
 
+// identify ncells
+// taken from tiledb-r
+// https://github.com/TileDB-Inc/TileDB-R/blob/525bdfc0f34aadb74a312a5d8428bd07819a8f83/src/libtiledb.cpp#L1590-L1599
+template <typename AttrOrDim>
+int _get_ncells(AttrOrDim x) {
+    int ncells;
+    if (x->cell_val_num() == TILEDB_VAR_NUM) {
+        ncells = R_NaInt;
+    } else if (x->cell_val_num() > std::numeric_limits<int32_t>::max()) {
+        Rcpp::stop("tiledb_attr ncells value not representable as an R integer");
+    } else {
+        ncells = static_cast<int32_t>(x->cell_val_num());
+    }
+    return ncells;
+}
+
 // internal helper function for
 // `_get_filter_options()`
 // <Numeric> should be `int32_t` or `double`
