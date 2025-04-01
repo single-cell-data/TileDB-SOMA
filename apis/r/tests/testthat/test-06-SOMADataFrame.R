@@ -568,7 +568,7 @@ test_that("platform_config is respected", {
   expect_equal(dim$filters[[1L]]$filter_type, "RLE")
   expect_equal(dim$filters[[2L]]$filter_type, "ZSTD")
   expect_equal(dim$filters[[2L]]$compression_level, 8L)
-  expect_equal(dim$filters[[3L]]$filter_type, "NONE")
+  expect_equal(dim$filters[[3L]]$filter_type, "NOOP")
 
   expect_length(attrs <- sdf$attributes(), n = 3L)
   expect_length(attrs$i32$filter_list, n = 2L)
