@@ -582,6 +582,22 @@ const char *_tiledb_datatype_to_string(tiledb_datatype_t dtype) {
     }
 }
 
+// identify ncells
+// taken from tiledb-r
+// https://github.com/TileDB-Inc/TileDB-R/blob/525bdfc0f34aadb74a312a5d8428bd07819a8f83/src/libtiledb.cpp#L1590-L1599
+template <typename AttrOrDim>
+int _get_ncells(AttrOrDim x) {
+    int ncells;
+    if (x->cell_val_num() == TILEDB_VAR_NUM) {
+        ncells = R_NaInt;
+    } else if (x->cell_val_num() > std::numeric_limits<int32_t>::max()) {
+        Rcpp::stop("tiledb_attr ncells value not representable as an R integer");
+    } else {
+        ncells = static_cast<int32_t>(x->cell_val_num());
+    }
+    return ncells;
+}
+
 // [[Rcpp::export]]
 Rcpp::List c_attributes(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
     auto sr = tdbs::SOMAArray::open(OpenMode::read, uri, ctxxp->ctxptr);
@@ -602,8 +618,8 @@ Rcpp::List c_attributes(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp
         int nfilters = static_cast<int32_t>(filter_list->nfilters());
         for (auto j = 0; j < nfilters; j++) {
             auto filter = make_xptr<tiledb::Filter>(new tiledb::Filter(filter_list->filter(j)));
-            auto filter_type = _tiledb_filter_to_string(filter->filter_type());
-            filters[filter_type] = _get_filter_opts(filter);
+            auto filter_type = tiledb::Filter::to_str(filter->filter_type());
+            filters[filter_type] = _get_filter_options(filter);
         }
 
         // assemble the attribute information list
@@ -701,8 +717,8 @@ Rcpp::List c_domain(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
         int nfilters = static_cast<int32_t>(filter_list->nfilters());
         for (auto j = 0; j < nfilters; j++) {
             auto filter = make_xptr<tiledb::Filter>(new tiledb::Filter(filter_list->filter(j)));
-            auto filter_type = _tiledb_filter_to_string(filter->filter_type());
-            filters[filter_type] = _get_filter_opts(filter);
+            auto filter_type = tiledb::Filter::to_str(filter->filter_type());
+            filters[filter_type] = _get_filter_options(filter);
         }
 
         // assemble the dimension information list
