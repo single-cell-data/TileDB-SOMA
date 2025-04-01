@@ -612,6 +612,18 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// c_schema_filters
+Rcpp::List c_schema_filters(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp);
+RcppExport SEXP _tiledbsoma_c_schema_filters(SEXP uriSEXP, SEXP ctxxpSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const std::string& >::type uri(uriSEXP);
+    Rcpp::traits::input_parameter< Rcpp::XPtr<somactx_wrap_t> >::type ctxxp(ctxxpSEXP);
+    rcpp_result_gen = Rcpp::wrap(c_schema_filters(uri, ctxxp));
+    return rcpp_result_gen;
+END_RCPP
+}
 // c_attributes
 Rcpp::List c_attributes(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp);
 RcppExport SEXP _tiledbsoma_c_attributes(SEXP uriSEXP, SEXP ctxxpSEXP) {
@@ -917,6 +929,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_tiledbsoma_c_capacity", (DL_FUNC) &_tiledbsoma_c_capacity, 2},
     {"_tiledbsoma_c_tile_order", (DL_FUNC) &_tiledbsoma_c_tile_order, 2},
     {"_tiledbsoma_c_cell_order", (DL_FUNC) &_tiledbsoma_c_cell_order, 2},
+    {"_tiledbsoma_c_schema_filters", (DL_FUNC) &_tiledbsoma_c_schema_filters, 2},
     {"_tiledbsoma_c_attributes", (DL_FUNC) &_tiledbsoma_c_attributes, 2},
     {"_tiledbsoma_resize", (DL_FUNC) &_tiledbsoma_resize, 5},
     {"_tiledbsoma_resize_soma_joinid_shape", (DL_FUNC) &_tiledbsoma_resize_soma_joinid_shape, 4},

@@ -489,7 +489,12 @@ test_that("platform_config is respected", {
 
   # Create the SOMADataFrame
   if (dir.exists(uri)) unlink(uri, recursive = TRUE)
-  sdf <- SOMADataFrameCreate(uri = uri, schema = asch, index_column_names = c("soma_joinid"), platform_config = cfg)
+  sdf <- SOMADataFrameCreate(
+    uri = uri,
+    schema = asch,
+    index_column_names = c("soma_joinid"),
+    platform_config = cfg
+  )
 
   # Read back and check the array schema against the tiledb create options
   arr <- tiledb::tiledb_array(uri)
@@ -509,17 +514,21 @@ test_that("platform_config is respected", {
   )
 
 
-  offsets_filters <- tiledb::filter_list(tsch)$offsets
-  expect_equal(tiledb::nfilters(offsets_filters), 1)
-  o1 <- offsets_filters[0] # C++ indexing here
-  expect_equal(tiledb::tiledb_filter_type(o1), "RLE")
+  expect_length(
+    coord_filters <- c_schema_filters(
+      sdf$uri,
+      sdf$.__enclos_env__$private$.soma_context
+    ),
+    n = 3L
+  )
+  expect_named(coord_filters, c("coords", "offsets", "validity"))
 
-  validity_filters <- tiledb::filter_list(tsch)$validity
-  expect_equal(tiledb::nfilters(validity_filters), 2)
-  v1 <- validity_filters[0] # C++ indexing here
-  v2 <- validity_filters[1] # C++ indexing here
-  expect_equal(tiledb::tiledb_filter_type(v1), "RLE")
-  expect_equal(tiledb::tiledb_filter_type(v2), "NONE")
+  expect_length(coord_filters$offsets, n = 1L)
+  expect_equal(coord_filters$offsets[[1L]]$filter_type, "RLE")
+
+  expect_length(coord_filters$validity, n = 2L)
+  expect_equal(coord_filters$validity[[1L]]$filter_type, "RLE")
+  expect_equal(coord_filters$validity[[2L]]$filter_type, "NOOP")
 
   dom <- tiledb::domain(tsch)
   expect_equal(tiledb::tiledb_ndim(dom), 1)
