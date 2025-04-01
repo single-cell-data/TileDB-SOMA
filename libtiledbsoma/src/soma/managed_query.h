@@ -403,7 +403,11 @@ class ManagedQuery {
     void submit_write() {
         _setup_write();
         query_->submit();
-        _teardown_write();
+        
+        // When we evolve the schema, the ArraySchema needs to be updated to the
+        // latest version so re-open the Array
+        array_->close();
+        array_->open(TILEDB_WRITE);
     }
 
     /**
@@ -412,6 +416,7 @@ class ManagedQuery {
      */
     void finalize() {
         query_->finalize();
+        _teardown_write();
     }
 
     /**
