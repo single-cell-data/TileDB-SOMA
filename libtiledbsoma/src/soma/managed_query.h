@@ -403,7 +403,7 @@ class ManagedQuery {
     void submit_write() {
         _setup_write();
         query_->submit();
-        _teardown_write();
+        // _teardown_write();
     }
 
     /**
@@ -412,6 +412,7 @@ class ManagedQuery {
      */
     void finalize() {
         query_->finalize();
+        _teardown_write();
     }
 
     /**
