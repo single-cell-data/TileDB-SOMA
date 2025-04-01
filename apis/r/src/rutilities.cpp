@@ -548,6 +548,7 @@ const char *_tiledb_layout_to_string(tiledb_layout_t layout) {
 // internal helper function for
 // `_get_filter_options()`
 // <Numeric> should be `int32_t` or `double`
+// TODO: replace with safer API from core when available
 template <typename Numeric>
 Numeric _get_filter_option(Rcpp::XPtr<tiledb::Filter> filter, tiledb_filter_option_t option) {
     try {
