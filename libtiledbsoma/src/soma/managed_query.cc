@@ -191,7 +191,7 @@ void ManagedQuery::_setup_write() {
 
 void ManagedQuery::_teardown_write() {
     // Reset
-    buffers_.reset();
+    // buffers_.reset();
 
     // When we evolve the schema, the ArraySchema needs to be updated to the
     // latest version so re-open the Array
