@@ -752,7 +752,6 @@ def test_extend_enumeration_values_deduplication(
         # Implicit check for no throw
         sdf.extend_enumeration_values(values)
 
-
 @pytest.mark.parametrize("ordered", [False, True])
 def test_extend_enumeration_values_offsets(tmp_path, ordered):
     uri = tmp_path.as_posix()

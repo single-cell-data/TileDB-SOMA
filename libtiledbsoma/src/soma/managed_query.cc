@@ -1237,7 +1237,9 @@ ManagedQuery::_extend_and_evolve_schema_with_details<std::string>(
     // The + 1 is for the following reason: Suppose the inputs are ["hello",
     // "goodbye"]. Then the first offset is 0, the second is 5, and the third
     // is 12. This makes it possible to locate the end of the string "goodbye"
-    // within the char buffer "hellogoodbye".
+    // within the char buffer "hellogoodbye". More generally, it takes n+1
+    // offsets to specify the starts and ends of n string values within a
+    // column.
     std::vector<uint64_t> offsets_v;
     if ((strcmp(value_schema->format, "U") == 0) ||
         (strcmp(value_schema->format, "Z") == 0)) {
