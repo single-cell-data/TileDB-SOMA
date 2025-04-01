@@ -29,7 +29,7 @@ from . import _arrow_types, _util
 from . import pytiledbsoma as clib
 from ._constants import SOMA_GEOMETRY, SOMA_JOINID
 from ._exception import SOMAError, map_exception_for_create
-from ._read_iters import TableReadIter
+from ._read_iters import ManagedQuery, TableReadIter
 from ._soma_array import SOMAArray
 from ._tdb_handles import DataFrameWrapper
 from ._types import (
@@ -801,7 +801,12 @@ class DataFrame(SOMAArray, somacore.DataFrame):
                 "TileDBWriteOptions instead of TileDBCreateOptions"
             )
         write_options = TileDBWriteOptions.from_platform_config(platform_config)
-        self._write_table(values, write_options.sort_coords)
+        sort_coords = write_options.sort_coords
+
+        for batch in values.to_batches():
+            mq = ManagedQuery(self)
+            mq._handle.set_array_data(batch)
+            mq._handle.submit_write(sort_coords or False)
 
         if write_options.consolidate_and_vacuum:
             self._handle._handle.consolidate_and_vacuum()

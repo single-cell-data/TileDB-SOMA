@@ -156,39 +156,16 @@ void load_managed_query(py::module& m) {
                 }
                 py::gil_scoped_acquire acquire;
             })
-        .def("reset_columns", &ManagedQuery::reset_columns)
-
         .def(
             "submit_write",
-            [](ManagedQuery& mq) {
+            [](ManagedQuery& mq, bool sort_coords) {
                 try {
-                    mq.submit_write();
+                    mq.submit_write(sort_coords);
                 } catch (const std::exception& e) {
                     TPY_ERROR_LOC(e.what());
                 }
             },
-            py::call_guard<py::gil_scoped_release>())
-
-        .def(
-            "submit_and_finalize",
-            [](ManagedQuery& mq) {
-                try {
-                    mq.submit_and_finalize();
-                } catch (const std::exception& e) {
-                    TPY_ERROR_LOC(e.what());
-                }
-            },
-            py::call_guard<py::gil_scoped_release>())
-
-        .def(
-            "finalize",
-            [](ManagedQuery& mq) {
-                try {
-                    mq.finalize();
-                } catch (const std::exception& e) {
-                    TPY_ERROR_LOC(e.what());
-                }
-            },
+            "sort_coords"_a = false,
             py::call_guard<py::gil_scoped_release>())
 
         .def("reset", &ManagedQuery::reset)
