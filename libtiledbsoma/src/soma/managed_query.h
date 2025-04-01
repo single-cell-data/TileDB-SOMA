@@ -403,7 +403,7 @@ class ManagedQuery {
     void submit_write() {
         _setup_write();
         query_->submit();
-        
+
         // When we evolve the schema, the ArraySchema needs to be updated to the
         // latest version so re-open the Array
         array_->close();
