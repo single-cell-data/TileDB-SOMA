@@ -194,22 +194,20 @@ class CachingReader:
           os.SEEK_END or 2 - end of the stream; offset is usually negative
 
         """
-
-        if whence not in [io.SEEK_SET, io.SEEK_CUR, io.SEEK_END]:
+        if whence == io.SEEK_SET:
+            new_pos = 0 + offset
+        elif whence == io.SEEK_CUR:
+            new_pos = self._pos + offset
+        elif whence == io.SEEK_END:
+            new_pos = self._file_length + offset
+        else:
             raise ValueError("Invalid whence value {whence})")
 
-        if whence == io.SEEK_END:
-            offset = self._file_length + offset
-        elif whence == io.SEEK_CUR:
-            offset += self._pos
-        elif whence == io.SEEK_SET:
-            offset = offset
-
-        if offset < 0:
+        if new_pos < 0:
             raise OSError("seek() returned invalid position")
 
-        self._pos = offset
-        return offset
+        self._pos = new_pos
+        return new_pos
 
     @property
     def closed(self) -> bool:
