@@ -503,7 +503,7 @@ test_that("platform_config is respected", {
   expect_equal(dim0$filters[[1L]]$filter_type, "RLE")
   expect_equal(dim0$filters[[2L]]$filter_type, "ZSTD")
   expect_equal(dim0$filters[[2L]]$compression_level, 8L)
-  expect_equal(dim0$filters[[3L]]$filter_type, "NONE")
+  expect_equal(dim0$filters[[3L]]$filter_type, "NOOP")
 
   dim1 <- domain$soma_dim_1
   expect_length(dim1$filters, n = 1L)

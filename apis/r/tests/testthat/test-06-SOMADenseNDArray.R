@@ -183,7 +183,7 @@ test_that("platform_config is respected", {
   d3 <- dim0_filters[2] # C++ indexing here
   expect_equal(tiledb::tiledb_filter_type(d1), "RLE")
   expect_equal(tiledb::tiledb_filter_type(d2), "ZSTD")
-  expect_equal(tiledb::tiledb_filter_type(d3), "NONE")
+  expect_equal(tiledb::tiledb_filter_type(d3), "NOOP")
   expect_equal(tiledb::tiledb_filter_get_option(d2, "COMPRESSION_LEVEL"), 8)
 
   dim1 <- tiledb::dimensions(dom)[[2]]
