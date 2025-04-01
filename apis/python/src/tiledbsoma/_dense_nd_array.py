@@ -315,6 +315,7 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
         _util._set_coords(mq, new_coords)
         mq._handle.set_column_data("soma_data", input)
         mq._handle.submit_write()
+        mq._handle.finalize()
 
         tiledb_write_options = TileDBWriteOptions.from_platform_config(platform_config)
         if tiledb_write_options.consolidate_and_vacuum:
