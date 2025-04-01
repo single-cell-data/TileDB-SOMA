@@ -22,6 +22,7 @@ from .. import pytiledbsoma as clib
 from .._exception import SOMAError
 from .._types import Path
 from ..options import SOMATileDBContext
+from ._caching_reader import CachingReader
 
 _pa_type_to_str_fmt = {
     pa.string(): "U",
@@ -51,7 +52,11 @@ def read_h5ad(
     """
     ctx = ctx or SOMATileDBContext()
     vfs = clib.SOMAVFS(ctx.native_context)
-    input_handle = clib.SOMAVFSFilebuf(vfs).open(str(input_path))
+    input_handle = CachingReader(
+        clib.SOMAVFSFilebuf(vfs).open(str(input_path)),
+        memory_budget=64 * 1024**2,
+        cache_block_size=8 * 1024**2,
+    )
     try:
         with _hack_patch_anndata():
             anndata = ad.read_h5ad(_FSPathWrapper(input_handle, input_path), mode)
