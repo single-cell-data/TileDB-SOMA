@@ -427,8 +427,6 @@ class DataFrame(SOMAArray, somacore.DataFrame):
                 raise ValueError(
                     f"value column name '{column_name}' is of dictionary type: pass its dictionary array instead"
                 )
-                # TO DISCUSS IN CODE REVIEW: alternatively:
-                # values[column_name] = values[column_name].dictionary
 
         self._handle.extend_enumeration_values(values, deduplicate)
 
