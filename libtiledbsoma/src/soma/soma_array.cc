@@ -484,10 +484,8 @@ void SOMAArray::extend_enumeration_values(
     ArraySchemaEvolution schema_evolution(*tctx);
 
     // TBD thread-pooling opportunity -- TBD if it will be worthwhile
-    for (const auto& pair : values) {
-        std::string column_name = pair.first;
-        ArrowSchema* values_schema = pair.second.first;
-        ArrowArray* values_array = pair.second.second;
+    for (const auto& [column_name, arrow_pair] : values) {
+        auto [values_schema, values_array] = arrow_pair;
 
         if (column_name == "") {
             throw TileDBSOMAError(

@@ -405,10 +405,11 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         self: DataFrame, values: dict[str, pa.Array], deduplicate: bool = False
     ) -> None:
         """Extend enumeration values for each column defined in `values`.
+        
         Raises ``ValueError`` if any of the the specified column names is not in
-        the schema, or if any is not of Arrow dictionary type. All the values
-        must provided must not already exist in the schema (see the output of
-        ``get_enumeration_values``), unless ``deduplicate=True`` is provided."""
+        the schema, or if any is not of Arrow dictionary type. May only contain
+        values that already exist in the schema (see the output of
+        ``get_enumeration_values``)  unless ``deduplicate=True``."""
         self.verify_open_for_writing()
 
         # These assertions could be done in C++. However, it's easier here
