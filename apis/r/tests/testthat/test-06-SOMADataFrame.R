@@ -348,7 +348,7 @@ test_that("creation with ordered factors", {
 
   expect_length(lvls <- sdf$levels(), n = 1L)
   expect_named(lvls, "ord")
-  expect_identical(lvs$ord, levels(df$ord))
+  expect_identical(lvls$ord, levels(df$ord))
   expect_identical(sdf$levels("ord"), levels(df$ord))
 
   expect_s3_class(ord <- sdf$object[]$ord, c("ordered", "factor"), exact = TRUE)
