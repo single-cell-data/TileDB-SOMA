@@ -401,6 +401,36 @@ class DataFrame(SOMAArray, somacore.DataFrame):
 
         return self._handle.get_enumeration_values(column_names)
 
+    def extend_enumeration_values(
+        self: DataFrame, values: dict[str, pa.Array], deduplicate: bool = False
+    ) -> None:
+        """Extend enumeration values for each column defined in `values`.
+
+        Raises ``ValueError`` if any of the the specified column names is not in
+        the schema, or if any is not of Arrow dictionary type. May only contain
+        values that already exist in the schema (see the output of
+        ``get_enumeration_values``)  unless ``deduplicate=True``."""
+        self.verify_open_for_writing()
+
+        # These assertions could be done in C++. However, it's easier here
+        # to do the exception-type multiplexing, raising ValueError for one
+        # thing, TileDBSOMAError for another.
+        for column_name in values.keys():
+            # As with get_enumeration_values: we are trusting pyarrow to raise
+            # KeyError, and raise it with a sufficiently clear error message,
+            # when the column name is not present within the schema.
+            field = self.schema.field(column_name)
+            if not pa.types.is_dictionary(field.type):
+                raise KeyError(
+                    f"schema column name '{column_name}' is not of dictionary type"
+                )
+            if pa.types.is_dictionary(values[column_name].type):
+                raise ValueError(
+                    f"value column name '{column_name}' is of dictionary type: pass its dictionary array instead"
+                )
+
+        self._handle.extend_enumeration_values(values, deduplicate)
+
     @property
     def domain(self) -> Tuple[Tuple[Any, Any], ...]:
         """Returns tuples of minimum and maximum values, one tuple per index column, currently storable

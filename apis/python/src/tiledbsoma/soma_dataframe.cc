@@ -132,7 +132,10 @@ void load_soma_dataframe(py::module& m) {
                     auto pa_array_import = pa.attr("Array").attr(
                         "_import_from_c");
 
+                    py::gil_scoped_release release;
                     ArrowTable t = sdf.get_enumeration_values(column_names);
+                    py::gil_scoped_acquire acquire;
+
                     auto ncol = t.second->n_children;
 
                     py::dict retval;
@@ -155,6 +158,62 @@ void load_soma_dataframe(py::module& m) {
                 }
             },
             "column_names"_a)
+
+        .def(
+            "extend_enumeration_values",
+            [](SOMADataFrame& sdf,
+               // Map values are of type pa.Array.
+               //
+               // One might think this looks a lot like a pa.RecordBatch,
+               // so why not use that? Answer: the map values are, in general,
+               // all of different lengths. So they cannot be formed into
+               // an Arrow table and passed into here that way.
+               std::map<std::string, py::object> values,
+               bool deduplicate) -> py::none {
+                size_t ncol = values.size();
+                std::vector<ArrowSchema> arrow_schemas(ncol);
+                std::vector<ArrowArray> arrow_arrays(ncol);
+                size_t i = 0;
+                std::map<std::string, std::pair<ArrowSchema*, ArrowArray*>>
+                    map_for_cpp;
+                for (auto item : values) {
+                    std::string column_name = py::str(item.first);
+                    py::object pa_array_for_column = item.second;
+                    // static_cast<uintptr_t>(...) does not compile here.
+                    uintptr_t arrow_schema_ptr = (uintptr_t)(&arrow_schemas[i]);
+                    uintptr_t arrow_array_ptr = (uintptr_t)(&arrow_arrays[i]);
+                    pa_array_for_column.attr("_export_to_c")(
+                        arrow_array_ptr, arrow_schema_ptr);
+                    map_for_cpp[column_name] =
+                        std::pair<ArrowSchema*, ArrowArray*>(
+                            (ArrowSchema*)arrow_schema_ptr,
+                            (ArrowArray*)arrow_array_ptr);
+                    i++;
+                }
+
+                // This will run at destruction time (like a 'defer' in Go)
+                // once this method exits, exception or no
+                ScopedExecutor cleanup([&]() {
+                    for (i = 0; i < ncol; i++) {
+                        arrow_schemas[i].release(&arrow_schemas[i]);
+                        arrow_arrays[i].release(&arrow_arrays[i]);
+                    }
+                });
+
+                py::gil_scoped_release release;
+                try {
+                    sdf.extend_enumeration_values(map_for_cpp, deduplicate);
+                } catch (std::range_error& e) {
+                    throw py::value_error(e.what());
+                } catch (const std::exception& e) {
+                    TPY_ERROR_LOC(e.what());
+                }
+                py::gil_scoped_acquire acquire;
+
+                return py::none();
+            },
+            "values"_a,
+            "deduplicate"_a)
 
         .def_property_readonly(
             "count",

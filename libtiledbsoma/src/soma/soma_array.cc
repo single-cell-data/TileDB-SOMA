@@ -367,8 +367,8 @@ Enumeration SOMAArray::get_existing_enumeration_for_column(
         *tctx, attribute);
     if (!enumeration_name.has_value()) {
         throw TileDBSOMAError(fmt::format(
-            "[SOMAArray::extend_enumeration_values] column_name '{}' is "
-            "non-enumerated",
+            "[SOMAArray::get_existing_enumeration_for_column] column_name '{}' "
+            "is non-enumerated",
             column_name));
     }
     return ArrayExperimental::get_enumeration(
@@ -474,6 +474,46 @@ SOMAArray::get_enumeration_values_for_column(std::string column_name) {
     }
 
     return std::pair(output_arrow_array, output_arrow_schema);
+}
+
+void SOMAArray::extend_enumeration_values(
+    std::map<std::string, std::pair<ArrowSchema*, ArrowArray*>> values,
+    bool deduplicate) {
+    auto tctx = ctx_->tiledb_ctx();
+    auto mq = ManagedQuery(arr_, tctx, "extend_enumeration_values");
+    ArraySchemaEvolution schema_evolution(*tctx);
+
+    // TBD thread-pooling opportunity -- TBD if it will be worthwhile
+    for (const auto& [column_name, arrow_pair] : values) {
+        auto [values_schema, values_array] = arrow_pair;
+
+        if (column_name == "") {
+            throw TileDBSOMAError(
+                "[SOMAArray::extend_enumeration_values] column_name is the "
+                "empty string");
+        }
+
+        auto attribute = schema_->attribute(column_name);
+        auto enumeration_name = AttributeExperimental::get_enumeration_name(
+            *tctx, attribute);
+        if (!enumeration_name.has_value()) {
+            throw TileDBSOMAError(fmt::format(
+                "[SOMAArray::extend_enumeration_values] column_name '{}' is "
+                "non-enumerated",
+                column_name));
+        }
+        Enumeration core_enum = get_existing_enumeration_for_column(
+            column_name);
+
+        mq._extend_enumeration(
+            values_schema,
+            values_array,
+            column_name,
+            deduplicate,
+            core_enum,
+            schema_evolution);
+    }
+    schema_evolution.array_evolve(arr_->uri());
 }
 
 // Note that ArrowTable is simply our libtiledbsoma pairing of ArrowArray and
