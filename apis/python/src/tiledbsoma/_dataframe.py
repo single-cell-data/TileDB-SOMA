@@ -405,7 +405,7 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         self: DataFrame, values: dict[str, pa.Array], deduplicate: bool = False
     ) -> None:
         """Extend enumeration values for each column defined in `values`.
-        
+
         Raises ``ValueError`` if any of the the specified column names is not in
         the schema, or if any is not of Arrow dictionary type. May only contain
         values that already exist in the schema (see the output of

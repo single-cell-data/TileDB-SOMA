@@ -466,8 +466,8 @@ class SOMAArray : public SOMAObject {
 
     /**
      * Adds new values to enumeration columns.
-     * 
-     * If deduplicate is `false`, the provided values for columns must be new, 
+     *
+     * If deduplicate is `false`, the provided values for columns must be new,
      * unique values.
      *
      * @param values A mapping of column names to Arrow tables of enumeration
