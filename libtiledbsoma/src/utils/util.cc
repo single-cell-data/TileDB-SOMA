@@ -14,6 +14,7 @@
 #include "utils/util.h"
 #include <cstring>
 #include "logger.h"
+#include "utils/logger.h"  // for fmt::format
 
 namespace tiledbsoma::util {
 
@@ -115,6 +116,35 @@ Enumeration get_enumeration(
                 new_way,
                 old_way));
         }
+    }
+}
+
+/**
+ * Maps core Array/Group type enums to SOMA-style strings "SOMAArray" and
+ * "SOMAGroup". Throws if the input value is neither one of those.
+ */
+std::string soma_type_from_tiledb_type(tiledb::Object::Type tiledb_type) {
+    switch (tiledb_type) {
+        case Object::Type::Array:
+            return "SOMAArray";
+        case Object::Type::Group:
+            return "SOMAGroup";
+        case Object::Type::Invalid:
+            throw TileDBSOMAError(fmt::format(
+                "[SOMAObject::open] Saw TileDB type Invalid ({}), which is "
+                "neither Array ({}) "
+                "nor Group ({})",
+                static_cast<int>(tiledb_type),
+                static_cast<int>(Object::Type::Array),
+                static_cast<int>(Object::Type::Group)));
+            throw TileDBSOMAError(fmt::format(
+                "[SOMAObject::open] Saw unrecognized TileDB type {}",
+                static_cast<int>(tiledb_type)));
+            throw TileDBSOMAError(fmt::format(
+                "[SOMAObject::open] Saw unrecognized TileDB type {}", 3));
+        default:
+            throw TileDBSOMAError(
+                fmt::format("[SOMAObject::open] Saw unrecognized TileDB type"));
     }
 }
 
