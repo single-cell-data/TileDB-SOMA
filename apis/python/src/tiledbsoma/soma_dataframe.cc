@@ -190,29 +190,27 @@ void load_soma_dataframe(py::module& m) {
                             (ArrowArray*)arrow_array_ptr);
                     i++;
                 }
+                ScopedExecutor([&]() {
+                    std::cout << "ENTER\n";
+                    for (i = 0; i < ncol; i++) {
+                        std::cout << "-- I=" << i << "a\n";
+                        arrow_schemas[i].release(&arrow_schemas[i]);
+                        std::cout << "-- I=" << i << "b\n";
+                        arrow_arrays[i].release(&arrow_arrays[i]);
+                        std::cout << "-- I=" << i << "c\n";
+                    }
+                    std::cout << "EXIT\n";
+                });
 
                 py::gil_scoped_release release;
                 try {
                     sdf.extend_enumeration_values(map_for_cpp, deduplicate);
                 } catch (std::range_error& e) {
-                    for (size_t i = 0; i < ncol; i++) {
-                        arrow_schemas[i].release(&arrow_schemas[i]);
-                        arrow_arrays[i].release(&arrow_arrays[i]);
-                    }
                     throw py::value_error(e.what());
                 } catch (const std::exception& e) {
-                    for (size_t i = 0; i < ncol; i++) {
-                        arrow_schemas[i].release(&arrow_schemas[i]);
-                        arrow_arrays[i].release(&arrow_arrays[i]);
-                    }
                     TPY_ERROR_LOC(e.what());
                 }
                 py::gil_scoped_acquire acquire;
-
-                for (i = 0; i < ncol; i++) {
-                    arrow_schemas[i].release(&arrow_schemas[i]);
-                    arrow_arrays[i].release(&arrow_arrays[i]);
-                }
 
                 return py::none();
             },
