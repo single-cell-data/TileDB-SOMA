@@ -179,8 +179,8 @@ void load_soma_dataframe(py::module& m) {
                 for (auto item : values) {
                     std::string column_name = py::str(item.first);
                     py::object pa_array_for_column = item.second;
-                    uintptr_t arrow_schema_ptr = (uintptr_t)(&arrow_schemas[i]);
-                    uintptr_t arrow_array_ptr = (uintptr_t)(&arrow_arrays[i]);
+                    uintptr_t arrow_schema_ptr = static_cast<uintptr_t>(&arrow_schemas[i]);
+                    uintptr_t arrow_array_ptr = static_cast<uintptr_t>(&arrow_arrays[i]);
                     pa_array_for_column.attr("_export_to_c")(
                         arrow_array_ptr, arrow_schema_ptr);
                     map_for_cpp[column_name] =
