@@ -1130,7 +1130,6 @@ bool ManagedQuery::_extend_enumeration(
                 std::string,
                 std::string_view>(
                 value_schema, value_array, column_name, deduplicate, enmr, se);
-
         case TILEDB_INT8:
             return _extend_and_evolve_schema_without_details<int8_t, int8_t>(
                 value_schema, value_array, column_name, deduplicate, enmr, se);

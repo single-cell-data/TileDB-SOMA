@@ -368,8 +368,7 @@ Enumeration SOMAArray::get_existing_enumeration_for_column(
     if (!enumeration_name.has_value()) {
         throw TileDBSOMAError(fmt::format(
             "[SOMAArray::get_existing_enumeration_for_column] column_name '{}' "
-            "is "
-            "non-enumerated",
+            "is non-enumerated",
             column_name));
     }
     return ArrayExperimental::get_enumeration(
