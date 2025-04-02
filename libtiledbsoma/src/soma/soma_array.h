@@ -476,8 +476,7 @@ class SOMAArray : public SOMAObject {
      * disjoint for each given column.
      */
     void extend_enumeration_values(
-        std::map<std::string, std::pair<ArrowSchema*, ArrowArray*>>,
-        bool deduplicate);
+        const std::map<std::string, ArrowTable>&, bool deduplicate);
 
     /**
      * Retrieves the non-empty domain from the array. This is the union of the

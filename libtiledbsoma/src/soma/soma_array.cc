@@ -10,11 +10,11 @@
  *   This file defines the SOMAArray class.
  */
 
-#include "soma_array.h"
 #include <tiledb/array_experimental.h>
 #include <ranges>
 #include "../utils/logger.h"
 #include "../utils/util.h"
+#include "soma_array.h"
 #include "soma_attribute.h"
 #include "soma_dimension.h"
 #include "soma_geometry_column.h"
@@ -478,8 +478,7 @@ SOMAArray::get_enumeration_values_for_column(std::string column_name) {
 }
 
 void SOMAArray::extend_enumeration_values(
-    std::map<std::string, std::pair<ArrowSchema*, ArrowArray*>> values,
-    bool deduplicate) {
+    const std::map<std::string, ArrowTable>& values, bool deduplicate) {
     auto tctx = ctx_->tiledb_ctx();
     auto mq = ManagedQuery(arr_, tctx, "extend_enumeration_values");
     ArraySchemaEvolution schema_evolution(*tctx);
@@ -487,8 +486,8 @@ void SOMAArray::extend_enumeration_values(
     // TBD thread-pooling opportunity -- TBD if it will be worthwhile
     for (const auto& pair : values) {
         std::string column_name = pair.first;
-        ArrowSchema* values_schema = pair.second.first;
-        ArrowArray* values_array = pair.second.second;
+        ArrowArray* values_array = pair.second.first.get();
+        ArrowSchema* values_schema = pair.second.second.get();
 
         if (column_name == "") {
             throw TileDBSOMAError(
@@ -515,6 +514,12 @@ void SOMAArray::extend_enumeration_values(
             deduplicate,
             core_enum,
             schema_evolution);
+
+        values_array->release(values_array);
+        values_array->release = nullptr;
+        values_schema->release(values_schema);
+        values_schema->release = nullptr;
+
     }
     schema_evolution.array_evolve(arr_->uri());
 }

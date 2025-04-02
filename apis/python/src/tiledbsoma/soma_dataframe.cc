@@ -162,7 +162,7 @@ void load_soma_dataframe(py::module& m) {
         .def(
             "extend_enumeration_values",
             [](SOMADataFrame& sdf,
-               // Map values are of type pa.Array.
+               // Map values for this argument are of type pa.Array.
                //
                // One might think this looks a lot like a pa.RecordBatch,
                // so why not use that? Answer: the map values are, in general,
@@ -174,8 +174,7 @@ void load_soma_dataframe(py::module& m) {
                 std::vector<ArrowSchema> arrow_schemas(ncol);
                 std::vector<ArrowArray> arrow_arrays(ncol);
                 size_t i = 0;
-                std::map<std::string, std::pair<ArrowSchema*, ArrowArray*>>
-                    map_for_cpp;
+                std::map<std::string, ArrowTable> map_for_cpp;
                 for (auto item : values) {
                     std::string column_name = py::str(item.first);
                     py::object pa_array_for_column = item.second;
@@ -183,10 +182,17 @@ void load_soma_dataframe(py::module& m) {
                     uintptr_t arrow_array_ptr = (uintptr_t)(&arrow_arrays[i]);
                     pa_array_for_column.attr("_export_to_c")(
                         arrow_array_ptr, arrow_schema_ptr);
-                    map_for_cpp[column_name] =
-                        std::pair<ArrowSchema*, ArrowArray*>(
-                            (ArrowSchema*)arrow_schema_ptr,
-                            (ArrowArray*)arrow_array_ptr);
+                    // It turns out to be crucial to back-cast from the
+                    // arrow_schema_ptr and the arrow_array_ptr, else the
+                    // compiler optimizes things away and memory corruption
+                    // ensues.
+                    std::unique_ptr<ArrowArray> ap(
+                        (ArrowArray*)arrow_array_ptr);
+                    std::unique_ptr<ArrowSchema> sp(
+                        (ArrowSchema*)arrow_schema_ptr);
+                    map_for_cpp[column_name] = ArrowTable(
+                        std::move(ap), std::move(sp));
+
                     i++;
                 }
 
@@ -199,11 +205,6 @@ void load_soma_dataframe(py::module& m) {
                     TPY_ERROR_LOC(e.what());
                 }
                 py::gil_scoped_acquire acquire;
-
-                for (i = 0; i < ncol; i++) {
-                    arrow_schemas[i].release(&arrow_schemas[i]);
-                    arrow_arrays[i].release(&arrow_arrays[i]);
-                }
 
                 return py::none();
             },
