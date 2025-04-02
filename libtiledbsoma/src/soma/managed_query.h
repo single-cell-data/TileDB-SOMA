@@ -749,15 +749,6 @@ class ManagedQuery {
         Enumeration enmr,
         ArraySchemaEvolution& se);
 
-    template <typename ValueType>
-    bool _extend_and_evolve_schema(
-        ArrowSchema* value_schema,
-        ArrowArray* value_array,
-        std::string column_name,
-        bool deduplicate,
-        Enumeration enmr,
-        ArraySchemaEvolution& se);
-
     // The two type names are because for string we need std::string and
     // std::string_view within the implementation. For other datatypes,
     // ValueType and ValueViewType will be the same.
@@ -770,6 +761,15 @@ class ManagedQuery {
         size_t,                      // total_size
         Enumeration>                 //  extended_enmr
     _extend_and_evolve_schema_with_details(
+        ArrowSchema* value_schema,
+        ArrowArray* value_array,
+        std::string column_name,
+        bool deduplicate,
+        Enumeration enmr,
+        ArraySchemaEvolution& se);
+
+    template <typename ValueType, typename ValueViewType>
+    bool _extend_and_evolve_schema_without_details(
         ArrowSchema* value_schema,
         ArrowArray* value_array,
         std::string column_name,
@@ -1105,15 +1105,6 @@ bool ManagedQuery::_extend_and_evolve_schema_and_write<std::string>(
     ArraySchemaEvolution& se);
 
 template <>
-bool ManagedQuery::_extend_and_evolve_schema<std::string>(
-    ArrowSchema* value_schema,
-    ArrowArray* value_array,
-    std::string column_name,
-    bool deduplicate,
-    Enumeration enmr,
-    ArraySchemaEvolution& se);
-
-template <>
 std::tuple<
     bool,                           // was_extended
     std::vector<std::string_view>,  // enum_values_in_write
@@ -1128,6 +1119,16 @@ ManagedQuery::_extend_and_evolve_schema_with_details<std::string>(
     bool deduplicate,
     Enumeration enmr,
     ArraySchemaEvolution& se);
+
+template <>
+bool ManagedQuery::
+    _extend_and_evolve_schema_without_details<std::string, std::string_view>(
+        ArrowSchema* value_schema,
+        ArrowArray* value_array,
+        std::string column_name,
+        bool deduplicate,
+        Enumeration enmr,
+        ArraySchemaEvolution& se);
 
 template <>
 std::vector<std::string_view> ManagedQuery::_enumeration_values_view(

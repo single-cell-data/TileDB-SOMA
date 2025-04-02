@@ -1126,39 +1126,47 @@ bool ManagedQuery::_extend_enumeration(
         case TILEDB_STRING_ASCII:
         case TILEDB_STRING_UTF8:
         case TILEDB_CHAR:
-            return _extend_and_evolve_schema<std::string>(
+            return _extend_and_evolve_schema_without_details<
+                std::string,
+                std::string_view>(
                 value_schema, value_array, column_name, deduplicate, enmr, se);
 
         case TILEDB_INT8:
-            return _extend_and_evolve_schema<int8_t>(
+            return _extend_and_evolve_schema_without_details<int8_t, int8_t>(
                 value_schema, value_array, column_name, deduplicate, enmr, se);
         case TILEDB_BOOL:
         case TILEDB_UINT8:
-            return _extend_and_evolve_schema<uint8_t>(
+            return _extend_and_evolve_schema_without_details<uint8_t, uint8_t>(
                 value_schema, value_array, column_name, deduplicate, enmr, se);
         case TILEDB_INT16:
-            return _extend_and_evolve_schema<int16_t>(
+            return _extend_and_evolve_schema_without_details<int16_t, int16_t>(
                 value_schema, value_array, column_name, deduplicate, enmr, se);
         case TILEDB_UINT16:
-            return _extend_and_evolve_schema<uint16_t>(
+            return _extend_and_evolve_schema_without_details<
+                uint16_t,
+                uint16_t>(
                 value_schema, value_array, column_name, deduplicate, enmr, se);
         case TILEDB_INT32:
-            return _extend_and_evolve_schema<int32_t>(
+            return _extend_and_evolve_schema_without_details<int32_t, int32_t>(
                 value_schema, value_array, column_name, deduplicate, enmr, se);
         case TILEDB_UINT32:
-            return _extend_and_evolve_schema<uint32_t>(
+            return _extend_and_evolve_schema_without_details<
+                uint32_t,
+                uint32_t>(
                 value_schema, value_array, column_name, deduplicate, enmr, se);
         case TILEDB_INT64:
-            return _extend_and_evolve_schema<int64_t>(
+            return _extend_and_evolve_schema_without_details<int64_t, int64_t>(
                 value_schema, value_array, column_name, deduplicate, enmr, se);
         case TILEDB_UINT64:
-            return _extend_and_evolve_schema<uint64_t>(
+            return _extend_and_evolve_schema_without_details<
+                uint64_t,
+                uint64_t>(
                 value_schema, value_array, column_name, deduplicate, enmr, se);
         case TILEDB_FLOAT32:
-            return _extend_and_evolve_schema<float>(
+            return _extend_and_evolve_schema_without_details<float, float>(
                 value_schema, value_array, column_name, deduplicate, enmr, se);
         case TILEDB_FLOAT64:
-            return _extend_and_evolve_schema<double>(
+            return _extend_and_evolve_schema_without_details<double, double>(
                 value_schema, value_array, column_name, deduplicate, enmr, se);
         default:
             throw TileDBSOMAError(fmt::format(
@@ -1168,21 +1176,22 @@ bool ManagedQuery::_extend_enumeration(
 }
 
 template <>
-bool ManagedQuery::_extend_and_evolve_schema<std::string>(
-    ArrowSchema* value_schema,
-    ArrowArray* value_array,
-    std::string column_name,
-    bool deduplicate,
-    Enumeration enmr,
-    ArraySchemaEvolution& se) {
+bool ManagedQuery::
+    _extend_and_evolve_schema_without_details<std::string, std::string_view>(
+        ArrowSchema* value_schema,
+        ArrowArray* value_array,
+        std::string column_name,
+        bool deduplicate,
+        Enumeration enmr,
+        ArraySchemaEvolution& se) {
     const auto [was_extended, _1, _2, _3, _4, _5] =
         _extend_and_evolve_schema_with_details<std::string, std::string_view>(
             value_schema, value_array, column_name, deduplicate, enmr, se);
     return was_extended;
 }
 
-template <typename ValueType>
-bool ManagedQuery::_extend_and_evolve_schema(
+template <typename ValueType, typename ValueViewType>
+bool ManagedQuery::_extend_and_evolve_schema_without_details(
     ArrowSchema* value_schema,
     ArrowArray* value_array,
     std::string column_name,
