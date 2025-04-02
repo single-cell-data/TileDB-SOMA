@@ -665,7 +665,7 @@ uint64_t SOMAArray::nnz() {
             }
 
             current_range = non_empty_domains[i];
-            cell_count = fragment_info.cell_num(relevant_fragments[0]);
+            cell_count = fragment_info.cell_num(relevant_fragments[i]);
             overlap = false;
         } else if (current_range[1] >= non_empty_domains[i][1]) {
             // Check if range is included completely
