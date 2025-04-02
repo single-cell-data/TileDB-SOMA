@@ -452,11 +452,37 @@ class ManagedQuery {
         return !query_submitted_;
     }
 
+    /**
+     * Does the schema evolution to extend the enumeration values, with a data
+     * write. The schema/array pair must be an Arrow array of values, e.g. Arrow
+     * int64 or string. It must not be an Arrow dictionary. Values within that
+     * array must be unique within themselves. The core schema evolution passed
+     * only those values in the array that are not already present in the array
+     * schema, i.e. this method is idempotent.
+     */
     bool _extend_and_write_enumeration(
         ArrowSchema* value_schema,
         ArrowArray* value_array,
         ArrowSchema* index_schema,
         ArrowArray* index_array,
+        Enumeration enmr,
+        ArraySchemaEvolution& se);
+
+    /**
+     * Does the schema evolution to extend the enumeration values, without a
+     * data write. The schema/array pair must be an Arrow array of values,
+     * e.g. Arrow int64 or string; it must not be an Arrow dictionary.
+     * Values within that array must be unique within themselves, regardless
+     * of the deduplicate flag. If deduplicate is false and any of the values
+     * are already present in the TileDB array schema, an exception is thrown.
+     * Otherwise, values are in the array schema are tolerated, making this
+     * function idempotent.
+     */
+    bool _extend_enumeration(
+        ArrowSchema* value_schema,
+        ArrowArray* value_array,
+        const std::string& column_name,
+        bool deduplicate,
         Enumeration enmr,
         ArraySchemaEvolution& se);
 
@@ -741,9 +767,18 @@ class ManagedQuery {
         Enumeration enmr,
         ArraySchemaEvolution& se);
 
-    // The two type names are because for string we need std::string and
-    // std::string_view within the implementation. For other datatypes,
-    // ValueType and ValueViewType will be the same.
+    /**
+     * Helper function for enumeration-extension; see comments there.  The
+     * implementation is templatized to accommodated various TileDB types. The
+     * without-details version is for only extending enumerations in the TileDB
+     * Array schema. The with-details version passes back information which is
+     * necessarily computed for the enumeration-extension/schema-evolution bit
+     * but which is also needed for doing data writes.
+     *
+     * The two type names are because for string we need std::string and
+     * std::string_view within the implementation. For other datatypes,
+     * ValueType and ValueViewType will be the same.
+     */
     template <typename ValueType, typename ValueViewType>
     std::tuple<
         bool,                        // was_extended
@@ -755,7 +790,20 @@ class ManagedQuery {
     _extend_and_evolve_schema_with_details(
         ArrowSchema* value_schema,
         ArrowArray* value_array,
-        std::string column_name,
+        const std::string& column_name,
+        bool deduplicate,
+        Enumeration enmr,
+        ArraySchemaEvolution& se);
+
+    /**
+     * See comments for _extend_and_evolve_schema_with_details.
+     */
+    template <typename ValueType, typename ValueViewType>
+    bool _extend_and_evolve_schema_without_details(
+        ArrowSchema* value_schema,
+        ArrowArray* value_array,
+        const std::string& column_name,
+        bool deduplicate,
         Enumeration enmr,
         ArraySchemaEvolution& se);
 
@@ -1097,9 +1145,20 @@ std::tuple<
 ManagedQuery::_extend_and_evolve_schema_with_details<std::string>(
     ArrowSchema* value_schema,
     ArrowArray* value_array,
-    std::string column_name,
+    const std::string& column_name,
+    bool deduplicate,
     Enumeration enmr,
     ArraySchemaEvolution& se);
+
+template <>
+bool ManagedQuery::
+    _extend_and_evolve_schema_without_details<std::string, std::string_view>(
+        ArrowSchema* value_schema,
+        ArrowArray* value_array,
+        const std::string& column_name,
+        bool deduplicate,
+        Enumeration enmr,
+        ArraySchemaEvolution& se);
 
 template <>
 std::vector<std::string_view> ManagedQuery::_enumeration_values_view(
