@@ -693,7 +693,7 @@ Rcpp::CharacterVector c_attribute_enumeration_levels(
     }
 
     nanoarrow::UniqueArrayView enum_view;
-    ArrowArrayViewInitFromType(enum_view.get(), NANOARROW_TYPE_STRING);
+    ArrowArrayViewInitFromType(enum_view.get(), NANOARROW_TYPE_LARGE_STRING);
     NANOARROW_RETURN_NOT_OK(ArrowArrayViewSetArray(enum_view.get(), enum_values.first, nullptr));
 
     int nlevels = static_cast<int32_t>(enum_values.first->length);
