@@ -463,7 +463,7 @@ class ManagedQuery {
     bool _extend_enumeration(
         ArrowSchema* value_schema,
         ArrowArray* value_array,
-        std::string column_name,
+        const std::string& column_name,
         bool deduplicate,
         Enumeration enmr,
         ArraySchemaEvolution& se);
@@ -763,7 +763,7 @@ class ManagedQuery {
     _extend_and_evolve_schema_with_details(
         ArrowSchema* value_schema,
         ArrowArray* value_array,
-        std::string column_name,
+        const std::string& column_name,
         bool deduplicate,
         Enumeration enmr,
         ArraySchemaEvolution& se);
@@ -772,7 +772,7 @@ class ManagedQuery {
     bool _extend_and_evolve_schema_without_details(
         ArrowSchema* value_schema,
         ArrowArray* value_array,
-        std::string column_name,
+        const std::string& column_name,
         bool deduplicate,
         Enumeration enmr,
         ArraySchemaEvolution& se);
@@ -1115,7 +1115,7 @@ std::tuple<
 ManagedQuery::_extend_and_evolve_schema_with_details<std::string>(
     ArrowSchema* value_schema,
     ArrowArray* value_array,
-    std::string column_name,
+    const std::string& column_name,
     bool deduplicate,
     Enumeration enmr,
     ArraySchemaEvolution& se);
@@ -1125,7 +1125,7 @@ bool ManagedQuery::
     _extend_and_evolve_schema_without_details<std::string, std::string_view>(
         ArrowSchema* value_schema,
         ArrowArray* value_array,
-        std::string column_name,
+        const std::string& column_name,
         bool deduplicate,
         Enumeration enmr,
         ArraySchemaEvolution& se);
