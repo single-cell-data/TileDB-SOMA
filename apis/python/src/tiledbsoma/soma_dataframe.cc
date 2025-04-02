@@ -179,10 +179,9 @@ void load_soma_dataframe(py::module& m) {
                 for (auto item : values) {
                     std::string column_name = py::str(item.first);
                     py::object pa_array_for_column = item.second;
-                    uintptr_t arrow_schema_ptr = static_cast<uintptr_t>(
-                        &arrow_schemas[i]);
-                    uintptr_t arrow_array_ptr = static_cast<uintptr_t>(
-                        &arrow_arrays[i]);
+                    // static_cast<uintptr_t>(...) does not compile here.
+                    uintptr_t arrow_schema_ptr = (uintptr_t)(&arrow_schemas[i]);
+                    uintptr_t arrow_array_ptr = (uintptr_t)(&arrow_arrays[i]);
                     pa_array_for_column.attr("_export_to_c")(
                         arrow_array_ptr, arrow_schema_ptr);
                     map_for_cpp[column_name] =
@@ -196,8 +195,16 @@ void load_soma_dataframe(py::module& m) {
                 try {
                     sdf.extend_enumeration_values(map_for_cpp, deduplicate);
                 } catch (std::range_error& e) {
+                    for (size_t i = 0; i < ncol; i++) {
+                        arrow_schemas[i].release(&arrow_schemas[i]);
+                        arrow_arrays[i].release(&arrow_arrays[i]);
+                    }
                     throw py::value_error(e.what());
                 } catch (const std::exception& e) {
+                    for (size_t i = 0; i < ncol; i++) {
+                        arrow_schemas[i].release(&arrow_schemas[i]);
+                        arrow_arrays[i].release(&arrow_arrays[i]);
+                    }
                     TPY_ERROR_LOC(e.what());
                 }
                 py::gil_scoped_acquire acquire;
