@@ -176,6 +176,7 @@ void load_soma_dataframe(py::module& m) {
                 size_t i = 0;
                 std::map<std::string, std::pair<ArrowSchema*, ArrowArray*>>
                     map_for_cpp;
+                std::cout << "START SETUP\n";
                 for (auto item : values) {
                     std::string column_name = py::str(item.first);
                     py::object pa_array_for_column = item.second;
@@ -190,8 +191,10 @@ void load_soma_dataframe(py::module& m) {
                             (ArrowArray*)arrow_array_ptr);
                     i++;
                 }
-                ScopedExecutor([&]() {
-                    std::cout << "ENTER\n";
+                std::cout << "FINISH SETUP\n";
+
+                ScopedExecutor cleanup([&]() {
+                    std::cout << "SE ENTER\n";
                     for (i = 0; i < ncol; i++) {
                         std::cout << "-- I=" << i << "a\n";
                         arrow_schemas[i].release(&arrow_schemas[i]);
@@ -199,9 +202,10 @@ void load_soma_dataframe(py::module& m) {
                         arrow_arrays[i].release(&arrow_arrays[i]);
                         std::cout << "-- I=" << i << "c\n";
                     }
-                    std::cout << "EXIT\n";
+                    std::cout << "SE EXIT\n";
                 });
 
+                std::cout << "START LIBTILEDBSOMA\n";
                 py::gil_scoped_release release;
                 try {
                     sdf.extend_enumeration_values(map_for_cpp, deduplicate);
@@ -211,6 +215,7 @@ void load_soma_dataframe(py::module& m) {
                     TPY_ERROR_LOC(e.what());
                 }
                 py::gil_scoped_acquire acquire;
+                std::cout << "FINISH LIBTILEDBSOMA\n";
 
                 return py::none();
             },
