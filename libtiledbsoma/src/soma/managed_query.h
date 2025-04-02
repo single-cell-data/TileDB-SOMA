@@ -1105,7 +1105,7 @@ bool ManagedQuery::_extend_and_evolve_schema_and_write<std::string>(
     ArraySchemaEvolution& se);
 
 template <>
-bool ManagedQuery::_extend_and_evolve_schema(
+bool ManagedQuery::_extend_and_evolve_schema<std::string>(
     ArrowSchema* value_schema,
     ArrowArray* value_array,
     std::string column_name,
