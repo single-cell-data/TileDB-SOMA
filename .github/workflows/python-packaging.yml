@@ -51,11 +51,14 @@ jobs:
     strategy:
       matrix:
         python-version: [ '39', '310', '311', '312', '313' ]
-        cibw_build: [ manylinux_x86_64, macosx_x86_64, macosx_arm64 ]
+        cibw_build: [ manylinux_x86_64, manylinux_aarch64, macosx_x86_64, macosx_arm64 ]
         include:
           - cibw_build: manylinux_x86_64
             os: ubuntu-24.04
-            wheel-name: manylinux_2_28
+            wheel-name: manylinux_2_28-x86_64
+          - cibw_build: manylinux_aarch64
+            os: ubuntu-24.04-arm
+            wheel-name: manylinux_2_28-aarch64
           - cibw_build: macosx_x86_64
             os: macos-latest
             cibw_archs_macos: x86_64
@@ -98,7 +101,8 @@ jobs:
           CIBW_BUILD: ${{ matrix.cibw_build }}
           CIBW_BUILD_VERBOSITY: 1
           CIBW_MANYLINUX_X86_64_IMAGE: manylinux_2_28
-          CIBW_BEFORE_BUILD_LINUX: yum -y remove gcc-toolset-12\*; yum -y install gcc-toolset-13; bash -x -c 'rm -rf tiledbsoma*/dist_links/dist/lib*'
+          CIBW_MANYLINUX_AARCH64_IMAGE: manylinux_2_28
+          CIBW_BEFORE_BUILD_LINUX: yum -y install gcc-toolset-13 ninja-build perl-IPC-Cmd zip; bash -x -c 'rm -rf tiledbsoma*/dist_links/dist/lib*'
           # ^ Delete lib folder that apis/python/setup.py:find_or_build() looks for in deciding to
           #   run CMake build or not. Otherwise it'll keep reusing the library file built in the
           #   first iteration of cibuildwheel's outer loop, resulting in wheels with the library
@@ -109,7 +113,8 @@ jobs:
           #   first iteration of cibuildwheel's outer loop, resulting in wheels with the library
           #   built for the wrong python version.
           CIBW_ARCHS_MACOS: ${{ matrix.cibw_archs_macos }}
-          CIBW_ENVIRONMENT_LINUX : CC=/opt/rh/gcc-toolset-13/root/usr/bin/gcc CXX=/opt/rh/gcc-toolset-13/root/usr/bin/g++
+          # vcpkg source build requires VCPKG_FORCE_SYSTEM_BINARIES=1 on ARM
+          CIBW_ENVIRONMENT_LINUX: CC=/opt/rh/gcc-toolset-13/root/usr/bin/gcc CXX=/opt/rh/gcc-toolset-13/root/usr/bin/g++ VCPKG_FORCE_SYSTEM_BINARIES=1
           CIBW_TEST_SKIP: "*_arm64"
           CMAKE_OSX_ARCHITECTURES: ${{ matrix.cibw_archs_macos }}
           MACOSX_DEPLOYMENT_TARGET: "13.3"
@@ -137,13 +142,19 @@ jobs:
           - undotted-version: '313'
             dotted-version: '3.13'
         wheel-name:
-          - manylinux_2_28
+          - manylinux_2_28-x86_64
+          - manylinux_2_28-aarch64
           - macos-x86_64
           - macos-arm64
         include:
-          - wheel-name: manylinux_2_28
+          - wheel-name: manylinux_2_28-x86_64
             os: ubuntu-24.04
             arch: x86_64
+            cc: gcc-13
+            cxx: g++-13
+          - wheel-name: manylinux_2_28-aarch64
+            os: ubuntu-24.04-arm
+            arch: aarch64
             cc: gcc-13
             cxx: g++-13
           - wheel-name: macos-x86_64
