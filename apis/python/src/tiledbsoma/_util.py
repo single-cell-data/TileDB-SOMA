@@ -701,7 +701,7 @@ def _resolve_futures(unresolved: Dict[str, Any], deep: bool = False) -> Dict[str
 
 
 def to_unix_ts(dt: Union[int, pa.TimestampScalar, np.datetime64]) -> int:
-    if isinstance(dt, pa.TimestampScalar): 
+    if isinstance(dt, pa.TimestampScalar):
         return int(dt.value)
     if isinstance(dt, np.datetime64):
         return int(dt.astype("int64"))
