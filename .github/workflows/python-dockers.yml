@@ -63,4 +63,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          filename: .github/workflows/daily-test-build-issue-template.md
+          filename: .github/workflows/daily-python-dockers-issue-template.md
+          assignees: ryan-williams, johnkerl
+          update_existing: true
