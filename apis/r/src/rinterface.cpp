@@ -654,7 +654,7 @@ Rcpp::List c_attributes(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp
 // adapted from tiledb-r
 // https://github.com/TileDB-Inc/TileDB-R/blob/525bdfc0f34aadb74a312a5d8428bd07819a8f83/src/libtiledb.cpp#L3027-L3042
 // [[Rcpp::export]]
-Rcpp::LogicalVector c_attribute_enumerated(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
+Rcpp::LogicalVector c_attributes_enumerated(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
     auto sr = tdbs::SOMAArray::open(OpenMode::read, uri, ctxxp->ctxptr);
     std::shared_ptr<tiledb::ArraySchema> sch = sr->tiledb_schema();
     sr->close();
@@ -663,7 +663,6 @@ Rcpp::LogicalVector c_attribute_enumerated(const std::string& uri, Rcpp::XPtr<so
     Rcpp::LogicalVector has_enum = Rcpp::LogicalVector(nattrs);
     Rcpp::CharacterVector names = Rcpp::CharacterVector(nattrs);
     for (int i = 0; i < nattrs; i++) {
-        //
         auto attr = make_xptr<tiledb::Attribute>(new tiledb::Attribute(sch->attribute(i)));
         auto enmr = tiledb::AttributeExperimental::get_enumeration_name(
             // credit to this monstrosity goes to Beka Davis
@@ -685,7 +684,7 @@ Rcpp::CharacterVector c_attribute_enumeration_levels(
         const std::string& name
 ) {
     auto sr = tdbs::SOMAArray::open(OpenMode::read, uri, ctxxp->ctxptr);
-    auto enum_values = sr->get_enumeration_values_for_column(name);
+    std::pair<ArrowArray*, ArrowSchema*> enum_values = sr->get_enumeration_values_for_column(name);
     sr->close();
 
     if (enum_values.first->length > std::numeric_limits<int32_t>::max()) {
@@ -705,7 +704,6 @@ Rcpp::CharacterVector c_attribute_enumeration_levels(
             ArrowStringView item = ArrowArrayViewGetStringUnsafe(enum_view.get(), i);
             enumerations(i) = std::string(item.data, item.size_bytes);
         }
-        Rcpp::Rcerr << "i " << i << " " << enumerations(i) << std::endl;
     }
 
     return enumerations;

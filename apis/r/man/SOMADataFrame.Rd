@@ -19,6 +19,7 @@ row and is intended to act as a join key for other objects, such as
 \item \href{#method-SOMADataFrame-write}{\code{SOMADataFrame$write()}}
 \item \href{#method-SOMADataFrame-read}{\code{SOMADataFrame$read()}}
 \item \href{#method-SOMADataFrame-update}{\code{SOMADataFrame$update()}}
+\item \href{#method-SOMADataFrame-levels}{\code{SOMADataFrame$levels()}}
 \item \href{#method-SOMADataFrame-shape}{\code{SOMADataFrame$shape()}}
 \item \href{#method-SOMADataFrame-maxshape}{\code{SOMADataFrame$maxshape()}}
 \item \href{#method-SOMADataFrame-domain}{\code{SOMADataFrame$domain()}}
@@ -213,6 +214,29 @@ Furthermore, \code{values} must contain the same number of rows as the current
 \code{SOMADataFrame}.
 }
 
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SOMADataFrame-levels"></a>}}
+\if{latex}{\out{\hypertarget{method-SOMADataFrame-levels}{}}}
+\subsection{Method \code{levels()}}{
+Get the levels for an enumerated (\code{factor}) column
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SOMADataFrame$levels(column_names = NULL)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{column_names}}{Optional character vector of column names to pull
+enumeration levels for; defaults to all enumerated columns}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+If \code{column_names} is a single string value, a character
+vector of enumeration levels; otherwise, a named list where each name is
+a column name and each value is the enumeration levels for said column
+}
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-SOMADataFrame-shape"></a>}}

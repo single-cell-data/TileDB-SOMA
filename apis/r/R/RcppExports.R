@@ -266,8 +266,8 @@ c_attributes <- function(uri, ctxxp) {
     .Call(`_tiledbsoma_c_attributes`, uri, ctxxp)
 }
 
-c_attribute_enumerated <- function(uri, ctxxp) {
-    .Call(`_tiledbsoma_c_attribute_enumerated`, uri, ctxxp)
+c_attributes_enumerated <- function(uri, ctxxp) {
+    .Call(`_tiledbsoma_c_attributes_enumerated`, uri, ctxxp)
 }
 
 c_attribute_enumeration_levels <- function(uri, ctxxp, name) {

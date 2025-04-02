@@ -54,6 +54,7 @@ test_that("Basic mechanics", {
   expect_match(sdf$soma_type, "SOMADataFrame")
 
   expect_error(sdf$shape(), class = "notYetImplementedError")
+  expect_warning(sdf$levels())
 
   # Dataframe write should fail if array opened in read mode
   expect_error(sdf$write(tbl0))
@@ -324,16 +325,41 @@ test_that("creation with ordered factors", {
   expect_true(tbl$schema$GetFieldByName("ord")$type$ordered)
   if (dir.exists(uri)) unlink(uri, recursive = TRUE)
   expect_no_condition(
-    sdf <- SOMADataFrameCreate(uri = uri, schema = tbl$schema, domain = list(soma_joinid = c(0, n - 1L)))
+    sdf <- SOMADataFrameCreate(
+      uri = uri,
+      schema = tbl$schema,
+      domain = list(soma_joinid = c(0, n - 1L))
+    )
   )
+  on.exit(sdf$close(), add = TRUE, after = FALSE)
   expect_no_condition(sdf$write(values = tbl))
+  sdf$close()
+
   expect_s3_class(sdf <- SOMADataFrameOpen(uri), "SOMADataFrame")
   expect_true(sdf$schema()$GetFieldByName("ord")$type$ordered)
+  expect_identical(
+    c_attributes_enumerated(sdf$uri, sdf$.__enclos_env__$private$.soma_context),
+    vapply(
+      sdf$attrnames(),
+      FUN = function(x) is.factor(df[[x]]),
+      FUN.VALUE = logical(1L)
+    )
+  )
+
+  expect_length(lvls <- sdf$levels(), n = 1L)
+  expect_named(lvls, "ord")
+  expect_identical(lvs$ord, levels(df$ord))
+  expect_identical(sdf$levels("ord"), levels(df$ord))
+
   expect_s3_class(ord <- sdf$object[]$ord, c("ordered", "factor"), exact = TRUE)
   expect_length(ord, n)
   expect_identical(levels(ord), levels(df$ord))
   rm(df, tbl)
   gc()
+
+  expect_error(sdf$levels("tomato"))
+  expect_error(sdf$levels(1L))
+  expect_error(sdf$levels(TRUE))
 })
 
 test_that("explicit casting of ordered factors to regular factors", {
@@ -872,29 +898,29 @@ test_that("missing levels in enums", {
   # Create SOMADataFrame w/ missing enum levels
   if (dir.exists(uri)) unlink(uri, recursive = TRUE)
   tbl <- arrow::as_arrow_table(df)
-  sdf <- SOMADataFrameCreate(uri, tbl$schema, domain = list(soma_joinid = c(0, n - 1)))
-  on.exit(sdf$close())
+  sdf <- SOMADataFrameCreate(
+    uri,
+    tbl$schema,
+    domain = list(soma_joinid = c(0, n - 1))
+  )
+  on.exit(sdf$close(), add = TRUE, after = FALSE)
   sdf$write(tbl)
   sdf$close()
 
   # Test missingness is preserved
   expect_s3_class(sdf <- SOMADataFrameOpen(uri), "SOMADataFrame")
-  expect_true(c_attribute_enumerated(
-    sdf$uri,
-    sdf$.__enclos_env__$private$.soma_context
-  )["enum"])
-  expect_s4_class(
-    attr <- tiledb::attrs(sdf$tiledb_schema())$enum,
-    "tiledb_attr"
-  )
   expect_identical(
-    tiledb::tiledb_attribute_get_enumeration(attr, sdf$object),
-    levels(df$enum)
+    c_attributes_enumerated(sdf$uri, sdf$.__enclos_env__$private$.soma_context),
+    vapply(
+      sdf$attrnames(),
+      FUN = function(x) is.factor(df[[x]]),
+      FUN.VALUE = logical(1L)
+    )
   )
+  expect_identical(sdf$levels("enum"), levels(df$enum))
   expect_true(sdf$attributes()$enum$nullable)
 
   # Test reading preserves missingness
-  expect_identical(sdf$object[]$enum, df$enum)
   tbl0 <- sdf$read()$concat()
   expect_identical(tbl0$enum$as_vector(), df$enum)
   sdf$close()
@@ -911,19 +937,18 @@ test_that("missing levels in enums", {
 
   # Test missingness is preserved when updating
   expect_s3_class(sdf <- SOMADataFrameOpen(uri), "SOMADataFrame")
-  expect_true(tiledb::tiledb_array_has_enumeration(sdf$object)["miss"])
-  expect_s4_class(
-    attr <- tiledb::attrs(sdf$tiledb_schema())$miss,
-    "tiledb_attr"
-  )
   expect_identical(
-    tiledb::tiledb_attribute_get_enumeration(attr, sdf$object),
-    levels(tbl0$miss$as_vector())
+    c_attributes_enumerated(sdf$uri, sdf$.__enclos_env__$private$.soma_context),
+    vapply(
+      sdf$attrnames(),
+      FUN = function(x) inherits(tbl0[[x]]$type, "DictionaryType"),
+      FUN.VALUE = logical(1L)
+    )
   )
-  expect_true(tiledb::tiledb_attribute_get_nullable(attr))
+  expect_identical(sdf$levels("miss"), levels(tbl0$miss$as_vector()))
+  expect_true(sdf$attributes()$miss$nullable)
 
   # Test reading preserves updated missingness
-  expect_identical(sdf$object[]$miss, tbl0$miss$as_vector())
   tbl1 <- sdf$read()$concat()
   expect_identical(tbl1$miss$as_vector(), tbl0$miss$as_vector())
   sdf$close()
