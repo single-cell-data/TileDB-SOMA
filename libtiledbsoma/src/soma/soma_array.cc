@@ -718,20 +718,40 @@ uint64_t SOMAArray::_nnz_slow(
         "[SOMAArray] nnz() found consolidated or overlapping fragments, "
         "counting cells...");
 
-    uint64_t total_cell_num = 0;
-    auto sr = SOMAArray::open(OpenMode::read, uri_, ctx_, timestamp_);
-    auto mq = ManagedQuery(*sr, ctx_->tiledb_ctx(), "count_cells");
-    mq.select_columns({schema_->domain().dimension(0).name()});
+    std::vector<uint64_t> count(1);
+    std::shared_ptr<Array> array = arr_;
 
-    if (!ranges.empty()) {
-        mq.select_ranges(schema_->domain().dimension(0).name(), ranges);
+    if (!arr_->is_open() || arr_->query_type() != TILEDB_READ) {
+        auto temporal_policy = timestamp_.has_value() ?
+                                   TemporalPolicy(
+                                       TimestampStartEnd,
+                                       timestamp_->first,
+                                       timestamp_->second) :
+                                   TemporalPolicy();
+        array = std::make_shared<Array>(
+            *ctx_->tiledb_ctx(), uri_, TILEDB_READ, temporal_policy);
     }
 
-    while (auto batch = mq.read_next()) {
-        total_cell_num += (*batch)->num_rows();
+    auto query = Query(*ctx_->tiledb_ctx(), *array);
+    auto subarray = Subarray(*ctx_->tiledb_ctx(), *array);
+
+    for (const auto& range : ranges) {
+        subarray.add_range(0, range.first, range.second);
     }
 
-    return total_cell_num;
+    // Get the default channel
+    QueryChannel default_channel = QueryExperimental::get_default_channel(
+        query);
+
+    // Apply count aggregate
+    default_channel.apply_aggregate("Count", CountOperation());
+
+    query.set_layout(TILEDB_UNORDERED)
+        .set_subarray(subarray)
+        .set_data_buffer("Count", count);
+    query.submit();
+
+    return count[0];
 }
 
 std::vector<int64_t> SOMAArray::shape() {
