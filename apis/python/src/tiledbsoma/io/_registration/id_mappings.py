@@ -15,7 +15,13 @@ from typing_extensions import Self
 
 @attrs.define(kw_only=True, frozen=True)
 class AxisIDMapping:
-    """Private class"""
+    """
+    For a single to-be-appended AnnData/H5AD input in SOMA multi-file append-mode ingestion, this
+    class tracks the mapping of input-data ``obs`` or ``var`` 0-up offsets to SOMA join ID values
+    for the destination SOMA experiment.
+
+    Private class
+    """
 
     data: npt.NDArray[np.int64]
 
@@ -46,7 +52,13 @@ class AxisIDMapping:
 
 @attrs.define(kw_only=True, frozen=True)
 class ExperimentIDMapping:
-    """Private class"""
+    """
+    For a single to-be-appended AnnData/H5AD input in SOMA multi-file append-mode ingestion, this
+    class contains an ``AxisIDMapping`` for ``obs``, and one ``AxisIDMapping`` for
+    ``var`` in each measurement.
+
+    Private class
+    """
 
     obs_axis: AxisIDMapping
     var_axes: dict[str, AxisIDMapping]
