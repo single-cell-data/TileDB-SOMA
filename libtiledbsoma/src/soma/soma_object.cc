@@ -3,6 +3,7 @@
 #include <tiledb/tiledb>
 
 #include "../utils/logger.h"
+#include "../utils/util.h"
 #include "soma_array.h"
 #include "soma_collection.h"
 #include "soma_dataframe.h"
@@ -28,17 +29,7 @@ std::unique_ptr<SOMAObject> SOMAObject::open(
     if (soma_type == std::nullopt) {
         auto tiledb_type = Object::object(*ctx->tiledb_ctx(), std::string(uri))
                                .type();
-        switch (tiledb_type) {
-            case Object::Type::Array:
-                soma_type = "SOMAArray";
-                break;
-            case Object::Type::Group:
-                soma_type = "SOMAGroup";
-                break;
-            default:
-                throw TileDBSOMAError(
-                    "[SOMAObject::open] Saw invalid TileDB type");
-        }
+        soma_type = util::soma_type_from_tiledb_type(tiledb_type);
     }
 
     if (soma_type == "SOMAArray") {

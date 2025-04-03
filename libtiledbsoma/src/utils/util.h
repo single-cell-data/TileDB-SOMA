@@ -94,6 +94,12 @@ Enumeration get_enumeration(
     ArrowSchema* index_schema,
     ArrowSchema* value_schema);
 
+/**
+ * Maps core Array/Group type enums to SOMA-style strings "SOMAArray" and
+ * "SOMAGroup". Throws if the input value is neither one of those.
+ */
+std::string soma_type_from_tiledb_type(tiledb::Object::Type tiledb_type);
+
 }  // namespace tiledbsoma::util
 
 #endif
