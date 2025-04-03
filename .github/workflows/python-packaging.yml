@@ -59,6 +59,9 @@ jobs:
           - cibw_build: manylinux_aarch64
             os: ubuntu-24.04-arm
             wheel-name: manylinux_2_28-aarch64
+            CIBW_BEFORE_BUILD_LINUX: dnf install -y ninja-build perl-IPC-Cmd zip
+            # vcpkg source build requires this on ARM, for some reason; cf. https://github.com/NixOS/nixpkgs/issues/335868
+            CIBW_ENVIRONMENT_LINUX: VCPKG_FORCE_SYSTEM_BINARIES=1
           - cibw_build: macosx_x86_64
             os: macos-latest
             cibw_archs_macos: x86_64
@@ -93,29 +96,23 @@ jobs:
         with:
           xcode-version: '15.4'
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.22.0
+        uses: pypa/cibuildwheel@v2.23.2
         with:
           package-dir: tiledbsoma.tar.gz
           only: cp${{ matrix.python-version }}-${{ matrix.cibw_build }}
         env:
-          CIBW_BUILD: ${{ matrix.cibw_build }}
           CIBW_BUILD_VERBOSITY: 1
-          CIBW_MANYLINUX_X86_64_IMAGE: manylinux_2_28
-          CIBW_MANYLINUX_AARCH64_IMAGE: manylinux_2_28
-          CIBW_BEFORE_BUILD_LINUX: yum -y install gcc-toolset-13 ninja-build perl-IPC-Cmd zip; bash -x -c 'rm -rf tiledbsoma*/dist_links/dist/lib*'
-          # ^ Delete lib folder that apis/python/setup.py:find_or_build() looks for in deciding to
-          #   run CMake build or not. Otherwise it'll keep reusing the library file built in the
-          #   first iteration of cibuildwheel's outer loop, resulting in wheels with the library
-          #   built for the wrong python version.
+          # Delete lib folder that apis/python/setup.py:find_or_build() looks for in deciding to
+          # run CMake build or not. Otherwise it'll keep reusing the library file built in the
+          # first iteration of cibuildwheel's outer loop, resulting in wheels with the library
+          # built for the wrong python version.
           CIBW_BEFORE_BUILD: bash -x -c 'rm -rf tiledbsoma*/dist_links/dist/lib*'
-          # ^ Delete lib folder that apis/python/setup.py:find_or_build() looks for in deciding to
-          #   run CMake build or not. Otherwise it'll keep reusing the library file built in the
-          #   first iteration of cibuildwheel's outer loop, resulting in wheels with the library
-          #   built for the wrong python version.
+          CIBW_BEFORE_BUILD_LINUX: ${{ matrix.CIBW_BEFORE_BUILD_LINUX || '' }}
+          CIBW_ENVIRONMENT_LINUX: ${{ matrix.CIBW_ENVIRONMENT_LINUX || '' }}
+          # Most recent tags with no listed security issues at https://quay.io/repository/pypa/manylinux_2_28_aarch64?tab=tags, ca. 2025-04-03
+          CIBW_MANYLINUX_X86_64_IMAGE: quay.io/pypa/manylinux_2_28_x86_64:2025.03.22-2
+          CIBW_MANYLINUX_AARCH64_IMAGE: quay.io/pypa/manylinux_2_28_aarch64:2025.03.22-2
           CIBW_ARCHS_MACOS: ${{ matrix.cibw_archs_macos }}
-          # vcpkg source build requires VCPKG_FORCE_SYSTEM_BINARIES=1 on ARM
-          CIBW_ENVIRONMENT_LINUX: CC=/opt/rh/gcc-toolset-13/root/usr/bin/gcc CXX=/opt/rh/gcc-toolset-13/root/usr/bin/g++ VCPKG_FORCE_SYSTEM_BINARIES=1
-          CIBW_TEST_SKIP: "*_arm64"
           CMAKE_OSX_ARCHITECTURES: ${{ matrix.cibw_archs_macos }}
           MACOSX_DEPLOYMENT_TARGET: "13.3"
 
