@@ -30,6 +30,8 @@ def extend_enumerations(df: DataFrame, columns: dict[str, pd.CategoricalDtype]) 
     Extend enumerations as needed, starting with a CategoricalDType for each
     cat/enum/dict column. A convenience wrapper around ``DataFrame.extend_enumeration_values``,
     for use in the registration module.
+
+    DataFrame must be open for write.
     """
 
     current_enums = get_enumerations(df, list(columns.keys()))
@@ -55,8 +57,4 @@ def extend_enumerations(df: DataFrame, columns: dict[str, pd.CategoricalDtype]) 
         columns_to_extend[column_name] = new_enum_values
 
     # and evolve the schema
-    if df.mode == "w":
-        df.extend_enumeration_values(columns_to_extend, deduplicate=False)
-    else:
-        with df.reopen(mode="w") as wdf:
-            wdf.extend_enumeration_values(columns_to_extend, deduplicate=False)
+    df.extend_enumeration_values(columns_to_extend, deduplicate=False)

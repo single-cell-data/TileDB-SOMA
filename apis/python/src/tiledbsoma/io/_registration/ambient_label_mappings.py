@@ -230,6 +230,8 @@ class ExperimentAmbientLabelMapping:
                     context=context,
                 )
 
+        with Experiment.open(experiment_uri, context=context, mode="w") as E:
+
             # Enumerations schema evolution
             extend_enumerations(E.obs, self.obs_axis.enum_values)
 
