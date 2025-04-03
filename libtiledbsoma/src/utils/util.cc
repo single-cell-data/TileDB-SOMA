@@ -132,19 +132,14 @@ std::string soma_type_from_tiledb_type(tiledb::Object::Type tiledb_type) {
         case Object::Type::Invalid:
             throw TileDBSOMAError(fmt::format(
                 "[SOMAObject::open] Saw TileDB type Invalid ({}), which is "
-                "neither Array ({}) "
-                "nor Group ({})",
+                "neither Array ({}) nor Group ({})",
                 static_cast<int>(tiledb_type),
                 static_cast<int>(Object::Type::Array),
                 static_cast<int>(Object::Type::Group)));
+        default:
             throw TileDBSOMAError(fmt::format(
                 "[SOMAObject::open] Saw unrecognized TileDB type {}",
                 static_cast<int>(tiledb_type)));
-            throw TileDBSOMAError(fmt::format(
-                "[SOMAObject::open] Saw unrecognized TileDB type {}", 3));
-        default:
-            throw TileDBSOMAError(
-                fmt::format("[SOMAObject::open] Saw unrecognized TileDB type"));
     }
 }
 
