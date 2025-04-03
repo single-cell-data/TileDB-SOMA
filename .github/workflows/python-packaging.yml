@@ -130,6 +130,8 @@ jobs:
     strategy:
       matrix:
         python:
+          - undotted-version: '39'
+            dotted-version: '3.9'
           - undotted-version: '310'
             dotted-version: '3.10'
           - undotted-version: '311'
