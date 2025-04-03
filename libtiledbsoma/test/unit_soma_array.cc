@@ -533,7 +533,7 @@ TEST_CASE("SOMAArray: Write and read back Boolean") {
     std::memcpy((void*)a0_expected->buffers[1], &a0_data, sizeof(uint8_t));
 
     auto mq_write = ManagedQuery(*soma_array, ctx->tiledb_ctx());
-    mq_write.set_array_data(arrow_schema, arrow_array);
+    mq_write.set_array_data(arrow_schema.get(), arrow_array.get());
     mq_write.submit_write();
     mq_write.close();
     soma_array->close();

@@ -212,7 +212,7 @@ TEST_CASE("SOMAGeometryDataFrame: Roundtrip", "[SOMAGeometryDataFrame]") {
                                                 OutlineTransformer(coord_space))
                                             .asTable();
 
-    mq.set_array_data(data_schema, data_array);
+    mq.set_array_data(data_schema.get(), data_array.get());
     mq.submit_write();
     soma_geometry->close();
 
