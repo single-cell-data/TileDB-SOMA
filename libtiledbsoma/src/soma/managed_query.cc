@@ -1024,7 +1024,7 @@ bool ManagedQuery::_extend_and_evolve_schema_and_write<std::string>(
             _extend_and_evolve_schema_with_details<
                 std::string,
                 std::string_view>(
-                value_schema, value_array, column_name, enmr, se);
+                value_schema, value_array, column_name, true, enmr, se);
 
     if (was_extended) {
         ManagedQuery::_remap_indexes(
@@ -1068,7 +1068,7 @@ bool ManagedQuery::_extend_and_evolve_schema_and_write(
          total_size,
          extended_enmr] =
             _extend_and_evolve_schema_with_details<ValueType, ValueType>(
-                value_schema, value_array, column_name, enmr, se);
+                value_schema, value_array, column_name, true, enmr, se);
 
     if (was_extended) {
         // If the passed-in enumerations are only a subset of the new extended
@@ -1101,6 +1101,111 @@ bool ManagedQuery::_extend_and_evolve_schema_and_write(
     }
 }
 
+bool ManagedQuery::_extend_enumeration(
+    ArrowSchema* value_schema,
+    ArrowArray* value_array,
+    const std::string& column_name,
+    bool deduplicate,
+    Enumeration enmr,
+    ArraySchemaEvolution& se) {
+    // For columns with dictionaries, we need to identify the data type of the
+    // enumeration to extend any new enumeration values
+
+    auto value_type_in_schema = enmr.type();
+    auto value_type_in_data = ArrowAdapter::to_tiledb_format(
+        value_schema->format);
+
+    if (value_type_in_schema != value_type_in_data) {
+        throw TileDBSOMAError(fmt::format(
+            "extend_enumeration: data type '{}' != schema type '{}'",
+            tiledb::impl::type_to_str(value_type_in_data),
+            tiledb::impl::type_to_str(value_type_in_schema)));
+    }
+
+    switch (value_type_in_schema) {
+        case TILEDB_STRING_ASCII:
+        case TILEDB_STRING_UTF8:
+        case TILEDB_CHAR:
+            return _extend_and_evolve_schema_without_details<
+                std::string,
+                std::string_view>(
+                value_schema, value_array, column_name, deduplicate, enmr, se);
+        case TILEDB_INT8:
+            return _extend_and_evolve_schema_without_details<int8_t, int8_t>(
+                value_schema, value_array, column_name, deduplicate, enmr, se);
+        case TILEDB_BOOL:
+        case TILEDB_UINT8:
+            return _extend_and_evolve_schema_without_details<uint8_t, uint8_t>(
+                value_schema, value_array, column_name, deduplicate, enmr, se);
+        case TILEDB_INT16:
+            return _extend_and_evolve_schema_without_details<int16_t, int16_t>(
+                value_schema, value_array, column_name, deduplicate, enmr, se);
+        case TILEDB_UINT16:
+            return _extend_and_evolve_schema_without_details<
+                uint16_t,
+                uint16_t>(
+                value_schema, value_array, column_name, deduplicate, enmr, se);
+        case TILEDB_INT32:
+            return _extend_and_evolve_schema_without_details<int32_t, int32_t>(
+                value_schema, value_array, column_name, deduplicate, enmr, se);
+        case TILEDB_UINT32:
+            return _extend_and_evolve_schema_without_details<
+                uint32_t,
+                uint32_t>(
+                value_schema, value_array, column_name, deduplicate, enmr, se);
+        case TILEDB_INT64:
+            return _extend_and_evolve_schema_without_details<int64_t, int64_t>(
+                value_schema, value_array, column_name, deduplicate, enmr, se);
+        case TILEDB_UINT64:
+            return _extend_and_evolve_schema_without_details<
+                uint64_t,
+                uint64_t>(
+                value_schema, value_array, column_name, deduplicate, enmr, se);
+        case TILEDB_FLOAT32:
+            return _extend_and_evolve_schema_without_details<float, float>(
+                value_schema, value_array, column_name, deduplicate, enmr, se);
+        case TILEDB_FLOAT64:
+            return _extend_and_evolve_schema_without_details<double, double>(
+                value_schema, value_array, column_name, deduplicate, enmr, se);
+        default:
+            throw TileDBSOMAError(fmt::format(
+                "ArrowAdapter: Unsupported TileDB enumeration datatype: {} ",
+                tiledb::impl::type_to_str(value_type_in_schema)));
+    }
+}
+
+template <>
+bool ManagedQuery::
+    _extend_and_evolve_schema_without_details<std::string, std::string_view>(
+        ArrowSchema* value_schema,
+        ArrowArray* value_array,
+        const std::string& column_name,
+        bool deduplicate,
+        Enumeration enmr,
+        ArraySchemaEvolution& se) {
+    const auto [was_extended, _1, _2, _3, _4, _5] =
+        _extend_and_evolve_schema_with_details<std::string, std::string_view>(
+            value_schema, value_array, column_name, deduplicate, enmr, se);
+    return was_extended;
+}
+
+template <typename ValueType, typename ValueViewType>
+bool ManagedQuery::_extend_and_evolve_schema_without_details(
+    ArrowSchema* value_schema,
+    ArrowArray* value_array,
+    const std::string& column_name,
+    bool deduplicate,
+    Enumeration enmr,
+    ArraySchemaEvolution& se) {
+    const auto [was_extended, _1, _2, _3, _4, _5] =
+        _extend_and_evolve_schema_with_details<ValueType, ValueType>(
+            value_schema, value_array, column_name, deduplicate, enmr, se);
+    return was_extended;
+}
+
+// We need to check if we are writing any new enumeration values. If so,
+// extend and evolve the schema. If not, just set the write buffers to the
+// dictionary's indexes as-is
 template <>
 std::tuple<
     bool,                           // was_extended
@@ -1112,36 +1217,83 @@ std::tuple<
 ManagedQuery::_extend_and_evolve_schema_with_details<std::string>(
     ArrowSchema* value_schema,
     ArrowArray* value_array,
-    std::string column_name,
+    const std::string& column_name,
+    bool deduplicate,
     Enumeration enmr,
     ArraySchemaEvolution& se) {
     uint64_t num_elems = value_array->length;
 
+    if (value_array->n_buffers != 3) {
+        throw std::invalid_argument(fmt::format(
+            "[ManagedQuery] _extend_and_evolve_schema_with_details string: "
+            "expected n_buffers == 3; got {}",
+            value_array->n_buffers));
+    }
+
+    if (value_array->null_count != 0) {
+        throw std::invalid_argument(fmt::format(
+            "[ManagedQuery] _extend_and_evolve_schema_with_details string: "
+            "null values are not supported"));
+    }
+
+    // Set up input values as a char buffer, and offsets within it.  This is
+    // zero-copy on the data buffers, since the Arrow data buffers are already
+    // contiguous.
+    //
+    // Arrow var-sized cells can have 32-bit or 64-bit offsets.  TileDB only has
+    // 64-bit offsets. Convert from the former to the latter.
+    //
+    // The + 1 is for the following reason: Suppose the inputs are ["hello",
+    // "goodbye"]. Then the first offset is 0, the second is 5, and the third
+    // is 12. This makes it possible to locate the end of the string "goodbye"
+    // within the char buffer "hellogoodbye". More generally, it takes n+1
+    // offsets to specify the starts and ends of n string values within a
+    // column.
     std::vector<uint64_t> offsets_v;
     if ((strcmp(value_schema->format, "U") == 0) ||
         (strcmp(value_schema->format, "Z") == 0)) {
         uint64_t* offsets = (uint64_t*)value_array->buffers[1];
-        offsets_v.assign(offsets, offsets + num_elems + 1);
+        offsets_v.assign(
+            offsets + value_array->offset,
+            offsets + value_array->offset + num_elems + 1);
     } else {
         uint32_t* offsets = (uint32_t*)value_array->buffers[1];
         for (size_t i = 0; i < num_elems + 1; ++i) {
-            offsets_v.push_back((uint64_t)offsets[i]);
+            offsets_v.push_back((uint64_t)offsets[i + value_array->offset]);
         }
     }
 
-    std::string_view data(
+    std::string_view data_as_char(
         static_cast<const char*>(value_array->buffers[2]), offsets_v.back());
 
+    // Create a vector of string-views into the char buffer.
+    // We need this in order to partition the requested values
+    // into the ones already in the schema, and the ones needing
+    // to be added to the schema.
     std::vector<std::string_view> enum_values_in_write;
+    std::unordered_set<std::string_view> unique_values_in_write;
     for (size_t i = 0; i < num_elems; ++i) {
         auto beg = offsets_v[i];
         auto sz = offsets_v[i + 1] - beg;
-        enum_values_in_write.push_back(data.substr(beg, sz));
+        auto enum_val = data_as_char.substr(beg, sz);
+        enum_values_in_write.push_back(enum_val);
+        unique_values_in_write.insert(enum_val);
     }
 
+    // Check for non-unique values in the input, even before we check the
+    // values in the array schema. See also sc-65078.
+    if (enum_values_in_write.size() != unique_values_in_write.size()) {
+        // std::range_error maps to Python ValueError
+        throw std::range_error(fmt::format(
+            "[extend_enumeration] new values provided for column '{}' must "
+            "be unique within themselves, irrespective of the deduplicate flag",
+            column_name));
+    }
+
+    // Separate out the values already in the array schema from the
+    // values not already in the array schema.
     std::vector<std::string_view> enum_values_to_add;
     size_t total_size = 0;
-
     auto enum_values_existing = _enumeration_values_view<std::string_view>(
         enmr);
     std::unordered_set<std::string_view> existing_enums_set;
@@ -1156,6 +1308,29 @@ ManagedQuery::_extend_and_evolve_schema_with_details<std::string>(
         }
     }
 
+    // There are two paths to enumeration extension:
+    // 1. The user does dataframe.write.
+    //    Here, if the on-schema values are a,b,c and the values being
+    //    written are c,d,e, then, the expected UX is that values d,e
+    //    will be handed to the core enumeration-extend.
+    // 2. The user does dataframe.extend_enumeration_values.
+    //    Here, if the on-schema values are a,b,c and the values being
+    //    extended are c,d,e, then, the expected UX (requested in sc-63930) is:
+    //    * By default, that's an error -- they were supposed to just pass d,e.
+    //    * If the deduplicate flag was passed, then we allow that, but
+    //      we still need to pass core only the d,e values. (It will
+    //      throw otherwise).
+    if (!deduplicate &&
+        enum_values_to_add.size() != enum_values_in_write.size()) {
+        throw TileDBSOMAError(fmt::format(
+            "[extend_enumeration] one or more values provided are already "
+            "present in the enumeration for column '{}', and deduplicate was "
+            "not specified",
+            column_name));
+    }
+
+    // Extend the enumeration in the schema, if there are any values to be
+    // added.
     if (enum_values_to_add.size() != 0) {
         // Check that we extend the enumeration values without
         // overflowing
@@ -1187,6 +1362,7 @@ ManagedQuery::_extend_and_evolve_schema_with_details<std::string>(
             extend_offsets.data(),
             enum_values_to_add.size() * sizeof(uint64_t));
         se.extend_enumeration(extended_enmr);
+
         return std::tuple{
             true,  // was_extended
             enum_values_in_write,
@@ -1206,6 +1382,9 @@ ManagedQuery::_extend_and_evolve_schema_with_details<std::string>(
     }
 }
 
+// We need to check if we are writing any new enumeration values. If so,
+// extend and evolve the schema. If not, just set the write buffers to the
+// dictionary's indexes as-is
 template <typename ValueType, typename ValueViewType>
 std::tuple<
     bool,                        // was_extended
@@ -1217,24 +1396,39 @@ std::tuple<
 ManagedQuery::_extend_and_evolve_schema_with_details(
     ArrowSchema* value_schema,
     ArrowArray* value_array,
-    std::string column_name,
+    const std::string& column_name,
+    bool deduplicate,
     Enumeration enmr,
     ArraySchemaEvolution& se) {
-    // We need to check if we are writing any new enumeration values. If so,
-    // extend and evolve the schema. If not, just set the write buffers to the
-    // dictionary's indexes as-is
+    if (value_array->n_buffers != 2) {
+        // Higher-level code should be catching this with an error message which
+        // is intended to be user-facing. Here is a low-level check before we
+        // dereference buffers[1] and buffers[2].
+        throw std::invalid_argument(fmt::format(
+            "[ManagedQuery] _extend_and_evolve_schema_with_details non-string: "
+            "internal coding error: expected n_buffers == 2; got {}",
+            value_array->n_buffers));
+    }
+
+    if (value_array->null_count != 0) {
+        throw std::invalid_argument(fmt::format(
+            "[ManagedQuery] _extend_and_evolve_schema_with_details non-string: "
+            "null values are not supported"));
+    }
 
     // Get all the enumeration values in the passed-in column
     std::vector<ValueType> enum_values_in_write;
     uint64_t num_elems = value_array->length;
     if (strcmp(value_schema->format, "b") == 0) {
         // Specially handle Boolean types as their representation in Arrow (bit)
-        // is different from what is in TileDB (uint8_t)
+        // is different from what is in TileDB (uint8_t). Here we must copy.
         auto expanded = _bool_data_bits_to_bytes(value_schema, value_array);
         enum_values_in_write.assign(
             expanded.data(), expanded.data() + num_elems);
     } else {
-        // General case
+        // General case. This is zero-copy since the Arrow buffer is already
+        // contiguous, and the Arrow in-memory storage model is identical to the
+        // TileDB in-memory storage model.
         ValueType* data;
         if (value_array->n_buffers == 3) {
             data = (ValueType*)value_array->buffers[2] + value_array->offset;
@@ -1244,22 +1438,83 @@ ManagedQuery::_extend_and_evolve_schema_with_details(
         enum_values_in_write.assign(
             (ValueType*)data, (ValueType*)data + num_elems);
     }
+    std::unordered_set<ValueType> unique_values_in_write(
+        enum_values_in_write.begin(), enum_values_in_write.end());
 
-    // Get all the enumeration values in the on-disk TileDB attribute
+    // Check for non-unique values in the input, even before we check the
+    // values in the array schema. See also sc-65078.
+    if (enum_values_in_write.size() != unique_values_in_write.size()) {
+        // std::range_error maps to Python ValueError
+        throw std::range_error(fmt::format(
+            "[extend_enumeration] new values provided for column '{}' must "
+            "be unique within themselves, irrespective of the deduplicate flag",
+            column_name));
+    }
+
+    // Get all the enumeration values in the on-disk TileDB attribute.
     std::vector<ValueType> enum_values_existing = enmr.as_vector<ValueType>();
+
+    // Separate out the values already in the array schema from the
+    // values not already in the array schema.
+    //
+    // One might think it would be simpler to use
+    //
+    //   std::unordered_set<ValueType> existing_enums_set;
+    //
+    // and one would be correct. However, core uses bitwise comparisons, and
+    // floating-point NaNs have the following properties: (1) NaN != NaN, and
+    // (2) there are multiple floating-point bit patterns which are NaN.  It's
+    // simplest to just use the same logic core does, making std::string_view on
+    // our elements.
+    //
+    // Specifically, please see
+    // https://github.com/TileDB-Inc/TileDB/blob/2.27.2/tiledb/sm/array_schema/enumeration.cc#L417-L456
+    //
+    // It is important that we use core's logic here, so that when we are
+    // able to access its hashmap directly without constructing our own,
+    // that transition will be seamless.
+    std::unordered_set<std::string_view> existing_enums_set;
+    for (const auto& enum_value_existing : enum_values_existing) {
+        auto sv = std::string_view(
+            static_cast<char*>((char*)&enum_value_existing),
+            sizeof(enum_value_existing));
+        existing_enums_set.insert(sv);
+    }
 
     // Find any new enumeration values
     std::vector<ValueType> enum_values_to_add;
-    for (auto enum_val : enum_values_in_write) {
-        // Find the value in the list of already existing enums
-        auto it = _find_enum_match(enum_values_existing, enum_val);
-
-        // If not found, append to the to-add list
-        if (it == enum_values_existing.end()) {
-            enum_values_to_add.push_back(enum_val);
+    for (const auto& enum_value_in_write : enum_values_in_write) {
+        auto sv = std::string_view(
+            static_cast<char*>((char*)&enum_value_in_write),
+            sizeof(enum_value_in_write));
+        if (!existing_enums_set.contains(sv)) {
+            enum_values_to_add.push_back(enum_value_in_write);
         }
     }
 
+    // There are two paths to enumeration extension:
+    // 1. The user does dataframe.write.
+    //    Here, if the on-schema values are a,b,c and the values being
+    //    written are c,d,e, then, the expected UX is that values d,e
+    //    will be handed to the core enumeration-extend.
+    // 2. The user does dataframe.extend_enumeration_values.
+    //    Here, if the on-schema values are a,b,c and the values being
+    //    extended are c,d,e, then, the expected UX (requested in sc-63930) is:
+    //    * By default, that's an error -- they were supposed to just pass d,e.
+    //    * If the deduplicate flag was passed, then we allow that, but
+    //      we still need to pass core only the d,e values. (It will
+    //      throw otherwise).
+    if (!deduplicate &&
+        enum_values_to_add.size() != enum_values_in_write.size()) {
+        throw TileDBSOMAError(fmt::format(
+            "[extend_enumeration] one or more values provided are already "
+            "present in the enumeration for column '{}', and deduplicate was "
+            "not specified",
+            column_name));
+    }
+
+    // Extend the enumeration in the schema, if there are any values to be
+    // added.
     if (enum_values_to_add.size() != 0) {
         // We have new enumeration values; additional processing needed
 
