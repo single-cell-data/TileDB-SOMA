@@ -406,6 +406,16 @@ class DataFrame(SOMAArray, somacore.DataFrame):
     ) -> None:
         """Extend enumeration values for each column defined in `values`.
 
+        You can do ``write`` with columns of Arrow dictionary type, without
+        calling this method, and that works fine for non-parallel data ingestion
+        into the same dataframe.  If, however, you are running multiple
+        parallelized writes into the same dataframe, you can use this method to
+        help avoid a race condition. Call this method with all the unique values
+        from all the your inputs.
+
+        Nominally this will be called for you by the experiment-level ingestion
+        logic.
+
         Raises ``ValueError`` if any of the the specified column names is not in
         the schema, or if any is not of Arrow dictionary type. May only contain
         values that already exist in the schema (see the output of
