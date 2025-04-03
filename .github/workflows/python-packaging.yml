@@ -211,7 +211,6 @@ jobs:
           ls -l dist
       - name: Publish packages to TestPyPI
         uses: pypa/gh-action-pypi-publish@release/v1
-        continue-on-error: true
         with:
           repository-url: https://test.pypi.org/legacy/
           packages_dir: dist
