@@ -654,9 +654,9 @@ uint64_t SOMAArray::nnz() {
     bool overlap = false;
     for (uint32_t i = 1; i < fragment_count; ++i) {
         if (current_range[1] < non_empty_domains[i][0]) {
-            // Fragment is not overlapping
+            // Fragment is non-overlapping.
             // Current range was overlapping with previous tiles
-            // and we need to add it to the ovelapping ranges
+            // and we need to add it to the overlapping ranges.
             if (overlap) {
                 overlapping_ranges.push_back(
                     std::make_pair(current_range[0], current_range[1]));
