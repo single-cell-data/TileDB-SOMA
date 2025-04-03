@@ -4,7 +4,6 @@
 
 from __future__ import annotations
 
-import json
 import warnings
 from collections import defaultdict
 from pathlib import Path
@@ -71,9 +70,6 @@ class AxisAmbientLabelMapping:
             and self.enum_values == other.enum_values
         )
 
-    def get_shape(self) -> int:
-        return self.shape
-
     def id_mapping_from_values(self, input_ids: npt.ArrayLike) -> AxisIDMapping:
         """Given registered label-to-SOMA-join-ID mappings for all registered input files for an
         ``obs`` or ``var`` axis, and a list of input-file 0-up offsets, this returns an int-to-int
@@ -94,57 +90,6 @@ class AxisAmbientLabelMapping:
         """
         values = get_dataframe_values(df, self.field_name)
         return self.id_mapping_from_values(values)
-
-    @staticmethod
-    def _attrs_todict_serializer(
-        _: Any, field: attrs.Attribute | None, value: Any  # type: ignore[type-arg]
-    ) -> Any:
-        if field is None:
-            return value
-        if field.name == "joinid_map":
-            return value.to_dict(orient="tight")
-        if field.name == "enum_values":
-            return {
-                k: dict(ordered=v.ordered, categories=v.categories.tolist())
-                for k, v in value.items()
-            }
-        if field.name == "shape":
-            return int(value)
-        if field.name == "field_name":
-            return value
-
-        # else, unknown field, raise
-        raise NotImplementedError("Unknown field - should never happen.")
-
-    @staticmethod
-    def _attrs_fromdict_deserializer(field: str, value: Any) -> Any:
-        if field == "joinid_map":
-            return pd.DataFrame.from_dict(value, orient="tight")
-        if field == "enum_values":
-            return {
-                k: pd.CategoricalDtype(ordered=v["ordered"], categories=v["categories"])
-                for k, v in value.items()
-            }
-        return value
-
-    @classmethod
-    def from_dict(cls, d: dict[Any, Any]) -> Self:
-        return cls(
-            **{
-                k: cls._attrs_fromdict_deserializer(k, v)
-                for k, v in d.items()
-                if k not in ["shape"]  # handled in post-init
-            }
-        )
-
-    def to_json(self) -> str:
-        return json.dumps(
-            attrs.asdict(self, value_serializer=self._attrs_todict_serializer)
-        )
-
-    @classmethod
-    def from_json(cls, s: str) -> Self:
-        return cls.from_dict(json.loads(s))
 
 
 @attrs.define(kw_only=True, frozen=True)
@@ -191,14 +136,6 @@ class ExperimentAmbientLabelMapping:
     def get_var_shapes(self) -> dict[str, int]:
         return {ms_name: self.var_axes[ms_name].shape for ms_name in self.var_axes}
 
-    def get_obs_enum_values(self) -> dict[str, pd.CategoricalDtype]:
-        return self.obs_axis.enum_values
-
-    def get_var_enum_values(self) -> dict[str, dict[str, pd.CategoricalDtype]]:
-        return {
-            ms_name: self.var_axes[ms_name].enum_values for ms_name in self.var_axes
-        }
-
     def subset_for_anndata(self, adata: ad.AnnData) -> Self:
         """Return a copy of this object containing only the information necessary to ingest
         the specified AnnData.
@@ -242,12 +179,15 @@ class ExperimentAmbientLabelMapping:
         """Prepare experiment for ingestion.
 
         Currently performs two operations:
-        1. Resize experiment to a shape sufficient to contain all registered AnnData
+        1. Resize experiment to a shape sufficient to contain all registered AnnData/H5AD inputs
         2. Evolve schema on all dict/enum/categorical columns to include any new values defined in
            registered AnnData (e.g., Pandas Categoricals with additional categories).
 
-        This operation must be performed after the experiment is created, and before
-        any writes to the experiment.
+        This makes subsequent data writes race safe, for workflows using concurrent dataset writers
+        (ie., parallel calls to `to_anndata` or `from_h5ad`).
+
+        This operation must be performed after the experiment is created, and before any writes
+        to the experiment.
         """
         context = _validate_soma_tiledb_context(context)
 
@@ -277,8 +217,8 @@ class ExperimentAmbientLabelMapping:
             _check_experiment_structure(E)
 
             # Resize is done only if we have an Experiment supporting current domain.
-            # Code assumes that if obs is of a given era, so are all other arrays in
-            # the experiment.
+            # Code assumes that if obs is of a given era (i.e. pre/post current domain change),
+            # so are all other arrays in the experiment.
             ok_to_resize, _ = E.obs.tiledbsoma_resize_soma_joinid_shape(
                 self.get_obs_shape(), check_only=True
             )
@@ -299,41 +239,6 @@ class ExperimentAmbientLabelMapping:
 
         object.__setattr__(self, "prepared", True)
 
-    def to_json(self) -> str:
-        """The ``to_json`` and ``from_json`` methods allow you to persist
-        the registration mappings to disk.
-
-        Hint: pickle may be more efficient for some use cases."""
-        dikt = {
-            "obs_axis": attrs.asdict(
-                self.obs_axis,
-                recurse=True,
-                value_serializer=AxisAmbientLabelMapping._attrs_todict_serializer,
-            ),
-            "var_axes": {
-                k: attrs.asdict(
-                    v,
-                    recurse=True,
-                    value_serializer=AxisAmbientLabelMapping._attrs_todict_serializer,
-                )
-                for k, v in self.var_axes.items()
-            },
-        }
-        return json.dumps(dikt)
-
-    @classmethod
-    def from_json(cls, s: str) -> Self:
-        """The ``to_json`` and ``from_json`` methods allow you to persist
-        the registration mappings to disk."""
-        d = json.loads(s)
-        return cls(
-            obs_axis=AxisAmbientLabelMapping.from_dict(d["obs_axis"]),
-            var_axes={
-                k: AxisAmbientLabelMapping.from_dict(v)
-                for k, v in d["var_axes"].items()
-            },
-        )
-
     @staticmethod
     def _load_axes_metadata_from_anndatas(
         adatas: Iterable[ad.AnnData],
@@ -350,6 +255,12 @@ class ExperimentAmbientLabelMapping:
         var_metadata: list[AnnDataAxisMetadata] = []
         raw_var_metadata: list[AnnDataAxisMetadata] = []
 
+        def categorical_columns(df: pd.DataFrame) -> dict[Any, pd.CategoricalDtype]:
+            return cast(
+                dict[str, pd.CategoricalDtype],
+                {k: v.dtype for k, v in df.items() if v.dtype == "category"},
+            )
+
         for adata in adatas:
 
             validate_anndata(adata)  # may throw
@@ -358,22 +269,14 @@ class ExperimentAmbientLabelMapping:
                 AnnDataAxisMetadata(
                     field_name=obs_field_name,
                     field_index=adata.obs.index,
-                    enum_values={
-                        k: v.dtype
-                        for k, v in adata.obs.items()
-                        if v.dtype == "category"
-                    },
+                    enum_values=categorical_columns(adata.obs),
                 )
             )
             var_metadata.append(
                 AnnDataAxisMetadata(
                     field_name=var_field_name,
                     field_index=adata.var.index,
-                    enum_values={
-                        k: v.dtype
-                        for k, v in adata.var.items()
-                        if v.dtype == "category"
-                    },
+                    enum_values=categorical_columns(adata.var),
                 )
             )
             if adata.raw is not None:
@@ -381,11 +284,7 @@ class ExperimentAmbientLabelMapping:
                     AnnDataAxisMetadata(
                         field_name=var_field_name,
                         field_index=adata.raw.var.index,
-                        enum_values={
-                            k: v.dtype
-                            for k, v in adata.raw.var.items()
-                            if v.dtype == "category"
-                        },
+                        enum_values=categorical_columns(adata.raw.var),
                     )
                 )
 
@@ -407,7 +306,7 @@ class ExperimentAmbientLabelMapping:
     ) -> tuple[AnnDataAxisMetadata, AnnDataAxisMetadata, AnnDataAxisMetadata | None]:
         """Private helper to load axis metadata for obs, var and raw.var (if present) from H5ADs.
 
-        Return (obs, var, raw.var)
+        Return (obs, var, raw.var).
         """
         obs_metadata: list[AnnDataAxisMetadata] = []
         var_metadata: list[AnnDataAxisMetadata] = []
@@ -509,7 +408,7 @@ class ExperimentAmbientLabelMapping:
         4. Create enum evolution
         5. Create and return the plan.
 
-        TODO: the current design assumes that the join column for `var` is the same across
+        [sc-65318]: the current design assumes that the join column for `var` is the same across
         all measurements. For simple cases (e.g., single modality) this is normally true.
         It is less likely to be true for multi-modal data. Future rework should address this
         by allowing a per-measurement var join column.
@@ -525,7 +424,7 @@ class ExperimentAmbientLabelMapping:
         # Step 1: load all existing Experiment info.
         #
         if experiment_uri is not None:
-            logging.log_io(None, "Loading existing experiment joinid map")
+            logging.log_io_same("Loading existing experiment joinid map")
             experiment_metadata_ft = tp.submit(
                 ExperimentAmbientLabelMapping._load_existing_experiment_metadata,
                 experiment_uri,
@@ -537,7 +436,7 @@ class ExperimentAmbientLabelMapping:
         #
         # Step 2: reduce axis metadata
         #
-        logging.log_io(None, "Reducing axis metadata")
+        logging.log_io_same("Reducing axis metadata")
         obs_axis_metadata, var_axis_metadata, raw_var_axis_metadata = tp.map(
             AnnDataAxisMetadata.reduce,
             [
@@ -546,7 +445,7 @@ class ExperimentAmbientLabelMapping:
                 [t[2] for t in axes_metadata if t[2] is not None],  # raw.var
             ],
         )
-        logging.log_io(None, "Finished reducing axis metadata")
+        logging.log_io_same("Finished reducing axis metadata")
 
         # And, grab the result of step 1 from the futures
         if experiment_uri is not None:
@@ -556,7 +455,7 @@ class ExperimentAmbientLabelMapping:
                 existing_obs_enum_values,
                 existing_var_enum_values,
             ) = experiment_metadata_ft.result()
-            logging.log_io(None, "Existing joinid maps are loaded.")
+            logging.log_io_same("Existing joinid maps are loaded.")
         else:
             existing_obs_joinid_map = pd.DataFrame()
             existing_var_joinid_maps = {
@@ -584,7 +483,7 @@ class ExperimentAmbientLabelMapping:
             else:
                 next_soma_joinid = 0
 
-            logging.log_io(None, f"next soma_joinid={next_soma_joinid}")
+            logging.log_io_same(f"next soma_joinid={next_soma_joinid}")
             maps.append(
                 pd.DataFrame(
                     index=joinids_index,

@@ -280,16 +280,11 @@ def test_axis_mappings(obs_field_name, var_field_name):
         enum_values={},
     )
 
-    for reload in [False, True]:
-        if reload:
-            dictionary = registration.AxisAmbientLabelMapping.from_json(
-                dictionary.to_json()
-            )
-        assert_array_equal(
-            dictionary.id_mapping_from_values(["a", "b", "c"]).data, (10, 20, 30)
-        )
-        assert_array_equal(dictionary.id_mapping_from_values(["c", "a"]).data, (30, 10))
-        assert_array_equal(dictionary.id_mapping_from_values([]).data, ())
+    assert_array_equal(
+        dictionary.id_mapping_from_values(["a", "b", "c"]).data, (10, 20, 30)
+    )
+    assert_array_equal(dictionary.id_mapping_from_values(["c", "a"]).data, (30, 10))
+    assert_array_equal(dictionary.id_mapping_from_values([]).data, ())
 
     d = tiledbsoma.io.register_anndatas(
         None,
@@ -316,10 +311,6 @@ def test_isolated_anndata_mappings(obs_field_name, var_field_name):
         obs_field_name=obs_field_name,
         var_field_name=var_field_name,
     )
-
-    for reload in [False, True]:
-        if reload:
-            rd = registration.ExperimentAmbientLabelMapping.from_json(rd.to_json())
 
     assert_array_equal(rd.obs_axis.id_mapping_from_values([]).data, ())
     assert_array_equal(
