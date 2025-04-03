@@ -41,7 +41,7 @@ jobs:
 
   # This step builds wheels and uploads them to GitHub Actions storage.
   # See also https://github.com/single-cell-data/TileDB-SOMA/issues/700.
-  # See also https://github.com/single-cell-data/TileDB-SOMA/wiki/PyPI-packaging-WIP
+  # See also https://github.com/single-cell-data/TileDB-SOMA/wiki/PyPI-packaging-notes
   # for important transitional context.
   wheels:
     # Note: tries all supported Python versions as specified in apis/python/setup.py
