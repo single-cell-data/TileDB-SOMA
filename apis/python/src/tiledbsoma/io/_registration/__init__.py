@@ -105,7 +105,6 @@ offsets to registered SOMA join IDs like this:
 
 from .ambient_label_mappings import (
     AxisAmbientLabelMapping,
-    AxisMetadata,
     ExperimentAmbientLabelMapping,
 )
 from .id_mappings import AxisIDMapping, ExperimentIDMapping, get_dataframe_values
@@ -113,7 +112,6 @@ from .id_mappings import AxisIDMapping, ExperimentIDMapping, get_dataframe_value
 __all__ = (
     "AxisIDMapping",
     "AxisAmbientLabelMapping",
-    "AxisMetadata",
     "ExperimentIDMapping",
     "ExperimentAmbientLabelMapping",
     "get_dataframe_values",

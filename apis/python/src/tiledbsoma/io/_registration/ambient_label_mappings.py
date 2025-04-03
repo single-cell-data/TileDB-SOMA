@@ -16,7 +16,7 @@ import numpy as np
 import numpy.typing as npt
 import pandas as pd
 import pyarrow as pa
-from typing_extensions import Self
+from typing_extensions import Self, TypeAlias
 
 import tiledbsoma
 import tiledbsoma.io
@@ -28,6 +28,9 @@ from tiledbsoma.options._soma_tiledb_context import _validate_soma_tiledb_contex
 from .._util import read_h5ad
 from .enum import _extend_enumeration, _get_enumeration
 from .id_mappings import AxisIDMapping, ExperimentIDMapping, get_dataframe_values
+
+MeasurementName: TypeAlias = str
+ColumnName: TypeAlias = str
 
 
 @attrs.define(kw_only=True, frozen=True)
@@ -314,22 +317,22 @@ class ExperimentAmbientLabelMapping:
         obs_field_name: str,
         var_field_name: str,
         validate_anndata: Callable[[ad.AnnData], None],
-    ) -> tuple[AxisMetadata, AxisMetadata, AxisMetadata | None]:
-        """Load axis metadata for obs, var and raw.var (if present) from AnnData,
+    ) -> tuple[AnnDataAxisMetadata, AnnDataAxisMetadata, AnnDataAxisMetadata | None]:
+        """Private helper to load axis metadata for obs, var and raw.var (if present) from AnnData,
         in an intermediate form.
 
         Return (obs, var, raw.var)
         """
-        obs_metadata: list[AxisMetadata] = []
-        var_metadata: list[AxisMetadata] = []
-        raw_var_metadata: list[AxisMetadata] = []
+        obs_metadata: list[AnnDataAxisMetadata] = []
+        var_metadata: list[AnnDataAxisMetadata] = []
+        raw_var_metadata: list[AnnDataAxisMetadata] = []
 
         for adata in adatas:
 
             validate_anndata(adata)  # may throw
 
             obs_metadata.append(
-                AxisMetadata(
+                AnnDataAxisMetadata(
                     field_name=obs_field_name,
                     field_index=adata.obs.index,
                     enum_values={
@@ -340,7 +343,7 @@ class ExperimentAmbientLabelMapping:
                 )
             )
             var_metadata.append(
-                AxisMetadata(
+                AnnDataAxisMetadata(
                     field_name=var_field_name,
                     field_index=adata.var.index,
                     enum_values={
@@ -352,7 +355,7 @@ class ExperimentAmbientLabelMapping:
             )
             if adata.raw is not None:
                 raw_var_metadata.append(
-                    AxisMetadata(
+                    AnnDataAxisMetadata(
                         field_name=var_field_name,
                         field_index=adata.raw.var.index,
                         enum_values={
@@ -364,9 +367,9 @@ class ExperimentAmbientLabelMapping:
                 )
 
         obs, var, raw_var = (
-            AxisMetadata.reduce(obs_metadata),
-            AxisMetadata.reduce(var_metadata),
-            AxisMetadata.reduce(raw_var_metadata),
+            AnnDataAxisMetadata.reduce(obs_metadata),
+            AnnDataAxisMetadata.reduce(var_metadata),
+            AnnDataAxisMetadata.reduce(raw_var_metadata),
         )
         assert obs is not None
         assert var is not None
@@ -378,14 +381,14 @@ class ExperimentAmbientLabelMapping:
         obs_field_name: str,
         var_field_name: str,
         validate_anndata: Callable[[ad.AnnData], None],
-    ) -> tuple[AxisMetadata, AxisMetadata, AxisMetadata | None]:
-        """Load axis metadata for obs, var and raw.var (if present) from H5ADs.
+    ) -> tuple[AnnDataAxisMetadata, AnnDataAxisMetadata, AnnDataAxisMetadata | None]:
+        """Private helper to load axis metadata for obs, var and raw.var (if present) from H5ADs.
 
         Return (obs, var, raw.var)
         """
-        obs_metadata: list[AxisMetadata] = []
-        var_metadata: list[AxisMetadata] = []
-        raw_var_metadata: list[AxisMetadata] = []
+        obs_metadata: list[AnnDataAxisMetadata] = []
+        var_metadata: list[AnnDataAxisMetadata] = []
+        raw_var_metadata: list[AnnDataAxisMetadata] = []
 
         for p in paths:
             with read_h5ad(p, mode="r") as adata:
@@ -400,9 +403,9 @@ class ExperimentAmbientLabelMapping:
                 raw_var_metadata.append(raw_var)
 
         obs, var, raw_var = (
-            AxisMetadata.reduce(obs_metadata),
-            AxisMetadata.reduce(var_metadata),
-            AxisMetadata.reduce(raw_var_metadata),
+            AnnDataAxisMetadata.reduce(obs_metadata),
+            AnnDataAxisMetadata.reduce(var_metadata),
+            AnnDataAxisMetadata.reduce(raw_var_metadata),
         )
         assert obs is not None
         assert var is not None
@@ -413,13 +416,14 @@ class ExperimentAmbientLabelMapping:
         uri: str, obs_field_name: str, var_field_name: str, context: SOMATileDBContext
     ) -> tuple[
         pd.DataFrame,
-        dict[str, pd.DataFrame],
-        dict[str, pd.CategoricalDtype],  # { col_name: CategoricalDtype, ...}
-        dict[
-            str, dict[str, pd.CategoricalDtype]
-        ],  # { ms_name: { col_name: CategoricalDtype, ...}, ...}
+        dict[ColumnName, pd.DataFrame],
+        dict[ColumnName, pd.CategoricalDtype],
+        dict[MeasurementName, dict[ColumnName, pd.CategoricalDtype]],
     ]:
-        """Private helper to load any joinid/enum metadata from an existing experiment."""
+        """Private helper to load any joinid/enum metadata from an existing experiment.
+
+        Returns (obs_joinid_map, var_joinid_maps, obs_enum_values, var_enum_values).
+        """
 
         def _get_enum_values(df: DataFrame) -> dict[str, pd.CategoricalDtype]:
             return {
@@ -464,7 +468,9 @@ class ExperimentAmbientLabelMapping:
     @staticmethod
     def _register_common(
         experiment_uri: str | None,
-        axes_metadata: list[tuple[AxisMetadata, AxisMetadata, AxisMetadata | None]],
+        axes_metadata: list[
+            tuple[AnnDataAxisMetadata, AnnDataAxisMetadata, AnnDataAxisMetadata | None]
+        ],
         *,
         measurement_name: str,
         obs_field_name: str,
@@ -472,7 +478,7 @@ class ExperimentAmbientLabelMapping:
         context: SOMATileDBContext,
     ) -> ExperimentAmbientLabelMapping:
         """
-        Private method used by various constructor paths.
+        Private method used by various constructor paths -- shared code for registration.
 
         Four-step process common to all ingestion plans. Given AnnData axis metadata (joinid map
         and enum definitions):
@@ -480,7 +486,12 @@ class ExperimentAmbientLabelMapping:
         2. Reduce all AnnData axis metadata
         3. Create a joinid map for ingestion
         4. Create enum evolution
-        and return the plan.
+        5. Create and return the plan.
+
+        TODO: the current design assumes that the join column for `var` is the same across
+        all measurements. For simple cases (e.g., single modality) this is normally true.
+        It is less likely to be true for multi-modal data. Future rework should address this
+        by allowing a per-measurement var join column.
         """
 
         tp = context.threadpool
@@ -490,7 +501,7 @@ class ExperimentAmbientLabelMapping:
         existing_var_enum_values: dict[str, dict[str, pd.CategoricalDtype]]
 
         #
-        # Step 1: load all existing Experiment info
+        # Step 1: load all existing Experiment info.
         #
         if experiment_uri is not None:
             logging.log_io(None, "Loading existing experiment joinid map")
@@ -507,7 +518,7 @@ class ExperimentAmbientLabelMapping:
         #
         logging.log_io(None, "Reducing axis metadata")
         obs_axis_metadata, var_axis_metadata, raw_var_axis_metadata = tp.map(
-            AxisMetadata.reduce,
+            AnnDataAxisMetadata.reduce,
             [
                 [t[0] for t in axes_metadata if t[0] is not None],  # obs
                 [t[1] for t in axes_metadata if t[1] is not None],  # var
@@ -516,7 +527,7 @@ class ExperimentAmbientLabelMapping:
         )
         logging.log_io(None, "Finished reducing axis metadata")
 
-        # And, grab the result of step 1
+        # And, grab the result of step 1 from the futures
         if experiment_uri is not None:
             (
                 existing_obs_joinid_map,
@@ -592,26 +603,27 @@ class ExperimentAmbientLabelMapping:
         #
         # Step 4: create merged enum values for all axis dataframes
         #
-
-        obs_enum_values = AxisMetadata.reduce_enum_values(
+        obs_enum_values = AnnDataAxisMetadata.reduce_enum_values(
             [existing_obs_enum_values, obs_axis_metadata.enum_values]
         )
         var_enum_values = existing_var_enum_values.copy()
-        var_enum_values[measurement_name] = AxisMetadata.reduce_enum_values(
+        var_enum_values[measurement_name] = AnnDataAxisMetadata.reduce_enum_values(
             [
                 existing_var_enum_values.get(measurement_name, {}),
                 var_axis_metadata.enum_values,
             ]
         )
         if len(raw_var_axis_metadata.enum_values) > 0:
-            var_enum_values["raw"] = AxisMetadata.reduce_enum_values(
+            var_enum_values["raw"] = AnnDataAxisMetadata.reduce_enum_values(
                 [
                     existing_var_enum_values.get("raw", {}),
                     raw_var_axis_metadata.enum_values,
                 ]
             )
 
-        # and return the ingestion plan
+        #
+        # Step 5: create and return the ingestion plan
+        #
         obs_axis = AxisAmbientLabelMapping(
             field_name=obs_field_name,
             joinid_map=obs_joinid_map,
@@ -630,10 +642,7 @@ class ExperimentAmbientLabelMapping:
         return ExperimentAmbientLabelMapping(obs_axis=obs_axis, var_axes=var_axes)
 
     @staticmethod
-    def _validate_anndata(
-        append_obsm_varm: bool,
-        adata: ad.AnnData,
-    ) -> None:
+    def _validate_anndata(append_obsm_varm: bool, adata: ad.AnnData) -> None:
         """Pre-checks performed on all AnnData"""
 
         def check_df(df: pd.DataFrame | None, df_name: str) -> None:
@@ -671,15 +680,17 @@ class ExperimentAmbientLabelMapping:
 
 
 @attrs.define(kw_only=True, frozen=True)
-class AxisMetadata:
-    """Private class"""
+class AnnDataAxisMetadata:
+    """Private class encapsulating _intermediate_ information extracted from registered
+    H5ADs/AnnData. Other than data storage, this also provides a reducer for the type.
+    """
 
     field_name: str  # user-specified join field name
     field_index: pd.Index[Any]  # index of join field values
-    enum_values: dict[str, pd.CategoricalDtype]  # dict[col_name, CategoricalDtype]
+    enum_values: dict[ColumnName, pd.CategoricalDtype]
 
     @classmethod
-    def reduce(cls, ams: list[Self]) -> AxisMetadata:
+    def reduce(cls, ams: list[Self]) -> AnnDataAxisMetadata:
         assert all(isinstance(a, cls) for a in ams)
         assert all([a.field_name == ams[0].field_name for a in ams])
         if not all(a.field_index.dtype == ams[0].field_index.dtype for a in ams):
@@ -708,8 +719,8 @@ class AxisMetadata:
 
     @staticmethod
     def reduce_enum_values(
-        enum_values: list[dict[str, pd.CategoricalDtype]],
-    ) -> dict[str, pd.CategoricalDtype]:
+        enum_values: list[dict[ColumnName, pd.CategoricalDtype]],
+    ) -> dict[ColumnName, pd.CategoricalDtype]:
         """reducer for enum values"""
 
         def _merge_categoricals(
