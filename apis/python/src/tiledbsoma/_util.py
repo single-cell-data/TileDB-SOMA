@@ -452,7 +452,9 @@ def _cast_domainish(domainish: List[Any]) -> Tuple[Tuple[object, object], ...]:
     for slot in domainish:
         arrow_type = slot[0].type
         if pa.types.is_timestamp(arrow_type):
-            result.append(tuple(pa.scalar(e, type=arrow_type) for e in slot))
+            result.append(
+                tuple(pa.scalar(to_unix_ts(e), type=arrow_type) for e in slot)
+            )
         else:
             result.append(tuple(e.as_py() for e in slot))
 
@@ -561,18 +563,8 @@ def _set_coord(
         # These timestamp types are stored in Arrow as well as TileDB as 64-bit
         # integers (with distinguishing metadata of course). For purposes of the
         # query logic they're just int64.
-        ts_dom = pa.array(dom, type=dim.type).cast(pa.int64())
-
-        if coord.start is not None:
-            istart = to_unix_ts(coord.start)
-        else:
-            istart = ts_dom[0].as_py()
-
-        if coord.stop is not None:
-            istop = to_unix_ts(coord.stop)
-        else:
-            istop = ts_dom[1].as_py()
-
+        istart = to_unix_ts(coord.start or dom[0])
+        istop = to_unix_ts(coord.stop or dom[1])
         column.set_dim_ranges_int64(mq._handle, [(istart, istop)])
         return
 
