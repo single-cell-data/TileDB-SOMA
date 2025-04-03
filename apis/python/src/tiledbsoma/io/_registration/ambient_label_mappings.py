@@ -203,6 +203,13 @@ class ExperimentAmbientLabelMapping:
         This is an optional step, used to improve the performance of multi-process or
         distributed ingestion. It reduces the registration information transmitted to
         the worker process performing the call to ``from_anndata`` or ``from_h5ad``.
+
+        Args:
+            h5ad_path: an ``anndata.AnnData``, previously registered in this ``ExperimentAmbientLabelMapping``.
+
+        Returns:
+            A new ``ExperimentAmbientLabelMapping`` scoped specifically for the H5AD.
+
         """
 
         # Just do obs - provides largest benefit with simple implementation.
@@ -215,7 +222,14 @@ class ExperimentAmbientLabelMapping:
 
     def subset_for_h5ad(self, h5ad_path: str) -> Self:
         """Subset this plan to only contain ID maps useful for this H5AD. See ``subset_for_anndata``
-        for more information."""
+        for more information.
+
+        Args:
+            h5ad_path: path to H5AD
+
+        Returns:
+            A new ``ExperimentAmbientLabelMapping`` scoped specifically for the H5AD.
+        """
         with read_h5ad(h5ad_path, mode="r") as adata:
             return self.subset_for_anndata(adata)
 

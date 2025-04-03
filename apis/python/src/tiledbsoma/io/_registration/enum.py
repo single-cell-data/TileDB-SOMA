@@ -7,12 +7,16 @@ from tiledbsoma import DataFrame
 
 
 def _get_enumeration(df: DataFrame, column_name: str) -> pd.CategoricalDtype:
+    """Get the enumeration for a given column and return as a Pandas CategoricalDType."""
     values = df.get_enumeration_values((column_name,))[column_name]
     ordered = df.schema.field(column_name).type.ordered
     return pd.CategoricalDtype(categories=values, ordered=ordered)
 
 
 def _extend_enumeration(df: DataFrame, column_name: str, values: pa.Array) -> None:
+    """Given a Pandas CategoricalDType, extend a DataFrame column to match enum/category values
+    as needed. Handle the corner case where the categorical/enum has been demoted to the
+    value type (aka de-categoricalized)."""
 
     # first confirm we are a dictionary. If we have been decategorical-ized, we
     # will just be an array of value type.
