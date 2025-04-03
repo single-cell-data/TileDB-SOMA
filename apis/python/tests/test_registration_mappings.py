@@ -941,10 +941,11 @@ def test_append_with_disjoint_measurements(
 
     tiledbsoma.io.from_anndata(soma_uri, anndata1, measurement_name="one")
 
-    with tiledbsoma.open(soma_uri, "w") as exp:
-        exp.ms.add_new_collection("two", kind=tiledbsoma.Measurement)
-
     anndata2 = anndata1 if use_same_cells else anndata4
+
+    tiledbsoma.io.from_anndata(
+        soma_uri, anndata2, measurement_name="two", ingest_mode="schema_only"
+    )
 
     original = anndata2.copy()
 
@@ -1395,12 +1396,13 @@ def test_multimodal_names(tmp_path, conftest_pbmc3k_adata):
         assert "RNA" in exp.ms
         assert "protein" not in exp.ms
 
-    with tiledbsoma.open(uri, "w") as exp:
-        exp.ms.add_new_collection(
-            "protein",
-            kind=tiledbsoma.Measurement,
-            uri="protein",  # relative path for local-disk operations
-        )
+    tiledbsoma.io.from_anndata(
+        experiment_uri=uri,
+        anndata=adata_protein,
+        measurement_name="protein",
+        uns_keys=[],
+        ingest_mode="schema_only",
+    )
 
     # Register the second anndata object in the protein measurement
     rd = tiledbsoma.io.register_anndatas(

@@ -143,7 +143,7 @@ class IngestionParams:
     ) -> None:
         if ingest_mode == "schema_only":
             self.write_schema_no_data = True
-            self.error_if_already_exists = True
+            self.error_if_already_exists = False
             self.skip_existing_nonempty_domain = False
             self.appending = False
 
