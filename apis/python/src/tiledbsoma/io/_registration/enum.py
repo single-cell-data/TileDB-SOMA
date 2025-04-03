@@ -11,7 +11,9 @@ from tiledbsoma import DataFrame
 def get_enumerations(
     df: DataFrame, column_names: Sequence[str]
 ) -> dict[str, pd.CategoricalDtype]:
-    """Lookup enum info in schema, and return as a Pandas CategoricalDType."""
+    """Lookup enum info in schema, and return as a Pandas CategoricalDType. This
+    is a convenience wrapper around ``DataFrame.get_enumeration_values``, for use
+    in the registration module."""
 
     # skip columns which are not of type dictionary
     column_names = [
@@ -24,6 +26,11 @@ def get_enumerations(
 
 
 def extend_enumerations(df: DataFrame, columns: dict[str, pd.CategoricalDtype]) -> None:
+    """
+    Extend enumerations as needed, starting with a CategoricalDType for each
+    cat/enum/dict column. A convenience wrapper around ``DataFrame.extend_enumeration_values``,
+    for use in the registration module.
+    """
 
     current_enum_values = get_enumerations(df, list(columns.keys()))
     columns_to_extend = {}
