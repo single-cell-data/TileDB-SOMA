@@ -26,7 +26,7 @@ from tiledbsoma.options import SOMATileDBContext
 from tiledbsoma.options._soma_tiledb_context import _validate_soma_tiledb_context
 
 from .._util import read_h5ad
-from .enum import _extend_enumeration, _get_enumeration
+from .enum import extend_enumerations, get_enumerations
 from .id_mappings import AxisIDMapping, ExperimentIDMapping, get_dataframe_values
 
 MeasurementName: TypeAlias = str
@@ -246,11 +246,35 @@ class ExperimentAmbientLabelMapping:
         2. Evolve schema on all dict/enum/categorical columns to include any new values defined in
            registered AnnData (e.g., Pandas Categoricals with additional categories).
 
-        This operation must be performed before any writes to the experiment.
+        This operation must be performed after the experiment is created, and before
+        any writes to the experiment.
         """
         context = _validate_soma_tiledb_context(context)
 
+        def _check_experiment_structure(E: tiledbsoma.Experiment) -> None:
+            # Verify that the experiment has been created correctly - check for existence of obs & var
+            # and raise error if Experiment does not contain expected structure.
+            did_you_create = (
+                "Did you create the Experiment using `from_anndata` or `from_h5ad`?"
+            )
+            if "obs" not in E:
+                raise ValueError(
+                    f"SOMA Experiment is missing required 'obs' DataFrame. {did_you_create}"
+                )
+            for ms_name in self.var_axes:
+                if len(self.var_axes[ms_name].joinid_map) > 0:
+                    if ms_name not in E.ms:
+                        raise ValueError(
+                            f"SOMA Experiment is missing required Measurement '{ms_name}'. {did_you_create}"
+                        )
+                    if "var" not in E.ms[ms_name]:
+                        raise ValueError(
+                            f"SOMA Experiment is missing required `var` Dataframe in Measurement '{ms_name}'. {did_you_create}"
+                        )
+
         with Experiment.open(experiment_uri, context=context) as E:
+
+            _check_experiment_structure(E)
 
             # Resize is done only if we have an Experiment supporting current domain.
             # Code assumes that if obs is of a given era, so are all other arrays in
@@ -266,13 +290,12 @@ class ExperimentAmbientLabelMapping:
                     context=context,
                 )
 
-            # Enumerations
-            for k, v in self.obs_axis.enum_values.items():
-                _extend_enumeration(E.obs, k, pa.array(v.categories))
+            # Enumerations schema evolution
+            extend_enumerations(E.obs, self.obs_axis.enum_values)
 
             for ms_name, var_axis in self.var_axes.items():
-                for k, v in var_axis.enum_values.items():
-                    _extend_enumeration(E.ms[ms_name].var, k, pa.array(v.categories))
+                if var_axis.enum_values:
+                    extend_enumerations(E.ms[ms_name].var, var_axis.enum_values)
 
         object.__setattr__(self, "prepared", True)
 
@@ -426,11 +449,9 @@ class ExperimentAmbientLabelMapping:
         """
 
         def _get_enum_values(df: DataFrame) -> dict[str, pd.CategoricalDtype]:
-            return {
-                f.name: _get_enumeration(df, f.name)
-                for f in df.schema
-                if pa.types.is_dictionary(f.type)
-            }
+            return get_enumerations(
+                df, [f.name for f in df.schema if pa.types.is_dictionary(f.type)]
+            )
 
         def _get_joinid_map(df: DataFrame, field_name: str) -> pd.DataFrame:
             return cast(
