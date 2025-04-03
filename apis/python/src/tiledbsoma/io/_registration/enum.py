@@ -11,7 +11,7 @@ from tiledbsoma import DataFrame
 def get_enumerations(
     df: DataFrame, column_names: Sequence[str]
 ) -> dict[str, pd.CategoricalDtype]:
-    """Lookup enum info in schema, and return as a Pandas CategoricalDType. This
+    """Look up enum info in schema, and return as a Pandas CategoricalDType. This
     is a convenience wrapper around ``DataFrame.get_enumeration_values``, for use
     in the registration module."""
 
@@ -32,18 +32,18 @@ def extend_enumerations(df: DataFrame, columns: dict[str, pd.CategoricalDtype]) 
     for use in the registration module.
     """
 
-    current_enum_values = get_enumerations(df, list(columns.keys()))
+    current_enums = get_enumerations(df, list(columns.keys()))
     columns_to_extend = {}
     for column_name, cat_dtype in columns.items():
 
-        # first confirm we are a dictionary. If we have been decategorical-ized, i.e.,
+        # first confirm this is a dictionary. If it has been decategorical-ized, i.e.,
         # are an array of the value type, don't extend.
-        if column_name not in current_enum_values:
+        if column_name not in current_enums:
             assert not pa.types.is_dictionary(df.schema.field(column_name).type)
             continue
 
         # determine if we have any new enum values in this column
-        existing_dtype = current_enum_values[column_name]
+        existing_dtype = current_enums[column_name]
         new_enum_values = pd.Index(cat_dtype.categories).difference(
             existing_dtype.categories, sort=False
         )
