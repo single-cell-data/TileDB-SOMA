@@ -3098,6 +3098,13 @@ def _ingest_uns_ndarray(
 
 
 def _concurrency_level(context: SOMATileDBContext) -> int:
+    """
+    Private helper function to determine appropriate concurrency level for
+    ingestion of H5AD when use_multiprocessing is enabled.
+
+    Functionally, this just allows the user to control concurrency via the
+    context configuration ``soma.compute_concurrency_level``, with error checking.
+    """
     concurrency_level: int = os.cpu_count() or 1
     if context is not None:
         concurrency_level = min(
