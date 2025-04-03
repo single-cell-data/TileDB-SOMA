@@ -1140,16 +1140,16 @@ def _find_extent_for_domain(
         return min(extent, _util.to_unix_ts(hi) - _util.to_unix_ts(lo) + 1)
 
     if dtype == "datetime64[s]":
-        return np.datetime64(get_datetime_extent(lo, hi), "s")
+        return get_datetime_extent(lo, hi)
 
     if dtype == "datetime64[ms]":
-        return np.datetime64(get_datetime_extent(lo, hi), "ms")
+        return get_datetime_extent(lo, hi)
 
     if dtype == "datetime64[us]":
-        return np.datetime64(get_datetime_extent(lo, hi), "us")
+        return get_datetime_extent(lo, hi)
 
     if dtype == "datetime64[ns]":
-        return np.datetime64(get_datetime_extent(lo, hi), "ns")
+        return get_datetime_extent(lo, hi)
 
     return extent
 
@@ -1162,6 +1162,9 @@ def _find_extent_for_domain(
 def _revise_domain_for_extent(
     domain: Tuple[Any, Any], extent: Any, saturated_range: Union[bool, Tuple[bool, ...]]
 ) -> Tuple[Any, Any]:
+    if isinstance(domain[0], (np.datetime64, pa.TimestampScalar)):
+        domain = (_util.to_unix_ts(domain[0]), _util.to_unix_ts(domain[1]))
+
     if isinstance(saturated_range, tuple):
         # Handle SOMA_GEOMETRY domain with is tuple[list[float], list[float]]
         if isinstance(domain[1], tuple):

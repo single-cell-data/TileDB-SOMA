@@ -314,7 +314,15 @@ class TenXCountMatrixReader:
 
     def unique_var_indices(self) -> pa.Array:
         """Returns the unique var indices that have non-zero values in the X matrix."""
-        return pacomp.unique(pa.array(self.var_indices))
+        var_indices = self.var_indices
+        if not isinstance(self.var_indices, pa.Array):
+            # This check is required for PyArrow 11.0.0. Otherwise, we get the
+            # error:
+            # E   pyarrow.lib.ArrowInvalid: Could not convert 
+            # <pyarrow.Int64Scalar: 0> with type pyarrow.lib.Int64Scalar: did 
+            # not recognize Python value type when inferring an Arrow data type
+            var_indices = pa.array(var_indices)
+        return pacomp.unique(var_indices)
 
     @property
     def var_id(self) -> pa.Array:
