@@ -661,6 +661,8 @@ uint64_t SOMAArray::nnz(bool raise_if_slow) {
     // the next non-empty domain, there is an overlap
 
     // TODO: We only need to apply the ``_nzz_slow`` on overlapping fragments
+    // Tracking issue:
+    // https://github.com/single-cell-data/TileDB-SOMA/issues/3908
     std::vector<std::pair<int64_t, int64_t>> overlapping_ranges;
     std::array<uint64_t, 2> current_range = non_empty_domains[0];
     uint64_t cell_count = fragment_info.cell_num(relevant_fragments[0]);
