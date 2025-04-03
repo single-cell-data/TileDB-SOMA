@@ -394,3 +394,120 @@ TEST_CASE("SOMASparseNDArray: can_resize", "[SOMASparseNDArray]") {
     REQUIRE(check.first == true);
     REQUIRE(check.second == "");
 }
+
+TEST_CASE("SOMASparseNDArray: nnz", "[SOMASparseNDArray]") {
+    int64_t dim_max = 999;
+
+    auto ctx = std::make_shared<SOMAContext>();
+    std::string uri = "mem://unit-test-sparse-ndarray-resize";
+
+    std::string dim_name = "soma_dim_0";
+    tiledb_datatype_t dim_tiledb_datatype = TILEDB_INT64;
+    tiledb_datatype_t attr_tiledb_datatype = TILEDB_INT32;
+    std::string dim_arrow_format = ArrowAdapter::tdb_to_arrow_type(
+        dim_tiledb_datatype);
+    std::string attr_arrow_format = ArrowAdapter::tdb_to_arrow_type(
+        attr_tiledb_datatype);
+
+    std::vector<helper::DimInfo> dim_infos(
+        {{.name = dim_name,
+          .tiledb_datatype = dim_tiledb_datatype,
+          .dim_max = dim_max,
+          .string_lo = "N/A",
+          .string_hi = "N/A"}});
+
+    auto index_columns = helper::create_column_index_info(dim_infos);
+
+    SOMASparseNDArray::create(
+        uri,
+        attr_arrow_format,
+        ArrowTable(
+            std::move(index_columns.first), std::move(index_columns.second)),
+        ctx);
+
+    // Create vectors of data for writing.
+    std::vector<int64_t> d0 = {1, 2, 3};
+    std::vector<int32_t> a0 = {0, 0, 0};
+
+    auto snda = SOMASparseNDArray::open(uri, OpenMode::write, ctx);
+    auto mq = ManagedQuery(*snda, ctx->tiledb_ctx());
+    mq.setup_write_column(
+        dim_infos[0].name, d0.size(), d0.data(), (uint64_t*)nullptr);
+    mq.setup_write_column(
+        "soma_data", a0.size(), a0.data(), (uint64_t*)nullptr);
+    mq.submit_write();
+    snda->close();
+
+    REQUIRE(snda->nnz() == 3);
+
+    // Write to non overlapping fragment
+    d0 = {4, 5, 6};
+    a0 = {1, 1, 1};
+
+    snda = SOMASparseNDArray::open(uri, OpenMode::write, ctx);
+    mq = ManagedQuery(*snda, ctx->tiledb_ctx());
+    mq.setup_write_column(
+        dim_infos[0].name, d0.size(), d0.data(), (uint64_t*)nullptr);
+    mq.setup_write_column(
+        "soma_data", a0.size(), a0.data(), (uint64_t*)nullptr);
+    mq.submit_write();
+    snda->close();
+
+    REQUIRE(snda->nnz() == 6);
+
+    // Write to partially overlapping fragment
+    d0 = {6, 7, 8};
+    a0 = {2, 2, 2};
+
+    snda = SOMASparseNDArray::open(uri, OpenMode::write, ctx);
+    mq = ManagedQuery(*snda, ctx->tiledb_ctx());
+    mq.setup_write_column(
+        dim_infos[0].name, d0.size(), d0.data(), (uint64_t*)nullptr);
+    mq.setup_write_column(
+        "soma_data", a0.size(), a0.data(), (uint64_t*)nullptr);
+    mq.submit_write();
+    snda->close();
+
+    REQUIRE(snda->nnz() == 8);
+
+    // Write to overlapping fragment
+    d0 = {1, 4, 8};
+    a0 = {3, 3, 3};
+
+    snda = SOMASparseNDArray::open(uri, OpenMode::write, ctx);
+    mq = ManagedQuery(*snda, ctx->tiledb_ctx());
+    mq.setup_write_column(
+        dim_infos[0].name, d0.size(), d0.data(), (uint64_t*)nullptr);
+    mq.setup_write_column(
+        "soma_data", a0.size(), a0.data(), (uint64_t*)nullptr);
+    mq.submit_write();
+    snda->close();
+
+    REQUIRE(snda->nnz() == 8);
+
+    // Write separate overlapping fragments
+    d0 = {10, 11, 12};
+    a0 = {4, 4, 4};
+
+    snda = SOMASparseNDArray::open(uri, OpenMode::write, ctx);
+    mq = ManagedQuery(*snda, ctx->tiledb_ctx());
+    mq.setup_write_column(
+        dim_infos[0].name, d0.size(), d0.data(), (uint64_t*)nullptr);
+    mq.setup_write_column(
+        "soma_data", a0.size(), a0.data(), (uint64_t*)nullptr);
+    mq.submit_write();
+
+    mq.reset();
+    d0 = {12, 13, 14};
+    a0 = {5, 5, 5};
+
+    mq = ManagedQuery(*snda, ctx->tiledb_ctx());
+    mq.setup_write_column(
+        dim_infos[0].name, d0.size(), d0.data(), (uint64_t*)nullptr);
+    mq.setup_write_column(
+        "soma_data", a0.size(), a0.data(), (uint64_t*)nullptr);
+    mq.submit_write();
+    snda->close();
+
+    REQUIRE(snda->nnz() == 13);
+}
