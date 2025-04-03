@@ -5,6 +5,7 @@ name: TileDB-SOMA Python CI (Packaging)
 
 on:
   push:
+    branches: [ main ]
     paths:
       - '.github/workflows/python-ci-packaging.yml'
       - 'apis/python/MANIFEST.in'

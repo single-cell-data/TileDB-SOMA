@@ -108,19 +108,3 @@ jobs:
       - name: Run pytests for Python
         shell: bash
         run: python -m pytest apis/python/remote_tests -v --durations=20 --maxfail=50
-
-  # File a bug report if anything fails, but don't file tickets for manual runs
-  # -- only for scheduled ones.
-  create_issue_on_fail:
-    runs-on: ubuntu-24.04
-    needs: [ci]
-    if: (failure() || cancelled()) && github.event_name != 'workflow_dispatch' && github.run_attempt == 1
-    steps:
-      - name: Checkout TileDB-SOMA `main`
-        uses: actions/checkout@v4
-      - name: Create Issue if Build Fails
-        uses: JasonEtco/create-an-issue@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          filename: .github/workflows/daily-remote-tests-issue-template.md
