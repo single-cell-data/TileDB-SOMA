@@ -1163,7 +1163,9 @@ def _revise_domain_for_extent(
     domain: Tuple[Any, Any], extent: Any, saturated_range: Union[bool, Tuple[bool, ...]]
 ) -> Tuple[Any, Any]:
     if isinstance(domain[0], (np.datetime64, pa.TimestampScalar)):
-        domain = (_util.to_unix_ts(domain[0]), _util.to_unix_ts(domain[1]))
+        domain = cast(
+            Tuple[Any, Any], (_util.to_unix_ts(domain[0]), _util.to_unix_ts(domain[1]))
+        )
 
     if isinstance(saturated_range, tuple):
         # Handle SOMA_GEOMETRY domain with is tuple[list[float], list[float]]
