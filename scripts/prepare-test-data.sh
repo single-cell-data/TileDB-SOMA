@@ -74,7 +74,7 @@ if [ -d $name ]; then
     echo "-- Skipping dataset 'data/$name'; directory 'data/$name' already exists."
 else
     if [ ! -f $name.tgz ]; then
-        wget https://github.com/single-cell-data/TileDB-SOMA-Test-Data/releases/download/dataset-2025-02-24/$name.tgz
+        wget https://github.com/single-cell-data/TileDB-SOMA-Test-Data/releases/download/dataset-2025-04-04/$name.tgz
     fi
     tar zxf $name.tgz
 fi
