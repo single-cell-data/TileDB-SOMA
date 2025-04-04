@@ -212,11 +212,11 @@ def default_max_domain(datatype: pa.DataType) -> AxisDomain:
         return md
     if pa.types.is_timestamp(datatype):
         return (
-            np.datetime64(
-                -(2**63) + 1, datatype.unit
+            pa.scalar(
+                -(2**63) + 1, type=pa.timestamp(datatype.unit)
             ),  # NB: -2**63 is NaT, per NEP-7, and indices can't be nullable
-            np.datetime64(
-                2**63 - 1_000_001, datatype.unit
+            pa.scalar(
+                2**63 - 1_000_001, type=pa.timestamp(datatype.unit)
             ),  # sc-61331: 1_000_001 appears to be a weird buggy magic number?
         )
 
@@ -252,7 +252,7 @@ def dataframe_domain(
         field = schema.field(field_name)
         if pa.types.is_primitive(field.type):
             zero = (
-                np.datetime64(0, field.type.unit)
+                pa.scalar(0, type=field.type)
                 if pa.types.is_timestamp(field.type)
                 else pa.scalar(0, type=field.type).as_py()
             )
@@ -289,30 +289,24 @@ def dataframe_domain(
                 else current_upper
             )
 
-            # pa.TimestampScalar overflows in a variety of situations, so don't use it
-            # (e.g., `pa.scalar(-161650356352888167,type=pa.timestamp('s')).as_py()` )
             if pa.types.is_timestamp(field.type):
-
-                def get_datetime(ts, field):
-                    return (
-                        np.datetime64(ts.value, field.type.unit)
-                        if isinstance(ts, pa.TimestampScalar)
-                        else ts
-                    )
-
-                lower = get_datetime(lower, field)
-                upper = get_datetime(upper, field)
-                current_lower = get_datetime(current_lower, field)
-                current_upper = get_datetime(current_upper, field)
-                max_lower = get_datetime(max_lower, field)
-                max_upper = get_datetime(max_upper, field)
+                # TypeError: '<=' not supported between instances of
+                # 'pyarrow.lib.TimestampScalar' and 'pyarrow.lib.TimestampScalar'
+                # so compare as int here
+                assert int(lower.value) <= int(upper.value)
+                assert (
+                    int(max_lower.value) <= int(lower.value) <= int(current_lower.value)
+                )
+                assert (
+                    int(max_upper.value) >= int(upper.value) >= int(current_upper.value)
+                )
             else:
                 lower = lower.as_py() if isinstance(lower, pa.Scalar) else lower
                 upper = upper.as_py() if isinstance(upper, pa.Scalar) else upper
+                assert lower <= upper
+                assert max_lower <= lower <= current_lower
+                assert max_upper >= upper >= current_upper
 
-            assert lower <= upper
-            assert max_lower <= lower <= current_lower
-            assert max_upper >= upper >= current_upper
             new_domain.append((lower, upper))
 
         else:
@@ -704,15 +698,7 @@ class SOMADataFrameStateMachine(SOMAArrayStateMachine):
         domain = []
         for iname, idomain in zip(self.index_column_names, self.domain):
             if idomain is not None:
-                if isinstance(idomain, np.datetime64):
-                    domain.append(
-                        (
-                            pa.scalar(idomain[0], type=pa.timestamp("s")),
-                            pa.scalar(idomain[1], type=pa.timestamp("s")),
-                        )
-                    )
-                else:
-                    domain.append(idomain)
+                domain.append(idomain)
             else:
                 type = self.schema.field(iname).type
                 if type in [
@@ -725,7 +711,7 @@ class SOMADataFrameStateMachine(SOMAArrayStateMachine):
                 elif pa.type.is_primitive(type):
                     domain.append((0, 0))
                 elif pa.types.is_timestamp(type):
-                    zero_ts = pa.scalar(0, type=pa.timestamp("s"))
+                    zero_ts = pa.scalar(0, type=type)
                     domain.append((zero_ts, zero_ts))
                 else:
                     domain.append(None)
