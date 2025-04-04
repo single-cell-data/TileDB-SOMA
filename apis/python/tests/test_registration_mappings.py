@@ -405,12 +405,14 @@ def test_isolated_soma_experiment_mappings(obs_field_name, var_field_name):
 @pytest.mark.parametrize("var_field_name", ["var_id", "gene_id"])
 @pytest.mark.parametrize("permutation", [[0, 1, 2, 3], [2, 3, 0, 1], [3, 2, 1, 0]])
 @pytest.mark.parametrize("solo_experiment_first", [True, False])
+@pytest.mark.parametrize("use_multiprocessing", [False, True])
 def test_multiples_without_experiment(
     tmp_path,
     obs_field_name,
     var_field_name,
     permutation,
     solo_experiment_first,
+    use_multiprocessing,
 ):
     h5ad1 = create_h5ad_canned(1, obs_field_name, var_field_name)
     h5ad2 = create_h5ad_canned(2, obs_field_name, var_field_name)
@@ -434,6 +436,7 @@ def test_multiples_without_experiment(
             measurement_name="measname",
             obs_field_name=obs_field_name,
             var_field_name=var_field_name,
+            use_multiprocessing=use_multiprocessing,
         )
         rd.prepare_experiment(experiment_uri)
 
@@ -445,6 +448,7 @@ def test_multiples_without_experiment(
             measurement_name="measname",
             obs_field_name=obs_field_name,
             var_field_name=var_field_name,
+            use_multiprocessing=use_multiprocessing,
         )
 
     assert_array_equal(
@@ -715,7 +719,8 @@ def test_multiples_without_experiment(
 
 @pytest.mark.parametrize("obs_field_name", ["obs_id", "cell_id"])
 @pytest.mark.parametrize("var_field_name", ["var_id", "gene_id"])
-def test_multiples_with_experiment(obs_field_name, var_field_name):
+@pytest.mark.parametrize("use_multiprocessing", [False,  True])
+def test_multiples_with_experiment(obs_field_name, var_field_name, use_multiprocessing):
     soma1 = create_soma_canned(1, obs_field_name, var_field_name)
     h5ad2 = create_h5ad_canned(2, obs_field_name, var_field_name)
     h5ad3 = create_h5ad_canned(3, obs_field_name, var_field_name)
@@ -727,6 +732,7 @@ def test_multiples_with_experiment(obs_field_name, var_field_name):
         measurement_name="measname",
         obs_field_name=obs_field_name,
         var_field_name=var_field_name,
+        use_multiprocessing=use_multiprocessing,
     )
 
     assert_array_equal(
