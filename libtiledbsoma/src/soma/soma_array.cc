@@ -573,36 +573,22 @@ uint64_t SOMAArray::nnz(bool raise_if_slow) {
         LOG_DEBUG(fragment_info_dump.str());
     }
 
-    // Find the subset of fragments contained within the read timestamp range
-    // [if any]
+    // Find the subset of fragments contained within the read timestamp range or
+    // are partially within [if any]
     std::vector<uint32_t> relevant_fragments;
     for (uint32_t fid = 0; fid < fragment_info.fragment_num(); fid++) {
         auto frag_ts = fragment_info.timestamp_range(fid);
         assert(frag_ts.first <= frag_ts.second);
-        if (timestamp_) {
-            if (frag_ts.first > timestamp_->second ||
-                frag_ts.second < timestamp_->first) {
-                // fragment is fully outside the read timestamp range: skip it
-                continue;
-            } else if (!(frag_ts.first >= timestamp_->first &&
-                         frag_ts.second <= timestamp_->second)) {
-                // fragment overlaps read timestamp range, but isn't fully
-                // contained within: fall back to count_cells to sort that out.
-                return _nnz_slow(raise_if_slow);
-            }
-        }
-        // fall through: fragment is fully contained within the read timestamp
-        // range
-        relevant_fragments.push_back(fid);
 
-        // If any relevant fragment is a consolidated fragment, fall back to
-        // counting cells, because the fragment may contain duplicates.
-        // If the application is allowing duplicates (in which case it's the
-        // application's job to otherwise ensure uniqueness), then
-        // sum-over-fragments is the right thing to do.
-        if (!schema_->allows_dups() && frag_ts.first != frag_ts.second) {
-            return _nnz_slow(raise_if_slow);
+        if (timestamp_ && (frag_ts.first > timestamp_->second ||
+                           frag_ts.second < timestamp_->first)) {
+            // fragment is fully outside the read timestamp range: skip it
+            continue;
         }
+
+        // fall through: fragment is fully/partially contained within the read
+        // timestamp range
+        relevant_fragments.push_back(fid);
     }
 
     auto fragment_count = relevant_fragments.size();
@@ -612,10 +598,10 @@ uint64_t SOMAArray::nnz(bool raise_if_slow) {
         return 0;
     }
 
-    if (fragment_count == 1) {
-        // Only one fragment; return its cell_num
-        return fragment_info.cell_num(relevant_fragments[0]);
-    }
+    // if (fragment_count == 1) {
+    //     // Only one fragment; return its cell_num
+    //     return fragment_info.cell_num(relevant_fragments[0]);
+    // }
 
     // Check for overlapping fragments on the first dimension and
     // compute total_cell_num while going through the loop
@@ -665,19 +651,42 @@ uint64_t SOMAArray::nnz(bool raise_if_slow) {
     // https://github.com/single-cell-data/TileDB-SOMA/issues/3908
     std::vector<std::pair<int64_t, int64_t>> overlapping_ranges;
     std::array<uint64_t, 2> current_range = non_empty_domains[0];
+
     uint64_t cell_count = fragment_info.cell_num(relevant_fragments[0]);
 
     bool overlap = false;
     for (uint32_t i = 1; i < fragment_count; ++i) {
         if (current_range[1] < non_empty_domains[i][0]) {
             // Fragment is non-overlapping.
+
             // Current range was overlapping with previous tiles
             // and we need to add it to the overlapping ranges.
             if (overlap) {
                 overlapping_ranges.push_back(
                     std::make_pair(current_range[0], current_range[1]));
             } else {
-                total_cell_num += cell_count;
+                auto frag_ts = fragment_info.timestamp_range(
+                    relevant_fragments[i - 1]);
+
+                if ((timestamp_ && !(frag_ts.first >= timestamp_->first &&
+                                     frag_ts.second <= timestamp_->second)) ||
+                    (!schema_->allows_dups() &&
+                     frag_ts.first != frag_ts.second)) {
+                    // fragment overlaps read timestamp range, but isn't fully
+                    // contained within: fall back to count_cells to sort that
+                    //                          or
+                    // If any relevant fragment is a consolidated fragment, fall
+                    // back to counting cells, because the fragment may contain
+                    // duplicates. If the application is allowing duplicates (in
+                    // which case it's the application's job to otherwise ensure
+                    // uniqueness), then sum-over-fragments is the right thing
+                    // to do.
+
+                    overlapping_ranges.push_back(
+                        std::make_pair(current_range[0], current_range[1]));
+                } else {
+                    total_cell_num += cell_count;
+                }
             }
 
             current_range = non_empty_domains[i];
@@ -697,7 +706,16 @@ uint64_t SOMAArray::nnz(bool raise_if_slow) {
         overlapping_ranges.push_back(
             std::make_pair(current_range[0], current_range[1]));
     } else {
-        total_cell_num += cell_count;
+        auto frag_ts = fragment_info.timestamp_range(relevant_fragments.back());
+
+        if ((timestamp_ && !(frag_ts.first >= timestamp_->first &&
+                             frag_ts.second <= timestamp_->second)) ||
+            (!schema_->allows_dups() && frag_ts.first != frag_ts.second)) {
+            overlapping_ranges.push_back(
+                std::make_pair(current_range[0], current_range[1]));
+        } else {
+            total_cell_num += cell_count;
+        }
     }
 
     // Found relevant fragments with overlap, count cells
