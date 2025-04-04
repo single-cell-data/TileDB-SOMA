@@ -418,12 +418,10 @@ TEST_CASE("SOMASparseNDArray: nnz", "[SOMASparseNDArray]") {
 
     auto index_columns = helper::create_column_index_info(dim_infos);
 
-    SOMASparseNDArray::create(
-        uri,
-        attr_arrow_format,
-        ArrowTable(
-            std::move(index_columns.first), std::move(index_columns.second)),
-        ctx);
+    SOMASparseNDArray::create(uri, attr_arrow_format, index_columns, ctx);
+
+    index_columns.first->release(index_columns.first.get());
+    index_columns.second->release(index_columns.second.get());
 
     // Create vectors of data for writing.
     std::vector<int64_t> d0 = {1, 2, 3};
