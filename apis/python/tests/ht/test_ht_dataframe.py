@@ -292,36 +292,20 @@ def dataframe_domain(
             # pa.TimestampScalar overflows in a variety of situations, so don't use it
             # (e.g., `pa.scalar(-161650356352888167,type=pa.timestamp('s')).as_py()` )
             if pa.types.is_timestamp(field.type):
-                lower = (
-                    np.datetime64(lower.value, field.type.unit)
-                    if isinstance(lower, pa.TimestampScalar)
-                    else lower
-                )
-                upper = (
-                    np.datetime64(upper.value, field.type.unit)
-                    if isinstance(upper, pa.TimestampScalar)
-                    else upper
-                )
-                current_lower = (
-                    np.datetime64(current_lower.value, field.type.unit)
-                    if isinstance(current_lower, pa.TimestampScalar)
-                    else current_lower
-                )
-                current_upper = (
-                    np.datetime64(current_upper.value, field.type.unit)
-                    if isinstance(current_upper, pa.TimestampScalar)
-                    else current_upper
-                )
-                max_lower = (
-                    np.datetime64(max_lower.value, field.type.unit)
-                    if isinstance(max_lower, pa.TimestampScalar)
-                    else max_lower
-                )
-                max_upper = (
-                    np.datetime64(max_upper.value, field.type.unit)
-                    if isinstance(max_upper, pa.TimestampScalar)
-                    else max_upper
-                )
+
+                def get_datetime(ts, field):
+                    return (
+                        np.datetime64(ts.value, field.type.unit)
+                        if isinstance(ts, pa.TimestampScalar)
+                        else ts
+                    )
+
+                lower = get_datetime(lower, field)
+                upper = get_datetime(upper, field)
+                current_lower = get_datetime(current_lower, field)
+                current_upper = get_datetime(current_upper, field)
+                max_lower = get_datetime(max_lower, field)
+                max_upper = get_datetime(max_upper, field)
             else:
                 lower = lower.as_py() if isinstance(lower, pa.Scalar) else lower
                 upper = upper.as_py() if isinstance(upper, pa.Scalar) else upper
