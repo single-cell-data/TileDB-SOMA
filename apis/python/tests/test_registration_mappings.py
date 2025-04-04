@@ -719,7 +719,7 @@ def test_multiples_without_experiment(
 
 @pytest.mark.parametrize("obs_field_name", ["obs_id", "cell_id"])
 @pytest.mark.parametrize("var_field_name", ["var_id", "gene_id"])
-@pytest.mark.parametrize("use_multiprocessing", [False,  True])
+@pytest.mark.parametrize("use_multiprocessing", [False, True])
 def test_multiples_with_experiment(obs_field_name, var_field_name, use_multiprocessing):
     soma1 = create_soma_canned(1, obs_field_name, var_field_name)
     h5ad2 = create_h5ad_canned(2, obs_field_name, var_field_name)
