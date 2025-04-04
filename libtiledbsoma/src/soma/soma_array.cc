@@ -559,6 +559,10 @@ uint64_t SOMAArray::nnz() {
         fragment_info.dump();
     }
 
+    if (fragment_info.fragment_num() == 1) {
+        return fragment_info.cell_num(0);
+    }
+
     // Find the subset of fragments contained within the read timestamp range
     // [if any]
     std::vector<uint32_t> relevant_fragments;
