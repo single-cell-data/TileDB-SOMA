@@ -271,6 +271,7 @@ def test_axis_mappings(obs_field_name, var_field_name):
     anndata1 = create_anndata_canned(1, obs_field_name, var_field_name)
     mapping = registration.AxisIDMapping.identity(10)
     assert_array_equal(mapping.data, np.arange(10))
+    assert mapping.is_identity()
 
     dictionary = registration.AxisAmbientLabelMapping(
         joinid_map=pd.Series(
@@ -298,6 +299,12 @@ def test_axis_mappings(obs_field_name, var_field_name):
 
     keys = list(anndata1.obs.index)
     assert_array_equal(d.id_mapping_from_values(keys).data, np.arange(len(keys)))
+
+
+def test_non_identity_axis_mappings():
+    mapping = registration.AxisIDMapping(data=np.arange(0, 100, 2, dtype=np.int64))
+    assert mapping.get_shape() == 99
+    assert not mapping.is_identity()
 
 
 @pytest.mark.parametrize("obs_field_name", ["obs_id", "cell_id"])
@@ -1665,7 +1672,7 @@ def test_prepare_experiment(tmp_path) -> None:
                 assert E.ms[ms].var.schema.field(k).type.ordered == cat_dtype.ordered
 
 
-def test_subset_from() -> None:
+def test_subset_from(tmp_path) -> None:
     # Test uses internal interfaces
 
     rng = np.random.default_rng()
@@ -1692,6 +1699,12 @@ def test_subset_from() -> None:
             rng.choice(catvals, size=len(adatas[i].raw.var))
         )
 
+    h5ads = []
+    for i, adata in enumerate(adatas):
+        fn = (tmp_path / f"_{i}.h5ad").as_posix()
+        adata.write_h5ad(fn)
+        h5ads.append(fn)
+
     rd = tiledbsoma.io.register_anndatas(
         None,
         adatas,
@@ -1700,8 +1713,10 @@ def test_subset_from() -> None:
         var_field_name="var_id",
     )
 
-    for adata in adatas:
+    for adata, h5ad in zip(adatas, h5ads):
         srd = rd.subset_for_anndata(adata)
+
+        assert srd == rd.subset_for_h5ad(h5ad)
 
         # confirm all of our joinids are present in the subset registration
         assert adata.obs.index.difference(srd.obs_axis.joinid_map.index).empty
