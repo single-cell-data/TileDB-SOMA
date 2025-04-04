@@ -105,13 +105,11 @@ struct VariouslyIndexedDataFrameFixture {
         auto [schema, index_columns] =
             helper::create_arrow_schema_and_index_columns(
                 dim_infos, attr_infos);
-        SOMADataFrame::create(
-            uri_,
-            std::move(schema),
-            ArrowTable(
-                std::move(index_columns.first),
-                std::move(index_columns.second)),
-            ctx_);
+        SOMADataFrame::create(uri_, schema, index_columns, ctx_);
+
+        schema->release(schema.get());
+        index_columns.first->release(index_columns.first.get());
+        index_columns.second->release(index_columns.second.get());
     }
 
     void create(
@@ -124,13 +122,15 @@ struct VariouslyIndexedDataFrameFixture {
                 dim_infos, attr_infos);
         SOMADataFrame::create(
             uri_,
-            std::move(schema),
-            ArrowTable(
-                std::move(index_columns.first),
-                std::move(index_columns.second)),
+            schema,
+            index_columns,
             ctx_,
             platform_config,
             timestamp_range);
+
+        schema->release(schema.get());
+        index_columns.first->release(index_columns.first.get());
+        index_columns.second->release(index_columns.second.get());
     }
 
     std::unique_ptr<SOMADataFrame> open(
@@ -245,6 +245,9 @@ TEST_CASE("SOMAColumn: SOMADimension") {
             dim_infos[i].tiledb_datatype);
     }
 
+    index_columns.first->release(index_columns.first.get());
+    index_columns.second->release(index_columns.second.get());
+
     REQUIRE(
         columns[1]->core_domain_slot<double_t>() ==
         std::make_pair<double_t, double_t>(0, helper::CORE_DOMAIN_MAX));
@@ -338,30 +341,51 @@ TEST_CASE_METHOD(
             ned_str = ArrowAdapter::get_table_string_column_by_name(
                 non_empty_domain, "mystring");
 
+        auto col_non_empty_domain = columns[0]->arrow_domain_slot(
+            *ctx_, raw_array, Domainish::kind_non_empty_domain);
         std::vector<std::string> ned_str_col = std::apply(
-            ArrowAdapter::get_array_string_column,
-            columns[0]->arrow_domain_slot(
-                *ctx_, raw_array, Domainish::kind_non_empty_domain));
+            ArrowAdapter::get_array_string_column, col_non_empty_domain);
 
         ArrowTable soma_domain = sdf->get_soma_domain();
         std::vector<std::string>
             dom_str = ArrowAdapter::get_table_string_column_by_name(
                 soma_domain, "mystring");
-
+        auto col_soma_domain = columns[0]->arrow_domain_slot(
+            *ctx_, raw_array, Domainish::kind_core_current_domain);
         std::vector<std::string> dom_str_col = std::apply(
-            ArrowAdapter::get_array_string_column,
-            columns[0]->arrow_domain_slot(
-                *ctx_, raw_array, Domainish::kind_core_current_domain));
+            ArrowAdapter::get_array_string_column, col_soma_domain);
 
         ArrowTable soma_maxdomain = sdf->get_soma_maxdomain();
         std::vector<std::string>
             maxdom_str = ArrowAdapter::get_table_string_column_by_name(
                 soma_maxdomain, "mystring");
 
+        auto col_soma_maxdomain = columns[0]->arrow_domain_slot(
+            *ctx_, raw_array, Domainish::kind_core_domain);
         std::vector<std::string> maxdom_str_col = std::apply(
-            ArrowAdapter::get_array_string_column,
-            columns[0]->arrow_domain_slot(
-                *ctx_, raw_array, Domainish::kind_core_domain));
+            ArrowAdapter::get_array_string_column, col_soma_maxdomain);
+
+        // Cleanup domain arrow tables
+        non_empty_domain.first->release(non_empty_domain.first.get());
+        non_empty_domain.second->release(non_empty_domain.second.get());
+        soma_domain.first->release(soma_domain.first.get());
+        soma_domain.second->release(soma_domain.second.get());
+        soma_maxdomain.first->release(soma_maxdomain.first.get());
+        soma_maxdomain.second->release(soma_maxdomain.second.get());
+
+        col_non_empty_domain.first->release(col_non_empty_domain.first);
+        col_non_empty_domain.second->release(col_non_empty_domain.second);
+        col_soma_domain.first->release(col_soma_domain.first);
+        col_soma_domain.second->release(col_soma_domain.second);
+        col_soma_maxdomain.first->release(col_soma_maxdomain.first);
+        col_soma_maxdomain.second->release(col_soma_maxdomain.second);
+
+        free(col_non_empty_domain.first);
+        free(col_non_empty_domain.second);
+        free(col_soma_domain.first);
+        free(col_soma_domain.second);
+        free(col_soma_maxdomain.first);
+        free(col_soma_maxdomain.second);
 
         REQUIRE(ned_str == std::vector<std::string>({"", ""}));
 
@@ -495,30 +519,52 @@ TEST_CASE_METHOD(
             ned_str = ArrowAdapter::get_table_string_column_by_name(
                 non_empty_domain, "mystring");
 
+        auto col_non_empty_domain = columns[0]->arrow_domain_slot(
+            *ctx_, raw_array, Domainish::kind_non_empty_domain);
         std::vector<std::string> ned_str_col = std::apply(
-            ArrowAdapter::get_array_string_column,
-            columns[0]->arrow_domain_slot(
-                *ctx_, raw_array, Domainish::kind_non_empty_domain));
+            ArrowAdapter::get_array_string_column, col_non_empty_domain);
 
         ArrowTable soma_domain = sdf->get_soma_domain();
         std::vector<std::string>
             dom_str = ArrowAdapter::get_table_string_column_by_name(
                 soma_domain, "mystring");
 
+        auto col_soma_domain = columns[0]->arrow_domain_slot(
+            *ctx_, raw_array, Domainish::kind_core_current_domain);
         std::vector<std::string> dom_str_col = std::apply(
-            ArrowAdapter::get_array_string_column,
-            columns[0]->arrow_domain_slot(
-                *ctx_, raw_array, Domainish::kind_core_current_domain));
+            ArrowAdapter::get_array_string_column, col_soma_domain);
 
         ArrowTable soma_maxdomain = sdf->get_soma_maxdomain();
         std::vector<std::string>
             maxdom_str = ArrowAdapter::get_table_string_column_by_name(
                 soma_maxdomain, "mystring");
 
+        auto col_soma_maxdomain = columns[0]->arrow_domain_slot(
+            *ctx_, raw_array, Domainish::kind_core_domain);
         std::vector<std::string> maxdom_str_col = std::apply(
-            ArrowAdapter::get_array_string_column,
-            columns[0]->arrow_domain_slot(
-                *ctx_, raw_array, Domainish::kind_core_domain));
+            ArrowAdapter::get_array_string_column, col_soma_maxdomain);
+
+        // Cleanup domain arrow tables
+        non_empty_domain.first->release(non_empty_domain.first.get());
+        non_empty_domain.second->release(non_empty_domain.second.get());
+        soma_domain.first->release(soma_domain.first.get());
+        soma_domain.second->release(soma_domain.second.get());
+        soma_maxdomain.first->release(soma_maxdomain.first.get());
+        soma_maxdomain.second->release(soma_maxdomain.second.get());
+
+        col_non_empty_domain.first->release(col_non_empty_domain.first);
+        col_non_empty_domain.second->release(col_non_empty_domain.second);
+        col_soma_domain.first->release(col_soma_domain.first);
+        col_soma_domain.second->release(col_soma_domain.second);
+        col_soma_maxdomain.first->release(col_soma_maxdomain.first);
+        col_soma_maxdomain.second->release(col_soma_maxdomain.second);
+
+        free(col_non_empty_domain.first);
+        free(col_non_empty_domain.second);
+        free(col_soma_domain.first);
+        free(col_soma_domain.second);
+        free(col_soma_maxdomain.first);
+        free(col_soma_maxdomain.second);
 
         REQUIRE(ned_str == std::vector<std::string>({"", ""}));
 

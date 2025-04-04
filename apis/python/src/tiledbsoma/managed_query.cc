@@ -127,9 +127,7 @@ void load_managed_query(py::module& m) {
 
                 py::gil_scoped_release release;
                 try {
-                    mq.set_array_data(
-                        std::make_unique<ArrowSchema>(arrow_schema),
-                        std::make_unique<ArrowArray>(arrow_array));
+                    mq.set_array_data(&arrow_schema, &arrow_array);
                 } catch (const std::exception& e) {
                     TPY_ERROR_LOC(e.what());
                 }

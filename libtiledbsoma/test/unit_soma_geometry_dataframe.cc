@@ -52,13 +52,16 @@ TEST_CASE("SOMAGeometryDataFrame: basic", "[SOMAGeometryDataFrame]") {
 
     SOMAGeometryDataFrame::create(
         uri,
-        std::move(schema),
-        ArrowTable(
-            std::move(index_columns.first), std::move(index_columns.second)),
+        schema,
+        index_columns,
         coord_space,
         ctx,
         platform_config,
         std::nullopt);
+
+    schema->release(schema.get());
+    index_columns.first->release(index_columns.first.get());
+    index_columns.second->release(index_columns.second.get());
 
     // Check the geometry dataframe exists and it cannot be read as a
     // different object.
@@ -114,13 +117,16 @@ TEST_CASE("SOMAGeometryDataFrame: Roundtrip", "[SOMAGeometryDataFrame]") {
 
     SOMAGeometryDataFrame::create(
         uri,
-        std::move(schema),
-        ArrowTable(
-            std::move(index_columns.first), std::move(index_columns.second)),
+        schema,
+        index_columns,
         coord_space,
         ctx,
         platform_config,
         std::nullopt);
+
+    schema->release(schema.get());
+    index_columns.first->release(index_columns.first.get());
+    index_columns.second->release(index_columns.second.get());
 
     // Create table of data for writing
     std::unique_ptr<ArrowSchema> data_schema = std::make_unique<ArrowSchema>(
@@ -206,9 +212,12 @@ TEST_CASE("SOMAGeometryDataFrame: Roundtrip", "[SOMAGeometryDataFrame]") {
                                                 OutlineTransformer(coord_space))
                                             .asTable();
 
-    mq.set_array_data(std::move(data_schema), std::move(data_array));
+    mq.set_array_data(data_schema.get(), data_array.get());
     mq.submit_write();
     soma_geometry->close();
+
+    data_schema->release(data_schema.get());
+    data_array->release(data_array.get());
 
     // Read back the data.
     soma_geometry = SOMAGeometryDataFrame::open(
