@@ -1133,23 +1133,8 @@ def _find_extent_for_domain(
     if np.issubdtype(dtype, NPInteger) or np.issubdtype(dtype, NPFloating):
         return min(extent, hi - lo + 1)
 
-    def get_datetime_extent(
-        lo: Union[int, pa.TimestampScalar, np.datetime64],
-        hi: Union[int, pa.TimestampScalar, np.datetime64],
-    ) -> int:
+    if dtype in ("datetime64[s]", "datetime64[ms]", "datetime64[us]", "datetime64[ns]"):
         return min(extent, _util.to_unix_ts(hi) - _util.to_unix_ts(lo) + 1)
-
-    if dtype == "datetime64[s]":
-        return get_datetime_extent(lo, hi)
-
-    if dtype == "datetime64[ms]":
-        return get_datetime_extent(lo, hi)
-
-    if dtype == "datetime64[us]":
-        return get_datetime_extent(lo, hi)
-
-    if dtype == "datetime64[ns]":
-        return get_datetime_extent(lo, hi)
 
     return extent
 
