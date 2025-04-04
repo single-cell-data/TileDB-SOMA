@@ -139,17 +139,7 @@ def validate_slice(slc: Slice[Any]) -> None:
         # All half-specified slices are valid.
         return
 
-    if isinstance(slc.stop, pa.TimestampScalar) or isinstance(
-        slc.start, pa.TimestampScalar
-    ):
-        if to_unix_ts(slc.stop) < to_unix_ts(slc.start):
-            raise ValueError(
-                f"slice start ({slc.start!r}) must be <= slice stop ({slc.stop!r})"
-            )
-        else:
-            return
-
-    if slc.stop < slc.start:
+    if to_unix_ts(slc.stop) < to_unix_ts(slc.start):
         raise ValueError(
             f"slice start ({slc.start!r}) must be <= slice stop ({slc.stop!r})"
         )

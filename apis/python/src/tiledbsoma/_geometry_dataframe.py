@@ -189,7 +189,10 @@ class GeometryDataFrame(SpatialDataFrame, somacore.GeometryDataFrame):
         soma_domain = tuple(mutable_soma_domain)
 
         index_column_schema = []
-        index_column_data = {}
+
+        # TODO this requires fixing the return type for _revise_domain_for_extent
+        # which is currently Tuple[Any, Any]
+        index_column_data: dict[str, Any] = {}
 
         for index_column_name, slot_soma_domain in zip(index_column_names, soma_domain):
             pa_field = schema.field(index_column_name)
