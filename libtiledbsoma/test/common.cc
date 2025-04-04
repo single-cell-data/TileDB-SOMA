@@ -134,8 +134,19 @@ std::unique_ptr<ArrowSchema> create_index_cols_info_schema(
     for (size_t i = 0; i < static_cast<size_t>(schema->n_children); ++i) {
         if (strcmp(schema->children[i]->name, "soma_geometry") == 0) {
             // Recreate schema for WKB domain (struct of floats)
-            auto geometry_schema = ArrowAdapter::make_arrow_schema_parent(
-                coordinate_space->size(), "soma_geometry");
+            auto geometry_schema = (ArrowSchema*)malloc(sizeof(ArrowSchema));
+            geometry_schema->format = strdup(
+                "+s");  // structure, i.e. non-leaf node
+            geometry_schema->name = strdup("soma_geometry");
+            geometry_schema->metadata = nullptr;
+            geometry_schema->flags = 0;
+            geometry_schema->n_children = static_cast<int64_t>(
+                coordinate_space->size());  // non-leaf node
+            geometry_schema->children = (ArrowSchema**)malloc(
+                geometry_schema->n_children * sizeof(ArrowSchema*));
+            geometry_schema->dictionary = nullptr;
+            geometry_schema->release = &ArrowAdapter::release_schema;
+            geometry_schema->private_data = nullptr;
             for (size_t j = 0; j < coordinate_space->size(); ++j) {
                 ArrowSchema* dim_schema = (ArrowSchema*)malloc(
                     sizeof(ArrowSchema));
@@ -155,8 +166,10 @@ std::unique_ptr<ArrowSchema> create_index_cols_info_schema(
                 geometry_schema->children[j] = dim_schema;
             }
 
-            schema->release(schema->children[i]);
-            schema->children[i] = geometry_schema.release();
+            schema->children[i]->release(schema->children[i]);
+            free(schema->children[i]);
+
+            schema->children[i] = geometry_schema;
         }
     }
 
@@ -198,13 +211,22 @@ static std::unique_ptr<ArrowArray> _create_index_cols_info_array(
         } else if (info.tiledb_datatype == TILEDB_GEOM_WKB) {
             // No domain can be set for WKB. The domain will be set to the
             // individual spatial axes.
-            dim_array = ArrowAdapter::make_arrow_array_parent(
-                            coordinate_space->size())
-                            .release();
+
+            dim_array = (ArrowArray*)malloc(sizeof(ArrowArray));
+            dim_array->length = 5;
+            dim_array->null_count = 0;
+            dim_array->offset = 0;
             dim_array->n_buffers = 1;
+            dim_array->n_children = static_cast<int64_t>(
+                coordinate_space->size());
             dim_array->buffers = (const void**)malloc(sizeof(void*));
             dim_array->buffers[0] = nullptr;
-            dim_array->length = 5;
+            dim_array->dictionary = nullptr;
+            dim_array->release = &ArrowAdapter::release_array;
+            dim_array->private_data = nullptr;
+
+            dim_array->children = (ArrowArray**)malloc(
+                coordinate_space->size() * sizeof(ArrowArray*));
             for (size_t j = 0; j < coordinate_space->size(); ++j) {
                 std::vector<double_t> dom(
                     {0,

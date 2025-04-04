@@ -44,9 +44,7 @@ TEST_CASE("SOMADenseNDArray: basic", "[SOMADenseNDArray]") {
         SOMADenseNDArray::create(
             uri,
             dim_arrow_format,
-            ArrowTable(
-                std::move(index_columns.first),
-                std::move(index_columns.second)),
+            index_columns,
             ctx,
             PlatformConfig(),
             TimestampRange(0, 2));
@@ -58,13 +56,14 @@ TEST_CASE("SOMADenseNDArray: basic", "[SOMADenseNDArray]") {
         REQUIRE_THROWS(SOMADenseNDArray::create(
             uri,
             dim_arrow_format,
-            ArrowTable(
-                std::move(index_columns.first),
-                std::move(index_columns.second)),
+            index_columns,
             ctx,
             PlatformConfig(),
             TimestampRange(0, 2)));
     }
+
+    index_columns.first->release(index_columns.first.get());
+    index_columns.second->release(index_columns.second.get());
 }
 
 TEST_CASE("SOMADenseNDArray: platform_config", "[SOMADenseNDArray]") {
@@ -89,13 +88,7 @@ TEST_CASE("SOMADenseNDArray: platform_config", "[SOMADenseNDArray]") {
 
     if (helper::have_dense_current_domain_support()) {
         SOMADenseNDArray::create(
-            uri,
-            arrow_format,
-            ArrowTable(
-                std::move(index_columns.first),
-                std::move(index_columns.second)),
-            ctx,
-            platform_config);
+            uri, arrow_format, index_columns, ctx, platform_config);
 
         auto dnda = SOMADenseNDArray::open(uri, OpenMode::read, ctx);
         auto dim_filter = dnda->tiledb_schema()
@@ -110,14 +103,11 @@ TEST_CASE("SOMADenseNDArray: platform_config", "[SOMADenseNDArray]") {
 
     } else {
         REQUIRE_THROWS(SOMADenseNDArray::create(
-            uri,
-            arrow_format,
-            ArrowTable(
-                std::move(index_columns.first),
-                std::move(index_columns.second)),
-            ctx,
-            platform_config));
+            uri, arrow_format, index_columns, ctx, platform_config));
     }
+
+    index_columns.first->release(index_columns.first.get());
+    index_columns.second->release(index_columns.second.get());
 }
 
 TEST_CASE("SOMADenseNDArray: metadata", "[SOMADenseNDArray]") {
@@ -140,8 +130,7 @@ TEST_CASE("SOMADenseNDArray: metadata", "[SOMADenseNDArray]") {
     SOMADenseNDArray::create(
         uri,
         arrow_format,
-        ArrowTable(
-            std::move(index_columns.first), std::move(index_columns.second)),
+        index_columns,
         ctx,
         PlatformConfig(),
         TimestampRange(0, 1));
@@ -194,4 +183,7 @@ TEST_CASE("SOMADenseNDArray: metadata", "[SOMADenseNDArray]") {
     dnda->open(OpenMode::read);
     REQUIRE(!dnda->has_metadata("md"));
     REQUIRE(dnda->metadata_num() == 2);
+
+    index_columns.first->release(index_columns.first.get());
+    index_columns.second->release(index_columns.second.get());
 }

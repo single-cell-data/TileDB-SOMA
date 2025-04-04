@@ -150,8 +150,8 @@ class SOMACollection : public SOMAGroup {
         std::string_view uri,
         URIType uri_type,
         std::shared_ptr<SOMAContext> ctx,
-        std::unique_ptr<ArrowSchema> schema,
-        ArrowTable index_columns,
+        const std::unique_ptr<ArrowSchema>& schema,
+        const ArrowTable& index_columns,
         PlatformConfig platform_config = PlatformConfig(),
         std::optional<TimestampRange> timestamp = std::nullopt);
 
@@ -169,8 +169,8 @@ class SOMACollection : public SOMAGroup {
         std::string_view uri,
         URIType uri_type,
         std::shared_ptr<SOMAContext> ctx,
-        std::unique_ptr<ArrowSchema> schema,
-        ArrowTable index_columns,
+        const std::unique_ptr<ArrowSchema>& schema,
+        const ArrowTable& index_columns,
         PlatformConfig platform_config = PlatformConfig(),
         std::optional<TimestampRange> timestamp = std::nullopt);
 
@@ -193,8 +193,8 @@ class SOMACollection : public SOMAGroup {
         std::string_view uri,
         URIType uri_type,
         std::shared_ptr<SOMAContext> ctx,
-        std::unique_ptr<ArrowSchema> schema,
-        ArrowTable index_columns,
+        const std::unique_ptr<ArrowSchema>& schema,
+        const ArrowTable& index_columns,
         PlatformConfig platform_config = PlatformConfig(),
         std::optional<TimestampRange> timestamp = std::nullopt);
 
@@ -218,7 +218,7 @@ class SOMACollection : public SOMAGroup {
         URIType uri_type,
         std::shared_ptr<SOMAContext> ctx,
         std::string_view format,
-        ArrowTable index_columns,
+        const ArrowTable& index_columns,
         PlatformConfig platform_config = PlatformConfig(),
         std::optional<TimestampRange> timestamp = std::nullopt);
 
@@ -242,7 +242,7 @@ class SOMACollection : public SOMAGroup {
         URIType uri_type,
         std::shared_ptr<SOMAContext> ctx,
         std::string_view format,
-        ArrowTable index_columns,
+        const ArrowTable& index_columns,
         PlatformConfig platform_config = PlatformConfig(),
         std::optional<TimestampRange> timestamp = std::nullopt);
 

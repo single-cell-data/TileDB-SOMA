@@ -358,7 +358,7 @@ class ArrowAdapter {
      *
      * @return ArrowSchema
      */
-    static std::unique_ptr<ArrowSchema> arrow_schema_from_tiledb_dimension(
+    static ArrowSchema* arrow_schema_from_tiledb_dimension(
         const Dimension& dimension);
 
     /**
