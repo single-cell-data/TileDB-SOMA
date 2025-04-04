@@ -228,7 +228,7 @@ void writeArrayFromArrow(
     auto mq = tdbs::ManagedQuery(*arrup, somactx->tiledb_ctx(), "unnamed");
     mq.set_layout(arraytype == "SOMADenseNDArray" ? 
                   ResultOrder::colmajor : ResultOrder::automatic);
-    mq.set_array_data(std::move(schema), std::move(array));
+    mq.set_array_data(schema.get(), array.get());
     mq.submit_write();
     mq.close();
 }
