@@ -139,7 +139,16 @@ def validate_slice(slc: Slice[Any]) -> None:
         # All half-specified slices are valid.
         return
 
-    if to_unix_ts(slc.stop) < to_unix_ts(slc.start):
+    if isinstance(slc.stop, pa.TimestampScalar) or isinstance(
+        slc.start, pa.TimestampScalar
+    ):
+        if to_unix_ts(slc.stop) < to_unix_ts(slc.start):
+            raise ValueError(
+                f"slice start ({slc.start!r}) must be <= slice stop ({slc.stop!r})"
+            )
+        return
+
+    if slc.stop < slc.start:
         raise ValueError(
             f"slice start ({slc.start!r}) must be <= slice stop ({slc.stop!r})"
         )
@@ -682,7 +691,7 @@ def _resolve_futures(unresolved: Dict[str, Any], deep: bool = False) -> Dict[str
     return resolved
 
 
-def to_unix_ts(dt: Union[int, pa.TimestampScalar, np.datetime64]) -> int:
+def to_unix_ts(dt: int | pa.TimestampScalar | np.datetime64) -> int:
     if isinstance(dt, pa.TimestampScalar):
         return int(dt.value)
     if isinstance(dt, np.datetime64):
