@@ -4,6 +4,11 @@
 \alias{SOMAArrayBase}
 \title{SOMA Array Base Class}
 \description{
+SOMA Array Base Class
+
+SOMA Array Base Class
+}
+\details{
 Adds SOMA-specific functionality to the \code{\link{TileDBArray}} class.  (lifecycle:
 maturing)
 }
@@ -21,6 +26,9 @@ maturing)
 \section{Methods}{
 \subsection{Public methods}{
 \itemize{
+\item \href{#method-SOMAArrayBase-allows_duplicates}{\code{SOMAArrayBase$allows_duplicates()}}
+\item \href{#method-SOMAArrayBase-attributes}{\code{SOMAArrayBase$attributes()}}
+\item \href{#method-SOMAArrayBase-is_sparse}{\code{SOMAArrayBase$is_sparse()}}
 \item \href{#method-SOMAArrayBase-clone}{\code{SOMAArrayBase$clone()}}
 }
 }
@@ -33,7 +41,6 @@ maturing)
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="is_open"><a href='../../tiledbsoma/html/TileDBObject.html#method-TileDBObject-is_open'><code>tiledbsoma::TileDBObject$is_open()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="mode"><a href='../../tiledbsoma/html/TileDBObject.html#method-TileDBObject-mode'><code>tiledbsoma::TileDBObject$mode()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="reopen"><a href='../../tiledbsoma/html/TileDBObject.html#method-TileDBObject-reopen'><code>tiledbsoma::TileDBObject$reopen()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="attributes"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-attributes'><code>tiledbsoma::TileDBArray$attributes()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="attrnames"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-attrnames'><code>tiledbsoma::TileDBArray$attrnames()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="close"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-close'><code>tiledbsoma::TileDBArray$close()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="colnames"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-colnames'><code>tiledbsoma::TileDBArray$colnames()</code></a></span></li>
@@ -54,6 +61,65 @@ maturing)
 </ul>
 </details>
 }}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SOMAArrayBase-allows_duplicates"></a>}}
+\if{latex}{\out{\hypertarget{method-SOMAArrayBase-allows_duplicates}{}}}
+\subsection{Method \code{allows_duplicates()}}{
+Does an array allow duplicates?
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SOMAArrayBase$allows_duplicates()}\if{html}{\out{</div>}}
+}
+
+\subsection{Returns}{
+\code{TRUE} if the underlying TileDB array allows duplicates;
+otherwise \code{FALSE}
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SOMAArrayBase-attributes"></a>}}
+\if{latex}{\out{\hypertarget{method-SOMAArrayBase-attributes}{}}}
+\subsection{Method \code{attributes()}}{
+Retrieve the array attributes
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SOMAArrayBase$attributes()}\if{html}{\out{</div>}}
+}
+
+\subsection{Returns}{
+A named list of array attributes; each entry contains the
+following named entries:
+\itemize{
+\item \dQuote{\code{name}}: name of the attribute
+\item \dQuote{\code{type}}: datatype of the attribute
+\item \dQuote{\code{ncells}}: number of values per dimension cell
+\item \dQuote{\code{nullable}}: is the attribute nullable
+\item \dQuote{\code{filter_list}}: a list with filter information; this
+list contains the following entries:
+\itemize{
+\item \dQuote{\code{filter_type}}
+\item \dQuote{\code{compression_level}}
+\item \dQuote{\code{bit_width}}
+\item \dQuote{\code{positive_delta}}
+\item \dQuote{\code{float_bytewidth}}
+\item \dQuote{\code{float_factor}}
+\item \dQuote{\code{float_offset}}
+}
+}
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SOMAArrayBase-is_sparse"></a>}}
+\if{latex}{\out{\hypertarget{method-SOMAArrayBase-is_sparse}{}}}
+\subsection{Method \code{is_sparse()}}{
+Is an array sparse?
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SOMAArrayBase$is_sparse()}\if{html}{\out{</div>}}
+}
+
+\subsection{Returns}{
+\code{TRUE} if the underlying TileDB array is sparse;
+otherwise \code{FALSE}
+}
+}
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-SOMAArrayBase-clone"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMAArrayBase-clone}{}}}
