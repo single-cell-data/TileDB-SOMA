@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import enum
 import warnings
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import Future, ThreadPoolExecutor
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -51,9 +51,12 @@ from somacore.query.query import (
 from somacore.query.types import IndexFactory, IndexLike
 from typing_extensions import Self
 
+from ._constants import SPATIAL_DISCLAIMER
+from ._dask.load import DaskConfig, load_daskarray
+
 if TYPE_CHECKING:
     from ._experiment import Experiment
-from ._constants import SPATIAL_DISCLAIMER
+
 from ._fastercsx import CompressedMatrix
 from ._measurement import Measurement
 from ._sparse_nd_array import SparseNDArray
@@ -405,6 +408,7 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
         varm_layers: Sequence[str] = (),
         varp_layers: Sequence[str] = (),
         drop_levels: bool = False,
+        dask: DaskConfig | None = None,
     ) -> AnnData:
         """Exports the query to an in-memory ``AnnData`` object.
 
@@ -426,6 +430,9 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
             drop_levels:
                 If true, drop unused categories from the ``obs`` and ``var`` dataframes.
                 Defaults to ``False``.
+            dask:
+                If not ``None``, load the X layer as a dask array. See
+                :class:`DaskConfig` for details.
         """
 
         if column_names is None:
@@ -456,13 +463,21 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
         var_joinids = self.var_joinids()
 
         x_matrices = {
-            _xname: tp.submit(
-                _read_as_csr,
-                layer,
-                obs_joinids,
-                var_joinids,
-                self._indexer.by_obs,
-                self._indexer.by_var,
+            _xname: (
+                tp.submit(
+                    _read_as_csr,
+                    layer,
+                    obs_joinids,
+                    var_joinids,
+                    self._indexer.by_obs,
+                    self._indexer.by_var,
+                )
+                if not dask
+                else load_daskarray(
+                    layer=layer,
+                    coords=(obs_joinids, var_joinids),
+                    **dask,
+                )
             )
             for _xname, layer in all_x_arrays.items()
         }
@@ -525,7 +540,7 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
                     var[name] = var[name].cat.remove_unused_categories()
 
         return AnnData(
-            X=x_future.result(),
+            X=x_future.result() if isinstance(x_future, Future) else x_future,
             obs=obs,
             var=var,
             obsm=(_resolve_futures(obsm_future) or None),
