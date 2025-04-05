@@ -563,36 +563,22 @@ uint64_t SOMAArray::nnz() {
         LOG_DEBUG(fragment_info_dump.str());
     }
 
-    // Find the subset of fragments contained within the read timestamp range
-    // [if any]
+    // Find the subset of fragments contained within the read timestamp range or
+    // are partially within [if any]
     std::vector<uint32_t> relevant_fragments;
     for (uint32_t fid = 0; fid < fragment_info.fragment_num(); fid++) {
         auto frag_ts = fragment_info.timestamp_range(fid);
         assert(frag_ts.first <= frag_ts.second);
-        if (timestamp_) {
-            if (frag_ts.first > timestamp_->second ||
-                frag_ts.second < timestamp_->first) {
-                // fragment is fully outside the read timestamp range: skip it
-                continue;
-            } else if (!(frag_ts.first >= timestamp_->first &&
-                         frag_ts.second <= timestamp_->second)) {
-                // fragment overlaps read timestamp range, but isn't fully
-                // contained within: fall back to count_cells to sort that out.
-                return _nnz_slow();
-            }
-        }
-        // fall through: fragment is fully contained within the read timestamp
-        // range
-        relevant_fragments.push_back(fid);
 
-        // If any relevant fragment is a consolidated fragment, fall back to
-        // counting cells, because the fragment may contain duplicates.
-        // If the application is allowing duplicates (in which case it's the
-        // application's job to otherwise ensure uniqueness), then
-        // sum-over-fragments is the right thing to do.
-        if (!schema_->allows_dups() && frag_ts.first != frag_ts.second) {
-            return _nnz_slow();
+        if (timestamp_ && (frag_ts.first > timestamp_->second ||
+                           frag_ts.second < timestamp_->first)) {
+            // fragment is fully outside the read timestamp range: skip it
+            continue;
         }
+
+        // fall through: fragment is fully/partially contained within the read
+        // timestamp range
+        relevant_fragments.push_back(fid);
     }
 
     auto fragment_count = relevant_fragments.size();
@@ -602,10 +588,10 @@ uint64_t SOMAArray::nnz() {
         return 0;
     }
 
-    if (fragment_count == 1) {
-        // Only one fragment; return its cell_num
-        return fragment_info.cell_num(relevant_fragments[0]);
-    }
+    // if (fragment_count == 1) {
+    //     // Only one fragment; return its cell_num
+    //     return fragment_info.cell_num(relevant_fragments[0]);
+    // }
 
     // Check for overlapping fragments on the first dimension and
     // compute total_cell_num while going through the loop
@@ -634,8 +620,6 @@ uint64_t SOMAArray::nnz() {
         // TODO[perf]: Reading fragment info is not supported on TileDB Cloud
         // yet, but reading one fragment at a time will be slow. Is there
         // another way?
-        total_cell_num += fragment_info.cell_num(relevant_fragments[i]);
-
         fragment_info.get_non_empty_domain(
             relevant_fragments[i], 0, &non_empty_domains[i]);
 
@@ -651,40 +635,126 @@ uint64_t SOMAArray::nnz() {
 
     // After sorting, if the end of a non-empty domain is >= the beginning of
     // the next non-empty domain, there is an overlap
+
+    // TODO: We only need to apply the ``_nzz_slow`` on overlapping fragments
+    // Tracking issue:
+    // https://github.com/single-cell-data/TileDB-SOMA/issues/3908
+    std::vector<std::pair<int64_t, int64_t>> overlapping_ranges;
+    std::array<uint64_t, 2> current_range = non_empty_domains[0];
+
+    uint64_t cell_count = fragment_info.cell_num(relevant_fragments[0]);
+
     bool overlap = false;
-    for (uint32_t i = 0; i < fragment_count - 1; i++) {
-        LOG_DEBUG(fmt::format(
-            "[SOMAArray] Checking {} < {}",
-            non_empty_domains[i][1],
-            non_empty_domains[i + 1][0]));
-        if (non_empty_domains[i][1] >= non_empty_domains[i + 1][0]) {
+    for (uint32_t i = 1; i < fragment_count; ++i) {
+        if (current_range[1] < non_empty_domains[i][0]) {
+            // Fragment is non-overlapping.
+
+            // Current range was overlapping with previous tiles
+            // and we need to add it to the overlapping ranges.
+            if (overlap) {
+                overlapping_ranges.push_back(
+                    std::make_pair(current_range[0], current_range[1]));
+            } else {
+                auto frag_ts = fragment_info.timestamp_range(
+                    relevant_fragments[i - 1]);
+
+                if ((timestamp_ && !(frag_ts.first >= timestamp_->first &&
+                                     frag_ts.second <= timestamp_->second)) ||
+                    (!schema_->allows_dups() &&
+                     frag_ts.first != frag_ts.second)) {
+                    // fragment overlaps read timestamp range, but isn't fully
+                    // contained within: fall back to count_cells to sort that
+                    //                          or
+                    // If any relevant fragment is a consolidated fragment, fall
+                    // back to counting cells, because the fragment may contain
+                    // duplicates. If the application is allowing duplicates (in
+                    // which case it's the application's job to otherwise ensure
+                    // uniqueness), then sum-over-fragments is the right thing
+                    // to do.
+
+                    overlapping_ranges.push_back(
+                        std::make_pair(current_range[0], current_range[1]));
+                } else {
+                    total_cell_num += cell_count;
+                }
+            }
+
+            current_range = non_empty_domains[i];
+            cell_count = fragment_info.cell_num(relevant_fragments[i]);
+            overlap = false;
+        } else if (current_range[1] >= non_empty_domains[i][1]) {
+            // Check if range is included completely
             overlap = true;
-            break;
+        } else if (current_range[1] < non_empty_domains[i][1]) {
+            // Check if range is partially overlapping
+            current_range[1] = non_empty_domains[i][1];
+            overlap = true;
         }
     }
 
-    // If relevant fragments do not overlap, return the total cell_num
-    if (!overlap) {
-        return total_cell_num;
+    if (overlap) {
+        overlapping_ranges.push_back(
+            std::make_pair(current_range[0], current_range[1]));
+    } else {
+        auto frag_ts = fragment_info.timestamp_range(relevant_fragments.back());
+
+        if ((timestamp_ && !(frag_ts.first >= timestamp_->first &&
+                             frag_ts.second <= timestamp_->second)) ||
+            (!schema_->allows_dups() && frag_ts.first != frag_ts.second)) {
+            overlapping_ranges.push_back(
+                std::make_pair(current_range[0], current_range[1]));
+        } else {
+            total_cell_num += cell_count;
+        }
     }
-    // Found relevant fragments with overlap, count cells
-    return _nnz_slow();
+
+    if (!overlapping_ranges.empty()) {
+        total_cell_num += _nnz_slow(overlapping_ranges);
+    }
+
+    return total_cell_num;
 }
 
-uint64_t SOMAArray::_nnz_slow() {
+uint64_t SOMAArray::_nnz_slow(
+    const std::vector<std::pair<int64_t, int64_t>>& ranges) {
     LOG_DEBUG(
         "[SOMAArray] nnz() found consolidated or overlapping fragments, "
         "counting cells...");
 
-    uint64_t total_cell_num = 0;
-    auto sr = SOMAArray::open(OpenMode::read, uri_, ctx_, timestamp_);
-    auto mq = ManagedQuery(*sr, ctx_->tiledb_ctx(), "count_cells");
-    mq.select_columns({schema_->domain().dimension(0).name()});
-    while (auto batch = mq.read_next()) {
-        total_cell_num += (*batch)->num_rows();
+    std::vector<uint64_t> count(1);
+    std::shared_ptr<Array> array = arr_;
+
+    if (!arr_->is_open() || arr_->query_type() != TILEDB_READ) {
+        auto temporal_policy = timestamp_.has_value() ?
+                                   TemporalPolicy(
+                                       TimestampStartEnd,
+                                       timestamp_->first,
+                                       timestamp_->second) :
+                                   TemporalPolicy();
+        array = std::make_shared<Array>(
+            *ctx_->tiledb_ctx(), uri_, TILEDB_READ, temporal_policy);
     }
 
-    return total_cell_num;
+    auto query = Query(*ctx_->tiledb_ctx(), *array);
+    auto subarray = Subarray(*ctx_->tiledb_ctx(), *array);
+
+    for (const auto& range : ranges) {
+        subarray.add_range(0, range.first, range.second);
+    }
+
+    // Get the default channel
+    QueryChannel default_channel = QueryExperimental::get_default_channel(
+        query);
+
+    // Apply count aggregate
+    default_channel.apply_aggregate("Count", CountOperation());
+
+    query.set_layout(TILEDB_UNORDERED)
+        .set_subarray(subarray)
+        .set_data_buffer("Count", count);
+    query.submit();
+
+    return count[0];
 }
 
 std::vector<int64_t> SOMAArray::shape() {

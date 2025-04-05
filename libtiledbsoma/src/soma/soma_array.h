@@ -1164,7 +1164,8 @@ class SOMAArray : public SOMAObject {
     std::shared_ptr<Array> meta_cache_arr_;
 
     // Unoptimized method for computing nnz() (issue `count_cells` query)
-    uint64_t _nnz_slow();
+    uint64_t _nnz_slow(
+        const std::vector<std::pair<int64_t, int64_t>>& ranges = {});
 };
 
 }  // namespace tiledbsoma
