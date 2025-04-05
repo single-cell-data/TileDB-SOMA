@@ -15,3 +15,4 @@ cd "$(dirname "$0")/../data"
 rm -rf soco
 rm -rf example-visium-v2 example-visium-v1
 rm -rf soma-experiment-versions
+rm -f  soma-experiment-versions.tgz
