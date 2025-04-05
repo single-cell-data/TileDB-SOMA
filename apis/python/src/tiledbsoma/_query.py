@@ -54,6 +54,7 @@ from typing_extensions import Self
 if TYPE_CHECKING:
     from ._experiment import Experiment
 from ._constants import SPATIAL_DISCLAIMER
+from ._exception import SOMAError
 from ._fastercsx import CompressedMatrix
 from ._measurement import Measurement
 from ._sparse_nd_array import SparseNDArray
@@ -812,7 +813,10 @@ def _read_as_csr(
 
     d0_joinids = d0_joinids_arr.to_numpy()
     d1_joinids = d1_joinids_arr.to_numpy()
-    nnz = matrix.nnz
+    try:
+        nnz = matrix._handle._handle.nnz(raise_if_slow=True)
+    except SOMAError:
+        nnz = -1
 
     # if able, downcast from int64 - reduces working memory
     index_dtype = (
@@ -867,7 +871,7 @@ def _read_as_csr(
             partition_size,
         )
     )
-    if len(splits) > 0:
+    if len(splits) > 1:
         d0_joinids_splits = np.array_split(np.partition(d0_joinids, splits), splits)
         tp = matrix.context.threadpool
         tbl = pa.concat_tables(

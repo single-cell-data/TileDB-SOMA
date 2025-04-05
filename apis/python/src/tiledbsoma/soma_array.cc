@@ -153,7 +153,11 @@ void load_soma_array(py::module& m) {
             &SOMAArray::config_options_from_schema)
         .def("context", &SOMAArray::ctx)
 
-        .def("nnz", &SOMAArray::nnz, py::call_guard<py::gil_scoped_release>())
+        .def(
+            "nnz",
+            &SOMAArray::nnz,
+            py::arg("raise_if_slow") = false,
+            py::call_guard<py::gil_scoped_release>())
 
         .def_property_readonly("uri", &SOMAArray::uri)
 
