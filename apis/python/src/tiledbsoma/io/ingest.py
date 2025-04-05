@@ -10,12 +10,20 @@ other formats. Currently only ``.h5ad`` (`AnnData <https://anndata.readthedocs.i
 
 from __future__ import annotations
 
+import contextlib
 import json
 import math
+import multiprocessing
+import os
 import time
+import warnings
+from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
+from functools import partial
+from itertools import repeat
 from typing import (
     Any,
     Dict,
+    Iterable,
     List,
     Literal,
     Mapping,
@@ -36,6 +44,7 @@ import numpy as np
 import pandas as pd
 import pyarrow as pa
 import scipy.sparse as sp
+from more_itertools import batched
 
 # As of anndata 0.11 we get a warning importing anndata.experimental.
 # But anndata.abc doesn't exist in anndata 0.10. And anndata 0.11 doesn't
@@ -105,7 +114,6 @@ from ._registration import (
     AxisIDMapping,
     ExperimentAmbientLabelMapping,
     ExperimentIDMapping,
-    get_dataframe_values,
 )
 from ._util import get_arrow_str_format, read_h5ad
 
@@ -135,7 +143,7 @@ class IngestionParams:
     ) -> None:
         if ingest_mode == "schema_only":
             self.write_schema_no_data = True
-            self.error_if_already_exists = True
+            self.error_if_already_exists = False
             self.skip_existing_nonempty_domain = False
             self.appending = False
 
@@ -190,24 +198,71 @@ def register_h5ads(
     var_field_name: str,
     append_obsm_varm: bool = False,
     context: SOMATileDBContext | None = None,
+    use_multiprocessing: bool = False,
 ) -> ExperimentAmbientLabelMapping:
     """Extends registration data from the baseline, already-written SOMA
     experiment to include multiple H5AD input files. See ``from_h5ad`` and
-    ``from_anndata`` on-line help."""
-    return ExperimentAmbientLabelMapping.from_h5ad_appends_on_experiment(
-        experiment_uri=experiment_uri,
-        h5ad_file_names=h5ad_file_names,
+    ``from_anndata`` on-line help.
+
+    If enabled via the ``use_multiprocessing`` parameter, this function will use multiprocessing
+    to register each H5AD in parallel. In cases with many files, this can produce a performance
+    benefit. Regardless of ``use_multiprocessing``, H5ADs will be registered concurrently -- you
+    can control the concurrency using the ``soma.compute_concurrency_level`` configuration
+    parameter in the ``context`` argument.
+    """
+
+    if isinstance(h5ad_file_names, str):
+        h5ad_file_names = [h5ad_file_names]
+
+    context = _validate_soma_tiledb_context(context)
+    concurrency_level = _concurrency_level(context)
+
+    logging.log_io(None, f"Loading per-axis metadata for {len(h5ad_file_names)} files.")
+    executor_context: contextlib.AbstractContextManager[
+        ProcessPoolExecutor | ThreadPoolExecutor
+    ]
+    if use_multiprocessing:
+        if multiprocessing.get_start_method() == "fork":
+            warnings.warn(
+                "Multiprocessing `fork` start method is inherently unsafe -- use `spawn`. See `multiprocessing.set_start_method()`",
+            )
+        executor_context = ProcessPoolExecutor(max_workers=concurrency_level)
+    else:
+        executor_context = contextlib.nullcontext(enter_result=context.threadpool)
+
+    with executor_context as executor:
+        axes_metadata = list(
+            executor.map(
+                ExperimentAmbientLabelMapping._load_axes_metadata_from_h5ads,
+                batched(
+                    h5ad_file_names,
+                    math.ceil(len(h5ad_file_names) / concurrency_level),
+                ),
+                repeat(obs_field_name),
+                repeat(var_field_name),
+                repeat(
+                    partial(
+                        ExperimentAmbientLabelMapping._validate_anndata,
+                        append_obsm_varm,
+                    )
+                ),
+            )
+        )
+    logging.log_io(None, "Loaded per-axis metadata")
+
+    return ExperimentAmbientLabelMapping._register_common(
+        experiment_uri,
+        axes_metadata,
         measurement_name=measurement_name,
         obs_field_name=obs_field_name,
         var_field_name=var_field_name,
-        append_obsm_varm=append_obsm_varm,
         context=context,
     )
 
 
 def register_anndatas(
     experiment_uri: str | None,
-    adatas: Sequence[ad.AnnData] | ad.AnnData,
+    adatas: Iterable[ad.AnnData] | ad.AnnData,
     *,
     measurement_name: str,
     obs_field_name: str,
@@ -218,13 +273,27 @@ def register_anndatas(
     """Extends registration data from the baseline, already-written SOMA
     experiment to include multiple H5AD input files. See ``from_h5ad`` and
     ``from_anndata`` on-line help."""
-    return ExperimentAmbientLabelMapping.from_anndata_appends_on_experiment(
-        experiment_uri=experiment_uri,
-        adatas=adatas,
+
+    if isinstance(adatas, ad.AnnData):
+        adatas = [adatas]
+
+    context = _validate_soma_tiledb_context(context)
+
+    axes_metadata = [
+        ExperimentAmbientLabelMapping._load_axes_metadata_from_anndatas(
+            adatas,
+            obs_field_name,
+            var_field_name,
+            partial(ExperimentAmbientLabelMapping._validate_anndata, append_obsm_varm),
+        )
+    ]
+
+    return ExperimentAmbientLabelMapping._register_common(
+        experiment_uri,
+        axes_metadata,
         measurement_name=measurement_name,
         obs_field_name=obs_field_name,
         var_field_name=var_field_name,
-        append_obsm_varm=append_obsm_varm,
         context=context,
     )
 
@@ -470,10 +539,14 @@ def from_anndata(
     #
     # * Here we select out the renumberings for the obs, var, X, etc. array indices
     if registration_mapping is None:
-        joinid_maps = ExperimentIDMapping.from_isolated_anndata(
+        joinid_maps = ExperimentIDMapping.from_anndata(
             anndata, measurement_name=measurement_name
         )
     else:
+        if not registration_mapping.prepared and Experiment.exists(experiment_uri):
+            raise SOMAError(
+                "Experiment must be prepared prior to ingestion. Please call ``registration_map.prepare_experiment`` method."
+            )
         joinid_maps = registration_mapping.id_mappings_for_anndata(
             anndata, measurement_name=measurement_name
         )
@@ -1114,11 +1187,15 @@ def _extract_new_values_for_append_aux(
     previous_sjids_table = previous_soma_dataframe.read(
         column_names=["soma_joinid"]
     ).concat()
-    previous_join_ids = set(
-        int(e)
-        for e in get_dataframe_values(previous_sjids_table.to_pandas(), SOMA_JOINID)
+    # use numpy.isin over pyarrow.compute.is_in, as it is MUCH faster
+    mask = pa.array(
+        np.isin(
+            arrow_table[SOMA_JOINID].to_numpy(),
+            previous_sjids_table[SOMA_JOINID].to_numpy(),
+            invert=True,
+        )
     )
-    mask = [e.as_py() not in previous_join_ids for e in arrow_table[SOMA_JOINID]]
+
     arrow_table = arrow_table.filter(mask)
 
     # Check if any new data.
@@ -2372,13 +2449,9 @@ def _write_matrix_to_sparseNDArray(
         soma_dim_1 = mat_coo.col + base if base > 0 and axis == 1 else mat_coo.col
 
         # Apply registration mappings: e.g. columns 0,1,2,3 in an AnnData file might
-        # have been assigned gene-ID labels 22,197,438,988. Don't do this for
-        # identity mappings, as this is a needless (and expensive) data copy.
-        if not axis_0_mapping.is_identity():
-            soma_dim_0 = [axis_0_mapping.data[e] for e in soma_dim_0]
-        if not axis_1_mapping.is_identity():
-            soma_dim_1 = [axis_1_mapping.data[e] for e in soma_dim_1]
-
+        # have been assigned gene-ID labels 22,197,438,988.
+        soma_dim_0 = axis_0_mapping.data[soma_dim_0]
+        soma_dim_1 = axis_1_mapping.data[soma_dim_1]
         pydict = {
             "soma_data": mat_coo.data,
             "soma_dim_0": soma_dim_0,
@@ -3022,3 +3095,24 @@ def _ingest_uns_ndarray(
 
     msg = f"Wrote   {soma_arr.uri} (uns ndarray)"
     logging.log_io(msg, msg)
+
+
+def _concurrency_level(context: SOMATileDBContext) -> int:
+    """
+    Private helper function to determine appropriate concurrency level for
+    ingestion of H5AD when use_multiprocessing is enabled.
+
+    Functionally, this just allows the user to control concurrency via the
+    context configuration ``soma.compute_concurrency_level``, with error checking.
+    """
+    concurrency_level: int = os.cpu_count() or 1
+    if context is not None:
+        concurrency_level = min(
+            concurrency_level,
+            int(
+                context.tiledb_config.get(
+                    "soma.compute_concurrency_level", concurrency_level
+                )
+            ),
+        )
+    return concurrency_level
