@@ -543,7 +543,7 @@ ArrowTable SOMAArray::_get_core_domainish(enum Domainish which_kind) {
     return ArrowTable(std::move(arrow_array), std::move(arrow_schema));
 }
 
-uint64_t SOMAArray::nnz() {
+uint64_t SOMAArray::nnz(bool raise_if_slow) {
     // Verify array is sparse
     if (schema_->array_type() != TILEDB_SPARSE) {
         throw TileDBSOMAError(
@@ -559,7 +559,7 @@ uint64_t SOMAArray::nnz() {
         fragment_info.dump();
     }
 
-    if (fragment_info.fragment_num() == 1) {
+    if (!schema_->allows_dups() && fragment_info.fragment_num() == 1) {
         return fragment_info.cell_num(0);
     }
 
@@ -578,7 +578,7 @@ uint64_t SOMAArray::nnz() {
                          frag_ts.second <= timestamp_->second)) {
                 // fragment overlaps read timestamp range, but isn't fully
                 // contained within: fall back to count_cells to sort that out.
-                return _nnz_slow();
+                return _nnz_slow(raise_if_slow);
             }
         }
         // fall through: fragment is fully contained within the read timestamp
@@ -591,7 +591,7 @@ uint64_t SOMAArray::nnz() {
         // application's job to otherwise ensure uniqueness), then
         // sum-over-fragments is the right thing to do.
         if (!schema_->allows_dups() && frag_ts.first != frag_ts.second) {
-            return _nnz_slow();
+            return _nnz_slow(raise_if_slow);
         }
     }
 
@@ -627,7 +627,7 @@ uint64_t SOMAArray::nnz() {
             "soma_joinid or int64 soma_dim_0: using _nnz_slow",
             tiledb::impl::type_to_str(type_code),
             dim_name));
-        return _nnz_slow();
+        return _nnz_slow(raise_if_slow);
     }
 
     for (uint32_t i = 0; i < fragment_count; i++) {
@@ -668,10 +668,15 @@ uint64_t SOMAArray::nnz() {
         return total_cell_num;
     }
     // Found relevant fragments with overlap, count cells
-    return _nnz_slow();
+    return _nnz_slow(raise_if_slow);
 }
 
-uint64_t SOMAArray::_nnz_slow() {
+uint64_t SOMAArray::_nnz_slow(bool raise_if_slow) {
+    if (raise_if_slow) {
+        throw TileDBSOMAError(
+            "NNZ slow path called with 'raise_if_slow==true'");
+    }
+
     LOG_DEBUG(
         "[SOMAArray] nnz() found consolidated or overlapping fragments, "
         "counting cells...");
