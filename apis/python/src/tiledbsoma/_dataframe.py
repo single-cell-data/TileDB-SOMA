@@ -13,6 +13,7 @@ from typing import (
     Any,
     Dict,
     List,
+    Literal,
     Sequence,
     Tuple,
     Union,
@@ -1106,7 +1107,7 @@ def _find_extent_for_domain(
     tiledb_create_write_options: TileDBCreateOptions,
     dtype: Any,
     slot_domain: Tuple[Any, Any],
-) -> Any:
+) -> int | float | Literal[""]:
     """Helper function for _build_tiledb_schema. Returns a tile extent that is
     small enough for the index-column type, and that also fits within the
     user-specified slot domain (if any).
@@ -1133,29 +1134,8 @@ def _find_extent_for_domain(
     if np.issubdtype(dtype, NPInteger) or np.issubdtype(dtype, NPFloating):
         return min(extent, hi - lo + 1)
 
-    if dtype == "datetime64[s]":
-        ilo = int(lo.astype("int64"))
-        ihi = int(hi.astype("int64"))
-        iextent = min(extent, ihi - ilo + 1)
-        return np.datetime64(iextent, "s")
-
-    if dtype == "datetime64[ms]":
-        ilo = int(lo.astype("int64"))
-        ihi = int(hi.astype("int64"))
-        iextent = min(extent, ihi - ilo + 1)
-        return np.datetime64(iextent, "ms")
-
-    if dtype == "datetime64[us]":
-        ilo = int(lo.astype("int64"))
-        ihi = int(hi.astype("int64"))
-        iextent = min(extent, ihi - ilo + 1)
-        return np.datetime64(iextent, "us")
-
-    if dtype == "datetime64[ns]":
-        ilo = int(lo.astype("int64"))
-        ihi = int(hi.astype("int64"))
-        iextent = min(extent, ihi - ilo + 1)
-        return np.datetime64(iextent, "ns")
+    if dtype in ("datetime64[s]", "datetime64[ms]", "datetime64[us]", "datetime64[ns]"):
+        return min(extent, _util.to_unix_ts(hi) - _util.to_unix_ts(lo) + 1)
 
     return extent
 
@@ -1168,6 +1148,11 @@ def _find_extent_for_domain(
 def _revise_domain_for_extent(
     domain: Tuple[Any, Any], extent: Any, saturated_range: Union[bool, Tuple[bool, ...]]
 ) -> Tuple[Any, Any]:
+    if isinstance(domain[0], (np.datetime64, pa.TimestampScalar)):
+        domain = cast(
+            Tuple[Any, Any], (_util.to_unix_ts(domain[0]), _util.to_unix_ts(domain[1]))
+        )
+
     if isinstance(saturated_range, tuple):
         # Handle SOMA_GEOMETRY domain with is tuple[list[float], list[float]]
         if isinstance(domain[1], tuple):
