@@ -13,14 +13,13 @@ from __future__ import annotations
 import json
 import warnings
 from pathlib import Path
-from typing import Sequence
+from typing import Sequence, Type, TypeVar
 
 import attrs
 import numpy as np
 import pandas as pd
 import pyarrow as pa
-import pyarrow.compute as pacomp
-import scanpy
+import scipy.sparse as sp
 from typing_extensions import Self
 
 try:
@@ -38,6 +37,7 @@ from ... import (
     DataFrame,
     DenseNDArray,
     Experiment,
+    Measurement,
     MultiscaleImage,
     PointCloudDataFrame,
     Scene,
@@ -45,7 +45,8 @@ from ... import (
     _util,
     logging,
 )
-from ..._constants import SPATIAL_DISCLAIMER
+from ..._common_nd_array import NDArray
+from ..._constants import SOMA_JOINID, SPATIAL_DISCLAIMER
 from ..._exception import (
     AlreadyExistsError,
     NotCreateableError,
@@ -54,22 +55,31 @@ from ..._exception import (
 from ..._soma_object import AnySOMAObject
 from ..._types import IngestMode
 from ...options import SOMATileDBContext
+from ...options._soma_tiledb_context import _validate_soma_tiledb_context
 from ...options._tiledb_create_write_options import (
     TileDBCreateOptions,
     TileDBWriteOptions,
 )
-from .. import conversions, from_anndata
+from .. import conversions
 from .._common import AdditionalMetadata
-from .._registration import ExperimentAmbientLabelMapping
+from .._registration import (
+    AxisIDMapping,
+    ExperimentAmbientLabelMapping,
+    ExperimentIDMapping,
+)
 from ..ingest import (
     IngestCtx,
     IngestionParams,
+    IngestPlatformCtx,
     _create_or_open_collection,
     _maybe_set,
     _write_arrow_table,
+    _write_matrix_to_denseNDArray,
     add_metadata,
 )
-from ._util import _read_visium_software_version
+from ._util import TenXCountMatrixReader, _read_visium_software_version
+
+_NDArr = TypeVar("_NDArr", bound=NDArray)
 
 
 def path_validator(instance, attribute, value: Path) -> None:  # type: ignore[no-untyped-def]
@@ -271,7 +281,6 @@ def from_visium(
     context: SOMATileDBContext | None = None,
     platform_config: PlatformConfig | None = None,
     X_layer_name: str = "data",
-    raw_X_layer_name: str = "data",
     image_name: str = "tissue",
     image_channel_first: bool = True,
     ingest_mode: IngestMode = "write",
@@ -298,8 +307,7 @@ def from_visium(
         context: Optional :class:`SOMATileDBContext` containing storage parameters, etc.
         platform_config: Platform-specific options used to specify TileDB options when
             creating and writing to SOMA objects.
-        X_layer_name: SOMA array name for the AnnData's ``X`` matrix.
-        raw_X_layer_name: SOMA array name for the AnnData's ``raw/X`` matrix.
+        X_layer_name: SOMA array name for the ``X`` matrix.
         image_name: SOMA multiscale image name for the multiscale image of the
             Space Ranger output images.
         image_channel_first: If ``True``, the image is ingested in channel-first format.
@@ -365,70 +373,54 @@ def from_visium(
         Experimental
     """
 
-    if ingest_mode != "write":
-        raise NotImplementedError(
-            f'the only ingest_mode currently supported is "write"; got "{ingest_mode}"'
-        )
-
     # Disclaimer about the experimental nature of the generated experiment.
     warnings.warn(SPATIAL_DISCLAIMER, stacklevel=2)
 
-    # Get input file locations.
-    input_paths = (
-        input_path
-        if isinstance(input_path, VisiumPaths)
-        else VisiumPaths.from_base_folder(input_path, use_raw_counts=use_raw_counts)
-    )
-
-    # Check the version.
-    major_version = (
-        input_paths.version[0]
-        if isinstance(input_paths.version, tuple)
-        else input_paths.version
-    )
-    if major_version is None:
-        raise ValueError("Unable to determine version number of Visium input")
-    if major_version not in {1, 2, 3}:
-        raise ValueError(
-            f"Visium version {input_paths.version} is not supported. Expected major "
-            f"version 1, 2, or 3."
+    # Check ingestion mode and create Ingestion params class.
+    if ingest_mode != "write":
+        raise NotImplementedError(
+            f"Support for ingest mode '{ingest_mode}' is not implemented. Currently, "
+            f"only support for 'write' mode is implemented."
         )
-
-    # Get JSON scale factors.
-    with open(
-        input_paths.scale_factors, mode="r", encoding="utf-8"
-    ) as scale_factors_json:
-        scale_factors = json.load(scale_factors_json)
-
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
-        adata = scanpy.read_10x_h5(input_paths.gene_expression)
-
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
-        uri = from_anndata(
-            experiment_uri,
-            adata,
-            measurement_name,
-            context=context,
-            platform_config=platform_config,
-            X_layer_name=X_layer_name,
-            raw_X_layer_name=raw_X_layer_name,
-            ingest_mode=ingest_mode,
-            use_relative_uri=use_relative_uri,
-            X_kind=X_kind,
-            registration_mapping=registration_mapping,
-            additional_metadata=additional_metadata,
+    ingestion_params = IngestionParams(ingest_mode, registration_mapping)
+    if ingestion_params.appending and X_kind == DenseNDArray:
+        raise NotImplementedError(
+            "Support for appending to `X_kind=DenseNDArray` is not implemented."
         )
+    if ingestion_params.appending:
+        raise NotImplementedError("Suport for appending is not implemented.")
 
-    # Set the ingestion parameters.
+    # Check context and create keyword argument dicts.
+    # - Create `ingest_ctx` for keyword args for creating SOMAGroup objects.
+    # - Create `ingestion_platform_ctx` for keyword args for creating SOMAArray objects.
+    context = _validate_soma_tiledb_context(context)
     ingest_ctx: IngestCtx = {
         "context": context,
         "ingestion_params": IngestionParams(ingest_mode, registration_mapping),
         "additional_metadata": additional_metadata,
     }
+    ingest_platform_ctx: IngestPlatformCtx = dict(
+        **ingest_ctx, platform_config=platform_config
+    )
 
-    # Get the spot diameters from teh scale factors file.
+    # Get input file locations and check the version is compatible.
+    input_paths = (
+        input_path
+        if isinstance(input_path, VisiumPaths)
+        else VisiumPaths.from_base_folder(input_path, use_raw_counts=use_raw_counts)
+    )
+    if input_paths.major_version not in {1, 2}:
+        raise ValueError(
+            f"Visium version {input_paths.version} is not supported. Expected major "
+            f"version 1 or 2."
+        )
+
+    # Get JSON scale factors.
+    # -- Get the spot diameters from teh scale factors file.
+    with open(
+        input_paths.scale_factors, mode="r", encoding="utf-8"
+    ) as scale_factors_json:
+        scale_factors = json.load(scale_factors_json)
     pixels_per_spot_diameter = scale_factors["spot_diameter_fullres"]
 
     # Create a list of image paths.
@@ -449,27 +441,158 @@ def from_visium(
         (Axis(name="x", unit="pixels"), Axis(name="y", unit="pixels"))  # type: ignore[arg-type]
     )
 
-    with Experiment.open(uri, mode="r", context=context) as exp:
-        obs_df = (
-            exp.obs.read(column_names=["soma_joinid", "obs_id"]).concat().to_pandas()
+    # Read 10x HDF5 gene expression file.
+    start_time = _util.get_start_stamp()
+    logging.log_io(None, f"START READING {input_paths.gene_expression}")
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+    with TenXCountMatrixReader(input_paths.gene_expression) as reader:
+        reader.load()
+        nobs = reader.nobs
+        nvar = reader.nvar
+        obs_data = pa.Table.from_pydict(
+            {
+                SOMA_JOINID: pa.array(np.arange(nobs, dtype=np.int64)),
+                "obs_id": reader.obs_id,
+            }
         )
-        x_layer = exp.ms[measurement_name].X[X_layer_name]
-        (len_obs_id, len_var_id) = x_layer.shape
-        if write_obs_spatial_presence or write_var_spatial_presence:
-            x_layer_data = x_layer.read().tables().concat()
-            if write_obs_spatial_presence:
-                obs_id = pacomp.unique(x_layer_data["soma_dim_0"])
+        var_data = pa.Table.from_pydict(
+            {
+                SOMA_JOINID: np.arange(nvar, dtype=np.int64),
+                "var_id": reader.var_id,
+                "gene_ids": reader.gene_id,
+                "feature_types": reader.feature_type,
+                "genome": reader.genome,
+            }
+        )
+    logging.log_io(None, _util.format_elapsed(start_time, "FINISHED READING"))
 
-            if write_var_spatial_presence:
-                var_id = pacomp.unique(x_layer_data["soma_dim_1"])
+    # Create registration mapping if none was provided and get obs/var data needed
+    # for spatial indexing.
+    if registration_mapping is None:
+        joinid_maps = ExperimentIDMapping(
+            obs_axis=AxisIDMapping(data=tuple(range(nobs))),
+            var_axes={measurement_name: AxisIDMapping(data=tuple(range(nvar)))},
+        )
+    else:
+        raise NotImplementedError("Support for appending is not yet implemented.")
 
-    # Add spatial information to the experiment.
-    with Experiment.open(experiment_uri, mode="w", context=context) as exp:
+    # Write the new experiment.
+    start_time = _util.get_start_stamp()
+    logging.log_io(None, f"START  WRITING {experiment_uri}")
+    with _create_or_open_collection(
+        Experiment, experiment_uri, **ingest_ctx
+    ) as experiment:
+
+        # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+        # OBS
+        df_uri = _util.uri_joinpath(experiment_uri, "obs")
+        with _write_arrow_to_dataframe(
+            df_uri, obs_data, max_size=nobs, **ingest_platform_ctx
+        ) as obs:
+            _maybe_set(experiment, "obs", obs, use_relative_uri=use_relative_uri)
+
+        # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+        # OBS
+        if write_obs_spatial_presence:
+            obs_spatial_presence_uri = _util.uri_joinpath(
+                experiment_uri, "obs_spatial_presence"
+            )
+            unique_obs_id = reader.unique_obs_indices()
+            obs_spatial_presence = _write_scene_presence_dataframe(
+                unique_obs_id,
+                nobs,
+                scene_name,
+                obs_spatial_presence_uri,
+                **ingest_platform_ctx,
+            )
+            _maybe_set(
+                experiment,
+                "obs_spatial_presence",
+                obs_spatial_presence,
+                use_relative_uri=use_relative_uri,
+            )
+
+        # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+        # MS
+        experiment_ms_uri = _util.uri_joinpath(experiment_uri, "ms")
+
+        with _create_or_open_collection(
+            Collection[Measurement], experiment_ms_uri, **ingest_ctx
+        ) as ms:
+            _maybe_set(experiment, "ms", ms, use_relative_uri=use_relative_uri)
+
+            # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+            # MS/meas
+            measurement_uri = _util.uri_joinpath(experiment_ms_uri, measurement_name)
+            with _create_or_open_collection(
+                Measurement, measurement_uri, **ingest_ctx
+            ) as measurement:
+                _maybe_set(
+                    ms, measurement_name, measurement, use_relative_uri=use_relative_uri
+                )
+
+                # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                # MS/meas/VAR
+                var_uri = _util.uri_joinpath(measurement_uri, "var")
+                with _write_arrow_to_dataframe(
+                    var_uri, var_data, max_size=nvar, **ingest_platform_ctx
+                ) as var:
+                    _maybe_set(
+                        measurement, "var", var, use_relative_uri=use_relative_uri
+                    )
+
+                # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                # MS/meas/VAR_SPATIAL_PRESENCE
+                if write_var_spatial_presence:
+                    var_spatial_presence_uri = _util.uri_joinpath(
+                        measurement_uri,
+                        "var_spatial_presence",
+                    )
+                    unique_var_id = reader.unique_var_indices()
+                    var_spatial_presence = _write_scene_presence_dataframe(
+                        unique_var_id,
+                        nvar,
+                        scene_name,
+                        var_spatial_presence_uri,
+                        **ingest_ctx,
+                    )
+                    _maybe_set(
+                        measurement,
+                        "var_spatial_presence",
+                        var_spatial_presence,
+                        use_relative_uri=use_relative_uri,
+                    )
+
+                # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                # MS/meas/X/DATA
+                measurement_X_uri = _util.uri_joinpath(measurement_uri, "X")
+                with _create_or_open_collection(
+                    Collection, measurement_X_uri, **ingest_ctx
+                ) as x:
+                    _maybe_set(measurement, "X", x, use_relative_uri=use_relative_uri)
+                    X_layer_uri = _util.uri_joinpath(measurement_X_uri, X_layer_name)
+                    with _write_X_layer(
+                        X_kind,
+                        X_layer_uri,
+                        reader,
+                        joinid_maps.obs_axis,
+                        joinid_maps.var_axes[measurement_name],
+                        **ingest_platform_ctx,
+                    ) as data:
+                        _maybe_set(
+                            x, X_layer_name, data, use_relative_uri=use_relative_uri
+                        )
+
+        # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+        # SPATIAL
         spatial_uri = _util.uri_joinpath(experiment_uri, "spatial")
         with _create_or_open_collection(
             Collection[Scene], spatial_uri, **ingest_ctx
         ) as spatial:
-            _maybe_set(exp, "spatial", spatial, use_relative_uri=use_relative_uri)
+            _maybe_set(
+                experiment, "spatial", spatial, use_relative_uri=use_relative_uri
+            )
             scene_uri = _util.uri_joinpath(spatial_uri, scene_name)
             with _create_or_open_scene(scene_uri, **ingest_ctx) as scene:
                 _maybe_set(
@@ -491,7 +614,7 @@ def from_visium(
                             image_paths,
                             image_channel_first=image_channel_first,
                             use_relative_uri=use_relative_uri,
-                            **ingest_ctx,
+                            **ingest_platform_ctx,
                         ) as tissue_image:
                             _maybe_set(
                                 img,
@@ -542,10 +665,10 @@ def from_visium(
                         input_paths.tissue_positions,
                         input_paths.major_version,
                         pixels_per_spot_diameter,
-                        obs_df,
+                        obs_data,
                         "obs_id",
-                        len_obs_id,
-                        **ingest_ctx,
+                        nobs,
+                        **ingest_platform_ctx,
                     ) as loc:
                         _maybe_set(obsl, "loc", loc, use_relative_uri=use_relative_uri)
                         scene.set_transform_to_point_cloud_dataframe(
@@ -559,34 +682,137 @@ def from_visium(
                 ) as varl:
                     _maybe_set(scene, "varl", varl, use_relative_uri=use_relative_uri)
 
-        # Create the obs presence matrix.
-        if write_obs_spatial_presence:
-            obs_spatial_presence_uri = _util.uri_joinpath(uri, "obs_spatial_presence")
-            obs_spatial_presence = _write_scene_presence_dataframe(
-                obs_id, len_obs_id, scene_name, obs_spatial_presence_uri, **ingest_ctx
-            )
-            _maybe_set(
-                exp,
-                "obs_spatial_presence",
-                obs_spatial_presence,
-                use_relative_uri=use_relative_uri,
-            )
-        if write_var_spatial_presence:
-            var_spatial_presence_uri = _util.uri_joinpath(
-                _util.uri_joinpath(_util.uri_joinpath(uri, "ms"), measurement_name),
-                "var_spatial_presence",
-            )
-            var_spatial_presence = _write_scene_presence_dataframe(
-                var_id, len_var_id, scene_name, var_spatial_presence_uri, **ingest_ctx
-            )
-            meas = exp.ms[measurement_name]
-            _maybe_set(
-                meas,
-                "var_spatial_presence",
-                var_spatial_presence,
-                use_relative_uri=use_relative_uri,
-            )
-    return uri
+    logging.log_io(
+        f"Wrote   {experiment.uri}",
+        _util.format_elapsed(start_time, f"FINISH WRITING {experiment.uri}"),
+    )
+
+    return experiment.uri
+
+
+def _write_arrow_to_dataframe(
+    df_uri: str,
+    arrow_table: pa.Table,
+    max_size: int,
+    *,
+    ingestion_params: IngestionParams,
+    additional_metadata: AdditionalMetadata = None,
+    platform_config: PlatformConfig | None = None,
+    context: SOMATileDBContext | None = None,
+) -> DataFrame:
+    # Start timer
+    start_time = _util.get_start_stamp()
+    logging.log_io(None, f"START WRITING {df_uri}")
+
+    try:
+        soma_df = DataFrame.create(
+            df_uri,
+            schema=arrow_table.schema,
+            domain=[[0, max_size - 1]],
+            platform_config=platform_config,
+            context=context,
+        )
+    except (AlreadyExistsError, NotCreateableError):
+        raise SOMAError(f"{df_uri} already exists")
+
+    if not ingestion_params.write_schema_no_data:
+        tiledb_create_options = TileDBCreateOptions.from_platform_config(
+            platform_config
+        )
+        tiledb_write_options = TileDBWriteOptions.from_platform_config(platform_config)
+        _write_arrow_table(
+            arrow_table,
+            soma_df,
+            tiledb_create_options,
+            tiledb_write_options,
+        )
+
+    add_metadata(soma_df, additional_metadata)
+
+    logging.log_io(
+        f"Wrote {df_uri}",
+        _util.format_elapsed(start_time, f"FINISH WRITING {df_uri}"),
+    )
+    return soma_df
+
+
+def _write_X_layer(
+    cls: Type[_NDArr],
+    uri: str,
+    reader: TenXCountMatrixReader,
+    axis_0_mapping: AxisIDMapping,
+    axis_1_mapping: AxisIDMapping,
+    *,
+    ingestion_params: IngestionParams,
+    additional_metadata: AdditionalMetadata,
+    platform_config: PlatformConfig | None,
+    context: SOMATileDBContext | None,
+) -> _NDArr:
+    start_time = _util.get_start_stamp()
+    logging.log_io(None, f"START  WRITING {uri}")
+
+    shape = (reader.nobs, reader.nvar)
+    assert reader._data is not None
+    matrix_type = pa.from_numpy_dtype(reader._data.dtype)
+    try:
+
+        soma_ndarray = cls.create(
+            uri,
+            type=matrix_type,
+            shape=shape,
+            platform_config=platform_config,
+            context=context,
+        )
+    except (AlreadyExistsError, NotCreateableError):
+        if ingestion_params.error_if_already_exists:
+            raise SOMAError(f"{uri} already exists")
+        soma_ndarray = cls.open(
+            uri, "w", platform_config=platform_config, context=context
+        )
+
+    logging.log_io(
+        f"Writing {uri}",
+        _util.format_elapsed(start_time, f"START  WRITING {uri}"),
+    )
+
+    if isinstance(soma_ndarray, DenseNDArray):
+        reader.open()
+        matrix = sp.csr_matrix(
+            (reader._data, reader._feature_indices, reader._barcode_indptr),
+            shape=shape,
+        )
+        reader.close()
+
+        _write_matrix_to_denseNDArray(
+            soma_ndarray,
+            matrix,
+            tiledb_create_options=TileDBCreateOptions.from_platform_config(
+                platform_config
+            ),
+            tiledb_write_options=TileDBWriteOptions.from_platform_config(
+                platform_config
+            ),
+            ingestion_params=ingestion_params,
+            additional_metadata=additional_metadata,
+        )
+    elif isinstance(soma_ndarray, SparseNDArray):  # SOMASparseNDArray
+        add_metadata(soma_ndarray, additional_metadata)
+        data = pa.Table.from_pydict(
+            {
+                "soma_data": reader.data,
+                "soma_dim_0": reader.obs_indices,
+                "soma_dim_1": reader.var_indices,
+            }
+        )
+        soma_ndarray.write(data, platform_config=platform_config)
+    else:
+        raise TypeError(f"Unknown array type {type(soma_ndarray)}.")
+
+    logging.log_io(
+        f"Wrote   {uri}",
+        _util.format_elapsed(start_time, f"FINISH WRITING {uri}"),
+    )
+    return soma_ndarray
 
 
 def _write_scene_presence_dataframe(
@@ -600,8 +826,8 @@ def _write_scene_presence_dataframe(
     platform_config: PlatformConfig | None = None,
     context: SOMATileDBContext | None = None,
 ) -> DataFrame:
-    s = _util.get_start_stamp()
-
+    start_time = _util.get_start_stamp()
+    logging.log_io(None, "START WRITING Presence matrix")
     try:
         soma_df = DataFrame.create(
             df_uri,
@@ -625,7 +851,7 @@ def _write_scene_presence_dataframe(
     if ingestion_params.write_schema_no_data:
         logging.log_io(
             f"Wrote schema {df_uri}",
-            _util.format_elapsed(s, f"FINISH WRITING SCHEMA {df_uri}"),
+            _util.format_elapsed(start_time, f"FINISH WRITING SCHEMA {df_uri}"),
         )
         add_metadata(soma_df, additional_metadata)
         return soma_df
@@ -648,7 +874,7 @@ def _write_scene_presence_dataframe(
 
     logging.log_io(
         f"Wrote   {df_uri}",
-        _util.format_elapsed(s, f"FINISH WRITING {df_uri}"),
+        _util.format_elapsed(start_time, f"FINISH WRITING {df_uri}"),
     )
     return soma_df
 
@@ -658,7 +884,7 @@ def _write_visium_spots(
     input_tissue_positions: Path,
     major_version: int,
     spot_diameter: float,
-    obs_df: pd.DataFrame,
+    obs_data: pa.Table,
     id_column_name: str,
     max_joinid_len: int,
     *,
@@ -670,6 +896,8 @@ def _write_visium_spots(
     """Creates, opens, and writes data to a ``PointCloudDataFrame`` with the spot
     locations and metadata. Returns the open dataframe for writing.
     """
+    start_time = _util.get_start_stamp()
+    logging.log_io(None, "START WRITING loc")
     if major_version == 1:
         names = [id_column_name, "in_tissue", "array_row", "array_col", "y", "x"]
     else:
@@ -685,6 +913,7 @@ def _write_visium_spots(
         )
         .assign(spot_diameter_fullres=np.double(spot_diameter))
     )
+    obs_df = obs_data.to_pandas()
     df = pd.merge(obs_df, df, how="inner", on=id_column_name)
     df.drop(id_column_name, axis=1, inplace=True)
 
@@ -727,6 +956,7 @@ def _write_visium_spots(
         )
 
     add_metadata(soma_point_cloud, additional_metadata)
+    logging.log_io(None, _util.format_elapsed(start_time, "FINISH WRITING loc"))
     return soma_point_cloud
 
 
@@ -766,6 +996,8 @@ def _create_visium_tissue_images(
     """Creates, opens, and writes a ``MultiscaleImage`` with the provide
     visium resolutions levels and returns the open image for writing.
     """
+    start_time = _util.get_start_stamp()
+    logging.log_io(None, "START WRITING IMAGES")
 
     # Open the first image to get the base size.
     with Image.open(image_paths[0][1]) as im:
@@ -819,4 +1051,5 @@ def _create_visium_tissue_images(
         )
         im_array.close()
 
+    logging.log_io(None, _util.format_elapsed(start_time, "FINISH WRITING IMAGES"))
     return image_pyramid
