@@ -471,8 +471,8 @@ def from_visium(
     # for spatial indexing.
     if registration_mapping is None:
         joinid_maps = ExperimentIDMapping(
-            obs_axis=AxisIDMapping(data=tuple(range(nobs))),
-            var_axes={measurement_name: AxisIDMapping(data=tuple(range(nvar)))},
+            obs_axis=AxisIDMapping.identity(nobs),
+            var_axes={measurement_name: AxisIDMapping.identity(nvar)},
         )
     else:
         raise NotImplementedError("Support for appending is not yet implemented.")

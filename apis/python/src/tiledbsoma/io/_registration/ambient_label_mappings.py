@@ -34,8 +34,7 @@ ColumnName: TypeAlias = str
 
 @attrs.define(kw_only=True, frozen=True)
 class AxisAmbientLabelMapping:
-    """
-    For all the to-be-appended AnnData/H5AD inputs in SOMA multi-file append-mode ingestion, this
+    """For all the to-be-appended AnnData/H5AD inputs in SOMA multi-file append-mode ingestion, this
     class tracks the mapping of input-data ``obs`` or ``var`` ID-column name (barcode ID, gene
     symbol) to SOMA join IDs for SOMA experiment ``obs`` or ``var``, as well as any dictionary/enumeration
     values.
@@ -94,8 +93,7 @@ class AxisAmbientLabelMapping:
 
 @attrs.define(kw_only=True, frozen=True)
 class ExperimentAmbientLabelMapping:
-    """
-    For all the to-be-appended AnnData/H5AD inputs in SOMA multi-file append-mode ingestion, this
+    """For all the to-be-appended AnnData/H5AD inputs in SOMA multi-file append-mode ingestion, this
     class contains information required to perform ingestion via ``from_h5ad`` or ``from_anndata``.
 
     This class tracks the mapping from input-data ``obs`` or ``var`` ID-column name (barcode ID, gene
@@ -148,8 +146,7 @@ class ExperimentAmbientLabelMapping:
             h5ad_path: an ``anndata.AnnData``, previously registered in this ``ExperimentAmbientLabelMapping``.
 
         Returns:
-            A new ``ExperimentAmbientLabelMapping`` scoped specifically for the H5AD.
-
+            A new ``ExperimentAmbientLabelMapping`` scoped specifically for the AnnData.
         """
 
         # Just do obs - provides largest benefit with simple implementation.
@@ -161,8 +158,9 @@ class ExperimentAmbientLabelMapping:
         )
 
     def subset_for_h5ad(self, h5ad_path: str) -> Self:
-        """Subset this plan to only contain ID maps useful for this H5AD. See ``subset_for_anndata``
-        for more information.
+        """Subset this plan to only contain ID maps useful for this H5AD.
+
+        See ``subset_for_anndata`` for more information.
 
         Args:
             h5ad_path: path to H5AD
@@ -188,6 +186,14 @@ class ExperimentAmbientLabelMapping:
 
         This operation must be performed after the experiment is created, and before any writes
         to the experiment.
+
+        Args:
+            experiment_uri: the Experiment to prepare for ingestion.
+
+            context: a SOMA context
+
+        Returns:
+            None
         """
         context = _validate_soma_tiledb_context(context)
 
@@ -239,6 +245,8 @@ class ExperimentAmbientLabelMapping:
                 if var_axis.enum_values:
                     extend_enumerations(E.ms[ms_name].var, var_axis.enum_values)
 
+        # The class is a frozen `attrs` instance, to protect from user modification of the data.
+        # This is the "blessed" way for an implementation to modify itself (per attrs docs).
         object.__setattr__(self, "prepared", True)
 
     @staticmethod
