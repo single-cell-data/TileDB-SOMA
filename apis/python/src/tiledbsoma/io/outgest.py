@@ -107,12 +107,12 @@ def _read_partitioned_sparse(X: SparseNDArray, d0_size: int) -> pa.Table:
     # between concurrency and fixed query overhead.
     tgt_point_count = 96 * 1024**2
     try:
-        nnz = X._handle._handle.nnz(raise_if_slow=True)
+        nnz: int | None = X._handle._handle.nnz(raise_if_slow=True)
     except SOMAError:
-        nnz = -1
+        nnz = None
     partition_sz = (
         max(1024 * round(d0_size * tgt_point_count / nnz / 1024), 1024)
-        if nnz > 0
+        if nnz is not None and nnz > 0
         else d0_size  # i.e, no partitioning
     )
     partitions = [
