@@ -2823,3 +2823,23 @@ def test_return_datetime_type_for_domain_and_maxdomain_62887(tmp_path):
             pa.scalar(-9223372036854775807, pa.timestamp("s")),
             pa.scalar(9223372036853775807, pa.timestamp("s")),
         )
+
+
+@pytest.mark.parametrize(
+    "pa_type,tile",
+    (
+        (pa.int32(), "1"),
+        (pa.float32(), "1"),
+        (pa.timestamp("s"), "1"),
+        (pa.large_string(), ""),
+        (pa.large_binary(), ""),
+    ),
+)
+def test_extents(tmp_path, pa_type, tile):
+    uri = tmp_path.as_posix()
+    asch = pa.schema([pa.field("dim", pa_type)])
+    soma.DataFrame.create(uri, schema=asch, index_column_names=["dim"])
+
+    with soma.DataFrame.open(tmp_path.as_posix()) as A:
+        dim_info = json.loads(A.schema_config_options().dims)
+        assert dim_info["dim"]["tile"] == tile

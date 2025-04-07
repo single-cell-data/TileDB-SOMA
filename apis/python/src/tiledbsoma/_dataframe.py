@@ -1107,7 +1107,7 @@ def _find_extent_for_domain(
     tiledb_create_write_options: TileDBCreateOptions,
     dtype: Any,
     slot_domain: Tuple[Any, Any],
-) -> int | float | Literal[""]:
+) -> int | float | Literal["", b""]:
     """Helper function for _build_tiledb_schema. Returns a tile extent that is
     small enough for the index-column type, and that also fits within the
     user-specified slot domain (if any).
@@ -1124,7 +1124,7 @@ def _find_extent_for_domain(
     # Core string dims have no extent and no (core) domain.  We return "" here
     # simply so we can pass libtiledbsoma "" for domain and extent, while it
     # will (and must) ignore these when creating the TileDB schema.
-    if isinstance(dtype, str):
+    if dtype in ("ascii", "bytes"):
         return ""
 
     lo, hi = slot_domain
