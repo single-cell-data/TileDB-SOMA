@@ -291,7 +291,6 @@ setuptools.setup(
         "Intended Audience :: Developers",
         "Intended Audience :: Information Technology",
         "Intended Audience :: Science/Research",
-        "License :: OSI Approved :: MIT License",
         "Topic :: Scientific/Engineering :: Bio-Informatics",
         "Operating System :: Unix",
         "Operating System :: POSIX :: Linux",
