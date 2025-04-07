@@ -2,5 +2,6 @@ geopandas
 tifffile
 pillow
 spatialdata>=0.2.5
+numcodecs<0.16
 xarray
 dask<=2024.11.2
