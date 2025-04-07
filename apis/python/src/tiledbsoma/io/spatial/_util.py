@@ -339,7 +339,7 @@ class TenXCountMatrixReader:
 
 
 def _read_xenium_software_version(
-    xenium_experiment_path: Union[str, Path]
+    xenium_experiment_path: Union[str, Path],
 ) -> Tuple[int, int, int]:
     with open(xenium_experiment_path) as xenium_experiment:
         experiment_json = json.load(xenium_experiment)
