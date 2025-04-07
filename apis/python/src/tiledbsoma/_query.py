@@ -856,13 +856,16 @@ def _read_as_csr(
 
     approx_X_shape = tuple(b - a + 1 for a, b in matrix.non_empty_domain())
     # heuristically derived number (benchmarking). Thesis is that this is roughly 80% of a 1 GiB io buffer,
-    # which is the default for SOMA.
+    # which is the default for SOMA. If we have NNZ, use to partition based upon memory size. If we do not
+    # have NNZ, pick a default partition size which is large, but not to large as to rule out reasonable
+    # parallelism (in this case, calculated based on typical scRNASeq assay density of 3-6K features).
     target_point_count = 96 * 1024**2
+    fallback_row_count = 32768
     # compute partition size from array density and target point count, rounding to nearest 1024.
     partition_size = (
         max(1024 * round(approx_X_shape[0] * target_point_count / nnz / 1024), 1024)
         if nnz > 0
-        else approx_X_shape[0]
+        else min(fallback_row_count, approx_X_shape[0])
     )
     splits = list(
         range(
