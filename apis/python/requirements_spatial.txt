@@ -2,6 +2,7 @@ geopandas
 tifffile
 pillow
 spatialdata>=0.2.5
+# spatialdata 0.3.0 pins `zarr<3`, which is incompatible with numcodecs 0.16.0. See also: https://github.com/single-cell-data/TileDB-SOMA/issues/3917
 numcodecs<0.16
 xarray
 dask<=2024.11.2
