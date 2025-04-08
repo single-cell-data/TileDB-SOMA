@@ -338,7 +338,8 @@ Loads the query as a \code{\link[SeuratObject]{Seurat}} object
   obsm_layers = NULL,
   varm_layers = NULL,
   obsp_layers = NULL,
-  drop_levels = FALSE
+  drop_levels = FALSE,
+  version = NULL
 )}\if{html}{\out{</div>}}
 }
 
@@ -362,6 +363,9 @@ Loads the query as a \code{\link[SeuratObject]{Seurat}} object
 \item{\code{obsp_layers}}{\Sexpr[results=rd]{tiledbsoma:::rd_outgest_players()}}
 
 \item{\code{drop_levels}}{Drop unused levels from \code{obs} and \code{var} factor columns}
+
+\item{\code{version}}{Assay version to read query in as; by default, will try to
+infer assay type from the measurement itself}
 }
 \if{html}{\out{</div>}}
 }
@@ -380,7 +384,8 @@ Loads the query as a Seurat \code{\link[SeuratObject]{Assay}}
   obs_index = NULL,
   var_index = NULL,
   var_column_names = NULL,
-  drop_levels = FALSE
+  drop_levels = FALSE,
+  version = NULL
 )}\if{html}{\out{</div>}}
 }
 
@@ -396,6 +401,9 @@ Loads the query as a Seurat \code{\link[SeuratObject]{Assay}}
 \item{\code{var_column_names}}{\Sexpr[results=rd]{tiledbsoma:::rd_outgest_metadata_names(axis = 'var')}}
 
 \item{\code{drop_levels}}{Drop unused levels from \code{var} factor columns}
+
+\item{\code{version}}{Assay version to read query in as; by default, will try to
+infer assay type from the measurement itself}
 }
 \if{html}{\out{</div>}}
 }
