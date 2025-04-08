@@ -74,9 +74,9 @@ def test_construction(
         # only occurs if we mess up the test params
         pytest.skip(reason="NNZ is too large for index type.")
 
-    indptr = np.empty((sp.shape[0] + 1), dtype=csr_major_index_dtype)
-    indices = np.empty((sp.nnz,), dtype=csr_minor_index_dtype)
-    data = np.empty((sp.nnz,), dtype=sp.dtype)
+    indptr = np.zeros((sp.shape[0] + 1), dtype=csr_major_index_dtype)
+    indices = np.zeros((sp.nnz,), dtype=csr_minor_index_dtype)
+    data = np.zeros((sp.nnz,), dtype=sp.dtype)
 
     fastercsx.compress_coo(
         context,
@@ -133,9 +133,9 @@ def test_partitioning(
         random_state=rng,
     )
 
-    indptr = np.empty((sp.shape[0] + 1), dtype=np.int32)
-    indices = np.empty((sp.nnz,), dtype=np.int32)
-    data = np.empty((sp.nnz,), dtype=sp.dtype)
+    indptr = np.zeros((sp.shape[0] + 1), dtype=np.int32)
+    indices = np.zeros((sp.nnz,), dtype=np.int32)
+    data = np.zeros((sp.nnz,), dtype=sp.dtype)
 
     fastercsx.compress_coo(
         context,
@@ -183,9 +183,9 @@ def test_multichunk(
     col_chunks = tuple(np.array_split(sp.col, nchunks))
     data_chunks = tuple(np.array_split(sp.data, nchunks))
 
-    indptr = np.empty((sp.shape[0] + 1), dtype=np.int32)
-    indices = np.empty((sp.nnz,), dtype=np.int32)
-    data = np.empty((sp.nnz,), dtype=sp.dtype)
+    indptr = np.zeros((sp.shape[0] + 1), dtype=np.int32)
+    indices = np.zeros((sp.nnz,), dtype=np.int32)
+    data = np.zeros((sp.nnz,), dtype=sp.dtype)
 
     fastercsx.compress_coo(
         context,
@@ -262,9 +262,9 @@ def test_compress_coo_bad_args(
     sp = sparse.random(2830, 212, density=0.1, dtype=np.int8, random_state=rng)
     i, j, d = sp.row, sp.col, sp.data
 
-    indptr = np.empty((sp.shape[0] + 1), dtype=np.int32)
-    indices = np.empty((sp.nnz,), dtype=np.int32)
-    data = np.empty((sp.nnz,), dtype=sp.dtype)
+    indptr = np.zeros((sp.shape[0] + 1), dtype=np.int32)
+    indices = np.zeros((sp.nnz,), dtype=np.int32)
+    data = np.zeros((sp.nnz,), dtype=sp.dtype)
 
     with pytest.raises(TypeError):
         fastercsx.compress_coo(None, sp.shape, (i,), (j,), (d,), indptr, indices, data)
@@ -399,9 +399,9 @@ def test_ragged_chunk_error(
     # is enforced.
     nnz = 3
     shape = (100, 20)
-    indptr = np.empty(shape[0] + 1, dtype=np.int32)
-    indices = np.empty(nnz, dtype=np.int32)
-    data = np.empty(nnz, dtype=np.int8)
+    indptr = np.zeros(shape[0] + 1, dtype=np.int32)
+    indices = np.zeros(nnz, dtype=np.int32)
+    data = np.zeros(nnz, dtype=np.int8)
     with pytest.raises(ValueError):
         fastercsx.compress_coo(
             context,
@@ -432,8 +432,8 @@ def test_empty_first_frag(rng: np.random.Generator, context: clib.SOMAContext) -
             d := np.array([85, 63, 51, 26, 30, 4, 7, 1, 17, 81], dtype=np.int8),
         ),
         indptr := np.zeros(57, dtype=np.int32),
-        indices := np.empty((10,), dtype=np.int32),
-        data := np.empty((10,), dtype=np.int8),
+        indices := np.zeros((10,), dtype=np.int32),
+        data := np.zeros((10,), dtype=np.int8),
     )
 
     csr = sparse.csr_matrix((d, (i, j)), shape=shape)
