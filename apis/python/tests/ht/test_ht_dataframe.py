@@ -211,13 +211,12 @@ def default_max_domain(datatype: pa.DataType) -> AxisDomain:
 
         return md
     if pa.types.is_timestamp(datatype):
-        # return Numpy! See sc-61328 and sc-61329
         return (
-            np.datetime64(
-                -(2**63) + 1, datatype.unit
+            pa.scalar(
+                -(2**63) + 1, type=pa.timestamp(datatype.unit)
             ),  # NB: -2**63 is NaT, per NEP-7, and indices can't be nullable
-            np.datetime64(
-                2**63 - 1_000_001, datatype.unit
+            pa.scalar(
+                2**63 - 1_000_001, type=pa.timestamp(datatype.unit)
             ),  # sc-61331: 1_000_001 appears to be a weird buggy magic number?
         )
 
@@ -241,7 +240,6 @@ def dataframe_domain(
     NB:
     * domain can't be set for string or binary index columns - use None or ('','').
     * domain can only expand.
-    * timestamp64 domain must be specified as a numpy.datetime64 (see sc-61328 and sc-61329)
     * all other domain values must be native python types, not pyarrow.Scalar
     """
     if max_domain is None:
@@ -254,7 +252,7 @@ def dataframe_domain(
         field = schema.field(field_name)
         if pa.types.is_primitive(field.type):
             zero = (
-                np.datetime64(0, field.type.unit)
+                pa.scalar(0, type=field.type)
                 if pa.types.is_timestamp(field.type)
                 else pa.scalar(0, type=field.type).as_py()
             )
@@ -291,27 +289,24 @@ def dataframe_domain(
                 else current_upper
             )
 
-            # timestamp64 columns only accept np.datetime64 for domain (see sc-61328 and sc-61329)
-            # In addition, pa.TimestampScalar overflows in a variety of situations, so don't use it
-            # (e.g., `pa.scalar(-161650356352888167,type=pa.timestamp('s')).as_py()` )
             if pa.types.is_timestamp(field.type):
-                lower = (
-                    np.datetime64(lower.value, field.type.unit)
-                    if isinstance(lower, pa.TimestampScalar)
-                    else lower
+                # TypeError: '<=' not supported between instances of
+                # 'pyarrow.lib.TimestampScalar' and 'pyarrow.lib.TimestampScalar'
+                # so compare as int here
+                assert int(lower.value) <= int(upper.value)
+                assert (
+                    int(max_lower.value) <= int(lower.value) <= int(current_lower.value)
                 )
-                upper = (
-                    np.datetime64(upper.value, field.type.unit)
-                    if isinstance(upper, pa.TimestampScalar)
-                    else upper
+                assert (
+                    int(max_upper.value) >= int(upper.value) >= int(current_upper.value)
                 )
             else:
                 lower = lower.as_py() if isinstance(lower, pa.Scalar) else lower
                 upper = upper.as_py() if isinstance(upper, pa.Scalar) else upper
+                assert lower <= upper
+                assert max_lower <= lower <= current_lower
+                assert max_upper >= upper >= current_upper
 
-            assert lower <= upper
-            assert max_lower <= lower <= current_lower
-            assert max_upper >= upper >= current_upper
             new_domain.append((lower, upper))
 
         else:
@@ -341,12 +336,12 @@ def column_values(
         min_value = (
             -(2**63) + 1
             if min_value is None
-            else max(-(2**63) + 1, int(min_value.astype(np.int64)))
+            else max(-(2**63) + 1, int(min_value.cast("int64").as_py()))
         )
         max_value = (
             2**63 - 1
             if max_value is None
-            else min(2**63 - 1, int(max_value.astype(np.int64)))
+            else min(2**63 - 1, int(max_value.cast("int64").as_py()))
         )
         dtype = np.dtype(type.to_pandas_dtype())
         elements = st.builds(
@@ -543,7 +538,9 @@ def arrow_table2(
                             )
                         )
                 elif pa.types.is_timestamp(f.type):
-                    delta = int(d[1].astype(np.int64)) - int(d[0].astype(np.int64))
+                    delta = int(d[1].cast("int64").as_py()) - int(
+                        d[0].cast("int64").as_py()
+                    )
                     assert delta >= 0
                     max_size = min(max_size, delta + 1)
             elif pa.types.is_dictionary(f.type):
@@ -713,6 +710,9 @@ class SOMADataFrameStateMachine(SOMAArrayStateMachine):
                     domain.append(("", ""))
                 elif pa.type.is_primitive(type):
                     domain.append((0, 0))
+                elif pa.types.is_timestamp(type):
+                    zero_ts = pa.scalar(0, type=type)
+                    domain.append((zero_ts, zero_ts))
                 else:
                     domain.append(None)
 
