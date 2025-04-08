@@ -11,30 +11,38 @@ on:
 jobs:
   docker:
     strategy:
+      fail-fast: false
       matrix:
         os:
           - runs-on: ubuntu-24.04
             suffix: ''
           - runs-on: ubuntu-24.04-arm
-            suffix: ' (ARM)'
+            suffix: ' ARM'
           # TODO: currently impossible(?) to build Docker images on macOS runners: https://github.com/single-cell-data/TileDB-SOMA/issues/3781
           # - macos-15
           # TODO: try x86 macOS builds, once https://github.com/single-cell-data/TileDB-SOMA/issues/3787 is resolved
           # - macos-13
         img:
-          - name: ubuntu-src
-          - name: ubuntu
+          - name: Ubuntu src
+            file: ubuntu-src
+          - name: Ubuntu 1.15.7
+            file: ubuntu
             args: v=1.15.7
-          - name: ubuntu
+          - name: Ubuntu 1.16.0
+            file: ubuntu
             args: v=1.16.0
-          - name: bookworm
+          - name: Debian 1.15.7 gcc12
+            file: bookworm
             args: gcc=12 v=1.15.7
-          - name: bookworm
+          - name: Debian 1.15.7 gcc13
+            file: bookworm
             args: gcc=13 v=1.15.7
-          - name: bookworm
+          - name: Debian 1.16.0 gcc13
+            file: bookworm
             args: gcc=13 v=1.16.0
-          - name: langchain
-    name: ${{ matrix.img.name }} ${{ matrix.img.args }}${{ matrix.os.suffix }}
+          - name: Langchain
+            file: langchain
+    name: ${{ matrix.img.name }}${{ matrix.os.suffix }}
     runs-on: ${{ matrix.os.runs-on }}
     steps:
       - uses: actions/checkout@v4
@@ -44,17 +52,17 @@ jobs:
           for arg in ${{ matrix.img.args }}; do
             args+=(--build-arg $arg)
           done
-          cmd=(docker build -f ${{ matrix.img.name }}.dockerfile -t ${{ matrix.img.name }} "${args[@]}" .)
+          cmd=(docker build -f ${{ matrix.img.file }}.dockerfile -t ${{ matrix.img.file }} "${args[@]}" .)
           echo "Running: ${cmd[*]}"
           "${cmd[@]}"
         working-directory: docker
-      - run: docker run ${{ matrix.img.name }}
+      - run: docker run ${{ matrix.img.file }}
         working-directory: docker
   # File an issue if anything fails, but only for scheduled ones (not manual "workflow_dispatch" runs).
   create_issue_on_fail:
     runs-on: ubuntu-24.04
     needs: [docker]
-    if: (failure() || cancelled()) && github.event_name == 'schedule'
+    if: (failure() || cancelled()) && github.event_name == 'schedule' && github.run_attempt == 1
     steps:
       - name: Checkout TileDB-SOMA `main`
         uses: actions/checkout@v4
@@ -63,4 +71,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          filename: .github/workflows/daily-test-build-issue-template.md
+          filename: .github/workflows/daily-python-dockers-issue-template.md
+          assignees: ryan-williams, johnkerl
+          update_existing: true

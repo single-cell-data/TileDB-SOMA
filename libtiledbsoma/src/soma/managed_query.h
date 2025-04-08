@@ -304,9 +304,7 @@ class ManagedQuery {
      * @param arrow_schema
      * @param arrow_array
      */
-    void set_array_data(
-        std::unique_ptr<ArrowSchema> arrow_schema,
-        std::unique_ptr<ArrowArray> arrow_array);
+    void set_array_data(ArrowSchema* arrow_schema, ArrowArray* arrow_array);
 
     std::optional<std::shared_ptr<ArrayBuffers>> read_next();
 
@@ -451,6 +449,40 @@ class ManagedQuery {
     bool is_first_read() const {
         return !query_submitted_;
     }
+
+    /**
+     * Does the schema evolution to extend the enumeration values, with a data
+     * write. The schema/array pair must be an Arrow array of values, e.g. Arrow
+     * int64 or string. It must not be an Arrow dictionary. Values within that
+     * array must be unique within themselves. The core schema evolution passed
+     * only those values in the array that are not already present in the array
+     * schema, i.e. this method is idempotent.
+     */
+    bool _extend_and_write_enumeration(
+        ArrowSchema* value_schema,
+        ArrowArray* value_array,
+        ArrowSchema* index_schema,
+        ArrowArray* index_array,
+        Enumeration enmr,
+        ArraySchemaEvolution& se);
+
+    /**
+     * Does the schema evolution to extend the enumeration values, without a
+     * data write. The schema/array pair must be an Arrow array of values,
+     * e.g. Arrow int64 or string; it must not be an Arrow dictionary.
+     * Values within that array must be unique within themselves, regardless
+     * of the deduplicate flag. If deduplicate is false and any of the values
+     * are already present in the TileDB array schema, an exception is thrown.
+     * Otherwise, values are in the array schema are tolerated, making this
+     * function idempotent.
+     */
+    bool _extend_enumeration(
+        ArrowSchema* value_schema,
+        ArrowArray* value_array,
+        const std::string& column_name,
+        bool deduplicate,
+        Enumeration enmr,
+        ArraySchemaEvolution& se);
 
     /**
      * This delegates to util::get_enumeration.
@@ -698,7 +730,7 @@ class ManagedQuery {
                 ctx_, array_, schema, schema->dictionary);
 
             // Return whether we extended the enumeration for this attribute
-            return _extend_enumeration(
+            return _extend_and_write_enumeration(
                 schema->dictionary,  // value schema
                 array->dictionary,   // value array
                 schema,              // index schema
@@ -725,12 +757,52 @@ class ManagedQuery {
     }
 
     template <typename ValueType>
-    bool _extend_and_evolve_schema(
+    bool _extend_and_evolve_schema_and_write(
         ArrowSchema* value_schema,
         ArrowArray* value_array,
         ArrowSchema* index_schema,
         ArrowArray* index_array,
-        Enumeration& enmr,
+        Enumeration enmr,
+        ArraySchemaEvolution& se);
+
+    /**
+     * Helper function for enumeration-extension; see comments there.  The
+     * implementation is templatized to accommodated various TileDB types. The
+     * without-details version is for only extending enumerations in the TileDB
+     * Array schema. The with-details version passes back information which is
+     * necessarily computed for the enumeration-extension/schema-evolution bit
+     * but which is also needed for doing data writes.
+     *
+     * The two type names are because for string we need std::string and
+     * std::string_view within the implementation. For other datatypes,
+     * ValueType and ValueViewType will be the same.
+     */
+    template <typename ValueType, typename ValueViewType>
+    std::tuple<
+        bool,                        // was_extended
+        std::vector<ValueViewType>,  // enum_values_in_write
+        std::vector<ValueViewType>,  // enum_values_existing
+        std::vector<ValueViewType>,  // enum_values_added
+        size_t,                      // total_size
+        Enumeration>                 //  extended_enmr
+    _extend_and_evolve_schema_with_details(
+        ArrowSchema* value_schema,
+        ArrowArray* value_array,
+        const std::string& column_name,
+        bool deduplicate,
+        Enumeration enmr,
+        ArraySchemaEvolution& se);
+
+    /**
+     * See comments for _extend_and_evolve_schema_with_details.
+     */
+    template <typename ValueType, typename ValueViewType>
+    bool _extend_and_evolve_schema_without_details(
+        ArrowSchema* value_schema,
+        ArrowArray* value_array,
+        const std::string& column_name,
+        bool deduplicate,
+        Enumeration enmr,
         ArraySchemaEvolution& se);
 
     template <typename ValueType>
@@ -805,8 +877,7 @@ class ManagedQuery {
             if (0 > i) {
                 shifted_indexes.push_back(i);
             } else {
-                auto it = std::find(
-                    enmr_vec.begin(), enmr_vec.end(), enums_in_write[i]);
+                auto it = _find_enum_match(enmr_vec, enums_in_write[i]);
                 shifted_indexes.push_back(it - enmr_vec.begin());
             }
         }
@@ -938,14 +1009,6 @@ class ManagedQuery {
             _cast_validity_buffer(index_array));
     }
 
-    bool _extend_enumeration(
-        ArrowSchema* value_schema,
-        ArrowArray* value_array,
-        ArrowSchema* index_schema,
-        ArrowArray* index_array,
-        Enumeration& enmr,
-        ArraySchemaEvolution& se);
-
     /**
      * @brief Get the mapping of attributes to Enumerations.
      *
@@ -993,7 +1056,7 @@ class ManagedQuery {
      * @param array the ArrowArray holding Boolean data
      * @return std::vector<uint8_t>
      */
-    std::vector<uint8_t> _cast_bool_data(
+    std::vector<uint8_t> _bool_data_bits_to_bytes(
         ArrowSchema* schema, ArrowArray* array);
 
     /**
@@ -1010,6 +1073,28 @@ class ManagedQuery {
 
     template <typename T>
     std::vector<T> _enumeration_values_view(Enumeration& enumeration);
+
+    /**
+     * @brief Finds an enumeration value in a vector of already
+     * existing enumeration values. This helper method support
+     * comparing NaN values. Since NaN != NaN, we cannot use
+     * std::find. Also since TileDB and Arrow treat NaNs with
+     * different bit patterns as distinct values, we also cannot
+     * rely onstd::isnan and must use to bitwise comparisons.
+     *
+     * @param values the vector of values to search through
+     * @param target the value to search for
+     * @return typename std::vector<T>::const_iterator iterator
+     * to the found element or values.end() if not found
+     */
+    template <typename T>
+    typename std::vector<T>::const_iterator _find_enum_match(
+        const std::vector<T>& values, const T& target) {
+        return std::find_if(
+            values.begin(), values.end(), [&target](const T& candidate) {
+                return std::memcmp(&target, &candidate, sizeof(T)) == 0;
+            });
+    }
 };
 
 // These are all specializations to string/bool of various methods
@@ -1039,13 +1124,39 @@ bool ManagedQuery::_cast_column_aux<bool>(
     ArrowSchema* schema, ArrowArray* array, ArraySchemaEvolution se);
 
 template <>
-bool ManagedQuery::_extend_and_evolve_schema<std::string>(
+bool ManagedQuery::_extend_and_evolve_schema_and_write<std::string>(
     ArrowSchema* value_schema,
     ArrowArray* value_array,
     ArrowSchema* index_schema,
     ArrowArray* index_array,
-    Enumeration& enmr,
+    Enumeration enmr,
     ArraySchemaEvolution& se);
+
+template <>
+std::tuple<
+    bool,                           // was_extended
+    std::vector<std::string_view>,  // enum_values_in_write
+    std::vector<std::string_view>,  // enum_values_existing
+    std::vector<std::string_view>,  // enum_values_added
+    size_t,                         // total_size
+    Enumeration>                    // extended_enmr
+ManagedQuery::_extend_and_evolve_schema_with_details<std::string>(
+    ArrowSchema* value_schema,
+    ArrowArray* value_array,
+    const std::string& column_name,
+    bool deduplicate,
+    Enumeration enmr,
+    ArraySchemaEvolution& se);
+
+template <>
+bool ManagedQuery::
+    _extend_and_evolve_schema_without_details<std::string, std::string_view>(
+        ArrowSchema* value_schema,
+        ArrowArray* value_array,
+        const std::string& column_name,
+        bool deduplicate,
+        Enumeration enmr,
+        ArraySchemaEvolution& se);
 
 template <>
 std::vector<std::string_view> ManagedQuery::_enumeration_values_view(

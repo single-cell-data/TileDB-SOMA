@@ -124,6 +124,16 @@ void ArrowAdapter::release_array(struct ArrowArray* array) {
         // If the ArrowBuffer.buffer_ shared_ptr is the last reference to the
         // underlying ColumnBuffer, the ColumnBuffer will be deleted.
         delete arrow_buffer;
+    } else {
+        // ArrowArray that allocate buffers directly to ``array->buffers`` will
+        // leak memory. We detect these arrays when the ``array->private_data``
+        // is null
+        for (int64_t i = 0; i < array->n_buffers; ++i) {
+            if (array->buffers[i] != nullptr) {
+                free((void*)array->buffers[i]);
+                array->buffers[i] = nullptr;
+            }
+        }
     }
 
     if (array->buffers != nullptr) {
@@ -460,9 +470,9 @@ std::unique_ptr<ArrowSchema> ArrowAdapter::arrow_schema_from_tiledb_array(
     return arrow_schema;
 }
 
-std::unique_ptr<ArrowSchema> ArrowAdapter::arrow_schema_from_tiledb_dimension(
+ArrowSchema* ArrowAdapter::arrow_schema_from_tiledb_dimension(
     const Dimension& dimension) {
-    std::unique_ptr<ArrowSchema> arrow_schema = std::make_unique<ArrowSchema>();
+    ArrowSchema* arrow_schema = (ArrowSchema*)malloc(sizeof(ArrowSchema));
     arrow_schema->format = strdup(
         ArrowAdapter::to_arrow_format(dimension.type()).data());
     arrow_schema->name = strdup(dimension.name().c_str());
@@ -1542,7 +1552,7 @@ std::unique_ptr<ArrowSchema> ArrowAdapter::make_arrow_schema(
     }
 
     auto arrow_schema = std::make_unique<ArrowSchema>();
-    arrow_schema->format = "+s";  // structure, i.e. non-leaf node
+    arrow_schema->format = strdup("+s");  // structure, i.e. non-leaf node
     arrow_schema->name = strdup("parent");
     arrow_schema->metadata = nullptr;
     arrow_schema->flags = 0;
@@ -1560,7 +1570,7 @@ std::unique_ptr<ArrowSchema> ArrowAdapter::make_arrow_schema(
     for (int i = 0; i < (int)num_names; i++) {
         auto dim_schema = make_arrow_schema_child(
             names[i], tiledb_datatypes[i]);
-        LOG_TRACE(std::format(
+        LOG_TRACE(fmt::format(
             "[ArrowAdapter] make_arrow_schema child {} format {} name {}",
             i,
             dim_schema->format,
@@ -1772,8 +1782,7 @@ std::unique_ptr<ArrowArray> ArrowAdapter::arrow_array_insert_at_index(
 
         if (i >= index &&
             i < index + static_cast<int64_t>(child_arrays.size())) {
-            ArrowArrayMove(
-                child_arrays[i - index].release(), array->children[i]);
+            ArrowArrayMove(child_arrays[i - index].get(), array->children[i]);
         } else {
             ArrowArrayMove(parent_array->children[idx], array->children[i]);
         }
@@ -1808,7 +1817,7 @@ std::unique_ptr<ArrowSchema> ArrowAdapter::arrow_schema_insert_at_index(
         if (i >= index &&
             i < index + static_cast<int64_t>(child_schemas.size())) {
             ArrowSchemaMove(
-                child_schemas[i - index].release(), schema->children[i]);
+                child_schemas[i - index].get(), schema->children[i]);
         } else {
             ArrowSchemaMove(parent_schema->children[idx], schema->children[i]);
         }

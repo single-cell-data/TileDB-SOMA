@@ -1436,7 +1436,10 @@ def test_extend_enmr_to_older_experiments_64521(tmp_path, version_and_shaped):
     from ._util import ROOT_DATA_DIR
 
     original_data_uri = str(
-        ROOT_DATA_DIR / "soma-experiment-versions" / version / "pbmc3k_unprocessed"
+        ROOT_DATA_DIR
+        / "soma-experiment-versions-2025-04-04"
+        / version
+        / "pbmc3k_unprocessed"
     )
 
     if not os.path.isdir(original_data_uri):

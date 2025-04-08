@@ -2,8 +2,7 @@
 #
 # Licensed under the MIT License.
 
-"""Implementation of a SOMA Experiment.
-"""
+"""Implementation of a SOMA Experiment."""
 
 from __future__ import annotations
 
@@ -54,6 +53,7 @@ from typing_extensions import Self
 
 from ._constants import SPATIAL_DISCLAIMER
 from ._dask.load import DaskConfig, load_daskarray
+from ._exception import SOMAError
 
 if TYPE_CHECKING:
     from ._experiment import Experiment
@@ -828,7 +828,10 @@ def _read_as_csr(
 
     d0_joinids = d0_joinids_arr.to_numpy()
     d1_joinids = d1_joinids_arr.to_numpy()
-    nnz = matrix.nnz
+    try:
+        nnz: int | None = matrix._handle._handle.nnz(raise_if_slow=True)
+    except SOMAError:
+        nnz = None
 
     # if able, downcast from int64 - reduces working memory
     index_dtype = (
@@ -868,13 +871,16 @@ def _read_as_csr(
 
     approx_X_shape = tuple(b - a + 1 for a, b in matrix.non_empty_domain())
     # heuristically derived number (benchmarking). Thesis is that this is roughly 80% of a 1 GiB io buffer,
-    # which is the default for SOMA.
+    # which is the default for SOMA. If we have fast NNZ, use to partition based upon memory size. If we do not
+    # have fast NNZ, pick a default partition size which is large, but not so large as to rule out reasonable
+    # parallelism (in this case, calculated based on typical scRNASeq assay density of 3-6K features).
     target_point_count = 96 * 1024**2
+    fallback_row_count = 32768
     # compute partition size from array density and target point count, rounding to nearest 1024.
     partition_size = (
         max(1024 * round(approx_X_shape[0] * target_point_count / nnz / 1024), 1024)
-        if nnz > 0
-        else approx_X_shape[0]
+        if nnz is not None and nnz > 0
+        else min(fallback_row_count, approx_X_shape[0])
     )
     splits = list(
         range(
@@ -883,7 +889,7 @@ def _read_as_csr(
             partition_size,
         )
     )
-    if len(splits) > 0:
+    if len(splits) > 1:
         d0_joinids_splits = np.array_split(np.partition(d0_joinids, splits), splits)
         tp = matrix.context.threadpool
         tbl = pa.concat_tables(

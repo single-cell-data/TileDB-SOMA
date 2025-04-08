@@ -140,8 +140,12 @@ void load_soma_array(py::module& m) {
                 auto pa = py::module::import("pyarrow");
                 auto pa_schema_import = pa.attr("Schema").attr(
                     "_import_from_c");
-                return pa_schema_import(
-                    py::capsule(array.arrow_schema().get()));
+                try {
+                    return pa_schema_import(
+                        py::capsule(array.arrow_schema().get()));
+                } catch (const std::exception& e) {
+                    TPY_ERROR_LOC(e.what());
+                }
             })
         .def("schema_config_options", &SOMAArray::schema_config_options)
         .def(
@@ -149,7 +153,11 @@ void load_soma_array(py::module& m) {
             &SOMAArray::config_options_from_schema)
         .def("context", &SOMAArray::ctx)
 
-        .def("nnz", &SOMAArray::nnz, py::call_guard<py::gil_scoped_release>())
+        .def(
+            "nnz",
+            &SOMAArray::nnz,
+            py::arg("raise_if_slow") = false,
+            py::call_guard<py::gil_scoped_release>())
 
         .def_property_readonly("uri", &SOMAArray::uri)
 

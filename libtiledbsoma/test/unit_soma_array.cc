@@ -458,23 +458,31 @@ TEST_CASE("SOMAArray: Write and read back Boolean") {
     auto soma_array = SOMAArray::open(OpenMode::write, uri, ctx);
 
     auto arrow_schema = std::make_unique<ArrowSchema>();
-    arrow_schema->format = "+s";
+    arrow_schema->format = strdup("+s");
     arrow_schema->n_children = 2;
     arrow_schema->dictionary = nullptr;
+    arrow_schema->metadata = nullptr;
     arrow_schema->release = &ArrowAdapter::release_schema;
-    arrow_schema->children = new ArrowSchema*[arrow_schema->n_children];
-    ArrowSchema* arrow_dim = arrow_schema->children[0] = new ArrowSchema;
+    arrow_schema->children = (ArrowSchema**)malloc(
+        arrow_schema->n_children * sizeof(ArrowSchema*));
+    ArrowSchema* arrow_dim = arrow_schema->children[0] = (ArrowSchema*)malloc(
+        sizeof(ArrowSchema));
     arrow_dim->format = strdup(
         ArrowAdapter::tdb_to_arrow_type(TILEDB_INT64).c_str());
-    arrow_dim->name = dim_name;
+    arrow_dim->name = strdup(dim_name);
     arrow_dim->n_children = 0;
     arrow_dim->dictionary = nullptr;
+    arrow_dim->metadata = nullptr;
+    arrow_dim->children = nullptr;
     arrow_dim->release = &ArrowAdapter::release_schema;
-    ArrowSchema* arrow_att = arrow_schema->children[1] = new ArrowSchema;
-    arrow_att->format = "b";
-    arrow_att->name = attr_name;
+    ArrowSchema* arrow_att = arrow_schema->children[1] = (ArrowSchema*)malloc(
+        sizeof(ArrowSchema));
+    arrow_att->format = strdup("b");
+    arrow_att->name = strdup(attr_name);
     arrow_att->n_children = 0;
     arrow_att->dictionary = nullptr;
+    arrow_att->metadata = nullptr;
+    arrow_att->children = nullptr;
     arrow_att->release = &ArrowAdapter::release_schema;
 
     auto arrow_array = std::make_unique<ArrowArray>();
@@ -485,36 +493,47 @@ TEST_CASE("SOMAArray: Write and read back Boolean") {
     arrow_array->buffers = nullptr;
     arrow_array->n_children = 2;
     arrow_array->release = &ArrowAdapter::release_array;
-    arrow_array->children = new ArrowArray*[arrow_schema->n_children];
+    arrow_array->private_data = nullptr;
+    arrow_array->children = (ArrowArray**)malloc(2 * sizeof(ArrowArray*));
+    arrow_array->dictionary = nullptr;
 
-    auto d0_expected = arrow_array->children[0] = new ArrowArray;
+    auto d0_expected = arrow_array->children[0] = (ArrowArray*)malloc(
+        sizeof(ArrowArray));
     d0_expected->length = 8;
     d0_expected->null_count = 0;
     d0_expected->offset = 0;
     d0_expected->n_buffers = 2;
     d0_expected->release = &ArrowAdapter::release_array;
-    d0_expected->buffers = new const void*[2];
+    d0_expected->private_data = nullptr;
+    d0_expected->buffers = (const void**)malloc(2 * sizeof(void*));
     d0_expected->buffers[0] = nullptr;
     d0_expected->buffers[1] = malloc(sizeof(int64_t) * 8);
     d0_expected->n_children = 0;
+    d0_expected->children = nullptr;
+    d0_expected->dictionary = nullptr;
     int64_t d0_data[] = {0, 1, 2, 3, 4, 5, 6, 7};
     std::memcpy((void*)d0_expected->buffers[1], &d0_data, sizeof(int64_t) * 8);
 
-    auto a0_expected = arrow_array->children[1] = new ArrowArray;
+    auto a0_expected = arrow_array->children[1] = (ArrowArray*)malloc(
+        sizeof(ArrowArray));
+    ;
     a0_expected->length = 8;
     a0_expected->null_count = 0;
     a0_expected->offset = 0;
     a0_expected->n_buffers = 2;
     a0_expected->release = &ArrowAdapter::release_array;
-    a0_expected->buffers = new const void*[2];
+    a0_expected->private_data = nullptr;
+    a0_expected->buffers = (const void**)malloc(2 * sizeof(void*));
     a0_expected->buffers[0] = nullptr;
     a0_expected->buffers[1] = malloc(sizeof(uint8_t));
     a0_expected->n_children = 0;
+    a0_expected->children = nullptr;
+    a0_expected->dictionary = nullptr;
     uint8_t a0_data = 0b10101010;
     std::memcpy((void*)a0_expected->buffers[1], &a0_data, sizeof(uint8_t));
 
     auto mq_write = ManagedQuery(*soma_array, ctx->tiledb_ctx());
-    mq_write.set_array_data(std::move(arrow_schema), std::move(arrow_array));
+    mq_write.set_array_data(arrow_schema.get(), arrow_array.get());
     mq_write.submit_write();
     mq_write.close();
     soma_array->close();
@@ -534,4 +553,7 @@ TEST_CASE("SOMAArray: Write and read back Boolean") {
         std::vector<bool>(
             {false, true, false, true, false, true, false, true}));
     soma_array->close();
+
+    arrow_array->release(arrow_array.get());
+    arrow_schema->release(arrow_schema.get());
 }

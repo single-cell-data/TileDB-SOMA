@@ -60,6 +60,50 @@ class TileDBSOMAError : public std::runtime_error {
     }
 };
 
+// From
+// https://github.com/TileDB-Inc/TileDB/blob/main/tiledb/common/scoped_executor.h
+class ScopedExecutor final {
+   public:
+    /** Default constructor. */
+    ScopedExecutor() = default;
+
+    /**
+     * Value constructor. Executes `fn` when this instance is
+     * destructed.
+     *
+     * @param fn The function to execute on destruction.
+     */
+    explicit ScopedExecutor(std::function<void()>&& fn)
+        : fn_(std::move(fn)) {
+    }
+
+    /** Move constructor. */
+    ScopedExecutor(ScopedExecutor&& rhs) {
+        fn_.swap(rhs.fn_);
+    }
+
+    /** Destructor. Executes `fn_`. */
+    ~ScopedExecutor() {
+        if (fn_) {
+            fn_();
+        }
+    }
+
+    ScopedExecutor(const ScopedExecutor&) = delete;
+
+    ScopedExecutor& operator=(const ScopedExecutor&) = delete;
+
+    // clang++ says:
+    // error: constructor cannot be redeclared
+    // ScopedExecutor(ScopedExecutor&&) = delete;
+
+    ScopedExecutor& operator=(ScopedExecutor&&) = delete;
+
+   private:
+    /** The wrapped function to execute on destruction. */
+    std::function<void()> fn_;
+};
+
 };  // namespace tiledbsoma
 
 #endif  // TILEDBSOMA_COMMON_H

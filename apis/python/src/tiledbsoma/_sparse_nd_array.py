@@ -226,7 +226,7 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
         Lifecycle:
             Maturing.
         """
-        self._check_open_read()
+        self._verify_open_for_reading()
         return cast(SparseNDArrayWrapper, self._handle).nnz
 
     def read(
@@ -273,7 +273,7 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
             * Negative indexing is unsupported.
         """
         del batch_size  # Currently unused.
-        self._check_open_read()
+        self._verify_open_for_reading()
         _util.check_unpartitioned(partitions)
 
         return SparseNDArrayRead(

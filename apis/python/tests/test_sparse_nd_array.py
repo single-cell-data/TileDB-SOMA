@@ -433,16 +433,34 @@ def test_sparse_nd_array_shaping(tmp_path, shape_is_nones, element_type):
     with soma.SparseNDArray.open(uri) as snda:
         assert snda.nnz == 0
 
+    soma_dim_0 = pa.array([0, 0, 0, 1, 1, 1], type=pa.int64())
+    soma_dim_1 = pa.array([0, 1, 2, 0, 1, 2], type=pa.int64())
+    soma_data = None
+
+    if element_type == pa.bool_():
+        soma_data = pa.array([True, False, False, True, True, False], type=element_type)
+    else:
+        soma_data = pa.array([1, 2, 3, 4, 5, 6], type=element_type)
+
     batch1 = pa.Table.from_pydict(
         {
-            "soma_dim_0": [0, 0, 0, 1, 1, 1],
-            "soma_dim_1": [0, 1, 2, 0, 1, 2],
-            "soma_data": [1, 2, 3, 4, 5, 6],
+            "soma_dim_0": soma_dim_0,
+            "soma_dim_1": soma_dim_1,
+            "soma_data": soma_data,
         }
     )
 
+    soma_dim_0 = pa.array([2, 2, 2], type=pa.int64())
+    soma_dim_1 = pa.array([0, 1, 2], type=pa.int64())
+    soma_data = None
+
+    if element_type == pa.bool_():
+        soma_data = pa.array([False, True, False], type=element_type)
+    else:
+        soma_data = pa.array([7, 8, 9], type=element_type)
+
     batch2 = pa.Table.from_pydict(
-        {"soma_dim_0": [2, 2, 2], "soma_dim_1": [0, 1, 2], "soma_data": [7, 8, 9]}
+        {"soma_dim_0": soma_dim_0, "soma_dim_1": soma_dim_1, "soma_data": soma_data}
     )
 
     with soma.SparseNDArray.open(uri, "w") as snda:

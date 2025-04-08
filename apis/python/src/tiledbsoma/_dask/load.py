@@ -2,8 +2,7 @@
 #
 # Licensed under the MIT License.
 
-"""Utilities for loading a TileDB-SOMA ``X`` matrix as a Dask Array.
-"""
+"""Utilities for loading a TileDB-SOMA ``X`` matrix as a Dask Array."""
 
 from __future__ import annotations
 

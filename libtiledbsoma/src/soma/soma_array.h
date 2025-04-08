@@ -308,6 +308,19 @@ class SOMAArray : public SOMAObject {
         return schema;
     }
 
+    std::unique_ptr<ArrowSchema> arrow_schema_for_column(
+        std::string column_name) const {
+        for (size_t i = 0; i < columns_.size(); ++i) {
+            if (columns_[i]->name() == column_name) {
+                return std::unique_ptr<ArrowSchema>(
+                    columns_[i]->arrow_schema_slot(*ctx_, *arr_));
+            }
+        }
+        throw TileDBSOMAError(
+            "[arrow_schema_for_column] column name '" + column_name +
+            "' not present in schema");
+    }
+
     /**
      * @brief Get members of the schema (capacity, allows_duplicates,
      * tile_order, cell_order, offsets_filters, validity_filters, attr filters,
@@ -427,6 +440,44 @@ class SOMAArray : public SOMAObject {
      * Return optional timestamp pair SOMAArray was opened with.
      */
     std::optional<TimestampRange> timestamp();
+
+    /**
+     * Retrieves the enumeration values from the array's TileDB schema,
+     * for specified column names. Throws if any of the column names
+     * are not present in the schema, or if any of them are present but
+     * none are for a non-enumerated column.
+     *
+     * @tparam std::vector<std::string> column names
+     * @return ArrowTable with as many columns as the size of column_names.
+     */
+    ArrowTable get_enumeration_values(std::vector<std::string> column_names);
+
+    /**
+     * Retrieves the enumeration values from the array's TileDB schema,
+     * for the specified column name. Throws if the column name is not
+     * present in the schema, or if it is present but is for a non-enumerated
+     * column.
+     *
+     * @tparam std::string column name
+     * @return ArrowTable with one column
+     */
+    std::pair<ArrowArray*, ArrowSchema*> get_enumeration_values_for_column(
+        std::string column_name);
+
+    /**
+     * Adds new values to enumeration columns.
+     *
+     * If deduplicate is `false`, the provided values for columns must be new,
+     * unique values.
+     *
+     * @param values A mapping of column names to Arrow tables of enumeration
+     * values.
+     * @param deduplicate If set to false, new and existing values must be
+     * disjoint for each given column.
+     */
+    void extend_enumeration_values(
+        std::map<std::string, std::pair<ArrowSchema*, ArrowArray*>> values,
+        bool deduplicate);
 
     /**
      * Retrieves the non-empty domain from the array. This is the union of the
@@ -608,7 +659,7 @@ class SOMAArray : public SOMAObject {
      *
      * @return uint64_t Total number of unique cells
      */
-    uint64_t nnz();
+    uint64_t nnz(bool raise_if_slow = false);
 
     /**
      * @brief Get the current capacity of each dimension.
@@ -865,6 +916,15 @@ class SOMAArray : public SOMAObject {
     //===================================================================
 
     /**
+     * This can only be used when getting the enumeration for a column
+     * which already exists, which is of enumerated type, and for which
+     * the core enumeration already exists. Example uses including
+     * getting the list of distinct enumeration values, or extending
+     * the existing enumeration.
+     */
+    Enumeration get_existing_enumeration_for_column(std::string column_name);
+
+    /**
      * The caller must check the return value for .is_empty() to see if this is
      * a new-style array with current-domain support (.is_empty() is false) , or
      * an old-style array without current-domain support (.is_empty() is true).
@@ -1104,7 +1164,7 @@ class SOMAArray : public SOMAObject {
     std::shared_ptr<Array> meta_cache_arr_;
 
     // Unoptimized method for computing nnz() (issue `count_cells` query)
-    uint64_t _nnz_slow();
+    uint64_t _nnz_slow(bool raise_if_slow);
 };
 
 }  // namespace tiledbsoma

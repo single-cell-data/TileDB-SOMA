@@ -123,6 +123,98 @@ void load_soma_dataframe(py::module& m) {
         .def_property_readonly(
             "index_column_names", &SOMADataFrame::index_column_names)
 
+        .def(
+            "get_enumeration_values",
+            [](SOMADataFrame& sdf,
+               std::vector<std::string> column_names) -> py::dict {
+                try {
+                    auto pa = py::module::import("pyarrow");
+                    auto pa_array_import = pa.attr("Array").attr(
+                        "_import_from_c");
+
+                    py::gil_scoped_release release;
+                    ArrowTable t = sdf.get_enumeration_values(column_names);
+                    py::gil_scoped_acquire acquire;
+
+                    auto ncol = t.second->n_children;
+
+                    py::dict retval;
+                    for (auto i = 0; i < ncol; i++) {
+                        auto column_arrow_array = t.first->children[i];
+                        auto column_arrow_schema = t.second->children[i];
+
+                        // Get this column_name before pa_array_import, while
+                        // the memory is still valid / untransferred.
+                        std::string column_name(column_arrow_schema->name);
+
+                        auto pa_array = pa_array_import(
+                            py::capsule(column_arrow_array),
+                            py::capsule(column_arrow_schema));
+                        retval[py::str(column_name)] = pa_array;
+                    }
+                    return retval;
+                } catch (const std::exception& e) {
+                    throw TileDBSOMAError(e.what());
+                }
+            },
+            "column_names"_a)
+
+        .def(
+            "extend_enumeration_values",
+            [](SOMADataFrame& sdf,
+               // Map values are of type pa.Array.
+               //
+               // One might think this looks a lot like a pa.RecordBatch,
+               // so why not use that? Answer: the map values are, in general,
+               // all of different lengths. So they cannot be formed into
+               // an Arrow table and passed into here that way.
+               std::map<std::string, py::object> values,
+               bool deduplicate) -> py::none {
+                size_t ncol = values.size();
+                std::vector<ArrowSchema> arrow_schemas(ncol);
+                std::vector<ArrowArray> arrow_arrays(ncol);
+                size_t i = 0;
+                std::map<std::string, std::pair<ArrowSchema*, ArrowArray*>>
+                    map_for_cpp;
+                for (auto item : values) {
+                    std::string column_name = py::str(item.first);
+                    py::object pa_array_for_column = item.second;
+                    // static_cast<uintptr_t>(...) does not compile here.
+                    uintptr_t arrow_schema_ptr = (uintptr_t)(&arrow_schemas[i]);
+                    uintptr_t arrow_array_ptr = (uintptr_t)(&arrow_arrays[i]);
+                    pa_array_for_column.attr("_export_to_c")(
+                        arrow_array_ptr, arrow_schema_ptr);
+                    map_for_cpp[column_name] =
+                        std::pair<ArrowSchema*, ArrowArray*>(
+                            (ArrowSchema*)arrow_schema_ptr,
+                            (ArrowArray*)arrow_array_ptr);
+                    i++;
+                }
+
+                // This will run at destruction time (like a 'defer' in Go)
+                // once this method exits, exception or no
+                ScopedExecutor cleanup([&]() {
+                    for (i = 0; i < ncol; i++) {
+                        arrow_schemas[i].release(&arrow_schemas[i]);
+                        arrow_arrays[i].release(&arrow_arrays[i]);
+                    }
+                });
+
+                py::gil_scoped_release release;
+                try {
+                    sdf.extend_enumeration_values(map_for_cpp, deduplicate);
+                } catch (std::range_error& e) {
+                    throw py::value_error(e.what());
+                } catch (const std::exception& e) {
+                    TPY_ERROR_LOC(e.what());
+                }
+                py::gil_scoped_acquire acquire;
+
+                return py::none();
+            },
+            "values"_a,
+            "deduplicate"_a)
+
         .def_property_readonly(
             "count",
             &SOMADataFrame::count,

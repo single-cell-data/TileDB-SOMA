@@ -57,7 +57,7 @@ else
     echo "   ... finished preparing dataset 'data/$name'."
 fi
 
-# Download and extra soma-experiment-versions
+# Download and extract soma-experiment-versions-YYYY-MM-DD
 # Nominal use case in CI:
 # * Download the .tgz
 # * Untar it
@@ -68,13 +68,13 @@ fi
 # * Else get the .tgz from cloud storage
 # * This enables the developer to try out any modified data files _before_ making
 #   a new release tag on the TileDB-SOMA-Test-Data repo
-name="soma-experiment-versions"
+name="soma-experiment-versions-2025-04-04"
 echo "-- Preparing dataset 'data/$name' ..."
 if [ -d $name ]; then
     echo "-- Skipping dataset 'data/$name'; directory 'data/$name' already exists."
 else
     if [ ! -f $name.tgz ]; then
-        wget https://github.com/single-cell-data/TileDB-SOMA-Test-Data/releases/download/dataset-2025-02-24/$name.tgz
+        wget https://github.com/single-cell-data/TileDB-SOMA-Test-Data/releases/download/dataset-2025-04-04/$name.tgz
     fi
     tar zxf $name.tgz
 fi

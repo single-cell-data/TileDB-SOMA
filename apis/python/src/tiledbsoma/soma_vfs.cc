@@ -34,11 +34,24 @@ class SOMAVFSFilebuf : public tiledb::impl::VFSFilebuf {
    private:
     std::streamsize offset_ = 0;
     SOMAVFS vfs_;
+    std::ios::openmode openmode_;
 
    public:
     SOMAVFSFilebuf(const VFS& vfs)
         : tiledb::impl::VFSFilebuf(vfs)
         , vfs_(vfs){};
+
+    SOMAVFSFilebuf* open(const std::string& uri, std::ios::openmode openmode) {
+        openmode_ = openmode;
+        if (tiledb::impl::VFSFilebuf::open(uri, openmode) == nullptr) {
+            // No std::format in C++17, and fmt::format is overkill
+            // here
+            std::stringstream ss;
+            ss << "URI " << uri << " is not a valid URI";
+            TPY_ERROR_LOC(ss.str());
+        }
+        return this;
+    }
 
     std::streamsize seek(std::streamsize offset, uint64_t whence) {
         if (whence == 0) {
@@ -70,8 +83,43 @@ class SOMAVFSFilebuf : public tiledb::impl::VFSFilebuf {
         return py::bytes(buffer);
     }
 
+    std::streamsize readinto(py::buffer buffer) {
+        py::buffer_info info = buffer.request();
+        if (info.ndim != 1)
+            throw std::runtime_error("Expected a 1-dimensional byte array");
+        if (info.readonly)
+            throw std::runtime_error("Cannot write to a read-only buffer");
+
+        auto nbytes = info.size;
+        if (nbytes <= 0)
+            return 0;
+
+        py::gil_scoped_release release;
+        auto bytes_read = xsgetn(static_cast<char*>(info.ptr), nbytes);
+        offset_ += bytes_read;
+        py::gil_scoped_acquire acquire;
+
+        return bytes_read;
+    }
+
     std::streamsize tell() {
         return offset_;
+    }
+
+    bool readable() {
+        return (openmode_ & std::ios::in) != 0;
+    }
+
+    bool writable() {
+        return (openmode_ & std::ios::out) != 0;
+    }
+
+    bool closed() {
+        return !is_open();
+    }
+
+    bool seekable() {
+        return true;
     }
 };
 
@@ -88,18 +136,17 @@ void load_soma_vfs(py::module& m) {
         .def(
             "open",
             [](SOMAVFSFilebuf& buf, const std::string& uri) {
-                auto fb = buf.open(uri, std::ios::in);
-                if (fb == nullptr) {
-                    // No std::format in C++17, and fmt::format is overkill here
-                    std::stringstream ss;
-                    ss << "URI " << uri << " is not a valid URI";
-                    TPY_ERROR_LOC(ss.str());
-                }
-                return fb;
+                return buf.open(uri, std::ios::in);  // hardwired to read-only
             },
             py::call_guard<py::gil_scoped_release>())
         .def("read", &SOMAVFSFilebuf::read, "size"_a = -1)
+        .def("readinto", &SOMAVFSFilebuf::readinto, "buffer"_a)
+        .def("flush", [](SOMAVFSFilebuf& buf) {})
         .def("tell", &SOMAVFSFilebuf::tell)
+        .def("readable", &SOMAVFSFilebuf::readable)
+        .def("writable", &SOMAVFSFilebuf::writable)
+        .def_property_readonly("closed", &SOMAVFSFilebuf::closed)
+        .def("seekable", &SOMAVFSFilebuf::seekable)
         .def(
             "seek",
             &SOMAVFSFilebuf::seek,

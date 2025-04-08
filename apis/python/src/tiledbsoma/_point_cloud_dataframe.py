@@ -299,7 +299,7 @@ class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
     @property
     def count(self) -> int:
         """Returns the number of rows in the dataframe."""
-        self._check_open_read()
+        self._verify_open_for_reading()
         # if is it in read open mode, then it is a PointCloudDataFrameWrapper
         return cast(PointCloudDataFrameWrapper, self._handle).count
 
@@ -337,7 +337,7 @@ class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
         """
         del batch_size  # Currently unused.
         _util.check_unpartitioned(partitions)
-        self._check_open_read()
+        self._verify_open_for_reading()
 
         # TODO: batch_size
         return TableReadIter(

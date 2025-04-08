@@ -31,32 +31,38 @@ void SOMADenseNDArray::create(
     uint64_t index_column_size = index_column_schema->n_children;
 
     auto schema = std::make_unique<ArrowSchema>();
+    schema->name = nullptr;
     schema->format = strdup("+s");
     schema->n_children = index_column_size + 1;
     schema->dictionary = nullptr;
     schema->metadata = nullptr;
     schema->flags = 0;
     schema->release = &ArrowAdapter::release_schema;
-    schema->children = new ArrowSchema*[schema->n_children];
+    schema->children = (ArrowSchema**)malloc(
+        schema->n_children * sizeof(ArrowSchema*));
 
     std::vector<std::string> index_column_names;
     for (uint64_t dim_idx = 0; dim_idx < index_column_size; ++dim_idx) {
-        ArrowSchema* dim = schema->children[dim_idx] = new ArrowSchema;
+        ArrowSchema* dim = schema->children[dim_idx] = (ArrowSchema*)malloc(
+            sizeof(ArrowSchema));
         dim->format = strdup("l");
         dim->name = strdup(
             std::string("soma_dim_" + std::to_string(dim_idx)).c_str());
         dim->n_children = 0;
+        dim->children = nullptr;
         dim->metadata = nullptr;
         dim->dictionary = nullptr;
         dim->release = &ArrowAdapter::release_schema;
         index_column_names.push_back(dim->name);
     }
 
-    ArrowSchema* attr = schema->children[index_column_size] = new ArrowSchema;
+    ArrowSchema* attr = schema->children[index_column_size] = (ArrowSchema*)
+        malloc(sizeof(ArrowSchema));
     attr->format = strdup(std::string(format).c_str());
     attr->name = strdup("soma_data");
     attr->n_children = 0;
     attr->flags = 0;  // or ARROW_FLAG_NULLABLE;
+    attr->children = nullptr;
     attr->dictionary = nullptr;
     attr->metadata = nullptr;
     attr->release = &ArrowAdapter::release_schema;
@@ -73,6 +79,8 @@ void SOMADenseNDArray::create(
 
     SOMAArray::create(
         ctx, uri, tiledb_schema, "SOMADenseNDArray", std::nullopt, timestamp);
+
+    schema->release(schema.get());
 }
 
 std::unique_ptr<SOMADenseNDArray> SOMADenseNDArray::open(

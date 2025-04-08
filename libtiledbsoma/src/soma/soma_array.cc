@@ -359,6 +359,163 @@ std::optional<TimestampRange> SOMAArray::timestamp() {
     return timestamp_;
 }
 
+Enumeration SOMAArray::get_existing_enumeration_for_column(
+    std::string column_name) {
+    auto tctx = ctx_->tiledb_ctx();
+    auto attribute = schema_->attribute(column_name);
+    auto enumeration_name = AttributeExperimental::get_enumeration_name(
+        *tctx, attribute);
+    if (!enumeration_name.has_value()) {
+        throw TileDBSOMAError(fmt::format(
+            "[SOMAArray::get_existing_enumeration_for_column] column_name '{}' "
+            "is non-enumerated",
+            column_name));
+    }
+    return ArrayExperimental::get_enumeration(
+        *tctx, *arr_, enumeration_name.value());
+}
+
+ArrowTable SOMAArray::get_enumeration_values(
+    std::vector<std::string> column_names) {
+    auto ncol = column_names.size();
+    auto arrow_schema = ArrowAdapter::make_arrow_schema_parent(ncol);
+    auto arrow_array = ArrowAdapter::make_arrow_array_parent(ncol);
+    // TBD thread-pooling opportunity -- TBD if it will be worthwhile
+    for (size_t i = 0; i < ncol; i++) {
+        const auto column_name = column_names[i];
+        auto pair = get_enumeration_values_for_column(column_name);
+
+        arrow_array->children[i] = pair.first;
+        arrow_schema->children[i] = pair.second;
+    }
+    return ArrowTable(std::move(arrow_array), std::move(arrow_schema));
+}
+
+std::pair<ArrowArray*, ArrowSchema*>
+SOMAArray::get_enumeration_values_for_column(std::string column_name) {
+    // This will throw if column name is not found
+    std::unique_ptr<ArrowSchema> up_column_schema = arrow_schema_for_column(
+        column_name);
+    ArrowSchema* column_schema = up_column_schema.get();
+
+    // Throw if this column is not of dictionary type
+    if (column_schema->dictionary == nullptr) {
+        throw TileDBSOMAError(fmt::format(
+            "[get_enumeration_values_for_column] column named '{}' is not of "
+            "dictionary type",
+            column_name));
+    }
+
+    Enumeration core_enum = get_existing_enumeration_for_column(column_name);
+    auto value_dtype = core_enum.type();
+
+    ArrowSchema* output_arrow_schema = ArrowAdapter::make_arrow_schema_child(
+        column_name, value_dtype);
+
+    ArrowArray* output_arrow_array = nullptr;
+
+    switch (value_dtype) {
+        case TILEDB_STRING_UTF8:
+        case TILEDB_STRING_ASCII:
+        case TILEDB_CHAR:
+            output_arrow_array = ArrowAdapter::make_arrow_array_child_string(
+                core_enum.as_vector<std::string>());
+            break;
+        case TILEDB_BOOL:
+            // TileDB bools are 8-bit; Arrow bools are 1-bit.
+            output_arrow_array = ArrowAdapter::make_arrow_array_child_bool(
+                core_enum.as_vector<uint8_t>());
+            break;
+        case TILEDB_INT8:
+            output_arrow_array = ArrowAdapter::make_arrow_array_child(
+                core_enum.as_vector<int8_t>());
+            break;
+        case TILEDB_UINT8:
+            output_arrow_array = ArrowAdapter::make_arrow_array_child(
+                core_enum.as_vector<uint8_t>());
+            break;
+        case TILEDB_INT16:
+            output_arrow_array = ArrowAdapter::make_arrow_array_child(
+                core_enum.as_vector<int16_t>());
+            break;
+        case TILEDB_UINT16:
+            output_arrow_array = ArrowAdapter::make_arrow_array_child(
+                core_enum.as_vector<uint16_t>());
+            break;
+        case TILEDB_INT32:
+            output_arrow_array = ArrowAdapter::make_arrow_array_child(
+                core_enum.as_vector<int32_t>());
+            break;
+        case TILEDB_UINT32:
+            output_arrow_array = ArrowAdapter::make_arrow_array_child(
+                core_enum.as_vector<uint32_t>());
+            break;
+        case TILEDB_INT64:
+            output_arrow_array = ArrowAdapter::make_arrow_array_child(
+                core_enum.as_vector<int64_t>());
+            break;
+        case TILEDB_UINT64:
+            output_arrow_array = ArrowAdapter::make_arrow_array_child(
+                core_enum.as_vector<uint64_t>());
+            break;
+        case TILEDB_FLOAT32:
+            output_arrow_array = ArrowAdapter::make_arrow_array_child(
+                core_enum.as_vector<float>());
+            break;
+        case TILEDB_FLOAT64:
+            output_arrow_array = ArrowAdapter::make_arrow_array_child(
+                core_enum.as_vector<double>());
+            break;
+
+        default:
+            throw TileDBSOMAError(fmt::format(
+                "ArrowAdapter: Unsupported TileDB dict datatype: {} ",
+                tiledb::impl::type_to_str(value_dtype)));
+    }
+
+    return std::pair(output_arrow_array, output_arrow_schema);
+}
+
+void SOMAArray::extend_enumeration_values(
+    std::map<std::string, std::pair<ArrowSchema*, ArrowArray*>> values,
+    bool deduplicate) {
+    auto tctx = ctx_->tiledb_ctx();
+    auto mq = ManagedQuery(arr_, tctx, "extend_enumeration_values");
+    ArraySchemaEvolution schema_evolution(*tctx);
+
+    // TBD thread-pooling opportunity -- TBD if it will be worthwhile
+    for (const auto& [column_name, arrow_pair] : values) {
+        auto [values_schema, values_array] = arrow_pair;
+
+        if (column_name == "") {
+            throw TileDBSOMAError(
+                "[SOMAArray::extend_enumeration_values] column_name is the "
+                "empty string");
+        }
+
+        auto attribute = schema_->attribute(column_name);
+        auto enumeration_name = AttributeExperimental::get_enumeration_name(
+            *tctx, attribute);
+        if (!enumeration_name.has_value()) {
+            throw TileDBSOMAError(fmt::format(
+                "[SOMAArray::extend_enumeration_values] column_name '{}' is "
+                "non-enumerated",
+                column_name));
+        }
+        Enumeration core_enum = get_existing_enumeration_for_column(
+            column_name);
+
+        mq._extend_enumeration(
+            values_schema,
+            values_array,
+            column_name,
+            deduplicate,
+            core_enum,
+            schema_evolution);
+    }
+    schema_evolution.array_evolve(arr_->uri());
+}
+
 // Note that ArrowTable is simply our libtiledbsoma pairing of ArrowArray and
 // ArrowSchema from nanoarrow.
 //
@@ -386,7 +543,7 @@ ArrowTable SOMAArray::_get_core_domainish(enum Domainish which_kind) {
     return ArrowTable(std::move(arrow_array), std::move(arrow_schema));
 }
 
-uint64_t SOMAArray::nnz() {
+uint64_t SOMAArray::nnz(bool raise_if_slow) {
     // Verify array is sparse
     if (schema_->array_type() != TILEDB_SPARSE) {
         throw TileDBSOMAError(
@@ -399,7 +556,11 @@ uint64_t SOMAArray::nnz() {
 
     LOG_DEBUG(fmt::format("[SOMAArray] Fragment info for array '{}'", uri_));
     if (LOG_DEBUG_ENABLED()) {
-        fragment_info.dump();
+        std::ostringstream fragment_info_dump;
+        fragment_info_dump << fragment_info;
+        fragment_info_dump.flush();
+
+        LOG_DEBUG(fragment_info_dump.str());
     }
 
     // Find the subset of fragments contained within the read timestamp range
@@ -417,7 +578,7 @@ uint64_t SOMAArray::nnz() {
                          frag_ts.second <= timestamp_->second)) {
                 // fragment overlaps read timestamp range, but isn't fully
                 // contained within: fall back to count_cells to sort that out.
-                return _nnz_slow();
+                return _nnz_slow(raise_if_slow);
             }
         }
         // fall through: fragment is fully contained within the read timestamp
@@ -430,7 +591,7 @@ uint64_t SOMAArray::nnz() {
         // application's job to otherwise ensure uniqueness), then
         // sum-over-fragments is the right thing to do.
         if (!schema_->allows_dups() && frag_ts.first != frag_ts.second) {
-            return _nnz_slow();
+            return _nnz_slow(raise_if_slow);
         }
     }
 
@@ -466,7 +627,7 @@ uint64_t SOMAArray::nnz() {
             "soma_joinid or int64 soma_dim_0: using _nnz_slow",
             tiledb::impl::type_to_str(type_code),
             dim_name));
-        return _nnz_slow();
+        return _nnz_slow(raise_if_slow);
     }
 
     for (uint32_t i = 0; i < fragment_count; i++) {
@@ -507,10 +668,15 @@ uint64_t SOMAArray::nnz() {
         return total_cell_num;
     }
     // Found relevant fragments with overlap, count cells
-    return _nnz_slow();
+    return _nnz_slow(raise_if_slow);
 }
 
-uint64_t SOMAArray::_nnz_slow() {
+uint64_t SOMAArray::_nnz_slow(bool raise_if_slow) {
+    if (raise_if_slow) {
+        throw TileDBSOMAError(
+            "NNZ slow path called with 'raise_if_slow==true'");
+    }
+
     LOG_DEBUG(
         "[SOMAArray] nnz() found consolidated or overlapping fragments, "
         "counting cells...");

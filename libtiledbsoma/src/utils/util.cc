@@ -14,6 +14,7 @@
 #include "utils/util.h"
 #include <cstring>
 #include "logger.h"
+#include "utils/logger.h"  // for fmt::format
 
 namespace tiledbsoma::util {
 
@@ -97,16 +98,52 @@ Enumeration get_enumeration(
     std::shared_ptr<Array> arr,
     ArrowSchema* index_schema,
     ArrowSchema* value_schema) {
+    std::string new_way = util::get_enmr_label(index_schema, value_schema);
+    std::string old_way = std::string(index_schema->name);
     try {
         // New-style names of the form {attr_name}_{arrow_format}, e.g. "foo_U"
         // for attributes written by tiledbsoma >= 1.16.0
-        return ArrayExperimental::get_enumeration(
-            *ctx, *arr, util::get_enmr_label(index_schema, value_schema));
+        return ArrayExperimental::get_enumeration(*ctx, *arr, new_way);
     } catch (const std::exception& e) {
         // Old-style names of the form {attr_name}, e.g. "foo"
         // for attributes written by tiledbsoma < 1.16.0
-        return ArrayExperimental::get_enumeration(
-            *ctx, *arr, index_schema->name);
+        try {
+            return ArrayExperimental::get_enumeration(*ctx, *arr, old_way);
+        } catch (const std::exception& e) {
+            throw TileDBSOMAError(fmt::format(
+                "[get_enumeration] Could not find enumeration with name '{} or "
+                "'{}'",
+                new_way,
+                old_way));
+        }
+    }
+}
+
+/**
+ * Maps core Array/Group type enums to SOMA-style strings "SOMAArray" and
+ * "SOMAGroup". Throws if the input value is neither one of those.
+ */
+std::string soma_type_from_tiledb_type(tiledb::Object::Type tiledb_type) {
+    switch (tiledb_type) {
+        case Object::Type::Array:
+            return "SOMAArray";
+        case Object::Type::Group:
+            return "SOMAGroup";
+        case Object::Type::Invalid:
+            throw TileDBSOMAError(fmt::format(
+                "[SOMAObject::open] Saw TileDB type Invalid ({}), which is "
+                "neither Array ({}) nor Group ({})",
+                static_cast<int>(tiledb_type),
+                static_cast<int>(Object::Type::Array),
+                static_cast<int>(Object::Type::Group)));
+        default:
+            throw TileDBSOMAError(fmt::format(
+                "[SOMAObject::open] Saw unrecognized TileDB type ({}), which "
+                "is neither Array ({}) nor Group ({}) nor Invalid ({})",
+                static_cast<int>(tiledb_type),
+                static_cast<int>(Object::Type::Array),
+                static_cast<int>(Object::Type::Group),
+                static_cast<int>(Object::Type::Invalid)));
     }
 }
 

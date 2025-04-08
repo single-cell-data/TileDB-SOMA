@@ -358,7 +358,7 @@ class ArrowAdapter {
      *
      * @return ArrowSchema
      */
-    static std::unique_ptr<ArrowSchema> arrow_schema_from_tiledb_dimension(
+    static ArrowSchema* arrow_schema_from_tiledb_dimension(
         const Dimension& dimension);
 
     /**
@@ -608,7 +608,7 @@ class ArrowAdapter {
 
         // Two-buffer model for non-string data:
         // * Slot 0 is the Arrow validity buffer which we leave null
-        // * Slot 1 is data, void* but will be derefrenced as T*
+        // * Slot 1 is data, void* but will be dereferenced as T*
         // * There is no offset information
         arrow_array->n_buffers = 2;
         arrow_array->n_children = 0;  // leaf/child node
@@ -663,7 +663,7 @@ class ArrowAdapter {
         // * Slot 0 is the Arrow uint8_t* validity buffer
         // * Slot 1 is the Arrow offsets buffer: uint32_t* for Arrow string
         //   or uint64_t* for Arrow large_string
-        // * Slot 2 is data, void* but will be derefrenced as T*
+        // * Slot 2 is data, void* but will be dereferenced as T*
         arrow_array->n_buffers = 3;
         arrow_array->buffers = (const void**)malloc(3 * sizeof(void*));
         arrow_array->n_children = 0;      // leaf/child node
@@ -702,8 +702,61 @@ class ArrowAdapter {
         return arrow_array;
     }
 
-    // These table-column getters are, as of this writing, intended primarily
-    // for keystroke-reduction in unit-test cases.
+    // Given TileDB 8-bit booleans, packs them to 1-bit Arrow-style booleans.
+    static ArrowArray* make_arrow_array_child_bool(
+        const std::vector<uint8_t>& v) {
+        // Use malloc here, not new, to match ArrowAdapter::release_array
+        auto arrow_array = (ArrowArray*)malloc(sizeof(ArrowArray));
+
+        size_t n = v.size();
+
+        arrow_array->length = n;  // Number of bools, not number of bytes
+        arrow_array->null_count = 0;
+        arrow_array->offset = 0;
+
+        // Two-buffer model for non-string data:
+        // * Slot 0 is the Arrow validity buffer which we leave null
+        // * Slot 1 is data, void* but will be dereferenced as T*
+        // * There is no offset information
+        arrow_array->n_buffers = 2;
+        arrow_array->n_children = 0;  // leaf/child node
+        arrow_array->buffers = (const void**)malloc(2 * sizeof(void*));
+        arrow_array->children = nullptr;  // leaf/child node
+        arrow_array->dictionary = nullptr;
+
+        // The nominal use of these methods as of this writing is for
+        // low-volume data such as schema information -- less than a
+        // kilobyte total. It's simplest and safest to do data copies,
+        // for-loop-wise. If we were to extend usage of these methods
+        // to bulk data in the megabyte/gigabyte range, we'd want to
+        // look at zero-copy for buffers, with variable approaches
+        // to memory management.
+        arrow_array->release = &ArrowAdapter::release_array;
+        arrow_array->private_data = nullptr;
+
+        arrow_array->buffers[0] = nullptr;
+        // Use malloc here, not new, to match ArrowAdapter::release_array.
+        // When computing the number of bits needed to store the n bits, round
+        // up.
+        auto nbytes = (n + 7) / 8;
+        uint8_t* dest = (uint8_t*)malloc(nbytes * sizeof(uint8_t));
+        memset(dest, 0, nbytes);
+
+        for (size_t i = 0; i < n; i++) {
+            if (v[i]) {
+                ArrowBitSet(dest, i);
+            }
+        }
+
+        arrow_array->buffers[1] = (void*)dest;
+
+        log_make_arrow_array_child(arrow_array);
+
+        return arrow_array;
+    }
+
+    // These table-column getters are, as of this writing, intended
+    // primarily for keystroke-reduction in unit-test cases.
 
     template <typename T>
     static std::vector<T> get_table_non_string_column_by_name(
@@ -761,13 +814,14 @@ class ArrowAdapter {
 
     /**
      * Returns a copy of the data in a specified non-string column of an
-     * ArrowArray as a standard/non-Arrow C++ object. There is no ArrowSchema*
-     * argument, as the caller must have determined the Arrow type, inferred
-     * a C++ type, and have invoked this method with the appropriate C++ type.
+     * ArrowArray as a standard/non-Arrow C++ object. There is no
+     * ArrowSchema* argument, as the caller must have determined the Arrow
+     * type, inferred a C++ type, and have invoked this method with the
+     * appropriate C++ type.
      *
-     * This is a helper for get_table_non_string_column_by_index; also exposed
-     * for callsites which have access to child objects which are not top-level
-     * ArrowTables.
+     * This is a helper for get_table_non_string_column_by_index; also
+     * exposed for callsites which have access to child objects which are
+     * not top-level ArrowTables.
      */
     template <typename T>
     static std::vector<T> get_array_non_string_column(
@@ -792,26 +846,29 @@ class ArrowAdapter {
 
         // Two-buffer model for non-string data:
         // * Slot 0 is the Arrow validity buffer which we leave null
-        // * Slot 1 is data, void* but will be derefrenced as T*
+        // * Slot 1 is data, void* but will be dereferenced as T*
         // * There is no offset information
 
-        // For our purposes -- reporting domains, etc. -- we don't use the Arrow
-        // validity buffers. If this class needs to be extended someday to
-        // support arrow-nulls, we can work on that.
+        // For our purposes -- reporting domains, etc. -- we don't use the
+        // Arrow validity buffers. If this class needs to be extended
+        // someday to support arrow-nulls, we can work on that.
         if (arrow_array->buffers[0] != nullptr) {
             throw std::runtime_error(
-                "ArrowAdapter::get_array_non_string_column: validity buffer "
+                "ArrowAdapter::get_array_non_string_column: validity "
+                "buffer "
                 "unsupported here");
         }
         if (arrow_array->buffers[1] == nullptr) {
             throw std::runtime_error(
-                "ArrowAdapter::get_array_non_string_column: null data buffer");
+                "ArrowAdapter::get_array_non_string_column: null data "
+                "buffer");
         }
 
         const void* vdata = arrow_array->buffers[1];
         if (vdata == nullptr) {
             throw std::runtime_error(
-                "ArrowAdapter::get_array_non_string_column: null data buffer");
+                "ArrowAdapter::get_array_non_string_column: null data "
+                "buffer");
         }
 
         const T* data = (T*)vdata;
@@ -847,11 +904,11 @@ class ArrowAdapter {
         // * Slot 0 is the Arrow uint8_t* validity buffer
         // * Slot 1 is the Arrow offsets buffer: uint32_t* for Arrow string
         //   or uint64_t* for Arrow large_string
-        // * Slot 2 is data, void* but will be derefrenced as T*
+        // * Slot 2 is data, void* but will be dereferenced as T*
 
-        // For our purposes -- reporting domains, etc. -- we don't use the Arrow
-        // validity buffers. If this class needs to be extended someday to
-        // support arrow-nulls, we can work on that.
+        // For our purposes -- reporting domains, etc. -- we don't use the
+        // Arrow validity buffers. If this class needs to be extended
+        // someday to support arrow-nulls, we can work on that.
         if (arrow_array->buffers[0] != nullptr) {
             throw std::runtime_error(
                 "ArrowAdapter::get_array_string_column: validity buffer "
@@ -930,7 +987,8 @@ class ArrowAdapter {
 
         if (arrow_schema->n_children <= column_index) {
             throw std::runtime_error(
-                "ArrowAdapter::get_table_any_column_by_index: column index out "
+                "ArrowAdapter::get_table_any_column_by_index: column index "
+                "out "
                 "of bounds.");
         }
 
@@ -940,8 +998,8 @@ class ArrowAdapter {
         ArrowSchema* selected_schema = arrow_schema->children[column_index];
 
         if (strcmp(selected_schema->format, "+s") == 0) {
-            // Complex domain like the ones required by `GeometryColumn` expect
-            // a struct containing lists of values
+            // Complex domain like the ones required by `GeometryColumn`
+            // expect a struct containing lists of values
             for (int64_t i = 0; i < selected_schema->n_children; ++i) {
                 ArrowArray* array = selected_array->children[i];
                 ArrowSchema* schema = selected_schema->children[i];
@@ -961,34 +1019,35 @@ class ArrowAdapter {
      * Read a part of an Arrow array to an std::array and cast into an
      * std::any object.
      *
-     * @example get_table_any_column<3>(array, schema, offset) will return an
-     * std::array<T, 3> where T is the appropriate type based on the Arrow array
-     * format casted as an std::any object. The std::array will skip as many
-     * elements as specified by `offset` and copy the next 3 from the Arrow
-     * array.
+     * @example get_table_any_column<3>(array, schema, offset) will return
+     * an std::array<T, 3> where T is the appropriate type based on the
+     * Arrow array format casted as an std::any object. The std::array will
+     * skip as many elements as specified by `offset` and copy the next 3
+     * from the Arrow array.
      *
      * @tparam S The number of elements to read.
      *
-     * @param array The Arrow array to read the data from. The array should be
-     * a leaf node with no subarrays.
+     * @param array The Arrow array to read the data from. The array should
+     * be a leaf node with no subarrays.
      * @param schema The Arrow schema of the given array.
-     * @param offset The number of elements to skip from the beginning of the
-     * Arrow array
+     * @param offset The number of elements to skip from the beginning of
+     * the Arrow array
      *
      * @remarks This method's usage is to extract specific subranges of
-     * ArrowArray data and they come in handy during ArrowSchema -> TileDBSchema
-     * where the Arrow array provided has 5 values per dimension and we only
-     * need the last 2 to set the current domain.
+     * ArrowArray data and they come in handy during ArrowSchema ->
+     * TileDBSchema where the Arrow array provided has 5 values per
+     * dimension and we only need the last 2 to set the current domain.
      *
-     * `S` is required to be a template parameter to specify the compile-time
-     * size of the underlying std::array that will hold the extracted data.
+     * `S` is required to be a template parameter to specify the
+     * compile-time size of the underlying std::array that will hold the
+     * extracted data.
      *
      * As to using std::variant, adding more SOMAColumn types would require
-     * changing multiple variants. The use of std::any here is to enable runtime
-     * polymorphism and indirectly introduces a runtime type check (via
-     * any_cast, make_any) between the templated function and the actual
-     * dimension type. std::variant can provide all the above; this is a
-     * stylistic choice.
+     * changing multiple variants. The use of std::any here is to enable
+     * runtime polymorphism and indirectly introduces a runtime type check
+     * (via any_cast, make_any) between the templated function and the
+     * actual dimension type. std::variant can provide all the above; this
+     * is a stylistic choice.
      */
     template <size_t S>
     static std::any get_table_any_column(

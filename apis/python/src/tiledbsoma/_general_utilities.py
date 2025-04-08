@@ -2,8 +2,7 @@
 #
 # Licensed under the MIT License.
 
-"""General utility functions.
-"""
+"""General utility functions."""
 import importlib.metadata
 import platform
 import sys

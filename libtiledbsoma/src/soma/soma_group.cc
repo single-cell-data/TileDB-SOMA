@@ -13,6 +13,7 @@
 
 #include "soma_group.h"
 #include "../soma/logger_public.h"
+#include "../utils/logger.h"  // for fmt::format
 #include "../utils/util.h"
 
 namespace tiledbsoma {
@@ -134,17 +135,7 @@ void SOMAGroup::fill_caches() {
 
     for (uint64_t i = 0; i < cache_group_->member_count(); ++i) {
         auto mem = cache_group_->member(i);
-        std::string soma_type;
-        switch (mem.type()) {
-            case Object::Type::Array:
-                soma_type = "SOMAArray";
-                break;
-            case Object::Type::Group:
-                soma_type = "SOMAGroup";
-                break;
-            default:
-                throw TileDBSOMAError("Saw invalid TileDB type");
-        }
+        std::string soma_type = util::soma_type_from_tiledb_type(mem.type());
         std::string key = mem.name().has_value() ? mem.name().value() :
                                                    mem.uri();
         members_map_[key] = SOMAGroupEntry(mem.uri(), soma_type);

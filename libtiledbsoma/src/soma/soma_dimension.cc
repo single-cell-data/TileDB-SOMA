@@ -1035,8 +1035,7 @@ std::pair<ArrowArray*, ArrowSchema*> SOMADimension::arrow_domain_slot(
 
 ArrowSchema* SOMADimension::arrow_schema_slot(
     const SOMAContext&, Array&) const {
-    return ArrowAdapter::arrow_schema_from_tiledb_dimension(dimension)
-        .release();
+    return ArrowAdapter::arrow_schema_from_tiledb_dimension(dimension);
 }
 
 void SOMADimension::serialize(nlohmann::json& columns_schema) const {
