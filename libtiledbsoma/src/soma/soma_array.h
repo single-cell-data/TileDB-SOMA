@@ -659,7 +659,7 @@ class SOMAArray : public SOMAObject {
      *
      * @return uint64_t Total number of unique cells
      */
-    uint64_t nnz();
+    uint64_t nnz(bool raise_if_slow = false);
 
     /**
      * @brief Get the current capacity of each dimension.
@@ -1164,7 +1164,7 @@ class SOMAArray : public SOMAObject {
     std::shared_ptr<Array> meta_cache_arr_;
 
     // Unoptimized method for computing nnz() (issue `count_cells` query)
-    uint64_t _nnz_slow();
+    uint64_t _nnz_slow(bool raise_if_slow);
 };
 
 }  // namespace tiledbsoma
