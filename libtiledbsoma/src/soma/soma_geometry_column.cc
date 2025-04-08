@@ -532,8 +532,7 @@ std::pair<ArrowArray*, ArrowSchema*> SOMAGeometryColumn::arrow_domain_slot(
 ArrowSchema* SOMAGeometryColumn::arrow_schema_slot(
     const SOMAContext& ctx, Array& array) const {
     return ArrowAdapter::arrow_schema_from_tiledb_attribute(
-               attribute, *ctx.tiledb_ctx(), array)
-        .release();
+        attribute, *ctx.tiledb_ctx(), array);
 }
 
 void SOMAGeometryColumn::serialize(nlohmann::json& columns_schema) const {
