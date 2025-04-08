@@ -492,9 +492,9 @@ ArrowSchema* ArrowAdapter::arrow_schema_from_tiledb_dimension(
     return arrow_schema;
 }
 
-std::unique_ptr<ArrowSchema> ArrowAdapter::arrow_schema_from_tiledb_attribute(
+ArrowSchema* ArrowAdapter::arrow_schema_from_tiledb_attribute(
     const Attribute& attribute, const Context& ctx, const Array& tiledb_array) {
-    std::unique_ptr<ArrowSchema> arrow_schema = std::make_unique<ArrowSchema>();
+    ArrowSchema* arrow_schema = (ArrowSchema*)malloc(sizeof(ArrowSchema));
     arrow_schema->format = strdup(
         ArrowAdapter::to_arrow_format(attribute.type()).data());
     arrow_schema->name = strdup(attribute.name().c_str());
@@ -519,7 +519,7 @@ std::unique_ptr<ArrowSchema> ArrowAdapter::arrow_schema_from_tiledb_attribute(
             ArrowCharView("dtype"),
             ArrowCharView("WKB"));
         ArrowSchemaSetMetadata(
-            arrow_schema.get(), reinterpret_cast<char*>(metadata_buffer->data));
+            arrow_schema, reinterpret_cast<char*>(metadata_buffer->data));
     }
 
     LOG_TRACE(fmt::format(
