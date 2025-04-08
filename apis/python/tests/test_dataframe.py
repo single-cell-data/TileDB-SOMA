@@ -821,11 +821,11 @@ def simple_data_frame(tmp_path):
     """
     schema = pa.schema(
         [
-            ("index", pa.int64()),
-            ("soma_joinid", pa.int64()),
-            ("A", pa.int64()),
-            ("B", pa.float64()),
-            ("C", pa.large_string()),
+            pa.field("index", pa.int64(), False),
+            pa.field("soma_joinid", pa.int64()),
+            pa.field("A", pa.int64()),
+            pa.field("B", pa.float64()),
+            pa.field("C", pa.large_string()),
         ]
     )
     index_column_names = ["index"]
@@ -846,7 +846,8 @@ def simple_data_frame(tmp_path):
         rb = pa.Table.from_pydict(data)
         sdf.write(rb)
     sdf = soma.DataFrame.open(tmp_path.as_posix())
-    return (schema, sdf, n_data, index_column_names)
+
+    return (sdf, n_data)
 
 
 @pytest.mark.parametrize(
@@ -871,12 +872,16 @@ def simple_data_frame(tmp_path):
     ],
 )
 def test_DataFrame_read_column_names(simple_data_frame, ids, col_names):
-    schema, sdf, n_data, index_column_names = simple_data_frame
+    sdf, n_data = simple_data_frame
 
-    def _check_tbl(tbl, col_names, ids, *, demote):
-        assert tbl.num_columns == (
-            len(schema.names) if col_names is None else len(col_names)
-        )
+    expected_schema = (
+        sdf.schema
+        if col_names is None
+        else pa.schema([sdf.schema.field(name) for name in col_names])
+    )
+
+    def _check_tbl(tbl, col_names, ids):
+        assert tbl.num_columns == len(sdf.schema if col_names is None else col_names)
 
         if ids is None:
             assert tbl.num_rows == n_data
@@ -887,50 +892,35 @@ def test_DataFrame_read_column_names(simple_data_frame, ids, col_names):
         else:
             assert tbl.num_rows == len(ids[0])
 
-        if demote:
-            assert tbl.schema == pa.schema(
-                [
-                    (
-                        pa.field(schema.field(f).name, pa.string())
-                        if schema.field(f).type == pa.large_string()
-                        else schema.field(f)
-                    )
-                    for f in (col_names if col_names is not None else schema.names)
-                ]
-            )
-        else:
-            assert tbl.schema == pa.schema(
-                [
-                    schema.field(f)
-                    for f in (col_names if col_names is not None else schema.names)
-                ]
-            )
+        assert tbl.schema == expected_schema
 
     # TileDB ASCII -> Arrow large_string
-    _check_tbl(
-        sdf.read(ids, column_names=col_names).concat(),
-        col_names,
-        ids,
-        demote=False,
-    )
-    _check_tbl(sdf.read(column_names=col_names).concat(), col_names, None, demote=False)
+    _check_tbl(sdf.read(ids, column_names=col_names).concat(), col_names, ids)
+    _check_tbl(sdf.read(column_names=col_names).concat(), col_names, None)
+
+    # pa.Table.from_pandas infers nullability from the data if a schema is not 
+    # provided. If there are no null values in the data, then the data is marked
+    # as non-nullable. To ensure nullability is preserved, explicitly pass in
+    # the schema
 
     # TileDB ASCII -> Pandas string -> Arrow string (not large_string)
     _check_tbl(
         pa.Table.from_pandas(
             pd.concat(
-                [tbl.to_pandas() for tbl in sdf.read(ids, column_names=col_names)]
-            )
+                [tbl.to_pandas() for tbl in sdf.read(ids, column_names=col_names)],
+            ),
+            schema=expected_schema,
         ),
         col_names,
         ids,
-        demote=True,
     )
     _check_tbl(
-        pa.Table.from_pandas(sdf.read(column_names=col_names).concat().to_pandas()),
+        pa.Table.from_pandas(
+            sdf.read(column_names=col_names).concat().to_pandas(),
+            schema=expected_schema,
+        ),
         col_names,
         None,
-        demote=True,
     )
 
 

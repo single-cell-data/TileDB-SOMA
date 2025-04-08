@@ -1895,7 +1895,10 @@ def test_blockwise_iterator_uses_thread_pool_from_context(
 def test_global_writes(tmp_path):
     write_options = soma.TileDBWriteOptions(**{"sort_coords": False})
 
-    soma.SparseNDArray.create(tmp_path.as_posix(), type=pa.uint8(), shape=(3,))
+    with soma.SparseNDArray.create(
+        tmp_path.as_posix(), type=pa.uint8(), shape=(3,)
+    ) as A:
+        schema = A.schema
 
     with pytest.raises(
         soma.SOMAError,
@@ -1916,7 +1919,8 @@ def test_global_writes(tmp_path):
         {
             "soma_dim_0": pa.array([0, 1, 2], type=pa.int64()),
             "soma_data": pa.array([1, 2, 3], type=pa.uint8()),
-        }
+        },
+        schema=schema,
     )
 
     with soma.SparseNDArray.open(tmp_path.as_posix(), "w") as A:
@@ -1947,7 +1951,8 @@ def test_pass_configs(tmp_path):
             {
                 "soma_dim_0": pa.array([0, 1, 2], type=pa.int64()),
                 "soma_data": pa.array([1, 2, 3], type=pa.uint8()),
-            }
+            },
+            schema=a.schema,
         )
         a.write(data)
 
@@ -2089,3 +2094,10 @@ def test_reopen_shape_sc61123(tmp_path):
         A = A.reopen(mode="r")
         assert A.shape == (10,)
         assert isinstance(A, soma.SparseNDArray)
+
+
+def test_match_read_schemas_61222(tmp_path):
+    uri = tmp_path.as_posix()
+    soma.SparseNDArray.create(uri, type=pa.int32(), shape=(None, None))
+    with soma.SparseNDArray.open(uri) as A:
+        assert A.schema == A.read().tables().concat().schema

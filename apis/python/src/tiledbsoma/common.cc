@@ -13,6 +13,8 @@
 
 #include "common.h"
 
+using namespace pybind11::literals;  // to bring in the `_a` literal
+
 namespace tiledbsoma {
 
 std::unordered_map<tiledb_datatype_t, std::string> _tdb_to_np_name_dtype = {
@@ -180,31 +182,57 @@ bool is_tdb_str(tiledb_datatype_t type) {
     }
 }
 
+py::object c_to_pyarrow_dtype(std::string_view c_arrow_type) {
+    auto pa = py::module::import("pyarrow");
+    std::map<std::string_view, py::object> _c_to_pyarrow_dtype = {
+        {"u", pa.attr("large_string")()},
+        {"U", pa.attr("large_string")()},
+        {"z", pa.attr("large_string")()},
+        {"Z", pa.attr("large_string")()},
+        {"c", pa.attr("int8")()},
+        {"C", pa.attr("uint8")()},
+        {"s", pa.attr("int16")()},
+        {"S", pa.attr("uint16")()},
+        {"i", pa.attr("int32")()},
+        {"I", pa.attr("uint32")()},
+        {"l", pa.attr("int64")()},
+        {"L", pa.attr("uint64")()},
+        {"f", pa.attr("float32")()},
+        {"g", pa.attr("float64")()},
+        {"b", pa.attr("bool_")()},
+        {"tss:", pa.attr("timestamp")("s")},
+        {"tsm:", pa.attr("timestamp")("ms")},
+        {"tsu:", pa.attr("timestamp")("us")},
+        {"tsn:", pa.attr("timestamp")("ns")},
+    };
+    return _c_to_pyarrow_dtype.at(c_arrow_type);
+}
+
 /**
  * @brief Convert ArrayBuffers to Arrow table.
  *
- * @param cbs ArrayBuffers
- * @return py::object
+ * @param buffers ArrayBuffers
+ * @param schema ArraySchema
+ * @return py::object pa.Table
  */
 py::object _buffer_to_table(std::shared_ptr<ArrayBuffers> buffers) {
     auto pa = py::module::import("pyarrow");
-    auto pa_table_from_arrays = pa.attr("Table").attr("from_arrays");
     auto pa_array_import = pa.attr("Array").attr("_import_from_c");
-    auto pa_schema_import = pa.attr("Schema").attr("_import_from_c");
+    auto pa_dtype_import = pa.attr("DataType").attr("_import_from_c");
+    auto pa_table_from_arrays = pa.attr("Table").attr("from_arrays");
 
     py::list array_list;
-    py::list names;
+    py::list field_list;
 
     for (auto& name : buffers->names()) {
-        auto column = buffers->at(name);
-        auto [pa_array, pa_schema] = ArrowAdapter::to_arrow(column);
-        auto array = pa_array_import(
-            py::capsule(pa_array.get()), py::capsule(pa_schema.get()));
-        array_list.append(array);
-        names.append(name);
+        auto [pa_array, pa_schema] = ArrowAdapter::to_arrow(buffers->at(name));
+        auto nullable = (pa_schema->flags & ARROW_FLAG_NULLABLE) != 0;
+        auto dtype = pa_dtype_import(py::capsule(pa_schema.get()));
+        array_list.append(pa_array_import(py::capsule(pa_array.get()), dtype));
+        field_list.append(pa.attr("field")(name, dtype, nullable));
     }
-
-    return pa_table_from_arrays(array_list, names);
+    return pa_table_from_arrays(
+        array_list, "schema"_a = pa.attr("schema")(field_list));
 }
 
 std::optional<py::object> to_table(
