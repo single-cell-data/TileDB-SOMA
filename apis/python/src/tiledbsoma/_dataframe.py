@@ -1105,14 +1105,29 @@ def _fill_out_slot_soma_domain(
 def _find_extent_for_domain(
     index_column_name: str,
     tiledb_create_write_options: TileDBCreateOptions,
-    dtype: Any,
+    dtype: np.typing.DTypeLike | str,
     slot_domain: Tuple[Any, Any],
 ) -> int | float | Literal["", b""]:
     """Helper function for _build_tiledb_schema. Returns a tile extent that is
     small enough for the index-column type, and that also fits within the
     user-specified slot domain (if any).
-    """
 
+    Args:
+        index_column_names:
+            A list of column names to use as user-defined
+            index columns (e.g., ``['cell_type', 'tissue_type']``).
+            All named columns must exist in the schema, and at least one
+            index column name is required.
+        tiledb_create_write_options:
+            Tuning options used when creating new SOMA arrays. The user may pass
+            in a custom tile size through TileDBCreateOptions.
+        dtype:
+            For str types, the dtype may be "ascii" or np.dtype("U"). For byte
+            types, the type may be "bytes" or np.dtype("S"). Otherwise, all
+            other dtypes are expected to be a np.DTypeLike.
+        slot_domain:
+            The user-specified slot domain from which to calculate the extent
+    """
     # Default 2048 mods to 0 for 8-bit types and 0 is an invalid extent
     extent = tiledb_create_write_options.dim_tile(index_column_name)
     if isinstance(dtype, np.dtype) and dtype.itemsize == 1:
@@ -1124,7 +1139,7 @@ def _find_extent_for_domain(
     # Core string dims have no extent and no (core) domain.  We return "" here
     # simply so we can pass libtiledbsoma "" for domain and extent, while it
     # will (and must) ignore these when creating the TileDB schema.
-    if dtype in ("ascii", "bytes"):
+    if dtype == "ascii" or np.dtype(dtype).kind in ("S", "U"):
         return ""
 
     lo, hi = slot_domain
