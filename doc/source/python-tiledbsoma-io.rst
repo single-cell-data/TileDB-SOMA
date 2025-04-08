@@ -47,3 +47,20 @@ Functions
     tiledbsoma.io.show_experiment_shapes
     tiledbsoma.io.upgrade_experiment_shapes
     tiledbsoma.io.resize_experiment
+
+
+Classes
+-------
+
+.. currentmodule:: tiledbsoma.io
+
+.. autoclass:: ExperimentAmbientLabelMapping
+
+   .. rubric:: Methods
+
+   .. autosummary::
+      :toctree: _generated
+
+      ~ExperimentAmbientLabelMapping.prepare_experiment
+      ~ExperimentAmbientLabelMapping.subset_for_anndata
+      ~ExperimentAmbientLabelMapping.subset_for_h5ad
