@@ -17,7 +17,7 @@ def test_to_anndata(version, name_and_expected_shape):
     in the particular form of doing an outgest."""
 
     name, expected_shape = name_and_expected_shape
-    path = ROOT_DATA_DIR / "soma-experiment-versions" / version / name
+    path = ROOT_DATA_DIR / "soma-experiment-versions-2025-04-04" / version / name
     uri = str(path)
     if not os.path.isdir(uri):
         raise RuntimeError(
