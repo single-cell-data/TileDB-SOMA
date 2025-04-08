@@ -14,4 +14,10 @@ cd "$(dirname "$0")/../data"
 # Remove prepared test data.
 rm -rf soco
 rm -rf example-visium-v2 example-visium-v1
+
+# Old, and may no longer be present -- clean up either way
 rm -rf soma-experiment-versions
+rm -f  soma-experiment-versions.tgz
+
+rm -rf soma-experiment-versions-2025-04-04
+rm -f  soma-experiment-versions-2025-04-04.tgz
