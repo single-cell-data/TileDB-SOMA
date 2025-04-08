@@ -12,7 +12,11 @@ from typing import List, Sequence, Tuple, Union
 import anndata as ad
 import numpy as np
 import pandas as pd
+import pyarrow as pa
 import pytest
+import scipy.sparse as sp
+from numpy.testing import assert_array_equal
+from pandas.testing import assert_frame_equal
 
 import tiledbsoma.io
 import tiledbsoma.io._registration as registration
@@ -266,53 +270,70 @@ def test_pandas_indexing(
 def test_axis_mappings(obs_field_name, var_field_name):
     anndata1 = create_anndata_canned(1, obs_field_name, var_field_name)
     mapping = registration.AxisIDMapping.identity(10)
-    assert mapping.data == tuple(range(10))
+    assert_array_equal(mapping.data, np.arange(10))
+    assert mapping.is_identity()
 
     dictionary = registration.AxisAmbientLabelMapping(
-        data={"a": 10, "b": 20, "c": 30},
+        joinid_map=pd.Series(
+            {"a": 10, "b": 20, "c": 30}, name="soma_joinid"
+        ).to_frame(),
         field_name=obs_field_name,
+        enum_values={},
     )
 
-    for reload in [False, True]:
-        if reload:
-            dictionary = registration.AxisAmbientLabelMapping.from_json(
-                dictionary.to_json()
-            )
-        assert dictionary.id_mapping_from_values(["a", "b", "c"]).data == (10, 20, 30)
-        assert dictionary.id_mapping_from_values(["c", "a"]).data == (30, 10)
-        assert dictionary.id_mapping_from_values([]).data == ()
-
-    d = registration.AxisAmbientLabelMapping.from_isolated_dataframe(
-        anndata1.obs,
-        index_field_name=obs_field_name,
+    assert_array_equal(
+        dictionary.id_mapping_from_values(["a", "b", "c"]).data, (10, 20, 30)
     )
-    assert d.id_mapping_from_values([]).data == ()
-    assert d.id_mapping_from_values(["AAAT", "AGAG"]).data == (0, 2)
+    assert_array_equal(dictionary.id_mapping_from_values(["c", "a"]).data, (30, 10))
+    assert_array_equal(dictionary.id_mapping_from_values([]).data, ())
+
+    d = tiledbsoma.io.register_anndatas(
+        None,
+        [anndata1],
+        measurement_name="RNA",
+        obs_field_name=obs_field_name,
+        var_field_name=var_field_name,
+    ).obs_axis
+    assert_array_equal(d.id_mapping_from_values([]).data, ())
+    assert_array_equal(d.id_mapping_from_values(["AAAT", "AGAG"]).data, (0, 2))
+
     keys = list(anndata1.obs.index)
-    assert d.id_mapping_from_values(keys).data == tuple(range(len(keys)))
+    assert_array_equal(d.id_mapping_from_values(keys).data, np.arange(len(keys)))
+
+
+def test_non_identity_axis_mappings():
+    mapping = registration.AxisIDMapping(data=np.arange(0, 100, 2, dtype=np.int64))
+    assert mapping.get_shape() == 99
+    assert not mapping.is_identity()
 
 
 @pytest.mark.parametrize("obs_field_name", ["obs_id", "cell_id"])
 @pytest.mark.parametrize("var_field_name", ["var_id", "gene_id"])
 def test_isolated_anndata_mappings(obs_field_name, var_field_name):
     anndata1 = create_anndata_canned(1, obs_field_name, var_field_name)
-    rd = registration.ExperimentAmbientLabelMapping.from_isolated_anndata(
-        anndata1, measurement_name="measname"
+    rd = tiledbsoma.io.register_anndatas(
+        None,
+        anndata1,
+        measurement_name="measname",
+        obs_field_name=obs_field_name,
+        var_field_name=var_field_name,
     )
 
-    for reload in [False, True]:
-        if reload:
-            rd = registration.ExperimentAmbientLabelMapping.from_json(rd.to_json())
-
-    assert rd.obs_axis.id_mapping_from_values([]).data == ()
-    assert rd.obs_axis.id_mapping_from_values(["AGAG", "ACTG"]).data == (2, 1)
-    assert rd.var_axes["measname"].id_mapping_from_values(["TP53", "VEGFA"]).data == (
-        3,
-        4,
+    assert_array_equal(rd.obs_axis.id_mapping_from_values([]).data, ())
+    assert_array_equal(
+        rd.obs_axis.id_mapping_from_values(["AGAG", "ACTG"]).data, (2, 1)
     )
-    assert rd.var_axes["raw"].id_mapping_from_values(
-        ["RAW2", "TP53", "VEGFA"]
-    ).data == (6, 3, 4)
+    assert_array_equal(
+        rd.var_axes["measname"].id_mapping_from_values(["TP53", "VEGFA"]).data,
+        (
+            3,
+            4,
+        ),
+    )
+    assert_array_equal(
+        rd.var_axes["raw"].id_mapping_from_values(["RAW2", "TP53", "VEGFA"]).data,
+        (6, 3, 4),
+    )
 
     assert rd.get_obs_shape() == 3
     assert rd.get_var_shapes() == {"measname": 5, "raw": 7}
@@ -322,19 +343,28 @@ def test_isolated_anndata_mappings(obs_field_name, var_field_name):
 @pytest.mark.parametrize("var_field_name", ["var_id", "gene_id"])
 def test_isolated_h5ad_mappings(obs_field_name, var_field_name):
     h5ad1 = create_h5ad_canned(1, obs_field_name, var_field_name)
-    rd = registration.ExperimentAmbientLabelMapping.from_isolated_h5ad(
+    rd = tiledbsoma.io.register_h5ads(
+        None,
         h5ad1,
         measurement_name="measname",
+        obs_field_name=obs_field_name,
+        var_field_name=var_field_name,
     )
-    assert rd.obs_axis.id_mapping_from_values([]).data == ()
-    assert rd.obs_axis.id_mapping_from_values(["AGAG", "ACTG"]).data == (2, 1)
-    assert rd.var_axes["measname"].id_mapping_from_values(["TP53", "VEGFA"]).data == (
-        3,
-        4,
+    assert_array_equal(rd.obs_axis.id_mapping_from_values([]).data, ())
+    assert_array_equal(
+        rd.obs_axis.id_mapping_from_values(["AGAG", "ACTG"]).data, (2, 1)
     )
-    assert rd.var_axes["raw"].id_mapping_from_values(
-        ["RAW2", "TP53", "VEGFA"]
-    ).data == (6, 3, 4)
+    assert_array_equal(
+        rd.var_axes["measname"].id_mapping_from_values(["TP53", "VEGFA"]).data,
+        (
+            3,
+            4,
+        ),
+    )
+    assert_array_equal(
+        rd.var_axes["raw"].id_mapping_from_values(["RAW2", "TP53", "VEGFA"]).data,
+        (6, 3, 4),
+    )
 
     assert rd.get_obs_shape() == 3
     assert rd.get_var_shapes() == {"measname": 5, "raw": 7}
@@ -344,18 +374,28 @@ def test_isolated_h5ad_mappings(obs_field_name, var_field_name):
 @pytest.mark.parametrize("var_field_name", ["var_id", "gene_id"])
 def test_isolated_soma_experiment_mappings(obs_field_name, var_field_name):
     soma1 = create_soma_canned(1, obs_field_name, var_field_name)
-    rd = registration.ExperimentAmbientLabelMapping.from_isolated_soma_experiment(
-        soma1, obs_field_name=obs_field_name, var_field_name=var_field_name
+    rd = tiledbsoma.io.register_anndatas(
+        soma1,
+        [],
+        measurement_name="measname",
+        obs_field_name=obs_field_name,
+        var_field_name=var_field_name,
     )
-    assert rd.obs_axis.id_mapping_from_values([]).data == ()
-    assert rd.obs_axis.id_mapping_from_values(["AGAG", "ACTG"]).data == (2, 1)
-    assert rd.var_axes["measname"].id_mapping_from_values(["TP53", "VEGFA"]).data == (
-        3,
-        4,
+    assert_array_equal(rd.obs_axis.id_mapping_from_values([]).data, ())
+    assert_array_equal(
+        rd.obs_axis.id_mapping_from_values(["AGAG", "ACTG"]).data, (2, 1)
     )
-    assert rd.var_axes["raw"].id_mapping_from_values(
-        ["RAW2", "TP53", "VEGFA"]
-    ).data == (6, 3, 4)
+    assert_array_equal(
+        rd.var_axes["measname"].id_mapping_from_values(["TP53", "VEGFA"]).data,
+        (
+            3,
+            4,
+        ),
+    )
+    assert_array_equal(
+        rd.var_axes["raw"].id_mapping_from_values(["RAW2", "TP53", "VEGFA"]).data,
+        (6, 3, 4),
+    )
 
     assert rd.get_obs_shape() == 3
     assert rd.get_var_shapes() == {"measname": 5, "raw": 7}
@@ -365,12 +405,14 @@ def test_isolated_soma_experiment_mappings(obs_field_name, var_field_name):
 @pytest.mark.parametrize("var_field_name", ["var_id", "gene_id"])
 @pytest.mark.parametrize("permutation", [[0, 1, 2, 3], [2, 3, 0, 1], [3, 2, 1, 0]])
 @pytest.mark.parametrize("solo_experiment_first", [True, False])
+@pytest.mark.parametrize("use_multiprocessing", [False, True])
 def test_multiples_without_experiment(
     tmp_path,
     obs_field_name,
     var_field_name,
     permutation,
     solo_experiment_first,
+    use_multiprocessing,
 ):
     h5ad1 = create_h5ad_canned(1, obs_field_name, var_field_name)
     h5ad2 = create_h5ad_canned(2, obs_field_name, var_field_name)
@@ -388,74 +430,101 @@ def test_multiples_without_experiment(
             measurement_name="measname",
             ingest_mode="write",
         )
-        rd = registration.ExperimentAmbientLabelMapping.from_h5ad_appends_on_experiment(
-            experiment_uri=experiment_uri,
-            h5ad_file_names=h5ad_file_names,
+        rd = tiledbsoma.io.register_h5ads(
+            experiment_uri,
+            h5ad_file_names,
             measurement_name="measname",
             obs_field_name=obs_field_name,
             var_field_name=var_field_name,
+            use_multiprocessing=use_multiprocessing,
         )
-
-        nobs = rd.get_obs_shape()
-        nvars = rd.get_var_shapes()
-        tiledbsoma.io.resize_experiment(experiment_uri, nobs=nobs, nvars=nvars)
+        rd.prepare_experiment(experiment_uri)
 
     else:
         # "Append" all the H5ADs where no experiment exists yet.
-        rd = registration.ExperimentAmbientLabelMapping.from_h5ad_appends_on_experiment(
+        rd = tiledbsoma.io.register_h5ads(
             experiment_uri=None,
             h5ad_file_names=h5ad_file_names,
             measurement_name="measname",
             obs_field_name=obs_field_name,
             var_field_name=var_field_name,
+            use_multiprocessing=use_multiprocessing,
         )
 
-    assert rd.obs_axis.id_mapping_from_values(["AGAG", "GGAG"]).data == (2, 8)
-    assert rd.var_axes["measname"].id_mapping_from_values(["ESR1", "VEGFA"]).data == (
-        2,
-        4,
+    assert_array_equal(
+        rd.obs_axis.id_mapping_from_values(["AGAG", "GGAG"]).data, (2, 8)
     )
-    assert rd.var_axes["raw"].id_mapping_from_values(
-        ["ZZZ3", "RAW2", "TP53", "VEGFA"]
-    ).data == (9, 6, 3, 4)
+    assert_array_equal(
+        rd.var_axes["measname"].id_mapping_from_values(["ESR1", "VEGFA"]).data,
+        (
+            2,
+            4,
+        ),
+    )
+    assert_array_equal(
+        rd.var_axes["raw"]
+        .id_mapping_from_values(["ZZZ3", "RAW2", "TP53", "VEGFA"])
+        .data,
+        (9, 6, 3, 4),
+    )
 
-    assert rd.obs_axis.data == {
-        "AAAT": 0,
-        "ACTG": 1,
-        "AGAG": 2,
-        "CAAT": 3,
-        "CCTG": 4,
-        "CGAG": 5,
-        "GAAT": 6,
-        "GCTG": 7,
-        "GGAG": 8,
-        "TAAT": 9,
-        "TCTG": 10,
-        "TGAG": 11,
-    }
+    assert_frame_equal(
+        rd.obs_axis.joinid_map,
+        pd.Series(
+            {
+                "AAAT": 0,
+                "ACTG": 1,
+                "AGAG": 2,
+                "CAAT": 3,
+                "CCTG": 4,
+                "CGAG": 5,
+                "GAAT": 6,
+                "GCTG": 7,
+                "GGAG": 8,
+                "TAAT": 9,
+                "TCTG": 10,
+                "TGAG": 11,
+            },
+            name="soma_joinid",
+        ).to_frame(),
+        check_names=False,
+    )
+    assert_frame_equal(
+        rd.var_axes["measname"].joinid_map,
+        pd.Series(
+            {
+                "AKT1": 0,
+                "APOE": 1,
+                "ESR1": 2,
+                "TP53": 3,
+                "VEGFA": 4,
+                "EGFR": 5,
+                "ZZZ3": 6,
+            },
+            name="soma_joinid",
+        ).to_frame(),
+        check_names=False,
+    )
 
-    assert rd.var_axes["measname"].data == {
-        "AKT1": 0,
-        "APOE": 1,
-        "EGFR": 5,
-        "ESR1": 2,
-        "TP53": 3,
-        "VEGFA": 4,
-        "ZZZ3": 6,
-    }
-
-    assert rd.var_axes["raw"].data == {
-        "AKT1": 0,
-        "APOE": 1,
-        "ESR1": 2,
-        "TP53": 3,
-        "VEGFA": 4,
-        "RAW1": 5,
-        "RAW2": 6,
-        "EGFR": 7,
-        "RAW3": 8,
-        "ZZZ3": 9,
-    }
+    assert_frame_equal(
+        rd.var_axes["raw"].joinid_map,
+        pd.Series(
+            {
+                "AKT1": 0,
+                "APOE": 1,
+                "ESR1": 2,
+                "TP53": 3,
+                "VEGFA": 4,
+                "RAW1": 5,
+                "RAW2": 6,
+                "EGFR": 7,
+                "RAW3": 8,
+                "ZZZ3": 9,
+            },
+            name="soma_joinid",
+        ).to_frame(),
+        check_names=False,
+    )
 
     assert rd.get_obs_shape() == 12
     assert rd.get_var_shapes() == {"measname": 7, "raw": 10}
@@ -471,11 +540,7 @@ def test_multiples_without_experiment(
     ]:
 
         if tiledbsoma.Experiment.exists(experiment_uri):
-            tiledbsoma.io.resize_experiment(
-                experiment_uri,
-                nobs=rd.get_obs_shape(),
-                nvars=rd.get_var_shapes(),
-            )
+            rd.prepare_experiment(experiment_uri)
 
         tiledbsoma.io.from_h5ad(
             experiment_uri,
@@ -654,65 +719,97 @@ def test_multiples_without_experiment(
 
 @pytest.mark.parametrize("obs_field_name", ["obs_id", "cell_id"])
 @pytest.mark.parametrize("var_field_name", ["var_id", "gene_id"])
-def test_multiples_with_experiment(obs_field_name, var_field_name):
+@pytest.mark.parametrize("use_multiprocessing", [False, True])
+def test_multiples_with_experiment(obs_field_name, var_field_name, use_multiprocessing):
     soma1 = create_soma_canned(1, obs_field_name, var_field_name)
     h5ad2 = create_h5ad_canned(2, obs_field_name, var_field_name)
     h5ad3 = create_h5ad_canned(3, obs_field_name, var_field_name)
     h5ad4 = create_h5ad_canned(4, obs_field_name, var_field_name)
 
-    rd = registration.ExperimentAmbientLabelMapping.from_h5ad_appends_on_experiment(
-        experiment_uri=soma1,
-        h5ad_file_names=[h5ad2, h5ad3, h5ad4],
+    rd = tiledbsoma.io.register_h5ads(
+        soma1,
+        [h5ad2, h5ad3, h5ad4],
         measurement_name="measname",
         obs_field_name=obs_field_name,
         var_field_name=var_field_name,
+        use_multiprocessing=use_multiprocessing,
     )
-    assert rd.obs_axis.id_mapping_from_values(["AGAG", "GGAG"]).data == (2, 8)
-    assert rd.var_axes["measname"].id_mapping_from_values(["ESR1", "VEGFA"]).data == (
-        2,
-        4,
+
+    assert_array_equal(
+        rd.obs_axis.id_mapping_from_values(["AGAG", "GGAG"]).data, (2, 8)
     )
-    assert rd.var_axes["raw"].id_mapping_from_values(
-        ["ZZZ3", "RAW2", "TP53", "VEGFA"]
-    ).data == (9, 6, 3, 4)
+    assert_array_equal(
+        rd.var_axes["measname"].id_mapping_from_values(["ESR1", "VEGFA"]).data,
+        (
+            2,
+            4,
+        ),
+    )
+    assert_array_equal(
+        rd.var_axes["raw"]
+        .id_mapping_from_values(["ZZZ3", "RAW2", "TP53", "VEGFA"])
+        .data,
+        (9, 6, 3, 4),
+    )
 
-    assert rd.obs_axis.data == {
-        "AAAT": 0,
-        "ACTG": 1,
-        "AGAG": 2,
-        "CAAT": 3,
-        "CCTG": 4,
-        "CGAG": 5,
-        "GAAT": 6,
-        "GCTG": 7,
-        "GGAG": 8,
-        "TAAT": 9,
-        "TCTG": 10,
-        "TGAG": 11,
-    }
+    assert_frame_equal(
+        rd.obs_axis.joinid_map,
+        pd.Series(
+            {
+                "AAAT": 0,
+                "ACTG": 1,
+                "AGAG": 2,
+                "CAAT": 3,
+                "CCTG": 4,
+                "CGAG": 5,
+                "GAAT": 6,
+                "GCTG": 7,
+                "GGAG": 8,
+                "TAAT": 9,
+                "TCTG": 10,
+                "TGAG": 11,
+            },
+            name="soma_joinid",
+        ).to_frame(),
+        check_names=False,
+    )
 
-    assert rd.var_axes["measname"].data == {
-        "AKT1": 0,
-        "APOE": 1,
-        "EGFR": 5,
-        "ESR1": 2,
-        "TP53": 3,
-        "VEGFA": 4,
-        "ZZZ3": 6,
-    }
+    assert_frame_equal(
+        rd.var_axes["measname"].joinid_map,
+        pd.Series(
+            {
+                "AKT1": 0,
+                "APOE": 1,
+                "ESR1": 2,
+                "TP53": 3,
+                "VEGFA": 4,
+                "EGFR": 5,
+                "ZZZ3": 6,
+            },
+            name="soma_joinid",
+        ).to_frame(),
+        check_names=False,
+    )
 
-    assert rd.var_axes["raw"].data == {
-        "AKT1": 0,
-        "APOE": 1,
-        "ESR1": 2,
-        "TP53": 3,
-        "VEGFA": 4,
-        "RAW1": 5,
-        "RAW2": 6,
-        "EGFR": 7,
-        "RAW3": 8,
-        "ZZZ3": 9,
-    }
+    assert_frame_equal(
+        rd.var_axes["raw"].joinid_map,
+        pd.Series(
+            {
+                "AKT1": 0,
+                "APOE": 1,
+                "ESR1": 2,
+                "TP53": 3,
+                "VEGFA": 4,
+                "RAW1": 5,
+                "RAW2": 6,
+                "EGFR": 7,
+                "RAW3": 8,
+                "ZZZ3": 9,
+            },
+            name="soma_joinid",
+        ).to_frame(),
+        check_names=False,
+    )
 
     assert rd.get_obs_shape() == 12
     assert rd.get_var_shapes() == {"measname": 7, "raw": 10}
@@ -723,9 +820,9 @@ def test_multiples_with_experiment(obs_field_name, var_field_name):
 def test_append_items_with_experiment(obs_field_name, var_field_name):
     soma1 = create_soma_canned(1, obs_field_name, var_field_name)
     h5ad2 = create_h5ad_canned(2, obs_field_name, var_field_name)
-    rd = registration.ExperimentAmbientLabelMapping.from_h5ad_appends_on_experiment(
-        experiment_uri=soma1,
-        h5ad_file_names=[h5ad2],
+    rd = tiledbsoma.io.register_h5ads(
+        soma1,
+        [h5ad2],
         measurement_name="measname",
         obs_field_name=obs_field_name,
         var_field_name=var_field_name,
@@ -738,11 +835,7 @@ def test_append_items_with_experiment(obs_field_name, var_field_name):
 
     original = adata2.copy()
 
-    tiledbsoma.io.resize_experiment(
-        soma1,
-        nobs=rd.get_obs_shape(),
-        nvars=rd.get_var_shapes(),
-    )
+    rd.prepare_experiment(soma1)
 
     with tiledbsoma.Experiment.open(soma1, "w") as exp1:
         tiledbsoma.io.append_obs(
@@ -852,10 +945,11 @@ def test_append_with_disjoint_measurements(
 
     tiledbsoma.io.from_anndata(soma_uri, anndata1, measurement_name="one")
 
-    with tiledbsoma.open(soma_uri, "w") as exp:
-        exp.ms.add_new_collection("two", kind=tiledbsoma.Measurement)
-
     anndata2 = anndata1 if use_same_cells else anndata4
+
+    tiledbsoma.io.from_anndata(
+        soma_uri, anndata2, measurement_name="two", ingest_mode="schema_only"
+    )
 
     original = anndata2.copy()
 
@@ -867,11 +961,7 @@ def test_append_with_disjoint_measurements(
         var_field_name=var_field_name,
     )
 
-    tiledbsoma.io.resize_experiment(
-        soma_uri,
-        nobs=rd.get_obs_shape(),
-        nvars=rd.get_var_shapes(),
-    )
+    rd.prepare_experiment(soma_uri)
 
     tiledbsoma.io.from_anndata(
         soma_uri,
@@ -1100,14 +1190,15 @@ def test_registration_with_batched_reads(tmp_path, soma_larger, use_small_buffer
         if use_small_buffer:
             assert nbatch > 1
 
-    rd = registration.ExperimentAmbientLabelMapping.from_isolated_soma_experiment(
-        soma_larger,
-        context=context,
+    rd = tiledbsoma.io.register_anndatas(
+        experiment_uri=soma_larger,
+        adatas=[],
+        measurement_name="measname",
         obs_field_name="cell_id",
         var_field_name="gene_id",
     )
 
-    assert len(rd.obs_axis.data) == 1000
+    assert len(rd.obs_axis.joinid_map) == 1000
 
     assert rd.get_obs_shape() == 1000
     assert rd.get_var_shapes() == {"measname": 6}
@@ -1128,7 +1219,7 @@ def test_append_registration_with_nonexistent_storage(tmp_path):
 
     tiledbsoma.io.from_anndata(soma_uri, anndata1, measurement_name="RNA")
 
-    with pytest.raises(ValueError):
+    with pytest.raises(tiledbsoma.DoesNotExistError):
         tiledbsoma.io.register_anndatas(
             soma_uri + "-nonesuch",
             [anndata2],
@@ -1228,11 +1319,7 @@ def test_enum_bit_width_append(tmp_path, all_at_once, nobs_a, nobs_b):
             soma_uri, adata, measurement_name=measurement_name, registration_mapping=rd
         )
 
-        tiledbsoma.io.resize_experiment(
-            soma_uri,
-            nobs=rd.get_obs_shape(),
-            nvars=rd.get_var_shapes(),
-        )
+        rd.prepare_experiment(soma_uri)
 
         tiledbsoma.io.from_anndata(
             soma_uri, bdata, measurement_name=measurement_name, registration_mapping=rd
@@ -1252,11 +1339,7 @@ def test_enum_bit_width_append(tmp_path, all_at_once, nobs_a, nobs_b):
         assert rd.get_obs_shape() == nobs_a + nobs_b
         assert rd.get_var_shapes() == {"meas": 4}
 
-        tiledbsoma.io.resize_experiment(
-            soma_uri,
-            nobs=rd.get_obs_shape(),
-            nvars=rd.get_var_shapes(),
-        )
+        rd.prepare_experiment(soma_uri)
 
         tiledbsoma.io.from_anndata(
             soma_uri, bdata, measurement_name=measurement_name, registration_mapping=rd
@@ -1317,12 +1400,13 @@ def test_multimodal_names(tmp_path, conftest_pbmc3k_adata):
         assert "RNA" in exp.ms
         assert "protein" not in exp.ms
 
-    with tiledbsoma.open(uri, "w") as exp:
-        exp.ms.add_new_collection(
-            "protein",
-            kind=tiledbsoma.Measurement,
-            uri="protein",  # relative path for local-disk operations
-        )
+    tiledbsoma.io.from_anndata(
+        experiment_uri=uri,
+        anndata=adata_protein,
+        measurement_name="protein",
+        uns_keys=[],
+        ingest_mode="schema_only",
+    )
 
     # Register the second anndata object in the protein measurement
     rd = tiledbsoma.io.register_anndatas(
@@ -1335,6 +1419,7 @@ def test_multimodal_names(tmp_path, conftest_pbmc3k_adata):
 
     assert rd.get_obs_shape() == 2638
     assert rd.get_var_shapes() == {"protein": 500, "raw": 13714}
+    rd.prepare_experiment(uri)
 
     # Ingest the second anndata object into the protein measurement
     tiledbsoma.io.from_anndata(
@@ -1480,13 +1565,7 @@ def test_extend_enmr_to_older_experiments_64521(tmp_path, version_and_shaped):
     )
 
     assert rd.get_obs_shape() == 5400
-
-    if shaped:
-        tiledbsoma.io.resize_experiment(
-            uri,
-            nobs=rd.get_obs_shape(),
-            nvars=rd.get_var_shapes(),
-        )
+    rd.prepare_experiment(uri)
 
     tiledbsoma.io.from_anndata(
         experiment_uri=uri,
@@ -1502,3 +1581,170 @@ def test_extend_enmr_to_older_experiments_64521(tmp_path, version_and_shaped):
         obs = exp.obs.read().concat().to_pandas()
         assert "pbmc3k" in obs["orig.ident"].cat.categories
         assert "new_ident" in obs["orig.ident"].cat.categories
+
+
+def test_prepare_experiment(tmp_path) -> None:
+    soma_uri = tmp_path.as_posix()
+    adatas = [
+        ad.AnnData(
+            X=sp.random(8, 6, format="csr", dtype=np.float32),
+            obs=pd.DataFrame(
+                data={
+                    "A": pd.Categorical(["red", "green"] * 4),
+                    "B": pd.Categorical([True, False] * 4),
+                },
+                index=[f"AD1:{i}" for i in range(8)],
+            ),
+            var=pd.DataFrame(data={}, index=[f"feature:{i}" for i in range(1, 7)]),
+        ),
+        ad.AnnData(
+            X=None,
+            obs=pd.DataFrame(
+                data={
+                    "A": pd.Categorical(["red", "blue"] * 4),
+                    "B": pd.Categorical([False] * 8),
+                },
+                index=[f"AD2:{i}" for i in range(8)],
+            ),
+            var=pd.DataFrame(data={}, index=[f"feature:{i}" for i in range(0, 6)]),
+        ),
+        ad.AnnData(
+            X=None,
+            obs=pd.DataFrame(
+                data={
+                    "A": pd.Categorical(["black", "white"] * 4),
+                    "B": pd.Categorical([True] * 8),
+                },
+                index=[f"AD3:{i}" for i in range(8)],
+            ),
+            var=pd.DataFrame(data={}, index=[f"feature:{i}" for i in range(12, 5, -1)]),
+        ),
+    ]
+
+    # create experiment
+    tiledbsoma.io.from_anndata(
+        soma_uri, adatas[0], measurement_name="RNA", ingest_mode="schema_only"
+    )
+
+    with tiledbsoma.open(soma_uri) as E:
+        assert pa.types.is_dictionary(E.obs.schema.field("A").type)
+        assert pa.types.is_dictionary(E.obs.schema.field("B").type)
+        assert E.obs.schema.field("A").type.value_type == pa.string()
+        assert E.obs.schema.field("B").type.value_type == pa.bool_()
+
+    # register
+    rd = tiledbsoma.io.register_anndatas(
+        soma_uri,
+        adatas,
+        measurement_name="RNA",
+        obs_field_name="obs_id",
+        var_field_name="var_id",
+    )
+    assert rd.get_obs_shape() == sum(len(ad.obs) for ad in adatas)
+    assert rd.get_var_shapes() == {
+        "RNA": len(pd.concat(ad.var.index.to_series() for ad in adatas).unique())
+    }
+    assert sorted(rd.obs_axis.enum_values.keys()) == sorted(["A", "B"])
+    for ms in rd.var_axes:
+        assert rd.var_axes[ms].enum_values == {}
+
+    assert rd.obs_axis.enum_values["A"] == pd.CategoricalDtype(
+        categories=np.array(["red", "green", "blue", "black", "white"]), ordered=False
+    )
+    assert rd.obs_axis.enum_values["B"] == pd.CategoricalDtype(
+        categories=[True, False], ordered=False
+    )
+
+    # prepare
+    rd.prepare_experiment(soma_uri)
+
+    with tiledbsoma.open(soma_uri) as E:
+        # check shapes
+        assert E.obs.domain[0] == (0, rd.get_obs_shape() - 1)
+        for k in E.ms.keys():
+            assert E.ms[k].var.domain[0] == (0, rd.get_var_shapes()[k] - 1)
+        assert E.ms["RNA"].X["data"].shape == (
+            rd.get_obs_shape(),
+            rd.get_var_shapes()["RNA"],
+        )
+
+        # check enums
+        for k, cat_dtype in rd.obs_axis.enum_values.items():
+            values = E.obs.get_enumeration_values([k])[k].to_pylist()
+            assert_array_equal(cat_dtype.categories, values)
+            assert E.obs.schema.field(k).type.ordered == cat_dtype.ordered
+
+        for ms in rd.var_axes:
+            for k, cat_dtype in rd.var_axes[ms].enum_values.items():
+                values = E.ms[ms].var.get_enumeration_values([k])[k].to_pylist()
+                assert_array_equal(cat_dtype.categories, values)
+                assert E.ms[ms].var.schema.field(k).type.ordered == cat_dtype.ordered
+
+
+def test_subset_from(tmp_path) -> None:
+    # Test uses internal interfaces
+
+    rng = np.random.default_rng()
+
+    # starting with the base canned anndata, add some additional columns for enum tests
+    adatas = [create_anndata_canned(i, "obs_id", "var_id") for i in range(1, 5)]
+    # obs
+    for i, catvals in enumerate(
+        [["red", "green"], ["blue"], ["blue", "yellow"], ["green", "red"]]
+    ):
+        adatas[i].obs["cat_str"] = pd.Categorical(
+            rng.choice(catvals, size=len(adatas[i].obs))
+        )
+    # var
+    for i, catvals in enumerate([[False], [True], [True, False], [False, True]]):
+        adatas[i].var["cat_bool"] = pd.Categorical(
+            rng.choice(catvals, size=len(adatas[i].var))
+        )
+    # raw.var
+    for i, catvals in enumerate(
+        [[1.0, 2.0], [9.0, 99.0], [100.0, -100.0], [float(f) for f in range(4, 16)]]
+    ):
+        adatas[i].raw.var["cat_float"] = pd.Categorical(
+            rng.choice(catvals, size=len(adatas[i].raw.var))
+        )
+
+    h5ads = []
+    for i, adata in enumerate(adatas):
+        fn = (tmp_path / f"_{i}.h5ad").as_posix()
+        adata.write_h5ad(fn)
+        h5ads.append(fn)
+
+    rd = tiledbsoma.io.register_anndatas(
+        None,
+        adatas,
+        measurement_name="RNA",
+        obs_field_name="obs_id",
+        var_field_name="var_id",
+    )
+
+    for adata, h5ad in zip(adatas, h5ads):
+        srd = rd.subset_for_anndata(adata)
+
+        assert srd == rd.subset_for_h5ad(h5ad)
+
+        # confirm all of our joinids are present in the subset registration
+        assert adata.obs.index.difference(srd.obs_axis.joinid_map.index).empty
+        assert adata.var.index.difference(srd.var_axes["RNA"].joinid_map.index).empty
+        if adata.raw is not None:
+            assert adata.raw.var.index.difference(
+                srd.var_axes["raw"].joinid_map.index
+            ).empty
+
+        # enums
+        assert not (
+            set(adata.obs.cat_str.cat.categories)
+            - set(srd.obs_axis.enum_values["cat_str"].categories)
+        )
+        assert not (
+            set(adata.var.cat_bool.cat.categories)
+            - set(srd.var_axes["RNA"].enum_values["cat_bool"].categories)
+        )
+        assert not (
+            set(adata.raw.var.cat_float.cat.categories)
+            - set(srd.var_axes["raw"].enum_values["cat_float"].categories)
+        )
