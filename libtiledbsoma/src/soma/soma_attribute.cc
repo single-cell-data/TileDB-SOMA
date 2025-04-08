@@ -145,8 +145,7 @@ std::pair<ArrowArray*, ArrowSchema*> SOMAAttribute::arrow_domain_slot(
 ArrowSchema* SOMAAttribute::arrow_schema_slot(
     const SOMAContext& ctx, Array& array) const {
     return ArrowAdapter::arrow_schema_from_tiledb_attribute(
-               attribute, *ctx.tiledb_ctx(), array)
-        .release();
+        attribute, *ctx.tiledb_ctx(), array);
 }
 
 void SOMAAttribute::serialize(nlohmann::json& columns_schema) const {
