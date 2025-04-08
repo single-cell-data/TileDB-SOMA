@@ -178,8 +178,7 @@ class ExperimentAmbientLabelMapping:
 
         Currently performs two operations:
         1. Resize experiment to a shape sufficient to contain all registered AnnData/H5AD inputs
-        2. Evolve schema on all dict/enum/categorical columns to include any new values defined in
-           registered AnnData (e.g., Pandas Categoricals with additional categories).
+        2. Evolve schema on all dict/enum/categorical columns to include any new values defined in registered AnnData (e.g., Pandas Categoricals with additional categories).
 
         This makes subsequent data writes race safe, for workflows using concurrent dataset writers
         (ie., parallel calls to `to_anndata` or `from_h5ad`).
