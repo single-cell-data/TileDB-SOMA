@@ -1207,8 +1207,8 @@ def arrow_table():
             ["tss"],
             [
                 [
-                    np.datetime64(0, "s"),
-                    np.datetime64(1000000000, "s"),
+                    pa.scalar(0, pa.timestamp("s")),
+                    pa.scalar(1000000000, pa.timestamp("s")),
                 ]
             ],
             [],
@@ -1219,8 +1219,8 @@ def arrow_table():
             ["tss"],
             [
                 [
-                    np.datetime64(946684800, "s"),
-                    np.datetime64(946684809, "s"),
+                    pa.scalar(946684800, pa.timestamp("s")),
+                    pa.scalar(946684809, pa.timestamp("s")),
                 ]
             ],
             [],
@@ -1231,8 +1231,8 @@ def arrow_table():
             ["tss"],
             [
                 [
-                    np.datetime64(0, "s"),
-                    np.datetime64(1000000000, "s"),
+                    pa.scalar(0, pa.timestamp("s")),
+                    pa.scalar(1000000000, pa.timestamp("s")),
                 ]
             ],
             [[np.datetime64(946684802, "s"), np.datetime64(946684803, "s")]],
@@ -1243,11 +1243,16 @@ def arrow_table():
             ["tss"],
             [
                 [
-                    np.datetime64(0, "s"),
-                    np.datetime64(1000000000, "s"),
+                    pa.scalar(0, pa.timestamp("s")),
+                    pa.scalar(1000000000, pa.timestamp("s")),
                 ]
             ],
-            [[np.datetime64(946684802, "s"), np.datetime64(946684803, "s")]],
+            [
+                [
+                    pa.scalar(946684802, pa.timestamp("s")),
+                    pa.scalar(946684803, pa.timestamp("s")),
+                ]
+            ],
             "default23",
         ],
         [
@@ -1255,11 +1260,16 @@ def arrow_table():
             ["tss"],
             [
                 [
-                    np.datetime64(0, "s"),
-                    np.datetime64(1000000000, "s"),
+                    pa.scalar(0, pa.timestamp("s")),
+                    pa.scalar(1000000000, pa.timestamp("s")),
                 ]
             ],
-            [slice(np.datetime64(946684802, "s"), np.datetime64(946684803, "s"))],
+            [
+                slice(
+                    pa.scalar(946684802, pa.timestamp("s")),
+                    pa.scalar(946684803, pa.timestamp("s")),
+                )
+            ],
             "default23",
         ],
         [
@@ -1267,11 +1277,11 @@ def arrow_table():
             ["tss"],
             [
                 [
-                    np.datetime64(0, "s"),
-                    np.datetime64(1000000000, "s"),
+                    pa.scalar(0, pa.timestamp("s")),
+                    pa.scalar(1000000000, pa.timestamp("s")),
                 ]
             ],
-            [slice(None, np.datetime64(946684802, "s"))],
+            [slice(None, pa.scalar(946684802, pa.timestamp("s")))],
             {
                 "soma_joinid": pa.array([0, 1, 2], pa.int64()),
                 "string": pa.array(["apple", "ball", "cat"], pa.large_string()),
@@ -1282,11 +1292,11 @@ def arrow_table():
             ["tss"],
             [
                 [
-                    np.datetime64(0, "s"),
-                    np.datetime64(1000000000, "s"),
+                    pa.scalar(0, pa.timestamp("s")),
+                    pa.scalar(1000000000, pa.timestamp("s")),
                 ]
             ],
-            [slice(np.datetime64(946684802, "s"), None)],
+            [slice(pa.scalar(946684802, pa.timestamp("s")), None)],
             {
                 "soma_joinid": pa.array([2, 3, 4], pa.int64()),
                 "string": pa.array(["cat", "dog", "egg"], pa.large_string()),
@@ -1297,8 +1307,8 @@ def arrow_table():
             ["tss"],
             [
                 [
-                    np.datetime64(0, "s"),
-                    np.datetime64(1000000000, "s"),
+                    pa.scalar(0, pa.timestamp("s")),
+                    pa.scalar(1000000000, pa.timestamp("s")),
                 ]
             ],
             [slice(None, None)],
@@ -1309,13 +1319,16 @@ def arrow_table():
             ["tss"],
             [
                 [
-                    np.datetime64(0, "s"),
-                    np.datetime64(1000000000, "s"),
+                    pa.scalar(0, pa.timestamp("s")),
+                    pa.scalar(1000000000, pa.timestamp("s")),
                 ]
             ],
             [
                 np.asarray(
-                    [np.datetime64(946684802, "s"), np.datetime64(946684803, "s")]
+                    [
+                        pa.scalar(946684802, pa.timestamp("s")),
+                        pa.scalar(946684803, pa.timestamp("s")),
+                    ]
                 )
             ],
             "default23",
@@ -1325,8 +1338,8 @@ def arrow_table():
             ["tss"],
             [
                 [
-                    np.datetime64(0, "s"),
-                    np.datetime64(1000000000, "s"),
+                    pa.scalar(0, pa.timestamp("s")),
+                    pa.scalar(1000000000, pa.timestamp("s")),
                 ]
             ],
             [pa.array([946684802, 946684803])],
@@ -1337,8 +1350,8 @@ def arrow_table():
             ["tss"],
             [
                 [
-                    np.datetime64(0, "s"),
-                    np.datetime64(1000000000, "s"),
+                    pa.scalar(0, pa.timestamp("s")),
+                    pa.scalar(1000000000, pa.timestamp("s")),
                 ]
             ],
             [pa.array([946684802, 946684803], pa.timestamp("s"))],
@@ -1350,8 +1363,8 @@ def arrow_table():
             ["tsms"],
             [
                 [
-                    np.datetime64(0, "ms"),
-                    np.datetime64(1000000000000, "ms"),
+                    pa.scalar(0, pa.timestamp("ms")),
+                    pa.scalar(1000000000000, pa.timestamp("ms")),
                 ]
             ],
             [],
@@ -1362,8 +1375,8 @@ def arrow_table():
             ["tsms"],
             [
                 [
-                    np.datetime64(946684800000, "ms"),
-                    np.datetime64(946684800009, "ms"),
+                    pa.scalar(946684800000, pa.timestamp("ms")),
+                    pa.scalar(946684800009, pa.timestamp("ms")),
                 ]
             ],
             [],
@@ -1374,11 +1387,16 @@ def arrow_table():
             ["tsms"],
             [
                 [
-                    np.datetime64(0, "ms"),
-                    np.datetime64(1000000000000, "ms"),
+                    pa.scalar(0, pa.timestamp("ms")),
+                    pa.scalar(1000000000000, pa.timestamp("ms")),
                 ]
             ],
-            [[np.datetime64(946684800002, "ms"), np.datetime64(946684800003, "ms")]],
+            [
+                [
+                    pa.scalar(946684800002, pa.timestamp("ms")),
+                    pa.scalar(946684800003, pa.timestamp("ms")),
+                ]
+            ],
             "default23",
         ],
         [
@@ -1386,11 +1404,16 @@ def arrow_table():
             ["tsms"],
             [
                 [
-                    np.datetime64(0, "ms"),
-                    np.datetime64(1000000000000, "ms"),
+                    pa.scalar(0, pa.timestamp("ms")),
+                    pa.scalar(1000000000000, pa.timestamp("ms")),
                 ]
             ],
-            [[np.datetime64(946684800002, "ms"), np.datetime64(946684800003, "ms")]],
+            [
+                [
+                    pa.scalar(946684800002, pa.timestamp("ms")),
+                    pa.scalar(946684800003, pa.timestamp("ms")),
+                ]
+            ],
             "default23",
         ],
         [
@@ -1398,13 +1421,14 @@ def arrow_table():
             ["tsms"],
             [
                 [
-                    np.datetime64(0, "ms"),
-                    np.datetime64(1000000000000, "ms"),
+                    pa.scalar(0, pa.timestamp("ms")),
+                    pa.scalar(1000000000000, pa.timestamp("ms")),
                 ]
             ],
             [
                 slice(
-                    np.datetime64(946684800002, "ms"), np.datetime64(946684800003, "ms")
+                    pa.scalar(946684800002, pa.timestamp("ms")),
+                    pa.scalar(946684800003, pa.timestamp("ms")),
                 )
             ],
             "default23",
@@ -1414,11 +1438,11 @@ def arrow_table():
             ["tsms"],
             [
                 [
-                    np.datetime64(0, "ms"),
-                    np.datetime64(1000000000000, "ms"),
+                    pa.scalar(0, pa.timestamp("ms")),
+                    pa.scalar(1000000000000, pa.timestamp("ms")),
                 ]
             ],
-            [slice(None, np.datetime64(946684800002, "ms"))],
+            [slice(None, pa.scalar(946684800002, pa.timestamp("ms")))],
             {
                 "soma_joinid": pa.array([0, 1, 2], pa.int64()),
                 "string": pa.array(["apple", "ball", "cat"], pa.large_string()),
@@ -1429,11 +1453,11 @@ def arrow_table():
             ["tsms"],
             [
                 [
-                    np.datetime64(0, "ms"),
-                    np.datetime64(1000000000000, "ms"),
+                    pa.scalar(0, pa.timestamp("ms")),
+                    pa.scalar(1000000000000, pa.timestamp("ms")),
                 ]
             ],
-            [slice(np.datetime64(946684800002, "ms"), None)],
+            [slice(pa.scalar(946684800002, pa.timestamp("ms")), None)],
             {
                 "soma_joinid": pa.array([2, 3, 4], pa.int64()),
                 "string": pa.array(["cat", "dog", "egg"], pa.large_string()),
@@ -1444,8 +1468,8 @@ def arrow_table():
             ["tsms"],
             [
                 [
-                    np.datetime64(0, "ms"),
-                    np.datetime64(1000000000000, "ms"),
+                    pa.scalar(0, pa.timestamp("ms")),
+                    pa.scalar(1000000000000, pa.timestamp("ms")),
                 ]
             ],
             [slice(None, None)],
@@ -1456,15 +1480,15 @@ def arrow_table():
             ["tsms"],
             [
                 [
-                    np.datetime64(0, "ms"),
-                    np.datetime64(1000000000000, "ms"),
+                    pa.scalar(0, pa.timestamp("ms")),
+                    pa.scalar(1000000000000, pa.timestamp("ms")),
                 ]
             ],
             [
                 np.asarray(
                     [
-                        np.datetime64(946684800002, "ms"),
-                        np.datetime64(946684800003, "ms"),
+                        pa.scalar(946684800002, pa.timestamp("ms")),
+                        pa.scalar(946684800003, pa.timestamp("ms")),
                     ]
                 )
             ],
@@ -1475,8 +1499,8 @@ def arrow_table():
             ["tsms"],
             [
                 [
-                    np.datetime64(0, "ms"),
-                    np.datetime64(1000000000000, "ms"),
+                    pa.scalar(0, pa.timestamp("ms")),
+                    pa.scalar(1000000000000, pa.timestamp("ms")),
                 ]
             ],
             [pa.array([946684800002, 946684800003])],
@@ -1487,8 +1511,8 @@ def arrow_table():
             ["tsms"],
             [
                 [
-                    np.datetime64(0, "ms"),
-                    np.datetime64(1000000000000, "ms"),
+                    pa.scalar(0, pa.timestamp("ms")),
+                    pa.scalar(1000000000000, pa.timestamp("ms")),
                 ]
             ],
             [pa.array([946684800002, 946684800003], pa.timestamp("ms"))],
@@ -1500,8 +1524,8 @@ def arrow_table():
             ["tsus"],
             [
                 [
-                    np.datetime64(0, "us"),
-                    np.datetime64(1000000000000000, "us"),
+                    pa.scalar(0, pa.timestamp("us")),
+                    pa.scalar(1000000000000000, pa.timestamp("us")),
                 ]
             ],
             [],
@@ -1512,8 +1536,8 @@ def arrow_table():
             ["tsus"],
             [
                 [
-                    np.datetime64(946684800000000, "us"),
-                    np.datetime64(946684800000009, "us"),
+                    pa.scalar(946684800000000, pa.timestamp("us")),
+                    pa.scalar(946684800000009, pa.timestamp("us")),
                 ]
             ],
             [],
@@ -1524,14 +1548,14 @@ def arrow_table():
             ["tsus"],
             [
                 [
-                    np.datetime64(0, "us"),
-                    np.datetime64(1000000000000000, "us"),
+                    pa.scalar(0, pa.timestamp("us")),
+                    pa.scalar(1000000000000000, pa.timestamp("us")),
                 ]
             ],
             [
                 [
-                    np.datetime64(946684800000002, "us"),
-                    np.datetime64(946684800000003, "us"),
+                    pa.scalar(946684800000002, pa.timestamp("us")),
+                    pa.scalar(946684800000003, pa.timestamp("us")),
                 ]
             ],
             "default23",
@@ -1541,14 +1565,14 @@ def arrow_table():
             ["tsus"],
             [
                 [
-                    np.datetime64(0, "us"),
-                    np.datetime64(1000000000000000, "us"),
+                    pa.scalar(0, pa.timestamp("us")),
+                    pa.scalar(1000000000000000, pa.timestamp("us")),
                 ]
             ],
             [
                 [
-                    np.datetime64(946684800000002, "us"),
-                    np.datetime64(946684800000003, "us"),
+                    pa.scalar(946684800000002, pa.timestamp("us")),
+                    pa.scalar(946684800000003, pa.timestamp("us")),
                 ]
             ],
             "default23",
@@ -1558,14 +1582,14 @@ def arrow_table():
             ["tsus"],
             [
                 [
-                    np.datetime64(0, "us"),
-                    np.datetime64(1000000000000000, "us"),
+                    pa.scalar(0, pa.timestamp("us")),
+                    pa.scalar(1000000000000000, pa.timestamp("us")),
                 ]
             ],
             [
                 slice(
-                    np.datetime64(946684800000002, "us"),
-                    np.datetime64(946684800000003, "us"),
+                    pa.scalar(946684800000002, pa.timestamp("us")),
+                    pa.scalar(946684800000003, pa.timestamp("us")),
                 )
             ],
             "default23",
@@ -1575,11 +1599,11 @@ def arrow_table():
             ["tsus"],
             [
                 [
-                    np.datetime64(0, "us"),
-                    np.datetime64(1000000000000000, "us"),
+                    pa.scalar(0, pa.timestamp("us")),
+                    pa.scalar(1000000000000000, pa.timestamp("us")),
                 ]
             ],
-            [slice(None, np.datetime64(946684800000002, "us"))],
+            [slice(None, pa.scalar(946684800000002, pa.timestamp("us")))],
             {
                 "soma_joinid": pa.array([0, 1, 2], pa.int64()),
                 "string": pa.array(["apple", "ball", "cat"], pa.large_string()),
@@ -1590,11 +1614,11 @@ def arrow_table():
             ["tsus"],
             [
                 [
-                    np.datetime64(0, "us"),
-                    np.datetime64(1000000000000000, "us"),
+                    pa.scalar(0, pa.timestamp("us")),
+                    pa.scalar(1000000000000000, pa.timestamp("us")),
                 ]
             ],
-            [slice(np.datetime64(946684800000002, "us"), None)],
+            [slice(pa.scalar(946684800000002, pa.timestamp("us")), None)],
             {
                 "soma_joinid": pa.array([2, 3, 4], pa.int64()),
                 "string": pa.array(["cat", "dog", "egg"], pa.large_string()),
@@ -1605,8 +1629,8 @@ def arrow_table():
             ["tsus"],
             [
                 [
-                    np.datetime64(0, "us"),
-                    np.datetime64(1000000000000000, "us"),
+                    pa.scalar(0, pa.timestamp("us")),
+                    pa.scalar(1000000000000000, pa.timestamp("us")),
                 ]
             ],
             [slice(None, None)],
@@ -1617,15 +1641,15 @@ def arrow_table():
             ["tsus"],
             [
                 [
-                    np.datetime64(0, "us"),
-                    np.datetime64(1000000000000000, "us"),
+                    pa.scalar(0, pa.timestamp("us")),
+                    pa.scalar(1000000000000000, pa.timestamp("us")),
                 ]
             ],
             [
                 np.asarray(
                     [
-                        np.datetime64(946684800000002, "us"),
-                        np.datetime64(946684800000003, "us"),
+                        pa.scalar(946684800000002, pa.timestamp("us")),
+                        pa.scalar(946684800000003, pa.timestamp("us")),
                     ]
                 )
             ],
@@ -1636,8 +1660,8 @@ def arrow_table():
             ["tsus"],
             [
                 [
-                    np.datetime64(0, "us"),
-                    np.datetime64(1000000000000000, "us"),
+                    pa.scalar(0, pa.timestamp("us")),
+                    pa.scalar(1000000000000000, pa.timestamp("us")),
                 ]
             ],
             [pa.array([946684800000002, 946684800000003])],
@@ -1648,8 +1672,8 @@ def arrow_table():
             ["tsus"],
             [
                 [
-                    np.datetime64(0, "us"),
-                    np.datetime64(1000000000000000, "us"),
+                    pa.scalar(0, pa.timestamp("us")),
+                    pa.scalar(1000000000000000, pa.timestamp("us")),
                 ]
             ],
             [pa.array([946684800000002, 946684800000003], pa.timestamp("us"))],
@@ -1661,8 +1685,8 @@ def arrow_table():
             ["tsns"],
             [
                 [
-                    np.datetime64(0, "ns"),
-                    np.datetime64(1000000000000000000, "ns"),
+                    pa.scalar(0, pa.timestamp("ns")),
+                    pa.scalar(1000000000000000000, pa.timestamp("ns")),
                 ]
             ],
             [],
@@ -1673,8 +1697,8 @@ def arrow_table():
             ["tsns"],
             [
                 [
-                    np.datetime64(946684800000000000, "ns"),
-                    np.datetime64(946684800000000009, "ns"),
+                    pa.scalar(946684800000000000, pa.timestamp("ns")),
+                    pa.scalar(946684800000000009, pa.timestamp("ns")),
                 ]
             ],
             [],
@@ -1685,14 +1709,14 @@ def arrow_table():
             ["tsns"],
             [
                 [
-                    np.datetime64(0, "ns"),
-                    np.datetime64(1000000000000000000, "ns"),
+                    pa.scalar(0, pa.timestamp("ns")),
+                    pa.scalar(1000000000000000000, pa.timestamp("ns")),
                 ]
             ],
             [
                 [
-                    np.datetime64(946684800000000002, "ns"),
-                    np.datetime64(946684800000000003, "ns"),
+                    pa.scalar(946684800000000002, pa.timestamp("ns")),
+                    pa.scalar(946684800000000003, pa.timestamp("ns")),
                 ]
             ],
             "default23",
@@ -1702,14 +1726,14 @@ def arrow_table():
             ["tsns"],
             [
                 [
-                    np.datetime64(0, "ns"),
-                    np.datetime64(1000000000000000000, "ns"),
+                    pa.scalar(0, pa.timestamp("ns")),
+                    pa.scalar(1000000000000000000, pa.timestamp("ns")),
                 ]
             ],
             [
                 [
-                    np.datetime64(946684800000000002, "ns"),
-                    np.datetime64(946684800000000003, "ns"),
+                    pa.scalar(946684800000000002, pa.timestamp("ns")),
+                    pa.scalar(946684800000000003, pa.timestamp("ns")),
                 ]
             ],
             "default23",
@@ -1719,14 +1743,14 @@ def arrow_table():
             ["tsns"],
             [
                 [
-                    np.datetime64(0, "ns"),
-                    np.datetime64(1000000000000000000, "ns"),
+                    pa.scalar(0, pa.timestamp("ns")),
+                    pa.scalar(1000000000000000000, pa.timestamp("ns")),
                 ]
             ],
             [
                 slice(
-                    np.datetime64(946684800000000002, "ns"),
-                    np.datetime64(946684800000000003, "ns"),
+                    pa.scalar(946684800000000002, pa.timestamp("ns")),
+                    pa.scalar(946684800000000003, pa.timestamp("ns")),
                 )
             ],
             "default23",
@@ -1736,11 +1760,11 @@ def arrow_table():
             ["tsns"],
             [
                 [
-                    np.datetime64(0, "ns"),
-                    np.datetime64(1000000000000000000, "ns"),
+                    pa.scalar(0, pa.timestamp("ns")),
+                    pa.scalar(1000000000000000000, pa.timestamp("ns")),
                 ]
             ],
-            [slice(None, np.datetime64(946684800000000002, "ns"))],
+            [slice(None, pa.scalar(946684800000000002, pa.timestamp("ns")))],
             {
                 "soma_joinid": pa.array([0, 1, 2], pa.int64()),
                 "string": pa.array(["apple", "ball", "cat"], pa.large_string()),
@@ -1751,11 +1775,11 @@ def arrow_table():
             ["tsns"],
             [
                 [
-                    np.datetime64(0, "ns"),
-                    np.datetime64(1000000000000000000, "ns"),
+                    pa.scalar(0, pa.timestamp("ns")),
+                    pa.scalar(1000000000000000000, pa.timestamp("ns")),
                 ]
             ],
-            [slice(np.datetime64(946684800000000002, "ns"), None)],
+            [slice(pa.scalar(946684800000000002, pa.timestamp("ns")), None)],
             {
                 "soma_joinid": pa.array([2, 3, 4], pa.int64()),
                 "string": pa.array(["cat", "dog", "egg"], pa.large_string()),
@@ -1766,8 +1790,8 @@ def arrow_table():
             ["tsns"],
             [
                 [
-                    np.datetime64(0, "ns"),
-                    np.datetime64(1000000000000000000, "ns"),
+                    pa.scalar(0, pa.timestamp("ns")),
+                    pa.scalar(1000000000000000000, pa.timestamp("ns")),
                 ]
             ],
             [slice(None, None)],
@@ -1778,15 +1802,15 @@ def arrow_table():
             ["tsns"],
             [
                 [
-                    np.datetime64(0, "ns"),
-                    np.datetime64(1000000000000000000, "ns"),
+                    pa.scalar(0, pa.timestamp("ns")),
+                    pa.scalar(1000000000000000000, pa.timestamp("ns")),
                 ]
             ],
             [
                 np.asarray(
                     [
-                        np.datetime64(946684800000000002, "ns"),
-                        np.datetime64(946684800000000003, "ns"),
+                        pa.scalar(946684800000000002, pa.timestamp("ns")),
+                        pa.scalar(946684800000000003, pa.timestamp("ns")),
                     ]
                 )
             ],
@@ -1797,8 +1821,8 @@ def arrow_table():
             ["tsns"],
             [
                 [
-                    np.datetime64(0, "ns"),
-                    np.datetime64(1000000000000000000, "ns"),
+                    pa.scalar(0, pa.timestamp("ns")),
+                    pa.scalar(1000000000000000000, pa.timestamp("ns")),
                 ]
             ],
             [pa.array([946684800000000002, 946684800000000003])],
@@ -1809,8 +1833,8 @@ def arrow_table():
             ["tsns"],
             [
                 [
-                    np.datetime64(0, "ns"),
-                    np.datetime64(1000000000000000000, "ns"),
+                    pa.scalar(0, pa.timestamp("ns")),
+                    pa.scalar(1000000000000000000, pa.timestamp("ns")),
                 ]
             ],
             [pa.array([946684800000000002, 946684800000000003], pa.timestamp("ns"))],
