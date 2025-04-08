@@ -77,7 +77,7 @@ class AxisAmbientLabelMapping:
         new_joinid_map = self.joinid_map.reindex(labels=input_ids, fill_value=-1)
         if new_joinid_map.soma_joinid.isin([-1]).any():
             raise ValueError(
-                f"input_ids for {self.field_name} [{input_ids[:10]}...] not found in registration data"
+                f"The input_ids for {self.field_name} [{input_ids[:10]}...] were not found in registration data."
             )
         return AxisIDMapping(data=new_joinid_map.soma_joinid.to_numpy())
 
@@ -149,7 +149,7 @@ class ExperimentAmbientLabelMapping:
             A new ``ExperimentAmbientLabelMapping`` scoped specifically for the AnnData.
         """
 
-        # Just do obs - provides largest benefit with simple implementation.
+        # Only subset obs - provides largest benefit with simple implementation.
         return attrs.evolve(
             self,
             obs_axis=attrs.evolve(
@@ -197,23 +197,23 @@ class ExperimentAmbientLabelMapping:
         """
         context = _validate_soma_tiledb_context(context)
 
-        def _check_experiment_structure(E: tiledbsoma.Experiment) -> None:
+        def _check_experiment_structure(exp: tiledbsoma.Experiment) -> None:
             # Verify that the experiment has been created correctly - check for existence of obs & var
             # and raise error if Experiment does not contain expected structure.
             did_you_create = (
                 "Did you create the Experiment using `from_anndata` or `from_h5ad`?"
             )
-            if "obs" not in E:
+            if "obs" not in exp:
                 raise ValueError(
                     f"SOMA Experiment is missing required 'obs' DataFrame. {did_you_create}"
                 )
             for ms_name in self.var_axes:
                 if len(self.var_axes[ms_name].joinid_map) > 0:
-                    if ms_name not in E.ms:
+                    if ms_name not in exp.ms:
                         raise ValueError(
                             f"SOMA Experiment is missing required Measurement '{ms_name}'. {did_you_create}"
                         )
-                    if "var" not in E.ms[ms_name]:
+                    if "var" not in exp.ms[ms_name]:
                         raise ValueError(
                             f"SOMA Experiment is missing required `var` Dataframe in Measurement '{ms_name}'. {did_you_create}"
                         )
@@ -234,6 +234,12 @@ class ExperimentAmbientLabelMapping:
                     nobs=self.get_obs_shape(),
                     nvars=self.get_var_shapes(),
                     context=context,
+                )
+            else:
+                warnings.warn(
+                    "Experiment does not support resizing. Please consider upgrading to "
+                    "a recent version of SOMA. See 'tiledbsoma.io.upgrade_experiment_shapes' "
+                    "for more information."
                 )
 
         with Experiment.open(experiment_uri, context=context, mode="w") as E:
@@ -478,7 +484,6 @@ class ExperimentAmbientLabelMapping:
         #
         # Step 3: create a joinid map for each axis
         #
-
         def _make_joinid_map(
             joinids_index: pd.Index,  # type:ignore[type-arg]
             prev_joinid_map: pd.DataFrame,
@@ -578,11 +583,11 @@ class ExperimentAmbientLabelMapping:
         def check_df(df: pd.DataFrame | None, df_name: str) -> None:
             if df is None or df.index.empty:
                 raise ValueError(
-                    f"Unable to ingest AnnData with empty {df_name} dataframe"
+                    f"Unable to ingest AnnData with empty {df_name} dataframe."
                 )
             elif not df.index.is_unique:
                 raise ValueError(
-                    f"non-unique registration values have been provided in {df_name} dataframe"
+                    f"Non-unique registration values have been provided in {df_name} dataframe."
                 )
 
         check_df(adata.obs, "obs")
@@ -593,17 +598,17 @@ class ExperimentAmbientLabelMapping:
         if not append_obsm_varm:
             if len(adata.obsm) > 0 or len(adata.varm) > 0:
                 raise ValueError(
-                    "append-mode ingest of obsm and varm is only supported via explicit opt-in. Please drop them from the inputs, or retry with append_obsm_varm=True."
+                    "The append-mode ingest of obsm and varm is only supported via explicit opt-in. Please drop them from the inputs, or retry with append_obsm_varm=True."
                 )
 
         if len(adata.obsp) > 0 or len(adata.varp) > 0:
             raise ValueError(
-                "append-mode ingest of obsp and varp is not supported. Please retry without them."
+                "The append-mode ingest of obsp and varp is not supported. Please retry without them."
             )
 
         if adata.uns:
             warnings.warn(
-                "append-mode ingest of 'uns' is typically an error due to uns key collisions "
+                "The append-mode ingest of 'uns' is typically an error due to uns key collisions "
                 "across multiple AnnData. Drop 'uns' from AnnData to remove this warning, or if you "
                 "intend for 'uns' to merge, ensure each AnnData uses unique keys."
             )
