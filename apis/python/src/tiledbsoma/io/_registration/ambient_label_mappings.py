@@ -237,9 +237,8 @@ class ExperimentAmbientLabelMapping:
                 )
             else:
                 warnings.warn(
-                    "Experiment does not support resizing. Please consider upgrading to "
-                    "a recent version of SOMA. See 'tiledbsoma.io.upgrade_experiment_shapes' "
-                    "for more information."
+                    "Experiment does not support resizing. Please consider upgrading the dataset "
+                     "using 'tiledbsoma.io.upgrade_experiment_shapes'."
                 )
 
         with Experiment.open(experiment_uri, context=context, mode="w") as E:

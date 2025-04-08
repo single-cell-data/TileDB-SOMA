@@ -82,11 +82,11 @@ def get_dataframe_values(df: pd.DataFrame, field_name: str) -> pd.Series:  # typ
     elif df.index.name in (field_name, "index", None):
         values = cast(pd.Series, df.index.to_series().astype(str))  # type: ignore[type-arg]
     else:
-        raise ValueError(f"Could not find field name {field_name} in dataframe")
+        raise ValueError(f"Could not find field name {field_name} in dataframe.")
 
     # Check the values are unique.
     if not values.is_unique:
         raise ValueError(
-            f"Non-unique registration values have been provided in field {field_name}"
+            f"Non-unique registration values have been provided in field {field_name}."
         )
     return values
