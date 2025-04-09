@@ -378,6 +378,41 @@ SOMADataFrame <- R6::R6Class(
       self$write(values)
     },
 
+    #' @description Get the levels for an enumerated (\code{factor}) column
+    #' @param column_names Optional character vector of column names to pull
+    #' enumeration levels for; defaults to all enumerated columns
+    #' @return If \code{column_names} is a single string value, a character
+    #' vector of enumeration levels; otherwise, a named list where each name is
+    #' a column name and each value is the enumeration levels for said column
+    #'
+    levels = function(column_names = NULL) {
+      enums <- c_attributes_enumerated(self$uri, private$.soma_context)
+      if (!any(enums)) {
+        rlang::warn("No enumerated columns present")
+        return(NULL)
+      }
+      simplify <- is.character(column_names) && length(column_names) == 1L
+      factors <- names(enums[enums])
+      column_names <- column_names %||% factors
+      column_names <- rlang::arg_match(
+        column_names,
+        values = factors,
+        multiple = TRUE
+      )
+      levels <- sapply(
+        X = column_names,
+        FUN = c_attribute_enumeration_levels,
+        uri = self$uri,
+        ctxxp = private$.soma_context,
+        simplify = FALSE,
+        USE.NAMES = TRUE
+      )
+      if (simplify) {
+        return(levels[[1L]])
+      }
+      return(levels)
+    },
+
     #' @description Retrieve the shape; as \code{SOMADataFrames} are shapeless,
     #' simply raises an error
     #'
