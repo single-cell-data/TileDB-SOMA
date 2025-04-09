@@ -3,7 +3,6 @@ from concurrent import futures
 from contextlib import nullcontext
 from unittest import mock
 
-import attrs
 import numpy as np
 import pandas as pd
 import pyarrow as pa
@@ -954,11 +953,3 @@ def test_empty_categorical_query(conftest_pbmc_small_exp):
     with ctx:
         obs = q.obs().concat()
         assert len(obs) == 0
-
-
-@attrs.define(frozen=True)
-class IHaveObsVarStuff:
-    obs: int
-    var: int
-    the_obs_suf: str
-    the_var_suf: str
