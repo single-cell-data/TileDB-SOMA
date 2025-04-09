@@ -308,12 +308,10 @@ class SOMAArray : public SOMAObject {
         return schema;
     }
 
-    std::unique_ptr<ArrowSchema> arrow_schema_for_column(
-        std::string column_name) const {
+    ArrowSchema* arrow_schema_for_column(std::string column_name) const {
         for (size_t i = 0; i < columns_.size(); ++i) {
             if (columns_[i]->name() == column_name) {
-                return std::unique_ptr<ArrowSchema>(
-                    columns_[i]->arrow_schema_slot(*ctx_, *arr_));
+                return columns_[i]->arrow_schema_slot(*ctx_, *arr_);
             }
         }
         throw TileDBSOMAError(

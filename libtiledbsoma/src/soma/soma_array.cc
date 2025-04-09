@@ -394,9 +394,7 @@ ArrowTable SOMAArray::get_enumeration_values(
 std::pair<ArrowArray*, ArrowSchema*>
 SOMAArray::get_enumeration_values_for_column(std::string column_name) {
     // This will throw if column name is not found
-    std::unique_ptr<ArrowSchema> up_column_schema = arrow_schema_for_column(
-        column_name);
-    ArrowSchema* column_schema = up_column_schema.get();
+    ArrowSchema* column_schema = arrow_schema_for_column(column_name);
 
     // Throw if this column is not of dictionary type
     if (column_schema->dictionary == nullptr) {
@@ -405,6 +403,18 @@ SOMAArray::get_enumeration_values_for_column(std::string column_name) {
             "dictionary type",
             column_name));
     }
+
+    // Release the pointers within the ArrowSchema*:
+    column_schema->release(column_schema);
+    // Release the ArrowSchema* itself.
+    // We are needing to remember that this was allocated by malloc via
+    // (as of this writing)
+    // * SOMAArray::arrow_schema_for_column
+    // * SOMAAttribute::arrow_schema_slot(
+    // * ArrowAdapter::arrow_schema_from_tiledb_attribute
+    // Follow-up audits are tracked on
+    // https://github.com/single-cell-data/TileDB-SOMA/issues/3860
+    free(column_schema);
 
     Enumeration core_enum = get_existing_enumeration_for_column(column_name);
     auto value_dtype = core_enum.type();
