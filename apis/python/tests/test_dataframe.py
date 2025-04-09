@@ -3,6 +3,7 @@ import datetime
 import json
 import math
 import os
+import shutil
 import struct
 import time
 from pathlib import Path
@@ -475,6 +476,99 @@ def test_get_enumeration_values_historical(version, name):
                 "Megakaryocytes",
             ]
             assert values["louvain"].to_pylist() == expect
+
+
+@pytest.mark.parametrize(
+    "version",
+    ["1.7.3", "1.12.3", "1.14.5", "1.15.0", "1.15.7"],
+)
+def test_extend_enumeration_values_historical(tmp_path, version):
+
+    original_data_uri = str(
+        ROOT_DATA_DIR
+        / "soma-experiment-versions-2025-04-04"
+        / version
+        / "pbmc3k_processed"
+    )
+
+    if not os.path.isdir(original_data_uri):
+        raise RuntimeError(
+            f"Missing '{original_data_uri}' directory. Try running `make data` "
+            "from the TileDB-SOMA project root directory."
+        )
+
+    # Make a copy of the Experiment as to not write over the data in ROOT_DATA_DIR
+    uri = (tmp_path / version).as_posix()
+    shutil.copytree(original_data_uri, uri)
+
+    with soma.Experiment.open(uri, "w") as exp:
+        with pytest.raises(soma.SOMAError):
+            exp.obs.extend_enumeration_values(
+                {
+                    "louvain": pa.array(
+                        [
+                            "CD4 T cells",
+                            "CD14+ Monocytes",
+                            "B cells",
+                        ]
+                    )
+                }
+            )
+
+            exp.obs.extend_enumeration_values(
+                {
+                    "louvain": pa.array(
+                        [
+                            "CD4 T cells",
+                            "CD14+ Monocytes",
+                            "B cells",
+                        ]
+                    )
+                },
+                deduplicate=True,
+            )
+    with soma.Experiment.open(uri) as exp:
+        values = exp.obs.get_enumeration_values(["louvain"])
+        expect = [
+            "CD4 T cells",
+            "CD14+ Monocytes",
+            "B cells",
+            "CD8 T cells",
+            "NK cells",
+            "FCGR3A+ Monocytes",
+            "Dendritic cells",
+            "Megakaryocytes",
+        ]
+        assert values["louvain"].to_pylist() == expect
+
+    with soma.Experiment.open(uri, "w") as exp:
+        for deduplicate in [True, False]:
+            with pytest.raises(ValueError):
+                exp.obs.extend_enumeration_values(
+                    {"louvain": pa.array(["even more cells", "even more cells"])},
+                    deduplicate=deduplicate,
+                )
+
+    with soma.Experiment.open(uri, "w") as exp:
+        exp.obs.extend_enumeration_values(
+            {"louvain": pa.array(["even more cells", "so many more cells"])},
+        )
+
+    with soma.Experiment.open(uri) as exp:
+        values = exp.obs.get_enumeration_values(["louvain"])
+        expect = [
+            "CD4 T cells",
+            "CD14+ Monocytes",
+            "B cells",
+            "CD8 T cells",
+            "NK cells",
+            "FCGR3A+ Monocytes",
+            "Dendritic cells",
+            "Megakaryocytes",
+            "even more cells",
+            "so many more cells",
+        ]
+        assert values["louvain"].to_pylist() == expect
 
 
 @pytest.mark.parametrize(
