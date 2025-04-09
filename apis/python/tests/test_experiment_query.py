@@ -1,9 +1,9 @@
+import os
 import re
 from concurrent import futures
 from contextlib import nullcontext
 from unittest import mock
 
-import attrs
 import numpy as np
 import pandas as pd
 import pyarrow as pa
@@ -23,6 +23,8 @@ from tiledbsoma._collection import CollectionBase
 from tiledbsoma.experiment_query import X_as_series
 
 from tests._util import raises_no_typeguard
+
+from ._util import ROOT_DATA_DIR
 
 # Number of features for the embeddings layer
 N_FEATURES = 50
@@ -945,7 +947,8 @@ def test_empty_categorical_query(conftest_pbmc_small_exp):
     q = conftest_pbmc_small_exp.axis_query(
         measurement_name="RNA", obs_query=AxisQuery(value_filter='groups == "foo"')
     )
-    # Empty query on a categorical column raised ArrowInvalid before TileDB 2.21; see https://github.com/single-cell-data/TileDB-SOMA/pull/2299
+    # Empty query on a categorical column raised ArrowInvalid before TileDB 2.21; see
+    # https://github.com/single-cell-data/TileDB-SOMA/pull/2299
     m = re.fullmatch(r"libtiledb=(\d+\.\d+\.\d+)", pytiledbsoma.version())
     version = m.group(1).split(".")
     major, minor = int(version[0]), int(version[1])
@@ -956,9 +959,58 @@ def test_empty_categorical_query(conftest_pbmc_small_exp):
         assert len(obs) == 0
 
 
-@attrs.define(frozen=True)
-class IHaveObsVarStuff:
-    obs: int
-    var: int
-    the_obs_suf: str
-    the_var_suf: str
+@pytest.mark.parametrize("version", ["1.7.3", "1.12.3", "1.14.5", "1.15.0", "1.15.7"])
+@pytest.mark.parametrize(
+    "obs_params",
+    [
+        [None, 2638],
+        ["n_genes > 1000", 526],
+        ["n_genes > 1000 and n_counts < 2000", 2],
+        ['louvain == "T cells"', 0],
+        ['louvain == "B cells"', 342],
+        ['louvain in ["B cells", "T cells"]', 342],
+        ['louvain in ["B cells", "B cells"]', 342],
+        ['louvain in ["T cells", "T cells"]', 0],
+        ['louvain == "nonesuch"', 0],
+        ['louvain in ["nonesuch"]', 0],
+        ['obs_id == "TTTCGAACTCTCAT-1"', 1],
+    ],
+)
+@pytest.mark.parametrize(
+    "var_params",
+    [
+        [None, 1838],
+        ["n_cells < 20", 275],
+        ['var_id == "S100A6" or var_id == "CYBA" or var_id == "NONESUCH"', 2],
+        ['var_id != "S100A6" and var_id != "CYBA" and var_id != "NONESUCH"', 1836],
+        ['var_id in ["S100A6", "CYBA", "NONESUCH"]', 2],
+        ['var_id not in ["S100A6", "CYBA", "NONESUCH"]', 1836],
+    ],
+)
+def test_experiment_query_historical(version, obs_params, var_params):
+    """Checks that experiments written by older versions are still queryable."""
+
+    name = "pbmc3k_processed"
+    path = ROOT_DATA_DIR / "soma-experiment-versions-2025-04-04" / version / name
+    uri = str(path)
+    if not os.path.isdir(uri):
+        raise RuntimeError(
+            f"Missing '{uri}' directory. Try running `make data` "
+            "from the TileDB-SOMA project root directory."
+        )
+
+    obs_condition, obs_count = obs_params
+    var_condition, var_count = var_params
+
+    with soma.open(uri) as exp:
+        query = exp.axis_query(
+            measurement_name="RNA",
+            obs_query=AxisQuery(value_filter=obs_condition),
+            var_query=AxisQuery(value_filter=var_condition),
+        )
+
+        obs = query.obs().concat()
+        assert len(obs) == obs_count
+
+        var = query.var().concat()
+        assert len(var) == var_count
