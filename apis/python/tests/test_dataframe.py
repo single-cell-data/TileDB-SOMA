@@ -14,6 +14,7 @@ import pytest
 import somacore
 from numpy.testing import assert_array_equal
 from pandas.api.types import union_categoricals
+from typeguard import suppress_type_checks
 
 import tiledbsoma as soma
 
@@ -576,6 +577,13 @@ def test_extend_enumeration_values(tmp_path, extend_not_write, ordered):
             match=r"is of dictionary type: pass its dictionary array instead",
         ):
             sdf.extend_enumeration_values(xvalues)
+
+        # The values provided must be Arrow arrays. Our unit tests run with typeguard,
+        # but our end users nominally do not -- so we have to ask typeguard to take
+        # a breather here so we can test the UX our users will have.
+        with suppress_type_checks():
+            with pytest.raises(ValueError):
+                sdf.extend_enumeration_values({"string_enum1": ["plain", "strings"]})
 
         # The values provided must all be non-null
         for nvalues in [
