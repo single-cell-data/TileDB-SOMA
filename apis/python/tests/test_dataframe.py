@@ -2,6 +2,7 @@ import contextlib
 import datetime
 import json
 import math
+import os
 import struct
 import time
 from pathlib import Path
@@ -18,6 +19,8 @@ from pandas.api.types import union_categoricals
 import tiledbsoma as soma
 
 from tests._util import raises_no_typeguard
+
+from ._util import ROOT_DATA_DIR
 
 
 @pytest.fixture
@@ -420,6 +423,58 @@ def test_get_enumeration_values(tmp_path, ordered, mode):
             "float64_enum": pa.array([1.5, 0.5, 99.0], type=pa.float64()),
             "bool_enum": pa.array([False, True, False], type=pa.bool_()),
         }
+
+
+@pytest.mark.parametrize("version", ["1.7.3", "1.12.3", "1.14.5", "1.15.0", "1.15.7"])
+@pytest.mark.parametrize("name", ["pbmc3k_unprocessed", "pbmc3k_processed"])
+def test_get_enumeration_values_historical(version, name):
+    """Checks that experiments written by older versions are still readable,
+    in the particular form of doing an outgest."""
+
+    path = ROOT_DATA_DIR / "soma-experiment-versions-2025-04-04" / version / name
+    uri = str(path)
+    if not os.path.isdir(uri):
+        raise RuntimeError(
+            f"Missing '{uri}' directory. Try running `make data` "
+            "from the TileDB-SOMA project root directory."
+        )
+
+    with soma.Experiment.open(uri) as exp:
+        if name == "pbmc3k_unprocessed":
+            values = exp.obs.get_enumeration_values(
+                ["orig.ident", "seurat_annotations"]
+            )
+
+            expect = ["pbmc3k"]
+            assert values["orig.ident"].to_pylist() == expect
+
+            expect = [
+                "B",
+                "CD8 T",
+                "CD14+ Mono",
+                "DC",
+                "FCGR3A+ Mono",
+                "Memory CD4 T",
+                "NA",
+                "NK",
+                "Naive CD4 T",
+                "Platelet",
+            ]
+            assert values["seurat_annotations"].to_pylist() == expect
+
+        elif name == "pbmc3k_processed":
+            values = exp.obs.get_enumeration_values(["louvain"])
+            expect = [
+                "CD4 T cells",
+                "CD14+ Monocytes",
+                "B cells",
+                "CD8 T cells",
+                "NK cells",
+                "FCGR3A+ Monocytes",
+                "Dendritic cells",
+                "Megakaryocytes",
+            ]
+            assert values["louvain"].to_pylist() == expect
 
 
 @pytest.mark.parametrize(

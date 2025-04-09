@@ -54,3 +54,20 @@ def test_to_anndata(version, name_and_expected_shape):
                 assert adata.obsp[key].shape == (expected_nobs, expected_nobs)
 
             assert adata.varm["PCs"].shape == (expected_nvar, 50)
+
+
+# XXX
+# test get_enumeration_values
+# test extend_enumeration_values -- explicitly
+# test more assertions on append mode ...
+# test experiment-axis-query
+
+
+# NAME pbmc3k_unprocessed
+# orig.ident: dictionary<values=string, indices=int32, ordered=0>
+# seurat_annotations: dictionary<values=string, indices=int32, ordered=0>
+
+# PASSED               [ 50%]
+# apis/python/tests/test_soma_experiment_versions.py::test_get_enumeration_values[name_and_expected_shape1-1.7.3]
+# NAME pbmc3k_processed
+# louvain: dictionary<values=string, indices=int8, ordered=0> not null
