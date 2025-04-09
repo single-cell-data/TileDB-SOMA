@@ -416,7 +416,12 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         # These assertions could be done in C++. However, it's easier here
         # to do the exception-type multiplexing, raising ValueError for one
         # thing, TileDBSOMAError for another.
-        for column_name in values.keys():
+        for column_name, values_for_column in values.items():
+            if not isinstance(values_for_column, pa.Array):
+                raise ValueError(
+                    f"value for column name '{column_name}' must be pyarrow.Array: got '{type(values_for_column)}'"
+                )
+
             # As with get_enumeration_values: we are trusting pyarrow to raise
             # KeyError, and raise it with a sufficiently clear error message,
             # when the column name is not present within the schema.
@@ -425,7 +430,7 @@ class DataFrame(SOMAArray, somacore.DataFrame):
                 raise KeyError(
                     f"schema column name '{column_name}' is not of dictionary type"
                 )
-            if pa.types.is_dictionary(values[column_name].type):
+            if pa.types.is_dictionary(values_for_column.type):
                 raise ValueError(
                     f"value column name '{column_name}' is of dictionary type: pass its dictionary array instead"
                 )
