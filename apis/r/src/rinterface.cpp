@@ -666,7 +666,7 @@ Rcpp::LogicalVector c_attributes_enumerated(const std::string& uri, Rcpp::XPtr<s
         auto attr = make_xptr<tiledb::Attribute>(new tiledb::Attribute(sch->attribute(i)));
         auto enmr = tiledb::AttributeExperimental::get_enumeration_name(
             // credit to this monstrosity goes to Beka Davis
-            const_cast<const tiledb::Context&>(*(ctxxp.get()->ctxptr.get()->tiledb_ctx())),
+            *(ctxxp->ctxptr->tiledb_ctx()),
             *attr.get()
         );
         has_enum(i) = enmr != std::nullopt;
