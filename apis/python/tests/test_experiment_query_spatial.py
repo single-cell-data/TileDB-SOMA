@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import itertools
-from typing import Dict, List
+from typing import Dict
 
 import numpy as np
 import pandas as pd
@@ -51,7 +51,7 @@ def add_presence_dataframe(
     key: str,
     max_joinids: int,
     joinids: np.ndarray,
-    scene_ids: List[str],
+    scene_ids: list[str],
 ) -> None:
     df = coll.add_new_dataframe(
         key,
@@ -78,7 +78,7 @@ def add_presence_dataframe(
 
 def add_point_cloud_dataframe(
     scene: soma.Scene,
-    subcoll: str | List[str],
+    subcoll: str | list[str],
     key: str,
     data: Dict[str, np.ndarray],
     circles: bool,
@@ -218,7 +218,7 @@ def soma_spatial_experiment(tmp_path_factory) -> soma.Experiment:
     return exp
 
 
-def check_for_scene_data(sdata, has_scenes: List[bool]):
+def check_for_scene_data(sdata, has_scenes: list[bool]):
     for index, has_scene in enumerate(has_scenes):
         if not has_scene:
             continue

@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import collections.abc
 import math
-from typing import Any, List, Literal, Sequence, Union, cast
+from typing import Any, Literal, Sequence, Union, cast
 
 import numpy as np
 import numpy.typing as npt
@@ -126,9 +126,9 @@ class CompressedMatrix:
             else tables
         )
 
-        def chunks(a: pa.Array | pa.ChunkedArray) -> List[pa.Array]:
+        def chunks(a: pa.Array | pa.ChunkedArray) -> list[pa.Array]:
             return (
-                list(a) if isinstance(a, pa.Array) else cast(List[pa.Array], a.chunks)
+                list(a) if isinstance(a, pa.Array) else cast(list[pa.Array], a.chunks)
             )
 
         if len(tbl) > 0:

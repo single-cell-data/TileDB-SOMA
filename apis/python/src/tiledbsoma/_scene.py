@@ -8,7 +8,7 @@ Implementation of a SOMA Scene
 from __future__ import annotations
 
 import warnings
-from typing import Any, List, Sequence, Type, TypeVar, Union
+from typing import Any, Sequence, Type, TypeVar, Union
 
 import somacore
 from somacore import (
@@ -157,7 +157,7 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
             subcollection = tuple(subcollection)
         coll: CollectionBase[AnySOMAObject] = self
         # Keep track of collection hierarchy for informative error reporting
-        parent_name: List[str] = []
+        parent_name: list[str] = []
         for name in subcollection:
             try:
                 coll = coll[name]  # type: ignore[assignment]

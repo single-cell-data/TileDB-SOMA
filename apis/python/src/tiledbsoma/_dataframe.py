@@ -12,7 +12,6 @@ import inspect
 from typing import (
     Any,
     Dict,
-    List,
     Literal,
     Sequence,
     Union,
@@ -48,7 +47,7 @@ from .options._tiledb_create_write_options import (
 )
 
 _UNBATCHED = options.BatchSize()
-AxisDomain = Union[None, tuple[Any, Any], List[Any]]
+AxisDomain = Union[None, tuple[Any, Any], list[Any]]
 Domain = Sequence[AxisDomain]
 
 

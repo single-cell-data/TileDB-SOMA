@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import json
 import warnings
-from typing import Any, Dict, List, Sequence
+from typing import Any, Dict, Sequence
 
 import attrs
 import pyarrow as pa
@@ -568,7 +568,7 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
         # by index
         return self._levels[level]
 
-    def _axis_order(self) -> List[int]:
+    def _axis_order(self) -> list[int]:
         """Indices for accessing the data order for spatial axes."""
         axes = [
             index

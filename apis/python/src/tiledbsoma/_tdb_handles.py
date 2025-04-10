@@ -16,7 +16,6 @@ from typing import (
     Dict,
     Generic,
     Iterator,
-    List,
     Mapping,
     MutableMapping,
     Sequence,
@@ -37,7 +36,7 @@ from ._exception import DoesNotExistError, SOMAError, is_does_not_exist_error
 from ._types import METADATA_TYPES, Metadatum, OpenTimestamp, StatusAndReason
 from .options._soma_tiledb_context import SOMATileDBContext
 
-AxisDomain = Union[None, tuple[Any, Any], List[Any]]
+AxisDomain = Union[None, tuple[Any, Any], list[Any]]
 Domain = Sequence[AxisDomain]
 
 RawHandle = Union[

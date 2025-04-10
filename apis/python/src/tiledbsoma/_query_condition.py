@@ -9,7 +9,7 @@ filtering query results on attribute values.
 from __future__ import annotations
 
 import ast
-from typing import Any, Callable, List, Union
+from typing import Any, Callable, Union
 
 import attrs
 import numpy as np
@@ -130,7 +130,7 @@ class QueryCondition:
     def init_query_condition(
         self,
         schema: pa.Schema,
-        query_attrs: List[str] | None,
+        query_attrs: list[str] | None,
     ):
         try:
             qctree = QueryConditionTree(schema, query_attrs)
@@ -150,7 +150,7 @@ class QueryCondition:
 @attrs.define
 class QueryConditionTree(ast.NodeVisitor):
     schema: pa.Schema
-    query_attrs: List[str]
+    query_attrs: list[str]
 
     def visit_BitOr(self, node):
         return clib.TILEDB_OR

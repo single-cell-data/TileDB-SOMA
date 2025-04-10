@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import datetime
 import pathlib
-from typing import TYPE_CHECKING, Any, List, Sequence, Union, get_args
+from typing import TYPE_CHECKING, Any, Sequence, Union, get_args
 
 import numpy as np
 import numpy.typing as npt
@@ -47,7 +47,7 @@ else:
 
 Path = Union[str, pathlib.Path]
 
-Ids = Union[List[str], List[bytes], List[int]]
+Ids = Union[list[str], list[bytes], list[int]]
 
 Labels = Union[Sequence[str], PDIndex]
 

@@ -9,7 +9,7 @@ Implementation of SOMA DenseNDArray.
 from __future__ import annotations
 
 import warnings
-from typing import List, Sequence
+from typing import Sequence
 
 import numpy as np
 import pyarrow as pa
@@ -291,7 +291,7 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
         clib_handle = self._handle._handle
 
         # Compute the coordinates for the dense array.
-        new_coords: List[int | Slice[int] | None] = []
+        new_coords: list[int | Slice[int] | None] = []
         for c in coords:
             if isinstance(c, slice) and isinstance(c.stop, int):
                 new_coords.append(slice(c.start, c.stop, c.step))

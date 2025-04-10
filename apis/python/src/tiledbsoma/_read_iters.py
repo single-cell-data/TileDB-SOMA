@@ -13,7 +13,6 @@ from typing import (
     TYPE_CHECKING,
     Any,
     Iterator,
-    List,
     Sequence,
     TypeVar,
     Union,
@@ -169,7 +168,7 @@ class BlockwiseReadIterBase(somacore.ReadIter[_RT], metaclass=abc.ABCMeta):
         self.coords = _pad_with_none(coords, self.ndim)
 
         # materialize all indexing info.
-        self.joinids: List[pa.Array] = [
+        self.joinids: list[pa.Array] = [
             pa.array(
                 np.concatenate(
                     list(_coords_strider(self.coords[d], self.shape[d], self.shape[d]))
@@ -198,7 +197,7 @@ class BlockwiseReadIterBase(somacore.ReadIter[_RT], metaclass=abc.ABCMeta):
         axis: int | Sequence[int],
         size: int | Sequence[int] | None = None,
         reindex_disable_on_axis: int | Sequence[int] | None = None,
-    ) -> tuple[List[int], List[int], List[int]]:
+    ) -> tuple[list[int], list[int], list[int]]:
         """
         Class method to validate and normalize common user-provided arguments axis, size and reindex_disable_on_axis.
         * normalize args to fully specify the arg per dimension, for convenience in later usage
@@ -418,7 +417,7 @@ class BlockwiseScipyReadIter(BlockwiseReadIterBase[BlockwiseScipyReadIterResult]
         """Private. Make shape of this iterator step"""
         shape = cast(tuple[int, int], tuple(self.shape))
         assert len(shape) == 2
-        _sp_shape: List[int] = list(shape)
+        _sp_shape: list[int] = list(shape)
 
         if self.major_axis not in self.reindex_disable_on_axis:
             _sp_shape[self.major_axis] = len(major_coords)
@@ -562,9 +561,7 @@ class ArrowTableRead(Iterator[pa.Table]):
     def __init__(
         self,
         array: SOMAArray,
-        coords: Union[
-            options.SparseDFCoords, options.SparseNDCoords, options.DenseNDCoords
-        ],
+        coords: options.SparseDFCoords | options.SparseNDCoords | options.DenseNDCoords,
         column_names: Sequence[str] | None,
         result_order: clib.ResultOrder,
         value_filter: str | None,

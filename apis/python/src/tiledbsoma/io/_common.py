@@ -6,7 +6,7 @@
 
 from __future__ import annotations
 
-from typing import Dict, List, Mapping, Union
+from typing import Dict, Mapping, Union
 
 import h5py
 import numpy as np
@@ -29,7 +29,7 @@ Matrix = Union[DenseMatrix, SparseMatrix]
 
 UnsScalar = Union[str, int, float, np.generic]
 # TODO: support sparse matrices in `uns`
-UnsLeaf = Union[UnsScalar, List[UnsScalar], pd.DataFrame, NPNDArray]
+UnsLeaf = Union[UnsScalar, list[UnsScalar], pd.DataFrame, NPNDArray]
 UnsNode = Union[UnsLeaf, Mapping[str, "UnsNode"]]
 UnsMapping = Mapping[str, UnsNode]
 # Specialize `UnsNode` to `Dict` instead of `Mapping`

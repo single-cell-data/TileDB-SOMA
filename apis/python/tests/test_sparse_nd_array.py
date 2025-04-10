@@ -9,7 +9,7 @@ import operator
 import pathlib
 import sys
 from concurrent import futures
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, Union
 from unittest import mock
 
 import numpy as np
@@ -1021,7 +1021,7 @@ def test_sparse_nd_array_table_slicing(tmp_path, io, write_format, read_format):
     ],
 )
 def test_result_order(
-    tmp_path: pathlib.Path, result_order, want: Dict[str, List[float]]
+    tmp_path: pathlib.Path, result_order, want: Dict[str, list[float]]
 ):
     arrow_tensor = create_random_tensor("table", (5, 7), np.float32(), density=1)
 

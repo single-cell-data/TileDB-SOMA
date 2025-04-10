@@ -15,7 +15,6 @@ from typing import (
     TYPE_CHECKING,
     Any,
     Dict,
-    List,
     Mapping,
     Sequence,
     Type,
@@ -41,7 +40,7 @@ if TYPE_CHECKING:
     from ._read_iters import ManagedQuery
 
 _JSONFilter = Union[str, Dict[str, Union[str, Union[int, float]]]]
-_JSONFilterList = Union[str, List[_JSONFilter]]
+_JSONFilterList = Union[str, list[_JSONFilter]]
 
 
 def get_start_stamp() -> float:
@@ -426,7 +425,7 @@ def _build_filter_list(
         return ""
 
     filter: _JSONFilter
-    filter_list: List[_JSONFilter] = []
+    filter_list: list[_JSONFilter] = []
 
     for info in filters:
         if len(info) == 1:
@@ -445,7 +444,7 @@ def _build_filter_list(
     return json.dumps(filter_list) if return_json else filter_list
 
 
-def _cast_domainish(domainish: List[Any]) -> tuple[tuple[object, object], ...]:
+def _cast_domainish(domainish: list[Any]) -> tuple[tuple[object, object], ...]:
     result = []
     for slot in domainish:
         arrow_type = slot[0].type

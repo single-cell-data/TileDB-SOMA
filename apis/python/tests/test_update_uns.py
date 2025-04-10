@@ -4,7 +4,7 @@ import logging
 from copy import deepcopy
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, List, Union
+from typing import Dict, Union
 
 import numpy as np
 from _pytest.logging import LogCaptureFixture
@@ -18,8 +18,8 @@ from tests._util import Err, assert_uns_equal, make_pd_df, maybe_raises, verify_
 from tests.parametrize_cases import parametrize_cases
 from tests.test_basic_anndata_io import TEST_UNS, make_uns_adata
 
-ValidUpdates = Union[None, str, List[str], Dict[str, "ValidUpdates"]]
-Logs = Union[List[str], None]
+ValidUpdates = Union[None, str, list[str], Dict[str, "ValidUpdates"]]
+Logs = Union[list[str], None]
 
 
 @dataclass

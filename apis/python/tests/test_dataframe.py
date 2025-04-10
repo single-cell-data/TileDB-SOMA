@@ -1214,7 +1214,7 @@ def test_index_types(tmp_path, make_dataframe):
 
 
 def make_multiply_indexed_dataframe(
-    tmp_path, index_column_names: List[str], domain: List[Any]
+    tmp_path, index_column_names: list[str], domain: List[Any]
 ):
     """
     Creates a variably-indexed DataFrame for use in tests below.

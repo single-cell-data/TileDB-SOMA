@@ -24,7 +24,6 @@ from typing import (
     Any,
     Dict,
     Iterable,
-    List,
     Literal,
     Mapping,
     Sequence,
@@ -2237,7 +2236,7 @@ def _find_sparse_chunk_size_non_backed(
     """
     chunk_size = 0
     sum_nnz = 0
-    coords: List[slice | int] = [slice(None), slice(None)]
+    coords: list[slice | int] = [slice(None), slice(None)]
     for index in range(start_index, matrix.shape[axis]):
         coords[axis] = index
         candidate_sum_nnz = sum_nnz + matrix[tuple(coords)].nnz
@@ -2268,7 +2267,7 @@ def _find_mean_nnz(matrix: Matrix, axis: int) -> int:
     #   total_nnz = matrix[:, :].nnz
     # So instead we break it up. Testing over a variety of H5AD sizes
     # shows that the performance is fine here.
-    coords: List[slice] = [slice(None), slice(None)]  # type: ignore[unreachable]
+    coords: list[slice] = [slice(None), slice(None)]  # type: ignore[unreachable]
     bsz = 1000
     total_nnz = 0
     for lo in range(0, extent, bsz):
@@ -2376,7 +2375,7 @@ def _find_sparse_chunk_size_backed(
 
     # This is just matrix[0:m, :] or matrix[:, 0:m], but spelt out flexibly
     # given that the axis (0 or 1) is a variable.
-    coords: List[slice] = [slice(None), slice(None)]
+    coords: list[slice] = [slice(None), slice(None)]
     coords[axis] = slice(start_index, start_index + chunk_size)
     chunk_nnz = int(matrix[tuple(coords)].nnz)
 
