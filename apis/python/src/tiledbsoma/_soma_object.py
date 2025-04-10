@@ -63,7 +63,6 @@ class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
         tiledb_timestamp: OpenTimestamp | None = None,
         context: SOMATileDBContext | None = None,
         platform_config: options.PlatformConfig | None = None,
-        clib_type: str | None = None,
     ) -> Self:
         """Opens this specific type of SOMA object.
 
