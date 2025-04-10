@@ -29,7 +29,7 @@ from . import _util
 from . import pytiledbsoma as clib
 from ._arrow_types import pyarrow_to_carrow_type
 from ._common_nd_array import NDArray
-from ._dask.util import DaskConfig
+from ._dask.util import SOMADaskConfig
 from ._exception import SOMAError, map_exception_for_create
 from ._read_iters import (
     BlockwiseScipyReadIter,
@@ -475,9 +475,12 @@ class SparseNDArrayRead(_SparseNDArrayReadBase):
 
     def dask_array(
         self,
-        **config: Unpack[DaskConfig],
+        **config: Unpack[SOMADaskConfig],
     ) -> "da.Array":
-        """Load a TileDB-SOMA X layer as a Dask array."""
+        """Load a TileDB-SOMA X layer as a Dask array.
+
+        Lifecycle: experimental
+        """
         from tiledbsoma._dask.load import load_daskarray
 
         return load_daskarray(

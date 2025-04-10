@@ -19,8 +19,8 @@ from somacore.options import PlatformConfig, ResultOrder, ResultOrderStr, Sparse
 
 from tiledbsoma._dask.util import (
     ChunkSize,
-    DaskConfig,
     JoinIDs,
+    SOMADaskConfig,
     chunk_ids_sizes,
     coords_to_joinids,
     make_context,
@@ -42,7 +42,7 @@ __all__ = [
     # Re-export `DaskConfig` here, to save most users from needing separate `tiledbsoma._dask` import lines. It also
     # appears in the public API of `SparseNDArrayRead.dask_array`, which imports it directly from
     # `tiledbsoma._dask.util` (to avoid a circular dependency, since `SparseNDArray` is also referenced in this file).
-    "DaskConfig",
+    "SOMADaskConfig",
     "load_daskarray",
     "sparse_chunk",
 ]

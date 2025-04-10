@@ -3,7 +3,7 @@ Utilities for exporting [`Experiment`]s and [`ExperimentAxisQuery`]s to [anndata
 
 See also: [Tutorial: Scanpy + Dask-AnnData][tutorial]
 
-Passing a `tiledbsoma._dask.util.DaskConfig` to `Experiment.to_anndata` or `ExperimentAxisQuery.to_anndata` will cause the resulting [anndata]'s `X` matrix to be a [Dask Array].
+Passing a `tiledbsoma._dask.util.DaskConfig` to `tiledbsoma.io.to_anndata` or `ExperimentAxisQuery.to_anndata` will cause the resulting [anndata]'s `X` matrix to be a [Dask Array].
 
 ## Memory management
 

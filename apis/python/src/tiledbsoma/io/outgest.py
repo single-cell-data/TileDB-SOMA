@@ -38,7 +38,7 @@ from .. import (
     logging,
 )
 from .._constants import SOMA_JOINID
-from .._dask.load import DaskConfig, load_daskarray
+from .._dask.load import SOMADaskConfig, load_daskarray
 from .._exception import SOMAError
 from .._types import NPNDArray, Path
 from .._util import MISSING, Sentinel, _resolve_futures
@@ -146,7 +146,7 @@ def _extract_X_key(
     X_layer_name: str,
     nobs: int,
     nvar: int,
-    dask: DaskConfig | None = None,
+    dask: SOMADaskConfig | None = None,
 ) -> Union[Future[Matrix], "da.Array"]:
     """Helper function for to_anndata"""
     if X_layer_name not in measurement.X:
@@ -256,7 +256,7 @@ def to_anndata(
     var_id_name: str | None = None,
     obsm_varm_width_hints: dict[str, dict[str, int]] | None = None,
     uns_keys: Sequence[str] | None = None,
-    dask: DaskConfig | None = None,
+    dask: SOMADaskConfig | None = None,
 ) -> ad.AnnData:
     """Converts the experiment group to AnnData format.
 
@@ -303,6 +303,9 @@ def to_anndata(
     If ``uns_keys`` is provided, only the specified top-level ``uns`` keys
     are extracted.  The default is to extract them all.  Use ``uns_keys=[]``
     to not outgest any ``uns`` keys.
+
+    If ``dask`` is present, the ``X`` matrix is returned as a Dask array, and the ``dask`` configs apply to that
+    conversion and resulting array (lifecycle: experimental).
 
     Lifecycle:
         Maturing.

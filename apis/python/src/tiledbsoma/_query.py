@@ -52,7 +52,7 @@ from somacore.query.types import IndexFactory, IndexLike
 from typing_extensions import Self
 
 from ._constants import SPATIAL_DISCLAIMER
-from ._dask.load import DaskConfig, load_daskarray
+from ._dask.load import SOMADaskConfig, load_daskarray
 from ._exception import SOMAError
 
 if TYPE_CHECKING:
@@ -409,7 +409,7 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
         varm_layers: Sequence[str] = (),
         varp_layers: Sequence[str] = (),
         drop_levels: bool = False,
-        dask: DaskConfig | None = None,
+        dask: SOMADaskConfig | None = None,
     ) -> AnnData:
         """Exports the query to an in-memory ``AnnData`` object.
 
@@ -432,8 +432,10 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
                 If true, drop unused categories from the ``obs`` and ``var`` dataframes.
                 Defaults to ``False``.
             dask:
-                If not ``None``, load the X layer as a dask array. See
+                If not ``None``, load the X layer as a Dask array. See
                 :class:`DaskConfig` for details.
+
+        Lifecycle: experimental
         """
 
         if column_names is None:
@@ -563,6 +565,7 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
         varp_layers: Sequence[str] = (),
         drop_levels: bool = False,
         scene_presence_mode: str = "obs",
+        dask: SOMADaskConfig | None = None,
     ):
         """Returns a SpatialData object containing the query results
 
@@ -612,6 +615,7 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
             varm_layers=varm_layers,
             varp_layers=varp_layers,
             drop_levels=drop_levels,
+            dask=dask,
         )
 
         return _spatial_to_spatialdata(

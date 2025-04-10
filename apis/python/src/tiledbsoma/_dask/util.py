@@ -30,7 +30,7 @@ ChunkSize = Union[int, tuple[Union[int, None], int]]
 JoinIDs: TypeAlias = NDArray[int64]
 
 
-class DaskConfig(TypedDict, total=False):
+class SOMADaskConfig(TypedDict, total=False):
     chunk_size: ChunkSize
     tiledb_concurrency: int | None
     tiledb_config: dict[str, ConfigVal]
