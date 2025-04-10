@@ -8,7 +8,7 @@ Implementation of a base class shared between GeometryDataFrame and PointCloudDa
 
 from __future__ import annotations
 
-from typing import Any, Sequence, Tuple, Union
+from typing import Any, Sequence, Tuple
 
 import pyarrow as pa
 import somacore
@@ -151,7 +151,7 @@ class SpatialDataFrame(SOMAArray):
 
     def write(
         self,
-        values: Union[pa.RecordBatch, pa.Table],
+        values: pa.RecordBatch | pa.Table,
         *,
         platform_config: options.PlatformConfig | None = None,
     ) -> Self:

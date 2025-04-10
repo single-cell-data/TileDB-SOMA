@@ -147,7 +147,7 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
             self._coord_space = coordinate_space_from_json(coord_space)
 
     def _open_subcollection(
-        self, subcollection: Union[str, Sequence[str]]
+        self, subcollection: str | Sequence[str]
     ) -> CollectionBase[AnySOMAObject]:
         if len(subcollection) == 0:
             raise ValueError("Invalid subcollection: value cannot be empty.")
@@ -174,7 +174,7 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
         *,
         key: str,
         transform: CoordinateTransform,
-        subcollection: Union[str, Sequence[str]],
+        subcollection: str | Sequence[str],
         coordinate_space: CoordinateSpace | None,
     ) -> _SE:
         # Check the transform is compatible with the coordinate spaces of the scene
@@ -251,7 +251,7 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
     def add_new_geometry_dataframe(
         self,
         key: str,
-        subcollection: Union[str, Sequence[str]],
+        subcollection: str | Sequence[str],
         *,
         transform: CoordinateTransform | None,
         uri: str | None = None,
@@ -295,11 +295,11 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
     def add_new_multiscale_image(
         self,
         key: str,
-        subcollection: Union[str, Sequence[str]],
+        subcollection: str | Sequence[str],
         *,
         transform: CoordinateTransform | None,
         uri: str | None = None,
-        coordinate_space: Union[Sequence[str], CoordinateSpace] = ("x", "y"),
+        coordinate_space: Sequence[str] | CoordinateSpace = ("x", "y"),
         **kwargs: Any,
     ) -> MultiscaleImage:
         """Adds a ``MultiscaleImage`` to the scene and sets a coordinate transform
@@ -386,11 +386,11 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
     def add_new_point_cloud_dataframe(
         self,
         key: str,
-        subcollection: Union[str, Sequence[str]],
+        subcollection: str | Sequence[str],
         *,
         transform: CoordinateTransform | None,
         uri: str | None = None,
-        coordinate_space: Union[Sequence[str], CoordinateSpace] = ("x", "y"),
+        coordinate_space: Sequence[str] | CoordinateSpace = ("x", "y"),
         **kwargs: Any,
     ) -> PointCloudDataFrame:
         """Adds a point cloud to the scene and sets a coordinate transform
@@ -477,7 +477,7 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
     def set_transform_to_geometry_dataframe(
         self,
         key: str,
-        subcollection: Union[str, Sequence[str]] = "obsl",
+        subcollection: str | Sequence[str] = "obsl",
         *,
         transform: CoordinateTransform,
         coordinate_space: CoordinateSpace | None = None,
@@ -512,7 +512,7 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
     def set_transform_to_multiscale_image(
         self,
         key: str,
-        subcollection: Union[str, Sequence[str]] = "img",
+        subcollection: str | Sequence[str] = "img",
         *,
         transform: CoordinateTransform,
         coordinate_space: CoordinateSpace | None = None,
@@ -549,7 +549,7 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
     def set_transform_to_point_cloud_dataframe(
         self,
         key: str,
-        subcollection: Union[str, Sequence[str]] = "obsl",
+        subcollection: str | Sequence[str] = "obsl",
         *,
         transform: CoordinateTransform,
         coordinate_space: CoordinateSpace | None = None,
@@ -589,7 +589,7 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
         )
 
     def get_transform_from_geometry_dataframe(
-        self, key: str, subcollection: Union[str, Sequence[str]] = "obsl"
+        self, key: str, subcollection: str | Sequence[str] = "obsl"
     ) -> CoordinateTransform:
         """Returns the coordinate transformation from the requested geometry dataframe
         to the scene.
@@ -678,7 +678,7 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
         return transform.inverse_transform()
 
     def get_transform_to_geometry_dataframe(
-        self, key: str, subcollection: Union[str, Sequence[str]] = "obsl"
+        self, key: str, subcollection: str | Sequence[str] = "obsl"
     ) -> CoordinateTransform:
         """Returns the coordinate transformation from the scene to a requested
         geometery dataframe.

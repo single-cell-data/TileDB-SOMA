@@ -480,22 +480,20 @@ class SOMAArrayWrapper(Wrapper[_SOMAObjectType]):
         """Only implemented for DataFrame."""
         raise NotImplementedError
 
-    def resize(self, newshape: Sequence[Union[int, None]]) -> None:
+    def resize(self, newshape: Sequence[int | None]) -> None:
         """Not implemented for DataFrame."""
         raise NotImplementedError
 
-    def tiledbsoma_can_resize(
-        self, newshape: Sequence[Union[int, None]]
-    ) -> StatusAndReason:
+    def tiledbsoma_can_resize(self, newshape: Sequence[int | None]) -> StatusAndReason:
         """Not implemented for DataFrame."""
         raise NotImplementedError
 
-    def tiledbsoma_upgrade_shape(self, newshape: Sequence[Union[int, None]]) -> None:
+    def tiledbsoma_upgrade_shape(self, newshape: Sequence[int | None]) -> None:
         """Not implemented for DataFrame."""
         raise NotImplementedError
 
     def tiledbsoma_can_upgrade_shape(
-        self, newshape: Sequence[Union[int, None]]
+        self, newshape: Sequence[int | None]
     ) -> StatusAndReason:
         """Not implemented for DataFrame."""
         raise NotImplementedError
@@ -685,22 +683,20 @@ class DenseNDArrayWrapper(SOMAArrayWrapper[clib.SOMADenseNDArray]):
         """Wrapper-class internals"""
         return cast(bool, self._handle.tiledbsoma_has_upgraded_shape)
 
-    def resize(self, newshape: Sequence[Union[int, None]]) -> None:
+    def resize(self, newshape: Sequence[int | None]) -> None:
         """Wrapper-class internals"""
         self._handle.resize(newshape)
 
-    def tiledbsoma_can_resize(
-        self, newshape: Sequence[Union[int, None]]
-    ) -> StatusAndReason:
+    def tiledbsoma_can_resize(self, newshape: Sequence[int | None]) -> StatusAndReason:
         """Wrapper-class internals"""
         return cast(StatusAndReason, self._handle.tiledbsoma_can_resize(newshape))
 
-    def tiledbsoma_upgrade_shape(self, newshape: Sequence[Union[int, None]]) -> None:
+    def tiledbsoma_upgrade_shape(self, newshape: Sequence[int | None]) -> None:
         """Wrapper-class internals"""
         self._handle.tiledbsoma_upgrade_shape(newshape)
 
     def tiledbsoma_can_upgrade_shape(
-        self, newshape: Sequence[Union[int, None]]
+        self, newshape: Sequence[int | None]
     ) -> StatusAndReason:
         """Wrapper-class internals"""
         return cast(
@@ -722,22 +718,20 @@ class SparseNDArrayWrapper(SOMAArrayWrapper[clib.SOMASparseNDArray]):
         """Wrapper-class internals"""
         return cast(bool, self._handle.tiledbsoma_has_upgraded_shape)
 
-    def resize(self, newshape: Sequence[Union[int, None]]) -> None:
+    def resize(self, newshape: Sequence[int | None]) -> None:
         """Wrapper-class internals"""
         self._handle.resize(newshape)
 
-    def tiledbsoma_can_resize(
-        self, newshape: Sequence[Union[int, None]]
-    ) -> StatusAndReason:
+    def tiledbsoma_can_resize(self, newshape: Sequence[int | None]) -> StatusAndReason:
         """Wrapper-class internals"""
         return cast(StatusAndReason, self._handle.can_resize(newshape))
 
-    def tiledbsoma_upgrade_shape(self, newshape: Sequence[Union[int, None]]) -> None:
+    def tiledbsoma_upgrade_shape(self, newshape: Sequence[int | None]) -> None:
         """Wrapper-class internals"""
         self._handle.tiledbsoma_upgrade_shape(newshape)
 
     def tiledbsoma_can_upgrade_shape(
-        self, newshape: Sequence[Union[int, None]]
+        self, newshape: Sequence[int | None]
     ) -> StatusAndReason:
         """Wrapper-class internals"""
         return cast(

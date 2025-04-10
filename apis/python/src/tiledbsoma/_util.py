@@ -354,13 +354,13 @@ def build_clib_platform_config(
 
 
 def _build_column_config(col: Mapping[str, _ColumnConfig] | None) -> str:
-    column_config: Dict[str, Dict[str, Union[_JSONFilterList, int]]] = dict()
+    column_config: Dict[str, Dict[str, _JSONFilterList | int]] = dict()
 
     if col is None:
         return ""
 
     for k in col:
-        dikt: Dict[str, Union[_JSONFilterList, int]] = {}
+        dikt: Dict[str, _JSONFilterList | int] = {}
         if col[k].filters is not None:
             dikt["filters"] = _build_filter_list(col[k].filters, False)
         if col[k].tile is not None:

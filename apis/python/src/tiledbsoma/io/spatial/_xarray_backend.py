@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import json
 import warnings
-from typing import Any, Mapping, Sequence, Tuple, Union
+from typing import Any, Mapping, Sequence, Tuple
 
 import dask.array as da
 import numpy as np
@@ -50,7 +50,7 @@ class DenseNDArrayWrapper:
             "soma_data"
         ).type.to_pandas_dtype()
 
-    def __getitem__(self, key: Tuple[Union[slice, int], ...]) -> np.typing.NDArray[Any]:
+    def __getitem__(self, key: Tuple[slice | int, ...]) -> np.typing.NDArray[Any]:
         """Returns a numpy array containing data from a requested tuple."""
 
         # Compute the expected Xarray output shape.

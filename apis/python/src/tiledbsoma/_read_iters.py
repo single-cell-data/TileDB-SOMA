@@ -136,7 +136,7 @@ class BlockwiseReadIterBase(somacore.ReadIter[_RT], metaclass=abc.ABCMeta):
         self,
         array: SOMAArray,
         coords: options.SparseNDCoords,
-        axis: Union[int, Sequence[int]],
+        axis: int | Sequence[int],
         result_order: clib.ResultOrder,
         platform_config: options.PlatformConfig | None,
         *,
@@ -197,8 +197,8 @@ class BlockwiseReadIterBase(somacore.ReadIter[_RT], metaclass=abc.ABCMeta):
     @classmethod
     def _validate_args(
         cls,
-        shape: Union[NTuple, Sequence[int]],
-        axis: Union[int, Sequence[int]],
+        shape: NTuple | Sequence[int],
+        axis: int | Sequence[int],
         size: int | Sequence[int] | None = None,
         reindex_disable_on_axis: int | Sequence[int] | None = None,
     ) -> Tuple[List[int], List[int], List[int]]:
@@ -340,7 +340,7 @@ class BlockwiseScipyReadIter(BlockwiseReadIterBase[BlockwiseScipyReadIterResult]
         self,
         array: SOMAArray,
         coords: options.SparseNDCoords,
-        axis: Union[int, Sequence[int]],
+        axis: int | Sequence[int],
         result_order: clib.ResultOrder,
         platform_config: options.PlatformConfig | None,
         *,
@@ -454,7 +454,7 @@ class BlockwiseScipyReadIter(BlockwiseReadIterBase[BlockwiseScipyReadIterResult]
 
     def _cs_reader(
         self, _pool: ThreadPoolExecutor | None = None
-    ) -> Iterator[Tuple[Union[sparse.csr_matrix, sparse.csc_matrix], IndicesType],]:
+    ) -> Iterator[Tuple[sparse.csr_matrix | sparse.csc_matrix, IndicesType],]:
         """Private. Compressed sparse variants"""
         assert self.compress
         assert self.major_axis not in self.reindex_disable_on_axis

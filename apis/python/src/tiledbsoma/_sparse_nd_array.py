@@ -112,7 +112,7 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
         uri: str,
         *,
         type: pa.DataType,
-        shape: Sequence[Union[int, None]],
+        shape: Sequence[int | None],
         platform_config: options.PlatformConfig | None = None,
         context: SOMATileDBContext | None = None,
         tiledb_timestamp: OpenTimestamp | None = None,
@@ -307,7 +307,7 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
             Maturing.
         """
 
-        write_options: Union[TileDBCreateOptions, TileDBWriteOptions]
+        write_options: TileDBCreateOptions | TileDBWriteOptions
         sort_coords = None
         if isinstance(platform_config, TileDBCreateOptions):
             raise ValueError(
@@ -504,7 +504,7 @@ class SparseNDArrayRead(_SparseNDArrayReadBase):
 
     def blockwise(
         self,
-        axis: Union[int, Sequence[int]],
+        axis: int | Sequence[int],
         *,
         size: int | Sequence[int] | None = None,
         reindex_disable_on_axis: int | Sequence[int] | None = None,
@@ -587,7 +587,7 @@ class SparseNDArrayBlockwiseRead(_SparseNDArrayReadBase):
         self,
         array: SparseNDArray,
         coords: options.SparseNDCoords,
-        axis: Union[int, Sequence[int]],
+        axis: int | Sequence[int],
         result_order: clib.ResultOrder,
         platform_config: options.PlatformConfig | None,
         *,

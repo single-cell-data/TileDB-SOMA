@@ -5,7 +5,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, Union
+from typing import Any
 
 import h5py
 import numpy as np
@@ -74,7 +74,7 @@ def _version_less_than(version: str, upper_bound: tuple[int, int, int]) -> bool:
 
 
 def _read_visium_software_version(
-    gene_expression_path: Union[str, Path],
+    gene_expression_path: str | Path,
 ) -> tuple[int, int, int]:
     with TenXCountMatrixReader(gene_expression_path) as reader:
         version = reader.software_version

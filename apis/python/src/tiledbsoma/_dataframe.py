@@ -830,7 +830,7 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         """
         _util.check_type("values", values, (pa.Table,))
 
-        write_options: Union[TileDBCreateOptions, TileDBWriteOptions]
+        write_options: TileDBCreateOptions | TileDBWriteOptions
         if isinstance(platform_config, TileDBCreateOptions):
             raise ValueError(
                 "As of TileDB-SOMA 1.13, the write method takes "
