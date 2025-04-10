@@ -1,8 +1,12 @@
 from __future__ import annotations
 
-from typing import Callable
+from pathlib import Path
+from typing import Protocol
 
+import numpy as np
 import pytest
+
+from .test_sparse_nd_array import create_random_tensor
 
 try:
     import dask.array as da
@@ -11,10 +15,11 @@ try:
 except ImportError:
     DaskArray = None
 
+import pyarrow as pa
 from scipy.sparse import csc_matrix, csr_matrix, hstack, vstack
 from somacore import AxisQuery
 
-from tiledbsoma import Experiment
+from tiledbsoma import Experiment, SparseNDArray
 from tiledbsoma._dask.load import load_daskarray
 from tiledbsoma.io import to_anndata
 
@@ -66,7 +71,12 @@ def test_dask_load_csc(
     assert_array_equal(X, csc)
 
 
-VerifyDaskArray = Callable[[csr_matrix, DaskArray], None]
+class VerifyDaskArray(Protocol):
+    """Type-alias for the verifier-function returned by the ``verify_dask_array`` fixture below."""
+
+    def __call__(
+        self, X1: csr_matrix, X2: DaskArray, nnz: int | None = None
+    ) -> None: ...
 
 
 @pytest.fixture
@@ -75,16 +85,21 @@ def verify_dask_array(
     var_chunk_size: int,
     shape: tuple[int, int],
     nnz: int,
-):
-    """``fixture`` function that verifies a non-Dask AnnData matches a Dask-backed AnnData.
+) -> VerifyDaskArray:
+    """``fixture`` function that verifies a non-Dask AnnData's ``X`` matches a Dask-backed AnnData's.
 
     Partially-applies other ``fixture``s, for calling convenience."""
+
+    expected_nnz = nnz
 
     def check(
         X1: csr_matrix,
         X2: DaskArray,
+        nnz: int | None = None,
     ):
         """Verify an AnnData (`ad1`) matches another (`ad2`) whose `X` matrix is a Dask Array."""
+        if nnz is None:
+            nnz = expected_nnz
         assert X1.shape == shape
         assert X1.nnz == nnz
         nobs, nvar = X1.shape
@@ -111,8 +126,6 @@ sweep_queries = pytest.mark.parametrize(
     ],
 )
 # fmt: on
-
-
 @sweep_queries
 @pytest.mark.parametrize("obs_chunk_size", [20, 30, 80, 100])
 @pytest.mark.parametrize("var_chunk_size", [3, 10, 20])
@@ -135,6 +148,111 @@ def test_dask_query_to_anndata(
         dask=dict(chunk_size=(obs_chunk_size, var_chunk_size)),
     )
     verify_dask_array(ad1.X, ad2.X)
+
+
+@pytest.mark.parametrize(
+    "obs_query,var_query,shape,nnz,obs_chunk_size,var_chunk_size",
+    [(AxisQuery(), AxisQuery(), (80, 20), 1600, 20, 3)],
+)
+def test_dask_query_to_anndata_timestamp(
+    conftest_pbmc_small_exp_path: Path,
+    obs_query: AxisQuery,
+    var_query: AxisQuery,
+    obs_chunk_size: int,
+    var_chunk_size: int,
+    verify_dask_array: VerifyDaskArray,
+):
+    exp_path = str(conftest_pbmc_small_exp_path)
+
+    def write_val(v: float) -> int:
+        with Experiment.open(exp_path, mode="w") as exp:
+            ts = exp.tiledb_timestamp_ms
+            X = exp.ms["RNA"].X
+            data = X["data"]
+            shape = data.shape
+            R, C = shape
+            soma_dim_0, soma_dim_1, soma_data = zip(
+                *[(r, c, v) for r in range(R) for c in range(C)]
+            )
+            tbl = pa.Table.from_pydict(
+                dict(
+                    soma_dim_0=soma_dim_0,
+                    soma_dim_1=soma_dim_1,
+                    soma_data=soma_data,
+                )
+            )
+            data.write(tbl)
+        return ts
+
+    ts1 = write_val(111)
+    ts2 = write_val(222)
+
+    def check_ts(tiledb_timestamp: int | None, v: float):
+        with Experiment.open(exp_path, tiledb_timestamp=tiledb_timestamp) as exp:
+            data = exp.ms["RNA"].X["data"]
+            [(data0, _)] = list(data.read().blockwise(0).scipy())
+            data1 = (
+                data.read()
+                .dask_array(chunk_size=(obs_chunk_size, var_chunk_size))
+                .compute()
+            )
+            assert_array_equal(data0, data1)
+            assert data0[0, 0] == v
+
+    check_ts(ts1 - 1, -0.1934951510503384)
+    check_ts(ts1, 111)
+    check_ts(ts2 - 1, 111)
+    check_ts(ts2, 222)
+    check_ts(None, 222)
+
+
+@pytest.mark.parametrize(
+    "obs_query,var_query,shape,nnz,obs_chunk_size,var_chunk_size",
+    [(AxisQuery(), AxisQuery(), (80, 20), 1600, 20, 3)],
+)
+def test_dask_query_to_anndata_layers(
+    conftest_pbmc_small_exp_path: Path,
+    obs_query: AxisQuery,
+    var_query: AxisQuery,
+    obs_chunk_size: int,
+    var_chunk_size: int,
+    verify_dask_array: VerifyDaskArray,
+):
+    exp_path = str(conftest_pbmc_small_exp_path)
+    layer_nnz = 528
+    with Experiment.open(exp_path, mode="w") as exp:
+        X = exp.ms["RNA"].X
+        shape = X["data"].shape
+        layer1 = SparseNDArray.create(
+            f"{X.uri}/layer1",
+            type=pa.float32(),
+            shape=shape,
+            context=X.context,
+        )
+        arrow_tensor = create_random_tensor(
+            format="csr",
+            shape=shape,
+            dtype=np.float32(),
+            seed=1111,
+        )
+        assert arrow_tensor.non_zero_length == layer_nnz
+        layer1.write(arrow_tensor)
+        X.set("layer1", layer1)
+
+    with Experiment.open(exp_path) as exp:
+        query = exp.axis_query(
+            measurement_name="RNA",
+            obs_query=obs_query,
+            var_query=var_query,
+        )
+        ad1 = query.to_anndata(X_name="data", X_layers=("layer1",))
+        ad2 = query.to_anndata(
+            X_name="data",
+            X_layers=("layer1",),
+            dask=dict(chunk_size=(obs_chunk_size, var_chunk_size)),
+        )
+        verify_dask_array(ad1.X, ad2.X)
+        verify_dask_array(ad1.layers["layer1"], ad2.layers["layer1"], nnz=layer_nnz)
 
 
 @pytest.mark.parametrize("obs_chunk_size", [20, 30, 80, 100])

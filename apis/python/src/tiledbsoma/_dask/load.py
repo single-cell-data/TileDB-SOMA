@@ -29,6 +29,7 @@ from tiledbsoma._dense_nd_array import DenseNDArray
 from tiledbsoma._fastercsx import CompressedMatrix, Format
 from tiledbsoma._indexer import IntIndexer
 from tiledbsoma._sparse_nd_array import SparseNDArray
+from tiledbsoma._types import OpenTimestamp
 from tiledbsoma.options._soma_tiledb_context import ConfigDict, ConfigVal
 
 if TYPE_CHECKING:
@@ -56,6 +57,7 @@ def sparse_chunk(
     tiledb_concurrency: int | None = None,
     format: Format = "csr",
     result_order: ResultOrderStr = ResultOrder.AUTO,
+    tiledb_timestamp: OpenTimestamp | None = None,
     platform_config: PlatformConfig | None = None,
 ) -> sp.csr_matrix | sp.csc_matrix:
     """Load a slice of a TileDB-SOMA ``X`` matrix, as a block of a CSR-backed Dask Array."""
@@ -69,7 +71,12 @@ def sparse_chunk(
         tiledb_config=tiledb_config,
         tiledb_concurrency=tiledb_concurrency,
     )
-    with SparseNDArray.open(uri, context=soma_ctx) as arr:
+    with SparseNDArray.open(
+        uri,
+        context=soma_ctx,
+        tiledb_timestamp=tiledb_timestamp,
+        platform_config=platform_config,
+    ) as arr:
         tbls = arr.read(
             coords=(obs_joinids, var_joinids),
             result_order=result_order,
@@ -164,6 +171,7 @@ def load_daskarray(
             tiledb_concurrency=tiledb_concurrency,
             tiledb_config=tiledb_config,
             result_order=result_order,
+            tiledb_timestamp=layer.tiledb_timestamp_ms,
             platform_config=platform_config,
         )
     else:
