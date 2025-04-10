@@ -186,7 +186,6 @@ bool is_tdb_str(tiledb_datatype_t type) {
  * @brief Convert ArrayBuffers to Arrow table.
  *
  * @param buffers ArrayBuffers
- * @param schema ArraySchema
  * @return py::object pa.Table
  */
 py::object _buffer_to_table(std::shared_ptr<ArrayBuffers> buffers) {
