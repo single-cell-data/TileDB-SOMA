@@ -11,7 +11,6 @@ from __future__ import annotations
 import inspect
 from typing import (
     Any,
-    Dict,
     Literal,
     Sequence,
     Union,
@@ -590,7 +589,7 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         dim_schema = pa.schema(dim_schema_list)
 
         # Convert the user's tuple of low/high pairs into a dict keyed by index-column name.
-        new_domain_dict: Dict[str, Domain] = {}
+        new_domain_dict: dict[str, Domain] = {}
         for dim_name, new_dom in zip(dim_names, newdomain):
             # Domain can't be specified for strings (core constraint) so let them keystroke that easily.
             if (

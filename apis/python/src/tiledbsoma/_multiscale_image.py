@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import json
 import warnings
-from typing import Any, Dict, Sequence
+from typing import Any, Sequence
 
 import attrs
 import pyarrow as pa
@@ -678,7 +678,7 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
         """
         return self._has_channel_axis
 
-    def levels(self) -> Dict[str, tuple[str, tuple[int, ...]]]:
+    def levels(self) -> dict[str, tuple[str, tuple[int, ...]]]:
         """Returns a mapping of {member_name: (uri, shape)}."""
         return {
             level.name: (self._contents[level.name].entry.uri, level.shape)

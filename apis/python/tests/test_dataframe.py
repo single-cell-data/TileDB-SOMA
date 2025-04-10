@@ -7,7 +7,7 @@ import shutil
 import struct
 import time
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, List
 
 import numpy as np
 import pandas as pd
@@ -1240,7 +1240,7 @@ def make_multiply_indexed_dataframe(
         domain=domain,
     )
 
-    data: Dict[str, list] = {
+    data: dict[str, list] = {
         "0_thru_5": [0, 1, 2, 3, 4, 5],
         "strings_aaa": ["aaa", "aaa", "bbb", "bbb", "ccc", "ccc"],
         "zero_one": [0, 1, 0, 1, 0, 1],

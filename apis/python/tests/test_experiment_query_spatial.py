@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import itertools
-from typing import Dict
 
 import numpy as np
 import pandas as pd
@@ -80,7 +79,7 @@ def add_point_cloud_dataframe(
     scene: soma.Scene,
     subcoll: str | list[str],
     key: str,
-    data: Dict[str, np.ndarray],
+    data: dict[str, np.ndarray],
     circles: bool,
 ):
     with scene.add_new_point_cloud_dataframe(
@@ -102,9 +101,9 @@ def add_scene(
     coll: soma.Collection,
     key: str,
     *,
-    points: Dict[tuple[str | tuple[str, ...], str], Dict[str, np.ndarray]],
-    circles: Dict[tuple[str | tuple[str, ...], str], Dict[str, np.ndarray]],
-    images: Dict[str, tuple[tuple[int, ...]]],
+    points: dict[tuple[str | tuple[str, ...], str], dict[str, np.ndarray]],
+    circles: dict[tuple[str | tuple[str, ...], str], dict[str, np.ndarray]],
+    images: dict[str, tuple[tuple[int, ...]]],
 ) -> None:
     with coll.add_new_collection(key, soma.Scene, coordinate_space=("x", "y")) as scene:
         scene.add_new_collection("obsl")

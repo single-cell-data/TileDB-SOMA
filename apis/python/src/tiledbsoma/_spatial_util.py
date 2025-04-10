@@ -5,7 +5,7 @@
 from __future__ import annotations
 
 import json
-from typing import Any, Dict, Type
+from typing import Any, Type
 
 import numpy as np
 import pyarrow as pa
@@ -52,7 +52,7 @@ def transform_from_json(data: str) -> somacore.CoordinateTransform:
             "convert JSON to CoordinateTransform child class"
         )
 
-    coord_transform_init: Dict[str, Type[somacore.CoordinateTransform]] = {
+    coord_transform_init: dict[str, Type[somacore.CoordinateTransform]] = {
         "AffineTransform": somacore.AffineTransform,
         "ScaleTransform": somacore.ScaleTransform,
         "UniformScaleTransform": somacore.UniformScaleTransform,
@@ -68,7 +68,7 @@ def transform_from_json(data: str) -> somacore.CoordinateTransform:
 def transform_to_json(transform: somacore.CoordinateTransform) -> str:
     """Representing a CoordinateTransform as a JSON string"""
 
-    kwargs: Dict[str, Any] = {
+    kwargs: dict[str, Any] = {
         "input_axes": transform.input_axes,
         "output_axes": transform.output_axes,
     }
@@ -181,7 +181,7 @@ def process_image_region(
 def process_spatial_df_region(
     region: options.SpatialRegion | None,
     transform: somacore.CoordinateTransform,
-    coords_by_name: Dict[str, options.SparseDFCoord],
+    coords_by_name: dict[str, options.SparseDFCoord],
     index_columns: tuple[str, ...],
     axis_names: tuple[str, ...],
     schema: pa.Schema,

@@ -2,7 +2,7 @@ import argparse
 import re
 from collections import OrderedDict
 from sys import stderr
-from typing import Dict, Union
+from typing import Union
 
 import attr
 import matplotlib.pyplot as plt
@@ -11,7 +11,7 @@ import pandas as pd
 from .data import FileBasedProfileDB, ProfileData
 
 
-def collect_tiledb_stats(data: ProfileData) -> Dict[str, Union[int, float]]:
+def collect_tiledb_stats(data: ProfileData) -> dict[str, Union[int, float]]:
     """Extract all TileDB stats as dictionary"""
     result = {}
     tiledb_stats = data.tiledb_stats

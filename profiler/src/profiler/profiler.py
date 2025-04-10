@@ -7,7 +7,7 @@ import sys
 from datetime import datetime
 from subprocess import PIPE
 from sys import stderr
-from typing import Any, Dict, Optional
+from typing import Any, Optional
 
 import somacore
 
@@ -103,7 +103,7 @@ def build_profile_data(
     return data
 
 
-def read_tiledb_stats_output() -> Dict[str, Any]:
+def read_tiledb_stats_output() -> dict[str, Any]:
     if not os.path.isfile(TILEDB_STATS_FILE_PATH):
         return {}
 

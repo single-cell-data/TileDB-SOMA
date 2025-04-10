@@ -22,7 +22,6 @@ from functools import partial
 from itertools import repeat
 from typing import (
     Any,
-    Dict,
     Iterable,
     Literal,
     Mapping,
@@ -2994,7 +2993,7 @@ def _ingest_uns_2d_string_array(
     this ``uns`` data is solely of interest for AnnData ingest/outgest, and it must go
     back out the way it came in."""
     num_rows, num_cols = value.shape
-    data: Dict[str, Any] = {"soma_joinid": np.arange(num_rows, dtype=np.int64)}
+    data: dict[str, Any] = {"soma_joinid": np.arange(num_rows, dtype=np.int64)}
     # An array like [["a", "b", "c"], ["d", "e", "f"]] becomes a DataFrame like
     # soma_joinid values_0 values_1 values_2
     # 0           a        b        c

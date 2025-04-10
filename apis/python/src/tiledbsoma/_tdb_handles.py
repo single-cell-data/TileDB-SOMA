@@ -13,7 +13,6 @@ import abc
 import enum
 from typing import (
     Any,
-    Dict,
     Generic,
     Iterator,
     Mapping,
@@ -323,8 +322,8 @@ class SOMAGroupWrapper(Wrapper[_SOMAObjectType]):
     def meta(self) -> "MetadataWrapper":
         return self.metadata
 
-    def members(self) -> Dict[str, tuple[str, str]]:
-        return cast(Dict[str, tuple[str, str]], self._handle.members())
+    def members(self) -> dict[str, tuple[str, str]]:
+        return cast(dict[str, tuple[str, str]], self._handle.members())
 
 
 class CollectionWrapper(SOMAGroupWrapper[clib.SOMACollection]):
@@ -799,8 +798,8 @@ class MetadataWrapper(MutableMapping[str, Any]):
     """
 
     owner: Wrapper[RawHandle]
-    cache: Dict[str, Any]
-    _mods: Dict[str, "_DictMod"] = attrs.field(init=False, factory=dict)
+    cache: dict[str, Any]
+    _mods: dict[str, "_DictMod"] = attrs.field(init=False, factory=dict)
     """Tracks the modifications we have made to cache entries."""
 
     def __len__(self) -> int:

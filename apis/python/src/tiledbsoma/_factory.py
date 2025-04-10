@@ -10,7 +10,6 @@ from __future__ import annotations
 
 from typing import (
     Callable,
-    Dict,
     Type,
     TypeVar,
     cast,
@@ -212,7 +211,7 @@ def _read_soma_type(hdl: _tdb_handles.AnyWrapper) -> str:
 
 @no_type_check
 def _type_name_to_cls(type_name: str) -> Type[AnySOMAObject]:
-    type_map: Dict[str, Type[AnySOMAObject]] = {
+    type_map: dict[str, Type[AnySOMAObject]] = {
         t.soma_type.lower(): t
         for t in (
             _collection.Collection,

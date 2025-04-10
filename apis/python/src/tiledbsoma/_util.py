@@ -14,7 +14,6 @@ from itertools import zip_longest
 from typing import (
     TYPE_CHECKING,
     Any,
-    Dict,
     Mapping,
     Sequence,
     Type,
@@ -39,7 +38,7 @@ from .options._tiledb_create_write_options import (
 if TYPE_CHECKING:
     from ._read_iters import ManagedQuery
 
-_JSONFilter = Union[str, Dict[str, Union[str, Union[int, float]]]]
+_JSONFilter = Union[str, dict[str, Union[str, Union[int, float]]]]
 _JSONFilterList = Union[str, list[_JSONFilter]]
 
 
@@ -352,13 +351,13 @@ def build_clib_platform_config(
 
 
 def _build_column_config(col: Mapping[str, _ColumnConfig] | None) -> str:
-    column_config: Dict[str, Dict[str, _JSONFilterList | int]] = dict()
+    column_config: dict[str, dict[str, _JSONFilterList | int]] = dict()
 
     if col is None:
         return ""
 
     for k in col:
-        dikt: Dict[str, _JSONFilterList | int] = {}
+        dikt: dict[str, _JSONFilterList | int] = {}
         if col[k].filters is not None:
             dikt["filters"] = _build_filter_list(col[k].filters, False)
         if col[k].tile is not None:
@@ -674,7 +673,7 @@ def _set_coord_by_numeric_slice(
         return
 
 
-def _resolve_futures(unresolved: Dict[str, Any], deep: bool = False) -> Dict[str, Any]:
+def _resolve_futures(unresolved: dict[str, Any], deep: bool = False) -> dict[str, Any]:
     """Resolves any futures found in the dict."""
     resolved = {}
     for k, v in unresolved.items():

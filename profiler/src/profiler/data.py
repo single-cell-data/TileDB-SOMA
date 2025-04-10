@@ -5,7 +5,7 @@ import json
 import os
 import uuid
 from abc import ABC, abstractmethod
-from typing import Any, Dict, Optional
+from typing import Any, Optional
 
 import attr
 import boto3
@@ -20,10 +20,10 @@ class ProfileData:
     timestamp: float
     stdout: str
     stderr: str
-    tiledb_stats: Dict[str, Any]
+    tiledb_stats: dict[str, Any]
     somacore_version: str
     tiledbsoma_version: str
-    host_context: Dict[str, str]
+    host_context: dict[str, str]
     user_time_sec: float
     system_time_sec: float
     pct_of_cpu: float

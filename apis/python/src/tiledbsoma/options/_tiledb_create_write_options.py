@@ -6,7 +6,6 @@ from __future__ import annotations
 
 from typing import (
     Any,
-    Dict,
     Iterable,
     Mapping,
     Sequence,
@@ -172,7 +171,7 @@ class TileDBCreateOptions:
             attrs: tuple[attrs_.Attribute, ...] = cls.__attrs_attrs__  # type: ignore[type-arg]
             attr_names = frozenset(a.name for a in attrs)
             # Explicitly opt out of type-checking for these kwargs.
-            filtered_create_entry: Dict[str, Any] = {
+            filtered_create_entry: dict[str, Any] = {
                 key: value for (key, value) in create_entry.items() if key in attr_names
             }
             return cls(**filtered_create_entry)
@@ -222,7 +221,7 @@ class TileDBWriteOptions:
             attrs: tuple[attrs_.Attribute, ...] = cls.__attrs_attrs__  # type: ignore[type-arg]
             attr_names = frozenset(a.name for a in attrs)
             # Explicitly opt out of type-checking for these kwargs.
-            filered_create_entry: Dict[str, Any] = {
+            filered_create_entry: dict[str, Any] = {
                 key: value for (key, value) in create_entry.items() if key in attr_names
             }
             return cls(**filered_create_entry)
@@ -234,7 +233,7 @@ _T = TypeVar("_T")
 
 def _dig_platform_config(
     input: object, typ: Type[_T], full_path: tuple[str, ...]
-) -> Dict[str, object] | _T:
+) -> dict[str, object] | _T:
     """Looks for an object of the given type in dictionaries.
 
     This is used to extract a valid object out of ``platform_config``. If an

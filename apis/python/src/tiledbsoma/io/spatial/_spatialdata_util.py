@@ -5,7 +5,7 @@
 from __future__ import annotations
 
 import warnings
-from typing import TYPE_CHECKING, Any, Dict, Mapping
+from typing import TYPE_CHECKING, Any, Mapping
 
 import pandas as pd
 import somacore
@@ -42,7 +42,7 @@ if TYPE_CHECKING:
 def _convert_axis_names(
     coord_axis_names: tuple[str, ...],
     data_axis_names: tuple[str, ...] | None = None,
-) -> tuple[tuple[str, ...], Dict[str, str]]:
+) -> tuple[tuple[str, ...], dict[str, str]]:
     """Convert SOMA axis names to SpatialData axis names.
 
     Args:
@@ -84,8 +84,8 @@ def _get_transform_from_collection(
 
 def _transform_to_spatialdata(
     transform: somacore.CoordinateTransform,
-    input_dim_map: Dict[str, str],
-    output_dim_map: Dict[str, str],
+    input_dim_map: dict[str, str],
+    output_dim_map: dict[str, str],
 ) -> sd.transformations.BaseTransformation:
     """Returns the equivalent SpatialData transform for a SOMA transform.
 
@@ -120,7 +120,7 @@ def to_spatialdata_points(
     *,
     key: str,
     scene_id: str,
-    scene_dim_map: Dict[str, str],
+    scene_dim_map: dict[str, str],
     transform: somacore.CoordinateTransform | None,
     soma_joinid_name: str = SOMA_JOINID,
 ) -> dd.DataFrame:
@@ -165,7 +165,7 @@ def to_spatialdata_shapes(
     *,
     key: str,
     scene_id: str,
-    scene_dim_map: Dict[str, str],
+    scene_dim_map: dict[str, str],
     transform: somacore.CoordinateTransform | None,
     soma_joinid_name: str = SOMA_JOINID,
 ) -> gpd.GeoDataFrame:
@@ -330,7 +330,7 @@ def to_spatialdata_multiscale_image(
     *,
     key: str,
     scene_id: str,
-    scene_dim_map: Dict[str, str],
+    scene_dim_map: dict[str, str],
     transform: somacore.CoordinateTransform | None,
 ) -> "DataTree":
     """Export a MultiscaleImage to a DataTree.
