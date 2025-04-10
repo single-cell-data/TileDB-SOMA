@@ -1,5 +1,5 @@
 import itertools
-from typing import Dict, List, Tuple, Union
+from typing import Dict, List, Union
 
 import numpy as np
 import pandas as pd
@@ -17,7 +17,7 @@ sd = pytest.importorskip("spatialdata")
 def add_multiscale_image(
     scene: soma.Scene,
     key: str,
-    shapes: Tuple[Tuple[int, ...]],
+    shapes: tuple[tuple[int, ...]],
 ):
     with scene.add_new_multiscale_image(
         key,
@@ -100,9 +100,9 @@ def add_scene(
     coll: soma.Collection,
     key: str,
     *,
-    points: Dict[Tuple[Union[str, Tuple[str, ...]], str], Dict[str, np.ndarray]],
-    circles: Dict[Tuple[Union[str, Tuple[str, ...]], str], Dict[str, np.ndarray]],
-    images: Dict[str, Tuple[Tuple[int, ...]]],
+    points: Dict[tuple[Union[str, tuple[str, ...]], str], Dict[str, np.ndarray]],
+    circles: Dict[tuple[Union[str, tuple[str, ...]], str], Dict[str, np.ndarray]],
+    images: Dict[str, tuple[tuple[int, ...]]],
 ) -> None:
     with coll.add_new_collection(key, soma.Scene, coordinate_space=("x", "y")) as scene:
         scene.add_new_collection("obsl")

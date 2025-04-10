@@ -28,7 +28,6 @@ from typing import (
     Literal,
     Mapping,
     Sequence,
-    Tuple,
     Type,
     TypedDict,
     TypeVar,
@@ -2659,8 +2658,8 @@ def _write_matrix_to_sparseNDArray(
 
 
 def _chunk_is_contained_in(
-    chunk_bounds: Sequence[Tuple[int, int]],
-    storage_nonempty_domain: Sequence[Tuple[int | None, int | None]],
+    chunk_bounds: Sequence[tuple[int, int]],
+    storage_nonempty_domain: Sequence[tuple[int | None, int | None]],
 ) -> bool:
     """
     Determines if a dim range is included within the array's non-empty domain.  Ranges are inclusive
@@ -2692,8 +2691,8 @@ def _chunk_is_contained_in(
 
 
 def _chunk_is_contained_in_axis(
-    chunk_bounds: Sequence[Tuple[int, int]],
-    storage_nonempty_domain: Sequence[Tuple[int | None, int | None]],
+    chunk_bounds: Sequence[tuple[int, int]],
+    storage_nonempty_domain: Sequence[tuple[int | None, int | None]],
     stride_axis: int,
 ) -> bool:
     """Helper function for ``_chunk_is_contained_in``."""

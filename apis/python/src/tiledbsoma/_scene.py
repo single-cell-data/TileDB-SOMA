@@ -8,7 +8,7 @@ Implementation of a SOMA Scene
 from __future__ import annotations
 
 import warnings
-from typing import Any, List, Sequence, Tuple, Type, TypeVar, Union
+from typing import Any, List, Sequence, Type, TypeVar, Union
 
 import somacore
 from somacore import (
@@ -213,7 +213,7 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
         # Either set the new coordinate space or check the axes of the current
         # coordinate space the element is defined on.
         if coordinate_space is None:
-            elem_axis_names: Tuple[str, ...] = elem.coordinate_space.axis_names
+            elem_axis_names: tuple[str, ...] = elem.coordinate_space.axis_names
             if elem_axis_names != transform.output_axes:
                 raise ValueError(
                     f"The name of transform output axes, {transform.output_axes}, do "

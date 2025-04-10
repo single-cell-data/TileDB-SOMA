@@ -15,7 +15,6 @@ from typing import (
     Iterator,
     List,
     Sequence,
-    Tuple,
     TypeVar,
     Union,
     cast,
@@ -48,17 +47,17 @@ if TYPE_CHECKING:
 
 # Convenience types
 _RT = TypeVar("_RT")
-BlockwiseTableReadIterResult = Tuple[pa.Table, Tuple[pa.Array, ...]]
+BlockwiseTableReadIterResult = tuple[pa.Table, tuple[pa.Array, ...]]
 BlockwiseSingleAxisTableIter = Iterator[BlockwiseTableReadIterResult]
 
-BlockwiseScipyReadIterResult = Tuple[
+BlockwiseScipyReadIterResult = tuple[
     Union[sparse.csr_matrix, sparse.csc_matrix, sparse.coo_matrix],
-    Tuple[npt.NDArray[np.int64], npt.NDArray[np.int64]],
+    tuple[npt.NDArray[np.int64], npt.NDArray[np.int64]],
 ]
 
-IndicesType = Tuple[npt.NDArray[np.int64], npt.NDArray[np.int64]]
-IJDType = Tuple[
-    Tuple[npt.NDArray[np.int64], npt.NDArray[np.int64]],
+IndicesType = tuple[npt.NDArray[np.int64], npt.NDArray[np.int64]]
+IJDType = tuple[
+    tuple[npt.NDArray[np.int64], npt.NDArray[np.int64]],
     npt.NDArray[Union[np.integer[Any], np.floating[Any]]],
 ]
 
@@ -201,7 +200,7 @@ class BlockwiseReadIterBase(somacore.ReadIter[_RT], metaclass=abc.ABCMeta):
         axis: int | Sequence[int],
         size: int | Sequence[int] | None = None,
         reindex_disable_on_axis: int | Sequence[int] | None = None,
-    ) -> Tuple[List[int], List[int], List[int]]:
+    ) -> tuple[List[int], List[int], List[int]]:
         """
         Class method to validate and normalize common user-provided arguments axis, size and reindex_disable_on_axis.
         * normalize args to fully specify the arg per dimension, for convenience in later usage
@@ -398,7 +397,7 @@ class BlockwiseScipyReadIter(BlockwiseReadIterBase[BlockwiseScipyReadIterResult]
 
     def _sorted_tbl_reader(
         self, _pool: ThreadPoolExecutor | None = None
-    ) -> Iterator[Tuple[IJDType, IndicesType]]:
+    ) -> Iterator[tuple[IJDType, IndicesType]]:
         """Private. Read reindexed tables and sort them. Yield as ((i,j),d)"""
         for coo_tbl, indices in self._maybe_eager_iterator(
             self._reindexed_table_reader(_pool), _pool
@@ -417,9 +416,9 @@ class BlockwiseScipyReadIter(BlockwiseReadIterBase[BlockwiseScipyReadIterResult]
 
     def _mk_shape(
         self, major_coords: npt.NDArray[np.int64], minor_coords: npt.NDArray[np.int64]
-    ) -> Tuple[int, int]:
+    ) -> tuple[int, int]:
         """Private. Make shape of this iterator step"""
-        shape = cast(Tuple[int, int], tuple(self.shape))
+        shape = cast(tuple[int, int], tuple(self.shape))
         assert len(shape) == 2
         _sp_shape: List[int] = list(shape)
 
@@ -428,11 +427,11 @@ class BlockwiseScipyReadIter(BlockwiseReadIterBase[BlockwiseScipyReadIterResult]
         if self.minor_axis not in self.reindex_disable_on_axis:
             _sp_shape[self.minor_axis] = len(minor_coords)
 
-        return cast(Tuple[int, int], tuple(_sp_shape))
+        return cast(tuple[int, int], tuple(_sp_shape))
 
     def _coo_reader(
         self, _pool: ThreadPoolExecutor | None = None
-    ) -> Iterator[Tuple[sparse.coo_matrix, IndicesType]]:
+    ) -> Iterator[tuple[sparse.coo_matrix, IndicesType]]:
         """Private. Uncompressed variants"""
         assert not self.compress
         for ((i, j), d), indices in self._maybe_eager_iterator(
@@ -454,7 +453,7 @@ class BlockwiseScipyReadIter(BlockwiseReadIterBase[BlockwiseScipyReadIterResult]
 
     def _cs_reader(
         self, _pool: ThreadPoolExecutor | None = None
-    ) -> Iterator[Tuple[sparse.csr_matrix | sparse.csc_matrix, IndicesType],]:
+    ) -> Iterator[tuple[sparse.csr_matrix | sparse.csc_matrix, IndicesType],]:
         """Private. Compressed sparse variants"""
         assert self.compress
         assert self.major_axis not in self.reindex_disable_on_axis
@@ -647,6 +646,6 @@ def _coords_strider(
 _ElemT = TypeVar("_ElemT")
 
 
-def _pad_with_none(s: Sequence[_ElemT], to_length: int) -> Tuple[_ElemT | None, ...]:
+def _pad_with_none(s: Sequence[_ElemT], to_length: int) -> tuple[_ElemT | None, ...]:
     """Given a sequence, pad length to a user-specified length, with None values"""
     return tuple(s[i] if i < len(s) else None for i in range(to_length))

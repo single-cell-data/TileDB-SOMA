@@ -5,7 +5,7 @@
 from __future__ import annotations
 
 import json
-from typing import Any, Dict, Tuple, Type
+from typing import Any, Dict, Type
 
 import numpy as np
 import pyarrow as pa
@@ -122,8 +122,8 @@ def process_image_region(
     region: options.SpatialRegion | None,
     transform: somacore.CoordinateTransform,
     channel_coords: options.DenseCoord,
-    data_order: Tuple[int, ...],
-) -> Tuple[
+    data_order: tuple[int, ...],
+) -> tuple[
     options.DenseNDCoords, options.SpatialRegion | None, somacore.CoordinateTransform
 ]:
 
@@ -182,11 +182,11 @@ def process_spatial_df_region(
     region: options.SpatialRegion | None,
     transform: somacore.CoordinateTransform,
     coords_by_name: Dict[str, options.SparseDFCoord],
-    index_columns: Tuple[str, ...],
-    axis_names: Tuple[str, ...],
+    index_columns: tuple[str, ...],
+    axis_names: tuple[str, ...],
     schema: pa.Schema,
     spatial_column: str | None = None,
-) -> Tuple[
+) -> tuple[
     options.SparseDFCoords,
     options.SpatialRegion | None,
     somacore.CoordinateTransform,

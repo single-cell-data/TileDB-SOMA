@@ -10,7 +10,6 @@ from __future__ import annotations
 
 from typing import (
     Sequence,
-    Tuple,
     Union,
     cast,
 )
@@ -400,7 +399,7 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
         dim_shape: int | None,
         ndim: int,  # not needed for sparse
         create_options: TileDBCreateOptions,
-    ) -> Tuple[int, int]:
+    ) -> tuple[int, int]:
         """Given a user-specified shape (maybe ``None``) along a particular dimension,
         returns a tuple of the TileDB capacity and extent for that dimension, suitable
         for schema creation. If the user-specified shape is None, the largest possible

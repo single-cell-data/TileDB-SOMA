@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import json
 import warnings
-from typing import Any, Dict, List, Sequence, Tuple
+from typing import Any, Dict, List, Sequence
 
 import attrs
 import pyarrow as pa
@@ -51,16 +51,16 @@ class _LevelProperties:
     """Properties for a single resolution level in a multiscale image."""
 
     name: str
-    shape: Tuple[int, ...] = attrs.field(converter=tuple)
+    shape: tuple[int, ...] = attrs.field(converter=tuple)
 
 
 @attrs.define(frozen=True)
 class _MultiscaleImageMetadata:
     """Helper class for reading/writing multiscale image metadata."""
 
-    data_axis_permutation: Tuple[int, ...] = attrs.field(converter=tuple)
+    data_axis_permutation: tuple[int, ...] = attrs.field(converter=tuple)
     has_channel_axis: bool
-    shape: Tuple[int, ...] = attrs.field(converter=tuple)
+    shape: tuple[int, ...] = attrs.field(converter=tuple)
     datatype: pa.DataType
 
     def to_json(self) -> str:
@@ -606,7 +606,7 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
         self._coord_space = value
 
     @property
-    def data_axis_order(self) -> Tuple[str, ...]:
+    def data_axis_order(self) -> tuple[str, ...]:
         """The order of the axes for the resolution levels.
 
         Lifecycle:
@@ -678,7 +678,7 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
         """
         return self._has_channel_axis
 
-    def levels(self) -> Dict[str, Tuple[str, Tuple[int, ...]]]:
+    def levels(self) -> Dict[str, tuple[str, tuple[int, ...]]]:
         """Returns a mapping of {member_name: (uri, shape)}."""
         return {
             level.name: (self._contents[level.name].entry.uri, level.shape)
@@ -694,7 +694,7 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
         """
         return len(self._levels)
 
-    def level_shape(self, level: int | str) -> Tuple[int, ...]:
+    def level_shape(self, level: int | str) -> tuple[int, ...]:
         """The shape of the image at the specified resolution level.
 
         Lifecycle: experimental

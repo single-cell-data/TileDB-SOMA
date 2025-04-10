@@ -8,7 +8,7 @@ Implementation of a SOMA Geometry DataFrame
 from __future__ import annotations
 
 import warnings
-from typing import Any, Sequence, Tuple, cast
+from typing import Any, Sequence, cast
 
 import pyarrow as pa
 import somacore
@@ -191,7 +191,7 @@ class GeometryDataFrame(SpatialDataFrame, somacore.GeometryDataFrame):
         index_column_schema = []
 
         # TODO this requires fixing the return type for _revise_domain_for_extent
-        # which is currently Tuple[Any, Any]
+        # which is currently tuple[Any, Any]
         index_column_data: dict[str, Any] = {}
 
         for index_column_name, slot_soma_domain in zip(index_column_names, soma_domain):
@@ -567,7 +567,7 @@ class GeometryDataFrame(SpatialDataFrame, somacore.GeometryDataFrame):
     # Metadata operations
 
     @property
-    def axis_names(self) -> Tuple[str, ...]:
+    def axis_names(self) -> tuple[str, ...]:
         """The names of the axes of the coordinate space the data is defined on.
 
         Lifecycle:

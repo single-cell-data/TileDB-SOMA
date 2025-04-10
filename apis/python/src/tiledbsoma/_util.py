@@ -18,7 +18,6 @@ from typing import (
     List,
     Mapping,
     Sequence,
-    Tuple,
     Type,
     TypeVar,
     Union,
@@ -162,8 +161,8 @@ class NonNumericDimensionError(TypeError):
 
 
 def slice_to_numeric_range(
-    slc: Slice[Any], domain: Tuple[_T, _T]
-) -> Tuple[_T, _T] | None:
+    slc: Slice[Any], domain: tuple[_T, _T]
+) -> tuple[_T, _T] | None:
     """Constrains the given slice to the ``domain`` for numeric dimensions.
 
     We assume the slice has already been validated by validate_slice.
@@ -196,9 +195,9 @@ def slice_to_numeric_range(
 
 def dense_indices_to_shape(
     coords: options.DenseNDCoords,
-    array_shape: Tuple[int, ...],
+    array_shape: tuple[int, ...],
     result_order: somacore.ResultOrder,
-) -> Tuple[int, ...]:
+) -> tuple[int, ...]:
     """Given a subarray index specified as a tuple of per-dimension slices or scalars
     (e.g., ``([:], 1, [1:2])``), and the shape of the array, return the shape of
     the subarray. Note that the number of coordinates may be less than or equal
@@ -246,7 +245,7 @@ def dense_index_to_shape(coord: options.DenseCoord, array_length: int) -> int:
 def check_type(
     name: str,
     actual_value: Any,
-    expected_types: Tuple[Type[Any], ...],
+    expected_types: tuple[Type[Any], ...],
 ) -> None:
     """Verifies the type of an argument, or produces a useful error message."""
     if not isinstance(actual_value, expected_types):
@@ -371,7 +370,7 @@ def _build_column_config(col: Mapping[str, _ColumnConfig] | None) -> str:
 
 
 def _build_filter_list(
-    filters: Tuple[_DictFilterSpec, ...] | None, return_json: bool = True
+    filters: tuple[_DictFilterSpec, ...] | None, return_json: bool = True
 ) -> _JSONFilterList:
     _convert_filter = {
         "GzipFilter": "GZIP",
@@ -446,7 +445,7 @@ def _build_filter_list(
     return json.dumps(filter_list) if return_json else filter_list
 
 
-def _cast_domainish(domainish: List[Any]) -> Tuple[Tuple[object, object], ...]:
+def _cast_domainish(domainish: List[Any]) -> tuple[tuple[object, object], ...]:
     result = []
     for slot in domainish:
         arrow_type = slot[0].type
@@ -509,7 +508,7 @@ def _set_coord(
             _set_geometry_coord(
                 mq,
                 dim,
-                cast(Tuple[Mapping[str, float], Mapping[str, float]], dom),
+                cast(tuple[Mapping[str, float], Mapping[str, float]], dom),
                 coord,
                 axis_names,
             )
@@ -580,7 +579,7 @@ def _set_coord(
 def _set_geometry_coord(
     mq: ManagedQuery,
     dim: pa.Field,
-    dom: Tuple[Mapping[str, float], Mapping[str, float]],
+    dom: tuple[Mapping[str, float], Mapping[str, float]],
     coord: object,
     axis_names: Sequence[str],
 ) -> None:
@@ -656,7 +655,7 @@ def _set_coord_by_py_seq_or_np_array(
 
 
 def _set_coord_by_numeric_slice(
-    mq: ManagedQuery, dim: pa.Field, dom: Tuple[object, object], coord: Slice[Any]
+    mq: ManagedQuery, dim: pa.Field, dom: tuple[object, object], coord: Slice[Any]
 ) -> None:
     try:
         lo_hi = slice_to_numeric_range(coord, dom)

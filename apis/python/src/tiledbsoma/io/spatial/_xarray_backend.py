@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import json
 import warnings
-from typing import Any, Mapping, Sequence, Tuple
+from typing import Any, Mapping, Sequence
 
 import dask.array as da
 import numpy as np
@@ -50,7 +50,7 @@ class DenseNDArrayWrapper:
             "soma_data"
         ).type.to_pandas_dtype()
 
-    def __getitem__(self, key: Tuple[slice | int, ...]) -> np.typing.NDArray[Any]:
+    def __getitem__(self, key: tuple[slice | int, ...]) -> np.typing.NDArray[Any]:
         """Returns a numpy array containing data from a requested tuple."""
 
         # Compute the expected Xarray output shape.
@@ -107,7 +107,7 @@ class DenseNDArrayWrapper:
         """Numpy dtype of the array data."""
         return self._dtype
 
-    def recommend_chunks(self) -> Tuple[int, ...]:
+    def recommend_chunks(self) -> tuple[int, ...]:
         """Returns recommended chunk sizes for chunking this array."""
         dim_info = json.loads(self._array.schema_config_options().dims)
         return tuple(
@@ -116,7 +116,7 @@ class DenseNDArrayWrapper:
         )
 
     @property
-    def shape(self) -> Tuple[int, ...]:
+    def shape(self) -> tuple[int, ...]:
         """Shape of the wrapped SOMA DenseNDArray."""
         return self._array.shape
 
@@ -124,8 +124,8 @@ class DenseNDArrayWrapper:
 def dense_nd_array_to_data_array(
     uri: str,
     *,
-    dim_names: Tuple[str, ...],
-    chunks: Tuple[int, ...] | None = None,
+    dim_names: tuple[str, ...],
+    chunks: tuple[int, ...] | None = None,
     attrs: Mapping[str, Any] | None = None,
     context: SOMATileDBContext | None = None,
 ) -> xr.DataArray:

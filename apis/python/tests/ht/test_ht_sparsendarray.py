@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import datetime
 import shutil
-from typing import Any, Dict, Mapping, Optional, Sequence, Tuple, Union
+from typing import Any, Dict, Mapping, Optional, Sequence, Union
 
 import hypothesis as ht
 import numpy as np
@@ -195,7 +195,7 @@ class SOMASparseNDArrayStateMachine(SOMANDArrayStateMachine):
         super().__init__(shapes_factory=sparse_array_shape)
 
     @initialize(type=ndarray_datatype(), shape=sparse_array_shape(allow_none=True))
-    def setup(self, type: pa.DataType, shape: Tuple[int | None, ...]) -> None:
+    def setup(self, type: pa.DataType, shape: tuple[int | None, ...]) -> None:
         super().setup(
             type,
             shape,

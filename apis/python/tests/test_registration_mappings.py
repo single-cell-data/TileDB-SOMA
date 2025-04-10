@@ -7,7 +7,7 @@ from __future__ import annotations
 import math
 import tempfile
 from contextlib import nullcontext
-from typing import List, Sequence, Tuple, Union
+from typing import List, Sequence, Union
 
 import anndata as ad
 import numpy as np
@@ -243,9 +243,9 @@ PANDAS_INDEXING_TEST_DF = pd.DataFrame(
     ]
 )
 def test_pandas_indexing(
-    index_col_and_name: Union[Tuple[str | None], Tuple[str, str | None]],
+    index_col_and_name: Union[tuple[str | None], tuple[str, str | None]],
     default_index_name: str,
-    signature_col_names: List[Union[str, Tuple[str, str]]],
+    signature_col_names: List[Union[str, tuple[str, str]]],
 ):
     """
     The `default_index_name` for registration can interact with column- and

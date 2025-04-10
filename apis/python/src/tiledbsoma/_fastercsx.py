@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import collections.abc
 import math
-from typing import Any, List, Literal, Sequence, Tuple, Union, cast
+from typing import Any, List, Literal, Sequence, Union, cast
 
 import numpy as np
 import numpy.typing as npt
@@ -45,7 +45,7 @@ class CompressedMatrix:
         indptr: NDArrayIndex,
         indices: NDArrayIndex,
         data: NDArrayNumber,
-        shape: Tuple[int, int],
+        shape: tuple[int, int],
         format: Format,
         is_sorted: bool,
         no_duplicates: bool | None,
@@ -73,7 +73,7 @@ class CompressedMatrix:
         i: NDArrayIndex | Sequence[NDArrayIndex],
         j: NDArrayIndex | Sequence[NDArrayIndex],
         d: NDArrayNumber | Sequence[NDArrayNumber],
-        shape: Tuple[int, int],
+        shape: tuple[int, int],
         format: Format,
         make_sorted: bool,
         context: SOMATileDBContext,
@@ -109,7 +109,7 @@ class CompressedMatrix:
     @staticmethod
     def from_soma(
         tables: pa.Table | Sequence[pa.Table],
-        shape: Tuple[int, int],
+        shape: tuple[int, int],
         format: Format,
         make_sorted: bool,
         context: SOMATileDBContext,
@@ -251,7 +251,7 @@ class CompressedMatrix:
         indptr: NDArrayNumber,
         indices: NDArrayNumber,
         data: NDArrayNumber,
-        shape: Tuple[int, int],
+        shape: tuple[int, int],
         format: Format,
         is_sorted: bool,
         no_duplicates: bool | None,

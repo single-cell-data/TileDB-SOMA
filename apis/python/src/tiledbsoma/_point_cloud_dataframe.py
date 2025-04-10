@@ -8,7 +8,7 @@ Implementation of a SOMA Point Cloud DataFrame
 from __future__ import annotations
 
 import warnings
-from typing import Any, Sequence, Tuple, cast
+from typing import Any, Sequence, cast
 
 import pyarrow as pa
 import somacore
@@ -524,7 +524,7 @@ class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
         self._coord_space = value
 
     @property
-    def axis_names(self) -> Tuple[str, ...]:
+    def axis_names(self) -> tuple[str, ...]:
         """The names of the axes of the coordinate space the data is defined on.
 
         Lifecycle:

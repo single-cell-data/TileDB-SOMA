@@ -20,7 +20,6 @@ from typing import (
     Mapping,
     MutableMapping,
     Sequence,
-    Tuple,
     Type,
     TypeVar,
     Union,
@@ -38,7 +37,7 @@ from ._exception import DoesNotExistError, SOMAError, is_does_not_exist_error
 from ._types import METADATA_TYPES, Metadatum, OpenTimestamp, StatusAndReason
 from .options._soma_tiledb_context import SOMATileDBContext
 
-AxisDomain = Union[None, Tuple[Any, Any], List[Any]]
+AxisDomain = Union[None, tuple[Any, Any], List[Any]]
 Domain = Sequence[AxisDomain]
 
 RawHandle = Union[
@@ -281,7 +280,7 @@ class GroupEntry:
     wrapper_type: Type[AnyWrapper]
 
     @classmethod
-    def from_soma_group_entry(cls, obj: Tuple[str, str]) -> "GroupEntry":
+    def from_soma_group_entry(cls, obj: tuple[str, str]) -> "GroupEntry":
         uri, type = obj[0], obj[1]
         if type == "SOMAArray":
             return GroupEntry(uri, SOMAArrayWrapper)
@@ -325,8 +324,8 @@ class SOMAGroupWrapper(Wrapper[_SOMAObjectType]):
     def meta(self) -> "MetadataWrapper":
         return self.metadata
 
-    def members(self) -> Dict[str, Tuple[str, str]]:
-        return cast(Dict[str, Tuple[str, str]], self._handle.members())
+    def members(self) -> Dict[str, tuple[str, str]]:
+        return cast(Dict[str, tuple[str, str]], self._handle.members())
 
 
 class CollectionWrapper(SOMAGroupWrapper[clib.SOMACollection]):
@@ -414,41 +413,41 @@ class SOMAArrayWrapper(Wrapper[_SOMAObjectType]):
         return len(self._handle.dimension_names)
 
     @property
-    def domain(self) -> Tuple[Tuple[object, object], ...]:
+    def domain(self) -> tuple[tuple[object, object], ...]:
         from ._util import _cast_domainish
 
         return _cast_domainish(self._handle.domain())
 
     @property
-    def maxdomain(self) -> Tuple[Tuple[object, object], ...]:
+    def maxdomain(self) -> tuple[tuple[object, object], ...]:
         from ._util import _cast_domainish
 
         return _cast_domainish(self._handle.maxdomain())
 
-    def non_empty_domain(self) -> Tuple[Tuple[object, object], ...]:
+    def non_empty_domain(self) -> tuple[tuple[object, object], ...]:
         from ._util import _cast_domainish
 
         return _cast_domainish(self._handle.non_empty_domain())
 
     @property
-    def attr_names(self) -> Tuple[str, ...]:
+    def attr_names(self) -> tuple[str, ...]:
         return tuple(
             f.name for f in self.schema if f.name not in self._handle.dimension_names
         )
 
     @property
-    def dim_names(self) -> Tuple[str, ...]:
+    def dim_names(self) -> tuple[str, ...]:
         return tuple(self._handle.dimension_names)
 
     @property
-    def shape(self) -> Tuple[int, ...]:
+    def shape(self) -> tuple[int, ...]:
         """Not implemented for DataFrame."""
-        return cast(Tuple[int, ...], tuple(self._handle.shape))
+        return cast(tuple[int, ...], tuple(self._handle.shape))
 
     @property
-    def maxshape(self) -> Tuple[int, ...]:
+    def maxshape(self) -> tuple[int, ...]:
         """Not implemented for DataFrame."""
-        return cast(Tuple[int, ...], tuple(self._handle.maxshape))
+        return cast(tuple[int, ...], tuple(self._handle.maxshape))
 
     @property
     def maybe_soma_joinid_shape(self) -> int | None:

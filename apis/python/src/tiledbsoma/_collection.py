@@ -11,7 +11,6 @@ from typing import (
     Callable,
     ClassVar,
     Dict,
-    Tuple,
     Type,
     TypeVar,
     cast,
@@ -121,7 +120,7 @@ class CollectionBase(  # type: ignore[misc]  # __eq__ false positive
 
     # Subclass protocol to constrain which SOMA objects types  may be set on a
     # particular collection key. Used by Experiment and Measurement.
-    _subclass_constrained_soma_types: ClassVar[Dict[str, Tuple[str, ...]]] = {}
+    _subclass_constrained_soma_types: ClassVar[Dict[str, tuple[str, ...]]] = {}
     """A map limiting what types may be set to certain keys.
 
     Map keys are the key of the collection to constrain; values are the SOMA
@@ -388,7 +387,7 @@ class CollectionBase(  # type: ignore[misc]  # __eq__ false positive
             key, kind=kind, factory=factory, user_uri=user_uri
         )
 
-    def members(self) -> Dict[str, Tuple[str, str]]:
+    def members(self) -> Dict[str, tuple[str, str]]:
         """Get a mapping of {member_name: (uri, soma_object_type)}"""
         handle = cast(_tdb_handles.SOMAGroupWrapper[Any], self._handle)
         return handle.members()

@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import datetime
 import pathlib
-from typing import TYPE_CHECKING, Any, List, Sequence, Tuple, Union, get_args
+from typing import TYPE_CHECKING, Any, List, Sequence, Union, get_args
 
 import numpy as np
 import numpy.typing as npt
@@ -51,7 +51,7 @@ Ids = Union[List[str], List[bytes], List[int]]
 
 Labels = Union[Sequence[str], PDIndex]
 
-NTuple = Tuple[int, ...]
+NTuple = tuple[int, ...]
 
 IngestMode = Literal["write", "schema_only", "resume"]  # for static-analysis checks
 INGEST_MODES = get_args(IngestMode)  # for run-time checks
@@ -84,6 +84,6 @@ is_slice_of = types.is_slice_of
 Metadatum = Union[bytes, float, int, str]
 METADATA_TYPES = (bytes, float, int, str)
 
-StatusAndReason = Tuple[bool, str]
+StatusAndReason = tuple[bool, str]
 """Information for whether an upgrade-shape or resize would succeed
 if attempted, along with a reason why not."""

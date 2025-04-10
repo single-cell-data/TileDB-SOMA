@@ -9,7 +9,7 @@ filtering query results on attribute values.
 from __future__ import annotations
 
 import ast
-from typing import Any, Callable, List, Tuple, Union
+from typing import Any, Callable, List, Union
 
 import attrs
 import numpy as np
@@ -336,7 +336,7 @@ class QueryConditionTree(ast.NodeVisitor):
         att: QueryConditionNodeElem,
         val: QueryConditionNodeElem,
         op: clib.tiledb_query_condition_op_t,
-    ) -> Tuple[
+    ) -> tuple[
         QueryConditionNodeElem,
         QueryConditionNodeElem,
         clib.tiledb_query_condition_op_t,

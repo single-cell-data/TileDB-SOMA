@@ -5,7 +5,7 @@
 from __future__ import annotations
 
 import warnings
-from typing import TYPE_CHECKING, Any, Dict, Mapping, Tuple
+from typing import TYPE_CHECKING, Any, Dict, Mapping
 
 import pandas as pd
 import somacore
@@ -40,9 +40,9 @@ if TYPE_CHECKING:
 
 
 def _convert_axis_names(
-    coord_axis_names: Tuple[str, ...],
-    data_axis_names: Tuple[str, ...] | None = None,
-) -> Tuple[Tuple[str, ...], Dict[str, str]]:
+    coord_axis_names: tuple[str, ...],
+    data_axis_names: tuple[str, ...] | None = None,
+) -> tuple[tuple[str, ...], Dict[str, str]]:
     """Convert SOMA axis names to SpatialData axis names.
 
     Args:
