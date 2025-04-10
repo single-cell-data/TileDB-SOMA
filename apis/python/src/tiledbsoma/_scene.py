@@ -8,7 +8,7 @@ Implementation of a SOMA Scene
 from __future__ import annotations
 
 import warnings
-from typing import Any, Sequence, Type, TypeVar, Union
+from typing import Any, Sequence, TypeVar, Union
 
 import somacore
 from somacore import (
@@ -170,7 +170,7 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
 
     def _set_transform_to_element(
         self,
-        kind: Type[_SE],
+        kind: type[_SE],
         *,
         key: str,
         transform: CoordinateTransform,

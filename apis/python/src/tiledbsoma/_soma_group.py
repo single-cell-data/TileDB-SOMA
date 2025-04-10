@@ -12,7 +12,6 @@ from typing import (
     Iterable,
     Iterator,
     Set,
-    Type,
     TypeVar,
     cast,
 )
@@ -186,7 +185,7 @@ class SOMAGroup(
     def _add_new_element(
         self,
         key: str,
-        kind: Type[_TDBO],
+        kind: type[_TDBO],
         factory: Callable[[str], _TDBO],
         user_uri: str | None,
     ) -> _TDBO:

@@ -5,7 +5,7 @@
 from __future__ import annotations
 
 import json
-from typing import Any, Type
+from typing import Any
 
 import numpy as np
 import pyarrow as pa
@@ -52,7 +52,7 @@ def transform_from_json(data: str) -> somacore.CoordinateTransform:
             "convert JSON to CoordinateTransform child class"
         )
 
-    coord_transform_init: dict[str, Type[somacore.CoordinateTransform]] = {
+    coord_transform_init: dict[str, type[somacore.CoordinateTransform]] = {
         "AffineTransform": somacore.AffineTransform,
         "ScaleTransform": somacore.ScaleTransform,
         "UniformScaleTransform": somacore.UniformScaleTransform,

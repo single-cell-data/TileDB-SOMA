@@ -26,7 +26,6 @@ from typing import (
     Literal,
     Mapping,
     Sequence,
-    Type,
     TypedDict,
     TypeVar,
     cast,
@@ -307,7 +306,7 @@ def from_h5ad(
     raw_X_layer_name: str = "data",
     ingest_mode: IngestMode = "write",
     use_relative_uri: bool | None = None,
-    X_kind: Type[SparseNDArray] | Type[DenseNDArray] = SparseNDArray,
+    X_kind: type[SparseNDArray] | type[DenseNDArray] = SparseNDArray,
     registration_mapping: ExperimentAmbientLabelMapping | None = None,
     uns_keys: Sequence[str] | None = None,
     additional_metadata: AdditionalMetadata = None,
@@ -484,7 +483,7 @@ def from_anndata(
     raw_X_layer_name: str = "data",
     ingest_mode: IngestMode = "write",
     use_relative_uri: bool | None = None,
-    X_kind: Type[SparseNDArray] | Type[DenseNDArray] = SparseNDArray,
+    X_kind: type[SparseNDArray] | type[DenseNDArray] = SparseNDArray,
     registration_mapping: ExperimentAmbientLabelMapping | None = None,
     uns_keys: Sequence[str] | None = None,
     additional_metadata: AdditionalMetadata = None,
@@ -950,7 +949,7 @@ def append_X(
     var_ids: Sequence[str],
     *,
     registration_mapping: ExperimentAmbientLabelMapping,
-    X_kind: Type[SparseNDArray] | Type[DenseNDArray] = SparseNDArray,
+    X_kind: type[SparseNDArray] | type[DenseNDArray] = SparseNDArray,
     context: SOMATileDBContext | None = None,
     platform_config: PlatformConfig | None = None,
 ) -> str:
@@ -1040,7 +1039,7 @@ def _maybe_set(
 
 @overload
 def _create_or_open_collection(
-    cls: Type[Experiment],
+    cls: type[Experiment],
     uri: str,
     *,
     ingestion_params: IngestionParams,
@@ -1051,7 +1050,7 @@ def _create_or_open_collection(
 
 @overload
 def _create_or_open_collection(
-    cls: Type[Measurement],
+    cls: type[Measurement],
     uri: str,
     *,
     ingestion_params: IngestionParams,
@@ -1062,7 +1061,7 @@ def _create_or_open_collection(
 
 @overload
 def _create_or_open_collection(
-    cls: Type[Collection[_TDBO]],
+    cls: type[Collection[_TDBO]],
     uri: str,
     *,
     ingestion_params: IngestionParams,
@@ -1073,7 +1072,7 @@ def _create_or_open_collection(
 
 @no_type_check
 def _create_or_open_collection(
-    cls: Type[CollectionBase[_TDBO]],
+    cls: type[CollectionBase[_TDBO]],
     uri: str,
     *,
     ingestion_params: IngestionParams,
@@ -1095,7 +1094,7 @@ def _create_or_open_collection(
 # Spellings compatible with 1.2.7:
 @overload
 def _create_or_open_coll(
-    cls: Type[Experiment],
+    cls: type[Experiment],
     uri: str,
     *,
     ingest_mode: IngestMode,
@@ -1105,7 +1104,7 @@ def _create_or_open_coll(
 
 @overload
 def _create_or_open_coll(
-    cls: Type[Measurement],
+    cls: type[Measurement],
     uri: str,
     *,
     ingest_mode: IngestMode,
@@ -1115,7 +1114,7 @@ def _create_or_open_coll(
 
 @overload
 def _create_or_open_coll(
-    cls: Type[Collection[_TDBO]],
+    cls: type[Collection[_TDBO]],
     uri: str,
     *,
     ingest_mode: IngestMode,
@@ -1124,7 +1123,7 @@ def _create_or_open_coll(
 
 
 def _create_or_open_coll(
-    cls: Type[Any],
+    cls: type[Any],
     uri: str,
     *,
     ingest_mode: IngestMode,
@@ -1495,7 +1494,7 @@ def _write_dataframe_impl(
 
 
 def create_from_matrix(
-    cls: Type[_NDArr],
+    cls: type[_NDArr],
     uri: str,
     matrix: Matrix | h5py.Dataset,
     platform_config: PlatformConfig | None = None,
@@ -1521,7 +1520,7 @@ def create_from_matrix(
 
 
 def _create_from_matrix(
-    cls: Type[_NDArr],
+    cls: type[_NDArr],
     uri: str,
     matrix: Matrix | h5py.Dataset,
     *,

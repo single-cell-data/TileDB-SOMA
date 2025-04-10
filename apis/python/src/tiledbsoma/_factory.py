@@ -10,7 +10,6 @@ from __future__ import annotations
 
 from typing import (
     Callable,
-    Type,
     TypeVar,
     cast,
     no_type_check,
@@ -64,7 +63,7 @@ def open(
     uri: str,
     mode: options.OpenMode,
     *,
-    soma_type: Type[_Obj],
+    soma_type: type[_Obj],
     context: SOMATileDBContext | None = None,
     tiledb_timestamp: OpenTimestamp | None = None,
 ) -> _Obj: ...
@@ -75,7 +74,7 @@ def open(
     uri: str,
     mode: options.OpenMode = "r",
     *,
-    soma_type: Type[SOMAObject] | str | None = None,  # type: ignore[type-arg]
+    soma_type: type[SOMAObject] | str | None = None,  # type: ignore[type-arg]
     context: SOMATileDBContext | None = None,
     tiledb_timestamp: OpenTimestamp | None = None,
 ) -> AnySOMAObject:
@@ -210,8 +209,8 @@ def _read_soma_type(hdl: _tdb_handles.AnyWrapper) -> str:
 
 
 @no_type_check
-def _type_name_to_cls(type_name: str) -> Type[AnySOMAObject]:
-    type_map: dict[str, Type[AnySOMAObject]] = {
+def _type_name_to_cls(type_name: str) -> type[AnySOMAObject]:
+    type_map: dict[str, type[AnySOMAObject]] = {
         t.soma_type.lower(): t
         for t in (
             _collection.Collection,

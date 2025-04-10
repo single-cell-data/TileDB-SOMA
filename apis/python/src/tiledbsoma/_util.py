@@ -16,7 +16,6 @@ from typing import (
     Any,
     Mapping,
     Sequence,
-    Type,
     TypeVar,
     Union,
     cast,
@@ -243,7 +242,7 @@ def dense_index_to_shape(coord: options.DenseCoord, array_length: int) -> int:
 def check_type(
     name: str,
     actual_value: Any,
-    expected_types: tuple[Type[Any], ...],
+    expected_types: tuple[type[Any], ...],
 ) -> None:
     """Verifies the type of an argument, or produces a useful error message."""
     if not isinstance(actual_value, expected_types):

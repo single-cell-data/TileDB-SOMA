@@ -9,7 +9,6 @@ from typing import (
     Iterable,
     Mapping,
     Sequence,
-    Type,
     TypedDict,
     TypeVar,
     Union,
@@ -232,7 +231,7 @@ _T = TypeVar("_T")
 
 
 def _dig_platform_config(
-    input: object, typ: Type[_T], full_path: tuple[str, ...]
+    input: object, typ: type[_T], full_path: tuple[str, ...]
 ) -> dict[str, object] | _T:
     """Looks for an object of the given type in dictionaries.
 

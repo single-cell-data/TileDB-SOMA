@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import datetime
 from contextlib import ExitStack
-from typing import Any, Generic, MutableMapping, Type, TypeVar
+from typing import Any, Generic, MutableMapping, TypeVar
 
 import somacore
 from somacore import options
@@ -40,15 +40,15 @@ class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
     """
 
     _wrapper_type: (
-        Type[_WrapperType_co]
-        | Type[_tdb_handles.DataFrameWrapper]
-        | Type[_tdb_handles.DenseNDArrayWrapper]
-        | Type[_tdb_handles.SparseNDArrayWrapper]
-        | Type[_tdb_handles.CollectionWrapper]
-        | Type[_tdb_handles.ExperimentWrapper]
-        | Type[_tdb_handles.MeasurementWrapper]
-        | Type[_tdb_handles.SceneWrapper]
-        | Type[_tdb_handles.MultiscaleImageWrapper]
+        type[_WrapperType_co]
+        | type[_tdb_handles.DataFrameWrapper]
+        | type[_tdb_handles.DenseNDArrayWrapper]
+        | type[_tdb_handles.SparseNDArrayWrapper]
+        | type[_tdb_handles.CollectionWrapper]
+        | type[_tdb_handles.ExperimentWrapper]
+        | type[_tdb_handles.MeasurementWrapper]
+        | type[_tdb_handles.SceneWrapper]
+        | type[_tdb_handles.MultiscaleImageWrapper]
     )
     """Class variable of the Wrapper class used to open this object type."""
 

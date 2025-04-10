@@ -1614,7 +1614,7 @@ def test_read_indexing(tmp_path, io):
             {k: io[k] for k in ("coords", "partitions", "value_filter") if k in io}
         )
 
-        # `throws` can be `Type[Exception]`, or `(Type[Exception], bool)` indicating explicitly
+        # `throws` can be `type[Exception]`, or `(type[Exception], bool)` indicating explicitly
         # whether Typeguard should be enabled during the `with raises` check.
         throws = io.get("throws", None)
         if throws:

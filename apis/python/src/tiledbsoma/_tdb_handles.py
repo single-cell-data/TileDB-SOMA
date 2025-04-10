@@ -18,7 +18,6 @@ from typing import (
     Mapping,
     MutableMapping,
     Sequence,
-    Type,
     TypeVar,
     Union,
     cast,
@@ -275,7 +274,7 @@ AnyWrapper = Wrapper[RawHandle]
 @attrs.define(frozen=True)
 class GroupEntry:
     uri: str
-    wrapper_type: Type[AnyWrapper]
+    wrapper_type: type[AnyWrapper]
 
     @classmethod
     def from_soma_group_entry(cls, obj: tuple[str, str]) -> "GroupEntry":
@@ -290,7 +289,7 @@ class GroupEntry:
 class SOMAGroupWrapper(Wrapper[_SOMAObjectType]):
     """Base class for Pybind11 SOMAGroupWrapper handles."""
 
-    _WRAPPED_TYPE: Type[_SOMAObjectType]
+    _WRAPPED_TYPE: type[_SOMAObjectType]
 
     clib_type = "SOMAGroup"
 
@@ -359,7 +358,7 @@ class SceneWrapper(SOMAGroupWrapper[clib.SOMAScene]):
 class SOMAArrayWrapper(Wrapper[_SOMAObjectType]):
     """Base class for Pybind11 SOMAArrayWrapper handles."""
 
-    _WRAPPED_TYPE: Type[_SOMAObjectType]
+    _WRAPPED_TYPE: type[_SOMAObjectType]
 
     clib_type = "SOMAArray"
 
