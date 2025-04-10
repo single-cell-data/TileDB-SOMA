@@ -155,9 +155,16 @@ void load_soma_array(py::module& m) {
 
         .def(
             "nnz",
-            &SOMAArray::nnz,
-            py::arg("raise_if_slow") = false,
-            py::call_guard<py::gil_scoped_release>())
+            [](SOMAArray& array, bool raise_if_slow = false) {
+                try {
+                    py::gil_scoped_release release;
+                    auto retval = array.nnz();
+                    py::gil_scoped_acquire acquire;
+                    return retval;
+                } catch (const std::exception& e) {
+                    TPY_ERROR_LOC(e.what());
+                }
+            })
 
         .def_property_readonly("uri", &SOMAArray::uri)
 
