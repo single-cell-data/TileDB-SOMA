@@ -13,7 +13,6 @@ from typing import (
     Dict,
     Type,
     TypeVar,
-    Union,
     cast,
     no_type_check,
     overload,
@@ -77,7 +76,7 @@ def open(
     uri: str,
     mode: options.OpenMode = "r",
     *,
-    soma_type: Union[Type[SOMAObject], str, None] = None,  # type: ignore[type-arg]
+    soma_type: Type[SOMAObject] | str | None = None,  # type: ignore[type-arg]
     context: SOMATileDBContext | None = None,
     tiledb_timestamp: OpenTimestamp | None = None,
 ) -> AnySOMAObject:

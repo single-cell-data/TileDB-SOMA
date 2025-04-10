@@ -8,11 +8,7 @@ Implementation of SOMA SparseNDArray.
 
 from __future__ import annotations
 
-from typing import (
-    Sequence,
-    Union,
-    cast,
-)
+from typing import Sequence, cast
 
 import numpy as np
 import pyarrow as pa
@@ -274,12 +270,7 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
 
     def write(
         self,
-        values: Union[
-            pa.SparseCOOTensor,
-            pa.SparseCSRMatrix,
-            pa.SparseCSCMatrix,
-            pa.Table,
-        ],
+        values: pa.SparseCOOTensor | pa.SparseCSRMatrix | pa.SparseCSCMatrix | pa.Table,
         *,
         platform_config: PlatformConfig | None = None,
     ) -> Self:

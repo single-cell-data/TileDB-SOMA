@@ -49,7 +49,7 @@ _FilterSpec = Union[str, _DictFilterSpec]
 class _DictColumnSpec(TypedDict, total=False):
     """Type specification for the dictionary used to configure a column."""
 
-    filters: Union[Sequence[str], Mapping[str, Union[_FilterSpec]]]
+    filters: Sequence[str] | Mapping[str, _FilterSpec]
     tile: int
 
 
@@ -159,9 +159,7 @@ class TileDBCreateOptions:
     @classmethod
     def from_platform_config(
         cls,
-        platform_config: Union[
-            options.PlatformConfig, "TileDBCreateOptions", None
-        ] = None,
+        platform_config: options.PlatformConfig | "TileDBCreateOptions" | None = None,
     ) -> Self:
         """Creates the object from a value passed in ``platform_config``.
 
@@ -211,9 +209,7 @@ class TileDBWriteOptions:
     @classmethod
     def from_platform_config(
         cls,
-        platform_config: Union[
-            options.PlatformConfig, "TileDBWriteOptions", None
-        ] = None,
+        platform_config: options.PlatformConfig | "TileDBWriteOptions" | None = None,
     ) -> Self:
         """Creates the object from a value passed in ``platform_config``.
 
@@ -238,7 +234,7 @@ _T = TypeVar("_T")
 
 def _dig_platform_config(
     input: object, typ: Type[_T], full_path: tuple[str, ...]
-) -> Union[Dict[str, object], _T]:
+) -> Dict[str, object] | _T:
     """Looks for an object of the given type in dictionaries.
 
     This is used to extract a valid object out of ``platform_config``. If an

@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 import itertools
-from typing import Dict, List, Union
+from typing import Dict, List
 
 import numpy as np
 import pandas as pd
@@ -76,7 +78,7 @@ def add_presence_dataframe(
 
 def add_point_cloud_dataframe(
     scene: soma.Scene,
-    subcoll: Union[str, List[str]],
+    subcoll: str | List[str],
     key: str,
     data: Dict[str, np.ndarray],
     circles: bool,
@@ -100,8 +102,8 @@ def add_scene(
     coll: soma.Collection,
     key: str,
     *,
-    points: Dict[tuple[Union[str, tuple[str, ...]], str], Dict[str, np.ndarray]],
-    circles: Dict[tuple[Union[str, tuple[str, ...]], str], Dict[str, np.ndarray]],
+    points: Dict[tuple[str | tuple[str, ...], str], Dict[str, np.ndarray]],
+    circles: Dict[tuple[str | tuple[str, ...], str], Dict[str, np.ndarray]],
     images: Dict[str, tuple[tuple[int, ...]]],
 ) -> None:
     with coll.add_new_collection(key, soma.Scene, coordinate_space=("x", "y")) as scene:

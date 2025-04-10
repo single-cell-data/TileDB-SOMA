@@ -950,7 +950,7 @@ def _fill_out_slot_soma_domain(
     index_column_name: str,
     pa_type: pa.DataType,
     dtype: Any,
-) -> tuple[tuple[Any, Any], Union[bool, tuple[bool, ...]]]:
+) -> tuple[tuple[Any, Any], bool | tuple[bool, ...]]:
     """Helper function for _build_tiledb_schema. Given a user-specified domain for a
     dimension slot -- which may be ``None``, or a two-tuple of which either element
     may be ``None`` -- return either what the user specified (if adequate) or
@@ -1165,7 +1165,7 @@ def _find_extent_for_domain(
 # extent exceeds max value representable by domain type. Reduce domain max
 # by 1 tile extent to allow for expansion.
 def _revise_domain_for_extent(
-    domain: tuple[Any, Any], extent: Any, saturated_range: Union[bool, tuple[bool, ...]]
+    domain: tuple[Any, Any], extent: Any, saturated_range: bool | tuple[bool, ...]
 ) -> tuple[Any, Any]:
     if isinstance(domain[0], (np.datetime64, pa.TimestampScalar)):
         domain = cast(

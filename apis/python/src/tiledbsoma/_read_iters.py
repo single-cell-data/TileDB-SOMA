@@ -68,9 +68,7 @@ class TableReadIter(somacore.ReadIter[pa.Table]):
     def __init__(
         self,
         array: SOMAArray,
-        coords: Union[
-            options.SparseDFCoords, options.SparseNDCoords, options.DenseNDCoords
-        ],
+        coords: options.SparseDFCoords | options.SparseNDCoords | options.DenseNDCoords,
         column_names: Sequence[str] | None,
         result_order: clib.ResultOrder,
         value_filter: str | None,
@@ -78,7 +76,7 @@ class TableReadIter(somacore.ReadIter[pa.Table]):
         *,
         coord_space: CoordinateSpace | None = None,
     ):
-        """Initalizes a new TableReadIter for SOMAArrays.
+        """Initializes a new TableReadIter for SOMAArrays.
 
         Args:
             array (SOMAArray):
