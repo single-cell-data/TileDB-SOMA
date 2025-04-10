@@ -5,7 +5,7 @@ import json
 import os
 import uuid
 from abc import ABC, abstractmethod
-from typing import Any, Optional
+from typing import Any
 
 import attr
 import boto3
@@ -46,7 +46,7 @@ class ProfileData:
     signals_delivered: int
     page_size_bytes: int
     exit_status: int
-    custom_out: list[Optional[str]]
+    custom_out: list[str | None]
 
     command_key: str = attr.field()
 

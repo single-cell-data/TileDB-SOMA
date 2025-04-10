@@ -7,7 +7,7 @@ import sys
 from datetime import datetime
 from subprocess import PIPE
 from sys import stderr
-from typing import Any, Optional
+from typing import Any
 
 import somacore
 
@@ -76,7 +76,7 @@ TILEDB_STATS_FILE_PATH = "./tiledb_stats.json"
 
 
 def build_profile_data(
-    stderr_: str, stdout_: str, prof1: Optional[str], prof2: Optional[str]
+    stderr_: str, stdout_: str, prof1: str | None, prof2: str | None
 ) -> ProfileData:
     """Parse the time utility output to extract performance and memory metrics"""
     gnu_time_output_values = GNU_TIME_OUTPUT_REGEXP.search(stderr_)

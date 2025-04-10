@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import datetime
 import shutil
-from typing import Any, Mapping, Optional, Sequence, Union
+from typing import Any, Mapping, Sequence, Union
 
 import hypothesis as ht
 import numpy as np
@@ -161,7 +161,7 @@ def test_fuzz_SparseNDArray_create(
     tmp_path,
     uri: str,
     type: pa.DataType,
-    shape: Sequence[Optional[int]],
+    shape: Sequence[int | None],
     platform_config: dict[str, Mapping[str, Any]] | object | None,
     context: tiledbsoma.SOMATileDBContext | None,
     tiledb_timestamp: int | datetime.datetime | None,
