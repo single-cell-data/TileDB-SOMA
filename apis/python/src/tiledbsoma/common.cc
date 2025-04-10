@@ -182,32 +182,6 @@ bool is_tdb_str(tiledb_datatype_t type) {
     }
 }
 
-py::object c_to_pyarrow_dtype(std::string_view c_arrow_type) {
-    auto pa = py::module::import("pyarrow");
-    std::map<std::string_view, py::object> _c_to_pyarrow_dtype = {
-        {"u", pa.attr("large_string")()},
-        {"U", pa.attr("large_string")()},
-        {"z", pa.attr("large_string")()},
-        {"Z", pa.attr("large_string")()},
-        {"c", pa.attr("int8")()},
-        {"C", pa.attr("uint8")()},
-        {"s", pa.attr("int16")()},
-        {"S", pa.attr("uint16")()},
-        {"i", pa.attr("int32")()},
-        {"I", pa.attr("uint32")()},
-        {"l", pa.attr("int64")()},
-        {"L", pa.attr("uint64")()},
-        {"f", pa.attr("float32")()},
-        {"g", pa.attr("float64")()},
-        {"b", pa.attr("bool_")()},
-        {"tss:", pa.attr("timestamp")("s")},
-        {"tsm:", pa.attr("timestamp")("ms")},
-        {"tsu:", pa.attr("timestamp")("us")},
-        {"tsn:", pa.attr("timestamp")("ns")},
-    };
-    return _c_to_pyarrow_dtype.at(c_arrow_type);
-}
-
 /**
  * @brief Convert ArrayBuffers to Arrow table.
  *
