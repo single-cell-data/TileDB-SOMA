@@ -898,7 +898,7 @@ def test_DataFrame_read_column_names(simple_data_frame, ids, col_names):
     _check_tbl(sdf.read(ids, column_names=col_names).concat(), col_names, ids)
     _check_tbl(sdf.read(column_names=col_names).concat(), col_names, None)
 
-    # pa.Table.from_pandas infers nullability from the data if a schema is not 
+    # pa.Table.from_pandas infers nullability from the data if a schema is not
     # provided. If there are no null values in the data, then the data is marked
     # as non-nullable. To ensure nullability is preserved, explicitly pass in
     # the schema
