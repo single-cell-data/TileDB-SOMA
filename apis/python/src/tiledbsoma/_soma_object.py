@@ -277,7 +277,7 @@ class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
             )
         if self.mode != "r":
             raise SOMAError(
-                f"{self.__class__.__name__} ({self.uri}) must be open for writing"
+                f"{self.__class__.__name__} ({self.uri}) must be open for reading"
             )
 
     @property
