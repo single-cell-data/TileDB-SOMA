@@ -401,11 +401,11 @@ class ManagedQuery {
     void submit_write(bool sort_coords = true);
 
     /**
-     * @brief Get the schema of the array.
+     * @brief Get the schema of the array as a TileDB ArraySchema.
      *
      * @return std::shared_ptr<ArraySchema> Schema
      */
-    std::shared_ptr<ArraySchema> schema() {
+    std::shared_ptr<ArraySchema> schema() const {
         return schema_;
     }
 
