@@ -2043,7 +2043,7 @@ def _write_matrix_to_denseNDArray(
 
     add_metadata(soma_ndarray, additional_metadata)
 
-    # TileDB does not support big-endian so coerse to little-endian
+    # TileDB does not support big-endian so coerce to little-endian
     if isinstance(matrix, np.ndarray) and matrix.dtype.byteorder == ">":
         matrix = np.array(matrix, copy=False).byteswap().newbyteorder("<")
 
@@ -2442,7 +2442,7 @@ def _write_matrix_to_sparseNDArray(
 ) -> None:
     """Write a matrix to an empty DenseNDArray"""
 
-    # TileDB does not support big-endian so coerse to little-endian
+    # TileDB does not support big-endian so coerce to little-endian
     if isinstance(matrix, np.ndarray) and matrix.dtype.byteorder == ">":
         matrix = np.array(matrix, copy=False).byteswap().newbyteorder("<")
 
