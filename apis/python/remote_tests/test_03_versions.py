@@ -190,3 +190,93 @@ def test_resize_experiment_ok(conftest_context, uri_and_info):
         assert "dataframe currently has no domain set" in body
     else:
         assert ok
+
+
+@pytest.mark.parametrize(
+    "uri_and_info",
+    util_pbmc3k_unprocessed_versions(),
+)
+def test_get_experiment_shapes(conftest_context, uri_and_info):
+    uri, info = uri_and_info
+
+    dict_output = tiledbsoma.io.get_experiment_shapes(uri, context=conftest_context)
+
+    # Mask out the URIs for which we needn't compare the exact UUID values.
+    dict_output["obs"]["uri"] = "test"
+    dict_output["ms"]["RNA"]["var"]["uri"] = "test"
+    dict_output["ms"]["RNA"]["X"]["data"]["uri"] = "test"
+
+    if info["shape"] == "old":
+
+        expect = {
+            "obs": {
+                "uri": "test",
+                "type": "DataFrame",
+                "count": 2700,
+                "non_empty_domain": ((0, 2699),),
+                "domain": ((0, 2147483646),),
+                "maxdomain": ((0, 2147483646),),
+                "upgraded": False,
+            },
+            "ms": {
+                "RNA": {
+                    "var": {
+                        "uri": "test",
+                        "type": "DataFrame",
+                        "count": 13714,
+                        "non_empty_domain": ((0, 13713),),
+                        "domain": ((0, 2147483646),),
+                        "maxdomain": ((0, 2147483646),),
+                        "upgraded": False,
+                    },
+                    "X": {
+                        "data": {
+                            "uri": "test",
+                            "type": "SparseNDArray",
+                            "non_empty_domain": ((0, 2699), (0, 13713)),
+                            "shape": (2147483646, 2147483646),
+                            "maxshape": (2147483646, 2147483646),
+                            "upgraded": False,
+                        }
+                    },
+                }
+            },
+        }
+        assert dict_output == expect
+
+    else:
+        expect = {
+            "obs": {
+                "uri": "test",
+                "type": "DataFrame",
+                "count": 2700,
+                "non_empty_domain": ((0, 2699),),
+                "domain": ((0, 2699),),
+                "maxdomain": ((0, 9223372036854773758),),
+                "upgraded": True,
+            },
+            "ms": {
+                "RNA": {
+                    "var": {
+                        "uri": "test",
+                        "type": "DataFrame",
+                        "count": 13714,
+                        "non_empty_domain": ((0, 13713),),
+                        "domain": ((0, 13713),),
+                        "maxdomain": ((0, 9223372036854773758),),
+                        "upgraded": True,
+                    },
+                    "X": {
+                        "data": {
+                            "uri": "test",
+                            "type": "SparseNDArray",
+                            "non_empty_domain": ((0, 2699), (0, 13713)),
+                            "shape": (2700, 13714),
+                            "maxshape": (9223372036854773759, 9223372036854773759),
+                            "upgraded": True,
+                        }
+                    },
+                }
+            },
+        }
+        assert dict_output == expect
