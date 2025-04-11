@@ -1,7 +1,7 @@
 [build-system]
 requires = [
     "pybind11[global]>=2.10.0",
-    "setuptools>=70.1",  # `setuptools.command.bdist_wheel`
+    "setuptools>=78.1",  # `setuptools.command.bdist_wheel`
     "cmake>=3.21,<4",  # CMake 4 builds are broken on ARM Linux: https://github.com/single-cell-data/TileDB-SOMA/issues/3890
 ]
 build-backend = "setuptools.build_meta"
