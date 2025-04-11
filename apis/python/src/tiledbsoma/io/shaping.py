@@ -11,7 +11,6 @@ https://github.com/single-cell-data/TileDB-SOMA/issues/2407."""
 from __future__ import annotations
 
 import io
-import json
 import sys
 from collections.abc import Callable
 from typing import Any, Dict, Tuple, TypeVar, Union, cast
@@ -195,7 +194,6 @@ def show_experiment_shapes(
         output_handle=output_handle,
         context=context,
     )
-    print(json.dumps(retval, indent=2))
     return _check_statuses(retval)
 
 
