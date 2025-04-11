@@ -44,6 +44,7 @@ Functions
     tiledbsoma.io.append_X
     tiledbsoma.io.append_obs
     tiledbsoma.io.append_var
+    tiledbsoma.io.get_experiment_shapes
     tiledbsoma.io.show_experiment_shapes
     tiledbsoma.io.upgrade_experiment_shapes
     tiledbsoma.io.resize_experiment
