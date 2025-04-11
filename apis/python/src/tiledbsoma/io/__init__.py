@@ -29,6 +29,7 @@ from .outgest import (
     to_h5ad,
 )
 from .shaping import (
+    get_experiment_shapes,
     resize_experiment,
     show_experiment_shapes,
     upgrade_experiment_shapes,
@@ -60,6 +61,7 @@ __all__ = (
     "update_obs",
     "update_var",
     "upgrade_experiment_shapes",
+    "get_experiment_shapes",
     "show_experiment_shapes",
     "resize_experiment",
     "ExperimentAmbientLabelMapping",
