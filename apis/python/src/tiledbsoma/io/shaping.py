@@ -11,6 +11,7 @@ https://github.com/single-cell-data/TileDB-SOMA/issues/2407."""
 from __future__ import annotations
 
 import io
+import json
 import sys
 from collections.abc import Callable
 from typing import Any, Dict, Tuple, TypeVar, Union, cast
@@ -31,11 +32,11 @@ def get_experiment_shapes(
 ) -> dict[str, Any]:
     """Returns the current shapes of the elements in the ``Experiment``.
 
+    Similar to ``show_experiment_shapes`` but returns a nested Python dict.
+
     Returns the ``non_empty_domain``, ``domain``, and ``maxdomain`` of dataframes and
     the ``non_empty_domain``, ``shape``, and ``maxshape`` of arrays as a dictionary. This
     method is applied to the following elements inside the SOMA ``Experiment``:
-
-    Similar to ``show_experiment_shapes`` but returns a nested Python dict.
 
     The shapes of the following elements are output:
 
@@ -99,6 +100,13 @@ def get_experiment_shapes(
     Returns: a nested Python dict.
     """
 
+    # Developer note: it would be a well-intentioned mistake to refactor
+    # show_experiment_shapes to call get_experiment_shapes and then print the
+    # result. The crucial issue is that for complex experiments on remote object
+    # stores, show_experiment_shapes communicates liveness UX to the user by
+    # printing things as it finds them, rather than giving the user a wait
+    # followed by a final burst of output.
+
     retval = _treewalk(
         uri,
         leaf_visitor=_leaf_visitor_get_shapes,
@@ -121,6 +129,9 @@ def show_experiment_shapes(
     output_handle: Printable = cast(Printable, sys.stdout),
 ) -> bool:
     """Outputs the current shapes of the elements in the ``Experiment``.
+
+    Similar to ``get_experiment_shapes`` but prints results as they are
+    traversed.
 
     Outputs the ``non_empty_domain``, ``domain``, and ``maxdomain`` of dataframes and
     the ``non_empty_domain``, ``shape``, and ``maxshape`` of arrays. This method is
@@ -184,6 +195,7 @@ def show_experiment_shapes(
         output_handle=output_handle,
         context=context,
     )
+    print(json.dumps(retval, indent=2))
     return _check_statuses(retval)
 
 
@@ -1053,14 +1065,29 @@ def _leaf_visitor_get_shapes(
     return retval
 
 
+# Expected input is like
+# {
+#   "obs": { "status": true },
+#   "ms": {
+#     "RNA": {
+#       "var": { "status": true },
+#       "X": {
+#         "data": { "status": true }
+#       }
+#     }
+#   }
+# }
 def _check_statuses(dikt: dict[str, Any]) -> bool:
+    """This reduces the pass/fail statuses for all leaf nodes in a treewalk
+    over the experiment down to a single pass/fail. It returns True
+    only when all leaves have status=True, else False.
+    """
     if "status" in dikt:
-        foo = dikt["status"]
-        assert isinstance(foo, bool)
-        return foo
+        ok = dikt["status"]
+        assert isinstance(ok, bool)
+        return ok
     for key, value in dikt.items():
-        if isinstance(value, dict):
-            ok = _check_statuses(value)
-            if not ok:
-                return False
+        assert isinstance(value, dict)
+        if not _check_statuses(value):
+            return False
     return True
