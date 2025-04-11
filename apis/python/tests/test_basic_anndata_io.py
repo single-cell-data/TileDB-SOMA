@@ -5,6 +5,7 @@ import random
 import tempfile
 from copy import deepcopy
 from pathlib import Path
+from tempfile import TemporaryDirectory
 
 import anndata
 import numpy as np
@@ -23,6 +24,7 @@ from tiledbsoma._soma_object import SOMAObject
 from tiledbsoma.io._common import _TILEDBSOMA_TYPE, UnsDict, UnsMapping
 
 from ._util import TESTDATA, assert_adata_equal, make_pd_df
+from .test_sparse_nd_array import create_random_tensor
 
 
 @pytest.fixture
@@ -1537,3 +1539,31 @@ def test_decat_append(tmp_path):
 def test_from_h5ad_bad_uri():
     with pytest.raises(tiledbsoma.SOMAError, match="URI /nonesuch is not a valid URI"):
         next(tiledbsoma.io._util.read_h5ad("/nonesuch").gen)
+
+
+def test_dask_query_to_anndata_timestamp(conftest_pbmc_small_h5ad_path):
+    with TemporaryDirectory("conftest_pbmc_small_exp_") as exp_path:
+        tiledbsoma.io.from_h5ad(
+            exp_path,
+            conftest_pbmc_small_h5ad_path,
+            measurement_name="RNA",
+        )
+        with Experiment.open(exp_path, mode="w") as exp:
+            ts0 = exp.tiledb_timestamp_ms
+            X = exp.ms["RNA"].X["data"]
+            arrow_tensor = create_random_tensor(
+                format="csr",
+                shape=X.shape,
+                dtype=np.float32(),
+                seed=1111,
+            )
+            assert arrow_tensor.non_zero_length == 528
+            X.write(arrow_tensor)
+
+        with Experiment.open(exp_path, tiledb_timestamp=ts0 - 1) as exp:
+            ad = tiledbsoma.io.to_anndata(exp, measurement_name="RNA")
+            assert ad.X.nnz == 1600
+
+        with Experiment.open(exp_path) as exp:
+            ad = tiledbsoma.io.to_anndata(exp, measurement_name="RNA")
+            assert ad.X.nnz == 528
