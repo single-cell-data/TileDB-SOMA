@@ -11,6 +11,7 @@ https://github.com/single-cell-data/TileDB-SOMA/issues/2407."""
 from __future__ import annotations
 
 import io
+import json
 import sys
 from collections.abc import Callable
 from typing import Any, Dict, Tuple, TypeVar, Union, cast
@@ -24,6 +25,103 @@ Printable = Union[io.TextIOWrapper, io.StringIO]
 _SOMAObjectType = TypeVar("_SOMAObjectType", bound=SOMAObject)  # type: ignore[type-arg]
 
 
+def get_experiment_shapes(
+    uri: str,
+    *,
+    context: tiledbsoma.SOMATileDBContext | None = None,
+) -> dict[str, Any]:
+    """Returns the current shapes of the elements in the ``Experiment``.
+
+    Similar to ``show_experiment_shapes`` but returns a nested Python dict.
+
+    Returns the ``non_empty_domain``, ``domain``, and ``maxdomain`` of dataframes and
+    the ``non_empty_domain``, ``shape``, and ``maxshape`` of arrays as a dictionary. This
+    method is applied to the following elements inside the SOMA ``Experiment``:
+
+    The shapes of the following elements are output:
+
+      * the ``obs`` dataframe in the experiment,
+
+    and for each measurement:
+
+      * the ``var`` dataframe,
+      * all ``X`` arrays,
+      * all ``obsm`` arrays,
+      * all ``varm`` arrays,
+      * all ``obsp`` arrays,
+      * all ``varm`` arrays,
+      * all ``varp`` arrays.
+
+    Example::
+
+        >>> tiledbsoma.io.get_experiment_shapes('pbmc3k_unprocessed')
+
+        {
+            "obs": {
+                "uri": "exp/obs",
+                "type": "DataFrame",
+                "count": 2700,
+                "non_empty_domain": ((0, 2699),),
+                "domain": ((0, 2699),),
+                "maxdomain": ((0, 2147483646),),
+                "upgraded": False,
+            },
+            "ms": {
+                "RNA": {
+                    "var": {
+                        "uri": "exp/ms/RNA/var",
+                        "type": "DataFrame",
+                        "count": 13714,
+                        "non_empty_domain": ((0, 13713),),
+                        "domain": ((0, 13713),),
+                        "maxdomain": ((0, 2147483646),),
+                        "upgraded": False,
+                    },
+                    "X": {
+                        "data": {
+                            "uri": "exp/ms/RNA/X/data",
+                            "type": "SparseNDArray",
+                            "non_empty_domain": ((0, 2699), (0, 13713)),
+                            "shape": (2700, 13714),
+                            "maxshape": (2147483646, 2147483646),
+                            "upgraded": False,
+                        }
+                    },
+                }
+            },
+        }
+
+
+    Args:
+        uri: The URI of a SOMA :class:`Experiment`.
+        context: Optional :class:`SOMATileDBContext`.
+        output_handle: The handle to print the output to.
+
+    Returns: a nested Python dict.
+    """
+
+    # Developer note: it would be a well-intentioned mistake to refactor
+    # show_experiment_shapes to call get_experiment_shapes and then print the
+    # result. The crucial issue is that for complex experiments on remote object
+    # stores, show_experiment_shapes communicates liveness UX to the user by
+    # printing things as it finds them, rather than giving the user a wait
+    # followed by a final burst of output.
+
+    retval = _treewalk(
+        uri,
+        leaf_visitor=_leaf_visitor_get_shapes,
+        nobs=None,
+        nvars=None,
+        ms_name=None,
+        coll_name=None,
+        verbose=True,
+        check_only=True,
+        context=context,
+        output_handle=None,
+    )
+    return retval
+
+
 def show_experiment_shapes(
     uri: str,
     *,
@@ -31,6 +129,9 @@ def show_experiment_shapes(
     output_handle: Printable = cast(Printable, sys.stdout),
 ) -> bool:
     """Outputs the current shapes of the elements in the ``Experiment``.
+
+    Similar to ``get_experiment_shapes`` but prints results as they are
+    traversed.
 
     Outputs the ``non_empty_domain``, ``domain``, and ``maxdomain`` of dataframes and
     the ``non_empty_domain``, ``shape``, and ``maxshape`` of arrays. This method is
@@ -94,6 +195,7 @@ def show_experiment_shapes(
         output_handle=output_handle,
         context=context,
     )
+    print(json.dumps(retval, indent=2))
     return _check_statuses(retval)
 
 
@@ -381,9 +483,10 @@ def _treewalk(
             retval["var"] = _recurse(item, node_name="var", **kwargs)
             for iter_coll_name in ["X", "obsm", "obsp", "varm", "varp"]:
                 kwargs["coll_name"] = iter_coll_name
-                retval[iter_coll_name] = _recurse(
-                    item, node_name=iter_coll_name, **kwargs
-                )
+                children_dict = _recurse(item, node_name=iter_coll_name, **kwargs)
+                # If the experiment has no varp (etc.) at all, don't include an entry for it.
+                if children_dict:
+                    retval[iter_coll_name] = children_dict
             return retval
 
         # Non-terminal
@@ -924,17 +1027,70 @@ def _get_new_ndarray_shape(
         )
 
 
+def _leaf_visitor_get_shapes(
+    item: Any,
+    *,
+    node_name: str,
+    nobs: int | None,
+    nvars: Dict[str, int] | None,
+    ms_name: str | None,
+    coll_name: str | None,
+    verbose: bool,
+    check_only: bool,
+    context: tiledbsoma.SOMATileDBContext | None,
+    output_handle: Printable | None,
+) -> dict[str, Any]:
+    retval: dict[str, Any] = {}
+    if isinstance(item, tiledbsoma.DataFrame):
+        retval["uri"] = item.uri
+        retval["type"] = "DataFrame"
+        retval["count"] = item.count
+        retval["non_empty_domain"] = item.non_empty_domain()
+        retval["domain"] = item.domain
+        retval["maxdomain"] = item.maxdomain
+        retval["upgraded"] = item.tiledbsoma_has_upgraded_domain
+
+    elif isinstance(item, tiledbsoma.SparseNDArray):
+        retval["uri"] = item.uri
+        retval["type"] = "SparseNDArray"
+        retval["non_empty_domain"] = item.non_empty_domain()
+        retval["shape"] = item.shape
+        retval["maxshape"] = item.maxshape
+        retval["upgraded"] = item.tiledbsoma_has_upgraded_shape
+
+    elif isinstance(item, tiledbsoma.DenseNDArray):
+        retval["uri"] = item.uri
+        retval["type"] = "DenseNDArray"
+        retval["shape"] = item.shape
+        retval["maxshape"] = item.maxshape
+        retval["upgraded"] = item.tiledbsoma_has_upgraded_shape
+
+    return retval
+
+
+# Expected input is like
+# {
+#   "obs": { "status": true },
+#   "ms": {
+#     "RNA": {
+#       "var": { "status": true },
+#       "X": {
+#         "data": { "status": true }
+#       }
+#     }
+#   }
+# }
 def _check_statuses(dikt: dict[str, Any]) -> bool:
-    """For vistors which return status dicts, traverses the tree structure
-    and returns True only if all leaf-node statuses are True, else False.
+    """This reduces the pass/fail statuses for all leaf nodes in a treewalk
+    over the experiment down to a single pass/fail. It returns True
+    only when all leaves have status=True, else False.
     """
     if "status" in dikt:
-        value = dikt["status"]
-        assert isinstance(value, bool)
-        return value
+        ok = dikt["status"]
+        assert isinstance(ok, bool)
+        return ok
     for key, value in dikt.items():
-        if isinstance(value, dict):
-            ok = _check_statuses(value)
-            if not ok:
-                return False
+        assert isinstance(value, dict)
+        if not _check_statuses(value):
+            return False
     return True
