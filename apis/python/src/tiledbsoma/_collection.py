@@ -10,9 +10,6 @@ from typing import (
     Any,
     Callable,
     ClassVar,
-    Dict,
-    Tuple,
-    Type,
     TypeVar,
     cast,
     overload,
@@ -121,7 +118,7 @@ class CollectionBase(  # type: ignore[misc]  # __eq__ false positive
 
     # Subclass protocol to constrain which SOMA objects types  may be set on a
     # particular collection key. Used by Experiment and Measurement.
-    _subclass_constrained_soma_types: ClassVar[Dict[str, Tuple[str, ...]]] = {}
+    _subclass_constrained_soma_types: ClassVar[dict[str, tuple[str, ...]]] = {}
     """A map limiting what types may be set to certain keys.
 
     Map keys are the key of the collection to constrain; values are the SOMA
@@ -153,7 +150,7 @@ class CollectionBase(  # type: ignore[misc]  # __eq__ false positive
     def add_new_collection(
         self,
         key: str,
-        kind: Type[_Coll],
+        kind: type[_Coll],
         *,
         uri: str | None = ...,
         platform_config: options.PlatformConfig | None = ...,
@@ -163,7 +160,7 @@ class CollectionBase(  # type: ignore[misc]  # __eq__ false positive
     def add_new_collection(
         self,
         key: str,
-        kind: Type[CollectionBase] | None = None,  # type: ignore[type-arg]
+        kind: type[CollectionBase] | None = None,  # type: ignore[type-arg]
         *,
         uri: str | None = None,
         platform_config: options.PlatformConfig | None = None,
@@ -274,7 +271,7 @@ class CollectionBase(  # type: ignore[misc]  # __eq__ false positive
 
     @_funcs.forwards_kwargs_to(NDArray.create, exclude=("context", "tiledb_timestamp"))
     def _add_new_ndarray(
-        self, cls: Type[_NDArr], key: str, *, uri: str | None = None, **kwargs: Any
+        self, cls: type[_NDArr], key: str, *, uri: str | None = None, **kwargs: Any
     ) -> _NDArr:
         """Internal implementation of common NDArray-adding operations."""
         return self._add_new_element(
@@ -364,7 +361,7 @@ class CollectionBase(  # type: ignore[misc]  # __eq__ false positive
     def _add_new_element(
         self,
         key: str,
-        kind: Type[_TDBO],
+        kind: type[_TDBO],
         factory: Callable[[str], _TDBO],
         user_uri: str | None,
     ) -> _TDBO:
@@ -388,7 +385,7 @@ class CollectionBase(  # type: ignore[misc]  # __eq__ false positive
             key, kind=kind, factory=factory, user_uri=user_uri
         )
 
-    def members(self) -> Dict[str, Tuple[str, str]]:
+    def members(self) -> dict[str, tuple[str, str]]:
         """Get a mapping of {member_name: (uri, soma_object_type)}"""
         handle = cast(_tdb_handles.SOMAGroupWrapper[Any], self._handle)
         return handle.members()
@@ -506,7 +503,7 @@ class Collection(  # type: ignore[misc]  # __eq__ false positive
 
 
 @typeguard_ignore
-def _real_class(cls: Type[Any]) -> type:
+def _real_class(cls: type[Any]) -> type:
     """Extracts the real class from a generic alias.
 
     Generic aliases like ``Collection[whatever]`` cannot be used in instance or

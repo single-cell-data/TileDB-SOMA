@@ -1,5 +1,6 @@
+from __future__ import annotations
+
 import threading
-from typing import List, Union
 
 import numpy as np
 import pandas as pd
@@ -19,9 +20,7 @@ from tiledbsoma.options._soma_tiledb_context import _validate_soma_tiledb_contex
         (np.tile(np.array([-1, 1, 2, 3, 4, 5]), 4), [-10000, 1, 2, 3, 5, 6]),
     ],
 )
-def test_duplicate_key_indexer_error(
-    keys: Union[np.array, List[int]], lookups: np.array
-):
+def test_duplicate_key_indexer_error(keys: np.array | list[int], lookups: np.array):
     context = _validate_soma_tiledb_context(SOMATileDBContext())
     with pytest.raises(SOMAError, match="There are duplicate keys."):
         IntIndexer(keys, context=context)

@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import tempfile
 from dataclasses import dataclass
-from typing import Type
 
 import numpy as np
 import pandas as pd
@@ -131,7 +130,7 @@ def verify_updates(
     experiment_path,
     obs,
     var,
-    exc: Type[ValueError] | None = None,
+    exc: type[ValueError] | None = None,
 ):
     """
     Calls `update_obs` and `update_var` on the experiment. Also verifies that the

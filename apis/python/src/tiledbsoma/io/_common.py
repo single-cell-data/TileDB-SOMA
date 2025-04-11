@@ -6,7 +6,7 @@
 
 from __future__ import annotations
 
-from typing import Dict, List, Mapping, Union
+from typing import Mapping, Union
 
 import h5py
 import numpy as np
@@ -29,15 +29,15 @@ Matrix = Union[DenseMatrix, SparseMatrix]
 
 UnsScalar = Union[str, int, float, np.generic]
 # TODO: support sparse matrices in `uns`
-UnsLeaf = Union[UnsScalar, List[UnsScalar], pd.DataFrame, NPNDArray]
+UnsLeaf = Union[UnsScalar, list[UnsScalar], pd.DataFrame, NPNDArray]
 UnsNode = Union[UnsLeaf, Mapping[str, "UnsNode"]]
 UnsMapping = Mapping[str, UnsNode]
 # Specialize `UnsNode` to `Dict` instead of `Mapping`
 # `Mapping` doesn't expose `__set__`, so this is useful for building `uns` dictionaries.
-UnsDictNode = Union[UnsLeaf, Dict[str, "UnsDictNode"]]
-UnsDict = Dict[str, UnsDictNode]
+UnsDictNode = Union[UnsLeaf, dict[str, "UnsDictNode"]]
+UnsDict = dict[str, UnsDictNode]
 
-AdditionalMetadata = Union[Dict[str, Metadatum], None]
+AdditionalMetadata = Union[dict[str, Metadatum], None]
 
 # Arrays of strings from AnnData's uns are stored in SOMA as SOMADataFrame,
 # since SOMA ND arrays are necessarily arrays *of numbers*. This is okay since

@@ -2,7 +2,6 @@
 #
 # Licensed under the MIT License.
 
-from typing import List
 
 import numpy as np
 
@@ -10,8 +9,8 @@ import numpy as np
 class Tracker:
     """Computes estimated time to completion for chunked writes."""
 
-    chunk_percents: List[float]
-    cumulative_seconds: List[float]
+    chunk_percents: list[float]
+    cumulative_seconds: list[float]
 
     def __init__(self) -> None:
         self.chunk_percents = []

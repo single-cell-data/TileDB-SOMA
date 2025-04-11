@@ -13,7 +13,7 @@ from __future__ import annotations
 import json
 import warnings
 from pathlib import Path
-from typing import Sequence, Type, TypeVar
+from typing import Sequence, TypeVar
 
 import attrs
 import numpy as np
@@ -737,7 +737,7 @@ def _write_arrow_to_dataframe(
 
 
 def _write_X_layer(
-    cls: Type[_NDArr],
+    cls: type[_NDArr],
     uri: str,
     reader: TenXCountMatrixReader,
     axis_0_mapping: AxisIDMapping,

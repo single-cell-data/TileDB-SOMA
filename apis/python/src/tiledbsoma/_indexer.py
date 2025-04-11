@@ -4,7 +4,7 @@
 
 from __future__ import annotations
 
-from typing import List, Union
+from typing import Union
 
 import numpy as np
 import numpy.typing as npt
@@ -24,7 +24,7 @@ IndexerDataType = Union[
     PDSeries,
     pd.arrays.IntegerArray,
     pa.ChunkedArray,
-    List[int],
+    list[int],
 ]
 
 

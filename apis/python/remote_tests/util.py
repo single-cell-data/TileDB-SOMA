@@ -2,7 +2,6 @@ import datetime
 import os
 import pathlib
 import shutil
-from typing import Tuple
 
 import tiledb.cloud
 
@@ -20,7 +19,7 @@ def util_make_uri(
     basename: str,
     namespace: str,
     default_s3_path: str,
-) -> Tuple[str, str]:
+) -> tuple[str, str]:
     if os.getenv("TILEDB_SOMA_CLOUD_TEST_LOCAL_PATHS") is None:
 
         # The default_s3_path contains the "s3://..." prefix and a trailing slash.

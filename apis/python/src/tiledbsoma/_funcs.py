@@ -9,7 +9,6 @@ from typing import (
     Any,
     Callable,
     Collection,
-    List,
     TypeVar,
 )
 
@@ -61,7 +60,7 @@ def forwards_kwargs_to(
 
     def wrap(me: _CT) -> _CT:
         my_sig = inspect.Signature.from_callable(me)
-        merged: List[inspect.Parameter] = []
+        merged: list[inspect.Parameter] = []
         claimed_names = set(exclude)
         for param in my_sig.parameters.values():
             if param.kind == inspect.Parameter.VAR_KEYWORD:

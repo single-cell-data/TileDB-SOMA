@@ -1,13 +1,12 @@
 import json
 import os
 import sys
-from typing import Dict
 
 import psutil
 from git import Repo
 
 
-def host_context() -> Dict[str, str]:
+def host_context() -> dict[str, str]:
     physical_mem_bytes = os.sysconf("SC_PAGE_SIZE") * os.sysconf("SC_PHYS_PAGES")
 
     def get_git_revision_hash() -> str:

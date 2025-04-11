@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import json
 import warnings
-from typing import Any, Dict, List, Sequence, Tuple, Union
+from typing import Any, Sequence
 
 import attrs
 import pyarrow as pa
@@ -51,16 +51,16 @@ class _LevelProperties:
     """Properties for a single resolution level in a multiscale image."""
 
     name: str
-    shape: Tuple[int, ...] = attrs.field(converter=tuple)
+    shape: tuple[int, ...] = attrs.field(converter=tuple)
 
 
 @attrs.define(frozen=True)
 class _MultiscaleImageMetadata:
     """Helper class for reading/writing multiscale image metadata."""
 
-    data_axis_permutation: Tuple[int, ...] = attrs.field(converter=tuple)
+    data_axis_permutation: tuple[int, ...] = attrs.field(converter=tuple)
     has_channel_axis: bool
-    shape: Tuple[int, ...] = attrs.field(converter=tuple)
+    shape: tuple[int, ...] = attrs.field(converter=tuple)
     datatype: pa.DataType
 
     def to_json(self) -> str:
@@ -119,7 +119,7 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
         level_shape: Sequence[int],
         level_key: str = "level0",
         level_uri: str | None = None,
-        coordinate_space: Union[Sequence[str], CoordinateSpace] = (
+        coordinate_space: Sequence[str] | CoordinateSpace = (
             "x",
             "y",
         ),
@@ -418,7 +418,7 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
 
     def read_spatial_region(
         self,
-        level: Union[int, str],
+        level: int | str,
         region: options.SpatialRegion | None = None,
         *,
         channel_coords: options.DenseCoord = None,
@@ -553,7 +553,7 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
         )
 
     # Metadata operations
-    def _level_properties(self, level: Union[int, str]) -> _LevelProperties:
+    def _level_properties(self, level: int | str) -> _LevelProperties:
         """The properties of an image at the specified level."""
         # by name
         # TODO could dynamically create a dictionary whenever a name-based
@@ -568,7 +568,7 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
         # by index
         return self._levels[level]
 
-    def _axis_order(self) -> List[int]:
+    def _axis_order(self) -> list[int]:
         """Indices for accessing the data order for spatial axes."""
         axes = [
             index
@@ -606,7 +606,7 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
         self._coord_space = value
 
     @property
-    def data_axis_order(self) -> Tuple[str, ...]:
+    def data_axis_order(self) -> tuple[str, ...]:
         """The order of the axes for the resolution levels.
 
         Lifecycle:
@@ -621,7 +621,7 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
             for index in self._data_axis_permutation
         )
 
-    def get_transform_from_level(self, level: Union[int, str]) -> ScaleTransform:
+    def get_transform_from_level(self, level: int | str) -> ScaleTransform:
         """Returns the transformation from user requested level to the image reference
         level.
 
@@ -645,7 +645,7 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
             scale_factors=scale_factors,
         )
 
-    def get_transform_to_level(self, level: Union[int, str]) -> ScaleTransform:
+    def get_transform_to_level(self, level: int | str) -> ScaleTransform:
         """Returns the transformation from the image reference level to the user
         requested level.
 
@@ -678,7 +678,7 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
         """
         return self._has_channel_axis
 
-    def levels(self) -> Dict[str, Tuple[str, Tuple[int, ...]]]:
+    def levels(self) -> dict[str, tuple[str, tuple[int, ...]]]:
         """Returns a mapping of {member_name: (uri, shape)}."""
         return {
             level.name: (self._contents[level.name].entry.uri, level.shape)
@@ -694,7 +694,7 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
         """
         return len(self._levels)
 
-    def level_shape(self, level: Union[int, str]) -> Tuple[int, ...]:
+    def level_shape(self, level: int | str) -> tuple[int, ...]:
         """The shape of the image at the specified resolution level.
 
         Lifecycle: experimental
@@ -709,7 +709,7 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
         # by index
         return self._levels[level].shape
 
-    def level_uri(self, level: Union[int, str]) -> str:
+    def level_uri(self, level: int | str) -> str:
         """The URI of the image at the specified resolution level.
 
         Lifecycle: experimental

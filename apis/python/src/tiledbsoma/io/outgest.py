@@ -468,7 +468,7 @@ def to_anndata(
 
 
 def _extract_obsm_or_varm(
-    soma_nd_array: Union[SparseNDArray, DenseNDArray],
+    soma_nd_array: SparseNDArray | DenseNDArray,
     collection_name: str,
     element_name: str,
     num_rows: int,

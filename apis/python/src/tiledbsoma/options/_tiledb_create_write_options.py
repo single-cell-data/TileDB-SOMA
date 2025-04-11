@@ -6,12 +6,9 @@ from __future__ import annotations
 
 from typing import (
     Any,
-    Dict,
     Iterable,
     Mapping,
     Sequence,
-    Tuple,
-    Type,
     TypedDict,
     TypeVar,
     Union,
@@ -50,13 +47,13 @@ _FilterSpec = Union[str, _DictFilterSpec]
 class _DictColumnSpec(TypedDict, total=False):
     """Type specification for the dictionary used to configure a column."""
 
-    filters: Union[Sequence[str], Mapping[str, Union[_FilterSpec]]]
+    filters: Sequence[str] | Mapping[str, _FilterSpec]
     tile: int
 
 
 # These functions have to appear first because they're used in the definition
 # of TileDBCreateOptions.
-def _normalize_filters(inputs: Iterable[_FilterSpec]) -> Tuple[_DictFilterSpec, ...]:
+def _normalize_filters(inputs: Iterable[_FilterSpec]) -> tuple[_DictFilterSpec, ...]:
     if isinstance(inputs, str):
         raise TypeError(
             "filters must be a list of strings (or dicts), not a single string"
@@ -72,13 +69,13 @@ def _normalize_filters(inputs: Iterable[_FilterSpec]) -> Tuple[_DictFilterSpec, 
 # like converters.optional(inner_converter).
 def _normalize_filters_optional(
     inputs: Iterable[_FilterSpec] | None,
-) -> Tuple[_DictFilterSpec, ...] | None:
+) -> tuple[_DictFilterSpec, ...] | None:
     return None if inputs is None else _normalize_filters(inputs)
 
 
 @attrs_.define(frozen=True, slots=True)
 class _ColumnConfig:
-    filters: Tuple[_DictFilterSpec, ...] | None = attrs_.field(
+    filters: tuple[_DictFilterSpec, ...] | None = attrs_.field(
         converter=_normalize_filters_optional
     )
     tile: int | None = attrs_.field(validator=vld.optional(vld.instance_of(int)))
@@ -129,7 +126,7 @@ class TileDBCreateOptions:
         validator=vld.instance_of(int), default=2_400_000_000
     )
     capacity: int = attrs_.field(validator=vld.instance_of(int), default=100_000)
-    offsets_filters: Tuple[_DictFilterSpec, ...] = attrs_.field(
+    offsets_filters: tuple[_DictFilterSpec, ...] = attrs_.field(
         converter=_normalize_filters,
         default=(
             "DoubleDeltaFilter",
@@ -137,7 +134,7 @@ class TileDBCreateOptions:
             "ZstdFilter",
         ),
     )
-    validity_filters: Tuple[_DictFilterSpec, ...] | None = attrs_.field(
+    validity_filters: tuple[_DictFilterSpec, ...] | None = attrs_.field(
         converter=_normalize_filters_optional, default=None
     )
     allows_duplicates: bool = attrs_.field(
@@ -160,9 +157,7 @@ class TileDBCreateOptions:
     @classmethod
     def from_platform_config(
         cls,
-        platform_config: Union[
-            options.PlatformConfig, "TileDBCreateOptions", None
-        ] = None,
+        platform_config: options.PlatformConfig | "TileDBCreateOptions" | None = None,
     ) -> Self:
         """Creates the object from a value passed in ``platform_config``.
 
@@ -172,16 +167,16 @@ class TileDBCreateOptions:
         """
         create_entry = _dig_platform_config(platform_config, cls, ("tiledb", "create"))
         if isinstance(create_entry, dict):
-            attrs: Tuple[attrs_.Attribute, ...] = cls.__attrs_attrs__  # type: ignore[type-arg]
+            attrs: tuple[attrs_.Attribute, ...] = cls.__attrs_attrs__  # type: ignore[type-arg]
             attr_names = frozenset(a.name for a in attrs)
             # Explicitly opt out of type-checking for these kwargs.
-            filtered_create_entry: Dict[str, Any] = {
+            filtered_create_entry: dict[str, Any] = {
                 key: value for (key, value) in create_entry.items() if key in attr_names
             }
             return cls(**filtered_create_entry)
         return create_entry
 
-    def cell_tile_orders(self) -> Tuple[str | None, str | None]:
+    def cell_tile_orders(self) -> tuple[str | None, str | None]:
         """Returns the cell and tile orders that should be used.
 
         If *neither* ``cell_order`` nor ``tile_order`` is present, only in this
@@ -212,9 +207,7 @@ class TileDBWriteOptions:
     @classmethod
     def from_platform_config(
         cls,
-        platform_config: Union[
-            options.PlatformConfig, "TileDBWriteOptions", None
-        ] = None,
+        platform_config: options.PlatformConfig | "TileDBWriteOptions" | None = None,
     ) -> Self:
         """Creates the object from a value passed in ``platform_config``.
 
@@ -224,10 +217,10 @@ class TileDBWriteOptions:
         """
         create_entry = _dig_platform_config(platform_config, cls, ("tiledb", "write"))
         if isinstance(create_entry, dict):
-            attrs: Tuple[attrs_.Attribute, ...] = cls.__attrs_attrs__  # type: ignore[type-arg]
+            attrs: tuple[attrs_.Attribute, ...] = cls.__attrs_attrs__  # type: ignore[type-arg]
             attr_names = frozenset(a.name for a in attrs)
             # Explicitly opt out of type-checking for these kwargs.
-            filered_create_entry: Dict[str, Any] = {
+            filered_create_entry: dict[str, Any] = {
                 key: value for (key, value) in create_entry.items() if key in attr_names
             }
             return cls(**filered_create_entry)
@@ -238,8 +231,8 @@ _T = TypeVar("_T")
 
 
 def _dig_platform_config(
-    input: object, typ: Type[_T], full_path: Tuple[str, ...]
-) -> Union[Dict[str, object], _T]:
+    input: object, typ: type[_T], full_path: tuple[str, ...]
+) -> dict[str, object] | _T:
     """Looks for an object of the given type in dictionaries.
 
     This is used to extract a valid object out of ``platform_config``. If an

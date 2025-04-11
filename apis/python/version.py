@@ -77,7 +77,6 @@ import sys
 from datetime import date
 from os.path import basename, dirname, join, relpath
 from subprocess import DEVNULL, CalledProcessError, check_output
-from typing import List
 
 GIT_RELPATH = "apis/python/version.py"
 RELEASE_VERSION_FILE = join(dirname(__file__), "RELEASE-VERSION")
@@ -97,7 +96,7 @@ def err(*args, **kwargs):
 
 def lines(
     *cmd, drop_trailing_newline: bool = True, stderr=DEVNULL, **kwargs
-) -> List[str] | None:
+) -> list[str] | None:
     """Run a command, return its stdout as a list of lines.
 
     Strip each line's trailing newline, and drop the last line if it's empty, by default.

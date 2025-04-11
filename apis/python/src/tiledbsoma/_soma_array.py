@@ -3,7 +3,7 @@
 # Licensed under the MIT License.
 
 import warnings
-from typing import Any, Tuple
+from typing import Any
 
 import pyarrow as pa
 
@@ -105,7 +105,7 @@ class SOMAArray(SOMAObject[_tdb_handles.SOMAArrayWrapper[Any]]):
         )
         return self._handle.config_options_from_schema()
 
-    def non_empty_domain(self) -> Tuple[Tuple[Any, Any], ...]:
+    def non_empty_domain(self) -> tuple[tuple[Any, Any], ...]:
         """
         Retrieves the non-empty domain for each dimension, namely the smallest
         and largest indices in each dimension for which the array/dataframe has
@@ -116,21 +116,21 @@ class SOMAArray(SOMAObject[_tdb_handles.SOMAArrayWrapper[Any]]):
         """
         return self._handle.non_empty_domain()
 
-    def _tiledb_array_keys(self) -> Tuple[str, ...]:
+    def _tiledb_array_keys(self) -> tuple[str, ...]:
         """Return all dim and attr names."""
         return self._tiledb_dim_names() + self._tiledb_attr_names()
 
-    def _tiledb_dim_names(self) -> Tuple[str, ...]:
+    def _tiledb_dim_names(self) -> tuple[str, ...]:
         """Reads the dimension names from the schema: for example, ['obs_id', 'var_id']."""
         return self._handle.dim_names
 
-    def _tiledb_attr_names(self) -> Tuple[str, ...]:
+    def _tiledb_attr_names(self) -> tuple[str, ...]:
         """Reads the attribute names from the schema:
         for example, the list of column names in a dataframe.
         """
         return self._handle.attr_names
 
-    def _domain(self) -> Tuple[Tuple[Any, Any], ...]:
+    def _domain(self) -> tuple[tuple[Any, Any], ...]:
         """This is the SOMA domain, not the core domain.
         * For arrays with core current-domain support:
           o soma domain is core current domain
@@ -145,7 +145,7 @@ class SOMAArray(SOMAObject[_tdb_handles.SOMAArrayWrapper[Any]]):
         """
         return self._handle.domain
 
-    def _maxdomain(self) -> Tuple[Tuple[Any, Any], ...]:
+    def _maxdomain(self) -> tuple[tuple[Any, Any], ...]:
         """This is the SOMA maxdomain, not the core domain.
         * For arrays with core current-domain support:
           o soma domain is core current domain

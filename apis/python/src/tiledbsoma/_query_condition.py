@@ -9,7 +9,7 @@ filtering query results on attribute values.
 from __future__ import annotations
 
 import ast
-from typing import Any, Callable, List, Tuple, Union
+from typing import Any, Callable, Union
 
 import attrs
 import numpy as np
@@ -130,7 +130,7 @@ class QueryCondition:
     def init_query_condition(
         self,
         schema: pa.Schema,
-        query_attrs: List[str] | None,
+        query_attrs: list[str] | None,
     ):
         try:
             qctree = QueryConditionTree(schema, query_attrs)
@@ -150,7 +150,7 @@ class QueryCondition:
 @attrs.define
 class QueryConditionTree(ast.NodeVisitor):
     schema: pa.Schema
-    query_attrs: List[str]
+    query_attrs: list[str]
 
     def visit_BitOr(self, node):
         return clib.TILEDB_OR
@@ -336,7 +336,7 @@ class QueryConditionTree(ast.NodeVisitor):
         att: QueryConditionNodeElem,
         val: QueryConditionNodeElem,
         op: clib.tiledb_query_condition_op_t,
-    ) -> Tuple[
+    ) -> tuple[
         QueryConditionNodeElem,
         QueryConditionNodeElem,
         clib.tiledb_query_condition_op_t,
@@ -411,9 +411,9 @@ class QueryConditionTree(ast.NodeVisitor):
 
     def cast_val_to_dtype(
         self,
-        val: Union[str, int, float, bytes, np.int32, np.int64, np.float32],
+        val: str | int | float | bytes | np.int32 | np.int64 | np.float32,
         dtype: str,
-    ) -> Union[str, int, float, bytes, np.int32, np.int64, np.float32]:
+    ) -> str | int | float | bytes | np.int32 | np.int64 | np.float32:
         if dtype != "string":
             try:
                 # this prevents numeric strings ("1", '123.32') from getting

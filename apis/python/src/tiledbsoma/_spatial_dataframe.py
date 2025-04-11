@@ -8,7 +8,7 @@ Implementation of a base class shared between GeometryDataFrame and PointCloudDa
 
 from __future__ import annotations
 
-from typing import Any, Sequence, Tuple, Union
+from typing import Any, Sequence
 
 import pyarrow as pa
 import somacore
@@ -25,7 +25,7 @@ class SpatialDataFrame(SOMAArray):
 
     __slots__ = ()
 
-    def keys(self) -> Tuple[str, ...]:
+    def keys(self) -> tuple[str, ...]:
         """Returns the names of the columns when read back as a spatial dataframe.
 
         Examples:
@@ -41,7 +41,7 @@ class SpatialDataFrame(SOMAArray):
         return self._tiledb_array_keys()
 
     @property
-    def index_column_names(self) -> Tuple[str, ...]:
+    def index_column_names(self) -> tuple[str, ...]:
         """Returns index (dimension) column names.
 
         Lifecycle:
@@ -50,7 +50,7 @@ class SpatialDataFrame(SOMAArray):
         return self._tiledb_dim_names()
 
     @property
-    def axis_names(self) -> Tuple[str, ...]:
+    def axis_names(self) -> tuple[str, ...]:
         """The names of the axes of the coordinate space the data is defined on.
 
         Lifecycle: experimental
@@ -58,7 +58,7 @@ class SpatialDataFrame(SOMAArray):
         raise NotImplementedError("Must be implemented by the child class")
 
     @property
-    def domain(self) -> Tuple[Tuple[Any, Any], ...]:
+    def domain(self) -> tuple[tuple[Any, Any], ...]:
         """Returns a tuple of minimum and maximum values, inclusive, storable
         on each index column of the dataframe.
 
@@ -151,7 +151,7 @@ class SpatialDataFrame(SOMAArray):
 
     def write(
         self,
-        values: Union[pa.RecordBatch, pa.Table],
+        values: pa.RecordBatch | pa.Table,
         *,
         platform_config: options.PlatformConfig | None = None,
     ) -> Self:

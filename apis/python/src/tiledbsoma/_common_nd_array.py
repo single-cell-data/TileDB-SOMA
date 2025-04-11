@@ -6,7 +6,7 @@
 
 from __future__ import annotations
 
-from typing import Sequence, Tuple, Union, cast
+from typing import Sequence, cast
 
 import pyarrow as pa
 import somacore
@@ -32,7 +32,7 @@ class NDArray(SOMAArray, somacore.NDArray):
         uri: str,
         *,
         type: pa.DataType,
-        shape: Sequence[Union[int, None]],
+        shape: Sequence[int | None],
         platform_config: options.PlatformConfig | None = None,
         context: SOMATileDBContext | None = None,
         tiledb_timestamp: OpenTimestamp | None = None,
@@ -86,7 +86,7 @@ class NDArray(SOMAArray, somacore.NDArray):
         raise NotImplementedError("must be implemented by child class.")
 
     def resize(
-        self, newshape: Sequence[Union[int, None]], check_only: bool = False
+        self, newshape: Sequence[int | None], check_only: bool = False
     ) -> StatusAndReason:
         """Increases the shape of the array as specfied. Raises an error if the new
         shape is less than the current shape in any dimension. Raises an error if
@@ -106,7 +106,7 @@ class NDArray(SOMAArray, somacore.NDArray):
             return (True, "")
 
     def tiledbsoma_upgrade_shape(
-        self, newshape: Sequence[Union[int, None]], check_only: bool = False
+        self, newshape: Sequence[int | None], check_only: bool = False
     ) -> StatusAndReason:
         """Allows the array to have a resizeable shape as described in the TileDB-SOMA
         1.15 release notes.  Raises an error if the new shape exceeds maxshape in
@@ -119,7 +119,7 @@ class NDArray(SOMAArray, somacore.NDArray):
             return (True, "")
 
     @property
-    def shape(self) -> Tuple[int, ...]:
+    def shape(self) -> tuple[int, ...]:
         """Returns capacity of each dimension, always a list of length ``ndim``.
         This will not necessarily match the bounds of occupied cells within the array.
         Rather, it is the bounds outside of which no data may be read or written.
@@ -127,10 +127,10 @@ class NDArray(SOMAArray, somacore.NDArray):
         Lifecycle:
             Maturing.
         """
-        return cast(Tuple[int, ...], tuple(self._handle.shape))
+        return cast(tuple[int, ...], tuple(self._handle.shape))
 
     @property
-    def maxshape(self) -> Tuple[int, ...]:
+    def maxshape(self) -> tuple[int, ...]:
         """Returns the maximum resizable capacity of each dimension, always a list of length
         ``ndim``.  This will not necessarily match the bounds of occupied cells within the array.
         It is the upper limit for ``resize`` on the array.
@@ -138,7 +138,7 @@ class NDArray(SOMAArray, somacore.NDArray):
         Lifecycle:
             Maturing.
         """
-        return cast(Tuple[int, ...], tuple(self._handle.maxshape))
+        return cast(tuple[int, ...], tuple(self._handle.maxshape))
 
     @property
     def tiledbsoma_has_upgraded_shape(self) -> bool:
@@ -158,5 +158,5 @@ class NDArray(SOMAArray, somacore.NDArray):
         dim_shape: int | None,
         ndim: int,
         create_options: TileDBCreateOptions,
-    ) -> Tuple[int, int]:
+    ) -> tuple[int, int]:
         raise NotImplementedError("must be implemented by child class.")

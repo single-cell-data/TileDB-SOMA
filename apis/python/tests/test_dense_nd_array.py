@@ -2,7 +2,6 @@ import contextlib
 import datetime
 import json
 import pathlib
-from typing import Tuple
 
 import numpy as np
 import pyarrow as pa
@@ -20,7 +19,7 @@ from ._util import raises_no_typeguard
 )
 @pytest.mark.parametrize("element_type", NDARRAY_ARROW_TYPES_SUPPORTED)
 def test_dense_nd_array_create_ok(
-    tmp_path, shape: Tuple[int, ...], element_type: pa.DataType
+    tmp_path, shape: tuple[int, ...], element_type: pa.DataType
 ):
     """
     Test all cases we expect "create" to succeed.
@@ -133,14 +132,14 @@ def test_dense_nd_array_reopen(tmp_path):
 @pytest.mark.parametrize("shape", [(10,)])
 @pytest.mark.parametrize("element_type", NDARRAY_ARROW_TYPES_NOT_SUPPORTED)
 def test_dense_nd_array_create_fail(
-    tmp_path, shape: Tuple[int, ...], element_type: pa.DataType
+    tmp_path, shape: tuple[int, ...], element_type: pa.DataType
 ):
     with pytest.raises(TypeError):
         soma.DenseNDArray.create(tmp_path.as_posix(), type=element_type, shape=shape)
 
 
 @pytest.mark.parametrize("shape", [(10,), (10, 20), (10, 20, 2), (2, 4, 6, 8)])
-def test_dense_nd_array_read_write_tensor(tmp_path, shape: Tuple[int, ...]):
+def test_dense_nd_array_read_write_tensor(tmp_path, shape: tuple[int, ...]):
     uri = tmp_path.as_posix()
 
     a = soma.DenseNDArray.create(uri, type=pa.float64(), shape=shape)

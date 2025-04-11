@@ -13,8 +13,7 @@ from __future__ import annotations
 import io
 import json
 import sys
-from collections.abc import Callable
-from typing import Any, Dict, Tuple, TypeVar, Union, cast
+from typing import Any, Callable, TypeVar, Union, cast
 
 import tiledbsoma
 
@@ -293,7 +292,7 @@ def resize_experiment(
     uri: str,
     *,
     nobs: int,
-    nvars: Dict[str, int],
+    nvars: dict[str, int],
     verbose: bool = False,
     check_only: bool = False,
     context: tiledbsoma.SOMATileDBContext | None = None,
@@ -507,7 +506,7 @@ def _leaf_visitor_show_shapes(
     *,
     node_name: str,
     nobs: int | None,
-    nvars: Dict[str, int] | None,
+    nvars: dict[str, int] | None,
     ms_name: str | None,
     coll_name: str | None,
     verbose: bool,
@@ -644,7 +643,7 @@ def _leaf_visitor_upgrade(
     *,
     node_name: str,
     nobs: int | None,
-    nvars: Dict[str, int] | None,
+    nvars: dict[str, int] | None,
     ms_name: str | None,
     coll_name: str | None,
     verbose: bool,
@@ -773,7 +772,7 @@ def _leaf_visitor_resize(
     *,
     node_name: str,
     nobs: int | None,
-    nvars: Dict[str, int] | None,
+    nvars: dict[str, int] | None,
     ms_name: str | None,
     coll_name: str | None,
     verbose: bool,
@@ -961,7 +960,7 @@ def _print_dry_run_result(
 
 def _get_new_var_shape(
     *,
-    nvars: Dict[str, int] | None,
+    nvars: dict[str, int] | None,
     ms_name: str | None,
 ) -> int:
     """Maps from experiment-level nobs and per-measurement nvar to the correct resizes
@@ -982,12 +981,12 @@ def _get_new_var_shape(
 
 def _get_new_ndarray_shape(
     *,
-    current_shape: Tuple[int, ...],
+    current_shape: tuple[int, ...],
     nobs: int | None,
-    nvars: Dict[str, int] | None,
+    nvars: dict[str, int] | None,
     ms_name: str | None,
     coll_name: str | None,
-) -> Tuple[int, ...]:
+) -> tuple[int, ...]:
     """Maps from experiment-level nobs and per-measurement nvar to the correct resizes
     for various kinds of n-d array within a SOMA Experiment.
     """
@@ -1032,7 +1031,7 @@ def _leaf_visitor_get_shapes(
     *,
     node_name: str,
     nobs: int | None,
-    nvars: Dict[str, int] | None,
+    nvars: dict[str, int] | None,
     ms_name: str | None,
     coll_name: str | None,
     verbose: bool,

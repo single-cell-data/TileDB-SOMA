@@ -8,7 +8,6 @@ from copy import deepcopy
 from dataclasses import dataclass
 from os.path import join
 from pathlib import Path
-from typing import List
 
 import numpy as np
 import pandas as pd
@@ -38,7 +37,7 @@ class RoundTrip:
     # Columns that should be persisted; all are expected to be of type "large string" (for the purposes of these test
     # cases); the required `soma_joinid` (with type `int64 not null`) is excluded from this list, but always verified to
     # also exist.
-    persisted_column_names: List[str]
+    persisted_column_names: list[str]
     # Expected "original index metadata" (attached to the persisted SOMA DataFrame)
     persisted_metadata: str | None = None
     # Argument passed to `_write_dataframe` on ingest (default here matches `from_anndata`'s "obs" path)
@@ -110,7 +109,7 @@ ROUND_TRIPS = [
 
 
 def verify_metadata(
-    sdf: DataFrame, persisted_column_names: List[str], persisted_metadata: str | None
+    sdf: DataFrame, persisted_column_names: list[str], persisted_metadata: str | None
 ):
     # Verify column names and types
     schema = sdf.schema
@@ -131,7 +130,7 @@ def verify_metadata(
 def test_adata_io_roundtrips(
     tmp_path: Path,
     original_df: pd.DataFrame,
-    persisted_column_names: List[str],
+    persisted_column_names: list[str],
     persisted_metadata: str | None,
     ingest_id_column_name: str | None,
     outgested_df: pd.DataFrame,
@@ -173,7 +172,7 @@ def test_adata_io_roundtrips(
 def test_df_io_roundtrips(
     tmp_path: Path,
     original_df: pd.DataFrame,
-    persisted_column_names: List[str],
+    persisted_column_names: list[str],
     persisted_metadata: str | None,
     ingest_id_column_name: str | None,
     outgested_df: pd.DataFrame,

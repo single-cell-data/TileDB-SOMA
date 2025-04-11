@@ -1,11 +1,10 @@
 from dataclasses import asdict, fields
 from inspect import getfullargspec
-from typing import List
 
 import pytest
 
 
-def parametrize_cases(cases: List):
+def parametrize_cases(cases: list):
     """Parametrize a test with a list of test cases (each an instance of a dataclass).
 
     The cases are expected to have an ``id: str`` field, which is used as the test-case "ID".
