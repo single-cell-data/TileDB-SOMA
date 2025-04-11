@@ -82,7 +82,7 @@ def test_sparse_nd_array_basics(
         dikt = {"soma_data": [4, 5]}
         for i in range(ndim):
             dikt[dim_names[i]] = coords[i]
-        table = pa.Table.from_pydict(dikt)
+        table = pa.Table.from_pydict(dikt, schema=snda.schema)
         snda.write(table)
 
     # Test the various accessors
@@ -104,7 +104,7 @@ def test_sparse_nd_array_basics(
         with pytest.raises(tiledbsoma.SOMAError):
             dikt = {name: [shape + 20] for name, shape in zip(dim_names, arg_shape)}
             dikt["soma_data"] = [30]
-            table = pa.Table.from_pydict(dikt)
+            table = pa.Table.from_pydict(dikt, schema=snda.schema)
             snda.write(table)
 
     with tiledbsoma.SparseNDArray.open(uri) as snda:
@@ -152,7 +152,7 @@ def test_sparse_nd_array_basics(
         for i in range(ndim):
             dikt[dim_names[i]] = [arg_shape[i] + 20]
         dikt["soma_data"] = pa.array([34.5], type=element_dtype)
-        table = pa.Table.from_pydict(dikt)
+        table = pa.Table.from_pydict(dikt, schema=snda.schema)
 
         # Re-test writes out of old bounds, within new bounds
         with tiledbsoma.SparseNDArray.open(uri, "w") as snda:
