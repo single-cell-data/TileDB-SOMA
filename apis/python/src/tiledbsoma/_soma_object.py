@@ -63,7 +63,6 @@ class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
         tiledb_timestamp: OpenTimestamp | None = None,
         context: SOMATileDBContext | None = None,
         platform_config: options.PlatformConfig | None = None,
-        clib_type: str | None = None,
     ) -> Self:
         """Opens this specific type of SOMA object.
 
@@ -77,7 +76,7 @@ class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
             tiledb_timestamp:
                 The TileDB timestamp to open this object at,
                 either an int representing milliseconds since the Unix epoch
-                or a datetime.dateime object.
+                or a datetime.datetime object.
                 When not provided (the default), the current time is used.
 
         Returns:
@@ -164,7 +163,7 @@ class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
             tiledb_timestamp:
                 The TileDB timestamp to open this object at,
                 either an int representing milliseconds since the Unix epoch
-                or a datetime.dateime object.
+                or a datetime.datetime object.
                 When not provided (the default), the current time is used.
 
         Raises:
@@ -278,7 +277,7 @@ class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
             )
         if self.mode != "r":
             raise SOMAError(
-                f"{self.__class__.__name__} ({self.uri}) must be open for writing"
+                f"{self.__class__.__name__} ({self.uri}) must be open for reading"
             )
 
     @property
