@@ -317,6 +317,9 @@ def _treewalk(
     Args:
         uri: URI of the element to visit and visit the children of.
         node_name: Name of the element to visit and visit the children of.
+        leaf_visitor: A callback function that returns a dict for a given
+            leaf node (DataFrame or ND Array), along with doing any
+            side effects such as printing to the output handle.
 
         Nominal kwargs:
 
