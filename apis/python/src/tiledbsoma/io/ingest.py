@@ -2043,6 +2043,10 @@ def _write_matrix_to_denseNDArray(
 
     add_metadata(soma_ndarray, additional_metadata)
 
+    # TileDB does not support big-endian so coerce to little-endian
+    if isinstance(matrix, np.ndarray) and matrix.dtype.byteorder == ">":
+        matrix = matrix.byteswap().view(matrix.dtype.newbyteorder("<"))
+
     # There is a chunk-by-chunk already-done check for resume mode, below.
     # This full-matrix-level check here might seem redundant, but in fact it's important:
     # * By checking input bounds against storage NED here, we can see if the entire matrix
@@ -2437,6 +2441,10 @@ def _write_matrix_to_sparseNDArray(
     axis_1_mapping: AxisIDMapping,
 ) -> None:
     """Write a matrix to an empty DenseNDArray"""
+
+    # TileDB does not support big-endian so coerce to little-endian
+    if isinstance(matrix, np.ndarray) and matrix.dtype.byteorder == ">":
+        matrix = matrix.byteswap().view(matrix.dtype.newbyteorder("<"))
 
     def _coo_to_table(
         mat_coo: sp.coo_matrix,
