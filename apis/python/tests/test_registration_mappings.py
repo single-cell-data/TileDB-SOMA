@@ -1748,3 +1748,59 @@ def test_subset_from(tmp_path) -> None:
             set(adata.raw.var.cat_float.cat.categories)
             - set(srd.var_axes["raw"].enum_values["cat_float"].categories)
         )
+
+
+def test_field_name(tmp_path):
+    soma_uri = tmp_path.as_posix()
+
+    ms_name = "RNA"
+    obs_field_name = "cell_id"
+    var_field_name = "gene_id"
+
+    anndatas = [
+        create_anndata_canned(1, obs_field_name, var_field_name),
+        create_anndata_canned(2, obs_field_name, var_field_name),
+    ]
+
+    for adata in anndatas:
+        # make all obs & var overlap in the index, to confirm we are using the join id column
+        adata.obs = adata.obs.reset_index()
+        adata.obs.index = adata.obs.index.astype(str)
+        adata.var = adata.var.reset_index()
+        adata.var.index = adata.var.index.astype(str)
+
+    tiledbsoma.io.from_anndata(
+        soma_uri,
+        anndatas[0],
+        measurement_name=ms_name,
+        ingest_mode="schema_only",
+        obs_id_name=obs_field_name,
+        var_id_name=var_field_name,
+    )
+
+    rd = tiledbsoma.io.register_anndatas(
+        soma_uri,
+        anndatas,
+        measurement_name=ms_name,
+        obs_field_name=obs_field_name,
+        var_field_name=var_field_name,
+    )
+
+    rd.prepare_experiment(soma_uri)
+
+    for adata in anndatas:
+        tiledbsoma.io.from_anndata(
+            soma_uri,
+            adata,
+            measurement_name=ms_name,
+            registration_mapping=rd.subset_for_anndata(adata),
+            obs_id_name=obs_field_name,
+            var_id_name=var_field_name,
+        )
+
+    with tiledbsoma.Experiment.open(soma_uri) as exp:
+        assert exp.obs.count == sum(adata.n_obs for adata in anndatas)
+        assert (
+            exp.ms[ms_name].var.count
+            == pd.concat(adata.var[var_field_name] for adata in anndatas).nunique()
+        )
