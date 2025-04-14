@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import gc
 import json
 import random
 import tempfile
@@ -1567,6 +1568,6 @@ def test_vfs_lifetime_65831():
         str(TESTDATA / "pbmc-small.h5ad")
     )
     del vfs
-    # Implicitly ensure that read does not segfault
-    fb.read(100)
+    gc.collect()  # Make sure that vfs is freed
+    fb.read(100)  # Implicitly ensure that read does not segfault
     fb.close()
