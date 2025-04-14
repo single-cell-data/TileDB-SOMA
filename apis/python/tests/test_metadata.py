@@ -187,11 +187,15 @@ def non_soma_metadata(obj) -> Dict[str, Any]:
         0,
         1.00000001,
         -3.1415,
+        np.float64(-3.1415),
         "",
         "\x00",
         "\U00000000",  # get's casted to \x00
         "\x10abc",
         "\U00081a63×\x84\x94𘪩a\U000a4f44Î\x10m",
+        "😀",
+        "¡ ¢ £ ¤ ¥ ¦ § ¨ © ª « ¬ ­ ® ¯ ° ± ² ³ ´ µ ¶ · ¸ ¹ º » ¼ ½ ¾ ¿",
+        "␀ ␁ ␂ ␃ ␄ ␅ ␆ ␇ ␈ ␉ ␊ ␋ ␌ ␍ ␎ ␏ ␐ ␑ ␒ ␓ ␔ ␕ ␖ ␗ ␘ ␙ ␚ ␛ ␜ ␝ ␞ ␟ ␠ ␡ ␢ ␣ ␤",
         np.str_("foo"),
         "a string",
         math.nan,
@@ -226,7 +230,22 @@ def test_metadata_marshalling_OK(soma_object, test_value):
 
 @pytest.mark.parametrize(
     "bad_value",
-    [["a", "b", "c"], {"a": False}, [1, 2, 3], np.arange(10)],
+    [
+        ["a", "b", "c"],
+        {"a": False},
+        [1, 2, 3],
+        np.arange(10),
+        np.bool(True),
+        np.int8(10),
+        np.int16(10),
+        np.int32(10),
+        np.int64(10),
+        np.uint8(10),
+        np.uint16(10),
+        np.uint32(10),
+        np.uint64(10),
+        np.float32(10),
+    ],
 )
 def test_metadata_marshalling_FAIL(soma_object, bad_value):
     """Verify that unsupported metadata types raise an error immediately."""
@@ -239,7 +258,15 @@ def test_metadata_marshalling_FAIL(soma_object, bad_value):
 
 @pytest.mark.parametrize(
     "good_key",
-    ["", "\x10abc", "\U00081a63×\x84\x94𘪩a\U000a4f44Î\x10m", "a string"],
+    [
+        "",
+        "\x10abc",
+        "\U00081a63×\x84\x94𘪩a\U000a4f44Î\x10m",
+        "a string",
+        "😀",
+        "¡ ¢ £ ¤ ¥ ¦ § ¨ © ª « ¬ ­ ® ¯ ° ± ² ³ ´ µ ¶ · ¸ ¹ º » ¼ ½ ¾ ¿",
+        "␀ ␁ ␂ ␃ ␄ ␅ ␆ ␇ ␈ ␉ ␊ ␋ ␌ ␍ ␎ ␏ ␐ ␑ ␒ ␓ ␔ ␕ ␖ ␗ ␘ ␙ ␚ ␛ ␜ ␝ ␞ ␟ ␠ ␡ ␢ ␣ ␤",
+    ],
 )
 def test_metadata_good_key(soma_object, good_key):
     """Verify that unsupported metadata types raise an error immediately."""
@@ -249,7 +276,14 @@ def test_metadata_good_key(soma_object, good_key):
 
 @pytest.mark.parametrize(
     "bad_key",
-    ["\x00", "AA\x00BB", "AA\U00000000BB"],
+    [
+        "\x00",
+        "AA\x00BB",
+        "AA\U00000000BB",
+        "😀\U00000000",
+        "¡ ¢ £ ¤ ¥ ¦ § ¨ © ª « ¬ ­ ® ¯\x00 ° ± ² ³ ´ µ ¶ · ¸ ¹ º » ¼ ½ ¾ ¿",
+        "␀ ␁ ␂ ␃ ␄ ␅ ␆ ␇ ␈ ␉ ␊ ␋ ␌ ␍ ␎\x00 ␏ ␐ ␑ ␒ ␓ ␔ ␕ ␖ ␗ ␘ ␙ ␚ ␛ ␜ ␝ ␞ ␟ ␠ ␡ ␢ ␣ ␤",
+    ],
 )
 def test_metadata_bad_key(soma_object, bad_key):
     """Verify that unsupported metadata types raise an error immediately."""
@@ -270,6 +304,9 @@ def test_metadata_bad_key(soma_object, bad_key):
         b"\xc2",
         b"\x00",
         np.bytes_("foo"),
+        "😀\U00000000",
+        "¡ ¢ £ ¤ ¥ ¦ § ¨ © ª « ¬ ­ ® ¯\x00 ° ± ² ³ ´ µ ¶ · ¸ ¹ º » ¼ ½ ¾ ¿",
+        "␀ ␁ ␂ ␃ ␄ ␅ ␆ ␇ ␈ ␉ ␊ ␋ ␌ ␍ ␎\x00 ␏ ␐ ␑ ␒ ␓ ␔ ␕ ␖ ␗ ␘ ␙ ␚ ␛ ␜ ␝ ␞ ␟ ␠ ␡ ␢ ␣ ␤",
     ],
 )
 def test_metadata_bad_string_value(soma_object, bad_value):
