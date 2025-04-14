@@ -9,7 +9,7 @@ Implementation of SOMA DenseNDArray.
 from __future__ import annotations
 
 import warnings
-from typing import List, Sequence, Tuple, Union
+from typing import Sequence
 
 import numpy as np
 import pyarrow as pa
@@ -94,7 +94,7 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
         uri: str,
         *,
         type: pa.DataType,
-        shape: Sequence[Union[int, None]],
+        shape: Sequence[int | None],
         platform_config: options.PlatformConfig | None = None,
         context: SOMATileDBContext | None = None,
         tiledb_timestamp: OpenTimestamp | None = None,
@@ -291,7 +291,7 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
         clib_handle = self._handle._handle
 
         # Compute the coordinates for the dense array.
-        new_coords: List[Union[int, Slice[int], None]] = []
+        new_coords: list[int | Slice[int] | None] = []
         for c in coords:
             if isinstance(c, slice) and isinstance(c.stop, int):
                 new_coords.append(slice(c.start, c.stop, c.step))
@@ -328,7 +328,7 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
         dim_shape: int | None,
         ndim: int,
         create_options: TileDBCreateOptions,
-    ) -> Tuple[int, int]:
+    ) -> tuple[int, int]:
         """Given a user-specified shape (maybe ``None``) along a particular dimension,
         returns a tuple of the TileDB capacity and extent for that dimension, suitable
         for schema creation. If the user-specified shape is None, the largest possible

@@ -7,7 +7,7 @@ import shutil
 import struct
 import time
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, List
 
 import numpy as np
 import pandas as pd
@@ -1214,7 +1214,7 @@ def test_index_types(tmp_path, make_dataframe):
 
 
 def make_multiply_indexed_dataframe(
-    tmp_path, index_column_names: List[str], domain: List[Any]
+    tmp_path, index_column_names: list[str], domain: List[Any]
 ):
     """
     Creates a variably-indexed DataFrame for use in tests below.
@@ -1240,7 +1240,7 @@ def make_multiply_indexed_dataframe(
         domain=domain,
     )
 
-    data: Dict[str, list] = {
+    data: dict[str, list] = {
         "0_thru_5": [0, 1, 2, 3, 4, 5],
         "strings_aaa": ["aaa", "aaa", "bbb", "bbb", "ccc", "ccc"],
         "zero_one": [0, 1, 0, 1, 0, 1],
@@ -1614,7 +1614,7 @@ def test_read_indexing(tmp_path, io):
             {k: io[k] for k in ("coords", "partitions", "value_filter") if k in io}
         )
 
-        # `throws` can be `Type[Exception]`, or `(Type[Exception], bool)` indicating explicitly
+        # `throws` can be `type[Exception]`, or `(type[Exception], bool)` indicating explicitly
         # whether Typeguard should be enabled during the `with raises` check.
         throws = io.get("throws", None)
         if throws:
