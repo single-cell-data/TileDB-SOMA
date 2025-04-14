@@ -1567,6 +1567,6 @@ def test_vfs_lifetime_65831():
         str(TESTDATA / "pbmc-small.h5ad")
     )
     del vfs
-    # Ensure that read does not segfault
+    # Implicitly ensure that read does not segfault
     fb.read(100)
     fb.close()
