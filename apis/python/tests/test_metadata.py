@@ -1,5 +1,5 @@
 import math
-from typing import Any, Dict
+from typing import Any
 
 import numpy as np
 import pyarrow as pa
@@ -175,7 +175,7 @@ def test_set_delete_metadata(soma_object):
         assert non_soma_metadata(reader) == {}
 
 
-def non_soma_metadata(obj) -> Dict[str, Any]:
+def non_soma_metadata(obj) -> dict[str, Any]:
     return {k: v for (k, v) in obj.metadata.items() if not k.startswith("soma_")}
 
 

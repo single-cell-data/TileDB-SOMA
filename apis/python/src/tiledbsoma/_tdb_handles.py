@@ -13,15 +13,11 @@ import abc
 import enum
 from typing import (
     Any,
-    Dict,
     Generic,
     Iterator,
-    List,
     Mapping,
     MutableMapping,
     Sequence,
-    Tuple,
-    Type,
     TypeVar,
     Union,
     cast,
@@ -38,7 +34,7 @@ from ._exception import DoesNotExistError, SOMAError, is_does_not_exist_error
 from ._types import METADATA_TYPES, Metadatum, OpenTimestamp, StatusAndReason
 from .options._soma_tiledb_context import SOMATileDBContext
 
-AxisDomain = Union[None, Tuple[Any, Any], List[Any]]
+AxisDomain = Union[None, tuple[Any, Any], list[Any]]
 Domain = Sequence[AxisDomain]
 
 RawHandle = Union[
@@ -278,10 +274,10 @@ AnyWrapper = Wrapper[RawHandle]
 @attrs.define(frozen=True)
 class GroupEntry:
     uri: str
-    wrapper_type: Type[AnyWrapper]
+    wrapper_type: type[AnyWrapper]
 
     @classmethod
-    def from_soma_group_entry(cls, obj: Tuple[str, str]) -> "GroupEntry":
+    def from_soma_group_entry(cls, obj: tuple[str, str]) -> "GroupEntry":
         uri, type = obj[0], obj[1]
         if type == "SOMAArray":
             return GroupEntry(uri, SOMAArrayWrapper)
@@ -293,7 +289,7 @@ class GroupEntry:
 class SOMAGroupWrapper(Wrapper[_SOMAObjectType]):
     """Base class for Pybind11 SOMAGroupWrapper handles."""
 
-    _WRAPPED_TYPE: Type[_SOMAObjectType]
+    _WRAPPED_TYPE: type[_SOMAObjectType]
 
     clib_type = "SOMAGroup"
 
@@ -325,8 +321,8 @@ class SOMAGroupWrapper(Wrapper[_SOMAObjectType]):
     def meta(self) -> "MetadataWrapper":
         return self.metadata
 
-    def members(self) -> Dict[str, Tuple[str, str]]:
-        return cast(Dict[str, Tuple[str, str]], self._handle.members())
+    def members(self) -> dict[str, tuple[str, str]]:
+        return cast(dict[str, tuple[str, str]], self._handle.members())
 
 
 class CollectionWrapper(SOMAGroupWrapper[clib.SOMACollection]):
@@ -362,7 +358,7 @@ class SceneWrapper(SOMAGroupWrapper[clib.SOMAScene]):
 class SOMAArrayWrapper(Wrapper[_SOMAObjectType]):
     """Base class for Pybind11 SOMAArrayWrapper handles."""
 
-    _WRAPPED_TYPE: Type[_SOMAObjectType]
+    _WRAPPED_TYPE: type[_SOMAObjectType]
 
     clib_type = "SOMAArray"
 
@@ -414,41 +410,41 @@ class SOMAArrayWrapper(Wrapper[_SOMAObjectType]):
         return len(self._handle.dimension_names)
 
     @property
-    def domain(self) -> Tuple[Tuple[object, object], ...]:
+    def domain(self) -> tuple[tuple[object, object], ...]:
         from ._util import _cast_domainish
 
         return _cast_domainish(self._handle.domain())
 
     @property
-    def maxdomain(self) -> Tuple[Tuple[object, object], ...]:
+    def maxdomain(self) -> tuple[tuple[object, object], ...]:
         from ._util import _cast_domainish
 
         return _cast_domainish(self._handle.maxdomain())
 
-    def non_empty_domain(self) -> Tuple[Tuple[object, object], ...]:
+    def non_empty_domain(self) -> tuple[tuple[object, object], ...]:
         from ._util import _cast_domainish
 
         return _cast_domainish(self._handle.non_empty_domain())
 
     @property
-    def attr_names(self) -> Tuple[str, ...]:
+    def attr_names(self) -> tuple[str, ...]:
         return tuple(
             f.name for f in self.schema if f.name not in self._handle.dimension_names
         )
 
     @property
-    def dim_names(self) -> Tuple[str, ...]:
+    def dim_names(self) -> tuple[str, ...]:
         return tuple(self._handle.dimension_names)
 
     @property
-    def shape(self) -> Tuple[int, ...]:
+    def shape(self) -> tuple[int, ...]:
         """Not implemented for DataFrame."""
-        return cast(Tuple[int, ...], tuple(self._handle.shape))
+        return cast(tuple[int, ...], tuple(self._handle.shape))
 
     @property
-    def maxshape(self) -> Tuple[int, ...]:
+    def maxshape(self) -> tuple[int, ...]:
         """Not implemented for DataFrame."""
-        return cast(Tuple[int, ...], tuple(self._handle.maxshape))
+        return cast(tuple[int, ...], tuple(self._handle.maxshape))
 
     @property
     def maybe_soma_joinid_shape(self) -> int | None:
@@ -480,22 +476,20 @@ class SOMAArrayWrapper(Wrapper[_SOMAObjectType]):
         """Only implemented for DataFrame."""
         raise NotImplementedError
 
-    def resize(self, newshape: Sequence[Union[int, None]]) -> None:
+    def resize(self, newshape: Sequence[int | None]) -> None:
         """Not implemented for DataFrame."""
         raise NotImplementedError
 
-    def tiledbsoma_can_resize(
-        self, newshape: Sequence[Union[int, None]]
-    ) -> StatusAndReason:
+    def tiledbsoma_can_resize(self, newshape: Sequence[int | None]) -> StatusAndReason:
         """Not implemented for DataFrame."""
         raise NotImplementedError
 
-    def tiledbsoma_upgrade_shape(self, newshape: Sequence[Union[int, None]]) -> None:
+    def tiledbsoma_upgrade_shape(self, newshape: Sequence[int | None]) -> None:
         """Not implemented for DataFrame."""
         raise NotImplementedError
 
     def tiledbsoma_can_upgrade_shape(
-        self, newshape: Sequence[Union[int, None]]
+        self, newshape: Sequence[int | None]
     ) -> StatusAndReason:
         """Not implemented for DataFrame."""
         raise NotImplementedError
@@ -685,22 +679,20 @@ class DenseNDArrayWrapper(SOMAArrayWrapper[clib.SOMADenseNDArray]):
         """Wrapper-class internals"""
         return cast(bool, self._handle.tiledbsoma_has_upgraded_shape)
 
-    def resize(self, newshape: Sequence[Union[int, None]]) -> None:
+    def resize(self, newshape: Sequence[int | None]) -> None:
         """Wrapper-class internals"""
         self._handle.resize(newshape)
 
-    def tiledbsoma_can_resize(
-        self, newshape: Sequence[Union[int, None]]
-    ) -> StatusAndReason:
+    def tiledbsoma_can_resize(self, newshape: Sequence[int | None]) -> StatusAndReason:
         """Wrapper-class internals"""
         return cast(StatusAndReason, self._handle.tiledbsoma_can_resize(newshape))
 
-    def tiledbsoma_upgrade_shape(self, newshape: Sequence[Union[int, None]]) -> None:
+    def tiledbsoma_upgrade_shape(self, newshape: Sequence[int | None]) -> None:
         """Wrapper-class internals"""
         self._handle.tiledbsoma_upgrade_shape(newshape)
 
     def tiledbsoma_can_upgrade_shape(
-        self, newshape: Sequence[Union[int, None]]
+        self, newshape: Sequence[int | None]
     ) -> StatusAndReason:
         """Wrapper-class internals"""
         return cast(
@@ -722,22 +714,20 @@ class SparseNDArrayWrapper(SOMAArrayWrapper[clib.SOMASparseNDArray]):
         """Wrapper-class internals"""
         return cast(bool, self._handle.tiledbsoma_has_upgraded_shape)
 
-    def resize(self, newshape: Sequence[Union[int, None]]) -> None:
+    def resize(self, newshape: Sequence[int | None]) -> None:
         """Wrapper-class internals"""
         self._handle.resize(newshape)
 
-    def tiledbsoma_can_resize(
-        self, newshape: Sequence[Union[int, None]]
-    ) -> StatusAndReason:
+    def tiledbsoma_can_resize(self, newshape: Sequence[int | None]) -> StatusAndReason:
         """Wrapper-class internals"""
         return cast(StatusAndReason, self._handle.can_resize(newshape))
 
-    def tiledbsoma_upgrade_shape(self, newshape: Sequence[Union[int, None]]) -> None:
+    def tiledbsoma_upgrade_shape(self, newshape: Sequence[int | None]) -> None:
         """Wrapper-class internals"""
         self._handle.tiledbsoma_upgrade_shape(newshape)
 
     def tiledbsoma_can_upgrade_shape(
-        self, newshape: Sequence[Union[int, None]]
+        self, newshape: Sequence[int | None]
     ) -> StatusAndReason:
         """Wrapper-class internals"""
         return cast(
@@ -807,8 +797,8 @@ class MetadataWrapper(MutableMapping[str, Any]):
     """
 
     owner: Wrapper[RawHandle]
-    cache: Dict[str, Any]
-    _mods: Dict[str, "_DictMod"] = attrs.field(init=False, factory=dict)
+    cache: dict[str, Any]
+    _mods: dict[str, "_DictMod"] = attrs.field(init=False, factory=dict)
     """Tracks the modifications we have made to cache entries."""
 
     def __len__(self) -> int:
