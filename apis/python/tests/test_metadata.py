@@ -235,7 +235,7 @@ def test_metadata_marshalling_OK(soma_object, test_value):
         {"a": False},
         [1, 2, 3],
         np.arange(10),
-        np.bool(True),
+        np.bool_(True),
         np.int8(10),
         np.int16(10),
         np.int32(10),
