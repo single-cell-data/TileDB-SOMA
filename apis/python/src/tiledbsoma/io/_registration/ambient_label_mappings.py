@@ -712,7 +712,7 @@ class AnnDataAxisMetadata:
 
 
 def _get_dataframe_joinid_index(df: pd.DataFrame, field_name: str) -> pd.Index:  # type: ignore[type-arg]
-    """Given an AnnData obs/var, extract the Index for the user-selected join column."""
+    """Given an AnnData obs/var, extract the index for the user-selected join column."""
     if field_name in df:
         return cast("pd.Index[Any]", pd.Index(df[field_name]))
     if df.index.name in (field_name, "index", None):
