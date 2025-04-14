@@ -1,5 +1,5 @@
 ---
-title: Daily {{ tools.context.action }} run failing
+title: Daily `python-dockers.yml` build run failing
 labels: bug
 ---
 
