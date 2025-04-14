@@ -110,19 +110,29 @@ class ExperimentAmbientLabelMapping:
     ) -> ExperimentIDMapping:
 
         obs_axis = AxisIDMapping(
-            data=self.obs_axis.joinid_map.loc[adata.obs.index].soma_joinid.to_numpy()
+            data=self.obs_axis.joinid_map.loc[
+                _get_dataframe_joinid_index(adata.obs, self.obs_axis.field_name)
+            ].soma_joinid.to_numpy()
         )
         var_axes = {
             measurement_name: AxisIDMapping(
                 data=self.var_axes[measurement_name]
-                .joinid_map.loc[adata.var.index]
+                .joinid_map.loc[
+                    _get_dataframe_joinid_index(
+                        adata.var, self.var_axes[measurement_name].field_name
+                    )
+                ]
                 .soma_joinid.to_numpy()
             )
         }
         if adata.raw is not None:
             var_axes["raw"] = AxisIDMapping(
                 data=self.var_axes["raw"]
-                .joinid_map.loc[adata.raw.var.index]
+                .joinid_map.loc[
+                    _get_dataframe_joinid_index(
+                        adata.raw.var, self.var_axes["raw"].field_name
+                    )
+                ]
                 .soma_joinid.to_numpy()
             )
 
@@ -153,7 +163,10 @@ class ExperimentAmbientLabelMapping:
         return attrs.evolve(
             self,
             obs_axis=attrs.evolve(
-                self.obs_axis, joinid_map=self.obs_axis.joinid_map.loc[adata.obs.index]
+                self.obs_axis,
+                joinid_map=self.obs_axis.joinid_map.loc[
+                    _get_dataframe_joinid_index(adata.obs, self.obs_axis.field_name)
+                ],
             ),
         )
 
@@ -282,14 +295,14 @@ class ExperimentAmbientLabelMapping:
             obs_metadata.append(
                 AnnDataAxisMetadata(
                     field_name=obs_field_name,
-                    field_index=adata.obs.index,
+                    field_index=_get_dataframe_joinid_index(adata.obs, obs_field_name),
                     enum_values=categorical_columns(adata.obs),
                 )
             )
             var_metadata.append(
                 AnnDataAxisMetadata(
                     field_name=var_field_name,
-                    field_index=adata.var.index,
+                    field_index=_get_dataframe_joinid_index(adata.var, var_field_name),
                     enum_values=categorical_columns(adata.var),
                 )
             )
@@ -297,7 +310,9 @@ class ExperimentAmbientLabelMapping:
                 raw_var_metadata.append(
                     AnnDataAxisMetadata(
                         field_name=var_field_name,
-                        field_index=adata.raw.var.index,
+                        field_index=_get_dataframe_joinid_index(
+                            adata.raw.var, var_field_name
+                        ),
                         enum_values=categorical_columns(adata.raw.var),
                     )
                 )
@@ -694,3 +709,12 @@ class AnnDataAxisMetadata:
                 inverted_enum_values[k].append(v)
 
         return {k: _merge_categoricals(k, v) for k, v in inverted_enum_values.items()}
+
+
+def _get_dataframe_joinid_index(df: pd.DataFrame, field_name: str) -> pd.Index:  # type: ignore[type-arg]
+    """Given an AnnData obs/var, extract the index for the user-selected join column."""
+    if field_name in df:
+        return cast("pd.Index[Any]", pd.Index(df[field_name]))
+    if df.index.name in (field_name, "index", None):
+        return df.index
+    raise ValueError(f"Could not find field name {field_name} in dataframe.")
