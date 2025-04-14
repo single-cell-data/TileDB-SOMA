@@ -1537,3 +1537,23 @@ def test_decat_append(tmp_path):
 def test_from_h5ad_bad_uri():
     with pytest.raises(tiledbsoma.SOMAError, match="URI /nonesuch is not a valid URI"):
         next(tiledbsoma.io._util.read_h5ad("/nonesuch").gen)
+
+
+def test_from_anndata_byteorder_63459(tmp_path, conftest_pbmc_small):
+    # https://app.shortcut.com/tiledb-inc/story/63459
+
+    ad_uri = (tmp_path / "anndata_pbmc_small").as_posix()
+    exp_uri = (tmp_path / "exp").as_posix()
+
+    # Make a copy of conftest_pbmc_small before modifying so we don't change the
+    # original test file
+    ad = conftest_pbmc_small.copy(ad_uri)
+
+    # host is little-endian, array is big-endian
+    ad.uns["X"] = np.array([7972], dtype=">u2")
+
+    tiledbsoma.io.from_anndata(exp_uri, ad, "RNA")
+
+    with tiledbsoma.Experiment.open(exp_uri) as E:
+        new_ad = tiledbsoma.io.to_anndata(E, "RNA", X_layer_name="data")
+        assert ad.uns["X"] == new_ad.uns["X"]
