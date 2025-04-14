@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import gc
 import json
 import random
 import tempfile
@@ -1557,3 +1558,16 @@ def test_from_anndata_byteorder_63459(tmp_path, conftest_pbmc_small):
     with tiledbsoma.Experiment.open(exp_uri) as E:
         new_ad = tiledbsoma.io.to_anndata(E, "RNA", X_layer_name="data")
         assert ad.uns["X"] == new_ad.uns["X"]
+
+
+def test_vfs_lifetime_65831():
+    # https://app.shortcut.com/tiledb-inc/story/65831/python-c-segv-memory-issues-in-somavfs-somavfsfilebuf
+    context = tiledbsoma.SOMATileDBContext()
+    vfs = tiledbsoma.pytiledbsoma.SOMAVFS(context.native_context)
+    fb = tiledbsoma.pytiledbsoma.SOMAVFSFilebuf(vfs).open(
+        str(TESTDATA / "pbmc-small.h5ad")
+    )
+    del vfs
+    gc.collect()  # Make sure that vfs is freed
+    fb.read(100)  # Implicitly ensure that read does not segfault
+    fb.close()

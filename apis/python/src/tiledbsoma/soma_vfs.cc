@@ -33,12 +33,12 @@ class SOMAVFS : public tiledb::VFS {
 class SOMAVFSFilebuf : public tiledb::impl::VFSFilebuf {
    private:
     std::streamsize offset_ = 0;
-    SOMAVFS vfs_;
+    std::shared_ptr<SOMAVFS> vfs_;
     std::ios::openmode openmode_;
 
    public:
-    SOMAVFSFilebuf(const VFS& vfs)
-        : tiledb::impl::VFSFilebuf(vfs)
+    SOMAVFSFilebuf(std::shared_ptr<SOMAVFS> vfs)
+        : tiledb::impl::VFSFilebuf(*vfs)
         , vfs_(vfs){};
 
     SOMAVFSFilebuf* open(const std::string& uri, std::ios::openmode openmode) {
@@ -59,7 +59,7 @@ class SOMAVFSFilebuf : public tiledb::impl::VFSFilebuf {
         } else if (whence == 1) {
             offset_ += seekoff(offset, std::ios::cur, std::ios::in);
         } else if (whence == 2) {
-            offset_ = vfs_.file_size(get_uri()) -
+            offset_ = vfs_->file_size(get_uri()) -
                       seekoff(offset, std::ios::end, std::ios::in);
         } else {
             TPY_ERROR_LOC(
@@ -124,7 +124,7 @@ class SOMAVFSFilebuf : public tiledb::impl::VFSFilebuf {
 };
 
 void load_soma_vfs(py::module& m) {
-    py::class_<SOMAVFS>(m, "SOMAVFS")
+    py::class_<SOMAVFS, std::shared_ptr<SOMAVFS>>(m, "SOMAVFS")
         .def(
             py::init([](std::shared_ptr<SOMAContext> context) {
                 return SOMAVFS(*context->tiledb_ctx());
@@ -132,7 +132,7 @@ void load_soma_vfs(py::module& m) {
             "ctx"_a);
 
     py::class_<SOMAVFSFilebuf>(m, "SOMAVFSFilebuf")
-        .def(py::init<const SOMAVFS&>())
+        .def(py::init<const std::shared_ptr<SOMAVFS>&>())
         .def(
             "open",
             [](SOMAVFSFilebuf& buf, const std::string& uri) {
