@@ -1354,9 +1354,7 @@ def test_nan_append(conftest_pbmc_small, dtype, nans, new_obs_ids):
         var_field_name="var_id",
     )
 
-    nobs = rd.get_obs_shape()
-    nvars = rd.get_var_shapes()
-    tiledbsoma.io.resize_experiment(SOMA_URI, nobs=nobs, nvars=nvars)
+    rd.prepare_experiment(experiment_uri=SOMA_URI)
 
     # Append the second anndata object
     tiledbsoma.io.from_anndata(
@@ -1488,16 +1486,8 @@ def test_decat_append(tmp_path):
         var_field_name="var_id",
     )
 
-    tiledbsoma.io.resize_experiment(
-        path_under,
-        nobs=rd_under_over.get_obs_shape(),
-        nvars=rd_under_over.get_var_shapes(),
-    )
-    tiledbsoma.io.resize_experiment(
-        path_over,
-        nobs=rd_over_under.get_obs_shape(),
-        nvars=rd_over_under.get_var_shapes(),
-    )
+    rd_under_over.prepare_experiment(experiment_uri=path_under)
+    rd_over_under.prepare_experiment(experiment_uri=path_over)
 
     tiledbsoma.io.from_anndata(
         path_under, adata_over, "RNA", registration_mapping=rd_under_over
@@ -1547,3 +1537,23 @@ def test_decat_append(tmp_path):
 def test_from_h5ad_bad_uri():
     with pytest.raises(tiledbsoma.SOMAError, match="URI /nonesuch is not a valid URI"):
         next(tiledbsoma.io._util.read_h5ad("/nonesuch").gen)
+
+
+def test_from_anndata_byteorder_63459(tmp_path, conftest_pbmc_small):
+    # https://app.shortcut.com/tiledb-inc/story/63459
+
+    ad_uri = (tmp_path / "anndata_pbmc_small").as_posix()
+    exp_uri = (tmp_path / "exp").as_posix()
+
+    # Make a copy of conftest_pbmc_small before modifying so we don't change the
+    # original test file
+    ad = conftest_pbmc_small.copy(ad_uri)
+
+    # host is little-endian, array is big-endian
+    ad.uns["X"] = np.array([7972], dtype=">u2")
+
+    tiledbsoma.io.from_anndata(exp_uri, ad, "RNA")
+
+    with tiledbsoma.Experiment.open(exp_uri) as E:
+        new_ad = tiledbsoma.io.to_anndata(E, "RNA", X_layer_name="data")
+        assert ad.uns["X"] == new_ad.uns["X"]

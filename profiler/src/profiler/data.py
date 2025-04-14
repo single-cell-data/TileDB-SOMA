@@ -5,7 +5,7 @@ import json
 import os
 import uuid
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import attr
 import boto3
@@ -20,10 +20,10 @@ class ProfileData:
     timestamp: float
     stdout: str
     stderr: str
-    tiledb_stats: Dict[str, Any]
+    tiledb_stats: dict[str, Any]
     somacore_version: str
     tiledbsoma_version: str
-    host_context: Dict[str, str]
+    host_context: dict[str, str]
     user_time_sec: float
     system_time_sec: float
     pct_of_cpu: float
@@ -46,7 +46,7 @@ class ProfileData:
     signals_delivered: int
     page_size_bytes: int
     exit_status: int
-    custom_out: List[Optional[str]]
+    custom_out: list[str | None]
 
     command_key: str = attr.field()
 
@@ -106,7 +106,7 @@ class FileBasedProfileDB(ProfileDB):
             return result
         return ""
 
-    def find(self, command) -> List[ProfileData]:
+    def find(self, command) -> list[ProfileData]:
         key = _command_key(command)
         if not os.path.exists(f"{self.path}/{key}"):
             raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), key)
@@ -141,10 +141,10 @@ class S3ProfileDB(ProfileDB):
     Each run is stored as a separate S3 object under a key with the structure `<bucket>/<command>/<timestamp>`.
     """
 
-    def read_object_keys(self, prefix: str, suffix: str) -> List[str]:
+    def read_object_keys(self, prefix: str, suffix: str) -> list[str]:
         # return all the objects kets starting with prefix and ending with suffix
         result = self.s3.list_objects(Bucket=self.bucket_name, Prefix=prefix)
-        keys: List[str] = []
+        keys: list[str] = []
         for o in result.get("Contents"):
             object_key = o.get("Key")
             if object_key.endswith(suffix):
@@ -196,7 +196,7 @@ class S3ProfileDB(ProfileDB):
             f"Bucket {self.bucket_name} does not exist or access is not granted."
         )
 
-    def find(self, command) -> List[ProfileData]:
+    def find(self, command) -> list[ProfileData]:
         key = _command_key(command)
         result = []
         # Extract all data files associated with this command

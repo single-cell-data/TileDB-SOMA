@@ -447,7 +447,7 @@ def arrow_array_fast(
     def gen_unique_floats(
         rng: np.random.Generator, lo: float, hi: float, n: int
     ) -> npt.NDArray[np.float64]:
-        out = np.empty(n)
+        out = np.zeros(n)
         needed = n
         while needed != 0:
             arr = rng.uniform(lo, hi, needed)

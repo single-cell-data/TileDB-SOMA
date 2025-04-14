@@ -7,11 +7,7 @@ from __future__ import annotations
 import pathlib
 import sys
 from contextlib import contextmanager
-from typing import (
-    ContextManager,
-    Iterator,
-    Union,
-)
+from typing import ContextManager, Iterator
 from unittest import mock
 
 import anndata as ad
@@ -113,7 +109,8 @@ def _hack_patch_anndata() -> ContextManager[object]:
 
     @file_backing.AnnDataFileManager.filename.setter  # type: ignore[misc]
     def filename(
-        self: file_backing.AnnDataFileManager, filename: Union[Path, _FSPathWrapper]
+        self: file_backing.AnnDataFileManager,
+        filename: Path | _FSPathWrapper | None,
     ) -> None:
         self._filename = filename
 

@@ -2,10 +2,12 @@ import contextlib
 import datetime
 import json
 import math
+import os
+import shutil
 import struct
 import time
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, List
 
 import numpy as np
 import pandas as pd
@@ -14,10 +16,13 @@ import pytest
 import somacore
 from numpy.testing import assert_array_equal
 from pandas.api.types import union_categoricals
+from typeguard import suppress_type_checks
 
 import tiledbsoma as soma
 
 from tests._util import raises_no_typeguard
+
+from ._util import ROOT_DATA_DIR
 
 
 @pytest.fixture
@@ -422,6 +427,151 @@ def test_get_enumeration_values(tmp_path, ordered, mode):
         }
 
 
+@pytest.mark.parametrize("version", ["1.7.3", "1.12.3", "1.14.5", "1.15.0", "1.15.7"])
+@pytest.mark.parametrize("name", ["pbmc3k_unprocessed", "pbmc3k_processed"])
+def test_get_enumeration_values_historical(version, name):
+    """Checks that experiments written by older versions are still readable,
+    in the particular form of doing an outgest."""
+
+    path = ROOT_DATA_DIR / "soma-experiment-versions-2025-04-04" / version / name
+    uri = str(path)
+    if not os.path.isdir(uri):
+        raise RuntimeError(
+            f"Missing '{uri}' directory. Try running `make data` "
+            "from the TileDB-SOMA project root directory."
+        )
+
+    with soma.Experiment.open(uri) as exp:
+        if name == "pbmc3k_unprocessed":
+            values = exp.obs.get_enumeration_values(
+                ["orig.ident", "seurat_annotations"]
+            )
+
+            expect = ["pbmc3k"]
+            assert values["orig.ident"].to_pylist() == expect
+
+            expect = [
+                "B",
+                "CD8 T",
+                "CD14+ Mono",
+                "DC",
+                "FCGR3A+ Mono",
+                "Memory CD4 T",
+                "NA",
+                "NK",
+                "Naive CD4 T",
+                "Platelet",
+            ]
+            assert values["seurat_annotations"].to_pylist() == expect
+
+        elif name == "pbmc3k_processed":
+            values = exp.obs.get_enumeration_values(["louvain"])
+            expect = [
+                "CD4 T cells",
+                "CD14+ Monocytes",
+                "B cells",
+                "CD8 T cells",
+                "NK cells",
+                "FCGR3A+ Monocytes",
+                "Dendritic cells",
+                "Megakaryocytes",
+            ]
+            assert values["louvain"].to_pylist() == expect
+
+
+@pytest.mark.parametrize(
+    "version",
+    ["1.7.3", "1.12.3", "1.14.5", "1.15.0", "1.15.7"],
+)
+def test_extend_enumeration_values_historical(tmp_path, version):
+
+    original_data_uri = str(
+        ROOT_DATA_DIR
+        / "soma-experiment-versions-2025-04-04"
+        / version
+        / "pbmc3k_processed"
+    )
+
+    if not os.path.isdir(original_data_uri):
+        raise RuntimeError(
+            f"Missing '{original_data_uri}' directory. Try running `make data` "
+            "from the TileDB-SOMA project root directory."
+        )
+
+    # Make a copy of the Experiment as to not write over the data in ROOT_DATA_DIR
+    uri = (tmp_path / version).as_posix()
+    shutil.copytree(original_data_uri, uri)
+
+    with soma.Experiment.open(uri, "w") as exp:
+        with pytest.raises(soma.SOMAError):
+            exp.obs.extend_enumeration_values(
+                {
+                    "louvain": pa.array(
+                        [
+                            "CD4 T cells",
+                            "CD14+ Monocytes",
+                            "B cells",
+                        ]
+                    )
+                }
+            )
+
+            exp.obs.extend_enumeration_values(
+                {
+                    "louvain": pa.array(
+                        [
+                            "CD4 T cells",
+                            "CD14+ Monocytes",
+                            "B cells",
+                        ]
+                    )
+                },
+                deduplicate=True,
+            )
+    with soma.Experiment.open(uri) as exp:
+        values = exp.obs.get_enumeration_values(["louvain"])
+        expect = [
+            "CD4 T cells",
+            "CD14+ Monocytes",
+            "B cells",
+            "CD8 T cells",
+            "NK cells",
+            "FCGR3A+ Monocytes",
+            "Dendritic cells",
+            "Megakaryocytes",
+        ]
+        assert values["louvain"].to_pylist() == expect
+
+    with soma.Experiment.open(uri, "w") as exp:
+        for deduplicate in [True, False]:
+            with pytest.raises(ValueError):
+                exp.obs.extend_enumeration_values(
+                    {"louvain": pa.array(["even more cells", "even more cells"])},
+                    deduplicate=deduplicate,
+                )
+
+    with soma.Experiment.open(uri, "w") as exp:
+        exp.obs.extend_enumeration_values(
+            {"louvain": pa.array(["even more cells", "so many more cells"])},
+        )
+
+    with soma.Experiment.open(uri) as exp:
+        values = exp.obs.get_enumeration_values(["louvain"])
+        expect = [
+            "CD4 T cells",
+            "CD14+ Monocytes",
+            "B cells",
+            "CD8 T cells",
+            "NK cells",
+            "FCGR3A+ Monocytes",
+            "Dendritic cells",
+            "Megakaryocytes",
+            "even more cells",
+            "so many more cells",
+        ]
+        assert values["louvain"].to_pylist() == expect
+
+
 @pytest.mark.parametrize(
     "data_and_expected_levels",
     [
@@ -576,6 +726,13 @@ def test_extend_enumeration_values(tmp_path, extend_not_write, ordered):
             match=r"is of dictionary type: pass its dictionary array instead",
         ):
             sdf.extend_enumeration_values(xvalues)
+
+        # The values provided must be Arrow arrays. Our unit tests run with typeguard,
+        # but our end users nominally do not -- so we have to ask typeguard to take
+        # a breather here so we can test the UX our users will have.
+        with suppress_type_checks():
+            with pytest.raises(ValueError):
+                sdf.extend_enumeration_values({"string_enum1": ["plain", "strings"]})
 
         # The values provided must all be non-null
         for nvalues in [
@@ -821,11 +978,11 @@ def simple_data_frame(tmp_path):
     """
     schema = pa.schema(
         [
-            ("index", pa.int64()),
-            ("soma_joinid", pa.int64()),
-            ("A", pa.int64()),
-            ("B", pa.float64()),
-            ("C", pa.large_string()),
+            pa.field("index", pa.int64(), False),
+            pa.field("soma_joinid", pa.int64()),
+            pa.field("A", pa.int64()),
+            pa.field("B", pa.float64()),
+            pa.field("C", pa.large_string()),
         ]
     )
     index_column_names = ["index"]
@@ -846,7 +1003,8 @@ def simple_data_frame(tmp_path):
         rb = pa.Table.from_pydict(data)
         sdf.write(rb)
     sdf = soma.DataFrame.open(tmp_path.as_posix())
-    return (schema, sdf, n_data, index_column_names)
+
+    return (sdf, n_data)
 
 
 @pytest.mark.parametrize(
@@ -871,12 +1029,16 @@ def simple_data_frame(tmp_path):
     ],
 )
 def test_DataFrame_read_column_names(simple_data_frame, ids, col_names):
-    schema, sdf, n_data, index_column_names = simple_data_frame
+    sdf, n_data = simple_data_frame
 
-    def _check_tbl(tbl, col_names, ids, *, demote):
-        assert tbl.num_columns == (
-            len(schema.names) if col_names is None else len(col_names)
-        )
+    expected_schema = (
+        sdf.schema
+        if col_names is None
+        else pa.schema([sdf.schema.field(name) for name in col_names])
+    )
+
+    def _check_tbl(tbl, col_names, ids):
+        assert tbl.num_columns == len(sdf.schema if col_names is None else col_names)
 
         if ids is None:
             assert tbl.num_rows == n_data
@@ -887,50 +1049,35 @@ def test_DataFrame_read_column_names(simple_data_frame, ids, col_names):
         else:
             assert tbl.num_rows == len(ids[0])
 
-        if demote:
-            assert tbl.schema == pa.schema(
-                [
-                    (
-                        pa.field(schema.field(f).name, pa.string())
-                        if schema.field(f).type == pa.large_string()
-                        else schema.field(f)
-                    )
-                    for f in (col_names if col_names is not None else schema.names)
-                ]
-            )
-        else:
-            assert tbl.schema == pa.schema(
-                [
-                    schema.field(f)
-                    for f in (col_names if col_names is not None else schema.names)
-                ]
-            )
+        assert tbl.schema == expected_schema
 
     # TileDB ASCII -> Arrow large_string
-    _check_tbl(
-        sdf.read(ids, column_names=col_names).concat(),
-        col_names,
-        ids,
-        demote=False,
-    )
-    _check_tbl(sdf.read(column_names=col_names).concat(), col_names, None, demote=False)
+    _check_tbl(sdf.read(ids, column_names=col_names).concat(), col_names, ids)
+    _check_tbl(sdf.read(column_names=col_names).concat(), col_names, None)
+
+    # pa.Table.from_pandas infers nullability from the data if a schema is not
+    # provided. If there are no null values in the data, then the data is marked
+    # as non-nullable. To ensure nullability is preserved, explicitly pass in
+    # the schema
 
     # TileDB ASCII -> Pandas string -> Arrow string (not large_string)
     _check_tbl(
         pa.Table.from_pandas(
             pd.concat(
-                [tbl.to_pandas() for tbl in sdf.read(ids, column_names=col_names)]
-            )
+                [tbl.to_pandas() for tbl in sdf.read(ids, column_names=col_names)],
+            ),
+            schema=expected_schema,
         ),
         col_names,
         ids,
-        demote=True,
     )
     _check_tbl(
-        pa.Table.from_pandas(sdf.read(column_names=col_names).concat().to_pandas()),
+        pa.Table.from_pandas(
+            sdf.read(column_names=col_names).concat().to_pandas(),
+            schema=expected_schema,
+        ),
         col_names,
         None,
-        demote=True,
     )
 
 
@@ -1067,7 +1214,7 @@ def test_index_types(tmp_path, make_dataframe):
 
 
 def make_multiply_indexed_dataframe(
-    tmp_path, index_column_names: List[str], domain: List[Any]
+    tmp_path, index_column_names: list[str], domain: List[Any]
 ):
     """
     Creates a variably-indexed DataFrame for use in tests below.
@@ -1093,7 +1240,7 @@ def make_multiply_indexed_dataframe(
         domain=domain,
     )
 
-    data: Dict[str, list] = {
+    data: dict[str, list] = {
         "0_thru_5": [0, 1, 2, 3, 4, 5],
         "strings_aaa": ["aaa", "aaa", "bbb", "bbb", "ccc", "ccc"],
         "zero_one": [0, 1, 0, 1, 0, 1],
@@ -1467,7 +1614,7 @@ def test_read_indexing(tmp_path, io):
             {k: io[k] for k in ("coords", "partitions", "value_filter") if k in io}
         )
 
-        # `throws` can be `Type[Exception]`, or `(Type[Exception], bool)` indicating explicitly
+        # `throws` can be `type[Exception]`, or `(type[Exception], bool)` indicating explicitly
         # whether Typeguard should be enabled during the `with raises` check.
         throws = io.get("throws", None)
         if throws:
@@ -2795,3 +2942,51 @@ def test_enum_handling_category_of_nan_62449(tmp_path):
         assert nan_check(signaling_nan, actual_dict_vals)
         assert_array_equal(expected_data1["A"], actual_data[:4])
         assert_array_equal(expected_data2["A"], actual_data[4:])
+
+
+def test_return_datetime_type_for_domain_and_maxdomain_62887(tmp_path):
+    uri = tmp_path.as_posix()
+
+    schema = pa.schema([("A", pa.timestamp("s"))])
+    index_column_names = ("soma_joinid", "A")
+    domain = (
+        (0, 1000),
+        (np.datetime64("2000-01-01T00:00:00"), np.datetime64("2025-01-04T09:16:49")),
+    )
+
+    soma.DataFrame.create(
+        uri, schema=schema, index_column_names=index_column_names, domain=domain
+    )
+
+    with soma.DataFrame.open(uri) as A:
+        assert A.index_column_names == index_column_names
+        assert A.schema.field("A").type == pa.timestamp("s")
+
+        assert A.domain[1] == (
+            pa.scalar(domain[1][0], pa.timestamp("s")),
+            pa.scalar(domain[1][1], pa.timestamp("s")),
+        )
+        assert A.maxdomain[1] == (
+            pa.scalar(-9223372036854775807, pa.timestamp("s")),
+            pa.scalar(9223372036853775807, pa.timestamp("s")),
+        )
+
+
+@pytest.mark.parametrize(
+    "pa_type,tile",
+    (
+        (pa.int32(), "1"),
+        (pa.float32(), "1"),
+        (pa.timestamp("s"), "1"),
+        (pa.large_string(), ""),
+        (pa.large_binary(), ""),
+    ),
+)
+def test_extents(tmp_path, pa_type, tile):
+    uri = tmp_path.as_posix()
+    asch = pa.schema([pa.field("dim", pa_type)])
+    soma.DataFrame.create(uri, schema=asch, index_column_names=["dim"])
+
+    with soma.DataFrame.open(tmp_path.as_posix()) as A:
+        dim_info = json.loads(A.schema_config_options().dims)
+        assert dim_info["dim"]["tile"] == tile

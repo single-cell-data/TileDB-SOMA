@@ -3,11 +3,11 @@
 # Licensed under the MIT License.
 
 import json
-from typing import Dict, List, Literal, Union, cast
+from typing import Literal, Union, cast
 
 from .pytiledbsoma import tiledbsoma_stats_string
 
-ParsedStats = List[Dict[Literal["counters", "timers"], Dict[str, Union[float, int]]]]
+ParsedStats = list[dict[Literal["counters", "timers"], dict[str, Union[float, int]]]]
 
 
 def tiledbsoma_stats_json() -> str:

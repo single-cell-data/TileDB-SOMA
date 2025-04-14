@@ -3,7 +3,7 @@ from __future__ import annotations
 import re
 from contextlib import contextmanager, nullcontext
 from pathlib import Path
-from typing import Any, List, Tuple, Type, Union
+from typing import Any, Union
 
 import numpy as np
 import pandas as pd
@@ -105,7 +105,7 @@ def assert_transform_equal(
         assert False
 
 
-def parse_col(col_str: str) -> Tuple[str | None, List[str]]:
+def parse_col(col_str: str) -> tuple[str | None, list[str]]:
     """Parse a "column string" of the form ``val1,val2,...`` or ``name=val1,val2,...``."""
     pcs = col_str.split("=")
     if len(pcs) == 1:
@@ -142,7 +142,7 @@ ROOT_DATA_DIR = PROJECT_ROOT / "data"
 
 
 @contextmanager
-def raises_no_typeguard(exc: Type[Exception], *args: Any, **kwargs: Any):
+def raises_no_typeguard(exc: type[Exception], *args: Any, **kwargs: Any):
     """
     Temporarily suppress typeguard checks in order to verify a runtime exception is raised.
 
@@ -155,7 +155,7 @@ def raises_no_typeguard(exc: Type[Exception], *args: Any, **kwargs: Any):
 
 
 # Alias for several types that can be used to specify expected exceptions in `maybe_raises`
-Err = Union[str, Type[E], Tuple[Type[E], str]]
+Err = Union[str, type[E], tuple[type[E], str]]
 
 
 def maybe_raises(
@@ -187,7 +187,7 @@ def maybe_raises(
         return nullcontext()
 
 
-def verify_logs(caplog: LogCaptureFixture, expected_logs: List[str] | None) -> None:
+def verify_logs(caplog: LogCaptureFixture, expected_logs: list[str] | None) -> None:
     """Verify that expected log messages are present in a pytest "caplog" (captured logs) fixture."""
     if not expected_logs:
         return

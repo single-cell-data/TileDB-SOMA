@@ -366,7 +366,7 @@ class ArrowAdapter {
      *
      * @return ArrowSchema
      */
-    static std::unique_ptr<ArrowSchema> arrow_schema_from_tiledb_attribute(
+    static ArrowSchema* arrow_schema_from_tiledb_attribute(
         const Attribute& attribute,
         const Context& ctx,
         const Array& tiledb_array);

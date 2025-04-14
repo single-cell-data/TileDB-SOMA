@@ -10,21 +10,24 @@ other formats. Currently only ``.h5ad`` (`AnnData <https://anndata.readthedocs.i
 
 from __future__ import annotations
 
+import contextlib
 import json
 import math
+import multiprocessing
+import os
 import time
+import warnings
+from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
+from functools import partial
+from itertools import repeat
 from typing import (
     Any,
-    Dict,
-    List,
+    Iterable,
     Literal,
     Mapping,
     Sequence,
-    Tuple,
-    Type,
     TypedDict,
     TypeVar,
-    Union,
     cast,
     no_type_check,
     overload,
@@ -36,6 +39,7 @@ import numpy as np
 import pandas as pd
 import pyarrow as pa
 import scipy.sparse as sp
+from more_itertools import batched
 
 # As of anndata 0.11 we get a warning importing anndata.experimental.
 # But anndata.abc doesn't exist in anndata 0.10. And anndata 0.11 doesn't
@@ -105,7 +109,6 @@ from ._registration import (
     AxisIDMapping,
     ExperimentAmbientLabelMapping,
     ExperimentIDMapping,
-    get_dataframe_values,
 )
 from ._util import get_arrow_str_format, read_h5ad
 
@@ -135,7 +138,7 @@ class IngestionParams:
     ) -> None:
         if ingest_mode == "schema_only":
             self.write_schema_no_data = True
-            self.error_if_already_exists = True
+            self.error_if_already_exists = False
             self.skip_existing_nonempty_domain = False
             self.appending = False
 
@@ -190,24 +193,71 @@ def register_h5ads(
     var_field_name: str,
     append_obsm_varm: bool = False,
     context: SOMATileDBContext | None = None,
+    use_multiprocessing: bool = False,
 ) -> ExperimentAmbientLabelMapping:
     """Extends registration data from the baseline, already-written SOMA
     experiment to include multiple H5AD input files. See ``from_h5ad`` and
-    ``from_anndata`` on-line help."""
-    return ExperimentAmbientLabelMapping.from_h5ad_appends_on_experiment(
-        experiment_uri=experiment_uri,
-        h5ad_file_names=h5ad_file_names,
+    ``from_anndata`` on-line help.
+
+    If enabled via the ``use_multiprocessing`` parameter, this function will use multiprocessing
+    to register each H5AD in parallel. In cases with many files, this can produce a performance
+    benefit. Regardless of ``use_multiprocessing``, H5ADs will be registered concurrently -- you
+    can control the concurrency using the ``soma.compute_concurrency_level`` configuration
+    parameter in the ``context`` argument.
+    """
+
+    if isinstance(h5ad_file_names, str):
+        h5ad_file_names = [h5ad_file_names]
+
+    context = _validate_soma_tiledb_context(context)
+    concurrency_level = _concurrency_level(context)
+
+    logging.log_io(None, f"Loading per-axis metadata for {len(h5ad_file_names)} files.")
+    executor_context: contextlib.AbstractContextManager[
+        ProcessPoolExecutor | ThreadPoolExecutor
+    ]
+    if use_multiprocessing:
+        if multiprocessing.get_start_method() == "fork":
+            warnings.warn(
+                "Multiprocessing `fork` start method is inherently unsafe -- use `spawn`. See `multiprocessing.set_start_method()`",
+            )
+        executor_context = ProcessPoolExecutor(max_workers=concurrency_level)
+    else:
+        executor_context = contextlib.nullcontext(enter_result=context.threadpool)
+
+    with executor_context as executor:
+        axes_metadata = list(
+            executor.map(
+                ExperimentAmbientLabelMapping._load_axes_metadata_from_h5ads,
+                batched(
+                    h5ad_file_names,
+                    math.ceil(len(h5ad_file_names) / concurrency_level),
+                ),
+                repeat(obs_field_name),
+                repeat(var_field_name),
+                repeat(
+                    partial(
+                        ExperimentAmbientLabelMapping._validate_anndata,
+                        append_obsm_varm,
+                    )
+                ),
+            )
+        )
+    logging.log_io(None, "Loaded per-axis metadata")
+
+    return ExperimentAmbientLabelMapping._register_common(
+        experiment_uri,
+        axes_metadata,
         measurement_name=measurement_name,
         obs_field_name=obs_field_name,
         var_field_name=var_field_name,
-        append_obsm_varm=append_obsm_varm,
         context=context,
     )
 
 
 def register_anndatas(
     experiment_uri: str | None,
-    adatas: Sequence[ad.AnnData] | ad.AnnData,
+    adatas: Iterable[ad.AnnData] | ad.AnnData,
     *,
     measurement_name: str,
     obs_field_name: str,
@@ -218,13 +268,27 @@ def register_anndatas(
     """Extends registration data from the baseline, already-written SOMA
     experiment to include multiple H5AD input files. See ``from_h5ad`` and
     ``from_anndata`` on-line help."""
-    return ExperimentAmbientLabelMapping.from_anndata_appends_on_experiment(
-        experiment_uri=experiment_uri,
-        adatas=adatas,
+
+    if isinstance(adatas, ad.AnnData):
+        adatas = [adatas]
+
+    context = _validate_soma_tiledb_context(context)
+
+    axes_metadata = [
+        ExperimentAmbientLabelMapping._load_axes_metadata_from_anndatas(
+            adatas,
+            obs_field_name,
+            var_field_name,
+            partial(ExperimentAmbientLabelMapping._validate_anndata, append_obsm_varm),
+        )
+    ]
+
+    return ExperimentAmbientLabelMapping._register_common(
+        experiment_uri,
+        axes_metadata,
         measurement_name=measurement_name,
         obs_field_name=obs_field_name,
         var_field_name=var_field_name,
-        append_obsm_varm=append_obsm_varm,
         context=context,
     )
 
@@ -242,7 +306,7 @@ def from_h5ad(
     raw_X_layer_name: str = "data",
     ingest_mode: IngestMode = "write",
     use_relative_uri: bool | None = None,
-    X_kind: Union[Type[SparseNDArray], Type[DenseNDArray]] = SparseNDArray,
+    X_kind: type[SparseNDArray] | type[DenseNDArray] = SparseNDArray,
     registration_mapping: ExperimentAmbientLabelMapping | None = None,
     uns_keys: Sequence[str] | None = None,
     additional_metadata: AdditionalMetadata = None,
@@ -419,7 +483,7 @@ def from_anndata(
     raw_X_layer_name: str = "data",
     ingest_mode: IngestMode = "write",
     use_relative_uri: bool | None = None,
-    X_kind: Union[Type[SparseNDArray], Type[DenseNDArray]] = SparseNDArray,
+    X_kind: type[SparseNDArray] | type[DenseNDArray] = SparseNDArray,
     registration_mapping: ExperimentAmbientLabelMapping | None = None,
     uns_keys: Sequence[str] | None = None,
     additional_metadata: AdditionalMetadata = None,
@@ -470,10 +534,14 @@ def from_anndata(
     #
     # * Here we select out the renumberings for the obs, var, X, etc. array indices
     if registration_mapping is None:
-        joinid_maps = ExperimentIDMapping.from_isolated_anndata(
+        joinid_maps = ExperimentIDMapping.from_anndata(
             anndata, measurement_name=measurement_name
         )
     else:
+        if not registration_mapping.prepared and Experiment.exists(experiment_uri):
+            raise SOMAError(
+                "Experiment must be prepared prior to ingestion. Please call ``registration_map.prepare_experiment`` method."
+            )
         joinid_maps = registration_mapping.id_mappings_for_anndata(
             anndata, measurement_name=measurement_name
         )
@@ -874,14 +942,14 @@ def append_var(
 
 def append_X(
     exp: Experiment,
-    new_X: Union[Matrix, h5py.Dataset],
+    new_X: Matrix | h5py.Dataset,
     measurement_name: str,
     X_layer_name: str,
     obs_ids: Sequence[str],
     var_ids: Sequence[str],
     *,
     registration_mapping: ExperimentAmbientLabelMapping,
-    X_kind: Union[Type[SparseNDArray], Type[DenseNDArray]] = SparseNDArray,
+    X_kind: type[SparseNDArray] | type[DenseNDArray] = SparseNDArray,
     context: SOMATileDBContext | None = None,
     platform_config: PlatformConfig | None = None,
 ) -> str:
@@ -971,7 +1039,7 @@ def _maybe_set(
 
 @overload
 def _create_or_open_collection(
-    cls: Type[Experiment],
+    cls: type[Experiment],
     uri: str,
     *,
     ingestion_params: IngestionParams,
@@ -982,7 +1050,7 @@ def _create_or_open_collection(
 
 @overload
 def _create_or_open_collection(
-    cls: Type[Measurement],
+    cls: type[Measurement],
     uri: str,
     *,
     ingestion_params: IngestionParams,
@@ -993,7 +1061,7 @@ def _create_or_open_collection(
 
 @overload
 def _create_or_open_collection(
-    cls: Type[Collection[_TDBO]],
+    cls: type[Collection[_TDBO]],
     uri: str,
     *,
     ingestion_params: IngestionParams,
@@ -1004,7 +1072,7 @@ def _create_or_open_collection(
 
 @no_type_check
 def _create_or_open_collection(
-    cls: Type[CollectionBase[_TDBO]],
+    cls: type[CollectionBase[_TDBO]],
     uri: str,
     *,
     ingestion_params: IngestionParams,
@@ -1026,7 +1094,7 @@ def _create_or_open_collection(
 # Spellings compatible with 1.2.7:
 @overload
 def _create_or_open_coll(
-    cls: Type[Experiment],
+    cls: type[Experiment],
     uri: str,
     *,
     ingest_mode: IngestMode,
@@ -1036,7 +1104,7 @@ def _create_or_open_coll(
 
 @overload
 def _create_or_open_coll(
-    cls: Type[Measurement],
+    cls: type[Measurement],
     uri: str,
     *,
     ingest_mode: IngestMode,
@@ -1046,7 +1114,7 @@ def _create_or_open_coll(
 
 @overload
 def _create_or_open_coll(
-    cls: Type[Collection[_TDBO]],
+    cls: type[Collection[_TDBO]],
     uri: str,
     *,
     ingest_mode: IngestMode,
@@ -1055,7 +1123,7 @@ def _create_or_open_coll(
 
 
 def _create_or_open_coll(
-    cls: Type[Any],
+    cls: type[Any],
     uri: str,
     *,
     ingest_mode: IngestMode,
@@ -1114,11 +1182,15 @@ def _extract_new_values_for_append_aux(
     previous_sjids_table = previous_soma_dataframe.read(
         column_names=["soma_joinid"]
     ).concat()
-    previous_join_ids = set(
-        int(e)
-        for e in get_dataframe_values(previous_sjids_table.to_pandas(), SOMA_JOINID)
+    # use numpy.isin over pyarrow.compute.is_in, as it is MUCH faster
+    mask = pa.array(
+        np.isin(
+            arrow_table[SOMA_JOINID].to_numpy(),
+            previous_sjids_table[SOMA_JOINID].to_numpy(),
+            invert=True,
+        )
     )
-    mask = [e.as_py() not in previous_join_ids for e in arrow_table[SOMA_JOINID]]
+
     arrow_table = arrow_table.filter(mask)
 
     # Check if any new data.
@@ -1232,7 +1304,7 @@ def _extract_new_values_for_append(
 
 def _write_arrow_table(
     arrow_table: pa.Table,
-    handle: Union[DataFrame, SparseNDArray, PointCloudDataFrame],
+    handle: DataFrame | SparseNDArray | PointCloudDataFrame,
     tiledb_create_options: TileDBCreateOptions,
     tiledb_write_options: TileDBWriteOptions,
 ) -> None:
@@ -1422,9 +1494,9 @@ def _write_dataframe_impl(
 
 
 def create_from_matrix(
-    cls: Type[_NDArr],
+    cls: type[_NDArr],
     uri: str,
-    matrix: Union[Matrix, h5py.Dataset],
+    matrix: Matrix | h5py.Dataset,
     platform_config: PlatformConfig | None = None,
     ingest_mode: IngestMode = "write",
     context: SOMATileDBContext | None = None,
@@ -1448,9 +1520,9 @@ def create_from_matrix(
 
 
 def _create_from_matrix(
-    cls: Type[_NDArr],
+    cls: type[_NDArr],
     uri: str,
-    matrix: Union[Matrix, h5py.Dataset],
+    matrix: Matrix | h5py.Dataset,
     *,
     ingestion_params: IngestionParams,
     additional_metadata: AdditionalMetadata = None,
@@ -1478,7 +1550,7 @@ def _create_from_matrix(
         )
     else:
         try:
-            shape: Sequence[Union[int, None]] = ()
+            shape: Sequence[int | None] = ()
             # A SparseNDArray must be appendable in soma.io.
 
             # Instead of
@@ -1762,8 +1834,8 @@ def _update_dataframe(
 
 
 def update_matrix(
-    soma_ndarray: Union[SparseNDArray, DenseNDArray],
-    new_data: Union[Matrix, h5py.Dataset],
+    soma_ndarray: SparseNDArray | DenseNDArray,
+    new_data: Matrix | h5py.Dataset,
     *,
     context: SOMATileDBContext | None = None,
     platform_config: PlatformConfig | None = None,
@@ -1862,7 +1934,7 @@ def add_X_layer(
     measurement_name: str,
     X_layer_name: str,
     # E.g. a scipy.csr_matrix from scanpy analysis:
-    X_layer_data: Union[Matrix, h5py.Dataset],
+    X_layer_data: Matrix | h5py.Dataset,
     ingest_mode: IngestMode = "write",
     use_relative_uri: bool | None = None,
     context: SOMATileDBContext | None = None,
@@ -1895,7 +1967,7 @@ def add_matrix_to_collection(
     collection_name: str,
     matrix_name: str,
     # E.g. a scipy.csr_matrix from scanpy analysis:
-    matrix_data: Union[Matrix, h5py.Dataset],
+    matrix_data: Matrix | h5py.Dataset,
     ingest_mode: IngestMode = "write",
     use_relative_uri: bool | None = None,
     context: SOMATileDBContext | None = None,
@@ -1956,7 +2028,7 @@ def add_matrix_to_collection(
 
 def _write_matrix_to_denseNDArray(
     soma_ndarray: DenseNDArray,
-    matrix: Union[Matrix, h5py.Dataset],
+    matrix: Matrix | h5py.Dataset,
     tiledb_create_options: TileDBCreateOptions,
     tiledb_write_options: TileDBWriteOptions,
     ingestion_params: IngestionParams,
@@ -1965,6 +2037,10 @@ def _write_matrix_to_denseNDArray(
     """Write a matrix to an empty DenseNDArray"""
 
     add_metadata(soma_ndarray, additional_metadata)
+
+    # TileDB does not support big-endian so coerce to little-endian
+    if isinstance(matrix, np.ndarray) and matrix.dtype.byteorder == ">":
+        matrix = matrix.byteswap().view(matrix.dtype.newbyteorder("<"))
 
     # There is a chunk-by-chunk already-done check for resume mode, below.
     # This full-matrix-level check here might seem redundant, but in fact it's important:
@@ -2162,7 +2238,7 @@ def _find_sparse_chunk_size_non_backed(
     """
     chunk_size = 0
     sum_nnz = 0
-    coords: List[Union[slice, int]] = [slice(None), slice(None)]
+    coords: list[slice | int] = [slice(None), slice(None)]
     for index in range(start_index, matrix.shape[axis]):
         coords[axis] = index
         candidate_sum_nnz = sum_nnz + matrix[tuple(coords)].nnz
@@ -2193,7 +2269,7 @@ def _find_mean_nnz(matrix: Matrix, axis: int) -> int:
     #   total_nnz = matrix[:, :].nnz
     # So instead we break it up. Testing over a variety of H5AD sizes
     # shows that the performance is fine here.
-    coords: List[slice] = [slice(None), slice(None)]  # type: ignore[unreachable]
+    coords: list[slice] = [slice(None), slice(None)]  # type: ignore[unreachable]
     bsz = 1000
     total_nnz = 0
     for lo in range(0, extent, bsz):
@@ -2301,7 +2377,7 @@ def _find_sparse_chunk_size_backed(
 
     # This is just matrix[0:m, :] or matrix[:, 0:m], but spelt out flexibly
     # given that the axis (0 or 1) is a variable.
-    coords: List[slice] = [slice(None), slice(None)]
+    coords: list[slice] = [slice(None), slice(None)]
     coords[axis] = slice(start_index, start_index + chunk_size)
     chunk_nnz = int(matrix[tuple(coords)].nnz)
 
@@ -2361,6 +2437,10 @@ def _write_matrix_to_sparseNDArray(
 ) -> None:
     """Write a matrix to an empty DenseNDArray"""
 
+    # TileDB does not support big-endian so coerce to little-endian
+    if isinstance(matrix, np.ndarray) and matrix.dtype.byteorder == ">":
+        matrix = matrix.byteswap().view(matrix.dtype.newbyteorder("<"))
+
     def _coo_to_table(
         mat_coo: sp.coo_matrix,
         axis_0_mapping: AxisIDMapping,
@@ -2372,13 +2452,9 @@ def _write_matrix_to_sparseNDArray(
         soma_dim_1 = mat_coo.col + base if base > 0 and axis == 1 else mat_coo.col
 
         # Apply registration mappings: e.g. columns 0,1,2,3 in an AnnData file might
-        # have been assigned gene-ID labels 22,197,438,988. Don't do this for
-        # identity mappings, as this is a needless (and expensive) data copy.
-        if not axis_0_mapping.is_identity():
-            soma_dim_0 = [axis_0_mapping.data[e] for e in soma_dim_0]
-        if not axis_1_mapping.is_identity():
-            soma_dim_1 = [axis_1_mapping.data[e] for e in soma_dim_1]
-
+        # have been assigned gene-ID labels 22,197,438,988.
+        soma_dim_0 = axis_0_mapping.data[soma_dim_0]
+        soma_dim_1 = axis_1_mapping.data[soma_dim_1]
         pydict = {
             "soma_data": mat_coo.data,
             "soma_dim_0": soma_dim_0,
@@ -2587,8 +2663,8 @@ def _write_matrix_to_sparseNDArray(
 
 
 def _chunk_is_contained_in(
-    chunk_bounds: Sequence[Tuple[int, int]],
-    storage_nonempty_domain: Sequence[Tuple[int | None, int | None]],
+    chunk_bounds: Sequence[tuple[int, int]],
+    storage_nonempty_domain: Sequence[tuple[int | None, int | None]],
 ) -> bool:
     """
     Determines if a dim range is included within the array's non-empty domain.  Ranges are inclusive
@@ -2620,8 +2696,8 @@ def _chunk_is_contained_in(
 
 
 def _chunk_is_contained_in_axis(
-    chunk_bounds: Sequence[Tuple[int, int]],
-    storage_nonempty_domain: Sequence[Tuple[int | None, int | None]],
+    chunk_bounds: Sequence[tuple[int, int]],
+    storage_nonempty_domain: Sequence[tuple[int | None, int | None]],
     stride_axis: int,
 ) -> bool:
     """Helper function for ``_chunk_is_contained_in``."""
@@ -2924,7 +3000,7 @@ def _ingest_uns_2d_string_array(
     this ``uns`` data is solely of interest for AnnData ingest/outgest, and it must go
     back out the way it came in."""
     num_rows, num_cols = value.shape
-    data: Dict[str, Any] = {"soma_joinid": np.arange(num_rows, dtype=np.int64)}
+    data: dict[str, Any] = {"soma_joinid": np.arange(num_rows, dtype=np.int64)}
     # An array like [["a", "b", "c"], ["d", "e", "f"]] becomes a DataFrame like
     # soma_joinid values_0 values_1 values_2
     # 0           a        b        c
@@ -3022,3 +3098,24 @@ def _ingest_uns_ndarray(
 
     msg = f"Wrote   {soma_arr.uri} (uns ndarray)"
     logging.log_io(msg, msg)
+
+
+def _concurrency_level(context: SOMATileDBContext) -> int:
+    """
+    Private helper function to determine appropriate concurrency level for
+    ingestion of H5AD when use_multiprocessing is enabled.
+
+    Functionally, this just allows the user to control concurrency via the
+    context configuration ``soma.compute_concurrency_level``, with error checking.
+    """
+    concurrency_level: int = os.cpu_count() or 1
+    if context is not None:
+        concurrency_level = min(
+            concurrency_level,
+            int(
+                context.tiledb_config.get(
+                    "soma.compute_concurrency_level", concurrency_level
+                )
+            ),
+        )
+    return concurrency_level

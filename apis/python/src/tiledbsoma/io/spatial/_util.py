@@ -5,7 +5,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, Union
+from typing import Any
 
 import h5py
 import numpy as np
@@ -74,7 +74,7 @@ def _version_less_than(version: str, upper_bound: tuple[int, int, int]) -> bool:
 
 
 def _read_visium_software_version(
-    gene_expression_path: Union[str, Path],
+    gene_expression_path: str | Path,
 ) -> tuple[int, int, int]:
     with TenXCountMatrixReader(gene_expression_path) as reader:
         version = reader.software_version
@@ -314,7 +314,15 @@ class TenXCountMatrixReader:
 
     def unique_var_indices(self) -> pa.Array:
         """Returns the unique var indices that have non-zero values in the X matrix."""
-        return pacomp.unique(pa.array(self.var_indices))
+        var_indices = self.var_indices
+        if not isinstance(self.var_indices, pa.Array):
+            # This check is required for PyArrow 11.0.0. Otherwise, we get the
+            # error:
+            # E   pyarrow.lib.ArrowInvalid: Could not convert
+            # <pyarrow.Int64Scalar: 0> with type pyarrow.lib.Int64Scalar: did
+            # not recognize Python value type when inferring an Arrow data type
+            var_indices = pa.array(var_indices)
+        return pacomp.unique(var_indices)
 
     @property
     def var_id(self) -> pa.Array:

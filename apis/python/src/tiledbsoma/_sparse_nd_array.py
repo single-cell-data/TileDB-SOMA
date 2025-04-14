@@ -11,8 +11,6 @@ from __future__ import annotations
 from typing import (
     TYPE_CHECKING,
     Sequence,
-    Tuple,
-    Union,
     cast,
 )
 
@@ -122,7 +120,7 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
         uri: str,
         *,
         type: pa.DataType,
-        shape: Sequence[Union[int, None]],
+        shape: Sequence[int | None],
         platform_config: options.PlatformConfig | None = None,
         context: SOMATileDBContext | None = None,
         tiledb_timestamp: OpenTimestamp | None = None,
@@ -285,12 +283,7 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
 
     def write(
         self,
-        values: Union[
-            pa.SparseCOOTensor,
-            pa.SparseCSRMatrix,
-            pa.SparseCSCMatrix,
-            pa.Table,
-        ],
+        values: pa.SparseCOOTensor | pa.SparseCSRMatrix | pa.SparseCSCMatrix | pa.Table,
         *,
         platform_config: PlatformConfig | None = None,
     ) -> Self:
@@ -317,7 +310,7 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
             Maturing.
         """
 
-        write_options: Union[TileDBCreateOptions, TileDBWriteOptions]
+        write_options: TileDBCreateOptions | TileDBWriteOptions
         sort_coords = None
         if isinstance(platform_config, TileDBCreateOptions):
             raise ValueError(
@@ -410,7 +403,7 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
         dim_shape: int | None,
         ndim: int,  # not needed for sparse
         create_options: TileDBCreateOptions,
-    ) -> Tuple[int, int]:
+    ) -> tuple[int, int]:
         """Given a user-specified shape (maybe ``None``) along a particular dimension,
         returns a tuple of the TileDB capacity and extent for that dimension, suitable
         for schema creation. If the user-specified shape is None, the largest possible
@@ -532,7 +525,7 @@ class SparseNDArrayRead(_SparseNDArrayReadBase):
 
     def blockwise(
         self,
-        axis: Union[int, Sequence[int]],
+        axis: int | Sequence[int],
         *,
         size: int | Sequence[int] | None = None,
         reindex_disable_on_axis: int | Sequence[int] | None = None,
@@ -615,7 +608,7 @@ class SparseNDArrayBlockwiseRead(_SparseNDArrayReadBase):
         self,
         array: SparseNDArray,
         coords: options.SparseNDCoords,
-        axis: Union[int, Sequence[int]],
+        axis: int | Sequence[int],
         result_order: clib.ResultOrder,
         platform_config: options.PlatformConfig | None,
         *,

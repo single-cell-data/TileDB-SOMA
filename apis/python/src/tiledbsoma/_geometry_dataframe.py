@@ -8,7 +8,7 @@ Implementation of a SOMA Geometry DataFrame
 from __future__ import annotations
 
 import warnings
-from typing import Any, Sequence, Tuple, Union, cast
+from typing import Any, Sequence, cast
 
 import pyarrow as pa
 import somacore
@@ -73,7 +73,7 @@ class GeometryDataFrame(SpatialDataFrame, somacore.GeometryDataFrame):
         uri: str,
         *,
         schema: pa.Schema,
-        coordinate_space: Union[Sequence[str], CoordinateSpace] = ("x", "y"),
+        coordinate_space: Sequence[str] | CoordinateSpace = ("x", "y"),
         domain: Domain | None = None,
         platform_config: options.PlatformConfig | None = None,
         context: SOMATileDBContext | None = None,
@@ -189,7 +189,10 @@ class GeometryDataFrame(SpatialDataFrame, somacore.GeometryDataFrame):
         soma_domain = tuple(mutable_soma_domain)
 
         index_column_schema = []
-        index_column_data = {}
+
+        # TODO this requires fixing the return type for _revise_domain_for_extent
+        # which is currently tuple[Any, Any]
+        index_column_data: dict[str, Any] = {}
 
         for index_column_name, slot_soma_domain in zip(index_column_names, soma_domain):
             pa_field = schema.field(index_column_name)
@@ -476,7 +479,7 @@ class GeometryDataFrame(SpatialDataFrame, somacore.GeometryDataFrame):
 
     def write(
         self,
-        values: Union[pa.RecordBatch, pa.Table],
+        values: pa.RecordBatch | pa.Table,
         *,
         platform_config: options.PlatformConfig | None = None,
     ) -> Self:
@@ -497,7 +500,7 @@ class GeometryDataFrame(SpatialDataFrame, somacore.GeometryDataFrame):
         """
         _util.check_type("values", values, (pa.Table,))
 
-        write_options: Union[TileDBCreateOptions, TileDBWriteOptions]
+        write_options: TileDBCreateOptions | TileDBWriteOptions
         sort_coords = None
         if isinstance(platform_config, TileDBCreateOptions):
             raise ValueError(
@@ -523,7 +526,7 @@ class GeometryDataFrame(SpatialDataFrame, somacore.GeometryDataFrame):
 
     def from_outlines(
         self,
-        values: Union[pa.RecordBatch, pa.Table],
+        values: pa.RecordBatch | pa.Table,
         *,
         platform_config: options.PlatformConfig | None = None,
     ) -> Self:
@@ -564,7 +567,7 @@ class GeometryDataFrame(SpatialDataFrame, somacore.GeometryDataFrame):
     # Metadata operations
 
     @property
-    def axis_names(self) -> Tuple[str, ...]:
+    def axis_names(self) -> tuple[str, ...]:
         """The names of the axes of the coordinate space the data is defined on.
 
         Lifecycle:

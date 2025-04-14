@@ -12,6 +12,16 @@ Test read/write of unicode, ascii and binary
 
 @pytest.fixture
 def sample_arrow_table():
+    schema = pa.schema(
+        [
+            pa.field("soma_joinid", pa.int64(), False),
+            pa.field("unicode", pa.large_string()),
+            pa.field("ascii", pa.large_string()),
+            pa.field("bytes", pa.large_binary()),
+            pa.field("float32", pa.float32()),
+        ]
+    )
+
     df = pd.DataFrame(
         data={
             "soma_joinid": np.arange(3, dtype=np.int64),
@@ -25,17 +35,6 @@ def sample_arrow_table():
             "float32": np.array([0.0, 1.0, 2.0], np.float32),
         }
     )
-
-    # We "know" that tiledbsoma will promote string->large_string and
-    # binary->large_binary, so generate a table with that latent expectation.
-    tbl = pa.Table.from_pandas(df)
-    schema = tbl.schema
-    for i in range(len(tbl.schema)):
-        fld = schema.field(i)
-        if fld.type == pa.string():
-            schema = schema.set(i, fld.with_type(pa.large_string()))
-        if fld.type == pa.binary():
-            schema = schema.set(i, fld.with_type(pa.large_binary()))
 
     return pa.Table.from_pandas(df, schema)
 

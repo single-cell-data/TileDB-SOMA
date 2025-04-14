@@ -11,10 +11,8 @@ from __future__ import annotations
 import inspect
 from typing import (
     Any,
-    Dict,
-    List,
+    Literal,
     Sequence,
-    Tuple,
     Union,
     cast,
 )
@@ -48,7 +46,7 @@ from .options._tiledb_create_write_options import (
 )
 
 _UNBATCHED = options.BatchSize()
-AxisDomain = Union[None, Tuple[Any, Any], List[Any]]
+AxisDomain = Union[None, tuple[Any, Any], list[Any]]
 Domain = Sequence[AxisDomain]
 
 
@@ -352,7 +350,7 @@ class DataFrame(SOMAArray, somacore.DataFrame):
             _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code",
         )
 
-    def keys(self) -> Tuple[str, ...]:
+    def keys(self) -> tuple[str, ...]:
         """Returns the names of the columns when read back as a dataframe.
 
         Examples:
@@ -368,7 +366,7 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         return self._tiledb_array_keys()
 
     @property
-    def index_column_names(self) -> Tuple[str, ...]:
+    def index_column_names(self) -> tuple[str, ...]:
         """Returns index (dimension) column names.
 
         Lifecycle:
@@ -415,7 +413,12 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         # These assertions could be done in C++. However, it's easier here
         # to do the exception-type multiplexing, raising ValueError for one
         # thing, TileDBSOMAError for another.
-        for column_name in values.keys():
+        for column_name, values_for_column in values.items():
+            if not isinstance(values_for_column, pa.Array):
+                raise ValueError(
+                    f"value for column name '{column_name}' must be pyarrow.Array: got '{type(values_for_column)}'"
+                )
+
             # As with get_enumeration_values: we are trusting pyarrow to raise
             # KeyError, and raise it with a sufficiently clear error message,
             # when the column name is not present within the schema.
@@ -424,7 +427,7 @@ class DataFrame(SOMAArray, somacore.DataFrame):
                 raise KeyError(
                     f"schema column name '{column_name}' is not of dictionary type"
                 )
-            if pa.types.is_dictionary(values[column_name].type):
+            if pa.types.is_dictionary(values_for_column.type):
                 raise ValueError(
                     f"value column name '{column_name}' is of dictionary type: pass its dictionary array instead"
                 )
@@ -432,7 +435,7 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         self._handle.extend_enumeration_values(values, deduplicate)
 
     @property
-    def domain(self) -> Tuple[Tuple[Any, Any], ...]:
+    def domain(self) -> tuple[tuple[Any, Any], ...]:
         """Returns tuples of minimum and maximum values, one tuple per index column, currently storable
         on each index column of the dataframe. These can be resized up to ``maxdomain``.
 
@@ -442,7 +445,7 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         return self._domain()
 
     @property
-    def maxdomain(self) -> Tuple[Tuple[Any, Any], ...]:
+    def maxdomain(self) -> tuple[tuple[Any, Any], ...]:
         """Returns tuples of minimum and maximum values, one tuple per index column, to which the dataframe
         can have its domain resized.
 
@@ -586,7 +589,7 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         dim_schema = pa.schema(dim_schema_list)
 
         # Convert the user's tuple of low/high pairs into a dict keyed by index-column name.
-        new_domain_dict: Dict[str, Domain] = {}
+        new_domain_dict: dict[str, Domain] = {}
         for dim_name, new_dom in zip(dim_names, newdomain):
             # Domain can't be specified for strings (core constraint) so let them keystroke that easily.
             if (
@@ -824,7 +827,7 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         """
         _util.check_type("values", values, (pa.Table,))
 
-        write_options: Union[TileDBCreateOptions, TileDBWriteOptions]
+        write_options: TileDBCreateOptions | TileDBWriteOptions
         if isinstance(platform_config, TileDBCreateOptions):
             raise ValueError(
                 "As of TileDB-SOMA 1.13, the write method takes "
@@ -945,7 +948,7 @@ def _fill_out_slot_soma_domain(
     index_column_name: str,
     pa_type: pa.DataType,
     dtype: Any,
-) -> Tuple[Tuple[Any, Any], Union[bool, Tuple[bool, ...]]]:
+) -> tuple[tuple[Any, Any], bool | tuple[bool, ...]]:
     """Helper function for _build_tiledb_schema. Given a user-specified domain for a
     dimension slot -- which may be ``None``, or a two-tuple of which either element
     may be ``None`` -- return either what the user specified (if adequate) or
@@ -1104,14 +1107,29 @@ def _fill_out_slot_soma_domain(
 def _find_extent_for_domain(
     index_column_name: str,
     tiledb_create_write_options: TileDBCreateOptions,
-    dtype: Any,
-    slot_domain: Tuple[Any, Any],
-) -> Any:
+    dtype: np.typing.DTypeLike | str,
+    slot_domain: tuple[Any, Any],
+) -> int | float | Literal["", b""]:
     """Helper function for _build_tiledb_schema. Returns a tile extent that is
     small enough for the index-column type, and that also fits within the
     user-specified slot domain (if any).
-    """
 
+    Args:
+        index_column_names:
+            A list of column names to use as user-defined
+            index columns (e.g., ``['cell_type', 'tissue_type']``).
+            All named columns must exist in the schema, and at least one
+            index column name is required.
+        tiledb_create_write_options:
+            Tuning options used when creating new SOMA arrays. The user may pass
+            in a custom tile size through TileDBCreateOptions.
+        dtype:
+            For str types, the dtype may be "ascii" or np.dtype("U"). For byte
+            types, the type may be "bytes" or np.dtype("S"). Otherwise, all
+            other dtypes are expected to be a np.DTypeLike.
+        slot_domain:
+            The user-specified slot domain from which to calculate the extent
+    """
     # Default 2048 mods to 0 for 8-bit types and 0 is an invalid extent
     extent = tiledb_create_write_options.dim_tile(index_column_name)
     if isinstance(dtype, np.dtype) and dtype.itemsize == 1:
@@ -1123,7 +1141,7 @@ def _find_extent_for_domain(
     # Core string dims have no extent and no (core) domain.  We return "" here
     # simply so we can pass libtiledbsoma "" for domain and extent, while it
     # will (and must) ignore these when creating the TileDB schema.
-    if isinstance(dtype, str):
+    if dtype == "ascii" or np.dtype(dtype).kind in ("S", "U"):
         return ""
 
     lo, hi = slot_domain
@@ -1133,29 +1151,8 @@ def _find_extent_for_domain(
     if np.issubdtype(dtype, NPInteger) or np.issubdtype(dtype, NPFloating):
         return min(extent, hi - lo + 1)
 
-    if dtype == "datetime64[s]":
-        ilo = int(lo.astype("int64"))
-        ihi = int(hi.astype("int64"))
-        iextent = min(extent, ihi - ilo + 1)
-        return np.datetime64(iextent, "s")
-
-    if dtype == "datetime64[ms]":
-        ilo = int(lo.astype("int64"))
-        ihi = int(hi.astype("int64"))
-        iextent = min(extent, ihi - ilo + 1)
-        return np.datetime64(iextent, "ms")
-
-    if dtype == "datetime64[us]":
-        ilo = int(lo.astype("int64"))
-        ihi = int(hi.astype("int64"))
-        iextent = min(extent, ihi - ilo + 1)
-        return np.datetime64(iextent, "us")
-
-    if dtype == "datetime64[ns]":
-        ilo = int(lo.astype("int64"))
-        ihi = int(hi.astype("int64"))
-        iextent = min(extent, ihi - ilo + 1)
-        return np.datetime64(iextent, "ns")
+    if dtype in ("datetime64[s]", "datetime64[ms]", "datetime64[us]", "datetime64[ns]"):
+        return min(extent, _util.to_unix_ts(hi) - _util.to_unix_ts(lo) + 1)
 
     return extent
 
@@ -1166,8 +1163,13 @@ def _find_extent_for_domain(
 # extent exceeds max value representable by domain type. Reduce domain max
 # by 1 tile extent to allow for expansion.
 def _revise_domain_for_extent(
-    domain: Tuple[Any, Any], extent: Any, saturated_range: Union[bool, Tuple[bool, ...]]
-) -> Tuple[Any, Any]:
+    domain: tuple[Any, Any], extent: Any, saturated_range: bool | tuple[bool, ...]
+) -> tuple[Any, Any]:
+    if isinstance(domain[0], (np.datetime64, pa.TimestampScalar)):
+        domain = cast(
+            tuple[Any, Any], (_util.to_unix_ts(domain[0]), _util.to_unix_ts(domain[1]))
+        )
+
     if isinstance(saturated_range, tuple):
         # Handle SOMA_GEOMETRY domain with is tuple[list[float], list[float]]
         if isinstance(domain[1], tuple):

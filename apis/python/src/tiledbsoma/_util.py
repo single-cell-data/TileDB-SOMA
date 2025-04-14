@@ -14,12 +14,8 @@ from itertools import zip_longest
 from typing import (
     TYPE_CHECKING,
     Any,
-    Dict,
-    List,
     Mapping,
     Sequence,
-    Tuple,
-    Type,
     TypeVar,
     Union,
     cast,
@@ -41,8 +37,8 @@ from .options._tiledb_create_write_options import (
 if TYPE_CHECKING:
     from ._read_iters import ManagedQuery
 
-_JSONFilter = Union[str, Dict[str, Union[str, Union[int, float]]]]
-_JSONFilterList = Union[str, List[_JSONFilter]]
+_JSONFilter = Union[str, dict[str, Union[str, Union[int, float]]]]
+_JSONFilterList = Union[str, list[_JSONFilter]]
 
 
 def get_start_stamp() -> float:
@@ -138,6 +134,16 @@ def validate_slice(slc: Slice[Any]) -> None:
     if slc.start is None or slc.stop is None:
         # All half-specified slices are valid.
         return
+
+    if isinstance(slc.stop, pa.TimestampScalar) or isinstance(
+        slc.start, pa.TimestampScalar
+    ):
+        if to_unix_ts(slc.stop) < to_unix_ts(slc.start):
+            raise ValueError(
+                f"slice start ({slc.start!r}) must be <= slice stop ({slc.stop!r})"
+            )
+        return
+
     if slc.stop < slc.start:
         raise ValueError(
             f"slice start ({slc.start!r}) must be <= slice stop ({slc.stop!r})"
@@ -152,8 +158,8 @@ class NonNumericDimensionError(TypeError):
 
 
 def slice_to_numeric_range(
-    slc: Slice[Any], domain: Tuple[_T, _T]
-) -> Tuple[_T, _T] | None:
+    slc: Slice[Any], domain: tuple[_T, _T]
+) -> tuple[_T, _T] | None:
     """Constrains the given slice to the ``domain`` for numeric dimensions.
 
     We assume the slice has already been validated by validate_slice.
@@ -166,6 +172,7 @@ def slice_to_numeric_range(
         # Strings don't have a real "domain" so we can't handle them
         # the same way that we handle numeric types.
         raise NonNumericDimensionError("only numeric dimensions supported")
+
     # TODO: with future C++ improvements, move half-slice logic to SOMAArrayReader
     start = domain_start if slc.start is None else max(slc.start, domain_start)
     stop = domain_stop if slc.stop is None else min(slc.stop, domain_stop)
@@ -185,9 +192,9 @@ def slice_to_numeric_range(
 
 def dense_indices_to_shape(
     coords: options.DenseNDCoords,
-    array_shape: Tuple[int, ...],
+    array_shape: tuple[int, ...],
     result_order: somacore.ResultOrder,
-) -> Tuple[int, ...]:
+) -> tuple[int, ...]:
     """Given a subarray index specified as a tuple of per-dimension slices or scalars
     (e.g., ``([:], 1, [1:2])``), and the shape of the array, return the shape of
     the subarray. Note that the number of coordinates may be less than or equal
@@ -235,7 +242,7 @@ def dense_index_to_shape(coord: options.DenseCoord, array_length: int) -> int:
 def check_type(
     name: str,
     actual_value: Any,
-    expected_types: Tuple[Type[Any], ...],
+    expected_types: tuple[type[Any], ...],
 ) -> None:
     """Verifies the type of an argument, or produces a useful error message."""
     if not isinstance(actual_value, expected_types):
@@ -355,13 +362,13 @@ def build_clib_platform_config(
 
 
 def _build_column_config(col: Mapping[str, _ColumnConfig] | None) -> str:
-    column_config: Dict[str, Dict[str, Union[_JSONFilterList, int]]] = dict()
+    column_config: dict[str, dict[str, _JSONFilterList | int]] = dict()
 
     if col is None:
         return ""
 
     for k in col:
-        dikt: Dict[str, Union[_JSONFilterList, int]] = {}
+        dikt: dict[str, _JSONFilterList | int] = {}
         if col[k].filters is not None:
             dikt["filters"] = _build_filter_list(col[k].filters, False)
         if col[k].tile is not None:
@@ -372,7 +379,7 @@ def _build_column_config(col: Mapping[str, _ColumnConfig] | None) -> str:
 
 
 def _build_filter_list(
-    filters: Tuple[_DictFilterSpec, ...] | None, return_json: bool = True
+    filters: tuple[_DictFilterSpec, ...] | None, return_json: bool = True
 ) -> _JSONFilterList:
     _convert_filter = {
         "GzipFilter": "GZIP",
@@ -428,7 +435,7 @@ def _build_filter_list(
         return ""
 
     filter: _JSONFilter
-    filter_list: List[_JSONFilter] = []
+    filter_list: list[_JSONFilter] = []
 
     for info in filters:
         if len(info) == 1:
@@ -447,18 +454,13 @@ def _build_filter_list(
     return json.dumps(filter_list) if return_json else filter_list
 
 
-def _cast_domainish(domainish: List[Any]) -> Tuple[Tuple[object, object], ...]:
+def _cast_domainish(domainish: list[Any]) -> tuple[tuple[object, object], ...]:
     result = []
     for slot in domainish:
-
         arrow_type = slot[0].type
         if pa.types.is_timestamp(arrow_type):
-            pandas_type = np.dtype(arrow_type.to_pandas_dtype())
             result.append(
-                tuple(
-                    pandas_type.type(e.cast(pa.int64()).as_py(), arrow_type.unit)
-                    for e in slot
-                )
+                tuple(pa.scalar(to_unix_ts(e), type=arrow_type) for e in slot)
             )
         else:
             result.append(tuple(e.as_py() for e in slot))
@@ -515,7 +517,7 @@ def _set_coord(
             _set_geometry_coord(
                 mq,
                 dim,
-                cast(Tuple[Mapping[str, float], Mapping[str, float]], dom),
+                cast(tuple[Mapping[str, float], Mapping[str, float]], dom),
                 coord,
                 axis_names,
             )
@@ -558,24 +560,18 @@ def _set_coord(
 
     # Note: slice(None, None) matches the is_slice_of part, unless we also check
     # the dim-type part.
-    if is_slice_of(coord, np.datetime64) and pa.types.is_timestamp(dim.type):
+    if (
+        is_slice_of(coord, np.datetime64)
+        or is_slice_of(coord, pa.TimestampScalar)
+        or is_slice_of(coord, int)
+    ) and pa.types.is_timestamp(dim.type):
         validate_slice(coord)
 
         # These timestamp types are stored in Arrow as well as TileDB as 64-bit
         # integers (with distinguishing metadata of course). For purposes of the
         # query logic they're just int64.
-        ts_dom = pa.array(dom, type=dim.type).cast(pa.int64())
-
-        if coord.start is not None:
-            istart = int(coord.start.astype("int64"))
-        else:
-            istart = ts_dom[0].as_py()
-
-        if coord.stop is not None:
-            istop = int(coord.stop.astype("int64"))
-        else:
-            istop = ts_dom[1].as_py()
-
+        istart = to_unix_ts(coord.start or dom[0])
+        istop = to_unix_ts(coord.stop or dom[1])
         column.set_dim_ranges_int64(mq._handle, [(istart, istop)])
         return
 
@@ -592,7 +588,7 @@ def _set_coord(
 def _set_geometry_coord(
     mq: ManagedQuery,
     dim: pa.Field,
-    dom: Tuple[Mapping[str, float], Mapping[str, float]],
+    dom: tuple[Mapping[str, float], Mapping[str, float]],
     coord: object,
     axis_names: Sequence[str],
 ) -> None:
@@ -659,9 +655,8 @@ def _set_coord_by_py_seq_or_np_array(
             raise ValueError(
                 f"unhandled coord type {type(coord)} for index column named {dim.name}"
             )
-        icoord = [
-            int(e.astype("int64")) if isinstance(e, np.datetime64) else e for e in coord
-        ]
+
+        icoord = [to_unix_ts(e) for e in coord]
         column.set_dim_points_int64(mq._handle, icoord)
         return
 
@@ -669,7 +664,7 @@ def _set_coord_by_py_seq_or_np_array(
 
 
 def _set_coord_by_numeric_slice(
-    mq: ManagedQuery, dim: pa.Field, dom: Tuple[object, object], coord: Slice[Any]
+    mq: ManagedQuery, dim: pa.Field, dom: tuple[object, object], coord: Slice[Any]
 ) -> None:
     try:
         lo_hi = slice_to_numeric_range(coord, dom)
@@ -689,7 +684,7 @@ def _set_coord_by_numeric_slice(
         return
 
 
-def _resolve_futures(unresolved: Dict[str, Any], deep: bool = False) -> Dict[str, Any]:
+def _resolve_futures(unresolved: dict[str, Any], deep: bool = False) -> dict[str, Any]:
     """Resolves any futures found in the dict."""
     resolved = {}
     for k, v in unresolved.items():
@@ -702,6 +697,14 @@ def _resolve_futures(unresolved: Dict[str, Any], deep: bool = False) -> Dict[str
         resolved[k] = v
 
     return resolved
+
+
+def to_unix_ts(dt: int | pa.TimestampScalar | np.datetime64) -> int:
+    if isinstance(dt, pa.TimestampScalar):
+        return int(dt.value)
+    if isinstance(dt, np.datetime64):
+        return int(dt.astype("int64"))
+    return dt
 
 
 class Sentinel:
