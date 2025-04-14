@@ -6,7 +6,7 @@
 
 from __future__ import annotations
 
-from typing import Dict, TypeVar, Union, cast
+from typing import TypeVar, Union, cast
 
 import numpy as np
 import pandas as pd
@@ -41,7 +41,7 @@ See also https://github.com/single-cell-data/TileDB-SOMA/pull/3415.
 OriginalIndexMetadata = Union[None, str]
 
 
-def _string_dict_from_arrow_schema(schema: pa.Schema) -> Dict[str, str]:
+def _string_dict_from_arrow_schema(schema: pa.Schema) -> dict[str, str]:
     """Converts an Arrow schema to a string/string dict.
 
     This is easier on the eyes, easier to convert from/to JSON for distributed logging,

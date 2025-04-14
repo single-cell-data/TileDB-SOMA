@@ -2,7 +2,7 @@ import datetime
 import os
 import pathlib
 import textwrap
-from typing import List, TypeVar, Union
+from typing import TypeVar, Union
 
 import numpy as np
 import pandas as pd
@@ -377,7 +377,7 @@ def test_cascading_close(tmp_path: pathlib.Path):
     un_corvid.close()
     assert un_corvid.closed
 
-    all_elements: List[_soma_object.AnySOMAObject] = []
+    all_elements: list[_soma_object.AnySOMAObject] = []
 
     def crawl(obj: _soma_object.AnySOMAObject):
         all_elements.append(obj)
@@ -409,7 +409,7 @@ def test_cascading_close(tmp_path: pathlib.Path):
 @pytest.mark.parametrize(
     ("in_type", "want"),
     [
-        (List[int], list),
+        (list[int], list),
         (set, set),
         (soma.Collection[object], soma.Collection),
     ],
@@ -420,7 +420,7 @@ def test_real_class(in_type, want):
 
 
 @pytest.mark.parametrize(
-    "in_type", (Union[int, str], Literal["bacon"], TypeVar("_T", bound=List))
+    "in_type", (Union[int, str], Literal["bacon"], TypeVar("_T", bound=list))
 )
 def test_real_class_fail(in_type):
     with raises_no_typeguard(TypeError):

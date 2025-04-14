@@ -2,7 +2,7 @@ import argparse
 import re
 from collections import OrderedDict
 from sys import stderr
-from typing import Dict, List, Union
+from typing import Union
 
 import attr
 import matplotlib.pyplot as plt
@@ -11,7 +11,7 @@ import pandas as pd
 from .data import FileBasedProfileDB, ProfileData
 
 
-def collect_tiledb_stats(data: ProfileData) -> Dict[str, Union[int, float]]:
+def collect_tiledb_stats(data: ProfileData) -> dict[str, Union[int, float]]:
     """Extract all TileDB stats as dictionary"""
     result = {}
     tiledb_stats = data.tiledb_stats
@@ -63,7 +63,7 @@ def extract_context_data(data: ProfileData, metric: str) -> Union[int, float, No
         raise Exception(f"context does not have the following metric {metric}")
 
 
-def create_pandas_df(profile_datas: List[ProfileData]) -> pd.DataFrame:
+def create_pandas_df(profile_datas: list[ProfileData]) -> pd.DataFrame:
     """Create pandas dataframe for all the runs of a given command
     Columns are metric names and rows are the runs
     """
@@ -108,7 +108,7 @@ def main():
 
     # extract profiling command run data
     db = FileBasedProfileDB()
-    profile_datas: List[ProfileData] = db.find(" ".join(args.command))
+    profile_datas: list[ProfileData] = db.find(" ".join(args.command))
 
     if args.json:
         output_as_json(profile_datas)
@@ -141,7 +141,7 @@ def main():
     plt.show()
 
 
-def output_as_json(profile_datas: List[ProfileData]) -> None:
+def output_as_json(profile_datas: list[ProfileData]) -> None:
     print(create_pandas_df(profile_datas).to_json(orient="columns"))
 
 

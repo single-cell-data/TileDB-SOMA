@@ -11,11 +11,8 @@ from __future__ import annotations
 import inspect
 from typing import (
     Any,
-    Dict,
-    List,
     Literal,
     Sequence,
-    Tuple,
     Union,
     cast,
 )
@@ -49,7 +46,7 @@ from .options._tiledb_create_write_options import (
 )
 
 _UNBATCHED = options.BatchSize()
-AxisDomain = Union[None, Tuple[Any, Any], List[Any]]
+AxisDomain = Union[None, tuple[Any, Any], list[Any]]
 Domain = Sequence[AxisDomain]
 
 
@@ -353,7 +350,7 @@ class DataFrame(SOMAArray, somacore.DataFrame):
             _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code",
         )
 
-    def keys(self) -> Tuple[str, ...]:
+    def keys(self) -> tuple[str, ...]:
         """Returns the names of the columns when read back as a dataframe.
 
         Examples:
@@ -369,7 +366,7 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         return self._tiledb_array_keys()
 
     @property
-    def index_column_names(self) -> Tuple[str, ...]:
+    def index_column_names(self) -> tuple[str, ...]:
         """Returns index (dimension) column names.
 
         Lifecycle:
@@ -438,7 +435,7 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         self._handle.extend_enumeration_values(values, deduplicate)
 
     @property
-    def domain(self) -> Tuple[Tuple[Any, Any], ...]:
+    def domain(self) -> tuple[tuple[Any, Any], ...]:
         """Returns tuples of minimum and maximum values, one tuple per index column, currently storable
         on each index column of the dataframe. These can be resized up to ``maxdomain``.
 
@@ -448,7 +445,7 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         return self._domain()
 
     @property
-    def maxdomain(self) -> Tuple[Tuple[Any, Any], ...]:
+    def maxdomain(self) -> tuple[tuple[Any, Any], ...]:
         """Returns tuples of minimum and maximum values, one tuple per index column, to which the dataframe
         can have its domain resized.
 
@@ -592,7 +589,7 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         dim_schema = pa.schema(dim_schema_list)
 
         # Convert the user's tuple of low/high pairs into a dict keyed by index-column name.
-        new_domain_dict: Dict[str, Domain] = {}
+        new_domain_dict: dict[str, Domain] = {}
         for dim_name, new_dom in zip(dim_names, newdomain):
             # Domain can't be specified for strings (core constraint) so let them keystroke that easily.
             if (
@@ -830,7 +827,7 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         """
         _util.check_type("values", values, (pa.Table,))
 
-        write_options: Union[TileDBCreateOptions, TileDBWriteOptions]
+        write_options: TileDBCreateOptions | TileDBWriteOptions
         if isinstance(platform_config, TileDBCreateOptions):
             raise ValueError(
                 "As of TileDB-SOMA 1.13, the write method takes "
@@ -951,7 +948,7 @@ def _fill_out_slot_soma_domain(
     index_column_name: str,
     pa_type: pa.DataType,
     dtype: Any,
-) -> Tuple[Tuple[Any, Any], Union[bool, Tuple[bool, ...]]]:
+) -> tuple[tuple[Any, Any], bool | tuple[bool, ...]]:
     """Helper function for _build_tiledb_schema. Given a user-specified domain for a
     dimension slot -- which may be ``None``, or a two-tuple of which either element
     may be ``None`` -- return either what the user specified (if adequate) or
@@ -1111,7 +1108,7 @@ def _find_extent_for_domain(
     index_column_name: str,
     tiledb_create_write_options: TileDBCreateOptions,
     dtype: np.typing.DTypeLike | str,
-    slot_domain: Tuple[Any, Any],
+    slot_domain: tuple[Any, Any],
 ) -> int | float | Literal["", b""]:
     """Helper function for _build_tiledb_schema. Returns a tile extent that is
     small enough for the index-column type, and that also fits within the
@@ -1166,11 +1163,11 @@ def _find_extent_for_domain(
 # extent exceeds max value representable by domain type. Reduce domain max
 # by 1 tile extent to allow for expansion.
 def _revise_domain_for_extent(
-    domain: Tuple[Any, Any], extent: Any, saturated_range: Union[bool, Tuple[bool, ...]]
-) -> Tuple[Any, Any]:
+    domain: tuple[Any, Any], extent: Any, saturated_range: bool | tuple[bool, ...]
+) -> tuple[Any, Any]:
     if isinstance(domain[0], (np.datetime64, pa.TimestampScalar)):
         domain = cast(
-            Tuple[Any, Any], (_util.to_unix_ts(domain[0]), _util.to_unix_ts(domain[1]))
+            tuple[Any, Any], (_util.to_unix_ts(domain[0]), _util.to_unix_ts(domain[1]))
         )
 
     if isinstance(saturated_range, tuple):

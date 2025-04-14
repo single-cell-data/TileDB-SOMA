@@ -1,6 +1,6 @@
 """Hypothesis tests for IntIndexer module."""
 
-from typing import Any, List, Union
+from typing import Any, Union
 
 import hypothesis as ht
 import hypothesis.extra.numpy as ht_np
@@ -63,7 +63,7 @@ def test_IntIndexer_arrow_lookup(
     )
 
 
-@given(data=st.from_type(Union[np.ndarray[Any, Any], List[int]]))
+@given(data=st.from_type(Union[np.ndarray[Any, Any], list[int]]))
 @settings(suppress_health_check=(ht.HealthCheck.function_scoped_fixture,))
 def test_fuzz_IntIndexer(
     data: npt.NDArray[Any], context: soma.SOMATileDBContext

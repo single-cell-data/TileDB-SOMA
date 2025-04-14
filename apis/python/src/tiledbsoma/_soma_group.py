@@ -11,8 +11,6 @@ from typing import (
     Generic,
     Iterable,
     Iterator,
-    Set,
-    Type,
     TypeVar,
     cast,
 )
@@ -72,7 +70,7 @@ class SOMAGroup(
 
         This is loaded at startup when we have a read handle.
         """
-        self._mutated_keys: Set[str] = set()
+        self._mutated_keys: set[str] = set()
 
     def __len__(self) -> int:
         """Return the number of members in the collection"""
@@ -186,7 +184,7 @@ class SOMAGroup(
     def _add_new_element(
         self,
         key: str,
-        kind: Type[_TDBO],
+        kind: type[_TDBO],
         factory: Callable[[str], _TDBO],
         user_uri: str | None,
     ) -> _TDBO:
