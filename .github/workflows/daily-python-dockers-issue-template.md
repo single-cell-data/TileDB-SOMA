@@ -1,5 +1,5 @@
 ---
-title: Daily `python-dockers.yml` build run failing
+title: Daily `python-dockers.yml` build failing
 labels: bug
 ---
 
