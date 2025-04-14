@@ -868,8 +868,12 @@ class MetadataWrapper(MutableMapping[str, Any]):
         self._mods.clear()
 
         if errors:
+            details = []
+            for error in errors:
+                details.append(repr(error))
+
             raise SOMAError(
-                f"[MetadataWrapper][_write] {len(errors)} errors occured while writing metadata to disk."
+                f"[MetadataWrapper][_write] {len(errors)} errors occured while writing metadata to disk. Details: \n {"----\n".join(details)}"
             )
 
     def __repr__(self) -> str:
