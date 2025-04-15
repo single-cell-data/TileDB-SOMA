@@ -221,7 +221,7 @@ Furthermore, \code{values} must contain the same number of rows as the current
 \subsection{Method \code{levels()}}{
 Get the levels for an enumerated (\code{factor}) column
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{SOMADataFrame$levels(column_names = NULL)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{SOMADataFrame$levels(column_names = NULL, simplify = TRUE)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -229,13 +229,21 @@ Get the levels for an enumerated (\code{factor}) column
 \describe{
 \item{\code{column_names}}{Optional character vector of column names to pull
 enumeration levels for; defaults to all enumerated columns}
+
+\item{\code{simplify}}{Simplify the result down to a vector or matrix}
 }
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-If \code{column_names} is a single string value, a character
-vector of enumeration levels; otherwise, a named list where each name is
-a column name and each value is the enumeration levels for said column
+If \code{simplify} returns one of the following:
+\itemize{
+\item a vector of there is only one enumerated column
+\item a matrix if there are multiple enumerated columns with the same
+number of levels
+\item a named list if there are multiple enumerated columns with
+differing numbers of levels
+}
+Otherwise, returns a named list
 }
 }
 \if{html}{\out{<hr>}}

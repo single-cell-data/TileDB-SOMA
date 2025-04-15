@@ -346,7 +346,7 @@ test_that("creation with ordered factors", {
     )
   )
 
-  expect_length(lvls <- sdf$levels(), n = 1L)
+  expect_length(lvls <- sdf$levels(simplify = FALSE), n = 1L)
   expect_named(lvls, "ord")
   expect_identical(lvls$ord, levels(df$ord))
   expect_identical(sdf$levels("ord"), levels(df$ord))
