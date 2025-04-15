@@ -176,9 +176,7 @@ class CachingReader:
     def close(self) -> None:
         """Close the file handle."""
         self._reset_cache()
-        if self._file is not None:
-            self._file.close()
-            self._file = None
+        self._file.close()
 
     def tell(self) -> int:
         """Return integer indicating the file object's current position in the file.
