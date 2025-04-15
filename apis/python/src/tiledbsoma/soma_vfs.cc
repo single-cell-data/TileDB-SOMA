@@ -23,8 +23,15 @@ using namespace tiledbsoma;
 // TODO This temporary workaround prevents namespace clash with tiledb-py.
 // Bind tiledb::VFS directly once tiledb-py dependency is removed
 class SOMAVFS : public tiledb::VFS {
+   private:
+    std::shared_ptr<SOMAContext> ctx_;
+
    public:
-    using tiledb::VFS::VFS;
+    SOMAVFS(std::shared_ptr<SOMAContext> ctx)
+        : tiledb::VFS(*ctx->tiledb_ctx())
+        , ctx_(ctx) {
+    }
+
     SOMAVFS(const tiledb::VFS& vfs)
         : tiledb::VFS(vfs) {
     }
@@ -127,7 +134,7 @@ void load_soma_vfs(py::module& m) {
     py::class_<SOMAVFS, std::shared_ptr<SOMAVFS>>(m, "SOMAVFS")
         .def(
             py::init([](std::shared_ptr<SOMAContext> context) {
-                return SOMAVFS(*context->tiledb_ctx());
+                return SOMAVFS(context);
             }),
             "ctx"_a);
 

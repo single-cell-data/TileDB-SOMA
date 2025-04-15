@@ -1560,14 +1560,14 @@ def test_from_anndata_byteorder_63459(tmp_path, conftest_pbmc_small):
         assert ad.uns["X"] == new_ad.uns["X"]
 
 
-def test_vfs_lifetime_65831():
-    # https://app.shortcut.com/tiledb-inc/story/65831/python-c-segv-memory-issues-in-somavfs-somavfsfilebuf
+def test_vfs_lifetime_65831_65864():
     context = tiledbsoma.SOMATileDBContext()
     vfs = tiledbsoma.pytiledbsoma.SOMAVFS(context.native_context)
+    del context  # https://app.shortcut.com/tiledb-inc/story/65864/
     fb = tiledbsoma.pytiledbsoma.SOMAVFSFilebuf(vfs).open(
         str(TESTDATA / "pbmc-small.h5ad")
     )
-    del vfs
+    del vfs  # https://app.shortcut.com/tiledb-inc/story/65831/
     gc.collect()  # Make sure that vfs is freed
     fb.read(100)  # Implicitly ensure that read does not segfault
     fb.close()
