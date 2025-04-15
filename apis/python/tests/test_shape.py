@@ -826,6 +826,43 @@ def test_canned_experiments(tmp_path, has_shapes):
     assert dict_output == expect
 
 
+@pytest.mark.parametrize("level", [1, 2, 3, 4])
+def test_get_experiment_shapes_corner_cases(tmp_path, level):
+    path1 = tmp_path
+    path2 = path1 / "ms"
+    path3 = path2 / "RNA"
+    path4 = path3 / "X"
+
+    uri1 = path1.as_posix()
+    uri2 = path2.as_posix()
+    uri3 = path3.as_posix()
+    uri4 = path4.as_posix()
+
+    with tiledbsoma.Experiment.create(uri1) as exp:
+        if level >= 2:
+            with tiledbsoma.Collection.create(uri2) as ms:
+                if level >= 3:
+                    with tiledbsoma.Measurement.create(uri3) as RNA:
+                        if level >= 4:
+                            with tiledbsoma.Collection.create(uri4) as X:
+                                pass
+                            RNA.set("X", X, use_relative_uri=False)
+                    ms.set("RNA", RNA, use_relative_uri=False)
+            exp.set("ms", ms, use_relative_uri=False)
+
+    actual = tiledbsoma.io.get_experiment_shapes(uri1)
+    expect = {}
+    if level == 1:
+        expect = {}
+    elif level == 2:
+        expect = {"ms": {}}
+    elif level == 3:
+        expect = {"ms": {"RNA": {}}}
+    elif level == 4:
+        expect = {"ms": {"RNA": {}}}
+    assert actual == expect
+
+
 def test_canned_nonstandard_dataframe_upgrade(tmp_path):
     uri = tmp_path.as_posix()
 
