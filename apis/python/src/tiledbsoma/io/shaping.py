@@ -470,14 +470,17 @@ def _treewalk(
         # Non-terminal
         if isinstance(item, tiledbsoma.Experiment):
             retval = {}
-            retval["obs"] = _recurse(item, node_name="obs", **kwargs)
-            retval["ms"] = _recurse(item, node_name="ms", **kwargs)
+            if "obs" in item:
+                retval["obs"] = _recurse(item, node_name="obs", **kwargs)
+            if "ms" in item:
+                retval["ms"] = _recurse(item, node_name="ms", **kwargs)
             return retval
 
         # Non-terminal
         if isinstance(item, tiledbsoma.Measurement):
             retval = {}
-            retval["var"] = _recurse(item, node_name="var", **kwargs)
+            if "var" in item:
+                retval["var"] = _recurse(item, node_name="var", **kwargs)
             for iter_coll_name in ["X", "obsm", "obsp", "varm", "varp"]:
                 kwargs["coll_name"] = iter_coll_name
                 children_dict = _recurse(item, node_name=iter_coll_name, **kwargs)
