@@ -58,6 +58,9 @@ def read_h5ad(
             anndata = ad.read_h5ad(_FSPathWrapper(input_handle, input_path), mode)
             yield anndata
     finally:
+        # This prevents a race condition with the REPL cleanup in ipython. See sc-65863
+        if anndata.file:
+            anndata.file.close()
         input_handle.close()
 
 
