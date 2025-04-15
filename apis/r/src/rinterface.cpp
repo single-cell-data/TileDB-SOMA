@@ -643,6 +643,63 @@ Rcpp::List c_attributes(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp
     return result;
 }
 
+// adapted from tiledb-r
+// https://github.com/TileDB-Inc/TileDB-R/blob/525bdfc0f34aadb74a312a5d8428bd07819a8f83/src/libtiledb.cpp#L3027-L3042
+// [[Rcpp::export]]
+Rcpp::LogicalVector c_attributes_enumerated(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
+    auto sr = tdbs::SOMAArray::open(OpenMode::read, uri, ctxxp->ctxptr);
+    std::shared_ptr<tiledb::ArraySchema> sch = sr->tiledb_schema();
+    sr->close();
+
+    int nattrs = sch->attribute_num();
+    Rcpp::LogicalVector has_enum = Rcpp::LogicalVector(nattrs);
+    Rcpp::CharacterVector names = Rcpp::CharacterVector(nattrs);
+    for (int i = 0; i < nattrs; i++) {
+        auto attr = make_xptr<tiledb::Attribute>(new tiledb::Attribute(sch->attribute(i)));
+        auto enmr = tiledb::AttributeExperimental::get_enumeration_name(
+            *(ctxxp->ctxptr->tiledb_ctx()),
+            *attr.get()
+        );
+        has_enum(i) = enmr != std::nullopt;
+        names(i) = attr->name();
+    }
+
+    has_enum.attr("names") = names;
+    return has_enum;
+}
+
+// [[Rcpp::export]]
+Rcpp::CharacterVector c_attribute_enumeration_levels(
+        const std::string& uri,
+        Rcpp::XPtr<somactx_wrap_t> ctxxp,
+        const std::string& name
+) {
+    auto sr = tdbs::SOMAArray::open(OpenMode::read, uri, ctxxp->ctxptr);
+    std::pair<ArrowArray*, ArrowSchema*> enum_values = sr->get_enumeration_values_for_column(name);
+    sr->close();
+
+    if (enum_values.first->length > std::numeric_limits<int32_t>::max()) {
+        Rcpp::stop("too many enumeration levels for R");
+    }
+
+    nanoarrow::UniqueArrayView enum_view;
+    ArrowArrayViewInitFromType(enum_view.get(), NANOARROW_TYPE_LARGE_STRING);
+    NANOARROW_RETURN_NOT_OK(ArrowArrayViewSetArray(enum_view.get(), enum_values.first, nullptr));
+
+    int nlevels = static_cast<int32_t>(enum_values.first->length);
+    Rcpp::CharacterVector enumerations = Rcpp::CharacterVector(nlevels);
+    for (int i = 0; i < nlevels; i++) {
+        if (ArrowArrayViewIsNull(enum_view.get(), i)) {
+            enumerations(i) = R_NaString;
+        } else {
+            ArrowStringView item = ArrowArrayViewGetStringUnsafe(enum_view.get(), i);
+            enumerations(i) = std::string(item.data, item.size_bytes);
+        }
+    }
+
+    return enumerations;
+}
+
 // [[Rcpp::export]]
 std::string resize(
     const std::string& uri,

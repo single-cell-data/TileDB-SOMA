@@ -378,6 +378,55 @@ SOMADataFrame <- R6::R6Class(
       self$write(values)
     },
 
+    #' @description Get the levels for an enumerated (\code{factor}) column
+    #'
+    #' @param column_names Optional character vector of column names to pull
+    #' enumeration levels for; defaults to all enumerated columns
+    #' @param simplify Simplify the result down to a vector or matrix
+    #'
+    #' @return If \code{simplify} returns one of the following:
+    #' \itemize{
+    #'  \item a vector of there is only one enumerated column
+    #'  \item a matrix if there are multiple enumerated columns with the same
+    #'   number of levels
+    #'  \item a named list if there are multiple enumerated columns with
+    #'   differing numbers of levels
+    #' }
+    #' Otherwise, returns a named list
+    #'
+    levels = function(column_names = NULL, simplify = TRUE) {
+      stopifnot(
+        "'simplify' must be TRUE or FALSE" = isTRUE(simplify) || isFALSE(simplify)
+      )
+      enums <- c_attributes_enumerated(self$uri, private$.soma_context)
+      if (!any(enums)) {
+        rlang::warn("No enumerated columns present")
+        return(NULL)
+      }
+      factors <- names(enums[enums])
+      column_names <- column_names %||% factors
+      column_names <- rlang::arg_match(
+        column_names,
+        values = factors,
+        multiple = TRUE
+      )
+      levels <- sapply(
+        X = column_names,
+        FUN = c_attribute_enumeration_levels,
+        uri = self$uri,
+        ctxxp = private$.soma_context,
+        simplify = FALSE,
+        USE.NAMES = TRUE
+      )
+      if (simplify) {
+        if (length(levels) == 1L) {
+          return(levels[[1L]])
+        }
+        return(simplify2array(levels, higher = FALSE))
+      }
+      return(levels)
+    },
+
     #' @description Retrieve the shape; as \code{SOMADataFrames} are shapeless,
     #' simply raises an error
     #'
