@@ -189,7 +189,7 @@ class SOMAArray(SOMAObject[_tdb_handles.SOMAArrayWrapper[Any]]):
         layout = (
             clib.ResultOrder.unordered if sort_coords else clib.ResultOrder.globalorder
         )
-        
+
         mq = ManagedQuery(self)._handle
         mq.set_layout(layout)
 
