@@ -518,16 +518,13 @@ uint64_t ManagedQuery::_get_max_capacity(tiledb_datatype_t index_type) {
     }
 }
 
-ArraySchemaEvolution ManagedQuery::_make_se() {
-    ArraySchemaEvolution se(*ctx_);
-    return se;
-}
-
 void ManagedQuery::set_array_data(
     ArrowSchema* arrow_schema, ArrowArray* arrow_array) {
     // Go through all columns in the ArrowTable and cast the values to what is
     // in the ArraySchema on disk
-    ArraySchemaEvolution se = _make_se();
+    ArraySchemaEvolution se(*ctx_);
+    auto ts = array_->open_timestamp_end();
+    se.set_timestamp_range(TimestampRange(ts, ts));
     bool evolve_schema = false;
     for (auto i = 0; i < arrow_schema->n_children; ++i) {
         bool enmr_extended = _cast_column(
