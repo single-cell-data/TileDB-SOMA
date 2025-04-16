@@ -106,10 +106,6 @@ test_that("SOMADataFrame round-trip with factor and ordered", {
   tsch <- tiledb::schema(turi)
   expect_true(inherits(tsch, "tiledb_array_schema"))
 
-  ## we no longer use this one though
-  sch <- tiledbsoma:::arrow_schema_from_tiledb_schema(tsch)
-  expect_true(inherits(sch, "Schema"))
-
   att <- arrow::as_arrow_table(ett)
   expect_true(inherits(att, "Table"))
 

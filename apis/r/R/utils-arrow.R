@@ -252,47 +252,10 @@ arrow_type_unsigned_range <- function(x) {
   range
 }
 
-#' Create an Arrow field from a TileDB dimension
-#' @noRd
-arrow_field_from_tiledb_dim <- function(x) {
-  stopifnot(inherits(x, "tiledb_dim"))
-  arrow::field(
-    name = tiledb::name(x),
-    type = arrow_type_from_tiledb_type(tiledb::datatype(x)),
-    nullable = FALSE
-  )
-}
-
 ## With a nod to Kevin Ushey
 #' @noRd
 yoink <- function(package, symbol) {
   do.call(":::", list(package, symbol))
-}
-
-#' Create an Arrow field from a TileDB attribute
-#' @noRd
-arrow_field_from_tiledb_attr <- function(x, arrptr = NULL) {
-  stopifnot(inherits(x, "tiledb_attr"))
-  if (tiledb::tiledb_attribute_has_enumeration(x) && !is.null(arrptr)) {
-    .tiledb_array_is_open <- yoink("tiledb", "libtiledb_array_is_open")
-    if (!.tiledb_array_is_open(arrptr)) {
-      .tiledb_array_open_with_ptr <- yoink("tiledb", "libtiledb_array_open_with_ptr")
-      arrptr <- .tiledb_array_open_with_ptr(arrptr, "READ")
-    }
-    ord <- tiledb::tiledb_attribute_is_ordered_enumeration_ptr(x, arrptr)
-    idx <- arrow_type_from_tiledb_type(tiledb::datatype(x))
-    arrow::field(
-      name = tiledb::name(x),
-      type = arrow::dictionary(index_type = idx, ordered = ord),
-      nullable = tiledb::tiledb_attribute_get_nullable(x)
-    )
-  } else {
-    arrow::field(
-      name = tiledb::name(x),
-      type = arrow_type_from_tiledb_type(tiledb::datatype(x)),
-      nullable = tiledb::tiledb_attribute_get_nullable(x)
-    )
-  }
 }
 
 #' Create a TileDB attribute from an Arrow field
@@ -323,19 +286,6 @@ tiledb_attr_from_arrow_field <- function(field, tiledb_create_options) {
       )
     )
   )
-}
-
-#' Create an Arrow schema from a TileDB array schema
-#' @noRd
-arrow_schema_from_tiledb_schema <- function(x) {
-  stopifnot(inherits(x, "tiledb_array_schema"))
-  dimfields <- lapply(tiledb::dimensions(x), arrow_field_from_tiledb_dim)
-  if (!is.null(x@arrptr)) {
-    attfields <- lapply(tiledb::attrs(x), arrow_field_from_tiledb_attr, x@arrptr)
-  } else {
-    attfields <- lapply(tiledb::attrs(x), arrow_field_from_tiledb_attr)
-  }
-  arrow::schema(c(dimfields, attfields))
 }
 
 #' Validate external pointer to ArrowArray which is embedded in a nanoarrow S3 type
