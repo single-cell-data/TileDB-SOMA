@@ -1560,14 +1560,28 @@ def test_from_anndata_byteorder_63459(tmp_path, conftest_pbmc_small):
         assert ad.uns["X"] == new_ad.uns["X"]
 
 
-def test_vfs_lifetime_65831():
-    # https://app.shortcut.com/tiledb-inc/story/65831/python-c-segv-memory-issues-in-somavfs-somavfsfilebuf
+def test_soma_file_handling_65831_65864():
     context = tiledbsoma.SOMATileDBContext()
-    vfs = tiledbsoma.pytiledbsoma.SOMAVFS(context.native_context)
-    fb = tiledbsoma.pytiledbsoma.SOMAVFSFilebuf(vfs).open(
-        str(TESTDATA / "pbmc-small.h5ad")
+    fb = tiledbsoma.pytiledbsoma.SOMAFileHandle(
+        str(TESTDATA / "pbmc-small.h5ad"), context.native_context
     )
-    del vfs
-    gc.collect()  # Make sure that vfs is freed
+    del context  # https://app.shortcut.com/tiledb-inc/story/65864/
+    gc.collect()  # Make sure that context is freed
     fb.read(100)  # Implicitly ensure that read does not segfault
     fb.close()
+
+    with pytest.raises(
+        tiledbsoma.SOMAError, match="File must be open before performing read"
+    ):
+        fb.read(100)
+
+    with pytest.raises(
+        tiledbsoma.SOMAError, match="File must be open before performing seek"
+    ):
+        fb.seek(100, 1)
+
+    with pytest.raises(
+        tiledbsoma.SOMAError, match="File must be open before performing readinto"
+    ):
+        arr = np.zeros(100, dtype=np.uint8)
+        fb.readinto(arr)
