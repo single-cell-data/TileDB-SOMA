@@ -1560,7 +1560,7 @@ def test_from_anndata_byteorder_63459(tmp_path, conftest_pbmc_small):
         assert ad.uns["X"] == new_ad.uns["X"]
 
 
-def test_vfs_lifetime_65831_65864():
+def test_soma_file_handling_65831_65864():
     context = tiledbsoma.SOMATileDBContext()
     fb = tiledbsoma.pytiledbsoma.SOMAFileHandle(
         str(TESTDATA / "pbmc-small.h5ad"), context.native_context
@@ -1569,3 +1569,19 @@ def test_vfs_lifetime_65831_65864():
     gc.collect()  # Make sure that context is freed
     fb.read(100)  # Implicitly ensure that read does not segfault
     fb.close()
+
+    with pytest.raises(
+        tiledbsoma.SOMAError, match="File must be open before performing read"
+    ):
+        fb.read(100)
+
+    with pytest.raises(
+        tiledbsoma.SOMAError, match="File must be open before performing seek"
+    ):
+        fb.seek(100, 1)
+
+    with pytest.raises(
+        tiledbsoma.SOMAError, match="File must be open before performing readinto"
+    ):
+        arr = np.zeros(100, dtype=np.uint8)
+        fb.readinto(arr)

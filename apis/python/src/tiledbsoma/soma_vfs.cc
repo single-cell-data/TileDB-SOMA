@@ -37,6 +37,7 @@ class SOMAFileHandle {
     std::ios::openmode openmode_ = std::ios::in;  // hardwired to read-only
 
     // Ensure proper order of destruction
+    const std::string& uri_;
     SOMAFilebuf buf_;
     tiledb::VFS vfs_;
     std::shared_ptr<SOMAContext> ctx_;
@@ -45,7 +46,8 @@ class SOMAFileHandle {
     SOMAFileHandle(const std::string& uri, std::shared_ptr<SOMAContext> ctx)
         : vfs_(tiledb::VFS(*ctx->tiledb_ctx()))
         , buf_(SOMAFilebuf(vfs_))
-        , ctx_(ctx) {
+        , ctx_(ctx)
+        , uri_(uri) {
         if (buf_.open(uri, openmode_) == nullptr) {
             // No std::format in C++17, and fmt::format is overkill here
             std::stringstream ss;
@@ -64,7 +66,7 @@ class SOMAFileHandle {
         } else if (whence == 1) {
             offset_ += buf_.seekoff(offset, std::ios::cur, std::ios::in);
         } else if (whence == 2) {
-            offset_ = vfs_.file_size(buf_.get_uri()) -
+            offset_ = vfs_.file_size(uri_) -
                       buf_.seekoff(offset, std::ios::end, std::ios::in);
         } else {
             TPY_ERROR_LOC(
@@ -144,11 +146,10 @@ class SOMAFileHandle {
 
 void load_soma_vfs(py::module& m) {
     py::class_<SOMAFileHandle>(m, "SOMAFileHandle")
-        .def(py::init<std::shared_ptr<SOMAContext>>(), "ctx"_a)
         .def(
-            "open",
-            &SOMAFileHandle::open,
+            py::init<const std::string&, std::shared_ptr<SOMAContext>>(),
             "uri"_a,
+            "ctx"_a,
             py::call_guard<py::gil_scoped_release>())
         .def("read", &SOMAFileHandle::read, "size"_a = -1)
         .def("readinto", &SOMAFileHandle::readinto, "buffer"_a)
