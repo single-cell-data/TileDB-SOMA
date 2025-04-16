@@ -47,9 +47,8 @@ def read_h5ad(
     This lets us ingest H5AD with "r" (backed mode) from S3 URIs.
     """
     ctx = ctx or SOMATileDBContext()
-    vfs = clib.SOMAVFS(ctx.native_context)
     input_handle = CachingReader(
-        clib.SOMAVFSFilebuf(vfs).open(str(input_path)),
+        clib.SOMAVFS(ctx.native_context).open(str(input_path)),
         memory_budget=64 * 1024**2,
         cache_block_size=8 * 1024**2,
     )

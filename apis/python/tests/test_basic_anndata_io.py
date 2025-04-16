@@ -1562,12 +1562,10 @@ def test_from_anndata_byteorder_63459(tmp_path, conftest_pbmc_small):
 
 def test_vfs_lifetime_65831_65864():
     context = tiledbsoma.SOMATileDBContext()
-    vfs = tiledbsoma.pytiledbsoma.SOMAVFS(context.native_context)
-    del context  # https://app.shortcut.com/tiledb-inc/story/65864/
-    fb = tiledbsoma.pytiledbsoma.SOMAVFSFilebuf(vfs).open(
+    fb = tiledbsoma.pytiledbsoma.SOMAVFS(context.native_context).open(
         str(TESTDATA / "pbmc-small.h5ad")
     )
-    del vfs  # https://app.shortcut.com/tiledb-inc/story/65831/
-    gc.collect()  # Make sure that vfs is freed
+    del context  # https://app.shortcut.com/tiledb-inc/story/65864/
+    gc.collect()  # Make sure that context is freed
     fb.read(100)  # Implicitly ensure that read does not segfault
     fb.close()
