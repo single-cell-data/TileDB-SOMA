@@ -22,7 +22,7 @@ namespace py = pybind11;
 using namespace py::literals;
 using namespace tiledbsoma;
 
-class SOMAVFS {
+class SOMAFileHandle {
    public:
     class SOMAFilebuf : public tiledb::impl::VFSFilebuf {
        public:
@@ -42,23 +42,23 @@ class SOMAVFS {
     std::shared_ptr<SOMAContext> ctx_;
 
    public:
-    SOMAVFS(std::shared_ptr<SOMAContext> ctx)
+    SOMAFileHandle(const std::string& uri, std::shared_ptr<SOMAContext> ctx)
         : vfs_(tiledb::VFS(*ctx->tiledb_ctx()))
         , buf_(SOMAFilebuf(vfs_))
         , ctx_(ctx) {
-    }
-
-    SOMAVFS* open(const std::string& uri) {
         if (buf_.open(uri, openmode_) == nullptr) {
             // No std::format in C++17, and fmt::format is overkill here
             std::stringstream ss;
             ss << "URI " << uri << " is not a valid URI";
             TPY_ERROR_LOC(ss.str());
         }
-        return this;
     }
 
     std::streamsize seek(std::streamsize offset, uint64_t whence) {
+        if (closed()) {
+            TPY_ERROR_LOC("File must be open before performing seek");
+        }
+
         if (whence == 0) {
             offset_ = buf_.seekoff(offset, std::ios::beg, std::ios::in);
         } else if (whence == 1) {
@@ -75,6 +75,10 @@ class SOMAVFS {
     }
 
     py::bytes read(std::streamsize size) {
+        if (closed()) {
+            TPY_ERROR_LOC("File must be open before performing read");
+        }
+
         int64_t nbytes = (size < 0 || size > buf_.showmanyc()) ?
                              buf_.showmanyc() :
                              size;
@@ -91,6 +95,10 @@ class SOMAVFS {
     }
 
     std::streamsize readinto(py::buffer buffer) {
+        if (closed()) {
+            TPY_ERROR_LOC("File must be open before performing readinto");
+        }
+
         py::buffer_info info = buffer.request();
         if (info.ndim != 1)
             throw std::runtime_error("Expected a 1-dimensional byte array");
@@ -135,27 +143,27 @@ class SOMAVFS {
 };
 
 void load_soma_vfs(py::module& m) {
-    py::class_<SOMAVFS>(m, "SOMAVFS")
+    py::class_<SOMAFileHandle>(m, "SOMAFileHandle")
         .def(py::init<std::shared_ptr<SOMAContext>>(), "ctx"_a)
         .def(
             "open",
-            &SOMAVFS::open,
+            &SOMAFileHandle::open,
             "uri"_a,
             py::call_guard<py::gil_scoped_release>())
-        .def("read", &SOMAVFS::read, "size"_a = -1)
-        .def("readinto", &SOMAVFS::readinto, "buffer"_a)
-        .def("flush", [](SOMAVFS& buf) {})
-        .def("tell", &SOMAVFS::tell)
-        .def("readable", &SOMAVFS::readable)
-        .def("writable", &SOMAVFS::writable)
-        .def_property_readonly("closed", &SOMAVFS::closed)
-        .def("seekable", &SOMAVFS::seekable)
+        .def("read", &SOMAFileHandle::read, "size"_a = -1)
+        .def("readinto", &SOMAFileHandle::readinto, "buffer"_a)
+        .def("flush", [](SOMAFileHandle& buf) {})
+        .def("tell", &SOMAFileHandle::tell)
+        .def("readable", &SOMAFileHandle::readable)
+        .def("writable", &SOMAFileHandle::writable)
+        .def_property_readonly("closed", &SOMAFileHandle::closed)
+        .def("seekable", &SOMAFileHandle::seekable)
         .def(
             "seek",
-            &SOMAVFS::seek,
+            &SOMAFileHandle::seek,
             "offset"_a,
             "whence"_a = 0,
             py::call_guard<py::gil_scoped_release>())
-        .def("close", &SOMAVFS::close, "should_throw"_a = true);
+        .def("close", &SOMAFileHandle::close, "should_throw"_a = true);
 }
 }  // namespace libtiledbsomacpp

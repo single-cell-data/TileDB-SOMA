@@ -1562,8 +1562,8 @@ def test_from_anndata_byteorder_63459(tmp_path, conftest_pbmc_small):
 
 def test_vfs_lifetime_65831_65864():
     context = tiledbsoma.SOMATileDBContext()
-    fb = tiledbsoma.pytiledbsoma.SOMAVFS(context.native_context).open(
-        str(TESTDATA / "pbmc-small.h5ad")
+    fb = tiledbsoma.pytiledbsoma.SOMAFileHandle(
+        str(TESTDATA / "pbmc-small.h5ad"), context.native_context
     )
     del context  # https://app.shortcut.com/tiledb-inc/story/65864/
     gc.collect()  # Make sure that context is freed

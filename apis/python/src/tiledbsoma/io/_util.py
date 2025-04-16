@@ -48,7 +48,7 @@ def read_h5ad(
     """
     ctx = ctx or SOMATileDBContext()
     input_handle = CachingReader(
-        clib.SOMAVFS(ctx.native_context).open(str(input_path)),
+        clib.SOMAFileHandle(str(input_path), ctx.native_context),
         memory_budget=64 * 1024**2,
         cache_block_size=8 * 1024**2,
     )
