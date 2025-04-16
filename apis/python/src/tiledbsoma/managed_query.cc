@@ -158,8 +158,7 @@ void load_managed_query(py::module& m) {
 
                 arrow_schema.release(&arrow_schema);
                 arrow_array.release(&arrow_array);
-            },
-            py::call_guard<py::gil_scoped_release>())
+            })
         .def(
             "set_column_data",
             [](ManagedQuery& mq, std::string name, py::array data) {
