@@ -37,7 +37,6 @@ class SOMAFileHandle {
     std::ios::openmode openmode_ = std::ios::in;  // hardwired to read-only
 
     // Ensure proper order of destruction
-    const std::string& uri_;
     SOMAFilebuf buf_;
     tiledb::VFS vfs_;
     std::shared_ptr<SOMAContext> ctx_;
@@ -46,8 +45,7 @@ class SOMAFileHandle {
     SOMAFileHandle(const std::string& uri, std::shared_ptr<SOMAContext> ctx)
         : vfs_(tiledb::VFS(*ctx->tiledb_ctx()))
         , buf_(SOMAFilebuf(vfs_))
-        , ctx_(ctx)
-        , uri_(uri) {
+        , ctx_(ctx) {
         if (buf_.open(uri, openmode_) == nullptr) {
             // No std::format in C++17, and fmt::format is overkill here
             std::stringstream ss;
@@ -66,7 +64,7 @@ class SOMAFileHandle {
         } else if (whence == 1) {
             offset_ += buf_.seekoff(offset, std::ios::cur, std::ios::in);
         } else if (whence == 2) {
-            offset_ = vfs_.file_size(uri_) -
+            offset_ = vfs_.file_size(buf_.get_uri()) -
                       buf_.seekoff(offset, std::ios::end, std::ios::in);
         } else {
             TPY_ERROR_LOC(
