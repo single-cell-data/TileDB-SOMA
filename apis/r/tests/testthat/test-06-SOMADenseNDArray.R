@@ -135,12 +135,14 @@ test_that("platform_config is respected", {
   ))
 
   # Create the SOMADenseNDArray
-  dnda <- SOMADenseNDArrayCreate(uri = uri, type = arrow::int32(), shape = c(100, 100), platform_config = cfg)
+  dnda <- SOMADenseNDArrayCreate(
+    uri = uri,
+    type = arrow::int32(),
+    shape = c(100, 100),
+    platform_config = cfg
+  )
 
   # Read back and check the array schema against the tiledb create options
-  arr <- tiledb::tiledb_array(uri)
-  tsch <- tiledb::schema(arr)
-
   expect_equal(
     c_capacity(dnda$uri, dnda$.__enclos_env__$private$.soma_context),
     8000L

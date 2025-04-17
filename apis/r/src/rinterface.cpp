@@ -726,9 +726,8 @@ Rcpp::List c_domain(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
             Rcpp::Named("name") = name,
             Rcpp::Named("type") = _tiledb_datatype_to_string(dim->type()),
             Rcpp::Named("ncells") = _get_ncells<Rcpp::XPtr<tiledb::Dimension>>(dim),
-            // TODO: add domain and tile to return value
-            // Rcpp::Named("domain") = "",
-            // Rcpp::Named("tile") = "",
+            Rcpp::Named("domain") = _get_dim_domain(dim),
+            Rcpp::Named("tile") = _get_dim_tile(dim),
             Rcpp::Named("filters") = filters
         );
     }

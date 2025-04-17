@@ -523,9 +523,6 @@ test_that("platform_config is respected", {
   )
 
   # Read back and check the array schema against the tiledb create options
-  arr <- tiledb::tiledb_array(uri)
-  tsch <- tiledb::schema(arr)
-
   expect_equal(
     c_capacity(sdf$uri, sdf$.__enclos_env__$private$.soma_context),
     8000L
