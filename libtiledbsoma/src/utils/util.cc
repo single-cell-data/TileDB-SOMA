@@ -147,4 +147,103 @@ std::string soma_type_from_tiledb_type(tiledb::Object::Type tiledb_type) {
     }
 }
 
+std::vector<std::array<Numeric, 2>> get_fragment_non_empty_domain(
+    const FragmentInfo& fragment_info, uint32_t idx, const Domain& domain) {
+    std::vector<std::array<Numeric, 2>> non_empy_domain(domain.ndim());
+
+    for (size_t i = 0; i < domain.ndim(); ++i) {
+        auto dimension = domain.dimension(i);
+
+        switch (dimension.type()) {
+            case TILEDB_UINT8: {
+                uint8_t data[2];
+                fragment_info.get_non_empty_domain(idx, i, data);
+                non_empy_domain[i] = std::array<Numeric, 2>({data[0], data[1]});
+            } break;
+            case TILEDB_INT8: {
+                int8_t data[2];
+                fragment_info.get_non_empty_domain(idx, i, data);
+                non_empy_domain[i] = std::array<Numeric, 2>({data[0], data[1]});
+            } break;
+            case TILEDB_UINT16: {
+                uint16_t data[2];
+                fragment_info.get_non_empty_domain(idx, i, data);
+                non_empy_domain[i] = std::array<Numeric, 2>({data[0], data[1]});
+            } break;
+            case TILEDB_INT16: {
+                int16_t data[2];
+                fragment_info.get_non_empty_domain(idx, i, data);
+                non_empy_domain[i] = std::array<Numeric, 2>({data[0], data[1]});
+            } break;
+            case TILEDB_UINT32: {
+                uint32_t data[2];
+                fragment_info.get_non_empty_domain(idx, i, data);
+                non_empy_domain[i] = std::array<Numeric, 2>({data[0], data[1]});
+            } break;
+            case TILEDB_INT32: {
+                int32_t data[2];
+                fragment_info.get_non_empty_domain(idx, i, data);
+                non_empy_domain[i] = std::array<Numeric, 2>({data[0], data[1]});
+            } break;
+            case TILEDB_UINT64: {
+                uint64_t data[2];
+                fragment_info.get_non_empty_domain(idx, i, data);
+                non_empy_domain[i] = std::array<Numeric, 2>({data[0], data[1]});
+            } break;
+            case TILEDB_INT64: {
+                int64_t data[2];
+                fragment_info.get_non_empty_domain(idx, i, data);
+                non_empy_domain[i] = std::array<Numeric, 2>({data[0], data[1]});
+            } break;
+            case TILEDB_FLOAT32: {
+                float_t data[2];
+                fragment_info.get_non_empty_domain(idx, i, data);
+                non_empy_domain[i] = std::array<Numeric, 2>({data[0], data[1]});
+            } break;
+            case TILEDB_FLOAT64: {
+                double_t data[2];
+                fragment_info.get_non_empty_domain(idx, i, data);
+                non_empy_domain[i] = std::array<Numeric, 2>({data[0], data[1]});
+            } break;
+            default:
+                throw TileDBSOMAError(fmt::format(
+                    "[get_fragment_non_empty_domain] Unsupported dimension "
+                    "datatype {}",
+                    tiledb::impl::type_to_str(dimension.type())));
+        }
+    }
+
+    return non_empy_domain;
+}
+
+bool NumericDomainComparator::operator()(
+    const std::vector<std::array<Numeric, 2>>& lhs,
+    const std::vector<std::array<Numeric, 2>>& rhs) {
+    if (lhs.size() != rhs.size()) {
+        throw TileDBSOMAError("Missmatching number dimensions");
+    }
+
+    bool result = true;
+
+    for (size_t i = 0; i < lhs.size() && result; ++i) {
+        result &= std::visit(
+            [](auto&& lhs_arg, auto&& rhs_arg) {
+                using lhs_T = std::decay_t<decltype(lhs_arg)>;
+                using rhs_T = std::decay_t<decltype(rhs_arg)>;
+
+                if constexpr (std::is_same_v<lhs_T, rhs_T>) {
+                    return lhs_arg < rhs_arg;
+                } else {
+                    throw TileDBSOMAError("Missmatching dimension datatype");
+                }
+
+                return false;
+            },
+            lhs[i][0],
+            rhs[i][0]);
+    }
+
+    return result;
+}
+
 };  // namespace tiledbsoma::util
