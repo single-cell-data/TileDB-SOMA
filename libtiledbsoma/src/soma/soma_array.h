@@ -22,6 +22,7 @@
 #include <tiledb/tiledb>
 #include <tiledb/tiledb_experimental>
 #include "../utils/arrow_adapter.h"
+#include "../utils/util.h"
 #include "enums.h"
 #include "logger_public.h"
 #include "managed_query.h"
@@ -1164,7 +1165,8 @@ class SOMAArray : public SOMAObject {
     // Unoptimized method for computing nnz() (issue `count_cells` query)
     uint64_t _nnz_slow(
         bool raise_if_slow,
-        const std::vector<std::pair<int64_t, int64_t>>& ranges = {});
+        const std::vector<std::vector<std::array<util::Numeric, 2>>>&
+            nd_ranges = {});
 };
 
 }  // namespace tiledbsoma

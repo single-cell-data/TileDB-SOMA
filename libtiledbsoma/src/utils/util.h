@@ -17,6 +17,7 @@
 #include <regex>
 #include <span>
 #include <stdexcept>  // for windows: error C2039: 'runtime_error': is not a member of 'std'
+#include <variant>
 
 #include "../soma/soma_column.h"
 #include "common.h"
@@ -25,6 +26,17 @@
 namespace tiledbsoma::util {
 
 using VarlenBufferPair = std::pair<std::string, std::vector<uint64_t>>;
+using Numeric = std::variant<
+    uint8_t,
+    int8_t,
+    uint16_t,
+    int16_t,
+    uint32_t,
+    int32_t,
+    float_t,
+    uint64_t,
+    int64_t,
+    double_t>;
 
 template <typename T>
 VarlenBufferPair to_varlen_buffers(std::vector<T> data, bool arrow = true);
@@ -99,6 +111,15 @@ Enumeration get_enumeration(
  * "SOMAGroup". Throws if the input value is neither one of those.
  */
 std::string soma_type_from_tiledb_type(tiledb::Object::Type tiledb_type);
+
+std::vector<std::array<Numeric, 2>> get_fragment_non_empty_domain(
+    const FragmentInfo& fragment_info, uint32_t idx, const Domain& domain);
+
+struct NumericDomainComparator {
+    bool operator()(
+        const std::vector<std::array<Numeric, 2>>& lhs,
+        const std::vector<std::array<Numeric, 2>>& rhs);
+};
 
 }  // namespace tiledbsoma::util
 
