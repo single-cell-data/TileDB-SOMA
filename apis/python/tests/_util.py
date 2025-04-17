@@ -67,6 +67,7 @@ def assert_array_equal(a0, a1):
         assert array_equal(a0, a1)
     elif isinstance(a0, spmatrix):
         assert type(a0) is type(a1)
+        assert a0.shape == a1.shape
         assert (a0 != a1).nnz == 0
     else:
         raise ValueError(f"Unsupported type: {type(a0)}")
