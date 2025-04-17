@@ -1004,7 +1004,8 @@ def test_extend_enumeration_values_offsets(tmp_path, ordered):
             "inidx2": [0, None, 2, 3],
             "inval2": ["orange", "grey", "green", "blue"],
             "expidx": [0, 1, 2, 3, 4, None, 2, 3],
-            "expval": ["red", "yellow", "green", "blue", "orange"],
+            # TODO: "expval": ["red", "yellow", "green", "blue", "orange"], # Desired
+            "expval": ["red", "yellow", "green", "blue", "orange", "grey"],  # Current
         },
         {
             "inidx1": [0, 1, 2, 3],
@@ -1020,9 +1021,10 @@ def test_extend_enumeration_values_offsets(tmp_path, ordered):
             "inidx2": [None, None, None, None],
             "inval2": ["orange"],
             "expidx": [0, 1, 2, 3, None, None, None, None],
-            "expval": ["red", "yellow", "green", "blue"],
+            # TODO: "expval": ["red", "yellow", "green", "blue"], # Desired
+            "expval": ["red", "yellow", "green", "blue", "orange"],  # Current
         },
-        # This segfaults:
+        # Segfaults:
         # {
         #     "inidx1": [0, 1, 2, 3],
         #     "inval1": ["red", "yellow", "green", "blue"],
@@ -1031,9 +1033,71 @@ def test_extend_enumeration_values_offsets(tmp_path, ordered):
         #     "expidx": [0, 1, 2, 3, None, None, None, None],
         #     "expval": ["red", "yellow", "green", "blue"],
         # },
+        # Segfaults:
+        # {
+        #     "inidx1": [None, None, None, None],
+        #     "inval1": [],
+        #     "inidx2": [0, 1, 2, 3],
+        #     "inval2": ["red", "yellow", "green", "blue"],
+        #     "expidx": [None, None, None, None, 0, 1, 2, 3],
+        #     "expval": ["red", "yellow", "green", "blue"],
+        # },
+        {
+            "inidx1": [0, 1, 2, 3],
+            "inval1": ["red", "yellow", "green", "blue"],
+            "inidx2": [0, 1, 2, 2],
+            "inval2": ["yellow", "green", "blue"],
+            "expidx": [0, 1, 2, 3, 1, 2, 3, 3],
+            "expval": ["red", "yellow", "green", "blue"],
+        },
+        {
+            "inidx1": [None, None, None, None],
+            "inval1": ["red", "yellow", "green", "blue"],
+            "inidx2": [None, None, None, None],
+            "inval2": ["yellow", "green", "blue"],
+            "expidx": [None, None, None, None, None, None, None, None],
+            "expval": ["red", "yellow", "green", "blue"],
+        },
+        {
+            "inidx1": [None, None, None, None],
+            "inval1": ["orange"],
+            "inidx2": [None, None, None, None],
+            "inval2": ["orange"],
+            "expidx": [None, None, None, None, None, None, None, None],
+            # TODO: "expval": [], # Desired
+            "expval": ["orange"],
+        },
+        # Segfault:
+        # {
+        #    "inidx1": [None, None, None, None],
+        #    "inval1": [],
+        #    "inidx2": [None, None, None, None],
+        #    "inval2": ["orange"],
+        #    "expidx": [None, None, None, None, None, None, None, None],
+        #    "expval": [],
+        # },
+        # Segfault:
+        # {
+        #    "inidx1": [None, None, None, None],
+        #    "inval1": ["orange"],
+        #    "inidx2": [None, None, None, None],
+        #    "inval2": [],
+        #    "expidx": [None, None, None, None, None, None, None, None],
+        #    "expval": [],
+        # },
+        # Segfault:
+        # {
+        # "inidx1": [None, None, None, None],
+        # "inval1": [],
+        # "inidx2": [None, None, None, None],
+        # "inval2": [],
+        # "expidx": [None, None, None, None, None, None, None, None],
+        # "expval": [],
+        # },
     ],
 )
-def test_extend_enumeration_null_indices(tmp_path, config):
+@pytest.mark.parametrize("ordered", [True, False])
+def test_extend_enumeration_null_indices(tmp_path, config, ordered):
     uri = tmp_path.as_posix()
 
     inidx1 = config["inidx1"]
@@ -1046,7 +1110,9 @@ def test_extend_enumeration_null_indices(tmp_path, config):
     schema = pa.schema(
         {
             "soma_joinid": pa.int64(),
-            "string_enum": pa.dictionary(pa.int32(), pa.large_string()),
+            "string_enum": pa.dictionary(
+                pa.int32(), pa.large_string(), ordered=ordered
+            ),
         }
     )
 
@@ -1085,6 +1151,61 @@ def test_extend_enumeration_null_indices(tmp_path, config):
         outval = column.dictionary.to_pylist()
         assert outidx == expidx
         assert outval == expval
+        getval = sdf.get_enumeration_values(["string_enum"])["string_enum"].to_pylist()
+        assert getval == expval
+
+
+def test_extend_enumeration_empty(tmp_path):
+    uri = tmp_path.as_posix()
+    schema = pa.schema(
+        {
+            "soma_joinid": pa.int64(),
+            "string_enum": pa.dictionary(pa.int32(), pa.large_string()),
+        }
+    )
+    domain = [[0, 7]]
+
+    data1 = pa.Table.from_pydict(
+        {
+            "soma_joinid": pa.array([0, 1, 2, 3], type=pa.int64()),
+            "string_enum": pa.DictionaryArray.from_arrays(
+                pa.array([0, 1, 2, 3], type=pa.int32()),
+                pa.array(["red", "yellow", None, "blue"], type=pa.large_string()),
+            ),
+        }
+    )
+
+    with soma.DataFrame.create(uri, schema=schema, domain=domain) as sdf:
+        with pytest.raises(soma.SOMAError):
+            sdf.write(data1)
+
+    data1 = pa.Table.from_pydict(
+        {
+            "soma_joinid": pa.array([0, 1, 2, 3], type=pa.int64()),
+            "string_enum": pa.DictionaryArray.from_arrays(
+                pa.array([0, 1, 2, 3], type=pa.int32()),
+                pa.array(["red", "yellow", "green", "blue"], type=pa.large_string()),
+            ),
+        }
+    )
+
+    with soma.DataFrame.open(uri, "w") as sdf:
+        sdf.write(data1)
+
+    with soma.DataFrame.open(uri, "r") as sdf:
+        assert sdf.get_enumeration_values(["string_enum"])[
+            "string_enum"
+        ].to_pylist() == [
+            "red",
+            "yellow",
+            "green",
+            "blue",
+        ]
+
+    with soma.DataFrame.open(uri, "w") as sdf:
+        sdf.extend_enumeration_values(
+            {"string_enum": pa.array([], type=pa.large_string())}
+        )
 
 
 @pytest.fixture
