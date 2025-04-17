@@ -442,3 +442,4 @@ get_soma_object_type <- function(uri, ctxxp) {
 get_tiledb_object_type <- function(uri, ctxxp) {
     .Call(`_tiledbsoma_get_tiledb_object_type`, uri, ctxxp)
 }
+
