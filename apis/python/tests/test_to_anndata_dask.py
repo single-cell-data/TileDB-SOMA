@@ -187,17 +187,34 @@ def test_dask_query_to_anndata_timestamp(
     ts1 = write_val(111)
     ts2 = write_val(222)
 
+    dask = dict(chunk_size=(obs_chunk_size, var_chunk_size))
+
     def check_ts(tiledb_timestamp: int | None, v: float):
         with Experiment.open(exp_path, tiledb_timestamp=tiledb_timestamp) as exp:
             data = exp.ms["RNA"].X["data"]
             [(data0, _)] = list(data.read().blockwise(0).scipy())
-            data1 = (
-                data.read()
-                .dask_array(chunk_size=(obs_chunk_size, var_chunk_size))
-                .compute()
-            )
+            data1 = data.read().dask_array(**dask).compute()
             assert_array_equal(data0, data1)
             assert data0[0, 0] == v
+
+            query = exp.axis_query(
+                measurement_name="RNA",
+                obs_query=obs_query,
+                var_query=var_query,
+            )
+            data = query.X("data")
+            [(data0, _)] = data.blockwise(0).scipy()
+            data1 = data.dask_array(**dask).compute()
+            assert_array_equal(data0, data1)
+            assert data0[0, 0] == v
+
+            ad1 = to_anndata(exp, measurement_name="RNA")
+            ad2 = to_anndata(exp, measurement_name="RNA", dask=dask)
+            verify_dask_array(ad1.X, ad2.X)
+
+            ad1 = query.to_anndata(X_name="data")
+            ad2 = query.to_anndata(X_name="data", dask=dask)
+            verify_dask_array(ad1.X, ad2.X)
 
     check_ts(ts1 - 1, -0.1934951510503384)
     check_ts(ts1, 111)
