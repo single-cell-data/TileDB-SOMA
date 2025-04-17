@@ -103,15 +103,12 @@ test_that("SOMADataFrame round-trip with factor and ordered", {
   turi <- tempfile()
   expect_silent(tiledb::fromDataFrame(ett, turi, col_index = "soma_joinid"))
 
-  tsch <- tiledb::schema(turi)
-  expect_true(inherits(tsch, "tiledb_array_schema"))
-
   att <- arrow::as_arrow_table(ett)
   expect_true(inherits(att, "Table"))
 
   lvls <- tiledbsoma:::extract_levels(att)
   expect_true(is.list(lvls))
-  expect_equal(length(lvls), ncol(et)) # et, not ett or tsch or sch as no soma_joinid
+  expect_equal(length(lvls), ncol(et)) # et, not ett
   expect_equal(names(lvls), colnames(et))
 
   # sdf <- SOMADataFrameCreate(uri, sch)
