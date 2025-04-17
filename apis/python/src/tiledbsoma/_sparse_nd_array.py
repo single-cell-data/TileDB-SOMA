@@ -472,6 +472,9 @@ class SparseNDArrayRead(_SparseNDArrayReadBase):
     ) -> "da.Array":
         """Load a TileDB-SOMA X layer as a Dask array.
 
+        The returned Array is effectively read-only; writes to it will not be persisted back to the
+        underlying TileDB-SOMA SparseNDArray.
+
         Lifecycle: experimental
         """
         from tiledbsoma._dask.load import load_daskarray
