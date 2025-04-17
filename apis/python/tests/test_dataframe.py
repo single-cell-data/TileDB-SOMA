@@ -971,6 +971,122 @@ def test_extend_enumeration_values_offsets(tmp_path, ordered):
         assert actual == expect
 
 
+@pytest.mark.parametrize(
+    "config",
+    [
+        {
+            "inidx1": [0, 1, 2, 3],
+            "inval1": ["red", "yellow", "green", "blue"],
+            "inidx2": [0, 1, 2, 3],
+            "inval2": ["red", "yellow", "green", "blue"],
+            "expidx": [0, 1, 2, 3, 0, 1, 2, 3],
+            "expval": ["red", "yellow", "green", "blue"],
+        },
+        {
+            "inidx1": [0, 1, 2, 3],
+            "inval1": ["red", "yellow", "green", "blue"],
+            "inidx2": [3, 2, 1, 0],
+            "inval2": ["red", "yellow", "green", "blue"],
+            "expidx": [0, 1, 2, 3, 3, 2, 1, 0],
+            "expval": ["red", "yellow", "green", "blue"],
+        },
+        {
+            "inidx1": [0, 1, 2, 3],
+            "inval1": ["red", "yellow", "green", "blue"],
+            "inidx2": [0, 1, 2, 3],
+            "inval2": ["orange", "grey", "green", "blue"],
+            "expidx": [0, 1, 2, 3, 4, 5, 2, 3],
+            "expval": ["red", "yellow", "green", "blue", "orange", "grey"],
+        },
+        {
+            "inidx1": [0, 1, 2, 3],
+            "inval1": ["red", "yellow", "green", "blue"],
+            "inidx2": [0, None, 2, 3],
+            "inval2": ["orange", "grey", "green", "blue"],
+            "expidx": [0, 1, 2, 3, 4, None, 2, 3],
+            "expval": ["red", "yellow", "green", "blue", "orange"],
+        },
+        {
+            "inidx1": [0, 1, 2, 3],
+            "inval1": ["red", "yellow", "green", "blue"],
+            "inidx2": [0, None, 0, 0],
+            "inval2": ["orange"],
+            "expidx": [0, 1, 2, 3, 4, None, 4, 4],
+            "expval": ["red", "yellow", "green", "blue", "orange"],
+        },
+        {
+            "inidx1": [0, 1, 2, 3],
+            "inval1": ["red", "yellow", "green", "blue"],
+            "inidx2": [None, None, None, None],
+            "inval2": ["orange"],
+            "expidx": [0, 1, 2, 3, None, None, None, None],
+            "expval": ["red", "yellow", "green", "blue"],
+        },
+        # This segfaults:
+        # {
+        #     "inidx1": [0, 1, 2, 3],
+        #     "inval1": ["red", "yellow", "green", "blue"],
+        #     "inidx2": [None, None, None, None],
+        #     "inval2": [],
+        #     "expidx": [0, 1, 2, 3, None, None, None, None],
+        #     "expval": ["red", "yellow", "green", "blue"],
+        # },
+    ],
+)
+def test_extend_enumeration_null_indices(tmp_path, config):
+    uri = tmp_path.as_posix()
+
+    inidx1 = config["inidx1"]
+    inval1 = config["inval1"]
+    inidx2 = config["inidx2"]
+    inval2 = config["inval2"]
+    expidx = config["expidx"]
+    expval = config["expval"]
+
+    schema = pa.schema(
+        {
+            "soma_joinid": pa.int64(),
+            "string_enum": pa.dictionary(pa.int32(), pa.large_string()),
+        }
+    )
+
+    domain = [[0, 7]]
+
+    data1 = pa.Table.from_pydict(
+        {
+            "soma_joinid": pa.array([0, 1, 2, 3], type=pa.int64()),
+            "string_enum": pa.DictionaryArray.from_arrays(
+                pa.array(inidx1, type=pa.int32()),
+                pa.array(inval1, type=pa.large_string()),
+            ),
+        }
+    )
+
+    with soma.DataFrame.create(uri, schema=schema, domain=domain) as sdf:
+        sdf.write(data1)
+
+    data2 = pa.Table.from_pydict(
+        {
+            "soma_joinid": pa.array([4, 5, 6, 7], type=pa.int64()),
+            "string_enum": pa.DictionaryArray.from_arrays(
+                pa.array(inidx2, type=pa.int32()),
+                pa.array(inval2, type=pa.large_string()),
+            ),
+        }
+    )
+
+    with soma.DataFrame.open(uri, "w") as sdf:
+        sdf.write(data2)
+
+    with soma.DataFrame.open(uri, "r") as sdf:
+        table = sdf.read().concat()
+        column = table["string_enum"].combine_chunks()
+        outidx = column.indices.to_pylist()
+        outval = column.dictionary.to_pylist()
+        assert outidx == expidx
+        assert outval == expval
+
+
 @pytest.fixture
 def simple_data_frame(tmp_path):
     """
