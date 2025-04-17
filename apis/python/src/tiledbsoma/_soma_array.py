@@ -190,17 +190,18 @@ class SOMAArray(SOMAObject[_tdb_handles.SOMAArrayWrapper[Any]]):
             clib.ResultOrder.unordered if sort_coords else clib.ResultOrder.globalorder
         )
 
-        mq = ManagedQuery(self)._handle
-        mq.set_layout(layout)
-
         if layout == clib.ResultOrder.unordered:
             # Finalize for each batch
             for batch in batches:
+                mq = ManagedQuery(self)._handle
+                mq.set_layout(layout)
                 mq.submit_batch(batch)
                 mq.finalize()
 
         else:  # globalorder
             # Only finalize at the last batch
+            mq = ManagedQuery(self)._handle
+            mq.set_layout(layout)
             for batch in batches[:-1]:
                 mq.submit_batch(batch)
             mq.submit_and_finalize_batch(batches[-1])
