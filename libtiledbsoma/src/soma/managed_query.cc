@@ -1015,7 +1015,6 @@ bool ManagedQuery::_extend_and_evolve_schema_and_write<std::string>(
 
     const auto
         [was_extended,
-         enum_values_in_write,
          enum_values_existing,
          enum_values_to_add,
          total_size,
@@ -1026,10 +1025,11 @@ bool ManagedQuery::_extend_and_evolve_schema_and_write<std::string>(
                 value_schema, value_array, column_name, true, enmr, se);
 
     if (was_extended) {
-        ManagedQuery::_remap_indexes(
+        ManagedQuery::_remap_indexes<std::string_view>(
             column_name,
             extended_enmr,
-            enum_values_in_write,
+            value_schema,
+            value_array,
             index_schema,
             index_array);
 
@@ -1043,8 +1043,13 @@ bool ManagedQuery::_extend_and_evolve_schema_and_write<std::string>(
         //   from the user, have indices 0,1.
         // * We need to remap those to 1,2.
 
-        ManagedQuery::_remap_indexes(
-            column_name, enmr, enum_values_in_write, index_schema, index_array);
+        ManagedQuery::_remap_indexes<std::string_view>(
+            column_name,
+            enmr,
+            value_schema,
+            value_array,
+            index_schema,
+            index_array);
     }
     return false;
 }
@@ -1061,7 +1066,6 @@ bool ManagedQuery::_extend_and_evolve_schema_and_write(
 
     const auto
         [was_extended,
-         enum_values_in_write,
          enum_values_existing,
          enum_values_to_add,
          total_size,
@@ -1075,10 +1079,11 @@ bool ManagedQuery::_extend_and_evolve_schema_and_write(
         // passes in values [B, C] which maps to indexes [0, 1]. However, the
         // full set of extended enumerations is [A, B, C] which means we need to
         // remap [B, C] to be indexes [1, 2]
-        ManagedQuery::_remap_indexes(
+        ManagedQuery::_remap_indexes<ValueType>(
             column_name,
             extended_enmr,
-            enum_values_in_write,
+            value_schema,
+            value_array,
             index_schema,
             index_array);
 
@@ -1092,8 +1097,13 @@ bool ManagedQuery::_extend_and_evolve_schema_and_write(
         // * User appends values b,c which, within the Arrow data coming in
         //   from the user, have indices 0,1.
         // * We need to remap those to 1,2.
-        ManagedQuery::_remap_indexes(
-            column_name, enmr, enum_values_in_write, index_schema, index_array);
+        ManagedQuery::_remap_indexes<ValueType>(
+            column_name,
+            enmr,
+            value_schema,
+            value_array,
+            index_schema,
+            index_array);
 
         // The enumeration was not extended
         return false;
@@ -1182,7 +1192,7 @@ bool ManagedQuery::
         bool deduplicate,
         Enumeration enmr,
         ArraySchemaEvolution& se) {
-    const auto [was_extended, _1, _2, _3, _4, _5] =
+    const auto [was_extended, _1, _2, _3, _4] =
         _extend_and_evolve_schema_with_details<std::string, std::string_view>(
             value_schema, value_array, column_name, deduplicate, enmr, se);
     return was_extended;
@@ -1196,7 +1206,7 @@ bool ManagedQuery::_extend_and_evolve_schema_without_details(
     bool deduplicate,
     Enumeration enmr,
     ArraySchemaEvolution& se) {
-    const auto [was_extended, _1, _2, _3, _4, _5] =
+    const auto [was_extended, _1, _2, _3, _4] =
         _extend_and_evolve_schema_with_details<ValueType, ValueType>(
             value_schema, value_array, column_name, deduplicate, enmr, se);
     return was_extended;
@@ -1208,7 +1218,6 @@ bool ManagedQuery::_extend_and_evolve_schema_without_details(
 template <>
 std::tuple<
     bool,                           // was_extended
-    std::vector<std::string_view>,  // enum_values_in_write
     std::vector<std::string_view>,  // enum_values_existing
     std::vector<std::string_view>,  // enum_values_added
     size_t,                         // total_size
@@ -1264,6 +1273,14 @@ ManagedQuery::_extend_and_evolve_schema_with_details<std::string>(
 
     std::string_view data_as_char(
         static_cast<const char*>(value_array->buffers[2]), offsets_v.back());
+
+    // XXX BUG 1: IF THERE IS AN INDEX_ARRAY, SKIP ANY VALUES
+    // WHICH ARE USED ONLY BY MASKED-OUT INDICES
+    //
+    // Example:
+    // * Arrow indices = [0, None, 2, 3]
+    // * Arrow values  = ["red", "yellow", "green", "blue"]
+    // Don't add "yellow" to the Arrow schema
 
     // Create a vector of string-views into the char buffer.
     // We need this in order to partition the requested values
@@ -1364,7 +1381,6 @@ ManagedQuery::_extend_and_evolve_schema_with_details<std::string>(
 
         return std::tuple{
             true,  // was_extended
-            enum_values_in_write,
             enum_values_existing,
             enum_values_to_add,
             total_size,
@@ -1373,7 +1389,6 @@ ManagedQuery::_extend_and_evolve_schema_with_details<std::string>(
     } else {
         return std::tuple{
             false,  // was_extended
-            enum_values_in_write,
             enum_values_existing,
             enum_values_to_add,
             total_size,
@@ -1387,7 +1402,6 @@ ManagedQuery::_extend_and_evolve_schema_with_details<std::string>(
 template <typename ValueType, typename ValueViewType>
 std::tuple<
     bool,                        // was_extended
-    std::vector<ValueViewType>,  // enum_values_in_write
     std::vector<ValueViewType>,  // enum_values_existing
     std::vector<ValueViewType>,  // enum_values_added
     size_t,                      // total_size
@@ -1531,9 +1545,9 @@ ManagedQuery::_extend_and_evolve_schema_with_details(
         // enumeration values
         auto extended_enmr = enmr.extend(enum_values_to_add);
         se.extend_enumeration(extended_enmr);
+
         return std::tuple{
             true,  // was_extended
-            enum_values_in_write,
             enum_values_existing,
             enum_values_to_add,
             0,  // total_size is only used for string columns
@@ -1543,7 +1557,6 @@ ManagedQuery::_extend_and_evolve_schema_with_details(
         // The enumeration was not extended
         return std::tuple{
             false,  // was_extended
-            enum_values_in_write,
             enum_values_existing,
             enum_values_to_add,
             0,  // total_size is only used for string columns
