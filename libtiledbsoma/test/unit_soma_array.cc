@@ -45,7 +45,8 @@ std::tuple<std::string, uint64_t> create_array(
     int num_cells_per_fragment = 10,
     int num_fragments = 1,
     bool overlap = false,
-    bool allow_duplicates = false) {
+    bool allow_duplicates = false,
+    tiledb_datatype_t dim_type = TILEDB_INT64) {
     auto vfs = VFS(*ctx->tiledb_ctx());
     if (vfs.is_dir(uri)) {
         vfs.remove_dir(uri);
@@ -56,14 +57,43 @@ std::tuple<std::string, uint64_t> create_array(
 
     // Create schema
     ArraySchema schema(*ctx->tiledb_ctx(), TILEDB_SPARSE);
-
-    auto dim = Dimension::create<int64_t>(
-        *ctx->tiledb_ctx(),
-        dim_name,
-        {0, std::numeric_limits<int64_t>::max() - 1});
-
     Domain domain(*ctx->tiledb_ctx());
-    domain.add_dimension(dim);
+
+    switch (dim_type) {
+        case TILEDB_UINT32: {
+            auto dim = Dimension::create<uint32_t>(
+                *ctx->tiledb_ctx(),
+                dim_name,
+                {0, std::numeric_limits<uint32_t>::max() - 1});
+            domain.add_dimension(dim);
+        } break;
+        case TILEDB_INT64: {
+            auto dim = Dimension::create<int64_t>(
+                *ctx->tiledb_ctx(),
+                dim_name,
+                {0, std::numeric_limits<int64_t>::max() - 1});
+            domain.add_dimension(dim);
+        } break;
+        case TILEDB_FLOAT64: {
+            auto dim = Dimension::create<double_t>(
+                *ctx->tiledb_ctx(),
+                dim_name,
+                {0, std::numeric_limits<double_t>::max()});
+            domain.add_dimension(dim);
+        } break;
+        case TILEDB_STRING_ASCII: {
+            auto dim = Dimension::create(
+                *ctx->tiledb_ctx(),
+                dim_name,
+                TILEDB_STRING_ASCII,
+                nullptr,
+                nullptr);
+            domain.add_dimension(dim);
+        } break;
+        default:
+            throw TileDBSOMAError("Unkown datatype");
+    }
+
     schema.set_domain(domain);
 
     auto attr = Attribute::create<int32_t>(*ctx->tiledb_ctx(), attr_name);
@@ -94,6 +124,48 @@ std::tuple<std::string, uint64_t> create_array(
     return {uri, nnz};
 }
 
+template <typename T>
+std::vector<T> generate_dim_data(
+    int num_cells_per_fragment, int frag_num, bool overlap) {
+    std::vector<T> data(num_cells_per_fragment);
+    for (int j = 0; j < num_cells_per_fragment; j++) {
+        // Overlap odd fragments when generating overlaps
+        if (overlap && frag_num % 2 == 1) {
+            data[j] = j + num_cells_per_fragment * (frag_num - 1);
+        } else {
+            data[j] = j + num_cells_per_fragment * frag_num;
+        }
+    }
+
+    return data;
+}
+
+std::pair<std::string, std::vector<uint64_t>> generate_dim_data_str(
+    int num_cells_per_fragment, int frag_num, bool overlap) {
+    std::string data("");
+    std::vector<uint64_t> offsets;
+    uint64_t offset = 0;
+
+    for (int j = 0; j < num_cells_per_fragment; j++) {
+        // Overlap odd fragments when generating overlaps
+        if (overlap && frag_num % 2 == 1) {
+            data += std::string(
+                static_cast<size_t>(j + 1),
+                static_cast<char>((frag_num - 1) + 65));
+        } else {
+            data += std::string(
+                static_cast<size_t>(j + 1), static_cast<char>(frag_num + 65));
+        }
+
+        offsets.push_back(offset);
+        offset += static_cast<uint64_t>(j + 1);
+    }
+
+    offsets.push_back(offset);
+
+    return std::make_pair(data, offsets);
+}
+
 std::tuple<std::vector<int64_t>, std::vector<int32_t>> write_array(
     const std::string& uri,
     std::shared_ptr<SOMAContext> ctx,
@@ -117,16 +189,8 @@ std::tuple<std::vector<int64_t>, std::vector<int32_t>> write_array(
             uri,
             ctx,
             TimestampRange(timestamp + i, timestamp + i));
-
-        std::vector<int64_t> d0(num_cells_per_fragment);
-        for (int j = 0; j < num_cells_per_fragment; j++) {
-            // Overlap odd fragments when generating overlaps
-            if (overlap && frag_num % 2 == 1) {
-                d0[j] = j + num_cells_per_fragment * (frag_num - 1);
-            } else {
-                d0[j] = j + num_cells_per_fragment * frag_num;
-            }
-        }
+        std::vector<int64_t> d0 = generate_dim_data<int64_t>(
+            num_cells_per_fragment, frag_num, overlap);
         std::vector<int32_t> a0(num_cells_per_fragment, frag_num);
 
         // Write data to array
@@ -346,6 +410,115 @@ TEST_CASE("SOMAArray: nnz") {
             REQUIRE(a0col == expected_a0);
         }
         mq.close();
+        soma_array->close();
+    }
+}
+
+TEST_CASE("SOMAArray: nnz - different dimension types") {
+    auto num_fragments = GENERATE(1, 10);
+    auto overlap = GENERATE(false, true);
+    auto allow_duplicates = true;
+    auto dim_type = GENERATE(
+        TILEDB_UINT32, TILEDB_FLOAT64, TILEDB_STRING_ASCII);
+    int num_cells_per_fragment = 128;
+    auto timestamp = 10;
+
+    const char* dim_name = "d0";
+    const char* attr_name = "a0";
+
+    // TODO this use to be formatted with fmt::format which is part of internal
+    // header spd/log/fmt/fmt.h and should not be used. In C++20, this can be
+    // replaced with std::format.
+    std::ostringstream section;
+    section << "- fragments=" << num_fragments << ", overlap=" << overlap
+            << ", allow_duplicates=" << allow_duplicates
+            << ", dtype=" << tiledb::impl::type_to_str(dim_type);
+
+    SECTION(section.str()) {
+        auto ctx = std::make_shared<SOMAContext>();
+
+        // Create array
+        std::string base_uri = "mem://unit-test-array";
+        auto [uri, expected_nnz] = create_array(
+            base_uri,
+            ctx,
+            num_cells_per_fragment,
+            num_fragments,
+            overlap,
+            allow_duplicates,
+            dim_type);
+
+        // Write data -- we only care about the count of cell not the actual
+        // values
+        {
+            // Generate fragments in random order
+            std::vector<int> frags(num_fragments);
+            std::iota(frags.begin(), frags.end(), 0);
+            std::shuffle(frags.begin(), frags.end(), std::random_device{});
+
+            // Write to SOMAArray
+            for (auto i = 0; i < num_fragments; ++i) {
+                auto frag_num = frags[i];
+                auto soma_array = SOMAArray::open(
+                    OpenMode::write,
+                    uri,
+                    ctx,
+                    TimestampRange(timestamp + i, timestamp + i));
+                std::vector<int32_t> a0(num_cells_per_fragment, frag_num);
+
+                // Write data to array
+                auto mq = ManagedQuery(*soma_array, ctx->tiledb_ctx(), "");
+                mq.set_layout(ResultOrder::unordered);
+                mq.setup_write_column(
+                    attr_name, a0.size(), a0.data(), (uint64_t*)nullptr);
+
+                switch (dim_type) {
+                    case TILEDB_UINT32: {
+                        std::vector<uint32_t> d0 = generate_dim_data<uint32_t>(
+                            num_cells_per_fragment, frag_num, overlap);
+                        mq.setup_write_column(
+                            dim_name, d0.size(), d0.data(), (uint64_t*)nullptr);
+                    } break;
+                    case TILEDB_INT64: {
+                        std::vector<int64_t> d0 = generate_dim_data<int64_t>(
+                            num_cells_per_fragment, frag_num, overlap);
+                        mq.setup_write_column(
+                            dim_name, d0.size(), d0.data(), (uint64_t*)nullptr);
+                    } break;
+                    case TILEDB_FLOAT64: {
+                        std::vector<double_t> d0 = generate_dim_data<double_t>(
+                            num_cells_per_fragment, frag_num, overlap);
+                        mq.setup_write_column(
+                            dim_name, d0.size(), d0.data(), (uint64_t*)nullptr);
+                    } break;
+                    case TILEDB_STRING_ASCII: {
+                        auto [d0_data, d0_offests] = generate_dim_data_str(
+                            num_cells_per_fragment, frag_num, overlap);
+                        mq.setup_write_column(
+                            dim_name,
+                            d0_offests.size() - 1,
+                            d0_data.data(),
+                            d0_offests.data());
+                    } break;
+                    default:
+                        throw TileDBSOMAError("Unsupported datatype");
+                }
+
+                mq.submit_write();
+                mq.close();
+                soma_array->close();
+            }
+        }
+
+        // Get total cell num
+        auto soma_array = SOMAArray::open(
+            OpenMode::read,
+            uri,
+            ctx,
+            TimestampRange(timestamp, timestamp + num_fragments - 1));
+
+        uint64_t nnz = soma_array->nnz(!overlap);
+        REQUIRE(nnz == expected_nnz);
         soma_array->close();
     }
 }
