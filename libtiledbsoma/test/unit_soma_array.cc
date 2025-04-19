@@ -46,52 +46,56 @@ std::tuple<std::string, uint64_t> create_array(
     int num_fragments = 1,
     bool overlap = false,
     bool allow_duplicates = false,
-    tiledb_datatype_t dim_type = TILEDB_INT64) {
+    std::vector<tiledb_datatype_t> dim_types = {TILEDB_INT64}) {
     auto vfs = VFS(*ctx->tiledb_ctx());
     if (vfs.is_dir(uri)) {
         vfs.remove_dir(uri);
     }
 
-    const char* dim_name = "d0";
+    const std::string dim_prefix = "d";
     const char* attr_name = "a0";
 
     // Create schema
     ArraySchema schema(*ctx->tiledb_ctx(), TILEDB_SPARSE);
     Domain domain(*ctx->tiledb_ctx());
 
-    switch (dim_type) {
-        case TILEDB_UINT32: {
-            auto dim = Dimension::create<uint32_t>(
-                *ctx->tiledb_ctx(),
-                dim_name,
-                {0, std::numeric_limits<uint32_t>::max() - 1});
-            domain.add_dimension(dim);
-        } break;
-        case TILEDB_INT64: {
-            auto dim = Dimension::create<int64_t>(
-                *ctx->tiledb_ctx(),
-                dim_name,
-                {0, std::numeric_limits<int64_t>::max() - 1});
-            domain.add_dimension(dim);
-        } break;
-        case TILEDB_FLOAT64: {
-            auto dim = Dimension::create<double_t>(
-                *ctx->tiledb_ctx(),
-                dim_name,
-                {0, std::numeric_limits<double_t>::max()});
-            domain.add_dimension(dim);
-        } break;
-        case TILEDB_STRING_ASCII: {
-            auto dim = Dimension::create(
-                *ctx->tiledb_ctx(),
-                dim_name,
-                TILEDB_STRING_ASCII,
-                nullptr,
-                nullptr);
-            domain.add_dimension(dim);
-        } break;
-        default:
-            throw TileDBSOMAError("Unkown datatype");
+    for (size_t i = 0; i < dim_types.size(); ++i) {
+        const auto dim_type = dim_types[i];
+
+        switch (dim_type) {
+            case TILEDB_UINT32: {
+                auto dim = Dimension::create<uint32_t>(
+                    *ctx->tiledb_ctx(),
+                    dim_prefix + std::to_string(i),
+                    {0, std::numeric_limits<uint32_t>::max() - 1});
+                domain.add_dimension(dim);
+            } break;
+            case TILEDB_INT64: {
+                auto dim = Dimension::create<int64_t>(
+                    *ctx->tiledb_ctx(),
+                    dim_prefix + std::to_string(i),
+                    {0, std::numeric_limits<int64_t>::max() - 1});
+                domain.add_dimension(dim);
+            } break;
+            case TILEDB_FLOAT64: {
+                auto dim = Dimension::create<double_t>(
+                    *ctx->tiledb_ctx(),
+                    dim_prefix + std::to_string(i),
+                    {0, std::numeric_limits<double_t>::max()});
+                domain.add_dimension(dim);
+            } break;
+            case TILEDB_STRING_ASCII: {
+                auto dim = Dimension::create(
+                    *ctx->tiledb_ctx(),
+                    dim_prefix + std::to_string(i),
+                    TILEDB_STRING_ASCII,
+                    nullptr,
+                    nullptr);
+                domain.add_dimension(dim);
+            } break;
+            default:
+                throw TileDBSOMAError("Unkown datatype");
+        }
     }
 
     schema.set_domain(domain);
@@ -414,16 +418,22 @@ TEST_CASE("SOMAArray: nnz") {
     }
 }
 
-TEST_CASE("SOMAArray: nnz - different dimension types") {
+TEST_CASE("SOMAArray: nnz - multiple dimensions") {
     auto num_fragments = GENERATE(1, 10);
     auto overlap = GENERATE(false, true);
     auto allow_duplicates = true;
-    auto dim_type = GENERATE(
+    auto dim_type_1 = GENERATE(
+        TILEDB_UINT32, TILEDB_FLOAT64, TILEDB_STRING_ASCII);
+    auto dim_type_2 = GENERATE(
+        TILEDB_UINT32, TILEDB_FLOAT64, TILEDB_STRING_ASCII);
+    auto dim_type_3 = GENERATE(
         TILEDB_UINT32, TILEDB_FLOAT64, TILEDB_STRING_ASCII);
     int num_cells_per_fragment = 128;
     auto timestamp = 10;
 
-    const char* dim_name = "d0";
+    const std::vector<tiledb_datatype_t> dim_types(
+        {dim_type_1, dim_type_2, dim_type_3});
+    const std::string dim_prefix = "d";
     const char* attr_name = "a0";
 
     // TODO this use to be formatted with fmt::format which is part of internal
@@ -432,7 +442,9 @@ TEST_CASE("SOMAArray: nnz - different dimension types") {
     std::ostringstream section;
     section << "- fragments=" << num_fragments << ", overlap=" << overlap
             << ", allow_duplicates=" << allow_duplicates
-            << ", dtype=" << tiledb::impl::type_to_str(dim_type);
+            << ", dtype 1=" << tiledb::impl::type_to_str(dim_type_1)
+            << ", dtype 2=" << tiledb::impl::type_to_str(dim_type_2)
+            << ", dtype 3=" << tiledb::impl::type_to_str(dim_type_3);
 
     SECTION(section.str()) {
         auto ctx = std::make_shared<SOMAContext>();
@@ -446,7 +458,7 @@ TEST_CASE("SOMAArray: nnz - different dimension types") {
             num_fragments,
             overlap,
             allow_duplicates,
-            dim_type);
+            dim_types);
 
         // Write data -- we only care about the count of cell not the actual
         // values
@@ -472,36 +484,52 @@ TEST_CASE("SOMAArray: nnz - different dimension types") {
                 mq.setup_write_column(
                     attr_name, a0.size(), a0.data(), (uint64_t*)nullptr);
 
-                switch (dim_type) {
-                    case TILEDB_UINT32: {
-                        std::vector<uint32_t> d0 = generate_dim_data<uint32_t>(
-                            num_cells_per_fragment, frag_num, overlap);
-                        mq.setup_write_column(
-                            dim_name, d0.size(), d0.data(), (uint64_t*)nullptr);
-                    } break;
-                    case TILEDB_INT64: {
-                        std::vector<int64_t> d0 = generate_dim_data<int64_t>(
-                            num_cells_per_fragment, frag_num, overlap);
-                        mq.setup_write_column(
-                            dim_name, d0.size(), d0.data(), (uint64_t*)nullptr);
-                    } break;
-                    case TILEDB_FLOAT64: {
-                        std::vector<double_t> d0 = generate_dim_data<double_t>(
-                            num_cells_per_fragment, frag_num, overlap);
-                        mq.setup_write_column(
-                            dim_name, d0.size(), d0.data(), (uint64_t*)nullptr);
-                    } break;
-                    case TILEDB_STRING_ASCII: {
-                        auto [d0_data, d0_offests] = generate_dim_data_str(
-                            num_cells_per_fragment, frag_num, overlap);
-                        mq.setup_write_column(
-                            dim_name,
-                            d0_offests.size() - 1,
-                            d0_data.data(),
-                            d0_offests.data());
-                    } break;
-                    default:
-                        throw TileDBSOMAError("Unsupported datatype");
+                for (size_t i = 0; i < dim_types.size(); ++i) {
+                    const auto dim_type = dim_types[i];
+
+                    switch (dim_type) {
+                        case TILEDB_UINT32: {
+                            std::vector<uint32_t>
+                                d0 = generate_dim_data<uint32_t>(
+                                    num_cells_per_fragment, frag_num, overlap);
+                            mq.setup_write_column(
+                                dim_prefix + std::to_string(i),
+                                d0.size(),
+                                d0.data(),
+                                (uint64_t*)nullptr);
+                        } break;
+                        case TILEDB_INT64: {
+                            std::vector<int64_t>
+                                d0 = generate_dim_data<int64_t>(
+                                    num_cells_per_fragment, frag_num, overlap);
+                            mq.setup_write_column(
+                                dim_prefix + std::to_string(i),
+                                d0.size(),
+                                d0.data(),
+                                (uint64_t*)nullptr);
+                        } break;
+                        case TILEDB_FLOAT64: {
+                            std::vector<double_t>
+                                d0 = generate_dim_data<double_t>(
+                                    num_cells_per_fragment, frag_num, overlap);
+                            mq.setup_write_column(
+                                dim_prefix + std::to_string(i),
+                                d0.size(),
+                                d0.data(),
+                                (uint64_t*)nullptr);
+                        } break;
+                        case TILEDB_STRING_ASCII: {
+                            auto [d0_data, d0_offests] = generate_dim_data_str(
+                                num_cells_per_fragment, frag_num, overlap);
+                            mq.setup_write_column(
+                                dim_prefix + std::to_string(i),
+                                d0_offests.size() - 1,
+                                d0_data.data(),
+                                d0_offests.data());
+                        } break;
+                        default:
+                            throw TileDBSOMAError("Unsupported datatype");
+                    }
                 }
 
                 mq.submit_write();
