@@ -610,21 +610,21 @@ uint64_t SOMAArray::nnz(bool raise_if_slow) {
     uint64_t total_cell_num = 0;
     uint64_t ndim = tiledb_schema()->domain().ndim();
 
-    for (size_t i = 0; i < ndim; ++i) {
-        auto dim = tiledb_schema()->domain().dimension(i);
+    // for (size_t i = 0; i < ndim; ++i) {
+    //     auto dim = tiledb_schema()->domain().dimension(i);
 
-        if (dim.type() == TILEDB_STRING_ASCII) {
-            LOG_DEBUG(fmt::format(
-                "[SOMAArray::nnz] dim {} (type={} name={}) isn't numeric: "
-                "using _nnz_slow",
-                i,
-                tiledb::impl::type_to_str(dim.type()),
-                dim.name()));
-            return _nnz_slow(raise_if_slow);
-        }
-    }
+    //     if (dim.type() == TILEDB_STRING_ASCII) {
+    //         LOG_DEBUG(fmt::format(
+    //             "[SOMAArray::nnz] dim {} (type={} name={}) isn't numeric: "
+    //             "using _nnz_slow",
+    //             i,
+    //             tiledb::impl::type_to_str(dim.type()),
+    //             dim.name()));
+    //         return _nnz_slow(raise_if_slow);
+    //     }
+    // }
 
-    std::vector<std::vector<std::array<util::Numeric, 2>>> non_empty_domains(
+    std::vector<std::vector<std::array<util::DimType, 2>>> non_empty_domains(
         fragment_count);
 
     for (uint32_t i = 0; i < fragment_count; i++) {
@@ -640,7 +640,7 @@ uint64_t SOMAArray::nnz(bool raise_if_slow) {
     // and ids
     std::vector<size_t> permutation(relevant_fragments.size());
     std::iota(permutation.begin(), permutation.end(), 0);
-    util::NumericDomainComparator compare{};
+    util::DimensionDomainComparator compare{};
     std::sort(
         permutation.begin(), permutation.end(), [&](size_t lhs, size_t rhs) {
             return compare(non_empty_domains[lhs], non_empty_domains[rhs]);
@@ -668,8 +668,8 @@ uint64_t SOMAArray::nnz(bool raise_if_slow) {
     // TODO: We only need to apply the ``_nzz_slow`` on overlapping fragments
     // Tracking issue:
     // https://github.com/single-cell-data/TileDB-SOMA/issues/3908
-    std::vector<std::vector<std::array<util::Numeric, 2>>> overlapping_ranges;
-    std::vector<std::array<util::Numeric, 2>>
+    std::vector<std::vector<std::array<util::DimType, 2>>> overlapping_ranges;
+    std::vector<std::array<util::DimType, 2>>
         current_range = non_empty_domains[0];
 
     uint64_t cell_count = fragment_info.cell_num(relevant_fragments[0]);
@@ -716,8 +716,10 @@ uint64_t SOMAArray::nnz(bool raise_if_slow) {
                     bool result = false;
 
                     if constexpr (std::is_same_v<current_T, next_T>) {
-                        if (current_max < next_min) {
-                            result = true;
+                        if constexpr (std::is_same_v<current_T, std::string>) {
+                            result = current_max.compare(next_min) < 0;
+                        } else {
+                            result = current_max < next_min;
                         }
                     } else {
                         throw TileDBSOMAError(
@@ -744,7 +746,7 @@ uint64_t SOMAArray::nnz(bool raise_if_slow) {
                         using current_T = std::decay_t<decltype(current_max)>;
                         using next_T = std::decay_t<decltype(next_max)>;
 
-                        util::Numeric result;
+                        util::DimType result;
 
                         if constexpr (std::is_same_v<current_T, next_T>) {
                             result = std::max<current_T>(current_max, next_max);
@@ -777,7 +779,7 @@ uint64_t SOMAArray::nnz(bool raise_if_slow) {
 
 uint64_t SOMAArray::_nnz_slow(
     bool raise_if_slow,
-    const std::vector<std::vector<std::array<util::Numeric, 2>>>& nd_ranges) {
+    const std::vector<std::vector<std::array<util::DimType, 2>>>& nd_ranges) {
     if (raise_if_slow) {
         throw TileDBSOMAError(
             "NNZ slow path called with 'raise_if_slow==true'");
@@ -812,7 +814,11 @@ uint64_t SOMAArray::_nnz_slow(
                     using max_T = std::decay_t<decltype(max)>;
 
                     if constexpr (std::is_same_v<min_T, max_T>) {
-                        subarray.add_range<min_T>(0, min, max);
+                        if constexpr (std::is_same_v<min_T, std::string>) {
+                            subarray.add_range(i, min, max);
+                        } else {
+                            subarray.add_range<min_T>(i, min, max);
+                        }
                     } else {
                         throw TileDBSOMAError(
                             "Missmatching dimension datatype");
