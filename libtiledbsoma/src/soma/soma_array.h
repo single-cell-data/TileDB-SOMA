@@ -1165,7 +1165,7 @@ class SOMAArray : public SOMAObject {
     // Unoptimized method for computing nnz() (issue `count_cells` query)
     uint64_t _nnz_slow(
         bool raise_if_slow,
-        const std::vector<std::vector<std::array<util::Numeric, 2>>>&
+        const std::vector<std::vector<std::array<util::DimType, 2>>>&
             nd_ranges = {});
 };
 
