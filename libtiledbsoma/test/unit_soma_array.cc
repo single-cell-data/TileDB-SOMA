@@ -547,6 +547,26 @@ TEST_CASE("SOMAArray: nnz - multiple dimensions") {
 
         uint64_t nnz = soma_array->nnz(!overlap);
         REQUIRE(nnz == expected_nnz);
+
+        auto array = std::make_shared<Array>(
+            *ctx->tiledb_ctx(),
+            uri,
+            TILEDB_READ,
+            TemporalPolicy(
+                TimestampStartEnd, timestamp, timestamp + num_fragments - 1));
+        auto query = Query(*ctx->tiledb_ctx(), *array);
+        QueryChannel default_channel = QueryExperimental::get_default_channel(
+            query);
+
+        // Apply count aggregate
+        default_channel.apply_aggregate("Count", CountOperation());
+        std::vector<uint64_t> count(1);
+        query.set_layout(TILEDB_UNORDERED).set_data_buffer("Count", count);
+        query.submit();
+
+        // Validate fast nnz return the same as slow_nnz
+        REQUIRE(nnz == count[0]);
+
         soma_array->close();
     }
 }
