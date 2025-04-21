@@ -158,7 +158,7 @@ void load_soma_array(py::module& m) {
             [](SOMAArray& array, bool raise_if_slow) {
                 try {
                     py::gil_scoped_release release;
-                    auto retval = array.nnz();
+                    auto retval = array.nnz(raise_if_slow);
                     py::gil_scoped_acquire acquire;
                     return retval;
                 } catch (const std::exception& e) {

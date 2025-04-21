@@ -554,6 +554,9 @@ ArrowTable SOMAArray::_get_core_domainish(enum Domainish which_kind) {
 }
 
 uint64_t SOMAArray::nnz(bool raise_if_slow) {
+    LOG_DEBUG(fmt::format(
+        "[SOMAArray] nnz with raise_if_slow='{}'",
+        (raise_if_slow ? "true" : "false")));
     // Verify array is sparse
     if (schema_->array_type() != TILEDB_SPARSE) {
         throw TileDBSOMAError(
