@@ -6,5 +6,33 @@ sparse
 typeguard==4.4.2
 types-setuptools
 more-itertools
-hypothesis
+hypothesis==6.131.0
 deepdiff
+# 6c6
+# < aiohttp-3.11.16
+# ---
+# > aiohttp-3.11.18
+# 33c33
+# < frozenlist-1.5.0
+# ---
+# > frozenlist-1.6.0
+# 38c38
+# < hypothesis-6.131.0
+# ---
+# > hypothesis-6.131.6
+# 68c68
+# < packaging-24.2
+# ---
+# > packaging-25.0
+# 96c96
+# < ruff-0.11.5
+# ---
+# > ruff-0.11.6
+# 117c117
+# < tiledbsoma-1.15.0rc0.post421.dev321298468
+# ---
+# > tiledbsoma-1.15.0rc0.post425.dev2356512743
+# 134c134
+# < yarl-1.19.0
+# ---
+# > yarl-1.20.0
