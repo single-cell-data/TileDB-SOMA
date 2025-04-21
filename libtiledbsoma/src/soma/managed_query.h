@@ -781,9 +781,6 @@ class ManagedQuery {
     std::tuple<
         bool,                        // was_extended
         std::vector<ValueViewType>,  // enum_values_in_write
-        std::vector<ValueViewType>,  // enum_values_existing
-        std::vector<ValueViewType>,  // enum_values_added
-        size_t,                      // total_size
         Enumeration>                 //  extended_enmr
     _extend_and_evolve_schema_with_details(
         ArrowSchema* value_schema,
@@ -870,11 +867,14 @@ class ManagedQuery {
         // enumerations
         std::vector<IndexType> shifted_indexes;
         auto enmr_vec = extended_enmr.as_vector<ValueType>();
-        for (auto i : original_indexes) {
+        for (ssize_t i : original_indexes) {
             // For nullable columns, when the value is NULL, the associated
             // index may be a negative integer, so do not index into
             // enums_in_write or it will segfault
             if (0 > i) {
+                shifted_indexes.push_back(i);
+            } else if (i >= enums_in_write.size()) {
+                // XXX TEMP
                 shifted_indexes.push_back(i);
             } else {
                 auto it = _find_enum_match(enmr_vec, enums_in_write[i]);
@@ -945,11 +945,14 @@ class ManagedQuery {
             ++idx;
         }
 
-        for (auto i : original_indexes) {
+        for (ssize_t i : original_indexes) {
             // For nullable columns, when the value is NULL, the associated
             // index may be a negative integer, so do not index into
             // enums_in_write or it will segfault
             if (0 > i) {
+                shifted_indexes.push_back(i);
+            } else if (i >= enums_in_write.size()) {
+                // XXX TEMP
                 shifted_indexes.push_back(i);
             } else {
                 shifted_indexes.push_back(enmr_map[enums_in_write[i]]);
@@ -1136,9 +1139,6 @@ template <>
 std::tuple<
     bool,                           // was_extended
     std::vector<std::string_view>,  // enum_values_in_write
-    std::vector<std::string_view>,  // enum_values_existing
-    std::vector<std::string_view>,  // enum_values_added
-    size_t,                         // total_size
     Enumeration>                    // extended_enmr
 ManagedQuery::_extend_and_evolve_schema_with_details<std::string>(
     ArrowSchema* value_schema,

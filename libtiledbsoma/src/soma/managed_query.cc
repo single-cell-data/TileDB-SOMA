@@ -1013,17 +1013,9 @@ bool ManagedQuery::_extend_and_evolve_schema_and_write<std::string>(
     ArraySchemaEvolution& se) {
     std::string column_name = index_schema->name;
 
-    const auto
-        [was_extended,
-         enum_values_in_write,
-         enum_values_existing,
-         enum_values_to_add,
-         total_size,
-         extended_enmr] =
-            _extend_and_evolve_schema_with_details<
-                std::string,
-                std::string_view>(
-                value_schema, value_array, column_name, true, enmr, se);
+    const auto [was_extended, enum_values_in_write, extended_enmr] =
+        _extend_and_evolve_schema_with_details<std::string, std::string_view>(
+            value_schema, value_array, column_name, true, enmr, se);
 
     if (was_extended) {
         ManagedQuery::_remap_indexes(
@@ -1059,15 +1051,9 @@ bool ManagedQuery::_extend_and_evolve_schema_and_write(
     ArraySchemaEvolution& se) {
     std::string column_name = index_schema->name;
 
-    const auto
-        [was_extended,
-         enum_values_in_write,
-         enum_values_existing,
-         enum_values_to_add,
-         total_size,
-         extended_enmr] =
-            _extend_and_evolve_schema_with_details<ValueType, ValueType>(
-                value_schema, value_array, column_name, true, enmr, se);
+    const auto [was_extended, enum_values_in_write, extended_enmr] =
+        _extend_and_evolve_schema_with_details<ValueType, ValueType>(
+            value_schema, value_array, column_name, true, enmr, se);
 
     if (was_extended) {
         // If the passed-in enumerations are only a subset of the new extended
@@ -1182,7 +1168,7 @@ bool ManagedQuery::
         bool deduplicate,
         Enumeration enmr,
         ArraySchemaEvolution& se) {
-    const auto [was_extended, _1, _2, _3, _4, _5] =
+    const auto [was_extended, _1, _2] =
         _extend_and_evolve_schema_with_details<std::string, std::string_view>(
             value_schema, value_array, column_name, deduplicate, enmr, se);
     return was_extended;
@@ -1196,7 +1182,7 @@ bool ManagedQuery::_extend_and_evolve_schema_without_details(
     bool deduplicate,
     Enumeration enmr,
     ArraySchemaEvolution& se) {
-    const auto [was_extended, _1, _2, _3, _4, _5] =
+    const auto [was_extended, _1, _2] =
         _extend_and_evolve_schema_with_details<ValueType, ValueType>(
             value_schema, value_array, column_name, deduplicate, enmr, se);
     return was_extended;
@@ -1209,9 +1195,6 @@ template <>
 std::tuple<
     bool,                           // was_extended
     std::vector<std::string_view>,  // enum_values_in_write
-    std::vector<std::string_view>,  // enum_values_existing
-    std::vector<std::string_view>,  // enum_values_added
-    size_t,                         // total_size
     Enumeration>                    // extended_enmr
 ManagedQuery::_extend_and_evolve_schema_with_details<std::string>(
     ArrowSchema* value_schema,
@@ -1365,18 +1348,12 @@ ManagedQuery::_extend_and_evolve_schema_with_details<std::string>(
         return std::tuple{
             true,  // was_extended
             enum_values_in_write,
-            enum_values_existing,
-            enum_values_to_add,
-            total_size,
             extended_enmr};
 
     } else {
         return std::tuple{
             false,  // was_extended
             enum_values_in_write,
-            enum_values_existing,
-            enum_values_to_add,
-            total_size,
             enmr};
     }
 }
@@ -1388,9 +1365,6 @@ template <typename ValueType, typename ValueViewType>
 std::tuple<
     bool,                        // was_extended
     std::vector<ValueViewType>,  // enum_values_in_write
-    std::vector<ValueViewType>,  // enum_values_existing
-    std::vector<ValueViewType>,  // enum_values_added
-    size_t,                      // total_size
     Enumeration>                 //  extended_enmr
 ManagedQuery::_extend_and_evolve_schema_with_details(
     ArrowSchema* value_schema,
@@ -1534,9 +1508,6 @@ ManagedQuery::_extend_and_evolve_schema_with_details(
         return std::tuple{
             true,  // was_extended
             enum_values_in_write,
-            enum_values_existing,
-            enum_values_to_add,
-            0,  // total_size is only used for string columns
             extended_enmr};
 
     } else {
@@ -1544,9 +1515,6 @@ ManagedQuery::_extend_and_evolve_schema_with_details(
         return std::tuple{
             false,  // was_extended
             enum_values_in_write,
-            enum_values_existing,
-            enum_values_to_add,
-            0,  // total_size is only used for string columns
             enmr};
     }
 }
