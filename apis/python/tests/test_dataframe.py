@@ -1045,8 +1045,7 @@ def test_extend_enumeration_values_offsets(tmp_path, ordered):
             "inidx2": [0, None, 2, 3],
             "inval2": ["orange", "grey", "green", "blue"],
             "expidx": [0, 1, 2, 3, 4, None, 2, 3],
-            "expval": ["red", "yellow", "green", "blue", "orange"],  # Desired
-            # "expval": ["red", "yellow", "green", "blue", "orange", "grey"],  # Current
+            "expval": ["red", "yellow", "green", "blue", "orange"],
         },
         {
             "arrow_type": pa.string(),
@@ -1054,10 +1053,8 @@ def test_extend_enumeration_values_offsets(tmp_path, ordered):
             "inval1": ["red", "yellow", "green", "blue"],
             "inidx2": [0, 1, 2, 3],
             "inval2": ["orange", "grey", "green", "blue"],
-            "expidx": [0, None, 2, 3, 4, 5, 2, 3],
-            # TODO:
-            "expval": ["red", "yellow", "green", "blue", "orange"],  # Desired
-            # "expval": ["red", "yellow", "green", "blue", "orange", "grey"],  # Current
+            "expidx": [0, None, 1, 2, 3, 4, 1, 2],
+            "expval": ["red", "green", "blue", "orange", "grey"],
         },
         {
             "arrow_type": pa.string(),
@@ -1075,9 +1072,7 @@ def test_extend_enumeration_values_offsets(tmp_path, ordered):
             "inidx2": [None, None, None, None],
             "inval2": ["orange"],
             "expidx": [0, 1, 2, 3, None, None, None, None],
-            # TODO:
-            "expval": ["red", "yellow", "green", "blue"],  # Desired
-            # "expval": ["red", "yellow", "green", "blue", "orange"],  # Current
+            "expval": ["red", "yellow", "green", "blue"],
         },
         {
             "arrow_type": pa.string(),
@@ -1095,7 +1090,7 @@ def test_extend_enumeration_values_offsets(tmp_path, ordered):
             "inidx2": [None, None, None, None],
             "inval2": ["yellow", "green", "blue"],
             "expidx": [None, None, None, None, None, None, None, None],
-            "expval": ["red", "yellow", "green", "blue"],
+            "expval": [],
         },
         {
             "arrow_type": pa.string(),
@@ -1104,9 +1099,7 @@ def test_extend_enumeration_values_offsets(tmp_path, ordered):
             "inidx2": [None, None, None, None],
             "inval2": ["orange"],
             "expidx": [None, None, None, None, None, None, None, None],
-            # TODO:
-            "expval": [],  # Desired
-            # "expval": ["orange"], # Current
+            "expval": [],
         },
         {
             "arrow_type": pa.string(),
@@ -1142,8 +1135,7 @@ def test_extend_enumeration_values_offsets(tmp_path, ordered):
             "inidx2": [None, None, None, None],
             "inval2": [],
             "expidx": [None, None, None, None, None, None, None, None],
-            # "expval": [],
-            "expval": ["orange"],
+            "expval": [],
         },
         {
             "arrow_type": pa.string(),
@@ -1160,7 +1152,7 @@ def test_extend_enumeration_values_offsets(tmp_path, ordered):
             "inval1": ["red", "yellow", "green", "blue"],
             "inidx2": [],
             "inval2": [],
-            "expidx": [0, None, 2, 3],
+            "expidx": [0, None, 1, 2],
             "expval": ["red", "green", "blue"],
         },
         {
@@ -1172,32 +1164,14 @@ def test_extend_enumeration_values_offsets(tmp_path, ordered):
             "expidx": [0, 1, 1, None, 0, 2],
             "expval": ["green", "red", "blue"],
         },
-        {
+        { # XXX TESTING
             "arrow_type": pa.string(),
-            "inidx1": [3, 1, 0, 1, 3, 0, None, None, 3],
-            "inval1": ["red", "yellow", "black", "green"],
-            "inidx2": [None, None, 0, 2, 2, 0, 2, None],
-            "inval2": ["yellow", "grey", "blue"],
-            "expidx": [
-                3,
-                1,
-                0,
-                1,
-                3,
-                0,
-                None,
-                None,
-                3,
-                None,
-                None,
-                1,
-                5,
-                5,
-                1,
-                5,
-                None,
-            ],
-            "expval": ["green", "yellow", "red", "blue"],
+            "inidx1": [0, 1, None, 3],
+            "inval1": ["RED", "YELLOW", "BLACK", "GREEN"],
+            "inidx2": [None, None, 0, 2],
+            "inval2": ["YELLOW", "GREY", "BLUE"],
+            "expidx": [1, 0, None, 2, None, None, 1, 0],
+            "expval": ["RED", "YELLOW", "GREEN"],
         },
         {
             "arrow_type": pa.string(),
@@ -1205,8 +1179,8 @@ def test_extend_enumeration_values_offsets(tmp_path, ordered):
             "inval1": ["red", "blue"],
             "inidx2": [0, 1, 1, 0, None, None, None, 0, 1],
             "inval2": ["orange", "blue"],
-            "expidx": [0, 1, 2, 3, 4, None, 2, 3],
-            "expval": ["red", "yellow", "green", "blue", "orange"],  # Desired
+            "expidx": [1, 0, 1, None, 1, 1, 0, 2, 1, 1, 2, None, None, None, 2, 1],
+            "expval": ["red", "blue", "orange"],
         },
         {
             "arrow_type": pa.string(),
@@ -1214,8 +1188,8 @@ def test_extend_enumeration_values_offsets(tmp_path, ordered):
             "inval1": ["purple", "orange", "grey", "red", "blue", "brown"],
             "inidx2": [4, None, 2],
             "inval2": ["lavender", "teal", "salmon", "puce", "mauve"],
-            "expidx": [0, 1, 2, 3, 4, None, 2, 3],
-            "expval": ["red", "yellow", "green", "blue", "orange"],  # Desired
+            "expidx": [0, None, 1, 3, None, 2],
+            "expval": ["red", "brown", "salmon", "mauve"],
         },
         {
             "arrow_type": pa.string(),
@@ -1223,8 +1197,17 @@ def test_extend_enumeration_values_offsets(tmp_path, ordered):
             "inval1": ["red", "yellow", "green", "blue"],
             "inidx2": [0, 1, None, 3],
             "inval2": ["green", "blue", "orange", "purple"],
-            "expidx": [0, 1, 2, 3, 0, 1, 2, 3],
-            "expval": ["red", "yellow", "green", "blue"],
+            "expidx": [0, None, 1, 2, 1, 2, None, 3],
+            "expval": ["red", "green", "blue", "purple"],
+        },
+        {
+            "arrow_type": pa.string(),
+            "inidx1": [3, None, 5],
+            "inval1": ["purple", "orange", "grey", "red", "blue", "brown"],
+            "inidx2": [],
+            "inval2": [],
+            "expidx": [0, None, 1],
+            "expval": ["red", "brown"],
         },
         # Int-valued enums
         {
@@ -1297,9 +1280,7 @@ def test_extend_enumeration_values_offsets(tmp_path, ordered):
             "inidx2": [0, None, 2, 3],
             "inval2": [555, 777, 333, 444],
             "expidx": [0, 1, 2, 3, 4, None, 2, 3],
-            # TODO:
-            "expval": [111, 222, 333, 444, 555],  # Desired
-            # "expval": [111, 222, 333, 444, 555, 777],  # Current
+            "expval": [111, 222, 333, 444, 555],
         },
         {
             "arrow_type": pa.int64(),
@@ -1307,10 +1288,8 @@ def test_extend_enumeration_values_offsets(tmp_path, ordered):
             "inval1": [111, 222, 333, 444],
             "inidx2": [0, 1, 2, 3],
             "inval2": [555, 777, 333, 444],
-            "expidx": [0, None, 2, 3, 4, 5, 2, 3],
-            # TODO:
-            "expval": [111, 222, 333, 444, 555],  # Desired
-            # "expval": [111, 222, 333, 444, 555, 777],  # Current
+            "expidx": [0, None, 1, 2, 3, 4, 1, 2],
+            "expval": [111, 333, 444, 555, 777],
         },
         {
             "arrow_type": pa.int64(),
@@ -1328,9 +1307,7 @@ def test_extend_enumeration_values_offsets(tmp_path, ordered):
             "inidx2": [None, None, None, None],
             "inval2": [555],
             "expidx": [0, 1, 2, 3, None, None, None, None],
-            # TODO:
-            "expval": [111, 222, 333, 444],  # Desired
-            # "expval": [111, 222, 333, 444, 555],  # Current
+            "expval": [111, 222, 333, 444],
         },
         {
             "arrow_type": pa.int64(),
@@ -1348,7 +1325,7 @@ def test_extend_enumeration_values_offsets(tmp_path, ordered):
             "inidx2": [None, None, None, None],
             "inval2": [222, 333, 444],
             "expidx": [None, None, None, None, None, None, None, None],
-            "expval": [111, 222, 333, 444],
+            "expval": [],
         },
         {
             "arrow_type": pa.int64(),
@@ -1357,9 +1334,7 @@ def test_extend_enumeration_values_offsets(tmp_path, ordered):
             "inidx2": [None, None, None, None],
             "inval2": [555],
             "expidx": [None, None, None, None, None, None, None, None],
-            # TODO:
-            "expval": [],  # Desired
-            # "expval": [555], # Current
+            "expval": [],
         },
         {
             "arrow_type": pa.int64(),
@@ -1395,8 +1370,7 @@ def test_extend_enumeration_values_offsets(tmp_path, ordered):
             "inidx2": [None, None, None, None],
             "inval2": [],
             "expidx": [None, None, None, None, None, None, None, None],
-            # "expval": [],
-            "expval": [555],
+            "expval": [],
         },
         {
             "arrow_type": pa.int64(),
@@ -1413,7 +1387,7 @@ def test_extend_enumeration_values_offsets(tmp_path, ordered):
             "inval1": [111, 222, 333, 444],
             "inidx2": [],
             "inval2": [],
-            "expidx": [0, None, 2, 3],
+            "expidx": [0, None, 1, 2],
             "expval": [111, 333, 444],
         },
         {
@@ -1432,25 +1406,25 @@ def test_extend_enumeration_values_offsets(tmp_path, ordered):
             "inidx2": [None, None, 0, 2, 2, 0, 2, None],
             "inval2": [222, 777, 444],
             "expidx": [
-                3,
+                2,
                 1,
                 0,
                 1,
-                3,
+                2,
                 0,
                 None,
                 None,
+                2,
+                None,
+                None,
+                1,
                 3,
-                None,
-                None,
+                3,
                 1,
-                5,
-                5,
-                1,
-                5,
+                3,
                 None,
             ],
-            "expval": [333, 222, 111, 444],
+            "expval": [111, 222, 333, 444],
         },
         {
             "arrow_type": pa.int64(),
@@ -1458,8 +1432,8 @@ def test_extend_enumeration_values_offsets(tmp_path, ordered):
             "inval1": [111, 444],
             "inidx2": [0, 1, 1, 0, None, None, None, 0, 1],
             "inval2": [555, 444],
-            "expidx": [0, 1, 2, 3, 4, None, 2, 3],
-            "expval": [111, 222, 333, 444, 555],  # Desired
+            "expidx": [1, 0, 1, None, 1, 1, 0, 2, 1, 1, 2, None, None, None, 2, 1],
+            "expval": [111, 444, 555],
         },
         {
             "arrow_type": pa.int64(),
@@ -1467,8 +1441,8 @@ def test_extend_enumeration_values_offsets(tmp_path, ordered):
             "inval1": [666, 555, 777, 111, 444, 888],
             "inidx2": [4, None, 2],
             "inval2": [1333, 1444, 1555, 1666, 1777],
-            "expidx": [0, 1, 2, 3, 4, None, 2, 3],
-            "expval": [111, 222, 333, 444, 555],  # Desired
+            "expidx": [0, None, 1, 3, None, 2],
+            "expval": [111, 888, 1555, 1777],
         },
         # Bool-valued enums
         # WIP
@@ -1530,11 +1504,8 @@ def test_extend_enumeration_null_indices(tmp_path, config, ordered):
 
     with soma.DataFrame.open(uri, "r") as sdf:
         table = sdf.read().concat()
-
         column = table["enum_test"].combine_chunks()
-
         outcol = column.to_pylist()
-
         assert outcol == expcol
 
         # outidx = column.indices.to_pylist()

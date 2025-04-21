@@ -1015,7 +1015,14 @@ bool ManagedQuery::_extend_and_evolve_schema_and_write<std::string>(
 
     const auto [was_extended, enum_values_in_write, extended_enmr] =
         _extend_and_evolve_schema_with_details<std::string, std::string_view>(
-            value_schema, value_array, column_name, true, enmr, se);
+            value_schema,
+            value_array,
+            index_schema,
+            index_array,
+            column_name,
+            true,
+            enmr,
+            se);
 
     if (was_extended) {
         ManagedQuery::_remap_indexes(
@@ -1053,7 +1060,14 @@ bool ManagedQuery::_extend_and_evolve_schema_and_write(
 
     const auto [was_extended, enum_values_in_write, extended_enmr] =
         _extend_and_evolve_schema_with_details<ValueType, ValueType>(
-            value_schema, value_array, column_name, true, enmr, se);
+            value_schema,
+            value_array,
+            index_schema,
+            index_array,
+            column_name,
+            true,
+            enmr,
+            se);
 
     if (was_extended) {
         // If the passed-in enumerations are only a subset of the new extended
@@ -1170,7 +1184,14 @@ bool ManagedQuery::
         ArraySchemaEvolution& se) {
     const auto [was_extended, _1, _2] =
         _extend_and_evolve_schema_with_details<std::string, std::string_view>(
-            value_schema, value_array, column_name, deduplicate, enmr, se);
+            value_schema,
+            value_array,
+            nullptr,
+            nullptr,
+            column_name,
+            deduplicate,
+            enmr,
+            se);
     return was_extended;
 }
 
@@ -1184,7 +1205,14 @@ bool ManagedQuery::_extend_and_evolve_schema_without_details(
     ArraySchemaEvolution& se) {
     const auto [was_extended, _1, _2] =
         _extend_and_evolve_schema_with_details<ValueType, ValueType>(
-            value_schema, value_array, column_name, deduplicate, enmr, se);
+            value_schema,
+            value_array,
+            nullptr,
+            nullptr,
+            column_name,
+            deduplicate,
+            enmr,
+            se);
     return was_extended;
 }
 
@@ -1199,6 +1227,8 @@ std::tuple<
 ManagedQuery::_extend_and_evolve_schema_with_details<std::string>(
     ArrowSchema* value_schema,
     ArrowArray* value_array,
+    ArrowSchema* index_schema,  // XXX MAYBE NULL
+    ArrowArray* index_array,    // XXX MAYBE NULL
     const std::string& column_name,
     bool deduplicate,
     Enumeration enmr,
@@ -1208,7 +1238,7 @@ ManagedQuery::_extend_and_evolve_schema_with_details<std::string>(
     if (value_array->n_buffers != 3) {
         throw std::invalid_argument(fmt::format(
             "[ManagedQuery] _extend_and_evolve_schema_with_details string: "
-            "expected n_buffers == 3; got {}",
+            "expected values n_buffers == 3; got {}",
             value_array->n_buffers));
     }
 
@@ -1252,6 +1282,10 @@ ManagedQuery::_extend_and_evolve_schema_with_details<std::string>(
     // We need this in order to partition the requested values
     // into the ones already in the schema, and the ones needing
     // to be added to the schema.
+#ifdef DEBUG_ENUMS
+    std::cout << "\n";
+    std::cout << "EVIW PREP\n";
+#endif
     std::vector<std::string_view> enum_values_in_write;
     std::unordered_set<std::string_view> unique_values_in_write;
     for (size_t i = 0; i < num_elems; ++i) {
@@ -1259,8 +1293,14 @@ ManagedQuery::_extend_and_evolve_schema_with_details<std::string>(
         auto sz = offsets_v[i + 1] - beg;
         auto enum_val = data_as_char.substr(beg, sz);
         enum_values_in_write.push_back(enum_val);
+#ifdef DEBUG_ENUMS
+        std::cout << "  EVIW I=" << i << " V=" << std::string(enum_val) << "\n";
+#endif
         unique_values_in_write.insert(enum_val);
     }
+#ifdef DEBUG_ENUMS
+    std::cout << "\n";
+#endif
 
     // Check for non-unique values in the input, even before we check the
     // values in the array schema. See also sc-65078.
@@ -1274,8 +1314,6 @@ ManagedQuery::_extend_and_evolve_schema_with_details<std::string>(
 
     // Separate out the values already in the array schema from the
     // values not already in the array schema.
-    std::vector<std::string_view> enum_values_to_add;
-    size_t total_size = 0;
     auto enum_values_existing = _enumeration_values_view<std::string_view>(
         enmr);
     std::unordered_set<std::string_view> existing_enums_set;
@@ -1283,10 +1321,47 @@ ManagedQuery::_extend_and_evolve_schema_with_details<std::string>(
         existing_enums_set.insert(existing_enum_val);
     }
 
-    for (const auto& enum_val : enum_values_in_write) {
-        if (!existing_enums_set.contains(enum_val)) {
-            enum_values_to_add.push_back(enum_val);
-            total_size += enum_val.size();
+#ifdef DEBUG_ENUMS
+    std::cout << "\n";
+    for (const auto& v : existing_enums_set) {
+        std::cout << "EXISTING ENUM " << std::string(v) << "\n";
+    }
+#endif
+
+    // XXX WIP
+    std::optional<std::unordered_set<std::string_view>>
+        opt_covered_values = _find_covered_enum_values_three(
+            enum_values_in_write, index_schema, index_array);
+    // XXX WIP
+
+    std::vector<std::string_view> enum_values_to_add;
+    size_t total_size = 0;
+
+    if (opt_covered_values.has_value()) {
+        const auto& covered_values = opt_covered_values.value();
+
+#ifdef DEBUG_ENUMS
+        std::cout << "\n";
+        for (const auto& v : covered_values) {
+            std::cout << "COVERED VALUE " << std::string(v) << "\n";
+        }
+#endif
+        for (size_t i = 0; i < enum_values_in_write.size(); i++) {
+            const auto& enum_val = enum_values_in_write[i];
+            if (!existing_enums_set.contains(enum_val)) {
+                if (covered_values.find(enum_val) != covered_values.end()) {
+                    enum_values_to_add.push_back(enum_val);
+                    total_size += enum_val.size();
+                }
+            }
+        }
+    } else {
+        for (size_t i = 0; i < enum_values_in_write.size(); i++) {
+            const auto& enum_val = enum_values_in_write[i];
+            if (!existing_enums_set.contains(enum_val)) {
+                enum_values_to_add.push_back(enum_val);
+                total_size += enum_val.size();
+            }
         }
     }
 
@@ -1369,6 +1444,8 @@ std::tuple<
 ManagedQuery::_extend_and_evolve_schema_with_details(
     ArrowSchema* value_schema,
     ArrowArray* value_array,
+    ArrowSchema* index_schema,  // XXX MAYBE NULL
+    ArrowArray* index_array,    // XXX MAYBE NULL
     const std::string& column_name,
     bool deduplicate,
     Enumeration enmr,
@@ -1387,6 +1464,10 @@ ManagedQuery::_extend_and_evolve_schema_with_details(
         throw std::invalid_argument(fmt::format(
             "[ManagedQuery] _extend_and_evolve_schema_with_details non-string: "
             "null values are not supported"));
+    }
+    std::optional<std::vector<uint8_t>> validities = std::nullopt;
+    if (index_array != nullptr) {
+        validities = _cast_validity_buffer(index_array);
     }
 
     // Get all the enumeration values in the passed-in column
@@ -1456,12 +1537,33 @@ ManagedQuery::_extend_and_evolve_schema_with_details(
 
     // Find any new enumeration values
     std::vector<ValueType> enum_values_to_add;
-    for (const auto& enum_value_in_write : enum_values_in_write) {
-        auto sv = std::string_view(
-            static_cast<char*>((char*)&enum_value_in_write),
-            sizeof(enum_value_in_write));
-        if (!existing_enums_set.contains(sv)) {
-            enum_values_to_add.push_back(enum_value_in_write);
+    // XXX WIP
+
+    std::optional<std::unordered_set<ValueType>>
+        opt_covered_values = _find_covered_enum_values<ValueType>(
+            value_array, index_schema, index_array);
+    // XXX WIP
+    if (opt_covered_values.has_value()) {
+        const auto& covered_values = opt_covered_values.value();
+        for (const auto& enum_value_in_write : enum_values_in_write) {
+            auto sv = std::string_view(
+                static_cast<char*>((char*)&enum_value_in_write),
+                sizeof(enum_value_in_write));
+            if (!existing_enums_set.contains(sv)) {
+                if (covered_values.find(enum_value_in_write) !=
+                    covered_values.end()) {
+                    enum_values_to_add.push_back(enum_value_in_write);
+                }
+            }
+        }
+    } else {
+        for (const auto& enum_value_in_write : enum_values_in_write) {
+            auto sv = std::string_view(
+                static_cast<char*>((char*)&enum_value_in_write),
+                sizeof(enum_value_in_write));
+            if (!existing_enums_set.contains(sv)) {
+                enum_values_to_add.push_back(enum_value_in_write);
+            }
         }
     }
 

@@ -27,6 +27,8 @@
 #include "enums.h"
 #include "logger_public.h"
 
+// #define DEBUG_ENUMS
+
 namespace tiledbsoma {
 
 using namespace tiledb;
@@ -785,6 +787,8 @@ class ManagedQuery {
     _extend_and_evolve_schema_with_details(
         ArrowSchema* value_schema,
         ArrowArray* value_array,
+        ArrowSchema* index_schema,  // XXX MAYBE NULL
+        ArrowArray* index_array,    // XXX MAYBE NULL
         const std::string& column_name,
         bool deduplicate,
         Enumeration enmr,
@@ -801,6 +805,299 @@ class ManagedQuery {
         bool deduplicate,
         Enumeration enmr,
         ArraySchemaEvolution& se);
+
+    /**
+     * XXX WRITE ME PLZ
+     */
+    template <typename ValueType>
+    std::optional<std::unordered_set<ValueType>> _find_covered_enum_values(
+        ArrowArray* value_array,
+        ArrowSchema* index_schema,
+        ArrowArray* index_array) {
+        auto user_index_type = ArrowAdapter::to_tiledb_format(
+            index_schema->format);
+        switch (user_index_type) {
+            case TILEDB_INT8:
+                return _find_covered_enum_values_aux<ValueType, int8_t>(
+                    value_array, index_array);
+            case TILEDB_UINT8:
+                return _find_covered_enum_values_aux<ValueType, uint8_t>(
+                    value_array, index_array);
+            case TILEDB_INT16:
+                return _find_covered_enum_values_aux<ValueType, int16_t>(
+                    value_array, index_array);
+            case TILEDB_UINT16:
+                return _find_covered_enum_values_aux<ValueType, uint16_t>(
+                    value_array, index_array);
+            case TILEDB_INT32:
+                return _find_covered_enum_values_aux<ValueType, int32_t>(
+                    value_array, index_array);
+            case TILEDB_UINT32:
+                return _find_covered_enum_values_aux<ValueType, uint32_t>(
+                    value_array, index_array);
+            case TILEDB_INT64:
+                return _find_covered_enum_values_aux<ValueType, int64_t>(
+                    value_array, index_array);
+            case TILEDB_UINT64:
+                return _find_covered_enum_values_aux<ValueType, uint64_t>(
+                    value_array, index_array);
+            default:
+                throw TileDBSOMAError(
+                    "Saw invalid enumeration index type when trying to extend"
+                    "enumeration");
+        }
+    }
+
+    /**
+     * This is a helper for the enumeration-extender.  Users can have Arrow
+     * dictionaries with values like red, yellow, green, etc.  and indices into
+     * that array -- and the indices can be null.  If there are no non-null
+     * indices in the index array which point to a particular enum value, we
+     * don't want to add that enum value to the array schema.  This method
+     * returns a set of the values touched by at least one non-null
+     * index.
+     *
+     * Trivial example: given Arrow dictionary values = ["orange"] and indices =
+     * [None, None, None, None], this method returns {}. Another
+     * example: Given values ["red", "yellow", "green", "blue"] an indices
+     * [3,1,1,3,None,0], this method returns the set {"red", "green", "blue"}.
+     *
+     * For implementation reasons, the ValueType is std::string_view for
+     * string-valued dictionaries, and what you'd expect (int32_t etc.) for all
+     * other dictionary value-types.
+     *
+     * The returned set is empty if the input index array is nullptr. This is
+     * because we have two use-cases for enumeration-extension: one is on
+     * dataframe.write where the user passes an Arrow dictionary column which
+     * has both values and indices. The other is extend_enumeration
+     * which takes a plain (non-dictionary) array of values only.
+     *
+     * The optional return value can also be empty if the index array has a null
+     * validity buffer, meaning that Arrow has said that all indices are
+     * non-null.
+     */
+    template <typename ValueType, typename IndexType>
+        requires std::same_as<ValueType, std::string_view>
+    std::optional<std::unordered_set<ValueType>> _find_covered_enum_values_aux(
+        ArrowArray* value_array, ArrowArray* index_array) {
+        std::unordered_set<ValueType> retval;
+        if (index_array == nullptr) {
+            // All enum values are considered covered: this is the context
+            // of our having been given a plain Arrow array of enum values
+            // and being asked to extend the array's enumeration to include
+            // them. We should honor all the provided values.
+            return std::nullopt;
+        }
+
+        std::optional<std::vector<uint8_t>>
+            opt_validities = _cast_validity_buffer(index_array);
+        if (!opt_validities.has_value()) {
+            // All enum values are considered covered: this is the context
+            // where the user has given us an Arrow dictionary, and
+            // the index part is all non-null values and the Arrow library
+            // has no validity buffer at all for it.
+            return std::nullopt;
+        }
+        std::vector<uint8_t> validities = opt_validities.value();
+
+        if (index_array->n_buffers != 2) {
+            throw std::invalid_argument(
+                "[ManagedQuery] XXX _extend_and_evolve_schema_with_details "
+                "string: "
+                "expected indexes n_buffers == 2; got {}" +
+                std::to_string(index_array->n_buffers));
+        }
+
+        if (value_array->n_buffers != 3) {
+            throw std::invalid_argument(
+                "[ManagedQuery] XXX _extend_and_evolve_schema_with_details "
+                "string: "
+                "expected values n_buffers == 3; got {}" +
+                std::to_string(value_array->n_buffers));
+        }
+
+#if 0
+        IndexType* idxbuf = (IndexType*)index_array->buffers[1] +
+                            index_array->offset;
+        ValueType* valbuf = (ValueType*)value_array->buffers[1] +
+                            value_array->offset;
+        ValueType* valbuf = (ValueType*)value_array->buffers[1] +
+                            value_array->offset;
+
+        for (int64_t i = 0; i < index_array->length; i++) {
+            IndexType index = idxbuf[i];
+            if (!validities[i]) {
+              continue;
+            }
+
+            auto beg = offsets_v[i];
+
+            ValueType value = valbuf[index];
+            if (validities[i]) {
+                retval.insert(value);
+            }
+        }
+
+        for (size_t i = 0; i < num_elems; ++i) {
+            auto beg = offsets_v[i];
+            auto sz = offsets_v[i + 1] - beg;
+            auto enum_val = data_as_char.substr(beg, sz);
+            enum_values_in_write.push_back(enum_val);
+            unique_values_in_write.insert(enum_val);
+        }
+#endif
+
+        return std::nullopt;  // XXX STUB
+    }
+
+    template <typename ValueType, typename IndexType>
+        requires(!std::same_as<ValueType, std::string_view>)
+    std::optional<std::unordered_set<ValueType>> _find_covered_enum_values_aux(
+        ArrowArray* value_array, ArrowArray* index_array) {
+        std::unordered_set<ValueType> retval;
+
+        if (index_array == nullptr) {
+            // All enum values are considered covered: this is the context
+            // of our having been given a plain Arrow array of enum values
+            // and being asked to extend the array's enumeration to include
+            // them. We should honor all the provided values.
+            return std::nullopt;
+        }
+
+        std::optional<std::vector<uint8_t>>
+            opt_validities = _cast_validity_buffer(index_array);
+        if (!opt_validities.has_value()) {
+            // All enum values are considered covered: this is the context
+            // where the user has given us an Arrow dictionary, and
+            // the index part is all non-null values and the Arrow library
+            // has no validity buffer at all for it.
+            return std::nullopt;
+        }
+        std::vector<uint8_t> validities = opt_validities.value();
+
+        if (index_array->n_buffers != 2) {
+            throw std::invalid_argument(
+                "[ManagedQuery] XXX _extend_and_evolve_schema_with_details "
+                "string: "
+                "expected indexes n_buffers == 2; got {}" +
+                std::to_string(value_array->n_buffers));
+        }
+
+        IndexType* idxbuf = (IndexType*)index_array->buffers[1] +
+                            index_array->offset;
+        ValueType* valbuf = (ValueType*)value_array->buffers[1] +
+                            value_array->offset;
+
+        for (int64_t i = 0; i < index_array->length; i++) {
+            IndexType index = idxbuf[i];
+            if (validities[i]) {
+                ValueType value = valbuf[index];
+                retval.insert(value);
+            }
+        }
+
+#ifdef DEBUG_ENUMS
+        std::cout << "\n";
+        std::cout << "NON-STRING COVERAGE MAP\n";
+        for (const auto& elem : retval) {
+            std::cout << "  " << elem << "\n";
+        }
+#endif
+
+        return retval;
+    }
+
+    /**
+     * XXX WRITE ME PLZ
+     */
+    std::optional<std::unordered_set<std::string_view>>
+    _find_covered_enum_values_three(
+        const std::vector<std::string_view>& enum_values_as_sv,
+        ArrowSchema* index_schema,
+        ArrowArray* index_array) {
+        auto user_index_type = ArrowAdapter::to_tiledb_format(
+            index_schema->format);
+        switch (user_index_type) {
+            case TILEDB_INT8:
+                return _find_covered_enum_values_three_aux<int8_t>(
+                    enum_values_as_sv, index_array);
+            case TILEDB_UINT8:
+                return _find_covered_enum_values_three_aux<uint8_t>(
+                    enum_values_as_sv, index_array);
+            case TILEDB_INT16:
+                return _find_covered_enum_values_three_aux<int16_t>(
+                    enum_values_as_sv, index_array);
+            case TILEDB_UINT16:
+                return _find_covered_enum_values_three_aux<uint16_t>(
+                    enum_values_as_sv, index_array);
+            case TILEDB_INT32:
+                return _find_covered_enum_values_three_aux<int32_t>(
+                    enum_values_as_sv, index_array);
+            case TILEDB_UINT32:
+                return _find_covered_enum_values_three_aux<uint32_t>(
+                    enum_values_as_sv, index_array);
+            case TILEDB_INT64:
+                return _find_covered_enum_values_three_aux<int64_t>(
+                    enum_values_as_sv, index_array);
+            case TILEDB_UINT64:
+                return _find_covered_enum_values_three_aux<uint64_t>(
+                    enum_values_as_sv, index_array);
+            default:
+                throw TileDBSOMAError(
+                    "Saw invalid enumeration index type when trying to extend"
+                    "enumeration");
+        }
+    }
+
+    template <typename IndexType>
+    std::optional<std::unordered_set<std::string_view>>
+    _find_covered_enum_values_three_aux(
+        const std::vector<std::string_view>& enum_values_as_sv,
+        ArrowArray* index_array) {
+        std::unordered_set<std::string_view> retval;
+
+        if (index_array == nullptr) {
+            // All enum values are considered covered: this is the context
+            // of our having been given a plain Arrow array of enum values
+            // and being asked to extend the array's enumeration to include
+            // them. We should honor all the provided values.
+            return std::nullopt;
+        }
+
+        std::optional<std::vector<uint8_t>>
+            opt_validities = _cast_validity_buffer(index_array);
+        if (!opt_validities.has_value()) {
+            // All enum values are considered covered: this is the context
+            // where the user has given us an Arrow dictionary, and
+            // the index part is all non-null values and the Arrow library
+            // has no validity buffer at all for it.
+            return std::nullopt;
+        }
+        std::vector<uint8_t> validities = opt_validities.value();
+
+        if (index_array->n_buffers != 2) {
+            throw std::invalid_argument(
+                "[ManagedQuery] XXX _extend_and_evolve_schema_with_details "
+                "string: "
+                "expected indexes n_buffers == 2; got {}" +
+                std::to_string(index_array->n_buffers));
+        }
+        IndexType* idxbuf = (IndexType*)index_array->buffers[1] +
+                            index_array->offset;
+
+        // i:          0  1  2     3
+        // idxbuf[i]: [3, 0, None, 2]
+        int64_t n = index_array->length;
+        for (int64_t i = 0; i < n; i++) {
+            if (validities[i]) {
+                IndexType index = idxbuf[i];
+                std::string_view value = enum_values_as_sv[index];
+                retval.insert(value);
+            }
+        }
+
+        return retval;
+    }
 
     template <typename ValueType>
     void _remap_indexes(
@@ -848,12 +1145,15 @@ class ManagedQuery {
     }
 
     template <typename ValueType, typename IndexType>
+        requires std::same_as<ValueType, std::string_view>
     void _remap_indexes_aux(
         std::string column_name,
         Enumeration extended_enmr,
         std::vector<ValueType> enums_in_write,
         ArrowArray* index_array) {
         // Get the user passed-in dictionary indexes
+        std::optional<std::vector<uint8_t>> validities = _cast_validity_buffer(
+            index_array);
         IndexType* idxbuf;
         if (index_array->n_buffers == 3) {
             idxbuf = (IndexType*)index_array->buffers[2] + index_array->offset;
@@ -863,27 +1163,81 @@ class ManagedQuery {
         std::vector<IndexType> original_indexes(
             idxbuf, idxbuf + index_array->length);
 
+#ifdef DEBUG_ENUMS
+        std::cout << "\n";
+        std::cout << "REMAP_INDEXES INDEX ARRAY\n";
+        for (int64_t i = 0; i < index_array->length; i++) {
+            if (validities.has_value()) {
+                std::cout << i << ": " << idxbuf[i] << " / "
+                          << (validities.value()[i] ? "T" : "F") << "\n";
+            } else {
+                std::cout << i << ": " << idxbuf[i] << " / " << "V" << "\n";
+            }
+        }
+#endif
+
         // Shift the dictionary indexes to match the on-disk extended
         // enumerations
-        std::vector<IndexType> shifted_indexes;
-        auto enmr_vec = extended_enmr.as_vector<ValueType>();
-        for (ssize_t i : original_indexes) {
-            // For nullable columns, when the value is NULL, the associated
-            // index may be a negative integer, so do not index into
-            // enums_in_write or it will segfault
-            if (0 > i) {
-                shifted_indexes.push_back(i);
-            } else if (i >= enums_in_write.size()) {
-                // XXX TEMP
-                shifted_indexes.push_back(i);
+        auto enmr_vec = _enumeration_values_view<ValueType>(extended_enmr);
+        std::unordered_map<ValueType, IndexType> enmr_map;
+        IndexType idx = 0;
+        for (const auto& enmr_value : enmr_vec) {
+            enmr_map.insert(std::make_pair(enmr_value, idx));
+            ++idx;
+        }
+
+#ifdef DEBUG_ENUMS
+        std::cout << "\n";
+        std::cout << "REMAP_INDEXES ENMR_VEC\n";
+        for (size_t i = 0; i < enmr_vec.size(); i++) {
+            std::cout << i << ": " << enmr_vec[i] << "\n";
+        }
+#endif
+
+#ifdef DEBUG_ENUMS
+        std::cout << "\n";
+        std::cout << "REMAP_INDEXES ENMR_MAP\n";
+        for (const auto& item : enmr_map) {
+            std::cout << item.first << ": " << (int)item.second << "\n";
+        }
+#endif
+
+#ifdef DEBUG_ENUMS
+        std::cout << "\n";
+        std::cout << "REMAP_INDEXES ENUMS_IN_WRITE\n";
+        for (size_t i = 0; i < enums_in_write.size(); i++) {
+            std::cout << i << ": " << enums_in_write[i] << "\n";
+        }
+#endif
+
+#ifdef DEBUG_ENUMS
+        std::cout << "\n";
+        std::cout << "REMAP_INDEXES ORIGINAL_INDEXES\n";
+        for (size_t i = 0; i < original_indexes.size(); i++) {
+            std::cout << (int)i << ": " << (int)original_indexes[i] << "\n";
+        }
+#endif
+
+        std::vector<IndexType> shifted_indexes(original_indexes.size());
+        for (size_t i = 0; i < original_indexes.size(); i++) {
+            IndexType oi = original_indexes[i];
+            if (validities.has_value() && !validities.value()[i]) {
+                shifted_indexes[i] = oi;
             } else {
-                auto it = _find_enum_match(enmr_vec, enums_in_write[i]);
-                shifted_indexes.push_back(it - enmr_vec.begin());
+                shifted_indexes[i] = enmr_map[enums_in_write[oi]];
             }
         }
 
+#ifdef DEBUG_ENUMS
+        std::cout << "\n";
+        std::cout << "REMAP_INDEXES SHIFTED_INDEXES\n";
+        for (size_t i = 0; i < shifted_indexes.size(); i++) {
+            std::cout << (int)i << ": " << (int)shifted_indexes[i] << "\n";
+        }
+#endif
+
         // Cast the user passed-in index type to be what is on-disk before we
-        // set the write buffers. Here we identify the on-disk type
+        // set the write buffers. Here we identify the on-disk type.
         auto attr = schema_->attribute(column_name);
         switch (attr.type()) {
             case TILEDB_INT8:
@@ -918,13 +1272,15 @@ class ManagedQuery {
     }
 
     template <typename ValueType, typename IndexType>
-        requires std::same_as<ValueType, std::string_view>
+        requires(!std::same_as<ValueType, std::string_view>)
     void _remap_indexes_aux(
         std::string column_name,
         Enumeration extended_enmr,
         std::vector<ValueType> enums_in_write,
         ArrowArray* index_array) {
         // Get the user passed-in dictionary indexes
+        std::optional<std::vector<uint8_t>> validities = _cast_validity_buffer(
+            index_array);
         IndexType* idxbuf;
         if (index_array->n_buffers == 3) {
             idxbuf = (IndexType*)index_array->buffers[2] + index_array->offset;
@@ -936,8 +1292,7 @@ class ManagedQuery {
 
         // Shift the dictionary indexes to match the on-disk extended
         // enumerations
-        std::vector<IndexType> shifted_indexes;
-        auto enmr_vec = _enumeration_values_view<ValueType>(extended_enmr);
+        auto enmr_vec = extended_enmr.as_vector<ValueType>();
         std::unordered_map<ValueType, IndexType> enmr_map;
         IndexType idx = 0;
         for (const auto& enmr_value : enmr_vec) {
@@ -945,22 +1300,18 @@ class ManagedQuery {
             ++idx;
         }
 
-        for (ssize_t i : original_indexes) {
-            // For nullable columns, when the value is NULL, the associated
-            // index may be a negative integer, so do not index into
-            // enums_in_write or it will segfault
-            if (0 > i) {
-                shifted_indexes.push_back(i);
-            } else if (i >= enums_in_write.size()) {
-                // XXX TEMP
-                shifted_indexes.push_back(i);
+        std::vector<IndexType> shifted_indexes(original_indexes.size());
+        for (size_t i = 0; i < original_indexes.size(); i++) {
+            IndexType oi = original_indexes[i];
+            if (validities.has_value() && !validities.value()[i]) {
+                shifted_indexes[i] = oi;
             } else {
-                shifted_indexes.push_back(enmr_map[enums_in_write[i]]);
+                shifted_indexes[i] = enmr_map[enums_in_write[oi]];
             }
         }
 
         // Cast the user passed-in index type to be what is on-disk before we
-        // set the write buffers. Here we identify the on-disk type
+        // set the write buffers. Here we identify the on-disk type.
         auto attr = schema_->attribute(column_name);
         switch (attr.type()) {
             case TILEDB_INT8:
@@ -1143,6 +1494,8 @@ std::tuple<
 ManagedQuery::_extend_and_evolve_schema_with_details<std::string>(
     ArrowSchema* value_schema,
     ArrowArray* value_array,
+    ArrowSchema* index_schema,  // XXX MAYBE NULL
+    ArrowArray* index_array,    // XXX MAYBE NULL
     const std::string& column_name,
     bool deduplicate,
     Enumeration enmr,
