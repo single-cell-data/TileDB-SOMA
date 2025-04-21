@@ -138,32 +138,29 @@ void SOMAGroup::fill_caches() {
         auto mem = cache_group_->member(i);
         std::string parent_soma_type = util::soma_type_from_tiledb_type(
             mem.type());
-        std::optional<std::string> soma_type = std::nullopt;
+        std::string soma_type;
 
         if (parent_soma_type == "SOMAArray") {
             try {
                 soma_type = SOMAArray::open(OpenMode::read, mem.uri(), ctx_)
-                                ->type();
+                                ->type()
+                                .value_or("SOMAArray");
             } catch (std::exception& e) {
                 soma_type = "SOMAArray";
             }
         } else if (parent_soma_type == "SOMAGroup") {
             try {
                 soma_type = SOMAGroup::open(OpenMode::read, mem.uri(), ctx_)
-                                ->type();
+                                ->type()
+                                .value_or("SOMAGroup");
             } catch (std::exception& e) {
                 soma_type = "SOMAGroup";
             }
         }
 
-        if (!soma_type.has_value()) {
-            throw TileDBSOMAError(fmt::format(
-                "Group member '{}' has invalid SOMA type", mem.uri()));
-        }
-
         std::string key = mem.name().has_value() ? mem.name().value() :
                                                    mem.uri();
-        members_map_[key] = SOMAGroupEntry(mem.uri(), *soma_type);
+        members_map_[key] = SOMAGroupEntry(mem.uri(), soma_type);
     }
 }
 

@@ -50,7 +50,7 @@ TEST_CASE("SOMACollection: add SOMASparseNDArray") {
     auto index_columns = helper::create_column_index_info(dim_infos);
 
     std::map<std::string, SOMAGroupEntry> expected_map{
-        {"sparse_ndarray", SOMAGroupEntry(sub_uri, "SOMAArray")}};
+        {"sparse_ndarray", SOMAGroupEntry(sub_uri, "SOMASparseNDArray")}};
 
     auto soma_collection = SOMACollection::open(
         base_uri, OpenMode::write, ctx, ts);
@@ -102,7 +102,7 @@ TEST_CASE("SOMACollection: add SOMADenseNDArray") {
     auto index_columns = helper::create_column_index_info(dim_infos);
 
     std::map<std::string, SOMAGroupEntry> expected_map{
-        {"dense_ndarray", SOMAGroupEntry(sub_uri, "SOMAArray")}};
+        {"dense_ndarray", SOMAGroupEntry(sub_uri, "SOMADenseNDArray")}};
 
     auto soma_collection = SOMACollection::open(
         base_uri, OpenMode::write, ctx, ts);
@@ -161,7 +161,7 @@ TEST_CASE("SOMACollection: add SOMADataFrame") {
         helper::create_arrow_schema_and_index_columns(dim_infos, attr_infos);
 
     std::map<std::string, SOMAGroupEntry> expected_map{
-        {"dataframe", SOMAGroupEntry(sub_uri, "SOMAArray")}};
+        {"dataframe", SOMAGroupEntry(sub_uri, "SOMADataFrame")}};
 
     auto soma_collection = SOMACollection::open(
         base_uri, OpenMode::write, ctx, ts);
@@ -200,7 +200,7 @@ TEST_CASE("SOMACollection: add SOMACollection") {
     SOMACollection::create(base_uri, ctx);
 
     std::map<std::string, SOMAGroupEntry> expected_map{
-        {"subcollection", SOMAGroupEntry(sub_uri, "SOMAGroup")}};
+        {"subcollection", SOMAGroupEntry(sub_uri, "SOMACollection")}};
 
     auto soma_collection = SOMACollection::open(base_uri, OpenMode::write, ctx);
     auto soma_subcollection = soma_collection->add_new_collection(
@@ -239,7 +239,7 @@ TEST_CASE("SOMACollection: add SOMAExperiment") {
         helper::create_arrow_schema_and_index_columns(dim_infos, attr_infos);
 
     std::map<std::string, SOMAGroupEntry> expected_map{
-        {"experiment", SOMAGroupEntry(sub_uri, "SOMAGroup")}};
+        {"experiment", SOMAGroupEntry(sub_uri, "SOMAExperiment")}};
 
     auto soma_collection = SOMACollection::open(base_uri, OpenMode::write, ctx);
     auto soma_experiment = soma_collection->add_new_experiment(
@@ -284,7 +284,7 @@ TEST_CASE("SOMACollection: add SOMAMeasurement") {
         helper::create_arrow_schema_and_index_columns(dim_infos, attr_infos);
 
     std::map<std::string, SOMAGroupEntry> expected_map{
-        {"measurement", SOMAGroupEntry(sub_uri, "SOMAGroup")}};
+        {"measurement", SOMAGroupEntry(sub_uri, "SOMAMeasurement")}};
 
     auto soma_collection = SOMACollection::open(base_uri, OpenMode::write, ctx);
     auto soma_measurement = soma_collection->add_new_measurement(

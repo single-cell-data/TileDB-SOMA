@@ -131,10 +131,10 @@ TEST_CASE("SOMAGroup: basic") {
     auto ctx = std::make_shared<SOMAContext>();
 
     std::string uri_main_group = "mem://main-group";
-    SOMAGroup::create(ctx, uri_main_group, "NONE");
+    SOMAGroup::create(ctx, uri_main_group, "SOMAGroup");
 
     std::string uri_sub_group = "mem://sub-group";
-    SOMAGroup::create(ctx, uri_sub_group, "NONE");
+    SOMAGroup::create(ctx, uri_sub_group, "SOMAGroup");
 
     auto [uri_sub_array, expected_nnz] = create_array(
         "mem://sub-array", *ctx->tiledb_ctx());
@@ -153,6 +153,8 @@ TEST_CASE("SOMAGroup: basic") {
     REQUIRE(soma_group->ctx() == ctx);
     REQUIRE(soma_group->uri() == uri_main_group);
     REQUIRE(soma_group->count() == 2);
+    std::cout << soma_group->members_map()["subgroup"].second << std::endl;
+    std::cout << soma_group->members_map()["subarray"].second << std::endl;
     REQUIRE(expected_map == soma_group->members_map());
     REQUIRE(soma_group->get("subgroup").type() == Object::Type::Group);
     REQUIRE(soma_group->get("subarray").type() == Object::Type::Array);
