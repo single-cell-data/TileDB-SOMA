@@ -279,9 +279,23 @@ class GroupEntry:
     @classmethod
     def from_soma_group_entry(cls, obj: tuple[str, str]) -> "GroupEntry":
         uri, type = obj[0], obj[1]
-        if type == "SOMAArray":
+        if type in (
+            "SOMAArray",
+            "SOMADataFrame",
+            "SOMADenseNDArray",
+            "SOMAGeometryDataFrame",
+            "SOMAPointCloudDataFrame",
+            "SOMASparseNDArray",
+        ):
             return GroupEntry(uri, SOMAArrayWrapper)
-        if type == "SOMAGroup":
+        if type in (
+            "SOMAGroup",
+            "SOMACollection",
+            "SOMAExperiment",
+            "SOMAMeasurement",
+            "SOMAScene",
+            "SOMAMultiscaleImage",
+        ):
             return GroupEntry(uri, SOMAGroupWrapper)
         raise SOMAError(f"internal error: unknown object type {uri}")
 

@@ -15,6 +15,7 @@
 #include "../soma/logger_public.h"
 #include "../utils/logger.h"  // for fmt::format
 #include "../utils/util.h"
+#include "soma_array.h"
 
 namespace tiledbsoma {
 using namespace tiledb;
@@ -135,10 +136,34 @@ void SOMAGroup::fill_caches() {
 
     for (uint64_t i = 0; i < cache_group_->member_count(); ++i) {
         auto mem = cache_group_->member(i);
-        std::string soma_type = util::soma_type_from_tiledb_type(mem.type());
+        std::string parent_soma_type = util::soma_type_from_tiledb_type(
+            mem.type());
+        std::optional<std::string> soma_type = std::nullopt;
+
+        if (parent_soma_type == "SOMAArray") {
+            try {
+                soma_type = SOMAArray::open(OpenMode::read, mem.uri(), ctx_)
+                                ->type();
+            } catch (std::exception& e) {
+                soma_type = "SOMAArray";
+            }
+        } else if (parent_soma_type == "SOMAGroup") {
+            try {
+                soma_type = SOMAGroup::open(OpenMode::read, mem.uri(), ctx_)
+                                ->type();
+            } catch (std::exception& e) {
+                soma_type = "SOMAGroup";
+            }
+        }
+
+        if (!soma_type.has_value()) {
+            throw TileDBSOMAError(fmt::format(
+                "Group member '{}' has invalid SOMA type", mem.uri()));
+        }
+
         std::string key = mem.name().has_value() ? mem.name().value() :
                                                    mem.uri();
-        members_map_[key] = SOMAGroupEntry(mem.uri(), soma_type);
+        members_map_[key] = SOMAGroupEntry(mem.uri(), *soma_type);
     }
 }
 

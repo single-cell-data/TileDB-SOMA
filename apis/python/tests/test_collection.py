@@ -112,6 +112,11 @@ def test_collection_basic(tmp_path):
     with pytest.raises(soma.SOMAError):
         soma.MultiscaleImage.open(collection.uri)
 
+    with soma.Collection.open(basedir) as collection:
+        mems = collection.members()
+        assert mems["sdf"][1] == "SOMADataFrame"
+        assert mems["snda"][1] == "SOMASparseNDArray"
+
 
 @pytest.fixture(
     scope="function",
