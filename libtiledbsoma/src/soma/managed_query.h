@@ -851,6 +851,7 @@ class ManagedQuery {
     }
 
     template <typename ValueType, typename IndexType>
+        requires std::same_as<ValueType, std::string_view>
     void _remap_indexes_aux(
         std::string column_name,
         Enumeration extended_enmr,
@@ -869,7 +870,14 @@ class ManagedQuery {
         // Shift the dictionary indexes to match the on-disk extended
         // enumerations
         std::vector<IndexType> shifted_indexes;
-        auto enmr_vec = extended_enmr.as_vector<ValueType>();
+        auto enmr_vec = _enumeration_values_view<ValueType>(extended_enmr);
+        std::unordered_map<ValueType, IndexType> enmr_map;
+        IndexType idx = 0;
+        for (const auto& enmr_value : enmr_vec) {
+            enmr_map.insert(std::make_pair(enmr_value, idx));
+            ++idx;
+        }
+
         for (auto i : original_indexes) {
             // For nullable columns, when the value is NULL, the associated
             // index may be a negative integer, so do not index into
@@ -877,8 +885,7 @@ class ManagedQuery {
             if (0 > i) {
                 shifted_indexes.push_back(i);
             } else {
-                auto it = _find_enum_match(enmr_vec, enums_in_write[i]);
-                shifted_indexes.push_back(it - enmr_vec.begin());
+                shifted_indexes.push_back(enmr_map[enums_in_write[i]]);
             }
         }
 
@@ -918,7 +925,7 @@ class ManagedQuery {
     }
 
     template <typename ValueType, typename IndexType>
-        requires std::same_as<ValueType, std::string_view>
+        requires(!std::same_as<ValueType, std::string_view>)
     void _remap_indexes_aux(
         std::string column_name,
         Enumeration extended_enmr,
@@ -937,14 +944,7 @@ class ManagedQuery {
         // Shift the dictionary indexes to match the on-disk extended
         // enumerations
         std::vector<IndexType> shifted_indexes;
-        auto enmr_vec = _enumeration_values_view<ValueType>(extended_enmr);
-        std::unordered_map<ValueType, IndexType> enmr_map;
-        IndexType idx = 0;
-        for (const auto& enmr_value : enmr_vec) {
-            enmr_map.insert(std::make_pair(enmr_value, idx));
-            ++idx;
-        }
-
+        auto enmr_vec = extended_enmr.as_vector<ValueType>();
         for (auto i : original_indexes) {
             // For nullable columns, when the value is NULL, the associated
             // index may be a negative integer, so do not index into
@@ -952,7 +952,8 @@ class ManagedQuery {
             if (0 > i) {
                 shifted_indexes.push_back(i);
             } else {
-                shifted_indexes.push_back(enmr_map[enums_in_write[i]]);
+                auto it = _find_enum_match(enmr_vec, enums_in_write[i]);
+                shifted_indexes.push_back(it - enmr_vec.begin());
             }
         }
 
