@@ -1479,7 +1479,10 @@ ManagedQuery::_extend_and_evolve_schema_with_details(
             column_name));
     }
 
-    // XXX COMMENT
+    // The enumeration values are tracked here in as a vector of string-views,
+    // even for non-string-valued data.  We do this so that we can
+    // differentiate, at the bit-by-bit level, between various floating-point
+    // NaN and Inf values.
     size_t n = enum_values_in_write.size();
     std::vector<std::string_view> enum_values_in_write_as_sv(n);
     for (size_t i = 0; i < n; i++) {

@@ -811,139 +811,6 @@ class ManagedQuery {
         Enumeration enmr,
         ArraySchemaEvolution& se);
 
-    template <typename ValueType>
-    std::optional<std::unordered_set<ValueType>> _find_covered_enum_values_ick(
-        ArrowArray* value_array,
-        ArrowSchema* index_schema,
-        ArrowArray* index_array) {
-        if (index_schema == nullptr) {
-            return std::nullopt;
-        }
-        auto user_index_type = ArrowAdapter::to_tiledb_format(
-            index_schema->format);
-        switch (user_index_type) {
-            case TILEDB_INT8:
-                return _find_covered_enum_values_ick_aux<ValueType, int8_t>(
-                    value_array, index_array);
-            case TILEDB_UINT8:
-                return _find_covered_enum_values_ick_aux<ValueType, uint8_t>(
-                    value_array, index_array);
-            case TILEDB_INT16:
-                return _find_covered_enum_values_ick_aux<ValueType, int16_t>(
-                    value_array, index_array);
-            case TILEDB_UINT16:
-                return _find_covered_enum_values_ick_aux<ValueType, uint16_t>(
-                    value_array, index_array);
-            case TILEDB_INT32:
-                return _find_covered_enum_values_ick_aux<ValueType, int32_t>(
-                    value_array, index_array);
-            case TILEDB_UINT32:
-                return _find_covered_enum_values_ick_aux<ValueType, uint32_t>(
-                    value_array, index_array);
-            case TILEDB_INT64:
-                return _find_covered_enum_values_ick_aux<ValueType, int64_t>(
-                    value_array, index_array);
-            case TILEDB_UINT64:
-                return _find_covered_enum_values_ick_aux<ValueType, uint64_t>(
-                    value_array, index_array);
-            default:
-                throw TileDBSOMAError(
-                    "Saw invalid enumeration index type when trying to extend"
-                    "enumeration");
-        }
-    }
-
-    template <typename ValueType, typename IndexType>
-        requires std::same_as<ValueType, std::string_view>
-    std::optional<std::unordered_set<ValueType>>
-    _find_covered_enum_values_ick_aux(
-        ArrowArray* value_array, ArrowArray* index_array) {
-        std::unordered_set<ValueType> retval;
-        if (index_array == nullptr) {
-            // All enum values are considered covered: this is the context
-            // of our having been given a plain Arrow array of enum values
-            // and being asked to extend the array's enumeration to include
-            // them. We should honor all the provided values.
-            return std::nullopt;
-        }
-
-        std::optional<std::vector<uint8_t>>
-            opt_validities = _cast_validity_buffer(index_array);
-        if (!opt_validities.has_value()) {
-            // All enum values are considered covered: this is the context
-            // where the user has given us an Arrow dictionary, and
-            // the index part is all non-null values and the Arrow library
-            // has no validity buffer at all for it.
-            return std::nullopt;
-        }
-        std::vector<uint8_t> validities = opt_validities.value();
-
-        if (index_array->n_buffers != 2) {
-            throw std::invalid_argument(
-                "[ManagedQuery] _find_covered_enum_values_ick_aux "
-                "string: expected indexes n_buffers == 2; got {}" +
-                std::to_string(index_array->n_buffers));
-        }
-
-        if (value_array->n_buffers != 3) {
-            throw std::invalid_argument(
-                "[ManagedQuery] _find_covered_enum_values_ick_aux "
-                "string: expected values n_buffers == 3; got {}" +
-                std::to_string(value_array->n_buffers));
-        }
-
-        return std::nullopt;
-    }
-
-    template <typename ValueType, typename IndexType>
-        requires(!std::same_as<ValueType, std::string_view>)
-    std::optional<std::unordered_set<ValueType>>
-    _find_covered_enum_values_ick_aux(
-        ArrowArray* value_array, ArrowArray* index_array) {
-        std::unordered_set<ValueType> retval;
-
-        if (index_array == nullptr) {
-            // All enum values are considered covered: this is the context
-            // of our having been given a plain Arrow array of enum values
-            // and being asked to extend the array's enumeration to include
-            // them. We should honor all the provided values.
-            return std::nullopt;
-        }
-
-        std::optional<std::vector<uint8_t>>
-            opt_validities = _cast_validity_buffer(index_array);
-        if (!opt_validities.has_value()) {
-            // All enum values are considered covered: this is the context
-            // where the user has given us an Arrow dictionary, and
-            // the index part is all non-null values and the Arrow library
-            // has no validity buffer at all for it.
-            return std::nullopt;
-        }
-        std::vector<uint8_t> validities = opt_validities.value();
-
-        if (index_array->n_buffers != 2) {
-            throw std::invalid_argument(
-                "[ManagedQuery] _find_covered_enum_values_ick_aux "
-                "string: expected indexes n_buffers == 2; got {}" +
-                std::to_string(value_array->n_buffers));
-        }
-
-        IndexType* idxbuf = (IndexType*)index_array->buffers[1] +
-                            index_array->offset;
-        ValueType* valbuf = (ValueType*)value_array->buffers[1] +
-                            value_array->offset;
-
-        for (int64_t i = 0; i < index_array->length; i++) {
-            IndexType index = idxbuf[i];
-            if (validities[i]) {
-                ValueType value = valbuf[index];
-                retval.insert(value);
-            }
-        }
-
-        return retval;
-    }
-
     /**
      * This is a helper for the enumeration-extender.  Users can have Arrow
      * dictionaries with values like red, yellow, green, etc.  and indices into
@@ -958,9 +825,11 @@ class ManagedQuery {
      * example: Given values ["red", "yellow", "green", "blue"] an indices
      * [3,1,1,3,None,0], this method returns the set {"red", "green", "blue"}.
      *
-     * For implementation reasons, the ValueType is std::string_view for
-     * string-valued dictionaries, and what you'd expect (int32_t etc.) for all
-     * other dictionary value-types.
+     * The enumeration values are passed in as a vector of string-views.
+     * This is for two reasons. For string-valued data, this results in
+     * a marginal memory savings. For non-string valued data, we do it so
+     * that we can differentiate, at the bit-by-bit level, between various
+     * floating-point NaN and Inf values.
      *
      * The returned set is empty if the input index array is nullptr. This is
      * because we have two use-cases for enumeration-extension: one is on
