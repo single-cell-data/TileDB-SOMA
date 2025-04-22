@@ -1227,8 +1227,8 @@ std::tuple<
 ManagedQuery::_extend_and_evolve_schema_with_details<std::string>(
     ArrowSchema* value_schema,
     ArrowArray* value_array,
-    ArrowSchema* index_schema,  // XXX MAYBE NULL
-    ArrowArray* index_array,    // XXX MAYBE NULL
+    ArrowSchema* index_schema,  // null for extend-enum, non-null for write
+    ArrowArray* index_array,    // null for extend-enum, non-null for write
     const std::string& column_name,
     bool deduplicate,
     Enumeration enmr,
@@ -1282,10 +1282,6 @@ ManagedQuery::_extend_and_evolve_schema_with_details<std::string>(
     // We need this in order to partition the requested values
     // into the ones already in the schema, and the ones needing
     // to be added to the schema.
-#ifdef DEBUG_ENUMS
-    std::cout << "\n";
-    std::cout << "EVIW PREP\n";
-#endif
     std::vector<std::string_view> enum_values_in_write;
     std::unordered_set<std::string_view> unique_values_in_write;
     for (size_t i = 0; i < num_elems; ++i) {
@@ -1293,14 +1289,8 @@ ManagedQuery::_extend_and_evolve_schema_with_details<std::string>(
         auto sz = offsets_v[i + 1] - beg;
         auto enum_val = data_as_char.substr(beg, sz);
         enum_values_in_write.push_back(enum_val);
-#ifdef DEBUG_ENUMS
-        std::cout << "  EVIW I=" << i << " V=" << std::string(enum_val) << "\n";
-#endif
         unique_values_in_write.insert(enum_val);
     }
-#ifdef DEBUG_ENUMS
-    std::cout << "\n";
-#endif
 
     // Check for non-unique values in the input, even before we check the
     // values in the array schema. See also sc-65078.
@@ -1321,31 +1311,15 @@ ManagedQuery::_extend_and_evolve_schema_with_details<std::string>(
         existing_enums_set.insert(existing_enum_val);
     }
 
-#ifdef DEBUG_ENUMS
-    std::cout << "\n";
-    for (const auto& v : existing_enums_set) {
-        std::cout << "EXISTING ENUM " << std::string(v) << "\n";
-    }
-#endif
-
-    // XXX WIP
     std::optional<std::unordered_set<std::string_view>>
-        opt_covered_values = _find_covered_enum_values_three(
+        opt_covered_values = _find_covered_enum_values(
             enum_values_in_write, index_schema, index_array);
-    // XXX WIP
 
     std::vector<std::string_view> enum_values_to_add;
     size_t total_size = 0;
 
     if (opt_covered_values.has_value()) {
         const auto& covered_values = opt_covered_values.value();
-
-#ifdef DEBUG_ENUMS
-        std::cout << "\n";
-        for (const auto& v : covered_values) {
-            std::cout << "COVERED VALUE " << std::string(v) << "\n";
-        }
-#endif
         for (size_t i = 0; i < enum_values_in_write.size(); i++) {
             const auto& enum_val = enum_values_in_write[i];
             if (!existing_enums_set.contains(enum_val)) {
@@ -1444,8 +1418,8 @@ std::tuple<
 ManagedQuery::_extend_and_evolve_schema_with_details(
     ArrowSchema* value_schema,
     ArrowArray* value_array,
-    ArrowSchema* index_schema,  // XXX MAYBE NULL
-    ArrowArray* index_array,    // XXX MAYBE NULL
+    ArrowSchema* index_schema,  // null for extend-enum, non-null for write
+    ArrowArray* index_array,    // null for extend-enum, non-null for write
     const std::string& column_name,
     bool deduplicate,
     Enumeration enmr,
@@ -1537,12 +1511,11 @@ ManagedQuery::_extend_and_evolve_schema_with_details(
 
     // Find any new enumeration values
     std::vector<ValueType> enum_values_to_add;
-    // XXX WIP
 
     std::optional<std::unordered_set<ValueType>>
-        opt_covered_values = _find_covered_enum_values<ValueType>(
+        opt_covered_values = _find_covered_enum_values_ick<ValueType>(
             value_array, index_schema, index_array);
-    // XXX WIP
+
     if (opt_covered_values.has_value()) {
         const auto& covered_values = opt_covered_values.value();
         for (const auto& enum_value_in_write : enum_values_in_write) {
