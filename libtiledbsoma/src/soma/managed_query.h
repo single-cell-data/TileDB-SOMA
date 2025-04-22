@@ -932,6 +932,18 @@ class ManagedQuery {
         return retval;
     }
 
+    /**
+     * Example use-case:
+     * o On-disk enumeration has indices 0, 1, 2 for values "red", "yellow",
+     * "green". o A dataframe write is being done with dictionary column
+     * ["yellow", None, "blue"]. This means indices are [0, None, 1] with values
+     * ["yellow", "blue"]. o The on-disk enumeration has already been extended
+     * before this method is called. So it now has indices 0,1,2,3 for values
+     * "red", "yellow", "green", "blue". o Here we change the user-provided
+     * indices (in index_array) from [0, None, 1] to now be [1, None, 3] since 1
+     * and 3 are the indices for "yellow" and "blue" in the now-extended on-disk
+     * enumeration.
+     */
     template <typename ValueType>
     void _remap_indexes(
         std::string name,
@@ -1012,7 +1024,7 @@ class ManagedQuery {
             if (validities.has_value() && !validities.value()[i]) {
                 shifted_indexes[i] = oi;
             } else {
-                shifted_indexes[i] = enmr_map[enums_in_write[oi]];
+                shifted_indexes[i] = enmr_map[enum_values_in_write[oi]];
             }
         }
 
@@ -1086,7 +1098,7 @@ class ManagedQuery {
             if (validities.has_value() && !validities.value()[i]) {
                 shifted_indexes[i] = oi;
             } else {
-                shifted_indexes[i] = enmr_map[enums_in_write[oi]];
+                shifted_indexes[i] = enmr_map[enum_values_in_write[oi]];
             }
         }
 
