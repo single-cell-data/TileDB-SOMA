@@ -936,7 +936,7 @@ class ManagedQuery {
     void _remap_indexes(
         std::string name,
         Enumeration extended_enmr,
-        std::vector<ValueType> enums_in_write,
+        std::vector<ValueType> enum_values_in_write,
         ArrowSchema* index_schema,
         ArrowArray* index_array) {
         // If the passed-in enumerations are only a subset of the new extended
@@ -948,28 +948,28 @@ class ManagedQuery {
         switch (user_index_type) {
             case TILEDB_INT8:
                 return _remap_indexes_aux<ValueType, int8_t>(
-                    name, extended_enmr, enums_in_write, index_array);
+                    name, extended_enmr, enum_values_in_write, index_array);
             case TILEDB_UINT8:
                 return _remap_indexes_aux<ValueType, uint8_t>(
-                    name, extended_enmr, enums_in_write, index_array);
+                    name, extended_enmr, enum_values_in_write, index_array);
             case TILEDB_INT16:
                 return _remap_indexes_aux<ValueType, int16_t>(
-                    name, extended_enmr, enums_in_write, index_array);
+                    name, extended_enmr, enum_values_in_write, index_array);
             case TILEDB_UINT16:
                 return _remap_indexes_aux<ValueType, uint16_t>(
-                    name, extended_enmr, enums_in_write, index_array);
+                    name, extended_enmr, enum_values_in_write, index_array);
             case TILEDB_INT32:
                 return _remap_indexes_aux<ValueType, int32_t>(
-                    name, extended_enmr, enums_in_write, index_array);
+                    name, extended_enmr, enum_values_in_write, index_array);
             case TILEDB_UINT32:
                 return _remap_indexes_aux<ValueType, uint32_t>(
-                    name, extended_enmr, enums_in_write, index_array);
+                    name, extended_enmr, enum_values_in_write, index_array);
             case TILEDB_INT64:
                 return _remap_indexes_aux<ValueType, int64_t>(
-                    name, extended_enmr, enums_in_write, index_array);
+                    name, extended_enmr, enum_values_in_write, index_array);
             case TILEDB_UINT64:
                 return _remap_indexes_aux<ValueType, uint64_t>(
-                    name, extended_enmr, enums_in_write, index_array);
+                    name, extended_enmr, enum_values_in_write, index_array);
             default:
                 throw TileDBSOMAError(
                     "Saw invalid enumeration index type when trying to extend"
@@ -982,7 +982,7 @@ class ManagedQuery {
     void _remap_indexes_aux(
         std::string column_name,
         Enumeration extended_enmr,
-        std::vector<ValueType> enums_in_write,
+        std::vector<ValueType> enum_values_in_write,
         ArrowArray* index_array) {
         // Get the user passed-in dictionary indexes
         std::optional<std::vector<uint8_t>> validities = _cast_validity_buffer(
@@ -1056,7 +1056,7 @@ class ManagedQuery {
     void _remap_indexes_aux(
         std::string column_name,
         Enumeration extended_enmr,
-        std::vector<ValueType> enums_in_write,
+        std::vector<ValueType> enum_values_in_write,
         ArrowArray* index_array) {
         // Get the user passed-in dictionary indexes
         std::optional<std::vector<uint8_t>> validities = _cast_validity_buffer(
