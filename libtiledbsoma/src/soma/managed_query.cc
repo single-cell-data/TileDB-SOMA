@@ -1479,6 +1479,16 @@ ManagedQuery::_extend_and_evolve_schema_with_details(
             column_name));
     }
 
+    // XXX COMMENT
+    size_t n = enum_values_in_write.size();
+    std::vector<std::string_view> enum_values_in_write_as_sv(n);
+    for (size_t i = 0; i < n; i++) {
+        auto sv = std::string_view(
+            static_cast<char*>((char*)&enum_values_in_write[i]),
+            sizeof(enum_values_in_write[i]));
+        enum_values_in_write_as_sv[i] = sv;
+    }
+
     // Get all the enumeration values in the on-disk TileDB attribute.
     std::vector<ValueType> enum_values_existing = enmr.as_vector<ValueType>();
 
@@ -1521,9 +1531,7 @@ ManagedQuery::_extend_and_evolve_schema_with_details(
         const size_t n = enum_values_in_write.size();
         for (size_t i = 0; i < n; i++) {
             const auto& enum_value_in_write = enum_values_in_write[i];
-            auto sv = std::string_view(
-                static_cast<char*>((char*)&enum_value_in_write),
-                sizeof(enum_value_in_write));
+            const auto& sv = enum_values_in_write_as_sv[i];
             if (!existing_enums_set.contains(sv)) {
                 if (covered_values.find(enum_value_in_write) !=
                     covered_values.end()) {
@@ -1535,9 +1543,7 @@ ManagedQuery::_extend_and_evolve_schema_with_details(
         const size_t n = enum_values_in_write.size();
         for (size_t i = 0; i < n; i++) {
             const auto& enum_value_in_write = enum_values_in_write[i];
-            auto sv = std::string_view(
-                static_cast<char*>((char*)&enum_value_in_write),
-                sizeof(enum_value_in_write));
+            const auto& sv = enum_values_in_write_as_sv[i];
             if (!existing_enums_set.contains(sv)) {
                 enum_values_to_add.push_back(enum_value_in_write);
             }
