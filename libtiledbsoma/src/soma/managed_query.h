@@ -809,7 +809,7 @@ class ManagedQuery {
     void _remap_indexes(
         std::string name,
         Enumeration extended_enmr,
-        std::vector<ValueType> enums_in_write,
+        std::vector<ValueType> enum_values_in_write,
         ArrowSchema* index_schema,
         ArrowArray* index_array) {
         // If the passed-in enumerations are only a subset of the new extended
@@ -821,28 +821,28 @@ class ManagedQuery {
         switch (user_index_type) {
             case TILEDB_INT8:
                 return _remap_indexes_aux<ValueType, int8_t>(
-                    name, extended_enmr, enums_in_write, index_array);
+                    name, extended_enmr, enum_values_in_write, index_array);
             case TILEDB_UINT8:
                 return _remap_indexes_aux<ValueType, uint8_t>(
-                    name, extended_enmr, enums_in_write, index_array);
+                    name, extended_enmr, enum_values_in_write, index_array);
             case TILEDB_INT16:
                 return _remap_indexes_aux<ValueType, int16_t>(
-                    name, extended_enmr, enums_in_write, index_array);
+                    name, extended_enmr, enum_values_in_write, index_array);
             case TILEDB_UINT16:
                 return _remap_indexes_aux<ValueType, uint16_t>(
-                    name, extended_enmr, enums_in_write, index_array);
+                    name, extended_enmr, enum_values_in_write, index_array);
             case TILEDB_INT32:
                 return _remap_indexes_aux<ValueType, int32_t>(
-                    name, extended_enmr, enums_in_write, index_array);
+                    name, extended_enmr, enum_values_in_write, index_array);
             case TILEDB_UINT32:
                 return _remap_indexes_aux<ValueType, uint32_t>(
-                    name, extended_enmr, enums_in_write, index_array);
+                    name, extended_enmr, enum_values_in_write, index_array);
             case TILEDB_INT64:
                 return _remap_indexes_aux<ValueType, int64_t>(
-                    name, extended_enmr, enums_in_write, index_array);
+                    name, extended_enmr, enum_values_in_write, index_array);
             case TILEDB_UINT64:
                 return _remap_indexes_aux<ValueType, uint64_t>(
-                    name, extended_enmr, enums_in_write, index_array);
+                    name, extended_enmr, enum_values_in_write, index_array);
             default:
                 throw TileDBSOMAError(
                     "Saw invalid enumeration index type when trying to extend"
@@ -851,10 +851,11 @@ class ManagedQuery {
     }
 
     template <typename ValueType, typename IndexType>
+        requires std::same_as<ValueType, std::string_view>
     void _remap_indexes_aux(
         std::string column_name,
         Enumeration extended_enmr,
-        std::vector<ValueType> enums_in_write,
+        std::vector<ValueType> enum_values_in_write,
         ArrowArray* index_array) {
         // Get the user passed-in dictionary indexes
         IndexType* idxbuf;
@@ -869,16 +870,22 @@ class ManagedQuery {
         // Shift the dictionary indexes to match the on-disk extended
         // enumerations
         std::vector<IndexType> shifted_indexes;
-        auto enmr_vec = extended_enmr.as_vector<ValueType>();
+        auto enmr_vec = _enumeration_values_view<ValueType>(extended_enmr);
+        std::unordered_map<ValueType, IndexType> enmr_map;
+        IndexType idx = 0;
+        for (const auto& enmr_value : enmr_vec) {
+            enmr_map.insert(std::make_pair(enmr_value, idx));
+            ++idx;
+        }
+
         for (auto i : original_indexes) {
             // For nullable columns, when the value is NULL, the associated
             // index may be a negative integer, so do not index into
-            // enums_in_write or it will segfault
+            // enum_values_in_write or it will segfault
             if (0 > i) {
                 shifted_indexes.push_back(i);
             } else {
-                auto it = _find_enum_match(enmr_vec, enums_in_write[i]);
-                shifted_indexes.push_back(it - enmr_vec.begin());
+                shifted_indexes.push_back(enmr_map[enum_values_in_write[i]]);
             }
         }
 
@@ -918,11 +925,11 @@ class ManagedQuery {
     }
 
     template <typename ValueType, typename IndexType>
-        requires std::same_as<ValueType, std::string_view>
+        requires(!std::same_as<ValueType, std::string_view>)
     void _remap_indexes_aux(
         std::string column_name,
         Enumeration extended_enmr,
-        std::vector<ValueType> enums_in_write,
+        std::vector<ValueType> enum_values_in_write,
         ArrowArray* index_array) {
         // Get the user passed-in dictionary indexes
         IndexType* idxbuf;
@@ -937,22 +944,16 @@ class ManagedQuery {
         // Shift the dictionary indexes to match the on-disk extended
         // enumerations
         std::vector<IndexType> shifted_indexes;
-        auto enmr_vec = _enumeration_values_view<ValueType>(extended_enmr);
-        std::unordered_map<ValueType, IndexType> enmr_map;
-        IndexType idx = 0;
-        for (const auto& enmr_value : enmr_vec) {
-            enmr_map.insert(std::make_pair(enmr_value, idx));
-            ++idx;
-        }
-
+        auto enmr_vec = extended_enmr.as_vector<ValueType>();
         for (auto i : original_indexes) {
             // For nullable columns, when the value is NULL, the associated
             // index may be a negative integer, so do not index into
-            // enums_in_write or it will segfault
+            // enum_values_in_write or it will segfault
             if (0 > i) {
                 shifted_indexes.push_back(i);
             } else {
-                shifted_indexes.push_back(enmr_map[enums_in_write[i]]);
+                auto it = _find_enum_match(enmr_vec, enum_values_in_write[i]);
+                shifted_indexes.push_back(it - enmr_vec.begin());
             }
         }
 
