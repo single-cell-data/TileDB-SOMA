@@ -352,6 +352,16 @@ TileDBGroup <- R6::R6Class(
         SOMAArray = TileDBArray$new,
         GROUP = TileDBGroup$new,
         SOMAGroup = TileDBGroup$new,
+        SOMADataFrame = TileDBArray$new,
+        SOMADenseNDArray = TileDBArray$new,
+        SOMAGeometryDataFrame = TileDBArray$new,
+        SOMAPointCloudDataFrame = TileDBArray$new,
+        SOMASparseNDArray = TileDBArray$new,
+        SOMACollection = TileDBGroup$new,
+        SOMAExperiment = TileDBGroup$new,
+        SOMAMeasurement = TileDBGroup$new,
+        SOMAScene = TileDBGroup$new,
+        SOMAMultiscaleImage = TileDBGroup$new,
         stop(sprintf("Unknown member type: %s", type), call. = FALSE)
       )
       obj <- constructor(uri,

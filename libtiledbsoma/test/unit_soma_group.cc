@@ -153,8 +153,6 @@ TEST_CASE("SOMAGroup: basic") {
     REQUIRE(soma_group->ctx() == ctx);
     REQUIRE(soma_group->uri() == uri_main_group);
     REQUIRE(soma_group->count() == 2);
-    std::cout << soma_group->members_map()["subgroup"].second << std::endl;
-    std::cout << soma_group->members_map()["subarray"].second << std::endl;
     REQUIRE(expected_map == soma_group->members_map());
     REQUIRE(soma_group->get("subgroup").type() == Object::Type::Group);
     REQUIRE(soma_group->get("subarray").type() == Object::Type::Array);
