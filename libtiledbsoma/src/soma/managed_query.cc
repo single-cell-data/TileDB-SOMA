@@ -1518,7 +1518,9 @@ ManagedQuery::_extend_and_evolve_schema_with_details(
 
     if (opt_covered_values.has_value()) {
         const auto& covered_values = opt_covered_values.value();
-        for (const auto& enum_value_in_write : enum_values_in_write) {
+        const size_t n = enum_values_in_write.size();
+        for (size_t i = 0; i < n; i++) {
+            const auto& enum_value_in_write = enum_values_in_write[i];
             auto sv = std::string_view(
                 static_cast<char*>((char*)&enum_value_in_write),
                 sizeof(enum_value_in_write));
@@ -1530,7 +1532,9 @@ ManagedQuery::_extend_and_evolve_schema_with_details(
             }
         }
     } else {
-        for (const auto& enum_value_in_write : enum_values_in_write) {
+        const size_t n = enum_values_in_write.size();
+        for (size_t i = 0; i < n; i++) {
+            const auto& enum_value_in_write = enum_values_in_write[i];
             auto sv = std::string_view(
                 static_cast<char*>((char*)&enum_value_in_write),
                 sizeof(enum_value_in_write));
