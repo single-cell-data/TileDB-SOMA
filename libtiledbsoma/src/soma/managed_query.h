@@ -814,6 +814,9 @@ class ManagedQuery {
         ArrowArray* value_array,
         ArrowSchema* index_schema,
         ArrowArray* index_array) {
+        if (index_schema == nullptr) {
+            return std::nullopt;
+        }
         auto user_index_type = ArrowAdapter::to_tiledb_format(
             index_schema->format);
         switch (user_index_type) {
@@ -1015,6 +1018,9 @@ class ManagedQuery {
         const std::vector<std::string_view>& enum_values_as_sv,
         ArrowSchema* index_schema,
         ArrowArray* index_array) {
+        if (index_schema == nullptr) {
+            return std::nullopt;
+        }
         auto user_index_type = ArrowAdapter::to_tiledb_format(
             index_schema->format);
         switch (user_index_type) {

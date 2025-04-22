@@ -1164,14 +1164,14 @@ def test_extend_enumeration_values_offsets(tmp_path, ordered):
             "expidx": [0, 1, 1, None, 0, 2],
             "expval": ["green", "red", "blue"],
         },
-        { # XXX TESTING
+        {
             "arrow_type": pa.string(),
             "inidx1": [0, 1, None, 3],
             "inval1": ["RED", "YELLOW", "BLACK", "GREEN"],
             "inidx2": [None, None, 0, 2],
             "inval2": ["YELLOW", "GREY", "BLUE"],
-            "expidx": [1, 0, None, 2, None, None, 1, 0],
-            "expval": ["RED", "YELLOW", "GREEN"],
+            "expidx": [0, 1, None, 2, None, None, 1, 3],
+            "expval": ["RED", "YELLOW", "GREEN", "BLUE"],
         },
         {
             "arrow_type": pa.string(),
@@ -1457,8 +1457,8 @@ def test_extend_enumeration_null_indices(tmp_path, config, ordered):
     inval1 = config["inval1"]
     inidx2 = config["inidx2"]
     inval2 = config["inval2"]
-    # expidx = config["expidx"]
-    # expval = config["expval"]
+    expidx = config["expidx"]
+    expval = config["expval"]
 
     n1 = len(inidx1)
     n2 = len(inidx2)
@@ -1506,15 +1506,14 @@ def test_extend_enumeration_null_indices(tmp_path, config, ordered):
         table = sdf.read().concat()
         column = table["enum_test"].combine_chunks()
         outcol = column.to_pylist()
+        outidx = column.indices.to_pylist()
+        outval = column.dictionary.to_pylist()
+        getval = sdf.get_enumeration_values(["enum_test"])["enum_test"].to_pylist()
+
         assert outcol == expcol
-
-        # outidx = column.indices.to_pylist()
-        # outval = column.dictionary.to_pylist()
-
-        # assert outidx == expidx
-        # assert outval == expval
-        # getval = sdf.get_enumeration_values(["enum_test"])["enum_test"].to_pylist()
-        # assert getval == expval
+        assert outidx == expidx
+        assert outval == expval
+        assert getval == expval
 
 
 def test_extend_enumeration_empty(tmp_path):
