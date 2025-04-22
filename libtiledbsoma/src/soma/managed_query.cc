@@ -1522,9 +1522,9 @@ ManagedQuery::_extend_and_evolve_schema_with_details(
     // Find any new enumeration values
     std::vector<ValueType> enum_values_to_add;
 
-    std::optional<std::unordered_set<ValueType>>
-        opt_covered_values = _find_covered_enum_values_ick<ValueType>(
-            value_array, index_schema, index_array);
+    std::optional<std::unordered_set<std::string_view>>
+        opt_covered_values = _find_covered_enum_values(
+            enum_values_in_write_as_sv, index_schema, index_array);
 
     if (opt_covered_values.has_value()) {
         const auto& covered_values = opt_covered_values.value();
@@ -1533,8 +1533,7 @@ ManagedQuery::_extend_and_evolve_schema_with_details(
             const auto& enum_value_in_write = enum_values_in_write[i];
             const auto& sv = enum_values_in_write_as_sv[i];
             if (!existing_enums_set.contains(sv)) {
-                if (covered_values.find(enum_value_in_write) !=
-                    covered_values.end()) {
+                if (covered_values.find(sv) != covered_values.end()) {
                     enum_values_to_add.push_back(enum_value_in_write);
                 }
             }
