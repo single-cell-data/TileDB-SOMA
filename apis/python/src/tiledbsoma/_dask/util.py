@@ -6,9 +6,7 @@
 
 from __future__ import annotations
 
-from concurrent.futures import ThreadPoolExecutor
 from functools import cache
-from os import cpu_count
 from typing import (
     Any,
     Sequence,
@@ -31,8 +29,15 @@ JoinIDs: TypeAlias = NDArray[int64]
 
 
 class SOMADaskConfig(TypedDict, total=False):
+    """Dask-related configs.
+
+    Sometimes a ``SOMADaskConfig`` is passed via a ``dask=dict(…)`` kwarg (e.g. to methods that may or may not execute
+    in "Dask mode", depending on presence/absence of a ``dask`` config ``dict``). Other methods, that are always
+    Dask-related, can receive a "spread" ``SOMADaskConfig`` as ``**kwargs``, ``TypedDict`` supports type-checking for
+    both ``kwargs`` styles.
+    """
+
     chunk_size: ChunkSize
-    tiledb_concurrency: int | None
     tiledb_config: dict[str, ConfigVal]
 
 
@@ -54,56 +59,21 @@ def chunk_ids_sizes(
     return chunk_joinids, chunk_sizes
 
 
-def make_context(
-    tiledb_concurrency: int | None,
-    tiledb_config: dict[str, Any],
-) -> SOMATileDBContext:
-    """Create and cache a ``SOMATileDBContext``, optionally setting several TileDB concurrency configs.
-
-    Intended for use with ``load_daskarray``, where we want to restrict TileDB concurrency when running TileDB-SOMA
-    queries from many Dask workers in parallel. In such cases we don't want each TileDB-SOMA query thinking it should
-    utilize all ``cpu_count`` CPUs.
+def make_context(tiledb_config: dict[str, Any]) -> SOMATileDBContext:
+    """Create and cache ``SOMATileDBContext``s within Dask worker processes.
 
     This wrapper just flattens the ``tiledb_config`` ``dict`` into hashable ``tuple``s (for use with ``cache``).
     """
-    return _make_context(
-        tiledb_concurrency=tiledb_concurrency,
-        tiledb_configs=tuple(tiledb_config.items()),
-    )
+    return _make_context(tiledb_configs=tuple(tiledb_config.items()))
 
 
 @cache
-def _make_context(
-    tiledb_concurrency: int | None,
-    tiledb_configs: tuple[tuple[str, Any], ...],
-) -> SOMATileDBContext:
-    """Create and cache a ``SOMATileDBContext``, optionally setting several TileDB concurrency configs.
-
-    Intended for use with ``load_daskarray``, where we want to restrict TileDB concurrency when running TileDB-SOMA
-    queries from many Dask workers in parallel. In such cases we don't want each TileDB-SOMA query thinking it should
-    utilize all ``cpu_count`` CPUs.
+def _make_context(tiledb_configs: tuple[tuple[str, Any], ...]) -> SOMATileDBContext:
+    """Create and cache ``SOMATileDBContext``s within Dask worker processes.
 
     ``tiledb_config`` is conceptually a ``dict``, but flattened into hashable ``tuple``s here, for use with ``cache``.
     """
-    if tiledb_concurrency == 0:
-        tiledb_concurrency = cpu_count()
-
-    tiledb_config = dict(tiledb_configs)
-    threadpool = None
-    if tiledb_concurrency:
-        # Passing `None` skips setting these configs
-        tiledb_config.update(
-            {
-                "sm.io_concurrency_level": tiledb_concurrency,
-                "sm.compute_concurrency_level": tiledb_concurrency,
-            }
-        )
-        threadpool = ThreadPoolExecutor(max_workers=tiledb_concurrency)
-
-    return SOMATileDBContext(
-        tiledb_config=tiledb_config,
-        threadpool=threadpool,
-    )
+    return SOMATileDBContext(tiledb_config=dict(tiledb_configs))
 
 
 def coord_to_joinids(coord: SparseNDCoord, n: int) -> JoinIDs:

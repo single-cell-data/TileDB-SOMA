@@ -54,23 +54,19 @@ def sparse_chunk(
     block_info: dict[int | None, Any],
     uri: str,
     tiledb_config: ConfigDict,
-    tiledb_concurrency: int | None = None,
     format: Format = "csr",
     result_order: ResultOrderStr = ResultOrder.AUTO,
     tiledb_timestamp: OpenTimestamp | None = None,
     platform_config: PlatformConfig | None = None,
 ) -> sp.csr_matrix | sp.csc_matrix:
-    """Load a slice of a TileDB-SOMA ``X`` matrix, as a block of a CSR-backed Dask Array."""
+    """Load a slice of a TileDB-SOMA ``X`` matrix, as a block of a CSR- or CSC-backed Dask Array."""
     shape = block_info[None]["chunk-shape"]
     assert block.shape == (1, 1)
     joinids = block[0, 0]
     obs_joinids, var_joinids = joinids
     obs_joinids = obs_joinids.astype("int64")
     var_joinids = var_joinids.astype("int64")
-    soma_ctx = make_context(
-        tiledb_config=tiledb_config,
-        tiledb_concurrency=tiledb_concurrency,
-    )
+    soma_ctx = make_context(tiledb_config=tiledb_config)
     with SparseNDArray.open(
         uri,
         context=soma_ctx,
@@ -113,7 +109,6 @@ def load_daskarray(
     *,
     coords: SparseNDCoords | None = None,
     chunk_size: ChunkSize | None = None,
-    tiledb_concurrency: int | None = None,
     tiledb_config: dict[str, ConfigVal] | None = None,
     format: Format = "csr",
     result_order: ResultOrderStr = ResultOrder.AUTO,
@@ -124,8 +119,6 @@ def load_daskarray(
 
     if chunk_size is None:
         raise ValueError("chunk_size required (directly or via `config`)")
-    if tiledb_concurrency is None:
-        tiledb_concurrency = 1
 
     _, _, data_dtype = layer.schema.types
     dtype = data_dtype.to_pandas_dtype()
@@ -168,7 +161,6 @@ def load_daskarray(
             meta=meta,
             uri=layer.uri,
             format=format,
-            tiledb_concurrency=tiledb_concurrency,
             tiledb_config=tiledb_config,
             result_order=result_order,
             tiledb_timestamp=layer.tiledb_timestamp_ms,
