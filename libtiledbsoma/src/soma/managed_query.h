@@ -854,28 +854,28 @@ class ManagedQuery {
         switch (user_index_type) {
             case TILEDB_INT8:
                 return _find_covered_enum_values_aux<int8_t>(
-                    enum_values_as_sv, index_schema, index_array);
+                    enum_values_as_sv, index_array);
             case TILEDB_UINT8:
                 return _find_covered_enum_values_aux<uint8_t>(
-                    enum_values_as_sv, index_schema, index_array);
+                    enum_values_as_sv, index_array);
             case TILEDB_INT16:
                 return _find_covered_enum_values_aux<int16_t>(
-                    enum_values_as_sv, index_schema, index_array);
+                    enum_values_as_sv, index_array);
             case TILEDB_UINT16:
                 return _find_covered_enum_values_aux<uint16_t>(
-                    enum_values_as_sv, index_schema, index_array);
+                    enum_values_as_sv, index_array);
             case TILEDB_INT32:
                 return _find_covered_enum_values_aux<int32_t>(
-                    enum_values_as_sv, index_schema, index_array);
+                    enum_values_as_sv, index_array);
             case TILEDB_UINT32:
                 return _find_covered_enum_values_aux<uint32_t>(
-                    enum_values_as_sv, index_schema, index_array);
+                    enum_values_as_sv, index_array);
             case TILEDB_INT64:
                 return _find_covered_enum_values_aux<int64_t>(
-                    enum_values_as_sv, index_schema, index_array);
+                    enum_values_as_sv, index_array);
             case TILEDB_UINT64:
                 return _find_covered_enum_values_aux<uint64_t>(
-                    enum_values_as_sv, index_schema, index_array);
+                    enum_values_as_sv, index_array);
             default:
                 throw TileDBSOMAError(
                     "Saw invalid enumeration index type when trying to extend"
@@ -887,7 +887,6 @@ class ManagedQuery {
     std::optional<std::unordered_set<std::string_view>>
     _find_covered_enum_values_aux(
         const std::vector<std::string_view>& enum_values_as_sv,
-        ArrowSchema* index_schema,
         ArrowArray* index_array) {
         std::unordered_set<std::string_view> retval;
 
@@ -899,30 +898,31 @@ class ManagedQuery {
             return std::nullopt;
         }
 
-        if (index_array->buffers[0] == nullptr) {
+        std::optional<std::vector<uint8_t>>
+            opt_validities = _cast_validity_buffer(index_array);
+        if (!opt_validities.has_value()) {
             // All enum values are considered covered: this is the context
             // where the user has given us an Arrow dictionary, and
             // the index part is all non-null values and the Arrow library
             // has no validity buffer at all for it.
             return std::nullopt;
         }
+        std::vector<uint8_t> validities = opt_validities.value();
 
+        if (index_array->n_buffers != 2) {
+            throw std::invalid_argument(
+                "[ManagedQuery] _find_covered_enum_values_aux: "
+                "expected indexes n_buffers == 2; got {}" +
+                std::to_string(index_array->n_buffers));
+        }
         IndexType* idxbuf = (IndexType*)index_array->buffers[1] +
                             index_array->offset;
-
-        struct ArrowArrayView index_array_view;
-        assert(
-            ArrowArrayViewInitFromSchema(
-                &index_array_view, index_schema, NULL) == NANOARROW_OK);
-        assert(
-            ArrowArrayViewSetArray(&index_array_view, index_array, NULL) ==
-            NANOARROW_OK);
 
         // i:          0  1  2     3
         // idxbuf[i]: [3, 0, None, 2]
         int64_t n = index_array->length;
         for (int64_t i = 0; i < n; i++) {
-            if (!ArrowArrayViewIsNull(&index_array_view, i)) {
+            if (validities[i]) {
                 IndexType index = idxbuf[i];
                 std::string_view value = enum_values_as_sv[index];
                 retval.insert(value);
@@ -960,60 +960,28 @@ class ManagedQuery {
         switch (user_index_type) {
             case TILEDB_INT8:
                 return _remap_indexes_aux<ValueType, int8_t>(
-                    name,
-                    extended_enmr,
-                    enum_values_in_write,
-                    index_schema,
-                    index_array);
+                    name, extended_enmr, enum_values_in_write, index_array);
             case TILEDB_UINT8:
                 return _remap_indexes_aux<ValueType, uint8_t>(
-                    name,
-                    extended_enmr,
-                    enum_values_in_write,
-                    index_schema,
-                    index_array);
+                    name, extended_enmr, enum_values_in_write, index_array);
             case TILEDB_INT16:
                 return _remap_indexes_aux<ValueType, int16_t>(
-                    name,
-                    extended_enmr,
-                    enum_values_in_write,
-                    index_schema,
-                    index_array);
+                    name, extended_enmr, enum_values_in_write, index_array);
             case TILEDB_UINT16:
                 return _remap_indexes_aux<ValueType, uint16_t>(
-                    name,
-                    extended_enmr,
-                    enum_values_in_write,
-                    index_schema,
-                    index_array);
+                    name, extended_enmr, enum_values_in_write, index_array);
             case TILEDB_INT32:
                 return _remap_indexes_aux<ValueType, int32_t>(
-                    name,
-                    extended_enmr,
-                    enum_values_in_write,
-                    index_schema,
-                    index_array);
+                    name, extended_enmr, enum_values_in_write, index_array);
             case TILEDB_UINT32:
                 return _remap_indexes_aux<ValueType, uint32_t>(
-                    name,
-                    extended_enmr,
-                    enum_values_in_write,
-                    index_schema,
-                    index_array);
+                    name, extended_enmr, enum_values_in_write, index_array);
             case TILEDB_INT64:
                 return _remap_indexes_aux<ValueType, int64_t>(
-                    name,
-                    extended_enmr,
-                    enum_values_in_write,
-                    index_schema,
-                    index_array);
+                    name, extended_enmr, enum_values_in_write, index_array);
             case TILEDB_UINT64:
                 return _remap_indexes_aux<ValueType, uint64_t>(
-                    name,
-                    extended_enmr,
-                    enum_values_in_write,
-                    index_schema,
-                    index_array);
+                    name, extended_enmr, enum_values_in_write, index_array);
             default:
                 throw TileDBSOMAError(
                     "Saw invalid enumeration index type when trying to extend"
@@ -1027,18 +995,10 @@ class ManagedQuery {
         std::string column_name,
         Enumeration extended_enmr,
         std::vector<ValueType> enum_values_in_write,
-        ArrowSchema* index_schema,
         ArrowArray* index_array) {
         // Get the user passed-in dictionary indexes
-
-        struct ArrowArrayView index_array_view;
-        assert(
-            ArrowArrayViewInitFromSchema(
-                &index_array_view, index_schema, NULL) == NANOARROW_OK);
-        assert(
-            ArrowArrayViewSetArray(&index_array_view, index_array, NULL) ==
-            NANOARROW_OK);
-
+        std::optional<std::vector<uint8_t>> validities = _cast_validity_buffer(
+            index_array);
         IndexType* idxbuf;
         if (index_array->n_buffers == 3) {
             idxbuf = (IndexType*)index_array->buffers[2] + index_array->offset;
@@ -1061,8 +1021,7 @@ class ManagedQuery {
         std::vector<IndexType> shifted_indexes(original_indexes.size());
         for (size_t i = 0; i < original_indexes.size(); i++) {
             IndexType oi = original_indexes[i];
-
-            if (ArrowArrayViewIsNull(&index_array_view, i)) {
+            if (validities.has_value() && !validities.value()[i]) {
                 shifted_indexes[i] = oi;
             } else {
                 shifted_indexes[i] = enmr_map[enum_values_in_write[oi]];
@@ -1110,17 +1069,10 @@ class ManagedQuery {
         std::string column_name,
         Enumeration extended_enmr,
         std::vector<ValueType> enum_values_in_write,
-        ArrowSchema* index_schema,
         ArrowArray* index_array) {
         // Get the user passed-in dictionary indexes
-        struct ArrowArrayView index_array_view;
-        assert(
-            ArrowArrayViewInitFromSchema(
-                &index_array_view, index_schema, NULL) == NANOARROW_OK);
-        assert(
-            ArrowArrayViewSetArray(&index_array_view, index_array, NULL) ==
-            NANOARROW_OK);
-
+        std::optional<std::vector<uint8_t>> validities = _cast_validity_buffer(
+            index_array);
         IndexType* idxbuf;
         if (index_array->n_buffers == 3) {
             idxbuf = (IndexType*)index_array->buffers[2] + index_array->offset;
@@ -1143,8 +1095,7 @@ class ManagedQuery {
         std::vector<IndexType> shifted_indexes(original_indexes.size());
         for (size_t i = 0; i < original_indexes.size(); i++) {
             IndexType oi = original_indexes[i];
-
-            if (ArrowArrayViewIsNull(&index_array_view, i)) {
+            if (validities.has_value() && !validities.value()[i]) {
                 shifted_indexes[i] = oi;
             } else {
                 shifted_indexes[i] = enmr_map[enum_values_in_write[oi]];
