@@ -1487,7 +1487,7 @@ ManagedQuery::_extend_and_evolve_schema_with_details(
     std::vector<std::string_view> enum_values_in_write_as_sv(n);
     for (size_t i = 0; i < n; i++) {
         auto sv = std::string_view(
-            static_cast<char*>((char*)&enum_values_in_write[i]),
+            reinterpret_cast<const char*>(&enum_values_in_write[i]),
             sizeof(enum_values_in_write[i]));
         enum_values_in_write_as_sv[i] = sv;
     }
