@@ -84,7 +84,7 @@ this in the class.
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1><code>SOMAExperiment</code> Axis Query</h1>
-      <small class="dont-index">Source: <a href="https://github.com/single-cell-data/TileDB-SOMA/blob/1.16.2rc0/R/SOMAExperimentAxisQuery.R" class="external-link"><code>R/SOMAExperimentAxisQuery.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/single-cell-data/TileDB-SOMA/blob/release-1.16/R/SOMAExperimentAxisQuery.R" class="external-link"><code>R/SOMAExperimentAxisQuery.R</code></a></small>
       <div class="d-none name"><code>SOMAExperimentAxisQuery.Rd</code></div>
     </div>
 
@@ -420,7 +420,7 @@ labels depends on the selected <code>collection</code>:</p><table class="table t
 
 </div><p></p><hr><a id="method-SOMAExperimentAxisQuery-to_seurat"></a><div class="section">
 <h3 id="method-to-seurat-">Method <code>to_seurat()</code><a class="anchor" aria-label="anchor" href="#method-to-seurat-"></a></h3>
-<p>Loads the query as a <code><a href="https://mojaveazure.github.io/seurat-object/reference/Seurat-class.html" class="external-link">Seurat</a></code> object</p><div class="section">
+<p>Loads the query as a <code><a href="https://satijalab.github.io/seurat-object/reference/Seurat-class.html" class="external-link">Seurat</a></code> object</p><div class="section">
 <h4 id="usage-12">Usage<a class="anchor" aria-label="anchor" href="#usage-12"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SOMAExperimentAxisQuery</span><span class="op">$</span><span class="fu">to_seurat</span><span class="op">(</span></span>
 <span>  X_layers <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>counts <span class="op">=</span> <span class="st">"counts"</span>, data <span class="op">=</span> <span class="st">"logcounts"</span><span class="op">)</span>,</span>
@@ -470,7 +470,7 @@ labels depends on the selected <code>collection</code>:</p><table class="table t
 
 
 <dt><code>obsp_layers</code></dt>
-<dd><p>Names of arrays in <code>obsp</code> to load in as <code><a href="https://mojaveazure.github.io/seurat-object/reference/Graph-class.html" class="external-link">Graph</a>s</code>; by default, loads all graphs</p></dd>
+<dd><p>Names of arrays in <code>obsp</code> to load in as <code><a href="https://satijalab.github.io/seurat-object/reference/Graph-class.html" class="external-link">Graph</a>s</code>; by default, loads all graphs</p></dd>
 
 
 <dt><code>drop_levels</code></dt>
@@ -486,12 +486,12 @@ infer assay type from the measurement itself</p></dd>
 </div>
 <div class="section">
 <h4 id="returns-1">Returns<a class="anchor" aria-label="anchor" href="#returns-1"></a></h4>
-<p>A <code><a href="https://mojaveazure.github.io/seurat-object/reference/Seurat-class.html" class="external-link">Seurat</a></code> object</p>
+<p>A <code><a href="https://satijalab.github.io/seurat-object/reference/Seurat-class.html" class="external-link">Seurat</a></code> object</p>
 </div>
 
 </div><p></p><hr><a id="method-SOMAExperimentAxisQuery-to_seurat_assay"></a><div class="section">
 <h3 id="method-to-seurat-assay-">Method <code>to_seurat_assay()</code><a class="anchor" aria-label="anchor" href="#method-to-seurat-assay-"></a></h3>
-<p>Loads the query as a Seurat <code><a href="https://mojaveazure.github.io/seurat-object/reference/Assay-class.html" class="external-link">Assay</a></code></p><div class="section">
+<p>Loads the query as a Seurat <code><a href="https://satijalab.github.io/seurat-object/reference/Assay-class.html" class="external-link">Assay</a></code></p><div class="section">
 <h4 id="usage-13">Usage<a class="anchor" aria-label="anchor" href="#usage-13"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SOMAExperimentAxisQuery</span><span class="op">$</span><span class="fu">to_seurat_assay</span><span class="op">(</span></span>
 <span>  X_layers <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>counts <span class="op">=</span> <span class="st">"counts"</span>, data <span class="op">=</span> <span class="st">"logcounts"</span><span class="op">)</span>,</span>
@@ -537,13 +537,13 @@ infer assay type from the measurement itself</p></dd>
 </div>
 <div class="section">
 <h4 id="returns-2">Returns<a class="anchor" aria-label="anchor" href="#returns-2"></a></h4>
-<p>An <code><a href="https://mojaveazure.github.io/seurat-object/reference/Assay-class.html" class="external-link">Assay</a></code> object</p>
+<p>An <code><a href="https://satijalab.github.io/seurat-object/reference/Assay-class.html" class="external-link">Assay</a></code> object</p>
 </div>
 
 </div><p></p><hr><a id="method-SOMAExperimentAxisQuery-to_seurat_reduction"></a><div class="section">
 <h3 id="method-to-seurat-reduction-">Method <code>to_seurat_reduction()</code><a class="anchor" aria-label="anchor" href="#method-to-seurat-reduction-"></a></h3>
 <p>Loads the query as a Seurat
-<a href="https://mojaveazure.github.io/seurat-object/reference/DimReduc-class.html" class="external-link">dimensional reduction</a></p><div class="section">
+<a href="https://satijalab.github.io/seurat-object/reference/DimReduc-class.html" class="external-link">dimensional reduction</a></p><div class="section">
 <h4 id="usage-14">Usage<a class="anchor" aria-label="anchor" href="#usage-14"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SOMAExperimentAxisQuery</span><span class="op">$</span><span class="fu">to_seurat_reduction</span><span class="op">(</span></span>
 <span>  <span class="va">obsm_layer</span>,</span>
@@ -578,12 +578,12 @@ from <code>obsm_layer</code></p></dd>
 </div>
 <div class="section">
 <h4 id="returns-3">Returns<a class="anchor" aria-label="anchor" href="#returns-3"></a></h4>
-<p>A <code><a href="https://mojaveazure.github.io/seurat-object/reference/DimReduc-class.html" class="external-link">DimReduc</a></code> object</p>
+<p>A <code><a href="https://satijalab.github.io/seurat-object/reference/DimReduc-class.html" class="external-link">DimReduc</a></code> object</p>
 </div>
 
 </div><p></p><hr><a id="method-SOMAExperimentAxisQuery-to_seurat_graph"></a><div class="section">
 <h3 id="method-to-seurat-graph-">Method <code>to_seurat_graph()</code><a class="anchor" aria-label="anchor" href="#method-to-seurat-graph-"></a></h3>
-<p>Loads the query as a Seurat <a href="https://mojaveazure.github.io/seurat-object/reference/Graph-class.html" class="external-link">graph</a></p><div class="section">
+<p>Loads the query as a Seurat <a href="https://satijalab.github.io/seurat-object/reference/Graph-class.html" class="external-link">graph</a></p><div class="section">
 <h4 id="usage-15">Usage<a class="anchor" aria-label="anchor" href="#usage-15"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">SOMAExperimentAxisQuery</span><span class="op">$</span><span class="fu">to_seurat_graph</span><span class="op">(</span><span class="va">obsp_layer</span>, obs_index <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
@@ -602,7 +602,7 @@ from <code>obsm_layer</code></p></dd>
 </div>
 <div class="section">
 <h4 id="returns-4">Returns<a class="anchor" aria-label="anchor" href="#returns-4"></a></h4>
-<p>A <code><a href="https://mojaveazure.github.io/seurat-object/reference/Graph-class.html" class="external-link">Graph</a></code> object</p>
+<p>A <code><a href="https://satijalab.github.io/seurat-object/reference/Graph-class.html" class="external-link">Graph</a></code> object</p>
 </div>
 
 </div><p></p><hr><a id="method-SOMAExperimentAxisQuery-to_single_cell_experiment"></a><div class="section">
