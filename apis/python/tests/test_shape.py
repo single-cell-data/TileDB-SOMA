@@ -82,7 +82,7 @@ def test_sparse_nd_array_basics(
         dikt = {"soma_data": [4, 5]}
         for i in range(ndim):
             dikt[dim_names[i]] = coords[i]
-        table = pa.Table.from_pydict(dikt)
+        table = pa.Table.from_pydict(dikt, schema=snda.schema)
         snda.write(table)
 
     # Test the various accessors
@@ -104,7 +104,7 @@ def test_sparse_nd_array_basics(
         with pytest.raises(tiledbsoma.SOMAError):
             dikt = {name: [shape + 20] for name, shape in zip(dim_names, arg_shape)}
             dikt["soma_data"] = [30]
-            table = pa.Table.from_pydict(dikt)
+            table = pa.Table.from_pydict(dikt, schema=snda.schema)
             snda.write(table)
 
     with tiledbsoma.SparseNDArray.open(uri) as snda:
@@ -152,7 +152,7 @@ def test_sparse_nd_array_basics(
         for i in range(ndim):
             dikt[dim_names[i]] = [arg_shape[i] + 20]
         dikt["soma_data"] = pa.array([34.5], type=element_dtype)
-        table = pa.Table.from_pydict(dikt)
+        table = pa.Table.from_pydict(dikt, schema=snda.schema)
 
         # Re-test writes out of old bounds, within new bounds
         with tiledbsoma.SparseNDArray.open(uri, "w") as snda:
@@ -677,6 +677,190 @@ def test_canned_experiments(tmp_path, has_shapes):
         _check_ndarray(exp.ms["RNA"].obsm["X_pca"], True, (2639, 50))
         _check_ndarray(exp.ms["RNA"].obsp["connectivities"], True, (2639, 2639))
         _check_ndarray(exp.ms["RNA"].varm["PCs"], True, (1839, 50))
+
+    # Test get_experiment_shapes.
+    # The output includes URIs which vary randomly from one test run to another;
+    # mask out the URIs.
+    dict_output = tiledbsoma.io.get_experiment_shapes(uri)
+
+    assert "obs" in dict_output
+    assert "ms" in dict_output
+    assert "RNA" in dict_output["ms"]
+
+    dict_output["obs"]["uri"] = "test"
+    dict_output["ms"]["RNA"]["var"]["uri"] = "test"
+    dict_output["ms"]["RNA"]["X"]["data"]["uri"] = "test"
+    dict_output["ms"]["RNA"]["obsm"]["X_draw_graph_fr"]["uri"] = "test"
+    dict_output["ms"]["RNA"]["obsm"]["X_pca"]["uri"] = "test"
+    dict_output["ms"]["RNA"]["obsm"]["X_tsne"]["uri"] = "test"
+    dict_output["ms"]["RNA"]["obsm"]["X_umap"]["uri"] = "test"
+    dict_output["ms"]["RNA"]["obsp"]["connectivities"]["uri"] = "test"
+    dict_output["ms"]["RNA"]["obsp"]["distances"]["uri"] = "test"
+    dict_output["ms"]["RNA"]["varm"]["PCs"]["uri"] = "test"
+    dict_output["ms"]["raw"]["var"]["uri"] = "test"
+    dict_output["ms"]["raw"]["X"]["data"]["uri"] = "test"
+
+    if has_shapes:
+        var_max_domain_hi = 9223372036854773968
+    else:
+        var_max_domain_hi = 9223372036854773758
+
+    expect = {
+        "obs": {
+            "uri": "test",
+            "type": "DataFrame",
+            "count": 2638,
+            "non_empty_domain": ((0, 2637),),
+            "domain": ((0, 2638),),
+            "maxdomain": ((0, 9223372036854773758),),
+            "upgraded": True,
+        },
+        "ms": {
+            "RNA": {
+                "var": {
+                    "uri": "test",
+                    "type": "DataFrame",
+                    "count": 1838,
+                    "non_empty_domain": ((0, 1837),),
+                    "domain": ((0, 1838),),
+                    "maxdomain": ((0, var_max_domain_hi),),
+                    "upgraded": True,
+                },
+                "X": {
+                    "data": {
+                        "uri": "test",
+                        "type": "SparseNDArray",
+                        "non_empty_domain": ((0, 2637), (0, 1837)),
+                        "shape": (2639, 1839),
+                        "maxshape": (9223372036854773759, 9223372036854773759),
+                        "upgraded": True,
+                    }
+                },
+                "obsm": {
+                    "X_draw_graph_fr": {
+                        "uri": "test",
+                        "type": "SparseNDArray",
+                        "non_empty_domain": ((0, 2637), (0, 1)),
+                        "shape": (2639, 2),
+                        "maxshape": (9223372036854773759, 9223372036854773759),
+                        "upgraded": True,
+                    },
+                    "X_pca": {
+                        "uri": "test",
+                        "type": "SparseNDArray",
+                        "non_empty_domain": ((0, 2637), (0, 49)),
+                        "shape": (2639, 50),
+                        "maxshape": (9223372036854773759, 9223372036854773759),
+                        "upgraded": True,
+                    },
+                    "X_tsne": {
+                        "uri": "test",
+                        "type": "SparseNDArray",
+                        "non_empty_domain": ((0, 2637), (0, 1)),
+                        "shape": (2639, 2),
+                        "maxshape": (9223372036854773759, 9223372036854773759),
+                        "upgraded": True,
+                    },
+                    "X_umap": {
+                        "uri": "test",
+                        "type": "SparseNDArray",
+                        "non_empty_domain": ((0, 2637), (0, 1)),
+                        "shape": (2639, 2),
+                        "maxshape": (9223372036854773759, 9223372036854773759),
+                        "upgraded": True,
+                    },
+                },
+                "obsp": {
+                    "connectivities": {
+                        "uri": "test",
+                        "type": "SparseNDArray",
+                        "non_empty_domain": ((0, 2637), (0, 2637)),
+                        "shape": (2639, 2639),
+                        "maxshape": (9223372036854773759, 9223372036854773759),
+                        "upgraded": True,
+                    },
+                    "distances": {
+                        "uri": "test",
+                        "type": "SparseNDArray",
+                        "non_empty_domain": ((0, 2637), (1, 2637)),
+                        "shape": (2639, 2639),
+                        "maxshape": (9223372036854773759, 9223372036854773759),
+                        "upgraded": True,
+                    },
+                },
+                "varm": {
+                    "PCs": {
+                        "uri": "test",
+                        "type": "SparseNDArray",
+                        "non_empty_domain": ((0, 1837), (0, 49)),
+                        "shape": (1839, 50),
+                        "maxshape": (9223372036854773759, 9223372036854773759),
+                        "upgraded": True,
+                    }
+                },
+            },
+            "raw": {
+                "var": {
+                    "uri": "test",
+                    "type": "DataFrame",
+                    "count": 13714,
+                    "non_empty_domain": ((0, 13713),),
+                    "domain": ((0, 13719),),
+                    "maxdomain": ((0, 9223372036854773758),),
+                    "upgraded": True,
+                },
+                "X": {
+                    "data": {
+                        "uri": "test",
+                        "type": "SparseNDArray",
+                        "non_empty_domain": ((0, 2637), (0, 13713)),
+                        "shape": (2639, 13720),
+                        "maxshape": (9223372036854773759, 9223372036854773759),
+                        "upgraded": True,
+                    }
+                },
+            },
+        },
+    }
+
+    assert dict_output == expect
+
+
+@pytest.mark.parametrize("level", [1, 2, 3, 4])
+def test_get_experiment_shapes_corner_cases(tmp_path, level):
+    path1 = tmp_path
+    path2 = path1 / "ms"
+    path3 = path2 / "RNA"
+    path4 = path3 / "X"
+
+    uri1 = path1.as_posix()
+    uri2 = path2.as_posix()
+    uri3 = path3.as_posix()
+    uri4 = path4.as_posix()
+
+    with tiledbsoma.Experiment.create(uri1) as exp:
+        if level >= 2:
+            with tiledbsoma.Collection.create(uri2) as ms:
+                if level >= 3:
+                    with tiledbsoma.Measurement.create(uri3) as RNA:
+                        if level >= 4:
+                            with tiledbsoma.Collection.create(uri4) as X:
+                                pass
+                            RNA.set("X", X, use_relative_uri=False)
+                    ms.set("RNA", RNA, use_relative_uri=False)
+            exp.set("ms", ms, use_relative_uri=False)
+
+    actual = tiledbsoma.io.get_experiment_shapes(uri1)
+    expect = {}
+    if level == 1:
+        expect = {}
+    elif level == 2:
+        expect = {"ms": {}}
+    elif level == 3:
+        expect = {"ms": {"RNA": {}}}
+    elif level == 4:
+        expect = {"ms": {"RNA": {}}}
+    assert actual == expect
 
 
 def test_canned_nonstandard_dataframe_upgrade(tmp_path):

@@ -1,6 +1,5 @@
 ---
-title: Daily GitHub Actions fail for remote tests on {{ date | date('ddd, MMMM Do YYYY') }}
-assignees: nguyenv, johnkerl
+title: Daily `python-packaging.yml` build failing
 labels: bug
 ---
 

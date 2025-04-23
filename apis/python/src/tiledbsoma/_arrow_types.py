@@ -25,13 +25,13 @@ ASCII-only dimensions will be relaxed in a future release. Unicode/UTF-8 is
 fully supported in SOMA DataFrame non-indexed columns.
 """
 
-from typing import Any, Dict, Union
+from typing import Any, Union
 
 import numpy as np
 import numpy.typing as npt
 import pyarrow as pa
 
-_ARROW_TO_TDB_ATTR: Dict[Any, Union[str, TypeError]] = {
+_ARROW_TO_TDB_ATTR: dict[Any, Union[str, TypeError]] = {
     pa.string(): "U1",
     pa.large_string(): "U1",
     pa.binary(): "bytes",
@@ -54,7 +54,7 @@ If the value is an instance of Exception, it will be raised.
 IMPORTANT: ALL non-primitive types supported by TileDB must be in this table.
 """
 
-_PYARROW_TO_CARROW: Dict[pa.DataType, str] = {
+_PYARROW_TO_CARROW: dict[pa.DataType, str] = {
     pa.bool_(): "b",
     pa.int8(): "c",
     pa.int16(): "s",
@@ -72,7 +72,7 @@ _PYARROW_TO_CARROW: Dict[pa.DataType, str] = {
     pa.timestamp("ns"): "tsn:",
 }
 
-_CARROW_TO_PYARROW: Dict[pa.DataType, str] = {
+_CARROW_TO_PYARROW: dict[pa.DataType, str] = {
     "c": pa.int8(),
     "s": pa.int16(),
     "i": pa.int32(),
@@ -91,7 +91,7 @@ _CARROW_TO_PYARROW: Dict[pa.DataType, str] = {
 
 # Same as _ARROW_TO_TDB_ATTR, but used for DataFrame indexed columns, aka TileDB Dimensions.
 # Any type system differences from the base-case Attr should be added here.
-_ARROW_TO_TDB_DIM: Dict[Any, Union[str, TypeError]] = _ARROW_TO_TDB_ATTR.copy()
+_ARROW_TO_TDB_DIM: dict[Any, Union[str, TypeError]] = _ARROW_TO_TDB_ATTR.copy()
 """Same as _ARROW_TO_TDB_ATTR, but used for DataFrame indexed columns, aka TileDB Dimensions.
 Any type system differences from the base-case Attr should be added here.
 """

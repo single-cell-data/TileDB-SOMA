@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import datetime
 import shutil
-from typing import Any, Dict, Mapping, Optional, Sequence, Tuple, Union
+from typing import Any, Mapping, Sequence, Union
 
 import hypothesis as ht
 import numpy as np
@@ -161,8 +161,8 @@ def test_fuzz_SparseNDArray_create(
     tmp_path,
     uri: str,
     type: pa.DataType,
-    shape: Sequence[Optional[int]],
-    platform_config: Dict[str, Mapping[str, Any]] | object | None,
+    shape: Sequence[int | None],
+    platform_config: dict[str, Mapping[str, Any]] | object | None,
     context: tiledbsoma.SOMATileDBContext | None,
     tiledb_timestamp: int | datetime.datetime | None,
 ) -> None:
@@ -195,7 +195,7 @@ class SOMASparseNDArrayStateMachine(SOMANDArrayStateMachine):
         super().__init__(shapes_factory=sparse_array_shape)
 
     @initialize(type=ndarray_datatype(), shape=sparse_array_shape(allow_none=True))
-    def setup(self, type: pa.DataType, shape: Tuple[int | None, ...]) -> None:
+    def setup(self, type: pa.DataType, shape: tuple[int | None, ...]) -> None:
         super().setup(
             type,
             shape,

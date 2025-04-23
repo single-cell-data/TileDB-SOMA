@@ -102,10 +102,10 @@ void load_managed_query(py::module& m) {
                 std::optional<std::shared_ptr<ArrayBuffers>> tbl;
                 try {
                     tbl = mq.read_next();
-                    // Acquire python GIL before accessing python objects
                 } catch (const std::exception& e) {
                     throw TileDBSOMAError(e.what());
                 }
+                // Acquire python GIL before accessing python objects
                 py::gil_scoped_acquire acquire;
 
                 if (!tbl) {

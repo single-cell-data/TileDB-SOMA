@@ -22,17 +22,12 @@ from functools import partial
 from itertools import repeat
 from typing import (
     Any,
-    Dict,
     Iterable,
-    List,
     Literal,
     Mapping,
     Sequence,
-    Tuple,
-    Type,
     TypedDict,
     TypeVar,
-    Union,
     cast,
     no_type_check,
     overload,
@@ -311,7 +306,7 @@ def from_h5ad(
     raw_X_layer_name: str = "data",
     ingest_mode: IngestMode = "write",
     use_relative_uri: bool | None = None,
-    X_kind: Union[Type[SparseNDArray], Type[DenseNDArray]] = SparseNDArray,
+    X_kind: type[SparseNDArray] | type[DenseNDArray] = SparseNDArray,
     registration_mapping: ExperimentAmbientLabelMapping | None = None,
     uns_keys: Sequence[str] | None = None,
     additional_metadata: AdditionalMetadata = None,
@@ -488,7 +483,7 @@ def from_anndata(
     raw_X_layer_name: str = "data",
     ingest_mode: IngestMode = "write",
     use_relative_uri: bool | None = None,
-    X_kind: Union[Type[SparseNDArray], Type[DenseNDArray]] = SparseNDArray,
+    X_kind: type[SparseNDArray] | type[DenseNDArray] = SparseNDArray,
     registration_mapping: ExperimentAmbientLabelMapping | None = None,
     uns_keys: Sequence[str] | None = None,
     additional_metadata: AdditionalMetadata = None,
@@ -947,14 +942,14 @@ def append_var(
 
 def append_X(
     exp: Experiment,
-    new_X: Union[Matrix, h5py.Dataset],
+    new_X: Matrix | h5py.Dataset,
     measurement_name: str,
     X_layer_name: str,
     obs_ids: Sequence[str],
     var_ids: Sequence[str],
     *,
     registration_mapping: ExperimentAmbientLabelMapping,
-    X_kind: Union[Type[SparseNDArray], Type[DenseNDArray]] = SparseNDArray,
+    X_kind: type[SparseNDArray] | type[DenseNDArray] = SparseNDArray,
     context: SOMATileDBContext | None = None,
     platform_config: PlatformConfig | None = None,
 ) -> str:
@@ -1044,7 +1039,7 @@ def _maybe_set(
 
 @overload
 def _create_or_open_collection(
-    cls: Type[Experiment],
+    cls: type[Experiment],
     uri: str,
     *,
     ingestion_params: IngestionParams,
@@ -1055,7 +1050,7 @@ def _create_or_open_collection(
 
 @overload
 def _create_or_open_collection(
-    cls: Type[Measurement],
+    cls: type[Measurement],
     uri: str,
     *,
     ingestion_params: IngestionParams,
@@ -1066,7 +1061,7 @@ def _create_or_open_collection(
 
 @overload
 def _create_or_open_collection(
-    cls: Type[Collection[_TDBO]],
+    cls: type[Collection[_TDBO]],
     uri: str,
     *,
     ingestion_params: IngestionParams,
@@ -1077,7 +1072,7 @@ def _create_or_open_collection(
 
 @no_type_check
 def _create_or_open_collection(
-    cls: Type[CollectionBase[_TDBO]],
+    cls: type[CollectionBase[_TDBO]],
     uri: str,
     *,
     ingestion_params: IngestionParams,
@@ -1099,7 +1094,7 @@ def _create_or_open_collection(
 # Spellings compatible with 1.2.7:
 @overload
 def _create_or_open_coll(
-    cls: Type[Experiment],
+    cls: type[Experiment],
     uri: str,
     *,
     ingest_mode: IngestMode,
@@ -1109,7 +1104,7 @@ def _create_or_open_coll(
 
 @overload
 def _create_or_open_coll(
-    cls: Type[Measurement],
+    cls: type[Measurement],
     uri: str,
     *,
     ingest_mode: IngestMode,
@@ -1119,7 +1114,7 @@ def _create_or_open_coll(
 
 @overload
 def _create_or_open_coll(
-    cls: Type[Collection[_TDBO]],
+    cls: type[Collection[_TDBO]],
     uri: str,
     *,
     ingest_mode: IngestMode,
@@ -1128,7 +1123,7 @@ def _create_or_open_coll(
 
 
 def _create_or_open_coll(
-    cls: Type[Any],
+    cls: type[Any],
     uri: str,
     *,
     ingest_mode: IngestMode,
@@ -1309,7 +1304,7 @@ def _extract_new_values_for_append(
 
 def _write_arrow_table(
     arrow_table: pa.Table,
-    handle: Union[DataFrame, SparseNDArray, PointCloudDataFrame],
+    handle: DataFrame | SparseNDArray | PointCloudDataFrame,
     tiledb_create_options: TileDBCreateOptions,
     tiledb_write_options: TileDBWriteOptions,
 ) -> None:
@@ -1499,9 +1494,9 @@ def _write_dataframe_impl(
 
 
 def create_from_matrix(
-    cls: Type[_NDArr],
+    cls: type[_NDArr],
     uri: str,
-    matrix: Union[Matrix, h5py.Dataset],
+    matrix: Matrix | h5py.Dataset,
     platform_config: PlatformConfig | None = None,
     ingest_mode: IngestMode = "write",
     context: SOMATileDBContext | None = None,
@@ -1525,9 +1520,9 @@ def create_from_matrix(
 
 
 def _create_from_matrix(
-    cls: Type[_NDArr],
+    cls: type[_NDArr],
     uri: str,
-    matrix: Union[Matrix, h5py.Dataset],
+    matrix: Matrix | h5py.Dataset,
     *,
     ingestion_params: IngestionParams,
     additional_metadata: AdditionalMetadata = None,
@@ -1555,7 +1550,7 @@ def _create_from_matrix(
         )
     else:
         try:
-            shape: Sequence[Union[int, None]] = ()
+            shape: Sequence[int | None] = ()
             # A SparseNDArray must be appendable in soma.io.
 
             # Instead of
@@ -1839,8 +1834,8 @@ def _update_dataframe(
 
 
 def update_matrix(
-    soma_ndarray: Union[SparseNDArray, DenseNDArray],
-    new_data: Union[Matrix, h5py.Dataset],
+    soma_ndarray: SparseNDArray | DenseNDArray,
+    new_data: Matrix | h5py.Dataset,
     *,
     context: SOMATileDBContext | None = None,
     platform_config: PlatformConfig | None = None,
@@ -1939,7 +1934,7 @@ def add_X_layer(
     measurement_name: str,
     X_layer_name: str,
     # E.g. a scipy.csr_matrix from scanpy analysis:
-    X_layer_data: Union[Matrix, h5py.Dataset],
+    X_layer_data: Matrix | h5py.Dataset,
     ingest_mode: IngestMode = "write",
     use_relative_uri: bool | None = None,
     context: SOMATileDBContext | None = None,
@@ -1972,7 +1967,7 @@ def add_matrix_to_collection(
     collection_name: str,
     matrix_name: str,
     # E.g. a scipy.csr_matrix from scanpy analysis:
-    matrix_data: Union[Matrix, h5py.Dataset],
+    matrix_data: Matrix | h5py.Dataset,
     ingest_mode: IngestMode = "write",
     use_relative_uri: bool | None = None,
     context: SOMATileDBContext | None = None,
@@ -2033,7 +2028,7 @@ def add_matrix_to_collection(
 
 def _write_matrix_to_denseNDArray(
     soma_ndarray: DenseNDArray,
-    matrix: Union[Matrix, h5py.Dataset],
+    matrix: Matrix | h5py.Dataset,
     tiledb_create_options: TileDBCreateOptions,
     tiledb_write_options: TileDBWriteOptions,
     ingestion_params: IngestionParams,
@@ -2042,6 +2037,10 @@ def _write_matrix_to_denseNDArray(
     """Write a matrix to an empty DenseNDArray"""
 
     add_metadata(soma_ndarray, additional_metadata)
+
+    # TileDB does not support big-endian so coerce to little-endian
+    if isinstance(matrix, np.ndarray) and matrix.dtype.byteorder == ">":
+        matrix = matrix.byteswap().view(matrix.dtype.newbyteorder("<"))
 
     # There is a chunk-by-chunk already-done check for resume mode, below.
     # This full-matrix-level check here might seem redundant, but in fact it's important:
@@ -2239,7 +2238,7 @@ def _find_sparse_chunk_size_non_backed(
     """
     chunk_size = 0
     sum_nnz = 0
-    coords: List[Union[slice, int]] = [slice(None), slice(None)]
+    coords: list[slice | int] = [slice(None), slice(None)]
     for index in range(start_index, matrix.shape[axis]):
         coords[axis] = index
         candidate_sum_nnz = sum_nnz + matrix[tuple(coords)].nnz
@@ -2270,7 +2269,7 @@ def _find_mean_nnz(matrix: Matrix, axis: int) -> int:
     #   total_nnz = matrix[:, :].nnz
     # So instead we break it up. Testing over a variety of H5AD sizes
     # shows that the performance is fine here.
-    coords: List[slice] = [slice(None), slice(None)]  # type: ignore[unreachable]
+    coords: list[slice] = [slice(None), slice(None)]  # type: ignore[unreachable]
     bsz = 1000
     total_nnz = 0
     for lo in range(0, extent, bsz):
@@ -2378,7 +2377,7 @@ def _find_sparse_chunk_size_backed(
 
     # This is just matrix[0:m, :] or matrix[:, 0:m], but spelt out flexibly
     # given that the axis (0 or 1) is a variable.
-    coords: List[slice] = [slice(None), slice(None)]
+    coords: list[slice] = [slice(None), slice(None)]
     coords[axis] = slice(start_index, start_index + chunk_size)
     chunk_nnz = int(matrix[tuple(coords)].nnz)
 
@@ -2437,6 +2436,10 @@ def _write_matrix_to_sparseNDArray(
     axis_1_mapping: AxisIDMapping,
 ) -> None:
     """Write a matrix to an empty DenseNDArray"""
+
+    # TileDB does not support big-endian so coerce to little-endian
+    if isinstance(matrix, np.ndarray) and matrix.dtype.byteorder == ">":
+        matrix = matrix.byteswap().view(matrix.dtype.newbyteorder("<"))
 
     def _coo_to_table(
         mat_coo: sp.coo_matrix,
@@ -2660,8 +2663,8 @@ def _write_matrix_to_sparseNDArray(
 
 
 def _chunk_is_contained_in(
-    chunk_bounds: Sequence[Tuple[int, int]],
-    storage_nonempty_domain: Sequence[Tuple[int | None, int | None]],
+    chunk_bounds: Sequence[tuple[int, int]],
+    storage_nonempty_domain: Sequence[tuple[int | None, int | None]],
 ) -> bool:
     """
     Determines if a dim range is included within the array's non-empty domain.  Ranges are inclusive
@@ -2693,8 +2696,8 @@ def _chunk_is_contained_in(
 
 
 def _chunk_is_contained_in_axis(
-    chunk_bounds: Sequence[Tuple[int, int]],
-    storage_nonempty_domain: Sequence[Tuple[int | None, int | None]],
+    chunk_bounds: Sequence[tuple[int, int]],
+    storage_nonempty_domain: Sequence[tuple[int | None, int | None]],
     stride_axis: int,
 ) -> bool:
     """Helper function for ``_chunk_is_contained_in``."""
@@ -2997,7 +3000,7 @@ def _ingest_uns_2d_string_array(
     this ``uns`` data is solely of interest for AnnData ingest/outgest, and it must go
     back out the way it came in."""
     num_rows, num_cols = value.shape
-    data: Dict[str, Any] = {"soma_joinid": np.arange(num_rows, dtype=np.int64)}
+    data: dict[str, Any] = {"soma_joinid": np.arange(num_rows, dtype=np.int64)}
     # An array like [["a", "b", "c"], ["d", "e", "f"]] becomes a DataFrame like
     # soma_joinid values_0 values_1 values_2
     # 0           a        b        c

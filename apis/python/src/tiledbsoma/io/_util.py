@@ -7,11 +7,7 @@ from __future__ import annotations
 import pathlib
 import sys
 from contextlib import contextmanager
-from typing import (
-    ContextManager,
-    Iterator,
-    Union,
-)
+from typing import ContextManager, Iterator
 from unittest import mock
 
 import anndata as ad
@@ -51,9 +47,8 @@ def read_h5ad(
     This lets us ingest H5AD with "r" (backed mode) from S3 URIs.
     """
     ctx = ctx or SOMATileDBContext()
-    vfs = clib.SOMAVFS(ctx.native_context)
     input_handle = CachingReader(
-        clib.SOMAVFSFilebuf(vfs).open(str(input_path)),
+        clib.SOMAFileHandle(str(input_path), ctx.native_context),
         memory_budget=64 * 1024**2,
         cache_block_size=8 * 1024**2,
     )
@@ -62,6 +57,9 @@ def read_h5ad(
             anndata = ad.read_h5ad(_FSPathWrapper(input_handle, input_path), mode)
             yield anndata
     finally:
+        # This prevents a race condition with the REPL cleanup in ipython. See sc-65863
+        if anndata.file:
+            anndata.file.close()
         input_handle.close()
 
 
@@ -114,7 +112,7 @@ def _hack_patch_anndata() -> ContextManager[object]:
     @file_backing.AnnDataFileManager.filename.setter  # type: ignore[misc]
     def filename(
         self: file_backing.AnnDataFileManager,
-        filename: Union[Path, _FSPathWrapper, None],
+        filename: Path | _FSPathWrapper | None,
     ) -> None:
         self._filename = filename
 

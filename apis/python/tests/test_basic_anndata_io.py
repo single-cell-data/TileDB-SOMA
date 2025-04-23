@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import gc
 import json
 import random
 import tempfile
@@ -1537,3 +1538,50 @@ def test_decat_append(tmp_path):
 def test_from_h5ad_bad_uri():
     with pytest.raises(tiledbsoma.SOMAError, match="URI /nonesuch is not a valid URI"):
         next(tiledbsoma.io._util.read_h5ad("/nonesuch").gen)
+
+
+def test_from_anndata_byteorder_63459(tmp_path, conftest_pbmc_small):
+    # https://app.shortcut.com/tiledb-inc/story/63459
+
+    ad_uri = (tmp_path / "anndata_pbmc_small").as_posix()
+    exp_uri = (tmp_path / "exp").as_posix()
+
+    # Make a copy of conftest_pbmc_small before modifying so we don't change the
+    # original test file
+    ad = conftest_pbmc_small.copy(ad_uri)
+
+    # host is little-endian, array is big-endian
+    ad.uns["X"] = np.array([7972], dtype=">u2")
+
+    tiledbsoma.io.from_anndata(exp_uri, ad, "RNA")
+
+    with tiledbsoma.Experiment.open(exp_uri) as E:
+        new_ad = tiledbsoma.io.to_anndata(E, "RNA", X_layer_name="data")
+        assert ad.uns["X"] == new_ad.uns["X"]
+
+
+def test_soma_file_handling_65831_65864():
+    context = tiledbsoma.SOMATileDBContext()
+    fb = tiledbsoma.pytiledbsoma.SOMAFileHandle(
+        str(TESTDATA / "pbmc-small.h5ad"), context.native_context
+    )
+    del context  # https://app.shortcut.com/tiledb-inc/story/65864/
+    gc.collect()  # Make sure that context is freed
+    fb.read(100)  # Implicitly ensure that read does not segfault
+    fb.close()
+
+    with pytest.raises(
+        tiledbsoma.SOMAError, match="File must be open before performing read"
+    ):
+        fb.read(100)
+
+    with pytest.raises(
+        tiledbsoma.SOMAError, match="File must be open before performing seek"
+    ):
+        fb.seek(100, 1)
+
+    with pytest.raises(
+        tiledbsoma.SOMAError, match="File must be open before performing readinto"
+    ):
+        arr = np.zeros(100, dtype=np.uint8)
+        fb.readinto(arr)

@@ -4,7 +4,7 @@
 
 """Exceptions."""
 
-from typing import Union
+from __future__ import annotations
 
 
 class SOMAError(Exception):
@@ -25,7 +25,7 @@ class DoesNotExistError(SOMAError):
     pass
 
 
-def is_does_not_exist_error(e: Union[RuntimeError, SOMAError]) -> bool:
+def is_does_not_exist_error(e: RuntimeError | SOMAError) -> bool:
     """Given a RuntimeError or SOMAError, return true if it indicates the object
     does not exist
 

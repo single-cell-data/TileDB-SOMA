@@ -9,7 +9,7 @@ import operator
 import pathlib
 import sys
 from concurrent import futures
-from typing import Any, Dict, List, Tuple, Union
+from typing import Any, Union
 from unittest import mock
 
 import numpy as np
@@ -32,7 +32,7 @@ AnySparseTensor = Union[pa.SparseCOOTensor, pa.SparseCSRMatrix, pa.SparseCSCMatr
 )
 @pytest.mark.parametrize("element_type", NDARRAY_ARROW_TYPES_SUPPORTED)
 def test_sparse_nd_array_create_ok(
-    tmp_path, shape: Tuple[int, ...], element_type: pa.DataType
+    tmp_path, shape: tuple[int, ...], element_type: pa.DataType
 ):
     """
     Test all cases we expect "create" to succeed.
@@ -156,7 +156,7 @@ def test_sparse_nd_array_reopen(tmp_path):
 @pytest.mark.parametrize("shape", [(10,)])
 @pytest.mark.parametrize("element_type", NDARRAY_ARROW_TYPES_NOT_SUPPORTED)
 def test_sparse_nd_array_create_fail(
-    tmp_path, shape: Tuple[int, ...], element_type: pa.DataType
+    tmp_path, shape: tuple[int, ...], element_type: pa.DataType
 ):
     with pytest.raises(TypeError):
         soma.SparseNDArray.create(tmp_path.as_posix(), type=element_type, shape=shape)
@@ -164,7 +164,7 @@ def test_sparse_nd_array_create_fail(
 
 def create_random_tensor(
     format: str,
-    shape: Tuple[int, ...],
+    shape: tuple[int, ...],
     dtype: np.dtype,
     density: float = 0.33,
 ):
@@ -320,7 +320,7 @@ def tables_are_same_value(a: pa.Table, b: pa.Table) -> bool:
 @pytest.mark.parametrize("test_enumeration", range(10))
 def test_sparse_nd_array_read_write_sparse_tensor(
     tmp_path,
-    shape: Tuple[int, ...],
+    shape: tuple[int, ...],
     format: str,
     test_enumeration: int,
 ):
@@ -367,7 +367,7 @@ def test_sparse_nd_array_read_write_sparse_tensor(
 @pytest.mark.parametrize("shape", [(10,), (23, 4), (5, 3, 1), (8, 4, 2, 30)])
 @pytest.mark.parametrize("test_enumeration", range(10))
 def test_sparse_nd_array_read_write_table(
-    tmp_path, shape: Tuple[int, ...], test_enumeration: int
+    tmp_path, shape: tuple[int, ...], test_enumeration: int
 ):
     a = soma.SparseNDArray.create(tmp_path.as_posix(), type=pa.float32(), shape=shape)
     assert a.shape == shape
@@ -391,7 +391,7 @@ def test_sparse_nd_array_read_write_table(
 @pytest.mark.parametrize("dtype", [np.float32, np.float64, np.int32, np.int64])
 @pytest.mark.parametrize("shape", [(1,), (23, 14), (35, 3, 2), (8, 4, 2, 30)])
 def test_sparse_nd_array_read_as_pandas(
-    tmp_path, dtype: np.dtype, shape: Tuple[int, ...]
+    tmp_path, dtype: np.dtype, shape: tuple[int, ...]
 ):
     dtype = np.dtype(dtype)
     with soma.SparseNDArray.create(
@@ -1021,7 +1021,7 @@ def test_sparse_nd_array_table_slicing(tmp_path, io, write_format, read_format):
     ],
 )
 def test_result_order(
-    tmp_path: pathlib.Path, result_order, want: Dict[str, List[float]]
+    tmp_path: pathlib.Path, result_order, want: dict[str, list[float]]
 ):
     arrow_tensor = create_random_tensor("table", (5, 7), np.float32(), density=1)
 
@@ -1276,7 +1276,7 @@ def a_soma_context() -> SOMATileDBContext:
 
 @pytest.fixture
 def a_random_sparse_nd_array(
-    tmp_path, a_soma_context: SOMATileDBContext, shape: Tuple[int, ...], density: float
+    tmp_path, a_soma_context: SOMATileDBContext, shape: tuple[int, ...], density: float
 ) -> str:
     uri = tmp_path.as_posix()
     dtype = np.float32
@@ -1325,8 +1325,8 @@ def a_random_sparse_nd_array(
 )
 def test_blockwise_table_iter(
     a_random_sparse_nd_array: str,
-    shape: Tuple[int, ...],
-    coords: Tuple[Any, ...],
+    shape: tuple[int, ...],
+    coords: tuple[Any, ...],
     a_soma_context: SOMATileDBContext,
 ) -> None:
     """Check blockwise iteration over non-reindexed results"""
@@ -1385,7 +1385,7 @@ def test_blockwise_table_iter(
 )
 @pytest.mark.parametrize("size", (999, 2**16, 2**20))
 def test_blockwise_table_iter_size(
-    a_random_sparse_nd_array: str, shape: Tuple[int, ...], size: int
+    a_random_sparse_nd_array: str, shape: tuple[int, ...], size: int
 ) -> None:
     """
     Verify that blockwise iteration correctly obeys size param.
@@ -1456,8 +1456,8 @@ def test_blockwise_table_iter_size(
 )
 def test_blockwise_table_iter_reindex(
     a_random_sparse_nd_array: str,
-    shape: Tuple[int, ...],
-    coords: Tuple[Any, ...],
+    shape: tuple[int, ...],
+    coords: tuple[Any, ...],
     a_soma_context: SOMATileDBContext,
 ) -> None:
     """Test blockwise table iteration with reindexing"""
@@ -1513,7 +1513,7 @@ def test_blockwise_table_iter_reindex(
 
 @pytest.mark.parametrize("density,shape", [(0.1, (100, 100))])
 def test_blockwise_table_iter_error_checks(
-    a_random_sparse_nd_array: str, shape: Tuple[int, ...]
+    a_random_sparse_nd_array: str, shape: tuple[int, ...]
 ) -> None:
     with soma.open(a_random_sparse_nd_array, mode="r") as A:
         with pytest.raises(NotImplementedError):
@@ -1550,7 +1550,7 @@ def test_blockwise_table_iter_error_checks(
 @pytest.mark.parametrize("size", [777, 1001, 2**16])
 def test_blockwise_scipy_iter(
     a_random_sparse_nd_array: str,
-    coords: Tuple[Any, ...],
+    coords: tuple[Any, ...],
     size: int,
     a_soma_context: SOMATileDBContext,
 ) -> None:
@@ -1559,7 +1559,7 @@ def test_blockwise_scipy_iter(
     """
 
     def _slice_sp(
-        coo: sparse.coo_matrix, _coords: Tuple[Any, ...]
+        coo: sparse.coo_matrix, _coords: tuple[Any, ...]
     ) -> sparse.coo_matrix:
         """
         Slice from the COO, accomodating conversion from closed range to half-open range
@@ -1653,7 +1653,7 @@ def test_blockwise_scipy_iter(
 
 @pytest.mark.parametrize("density,shape", [(0.1, (100, 100))])
 def test_blockwise_scipy_iter_error_checks(
-    a_random_sparse_nd_array: str, shape: Tuple[int, ...]
+    a_random_sparse_nd_array: str, shape: tuple[int, ...]
 ) -> None:
     with soma.open(a_random_sparse_nd_array, mode="r") as A:
         with pytest.raises(ValueError):
@@ -1668,7 +1668,7 @@ def test_blockwise_scipy_iter_error_checks(
 
 @pytest.mark.parametrize("density,shape", [(0.1, (4, 8, 16))])
 def test_blockwise_scipy_iter_not_2D(
-    a_random_sparse_nd_array: str, shape: Tuple[int, ...]
+    a_random_sparse_nd_array: str, shape: tuple[int, ...]
 ) -> None:
     with soma.open(a_random_sparse_nd_array, mode="r") as A:
         with pytest.raises(soma.SOMAError):
@@ -1678,7 +1678,7 @@ def test_blockwise_scipy_iter_not_2D(
 @pytest.mark.parametrize("density,shape", [(0.01, (10_000, 1230))])
 def test_blockwise_scipy_iter_eager(
     a_random_sparse_nd_array: str,
-    shape: Tuple[int, ...],
+    shape: tuple[int, ...],
     a_soma_context: SOMATileDBContext,
 ) -> None:
     """Should get same results with any eager setting"""
@@ -1753,8 +1753,8 @@ def test_blockwise_scipy_iter_result_order(a_random_sparse_nd_array: str) -> Non
 )
 def test_blockwise_indices(
     a_random_sparse_nd_array: str,
-    coords: Tuple[Any, ...],
-    expected_indices: Tuple[Any, ...],
+    coords: tuple[Any, ...],
+    expected_indices: tuple[Any, ...],
 ) -> None:
     """Verify indices look reasonable"""
     size = 1111
@@ -1815,7 +1815,7 @@ def test_blockwise_indices(
 @pytest.mark.parametrize("density,shape", [(0.1, (100, 100))])
 @pytest.mark.parametrize("coords", [(slice(0, 10),), (slice(1, 10),)])
 def test_blockwise_scipy_reindex_disable_major_dim(
-    a_random_sparse_nd_array: str, coords: Tuple[Any, ...]
+    a_random_sparse_nd_array: str, coords: tuple[Any, ...]
 ) -> None:
     """
     Disable reindexing on major axis. Expected behavior:
@@ -1844,7 +1844,7 @@ def test_blockwise_scipy_reindex_disable_major_dim(
 
 @pytest.mark.parametrize("density,shape", [(0.1, (100, 100))])
 def test_blockwise_iterator_uses_thread_pool_from_context(
-    a_random_sparse_nd_array: str, shape: Tuple[int, ...]
+    a_random_sparse_nd_array: str, shape: tuple[int, ...]
 ) -> None:
     pool = mock.Mock(wraps=futures.ThreadPoolExecutor(max_workers=2))
     pool.submit.assert_not_called()
@@ -1895,7 +1895,10 @@ def test_blockwise_iterator_uses_thread_pool_from_context(
 def test_global_writes(tmp_path):
     write_options = soma.TileDBWriteOptions(**{"sort_coords": False})
 
-    soma.SparseNDArray.create(tmp_path.as_posix(), type=pa.uint8(), shape=(3,))
+    with soma.SparseNDArray.create(
+        tmp_path.as_posix(), type=pa.uint8(), shape=(3,)
+    ) as A:
+        schema = A.schema
 
     with pytest.raises(
         soma.SOMAError,
@@ -1916,7 +1919,8 @@ def test_global_writes(tmp_path):
         {
             "soma_dim_0": pa.array([0, 1, 2], type=pa.int64()),
             "soma_data": pa.array([1, 2, 3], type=pa.uint8()),
-        }
+        },
+        schema=schema,
     )
 
     with soma.SparseNDArray.open(tmp_path.as_posix(), "w") as A:
@@ -1947,7 +1951,8 @@ def test_pass_configs(tmp_path):
             {
                 "soma_dim_0": pa.array([0, 1, 2], type=pa.int64()),
                 "soma_data": pa.array([1, 2, 3], type=pa.uint8()),
-            }
+            },
+            schema=a.schema,
         )
         a.write(data)
 
@@ -2089,3 +2094,10 @@ def test_reopen_shape_sc61123(tmp_path):
         A = A.reopen(mode="r")
         assert A.shape == (10,)
         assert isinstance(A, soma.SparseNDArray)
+
+
+def test_match_read_schemas_61222(tmp_path):
+    uri = tmp_path.as_posix()
+    soma.SparseNDArray.create(uri, type=pa.int32(), shape=(None, None))
+    with soma.SparseNDArray.open(uri) as A:
+        assert A.schema == A.read().tables().concat().schema

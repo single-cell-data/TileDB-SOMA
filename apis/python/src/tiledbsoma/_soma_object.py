@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import datetime
 from contextlib import ExitStack
-from typing import Any, Generic, MutableMapping, Type, TypeVar, Union
+from typing import Any, Generic, MutableMapping, TypeVar
 
 import somacore
 from somacore import options
@@ -39,17 +39,17 @@ class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
         Maturing.
     """
 
-    _wrapper_type: Union[
-        Type[_WrapperType_co],
-        Type[_tdb_handles.DataFrameWrapper],
-        Type[_tdb_handles.DenseNDArrayWrapper],
-        Type[_tdb_handles.SparseNDArrayWrapper],
-        Type[_tdb_handles.CollectionWrapper],
-        Type[_tdb_handles.ExperimentWrapper],
-        Type[_tdb_handles.MeasurementWrapper],
-        Type[_tdb_handles.SceneWrapper],
-        Type[_tdb_handles.MultiscaleImageWrapper],
-    ]
+    _wrapper_type: (
+        type[_WrapperType_co]
+        | type[_tdb_handles.DataFrameWrapper]
+        | type[_tdb_handles.DenseNDArrayWrapper]
+        | type[_tdb_handles.SparseNDArrayWrapper]
+        | type[_tdb_handles.CollectionWrapper]
+        | type[_tdb_handles.ExperimentWrapper]
+        | type[_tdb_handles.MeasurementWrapper]
+        | type[_tdb_handles.SceneWrapper]
+        | type[_tdb_handles.MultiscaleImageWrapper]
+    )
     """Class variable of the Wrapper class used to open this object type."""
 
     __slots__ = ("_close_stack", "_handle")
@@ -63,7 +63,6 @@ class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
         tiledb_timestamp: OpenTimestamp | None = None,
         context: SOMATileDBContext | None = None,
         platform_config: options.PlatformConfig | None = None,
-        clib_type: str | None = None,
     ) -> Self:
         """Opens this specific type of SOMA object.
 
@@ -77,7 +76,7 @@ class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
             tiledb_timestamp:
                 The TileDB timestamp to open this object at,
                 either an int representing milliseconds since the Unix epoch
-                or a datetime.dateime object.
+                or a datetime.datetime object.
                 When not provided (the default), the current time is used.
 
         Returns:
@@ -113,12 +112,12 @@ class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
 
     def __init__(
         self,
-        handle: Union[
-            _WrapperType_co,
-            _tdb_handles.DataFrameWrapper,
-            _tdb_handles.DenseNDArrayWrapper,
-            _tdb_handles.SparseNDArrayWrapper,
-        ],
+        handle: (
+            _WrapperType_co
+            | _tdb_handles.DataFrameWrapper
+            | _tdb_handles.DenseNDArrayWrapper
+            | _tdb_handles.SparseNDArrayWrapper
+        ),
         *,
         _dont_call_this_use_create_or_open_instead: str = "unset",
     ):
@@ -164,7 +163,7 @@ class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
             tiledb_timestamp:
                 The TileDB timestamp to open this object at,
                 either an int representing milliseconds since the Unix epoch
-                or a datetime.dateime object.
+                or a datetime.datetime object.
                 When not provided (the default), the current time is used.
 
         Raises:
@@ -278,7 +277,7 @@ class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
             )
         if self.mode != "r":
             raise SOMAError(
-                f"{self.__class__.__name__} ({self.uri}) must be open for writing"
+                f"{self.__class__.__name__} ({self.uri}) must be open for reading"
             )
 
     @property
