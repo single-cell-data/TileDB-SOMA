@@ -1455,6 +1455,11 @@ def _write_dataframe_impl(
                 platform_config=platform_config,
                 context=context,
             )
+            # Save the original index name for outgest. We use JSON for elegant indication of index name
+            # being None (in Python anyway).
+            soma_df.metadata[_DATAFRAME_ORIGINAL_INDEX_NAME_JSON] = json.dumps(
+                original_index_metadata
+            )
         except (AlreadyExistsError, NotCreateableError):
             if ingestion_params.error_if_already_exists:
                 raise SOMAError(f"{df_uri} already exists")
@@ -1479,11 +1484,6 @@ def _write_dataframe_impl(
             arrow_table, soma_df, tiledb_create_options, tiledb_write_options
         )
 
-    # Save the original index name for outgest. We use JSON for elegant indication of index name
-    # being None (in Python anyway).
-    soma_df.metadata[_DATAFRAME_ORIGINAL_INDEX_NAME_JSON] = json.dumps(
-        original_index_metadata
-    )
     add_metadata(soma_df, additional_metadata)
 
     logging.log_io(
