@@ -580,3 +580,171 @@ Rcpp::List _get_filter_options(Rcpp::XPtr<tiledb::Filter> filter) {
         Rcpp::Named("float_offset") = _get_filter_option<double>(filter, TILEDB_SCALE_FLOAT_OFFSET)
     );
 }
+
+// adapted from tiledb-r
+// https://github.com/TileDB-Inc/TileDB-R/blob/57d3d929a5cd6d6e9bc4bf5bda0036c736ca46dc/src/libtiledb.cpp#L927-L1039
+SEXP _get_dim_domain(Rcpp::XPtr<tiledb::Dimension> dim) {
+    auto dim_type = dim->type();
+    switch (dim_type) {
+    case TILEDB_FLOAT32: {
+        using DataType = tiledb::impl::tiledb_to_type<TILEDB_FLOAT32>::type;
+        return Rcpp::NumericVector({dim->domain<DataType>().first, dim->domain<DataType>().second});
+    }
+    case TILEDB_FLOAT64: {
+        using DataType = tiledb::impl::tiledb_to_type<TILEDB_FLOAT64>::type;
+        auto d1 = dim->domain<DataType>().first;
+        auto d2 = dim->domain<DataType>().second;
+        if (d1 == R_NaReal || d2 == R_NaReal) {
+            Rcpp::stop("tiledb_dim domain FLOAT64 value not representable as an R double");
+        }
+        return Rcpp::NumericVector({d1, d2});
+    }
+    case TILEDB_INT8: {
+        using DataType = tiledb::impl::tiledb_to_type<TILEDB_INT8>::type;
+        return Rcpp::IntegerVector({dim->domain<DataType>().first, dim->domain<DataType>().second});
+    }
+    case TILEDB_UINT8: {
+        using DataType = tiledb::impl::tiledb_to_type<TILEDB_UINT8>::type;
+        return Rcpp::IntegerVector({dim->domain<DataType>().first, dim->domain<DataType>().second});
+    }
+    case TILEDB_INT16: {
+        using DataType = tiledb::impl::tiledb_to_type<TILEDB_INT16>::type;
+        return Rcpp::IntegerVector({dim->domain<DataType>().first, dim->domain<DataType>().second});
+    }
+    case TILEDB_UINT16: {
+        using DataType = tiledb::impl::tiledb_to_type<TILEDB_UINT16>::type;
+        return Rcpp::IntegerVector({dim->domain<DataType>().first, dim->domain<DataType>().second});
+    }
+    case TILEDB_INT32: {
+        using DataType = tiledb::impl::tiledb_to_type<TILEDB_INT32>::type;
+        auto d1 = dim->domain<DataType>().first;
+        auto d2 = dim->domain<DataType>().second;
+        if (d1 == R_NaInt || d2 == R_NaInt) {
+            Rcpp::stop("tiledb_dim domain INT32 value not representable as an R integer");
+        }
+        return Rcpp::IntegerVector({d1, d2});
+    }
+    case TILEDB_UINT32: {
+        using DataType = tiledb::impl::tiledb_to_type<TILEDB_UINT32>::type;
+        auto d1 = dim->domain<DataType>().first;
+        auto d2 = dim->domain<DataType>().second;
+        auto uint_max = std::numeric_limits<uint32_t>::max();
+        if (d1 > uint_max ||d2 > uint_max) {
+            Rcpp::stop("tiledb_dim domain UINT32 value not representable as an R integer64 type");
+        }
+        return Rcpp::NumericVector({static_cast<double>(d1), static_cast<double>(d2)});
+    }
+    case TILEDB_INT64: {
+        using DataType = tiledb::impl::tiledb_to_type<TILEDB_INT64>::type;
+        auto d1 = dim->domain<DataType>().first;
+        auto d2 = dim->domain<DataType>().second;
+        return Rcpp::NumericVector({static_cast<double>(d1), static_cast<double>(d2)});
+    }
+    case TILEDB_UINT64: {
+        using DataType = tiledb::impl::tiledb_to_type<TILEDB_UINT64>::type;
+        auto d1 = dim->domain<DataType>().first;
+        auto d2 = dim->domain<DataType>().second;
+        return Rcpp::NumericVector({static_cast<double>(d1), static_cast<double>(d2)});
+    }
+    case TILEDB_DATETIME_YEAR:
+    case TILEDB_DATETIME_MONTH:
+    case TILEDB_DATETIME_WEEK:
+    case TILEDB_DATETIME_DAY:
+    case TILEDB_DATETIME_HR:
+    case TILEDB_DATETIME_MIN:
+    case TILEDB_DATETIME_SEC:
+    case TILEDB_DATETIME_MS:
+    case TILEDB_DATETIME_US:
+    case TILEDB_DATETIME_NS:
+    case TILEDB_DATETIME_PS:
+    case TILEDB_DATETIME_FS:
+    case TILEDB_DATETIME_AS: {
+        using DataType = tiledb::impl::tiledb_to_type<TILEDB_INT64>::type;
+        auto d1 = dim->domain<DataType>().first;
+        auto d2 = dim->domain<DataType>().second;
+        auto int32_max = std::numeric_limits<int32_t>::max();
+        if (d1 <= R_NaInt || d1 > int32_max || d2 <= R_NaInt || d2 > int32_max) {
+            return Rcpp::NumericVector({static_cast<double>(d1), static_cast<double>(d2)});
+        }
+        return Rcpp::IntegerVector({static_cast<int32_t>(d1), static_cast<int32_t>(d2)});
+    }
+    default:
+        Rcpp::stop("invalid tiledb_dim domain type (%s)", tiledb::impl::to_str(dim_type));
+    }
+}
+
+// adapted from tiledb-r
+// https://github.com/TileDB-Inc/TileDB-R/blob/57d3d929a5cd6d6e9bc4bf5bda0036c736ca46dc/src/libtiledb.cpp#L1042-L1137
+SEXP _get_dim_tile(Rcpp::XPtr<tiledb::Dimension> dim) {
+    auto dim_type = dim->type();
+    switch (dim_type) {
+    case TILEDB_FLOAT32: {
+        using DataType = tiledb::impl::tiledb_to_type<TILEDB_FLOAT32>::type;
+        return Rcpp::wrap(static_cast<double>(dim->tile_extent<DataType>()));
+    }
+    case TILEDB_FLOAT64: {
+        using DataType = tiledb::impl::tiledb_to_type<TILEDB_FLOAT64>::type;
+        auto t = dim->tile_extent<DataType>();
+        if (t == R_NaReal) {
+            Rcpp::stop("tiledb_dim tile FLOAT64 value not representable as an R double");
+        }
+        return Rcpp::wrap(static_cast<double>(t));
+    }
+    case TILEDB_INT8: {
+        using DataType = tiledb::impl::tiledb_to_type<TILEDB_INT8>::type;
+        return Rcpp::wrap(static_cast<int32_t>(dim->tile_extent<DataType>()));
+    }
+    case TILEDB_UINT8: {
+        using DataType = tiledb::impl::tiledb_to_type<TILEDB_UINT8>::type;
+        return Rcpp::wrap(static_cast<int32_t>(dim->tile_extent<DataType>()));
+    }
+    case TILEDB_INT16: {
+        using DataType = tiledb::impl::tiledb_to_type<TILEDB_INT16>::type;
+        return Rcpp::wrap(static_cast<int32_t>(dim->tile_extent<DataType>()));
+    }
+    case TILEDB_UINT16: {
+        using DataType = tiledb::impl::tiledb_to_type<TILEDB_UINT16>::type;
+        return Rcpp::wrap(static_cast<int32_t>(dim->tile_extent<DataType>()));
+    }
+    case TILEDB_INT32: {
+        using DataType = tiledb::impl::tiledb_to_type<TILEDB_INT32>::type;
+        auto t = dim->tile_extent<DataType>();
+        if (t == R_NaInt) {
+            Rcpp::stop("tiledb_dim tile INT32 value not representable as an R integer");
+        }
+        return Rcpp::wrap(static_cast<int32_t>(t));
+    }
+    case TILEDB_UINT32: {
+        using DataType = tiledb::impl::tiledb_to_type<TILEDB_UINT32>::type;
+        auto t = dim->tile_extent<DataType>();
+        if (t > std::numeric_limits<int32_t>::max()) {
+            Rcpp::warning("tiledb_dim tile UINT32 value not representable as an R integer, returning double");
+            return Rcpp::wrap(static_cast<double>(t));
+        }
+        return Rcpp::wrap(static_cast<int32_t>(t));
+    }
+    case TILEDB_DATETIME_YEAR:
+    case TILEDB_DATETIME_MONTH:
+    case TILEDB_DATETIME_WEEK:
+    case TILEDB_DATETIME_DAY:
+    case TILEDB_DATETIME_HR:
+    case TILEDB_DATETIME_MIN:
+    case TILEDB_DATETIME_SEC:
+    case TILEDB_DATETIME_MS:
+    case TILEDB_DATETIME_US:
+    case TILEDB_DATETIME_NS:
+    case TILEDB_DATETIME_PS:
+    case TILEDB_DATETIME_FS:
+    case TILEDB_DATETIME_AS:
+    case TILEDB_INT64: {
+        using DataType = tiledb::impl::tiledb_to_type<TILEDB_INT64>::type;
+        return Rcpp::wrap(static_cast<double>(dim->tile_extent<DataType>()));
+    }
+    case TILEDB_UINT64: {
+        using DataType = tiledb::impl::tiledb_to_type<TILEDB_UINT64>::type;
+        return Rcpp::wrap(static_cast<double>(dim->tile_extent<DataType>()));
+    }
+    default:
+        Rcpp::stop("invalid tiledb_dim domain type (%s)", tiledb::impl::to_str(dim_type));
+    }
+}
