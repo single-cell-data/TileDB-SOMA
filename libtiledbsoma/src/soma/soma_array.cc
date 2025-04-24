@@ -639,7 +639,30 @@ uint64_t SOMAArray::nnz(bool raise_if_slow) {
     }
 
     // Sort non-empty domains by the start of their ranges
-    std::sort(non_empty_domains.begin(), non_empty_domains.end());
+    // Generate sorting permutation to apply to both fragment non empty domains
+    // and ids
+    std::vector<size_t> permutation(relevant_fragments.size());
+    std::iota(permutation.begin(), permutation.end(), 0);
+    std::sort(
+        permutation.begin(), permutation.end(), [&](size_t lhs, size_t rhs) {
+            return non_empty_domains[lhs][0] < non_empty_domains[rhs][0];
+        });
+
+    auto permutate =
+        []<typename T>(
+            const std::vector<T>& data,
+            const std::vector<size_t>& permutation) -> std::vector<T> {
+        std::vector<T> result(data.size());
+        std::transform(
+            permutation.cbegin(),
+            permutation.cend(),
+            result.begin(),
+            [&](std::size_t i) { return data[i]; });
+        return result;
+    };
+
+    non_empty_domains = permutate(non_empty_domains, permutation);
+    relevant_fragments = permutate(relevant_fragments, permutation);
 
     // After sorting, if the end of a non-empty domain is >= the beginning of
     // the next non-empty domain, there is an overlap
