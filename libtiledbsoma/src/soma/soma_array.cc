@@ -648,7 +648,7 @@ uint64_t SOMAArray::nnz(bool raise_if_slow) {
             return non_empty_domains[lhs][0] < non_empty_domains[rhs][0];
         });
 
-    auto permutate =
+    auto permute =
         []<typename T>(
             const std::vector<T>& data,
             const std::vector<size_t>& permutation) -> std::vector<T> {
