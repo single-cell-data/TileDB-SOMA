@@ -661,8 +661,8 @@ uint64_t SOMAArray::nnz(bool raise_if_slow) {
         return result;
     };
 
-    non_empty_domains = permutate(non_empty_domains, permutation);
-    relevant_fragments = permutate(relevant_fragments, permutation);
+    non_empty_domains = permute(non_empty_domains, permutation);
+    relevant_fragments = permute(relevant_fragments, permutation);
 
     // After sorting, if the end of a non-empty domain is >= the beginning of
     // the next non-empty domain, there is an overlap
