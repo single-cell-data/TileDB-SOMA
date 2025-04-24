@@ -168,6 +168,111 @@ std::tuple<std::vector<int64_t>, std::vector<int32_t>> write_array(
 
 };  // namespace
 
+TEST_CASE("SOMAArray: random nnz") {
+    auto ctx = std::make_shared<SOMAContext>();
+
+    // Create array
+    std::string base_uri = "mem://unit-test-array";
+    const char* dim_name = "soma_joinid";
+    const char* attr_name = "a0";
+
+    // Create schema
+    ArraySchema schema(*ctx->tiledb_ctx(), TILEDB_SPARSE);
+
+    auto dim = Dimension::create<int64_t>(
+        *ctx->tiledb_ctx(),
+        dim_name,
+        {0, std::numeric_limits<int64_t>::max() - 1});
+
+    Domain domain(*ctx->tiledb_ctx());
+    domain.add_dimension(dim);
+    schema.set_domain(domain);
+
+    auto attr = Attribute::create<int32_t>(*ctx->tiledb_ctx(), attr_name);
+    schema.add_attribute(attr);
+    schema.set_allows_dups(false);
+    schema.check();
+
+    // Create array
+    SOMAArray::create(
+        ctx,
+        base_uri,
+        std::move(schema),
+        "NONE",
+        std::nullopt,
+        TimestampRange(0, 2));
+
+    std::vector<size_t> fragment_ids(10);
+    std::iota(fragment_ids.begin(), fragment_ids.end(), 0);
+    std::shuffle(
+        fragment_ids.begin(), fragment_ids.end(), std::random_device{});
+
+    // Generate 10 random fragments with no overlap
+    for (size_t i : fragment_ids) {
+        std::vector<int64_t> d0(128 - i);
+        std::vector<int32_t> a0(128 - i, i);
+        std::iota(d0.begin(), d0.end(), i * 128);
+
+        auto soma_array = SOMAArray::open(OpenMode::write, base_uri, ctx);
+
+        // Write data to array
+        auto mq = ManagedQuery(*soma_array, ctx->tiledb_ctx(), "");
+        mq.set_layout(ResultOrder::unordered);
+        mq.setup_write_column(
+            attr_name, a0.size(), a0.data(), (uint64_t*)nullptr);
+        mq.setup_write_column(
+            dim_name, d0.size(), d0.data(), (uint64_t*)nullptr);
+        mq.submit_write();
+        mq.close();
+        soma_array->close();
+    }
+
+    // Generate a randomly overlapping tile
+    {
+        std::random_device dev;
+        std::mt19937 rng(dev());
+        std::uniform_int_distribution<std::mt19937::result_type> dist(
+            256, 1023);
+
+        auto limit0 = dist(rng);
+        auto limit1 = dist(rng);
+
+        auto min = std::min(limit0, limit1);
+        auto max = std::max(limit0, limit1);
+
+        std::vector<int64_t> d0(max - min);
+        std::vector<int32_t> a0(max - min, max);
+        std::iota(d0.begin(), d0.end(), min);
+
+        auto soma_array = SOMAArray::open(OpenMode::write, base_uri, ctx);
+
+        // Write data to array
+        auto mq = ManagedQuery(*soma_array, ctx->tiledb_ctx(), "");
+        mq.set_layout(ResultOrder::unordered);
+        mq.setup_write_column(
+            attr_name, a0.size(), a0.data(), (uint64_t*)nullptr);
+        mq.setup_write_column(
+            dim_name, d0.size(), d0.data(), (uint64_t*)nullptr);
+        mq.submit_write();
+        mq.close();
+        soma_array->close();
+    }
+
+    // Get total cell num
+    auto soma_array = SOMAArray::open(OpenMode::read, base_uri, ctx);
+
+    uint64_t nnz = soma_array->nnz();
+    auto mq = ManagedQuery(*soma_array, ctx->tiledb_ctx(), "");
+    mq.set_layout(ResultOrder::unordered);
+
+    uint64_t total_cell_num = 0;
+    while (auto batch = mq.read_next()) {
+        total_cell_num += (*batch)->num_rows();
+    }
+
+    REQUIRE(nnz == total_cell_num);
+}
+
 TEST_CASE("SOMAArray: nnz") {
     auto num_fragments = GENERATE(1, 10);
     auto overlap = GENERATE(false, true);
