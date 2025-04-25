@@ -610,20 +610,6 @@ uint64_t SOMAArray::nnz(bool raise_if_slow) {
     uint64_t total_cell_num = 0;
     uint64_t ndim = tiledb_schema()->domain().ndim();
 
-    // for (size_t i = 0; i < ndim; ++i) {
-    //     auto dim = tiledb_schema()->domain().dimension(i);
-
-    //     if (dim.type() == TILEDB_STRING_ASCII) {
-    //         LOG_DEBUG(fmt::format(
-    //             "[SOMAArray::nnz] dim {} (type={} name={}) isn't numeric: "
-    //             "using _nnz_slow",
-    //             i,
-    //             tiledb::impl::type_to_str(dim.type()),
-    //             dim.name()));
-    //         return _nnz_slow(raise_if_slow);
-    //     }
-    // }
-
     std::vector<std::vector<std::array<util::DimType, 2>>> non_empty_domains(
         fragment_count);
 
