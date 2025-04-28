@@ -1,3 +1,7 @@
+# tiledbsoma 1.16.2
+
+* Add support for reading Seurat v5 assays from an axis query
+
 # tiledbsoma 1.16.1
 
 * This release contains a Python-only bugfix
