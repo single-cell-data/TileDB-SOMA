@@ -637,12 +637,12 @@ void ManagedQuery::_promote_indexes_to_values(
             return _cast_dictionary_values<int32_t>(schema, array);
         case TILEDB_UINT32:
             return _cast_dictionary_values<uint32_t>(schema, array);
-        case TILEDB_INT64:
-            return _cast_dictionary_values<int64_t>(schema, array);
         case TILEDB_DATETIME_SEC:
         case TILEDB_DATETIME_MS:
         case TILEDB_DATETIME_US:
         case TILEDB_DATETIME_NS:
+        case TILEDB_INT64:
+            return _cast_dictionary_values<int64_t>(schema, array);
         case TILEDB_UINT64:
             return _cast_dictionary_values<uint64_t>(schema, array);
         case TILEDB_FLOAT32:
