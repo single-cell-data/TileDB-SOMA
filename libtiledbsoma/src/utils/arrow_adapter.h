@@ -492,6 +492,8 @@ class ArrowAdapter {
         std::string_view arrow_dtype_metadata = {});
 
     static enum ArrowType to_nanoarrow_type(std::string_view sv);
+    static std::pair<enum ArrowType, enum ArrowTimeUnit> to_nanoarrow_time(
+        std::string_view sv);
 
     /**
      * @brief This is a keystroke-saver.

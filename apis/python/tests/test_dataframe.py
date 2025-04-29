@@ -3650,3 +3650,41 @@ def test_extents(tmp_path, pa_type, tile):
     with soma.DataFrame.open(tmp_path.as_posix()) as A:
         dim_info = json.loads(A.schema_config_options().dims)
         assert dim_info["dim"]["tile"] == tile
+
+
+@pytest.mark.parametrize(
+    "dt_type",
+    (pa.timestamp("s"), pa.timestamp("ms"), pa.timestamp("us"), pa.timestamp("ns")),
+)
+def test_dictionary_value_type_62364(tmp_path, dt_type):
+    # https://app.shortcut.com/tiledb-inc/story/62364
+
+    uri = tmp_path.as_posix()
+    schema = pa.schema(
+        [
+            pa.field("soma_joinid", pa.int64(), nullable=False),
+            pa.field("attr", pa.dictionary(pa.int8(), dt_type), nullable=False),
+        ]
+    )
+    expected = pa.Table.from_pydict(
+        {
+            "soma_joinid": [0, 1, 2, 3],
+            "attr": pa.DictionaryArray.from_arrays(
+                indices=pa.array([0, 1, 2, 0], type=pa.int8()),
+                dictionary=pa.array([0, 1, 2], type=dt_type),
+            ),
+        }
+    )
+
+    soma.DataFrame.create(uri, schema=schema, domain=[(0, 3)])
+
+    with soma.DataFrame.open(uri, mode="r") as A:
+        assert schema == A.schema == A.read().concat().schema
+
+    with soma.DataFrame.open(uri, mode="w") as A:
+        A.write(expected)
+
+    with soma.DataFrame.open(uri, mode="r") as A:
+        actual = A.read().concat()
+        assert schema == A.schema == A.read().concat().schema
+        assert actual["attr"] == expected["attr"]
