@@ -706,7 +706,8 @@ void ManagedQuery::_cast_dictionary_values<std::string>(
 
     uint64_t num_elems = value_array->length;
 
-    std::vector<uint64_t> offsets_v(num_elems + 1);
+    std::vector<uint64_t> offsets_v;
+    offsets_v.reserve(num_elems + 1);
     if (strcmp(value_schema->format, "U") == 0 ||
         strcmp(value_schema->format, "Z") == 0) {
         uint64_t* offsets = (uint64_t*)value_array->buffers[1];
