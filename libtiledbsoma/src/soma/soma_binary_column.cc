@@ -376,15 +376,14 @@ ArrowSchema* SOMABinaryColumn::arrow_schema_slot(
     const SOMAContext& ctx, Array& array) const {
     if (isIndexColumn()) {
         ArrowSchema* schema = ArrowAdapter::arrow_schema_from_tiledb_dimension(
-                                  std::get<Dimension>(container))
-                                  .release();
+            std::get<Dimension>(container));
+        free((void*)schema->format);
         schema->format = strdup("Z");
 
         return schema;
     } else {
         return ArrowAdapter::arrow_schema_from_tiledb_attribute(
-                   std::get<Attribute>(container), *ctx.tiledb_ctx(), array)
-            .release();
+            std::get<Attribute>(container), *ctx.tiledb_ctx(), array);
     }
 }
 

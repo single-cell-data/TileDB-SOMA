@@ -1067,7 +1067,7 @@ class ManagedQuery {
     }
 
     template <typename ValueType, typename IndexType>
-        requires std::same_as<ValueType, std::string_view>
+        requires(!std::same_as<ValueType, std::string_view>)
     void _remap_indexes_aux(
         std::string column_name,
         Enumeration extended_enmr,
@@ -1264,11 +1264,11 @@ void ManagedQuery::_cast_dictionary_values<bool>(
     ArrowSchema* schema, ArrowArray* array);
 
 template <>
-bool ManagedQuery::_cast_column_aux<bool>(
+bool ManagedQuery::_cast_column_aux<std::string>(
     ArrowSchema* schema, ArrowArray* array, ArraySchemaEvolution se);
 
 template <>
-bool ManagedQuery::_cast_column_aux<std::string>(
+bool ManagedQuery::_cast_column_aux<bool>(
     ArrowSchema* schema, ArrowArray* array, ArraySchemaEvolution se);
 
 template <>
@@ -1294,6 +1294,16 @@ ManagedQuery::_extend_and_evolve_schema_with_details<std::string>(
     bool deduplicate,
     Enumeration enmr,
     ArraySchemaEvolution& se);
+
+template <>
+bool ManagedQuery::
+    _extend_and_evolve_schema_without_details<std::string, std::string_view>(
+        ArrowSchema* value_schema,
+        ArrowArray* value_array,
+        const std::string& column_name,
+        bool deduplicate,
+        Enumeration enmr,
+        ArraySchemaEvolution& se);
 
 template <>
 std::vector<std::string_view> ManagedQuery::_enumeration_values_view(
