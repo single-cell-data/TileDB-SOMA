@@ -1475,11 +1475,13 @@ tiledb_datatype_t ArrowAdapter::to_tiledb_format(
         return dtype;
     } catch (const std::out_of_range& e) {
         throw std::out_of_range(fmt::format(
-            "ArrowAdapter: Unsupported Arrow type: {} ", arrow_dtype));
+            "ArrowAdapter: Unsupported Arrow type: {} ({})",
+            arrow_dtype,
+            to_arrow_readable(arrow_dtype)));
     }
 }
 
-enum ArrowType ArrowAdapter::to_nanoarrow_type(std::string_view sv) {
+enum ArrowType ArrowAdapter::to_nanoarrow_type(std::string_view arrow_dtype) {
     std::map<std::string_view, enum ArrowType> _to_nanoarrow_type_map = {
         {"i", NANOARROW_TYPE_INT32},        {"c", NANOARROW_TYPE_INT8},
         {"C", NANOARROW_TYPE_UINT8},        {"s", NANOARROW_TYPE_INT16},
@@ -1494,15 +1496,17 @@ enum ArrowType ArrowAdapter::to_nanoarrow_type(std::string_view sv) {
     };
 
     try {
-        return _to_nanoarrow_type_map.at(sv);
+        return _to_nanoarrow_type_map.at(arrow_dtype);
     } catch (const std::out_of_range& e) {
-        throw std::out_of_range(
-            fmt::format("ArrowAdapter: Unsupported nanoarrow format: {} ", sv));
+        throw std::out_of_range(fmt::format(
+            "ArrowAdapter: Unsupported Arrow type: {} ({})",
+            arrow_dtype,
+            to_arrow_readable(arrow_dtype)));
     }
 }
 
 std::pair<enum ArrowType, enum ArrowTimeUnit> ArrowAdapter::to_nanoarrow_time(
-    std::string_view sv) {
+    std::string_view arrow_dtype) {
     std::map<std::string_view, std::pair<enum ArrowType, enum ArrowTimeUnit>>
         _to_nanoarrow_time = {
             {"tss:", {NANOARROW_TYPE_TIMESTAMP, NANOARROW_TIME_UNIT_SECOND}},
@@ -1512,11 +1516,63 @@ std::pair<enum ArrowType, enum ArrowTimeUnit> ArrowAdapter::to_nanoarrow_time(
         };
 
     try {
-        return _to_nanoarrow_time.at(sv);
+        return _to_nanoarrow_time.at(arrow_dtype);
     } catch (const std::out_of_range& e) {
         throw std::out_of_range(fmt::format(
-            "ArrowAdapter: Unsupported nanoarrow timestamp format: {} ", sv));
+            "ArrowAdapter: Unsupported Arrow type: {} ({})",
+            arrow_dtype,
+            to_arrow_readable(arrow_dtype)));
     }
+}
+
+std::string_view ArrowAdapter::to_arrow_readable(std::string_view arrow_dtype) {
+    std::map<std::string_view, std::string_view> _to_arrow_readable = {
+        {"n", "null"},
+        {"b", "boolean"},
+        {"c", "int8"},
+        {"C", "uint8"},
+        {"s", "int16"},
+        {"S", "uint16"},
+        {"i", "int32"},
+        {"I", "uint32"},
+        {"l", "int64"},
+        {"L", "uint64"},
+        {"e", "float16"},
+        {"f", "float32"},
+        {"g", "float64"},
+        {"z", "binary"},
+        {"Z", "large binary"},
+        {"vz", "binary view"},
+        {"u", "utf-8 string"},
+        {"U", "large utf-8 string"},
+        {"vu", "utf-8 view"},
+        {"tdD", "date32 [days]"},
+        {"tdm", "date64 [milliseconds]"},
+        {"tts", "time32 [seconds]"},
+        {"ttm", "time32 [milliseconds]"},
+        {"ttu", "time64 [microseconds]"},
+        {"ttn", "time64 [nanoseconds]"},
+        {"tDs", "duration [seconds]"},
+        {"tDm", "duration [milliseconds]"},
+        {"tDu", "duration [microseconds]"},
+        {"tDn", "duration [nanoseconds]"},
+        {"tiM", "interval [months]"},
+        {"tiD", "interval [days, time]"},
+        {"tin", "interval [month, day, nanoseconds]"},
+        {"+l", "list"},
+        {"+L", "large list"},
+        {"+vl", "list-view"},
+        {"+vL", "large list-view"},
+        {"+s", "struct"},
+        {"+m", "map"},
+        {"+r", "run-end encoded"}};
+
+    auto it = _to_arrow_readable.find(arrow_dtype);
+    return it != _to_arrow_readable.end() ?
+               it->second :
+               "unknown Arrow type [see "
+               "https://arrow.apache.org/docs/format/"
+               "CDataInterface.html#data-type-description-format-strings]";
 }
 
 std::unique_ptr<ArrowSchema> ArrowAdapter::make_arrow_schema(
