@@ -7,7 +7,11 @@
 .onLoad <- function(libname, pkgname) {
   ## create a slot for somactx in per-package enviroment, do no fill it yet to allow 'lazy load'
   .pkgenv[["somactx"]] <- NULL
+}
 
+## An .onAttach() function is not allowed to use cat() etc but _must_ communicate via
+## packageStartupMessage() as this function can be 'muzzled' as desired. See Writing R Extensions.
+.onAttach <- function(libname, pkgname) {
   rpkg_lib <- tiledb::tiledb_version(compact = FALSE)
   # Check major and minor but not micro: sc-50464
   rpkg_lib_version <- paste(rpkg_lib[["major"]], rpkg_lib[["minor"]], sep = ".")
@@ -19,11 +23,6 @@
     )
     packageStartupMessage(msg)
   }
-}
-
-## An .onAttach() function is not allowed to use cat() etc but _must_ communicate via
-## packageStartupMessage() as this function can be 'muzzled' as desired. See Writing R Extensions.
-.onAttach <- function(libname, pkgname) {
   if (interactive()) {
     packageStartupMessage(
       "TileDB-SOMA R package ", packageVersion(pkgname),
