@@ -3650,3 +3650,58 @@ def test_extents(tmp_path, pa_type, tile):
     with soma.DataFrame.open(tmp_path.as_posix()) as A:
         dim_info = json.loads(A.schema_config_options().dims)
         assert dim_info["dim"]["tile"] == tile
+
+
+def test_fragments_in_writes(tmp_path):
+    uri = tmp_path.as_posix()
+
+    # --- three dataframes, all with identical schema
+    df_0 = pd.DataFrame(
+        {
+            "soma_joinid": pd.Series([0, 1, 2, 3], dtype=np.int64),
+            "obs": pd.Series(["A", "B", "A", "B"], dtype="str"),
+        }
+    )
+    df_1 = pd.DataFrame(
+        {
+            "soma_joinid": pd.Series([4, 5, 6, 7], dtype=np.int64),
+            "obs": pd.Series(["A", "A", "B", "B"], dtype="str"),
+        }
+    )
+    df_2 = pd.DataFrame(
+        {
+            "soma_joinid": pd.Series([8, 9, 10, 11], dtype=np.int64),
+            "obs": pd.Series(["B", "C", "B", "C"], dtype="str"),
+        }
+    )
+    expected_df = pd.concat([df_0, df_1, df_2], ignore_index=True)
+
+    soma.DataFrame.create(
+        uri,
+        schema=pa.Schema.from_pandas(df_0, preserve_index=False),
+        domain=[[0, 11]],
+    ).close()
+
+    with soma.DataFrame.open(uri, mode="w") as A:
+        # Three-chunk table
+        A.write(
+            pa.concat_tables(
+                [
+                    pa.Table.from_pandas(df_0, preserve_index=False),
+                    pa.Table.from_pandas(df_1, preserve_index=False),
+                    pa.Table.from_pandas(df_2, preserve_index=False),
+                ]
+            ),
+            platform_config=soma.TileDBWriteOptions(**{"sort_coords": False}),
+        )
+
+    # There should be a single fragment even though there are three chunks (and
+    # therefore three submits) in the array because we only finalize once at
+    # the end
+    assert len(list((Path(uri) / "__commits").iterdir())) == 1
+    assert len(list((Path(uri) / "__fragments").iterdir())) == 1
+
+    with soma.open(uri) as A:
+        df = A.read().concat().to_pandas()
+
+    assert df.equals(expected_df)
