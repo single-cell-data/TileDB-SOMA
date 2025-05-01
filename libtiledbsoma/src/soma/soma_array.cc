@@ -460,6 +460,10 @@ SOMAArray::get_enumeration_values_for_column(std::string column_name) {
             output_arrow_array = ArrowAdapter::make_arrow_array_child(
                 core_enum.as_vector<uint32_t>());
             break;
+        case TILEDB_DATETIME_SEC:
+        case TILEDB_DATETIME_MS:
+        case TILEDB_DATETIME_US:
+        case TILEDB_DATETIME_NS:
         case TILEDB_INT64:
             output_arrow_array = ArrowAdapter::make_arrow_array_child(
                 core_enum.as_vector<int64_t>());

@@ -589,29 +589,11 @@ bool ManagedQuery::_cast_column(
             return _cast_column_aux<int32_t>(schema, array, se);
         case TILEDB_UINT32:
             return _cast_column_aux<uint32_t>(schema, array, se);
-        case TILEDB_INT64:
-        case TILEDB_DATETIME_YEAR:
-        case TILEDB_DATETIME_MONTH:
-        case TILEDB_DATETIME_WEEK:
-        case TILEDB_DATETIME_DAY:
-        case TILEDB_DATETIME_HR:
-        case TILEDB_DATETIME_MIN:
         case TILEDB_DATETIME_SEC:
         case TILEDB_DATETIME_MS:
         case TILEDB_DATETIME_US:
         case TILEDB_DATETIME_NS:
-        case TILEDB_DATETIME_PS:
-        case TILEDB_DATETIME_FS:
-        case TILEDB_DATETIME_AS:
-        case TILEDB_TIME_HR:
-        case TILEDB_TIME_MIN:
-        case TILEDB_TIME_SEC:
-        case TILEDB_TIME_MS:
-        case TILEDB_TIME_US:
-        case TILEDB_TIME_NS:
-        case TILEDB_TIME_PS:
-        case TILEDB_TIME_FS:
-        case TILEDB_TIME_AS:
+        case TILEDB_INT64:
             return _cast_column_aux<int64_t>(schema, array, se);
         case TILEDB_UINT64:
             return _cast_column_aux<uint64_t>(schema, array, se);
@@ -655,30 +637,12 @@ void ManagedQuery::_promote_indexes_to_values(
             return _cast_dictionary_values<int32_t>(schema, array);
         case TILEDB_UINT32:
             return _cast_dictionary_values<uint32_t>(schema, array);
-        case TILEDB_INT64:
-            return _cast_dictionary_values<int64_t>(schema, array);
-        case TILEDB_DATETIME_YEAR:
-        case TILEDB_DATETIME_MONTH:
-        case TILEDB_DATETIME_WEEK:
-        case TILEDB_DATETIME_DAY:
-        case TILEDB_DATETIME_HR:
-        case TILEDB_DATETIME_MIN:
         case TILEDB_DATETIME_SEC:
         case TILEDB_DATETIME_MS:
         case TILEDB_DATETIME_US:
         case TILEDB_DATETIME_NS:
-        case TILEDB_DATETIME_PS:
-        case TILEDB_DATETIME_FS:
-        case TILEDB_DATETIME_AS:
-        case TILEDB_TIME_HR:
-        case TILEDB_TIME_MIN:
-        case TILEDB_TIME_SEC:
-        case TILEDB_TIME_MS:
-        case TILEDB_TIME_US:
-        case TILEDB_TIME_NS:
-        case TILEDB_TIME_PS:
-        case TILEDB_TIME_FS:
-        case TILEDB_TIME_AS:
+        case TILEDB_INT64:
+            return _cast_dictionary_values<int64_t>(schema, array);
         case TILEDB_UINT64:
             return _cast_dictionary_values<uint64_t>(schema, array);
         case TILEDB_FLOAT32:
@@ -910,28 +874,10 @@ bool ManagedQuery::_cast_column_aux(
         case TILEDB_UINT32:
             return _set_column<UserType, uint32_t>(schema, array, se);
         case TILEDB_INT64:
-        case TILEDB_DATETIME_YEAR:
-        case TILEDB_DATETIME_MONTH:
-        case TILEDB_DATETIME_WEEK:
-        case TILEDB_DATETIME_DAY:
-        case TILEDB_DATETIME_HR:
-        case TILEDB_DATETIME_MIN:
         case TILEDB_DATETIME_SEC:
         case TILEDB_DATETIME_MS:
         case TILEDB_DATETIME_US:
         case TILEDB_DATETIME_NS:
-        case TILEDB_DATETIME_PS:
-        case TILEDB_DATETIME_FS:
-        case TILEDB_DATETIME_AS:
-        case TILEDB_TIME_HR:
-        case TILEDB_TIME_MIN:
-        case TILEDB_TIME_SEC:
-        case TILEDB_TIME_MS:
-        case TILEDB_TIME_US:
-        case TILEDB_TIME_NS:
-        case TILEDB_TIME_PS:
-        case TILEDB_TIME_FS:
-        case TILEDB_TIME_AS:
             return _set_column<UserType, int64_t>(schema, array, se);
         case TILEDB_UINT64:
             return _set_column<UserType, uint64_t>(schema, array, se);
@@ -984,6 +930,10 @@ bool ManagedQuery::_extend_and_write_enumeration(
         case TILEDB_UINT32:
             return _extend_and_evolve_schema_and_write<uint32_t>(
                 value_schema, value_array, index_schema, index_array, enmr, se);
+        case TILEDB_DATETIME_SEC:
+        case TILEDB_DATETIME_MS:
+        case TILEDB_DATETIME_US:
+        case TILEDB_DATETIME_NS:
         case TILEDB_INT64:
             return _extend_and_evolve_schema_and_write<int64_t>(
                 value_schema, value_array, index_schema, index_array, enmr, se);

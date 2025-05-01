@@ -742,10 +742,6 @@ Dimension ArrowAdapter::_create_dim(
     switch (type) {
         case TILEDB_STRING_ASCII:
             return Dimension::create(*ctx, name, type, nullptr, nullptr);
-        case TILEDB_TIME_SEC:
-        case TILEDB_TIME_MS:
-        case TILEDB_TIME_US:
-        case TILEDB_TIME_NS:
         case TILEDB_DATETIME_SEC:
         case TILEDB_DATETIME_MS:
         case TILEDB_DATETIME_US:
@@ -1264,7 +1260,17 @@ ArrowAdapter::to_arrow(std::shared_ptr<ColumnBuffer> column) {
 
     auto coltype = to_arrow_format(column->type()).data();
     auto natype = to_nanoarrow_type(coltype);
-    exitIfError(ArrowSchemaInitFromType(sch, natype), "Bad schema init");
+
+    if (natype == NANOARROW_TYPE_TIMESTAMP) {
+        ArrowSchemaInit(sch);
+        auto [ts_type, ts_unit] = to_nanoarrow_time(coltype);
+        exitIfError(
+            ArrowSchemaSetTypeDateTime(sch, ts_type, ts_unit, NULL),
+            "Bad datetime");
+    } else {
+        exitIfError(ArrowSchemaInitFromType(sch, natype), "Bad schema init");
+    }
+
     exitIfError(
         ArrowSchemaSetName(sch, column->name().data()), "Bad schema name");
     exitIfError(
@@ -1286,7 +1292,7 @@ ArrowAdapter::to_arrow(std::shared_ptr<ColumnBuffer> column) {
     //   0, the ColumnBuffer data will be deleted.
     auto arrow_buffer = new ArrowBuffer(column);
 
-    exitIfError(ArrowArrayInitFromType(arr, natype), "Bad array init");
+    exitIfError(ArrowArrayInitFromSchema(arr, sch, NULL), "Bad array init");
     exitIfError(ArrowArrayAllocateChildren(arr, 0), "Bad array children alloc");
     array->length = column->size();
 
@@ -1352,33 +1358,6 @@ ArrowAdapter::to_arrow(std::shared_ptr<ColumnBuffer> column) {
         column->data_to_bitmap();
     }
 
-    // Workaround for datetime
-    if (column->type() == TILEDB_DATETIME_SEC ||
-        column->type() == TILEDB_DATETIME_MS ||
-        column->type() == TILEDB_DATETIME_NS) {
-        free((void*)schema->format);  // free the 'storage' format
-        schema->format = strdup(to_arrow_format(column->type()).data());
-    }
-
-    // Workaround for date
-    if (column->type() == TILEDB_DATETIME_DAY) {
-        free((void*)schema->format);  // free the 'storage' format
-        schema->format = strdup(to_arrow_format(column->type()).data());
-        // TODO: Put in ColumnBuffer
-        size_t n = array->length;
-        std::vector<int64_t> indata(n);
-        std::memcpy(
-            indata.data(), column->data<double>().data(), sizeof(int64_t) * n);
-        std::vector<int32_t> vec(n);
-        for (size_t i = 0; i < n; i++) {
-            vec[i] = static_cast<int32_t>(indata[i]);
-        }
-        std::memcpy(
-            (void*)array->buffers[n_buffers - 1],
-            vec.data(),
-            sizeof(int32_t) * n);
-    }
-
     auto enmr = column->get_enumeration_info();
     if (enmr.has_value()) {
         auto dict_sch = (ArrowSchema*)malloc(sizeof(ArrowSchema));
@@ -1387,16 +1366,27 @@ ArrowAdapter::to_arrow(std::shared_ptr<ColumnBuffer> column) {
         auto dcoltype = to_arrow_format(enmr->type(), false).data();
         auto dnatype = to_nanoarrow_type(dcoltype);
 
-        exitIfError(
-            ArrowSchemaInitFromType(dict_sch, dnatype), "Bad schema init");
-        exitIfError(ArrowSchemaSetName(dict_sch, ""), "Bad schema name");
+        if (dnatype == NANOARROW_TYPE_TIMESTAMP) {
+            ArrowSchemaInit(dict_sch);
+            auto [ts_type, ts_unit] = to_nanoarrow_time(dcoltype);
+            exitIfError(
+                ArrowSchemaSetTypeDateTime(dict_sch, ts_type, ts_unit, NULL),
+                "Bad datetime");
+        } else {
+            exitIfError(
+                ArrowSchemaInitFromType(dict_sch, dnatype),
+                "Bad dict schema init");
+        }
+
+        exitIfError(ArrowSchemaSetName(dict_sch, ""), "Bad dict schema name");
         exitIfError(
             ArrowSchemaAllocateChildren(dict_sch, 0),
-            "Bad schema children alloc");
+            "Bad dict schema children alloc");
         dict_sch->release = &release_schema;
 
         exitIfError(
-            ArrowArrayInitFromType(dict_arr, dnatype), "Bad array init");
+            ArrowArrayInitFromSchema(dict_arr, dict_sch, NULL),
+            "Bad dict array init");
         exitIfError(
             ArrowArrayAllocateChildren(dict_arr, 0),
             "Bad array children alloc");
@@ -1447,7 +1437,6 @@ std::string_view ArrowAdapter::to_arrow_format(
         {TILEDB_DATETIME_MS, "tsm:"}, {TILEDB_DATETIME_US, "tsu:"},
         {TILEDB_DATETIME_NS, "tsn:"}, {TILEDB_GEOM_WKB, z},
         {TILEDB_GEOM_WKT, u}};
-
     try {
         return _to_arrow_format_map.at(tiledb_dtype);
     } catch (const std::out_of_range& e) {
@@ -1486,55 +1475,104 @@ tiledb_datatype_t ArrowAdapter::to_tiledb_format(
         return dtype;
     } catch (const std::out_of_range& e) {
         throw std::out_of_range(fmt::format(
-            "ArrowAdapter: Unsupported Arrow type: {} ", arrow_dtype));
+            "ArrowAdapter: Unsupported Arrow type: {} ({})",
+            arrow_dtype,
+            to_arrow_readable(arrow_dtype)));
     }
 }
 
-// FIXME: Add more types, maybe make it a map
-enum ArrowType ArrowAdapter::to_nanoarrow_type(std::string_view sv) {
-    if (sv == "i")
-        return NANOARROW_TYPE_INT32;
-    else if (sv == "c")
-        return NANOARROW_TYPE_INT8;
-    else if (sv == "C")
-        return NANOARROW_TYPE_UINT8;
-    else if (sv == "s")
-        return NANOARROW_TYPE_INT16;
-    else if (sv == "S")
-        return NANOARROW_TYPE_UINT16;
-    else if (sv == "I")
-        return NANOARROW_TYPE_UINT32;
-    else if (sv == "l")
-        return NANOARROW_TYPE_INT64;
-    else if (sv == "L")
-        return NANOARROW_TYPE_UINT64;
-    else if (sv == "f")
-        return NANOARROW_TYPE_FLOAT;
-    else if (sv == "g")
-        return NANOARROW_TYPE_DOUBLE;
-    else if (sv == "u")
-        return NANOARROW_TYPE_STRING;
-    else if (sv == "U")
-        return NANOARROW_TYPE_LARGE_STRING;
-    else if (sv == "b")
-        return NANOARROW_TYPE_BOOL;
-    else if (sv == "tss:")
-        return NANOARROW_TYPE_INT64;  // NB time resolution set indepedently
-    else if (sv == "tsm:")
-        return NANOARROW_TYPE_INT64;  // NB time resolution set indepedently
-    else if (sv == "tsn:")
-        return NANOARROW_TYPE_INT64;  // NB time resolution set indepedently
-    else if (sv == "tsu:")
-        return NANOARROW_TYPE_INT64;  // NB time resolution set indepedently
-    else if (sv == "tdD")
-        return NANOARROW_TYPE_INT32;  // R Date: fractional days since epoch
-    else if (sv == "z")
-        return NANOARROW_TYPE_BINARY;
-    else if (sv == "Z")
-        return NANOARROW_TYPE_LARGE_BINARY;
-    else
-        throw TileDBSOMAError(
-            fmt::format("ArrowAdapter: Unsupported Arrow format: {} ", sv));
+enum ArrowType ArrowAdapter::to_nanoarrow_type(std::string_view arrow_dtype) {
+    std::map<std::string_view, enum ArrowType> _to_nanoarrow_type_map = {
+        {"i", NANOARROW_TYPE_INT32},        {"c", NANOARROW_TYPE_INT8},
+        {"C", NANOARROW_TYPE_UINT8},        {"s", NANOARROW_TYPE_INT16},
+        {"S", NANOARROW_TYPE_UINT16},       {"I", NANOARROW_TYPE_UINT32},
+        {"l", NANOARROW_TYPE_INT64},        {"L", NANOARROW_TYPE_UINT64},
+        {"f", NANOARROW_TYPE_FLOAT},        {"g", NANOARROW_TYPE_DOUBLE},
+        {"u", NANOARROW_TYPE_STRING},       {"U", NANOARROW_TYPE_LARGE_STRING},
+        {"b", NANOARROW_TYPE_BOOL},         {"tss:", NANOARROW_TYPE_TIMESTAMP},
+        {"tsm:", NANOARROW_TYPE_TIMESTAMP}, {"tsn:", NANOARROW_TYPE_TIMESTAMP},
+        {"tsu:", NANOARROW_TYPE_TIMESTAMP}, {"tdD", NANOARROW_TYPE_TIMESTAMP},
+        {"z", NANOARROW_TYPE_BINARY},       {"Z", NANOARROW_TYPE_LARGE_BINARY},
+    };
+
+    try {
+        return _to_nanoarrow_type_map.at(arrow_dtype);
+    } catch (const std::out_of_range& e) {
+        throw std::out_of_range(fmt::format(
+            "ArrowAdapter: Unsupported Arrow type: {} ({})",
+            arrow_dtype,
+            to_arrow_readable(arrow_dtype)));
+    }
+}
+
+std::pair<enum ArrowType, enum ArrowTimeUnit> ArrowAdapter::to_nanoarrow_time(
+    std::string_view arrow_dtype) {
+    std::map<std::string_view, std::pair<enum ArrowType, enum ArrowTimeUnit>>
+        _to_nanoarrow_time = {
+            {"tss:", {NANOARROW_TYPE_TIMESTAMP, NANOARROW_TIME_UNIT_SECOND}},
+            {"tsm:", {NANOARROW_TYPE_TIMESTAMP, NANOARROW_TIME_UNIT_MILLI}},
+            {"tsu:", {NANOARROW_TYPE_TIMESTAMP, NANOARROW_TIME_UNIT_MICRO}},
+            {"tsn:", {NANOARROW_TYPE_TIMESTAMP, NANOARROW_TIME_UNIT_NANO}},
+        };
+
+    try {
+        return _to_nanoarrow_time.at(arrow_dtype);
+    } catch (const std::out_of_range& e) {
+        throw std::out_of_range(fmt::format(
+            "ArrowAdapter: Unsupported Arrow type: {} ({})",
+            arrow_dtype,
+            to_arrow_readable(arrow_dtype)));
+    }
+}
+
+std::string_view ArrowAdapter::to_arrow_readable(std::string_view arrow_dtype) {
+    std::map<std::string_view, std::string_view> _to_arrow_readable = {
+        {"n", "null"},
+        {"b", "boolean"},
+        {"c", "int8"},
+        {"C", "uint8"},
+        {"s", "int16"},
+        {"S", "uint16"},
+        {"i", "int32"},
+        {"I", "uint32"},
+        {"l", "int64"},
+        {"L", "uint64"},
+        {"e", "float16"},
+        {"f", "float32"},
+        {"g", "float64"},
+        {"z", "binary"},
+        {"Z", "large binary"},
+        {"vz", "binary view"},
+        {"u", "utf-8 string"},
+        {"U", "large utf-8 string"},
+        {"vu", "utf-8 view"},
+        {"tdD", "date32 [days]"},
+        {"tdm", "date64 [milliseconds]"},
+        {"tts", "time32 [seconds]"},
+        {"ttm", "time32 [milliseconds]"},
+        {"ttu", "time64 [microseconds]"},
+        {"ttn", "time64 [nanoseconds]"},
+        {"tDs", "duration [seconds]"},
+        {"tDm", "duration [milliseconds]"},
+        {"tDu", "duration [microseconds]"},
+        {"tDn", "duration [nanoseconds]"},
+        {"tiM", "interval [months]"},
+        {"tiD", "interval [days, time]"},
+        {"tin", "interval [month, day, nanoseconds]"},
+        {"+l", "list"},
+        {"+L", "large list"},
+        {"+vl", "list-view"},
+        {"+vL", "large list-view"},
+        {"+s", "struct"},
+        {"+m", "map"},
+        {"+r", "run-end encoded"}};
+
+    auto it = _to_arrow_readable.find(arrow_dtype);
+    return it != _to_arrow_readable.end() ?
+               it->second :
+               "unknown Arrow type [see "
+               "https://arrow.apache.org/docs/format/"
+               "CDataInterface.html#data-type-description-format-strings]";
 }
 
 std::unique_ptr<ArrowSchema> ArrowAdapter::make_arrow_schema(
@@ -1932,6 +1970,10 @@ size_t ArrowAdapter::_set_dictionary_buffers(
             return data_size / sizeof(int32_t);
         case TILEDB_UINT32:
             return data_size / sizeof(uint32_t);
+        case TILEDB_DATETIME_SEC:
+        case TILEDB_DATETIME_MS:
+        case TILEDB_DATETIME_US:
+        case TILEDB_DATETIME_NS:
         case TILEDB_INT64:
             return data_size / sizeof(int64_t);
         case TILEDB_UINT64:
