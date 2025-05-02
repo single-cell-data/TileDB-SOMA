@@ -20,7 +20,7 @@ import somacore.collection
 from somacore import options
 from typing_extensions import Self
 
-from . import _funcs, _tdb_handles
+from . import _funcs, _tdb_handles, _util
 from . import pytiledbsoma as clib
 from ._common_nd_array import NDArray
 from ._dataframe import DataFrame
@@ -100,6 +100,7 @@ class CollectionBase(  # type: ignore[misc]  # __eq__ false positive
         """
         context = _validate_soma_tiledb_context(context)
         try:
+            _util.SafeURI.validate(uri, raise_error=True)
             wrapper = cast(_tdb_handles.SOMAGroupWrapper[Any], cls._wrapper_type)
             timestamp_ms = context._open_timestamp_ms(tiledb_timestamp)
             clib.SOMAGroup.create(
