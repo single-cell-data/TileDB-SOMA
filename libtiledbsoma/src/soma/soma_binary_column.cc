@@ -87,8 +87,8 @@ std::shared_ptr<SOMABinaryColumn> SOMABinaryColumn::create(
             array,
             soma_type,
             type_metadata,
-            "",
-            "",
+            "", //prefix
+            "", //suffix
             platform_config);
 
         return std::make_shared<SOMABinaryColumn>(dimension);
@@ -107,8 +107,7 @@ void SOMABinaryColumn::_set_dim_points(
     if (!isIndexColumn()) {
         throw TileDBSOMAError(fmt::format(
             "[SOMABinaryColumn][_set_dim_points] Column with name {} is not an "
-            "index "
-            "column",
+            "index column",
             name()));
     }
 
@@ -128,8 +127,7 @@ void SOMABinaryColumn::_set_dim_ranges(
     if (!isIndexColumn()) {
         throw TileDBSOMAError(fmt::format(
             "[SOMABinaryColumn][_set_dim_ranges] Column with name {} is not an "
-            "index "
-            "column",
+            "index column",
             name()));
     }
 
@@ -155,9 +153,7 @@ void SOMABinaryColumn::_set_current_domain_slot(
     if (!isIndexColumn()) {
         throw TileDBSOMAError(fmt::format(
             "[SOMABinaryColumn][_set_current_domain_slot] Column with name {} "
-            "is "
-            "not "
-            "an index column",
+            "is not an index column",
             name()));
     }
 
@@ -174,8 +170,7 @@ void SOMABinaryColumn::_set_current_domain_slot(
     } else {
         throw TileDBSOMAError(fmt::format(
             "[SOMABinaryColumn][_set_current_domain_slot] domain (\"{}\", "
-            "\"{}\") cannot be set for "
-            "binary index columns: please use "
+            "\"{}\") cannot be set for binary index columns: please use "
             "(\"\", \"\")",
             std::string(
                 reinterpret_cast<const char*>(dom[0].data()), dom[0].size()),
