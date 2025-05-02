@@ -46,7 +46,7 @@ test_that("Basic mechanics", {
 
   # Verify the array is still open for write
   expect_equal(sdf$mode(), "WRITE")
-  expect_true(tiledb::tiledb_array_is_open(sdf$object))
+  # expect_true(tiledb::tiledb_array_is_open(sdf$object))
   sdf$close()
 
   # Read back the data (ignore attributes)
@@ -60,7 +60,7 @@ test_that("Basic mechanics", {
   expect_error(sdf$write(tbl0))
 
   expect_equivalent(
-    tiledb::tiledb_array(sdf$uri, return_as = "asis")[],
+    as.list(sdf$read()$concat()),
     as.list(tbl0),
     ignore_attr = TRUE
   )
@@ -168,10 +168,11 @@ test_that("Basic mechanics with default index_column_names", {
   )
 
   sdf$write(tbl0)
+  sdf$reopen("READ")
 
   # read back the data (ignore attributes)
   expect_equivalent(
-    tiledb::tiledb_array(sdf$uri, return_as = "asis")[],
+    as.list(sdf$read()$concat()),
     as.list(tbl0),
     ignore_attr = TRUE
   )

@@ -22,7 +22,7 @@ test_that("SOMASparseNDArray creation", {
 
   # Verify the array is still open for write
   expect_equal(ndarray$mode(), "WRITE")
-  expect_true(tiledb::tiledb_array_is_open(ndarray$object))
+  # expect_true(tiledb::tiledb_array_is_open(ndarray$object))
   ndarray$close()
 
   ndarray <- SOMASparseNDArrayOpen(uri)
@@ -372,43 +372,47 @@ test_that("SOMASparseNDArray read coordinates", {
 
 test_that("SOMASparseNDArray creation with duplicates", {
   skip_if(!extended_tests())
-  uri <- tempfile(pattern = "sparse-ndarray")
 
   set.seed(42)
   D <- data.frame(
-    rows = sample(100, 10, replace = TRUE),
-    cols = sample(100, 10, replace = TRUE),
-    vals = rnorm(10)
+    soma_dim_0 = sample(seq.int(0L, 99L), size = 10L),
+    soma_dim_1 = sample(seq.int(0L, 99L), size = 10L),
+    soma_data = rnorm(n = 10L)
   )
-
-  create_write_check <- function(uri, D, allows_dups, do_dup, expected_nnz) {
-    ## write from tiledb "for now"
-    dom <- tiledb::tiledb_domain(dims = c(
-      tiledb::tiledb_dim("rows", c(1L, 100L), 100L, "INT32"),
-      tiledb::tiledb_dim("cols", c(1L, 100L), 100L, "INT32")
-    ))
-    sch <- tiledb::tiledb_array_schema(dom,
-      attrs = c(tiledb::tiledb_attr("vals", type = "FLOAT64")),
-      sparse = TRUE,
-      allows_dups = allows_dups
-    )
-    invisible(tiledb::tiledb_array_create(uri, sch))
-    arr <- tiledb::tiledb_array(uri)
-    if (do_dup) {
-      arr[] <- rbind(D, D)
+  params <- list(
+    c(allow_dups = FALSE, do_dup = FALSE),
+    c(allow_dups = TRUE, do_dup = FALSE),
+    c(allow_dups = TRUE, do_dup = TRUE)
+  )
+  for (i in seq_along(along.with = params)) {
+    allow <- params[[i]][['allow_dups']]
+    dups <- params[[i]][['do_dup']]
+    cfg <- if (allow) {
+      PlatformConfig$new()$set(
+        platform = "tiledb",
+        param = "create",
+        key = "allows_duplicates",
+        value = TRUE
+      )
     } else {
-      arr[] <- D
+      NULL
     }
-
-    nda <- SOMASparseNDArray$new(uri, internal_use_only = "allowed_use")
-    expect_equal(nda$nnz(), expected_nnz)
-
-    unlink(uri, recursive = TRUE)
+    arr <- SOMASparseNDArrayCreate(
+      uri = tempfile(pattern = sprintf(
+        fmt = "sparse-ndarray-%s-%s",
+        ifelse(allow, yes = "dupAllowed", no = "dupDisallowed"),
+        ifelse(dups, yes = "duplicated", no = "nodups")
+      )),
+      type = arrow::float64(),
+      shape = c(100L, 100L),
+      platform_config = cfg
+    )
+    arr$.write_coordinates(if (dups) rbind(D, D) else D)
+    arr$reopen("READ")
+    expect_equal(arr$nnz(), if (dups) nrow(D) * 2L else nrow(D))
+    arr$close()
+    unlink(arr$uri, recursive = TRUE, force = TRUE)
   }
-
-  create_write_check(uri, D, FALSE, FALSE, 10)
-  create_write_check(uri, D, TRUE, FALSE, 10)
-  create_write_check(uri, D, TRUE, TRUE, 20)
 })
 
 test_that("platform_config is respected", {

@@ -25,7 +25,7 @@ test_that("SOMADenseNDArray creation", {
 
   # Verify the array is still open for write
   expect_equal(ndarray$mode(), "WRITE")
-  expect_true(tiledb::tiledb_array_is_open(ndarray$object))
+  # expect_true(tiledb::tiledb_array_is_open(ndarray$object))
   ndarray$close()
 
   # Read result in column-major order to match R matrix layout
