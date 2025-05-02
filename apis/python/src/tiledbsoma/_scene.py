@@ -16,7 +16,7 @@ from somacore import (
 )
 from typing_extensions import Self
 
-from . import _funcs, _tdb_handles
+from . import _funcs, _tdb_handles, _util
 from . import pytiledbsoma as clib
 from ._collection import CollectionBase
 from ._constants import (
@@ -117,6 +117,7 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
             axis_units = None
 
         try:
+            _util.SafeURI.validate(uri, raise_error=True)
             timestamp_ms = context._open_timestamp_ms(tiledb_timestamp)
             clib.SOMAScene.create(
                 ctx=context.native_context,

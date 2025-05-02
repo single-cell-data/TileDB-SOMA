@@ -21,7 +21,7 @@ from somacore import (
 )
 from typing_extensions import Final, Self
 
-from . import _funcs, _tdb_handles
+from . import _funcs, _tdb_handles, _util
 from . import pytiledbsoma as clib
 from ._arrow_types import carrow_type_to_pyarrow, pyarrow_to_carrow_type
 from ._constants import (
@@ -213,6 +213,7 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
 
         _image_meta_str = image_meta.to_json()
         try:
+            _util.SafeURI.validate(uri, raise_error=True)
             timestamp_ms = context._open_timestamp_ms(tiledb_timestamp)
             clib.SOMAMultiscaleImage.create(
                 uri=uri,
