@@ -6,7 +6,6 @@
 #include <spdl.h>
 #include <tiledb/tiledb>
 #include "tiledbsoma_types.h"
-#include <RcppSpdlog>
 namespace tdbs = tiledbsoma;
 
 // create a single 'comparable' number out of version, minor and patch
