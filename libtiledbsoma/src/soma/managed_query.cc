@@ -1240,8 +1240,8 @@ ManagedQuery::_extend_and_evolve_schema_with_details<std::string>(
         }
     } else {
         throw TileDBSOMAError(fmt::format(
-            "[ManagedQuery][_extend_and_evolve_schema_with_details] Unknown arrow array "
-            "type. Expected 'U', 'Z', 'u' or 'z', found '{}'",
+            "[ManagedQuery][_extend_and_evolve_schema_with_details] Unknown "
+            "arrow array type. Expected 'U', 'Z', 'u' or 'z', found '{}'",
             value_schema->format));
     }
 
