@@ -1212,7 +1212,7 @@ class ArrowAdapter {
             case TILEDB_CHAR:
             case TILEDB_GEOM_WKT: {
                 if (strcmp(schema->format, "u") == 0) {
-                    auto offsets = static_cast<const uint32_t*>(
+                    auto offsets = static_cast<const int32_t*>(
                         array->buffers[1]);
                     auto data = static_cast<const char*>(array->buffers[2]);
 
@@ -1228,7 +1228,7 @@ class ArrowAdapter {
 
                     return std::make_any<std::array<std::string, S>>(result);
                 } else if (strcmp(schema->format, "U") == 0) {
-                    auto offsets = static_cast<const uint64_t*>(
+                    auto offsets = static_cast<const int64_t*>(
                         array->buffers[1]);
                     auto data = static_cast<const char*>(array->buffers[2]);
 
@@ -1253,7 +1253,7 @@ class ArrowAdapter {
             case TILEDB_BLOB:
             case TILEDB_GEOM_WKB: {
                 if (strcmp(schema->format, "z") == 0) {
-                    auto offsets = static_cast<const uint32_t*>(
+                    auto offsets = static_cast<const int32_t*>(
                         array->buffers[1]);
                     auto data = static_cast<const std::byte*>(
                         array->buffers[2]);
@@ -1263,17 +1263,15 @@ class ArrowAdapter {
                          i < arrow_offset + S + offset;
                          ++i) {
                         if (offsets[i + 1] - offsets[i] != 0) {
-                            std::copy(
-                                &data[offsets[i]],
-                                &data[offsets[i + 1]],
-                                result[i - arrow_offset - offset].begin());
+                            result[i - arrow_offset - offset].assign(
+                                &data[offsets[i]], &data[offsets[i + 1]]);
                         }
                     }
 
                     return std::make_any<std::array<std::vector<std::byte>, S>>(
                         result);
                 } else if (strcmp(schema->format, "Z") == 0) {
-                    auto offsets = static_cast<const uint64_t*>(
+                    auto offsets = static_cast<const int64_t*>(
                         array->buffers[1]);
                     auto data = static_cast<const std::byte*>(
                         array->buffers[2]);
@@ -1283,10 +1281,8 @@ class ArrowAdapter {
                          i < arrow_offset + S + offset;
                          ++i) {
                         if (offsets[i + 1] - offsets[i] != 0) {
-                            std::copy(
-                                &data[offsets[i]],
-                                &data[offsets[i + 1]],
-                                result[i - arrow_offset - offset].begin());
+                            result[i - arrow_offset - offset].assign(
+                                &data[offsets[i]], &data[offsets[i + 1]]);
                         }
                     }
 
