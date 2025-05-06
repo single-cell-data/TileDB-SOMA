@@ -12,7 +12,13 @@ ScalarMap <- R6::R6Class(
   inherit = MappingBase,
   public = list(
     #' @param type Limit the \code{ScalarMap} to a preset type; choose from:
-    #' \Sexpr[results=rd]{tiledbsoma:::rd_atomic()}
+    #' \itemize{
+    #'  \item \dQuote{\code{any}}
+    #'  \item \dQuote{\code{numeric}}
+    #'  \item \dQuote{\code{integer}}
+    #'  \item \dQuote{\code{character}}
+    #'  \item \dQuote{\code{logical}}
+    #' }
     #'
     #' @return An instantiated \code{ScalarMap} object with the
     #' type set to \code{type}

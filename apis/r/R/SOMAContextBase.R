@@ -13,7 +13,7 @@ SOMAContextBase <- R6::R6Class(
   public = list(
     #' @template param-config
     #'
-    #' @return \Sexpr[results=rd]{tiledbsoma:::rd_return_virtual()}
+    #' @return This is a \strong{virtual} class and cannot be directly instantiated
     #'
     initialize = function(config = NULL) {
       calls <- vapply_char(

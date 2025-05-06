@@ -55,7 +55,13 @@ optionally be limited further to a specific atomic vector type
 \if{html}{\out{<div class="arguments">}}
 \describe{
 \item{\code{type}}{Limit the \code{ScalarMap} to a preset type; choose from:
-\Sexpr[results=rd]{tiledbsoma:::rd_atomic()}}
+\itemize{
+\item \dQuote{\code{any}}
+\item \dQuote{\code{numeric}}
+\item \dQuote{\code{integer}}
+\item \dQuote{\code{character}}
+\item \dQuote{\code{logical}}
+}}
 }
 \if{html}{\out{</div>}}
 }
