@@ -1,7 +1,7 @@
 test_that("example dataset access", {
   expect_length(
     list_datasets(),
-    length(dir(example_data_dir())) - 1 # There is a README.md
+    length(list.files(example_data_dir(), pattern = "\\.tar\\.gz$"))
   )
 
   # Test that the dataset can be extracted
