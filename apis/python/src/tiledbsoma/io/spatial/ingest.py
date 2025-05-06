@@ -13,7 +13,7 @@ from __future__ import annotations
 import json
 import warnings
 from pathlib import Path
-from typing import Optional, Sequence, Type, TypeVar
+from typing import Optional, Sequence, TypeVar
 
 import attrs
 import numpy as np
@@ -1154,7 +1154,6 @@ def from_xenium(
     context: SOMATileDBContext | None = None,
     platform_config: PlatformConfig | None = None,
     X_layer_name: str = "data",
-    raw_X_layer_name: str = "data",
     ingest_mode: IngestMode = "write",
     use_relative_uri: bool | None = None,
     X_kind: type[SparseNDArray] | type[DenseNDArray] = SparseNDArray,
@@ -1178,7 +1177,6 @@ def from_xenium(
         platform_config: Platform-specific options used to specify TileDB options when
             creating and writing to SOMA objects.
         X_layer_name: SOMA array name for the AnnData's ``X`` matrix.
-        raw_X_layer_name: SOMA array name for the AnnData's ``raw/X`` matrix.
         image_name: SOMA multiscale image name for the multiscale image of the
             Space Ranger output images.
         image_channel_first: If ``True``, the image is ingested in channel-first format.
@@ -1245,7 +1243,14 @@ def from_xenium(
     """
 
     # Disclaimer about the experimental nature of the generated experiment.
-    warnings.warn(SPATIAL_DISCLAIMER, stacklevel=2)
+    warnings.warn(
+        "Support for geometry types is experimental. Changes to both the API and data storage may not be backwards compatible.",
+        stacklevel=2,
+    )
+    warnings.warn(
+        "Support for xenium ingesition is experimental. Missing support for image ingestion",
+        stacklevel=2,
+    )
 
     # Check ingestion mode and create Ingestion params class.
     if ingest_mode != "write":
@@ -1352,7 +1357,7 @@ def from_xenium(
             _maybe_set(experiment, "obs", obs, use_relative_uri=use_relative_uri)
 
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-        # OBS
+        # OBS_SPATIAL_PRESENCE
         if write_obs_spatial_presence:
             obs_spatial_presence_uri = _util.uri_joinpath(
                 experiment_uri, "obs_spatial_presence"
@@ -1465,7 +1470,7 @@ def from_xenium(
                 ) as img:
                     _maybe_set(scene, "img", img, use_relative_uri=use_relative_uri)
 
-                    # Write image data and add to the scene.
+                    # TODO: Write image data and add to the scene.
 
                 obsl_uri = _util.uri_joinpath(scene_uri, "obsl")
                 with _create_or_open_collection(
@@ -1740,7 +1745,8 @@ def _write_geometry_outline_arrow_table(
         n = len(arrow_table)
         if n < 2:
             raise SOMAError(
-                "single table row nbytes {arrow_table.nbytes} exceeds cap nbytes {cap}"
+                f"Failed to write geometry dataframe. The number of bytes {arrow_table.nbytes}"
+                f" in a single input table row nexceeds the cap of {cap}."
             )
         m = n // 2
         _write_geometry_outline_arrow_table(

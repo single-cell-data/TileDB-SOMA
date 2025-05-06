@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Any, Tuple, Union
+from typing import Any
 
 import h5py
 import numpy as np
@@ -339,8 +339,8 @@ class TenXCountMatrixReader:
 
 
 def _read_xenium_software_version(
-    xenium_experiment_path: Union[str, Path],
-) -> Tuple[int, int, int]:
+    xenium_experiment_path: str | Path,
+) -> tuple[int, int, int]:
     with open(xenium_experiment_path) as xenium_experiment:
         experiment_json = json.load(xenium_experiment)
 
