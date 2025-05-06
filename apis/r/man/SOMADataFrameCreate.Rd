@@ -51,6 +51,8 @@ if it already exists, simply open it for writing
 \item{tiledbsoma_ctx}{Optional SOMATileDBContext}
 
 \item{tiledb_timestamp}{Optional Datetime (POSIXct) for TileDB timestamp}
+
+\item{soma_context}{A SOMA context as created by \code{\link{soma_context}()}}
 }
 \description{
 Factory function to create a SOMADataFrame for writing, (lifecycle: maturing)

@@ -62,8 +62,11 @@ Create a new TileDB object. (lifecycle: maturing)
 
 \item{\code{tiledb_timestamp}}{Optional Datetime (POSIXct) with TileDB timestamp}
 
-\item{\code{internal_use_only}}{Character value to signal this is a 'permitted' call,
-as \code{new()} is considered internal and should not be called directly.}
+\item{\code{internal_use_only}}{Character value to signal this is a 'permitted'
+call, as \code{new()} is considered internal and should not be called directly.}
+
+\item{\code{soma_context}}{A SOMA context as created by
+\code{\link{soma_context}()}}
 }
 \if{html}{\out{</div>}}
 }
