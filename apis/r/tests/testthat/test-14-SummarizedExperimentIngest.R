@@ -1,10 +1,9 @@
 test_that("Write SummarizedExperiment mechanics", {
   skip_if(!extended_tests() || covr_tests())
   suppressMessages(skip_if_not_installed("SummarizedExperiment", "1.28.0"))
-  skip_if_not_installed("pbmc3k.sce")
+  skip_if_not_installed("pbmc3k")
 
-  se <- get_data("pbmc3k.final", package = "pbmc3k.sce")
-  skip_if(is.null(se), message = "`pbmc3k.sce` is funky")
+  se <- pbmc3k_sce()
   var_df <- SummarizedExperiment::rowData(se)
   features <- rownames(se)
 

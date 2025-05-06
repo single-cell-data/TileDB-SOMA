@@ -61,7 +61,6 @@ Suggests:
     withr,
     testthat (>= 3.0.0),
     pbmc3k.tiledb,
-    pbmc3k.sce,
     SeuratObject (>= 4.1.0),
     datasets,
     SingleCellExperiment (>= 1.20.0),
@@ -69,7 +68,8 @@ Suggests:
     S4Vectors,
     jsonlite,
     iterators,
-    itertools
+    itertools,
+    pbmc3k
 VignetteBuilder: knitr
 Config/testthat/edition: 2
 OS_type: unix

@@ -510,11 +510,10 @@ test_that("Resume-mode Seurat", {
 
 test_that("Resume-mode SingleCellExperiment", {
   skip_if(!extended_tests())
-  skip_if_not_installed("pbmc3k.sce")
+  skip_if_not_installed("pbmc3k")
   suppressMessages(skip_if_not_installed("SingleCellExperiment", .MINIMUM_SCE_VERSION("c")))
 
-  sce <- get_data("pbmc3k.final", package = "pbmc3k.sce")
-  skip_if(is.null(sce), message = "`pbmc3k.sce` is funky")
+  sce <- pbmc3k_sce()
   SingleCellExperiment::mainExpName(sce) <- "RNA"
 
   # Test resume-mode when writing Seurat object
