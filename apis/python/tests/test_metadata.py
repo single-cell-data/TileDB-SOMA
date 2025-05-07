@@ -110,7 +110,9 @@ def test_metadata(soma_object):
         assert "'foobar': " in meta_repr
         assert "'my': 'enemies'" in meta_repr
     # ...but closed metadata does not.
-    with suppress_type_checks():  # type checking eagerly evaluates properties including `len`, which fails on a closed object
+    with (
+        suppress_type_checks()
+    ):  # type checking eagerly evaluates properties including `len`, which fails on a closed object
         meta_repr_closed = repr(second_read.metadata)
     assert "foobar" not in meta_repr_closed
 
