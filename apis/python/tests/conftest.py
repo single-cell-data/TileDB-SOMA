@@ -25,11 +25,24 @@ def conftest_pbmc_small(conftest_pbmc_small_h5ad_path) -> AnnData:
 
 
 @pytest.fixture
-def conftest_pbmc_small_exp(conftest_pbmc_small_h5ad_path) -> Experiment:
+def conftest_pbmc_small_exp_path(conftest_pbmc_small_h5ad_path) -> Path:
+    with TemporaryDirectory("conftest_pbmc_small_exp_") as exp_path:
+        tiledbsoma.io.from_h5ad(
+            exp_path,
+            conftest_pbmc_small_h5ad_path,
+            measurement_name="RNA",
+        )
+        yield exp_path
+
+
+@pytest.fixture
+def conftest_pbmc_small_exp(conftest_pbmc_small_h5ad_path: Path) -> Experiment:
     """Ingest an ``AnnData``, yield a ``TestCase`` with the original and new AnnData objects."""
     with TemporaryDirectory("conftest_pbmc_small_exp_") as exp_path:
         tiledbsoma.io.from_h5ad(
-            exp_path, conftest_pbmc_small_h5ad_path, measurement_name="RNA"
+            exp_path,
+            conftest_pbmc_small_h5ad_path,
+            measurement_name="RNA",
         )
         with tiledbsoma.Experiment.open(exp_path) as exp:
             yield exp

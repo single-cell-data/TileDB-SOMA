@@ -167,6 +167,7 @@ def create_random_tensor(
     shape: tuple[int, ...],
     dtype: np.dtype,
     density: float = 0.33,
+    seed: int | None = None,
 ):
     """
     Create a random tensor/table of specified format, shape and dtype.
@@ -174,7 +175,7 @@ def create_random_tensor(
     Guarantee: there will be NO duplicate values in the tensor, which makes
     it simpler to validate (see `tensors_are_same_value`)
     """
-    rng = np.random.default_rng()
+    rng = np.random.default_rng(seed=seed)
     ndim = len(shape)
     assert 0 < density <= 1
 
