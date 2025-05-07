@@ -14,40 +14,11 @@ jobs:
       fail-fast: false
       matrix:
         os:
-          - runs-on: ubuntu-24.04
-            suffix: ''
           - runs-on: ubuntu-24.04-arm
             suffix: ' ARM'
-          # TODO: currently impossible(?) to build Docker images on macOS runners: https://github.com/single-cell-data/TileDB-SOMA/issues/3781
-          # - macos-15
-          # TODO: try x86 macOS builds, once https://github.com/single-cell-data/TileDB-SOMA/issues/3787 is resolved
-          # - macos-13
         img:
           - name: Ubuntu src
             file: ubuntu-src
-          - name: Ubuntu 1.15.7
-            file: ubuntu
-            args: v=1.15.7
-          - name: Ubuntu 1.16.0
-            file: ubuntu
-            args: v=1.16.0
-          - name: Debian 1.15.7 gcc12
-            file: bookworm
-            args: gcc=12 v=1.15.7
-          - name: Debian 1.15.7 gcc13
-            file: bookworm
-            args: gcc=13 v=1.15.7
-          - name: Debian 1.16.0 gcc13
-            file: bookworm
-            args: gcc=13 v=1.16.0
-          - name: Langchain
-            file: langchain
-          - name: Python 3.12 + uv
-            file: python-uv
-            args: python=3.12
-          - name: Python 3.13 + uv
-            file: python-uv
-            args: python=3.13
     name: ${{ matrix.img.name }}${{ matrix.os.suffix }}
     runs-on: ${{ matrix.os.runs-on }}
     steps:
