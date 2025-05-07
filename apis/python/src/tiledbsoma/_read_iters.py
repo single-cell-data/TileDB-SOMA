@@ -62,7 +62,7 @@ IJDType = tuple[
 
 
 class TableReadIter(somacore.ReadIter[pa.Table]):
-    """Iterator over `Arrow Table <https://arrow.apache.org/docs/python/generated/pyarrow.Table.html>`_ elements"""
+    """Iterator over `Arrow Table <https://arrow.apache.org/docs/python/generated/pyarrow.Table.html>`_ elements."""
 
     def __init__(
         self,
@@ -116,7 +116,7 @@ class TableReadIter(somacore.ReadIter[pa.Table]):
         return next(self._reader)
 
     def concat(self) -> pa.Table:
-        """Concatenate remainder of iterator, and return as a single `Arrow Table <https://arrow.apache.org/docs/python/generated/pyarrow.Table.html>`_"""
+        """Concatenate remainder of iterator, and return as a single `Arrow Table <https://arrow.apache.org/docs/python/generated/pyarrow.Table.html>`_."""
         return pa.concat_tables(self)
 
 
@@ -124,7 +124,10 @@ _EagerRT = TypeVar("_EagerRT")
 
 
 class BlockwiseReadIterBase(somacore.ReadIter[_RT], metaclass=abc.ABCMeta):
-    """Private implementation class. Currently implemented as a single-axis blockwise iterator"""
+    """Private implementation class.
+
+    Currently implemented as a single-axis blockwise iterator.
+    """
 
     _reader: Iterator[_RT]
 
@@ -198,8 +201,7 @@ class BlockwiseReadIterBase(somacore.ReadIter[_RT], metaclass=abc.ABCMeta):
         size: int | Sequence[int] | None = None,
         reindex_disable_on_axis: int | Sequence[int] | None = None,
     ) -> tuple[list[int], list[int], list[int]]:
-        """
-        Class method to validate and normalize common user-provided arguments axis, size and reindex_disable_on_axis.
+        """Class method to validate and normalize common user-provided arguments axis, size and reindex_disable_on_axis.
         * normalize args to fully specify the arg per dimension, for convenience in later usage
         * error check and raise if a nonsense value
         * set defaults where supported.
@@ -251,15 +253,14 @@ class BlockwiseReadIterBase(somacore.ReadIter[_RT], metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def _create_reader(self) -> Iterator[_RT]:
-        """Sub-class responsibility"""
+        """Sub-class responsibility."""
         raise NotImplementedError()
 
     def __next__(self) -> _RT:
         return next(self._reader)
 
     def concat(self) -> _RT:
-        """
-        Unimplemented as there is little utility beyond that offered by a ragged
+        """Unimplemented as there is little utility beyond that offered by a ragged
         read iterator concat, other than reindexing.
         """
         raise NotImplementedError("Blockwise iterators do not support concat operation")
@@ -267,11 +268,14 @@ class BlockwiseReadIterBase(somacore.ReadIter[_RT], metaclass=abc.ABCMeta):
     def _maybe_eager_iterator(
         self, x: Iterator[_EagerRT], _pool: ThreadPoolExecutor | None = None
     ) -> Iterator[_EagerRT]:
-        """Private"""
+        """Private."""
         return EagerIterator(x, pool=_pool) if self.eager else x
 
     def _table_reader(self) -> Iterator[BlockwiseTableReadIterResult]:
-        """Private. Blockwise table reader. Helper function for sub-class use"""
+        """Private.
+
+        Blockwise table reader. Helper function for sub-class use
+        """
         for coord_chunk in _coords_strider(
             self.coords[self.major_axis],
             self.shape[self.major_axis],
@@ -297,7 +301,10 @@ class BlockwiseReadIterBase(somacore.ReadIter[_RT], metaclass=abc.ABCMeta):
         self,
         _pool: ThreadPoolExecutor | None = None,
     ) -> Iterator[BlockwiseTableReadIterResult]:
-        """Private. Blockwise table reader w/ reindexing. Helper function for sub-class use"""
+        """Private.
+
+        Blockwise table reader w/ reindexing. Helper function for sub-class use.
+        """
         for tbl, coords in self._maybe_eager_iterator(self._table_reader(), _pool):
             pytbl = {}
             for d in range(self.ndim):
@@ -318,10 +325,13 @@ class BlockwiseReadIterBase(somacore.ReadIter[_RT], metaclass=abc.ABCMeta):
 
 
 class BlockwiseTableReadIter(BlockwiseReadIterBase[BlockwiseTableReadIterResult]):
-    """Blockwise iterator over `Arrow Table <https://arrow.apache.org/docs/python/generated/pyarrow.Table.html>`_ elements"""
+    """Blockwise iterator over `Arrow Table <https://arrow.apache.org/docs/python/generated/pyarrow.Table.html>`_ elements."""
 
     def _create_reader(self) -> Iterator[BlockwiseTableReadIterResult]:
-        """Private. Blockwise Arrow Table iterator, restricted to a single axis"""
+        """Private.
+
+        Blockwise Arrow Table iterator, restricted to a single axis
+        """
         yield from (
             self._reindexed_table_reader(_pool=self._threadpool)
             if self.axes_to_reindex
@@ -330,7 +340,7 @@ class BlockwiseTableReadIter(BlockwiseReadIterBase[BlockwiseTableReadIterResult]
 
 
 class BlockwiseScipyReadIter(BlockwiseReadIterBase[BlockwiseScipyReadIterResult]):
-    """Blockwise iterator over `SciPy sparse matrix <https://docs.scipy.org/doc/scipy/reference/sparse.html>`_ elements"""
+    """Blockwise iterator over `SciPy sparse matrix <https://docs.scipy.org/doc/scipy/reference/sparse.html>`_ elements."""
 
     def __init__(
         self,
@@ -379,12 +389,13 @@ class BlockwiseScipyReadIter(BlockwiseReadIterBase[BlockwiseScipyReadIterResult]
 
     @property
     def minor_axis(self) -> int:
-        """For convienence's sake"""
+        """For convienence's sake."""
         return 1 - self.major_axis
 
     def _create_reader(self) -> Iterator[BlockwiseScipyReadIterResult]:
-        """
-        Private. Iterator over SparseNDArray producing sequence of scipy sparse matrix.
+        """Private.
+
+        Iterator over SparseNDArray producing sequence of scipy sparse matrix.
         """
         yield from (
             self._cs_reader(_pool=self._threadpool)
@@ -395,7 +406,10 @@ class BlockwiseScipyReadIter(BlockwiseReadIterBase[BlockwiseScipyReadIterResult]
     def _sorted_tbl_reader(
         self, _pool: ThreadPoolExecutor | None = None
     ) -> Iterator[tuple[IJDType, IndicesType]]:
-        """Private. Read reindexed tables and sort them. Yield as ((i,j),d)"""
+        """Private.
+
+        Read reindexed tables and sort them. Yield as ((i,j),d)
+        """
         for coo_tbl, indices in self._maybe_eager_iterator(
             self._reindexed_table_reader(_pool), _pool
         ):
@@ -414,7 +428,10 @@ class BlockwiseScipyReadIter(BlockwiseReadIterBase[BlockwiseScipyReadIterResult]
     def _mk_shape(
         self, major_coords: npt.NDArray[np.int64], minor_coords: npt.NDArray[np.int64]
     ) -> tuple[int, int]:
-        """Private. Make shape of this iterator step"""
+        """Private.
+
+        Make shape of this iterator step.
+        """
         shape = cast(tuple[int, int], tuple(self.shape))
         assert len(shape) == 2
         _sp_shape: list[int] = list(shape)
@@ -429,7 +446,10 @@ class BlockwiseScipyReadIter(BlockwiseReadIterBase[BlockwiseScipyReadIterResult]
     def _coo_reader(
         self, _pool: ThreadPoolExecutor | None = None
     ) -> Iterator[tuple[sparse.coo_matrix, IndicesType]]:
-        """Private. Uncompressed variants"""
+        """Private.
+
+        Uncompressed variants.
+        """
         assert not self.compress
         for ((i, j), d), indices in self._maybe_eager_iterator(
             self._sorted_tbl_reader(_pool), _pool
@@ -451,7 +471,10 @@ class BlockwiseScipyReadIter(BlockwiseReadIterBase[BlockwiseScipyReadIterResult]
     def _cs_reader(
         self, _pool: ThreadPoolExecutor | None = None
     ) -> Iterator[tuple[sparse.csr_matrix | sparse.csc_matrix, IndicesType],]:
-        """Private. Compressed sparse variants"""
+        """Private.
+
+        Compressed sparse variants.
+        """
         assert self.compress
         assert self.major_axis not in self.reindex_disable_on_axis
         for ((i, j), d), indices in self._maybe_eager_iterator(
@@ -495,7 +518,7 @@ class ManagedQuery:
 
 
 class SparseTensorReadIterBase(somacore.ReadIter[_RT], metaclass=abc.ABCMeta):
-    """Private implementation class"""
+    """Private implementation class."""
 
     def __init__(
         self,
@@ -544,7 +567,7 @@ class SparseTensorReadIterBase(somacore.ReadIter[_RT], metaclass=abc.ABCMeta):
 
 
 class SparseCOOTensorReadIter(SparseTensorReadIterBase[pa.SparseCOOTensor]):
-    """Iterator over `Arrow SparseCOOTensor <https://arrow.apache.org/docs/cpp/api/tensor.html>`_ elements"""
+    """Iterator over `Arrow SparseCOOTensor <https://arrow.apache.org/docs/cpp/api/tensor.html>`_ elements."""
 
     def _from_table(self, arrow_table: pa.Table) -> pa.SparseCOOTensor:
         coo_data = arrow_table.column("soma_data").to_numpy()
@@ -595,15 +618,13 @@ class ArrowTableRead(Iterator[pa.Table]):
 def _coords_strider(
     coords: options.SparseNDCoord, length: int, stride: int
 ) -> Iterator[npt.NDArray[np.int64]]:
-    """
-    Private.
+    """Private.
 
     Iterate over major coordinates, in stride sized steps, materializing each step as an
     ndarray of coordinate values. Will be sorted in ascending order.
 
     NB: SOMA slices are _closed_ (i.e., inclusive of both range start and stop)
     """
-
     # normalize coord to either a slice or ndarray
 
     # NB: type check on slice is to handle the case where coords is an NDArray,
@@ -642,5 +663,5 @@ _ElemT = TypeVar("_ElemT")
 
 
 def _pad_with_none(s: Sequence[_ElemT], to_length: int) -> tuple[_ElemT | None, ...]:
-    """Given a sequence, pad length to a user-specified length, with None values"""
+    """Given a sequence, pad length to a user-specified length, with None values."""
     return tuple(s[i] if i < len(s) else None for i in range(to_length))

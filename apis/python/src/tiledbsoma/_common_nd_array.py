@@ -40,7 +40,6 @@ class NDArray(SOMAArray, somacore.NDArray):
         """Creates a SOMA ``NDArray`` at the given URI.
 
         Args:
-
             type:
                 The Arrow type to be stored in the NDArray.
                 If the type is unsupported, an error will be raised.

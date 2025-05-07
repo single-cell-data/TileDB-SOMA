@@ -43,9 +43,7 @@ _pa_type_to_str_fmt = {
 def read_h5ad(
     input_path: Path, *, mode: str = "r", ctx: SOMATileDBContext | None = None
 ) -> Iterator[ad.AnnData]:
-    """
-    This lets us ingest H5AD with "r" (backed mode) from S3 URIs.
-    """
+    """This lets us ingest H5AD with "r" (backed mode) from S3 URIs."""
     ctx = ctx or SOMATileDBContext()
     input_handle = CachingReader(
         clib.SOMAFileHandle(str(input_path), ctx.native_context),

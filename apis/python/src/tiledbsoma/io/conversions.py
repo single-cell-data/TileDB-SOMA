@@ -47,7 +47,6 @@ def _string_dict_from_arrow_schema(schema: pa.Schema) -> dict[str, str]:
     This is easier on the eyes, easier to convert from/to JSON for distributed logging,
     and easier to do del-key on.
     """
-
     _EQUIVALENCES = {
         "large_string": "string",
         "large_binary": "binary",
@@ -166,8 +165,7 @@ def _prepare_df_for_ingest(df: pd.DataFrame, id_column_name: str | None) -> str 
 
 
 def obs_or_var_to_tiledb_supported_array_type(obs_or_var: pd.DataFrame) -> pd.DataFrame:
-    """
-    Performs a typecast into types that TileDB can persist.  This includes, as a
+    """Performs a typecast into types that TileDB can persist.  This includes, as a
     performance improvement, converting high-cardinality categorical-of-string
     columns (cardinality > 4096) to plain string.
     """
@@ -221,9 +219,7 @@ def csr_from_coo_table(
 
 
 def df_to_arrow_table(df: pd.DataFrame) -> pa.Table:
-    """
-    Handle special cases where pa.Table.from_pandas is not sufficient.
-    """
+    """Handle special cases where pa.Table.from_pandas is not sufficient."""
     nullable_fields = set()
     # Not for name, col in df.items() since we need df[k] on the left-hand sides
     for key in df:

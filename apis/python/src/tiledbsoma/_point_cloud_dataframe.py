@@ -1,9 +1,7 @@
 # Copyright (c) TileDB, Inc. and The Chan Zuckerberg Initiative Foundation
 #
 # Licensed under the MIT License.
-"""
-Implementation of a SOMA Point Cloud DataFrame
-"""
+"""Implementation of a SOMA Point Cloud DataFrame."""
 
 from __future__ import annotations
 
@@ -112,6 +110,7 @@ class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
                 particular reason not to, you should always provide the desired
                 `domain` at create time: this is an optional but strongly
                 recommended parameter.
+
         Returns:
             The newly created point cloud, opened for writing.
 
@@ -329,6 +328,7 @@ class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
                 The default of ``None`` represents no filter. Value filter
                 syntax is implementation-defined; see the documentation
                 for the particular SOMA implementation for details.
+
         Returns:
             A :class:`ReadIter` of :class:`pa.Table`s.
 

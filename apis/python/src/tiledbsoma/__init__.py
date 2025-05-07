@@ -2,7 +2,7 @@
 #
 # Licensed under the MIT License.
 
-"""SOMA powered by TileDB
+"""SOMA powered by TileDB.
 
 SOMA --- stack of matrices, annotated --- is a flexible, extensible, and
 open-source API enabling access to data in a variety of formats, and is

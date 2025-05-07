@@ -137,7 +137,6 @@ def to_spatialdata_points(
             cloud is in to the coordinate space of the point cloud.
         soma_joinid: The name to use for the SOMA joinid.
     """
-
     # Get the axis names for the spatial data shapes.
     orig_axis_names = points.coordinate_space.axis_names
     new_axis_names, points_dim_map = _convert_axis_names(orig_axis_names)
@@ -182,7 +181,6 @@ def to_spatialdata_shapes(
             cloud is in to the coordinate space of the point cloud.
         soma_joinid: The name to use for the SOMA joinid.
     """
-
     # Get the radius for the point cloud.
     try:
         radius = points.metadata["soma_geometry"]
@@ -345,7 +343,6 @@ def to_spatialdata_multiscale_image(
         transform: The transformation from the coordinate space of the scene this
             multiscale image is in to the coordinate space of the image itself.
     """
-
     # Check for channel axis.
     if not image.has_channel_axis:
         raise NotImplementedError(

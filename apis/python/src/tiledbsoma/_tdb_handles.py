@@ -567,29 +567,29 @@ class DataFrameWrapper(SOMAArrayWrapper[clib.SOMADataFrame]):
 
     @property
     def maybe_soma_joinid_shape(self) -> int | None:
-        """Wrapper-class internals"""
+        """Wrapper-class internals."""
         return cast(Union[int, None], self._handle.maybe_soma_joinid_shape)
 
     @property
     def maybe_soma_joinid_maxshape(self) -> int | None:
-        """Wrapper-class internals"""
+        """Wrapper-class internals."""
         return cast(Union[int, None], self._handle.maybe_soma_joinid_maxshape)
 
     @property
     def tiledbsoma_has_upgraded_domain(self) -> bool:
-        """Wrapper-class internals"""
+        """Wrapper-class internals."""
         return cast(bool, self._handle.tiledbsoma_has_upgraded_domain)
 
     def resize_soma_joinid_shape(
         self, newshape: int, function_name_for_messages: str
     ) -> None:
-        """Wrapper-class internals"""
+        """Wrapper-class internals."""
         self._handle.resize_soma_joinid_shape(newshape, function_name_for_messages)
 
     def can_resize_soma_joinid_shape(
         self, newshape: int, function_name_for_messages: str
     ) -> StatusAndReason:
-        """Wrapper-class internals"""
+        """Wrapper-class internals."""
         return cast(
             StatusAndReason,
             self._handle.can_resize_soma_joinid_shape(
@@ -600,13 +600,13 @@ class DataFrameWrapper(SOMAArrayWrapper[clib.SOMADataFrame]):
     def upgrade_soma_joinid_shape(
         self, newshape: int, function_name_for_messages: str
     ) -> None:
-        """Wrapper-class internals"""
+        """Wrapper-class internals."""
         self._handle.upgrade_soma_joinid_shape(newshape, function_name_for_messages)
 
     def can_upgrade_soma_joinid_shape(
         self, newshape: int, function_name_for_messages: str
     ) -> StatusAndReason:
-        """Wrapper-class internals"""
+        """Wrapper-class internals."""
         return cast(
             StatusAndReason,
             self._handle.can_upgrade_soma_joinid_shape(
@@ -617,26 +617,26 @@ class DataFrameWrapper(SOMAArrayWrapper[clib.SOMADataFrame]):
     def upgrade_domain(
         self, newdomain: Domain, function_name_for_messages: str
     ) -> None:
-        """Wrapper-class internals"""
+        """Wrapper-class internals."""
         self._handle.upgrade_domain(newdomain, function_name_for_messages)
 
     def can_upgrade_domain(
         self, newdomain: Domain, function_name_for_messages: str
     ) -> StatusAndReason:
-        """Wrapper-class internals"""
+        """Wrapper-class internals."""
         return cast(
             StatusAndReason,
             self._handle.can_upgrade_domain(newdomain, function_name_for_messages),
         )
 
     def change_domain(self, newdomain: Domain, function_name_for_messages: str) -> None:
-        """Wrapper-class internals"""
+        """Wrapper-class internals."""
         self._handle.change_domain(newdomain, function_name_for_messages)
 
     def can_change_domain(
         self, newdomain: Domain, function_name_for_messages: str
     ) -> StatusAndReason:
-        """Wrapper-class internals"""
+        """Wrapper-class internals."""
         return cast(
             StatusAndReason,
             self._handle.can_change_domain(newdomain, function_name_for_messages),
@@ -676,25 +676,25 @@ class DenseNDArrayWrapper(SOMAArrayWrapper[clib.SOMADenseNDArray]):
 
     @property
     def tiledbsoma_has_upgraded_shape(self) -> bool:
-        """Wrapper-class internals"""
+        """Wrapper-class internals."""
         return cast(bool, self._handle.tiledbsoma_has_upgraded_shape)
 
     def resize(self, newshape: Sequence[int | None]) -> None:
-        """Wrapper-class internals"""
+        """Wrapper-class internals."""
         self._handle.resize(newshape)
 
     def tiledbsoma_can_resize(self, newshape: Sequence[int | None]) -> StatusAndReason:
-        """Wrapper-class internals"""
+        """Wrapper-class internals."""
         return cast(StatusAndReason, self._handle.tiledbsoma_can_resize(newshape))
 
     def tiledbsoma_upgrade_shape(self, newshape: Sequence[int | None]) -> None:
-        """Wrapper-class internals"""
+        """Wrapper-class internals."""
         self._handle.tiledbsoma_upgrade_shape(newshape)
 
     def tiledbsoma_can_upgrade_shape(
         self, newshape: Sequence[int | None]
     ) -> StatusAndReason:
-        """Wrapper-class internals"""
+        """Wrapper-class internals."""
         return cast(
             StatusAndReason, self._handle.tiledbsoma_can_upgrade_shape(newshape)
         )
@@ -711,25 +711,25 @@ class SparseNDArrayWrapper(SOMAArrayWrapper[clib.SOMASparseNDArray]):
 
     @property
     def tiledbsoma_has_upgraded_shape(self) -> bool:
-        """Wrapper-class internals"""
+        """Wrapper-class internals."""
         return cast(bool, self._handle.tiledbsoma_has_upgraded_shape)
 
     def resize(self, newshape: Sequence[int | None]) -> None:
-        """Wrapper-class internals"""
+        """Wrapper-class internals."""
         self._handle.resize(newshape)
 
     def tiledbsoma_can_resize(self, newshape: Sequence[int | None]) -> StatusAndReason:
-        """Wrapper-class internals"""
+        """Wrapper-class internals."""
         return cast(StatusAndReason, self._handle.can_resize(newshape))
 
     def tiledbsoma_upgrade_shape(self, newshape: Sequence[int | None]) -> None:
-        """Wrapper-class internals"""
+        """Wrapper-class internals."""
         self._handle.tiledbsoma_upgrade_shape(newshape)
 
     def tiledbsoma_can_upgrade_shape(
         self, newshape: Sequence[int | None]
     ) -> StatusAndReason:
-        """Wrapper-class internals"""
+        """Wrapper-class internals."""
         return cast(
             StatusAndReason, self._handle.tiledbsoma_can_upgrade_shape(newshape)
         )

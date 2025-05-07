@@ -205,7 +205,6 @@ def register_h5ads(
     can control the concurrency using the ``soma.compute_concurrency_level`` configuration
     parameter in the ``context`` argument.
     """
-
     if isinstance(h5ad_file_names, str):
         h5ad_file_names = [h5ad_file_names]
 
@@ -267,8 +266,8 @@ def register_anndatas(
 ) -> ExperimentAmbientLabelMapping:
     """Extends registration data from the baseline, already-written SOMA
     experiment to include multiple H5AD input files. See ``from_h5ad`` and
-    ``from_anndata`` on-line help."""
-
+    ``from_anndata`` on-line help.
+    """
     if isinstance(adatas, ad.AnnData):
         adatas = [adatas]
 
@@ -311,7 +310,7 @@ def from_h5ad(
     uns_keys: Sequence[str] | None = None,
     additional_metadata: AdditionalMetadata = None,
 ) -> str:
-    """Reads an ``.h5ad`` file and writes it to an :class:`Experiment`.
+    r"""Reads an ``.h5ad`` file and writes it to an :class:`Experiment`.
 
     Measurement data is stored in a :class:`Measurement` in the experiment's
     ``ms`` field, with the key provided by ``measurement_name``. Data elements
@@ -464,7 +463,8 @@ class IngestCtx(TypedDict):
 class IngestPlatformCtx(IngestCtx):
     """Convenience type-alias for kwargs passed to ingest functions.
 
-    Extends :class:`IngestCtx`, adds ``platform_config``."""
+    Extends :class:`IngestCtx`, adds ``platform_config``.
+    """
 
     platform_config: PlatformConfig | None
 
@@ -825,9 +825,8 @@ def append_obs(
     context: SOMATileDBContext | None = None,
     platform_config: PlatformConfig | None = None,
 ) -> str:
-    """
-    Writes new rows to an existing ``obs`` dataframe. (This is distinct from ``update_obs``
-    which mutates the entirety of the ``obs`` dataframe, e.g. to add/remove columns.)
+    """Writes new rows to an existing ``obs`` dataframe (this is distinct from ``update_obs``
+    which mutates the entirety of the ``obs`` dataframe, e.g. to add/remove columns).
 
     Example::
 
@@ -884,9 +883,8 @@ def append_var(
     context: SOMATileDBContext | None = None,
     platform_config: PlatformConfig | None = None,
 ) -> str:
-    """
-    Writes new rows to an existing ``var`` dataframe. (This is distinct from ``update_var``
-    which mutates the entirety of the ``var`` dataframe, e.g. to add/remove columns.)
+    """Writes new rows to an existing ``var`` dataframe (this is distinct from ``update_var``
+    which mutates the entirety of the ``var`` dataframe, e.g. to add/remove columns).
 
     Example::
 
@@ -953,8 +951,7 @@ def append_X(
     context: SOMATileDBContext | None = None,
     platform_config: PlatformConfig | None = None,
 ) -> str:
-    """
-    Appends new data to an existing ``X`` matrix. Nominally to be used in conjunction
+    """Appends new data to an existing ``X`` matrix. Nominally to be used in conjunction
     with ``update_obs`` and ``update_var``, as an itemized alternative to doing
     ``from_anndata`` with a registration mapping supplied.
 
@@ -1141,8 +1138,7 @@ def _extract_new_values_for_append_aux(
     previous_soma_dataframe: DataFrame,
     arrow_table: pa.Table,
 ) -> pa.Table:
-    """
-    Helper function for _extract_new_values_for_append.
+    """Helper function for _extract_new_values_for_append.
 
     This does two things:
 
@@ -1177,7 +1173,6 @@ def _extract_new_values_for_append_aux(
     enough cardinality that we would keep it as categorical, but the existing
     storage has non-categorical, we must write the new data as non-categorical.
     """
-
     # Retain only the new rows.
     previous_sjids_table = previous_soma_dataframe.read(
         column_names=["soma_joinid"]
@@ -1269,8 +1264,8 @@ def _extract_new_values_for_append(
     arrow_table: pa.Table,
     context: SOMATileDBContext | None = None,
 ) -> pa.Table:
-    """
-    For append mode: mostly we just go ahead and write the data, except var.
+    """For append mode: mostly we just go ahead and write the data, except var.
+
     Nominally:
 
     * Cell IDs (obs IDs) are distinct per input
@@ -1343,8 +1338,7 @@ def _write_dataframe(
     axis_mapping: AxisIDMapping,
     must_exist: bool = False,
 ) -> DataFrame:
-    """
-    Convert and save a pd.DataFrame as a SOMA DataFrame.
+    """Convert and save a pd.DataFrame as a SOMA DataFrame.
 
     This function adds a ``soma_joinid`` index to the provided ``pd.DataFrame``, as that is
     required by libtiledbsoma; the original ``pd.DataFrame`` index is "reset" to a column, with its
@@ -1501,8 +1495,7 @@ def create_from_matrix(
     ingest_mode: IngestMode = "write",
     context: SOMATileDBContext | None = None,
 ) -> _NDArr:
-    """
-    Create and populate the ``soma_matrix`` from the contents of ``matrix``.
+    """Create and populate the ``soma_matrix`` from the contents of ``matrix``.
 
     Lifecycle:
         Maturing.
@@ -1532,9 +1525,7 @@ def _create_from_matrix(
     axis_1_mapping: AxisIDMapping,
     must_exist: bool = False,
 ) -> _NDArr:
-    """
-    Internal helper for user-facing ``create_from_matrix``.
-    """
+    """Internal helper for user-facing ``create_from_matrix``."""
     # Older SparseDataset has no ndim but it has a shape
     if len(matrix.shape) != 2:
         raise ValueError(f"expected matrix.shape == 2; got {matrix.shape}")
@@ -1632,10 +1623,9 @@ def update_obs(
     platform_config: PlatformConfig | None = None,
     default_index_name: str = "obs_id",
 ) -> None:
-    """
-    Given a new Pandas dataframe with desired contents, updates the SOMA experiment's
-    entire ``obs`` to incorporate the changes. (This is distinct from ``append_obs``
-    which adds new rows, while allowing no schema/column changes.)
+    """Given a new Pandas dataframe with desired contents, updates the SOMA experiment's
+    entire ``obs`` to incorporate the changes (this is distinct from ``append_obs``
+    which adds new rows, while allowing no schema/column changes).
 
     All columns present in current SOMA-experiment storage but absent from the new
     dataframe will be dropped.  All columns absent in current SOMA-experiment storage
@@ -1662,7 +1652,6 @@ def update_obs(
     Lifecycle:
         Maturing.
     """
-
     _update_dataframe(
         exp.obs,
         new_data,
@@ -1682,10 +1671,9 @@ def update_var(
     platform_config: PlatformConfig | None = None,
     default_index_name: str = "var_id",
 ) -> None:
-    """
-    Given a new Pandas dataframe with desired contents, updates the SOMA experiment's
-    specified measurement's entire ``var`` to incorporate the changes. (This is distinct
-    from ``append_var`` which adds new rows, while allowing no schema/column changes.)
+    """Given a new Pandas dataframe with desired contents, updates the SOMA experiment's
+    specified measurement's entire ``var`` to incorporate the changes (this is distinct
+    from ``append_var`` which adds new rows, while allowing no schema/column changes).
 
     All columns present in current SOMA-experiment storage but absent from the new
     dataframe will be dropped.  All columns absent in current SOMA-experiment storage
@@ -1740,10 +1728,7 @@ def _update_dataframe(
     platform_config: PlatformConfig | None,
     default_index_name: str,
 ) -> None:
-    """
-    See ``update_obs`` and ``update_var``. This is common helper code shared by both.
-    """
-
+    """See ``update_obs`` and ``update_var``. This is common helper code shared by both."""
     sdf.verify_open_for_writing()
     old_sig = conversions._string_dict_from_arrow_schema(sdf.schema)
     new_schema = conversions.df_to_arrow_schema(new_data, default_index_name)
@@ -1840,8 +1825,7 @@ def update_matrix(
     context: SOMATileDBContext | None = None,
     platform_config: PlatformConfig | None = None,
 ) -> None:
-    """
-    Given a ``SparseNDArray`` or ``DenseNDArray`` already opened for write,
+    """Given a ``SparseNDArray`` or ``DenseNDArray`` already opened for write,
     writes the new data. It is the caller's responsibility to ensure that the
     intended shape of written contents of the array match those of the existing
     data. The intended use-case is to replace updated numerical values.
@@ -1872,7 +1856,6 @@ def update_matrix(
     Lifecycle:
         Maturing.
     """
-
     # More developer-level information on why we do not -- and cannot -- check
     # shape/bounding box:
     #
@@ -1980,7 +1963,6 @@ def add_matrix_to_collection(
     Lifecycle:
         Maturing.
     """
-
     ingestion_params = IngestionParams(ingest_mode, None)
 
     # For local disk and S3, creation and storage URIs are identical.  For
@@ -2034,8 +2016,7 @@ def _write_matrix_to_denseNDArray(
     ingestion_params: IngestionParams,
     additional_metadata: AdditionalMetadata = None,
 ) -> None:
-    """Write a matrix to an empty DenseNDArray"""
-
+    """Write a matrix to an empty DenseNDArray."""
     add_metadata(soma_ndarray, additional_metadata)
 
     # TileDB does not support big-endian so coerce to little-endian
@@ -2254,7 +2235,7 @@ def _find_sparse_chunk_size_non_backed(
 
 
 def _find_mean_nnz(matrix: Matrix, axis: int) -> int:
-    """Helper for _find_sparse_chunk_size_backed"""
+    """Helper for _find_sparse_chunk_size_backed."""
     extent = matrix.shape[axis]
     if extent == 0:
         return 0
@@ -2352,7 +2333,6 @@ def _find_sparse_chunk_size_backed(
     * On the very last bit of the matrix, there can be no sizing up --
       if there are only 7 rows remaining, that's that, end of story.
     """
-
     # Parameters as noted above and below.
     lower_ratio = 0.7
     upper_ratio = 1.0
@@ -2435,8 +2415,7 @@ def _write_matrix_to_sparseNDArray(
     axis_0_mapping: AxisIDMapping,
     axis_1_mapping: AxisIDMapping,
 ) -> None:
-    """Write a matrix to an empty DenseNDArray"""
-
+    """Write a matrix to an empty DenseNDArray."""
     # TileDB does not support big-endian so coerce to little-endian
     if isinstance(matrix, np.ndarray) and matrix.dtype.byteorder == ">":
         matrix = matrix.byteswap().view(matrix.dtype.newbyteorder("<"))
@@ -2666,8 +2645,7 @@ def _chunk_is_contained_in(
     chunk_bounds: Sequence[tuple[int, int]],
     storage_nonempty_domain: Sequence[tuple[int | None, int | None]],
 ) -> bool:
-    """
-    Determines if a dim range is included within the array's non-empty domain.  Ranges are inclusive
+    """Determines if a dim range is included within the array's non-empty domain.  Ranges are inclusive
     on both endpoints.  This is a helper for resume-ingest mode.
 
     We say "bounds" not "MBR" with the "M" for minimum: a sparse matrix might not _have_ any
@@ -2906,15 +2884,13 @@ def _ingest_uns_string_array(
     ingestion_params: IngestionParams,
     additional_metadata: AdditionalMetadata = None,
 ) -> None:
-    """
-    Ingest an uns string array. In the SOMA data model, we have NDArrays _of number only_ ...
+    """Ingest an uns string array. In the SOMA data model, we have NDArrays _of number only_ ...
     so we need to make this a SOMADataFrame.
 
     Ideally we don't want to add an index column "soma_joinid" -- "index", maybe.
     However, ``SOMADataFrame`` _requires_ that soma_joinid be present, either
     as an index column, or as a data column. The former is less confusing.
     """
-
     if len(value.shape) == 1:
         helper = _ingest_uns_1d_string_array
     elif len(value.shape) == 2:
@@ -2950,7 +2926,7 @@ def _ingest_uns_1d_string_array(
     ingestion_params: IngestionParams,
     additional_metadata: AdditionalMetadata = None,
 ) -> None:
-    """Helper for ``_ingest_uns_string_array``"""
+    """Helper for ``_ingest_uns_string_array``."""
     n = len(value)
     # An array like ["a", "b", "c"] becomes a DataFrame like
     # soma_joinid value
@@ -2998,7 +2974,8 @@ def _ingest_uns_2d_string_array(
     """Helper for ``_ingest_uns_string_array``. Even if the 2D array is 1xN or Nx1, we
     must nonetheless keep this as 2D rather than flattening to length-N 1D. That's because
     this ``uns`` data is solely of interest for AnnData ingest/outgest, and it must go
-    back out the way it came in."""
+    back out the way it came in.
+    """
     num_rows, num_cols = value.shape
     data: dict[str, Any] = {"soma_joinid": np.arange(num_rows, dtype=np.int64)}
     # An array like [["a", "b", "c"], ["d", "e", "f"]] becomes a DataFrame like
@@ -3101,8 +3078,7 @@ def _ingest_uns_ndarray(
 
 
 def _concurrency_level(context: SOMATileDBContext) -> int:
-    """
-    Private helper function to determine appropriate concurrency level for
+    """Private helper function to determine appropriate concurrency level for
     ingestion of H5AD when use_multiprocessing is enabled.
 
     Functionally, this just allows the user to control concurrency via the

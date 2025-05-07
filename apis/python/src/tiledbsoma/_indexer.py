@@ -44,7 +44,6 @@ def tiledbsoma_build_index(
     Lifecycle:
         Deprecated.
     """
-
     return IntIndexer(data, context=context)
 
 

@@ -73,7 +73,7 @@ class SOMAGroup(
         self._mutated_keys: set[str] = set()
 
     def __len__(self) -> int:
-        """Return the number of members in the collection"""
+        """Return the number of members in the collection."""
         return len(self._contents)
 
     def __getitem__(self, key: str) -> CollectionElementType:
@@ -101,7 +101,7 @@ class SOMAGroup(
         return cast(CollectionElementType, entry.soma)
 
     def __setitem__(self, key: str, value: CollectionElementType) -> None:
-        """Default collection __setattr__"""
+        """Default collection __setattr__."""
         self.set(key, value, use_relative_uri=None)
 
     def __delitem__(self, key: str) -> None:
@@ -150,7 +150,6 @@ class SOMAGroup(
             value:
                 The reified SOMA object to store locally.
         """
-
         if key in self._mutated_keys.union(self._contents):
             # TileDB groups currently do not support replacing elements.
             # If we use a hack to flush writes, corruption is possible.

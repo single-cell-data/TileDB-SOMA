@@ -2,9 +2,7 @@
 #
 # Licensed under the MIT License.
 
-"""
-Implementation of a SOMA DataFrame
-"""
+"""Implementation of a SOMA DataFrame."""
 
 from __future__ import annotations
 
@@ -380,8 +378,8 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         """Returns an Arrow array of the specified columns'
         enumeration/dictionary/categorical values. Raises ``ValueError`` if any
         of the the specified column names is not in the schema, or if any is not
-        of Arrow dictionary type."""
-
+        of Arrow dictionary type.
+        """
         # These assertions could be done in C++. However, it's easier here
         # to do the exception-type multiplexing, raising ValueError for one
         # thing, TileDBSOMAError for another.
@@ -407,7 +405,8 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         Raises ``ValueError`` if any of the the specified column names is not in
         the schema, or if any is not of Arrow dictionary type. May only contain
         values that already exist in the schema (see the output of
-        ``get_enumeration_values``)  unless ``deduplicate=True``."""
+        ``get_enumeration_values``)  unless ``deduplicate=True``.
+        """
         self.verify_open_for_writing()
 
         # These assertions could be done in C++. However, it's easier here
@@ -568,7 +567,6 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         self, newdomain: Domain, function_name_for_messages: str
     ) -> Any:
         """Converts the user-level tuple of low/high pairs into a pyarrow table suitable for calling libtiledbsoma."""
-
         # Check user-provided domain against dataframe domain.
         dim_names = self._tiledb_dim_names()
         if len(dim_names) != len(newdomain):

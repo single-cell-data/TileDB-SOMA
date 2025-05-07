@@ -33,7 +33,6 @@ def get_implementation_version() -> str:
 
     Lifecycle: Maturing.
     """
-
     try:
         return importlib.metadata.version("tiledbsoma")
     except importlib.metadata.PackageNotFoundError:

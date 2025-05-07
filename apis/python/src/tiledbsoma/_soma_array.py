@@ -106,8 +106,7 @@ class SOMAArray(SOMAObject[_tdb_handles.SOMAArrayWrapper[Any]]):
         return self._handle.config_options_from_schema()
 
     def non_empty_domain(self) -> tuple[tuple[Any, Any], ...]:
-        """
-        Retrieves the non-empty domain for each dimension, namely the smallest
+        """Retrieves the non-empty domain for each dimension, namely the smallest
         and largest indices in each dimension for which the array/dataframe has
         data occupied.  This is nominally the same as the domain used at
         creation time, but if for example only a portion of the available domain

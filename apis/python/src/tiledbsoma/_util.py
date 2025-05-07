@@ -324,9 +324,7 @@ def pa_types_is_string_or_bytes(dtype: pa.DataType) -> bool:
 def build_clib_platform_config(
     platform_config: options.PlatformConfig | None,
 ) -> clib.PlatformConfig:
-    """
-    Copy over Python PlatformConfig values to the C++ clib.PlatformConfig
-    """
+    """Copy over Python PlatformConfig values to the C++ clib.PlatformConfig."""
     plt_cfg = clib.PlatformConfig()
 
     if platform_config is None:

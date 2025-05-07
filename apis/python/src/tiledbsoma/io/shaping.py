@@ -2,11 +2,11 @@
 #
 # Licensed under the MIT License.
 
-"""
-Provides support for the new shape feature in TileDB-SOMA 1.15, including the
+"""Provides support for the new shape feature in TileDB-SOMA 1.15, including the
 ability to process all dataframes/arrays contained within a TileDB-SOMA
 Experiment. Please also see
-https://github.com/single-cell-data/TileDB-SOMA/issues/2407."""
+https://github.com/single-cell-data/TileDB-SOMA/issues/2407.
+"""
 
 from __future__ import annotations
 
@@ -97,7 +97,6 @@ def get_experiment_shapes(
 
     Returns: a nested Python dict.
     """
-
     # Developer note: it would be a well-intentioned mistake to refactor
     # show_experiment_shapes to call get_experiment_shapes and then print the
     # result. The crucial issue is that for complex experiments on remote object
@@ -180,7 +179,6 @@ def show_experiment_shapes(
         ``True`` if outputting the shape works for elements. ``False`` if any element
         fails to successfully output its shape.
     """
-
     retval = _treewalk(
         uri,
         leaf_visitor=_leaf_visitor_show_shapes,
@@ -361,7 +359,6 @@ def resize_experiment(
         ``True`` if all resize operations succeed. ``False`` if any resize operation
         fails.
     """
-
     # Extra user-provided keys not relevant to the experiment are ignored.  This
     # is important for the case when a new measurement, which is registered from
     # AnnData/H5AD inputs, is registered and is about to be created but does not

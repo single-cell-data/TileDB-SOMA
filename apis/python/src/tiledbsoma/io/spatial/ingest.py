@@ -372,7 +372,6 @@ def from_visium(
     Lifecycle:
         Experimental
     """
-
     # Disclaimer about the experimental nature of the generated experiment.
     warnings.warn(SPATIAL_DISCLAIMER, stacklevel=2)
 
