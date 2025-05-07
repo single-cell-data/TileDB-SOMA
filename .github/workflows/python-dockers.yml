@@ -1,53 +1,21 @@
-# Workflow to build example Docker images with TileDB-SOMA installed
 name: TileDB-SOMA docker builds
 on:
   workflow_dispatch:
-  schedule:
-    - cron: "42 9 * * *"
-  pull_request:
-    paths:
-      - .github/workflows/python-dockers.yml
-      - docker/**
 jobs:
   docker:
     strategy:
       fail-fast: false
       matrix:
-        os:
-          - runs-on: ubuntu-24.04-arm
-            suffix: ' ARM'
-        img:
-          - name: Ubuntu src
-            file: ubuntu-src
-    name: ${{ matrix.img.name }}${{ matrix.os.suffix }}
-    runs-on: ${{ matrix.os.runs-on }}
+        idx: [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24 ]
+    name: 'Ubuntu src ARM #${{ matrix.idx }}'
+    runs-on: ubuntu-24.04-arm
     steps:
       - uses: actions/checkout@v4
       - name: docker build
         run: |
-          args=()
-          for arg in ${{ matrix.img.args }}; do
-            args+=(--build-arg $arg)
-          done
-          cmd=(docker build -f ${{ matrix.img.file }}.dockerfile -t ${{ matrix.img.file }} "${args[@]}" .)
+          cmd=(docker build -f ubuntu-src.dockerfile -t ubuntu-src .)
           echo "Running: ${cmd[*]}"
           "${cmd[@]}"
         working-directory: docker
-      - run: docker run ${{ matrix.img.file }}
+      - run: docker run ubuntu-src
         working-directory: docker
-  # File an issue if anything fails, but only for scheduled ones (not manual "workflow_dispatch" runs).
-  create_issue_on_fail:
-    runs-on: ubuntu-24.04
-    needs: [docker]
-    if: (failure() || cancelled()) && github.event_name == 'schedule' && github.run_attempt == 1
-    steps:
-      - name: Checkout TileDB-SOMA `main`
-        uses: actions/checkout@v4
-      - name: Create Issue if Build Fails
-        uses: JasonEtco/create-an-issue@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          filename: .github/workflows/daily-python-dockers-issue-template.md
-          assignees: ryan-williams, johnkerl
-          update_existing: true

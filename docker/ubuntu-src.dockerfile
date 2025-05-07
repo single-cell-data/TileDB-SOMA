@@ -21,6 +21,7 @@ WORKDIR TileDB-SOMA
 
 # Release or Debug
 ARG build=Release
-RUN if ! make install build=$build; then cat /TileDB-SOMA/build/externals/src/ep_tiledb-stamp/ep_tiledb-configure-err.log; exit 1; fi
+COPY make.sh ./
+RUN ./make.sh
 
 ENTRYPOINT [ "python", "scripts/show-versions.py" ]
