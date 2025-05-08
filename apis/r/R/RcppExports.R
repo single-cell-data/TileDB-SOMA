@@ -238,6 +238,46 @@ c_schema <- function(uri, ctxxp) {
     .Call(`_tiledbsoma_c_schema`, uri, ctxxp)
 }
 
+c_is_sparse <- function(uri, ctxxp) {
+    .Call(`_tiledbsoma_c_is_sparse`, uri, ctxxp)
+}
+
+c_allows_dups <- function(uri, ctxxp) {
+    .Call(`_tiledbsoma_c_allows_dups`, uri, ctxxp)
+}
+
+c_capacity <- function(uri, ctxxp) {
+    .Call(`_tiledbsoma_c_capacity`, uri, ctxxp)
+}
+
+c_tile_order <- function(uri, ctxxp) {
+    .Call(`_tiledbsoma_c_tile_order`, uri, ctxxp)
+}
+
+c_cell_order <- function(uri, ctxxp) {
+    .Call(`_tiledbsoma_c_cell_order`, uri, ctxxp)
+}
+
+c_schema_filters <- function(uri, ctxxp) {
+    .Call(`_tiledbsoma_c_schema_filters`, uri, ctxxp)
+}
+
+c_attributes <- function(uri, ctxxp) {
+    .Call(`_tiledbsoma_c_attributes`, uri, ctxxp)
+}
+
+c_attributes_enumerated <- function(uri, ctxxp) {
+    .Call(`_tiledbsoma_c_attributes_enumerated`, uri, ctxxp)
+}
+
+c_attribute_enumeration_levels <- function(uri, ctxxp, name) {
+    .Call(`_tiledbsoma_c_attribute_enumeration_levels`, uri, ctxxp, name)
+}
+
+c_domain <- function(uri, ctxxp) {
+    .Call(`_tiledbsoma_c_domain`, uri, ctxxp)
+}
+
 resize <- function(uri, new_shape, function_name_for_messages, check_only, ctxxp) {
     .Call(`_tiledbsoma_resize`, uri, new_shape, function_name_for_messages, check_only, ctxxp)
 }

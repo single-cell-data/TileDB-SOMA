@@ -3,11 +3,17 @@ test_that("SOMASparseNDArray creation", {
   uri <- tempfile(pattern = "sparse-ndarray")
   ndarray <- SOMASparseNDArrayCreate(uri, arrow::int32(), shape = c(10, 10))
 
-  expect_equal(tiledb::tiledb_object_type(uri), "ARRAY")
+  expect_match(
+    get_tiledb_object_type(
+      ndarray$uri,
+      ndarray$.__enclos_env__$private$.soma_context
+    ),
+    "ARRAY"
+  )
   expect_equal(ndarray$dimnames(), c("soma_dim_0", "soma_dim_1"))
 
   expect_equal(ndarray$attrnames(), "soma_data")
-  expect_equal(tiledb::datatype(ndarray$attributes()$soma_data), "INT32")
+  expect_equal(ndarray$attributes()$soma_data$type, "INT32")
 
   mat <- create_sparse_matrix_with_int_dims(10, 10)
   vals <- as.vector(t(as.matrix(mat)))
@@ -16,7 +22,7 @@ test_that("SOMASparseNDArray creation", {
 
   # Verify the array is still open for write
   expect_equal(ndarray$mode(), "WRITE")
-  expect_true(tiledb::tiledb_array_is_open(ndarray$object))
+  # expect_true(tiledb::tiledb_array_is_open(ndarray$object))
   ndarray$close()
 
   ndarray <- SOMASparseNDArrayOpen(uri)
@@ -54,10 +60,8 @@ test_that("SOMASparseNDArray creation", {
   )
 
   # Validate TileDB array schema
-  arr <- tiledb::tiledb_array(uri)
-  sch <- tiledb::schema(arr)
-  expect_true(tiledb::is.sparse(sch))
-  expect_false(tiledb::allows_dups(sch))
+  expect_true(ndarray$is_sparse())
+  expect_false(ndarray$allows_duplicates())
 
   expect_equal(ndarray$shape(), bit64::as.integer64(c(10, 10)))
 
@@ -368,43 +372,47 @@ test_that("SOMASparseNDArray read coordinates", {
 
 test_that("SOMASparseNDArray creation with duplicates", {
   skip_if(!extended_tests())
-  uri <- tempfile(pattern = "sparse-ndarray")
 
   set.seed(42)
   D <- data.frame(
-    rows = sample(100, 10, replace = TRUE),
-    cols = sample(100, 10, replace = TRUE),
-    vals = rnorm(10)
+    soma_dim_0 = sample(seq.int(0L, 99L), size = 10L),
+    soma_dim_1 = sample(seq.int(0L, 99L), size = 10L),
+    soma_data = rnorm(n = 10L)
   )
-
-  create_write_check <- function(uri, D, allows_dups, do_dup, expected_nnz) {
-    ## write from tiledb "for now"
-    dom <- tiledb::tiledb_domain(dims = c(
-      tiledb::tiledb_dim("rows", c(1L, 100L), 100L, "INT32"),
-      tiledb::tiledb_dim("cols", c(1L, 100L), 100L, "INT32")
-    ))
-    sch <- tiledb::tiledb_array_schema(dom,
-      attrs = c(tiledb::tiledb_attr("vals", type = "FLOAT64")),
-      sparse = TRUE,
-      allows_dups = allows_dups
-    )
-    invisible(tiledb::tiledb_array_create(uri, sch))
-    arr <- tiledb::tiledb_array(uri)
-    if (do_dup) {
-      arr[] <- rbind(D, D)
+  params <- list(
+    c(allow_dups = FALSE, do_dup = FALSE),
+    c(allow_dups = TRUE, do_dup = FALSE),
+    c(allow_dups = TRUE, do_dup = TRUE)
+  )
+  for (i in seq_along(along.with = params)) {
+    allow <- params[[i]][['allow_dups']]
+    dups <- params[[i]][['do_dup']]
+    cfg <- if (allow) {
+      PlatformConfig$new()$set(
+        platform = "tiledb",
+        param = "create",
+        key = "allows_duplicates",
+        value = TRUE
+      )
     } else {
-      arr[] <- D
+      NULL
     }
-
-    nda <- SOMASparseNDArray$new(uri, internal_use_only = "allowed_use")
-    expect_equal(nda$nnz(), expected_nnz)
-
-    unlink(uri, recursive = TRUE)
+    arr <- SOMASparseNDArrayCreate(
+      uri = tempfile(pattern = sprintf(
+        fmt = "sparse-ndarray-%s-%s",
+        ifelse(allow, yes = "dupAllowed", no = "dupDisallowed"),
+        ifelse(dups, yes = "duplicated", no = "nodups")
+      )),
+      type = arrow::float64(),
+      shape = c(100L, 100L),
+      platform_config = cfg
+    )
+    arr$.write_coordinates(if (dups) rbind(D, D) else D)
+    arr$reopen("READ")
+    expect_equal(arr$nnz(), if (dups) nrow(D) * 2L else nrow(D))
+    arr$close()
+    unlink(arr$uri, recursive = TRUE, force = TRUE)
   }
-
-  create_write_check(uri, D, FALSE, FALSE, 10)
-  create_write_check(uri, D, TRUE, FALSE, 10)
-  create_write_check(uri, D, TRUE, TRUE, 20)
 })
 
 test_that("platform_config is respected", {
@@ -448,62 +456,70 @@ test_that("platform_config is respected", {
   ))
 
   # Create the SOMASparseNDArray
-  snda <- SOMASparseNDArrayCreate(uri = uri, type = arrow::int32(), shape = c(100, 100), platform_config = cfg)
+  snda <- SOMASparseNDArrayCreate(
+    uri = uri,
+    type = arrow::int32(),
+    shape = c(100, 100),
+    platform_config = cfg
+  )
 
   # Read back and check the array schema against the tiledb create options
-  arr <- tiledb::tiledb_array(uri)
-  tsch <- tiledb::schema(arr)
+  expect_equal(
+    c_capacity(snda$uri, snda$.__enclos_env__$private$.soma_context),
+    8000L
+  )
+  expect_equal(
+    c_tile_order(snda$uri, snda$.__enclos_env__$private$.soma_context),
+    "COL_MAJOR"
+  )
+  expect_equal(
+    c_cell_order(snda$uri, snda$.__enclos_env__$private$.soma_context),
+    "ROW_MAJOR"
+  )
 
-  expect_equal(tiledb::capacity(tsch), 8000)
-  expect_equal(tiledb::tile_order(tsch), "COL_MAJOR")
-  expect_equal(tiledb::cell_order(tsch), "ROW_MAJOR")
+  expect_length(
+    coord_filters <- c_schema_filters(
+      snda$uri,
+      snda$.__enclos_env__$private$.soma_context
+    ),
+    n = 3L
+  )
+  expect_named(coord_filters, c("coords", "offsets", "validity"))
 
-  offsets_filters <- tiledb::filter_list(tsch)$offsets
-  expect_equal(tiledb::nfilters(offsets_filters), 1)
-  o1 <- offsets_filters[0] # C++ indexing here
-  expect_equal(tiledb::tiledb_filter_type(o1), "RLE")
+  expect_length(coord_filters$offsets, n = 1L)
+  expect_equal(coord_filters$offsets[[1L]]$filter_type, "RLE")
 
-  validity_filters <- tiledb::filter_list(tsch)$validity
-  expect_equal(tiledb::nfilters(validity_filters), 2)
-  v1 <- validity_filters[0] # C++ indexing here
-  v2 <- validity_filters[1] # C++ indexing here
-  expect_equal(tiledb::tiledb_filter_type(v1), "RLE")
-  expect_equal(tiledb::tiledb_filter_type(v2), "NONE")
+  expect_length(coord_filters$validity, n = 2L)
+  expect_equal(coord_filters$validity[[1L]]$filter_type, "RLE")
+  expect_equal(coord_filters$validity[[2L]]$filter_type, "NOOP")
 
-  dom <- tiledb::domain(tsch)
-  expect_equal(tiledb::tiledb_ndim(dom), 2)
-  dim0 <- tiledb::dimensions(dom)[[1]]
-  expect_equal(tiledb::name(dim0), "soma_dim_0")
+  expect_length(
+    domain <- c_domain(snda$uri, snda$.__enclos_env__$private$.soma_context),
+    n = 2L
+  )
+  expect_named(domain, dims <- sprintf("soma_dim_%i", 0:1))
+  expect_equal(
+    vapply(domain, FUN = '[[', FUN.VALUE = character(1L), "name", USE.NAMES = FALSE),
+    dims
+  )
   # TODO: As noted above, check this when we are able to.
-  # expect_equal(tiledb::tile(dim0), 999)
-  dim0_filters <- tiledb::filter_list(dim0)
-  expect_equal(tiledb::nfilters(dim0_filters), 3)
-  d1 <- dim0_filters[0] # C++ indexing here
-  d2 <- dim0_filters[1] # C++ indexing here
-  d3 <- dim0_filters[2] # C++ indexing here
-  expect_equal(tiledb::tiledb_filter_type(d1), "RLE")
-  expect_equal(tiledb::tiledb_filter_type(d2), "ZSTD")
-  expect_equal(tiledb::tiledb_filter_type(d3), "NONE")
-  expect_equal(tiledb::tiledb_filter_get_option(d2, "COMPRESSION_LEVEL"), 8)
+  # expect_equal(tiledb::tile(dim), 999)
+  dim0 <- domain$soma_dim_0
+  expect_length(dim0$filters, n = 3L)
+  expect_equal(dim0$filters[[1L]]$filter_type, "RLE")
+  expect_equal(dim0$filters[[2L]]$filter_type, "ZSTD")
+  expect_equal(dim0$filters[[2L]]$compression_level, 8L)
+  expect_equal(dim0$filters[[3L]]$filter_type, "NOOP")
 
-  dim1 <- tiledb::dimensions(dom)[[2]]
-  expect_equal(tiledb::name(dim1), "soma_dim_1")
-  # TODO: As noted above, check this when we are able to.
-  # expect_equal(tiledb::tile(dim1), 999)
-  dim1_filters <- tiledb::filter_list(dim1)
-  expect_equal(tiledb::nfilters(dim1_filters), 1)
-  d1 <- dim1_filters[0] # C++ indexing here
-  expect_equal(tiledb::tiledb_filter_type(d1), "RLE")
+  dim1 <- domain$soma_dim_1
+  expect_length(dim1$filters, n = 1L)
+  expect_equal(dim1$filters[[1L]]$filter_type, "RLE")
 
-  expect_equal(length(tiledb::attrs(tsch)), 1)
-  soma_data_filters <- tiledb::filter_list(tiledb::attrs(tsch)$soma_data)
-  expect_equal(tiledb::nfilters(soma_data_filters), 2)
-
-  a1 <- soma_data_filters[0] # C++ indexing here
-  a2 <- soma_data_filters[1] # C++ indexing here
-  expect_equal(tiledb::tiledb_filter_type(a1), "BITSHUFFLE")
-  expect_equal(tiledb::tiledb_filter_type(a2), "ZSTD")
-  expect_equal(tiledb::tiledb_filter_get_option(a2, "COMPRESSION_LEVEL"), 9)
+  expect_length(attrs <- snda$attributes(), n = 1L)
+  expect_length(attrs$soma_data$filter_list, n = 2L)
+  expect_equal(attrs$soma_data$filter_list[[1L]]$filter_type, "BITSHUFFLE")
+  expect_equal(attrs$soma_data$filter_list[[2L]]$filter_type, "ZSTD")
+  expect_equal(attrs$soma_data$filter_list[[2L]]$compression_level, 9L)
 
   snda$close()
 })
@@ -518,29 +534,28 @@ test_that("platform_config defaults", {
   # Create the SOMASparseNDArray
   snda <- SOMASparseNDArrayCreate(uri = uri, type = arrow::int32(), shape = c(100, 100), platform_config = cfg)
 
-  # Read back and check the array schema against the tiledb create options
-  arr <- tiledb::tiledb_array(uri)
-  tsch <- tiledb::schema(arr)
-
   # Here we're snooping on the default dim filter that's used when no other is specified.
-  dom <- tiledb::domain(tsch)
-  expect_equal(tiledb::tiledb_ndim(dom), 2)
+  expect_length(
+    domain <- c_domain(snda$uri, snda$.__enclos_env__$private$.soma_context),
+    n = 2L
+  )
+  expect_named(
+    domain,
+    dims <- sprintf("soma_dim_%i", 0:1)
+  )
+  expect_equal(
+    vapply(domain, FUN = '[[', FUN.VALUE = character(1L), "name", USE.NAMES = FALSE),
+    dims
+  )
+  dim0 <- domain$soma_dim_0
+  expect_length(dim0$filters, n = 1L)
+  expect_equal(dim0$filters[[1L]]$filter_type, "ZSTD")
+  expect_equal(dim0$filters[[1L]]$compression_level, 3L)
 
-  dim0 <- tiledb::dimensions(dom)[[1]]
-  expect_equal(tiledb::name(dim0), "soma_dim_0")
-  dim0_filters <- tiledb::filter_list(dim0)
-  expect_equal(tiledb::nfilters(dim0_filters), 1)
-  d1 <- dim0_filters[0] # C++ indexing here
-  expect_equal(tiledb::tiledb_filter_type(d1), "ZSTD")
-  expect_equal(tiledb::tiledb_filter_get_option(d1, "COMPRESSION_LEVEL"), 3)
-
-  dim1 <- tiledb::dimensions(dom)[[2]]
-  expect_equal(tiledb::name(dim1), "soma_dim_1")
-  dim1_filters <- tiledb::filter_list(dim1)
-  expect_equal(tiledb::nfilters(dim1_filters), 1)
-  d1 <- dim1_filters[0] # C++ indexing here
-  expect_equal(tiledb::tiledb_filter_type(d1), "ZSTD")
-  expect_equal(tiledb::tiledb_filter_get_option(d1, "COMPRESSION_LEVEL"), 3)
+  dim1 <- domain$soma_dim_1
+  expect_length(dim1$filters, n = 1L)
+  expect_equal(dim1$filters[[1L]]$filter_type, "ZSTD")
+  expect_equal(dim1$filters[[1L]]$compression_level, 3L)
 
   snda$close()
 })

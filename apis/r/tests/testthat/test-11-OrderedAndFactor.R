@@ -97,25 +97,22 @@ test_that("SOMADataFrame round-trip with factor and ordered", {
   )
   expect_true(is.data.frame(et))
 
-  ett <- data.frame(soma_joinid = bit64::as.integer64(seq(1, nrow(et))), et)
+  ett <- data.frame(soma_joinid = bit64::as.integer64(seq(0L, nrow(et) - 1L)), et)
   ## quick write with tiledb-r so that we get a schema from the manifested array
   ## there should possibly be a helper function to create the schema from a data.frame
   turi <- tempfile()
-  expect_silent(tiledb::fromDataFrame(ett, turi, col_index = "soma_joinid"))
-
-  tsch <- tiledb::schema(turi)
-  expect_true(inherits(tsch, "tiledb_array_schema"))
-
-  ## we no longer use this one though
-  sch <- tiledbsoma:::arrow_schema_from_tiledb_schema(tsch)
-  expect_true(inherits(sch, "Schema"))
+  expect_s3_class(
+    sdf <- write_soma(ett, turi, soma_parent = NULL, relative = FALSE),
+    "SOMADataFrame"
+  )
+  sdf$close()
 
   att <- arrow::as_arrow_table(ett)
   expect_true(inherits(att, "Table"))
 
   lvls <- tiledbsoma:::extract_levels(att)
   expect_true(is.list(lvls))
-  expect_equal(length(lvls), ncol(et)) # et, not ett or tsch or sch as no soma_joinid
+  expect_equal(length(lvls), ncol(et)) # et, not ett
   expect_equal(names(lvls), colnames(et))
 
   # sdf <- SOMADataFrameCreate(uri, sch)

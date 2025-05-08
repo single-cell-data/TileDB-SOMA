@@ -19,6 +19,7 @@ row and is intended to act as a join key for other objects, such as
 \item \href{#method-SOMADataFrame-write}{\code{SOMADataFrame$write()}}
 \item \href{#method-SOMADataFrame-read}{\code{SOMADataFrame$read()}}
 \item \href{#method-SOMADataFrame-update}{\code{SOMADataFrame$update()}}
+\item \href{#method-SOMADataFrame-levels}{\code{SOMADataFrame$levels()}}
 \item \href{#method-SOMADataFrame-shape}{\code{SOMADataFrame$shape()}}
 \item \href{#method-SOMADataFrame-maxshape}{\code{SOMADataFrame$maxshape()}}
 \item \href{#method-SOMADataFrame-domain}{\code{SOMADataFrame$domain()}}
@@ -39,7 +40,6 @@ row and is intended to act as a join key for other objects, such as
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="is_open"><a href='../../tiledbsoma/html/TileDBObject.html#method-TileDBObject-is_open'><code>tiledbsoma::TileDBObject$is_open()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="mode"><a href='../../tiledbsoma/html/TileDBObject.html#method-TileDBObject-mode'><code>tiledbsoma::TileDBObject$mode()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="reopen"><a href='../../tiledbsoma/html/TileDBObject.html#method-TileDBObject-reopen'><code>tiledbsoma::TileDBObject$reopen()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="attributes"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-attributes'><code>tiledbsoma::TileDBArray$attributes()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="attrnames"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-attrnames'><code>tiledbsoma::TileDBArray$attrnames()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="close"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-close'><code>tiledbsoma::TileDBArray$close()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="colnames"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-colnames'><code>tiledbsoma::TileDBArray$colnames()</code></a></span></li>
@@ -55,6 +55,9 @@ row and is intended to act as a join key for other objects, such as
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="set_metadata"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-set_metadata'><code>tiledbsoma::TileDBArray$set_metadata()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="tiledb_array"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-tiledb_array'><code>tiledbsoma::TileDBArray$tiledb_array()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="tiledb_schema"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-tiledb_schema'><code>tiledbsoma::TileDBArray$tiledb_schema()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAArrayBase" data-id="allows_duplicates"><a href='../../tiledbsoma/html/SOMAArrayBase.html#method-SOMAArrayBase-allows_duplicates'><code>tiledbsoma::SOMAArrayBase$allows_duplicates()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAArrayBase" data-id="attributes"><a href='../../tiledbsoma/html/SOMAArrayBase.html#method-SOMAArrayBase-attributes'><code>tiledbsoma::SOMAArrayBase$attributes()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAArrayBase" data-id="is_sparse"><a href='../../tiledbsoma/html/SOMAArrayBase.html#method-SOMAArrayBase-is_sparse'><code>tiledbsoma::SOMAArrayBase$is_sparse()</code></a></span></li>
 </ul>
 </details>
 }}
@@ -211,6 +214,37 @@ Furthermore, \code{values} must contain the same number of rows as the current
 \code{SOMADataFrame}.
 }
 
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SOMADataFrame-levels"></a>}}
+\if{latex}{\out{\hypertarget{method-SOMADataFrame-levels}{}}}
+\subsection{Method \code{levels()}}{
+Get the levels for an enumerated (\code{factor}) column
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SOMADataFrame$levels(column_names = NULL, simplify = TRUE)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{column_names}}{Optional character vector of column names to pull
+enumeration levels for; defaults to all enumerated columns}
+
+\item{\code{simplify}}{Simplify the result down to a vector or matrix}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+If \code{simplify} returns one of the following:
+\itemize{
+\item a vector of there is only one enumerated column
+\item a matrix if there are multiple enumerated columns with the same
+number of levels
+\item a named list if there are multiple enumerated columns with
+differing numbers of levels
+}
+Otherwise, returns a named list
+}
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-SOMADataFrame-shape"></a>}}

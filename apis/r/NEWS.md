@@ -1,3 +1,25 @@
+# Unreleased
+
+## Removals
+
+* `TileDBURI` class has been removed
+* arrow <> TileDB-R helpers have been removed
+  * `arrow_field_from_tiledb_dim()`
+  * `arrow_field_from_tiledb_attr()`
+  * `arrow_schema_from_tiledb_schema()`
+
+## Additions
+
+* New function `get_tiledb_object_type()` to replace `tiledb::tiledb_object_type()`
+* New function `get_tiledb_version()` to replace `tiledb::tiledb_version()`
+* New method `SOMAArrayBase$is_sparse()` to replace `tiledb::is.sparse()`
+* New method `SOMAArrayBase$allows_duplicates()` to replace `tiledb::allows_dups()`
+* New method `SOMADataFrame$levels()` to replace tiledb-r enum accessors
+
+## Changes
+
+* `TileDBArray$attributes()` has been promoted to `SOMAArrayBase$attributes()` and returns a named list instead of an external pointer
+
 # tiledbsoma 1.16.0
 
 * Encode string metadata as `TILEDB_STRING_UTF8` instead of `TILEDB_STRING_ASCII`

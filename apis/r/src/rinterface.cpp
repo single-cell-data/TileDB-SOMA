@@ -2,6 +2,7 @@
 #include <nanoarrow/r.h>            // for C interface to Arrow (via R package)
 #include <RcppInt64>                // for fromInteger64
 #include <nanoarrow/nanoarrow.hpp>  // for C/C++ interface to Arrow
+#include <type_traits>
 
 // we currently get deprecation warnings by default which are noisy
 #ifndef TILEDB_NO_API_DEPRECATION_WARNINGS
@@ -95,7 +96,7 @@ SEXP soma_array_reader(
     if(!column_names.empty()){
         mq.select_columns(column_names);
     }
-    
+
     std::unordered_map<std::string, std::shared_ptr<tiledb::Dimension>>
         name2dim;
     std::shared_ptr<tiledb::ArraySchema> schema = sr->tiledb_schema();
@@ -406,6 +407,324 @@ SEXP c_schema(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
     }
 
     return schemaxp;
+}
+
+// [[Rcpp::export]]
+bool c_is_sparse(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
+    auto sr = tdbs::SOMAArray::open(OpenMode::read, uri, ctxxp->ctxptr);
+    std::shared_ptr<tiledb::ArraySchema> sch = sr->tiledb_schema();
+    sr->close();
+
+    return sch->array_type() == TILEDB_SPARSE;
+}
+
+// [[Rcpp::export]]
+bool c_allows_dups(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
+    auto sr = tdbs::SOMAArray::open(OpenMode::read, uri, ctxxp->ctxptr);
+    std::shared_ptr<tiledb::ArraySchema> sch = sr->tiledb_schema();
+    sr->close();
+
+    return sch->allows_dups();
+}
+
+// [[Rcpp::export]]
+double c_capacity(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
+    auto sr = tdbs::SOMAArray::open(OpenMode::read, uri, ctxxp->ctxptr);
+    std::shared_ptr<tiledb::ArraySchema> sch = sr->tiledb_schema();
+    sr->close();
+
+    uint64_t cap = sch->capacity();
+    return static_cast<double>(cap);
+}
+
+// [[Rcpp::export]]
+std::string c_tile_order(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
+    auto sr = tdbs::SOMAArray::open(OpenMode::read, uri, ctxxp->ctxptr);
+    std::shared_ptr<tiledb::ArraySchema> sch = sr->tiledb_schema();
+    sr->close();
+
+    auto order = sch->tile_order();
+    return _tiledb_layout_to_string(order);
+}
+
+// [[Rcpp::export]]
+std::string c_cell_order(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
+    auto sr = tdbs::SOMAArray::open(OpenMode::read, uri, ctxxp->ctxptr);
+    std::shared_ptr<tiledb::ArraySchema> sch = sr->tiledb_schema();
+    sr->close();
+
+    auto order = sch->cell_order();
+    return _tiledb_layout_to_string(order);
+}
+
+// [[Rcpp::export]]
+Rcpp::List c_schema_filters(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
+    auto sr = tdbs::SOMAArray::open(OpenMode::read, uri, ctxxp->ctxptr);
+    std::shared_ptr<tiledb::ArraySchema> sch = sr->tiledb_schema();
+    sr->close();
+
+    Rcpp::List filter_list, coord_filters, offset_filters, validity_filters;
+
+    auto coords_filter_list = make_xptr<tiledb::FilterList>(new tiledb::FilterList(sch->coords_filter_list()));
+    int ncoords_filters = static_cast<int32_t>(coords_filter_list->nfilters());
+    for (int i = 0; i < ncoords_filters; i++) {
+        auto filter = make_xptr<tiledb::Filter>(new tiledb::Filter(coords_filter_list->filter(i)));
+        auto filter_type = tiledb::Filter::to_str(filter->filter_type());
+        coord_filters[filter_type] = _get_filter_options(filter);
+    }
+    filter_list["coords"] = coord_filters;
+
+    auto offset_filter_list = make_xptr<tiledb::FilterList>(new tiledb::FilterList(sch->offsets_filter_list()));
+    int noffset_filters = static_cast<int32_t>(offset_filter_list->nfilters());
+    for (int i = 0; i < noffset_filters; i++) {
+        auto filter = make_xptr<tiledb::Filter>(new tiledb::Filter(offset_filter_list->filter(i)));
+        auto filter_type = tiledb::Filter::to_str(filter->filter_type());
+        offset_filters[filter_type] = _get_filter_options(filter);
+    }
+    filter_list["offsets"] = offset_filters;
+
+    auto validity_filter_list = make_xptr<tiledb::FilterList>(new tiledb::FilterList(sch->validity_filter_list()));
+    int nvalidity_filters = static_cast<int32_t>(validity_filter_list->nfilters());
+    for (int i = 0; i < nvalidity_filters; i++) {
+        auto filter = make_xptr<tiledb::Filter>(new tiledb::Filter(validity_filter_list->filter(i)));
+        auto filter_type = tiledb::Filter::to_str(filter->filter_type());
+        validity_filters[filter_type] = _get_filter_options(filter);
+    }
+    filter_list["validity"] = validity_filters;
+
+    return filter_list;
+}
+
+// Taken from tiledb-r
+// https://github.com/TileDB-Inc/TileDB-R/blob/525bdfc0f34aadb74a312a5d8428bd07819a8f83/src/libtiledb.cpp#L31C1-L110C2
+const char *_tiledb_datatype_to_string(tiledb_datatype_t dtype) {
+    switch (dtype) {
+    case TILEDB_INT8:
+        return "INT8";
+    case TILEDB_UINT8:
+        return "UINT8";
+    case TILEDB_INT16:
+        return "INT16";
+    case TILEDB_UINT16:
+        return "UINT16";
+    case TILEDB_INT32:
+        return "INT32";
+    case TILEDB_UINT32:
+        return "UINT32";
+    case TILEDB_INT64:
+        return "INT64";
+    case TILEDB_UINT64:
+        return "UINT64";
+    case TILEDB_FLOAT32:
+        return "FLOAT32";
+    case TILEDB_FLOAT64:
+        return "FLOAT64";
+    case TILEDB_CHAR:
+        return "CHAR";
+    case TILEDB_STRING_ASCII:
+        return "ASCII";
+    case TILEDB_STRING_UTF8:
+        return "UTF8";
+    case TILEDB_STRING_UTF16:
+        return "UTF16";
+    case TILEDB_STRING_UTF32:
+        return "UTF32";
+    case TILEDB_STRING_UCS2:
+        return "UCS2";
+    case TILEDB_STRING_UCS4:
+        return "UCS4";
+    case TILEDB_ANY:
+        return "ANY";
+    case TILEDB_DATETIME_YEAR:
+        return "DATETIME_YEAR";
+    case TILEDB_DATETIME_MONTH:
+        return "DATETIME_MONTH";
+    case TILEDB_DATETIME_WEEK:
+        return "DATETIME_WEEK";
+    case TILEDB_DATETIME_DAY:
+        return "DATETIME_DAY";
+    case TILEDB_DATETIME_HR:
+        return "DATETIME_HR";
+    case TILEDB_DATETIME_MIN:
+        return "DATETIME_MIN";
+    case TILEDB_DATETIME_SEC:
+        return "DATETIME_SEC";
+    case TILEDB_DATETIME_MS:
+        return "DATETIME_MS";
+    case TILEDB_DATETIME_US:
+        return "DATETIME_US";
+    case TILEDB_DATETIME_NS:
+        return "DATETIME_NS";
+    case TILEDB_DATETIME_PS:
+        return "DATETIME_PS";
+    case TILEDB_DATETIME_FS:
+        return "DATETIME_FS";
+    case TILEDB_DATETIME_AS:
+        return "DATETIME_AS";
+    case TILEDB_BLOB:
+        return "BLOB";
+    case TILEDB_BOOL:
+        return "BOOL";
+    case TILEDB_GEOM_WKB:
+        return "GEOM_WKB";
+    case TILEDB_GEOM_WKT:
+        return "GEOM_WKT";
+    default:
+        Rcpp::stop("unknown tiledb_datatype_t (%d)", dtype);
+    }
+}
+
+// identify ncells
+// taken from tiledb-r
+// https://github.com/TileDB-Inc/TileDB-R/blob/525bdfc0f34aadb74a312a5d8428bd07819a8f83/src/libtiledb.cpp#L1590-L1599
+template <typename AttrOrDim>
+int _get_ncells(AttrOrDim x) {
+    int ncells;
+    if (x->cell_val_num() == TILEDB_VAR_NUM) {
+        ncells = R_NaInt;
+    } else if (x->cell_val_num() > std::numeric_limits<int32_t>::max()) {
+        Rcpp::stop("tiledb_attr ncells value not representable as an R integer");
+    } else {
+        ncells = static_cast<int32_t>(x->cell_val_num());
+    }
+    return ncells;
+}
+
+// [[Rcpp::export]]
+Rcpp::List c_attributes(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
+    auto sr = tdbs::SOMAArray::open(OpenMode::read, uri, ctxxp->ctxptr);
+    std::shared_ptr<tiledb::ArraySchema> sch = sr->tiledb_schema();
+    sr->close();
+
+    Rcpp::List result;
+    int nattr = sch->attribute_num();
+    for (auto i = 0; i < nattr; i++) {
+        auto attr = make_xptr<tiledb::Attribute>(new tiledb::Attribute(sch->attribute(i)));
+        auto name = attr->name();
+
+        // identify the filters
+        // filter options taken from tiledb-r
+        // https://github.com/TileDB-Inc/TileDB-R/blob/525bdfc0f34aadb74a312a5d8428bd07819a8f83/src/libtiledb.cpp#L369-L388
+        Rcpp::List filters;
+        auto filter_list = make_xptr<tiledb::FilterList>(new tiledb::FilterList(attr->filter_list()));
+        int nfilters = static_cast<int32_t>(filter_list->nfilters());
+        for (auto j = 0; j < nfilters; j++) {
+            auto filter = make_xptr<tiledb::Filter>(new tiledb::Filter(filter_list->filter(j)));
+            auto filter_type = tiledb::Filter::to_str(filter->filter_type());
+            filters[filter_type] = _get_filter_options(filter);
+        }
+
+        // assemble the attribute information list
+        result[name] = Rcpp::List::create(
+            Rcpp::Named("name") = name,
+            Rcpp::Named("type") = _tiledb_datatype_to_string(attr->type()),
+            Rcpp::Named("ncells") = _get_ncells<Rcpp::XPtr<tiledb::Attribute>>(attr),
+            Rcpp::Named("nullable") = attr->nullable(),
+            Rcpp::Named("filter_list") = filters
+        );
+    }
+
+    return result;
+}
+
+// adapted from tiledb-r
+// https://github.com/TileDB-Inc/TileDB-R/blob/525bdfc0f34aadb74a312a5d8428bd07819a8f83/src/libtiledb.cpp#L3027-L3042
+// [[Rcpp::export]]
+Rcpp::LogicalVector c_attributes_enumerated(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
+    auto sr = tdbs::SOMAArray::open(OpenMode::read, uri, ctxxp->ctxptr);
+    std::shared_ptr<tiledb::ArraySchema> sch = sr->tiledb_schema();
+    sr->close();
+
+    int nattrs = sch->attribute_num();
+    Rcpp::LogicalVector has_enum = Rcpp::LogicalVector(nattrs);
+    Rcpp::CharacterVector names = Rcpp::CharacterVector(nattrs);
+    for (int i = 0; i < nattrs; i++) {
+        auto attr = make_xptr<tiledb::Attribute>(new tiledb::Attribute(sch->attribute(i)));
+        auto enmr = tiledb::AttributeExperimental::get_enumeration_name(
+            *(ctxxp->ctxptr->tiledb_ctx()),
+            *attr.get()
+        );
+        has_enum(i) = enmr != std::nullopt;
+        names(i) = attr->name();
+    }
+
+    has_enum.attr("names") = names;
+    return has_enum;
+}
+
+// [[Rcpp::export]]
+Rcpp::CharacterVector c_attribute_enumeration_levels(
+        const std::string& uri,
+        Rcpp::XPtr<somactx_wrap_t> ctxxp,
+        const std::string& name
+) {
+    auto sr = tdbs::SOMAArray::open(OpenMode::read, uri, ctxxp->ctxptr);
+    std::pair<ArrowArray*, ArrowSchema*> enum_values = sr->get_enumeration_values_for_column(name);
+    sr->close();
+
+    if (enum_values.first->length > std::numeric_limits<int32_t>::max()) {
+        Rcpp::stop("too many enumeration levels for R");
+    }
+
+    nanoarrow::UniqueArrayView enum_view;
+    ArrowArrayViewInitFromType(enum_view.get(), NANOARROW_TYPE_LARGE_STRING);
+    NANOARROW_RETURN_NOT_OK(ArrowArrayViewSetArray(enum_view.get(), enum_values.first, nullptr));
+
+    int nlevels = static_cast<int32_t>(enum_values.first->length);
+    Rcpp::CharacterVector enumerations = Rcpp::CharacterVector(nlevels);
+    for (int i = 0; i < nlevels; i++) {
+        if (ArrowArrayViewIsNull(enum_view.get(), i)) {
+            enumerations(i) = R_NaString;
+        } else {
+            ArrowStringView item = ArrowArrayViewGetStringUnsafe(enum_view.get(), i);
+            enumerations(i) = std::string(item.data, item.size_bytes);
+        }
+    }
+
+    return enumerations;
+}
+
+// [[Rcpp::export]]
+Rcpp::List c_domain(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
+    auto sr = tdbs::SOMAArray::open(OpenMode::read, uri, ctxxp->ctxptr);
+    std::shared_ptr<tiledb::ArraySchema> sch = sr->tiledb_schema();
+    sr->close();
+
+    Rcpp::List result;
+    auto domain = make_xptr<tiledb::Domain>(new tiledb::Domain(sch->domain()));
+    // adapted from tiledb-r
+    // https://github.com/TileDB-Inc/TileDB-R/blob/525bdfc0f34aadb74a312a5d8428bd07819a8f83/src/libtiledb.cpp#L1262C3-L1264C4
+    uint32_t rank = domain->ndim();
+    if (rank > std::numeric_limits<int32_t>::max()) {
+        Rcpp::stop("tiledb::Domain rank is not representable by an R integer");
+    }
+    int ndim = static_cast<int32_t>(rank);
+    for (int i = 0; i < ndim; i++) {
+        auto dim = make_xptr<tiledb::Dimension>(new tiledb::Dimension(domain->dimension(i)));
+        auto name = dim->name();
+
+        // identify the filters
+        Rcpp::List filters;
+        auto filter_list = make_xptr<tiledb::FilterList>(new tiledb::FilterList(dim->filter_list()));
+        int nfilters = static_cast<int32_t>(filter_list->nfilters());
+        for (auto j = 0; j < nfilters; j++) {
+            auto filter = make_xptr<tiledb::Filter>(new tiledb::Filter(filter_list->filter(j)));
+            auto filter_type = tiledb::Filter::to_str(filter->filter_type());
+            filters[filter_type] = _get_filter_options(filter);
+        }
+
+        // assemble the dimension information list
+        result[name] = Rcpp::List::create(
+            Rcpp::Named("name") = name,
+            Rcpp::Named("type") = _tiledb_datatype_to_string(dim->type()),
+            Rcpp::Named("ncells") = _get_ncells<Rcpp::XPtr<tiledb::Dimension>>(dim),
+            Rcpp::Named("domain") = _get_dim_domain(dim),
+            Rcpp::Named("tile") = _get_dim_tile(dim),
+            Rcpp::Named("filters") = filters
+        );
+    }
+
+    return result;
 }
 
 // [[Rcpp::export]]

@@ -9,7 +9,12 @@ test_that("Basic mechanics", {
   )
   if (dir.exists(uri)) unlink(uri, recursive = TRUE)
 
-  sdf <- SOMADataFrameCreate(uri, asch, index_column_names = "int_column", domain = list(int_column = c(1, 36)))
+  sdf <- SOMADataFrameCreate(
+    uri,
+    asch,
+    index_column_names = "int_column",
+    domain = list(int_column = c(1, 36))
+  )
   expect_true(sdf$exists())
   expect_true(dir.exists(uri))
 
@@ -41,7 +46,7 @@ test_that("Basic mechanics", {
 
   # Verify the array is still open for write
   expect_equal(sdf$mode(), "WRITE")
-  expect_true(tiledb::tiledb_array_is_open(sdf$object))
+  # expect_true(tiledb::tiledb_array_is_open(sdf$object))
   sdf$close()
 
   # Read back the data (ignore attributes)
@@ -49,12 +54,13 @@ test_that("Basic mechanics", {
   expect_match(sdf$soma_type, "SOMADataFrame")
 
   expect_error(sdf$shape(), class = "notYetImplementedError")
+  expect_warning(sdf$levels())
 
   # Dataframe write should fail if array opened in read mode
   expect_error(sdf$write(tbl0))
 
   expect_equivalent(
-    tiledb::tiledb_array(sdf$uri, return_as = "asis")[],
+    as.list(sdf$read()$concat()),
     as.list(tbl0),
     ignore_attr = TRUE
   )
@@ -82,13 +88,9 @@ test_that("Basic mechanics", {
   sdf$write(rb0)
   sdf$close()
 
-  # Read back the data (ignore attributes)
+  # Read back the data
   sdf <- SOMADataFrameOpen(uri)
-  expect_equivalent(
-    tiledb::tiledb_array(sdf$uri, return_as = "asis")[],
-    as.list(rb0),
-    ignore_attr = TRUE
-  )
+  expect_equivalent(sdf$read()$concat(), expected = arrow::as_arrow_table(rb0))
 
   # Read result should recreate the original RecordBatch (when seen as a tibble)
   rb1 <- arrow::as_record_batch(sdf$read()$concat())
@@ -116,10 +118,8 @@ test_that("Basic mechanics", {
   expect_true(tbl1$Equals(tbl0$Filter(tbl0$float_column < 5)))
 
   # Validate TileDB array schema
-  arr <- tiledb::tiledb_array(uri)
-  sch <- tiledb::schema(arr)
-  expect_true(tiledb::is.sparse(sch))
-  expect_false(tiledb::allows_dups(sch))
+  expect_true(sdf$is_sparse())
+  expect_false(sdf$allows_duplicates())
   sdf$close()
 
   rm(sdf, tbl0, tbl1, rb0, rb1)
@@ -168,10 +168,11 @@ test_that("Basic mechanics with default index_column_names", {
   )
 
   sdf$write(tbl0)
+  sdf$reopen("READ")
 
   # read back the data (ignore attributes)
   expect_equivalent(
-    tiledb::tiledb_array(sdf$uri, return_as = "asis")[],
+    as.list(sdf$read()$concat()),
     as.list(tbl0),
     ignore_attr = TRUE
   )
@@ -325,16 +326,41 @@ test_that("creation with ordered factors", {
   expect_true(tbl$schema$GetFieldByName("ord")$type$ordered)
   if (dir.exists(uri)) unlink(uri, recursive = TRUE)
   expect_no_condition(
-    sdf <- SOMADataFrameCreate(uri = uri, schema = tbl$schema, domain = list(soma_joinid = c(0, n - 1L)))
+    sdf <- SOMADataFrameCreate(
+      uri = uri,
+      schema = tbl$schema,
+      domain = list(soma_joinid = c(0, n - 1L))
+    )
   )
+  on.exit(sdf$close(), add = TRUE, after = FALSE)
   expect_no_condition(sdf$write(values = tbl))
+  sdf$close()
+
   expect_s3_class(sdf <- SOMADataFrameOpen(uri), "SOMADataFrame")
   expect_true(sdf$schema()$GetFieldByName("ord")$type$ordered)
+  expect_identical(
+    c_attributes_enumerated(sdf$uri, sdf$.__enclos_env__$private$.soma_context),
+    vapply(
+      sdf$attrnames(),
+      FUN = function(x) is.factor(df[[x]]),
+      FUN.VALUE = logical(1L)
+    )
+  )
+
+  expect_length(lvls <- sdf$levels(simplify = FALSE), n = 1L)
+  expect_named(lvls, "ord")
+  expect_identical(lvls$ord, levels(df$ord))
+  expect_identical(sdf$levels("ord"), levels(df$ord))
+
   expect_s3_class(ord <- sdf$object[]$ord, c("ordered", "factor"), exact = TRUE)
   expect_length(ord, n)
   expect_identical(levels(ord), levels(df$ord))
   rm(df, tbl)
   gc()
+
+  expect_error(sdf$levels("tomato"))
+  expect_error(sdf$levels(1L))
+  expect_error(sdf$levels(TRUE))
 })
 
 test_that("explicit casting of ordered factors to regular factors", {
@@ -424,7 +450,7 @@ test_that("soma_joinid is added on creation", {
   sdf <- SOMADataFrameCreate(uri, asch, index_column_names = "int_column")
 
   expect_true("soma_joinid" %in% sdf$attrnames())
-  expect_equal(tiledb::datatype(sdf$attributes()$soma_joinid), "INT64")
+  expect_equal(sdf$attributes()$soma_joinid$type, "INT64")
   sdf$close()
 })
 
@@ -490,55 +516,64 @@ test_that("platform_config is respected", {
 
   # Create the SOMADataFrame
   if (dir.exists(uri)) unlink(uri, recursive = TRUE)
-  sdf <- SOMADataFrameCreate(uri = uri, schema = asch, index_column_names = c("soma_joinid"), platform_config = cfg)
+  sdf <- SOMADataFrameCreate(
+    uri = uri,
+    schema = asch,
+    index_column_names = c("soma_joinid"),
+    platform_config = cfg
+  )
 
   # Read back and check the array schema against the tiledb create options
-  arr <- tiledb::tiledb_array(uri)
-  tsch <- tiledb::schema(arr)
+  expect_equal(
+    c_capacity(sdf$uri, sdf$.__enclos_env__$private$.soma_context),
+    8000L
+  )
+  expect_equal(
+    c_tile_order(sdf$uri, sdf$.__enclos_env__$private$.soma_context),
+    "COL_MAJOR"
+  )
+  expect_equal(
+    c_cell_order(sdf$uri, sdf$.__enclos_env__$private$.soma_context),
+    "ROW_MAJOR"
+  )
 
-  expect_equal(tiledb::capacity(tsch), 8000)
-  expect_equal(tiledb::tile_order(tsch), "COL_MAJOR")
-  expect_equal(tiledb::cell_order(tsch), "ROW_MAJOR")
 
-  offsets_filters <- tiledb::filter_list(tsch)$offsets
-  expect_equal(tiledb::nfilters(offsets_filters), 1)
-  o1 <- offsets_filters[0] # C++ indexing here
-  expect_equal(tiledb::tiledb_filter_type(o1), "RLE")
+  expect_length(
+    coord_filters <- c_schema_filters(
+      sdf$uri,
+      sdf$.__enclos_env__$private$.soma_context
+    ),
+    n = 3L
+  )
+  expect_named(coord_filters, c("coords", "offsets", "validity"))
 
-  validity_filters <- tiledb::filter_list(tsch)$validity
-  expect_equal(tiledb::nfilters(validity_filters), 2)
-  v1 <- validity_filters[0] # C++ indexing here
-  v2 <- validity_filters[1] # C++ indexing here
-  expect_equal(tiledb::tiledb_filter_type(v1), "RLE")
-  expect_equal(tiledb::tiledb_filter_type(v2), "NONE")
+  expect_length(coord_filters$offsets, n = 1L)
+  expect_equal(coord_filters$offsets[[1L]]$filter_type, "RLE")
 
-  dom <- tiledb::domain(tsch)
-  expect_equal(tiledb::tiledb_ndim(dom), 1)
-  dim <- tiledb::dimensions(dom)[[1]]
-  expect_equal(tiledb::name(dim), "soma_joinid")
+  expect_length(coord_filters$validity, n = 2L)
+  expect_equal(coord_filters$validity[[1L]]$filter_type, "RLE")
+  expect_equal(coord_filters$validity[[2L]]$filter_type, "NOOP")
+
+  expect_length(
+    domain <- c_domain(sdf$uri, sdf$.__enclos_env__$private$.soma_context),
+    n = 1L
+  )
+  dim <- domain[[1]]
+  expect_equal(dim$name, "soma_joinid")
   # TODO: As noted above, check this when we are able to.
   # expect_equal(tiledb::tile(dim), 999)
-  dim_filters <- tiledb::filter_list(dim)
-  expect_equal(tiledb::nfilters(dim_filters), 3)
-  d1 <- dim_filters[0] # C++ indexing here
-  d2 <- dim_filters[1] # C++ indexing here
-  d3 <- dim_filters[2] # C++ indexing here
-  expect_equal(tiledb::tiledb_filter_type(d1), "RLE")
-  expect_equal(tiledb::tiledb_filter_type(d2), "ZSTD")
-  expect_equal(tiledb::tiledb_filter_type(d3), "NONE")
-  expect_equal(tiledb::tiledb_filter_get_option(d2, "COMPRESSION_LEVEL"), 8)
+  expect_length(dim$filters, n = 3L)
+  expect_equal(dim$filters[[1L]]$filter_type, "RLE")
+  expect_equal(dim$filters[[2L]]$filter_type, "ZSTD")
+  expect_equal(dim$filters[[2L]]$compression_level, 8L)
+  expect_equal(dim$filters[[3L]]$filter_type, "NOOP")
 
-  expect_equal(length(tiledb::attrs(tsch)), 3)
-  i32_filters <- tiledb::filter_list(tiledb::attrs(tsch)$i32)
-  f64_filters <- tiledb::filter_list(tiledb::attrs(tsch)$f64)
-  expect_equal(tiledb::nfilters(i32_filters), 2)
-  expect_equal(tiledb::nfilters(f64_filters), 0)
-
-  i1 <- i32_filters[0] # C++ indexing here
-  i2 <- i32_filters[1] # C++ indexing here
-  expect_equal(tiledb::tiledb_filter_type(i1), "RLE")
-  expect_equal(tiledb::tiledb_filter_type(i2), "ZSTD")
-  expect_equal(tiledb::tiledb_filter_get_option(i2, "COMPRESSION_LEVEL"), 9)
+  expect_length(attrs <- sdf$attributes(), n = 3L)
+  expect_length(attrs$i32$filter_list, n = 2L)
+  expect_equal(attrs$i32$filter_list[[1L]]$filter_type, "RLE")
+  expect_equal(attrs$i32$filter_list[[2L]]$filter_type, "ZSTD")
+  expect_equal(attrs$i32$filter_list[[2L]]$compression_level, 9L)
+  expect_length(attrs$f64$filter_list, n = 0L)
 
   sdf$close()
 })
@@ -567,61 +602,19 @@ test_that("platform_config defaults", {
     platform_config = cfg
   )
 
-  # Read back and check the array schema against the tiledb create options
-  arr <- tiledb::tiledb_array(uri)
-  tsch <- tiledb::schema(arr)
-
   # Here we're snooping on the default dim filter that's used when no other is specified.
-  dom <- tiledb::domain(tsch)
-  expect_equal(tiledb::tiledb_ndim(dom), 1)
-  dim <- tiledb::dimensions(dom)[[1]]
-  expect_equal(tiledb::name(dim), "soma_joinid")
-  dim_filters <- tiledb::filter_list(dim)
-  expect_equal(tiledb::nfilters(dim_filters), 1)
-  d1 <- dim_filters[0] # C++ indexing here
-  expect_equal(tiledb::tiledb_filter_type(d1), "ZSTD")
-  expect_equal(tiledb::tiledb_filter_get_option(d1, "COMPRESSION_LEVEL"), 3)
-  sdf$close()
-})
-
-test_that("platform_config defaults", {
-  skip_if(!extended_tests())
-  uri <- withr::local_tempdir("soma-dataframe")
-
-  # Set Arrow schema
-  asch <- arrow::schema(
-    arrow::field("soma_joinid", arrow::int64(), nullable = FALSE),
-    arrow::field("i32", arrow::int32(), nullable = FALSE),
-    arrow::field("f64", arrow::float64(), nullable = FALSE),
-    arrow::field("utf8", arrow::large_utf8(), nullable = FALSE)
+  expect_length(
+    domain <- c_domain(sdf$uri, sdf$.__enclos_env__$private$.soma_context),
+    n = 1L
   )
+  expect_named(domain, "soma_joinid")
+  expect_equal(domain[[1L]]$name, "soma_joinid")
 
-  # Set tiledb create options
-  cfg <- PlatformConfig$new()
+  dim <- domain$soma_joinid
+  expect_length(dim$filters, n = 1L)
+  expect_equal(dim$filters[[1L]]$filter_type, "ZSTD")
+  expect_equal(dim$filters[[1L]]$compression_level, 3L)
 
-  # Create the SOMADataFrame
-  if (dir.exists(uri)) unlink(uri, recursive = TRUE)
-  sdf <- SOMADataFrameCreate(
-    uri = uri,
-    schema = asch,
-    index_column_names = c("soma_joinid"),
-    platform_config = cfg
-  )
-
-  # Read back and check the array schema against the tiledb create options
-  arr <- tiledb::tiledb_array(uri)
-  tsch <- tiledb::schema(arr)
-
-  # Here we're snooping on the default dim filter that's used when no other is specified.
-  dom <- tiledb::domain(tsch)
-  expect_equal(tiledb::tiledb_ndim(dom), 1)
-  dim <- tiledb::dimensions(dom)[[1]]
-  expect_equal(tiledb::name(dim), "soma_joinid")
-  dim_filters <- tiledb::filter_list(dim)
-  expect_equal(tiledb::nfilters(dim_filters), 1)
-  d1 <- dim_filters[0] # C++ indexing here
-  expect_equal(tiledb::tiledb_filter_type(d1), "ZSTD")
-  expect_equal(tiledb::tiledb_filter_get_option(d1, "COMPRESSION_LEVEL"), 3)
   sdf$close()
 })
 
@@ -900,26 +893,29 @@ test_that("missing levels in enums", {
   # Create SOMADataFrame w/ missing enum levels
   if (dir.exists(uri)) unlink(uri, recursive = TRUE)
   tbl <- arrow::as_arrow_table(df)
-  sdf <- SOMADataFrameCreate(uri, tbl$schema, domain = list(soma_joinid = c(0, n - 1)))
-  on.exit(sdf$close())
+  sdf <- SOMADataFrameCreate(
+    uri,
+    tbl$schema,
+    domain = list(soma_joinid = c(0, n - 1))
+  )
+  on.exit(sdf$close(), add = TRUE, after = FALSE)
   sdf$write(tbl)
   sdf$close()
 
   # Test missingness is preserved
   expect_s3_class(sdf <- SOMADataFrameOpen(uri), "SOMADataFrame")
-  expect_true(tiledb::tiledb_array_has_enumeration(sdf$object)["enum"])
-  expect_s4_class(
-    attr <- tiledb::attrs(sdf$tiledb_schema())$enum,
-    "tiledb_attr"
-  )
   expect_identical(
-    tiledb::tiledb_attribute_get_enumeration(attr, sdf$object),
-    levels(df$enum)
+    c_attributes_enumerated(sdf$uri, sdf$.__enclos_env__$private$.soma_context),
+    vapply(
+      sdf$attrnames(),
+      FUN = function(x) is.factor(df[[x]]),
+      FUN.VALUE = logical(1L)
+    )
   )
-  expect_true(tiledb::tiledb_attribute_get_nullable(attr))
+  expect_identical(sdf$levels("enum"), levels(df$enum))
+  expect_true(sdf$attributes()$enum$nullable)
 
   # Test reading preserves missingness
-  expect_identical(sdf$object[]$enum, df$enum)
   tbl0 <- sdf$read()$concat()
   expect_identical(tbl0$enum$as_vector(), df$enum)
   sdf$close()
@@ -936,19 +932,18 @@ test_that("missing levels in enums", {
 
   # Test missingness is preserved when updating
   expect_s3_class(sdf <- SOMADataFrameOpen(uri), "SOMADataFrame")
-  expect_true(tiledb::tiledb_array_has_enumeration(sdf$object)["miss"])
-  expect_s4_class(
-    attr <- tiledb::attrs(sdf$tiledb_schema())$miss,
-    "tiledb_attr"
-  )
   expect_identical(
-    tiledb::tiledb_attribute_get_enumeration(attr, sdf$object),
-    levels(tbl0$miss$as_vector())
+    c_attributes_enumerated(sdf$uri, sdf$.__enclos_env__$private$.soma_context),
+    vapply(
+      sdf$attrnames(),
+      FUN = function(x) inherits(tbl0[[x]]$type, "DictionaryType"),
+      FUN.VALUE = logical(1L)
+    )
   )
-  expect_true(tiledb::tiledb_attribute_get_nullable(attr))
+  expect_identical(sdf$levels("miss"), levels(tbl0$miss$as_vector()))
+  expect_true(sdf$attributes()$miss$nullable)
 
   # Test reading preserves updated missingness
-  expect_identical(sdf$object[]$miss, tbl0$miss$as_vector())
   tbl1 <- sdf$read()$concat()
   expect_identical(tbl1$miss$as_vector(), tbl0$miss$as_vector())
   sdf$close()
