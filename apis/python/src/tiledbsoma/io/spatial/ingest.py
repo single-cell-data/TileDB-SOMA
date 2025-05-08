@@ -13,7 +13,7 @@ from __future__ import annotations
 import json
 import warnings
 from pathlib import Path
-from typing import Sequence, TypeVar
+from typing import Optional, Sequence, TypeVar
 
 import attrs
 import numpy as np
@@ -29,7 +29,13 @@ except ImportError as err:
     raise err
 
 
-from somacore import Axis, CoordinateSpace, IdentityTransform, ScaleTransform
+from somacore import (
+    Axis,
+    CoordinateSpace,
+    IdentityTransform,
+    NDArray,
+    ScaleTransform,
+)
 from somacore.options import PlatformConfig
 
 from ... import (
@@ -37,6 +43,7 @@ from ... import (
     DataFrame,
     DenseNDArray,
     Experiment,
+    GeometryDataFrame,
     Measurement,
     MultiscaleImage,
     PointCloudDataFrame,
@@ -45,7 +52,6 @@ from ... import (
     _util,
     logging,
 )
-from ..._common_nd_array import NDArray
 from ..._constants import SOMA_JOINID, SPATIAL_DISCLAIMER
 from ..._exception import (
     AlreadyExistsError,
@@ -77,7 +83,11 @@ from ..ingest import (
     _write_matrix_to_denseNDArray,
     add_metadata,
 )
-from ._util import TenXCountMatrixReader, _read_visium_software_version
+from ._util import (
+    TenXCountMatrixReader,
+    _read_visium_software_version,
+    _read_xenium_software_version,
+)
 
 _NDArr = TypeVar("_NDArr", bound=NDArray)
 
@@ -1053,3 +1063,701 @@ def _create_visium_tissue_images(
 
     logging.log_io(None, _util.format_elapsed(start_time, "FINISH WRITING IMAGES"))
     return image_pyramid
+
+
+@attrs.define(kw_only=True)
+class XeniumPaths:
+
+    @classmethod
+    def from_base_folder(
+        cls,
+        base_path: str | Path,
+        *,
+        xenium_experiment: str | Path | None = None,
+        cell_feature_matrix: str | Path | None = None,
+        cells: str | Path | None = None,
+        cell_boundaries: str | Path | None = None,
+        nucleus_boundaries: str | Path | None = None,
+        transcripts: str | Path | None = None,
+        version: int | tuple[int, int, int] | None = None,
+    ) -> Self:
+        """Create ingestion files from Xenium output directory.
+
+        This method attempts to find the required Xenium assets from an output
+        directory from Xenium. The path for all files can be directly
+        specified instead.
+        """
+        base_path = Path(base_path)
+
+        if xenium_experiment is None:
+            xenium_experiment = base_path / "experiment.xenium"
+
+        # Attempt to read the Xenium version if it is not already set.
+        if version is None:
+            try:
+                version = _read_xenium_software_version(xenium_experiment)
+            except (KeyError, ValueError):
+                raise ValueError(
+                    "Unable to determine Xenium version from Xenium Experiment file"
+                )
+
+        if cell_feature_matrix is None:
+            cell_feature_matrix = base_path / "cell_feature_matrix.h5"
+
+        if cells is None:
+            cells = base_path / "cells.parquet"
+        if cell_boundaries is None:
+            cell_boundaries = base_path / "cell_boundaries.parquet"
+        if nucleus_boundaries is None:
+            nucleus_boundaries = base_path / "nucleus_boundaries.parquet"
+
+        if transcripts is None:
+            transcripts = base_path / "transcripts.parquet"
+
+        return cls(
+            xenium_experiment=xenium_experiment,
+            cell_feature_matrix=cell_feature_matrix,
+            cells=cells,
+            cell_boundaries=cell_boundaries,
+            nucleus_boundaries=nucleus_boundaries,
+            transcripts=transcripts,
+            version=version,
+        )
+
+    xenium_experiment: Path = attrs.field(converter=Path, validator=path_validator)
+    cell_feature_matrix: Path = attrs.field(converter=Path, validator=path_validator)
+    cells: Path | None = attrs.field(
+        converter=optional_path_converter, validator=optional_path_validator
+    )
+    nucleus_boundaries: Path | None = attrs.field(
+        converter=optional_path_converter, validator=optional_path_validator
+    )
+    cell_boundaries: Path | None = attrs.field(
+        converter=optional_path_converter, validator=optional_path_validator
+    )
+    transcripts: Path | None = attrs.field(
+        converter=optional_path_converter, validator=optional_path_validator
+    )
+    version: int | tuple[int, int, int]
+
+    @property
+    def major_version(self) -> int:
+        return self.version[0] if isinstance(self.version, tuple) else self.version
+
+
+def from_xenium(
+    experiment_uri: str,
+    input_path: Path | XeniumPaths,
+    measurement_name: str,
+    scene_name: str,
+    *,
+    context: SOMATileDBContext | None = None,
+    platform_config: PlatformConfig | None = None,
+    X_layer_name: str = "data",
+    ingest_mode: IngestMode = "write",
+    use_relative_uri: bool | None = None,
+    X_kind: type[SparseNDArray] | type[DenseNDArray] = SparseNDArray,
+    registration_mapping: ExperimentAmbientLabelMapping | None = None,
+    additional_metadata: AdditionalMetadata = None,
+    use_raw_counts: bool = False,
+    write_obs_spatial_presence: bool = True,
+    write_var_spatial_presence: bool = False,
+) -> str:
+    """Reads a 10x Xenium dataset and writes it to an :class:`Experiment`.
+
+    This function is for ingesting Xenium data for prototyping and testing the
+    proposed spatial design.
+
+    Args:
+        experiment_uri: The experiment to create or update.
+        input_path: A path to the base directory storing SpaceRanger output or
+            a ``VisiumPaths`` object.
+        measurement_name: The name of the measurement to store data in.
+        context: Optional :class:`SOMATileDBContext` containing storage parameters, etc.
+        platform_config: Platform-specific options used to specify TileDB options when
+            creating and writing to SOMA objects.
+        X_layer_name: SOMA array name for the AnnData's ``X`` matrix.
+        image_name: SOMA multiscale image name for the multiscale image of the
+            Space Ranger output images.
+        image_channel_first: If ``True``, the image is ingested in channel-first format.
+            Otherwise, it is ingested into channel-last format. Defaults to ``True``.
+        ingest_mode: The ingestion type to perform:
+            - ``write``: Writes all data, creating new layers if the SOMA already exists.
+            - ``resume``: Adds data to an existing SOMA, skipping writing data
+              that was previously written. Useful for continuing after a partial
+              or interrupted ingestion operation.
+            - ``schema_only``: Creates groups and the array schema, without
+              writing any data to the array. Useful to prepare for appending
+              multiple H5AD files to a single SOMA.
+        X_kind: Which type of matrix is used to store dense X data from the
+            H5AD file: ``DenseNDArray`` or ``SparseNDArray``.
+        registration_mapping: Mapping for ``soma_joinid`` when ingesting multiple
+            Visium datasets or ingesting into an existing :class:`Experiment`. This
+            is done by first registering the Visium dataset(s):
+
+            .. code-block:: python
+
+                import tiledbsoma.io.spatial
+                rd = tiledbsoma.io.register_h5ads(
+                    experiment_uri,
+                    visium_paths,
+                    measurement_name="RNA",
+                    context=context,
+                )
+
+            Once they are registered, the Visium datasets can be ingested in any order
+            using:
+
+            .. code-block:: python
+
+                tiledbsoma.io.from_visium(
+                    experiment_uri,
+                    visium_path,
+                    measurement_name="RNA",
+                    ingest_mode="write",
+                    registration_mapping=rd,
+                )
+        additional_metadata: Optional metadata to add to the :class:`Experiment` and
+            all descendents. This is a coarse-grained mechanism for setting key-value
+            pairs on all SOMA objects in an :class:`Experiment` hierarchy. Metadata
+            for particular objects is more commonly set like:
+
+            .. code-block:: python
+
+                with soma.open(uri, 'w') as exp:
+                    exp.metadata.update({"aaa": "BBB"})
+                    exp.obs.metadata.update({"ccc": 123})
+        use_raw_counts: If ``True`` ingest the raw gene expression data, otherwise
+            use the filtered gene expression data. Only used if ``input_path`` is
+            not a ``VisiumPaths`` object. Defaults to ``False``.
+        write_obs_spatial_presence: If ``True`` create and write data to the ``obs``
+            presence matrix. Defaults to ``True``.
+        write_var_spatial_presence: If ``True`` create and write data to the ``var``
+            presence matrix. Defaults to ``False``.
+
+    Returns:
+        The URI of the newly created experiment.
+
+    Lifecycle:
+        Experimental
+    """
+
+    # Disclaimer about the experimental nature of the generated experiment.
+    warnings.warn(
+        "Support for geometry types is experimental. Changes to both the API and data storage may not be backwards compatible.",
+        stacklevel=2,
+    )
+    warnings.warn(
+        "Support for xenium ingesition is experimental. Missing support for image ingestion",
+        stacklevel=2,
+    )
+
+    # Check ingestion mode and create Ingestion params class.
+    if ingest_mode != "write":
+        raise NotImplementedError(
+            f"Support for ingest mode '{ingest_mode}' is not implemented. Currently, "
+            f"only support for 'write' mode is implemented."
+        )
+    ingestion_params = IngestionParams(ingest_mode, registration_mapping)
+    if ingestion_params.appending and X_kind == DenseNDArray:
+        raise NotImplementedError(
+            "Support for appending to `X_kind=DenseNDArray` is not implemented."
+        )
+    if ingestion_params.appending:
+        raise NotImplementedError("Suport for appending is not implemented.")
+
+    # Check context and create keyword argument dicts.
+    # - Create `ingest_ctx` for keyword args for creating SOMAGroup objects.
+    # - Create `ingestion_platform_ctx` for keyword args for creating SOMAArray objects.
+    context = _validate_soma_tiledb_context(context)
+    ingest_ctx: IngestCtx = {
+        "context": context,
+        "ingestion_params": IngestionParams(ingest_mode, registration_mapping),
+        "additional_metadata": additional_metadata,
+    }
+    ingest_platform_ctx: IngestPlatformCtx = dict(
+        **ingest_ctx, platform_config=platform_config
+    )
+
+    # Get input file locations.
+    input_paths = (
+        input_path
+        if isinstance(input_path, XeniumPaths)
+        else XeniumPaths.from_base_folder(input_path)
+    )
+
+    # Check the version.
+    major_version = (
+        input_paths.version[0]
+        if isinstance(input_paths.version, tuple)
+        else input_paths.version
+    )
+    if major_version is None:
+        raise ValueError("Unable to determine version number of Xenium input")
+    if major_version not in {1, 2, 3}:
+        raise ValueError(
+            f"Xenium version {input_paths.version} is not supported. Expected major "
+            f"version 1, 2 or 3"
+        )
+
+    # Read 10x HDF5 gene expression file.
+    start_time = _util.get_start_stamp()
+    logging.log_io(None, f"START READING {input_paths.cell_feature_matrix}")
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+    with TenXCountMatrixReader(input_paths.cell_feature_matrix) as reader:
+        reader.load()
+        nobs = reader.nobs
+        nvar = reader.nvar
+        obs_data = pa.Table.from_pydict(
+            {
+                SOMA_JOINID: pa.array(np.arange(nobs, dtype=np.int64)),
+                "obs_id": reader.obs_id,
+            }
+        )
+        var_data = pa.Table.from_pydict(
+            {
+                SOMA_JOINID: np.arange(nvar, dtype=np.int64),
+                "var_id": reader.var_id,
+                "gene_ids": reader.gene_id,
+                "feature_types": reader.feature_type,
+                "genome": reader.genome,
+            }
+        )
+    logging.log_io(None, _util.format_elapsed(start_time, "FINISHED READING"))
+
+    # Create registration mapping if none was provided and get obs/var data needed
+    # for spatial indexing.
+    if registration_mapping is None:
+        joinid_maps = ExperimentIDMapping(
+            obs_axis=AxisIDMapping(data=tuple(range(nobs))),
+            var_axes={measurement_name: AxisIDMapping(data=tuple(range(nvar)))},
+        )
+    else:
+        raise NotImplementedError("Support for appending is not yet implemented.")
+
+    # Create axes and transformations
+    # mypy false positive https://github.com/python/mypy/issues/5313
+    coord_space = CoordinateSpace(
+        (Axis(name="x", unit="micrometre"), Axis(name="y", unit="micrometre"), Axis(name="z", unit="micrometre"))  # type: ignore[arg-type]
+    )
+
+    # Write the new experiment.
+    start_time = _util.get_start_stamp()
+    logging.log_io(None, f"START  WRITING {experiment_uri}")
+    with _create_or_open_collection(
+        Experiment, experiment_uri, **ingest_ctx
+    ) as experiment:
+        # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+        # OBS
+        df_uri = _util.uri_joinpath(experiment_uri, "obs")
+        with _write_arrow_to_dataframe(
+            df_uri, obs_data, max_size=nobs, **ingest_platform_ctx
+        ) as obs:
+            _maybe_set(experiment, "obs", obs, use_relative_uri=use_relative_uri)
+
+        # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+        # OBS_SPATIAL_PRESENCE
+        if write_obs_spatial_presence:
+            obs_spatial_presence_uri = _util.uri_joinpath(
+                experiment_uri, "obs_spatial_presence"
+            )
+            unique_obs_id = reader.unique_obs_indices()
+            obs_spatial_presence = _write_scene_presence_dataframe(
+                unique_obs_id,
+                nobs,
+                scene_name,
+                obs_spatial_presence_uri,
+                **ingest_platform_ctx,
+            )
+            _maybe_set(
+                experiment,
+                "obs_spatial_presence",
+                obs_spatial_presence,
+                use_relative_uri=use_relative_uri,
+            )
+
+        # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+        # MS
+        experiment_ms_uri = _util.uri_joinpath(experiment_uri, "ms")
+
+        with _create_or_open_collection(
+            Collection[Measurement], experiment_ms_uri, **ingest_ctx
+        ) as ms:
+            _maybe_set(experiment, "ms", ms, use_relative_uri=use_relative_uri)
+
+            # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+            # MS/meas
+            measurement_uri = _util.uri_joinpath(experiment_ms_uri, measurement_name)
+            with _create_or_open_collection(
+                Measurement, measurement_uri, **ingest_ctx
+            ) as measurement:
+                _maybe_set(
+                    ms, measurement_name, measurement, use_relative_uri=use_relative_uri
+                )
+
+                # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                # MS/meas/VAR
+                var_uri = _util.uri_joinpath(measurement_uri, "var")
+                with _write_arrow_to_dataframe(
+                    var_uri, var_data, max_size=nvar, **ingest_platform_ctx
+                ) as var:
+                    _maybe_set(
+                        measurement, "var", var, use_relative_uri=use_relative_uri
+                    )
+
+                # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                # MS/meas/VAR_SPATIAL_PRESENCE
+                if write_var_spatial_presence:
+                    var_spatial_presence_uri = _util.uri_joinpath(
+                        measurement_uri,
+                        "var_spatial_presence",
+                    )
+                    unique_var_id = reader.unique_var_indices()
+                    var_spatial_presence = _write_scene_presence_dataframe(
+                        unique_var_id,
+                        nvar,
+                        scene_name,
+                        var_spatial_presence_uri,
+                        **ingest_ctx,
+                    )
+                    _maybe_set(
+                        measurement,
+                        "var_spatial_presence",
+                        var_spatial_presence,
+                        use_relative_uri=use_relative_uri,
+                    )
+
+                # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                # MS/meas/X/DATA
+                measurement_X_uri = _util.uri_joinpath(measurement_uri, "X")
+                with _create_or_open_collection(
+                    Collection, measurement_X_uri, **ingest_ctx
+                ) as x:
+                    _maybe_set(measurement, "X", x, use_relative_uri=use_relative_uri)
+                    X_layer_uri = _util.uri_joinpath(measurement_X_uri, X_layer_name)
+                    with _write_X_layer(
+                        X_kind,
+                        X_layer_uri,
+                        reader,
+                        joinid_maps.obs_axis,
+                        joinid_maps.var_axes[measurement_name],
+                        **ingest_platform_ctx,
+                    ) as data:
+                        _maybe_set(
+                            x, X_layer_name, data, use_relative_uri=use_relative_uri
+                        )
+
+        # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+        # SPATIAL
+        spatial_uri = _util.uri_joinpath(experiment_uri, "spatial")
+        with _create_or_open_collection(
+            Collection[Scene], spatial_uri, **ingest_ctx
+        ) as spatial:
+            _maybe_set(
+                experiment, "spatial", spatial, use_relative_uri=use_relative_uri
+            )
+            scene_uri = _util.uri_joinpath(spatial_uri, scene_name)
+            with _create_or_open_scene(scene_uri, **ingest_ctx) as scene:
+                _maybe_set(
+                    spatial, scene_name, scene, use_relative_uri=use_relative_uri
+                )
+                scene.coordinate_space = coord_space
+
+                img_uri = _util.uri_joinpath(scene_uri, "img")
+                with _create_or_open_collection(
+                    Collection[MultiscaleImage], img_uri, **ingest_ctx
+                ) as img:
+                    _maybe_set(scene, "img", img, use_relative_uri=use_relative_uri)
+
+                    # TODO: Write image data and add to the scene.
+
+                obsl_uri = _util.uri_joinpath(scene_uri, "obsl")
+                with _create_or_open_collection(
+                    Collection[AnySOMAObject], obsl_uri, **ingest_ctx
+                ) as obsl:
+                    _maybe_set(scene, "obsl", obsl, use_relative_uri=use_relative_uri)
+
+                    if input_paths.cells and input_paths.cell_boundaries:
+                        # Write geometry data and add to the scene.
+                        cells_uri = _util.uri_joinpath(obsl_uri, "cells")
+                        with _write_xenium_geometry(
+                            cells_uri,
+                            input_paths.cells,
+                            input_paths.cell_boundaries,
+                            input_paths.nucleus_boundaries,
+                            obs_data,
+                            "obs_id",
+                            nobs,
+                            **ingest_ctx,
+                        ) as cells:
+                            _maybe_set(
+                                obsl, "cells", cells, use_relative_uri=use_relative_uri
+                            )
+                            geometry_coord_space = CoordinateSpace(
+                                (Axis(name="x", unit="micrometre"), Axis(name="y", unit="micrometre"))  # type: ignore[arg-type]
+                            )
+
+                            # TODO: Add projection coordinate transformation
+                            cells.coordinate_space = geometry_coord_space
+
+                varl_uri = _util.uri_joinpath(scene_uri, "varl")
+                with _create_or_open_collection(
+                    Collection[Collection[AnySOMAObject]], varl_uri, **ingest_ctx
+                ) as varl:
+                    _maybe_set(scene, "varl", varl, use_relative_uri=use_relative_uri)
+
+                    rna_uri = _util.uri_joinpath(varl_uri, "RNA")
+                    with _create_or_open_collection(
+                        Collection[AnySOMAObject], rna_uri, **ingest_ctx
+                    ) as rna:
+                        _maybe_set(varl, "RNA", rna, use_relative_uri=use_relative_uri)
+
+                        if input_paths.transcripts:
+                            # Write transcripts data and add to the scene.
+                            transcripts_uri = _util.uri_joinpath(rna_uri, "transcripts")
+                            with _write_xenium_transcripts(
+                                transcripts_uri,
+                                input_paths.transcripts,
+                                var_data,
+                                "var_id",
+                                nvar,
+                                **ingest_ctx,
+                            ) as transcripts:
+                                _maybe_set(
+                                    rna,
+                                    "transcripts",
+                                    transcripts,
+                                    use_relative_uri=use_relative_uri,
+                                )
+                                transcripts_coord_space = CoordinateSpace(
+                                    (Axis(name="x", unit="micrometre"), Axis(name="y", unit="micrometre"), Axis(name="z", unit="micrometre"))  # type: ignore[arg-type]
+                                )
+                                scene.set_transform_to_point_cloud_dataframe(
+                                    "transcripts",
+                                    subcollection=["varl", "RNA"],
+                                    transform=IdentityTransform(
+                                        ("x", "y", "z"), ("x", "y", "z")
+                                    ),
+                                )
+                                transcripts.coordinate_space = transcripts_coord_space
+
+    logging.log_io(
+        f"Wrote   {experiment.uri}",
+        _util.format_elapsed(start_time, f"FINISH WRITING {experiment.uri}"),
+    )
+
+    return experiment.uri
+
+
+def _write_xenium_transcripts(
+    df_uri: str,
+    input_transcripts: Path,
+    var_data: pa.Table,
+    id_column_name: str,
+    max_joinid_len: int,
+    *,
+    ingestion_params: IngestionParams,
+    additional_metadata: AdditionalMetadata = None,
+    platform_config: PlatformConfig | None = None,
+    context: SOMATileDBContext | None = None,
+) -> PointCloudDataFrame:
+    """Creates, opens, and writes data to a ``PointCloudDataFrame`` with the transcripts
+    and metadata. Returns the open dataframe for writing.
+    """
+    var_df = var_data.to_pandas()
+    df = (
+        pd.read_parquet(input_transcripts)
+        .rename(
+            columns={
+                "z_location": "z",
+                "y_location": "y",
+                "x_location": "x",
+            }
+        )
+        .astype({"feature_name": "string"})
+    )
+    df = pd.merge(
+        var_df, df, how="inner", left_on=id_column_name, right_on="feature_name"
+    )
+    df.drop(id_column_name, axis=1, inplace=True)
+
+    domain = (
+        (df["x"].min(), df["x"].max()),
+        (df["y"].min(), df["y"].max()),
+        (df["z"].min(), df["z"].max()),
+        (0, max_joinid_len - 1),
+    )
+
+    coord_space = CoordinateSpace(
+        (Axis(name="x", unit="micrometre"), Axis(name="y", unit="micrometre"), Axis(name="z", unit="micrometre"))  # type: ignore[arg-type]
+    )
+
+    platform_config = platform_config or dict()
+    if isinstance(platform_config, dict):
+        platform_config.setdefault("tiledb", dict())
+        if isinstance(platform_config["tiledb"], dict):
+            platform_config["tiledb"].setdefault("create", dict())
+            if isinstance(platform_config["tiledb"]["create"], dict):
+                platform_config["tiledb"]["create"].setdefault(
+                    "allows_duplicates", True
+                )
+
+    arrow_table = conversions.df_to_arrow_table(df)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        soma_point_cloud = PointCloudDataFrame.create(
+            df_uri,
+            domain=domain,
+            schema=arrow_table.schema,
+            coordinate_space=coord_space,
+            platform_config=platform_config,
+            context=context,
+        )
+
+    add_metadata(soma_point_cloud, additional_metadata)
+    soma_point_cloud.coordinate_space = coord_space
+
+    if ingestion_params.write_schema_no_data:
+        return soma_point_cloud
+
+    tiledb_create_options = TileDBCreateOptions.from_platform_config(platform_config)
+    tiledb_write_options = TileDBWriteOptions.from_platform_config(platform_config)
+
+    if arrow_table:
+        _write_arrow_table(
+            arrow_table, soma_point_cloud, tiledb_create_options, tiledb_write_options
+        )
+
+    return soma_point_cloud
+
+
+def _write_xenium_geometry(
+    df_uri: str,
+    input_cells: Path,
+    input_cell_boundaries: Path,
+    input_nucleus_boundaries: Optional[Path],
+    obs_data: pa.Table,
+    id_column_name: str,
+    max_joinid_len: int,
+    *,
+    ingestion_params: IngestionParams,
+    additional_metadata: AdditionalMetadata = None,
+    platform_config: PlatformConfig | None = None,
+    context: SOMATileDBContext | None = None,
+) -> GeometryDataFrame:
+    """Creates, opens, and writes data to a ``PointCloudDataFrame`` with the transcripts
+    and metadata. Returns the open dataframe for writing.
+    """
+    obs_df = obs_data.to_pandas()
+    cell_df = pd.read_parquet(input_cells).astype({"cell_id": "string"})
+    cell_df = pd.merge(
+        obs_df, cell_df, how="inner", left_on=id_column_name, right_on="cell_id"
+    )
+    cell_df.drop(id_column_name, axis=1, inplace=True)
+
+    cell_boundary_df = pd.read_parquet(input_cell_boundaries).astype(
+        {"cell_id": "string"}
+    )
+    cell_boundary_df["soma_geometry"] = cell_boundary_df.apply(
+        lambda x: list([x["vertex_x"], x["vertex_y"]]), axis=1
+    )
+    cell_boundary_df.drop(columns=["vertex_x", "vertex_y"], inplace=True)
+    cell_boundary_df = cell_boundary_df.groupby("cell_id").agg("sum")
+
+    cell_df = pd.merge(cell_df, cell_boundary_df, how="inner", on="cell_id")
+    del cell_boundary_df
+
+    if input_nucleus_boundaries:
+        nucleus_boundary_df = pd.read_parquet(input_nucleus_boundaries).astype(
+            {"cell_id": "string"}
+        )
+        nucleus_boundary_df["nucleus_boundary"] = nucleus_boundary_df.apply(
+            lambda x: list([x["vertex_x"], x["vertex_y"]]), axis=1
+        )
+        nucleus_boundary_df.drop(columns=["vertex_x", "vertex_y"], inplace=True)
+        nucleus_boundary_df = nucleus_boundary_df.groupby("cell_id").agg("sum")
+
+        cell_df = pd.merge(cell_df, nucleus_boundary_df, how="inner", on="cell_id")
+        del nucleus_boundary_df
+
+    arrow_table = conversions.df_to_arrow_table(cell_df)
+
+    schema = arrow_table.schema
+    soma_geometry_idx = schema.get_field_index("soma_geometry")
+    nucleus_boundary_idx = schema.get_field_index("nucleus_boundary")
+
+    schema = schema.set(
+        soma_geometry_idx,
+        pa.field("soma_geometry", pa.large_binary(), metadata={"dtype": "WKB"}),
+    )
+    schema = schema.set(
+        nucleus_boundary_idx,
+        pa.field("nucleus_boundary", pa.large_binary(), metadata={"dtype": "WKB"}),
+    )
+
+    domain = (
+        None,
+        (0, max_joinid_len - 1),
+    )
+
+    coord_space = CoordinateSpace(
+        (Axis(name="x", unit="micrometre"), Axis(name="y", unit="micrometre"))  # type: ignore[arg-type]
+    )
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        soma_geometry_df = GeometryDataFrame.create(
+            df_uri,
+            schema=schema,
+            domain=domain,
+            coordinate_space=coord_space,
+            platform_config=platform_config,
+            context=context,
+        )
+
+    add_metadata(soma_geometry_df, additional_metadata)
+    soma_geometry_df.coordinate_space = coord_space
+
+    if ingestion_params.write_schema_no_data:
+        return soma_geometry_df
+
+    tiledb_create_options = TileDBCreateOptions.from_platform_config(platform_config)
+    tiledb_write_options = TileDBWriteOptions.from_platform_config(platform_config)
+
+    if arrow_table:
+        _write_geometry_outline_arrow_table(
+            arrow_table, soma_geometry_df, tiledb_create_options, tiledb_write_options
+        )
+
+    return soma_geometry_df
+
+
+def _write_geometry_outline_arrow_table(
+    arrow_table: pa.Table,
+    handle: GeometryDataFrame,
+    tiledb_create_options: TileDBCreateOptions,
+    tiledb_write_options: TileDBWriteOptions,
+) -> None:
+    """Handles num-bytes capacity for remote object stores."""
+    cap = tiledb_create_options.remote_cap_nbytes
+    if arrow_table.nbytes > cap:
+        n = len(arrow_table)
+        if n < 2:
+            raise SOMAError(
+                f"Failed to write geometry dataframe. The number of bytes {arrow_table.nbytes}"
+                f" in a single input table row nexceeds the cap of {cap}."
+            )
+        m = n // 2
+        _write_geometry_outline_arrow_table(
+            arrow_table[:m], handle, tiledb_create_options, tiledb_write_options
+        )
+        _write_geometry_outline_arrow_table(
+            arrow_table[m:], handle, tiledb_create_options, tiledb_write_options
+        )
+    else:
+        logging.log_io(
+            None,
+            f"Write Arrow table num_rows={len(arrow_table)} num_bytes={arrow_table.nbytes} cap={cap}",
+        )
+        handle.from_outlines(arrow_table, platform_config=tiledb_write_options)

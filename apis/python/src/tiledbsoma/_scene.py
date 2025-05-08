@@ -507,7 +507,13 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
 
         Lifecycle: experimental
         """
-        raise NotImplementedError()
+        return self._set_transform_to_element(
+            GeometryDataFrame,
+            key=key,
+            transform=transform,
+            subcollection=subcollection,
+            coordinate_space=coordinate_space,
+        )
 
     def set_transform_to_multiscale_image(
         self,
@@ -657,7 +663,7 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
         return base_transform.inverse_transform() @ level_transform
 
     def get_transform_from_point_cloud_dataframe(
-        self, key: str, subcollection: str = "obsl"
+        self, key: str, subcollection: str | Sequence[str] = "obsl"
     ) -> CoordinateTransform:
         """Returns the coordinate transformation from the requested point cloud
         dataframe to the scene.
@@ -752,7 +758,7 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
         return level_transform @ base_transform
 
     def get_transform_to_point_cloud_dataframe(
-        self, key: str, subcollection: str = "obsl"
+        self, key: str, subcollection: str | Sequence[str] = "obsl"
     ) -> CoordinateTransform:
         """Returns the coordinate transformation from the scene to a requested
         point cloud dataframe.
