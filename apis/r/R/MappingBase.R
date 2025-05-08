@@ -13,7 +13,7 @@ MappingBase <- R6::R6Class(
   public = list(
     #' @param ... Ignored
     #'
-    #' @return \Sexpr[results=rd]{tiledbsoma:::rd_return_virtual()}
+    #' @return This is a \strong{virtual} class and cannot be directly instantiated
     #'
     initialize = function(...) {
       calls <- vapply_char(

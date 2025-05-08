@@ -52,7 +52,7 @@ context options
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-\Sexpr[results=rd]{tiledbsoma:::rd_return_virtual()}
+This is a \strong{virtual} class and cannot be directly instantiated
 }
 }
 \if{html}{\out{<hr>}}

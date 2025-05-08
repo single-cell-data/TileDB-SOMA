@@ -4,7 +4,9 @@
 \alias{EphemeralCollectionBase}
 \title{Ephemeral Collection Base}
 \description{
-\Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_cls("collection", TRUE)}
+Base class for ephemeral collections; ephemeral collections are
+equivalent to \link[tiledbsoma:SOMACollection]{SOMA collections} but are
+stored in-memory instead of on-disks
 }
 \keyword{internal}
 \section{Super classes}{
@@ -15,13 +17,17 @@
 \describe{
 \item{\code{uri}}{\dQuote{\code{ephemeral-collection:<MEMORY_ADDRESS>}}}
 
-\item{\code{soma_type}}{\Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_field()}}
+\item{\code{soma_type}}{Dummy field for ephemeral objects for compatibility with
+SOMA collections}
 
-\item{\code{platform_config}}{\Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_field()}}
+\item{\code{platform_config}}{Dummy field for ephemeral objects for
+compatibility with SOMA collections}
 
-\item{\code{tiledbsoma_ctx}}{\Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_field()}}
+\item{\code{tiledbsoma_ctx}}{Dummy field for ephemeral objects for compatibility
+with SOMA collections}
 
-\item{\code{object}}{\Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_field()}}
+\item{\code{object}}{Dummy field for ephemeral objects for compatibility with
+SOMA collections}
 }
 \if{html}{\out{</div>}}
 }
@@ -95,7 +101,8 @@ Returns a new ephemeral collection of class \code{class(self)}
 \if{html}{\out{<a id="method-EphemeralCollectionBase-open"></a>}}
 \if{latex}{\out{\hypertarget{method-EphemeralCollectionBase-open}{}}}
 \subsection{Method \code{open()}}{
-\Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_desc()}
+Dummy method for ephemeral cobjects for compatibility with
+SOMA collections
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{EphemeralCollectionBase$open(mode)}\if{html}{\out{</div>}}
 }
@@ -103,19 +110,20 @@ Returns a new ephemeral collection of class \code{class(self)}
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{mode}}{\Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_param()}}
+\item{\code{mode}}{Ignored for ephemeral objects}
 }
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-\Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_error()}
+Throws an error as this method is not supported by ephemeral objects
 }
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-EphemeralCollectionBase-close"></a>}}
 \if{latex}{\out{\hypertarget{method-EphemeralCollectionBase-close}{}}}
 \subsection{Method \code{close()}}{
-\Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_desc()}
+Dummy method for ephemeral cobjects for compatibility with
+SOMA collections
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{EphemeralCollectionBase$close()}\if{html}{\out{</div>}}
 }
@@ -128,7 +136,8 @@ Invisibly returns \code{NULL}
 \if{html}{\out{<a id="method-EphemeralCollectionBase-exists"></a>}}
 \if{latex}{\out{\hypertarget{method-EphemeralCollectionBase-exists}{}}}
 \subsection{Method \code{exists()}}{
-\Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_desc()}
+Dummy method for ephemeral cobjects for compatibility with
+SOMA collections
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{EphemeralCollectionBase$exists()}\if{html}{\out{</div>}}
 }
@@ -156,7 +165,8 @@ returns itself
 \if{html}{\out{<a id="method-EphemeralCollectionBase-get_tiledb_config"></a>}}
 \if{latex}{\out{\hypertarget{method-EphemeralCollectionBase-get_tiledb_config}{}}}
 \subsection{Method \code{get_tiledb_config()}}{
-\Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_desc()}
+Dummy method for ephemeral cobjects for compatibility with
+SOMA collections
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{EphemeralCollectionBase$get_tiledb_config(param = NULL)}\if{html}{\out{</div>}}
 }
@@ -164,7 +174,7 @@ returns itself
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{param}}{\Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_param()}}
+\item{\code{param}}{Ignored for ephemeral objects}
 }
 \if{html}{\out{</div>}}
 }
@@ -216,7 +226,7 @@ to the collection}
 
 \item{\code{name}}{A name to add \code{object} as}
 
-\item{\code{relative}}{\Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_param()}}
+\item{\code{relative}}{Ignored for ephemeral objects}
 }
 \if{html}{\out{</div>}}
 }
@@ -270,7 +280,8 @@ Remove objects from an ephemeral collection
 \if{html}{\out{<a id="method-EphemeralCollectionBase-set_metadata"></a>}}
 \if{latex}{\out{\hypertarget{method-EphemeralCollectionBase-set_metadata}{}}}
 \subsection{Method \code{set_metadata()}}{
-\Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_desc()}
+Dummy method for ephemeral cobjects for compatibility with
+SOMA collections
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{EphemeralCollectionBase$set_metadata(metadata)}\if{html}{\out{</div>}}
 }
@@ -278,19 +289,20 @@ Remove objects from an ephemeral collection
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{metadata}}{\Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_param()}}
+\item{\code{metadata}}{Ignored for ephemeral objects}
 }
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-\Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_error()}
+Throws an error as this method is not supported by ephemeral objects
 }
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-EphemeralCollectionBase-get_metadata"></a>}}
 \if{latex}{\out{\hypertarget{method-EphemeralCollectionBase-get_metadata}{}}}
 \subsection{Method \code{get_metadata()}}{
-\Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_desc()}
+Dummy method for ephemeral cobjects for compatibility with
+SOMA collections
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{EphemeralCollectionBase$get_metadata(key = NULL)}\if{html}{\out{</div>}}
 }
@@ -298,7 +310,7 @@ Remove objects from an ephemeral collection
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{key}}{\Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_param()}}
+\item{\code{key}}{Ignored for ephemeral objects}
 }
 \if{html}{\out{</div>}}
 }
@@ -310,7 +322,8 @@ An empty list
 \if{html}{\out{<a id="method-EphemeralCollectionBase-add_new_collection"></a>}}
 \if{latex}{\out{\hypertarget{method-EphemeralCollectionBase-add_new_collection}{}}}
 \subsection{Method \code{add_new_collection()}}{
-\Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_desc()}
+Dummy method for ephemeral cobjects for compatibility with
+SOMA collections
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{EphemeralCollectionBase$add_new_collection(object, key)}\if{html}{\out{</div>}}
 }
@@ -318,19 +331,20 @@ An empty list
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{object, key}}{\Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_param()}}
+\item{\code{object, key}}{Ignored for ephemeral objects}
 }
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-\Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_error()}
+Throws an error as this method is not supported by ephemeral objects
 }
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-EphemeralCollectionBase-add_new_dataframe"></a>}}
 \if{latex}{\out{\hypertarget{method-EphemeralCollectionBase-add_new_dataframe}{}}}
 \subsection{Method \code{add_new_dataframe()}}{
-\Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_desc()}
+Dummy method for ephemeral cobjects for compatibility with
+SOMA collections
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{EphemeralCollectionBase$add_new_dataframe(key, schema, index_column_names)}\if{html}{\out{</div>}}
 }
@@ -338,19 +352,20 @@ An empty list
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{key, schema, index_column_names}}{\Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_param()}}
+\item{\code{key, schema, index_column_names}}{Ignored for ephemeral objects}
 }
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-\Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_error()}
+Throws an error as this method is not supported by ephemeral objects
 }
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-EphemeralCollectionBase-add_new_dense_ndarray"></a>}}
 \if{latex}{\out{\hypertarget{method-EphemeralCollectionBase-add_new_dense_ndarray}{}}}
 \subsection{Method \code{add_new_dense_ndarray()}}{
-\Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_desc()}
+Dummy method for ephemeral cobjects for compatibility with
+SOMA collections
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{EphemeralCollectionBase$add_new_dense_ndarray(key, type, shape)}\if{html}{\out{</div>}}
 }
@@ -358,19 +373,20 @@ An empty list
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{key, type, shape}}{\Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_param()}}
+\item{\code{key, type, shape}}{Ignored for ephemeral objects}
 }
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-\Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_error()}
+Throws an error as this method is not supported by ephemeral objects
 }
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-EphemeralCollectionBase-add_new_sparse_ndarray"></a>}}
 \if{latex}{\out{\hypertarget{method-EphemeralCollectionBase-add_new_sparse_ndarray}{}}}
 \subsection{Method \code{add_new_sparse_ndarray()}}{
-\Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_desc()}
+Dummy method for ephemeral cobjects for compatibility with
+SOMA collections
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{EphemeralCollectionBase$add_new_sparse_ndarray(key, type, shape)}\if{html}{\out{</div>}}
 }
@@ -378,12 +394,12 @@ An empty list
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{key, type, shape}}{\Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_param()}}
+\item{\code{key, type, shape}}{Ignored for ephemeral objects}
 }
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-\Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_error()}
+Throws an error as this method is not supported by ephemeral objects
 }
 }
 \if{html}{\out{<hr>}}

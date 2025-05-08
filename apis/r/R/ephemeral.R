@@ -1,6 +1,8 @@
 #' Ephemeral Collection Base
 #'
-#' @description \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_cls("collection", TRUE)}
+#' @description Base class for ephemeral collections; ephemeral collections are
+#' equivalent to \link[tiledbsoma:SOMACollection]{SOMA collections} but are
+#' stored in-memory instead of on-disks
 #'
 #' @keywords internal
 #' @export
@@ -52,17 +54,19 @@ EphemeralCollectionBase <- R6::R6Class(
     },
 
     # Override TileDBGroup private methods
-    #' @description \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_desc()}
+    #' @description Dummy method for ephemeral cobjects for compatibility with
+    #' SOMA collections
     #'
-    #' @param mode \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_param()}
+    #' @param mode Ignored for ephemeral objects
     #'
-    #' @return \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_error()}
+    #' @return Throws an error as this method is not supported by ephemeral objects
     #'
     open = function(mode) {
       private$.ephemeral_error("opened")
     },
 
-    #' @description \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_desc()}
+    #' @description Dummy method for ephemeral cobjects for compatibility with
+    #' SOMA collections
     #'
     #' @return Invisibly returns \code{NULL}
     #'
@@ -76,7 +80,8 @@ EphemeralCollectionBase <- R6::R6Class(
       return(invisible(NULL))
     },
 
-    #' @description \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_desc()}
+    #' @description Dummy method for ephemeral cobjects for compatibility with
+    #' SOMA collections
     #'
     #' @return Returns \code{FALSE} as ephemeral collections do not
     #' exist on-disk
@@ -97,9 +102,10 @@ EphemeralCollectionBase <- R6::R6Class(
       return(invisible(self))
     },
 
-    #' @description \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_desc()}
+    #' @description Dummy method for ephemeral cobjects for compatibility with
+    #' SOMA collections
     #'
-    #' @param param \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_param()}
+    #' @param param Ignored for ephemeral objects
     #'
     #' @return Returns \code{NULL} as ephemeral collections do not have an
     #' on-disk configuration
@@ -134,7 +140,7 @@ EphemeralCollectionBase <- R6::R6Class(
     #' @param object A TileDB object (eg. \code{\link{TileDBGroup}}) to add
     #' to the collection
     #' @param name A name to add \code{object} as
-    #' @param relative \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_param()}
+    #' @param relative Ignored for ephemeral objects
     #'
     #' @return \[chainable] Invisibly returns \code{self} with \code{object}
     #' added as \code{name}
@@ -184,19 +190,21 @@ EphemeralCollectionBase <- R6::R6Class(
       return(invisible(self))
     },
 
-    #' @description \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_desc()}
+    #' @description Dummy method for ephemeral cobjects for compatibility with
+    #' SOMA collections
     #'
-    #' @param metadata \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_param()}
+    #' @param metadata Ignored for ephemeral objects
     #'
-    #' @return \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_error()}
+    #' @return Throws an error as this method is not supported by ephemeral objects
     #'
     set_metadata = function(metadata) {
       private$.ephemeral_error("edited")
     },
 
-    #' @description \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_desc()}
+    #' @description Dummy method for ephemeral cobjects for compatibility with
+    #' SOMA collections
     #'
-    #' @param key \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_param()}
+    #' @param key Ignored for ephemeral objects
     #'
     #' @return An empty list
     #'
@@ -211,41 +219,45 @@ EphemeralCollectionBase <- R6::R6Class(
     },
 
     # Override SOMACollectionBase methods
-    #' @description \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_desc()}
+    #' @description Dummy method for ephemeral cobjects for compatibility with
+    #' SOMA collections
     #'
-    #' @param object,key \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_param()}
+    #' @param object,key Ignored for ephemeral objects
     #'
-    #' @return \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_error()}
+    #' @return Throws an error as this method is not supported by ephemeral objects
     #'
     add_new_collection = function(object, key) {
       private$.ephemeral_error()
     },
 
-    #' @description \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_desc()}
+    #' @description Dummy method for ephemeral cobjects for compatibility with
+    #' SOMA collections
     #'
-    #' @param key,schema,index_column_names \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_param()}
+    #' @param key,schema,index_column_names Ignored for ephemeral objects
     #'
-    #' @return \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_error()}
+    #' @return Throws an error as this method is not supported by ephemeral objects
     #'
     add_new_dataframe = function(key, schema, index_column_names) {
       private$.ephemeral_error()
     },
 
-    #' @description \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_desc()}
+    #' @description Dummy method for ephemeral cobjects for compatibility with
+    #' SOMA collections
     #'
-    #' @param key,type,shape \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_param()}
+    #' @param key,type,shape Ignored for ephemeral objects
     #'
-    #' @return \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_error()}
+    #' @return Throws an error as this method is not supported by ephemeral objects
     #'
     add_new_dense_ndarray = function(key, type, shape) {
       private$.ephemeral_error()
     },
 
-    #' @description \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_desc()}
+    #' @description Dummy method for ephemeral cobjects for compatibility with
+    #' SOMA collections
     #'
-    #' @param key,type,shape \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_param()}
+    #' @param key,type,shape Ignored for ephemeral objects
     #'
-    #' @return \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_error()}
+    #' @return Throws an error as this method is not supported by ephemeral objects
     #'
     add_new_sparse_ndarray = function(key, type, shape) {
       private$.ephemeral_error()
@@ -262,7 +274,8 @@ EphemeralCollectionBase <- R6::R6Class(
     },
 
     # Override SOMACollectionBase fields
-    #' @field soma_type \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_field()}
+    #' @field soma_type Dummy field for ephemeral objects for compatibility with
+    #' SOMA collections
     soma_type = function(value) {
       if (!missing(value)) {
         private$.read_only_error("soma_type")
@@ -271,7 +284,8 @@ EphemeralCollectionBase <- R6::R6Class(
     },
 
     # Override TileDBObject fields
-    #' @field platform_config \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_field()}
+    #' @field platform_config Dummy field for ephemeral objects for
+    #' compatibility with SOMA collections
     platform_config = function(value) {
       if (!missing(value)) {
         private$.read_only_error("platform_config")
@@ -279,7 +293,8 @@ EphemeralCollectionBase <- R6::R6Class(
       private$.ephemeral_error("custom", "and have no configuration")
     },
 
-    #' @field tiledbsoma_ctx \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_field()}
+    #' @field tiledbsoma_ctx Dummy field for ephemeral objects for compatibility
+    #' with SOMA collections
     tiledbsoma_ctx = function(value) {
       if (!missing(value)) {
         private$.read_only_error("tiledbsoma_ctx")
@@ -287,7 +302,8 @@ EphemeralCollectionBase <- R6::R6Class(
       private$.ephemeral_error("custom", "and have no context")
     },
 
-    #' @field object \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_field()}
+    #' @field object Dummy field for ephemeral objects for compatibility with
+    #' SOMA collections
     object = function(value) {
       if (!missing(value)) {
         private$.read_only_error("object")
@@ -370,7 +386,10 @@ EphemeralCollectionBase <- R6::R6Class(
 
 #' Ephemeral Collections
 #'
-#' @description \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_cls("collection")}
+#' @description Ephemeral version of \code{\link{SOMACollection}s}; ephemeral
+#' collections are equivalent to
+#' \link[tiledbsoma:SOMACollection]{SOMA collections} but are stored in-memory
+#' instead of on-disk
 #'
 #' @keywords internal
 #'
@@ -392,7 +411,10 @@ EphemeralCollection <- R6::R6Class(
 
 #' Ephemeral SOMA Measurement
 #'
-#' @description \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_cls("measurement")}
+#' @description Ephemeral version of \code{\link{SOMAMeasurement}s}; ephemeral
+#' measurements are equivalent to
+#' \link[tiledbsoma:SOMAMeasurement]{SOMA measurements} but are stored in-memory
+#' instead of on-disk
 #'
 #' @keywords internal
 #'
@@ -402,7 +424,11 @@ EphemeralMeasurement <- R6::R6Class(
   classname = "EphemeralMeasurement",
   inherit = EphemeralCollectionBase,
   active = list(
-    #' @field var \Sexpr[results=rd]{tiledbsoma:::rd_soma_field("var")}
+    #' @field var A \code{\link{SOMADataFrame}} containing primary annotations
+    #' on the variable axis, for variables in this measurement (i.e., annotates
+    #' columns of \code{X}). The contents of the \code{soma_joinid} column
+    #' define the variable index domain, \code{var_id}. All variables for this
+    #' measurement must be defined in this data frame
     var = function(value) {
       private$get_or_set_soma_field(
         value = value,
@@ -411,7 +437,9 @@ EphemeralMeasurement <- R6::R6Class(
       )
     },
 
-    #' @field X \Sexpr[results=rd]{tiledbsoma:::rd_soma_field("X")}
+    #' @field X A \code{\link{SOMACollection}} of
+    #' \code{\link{SOMASparseNDArray}}s; each contain measured feature values
+    #' indexed by \code{[obsid, varid]}
     X = function(value) {
       private$get_or_set_soma_field(
         value = value,
@@ -420,7 +448,10 @@ EphemeralMeasurement <- R6::R6Class(
       )
     },
 
-    #' @field obsm \Sexpr[results=rd]{tiledbsoma:::rd_soma_field("obsm")}
+    #' @field obsm A \code{\link{SOMACollection}} of
+    #' \code{\link{SOMADenseNDArray}}s containing annotations on the observation
+    #' axis. Each array is indexed by \code{obsid} and has the same shape as
+    #' \code{obs}
     obsm = function(value) {
       private$get_or_set_soma_field(
         value = value,
@@ -429,7 +460,9 @@ EphemeralMeasurement <- R6::R6Class(
       )
     },
 
-    #' @field obsp \Sexpr[results=rd]{tiledbsoma:::rd_soma_field("obsp")}
+    #' @field obsp A \code{\link{SOMACollection}} of
+    #' \code{\link{SOMASparseNDArray}}s containing pairwise annotations on the
+    #' observation axis and indexed with \code{[obsid_1, obsid_2]}
     obsp = function(value) {
       private$get_or_set_soma_field(
         value = value,
@@ -438,7 +471,10 @@ EphemeralMeasurement <- R6::R6Class(
       )
     },
 
-    #' @field varm \Sexpr[results=rd]{tiledbsoma:::rd_soma_field("varm")}
+    #' @field varm A \code{\link{SOMACollection}} of
+    #' \code{\link{SOMADenseNDArray}}s containing annotations on the variable
+    #' axis. Each array is indexed by \code{varid} and has the same shape as
+    #' \code{var}
     varm = function(value) {
       private$get_or_set_soma_field(
         value = value,
@@ -447,7 +483,9 @@ EphemeralMeasurement <- R6::R6Class(
       )
     },
 
-    #' @field varp \Sexpr[results=rd]{tiledbsoma:::rd_soma_field("varp")}
+    #' @field varp A \code{\link{SOMACollection}} of
+    #' \code{\link{SOMASparseNDArray}}s containing pairwise annotations on the
+    #' variable axis and indexed with \code{[varid_1, varid_2]}
     varp = function(value) {
       private$get_or_set_soma_field(
         value = value,
@@ -468,7 +506,10 @@ EphemeralMeasurement <- R6::R6Class(
 
 #' Ephemeral SOMA Experiment
 #'
-#' @description \Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_cls("experiment")}
+#' @description Ephemeral version of \code{\link{SOMAExperiment}s}; ephemeral
+#' experiments are equivalent to
+#' \link[tiledbsoma:SOMAExperiment]{SOMA experiments} but are stored in-memory
+#' instead of on-disk
 #'
 #' @keywords internal
 #'
@@ -478,7 +519,10 @@ EphemeralExperiment <- R6::R6Class(
   classname = "EphemeralExperiment",
   inherit = EphemeralCollectionBase,
   active = list(
-    #' @field obs \Sexpr[results=rd]{tiledbsoma:::rd_soma_field("obs")}
+    #' @field obs A \code{\link{SOMADataFrame}} containing the annotations on
+    #' the observation axis. The contents of the \code{soma_joinid} column
+    #' define the observation index domain \code{obs_id}. All observations for
+    #' the \code{SOMAExperiment} must be defined in this data frame
     obs = function(value) {
       private$get_or_set_soma_field(
         value = value,
@@ -487,7 +531,8 @@ EphemeralExperiment <- R6::R6Class(
       )
     },
 
-    #' @field ms \Sexpr[results=rd]{tiledbsoma:::rd_soma_field("ms")}
+    #' @field ms A \code{\link{SOMACollection}} of named
+    #' \code{\link{SOMAMeasurement}}s
     ms = function(value) {
       private$get_or_set_soma_field(
         value = value,
