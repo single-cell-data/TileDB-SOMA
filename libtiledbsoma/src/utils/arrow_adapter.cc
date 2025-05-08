@@ -19,6 +19,7 @@
 #include "util.h"
 
 #include "../soma/soma_attribute.h"
+#include "../soma/soma_binary_column.h"
 #include "../soma/soma_coordinates.h"
 #include "../soma/soma_dimension.h"
 #include "../soma/soma_geometry_column.h"
@@ -894,7 +895,7 @@ tiledb_layout_t ArrowAdapter::_get_order(std::string order) {
     }
 }
 
-std::tuple<ArraySchema, nlohmann::json>
+std::tuple<ArraySchema, nlohmann::json, bool>
 ArrowAdapter::tiledb_schema_from_arrow_schema(
     std::shared_ptr<Context> ctx,
     const std::unique_ptr<ArrowSchema>& arrow_schema,
@@ -905,6 +906,7 @@ ArrowAdapter::tiledb_schema_from_arrow_schema(
     PlatformConfig platform_config) {
     auto& index_column_array = index_column_info.first;
     auto& index_column_schema = index_column_info.second;
+    bool required_soma_column_metadata = false;
 
     ArraySchema schema(*ctx, is_sparse ? TILEDB_SPARSE : TILEDB_DENSE);
     Domain domain(*ctx);
@@ -961,26 +963,42 @@ ArrowAdapter::tiledb_schema_from_arrow_schema(
         for (int64_t i = 0; i < index_column_schema->n_children; ++i) {
             if (strcmp(child->name, index_column_schema->children[i]->name) ==
                 0) {
-                if (strcmp(child->name, SOMA_GEOMETRY_COLUMN_NAME.c_str()) ==
-                    0) {
-                    columns.push_back(SOMAGeometryColumn::create(
-                        ctx,
-                        child,
-                        index_column_schema->children[i],
-                        index_column_array->children[i],
-                        coordinate_space.value(),
-                        soma_type,
-                        type_metadata,
-                        platform_config));
-                } else {
-                    columns.push_back(SOMADimension::create(
-                        ctx,
-                        index_column_schema->children[i],
-                        index_column_array->children[i],
-                        soma_type,
-                        type_metadata,
-                        platform_config));
+                auto dtype = to_tiledb_format(child->format, type_metadata);
+                switch (dtype) {
+                    case TILEDB_BLOB:
+                        required_soma_column_metadata = true;
+                        columns.push_back(SOMABinaryColumn::create(
+                            ctx,
+                            index_column_schema->children[i],
+                            index_column_array->children[i],
+                            soma_type,
+                            true,
+                            type_metadata,
+                            platform_config));
+                        break;
+                    case TILEDB_GEOM_WKB:
+                        required_soma_column_metadata = true;
+                        columns.push_back(SOMAGeometryColumn::create(
+                            ctx,
+                            child,
+                            index_column_schema->children[i],
+                            index_column_array->children[i],
+                            coordinate_space.value(),
+                            soma_type,
+                            type_metadata,
+                            platform_config));
+                        break;
+                    default:
+                        columns.push_back(SOMADimension::create(
+                            ctx,
+                            index_column_schema->children[i],
+                            index_column_array->children[i],
+                            soma_type,
+                            type_metadata,
+                            platform_config));
+                        break;
                 }
+
                 isattr = false;
                 LOG_DEBUG(fmt::format(
                     "[ArrowAdapter] adding dimension {}", child->name));
@@ -1079,24 +1097,6 @@ ArrowAdapter::tiledb_schema_from_arrow_schema(
             ndrect,
             get_table_any_column_by_name<2>(
                 index_column_info, column->name(), 3));
-
-        // if (column->name() == SOMA_GEOMETRY_COLUMN_NAME) {
-        //     std::vector<std::any> cdslot;
-        //     for (int64_t j = 0; j < spatial_column_info.first->n_children;
-        //          ++j) {
-        //         cdslot.push_back(ArrowAdapter::get_table_any_column<2>(
-        //             spatial_column_info.first->children[j],
-        //             spatial_column_info.second->children[j],
-        //             3));
-        //     }
-
-        //     column->set_current_domain_slot(ndrect, cdslot);
-        // } else {
-        //     column->set_current_domain_slot(
-        //         ndrect,
-        //         get_table_any_column_by_name<2>(
-        //             index_column_info, column->name(), 3));
-        // }
     }
     current_domain.set_ndrectangle(ndrect);
 
@@ -1110,7 +1110,8 @@ ArrowAdapter::tiledb_schema_from_arrow_schema(
     schema.check();
 
     LOG_DEBUG(fmt::format("[ArrowAdapter] returning"));
-    return std::make_tuple(schema, soma_schema_extension);
+    return std::make_tuple(
+        schema, soma_schema_extension, required_soma_column_metadata);
 }
 
 Dimension ArrowAdapter::tiledb_dimension_from_arrow_schema(
@@ -1124,6 +1125,7 @@ Dimension ArrowAdapter::tiledb_dimension_from_arrow_schema(
     PlatformConfig platform_config) {
     auto type = ArrowAdapter::to_tiledb_format(schema->format, type_metadata);
 
+    // TileDB dimension only support ASCII so UTF8 and BLOB need to be casted
     if (ArrowAdapter::arrow_is_var_length_type(schema->format)) {
         type = TILEDB_STRING_ASCII;
     }
@@ -1142,54 +1144,6 @@ Dimension ArrowAdapter::tiledb_dimension_from_arrow_schema(
     }
 
     const void* buff = array->buffers[1];
-    auto dim = ArrowAdapter::_create_dim(type, col_name, buff, ctx);
-    dim.set_filter_list(filter_list);
-
-    return dim;
-}
-
-Dimension ArrowAdapter::tiledb_dimension_from_arrow_schema_ext(
-    std::shared_ptr<Context> ctx,
-    ArrowSchema* schema,
-    ArrowArray* array,
-    std::string soma_type,
-    std::string_view type_metadata,
-    std::string prefix,
-    std::string suffix,
-    PlatformConfig platform_config) {
-    if (strcmp(schema->format, "+l") != 0) {
-        throw TileDBSOMAError(
-            fmt::format("[tiledb_dimension_from_arrow_schema_ext] Schema "
-                        "should be of type list."));
-    }
-
-    if (schema->n_children != 1) {
-        throw TileDBSOMAError(
-            fmt::format("[tiledb_dimension_from_arrow_schema_ext] Schema "
-                        "should have exactly 1 child"));
-    }
-
-    auto type = ArrowAdapter::to_tiledb_format(
-        schema->children[0]->format, type_metadata);
-
-    if (ArrowAdapter::arrow_is_var_length_type(schema->format)) {
-        type = TILEDB_STRING_ASCII;
-    }
-
-    auto col_name = prefix + std::string(schema->name) + suffix;
-
-    FilterList filter_list = ArrowAdapter::_create_dim_filter_list(
-        col_name, platform_config, soma_type, ctx);
-
-    if (array->length != 5) {
-        throw TileDBSOMAError(fmt::format(
-            "ArrowAdapter: unexpected length {} != 5 for name "
-            "'{}'",
-            array->length,
-            col_name));
-    }
-
-    const void* buff = array->children[0]->buffers[1];
     auto dim = ArrowAdapter::_create_dim(type, col_name, buff, ctx);
     dim.set_filter_list(filter_list);
 
@@ -1397,7 +1351,7 @@ ArrowAdapter::to_arrow(std::shared_ptr<ColumnBuffer> column) {
         // the owner of new buffers should be responsible for clean-up.
         if (enmr->type() == TILEDB_STRING_ASCII ||
             enmr->type() == TILEDB_STRING_UTF8 || enmr->type() == TILEDB_CHAR ||
-            enmr->type() == TILEDB_BLOB) {
+            enmr->type() == TILEDB_BLOB || enmr->type() == TILEDB_GEOM_WKB) {
             dict_arr->length = _set_var_dictionary_buffers(
                 enmr.value(), enmr->context(), dict_arr->buffers);
         } else if (enmr->type() == TILEDB_BOOL) {
@@ -1450,7 +1404,7 @@ tiledb_datatype_t ArrowAdapter::to_tiledb_format(
     std::string_view arrow_dtype, std::string_view arrow_dtype_metadata) {
     std::map<std::string_view, tiledb_datatype_t> _to_tiledb_format_map = {
         {"u", TILEDB_STRING_UTF8},    {"U", TILEDB_STRING_UTF8},
-        {"z", TILEDB_CHAR},           {"Z", TILEDB_CHAR},
+        {"z", TILEDB_BLOB},           {"Z", TILEDB_BLOB},
         {"c", TILEDB_INT8},           {"C", TILEDB_UINT8},
         {"s", TILEDB_INT16},          {"S", TILEDB_UINT16},
         {"i", TILEDB_INT32},          {"I", TILEDB_UINT32},
@@ -1464,7 +1418,7 @@ tiledb_datatype_t ArrowAdapter::to_tiledb_format(
     try {
         auto dtype = _to_tiledb_format_map.at(arrow_dtype);
 
-        if (dtype == TILEDB_CHAR && arrow_dtype_metadata.compare("WKB") == 0) {
+        if (dtype == TILEDB_BLOB && arrow_dtype_metadata.compare("WKB") == 0) {
             dtype = TILEDB_GEOM_WKB;
         } else if (
             dtype == TILEDB_STRING_UTF8 &&
