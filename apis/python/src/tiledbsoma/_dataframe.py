@@ -1149,7 +1149,7 @@ def _find_extent_for_domain(
         return extent
 
     if np.issubdtype(dtype, NPInteger) or np.issubdtype(dtype, NPFloating):
-        with np.errstate(over='ignore'):
+        with np.errstate(over="ignore"):
             return min(extent, hi - lo + 1)
 
     if dtype in ("datetime64[s]", "datetime64[ms]", "datetime64[us]", "datetime64[ns]"):
