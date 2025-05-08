@@ -6,6 +6,7 @@ import os
 import shutil
 import struct
 import time
+import warnings
 from pathlib import Path
 from typing import Any, List
 
@@ -3688,3 +3689,25 @@ def test_dictionary_value_type_62364(tmp_path, dt_type):
         actual = A.read().concat()
         assert schema == A.schema == A.read().concat().schema
         assert actual["attr"] == expected["attr"]
+
+
+def test_no_extent_warning_61509(tmp_path):
+
+    schema = pa.schema(
+        [
+            pa.field("float_index", type=pa.float64(), nullable=False),
+            pa.field("soma_joinid", type=pa.int64(), nullable=False),
+            ("data", pa.float64()),
+        ]
+    )
+    fmax = np.finfo(np.float64).max
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+
+        soma.DataFrame.create(
+            tmp_path.as_posix(),
+            schema=schema,
+            index_column_names=("float_index",),
+            domain=((-fmax, fmax),),
+        ).close()
