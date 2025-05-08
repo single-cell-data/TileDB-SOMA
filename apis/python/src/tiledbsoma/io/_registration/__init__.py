@@ -2,8 +2,7 @@
 #
 # Licensed under the MIT License.
 
-"""
-Support for soma_joinid remapping for append-mode ingestion.
+"""Support for soma_joinid remapping for append-mode ingestion.
 
 This is an internal-use class; none of it is user-facing API. The user-facing API is
 ``tiledbsoma.io.register``.
@@ -43,7 +42,6 @@ There are two kinds of mappings: _ambient mappings_ which contain string-to-int 
 for _all_ inputs, and ID mappings which contain int-to-int offset-to-join-ID mappings for each _single_ input.
 
 Example:
-
 - Input 1 has obs IDs ``["AAAT", "ACTG", "AGAG"]`` numbered 0, 1, 2 within input 1.
 - Input 1 has var IDs ``["AKT1", "APOE", "ESR1", "TP53", "VEGFA"]`` numbered 0, 1, 2, 3, 4 within input 1.
 - Input 2 has obs IDs ``["CAAT", "CCTG", "CGAG"]`` numbered 0, 1, 2 within input 2.

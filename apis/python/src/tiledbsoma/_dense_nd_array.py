@@ -2,9 +2,7 @@
 #
 # Licensed under the MIT License.
 
-"""
-Implementation of SOMA DenseNDArray.
-"""
+"""Implementation of SOMA DenseNDArray."""
 
 from __future__ import annotations
 
@@ -38,8 +36,9 @@ from .options._tiledb_create_write_options import (
 
 class DenseNDArray(NDArray, somacore.DenseNDArray):
     """:class:`DenseNDArray` is a dense, N-dimensional array, with offset (zero-based)
-    integer indexing on each dimension. :class:`DenseNDArray` has a user-defined
-    schema, which includes:
+    integer indexing on each dimension.
+
+    :class:`DenseNDArray` has a user-defined schema, which includes:
 
     * The element type, expressed as an
       `Arrow type <https://arrow.apache.org/docs/python/api/datatypes.html>`_
@@ -335,7 +334,6 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
         int64 is returned for the capacity -- which is particularly suitable for
         maxdomain.
         """
-
         # Old news: for dense n-dimensional arrays, the number of bytes for each
         # core cell is the product of the following:
         #

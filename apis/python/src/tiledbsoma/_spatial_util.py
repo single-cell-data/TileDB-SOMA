@@ -32,8 +32,7 @@ def coordinate_space_to_json(coord_space: somacore.CoordinateSpace) -> str:
 
 
 def transform_from_json(data: str) -> somacore.CoordinateTransform:
-    """Convert a JSON string representing a CoordinateTransform"""
-
+    """Convert a JSON string representing a CoordinateTransform."""
     raw = json.loads(data)
 
     try:
@@ -66,8 +65,7 @@ def transform_from_json(data: str) -> somacore.CoordinateTransform:
 
 
 def transform_to_json(transform: somacore.CoordinateTransform) -> str:
-    """Representing a CoordinateTransform as a JSON string"""
-
+    """Representing a CoordinateTransform as a JSON string."""
     kwargs: dict[str, Any] = {
         "input_axes": transform.input_axes,
         "output_axes": transform.output_axes,

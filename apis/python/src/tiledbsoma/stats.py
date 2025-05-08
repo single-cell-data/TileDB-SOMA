@@ -2,6 +2,8 @@
 #
 # Licensed under the MIT License.
 
+"""TileDB query stats helpers."""
+
 import json
 from typing import Literal, Union, cast
 

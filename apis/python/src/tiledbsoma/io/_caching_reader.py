@@ -27,7 +27,9 @@ class CacheStats:
 
 class CachingReader:
     """Buffering reader which maintains a LRU cache of previously read data, wrapping
-    and presenting a file-like interface. Typical use is similar to ``io.BufferedReader``:
+    and presenting a file-like interface.
+
+    Typical use is similar to ``io.BufferedReader``:
 
         f = CachingReader(open("a file", mode="rb"), memory_budget=64*1024**2, cache_block_size=1024**2)
 
@@ -128,7 +130,8 @@ class CachingReader:
         is unspecified or -1, all bytes until EOF are returned. Fewer than size bytes may be
         returned if the operating system call returns fewer than size bytes.
 
-        If 0 bytes are returned, and size was not 0, this indicates end of file."""
+        If 0 bytes are returned, and size was not 0, this indicates end of file.
+        """
         if size is None:
             size = -1  # type: ignore[unreachable]
         if size < 0:
@@ -148,7 +151,8 @@ class CachingReader:
 
     def readinto(self, buf: WritableBuffer) -> int | None:
         """Read bytes into a pre-allocated, writable bytes-like object b,
-        and return the number of bytes read."""
+        and return the number of bytes read.
+        """
         if not isinstance(buf, memoryview):
             buf = memoryview(buf)
         if buf.nbytes == 0:
@@ -180,15 +184,16 @@ class CachingReader:
 
     def tell(self) -> int:
         """Return integer indicating the file object's current position in the file.
+
         See ``io.RawIOBase.tell``
         """
         return self._pos
 
     def seek(self, offset: int, whence: int = 0) -> int:
-        """
-        Change the stream position to the given byte offset, interpreted relative to the position
-        indicated by whence, and return the new absolute position. Values for whence are:
+        """Change the stream position to the given byte offset, interpreted relative to the position
+        indicated by whence, and return the new absolute position.
 
+        Values for whence are:
           os.SEEK_SET or 0 - start of the stream (the default); offset should be zero or positive
           os.SEEK_CUR or 1 - current stream position; offset may be negative
           os.SEEK_END or 2 - end of the stream; offset is usually negative

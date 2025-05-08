@@ -27,7 +27,7 @@ class DoesNotExistError(SOMAError):
 
 def is_does_not_exist_error(e: RuntimeError | SOMAError) -> bool:
     """Given a RuntimeError or SOMAError, return true if it indicates the object
-    does not exist
+    does not exist.
 
     Lifecycle: Maturing.
 
@@ -65,7 +65,7 @@ class AlreadyExistsError(SOMAError):
 
 
 def is_already_exists_error(e: SOMAError) -> bool:
-    """Given a SOMAError, return true if it indicates the object already exists
+    """Given a SOMAError, return true if it indicates the object already exists.
 
     Lifecycle: Maturing.
 

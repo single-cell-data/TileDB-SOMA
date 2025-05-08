@@ -2,6 +2,8 @@
 #
 # Licensed under the MIT License.
 
+"""Logging configuration helpers."""
+
 from __future__ import annotations
 
 import logging
@@ -52,6 +54,7 @@ def _set_level(level: int) -> None:
 
 
 def log_io_same(message: str) -> None:
+    """Log message to both INFO and DEBUG."""
     log_io(message, message)
 
 

@@ -2,6 +2,7 @@
 #
 # Licensed under the MIT License.
 
+"""Estimated time helpers."""
 
 import numpy as np
 
@@ -13,6 +14,7 @@ class Tracker:
     cumulative_seconds: list[float]
 
     def __init__(self) -> None:
+        """Initialize."""
         self.chunk_percents = []
         self.cumulative_seconds = []
 
@@ -72,7 +74,9 @@ class Tracker:
             return "%.2f seconds" % (seconds)
 
     def __str__(self) -> str:
+        """User-friendly string."""
         return str(self.chunk_percents) + " " + str(self.cumulative_seconds)
 
     def __repr__(self) -> str:
+        """User-friendly string."""
         return self.__str__()

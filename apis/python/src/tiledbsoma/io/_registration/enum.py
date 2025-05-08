@@ -13,8 +13,8 @@ def get_enumerations(
 ) -> dict[str, pd.CategoricalDtype]:
     """Look up enum info in schema, and return as a Pandas CategoricalDType. This
     is a convenience wrapper around ``DataFrame.get_enumeration_values``, for use
-    in the registration module."""
-
+    in the registration module.
+    """
     # skip columns which are not of type dictionary
     column_names = [
         c for c in column_names if pa.types.is_dictionary(df.schema.field(c).type)
@@ -26,14 +26,12 @@ def get_enumerations(
 
 
 def extend_enumerations(df: DataFrame, columns: dict[str, pd.CategoricalDtype]) -> None:
-    """
-    Extend enumerations as needed, starting with a CategoricalDType for each
+    """Extend enumerations as needed, starting with a CategoricalDType for each
     cat/enum/dict column. A convenience wrapper around ``DataFrame.extend_enumeration_values``,
     for use in the registration module.
 
     DataFrame must be open for write.
     """
-
     current_enums = get_enumerations(df, list(columns.keys()))
     columns_to_extend = {}
     for column_name, cat_dtype in columns.items():

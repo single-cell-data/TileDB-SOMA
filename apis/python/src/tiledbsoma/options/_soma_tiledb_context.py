@@ -186,17 +186,14 @@ class SOMATileDBContext(ContextBase):
 
     @property
     def timestamp_ms(self) -> int | None:
-        """
-        The default timestamp for SOMA operations, as milliseconds since
+        """The default timestamp for SOMA operations, as milliseconds since
         the Unix epoch, or ``None`` if not provided.
         """
         return self._timestamp_ms
 
     @property
     def timestamp(self) -> datetime.datetime | None:
-        """
-        The default timestamp for SOMA operations, or ``None`` if not provided.
-        """
+        """The default timestamp for SOMA operations, or ``None`` if not provided."""
         if self.timestamp_ms is None:
             return None
         return ms_to_datetime(self.timestamp_ms)
@@ -372,7 +369,6 @@ def _validate_soma_tiledb_context(context: Any) -> SOMATileDBContext:
     easy for users to pass a ``tiledb.Ctx`` when a ``SOMATileDBContext`` is
     expected, we should offer a helpful redirect when they do.
     """
-
     if context is None:
         return SOMATileDBContext()
 

@@ -2,6 +2,8 @@
 #
 # Licensed under the MIT License.
 
+"""Read utilities."""
+
 from typing import cast
 
 import pandas as pd
@@ -39,7 +41,6 @@ def X_as_series(tbl: pa.Table) -> PDSeries:
     Lifecycle:
         Maturing.
     """
-
     data = tbl["soma_data"].to_numpy()
     dim_0 = tbl["soma_dim_0"].to_numpy()
     dim_1 = tbl["soma_dim_1"].to_numpy()

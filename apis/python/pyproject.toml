@@ -26,6 +26,28 @@ line-length = 88
 [tool.ruff.lint]
 extend-select = ["I001"]  # unsorted-imports
 
+# Enable all `pydocstyle` rules, limiting to those that adhere to the
+# Google convention via `convention = "google"`, below.
+select = ["D"]
+ignore = [
+    "D417",  # disable documentation for every function parameter
+    "D205",  # disable blank line requirement between summary and description
+]
+
+[tool.ruff.lint.per-file-ignores]
+# Ignore `D` rules everywhere except for the `src/` directory.
+"!apis/python/src/**.py" = ["D"]
+
+# Temporarily disable checks in the io and io.spatial modules.
+"apis/python/src/tiledbsoma/io/**/*.py" = [
+    "D100",  # Missing docstring in public module (TEMP disable)
+    "D101",  # Missing docstring in public class (TEMP disable)
+    "D102",  # Missing docstring in public method (TEMP disable)
+    "D103",  # Missing docstring in public function (TEMP disable)
+    "D104",  # Missing docstring in private module (TEMP disable)
+    "D107",  # Missing docstring in `__init__` (TEMP disable)
+]
+
 [tool.ruff.lint.isort]
 # HACK: tiledb needs to come after tiledbsoma: https://github.com/single-cell-data/TileDB-SOMA/issues/2293
 section-order = ["future", "standard-library", "third-party", "tiledbsoma", "tiledb", "first-party", "local-folder"]
@@ -34,6 +56,9 @@ no-lines-before = ["tiledb"]
 [tool.ruff.lint.isort.sections]
 "tiledbsoma" = ["tiledbsoma"]
 "tiledb" = ["tiledb"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
 
 [tool.pytest.ini_options]
 filterwarnings = ["ignore:Support for spatial types is experimental"]

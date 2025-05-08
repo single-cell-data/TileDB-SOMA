@@ -76,7 +76,8 @@ class ExperimentIDMapping:
 
 def get_dataframe_values(df: pd.DataFrame, field_name: str) -> pd.Series:  # type: ignore[type-arg]
     """Extracts the label values (e.g. cell barcode, gene symbol) from an AnnData/H5AD
-    ``obs`` or ``var`` dataframe."""
+    ``obs`` or ``var`` dataframe.
+    """
     if field_name in df:
         values = cast(pd.Series, df[field_name].astype(str))  # type: ignore[type-arg]
     elif df.index.name in (field_name, "index", None):

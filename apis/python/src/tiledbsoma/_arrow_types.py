@@ -2,8 +2,9 @@
 #
 # Licensed under the MIT License.
 
-"""Conversion to/from Arrow and TileDB type systems. Must be capable
-of representing full type semantics, and correctly performing a
+"""Conversion to/from Arrow and TileDB type systems.
+
+Must be capable of representing full type semantics, and correctly performing a
 round trip conversion (e.g., T == to_arrow(to_tiledb(T)))
 
 Most primitive types are simple -- e.g., uint8. Of particular challenge

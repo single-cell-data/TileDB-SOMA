@@ -74,8 +74,7 @@ def _update_uns(
     default_index_name: str | None = None,
     strict: Strict = True,
 ) -> None:
-    """
-    Update the given experiment/measurement's ``uns`` Collection.
+    """Update the given experiment/measurement's ``uns`` Collection.
 
     ``uns`` (short for unstructured data) is conceptually a dictionary; values can be scalars,
     DataFrames, arrays (dense or sparse), or recursively-nested dictionaries.

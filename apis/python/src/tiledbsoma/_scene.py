@@ -1,9 +1,7 @@
 # Copyright (c) TileDB, Inc. and The Chan Zuckerberg Initiative Foundation
 #
 # Licensed under the MIT License.
-"""
-Implementation of a SOMA Scene
-"""
+"""Implementation of a SOMA Scene."""
 
 from __future__ import annotations
 

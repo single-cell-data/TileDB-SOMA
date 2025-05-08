@@ -88,8 +88,7 @@ class AxisName(enum.Enum):
 
 @attrs.define
 class AxisIndexer(query.AxisIndexer):
-    """
-    Given a query, provides index-building services for obs/var axis.
+    """Given a query, provides index-building services for obs/var axis.
 
     Lifecycle: maturing
     """
@@ -328,6 +327,7 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
 
     def obsm(self, layer: str) -> SparseRead:
         """Returns an ``obsm`` layer as a sparse read.
+
         Lifecycle: maturing
         """
         return self._get_annotation_layer("obsm", layer).read(
@@ -336,6 +336,7 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
 
     def varm(self, layer: str) -> SparseRead:
         """Returns a ``varm`` layer as a sparse read.
+
         Lifecycle: maturing
         """
         return self._get_annotation_layer("varm", layer).read(
@@ -343,8 +344,7 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
         )
 
     def obs_scene_ids(self) -> pa.Array:
-        """Returns a pyarrow array with scene ids that contain obs from this
-        query.
+        """Returns a pyarrow array with scene ids that contain obs from this query.
 
         Lifecycle: experimental
         """
@@ -428,7 +428,6 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
                 If true, drop unused categories from the ``obs`` and ``var`` dataframes.
                 Defaults to ``False``.
         """
-
         if column_names is None:
             column_names = AxisColumnNames(obs=None, var=None)
 
@@ -549,7 +548,7 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
         drop_levels: bool = False,
         scene_presence_mode: str = "obs",
     ):
-        """Returns a SpatialData object containing the query results
+        """Returns a SpatialData object containing the query results.
 
         This is a low-level routine intended to be used by loaders for other
         in-core formats, such as AnnData, which can be created from the
@@ -571,7 +570,6 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
                 dataframe) and ``var`` (use ``var_spatial_presence`` dataframe).
                 Defaults to ``obs``.
         """
-
         from .io.spatial._spatialdata_util import _spatial_to_spatialdata
 
         warnings.warn(SPATIAL_DISCLAIMER)
@@ -715,9 +713,9 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
 
     @property
     def _threadpool(self) -> ThreadPoolExecutor:
+        """Returns the threadpool provided by the experiment's context.
+        If not available, creates a thread pool just in time.
         """
-        Returns the threadpool provided by the experiment's context.
-        If not available, creates a thread pool just in time."""
         return self.experiment.context.threadpool
 
 

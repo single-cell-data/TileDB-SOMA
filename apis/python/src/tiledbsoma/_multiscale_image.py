@@ -1,9 +1,7 @@
 # Copyright (c) TileDB, Inc. and The Chan Zuckerberg Initiative Foundation
 #
 # Licensed under the MIT License.
-"""
-Implementation of a SOMA MultiscaleImage.
-"""
+"""Implementation of a SOMA MultiscaleImage."""
 
 from __future__ import annotations
 
