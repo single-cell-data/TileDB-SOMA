@@ -268,8 +268,10 @@ def dataframe_datatype() -> st.SearchStrategy[pa.DataType]:
 
 @st.composite
 def arrow_schema_field_name(draw: st.DrawFn) -> str:
-    # TileDB attribute names may not start with '__'
-    elements = st.text(min_size=1).filter(lambda n: not n.startswith("__"))
+    # TileDB attribute names may not start with '__', and SOMA fields may not start with `soma_`
+    elements = st.text(min_size=1).filter(
+        lambda n: not (n.startswith("__") or n.startswith("soma_"))
+    )
     if HT_TEST_CONFIG["sc-61291_workaround"]:
         elements = elements.filter(lambda n: "\x00" not in n)
     return draw(elements)
