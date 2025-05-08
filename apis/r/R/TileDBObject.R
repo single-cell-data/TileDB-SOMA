@@ -12,8 +12,10 @@ TileDBObject <- R6::R6Class(
     #' @param platform_config Optional platform configuration
     #' @param tiledbsoma_ctx Optional SOMATileDBContext
     #' @param tiledb_timestamp Optional Datetime (POSIXct) with TileDB timestamp
-    #' @param internal_use_only Character value to signal this is a 'permitted' call,
-    #' as `new()` is considered internal and should not be called directly.
+    #' @param internal_use_only Character value to signal this is a 'permitted'
+    #' call, as `new()` is considered internal and should not be called directly.
+    #' @param soma_context A SOMA context as created by
+    #' \code{\link{soma_context}()}
     initialize = function(
       uri,
       platform_config = NULL,

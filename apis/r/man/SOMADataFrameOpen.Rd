@@ -25,6 +25,8 @@ SOMADataFrameOpen(
 \item{tiledb_timestamp}{Optional Datetime (POSIXct) for TileDB timestamp.
 In READ mode, defaults to the current time. If non-NULL, then all members
 accessed through the collection object inherit the timestamp.}
+
+\item{soma_context}{A SOMA context as created by \code{\link{soma_context}()}}
 }
 \description{
 Factory function to open a SOMADataFrame for reading, (lifecycle: maturing)

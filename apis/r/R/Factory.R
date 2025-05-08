@@ -29,6 +29,7 @@
 #' @param platform_config Optional platform configuration
 #' @param tiledbsoma_ctx Optional SOMATileDBContext
 #' @param tiledb_timestamp Optional Datetime (POSIXct) for TileDB timestamp
+#' @param soma_context A SOMA context as created by \code{\link{soma_context}()}
 #'
 #' @export
 #'
