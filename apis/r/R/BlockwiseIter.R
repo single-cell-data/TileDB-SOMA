@@ -246,7 +246,7 @@ BlockwiseReadIterBase <- R6::R6Class(
 #' SOMA Blockwise Read Iterator for Arrow Tables
 #'
 #' @description Class that allows for blockwise read iteration of SOMA reads
-#' as Arrow \code{\link[Arrow]{Table}s}
+#' as Arrow \code{\link[arrow]{Table}s}
 #'
 #' @keywords internal
 #'

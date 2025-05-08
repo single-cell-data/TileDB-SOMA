@@ -16,13 +16,13 @@ r_type_from_arrow_type(x)
 \method{r_type_from_arrow_type}{DataType}(x)
 }
 \arguments{
-\item{x}{An \CRANpkg{Arrow} \link[arrow:Schema]{schema},
+\item{x}{An \CRANpkg{arrow} \link[arrow:Schema]{schema},
 \link[arrow:Field]{field}, or \link[arrow:infer_type]{data type}}
 }
 \value{
 If \code{x} is a \link[arrow:infer_type]{data type}, a single
 character value giving the \R \link[base:typeof]{type} of \code{x}; if no
-corresponding \R type, returns the \CRANpkg{Arrow} type name
+corresponding \R type, returns the \CRANpkg{arrow} type name
 
 If \code{x} is a \link[arrow:Field]{field}, a single named character
 vector with the name being the field name and the value being the \R
