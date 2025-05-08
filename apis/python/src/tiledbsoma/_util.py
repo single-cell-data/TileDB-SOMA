@@ -791,7 +791,7 @@ class SafeURI:
 
         # Check that the filename only contains valid characters; Note that % is
         # included because we already ensured that any usage of % is valid encoding
-        if not re.match(rf"[{SafeURI.SAFE_CHARACTER_SET}%]+", fname):
+        if not re.fullmatch(rf"[{re.escape(SafeURI.SAFE_CHARACTER_SET)}%]+", fname):
             return _err(
                 f"Invalid characters: '{fname}' contains characters that are not "
                 f"allowed (valid character set is {SafeURI.SAFE_CHARACTER_SET})",
@@ -825,6 +825,13 @@ class SafeURI:
         sanitized_name = urllib.parse.quote(
             decoded_name, safe=SafeURI.SAFE_CHARACTER_SET
         )
+
+        # File names cannot start or end with . so specially  encode these
+        if sanitized_name.startswith("."):
+            sanitized_name = "%2E" + sanitized_name[1:]
+
+        if sanitized_name.endswith("."):
+            sanitized_name = sanitized_name[:-1] + "%2E"
 
         # Ensure that the final filename is valid
         if not SafeURI.validate(sanitized_name):
