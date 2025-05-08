@@ -129,12 +129,12 @@ arrow_type_from_tiledb_type <- function(x) {
 #' \dQuote{\code{factor}}; likewise, the equivalent \R type to an Arrow 64-bit
 #' integer is \dQuote{\code{double}}
 #'
-#' @param x An \CRANpkg{Arrow} \link[arrow:Schema]{schema},
+#' @param x An \CRANpkg{arrow} \link[arrow:Schema]{schema},
 #' \link[arrow:Field]{field}, or \link[arrow:infer_type]{data type}
 #'
 #' @return If \code{x} is a \link[arrow:infer_type]{data type}, a single
 #' character value giving the \R \link[base:typeof]{type} of \code{x}; if no
-#' corresponding \R type, returns the \CRANpkg{Arrow} type name
+#' corresponding \R type, returns the \CRANpkg{arrow} type name
 #'
 #' @return If \code{x} is a \link[arrow:Field]{field}, a single named character
 #' vector with the name being the field name and the value being the \R
