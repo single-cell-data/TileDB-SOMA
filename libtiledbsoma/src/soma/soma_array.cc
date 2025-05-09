@@ -626,10 +626,17 @@ uint64_t SOMAArray::nnz(bool raise_if_slow) {
     // and ids
     std::vector<size_t> permutation(relevant_fragments.size());
     std::iota(permutation.begin(), permutation.end(), 0);
-    util::DimensionDomainComparator compare{};
     std::sort(
         permutation.begin(), permutation.end(), [&](size_t lhs, size_t rhs) {
-            return compare(non_empty_domains[lhs], non_empty_domains[rhs]);
+            for (size_t i = 0; i < ndim; ++i) {
+                if (non_empty_domains[lhs][0] == non_empty_domains[rhs][0]) {
+                    continue;
+                }
+
+                return non_empty_domains[lhs][0] < non_empty_domains[rhs][0];
+            }
+
+            return false;
         });
 
     auto permute =
@@ -694,28 +701,8 @@ uint64_t SOMAArray::nnz(bool raise_if_slow) {
         bool fragment_no_overlap = false;
         for (size_t j = 0; j < ndim && !fragment_no_overlap; ++j) {
             // Test if any dimension overlap
-            fragment_no_overlap |= std::visit(
-                [](auto&& current_max, auto&& next_min) {
-                    using current_T = std::decay_t<decltype(current_max)>;
-                    using next_T = std::decay_t<decltype(next_min)>;
-
-                    bool result = false;
-
-                    if constexpr (std::is_same_v<current_T, next_T>) {
-                        if constexpr (std::is_same_v<current_T, std::string>) {
-                            result = current_max.compare(next_min) < 0;
-                        } else {
-                            result = current_max < next_min;
-                        }
-                    } else {
-                        throw TileDBSOMAError(
-                            "Missmatching dimension datatype");
-                    }
-
-                    return result;
-                },
-                current_range[j][1],
-                non_empty_domains[i][j][0]);
+            fragment_no_overlap |= current_range[j][1] <
+                                   non_empty_domains[i][j][0];
         }
 
         if (fragment_no_overlap) {
@@ -727,24 +714,10 @@ uint64_t SOMAArray::nnz(bool raise_if_slow) {
         } else {
             // Expand overalapping domain
             for (size_t j = 0; j < ndim; ++j) {
-                current_range[j][1] = std::visit(
-                    [](auto&& current_max, auto&& next_max) {
-                        using current_T = std::decay_t<decltype(current_max)>;
-                        using next_T = std::decay_t<decltype(next_max)>;
-
-                        util::DimType result;
-
-                        if constexpr (std::is_same_v<current_T, next_T>) {
-                            result = std::max<current_T>(current_max, next_max);
-                        } else {
-                            throw TileDBSOMAError(
-                                "Missmatching dimension datatype");
-                        }
-
-                        return result;
-                    },
-                    current_range[j][1],
-                    non_empty_domains[i][j][1]);
+                current_range[j][0] = std::min(
+                    current_range[j][0], non_empty_domains[i][j][0]);
+                current_range[j][1] = std::max(
+                    current_range[j][1], non_empty_domains[i][j][1]);
             }
 
             overlap = true;

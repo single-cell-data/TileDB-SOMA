@@ -116,12 +116,6 @@ std::string soma_type_from_tiledb_type(tiledb::Object::Type tiledb_type);
 std::vector<std::array<DimType, 2>> get_fragment_non_empty_domain(
     const FragmentInfo& fragment_info, uint32_t idx, const Domain& domain);
 
-struct DimensionDomainComparator {
-    bool operator()(
-        const std::vector<std::array<DimType, 2>>& lhs,
-        const std::vector<std::array<DimType, 2>>& rhs);
-};
-
 }  // namespace tiledbsoma::util
 
 #endif

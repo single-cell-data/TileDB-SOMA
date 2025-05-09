@@ -220,39 +220,4 @@ std::vector<std::array<DimType, 2>> get_fragment_non_empty_domain(
 
     return non_empy_domain;
 }
-
-bool DimensionDomainComparator::operator()(
-    const std::vector<std::array<DimType, 2>>& lhs,
-    const std::vector<std::array<DimType, 2>>& rhs) {
-    if (lhs.size() != rhs.size()) {
-        throw TileDBSOMAError("Missmatching number dimensions");
-    }
-
-    bool result = true;
-
-    for (size_t i = 0; i < lhs.size() && result; ++i) {
-        result &= std::visit(
-            [](auto&& lhs_arg, auto&& rhs_arg) {
-                using lhs_T = std::decay_t<decltype(lhs_arg)>;
-                using rhs_T = std::decay_t<decltype(rhs_arg)>;
-
-                if constexpr (std::is_same_v<lhs_T, rhs_T>) {
-                    if constexpr (std::is_same_v<lhs_T, std::string>) {
-                        return lhs_arg.compare(rhs_arg) < 0;
-                    } else {
-                        return lhs_arg < rhs_arg;
-                    }
-                } else {
-                    throw TileDBSOMAError("Missmatching dimension datatype");
-                }
-
-                return false;
-            },
-            lhs[i][0],
-            rhs[i][0]);
-    }
-
-    return result;
-}
-
 };  // namespace tiledbsoma::util
