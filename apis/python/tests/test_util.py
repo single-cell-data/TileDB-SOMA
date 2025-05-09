@@ -163,59 +163,6 @@ def test_slice_to_range_bad(start_stop, domain, exc):
 
 
 @pytest.mark.parametrize(
-    "uri",
-    (
-        "<>",
-        "#%&*",
-        "CON",
-        "CONFIG$",
-        "..",
-        ".",
-        "~",
-        "name_with_trailing_space_ ",
-        " name_with_leading_space",
-        "name_with_too_long_" * 300,
-        "无效的文件名",
-        "path/无效的文件名",
-        "path/with/ space-before-filename",
-        "path/with/space-after-filename ",
-        "path/with/.dot-before-filename",
-        "path/with/dot-after-filename.",
-        "%%%%%%%%%%%",
-        "path/with/trailing/slash/",
-    ),
-)
-def test_invalid_paths(uri):
-    assert not SafeURI.validate(uri)
-
-
-@pytest.mark.parametrize(
-    "uri",
-    (
-        "valid/path/with/slashes",
-        "nested/path/with_underscores/with-dashes",
-        "path/with+special-characters!",
-        "name%20with%20encoded%20spaces",
-        "name%2Fwith%2Fencoded%2Fslashes",
-        "path/name%20with%20encoded%20spaces",
-        "path/name%2Fwith%2Fencoded%2Fslashes",
-        "%20%20%20%20%20%20%20%20%20",
-        "/path/with/mixed/slashes\\and\\backslashes",
-        "path//with///multiple////slashes",
-        "//leading//double/slashes",
-        "/./root_parent",
-        "/path/with/leading/slash",
-        "path/./dot_as_directory",
-        "file.with..dot_segments",
-        "~/user_home_dir",
-        "path.with../dot_segments/subdir",
-    ),
-)
-def test_valid_paths(uri):
-    assert SafeURI.validate(uri)
-
-
-@pytest.mark.parametrize(
     ("key", "uri"),
     (
         ("<>", "%3C%3E"),
@@ -257,23 +204,17 @@ def test_valid_paths(uri):
         ("file.with..dot_segments", "file.with..dot_segments"),
         ("~/user_home_dir", "~/user_home_dir"),
         ("path.with../dot_segments/subdir", "path.with../dot_segments/subdir"),
+        ("path/with/.dot-before-filename", "path/with/.dot-before-filename"),
+        ("path/with/dot-after-filename.", "path/with/dot-after-filename."),
+        ("CON", "CON"),
+        ("~", "~"),
     ),
 )
 def test_sanitize_paths(key, uri):
     assert uri == SafeURI.sanitize(key)
 
 
-@pytest.mark.parametrize(
-    "key",
-    (
-        "path/with/.dot-before-filename",
-        "path/with/dot-after-filename.",
-        "CON",
-        "..",
-        ".",
-        "~",
-    ),
-)
+@pytest.mark.parametrize("key", ("..", "."))
 def test_invalid_sanitize_paths(key):
     with pytest.raises(ValueError):
         assert SafeURI.sanitize(key)

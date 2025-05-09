@@ -741,35 +741,7 @@ MISSING = Sentinel()
 class SafeURI:
     SAFE_PUNCTUATION = "-_.()^!@+={}~'"
     SAFE_CHARACTER_SET = f"{digits}{ascii_lowercase}{ascii_uppercase}{SAFE_PUNCTUATION}"
-    RESERVED_FILE_NAMES = [
-        "CON",
-        "PRN",
-        "AUX",
-        "NUL",
-        "COM1",
-        "COM2",
-        "COM3",
-        "COM4",
-        "COM5",
-        "COM6",
-        "COM7",
-        "COM8",
-        "COM9",
-        "LPT1",
-        "LPT2",
-        "LPT3",
-        "LPT4",
-        "LPT5",
-        "LPT6",
-        "LPT7",
-        "LPT8",
-        "LPT9",
-        "CLOCK$",
-        "CONFIG$",
-        "..",
-        ".",
-        "~",
-    ]
+    RESERVED_PATH_SEGMENTS = ["..", "."]
 
     @staticmethod
     def validate(uri: str, raise_error: bool = False) -> bool:
@@ -782,8 +754,8 @@ class SafeURI:
 
         fname = os.path.basename(uri)
 
-        if fname.upper() in SafeURI.RESERVED_FILE_NAMES:
-            return _err(f"Invalid filename: '{fname}' is a reserved filename")
+        if fname.upper() in SafeURI.RESERVED_PATH_SEGMENTS:
+            return _err(f"Invalid filename: '{fname}' cannot be used as a filename")
 
         # % is only allowed in the filename if it a properly encoded character
         if "%" in fname and not re.search(r"%[0-9A-Fa-f]{2}", fname):
@@ -796,9 +768,6 @@ class SafeURI:
                 f"Invalid characters: '{fname}' contains characters that are not "
                 f"allowed (valid character set is {SafeURI.SAFE_CHARACTER_SET})",
             )
-
-        if fname.startswith(".") or fname.endswith("."):
-            return _err(f"Invalid filename: '{fname}' starts or ends with a dot")
 
         if fname != fname.strip():
             return _err(
@@ -825,13 +794,6 @@ class SafeURI:
         sanitized_name = urllib.parse.quote(
             decoded_name, safe=SafeURI.SAFE_CHARACTER_SET
         )
-
-        # File names cannot start or end with . so specially  encode these
-        if sanitized_name.startswith("."):
-            sanitized_name = "%2E" + sanitized_name[1:]
-
-        if sanitized_name.endswith("."):
-            sanitized_name = sanitized_name[:-1] + "%2E"
 
         # Ensure that the final filename is valid
         if not SafeURI.validate(sanitized_name):
