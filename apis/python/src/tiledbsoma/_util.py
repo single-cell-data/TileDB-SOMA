@@ -11,6 +11,7 @@ import time
 import urllib.parse
 from concurrent.futures import Future
 from itertools import zip_longest
+from string import ascii_lowercase, ascii_uppercase, digits
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -704,3 +705,26 @@ class Sentinel:
 
 
 MISSING = Sentinel()
+
+
+def sanitize_uri(uri: str) -> str:
+    parts = uri.rstrip("/").split("/")
+    decoded_name = urllib.parse.unquote(parts[-1])
+
+    # This decodes percent-encoded characters in the input name. For example,
+    # "hello%20world" becomes "hello world". We do this unquote step because
+    # if we passed "hello%20world" directly to the encoding method, it would
+    # end up being doubly encoded as "hello%2520world"
+    decoded_name = urllib.parse.unquote(parts[-1])
+
+    # Now encode everything outside of the safe characters set
+    safe_puncuation = "-_.()^!@+={}~'"
+    safe_character_set = f"{digits}{ascii_lowercase}{ascii_uppercase}{safe_puncuation}"
+    sanitized_name = urllib.parse.quote(decoded_name, safe=safe_character_set)
+
+    # Ensure that the final filename is valid
+    if sanitized_name in ["..", "."]:
+        raise ValueError(f"{parts[-1]} is not a supported name")
+
+    parts[-1] = sanitized_name
+    return "/".join(parts) + ("/" if uri.endswith("/") else "")

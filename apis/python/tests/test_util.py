@@ -4,6 +4,7 @@ from somacore import ResultOrder
 from tiledbsoma._util import (
     dense_index_to_shape,
     dense_indices_to_shape,
+    sanitize_uri,
     slice_to_numeric_range,
     uri_joinpath,
 )
@@ -159,3 +160,61 @@ def test_slice_to_range_bad(start_stop, domain, exc):
     with pytest.raises(exc):
         slc = slice(*start_stop)
         slice_to_numeric_range(slc, domain)
+
+
+@pytest.mark.parametrize(
+    ("key", "uri"),
+    (
+        ("<>", "%3C%3E"),
+        ("#%&*", "%23%25%26%2A"),
+        ("CONFIG$", "CONFIG%24"),
+        ("name_with_trailing_space_ ", "name_with_trailing_space_%20"),
+        (" name_with_leading_space", "%20name_with_leading_space"),
+        ("无效的文件名", "%E6%97%A0%E6%95%88%E7%9A%84%E6%96%87%E4%BB%B6%E5%90%8D"),
+        (
+            "path/无效的文件名",
+            "path/%E6%97%A0%E6%95%88%E7%9A%84%E6%96%87%E4%BB%B6%E5%90%8D",
+        ),
+        ("path/with/ space-before-filename", "path/with/%20space-before-filename"),
+        ("path/with/space-after-filename ", "path/with/space-after-filename%20"),
+        ("%%%%%%%%%%%", "%25%25%25%25%25%25%25%25%25%25%25"),
+        ("valid/path/with/slashes", "valid/path/with/slashes"),
+        (
+            "nested/path/with_underscores/with-dashes",
+            "nested/path/with_underscores/with-dashes",
+        ),
+        ("path/with+special-characters!", "path/with+special-characters!"),
+        ("name%20with%20encoded%20spaces", "name%20with%20encoded%20spaces"),
+        ("name%2Fwith%2Fencoded%2Fslashes", "name%2Fwith%2Fencoded%2Fslashes"),
+        ("path/name%20with%20encoded%20spaces", "path/name%20with%20encoded%20spaces"),
+        (
+            "path/name%2Fwith%2Fencoded%2Fslashes",
+            "path/name%2Fwith%2Fencoded%2Fslashes",
+        ),
+        ("%20%20%20%20%20%20%20%20%20", "%20%20%20%20%20%20%20%20%20"),
+        (
+            "/path/with/mixed/slashes\\and\\backslashes",
+            "/path/with/mixed/slashes%5Cand%5Cbackslashes",
+        ),
+        ("path//with///multiple////slashes", "path//with///multiple////slashes"),
+        ("//leading//double/slashes", "//leading//double/slashes"),
+        ("/./root_parent", "/./root_parent"),
+        ("/path/with/leading/slash", "/path/with/leading/slash"),
+        ("path/./dot_as_directory", "path/./dot_as_directory"),
+        ("file.with..dot_segments", "file.with..dot_segments"),
+        ("~/user_home_dir", "~/user_home_dir"),
+        ("path.with../dot_segments/subdir", "path.with../dot_segments/subdir"),
+        ("path/with/.dot-before-filename", "path/with/.dot-before-filename"),
+        ("path/with/dot-after-filename.", "path/with/dot-after-filename."),
+        ("CON", "CON"),
+        ("~", "~"),
+    ),
+)
+def test_sanitize_paths(key, uri):
+    assert uri == sanitize_uri(key)
+
+
+@pytest.mark.parametrize("key", ("..", "."))
+def test_invalid_sanitize_paths(key):
+    with pytest.raises(ValueError):
+        assert sanitize_uri(key)
