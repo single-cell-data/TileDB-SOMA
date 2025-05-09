@@ -282,7 +282,6 @@ class GeometryDataFrame(SpatialDataFrame, somacore.GeometryDataFrame):
         plt_cfg = _util.build_clib_platform_config(platform_config)
         timestamp_ms = context._open_timestamp_ms(tiledb_timestamp)
         try:
-            _util.SafeURI.validate(uri, raise_error=True)
             clib.SOMAGeometryDataFrame.create(
                 uri,
                 schema=schema,

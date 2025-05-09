@@ -6,12 +6,9 @@ from __future__ import annotations
 
 import datetime
 import json
-import os
 import pathlib
-import re
 import time
 import urllib.parse
-import warnings
 from concurrent.futures import Future
 from itertools import zip_longest
 from string import ascii_lowercase, ascii_uppercase, digits
@@ -25,7 +22,6 @@ from typing import (
     cast,
 )
 
-import attrs
 import numpy as np
 import pyarrow as pa
 import somacore
@@ -129,7 +125,7 @@ def uri_joinpath(base: str, path: str) -> str:
             else:
                 parts[2] = parts[2] + "/" + path
 
-    return SafeURI.sanitize(urllib.parse.urlunparse(parts))
+    return urllib.parse.urlunparse(parts)
 
 
 def validate_slice(slc: Slice[Any]) -> None:
@@ -737,67 +733,24 @@ class Sentinel:
 MISSING = Sentinel()
 
 
-@attrs.define(frozen=True)
-class SafeURI:
-    SAFE_PUNCTUATION = "-_.()^!@+={}~'"
-    SAFE_CHARACTER_SET = f"{digits}{ascii_lowercase}{ascii_uppercase}{SAFE_PUNCTUATION}"
-    RESERVED_PATH_SEGMENTS = ["..", "."]
+def sanitize_uri(uri: str) -> str:
+    parts = uri.rstrip("/").split("/")
+    decoded_name = urllib.parse.unquote(parts[-1])
 
-    @staticmethod
-    def validate(uri: str, raise_error: bool = False) -> bool:
-        def _err(msg: str) -> bool:
-            if raise_error:
-                raise ValueError(msg)
+    # This decodes percent-encoded characters in the input name. For example,
+    # "hello%20world" becomes "hello world". We do this unquote step because
+    # if we passed "hello%20world" directly to the encoding method, it would
+    # end up being doubly encoded as "hello%2520world"
+    decoded_name = urllib.parse.unquote(parts[-1])
 
-            warnings.warn(msg, UserWarning)
-            return False
+    # Now encode everything outside of the safe characters set
+    safe_puncuation = "-_.()^!@+={}~'"
+    safe_character_set = f"{digits}{ascii_lowercase}{ascii_uppercase}{safe_puncuation}"
+    sanitized_name = urllib.parse.quote(decoded_name, safe=safe_character_set)
 
-        fname = os.path.basename(uri)
+    # Ensure that the final filename is valid
+    if sanitized_name in ["..", "."]:
+        raise ValueError(f"{parts[-1]} is not a supported name")
 
-        if fname.upper() in SafeURI.RESERVED_PATH_SEGMENTS:
-            return _err(f"Invalid filename: '{fname}' cannot be used as a filename")
-
-        # % is only allowed in the filename if it a properly encoded character
-        if "%" in fname and not re.search(r"%[0-9A-Fa-f]{2}", fname):
-            return _err(f"Invalid encoding: '%' in '{fname}' is not properly encoded")
-
-        # Check that the filename only contains valid characters; Note that % is
-        # included because we already ensured that any usage of % is valid encoding
-        if not re.fullmatch(rf"[{re.escape(SafeURI.SAFE_CHARACTER_SET)}%]+", fname):
-            return _err(
-                f"Invalid characters: '{fname}' contains characters that are not "
-                f"allowed (valid character set is {SafeURI.SAFE_CHARACTER_SET})",
-            )
-
-        if fname != fname.strip():
-            return _err(
-                f"Invalid filename: '{fname}' has leading or trailing whitespace"
-            )
-
-        if len(uri) > 255:
-            return _err(f"Invalid filename: '{fname}' exceeds the 255 character limit")
-
-        return True
-
-    @staticmethod
-    def sanitize(uri: str) -> str:
-        parts = uri.rstrip("/").split("/")
-        decoded_name = urllib.parse.unquote(parts[-1])
-
-        # This decodes percent-encoded characters in the input name. For example,
-        # "hello%20world" becomes "hello world". We do this unquote step because
-        # if we passed "hello%20world" directly to the encoding method, it would
-        # end up being doubly encoded as "hello%2520world"
-        decoded_name = urllib.parse.unquote(parts[-1])
-
-        # Now encode everything outside of the safe characters set
-        sanitized_name = urllib.parse.quote(
-            decoded_name, safe=SafeURI.SAFE_CHARACTER_SET
-        )
-
-        # Ensure that the final filename is valid
-        if not SafeURI.validate(sanitized_name):
-            raise ValueError(f"{parts[-1]} is not a supported name")
-
-        parts[-1] = sanitized_name
-        return "/".join(parts) + ("/" if uri.endswith("/") else "")
+    parts[-1] = sanitized_name
+    return "/".join(parts) + ("/" if uri.endswith("/") else "")
