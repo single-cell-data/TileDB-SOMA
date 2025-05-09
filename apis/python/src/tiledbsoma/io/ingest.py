@@ -595,7 +595,7 @@ def from_anndata(
     # tiledb://namespace/s3://bucket/path/to/exp whereas experiment.ms.uri will
     # be of the form tiledb://namespace/uuid. Only for the former is it suitable
     # to append "/ms" so that is what we do here.
-    experiment_ms_uri = _util.SafeURI.sanitize(f"{experiment_uri}/ms")
+    experiment_ms_uri = f"{experiment_uri}/ms"
 
     with _create_or_open_collection(
         Collection[Measurement],
@@ -1076,15 +1076,13 @@ def _create_or_open_collection(
     context: SOMATileDBContext | None,
     additional_metadata: AdditionalMetadata = None,
 ) -> CollectionBase[_TDBO]:
-    safe_uri = _util.SafeURI.sanitize(uri)
-
     try:
-        coll = cls.create(safe_uri, context=context)
+        coll = cls.create(uri, context=context)
     except (AlreadyExistsError, NotCreateableError):
         # It already exists. Are we resuming?
         if ingestion_params.error_if_already_exists:
             raise SOMAError(f"{uri} already exists")
-        coll = cls.open(safe_uri, "w", context=context)
+        coll = cls.open(uri, "w", context=context)
 
     add_metadata(coll, additional_metadata)
     return coll
@@ -1502,7 +1500,6 @@ def create_from_matrix(
     Lifecycle:
         Maturing.
     """
-    _util.SafeURI.validate(uri, raise_error=True)
     return _create_from_matrix(
         cls,
         uri,
@@ -1977,11 +1974,9 @@ def add_matrix_to_collection(
 
     with exp.ms[measurement_name] as meas:
         if extend_creation_uri:
-            coll_uri = _util.uri_joinpath(
-                f"{exp.uri}/ms/{measurement_name}", collection_name
-            )
+            coll_uri = f"{exp.uri}/ms/{measurement_name}/{collection_name}"
         else:
-            coll_uri = _util.uri_joinpath(meas.uri, collection_name)
+            coll_uri = f"{meas.uri}/{collection_name}"
 
         if collection_name in meas:
             coll = cast(Collection[RawHandle], meas[collection_name])
@@ -1994,7 +1989,7 @@ def add_matrix_to_collection(
             )
             _maybe_set(meas, collection_name, coll, use_relative_uri=use_relative_uri)
         with coll:
-            matrix_uri = _util.uri_joinpath(coll_uri, matrix_name)
+            matrix_uri = f"{coll_uri}/{matrix_name}"
 
             with _create_from_matrix(
                 SparseNDArray,

@@ -152,7 +152,6 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
         plt_cfg = _util.build_clib_platform_config(platform_config)
         timestamp_ms = context._open_timestamp_ms(tiledb_timestamp)
         try:
-            _util.SafeURI.validate(uri, raise_error=True)
             clib.SOMADenseNDArray.create(
                 uri,
                 format=carrow_type,
