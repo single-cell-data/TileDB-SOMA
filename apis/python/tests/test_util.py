@@ -2,9 +2,9 @@ import pytest
 from somacore import ResultOrder
 
 from tiledbsoma._util import (
-    SafeURI,
     dense_index_to_shape,
     dense_indices_to_shape,
+    sanitize_uri,
     slice_to_numeric_range,
     uri_joinpath,
 )
@@ -211,10 +211,10 @@ def test_slice_to_range_bad(start_stop, domain, exc):
     ),
 )
 def test_sanitize_paths(key, uri):
-    assert uri == SafeURI.sanitize(key)
+    assert uri == sanitize_uri(key)
 
 
 @pytest.mark.parametrize("key", ("..", "."))
 def test_invalid_sanitize_paths(key):
     with pytest.raises(ValueError):
-        assert SafeURI.sanitize(key)
+        assert sanitize_uri(key)
