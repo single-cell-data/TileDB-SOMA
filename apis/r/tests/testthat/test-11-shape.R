@@ -460,7 +460,7 @@ test_that("SOMASparseNDArray shape", {
     soma_dim_0 <- c(2, 3)
     soma_dim_1 <- c(4, 5)
     soma_data <- c(60, 70)
-    sm <- sparseMatrix(i = soma_dim_0, j = soma_dim_1, x = soma_data)
+    sm <- Matrix::sparseMatrix(i = soma_dim_0, j = soma_dim_1, x = soma_data)
     ndarray$write(sm)
     ndarray$close()
 
@@ -488,7 +488,7 @@ test_that("SOMASparseNDArray shape", {
     soma_dim_0 <- c(200, 300)
     soma_dim_1 <- c(400, 500)
     soma_data <- c(6000, 7000)
-    sm <- sparseMatrix(i = soma_dim_0, j = soma_dim_1, x = soma_data)
+    sm <- Matrix::sparseMatrix(i = soma_dim_0, j = soma_dim_1, x = soma_data)
     expect_error(ndarray$write(sm))
 
     # Test resize up
@@ -500,7 +500,7 @@ test_that("SOMASparseNDArray shape", {
     soma_dim_0 <- c(200, 300)
     soma_dim_1 <- c(400, 500)
     soma_data <- c(6000, 7000)
-    sm <- sparseMatrix(i = soma_dim_0, j = soma_dim_1, x = soma_data)
+    sm <- Matrix::sparseMatrix(i = soma_dim_0, j = soma_dim_1, x = soma_data)
     expect_no_error(ndarray$write(sm))
     ndarray$close()
 
