@@ -1,3 +1,12 @@
+#' @importFrom methods as
+#' @importFrom Matrix as.matrix
+#' @importFrom bit64 as.integer64
+#' @importFrom arrow concat_arrays
+#' @importFrom rlang is_scalar_logical is_scalar_character
+#' @useDynLib tiledbsoma, .registration=TRUE
+#'
+NULL
+
 .pkgenv <- new.env(parent = emptyenv())
 
 ## .onLoad is called whether code from the package is used and the packages is 'loaded'. An

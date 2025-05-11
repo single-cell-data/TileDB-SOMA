@@ -1,6 +1,6 @@
-#' @importFrom glue glue_collapse
+
 string_collapse <- function(x, sep = ", ") {
-  glue::glue_collapse(x, sep = sep, width = getOption("width", Inf))
+  return(glue::glue_collapse(x, sep = sep, width = getOption("width", Inf)))
 }
 
 n_unique <- function(x) {
@@ -47,7 +47,7 @@ null <- function(...) {
 
 random_name <- function(length = 5L, chars = letters, ...) {
   stopifnot(
-    "'length' must be a single integer" = is_integerish(length, n = 1L),
+    "'length' must be a single integer" = rlang::is_integerish(length, n = 1L),
     "'chars' must be character" = is.character(chars)
   )
   chars <- unique(unlist(strsplit(chars, split = "")))
@@ -383,14 +383,6 @@ read_only_error <- function(field_name) {
 SOMA_OBJECT_TYPE_METADATA_KEY <- "soma_object_type"
 SOMA_ENCODING_VERSION_METADATA_KEY <- "soma_encoding_version"
 SOMA_ENCODING_VERSION <- "1.1.0"
-
-#' @importFrom Matrix as.matrix
-#' @importFrom arrow RecordBatch
-#' @import R6 methods utils
-##' @importFrom Rcpp evalCpp
-##' @importFrom spdl setup
-##' @useDynLib tiledbsoma, .registration=TRUE
-NULL
 
 # This is for internal logging purposes. Context:
 # * We have R (and Python) code with function names the user invokes.

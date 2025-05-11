@@ -6,8 +6,7 @@
 #'
 #' @keywords internal
 #' @export
-#' @importFrom data.table address
-
+#'
 EphemeralCollectionBase <- R6::R6Class(
   classname = "EphemeralCollectionBase",
   inherit = SOMACollectionBase,

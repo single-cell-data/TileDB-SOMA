@@ -23,12 +23,13 @@ NULL
 #' @rdname example-datasets
 #' @return
 #'  - `list_datasets()` returns a character vector of the available datasets.
-#' @importFrom tools file_path_sans_ext
+#'
 #' @export
+#'
 list_datasets <- function() {
   data_dir <- example_data_dir()
   files <- dir(data_dir, pattern = "tar\\.gz$")
-  tools::file_path_sans_ext(basename(files), compression = TRUE)
+  return(tools::file_path_sans_ext(basename(files), compression = TRUE))
 }
 
 #' @rdname example-datasets

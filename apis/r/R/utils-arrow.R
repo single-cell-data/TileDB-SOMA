@@ -365,7 +365,6 @@ check_arrow_schema_data_types <- function(from, to) {
 }
 
 #' Extract levels from dictionaries
-#' @importFrom tibble as_tibble
 #' @noRd
 extract_levels <- function(arrtbl, exclude_cols = c("soma_joinid")) {
   stopifnot("Argument must be an Arrow Table object" = is_arrow_table(arrtbl))
