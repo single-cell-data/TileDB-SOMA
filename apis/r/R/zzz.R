@@ -1,4 +1,5 @@
 #' @importFrom methods as
+#' @importFrom Rcpp evalCpp
 #' @importFrom Matrix as.matrix
 #' @importFrom bit64 as.integer64
 #' @importFrom arrow concat_arrays
