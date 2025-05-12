@@ -106,14 +106,16 @@ def _read_partitioned_sparse(X: SparseNDArray, d0_size: int) -> pa.Table:
     # density of matrix. Magic number determined empirically, as a tradeoff
     # between concurrency and fixed query overhead.
     tgt_point_count = 96 * 1024**2
+    fallback_row_count = 32768
     try:
-        nnz: int | None = X._handle._handle.nnz(raise_if_slow=True)
+        # frag_cell_count is >= nnz, as it does not account for deletes and double-counts updates
+        frag_cell_count: int | None = X._handle._handle.fragment_cell_count()
     except SOMAError:
-        nnz = None
+        frag_cell_count = None
     partition_sz = (
-        max(1024 * round(d0_size * tgt_point_count / nnz / 1024), 1024)
-        if nnz is not None and nnz > 0
-        else d0_size  # i.e, no partitioning
+        max(1024 * round(d0_size * tgt_point_count / frag_cell_count / 1024), 1024)
+        if frag_cell_count is not None and frag_cell_count > 0
+        else min(fallback_row_count, d0_size)
     )
     partitions = [
         slice(st, min(st + partition_sz - 1, d0_size - 1))

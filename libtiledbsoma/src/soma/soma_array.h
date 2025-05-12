@@ -653,11 +653,19 @@ class SOMAArray : public SOMAObject {
     }
 
     /**
-     * @brief Get the total number of unique cells in the array.
+     * @brief Get the total number of unique cells in the array. Equivalent to
+     * the COUNT aggregate.
      *
      * @return uint64_t Total number of unique cells
      */
-    uint64_t nnz(bool raise_if_slow = false);
+    uint64_t nnz();
+
+    /**
+     * @brief Get the total number of cells in all fragments. Does not account
+     * for duplicates or deletes, and will therefore be an upper bound on the
+     * actual unique cell count. See `nnz`.
+     */
+    uint64_t fragment_cell_count();
 
     /**
      * @brief Get the current capacity of each dimension.
@@ -1160,11 +1168,6 @@ class SOMAArray : public SOMAObject {
     // array alive in order for the metadata value pointers in the cache to
     // be accessible
     std::shared_ptr<Array> meta_cache_arr_;
-
-    // Unoptimized method for computing nnz() (issue `count_cells` query)
-    uint64_t _nnz_slow(
-        bool raise_if_slow,
-        const std::vector<std::pair<int64_t, int64_t>>& ranges = {});
 };
 
 }  // namespace tiledbsoma
