@@ -12,7 +12,7 @@ from typeguard import suppress_type_checks
 from typing_extensions import Literal
 
 import tiledbsoma as soma
-from tiledbsoma import _collection, _factory, _soma_group, _soma_object
+from tiledbsoma import _collection, _factory, _soma_object
 from tiledbsoma._exception import DoesNotExistError, SOMAError
 from tiledbsoma.options import SOMATileDBContext
 
@@ -425,20 +425,6 @@ def test_real_class(in_type, want):
 def test_real_class_fail(in_type):
     with raises_no_typeguard(TypeError):
         _collection._real_class(in_type)
-
-
-@pytest.mark.parametrize(
-    ("key", "want"),
-    [
-        ("hello", "hello"),
-        ("good bye", "good_bye"),
-        ("../beas/tie@boyz", "_beas_tie_boyz"),
-        ("g0nna~let-the.BEAT", "g0nna_let_the_BEAT"),
-        ("____DROP", "_DROP"),
-    ],
-)
-def test_sanitize_for_path(key, want):
-    assert _soma_group._sanitize_for_path(key) == want
 
 
 def test_timestamped_ops(tmp_path):
