@@ -1974,7 +1974,7 @@ def add_matrix_to_collection(
 
     with exp.ms[measurement_name] as meas:
         if extend_creation_uri:
-            coll_uri = f"{exp.uri}/ms/{measurement_name}/{collection_name}"
+            coll_uri = f"{exp.uri}/ms/{(measurement_name)}/{collection_name}"
         else:
             coll_uri = f"{meas.uri}/{collection_name}"
 

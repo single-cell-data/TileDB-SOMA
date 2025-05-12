@@ -1585,3 +1585,15 @@ def test_soma_file_handling_65831_65864():
     ):
         arr = np.zeros(100, dtype=np.uint8)
         fb.readinto(arr)
+
+
+def test_from_anndata_sketchy_key(tmp_path):
+    exp_uri = tmp_path.as_posix()
+    ad = anndata.read_h5ad(str(TESTDATA / "pbmc-small.h5ad"))
+
+    with pytest.raises(ValueError):
+        tiledbsoma.io.from_anndata(f"{exp_uri}/bad", ad, "..")
+
+    tiledbsoma.io.from_anndata(exp_uri, ad, "../..")
+    with tiledbsoma.Experiment.open(exp_uri) as E:
+        assert E["ms"]["../.."].uri == f"file://{exp_uri}/ms/..%2F.."
