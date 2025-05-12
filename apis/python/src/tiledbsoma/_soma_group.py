@@ -16,7 +16,7 @@ from . import _tdb_handles
 from . import pytiledbsoma as clib  # noqa: E402
 from ._exception import SOMAError, is_does_not_exist_error
 from ._soma_object import AnySOMAObject, SOMAObject
-from ._util import is_relative_uri, make_relative_path, sanitize_uri, uri_joinpath
+from ._util import is_relative_uri, make_relative_path, sanitize_key, uri_joinpath
 
 CollectionElementType = TypeVar("CollectionElementType", bound=AnySOMAObject)
 _TDBO = TypeVar("_TDBO", bound=SOMAObject)  # type: ignore[type-arg]
@@ -203,7 +203,7 @@ class SOMAGroup(
         return child
 
     def _new_child_uri(self, *, key: str, user_uri: str | None) -> "_ChildURI":
-        maybe_relative_uri = user_uri or sanitize_uri(key)
+        maybe_relative_uri = user_uri or sanitize_key(key)
         if not is_relative_uri(maybe_relative_uri):
             # It's an absolute URI.
             return _ChildURI(

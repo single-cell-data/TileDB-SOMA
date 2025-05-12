@@ -109,8 +109,6 @@ def uri_joinpath(base: str, path: str) -> str:
     if len(path) == 0:
         return base
 
-    path = sanitize_uri(path)
-
     if p_base.scheme == "" or p_base.scheme == "file":
         # if a file path, just use pathlib.
         parts[2] = pathlib.PurePath(p_base.path).joinpath(path).as_posix()
@@ -735,32 +733,22 @@ class Sentinel:
 MISSING = Sentinel()
 
 
-def sanitize_uri(uri: str, preserve_path: bool = False) -> str:
-    if preserve_path:
-        parts = uri.rstrip("/").split("/")
-        filename = parts[-1]
-    else:
-        filename = uri
-
-    decoded_name = urllib.parse.unquote(filename)
+def sanitize_key(key: str) -> str:
+    decoded_name = urllib.parse.unquote(key)
 
     # This decodes percent-encoded characters in the input name. For example,
     # "hello%20world" becomes "hello world". We do this unquote step because
     # if we passed "hello%20world" directly to the encoding method, it would
     # end up being doubly encoded as "hello%2520world"
-    decoded_name = urllib.parse.unquote(filename)
+    decoded_name = urllib.parse.unquote(key)
 
     # Now encode everything outside of the safe characters set
     safe_puncuation = "-_.()^!@+={}~'"
     safe_character_set = f"{digits}{ascii_lowercase}{ascii_uppercase}{safe_puncuation}"
     sanitized_name = urllib.parse.quote(decoded_name, safe=safe_character_set)
 
-    # Ensure that the final filename is valid
+    # Ensure that the final key is valid
     if sanitized_name in ["..", "."]:
-        raise ValueError(f"{filename} is not a supported name")
+        raise ValueError(f"{key} is not a supported name")
 
-    if preserve_path:
-        parts[-1] = sanitized_name
-        return "/".join(parts) + ("/" if uri.endswith("/") else "")
-    else:
-        return sanitized_name
+    return sanitized_name
