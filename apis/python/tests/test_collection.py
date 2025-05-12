@@ -588,3 +588,31 @@ def test_collection_reopen(tmp_path):
                 assert col1.tiledb_timestamp <= now
                 assert col2.tiledb_timestamp <= now
                 assert col2.tiledb_timestamp <= now
+
+
+@pytest.mark.parametrize(
+    ("key", "sanitized_key"),
+    (
+        ("<>", "%3C%3E"),
+        ("#%&*", "%23%25%26%2A"),
+        ("CONFIG$", "CONFIG%24"),
+        ("name_with_trailing_space_ ", "name_with_trailing_space_%20"),
+        (" name_with_leading_space", "%20name_with_leading_space"),
+        ("无效的文件名", "%E6%97%A0%E6%95%88%E7%9A%84%E6%96%87%E4%BB%B6%E5%90%8D"),
+        ("%%%%%%%%%%%", "%25%25%25%25%25%25%25%25%25%25%25"),
+        ("name%20with%20encoded%20spaces", "name%20with%20encoded%20spaces"),
+        ("name%2Fwith%2Fencoded%2Fslashes", "name%2Fwith%2Fencoded%2Fslashes"),
+        ("%20%20%20%20%20%20%20%20%20", "%20%20%20%20%20%20%20%20%20"),
+        ("file.with..dot_segments", "file.with..dot_segments"),
+        ("CON", "CON"),
+        ("~", "~"),
+    ),
+)
+def test_keys_with_sanitized_uris(tmp_path, key, sanitized_key):
+    uri = tmp_path.as_uri()
+
+    with soma.Collection.create(uri) as c:
+        c.add_new_collection(key)
+
+    with soma.Collection.open(uri) as c:
+        assert c[key].uri == f"{uri}/{sanitized_key}"

@@ -203,7 +203,7 @@ class SOMAGroup(
         return child
 
     def _new_child_uri(self, *, key: str, user_uri: str | None) -> "_ChildURI":
-        maybe_relative_uri = user_uri or _sanitize_for_path(key)
+        maybe_relative_uri = user_uri or sanitize_uri(key)
         if not is_relative_uri(maybe_relative_uri):
             # It's an absolute URI.
             return _ChildURI(
@@ -265,7 +265,6 @@ class SOMAGroup(
         if use_relative_uri is not False:
             try:
                 uri_to_add = make_relative_path(value.uri, relative_to=self.uri)
-                uri_to_add = sanitize_uri(uri_to_add)
                 use_relative_uri = True
             except ValueError:
                 if use_relative_uri:
@@ -281,12 +280,6 @@ class SOMAGroup(
 
 
 _NON_WORDS = re.compile(r"[\W_]+")
-
-
-def _sanitize_for_path(key: str) -> str:
-    """Prepares the given key for use as a path component."""
-    sanitized = "_".join(_NON_WORDS.split(key))
-    return sanitized
 
 
 @attrs.define(frozen=True, kw_only=True)

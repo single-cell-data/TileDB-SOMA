@@ -733,15 +733,20 @@ class Sentinel:
 MISSING = Sentinel()
 
 
-def sanitize_uri(uri: str) -> str:
-    parts = uri.rstrip("/").split("/")
-    decoded_name = urllib.parse.unquote(parts[-1])
+def sanitize_uri(uri: str, preserve_path=False) -> str:
+    if preserve_path:
+        parts = uri.rstrip("/").split("/")
+        filename = parts[-1]
+    else:
+        filename = uri
+
+    decoded_name = urllib.parse.unquote(filename)
 
     # This decodes percent-encoded characters in the input name. For example,
     # "hello%20world" becomes "hello world". We do this unquote step because
     # if we passed "hello%20world" directly to the encoding method, it would
     # end up being doubly encoded as "hello%2520world"
-    decoded_name = urllib.parse.unquote(parts[-1])
+    decoded_name = urllib.parse.unquote(filename)
 
     # Now encode everything outside of the safe characters set
     safe_puncuation = "-_.()^!@+={}~'"
@@ -750,7 +755,10 @@ def sanitize_uri(uri: str) -> str:
 
     # Ensure that the final filename is valid
     if sanitized_name in ["..", "."]:
-        raise ValueError(f"{parts[-1]} is not a supported name")
+        raise ValueError(f"{filename} is not a supported name")
 
-    parts[-1] = sanitized_name
-    return "/".join(parts) + ("/" if uri.endswith("/") else "")
+    if preserve_path:
+        parts[-1] = sanitized_name
+        return "/".join(parts) + ("/" if uri.endswith("/") else "")
+    else:
+        return sanitized_name
