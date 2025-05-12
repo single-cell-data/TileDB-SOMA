@@ -109,6 +109,8 @@ def uri_joinpath(base: str, path: str) -> str:
     if len(path) == 0:
         return base
 
+    path = sanitize_uri(path)
+
     if p_base.scheme == "" or p_base.scheme == "file":
         # if a file path, just use pathlib.
         parts[2] = pathlib.PurePath(p_base.path).joinpath(path).as_posix()
@@ -733,7 +735,7 @@ class Sentinel:
 MISSING = Sentinel()
 
 
-def sanitize_uri(uri: str, preserve_path=False) -> str:
+def sanitize_uri(uri: str, preserve_path: bool = False) -> str:
     if preserve_path:
         parts = uri.rstrip("/").split("/")
         filename = parts[-1]
