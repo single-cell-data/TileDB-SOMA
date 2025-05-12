@@ -1,0 +1,6 @@
+{
+  "dependencies": [
+    "arcticdb-sparrow",
+    "catch2"
+  ]
+}
