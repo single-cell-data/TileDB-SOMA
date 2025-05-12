@@ -9,7 +9,6 @@ import numpy as np
 import pandas as pd
 import pyarrow as pa
 import pytest
-from hypothesis import reproduce_failure
 from hypothesis import strategies as st
 from hypothesis.extra import numpy as ht_np
 from hypothesis.stateful import initialize, invariant, precondition, rule
@@ -610,9 +609,6 @@ def arrow_table2(
     return tbl, enumeration_metadata
 
 
-@reproduce_failure(
-    "6.131.15", b"AXicY3BkajRwZABCZkdmBgZHRkcGEIcBQoJZjkyE2IwMIO0MAFWgCGM="
-)
 class SOMADataFrameStateMachine(SOMAArrayStateMachine):
 
     def __init__(self) -> None:
