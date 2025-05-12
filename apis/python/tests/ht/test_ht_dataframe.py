@@ -702,12 +702,12 @@ class SOMADataFrameStateMachine(SOMAArrayStateMachine):
             else:
                 type = self.schema.field(iname).type
                 if type in [
-                    pa.string(),
-                    pa.large_string(),
                     pa.binary(),
                     pa.large_binary(),
                 ]:
                     domain.append(("", ""))
+                elif type in [pa.binary(), pa.large_binary()]:
+                    domain.append((b"", b""))
                 elif pa.type.is_primitive(type):
                     domain.append((0, 0))
                 elif pa.types.is_timestamp(type):

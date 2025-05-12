@@ -26,6 +26,15 @@ namespace libtiledbsomacpp {
 namespace py = pybind11;
 using namespace py::literals;
 using namespace tiledbsoma;
+using binary = std::vector<std::byte>;
+
+binary pybytes_to_binary(const py::bytes& bytes) {
+    py::buffer_info info(py::buffer(bytes).request());
+    const std::byte* data = reinterpret_cast<const std::byte*>(info.ptr);
+    size_t length = static_cast<size_t>(info.size);
+
+    return binary(data, data + length);
+}
 
 void load_soma_column(py::module& m) {
     py::class_<SOMAColumn, std::shared_ptr<SOMAColumn>>(m.attr("SOMAColumn"))
@@ -46,18 +55,12 @@ void load_soma_column(py::module& m) {
             [](std::shared_ptr<SOMAColumn>& column,
                ManagedQuery& mq,
                const std::vector<py::bytes>& points) {
-                std::vector<std::vector<std::byte>> casted_points;
+                std::vector<binary> casted_points;
                 for (const auto& point : points) {
-                    py::buffer_info info(py::buffer(point).request());
-                    const std::byte* data = reinterpret_cast<const std::byte*>(
-                        info.ptr);
-                    size_t length = static_cast<size_t>(info.size);
-                    casted_points.push_back(
-                        std::vector<std::byte>(data, data + length));
+                    casted_points.push_back(pybytes_to_binary(point));
                 }
 
-                column->set_dim_points<std::vector<std::byte>>(
-                    mq, casted_points);
+                column->set_dim_points<binary>(mq, casted_points);
             })
         .def(
             "set_dim_points_double",
@@ -148,9 +151,7 @@ void load_soma_column(py::module& m) {
             [](std::shared_ptr<SOMAColumn>& column,
                ManagedQuery& mq,
                const std::vector<std::pair<py::bytes, py::bytes>>& ranges) {
-                std::vector<
-                    std::pair<std::vector<std::byte>, std::vector<std::byte>>>
-                    casted_ranges;
+                std::vector<std::pair<binary, binary>> casted_ranges;
                 for (const auto& range : ranges) {
                     py::buffer_info info_first(
                         py::buffer(range.first).request());
@@ -169,13 +170,10 @@ void load_soma_column(py::module& m) {
                         info_second.size);
 
                     casted_ranges.push_back(std::make_pair(
-                        std::vector<std::byte>(
-                            data_first, data_first + length_first),
-                        std::vector<std::byte>(
-                            data_second, data_second + length_second)));
+                        pybytes_to_binary(range.first),
+                        pybytes_to_binary(range.second)));
                 }
-                column->set_dim_ranges<std::vector<std::byte>>(
-                    mq, casted_ranges);
+                column->set_dim_ranges<binary>(mq, casted_ranges);
             })
         .def(
             "set_dim_ranges_double",
@@ -340,22 +338,15 @@ void load_soma_column(py::module& m) {
                             !strcmp(arrow_schema.format, "z") ||
                             !strcmp(arrow_schema.format, "Z")) {
                             auto bytes = coords.cast<std::vector<py::bytes>>();
-                            std::vector<std::vector<std::byte>> casted_points;
+                            std::vector<binary> casted_points;
                             casted_points.reserve(bytes.size());
 
                             for (const auto& element : bytes) {
-                                py::buffer_info info(
-                                    py::buffer(element).request());
-                                const std::byte*
-                                    data = reinterpret_cast<const std::byte*>(
-                                        info.ptr);
-                                size_t length = static_cast<size_t>(info.size);
-                                casted_points.push_back(std::vector<std::byte>(
-                                    data, data + length));
+                                casted_points.push_back(
+                                    pybytes_to_binary(element));
                             }
 
-                            column->set_dim_points<std::vector<std::byte>>(
-                                mq, casted_points);
+                            column->set_dim_points<binary>(mq, casted_points);
                         } else {
                             TPY_ERROR_LOC(
                                 "[pytiledbsoma] set_dim_points: type={} not "
