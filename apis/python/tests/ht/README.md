@@ -39,5 +39,4 @@ which enables a defect workaround, while the issue is being resolved.
 
 See the [Hypothesis documentation].
 
-
-[Hypothesis documentation]: https://hypothesis.readthedocs.io/
+[hypothesis documentation]: https://hypothesis.readthedocs.io/
