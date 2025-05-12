@@ -9,6 +9,7 @@ import numpy as np
 import pandas as pd
 import pyarrow as pa
 import pytest
+from hypothesis import reproduce_failure
 from hypothesis import strategies as st
 from hypothesis.extra import numpy as ht_np
 from hypothesis.stateful import initialize, invariant, precondition, rule
@@ -609,6 +610,9 @@ def arrow_table2(
     return tbl, enumeration_metadata
 
 
+@reproduce_failure(
+    "6.131.15", b"AXicY3BkajRwZABCZkdmBgZHRkcGEIcBQoJZjkyE2IwMIO0MAFWgCGM="
+)
 class SOMADataFrameStateMachine(SOMAArrayStateMachine):
 
     def __init__(self) -> None:
@@ -702,13 +706,13 @@ class SOMADataFrameStateMachine(SOMAArrayStateMachine):
             else:
                 type = self.schema.field(iname).type
                 if type in [
-                    pa.binary(),
-                    pa.large_binary(),
+                    pa.string(),
+                    pa.large_string(),
                 ]:
                     domain.append(("", ""))
                 elif type in [pa.binary(), pa.large_binary()]:
                     domain.append((b"", b""))
-                elif pa.type.is_primitive(type):
+                elif pa.types.is_primitive(type):
                     domain.append((0, 0))
                 elif pa.types.is_timestamp(type):
                     zero_ts = pa.scalar(0, type=type)
