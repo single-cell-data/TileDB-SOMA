@@ -211,7 +211,7 @@ def test_slice_to_range_bad(start_stop, domain, exc):
     ),
 )
 def test_sanitize_paths(key, uri):
-    assert uri == sanitize_uri(key)
+    assert uri == sanitize_uri(key, preserve_path=True)
 
 
 @pytest.mark.parametrize("key", ("..", "."))
