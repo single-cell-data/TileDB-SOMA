@@ -4,7 +4,6 @@
 
 from __future__ import annotations
 
-import re
 from typing import Any, Callable, Generic, Iterable, Iterator, TypeVar, cast
 
 import attrs
@@ -277,9 +276,6 @@ class SOMAGroup(
             key, uri=uri_to_add, relative=use_relative_uri, soma_object=value
         )
         return self
-
-
-_NON_WORDS = re.compile(r"[\W_]+")
 
 
 @attrs.define(frozen=True, kw_only=True)
