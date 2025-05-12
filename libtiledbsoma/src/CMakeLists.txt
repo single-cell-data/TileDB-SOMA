@@ -1,4 +1,6 @@
 message(STATUS "Starting TileDB-SOMA build.")
+find_package(sparrow CONFIG REQUIRED)
+
 
 # ###########################################################
 # Nanoarrow object library
@@ -61,6 +63,8 @@ add_library(TILEDB_SOMA_OBJECTS OBJECT
   ${CMAKE_CURRENT_SOURCE_DIR}/external/src/thread_pool/thread_pool.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/external/src/thread_pool/status.cc
 )
+
+target_link_libraries(TILEDB_SOMA_OBJECTS PUBLIC sparrow::sparrow)
 
 if(SPDLOG_LINK_SHARED)
   target_link_libraries(TILEDB_SOMA_OBJECTS PUBLIC spdlog::spdlog)
@@ -176,6 +180,7 @@ else()
     PUBLIC
       TileDB::tiledb_shared
       spdlog::spdlog
+      sparrow::sparrow
   )
   target_link_options(tiledbsoma
     PRIVATE

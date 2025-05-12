@@ -11,7 +11,8 @@ add_compile_definitions(TILEDBSOMA_SOURCE_ROOT="${TILEDBSOMA_SOURCE_ROOT}")
 # SOMA unit test
 ############################################################
 
-find_package(Catch_EP REQUIRED)
+find_package(Catch2 CONFIG REQUIRED)
+find_package(sparrow CONFIG REQUIRED)
 
 add_executable(unit_soma
     $<TARGET_OBJECTS:TILEDB_SOMA_OBJECTS>
@@ -50,6 +51,7 @@ target_link_libraries(unit_soma
   PRIVATE
     Catch2::Catch2WithMain
     TileDB::tiledb_shared
+    sparrow::sparrow
 )
 target_link_options(unit_soma
   PRIVATE
@@ -124,6 +126,7 @@ target_link_libraries(unit_geometry
   PRIVATE
     Catch2::Catch2WithMain
     TileDB::tiledb_shared
+    sparrow::sparrow
 )
 
 target_link_options(unit_geometry
