@@ -36,19 +36,11 @@ SOMAObject <- R6::R6Class(
         FUN.VALUE = character(1L)
       ))
       if (!"tiledbsoma" %in% envs) {
-        stop(
-          paste(
-            strwrap(
-              paste(
-                "Use of the new() method is for internal use only. Consider",
-                "using a factory method such as 'SOMADataFrameOpen()'."
-              ),
-              width = 0.6 * getOption("width")
-            ),
-            collapse = '\n'
-          ),
-          call. = FALSE
+        msg <- private$.internal_use_only(
+          "new",
+          ifelse(inherits(self, "SOMACollectionBase"), "collection", "array")
         )
+        stop(paste(strwrap(msg), collapse = '\n'), call. = FALSE)
       }
 
       # Set the URI
@@ -285,6 +277,19 @@ SOMAObject <- R6::R6Class(
     # @field .uri ...
     #
     .uri = character(1L),
+
+    # @description Create a message saying that a method is for
+    # internal use only
+    #
+    .internal_use_only = \(method, type = c("array", "collection")) sprintf(
+      fmt = "Use of the '%s()' method is for internal use only; consider using a factory method such as '%s()' instead",
+      method,
+      sprintf(
+        fmt = "%s%s",
+        switch(type, collection = "SOMACollection", "SOMADataFrame"),
+        switch(method, create = "Create", "Open")
+      )
+    ),
 
     # @description Throw an error saying a field is read-only
     #
