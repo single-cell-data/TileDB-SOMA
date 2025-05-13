@@ -48,6 +48,7 @@ Imports:
     rlang (>= 1.1.5),
     spdl,
     stats,
+    tiledb (>= 0.31.1),
     tools,
     utils
 LinkingTo:
