@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
-- \[[#3740](https://github.com/single-cell-data/TileDB-SOMA/pull/3740)\] [python] Add experimental support for Dask-backed `to_anndata` functionality.
+- \[[#3740](https://github.com/single-cell-data/TileDB-SOMA/pull/3740)\] [python] Add experimental Dask-backed `to_anndata` functionality to `SparseNDArray` and `ExperimentAxisQuery`.
 
 ### Changed
 
