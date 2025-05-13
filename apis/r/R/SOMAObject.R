@@ -13,19 +13,21 @@ SOMAObject <- R6::R6Class(
   public = list(
     #' @description Create a new SOMA object. (lifecycle: maturing)
     #'
-    #' @param uri ...
-    #' @param platform_config ...
-    #' @param tiledbsoma_ctx ...
-    #' @param tiledb_timestamp ...
-    #' @param internal_use_only ...
-    #' @param soma_context ...
+    #' @param uri URI for the SOMA object
+    #' @param ... Ignored
+    #' @param platform_config Optional platform configuration
+    #' @param tiledbsoma_ctx Optional TileDB SOMA context
+    #' @param tiledb_timestamp Optional timestamp (\code{\link[base]{POSIXct}})
+    #' to open the object at
+    #' @param soma_context A SOMA context as created by
+    #' \code{\link{soma_context}()}
     #'
     initialize = function(
       uri,
+      ...,
       platform_config = NULL,
       tiledbsoma_ctx = NULL,
       tiledb_timestamp = NULL,
-      internal_use_only = NULL,
       soma_context = NULL
     ) {
       envs <- unique(vapply(
@@ -48,8 +50,105 @@ SOMAObject <- R6::R6Class(
           call. = FALSE
         )
       }
-      .NotYetImplemented()
+
+      # Set the URI
+      if (!is.character(uri) || length(uri) != 1L || !nzchar(uri)) {
+        stop("'uri' must be a single, non-empty string", call. = FALSE)
+      }
+      private$.uri <- uri
+
+      # Set the platform config
+      platform_config <- platform_config %||% PlatformConfig$new()
+      if (!inherits(platform_config, "PlatformConfig")) {
+        stop("'platform_config' must be a PlatformConfig object", call. = FALSE)
+      }
+      private$.platform_config <- platform_config
+
+      # Set the context
+      if (!is.null(x = tiledbsoma_ctx)) {
+        if (!inherits(x = tiledbsoma_ctx, what = 'SOMATileDBContext')) {
+          stop(
+            "'tiledbsoma_ctx' must be a SOMATileDBContext object",
+            call. = FALSE
+          )
+        }
+        # TODO: Deprecate tiledbsoma_ctx in favor of soma_context
+        # warning("'tiledbsoma_ctx' is deprecated, use 'soma_context' instead")
+        # Set the old context
+        private$.tiledbsoma_ctx <- tiledbsoma_ctx
+        private$.tiledb_ctx <- self$tiledbsoma_ctx$context()
+        # Also plumb through to the new context
+        if (!is.null(soma_context)) {
+          warning(
+            "Both 'soma_context' and 'tiledbsoma_ctx' were provided,",
+            "using 'soma_context' only"
+          )
+        } else {
+          # why we named the parameter and function the same thing is beyond me
+          soma_context <- tiledbsoma::soma_context(
+            config = unlist(tiledbsoma_ctx$to_list())
+          )
+        }
+      } else {
+        tiledbsoma_ctx <- SOMATileDBContext$new()
+        private$.tiledbsoma_ctx <- tiledbsoma_ctx
+        private$.tiledb_ctx <- self$tiledbsoma_ctx$context()
+      }
+
+      # TODO: re-enable once new UX is worked out
+      # soma_context <- soma_context %||% soma_context()
+      # stopifnot(
+      #   "'soma_context' must be a pointer" = inherits(x = soma_context, what = 'externalptr')
+      # )
+      if (is.null(soma_context)) {
+        private$.soma_context <- soma_context() # FIXME via factory and paramater_config
+      } else {
+        private$.soma_context <- soma_context
+      }
+
+      # Set the timestamp
+      if (!is.null(tiledb_timestamp)) {
+        stopifnot(
+          "'tiledb_timestamp' must be a single POSIXct datetime object" = inherits(tiledb_timestamp, "POSIXct") &&
+            length(tiledb_timestamp) == 1L &&
+            !is.na(tiledb_timestamp)
+        )
+        private$.tiledb_timestamp <- tiledb_timestamp
+      }
+
+      spdl::debug(
+        "[SOMAObject] initialize {} with '{}' at ({})",
+        self$class(),
+        self$uri,
+        self$tiledb_timestamp %||% "now"
+      )
     },
+
+    # NOTE: The create/open/close are necessarily specific to arrays and
+    # collections; this is a bit of re-use at the ABC level
+
+    #' @description Determine if the object is open for reading or writing
+    #'
+    #' @return \code{TRUE} if the object is open, otherwise \code{FALSE}
+    #'
+    is_open = \() self$mode() != "CLOSED",
+
+    #' @description Print the name of the R6 class
+    #'
+    #' @return The name of the R6 class
+    #'
+    class = \() class(self)[1L],
+
+    #' @description Get the mode of the object
+    #'
+    #' @return The mode of the object, one of:
+    #' \itemize{
+    #'  \item \dQuote{\code{CLOSED}}
+    #'  \item \dQuote{\code{READ}}
+    #'  \item \dQuote{\code{WRITE}}
+    #' }
+    #'
+    mode = \() private$.mode %||% "CLOSED",
 
     #' @description Close and reopen the TileDB object in a new mode
     #'
@@ -72,6 +171,36 @@ SOMAObject <- R6::R6Class(
       private$.tiledb_timestamp <- tiledb_timestamp
       self$open(mode, internal_use_only = "allowed_use")
       return(invisible(self))
+    },
+
+    #' @description Check if the object exists. (lifecycle: maturing)
+    #'
+    #' @return \code{TRUE} if the object exists, otherwise \code{FALSE}
+    #'
+    exists = function() {
+      expected_type <- if (self$class() == "SOMAObject") {
+        c("ARRAY", "GROUP")
+      } else if (inherits(self, "SOMAArrayBase")) {
+        "ARRAY"
+      } else if (inherits(self, "SOMACollectionBase")) {
+        "GROUP"
+      } else {
+        stop("Unknown object type", call. = FALSE)
+      }
+      return(get_tiledb_object_type(self$uri, ctxxp = private$.soma_context) %in% expected_type)
+    },
+
+    #' @description Print-friendly representation of the object
+    #'
+    #' @return Invisibly returns \code{self}
+    #'
+    print = function() {
+      cat(
+        sprintf(fmt = "<%s>", self$class()),
+        sprintf(fmt = "  uri: %s", self$uri),
+        sep = "\n"
+      )
+      return(invisible(self))
     }
 
   ),
@@ -80,16 +209,16 @@ SOMAObject <- R6::R6Class(
     #'
     platform_config = function(value) {
       if (!missing(x = value)) {
-        stop("'platform_config' is a read-only field", call. = FALSE)
+        private$.read_only_error("platform_config")
       }
-      return(private$.tiledb_platform_config)
+      return(private$.platform_config)
     },
 
     #' @field tiledbsoma_ctx SOMATileDBContext
     #'
     tiledbsoma_ctx = function(value) {
       if (!missing(x = value)) {
-        stop("'tiledbsoma_ctx' is a read-only field", call. = FALSE)
+        private$.read_only_error("tiledbsoma_ctx")
       }
       return(private$.tiledbsoma_ctx)
     },
@@ -129,6 +258,26 @@ SOMAObject <- R6::R6Class(
   ),
   private = list(
 
+    # @field .platform_config ...
+    #
+    .platform_config = NULL,
+
+    # @field .tiledbsoma_ctx ...
+    #
+    .tiledbsoma_ctx = NULL,
+
+    # @field .tiledb_ctx ...
+    #
+    .tiledb_ctx = NULL,
+
+    # @field .tiledb_timestamp ...
+    #
+    .tiledb_timestamp = NULL,
+
+    # @field .soma_context ...
+    #
+    .soma_context = NULL,
+
     # @field .mode ...
     #
     .mode = character(1L),
@@ -139,8 +288,38 @@ SOMAObject <- R6::R6Class(
 
     # @description Throw an error saying a field is read-only
     #
-    .read_only_error = function(field) {
-      stop("Field ", sQuote(field), " is read-only", call. = FALSE)
+    .read_only_error = \(field) stop(
+      "Field ",
+      sQuote(field),
+      " is read-only",
+      call. = FALSE
+    ),
+
+    # @description Check that the object is open for reading
+    #
+    .check_open_for_read = function() {
+      if (!switch(self$mode() %||% "", READ = TRUE, FALSE)) {
+        stop("Item must be open for read: ", self$uri, call. = FALSE)
+      }
+      return(invisible(NULL))
+    },
+
+    # @description Check that the object is open for writing
+    #
+    .check_open_for_write = function() {
+      if (!switch(self$mode() %||% "", WRITE = TRUE, FALSE)) {
+        stop("Item must be open for write: ", self$uri, call. = FALSE)
+      }
+      return(invisible(NULL))
+    },
+
+    # @description Check that the object is open
+    #
+    .check_open_for_read_or_write = function() {
+      if (!self$is_open()) {
+        stop("Item must be open for read or write: ", self$uri, call. = FALSE)
+      }
+      return(invisible(NULL))
     }
   )
 )
