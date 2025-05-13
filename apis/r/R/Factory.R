@@ -254,10 +254,9 @@ SOMACollectionCreate <- function(
   ingest_mode <- match.arg(ingest_mode)
   coll <- SOMACollection$new(
     uri,
-    platform_config,
-    tiledbsoma_ctx,
-    tiledb_timestamp,
-    internal_use_only = "allowed_use"
+    platform_config = platform_config,
+    tiledbsoma_ctx = tiledbsoma_ctx,
+    tiledb_timestamp = tiledb_timestamp
   )
   ingest_mode <- switch(
     EXPR = ingest_mode,
@@ -265,9 +264,9 @@ SOMACollectionCreate <- function(
     ingest_mode
   )
   if (ingest_mode %in% c("resume")) {
-    coll$open(mode = "WRITE", internal_use_only = "allowed_use")
+    coll$open(mode = "WRITE")
   } else {
-    coll$create(internal_use_only = "allowed_use")
+    coll$create()
   }
   return(coll)
 }
@@ -289,12 +288,11 @@ SOMACollectionOpen <- function(
 ) {
   coll <- SOMACollection$new(
     uri,
-    platform_config,
-    tiledbsoma_ctx,
-    tiledb_timestamp,
-    internal_use_only = "allowed_use"
+    platform_config = platform_config,
+    tiledbsoma_ctx = tiledbsoma_ctx,
+    tiledb_timestamp = tiledb_timestamp
   )
-  coll$open(mode, internal_use_only = "allowed_use")
+  coll$open(mode)
   return(coll)
 }
 
