@@ -21,7 +21,7 @@ x = ad.read_h5ad('/Users/aaronwolen/Downloads/pbmc-small.h5ad')
 FutureWarning: Moving element from .uns['neighbors']['distances'] to .obsp['distances'].
 ```
 
-But the Python `anndata` package (which we use for ingest) recognizes and fixes the problem.  The
+But the Python `anndata` package (which we use for ingest) recognizes and fixes the problem. The
 `pbmc-small.h5ad` file included here has that corrected by having read and written back the file
 using Python `anndata`.
 
