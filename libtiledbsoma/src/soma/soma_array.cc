@@ -557,201 +557,14 @@ ArrowTable SOMAArray::_get_core_domainish(enum Domainish which_kind) {
     return ArrowTable(std::move(arrow_array), std::move(arrow_schema));
 }
 
-uint64_t SOMAArray::nnz(bool raise_if_slow) {
-    LOG_DEBUG(fmt::format(
-        "[SOMAArray] nnz with raise_if_slow='{}'",
-        (raise_if_slow ? "true" : "false")));
+uint64_t SOMAArray::nnz() {
+    LOG_DEBUG("[SOMAArray] nnz");
+
     // Verify array is sparse
     if (schema_->array_type() != TILEDB_SPARSE) {
         throw TileDBSOMAError(
             "[SOMAArray] nnz is only supported for sparse arrays");
     }
-
-    // Load fragment info
-    FragmentInfo fragment_info(*ctx_->tiledb_ctx(), uri_);
-    fragment_info.load();
-
-    LOG_DEBUG(fmt::format("[SOMAArray] Fragment info for array '{}'", uri_));
-    if (LOG_DEBUG_ENABLED()) {
-        std::ostringstream fragment_info_dump;
-        fragment_info_dump << fragment_info;
-        fragment_info_dump.flush();
-
-        LOG_DEBUG(fragment_info_dump.str());
-    }
-
-    // Find the subset of fragments contained within the read timestamp range or
-    // are partially within [if any]
-    std::vector<uint32_t> relevant_fragments;
-    for (uint32_t fid = 0; fid < fragment_info.fragment_num(); fid++) {
-        auto frag_ts = fragment_info.timestamp_range(fid);
-        assert(frag_ts.first <= frag_ts.second);
-
-        if (timestamp_ && (frag_ts.first > timestamp_->second ||
-                           frag_ts.second < timestamp_->first)) {
-            // fragment is fully outside the read timestamp range: skip it
-            continue;
-        }
-
-        // fall through: fragment is fully/partially contained within the read
-        // timestamp range
-        relevant_fragments.push_back(fid);
-    }
-
-    auto fragment_count = relevant_fragments.size();
-
-    if (fragment_count == 0) {
-        // No data have been written [in the read timestamp range]
-        return 0;
-    }
-
-    // Check for overlapping fragments on the first dimension and
-    // compute total_cell_num while going through the loop
-    uint64_t total_cell_num = 0;
-    std::vector<std::array<uint64_t, 2>> non_empty_domains(fragment_count);
-
-    // The loop after this only works if dim 0 is int64 soma_joinid or
-    // soma_dim_0. That's the case for _almost_ all SOMADataFrame objects, but
-    // not the "variant-indexed" ones: the SOMA spec only requires
-    // that soma_joinid be present as a dim or an attr. It's true for all
-    // SOMASparseNDArray objects.
-    auto dim = tiledb_schema()->domain().dimension(0);
-    auto dim_name = dim.name();
-    auto type_code = dim.type();
-    if ((dim_name != "soma_joinid" && dim_name != "soma_dim_0") ||
-        type_code != TILEDB_INT64) {
-        LOG_DEBUG(fmt::format(
-            "[SOMAArray::nnz] dim 0 (type={} name={}) isn't int64 "
-            "soma_joinid or int64 soma_dim_0: using _nnz_slow",
-            tiledb::impl::type_to_str(type_code),
-            dim_name));
-        return _nnz_slow(raise_if_slow);
-    }
-
-    for (uint32_t i = 0; i < fragment_count; i++) {
-        // TODO[perf]: Reading fragment info is not supported on TileDB Cloud
-        // yet, but reading one fragment at a time will be slow. Is there
-        // another way?
-        fragment_info.get_non_empty_domain(
-            relevant_fragments[i], 0, &non_empty_domains[i]);
-
-        LOG_DEBUG(fmt::format(
-            "[SOMAArray] fragment {} non-empty domain = [{}, {}]",
-            i,
-            non_empty_domains[i][0],
-            non_empty_domains[i][1]));
-    }
-
-    // Sort non-empty domains by the start of their ranges
-    // Generate sorting permutation to apply to both fragment non empty domains
-    // and ids
-    std::vector<size_t> permutation(relevant_fragments.size());
-    std::iota(permutation.begin(), permutation.end(), 0);
-    std::sort(
-        permutation.begin(), permutation.end(), [&](size_t lhs, size_t rhs) {
-            return non_empty_domains[lhs][0] < non_empty_domains[rhs][0];
-        });
-
-    auto permute =
-        []<typename T>(
-            const std::vector<T>& data,
-            const std::vector<size_t>& permutation) -> std::vector<T> {
-        std::vector<T> result(data.size());
-        std::transform(
-            permutation.cbegin(),
-            permutation.cend(),
-            result.begin(),
-            [&](std::size_t i) { return data[i]; });
-        return result;
-    };
-
-    non_empty_domains = permute(non_empty_domains, permutation);
-    relevant_fragments = permute(relevant_fragments, permutation);
-
-    // After sorting, if the end of a non-empty domain is >= the beginning of
-    // the next non-empty domain, there is an overlap
-
-    // TODO: We only need to apply the ``_nzz_slow`` on overlapping fragments
-    // Tracking issue:
-    // https://github.com/single-cell-data/TileDB-SOMA/issues/3908
-    std::vector<std::pair<int64_t, int64_t>> overlapping_ranges;
-    std::array<uint64_t, 2> current_range = non_empty_domains[0];
-    bool overlap = false;
-
-    uint64_t cell_count = fragment_info.cell_num(relevant_fragments[0]);
-
-    auto fragment_handler = [&](uint32_t index) {
-        // Current range was overlapping with previous tiles
-        // and we need to add it to the overlapping ranges.
-        if (overlap) {
-            overlapping_ranges.push_back(
-                std::make_pair(current_range[0], current_range[1]));
-        } else {
-            auto frag_ts = fragment_info.timestamp_range(
-                relevant_fragments[index - 1]);
-
-            if ((timestamp_ && !(frag_ts.first >= timestamp_->first &&
-                                 frag_ts.second <= timestamp_->second)) ||
-                (!schema_->allows_dups() && frag_ts.first != frag_ts.second)) {
-                // fragment overlaps read timestamp range, but isn't fully
-                // contained within: fall back to count_cells to sort that
-                //                          or
-                // If any relevant fragment is a consolidated fragment, fall
-                // back to counting cells, because the fragment may contain
-                // duplicates. If the application is allowing duplicates (in
-                // which case it's the application's job to otherwise ensure
-                // uniqueness), then sum-over-fragments is the right thing
-                // to do.
-
-                overlapping_ranges.push_back(
-                    std::make_pair(current_range[0], current_range[1]));
-            } else {
-                total_cell_num += cell_count;
-            }
-        }
-    };
-
-    for (uint32_t i = 1; i < fragment_count; ++i) {
-        if (current_range[1] < non_empty_domains[i][0]) {
-            // Fragment is non-overlapping.
-            fragment_handler(i);
-
-            current_range = non_empty_domains[i];
-            cell_count = fragment_info.cell_num(relevant_fragments[i]);
-            overlap = false;
-        } else if (current_range[1] >= non_empty_domains[i][1]) {
-            // Check if range is included completely
-            overlap = true;
-        } else if (current_range[1] < non_empty_domains[i][1]) {
-            // Check if range is partially overlapping
-            current_range[1] = non_empty_domains[i][1];
-            overlap = true;
-        }
-    }
-
-    // Check if the last fragment is overlapped and add to overlapping_ranges
-    // or add its cell count to total otherwise
-    fragment_handler(relevant_fragments.size());
-
-    // Found relevant fragments with overlap, count cells
-    if (!overlapping_ranges.empty()) {
-        total_cell_num += _nnz_slow(raise_if_slow, overlapping_ranges);
-    }
-
-    return total_cell_num;
-}
-
-uint64_t SOMAArray::_nnz_slow(
-    bool raise_if_slow,
-    const std::vector<std::pair<int64_t, int64_t>>& ranges) {
-    if (raise_if_slow) {
-        throw TileDBSOMAError(
-            "NNZ slow path called with 'raise_if_slow==true'");
-    }
-
-    LOG_DEBUG(
-        "[SOMAArray] nnz() found consolidated or overlapping fragments, "
-        "counting cells...");
 
     std::vector<uint64_t> count(1);
     std::shared_ptr<Array> array = arr_;
@@ -768,11 +581,6 @@ uint64_t SOMAArray::_nnz_slow(
     }
 
     auto query = Query(*ctx_->tiledb_ctx(), *array);
-    auto subarray = Subarray(*ctx_->tiledb_ctx(), *array);
-
-    for (const auto& range : ranges) {
-        subarray.add_range(0, range.first, range.second);
-    }
 
     // Get the default channel
     QueryChannel default_channel = QueryExperimental::get_default_channel(
@@ -781,12 +589,42 @@ uint64_t SOMAArray::_nnz_slow(
     // Apply count aggregate
     default_channel.apply_aggregate("Count", CountOperation());
 
-    query.set_layout(TILEDB_UNORDERED)
-        .set_subarray(subarray)
-        .set_data_buffer("Count", count);
+    query.set_layout(TILEDB_UNORDERED).set_data_buffer("Count", count);
     query.submit();
 
     return count[0];
+}
+
+uint64_t SOMAArray::fragment_cell_count() {
+    LOG_DEBUG("[SOMAArray] fragment_cell_count");
+
+    // Verify array is sparse
+    if (schema_->array_type() != TILEDB_SPARSE) {
+        throw TileDBSOMAError(
+            "[SOMAArray] nnz is only supported for sparse arrays");
+    }
+
+    uint64_t cell_count = 0;
+
+    // Load fragment info
+    FragmentInfo fragment_info(*ctx_->tiledb_ctx(), uri_);
+    fragment_info.load();
+
+    // Find the subset of fragments contained within the read timestamp range or
+    // are partially within [if any]
+    for (uint32_t fid = 0; fid < fragment_info.fragment_num(); fid++) {
+        auto frag_ts = fragment_info.timestamp_range(fid);
+        assert(frag_ts.first <= frag_ts.second);
+
+        if (timestamp_ && (frag_ts.first > timestamp_->second ||
+                           frag_ts.second < timestamp_->first)) {
+            // fragment is fully outside the read timestamp range: skip it
+            continue;
+        }
+
+        cell_count += fragment_info.cell_num(fid);
+    }
+    return cell_count;
 }
 
 std::vector<int64_t> SOMAArray::shape() {

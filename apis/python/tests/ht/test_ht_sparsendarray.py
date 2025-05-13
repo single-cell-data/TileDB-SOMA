@@ -269,6 +269,9 @@ class SOMASparseNDArrayStateMachine(SOMANDArrayStateMachine):
             self.data_ledger.read(timestamp_ms=self.A.tiledb_timestamp_ms).to_table()
         )
         assert expected == self.A.nnz, "NNZ mismatch"
+        assert (
+            self.A.nnz <= self.A._handle._handle.fragment_cell_count()
+        ), "NNZ vs fragment_cell_count inconsistency"
 
     @precondition(lambda self: not self.closed and self.mode == "w")
     @precondition(
