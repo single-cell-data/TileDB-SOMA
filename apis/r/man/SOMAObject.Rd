@@ -28,7 +28,12 @@ Base class to implement shared functionality across the
 \subsection{Public methods}{
 \itemize{
 \item \href{#method-SOMAObject-new}{\code{SOMAObject$new()}}
+\item \href{#method-SOMAObject-is_open}{\code{SOMAObject$is_open()}}
+\item \href{#method-SOMAObject-class}{\code{SOMAObject$class()}}
+\item \href{#method-SOMAObject-mode}{\code{SOMAObject$mode()}}
 \item \href{#method-SOMAObject-reopen}{\code{SOMAObject$reopen()}}
+\item \href{#method-SOMAObject-exists}{\code{SOMAObject$exists()}}
+\item \href{#method-SOMAObject-print}{\code{SOMAObject$print()}}
 \item \href{#method-SOMAObject-clone}{\code{SOMAObject$clone()}}
 }
 }
@@ -40,10 +45,10 @@ Create a new SOMA object. (lifecycle: maturing)
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMAObject$new(
   uri,
+  ...,
   platform_config = NULL,
   tiledbsoma_ctx = NULL,
   tiledb_timestamp = NULL,
-  internal_use_only = NULL,
   soma_context = NULL
 )}\if{html}{\out{</div>}}
 }
@@ -51,19 +56,65 @@ Create a new SOMA object. (lifecycle: maturing)
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{uri}}{...}
+\item{\code{uri}}{URI for the SOMA object}
 
-\item{\code{platform_config}}{...}
+\item{\code{...}}{Ignored}
 
-\item{\code{tiledbsoma_ctx}}{...}
+\item{\code{platform_config}}{Optional platform configuration}
 
-\item{\code{tiledb_timestamp}}{...}
+\item{\code{tiledbsoma_ctx}}{Optional TileDB SOMA context}
 
-\item{\code{internal_use_only}}{...}
+\item{\code{tiledb_timestamp}}{Optional timestamp (\code{\link[base]{POSIXct}})
+to open the object at}
 
-\item{\code{soma_context}}{...}
+\item{\code{soma_context}}{A SOMA context as created by
+\code{\link{soma_context}()}}
 }
 \if{html}{\out{</div>}}
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SOMAObject-is_open"></a>}}
+\if{latex}{\out{\hypertarget{method-SOMAObject-is_open}{}}}
+\subsection{Method \code{is_open()}}{
+Determine if the object is open for reading or writing
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SOMAObject$is_open()}\if{html}{\out{</div>}}
+}
+
+\subsection{Returns}{
+\code{TRUE} if the object is open, otherwise \code{FALSE}
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SOMAObject-class"></a>}}
+\if{latex}{\out{\hypertarget{method-SOMAObject-class}{}}}
+\subsection{Method \code{class()}}{
+Print the name of the R6 class
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SOMAObject$class()}\if{html}{\out{</div>}}
+}
+
+\subsection{Returns}{
+The name of the R6 class
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SOMAObject-mode"></a>}}
+\if{latex}{\out{\hypertarget{method-SOMAObject-mode}{}}}
+\subsection{Method \code{mode()}}{
+Get the mode of the object
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SOMAObject$mode()}\if{html}{\out{</div>}}
+}
+
+\subsection{Returns}{
+The mode of the object, one of:
+\itemize{
+\item \dQuote{\code{CLOSED}}
+\item \dQuote{\code{READ}}
+\item \dQuote{\code{WRITE}}
+}
 }
 }
 \if{html}{\out{<hr>}}
@@ -90,6 +141,32 @@ Close and reopen the TileDB object in a new mode
 }
 \subsection{Returns}{
 Invisibly returns \code{self} opened in \code{mode}
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SOMAObject-exists"></a>}}
+\if{latex}{\out{\hypertarget{method-SOMAObject-exists}{}}}
+\subsection{Method \code{exists()}}{
+Check if the object exists. (lifecycle: maturing)
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SOMAObject$exists()}\if{html}{\out{</div>}}
+}
+
+\subsection{Returns}{
+\code{TRUE} if the object exists, otherwise \code{FALSE}
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SOMAObject-print"></a>}}
+\if{latex}{\out{\hypertarget{method-SOMAObject-print}{}}}
+\subsection{Method \code{print()}}{
+Print-friendly representation of the object
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SOMAObject$print()}\if{html}{\out{</div>}}
+}
+
+\subsection{Returns}{
+Invisibly returns \code{self}
 }
 }
 \if{html}{\out{<hr>}}
