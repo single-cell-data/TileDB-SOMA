@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 from time import sleep
-from typing import Type
+from typing import Optional, Type
 
 import numpy as np
 import pyarrow as pa
