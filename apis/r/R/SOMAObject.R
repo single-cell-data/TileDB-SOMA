@@ -35,6 +35,22 @@ SOMAObject <- R6::R6Class(
         FUN = function(n) environmentName(environment(sys.function(n))),
         FUN.VALUE = character(1L)
       ))
+      if (sys.parent()) {
+        env <- environment(sys.function(sys.parent()))
+        if (R6::is.R6Class(env)) {
+          cls <- env$classname
+          while (!is.null(cls)) {
+            if (cls == "SOMAObject") {
+              break
+            }
+            env <- env$get_inherit()
+            cls <- env$classname
+          }
+          if (is_scalar_character(cls) && cls == "SOMAObject") {
+            envs <- union(envs, "tiledbsoma")
+          }
+        }
+      }
       if (!"tiledbsoma" %in% envs) {
         msg <- private$.internal_use_only(
           "new",
