@@ -1,7 +1,7 @@
 #' `SOMAExperiment` Axis Query Result
 #' @description Access [`SOMAExperimentAxisQuery`] results.
 #' @export
-SOMAAxisQueryResult <- R6Class(
+SOMAAxisQueryResult <- R6::R6Class(
   classname = "SOMAAxisQueryResult",
   public = list(
 

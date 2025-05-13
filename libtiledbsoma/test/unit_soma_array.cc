@@ -321,6 +321,7 @@ TEST_CASE("SOMAArray: nnz") {
 
         uint64_t nnz = soma_array->nnz();
         REQUIRE(nnz == expected_nnz);
+        REQUIRE(nnz >= soma_array->fragment_cell_count());
 
         std::vector<int64_t> shape = soma_array->shape();
         REQUIRE(shape.size() == 1);
@@ -391,6 +392,7 @@ TEST_CASE("SOMAArray: nnz with timestamp") {
 
         uint64_t nnz = soma_array->nnz();
         REQUIRE(nnz == expected_nnz);
+        REQUIRE(nnz >= soma_array->fragment_cell_count());
     }
 }
 

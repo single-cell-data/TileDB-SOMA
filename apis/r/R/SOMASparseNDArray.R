@@ -99,7 +99,7 @@ SOMASparseNDArray <- R6::R6Class(
         simplify = FALSE,
         USE.NAMES = TRUE
       )
-      bbox <- bbox %||% setNames(
+      bbox <- bbox %||% stats::setNames(
         lapply(
           X = dim(x = values) - 1L,
           FUN = function(x) {
@@ -122,7 +122,7 @@ SOMASparseNDArray <- R6::R6Class(
       if (!identical(sort(names(bbox)), sort(dnames))) {
         stop("The names of 'bbox' must be the names of the array")
       }
-      if (is_integerish(bbox) || bit64::is.integer64(bbox)) {
+      if (rlang::is_integerish(bbox) || bit64::is.integer64(bbox)) {
         bbox <- sapply(
           X = names(bbox),
           FUN = function(x) {
@@ -141,7 +141,7 @@ SOMASparseNDArray <- R6::R6Class(
             call. = FALSE
           )
         }
-        if (!(is_integerish(xrange) || bit64::is.integer64(xrange))) {
+        if (!(rlang::is_integerish(xrange) || bit64::is.integer64(xrange))) {
           stop(
             "Ranges in the bounding box must be integers (offending: ",
             sQuote(x),

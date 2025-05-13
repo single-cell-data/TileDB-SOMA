@@ -1,7 +1,7 @@
 ---
-title: "SOMA objects overview"
+title: SOMA objects overview
 output: rmarkdown::html_vignette
-vignette: >
+vignette: >-
   %\VignetteIndexEntry{SOMA objects overview}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
@@ -34,7 +34,7 @@ uri
 The `SOMAExperiment` class represents the top-level container for experiments that include one or more measurements across set of observations (e.g., cells or biospecimens). It always contains at least two objects:
 
 1. `obs`: A `SOMADataFrame` containing primary annotations on the observations.
-2. `ms`: A `SOMACollection` of the individual measurements (i.e., modalities).
+1. `ms`: A `SOMACollection` of the individual measurements (i.e., modalities).
 
 Open the `SOMAExperiment` using its file path and inspect the object:
 

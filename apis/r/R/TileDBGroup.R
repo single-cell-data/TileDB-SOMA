@@ -2,9 +2,11 @@
 #'
 #' @description
 #' Base class for interacting with TileDB groups (lifecycle: maturing)
-#' @importFrom spdl info debug
+#'
 #' @keywords internal
+#'
 #' @export
+#'
 TileDBGroup <- R6::R6Class(
   classname = "TileDBGroup",
   inherit = TileDBObject,

@@ -9,6 +9,7 @@
 #' @return A matrix containing the data of \code{x} padded out to \code{shape}
 #'
 #' @noRd
+#'
 pad_matrix <- function(x, ...) {
   UseMethod(generic = "pad_matrix", object = x)
 }
@@ -21,9 +22,11 @@ pad_matrix <- function(x, ...) {
 #' @param returns A padded matrix containing all provided
 #' row/column names
 #'
-#' @importFrom Matrix sparseMatrix
 #' @method pad_matrix default
+#' @rdname pad_matrix
+#'
 #' @noRd
+#'
 pad_matrix.default <- function(x, rownames = NULL, colnames = NULL, ...) {
   stopifnot(
     inherits(x, "Matrix"),
@@ -66,6 +69,7 @@ pad_matrix.default <- function(x, rownames = NULL, colnames = NULL, ...) {
 }
 
 #' @param sparse Return a \link[Matrix:TsparseMatrix-class]{sparse matrix}
+#'
 #' @rdname pad_matrix
 #' @method pad_matrix matrix
 #' @noRd

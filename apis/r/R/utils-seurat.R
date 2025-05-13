@@ -18,8 +18,6 @@
   ))
 }
 
-#' @importFrom methods getClassDef slotNames
-#'
 .load_seurat_command <- function(uns, ms_names) {
   key <- "seurat_commands"
   check_package("jsonlite")
@@ -35,10 +33,13 @@
       class = c("noCommandLogsError", "missingCollectionError")
     ))
   }
-  slots <- slotNames(getClassDef("SeuratCommand", package = "SeuratObject"))
+  slots <- methods::slotNames(methods::getClassDef(
+    "SeuratCommand",
+    package = "SeuratObject"
+  ))
   hint <- uns_hint("1d")
   lognames <- logs$names()
-  commands <- setNames(vector("list", length = length(lognames)), lognames)
+  commands <- stats::setNames(vector("list", length = length(lognames)), lognames)
   for (x in lognames) {
     spdl::info("Attempting to read command log {}", x)
     xdf <- logs$get(x)
@@ -79,7 +80,7 @@
     spdl::info("Assembling command log")
     params <- cmdlist[setdiff(names(cmdlist), slots)]
     cmdlist <- c(cmdlist[setdiff(names(cmdlist), names(params))], list(params = params))
-    commands[[x]] <- do.call(new, c(cmdlist, Class = "SeuratCommand"))
+    commands[[x]] <- do.call(methods::new, c(cmdlist, Class = "SeuratCommand"))
   }
   commands <- Filter(Negate(is.null), x = commands)
   spdl::info("Returning {} command log(s)", length(commands))

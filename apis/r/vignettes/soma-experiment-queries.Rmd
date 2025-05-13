@@ -1,7 +1,7 @@
 ---
-title: "Querying a SOMA experiment"
+title: Querying a SOMA experiment
 output: rmarkdown::html_vignette
-vignette: >
+vignette: >-
   %\VignetteIndexEntry{Querying a SOMA experiment}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
@@ -50,7 +50,6 @@ experiment <- SOMAExperimentOpen(experiment$uri, tiledbsoma_ctx = ctx)
 
 Alternatively, you can have in your environment `export TILEDB_SOMA_INIT_BUFFER_BYTES=2147483648` before loading the data.
 
-
 Now we can construct our query object.
 
 ```{r}
@@ -85,6 +84,7 @@ iterator <- query$obs()
 obs <- iterator$concat()
 obs
 ```
+
 As a reminder `arrow:Table` can be easily cast into a `tibble`
 
 ```{r}
@@ -108,6 +108,7 @@ Here we demonstrate by creating a new iterator.
 iterator <- experiment$obs$read()
 iterator$read_complete()
 ```
+
 ```{r}
 iterator$read_next()
 iterator$read_complete()
@@ -127,7 +128,7 @@ table_irerator$read_next()
 
 As in the `obs` example the data is small enough to fit in one chunk. For bigger data you can user `iterator$read_complete()` to check the status of iteration and `iterator$concat()` to concatenate the rest of the chunks.
 
-The iterator for  `Matrix::sparse_matrix` works in the same way. Keep in mind that the matrix format is `dgTMatrix` as it is the most memory-efficient and the only format type that can be easily iterated. And most importantly, the resulting object is a "view" of the full matrix with the original shape and indexes but only with data corresponding to the query coordinates or filters (see section below).
+The iterator for `Matrix::sparse_matrix` works in the same way. Keep in mind that the matrix format is `dgTMatrix` as it is the most memory-efficient and the only format type that can be easily iterated. And most importantly, the resulting object is a "view" of the full matrix with the original shape and indexes but only with data corresponding to the query coordinates or filters (see section below).
 
 ```{r}
 reader <- query$X(layer_name = "counts")
