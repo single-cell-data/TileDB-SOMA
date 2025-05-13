@@ -19,6 +19,7 @@
 ## Changes
 
 * `TileDBArray$attributes()` has been promoted to `SOMAArrayBase$attributes()` and returns a named list instead of an external pointer
+* DataFrame `count` and SparseNDArray `nnz` fix - report correct number of cells in array in the case where a delete query had been previously applied.
 
 # tiledbsoma 1.16.0
 
