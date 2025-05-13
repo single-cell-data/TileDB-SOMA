@@ -1,7 +1,7 @@
 ---
-title: "SOMA shapes"
+title: SOMA shapes
 output: rmarkdown::html_vignette
-vignette: >
+vignette: >-
   %\VignetteIndexEntry{SOMA shapes}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
@@ -33,7 +33,7 @@ exp
 
 The `obs` dataframe has a `domain`, which is a soft limit on what values can be written to it. (You'll get an error if you try to read or write `soma_joinid` values outside this range, which is an important data-integrity reassurance.)
 
-The `domain` we see here matches with the data populated inside of it.  (This will usually be the case. It might not, if you've created the dataframe but not written any data to it yet --- at that point it's empty but it still has a shape.)
+The `domain` we see here matches with the data populated inside of it. (This will usually be the case. It might not, if you've created the dataframe but not written any data to it yet --- at that point it's empty but it still has a shape.)
 
 If you have more data --- more cells --- to add to the experiment later, you will be able resize the obs, up to the maxdomain which is a hard limit.
 
@@ -121,11 +121,11 @@ In particular, the `X` array in this experiment --- and in most experiments --- 
 
 As a general rule you'll see the following:
 
-* An `X` array's shape is nobs x nvar
-* An `obsm` array's shape is `nobs` x some number, maybe 20
-* An `obsp` array's shape is `nobs` x `nobs`
-* A `varm` array's shape is `nvar` x some number, maybe 20
-* A `varp` array's shape is `nvar` x `nvar`
+- An `X` array's shape is nobs x nvar
+- An `obsm` array's shape is `nobs` x some number, maybe 20
+- An `obsp` array's shape is `nobs` x `nobs`
+- A `varm` array's shape is `nvar` x some number, maybe 20
+- A `varp` array's shape is `nvar` x `nvar`
 
 ## Advanced usage: dataframes with non-standard index columns
 
@@ -191,7 +191,7 @@ sdf1$index_column_names()
 
 Here we see the `soma_joinid` slot of the dataframe's domain is as requested.
 
-Another point is that domain cannot be specified for string-type index columns.  You can set them at create one of two ways:
+Another point is that domain cannot be specified for string-type index columns. You can set them at create one of two ways:
 
 ```{r, eval=FALSE}
 domain = list(soma_joinid = (0, 9), mystring = NULL)
@@ -247,8 +247,8 @@ In the TileDB-SOMA Python API, there is a method for resizing all the dataframes
 
 For N-dimensional arrays that have been upgraded, or that were created using TileDB-SOMA 1.15 or higher, simply do the following:
 
-* If the array's `$tiledbsoma_has_upgraded_shape()` reports `FALSE`, invoke the `$tiledbsoma_upgrade_shape()` method.
-* Otherwise invoke the `$.resize()` method.
+- If the array's `$tiledbsoma_has_upgraded_shape()` reports `FALSE`, invoke the `$tiledbsoma_upgrade_shape()` method.
+- Otherwise invoke the `$.resize()` method.
 
 Let's do a fresh unpack of a pre-1.15 experiment:
 
