@@ -55,7 +55,7 @@ extract_dataset <- function(name, dir = tempdir()) {
   stopifnot("The specified dataset does not exist" = file.exists(tarfile))
 
   dataset_uri <- file.path(dir, name)
-  untar(tarfile, exdir = dataset_uri)
+  utils::untar(tarfile, exdir = dataset_uri)
   dataset_uri
 }
 

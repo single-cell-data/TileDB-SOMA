@@ -243,7 +243,7 @@ uns_hint <- function(type = c("1d", "2d")) {
           pattern = '<-',
           x = grep(
             pattern = '^is\\.',
-            x = lsf.str(envir = baseenv()),
+            x = utils::lsf.str(envir = baseenv()),
             value = TRUE
           ),
           value = TRUE,

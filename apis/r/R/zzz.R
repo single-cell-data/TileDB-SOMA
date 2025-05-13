@@ -1,5 +1,5 @@
-#' @importFrom methods as
 #' @importFrom Rcpp evalCpp
+#' @importFrom methods as is
 #' @importFrom Matrix as.matrix
 #' @importFrom bit64 as.integer64
 #' @importFrom arrow concat_arrays
@@ -35,7 +35,7 @@ NULL
   }
   if (interactive()) {
     packageStartupMessage(
-      "TileDB-SOMA R package ", packageVersion(pkgname),
+      "TileDB-SOMA R package ", utils::packageVersion(pkgname),
       " with TileDB Embedded ", format(get_tiledb_version(TRUE)),
       " on ", utils::osVersion,
       ".\nSee https://github.com/single-cell-data for more information ",

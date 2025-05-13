@@ -80,7 +80,7 @@
     spdl::info("Assembling command log")
     params <- cmdlist[setdiff(names(cmdlist), slots)]
     cmdlist <- c(cmdlist[setdiff(names(cmdlist), names(params))], list(params = params))
-    commands[[x]] <- do.call(new, c(cmdlist, Class = "SeuratCommand"))
+    commands[[x]] <- do.call(methods::new, c(cmdlist, Class = "SeuratCommand"))
   }
   commands <- Filter(Negate(is.null), x = commands)
   spdl::info("Returning {} command log(s)", length(commands))
