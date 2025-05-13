@@ -175,7 +175,8 @@ Retrieves an \code{X} layer as a \link{SOMASparseNDArrayRead}
 \if{html}{\out{<a id="method-SOMAExperimentAxisQuery-obsm"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMAExperimentAxisQuery-obsm}{}}}
 \subsection{Method \code{obsm()}}{
-Retrieves an \code{obsm} layer as a \code{\link{SOMASparseNDArrayRead}}
+Retrieves an \code{obsm} layer as a
+\code{\link{SOMASparseNDArrayRead}}
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMAExperimentAxisQuery$obsm(layer_name)}\if{html}{\out{</div>}}
 }
@@ -192,7 +193,8 @@ Retrieves an \code{obsm} layer as a \code{\link{SOMASparseNDArrayRead}}
 \if{html}{\out{<a id="method-SOMAExperimentAxisQuery-varm"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMAExperimentAxisQuery-varm}{}}}
 \subsection{Method \code{varm()}}{
-Retrieves a \code{varm} layer as a \code{\link{SOMASparseNDArrayRead}}
+Retrieves a \code{varm} layer as a
+\code{\link{SOMASparseNDArrayRead}}
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMAExperimentAxisQuery$varm(layer_name)}\if{html}{\out{</div>}}
 }
@@ -209,7 +211,8 @@ Retrieves a \code{varm} layer as a \code{\link{SOMASparseNDArrayRead}}
 \if{html}{\out{<a id="method-SOMAExperimentAxisQuery-obsp"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMAExperimentAxisQuery-obsp}{}}}
 \subsection{Method \code{obsp()}}{
-Retrieves an \code{obsp} layer as a \code{\link{SOMASparseNDArrayRead}}
+Retrieves an \code{obsp} layer as a
+\code{\link{SOMASparseNDArrayRead}}
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMAExperimentAxisQuery$obsp(layer_name)}\if{html}{\out{</div>}}
 }
@@ -226,7 +229,8 @@ Retrieves an \code{obsp} layer as a \code{\link{SOMASparseNDArrayRead}}
 \if{html}{\out{<a id="method-SOMAExperimentAxisQuery-varp"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMAExperimentAxisQuery-varp}{}}}
 \subsection{Method \code{varp()}}{
-Retrieves a \code{varp} layer as a \code{\link{SOMASparseNDArrayRead}}
+Retrieves a \code{varp} layer as a
+\code{\link{SOMASparseNDArrayRead}}
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMAExperimentAxisQuery$varp(layer_name)}\if{html}{\out{</div>}}
 }
@@ -327,7 +331,8 @@ A \code{\link[Matrix:sparseMatrix-class]{Matrix::sparseMatrix}}
 \if{html}{\out{<a id="method-SOMAExperimentAxisQuery-to_seurat"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMAExperimentAxisQuery-to_seurat}{}}}
 \subsection{Method \code{to_seurat()}}{
-Loads the query as a \code{\link[SeuratObject]{Seurat}} object
+Loads the query as a
+\code{\link[SeuratObject]{Seurat}} object
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMAExperimentAxisQuery$to_seurat(
   X_layers = c(counts = "counts", data = "logcounts"),
@@ -346,23 +351,43 @@ Loads the query as a \code{\link[SeuratObject]{Seurat}} object
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{X_layers}}{\Sexpr[results=rd]{tiledbsoma:::rd_outgest_xlayers()}}
+\item{\code{X_layers}}{A named character of X layers to add to the Seurat assay
+where the names are the names of Seurat slots and the values are the
+names of layers within \code{X}; names should be one of:
+\itemize{
+\item \dQuote{\code{counts}} to add the layer as \code{counts}
+\item \dQuote{\code{data}} to add the layer as \code{data}
+\item \dQuote{\code{scale.data}} to add the layer as \code{scale.data}
+}
+At least one of \dQuote{\code{counts}} or \dQuote{\code{data}} is required}
 
-\item{\code{obs_index}}{\Sexpr[results=rd]{tiledbsoma:::rd_outgest_index()}}
+\item{\code{obs_index}}{Name of column in \code{obs} to add as cell names; uses
+\code{paste0("cell", obs_joinids())} by default}
 
-\item{\code{var_index}}{\Sexpr[results=rd]{tiledbsoma:::rd_outgest_index(axis = 'var')}}
+\item{\code{var_index}}{Name of column in \code{var} to add as feature names;
+uses \code{paste0("feature", var_joinids())} by default}
 
-\item{\code{obs_column_names}}{\Sexpr[results=rd]{tiledbsoma:::rd_outgest_metadata_names()}}
+\item{\code{obs_column_names}}{Names of columns in \code{obs} to add as
+cell-level meta data; by default, loads all columns}
 
-\item{\code{var_column_names}}{\Sexpr[results=rd]{tiledbsoma:::rd_outgest_metadata_names(axis = 'var')}}
+\item{\code{var_column_names}}{Names of columns in \code{var} to add as
+feature-level meta data; by default, loads all columns}
 
-\item{\code{obsm_layers}}{\Sexpr[results=rd]{tiledbsoma:::rd_outgest_mlayers()}}
+\item{\code{obsm_layers}}{Names of arrays in \code{obsm} to add as the cell
+embeddings; pass \code{FALSE} to suppress loading in any dimensional
+reductions; by default, loads all dimensional reduction information}
 
-\item{\code{varm_layers}}{\Sexpr[results=rd]{tiledbsoma:::rd_outgest_mlayers(axis = 'varm')}}
+\item{\code{varm_layers}}{Named vector of arrays in \code{varm} to load in as
+the feature loadings; names must be names of arrays in \code{obsm}
+(eg. \code{varm_layers = c(X_pca = "PCs")}); pass \code{FALSE} to
+suppress loading in any feature loadings; will try to determine
+\code{varm_layers} from \code{obsm_layers}}
 
-\item{\code{obsp_layers}}{\Sexpr[results=rd]{tiledbsoma:::rd_outgest_players()}}
+\item{\code{obsp_layers}}{Names of arrays in \code{obsp} to load in as
+\code{\link[SeuratObject]{Graph}s}; by default, loads all graphs}
 
-\item{\code{drop_levels}}{Drop unused levels from \code{obs} and \code{var} factor columns}
+\item{\code{drop_levels}}{Drop unused levels from \code{obs} and \code{var}
+factor columns}
 
 \item{\code{version}}{Assay version to read query in as; by default, will try to
 infer assay type from the measurement itself}
@@ -392,13 +417,24 @@ Loads the query as a Seurat \code{\link[SeuratObject]{Assay}}
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{X_layers}}{\Sexpr[results=rd]{tiledbsoma:::rd_outgest_xlayers()}}
+\item{\code{X_layers}}{A named character of X layers to add to the Seurat assay
+where the names are the names of Seurat slots and the values are the
+names of layers within \code{X}; names should be one of:
+\itemize{
+\item \dQuote{\code{counts}} to add the layer as \code{counts}
+\item \dQuote{\code{data}} to add the layer as \code{data}
+\item \dQuote{\code{scale.data}} to add the layer as \code{scale.data}
+}
+At least one of \dQuote{\code{counts}} or \dQuote{\code{data}} is required}
 
-\item{\code{obs_index}}{\Sexpr[results=rd]{tiledbsoma:::rd_outgest_index()}}
+\item{\code{obs_index}}{Name of column in \code{obs} to add as cell names; uses
+\code{paste0("cell", obs_joinids())} by default}
 
-\item{\code{var_index}}{\Sexpr[results=rd]{tiledbsoma:::rd_outgest_index(axis = 'var')}}
+\item{\code{var_index}}{Name of column in \code{var} to add as feature names;
+uses \code{paste0("feature", var_joinids())} by default}
 
-\item{\code{var_column_names}}{\Sexpr[results=rd]{tiledbsoma:::rd_outgest_metadata_names(axis = 'var')}}
+\item{\code{var_column_names}}{Names of columns in \code{var} to add as
+feature-level meta data; by default, loads all columns}
 
 \item{\code{drop_levels}}{Drop unused levels from \code{var} factor columns}
 
@@ -436,9 +472,11 @@ cell embeddings}
 feature loadings; by default, will try to determine \code{varm_layer}
 from \code{obsm_layer}}
 
-\item{\code{obs_index}}{\Sexpr[results=rd]{tiledbsoma:::rd_outgest_index()}}
+\item{\code{obs_index}}{Name of column in \code{obs} to add as cell names; uses
+\code{paste0("cell", obs_joinids())} by default}
 
-\item{\code{var_index}}{\Sexpr[results=rd]{tiledbsoma:::rd_outgest_index(axis = 'var')}}
+\item{\code{var_index}}{Name of column in \code{var} to add as feature names;
+uses \code{paste0("feature", var_joinids())} by default}
 }
 \if{html}{\out{</div>}}
 }
@@ -460,7 +498,8 @@ Loads the query as a Seurat \link[SeuratObject:Graph]{graph}
 \describe{
 \item{\code{obsp_layer}}{Name of array in \code{obsp} to load as the graph}
 
-\item{\code{obs_index}}{\Sexpr[results=rd]{tiledbsoma:::rd_outgest_index()}}
+\item{\code{obs_index}}{Name of column in \code{obs} to add as cell names; uses
+\code{paste0("cell", obs_joinids())} by default}
 }
 \if{html}{\out{</div>}}
 }
@@ -491,23 +530,36 @@ Loads the query as a
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{X_layers}}{\Sexpr[results=rd]{tiledbsoma:::rd_outgest_xlayers('sce')}}
+\item{\code{X_layers}}{A character vector of X layers to add as assays in the
+main experiment; may optionally be named to set the name of the resulting
+assay (eg. \code{X_layers = c(counts = "raw")} will load in X layer
+\dQuote{\code{raw}} as assay \dQuote{\code{counts}}); by default, loads
+in all X layers}
 
-\item{\code{obs_index}}{\Sexpr[results=rd]{tiledbsoma:::rd_outgest_index('sce')}}
+\item{\code{obs_index}}{Name of column in \code{obs} to add as cell names; uses
+\code{paste0("cell", obs_joinids())} by default}
 
-\item{\code{var_index}}{\Sexpr[results=rd]{tiledbsoma:::rd_outgest_index('sce', 'var')}}
+\item{\code{var_index}}{Name of column in \code{var} to add as feature names;
+uses \code{paste0("feature", var_joinids())} by default}
 
-\item{\code{obs_column_names}}{\Sexpr[results=rd]{tiledbsoma:::rd_outgest_metadata_names('sce')}}
+\item{\code{obs_column_names}}{Names of columns in \code{obs} to add as
+\code{colData}; by default, loads all columns}
 
-\item{\code{var_column_names}}{\Sexpr[results=rd]{tiledbsoma:::rd_outgest_metadata_names('sce', 'var')}}
+\item{\code{var_column_names}}{Names of columns in \code{var} to add as
+\code{rowData}; by default, loads all columns}
 
-\item{\code{obsm_layers}}{\Sexpr[results=rd]{tiledbsoma:::rd_outgest_mlayers('sce')}}
+\item{\code{obsm_layers}}{Names of arrays in \code{obsm} to add as the reduced
+dimensions; pass \code{FALSE} to suppress loading in any reduced
+dimensions; by default, loads all reduced dimensions}
 
-\item{\code{obsp_layers}}{\Sexpr[results=rd]{tiledbsoma:::rd_outgest_players('sce')}}
+\item{\code{obsp_layers}}{Names of arrays in \code{obsp} to load in as
+\code{\link[S4Vectors]{SelfHits}}; by default, loads all graphs}
 
-\item{\code{varp_layers}}{\Sexpr[results=rd]{tiledbsoma:::rd_outgest_players('sce', 'varp')}}
+\item{\code{varp_layers}}{Names of arrays in \code{varp} to load in as
+\code{\link[S4Vectors]{SelfHits}}; by default, loads all networks}
 
-\item{\code{drop_levels}}{Drop unused levels from \code{obs} and \code{var} factor columns}
+\item{\code{drop_levels}}{Drop unused levels from \code{obs} and \code{var}
+factor columns}
 }
 \if{html}{\out{</div>}}
 }

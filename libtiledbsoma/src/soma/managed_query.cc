@@ -589,29 +589,11 @@ bool ManagedQuery::_cast_column(
             return _cast_column_aux<int32_t>(schema, array, se);
         case TILEDB_UINT32:
             return _cast_column_aux<uint32_t>(schema, array, se);
-        case TILEDB_INT64:
-        case TILEDB_DATETIME_YEAR:
-        case TILEDB_DATETIME_MONTH:
-        case TILEDB_DATETIME_WEEK:
-        case TILEDB_DATETIME_DAY:
-        case TILEDB_DATETIME_HR:
-        case TILEDB_DATETIME_MIN:
         case TILEDB_DATETIME_SEC:
         case TILEDB_DATETIME_MS:
         case TILEDB_DATETIME_US:
         case TILEDB_DATETIME_NS:
-        case TILEDB_DATETIME_PS:
-        case TILEDB_DATETIME_FS:
-        case TILEDB_DATETIME_AS:
-        case TILEDB_TIME_HR:
-        case TILEDB_TIME_MIN:
-        case TILEDB_TIME_SEC:
-        case TILEDB_TIME_MS:
-        case TILEDB_TIME_US:
-        case TILEDB_TIME_NS:
-        case TILEDB_TIME_PS:
-        case TILEDB_TIME_FS:
-        case TILEDB_TIME_AS:
+        case TILEDB_INT64:
             return _cast_column_aux<int64_t>(schema, array, se);
         case TILEDB_UINT64:
             return _cast_column_aux<uint64_t>(schema, array, se);
@@ -655,30 +637,12 @@ void ManagedQuery::_promote_indexes_to_values(
             return _cast_dictionary_values<int32_t>(schema, array);
         case TILEDB_UINT32:
             return _cast_dictionary_values<uint32_t>(schema, array);
-        case TILEDB_INT64:
-            return _cast_dictionary_values<int64_t>(schema, array);
-        case TILEDB_DATETIME_YEAR:
-        case TILEDB_DATETIME_MONTH:
-        case TILEDB_DATETIME_WEEK:
-        case TILEDB_DATETIME_DAY:
-        case TILEDB_DATETIME_HR:
-        case TILEDB_DATETIME_MIN:
         case TILEDB_DATETIME_SEC:
         case TILEDB_DATETIME_MS:
         case TILEDB_DATETIME_US:
         case TILEDB_DATETIME_NS:
-        case TILEDB_DATETIME_PS:
-        case TILEDB_DATETIME_FS:
-        case TILEDB_DATETIME_AS:
-        case TILEDB_TIME_HR:
-        case TILEDB_TIME_MIN:
-        case TILEDB_TIME_SEC:
-        case TILEDB_TIME_MS:
-        case TILEDB_TIME_US:
-        case TILEDB_TIME_NS:
-        case TILEDB_TIME_PS:
-        case TILEDB_TIME_FS:
-        case TILEDB_TIME_AS:
+        case TILEDB_INT64:
+            return _cast_dictionary_values<int64_t>(schema, array);
         case TILEDB_UINT64:
             return _cast_dictionary_values<uint64_t>(schema, array);
         case TILEDB_FLOAT32:
@@ -910,28 +874,10 @@ bool ManagedQuery::_cast_column_aux(
         case TILEDB_UINT32:
             return _set_column<UserType, uint32_t>(schema, array, se);
         case TILEDB_INT64:
-        case TILEDB_DATETIME_YEAR:
-        case TILEDB_DATETIME_MONTH:
-        case TILEDB_DATETIME_WEEK:
-        case TILEDB_DATETIME_DAY:
-        case TILEDB_DATETIME_HR:
-        case TILEDB_DATETIME_MIN:
         case TILEDB_DATETIME_SEC:
         case TILEDB_DATETIME_MS:
         case TILEDB_DATETIME_US:
         case TILEDB_DATETIME_NS:
-        case TILEDB_DATETIME_PS:
-        case TILEDB_DATETIME_FS:
-        case TILEDB_DATETIME_AS:
-        case TILEDB_TIME_HR:
-        case TILEDB_TIME_MIN:
-        case TILEDB_TIME_SEC:
-        case TILEDB_TIME_MS:
-        case TILEDB_TIME_US:
-        case TILEDB_TIME_NS:
-        case TILEDB_TIME_PS:
-        case TILEDB_TIME_FS:
-        case TILEDB_TIME_AS:
             return _set_column<UserType, int64_t>(schema, array, se);
         case TILEDB_UINT64:
             return _set_column<UserType, uint64_t>(schema, array, se);
@@ -984,6 +930,10 @@ bool ManagedQuery::_extend_and_write_enumeration(
         case TILEDB_UINT32:
             return _extend_and_evolve_schema_and_write<uint32_t>(
                 value_schema, value_array, index_schema, index_array, enmr, se);
+        case TILEDB_DATETIME_SEC:
+        case TILEDB_DATETIME_MS:
+        case TILEDB_DATETIME_US:
+        case TILEDB_DATETIME_NS:
         case TILEDB_INT64:
             return _extend_and_evolve_schema_and_write<int64_t>(
                 value_schema, value_array, index_schema, index_array, enmr, se);
@@ -1013,17 +963,16 @@ bool ManagedQuery::_extend_and_evolve_schema_and_write<std::string>(
     ArraySchemaEvolution& se) {
     std::string column_name = index_schema->name;
 
-    const auto
-        [was_extended,
-         enum_values_in_write,
-         enum_values_existing,
-         enum_values_to_add,
-         total_size,
-         extended_enmr] =
-            _extend_and_evolve_schema_with_details<
-                std::string,
-                std::string_view>(
-                value_schema, value_array, column_name, true, enmr, se);
+    const auto [was_extended, enum_values_in_write, extended_enmr] =
+        _extend_and_evolve_schema_with_details<std::string, std::string_view>(
+            value_schema,
+            value_array,
+            index_schema,
+            index_array,
+            column_name,
+            true,
+            enmr,
+            se);
 
     if (was_extended) {
         ManagedQuery::_remap_indexes(
@@ -1059,15 +1008,16 @@ bool ManagedQuery::_extend_and_evolve_schema_and_write(
     ArraySchemaEvolution& se) {
     std::string column_name = index_schema->name;
 
-    const auto
-        [was_extended,
-         enum_values_in_write,
-         enum_values_existing,
-         enum_values_to_add,
-         total_size,
-         extended_enmr] =
-            _extend_and_evolve_schema_with_details<ValueType, ValueType>(
-                value_schema, value_array, column_name, true, enmr, se);
+    const auto [was_extended, enum_values_in_write, extended_enmr] =
+        _extend_and_evolve_schema_with_details<ValueType, ValueType>(
+            value_schema,
+            value_array,
+            index_schema,
+            index_array,
+            column_name,
+            true,
+            enmr,
+            se);
 
     if (was_extended) {
         // If the passed-in enumerations are only a subset of the new extended
@@ -1182,9 +1132,16 @@ bool ManagedQuery::
         bool deduplicate,
         Enumeration enmr,
         ArraySchemaEvolution& se) {
-    const auto [was_extended, _1, _2, _3, _4, _5] =
+    const auto [was_extended, _1, _2] =
         _extend_and_evolve_schema_with_details<std::string, std::string_view>(
-            value_schema, value_array, column_name, deduplicate, enmr, se);
+            value_schema,
+            value_array,
+            nullptr,
+            nullptr,
+            column_name,
+            deduplicate,
+            enmr,
+            se);
     return was_extended;
 }
 
@@ -1196,9 +1153,16 @@ bool ManagedQuery::_extend_and_evolve_schema_without_details(
     bool deduplicate,
     Enumeration enmr,
     ArraySchemaEvolution& se) {
-    const auto [was_extended, _1, _2, _3, _4, _5] =
+    const auto [was_extended, _1, _2] =
         _extend_and_evolve_schema_with_details<ValueType, ValueType>(
-            value_schema, value_array, column_name, deduplicate, enmr, se);
+            value_schema,
+            value_array,
+            nullptr,
+            nullptr,
+            column_name,
+            deduplicate,
+            enmr,
+            se);
     return was_extended;
 }
 
@@ -1209,13 +1173,12 @@ template <>
 std::tuple<
     bool,                           // was_extended
     std::vector<std::string_view>,  // enum_values_in_write
-    std::vector<std::string_view>,  // enum_values_existing
-    std::vector<std::string_view>,  // enum_values_added
-    size_t,                         // total_size
     Enumeration>                    // extended_enmr
 ManagedQuery::_extend_and_evolve_schema_with_details<std::string>(
     ArrowSchema* value_schema,
     ArrowArray* value_array,
+    ArrowSchema* index_schema,  // null for extend-enum, non-null for write
+    ArrowArray* index_array,    // null for extend-enum, non-null for write
     const std::string& column_name,
     bool deduplicate,
     Enumeration enmr,
@@ -1225,7 +1188,7 @@ ManagedQuery::_extend_and_evolve_schema_with_details<std::string>(
     if (value_array->n_buffers != 3) {
         throw std::invalid_argument(fmt::format(
             "[ManagedQuery] _extend_and_evolve_schema_with_details string: "
-            "expected n_buffers == 3; got {}",
+            "expected values n_buffers == 3; got {}",
             value_array->n_buffers));
     }
 
@@ -1291,8 +1254,6 @@ ManagedQuery::_extend_and_evolve_schema_with_details<std::string>(
 
     // Separate out the values already in the array schema from the
     // values not already in the array schema.
-    std::vector<std::string_view> enum_values_to_add;
-    size_t total_size = 0;
     auto enum_values_existing = _enumeration_values_view<std::string_view>(
         enmr);
     std::unordered_set<std::string_view> existing_enums_set;
@@ -1300,10 +1261,31 @@ ManagedQuery::_extend_and_evolve_schema_with_details<std::string>(
         existing_enums_set.insert(existing_enum_val);
     }
 
-    for (const auto& enum_val : enum_values_in_write) {
-        if (!existing_enums_set.contains(enum_val)) {
-            enum_values_to_add.push_back(enum_val);
-            total_size += enum_val.size();
+    std::optional<std::unordered_set<std::string_view>>
+        opt_covered_values = _find_covered_enum_values(
+            enum_values_in_write, index_schema, index_array);
+
+    std::vector<std::string_view> enum_values_to_add;
+    size_t total_size = 0;
+
+    if (opt_covered_values.has_value()) {
+        const auto& covered_values = opt_covered_values.value();
+        for (size_t i = 0; i < enum_values_in_write.size(); i++) {
+            const auto& enum_val = enum_values_in_write[i];
+            if (!existing_enums_set.contains(enum_val)) {
+                if (covered_values.find(enum_val) != covered_values.end()) {
+                    enum_values_to_add.push_back(enum_val);
+                    total_size += enum_val.size();
+                }
+            }
+        }
+    } else {
+        for (size_t i = 0; i < enum_values_in_write.size(); i++) {
+            const auto& enum_val = enum_values_in_write[i];
+            if (!existing_enums_set.contains(enum_val)) {
+                enum_values_to_add.push_back(enum_val);
+                total_size += enum_val.size();
+            }
         }
     }
 
@@ -1365,18 +1347,12 @@ ManagedQuery::_extend_and_evolve_schema_with_details<std::string>(
         return std::tuple{
             true,  // was_extended
             enum_values_in_write,
-            enum_values_existing,
-            enum_values_to_add,
-            total_size,
             extended_enmr};
 
     } else {
         return std::tuple{
             false,  // was_extended
             enum_values_in_write,
-            enum_values_existing,
-            enum_values_to_add,
-            total_size,
             enmr};
     }
 }
@@ -1388,13 +1364,12 @@ template <typename ValueType, typename ValueViewType>
 std::tuple<
     bool,                        // was_extended
     std::vector<ValueViewType>,  // enum_values_in_write
-    std::vector<ValueViewType>,  // enum_values_existing
-    std::vector<ValueViewType>,  // enum_values_added
-    size_t,                      // total_size
     Enumeration>                 //  extended_enmr
 ManagedQuery::_extend_and_evolve_schema_with_details(
     ArrowSchema* value_schema,
     ArrowArray* value_array,
+    ArrowSchema* index_schema,  // null for extend-enum, non-null for write
+    ArrowArray* index_array,    // null for extend-enum, non-null for write
     const std::string& column_name,
     bool deduplicate,
     Enumeration enmr,
@@ -1413,6 +1388,10 @@ ManagedQuery::_extend_and_evolve_schema_with_details(
         throw std::invalid_argument(fmt::format(
             "[ManagedQuery] _extend_and_evolve_schema_with_details non-string: "
             "null values are not supported"));
+    }
+    std::optional<std::vector<uint8_t>> validities = std::nullopt;
+    if (index_array != nullptr) {
+        validities = _cast_validity_buffer(index_array);
     }
 
     // Get all the enumeration values in the passed-in column
@@ -1450,6 +1429,19 @@ ManagedQuery::_extend_and_evolve_schema_with_details(
             column_name));
     }
 
+    // The enumeration values are tracked here in as a vector of string-views,
+    // even for non-string-valued data.  We do this so that we can
+    // differentiate, at the bit-by-bit level, between various floating-point
+    // NaN and Inf values.
+    size_t n = enum_values_in_write.size();
+    std::vector<std::string_view> enum_values_in_write_as_sv(n);
+    for (size_t i = 0; i < n; i++) {
+        auto sv = std::string_view(
+            reinterpret_cast<const char*>(&enum_values_in_write[i]),
+            sizeof(enum_values_in_write[i]));
+        enum_values_in_write_as_sv[i] = sv;
+    }
+
     // Get all the enumeration values in the on-disk TileDB attribute.
     std::vector<ValueType> enum_values_existing = enmr.as_vector<ValueType>();
 
@@ -1482,12 +1474,31 @@ ManagedQuery::_extend_and_evolve_schema_with_details(
 
     // Find any new enumeration values
     std::vector<ValueType> enum_values_to_add;
-    for (const auto& enum_value_in_write : enum_values_in_write) {
-        auto sv = std::string_view(
-            static_cast<char*>((char*)&enum_value_in_write),
-            sizeof(enum_value_in_write));
-        if (!existing_enums_set.contains(sv)) {
-            enum_values_to_add.push_back(enum_value_in_write);
+
+    std::optional<std::unordered_set<std::string_view>>
+        opt_covered_values = _find_covered_enum_values(
+            enum_values_in_write_as_sv, index_schema, index_array);
+
+    if (opt_covered_values.has_value()) {
+        const auto& covered_values = opt_covered_values.value();
+        const size_t n = enum_values_in_write.size();
+        for (size_t i = 0; i < n; i++) {
+            const auto& enum_value_in_write = enum_values_in_write[i];
+            const auto& sv = enum_values_in_write_as_sv[i];
+            if (!existing_enums_set.contains(sv)) {
+                if (covered_values.find(sv) != covered_values.end()) {
+                    enum_values_to_add.push_back(enum_value_in_write);
+                }
+            }
+        }
+    } else {
+        const size_t n = enum_values_in_write.size();
+        for (size_t i = 0; i < n; i++) {
+            const auto& enum_value_in_write = enum_values_in_write[i];
+            const auto& sv = enum_values_in_write_as_sv[i];
+            if (!existing_enums_set.contains(sv)) {
+                enum_values_to_add.push_back(enum_value_in_write);
+            }
         }
     }
 
@@ -1534,9 +1545,6 @@ ManagedQuery::_extend_and_evolve_schema_with_details(
         return std::tuple{
             true,  // was_extended
             enum_values_in_write,
-            enum_values_existing,
-            enum_values_to_add,
-            0,  // total_size is only used for string columns
             extended_enmr};
 
     } else {
@@ -1544,9 +1552,6 @@ ManagedQuery::_extend_and_evolve_schema_with_details(
         return std::tuple{
             false,  // was_extended
             enum_values_in_write,
-            enum_values_existing,
-            enum_values_to_add,
-            0,  // total_size is only used for string columns
             enmr};
     }
 }

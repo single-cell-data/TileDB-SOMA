@@ -1,9 +1,7 @@
 # Copyright (c) TileDB, Inc. and The Chan Zuckerberg Initiative Foundation
 #
 # Licensed under the MIT License.
-"""
-Implementation of a SOMA Geometry DataFrame
-"""
+"""Implementation of a SOMA Geometry DataFrame."""
 
 from __future__ import annotations
 
@@ -355,6 +353,7 @@ class GeometryDataFrame(SpatialDataFrame, somacore.GeometryDataFrame):
                 The default of ``None`` represents no filter. Value filter
                 syntax is implementation-defined; see the documentation
                 for the particular SOMA implementation for details.
+
         Returns:
             A :class:`ReadIter` of :class:`pa.Table`s.
 
@@ -549,7 +548,6 @@ class GeometryDataFrame(SpatialDataFrame, somacore.GeometryDataFrame):
         Returns: ``self``, to enable method chaining.
 
         """
-
         outline_transformer = clib.OutlineTransformer(
             coordinate_space_to_json(self._coord_space)
         )

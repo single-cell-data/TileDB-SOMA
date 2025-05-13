@@ -52,7 +52,6 @@ class DenseNDArrayWrapper:
 
     def __getitem__(self, key: tuple[slice | int, ...]) -> np.typing.NDArray[Any]:
         """Returns a numpy array containing data from a requested tuple."""
-
         # Compute the expected Xarray output shape.
         output_shape = tuple(
             len(range(dim_size)[index])  # type: ignore
@@ -141,7 +140,6 @@ def dense_nd_array_to_data_array(
         attrs: The attributes (metadata) to set on the :class:`xarray.DataArray`.
         context: Optional :class:`SOMATileDBContext` containing storage parameters, etc.
     """
-
     array_wrapper = DenseNDArrayWrapper(uri=uri, context=context)
 
     if chunks is None:

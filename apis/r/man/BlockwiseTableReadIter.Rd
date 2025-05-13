@@ -5,7 +5,7 @@
 \title{SOMA Blockwise Read Iterator for Arrow Tables}
 \description{
 Class that allows for blockwise read iteration of SOMA reads
-as Arrow \code{\link[Arrow]{Table}s}
+as Arrow \code{\link[arrow]{Table}s}
 }
 \keyword{internal}
 \section{Super classes}{

@@ -75,14 +75,14 @@ disable re-indexing
 \if{html}{\out{<a id="method-SOMASparseNDArrayBlockwiseRead-tables"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMASparseNDArrayBlockwiseRead-tables}{}}}
 \subsection{Method \code{tables()}}{
-Read as an \code{\link[Arrow:Table]{Arrow::Table}}
+Read as an \code{\link[arrow:Table]{Arrow::Table}}
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMASparseNDArrayBlockwiseRead$tables()}\if{html}{\out{</div>}}
 }
 
 \subsection{Returns}{
 A blockwise iterator yielding chunks as
-\code{\link[Arrow:Table]{Arrow::Table}s}
+\code{\link[arrow:Table]{Arrow::Table}s}
 }
 }
 \if{html}{\out{<hr>}}

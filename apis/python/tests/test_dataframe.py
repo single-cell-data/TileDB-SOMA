@@ -6,6 +6,7 @@ import os
 import shutil
 import struct
 import time
+import warnings
 from pathlib import Path
 from typing import Any, List
 
@@ -969,6 +970,666 @@ def test_extend_enumeration_values_offsets(tmp_path, ordered):
             ["string_enum", "int64_enum", "float32_enum", "bool_enum"]
         )
         assert actual == expect
+
+
+@pytest.mark.parametrize(
+    "config",
+    [
+        # String-valued enums
+        {
+            "arrow_type": pa.string(),
+            "inidx1": [0, 1, 2, 3],
+            "inval1": ["red", "yellow", "green", "blue"],
+            "inidx2": [0, 1, 2, 3],
+            "inval2": ["red", "yellow", "green", "blue"],
+            "expidx": [0, 1, 2, 3, 0, 1, 2, 3],
+            "expval": ["red", "yellow", "green", "blue"],
+        },
+        {
+            "arrow_type": pa.string(),
+            "inidx1": [0, 1, 2, 3],
+            "inval1": ["red", "yellow", "green", "blue"],
+            "inidx2": [],
+            "inval2": [],
+            "expidx": [0, 1, 2, 3],
+            "expval": ["red", "yellow", "green", "blue"],
+        },
+        {
+            "arrow_type": pa.string(),
+            "inidx1": [],
+            "inval1": [],
+            "inidx2": [0, 1, 2, 3],
+            "inval2": ["red", "yellow", "green", "blue"],
+            "expidx": [0, 1, 2, 3],
+            "expval": ["red", "yellow", "green", "blue"],
+        },
+        {
+            "arrow_type": pa.string(),
+            "inidx1": [0, 1, 2, 3],
+            "inval1": ["red", "yellow", "green", "blue"],
+            "inidx2": [0, 1, 2, 3],
+            "inval2": ["orange", "purple", "indigo", "violet"],
+            "expidx": [0, 1, 2, 3, 4, 5, 6, 7],
+            "expval": [
+                "red",
+                "yellow",
+                "green",
+                "blue",
+                "orange",
+                "purple",
+                "indigo",
+                "violet",
+            ],
+        },
+        {
+            "arrow_type": pa.string(),
+            "inidx1": [0, 1, 2, 3],
+            "inval1": ["red", "yellow", "green", "blue"],
+            "inidx2": [3, 2, 1, 0],
+            "inval2": ["red", "yellow", "green", "blue"],
+            "expidx": [0, 1, 2, 3, 3, 2, 1, 0],
+            "expval": ["red", "yellow", "green", "blue"],
+        },
+        {
+            "arrow_type": pa.string(),
+            "inidx1": [0, 1, 2, 3],
+            "inval1": ["red", "yellow", "green", "blue"],
+            "inidx2": [0, 1, 2, 3],
+            "inval2": ["orange", "grey", "green", "blue"],
+            "expidx": [0, 1, 2, 3, 4, 5, 2, 3],
+            "expval": ["red", "yellow", "green", "blue", "orange", "grey"],
+        },
+        {
+            "arrow_type": pa.string(),
+            "inidx1": [0, 1, 2, 3],
+            "inval1": ["red", "yellow", "green", "blue"],
+            "inidx2": [0, None, 2, 3],
+            "inval2": ["orange", "grey", "green", "blue"],
+            "expidx": [0, 1, 2, 3, 4, None, 2, 3],
+            "expval": ["red", "yellow", "green", "blue", "orange"],
+        },
+        {
+            "arrow_type": pa.string(),
+            "inidx1": [0, None, 2, 3],
+            "inval1": ["red", "yellow", "green", "blue"],
+            "inidx2": [0, 1, 2, 3],
+            "inval2": ["orange", "grey", "green", "blue"],
+            "expidx": [0, None, 1, 2, 3, 4, 1, 2],
+            "expval": ["red", "green", "blue", "orange", "grey"],
+        },
+        {
+            "arrow_type": pa.string(),
+            "inidx1": [0, 1, 2, 3],
+            "inval1": ["red", "yellow", "green", "blue"],
+            "inidx2": [0, None, 0, 0],
+            "inval2": ["orange"],
+            "expidx": [0, 1, 2, 3, 4, None, 4, 4],
+            "expval": ["red", "yellow", "green", "blue", "orange"],
+        },
+        {
+            "arrow_type": pa.string(),
+            "inidx1": [0, 1, 2, 3],
+            "inval1": ["red", "yellow", "green", "blue"],
+            "inidx2": [None, None, None, None],
+            "inval2": ["orange"],
+            "expidx": [0, 1, 2, 3, None, None, None, None],
+            "expval": ["red", "yellow", "green", "blue"],
+        },
+        {
+            "arrow_type": pa.string(),
+            "inidx1": [0, 1, 2, 3],
+            "inval1": ["red", "yellow", "green", "blue"],
+            "inidx2": [0, 1, 2, 2],
+            "inval2": ["yellow", "green", "blue"],
+            "expidx": [0, 1, 2, 3, 1, 2, 3, 3],
+            "expval": ["red", "yellow", "green", "blue"],
+        },
+        {
+            "arrow_type": pa.string(),
+            "inidx1": [None, None, None, None],
+            "inval1": ["red", "yellow", "green", "blue"],
+            "inidx2": [None, None, None, None],
+            "inval2": ["yellow", "green", "blue"],
+            "expidx": [None, None, None, None, None, None, None, None],
+            "expval": [],
+        },
+        {
+            "arrow_type": pa.string(),
+            "inidx1": [None, None, None, None],
+            "inval1": ["orange"],
+            "inidx2": [None, None, None, None],
+            "inval2": ["orange"],
+            "expidx": [None, None, None, None, None, None, None, None],
+            "expval": [],
+        },
+        {
+            "arrow_type": pa.string(),
+            "inidx1": [0, 1, 2, 3],
+            "inval1": ["red", "yellow", "green", "blue"],
+            "inidx2": [None, None, None, None],
+            "inval2": [],
+            "expidx": [0, 1, 2, 3, None, None, None, None],
+            "expval": ["red", "yellow", "green", "blue"],
+        },
+        {
+            "arrow_type": pa.string(),
+            "inidx1": [None, None, None, None],
+            "inval1": [],
+            "inidx2": [0, 1, 2, 3],
+            "inval2": ["red", "yellow", "green", "blue"],
+            "expidx": [None, None, None, None, 0, 1, 2, 3],
+            "expval": ["red", "yellow", "green", "blue"],
+        },
+        {
+            "arrow_type": pa.string(),
+            "inidx1": [None, None, None, None],
+            "inval1": [],
+            "inidx2": [None, None, None, None],
+            "inval2": ["orange"],
+            "expidx": [None, None, None, None, None, None, None, None],
+            "expval": [],
+        },
+        {
+            "arrow_type": pa.string(),
+            "inidx1": [None, None, None, None],
+            "inval1": ["orange"],
+            "inidx2": [None, None, None, None],
+            "inval2": [],
+            "expidx": [None, None, None, None, None, None, None, None],
+            "expval": [],
+        },
+        {
+            "arrow_type": pa.string(),
+            "inidx1": [None, None, None, None],
+            "inval1": [],
+            "inidx2": [None, None, None, None],
+            "inval2": [],
+            "expidx": [None, None, None, None, None, None, None, None],
+            "expval": [],
+        },
+        {
+            "arrow_type": pa.string(),
+            "inidx1": [0, None, 2, 3],
+            "inval1": ["red", "yellow", "green", "blue"],
+            "inidx2": [],
+            "inval2": [],
+            "expidx": [0, None, 1, 2],
+            "expval": ["red", "green", "blue"],
+        },
+        {
+            "arrow_type": pa.string(),
+            "inidx1": [0, 1],
+            "inval1": ["green", "red"],
+            "inidx2": [0, None, 2, 3],
+            "inval2": ["red", "yellow", "green", "blue"],
+            "expidx": [0, 1, 1, None, 0, 2],
+            "expval": ["green", "red", "blue"],
+        },
+        {
+            "arrow_type": pa.string(),
+            "inidx1": [0, 1, None, 3],
+            "inval1": ["RED", "YELLOW", "BLACK", "GREEN"],
+            "inidx2": [None, None, 0, 2],
+            "inval2": ["YELLOW", "GREY", "BLUE"],
+            "expidx": [0, 1, None, 2, None, None, 1, 3],
+            "expval": ["RED", "YELLOW", "GREEN", "BLUE"],
+        },
+        {
+            "arrow_type": pa.string(),
+            "inidx1": [1, 0, 1, None, 1, 1, 0],
+            "inval1": ["red", "blue"],
+            "inidx2": [0, 1, 1, 0, None, None, None, 0, 1],
+            "inval2": ["orange", "blue"],
+            "expidx": [1, 0, 1, None, 1, 1, 0, 2, 1, 1, 2, None, None, None, 2, 1],
+            "expval": ["red", "blue", "orange"],
+        },
+        {
+            "arrow_type": pa.string(),
+            "inidx1": [3, None, 5],
+            "inval1": ["purple", "orange", "grey", "red", "blue", "brown"],
+            "inidx2": [4, None, 2],
+            "inval2": ["lavender", "teal", "salmon", "puce", "mauve"],
+            "expidx": [0, None, 1, 3, None, 2],
+            "expval": ["red", "brown", "salmon", "mauve"],
+        },
+        {
+            "arrow_type": pa.string(),
+            "inidx1": [0, None, 2, 3],
+            "inval1": ["red", "yellow", "green", "blue"],
+            "inidx2": [0, 1, None, 3],
+            "inval2": ["green", "blue", "orange", "purple"],
+            "expidx": [0, None, 1, 2, 1, 2, None, 3],
+            "expval": ["red", "green", "blue", "purple"],
+        },
+        {
+            "arrow_type": pa.string(),
+            "inidx1": [3, None, 5],
+            "inval1": ["purple", "orange", "grey", "red", "blue", "brown"],
+            "inidx2": [],
+            "inval2": [],
+            "expidx": [0, None, 1],
+            "expval": ["red", "brown"],
+        },
+        # Int-valued enums
+        {
+            "arrow_type": pa.int64(),
+            "inidx1": [0, 1, 2, 3],
+            "inval1": [111, 222, 333, 444],
+            "inidx2": [0, 1, 2, 3],
+            "inval2": [111, 222, 333, 444],
+            "expidx": [0, 1, 2, 3, 0, 1, 2, 3],
+            "expval": [111, 222, 333, 444],
+        },
+        {
+            "arrow_type": pa.int64(),
+            "inidx1": [0, 1, 2, 3],
+            "inval1": [111, 222, 333, 444],
+            "inidx2": [],
+            "inval2": [],
+            "expidx": [0, 1, 2, 3],
+            "expval": [111, 222, 333, 444],
+        },
+        {
+            "arrow_type": pa.int64(),
+            "inidx1": [],
+            "inval1": [],
+            "inidx2": [0, 1, 2, 3],
+            "inval2": [111, 222, 333, 444],
+            "expidx": [0, 1, 2, 3],
+            "expval": [111, 222, 333, 444],
+        },
+        {
+            "arrow_type": pa.int64(),
+            "inidx1": [0, 1, 2, 3],
+            "inval1": [111, 222, 333, 444],
+            "inidx2": [0, 1, 2, 3],
+            "inval2": [555, 666, 1111, 1222],
+            "expidx": [0, 1, 2, 3, 4, 5, 6, 7],
+            "expval": [
+                111,
+                222,
+                333,
+                444,
+                555,
+                666,
+                1111,
+                1222,
+            ],
+        },
+        {
+            "arrow_type": pa.int64(),
+            "inidx1": [0, 1, 2, 3],
+            "inval1": [111, 222, 333, 444],
+            "inidx2": [3, 2, 1, 0],
+            "inval2": [111, 222, 333, 444],
+            "expidx": [0, 1, 2, 3, 3, 2, 1, 0],
+            "expval": [111, 222, 333, 444],
+        },
+        {
+            "arrow_type": pa.int64(),
+            "inidx1": [0, 1, 2, 3],
+            "inval1": [111, 222, 333, 444],
+            "inidx2": [0, 1, 2, 3],
+            "inval2": [555, 777, 333, 444],
+            "expidx": [0, 1, 2, 3, 4, 5, 2, 3],
+            "expval": [111, 222, 333, 444, 555, 777],
+        },
+        {
+            "arrow_type": pa.int64(),
+            "inidx1": [0, 1, 2, 3],
+            "inval1": [111, 222, 333, 444],
+            "inidx2": [0, None, 2, 3],
+            "inval2": [555, 777, 333, 444],
+            "expidx": [0, 1, 2, 3, 4, None, 2, 3],
+            "expval": [111, 222, 333, 444, 555],
+        },
+        {
+            "arrow_type": pa.int64(),
+            "inidx1": [0, None, 2, 3],
+            "inval1": [111, 222, 333, 444],
+            "inidx2": [0, 1, 2, 3],
+            "inval2": [555, 777, 333, 444],
+            "expidx": [0, None, 1, 2, 3, 4, 1, 2],
+            "expval": [111, 333, 444, 555, 777],
+        },
+        {
+            "arrow_type": pa.int64(),
+            "inidx1": [0, 1, 2, 3],
+            "inval1": [111, 222, 333, 444],
+            "inidx2": [0, None, 0, 0],
+            "inval2": [555],
+            "expidx": [0, 1, 2, 3, 4, None, 4, 4],
+            "expval": [111, 222, 333, 444, 555],
+        },
+        {
+            "arrow_type": pa.int64(),
+            "inidx1": [0, 1, 2, 3],
+            "inval1": [111, 222, 333, 444],
+            "inidx2": [None, None, None, None],
+            "inval2": [555],
+            "expidx": [0, 1, 2, 3, None, None, None, None],
+            "expval": [111, 222, 333, 444],
+        },
+        {
+            "arrow_type": pa.int64(),
+            "inidx1": [0, 1, 2, 3],
+            "inval1": [111, 222, 333, 444],
+            "inidx2": [0, 1, 2, 2],
+            "inval2": [222, 333, 444],
+            "expidx": [0, 1, 2, 3, 1, 2, 3, 3],
+            "expval": [111, 222, 333, 444],
+        },
+        {
+            "arrow_type": pa.int64(),
+            "inidx1": [None, None, None, None],
+            "inval1": [111, 222, 333, 444],
+            "inidx2": [None, None, None, None],
+            "inval2": [222, 333, 444],
+            "expidx": [None, None, None, None, None, None, None, None],
+            "expval": [],
+        },
+        {
+            "arrow_type": pa.int64(),
+            "inidx1": [None, None, None, None],
+            "inval1": [555],
+            "inidx2": [None, None, None, None],
+            "inval2": [555],
+            "expidx": [None, None, None, None, None, None, None, None],
+            "expval": [],
+        },
+        {
+            "arrow_type": pa.int64(),
+            "inidx1": [0, 1, 2, 3],
+            "inval1": [111, 222, 333, 444],
+            "inidx2": [None, None, None, None],
+            "inval2": [],
+            "expidx": [0, 1, 2, 3, None, None, None, None],
+            "expval": [111, 222, 333, 444],
+        },
+        {
+            "arrow_type": pa.int64(),
+            "inidx1": [None, None, None, None],
+            "inval1": [],
+            "inidx2": [0, 1, 2, 3],
+            "inval2": [111, 222, 333, 444],
+            "expidx": [None, None, None, None, 0, 1, 2, 3],
+            "expval": [111, 222, 333, 444],
+        },
+        {
+            "arrow_type": pa.int64(),
+            "inidx1": [None, None, None, None],
+            "inval1": [],
+            "inidx2": [None, None, None, None],
+            "inval2": [555],
+            "expidx": [None, None, None, None, None, None, None, None],
+            "expval": [],
+        },
+        {
+            "arrow_type": pa.int64(),
+            "inidx1": [None, None, None, None],
+            "inval1": [555],
+            "inidx2": [None, None, None, None],
+            "inval2": [],
+            "expidx": [None, None, None, None, None, None, None, None],
+            "expval": [],
+        },
+        {
+            "arrow_type": pa.int64(),
+            "inidx1": [None, None, None, None],
+            "inval1": [],
+            "inidx2": [None, None, None, None],
+            "inval2": [],
+            "expidx": [None, None, None, None, None, None, None, None],
+            "expval": [],
+        },
+        {
+            "arrow_type": pa.int64(),
+            "inidx1": [0, None, 2, 3],
+            "inval1": [111, 222, 333, 444],
+            "inidx2": [],
+            "inval2": [],
+            "expidx": [0, None, 1, 2],
+            "expval": [111, 333, 444],
+        },
+        {
+            "arrow_type": pa.int64(),
+            "inidx1": [0, 1],
+            "inval1": [333, 111],
+            "inidx2": [0, None, 2, 3],
+            "inval2": [111, 222, 333, 444],
+            "expidx": [0, 1, 1, None, 0, 2],
+            "expval": [333, 111, 444],
+        },
+        {
+            "arrow_type": pa.int64(),
+            "inidx1": [3, 1, 0, 1, 3, 0, None, None, 3],
+            "inval1": [111, 222, 999, 333],
+            "inidx2": [None, None, 0, 2, 2, 0, 2, None],
+            "inval2": [222, 777, 444],
+            "expidx": [
+                2,
+                1,
+                0,
+                1,
+                2,
+                0,
+                None,
+                None,
+                2,
+                None,
+                None,
+                1,
+                3,
+                3,
+                1,
+                3,
+                None,
+            ],
+            "expval": [111, 222, 333, 444],
+        },
+        {
+            "arrow_type": pa.int64(),
+            "inidx1": [1, 0, 1, None, 1, 1, 0],
+            "inval1": [111, 444],
+            "inidx2": [0, 1, 1, 0, None, None, None, 0, 1],
+            "inval2": [555, 444],
+            "expidx": [1, 0, 1, None, 1, 1, 0, 2, 1, 1, 2, None, None, None, 2, 1],
+            "expval": [111, 444, 555],
+        },
+        {
+            "arrow_type": pa.int64(),
+            "inidx1": [3, None, 5],
+            "inval1": [666, 555, 777, 111, 444, 888],
+            "inidx2": [4, None, 2],
+            "inval2": [1333, 1444, 1555, 1666, 1777],
+            "expidx": [0, None, 1, 3, None, 2],
+            "expval": [111, 888, 1555, 1777],
+        },
+        # Bool-valued enums
+        {
+            "arrow_type": pa.bool_(),
+            "inidx1": [],
+            "inval1": [],
+            "inidx2": [],
+            "inval2": [],
+            "expidx": [],
+            "expval": [],
+        },
+        {
+            "arrow_type": pa.bool_(),
+            "inidx1": [0, 0, 0],
+            "inval1": [True],
+            "inidx2": [0, 0],
+            "inval2": [True],
+            "expidx": [0, 0, 0, 0, 0],
+            "expval": [True],
+        },
+        {
+            "arrow_type": pa.bool_(),
+            "inidx1": [0, 0, 0],
+            "inval1": [True],
+            "inidx2": [0, 0],
+            "inval2": [False],
+            "expidx": [0, 0, 0, 1, 1],
+            "expval": [True, False],
+        },
+        {
+            "arrow_type": pa.bool_(),
+            "inidx1": [0, None, 0],
+            "inval1": [True],
+            "inidx2": [None, 0],
+            "inval2": [False],
+            "expidx": [0, None, 0, None, 1],
+            "expval": [True, False],
+        },
+        {
+            "arrow_type": pa.bool_(),
+            "inidx1": [0, None, 0],
+            "inval1": [True, False],
+            "inidx2": [None, 0],
+            "inval2": [False],
+            "expidx": [0, None, 0, None, 1],
+            "expval": [True, False],
+        },
+        {
+            "arrow_type": pa.bool_(),
+            "inidx1": [0, None, 0],
+            "inval1": [True, False],
+            "inidx2": [None, 1],
+            "inval2": [True, False],
+            "expidx": [0, None, 0, None, 1],
+            "expval": [True, False],
+        },
+        {
+            "arrow_type": pa.bool_(),
+            "inidx1": [0, None, 1],
+            "inval1": [True, False],
+            "inidx2": [None, 1, 0],
+            "inval2": [True, False],
+            "expidx": [0, None, 1, None, 1, 0],
+            "expval": [True, False],
+        },
+    ],
+)
+@pytest.mark.parametrize("ordered", [True, False])
+def test_extend_enumeration_null_indices(tmp_path, config, ordered):
+    uri = tmp_path.as_posix()
+
+    arrow_type = config["arrow_type"]
+    inidx1 = config["inidx1"]
+    inval1 = config["inval1"]
+    inidx2 = config["inidx2"]
+    inval2 = config["inval2"]
+    expidx = config["expidx"]
+    expval = config["expval"]
+
+    n1 = len(inidx1)
+    n2 = len(inidx2)
+
+    domain = [[0, 99]]
+
+    schema = pa.schema(
+        {
+            "soma_joinid": pa.int64(),
+            "enum_test": pa.dictionary(pa.int32(), arrow_type, ordered=ordered),
+        }
+    )
+
+    data1 = pa.Table.from_pydict(
+        {
+            "soma_joinid": pa.array(list(range(n1)), type=pa.int64()),
+            "enum_test": pa.DictionaryArray.from_arrays(
+                pa.array(inidx1, type=pa.int32()),
+                pa.array(inval1, type=arrow_type),
+            ),
+        }
+    )
+
+    with soma.DataFrame.create(uri, schema=schema, domain=domain) as sdf:
+        sdf.write(data1)
+
+    data2 = pa.Table.from_pydict(
+        {
+            "soma_joinid": pa.array(list(range(n1, n1 + n2)), type=pa.int64()),
+            "enum_test": pa.DictionaryArray.from_arrays(
+                pa.array(inidx2, type=pa.int32()),
+                pa.array(inval2, type=arrow_type),
+            ),
+        }
+    )
+
+    with soma.DataFrame.open(uri, "w") as sdf:
+        sdf.write(data2)
+
+    incol1 = data1["enum_test"].to_pylist()
+    incol2 = data2["enum_test"].to_pylist()
+    expcol = incol1 + incol2
+
+    with soma.DataFrame.open(uri, "r") as sdf:
+        table = sdf.read().concat()
+        column = table["enum_test"].combine_chunks()
+        outcol = column.to_pylist()
+        outidx = column.indices.to_pylist()
+        outval = column.dictionary.to_pylist()
+        getval = sdf.get_enumeration_values(["enum_test"])["enum_test"].to_pylist()
+
+        assert outcol == expcol
+        assert outidx == expidx
+        assert outval == expval
+        assert getval == expval
+
+
+def test_extend_enumeration_empty(tmp_path):
+    uri = tmp_path.as_posix()
+    schema = pa.schema(
+        {
+            "soma_joinid": pa.int64(),
+            "string_enum": pa.dictionary(pa.int32(), pa.large_string()),
+        }
+    )
+    domain = [[0, 7]]
+
+    data1 = pa.Table.from_pydict(
+        {
+            "soma_joinid": pa.array([0, 1, 2, 3], type=pa.int64()),
+            "string_enum": pa.DictionaryArray.from_arrays(
+                pa.array([0, 1, 2, 3], type=pa.int32()),
+                pa.array(["red", "yellow", None, "blue"], type=pa.large_string()),
+            ),
+        }
+    )
+
+    with soma.DataFrame.create(uri, schema=schema, domain=domain) as sdf:
+        with pytest.raises(soma.SOMAError):
+            sdf.write(data1)
+
+    data1 = pa.Table.from_pydict(
+        {
+            "soma_joinid": pa.array([0, 1, 2, 3], type=pa.int64()),
+            "string_enum": pa.DictionaryArray.from_arrays(
+                pa.array([0, 1, 2, 3], type=pa.int32()),
+                pa.array(["red", "yellow", "green", "blue"], type=pa.large_string()),
+            ),
+        }
+    )
+
+    with soma.DataFrame.open(uri, "w") as sdf:
+        sdf.write(data1)
+
+    with soma.DataFrame.open(uri, "r") as sdf:
+        assert sdf.get_enumeration_values(["string_enum"])[
+            "string_enum"
+        ].to_pylist() == [
+            "red",
+            "yellow",
+            "green",
+            "blue",
+        ]
+
+    with soma.DataFrame.open(uri, "w") as sdf:
+        sdf.extend_enumeration_values(
+            {"string_enum": pa.array([], type=pa.large_string())}
+        )
 
 
 @pytest.fixture
@@ -2990,3 +3651,63 @@ def test_extents(tmp_path, pa_type, tile):
     with soma.DataFrame.open(tmp_path.as_posix()) as A:
         dim_info = json.loads(A.schema_config_options().dims)
         assert dim_info["dim"]["tile"] == tile
+
+
+@pytest.mark.parametrize(
+    "dt_type",
+    (pa.timestamp("s"), pa.timestamp("ms"), pa.timestamp("us"), pa.timestamp("ns")),
+)
+def test_dictionary_value_type_62364(tmp_path, dt_type):
+    # https://app.shortcut.com/tiledb-inc/story/62364
+
+    uri = tmp_path.as_posix()
+    schema = pa.schema(
+        [
+            pa.field("soma_joinid", pa.int64(), nullable=False),
+            pa.field("attr", pa.dictionary(pa.int8(), dt_type), nullable=False),
+        ]
+    )
+    expected = pa.Table.from_pydict(
+        {
+            "soma_joinid": [0, 1, 2, 3],
+            "attr": pa.DictionaryArray.from_arrays(
+                indices=pa.array([0, 1, 2, 0], type=pa.int8()),
+                dictionary=pa.array([0, 1, 2], type=dt_type),
+            ),
+        }
+    )
+
+    soma.DataFrame.create(uri, schema=schema, domain=[(0, 3)])
+
+    with soma.DataFrame.open(uri, mode="r") as A:
+        assert schema == A.schema == A.read().concat().schema
+
+    with soma.DataFrame.open(uri, mode="w") as A:
+        A.write(expected)
+
+    with soma.DataFrame.open(uri, mode="r") as A:
+        actual = A.read().concat()
+        assert schema == A.schema == A.read().concat().schema
+        assert actual["attr"] == expected["attr"]
+
+
+def test_no_extent_warning_61509(tmp_path):
+
+    schema = pa.schema(
+        [
+            pa.field("float_index", type=pa.float64(), nullable=False),
+            pa.field("soma_joinid", type=pa.int64(), nullable=False),
+            ("data", pa.float64()),
+        ]
+    )
+    fmax = np.finfo(np.float64).max
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+
+        soma.DataFrame.create(
+            tmp_path.as_posix(),
+            schema=schema,
+            index_column_names=("float_index",),
+            domain=((-fmax, fmax),),
+        ).close()

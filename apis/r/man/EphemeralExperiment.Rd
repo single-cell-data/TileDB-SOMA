@@ -4,7 +4,10 @@
 \alias{EphemeralExperiment}
 \title{Ephemeral SOMA Experiment}
 \description{
-\Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_cls("experiment")}
+Ephemeral version of \code{\link{SOMAExperiment}s}; ephemeral
+experiments are equivalent to
+\link[tiledbsoma:SOMAExperiment]{SOMA experiments} but are stored in-memory
+instead of on-disk
 }
 \keyword{internal}
 \section{Super classes}{
@@ -13,9 +16,13 @@
 \section{Active bindings}{
 \if{html}{\out{<div class="r6-active-bindings">}}
 \describe{
-\item{\code{obs}}{\Sexpr[results=rd]{tiledbsoma:::rd_soma_field("obs")}}
+\item{\code{obs}}{A \code{\link{SOMADataFrame}} containing the annotations on
+the observation axis. The contents of the \code{soma_joinid} column
+define the observation index domain \code{obs_id}. All observations for
+the \code{SOMAExperiment} must be defined in this data frame}
 
-\item{\code{ms}}{\Sexpr[results=rd]{tiledbsoma:::rd_soma_field("ms")}}
+\item{\code{ms}}{A \code{\link{SOMACollection}} of named
+\code{\link{SOMAMeasurement}}s}
 
 \item{\code{soma_type}}{The SOMA object type}
 }

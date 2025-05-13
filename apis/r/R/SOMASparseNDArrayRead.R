@@ -243,10 +243,10 @@ SOMASparseNDArrayBlockwiseRead <- R6::R6Class(
       }
       private$.reindex_disable_on_axis <- reindex_disable_on_axis
     },
-    #' @description Read as an \code{\link[Arrow:Table]{Arrow::Table}}
+    #' @description Read as an \code{\link[arrow:Table]{Arrow::Table}}
     #'
     #' @return A blockwise iterator yielding chunks as
-    #' \code{\link[Arrow:Table]{Arrow::Table}s}
+    #' \code{\link[arrow:Table]{Arrow::Table}s}
     #'
     tables = function() {
       return(BlockwiseTableReadIter$new(

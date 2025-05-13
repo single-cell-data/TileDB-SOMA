@@ -12,8 +12,10 @@ TileDBObject <- R6::R6Class(
     #' @param platform_config Optional platform configuration
     #' @param tiledbsoma_ctx Optional SOMATileDBContext
     #' @param tiledb_timestamp Optional Datetime (POSIXct) with TileDB timestamp
-    #' @param internal_use_only Character value to signal this is a 'permitted' call,
-    #' as `new()` is considered internal and should not be called directly.
+    #' @param internal_use_only Character value to signal this is a 'permitted'
+    #' call, as `new()` is considered internal and should not be called directly.
+    #' @param soma_context A SOMA context as created by
+    #' \code{\link{soma_context}()}
     initialize = function(
       uri,
       platform_config = NULL,
@@ -29,7 +31,8 @@ TileDBObject <- R6::R6Class(
         ), call. = FALSE)
       }
       if (missing(uri)) stop("Must specify a `uri`", call. = FALSE)
-      private$tiledb_uri <- TileDBURI$new(uri)
+      # private$tiledb_uri <- TileDBURI$new(uri)
+      private$tiledb_uri <- uri
 
       # Set platform config
       platform_config <- platform_config %||% PlatformConfig$new()
@@ -195,7 +198,7 @@ TileDBObject <- R6::R6Class(
     #' The URI of the TileDB object.
     uri = function(value) {
       if (missing(value)) {
-        return(private$tiledb_uri$uri)
+        return(private$tiledb_uri)
       }
       stop(sprintf("'%s' is a read-only field.", "uri"), call. = FALSE)
     },

@@ -256,8 +256,7 @@ class CompressedMatrix:
         is_sorted: bool,
         no_duplicates: bool | None,
     ) -> scipy.sparse.csr_matrix | scipy.sparse.csc_matrix:
-        """
-        This is to bypass the O(N) scan that :meth:`sparse._cs_matrix.__init__`
+        """This is to bypass the O(N) scan that :meth:`sparse._cs_matrix.__init__`
         performs when a new compressed matrix is created.
 
         See `SciPy bug 11496 <https://github.com/scipy/scipy/issues/11496>` for details.

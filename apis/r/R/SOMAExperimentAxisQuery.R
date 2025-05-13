@@ -119,7 +119,8 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       return(x_layer$read(coords))
     },
 
-    #' @description Retrieves an `obsm` layer as a \code{\link{SOMASparseNDArrayRead}}
+    #' @description Retrieves an `obsm` layer as a
+    #' \code{\link{SOMASparseNDArrayRead}}
     #' @param layer_name The name of the layer to retrieve
     #'
     obsm = function(layer_name) {
@@ -153,7 +154,8 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       )))
     },
 
-    #' @description Retrieves a `varm` layer as a \code{\link{SOMASparseNDArrayRead}}
+    #' @description Retrieves a `varm` layer as a
+    #' \code{\link{SOMASparseNDArrayRead}}
     #' @param layer_name The name of the layer to retrieve
     #'
     varm = function(layer_name) {
@@ -187,7 +189,8 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       )))
     },
 
-    #' @description Retrieves an `obsp` layer as a \code{\link{SOMASparseNDArrayRead}}
+    #' @description Retrieves an `obsp` layer as a
+    #' \code{\link{SOMASparseNDArrayRead}}
     #' @param layer_name The name of the layer to retrieve
     #'
     obsp = function(layer_name) {
@@ -219,7 +222,8 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       return(obsp_layer$read(coords = list(obs_ids, obs_ids)))
     },
 
-    #' @description Retrieves a `varp` layer as a \code{\link{SOMASparseNDArrayRead}}
+    #' @description Retrieves a `varp` layer as a
+    #' \code{\link{SOMASparseNDArrayRead}}
     #' @param layer_name The name of the layer to retrieve
     #'
     varp = function(layer_name) {
@@ -510,17 +514,38 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       )
     },
 
-    #' @description Loads the query as a \code{\link[SeuratObject]{Seurat}} object
+    #' @description Loads the query as a
+    #' \code{\link[SeuratObject]{Seurat}} object
     #'
-    #' @param X_layers \Sexpr[results=rd]{tiledbsoma:::rd_outgest_xlayers()}
-    #' @param obs_index \Sexpr[results=rd]{tiledbsoma:::rd_outgest_index()}
-    #' @param var_index \Sexpr[results=rd]{tiledbsoma:::rd_outgest_index(axis = 'var')}
-    #' @param obs_column_names \Sexpr[results=rd]{tiledbsoma:::rd_outgest_metadata_names()}
-    #' @param var_column_names \Sexpr[results=rd]{tiledbsoma:::rd_outgest_metadata_names(axis = 'var')}
-    #' @param obsm_layers \Sexpr[results=rd]{tiledbsoma:::rd_outgest_mlayers()}
-    #' @param varm_layers \Sexpr[results=rd]{tiledbsoma:::rd_outgest_mlayers(axis = 'varm')}
-    #' @param obsp_layers \Sexpr[results=rd]{tiledbsoma:::rd_outgest_players()}
-    #' @param drop_levels Drop unused levels from \code{obs} and \code{var} factor columns
+    #' @param X_layers A named character of X layers to add to the Seurat assay
+    #' where the names are the names of Seurat slots and the values are the
+    #' names of layers within \code{X}; names should be one of:
+    #' \itemize{
+    #'  \item \dQuote{\code{counts}} to add the layer as \code{counts}
+    #'  \item \dQuote{\code{data}} to add the layer as \code{data}
+    #'  \item \dQuote{\code{scale.data}} to add the layer as \code{scale.data}
+    #' }
+    #' At least one of \dQuote{\code{counts}} or \dQuote{\code{data}} is required
+    #' @param obs_index Name of column in \code{obs} to add as cell names; uses
+    #' \code{paste0("cell", obs_joinids())} by default
+    #' @param var_index Name of column in \code{var} to add as feature names;
+    #' uses \code{paste0("feature", var_joinids())} by default
+    #' @param obs_column_names Names of columns in \code{obs} to add as
+    #' cell-level meta data; by default, loads all columns
+    #' @param var_column_names Names of columns in \code{var} to add as
+    #' feature-level meta data; by default, loads all columns
+    #' @param obsm_layers Names of arrays in \code{obsm} to add as the cell
+    #' embeddings; pass \code{FALSE} to suppress loading in any dimensional
+    #' reductions; by default, loads all dimensional reduction information
+    #' @param varm_layers Named vector of arrays in \code{varm} to load in as
+    #' the feature loadings; names must be names of arrays in \code{obsm}
+    #' (eg. \code{varm_layers = c(X_pca = "PCs")}); pass \code{FALSE} to
+    #' suppress loading in any feature loadings; will try to determine
+    #' \code{varm_layers} from \code{obsm_layers}
+    #' @param obsp_layers Names of arrays in \code{obsp} to load in as
+    #' \code{\link[SeuratObject]{Graph}s}; by default, loads all graphs
+    #' @param drop_levels Drop unused levels from \code{obs} and \code{var}
+    #' factor columns
     #' @param version Assay version to read query in as; by default, will try to
     #' infer assay type from the measurement itself
     #'
@@ -743,10 +768,21 @@ SOMAExperimentAxisQuery <- R6::R6Class(
 
     #' @description Loads the query as a Seurat \code{\link[SeuratObject]{Assay}}
     #'
-    #' @param X_layers \Sexpr[results=rd]{tiledbsoma:::rd_outgest_xlayers()}
-    #' @param obs_index \Sexpr[results=rd]{tiledbsoma:::rd_outgest_index()}
-    #' @param var_index \Sexpr[results=rd]{tiledbsoma:::rd_outgest_index(axis = 'var')}
-    #' @param var_column_names \Sexpr[results=rd]{tiledbsoma:::rd_outgest_metadata_names(axis = 'var')}
+    #' @param X_layers A named character of X layers to add to the Seurat assay
+    #' where the names are the names of Seurat slots and the values are the
+    #' names of layers within \code{X}; names should be one of:
+    #' \itemize{
+    #'  \item \dQuote{\code{counts}} to add the layer as \code{counts}
+    #'  \item \dQuote{\code{data}} to add the layer as \code{data}
+    #'  \item \dQuote{\code{scale.data}} to add the layer as \code{scale.data}
+    #' }
+    #' At least one of \dQuote{\code{counts}} or \dQuote{\code{data}} is required
+    #' @param obs_index Name of column in \code{obs} to add as cell names; uses
+    #' \code{paste0("cell", obs_joinids())} by default
+    #' @param var_index Name of column in \code{var} to add as feature names;
+    #' uses \code{paste0("feature", var_joinids())} by default
+    #' @param var_column_names Names of columns in \code{var} to add as
+    #' feature-level meta data; by default, loads all columns
     #' @param drop_levels Drop unused levels from \code{var} factor columns
     #' @param version Assay version to read query in as; by default, will try to
     #' infer assay type from the measurement itself
@@ -875,8 +911,10 @@ SOMAExperimentAxisQuery <- R6::R6Class(
     #' @param varm_layer Name of the array in \code{varm} to load as the
     #' feature loadings; by default, will try to determine \code{varm_layer}
     #' from \code{obsm_layer}
-    #' @param obs_index \Sexpr[results=rd]{tiledbsoma:::rd_outgest_index()}
-    #' @param var_index \Sexpr[results=rd]{tiledbsoma:::rd_outgest_index(axis = 'var')}
+    #' @param obs_index Name of column in \code{obs} to add as cell names; uses
+    #' \code{paste0("cell", obs_joinids())} by default
+    #' @param var_index Name of column in \code{var} to add as feature names;
+    #' uses \code{paste0("feature", var_joinids())} by default
     #'
     #' @return A \code{\link[SeuratObject]{DimReduc}} object
     #'
@@ -1048,7 +1086,8 @@ SOMAExperimentAxisQuery <- R6::R6Class(
     #' @description Loads the query as a Seurat \link[SeuratObject:Graph]{graph}
     #'
     #' @param obsp_layer Name of array in \code{obsp} to load as the graph
-    #' @param obs_index \Sexpr[results=rd]{tiledbsoma:::rd_outgest_index()}
+    #' @param obs_index Name of column in \code{obs} to add as cell names; uses
+    #' \code{paste0("cell", obs_joinids())} by default
     #'
     #' @return A \code{\link[SeuratObject]{Graph}} object
     #'
@@ -1096,15 +1135,28 @@ SOMAExperimentAxisQuery <- R6::R6Class(
     #' @description Loads the query as a
     #' \code{\link[SingleCellExperiment]{SingleCellExperiment}} object
     #'
-    #' @param X_layers \Sexpr[results=rd]{tiledbsoma:::rd_outgest_xlayers('sce')}
-    #' @param obs_index \Sexpr[results=rd]{tiledbsoma:::rd_outgest_index('sce')}
-    #' @param var_index \Sexpr[results=rd]{tiledbsoma:::rd_outgest_index('sce', 'var')}
-    #' @param obsm_layers \Sexpr[results=rd]{tiledbsoma:::rd_outgest_mlayers('sce')}
-    #' @param obs_column_names \Sexpr[results=rd]{tiledbsoma:::rd_outgest_metadata_names('sce')}
-    #' @param var_column_names \Sexpr[results=rd]{tiledbsoma:::rd_outgest_metadata_names('sce', 'var')}
-    #' @param obsp_layers \Sexpr[results=rd]{tiledbsoma:::rd_outgest_players('sce')}
-    #' @param varp_layers \Sexpr[results=rd]{tiledbsoma:::rd_outgest_players('sce', 'varp')}
-    #' @param drop_levels Drop unused levels from \code{obs} and \code{var} factor columns
+    #' @param X_layers A character vector of X layers to add as assays in the
+    #' main experiment; may optionally be named to set the name of the resulting
+    #' assay (eg. \code{X_layers = c(counts = "raw")} will load in X layer
+    #' \dQuote{\code{raw}} as assay \dQuote{\code{counts}}); by default, loads
+    #' in all X layers
+    #' @param obs_index Name of column in \code{obs} to add as cell names; uses
+    #' \code{paste0("cell", obs_joinids())} by default
+    #' @param var_index Name of column in \code{var} to add as feature names;
+    #' uses \code{paste0("feature", var_joinids())} by default
+    #' @param obsm_layers Names of arrays in \code{obsm} to add as the reduced
+    #' dimensions; pass \code{FALSE} to suppress loading in any reduced
+    #' dimensions; by default, loads all reduced dimensions
+    #' @param obs_column_names Names of columns in \code{obs} to add as
+    #' \code{colData}; by default, loads all columns
+    #' @param var_column_names Names of columns in \code{var} to add as
+    #' \code{rowData}; by default, loads all columns
+    #' @param obsp_layers Names of arrays in \code{obsp} to load in as
+    #' \code{\link[S4Vectors]{SelfHits}}; by default, loads all graphs
+    #' @param varp_layers Names of arrays in \code{varp} to load in as
+    #' \code{\link[S4Vectors]{SelfHits}}; by default, loads all networks
+    #' @param drop_levels Drop unused levels from \code{obs} and \code{var}
+    #' factor columns
     #'
     #' @return A \code{\link[SingleCellExperiment]{SingleCellExperiment}} object
     #'
@@ -1307,13 +1359,17 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       return(mat)
     },
     # Helper methods to load aspects of a measurement for the ecosystems
-    # @description Load the `obs` or `var` data frames for usage with the ecosystems
-    # @param df_name Name of SOMADataFrame to load; choose from `"obs"` or `"var"`
+    # @description Load the `obs` or `var` data frames for usage with
+    # the ecosystems
+    # @param df_name Name of SOMADataFrame to load; choose from `"obs"`
+    # or `"var"`
     # @param index Name of attribute in `df_name` to use as the row names for
-    # the resulting data frame. By default, uses `paste0(df_name, df$soma_join_ids)`;
-    # If provided, and `column_names` is `NULL`, `index` will be **excluded** from
+    # the resulting data frame. By default, uses
+    # `paste0(df_name, df$soma_join_ids)`; if provided, and `column_names` is
+    # `NULL`, `index` will be **excluded** from
     # the resulting data frame
-    # @param column name The names of attributes in `df_name` to load; choose from:
+    # @param column name The names of attributes in `df_name` to load;
+    # choose from:
     # - `NULL` (default) or `TRUE`: loads all attributes **except** `index`
     # - `FALSE` or `NA`: return a data frame the number of rows as present
     # in `df_name` and zero columns

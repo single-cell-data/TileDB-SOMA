@@ -276,7 +276,9 @@ def test_bad_arguments(
     """Test various bad argument types/values are caught."""
     sp = sparse.random(970, 31, density=0.01, dtype=np.float32, random_state=rng)
 
-    with suppress_type_checks():  # w/o this, typeguard raises, which defeats the point of the test
+    with (
+        suppress_type_checks()
+    ):  # w/o this, typeguard raises, which defeats the point of the test
 
         # context - bad type
         with pytest.raises(AttributeError):

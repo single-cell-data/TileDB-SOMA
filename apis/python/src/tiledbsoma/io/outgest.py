@@ -148,7 +148,7 @@ def _extract_X_key(
     nvar: int,
     dask: SOMADaskConfig | None = None,
 ) -> Union[Future[Matrix], "da.Array"]:
-    """Helper function for to_anndata"""
+    """Helper function for to_anndata."""
     if X_layer_name not in measurement.X:
         raise ValueError(
             f"X_layer_name {X_layer_name} not found in data: {measurement.X.keys()}"
@@ -310,7 +310,6 @@ def to_anndata(
     Lifecycle:
         Maturing.
     """
-
     s = _util.get_start_stamp()
     logging.log_io(None, "START  Experiment.to_anndata")
 
@@ -512,10 +511,7 @@ def _extract_obsm_or_varm(
     num_rows: int,
     width_configs: dict[str, int],
 ) -> Matrix:
-    """
-    This is a helper function for ``to_anndata`` of ``obsm`` and ``varm`` elements.
-    """
-
+    """This is a helper function for ``to_anndata`` of ``obsm`` and ``varm`` elements."""
     # SOMA shape is capacity/domain -- not what AnnData wants.
     # But here do check the array is truly 2D.
     shape = soma_nd_array.shape
@@ -596,9 +592,7 @@ def _extract_uns(
     uns_keys: Sequence[str] | None = None,
     level: int = 0,
 ) -> dict[str, FutureUnsDictNode]:
-    """
-    This is a helper function for ``to_anndata`` of ``uns`` elements.
-    """
+    """This is a helper function for ``to_anndata`` of ``uns`` elements."""
     extracted: dict[str, FutureUnsDictNode] = {}
     tp = collection.context.threadpool
     for key in collection.keys():
@@ -651,7 +645,7 @@ def _extract_uns(
 
 
 def _outgest_uns_1d_string_array(pdf: pd.DataFrame, uri_for_logging: str) -> NPNDArray:
-    """Helper methods for _extract_uns"""
+    """Helper methods for _extract_uns."""
     num_rows, num_cols = pdf.shape
     # An array like ["a", "b", "c"] had become a DataFrame like
     # soma_joinid value
@@ -666,7 +660,7 @@ def _outgest_uns_1d_string_array(pdf: pd.DataFrame, uri_for_logging: str) -> NPN
 
 
 def _outgest_uns_2d_string_array(pdf: pd.DataFrame, uri_for_logging: str) -> NPNDArray:
-    """Helper methods for _extract_uns"""
+    """Helper methods for _extract_uns."""
     num_rows, num_cols = pdf.shape
     if num_cols < 2:
         raise SOMAError(f"Expected 2 columns in {uri_for_logging}; got {num_cols}")

@@ -4,7 +4,10 @@
 \alias{EphemeralMeasurement}
 \title{Ephemeral SOMA Measurement}
 \description{
-\Sexpr[results=rd]{tiledbsoma:::rd_ephemeral_cls("measurement")}
+Ephemeral version of \code{\link{SOMAMeasurement}s}; ephemeral
+measurements are equivalent to
+\link[tiledbsoma:SOMAMeasurement]{SOMA measurements} but are stored in-memory
+instead of on-disk
 }
 \keyword{internal}
 \section{Super classes}{
@@ -13,17 +16,33 @@
 \section{Active bindings}{
 \if{html}{\out{<div class="r6-active-bindings">}}
 \describe{
-\item{\code{var}}{\Sexpr[results=rd]{tiledbsoma:::rd_soma_field("var")}}
+\item{\code{var}}{A \code{\link{SOMADataFrame}} containing primary annotations
+on the variable axis, for variables in this measurement (i.e., annotates
+columns of \code{X}). The contents of the \code{soma_joinid} column
+define the variable index domain, \code{var_id}. All variables for this
+measurement must be defined in this data frame}
 
-\item{\code{X}}{\Sexpr[results=rd]{tiledbsoma:::rd_soma_field("X")}}
+\item{\code{X}}{A \code{\link{SOMACollection}} of
+\code{\link{SOMASparseNDArray}}s; each contain measured feature values
+indexed by \code{[obsid, varid]}}
 
-\item{\code{obsm}}{\Sexpr[results=rd]{tiledbsoma:::rd_soma_field("obsm")}}
+\item{\code{obsm}}{A \code{\link{SOMACollection}} of
+\code{\link{SOMADenseNDArray}}s containing annotations on the observation
+axis. Each array is indexed by \code{obsid} and has the same shape as
+\code{obs}}
 
-\item{\code{obsp}}{\Sexpr[results=rd]{tiledbsoma:::rd_soma_field("obsp")}}
+\item{\code{obsp}}{A \code{\link{SOMACollection}} of
+\code{\link{SOMASparseNDArray}}s containing pairwise annotations on the
+observation axis and indexed with \code{[obsid_1, obsid_2]}}
 
-\item{\code{varm}}{\Sexpr[results=rd]{tiledbsoma:::rd_soma_field("varm")}}
+\item{\code{varm}}{A \code{\link{SOMACollection}} of
+\code{\link{SOMADenseNDArray}}s containing annotations on the variable
+axis. Each array is indexed by \code{varid} and has the same shape as
+\code{var}}
 
-\item{\code{varp}}{\Sexpr[results=rd]{tiledbsoma:::rd_soma_field("varp")}}
+\item{\code{varp}}{A \code{\link{SOMACollection}} of
+\code{\link{SOMASparseNDArray}}s containing pairwise annotations on the
+variable axis and indexed with \code{[varid_1, varid_2]}}
 
 \item{\code{soma_type}}{The SOMA object type}
 }

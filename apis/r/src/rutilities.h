@@ -80,3 +80,15 @@ SEXP convert_domainish(const tdbs::ArrowTable& arrow_table);
 
 // Maps e.g. "int8" and "float32" to "c" and "f".
 std::string remap_arrow_type_code_r_to_c(std::string input);
+
+// Maps tiledb layouts to string identifiers
+const char *_tiledb_layout_to_string(tiledb_layout_t layout);
+
+// Get options for a TileDB filter
+Rcpp::List _get_filter_options(Rcpp::XPtr<tiledb::Filter> filter);
+
+// Get domain from a TileDB dimension
+SEXP _get_dim_domain(Rcpp::XPtr<tiledb::Dimension> dim);
+
+// Get tiling from a TileDB dimension
+SEXP _get_dim_tile(Rcpp::XPtr<tiledb::Dimension> dim);

@@ -63,7 +63,6 @@ class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
         tiledb_timestamp: OpenTimestamp | None = None,
         context: SOMATileDBContext | None = None,
         platform_config: options.PlatformConfig | None = None,
-        clib_type: str | None = None,
     ) -> Self:
         """Opens this specific type of SOMA object.
 
@@ -77,7 +76,7 @@ class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
             tiledb_timestamp:
                 The TileDB timestamp to open this object at,
                 either an int representing milliseconds since the Unix epoch
-                or a datetime.dateime object.
+                or a datetime.datetime object.
                 When not provided (the default), the current time is used.
 
         Returns:
@@ -152,8 +151,7 @@ class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
     def reopen(
         self, mode: options.OpenMode, tiledb_timestamp: OpenTimestamp | None = None
     ) -> Self:
-        """
-        Return a new copy of the SOMAObject with the given mode at the current
+        """Return a new copy of the SOMAObject with the given mode at the current
         Unix timestamp.
 
         Args:
@@ -164,7 +162,7 @@ class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
             tiledb_timestamp:
                 The TileDB timestamp to open this object at,
                 either an int representing milliseconds since the Unix epoch
-                or a datetime.dateime object.
+                or a datetime.datetime object.
                 When not provided (the default), the current time is used.
 
         Raises:
@@ -200,8 +198,7 @@ class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
 
     @property
     def uri(self) -> str:
-        """
-        Accessor for the object's storage URI.
+        """Accessor for the object's storage URI.
 
         Examples:
             >>> soma_object.uri
@@ -213,8 +210,7 @@ class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
         return self._handle.uri
 
     def close(self) -> None:
-        """
-        Release any resources held while the object is open.
+        """Release any resources held while the object is open.
         Closing an already-closed object is a no-op.
 
         Examples:
@@ -227,8 +223,7 @@ class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
 
     @property
     def closed(self) -> bool:
-        """
-        True if the object has been closed. False if it is still open.
+        """True if the object has been closed. False if it is still open.
 
         Examples:
             >>> with tiledbsoma.open("an_object") as soma_object:
@@ -245,8 +240,7 @@ class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
 
     @property
     def mode(self) -> options.OpenMode:
-        """
-        The mode this object was opened in, either ``r`` or ``w``.
+        """The mode this object was opened in, either ``r`` or ``w``.
 
         Examples:
             >>> with tiledbsoma.open("an_object") as soma_object:
@@ -278,7 +272,7 @@ class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
             )
         if self.mode != "r":
             raise SOMAError(
-                f"{self.__class__.__name__} ({self.uri}) must be open for writing"
+                f"{self.__class__.__name__} ({self.uri}) must be open for reading"
             )
 
     @property
@@ -298,8 +292,7 @@ class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
         context: SOMATileDBContext | None = None,
         tiledb_timestamp: OpenTimestamp | None = None,
     ) -> bool:
-        """
-        Finds whether an object of this type exists at the given URI.
+        """Finds whether an object of this type exists at the given URI.
 
         Args:
             uri:

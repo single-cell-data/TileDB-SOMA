@@ -19,24 +19,29 @@ SOMADataFrameCreate(
 \arguments{
 \item{uri}{URI for the TileDB object}
 
-\item{schema}{Arrow schema argument for the \link[SOMADataFrame]{SOMA dataframe}}
+\item{schema}{Arrow schema argument for the
+\link[tiledbsoma:SOMADataFrame]{SOMA dataframe}}
 
 \item{index_column_names}{A vector of column names to use as user-defined
 index columns; all named columns must exist in the schema, and at least
 one index column name is required}
 
-\item{domain}{An optional list of 2-element vectors specifying the domain of each index
-column. Each vector should be a pair consisting of the minimum and maximum values storable in
-the index column. For example, if there is a single int64-valued index column, then \code{domain}
-might be \code{c(100, 200)} to indicate that values between 100 and 200, inclusive, can be stored
-in that column.  If provided, this list must have the same length as \code{index_column_names},
-and the index-column domain will be as specified.  If omitted entirely, or if \code{NULL} in a given
-dimension, the corresponding index-column domain will use the minimum and maximum possible
-values for the column's datatype.  This makes a \code{DataFrame} growable.}
+\item{domain}{An optional list of 2-element vectors specifying the domain of
+each index column. Each vector should be a pair consisting of the minimum and
+maximum values storable in the index column. For example, if there is a
+single int64-valued index column, then \code{domain} might be \code{c(100, 200)} to
+indicate that values between 100 and 200, inclusive, can be stored in that
+column. If provided, this list must have the same length as
+\code{index_column_names}, and the index-column domain will be as specified. If
+omitted entirely, or if \code{NULL} in a given dimension, the corresponding
+index-column domain will use the minimum and maximum possible values for the
+column's datatype.  This makes a \code{DataFrame} growable.}
 
-\item{ingest_mode}{Ingestion mode when creating the TileDB object; choose from:
+\item{ingest_mode}{Ingestion mode when creating the TileDB object;
+choose from:
 \itemize{
-\item \dQuote{\code{write}}: create a new TileDB object and error if it already exists
+\item \dQuote{\code{write}}: create a new TileDB object and error if
+it already exists
 \item \dQuote{\code{resume}}: attempt to create a new TileDB object;
 if it already exists, simply open it for writing
 }}
@@ -46,6 +51,8 @@ if it already exists, simply open it for writing
 \item{tiledbsoma_ctx}{Optional SOMATileDBContext}
 
 \item{tiledb_timestamp}{Optional Datetime (POSIXct) for TileDB timestamp}
+
+\item{soma_context}{A SOMA context as created by \code{\link{soma_context}()}}
 }
 \description{
 Factory function to create a SOMADataFrame for writing, (lifecycle: maturing)

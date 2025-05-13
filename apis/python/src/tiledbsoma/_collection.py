@@ -2,7 +2,7 @@
 #
 # Licensed under the MIT License.
 
-"""Implementation of a SOMA Collection"""
+"""Implementation of a SOMA Collection."""
 from __future__ import annotations
 
 import itertools
@@ -386,7 +386,7 @@ class CollectionBase(  # type: ignore[misc]  # __eq__ false positive
         )
 
     def members(self) -> dict[str, tuple[str, str]]:
-        """Get a mapping of {member_name: (uri, soma_object_type)}"""
+        """Get a mapping of {member_name: (uri, soma_object_type)}."""
         handle = cast(_tdb_handles.SOMAGroupWrapper[Any], self._handle)
         return handle.members()
 
@@ -432,7 +432,6 @@ class CollectionBase(  # type: ignore[misc]  # __eq__ false positive
             value:
                 The reified SOMA object to store locally.
         """
-
         self._check_allows_child(key, type(soma_object))
         super()._set_element(key, uri=uri, relative=relative, soma_object=soma_object)
 

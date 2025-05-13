@@ -1,13 +1,16 @@
 test_that("example dataset access", {
   expect_length(
     list_datasets(),
-    length(dir(example_data_dir())) - 1 # There is a README.md
+    length(list.files(example_data_dir(), pattern = "\\.tar\\.gz$"))
   )
 
   # Test that the dataset can be extracted
   dataset_uri <- extract_dataset("soma-exp-pbmc-small")
   expect_true(dir.exists(dataset_uri))
-  expect_equal(tiledb::tiledb_object_type(dataset_uri), "GROUP")
+  expect_match(
+    get_tiledb_object_type(dataset_uri, soma_context()),
+    "GROUP"
+  )
 
   # Test the datasets can be loaded
   exp <- load_dataset("soma-exp-pbmc-small")

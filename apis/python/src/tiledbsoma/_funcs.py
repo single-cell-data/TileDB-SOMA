@@ -39,7 +39,6 @@ def forwards_kwargs_to(
     """Decorator function to update the signature with ``dst``'s kwargs.
 
     Example:
-
         def _internal(__it, a, b, c=3, *d, e=6, **f) -> None:
             ...
 

@@ -43,13 +43,10 @@ _pa_type_to_str_fmt = {
 def read_h5ad(
     input_path: Path, *, mode: str = "r", ctx: SOMATileDBContext | None = None
 ) -> Iterator[ad.AnnData]:
-    """
-    This lets us ingest H5AD with "r" (backed mode) from S3 URIs.
-    """
+    """This lets us ingest H5AD with "r" (backed mode) from S3 URIs."""
     ctx = ctx or SOMATileDBContext()
-    vfs = clib.SOMAVFS(ctx.native_context)
     input_handle = CachingReader(
-        clib.SOMAVFSFilebuf(vfs).open(str(input_path)),
+        clib.SOMAFileHandle(str(input_path), ctx.native_context),
         memory_budget=64 * 1024**2,
         cache_block_size=8 * 1024**2,
     )
@@ -58,6 +55,9 @@ def read_h5ad(
             anndata = ad.read_h5ad(_FSPathWrapper(input_handle, input_path), mode)
             yield anndata
     finally:
+        # This prevents a race condition with the REPL cleanup in ipython. See sc-65863
+        if anndata.file:
+            anndata.file.close()
         input_handle.close()
 
 

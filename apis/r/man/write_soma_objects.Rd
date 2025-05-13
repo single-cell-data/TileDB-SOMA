@@ -174,8 +174,8 @@ Various helpers to write R objects to SOMA
 \code{\link{SOMADataFrame}s} with one attribute: \dQuote{\code{values}};
 additionally one bit of array-level metadata is added:
 \itemize{
-\item \dQuote{\code{\Sexpr[stage=build]{names(tiledbsoma:::uns_hint())}}}
-with a value of \dQuote{\code{\Sexpr[stage=build]{tiledbsoma:::uns_hint()[[1L]]}}}
+\item \dQuote{\code{soma_uns_outgest_hint}} with a value of
+\dQuote{\code{array_1d}}
 }
 }
 

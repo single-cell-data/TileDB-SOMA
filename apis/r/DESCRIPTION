@@ -6,16 +6,16 @@ Description: Interface for working with 'TileDB'-based Stack of Matrices,
     like those commonly used for single cell data analysis. It is documented at
     <https://github.com/single-cell-data>; a formal specification available is at
     <https://github.com/single-cell-data/SOMA/blob/main/abstract_specification.md>.
-Version: 1.17.99
+Version: 1.17.99.6
 Authors@R: c(
     person(given = "Aaron", family = "Wolen",
-           role = c("cre", "aut"), email = "aaron@tiledb.com",
+           role = "aut", email = "aaron@tiledb.com",
            comment = c(ORCID = "0000-0003-2542-2202")),
     person(given = "Dirk", family = "Eddelbuettel",
            role = "aut", email = "dirk@tiledb.com",
            comment = c(ORCID = "0000-0001-6419-907X")),
     person(given = "Paul", family = "Hoffman",
-           role = "aut", email = "paul.hoffman@tiledb.com",
+           role = c("cre", "aut"), email = "paul.hoffman@tiledb.com",
            comment = c(ORCID = "0000-0002-7693-8957")),
     person(given = "John", family = "Kerl",
            role = "aut", email = "john.kerl@tiledb.com"),
@@ -34,12 +34,11 @@ Imports:
     Matrix,
     stats,
     bit64 (>= 4.6.0.1),
-    tiledb (>= 0.30.0),
+    tiledb (>= 0.31.1),
     arrow (>= 14.0.0),
     utils,
     fs,
     glue,
-    urltools,
     Rcpp,
     data.table,
     spdl,
@@ -61,7 +60,6 @@ Suggests:
     withr,
     testthat (>= 3.0.0),
     pbmc3k.tiledb,
-    pbmc3k.sce,
     SeuratObject (>= 4.1.0),
     datasets,
     SingleCellExperiment (>= 1.20.0),
@@ -69,7 +67,8 @@ Suggests:
     S4Vectors,
     jsonlite,
     iterators,
-    itertools
+    itertools,
+    pbmc3k
 VignetteBuilder: knitr
 Config/testthat/edition: 2
 OS_type: unix

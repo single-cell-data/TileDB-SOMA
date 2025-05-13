@@ -2,9 +2,7 @@
 #
 # Licensed under the MIT License.
 
-"""
-Implementation of a base class shared between GeometryDataFrame and PointCloudDataFrame
-"""
+"""Implementation of a base class shared between GeometryDataFrame and PointCloudDataFrame."""
 
 from __future__ import annotations
 
@@ -93,6 +91,7 @@ class SpatialDataFrame(SOMAArray):
                 The default of ``None`` represents no filter. Value filter
                 syntax is implementation-defined; see the documentation
                 for the particular SOMA implementation for details.
+
         Returns:
             A :class:`ReadIter` of :class:`pa.Table`s.
 

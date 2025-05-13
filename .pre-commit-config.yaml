@@ -4,6 +4,7 @@ repos:
     rev: "25.1.0"
     hooks:
     - id: black
+      args: ["--config=apis/python/pyproject.toml"]
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.11.2
     hooks:
@@ -22,3 +23,11 @@ repos:
         - types-setuptools
       args: ["--config-file=apis/python/pyproject.toml", "apis/python/src", "apis/python/devtools"]
       pass_filenames: false
+
+# TODO: consider enabling this for all markdown files
+files: apis/python/HISTORY.md
+repos:
+  - repo: https://github.com/hukkin/mdformat
+    rev: 0.7.22  # Use the ref you want to point at
+    hooks:
+    - id: mdformat

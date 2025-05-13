@@ -158,7 +158,6 @@ class ExperimentAmbientLabelMapping:
         Returns:
             A new ``ExperimentAmbientLabelMapping`` scoped specifically for the AnnData.
         """
-
         # Only subset obs - provides largest benefit with simple implementation.
         return attrs.evolve(
             self,
@@ -426,8 +425,7 @@ class ExperimentAmbientLabelMapping:
         var_field_name: str,
         context: SOMATileDBContext,
     ) -> ExperimentAmbientLabelMapping:
-        """
-        Private method used by various constructor paths -- shared code for registration.
+        """Private method used by various constructor paths -- shared code for registration.
 
         Four-step process common to all ingestion plans. Given AnnData axis metadata (joinid map
         and enum definitions):
@@ -442,7 +440,6 @@ class ExperimentAmbientLabelMapping:
         It is less likely to be true for multi-modal data. Future rework should address this
         by allowing a per-measurement var join column.
         """
-
         tp = context.threadpool
         existing_obs_joinid_map: pd.DataFrame
         existing_var_joinid_maps: dict[str, pd.DataFrame]
@@ -591,7 +588,7 @@ class ExperimentAmbientLabelMapping:
 
     @staticmethod
     def _validate_anndata(append_obsm_varm: bool, adata: ad.AnnData) -> None:
-        """Pre-checks performed on all AnnData"""
+        """Pre-checks performed on all AnnData."""
 
         def check_df(df: pd.DataFrame | None, df_name: str) -> None:
             if df is None or df.index.empty:
@@ -630,7 +627,9 @@ class ExperimentAmbientLabelMapping:
 @attrs.define(kw_only=True, frozen=True)
 class AnnDataAxisMetadata:
     """Private class encapsulating _intermediate_ information extracted from registered
-    H5ADs/AnnData. Other than data storage, this also provides a reducer for the type.
+    H5ADs/AnnData.
+
+    Other than data storage, this also provides a reducer for the type.
     """
 
     field_name: str  # user-specified join field name
@@ -650,7 +649,7 @@ class AnnDataAxisMetadata:
             return ams[0]
 
         def _reduce_field_index(indices: list[pd.Index]) -> pd.Index:  # type: ignore[type-arg]
-            """reducer for joinid indices"""
+            """Reducer for joinid indices."""
             if len(indices) == 0:
                 return pd.Index([])
             if len(indices) == 1:
@@ -669,7 +668,7 @@ class AnnDataAxisMetadata:
     def reduce_enum_values(
         enum_values: list[dict[ColumnName, pd.CategoricalDtype]],
     ) -> dict[ColumnName, pd.CategoricalDtype]:
-        """reducer for enum values"""
+        """Reducer for enum values."""
 
         def _merge_categoricals(
             col_name: str,

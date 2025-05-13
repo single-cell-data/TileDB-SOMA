@@ -2,7 +2,7 @@
 #
 # Licensed under the MIT License.
 
-"""Experimental SOMA features
+"""Experimental SOMA features.
 
 This module is for experimental features. Support for these features
 may be dropped.

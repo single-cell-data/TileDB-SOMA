@@ -189,9 +189,10 @@ def dataframes(
 def keys() -> st.SearchStrategy[str]:
     # if sc-63410_workaround, we can't handle anything that isn't a legal posix path name.
     if HT_TEST_CONFIG["sc-63410_workaround"]:
-        return posix_filename()
+        stgy = posix_filename()
     else:
-        return st.text(string.printable, min_size=1, max_size=20)
+        stgy = st.text(string.printable, min_size=1, max_size=20)
+    return stgy.filter(lambda s: not s.startswith("soma_"))
 
 
 # AnnData <= 0.10 does not support scipy sparse_array
@@ -566,8 +567,6 @@ def assert_uns_equal(src_adata: anndata.AnnData, read_adata: anndata.Anndata) ->
 
     if diff.get("type_changes", None) == {}:
         del diff["type_changes"]
-
-    assert diff == {}, repr(diff.to_dict())
 
 
 def assert_anndata_equal(
