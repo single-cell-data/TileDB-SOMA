@@ -1,3 +1,13 @@
+#' @importFrom Rcpp evalCpp
+#' @importFrom methods as is
+#' @importFrom Matrix as.matrix
+#' @importFrom bit64 as.integer64
+#' @importFrom arrow concat_arrays
+#' @importFrom rlang is_scalar_logical is_scalar_character
+#' @useDynLib tiledbsoma, .registration=TRUE
+#'
+NULL
+
 .pkgenv <- new.env(parent = emptyenv())
 
 ## .onLoad is called whether code from the package is used and the packages is 'loaded'. An
@@ -25,7 +35,7 @@
   }
   if (interactive()) {
     packageStartupMessage(
-      "TileDB-SOMA R package ", packageVersion(pkgname),
+      "TileDB-SOMA R package ", utils::packageVersion(pkgname),
       " with TileDB Embedded ", format(get_tiledb_version(TRUE)),
       " on ", utils::osVersion,
       ".\nSee https://github.com/single-cell-data for more information ",
