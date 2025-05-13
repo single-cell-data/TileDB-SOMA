@@ -2,23 +2,23 @@
 
 ## Removals
 
-- `TileDBURI` class has been removed
-- arrow \<> TileDB-R helpers have been removed
+- `TileDBURI` class has been removed ([#3644](https://github.com/single-cell-data/TileDB-SOMA/pull/3644))
+- arrow \<> TileDB-R helpers have been removed ([#3644](https://github.com/single-cell-data/TileDB-SOMA/pull/3644))
   - `arrow_field_from_tiledb_dim()`
   - `arrow_field_from_tiledb_attr()`
   - `arrow_schema_from_tiledb_schema()`
 
 ## Additions
 
-- New function `get_tiledb_object_type()` to replace `tiledb::tiledb_object_type()`
-- New function `get_tiledb_version()` to replace `tiledb::tiledb_version()`
-- New method `SOMAArrayBase$is_sparse()` to replace `tiledb::is.sparse()`
-- New method `SOMAArrayBase$allows_duplicates()` to replace `tiledb::allows_dups()`
-- New method `SOMADataFrame$levels()` to replace tiledb-r enum accessors
+- New function `get_tiledb_object_type()` to replace `tiledb::tiledb_object_type()` ([#3644](https://github.com/single-cell-data/TileDB-SOMA/pull/3644))
+- New function `get_tiledb_version()` to replace `tiledb::tiledb_version()` ([#3644](https://github.com/single-cell-data/TileDB-SOMA/pull/3644))
+- New method `SOMAArrayBase$is_sparse()` to replace `tiledb::is.sparse()` ([#3644](https://github.com/single-cell-data/TileDB-SOMA/pull/3644))
+- New method `SOMAArrayBase$allows_duplicates()` to replace `tiledb::allows_dups()` ([#3644](https://github.com/single-cell-data/TileDB-SOMA/pull/3644))
+- New method `SOMADataFrame$levels()` to replace tiledb-r enum accessors ([#3644](https://github.com/single-cell-data/TileDB-SOMA/pull/3644))
 
 ## Changes
 
-- `TileDBArray$attributes()` has been promoted to `SOMAArrayBase$attributes()` and returns a named list instead of an external pointer
+- `TileDBArray$attributes()` has been promoted to `SOMAArrayBase$attributes()` and returns a named list instead of an external pointer ([#3644](https://github.com/single-cell-data/TileDB-SOMA/pull/3644))
 
 # tiledbsoma 1.16.0
 
