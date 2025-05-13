@@ -73,4 +73,4 @@ Suggests:
     withr
 Config/testthat/edition: 2
 OS_type: unix
-SystemRequirements: cmake, git
+SystemRequirements: C++20, cmake, git
