@@ -22,7 +22,7 @@
 
 ## Fixed
 
-* \[[#4051](https://github.com/single-cell-data/TileDB-SOMA/pull/4051)] [r] Fix C++20 flag to be a configuration option instead of hard-coded
+- Fix C++20 flag to be a configuration option instead of hard-coded ([#4051](https://github.com/single-cell-data/TileDB-SOMA/pull/4051))
 
 # tiledbsoma 1.16.0
 
