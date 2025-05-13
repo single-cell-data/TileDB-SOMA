@@ -748,7 +748,7 @@ SOMACollectionBase <- R6::R6Class(
         internal_use_only = "allowed_use",
         tiledb_timestamp = self$tiledb_timestamp,
         soma_context = private$soma_context
-      ))
+      )$open(self$mode()))
 
       # # We have to use the appropriate TileDB base class to read the soma_type
       # # from the object's metadata so we know which SOMA class to instantiate
