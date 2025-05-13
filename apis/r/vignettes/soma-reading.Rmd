@@ -1,7 +1,7 @@
 ---
-title: "Reading from SOMA objects"
+title: Reading from SOMA objects
 output: rmarkdown::html_vignette
-vignette: >
+vignette: >-
   %\VignetteIndexEntry{Reading from SOMA objects}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
@@ -28,7 +28,6 @@ experiment <- load_dataset("soma-exp-pbmc-small")
 ## SOMA DataFrame
 
 We'll start with the `obs` dataframe. Simply calling the `read()$concat()` method will load all of the data in memory as an [Arrow Table](https://arrow.apache.org/docs/r/reference/table.html).
-
 
 ```{r}
 obs <- experiment$obs
@@ -128,7 +127,7 @@ Similar to `SOMADataFrame`, we can load the data into memory as an Arrow Table:
 counts$read()$tables()$concat()
 ```
 
-Or as a [`Matrix::sparseMatrix()`]:
+Or as a \[`Matrix::sparseMatrix()`\]:
 
 ```{r}
 counts$read()$sparse_matrix()$concat()

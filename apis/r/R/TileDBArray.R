@@ -145,7 +145,7 @@ TileDBArray <- R6::R6Class(
     #' @return A named list of [`tiledb::tiledb_dim`] objects
     dimensions = function() {
       dims <- tiledb::dimensions(self$tiledb_schema())
-      setNames(dims, nm = vapply_char(dims, tiledb::name))
+      return(stats::setNames(dims, nm = vapply_char(dims, tiledb::name)))
     },
 
     #' @description Retrieve the shape, i.e. the capacity of each dimension.

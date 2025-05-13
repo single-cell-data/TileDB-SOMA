@@ -2,32 +2,44 @@
 
 ## System Dependencies
 
-* C++20 compiler
-* Python 3.9+
+- C++20 compiler
+- Python 3.9+
 
 Run these commands to setup a fresh Ubuntu 22.04 instance (tested on x86 and Arm):
+
 ```
 sudo apt update
 sudo apt install -y g++ make pkg-config
 sudo apt install -y python3 python-is-python3 python3.10-venv python-dev-is-python3
 ```
----
+
+______________________________________________________________________
+
 ## Clone the source code
+
 ```
 git clone https://github.com/single-cell-data/TileDB-SOMA.git
 cd TileDB-SOMA
 ```
----
+
+______________________________________________________________________
+
 ## Set up a Python Virtual Environment
+
 Create a python virtual environment and install the [developer requirements](../apis/python/requirements_dev.txt):
+
 ```
 python -m venv test/tiledbsoma
 source test/tiledbsoma/bin/activate
 pip install -r apis/python/requirements_dev.txt
 ```
----
+
+______________________________________________________________________
+
 ## Python-only Development
+
 Developers who do not need to modify the C++ code must use these build commands:
+
 ```
 # remove old build artifacts
 make clean
@@ -38,11 +50,12 @@ pip install -v -e apis/python
 # test
 pytest apis/python
 ```
+
 This approach leverages the build-system defined in [pyproject.toml](../apis/python/pyproject.toml) to reduce the number of dependencies required to build `tiledbsoma`.
 
 > **Note** - Running `python setup.py develop` is not supported.
 
----
+______________________________________________________________________
 
 ## Python and C++ Development
 
@@ -99,7 +112,7 @@ Examples:
     make update
 ```
 
----
+______________________________________________________________________
 
 ## Notes
 

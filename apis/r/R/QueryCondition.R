@@ -293,8 +293,12 @@ setClass(
 tiledbsoma_empty_query_condition <- function(somactx) {
   stopifnot("The argument must be a somactx object" = is(somactx, "externalptr"))
   ptr <- libtiledbsoma_empty_query_condition(somactx)
-  query_condition <- new("tiledbsoma_query_condition", ptr = ptr, init = FALSE)
-  invisible(query_condition)
+  query_condition <- methods::new(
+    "tiledbsoma_query_condition",
+    ptr = ptr,
+    init = FALSE
+  )
+  return(invisible(query_condition))
 }
 
 # ================================================================

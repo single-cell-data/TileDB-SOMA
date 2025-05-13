@@ -1,7 +1,3 @@
-#' @importFrom rlang is_na
-#' @importFrom methods as new validObject
-#'
-NULL
 
 #' `SOMAExperiment` Axis Query
 #' @description Perform an axis-based query against a [`SOMAExperiment`].
@@ -23,7 +19,6 @@ NULL
 #' to the underlying X NDArray. Accessors such as `n_obs` and `n_vars` codify
 #' this in the class.
 #'
-#' @importFrom arrow concat_arrays
 #' @export
 SOMAExperimentAxisQuery <- R6::R6Class(
   classname = "SOMAExperimentAxisQuery",
@@ -762,7 +757,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
         }
       }
       # Validate and return
-      validObject(object)
+      methods::validObject(object)
       return(object)
     },
 
@@ -900,7 +895,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
         row.names(var) <- features
         obj[[names(var)]] <- var
       }
-      validObject(obj)
+      methods::validObject(obj)
       return(obj)
     },
     #' @description Loads the query as a Seurat
@@ -1129,7 +1124,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
       }
 
       SeuratObject::DefaultAssay(mat) <- private$.measurement_name
-      validObject(mat)
+      methods::validObject(mat)
       return(mat)
     },
     #' @description Loads the query as a
@@ -1684,7 +1679,7 @@ SOMAExperimentAxisQuery <- R6::R6Class(
         obj <- SeuratObject::SetAssayData(obj, "scale.data", new.data = smat)
       }
       # Return the assay
-      validObject(obj)
+      methods::validObject(obj)
       return(obj)
     },
     .to_seurat_assay_v5 = function(layers, cells, features) {
