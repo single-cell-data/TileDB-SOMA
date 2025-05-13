@@ -55,6 +55,11 @@ The TileDB-SOMA doc-site ([Python](https://tiledbsoma.readthedocs.io/en/latest/p
 
 Reference documentation can also be accessed directly from Python `help(tiledsoma)` or R `help(package = "tiledbsoma")`.
 
+Release notes / changelog:
+
+- [R package NEWS.md](https://github.com/single-cell-data/TileDB-SOMA/blob/main/apis/r/NEWS.md)
+- [Python package HISTORY.md](https://github.com/single-cell-data/TileDB-SOMA/blob/main/apis/python/HISTORY.md)
+
 ## Main SOMA Objects
 
 The capabilities of TileDB-SOMA lay on the different read, access, and query patterns that each of the main implementations of SOMA objects provide:
