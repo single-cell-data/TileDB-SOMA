@@ -35,8 +35,9 @@ uri_scheme_remove <- function(uri) {
 #' Return a URI relative to a parent URI
 #' This takes URI schemes into account and errors if they do not match. URIs
 #' without a scheme are treated as `file://` URIs.
-#' @importFrom fs path_rel path_has_parent
+#'
 #' @noRd
+#'
 make_uri_relative <- function(uri, relative_to) {
   stopifnot(
     "'uri' and 'relative_to' must be scalar character vectors" =

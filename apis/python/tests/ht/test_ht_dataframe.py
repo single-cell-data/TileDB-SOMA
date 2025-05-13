@@ -767,6 +767,9 @@ class SOMADataFrameStateMachine(SOMAArrayStateMachine):
             self.data_ledger.read(timestamp_ms=self.A.tiledb_timestamp_ms).to_table()
         )
         assert expected == self.A.count, "count mismatch"
+        assert (
+            self.A.count <= self.A._handle._handle.fragment_cell_count()
+        ), "count vs fragment_cell_count inconsistency"
 
     @precondition(lambda self: not self.closed and self.mode == "w")
     @precondition(

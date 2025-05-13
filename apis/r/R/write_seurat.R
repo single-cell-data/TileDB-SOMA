@@ -1,6 +1,3 @@
-#' @importFrom rlang is_integerish
-#'
-NULL
 
 #' Convert a \pkg{Seurat} Sub-Object to a SOMA Object, returned opened for write
 #'

@@ -499,9 +499,9 @@ write_soma.TsparseMatrix <- function(
     row_ids <- .read_soma_joinids(array, axis = 0L)
     col_ids <- .read_soma_joinids(array, axis = 1L)
     tbl <- data.frame(
-      i = bit64::as.integer64(slot(x, "i")),
-      j = bit64::as.integer64(slot(x, "j")),
-      x = slot(x, "x")
+      i = bit64::as.integer64(methods::slot(x, "i")),
+      j = bit64::as.integer64(methods::slot(x, "j")),
+      x = methods::slot(x, "x")
     )
     tbl <- tbl[-which(tbl$i %in% row_ids & tbl$j %in% col_ids), , drop = FALSE]
     x <- if (nrow(tbl)) {
@@ -595,8 +595,6 @@ write_soma.TsparseMatrix <- function(
   return(x)
 }
 
-#' @importFrom tools R_user_dir
-#'
 .check_soma_uri <- function(
   uri,
   soma_parent = NULL,
@@ -613,7 +611,7 @@ write_soma.TsparseMatrix <- function(
       warning("uri", call. = FALSE, immediate. = TRUE)
       uri <- basename(uri)
     }
-    uri <- file_path(soma_parent$uri %||% R_user_dir("tiledbsoma"), uri)
+    uri <- file_path(soma_parent$uri %||% tools::R_user_dir("tiledbsoma"), uri)
   } else if (!is_remote_uri(uri)) {
     dir.create(dirname(uri), showWarnings = FALSE, recursive = TRUE)
   }

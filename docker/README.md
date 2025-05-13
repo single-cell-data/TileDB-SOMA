@@ -7,10 +7,10 @@ Sample Dockerfiles that `pip install tiledbsoma` (including installing required 
 - [bookworm.dockerfile](bookworm.dockerfile): Debian 12, GCC 13, `pip install tiledbsoma==1.16.0`
 - [langchain.dockerfile](langchain.dockerfile): Debian 12, GCC 12, `pip install tiledbsoma==1.15.7`
 
-
 ## Debugging Tips
 
 ### `pip install --no-clean tiledbsoma` <a id="no-clean"></a>
+
 This keeps around various logs (example below), when a `pip install` fails.
 
 ### [vcpkg] requires `VCPKG_FORCE_SYSTEM_BINARIES=1` on ARM <a id="vcpkg"></a>
@@ -97,8 +97,8 @@ tail /TileDB-SOMA/build/externals/src/ep_tiledb-build/vcpkg-bootstrap.log
 ```
 
 This sequence of log files is commonly useful:
+
 - `ep_tiledb-configure-err.log`
 - `vcpkg-bootstrap.log`
-
 
 [vcpkg]: https://vcpkg.io/

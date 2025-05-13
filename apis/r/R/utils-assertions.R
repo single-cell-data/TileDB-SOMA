@@ -1,5 +1,3 @@
-#' @importFrom rlang is_scalar_integerish is_scalar_logical is_scalar_character
-NULL
 
 #' Check if object is empty
 #' @noRd

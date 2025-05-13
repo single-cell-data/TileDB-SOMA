@@ -40,7 +40,7 @@ get_tiledb_version <- function(compact = FALSE) {
 #' TileDB embedded, suitable for assisting with bug reports.
 #'
 #' @export
-#' @importFrom utils packageVersion
+#'
 show_package_versions <- function() {
   cat("tiledbsoma:    ", toString(utils::packageVersion("tiledbsoma")), "\n",
     "tiledb-r:      ", toString(utils::packageVersion("tiledb")), "\n",

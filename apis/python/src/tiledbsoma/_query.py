@@ -831,9 +831,10 @@ def _read_as_csr(
     d0_joinids = d0_joinids_arr.to_numpy()
     d1_joinids = d1_joinids_arr.to_numpy()
     try:
-        nnz: int | None = matrix._handle._handle.nnz(raise_if_slow=True)
+        # frag_cell_count is >= nnz, as it does not account for deletes and double-counts updates
+        frag_cell_count: int | None = matrix._handle._handle.fragment_cell_count()
     except SOMAError:
-        nnz = None
+        frag_cell_count = None
 
     # if able, downcast from int64 - reduces working memory
     index_dtype = (
@@ -880,8 +881,12 @@ def _read_as_csr(
     fallback_row_count = 32768
     # compute partition size from array density and target point count, rounding to nearest 1024.
     partition_size = (
-        max(1024 * round(approx_X_shape[0] * target_point_count / nnz / 1024), 1024)
-        if nnz is not None and nnz > 0
+        max(
+            1024
+            * round(approx_X_shape[0] * target_point_count / frag_cell_count / 1024),
+            1024,
+        )
+        if frag_cell_count is not None and frag_cell_count > 0
         else min(fallback_row_count, approx_X_shape[0])
     )
     splits = list(

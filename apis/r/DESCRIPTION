@@ -6,7 +6,7 @@ Description: Interface for working with 'TileDB'-based Stack of Matrices,
     like those commonly used for single cell data analysis. It is documented at
     <https://github.com/single-cell-data>; a formal specification available is at
     <https://github.com/single-cell-data/SOMA/blob/main/abstract_specification.md>.
-Version: 1.17.99.6
+Version: 1.17.99.7
 Authors@R: c(
     person(given = "Aaron", family = "Wolen",
            role = "aut", email = "aaron@tiledb.com",
@@ -15,61 +15,62 @@ Authors@R: c(
            role = "aut", email = "dirk@tiledb.com",
            comment = c(ORCID = "0000-0001-6419-907X")),
     person(given = "Paul", family = "Hoffman",
-           role = c("cre", "aut"), email = "paul.hoffman@tiledb.com",
+           role = c("cre", "aut"), email = "tiledb-r@tiledb.com",
            comment = c(ORCID = "0000-0002-7693-8957")),
     person(given = "John", family = "Kerl",
            role = "aut", email = "john.kerl@tiledb.com"),
     person(given = "TileDB, Inc.",
            role = c("cph", "fnd"))
     )
-URL: https://github.com/single-cell-data/TileDB-SOMA
+URL:
+    https://single-cell-data.github.io/TileDB-SOMA/,
+    https://github.com/single-cell-data/TileDB-SOMA
 BugReports: https://github.com/single-cell-data/TileDB-SOMA/issues
 License: MIT + file LICENSE
 Encoding: UTF-8
-Depends:
-    R (>= 4.0.0)
-Imports:
-    R6,
-    methods,
-    Matrix,
-    stats,
-    bit64 (>= 4.6.0.1),
-    tiledb (>= 0.31.1),
-    arrow (>= 14.0.0),
-    utils,
-    fs,
-    glue,
-    Rcpp,
-    data.table,
-    spdl,
-    rlang,
-    tools,
-    tibble,
-    nanoarrow
-LinkingTo:
-    Rcpp,
-    RcppSpdlog (>= 0.0.20),
-    RcppInt64,
-    nanoarrow
 Additional_repositories: https://tiledb-inc.r-universe.dev
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
+VignetteBuilder: knitr
+Depends:
+    R (>= 4.0.0)
+Imports:
+    arrow (>= 19.0.1),
+    bit64 (>= 4.6.0.1),
+    data.table,
+    fs,
+    glue,
+    Matrix (>= 1.7.3),
+    methods,
+    nanoarrow,
+    R6,
+    Rcpp,
+    rlang (>= 1.1.5),
+    spdl,
+    stats,
+    tiledb (>= 0.31.1),
+    tools,
+    utils
+LinkingTo:
+    nanoarrow,
+    Rcpp,
+    RcppInt64,
+    RcppSpdlog (>= 0.0.20)
 Suggests:
-    rmarkdown,
-    knitr,
-    withr,
-    testthat (>= 3.0.0),
-    pbmc3k.tiledb,
-    SeuratObject (>= 4.1.0),
     datasets,
-    SingleCellExperiment (>= 1.20.0),
-    SummarizedExperiment (>= 1.28.0),
-    S4Vectors,
-    jsonlite,
     iterators,
     itertools,
-    pbmc3k
-VignetteBuilder: knitr
+    jsonlite,
+    knitr,
+    pbmc3k,
+    pbmc3k.tiledb,
+    rmarkdown,
+    S4Vectors,
+    SeuratObject (>= 4.1.0),
+    SingleCellExperiment (>= 1.20.0),
+    SummarizedExperiment (>= 1.28.0),
+    testthat (>= 3.0.0),
+    withr
 Config/testthat/edition: 2
 OS_type: unix
-SystemRequirements: cmake, git
+SystemRequirements: C++20, cmake, git

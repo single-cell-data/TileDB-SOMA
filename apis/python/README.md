@@ -38,23 +38,23 @@ If this comes up empty for your system, you'll definitely need to build from sou
 
 ## From source
 
-* Clone [this repo](https://github.com/single-cell-data/TileDB-SOMA)
-* `cd` into your checkout and then `cd apis/python`
-* `python -m pip install .`
-* Or, if you wish to modify the code and run it, `python -m pip install -v -e .`
-* If the TileDB and TileDB-SOMA libraries are locally installed to a custom directory, such as `/usr/local`, set the path with environment variables `TILEDB_PATH` and `TILEDBSOMA_PATH`, `TILEDB_PATH=/usr/local python -m pip install -v -e .`
-* Optionally, if you prefer, you can run that inside `venv`:
+- Clone [this repo](https://github.com/single-cell-data/TileDB-SOMA)
+- `cd` into your checkout and then `cd apis/python`
+- `python -m pip install .`
+- Or, if you wish to modify the code and run it, `python -m pip install -v -e .`
+- If the TileDB and TileDB-SOMA libraries are locally installed to a custom directory, such as `/usr/local`, set the path with environment variables `TILEDB_PATH` and `TILEDBSOMA_PATH`, `TILEDB_PATH=/usr/local python -m pip install -v -e .`
+- Optionally, if you prefer, you can run that inside `venv`:
   ```shell
   $ python -m venv venv
   $ . ./venv/bin/activate
   $ python -m pip install -v -e .
   ```
-* In either case:
+- In either case:
   ```shell
   make data
   python -m pytest tests
   ```
-* A note about the `spdlog` package: If you encounter an install-time error like `fatal error: spdlog/spdlog.h: No such file or directory` you should additionally recursively remove `/usr/local/lib/cmake/spdlog `, since the system uninstall of `spdlog` fails to remove this properly.
+- A note about the `spdlog` package: If you encounter an install-time error like `fatal error: spdlog/spdlog.h: No such file or directory` you should additionally recursively remove `/usr/local/lib/cmake/spdlog `, since the system uninstall of `spdlog` fails to remove this properly.
 
 # Status
 
