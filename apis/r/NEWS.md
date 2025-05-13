@@ -20,6 +20,10 @@
 
 * `TileDBArray$attributes()` has been promoted to `SOMAArrayBase$attributes()` and returns a named list instead of an external pointer
 
+## Fixed
+
+* \[[#4051](https://github.com/single-cell-data/TileDB-SOMA/pull/4051)] [r] Fix C++20 flag to be a configuration option instead of hard-coded
+
 # tiledbsoma 1.16.0
 
 * Encode string metadata as `TILEDB_STRING_UTF8` instead of `TILEDB_STRING_ASCII`
