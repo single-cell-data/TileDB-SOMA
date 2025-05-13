@@ -13,6 +13,7 @@ from __future__ import annotations
 import json
 from concurrent.futures import Future
 from typing import (
+    TYPE_CHECKING,
     Any,
     KeysView,
     Sequence,
@@ -37,6 +38,7 @@ from .. import (
     logging,
 )
 from .._constants import SOMA_JOINID
+from .._dask.load import SOMADaskConfig, load_daskarray
 from .._exception import SOMAError
 from .._types import NPNDArray, Path
 from .._util import MISSING, Sentinel, _resolve_futures
@@ -134,9 +136,20 @@ def _read_partitioned_sparse(X: SparseNDArray, d0_size: int) -> pa.Table:
         return _read_sparse_X(X, partitions[0])
 
 
+if TYPE_CHECKING:
+    try:
+        import dask.array as da
+    except ImportError:
+        pass
+
+
 def _extract_X_key(
-    measurement: Measurement, X_layer_name: str, nobs: int, nvar: int
-) -> Future[Matrix]:
+    measurement: Measurement,
+    X_layer_name: str,
+    nobs: int,
+    nvar: int,
+    dask: SOMADaskConfig | None = None,
+) -> Union[Future[Matrix], "da.Array"]:
     """Helper function for to_anndata."""
     if X_layer_name not in measurement.X:
         raise ValueError(
@@ -147,8 +160,14 @@ def _extract_X_key(
     X = measurement.X[X_layer_name]
     tp = X.context.threadpool
 
+    if dask:
+        return load_daskarray(
+            layer=X,
+            coords=None,
+            **dask,
+        )
     # Read data from SOMA into memory
-    if isinstance(X, DenseNDArray):
+    elif isinstance(X, DenseNDArray):
 
         def _read_dense_X(A: DenseNDArray) -> Matrix:
             return A.read((slice(None), slice(None))).to_numpy()
@@ -239,6 +258,7 @@ def to_anndata(
     var_id_name: str | None = None,
     obsm_varm_width_hints: dict[str, dict[str, int]] | None = None,
     uns_keys: Sequence[str] | None = None,
+    dask: SOMADaskConfig | None = None,
 ) -> ad.AnnData:
     """Converts the experiment group to AnnData format.
 
@@ -285,6 +305,9 @@ def to_anndata(
     If ``uns_keys`` is provided, only the specified top-level ``uns`` keys
     are extracted.  The default is to extract them all.  Use ``uns_keys=[]``
     to not outgest any ``uns`` keys.
+
+    If ``dask`` is present, the ``X`` matrix is returned as a Dask array, and the ``dask`` configs apply to that
+    conversion and resulting array (lifecycle: experimental).
 
     Lifecycle:
         Maturing.
@@ -345,26 +368,37 @@ def to_anndata(
     # * We could use **kwargs -- but that would bork the online help docs.
     # * Our consolation: check if the layer name is the _default_,
     #   and the experiment doesn't have it.
-    anndata_X_future: Future[Matrix] | None = None
+    anndata_X_future: Future[Matrix] | "da.Array" | None = None
 
     if X_layer_name == MISSING:
         if "data" in measurement.X:
-            anndata_X_future = _extract_X_key(measurement, "data", nobs, nvar)
+            anndata_X_future = _extract_X_key(
+                measurement, "data", nobs, nvar, dask=dask
+            )
     elif X_layer_name is not None:
         if X_layer_name not in measurement.X:
             raise ValueError(
                 f"X_layer_name '{X_layer_name}' not found in measurement: {measurement.X.keys()}"
             )
         anndata_X_future = _extract_X_key(
-            measurement, cast(str, X_layer_name), nobs, nvar
+            measurement=measurement,
+            X_layer_name=cast(str, X_layer_name),
+            nobs=nobs,
+            nvar=nvar,
+            dask=dask,
         )
 
     if extra_X_layer_names is not None:
         for extra_X_layer_name in extra_X_layer_names:
             if extra_X_layer_name == X_layer_name:
                 continue
-            assert extra_X_layer_name is not None  # appease linter; already checked
-            data = _extract_X_key(measurement, extra_X_layer_name, nobs, nvar)
+            data = _extract_X_key(
+                measurement=measurement,
+                X_layer_name=extra_X_layer_name,
+                nobs=nobs,
+                nvar=nvar,
+                dask=dask,
+            )
             anndata_layers_futures[extra_X_layer_name] = data
 
     if obsm_varm_width_hints is None:
@@ -442,7 +476,11 @@ def to_anndata(
     varm = _resolve_futures(varm)
     obsp = _resolve_futures(obsp)
     varp = _resolve_futures(varp)
-    anndata_X = anndata_X_future.result() if anndata_X_future else None
+    anndata_X = (
+        anndata_X_future.result()
+        if isinstance(anndata_X_future, Future)
+        else anndata_X_future
+    )
     anndata_layers = _resolve_futures(anndata_layers_futures)
     uns: UnsDict = (
         _resolve_futures(uns_future.result(), deep=True)

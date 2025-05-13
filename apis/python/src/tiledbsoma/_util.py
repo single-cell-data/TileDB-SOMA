@@ -312,6 +312,18 @@ def to_clib_result_order(result_order: options.ResultOrderStr) -> clib.ResultOrd
         raise ValueError(f"Invalid result_order: {result_order}") from ke
 
 
+def from_clib_result_order(result_order: clib.ResultOrder) -> options.ResultOrder:
+    from_clib_result_order = {
+        clib.ResultOrder.automatic: options.ResultOrder.AUTO,
+        clib.ResultOrder.rowmajor: options.ResultOrder.ROW_MAJOR,
+        clib.ResultOrder.colmajor: options.ResultOrder.COLUMN_MAJOR,
+    }
+    try:
+        return from_clib_result_order[result_order]
+    except KeyError as ke:
+        raise ValueError(f"Invalid clib result_order: {result_order}") from ke
+
+
 def pa_types_is_string_or_bytes(dtype: pa.DataType) -> bool:
     return bool(
         pa.types.is_large_string(dtype)
