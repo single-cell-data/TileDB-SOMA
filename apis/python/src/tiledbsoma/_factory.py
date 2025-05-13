@@ -38,7 +38,7 @@ from ._constants import (
 )
 from ._exception import SOMAError
 from ._funcs import typeguard_ignore
-from ._soma_object import AnySOMAObject, SOMAObject
+from ._soma_object import AnySOMAObject, SOMAObject, _read_soma_type
 from ._types import OpenTimestamp
 from .options import SOMATileDBContext
 from .options._soma_tiledb_context import _validate_soma_tiledb_context
@@ -172,40 +172,6 @@ def reify_handle(hdl: _Wrapper) -> SOMAObject[_Wrapper]:
         _soma_object.SOMAObject[_Wrapper],
         cls(hdl, _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code"),
     )
-
-
-def _read_soma_type(hdl: _tdb_handles.AnyWrapper) -> str:
-    obj_type = hdl.metadata.get(SOMA_OBJECT_TYPE_METADATA_KEY)
-    encoding_version = hdl.metadata.get(SOMA_ENCODING_VERSION_METADATA_KEY)
-
-    if obj_type is None:
-        raise SOMAError(
-            f"stored TileDB object does not have {SOMA_OBJECT_TYPE_METADATA_KEY!r}"
-        )
-
-    if isinstance(obj_type, bytes):
-        obj_type = str(obj_type, "utf-8")
-
-    if not isinstance(obj_type, str):
-        raise SOMAError(
-            f"stored TileDB object {SOMA_OBJECT_TYPE_METADATA_KEY!r}"
-            f" is {type(obj_type)}"
-        )
-    if encoding_version is None:
-        raise SOMAError(
-            f"stored TileDB object does not have {SOMA_ENCODING_VERSION_METADATA_KEY}"
-        )
-
-    if isinstance(encoding_version, bytes):
-        encoding_version = str(encoding_version, "utf-8")
-
-    if encoding_version not in {"1", "1.1.0"}:
-        raise ValueError(
-            f"Unsupported SOMA object encoding version {encoding_version}. The TileDB-SOMA "
-            f"client library needs to be updated to a more recent version."
-        )
-
-    return obj_type
 
 
 @no_type_check
