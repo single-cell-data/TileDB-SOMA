@@ -15,7 +15,7 @@ Authors@R: c(
            role = "aut", email = "dirk@tiledb.com",
            comment = c(ORCID = "0000-0001-6419-907X")),
     person(given = "Paul", family = "Hoffman",
-           role = c("cre", "aut"), email = "paul.hoffman@tiledb.com",
+           role = c("cre", "aut"), email = "tiledb-r@tiledb.com",
            comment = c(ORCID = "0000-0002-7693-8957")),
     person(given = "John", family = "Kerl",
            role = "aut", email = "john.kerl@tiledb.com"),
