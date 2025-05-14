@@ -161,7 +161,7 @@ SOMAObject <- R6::R6Class(
       )
       self$close()
       private$.tiledb_timestamp <- tiledb_timestamp
-      self$open(mode, internal_use_only = "allowed_use")
+      self$open(mode)
       return(invisible(self))
     },
 

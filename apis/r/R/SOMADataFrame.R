@@ -55,8 +55,7 @@ SOMADataFrame <- R6::R6Class(
       schema,
       index_column_names = c("soma_joinid"),
       domain = NULL,
-      platform_config = NULL,
-      ...
+      platform_config = NULL
     ) {
       envs <- unique(vapply(
         X = unique(sys.parents()),

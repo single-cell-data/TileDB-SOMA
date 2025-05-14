@@ -25,7 +25,7 @@ SOMAArrayBase <- R6::R6Class(
     #' directly; use factory functions (eg. \code{\link{SOMACollectionOpen}()})
     #' instead
     #'
-    open = function(mode = c("READ", "WRITE"), ...) {
+    open = function(mode = c("READ", "WRITE")) {
       envs <- unique(vapply(
         X = unique(sys.parents()),
         FUN = function(n) environmentName(environment(sys.function(n))),
