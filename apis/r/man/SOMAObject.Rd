@@ -18,7 +18,9 @@ Base class to implement shared functionality across the
 
 \item{\code{tiledb_timestamp}}{Time that object was opened at}
 
-\item{\code{uri}}{The URI of the TileDB object.}
+\item{\code{uri}}{The URI of the TileDB object}
+
+\item{\code{soma_type}}{The SOMA object type}
 
 \item{\code{.tiledb_timestamp_range}}{Time range for libtiledbsoma}
 }
@@ -33,6 +35,8 @@ Base class to implement shared functionality across the
 \item \href{#method-SOMAObject-mode}{\code{SOMAObject$mode()}}
 \item \href{#method-SOMAObject-reopen}{\code{SOMAObject$reopen()}}
 \item \href{#method-SOMAObject-exists}{\code{SOMAObject$exists()}}
+\item \href{#method-SOMAObject-get_metadata}{\code{SOMAObject$get_metadata()}}
+\item \href{#method-SOMAObject-set_metadata}{\code{SOMAObject$set_metadata()}}
 \item \href{#method-SOMAObject-print}{\code{SOMAObject$print()}}
 \item \href{#method-SOMAObject-clone}{\code{SOMAObject$clone()}}
 }
@@ -154,6 +158,47 @@ Check if the object exists. (lifecycle: maturing)
 
 \subsection{Returns}{
 \code{TRUE} if the object exists, otherwise \code{FALSE}
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SOMAObject-get_metadata"></a>}}
+\if{latex}{\out{\hypertarget{method-SOMAObject-get_metadata}{}}}
+\subsection{Method \code{get_metadata()}}{
+Retrieve metadata. (lifecycle: maturing)
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SOMAObject$get_metadata(key = NULL)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{key}}{The name of the metadata attribute to retrieve
+is not NULL.}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+A list of metadata values.
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SOMAObject-set_metadata"></a>}}
+\if{latex}{\out{\hypertarget{method-SOMAObject-set_metadata}{}}}
+\subsection{Method \code{set_metadata()}}{
+Add list of metadata. (lifecycle: maturing)
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SOMAObject$set_metadata(metadata)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{metadata}}{Named list of metadata to add}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+Invisibly returns \code{self}
 }
 }
 \if{html}{\out{<hr>}}
