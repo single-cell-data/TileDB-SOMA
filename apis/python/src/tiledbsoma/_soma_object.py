@@ -110,7 +110,7 @@ class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
         )
         if _read_soma_type(handle) != cls.soma_type:
             raise SOMAError(
-                "Unexpected SOMA metadaa encoding - unable to determine object type."
+                "Unexpected SOMA metadata encoding - object encoding metadata value did not match expected value."
             )
         if not isinstance(handle, cls._wrapper_type):
             handle = cls._wrapper_type.open(uri, mode, context, tiledb_timestamp)
@@ -352,7 +352,8 @@ def _read_soma_type(hdl: _tdb_handles.AnyWrapper) -> str:
 
     if obj_type is None:
         raise SOMAError(
-            f"stored TileDB object does not have {SOMA_OBJECT_TYPE_METADATA_KEY!r}"
+            f"Cannot access stored TileDB object with TileDB-SOMA. The object is missing "
+            f"the required '{SOMA_OBJECT_TYPE_METADATA_KEY!r}' metadata key."
         )
 
     if isinstance(obj_type, bytes):
@@ -360,12 +361,13 @@ def _read_soma_type(hdl: _tdb_handles.AnyWrapper) -> str:
 
     if not isinstance(obj_type, str):
         raise SOMAError(
-            f"stored TileDB object {SOMA_OBJECT_TYPE_METADATA_KEY!r}"
-            f" is {type(obj_type)}"
+            f"Cannot access stored TileDB object with TileDB-SOMA. The metadata key "
+            f"'{SOMA_OBJECT_TYPE_METADATA_KEY!r}' has unexpected type '{type(obj_type)}'."
         )
     if encoding_version is None:
         raise SOMAError(
-            f"stored TileDB object does not have {SOMA_ENCODING_VERSION_METADATA_KEY}"
+            f"Cannot access stored TileDB object with TileDB-SOMA. The object is missing "
+            f"the required '{SOMA_ENCODING_VERSION_METADATA_KEY!r}' metadata key."
         )
 
     if isinstance(encoding_version, bytes):
@@ -373,8 +375,8 @@ def _read_soma_type(hdl: _tdb_handles.AnyWrapper) -> str:
 
     if encoding_version not in SUPPORTED_SOMA_ENCODING_VERSIONS:
         raise ValueError(
-            f"Unsupported SOMA object encoding version {encoding_version}. The TileDB-SOMA "
-            f"client library needs to be updated to a more recent version."
+            f"Unsupported SOMA object encoding version '{encoding_version}'. TileDB-SOMA "
+            f"needs to be updated to a more recent version."
         )
 
     return obj_type
