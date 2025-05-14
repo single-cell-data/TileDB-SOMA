@@ -184,17 +184,20 @@ def test_slice_to_range_bad(start_stop, domain, exc):
             "nested%2Fpath%2Fwith_underscores%2Fwith-dashes",
         ),
         ("path/with+special-characters!", "path%2Fwith+special-characters!"),
-        ("name%20with%20encoded%20spaces", "name%20with%20encoded%20spaces"),
-        ("name%2Fwith%2Fencoded%2Fslashes", "name%2Fwith%2Fencoded%2Fslashes"),
+        ("name%20with%20encoded%20spaces", "name%2520with%2520encoded%2520spaces"),
+        ("name%2Fwith%2Fencoded%2Fslashes", "name%252Fwith%252Fencoded%252Fslashes"),
         (
             "path/name%20with%20encoded%20spaces",
-            "path%2Fname%20with%20encoded%20spaces",
+            "path%2Fname%2520with%2520encoded%2520spaces",
         ),
         (
             "path/name%2Fwith%2Fencoded%2Fslashes",
-            "path%2Fname%2Fwith%2Fencoded%2Fslashes",
+            "path%2Fname%252Fwith%252Fencoded%252Fslashes",
         ),
-        ("%20%20%20%20%20%20%20%20%20", "%20%20%20%20%20%20%20%20%20"),
+        (
+            "%20%20%20%20%20%20%20%20%20",
+            "%2520%2520%2520%2520%2520%2520%2520%2520%2520",
+        ),
         (
             "/path/with/mixed/slashes\\and\\backslashes",
             "%2Fpath%2Fwith%2Fmixed%2Fslashes%5Cand%5Cbackslashes",

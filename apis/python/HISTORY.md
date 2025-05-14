@@ -25,6 +25,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Security
 
+- \[[#4031](https://github.com/single-cell-data/TileDB-SOMA/pull/4031)\] [python] Encode URI when generating from key
+
 ## [Release prior to 1.17.0]
 
 TileDB-SOMA Python releases prior to 1.17.0 are documented in the [TileDB-SOMA Github Releases](https://github.com/single-cell-data/TileDB-SOMA/releases).
