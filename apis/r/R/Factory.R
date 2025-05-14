@@ -138,7 +138,7 @@ SOMASparseNDArrayCreate <- function(
     snda$create(
       type,
       shape,
-      platform_config = platform_config,
+      platform_config = platform_config
     )
   }
   return(snda)
@@ -195,7 +195,7 @@ SOMADenseNDArrayCreate <- function(
   dnda$create(
     type,
     shape,
-    platform_config = platform_config,
+    platform_config = platform_config
   )
   return(dnda)
 }
