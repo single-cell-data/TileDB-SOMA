@@ -40,7 +40,7 @@ Imports:
     data.table,
     fs,
     glue,
-    Matrix (>= 1.7.3),
+    Matrix (>= 1.6.4),
     methods,
     nanoarrow,
     R6,
