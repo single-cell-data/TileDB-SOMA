@@ -736,67 +736,22 @@ SOMACollectionBase <- R6::R6Class(
         uri
       )
 
-      generator <- tryCatch(
-        base::get(soma_type, envir = getNamespace("tiledbsoma"), mode = "environment"),
+      fxn <- tryCatch(
+        base::get(
+          sprintf("%sOpen", soma_type),
+          envir = getNamespace("tiledbsoma"),
+          mode = "function"
+        ),
         error = \() stop("Unknown member SOMA type: ", soma_type, call. = FALSE)
       )
 
-      return(generator$new(
+      return(fxn(
         uri,
-        # tiledbsoma_ctx = self$tiledbsoma_ctx,
+        mode = self$mode(),
         platform_config = self$platform_config,
-        internal_use_only = "allowed_use",
-        tiledb_timestamp = self$tiledb_timestamp,
-        soma_context = private$soma_context
-      )$open(self$mode()))
-
-      # # We have to use the appropriate TileDB base class to read the soma_type
-      # # from the object's metadata so we know which SOMA class to instantiate
-      # tiledbsoma_constructor <- switch(type,
-      #   ARRAY = TileDBArray$new,
-      #   SOMAArray = TileDBArray$new,
-      #   GROUP = TileDBGroup$new,
-      #   SOMAGroup = TileDBGroup$new,
-      #   stop(sprintf("Unknown member TileDB type: %s", type), call. = FALSE)
-      # )
-      #
-      # tiledb_object <- tiledbsoma_constructor(
-      #   uri,
-      #   tiledbsoma_ctx = self$tiledbsoma_ctx,
-      #   platform_config = self$platform_config,
-      #   tiledb_timestamp = private$.group_open_timestamp,
-      #   internal_use_only = "allowed_use"
-      # )
-      #
-      # tiledb_object$open(mode = "READ", internal_use_only = "allowed_use")
-      # soma_type <- tiledb_object$get_metadata(SOMA_OBJECT_TYPE_METADATA_KEY)
-      # tiledb_object$close()
-      #
-      # spdl::debug(
-      #   "[SOMACollectionBase] Instantiating {} object at: '{}'",
-      #   soma_type %||% "Unknown",
-      #   uri
-      # )
-      #
-      # stopifnot("Discovered metadata object type is missing; cannot construct" = !is.null(soma_type))
-      # spdl::debug("[SOMACollectionBase$construct_member] soma_type {}", soma_type)
-      # soma_constructor <- switch(soma_type,
-      #   SOMADataFrame = SOMADataFrame$new,
-      #   SOMADenseNDArray = SOMADenseNDArray$new,
-      #   SOMASparseNDArray = SOMASparseNDArray$new,
-      #   SOMACollection = SOMACollection$new,
-      #   SOMAMeasurement = SOMAMeasurement$new,
-      #   SOMAExperiment = SOMAExperiment$new,
-      #   stop(sprintf("Unknown member SOMA type: %s", soma_type), call. = FALSE)
-      # )
-      # obj <- soma_constructor(
-      #   uri,
-      #   tiledbsoma_ctx = self$tiledbsoma_ctx,
-      #   platform_config = self$platform_config,
-      #   tiledb_timestamp = private$.group_open_timestamp,
-      #   internal_use_only = "allowed_use"
-      # )
-      # return(obj)
+        tiledbsoma_ctx = self$tiledbsoma_ctx,
+        tiledb_timestamp = self$tiledb_timestamp
+      ))
     },
 
     # Internal method called by SOMA Measurement/Experiment's active bindings
