@@ -55,7 +55,7 @@ SOMAArrayBase <- R6::R6Class(
 
       if (is.null(self$tiledb_timestamp)) {
         spdl::debug(
-          "[TileDBArray$open] Opening {} '{}' in {} mode",
+          "[SOMAArrayBase$open] Opening {} '{}' in {} mode",
           self$class(),
           self$uri,
           self$mode()
@@ -73,7 +73,7 @@ SOMAArrayBase <- R6::R6Class(
         #   )
         # }
         spdl::debug(
-          "[TileDBArray$open] Opening {} '{}' in {} mode at ({})",
+          "[SOMAArrayBase$open] Opening {} '{}' in {} mode at ({})",
           self$class(),
           self$uri,
           mode,
