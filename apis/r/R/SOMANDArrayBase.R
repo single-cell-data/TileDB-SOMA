@@ -31,8 +31,7 @@ SOMANDArrayBase <- R6::R6Class(
     create = function(
       type,
       shape,
-      platform_config = NULL,
-      ...
+      platform_config = NULL
     ) {
       envs <- unique(vapply(
         X = unique(sys.parents()),

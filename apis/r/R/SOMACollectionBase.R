@@ -231,7 +231,7 @@ SOMACollectionBase <- R6::R6Class(
 
       obj <- if (is.null(member$object)) {
         spdl::debug(
-          "[TileDBGroup$get] construct member {} type {}",
+          "[SOMACollectionBase$get] construct member {} type {}",
           member$uri,
           member$type
         )
@@ -240,11 +240,11 @@ SOMACollectionBase <- R6::R6Class(
         member$object
       }
 
-      spdl::debug("[TileDBGroup$get] open check, mode {}", self$mode())
+      spdl::debug("[SOMACollectionBase$get] open check, mode {}", self$mode())
       if (!obj$is_open()) {
         switch(
           EXPR = (mode <- self$mode()),
-          READ = obj$open(mode, internal_use_only = "allowed_use"),
+          READ = obj$open(mode),
           WRITE = obj$reopen(mode)
         )
       }
