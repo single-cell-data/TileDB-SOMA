@@ -18,8 +18,8 @@
 #' more dimensions.
 #'
 #' The default \dQuote{fill} value for \code{SOMADenseNDArray} is the zero or
-#' null value of the array type (e.g. \code{\link[arrow]{float32}} defaults
-#' to 0.0).
+#' null value of the array type (e.g.,
+#' \code{\link[arrow:float32]{arrow::float32}()} defaults to 0.0).
 #'
 #' The \code{$write()} method is currently limited to writing from 2-d matrices
 #' (lifecycle: maturing).
@@ -51,7 +51,7 @@ SOMADenseNDArray <- R6::R6Class(
       result_order = "auto",
       log_level = "auto"
     ) {
-      private$check_open_for_read()
+      private$.check_open_for_read()
 
       uri <- self$uri
 
@@ -92,7 +92,7 @@ SOMADenseNDArray <- R6::R6Class(
       result_order = "ROW_MAJOR",
       log_level = "warn"
     ) {
-      private$check_open_for_read()
+      private$.check_open_for_read()
 
       ndim <- self$ndim()
       attrnames <- self$attrnames()
@@ -124,16 +124,19 @@ SOMADenseNDArray <- R6::R6Class(
     # More general write methods for higher-dimensional array could be added.
     #'
     #' @param values A \code{matrix}. Character dimension names are ignored
-    #' because \code{SOMANDArray}s use integer indexing.
+    #' because \code{SOMANDArray}'s use integer indexing.
     #' @param coords A \code{list} of integer vectors, one for each dimension,
-    #' with a length equal to the number of values to write. If \code{NULL}, the
-    #' default, the values are taken from the row and column names of
-    #' \code{values}.
+    #' with a length equal to the number of values to write. If \code{NULL},
+    #' the default, the values are taken from the row and column names
+    #' of \code{values}.
     #'
-    #' @return Invisibly returns \code{self}
+    #' @return Invisibly returns \code{self}.
+    #'
+    #' @note The \code{$write()} method is currently limited to writing from
+    #' two-dimensional matrices (lifecycle: maturing).
     #'
     write = function(values, coords = NULL) {
-      private$check_open_for_write()
+      private$.check_open_for_write()
 
       spdl::debug("[SOMADenseNDArray::write] entered")
       stopifnot(
@@ -156,7 +159,7 @@ SOMADenseNDArray <- R6::R6Class(
         private$.type <- self$schema()[["soma_data"]]$type
       }
 
-      arr <- self$object
+      arr <- private$.tiledb_array
       tiledb::query_layout(arr) <- "COL_MAJOR"
       spdl::debug("[SOMADenseNDArray::write] about to call write")
       arrsch <- arrow::schema(arrow::field("soma_data", private$.type))
@@ -166,7 +169,6 @@ SOMADenseNDArray <- R6::R6Class(
       naap <- nanoarrow::nanoarrow_allocate_array()
       nasp <- nanoarrow::nanoarrow_allocate_schema()
       arrow::as_record_batch(tbl)$export_to_c(naap, nasp)
-      # arr[] <- values
       writeArrayFromArrow(
         uri = self$uri,
         naap = naap,
@@ -178,10 +180,7 @@ SOMADenseNDArray <- R6::R6Class(
       )
       spdl::debug("[SOMADenseNDArray::write] written")
 
-      # tiledb-r always closes the array after a write operation so we need to
-      # manually reopen it until close-on-write is optional
-      # self$open("WRITE", internal_use_only = "allowed_use")
-      invisible(self)
+      return(invisible(self))
     }
   ),
   private = list(
