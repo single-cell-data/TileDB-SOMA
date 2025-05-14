@@ -28,7 +28,7 @@ obs$close()
 }
 \keyword{internal}
 \section{Super classes}{
-\code{\link[tiledbsoma:TileDBObject]{tiledbsoma::TileDBObject}} -> \code{\link[tiledbsoma:TileDBGroup]{tiledbsoma::TileDBGroup}} -> \code{\link[tiledbsoma:SOMACollectionBase]{tiledbsoma::SOMACollectionBase}} -> \code{\link[tiledbsoma:EphemeralCollectionBase]{tiledbsoma::EphemeralCollectionBase}} -> \code{EphemeralExperiment}
+\code{\link[tiledbsoma:SOMAObject]{tiledbsoma::SOMAObject}} -> \code{\link[tiledbsoma:SOMACollectionBase]{tiledbsoma::SOMACollectionBase}} -> \code{\link[tiledbsoma:EphemeralCollectionBase]{tiledbsoma::EphemeralCollectionBase}} -> \code{EphemeralExperiment}
 }
 \section{Active bindings}{
 \if{html}{\out{<div class="r6-active-bindings">}}
@@ -54,12 +54,12 @@ the \code{SOMAExperiment} must be defined in this data frame.}
 \if{html}{\out{
 <details><summary>Inherited methods</summary>
 <ul>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="class"><a href='../../tiledbsoma/html/TileDBObject.html#method-TileDBObject-class'><code>tiledbsoma::TileDBObject$class()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="is_open"><a href='../../tiledbsoma/html/TileDBObject.html#method-TileDBObject-is_open'><code>tiledbsoma::TileDBObject$is_open()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="mode"><a href='../../tiledbsoma/html/TileDBObject.html#method-TileDBObject-mode'><code>tiledbsoma::TileDBObject$mode()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="reopen"><a href='../../tiledbsoma/html/TileDBObject.html#method-TileDBObject-reopen'><code>tiledbsoma::TileDBObject$reopen()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBGroup" data-id="to_data_frame"><a href='../../tiledbsoma/html/TileDBGroup.html#method-TileDBGroup-to_data_frame'><code>tiledbsoma::TileDBGroup$to_data_frame()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBGroup" data-id="to_list"><a href='../../tiledbsoma/html/TileDBGroup.html#method-TileDBGroup-to_list'><code>tiledbsoma::TileDBGroup$to_list()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAObject" data-id="class"><a href='../../tiledbsoma/html/SOMAObject.html#method-SOMAObject-class'><code>tiledbsoma::SOMAObject$class()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAObject" data-id="is_open"><a href='../../tiledbsoma/html/SOMAObject.html#method-SOMAObject-is_open'><code>tiledbsoma::SOMAObject$is_open()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAObject" data-id="mode"><a href='../../tiledbsoma/html/SOMAObject.html#method-SOMAObject-mode'><code>tiledbsoma::SOMAObject$mode()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAObject" data-id="reopen"><a href='../../tiledbsoma/html/SOMAObject.html#method-SOMAObject-reopen'><code>tiledbsoma::SOMAObject$reopen()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMACollectionBase" data-id="length"><a href='../../tiledbsoma/html/SOMACollectionBase.html#method-SOMACollectionBase-length'><code>tiledbsoma::SOMACollectionBase$length()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMACollectionBase" data-id="names"><a href='../../tiledbsoma/html/SOMACollectionBase.html#method-SOMACollectionBase-names'><code>tiledbsoma::SOMACollectionBase$names()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="EphemeralCollectionBase" data-id="add_new_collection"><a href='../../tiledbsoma/html/EphemeralCollectionBase.html#method-EphemeralCollectionBase-add_new_collection'><code>tiledbsoma::EphemeralCollectionBase$add_new_collection()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="EphemeralCollectionBase" data-id="add_new_dataframe"><a href='../../tiledbsoma/html/EphemeralCollectionBase.html#method-EphemeralCollectionBase-add_new_dataframe'><code>tiledbsoma::EphemeralCollectionBase$add_new_dataframe()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="EphemeralCollectionBase" data-id="add_new_dense_ndarray"><a href='../../tiledbsoma/html/EphemeralCollectionBase.html#method-EphemeralCollectionBase-add_new_dense_ndarray'><code>tiledbsoma::EphemeralCollectionBase$add_new_dense_ndarray()</code></a></span></li>
@@ -71,8 +71,6 @@ the \code{SOMAExperiment} must be defined in this data frame.}
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="EphemeralCollectionBase" data-id="get_metadata"><a href='../../tiledbsoma/html/EphemeralCollectionBase.html#method-EphemeralCollectionBase-get_metadata'><code>tiledbsoma::EphemeralCollectionBase$get_metadata()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="EphemeralCollectionBase" data-id="get_tiledb_config"><a href='../../tiledbsoma/html/EphemeralCollectionBase.html#method-EphemeralCollectionBase-get_tiledb_config'><code>tiledbsoma::EphemeralCollectionBase$get_tiledb_config()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="EphemeralCollectionBase" data-id="initialize"><a href='../../tiledbsoma/html/EphemeralCollectionBase.html#method-EphemeralCollectionBase-initialize'><code>tiledbsoma::EphemeralCollectionBase$initialize()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="EphemeralCollectionBase" data-id="length"><a href='../../tiledbsoma/html/EphemeralCollectionBase.html#method-EphemeralCollectionBase-length'><code>tiledbsoma::EphemeralCollectionBase$length()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="EphemeralCollectionBase" data-id="names"><a href='../../tiledbsoma/html/EphemeralCollectionBase.html#method-EphemeralCollectionBase-names'><code>tiledbsoma::EphemeralCollectionBase$names()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="EphemeralCollectionBase" data-id="open"><a href='../../tiledbsoma/html/EphemeralCollectionBase.html#method-EphemeralCollectionBase-open'><code>tiledbsoma::EphemeralCollectionBase$open()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="EphemeralCollectionBase" data-id="print"><a href='../../tiledbsoma/html/EphemeralCollectionBase.html#method-EphemeralCollectionBase-print'><code>tiledbsoma::EphemeralCollectionBase$print()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="EphemeralCollectionBase" data-id="remove"><a href='../../tiledbsoma/html/EphemeralCollectionBase.html#method-EphemeralCollectionBase-remove'><code>tiledbsoma::EphemeralCollectionBase$remove()</code></a></span></li>
