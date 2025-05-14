@@ -10,24 +10,29 @@ stored in-memory instead of on-disks
 }
 \keyword{internal}
 \section{Super classes}{
-\code{\link[tiledbsoma:TileDBObject]{tiledbsoma::TileDBObject}} -> \code{\link[tiledbsoma:TileDBGroup]{tiledbsoma::TileDBGroup}} -> \code{\link[tiledbsoma:SOMACollectionBase]{tiledbsoma::SOMACollectionBase}} -> \code{EphemeralCollectionBase}
+\code{\link[tiledbsoma:SOMAObject]{tiledbsoma::SOMAObject}} -> \code{\link[tiledbsoma:SOMACollectionBase]{tiledbsoma::SOMACollectionBase}} -> \code{EphemeralCollectionBase}
 }
 \section{Active bindings}{
 \if{html}{\out{<div class="r6-active-bindings">}}
 \describe{
 \item{\code{uri}}{\dQuote{\code{ephemeral-collection:<MEMORY_ADDRESS>}}}
 
-\item{\code{soma_type}}{Dummy field for ephemeral objects for compatibility with
-SOMA collections}
+\item{\code{members}}{A list with the members of this collection}
+
+\item{\code{soma_type}}{Dummy field for ephemeral objects for compatibility
+with SOMA collections}
 
 \item{\code{platform_config}}{Dummy field for ephemeral objects for
 compatibility with SOMA collections}
 
-\item{\code{tiledbsoma_ctx}}{Dummy field for ephemeral objects for compatibility
-with SOMA collections}
+\item{\code{tiledbsoma_ctx}}{Dummy field for ephemeral objects for
+compatibility with SOMA collections}
 
-\item{\code{object}}{Dummy field for ephemeral objects for compatibility with
-SOMA collections}
+\item{\code{tiledb_timestamp}}{Dummy field for ephemeral objects for
+compatibility with SOMA collections}
+
+\item{\code{.tiledb_timestamp_range}}{Dummy field for ephemeral objects for
+compatibility with SOMA collections}
 }
 \if{html}{\out{</div>}}
 }
@@ -41,8 +46,6 @@ SOMA collections}
 \item \href{#method-EphemeralCollectionBase-exists}{\code{EphemeralCollectionBase$exists()}}
 \item \href{#method-EphemeralCollectionBase-print}{\code{EphemeralCollectionBase$print()}}
 \item \href{#method-EphemeralCollectionBase-get_tiledb_config}{\code{EphemeralCollectionBase$get_tiledb_config()}}
-\item \href{#method-EphemeralCollectionBase-length}{\code{EphemeralCollectionBase$length()}}
-\item \href{#method-EphemeralCollectionBase-names}{\code{EphemeralCollectionBase$names()}}
 \item \href{#method-EphemeralCollectionBase-set}{\code{EphemeralCollectionBase$set()}}
 \item \href{#method-EphemeralCollectionBase-get}{\code{EphemeralCollectionBase$get()}}
 \item \href{#method-EphemeralCollectionBase-remove}{\code{EphemeralCollectionBase$remove()}}
@@ -58,12 +61,12 @@ SOMA collections}
 \if{html}{\out{
 <details><summary>Inherited methods</summary>
 <ul>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="class"><a href='../../tiledbsoma/html/TileDBObject.html#method-TileDBObject-class'><code>tiledbsoma::TileDBObject$class()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="is_open"><a href='../../tiledbsoma/html/TileDBObject.html#method-TileDBObject-is_open'><code>tiledbsoma::TileDBObject$is_open()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="mode"><a href='../../tiledbsoma/html/TileDBObject.html#method-TileDBObject-mode'><code>tiledbsoma::TileDBObject$mode()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="reopen"><a href='../../tiledbsoma/html/TileDBObject.html#method-TileDBObject-reopen'><code>tiledbsoma::TileDBObject$reopen()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBGroup" data-id="to_data_frame"><a href='../../tiledbsoma/html/TileDBGroup.html#method-TileDBGroup-to_data_frame'><code>tiledbsoma::TileDBGroup$to_data_frame()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBGroup" data-id="to_list"><a href='../../tiledbsoma/html/TileDBGroup.html#method-TileDBGroup-to_list'><code>tiledbsoma::TileDBGroup$to_list()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAObject" data-id="class"><a href='../../tiledbsoma/html/SOMAObject.html#method-SOMAObject-class'><code>tiledbsoma::SOMAObject$class()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAObject" data-id="is_open"><a href='../../tiledbsoma/html/SOMAObject.html#method-SOMAObject-is_open'><code>tiledbsoma::SOMAObject$is_open()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAObject" data-id="mode"><a href='../../tiledbsoma/html/SOMAObject.html#method-SOMAObject-mode'><code>tiledbsoma::SOMAObject$mode()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAObject" data-id="reopen"><a href='../../tiledbsoma/html/SOMAObject.html#method-SOMAObject-reopen'><code>tiledbsoma::SOMAObject$reopen()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMACollectionBase" data-id="length"><a href='../../tiledbsoma/html/SOMACollectionBase.html#method-SOMACollectionBase-length'><code>tiledbsoma::SOMACollectionBase$length()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMACollectionBase" data-id="names"><a href='../../tiledbsoma/html/SOMACollectionBase.html#method-SOMACollectionBase-names'><code>tiledbsoma::SOMACollectionBase$names()</code></a></span></li>
 </ul>
 </details>
 }}
@@ -101,7 +104,7 @@ Returns a new ephemeral collection of class \code{class(self)}
 \if{html}{\out{<a id="method-EphemeralCollectionBase-open"></a>}}
 \if{latex}{\out{\hypertarget{method-EphemeralCollectionBase-open}{}}}
 \subsection{Method \code{open()}}{
-Dummy method for ephemeral cobjects for compatibility with
+Dummy method for ephemeral objects for compatibility with
 SOMA collections
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{EphemeralCollectionBase$open(mode)}\if{html}{\out{</div>}}
@@ -115,14 +118,15 @@ SOMA collections
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-Throws an error as this method is not supported by ephemeral objects
+Throws an error as this method is not supported by
+ephemeral objects
 }
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-EphemeralCollectionBase-close"></a>}}
 \if{latex}{\out{\hypertarget{method-EphemeralCollectionBase-close}{}}}
 \subsection{Method \code{close()}}{
-Dummy method for ephemeral cobjects for compatibility with
+Dummy method for ephemeral objects for compatibility with
 SOMA collections
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{EphemeralCollectionBase$close()}\if{html}{\out{</div>}}
@@ -136,7 +140,7 @@ Invisibly returns \code{NULL}
 \if{html}{\out{<a id="method-EphemeralCollectionBase-exists"></a>}}
 \if{latex}{\out{\hypertarget{method-EphemeralCollectionBase-exists}{}}}
 \subsection{Method \code{exists()}}{
-Dummy method for ephemeral cobjects for compatibility with
+Dummy method for ephemeral objects for compatibility with
 SOMA collections
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{EphemeralCollectionBase$exists()}\if{html}{\out{</div>}}
@@ -165,7 +169,7 @@ returns itself
 \if{html}{\out{<a id="method-EphemeralCollectionBase-get_tiledb_config"></a>}}
 \if{latex}{\out{\hypertarget{method-EphemeralCollectionBase-get_tiledb_config}{}}}
 \subsection{Method \code{get_tiledb_config()}}{
-Dummy method for ephemeral cobjects for compatibility with
+Dummy method for ephemeral objects for compatibility with
 SOMA collections
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{EphemeralCollectionBase$get_tiledb_config(param = NULL)}\if{html}{\out{</div>}}
@@ -181,32 +185,6 @@ SOMA collections
 \subsection{Returns}{
 Returns \code{NULL} as ephemeral collections do not have an
 on-disk configuration
-}
-}
-\if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-EphemeralCollectionBase-length"></a>}}
-\if{latex}{\out{\hypertarget{method-EphemeralCollectionBase-length}{}}}
-\subsection{Method \code{length()}}{
-Retrieve the number of items in the collection
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{EphemeralCollectionBase$length()}\if{html}{\out{</div>}}
-}
-
-\subsection{Returns}{
-The length of the collection
-}
-}
-\if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-EphemeralCollectionBase-names"></a>}}
-\if{latex}{\out{\hypertarget{method-EphemeralCollectionBase-names}{}}}
-\subsection{Method \code{names()}}{
-Retrieve the names of members. (lifecycle: maturing)
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{EphemeralCollectionBase$names()}\if{html}{\out{</div>}}
-}
-
-\subsection{Returns}{
-A \code{character} vector of member names.
 }
 }
 \if{html}{\out{<hr>}}
@@ -280,7 +258,7 @@ Remove objects from an ephemeral collection
 \if{html}{\out{<a id="method-EphemeralCollectionBase-set_metadata"></a>}}
 \if{latex}{\out{\hypertarget{method-EphemeralCollectionBase-set_metadata}{}}}
 \subsection{Method \code{set_metadata()}}{
-Dummy method for ephemeral cobjects for compatibility with
+Dummy method for ephemeral objects for compatibility with
 SOMA collections
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{EphemeralCollectionBase$set_metadata(metadata)}\if{html}{\out{</div>}}
@@ -294,14 +272,15 @@ SOMA collections
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-Throws an error as this method is not supported by ephemeral objects
+Throws an error as this method is not supported by
+ephemeral objects
 }
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-EphemeralCollectionBase-get_metadata"></a>}}
 \if{latex}{\out{\hypertarget{method-EphemeralCollectionBase-get_metadata}{}}}
 \subsection{Method \code{get_metadata()}}{
-Dummy method for ephemeral cobjects for compatibility with
+Dummy method for ephemeral objects for compatibility with
 SOMA collections
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{EphemeralCollectionBase$get_metadata(key = NULL)}\if{html}{\out{</div>}}
@@ -322,7 +301,7 @@ An empty list
 \if{html}{\out{<a id="method-EphemeralCollectionBase-add_new_collection"></a>}}
 \if{latex}{\out{\hypertarget{method-EphemeralCollectionBase-add_new_collection}{}}}
 \subsection{Method \code{add_new_collection()}}{
-Dummy method for ephemeral cobjects for compatibility with
+Dummy method for ephemeral objects for compatibility with
 SOMA collections
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{EphemeralCollectionBase$add_new_collection(object, key)}\if{html}{\out{</div>}}
@@ -336,14 +315,15 @@ SOMA collections
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-Throws an error as this method is not supported by ephemeral objects
+Throws an error as this method is not supported by
+ephemeral objects
 }
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-EphemeralCollectionBase-add_new_dataframe"></a>}}
 \if{latex}{\out{\hypertarget{method-EphemeralCollectionBase-add_new_dataframe}{}}}
 \subsection{Method \code{add_new_dataframe()}}{
-Dummy method for ephemeral cobjects for compatibility with
+Dummy method for ephemeral objects for compatibility with
 SOMA collections
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{EphemeralCollectionBase$add_new_dataframe(key, schema, index_column_names)}\if{html}{\out{</div>}}
@@ -357,14 +337,15 @@ SOMA collections
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-Throws an error as this method is not supported by ephemeral objects
+Throws an error as this method is not supported by
+ephemeral objects
 }
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-EphemeralCollectionBase-add_new_dense_ndarray"></a>}}
 \if{latex}{\out{\hypertarget{method-EphemeralCollectionBase-add_new_dense_ndarray}{}}}
 \subsection{Method \code{add_new_dense_ndarray()}}{
-Dummy method for ephemeral cobjects for compatibility with
+Dummy method for ephemeral objects for compatibility with
 SOMA collections
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{EphemeralCollectionBase$add_new_dense_ndarray(key, type, shape)}\if{html}{\out{</div>}}
@@ -378,14 +359,15 @@ SOMA collections
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-Throws an error as this method is not supported by ephemeral objects
+Throws an error as this method is not supported by
+ephemeral objects
 }
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-EphemeralCollectionBase-add_new_sparse_ndarray"></a>}}
 \if{latex}{\out{\hypertarget{method-EphemeralCollectionBase-add_new_sparse_ndarray}{}}}
 \subsection{Method \code{add_new_sparse_ndarray()}}{
-Dummy method for ephemeral cobjects for compatibility with
+Dummy method for ephemeral objects for compatibility with
 SOMA collections
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{EphemeralCollectionBase$add_new_sparse_ndarray(key, type, shape)}\if{html}{\out{</div>}}
@@ -399,7 +381,8 @@ SOMA collections
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-Throws an error as this method is not supported by ephemeral objects
+Throws an error as this method is not supported by
+ephemeral objects
 }
 }
 \if{html}{\out{<hr>}}
