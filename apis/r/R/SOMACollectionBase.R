@@ -453,7 +453,7 @@ SOMACollectionBase <- R6::R6Class(
       super$print()
       if (self$exists()) {
         if (self$is_open()) {
-          if ((count <- self$length()) > 0L) {
+          if (self$length()) {
             df <- vector(mode = "list", length = 3L)
             names(df) <- c("name", "uri", "type")
             for (i in names(df)) {
@@ -499,7 +499,9 @@ SOMACollectionBase <- R6::R6Class(
     #' @field soma_type Retrieve the SOMA object type.
     #'
     soma_type = function(value) {
-      stopifnot("'soma_type' is a read-only field" = missing(value))
+      if (!missing(value)) {
+        private$.read_only_error("soma_type")
+      }
       if (is.null(private$soma_type_cache)) {
         private$update_soma_type_cache()
       }
