@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 from time import sleep
-from typing import Type
+from typing import Optional, Type
 
 import numpy as np
 import pyarrow as pa
@@ -34,68 +36,88 @@ def tiledb_object_uri(tmp_path, metadata_typename, encoding_version, soma_type):
 
 
 @pytest.mark.parametrize(
-    "metadata_typename, encoding_version, soma_type",
+    "metadata_typename, soma_type",
     [
-        ("SOMAExperiment", _constants.SOMA_ENCODING_VERSION, soma.Experiment),
-        ("SOMAMeasurement", _constants.SOMA_ENCODING_VERSION, soma.Measurement),
-        ("SOMACollection", _constants.SOMA_ENCODING_VERSION, soma.Collection),
-        ("SOMADataFrame", _constants.SOMA_ENCODING_VERSION, soma.DataFrame),
-        ("SOMADenseNDArray", _constants.SOMA_ENCODING_VERSION, soma.DenseNDArray),
-        ("SOMADenseNdArray", _constants.SOMA_ENCODING_VERSION, soma.DenseNDArray),
-        ("SOMASparseNDArray", _constants.SOMA_ENCODING_VERSION, soma.SparseNDArray),
-        ("SOMASparseNdArray", _constants.SOMA_ENCODING_VERSION, soma.SparseNDArray),
+        ("SOMAExperiment", soma.Experiment),
+        ("SOMAMeasurement", soma.Measurement),
+        ("SOMACollection", soma.Collection),
+        ("SOMADataFrame", soma.DataFrame),
+        ("SOMADenseNDArray", soma.DenseNDArray),
+        ("SOMADenseNdArray", soma.DenseNDArray),
+        ("SOMASparseNDArray", soma.SparseNDArray),
+        ("SOMASparseNdArray", soma.SparseNDArray),
     ],
 )
-def test_open(tiledb_object_uri, soma_type: Type):
+@pytest.mark.parametrize(
+    "encoding_version", _constants.SUPPORTED_SOMA_ENCODING_VERSIONS
+)
+@pytest.mark.parametrize("tiledb_timestamp", [2, None])
+def test_open(tiledb_object_uri, soma_type: Type, tiledb_timestamp: int | None):
     """Happy path tests"""
     # TODO: Fix Windows test failures without the following.
     sleep(0.01)
-    soma_obj = soma.open(tiledb_object_uri, tiledb_timestamp=2)
+    soma_obj = soma.open(tiledb_object_uri, tiledb_timestamp=tiledb_timestamp)
     assert isinstance(soma_obj, soma_type)
     typed_soma_obj = soma.open(
-        tiledb_object_uri, soma_type=soma_type, tiledb_timestamp=2
+        tiledb_object_uri, soma_type=soma_type, tiledb_timestamp=tiledb_timestamp
     )
     assert isinstance(typed_soma_obj, soma_type)
     str_typed_soma_obj = soma.open(
-        tiledb_object_uri, soma_type=soma_type.soma_type, tiledb_timestamp=2
+        tiledb_object_uri,
+        soma_type=soma_type.soma_type,
+        tiledb_timestamp=tiledb_timestamp,
     )
     assert isinstance(str_typed_soma_obj, soma_type)
     assert soma_type.exists(tiledb_object_uri)
 
 
 @pytest.mark.parametrize(
-    ("metadata_typename", "encoding_version", "soma_type"),
+    ("metadata_typename", "soma_type"),
     [
-        ("SOMAExperiment", _constants.SOMA_ENCODING_VERSION, soma.Measurement),
-        ("SOMAMeasurement", _constants.SOMA_ENCODING_VERSION, soma.DataFrame),
-        ("SOMAMeasurement", _constants.SOMA_ENCODING_VERSION, soma.Collection),
-        ("SOMADenseNDArray", _constants.SOMA_ENCODING_VERSION, soma.Collection),
-        ("SOMADenseNdArray", _constants.SOMA_ENCODING_VERSION, soma.SparseNDArray),
-        ("SOMASparseNDArray", _constants.SOMA_ENCODING_VERSION, soma.DenseNDArray),
+        ("SOMAExperiment", soma.Measurement),
+        ("SOMAMeasurement", soma.DataFrame),
+        ("SOMAMeasurement", soma.Collection),
+        ("SOMADenseNDArray", soma.Collection),
+        ("SOMADenseNdArray", soma.SparseNDArray),
+        ("SOMASparseNDArray", soma.DenseNDArray),
     ],
 )
-def test_open_wrong_type(tiledb_object_uri, soma_type):
+@pytest.mark.parametrize(
+    "encoding_version", _constants.SUPPORTED_SOMA_ENCODING_VERSIONS
+)
+@pytest.mark.parametrize("tiledb_timestamp", [2, None])
+def test_open_wrong_type(
+    tiledb_object_uri, soma_type: Type, tiledb_timestamp: int | None
+):
     with pytest.raises((soma.SOMAError, TypeError)):
-        soma.open(tiledb_object_uri, soma_type=soma_type, tiledb_timestamp=2)
+        soma.open(
+            tiledb_object_uri, soma_type=soma_type, tiledb_timestamp=tiledb_timestamp
+        )
 
 
 @pytest.mark.parametrize(
-    "metadata_typename, encoding_version, soma_type",
+    "metadata_typename, soma_type",
     [
-        ("SOMAExperiment", UNKNOWN_ENCODING_VERSION, soma.Experiment),
-        ("SOMAMeasurement", UNKNOWN_ENCODING_VERSION, soma.Measurement),
-        ("SOMACollection", UNKNOWN_ENCODING_VERSION, soma.Collection),
-        ("SOMADataFrame", UNKNOWN_ENCODING_VERSION, soma.DataFrame),
-        ("SOMADenseNDArray", UNKNOWN_ENCODING_VERSION, soma.DenseNDArray),
-        ("SOMASparseNDArray", UNKNOWN_ENCODING_VERSION, soma.SparseNDArray),
+        ("SOMAExperiment", soma.Experiment),
+        ("SOMAMeasurement", soma.Measurement),
+        ("SOMACollection", soma.Collection),
+        ("SOMADataFrame", soma.DataFrame),
+        ("SOMADenseNDArray", soma.DenseNDArray),
+        ("SOMASparseNDArray", soma.SparseNDArray),
     ],
 )
-def test_factory_unsupported_version(tiledb_object_uri):
+@pytest.mark.parametrize("encoding_version", [UNKNOWN_ENCODING_VERSION])
+@pytest.mark.parametrize("tiledb_timestamp", [2, None])
+def test_factory_unsupported_version(
+    tiledb_object_uri, soma_type: Type, tiledb_timestamp: int | None
+):
     """All of these should raise, as they are encoding formats from the future"""
     # TODO: Fix Windows test failures without the following.
     sleep(0.01)
     with pytest.raises(ValueError):
-        soma.open(tiledb_object_uri, tiledb_timestamp=2)
+        soma.open(tiledb_object_uri, tiledb_timestamp=tiledb_timestamp)
+    with pytest.raises(ValueError):
+        soma_type.open(tiledb_object_uri, tiledb_timestamp=tiledb_timestamp)
 
 
 @pytest.mark.parametrize(
@@ -129,10 +151,13 @@ def test_factory_unsupported_version(tiledb_object_uri):
         ),  # DataFrame can't be a group
     ],
 )
-def test_factory_unsupported_types(tiledb_object_uri):
+def test_factory_unsupported_types(tiledb_object_uri, soma_type):
     """Illegal or non-existant metadata"""
     with pytest.raises(soma.SOMAError):
         soma.open(tiledb_object_uri, tiledb_timestamp=2)
+
+    with pytest.raises(soma.SOMAError):
+        soma_type.open(tiledb_object_uri, tiledb_timestamp=2)
 
 
 def test_factory_unknown_files():

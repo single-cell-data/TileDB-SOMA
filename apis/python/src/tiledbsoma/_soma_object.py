@@ -13,6 +13,11 @@ from somacore import options
 from typing_extensions import Self
 
 from . import _constants, _tdb_handles
+from ._constants import (
+    SOMA_ENCODING_VERSION_METADATA_KEY,
+    SOMA_OBJECT_TYPE_METADATA_KEY,
+    SUPPORTED_SOMA_ENCODING_VERSIONS,
+)
 from ._exception import SOMAError
 from ._types import OpenTimestamp
 from ._util import check_type, ms_to_datetime
@@ -103,6 +108,10 @@ class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
             tiledb_timestamp,
             clib_type=cls._wrapper_type._WRAPPED_TYPE.__name__,
         )
+        if _read_soma_type(handle) != cls.soma_type:
+            raise SOMAError(
+                "Unexpected SOMA metadata encoding - object encoding metadata value did not match expected value."
+            )
         if not isinstance(handle, cls._wrapper_type):
             handle = cls._wrapper_type.open(uri, mode, context, tiledb_timestamp)
         return cls(
@@ -335,3 +344,39 @@ class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
 
 
 AnySOMAObject = SOMAObject[_tdb_handles.AnyWrapper]
+
+
+def _read_soma_type(hdl: _tdb_handles.AnyWrapper) -> str:
+    obj_type = hdl.metadata.get(SOMA_OBJECT_TYPE_METADATA_KEY)
+    encoding_version = hdl.metadata.get(SOMA_ENCODING_VERSION_METADATA_KEY)
+
+    if obj_type is None:
+        raise SOMAError(
+            f"Cannot access stored TileDB object with TileDB-SOMA. The object is missing "
+            f"the required '{SOMA_OBJECT_TYPE_METADATA_KEY!r}' metadata key."
+        )
+
+    if isinstance(obj_type, bytes):
+        obj_type = str(obj_type, "utf-8")
+
+    if not isinstance(obj_type, str):
+        raise SOMAError(
+            f"Cannot access stored TileDB object with TileDB-SOMA. The metadata key "
+            f"'{SOMA_OBJECT_TYPE_METADATA_KEY!r}' has unexpected type '{type(obj_type)}'."
+        )
+    if encoding_version is None:
+        raise SOMAError(
+            f"Cannot access stored TileDB object with TileDB-SOMA. The object is missing "
+            f"the required '{SOMA_ENCODING_VERSION_METADATA_KEY!r}' metadata key."
+        )
+
+    if isinstance(encoding_version, bytes):
+        encoding_version = str(encoding_version, "utf-8")
+
+    if encoding_version not in SUPPORTED_SOMA_ENCODING_VERSIONS:
+        raise ValueError(
+            f"Unsupported SOMA object encoding version '{encoding_version}'. TileDB-SOMA "
+            f"needs to be updated to a more recent version."
+        )
+
+    return obj_type
