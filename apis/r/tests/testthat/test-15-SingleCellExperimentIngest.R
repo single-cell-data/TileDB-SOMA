@@ -1,7 +1,10 @@
 test_that("Write SingleCellExperiment mechanics", {
   skip_if(!extended_tests() || covr_tests())
   skip_if_not_installed("pbmc3k")
-  suppressMessages(skip_if_not_installed("SingleCellExperiment", .MINIMUM_SCE_VERSION("c")))
+  suppressWarnings(suppressMessages(skip_if_not_installed(
+    "SingleCellExperiment",
+    .MINIMUM_SCE_VERSION("c")
+  )))
 
   sce <- pbmc3k_sce()
   SingleCellExperiment::mainExpName(sce) <- "RNA"
