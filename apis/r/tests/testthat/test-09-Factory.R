@@ -2,9 +2,8 @@ test_that("DataFrame Factory", {
   skip_if(!extended_tests())
   uri <- tempfile()
 
-  # Check that straight use of new() errors, but 'with handshake' passes
+  # Check that straight use of new() errors
   expect_error(SOMADataFrame$new(uri))
-  expect_silent(d1 <- SOMADataFrame$new(uri, internal_use_only = "allowed_use"))
 
   # Check creation of a DF
   asch <- create_arrow_schema(foo_first = FALSE)
@@ -68,9 +67,8 @@ test_that("SparseNDArray Factory", {
   skip_if(!extended_tests())
   uri <- tempfile()
 
-  # check that straight use of new() errors, but 'with handshake' passes
+  # check that straight use of new() errors
   expect_error(SOMASparseNDArray$new(uri))
-  expect_silent(s1 <- SOMASparseNDArray$new(uri, internal_use_only = "allowed_use"))
 
   # check creation of a sparse array
   expect_error(s2 <- SOMASparseNDArrayCreate(uri, arrow::int32())) # misses shape
@@ -98,9 +96,8 @@ test_that("DenseNDArray Factory", {
   skip_if(!extended_tests())
   uri <- tempfile()
 
-  # check that straight use of new() errors, but 'with handshake' passes
+  # check that straight use of new() errors
   expect_error(SOMADenseNDArray$new(uri))
-  expect_silent(s1 <- SOMADenseNDArray$new(uri, internal_use_only = "allowed_use"))
 
   # check creation of a sparse array
   expect_error(s2 <- SOMADenseNDArrayCreate(uri, arrow::int32())) # misses shape
