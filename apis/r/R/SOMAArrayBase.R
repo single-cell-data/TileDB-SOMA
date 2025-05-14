@@ -230,10 +230,7 @@ SOMAArrayBase <- R6::R6Class(
       }
       if (max_only) {
         # # No vapply options since SOMADataFrame can have varying types.
-        # retval <- unname(unlist(lapply(retval, function(e) {
-        #   e[[2]]
-        # })))
-        retval <- sapply(retval, FUN = max, USE.NAMES = FALSE)
+        retval <- unname(sapply(retval, FUN = max, USE.NAMES = FALSE))
       }
       return(retval)
     },
