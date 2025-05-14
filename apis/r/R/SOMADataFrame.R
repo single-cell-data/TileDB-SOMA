@@ -1,10 +1,9 @@
 #' SOMADataFrame
 #'
-#' @description
-#' `SOMADataFrame` is a multi-column table that must contain a column
-#' called `soma_joinid` of type `int64`, which contains a unique value for each
-#' row and is intended to act as a join key for other objects, such as
-#' [`SOMASparseNDArray`].  (lifecycle: maturing)
+#' @description A SOMA data frame is a multi-column table that must contain a
+#' column called \dQuote{\code{soma_joinid}} of type \code{int64}, which
+#' contains a unique value for each row and is intended to act as a join key
+#' for other objects, such as \code{\link{SOMASparseNDArray}} (lifecycle: maturing)
 #'
 #' @export
 #'
@@ -13,43 +12,55 @@ SOMADataFrame <- R6::R6Class(
   inherit = SOMAArrayBase,
   public = list(
 
-    #' @description Create (lifecycle: maturing)
-    #' @param schema an [`arrow::schema`].
+    #' @description Create a SOMA data frame (lifecycle: maturing)
+    #' @param schema An \link[arrow:schema]{Arrow schema}
     #' @param index_column_names A vector of column names to use as user-defined
-    #' index columns.  All named columns must exist in the schema, and at least
+    #' index columns. All named columns must exist in the schema, and at least
     #' one index column name is required.
     #' @param domain An optional list specifying the domain of each
     #' index column. Each slot in the list must have its name being the name
     #' of an index column, and its value being be a length-two vector
     #' consisting of the minimum and maximum values storable in the index
     #' column. For example, if there is a single int64-valued index column
-    #' `soma_joinid`, then `domain` might be `list(soma_joinid=c(100, 200))`
-    #' to indicate that values between 100 and 200, inclusive, can be stored
-    #' in that column.  If provided, this sequence must have the same length
-    #' as `index_column_names`, and the index-column domain will be as
-    #' specified.  If omitted entirely, or if `NULL` in a given dimension, the
-    #' corresponding index-column domain will use an empty range, and data writes
-    #' after that will fail with "A range was set outside of the current domain".
-    #' Unless you have a particular reason not to, you should always provide the
-    #' desired `domain` at create time: this is an optional but strongly
-    #' recommended parameter.  See also `change_domain` which allows you to
+    #' \code{soma_joinid}, then \code{domain} might be
+    #' \code{list(soma_joinid=c(100, 200))} to indicate that values between 100
+    #' and 200, inclusive, can be stored in that column. If provided, this
+    #' sequence must have the same length as \code{index_column_names}, and the
+    #' index-column domain will be as specified. If omitted entirely, or if
+    #' \code{NULL} in a given dimension, the corresponding index-column domain
+    #' will use an empty range, and data writes after that will fail with
+    #' \dQuote{A range was set outside of the current domain}. Unless you have
+    #' a particular reason not to, you should always provide the desired
+    #' \code{domain} at create time: this is an optional but strongly
+    #' recommended parameter. See also \code{change_domain} which allows you to
     #' expand the domain after create.
     #' @template param-platform-config
-    #' @param internal_use_only Character value to signal this is a 'permitted' call,
-    #' as `create()` is considered internal and should not be called directly.
+    #'
+    #' @return \code{self}
+    #'
+    #' @note \code{create()} is considered internal and should not be called
+    #' directly; use factory functions (eg. \code{\link{SOMACollectionCreate}()})
+    #' instead
+    #'
     create = function(
       schema,
       index_column_names = c("soma_joinid"),
       domain = NULL,
       platform_config = NULL,
-      internal_use_only = NULL
+      ...
     ) {
-      if (is.null(internal_use_only) || internal_use_only != "allowed_use") {
-        stop(paste(
-          "Use of the create() method is for internal use only. Consider using a",
-          "factory method as e.g. 'SOMADataFrameCreate()'."
-        ), call. = FALSE)
+      envs <- unique(vapply(
+        X = unique(sys.parents()),
+        FUN = function(n) environmentName(environment(sys.function(n))),
+        FUN.VALUE = character(1L)
+      ))
+      if (!"tiledbsoma" %in% envs) {
+        stop(
+          paste(strwrap(private$.internal_use_only("create", "collection")), collapse = '\n'),
+          call. = FALSE
+        )
       }
+
       schema <- private$validate_schema(schema, index_column_names)
 
       stopifnot(
@@ -120,20 +131,24 @@ SOMADataFrame <- R6::R6Class(
       )
 
       spdl::debug("[SOMADataFrame$create] about to call write_object_type_metadata")
+      self$open("WRITE")
       private$write_object_type_metadata()
+      self$reopen("WRITE", tiledb_timestamp = self$tiledb_timestamp)
 
-      self$open("WRITE", internal_use_only = "allowed_use")
-      self
+      return(self)
     },
 
-    #' @description Write (lifecycle: maturing)
+    #' @description Write values to the data frame (lifecycle: maturing)
     #'
-    #' @param values An [`arrow::Table`] or [`arrow::RecordBatch`]
-    #' containing all columns, including any index columns. The
-    #' schema for `values` must match the schema for the `SOMADataFrame`.
+    #' @param values An \link[arrow:Table]{Arrow table} or
+    #' \link[arrow:RecordBatch]{record batch} containing all columns, including
+    #' any index columns. The schema for \code{values} must match the schema
+    #' for the data frame
+    #'
+    #' @return Invisibly returns \code{self}
     #'
     write = function(values) {
-      private$check_open_for_write()
+      private$.check_open_for_write()
 
       # Prevent downcasting of int64 to int32 when materializing a column
       op <- options(arrow.int64_downcast = FALSE)
@@ -171,12 +186,12 @@ SOMADataFrame <- R6::R6Class(
         tsvec = self$.tiledb_timestamp_range
       )
 
-      invisible(self)
+      return(invisible(self))
     },
 
-    #' @description Read (lifecycle: maturing)
-    #' Read a user-defined subset of data, addressed by the dataframe indexing
-    #' column, and optionally filtered.
+    #' @description Read a user-defined subset of data, addressed by the
+    #' data frame indexing column, and optionally filtered. (lifecycle: maturing)
+    #'
     #' @param coords Optional named list of indices specifying the rows to read;
     #' each (named) list element corresponds to a dimension of the same name.
     #' @param column_names Optional character vector of column names to return.
@@ -184,19 +199,18 @@ SOMADataFrame <- R6::R6Class(
     #' to filter the returned values. See [`tiledb::parse_query_condition`] for
     #' more information.
     #' @template param-result-order
-    #' @param iterated Option boolean indicated whether data is read in call (when
-    #' `FALSE`, the default value) or in several iterated steps.
     #' @param log_level Optional logging level with default value of `"warn"`.
-    #' @return arrow::\link[arrow]{Table} or \link{TableReadIter}
+    #'
+    #' @return A \link{TableReadIter}
+    #'
     read = function(
       coords = NULL,
       column_names = NULL,
       value_filter = NULL,
       result_order = "auto",
-      iterated = FALSE,
       log_level = "auto"
     ) {
-      private$check_open_for_read()
+      private$.check_open_for_read()
 
       result_order <- match_query_layout(result_order)
 
@@ -227,8 +241,10 @@ SOMADataFrame <- R6::R6Class(
         value_filter <- parsed@ptr
       }
       spdl::debug(
-        "[SOMADataFrame$read] calling mq_setup for {} at ({},{})", self$uri,
-        private$tiledb_timestamp[1], private$tiledb_timestamp[2]
+        "[SOMADataFrame$read] calling mq_setup for {} at ({},{})",
+        self$uri,
+        self$.tiledb_timestamp_range[1],
+        self$.tiledb_timestamp_range[2]
       )
       sr <- mq_setup(
         uri = self$uri,
@@ -239,7 +255,7 @@ SOMADataFrame <- R6::R6Class(
         timestamprange = self$.tiledb_timestamp_range, # NULL or two-elem vector
         loglevel = log_level
       )
-      TableReadIter$new(sr)
+      return(TableReadIter$new(sr))
     },
 
     #' @description Update (lifecycle: maturing)
@@ -265,7 +281,7 @@ SOMADataFrame <- R6::R6Class(
     #' prior to performing the update. The name of this new column will be set
     #' to the value specified by `row_index_name`.
     update = function(values, row_index_name = NULL) {
-      private$check_open_for_write()
+      private$.check_open_for_write()
       stopifnot(
         "'values' must be a data.frame, Arrow Table or RecordBatch" =
           is.data.frame(values) || is_arrow_table(values) || is_arrow_record_batch(values)
