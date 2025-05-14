@@ -314,9 +314,9 @@ SOMAMeasurementCreate <- function(
   ingest_mode <- match.arg(ingest_mode)
   meas <- SOMAMeasurement$new(
     uri,
-    platform_config,
-    tiledbsoma_ctx,
-    tiledb_timestamp
+    platform_config = platform_config,
+    tiledbsoma_ctx = tiledbsoma_ctx,
+    tiledb_timestamp = tiledb_timestamp
   )
   ingest_mode <- switch(
     EXPR = ingest_mode,
@@ -348,9 +348,9 @@ SOMAMeasurementOpen <- function(
 ) {
   meas <- SOMAMeasurement$new(
     uri,
-    platform_config,
-    tiledbsoma_ctx,
-    tiledb_timestamp
+    platform_config = platform_config,
+    tiledbsoma_ctx = tiledbsoma_ctx,
+    tiledb_timestamp = tiledb_timestamp
   )
   meas$open(mode)
   return(meas)
@@ -374,9 +374,9 @@ SOMAExperimentCreate <- function(
   ingest_mode <- match.arg(ingest_mode)
   exp <- SOMAExperiment$new(
     uri,
-    platform_config,
-    tiledbsoma_ctx,
-    tiledb_timestamp
+    platform_config = platform_config,
+    tiledbsoma_ctx = tiledbsoma_ctx,
+    tiledb_timestamp = tiledb_timestamp
   )
   ingest_mode <- switch(
     EXPR = ingest_mode,
@@ -408,9 +408,9 @@ SOMAExperimentOpen <- function(
 ) {
   exp <- SOMAExperiment$new(
     uri,
-    platform_config,
-    tiledbsoma_ctx,
-    tiledb_timestamp
+    platform_config = platform_config,
+    tiledbsoma_ctx = tiledbsoma_ctx,
+    tiledb_timestamp = tiledb_timestamp
   )
   exp$open(mode)
   return(exp)
