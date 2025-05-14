@@ -173,8 +173,7 @@ SOMACollectionBase <- R6::R6Class(
     #'
     set = function(object, name = NULL, relative = NULL) {
       stopifnot(
-        "Only SOMA objects may be added" = inherits(object, c("SOMAObject", "TileDBObject")),
-        # "Only SOMA objects may be added" = inherits(object, "SOMAObject"),
+        "Only SOMA objects may be added" = inherits(object, "SOMAObject"),
         "'name' must be a single, non-empty string" = is.null(name) ||
           (is_scalar_character(name) && nzchar(name))
       )
@@ -556,8 +555,7 @@ SOMACollectionBase <- R6::R6Class(
     .add_cache_member = function(name, object) {
       stopifnot(
         is.character(name) && length(name) == 1L && nzchar(name),
-        # inherits(object, "SOMAObject")
-        inherits(object, c("SOMAObject", "TileDBObject"))
+        inherits(object, "SOMAObject")
       )
       if (is.null(private$.member_cache)) {
         private$.member_cache <- list()
