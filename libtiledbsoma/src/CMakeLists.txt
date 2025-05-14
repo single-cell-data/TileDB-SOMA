@@ -62,6 +62,7 @@ add_library(TILEDB_SOMA_OBJECTS OBJECT
   ${CMAKE_CURRENT_SOURCE_DIR}/utils/version.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/external/src/thread_pool/thread_pool.cc
   ${CMAKE_CURRENT_SOURCE_DIR}/external/src/thread_pool/status.cc
+  ${CMAKE_CURRENT_SOURCE_DIR}/arrow/arrow.cc
 )
 
 target_link_libraries(TILEDB_SOMA_OBJECTS PUBLIC sparrow::sparrow)
@@ -235,6 +236,11 @@ install(FILES
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_object.h
   ${CMAKE_CURRENT_SOURCE_DIR}/soma/soma_transformers.h
   DESTINATION "include/tiledbsoma/soma"
+)
+
+install(FILES
+  ${CMAKE_CURRENT_SOURCE_DIR}/arrow/arrow.h
+  DESTINATION "include/tiledbsoma/arrow"
 )
 
 install(FILES
