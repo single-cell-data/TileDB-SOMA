@@ -295,35 +295,12 @@ SOMACollectionBase <- R6::R6Class(
       names(self$members) %||% character(length = 0L)
     },
 
-    #' @description Retrieve metadata. (lifecycle: maturing)
-    #'
-    #' @param key The name of the metadata attribute to retrieve
-    #' is not NULL.
-    #'
-    #' @return A list of metadata values.
-    #'
-    get_metadata = function(key = NULL) {
-      if (!(is.null(key) || (is_scalar_character(key) && nzchar(key)))) {
-        stop("'key' must be a single, non-empty string", call. = FALSE)
-      }
-      private$.check_open_for_read_or_write()
-      private$.update_metadata_cache()
-
-      spdl::debug("Retrieving metadata for {} '{}'", self$class(), self$uri)
-
-      if (is.null(key)) {
-        return(private$.metadata_cache)
-      }
-      val <- private$.metadata_cache[[key]]
-      if (is.list(val)) {
-        val <- unlist(val)
-      }
-      return(val)
-    },
-
     #' @description Add list of metadata. (lifecycle: maturing)
-    #' @param metadata Named list of metadata to add.
-    #' @return NULL
+    #'
+    #' @param metadata Named list of metadata to add
+    #'
+    #' @return Invisibly returns \code{self}
+    #'
     set_metadata = function(metadata) {
       stopifnot(
         "Metadata must be a named list" = is_named_list(metadata)
@@ -379,19 +356,14 @@ SOMACollectionBase <- R6::R6Class(
       domain,
       platform_config = NULL
     ) {
-      sdf <- SOMADataFrame$new(
+      sdf <- SOMADataFrameCreate(
         uri = file_path(self$uri, key),
-        platform_config = platform_config %||% self$platform_config,
-        tiledbsoma_ctx = self$tiledbsoma_ctx,
-        tiledb_timestamp = self$tiledb_timestamp, # Cached value from $new()/SOMACollectionOpen
-        internal_use_only = "allowed_use"
-      )
-
-      sdf$create(
-        schema,
+        schema = schema,
         index_column_names = index_column_names,
         domain = domain,
-        internal_use_only = "allowed_use"
+        platform_config = platform_config %||% self$platform_config,
+        tiledbsoma_ctx = self$tiledbsoma_ctx,
+        tiledb_timestamp = self$tiledb_timestamp # Cached value from $new()/SOMACollectionOpen
       )
       self$set(sdf, key)
       return(sdf)
@@ -409,15 +381,14 @@ SOMACollectionBase <- R6::R6Class(
     #' @return Returns the newly-created array stored at \code{key}
     #'
     add_new_dense_ndarray = function(key, type, shape, platform_config = NULL) {
-      ndarr <- SOMADenseNDArray$new(
+      ndarr <- SOMADenseNDArrayCreate(
         uri = file_path(self$uri, key),
+        type = type,
+        shape = shape,
         platform_config = platform_config %||% self$platform_config,
         tiledbsoma_ctx = self$tiledbsoma_ctx,
-        tiledb_timestamp = self$tiledb_timestamp, # Cached value from $new()/SOMACollectionOpen
-        internal_use_only = "allowed_use"
+        tiledb_timestamp = self$tiledb_timestamp
       )
-
-      ndarr$create(type, shape, internal_use_only = "allowed_use")
       self$set(ndarr, key)
       return(ndarr)
     },
@@ -434,15 +405,14 @@ SOMACollectionBase <- R6::R6Class(
     #' @return Returns the newly-created array stored at \code{key}
     #'
     add_new_sparse_ndarray = function(key, type, shape, platform_config = NULL) {
-      ndarr <- SOMASparseNDArray$new(
+      ndarr <- SOMASparseNDArrayCreate(
         uri = file_path(self$uri, key),
+        type = type,
+        shape = shape,
         platform_config = platform_config %||% self$platform_config,
         tiledbsoma_ctx = self$tiledbsoma_ctx,
-        tiledb_timestamp = self$tiledb_timestamp, # Cached value from $new()/SOMACollectionOpen
-        internal_use_only = "allowed_use"
+        tiledb_timestamp = self$tiledb_timestamp # Cached value from $new()/SOMACollectionOpen
       )
-
-      ndarr$create(type, shape, internal_use_only = "allowed_use")
       self$set(ndarr, key)
       return(ndarr)
     },
@@ -487,7 +457,6 @@ SOMACollectionBase <- R6::R6Class(
     }
   ),
   active = list(
-
     #' @field members A list with the members of this collection
     #'
     members = function(value) {
@@ -496,18 +465,6 @@ SOMACollectionBase <- R6::R6Class(
       }
       private$.update_member_cache()
       return(private$.member_cache %||% NULL)
-    },
-
-    #' @field soma_type Retrieve the SOMA object type.
-    #'
-    soma_type = function(value) {
-      if (!missing(value)) {
-        private$.read_only_error("soma_type")
-      }
-      if (is.null(private$soma_type_cache)) {
-        private$update_soma_type_cache()
-      }
-      private$soma_type_cache
     }
   ),
   private = list(
@@ -523,10 +480,6 @@ SOMACollectionBase <- R6::R6Class(
     # @field .member_cache ...
     #
     .member_cache = NULL,
-
-    # @field .metadata_cache
-    #
-    .metadata_cache = NULL,
 
     # @description Update the member cache
     #
@@ -668,30 +621,6 @@ SOMACollectionBase <- R6::R6Class(
 
       # Allow method chaining
       return(invisible(self))
-    },
-
-    # @description Explicitly add a member to the cache in order to preserve
-    # original URIs; otherwise, TileDB-Cloud creation URIs are retrieved which
-    # prevent appending children
-    #
-    # @param key Key to store metadata as
-    # @param value Metadata to add
-    #
-    # @return Invisibly returns \code{self}
-    #
-    .add_cache_metadata = function(key, value) {
-      if (is.null(private$.metadata_cache)) {
-        private$.metadata_cache <- list()
-      }
-      private$.metadata_cache[[key]] <- value
-
-      return(invisible(self))
-    },
-
-    # Cache object's SOMA_OBJECT_TYPE_METADATA_KEY
-    soma_type_cache = NULL,
-    update_soma_type_cache = function() {
-      private$soma_type_cache <- self$get_metadata(SOMA_OBJECT_TYPE_METADATA_KEY)
     },
 
     # Add standard SOMA metadata values to the object with the option to include

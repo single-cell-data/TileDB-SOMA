@@ -182,6 +182,70 @@ SOMAObject <- R6::R6Class(
       return(get_tiledb_object_type(self$uri, ctxxp = private$.soma_context) %in% expected_type)
     },
 
+    #' @description Retrieve metadata. (lifecycle: maturing)
+    #'
+    #' @param key The name of the metadata attribute to retrieve
+    #' is not NULL.
+    #'
+    #' @return A list of metadata values.
+    #'
+    get_metadata = function(key = NULL) {
+      if (!(is.null(key) || (is_scalar_character(key) && nzchar(key)))) {
+        stop("'key' must be a single, non-empty string", call. = FALSE)
+      }
+      private$.check_open_for_read_or_write()
+      private$.update_metadata_cache()
+
+      spdl::debug("Retrieving metadata for {} '{}'", self$class(), self$uri)
+
+      if (is.null(key)) {
+        return(private$.metadata_cache)
+      }
+      val <- private$.metadata_cache[[key]]
+      if (is.list(val)) {
+        val <- unlist(val)
+      }
+      return(val)
+    },
+
+    #' @description Add list of metadata. (lifecycle: maturing)
+    #'
+    #' @param metadata Named list of metadata to add
+    #'
+    #' @return Invisibly returns \code{self}
+    #'
+    set_metadata = function(metadata) {
+      stopifnot(
+        "Metadata must be a named list" = is_named_list(metadata)
+      )
+
+      private$.check_open_for_write()
+      private$.update_metadata_cache()
+
+      for (i in seq_along(metadata)) {
+        key <- names(metadata)[i]
+        value <- metadata[[i]]
+        spdl::debug(
+          "[SOMAObject$set_metadata] setting key {} to {} ({})",
+          key,
+          value,
+          class(value)
+        )
+        set_metadata(
+          uri = self$uri,
+          key = key,
+          valuesxp = value,
+          type = class(value),
+          is_array = inherits(self, "SOMAArrayBase"),
+          ctxxp = private$.soma_context,
+          tsvec = self$.tiledb_timestamp_range
+        )
+        private$.metadata_cache[[key]] <- value
+      }
+
+      return(invisible(self))
+    },
+
     #' @description Print-friendly representation of the object
     #'
     #' @return Invisibly returns \code{self}
@@ -224,13 +288,25 @@ SOMAObject <- R6::R6Class(
       return(private$.tiledb_timestamp)
     },
 
-    #' @field uri
-    #' The URI of the TileDB object.
+    #' @field uri The URI of the TileDB object
+    #'
     uri = function(value) {
       if (!missing(value)) {
         private$.read_only_error("uri")
       }
       return(private$.uri)
+    },
+
+    #' @field soma_type The SOMA object type
+    #'
+    soma_type = function(value) {
+      if (!missing(value)) {
+        private$.read_only_error("soma_type")
+      }
+      if (!length(private$.soma_type) || !nzchar(private$.soma_type)) {
+        private$.soma_type <- self$get_metadata(SOMA_OBJECT_TYPE_METADATA_KEY)
+      }
+      return(private$.soma_type)
     },
 
     #' @field .tiledb_timestamp_range Time range for libtiledbsoma
@@ -270,6 +346,10 @@ SOMAObject <- R6::R6Class(
     #
     .soma_context = NULL,
 
+    # @field .soma_type ...
+    #
+    .soma_type = character(1L),
+
     # @field .mode ...
     #
     .mode = character(1L),
@@ -277,6 +357,10 @@ SOMAObject <- R6::R6Class(
     # @field .uri ...
     #
     .uri = character(1L),
+
+    # @field .metadata_cache ...
+    #
+    .metadata_cache = NULL,
 
     # @description Create a message saying that a method is for
     # internal use only
@@ -325,6 +409,41 @@ SOMAObject <- R6::R6Class(
         stop("Item must be open for read or write: ", self$uri, call. = FALSE)
       }
       return(invisible(NULL))
+    },
+
+    # @description Update the metadata cache
+    #
+    # @param force \code{TRUE} or \code{FALSE}
+    #
+    # @return Invisibly returns \code{self}
+    #
+    .update_metadata_cache = function(force = FALSE) {
+      stopifnot(isTRUE(force) || isFALSE(force))
+
+      if (is.null(private$.metadata_cache)) {
+        private$.metadata_cache <- list()
+      }
+
+      # Skip if we already have a member cache and don't want to update
+      if (length(private$.metadata_cache) && !force) {
+        return(invisible(NULL))
+      }
+
+      spdl::debug(
+        "[SOMAObject$update_metadata_cache] updating metadata cache for {} '{}' in {}",
+        self$class(),
+        self$uri,
+        self$mode()
+      )
+
+      private$.metadata_cache <- get_all_metadata(
+        uri = self$uri,
+        is_array = inherits(self, "SOMAArrayBase"),
+        ctxxp = private$.soma_context
+      ) %||% list()
+
+      # Allow method chaining
+      return(invisible(self))
     }
   )
 )
