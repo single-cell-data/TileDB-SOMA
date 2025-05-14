@@ -734,18 +734,10 @@ MISSING = Sentinel()
 
 
 def sanitize_key(key: str) -> str:
-    decoded_name = urllib.parse.unquote(key)
-
-    # This decodes percent-encoded characters in the input name. For example,
-    # "hello%20world" becomes "hello world". We do this unquote step because
-    # if we passed "hello%20world" directly to the encoding method, it would
-    # end up being doubly encoded as "hello%2520world"
-    decoded_name = urllib.parse.unquote(key)
-
-    # Now encode everything outside of the safe characters set
+    # Encode everything outside of the safe characters set
     safe_puncuation = "-_.()^!@+={}~'"
     safe_character_set = f"{digits}{ascii_lowercase}{ascii_uppercase}{safe_puncuation}"
-    sanitized_name = urllib.parse.quote(decoded_name, safe=safe_character_set)
+    sanitized_name = urllib.parse.quote(key, safe=safe_character_set)
 
     # Ensure that the final key is valid
     if sanitized_name in ["..", "."]:
