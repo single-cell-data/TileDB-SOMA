@@ -70,11 +70,9 @@ SOMADataFrameCreate <- function(
   ingest_mode <- match.arg(ingest_mode)
   sdf <- SOMADataFrame$new(
     uri,
-    platform_config,
-    tiledbsoma_ctx,
-    tiledb_timestamp,
-    soma_context = soma_context,
-    internal_use_only = "allowed_use"
+    platform_config = platform_config,
+    tiledbsoma_ctx = tiledbsoma_ctx,
+    tiledb_timestamp = tiledb_timestamp
   )
   ingest_mode <- switch(
     EXPR = ingest_mode,
@@ -82,14 +80,13 @@ SOMADataFrameCreate <- function(
     ingest_mode
   )
   if (ingest_mode %in% c("resume")) {
-    sdf$open(mode = "WRITE", internal_use_only = "allowed_use")
+    sdf$open(mode = "WRITE")
   } else {
     sdf$create(
       schema,
       index_column_names = index_column_names,
       domain = domain,
-      platform_config = platform_config,
-      internal_use_only = "allowed_use"
+      platform_config = platform_config
     )
   }
   return(sdf)
@@ -124,13 +121,11 @@ SOMADataFrameOpen <- function(
   spdl::debug("[SOMADataFrameOpen] uri {} ts ({})", uri, tiledb_timestamp %||% "now")
   sdf <- SOMADataFrame$new(
     uri,
-    platform_config,
-    tiledbsoma_ctx,
-    tiledb_timestamp,
-    soma_context = soma_context,
-    internal_use_only = "allowed_use"
+    platform_config = platform_config,
+    tiledbsoma_ctx = tiledbsoma_ctx,
+    tiledb_timestamp = tiledb_timestamp
   )
-  sdf$open(mode, internal_use_only = "allowed_use")
+  sdf$open(mode)
   return(sdf)
 }
 
@@ -178,10 +173,9 @@ SOMASparseNDArrayCreate <- function(
   ingest_mode <- match.arg(ingest_mode)
   snda <- SOMASparseNDArray$new(
     uri,
-    platform_config,
-    tiledbsoma_ctx,
-    tiledb_timestamp,
-    internal_use_only = "allowed_use"
+    platform_config = platform_config,
+    tiledbsoma_ctx = tiledbsoma_ctx,
+    tiledb_timestamp = tiledb_timestamp
   )
   ingest_mode <- switch(
     EXPR = ingest_mode,
@@ -189,13 +183,12 @@ SOMASparseNDArrayCreate <- function(
     ingest_mode
   )
   if (ingest_mode %in% c("resume")) {
-    snda$open(mode = "WRITE", internal_use_only = "allowed_use")
+    snda$open(mode = "WRITE")
   } else {
     snda$create(
       type,
       shape,
       platform_config = platform_config,
-      internal_use_only = "allowed_use"
     )
   }
   return(snda)
@@ -225,12 +218,11 @@ SOMASparseNDArrayOpen <- function(
 ) {
   snda <- SOMASparseNDArray$new(
     uri,
-    platform_config,
-    tiledbsoma_ctx,
-    tiledb_timestamp,
-    internal_use_only = "allowed_use"
+    platform_config = platform_config,
+    tiledbsoma_ctx = tiledbsoma_ctx,
+    tiledb_timestamp = tiledb_timestamp
   )
-  snda$open(mode, internal_use_only = "allowed_use")
+  snda$open(mode)
   return(snda)
 }
 
@@ -273,16 +265,14 @@ SOMADenseNDArrayCreate <- function(
   spdl::debug("[SOMADenseNDArrayCreate] tstamp ({})", tiledb_timestamp %||% "now")
   dnda <- SOMADenseNDArray$new(
     uri,
-    platform_config,
-    tiledbsoma_ctx,
-    tiledb_timestamp,
-    internal_use_only = "allowed_use"
+    platform_config = platform_config,
+    tiledbsoma_ctx = tiledbsoma_ctx,
+    tiledb_timestamp = tiledb_timestamp
   )
   dnda$create(
     type,
     shape,
     platform_config = platform_config,
-    internal_use_only = "allowed_use"
   )
   return(dnda)
 }
@@ -311,12 +301,11 @@ SOMADenseNDArrayOpen <- function(
 ) {
   dnda <- SOMADenseNDArray$new(
     uri,
-    platform_config,
-    tiledbsoma_ctx,
-    tiledb_timestamp,
-    internal_use_only = "allowed_use"
+    platform_config = platform_config,
+    tiledbsoma_ctx = tiledbsoma_ctx,
+    tiledb_timestamp = tiledb_timestamp
   )
-  dnda$open(mode, internal_use_only = "allowed_use")
+  dnda$open(mode)
   return(dnda)
 }
 
