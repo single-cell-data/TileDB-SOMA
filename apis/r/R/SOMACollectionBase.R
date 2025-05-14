@@ -133,6 +133,8 @@ SOMACollectionBase <- R6::R6Class(
         timestamp = self$.tiledb_timestamp_range
       )
 
+      private$.update_member_cache(TRUE)
+
       return(self)
     },
 
