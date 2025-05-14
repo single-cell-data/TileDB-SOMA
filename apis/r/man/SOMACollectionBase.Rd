@@ -20,8 +20,6 @@ Derived classes: \code{\link{SOMACollection}},
 \if{html}{\out{<div class="r6-active-bindings">}}
 \describe{
 \item{\code{members}}{A list with the members of this collection}
-
-\item{\code{soma_type}}{Retrieve the SOMA object type.}
 }
 \if{html}{\out{</div>}}
 }
@@ -36,7 +34,6 @@ Derived classes: \code{\link{SOMACollection}},
 \item \href{#method-SOMACollectionBase-remove}{\code{SOMACollectionBase$remove()}}
 \item \href{#method-SOMACollectionBase-length}{\code{SOMACollectionBase$length()}}
 \item \href{#method-SOMACollectionBase-names}{\code{SOMACollectionBase$names()}}
-\item \href{#method-SOMACollectionBase-get_metadata}{\code{SOMACollectionBase$get_metadata()}}
 \item \href{#method-SOMACollectionBase-set_metadata}{\code{SOMACollectionBase$set_metadata()}}
 \item \href{#method-SOMACollectionBase-add_new_collection}{\code{SOMACollectionBase$add_new_collection()}}
 \item \href{#method-SOMACollectionBase-add_new_dataframe}{\code{SOMACollectionBase$add_new_dataframe()}}
@@ -51,6 +48,7 @@ Derived classes: \code{\link{SOMACollection}},
 <ul>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAObject" data-id="class"><a href='../../tiledbsoma/html/SOMAObject.html#method-SOMAObject-class'><code>tiledbsoma::SOMAObject$class()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAObject" data-id="exists"><a href='../../tiledbsoma/html/SOMAObject.html#method-SOMAObject-exists'><code>tiledbsoma::SOMAObject$exists()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAObject" data-id="get_metadata"><a href='../../tiledbsoma/html/SOMAObject.html#method-SOMAObject-get_metadata'><code>tiledbsoma::SOMAObject$get_metadata()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAObject" data-id="initialize"><a href='../../tiledbsoma/html/SOMAObject.html#method-SOMAObject-initialize'><code>tiledbsoma::SOMAObject$initialize()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAObject" data-id="is_open"><a href='../../tiledbsoma/html/SOMAObject.html#method-SOMAObject-is_open'><code>tiledbsoma::SOMAObject$is_open()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAObject" data-id="mode"><a href='../../tiledbsoma/html/SOMAObject.html#method-SOMAObject-mode'><code>tiledbsoma::SOMAObject$mode()</code></a></span></li>
