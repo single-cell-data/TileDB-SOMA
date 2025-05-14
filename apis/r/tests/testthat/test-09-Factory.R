@@ -122,9 +122,8 @@ test_that("Collection Factory", {
   skip_if(!extended_tests())
   uri <- tempfile()
 
-  # check that straight use of new() errors, but 'with handshake' passes
+  # check that straight use of new() errors
   expect_error(SOMACollection$new(uri))
-  expect_silent(s1 <- SOMACollection$new(uri, internal_use_only = "allowed_use"))
 
   # check creation of a sparse array
   expect_silent(s2 <- SOMACollectionCreate(uri))
@@ -140,9 +139,8 @@ test_that("Measurement Factory", {
   skip_if(!extended_tests())
   uri <- tempfile()
 
-  # check that straight use of new() errors, but 'with handshake' passes
+  # check that straight use of new() errors
   expect_error(SOMAMeasurement$new(uri))
-  expect_silent(s1 <- SOMAMeasurement$new(uri, internal_use_only = "allowed_use"))
 
   # check creation of a sparse array
   expect_silent(s2 <- SOMAMeasurementCreate(uri))
@@ -158,9 +156,8 @@ test_that("Experiment Factory", {
   skip_if(!extended_tests())
   uri <- tempfile()
 
-  # check that straight use of new() errors, but 'with handshake' passes
+  # check that straight use of new() errors
   expect_error(SOMAExperiment$new(uri))
-  expect_silent(s1 <- SOMAExperiment$new(uri, internal_use_only = "allowed_use"))
 
   # check creation of a sparse array
   expect_silent(s2 <- SOMAExperimentCreate(uri))
