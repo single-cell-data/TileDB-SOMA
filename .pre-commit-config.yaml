@@ -6,12 +6,12 @@ repos:
     - id: black
       args: ["--config=apis/python/pyproject.toml"]
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.11.2
+    rev: v0.11.10
     hooks:
     - id: ruff
       args: ["--config=apis/python/pyproject.toml"]
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.13.0
+    rev: v1.15.0
     hooks:
     - id: mypy
       additional_dependencies:

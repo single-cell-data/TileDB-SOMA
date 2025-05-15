@@ -18,13 +18,13 @@ from ._sparse_nd_array import SparseNDArray
 
 class Measurement(  # type: ignore[misc]  # __eq__ false positive
     CollectionBase[AnySOMAObject],
-    measurement.Measurement[  # type: ignore[type-var]
+    measurement.Measurement[
         DataFrame,
-        Collection[
+        Collection[  # type: ignore[type-var]
             Union[SparseNDArray, DenseNDArray]
         ],  # not just `NDArray` since that has no common `read`
-        Collection[DenseNDArray],
-        Collection[SparseNDArray],
+        Collection[DenseNDArray],  # type: ignore[type-var]
+        Collection[SparseNDArray],  # type: ignore[type-var]
         AnySOMAObject,
     ],
 ):
