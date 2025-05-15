@@ -163,9 +163,28 @@ SOMAArrayBase <- R6::R6Class(
 
     #' @description Retrieve the array dimensions (lifecycle: maturing)
     #'
-    #' @return ...
+    #' @return A named list of array dimensions; each entry contains the
+    #' following named entries:
+    #' \itemize{
+    #'  \item \dQuote{\code{name}}: name of the dimension
+    #'  \item \dQuote{\code{type}}: datatype of the dimension
+    #'  \item \dQuote{\code{ncells}}: number of values per dimension cell
+    #'  \item \dQuote{\code{domain}}: domain of the dimension
+    #'  \item \dQuote{\code{tile}}: tile of the dimension
+    #'  \item \dQuote{\code{filter_list}}: a list with filter information; this
+    #'   list contains the following entries:
+    #'   \itemize{
+    #'    \item \dQuote{\code{filter_type}}
+    #'    \item \dQuote{\code{compression_level}}
+    #'    \item \dQuote{\code{bit_width}}
+    #'    \item \dQuote{\code{positive_delta}}
+    #'    \item \dQuote{\code{float_bytewidth}}
+    #'    \item \dQuote{\code{float_factor}}
+    #'    \item \dQuote{\code{float_offset}}
+    #'   }
+    #' }
     #'
-    dimensions = \() .NotYetImplemented(),
+    dimensions = \() c_domain(self$uri, private$.soma_context),
 
     #' @description Retrieve dimension names (lifecycle: maturing)
     #'
