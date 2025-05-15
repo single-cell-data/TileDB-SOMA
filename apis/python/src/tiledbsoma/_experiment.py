@@ -22,10 +22,10 @@ from ._soma_object import AnySOMAObject
 
 class Experiment(  # type: ignore[misc]  # `SOMAObject.__eq__`, `SOMAGroup.set` false positives
     CollectionBase[AnySOMAObject],
-    experiment.Experiment[  # type: ignore[type-var]
+    experiment.Experiment[
         DataFrame,
-        Collection[Measurement],
-        Collection[Scene],
+        Collection[Measurement],  # type: ignore[type-var]
+        Collection[Scene],  # type: ignore[type-var]
         AnySOMAObject,
     ],
 ):
