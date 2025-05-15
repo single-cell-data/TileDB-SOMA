@@ -18,6 +18,7 @@
 
 ## Changes
 
+- Update [TileDB core to 2.28.0](https://github.com/TileDB-Inc/TileDB/blob/main/HISTORY.md#tiledb-v2280-release-notes) ([#4057](https://github.com/single-cell-data/TileDB-SOMA/pull/4057))
 - `TileDBArray$attributes()` has been promoted to `SOMAArrayBase$attributes()` and returns a named list instead of an external pointer ([#3644](https://github.com/single-cell-data/TileDB-SOMA/pull/3644))
 
 ## Fixed
