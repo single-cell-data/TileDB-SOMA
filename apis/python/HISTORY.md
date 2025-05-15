@@ -25,7 +25,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Security
 
-- \[[#4031](https://github.com/single-cell-data/TileDB-SOMA/pull/4031)\] [python] Encode URI when generating from key
+- \[[#4031](https://github.com/single-cell-data/TileDB-SOMA/pull/4031)\] [python] Storage paths generated from collection keys are now URL-escaped if they contain characters outside the safe set (`a-zA-Z0-9-_.()^!@+={}~'`). Additionally, the special names `..` and `.` are now prohibited.
 
 ## [Release prior to 1.17.0]
 
