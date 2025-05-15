@@ -86,6 +86,7 @@ jobs:
         with:
           working-directory: 'apis/r/'
           cache-version: 2
+          pak-version: "devel"
 
       # - name: CMake
       #   uses: lukka/get-cmake@latest
