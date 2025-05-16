@@ -67,18 +67,26 @@ void SOMADenseNDArray::create(
     attr->metadata = nullptr;
     attr->release = &ArrowAdapter::release_schema;
 
-    auto [tiledb_schema, soma_schema_extension] =
-        ArrowAdapter::tiledb_schema_from_arrow_schema(
-            ctx->tiledb_ctx(),
-            schema,
-            index_columns,
-            std::nullopt,
-            "SOMADenseNDArray",
-            false,
-            platform_config);
+    auto
+        [tiledb_schema, soma_schema_extension, required_soma_schema_extension] =
+            ArrowAdapter::tiledb_schema_from_arrow_schema(
+                ctx->tiledb_ctx(),
+                schema,
+                index_columns,
+                std::nullopt,
+                "SOMADenseNDArray",
+                false,
+                platform_config);
 
     SOMAArray::create(
-        ctx, uri, tiledb_schema, "SOMADenseNDArray", std::nullopt, timestamp);
+        ctx,
+        uri,
+        tiledb_schema,
+        "SOMADenseNDArray",
+        required_soma_schema_extension ?
+            std::make_optional(soma_schema_extension.dump()) :
+            std::nullopt,
+        timestamp);
 
     schema->release(schema.get());
 }
