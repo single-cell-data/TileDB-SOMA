@@ -3,6 +3,7 @@
 #' @importFrom Matrix as.matrix
 #' @importFrom bit64 as.integer64
 #' @importFrom arrow concat_arrays
+#' @importFrom tiledb query_layout
 #' @importFrom rlang is_scalar_logical is_scalar_character
 #' @useDynLib tiledbsoma, .registration=TRUE
 #'
