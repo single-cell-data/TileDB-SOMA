@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">tiledbsoma</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.16.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.17.99.8</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -40,7 +40,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Create SOMA DataFrame</h1>
-      <small class="dont-index">Source: <a href="https://github.com/single-cell-data/TileDB-SOMA/blob/1.16.2/R/Factory.R" class="external-link"><code>R/Factory.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/single-cell-data/TileDB-SOMA/blob/1.17.0rc0/R/Factory.R" class="external-link"><code>R/Factory.R</code></a></small>
       <div class="d-none name"><code>SOMADataFrameCreate.Rd</code></div>
     </div>
 
@@ -72,7 +72,8 @@
 
 
 <dt id="arg-schema">schema<a class="anchor" aria-label="anchor" href="#arg-schema"></a></dt>
-<dd><p>Arrow schema argument for the SOMA dataframe</p></dd>
+<dd><p>Arrow schema argument for the
+<a href="SOMADataFrame.html">SOMA dataframe</a></p></dd>
 
 
 <dt id="arg-index-column-names">index_column_names<a class="anchor" aria-label="anchor" href="#arg-index-column-names"></a></dt>
@@ -82,18 +83,22 @@ one index column name is required</p></dd>
 
 
 <dt id="arg-domain">domain<a class="anchor" aria-label="anchor" href="#arg-domain"></a></dt>
-<dd><p>An optional list of 2-element vectors specifying the domain of each index
-column. Each vector should be a pair consisting of the minimum and maximum values storable in
-the index column. For example, if there is a single int64-valued index column, then <code>domain</code>
-might be <code>c(100, 200)</code> to indicate that values between 100 and 200, inclusive, can be stored
-in that column.  If provided, this list must have the same length as <code>index_column_names</code>,
-and the index-column domain will be as specified.  If omitted entirely, or if <code>NULL</code> in a given
-dimension, the corresponding index-column domain will use the minimum and maximum possible
-values for the column's datatype.  This makes a <code>DataFrame</code> growable.</p></dd>
+<dd><p>An optional list of 2-element vectors specifying the domain of
+each index column. Each vector should be a pair consisting of the minimum and
+maximum values storable in the index column. For example, if there is a
+single int64-valued index column, then <code>domain</code> might be <code>c(100, 200)</code> to
+indicate that values between 100 and 200, inclusive, can be stored in that
+column. If provided, this list must have the same length as
+<code>index_column_names</code>, and the index-column domain will be as specified. If
+omitted entirely, or if <code>NULL</code> in a given dimension, the corresponding
+index-column domain will use the minimum and maximum possible values for the
+column's datatype.  This makes a <code>DataFrame</code> growable.</p></dd>
 
 
 <dt id="arg-ingest-mode">ingest_mode<a class="anchor" aria-label="anchor" href="#arg-ingest-mode"></a></dt>
-<dd><p>Ingestion mode when creating the TileDB object; choose from:</p><ul><li><p>“<code>write</code>”: create a new TileDB object and error if it already exists</p></li>
+<dd><p>Ingestion mode when creating the TileDB object;
+choose from:</p><ul><li><p>“<code>write</code>”: create a new TileDB object and error if
+it already exists</p></li>
 <li><p>“<code>resume</code>”: attempt to create a new TileDB object;
 if it already exists, simply open it for writing</p></li>
 </ul></dd>
@@ -109,6 +114,10 @@ if it already exists, simply open it for writing</p></li>
 
 <dt id="arg-tiledb-timestamp">tiledb_timestamp<a class="anchor" aria-label="anchor" href="#arg-tiledb-timestamp"></a></dt>
 <dd><p>Optional Datetime (POSIXct) for TileDB timestamp</p></dd>
+
+
+<dt id="arg-soma-context">soma_context<a class="anchor" aria-label="anchor" href="#arg-soma-context"></a></dt>
+<dd><p>A SOMA context as created by <code><a href="soma_context.html">soma_context</a>()</code></p></dd>
 
 </dl></div>
 
