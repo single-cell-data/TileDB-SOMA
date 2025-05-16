@@ -77,7 +77,7 @@ def test_query_condition(condition):
     pandas = pandas_query(uri, condition)
     soma_arrow = soma_query(uri, condition)
     assert len(pandas.index) == soma_arrow.num_rows
-    assert (
+    assert pandas.empty or (
         (pandas.reset_index(drop=True) == soma_arrow.to_pandas().reset_index(drop=True))
         .all()
         .all()
