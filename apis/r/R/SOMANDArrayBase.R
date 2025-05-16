@@ -1,10 +1,10 @@
 #' SOMA NDArray Base Class
 #'
-#' @description
-#' Adds NDArray-specific functionality to the [`SOMAArrayBase`] class.
-#' (lifecycle: maturing)
+#' @description Adds NDArray-specific functionality to the
+#' \code{\link{SOMAArrayBase}} class. (lifecycle: maturing)
 #'
 #' @keywords internal
+#'
 #' @export
 #'
 SOMANDArrayBase <- R6::R6Class(
@@ -14,24 +14,26 @@ SOMANDArrayBase <- R6::R6Class(
 
     #' @description Create a SOMA NDArray named with the URI. (lifecycle:
     #' maturing)
-    #' @param type an [Arrow type][arrow::data-type] defining the type of each
-    #' element in the array.
+    #'
+    #' @param type An \link[arrow:data-type]{Arrow type} defining the type of
+    #' each element in the array.
     #' @param shape a vector of integers defining the shape of the array.
     #' @template param-platform-config
-    #' @param internal_use_only Character value to signal this is a 'permitted'
-    #' call, as `create()` is considered internal and should not be called
-    #' directly.
     create = function(
       type,
       shape,
-      platform_config = NULL,
-      internal_use_only = NULL
+      platform_config = NULL
     ) {
-      if (is.null(internal_use_only) || internal_use_only != "allowed_use") {
-        stop(paste(
-          "Use of the create() method is for internal use only. Consider using a",
-          "factory method as e.g. 'SOMASparseNDArrayCreate()'."
-        ), call. = FALSE)
+      envs <- unique(vapply(
+        X = unique(sys.parents()),
+        FUN = function(n) environmentName(environment(sys.function(n))),
+        FUN.VALUE = character(1L)
+      ))
+      if (!"tiledbsoma" %in% envs) {
+        stop(
+          paste(strwrap(private$.internal_use_only("create", "collection")), collapse = '\n'),
+          call. = FALSE
+        )
       }
 
       ## .is_sparse field is being set by dense and sparse private initialisers, respectively
@@ -39,7 +41,7 @@ SOMANDArrayBase <- R6::R6Class(
 
       dom_ext_tbl <- get_domain_and_extent_array(shape, private$.is_sparse)
 
-      # Parse the tiledb/create/ subkeys of the platform_config into a handy,
+      # Parse the tiledb/create subkeys of the platform_config into a handy,
       # typed, queryable data structure.
       tiledb_create_options <- TileDBCreateOptions$new(platform_config)
 
@@ -59,7 +61,7 @@ SOMANDArrayBase <- R6::R6Class(
       schema$export_to_c(nasp)
 
       ## create array
-      ctxptr <- super$tiledbsoma_ctx$context()
+      # ctxptr <- self$tiledbsoma_ctx$context()
       createSchemaFromArrow(
         uri = self$uri,
         nasp = nasp,
@@ -73,8 +75,8 @@ SOMANDArrayBase <- R6::R6Class(
       )
       # private$write_object_type_metadata(timestamps)  ## FIXME: temp. commented out -- can this be removed overall?
 
-      self$open("WRITE", internal_use_only = "allowed_use")
-      self
+      self$reopen("WRITE", tiledb_timestamp = self$tiledb_timestamp)
+      return(self)
     },
 
     ## needed eg after open() to set (Arrow) type
@@ -90,9 +92,7 @@ SOMANDArrayBase <- R6::R6Class(
     #' or it has had ``upgrade_domain`` applied to it.
     #' (lifecycle: maturing)
     #' @return Logical
-    tiledbsoma_has_upgraded_shape = function() {
-      has_current_domain(self$uri, private$.soma_context)
-    },
+    tiledbsoma_has_upgraded_shape = \() has_current_domain(self$uri, private$.soma_context),
 
     #' @description Increases the shape of the array as specified, up to the hard
     #' limit which is `maxshape`. Raises an error if the new shape is less than
@@ -113,7 +113,13 @@ SOMANDArrayBase <- R6::R6Class(
       )
       # Checking slotwise new shape >= old shape, and <= max_shape, is already done in libtiledbsoma
 
-      reason_string <- resize(self$uri, new_shape, .name_of_function(), check_only, private$.soma_context)
+      reason_string <- resize(
+        uri = self$uri,
+        new_shape = new_shape,
+        function_name_for_messages = .name_of_function(),
+        check_only = check_only,
+        ctxxp = private$.soma_context
+      )
 
       if (isTRUE(check_only)) {
         return(reason_string)
@@ -144,7 +150,13 @@ SOMANDArrayBase <- R6::R6Class(
       )
       # Checking slotwise new shape >= old shape, and <= max_shape, is already done in libtiledbsoma
 
-      reason_string <- tiledbsoma_upgrade_shape(self$uri, shape, .name_of_function(), check_only, private$.soma_context)
+      reason_string <- tiledbsoma_upgrade_shape(
+        uri = self$uri,
+        new_shape = shape,
+        function_name_for_messages = .name_of_function(),
+        check_only = check_only,
+        ctxxp = private$.soma_context
+      )
       if (isTRUE(check_only)) {
         return(reason_string)
       }
@@ -229,9 +241,6 @@ SOMANDArrayBase <- R6::R6Class(
 
       # convert integer to integer64 to match dimension type
       return(bit64::as.integer64(new_shape))
-    },
-
-    # Internal marking of one or zero based matrices for iterated reads
-    zero_based = NA
+    }
   )
 )
