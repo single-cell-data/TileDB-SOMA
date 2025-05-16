@@ -4,16 +4,7 @@
 
 from __future__ import annotations
 
-import re
-from typing import (
-    Any,
-    Callable,
-    Generic,
-    Iterable,
-    Iterator,
-    TypeVar,
-    cast,
-)
+from typing import Any, Callable, Generic, Iterable, Iterator, TypeVar, cast
 
 import attrs
 from typing_extensions import Self
@@ -22,16 +13,9 @@ from . import _tdb_handles
 
 # This package's pybind11 code
 from . import pytiledbsoma as clib  # noqa: E402
-from ._exception import (
-    SOMAError,
-    is_does_not_exist_error,
-)
+from ._exception import SOMAError, is_does_not_exist_error
 from ._soma_object import AnySOMAObject, SOMAObject
-from ._util import (
-    is_relative_uri,
-    make_relative_path,
-    uri_joinpath,
-)
+from ._util import is_relative_uri, make_relative_path, sanitize_key, uri_joinpath
 
 CollectionElementType = TypeVar("CollectionElementType", bound=AnySOMAObject)
 _TDBO = TypeVar("_TDBO", bound=SOMAObject)  # type: ignore[type-arg]
@@ -218,7 +202,7 @@ class SOMAGroup(
         return child
 
     def _new_child_uri(self, *, key: str, user_uri: str | None) -> "_ChildURI":
-        maybe_relative_uri = user_uri or _sanitize_for_path(key)
+        maybe_relative_uri = user_uri or sanitize_key(key)
         if not is_relative_uri(maybe_relative_uri):
             # It's an absolute URI.
             return _ChildURI(
@@ -292,15 +276,6 @@ class SOMAGroup(
             key, uri=uri_to_add, relative=use_relative_uri, soma_object=value
         )
         return self
-
-
-_NON_WORDS = re.compile(r"[\W_]+")
-
-
-def _sanitize_for_path(key: str) -> str:
-    """Prepares the given key for use as a path component."""
-    sanitized = "_".join(_NON_WORDS.split(key))
-    return sanitized
 
 
 @attrs.define(frozen=True, kw_only=True)
