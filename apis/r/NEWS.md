@@ -1,6 +1,20 @@
 # Unreleased
 
-## Removals
+## Added
+
+## Changed
+
+## Deprecated
+
+## Removed
+
+## Fixed
+
+## Security
+
+# tiledbsoma 1.17.0
+
+## Removed
 
 - `TileDBURI` class has been removed ([#3644](https://github.com/single-cell-data/TileDB-SOMA/pull/3644))
 - arrow \<> TileDB-R helpers have been removed ([#3644](https://github.com/single-cell-data/TileDB-SOMA/pull/3644))
@@ -8,7 +22,7 @@
   - `arrow_field_from_tiledb_attr()`
   - `arrow_schema_from_tiledb_schema()`
 
-## Additions
+## Added
 
 - New function `get_tiledb_object_type()` to replace `tiledb::tiledb_object_type()` ([#3644](https://github.com/single-cell-data/TileDB-SOMA/pull/3644))
 - New function `get_tiledb_version()` to replace `tiledb::tiledb_version()` ([#3644](https://github.com/single-cell-data/TileDB-SOMA/pull/3644))
@@ -16,7 +30,7 @@
 - New method `SOMAArrayBase$allows_duplicates()` to replace `tiledb::allows_dups()` ([#3644](https://github.com/single-cell-data/TileDB-SOMA/pull/3644))
 - New method `SOMADataFrame$levels()` to replace tiledb-r enum accessors ([#3644](https://github.com/single-cell-data/TileDB-SOMA/pull/3644))
 
-## Changes
+## Changed
 
 - Update [TileDB core to 2.28.0](https://github.com/TileDB-Inc/TileDB/blob/main/HISTORY.md#tiledb-v2280-release-notes) ([#4057](https://github.com/single-cell-data/TileDB-SOMA/pull/4057))
 - `TileDBArray$attributes()` has been promoted to `SOMAArrayBase$attributes()` and returns a named list instead of an external pointer ([#3644](https://github.com/single-cell-data/TileDB-SOMA/pull/3644))
