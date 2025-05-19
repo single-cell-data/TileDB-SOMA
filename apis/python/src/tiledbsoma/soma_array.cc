@@ -36,14 +36,12 @@ py::list domainish_to_list(ArrowArray* arrow_array, ArrowSchema* arrow_schema) {
         array_list.append(array);
 
         // Already released: ensure there is no attempt at second free.
-        arrow_array->children[i] = nullptr;
-        arrow_schema->children[i] = nullptr;
+        arrow_array->children[i]->release = nullptr;
+        arrow_schema->children[i]->release = nullptr;
     }
-    // Already released: ensure there is no attempt at second free.
-    arrow_array->n_children = 0;
-    arrow_array->children = nullptr;
-    arrow_schema->n_children = 0;
-    arrow_schema->children = nullptr;
+
+    arrow_array->release(arrow_array);
+    arrow_schema->release(arrow_schema);
 
     return array_list;
 }
