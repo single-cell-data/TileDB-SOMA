@@ -15,6 +15,7 @@
 
 #include "../utils/logger.h"
 #include "soma_attribute.h"
+#include "soma_binary_column.h"
 #include "soma_dimension.h"
 #include "soma_geometry_column.h"
 
@@ -68,6 +69,10 @@ std::vector<std::shared_ptr<SOMAColumn>> SOMAColumn::deserialize(
                     break;
                 case soma_column_datatype_t::SOMA_COLUMN_GEOMETRY:
                     col = SOMAGeometryColumn::deserialize(
+                        column, ctx, array, metadata);
+                    break;
+                case soma_column_datatype_t::SOMA_COLUMN_BINARY:
+                    col = SOMABinaryColumn::deserialize(
                         column, ctx, array, metadata);
                     break;
                 default:

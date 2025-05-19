@@ -278,7 +278,7 @@ def arrow_table():
         [
             "bytes-pa-array-typed",
             ["bytes"],
-            [["", ""]],
+            [[b"", b""]],
             [pa.array([b"cat", b"dog"], pa.binary())],
             "default23",
         ],
@@ -2139,3 +2139,90 @@ def test_types_read_errors(
     with pytest.raises(soma.SOMAError):
         with soma.DataFrame.open(uri, "r") as sdf:
             sdf.read(coords=coords).concat()
+
+
+@pytest.mark.parametrize("domain", [[None], [[b"", b""]]])
+def test_binary_index(tmp_path, domain):
+    uri = tmp_path.as_posix()
+
+    soma_joinid_data = []
+    string_data = []
+    bytes_data = []
+
+    # generate data for writing
+    for i in range(128):
+        soma_joinid_data.append(i)
+        string_data.append(str(i))
+        bytes_data.append(i.to_bytes(1, byteorder="big"))
+
+    arrow_table = pa.Table.from_pydict(
+        {
+            "soma_joinid": pa.array(soma_joinid_data, pa.int64()),
+            "string": string_data,
+            "bytes": bytes_data,
+        }
+    )
+
+    sdf = soma.DataFrame.create(
+        uri,
+        schema=arrow_table.schema,
+        index_column_names=["bytes"],
+        domain=domain,
+    )
+
+    with pytest.raises(soma.SOMAError):
+        sdf.change_domain([[b"\x00", "\x7f"]])
+
+    with pytest.raises(soma.SOMAError):
+        sdf.change_domain([["a", "b"]])
+
+    sdf.change_domain([[b"", b""]])
+    sdf.change_domain([["", ""]])
+
+    sdf.write(arrow_table)
+
+    with pytest.raises(soma.SOMAError):
+        # Write outside of current domain
+        for i in range(128, 256):
+            temp_soma_joinid_data = [i]
+            temp_string_data = [str(i)]
+            temp_bytes_data = [i.to_bytes(1, byteorder="big")]
+
+            temp_arrow_table = pa.Table.from_pydict(
+                {
+                    "soma_joinid": pa.array(temp_soma_joinid_data, pa.int64()),
+                    "string": temp_string_data,
+                    "bytes": temp_bytes_data,
+                }
+            )
+
+            sdf.write(temp_arrow_table)
+
+    sdf = sdf.reopen("r")
+
+    point_read = sdf.read([(b"\x10", b"\x20")]).concat().to_pandas()
+    slice_read = sdf.read([slice(b"\x10", b"\x20")]).concat().to_pandas()
+
+    assert len(point_read) == 2
+    assert len(slice_read) == 17
+
+    for idx, entry in enumerate(slice_read["bytes"]):
+        assert entry == bytes_data[16 + idx].decode("utf-8")
+
+    assert sdf.non_empty_domain() == ((b"\x00", b"\x7f"),)
+    assert sdf.domain == ((b"", b""),)
+    assert sdf._maxdomain() == ((b"", b""),)
+
+
+@pytest.mark.parametrize(
+    "domain", [[[b"0x00", b"0x7f"]], [[b"0x10", b"0x56"]], [[b"0x00", b"0xff"]]]
+)
+def test_binary_index_invalid_domain(tmp_path, arrow_table, domain):
+    uri = tmp_path.as_posix()
+    with pytest.raises(ValueError):
+        soma.DataFrame.create(
+            uri,
+            schema=arrow_table.schema,
+            index_column_names=["bytes"],
+            domain=domain,
+        )

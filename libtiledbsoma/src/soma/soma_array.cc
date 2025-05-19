@@ -189,6 +189,8 @@ void SOMAArray::fill_columns() {
         }
     }
 
+    // Column metadata is optional for other SOMAArray types but some features
+    // may be missing such as binary index columns
     columns_ = SOMAColumn::deserialize(*ctx_->tiledb_ctx(), *arr_, metadata_);
 }
 
