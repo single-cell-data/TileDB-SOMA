@@ -136,6 +136,13 @@ void load_soma_dataframe(py::module& m) {
                     ArrowTable t = sdf.get_enumeration_values(column_names);
                     py::gil_scoped_acquire acquire;
 
+                    // This will run at destruction time (like a 'defer' in Go)
+                    // once this method exits, exception or no
+                    ScopedExecutor cleanup([&]() {
+                        t.first->release(t.first.get());
+                        t.second->release(t.second.get());
+                    });
+
                     auto ncol = t.second->n_children;
 
                     py::dict retval;
