@@ -26,8 +26,8 @@ jobs:
     - name: Run libTileDB-SOMA unittests
       run: ctest --test-dir build/libtiledbsoma -C Release --verbose --rerun-failed --output-on-failure
     - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v5
       with:
-        gcov: true
         flags: libtiledbsoma
         gcov_include: $(find libtiledbsoma -name "*.h" -or -name "*.cc")
+        token: ${{ secrets.CODECOV_TOKEN }}
