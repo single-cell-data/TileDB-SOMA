@@ -447,5 +447,3 @@ SOMAObject <- R6::R6Class(
     }
   )
 )
-
-SOMAObjectCreate <- \() SOMAObject$new()
