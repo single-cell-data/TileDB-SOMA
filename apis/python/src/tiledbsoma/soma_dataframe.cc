@@ -95,6 +95,8 @@ void load_soma_dataframe(py::module& m) {
                     TPY_ERROR_LOC(e.what());
                 }
                 schema.release(&schema);
+                index_column_array.release(&index_column_array);
+                index_column_schema.release(&index_column_schema);
             },
             "uri"_a,
             py::kw_only(),
@@ -152,6 +154,10 @@ void load_soma_dataframe(py::module& m) {
                             py::capsule(column_arrow_schema));
                         retval[py::str(column_name)] = pa_array;
                     }
+
+                    t.first->release(t.first.get());
+                    t.second->release(t.second.get());
+
                     return retval;
                 } catch (const std::exception& e) {
                     throw TileDBSOMAError(e.what());

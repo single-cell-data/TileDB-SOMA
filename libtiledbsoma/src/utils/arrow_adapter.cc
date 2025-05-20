@@ -99,7 +99,7 @@ void ArrowAdapter::release_schema(struct ArrowSchema* schema) {
             LOG_TRACE(fmt::format(
                 "[ArrowAdapter] release_schema name {} schema->dict release",
                 name_for_log));
-            release_schema(schema->dictionary);
+            schema->dictionary->release(schema->dictionary);
         }
         LOG_TRACE(fmt::format(
             "[ArrowAdapter] release_schema name {} schema->dict free",

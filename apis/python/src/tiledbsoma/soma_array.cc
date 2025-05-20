@@ -135,11 +135,16 @@ void load_soma_array(py::module& m) {
                 auto pa = py::module::import("pyarrow");
                 auto pa_schema_import = pa.attr("Schema").attr(
                     "_import_from_c");
+
+                auto schema = array.arrow_schema();
                 try {
-                    return pa_schema_import(
-                        py::capsule(array.arrow_schema().get()));
+                    return pa_schema_import(py::capsule(schema.get()));
                 } catch (const std::exception& e) {
                     TPY_ERROR_LOC(e.what());
+                }
+
+                if (schema->release) {
+                    schema->release(schema.get());
                 }
             })
         .def("schema_config_options", &SOMAArray::schema_config_options)
