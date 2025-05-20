@@ -309,6 +309,11 @@ void load_soma_dataframe(py::module& m) {
                 } catch (const std::exception& e) {
                     throw TileDBSOMAError(e.what());
                 }
+
+                nanoarrow_domain_table.first->release(
+                    nanoarrow_domain_table.first.get());
+                nanoarrow_domain_table.second->release(
+                    nanoarrow_domain_table.second.get());
             },
             "pyarrow_domain_table"_a,
             "function_name_for_messages"_a)
@@ -335,6 +340,11 @@ void load_soma_dataframe(py::module& m) {
                 } catch (const std::exception& e) {
                     throw TileDBSOMAError(e.what());
                 }
+
+                nanoarrow_domain_table.first->release(
+                    nanoarrow_domain_table.first.get());
+                nanoarrow_domain_table.second->release(
+                    nanoarrow_domain_table.second.get());
             },
             "pyarrow_domain_table"_a,
             "function_name_for_messages"_a)
@@ -361,6 +371,11 @@ void load_soma_dataframe(py::module& m) {
                 } catch (const std::exception& e) {
                     throw TileDBSOMAError(e.what());
                 }
+
+                nanoarrow_domain_table.first->release(
+                    nanoarrow_domain_table.first.get());
+                nanoarrow_domain_table.second->release(
+                    nanoarrow_domain_table.second.get());
             },
             "pyarrow_domain_table"_a,
             "function_name_for_messages"_a)
@@ -387,6 +402,11 @@ void load_soma_dataframe(py::module& m) {
                 } catch (const std::exception& e) {
                     throw TileDBSOMAError(e.what());
                 }
+
+                nanoarrow_domain_table.first->release(
+                    nanoarrow_domain_table.first.get());
+                nanoarrow_domain_table.second->release(
+                    nanoarrow_domain_table.second.get());
             },
             "pyarrow_domain_table"_a,
             "function_name_for_messages"_a)
