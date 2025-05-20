@@ -606,7 +606,9 @@ def from_anndata(
 
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         # MS/meas
-        measurement_uri = _util.uri_joinpath(experiment_ms_uri, measurement_name)
+        measurement_uri = _util.uri_joinpath(
+            experiment_ms_uri, _util.sanitize_key(measurement_name)
+        )
         with _create_or_open_collection(
             Measurement,
             measurement_uri,
@@ -666,7 +668,9 @@ def from_anndata(
                 if has_X:
                     with _create_from_matrix(
                         X_kind,
-                        _util.uri_joinpath(measurement_X_uri, X_layer_name),
+                        _util.uri_joinpath(
+                            measurement_X_uri, _util.sanitize_key(X_layer_name)
+                        ),
                         anndata.X,
                         axis_0_mapping=joinid_maps.obs_axis,
                         axis_1_mapping=joinid_maps.var_axes[measurement_name],
@@ -679,7 +683,9 @@ def from_anndata(
                 for layer_name, layer in anndata.layers.items():
                     with _create_from_matrix(
                         X_kind,
-                        _util.uri_joinpath(measurement_X_uri, layer_name),
+                        _util.uri_joinpath(
+                            measurement_X_uri, _util.sanitize_key(layer_name)
+                        ),
                         layer,
                         axis_0_mapping=joinid_maps.obs_axis,
                         axis_1_mapping=joinid_maps.var_axes[measurement_name],
@@ -698,7 +704,9 @@ def from_anndata(
                 ) -> None:
                     ad_val = getattr(anndata, ad_key)
                     if len(ad_val.keys()) > 0:  # do not create an empty collection
-                        ad_val_uri = _util.uri_joinpath(measurement_uri, ad_key)
+                        ad_val_uri = _util.uri_joinpath(
+                            measurement_uri, _util.sanitize_key(ad_key)
+                        )
                         with _create_or_open_collection(
                             Collection,
                             ad_val_uri,
@@ -723,7 +731,9 @@ def from_anndata(
                                     # consider a use-dense flag at the tiledbsoma.io API
                                     # DenseNDArray,
                                     SparseNDArray,
-                                    _util.uri_joinpath(ad_val_uri, key),
+                                    _util.uri_joinpath(
+                                        ad_val_uri, _util.sanitize_key(key)
+                                    ),
                                     conversions.to_tiledb_supported_array_type(
                                         key, val
                                     ),
@@ -794,7 +804,9 @@ def from_anndata(
 
                             with _create_from_matrix(
                                 SparseNDArray,
-                                _util.uri_joinpath(raw_X_uri, raw_X_layer_name),
+                                _util.uri_joinpath(
+                                    raw_X_uri, _util.sanitize_key(raw_X_layer_name)
+                                ),
                                 anndata.raw.X,
                                 axis_0_mapping=joinid_maps.obs_axis,
                                 axis_1_mapping=joinid_maps.var_axes["raw"],
@@ -1974,9 +1986,9 @@ def add_matrix_to_collection(
 
     with exp.ms[measurement_name] as meas:
         if extend_creation_uri:
-            coll_uri = f"{exp.uri}/ms/{measurement_name}/{collection_name}"
+            coll_uri = f"{exp.uri}/ms/{_util.sanitize_key(measurement_name)}/{_util.sanitize_key(collection_name)}"
         else:
-            coll_uri = f"{meas.uri}/{collection_name}"
+            coll_uri = _util.uri_joinpath(meas.uri, _util.sanitize_key(collection_name))
 
         if collection_name in meas:
             coll = cast(Collection[RawHandle], meas[collection_name])
@@ -1989,7 +2001,7 @@ def add_matrix_to_collection(
             )
             _maybe_set(meas, collection_name, coll, use_relative_uri=use_relative_uri)
         with coll:
-            matrix_uri = f"{coll_uri}/{matrix_name}"
+            matrix_uri = _util.uri_joinpath(coll_uri, _util.sanitize_key(matrix_name))
 
             with _create_from_matrix(
                 SparseNDArray,
@@ -2738,7 +2750,7 @@ def _ingest_uns_dict(
 ) -> None:
     with _create_or_open_collection(
         Collection,
-        _util.uri_joinpath(parent.uri, parent_key),
+        _util.uri_joinpath(parent.uri, _util.sanitize_key(parent_key)),
         ingestion_params=ingestion_params,
         context=context,
         additional_metadata=additional_metadata,
@@ -2807,7 +2819,7 @@ def _ingest_uns_node(
     if isinstance(value, pd.DataFrame):
         num_rows = value.shape[0]
         with _write_dataframe(
-            _util.uri_joinpath(coll.uri, key),
+            _util.uri_joinpath(coll.uri, _util.sanitize_key(key)),
             # _write_dataframe modifies passed DataFrame in-place (adding a "soma_joinid" index)
             value.copy(),
             None,
@@ -2941,7 +2953,7 @@ def _ingest_uns_1d_string_array(
     )
     df.set_index("soma_joinid", inplace=True)
 
-    df_uri = _util.uri_joinpath(coll.uri, key)
+    df_uri = _util.uri_joinpath(coll.uri, _util.sanitize_key(key))
     with _write_dataframe_impl(
         df,
         df_uri,
@@ -2988,7 +3000,7 @@ def _ingest_uns_2d_string_array(
     df = pd.DataFrame(data=data)
     df.set_index("soma_joinid", inplace=True)
 
-    df_uri = _util.uri_joinpath(coll.uri, key)
+    df_uri = _util.uri_joinpath(coll.uri, _util.sanitize_key(key))
     with _write_dataframe_impl(
         df,
         df_uri,
@@ -3018,7 +3030,7 @@ def _ingest_uns_ndarray(
     ingestion_params: IngestionParams,
     additional_metadata: AdditionalMetadata = None,
 ) -> None:
-    arr_uri = _util.uri_joinpath(coll.uri, key)
+    arr_uri = _util.uri_joinpath(coll.uri, _util.sanitize_key(key))
 
     if any(e <= 0 for e in value.shape):
         msg = f"Skipped {arr_uri} (uns ndarray): zero in shape {value.shape}"

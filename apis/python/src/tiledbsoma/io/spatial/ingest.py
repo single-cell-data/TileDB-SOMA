@@ -523,7 +523,9 @@ def from_visium(
 
             # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
             # MS/meas
-            measurement_uri = _util.uri_joinpath(experiment_ms_uri, measurement_name)
+            measurement_uri = _util.uri_joinpath(
+                experiment_ms_uri, _util.sanitize_key(measurement_name)
+            )
             with _create_or_open_collection(
                 Measurement, measurement_uri, **ingest_ctx
             ) as measurement:
@@ -570,7 +572,9 @@ def from_visium(
                     Collection, measurement_X_uri, **ingest_ctx
                 ) as x:
                     _maybe_set(measurement, "X", x, use_relative_uri=use_relative_uri)
-                    X_layer_uri = _util.uri_joinpath(measurement_X_uri, X_layer_name)
+                    X_layer_uri = _util.uri_joinpath(
+                        measurement_X_uri, _util.sanitize_key(X_layer_name)
+                    )
                     with _write_X_layer(
                         X_kind,
                         X_layer_uri,
@@ -592,7 +596,7 @@ def from_visium(
             _maybe_set(
                 experiment, "spatial", spatial, use_relative_uri=use_relative_uri
             )
-            scene_uri = _util.uri_joinpath(spatial_uri, scene_name)
+            scene_uri = _util.uri_joinpath(spatial_uri, _util.sanitize_key(scene_name))
             with _create_or_open_scene(scene_uri, **ingest_ctx) as scene:
                 _maybe_set(
                     spatial, scene_name, scene, use_relative_uri=use_relative_uri
@@ -607,7 +611,9 @@ def from_visium(
 
                     # Write image data and add to the scene.
                     if image_paths:
-                        tissue_uri = _util.uri_joinpath(img_uri, image_name)
+                        tissue_uri = _util.uri_joinpath(
+                            img_uri, _util.sanitize_key(image_name)
+                        )
                         with _create_visium_tissue_images(
                             tissue_uri,
                             image_paths,

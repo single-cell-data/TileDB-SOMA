@@ -11,6 +11,7 @@ import time
 import urllib.parse
 from concurrent.futures import Future
 from itertools import zip_longest
+from string import ascii_lowercase, ascii_uppercase, digits
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -730,3 +731,16 @@ class Sentinel:
 
 
 MISSING = Sentinel()
+
+
+def sanitize_key(key: str) -> str:
+    # Encode everything outside of the safe characters set
+    safe_puncuation = "-_.()^!@+={}~'"
+    safe_character_set = f"{digits}{ascii_lowercase}{ascii_uppercase}{safe_puncuation}"
+    sanitized_name = urllib.parse.quote(key, safe=safe_character_set)
+
+    # Ensure that the final key is valid
+    if sanitized_name in ["..", "."]:
+        raise ValueError(f"{key} is not a supported name")
+
+    return sanitized_name
