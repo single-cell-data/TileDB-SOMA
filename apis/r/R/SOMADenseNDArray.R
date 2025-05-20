@@ -184,8 +184,6 @@ SOMADenseNDArray <- R6::R6Class(
     }
   ),
   private = list(
-    .is_sparse = FALSE,
-
     # Given a user-specified shape along a particular dimension, returns a named
     # list containing name, capacity, and extent elements. The shape cannot be
     # NULL for dense arrays.

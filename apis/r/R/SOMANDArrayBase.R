@@ -48,7 +48,7 @@ SOMANDArrayBase <- R6::R6Class(
       ## .is_sparse field is being set by dense and sparse private initialisers, respectively
       private$.type <- type # Arrow schema type of data
 
-      dom_ext_tbl <- get_domain_and_extent_array(shape, private$.is_sparse)
+      dom_ext_tbl <- get_domain_and_extent_array(shape, self$is_sparse())
 
       # Parse the tiledb/create subkeys of the platform_config into a handy,
       # typed, queryable data structure.
@@ -71,13 +71,20 @@ SOMANDArrayBase <- R6::R6Class(
 
       ## create array
       # ctxptr <- self$tiledbsoma_ctx$context()
+      sparse <- if (inherits(self, "SOMASparseNDArray")) {
+        TRUE
+      } else if (inherits(self, "SOMADenseNDArray")) {
+        FALSE
+      } else {
+        stop("Unknown SOMA array type: ", self$class(), call. = FALSE)
+      }
       createSchemaFromArrow(
         uri = self$uri,
         nasp = nasp,
         nadimap = dnaap,
         nadimsp = dnasp,
-        sparse = private$.is_sparse,
-        datatype = if (private$.is_sparse) "SOMASparseNDArray" else "SOMADenseNDArray",
+        sparse = sparse,
+        datatype = if (sparse) "SOMASparseNDArray" else "SOMADenseNDArray",
         pclst = tiledb_create_options$to_list(FALSE),
         ctxxp = private$.soma_context,
         tsvec = self$.tiledb_timestamp_range
@@ -186,7 +193,6 @@ SOMANDArrayBase <- R6::R6Class(
     }
   ),
   private = list(
-    .is_sparse = NULL,
     .type = NULL,
 
     # Given a user-specified shape along a particular dimension, returns a named

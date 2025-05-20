@@ -65,13 +65,6 @@ SOMAArrayBase <- R6::R6Class(
           type = self$mode()
         )
       } else {
-        # if (is.null(internal_use_only)) stopifnot("tiledb_timestamp not yet supported for WRITE mode" = mode == "READ")
-        # if (self$mode() == "WRITE") {
-        #   stop(
-        #     "'tiledb_timestamp' not yet supported for WRITE mode",
-        #     call. = FALSE
-        #   )
-        # }
         spdl::debug(
           "[SOMAArrayBase$open] Opening {} '{}' in {} mode at ({})",
           self$class(),
@@ -235,7 +228,6 @@ SOMAArrayBase <- R6::R6Class(
     #' @return Named list of minimum/maximum values, or integer vector
     #' of maximum values.
     #'
-    # TODO: check max_only behavior
     non_empty_domain = function(index1 = FALSE, max_only = FALSE) {
       retval <- as.list(
         arrow::as_record_batch(
@@ -270,6 +262,7 @@ SOMAArrayBase <- R6::R6Class(
         cat("  dimensions:", string_collapse(self$dimnames()), "\n")
         cat("  attributes:", string_collapse(self$attrnames()), "\n")
       }
+      return(invisible(self))
     }
   ),
   active = list(

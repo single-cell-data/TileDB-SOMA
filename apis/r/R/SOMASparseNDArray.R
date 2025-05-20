@@ -300,8 +300,6 @@ SOMASparseNDArray <- R6::R6Class(
     }
   ),
   private = list(
-    .is_sparse = TRUE,
-
     # Given a user-specified shape along a particular dimension, returns a named
     # list containing name, capacity, and extent elements. If no shape is
     # provided the .Machine$integer.max - 1 is used.
