@@ -139,6 +139,10 @@ void load_soma_dataframe(py::module& m) {
                     py::gil_scoped_acquire acquire;
 
                     auto ncol = t.second->n_children;
+                    ScopedExecutor cleanup([&]() {
+                        t.first->release(t.first.get());
+                        t.second->release(t.second.get());
+                    });
 
                     py::dict retval;
                     for (auto i = 0; i < ncol; i++) {
@@ -154,9 +158,6 @@ void load_soma_dataframe(py::module& m) {
                             py::capsule(column_arrow_schema));
                         retval[py::str(column_name)] = pa_array;
                     }
-
-                    t.first->release(t.first.get());
-                    t.second->release(t.second.get());
 
                     return retval;
                 } catch (const std::exception& e) {
