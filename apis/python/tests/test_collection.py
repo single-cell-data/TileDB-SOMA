@@ -595,6 +595,7 @@ def test_collection_reopen(tmp_path):
         ("file.with..dot_segments", "file.with..dot_segments"),
         ("CON", "CON"),
         ("~", "~"),
+        ("#", "%23"),
     ),
 )
 def test_keys_with_sanitized_uris(tmp_path, key, sanitized_key):

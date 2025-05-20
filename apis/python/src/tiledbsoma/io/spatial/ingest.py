@@ -572,7 +572,9 @@ def from_visium(
                     Collection, measurement_X_uri, **ingest_ctx
                 ) as x:
                     _maybe_set(measurement, "X", x, use_relative_uri=use_relative_uri)
-                    X_layer_uri = _util.uri_joinpath(measurement_X_uri, X_layer_name)
+                    X_layer_uri = _util.uri_joinpath(
+                        measurement_X_uri, _util.sanitize_key(X_layer_name)
+                    )
                     with _write_X_layer(
                         X_kind,
                         X_layer_uri,
@@ -609,7 +611,9 @@ def from_visium(
 
                     # Write image data and add to the scene.
                     if image_paths:
-                        tissue_uri = _util.uri_joinpath(img_uri, image_name)
+                        tissue_uri = _util.uri_joinpath(
+                            img_uri, _util.sanitize_key(image_name)
+                        )
                         with _create_visium_tissue_images(
                             tissue_uri,
                             image_paths,
