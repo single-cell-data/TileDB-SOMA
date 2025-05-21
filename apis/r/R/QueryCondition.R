@@ -1,26 +1,3 @@
-#  MIT License
-#
-#  Copyright (c) TileDB Inc.
-#
-#  Permission is hereby granted, free of charge, to any person obtaining a copy
-#  of this software and associated documentation files (the "Software"), to deal
-#  in the Software without restriction, including without limitation the rights
-#  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-#  copies of the Software, and to permit persons to whom the Software is
-#  furnished to do so, subject to the following conditions:
-#
-#  The above copyright notice and this permission notice shall be included in all
-#  copies or substantial portions of the Software.
-#
-#  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-#  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-#  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-#  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-#  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-#  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-#  SOFTWARE.
-
-# ================================================================
 #' Create a 'tiledbsoma_query_condition' object from an expression
 #'
 #' The grammar for query conditions is constrained to the operators
@@ -273,23 +250,28 @@ parse_query_condition <- function(
   return(.parse_tree_to_qc(parse_tree, debug))
 }
 
-# ================================================================
 #' An S4 class for a TileDB QueryCondition object
 #'
 #' @slot ptr An external pointer to the underlying implementation
-#' @slot init A logical variable tracking if the query condition object has been
-#' initialized
+#' @slot init A logical variable tracking if the query condition object has
+#' been initialized
+#'
+#' @noRd
+#'
 setClass(
   "tiledbsoma_query_condition",
   slots = list(ptr = "externalptr", init = "logical")
 )
 
-# ================================================================
 #' Creates a 'tiledbsoma_query_condition' object
 #'
 #' @param somactx (optional) A TileDB Ctx object; if not supplied the default
 #' context object is retrieved
+#'
 #' @return A 'tiledbsoma_query_condition' object
+#'
+#' @noRd
+#'
 tiledbsoma_empty_query_condition <- function(somactx) {
   stopifnot("The argument must be a somactx object" = is(somactx, "externalptr"))
   ptr <- libtiledbsoma_empty_query_condition(somactx)
@@ -301,20 +283,24 @@ tiledbsoma_empty_query_condition <- function(somactx) {
   return(invisible(query_condition))
 }
 
-# ================================================================
 #' Initialize a 'tiledbsoma_query_condition' object
 #'
-#' Initializes (and possibly allocates) a query condition object using a triplet of
-#' attribute name, comparison value, and operator.  Six types of conditions are supported,
-#' they all take a single scalar comparison argument and attribute to compare against.
-#' At present only integer or numeric attribute comparisons are implemented.
+#' Initializes (and possibly allocates) a query condition object using a
+#' triplet of attribute name, comparison value, and operator.  Six types of
+#' conditions are supported, they all take a single scalar comparison argument
+#' and attribute to compare against. At present only integer or numeric
+#' attribute comparisons are implemented.
+#'
 #' @param attr_name A character value with the scheme attribute name
 #' @param value A scalar value that the attribute is compared against
-#' @param arrow_type_name A character value with the TileDB data type of the attribute column, for
-#' example 'float' or 'int32'
-#' @param op_name A character value with the comparison operation. This must be one of
-#' 'LT', 'LE', 'GT', 'GE', 'EQ', 'NE'.
-#' @param qc A 'tiledbsoma_query_condition' object to be initialized by this call.
+#' @param arrow_type_name A character value with the TileDB data type of the
+#' attribute column, for example 'float' or 'int32'
+#'
+#' @param op_name A character value with the comparison operation. This must be
+#' one of 'LT', 'LE', 'GT', 'GE', 'EQ', 'NE'
+#' @param qc A 'tiledbsoma_query_condition' object to be initialized by
+#' this call
+#'
 #' @return The initialized 'tiledbsoma_query_condition' object
 #'
 #' @noRd
@@ -349,15 +335,18 @@ tiledbsoma_query_condition_from_triple <- function(
   invisible(qc)
 }
 
-# ================================================================
 #' Combine two 'tiledbsoma_query_condition' objects
 #'
 #' Combines two query condition objects using a relatiional operator.
 #'
-#' @param lhs A 'tiledbsoma_query_condition' object on the left-hand side of the relation
-#' @param rhs A 'tiledbsoma_query_condition' object on the right-hand side of the relation
-#' @param op_name A character value with the relation, which must be one of 'AND', 'OR' or 'NOT'.
-#' @param somactx SOMAContext pointer.
+#' @param lhs A 'tiledbsoma_query_condition' object on the left-hand side
+#' of the relation
+#' @param rhs A 'tiledbsoma_query_condition' object on the right-hand side
+#' of the relation
+#' @param op_name A character value with the relation, which must be one of
+#' 'AND', 'OR' or 'NOT'
+#' @param somactx SOMAContext pointer
+#'
 #' @return The combined 'tiledbsoma_query_condition' object
 #'
 #' @noRd
@@ -375,18 +364,17 @@ tiledbsoma_query_condition_combine <- function(lhs, rhs, op_name, somactx) {
   invisible(qc)
 }
 
-# ================================================================
 #' Create a query condition for vector 'IN' and 'NOT_IN' operations
 #'
-#' Uses \sQuote{IN} and \sQuote{NOT_IN} operators on given attribute
+#' Uses \dQuote{IN} and \dQuote{NOT_IN} operators on given attribute
 #'
 #' @param attr_name A character value with the schema attribute name.
 #'
-#' @param op_name A character value with the chosen set operation. This must be one of
-#' \sQuote{IN} or \sQuote{NOT_IN}.
+#' @param op_name A character value with the chosen set operation. This must be
+#' one of \dQuote{IN} or \dQuote{NOT_IN}.
 #'
-#' @param values A vector wiith the given values. Supported types are integer, double,
-#' integer64, and character.
+#' @param values A vector wiith the given values. Supported types are integer,
+#' double, integer64, and character.
 #'
 #' @param somactx SOMAContext pointer.
 #'
