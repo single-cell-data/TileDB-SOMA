@@ -41,6 +41,9 @@ get_tiledb_version <- function(compact = FALSE) {
 #'
 #' @export
 #'
+#' @examples
+#' show_package_versions()
+#'
 show_package_versions <- function() {
   cat("tiledbsoma:    ", toString(utils::packageVersion("tiledbsoma")), "\n",
     "tiledb-r:      ", toString(utils::packageVersion("tiledb")), "\n",
@@ -53,7 +56,9 @@ show_package_versions <- function() {
 }
 
 #' @rdname tiledbsoma_stats
+#'
 #' @export
+#'
 tiledbsoma_stats_show <- function() {
   cat(tiledbsoma_stats_dump(), "\n")
 }
