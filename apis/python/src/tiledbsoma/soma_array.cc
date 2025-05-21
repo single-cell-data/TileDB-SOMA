@@ -28,9 +28,9 @@ py::list domainish_to_list(ArrowArray* arrow_array, ArrowSchema* arrow_schema) {
 
     py::list array_list;
     for (int i = 0; i < arrow_array->n_children; i++) {
-        // "_import_from_c" implements Arrow move semantic menaing
+        // "_import_from_c" implements Arrow move semantics, meaning
         // release is set to NULL for each array imported. Release
-        // should be called to the parent array
+        // should be called on the parent array.
         auto array = pa_array_import(
             py::capsule(arrow_array->children[i]),
             py::capsule(arrow_schema->children[i]));
