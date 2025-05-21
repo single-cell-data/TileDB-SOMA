@@ -16,6 +16,8 @@ qry <- exp$axis_query("RNA")
 xqry <- qry$X("data")
 
 iter <- xqry$blockwise(0L, size = 20L, reindex_disable_on_axis = TRUE)$sparse_matrix()
+stopifnot(inherits(iter, "BlockwiseSparseReadIter"))
+
 while (!iter$read_complete()) {
   block <- iter$read_next()
 }
