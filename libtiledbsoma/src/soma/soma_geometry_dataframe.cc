@@ -36,25 +36,22 @@ void SOMAGeometryDataFrame::create(
     std::shared_ptr<SOMAContext> ctx,
     PlatformConfig platform_config,
     std::optional<TimestampRange> timestamp) {
-    auto
-        [tiledb_schema, soma_schema_extension, required_soma_schema_extension] =
-            ArrowAdapter::tiledb_schema_from_arrow_schema(
-                ctx->tiledb_ctx(),
-                schema,
-                index_columns,
-                std::make_optional(coordinate_space),
-                "SOMAGeometryDataFrame",
-                true,
-                platform_config);
+    auto [tiledb_schema, soma_schema_extension] =
+        ArrowAdapter::tiledb_schema_from_arrow_schema(
+            ctx->tiledb_ctx(),
+            schema,
+            index_columns,
+            std::make_optional(coordinate_space),
+            "SOMAGeometryDataFrame",
+            true,
+            platform_config);
 
     auto array = SOMAArray::_create(
         ctx,
         uri,
         tiledb_schema,
         "SOMAGeometryDataFrame",
-        required_soma_schema_extension ?
-            std::make_optional(soma_schema_extension.dump()) :
-            std::nullopt,
+        soma_schema_extension.dump(),
         timestamp);
 
     // Add additional geometry dataframe metadata.
