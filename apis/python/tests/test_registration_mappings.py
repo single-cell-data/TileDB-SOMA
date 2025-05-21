@@ -74,13 +74,13 @@ def _create_anndata(
     var = _make_var(var_ids)
     X = _make_X(n_obs, n_var, X_value_base)
 
-    adata = ad.AnnData(X=X, obs=obs, var=var, dtype=X.dtype)
+    adata = ad.AnnData(X=X, obs=obs, var=var)
 
     if raw_var_ids is not None:
         raw_var = _make_var(raw_var_ids)
         raw_X = _make_X(n_obs, len(raw_var_ids), X_value_base)
         raw = ad.Raw(adata, var=raw_var, X=raw_X)
-        adata = ad.AnnData(X=X, obs=obs, var=var, dtype=X.dtype, raw=raw)
+        adata = ad.AnnData(X=X, obs=obs, var=var, raw=raw)
 
     return adata
 
@@ -1250,8 +1250,14 @@ def test_append_with_nonunique_field_values(
     exc, idb = dataset_ids_and_exc
     measurement_name = "test"
 
-    anndataa = create_anndata_canned(ida, obs_field_name, var_field_name)
-    anndatab = create_anndata_canned(idb, obs_field_name, var_field_name)
+    settings = (
+        ad.settings.override(check_uniqueness=False)
+        if hasattr(ad, "settings")
+        else nullcontext()
+    )
+    with settings:
+        anndataa = create_anndata_canned(ida, obs_field_name, var_field_name)
+        anndatab = create_anndata_canned(idb, obs_field_name, var_field_name)
     soma_uri = tmp_path.as_posix()
 
     tiledbsoma.io.from_anndata(soma_uri, anndataa, measurement_name=measurement_name)
@@ -1370,6 +1376,7 @@ def test_multimodal_names(tmp_path, conftest_pbmc3k_adata):
     del adata_rna.varm
     del adata_rna.obsp
     del adata_rna.varp
+    del adata_rna.uns
 
     # Simulate for "protein" measurement of SOMA experiment:
     # * Different var values
@@ -1381,7 +1388,7 @@ def test_multimodal_names(tmp_path, conftest_pbmc3k_adata):
         {"assay_type": ["protein"] * adata_protein.n_vars},
         index=[f"p{i}" for i in range(adata_protein.n_vars)],
     )
-    adata_protein = adata_protein[:, :500]
+    adata_protein = adata_protein[:, :500].copy()
 
     adata_protein.obs["batch_id"] = np.nan
     adata_protein.obs["batch_id"] = adata_protein.obs["batch_id"].astype("string")
@@ -1502,6 +1509,9 @@ def test_registration_lists_and_tuples(tmp_path):
     assert rd5 == rd6
 
 
+@pytest.mark.filterwarnings(
+    "ignore:.*Experiment does not support resizing.*:UserWarning"
+)
 @pytest.mark.parametrize(
     "version_and_shaped",
     [
