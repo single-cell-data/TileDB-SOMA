@@ -6,6 +6,9 @@
 #'
 #' @export
 #'
+#' @seealso \code{\link{BlockwiseTableReadIter}},
+#' \code{\link{BlockwiseSparseReadIter}}
+#'
 BlockwiseReadIterBase <- R6::R6Class(
   classname = "BlockwiseReadIterBase",
   inherit = ReadIter,
@@ -25,9 +28,9 @@ BlockwiseReadIterBase <- R6::R6Class(
       reindex_disable_on_axis = NA
     ) {
       super$initialize(sr)
-      stopifnot(
-        "'array' must be a 'SOMASparseNDArray'" = inherits(array, "SOMASparseNDArray")
-      )
+      if (!inherits(array, "SOMASparseNDArray")) {
+        stop("'array' must be a 'SOMASparseNDArray'", call. = FALSE)
+      }
       private$.array <- array
       # Check axis
       ndim <- self$array$ndim() - 1L
@@ -252,6 +255,22 @@ BlockwiseReadIterBase <- R6::R6Class(
 #'
 #' @export
 #'
+#' @examplesIf requireNamespace("withr", quietly = TRUE)
+#' dir <- withr::local_tempfile(pattern = "blockwise-table")
+#' dir.create(dir, recursive = TRUE)
+#' (exp <- load_dataset("soma-exp-pbmc-small", dir))
+#' qry <- exp$axis_query("RNA")
+#' xqry <- qry$X("data")
+#'
+#' iter <- xqry$blockwise(0L, size = 20L, reindex_disable_on_axis = TRUE)$tables()
+#' while (!iter$read_complete()) {
+#'   block <- iter$read_next()
+#' }
+#'
+#' \dontshow{
+#' exp$close()
+#' }
+#'
 BlockwiseTableReadIter <- R6::R6Class(
   classname = "BlockwiseTableReadIter",
   inherit = BlockwiseReadIterBase,
@@ -283,6 +302,22 @@ BlockwiseTableReadIter <- R6::R6Class(
 #' @keywords internal
 #'
 #' @export
+#'
+#' @examplesIf requireNamespace("withr", quietly = TRUE)
+#' dir <- withr::local_tempfile(pattern = "blockwise-table")
+#' dir.create(dir, recursive = TRUE)
+#' (exp <- load_dataset("soma-exp-pbmc-small", dir))
+#' qry <- exp$axis_query("RNA")
+#' xqry <- qry$X("data")
+#'
+#' iter <- xqry$blockwise(0L, size = 20L, reindex_disable_on_axis = TRUE)$sparse_matrix()
+#' while (!iter$read_complete()) {
+#'   block <- iter$read_next()
+#' }
+#'
+#' \dontshow{
+#' exp$close()
+#' }
 #'
 BlockwiseSparseReadIter <- R6::R6Class(
   classname = "BlockwiseSparseReadIter",
