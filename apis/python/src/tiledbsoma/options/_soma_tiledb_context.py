@@ -354,10 +354,18 @@ class SOMATileDBContext(ContextBase):
         )
 
     def _open_timestamp_ms(self, in_timestamp: OpenTimestamp | None) -> int:
-        """Returns the real timestamp that should be used to open an object."""
-        if in_timestamp is not None:
+        """Returns the real timestamp that should be used to open an object.
+
+        Timestamp values of zero or None are treated as "use default". This is
+        consistent with other TileDB API (e.g., TileDB-Py). The datetime.datetime
+        epoch is treated as zero/default.
+        """
+        if isinstance(in_timestamp, datetime.datetime):
+            # if a datetime, convert to int/ms
+            in_timestamp = to_timestamp_ms(in_timestamp)
+        if in_timestamp is not None and in_timestamp != 0:
             return to_timestamp_ms(in_timestamp)
-        if self.timestamp_ms is not None:
+        if self.timestamp_ms is not None and self.timestamp_ms != 0:
             return self.timestamp_ms
         return int(time.time() * 1000)
 
