@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">tiledbsoma</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.17.99.8</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.17.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -40,9 +40,40 @@
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Changelog</h1>
-      <small>Source: <a href="https://github.com/single-cell-data/TileDB-SOMA/blob/1.17.0rc0/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
+      <small>Source: <a href="https://github.com/single-cell-data/TileDB-SOMA/blob/release-1.17/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.17.0" id="tiledbsoma-1170">tiledbsoma 1.17.0<a class="anchor" aria-label="anchor" href="#tiledbsoma-1170"></a></h2>
+<div class="section level3">
+<h3 id="removed-1-17-0">Removed<a class="anchor" aria-label="anchor" href="#removed-1-17-0"></a></h3>
+<ul><li>
+<code>TileDBURI</code> class has been removed (<a href="https://github.com/single-cell-data/TileDB-SOMA/pull/3644" class="external-link">#3644</a>)</li>
+<li>arrow &lt;&gt; TileDB-R helpers have been removed (<a href="https://github.com/single-cell-data/TileDB-SOMA/pull/3644" class="external-link">#3644</a>)
+<ul><li><code>arrow_field_from_tiledb_dim()</code></li>
+<li><code>arrow_field_from_tiledb_attr()</code></li>
+<li><code>arrow_schema_from_tiledb_schema()</code></li>
+</ul></li>
+</ul></div>
+<div class="section level3">
+<h3 id="added-1-17-0">Added<a class="anchor" aria-label="anchor" href="#added-1-17-0"></a></h3>
+<ul><li>New function <code>get_tiledb_object_type()</code> to replace <code><a href="https://tiledb-inc.github.io/TileDB-R/reference/tiledb_object_type.html" class="external-link">tiledb::tiledb_object_type()</a></code> (<a href="https://github.com/single-cell-data/TileDB-SOMA/pull/3644" class="external-link">#3644</a>)</li>
+<li>New function <code>get_tiledb_version()</code> to replace <code><a href="https://tiledb-inc.github.io/TileDB-R/reference/tiledb_version.html" class="external-link">tiledb::tiledb_version()</a></code> (<a href="https://github.com/single-cell-data/TileDB-SOMA/pull/3644" class="external-link">#3644</a>)</li>
+<li>New method <code>SOMAArrayBase$is_sparse()</code> to replace <code><a href="https://tiledb-inc.github.io/TileDB-R/reference/generics.html" class="external-link">tiledb::is.sparse()</a></code> (<a href="https://github.com/single-cell-data/TileDB-SOMA/pull/3644" class="external-link">#3644</a>)</li>
+<li>New method <code>SOMAArrayBase$allows_duplicates()</code> to replace <code><a href="https://tiledb-inc.github.io/TileDB-R/reference/tiledb_array_schema_get_allows_dups.html" class="external-link">tiledb::allows_dups()</a></code> (<a href="https://github.com/single-cell-data/TileDB-SOMA/pull/3644" class="external-link">#3644</a>)</li>
+<li>New method <code>SOMADataFrame$levels()</code> to replace tiledb-r enum accessors (<a href="https://github.com/single-cell-data/TileDB-SOMA/pull/3644" class="external-link">#3644</a>)</li>
+</ul></div>
+<div class="section level3">
+<h3 id="changed-1-17-0">Changed<a class="anchor" aria-label="anchor" href="#changed-1-17-0"></a></h3>
+<ul><li>Update <a href="https://github.com/TileDB-Inc/TileDB/blob/main/HISTORY.md#tiledb-v2280-release-notes" class="external-link">TileDB core to 2.28.0</a> (<a href="https://github.com/single-cell-data/TileDB-SOMA/pull/4057" class="external-link">#4057</a>)</li>
+<li>
+<code>TileDBArray$attributes()</code> has been promoted to <code>SOMAArrayBase$attributes()</code> and returns a named list instead of an external pointer (<a href="https://github.com/single-cell-data/TileDB-SOMA/pull/3644" class="external-link">#3644</a>)</li>
+</ul></div>
+<div class="section level3">
+<h3 id="fixed-1-17-0">Fixed<a class="anchor" aria-label="anchor" href="#fixed-1-17-0"></a></h3>
+<ul><li>Fix C++20 flag to be a configuration option instead of hard-coded (<a href="https://github.com/single-cell-data/TileDB-SOMA/pull/4051" class="external-link">#4051</a>)</li>
+</ul></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.16.0" id="tiledbsoma-1160">tiledbsoma 1.16.0<a class="anchor" aria-label="anchor" href="#tiledbsoma-1160"></a></h2>
 <ul><li>Encode string metadata as <code>TILEDB_STRING_UTF8</code> instead of <code>TILEDB_STRING_ASCII</code>
