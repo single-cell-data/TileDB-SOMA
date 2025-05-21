@@ -17,7 +17,7 @@ load_dataset(name, dir = tempdir(), tiledbsoma_ctx = NULL)
 \item{name}{The name of the dataset}
 
 \item{dir}{The directory where the dataset will be extracted to
-(default: \code{\link[base]{tempdir()}})}
+(default: \code{\link[base]{tempdir}()})}
 
 \item{tiledbsoma_ctx}{Optional TileDB \dQuote{Context} object,
 defaults to \code{NULL}}

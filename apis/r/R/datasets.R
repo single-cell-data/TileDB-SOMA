@@ -38,7 +38,7 @@ list_datasets <- function() {
 #'
 #' @param name The name of the dataset
 #' @param dir The directory where the dataset will be extracted to
-#' (default: \code{\link[base]{tempdir()}})
+#' (default: \code{\link[base]{tempdir}()})
 #'
 #' @return \code{extract_dataset()}: returns the path to the extracted dataset
 #'
