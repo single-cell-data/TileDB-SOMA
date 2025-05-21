@@ -119,9 +119,12 @@ def open(
         Maturing.
     """
     context = _validate_soma_tiledb_context(context)
-    obj: SOMAObject[_Wrapper] = _open_internal(  # type: ignore[valid-type]
-        _tdb_handles.open_handle_wrapper, uri, mode, context, tiledb_timestamp
-    )
+    handle = _tdb_handles.open_handle_wrapper(uri, mode, context, tiledb_timestamp)
+    try:
+        obj: SOMAObject[_Wrapper] = reify_handle(handle)  # type: ignore[valid-type]
+    except Exception:
+        handle.close()
+        raise
     try:
         if soma_type:
             if isinstance(soma_type, str):
@@ -129,28 +132,12 @@ def open(
             elif issubclass(soma_type, somacore.SOMAObject):
                 soma_type_name = soma_type.soma_type
             else:
-                raise TypeError(f"cannot convert {soma_type!r} to expected SOMA type")
+                raise TypeError(f"Cannot convert soma_type {soma_type!r} to expected SOMA type.")
             if obj.soma_type.lower() != soma_type_name.lower():
-                raise TypeError(f"type of URI {uri!r} was {obj.soma_type}; expected {soma_type_name}")
+                raise TypeError(f"Type of URI {uri!r} was {obj.soma_type}; expected {soma_type_name}.")
         return obj
     except Exception:
         obj.close()
-        raise
-
-
-def _open_internal(
-    opener: Callable[[str, options.OpenMode, SOMATileDBContext, OpenTimestamp | None], _Wrapper],
-    uri: str,
-    mode: options.OpenMode,
-    context: SOMATileDBContext,
-    timestamp: OpenTimestamp | None,
-) -> SOMAObject[_Wrapper]:
-    """Lower-level open function for internal use only."""
-    handle = opener(uri, mode, context, timestamp)
-    try:
-        return reify_handle(handle)
-    except Exception:
-        handle.close()
         raise
 
 
