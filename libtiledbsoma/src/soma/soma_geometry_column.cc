@@ -480,31 +480,37 @@ std::pair<ArrowArray*, ArrowSchema*> SOMAGeometryColumn::arrow_domain_slot(
     const SOMAContext& ctx, Array& array, enum Domainish kind) const {
     switch (domain_type().value()) {
         case TILEDB_FLOAT64: {
-            ArrowSchema* parent_schema = static_cast<ArrowSchema*>(malloc(sizeof(ArrowSchema)));
+            ArrowSchema* parent_schema = static_cast<ArrowSchema*>(
+                malloc(sizeof(ArrowSchema)));
             parent_schema->name = strdup(name().c_str());
             parent_schema->format = strdup("+s");
-            parent_schema->n_children = static_cast<int64_t>(TDB_DIM_PER_SPATIAL_AXIS);
+            parent_schema->n_children = static_cast<int64_t>(
+                TDB_DIM_PER_SPATIAL_AXIS);
             parent_schema->metadata = nullptr;
             parent_schema->private_data = nullptr;
             parent_schema->flags = 0;
             parent_schema->dictionary = nullptr;
-            parent_schema->children = static_cast<ArrowSchema**>(malloc(TDB_DIM_PER_SPATIAL_AXIS * sizeof(ArrowSchema*)));
+            parent_schema->children = static_cast<ArrowSchema**>(
+                malloc(TDB_DIM_PER_SPATIAL_AXIS * sizeof(ArrowSchema*)));
             parent_schema->release = &ArrowAdapter::release_schema;
 
-            ArrowArray* parent_array = static_cast<ArrowArray*>(malloc(sizeof(ArrowArray)));
+            ArrowArray* parent_array = static_cast<ArrowArray*>(
+                malloc(sizeof(ArrowArray)));
 
             parent_array->length = 2;
             parent_array->null_count = 0;
             parent_array->offset = 0;
             parent_array->n_buffers = 1;
-            parent_array->n_children = static_cast<int64_t>(TDB_DIM_PER_SPATIAL_AXIS);
+            parent_array->n_children = static_cast<int64_t>(
+                TDB_DIM_PER_SPATIAL_AXIS);
             parent_array->buffers = (const void**)malloc(sizeof(void*));
             parent_array->buffers[0] = nullptr;
             parent_array->dictionary = nullptr;
             parent_array->release = &ArrowAdapter::release_array;
             parent_array->private_data = nullptr;
 
-            parent_array->children = static_cast<ArrowArray**>(malloc(TDB_DIM_PER_SPATIAL_AXIS * sizeof(ArrowArray*)));
+            parent_array->children = static_cast<ArrowArray**>(
+                malloc(TDB_DIM_PER_SPATIAL_AXIS * sizeof(ArrowArray*)));
 
             auto kind_domain = domain_slot<std::vector<double_t>>(
                 ctx, array, kind);
@@ -532,8 +538,7 @@ std::pair<ArrowArray*, ArrowSchema*> SOMAGeometryColumn::arrow_domain_slot(
                         {kind_domain.first[i], kind_domain.second[i]}));
             }
 
-            return std::make_pair(
-                parent_array, parent_schema);
+            return std::make_pair(parent_array, parent_schema);
         } break;
         default:
             throw TileDBSOMAError(fmt::format(
