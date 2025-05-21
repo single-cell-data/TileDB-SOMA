@@ -85,7 +85,8 @@ getting (\code{self$get()}) and setting (\code{self$set()}) items in the map
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-This is a \strong{virtual} class and cannot be directly instantiated
+This is a \strong{virtual} class and cannot be
+directly instantiated
 }
 }
 \if{html}{\out{<hr>}}

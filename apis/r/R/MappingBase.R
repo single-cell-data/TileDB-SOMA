@@ -5,15 +5,17 @@
 #' getting (\code{self$get()}) and setting (\code{self$set()}) items in the map
 #'
 #' @keywords internal
+#'
 #' @export
-
+#'
 MappingBase <- R6::R6Class(
   classname = "MappingBase",
   lock_class = TRUE,
   public = list(
     #' @param ... Ignored
     #'
-    #' @return This is a \strong{virtual} class and cannot be directly instantiated
+    #' @return This is a \strong{virtual} class and cannot be
+    #' directly instantiated
     #'
     initialize = function(...) {
       calls <- vapply_char(

@@ -5,8 +5,9 @@
 #' (eg. \dQuote{\code{logical}}).
 #'
 #' @keywords internal
+#'
 #' @export
-
+#'
 ScalarMap <- R6::R6Class(
   classname = "ScalarMap",
   inherit = MappingBase,
