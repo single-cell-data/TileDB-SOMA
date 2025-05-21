@@ -100,7 +100,10 @@ void load_soma_point_cloud_dataframe(py::module& m) {
                 } catch (const std::exception& e) {
                     TPY_ERROR_LOC(e.what());
                 }
+
                 schema.release(&schema);
+                index_column_array.release(&index_column_array);
+                index_column_schema.release(&index_column_schema);
             },
             "uri"_a,
             py::kw_only(),
