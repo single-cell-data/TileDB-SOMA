@@ -1,4 +1,5 @@
 import os
+from contextlib import nullcontext
 
 import anndata as ad
 import numpy as np
@@ -117,7 +118,12 @@ def test_from_visium(tmp_path, version, visium_v1_path, visium_v2_path):
 
     # Get input data and open AnnData for comparisons.
     visium_paths = spatial_io.VisiumPaths.from_base_folder(visium_dir_path)
-    with ad.settings.override(check_uniqueness=False):
+    settings = (
+        ad.settings.override(check_uniqueness=False)
+        if hasattr(ad, "settings")
+        else nullcontext()
+    )
+    with settings:
         adata = scanpy.read_10x_h5(visium_paths.gene_expression)
 
     # Set URI for output data.

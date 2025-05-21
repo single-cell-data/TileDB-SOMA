@@ -1250,7 +1250,12 @@ def test_append_with_nonunique_field_values(
     exc, idb = dataset_ids_and_exc
     measurement_name = "test"
 
-    with ad.settings.override(check_uniqueness=False):
+    settings = (
+        ad.settings.override(check_uniqueness=False)
+        if hasattr(ad, "settings")
+        else nullcontext()
+    )
+    with settings:
         anndataa = create_anndata_canned(ida, obs_field_name, var_field_name)
         anndatab = create_anndata_canned(idb, obs_field_name, var_field_name)
     soma_uri = tmp_path.as_posix()
