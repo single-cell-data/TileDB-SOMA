@@ -99,7 +99,7 @@ class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
         """
         del platform_config  # unused
         context = _validate_soma_tiledb_context(context)
-        handle = _tdb_handles.open(
+        handle = _tdb_handles.open_handle_wrapper(
             uri,
             mode,
             context,

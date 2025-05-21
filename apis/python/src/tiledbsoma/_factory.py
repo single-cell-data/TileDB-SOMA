@@ -120,7 +120,7 @@ def open(
     """
     context = _validate_soma_tiledb_context(context)
     obj: SOMAObject[_Wrapper] = _open_internal(  # type: ignore[valid-type]
-        _tdb_handles.open, uri, mode, context, tiledb_timestamp
+        _tdb_handles.open_handle_wrapper, uri, mode, context, tiledb_timestamp
     )
     try:
         if soma_type:

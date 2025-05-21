@@ -57,7 +57,7 @@ _RawHdl_co = TypeVar("_RawHdl_co", bound=RawHandle, covariant=True)
 _SOMAObjectType = TypeVar("_SOMAObjectType", bound=clib.SOMAObject)
 
 
-def open(
+def open_handle_wrapper(
     uri: str,
     mode: options.OpenMode,
     context: SOMATileDBContext,
