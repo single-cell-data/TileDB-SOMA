@@ -24,6 +24,9 @@
 #' the object are overwritten and new index values are added. (lifecycle: maturing)
 #'
 #' @export
+#'
+#' @inherit SOMASparseNDArrayCreate examples
+#'
 SOMASparseNDArray <- R6::R6Class(
   classname = "SOMASparseNDArray",
   inherit = SOMANDArrayBase,

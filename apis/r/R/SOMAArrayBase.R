@@ -1,9 +1,15 @@
 #' SOMA Array Base Class
 #'
-#' Adds SOMA-specific functionality to the [`TileDBArray`] class.  (lifecycle:
-#' maturing)
+#' Virtual base class to add SOMA-specific functionality to the
+#' \code{\link{TileDBArray}} class (lifecycle: maturing)
+#'
 #' @keywords internal
-
+#'
+#' @export
+#'
+#' @seealso Derived classes: \code{\link{SOMADataFrame}},
+#' \code{\link{SOMANDArrayBase}}
+#'
 SOMAArrayBase <- R6::R6Class(
   classname = "SOMAArrayBase",
   inherit = TileDBArray,

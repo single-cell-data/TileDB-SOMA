@@ -4,10 +4,30 @@
 \alias{SOMADataFrame}
 \title{SOMADataFrame}
 \description{
-\code{SOMADataFrame} is a multi-column table that must contain a column
-called \code{soma_joinid} of type \code{int64}, which contains a unique value for each
-row and is intended to act as a join key for other objects, such as
-\code{\link{SOMASparseNDArray}}.  (lifecycle: maturing)
+\code{SOMADataFrame} is a multi-column table that must contain a
+column called \dQuote{\code{soma_joinid}} of type \code{int64}, which
+contains a unique value for each row and is intended to act as a join key for
+other objects, such as \code{\link{SOMASparseNDArray}} (lifecycle: maturing)
+}
+\examples{
+\dontshow{if (requireNamespace("withr", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+uri <- withr::local_tempfile(pattern = "soma-data-frame")
+df <- data.frame(
+  soma_joinid = bit64::seq.integer64(0L, 99L),
+  group = sample(factor(c("g1", "g2")), size = 100L, replace = TRUE),
+  nCount = stats::rbinom(100L, 10L, 0.3)
+)
+(sch <- arrow::infer_schema(df))
+(sdf <- SOMADataFrameCreate(uri, sch, domain = list(soma_joinid = c(0, 100))))
+sdf$write(arrow::as_arrow_table(df, schema = sch))
+sdf$close()
+
+(sdf <- SOMADataFrameOpen(uri))
+head(as.data.frame(sdf$read()$concat()))
+\dontshow{
+sdf$close()
+}
+\dontshow{\}) # examplesIf}
 }
 \section{Super classes}{
 \code{\link[tiledbsoma:TileDBObject]{tiledbsoma::TileDBObject}} -> \code{\link[tiledbsoma:TileDBArray]{tiledbsoma::TileDBArray}} -> \code{\link[tiledbsoma:SOMAArrayBase]{tiledbsoma::SOMAArrayBase}} -> \code{SOMADataFrame}

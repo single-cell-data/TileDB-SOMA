@@ -27,6 +27,24 @@ As duplicate index values are not allowed, index values already present in
 the object are overwritten and new index values are added. (lifecycle: maturing)
 }
 }
+\examples{
+\dontshow{if (requireNamespace("withr", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+uri <- withr::local_tempfile(pattern = "soma-sparse-array")
+mat <- Matrix::rsparsematrix(100L, 100L, 0.7, repr = "T")
+mat[1:3, 1:5]
+
+(arr <- SOMASparseNDArrayCreate(uri, arrow::float64(), shape = dim(mat)))
+arr$write(mat)
+arr$close()
+
+(arr <- SOMASparseNDArrayOpen(uri))
+m2 <- arr$read()$sparse_matrix()$concat()
+m2[1:3, 1:5]
+\dontshow{
+arr$close()
+}
+\dontshow{\}) # examplesIf}
+}
 \section{Super classes}{
 \code{\link[tiledbsoma:TileDBObject]{tiledbsoma::TileDBObject}} -> \code{\link[tiledbsoma:TileDBArray]{tiledbsoma::TileDBArray}} -> \code{\link[tiledbsoma:SOMAArrayBase]{tiledbsoma::SOMAArrayBase}} -> \code{\link[tiledbsoma:SOMANDArrayBase]{tiledbsoma::SOMANDArrayBase}} -> \code{SOMASparseNDArray}
 }
