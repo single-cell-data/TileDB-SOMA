@@ -4,7 +4,11 @@
 \alias{SOMASparseNDArrayReadBase}
 \title{SOMA Sparse ND-Array Reader Base}
 \description{
-Base class for SOMA sparse ND-array reads
+Virtual base class for SOMA sparse ND-array reads
+}
+\seealso{
+\code{\link{SOMASparseNDArrayRead}},
+\code{\link{SOMASparseNDArrayBlockwiseRead}}
 }
 \keyword{internal}
 \section{Active bindings}{

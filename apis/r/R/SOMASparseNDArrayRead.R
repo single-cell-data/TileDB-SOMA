@@ -1,10 +1,13 @@
 #' SOMA Sparse ND-Array Reader Base
 #'
-#' @description Base class for SOMA sparse ND-array reads
+#' @description Virtual base class for SOMA sparse ND-array reads
 #'
 #' @keywords internal
 #'
 #' @export
+#'
+#' @seealso \code{\link{SOMASparseNDArrayRead}},
+#' \code{\link{SOMASparseNDArrayBlockwiseRead}}
 #'
 SOMASparseNDArrayReadBase <- R6::R6Class(
   classname = "SOMASparseNDArrayReadBase",
@@ -57,11 +60,13 @@ SOMASparseNDArrayReadBase <- R6::R6Class(
     sr = function() {
       return(private$.sr)
     },
+
     #' @field array The underlying \code{\link{SOMASparseNDArray}}
     #'
     array = function() {
       return(private$.array)
     },
+
     #' @field coords The iterated coordinates for the read
     #'
     coords = function(value) {
@@ -101,6 +106,7 @@ SOMASparseNDArrayReadBase <- R6::R6Class(
       }
       return(invisible(NULL))
     },
+
     #' @field shape The shape of the underlying array
     #'
     shape = function() {
@@ -116,17 +122,32 @@ SOMASparseNDArrayReadBase <- R6::R6Class(
 
 #' SOMASparseNDArrayRead
 #'
-#' @description
-#' Intermediate type to choose result format when reading a sparse array
+#' @description Intermediate type to choose result format when reading a
+#' sparse array
+#'
 #' @keywords internal
+#'
 #' @export
-
+#'
+#' @examplesIf requireNamespace("withr", quietly = TRUE)
+#' dir <- withr::local_tempfile(pattern = "blockwise-table")
+#' dir.create(dir, recursive = TRUE)
+#' (exp <- load_dataset("soma-exp-pbmc-small", dir))
+#' qry <- exp$axis_query("RNA")
+#' xqry <- qry$X("data")
+#' stopifnot(inherits(xqry, "SOMASparseNDArrayRead"))
+#'
+#' xqry$coords
+#'
+#' \dontshow{
+#' exp$close()
+#' }
+#'
 SOMASparseNDArrayRead <- R6::R6Class(
   classname = "SOMASparseNDArrayRead",
   inherit = SOMASparseNDArrayReadBase,
   cloneable = FALSE,
   public = list(
-
     #' @description Read as a sparse matrix (lifecycle: maturing). Returns
     #' an iterator of Matrix::\link[Matrix]{dgTMatrix-class} or
     #' \link{matrixZeroBasedView} of it.
@@ -164,6 +185,7 @@ SOMASparseNDArrayRead <- R6::R6Class(
     tables = function() {
       TableReadIter$new(self$sr)
     },
+
     #' @description Read in a blockwise fashion
     #'
     #' @template param-blockwise-iter
@@ -196,6 +218,20 @@ SOMASparseNDArrayRead <- R6::R6Class(
 #' @keywords internal
 #'
 #' @export
+#'
+#' @examplesIf requireNamespace("withr", quietly = TRUE)
+#' dir <- withr::local_tempfile(pattern = "blockwise-table")
+#' dir.create(dir, recursive = TRUE)
+#' (exp <- load_dataset("soma-exp-pbmc-small", dir))
+#' qry <- exp$axis_query("RNA")
+#' xqry <- qry$X("data")$blockwise(0L, size = 20L, reindex_disable_on_axis = TRUE)
+#' stopifnot(inherits(xqry, "SOMASparseNDArrayBlockwiseRead"))
+#'
+#' xqry$axis
+#'
+#' \dontshow{
+#' exp$close()
+#' }
 #'
 SOMASparseNDArrayBlockwiseRead <- R6::R6Class(
   classname = "SOMASparseNDArrayBlockwiseRead",
@@ -243,6 +279,7 @@ SOMASparseNDArrayBlockwiseRead <- R6::R6Class(
       }
       private$.reindex_disable_on_axis <- reindex_disable_on_axis
     },
+
     #' @description Read as an \code{\link[arrow:Table]{Arrow::Table}}
     #'
     #' @return A blockwise iterator yielding chunks as
@@ -257,6 +294,7 @@ SOMASparseNDArrayBlockwiseRead <- R6::R6Class(
         reindex_disable_on_axis = private$.reindex_disable_on_axis
       ))
     },
+
     #' @description Read as a sparse matrix
     #'
     #' @template param-repr-read
