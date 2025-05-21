@@ -6,7 +6,7 @@
 #'
 #' @export
 #'
-#' @seealso \code{\link{BlockwiseTableReadIter}},
+#' @seealso Derived classes: \code{\link{BlockwiseTableReadIter}},
 #' \code{\link{BlockwiseSparseReadIter}}
 #'
 BlockwiseReadIterBase <- R6::R6Class(

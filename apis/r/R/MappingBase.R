@@ -8,7 +8,7 @@
 #'
 #' @export
 #'
-#' @seealso \code{\link{ConfigList}},
+#' @seealso Derived classes: \code{\link{ConfigList}},
 #' \code{\link{PlatformConfig}},
 #' \code{\link{ScalarMap}}
 #'

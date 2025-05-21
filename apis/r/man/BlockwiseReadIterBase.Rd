@@ -7,7 +7,7 @@
 Class that allows for blockwise read iteration of SOMA reads
 }
 \seealso{
-\code{\link{BlockwiseTableReadIter}},
+Derived classes: \code{\link{BlockwiseTableReadIter}},
 \code{\link{BlockwiseSparseReadIter}}
 }
 \keyword{internal}
