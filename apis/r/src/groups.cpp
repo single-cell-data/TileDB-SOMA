@@ -12,7 +12,6 @@
 
 namespace tdbs = tiledbsoma;
 
-//' @noRd
 // [[Rcpp::export]]
 void c_group_create(
     std::string& uri,
@@ -37,7 +36,6 @@ void c_group_create(
     tdbs::SOMAGroup::create(sctx, uri, type, tsrng);
 }
 
-//' @noRd
 // [[Rcpp::export]]
 Rcpp::XPtr<somagrp_wrap_t> c_group_open(
     std::string& uri,
@@ -62,7 +60,6 @@ Rcpp::XPtr<somagrp_wrap_t> c_group_open(
     return somagrp_xptr;
 }
 
-//' @noRd
 // [[Rcpp::export]]
 double c_group_member_count(Rcpp::XPtr<somagrp_wrap_t> xp) {
     check_xptr_tag<somagrp_wrap_t>(xp);  // throws if mismatched
@@ -70,7 +67,6 @@ double c_group_member_count(Rcpp::XPtr<somagrp_wrap_t> xp) {
     return static_cast<double>(xp->grpptr->count());
 }
 
-//' @noRd
 // [[Rcpp::export]]
 Rcpp::List c_group_members(Rcpp::XPtr<somagrp_wrap_t> xp) {
     check_xptr_tag<somagrp_wrap_t>(xp);  // throws if mismatched
@@ -164,7 +160,6 @@ SEXP _metadata_to_sexp(
     }
 }
 
-//' @noRd
 // [[Rcpp::export]]
 Rcpp::List c_group_get_metadata(Rcpp::XPtr<somagrp_wrap_t> xp) {
     check_xptr_tag<somagrp_wrap_t>(xp);  // throws if mismatched
@@ -190,7 +185,6 @@ Rcpp::List c_group_get_metadata(Rcpp::XPtr<somagrp_wrap_t> xp) {
     return lst;
 }
 
-//' @noRd
 // [[Rcpp::export]]
 void c_group_close(Rcpp::XPtr<somagrp_wrap_t> xp) {
     check_xptr_tag<somagrp_wrap_t>(xp);  // throws if mismatched
@@ -201,7 +195,6 @@ void c_group_close(Rcpp::XPtr<somagrp_wrap_t> xp) {
 std::map<int, URIType> uritypemap = {
     {0, URIType::automatic}, {1, URIType::absolute}, {2, URIType::relative}};
 
-//' @noRd
 // [[Rcpp::export]]
 void c_group_set(
     Rcpp::XPtr<somagrp_wrap_t> xp,
@@ -213,7 +206,6 @@ void c_group_set(
     xp->grpptr->set(uri, uritypemap[uri_type_int], name, soma_type);
 }
 
-//' @noRd
 // [[Rcpp::export]]
 void c_group_remove_member(
     Rcpp::XPtr<somagrp_wrap_t> xp, const std::string& name) {
@@ -221,7 +213,6 @@ void c_group_remove_member(
     xp->grpptr->del(name);
 }
 
-//' @noRd
 // [[Rcpp::export]]
 void c_group_put_metadata(
     Rcpp::XPtr<somagrp_wrap_t> xp, std::string key, SEXP obj) {
