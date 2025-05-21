@@ -28,22 +28,17 @@ py::list domainish_to_list(ArrowArray* arrow_array, ArrowSchema* arrow_schema) {
 
     py::list array_list;
     for (int i = 0; i < arrow_array->n_children; i++) {
-        // Note that this runs the release callbacks within the ArrowArray and
-        // the ArrowSchema, freeing memory.
+        // "_import_from_c" implements Arrow move semantics, meaning
+        // release is set to NULL for each array imported. Release
+        // should be called on the parent array.
         auto array = pa_array_import(
             py::capsule(arrow_array->children[i]),
             py::capsule(arrow_schema->children[i]));
         array_list.append(array);
-
-        // Already released: ensure there is no attempt at second free.
-        arrow_array->children[i] = nullptr;
-        arrow_schema->children[i] = nullptr;
     }
-    // Already released: ensure there is no attempt at second free.
-    arrow_array->n_children = 0;
-    arrow_array->children = nullptr;
-    arrow_schema->n_children = 0;
-    arrow_schema->children = nullptr;
+
+    arrow_array->release(arrow_array);
+    arrow_schema->release(arrow_schema);
 
     return array_list;
 }
@@ -140,6 +135,7 @@ void load_soma_array(py::module& m) {
                 auto pa = py::module::import("pyarrow");
                 auto pa_schema_import = pa.attr("Schema").attr(
                     "_import_from_c");
+
                 try {
                     return pa_schema_import(
                         py::capsule(array.arrow_schema().get()));
