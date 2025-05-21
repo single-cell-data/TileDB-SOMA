@@ -9,7 +9,7 @@
 #'
 #' @export
 #'
-#' @seealso \code{\link{EphemeralCollection}},
+#' @seealso Derived classes: \code{\link{EphemeralCollection}},
 #' \code{\link{EphemeralMeasurement}},
 #' \code{\link{EphemeralExperiment}}
 #'

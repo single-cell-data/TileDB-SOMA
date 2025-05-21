@@ -10,7 +10,7 @@ collections are equivalent to
 instead of on-disk
 }
 \seealso{
-\code{\link{EphemeralCollection}},
+Derived classes: \code{\link{EphemeralCollection}},
 \code{\link{EphemeralMeasurement}},
 \code{\link{EphemeralExperiment}}
 }
