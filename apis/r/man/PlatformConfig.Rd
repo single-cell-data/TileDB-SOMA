@@ -10,6 +10,15 @@ map is a \code{\link{ScalarMap}} contained within a \code{\link{ConfigList}}
 (middle map):
 \code{\{platform: \{param: \{key: value\}\}\}}
 }
+\examples{
+(cfg <- PlatformConfig$new())
+cfg$set("plat1", "op1", "a", 1L)
+cfg
+
+cfg$get("plat1")
+cfg$get("plat1")$get("op1")
+
+}
 \section{Super class}{
 \code{\link[tiledbsoma:MappingBase]{tiledbsoma::MappingBase}} -> \code{PlatformConfig}
 }

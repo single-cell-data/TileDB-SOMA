@@ -8,6 +8,10 @@
 #'
 #' @export
 #'
+#' @seealso \code{\link{ConfigList}},
+#' \code{\link{PlatformConfig}},
+#' \code{\link{ScalarMap}}
+#'
 MappingBase <- R6::R6Class(
   classname = "MappingBase",
   lock_class = TRUE,

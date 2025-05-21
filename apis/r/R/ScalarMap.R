@@ -8,6 +8,14 @@
 #'
 #' @export
 #'
+#' @examples
+#' (map <- ScalarMap$new())
+#' map$set("a", 1L)
+#' map
+#'
+#' map$get("a")
+#' map$get("b", default = NULL)
+#'
 ScalarMap <- R6::R6Class(
   classname = "ScalarMap",
   inherit = MappingBase,

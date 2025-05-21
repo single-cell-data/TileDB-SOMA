@@ -50,6 +50,11 @@ Virtual base mapping type for R6 objects; defines internal data structure
 (\code{private$.data}) as a named list along with behavior methods for
 getting (\code{self$get()}) and setting (\code{self$set()}) items in the map
 }
+\seealso{
+\code{\link{ConfigList}},
+\code{\link{PlatformConfig}},
+\code{\link{ScalarMap}}
+}
 \keyword{internal}
 \section{Methods}{
 \subsection{Public methods}{
