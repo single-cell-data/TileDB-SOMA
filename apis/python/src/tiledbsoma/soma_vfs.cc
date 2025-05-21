@@ -37,8 +37,8 @@ class SOMAFileHandle {
     std::ios::openmode openmode_ = std::ios::in;  // hardwired to read-only
 
     // Ensure proper order of destruction
-    SOMAFilebuf buf_;
     tiledb::VFS vfs_;
+    SOMAFilebuf buf_;
     std::shared_ptr<SOMAContext> ctx_;
 
    public:
