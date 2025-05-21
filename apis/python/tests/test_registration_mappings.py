@@ -5,7 +5,6 @@ Test join-id registrations for ingesting multiple AnnData objects into a single 
 from __future__ import annotations
 
 import math
-import tempfile
 from contextlib import nullcontext
 from typing import Sequence
 
@@ -172,19 +171,17 @@ def create_anndata_canned(which: int, obs_field_name: str, var_field_name: str):
     )
 
 
-def create_h5ad_canned(which: int, obs_field_name: str, var_field_name: str):
-    tmp_path = tempfile.TemporaryDirectory(prefix="create_h5ad_canned_")
+def create_h5ad_canned(which: int, obs_field_name: str, var_field_name: str, tmp_path):
     anndata = create_anndata_canned(which, obs_field_name, var_field_name)
     return create_h5ad(
         anndata,
-        (tmp_path.name + f"{which}.h5ad"),
+        (tmp_path / f"{which}.h5ad").as_posix(),
     )
 
 
-def create_soma_canned(which: int, obs_field_name, var_field_name):
-    tmp_path = tempfile.TemporaryDirectory(prefix="create_soma_canned_")
-    h5ad = create_h5ad_canned(which, obs_field_name, var_field_name)
-    uri = tmp_path.name + f"soma{which}"
+def create_soma_canned(which: int, obs_field_name, var_field_name, tmp_path):
+    h5ad = create_h5ad_canned(which, obs_field_name, var_field_name, tmp_path)
+    uri = (tmp_path / f"soma{which}").as_posix()
     tiledbsoma.io.from_h5ad(uri, h5ad, "measname")
     return uri
 
@@ -200,10 +197,9 @@ def anndata_larger():
     )
 
 
-@pytest.fixture
-def soma_larger(anndata_larger):
-    tmp_path = tempfile.TemporaryDirectory(prefix="soma_larger_")
-    uri = tmp_path.name + "soma-larger"
+@pytest.fixture()
+def soma_larger(anndata_larger, tmp_path):
+    uri = (tmp_path / "soma-larger").as_posix()
     tiledbsoma.io.from_anndata(uri, anndata_larger, "measname")
     return uri
 
@@ -267,7 +263,7 @@ def test_pandas_indexing(
 
 @pytest.mark.parametrize("obs_field_name", ["obs_id", "cell_id"])
 @pytest.mark.parametrize("var_field_name", ["var_id", "gene_id"])
-def test_axis_mappings(obs_field_name, var_field_name):
+def test_axis_mappings(obs_field_name, var_field_name, tmp_path):
     anndata1 = create_anndata_canned(1, obs_field_name, var_field_name)
     mapping = registration.AxisIDMapping.identity(10)
     assert_array_equal(mapping.data, np.arange(10))
@@ -341,8 +337,8 @@ def test_isolated_anndata_mappings(obs_field_name, var_field_name):
 
 @pytest.mark.parametrize("obs_field_name", ["obs_id", "cell_id"])
 @pytest.mark.parametrize("var_field_name", ["var_id", "gene_id"])
-def test_isolated_h5ad_mappings(obs_field_name, var_field_name):
-    h5ad1 = create_h5ad_canned(1, obs_field_name, var_field_name)
+def test_isolated_h5ad_mappings(obs_field_name, var_field_name, tmp_path):
+    h5ad1 = create_h5ad_canned(1, obs_field_name, var_field_name, tmp_path)
     rd = tiledbsoma.io.register_h5ads(
         None,
         h5ad1,
@@ -372,8 +368,8 @@ def test_isolated_h5ad_mappings(obs_field_name, var_field_name):
 
 @pytest.mark.parametrize("obs_field_name", ["obs_id", "cell_id"])
 @pytest.mark.parametrize("var_field_name", ["var_id", "gene_id"])
-def test_isolated_soma_experiment_mappings(obs_field_name, var_field_name):
-    soma1 = create_soma_canned(1, obs_field_name, var_field_name)
+def test_isolated_soma_experiment_mappings(obs_field_name, var_field_name, tmp_path):
+    soma1 = create_soma_canned(1, obs_field_name, var_field_name, tmp_path)
     rd = tiledbsoma.io.register_anndatas(
         soma1,
         [],
@@ -414,10 +410,10 @@ def test_multiples_without_experiment(
     solo_experiment_first,
     use_multiprocessing,
 ):
-    h5ad1 = create_h5ad_canned(1, obs_field_name, var_field_name)
-    h5ad2 = create_h5ad_canned(2, obs_field_name, var_field_name)
-    h5ad3 = create_h5ad_canned(3, obs_field_name, var_field_name)
-    h5ad4 = create_h5ad_canned(4, obs_field_name, var_field_name)
+    h5ad1 = create_h5ad_canned(1, obs_field_name, var_field_name, tmp_path)
+    h5ad2 = create_h5ad_canned(2, obs_field_name, var_field_name, tmp_path)
+    h5ad3 = create_h5ad_canned(3, obs_field_name, var_field_name, tmp_path)
+    h5ad4 = create_h5ad_canned(4, obs_field_name, var_field_name, tmp_path)
 
     experiment_uri = (tmp_path / "exp").as_posix()
     h5ad_file_names = [h5ad1, h5ad2, h5ad3, h5ad4]
@@ -720,11 +716,13 @@ def test_multiples_without_experiment(
 @pytest.mark.parametrize("obs_field_name", ["obs_id", "cell_id"])
 @pytest.mark.parametrize("var_field_name", ["var_id", "gene_id"])
 @pytest.mark.parametrize("use_multiprocessing", [False, True])
-def test_multiples_with_experiment(obs_field_name, var_field_name, use_multiprocessing):
-    soma1 = create_soma_canned(1, obs_field_name, var_field_name)
-    h5ad2 = create_h5ad_canned(2, obs_field_name, var_field_name)
-    h5ad3 = create_h5ad_canned(3, obs_field_name, var_field_name)
-    h5ad4 = create_h5ad_canned(4, obs_field_name, var_field_name)
+def test_multiples_with_experiment(
+    obs_field_name, var_field_name, use_multiprocessing, tmp_path
+):
+    soma1 = create_soma_canned(1, obs_field_name, var_field_name, tmp_path)
+    h5ad2 = create_h5ad_canned(2, obs_field_name, var_field_name, tmp_path)
+    h5ad3 = create_h5ad_canned(3, obs_field_name, var_field_name, tmp_path)
+    h5ad4 = create_h5ad_canned(4, obs_field_name, var_field_name, tmp_path)
 
     rd = tiledbsoma.io.register_h5ads(
         soma1,
@@ -817,9 +815,9 @@ def test_multiples_with_experiment(obs_field_name, var_field_name, use_multiproc
 
 @pytest.mark.parametrize("obs_field_name", ["obs_id", "cell_id"])
 @pytest.mark.parametrize("var_field_name", ["var_id", "gene_id"])
-def test_append_items_with_experiment(obs_field_name, var_field_name):
-    soma1 = create_soma_canned(1, obs_field_name, var_field_name)
-    h5ad2 = create_h5ad_canned(2, obs_field_name, var_field_name)
+def test_append_items_with_experiment(obs_field_name, var_field_name, tmp_path):
+    soma1 = create_soma_canned(1, obs_field_name, var_field_name, tmp_path)
+    h5ad2 = create_h5ad_canned(2, obs_field_name, var_field_name, tmp_path)
     rd = tiledbsoma.io.register_h5ads(
         soma1,
         [h5ad2],
@@ -1451,9 +1449,9 @@ def test_registration_lists_and_tuples(tmp_path):
     obs_field_name = "cell_id"
     var_field_name = "gene_id"
 
-    exp_uri = create_soma_canned(1, obs_field_name, var_field_name)
+    exp_uri = create_soma_canned(1, obs_field_name, var_field_name, tmp_path)
     adata = create_anndata_canned(2, obs_field_name, var_field_name)
-    h5ad_file_name = create_h5ad_canned(2, obs_field_name, var_field_name)
+    h5ad_file_name = create_h5ad_canned(2, obs_field_name, var_field_name, tmp_path)
 
     rd1 = tiledbsoma.io.register_anndatas(
         experiment_uri=exp_uri,

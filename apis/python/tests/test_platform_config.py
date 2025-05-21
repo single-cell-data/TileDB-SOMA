@@ -1,5 +1,4 @@
 import json
-import tempfile
 from pathlib import Path
 
 import pytest
@@ -11,69 +10,70 @@ import tiledbsoma.options._tiledb_create_write_options as tco
 from ._util import assert_adata_equal
 
 
-def test_platform_config(conftest_pbmc_small):
+def test_platform_config(conftest_pbmc_small, tmp_path):
     # Set up anndata input path and tiledb-group output path
     original = conftest_pbmc_small.copy()
-    with tempfile.TemporaryDirectory(prefix="test_platform_config_") as output_path:
-        # Ingest
-        create_cfg = {
-            "capacity": 8888,
-            "offsets_filters": [
-                "RleFilter",
-                {"_type": "GzipFilter", "level": 7},
-                "NoOpFilter",
-            ],
-            "dims": {
-                "soma_dim_0": {"tile": 6, "filters": ["RleFilter"]},
-                # Empty filters for soma_dim_1 overrides the default
-                # dimension zstd level defined below.
-                "soma_dim_1": {"filters": []},
-            },
-            "attrs": {"soma_data": {"filters": ["NoOpFilter"]}},
-            "dataframe_dim_zstd_level": 1,
-            "cell_order": "row-major",
-            "tile_order": "column-major",
-            "dense_nd_array_dim_zstd_level": 2,
-        }
+    output_path = tmp_path.as_posix()
 
-        tiledbsoma.io.from_anndata(
-            output_path,
-            conftest_pbmc_small,
-            "RNA",
-            platform_config={"tiledb": {"create": create_cfg}},
-        )
-        assert_adata_equal(original, conftest_pbmc_small)
+    # Ingest
+    create_cfg = {
+        "capacity": 8888,
+        "offsets_filters": [
+            "RleFilter",
+            {"_type": "GzipFilter", "level": 7},
+            "NoOpFilter",
+        ],
+        "dims": {
+            "soma_dim_0": {"tile": 6, "filters": ["RleFilter"]},
+            # Empty filters for soma_dim_1 overrides the default
+            # dimension zstd level defined below.
+            "soma_dim_1": {"filters": []},
+        },
+        "attrs": {"soma_data": {"filters": ["NoOpFilter"]}},
+        "dataframe_dim_zstd_level": 1,
+        "cell_order": "row-major",
+        "tile_order": "column-major",
+        "dense_nd_array_dim_zstd_level": 2,
+    }
 
-        x_arr_uri = str(Path(output_path) / "ms" / "RNA" / "X" / "data")
-        with tiledbsoma.SparseNDArray.open(x_arr_uri) as x_arr:
-            cfg = x_arr.schema_config_options()
-            assert cfg.capacity == create_cfg["capacity"]
-            assert cfg.cell_order == create_cfg["cell_order"]
-            assert cfg.tile_order == create_cfg["tile_order"]
-            assert json.loads(cfg.offsets_filters) == [
-                {"COMPRESSION_LEVEL": -1, "name": "RLE"},
-                {"COMPRESSION_LEVEL": 7, "name": "GZIP"},
-                {"name": "NOOP"},
-            ]
+    tiledbsoma.io.from_anndata(
+        output_path,
+        conftest_pbmc_small,
+        "RNA",
+        platform_config={"tiledb": {"create": create_cfg}},
+    )
+    assert_adata_equal(original, conftest_pbmc_small)
 
-            assert json.loads(cfg.attrs)["soma_data"]["filters"] == [{"name": "NOOP"}]
+    x_arr_uri = str(Path(output_path) / "ms" / "RNA" / "X" / "data")
+    with tiledbsoma.SparseNDArray.open(x_arr_uri) as x_arr:
+        cfg = x_arr.schema_config_options()
+        assert cfg.capacity == create_cfg["capacity"]
+        assert cfg.cell_order == create_cfg["cell_order"]
+        assert cfg.tile_order == create_cfg["tile_order"]
+        assert json.loads(cfg.offsets_filters) == [
+            {"COMPRESSION_LEVEL": -1, "name": "RLE"},
+            {"COMPRESSION_LEVEL": 7, "name": "GZIP"},
+            {"name": "NOOP"},
+        ]
 
-            soma_dim_0 = json.loads(cfg.dims)["soma_dim_0"]
-            assert int(soma_dim_0["tile"]) == 6
-            assert soma_dim_0["filters"] == [{"COMPRESSION_LEVEL": -1, "name": "RLE"}]
+        assert json.loads(cfg.attrs)["soma_data"]["filters"] == [{"name": "NOOP"}]
 
-            # As of 2.17.0 this is the default when empty filter-list, or none at all,
-            # is requested. Those who want truly no filtering can request a no-op filter.
-            assert json.loads(cfg.dims)["soma_dim_1"]["filters"] == [
-                {"COMPRESSION_LEVEL": -1, "name": "ZSTD"}
-            ]
+        soma_dim_0 = json.loads(cfg.dims)["soma_dim_0"]
+        assert int(soma_dim_0["tile"]) == 6
+        assert soma_dim_0["filters"] == [{"COMPRESSION_LEVEL": -1, "name": "RLE"}]
 
-        var_arr_uri = str(Path(output_path) / "ms" / "RNA" / "var")
-        with tiledbsoma.DataFrame.open(var_arr_uri) as var_arr:
-            cfg = var_arr.schema_config_options()
-            assert json.loads(cfg.dims)["soma_joinid"]["filters"] == [
-                {"COMPRESSION_LEVEL": 1, "name": "ZSTD"}
-            ]
+        # As of 2.17.0 this is the default when empty filter-list, or none at all,
+        # is requested. Those who want truly no filtering can request a no-op filter.
+        assert json.loads(cfg.dims)["soma_dim_1"]["filters"] == [
+            {"COMPRESSION_LEVEL": -1, "name": "ZSTD"}
+        ]
+
+    var_arr_uri = str(Path(output_path) / "ms" / "RNA" / "var")
+    with tiledbsoma.DataFrame.open(var_arr_uri) as var_arr:
+        cfg = var_arr.schema_config_options()
+        assert json.loads(cfg.dims)["soma_joinid"]["filters"] == [
+            {"COMPRESSION_LEVEL": 1, "name": "ZSTD"}
+        ]
 
 
 def test__from_platform_config__admits_ignored_config_structure():

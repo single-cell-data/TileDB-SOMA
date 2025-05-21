@@ -3,7 +3,6 @@ from __future__ import annotations
 import gc
 import json
 import random
-import tempfile
 from copy import deepcopy
 from pathlib import Path
 
@@ -90,14 +89,13 @@ def h5ad_file_X_none(request):
     "X_kind",
     [tiledbsoma.SparseNDArray, tiledbsoma.DenseNDArray],
 )
-def test_import_anndata(conftest_pbmc_small, ingest_modes, X_kind):
+def test_import_anndata(conftest_pbmc_small, ingest_modes, X_kind, tmp_path):
     original = conftest_pbmc_small.copy()
     conftest_pbmc_small = conftest_pbmc_small.copy()
 
     have_ingested = False
 
-    tempdir = tempfile.TemporaryDirectory(prefix="test_import_anndata_")
-    output_path = tempdir.name
+    output_path = tmp_path.as_posix()
 
     conftest_pbmc_small.layers["plus1"] = conftest_pbmc_small.X + 1
     orig = conftest_pbmc_small.copy()
@@ -221,8 +219,6 @@ def test_import_anndata(conftest_pbmc_small, ingest_modes, X_kind):
 
         # pbmc-small has no varp
 
-        tempdir.cleanup()
-
 
 @pytest.mark.parametrize(
     "X_layer_name",
@@ -232,9 +228,8 @@ def test_import_anndata(conftest_pbmc_small, ingest_modes, X_kind):
         "othername",
     ],
 )
-def test_named_X_layers(conftest_pbmc_small_h5ad_path, X_layer_name):
-    tempdir = tempfile.TemporaryDirectory(prefix="test_named_X_layers_")
-    soma_path = tempdir.name
+def test_named_X_layers(conftest_pbmc_small_h5ad_path, X_layer_name, tmp_path):
+    soma_path = tmp_path.as_posix()
 
     if X_layer_name is None:
         tiledbsoma.io.from_h5ad(
@@ -275,20 +270,18 @@ def _get_fragment_count(array_uri):
         TESTDATA / "pbmc-small-x-csc.h5ad",
     ],
 )
-def test_resume_mode(resume_mode_h5ad_file):
+def test_resume_mode(resume_mode_h5ad_file, tmp_path):
     """
     Makes sure resume-mode ingest after successful ingest of the same input data does not write
     anything new
     """
 
-    tempdir1 = tempfile.TemporaryDirectory(prefix="test_resume_mode_1_")
-    output_path1 = tempdir1.name
+    output_path1 = (tmp_path / "test_resume_mode_1_").as_posix()
     tiledbsoma.io.from_h5ad(
         output_path1, resume_mode_h5ad_file.as_posix(), "RNA", ingest_mode="write"
     )
 
-    tempdir2 = tempfile.TemporaryDirectory(prefix="test_resume_mode_2_")
-    output_path2 = tempdir2.name
+    output_path2 = (tmp_path / "test_resume_mode_2_").as_posix()
     tiledbsoma.io.from_h5ad(
         output_path2, resume_mode_h5ad_file.as_posix(), "RNA", ingest_mode="write"
     )
@@ -333,9 +326,8 @@ def test_resume_mode(resume_mode_h5ad_file):
 
 
 @pytest.mark.parametrize("use_relative_uri", [False, True, None])
-def test_ingest_relative(conftest_pbmc3k_h5ad_path, use_relative_uri):
-    tempdir = tempfile.TemporaryDirectory(prefix="test_ingest_relative_")
-    output_path = tempdir.name
+def test_ingest_relative(conftest_pbmc3k_h5ad_path, use_relative_uri, tmp_path):
+    output_path = tmp_path.as_posix()
 
     tiledbsoma.io.from_h5ad(
         output_path,
@@ -431,9 +423,8 @@ def test_ingest_uns(
             assert set(uns) == set(ingest_uns_keys)
 
 
-def test_ingest_uns_string_arrays(h5ad_file_uns_string_arrays):
-    tempdir = tempfile.TemporaryDirectory(prefix="test_ingest_uns_string_arrays_")
-    output_path = tempdir.name
+def test_ingest_uns_string_arrays(h5ad_file_uns_string_arrays, tmp_path):
+    output_path = tmp_path.as_posix()
 
     tiledbsoma.io.from_h5ad(
         output_path,
@@ -457,9 +448,8 @@ def test_ingest_uns_string_arrays(h5ad_file_uns_string_arrays):
             assert contents["values_0"][0].as_py() == "#1f77b4"
 
 
-def test_add_matrix_to_collection(conftest_pbmc_small):
-    tempdir = tempfile.TemporaryDirectory(prefix="test_add_matrix_to_collection_")
-    output_path = tempdir.name
+def test_add_matrix_to_collection(conftest_pbmc_small, tmp_path):
+    output_path = tmp_path.as_posix()
 
     original = conftest_pbmc_small.copy()
 
@@ -518,7 +508,7 @@ def test_add_matrix_to_collection(conftest_pbmc_small):
 # modules or methods -- those whose names start with an underscore.  For this single case we are
 # making an exception. For future code-imitation purposes, please be aware this is a pattern to be
 # avoided in the future, not imitated.
-def test_add_matrix_to_collection_1_2_7(conftest_pbmc_small):
+def test_add_matrix_to_collection_1_2_7(conftest_pbmc_small, tmp_path):
     def add_X_layer(
         exp: tiledbsoma.Experiment,
         measurement_name: str,
@@ -589,8 +579,7 @@ def test_add_matrix_to_collection_1_2_7(conftest_pbmc_small):
                         use_relative_uri=use_relative_uri,
                     )
 
-    tempdir = tempfile.TemporaryDirectory(prefix="test_add_matrix_to_collection_1_2_7_")
-    output_path = tempdir.name
+    output_path = tmp_path.as_posix()
     original = conftest_pbmc_small.copy()
 
     uri = tiledbsoma.io.from_anndata(
@@ -653,9 +642,8 @@ def test_add_matrix_to_collection_1_2_7(conftest_pbmc_small):
         assert sorted(list(exp_r.ms["RNA"]["newthing"].keys())) == ["X_pcd"]
 
 
-def test_export_anndata(conftest_pbmc_small):
-    tempdir = tempfile.TemporaryDirectory(prefix="test_export_anndata_")
-    output_path = tempdir.name
+def test_export_anndata(conftest_pbmc_small, tmp_path):
+    output_path = tmp_path.as_posix()
 
     original = conftest_pbmc_small.copy()
 
@@ -703,9 +691,8 @@ def test_export_anndata(conftest_pbmc_small):
         assert readback.X is None
 
 
-def test_ingest_additional_metadata(conftest_pbmc_small):
-    tempdir = tempfile.TemporaryDirectory(prefix="test_ingest_additional_metadata_")
-    output_path = tempdir.name
+def test_ingest_additional_metadata(conftest_pbmc_small, tmp_path):
+    output_path = tmp_path.as_posix()
 
     additional_metadata = {"key1": "val1", "key2": "val2"}
 
@@ -836,9 +823,8 @@ def test_export_obsm_with_holes(h5ad_file_with_obsm_holes, tmp_path):
         assert try4.obsm["X_pca"].shape == (2638, 50)
 
 
-def test_X_empty(h5ad_file_X_empty):
-    tempdir = tempfile.TemporaryDirectory(prefix="test_X_empty_")
-    output_path = tempdir.name
+def test_X_empty(h5ad_file_X_empty, tmp_path):
+    output_path = tmp_path.as_posix()
     tiledbsoma.io.from_h5ad(
         output_path, h5ad_file_X_empty.as_posix(), measurement_name="RNA"
     )
@@ -853,9 +839,8 @@ def test_X_empty(h5ad_file_X_empty):
         # TODO: more
 
 
-def test_X_none(h5ad_file_X_none):
-    tempdir = tempfile.TemporaryDirectory(prefix="test_X_none_")
-    output_path = tempdir.name
+def test_X_none(h5ad_file_X_none, tmp_path):
+    output_path = tmp_path.as_posix()
     tiledbsoma.io.from_h5ad(
         output_path, h5ad_file_X_none.as_posix(), measurement_name="RNA"
     )
@@ -1161,9 +1146,8 @@ def test_index_names_io(tmp_path, obs_index_name, var_index_name):
         assert adata.var.index.name == bdata.var.index.name
 
 
-def test_obsm_data_type(conftest_pbmc_small):
-    tempdir = tempfile.TemporaryDirectory(prefix="test_obsm_data_type_")
-    soma_path = tempdir.name
+def test_obsm_data_type(conftest_pbmc_small, tmp_path):
+    soma_path = tmp_path.as_posix()
     bdata = anndata.AnnData(
         X=conftest_pbmc_small.X,
         obs=conftest_pbmc_small.obs,
@@ -1293,7 +1277,7 @@ def test_outgest_X_layers(tmp_path):
 @pytest.mark.parametrize("nans", ["all", "none", "some"])         # how many `nan`s in new column?
 @pytest.mark.parametrize("new_obs_ids", ["all", "none", "half"])  # how many new obs IDs?
 # fmt: on
-def test_nan_append(conftest_pbmc_small, dtype, nans, new_obs_ids):
+def test_nan_append(conftest_pbmc_small, dtype, nans, new_obs_ids, tmp_path):
     """Test append-ingesting an AnnData object, including a new `obs` column with various properties:
 
     - {all,some,none} of its values are `nan`
@@ -1331,7 +1315,7 @@ def test_nan_append(conftest_pbmc_small, dtype, nans, new_obs_ids):
         obs2.index = obs2.index[:half].tolist() + (obs2.index[half:] + "_2").tolist()
 
     # Initial ingest
-    SOMA_URI = tempfile.mkdtemp(prefix="soma-exp-")
+    SOMA_URI = tmp_path.as_posix()
     tiledbsoma.io.from_anndata(
         experiment_uri=SOMA_URI, anndata=conftest_pbmc_small, measurement_name="RNA"
     )
