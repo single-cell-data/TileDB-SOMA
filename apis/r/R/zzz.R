@@ -64,13 +64,20 @@ NULL
 
 #' Create and cache a SOMA Context Object
 #'
-#' @param config A named character vector with \sQuote{key} and \sQuote{value} pairs defining the
-#' configuration setting
-#' @return An external pointer object containing a shared pointer instance of \code{SOMAContext}
-#' @examples
-#' cfgvec <- as.vector(tiledb::tiledb_config()) # TileDB Config in vector form
-#' sctx <- soma_context(cfgvec)
+#' @param config A named character vector with \dQuote{key} and \dQuote{value}
+#' pairs defining the configuration setting
+#'
+#' @return An external pointer object containing a shared pointer instance
+#' of \code{SOMAContext}
+#'
+#' @keywords internal
+#'
 #' @export
+#'
+#' @examplesIf requireNamespace("tiledb", quietly = TRUE)
+#' head(cfgvec <- as.vector(tiledb::tiledb_config())) # TileDB config as a vector
+#' (sctx <- soma_context(cfgvec))
+#'
 soma_context <- function(config) {
   ## if a new config is given always create a new object
   if (!missing(config)) {
