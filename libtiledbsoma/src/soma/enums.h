@@ -27,8 +27,7 @@ enum class URIType { automatic = 0, absolute, relative };
 typedef enum {
     SOMA_COLUMN_DIMENSION = 0,
     SOMA_COLUMN_ATTRIBUTE = 1,
-    SOMA_COLUMN_GEOMETRY = 2,
-    SOMA_COLUMN_BINARY = 3
+    SOMA_COLUMN_GEOMETRY = 2
 } soma_column_datatype_t;
 
 // This enables some code deduplication between core domain, core current
