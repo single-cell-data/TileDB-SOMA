@@ -70,6 +70,9 @@ void load_transformers(py::module& m) {
                 array_list.append(pa_array);
             }
 
+            array->release(array.get());
+            schema->release(schema.get());
+
             return pa_table_from_arrays(array_list, names);
         });
 

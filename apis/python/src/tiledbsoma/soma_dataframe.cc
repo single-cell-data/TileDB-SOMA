@@ -95,6 +95,8 @@ void load_soma_dataframe(py::module& m) {
                     TPY_ERROR_LOC(e.what());
                 }
                 schema.release(&schema);
+                index_column_array.release(&index_column_array);
+                index_column_schema.release(&index_column_schema);
             },
             "uri"_a,
             py::kw_only(),
@@ -137,6 +139,10 @@ void load_soma_dataframe(py::module& m) {
                     py::gil_scoped_acquire acquire;
 
                     auto ncol = t.second->n_children;
+                    ScopedExecutor cleanup([&]() {
+                        t.first->release(t.first.get());
+                        t.second->release(t.second.get());
+                    });
 
                     py::dict retval;
                     for (auto i = 0; i < ncol; i++) {
@@ -152,6 +158,7 @@ void load_soma_dataframe(py::module& m) {
                             py::capsule(column_arrow_schema));
                         retval[py::str(column_name)] = pa_array;
                     }
+
                     return retval;
                 } catch (const std::exception& e) {
                     throw TileDBSOMAError(e.what());
@@ -309,6 +316,11 @@ void load_soma_dataframe(py::module& m) {
                 } catch (const std::exception& e) {
                     throw TileDBSOMAError(e.what());
                 }
+
+                nanoarrow_domain_table.first->release(
+                    nanoarrow_domain_table.first.get());
+                nanoarrow_domain_table.second->release(
+                    nanoarrow_domain_table.second.get());
             },
             "pyarrow_domain_table"_a,
             "function_name_for_messages"_a)
@@ -335,6 +347,11 @@ void load_soma_dataframe(py::module& m) {
                 } catch (const std::exception& e) {
                     throw TileDBSOMAError(e.what());
                 }
+
+                nanoarrow_domain_table.first->release(
+                    nanoarrow_domain_table.first.get());
+                nanoarrow_domain_table.second->release(
+                    nanoarrow_domain_table.second.get());
             },
             "pyarrow_domain_table"_a,
             "function_name_for_messages"_a)
@@ -361,6 +378,11 @@ void load_soma_dataframe(py::module& m) {
                 } catch (const std::exception& e) {
                     throw TileDBSOMAError(e.what());
                 }
+
+                nanoarrow_domain_table.first->release(
+                    nanoarrow_domain_table.first.get());
+                nanoarrow_domain_table.second->release(
+                    nanoarrow_domain_table.second.get());
             },
             "pyarrow_domain_table"_a,
             "function_name_for_messages"_a)
@@ -387,6 +409,11 @@ void load_soma_dataframe(py::module& m) {
                 } catch (const std::exception& e) {
                     throw TileDBSOMAError(e.what());
                 }
+
+                nanoarrow_domain_table.first->release(
+                    nanoarrow_domain_table.first.get());
+                nanoarrow_domain_table.second->release(
+                    nanoarrow_domain_table.second.get());
             },
             "pyarrow_domain_table"_a,
             "function_name_for_messages"_a)

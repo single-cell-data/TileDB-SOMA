@@ -98,7 +98,7 @@ void ArrowAdapter::release_schema(struct ArrowSchema* schema) {
             LOG_TRACE(fmt::format(
                 "[ArrowAdapter] release_schema name {} schema->dict release",
                 name_for_log));
-            release_schema(schema->dictionary);
+            schema->dictionary->release(schema->dictionary);
         }
         LOG_TRACE(fmt::format(
             "[ArrowAdapter] release_schema name {} schema->dict free",
@@ -535,8 +535,6 @@ ArrowSchema* ArrowAdapter::arrow_schema_from_tiledb_attribute(
         auto enmr = ArrayExperimental::get_enumeration(
             ctx, tiledb_array, *enmr_name);
         auto dict = (ArrowSchema*)malloc(sizeof(ArrowSchema));
-        dict->format = strdup(
-            ArrowAdapter::to_arrow_format(enmr.type(), false).data());
         if (enmr.type() == TILEDB_STRING_ASCII || enmr.type() == TILEDB_CHAR) {
             dict->format = strdup("z");
         } else {
