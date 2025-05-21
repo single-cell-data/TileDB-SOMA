@@ -938,7 +938,7 @@ def test_id_names(tmp_path, obs_id_name, var_id_name, indexify_obs, indexify_var
             if (i + j) % 2 == 1:
                 X[i, j] = 100 + 10 * i + j
 
-    adata = anndata.AnnData(X=X, obs=obs, var=var, dtype=X.dtype)
+    adata = anndata.AnnData(X=X, obs=obs, var=var)
     original = adata.copy()
 
     uri = tmp_path.as_posix()
@@ -1025,13 +1025,7 @@ def make_uns_adata(
     if uns is None:
         uns = TEST_UNS
 
-    adata = anndata.AnnData(
-        obs=obs,
-        var=var,
-        X=X,
-        uns=uns,
-        dtype=X.dtype,
-    )
+    adata = anndata.AnnData(obs=obs, var=var, X=X, uns=uns)
     adata0 = deepcopy(adata)
 
     soma_uri = tmp_path.as_posix()
@@ -1098,7 +1092,7 @@ def test_string_nan_columns(tmp_path, conftest_pbmc_small, write_index):
         bdata = tiledbsoma.io.to_anndata(exp, measurement_name="RNA")
 
     # Step 4
-    bdata.obs["new_col"][write_index] = "abc"
+    bdata.obs.loc[bdata.obs.index[[write_index]], "new_col"] = "abc"
     with tiledbsoma.open(uri, "w") as exp:
         # Implicit assert here that nothing throws
         tiledbsoma.io.update_obs(exp, bdata.obs)
@@ -1320,16 +1314,12 @@ def test_nan_append(conftest_pbmc_small, dtype, nans, new_obs_ids):
     # Add empty column to obs
     obs = conftest_pbmc_small.obs
     if nans == "all":
-        obs["batch_id"] = np.nan
+        obs["batch_id"] = pd.Series(data=np.nan, dtype=dtype, index=obs.index)
     else:
         elem = "batch_id" if dtype == "string" else 1.23
+        obs["batch_id"] = pd.Series(data=elem, dtype=dtype, index=obs.index)
         if nans == "some":
-            obs["batch_id"] = np.nan
-            obs.loc[obs.index.tolist()[0], "batch_id"] = elem
-        else:
-            obs["batch_id"] = elem
-
-    obs["batch_id"] = obs["batch_id"].astype(dtype)
+            obs.iloc[0:3, obs.columns.get_loc("batch_id")] = np.nan
 
     # Create a copy of the anndata object
     adata2 = conftest_pbmc_small.copy()
@@ -1435,10 +1425,8 @@ def test_decat_append(tmp_path):
     ).tocsr()
     X_over = scipy.sparse.random(nobs_over, nvar, density=0.1, dtype=np.float64).tocsr()
 
-    adata_under = anndata.AnnData(
-        X=X_under, obs=obs_under, var=var, dtype=X_under.dtype
-    )
-    adata_over = anndata.AnnData(X=X_over, obs=obs_over, var=var, dtype=X_over.dtype)
+    adata_under = anndata.AnnData(X=X_under, obs=obs_under, var=var)
+    adata_over = anndata.AnnData(X=X_over, obs=obs_over, var=var)
 
     # Do the initial ingests from AnnData format to TileDB-SOMA format
     path_under = (tmp_path / "under").as_posix()

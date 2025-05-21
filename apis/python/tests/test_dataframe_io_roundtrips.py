@@ -142,7 +142,9 @@ def test_adata_io_roundtrips(
     """
     uri = str(tmp_path)
     n_obs = len(original_df)
-    var = pd.DataFrame({"var1": [1, 2, 3], "var2": ["a", "b", "c"]})  # unused
+    var = pd.DataFrame(
+        {"var1": [1, 2, 3], "var2": ["a", "b", "c"]}, index=["A", "B", "C"]
+    )  # unused
     n_var = len(var)
     X = csr_matrix(np.array([0] * n_obs * n_var).reshape(n_obs, n_var))  # unused
     adata0 = AnnData(X=X, obs=original_df, var=var)

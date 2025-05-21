@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import tempfile
 from dataclasses import dataclass
+from typing import Generator
 
 import numpy as np
 import pandas as pd
@@ -21,7 +22,7 @@ from ._util import (
 
 
 @dataclass
-class TestCase:
+class ATestCase:
     """Group of related objects, used by test cases in this file, that share a creation code-path and are exposed as
     `pytest.fixture`s below."""
 
@@ -35,16 +36,18 @@ class TestCase:
 
 
 @pytest.fixture
-def multiple_fixtures_with_readback(request, conftest_pbmc_small) -> TestCase:
+def multiple_fixtures_with_readback(
+    request, conftest_pbmc_small
+) -> Generator[ATestCase, None, None]:
     """
-    Ingest an `AnnData`to a SOMA `Experiment`, yielding a `TestCase` with the old and new AnnData objects.
+    Ingest an `AnnData`to a SOMA `Experiment`, yielding `ATestCase` with the old and new AnnData objects.
 
     * The input AnnData is always `conftest_pbmc_small` (from conftest.py), not specifiable here as an argument
     * `request.param` (a.k.a. `use_readback` below) is a boolean, populated by pytest, that specifies whether:
       * `False`: the returned `new_obs` and `new_var` come directly from the input `conftest_pbmc_small`, or
       * `True`: `new_obs` and `new_var` are returned after round-tripping `conftest_pbmc_small` through SOMA and back to
         AnnData/Pandas.
-    * Each `TestCase` member is also exposed directly as its own `fixture` below.
+    * Each `ATestCase` member is also exposed directly as its own `fixture` below.
     """
     with tempfile.TemporaryDirectory(
         "multiple_fixtures_with_readback_"
@@ -70,7 +73,7 @@ def multiple_fixtures_with_readback(request, conftest_pbmc_small) -> TestCase:
                 new_obs = conftest_pbmc_small.obs
                 new_var = conftest_pbmc_small.var
 
-            yield TestCase(
+            yield ATestCase(
                 experiment_path=experiment_path,
                 old_anndata=old_anndata,
                 new_anndata=conftest_pbmc_small,
@@ -81,7 +84,7 @@ def multiple_fixtures_with_readback(request, conftest_pbmc_small) -> TestCase:
             )
 
 
-# Expose each field of the TestCase object as a pytest.fixture, to reduce boilerplate in test functions.
+# Expose each field of the ATestCase object as a pytest.fixture, to reduce boilerplate in test functions.
 @pytest.fixture
 def experiment_path(multiple_fixtures_with_readback):
     return multiple_fixtures_with_readback.experiment_path

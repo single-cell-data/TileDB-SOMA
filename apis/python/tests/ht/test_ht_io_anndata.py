@@ -444,6 +444,9 @@ def anndatas(draw: st.DrawFn) -> anndata.AnnData:
 
     obs = draw(dataframes(size=n_obs, name="obs"))
     var = draw(dataframes(size=n_vars, name="var"))
+    # AnnData likes a string index
+    obs.index = obs.index.astype(str)
+    var.index = var.index.astype(str)
 
     X = draw(st.one_of(matrixes(shape=(n_obs, n_vars))), st.none())
     layers = draw(map_of_matrixes(shape_prelude=(n_obs, n_vars)))

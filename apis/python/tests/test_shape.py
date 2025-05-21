@@ -446,7 +446,10 @@ def test_canned_experiments(tmp_path, has_shapes):
         tgz = TESTDATA / "pbmc-exp-with-shapes.tgz"
 
     with tarfile.open(tgz) as handle:
-        handle.extractall(uri)
+        if hasattr(tarfile, "data_filter"):
+            handle.extractall(uri, filter="data")
+        else:
+            handle.extractall(uri)
 
     def _assert_huge_domainish(d):
         assert len(d) == 1
@@ -869,7 +872,10 @@ def test_canned_nonstandard_dataframe_upgrade(tmp_path):
     tgz = TESTDATA / "nonstandard-dataframe-without-shapes.tgz"
 
     with tarfile.open(tgz) as handle:
-        handle.extractall(uri)
+        if hasattr(tarfile, "data_filter"):
+            handle.extractall(uri, filter="data")
+        else:
+            handle.extractall(uri)
 
     # ----------------------------------------------------------------
     # As of tiledbsoma 1.15 we no longer write dataframes/arrays without
