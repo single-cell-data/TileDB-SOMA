@@ -498,7 +498,6 @@ def to_anndata(
         obsp=obsp,
         varp=varp,
         uns=uns,
-        dtype=anndata_X.dtype if anndata_X is not None else None,
     )
 
     logging.log_io(None, _util.format_elapsed(s, "FINISH Experiment.to_anndata"))

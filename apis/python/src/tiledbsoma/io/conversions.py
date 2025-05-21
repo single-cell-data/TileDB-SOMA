@@ -14,6 +14,9 @@ import pandas._typing as pdt
 import pandas.api.types
 import pyarrow as pa
 import scipy.sparse as sp
+from pandas.core.dtypes.dtypes import (
+    ExtensionDtype,  # do not delete. referenced by "_DT" type alias
+)
 
 from .._fastercsx import CompressedMatrix
 from .._funcs import typeguard_ignore

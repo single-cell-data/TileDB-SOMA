@@ -14,7 +14,10 @@ def test_notebook_path_dense(tmp_path, name):
     uri = tmp_path.as_posix()
 
     with tarfile.open(tgz_path) as handle:
-        handle.extractall(uri)
+        if hasattr(tarfile, "data_filter"):
+            handle.extractall(uri, filter="data")
+        else:
+            handle.extractall(uri)
 
     with tiledbsoma.Experiment.open(uri) as exp:
         assert len(exp.obs.read().concat()) == 2638

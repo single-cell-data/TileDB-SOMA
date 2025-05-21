@@ -1,3 +1,4 @@
+import multiprocessing
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
@@ -58,3 +59,6 @@ def conftest_pbmc3k_h5ad_path(request) -> Path:
 def conftest_pbmc3k_adata(conftest_pbmc3k_h5ad_path):
     """Larger (2638x1838) AnnData, which also includes obsm, obsp, and varm arrays."""
     return anndata.read_h5ad(conftest_pbmc3k_h5ad_path)
+
+
+multiprocessing.set_start_method("spawn", force=True)
