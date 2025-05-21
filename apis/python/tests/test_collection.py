@@ -12,7 +12,7 @@ from typeguard import suppress_type_checks
 from typing_extensions import Literal
 
 import tiledbsoma as soma
-from tiledbsoma import _collection, _factory, _soma_group, _soma_object
+from tiledbsoma import _collection, _factory, _soma_object
 from tiledbsoma._exception import DoesNotExistError, SOMAError
 from tiledbsoma.options import SOMATileDBContext
 
@@ -427,20 +427,6 @@ def test_real_class_fail(in_type):
         _collection._real_class(in_type)
 
 
-@pytest.mark.parametrize(
-    ("key", "want"),
-    [
-        ("hello", "hello"),
-        ("good bye", "good_bye"),
-        ("../beas/tie@boyz", "_beas_tie_boyz"),
-        ("g0nna~let-the.BEAT", "g0nna_let_the_BEAT"),
-        ("____DROP", "_DROP"),
-    ],
-)
-def test_sanitize_for_path(key, want):
-    assert _soma_group._sanitize_for_path(key) == want
-
-
 def test_timestamped_ops(tmp_path):
     """
     When we specify read/write timestamps in SOMATileDBContext supplied to collection, those are
@@ -588,3 +574,35 @@ def test_collection_reopen(tmp_path):
                 assert col1.tiledb_timestamp <= now
                 assert col2.tiledb_timestamp <= now
                 assert col2.tiledb_timestamp <= now
+
+
+@pytest.mark.parametrize(
+    ("key", "sanitized_key"),
+    (
+        ("<>", "%3C%3E"),
+        ("#%&*", "%23%25%26%2A"),
+        ("CONFIG$", "CONFIG%24"),
+        ("name_with_trailing_space_ ", "name_with_trailing_space_%20"),
+        (" name_with_leading_space", "%20name_with_leading_space"),
+        ("无效的文件名", "%E6%97%A0%E6%95%88%E7%9A%84%E6%96%87%E4%BB%B6%E5%90%8D"),
+        ("%%%%%%%%%%%", "%25%25%25%25%25%25%25%25%25%25%25"),
+        ("name%20with%20encoded%20spaces", "name%2520with%2520encoded%2520spaces"),
+        ("name%2Fwith%2Fencoded%2Fslashes", "name%252Fwith%252Fencoded%252Fslashes"),
+        (
+            "%20%20%20%20%20%20%20%20%20",
+            "%2520%2520%2520%2520%2520%2520%2520%2520%2520",
+        ),
+        ("file.with..dot_segments", "file.with..dot_segments"),
+        ("CON", "CON"),
+        ("~", "~"),
+        ("#", "%23"),
+    ),
+)
+def test_keys_with_sanitized_uris(tmp_path, key, sanitized_key):
+    uri = tmp_path.as_uri()
+
+    with soma.Collection.create(uri) as c:
+        c.add_new_collection(key)
+
+    with soma.Collection.open(uri) as c:
+        assert c[key].uri == f"{uri}/{sanitized_key}"
