@@ -53,6 +53,13 @@
 #'
 #' @noMd
 #'
+#' @examples
+#' (cfg <- PlatformConfig$new())
+#' (tdco <- TileDBCreateOptions$new(cfg))
+#' tdco$cell_tile_orders()
+#' tdco$to_list()
+#' tdco$to_list(build_filters = FALSE)
+#'
 TileDBCreateOptions <- R6::R6Class(
   classname = "TileDBCreateOptions",
   inherit = MappingBase,

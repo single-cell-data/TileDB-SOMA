@@ -10,7 +10,8 @@
 #'
 #' @seealso Derived classes: \code{\link{ConfigList}},
 #' \code{\link{PlatformConfig}},
-#' \code{\link{ScalarMap}}
+#' \code{\link{ScalarMap}},
+#' \code{\link{TileDBCreateOptions}}
 #'
 MappingBase <- R6::R6Class(
   classname = "MappingBase",

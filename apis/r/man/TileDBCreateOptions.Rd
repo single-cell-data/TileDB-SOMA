@@ -11,6 +11,12 @@ Provides strongly-typed access and default values for
 Intended for internal use only.
 }
 \examples{
+(cfg <- PlatformConfig$new())
+(tdco <- TileDBCreateOptions$new(cfg))
+tdco$cell_tile_orders()
+tdco$to_list()
+tdco$to_list(build_filters = FALSE)
+
 
 ## ------------------------------------------------
 ## Method `TileDBCreateOptions$dim_tile`

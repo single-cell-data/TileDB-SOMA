@@ -53,7 +53,8 @@ getting (\code{self$get()}) and setting (\code{self$set()}) items in the map
 \seealso{
 Derived classes: \code{\link{ConfigList}},
 \code{\link{PlatformConfig}},
-\code{\link{ScalarMap}}
+\code{\link{ScalarMap}},
+\code{\link{TileDBCreateOptions}}
 }
 \keyword{internal}
 \section{Methods}{
