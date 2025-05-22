@@ -34,9 +34,7 @@ class SOMAArrayStateMachine(RuleBasedStateMachine):
         self.closed: bool = True
         self.mode: Literal["r", "w"] | None = None
         self.A: SOMAArray | None = None
-        self.uri = self.TestCase.tmp_path_factory.mktemp(
-            f"{self.__class__.__name__}-"
-        ).as_posix()
+        self.uri = self.TestCase.tmp_path_factory.mktemp(f"{self.__class__.__name__}-").as_posix()
 
     def setup(self, A: SOMAArray) -> None:
         assert isinstance(A, (soma.DataFrame, soma.SparseNDArray, soma.DenseNDArray))
@@ -68,9 +66,7 @@ class SOMAArrayStateMachine(RuleBasedStateMachine):
         return self.A is not None
 
     @abstractmethod
-    def _array_exists(
-        self, uri: str, context: soma.SOMATileDBContext, tiledb_timestamp: int | None
-    ) -> bool:
+    def _array_exists(self, uri: str, context: soma.SOMATileDBContext, tiledb_timestamp: int | None) -> bool:
         pass
 
     @abstractmethod
@@ -88,9 +84,7 @@ class SOMAArrayStateMachine(RuleBasedStateMachine):
     def _close(self) -> None:
         assert not self.A.closed
         if self.pending_metadata is not None:
-            self.metadata_ledger.write(
-                PyDictLedgerEntry(self.A.tiledb_timestamp_ms, "", self.pending_metadata)
-            )
+            self.metadata_ledger.write(PyDictLedgerEntry(self.A.tiledb_timestamp_ms, "", self.pending_metadata))
             self.pending_metadata = None
 
         self.A.close()
@@ -149,15 +143,13 @@ class SOMAArrayStateMachine(RuleBasedStateMachine):
     ## --- metadata
     ##
     METADATA_KEY_ALPHABET = st.characters(codec="utf-8", exclude_characters=["\x00"])
-    METADATA_KEYS = st.text(
-        min_size=0, max_size=4096, alphabet=METADATA_KEY_ALPHABET
-    ).filter(lambda k: not k.startswith("soma_"))
+    METADATA_KEYS = st.text(min_size=0, max_size=4096, alphabet=METADATA_KEY_ALPHABET).filter(
+        lambda k: not k.startswith("soma_")
+    )
     METADATA_VALUE_ALPHABET = st.characters(codec="utf-8", exclude_characters=["\x00"])
     METADATA_VALUES = st.one_of(
         st.text(alphabet=METADATA_VALUE_ALPHABET, min_size=0)
-        | st.integers(
-            min_value=np.iinfo(np.int64).min, max_value=np.iinfo(np.int64).max
-        )
+        | st.integers(min_value=np.iinfo(np.int64).min, max_value=np.iinfo(np.int64).max)
         | st.floats()
     )
     IGNORE_KEYS = re.compile(r"^soma_.*$")
@@ -183,36 +175,22 @@ class SOMAArrayStateMachine(RuleBasedStateMachine):
                 continue
             assert array_metadata[k] == expected_metadata[k]
 
-    @precondition(
-        lambda self: not self.closed and self.mode == "w" and len(self.A.metadata) < 100
-    )
+    @precondition(lambda self: not self.closed and self.mode == "w" and len(self.A.metadata) < 100)
     @rule(k=METADATA_KEYS, v=METADATA_VALUES)
     def set_metadata(self, k: str, v: str | int | float) -> None:
         self.A.metadata[k] = v
         if self.pending_metadata is None:
-            self.pending_metadata = self.metadata_ledger.read(
-                self.A.tiledb_timestamp_ms
-            ).to_dict()
+            self.pending_metadata = self.metadata_ledger.read(self.A.tiledb_timestamp_ms).to_dict()
         self.pending_metadata[k] = v
 
-    @precondition(
-        lambda self: not self.closed
-        and self.mode == "w"
-        and len(self.filter_metadata(self.A.metadata))
-    )
+    @precondition(lambda self: not self.closed and self.mode == "w" and len(self.filter_metadata(self.A.metadata)))
     @precondition(lambda self: not self.closed)
     @rule(data=st.data())
     def del_metadata(self, data: st.DataObject) -> None:
         if self.pending_metadata is None:
-            self.pending_metadata = self.metadata_ledger.read(
-                self.A.tiledb_timestamp_ms
-            ).to_dict()
+            self.pending_metadata = self.metadata_ledger.read(self.A.tiledb_timestamp_ms).to_dict()
 
-        k = data.draw(
-            st.sampled_from(
-                sorted(list(self.filter_metadata(self.pending_metadata).keys()))
-            )
-        )
+        k = data.draw(st.sampled_from(sorted(list(self.filter_metadata(self.pending_metadata).keys()))))
         del self.A.metadata[k]
         del self.pending_metadata[k]
 
@@ -239,17 +217,12 @@ class SOMANDArrayStateMachine(SOMAArrayStateMachine):
         super().setup(array)
         self.type = type
         self.schema = pa.schema(
-            [
-                pa.field(f"soma_dim_{n}", pa.int64(), nullable=False)
-                for n in range(len(shape))
-            ]
+            [pa.field(f"soma_dim_{n}", pa.int64(), nullable=False) for n in range(len(shape))]
             + [pa.field("soma_data", self.type, nullable=False)]
         )
         assert all((shape[i] or 1) == self.A.shape[i] for i in range(len(shape)))
         assert self.schema == self.A.schema
-        self.shape = tuple(
-            (shape[i] or 1) for i in range(len(shape))
-        )  # XXX TODO: shape should be a ledger
+        self.shape = tuple((shape[i] or 1) for i in range(len(shape)))  # XXX TODO: shape should be a ledger
 
     ##
     ## --- schema
@@ -286,9 +259,7 @@ class SOMANDArrayStateMachine(SOMAArrayStateMachine):
         if self.closed:
             self._open(mode="w")
         assert self.mode == "w"
-        new_shape = data.draw(
-            self.shapes_factory(min_shape=self.shape, max_shape=self.A.maxshape)
-        )
+        new_shape = data.draw(self.shapes_factory(min_shape=self.shape, max_shape=self.A.maxshape))
         self.A.resize(new_shape)
         self.shape = new_shape
         self._close()  # resize is committed upon close

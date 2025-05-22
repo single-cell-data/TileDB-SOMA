@@ -31,10 +31,7 @@ def test_uri_joinpath_s3():
 
 def test_uri_joinpath_tiledb():
     assert uri_joinpath("tiledb://acct/", "A") == "tiledb://acct/A"
-    assert (
-        uri_joinpath("tiledb://acct/s3://bucket/C", "D")
-        == "tiledb://acct/s3://bucket/C/D"
-    )
+    assert uri_joinpath("tiledb://acct/s3://bucket/C", "D") == "tiledb://acct/s3://bucket/C/D"
 
     with pytest.raises(ValueError):
         assert uri_joinpath("tiledb://acct/A/", "../B/")
@@ -102,10 +99,7 @@ def test_dense_index_to_shape(io):
     ],
 )
 def test_dense_indices_to_shape(io):
-    assert (
-        dense_indices_to_shape(io["coord"], io["input_shape"], io["result_order"])
-        == io["output_shape"]
-    )
+    assert dense_indices_to_shape(io["coord"], io["input_shape"], io["result_order"]) == io["output_shape"]
 
 
 @pytest.mark.parametrize(

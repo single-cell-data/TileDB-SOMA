@@ -30,15 +30,9 @@ import tiledb
 
 # ================================================================
 def main():
-    parser = argparse.ArgumentParser(
-        description="Ingest SOMA data from anndata/h5ad into TileDB group structure"
-    )
-    parser.add_argument(
-        "-q", "--quiet", help="decrease output verbosity", action="store_true"
-    )
-    parser.add_argument(
-        "--debug", help="increase output verbosity", action="store_true"
-    )
+    parser = argparse.ArgumentParser(description="Ingest SOMA data from anndata/h5ad into TileDB group structure")
+    parser.add_argument("-q", "--quiet", help="decrease output verbosity", action="store_true")
+    parser.add_argument("--debug", help="increase output verbosity", action="store_true")
     parser.add_argument(
         "--append",
         help="Append the inputs to the existing SOMA experiment",
@@ -156,9 +150,7 @@ using `--platform-config-file pc.json`.
         elif relative == "auto":
             use_relative_uri = None
         else:
-            raise tiledbsoma._exception.SOMAError(
-                f"Internal coding error in {__file__}"
-            )
+            raise tiledbsoma._exception.SOMAError(f"Internal coding error in {__file__}")
 
     context = SOMATileDBContext()
     if args.tiledb_config_file is not None:
@@ -179,9 +171,7 @@ using `--platform-config-file pc.json`.
             sys.exit(1)
         for input_path in args.paths:
             # Example 'testdata/pbmc3k_processed.h5ad' -> 'tiledbsoma-data/pbmc3k_processed'
-            output_path = os.path.join(
-                soco_dir, os.path.splitext(os.path.basename(input_path))[0]
-            )
+            output_path = os.path.join(soco_dir, os.path.splitext(os.path.basename(input_path))[0])
             ingest_one(
                 input_path=input_path,
                 output_path=output_path,
@@ -213,9 +203,7 @@ using `--platform-config-file pc.json`.
         elif len(args.paths) == 1:
             input_path = args.paths[0]
             # Example 'testdata/pbmc3k_processed.h5ad' -> 'tiledbsoma-data/pbmc3k_processed'
-            output_path = os.path.join(
-                soco_dir, os.path.splitext(os.path.basename(input_path))[0]
-            )
+            output_path = os.path.join(soco_dir, os.path.splitext(os.path.basename(input_path))[0])
             ingest_one(
                 input_path=input_path,
                 output_path=output_path,
@@ -322,9 +310,7 @@ def ingest_one(
         exp.close()
 
         tiledbsoma.logging.logger.info("")
-        tiledbsoma.logging.logger.info(
-            f"Added Experiment {exp_name} to Collection {soco_dir}"
-        )
+        tiledbsoma.logging.logger.info(f"Added Experiment {exp_name} to Collection {soco_dir}")
 
 
 # ================================================================

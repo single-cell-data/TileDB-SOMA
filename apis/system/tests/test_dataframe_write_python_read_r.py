@@ -18,9 +18,7 @@ class TestDataframeWritePythonReadR(TestWritePythonReadR):
             ]
         )
 
-        soma.DataFrame.create(
-            self.uri, schema=asch, index_column_names=["foo"], domain=[[0, 99]]
-        ).close()
+        soma.DataFrame.create(self.uri, schema=asch, index_column_names=["foo"], domain=[[0, 99]]).close()
 
         pydict = {}
         pydict["soma_joinid"] = [0, 1, 2, 3, 4]

@@ -64,25 +64,19 @@ def test_platform_config(conftest_pbmc_small, tmp_path):
 
         # As of 2.17.0 this is the default when empty filter-list, or none at all,
         # is requested. Those who want truly no filtering can request a no-op filter.
-        assert json.loads(cfg.dims)["soma_dim_1"]["filters"] == [
-            {"COMPRESSION_LEVEL": -1, "name": "ZSTD"}
-        ]
+        assert json.loads(cfg.dims)["soma_dim_1"]["filters"] == [{"COMPRESSION_LEVEL": -1, "name": "ZSTD"}]
 
     var_arr_uri = str(Path(output_path) / "ms" / "RNA" / "var")
     with tiledbsoma.DataFrame.open(var_arr_uri) as var_arr:
         cfg = var_arr.schema_config_options()
-        assert json.loads(cfg.dims)["soma_joinid"]["filters"] == [
-            {"COMPRESSION_LEVEL": 1, "name": "ZSTD"}
-        ]
+        assert json.loads(cfg.dims)["soma_joinid"]["filters"] == [{"COMPRESSION_LEVEL": 1, "name": "ZSTD"}]
 
 
 def test__from_platform_config__admits_ignored_config_structure():
     try:
         tco.TileDBCreateOptions.from_platform_config(
             dict(
-                tiledb=dict(
-                    create=tco.TileDBCreateOptions(), future_option=dict(foo="1")
-                ),
+                tiledb=dict(create=tco.TileDBCreateOptions(), future_option=dict(foo="1")),
                 not_tiledb=dict(read=dict(buffer_size="128")),
             )
         )
@@ -91,9 +85,7 @@ def test__from_platform_config__admits_ignored_config_structure():
 
 
 def test__from_platform_config__admits_ignored_options():
-    tco.TileDBCreateOptions.from_platform_config(
-        {"tiledb": {"create": {"zzz_future_option": "hello"}}}
-    )
+    tco.TileDBCreateOptions.from_platform_config({"tiledb": {"create": {"zzz_future_option": "hello"}}})
 
 
 def test__from_platform_config__admits_plain_dict():
@@ -112,11 +104,7 @@ def test__from_platform_config__admits_create_options_in_dict_shallow():
 
 def test__from_platform_config__admits_create_options_in_dict_at_leaf():
     tdb_create_options = tco.TileDBCreateOptions.from_platform_config(
-        {
-            "tiledb": {
-                "create": tco.TileDBCreateOptions(dims={"soma_dim_0": {"tile": 6}})
-            }
-        }
+        {"tiledb": {"create": tco.TileDBCreateOptions(dims={"soma_dim_0": {"tile": 6}})}}
     )
     assert tdb_create_options.dim_tile("soma_dim_0") == 6
 
@@ -133,9 +121,7 @@ def test_dig_platform_config():
     assert tco._dig_platform_config(1, int, ("a", "b")) == 1
     assert tco._dig_platform_config({"a": 2}, int, ("a", "b")) == 2
     assert tco._dig_platform_config({"a": {"b": 3}}, int, ("a", "b")) == 3
-    assert tco._dig_platform_config(
-        {"a": {"b": {"config_data": "hello"}}}, int, ("a", "b")
-    ) == {"config_data": "hello"}
+    assert tco._dig_platform_config({"a": {"b": {"config_data": "hello"}}}, int, ("a", "b")) == {"config_data": "hello"}
 
     # Missing keys interpolated with empty dict.
     assert tco._dig_platform_config({"x": "y"}, int, ("a", "b")) == {}

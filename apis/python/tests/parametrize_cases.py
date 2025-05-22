@@ -13,9 +13,7 @@ def parametrize_cases(cases: list):
     cls = cases[0].__class__
     for case in cases:
         if case.__class__ is not cls:
-            raise ValueError(
-                f"Expected all cases to be of type {cls}, but found {case.__class__}"
-            )
+            raise ValueError(f"Expected all cases to be of type {cls}, but found {case.__class__}")
 
     def wrapper(fn):
         """Parameterize a test ``fn``, converting the ``cases`` above to pytest-style "ID"s and
@@ -29,10 +27,7 @@ def parametrize_cases(cases: list):
         spec = getfullargspec(fn)
         field_names = [f.name for f in fields(cls)]
         names = [arg for arg in spec.args if arg in field_names]
-        values = [
-            {name: rt_dict[name] for name in names}.values()
-            for rt_dict in [asdict(case) for case in cases]
-        ]
+        values = [{name: rt_dict[name] for name in names}.values() for rt_dict in [asdict(case) for case in cases]]
 
         # Delegate to PyTest `parametrize`
         return pytest.mark.parametrize(

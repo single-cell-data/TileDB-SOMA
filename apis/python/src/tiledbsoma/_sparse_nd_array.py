@@ -189,9 +189,7 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
                 dim_shape - 1,
             ]
 
-        index_column_info = pa.RecordBatch.from_pydict(
-            index_column_data, schema=pa.schema(index_column_schema)
-        )
+        index_column_info = pa.RecordBatch.from_pydict(index_column_data, schema=pa.schema(index_column_schema))
 
         carrow_type = pyarrow_to_carrow_type(type)
         plt_cfg = _util.build_clib_platform_config(platform_config)
@@ -309,8 +307,7 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
         sort_coords = None
         if isinstance(platform_config, TileDBCreateOptions):
             raise ValueError(
-                "As of TileDB-SOMA 1.13, the write method takes "
-                "TileDBWriteOptions instead of TileDBCreateOptions"
+                "As of TileDB-SOMA 1.13, the write method takes " "TileDBWriteOptions instead of TileDBCreateOptions"
             )
         write_options = TileDBWriteOptions.from_platform_config(platform_config)
         sort_coords = write_options.sort_coords
@@ -332,9 +329,7 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
                 )
             mq._handle.set_column_data(
                 "soma_data",
-                np.array(
-                    data, dtype=self.schema.field("soma_data").type.to_pandas_dtype()
-                ),
+                np.array(data, dtype=self.schema.field("soma_data").type.to_pandas_dtype()),
             )
             mq._handle.submit_write(sort_coords or True)
 
@@ -345,9 +340,7 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
 
         if isinstance(values, (pa.SparseCSCMatrix, pa.SparseCSRMatrix)):
             if self.ndim != 2:
-                raise ValueError(
-                    f"Unable to write 2D Arrow sparse matrix to {self.ndim}D SparseNDArray"
-                )
+                raise ValueError(f"Unable to write 2D Arrow sparse matrix to {self.ndim}D SparseNDArray")
             # Write bulk data
             # TODO: the ``to_scipy`` function is not zero copy. Need to explore zero-copy options.
             sp = values.to_scipy().tocoo()
@@ -363,9 +356,7 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
                 )
             mq._handle.set_column_data(
                 "soma_data",
-                np.array(
-                    sp.data, dtype=self.schema.field("soma_data").type.to_pandas_dtype()
-                ),
+                np.array(sp.data, dtype=self.schema.field("soma_data").type.to_pandas_dtype()),
             )
             mq._handle.submit_write(sort_coords or True)
 
@@ -387,9 +378,7 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
                 clib_sparse_array.consolidate_and_vacuum()
             return self
 
-        raise TypeError(
-            f"Unsupported Arrow type or non-arrow type for values argument: {type(values)}"
-        )
+        raise TypeError(f"Unsupported Arrow type or non-arrow type for values argument: {type(values)}")
 
     @classmethod
     def _dim_capacity_and_extent(
@@ -414,9 +403,7 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
             dim_capacity -= dim_extent
         else:
             if dim_shape <= 0:
-                raise ValueError(
-                    "SOMASparseNDArray shape must be a non-zero-length tuple of positive ints or Nones"
-                )
+                raise ValueError("SOMASparseNDArray shape must be a non-zero-length tuple of positive ints or Nones")
             dim_capacity = dim_shape
             dim_extent = min(dim_shape, create_options.dim_tile(dim_name, 2048))
 
@@ -644,9 +631,7 @@ class SparseNDArrayBlockwiseRead(_SparseNDArrayReadBase):
 
         Also tracked as https://github.com/single-cell-data/TileDB-SOMA/issues/668
         """
-        raise NotImplementedError(
-            "Blockwise SparseCOOTensor not implemented due to ARROW-17933."
-        )
+        raise NotImplementedError("Blockwise SparseCOOTensor not implemented due to ARROW-17933.")
 
     def scipy(self, *, compress: bool = True) -> BlockwiseScipyReadIter:
         """Returns a blockwise iterator of

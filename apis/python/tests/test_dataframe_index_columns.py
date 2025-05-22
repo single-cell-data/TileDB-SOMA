@@ -22,9 +22,7 @@ def arrow_table():
         "float32": pa.array([320.5, 321.5, 322.5, 323.5, 324.5], pa.float32()),
         "float64": pa.array([640.5, 641.5, 642.5, 643.5, 644.5], pa.float64()),
         "bool": pa.array([True, True, False, True, False], pa.bool_()),
-        "tss": pa.array(
-            [946684800, 946684801, 946684802, 946684803, 946684804], pa.timestamp("s")
-        ),
+        "tss": pa.array([946684800, 946684801, 946684802, 946684803, 946684804], pa.timestamp("s")),
         "tsms": pa.array(
             [946684800000, 946684800001, 946684800002, 946684800003, 946684800004],
             pa.timestamp("ms"),
@@ -1866,9 +1864,7 @@ def test_types_no_errors(
     if expecteds == "default01234":
         expecteds = {
             "soma_joinid": pa.array([0, 1, 2, 3, 4], pa.int64()),
-            "string": pa.array(
-                ["apple", "ball", "cat", "dog", "egg"], pa.large_string()
-            ),
+            "string": pa.array(["apple", "ball", "cat", "dog", "egg"], pa.large_string()),
         }
 
     elif expecteds == "default23":
@@ -1893,10 +1889,7 @@ def test_types_no_errors(
             # TileDB always returns ("", "") as domain for string/bytes dimensions on sparse arrays.
             actual_domain = sdf.domain
             for i in range(len(index_column_names)):
-                if (
-                    index_column_names[i] == "string"
-                    or index_column_names[i] == "bytes"
-                ):
+                if index_column_names[i] == "string" or index_column_names[i] == "bytes":
                     assert actual_domain[i] == ("", "")
 
 

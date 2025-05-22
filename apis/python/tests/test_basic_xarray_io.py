@@ -17,9 +17,7 @@ class TestDenseNDDataArray1D:
         baseuri = tmp_path_factory.mktemp("basic_xarray_io").as_uri()
         array_uri = urljoin(baseuri, "sample_1d_dense_array")
         platform_config = {"tiledb": {"create": {"dims": {"soma_dim_0": {"tile": 4}}}}}
-        with soma.DenseNDArray.create(
-            array_uri, type=pa.uint8(), shape=(8,), platform_config=platform_config
-        ) as array:
+        with soma.DenseNDArray.create(array_uri, type=pa.uint8(), shape=(8,), platform_config=platform_config) as array:
             data = pa.Tensor.from_numpy(np.arange(8, dtype=np.uint8))
             array.write((None,), data)
         return soma_xarray.dense_nd_array_to_data_array(
@@ -89,16 +87,10 @@ class TestDenseNDDataArray3D:
     def xr_soma_data_array(self, tmp_path_factory):
         baseuri = tmp_path_factory.mktemp("basic_xarray_io").as_uri()
         array_uri = urljoin(baseuri, "sample_3d_dense_array")
-        with soma.DenseNDArray.create(
-            array_uri, type=pa.uint8(), shape=(8, 2, 4)
-        ) as array:
-            data = pa.Tensor.from_numpy(
-                np.reshape(np.arange(64, dtype=np.uint8), (8, 2, 4))
-            )
+        with soma.DenseNDArray.create(array_uri, type=pa.uint8(), shape=(8, 2, 4)) as array:
+            data = pa.Tensor.from_numpy(np.reshape(np.arange(64, dtype=np.uint8), (8, 2, 4)))
             array.write((None,), data)
-        return soma_xarray.dense_nd_array_to_data_array(
-            array_uri, dim_names=("xdim", "ydim", "zdim")
-        )
+        return soma_xarray.dense_nd_array_to_data_array(array_uri, dim_names=("xdim", "ydim", "zdim"))
 
     @pytest.fixture(scope="class")
     def xr_numpy_data_array(self):

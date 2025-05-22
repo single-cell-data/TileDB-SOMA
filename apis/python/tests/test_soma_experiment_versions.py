@@ -21,8 +21,7 @@ def test_to_anndata(version, name_and_expected_shape):
     uri = str(path)
     if not os.path.isdir(uri):
         raise RuntimeError(
-            f"Missing '{uri}' directory. Try running `make data` "
-            "from the TileDB-SOMA project root directory."
+            f"Missing '{uri}' directory. Try running `make data` " "from the TileDB-SOMA project root directory."
         )
 
     with tiledbsoma.Experiment.open(uri) as exp:
@@ -76,8 +75,7 @@ def test_get_experiment_shapes(version_and_upgraded):
     uri = str(path)
     if not os.path.isdir(uri):
         raise RuntimeError(
-            f"Missing '{uri}' directory. Try running `make data` "
-            "from the TileDB-SOMA project root directory."
+            f"Missing '{uri}' directory. Try running `make data` " "from the TileDB-SOMA project root directory."
         )
 
     # The output includes URIs which vary randomly from one test run to another;

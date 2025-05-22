@@ -29,11 +29,7 @@ def everything_except(excluded_types: type) -> st.SearchStrategy[type]:
         everything_except(int|float)
 
     """
-    return (
-        st.from_type(type)
-        .flatmap(st.from_type)
-        .filter(lambda x: not isinstance(x, excluded_types))
-    )
+    return st.from_type(type).flatmap(st.from_type).filter(lambda x: not isinstance(x, excluded_types))
 
 
 def resolve_dtype(
@@ -49,9 +45,7 @@ def resolve_dtype(
     return dtype
 
 
-def from_datatype(
-    datatype: pa.DataType, *args, **kwargs
-) -> st.SearchStrategy[pa.Scalar]:
+def from_datatype(datatype: pa.DataType, *args, **kwargs) -> st.SearchStrategy[pa.Scalar]:
     """Strategy to return an element of the given type."""
     if datatype in [pa.binary(), pa.large_binary()]:
         return st.binary(*args, **kwargs).map(lambda v: pa.scalar(v, type=datatype))
@@ -73,9 +67,9 @@ def from_datatype(
         )
         return elems.map(lambda v: pa.scalar(v, type=datatype))
     else:
-        return ht_np.from_dtype(
-            np.dtype(datatype.to_pandas_dtype()), *args, **kwargs
-        ).map(lambda v: pa.scalar(v, type=datatype))
+        return ht_np.from_dtype(np.dtype(datatype.to_pandas_dtype()), *args, **kwargs).map(
+            lambda v: pa.scalar(v, type=datatype)
+        )
 
 
 def tiledb_timestamps(from_future: bool = False):
@@ -88,11 +82,7 @@ def tiledb_timestamps(from_future: bool = False):
 
     # technically TileDB allows timestamps up to 2**64-1, but Python time_t can't represent it, so
     # settle for something less (not as far in the future).
-    END_OF_TIME = (
-        datetime.datetime.now()
-        if not from_future
-        else datetime.datetime.fromtimestamp(2**37)
-    )
+    END_OF_TIME = datetime.datetime.now() if not from_future else datetime.datetime.fromtimestamp(2**37)
 
     return st.one_of(
         st.none(),
@@ -198,9 +188,7 @@ def arrow_nondict_datatypes(draw: st.DrawFn) -> pa.DataType:
 
 @st.composite
 def arrow_dictionary_datatypes(draw: st.DraFn) -> pa.DataType:
-    index_type = draw(
-        st.one_of((arrow_integer_datatypes(), arrow_unsigned_integer_datatypes()))
-    )
+    index_type = draw(st.one_of((arrow_integer_datatypes(), arrow_unsigned_integer_datatypes())))
     value_type = draw(arrow_nondict_datatypes())
     ordered = draw(st.booleans())
     return pa.dictionary(index_type=index_type, value_type=value_type, ordered=ordered)
@@ -234,11 +222,7 @@ def dataframe_datatype() -> st.SearchStrategy[pa.DataType]:
 
     def is_dataframe_value_type(dt: pa.DataType) -> bool:
         return (
-            (
-                pa.types.is_primitive(dt)
-                or dt
-                in [pa.string(), pa.large_string(), pa.binary(), pa.large_binary()]
-            )
+            (pa.types.is_primitive(dt) or dt in [pa.string(), pa.large_string(), pa.binary(), pa.large_binary()])
             and not (pa.types.is_timestamp(dt) and dt.tz is not None)
             and not pa.types.is_time(dt)
             and not pa.types.is_date(dt)
@@ -254,9 +238,7 @@ def dataframe_datatype() -> st.SearchStrategy[pa.DataType]:
             if pa.types.is_unsigned_integer(dt.index_type):
                 return False
 
-            if HT_TEST_CONFIG["sc-62364_workaround"] and pa.types.is_timestamp(
-                dt.value_type
-            ):
+            if HT_TEST_CONFIG["sc-62364_workaround"] and pa.types.is_timestamp(dt.value_type):
                 return False
 
             return is_dataframe_value_type(dt.value_type)
@@ -269,9 +251,7 @@ def dataframe_datatype() -> st.SearchStrategy[pa.DataType]:
 @st.composite
 def arrow_schema_field_name(draw: st.DrawFn) -> str:
     # TileDB attribute names may not start with '__', and SOMA fields may not start with `soma_`
-    elements = st.text(min_size=1).filter(
-        lambda n: not (n.startswith("__") or n.startswith("soma_"))
-    )
+    elements = st.text(min_size=1).filter(lambda n: not (n.startswith("__") or n.startswith("soma_")))
     if HT_TEST_CONFIG["sc-61291_workaround"]:
         elements = elements.filter(lambda n: "\x00" not in n)
     return draw(elements)
@@ -305,9 +285,7 @@ def arrow_schema(
 
         field_type = draw(elements)
         field_nullable = True if field_type == pa.null() else draw(st.booleans())
-        fields[field_name] = pa.field(
-            field_name, nullable=field_nullable, type=field_type
-        )
+        fields[field_name] = pa.field(field_name, nullable=field_nullable, type=field_type)
 
     return pa.schema(list(fields.values()))
 
@@ -315,9 +293,7 @@ def arrow_schema(
 @st.composite
 def arrow_shape(
     draw: st.DrawFn,
-    shape: (
-        int | st.SearchStrategy[int] | Shape | st.SearchStrategy[Shape] | None
-    ) = None,
+    shape: int | st.SearchStrategy[int] | Shape | st.SearchStrategy[Shape] | None = None,
 ) -> Shape:
     if isinstance(shape, st.SearchStrategy):
         shape = draw(shape)
@@ -407,19 +383,11 @@ def arrow_array(
     dtype = resolve_dtype(draw, dtype)
     shape = draw(arrow_shape(shape))
 
-    if (
-        not HT_TEST_CONFIG["allow_nullable"]
-        and dtype.kind in ["m", "M"]
-        and elements is None
-    ):
+    if not HT_TEST_CONFIG["allow_nullable"] and dtype.kind in ["m", "M"] and elements is None:
         # NaT gets turned into a nulled position by pyarrow.array
         elements = {"allow_nan": False}
 
-    nparr = draw(
-        ht_np.arrays(
-            dtype=dtype, shape=shape, unique=unique, elements=elements, fill=fill
-        )
-    )
+    nparr = draw(ht_np.arrays(dtype=dtype, shape=shape, unique=unique, elements=elements, fill=fill))
     arr = pad_array(nparr, draw) if padding else pa.array(nparr)
 
     # sanity check
@@ -446,9 +414,7 @@ def arrow_array_fast(
     this means no NaN for floats, etc.
     """
 
-    def gen_unique_floats(
-        rng: np.random.Generator, lo: float, hi: float, n: int
-    ) -> npt.NDArray[np.float64]:
+    def gen_unique_floats(rng: np.random.Generator, lo: float, hi: float, n: int) -> npt.NDArray[np.float64]:
         out = np.zeros(n)
         needed = n
         while needed != 0:
@@ -484,9 +450,7 @@ def arrow_array_fast(
                 nparr = np.full(shape=shape, fill_value=low, dtype=dtype)
             nparr += low
         else:
-            nparr = rng.choice(
-                np.iinfo(np.int64).max, size=length, replace=(not unique)
-            )
+            nparr = rng.choice(np.iinfo(np.int64).max, size=length, replace=(not unique))
             if min_value is not None:
                 nparr += low
             else:
@@ -562,9 +526,7 @@ def arrow_chunked_array_fast(
 
 
 @st.composite
-def splitss(
-    draw: st.DrawFn, n_splits: int | st.SearchStrategy[int], max_value: int
-) -> list[int]:
+def splitss(draw: st.DrawFn, n_splits: int | st.SearchStrategy[int], max_value: int) -> list[int]:
     if n_splits == 0:
         return []
     rng = np.random.default_rng(seed=draw(st.integers(min_value=0)))
@@ -573,13 +535,9 @@ def splitss(
     return splits.tolist()
 
 
-def split_arrow_array(
-    arr: pa.Array | pa.ChunkedArray, splits: list[int]
-) -> pa.ChunkedArray:
+def split_arrow_array(arr: pa.Array | pa.ChunkedArray, splits: list[int]) -> pa.ChunkedArray:
     assert np.array_equal(np.unique(splits), splits), "splits not unique and sorted"
-    assert len(splits) == 0 or (
-        splits[0] >= 0 and splits[-1] < len(arr)
-    ), "splits out of range"
+    assert len(splits) == 0 or (splits[0] >= 0 and splits[-1] < len(arr)), "splits out of range"
 
     split_points = [0] + splits + [len(arr)]
     arr_splits = [arr[st:sp] for st, sp in pairwise(split_points)]
@@ -587,9 +545,7 @@ def split_arrow_array(
 
 
 @st.composite
-def random_length_tuple(
-    draw, elements=st.integers(), min_length: int = 0, max_length: int = 10
-):
+def random_length_tuple(draw, elements=st.integers(), min_length: int = 0, max_length: int = 10):
     """Generates a tuple of random length with elements drawn from the provided strategy."""
     length = draw(st.integers(min_value=min_length, max_value=max_length))
     return tuple(draw(st.lists(elements, min_size=length, max_size=length)))
@@ -688,9 +644,7 @@ def schemas_equal(
     return True
 
 
-def arrays_equal(
-    read: pa.ChunkedArray, expected: pa.ChunkedArray, *, equal_nan: bool = False
-) -> bool:
+def arrays_equal(read: pa.ChunkedArray, expected: pa.ChunkedArray, *, equal_nan: bool = False) -> bool:
     """Zero copy test for array equality, optionally allowing NaN==NaN."""
 
     # TODO: handle nullable arrays
@@ -732,9 +686,7 @@ def arrays_equal(
     return is_eq
 
 
-def tables_equal(
-    read: pa.Table, expected: pa.Table, *, equal_nan: bool = False
-) -> bool:
+def tables_equal(read: pa.Table, expected: pa.Table, *, equal_nan: bool = False) -> bool:
     """Test for table equality, optionally allowing NaN==NaN."""
 
     # TODO: handle nullable arrays
@@ -756,13 +708,8 @@ def tables_equal(
     if HT_TEST_CONFIG["sc-61227_workaround"]:
         # because sc-61227, read returns `int64` when we expect `timestamp[us]`
         for fidx, field in enumerate(expected.schema):
-            if (
-                field.type == pa.timestamp("us")
-                and read_schema.field(fidx).type == pa.int64()
-            ):
-                read_schema = read_schema.set(
-                    fidx, read_schema.field(fidx).with_type(field.type)
-                )
+            if field.type == pa.timestamp("us") and read_schema.field(fidx).type == pa.int64():
+                read_schema = read_schema.set(fidx, read_schema.field(fidx).with_type(field.type))
 
     def _upcast_to_large(schema: pa.Schema) -> pa.Schema:
         for fidx, field in enumerate(schema):

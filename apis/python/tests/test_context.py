@@ -14,9 +14,7 @@ def test_lazy_init():
     """Verifies we don't construct a Ctx until we have to."""
     with mock.patch.object(clib, "SOMAContext", wraps=clib.SOMAContext) as mock_ctx:
         context = stc.SOMATileDBContext(tiledb_config={})
-        assert context.tiledb_config == {
-            "sm.mem.reader.sparse_global_order.ratio_array_data": 0.3
-        }
+        assert context.tiledb_config == {"sm.mem.reader.sparse_global_order.ratio_array_data": 0.3}
         mock_ctx.assert_not_called()
         assert context._native_context is None
         # Invoke the @property twice to ensure we only build one Ctx.
@@ -45,9 +43,7 @@ def test_delete_config_entry():
     }
     new_context = context.replace(tiledb_config={"hither": None})
     # We've removed the only non-default entry; this should work.
-    assert new_context.tiledb_config == {
-        "sm.mem.reader.sparse_global_order.ratio_array_data": 0.3
-    }
+    assert new_context.tiledb_config == {"sm.mem.reader.sparse_global_order.ratio_array_data": 0.3}
 
 
 def test_shared_ctx():
@@ -71,9 +67,7 @@ def test_replace_timestamp():
     assert orig_ctx.timestamp is None
     assert orig_ctx.timestamp_ms is None
     ts_ctx = orig_ctx.replace(timestamp=1683817200000)
-    assert ts_ctx.timestamp == datetime.datetime(
-        2023, 5, 11, 15, 0, tzinfo=datetime.timezone.utc
-    )
+    assert ts_ctx.timestamp == datetime.datetime(2023, 5, 11, 15, 0, tzinfo=datetime.timezone.utc)
     assert ts_ctx.timestamp_ms == 1683817200000
     same_ts_ctx = ts_ctx.replace()  # replace nothing!
     assert ts_ctx.timestamp == same_ts_ctx.timestamp
@@ -116,18 +110,12 @@ def test_malformed_concurrency_config_value():
     import numpy as np
 
     with pytest.raises(tiledbsoma.SOMAError):
-        ctx = tiledbsoma.SOMATileDBContext(
-            tiledb_config={"soma.compute_concurrency_level": "not-a-number"}
-        )
+        ctx = tiledbsoma.SOMATileDBContext(tiledb_config={"soma.compute_concurrency_level": "not-a-number"})
 
-        tiledbsoma.IntIndexer(np.arange(100, dtype=np.int64), context=ctx).get_indexer(
-            np.array([0, 1])
-        )
+        tiledbsoma.IntIndexer(np.arange(100, dtype=np.int64), context=ctx).get_indexer(np.array([0, 1]))
 
 
-@pytest.mark.skipif(
-    importlib.util.find_spec("tiledb") is not None, reason="TileDB-Py is installed"
-)
+@pytest.mark.skipif(importlib.util.find_spec("tiledb") is not None, reason="TileDB-Py is installed")
 def test_tiledb_ctx_without_tiledb():
     # Test that tiledb_ctx errors out as expected without tiledb-py
 
@@ -142,9 +130,7 @@ def test_tiledb_ctx_without_tiledb():
         sctx.replace(tiledb_ctx="junk")
 
 
-@pytest.mark.skipif(
-    importlib.util.find_spec("tiledb") is None, reason="TileDB-Py is not installed"
-)
+@pytest.mark.skipif(importlib.util.find_spec("tiledb") is None, reason="TileDB-Py is not installed")
 def test_tiledb_ctx_with_tiledb():
     # If tiledb-py is installed, test that tiledb_ctx works to handle tiledb.Ctx
     import tiledb

@@ -125,11 +125,7 @@ class VisiumPaths:
         base_path = Path(base_path)
 
         if gene_expression is None:
-            gene_expression_suffix = (
-                "raw_feature_bc_matrix.h5"
-                if use_raw_counts
-                else "filtered_feature_bc_matrix.h5"
-            )
+            gene_expression_suffix = "raw_feature_bc_matrix.h5" if use_raw_counts else "filtered_feature_bc_matrix.h5"
 
             possible_paths = list(base_path.glob(f"*{gene_expression_suffix}"))
             if len(possible_paths) == 0:
@@ -187,9 +183,7 @@ class VisiumPaths:
             try:
                 version = _read_visium_software_version(gene_expression)
             except (KeyError, ValueError):
-                raise ValueError(
-                    "Unable to determine Space Ranger version from gene expression file."
-                )
+                raise ValueError("Unable to determine Space Ranger version from gene expression file.")
 
         # Find the tissue positions file path if it wasn't supplied.
         if tissue_positions is None:
@@ -227,25 +221,15 @@ class VisiumPaths:
     gene_expression: Path = attrs.field(converter=Path, validator=path_validator)
     scale_factors: Path = attrs.field(converter=Path, validator=path_validator)
     tissue_positions: Path = attrs.field(converter=Path, validator=path_validator)
-    fullres_image: Path | None = attrs.field(
-        converter=optional_path_converter, validator=optional_path_validator
-    )
-    hires_image: Path | None = attrs.field(
-        converter=optional_path_converter, validator=optional_path_validator
-    )
+    fullres_image: Path | None = attrs.field(converter=optional_path_converter, validator=optional_path_validator)
+    hires_image: Path | None = attrs.field(converter=optional_path_converter, validator=optional_path_validator)
 
-    lowres_image: Path | None = attrs.field(
-        converter=optional_path_converter, validator=optional_path_validator
-    )
+    lowres_image: Path | None = attrs.field(converter=optional_path_converter, validator=optional_path_validator)
     version: int | tuple[int, int, int]
 
     @property
     def has_image(self) -> bool:
-        return (
-            self.fullres_image is not None
-            or self.hires_image is not None
-            or self.lowres_image is not None
-        )
+        return self.fullres_image is not None or self.hires_image is not None or self.lowres_image is not None
 
     @property
     def major_version(self) -> int:
@@ -383,9 +367,7 @@ def from_visium(
         )
     ingestion_params = IngestionParams(ingest_mode, registration_mapping)
     if ingestion_params.appending and X_kind == DenseNDArray:
-        raise NotImplementedError(
-            "Support for appending to `X_kind=DenseNDArray` is not implemented."
-        )
+        raise NotImplementedError("Support for appending to `X_kind=DenseNDArray` is not implemented.")
     if ingestion_params.appending:
         raise NotImplementedError("Suport for appending is not implemented.")
 
@@ -398,9 +380,7 @@ def from_visium(
         "ingestion_params": IngestionParams(ingest_mode, registration_mapping),
         "additional_metadata": additional_metadata,
     }
-    ingest_platform_ctx: IngestPlatformCtx = dict(
-        **ingest_ctx, platform_config=platform_config
-    )
+    ingest_platform_ctx: IngestPlatformCtx = dict(**ingest_ctx, platform_config=platform_config)
 
     # Get input file locations and check the version is compatible.
     input_paths = (
@@ -409,16 +389,11 @@ def from_visium(
         else VisiumPaths.from_base_folder(input_path, use_raw_counts=use_raw_counts)
     )
     if input_paths.major_version not in {1, 2}:
-        raise ValueError(
-            f"Visium version {input_paths.version} is not supported. Expected major "
-            f"version 1 or 2."
-        )
+        raise ValueError(f"Visium version {input_paths.version} is not supported. Expected major " f"version 1 or 2.")
 
     # Get JSON scale factors.
     # -- Get the spot diameters from teh scale factors file.
-    with open(
-        input_paths.scale_factors, mode="r", encoding="utf-8"
-    ) as scale_factors_json:
+    with open(input_paths.scale_factors, mode="r", encoding="utf-8") as scale_factors_json:
         scale_factors = json.load(scale_factors_json)
     pixels_per_spot_diameter = scale_factors["spot_diameter_fullres"]
 
@@ -479,24 +454,18 @@ def from_visium(
     # Write the new experiment.
     start_time = _util.get_start_stamp()
     logging.log_io(None, f"START  WRITING {experiment_uri}")
-    with _create_or_open_collection(
-        Experiment, experiment_uri, **ingest_ctx
-    ) as experiment:
+    with _create_or_open_collection(Experiment, experiment_uri, **ingest_ctx) as experiment:
 
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         # OBS
         df_uri = _util.uri_joinpath(experiment_uri, "obs")
-        with _write_arrow_to_dataframe(
-            df_uri, obs_data, max_size=nobs, **ingest_platform_ctx
-        ) as obs:
+        with _write_arrow_to_dataframe(df_uri, obs_data, max_size=nobs, **ingest_platform_ctx) as obs:
             _maybe_set(experiment, "obs", obs, use_relative_uri=use_relative_uri)
 
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         # OBS
         if write_obs_spatial_presence:
-            obs_spatial_presence_uri = _util.uri_joinpath(
-                experiment_uri, "obs_spatial_presence"
-            )
+            obs_spatial_presence_uri = _util.uri_joinpath(experiment_uri, "obs_spatial_presence")
             unique_obs_id = reader.unique_obs_indices()
             obs_spatial_presence = _write_scene_presence_dataframe(
                 unique_obs_id,
@@ -516,32 +485,20 @@ def from_visium(
         # MS
         experiment_ms_uri = _util.uri_joinpath(experiment_uri, "ms")
 
-        with _create_or_open_collection(
-            Collection[Measurement], experiment_ms_uri, **ingest_ctx
-        ) as ms:
+        with _create_or_open_collection(Collection[Measurement], experiment_ms_uri, **ingest_ctx) as ms:
             _maybe_set(experiment, "ms", ms, use_relative_uri=use_relative_uri)
 
             # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
             # MS/meas
-            measurement_uri = _util.uri_joinpath(
-                experiment_ms_uri, _util.sanitize_key(measurement_name)
-            )
-            with _create_or_open_collection(
-                Measurement, measurement_uri, **ingest_ctx
-            ) as measurement:
-                _maybe_set(
-                    ms, measurement_name, measurement, use_relative_uri=use_relative_uri
-                )
+            measurement_uri = _util.uri_joinpath(experiment_ms_uri, _util.sanitize_key(measurement_name))
+            with _create_or_open_collection(Measurement, measurement_uri, **ingest_ctx) as measurement:
+                _maybe_set(ms, measurement_name, measurement, use_relative_uri=use_relative_uri)
 
                 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
                 # MS/meas/VAR
                 var_uri = _util.uri_joinpath(measurement_uri, "var")
-                with _write_arrow_to_dataframe(
-                    var_uri, var_data, max_size=nvar, **ingest_platform_ctx
-                ) as var:
-                    _maybe_set(
-                        measurement, "var", var, use_relative_uri=use_relative_uri
-                    )
+                with _write_arrow_to_dataframe(var_uri, var_data, max_size=nvar, **ingest_platform_ctx) as var:
+                    _maybe_set(measurement, "var", var, use_relative_uri=use_relative_uri)
 
                 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
                 # MS/meas/VAR_SPATIAL_PRESENCE
@@ -568,13 +525,9 @@ def from_visium(
                 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
                 # MS/meas/X/DATA
                 measurement_X_uri = _util.uri_joinpath(measurement_uri, "X")
-                with _create_or_open_collection(
-                    Collection, measurement_X_uri, **ingest_ctx
-                ) as x:
+                with _create_or_open_collection(Collection, measurement_X_uri, **ingest_ctx) as x:
                     _maybe_set(measurement, "X", x, use_relative_uri=use_relative_uri)
-                    X_layer_uri = _util.uri_joinpath(
-                        measurement_X_uri, _util.sanitize_key(X_layer_name)
-                    )
+                    X_layer_uri = _util.uri_joinpath(measurement_X_uri, _util.sanitize_key(X_layer_name))
                     with _write_X_layer(
                         X_kind,
                         X_layer_uri,
@@ -583,37 +536,25 @@ def from_visium(
                         joinid_maps.var_axes[measurement_name],
                         **ingest_platform_ctx,
                     ) as data:
-                        _maybe_set(
-                            x, X_layer_name, data, use_relative_uri=use_relative_uri
-                        )
+                        _maybe_set(x, X_layer_name, data, use_relative_uri=use_relative_uri)
 
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         # SPATIAL
         spatial_uri = _util.uri_joinpath(experiment_uri, "spatial")
-        with _create_or_open_collection(
-            Collection[Scene], spatial_uri, **ingest_ctx
-        ) as spatial:
-            _maybe_set(
-                experiment, "spatial", spatial, use_relative_uri=use_relative_uri
-            )
+        with _create_or_open_collection(Collection[Scene], spatial_uri, **ingest_ctx) as spatial:
+            _maybe_set(experiment, "spatial", spatial, use_relative_uri=use_relative_uri)
             scene_uri = _util.uri_joinpath(spatial_uri, _util.sanitize_key(scene_name))
             with _create_or_open_scene(scene_uri, **ingest_ctx) as scene:
-                _maybe_set(
-                    spatial, scene_name, scene, use_relative_uri=use_relative_uri
-                )
+                _maybe_set(spatial, scene_name, scene, use_relative_uri=use_relative_uri)
                 scene.coordinate_space = coord_space
 
                 img_uri = _util.uri_joinpath(scene_uri, "img")
-                with _create_or_open_collection(
-                    Collection[MultiscaleImage], img_uri, **ingest_ctx
-                ) as img:
+                with _create_or_open_collection(Collection[MultiscaleImage], img_uri, **ingest_ctx) as img:
                     _maybe_set(scene, "img", img, use_relative_uri=use_relative_uri)
 
                     # Write image data and add to the scene.
                     if image_paths:
-                        tissue_uri = _util.uri_joinpath(
-                            img_uri, _util.sanitize_key(image_name)
-                        )
+                        tissue_uri = _util.uri_joinpath(img_uri, _util.sanitize_key(image_name))
                         with _create_visium_tissue_images(
                             tissue_uri,
                             image_paths,
@@ -649,18 +590,14 @@ def from_visium(
                                 )
                                 scene.set_transform_to_multiscale_image(
                                     image_name,
-                                    transform=ScaleTransform(
-                                        ("x", "y"), ("x", "y"), updated_scales
-                                    ),
+                                    transform=ScaleTransform(("x", "y"), ("x", "y"), updated_scales),
                                 )
                             tissue_image.coordinate_space = CoordinateSpace(
                                 (Axis(name="x", unit="pixels"), Axis(name="y", unit="pixels"))  # type: ignore[arg-type]
                             )
 
                 obsl_uri = _util.uri_joinpath(scene_uri, "obsl")
-                with _create_or_open_collection(
-                    Collection[AnySOMAObject], obsl_uri, **ingest_ctx
-                ) as obsl:
+                with _create_or_open_collection(Collection[AnySOMAObject], obsl_uri, **ingest_ctx) as obsl:
                     _maybe_set(scene, "obsl", obsl, use_relative_uri=use_relative_uri)
 
                     # Write spot data and add to the scene.
@@ -682,9 +619,7 @@ def from_visium(
                         loc.coordinate_space = coord_space
 
                 varl_uri = _util.uri_joinpath(scene_uri, "varl")
-                with _create_or_open_collection(
-                    Collection[Collection[AnySOMAObject]], varl_uri, **ingest_ctx
-                ) as varl:
+                with _create_or_open_collection(Collection[Collection[AnySOMAObject]], varl_uri, **ingest_ctx) as varl:
                     _maybe_set(scene, "varl", varl, use_relative_uri=use_relative_uri)
 
     logging.log_io(
@@ -721,9 +656,7 @@ def _write_arrow_to_dataframe(
         raise SOMAError(f"{df_uri} already exists")
 
     if not ingestion_params.write_schema_no_data:
-        tiledb_create_options = TileDBCreateOptions.from_platform_config(
-            platform_config
-        )
+        tiledb_create_options = TileDBCreateOptions.from_platform_config(platform_config)
         tiledb_write_options = TileDBWriteOptions.from_platform_config(platform_config)
         _write_arrow_table(
             arrow_table,
@@ -771,9 +704,7 @@ def _write_X_layer(
     except (AlreadyExistsError, NotCreateableError):
         if ingestion_params.error_if_already_exists:
             raise SOMAError(f"{uri} already exists")
-        soma_ndarray = cls.open(
-            uri, "w", platform_config=platform_config, context=context
-        )
+        soma_ndarray = cls.open(uri, "w", platform_config=platform_config, context=context)
 
     logging.log_io(
         f"Writing {uri}",
@@ -791,12 +722,8 @@ def _write_X_layer(
         _write_matrix_to_denseNDArray(
             soma_ndarray,
             matrix,
-            tiledb_create_options=TileDBCreateOptions.from_platform_config(
-                platform_config
-            ),
-            tiledb_write_options=TileDBWriteOptions.from_platform_config(
-                platform_config
-            ),
+            tiledb_create_options=TileDBCreateOptions.from_platform_config(platform_config),
+            tiledb_write_options=TileDBWriteOptions.from_platform_config(platform_config),
             ingestion_params=ingestion_params,
             additional_metadata=additional_metadata,
         )
@@ -873,9 +800,7 @@ def _write_scene_presence_dataframe(
                 "data": nvalues * [True],
             }
         )
-        _write_arrow_table(
-            arrow_table, soma_df, tiledb_create_options, tiledb_write_options
-        )
+        _write_arrow_table(arrow_table, soma_df, tiledb_create_options, tiledb_write_options)
 
     logging.log_io(
         f"Wrote   {df_uri}",
@@ -956,9 +881,7 @@ def _write_visium_spots(
     tiledb_write_options = TileDBWriteOptions.from_platform_config(platform_config)
 
     if arrow_table:
-        _write_arrow_table(
-            arrow_table, soma_point_cloud, tiledb_create_options, tiledb_write_options
-        )
+        _write_arrow_table(arrow_table, soma_point_cloud, tiledb_create_options, tiledb_write_options)
 
     add_metadata(soma_point_cloud, additional_metadata)
     logging.log_io(None, _util.format_elapsed(start_time, "FINISH WRITING loc"))

@@ -56,9 +56,7 @@ class Ledger(Generic[LedgerEntryType]):
         allows_duplicates: bool = False,
     ) -> None:
         self.entries: list[LedgerEntryType] = [initial_entry]
-        self.initial_entry = (
-            initial_entry  # XXX: do we need this or can we use entries[0]?
-        )
+        self.initial_entry = initial_entry  # XXX: do we need this or can we use entries[0]?
         self.allows_duplicates = allows_duplicates
 
         # multiple fragments with same timestamp are trouble. Just disallow for now
@@ -84,9 +82,7 @@ class Ledger(Generic[LedgerEntryType]):
         )
         consolidated_result = entries_to_consolidate[0]
         for entry in entries_to_consolidate[1:]:
-            consolidated_result = consolidated_result.consolidate_with(
-                entry, self.allows_duplicates
-            )
+            consolidated_result = consolidated_result.consolidate_with(entry, self.allows_duplicates)
         return consolidated_result
 
     def write(self, entry: LedgerEntryType) -> None:
@@ -104,18 +100,16 @@ class Ledger(Generic[LedgerEntryType]):
 class ArrowTableLedgerEntry(LedgerEntry[pa.Table]):
     """Ledger entry based upon an Arrow Table."""
 
-    def __init__(
-        self, timestamp_ms: int, name: str, data: pa.Table, index_columns: Sequence[str]
-    ) -> None:
+    def __init__(self, timestamp_ms: int, name: str, data: pa.Table, index_columns: Sequence[str]) -> None:
         super().__init__(timestamp_ms, name, data)
         self.index_columns: list[str] = list(index_columns)
 
     def __repr__(self) -> str:
-        return f"ArrowTableLedgerEntry(timestamp_ms={self.timestamp_ms}, index_columns={self.index_columns}):\n{self.data}"
+        return (
+            f"ArrowTableLedgerEntry(timestamp_ms={self.timestamp_ms}, index_columns={self.index_columns}):\n{self.data}"
+        )
 
-    def consolidate_with(
-        self, other: ArrowTableLedgerEntry, allow_duplicates: bool
-    ) -> ArrowTableLedgerEntry:
+    def consolidate_with(self, other: ArrowTableLedgerEntry, allow_duplicates: bool) -> ArrowTableLedgerEntry:
 
         assert (self.timestamp_ms, self.name) < (other.timestamp_ms, other.name)
         assert schemas_equal(self.data.schema, other.data.schema)
@@ -140,9 +134,7 @@ class ArrowTableLedgerEntry(LedgerEntry[pa.Table]):
                 combined_table = pa.Table.from_pydict(
                     {
                         k: pa.array(v, from_pandas=False)
-                        for k, v in combine_first(latest_indexed, earliest_indexed)
-                        .reset_index()
-                        .items()
+                        for k, v in combine_first(latest_indexed, earliest_indexed).reset_index().items()
                     },
                     schema=schema,
                 )
@@ -175,9 +167,7 @@ class ArrowTensorLedgerEntry(LedgerEntry[pa.Tensor]):
     def __repr__(self) -> str:
         return f"ArrowTensorLedgerEntry(timestamp_ms={self.timestamp_ms}):\n{self.data}"
 
-    def consolidate_with(
-        self, other: ArrowTensorLedgerEntry, allow_duplicates: bool
-    ) -> ArrowTensorLedgerEntry:
+    def consolidate_with(self, other: ArrowTensorLedgerEntry, allow_duplicates: bool) -> ArrowTensorLedgerEntry:
         assert not allow_duplicates, "Unsupported"
         assert (self.timestamp_ms, self.name) < (other.timestamp_ms, other.name)
         return other
@@ -203,9 +193,7 @@ class PyDictLedgerEntry(LedgerEntry[dict[str, Any]]):
     def __repr__(self) -> str:
         return f"PyDictLedgerEntry(timestamp_ms={self.timestamp_ms}):\n{self.data}"
 
-    def consolidate_with(
-        self, other: PyDictLedgerEntry, allow_duplicates: bool
-    ) -> PyDictLedgerEntry:
+    def consolidate_with(self, other: PyDictLedgerEntry, allow_duplicates: bool) -> PyDictLedgerEntry:
         assert not allow_duplicates, "Unsupported"
         assert (self.timestamp_ms, self.name) < (other.timestamp_ms, other.name)
         return other
@@ -264,13 +252,10 @@ def combine_first(first: pd.DataFrame, second: pd.DataFrame) -> pd.DataFrame:
         if first_series.dtype == "category":
             assert first_series.cat.ordered == second_series.cat.ordered
             merged_categories = list(
-                dict.fromkeys(first_series.cat.categories)
-                | dict.fromkeys(second_series.cat.categories)
+                dict.fromkeys(first_series.cat.categories) | dict.fromkeys(second_series.cat.categories)
             )
             combined_series = combined_series.astype(
-                pd.CategoricalDtype(
-                    categories=merged_categories, ordered=first_series.cat.ordered
-                )
+                pd.CategoricalDtype(categories=merged_categories, ordered=first_series.cat.ordered)
             )
 
         new_data[col] = combined_series

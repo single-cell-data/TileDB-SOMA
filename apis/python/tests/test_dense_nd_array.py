@@ -14,22 +14,16 @@ from . import NDARRAY_ARROW_TYPES_NOT_SUPPORTED, NDARRAY_ARROW_TYPES_SUPPORTED
 from ._util import raises_no_typeguard
 
 
-@pytest.mark.parametrize(
-    "shape", [(10,), (1, 100), (10, 1, 100), (2, 4, 6, 8), [1], (1, 2, 3, 4, 5)]
-)
+@pytest.mark.parametrize("shape", [(10,), (1, 100), (10, 1, 100), (2, 4, 6, 8), [1], (1, 2, 3, 4, 5)])
 @pytest.mark.parametrize("element_type", NDARRAY_ARROW_TYPES_SUPPORTED)
-def test_dense_nd_array_create_ok(
-    tmp_path, shape: tuple[int, ...], element_type: pa.DataType
-):
+def test_dense_nd_array_create_ok(tmp_path, shape: tuple[int, ...], element_type: pa.DataType):
     """
     Test all cases we expect "create" to succeed.
     """
     assert pa.types.is_primitive(element_type)  # sanity check incoming params
 
     with raises_no_typeguard(TypeError):
-        soma.DenseNDArray.create(
-            tmp_path.as_posix(), type=element_type.to_pandas_dtype(), shape=shape
-        )
+        soma.DenseNDArray.create(tmp_path.as_posix(), type=element_type.to_pandas_dtype(), shape=shape)
     a = soma.DenseNDArray.create(tmp_path.as_posix(), type=element_type, shape=shape)
     assert soma.DenseNDArray.exists(tmp_path.as_posix())
     assert not soma.SparseNDArray.exists(tmp_path.as_posix())
@@ -83,9 +77,7 @@ def test_dense_nd_array_create_ok(
 
 
 def test_dense_nd_array_reopen(tmp_path):
-    soma.DenseNDArray.create(
-        tmp_path.as_posix(), type=pa.float64(), shape=(1,), tiledb_timestamp=1
-    )
+    soma.DenseNDArray.create(tmp_path.as_posix(), type=pa.float64(), shape=(1,), tiledb_timestamp=1)
 
     # Ensure that reopen uses the correct mode
     with soma.DenseNDArray.open(tmp_path.as_posix(), "r", tiledb_timestamp=1) as A1:
@@ -131,9 +123,7 @@ def test_dense_nd_array_reopen(tmp_path):
 
 @pytest.mark.parametrize("shape", [(10,)])
 @pytest.mark.parametrize("element_type", NDARRAY_ARROW_TYPES_NOT_SUPPORTED)
-def test_dense_nd_array_create_fail(
-    tmp_path, shape: tuple[int, ...], element_type: pa.DataType
-):
+def test_dense_nd_array_create_fail(tmp_path, shape: tuple[int, ...], element_type: pa.DataType):
     with pytest.raises(TypeError):
         soma.DenseNDArray.create(tmp_path.as_posix(), type=element_type, shape=shape)
 
@@ -280,9 +270,7 @@ def test_dense_nd_array_ned_write(tmp_path):
         {
             "name": "([:], [:]) multiple reads",
             "coords": (slice(None), slice(None)),
-            "cfg": {
-                "soma.init_buffer_bytes": 100
-            },  # Known small enough to force multiple reads
+            "cfg": {"soma.init_buffer_bytes": 100},  # Known small enough to force multiple reads
             "output": np.array(
                 [
                     [0, 1, 2, 3, 4, 5],
@@ -310,9 +298,7 @@ def test_dense_nd_array_slicing(tmp_path, io):
     nr = 4
     nc = 6
 
-    with soma.DenseNDArray.create(
-        tmp_path.as_posix(), type=pa.int64(), shape=(nr, nc), context=context
-    ) as a:
+    with soma.DenseNDArray.create(tmp_path.as_posix(), type=pa.int64(), shape=(nr, nc), context=context) as a:
         npa = np.zeros((nr, nc))
         for i in range(nr):
             for j in range(nc):
@@ -409,9 +395,7 @@ def test_dense_nd_array_indexing_errors(tmp_path, io):
     shape = io["shape"]
     read_coords = io["coords"]
 
-    with soma.DenseNDArray.create(
-        tmp_path.as_posix(), type=pa.int64(), shape=shape
-    ) as a:
+    with soma.DenseNDArray.create(tmp_path.as_posix(), type=pa.int64(), shape=shape) as a:
         npa = np.random.default_rng().standard_normal(np.prod(shape)).reshape(shape)
 
         write_coords = tuple(slice(0, dim_len) for dim_len in shape)
@@ -462,18 +446,14 @@ def test_timestamped_ops(tmp_path):
         )
 
     # write 1 into top-left entry @ t=10
-    with soma.DenseNDArray.open(
-        tmp_path.as_posix(), mode="w", context=SOMATileDBContext(timestamp=10)
-    ) as a:
+    with soma.DenseNDArray.open(tmp_path.as_posix(), mode="w", context=SOMATileDBContext(timestamp=10)) as a:
         a.write(
             (0, 0),
             pa.Tensor.from_numpy(np.ones((1, 1), dtype=np.uint8)),
         )
 
     # write 1 into bottom-right entry @ t=20
-    with soma.DenseNDArray.open(
-        uri=tmp_path.as_posix(), mode="w", context=SOMATileDBContext(timestamp=20)
-    ) as a:
+    with soma.DenseNDArray.open(uri=tmp_path.as_posix(), mode="w", context=SOMATileDBContext(timestamp=20)) as a:
         a.write(
             (1, 1),
             pa.Tensor.from_numpy(np.ones((1, 1), dtype=np.uint8)),
@@ -487,9 +467,7 @@ def test_timestamped_ops(tmp_path):
         ]
 
     # read @ t=15 & see only the writes up til then
-    with soma.DenseNDArray.open(
-        tmp_path.as_posix(), context=SOMATileDBContext(timestamp=15)
-    ) as a:
+    with soma.DenseNDArray.open(tmp_path.as_posix(), context=SOMATileDBContext(timestamp=15)) as a:
         assert a.read((slice(0, 1), slice(0, 1))).to_numpy().tolist() == [
             [1, 0],
             [0, 0],
@@ -511,9 +489,7 @@ def test_fixed_timestamp(tmp_path: pathlib.Path):
         assert ndarr_read.tiledb_timestamp_ms == 999
         assert ndarr_read.metadata["metadata"] == "created"
 
-    with soma.open(
-        tmp_path.as_posix(), context=fixed_time, tiledb_timestamp=1000
-    ) as read_1000:
+    with soma.open(tmp_path.as_posix(), context=fixed_time, tiledb_timestamp=1000) as read_1000:
         assert read_1000.tiledb_timestamp_ms == 1000
         assert read_1000.metadata["metadata"] == "created"
 
@@ -549,9 +525,7 @@ def test_pass_configs(tmp_path):
     with soma.DenseNDArray.open(
         uri,
         "r",
-        context=soma.SOMATileDBContext(
-            {"sm.mem.total_budget": "0", "sm.io_concurrency_level": "0"}
-        ),
+        context=soma.SOMATileDBContext({"sm.mem.total_budget": "0", "sm.io_concurrency_level": "0"}),
     ) as sdf:
 
         # This errors out as 0 is not a valid value to set the total memory
@@ -584,9 +558,7 @@ def test_read_result_order(tmp_path):
         assert np.array_equal(A.read(), data)
         assert np.array_equal(A.read(result_order="row-major"), data)
         assert np.array_equal(A.read(result_order="column-major"), data.T)
-        with pytest.warns(
-            DeprecationWarning, match="The use of 'result_order=\"auto\"' is deprecated"
-        ):
+        with pytest.warns(DeprecationWarning, match="The use of 'result_order=\"auto\"' is deprecated"):
             assert np.array_equal(A.read(result_order="auto"), data)
 
 
@@ -681,9 +653,7 @@ def test_subarray_at_coords(tmp_path, shape, coords, subarray):
 
     with soma.DenseNDArray.open(uri) as dnda:
         expected = np.full(shape, -2147483648)
-        inclusive_coords = tuple(
-            slice(s.start, s.stop + 1) if isinstance(s, slice) else s for s in coords
-        )
+        inclusive_coords = tuple(slice(s.start, s.stop + 1) if isinstance(s, slice) else s for s in coords)
         expected[inclusive_coords] = subarray
         assert np.array_equal(dnda.read(), expected)
 
@@ -691,9 +661,7 @@ def test_subarray_at_coords(tmp_path, shape, coords, subarray):
 def test_use_same_slicing_semantics_61815(tmp_path):
     uri = tmp_path.as_posix()
     coords = (0, slice(0, 4))
-    subarray = pa.Tensor.from_numpy(
-        np.array([[100, 101, 102, 103, 104]], dtype=np.int8)
-    )
+    subarray = pa.Tensor.from_numpy(np.array([[100, 101, 102, 103, 104]], dtype=np.int8))
 
     soma.DenseNDArray.create(uri, type=pa.int8(), shape=(10, 5))
 

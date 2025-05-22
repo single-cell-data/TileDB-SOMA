@@ -11,9 +11,7 @@ from somacore import (
 import tiledbsoma as soma
 
 
-def check_transform_is_equal(
-    actual: CoordinateTransform, desired: CoordinateTransform
-) -> None:
+def check_transform_is_equal(actual: CoordinateTransform, desired: CoordinateTransform) -> None:
     assert actual.input_axes == desired.input_axes
     assert actual.output_axes == desired.output_axes
     if isinstance(desired, IdentityTransform):

@@ -44,9 +44,7 @@ n_obs = len(obs_ids)
 n_var = len(var_ids)
 
 cell_types = ["blööd" if obs_id[1] == "A" else "lung" for obs_id in obs_ids]
-feature_names = [
-    "ENSG00000999999" if var_id[1] < "M" else "ENSG00000123456" for var_id in var_ids
-]
+feature_names = ["ENSG00000999999" if var_id[1] < "M" else "ENSG00000123456" for var_id in var_ids]
 
 # AnnData requires string indices for obs/var
 obs = pd.DataFrame(

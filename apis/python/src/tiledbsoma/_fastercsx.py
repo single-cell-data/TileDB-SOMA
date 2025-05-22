@@ -94,17 +94,11 @@ class CompressedMatrix:
         indptr = np.zeros((n_major + 1), dtype=index_dtype)
         indices = np.empty((nnz,), dtype=index_dtype)
         data = np.empty((nnz,), dtype=d[0].dtype)
-        compress_coo(
-            context.native_context, (n_major, n_minor), i, j, d, indptr, indices, data
-        )
+        compress_coo(context.native_context, (n_major, n_minor), i, j, d, indptr, indices, data)
         no_duplicates = None  # aka, unknown
         if make_sorted:
-            no_duplicates = sort_csx_indices(
-                context.native_context, indptr, indices, data
-            )
-        return CompressedMatrix(
-            indptr, indices, data, shape, format, make_sorted, no_duplicates, context
-        )
+            no_duplicates = sort_csx_indices(context.native_context, indptr, indices, data)
+        return CompressedMatrix(indptr, indices, data, shape, format, make_sorted, no_duplicates, context)
 
     @staticmethod
     def from_soma(
@@ -120,16 +114,10 @@ class CompressedMatrix:
         ``soma_dim_0``, ``soma_dim_1`` and ``soma_data``. All arrays in each table column must
         contain the same chunk count/size, and the dimension columns must be int64.
         """
-        tbl = (
-            pa.concat_tables(tables)
-            if isinstance(tables, collections.abc.Sequence)
-            else tables
-        )
+        tbl = pa.concat_tables(tables) if isinstance(tables, collections.abc.Sequence) else tables
 
         def chunks(a: pa.Array | pa.ChunkedArray) -> list[pa.Array]:
-            return (
-                list(a) if isinstance(a, pa.Array) else cast(list[pa.Array], a.chunks)
-            )
+            return list(a) if isinstance(a, pa.Array) else cast(list[pa.Array], a.chunks)
 
         if len(tbl) > 0:
             i = tuple(a.to_numpy() for a in chunks(tbl["soma_dim_0"]))
@@ -154,9 +142,7 @@ class CompressedMatrix:
     def dtype(self) -> npt.DTypeLike:
         return self.data.dtype
 
-    def to_scipy(
-        self, index: slice | None = None
-    ) -> scipy.sparse.csr_matrix | scipy.sparse.csc_matrix:
+    def to_scipy(self, index: slice | None = None) -> scipy.sparse.csr_matrix | scipy.sparse.csc_matrix:
         """Extract a slice on the compressed dimension and return as a
         :class:`scipy.sparse.csr_matrix` or
         :class:`scipy.sparse.csc_matrix`.
@@ -189,11 +175,7 @@ class CompressedMatrix:
             data = self.data[indptr[0] : indptr[-1]].copy()
             indptr -= indptr[0]
 
-        shape = (
-            (n_major, self.shape[1])
-            if self.format == "csr"
-            else (self.shape[0], n_major)
-        )
+        shape = (n_major, self.shape[1]) if self.format == "csr" else (self.shape[0], n_major)
         return CompressedMatrix._to_scipy(
             indptr,
             indices,
@@ -212,11 +194,7 @@ class CompressedMatrix:
         major_idx_start, major_idx_end, _ = index.indices(self.indptr.shape[0] - 1)
         n_major = max(major_idx_end - major_idx_start, 0)
 
-        out_shape = (
-            (n_major, self.shape[1])
-            if self.format == "csr"
-            else (self.shape[0], n_major)
-        )
+        out_shape = (n_major, self.shape[1]) if self.format == "csr" else (self.shape[0], n_major)
         out = np.zeros(math.prod(out_shape), dtype=self.data.dtype)
         copy_csx_to_dense(
             self.context.native_context,
@@ -242,9 +220,7 @@ class CompressedMatrix:
             if max_val <= np.iinfo(dt).max:
                 return dt
 
-        raise ValueError(
-            "Unable to find index type sufficiently large for max index value."
-        )
+        raise ValueError("Unable to find index type sufficiently large for max index value.")
 
     @staticmethod
     def _to_scipy(

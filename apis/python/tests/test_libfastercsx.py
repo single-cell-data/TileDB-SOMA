@@ -33,9 +33,7 @@ def context(concurrency: int | None) -> clib.SOMAContext:
         return clib.SOMAContext({"soma.compute_concurrency_level": f"{concurrency}"})
 
 
-@pytest.mark.parametrize(
-    "shape", [(0, 0), (1, 0), (0, 1), (10, 100), (100, 10), (9972, 1), (1, 9972)]
-)
+@pytest.mark.parametrize("shape", [(0, 0), (1, 0), (0, 1), (10, 100), (100, 10), (9972, 1), (1, 9972)])
 @pytest.mark.parametrize(
     "value_dtype",
     [
@@ -51,12 +49,8 @@ def context(concurrency: int | None) -> clib.SOMAContext:
         np.int64,
     ],
 )
-@pytest.mark.parametrize(
-    "csr_major_index_dtype", [np.uint16, np.int32, np.uint32, np.int64]
-)
-@pytest.mark.parametrize(
-    "csr_minor_index_dtype", [np.uint16, np.int32, np.uint32, np.int64]
-)
+@pytest.mark.parametrize("csr_major_index_dtype", [np.uint16, np.int32, np.uint32, np.int64])
+@pytest.mark.parametrize("csr_minor_index_dtype", [np.uint16, np.int32, np.uint32, np.int64])
 def test_construction(
     shape: tuple[int, int],
     csr_major_index_dtype: np.dtype[Any],
@@ -66,9 +60,7 @@ def test_construction(
 ) -> None:
 
     rng = np.random.default_rng()
-    sp = sparse.random(
-        shape[0], shape[1], density=0.01, dtype=value_dtype, random_state=rng
-    )
+    sp = sparse.random(shape[0], shape[1], density=0.01, dtype=value_dtype, random_state=rng)
 
     if sp.nnz >= np.iinfo(csr_major_index_dtype).max:
         # only occurs if we mess up the test params
@@ -164,9 +156,7 @@ def test_partitioning(
     ],
 )
 @pytest.mark.parametrize("nchunks", [1, 2, 3, 7, 10, 13])
-def test_multichunk(
-    nchunks: int, shape: tuple[int, int], density: float, context: clib.SOMAContext
-) -> None:
+def test_multichunk(nchunks: int, shape: tuple[int, int], density: float, context: clib.SOMAContext) -> None:
     """Check that multi-chunk COO input functions correctly"""
 
     rng = np.random.default_rng()
@@ -206,9 +196,7 @@ def test_multichunk(
     assert np.array_equal(data, csr.data)
 
 
-def test_sort_csx_indices_bad_args(
-    rng: np.random.Generator, context: clib.SOMAContext
-) -> None:
+def test_sort_csx_indices_bad_args(rng: np.random.Generator, context: clib.SOMAContext) -> None:
 
     sp = sparse.random(2830, 212, density=0.1, dtype=np.int8, random_state=rng).tocsr()
     p, j, d = sp.indptr, sp.indices, sp.data
@@ -255,9 +243,7 @@ def test_sort_csx_indices_bad_args(
         fastercsx.sort_csx_indices(context, p, j, d.astype(f"{NON_NATIVE_BYTEORDER}i4"))
 
 
-def test_compress_coo_bad_args(
-    rng: np.random.Generator, context: clib.SOMAContext
-) -> None:
+def test_compress_coo_bad_args(rng: np.random.Generator, context: clib.SOMAContext) -> None:
 
     sp = sparse.random(2830, 212, density=0.1, dtype=np.int8, random_state=rng)
     i, j, d = sp.row, sp.col, sp.data
@@ -283,45 +269,25 @@ def test_compress_coo_bad_args(
             data,
         )
     with pytest.raises(ValueError):
-        fastercsx.compress_coo(
-            context, (0, sp.shape[1]), (i,), (j,), (d,), indptr, indices, data
-        )
+        fastercsx.compress_coo(context, (0, sp.shape[1]), (i,), (j,), (d,), indptr, indices, data)
     with pytest.raises(ValueError):
-        fastercsx.compress_coo(
-            context, (-1, sp.shape[1]), (i,), (j,), (d,), indptr, indices, data
-        )
+        fastercsx.compress_coo(context, (-1, sp.shape[1]), (i,), (j,), (d,), indptr, indices, data)
     with pytest.raises(IndexError):
-        fastercsx.compress_coo(
-            context, (sp.shape[0], 0), (i,), (j,), (d,), indptr, indices, data
-        )
+        fastercsx.compress_coo(context, (sp.shape[0], 0), (i,), (j,), (d,), indptr, indices, data)
     with pytest.raises(ValueError):
-        fastercsx.compress_coo(
-            context, (sp.shape[0], -1), (i,), (j,), (d,), indptr, indices, data
-        )
+        fastercsx.compress_coo(context, (sp.shape[0], -1), (i,), (j,), (d,), indptr, indices, data)
     with pytest.raises(ValueError):
-        fastercsx.compress_coo(
-            context, sp.shape, (i,), (j,), (d,), indptr[:-1].copy(), indices, data
-        )
+        fastercsx.compress_coo(context, sp.shape, (i,), (j,), (d,), indptr[:-1].copy(), indices, data)
     with pytest.raises(ValueError):
-        fastercsx.compress_coo(
-            context, sp.shape, (i,), (j,), (d,), indptr, indices[:-1].copy(), data
-        )
+        fastercsx.compress_coo(context, sp.shape, (i,), (j,), (d,), indptr, indices[:-1].copy(), data)
     with pytest.raises(ValueError):
-        fastercsx.compress_coo(
-            context, sp.shape, (i,), (j,), (d,), indptr, indices, data[1:].copy()
-        )
+        fastercsx.compress_coo(context, sp.shape, (i,), (j,), (d,), indptr, indices, data[1:].copy())
     with pytest.raises(ValueError):
-        fastercsx.compress_coo(
-            context, sp.shape, (i[1:],), (j,), (d,), indptr, indices, data
-        )
+        fastercsx.compress_coo(context, sp.shape, (i[1:],), (j,), (d,), indptr, indices, data)
     with pytest.raises(ValueError):
-        fastercsx.compress_coo(
-            context, sp.shape, (i,), (j[1:],), (d,), indptr, indices, data
-        )
+        fastercsx.compress_coo(context, sp.shape, (i,), (j[1:],), (d,), indptr, indices, data)
     with pytest.raises(ValueError):
-        fastercsx.compress_coo(
-            context, sp.shape, (i,), (j,), (d[1:],), indptr, indices, data
-        )
+        fastercsx.compress_coo(context, sp.shape, (i,), (j,), (d[1:],), indptr, indices, data)
 
     # non-native byteorder should throw
     with pytest.raises(ValueError):
@@ -392,9 +358,7 @@ def test_compress_coo_bad_args(
         )
 
 
-def test_ragged_chunk_error(
-    rng: np.random.Generator, context: clib.SOMAContext
-) -> None:
+def test_ragged_chunk_error(rng: np.random.Generator, context: clib.SOMAContext) -> None:
     # module assumes all chunks are regular across all input arrays. Check that this
     # is enforced.
     nnz = 3

@@ -87,7 +87,5 @@ def get_dataframe_values(df: pd.DataFrame, field_name: str) -> pd.Series:  # typ
 
     # Check the values are unique.
     if not values.is_unique:
-        raise ValueError(
-            f"Non-unique registration values have been provided in field {field_name}."
-        )
+        raise ValueError(f"Non-unique registration values have been provided in field {field_name}.")
     return values

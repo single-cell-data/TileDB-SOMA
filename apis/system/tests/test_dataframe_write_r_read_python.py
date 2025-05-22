@@ -44,10 +44,6 @@ class TestDataframeWriteRReadPython(TestReadPythonWriteR):
         with soma.open(self.uri) as sdf:
             df = sdf.read().concat().to_pandas()
             assert df["foo"].equals(pd.Series([10, 20, 30, 40, 50], dtype=np.int32))
-            assert df["bar"].equals(
-                pd.Series([4.1, 5.2, 6.3, 7.4, 8.5], dtype=np.float64)
-            )
+            assert df["bar"].equals(pd.Series([4.1, 5.2, 6.3, 7.4, 8.5], dtype=np.float64))
             assert df["baz"].equals(pd.Series(["apple", "ball", "cat", "dog", "egg"]))
-            assert df["quux"].equals(
-                pd.Series([True, False, False, True, False], dtype=bool)
-            )
+            assert df["quux"].equals(pd.Series([True, False, False, True, False], dtype=bool))

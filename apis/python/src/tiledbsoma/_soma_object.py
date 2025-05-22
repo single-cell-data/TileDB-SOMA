@@ -24,9 +24,7 @@ from ._util import check_type, ms_to_datetime
 from .options import SOMATileDBContext
 from .options._soma_tiledb_context import _validate_soma_tiledb_context
 
-_WrapperType_co = TypeVar(
-    "_WrapperType_co", bound=_tdb_handles.AnyWrapper, covariant=True
-)
+_WrapperType_co = TypeVar("_WrapperType_co", bound=_tdb_handles.AnyWrapper, covariant=True)
 
 """The type of handle on a backend object that we have.
 
@@ -157,9 +155,7 @@ class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
         self._handle = handle
         self._close_stack.enter_context(self._handle)
 
-    def reopen(
-        self, mode: options.OpenMode, tiledb_timestamp: OpenTimestamp | None = None
-    ) -> Self:
+    def reopen(self, mode: options.OpenMode, tiledb_timestamp: OpenTimestamp | None = None) -> Self:
         """Return a new copy of the SOMAObject with the given mode at the current
         Unix timestamp.
 
@@ -181,9 +177,7 @@ class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
         Lifecycle:
             Experimental.
         """
-        handle = self._wrapper_type._from_soma_object(
-            self._handle.reopen(mode, tiledb_timestamp), self.context
-        )
+        handle = self._wrapper_type._from_soma_object(self._handle.reopen(mode, tiledb_timestamp), self.context)
         return self.__class__(
             handle,  # type: ignore[arg-type]
             _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code",
@@ -265,24 +259,16 @@ class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
     def verify_open_for_writing(self) -> None:
         """Raises an error if the object is not open for writing."""
         if self.closed:
-            raise SOMAError(
-                f"{self.__class__.__name__} ({self.uri}) must be open for writing (closed)"
-            )
+            raise SOMAError(f"{self.__class__.__name__} ({self.uri}) must be open for writing (closed)")
         if self.mode != "w":
-            raise SOMAError(
-                f"{self.__class__.__name__} ({self.uri}) must be open for writing"
-            )
+            raise SOMAError(f"{self.__class__.__name__} ({self.uri}) must be open for writing")
 
     def _verify_open_for_reading(self) -> None:
         """Raises an error if the object is not open for reading."""
         if self.closed:
-            raise SOMAError(
-                f"{self.__class__.__name__} ({self.uri}) must be open for reading (closed)"
-            )
+            raise SOMAError(f"{self.__class__.__name__} ({self.uri}) must be open for reading (closed)")
         if self.mode != "r":
-            raise SOMAError(
-                f"{self.__class__.__name__} ({self.uri}) must be open for reading"
-            )
+            raise SOMAError(f"{self.__class__.__name__} ({self.uri}) must be open for reading")
 
     @property
     def tiledb_timestamp(self) -> datetime.datetime:

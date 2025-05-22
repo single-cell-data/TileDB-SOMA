@@ -33,9 +33,7 @@ def experiment_with_single_scene(tmp_path_factory, sample_2d_data) -> soma.Exper
         with exp.add_new_collection("spatial") as spatial:
 
             # Create scene 1.
-            with spatial.add_new_collection(
-                "scene1", soma.Scene, coordinate_space=("x_scene1", "y_scene1")
-            ) as scene1:
+            with spatial.add_new_collection("scene1", soma.Scene, coordinate_space=("x_scene1", "y_scene1")) as scene1:
                 scene1.add_new_collection("obsl")
                 scene1.add_new_collection("varl")
                 scene1.varl.add_new_collection("RNA")
@@ -45,9 +43,7 @@ def experiment_with_single_scene(tmp_path_factory, sample_2d_data) -> soma.Exper
                 points1 = scene1.add_new_point_cloud_dataframe(
                     "points1",
                     "obsl",
-                    transform=soma.UniformScaleTransform(
-                        ("x_scene1", "y_scene1"), ("x", "y"), 2.0
-                    ),
+                    transform=soma.UniformScaleTransform(("x_scene1", "y_scene1"), ("x", "y"), 2.0),
                     schema=pa.schema([("x", pa.float64()), ("y", pa.float64())]),
                     domain=[[0, 1], [0, 1], [0, 3]],
                 )
@@ -67,9 +63,7 @@ def experiment_with_single_scene(tmp_path_factory, sample_2d_data) -> soma.Exper
                 points3 = scene1.add_new_point_cloud_dataframe(
                     "points3",
                     "obsl",
-                    transform=soma.UniformScaleTransform(
-                        ("x_scene1", "y_scene1"), ("x", "y"), 4.0
-                    ),
+                    transform=soma.UniformScaleTransform(("x_scene1", "y_scene1"), ("x", "y"), 4.0),
                     schema=pa.schema([("x", pa.float64()), ("y", pa.float64())]),
                     domain=[[-1, 0], [-1, 0], [0, 3]],
                 )
@@ -87,9 +81,7 @@ def experiment_with_single_scene(tmp_path_factory, sample_2d_data) -> soma.Exper
                 points2 = scene1.add_new_point_cloud_dataframe(
                     "points2",
                     ["varl", "RNA"],
-                    transform=soma.UniformScaleTransform(
-                        ("x_scene1", "y_scene1"), ("x", "y"), -1.0
-                    ),
+                    transform=soma.UniformScaleTransform(("x_scene1", "y_scene1"), ("x", "y"), -1.0),
                     schema=pa.schema([("x", pa.float64()), ("y", pa.float64())]),
                     domain=[[-1, 0], [-1, 0], [0, 3]],
                 )
@@ -107,9 +99,7 @@ def experiment_with_single_scene(tmp_path_factory, sample_2d_data) -> soma.Exper
                 points4 = scene1.add_new_point_cloud_dataframe(
                     "points4",
                     ["varl", "RNA"],
-                    transform=soma.UniformScaleTransform(
-                        ("x_scene1", "y_scene1"), ("x", "y"), 0.25
-                    ),
+                    transform=soma.UniformScaleTransform(("x_scene1", "y_scene1"), ("x", "y"), 0.25),
                     schema=pa.schema([("x", pa.float64()), ("y", pa.float64())]),
                     domain=[[0, 1], [0, 1], [0, 3]],
                 )
@@ -131,9 +121,7 @@ def experiment_with_single_scene(tmp_path_factory, sample_2d_data) -> soma.Exper
                     "img",
                     type=pa.uint8(),
                     level_shape=(3, 64, 64),
-                    transform=soma.UniformScaleTransform(
-                        ("x_scene1", "y_scene1"), ("x", "y"), 0.5
-                    ),
+                    transform=soma.UniformScaleTransform(("x_scene1", "y_scene1"), ("x", "y"), 0.5),
                 ) as image1:
                     coords = (slice(None), slice(None), slice(None))
                     l0 = image1["level0"]
@@ -146,9 +134,7 @@ def experiment_with_single_scene(tmp_path_factory, sample_2d_data) -> soma.Exper
                     type=pa.uint8(),
                     level_key="fullres",
                     level_shape=(3, 32, 32),
-                    transform=soma.UniformScaleTransform(
-                        ("x_scene1", "y_scene1"), ("x", "y"), 0.5
-                    ),
+                    transform=soma.UniformScaleTransform(("x_scene1", "y_scene1"), ("x", "y"), 0.5),
                 ) as image2:
                     coords = (slice(None), slice(None), slice(None))
                     fullres = image2["fullres"]
@@ -212,9 +198,7 @@ def test_outgest_spatial_only(experiment_with_single_scene, sample_2d_data):
     # Check image1.
     image1 = sdata.images["scene1_image1"]
     assert isinstance(image1, sd.models.models.DataArray)  # Verify single scale image.
-    assert image1.attrs["transform"] == {
-        "scene1": sd.transformations.Scale([2, 2], ("x", "y"))
-    }
+    assert image1.attrs["transform"] == {"scene1": sd.transformations.Scale([2, 2], ("x", "y"))}
     image_data = image1.data.compute()
     np.testing.assert_equal(image_data, sample_2d_data[0])
 
@@ -226,9 +210,7 @@ def test_outgest_spatial_only(experiment_with_single_scene, sample_2d_data):
         image_data = image_level.data.compute()
         np.testing.assert_equal(image_data, sample_2d_data[index + 1])
         scale = 2 ** (index + 1)
-        assert image_level.attrs["transform"] == {
-            "scene1": sd.transformations.Scale([scale, scale], ("x", "y"))
-        }
+        assert image_level.attrs["transform"] == {"scene1": sd.transformations.Scale([scale, scale], ("x", "y"))}
 
     # Check points1.
     points1 = sdata.shapes["scene1_points1"]
@@ -236,15 +218,11 @@ def test_outgest_spatial_only(experiment_with_single_scene, sample_2d_data):
         {
             "obs_id": np.arange(4),
             "radius": np.ones((4,), dtype=np.float64),
-            "geometry": shapely.points(
-                [[0, 0], [0, 0.5], [0.5, 0], [0.5, 0.5]]
-            ).tolist(),
+            "geometry": shapely.points([[0, 0], [0, 0.5], [0.5, 0], [0.5, 0.5]]).tolist(),
         }
     )
     assert all(points1 == points1_expected)
-    assert points1.attrs["transform"] == {
-        "scene1": sd.transformations.Scale([0.5, 0.5], ("x", "y"))
-    }
+    assert points1.attrs["transform"] == {"scene1": sd.transformations.Scale([0.5, 0.5], ("x", "y"))}
 
     # Check points2.
     points2 = sdata.points["scene1_RNA_points2"]
@@ -258,9 +236,7 @@ def test_outgest_spatial_only(experiment_with_single_scene, sample_2d_data):
     points2_data = points2.compute()
     print(points2_data)
     assert all(points2_data == points2_expected)
-    assert points2.attrs["transform"] == {
-        "scene1": sd.transformations.Scale([-1.0, -1.0], ("x", "y"))
-    }
+    assert points2.attrs["transform"] == {"scene1": sd.transformations.Scale([-1.0, -1.0], ("x", "y"))}
 
     # Check points3.
     points3 = sdata.points["scene1_points3"]
@@ -274,9 +250,7 @@ def test_outgest_spatial_only(experiment_with_single_scene, sample_2d_data):
     points3_data = points3.compute()
     print(points3_data)
     assert all(points3_data == points3_expected)
-    assert points3.attrs["transform"] == {
-        "scene1": sd.transformations.Scale([0.25, 0.25], ("x", "y"))
-    }
+    assert points3.attrs["transform"] == {"scene1": sd.transformations.Scale([0.25, 0.25], ("x", "y"))}
 
     # Check points4.
     points4 = sdata.shapes["scene1_RNA_points4"]
@@ -284,12 +258,8 @@ def test_outgest_spatial_only(experiment_with_single_scene, sample_2d_data):
         {
             "var_id": np.arange(4),
             "radius": np.ones((4,), dtype=np.float64),
-            "geometry": shapely.points(
-                [[0, 0], [0, 0.5], [0.5, 0], [0.5, 0.5]]
-            ).tolist(),
+            "geometry": shapely.points([[0, 0], [0, 0.5], [0.5, 0], [0.5, 0.5]]).tolist(),
         }
     )
     assert all(points4 == points4_expected)
-    assert points4.attrs["transform"] == {
-        "scene1": sd.transformations.Scale([4.0, 4.0], ("x", "y"))
-    }
+    assert points4.attrs["transform"] == {"scene1": sd.transformations.Scale([4.0, 4.0], ("x", "y"))}

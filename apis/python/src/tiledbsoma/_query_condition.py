@@ -116,15 +116,11 @@ class QueryCondition:
         try:
             self.tree = ast.parse(self.expression, mode="eval")
         except Exception as pex:
-            raise SOMAError(
-                "Could not parse the given QueryCondition statement: "
-                f"{self.expression}"
-            ) from pex
+            raise SOMAError("Could not parse the given QueryCondition statement: " f"{self.expression}") from pex
 
         if not self.tree:
             raise SOMAError(
-                "The query condition statement could not be parsed properly. "
-                "(Is this an empty expression?)"
+                "The query condition statement could not be parsed properly. " "(Is this an empty expression?)"
             )
 
     def init_query_condition(
@@ -222,19 +218,13 @@ class QueryConditionTree(ast.NodeVisitor):
             )
 
             # Handling cases val < attr < val
-            for lhs, op, rhs in zip(
-                node.comparators[:-1], node.ops[1:], node.comparators[1:]
-            ):
-                value = self.aux_visit_Compare(
-                    self.visit(lhs), self.visit(op), self.visit(rhs)
-                )
+            for lhs, op, rhs in zip(node.comparators[:-1], node.ops[1:], node.comparators[1:]):
+                value = self.aux_visit_Compare(self.visit(lhs), self.visit(op), self.visit(rhs))
                 result = result.combine(value, clib.TILEDB_AND)
         elif isinstance(operator, (ast.In, ast.NotIn)):
             rhs = node.comparators[0]
             if not isinstance(rhs, ast.List):
-                raise SOMAError(
-                    "`in` operator syntax must be written as `attr in ['l', 'i', 's', 't']`"
-                )
+                raise SOMAError("`in` operator syntax must be written as `attr in ['l', 'i', 's', 't']`")
 
             # For 'my_string in ["red", "yellow"]': node.left is ast.Name
             # For 'attr(my.string) in ["red", "yellow"]': node.left is ast.Call
@@ -251,23 +241,17 @@ class QueryConditionTree(ast.NodeVisitor):
 
                 arg = node.left.args[0]
                 if not isinstance(arg, ast.Constant):
-                    raise SOMAError(
-                        "query condition left-hand side 'attr' argument must be a constant"
-                    )
+                    raise SOMAError("query condition left-hand side 'attr' argument must be a constant")
                 variable = arg.value
 
             elif isinstance(node.left, ast.Name):
                 variable = node.left.id
             else:
-                raise SOMAError(
-                    f"cannot handle query condition left-hand side of type '{type(node.left)}'"
-                )
+                raise SOMAError(f"cannot handle query condition left-hand side of type '{type(node.left)}'")
 
             values = [self.get_val_from_node(val) for val in self.visit(rhs)]
             if len(values) == 0:
-                raise SOMAError(
-                    "At least one value must be provided to the set membership"
-                )
+                raise SOMAError("At least one value must be provided to the set membership")
 
             dt = self.schema.field(variable).type
             if pa.types.is_dictionary(dt):
@@ -370,9 +354,7 @@ class QueryConditionTree(ast.NodeVisitor):
             elif isinstance(att_node, ast.Constant):
                 att = str(att_node.value)
             else:
-                raise SOMAError(
-                    f"Incorrect type for attribute name: {ast.dump(att_node)}"
-                )
+                raise SOMAError(f"Incorrect type for attribute name: {ast.dump(att_node)}")
         else:
             raise SOMAError(f"Incorrect type for attribute name: {ast.dump(node)}")
 
@@ -462,9 +444,7 @@ class QueryConditionTree(ast.NodeVisitor):
         try:
             op = self.visit(node.op)
         except KeyError:
-            raise SOMAError(
-                f"Unsupported binary operator: {ast.dump(node.op)}. Only & is currently supported."
-            )
+            raise SOMAError(f"Unsupported binary operator: {ast.dump(node.op)}. Only & is currently supported.")
 
         result = self.visit(node.left)
         rhs = node.right[1:] if isinstance(node.right, list) else [node.right]
@@ -498,9 +478,7 @@ class QueryConditionTree(ast.NodeVisitor):
             raise SOMAError("Valid casts are attr() or val().")
 
         if len(node.args) != 1:
-            raise SOMAError(
-                f"Exactly one argument must be provided to {node.func.id}()."
-            )
+            raise SOMAError(f"Exactly one argument must be provided to {node.func.id}().")
 
         return node
 
@@ -527,8 +505,6 @@ class QueryConditionTree(ast.NodeVisitor):
         if isinstance(node.operand, ast.Constant):
             node.operand.value *= sign
         else:
-            raise SOMAError(
-                f"Unexpected node type following UnaryOp. Saw {ast.dump(node)}."
-            )
+            raise SOMAError(f"Unexpected node type following UnaryOp. Saw {ast.dump(node)}.")
 
         return node.operand

@@ -158,17 +158,13 @@ def main():
     ##
     ## Step 4 - parallel ingest each H5AD
     ##
-    with ProcessPoolExecutor(
-        max_workers=args.num_workers, initializer=logger_setup, max_tasks_per_child=1
-    ) as ppe:
+    with ProcessPoolExecutor(max_workers=args.num_workers, initializer=logger_setup, max_tasks_per_child=1) as ppe:
         # Use a lazy executor so that the params which consume a lot of memory (e.g.,registration_map)
         # are materialized as late as is possible.
         #
         # In addition, call `subset_for_h5ad` to reduce the size of the object transmitted
         # to the distributed worker.
-        for result in LazyExecutor(
-            ppe, args.num_workers + max(1, args.num_workers // 2)
-        ).map(
+        for result in LazyExecutor(ppe, args.num_workers + max(1, args.num_workers // 2)).map(
             worker_load_dataset,
             h5ad_paths,
             repeat(context.tiledb_config),
@@ -307,9 +303,7 @@ class LazyExecutor:
                     in_progress.add(fut)
                     logger.debug(f"Queued job, num pending: {len(pending)}")
 
-                _, in_progress = concurrent.futures.wait(
-                    in_progress, return_when=concurrent.futures.FIRST_COMPLETED
-                )
+                _, in_progress = concurrent.futures.wait(in_progress, return_when=concurrent.futures.FIRST_COMPLETED)
 
                 while pending and pending[0].done():
                     yield pending.pop(0).result()
@@ -330,12 +324,8 @@ def default_cpu_count() -> int:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--experiment-uri", type=str, help="Experiment URI", required=True
-    )
-    parser.add_argument(
-        "--h5ad-directory", type=str, help="Folder of H5AD files", required=True
-    )
+    parser.add_argument("--experiment-uri", type=str, help="Experiment URI", required=True)
+    parser.add_argument("--h5ad-directory", type=str, help="Folder of H5AD files", required=True)
     parser.add_argument(
         "--append",
         default=False,
@@ -372,9 +362,7 @@ def parse_args() -> argparse.Namespace:
         default="var_id",
         help="var column name containing unique identifiers",
     )
-    parser.add_argument(
-        "--X-layer-name", type=str, default="data", help="Default X layer name"
-    )
+    parser.add_argument("--X-layer-name", type=str, default="data", help="Default X layer name")
 
     args = parser.parse_args()
 
@@ -397,9 +385,7 @@ def logger_setup() -> None:
                     "format": "[%(asctime)s %(process)d] %(message)s",
                 }
             },
-            "handlers": {
-                "console": {"class": "logging.StreamHandler", "formatter": "default"}
-            },
+            "handlers": {"console": {"class": "logging.StreamHandler", "formatter": "default"}},
             "loggers": {
                 "ingest_h5ads": {"level": "INFO", "handlers": ["console"]},
                 "tiledbsoma": {"level": "WARNING", "handlers": ["console"]},
@@ -413,8 +399,7 @@ def get_h5ad_paths(h5ad_directory_path: str) -> list[str]:
     return [
         os.path.join(h5ad_directory_path, fn)
         for fn in os.listdir(h5ad_directory_path)
-        if fn.endswith(".h5ad")
-        and os.path.isfile(os.path.join(h5ad_directory_path, fn))
+        if fn.endswith(".h5ad") and os.path.isfile(os.path.join(h5ad_directory_path, fn))
     ]
 
 

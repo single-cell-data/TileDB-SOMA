@@ -217,19 +217,11 @@ class SOMASparseNDArrayStateMachine(SOMANDArrayStateMachine):
             allows_duplicates=False,
         )
 
-    def _array_exists(
-        self, uri: str, context: soma.SOMATileDBContext, tiledb_timestamp: int | None
-    ) -> bool:
-        return soma.SparseNDArray.exists(
-            uri, context=context, tiledb_timestamp=tiledb_timestamp
-        )
+    def _array_exists(self, uri: str, context: soma.SOMATileDBContext, tiledb_timestamp: int | None) -> bool:
+        return soma.SparseNDArray.exists(uri, context=context, tiledb_timestamp=tiledb_timestamp)
 
-    def _array_open(
-        self, *, mode: OpenMode, tiledb_timestamp: int | None = None
-    ) -> None:
-        self.A = soma.SparseNDArray.open(
-            self.uri, mode=mode, context=self.context, tiledb_timestamp=tiledb_timestamp
-        )
+    def _array_open(self, *, mode: OpenMode, tiledb_timestamp: int | None = None) -> None:
+        self.A = soma.SparseNDArray.open(self.uri, mode=mode, context=self.context, tiledb_timestamp=tiledb_timestamp)
 
     ##
     ## --- schema
@@ -250,11 +242,7 @@ class SOMASparseNDArrayStateMachine(SOMANDArrayStateMachine):
     def check_read_all(self) -> None:
         timestamp_ms = self.A.tiledb_timestamp_ms
         sort_order = [(f"soma_dim_{n}", "ascending") for n in range(len(self.shape))]
-        expected = (
-            self.data_ledger.read(timestamp_ms=timestamp_ms)
-            .to_table()
-            .sort_by(sort_order)
-        )
+        expected = self.data_ledger.read(timestamp_ms=timestamp_ms).to_table().sort_by(sort_order)
         found = self.A.read().tables().concat().sort_by(sort_order)
         assert tables_equal(
             found,
@@ -265,13 +253,9 @@ class SOMASparseNDArrayStateMachine(SOMANDArrayStateMachine):
     @precondition(lambda self: not self.closed and self.mode == "r")
     @invariant()
     def check_nnz(self) -> None:
-        expected = len(
-            self.data_ledger.read(timestamp_ms=self.A.tiledb_timestamp_ms).to_table()
-        )
+        expected = len(self.data_ledger.read(timestamp_ms=self.A.tiledb_timestamp_ms).to_table())
         assert expected == self.A.nnz, "NNZ mismatch"
-        assert (
-            self.A.nnz <= self.A._handle._handle.fragment_cell_count()
-        ), "NNZ vs fragment_cell_count inconsistency"
+        assert self.A.nnz <= self.A._handle._handle.fragment_cell_count(), "NNZ vs fragment_cell_count inconsistency"
 
     @precondition(lambda self: not self.closed and self.mode == "w")
     @precondition(
@@ -283,9 +267,7 @@ class SOMASparseNDArrayStateMachine(SOMANDArrayStateMachine):
 
         fragments_before_write = get_entries(f"{self.uri}/__fragments")
         self.A.write(coo_tbl)
-        new_fragments = set(get_entries(f"{self.uri}/__fragments")) - set(
-            fragments_before_write
-        )
+        new_fragments = set(get_entries(f"{self.uri}/__fragments")) - set(fragments_before_write)
         assert len(new_fragments) == 1
         self.data_ledger.write(
             ArrowTableLedgerEntry(
@@ -297,6 +279,4 @@ class SOMASparseNDArrayStateMachine(SOMANDArrayStateMachine):
         )
 
 
-TestSOMASparseNDArray = pytest.mark.usefixtures("make_tmp_dir")(
-    SOMASparseNDArrayStateMachine.TestCase
-)
+TestSOMASparseNDArray = pytest.mark.usefixtures("make_tmp_dir")(SOMASparseNDArrayStateMachine.TestCase)

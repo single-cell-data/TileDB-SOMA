@@ -64,9 +64,7 @@ UNSUPPORTED_ARROW_TYPES = [
 def test_arrow_types_supported(tmp_path: pathlib.Path, arrow_type_info):
     """Verify round-trip conversion of types which should work "as is" """
     arrow_type, expected_arrow_type = arrow_type_info
-    sdf = soma.DataFrame.create(
-        tmp_path.as_posix(), schema=pa.schema([(str(arrow_type), arrow_type)])
-    )
+    sdf = soma.DataFrame.create(tmp_path.as_posix(), schema=pa.schema([(str(arrow_type), arrow_type)]))
     schema = sdf.schema
     assert schema is not None
     assert sorted(schema.names) == sorted(["soma_joinid", str(arrow_type)])
@@ -78,9 +76,7 @@ def test_arrow_types_unsupported(tmp_path, arrow_type):
     """Verify explicit error for unsupported types"""
 
     with pytest.raises(TypeError, match=r"unsupported type|Unsupported Arrow type"):
-        soma.DataFrame.create(
-            tmp_path.as_posix(), schema=pa.schema([(str(arrow_type), arrow_type)])
-        )
+        soma.DataFrame.create(tmp_path.as_posix(), schema=pa.schema([(str(arrow_type), arrow_type)]))
 
 
 # ================================================================

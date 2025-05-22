@@ -431,11 +431,7 @@ def _treewalk(
     """
 
     def _recurse(
-        parent: (
-            tiledbsoma.Experiment
-            | tiledbsoma.Measurement
-            | tiledbsoma.Collection[_SOMAObjectType]
-        ),
+        parent: tiledbsoma.Experiment | tiledbsoma.Measurement | tiledbsoma.Collection[_SOMAObjectType],
         node_name: str | None,
         **kwargs: Any,
     ) -> dict[str, Any]:
@@ -738,9 +734,7 @@ def _leaf_visitor_upgrade(
                     f"  Applying tiledbsoma_upgrade_shape({new_shape})",
                     file=output_handle,
                 )
-            with tiledbsoma.SparseNDArray.open(
-                item.uri, "w", context=context
-            ) as writer:
+            with tiledbsoma.SparseNDArray.open(item.uri, "w", context=context) as writer:
                 writer.tiledbsoma_upgrade_shape(new_shape)
         else:
             if verbose:
@@ -784,17 +778,13 @@ def _leaf_visitor_resize(
         if node_name == "obs":
             new_soma_joinid_shape = nobs
             if new_soma_joinid_shape is None:
-                raise tiledbsoma.SOMAError(
-                    "experiment resize: internal error: nobs missing"
-                )
+                raise tiledbsoma.SOMAError("experiment resize: internal error: nobs missing")
 
         elif node_name == "var":
             new_soma_joinid_shape = _get_new_var_shape(nvars=nvars, ms_name=ms_name)
 
         else:
-            raise tiledbsoma.SOMAError(
-                "experiment resize: internal error: dataframe node name '{node_name}'"
-            )
+            raise tiledbsoma.SOMAError("experiment resize: internal error: dataframe node name '{node_name}'")
 
         _print_leaf_node_banner(
             uri=item.uri,
@@ -812,9 +802,7 @@ def _leaf_visitor_resize(
                 f"  Dry run for: tiledbsoma_resize_soma_joinid_shape({new_soma_joinid_shape})",
                 file=output_handle,
             )
-            ok, msg = item.tiledbsoma_resize_soma_joinid_shape(
-                new_soma_joinid_shape, check_only=True
-            )
+            ok, msg = item.tiledbsoma_resize_soma_joinid_shape(new_soma_joinid_shape, check_only=True)
             _print_dry_run_result(
                 ok=ok,
                 msg=msg,
@@ -863,9 +851,7 @@ def _leaf_visitor_resize(
         else:
             if verbose:
                 print(f"  Applying resize({new_shape})", file=output_handle)
-            with tiledbsoma.SparseNDArray.open(
-                item.uri, "w", context=context
-            ) as writer:
+            with tiledbsoma.SparseNDArray.open(item.uri, "w", context=context) as writer:
                 writer.resize(new_shape)
 
     elif isinstance(item, tiledbsoma.DenseNDArray):
@@ -971,9 +957,7 @@ def _get_new_var_shape(
         raise tiledbsoma.SOMAError("experiment resize: internal error: ms_name missing")
 
     if ms_name not in nvars:
-        raise tiledbsoma.SOMAError(
-            f"experiment resize: missing measurement name '{ms_name}' in provided nvars"
-        )
+        raise tiledbsoma.SOMAError(f"experiment resize: missing measurement name '{ms_name}' in provided nvars")
     return nvars[ms_name]
 
 
@@ -998,15 +982,11 @@ def _get_new_ndarray_shape(
         raise tiledbsoma.SOMAError("experiment resize: internal error: ms_name missing")
 
     if ms_name not in nvars:
-        raise tiledbsoma.SOMAError(
-            f"experiment resize: missing measurement name '{ms_name}' in provided nvars"
-        )
+        raise tiledbsoma.SOMAError(f"experiment resize: missing measurement name '{ms_name}' in provided nvars")
     nvar = nvars[ms_name]
 
     if coll_name is None:
-        raise tiledbsoma.SOMAError(
-            "experiment resize: internal error: coll_name missing"
-        )
+        raise tiledbsoma.SOMAError("experiment resize: internal error: coll_name missing")
 
     coll_dict = {
         "X": (nobs, nvar),
@@ -1019,9 +999,7 @@ def _get_new_ndarray_shape(
     try:
         return coll_dict[coll_name]
     except KeyError:
-        raise tiledbsoma.SOMAError(
-            f"experiment resize: internal error: unhandled collection {coll_name}"
-        )
+        raise tiledbsoma.SOMAError(f"experiment resize: internal error: unhandled collection {coll_name}")
 
 
 def _leaf_visitor_get_shapes(

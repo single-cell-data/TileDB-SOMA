@@ -46,9 +46,7 @@ class DenseNDArrayWrapper:
         context: SOMATileDBContext | None = None,
     ):
         self._array = DenseNDArray.open(uri, context=context)
-        self._dtype: np.typing.DTypeLike = self._array.schema.field(
-            "soma_data"
-        ).type.to_pandas_dtype()
+        self._dtype: np.typing.DTypeLike = self._array.schema.field("soma_data").type.to_pandas_dtype()
 
     def __getitem__(self, key: tuple[slice | int, ...]) -> np.typing.NDArray[Any]:
         """Returns a numpy array containing data from a requested tuple."""
@@ -65,9 +63,7 @@ class DenseNDArrayWrapper:
             - Convert negative indices to appropriate positive position.
             """
             if not -dim_size <= index < dim_size:
-                raise IndexError(
-                    f"Index {index} out of bounds for dimension with size {dim_size}."
-                )
+                raise IndexError(f"Index {index} out of bounds for dimension with size {dim_size}.")
             return index if index >= 0 else index + dim_size - 1
 
         def update_slice_index(index: slice, dim_size: int) -> slice:
@@ -84,11 +80,7 @@ class DenseNDArrayWrapper:
             return slice(_index.start, _index.stop - 1)
 
         key = tuple(
-            (
-                update_slice_index(index, dim_size)
-                if isinstance(index, slice)
-                else update_int_index(index, dim_size)
-            )
+            (update_slice_index(index, dim_size) if isinstance(index, slice) else update_int_index(index, dim_size))
             for index, dim_size in zip(key, self.shape)
         )
 
@@ -109,10 +101,7 @@ class DenseNDArrayWrapper:
     def recommend_chunks(self) -> tuple[int, ...]:
         """Returns recommended chunk sizes for chunking this array."""
         dim_info = json.loads(self._array.schema_config_options().dims)
-        return tuple(
-            _str_to_int(dim_info[f"soma_dim_{index}"]["tile"])
-            for index in range(self.ndim)
-        )
+        return tuple(_str_to_int(dim_info[f"soma_dim_{index}"]["tile"]) for index in range(self.ndim))
 
     @property
     def shape(self) -> tuple[int, ...]:
@@ -160,12 +149,7 @@ def images_to_datatree(image_data_arrays: Sequence[xr.DataArray]) -> DataTree:
     # If SpatialData version < 0.2.6 use the legacy xarray_datatree implementation
     # of the DataTree.
     if _version_less_than(sd.__version__, (0, 2, 5)):
-        return DataTree.from_dict(
-            {f"scale{index}": image for index, image in enumerate(image_data_arrays)}
-        )
+        return DataTree.from_dict({f"scale{index}": image for index, image in enumerate(image_data_arrays)})
     return DataTree.from_dict(
-        {
-            f"scale{index}": xr.Dataset({"image": image})
-            for index, image in enumerate(image_data_arrays)
-        }
+        {f"scale{index}": xr.Dataset({"image": image}) for index, image in enumerate(image_data_arrays)}
     )

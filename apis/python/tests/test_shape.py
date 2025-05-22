@@ -113,10 +113,7 @@ def test_sparse_nd_array_basics(
     with tiledbsoma.SparseNDArray.open(uri) as snda:
         ok, msg = snda.tiledbsoma_upgrade_shape(arg_shape, check_only=True)
         assert not ok
-        assert (
-            msg
-            == "tiledbsoma_can_upgrade_shape: array already has a shape: please use resize"
-        )
+        assert msg == "tiledbsoma_can_upgrade_shape: array already has a shape: please use resize"
 
     # Test resize down
     new_shape = tuple([arg_shape[i] - 50 for i in range(ndim)])
@@ -124,8 +121,7 @@ def test_sparse_nd_array_basics(
         (ok, msg) = snda.resize(new_shape, check_only=True)
         assert not ok
         assert (
-            msg
-            == "[can_resize] index-column name 'soma_dim_0': new upper 49 < old upper 99 (downsize is unsupported)"
+            msg == "[can_resize] index-column name 'soma_dim_0': new upper 49 < old upper 99 (downsize is unsupported)"
         )
         # TODO: check draft spec
         # with pytest.raises(ValueError):
@@ -210,10 +206,7 @@ def test_dense_nd_array_basics(tmp_path):
     with tiledbsoma.DenseNDArray.open(uri) as dnda:
         ok, msg = dnda.tiledbsoma_upgrade_shape((600, 700), check_only=True)
         assert not ok
-        assert (
-            msg
-            == "tiledbsoma_can_upgrade_shape: array already has a shape: please use resize"
-        )
+        assert msg == "tiledbsoma_can_upgrade_shape: array already has a shape: please use resize"
 
 
 @pytest.mark.parametrize(
@@ -268,10 +261,7 @@ def test_dataframe_basics(tmp_path, soma_joinid_domain, index_column_names):
     domain = tuple([domain_slots[name] for name in index_column_names])
 
     soma_joinid_coords = data["soma_joinid"]
-    oob_write = any(
-        e.as_py() < soma_joinid_domain[0] or e.as_py() > soma_joinid_domain[1]
-        for e in soma_joinid_coords
-    )
+    oob_write = any(e.as_py() < soma_joinid_domain[0] or e.as_py() > soma_joinid_domain[1] for e in soma_joinid_coords)
     oob_write = oob_write and "soma_joinid" in index_column_names
 
     with tiledbsoma.DataFrame.create(
@@ -306,10 +296,7 @@ def test_dataframe_basics(tmp_path, soma_joinid_domain, index_column_names):
             # TODO: check draft spec
             # with pytest.raises(ValueError):
             assert not ok
-            assert (
-                "tiledbsoma_resize_soma_joinid_shape: new soma_joinid shape 0 < existing shape"
-                in msg
-            )
+            assert "tiledbsoma_resize_soma_joinid_shape: new soma_joinid shape 0 < existing shape" in msg
             with pytest.raises(tiledbsoma.SOMAError):
                 sdf.tiledbsoma_resize_soma_joinid_shape(new_shape)
         else:
@@ -458,9 +445,7 @@ def test_canned_experiments(tmp_path, has_shapes):
         # Exact number depends on tile extent, and is unimportant in any case
         assert d[0][1] > 2**62
 
-    def _check_dataframe(
-        sdf, has_shapes, expected_count, *, count_must_match: bool = True
-    ):
+    def _check_dataframe(sdf, has_shapes, expected_count, *, count_must_match: bool = True):
         if count_must_match:
             # OK match case: 2000 populated rows and shape is 2000.
             # OK mismatch case: 2000 populated rows and a reshape to 3000 has been done.
@@ -542,9 +527,7 @@ def test_canned_experiments(tmp_path, has_shapes):
 
     # Check dry run of tiledbsoma.io.upgrade_experiment_shapes
     handle = io.StringIO()
-    upgradeable = tiledbsoma.io.upgrade_experiment_shapes(
-        uri, check_only=True, output_handle=handle
-    )
+    upgradeable = tiledbsoma.io.upgrade_experiment_shapes(uri, check_only=True, output_handle=handle)
     handle.seek(0)
     lines = handle.readlines()
     handle.close()
@@ -600,10 +583,7 @@ def test_canned_experiments(tmp_path, has_shapes):
     handle.close()
     body = "\n".join(lines)
     if not has_shapes:
-        assert (
-            "Not OK: can_resize: array currently has no shape: please upgrade the array"
-            in body
-        )
+        assert "Not OK: can_resize: array currently has no shape: please upgrade the array" in body
     else:
         assert (
             "Not OK: [can_resize] index-column name 'soma_dim_1': new upper 13712 < old upper 13713 (downsize is unsupported)"

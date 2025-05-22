@@ -39,9 +39,7 @@ def run(data_type, keys, lookups, pandas):
         name = "pandas"
     else:
         name = "reindexer"
-    print(
-        f"{data_type}: Setup time: {name}: {build_time - start_time}: Lookup time: {lookup_time - build_time}"
-    )
+    print(f"{data_type}: Setup time: {name}: {build_time - start_time}: Lookup time: {lookup_time - build_time}")
 
 
 def indexer_test_build(data_type, keys, lookups):

@@ -45,9 +45,7 @@ _SE = TypeVar("_SE", bound=_spatial_element)
 
 class Scene(  # type: ignore[misc]   # __eq__ false positive
     CollectionBase[AnySOMAObject],
-    somacore.Scene[
-        MultiscaleImage, PointCloudDataFrame, GeometryDataFrame, AnySOMAObject
-    ],
+    somacore.Scene[MultiscaleImage, PointCloudDataFrame, GeometryDataFrame, AnySOMAObject],
 ):
     """A collection subtype representing spatial assets that can all be stored
     on a single coordinate space.
@@ -144,9 +142,7 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
         else:
             self._coord_space = coordinate_space_from_json(coord_space)
 
-    def _open_subcollection(
-        self, subcollection: str | Sequence[str]
-    ) -> CollectionBase[AnySOMAObject]:
+    def _open_subcollection(self, subcollection: str | Sequence[str]) -> CollectionBase[AnySOMAObject]:
         if len(subcollection) == 0:
             raise ValueError("Invalid subcollection: value cannot be empty.")
         if isinstance(subcollection, str):
@@ -160,9 +156,7 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
             try:
                 coll = coll[name]  # type: ignore[assignment]
             except KeyError as ke:
-                raise KeyError(
-                    f"Unable to open collection '{name}' in {parent_name}."
-                ) from ke
+                raise KeyError(f"Unable to open collection '{name}' in {parent_name}.") from ke
             parent_name.append(name)
         return coll
 
@@ -178,19 +172,14 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
         # Check the transform is compatible with the coordinate spaces of the scene
         # and the new element coordinate space (if provided).
         if self.coordinate_space is None:
-            raise SOMAError(
-                "The scene coordinate space must be set before setting a transform."
-            )
+            raise SOMAError("The scene coordinate space must be set before setting a transform.")
         if transform.input_axes != self.coordinate_space.axis_names:
             raise ValueError(
                 f"The name of the transform input axes, {transform.input_axes}, do "
                 f"not match the name of the axes, {self.coordinate_space.axis_names}, "
                 f"in the scene coordinate space."
             )
-        if (
-            coordinate_space is not None
-            and transform.output_axes != coordinate_space.axis_names
-        ):
+        if coordinate_space is not None and transform.output_axes != coordinate_space.axis_names:
             raise ValueError(
                 f"The name of the transform output axes, {transform.output_axes}, do "
                 f"not match the name of the axes, {coordinate_space.axis_names}, ."
@@ -204,9 +193,7 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
         except KeyError as ke:
             raise KeyError(f"No element named '{key}' in '{subcollection}'.") from ke
         if not isinstance(elem, kind):
-            raise TypeError(
-                f"'{key}' in '{subcollection}' is a {type(elem).__name__} not a {kind.__name__}."
-            )
+            raise TypeError(f"'{key}' in '{subcollection}' is a {type(elem).__name__} not a {kind.__name__}.")
 
         # Either set the new coordinate space or check the axes of the current
         # coordinate space the element is defined on.
@@ -238,14 +225,10 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
     def coordinate_space(self, value: CoordinateSpace) -> None:
         if not isinstance(value, CoordinateSpace):
             raise TypeError(f"Invalid type {type(value).__name__}.")
-        self.metadata[SOMA_COORDINATE_SPACE_METADATA_KEY] = coordinate_space_to_json(
-            value
-        )
+        self.metadata[SOMA_COORDINATE_SPACE_METADATA_KEY] = coordinate_space_to_json(value)
         self._coord_space = value
 
-    @_funcs.forwards_kwargs_to(
-        GeometryDataFrame.create, exclude=("context", "tiledb_timestamp")
-    )
+    @_funcs.forwards_kwargs_to(GeometryDataFrame.create, exclude=("context", "tiledb_timestamp"))
     def add_new_geometry_dataframe(
         self,
         key: str,
@@ -287,9 +270,7 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
         """
         raise NotImplementedError()
 
-    @_funcs.forwards_kwargs_to(
-        MultiscaleImage.create, exclude=("context", "tiledb_timestamp")
-    )
+    @_funcs.forwards_kwargs_to(MultiscaleImage.create, exclude=("context", "tiledb_timestamp"))
     def add_new_multiscale_image(
         self,
         key: str,
@@ -324,9 +305,7 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
         if transform is not None:
             # Get and check the scene coordinate space axis names.
             if self.coordinate_space is None:
-                raise SOMAError(
-                    "The scene coordinate space must be set before setting a transform."
-                )
+                raise SOMAError("The scene coordinate space must be set before setting a transform.")
             if transform.input_axes != self.coordinate_space.axis_names:
                 raise ValueError(
                     f"The name of the transform input axes, {transform.input_axes}, "
@@ -378,9 +357,7 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
         # Return the multiscale image.
         return image
 
-    @_funcs.forwards_kwargs_to(
-        PointCloudDataFrame.create, exclude=("context", "tiledb_timestamp")
-    )
+    @_funcs.forwards_kwargs_to(PointCloudDataFrame.create, exclude=("context", "tiledb_timestamp"))
     def add_new_point_cloud_dataframe(
         self,
         key: str,
@@ -426,9 +403,7 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
         if transform is not None:
             # Get Scene coordinate space and check the axis names.
             if self.coordinate_space is None:
-                raise SOMAError(
-                    "The scene coordinate space must be set before setting a transform."
-                )
+                raise SOMAError("The scene coordinate space must be set before setting a transform.")
             if transform.input_axes != self.coordinate_space.axis_names:
                 raise ValueError(
                     f"The name of the transform input axes, {transform.input_axes}, "
@@ -635,28 +610,18 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
         try:
             transform_json = coll.metadata[f"soma_scene_registry_{key}"]
         except KeyError:
-            raise KeyError(
-                f"No coordinate space registry for '{key}' in collection "
-                f"'{subcollection}'"
-            )
+            raise KeyError(f"No coordinate space registry for '{key}' in collection " f"'{subcollection}'")
         base_transform = transform_from_json(transform_json)
         try:
             image: MultiscaleImage = coll[key]  # type: ignore[assignment]
         except KeyError as ke:
-            raise KeyError(
-                f"No MultiscaleImage named '{key}' in '{subcollection}'."
-            ) from ke
+            raise KeyError(f"No MultiscaleImage named '{key}' in '{subcollection}'.") from ke
         if not isinstance(image, MultiscaleImage):
-            raise TypeError(
-                f"Item at '{key}' in '{subcollection}' has an unexpected type "
-                f"{type(image)!r}."
-            )
+            raise TypeError(f"Item at '{key}' in '{subcollection}' has an unexpected type " f"{type(image)!r}.")
         level_transform = image.get_transform_from_level(level)
         return base_transform.inverse_transform() @ level_transform
 
-    def get_transform_from_point_cloud_dataframe(
-        self, key: str, subcollection: str = "obsl"
-    ) -> CoordinateTransform:
+    def get_transform_from_point_cloud_dataframe(self, key: str, subcollection: str = "obsl") -> CoordinateTransform:
         """Returns the coordinate transformation from the requested point cloud
         dataframe to the scene.
 
@@ -670,9 +635,7 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
 
         Lifecycle: experimental
         """
-        transform = self.get_transform_to_point_cloud_dataframe(
-            key, subcollection=subcollection
-        )
+        transform = self.get_transform_to_point_cloud_dataframe(key, subcollection=subcollection)
         return transform.inverse_transform()
 
     def get_transform_to_geometry_dataframe(
@@ -695,10 +658,7 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
         try:
             transform_json = coll.metadata[f"soma_scene_registry_{key}"]
         except KeyError as ke:
-            raise KeyError(
-                f"No coordinate space registry for '{key}' in collection "
-                f"'{subcollection}'."
-            ) from ke
+            raise KeyError(f"No coordinate space registry for '{key}' in collection " f"'{subcollection}'.") from ke
         return transform_from_json(transform_json)
 
     def get_transform_to_multiscale_image(
@@ -728,30 +688,20 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
         try:
             transform_json = coll.metadata[f"soma_scene_registry_{key}"]
         except KeyError:
-            raise KeyError(
-                f"No coordinate space registry for '{key}' in collection "
-                f"'{subcollection}'"
-            )
+            raise KeyError(f"No coordinate space registry for '{key}' in collection " f"'{subcollection}'")
         base_transform = transform_from_json(transform_json)
         if level is None:
             return base_transform
         try:
             image: MultiscaleImage = coll[key]  # type: ignore[assignment]
         except KeyError as ke:
-            raise KeyError(
-                f"No MultiscaleImage named '{key}' in '{subcollection}'."
-            ) from ke
+            raise KeyError(f"No MultiscaleImage named '{key}' in '{subcollection}'.") from ke
         if not isinstance(image, MultiscaleImage):
-            raise TypeError(
-                f"Item at '{key}' in '{subcollection}' has an unexpected type "
-                f"{type(image)!r}."
-            )
+            raise TypeError(f"Item at '{key}' in '{subcollection}' has an unexpected type " f"{type(image)!r}.")
         level_transform = image.get_transform_to_level(level)
         return level_transform @ base_transform
 
-    def get_transform_to_point_cloud_dataframe(
-        self, key: str, subcollection: str = "obsl"
-    ) -> CoordinateTransform:
+    def get_transform_to_point_cloud_dataframe(self, key: str, subcollection: str = "obsl") -> CoordinateTransform:
         """Returns the coordinate transformation from the scene to a requested
         point cloud dataframe.
 
@@ -769,8 +719,5 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
         try:
             transform_json = coll.metadata[f"soma_scene_registry_{key}"]
         except KeyError as ke:
-            raise KeyError(
-                f"No coordinate space registry for '{key}' in collection "
-                f"'{subcollection}'."
-            ) from ke
+            raise KeyError(f"No coordinate space registry for '{key}' in collection " f"'{subcollection}'.") from ke
         return transform_from_json(transform_json)

@@ -30,9 +30,7 @@ class _CachedElement:
     """The reified object, if it has been opened."""
 
 
-class SOMAGroup(
-    SOMAObject[_tdb_handles.SOMAGroupWrapper[Any]], Generic[CollectionElementType]
-):
+class SOMAGroup(SOMAObject[_tdb_handles.SOMAGroupWrapper[Any]], Generic[CollectionElementType]):
     """Base class for all SOMAGroups: CollectionBase and MultiscaleImage.
 
     Lifecycle:
@@ -47,9 +45,7 @@ class SOMAGroup(
         **kwargs: Any,
     ):
         super().__init__(handle, **kwargs)
-        self._contents = {
-            key: _CachedElement(entry) for key, entry in handle.initial_contents.items()
-        }
+        self._contents = {key: _CachedElement(entry) for key, entry in handle.initial_contents.items()}
         """The contents of the persisted TileDB Group.
 
         This is loaded at startup when we have a read handle.
@@ -272,9 +268,7 @@ class SOMAGroup(
                     raise
                 use_relative_uri = False
 
-        self._set_element(
-            key, uri=uri_to_add, relative=use_relative_uri, soma_object=value
-        )
+        self._set_element(key, uri=uri_to_add, relative=use_relative_uri, soma_object=value)
         return self
 
 

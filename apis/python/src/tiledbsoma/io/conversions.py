@@ -68,11 +68,7 @@ def _string_dict_from_arrow_schema(schema: pa.Schema) -> dict[str, str]:
 
     # Stringify types skipping the soma_joinid field (it is specific to SOMA data
     # and does not exist in AnnData/H5AD).
-    arrow_columns = {
-        name: _stringify_type(schema.field(name).type)
-        for name in schema.names
-        if name != "soma_joinid"
-    }
+    arrow_columns = {name: _stringify_type(schema.field(name).type) for name in schema.names if name != "soma_joinid"}
 
     return arrow_columns
 
@@ -176,10 +172,7 @@ def obs_or_var_to_tiledb_supported_array_type(obs_or_var: pd.DataFrame) -> pd.Da
         return obs_or_var.copy()
 
     return pd.DataFrame.from_dict(
-        {
-            str(k): to_tiledb_supported_array_type(str(k), v)
-            for k, v in obs_or_var.items()
-        },
+        {str(k): to_tiledb_supported_array_type(str(k), v) for k, v in obs_or_var.items()},
     )
 
 
@@ -194,9 +187,7 @@ def to_tiledb_supported_array_type(name: str, x: _MT) -> _MT:
     """Converts datatypes unrepresentable by TileDB into datatypes it can represent,
     e.g., float16 -> float32.
     """
-    if isinstance(x, (np.ndarray, sp.spmatrix)) or not isinstance(
-        x.dtype, pd.CategoricalDtype
-    ):
+    if isinstance(x, (np.ndarray, sp.spmatrix)) or not isinstance(x.dtype, pd.CategoricalDtype):
         target_dtype = _to_tiledb_supported_dtype(x.dtype)
         return x if target_dtype == x.dtype else x.astype(target_dtype)
 
@@ -211,13 +202,9 @@ def to_tiledb_supported_array_type(name: str, x: _MT) -> _MT:
     return x
 
 
-def csr_from_coo_table(
-    tbl: pa.Table, num_rows: int, num_cols: int, context: SOMATileDBContext
-) -> sp.csr_matrix:
+def csr_from_coo_table(tbl: pa.Table, num_rows: int, num_cols: int, context: SOMATileDBContext) -> sp.csr_matrix:
     """Given an Arrow Table containing COO data, return a ``scipy.sparse.csr_matrix``."""
-    s = CompressedMatrix.from_soma(
-        tbl, (num_rows, num_cols), "csr", True, context
-    ).to_scipy()
+    s = CompressedMatrix.from_soma(tbl, (num_rows, num_cols), "csr", True, context).to_scipy()
     return s
 
 
@@ -287,9 +274,7 @@ def df_to_arrow_table(df: pd.DataFrame) -> pa.Table:
                 # That's the good news. The bad news is that pa.Table.from_pandas() of this
                 # will result in Arrow value-type of pa.null().  Part two, to deal with
                 # this, is below.
-                df[key] = pd.Series(
-                    ["X"] * df.shape[0], dtype=pd.CategoricalDtype()
-                ).cat.remove_categories(["X"])
+                df[key] = pd.Series(["X"] * df.shape[0], dtype=pd.CategoricalDtype()).cat.remove_categories(["X"])
 
     # For categoricals, it's possible to get
     #   TypeError: Object of type bool_ is not JSON serializable
@@ -305,9 +290,7 @@ def df_to_arrow_table(df: pd.DataFrame) -> pa.Table:
             if hasattr(column.values, "ordered"):
                 ordered = bool(column.values.ordered)
 
-            df[key] = pd.Categorical(
-                values=column, categories=categories, ordered=ordered
-            )
+            df[key] = pd.Categorical(values=column, categories=categories, ordered=ordered)
 
     arrow_table = pa.Table.from_pandas(df)
 
@@ -324,19 +307,13 @@ def df_to_arrow_table(df: pd.DataFrame) -> pa.Table:
             continue
         elif pa.types.is_dictionary(field.type):
             old_index_type = field.type.index_type
-            new_index_type = (
-                pa.int32()
-                if old_index_type in [pa.int8(), pa.int16()]
-                else old_index_type
-            )
+            new_index_type = pa.int32() if old_index_type in [pa.int8(), pa.int16()] else old_index_type
             # This is part two of what we need to do to get null-filled Pandas
             # categorical-of-string conveyed to Arrow. An entirely null-filled
             # Pandas categorical-of-string series, after py.Table.from_pandas(),
             # will have type pa.null.
             old_value_type = field.type.value_type
-            new_value_type = (
-                pa.large_string() if old_value_type == pa.null() else old_value_type
-            )
+            new_value_type = pa.large_string() if old_value_type == pa.null() else old_value_type
             new_map[field.name] = pa.dictionary(
                 new_index_type,
                 new_value_type,

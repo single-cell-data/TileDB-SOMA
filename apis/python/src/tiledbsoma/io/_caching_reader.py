@@ -60,9 +60,7 @@ class CachingReader:
         if not file.readable():
             raise io.UnsupportedOperation("File must be readable")
         if memory_budget < cache_block_size:
-            raise ValueError(
-                "The memory_budget parameter must be greater than or equal to the cache_block_size"
-            )
+            raise ValueError("The memory_budget parameter must be greater than or equal to the cache_block_size")
 
         self._file = file
         self._file_length = file.seek(0, io.SEEK_END)
@@ -75,9 +73,7 @@ class CachingReader:
 
         self._cache_lock = threading.Lock()
         self._cache: OrderedDict[int, pa.UInt8Array] = OrderedDict()
-        self._cache_stats: list[CacheStats] = [
-            CacheStats(block_idx) for block_idx in range(_n_blocks)
-        ]
+        self._cache_stats: list[CacheStats] = [CacheStats(block_idx) for block_idx in range(_n_blocks)]
 
     def _read_block(self, block_idx: int) -> pa.UInt8Array:
         nbytes = min(
@@ -98,16 +94,12 @@ class CachingReader:
         start_block = start // self._cache_block_size
         end_block = (end + self._cache_block_size - 1) // self._cache_block_size
         with self._cache_lock:
-            missing_blocks = [
-                i for i in range(start_block, end_block) if i not in self._cache
-            ]
+            missing_blocks = [i for i in range(start_block, end_block) if i not in self._cache]
             for block_idx in missing_blocks:
                 self._cache_stats[block_idx].miss += 1
                 self._cache[block_idx] = self._read_block(block_idx)
 
-            requested_blocks = [
-                self._cache[block_idx] for block_idx in range(start_block, end_block)
-            ]
+            requested_blocks = [self._cache[block_idx] for block_idx in range(start_block, end_block)]
 
             self._mark_and_sweep_blocks(start_block, end_block)
 
