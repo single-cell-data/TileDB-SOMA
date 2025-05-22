@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import contextlib
 import gc
 import json
 import random
@@ -104,13 +105,15 @@ def test_import_anndata(conftest_pbmc_small, ingest_modes, X_kind, tmp_path):
     all2d = (slice(None), slice(None))  # keystroke-saver
 
     for ingest_mode in ingest_modes:
-        uri = tiledbsoma.io.from_anndata(
-            output_path,
-            orig,
-            "RNA",
-            ingest_mode=ingest_mode,
-            X_kind=X_kind,
-        )
+
+        with pytest.deprecated_call() if ingest_mode == "resume" else contextlib.nullcontext():
+            uri = tiledbsoma.io.from_anndata(
+                output_path,
+                orig,
+                "RNA",
+                ingest_mode=ingest_mode,
+                X_kind=X_kind,
+            )
         if ingest_mode != "schema_only":
             have_ingested = True
 
@@ -273,7 +276,8 @@ def test_resume_mode(resume_mode_h5ad_file, tmp_path):
 
     output_path2 = (tmp_path / "test_resume_mode_2_").as_posix()
     tiledbsoma.io.from_h5ad(output_path2, resume_mode_h5ad_file.as_posix(), "RNA", ingest_mode="write")
-    tiledbsoma.io.from_h5ad(output_path2, resume_mode_h5ad_file.as_posix(), "RNA", ingest_mode="resume")
+    with pytest.deprecated_call():
+        tiledbsoma.io.from_h5ad(output_path2, resume_mode_h5ad_file.as_posix(), "RNA", ingest_mode="resume")
 
     exp1 = _factory.open(output_path1)
     exp2 = _factory.open(output_path2)
