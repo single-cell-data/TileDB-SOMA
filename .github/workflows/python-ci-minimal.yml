@@ -35,7 +35,7 @@ jobs:
           - os: ubuntu-24.04
             cc: gcc-13
             cxx: g++-13
-          - os: macos-latest
+          - os: macos-15
             cc: clang
             cxx: clang++
     uses: ./.github/workflows/python-ci-single.yml
