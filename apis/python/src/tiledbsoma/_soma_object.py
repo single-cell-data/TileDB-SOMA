@@ -101,19 +101,7 @@ class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
         """
         del platform_config  # unused
         context = _validate_soma_tiledb_context(context)
-        handle = _tdb_handles.open_handle_wrapper(
-            uri,
-            mode,
-            context,
-            tiledb_timestamp,
-            clib_type=cls._wrapper_type._WRAPPED_TYPE.__name__,
-        )
-        if _read_soma_type(handle) != cls.soma_type:
-            raise SOMAError(
-                "Unexpected SOMA metadata encoding - object encoding metadata value did not match expected value."
-            )
-        if not isinstance(handle, cls._wrapper_type):
-            handle = cls._wrapper_type.open(uri, mode, context, tiledb_timestamp)
+        handle = cls._wrapper_type.open(uri, mode, context, tiledb_timestamp)
         return cls(
             handle,  # type: ignore[arg-type]
             _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code",
