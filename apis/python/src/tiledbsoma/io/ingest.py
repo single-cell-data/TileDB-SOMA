@@ -348,12 +348,20 @@ def from_h5ad(
         ingest_mode: The ingestion type to perform:
 
             - ``write``: Writes all data, creating new layers if the SOMA already exists.
-            - ``resume``: Adds data to an existing SOMA, skipping writing data
+            - ``resume``: (deprecated) Adds data to an existing SOMA, skipping writing data
               that was previously written. Useful for continuing after a partial
               or interrupted ingestion operation.
             - ``schema_only``: Creates groups and the array schema, without
               writing any data to the array. Useful to prepare for appending
               multiple H5AD files to a single SOMA.
+
+          The 'resume' ingest_mode is deprecated and will be removed in a future version. The
+          current implementation has a known issue that can can cause multi-dataset appends to
+          not resume correctly.
+
+          The recommended and safest approach for recovering from a failed ingestion is to delete
+          the partially written SOMA Experiment and restart the ingestion process from the original
+          input files or a known-good backup.
 
         X_kind: Which type of matrix is used to store dense X data from the
           H5AD file: ``DenseNDArray`` or ``SparseNDArray``.
