@@ -149,11 +149,7 @@ def load_daskarray(
             tiledb_config = layer.context.tiledb_config
 
         chunk_joinids = da.from_array(arr, chunks=(1, 1))
-        meta = (
-            sp.csr_matrix((0, 0), dtype=dtype)
-            if format == "csr"
-            else sp.csc_matrix((0, 0), dtype=dtype)
-        )
+        meta = sp.csr_matrix((0, 0), dtype=dtype) if format == "csr" else sp.csc_matrix((0, 0), dtype=dtype)
         X = da.map_blocks(
             sparse_chunk,
             chunk_joinids,
@@ -168,7 +164,5 @@ def load_daskarray(
         )
     else:
         # TODO: combine with Spatial DenseNDArray Dask code
-        raise NotImplementedError(
-            f"Dask-loading not implemented yet for DenseNDArray ({layer.uri})"
-        )
+        raise NotImplementedError(f"Dask-loading not implemented yet for DenseNDArray ({layer.uri})")
     return X

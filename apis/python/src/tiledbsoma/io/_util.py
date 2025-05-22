@@ -40,9 +40,7 @@ _pa_type_to_str_fmt = {
 
 
 @contextmanager
-def read_h5ad(
-    input_path: Path, *, mode: str = "r", ctx: SOMATileDBContext | None = None
-) -> Iterator[ad.AnnData]:
+def read_h5ad(input_path: Path, *, mode: str = "r", ctx: SOMATileDBContext | None = None) -> Iterator[ad.AnnData]:
     """This lets us ingest H5AD with "r" (backed mode) from S3 URIs."""
     ctx = ctx or SOMATileDBContext()
     input_handle = CachingReader(

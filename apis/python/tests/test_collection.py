@@ -45,9 +45,7 @@ def create_and_populate_dataframe(path: str) -> soma.DataFrame:
 def create_and_populate_sparse_nd_array(path: str) -> soma.SparseNDArray:
     nr = 10
     nc = 20
-    with soma.SparseNDArray.create(
-        path, type=pa.int64(), shape=(nr, nc)
-    ) as sparse_nd_array:
+    with soma.SparseNDArray.create(path, type=pa.int64(), shape=(nr, nc)) as sparse_nd_array:
         tensor = pa.SparseCOOTensor.from_numpy(
             data=np.asarray([7, 8, 9]),
             coords=[[0, 1], [2, 3], [3, 4]],
@@ -295,12 +293,8 @@ def test_collection_update_on_set(tmp_path):
     """
 
     sc = soma.Collection.create(tmp_path.as_uri())
-    A = soma.DenseNDArray.create(
-        (tmp_path / "A").as_uri(), type=pa.float64(), shape=(100, 10, 1)
-    )
-    B = soma.DenseNDArray.create(
-        uri=(tmp_path / "B").as_uri(), type=pa.float64(), shape=(100, 10, 1)
-    )
+    A = soma.DenseNDArray.create((tmp_path / "A").as_uri(), type=pa.float64(), shape=(100, 10, 1))
+    B = soma.DenseNDArray.create(uri=(tmp_path / "B").as_uri(), type=pa.float64(), shape=(100, 10, 1))
     assert set(sc.keys()) == set([])
 
     sc["A"] = A
@@ -320,17 +314,13 @@ def test_cascading_close(tmp_path: pathlib.Path):
         dog = outer.add_new_collection("dog")
         spitz = dog.add_new_collection("spitz")
         akita = spitz.add_new_collection("akita")
-        hachiko = akita.add_new_dense_ndarray(
-            "hachiko", type=pa.float64(), shape=(1, 2, 3)
-        )
+        hachiko = akita.add_new_dense_ndarray("hachiko", type=pa.float64(), shape=(1, 2, 3))
         shiba = spitz.add_new_collection("shiba")
         kabosu = shiba.add_new_sparse_ndarray("kabosu", type=pa.uint8(), shape=(10,))
         mutt = dog.add_new_collection("mutt")
         louis = mutt.add_new_dataframe(
             "louis",
-            schema=pa.schema(
-                (("soma_joinid", pa.int64()), ("stripes", pa.large_string()))
-            ),
+            schema=pa.schema((("soma_joinid", pa.int64()), ("stripes", pa.large_string()))),
         )
 
         # A mix of collections we own and collections we don't own
@@ -419,9 +409,7 @@ def test_real_class(in_type, want):
         assert _collection._real_class(in_type) is want
 
 
-@pytest.mark.parametrize(
-    "in_type", (Union[int, str], Literal["bacon"], TypeVar("_T", bound=list))
-)
+@pytest.mark.parametrize("in_type", (Union[int, str], Literal["bacon"], TypeVar("_T", bound=list)))
 def test_real_class_fail(in_type):
     with raises_no_typeguard(TypeError):
         _collection._real_class(in_type)
@@ -463,18 +451,14 @@ def test_timestamped_ops(tmp_path):
         ]
 
     # open A via collection @ t=25 => A should reflect first write only
-    with soma.Collection.open(
-        tmp_path.as_uri(), context=SOMATileDBContext(timestamp=25)
-    ) as sc:
+    with soma.Collection.open(tmp_path.as_uri(), context=SOMATileDBContext(timestamp=25)) as sc:
         assert sc["A"].read((slice(None), slice(None))).to_numpy().tolist() == [
             [0, 0],
             [0, 0],
         ]
 
     # open collection @ t=15 => A should not even be there
-    with soma.Collection.open(
-        tmp_path.as_uri(), context=SOMATileDBContext(timestamp=15)
-    ) as sc:
+    with soma.Collection.open(tmp_path.as_uri(), context=SOMATileDBContext(timestamp=15)) as sc:
         assert "A" not in sc
 
     # confirm timestamp validation in SOMATileDBContext
@@ -500,9 +484,7 @@ def test_issue919(tmp_path):
         with soma.Collection.create(uri, context=context) as c:
             expt = c.add_new_collection("expt", soma.Experiment)
             expt.add_new_collection("causes_bug")
-            expt.add_new_dataframe(
-                "df", schema=schema, index_column_names=["soma_joinid"]
-            )
+            expt.add_new_dataframe("df", schema=schema, index_column_names=["soma_joinid"])
 
         with soma.Collection.open(uri, context=context) as c:
             assert "df" in c["expt"] and "causes_bug" in c["expt"]
@@ -529,9 +511,7 @@ def test_context_timestamp(tmp_path: pathlib.Path):
     with pytest.raises(soma.SOMAError):
         soma.open(tmp_path.as_uri(), context=fixed_time, tiledb_timestamp=100)
 
-    with soma.Collection.open(
-        tmp_path.as_uri(), context=fixed_time, tiledb_timestamp=234
-    ) as coll:
+    with soma.Collection.open(tmp_path.as_uri(), context=fixed_time, tiledb_timestamp=234) as coll:
         assert coll.tiledb_timestamp_ms == 234
         sub_1 = coll["sub_1"]
         assert sub_1.tiledb_timestamp_ms == 234

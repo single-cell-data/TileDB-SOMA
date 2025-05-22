@@ -75,18 +75,14 @@ GNU_TIME_OUTPUT_REGEXP = re.compile(
 TILEDB_STATS_FILE_PATH = "./tiledb_stats.json"
 
 
-def build_profile_data(
-    stderr_: str, stdout_: str, prof1: str | None, prof2: str | None
-) -> ProfileData:
+def build_profile_data(stderr_: str, stdout_: str, prof1: str | None, prof2: str | None) -> ProfileData:
     """Parse the time utility output to extract performance and memory metrics"""
     gnu_time_output_values = GNU_TIME_OUTPUT_REGEXP.search(stderr_)
     assert gnu_time_output_values
 
     gnu_time_output_values = gnu_time_output_values.groupdict()
     # cast all dict int values
-    gnu_time_output_values.update(
-        {k: int(v) for k, v in gnu_time_output_values.items() if v.isdigit()}
-    )
+    gnu_time_output_values.update({k: int(v) for k, v in gnu_time_output_values.items() if v.isdigit()})
 
     data = ProfileData(
         stdout=stdout_,
@@ -114,9 +110,7 @@ def read_tiledb_stats_output() -> dict[str, Any]:
 
 def main():
     data_columns = ", ".join([a for a in dir(ProfileData) if a[0] != "_"])
-    parser = argparse.ArgumentParser(
-        epilog=f"The list of collected metrics by the generic profiler: {data_columns}"
-    )
+    parser = argparse.ArgumentParser(epilog=f"The list of collected metrics by the generic profiler: {data_columns}")
     parser.add_argument(
         "command",
         help="The command and its arguments to be profiled (as quoted, single-argument)",
@@ -178,9 +172,7 @@ def main():
             # p1 = subprocess.Popen(["py-spy", "record", "-o", "profile.svg", "--", "python", "tests/objects.py"])
             print(f"Running second profiler {command.split()}")
         else:
-            print(
-                f"Second profiler {args.prof1} missing output flamegraph file location"
-            )
+            print(f"Second profiler {args.prof1} missing output flamegraph file location")
 
     if args.prof2 is not None:
         if args.prof2_output is not None:
@@ -188,9 +180,7 @@ def main():
             p2 = subprocess.Popen(command.split())
             print(f"Running third profiler {command}")
         else:
-            print(
-                f"Third profiler {args.prof2} missing output flamegraph file location"
-            )
+            print(f"Third profiler {args.prof2} missing output flamegraph file location")
     p_stdout, p_stderr = p.communicate()
     if p1 is not None:
         p1.wait()
@@ -202,9 +192,7 @@ def main():
     p_stdout = p_stdout.decode("utf-8")
     print(f"The benchmarked process output:\n {p_stdout}", file=stderr)
     # Parse the generated output from the time utility
-    data: ProfileData = build_profile_data(
-        p_stderr.decode("utf-8"), p_stdout, args.prof1_output, args.prof2_output
-    )
+    data: ProfileData = build_profile_data(p_stderr.decode("utf-8"), p_stdout, args.prof1_output, args.prof2_output)
     # Add the run data to DB
     db: ProfileDB = S3ProfileDB(args.db_path)
     db_record_file = db.add(data)

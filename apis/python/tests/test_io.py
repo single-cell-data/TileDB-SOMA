@@ -14,11 +14,7 @@ from tiledbsoma.options._tiledb_create_write_options import TileDBCreateOptions
 def src_matrix(request):
     format, shape, density = request.param
     if format == "dense":
-        return (
-            np.random.default_rng()
-            .standard_normal(np.prod(shape), dtype=np.float32)
-            .reshape(shape)
-        )
+        return np.random.default_rng().standard_normal(np.prod(shape), dtype=np.float32).reshape(shape)
 
     return sp.random(10, 89, density=density, format=format, dtype=np.float32)
 
@@ -94,9 +90,7 @@ def test_io_create_from_matrix_dense_nd_array(tmp_path, tdb_create_options, src_
     ],
     indirect=True,
 )
-def test_io_create_from_matrix_sparse_nd_array(
-    tmp_path, tdb_create_options, src_matrix
-):
+def test_io_create_from_matrix_sparse_nd_array(tmp_path, tdb_create_options, src_matrix):
     """
     Test soma.io.from_matrix to a SparseNDArray.
 

@@ -34,9 +34,7 @@ class SpaceRangerMatrixData:
 
     def __attrs_post_init__(self):
         with h5py.File(self.filepath, "w") as root:
-            root.attrs["software_version"] = (
-                f"spaceranger-{self.version[0]}.{self.version[1]}.{self.version[2]}"
-            )
+            root.attrs["software_version"] = f"spaceranger-{self.version[0]}.{self.version[1]}.{self.version[2]}"
 
             # Create the matrix group.
             matrix_group = root.create_group("matrix")
@@ -48,15 +46,11 @@ class SpaceRangerMatrixData:
             matrix_group.create_dataset("data", data=X.data, dtype=np.int32)
             matrix_group.create_dataset("indices", data=X.indices, dtype=np.int64)
             matrix_group.create_dataset("indptr", data=X.indptr, dtype=np.int64)
-            matrix_group.create_dataset(
-                "shape", data=np.array([self.nvar, self.nobs], dtype=np.int32)
-            )
+            matrix_group.create_dataset("shape", data=np.array([self.nvar, self.nobs], dtype=np.int32))
 
             # Create the feature group.
             features_group = matrix_group.create_group("features")
-            features_group.create_dataset(
-                "feature_type", data=self.feature_type, dtype="S15"
-            )
+            features_group.create_dataset("feature_type", data=self.feature_type, dtype="S15")
             features_group.create_dataset("genome", data=self.genome, dtype="S6")
             features_group.create_dataset("id", data=self.gene_id, dtype="S15")
             features_group.create_dataset("name", data=self.var_name, dtype="S17")

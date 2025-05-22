@@ -28,9 +28,7 @@ IndexerDataType = Union[
 ]
 
 
-def tiledbsoma_build_index(
-    data: IndexerDataType, *, context: SOMATileDBContext | None = None
-) -> IndexLike:
+def tiledbsoma_build_index(data: IndexerDataType, *, context: SOMATileDBContext | None = None) -> IndexLike:
     """Initialize re-indexer for provided indices (deprecated).
 
     Provides the same functionality as the``IntIndexer`` class.
@@ -54,9 +52,7 @@ class IntIndexer:
         Maturing.
     """
 
-    def __init__(
-        self, data: IndexerDataType, *, context: SOMATileDBContext | None = None
-    ):
+    def __init__(self, data: IndexerDataType, *, context: SOMATileDBContext | None = None):
         """Initialize re-indexer for provided indices.
 
         Args:
@@ -69,11 +65,7 @@ class IntIndexer:
             Maturing.
         """
         self._context = context
-        self._reindexer = (
-            clib.IntIndexer()
-            if self._context is None
-            else clib.IntIndexer(self._context.native_context)
-        )
+        self._reindexer = clib.IntIndexer() if self._context is None else clib.IntIndexer(self._context.native_context)
 
         # TODO: the map_locations interface does not accept chunked arrays. It would
         # save a copy (reduce memory usage) if they were natively supported.

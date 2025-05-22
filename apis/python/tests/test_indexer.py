@@ -160,8 +160,6 @@ def test_arrow_offset_handling() -> None:
         np.array([1]),
     )
     assert np.array_equal(
-        IntIndexer([0, 1, 2, 3, 4, 5]).get_indexer(
-            pa.chunked_array([[0, 1], [2, 3]]).slice(offset=1, length=2)
-        ),
+        IntIndexer([0, 1, 2, 3, 4, 5]).get_indexer(pa.chunked_array([[0, 1], [2, 3]]).slice(offset=1, length=2)),
         np.array([1, 2]),
     )

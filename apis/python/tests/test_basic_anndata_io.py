@@ -122,18 +122,14 @@ def test_import_anndata(conftest_pbmc_small, ingest_modes, X_kind, tmp_path):
 
         # Check obs
         obs = exp.obs.read().concat().to_pandas()
-        assert sorted(obs.columns.to_list()) == sorted(
-            orig.obs_keys() + ["soma_joinid", "obs_id"]
-        )
+        assert sorted(obs.columns.to_list()) == sorted(orig.obs_keys() + ["soma_joinid", "obs_id"])
         assert exp.obs.metadata.get(metakey) == "SOMADataFrame"
         if have_ingested:
             assert sorted(obs["obs_id"]) == sorted(list(orig.obs_names))
         else:
             assert sorted(obs["obs_id"]) == []
         # Convenience accessor
-        assert sorted(exp.obs.keys()) == sorted(
-            list(orig.obs.keys()) + ["soma_joinid", "obs_id"]
-        )
+        assert sorted(exp.obs.keys()) == sorted(list(orig.obs.keys()) + ["soma_joinid", "obs_id"])
 
         # Check ms
         assert exp.ms.metadata.get(metakey) == "SOMACollection"
@@ -141,18 +137,14 @@ def test_import_anndata(conftest_pbmc_small, ingest_modes, X_kind, tmp_path):
 
         # Check var
         var = exp.ms["RNA"].var.read().concat().to_pandas()
-        assert sorted(var.columns.to_list()) == sorted(
-            orig.var_keys() + ["soma_joinid", "var_id"]
-        )
+        assert sorted(var.columns.to_list()) == sorted(orig.var_keys() + ["soma_joinid", "var_id"])
         assert exp.ms["RNA"].var.metadata.get(metakey) == "SOMADataFrame"
         if have_ingested:
             assert sorted(var["var_id"]) == sorted(list(orig.var_names))
         else:
             assert sorted(var["var_id"]) == []
         # Convenience accessor
-        assert sorted(exp.ms["RNA"].var.keys()) == sorted(
-            list(orig.var.keys()) + ["soma_joinid", "var_id"]
-        )
+        assert sorted(exp.ms["RNA"].var.keys()) == sorted(list(orig.var.keys()) + ["soma_joinid", "var_id"])
 
         # Check Xs
         assert exp.ms["RNA"].X.metadata.get(metakey) == "SOMACollection"
@@ -277,52 +269,34 @@ def test_resume_mode(resume_mode_h5ad_file, tmp_path):
     """
 
     output_path1 = (tmp_path / "test_resume_mode_1_").as_posix()
-    tiledbsoma.io.from_h5ad(
-        output_path1, resume_mode_h5ad_file.as_posix(), "RNA", ingest_mode="write"
-    )
+    tiledbsoma.io.from_h5ad(output_path1, resume_mode_h5ad_file.as_posix(), "RNA", ingest_mode="write")
 
     output_path2 = (tmp_path / "test_resume_mode_2_").as_posix()
-    tiledbsoma.io.from_h5ad(
-        output_path2, resume_mode_h5ad_file.as_posix(), "RNA", ingest_mode="write"
-    )
-    tiledbsoma.io.from_h5ad(
-        output_path2, resume_mode_h5ad_file.as_posix(), "RNA", ingest_mode="resume"
-    )
+    tiledbsoma.io.from_h5ad(output_path2, resume_mode_h5ad_file.as_posix(), "RNA", ingest_mode="write")
+    tiledbsoma.io.from_h5ad(output_path2, resume_mode_h5ad_file.as_posix(), "RNA", ingest_mode="resume")
 
     exp1 = _factory.open(output_path1)
     exp2 = _factory.open(output_path2)
     with exp1, exp2:
         assert _get_fragment_count(exp1.obs.uri) == _get_fragment_count(exp2.obs.uri)
-        assert _get_fragment_count(exp1.ms["RNA"].var.uri) == _get_fragment_count(
-            exp2.ms["RNA"].var.uri
-        )
-        assert _get_fragment_count(exp1.ms["RNA"].X["data"].uri) == _get_fragment_count(
-            exp2.ms["RNA"].X["data"].uri
-        )
+        assert _get_fragment_count(exp1.ms["RNA"].var.uri) == _get_fragment_count(exp2.ms["RNA"].var.uri)
+        assert _get_fragment_count(exp1.ms["RNA"].X["data"].uri) == _get_fragment_count(exp2.ms["RNA"].X["data"].uri)
 
         meas1 = exp1.ms["RNA"]
         meas2 = exp2.ms["RNA"]
 
         if "obsm" in meas1:
             for key in meas1.obsm.keys():
-                assert _get_fragment_count(meas1.obsm[key].uri) == _get_fragment_count(
-                    meas2.obsm[key].uri
-                )
+                assert _get_fragment_count(meas1.obsm[key].uri) == _get_fragment_count(meas2.obsm[key].uri)
         if "varm" in meas1:
             for key in meas1.varm.keys():
-                assert _get_fragment_count(meas1.obsm[key].uri) == _get_fragment_count(
-                    meas2.obsm[key].uri
-                )
+                assert _get_fragment_count(meas1.obsm[key].uri) == _get_fragment_count(meas2.obsm[key].uri)
         if "obsp" in meas1:
             for key in meas1.obsp.keys():
-                assert _get_fragment_count(meas1.obsp[key].uri) == _get_fragment_count(
-                    meas2.obsp[key].uri
-                )
+                assert _get_fragment_count(meas1.obsp[key].uri) == _get_fragment_count(meas2.obsp[key].uri)
         if "varp" in meas1:
             for key in meas1.varp.keys():
-                assert _get_fragment_count(meas1.varm[key].uri) == _get_fragment_count(
-                    meas2.varm[key].uri
-                )
+                assert _get_fragment_count(meas1.varm[key].uri) == _get_fragment_count(meas2.varm[key].uri)
 
 
 @pytest.mark.parametrize("use_relative_uri", [False, True, None])
@@ -359,10 +333,7 @@ def test_ingest_relative(conftest_pbmc3k_h5ad_path, use_relative_uri, tmp_path):
             "varm",
         ]:  # conftest_h5ad_file_extended has no varp
             for member in G.ms["RNA"][collection_name]:
-                assert (
-                    G.ms["RNA"][collection_name]._handle._handle.is_relative(member)
-                    == expected_relative
-                )
+                assert G.ms["RNA"][collection_name]._handle._handle.is_relative(member) == expected_relative
 
         assert G.ms._handle._handle.is_relative("raw") == expected_relative
         assert G.ms["raw"]._handle._handle.is_relative("var") == expected_relative
@@ -416,9 +387,7 @@ def test_ingest_uns(
             assert isinstance(random_state, tiledbsoma.DenseNDArray)
             assert np.array_equal(random_state.read().to_numpy(), np.array([0]))
             got_pca_variance = uns["pca"]["variance"].read().to_numpy()
-            assert np.array_equal(
-                got_pca_variance, adata_extended2.uns["pca"]["variance"]
-            )
+            assert np.array_equal(got_pca_variance, adata_extended2.uns["pca"]["variance"])
         else:
             assert set(uns) == set(ingest_uns_keys)
 
@@ -433,9 +402,7 @@ def test_ingest_uns_string_arrays(h5ad_file_uns_string_arrays, tmp_path):
     )
 
     with tiledbsoma.Experiment.open(output_path) as exp:
-        with tiledbsoma.DataFrame.open(
-            exp.ms["RNA"]["uns"]["louvain_colors"].uri
-        ) as df:
+        with tiledbsoma.DataFrame.open(exp.ms["RNA"]["uns"]["louvain_colors"].uri) as df:
             contents = df.read().concat()
             assert contents.shape == (8, 2)
             assert len(contents["values"]) == 8
@@ -453,9 +420,7 @@ def test_add_matrix_to_collection(conftest_pbmc_small, tmp_path):
 
     original = conftest_pbmc_small.copy()
 
-    uri = tiledbsoma.io.from_anndata(
-        output_path, conftest_pbmc_small, measurement_name="RNA"
-    )
+    uri = tiledbsoma.io.from_anndata(output_path, conftest_pbmc_small, measurement_name="RNA")
 
     assert_adata_equal(original, conftest_pbmc_small)
 
@@ -463,9 +428,7 @@ def test_add_matrix_to_collection(conftest_pbmc_small, tmp_path):
     with _factory.open(output_path) as exp_r:
         assert list(exp_r.ms["RNA"].X.keys()) == ["data"]
         with pytest.raises(tiledbsoma.SOMAError):
-            tiledbsoma.io.add_X_layer(
-                exp, "RNA", "data2", conftest_pbmc_small.X
-            )  # not open for read
+            tiledbsoma.io.add_X_layer(exp, "RNA", "data2", conftest_pbmc_small.X)  # not open for read
     with _factory.open(output_path, "w") as exp:
         tiledbsoma.io.add_X_layer(exp, "RNA", "data2", conftest_pbmc_small.X)
     with pytest.raises(tiledbsoma.SOMAError):
@@ -478,27 +441,17 @@ def test_add_matrix_to_collection(conftest_pbmc_small, tmp_path):
             tiledbsoma.io.add_X_layer(exp, "nonesuch", "data3", conftest_pbmc_small.X)
 
     with _factory.open(output_path) as exp_r:
-        assert sorted(list(exp_r.ms["RNA"].obsm.keys())) == sorted(
-            list(conftest_pbmc_small.obsm.keys())
-        )
+        assert sorted(list(exp_r.ms["RNA"].obsm.keys())) == sorted(list(conftest_pbmc_small.obsm.keys()))
     with _factory.open(output_path, "w") as exp:
-        tiledbsoma.io.add_matrix_to_collection(
-            exp, "RNA", "obsm", "X_pcb", conftest_pbmc_small.obsm["X_pca"]
-        )
+        tiledbsoma.io.add_matrix_to_collection(exp, "RNA", "obsm", "X_pcb", conftest_pbmc_small.obsm["X_pca"])
     with _factory.open(output_path) as exp_r:
-        assert sorted(list(exp_r.ms["RNA"].obsm.keys())) == sorted(
-            list(conftest_pbmc_small.obsm.keys()) + ["X_pcb"]
-        )
+        assert sorted(list(exp_r.ms["RNA"].obsm.keys())) == sorted(list(conftest_pbmc_small.obsm.keys()) + ["X_pcb"])
 
     with _factory.open(output_path, "w") as exp:
         with pytest.raises(KeyError):
-            tiledbsoma.io.add_matrix_to_collection(
-                exp, "nonesuch", "obsm", "X_pcc", conftest_pbmc_small.obsm["X_pca"]
-            )
+            tiledbsoma.io.add_matrix_to_collection(exp, "nonesuch", "obsm", "X_pcc", conftest_pbmc_small.obsm["X_pca"])
 
-        tiledbsoma.io.add_matrix_to_collection(
-            exp, "RNA", "newthing", "X_pcd", conftest_pbmc_small.obsm["X_pca"]
-        )
+        tiledbsoma.io.add_matrix_to_collection(exp, "RNA", "newthing", "X_pcd", conftest_pbmc_small.obsm["X_pca"])
     with _factory.open(output_path) as exp_r:
         assert sorted(list(exp_r.ms["RNA"]["newthing"].keys())) == ["X_pcd"]
 
@@ -560,9 +513,7 @@ def test_add_matrix_to_collection_1_2_7(conftest_pbmc_small, tmp_path):
                     ingest_mode=ingest_mode,
                     context=context,
                 )
-                tiledbsoma.io.ingest._maybe_set(
-                    meas, collection_name, coll, use_relative_uri=use_relative_uri
-                )
+                tiledbsoma.io.ingest._maybe_set(meas, collection_name, coll, use_relative_uri=use_relative_uri)
             with coll:
                 matrix_uri = f"{coll_uri}/{matrix_name}"
 
@@ -582,9 +533,7 @@ def test_add_matrix_to_collection_1_2_7(conftest_pbmc_small, tmp_path):
     output_path = tmp_path.as_posix()
     original = conftest_pbmc_small.copy()
 
-    uri = tiledbsoma.io.from_anndata(
-        output_path, conftest_pbmc_small, measurement_name="RNA"
-    )
+    uri = tiledbsoma.io.from_anndata(output_path, conftest_pbmc_small, measurement_name="RNA")
 
     assert_adata_equal(original, conftest_pbmc_small)
 
@@ -605,39 +554,25 @@ def test_add_matrix_to_collection_1_2_7(conftest_pbmc_small, tmp_path):
             add_X_layer(exp, "nonesuch", "data3", conftest_pbmc_small.X)
 
     with _factory.open(output_path) as exp_r:
-        assert sorted(list(exp_r.ms["RNA"].obsm.keys())) == sorted(
-            list(conftest_pbmc_small.obsm.keys())
-        )
+        assert sorted(list(exp_r.ms["RNA"].obsm.keys())) == sorted(list(conftest_pbmc_small.obsm.keys()))
 
     with _factory.open(output_path, "w") as exp:
-        add_matrix_to_collection(
-            exp, "RNA", "obsm", "X_pcb", conftest_pbmc_small.obsm["X_pca"]
-        )
+        add_matrix_to_collection(exp, "RNA", "obsm", "X_pcb", conftest_pbmc_small.obsm["X_pca"])
     with _factory.open(output_path) as exp_r:
-        assert sorted(list(exp_r.ms["RNA"].obsm.keys())) == sorted(
-            list(conftest_pbmc_small.obsm.keys()) + ["X_pcb"]
-        )
+        assert sorted(list(exp_r.ms["RNA"].obsm.keys())) == sorted(list(conftest_pbmc_small.obsm.keys()) + ["X_pcb"])
 
     with _factory.open(output_path, "w") as exp:
         # It's nonsense biologically to add this to varp, but as a fake-test unit-test case, we can
         # use varp to test adding to a not-yet-existing collection.
-        add_matrix_to_collection(
-            exp, "RNA", "varp", "X_pcb", conftest_pbmc_small.obsm["X_pca"]
-        )
+        add_matrix_to_collection(exp, "RNA", "varp", "X_pcb", conftest_pbmc_small.obsm["X_pca"])
     with _factory.open(output_path) as exp_r:
-        assert sorted(list(exp_r.ms["RNA"].varp.keys())) == sorted(
-            list(conftest_pbmc_small.varp.keys()) + ["X_pcb"]
-        )
+        assert sorted(list(exp_r.ms["RNA"].varp.keys())) == sorted(list(conftest_pbmc_small.varp.keys()) + ["X_pcb"])
 
     with _factory.open(output_path, "w") as exp:
         with pytest.raises(KeyError):
-            add_matrix_to_collection(
-                exp, "nonesuch", "obsm", "X_pcc", conftest_pbmc_small.obsm["X_pca"]
-            )
+            add_matrix_to_collection(exp, "nonesuch", "obsm", "X_pcc", conftest_pbmc_small.obsm["X_pca"])
 
-        add_matrix_to_collection(
-            exp, "RNA", "newthing", "X_pcd", conftest_pbmc_small.obsm["X_pca"]
-        )
+        add_matrix_to_collection(exp, "RNA", "newthing", "X_pcd", conftest_pbmc_small.obsm["X_pca"])
     with _factory.open(output_path) as exp_r:
         assert sorted(list(exp_r.ms["RNA"]["newthing"].keys())) == ["X_pcd"]
 
@@ -653,19 +588,13 @@ def test_export_anndata(conftest_pbmc_small, tmp_path):
 
     with _factory.open(output_path) as exp:
         with pytest.raises(ValueError):
-            tiledbsoma.io.to_anndata(
-                exp, measurement_name="RNA", obs_id_name="nonesuch"
-            )
+            tiledbsoma.io.to_anndata(exp, measurement_name="RNA", obs_id_name="nonesuch")
         with pytest.raises(ValueError):
-            tiledbsoma.io.to_anndata(
-                exp, measurement_name="RNA", var_id_name="nonesuch"
-            )
+            tiledbsoma.io.to_anndata(exp, measurement_name="RNA", var_id_name="nonesuch")
         with pytest.raises(ValueError):
             tiledbsoma.io.to_anndata(exp, measurement_name="nonesuch")
         with pytest.raises(ValueError):
-            tiledbsoma.io.to_anndata(
-                exp, measurement_name="RNA", X_layer_name="nonesuch"
-            )
+            tiledbsoma.io.to_anndata(exp, measurement_name="RNA", X_layer_name="nonesuch")
 
         readback = tiledbsoma.io.to_anndata(exp, measurement_name="RNA")
 
@@ -683,9 +612,7 @@ def test_export_anndata(conftest_pbmc_small, tmp_path):
         assert readback.varp[key].shape == conftest_pbmc_small.varp[key].shape
 
     with _factory.open(output_path) as exp:
-        readback = tiledbsoma.io.to_anndata(
-            exp, measurement_name="RNA", X_layer_name=None
-        )
+        readback = tiledbsoma.io.to_anndata(exp, measurement_name="RNA", X_layer_name=None)
         assert readback.obs.shape == conftest_pbmc_small.obs.shape
         assert readback.var.shape == conftest_pbmc_small.var.shape
         assert readback.X is None
@@ -749,9 +676,7 @@ def test_null_obs(conftest_pbmc_small, tmp_path: Path):
     # Create column of partially-null values
     rng = np.random.RandomState(seed)
 
-    conftest_pbmc_small.obs["empty_categorical_partial"] = rng.choice(
-        (np.nan, 1.0), conftest_pbmc_small.n_obs, True
-    )
+    conftest_pbmc_small.obs["empty_categorical_partial"] = rng.choice((np.nan, 1.0), conftest_pbmc_small.n_obs, True)
     conftest_pbmc_small.obs["empty_extension_partial"] = pd.Series(
         [1] * conftest_pbmc_small.n_obs + [np.nan], dtype=pd.Int64Dtype()
     )
@@ -817,17 +742,13 @@ def test_export_obsm_with_holes(h5ad_file_with_obsm_holes, tmp_path):
         try3 = tiledbsoma.io.to_anndata(exp, "RNA")
         assert try3.obsm["X_pca"].shape == (2638, 50)
 
-        try4 = tiledbsoma.io.to_anndata(
-            exp, "RNA", obsm_varm_width_hints={"obsm": {"X_pca": 50}}
-        )
+        try4 = tiledbsoma.io.to_anndata(exp, "RNA", obsm_varm_width_hints={"obsm": {"X_pca": 50}})
         assert try4.obsm["X_pca"].shape == (2638, 50)
 
 
 def test_X_empty(h5ad_file_X_empty, tmp_path):
     output_path = tmp_path.as_posix()
-    tiledbsoma.io.from_h5ad(
-        output_path, h5ad_file_X_empty.as_posix(), measurement_name="RNA"
-    )
+    tiledbsoma.io.from_h5ad(output_path, h5ad_file_X_empty.as_posix(), measurement_name="RNA")
 
     with tiledbsoma.Experiment.open(output_path) as exp:
         assert exp.obs.count == 2638
@@ -841,9 +762,7 @@ def test_X_empty(h5ad_file_X_empty, tmp_path):
 
 def test_X_none(h5ad_file_X_none, tmp_path):
     output_path = tmp_path.as_posix()
-    tiledbsoma.io.from_h5ad(
-        output_path, h5ad_file_X_none.as_posix(), measurement_name="RNA"
-    )
+    tiledbsoma.io.from_h5ad(output_path, h5ad_file_X_none.as_posix(), measurement_name="RNA")
 
     with tiledbsoma.Experiment.open(output_path) as exp:
         assert exp.obs.count == 2638
@@ -864,22 +783,16 @@ def test_X_none(h5ad_file_X_none, tmp_path):
             tiledbsoma.io.to_anndata(exp, measurement_name="RNA", X_layer_name="data")
 
         with pytest.raises(ValueError):
-            adata = tiledbsoma.io.to_anndata(
-                exp, measurement_name="RNA", X_layer_name="nonesuch"
-            )
+            adata = tiledbsoma.io.to_anndata(exp, measurement_name="RNA", X_layer_name="nonesuch")
 
 
 # There exist in the wild AnnData files with categorical-int columns where "not in the category" is
 # indicated by the presence of floating-point math.NaN in cells. Here we test that we can ingest
 # this.
-def test_obs_with_categorical_int_nan_enumeration(
-    tmp_path, h5ad_file_categorical_int_nan
-):
+def test_obs_with_categorical_int_nan_enumeration(tmp_path, h5ad_file_categorical_int_nan):
     output_path = tmp_path.as_uri()
 
-    tiledbsoma.io.from_h5ad(
-        output_path, h5ad_file_categorical_int_nan, measurement_name="RNA"
-    )
+    tiledbsoma.io.from_h5ad(output_path, h5ad_file_categorical_int_nan, measurement_name="RNA")
 
 
 @pytest.mark.parametrize("obs_id_name", ["obs_id", "cells_are_great"])
@@ -963,9 +876,7 @@ def test_id_names(tmp_path, obs_id_name, var_id_name, indexify_obs, indexify_var
         )
 
         soma_obs = exp.obs.read(column_names=[obs_id_name]).concat().to_pandas()
-        soma_var = (
-            exp.ms["RNA"].var.read(column_names=[var_id_name]).concat().to_pandas()
-        )
+        soma_var = exp.ms["RNA"].var.read(column_names=[var_id_name]).concat().to_pandas()
         assert list(bdata.obs.index) == list(soma_obs[obs_id_name])
         assert list(bdata.var.index) == list(soma_var[var_id_name])
 
@@ -1021,9 +932,7 @@ def make_uns_adata(
     return soma_uri, adata
 
 
-@pytest.mark.parametrize(
-    "outgest_uns_keys", [["int_scalar", "strings", "np_ndarray_2d"], None]
-)
+@pytest.mark.parametrize("outgest_uns_keys", [["int_scalar", "strings", "np_ndarray_2d"], None])
 def test_uns_io(tmp_path, outgest_uns_keys):
     soma_uri, adata = make_uns_adata(tmp_path)
 
@@ -1047,9 +956,7 @@ def test_uns_io(tmp_path, outgest_uns_keys):
     expected_adata.var.index.name = None
 
     if outgest_uns_keys is not None:
-        expected_adata.uns = {
-            k: v for k, v in expected_adata.uns.items() if k in outgest_uns_keys
-        }
+        expected_adata.uns = {k: v for k, v in expected_adata.uns.items() if k in outgest_uns_keys}
 
     assert_adata_equal(expected_adata, adata2)
 
@@ -1208,16 +1115,12 @@ def test_outgest_X_layers(tmp_path):
         assert bdata.X is not None
         assert len(bdata.layers) == 0
 
-        bdata = tiledbsoma.io.to_anndata(
-            exp, measurement_name, X_layer_name=None, extra_X_layer_names=[]
-        )
+        bdata = tiledbsoma.io.to_anndata(exp, measurement_name, X_layer_name=None, extra_X_layer_names=[])
         assert bdata.X is None
         assert len(bdata.layers) == 0
 
         with pytest.raises(ValueError):
-            tiledbsoma.io.to_anndata(
-                exp, measurement_name, X_layer_name=None, extra_X_layer_names=["data"]
-            )
+            tiledbsoma.io.to_anndata(exp, measurement_name, X_layer_name=None, extra_X_layer_names=["data"])
 
         with pytest.raises(ValueError):
             tiledbsoma.io.to_anndata(exp, measurement_name, X_layer_name="nonesuch")
@@ -1230,9 +1133,7 @@ def test_outgest_X_layers(tmp_path):
                 extra_X_layer_names=["nonesuch"],
             )
 
-        bdata = tiledbsoma.io.to_anndata(
-            exp, measurement_name, X_layer_name="data", extra_X_layer_names=["data2"]
-        )
+        bdata = tiledbsoma.io.to_anndata(exp, measurement_name, X_layer_name="data", extra_X_layer_names=["data2"])
         assert bdata.X is not None
         assert len(bdata.layers) == 1
         assert sorted(list(bdata.layers.keys())) == ["data2"]
@@ -1316,9 +1217,7 @@ def test_nan_append(conftest_pbmc_small, dtype, nans, new_obs_ids, tmp_path):
 
     # Initial ingest
     SOMA_URI = tmp_path.as_posix()
-    tiledbsoma.io.from_anndata(
-        experiment_uri=SOMA_URI, anndata=conftest_pbmc_small, measurement_name="RNA"
-    )
+    tiledbsoma.io.from_anndata(experiment_uri=SOMA_URI, anndata=conftest_pbmc_small, measurement_name="RNA")
 
     # Register the second anndata object
     rd = tiledbsoma.io.register_anndatas(
@@ -1368,15 +1267,9 @@ def test_decat_append(tmp_path):
         data={
             "obs_id": np.asarray(obs_ids_under),
             "is_primary_data": np.asarray([True] * nobs_under),
-            "string_enum": pd.Series(
-                np.asarray(string_enum_values_under), dtype="category"
-            ),
-            "float_enum": pd.Series(
-                np.asarray(float_enum_values_under), dtype="category"
-            ),
-            "bool_enum": pd.Series(
-                np.asarray(bool_enum_values_under), dtype="category"
-            ),
+            "string_enum": pd.Series(np.asarray(string_enum_values_under), dtype="category"),
+            "float_enum": pd.Series(np.asarray(float_enum_values_under), dtype="category"),
+            "bool_enum": pd.Series(np.asarray(bool_enum_values_under), dtype="category"),
         }
     )
     obs_under.set_index("obs_id", inplace=True)
@@ -1385,12 +1278,8 @@ def test_decat_append(tmp_path):
         data={
             "obs_id": np.asarray(obs_ids_over),
             "is_primary_data": np.asarray([True] * nobs_over),
-            "string_enum": pd.Series(
-                np.asarray(string_enum_values_over), dtype="category"
-            ),
-            "float_enum": pd.Series(
-                np.asarray(float_enum_values_over), dtype="category"
-            ),
+            "string_enum": pd.Series(np.asarray(string_enum_values_over), dtype="category"),
+            "float_enum": pd.Series(np.asarray(float_enum_values_over), dtype="category"),
             "bool_enum": pd.Series(np.asarray(bool_enum_values_over), dtype="category"),
         }
     )
@@ -1404,9 +1293,7 @@ def test_decat_append(tmp_path):
     )
     var.set_index("var_id", inplace=True)
 
-    X_under = scipy.sparse.random(
-        nobs_under, nvar, density=0.1, dtype=np.float64
-    ).tocsr()
+    X_under = scipy.sparse.random(nobs_under, nvar, density=0.1, dtype=np.float64).tocsr()
     X_over = scipy.sparse.random(nobs_over, nvar, density=0.1, dtype=np.float64).tocsr()
 
     adata_under = anndata.AnnData(X=X_under, obs=obs_under, var=var)
@@ -1462,12 +1349,8 @@ def test_decat_append(tmp_path):
     rd_under_over.prepare_experiment(experiment_uri=path_under)
     rd_over_under.prepare_experiment(experiment_uri=path_over)
 
-    tiledbsoma.io.from_anndata(
-        path_under, adata_over, "RNA", registration_mapping=rd_under_over
-    )
-    tiledbsoma.io.from_anndata(
-        path_over, adata_under, "RNA", registration_mapping=rd_over_under
-    )
+    tiledbsoma.io.from_anndata(path_under, adata_over, "RNA", registration_mapping=rd_under_over)
+    tiledbsoma.io.from_anndata(path_over, adata_under, "RNA", registration_mapping=rd_over_under)
 
     # Check that the appends happened successfully
     with tiledbsoma.Experiment.open(path_under) as exp_under:
@@ -1475,36 +1358,18 @@ def test_decat_append(tmp_path):
         assert pa.types.is_dictionary(exp_under.obs.schema.field("float_enum").type)
         assert pa.types.is_dictionary(exp_under.obs.schema.field("bool_enum").type)
         obs_table = exp_under.obs.read().concat()
-        assert (
-            obs_table.column("string_enum").to_pylist()
-            == string_enum_values_under + string_enum_values_over
-        )
-        assert (
-            obs_table.column("float_enum").to_pylist()
-            == float_enum_values_under + float_enum_values_over
-        )
-        assert (
-            obs_table.column("bool_enum").to_pylist()
-            == bool_enum_values_under + bool_enum_values_over
-        )
+        assert obs_table.column("string_enum").to_pylist() == string_enum_values_under + string_enum_values_over
+        assert obs_table.column("float_enum").to_pylist() == float_enum_values_under + float_enum_values_over
+        assert obs_table.column("bool_enum").to_pylist() == bool_enum_values_under + bool_enum_values_over
 
     with tiledbsoma.Experiment.open(path_over) as exp_over:
         assert not pa.types.is_dictionary(exp_over.obs.schema.field("string_enum").type)
         assert not pa.types.is_dictionary(exp_over.obs.schema.field("float_enum").type)
         assert pa.types.is_dictionary(exp_over.obs.schema.field("bool_enum").type)
         obs_table = exp_over.obs.read().concat()
-        assert (
-            obs_table.column("string_enum").to_pylist()
-            == string_enum_values_over + string_enum_values_under
-        )
-        assert (
-            obs_table.column("float_enum").to_pylist()
-            == float_enum_values_over + float_enum_values_under
-        )
-        assert (
-            obs_table.column("bool_enum").to_pylist()
-            == bool_enum_values_over + bool_enum_values_under
-        )
+        assert obs_table.column("string_enum").to_pylist() == string_enum_values_over + string_enum_values_under
+        assert obs_table.column("float_enum").to_pylist() == float_enum_values_over + float_enum_values_under
+        assert obs_table.column("bool_enum").to_pylist() == bool_enum_values_over + bool_enum_values_under
 
 
 def test_from_h5ad_bad_uri():
@@ -1534,27 +1399,19 @@ def test_from_anndata_byteorder_63459(tmp_path, conftest_pbmc_small):
 
 def test_soma_file_handling_65831_65864():
     context = tiledbsoma.SOMATileDBContext()
-    fb = tiledbsoma.pytiledbsoma.SOMAFileHandle(
-        str(TESTDATA / "pbmc-small.h5ad"), context.native_context
-    )
+    fb = tiledbsoma.pytiledbsoma.SOMAFileHandle(str(TESTDATA / "pbmc-small.h5ad"), context.native_context)
     del context  # https://app.shortcut.com/tiledb-inc/story/65864/
     gc.collect()  # Make sure that context is freed
     fb.read(100)  # Implicitly ensure that read does not segfault
     fb.close()
 
-    with pytest.raises(
-        tiledbsoma.SOMAError, match="File must be open before performing read"
-    ):
+    with pytest.raises(tiledbsoma.SOMAError, match="File must be open before performing read"):
         fb.read(100)
 
-    with pytest.raises(
-        tiledbsoma.SOMAError, match="File must be open before performing seek"
-    ):
+    with pytest.raises(tiledbsoma.SOMAError, match="File must be open before performing seek"):
         fb.seek(100, 1)
 
-    with pytest.raises(
-        tiledbsoma.SOMAError, match="File must be open before performing readinto"
-    ):
+    with pytest.raises(tiledbsoma.SOMAError, match="File must be open before performing readinto"):
         arr = np.zeros(100, dtype=np.uint8)
         fb.readinto(arr)
 

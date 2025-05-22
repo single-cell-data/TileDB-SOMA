@@ -55,13 +55,9 @@ class _DictColumnSpec(TypedDict, total=False):
 # of TileDBCreateOptions.
 def _normalize_filters(inputs: Iterable[_FilterSpec]) -> tuple[_DictFilterSpec, ...]:
     if isinstance(inputs, str):
-        raise TypeError(
-            "filters must be a list of strings (or dicts), not a single string"
-        )
+        raise TypeError("filters must be a list of strings (or dicts), not a single string")
     if not isinstance(inputs, Iterable):
-        raise TypeError(
-            f"filters must be a sequence of filter specs, not {type(inputs)}"
-        )
+        raise TypeError(f"filters must be a sequence of filter specs, not {type(inputs)}")
     return tuple(_normalize_filter(spec) for spec in inputs)
 
 
@@ -75,9 +71,7 @@ def _normalize_filters_optional(
 
 @attrs_.define(frozen=True, slots=True)
 class _ColumnConfig:
-    filters: tuple[_DictFilterSpec, ...] | None = attrs_.field(
-        converter=_normalize_filters_optional
-    )
+    filters: tuple[_DictFilterSpec, ...] | None = attrs_.field(converter=_normalize_filters_optional)
     tile: int | None = attrs_.field(validator=vld.optional(vld.instance_of(int)))
 
     @classmethod
@@ -90,9 +84,7 @@ def _normalize_columns(
 ) -> Mapping[str, _ColumnConfig]:
     if not isinstance(input, Mapping):
         raise TypeError("column configuration must be a dictionary")
-    return {
-        col_name: _ColumnConfig.from_dict(value) for (col_name, value) in input.items()
-    }
+    return {col_name: _ColumnConfig.from_dict(value) for (col_name, value) in input.items()}
 
 
 @attrs_.define(frozen=True, kw_only=True, slots=True)
@@ -106,25 +98,15 @@ class TileDBCreateOptions:
     ``TileDBCreateOptions(**tiledb_create_dict)``).
     """
 
-    dataframe_dim_zstd_level: int = attrs_.field(
-        validator=vld.instance_of(int), default=3
-    )
-    sparse_nd_array_dim_zstd_level: int = attrs_.field(
-        validator=vld.instance_of(int), default=3
-    )
-    dense_nd_array_dim_zstd_level: int = attrs_.field(
-        validator=vld.instance_of(int), default=3
-    )
+    dataframe_dim_zstd_level: int = attrs_.field(validator=vld.instance_of(int), default=3)
+    sparse_nd_array_dim_zstd_level: int = attrs_.field(validator=vld.instance_of(int), default=3)
+    dense_nd_array_dim_zstd_level: int = attrs_.field(validator=vld.instance_of(int), default=3)
     write_X_chunked: bool = attrs_.field(validator=vld.instance_of(bool), default=True)
-    goal_chunk_nnz: int = attrs_.field(
-        validator=vld.instance_of(int), default=100_000_000
-    )
+    goal_chunk_nnz: int = attrs_.field(validator=vld.instance_of(int), default=100_000_000)
     # We would prefer _remote_cap_nbytes as this is a server-side parameter
     # people should not be changing. However, leading underscores are not
     # accepted by the attrs framework.
-    remote_cap_nbytes: int = attrs_.field(
-        validator=vld.instance_of(int), default=2_400_000_000
-    )
+    remote_cap_nbytes: int = attrs_.field(validator=vld.instance_of(int), default=2_400_000_000)
     capacity: int = attrs_.field(validator=vld.instance_of(int), default=100_000)
     offsets_filters: tuple[_DictFilterSpec, ...] = attrs_.field(
         converter=_normalize_filters,
@@ -141,18 +123,10 @@ class TileDBCreateOptions:
         validator=vld.instance_of(bool),
         default=False,
     )
-    tile_order: str | None = attrs_.field(
-        validator=vld.optional(vld.instance_of(str)), default=None
-    )
-    cell_order: str | None = attrs_.field(
-        validator=vld.optional(vld.instance_of(str)), default=None
-    )
-    dims: Mapping[str, _ColumnConfig] = attrs_.field(
-        factory=dict, converter=_normalize_columns
-    )
-    attrs: Mapping[str, _ColumnConfig] = attrs_.field(
-        factory=dict, converter=_normalize_columns
-    )
+    tile_order: str | None = attrs_.field(validator=vld.optional(vld.instance_of(str)), default=None)
+    cell_order: str | None = attrs_.field(validator=vld.optional(vld.instance_of(str)), default=None)
+    dims: Mapping[str, _ColumnConfig] = attrs_.field(factory=dict, converter=_normalize_columns)
+    attrs: Mapping[str, _ColumnConfig] = attrs_.field(factory=dict, converter=_normalize_columns)
 
     @classmethod
     def from_platform_config(
@@ -200,9 +174,7 @@ class TileDBWriteOptions:
     """Tuning options used when writing to SOMA arrays."""
 
     sort_coords: bool = attrs_.field(validator=vld.instance_of(bool), default=True)
-    consolidate_and_vacuum: bool | None = attrs_.field(
-        validator=vld.instance_of(bool), default=False
-    )
+    consolidate_and_vacuum: bool | None = attrs_.field(validator=vld.instance_of(bool), default=False)
 
     @classmethod
     def from_platform_config(
@@ -230,9 +202,7 @@ class TileDBWriteOptions:
 _T = TypeVar("_T")
 
 
-def _dig_platform_config(
-    input: object, typ: type[_T], full_path: tuple[str, ...]
-) -> dict[str, object] | _T:
+def _dig_platform_config(input: object, typ: type[_T], full_path: tuple[str, ...]) -> dict[str, object] | _T:
     """Looks for an object of the given type in dictionaries.
 
     This is used to extract a valid object out of ``platform_config``. If an
@@ -297,15 +267,11 @@ def _normalize_filter(input: _FilterSpec) -> _DictFilterSpec:
     if isinstance(input, str):
         input = {"_type": input}
     if not isinstance(input, Mapping):
-        raise TypeError(
-            f"filters must be specified as a string or dict, not {type(input)}"
-        )
+        raise TypeError(f"filters must be specified as a string or dict, not {type(input)}")
     try:
         typ_name = input["_type"]
     except KeyError as ke:
-        raise ValueError(
-            "filter dicts must include a `_type` key with the filter name"
-        ) from ke
+        raise ValueError("filter dicts must include a `_type` key with the filter name") from ke
     if not isinstance(typ_name, str):
         raise TypeError(f"filter name must be a str, not {type(typ_name)}")
     try:

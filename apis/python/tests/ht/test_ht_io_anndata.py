@@ -73,9 +73,7 @@ def df_index_dtypes() -> st.SearchStrategy[npt.DTypeLike]:
     )
 
 
-def elements_and_dtypes(
-    dtype: np.dtype, is_index: bool
-) -> tuple[np.dtype, st.SearchStrategy[Any]]:
+def elements_and_dtypes(dtype: np.dtype, is_index: bool) -> tuple[np.dtype, st.SearchStrategy[Any]]:
     """Given dtype, return elements and dtype strategy"""
     elements = None  # default
     if dtype.kind == "m":
@@ -99,24 +97,18 @@ def elements_and_dtypes(
         if HT_TEST_CONFIG["sc-63404_workaround"]:
             elements = ht_np.from_dtype(
                 dtype,
-                alphabet=st.characters(
-                    exclude_categories=["C"], exclude_characters=["\x00"]
-                ),
+                alphabet=st.characters(exclude_categories=["C"], exclude_characters=["\x00"]),
                 min_size=1,
             )
         else:
             elements = ht_np.from_dtype(
                 dtype,
-                alphabet=st.characters(
-                    exclude_categories=["C"], exclude_characters=["\x00"]
-                ),
+                alphabet=st.characters(exclude_categories=["C"], exclude_characters=["\x00"]),
             )
     elif dtype.kind in ("S", "a"):
         max_size = dtype.itemsize or None
         if HT_TEST_CONFIG["sc-63404_workaround"]:
-            elements = st.binary(min_size=1, max_size=max_size).filter(
-                lambda b: b"\0" not in b
-            )
+            elements = st.binary(min_size=1, max_size=max_size).filter(lambda b: b"\0" not in b)
         else:
             elements = st.binary(max_size=max_size).filter(lambda b: b"\0" not in b)
 
@@ -124,14 +116,10 @@ def elements_and_dtypes(
 
 
 @st.composite
-def dataframe_indexes(
-    draw: st.DrawFn, size: int, name: str
-) -> st.SearchStrategy[pd.Index]:
+def dataframe_indexes(draw: st.DrawFn, size: int, name: str) -> st.SearchStrategy[pd.Index]:
     """Strategy that returns an index-building strategy"""
     if draw(st.booleans()):
-        return ht_pd.range_indexes(
-            min_size=size, max_size=size, name=st.just(f"{name}_index")
-        )
+        return ht_pd.range_indexes(min_size=size, max_size=size, name=st.just(f"{name}_index"))
 
     elements, dtype = elements_and_dtypes(draw(df_index_dtypes()), is_index=True)
     indexes = ht_pd.indexes(
@@ -152,9 +140,7 @@ def dataframe_columns(draw: st.DrawFn, name: str) -> ht_pd.column:
 
 
 @st.composite
-def dataframes(
-    draw: st.DrawFn, size: int, name: str, n_cols: int | None = None
-) -> pd.DataFrame:
+def dataframes(draw: st.DrawFn, size: int, name: str, n_cols: int | None = None) -> pd.DataFrame:
     """
     Strategy to generate dataframe compatible with obs/var requirements
     (must be made of types/values supported by both TileDB-SOMA _and_ AnnData).
@@ -168,11 +154,7 @@ def dataframes(
     # Hypothesis.extras.pandas does not support generating categorical or (pandas) string
     # types, so do those as post-processing steps.
     for c in columns:
-        if (
-            c.dtype.kind in ("S", "U", "b", "i", "u")
-            and df[c.name].dtype != "category"
-            and draw(st.booleans())
-        ):
+        if c.dtype.kind in ("S", "U", "b", "i", "u") and df[c.name].dtype != "category" and draw(st.booleans()):
             df[c.name] = df[c.name].astype("category")
 
         # AnnData does not (yet) support Pandas string-type. See https://github.com/scverse/anndata/issues/1571
@@ -197,9 +179,7 @@ def keys() -> st.SearchStrategy[str]:
 
 # AnnData <= 0.10 does not support scipy sparse_array
 if Version(anndata.__version__) >= Version("0.11.0"):
-    MatrixFormats = Literal[
-        "csr_matrix", "csc_matrix", "csr_array", "csc_array", "ndarray", "ma"
-    ]
+    MatrixFormats = Literal["csr_matrix", "csc_matrix", "csr_array", "csc_array", "ndarray", "ma"]
 else:
     MatrixFormats = Literal["csr_matrix", "csc_matrix", "ndarray", "ma"]
 
@@ -218,9 +198,7 @@ def matrixes(
     rng = np.random.default_rng(seed=draw(st.integers(min_value=0)))
     dtype = draw(
         st.one_of(
-            ht_np.floating_dtypes(
-                sizes=(32, 64), endianness="="
-            ),  # float16 not supported
+            ht_np.floating_dtypes(sizes=(32, 64), endianness="="),  # float16 not supported
             ht_np.integer_dtypes(endianness="="),
             ht_np.unsigned_integer_dtypes(endianness="="),
             # ht_np.boolean_dtypes(),  # bools not currently supported by TileDB-SOMA
@@ -260,9 +238,7 @@ def matrixes(
 
     # the remainder are sparse, so create a mask
     density = 0.2
-    masked = rng.choice(
-        size, size=int(size * (1 - density)), replace=False
-    )  # coordinates
+    masked = rng.choice(size, size=int(size * (1 - density)), replace=False)  # coordinates
     mask = np.ones((size,), dtype=np.bool_)
     mask[masked] = 0
     mask = mask.reshape(vals.shape)
@@ -298,9 +274,7 @@ def matrix_shapes(
     if min_dims <= 0:
         return prelude
 
-    postlude = draw(
-        st.lists(st.integers(min_side, max_side), min_size=min_dims, max_size=max_dims)
-    )
+    postlude = draw(st.lists(st.integers(min_side, max_side), min_size=min_dims, max_size=max_dims))
     return tuple(list(prelude) + postlude)
 
 
@@ -353,9 +327,7 @@ def dictionaries_unique_by(
     dict_class: type = dict,
     min_size: int = 0,
     max_size: int | None = None,
-    unique_by: (
-        Callable[[Ex], Hashable] | tuple[Callable[[Ex], Hashable], ...] | None
-    ) = None,
+    unique_by: Callable[[Ex], Hashable] | tuple[Callable[[Ex], Hashable], ...] | None = None,
 ) -> st.SearchStrategy[dict[Ex, T]]:
     """
     Identical to hypothesis.strategies.dictionaries, except it allows user-configurable
@@ -380,12 +352,8 @@ def unses(draw: st.DrawFn) -> dict[str, Any]:
     # the types AnnData.write will allow
     np_dtypes = st.one_of(
         ht_np.boolean_dtypes(),
-        ht_np.integer_dtypes(
-            endianness="=" if HT_TEST_CONFIG["sc-63459_workaround"] else "?"
-        ),
-        ht_np.unsigned_integer_dtypes(
-            endianness="=" if HT_TEST_CONFIG["sc-63459_workaround"] else "?"
-        ),
+        ht_np.integer_dtypes(endianness="=" if HT_TEST_CONFIG["sc-63459_workaround"] else "?"),
+        ht_np.unsigned_integer_dtypes(endianness="=" if HT_TEST_CONFIG["sc-63459_workaround"] else "?"),
         ht_np.floating_dtypes(
             sizes=(32, 64),
             endianness="=" if HT_TEST_CONFIG["sc-63459_workaround"] else "?",
@@ -395,9 +363,7 @@ def unses(draw: st.DrawFn) -> dict[str, Any]:
         # st.none(),  # both anndata.write and tiledbsoma.io.from_anndata drop any elements with a value of None
         st.booleans(),
         st.floats(),
-        st.integers(
-            min_value=-(2**63), max_value=2**63 - 1
-        ),  # outside this range unsupported by TileDB metadata
+        st.integers(min_value=-(2**63), max_value=2**63 - 1),  # outside this range unsupported by TileDB metadata
         st.text(string.printable),
         # | st.binary()  # Currently unsupported by Anndata write
     )
@@ -407,9 +373,7 @@ def unses(draw: st.DrawFn) -> dict[str, Any]:
         monomorphic_list(value_types, min_size=1),
         ht_np.arrays(
             dtype=np_dtypes,
-            shape=ht_np.array_shapes(
-                max_dims=2 if HT_TEST_CONFIG["sc-63409_workaround"] else None
-            ),
+            shape=ht_np.array_shapes(max_dims=2 if HT_TEST_CONFIG["sc-63409_workaround"] else None),
         ),
     )
 
@@ -423,9 +387,7 @@ def unses(draw: st.DrawFn) -> dict[str, Any]:
                 keys=keys(),
                 values=st.recursive(
                     base,
-                    lambda children: dictionaries_unique_by(
-                        keys=keys(), values=children, unique_by=key_unique_by
-                    ),
+                    lambda children: dictionaries_unique_by(keys=keys(), values=children, unique_by=key_unique_by),
                     max_leaves=10,
                 ),
                 unique_by=key_unique_by,
@@ -478,9 +440,7 @@ def anndatas(draw: st.DrawFn) -> anndata.AnnData:
     return adata
 
 
-def assert_matrix_equal(
-    m1: np.ndarray | sp.sparray | None, m2: np.ndarray | sp.sparray | None
-) -> None:
+def assert_matrix_equal(m1: np.ndarray | sp.sparray | None, m2: np.ndarray | sp.sparray | None) -> None:
     if m1 is None and m2 is None:
         return
 
@@ -500,14 +460,10 @@ def assert_deep_eq(a: Any, b: Any, **kwargs: Any) -> None:
 
 
 def assert_frame_equal_strict(f1: pd.DataFrame, f2: pd.DataFrame) -> None:
-    assert_frame_equal(
-        f1, f2, check_index_type=True, check_column_type=True, check_exact=True
-    )
+    assert_frame_equal(f1, f2, check_index_type=True, check_column_type=True, check_exact=True)
 
 
-def assert_map_of_matrix_equal(
-    m1: Mapping[str, np.ndarray], m2: dict[str, np.ndarray]
-) -> None:
+def assert_map_of_matrix_equal(m1: Mapping[str, np.ndarray], m2: dict[str, np.ndarray]) -> None:
     assert m1.keys() == m2.keys()
     for k in m1.keys():
         assert_matrix_equal(m1[k], m2[k])
@@ -561,9 +517,7 @@ def assert_uns_equal(src_adata: anndata.AnnData, read_adata: anndata.Anndata) ->
             if (
                 chng["old_type"] in (np.bool_, list)
                 and chng["new_type"] == np.uint8
-                and ndarray_equal(
-                    np.asarray(chng["old_value"]).astype(np.uint8), chng["new_value"]
-                )
+                and ndarray_equal(np.asarray(chng["old_value"]).astype(np.uint8), chng["new_value"])
             ):
                 del diff["type_changes"][key]
                 continue
@@ -572,9 +526,7 @@ def assert_uns_equal(src_adata: anndata.AnnData, read_adata: anndata.Anndata) ->
         del diff["type_changes"]
 
 
-def assert_anndata_equal(
-    src_adata: anndata.AnnData, read_adata: anndata.AnnData
-) -> None:
+def assert_anndata_equal(src_adata: anndata.AnnData, read_adata: anndata.AnnData) -> None:
 
     assert (
         src_adata.shape == read_adata.shape
@@ -642,9 +594,7 @@ def test_roundtrip_from_anndata_to_anndata(
     # Pick X and raw.X layer names that are NOT already used by the layers mapping
     #
     X_layer_name = data.draw(posix_filename().filter(lambda x: x not in adata.layers))
-    raw_X_layer_name = data.draw(
-        posix_filename().filter(lambda x: x not in adata.layers and x != X_layer_name)
-    )
+    raw_X_layer_name = data.draw(posix_filename().filter(lambda x: x not in adata.layers and x != X_layer_name))
 
     with suppress_type_checks():
         tiledbsoma.io.from_anndata(
@@ -672,11 +622,7 @@ def test_roundtrip_from_anndata_to_anndata(
             if adata.raw is not None:
                 assert_frame_equal_strict(
                     adata.raw.var.reset_index(),
-                    E.ms["raw"]["var"]
-                    .read()
-                    .concat()
-                    .to_pandas()
-                    .drop(columns="soma_joinid"),
+                    E.ms["raw"]["var"].read().concat().to_pandas().drop(columns="soma_joinid"),
                 )
                 if adata.raw.X is not None:
                     tbl = E.ms["raw"]["X"][raw_X_layer_name].read().tables().concat()

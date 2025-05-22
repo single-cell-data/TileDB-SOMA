@@ -223,12 +223,8 @@ class CollectionBase(  # type: ignore[misc]  # __eq__ false positive
             uri,
         )
 
-    @_funcs.forwards_kwargs_to(
-        DataFrame.create, exclude=("context", "tiledb_timestamp")
-    )
-    def add_new_dataframe(
-        self, key: str, *, uri: str | None = None, **kwargs: Any
-    ) -> DataFrame:
+    @_funcs.forwards_kwargs_to(DataFrame.create, exclude=("context", "tiledb_timestamp"))
+    def add_new_dataframe(self, key: str, *, uri: str | None = None, **kwargs: Any) -> DataFrame:
         """Adds a new DataFrame to this collection.
 
         For details about the behavior of ``key`` and ``uri``, see
@@ -270,9 +266,7 @@ class CollectionBase(  # type: ignore[misc]  # __eq__ false positive
         )
 
     @_funcs.forwards_kwargs_to(NDArray.create, exclude=("context", "tiledb_timestamp"))
-    def _add_new_ndarray(
-        self, cls: type[_NDArr], key: str, *, uri: str | None = None, **kwargs: Any
-    ) -> _NDArr:
+    def _add_new_ndarray(self, cls: type[_NDArr], key: str, *, uri: str | None = None, **kwargs: Any) -> _NDArr:
         """Internal implementation of common NDArray-adding operations."""
         return self._add_new_element(
             key,
@@ -381,9 +375,7 @@ class CollectionBase(  # type: ignore[misc]  # __eq__ false positive
                 instead of the default.
         """
         self._check_allows_child(key, kind)
-        return super()._add_new_element(
-            key, kind=kind, factory=factory, user_uri=user_uri
-        )
+        return super()._add_new_element(key, kind=kind, factory=factory, user_uri=user_uri)
 
     def members(self) -> dict[str, tuple[str, str]]:
         """Get a mapping of {member_name: (uri, soma_object_type)}."""
@@ -439,14 +431,10 @@ class CollectionBase(  # type: ignore[misc]  # __eq__ false positive
     def _check_allows_child(cls, key: str, child_cls: type) -> None:
         real_child = _real_class(child_cls)
         if not issubclass(real_child, SOMAObject):
-            raise TypeError(
-                f"only TileDB objects can be added as children of {cls}, not {child_cls}"
-            )
+            raise TypeError(f"only TileDB objects can be added as children of {cls}, not {child_cls}")
         constraint = cls._subclass_constrained_soma_types.get(key)
         if constraint is not None and real_child.soma_type not in constraint:
-            raise TypeError(
-                f"cannot add {child_cls} at {cls}[{key!r}]; only {constraint}"
-            )
+            raise TypeError(f"cannot add {child_cls} at {cls}[{key!r}]; only {constraint}")
 
 
 AnyTileDBCollection = CollectionBase[Any]

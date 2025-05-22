@@ -144,9 +144,7 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
                 dim_shape - 1,
             ]
 
-        index_column_info = pa.RecordBatch.from_pydict(
-            index_column_data, schema=pa.schema(index_column_schema)
-        )
+        index_column_info = pa.RecordBatch.from_pydict(index_column_data, schema=pa.schema(index_column_schema))
 
         carrow_type = pyarrow_to_carrow_type(type)
         plt_cfg = _util.build_clib_platform_config(platform_config)
@@ -241,9 +239,7 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
         ).concat()
 
         if arrow_table is None:
-            raise SOMAError(
-                "internal error: at least one table-piece should have been returned"
-            )
+            raise SOMAError("internal error: at least one table-piece should have been returned")
 
         npval = arrow_table.column("soma_data").to_numpy()
         # TODO: as currently coded we're looking at the non-empty domain upper
@@ -372,21 +368,15 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
 
         if dim_shape is None:
             dim_capacity = 2**63 - 1
-            dim_extent = min(
-                dim_capacity, create_options.dim_tile(dim_name, default_extent)
-            )
+            dim_extent = min(dim_capacity, create_options.dim_tile(dim_name, default_extent))
             # For core: "domain max expanded to multiple of tile extent exceeds max value
             # representable by domain type. Reduce domain max by 1 tile extent to allow for
             # expansion."
             dim_capacity -= dim_extent
         else:
             if dim_shape <= 0:
-                raise ValueError(
-                    "SOMASparseNDArray shape must be a non-zero-length tuple of positive ints or Nones"
-                )
+                raise ValueError("SOMASparseNDArray shape must be a non-zero-length tuple of positive ints or Nones")
             dim_capacity = dim_shape
-            dim_extent = min(
-                dim_shape, create_options.dim_tile(dim_name, default_extent)
-            )
+            dim_extent = min(dim_shape, create_options.dim_tile(dim_name, default_extent))
 
         return (dim_capacity, dim_extent)

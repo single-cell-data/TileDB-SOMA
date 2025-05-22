@@ -25,14 +25,10 @@ def test_geometry_domain(tmp_path, domain):
                 assert len(soma_domain[idx][1]) == 2
 
                 for axis_idx, axis_name in enumerate(geom.coordinate_space.axis_names):
-                    assert soma_domain[idx][0][axis_name] == (
-                        f64info.min if domain is None else domain[0][axis_idx][0]
-                    )
+                    assert soma_domain[idx][0][axis_name] == (f64info.min if domain is None else domain[0][axis_idx][0])
 
                 for axis_idx, axis_name in enumerate(geom.coordinate_space.axis_names):
-                    assert soma_domain[idx][1][axis_name] == (
-                        f64info.max if domain is None else domain[0][axis_idx][1]
-                    )
+                    assert soma_domain[idx][1][axis_name] == (f64info.max if domain is None else domain[0][axis_idx][1])
 
 
 def test_geometry_coordinate_space(tmp_path):
@@ -47,13 +43,9 @@ def test_geometry_coordinate_space(tmp_path):
 
         # Axis names do not match
         with pytest.raises(ValueError):
-            geom.coordinate_space = soma.CoordinateSpace(
-                [soma.Axis(name="a"), soma.Axis(name="y")]
-            )
+            geom.coordinate_space = soma.CoordinateSpace([soma.Axis(name="a"), soma.Axis(name="y")])
 
-        geom.coordinate_space = soma.CoordinateSpace(
-            [soma.Axis(name="x", unit="m"), soma.Axis(name="y", unit="in")]
-        )
+        geom.coordinate_space = soma.CoordinateSpace([soma.Axis(name="x", unit="m"), soma.Axis(name="y", unit="in")])
         assert geom.coordinate_space[0] == soma.Axis(name="x", unit="m")
         assert geom.coordinate_space[1] == soma.Axis(name="y", unit="in")
 
@@ -65,9 +57,7 @@ def test_geometry_basic_read(tmp_path):
     triangle = shapely.Polygon([(0, 0), (0, 1), (1, 0), (0, 0)])
     rect = shapely.Polygon([(0, 0), (0, 1), (1, 1), (1, 0), (0, 0)])
 
-    with soma.GeometryDataFrame.create(
-        uri, schema=asch, domain=[[(-10, 10), (-10, 10)], [0, 100]]
-    ) as geom:
+    with soma.GeometryDataFrame.create(uri, schema=asch, domain=[[(-10, 10), (-10, 10)], [0, 100]]) as geom:
         pydict = {}
         pydict["soma_geometry"] = [
             [0.0, 0, 0, 1, 1, 0, 0, 0],
@@ -85,12 +75,12 @@ def test_geometry_basic_read(tmp_path):
         assert result[0].to_numpy()[0] == triangle.wkb
         assert result[0].to_numpy()[1] == rect.wkb
 
-        assert shapely.from_wkb(
-            result["soma_geometry"].to_numpy()[0]
-        ) == shapely.Polygon([(0, 0), (0, 1), (1, 0), (0, 0)])
-        assert shapely.from_wkb(
-            result["soma_geometry"].to_numpy()[1]
-        ) == shapely.Polygon([(0, 0), (0, 1), (1, 1), (1, 0), (0, 0)])
+        assert shapely.from_wkb(result["soma_geometry"].to_numpy()[0]) == shapely.Polygon(
+            [(0, 0), (0, 1), (1, 0), (0, 0)]
+        )
+        assert shapely.from_wkb(result["soma_geometry"].to_numpy()[1]) == shapely.Polygon(
+            [(0, 0), (0, 1), (1, 1), (1, 0), (0, 0)]
+        )
 
 
 def test_geometry_basic_spatial_read(tmp_path):
@@ -98,9 +88,7 @@ def test_geometry_basic_spatial_read(tmp_path):
 
     asch = pa.schema([("quality", pa.float32())])
 
-    with soma.GeometryDataFrame.create(
-        uri, schema=asch, domain=[[(-10, 10), (-10, 10)], [0, 100]]
-    ) as geom:
+    with soma.GeometryDataFrame.create(uri, schema=asch, domain=[[(-10, 10), (-10, 10)], [0, 100]]) as geom:
         pydict = {}
         pydict["soma_geometry"] = [
             [0.0, 0, 0, 1, 1, 0, 0, 0],
@@ -119,6 +107,6 @@ def test_geometry_basic_spatial_read(tmp_path):
         # Internal columns will be hidden in a subsequent PR
         assert len(result) == 1
 
-        assert shapely.from_wkb(
-            result["soma_geometry"].to_numpy()[0]
-        ) == shapely.Polygon([(0, 0), (0, 1), (1, 0), (0, 0)])
+        assert shapely.from_wkb(result["soma_geometry"].to_numpy()[0]) == shapely.Polygon(
+            [(0, 0), (0, 1), (1, 0), (0, 0)]
+        )

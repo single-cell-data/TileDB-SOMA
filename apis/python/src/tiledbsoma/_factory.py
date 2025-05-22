@@ -131,9 +131,7 @@ def open(
             else:
                 raise TypeError(f"cannot convert {soma_type!r} to expected SOMA type")
             if obj.soma_type.lower() != soma_type_name.lower():
-                raise TypeError(
-                    f"type of URI {uri!r} was {obj.soma_type}; expected {soma_type_name}"
-                )
+                raise TypeError(f"type of URI {uri!r} was {obj.soma_type}; expected {soma_type_name}")
         return obj
     except Exception:
         obj.close()
@@ -141,9 +139,7 @@ def open(
 
 
 def _open_internal(
-    opener: Callable[
-        [str, options.OpenMode, SOMATileDBContext, OpenTimestamp | None], _Wrapper
-    ],
+    opener: Callable[[str, options.OpenMode, SOMATileDBContext, OpenTimestamp | None], _Wrapper],
     uri: str,
     mode: options.OpenMode,
     context: SOMATileDBContext,
@@ -164,10 +160,7 @@ def reify_handle(hdl: _Wrapper) -> SOMAObject[_Wrapper]:
     typename = _read_soma_type(hdl)
     cls = _type_name_to_cls(typename)  # type: ignore[no-untyped-call]
     if not isinstance(hdl, cls._wrapper_type):
-        raise SOMAError(
-            f"cannot open {hdl.uri!r}: a {type(hdl._handle)}"
-            f" cannot be converted to a {typename}"
-        )
+        raise SOMAError(f"cannot open {hdl.uri!r}: a {type(hdl._handle)}" f" cannot be converted to a {typename}")
     return cast(
         _soma_object.SOMAObject[_Wrapper],
         cls(hdl, _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code"),
@@ -194,6 +187,4 @@ def _type_name_to_cls(type_name: str) -> type[AnySOMAObject]:
         return type_map[type_name.lower()]
     except KeyError as ke:
         options = sorted(type_map)
-        raise SOMAError(
-            f"{type_name!r} is not a recognized SOMA type; expected one of {options}"
-        ) from ke
+        raise SOMAError(f"{type_name!r} is not a recognized SOMA type; expected one of {options}") from ke

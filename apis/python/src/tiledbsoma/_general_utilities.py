@@ -42,10 +42,7 @@ def get_implementation_version() -> str:
 def assert_version_before(major: int, minor: int) -> None:
     version_string = get_implementation_version()
     if version_string == "unknown":
-        warnings.warn(
-            "`assert_version_before` could not retrieve the current "
-            "implementation version"
-        )
+        warnings.warn("`assert_version_before` could not retrieve the current " "implementation version")
         return
 
     version = version_string.split(".")
@@ -74,9 +71,7 @@ def get_libtiledbsoma_core_version() -> str:
 
 # Set this env var to "err" to print an error to stderr when TileDB-Py's and libtiledbsoma's core
 # versions mismatch (by default, an AssertionError is raised).
-TILEDB_CORE_MISMATCHED_VERSIONS_ERROR_LEVEL_VAR = (
-    "TILEDB_CORE_MISMATCHED_VERSIONS_ERROR_LEVEL"
-)
+TILEDB_CORE_MISMATCHED_VERSIONS_ERROR_LEVEL_VAR = "TILEDB_CORE_MISMATCHED_VERSIONS_ERROR_LEVEL"
 
 
 def show_package_versions() -> None:

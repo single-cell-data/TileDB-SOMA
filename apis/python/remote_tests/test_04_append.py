@@ -11,9 +11,7 @@ import tiledbsoma.io
 from .util import util_make_uri, util_tear_down_uri
 
 if os.getenv("TILEDB_REST_UNITTEST_TOKEN") is None:
-    pytest.skip(
-        reason="$TILEDB_REST_UNITTEST_TOKEN is not set", allow_module_level=True
-    )
+    pytest.skip(reason="$TILEDB_REST_UNITTEST_TOKEN is not set", allow_module_level=True)
 
 
 def test_basic_append(conftest_context, conftest_namespace, conftest_default_s3_path):

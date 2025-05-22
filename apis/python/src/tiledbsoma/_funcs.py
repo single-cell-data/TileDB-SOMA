@@ -33,9 +33,7 @@ except ImportError:
         return f
 
 
-def forwards_kwargs_to(
-    dst: Callable[..., Any], *, exclude: Collection[str] = ()
-) -> Callable[[_CT], _CT]:
+def forwards_kwargs_to(dst: Callable[..., Any], *, exclude: Collection[str] = ()) -> Callable[[_CT], _CT]:
     """Decorator function to update the signature with ``dst``'s kwargs.
 
     Example:
@@ -77,9 +75,7 @@ def forwards_kwargs_to(
                         # `b` cannot be forwarded to `internal`, so we skip it.
                         if dst_param.name not in claimed_names:
                             # ...however, `a` can.
-                            merged.append(
-                                dst_param.replace(kind=inspect.Parameter.KEYWORD_ONLY)
-                            )
+                            merged.append(dst_param.replace(kind=inspect.Parameter.KEYWORD_ONLY))
                             claimed_names.add(dst_param.name)
                     # else: this param is positional-only.
             else:
@@ -102,9 +98,7 @@ def forwards_kwargs_to(
             claimed_names.add(param.name)
             merged[idx] = param
 
-        me.__signature__ = my_sig.replace(  # type: ignore[attr-defined]
-            parameters=merged
-        )
+        me.__signature__ = my_sig.replace(parameters=merged)  # type: ignore[attr-defined]
         return me
 
     return wrap

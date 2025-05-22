@@ -73,9 +73,7 @@ def create_and_populate_sparse_nd_array(uri: str) -> soma.SparseNDArray:
     # 3 . 8 .
     # 4 . . 9
 
-    with soma.SparseNDArray.create(
-        uri, type=pa.int64(), shape=[nr, nc]
-    ) as sparse_nd_array:
+    with soma.SparseNDArray.create(uri, type=pa.int64(), shape=[nr, nc]) as sparse_nd_array:
         tensor = pa.SparseCOOTensor.from_numpy(
             data=np.asarray([7, 8, 9]),
             coords=[[0, 2], [3, 1], [4, 2]],
@@ -225,18 +223,12 @@ def test_experiment_obs_type_constraint(tmp_path):
     with pytest.raises(TypeError):
         se["obs"] = soma.Collection.create((tmp_path / "A").as_uri())
     with pytest.raises(TypeError):
-        se["obs"] = soma.SparseNDArray.create(
-            (tmp_path / "B").as_uri(), type=pa.float32(), shape=(10,)
-        )
+        se["obs"] = soma.SparseNDArray.create((tmp_path / "B").as_uri(), type=pa.float32(), shape=(10,))
     with pytest.raises(TypeError):
-        se["obs"] = soma.DenseNDArray.create(
-            (tmp_path / "C").as_uri(), type=pa.float32(), shape=(10,)
-        )
+        se["obs"] = soma.DenseNDArray.create((tmp_path / "C").as_uri(), type=pa.float32(), shape=(10,))
     with pytest.raises(TypeError):
         se["obs"] = soma.Measurement.create((tmp_path / "D").as_uri())
-    se["obs"] = soma.DataFrame.create(
-        (tmp_path / "E").as_uri(), schema=pa.schema([("A", pa.int32())])
-    )
+    se["obs"] = soma.DataFrame.create((tmp_path / "E").as_uri(), schema=pa.schema([("A", pa.int32())]))
 
 
 def test_experiment_ms_type_constraint(tmp_path):
@@ -244,19 +236,13 @@ def test_experiment_ms_type_constraint(tmp_path):
 
     se["ms"] = soma.Collection.create((tmp_path / "A").as_uri())
     with pytest.raises(TypeError):
-        se["ms"] = soma.SparseNDArray.create(
-            (tmp_path / "B").as_uri(), type=pa.float32(), shape=(10,)
-        )
+        se["ms"] = soma.SparseNDArray.create((tmp_path / "B").as_uri(), type=pa.float32(), shape=(10,))
     with pytest.raises(TypeError):
-        se["ms"] = soma.DenseNDArray.create(
-            (tmp_path / "C").as_uri(), type=pa.float32(), shape=(10,)
-        )
+        se["ms"] = soma.DenseNDArray.create((tmp_path / "C").as_uri(), type=pa.float32(), shape=(10,))
     with pytest.raises(TypeError):
         se["ms"] = soma.Measurement.create((tmp_path / "D").as_uri())
     with pytest.raises(TypeError):
-        se["ms"] = soma.DataFrame.create(
-            (tmp_path / "E").as_uri(), schema=pa.schema([("A", pa.int32())])
-        )
+        se["ms"] = soma.DataFrame.create((tmp_path / "E").as_uri(), schema=pa.schema([("A", pa.int32())]))
     with pytest.raises(TypeError):
         se["ms"] = soma.DataFrame.create(
             (tmp_path / "F").as_uri(),

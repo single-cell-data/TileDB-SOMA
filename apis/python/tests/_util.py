@@ -84,9 +84,7 @@ def assert_adata_equal(ad0: AnnData, ad1: AnnData):
     assert_array_dicts_equal(ad0.varp, ad1.varp)
 
 
-def assert_transform_equal(
-    actual: CoordinateTransform, expected: CoordinateTransform
-) -> None:
+def assert_transform_equal(actual: CoordinateTransform, expected: CoordinateTransform) -> None:
     assert actual.input_axes == expected.input_axes
     assert actual.output_axes == expected.output_axes
     if isinstance(expected, IdentityTransform):
@@ -99,9 +97,7 @@ def assert_transform_equal(
         np.testing.assert_array_equal(actual.scale_factors, expected.scale_factors)
     elif isinstance(expected, AffineTransform):
         assert isinstance(actual, AffineTransform)
-        np.testing.assert_array_equal(
-            actual.augmented_matrix, expected.augmented_matrix
-        )
+        np.testing.assert_array_equal(actual.augmented_matrix, expected.augmented_matrix)
     else:
         assert False
 
@@ -179,9 +175,7 @@ def maybe_raises(
             else:
                 exc, match = expected_exception
             if "match" in kwargs:
-                raise ValueError(
-                    "Cannot specify 'match' in both kwargs and `expected_exception`"
-                )
+                raise ValueError("Cannot specify 'match' in both kwargs and `expected_exception`")
             kwargs["match"] = match
         return pytest.raises(exc, *args, **kwargs)
     else:

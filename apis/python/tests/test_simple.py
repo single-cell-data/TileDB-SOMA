@@ -15,19 +15,14 @@ rng = np.random.default_rng()
 def random_strings(max_length=32):
     # Generate list of random length strings (omit 0 to avoid string comparison failure)
     chars = "".join(chr(i) for i in range(64, 128))
-    strings = [
-        "".join(random.choices(chars, k=np.random.randint(max_length)))
-        for i in range(DATA_SIZE)
-    ]
+    strings = ["".join(random.choices(chars, k=np.random.randint(max_length))) for i in range(DATA_SIZE)]
 
     # Convert to data and offsets
     pa_data = pa.array(strings)
     offsets, data = map(np.array, pa_data.buffers()[1:])
     offsets = offsets.view(np.uint32).astype(np.uint64)
 
-    cb = clib.ColumnBuffer(
-        "buf", clib.DataType.STRING_ASCII, len(strings), data, offsets
-    )
+    cb = clib.ColumnBuffer("buf", clib.DataType.STRING_ASCII, len(strings), data, offsets)
 
     return strings, cb
 
@@ -58,9 +53,7 @@ def skip_test_init():
 
     for ov in ovs:
         data, offsets, validity = ov
-        buf = clib.ColumnBuffer(
-            "buf", clib.DataType.INT32, len(data), data, offsets, validity
-        )
+        buf = clib.ColumnBuffer("buf", clib.DataType.INT32, len(data), data, offsets, validity)
 
         assert np.array_equal(buf.data(), data)
         assert np.array_equal(buf.offsets(), offsets)

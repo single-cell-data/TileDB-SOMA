@@ -120,15 +120,11 @@ def main():
         if args.metric:
             plot_data[profile_data.datetime] = getattr(profile_data, args.metric)
         elif args.tiledb_metric:
-            plot_data[profile_data.datetime] = extract_tiledb_data(
-                profile_data, str(args.tiledb_metric)
-            )
+            plot_data[profile_data.datetime] = extract_tiledb_data(profile_data, str(args.tiledb_metric))
             if not pd[profile_data.datetime]:
                 raise RuntimeError(f"TileDB stat {args.tiledb_metric} not found!")
         elif args.context_metric:
-            plot_data[profile_data.datetime] = extract_context_data(
-                profile_data, str(args.context_metric)
-            )
+            plot_data[profile_data.datetime] = extract_context_data(profile_data, str(args.context_metric))
             if not plot_data[profile_data.datetime]:
                 raise RuntimeError(f"TileDB stat {args.context_metric} not found!")
         else:

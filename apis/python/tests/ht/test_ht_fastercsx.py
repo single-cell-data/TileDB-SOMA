@@ -185,21 +185,15 @@ def test_fastercsx_clib_compress_coo(
     i, j, d = do.draw(coo_ijd(dtype=value_dtype, shape=shape, unique=unique))
     nnz = sum(len(c) for c in i)
     assert nnz <= np.prod(shape)
-    index_dtype = do.draw(
-        st.sampled_from([t for t in CsxIndexTypes if np.iinfo(t).max >= nnz])
-    )
+    index_dtype = do.draw(st.sampled_from([t for t in CsxIndexTypes if np.iinfo(t).max >= nnz]))
 
     indptr = np.empty(shape[0] + 1, dtype=index_dtype)
     indices = np.empty(nnz, dtype=index_dtype)
     data = np.empty(nnz, dtype=value_dtype)
-    clib_fastercsx.compress_coo(
-        context.native_context, shape, i, j, d, indptr, indices, data
-    )
+    clib_fastercsx.compress_coo(context.native_context, shape, i, j, d, indptr, indices, data)
 
     # compare to oracle
-    csr = sparse.csr_matrix(
-        (data, indices, indptr), shape=shape, dtype=value_dtype, copy=False
-    )
+    csr = sparse.csr_matrix((data, indices, indptr), shape=shape, dtype=value_dtype, copy=False)
     if not unique:
         csr.sum_duplicates()
     csr.sort_indices()
@@ -251,18 +245,12 @@ def test_fuzz_fastercsx_clib_compress_coo(
 ) -> None:
     # TODO: exclude the rare case that would pass
     with pytest.raises(Exception):
-        clib_fastercsx.compress_coo(
-            context.native_context, shape, i, j, d, indptr, indices, data
-        )
+        clib_fastercsx.compress_coo(context.native_context, shape, i, j, d, indptr, indices, data)
 
 
 @given(
-    indptr=st.from_type(npt.NDArray[Any]).filter(
-        lambda a: a.dtype not in CsxIndexTypes
-    ),
-    indices=st.from_type(npt.NDArray[Any]).filter(
-        lambda a: a.dtype not in CsxIndexTypes
-    ),
+    indptr=st.from_type(npt.NDArray[Any]).filter(lambda a: a.dtype not in CsxIndexTypes),
+    indices=st.from_type(npt.NDArray[Any]).filter(lambda a: a.dtype not in CsxIndexTypes),
     data=st.from_type(npt.NDArray[Any]).filter(lambda a: a.dtype not in ValueTypes),
     context=st.from_type(soma.SOMATileDBContext),
 )
@@ -338,9 +326,7 @@ def test_fastercsx_from_ijd(
     i, j, d = do.draw(coo_ijd(dtype=value_dtype, shape=shape, unique=unique))
     assert all(a.dtype == value_dtype for a in d)
 
-    cm = fastercsx.CompressedMatrix.from_ijd(
-        i, j, d, shape, format, make_sorted, context
-    ).to_scipy()
+    cm = fastercsx.CompressedMatrix.from_ijd(i, j, d, shape, format, make_sorted, context).to_scipy()
     assert cm.dtype == value_dtype
 
     # compare to oracle
@@ -365,9 +351,7 @@ def test_fastercsx_from_ijd(
             rtol=1e-04,
         )
         if not unique
-        else np.array_equal(
-            cm.data, scipy_cm.data, equal_nan=True if value_dtype.kind == "f" else False
-        )
+        else np.array_equal(cm.data, scipy_cm.data, equal_nan=True if value_dtype.kind == "f" else False)
     )
 
 
@@ -393,9 +377,7 @@ def test_fastercsx_to_scipy(
     context: soma.SOMATileDBContext,
 ) -> None:
     i, j, d = do.draw(coo_ijd(dtype=value_dtype, shape=shape, unique=unique))
-    cm = fastercsx.CompressedMatrix.from_ijd(
-        i, j, d, shape, format, make_sorted, context
-    )
+    cm = fastercsx.CompressedMatrix.from_ijd(i, j, d, shape, format, make_sorted, context)
 
     # compare to oracle
     scipy_cm = sparse.coo_matrix(
@@ -412,11 +394,7 @@ def test_fastercsx_to_scipy(
         cm_slc.sum_duplicates()
     assert cm_slc.has_canonical_format
 
-    scipy_slc = (
-        scipy_cm[major_index_slice]
-        if format == "csr"
-        else scipy_cm[:, major_index_slice]
-    )
+    scipy_slc = scipy_cm[major_index_slice] if format == "csr" else scipy_cm[:, major_index_slice]
 
     assert np.array_equal(cm_slc.indptr, scipy_slc.indptr)
     assert np.array_equal(cm_slc.indices, scipy_slc.indices)

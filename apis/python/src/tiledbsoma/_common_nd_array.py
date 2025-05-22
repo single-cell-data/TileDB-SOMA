@@ -84,9 +84,7 @@ class NDArray(SOMAArray, somacore.NDArray):
         """
         raise NotImplementedError("must be implemented by child class.")
 
-    def resize(
-        self, newshape: Sequence[int | None], check_only: bool = False
-    ) -> StatusAndReason:
+    def resize(self, newshape: Sequence[int | None], check_only: bool = False) -> StatusAndReason:
         """Increases the shape of the array as specfied. Raises an error if the new
         shape is less than the current shape in any dimension. Raises an error if
         the new shape exceeds maxshape in any dimension. Raises an error if the
@@ -104,9 +102,7 @@ class NDArray(SOMAArray, somacore.NDArray):
             self._handle.resize(newshape)
             return (True, "")
 
-    def tiledbsoma_upgrade_shape(
-        self, newshape: Sequence[int | None], check_only: bool = False
-    ) -> StatusAndReason:
+    def tiledbsoma_upgrade_shape(self, newshape: Sequence[int | None], check_only: bool = False) -> StatusAndReason:
         """Allows the array to have a resizeable shape as described in the TileDB-SOMA
         1.15 release notes.  Raises an error if the new shape exceeds maxshape in
         any dimension. Raises an error if the array already has a shape.
