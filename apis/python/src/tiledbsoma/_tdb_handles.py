@@ -114,10 +114,14 @@ def open_handle_wrapper(
     }
 
     try:
-        return _type_to_class[soma_object.type.lower()]._from_soma_object(soma_object, context)
+        return _type_to_class[soma_object.type.lower()]._from_soma_object(
+            soma_object, context
+        )
     except KeyError:
         if soma_object.type.lower() == "somageometrydataframe":
-            raise NotImplementedError(f"Support for {soma_object.type!r} is not yet implemented.")
+            raise NotImplementedError(
+                f"Support for {soma_object.type!r} is not yet implemented."
+            )
         raise SOMAError(f"{uri!r} has unknown storage type {soma_object.type!r}")
 
 
@@ -164,7 +168,9 @@ class Wrapper(Generic[_RawHdl_co], metaclass=abc.ABCMeta):
         return handle
 
     @classmethod
-    def _from_soma_object(cls, soma_object: clib.SOMAObject, context: SOMATileDBContext) -> Self:
+    def _from_soma_object(
+        cls, soma_object: clib.SOMAObject, context: SOMATileDBContext
+    ) -> Self:
         uri = soma_object.uri
         mode = soma_object.mode
         timestamp = context._open_timestamp_ms(soma_object.timestamp)
@@ -194,12 +200,20 @@ class Wrapper(Generic[_RawHdl_co], metaclass=abc.ABCMeta):
         """Opens and returns a TileDB object specific to this type."""
         raise NotImplementedError()
 
-    def reopen(self, mode: options.OpenMode, timestamp: OpenTimestamp | None) -> clib.SOMAObject:
+    def reopen(
+        self, mode: options.OpenMode, timestamp: OpenTimestamp | None
+    ) -> Wrapper[_RawHdl_co]:
+        """Returns a new copy of the wrapper handle in the requested mode and at the requested timestamp."""
         if mode not in ("r", "w"):
-            raise ValueError(f"Invalid mode '{mode}' passed. " "Valid modes are 'r' and 'w'.")
+            raise ValueError(
+                f"Invalid mode '{mode}' passed. " "Valid modes are 'r' and 'w'."
+            )
         ts = self.context._open_timestamp_ms(timestamp)
         self.metadata._write()
-        return self._handle.reopen(clib.OpenMode.read if mode == "r" else clib.OpenMode.write, (0, ts))
+        clib_handle = self._handle.reopen(
+            clib.OpenMode.read if mode == "r" else clib.OpenMode.write, (0, ts)
+        )
+        return self.__class__._from_soma_object(clib_handle, self.context)
 
     # Covariant types should normally not be in parameters, but this is for
     # internal use only so it's OK.
@@ -301,7 +315,8 @@ class SOMAGroupWrapper(Wrapper[_SOMAObjectType]):
         super()._do_initial_reads(group)
 
         self.initial_contents = {
-            name: GroupEntry.from_soma_group_entry(entry) for name, entry in group.members().items()
+            name: GroupEntry.from_soma_group_entry(entry)
+            for name, entry in group.members().items()
         }
 
     @property
@@ -415,7 +430,9 @@ class SOMAArrayWrapper(Wrapper[_SOMAObjectType]):
 
     @property
     def attr_names(self) -> tuple[str, ...]:
-        return tuple(f.name for f in self.schema if f.name not in self._handle.dimension_names)
+        return tuple(
+            f.name for f in self.schema if f.name not in self._handle.dimension_names
+        )
 
     @property
     def dim_names(self) -> tuple[str, ...]:
@@ -436,10 +453,14 @@ class SOMAArrayWrapper(Wrapper[_SOMAObjectType]):
         """Only implemented for DataFrame."""
         raise NotImplementedError
 
-    def get_enumeration_values(self, column_names: Sequence[str]) -> dict[str, pa.Array]:
+    def get_enumeration_values(
+        self, column_names: Sequence[str]
+    ) -> dict[str, pa.Array]:
         raise NotImplementedError
 
-    def extend_enumeration_values(self, values: dict[str, pa.Array], deduplicate: bool) -> None:
+    def extend_enumeration_values(
+        self, values: dict[str, pa.Array], deduplicate: bool
+    ) -> None:
         raise NotImplementedError
 
     @property
@@ -469,31 +490,45 @@ class SOMAArrayWrapper(Wrapper[_SOMAObjectType]):
         """Not implemented for DataFrame."""
         raise NotImplementedError
 
-    def tiledbsoma_can_upgrade_shape(self, newshape: Sequence[int | None]) -> StatusAndReason:
+    def tiledbsoma_can_upgrade_shape(
+        self, newshape: Sequence[int | None]
+    ) -> StatusAndReason:
         """Not implemented for DataFrame."""
         raise NotImplementedError
 
-    def resize_soma_joinid_shape(self, newshape: int, function_name_for_messages: str) -> None:
+    def resize_soma_joinid_shape(
+        self, newshape: int, function_name_for_messages: str
+    ) -> None:
         """Only implemented for DataFrame."""
         raise NotImplementedError
 
-    def can_resize_soma_joinid_shape(self, newshape: int, function_name_for_messages: str) -> StatusAndReason:
+    def can_resize_soma_joinid_shape(
+        self, newshape: int, function_name_for_messages: str
+    ) -> StatusAndReason:
         """Only implemented for DataFrame."""
         raise NotImplementedError
 
-    def upgrade_soma_joinid_shape(self, newshape: int, function_name_for_messages: str) -> None:
+    def upgrade_soma_joinid_shape(
+        self, newshape: int, function_name_for_messages: str
+    ) -> None:
         """Only implemented for DataFrame."""
         raise NotImplementedError
 
-    def can_upgrade_soma_joinid_shape(self, newshape: int, function_name_for_messages: str) -> StatusAndReason:
+    def can_upgrade_soma_joinid_shape(
+        self, newshape: int, function_name_for_messages: str
+    ) -> StatusAndReason:
         """Only implemented for DataFrame."""
         raise NotImplementedError
 
-    def upgrade_domain(self, newdomain: Domain, function_name_for_messages: str) -> None:
+    def upgrade_domain(
+        self, newdomain: Domain, function_name_for_messages: str
+    ) -> None:
         """Only implemented for DataFrame."""
         raise NotImplementedError
 
-    def can_upgrade_domain(self, newdomain: Domain, function_name_for_messages: str) -> StatusAndReason:
+    def can_upgrade_domain(
+        self, newdomain: Domain, function_name_for_messages: str
+    ) -> StatusAndReason:
         """Only implemented for DataFrame."""
         raise NotImplementedError
 
@@ -501,7 +536,9 @@ class SOMAArrayWrapper(Wrapper[_SOMAObjectType]):
         """Only implemented for DataFrame."""
         raise NotImplementedError
 
-    def can_change_domain(self, newdomain: Domain, function_name_for_messages: str) -> StatusAndReason:
+    def can_change_domain(
+        self, newdomain: Domain, function_name_for_messages: str
+    ) -> StatusAndReason:
         """Only implemented for DataFrame."""
         raise NotImplementedError
 
@@ -518,10 +555,16 @@ class DataFrameWrapper(SOMAArrayWrapper[clib.SOMADataFrame]):
     def write(self, values: pa.RecordBatch) -> None:
         self._handle.write(values)
 
-    def get_enumeration_values(self, column_names: Sequence[str]) -> dict[str, pa.Array]:
-        return cast(dict[str, pa.Array], self._handle.get_enumeration_values(column_names))
+    def get_enumeration_values(
+        self, column_names: Sequence[str]
+    ) -> dict[str, pa.Array]:
+        return cast(
+            dict[str, pa.Array], self._handle.get_enumeration_values(column_names)
+        )
 
-    def extend_enumeration_values(self, values: dict[str, pa.Array], deduplicate: bool) -> None:
+    def extend_enumeration_values(
+        self, values: dict[str, pa.Array], deduplicate: bool
+    ) -> None:
         self._handle.extend_enumeration_values(values, deduplicate)
 
     @property
@@ -539,33 +582,49 @@ class DataFrameWrapper(SOMAArrayWrapper[clib.SOMADataFrame]):
         """Wrapper-class internals."""
         return cast(bool, self._handle.tiledbsoma_has_upgraded_domain)
 
-    def resize_soma_joinid_shape(self, newshape: int, function_name_for_messages: str) -> None:
+    def resize_soma_joinid_shape(
+        self, newshape: int, function_name_for_messages: str
+    ) -> None:
         """Wrapper-class internals."""
         self._handle.resize_soma_joinid_shape(newshape, function_name_for_messages)
 
-    def can_resize_soma_joinid_shape(self, newshape: int, function_name_for_messages: str) -> StatusAndReason:
+    def can_resize_soma_joinid_shape(
+        self, newshape: int, function_name_for_messages: str
+    ) -> StatusAndReason:
         """Wrapper-class internals."""
         return cast(
             StatusAndReason,
-            self._handle.can_resize_soma_joinid_shape(newshape, function_name_for_messages),
+            self._handle.can_resize_soma_joinid_shape(
+                newshape, function_name_for_messages
+            ),
         )
 
-    def upgrade_soma_joinid_shape(self, newshape: int, function_name_for_messages: str) -> None:
+    def upgrade_soma_joinid_shape(
+        self, newshape: int, function_name_for_messages: str
+    ) -> None:
         """Wrapper-class internals."""
         self._handle.upgrade_soma_joinid_shape(newshape, function_name_for_messages)
 
-    def can_upgrade_soma_joinid_shape(self, newshape: int, function_name_for_messages: str) -> StatusAndReason:
+    def can_upgrade_soma_joinid_shape(
+        self, newshape: int, function_name_for_messages: str
+    ) -> StatusAndReason:
         """Wrapper-class internals."""
         return cast(
             StatusAndReason,
-            self._handle.can_upgrade_soma_joinid_shape(newshape, function_name_for_messages),
+            self._handle.can_upgrade_soma_joinid_shape(
+                newshape, function_name_for_messages
+            ),
         )
 
-    def upgrade_domain(self, newdomain: Domain, function_name_for_messages: str) -> None:
+    def upgrade_domain(
+        self, newdomain: Domain, function_name_for_messages: str
+    ) -> None:
         """Wrapper-class internals."""
         self._handle.upgrade_domain(newdomain, function_name_for_messages)
 
-    def can_upgrade_domain(self, newdomain: Domain, function_name_for_messages: str) -> StatusAndReason:
+    def can_upgrade_domain(
+        self, newdomain: Domain, function_name_for_messages: str
+    ) -> StatusAndReason:
         """Wrapper-class internals."""
         return cast(
             StatusAndReason,
@@ -576,7 +635,9 @@ class DataFrameWrapper(SOMAArrayWrapper[clib.SOMADataFrame]):
         """Wrapper-class internals."""
         self._handle.change_domain(newdomain, function_name_for_messages)
 
-    def can_change_domain(self, newdomain: Domain, function_name_for_messages: str) -> StatusAndReason:
+    def can_change_domain(
+        self, newdomain: Domain, function_name_for_messages: str
+    ) -> StatusAndReason:
         """Wrapper-class internals."""
         return cast(
             StatusAndReason,
@@ -632,9 +693,13 @@ class DenseNDArrayWrapper(SOMAArrayWrapper[clib.SOMADenseNDArray]):
         """Wrapper-class internals."""
         self._handle.tiledbsoma_upgrade_shape(newshape)
 
-    def tiledbsoma_can_upgrade_shape(self, newshape: Sequence[int | None]) -> StatusAndReason:
+    def tiledbsoma_can_upgrade_shape(
+        self, newshape: Sequence[int | None]
+    ) -> StatusAndReason:
         """Wrapper-class internals."""
-        return cast(StatusAndReason, self._handle.tiledbsoma_can_upgrade_shape(newshape))
+        return cast(
+            StatusAndReason, self._handle.tiledbsoma_can_upgrade_shape(newshape)
+        )
 
 
 class SparseNDArrayWrapper(SOMAArrayWrapper[clib.SOMASparseNDArray]):
@@ -663,9 +728,13 @@ class SparseNDArrayWrapper(SOMAArrayWrapper[clib.SOMASparseNDArray]):
         """Wrapper-class internals."""
         self._handle.tiledbsoma_upgrade_shape(newshape)
 
-    def tiledbsoma_can_upgrade_shape(self, newshape: Sequence[int | None]) -> StatusAndReason:
+    def tiledbsoma_can_upgrade_shape(
+        self, newshape: Sequence[int | None]
+    ) -> StatusAndReason:
         """Wrapper-class internals."""
-        return cast(StatusAndReason, self._handle.tiledbsoma_can_upgrade_shape(newshape))
+        return cast(
+            StatusAndReason, self._handle.tiledbsoma_can_upgrade_shape(newshape)
+        )
 
 
 class _DictMod(enum.Enum):
