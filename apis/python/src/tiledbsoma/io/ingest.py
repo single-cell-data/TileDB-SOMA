@@ -1453,6 +1453,11 @@ def _write_dataframe_impl(
     return soma_df
 
 
+@deprecated(
+    """This function is deprecated and will be removed in a future version of this package.
+
+To add a new matrix as a layer within an existing SOMA Experiment (e.g., to X, obsm, varm), please use the more specific functions tiledbsoma.io.add_X_layer or tiledbsoma.io.add_matrix_to_collection. If you need to create a standalone SOMA NDArray outside of a pre-defined Experiment structure, please use the direct SOMA API constructors, such as tiledbsoma.SparseNDArray.create."""
+)
 def create_from_matrix(
     cls: type[_NDArr],
     uri: str,
@@ -1463,8 +1468,12 @@ def create_from_matrix(
 ) -> _NDArr:
     """Create and populate the ``soma_matrix`` from the contents of ``matrix``.
 
+    This function is deprecated and will be removed in a future version of this package.
+
+    To add a new matrix as a layer within an existing SOMA :class:`Experiment` (e.g., to X, obsm, varm), please use the more specific functions ``tiledbsoma.io.add_X_layer`` or ``tiledbsoma.io.add_matrix_to_collection``. If you need to create a standalone SOMA NDArray outside of a pre-defined :class:`Experiment` structure, please use the direct SOMA API constructors, such as ``tiledbsoma.SparseNDArray.create``.
+
     Lifecycle:
-        Maturing.
+        Deprecated.
     """
     return _create_from_matrix(
         cls,

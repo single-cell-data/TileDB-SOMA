@@ -517,18 +517,19 @@ def test_add_matrix_to_collection_1_2_7(conftest_pbmc_small, tmp_path):
             with coll:
                 matrix_uri = f"{coll_uri}/{matrix_name}"
 
-                with tiledbsoma.io.ingest.create_from_matrix(
-                    tiledbsoma.SparseNDArray,
-                    matrix_uri,
-                    matrix_data,
-                    context=context,
-                ) as sparse_nd_array:
-                    tiledbsoma.io.ingest._maybe_set(
-                        coll,
-                        matrix_name,
-                        sparse_nd_array,
-                        use_relative_uri=use_relative_uri,
-                    )
+                with pytest.deprecated_call():
+                    with tiledbsoma.io.ingest.create_from_matrix(
+                        tiledbsoma.SparseNDArray,
+                        matrix_uri,
+                        matrix_data,
+                        context=context,
+                    ) as sparse_nd_array:
+                        tiledbsoma.io.ingest._maybe_set(
+                            coll,
+                            matrix_name,
+                            sparse_nd_array,
+                            use_relative_uri=use_relative_uri,
+                        )
 
     output_path = tmp_path.as_posix()
     original = conftest_pbmc_small.copy()
