@@ -40,6 +40,7 @@ import pandas as pd
 import pyarrow as pa
 import scipy.sparse as sp
 from more_itertools import batched
+from typing_extensions import deprecated
 
 # As of anndata 0.11 we get a warning importing anndata.experimental.
 # But anndata.abc doesn't exist in anndata 0.10. And anndata 0.11 doesn't
@@ -784,6 +785,12 @@ def from_anndata(
     return experiment.uri
 
 
+@deprecated(
+    """This function is deprecated and will be removed in a future version of this package.
+
+It is recommended to use tiledbsoma.io.from_anndata (with a registration map from tiledbsoma.io.register_anndatas or tiledbsoma.io.register_h5ads) for appending new, complete AnnData objects to an Experiment.
+"""
+)
 def append_obs(
     exp: Experiment,
     new_obs: pd.DataFrame,
@@ -795,6 +802,12 @@ def append_obs(
 ) -> str:
     """Writes new rows to an existing ``obs`` dataframe (this is distinct from ``update_obs``
     which mutates the entirety of the ``obs`` dataframe, e.g. to add/remove columns).
+
+    This function is deprecated and will be removed in a future version of this package.
+
+    It is recommended to use ``tiledbsoma.io.from_anndata`` (with a registration map from
+    ``tiledbsoma.io.register_anndatas`` or ``tiledbsoma.io.register_h5ads``) for appending new,
+    complete AnnData objects to an :class:`Experiment`.
 
     Example::
 
@@ -812,7 +825,7 @@ def append_obs(
             )
 
     Lifecycle:
-        Maturing.
+        Deprecated.
     """
     exp.verify_open_for_writing()
 
@@ -839,6 +852,12 @@ def append_obs(
     return exp.obs.uri
 
 
+@deprecated(
+    """This function is deprecated and will be removed in a future version of this package.
+
+It is recommended to use tiledbsoma.io.from_anndata (with a registration map from tiledbsoma.io.register_anndatas or tiledbsoma.io.register_h5ads) for appending new, complete AnnData objects to an Experiment.
+"""
+)
 def append_var(
     exp: Experiment,
     new_var: pd.DataFrame,
@@ -851,6 +870,12 @@ def append_var(
 ) -> str:
     """Writes new rows to an existing ``var`` dataframe (this is distinct from ``update_var``
     which mutates the entirety of the ``var`` dataframe, e.g. to add/remove columns).
+
+    This function is deprecated and will be removed in a future version of this package.
+
+    It is recommended to use ``tiledbsoma.io.from_anndata`` (with a registration map from
+    ``tiledbsoma.io.register_anndatas`` or ``tiledbsoma.io.register_h5ads``) for appending new,
+    complete AnnData objects to an :class:`Experiment`.
 
     Example::
 
@@ -868,7 +893,7 @@ def append_var(
             )
 
     Lifecycle:
-        Maturing.
+        Deprecated.
     """
     exp.verify_open_for_writing()
     if measurement_name not in exp.ms:
@@ -898,6 +923,12 @@ def append_var(
     return sdf.uri
 
 
+@deprecated(
+    """This function is deprecated and will be removed in a future version of this package.
+
+It is recommended to use tiledbsoma.io.from_anndata (with a registration map from tiledbsoma.io.register_anndatas or tiledbsoma.io.register_h5ads) for appending new, complete AnnData objects to an Experiment.
+"""
+)
 def append_X(
     exp: Experiment,
     new_X: Matrix | h5py.Dataset,
@@ -914,6 +945,12 @@ def append_X(
     """Appends new data to an existing ``X`` matrix. Nominally to be used in conjunction
     with ``update_obs`` and ``update_var``, as an itemized alternative to doing
     ``from_anndata`` with a registration mapping supplied.
+
+    This function is deprecated and will be removed in a future version of this package.
+
+    It is recommended to use ``tiledbsoma.io.from_anndata`` (with a registration map from
+    ``tiledbsoma.io.register_anndatas`` or ``tiledbsoma.io.register_h5ads``) for appending new,
+    complete AnnData objects to an :class:`Experiment`.
 
     Example::
 
@@ -938,7 +975,7 @@ def append_X(
             )
 
     Lifecycle:
-        Maturing.
+        Deprecated.
     """
     exp.verify_open_for_writing()
     if measurement_name not in exp.ms:
