@@ -1,9 +1,13 @@
 #' TileDB Object Base Class
 #'
-#' @description
-#' Base class to implement shared functionality across the TileDBArray and
-#' TileDBGroup classes. (lifecycle: maturing)
+#' @description Virtual base class to implement shared functionality across the
+#' TileDBArray and TileDBGroup classes (lifecycle: maturing)
+#'
 #' @export
+#'
+#' @seealso Derived classes: \code{\link{TileDBArray}},
+#' \code{\link{TileDBGroup}}
+#'
 TileDBObject <- R6::R6Class(
   classname = "TileDBObject",
   public = list(
