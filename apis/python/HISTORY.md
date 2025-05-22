@@ -12,6 +12,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Deprecated
 
+- \[[#4081](https://github.com/single-cell-data/TileDB-SOMA/pull/4081)\] [python] the `tiledbsoma.io` functions `append_obs`, `append_var` and `append_X` are deprecated and will be removed in a future release. It is recommended to use tiledbsoma.io.from_anndata (with a registration map from tiledbsoma.io.register_anndatas or tiledbsoma.io.register_h5ads) for appending new, complete AnnData objects to an Experiment.
+
 ### Removed
 
 ### Fixed
