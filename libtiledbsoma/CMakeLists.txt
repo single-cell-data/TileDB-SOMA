@@ -19,6 +19,8 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Mo
 
 set(TILEDBSOMA_CMAKE_INPUTS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/cmake/inputs")
 
+set(CMAKE_TOOLCHAIN_FILE "$ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake" CACHE STRING "Vcpkg toolchain file")
+
 # Check for and set environment variables.
 if (NOT DEFINED TILEDBSOMA_ENABLE_WERROR AND DEFINED $ENV{TILEDBSSOMA_ENABLE_WERROR})
   set(TILEDBSOMA_ENABLE_WERROR "$ENV{TILEDBSOMA_ENABLE_WERROR}")
@@ -131,6 +133,7 @@ set(CMAKE_INSTALL_RPATH_USE_LINK_PATH ON)
 
 # Search the externals install directory for dependencies.
 list(APPEND CMAKE_PREFIX_PATH "${EP_INSTALL_PREFIX}")
+list(APPEND CMAKE_PREFIX_PATH "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}")
 
 # If this is an in-IDE build, we need to disable the superbuild and explicitly
 # set the EP base dir. The normal 'cmake && make' process won't need this step,

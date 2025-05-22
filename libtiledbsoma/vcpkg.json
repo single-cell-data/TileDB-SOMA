@@ -1,6 +1,10 @@
 {
   "dependencies": [
-    "arcticdb-sparrow",
+    {
+      "name": "arcticdb-sparrow",
+      "version>=": "0.8.0"
+    },
     "catch2"
-  ]
+  ],
+  "builtin-baseline": "ca846b21276c9a3171074ac8d2b4f6516894a7d0"
 }

@@ -26,6 +26,9 @@
 #include "../src/geometry/geometry.h"
 #include "../src/geometry/operators/envelope.h"
 
+#include <sparrow/buffer/u8_buffer.hpp>
+#include <sparrow/sparrow.hpp>
+
 using namespace tiledbsoma;
 using namespace tiledbsoma::geometry;
 using namespace Catch::Matchers;
@@ -35,6 +38,12 @@ using namespace Catch::Matchers;
 #endif
 
 TEST_CASE("Geometry: Envelope") {
+    std::vector<int32_t> dat({1, 2, 3, 4, 5});
+    sparrow::u8_buffer<int32_t> data_buff(
+        dat.data(), dat.size(), dat.get_allocator());
+
+    sparrow::primitive_array<int32_t> arr(data_buff);
+
     Point point(10, 20);
     LineString linestring(
         std::vector<BasePoint>({BasePoint(2, 2), BasePoint(3, 4)}));

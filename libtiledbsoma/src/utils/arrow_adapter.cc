@@ -1681,9 +1681,10 @@ std::unique_ptr<ArrowArray> ArrowAdapter::make_arrow_array_parent(
     arrow_array->length = 0;
     arrow_array->null_count = 0;
     arrow_array->offset = 0;
-    arrow_array->n_buffers = 0;
+    arrow_array->n_buffers = 1;
     arrow_array->n_children = static_cast<int64_t>(num_columns);
-    arrow_array->buffers = nullptr;
+    arrow_array->buffers = (const void**)malloc(1 * sizeof(void*));
+    arrow_array->buffers[0] = nullptr;
     arrow_array->dictionary = nullptr;
     arrow_array->release = &ArrowAdapter::release_array;
     arrow_array->private_data = nullptr;
