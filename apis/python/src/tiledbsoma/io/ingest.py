@@ -788,8 +788,7 @@ def from_anndata(
 @deprecated(
     """This function is deprecated and will be removed in a future version of this package.
 
-It is recommended to use tiledbsoma.io.from_anndata (with a registration map from tiledbsoma.io.register_anndatas or tiledbsoma.io.register_h5ads) for appending new, complete AnnData objects to an Experiment.
-"""
+It is recommended to use tiledbsoma.io.from_anndata (with a registration map from tiledbsoma.io.register_anndatas or tiledbsoma.io.register_h5ads) for appending new, complete AnnData objects to an Experiment."""
 )
 def append_obs(
     exp: Experiment,
@@ -855,8 +854,7 @@ def append_obs(
 @deprecated(
     """This function is deprecated and will be removed in a future version of this package.
 
-It is recommended to use tiledbsoma.io.from_anndata (with a registration map from tiledbsoma.io.register_anndatas or tiledbsoma.io.register_h5ads) for appending new, complete AnnData objects to an Experiment.
-"""
+It is recommended to use tiledbsoma.io.from_anndata (with a registration map from tiledbsoma.io.register_anndatas or tiledbsoma.io.register_h5ads) for appending new, complete AnnData objects to an Experiment."""
 )
 def append_var(
     exp: Experiment,
@@ -926,8 +924,7 @@ def append_var(
 @deprecated(
     """This function is deprecated and will be removed in a future version of this package.
 
-It is recommended to use tiledbsoma.io.from_anndata (with a registration map from tiledbsoma.io.register_anndatas or tiledbsoma.io.register_h5ads) for appending new, complete AnnData objects to an Experiment.
-"""
+It is recommended to use tiledbsoma.io.from_anndata (with a registration map from tiledbsoma.io.register_anndatas or tiledbsoma.io.register_h5ads) for appending new, complete AnnData objects to an Experiment."""
 )
 def append_X(
     exp: Experiment,
