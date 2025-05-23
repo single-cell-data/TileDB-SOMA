@@ -6,17 +6,17 @@ TileDB-SOMA uses a loose variation of [semantic versioning](https://semver.org/)
 
 TileDB-SOMA also uses lifecycle tags to indicate the maturity of an interface. All public API should have a lifecycle tag in docstrings. These tags are patterned after the RStudio lifecycle stage model. Tags are:
 
-- ``experimental``: Under active development and may undergo significant and breaking changes.
-- ``maturing``: Under active development but the interface and behavior have stabilized and are unlikely to change significantly but breaking changes are still possible.
-- ``stable``: The interface is considered stable and breaking changes will be avoided where possible. Breaking changes that cannot be avoided will be accompanied by a major version bump.
-- ``deprecated``: The API is no longer recommended for use and may be removed in a future release.
+- `experimental`: Under active development and may undergo significant and breaking changes.
+- `maturing`: Under active development but the interface and behavior have stabilized and are unlikely to change significantly but breaking changes are still possible.
+- `stable`: The interface is considered stable and breaking changes will be avoided where possible. Breaking changes that cannot be avoided will be accompanied by a major version bump.
+- `deprecated`: The API is no longer recommended for use and will be removed in a future release.
 
-If no tag is present, the state is ``experimental``.
+If no tag is present, the state is `experimental`.
 
 > [!NOTE]
-> Prior to version 1.18, TileDB-SOMA had no explicit version policy. Versioning was most commonly `1.MAJOR.MINOR`,
+> Prior to version 2.0, TileDB-SOMA had no explicit version policy. Versioning was most commonly `1.MAJOR.MINOR`,
 > where breaking changes would occur in `1.X` releases, and any other change could occur on `1.X.Y` versions.
-> Starting with `1.18.0`, versioning will be aligned with the SemVer `MAJOR.MINOR.PATCH` schema.
+> Starting with `2.0.0`, versioning will be aligned with the SemVer `MAJOR.MINOR.PATCH` schema.
 
 A release number is comprised of `MAJOR.MINOR.PATCH`.
 
