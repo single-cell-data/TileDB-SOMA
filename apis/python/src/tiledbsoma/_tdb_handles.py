@@ -221,9 +221,9 @@ class Wrapper(Generic[_RawHdl_co], metaclass=abc.ABCMeta):
         clib_handle = self._handle.reopen(clib.OpenMode.read if mode == "r" else clib.OpenMode.write, (0, ts))
         return self.__class__.open(
             uri=clib_handle.uri,
-            mode=clib.mode,
+            mode=mode,
             context=self.context,
-            timestamp=clib.timestamp,
+            timestamp=ts,
         )
 
     # Covariant types should normally not be in parameters, but this is for
