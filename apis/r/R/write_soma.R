@@ -23,6 +23,8 @@
 #'
 #' @export
 #'
+#' @inherit write_soma_objects examples
+#'
 write_soma <- function(x, uri, ..., platform_config = NULL, tiledbsoma_ctx = NULL) {
   UseMethod(generic = "write_soma", object = x)
 }
@@ -42,7 +44,7 @@ write_soma <- function(x, uri, ..., platform_config = NULL, tiledbsoma_ctx = NUL
 #'   exists, simply open it for writing
 #' }
 #' @param relative \strong{\[Internal use only\]} Is \code{uri}
-#' relative or aboslute
+#' relative or absolute
 #'
 #' @return The resulting SOMA \link[tiledbsoma:SOMASparseNDArray]{array} or
 #' \link[tiledbsoma:SOMADataFrame]{data frame}, returned opened for write
@@ -67,6 +69,14 @@ NULL
 #'
 #' @method write_soma character
 #' @export
+#'
+#' @examplesIf requireNamespace("withr", quietly = TRUE)
+#' uri <- withr::local_tempfile(pattern = "character")
+#' (sdf <- write_soma(letters, uri, soma_parent = NULL, relative = FALSE))
+#'
+#' \dontshow{
+#' sdf$close()
+#' }
 #'
 write_soma.character <- function(
   x,
@@ -105,6 +115,7 @@ write_soma.character <- function(
 #' \code{soma_parent} as \code{key}; pass \code{NULL} to prevent registration
 #' to handle manually
 #'
+#' @name write_soma_objects
 #' @rdname write_soma_objects
 #'
 #' @section Writing Data Frames:
@@ -130,6 +141,16 @@ write_soma.character <- function(
 #'
 #' @method write_soma data.frame
 #' @export
+#'
+#' @examplesIf requireNamespace("withr", quietly = TRUE) && requireNamespace("datasets", quietly = TRUE)
+#' uri <- withr::local_tempfile(pattern = "data-frame")
+#' data("mtcars", package = "datasets")
+#'
+#' (sdf <- write_soma(mtcars, uri, soma_parent = NULL, relative = FALSE))
+#'
+#' \dontshow{
+#' sdf$close()
+#' }
 #'
 write_soma.data.frame <- function(
   x,
@@ -283,6 +304,8 @@ write_soma.data.frame <- function(
 #' @param shape A vector of two positive integers giving the on-disk shape of
 #' the array; defaults to \code{dim(x)}
 #'
+#'
+#' @name write_soma_objects
 #' @rdname write_soma_objects
 #'
 #' @section Writing Dense Matrices:
@@ -293,6 +316,15 @@ write_soma.data.frame <- function(
 #'
 #' @method write_soma matrix
 #' @export
+#'
+#' @examplesIf requireNamespace("withr", quietly = TRUE)
+#' uri <- withr::local_tempfile(pattern = "matrix")
+#' mat <- matrix(stats::rnorm(25L), nrow = 5L, ncol = 5L)
+#' (arr <- write_soma(mat, uri, soma_parent = NULL, sparse = FALSE, relative = FALSE))
+#'
+#' \dontshow{
+#' arr$close()
+#' }
 #'
 write_soma.matrix <- function(
   x,
@@ -401,13 +433,24 @@ write_soma.matrix <- function(
   return(array)
 }
 
+#' @name write_soma_objects
 #' @rdname write_soma_objects
 #'
 #' @method write_soma Matrix
 #' @export
 #'
+#' @examplesIf requireNamespace("withr", quietly = TRUE)
+#' uri <- withr::local_tempfile(pattern = "s4-matrix")
+#' mat <- Matrix::Matrix(stats::rnorm(25L), nrow = 5L, ncol = 5L)
+#' (arr <- write_soma(mat, uri, soma_parent = NULL, sparse = FALSE, relative = FALSE))
+#'
+#' \dontshow{
+#' arr$close()
+#' }
+#'
 write_soma.Matrix <- write_soma.matrix
 
+#' @name write_soma_objects
 #' @rdname write_soma_objects
 #'
 #' @section Writing Sparse Matrices:
@@ -427,6 +470,31 @@ write_soma.Matrix <- write_soma.matrix
 #'
 #' @method write_soma TsparseMatrix
 #' @export
+#'
+#' @examplesIf requireNamespace("withr", quietly = TRUE)
+#' uri <- withr::local_tempfile(pattern = "tsparse-matrix")
+#' mat <- Matrix::rsparsematrix(5L, 5L, 0.3, repr = "T")
+#' (arr <- write_soma(mat, uri, soma_parent = NULL, relative = FALSE))
+#'
+#' \dontshow{
+#' arr$close()
+#' }
+#'
+#' uri <- withr::local_tempfile(pattern = "csparse-matrix")
+#' mat <- Matrix::rsparsematrix(5L, 5L, 0.3, repr = "C")
+#' (arr <- write_soma(mat, uri, soma_parent = NULL, relative = FALSE))
+#'
+#' \dontshow{
+#' arr$close()
+#' }
+#'
+#' uri <- withr::local_tempfile(pattern = "rsparse-matrix")
+#' mat <- Matrix::rsparsematrix(5L, 5L, 0.3, repr = "R")
+#' (arr <- write_soma(mat, uri, soma_parent = NULL, relative = FALSE))
+#'
+#' \dontshow{
+#' arr$close()
+#' }
 #'
 write_soma.TsparseMatrix <- function(
   x,

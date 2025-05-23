@@ -9,6 +9,12 @@
 #'
 #' @noMd
 #'
+#' @examples
+#' (cfg <- ConfigList$new())
+#' cfg$set("op1", "a", 1L)
+#' cfg
+#' cfg$get("op1")
+#'
 ConfigList <- R6::R6Class(
   classname = "ConfigList",
   inherit = MappingBase,

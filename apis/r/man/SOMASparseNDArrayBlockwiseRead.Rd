@@ -6,6 +6,22 @@
 \description{
 Blockwise reader for \code{\link{SOMASparseNDArray}}
 }
+\examples{
+\dontshow{if (requireNamespace("withr", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+dir <- withr::local_tempfile(pattern = "blockwise-table")
+dir.create(dir, recursive = TRUE)
+(exp <- load_dataset("soma-exp-pbmc-small", dir))
+qry <- exp$axis_query("RNA")
+xqry <- qry$X("data")$blockwise(0L, size = 20L, reindex_disable_on_axis = TRUE)
+stopifnot(inherits(xqry, "SOMASparseNDArrayBlockwiseRead"))
+
+xqry$axis
+
+\dontshow{
+exp$close()
+}
+\dontshow{\}) # examplesIf}
+}
 \keyword{internal}
 \section{Super class}{
 \code{\link[tiledbsoma:SOMASparseNDArrayReadBase]{tiledbsoma::SOMASparseNDArrayReadBase}} -> \code{SOMASparseNDArrayBlockwiseRead}

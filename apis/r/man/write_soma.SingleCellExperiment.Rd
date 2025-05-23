@@ -90,3 +90,36 @@ transposed (samples as rows) prior to writing
 the \code{\link[tiledbsoma:SOMAMeasurement]{measurement}} level
 }
 
+\examples{
+\dontshow{if (requireNamespace("withr", quietly = TRUE) && requireNamespace("SingleCellExperiment", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+uri <- withr::local_tempfile(pattern = "single-cell-experiment")
+
+mat <- abs(Matrix::rsparsematrix(
+  230L,
+  80L,
+  0.3,
+  dimnames = list(paste0("feature_", seq_len(230)), paste0("cell_", seq_len(80)))
+))
+(sce <- SingleCellExperiment::SingleCellExperiment(
+  assays = list(counts = mat, logcounts = log2(mat + 1L)),
+  reducedDims = list(
+    pca = matrix(stats::runif(80 * 5L), nrow = 80),
+    tsne = matrix(stats::rnorm(80 * 2L), nrow = 80)
+  ),
+  mainExpName = "RNA"
+))
+
+uri <- write_soma(sce, uri)
+
+(exp <- SOMAExperimentOpen(uri))
+exp$obs
+(ms <- exp$ms$get("RNA"))
+ms$var
+ms$X$names()
+ms$obsm$names()
+
+\dontshow{
+exp$close()
+}
+\dontshow{\}) # examplesIf}
+}

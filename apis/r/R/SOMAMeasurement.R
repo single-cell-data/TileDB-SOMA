@@ -9,6 +9,9 @@
 #' @template section-add-object-to-collection
 #'
 #' @export
+#'
+#' @inherit SOMAMeasurementCreate examples
+#'
 SOMAMeasurement <- R6::R6Class(
   classname = "SOMAMeasurement",
   inherit = SOMACollectionBase,

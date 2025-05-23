@@ -1,11 +1,17 @@
 #' Ephemeral Collection Base
 #'
-#' @description Base class for ephemeral collections; ephemeral collections are
-#' equivalent to \link[tiledbsoma:SOMACollection]{SOMA collections} but are
-#' stored in-memory instead of on-disks
+#' @description Virtual base class for ephemeral collections; ephemeral
+#' collections are equivalent to
+#' \link[tiledbsoma:SOMACollection]{SOMA collections} but are stored in-memory
+#' instead of on-disk
 #'
 #' @keywords internal
+#'
 #' @export
+#'
+#' @seealso Derived classes: \code{\link{EphemeralCollection}},
+#' \code{\link{EphemeralMeasurement}},
+#' \code{\link{EphemeralExperiment}}
 #'
 EphemeralCollectionBase <- R6::R6Class(
   classname = "EphemeralCollectionBase",
@@ -53,18 +59,19 @@ EphemeralCollectionBase <- R6::R6Class(
     },
 
     # Override TileDBGroup private methods
-    #' @description Dummy method for ephemeral cobjects for compatibility with
+    #' @description Dummy method for ephemeral objects for compatibility with
     #' SOMA collections
     #'
     #' @param mode Ignored for ephemeral objects
     #'
-    #' @return Throws an error as this method is not supported by ephemeral objects
+    #' @return Throws an error as this method is not supported by ephemeral
+    #' objects
     #'
     open = function(mode) {
       private$.ephemeral_error("opened")
     },
 
-    #' @description Dummy method for ephemeral cobjects for compatibility with
+    #' @description Dummy method for ephemeral objects for compatibility with
     #' SOMA collections
     #'
     #' @return Invisibly returns \code{NULL}
@@ -79,7 +86,7 @@ EphemeralCollectionBase <- R6::R6Class(
       return(invisible(NULL))
     },
 
-    #' @description Dummy method for ephemeral cobjects for compatibility with
+    #' @description Dummy method for ephemeral objects for compatibility with
     #' SOMA collections
     #'
     #' @return Returns \code{FALSE} as ephemeral collections do not
@@ -101,7 +108,7 @@ EphemeralCollectionBase <- R6::R6Class(
       return(invisible(self))
     },
 
-    #' @description Dummy method for ephemeral cobjects for compatibility with
+    #' @description Dummy method for ephemeral objects for compatibility with
     #' SOMA collections
     #'
     #' @param param Ignored for ephemeral objects
@@ -189,18 +196,19 @@ EphemeralCollectionBase <- R6::R6Class(
       return(invisible(self))
     },
 
-    #' @description Dummy method for ephemeral cobjects for compatibility with
+    #' @description Dummy method for ephemeral objects for compatibility with
     #' SOMA collections
     #'
     #' @param metadata Ignored for ephemeral objects
     #'
-    #' @return Throws an error as this method is not supported by ephemeral objects
+    #' @return Throws an error as this method is not supported by ephemeral
+    #' objects
     #'
     set_metadata = function(metadata) {
       private$.ephemeral_error("edited")
     },
 
-    #' @description Dummy method for ephemeral cobjects for compatibility with
+    #' @description Dummy method for ephemeral objects for compatibility with
     #' SOMA collections
     #'
     #' @param key Ignored for ephemeral objects
@@ -218,45 +226,49 @@ EphemeralCollectionBase <- R6::R6Class(
     },
 
     # Override SOMACollectionBase methods
-    #' @description Dummy method for ephemeral cobjects for compatibility with
+    #' @description Dummy method for ephemeral objects for compatibility with
     #' SOMA collections
     #'
     #' @param object,key Ignored for ephemeral objects
     #'
-    #' @return Throws an error as this method is not supported by ephemeral objects
+    #' @return Throws an error as this method is not supported by ephemeral
+    #' objects
     #'
     add_new_collection = function(object, key) {
       private$.ephemeral_error()
     },
 
-    #' @description Dummy method for ephemeral cobjects for compatibility with
+    #' @description Dummy method for ephemeral objects for compatibility with
     #' SOMA collections
     #'
     #' @param key,schema,index_column_names Ignored for ephemeral objects
     #'
-    #' @return Throws an error as this method is not supported by ephemeral objects
+    #' @return Throws an error as this method is not supported by ephemeral
+    #' objects
     #'
     add_new_dataframe = function(key, schema, index_column_names) {
       private$.ephemeral_error()
     },
 
-    #' @description Dummy method for ephemeral cobjects for compatibility with
+    #' @description Dummy method for ephemeral objects for compatibility with
     #' SOMA collections
     #'
     #' @param key,type,shape Ignored for ephemeral objects
     #'
-    #' @return Throws an error as this method is not supported by ephemeral objects
+    #' @return Throws an error as this method is not supported by ephemeral
+    #' objects
     #'
     add_new_dense_ndarray = function(key, type, shape) {
       private$.ephemeral_error()
     },
 
-    #' @description Dummy method for ephemeral cobjects for compatibility with
+    #' @description Dummy method for ephemeral objects for compatibility with
     #' SOMA collections
     #'
     #' @param key,type,shape Ignored for ephemeral objects
     #'
-    #' @return Throws an error as this method is not supported by ephemeral objects
+    #' @return Throws an error as this method is not supported by ephemeral
+    #' objects
     #'
     add_new_sparse_ndarray = function(key, type, shape) {
       private$.ephemeral_error()
@@ -394,6 +406,22 @@ EphemeralCollectionBase <- R6::R6Class(
 #'
 #' @export
 #'
+#' @examples
+#' (col <- EphemeralCollection$new())
+#' col$soma_type
+#'
+#' @examplesIf requireNamespace("withr", quietly = TRUE)
+#' dir <- withr::local_tempfile(pattern = "obs")
+#' dir.create(dir, recursive = TRUE)
+#'
+#' (obs <- load_dataset("soma-dataframe-pbmc3k-processed-obs", dir))
+#' col$set(obs, "obs")
+#' col$names()
+#'
+#' \dontshow{
+#' obs$close()
+#' }
+#'
 EphemeralCollection <- R6::R6Class(
   classname = "EphemeralCollection",
   inherit = EphemeralCollectionBase,
@@ -418,6 +446,13 @@ EphemeralCollection <- R6::R6Class(
 #' @keywords internal
 #'
 #' @export
+#'
+#' @examples
+#' (ms <- EphemeralMeasurement$new())
+#' ms$soma_type
+#'
+#' ms$set(EphemeralCollection$new(), "X")
+#' ms$X
 #'
 EphemeralMeasurement <- R6::R6Class(
   classname = "EphemeralMeasurement",
@@ -513,6 +548,22 @@ EphemeralMeasurement <- R6::R6Class(
 #' @keywords internal
 #'
 #' @export
+#'
+#' @examples
+#' (exp <- EphemeralExperiment$new())
+#' exp$soma_type
+#'
+#' @examplesIf requireNamespace("withr", quietly = TRUE)
+#' dir <- withr::local_tempfile(pattern = "obs")
+#' dir.create(dir, recursive = TRUE)
+#'
+#' (obs <- load_dataset("soma-dataframe-pbmc3k-processed-obs", dir))
+#' exp$set(obs, "obs")
+#' exp$obs
+#'
+#' \dontshow{
+#' obs$close()
+#' }
 #'
 EphemeralExperiment <- R6::R6Class(
   classname = "EphemeralExperiment",

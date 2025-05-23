@@ -10,6 +10,14 @@
 #'
 #' @noMd
 #'
+#' @examples
+#' (cfg <- PlatformConfig$new())
+#' cfg$set("plat1", "op1", "a", 1L)
+#' cfg
+#'
+#' cfg$get("plat1")
+#' cfg$get("plat1")$get("op1")
+#'
 PlatformConfig <- R6::R6Class(
   classname = "PlatformConfig",
   inherit = MappingBase,

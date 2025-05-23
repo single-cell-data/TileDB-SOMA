@@ -1,7 +1,17 @@
 #' The SOMA Re-Indexer
 #'
 #' @description A re-indexer for unique integer indices
+#'
 #' @export
+#'
+#' @examples
+#' (keys <- c(-10000, -100000, 200000, 5, 1, 7))
+#' (lookups <- unlist(replicate(n = 4L, c(-1L, 1:5), simplify = FALSE)))
+#'
+#' indexer <- IntIndexer$new(keys)
+#' indexer$get_indexer(lookups)
+#' indexer$get_indexer(lookups, nomatch_na = TRUE)
+#'
 IntIndexer <- R6::R6Class(
   classname = "IntIndexer",
   public = list(

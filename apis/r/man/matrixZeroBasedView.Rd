@@ -2,10 +2,24 @@
 % Please edit documentation in R/utils-matrixZeroBasedView.R
 \name{matrixZeroBasedView}
 \alias{matrixZeroBasedView}
-\title{matrixZeroBasedView is a wrapper shim for a matrix or Matrix::sparseMatrix providing}
+\title{Zero-based Wrapper for Sparse Matrices}
 \description{
-\code{matrixZeroBasedView} is a class that allows elemental
-matrix access using zero-based indeces.
+Zero-based Wrapper for Sparse Matrices
+
+Zero-based Wrapper for Sparse Matrices
+}
+\details{
+\code{matrixZeroBasedView} is a wrapper shim for a matrix or
+\code{\link[Matrix:sparseMatrix]{Matrix::sparseMatrix}} that allows
+elemental matrix access using zero-based indices
+}
+\examples{
+(mat <- Matrix::rsparsematrix(3L, 3L, 0.3))
+(mat0 <- matrixZeroBasedView$new(mat))
+
+mat0$take(0, 0)
+mat0$take(0, 0:2)$get_one_based_matrix()
+
 }
 \section{Methods}{
 \subsection{Public methods}{
@@ -33,7 +47,7 @@ Initialize (lifecycle: maturing)
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{x}}{\link{matrix} or Matrix::\link[Matrix]{sparseMatrix} or Matrix::\link[Matrix]{Matrix}}
+\item{\code{x}}{A matrix}
 }
 \if{html}{\out{</div>}}
 }
@@ -50,9 +64,9 @@ Zero-based matrix element access
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{i}}{Row index (zero-based).}
+\item{\code{i}}{Row index (zero-based)}
 
-\item{\code{j}}{Column index (zero-based).}
+\item{\code{j}}{Column index (zero-based)}
 }
 \if{html}{\out{</div>}}
 }
@@ -83,7 +97,7 @@ nrow
 }
 
 \subsection{Returns}{
-Matrix row count.
+Matrix row count
 }
 }
 \if{html}{\out{<hr>}}
@@ -96,7 +110,7 @@ ncol
 }
 
 \subsection{Returns}{
-Matrix column count.
+Matrix column count
 }
 }
 \if{html}{\out{<hr>}}
@@ -116,8 +130,8 @@ One-based matrix
 \if{html}{\out{<a id="method-matrixZeroBasedView-sum"></a>}}
 \if{latex}{\out{\hypertarget{method-matrixZeroBasedView-sum}{}}}
 \subsection{Method \code{sum()}}{
-Perform arithmetic sum between this \link{matrixZeroBasedView}
-and another \link{matrixZeroBasedView}.
+Perform arithmetic sum between this
+\link{matrixZeroBasedView} and another \link{matrixZeroBasedView}
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{matrixZeroBasedView$sum(x)}\if{html}{\out{</div>}}
 }
@@ -125,12 +139,12 @@ and another \link{matrixZeroBasedView}.
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{x}}{the \link{matrixZeroBasedView} to sum.}
+\item{\code{x}}{the \link{matrixZeroBasedView} to sum}
 }
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-The result of the sum as a \link{matrixZeroBasedView}.
+The result of the sum as a \link{matrixZeroBasedView}
 }
 }
 \if{html}{\out{<hr>}}
@@ -142,6 +156,9 @@ print
 \if{html}{\out{<div class="r">}}\preformatted{matrixZeroBasedView$print()}\if{html}{\out{</div>}}
 }
 
+\subsection{Returns}{
+Invisibly returns \code{self}
+}
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-matrixZeroBasedView-clone"></a>}}

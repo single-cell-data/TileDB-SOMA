@@ -8,6 +8,15 @@ An R6 mapping type that is limited to scalar atomic vector types only; can
 optionally be limited further to a specific atomic vector type
 (eg. \dQuote{\code{logical}}).
 }
+\examples{
+(map <- ScalarMap$new())
+map$set("a", 1L)
+map
+
+map$get("a")
+map$get("b", default = NULL)
+
+}
 \keyword{internal}
 \section{Super class}{
 \code{\link[tiledbsoma:MappingBase]{tiledbsoma::MappingBase}} -> \code{ScalarMap}

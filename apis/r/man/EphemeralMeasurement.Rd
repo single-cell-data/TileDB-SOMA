@@ -9,6 +9,14 @@ measurements are equivalent to
 \link[tiledbsoma:SOMAMeasurement]{SOMA measurements} but are stored in-memory
 instead of on-disk
 }
+\examples{
+(ms <- EphemeralMeasurement$new())
+ms$soma_type
+
+ms$set(EphemeralCollection$new(), "X")
+ms$X
+
+}
 \keyword{internal}
 \section{Super classes}{
 \code{\link[tiledbsoma:TileDBObject]{tiledbsoma::TileDBObject}} -> \code{\link[tiledbsoma:TileDBGroup]{tiledbsoma::TileDBGroup}} -> \code{\link[tiledbsoma:SOMACollectionBase]{tiledbsoma::SOMACollectionBase}} -> \code{\link[tiledbsoma:EphemeralCollectionBase]{tiledbsoma::EphemeralCollectionBase}} -> \code{EphemeralMeasurement}

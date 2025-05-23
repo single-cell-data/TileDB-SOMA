@@ -7,6 +7,26 @@
 Class that allows for blockwise read iteration of SOMA reads
 as Arrow \code{\link[arrow]{Table}s}
 }
+\examples{
+\dontshow{if (requireNamespace("withr", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+dir <- withr::local_tempfile(pattern = "blockwise-table")
+dir.create(dir, recursive = TRUE)
+(exp <- load_dataset("soma-exp-pbmc-small", dir))
+qry <- exp$axis_query("RNA")
+xqry <- qry$X("data")
+
+iter <- xqry$blockwise(0L, size = 20L, reindex_disable_on_axis = TRUE)$tables()
+stopifnot(inherits(iter, "BlockwiseTableReadIter"))
+
+while (!iter$read_complete()) {
+  block <- iter$read_next()
+}
+
+\dontshow{
+exp$close()
+}
+\dontshow{\}) # examplesIf}
+}
 \keyword{internal}
 \section{Super classes}{
 \code{\link[tiledbsoma:ReadIter]{tiledbsoma::ReadIter}} -> \code{\link[tiledbsoma:BlockwiseReadIterBase]{tiledbsoma::BlockwiseReadIterBase}} -> \code{BlockwiseTableReadIter}

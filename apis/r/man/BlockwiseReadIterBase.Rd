@@ -6,6 +6,10 @@
 \description{
 Class that allows for blockwise read iteration of SOMA reads
 }
+\seealso{
+Derived classes: \code{\link{BlockwiseTableReadIter}},
+\code{\link{BlockwiseSparseReadIter}}
+}
 \keyword{internal}
 \section{Super class}{
 \code{\link[tiledbsoma:ReadIter]{tiledbsoma::ReadIter}} -> \code{BlockwiseReadIterBase}

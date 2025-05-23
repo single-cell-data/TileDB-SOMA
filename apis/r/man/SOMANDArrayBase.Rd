@@ -4,8 +4,12 @@
 \alias{SOMANDArrayBase}
 \title{SOMA NDArray Base Class}
 \description{
-Adds NDArray-specific functionality to the \code{\link{SOMAArrayBase}} class.
-(lifecycle: maturing)
+Virtual base class to add NDArray-specific functionality to the
+\code{\link{SOMAArrayBase}} class (lifecycle: maturing)
+}
+\seealso{
+Derived classes: \code{\link{SOMADenseNDArray}},
+\code{\link{SOMASparseNDArray}}
 }
 \keyword{internal}
 \section{Super classes}{

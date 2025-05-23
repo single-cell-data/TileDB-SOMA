@@ -1,7 +1,7 @@
 #' The Coordinate Strider
 #'
 #' @description The \code{CoordsStrider} allows creating coordinate slices
-#' in an interated manner. Alternatively, it can chunk an existing vector of
+#' in an iterated manner. Alternatively, it can chunk an existing vector of
 #' coordinates
 #'
 #' @note The \code{CoordsStrider} operates using
@@ -16,7 +16,7 @@
 #' @export
 #'
 #' @examples
-#' strider <- CoordsStrider$new(start = 1L, end = 200L, stride = 60L)
+#' (strider <- CoordsStrider$new(start = 1L, end = 200L, stride = 60L))
 #' while (strider$has_next()) {
 #'   str(strider$next_element())
 #' }
@@ -197,8 +197,14 @@ CoordsStrider <- R6::R6Class(
   )
 )
 
+#' @rdname CoordsStrider
+#'
 #' @method as.list CoordsStrider
 #' @export
+#'
+#' @examples
+#' (strider <- CoordsStrider$new(start = 1L, end = 200L, stride = 60L))
+#' as.list(strider)
 #'
 as.list.CoordsStrider <- function(x, ...) {
   res <- vector(mode = "list", length = ceiling(x$length() / x$stride))
@@ -213,15 +219,30 @@ as.list.CoordsStrider <- function(x, ...) {
   return(Filter(Negate(is.null), res))
 }
 
+#' @rdname CoordsStrider
+#'
 #' @method length CoordsStrider
 #' @export
 #'
+#' @examples
+#' length(strider)
+#'
 length.CoordsStrider <- function(x) x$length()
 
+#' @rdname CoordsStrider
+#'
 #' @exportS3Method iterators::nextElem
+#'
+#' @examplesIf requireNamespace("itertools", quietly = TRUE)
+#' (strider <- CoordsStrider$new(start = 1L, end = 200L, stride = 60L))
+#' while (itertools::hasNext(strider)) {
+#'   str(iterators::nextElem(strider))
+#' }
 #'
 nextElem.CoordsStrider <- function(obj, ...) obj$next_element()
 
+#' @rdname CoordsStrider
+#'
 #' @exportS3Method itertools::hasNext
 #'
 hasNext.CoordsStrider <- function(obj, ...) obj$has_next()

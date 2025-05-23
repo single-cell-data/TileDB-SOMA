@@ -1,11 +1,13 @@
 #' TileDB Group Base Class
 #'
-#' @description
-#' Base class for interacting with TileDB groups (lifecycle: maturing)
+#' @description Virtual base class for interacting with TileDB groups
+#' (lifecycle: maturing)
 #'
 #' @keywords internal
 #'
 #' @export
+#'
+#' @seealso Derived classes: \code{\link{SOMACollectionBase}}
 #'
 TileDBGroup <- R6::R6Class(
   classname = "TileDBGroup",

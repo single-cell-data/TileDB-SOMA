@@ -14,6 +14,9 @@
 #' to the value specified by `row_index_name`.
 #'
 #' @export
+#'
+#' @inherit SOMAExperimentCreate examples
+#'
 SOMAExperiment <- R6::R6Class(
   classname = "SOMAExperiment",
   inherit = SOMACollectionBase,

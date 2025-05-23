@@ -14,41 +14,53 @@ extract_dataset(name, dir = tempdir())
 load_dataset(name, dir = tempdir(), tiledbsoma_ctx = NULL)
 }
 \arguments{
-\item{name}{The name of the dataset.}
+\item{name}{The name of the dataset}
 
-\item{dir}{The directory where the dataset will be extracted to (default:
-\code{tempdir()}).}
+\item{dir}{The directory where the dataset will be extracted to
+(default: \code{\link[base]{tempdir}()})}
 
-\item{tiledbsoma_ctx}{Optional TileDB \sQuote{Context} object, defaults to \code{NULL}}
+\item{tiledbsoma_ctx}{Optional TileDB \dQuote{Context} object,
+defaults to \code{NULL}}
 }
 \value{
-\itemize{
-\item \code{list_datasets()} returns a character vector of the available datasets.
-}
+\code{list_datasets()}: returns a character vector of the
+available datasets
 
-\itemize{
-\item \code{extract_dataset()} returns the path to the extracted dataset.
-}
+\code{extract_dataset()}: returns the path to the extracted dataset
 
-\itemize{
-\item \code{load_dataset()} returns a SOMA object.
-}
+\code{load_dataset()}: returns a SOMA object.
 }
 \description{
-Access example SOMA objects bundled with the tiledbsoma package.
-
-Use \code{list_datasets()} to list the available datasets and \code{load_dataset()} to
-load a dataset into memory using the appropriate SOMA class. The
-\code{extract_dataset()} method returns the path to the extracted dataset without
-loading it into memory.
+Access example SOMA objects bundled with the tiledbsoma package\cr
+\cr
+Use \code{list_datasets()} to list the available datasets and
+\code{load_dataset()} to load a dataset into memory using the appropriate
+SOMA class. The \code{extract_dataset()} function returns the path to the
+extracted dataset without loading it into memory.
 }
 \details{
-The SOMA objects are stored as \code{tar.gz} files in the package's \code{extdata}
-directory. Calling \code{load_dataset()} extracts the \code{tar.gz} file to the
-specified \code{dir}, inspects its metadata to determine the appropriate SOMA
-class to instantiate, and returns the SOMA object.
+The SOMA objects are stored as \code{tar.gz} files in the package's
+\code{extdata} directory. Calling \code{load_dataset()} extracts the
+\code{tar.gz} file to the specified \code{dir}, inspects its metadata to
+determine the appropriate SOMA class to instantiate, and returns the
+SOMA object.
 }
 \examples{
-soma_pbmc_small <- load_dataset("soma-exp-pbmc-small")
+list_datasets()
 
+\dontshow{if (requireNamespace("withr", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+dir <- withr::local_tempfile(pattern = "pbmc-small")
+dir.create(dir, recursive = TRUE)
+dest <- extract_dataset("soma-exp-pbmc-small", dir)
+list.files(dest)
+\dontshow{\}) # examplesIf}
+\dontshow{if (requireNamespace("withr", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+dir <- withr::local_tempfile(pattern = "pbmc_small")
+dir.create(dir, recursive = TRUE)
+(exp <- load_dataset("soma-exp-pbmc-small", dir))
+
+\dontshow{
+exp$close()
+}
+\dontshow{\}) # examplesIf}
 }

@@ -4,9 +4,12 @@
 \alias{SOMAContextBase}
 \title{Base SOMA Context}
 \description{
-R6 mapping class for SOMA context options. This class should be used
+Virtual R6 mapping class for SOMA context options. This class should be used
 as the basis for platform-specific contexts as it checks SOMA-specific
 context options
+}
+\seealso{
+Derived classes: \code{\link{SOMATileDBContext}}
 }
 \keyword{internal}
 \section{Super classes}{

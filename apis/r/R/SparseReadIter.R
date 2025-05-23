@@ -1,21 +1,40 @@
-#' SparseReadIter
+#'  SOMA Read Iterator Over Sparse Matrices
 #'
-#' @description
-#' \code{SparseReadIter} is a class that allows for iteration over
-#'  a reads on \link{SOMASparseNDArray}.
-#' Iteration chunks are retrieved as 0-based Views \link{matrixZeroBasedView} of Matrix::\link[Matrix]{sparseMatrix}.
+#' @description \code{SparseReadIter} is a class that allows for iteration over
+#' a reads on \link{SOMASparseNDArray}
+#'
 #' @export
-
+#'
+#' @examplesIf requireNamespace("withr", quietly = TRUE)
+#' dir <- withr::local_tempfile(pattern = "blockwise-table")
+#' dir.create(dir, recursive = TRUE)
+#' (exp <- load_dataset("soma-exp-pbmc-small", dir))
+#' qry <- exp$axis_query("RNA")
+#' xqry <- qry$X("data")
+#'
+#' iter <- xqry$sparse_matrix()
+#' stopifnot(inherits(iter, "SparseReadIter"))
+#'
+#' while (!iter$read_complete()) {
+#'   block <- iter$read_next()
+#' }
+#'
+#' \dontshow{
+#' exp$close()
+#' }
+#'
 SparseReadIter <- R6::R6Class(
   classname = "SparseReadIter",
   inherit = ReadIter,
   public = list(
-
     #' @description Create (lifecycle: maturing)
+    #'
     #' @param sr Soma reader pointer
     #' @param shape Shape of the full matrix
-    #' @param zero_based Logical, if TRUE will make iterator for Matrix::\link[Matrix]{dgTMatrix-class}
+    #' @param zero_based Logical, if TRUE will make iterator for
+    #' Matrix::\link[Matrix]{dgTMatrix-class}
     #' otherwise \link{matrixZeroBasedView}.
+    #'
     initialize = function(sr, shape, zero_based = FALSE) {
       # TODO implement zero_based argument, currently doesn't do anything
       stopifnot(
@@ -32,7 +51,9 @@ SparseReadIter <- R6::R6Class(
     },
 
     #' @description  Concatenate remainder of iterator.
+    #'
     #' @return \link{matrixZeroBasedView} of Matrix::\link[Matrix]{sparseMatrix}
+    #'
     concat = function() soma_array_to_sparse_matrix_concat(self, private$zero_based)
   ),
   private = list(

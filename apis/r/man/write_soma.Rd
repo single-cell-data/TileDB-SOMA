@@ -36,3 +36,92 @@ function and methods can be written for it to provide a high-level
 }
 }
 
+\examples{
+\dontshow{if (requireNamespace("withr", quietly = TRUE) && requireNamespace("datasets", quietly = TRUE) && requireNamespace("S4Vectors", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+uri <- withr::local_tempfile(pattern = "s4-data-frame")
+data("mtcars", package = "datasets")
+head(mtcars <- as(mtcars, "DataFrame"))
+
+(sdf <- write_soma(mtcars, uri, soma_parent = NULL, relative = FALSE))
+
+\dontshow{
+sdf$close()
+}
+\dontshow{\}) # examplesIf}
+\dontshow{if (requireNamespace("withr", quietly = TRUE) && requireNamespace("S4Vectors", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+uri <- withr::local_tempfile(pattern = "hits")
+(hits <- S4Vectors::SelfHits(
+  c(2, 3, 3, 3, 3, 3, 4, 4, 4),
+  c(4, 3, 2:4, 2, 2:3, 2),
+  4,
+  x = stats::rnorm(9L)
+))
+
+(arr <- write_soma(hits, uri, soma_parent = NULL, relative = FALSE))
+
+\dontshow{
+arr$close()
+}
+\dontshow{\}) # examplesIf}
+\dontshow{if (requireNamespace("withr", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+uri <- withr::local_tempfile(pattern = "character")
+(sdf <- write_soma(letters, uri, soma_parent = NULL, relative = FALSE))
+
+\dontshow{
+sdf$close()
+}
+\dontshow{\}) # examplesIf}
+\dontshow{if (requireNamespace("withr", quietly = TRUE) && requireNamespace("datasets", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+uri <- withr::local_tempfile(pattern = "data-frame")
+data("mtcars", package = "datasets")
+
+(sdf <- write_soma(mtcars, uri, soma_parent = NULL, relative = FALSE))
+
+\dontshow{
+sdf$close()
+}
+\dontshow{\}) # examplesIf}
+\dontshow{if (requireNamespace("withr", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+uri <- withr::local_tempfile(pattern = "matrix")
+mat <- matrix(stats::rnorm(25L), nrow = 5L, ncol = 5L)
+(arr <- write_soma(mat, uri, soma_parent = NULL, sparse = FALSE, relative = FALSE))
+
+\dontshow{
+arr$close()
+}
+\dontshow{\}) # examplesIf}
+\dontshow{if (requireNamespace("withr", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+uri <- withr::local_tempfile(pattern = "s4-matrix")
+mat <- Matrix::Matrix(stats::rnorm(25L), nrow = 5L, ncol = 5L)
+(arr <- write_soma(mat, uri, soma_parent = NULL, sparse = FALSE, relative = FALSE))
+
+\dontshow{
+arr$close()
+}
+\dontshow{\}) # examplesIf}
+\dontshow{if (requireNamespace("withr", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+uri <- withr::local_tempfile(pattern = "tsparse-matrix")
+mat <- Matrix::rsparsematrix(5L, 5L, 0.3, repr = "T")
+(arr <- write_soma(mat, uri, soma_parent = NULL, relative = FALSE))
+
+\dontshow{
+arr$close()
+}
+
+uri <- withr::local_tempfile(pattern = "csparse-matrix")
+mat <- Matrix::rsparsematrix(5L, 5L, 0.3, repr = "C")
+(arr <- write_soma(mat, uri, soma_parent = NULL, relative = FALSE))
+
+\dontshow{
+arr$close()
+}
+
+uri <- withr::local_tempfile(pattern = "rsparse-matrix")
+mat <- Matrix::rsparsematrix(5L, 5L, 0.3, repr = "R")
+(arr <- write_soma(mat, uri, soma_parent = NULL, relative = FALSE))
+
+\dontshow{
+arr$close()
+}
+\dontshow{\}) # examplesIf}
+}

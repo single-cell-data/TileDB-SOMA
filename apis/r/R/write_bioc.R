@@ -1,7 +1,19 @@
+#' @name write_soma_objects
 #' @rdname write_soma_objects
 #'
 #' @method write_soma DataFrame
 #' @export
+#'
+#' @examplesIf requireNamespace("withr", quietly = TRUE) && requireNamespace("datasets", quietly = TRUE) && requireNamespace("S4Vectors", quietly = TRUE)
+#' uri <- withr::local_tempfile(pattern = "s4-data-frame")
+#' data("mtcars", package = "datasets")
+#' head(mtcars <- as(mtcars, "DataFrame"))
+#'
+#' (sdf <- write_soma(mtcars, uri, soma_parent = NULL, relative = FALSE))
+#'
+#' \dontshow{
+#' sdf$close()
+#' }
 #'
 write_soma.DataFrame <- function(
   x,
@@ -42,6 +54,21 @@ write_soma.DataFrame <- function(
 #'
 #' @method write_soma Hits
 #' @export
+#'
+#' @examplesIf requireNamespace("withr", quietly = TRUE) && requireNamespace("S4Vectors", quietly = TRUE)
+#' uri <- withr::local_tempfile(pattern = "hits")
+#' (hits <- S4Vectors::SelfHits(
+#'   c(2, 3, 3, 3, 3, 3, 4, 4, 4),
+#'   c(4, 3, 2:4, 2, 2:3, 2),
+#'   4,
+#'   x = stats::rnorm(9L)
+#' ))
+#'
+#' (arr <- write_soma(hits, uri, soma_parent = NULL, relative = FALSE))
+#'
+#' \dontshow{
+#' arr$close()
+#' }
 #'
 write_soma.Hits <- function(
   x,
@@ -98,6 +125,37 @@ write_soma.Hits <- function(
 #'
 #' @method write_soma SingleCellExperiment
 #' @export
+#'
+#' @examplesIf requireNamespace("withr", quietly = TRUE) && requireNamespace("SingleCellExperiment", quietly = TRUE)
+#' uri <- withr::local_tempfile(pattern = "single-cell-experiment")
+#'
+#' mat <- abs(Matrix::rsparsematrix(
+#'   230L,
+#'   80L,
+#'   0.3,
+#'   dimnames = list(paste0("feature_", seq_len(230)), paste0("cell_", seq_len(80)))
+#' ))
+#' (sce <- SingleCellExperiment::SingleCellExperiment(
+#'   assays = list(counts = mat, logcounts = log2(mat + 1L)),
+#'   reducedDims = list(
+#'     pca = matrix(stats::runif(80 * 5L), nrow = 80),
+#'     tsne = matrix(stats::rnorm(80 * 2L), nrow = 80)
+#'   ),
+#'   mainExpName = "RNA"
+#' ))
+#'
+#' uri <- write_soma(sce, uri)
+#'
+#' (exp <- SOMAExperimentOpen(uri))
+#' exp$obs
+#' (ms <- exp$ms$get("RNA"))
+#' ms$var
+#' ms$X$names()
+#' ms$obsm$names()
+#'
+#' \dontshow{
+#' exp$close()
+#' }
 #'
 write_soma.SingleCellExperiment <- function(
   x,
@@ -287,6 +345,29 @@ write_soma.SingleCellExperiment <- function(
 #'
 #' @method write_soma SummarizedExperiment
 #' @export
+#'
+#' @examplesIf requireNamespace("withr", quietly = TRUE) && requireNamespace("SummarizedExperiment", quietly = TRUE)
+#' uri <- withr::local_tempfile(pattern = "summarized-experiment")
+#'
+#' mat <- abs(Matrix::rsparsematrix(
+#'   230L,
+#'   80L,
+#'   0.3,
+#'   dimnames = list(paste0("feature_", seq_len(230)), paste0("cell_", seq_len(80)))
+#' ))
+#' (se <- SummarizedExperiment::SummarizedExperiment(list(counts = mat, logcounts = log2(mat + 1L))))
+#'
+#' uri <- write_soma(se, uri, ms_name = "RNA")
+#'
+#' (exp <- SOMAExperimentOpen(uri))
+#' exp$obs
+#' (ms <- exp$ms$get("RNA"))
+#' ms$var
+#' ms$X$names()
+#'
+#' \dontshow{
+#' exp$close()
+#' }
 #'
 write_soma.SummarizedExperiment <- function(
   x,

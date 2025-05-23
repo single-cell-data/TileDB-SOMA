@@ -1,12 +1,13 @@
 #' SOMADataFrame
 #'
-#' @description
-#' `SOMADataFrame` is a multi-column table that must contain a column
-#' called `soma_joinid` of type `int64`, which contains a unique value for each
-#' row and is intended to act as a join key for other objects, such as
-#' [`SOMASparseNDArray`].  (lifecycle: maturing)
+#' @description \code{SOMADataFrame} is a multi-column table that must contain a
+#' column called \dQuote{\code{soma_joinid}} of type \code{int64}, which
+#' contains a unique value for each row and is intended to act as a join key for
+#' other objects, such as \code{\link{SOMASparseNDArray}} (lifecycle: maturing)
 #'
 #' @export
+#'
+#' @inherit SOMADataFrameCreate examples
 #'
 SOMADataFrame <- R6::R6Class(
   classname = "SOMADataFrame",

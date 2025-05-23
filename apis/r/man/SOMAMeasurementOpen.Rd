@@ -15,16 +15,50 @@ SOMAMeasurementOpen(
 \arguments{
 \item{uri}{URI for the TileDB object}
 
-\item{mode}{One of \code{"READ"} or \code{"WRITE"}}
+\item{mode}{One of \dQuote{\code{READ}} or \dQuote{\code{WRITE}}}
 
 \item{platform_config}{Optional platform configuration}
 
 \item{tiledbsoma_ctx}{Optional SOMATileDBContext}
 
-\item{tiledb_timestamp}{Optional Datetime (POSIXct) for TileDB timestamp.
-In READ mode, defaults to the current time. If non-NULL, then all members
-accessed through the collection object inherit the timestamp.}
+\item{tiledb_timestamp}{Optional Datetime (POSIXct) for TileDB timestamp;
+defaults to the current time. If not \code{NULL}, all members accessed
+through the collection inherit the timestamp}
+}
+\value{
+A \link[tiledbsoma:SOMAMeasurement]{SOMA measurement} stored at
+\code{uri} opened in mode \code{mode}
 }
 \description{
-Factory function to open a SOMAMeasurement for reading, (lifecycle: maturing)
+Factory function to open a
+\link[tiledbsoma:SOMAMeasurement]{SOMA measurement} for reading
+(lifecycle: maturing)
+}
+\examples{
+\dontshow{if (requireNamespace("withr", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+uri <- withr::local_tempfile(pattern = "soma-measurement")
+var <- data.frame(
+  soma_joinid = bit64::seq.integer64(0L, 99L),
+  var_id = paste0("feature_", seq_len(100L))
+)
+sch <- arrow::infer_schema(var)
+
+(ms <- SOMAMeasurementCreate(uri))
+sdf <- ms$add_new_dataframe(
+  "var",
+  sch,
+  "soma_joinid",
+  list(soma_joinid = c(0, 100))
+)
+sdf$write(arrow::as_arrow_table(var, schema = sch))
+sdf$close()
+ms$close()
+
+(ms <- SOMAMeasurementOpen(uri))
+ms$var
+
+\dontshow{
+ms$close()
+}
+\dontshow{\}) # examplesIf}
 }

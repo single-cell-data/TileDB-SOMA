@@ -4,7 +4,24 @@
 \alias{SOMASparseNDArrayRead}
 \title{SOMASparseNDArrayRead}
 \description{
-Intermediate type to choose result format when reading a sparse array
+Intermediate type to choose result format when reading a
+sparse array
+}
+\examples{
+\dontshow{if (requireNamespace("withr", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+dir <- withr::local_tempfile(pattern = "blockwise-table")
+dir.create(dir, recursive = TRUE)
+(exp <- load_dataset("soma-exp-pbmc-small", dir))
+qry <- exp$axis_query("RNA")
+xqry <- qry$X("data")
+stopifnot(inherits(xqry, "SOMASparseNDArrayRead"))
+
+xqry$coords
+
+\dontshow{
+exp$close()
+}
+\dontshow{\}) # examplesIf}
 }
 \keyword{internal}
 \section{Super class}{

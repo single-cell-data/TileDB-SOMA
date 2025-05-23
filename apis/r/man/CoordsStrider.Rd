@@ -2,10 +2,23 @@
 % Please edit documentation in R/CoordsStrider.R
 \name{CoordsStrider}
 \alias{CoordsStrider}
+\alias{as.list.CoordsStrider}
+\alias{length.CoordsStrider}
+\alias{nextElem.CoordsStrider}
+\alias{hasNext.CoordsStrider}
 \title{The Coordinate Strider}
+\usage{
+\method{as.list}{CoordsStrider}(x, ...)
+
+\method{length}{CoordsStrider}(x)
+
+\method{nextElem}{CoordsStrider}(obj, ...)
+
+\method{hasNext}{CoordsStrider}(obj, ...)
+}
 \description{
 The \code{CoordsStrider} allows creating coordinate slices
-in an interated manner. Alternatively, it can chunk an existing vector of
+in an iterated manner. Alternatively, it can chunk an existing vector of
 coordinates
 }
 \note{
@@ -17,11 +30,22 @@ such as \code{strider$start} or \code{strider$stride} will return an
 as necessary
 }
 \examples{
-strider <- CoordsStrider$new(start = 1L, end = 200L, stride = 60L)
+(strider <- CoordsStrider$new(start = 1L, end = 200L, stride = 60L))
 while (strider$has_next()) {
   str(strider$next_element())
 }
 
+(strider <- CoordsStrider$new(start = 1L, end = 200L, stride = 60L))
+as.list(strider)
+
+length(strider)
+
+\dontshow{if (requireNamespace("itertools", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+(strider <- CoordsStrider$new(start = 1L, end = 200L, stride = 60L))
+while (itertools::hasNext(strider)) {
+  str(iterators::nextElem(strider))
+}
+\dontshow{\}) # examplesIf}
 }
 \keyword{internal}
 \section{Active bindings}{

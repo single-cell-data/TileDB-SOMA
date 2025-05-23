@@ -50,6 +50,12 @@ Virtual base mapping type for R6 objects; defines internal data structure
 (\code{private$.data}) as a named list along with behavior methods for
 getting (\code{self$get()}) and setting (\code{self$set()}) items in the map
 }
+\seealso{
+Derived classes: \code{\link{ConfigList}},
+\code{\link{PlatformConfig}},
+\code{\link{ScalarMap}},
+\code{\link{TileDBCreateOptions}}
+}
 \keyword{internal}
 \section{Methods}{
 \subsection{Public methods}{
@@ -85,7 +91,8 @@ getting (\code{self$get()}) and setting (\code{self$set()}) items in the map
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-This is a \strong{virtual} class and cannot be directly instantiated
+This is a \strong{virtual} class and cannot be
+directly instantiated
 }
 }
 \if{html}{\out{<hr>}}

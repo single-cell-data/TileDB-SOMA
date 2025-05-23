@@ -1,10 +1,14 @@
 #' TileDB Array Base Class
 #'
-#' @description Base class for representing an individual TileDB array.
+#' @description Virtual base class for representing an individual TileDB array
 #' (lifecycle: maturing)
 #'
 #' @keywords internal
+#'
 #' @export
+#'
+#' @seealso Derived classes: \code{\link{SOMAArray}}
+#'
 TileDBArray <- R6::R6Class(
   classname = "TileDBArray",
   inherit = TileDBObject,

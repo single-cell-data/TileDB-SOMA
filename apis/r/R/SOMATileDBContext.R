@@ -3,7 +3,13 @@
 #' Context map for TileDB-backed SOMA objects
 #'
 #' @export
-
+#'
+#' @examplesIf requireNamespace("tiledb", quietly = TRUE)
+#' (ctx <- SOMATileDBContext$new())
+#' ctx$get("sm.mem.reader.sparse_global_order.ratio_array_data")
+#'
+#' ctx$to_tiledb_context()
+#'
 SOMATileDBContext <- R6::R6Class(
   classname = "SOMATileDBContext",
   inherit = SOMAContextBase,
@@ -39,21 +45,25 @@ SOMATileDBContext <- R6::R6Class(
       }
       private$.tiledb_ctx <- tiledb::tiledb_ctx(config = cfg, cached = cached)
     },
+
     #' @return The keys of the map
     #'
     keys = function() {
       return(c(super$keys(), private$.tiledb_ctx_names()))
     },
+
     #' @return Return the items of the map as a list
     #'
     items = function() {
       return(c(super$items(), as.list(tiledb::config(object = private$.tiledb_ctx))))
     },
+
     #' @return The number of items in the map
     #'
     length = function() {
       return(super$length() + length(private$.tiledb_ctx_names()))
     },
+
     #' @param key Key to fetch
     #' @templateVar key key
     #' @templateVar default NULL
@@ -73,6 +83,7 @@ SOMATileDBContext <- R6::R6Class(
       }
       return(super$get(key = key, default = default))
     },
+
     #' @param key Key to set
     #' @templateVar key key
     #' @template param-value
@@ -94,6 +105,7 @@ SOMATileDBContext <- R6::R6Class(
       }
       return(invisible(self))
     },
+
     #' @return A \code{\link[tiledb:tiledb_ctx]{tiledb_ctx}} object, dynamically
     #' constructed. Most useful for the constructor of this class.
     #'
@@ -106,6 +118,7 @@ SOMATileDBContext <- R6::R6Class(
       tiledb_ctx <- tiledb::tiledb_ctx(cfg)
       return(tiledb_ctx)
     },
+
     #' @return A \code{\link[tiledb:tiledb_ctx]{tiledb_ctx}} object, which is
     #' a stored (and long-lived) result from \code{to_tiledb_context}.
     context = function() {

@@ -9,6 +9,13 @@ Essentially, serves as a nested map where the inner map is a
 \code{\link{ScalarMap}}:
 \code{\{<param>: \link[tiledbsoma:ScalarMap]{\{<key>: <value>\}}\}}
 }
+\examples{
+(cfg <- ConfigList$new())
+cfg$set("op1", "a", 1L)
+cfg
+cfg$get("op1")
+
+}
 \section{Super class}{
 \code{\link[tiledbsoma:MappingBase]{tiledbsoma::MappingBase}} -> \code{ConfigList}
 }

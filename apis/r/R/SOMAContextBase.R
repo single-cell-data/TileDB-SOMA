@@ -1,12 +1,15 @@
 #' Base SOMA Context
 #'
-#' R6 mapping class for SOMA context options. This class should be used
+#' Virtual R6 mapping class for SOMA context options. This class should be used
 #' as the basis for platform-specific contexts as it checks SOMA-specific
 #' context options
 #'
 #' @keywords internal
+#'
 #' @export
-
+#'
+#' @seealso Derived classes: \code{\link{SOMATileDBContext}}
+#'
 SOMAContextBase <- R6::R6Class(
   classname = "SOMAContextBase",
   inherit = ScalarMap,

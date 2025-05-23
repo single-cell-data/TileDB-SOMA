@@ -8,6 +8,9 @@
 #' @templateVar class SOMACollection @template section-add-object-to-collection
 #'
 #' @export
+#'
+#' @inherit SOMACollectionCreate examples
+#'
 SOMACollection <- R6::R6Class(
   classname = "SOMACollection",
   inherit = SOMACollectionBase
