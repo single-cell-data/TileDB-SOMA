@@ -816,28 +816,31 @@ def test_append_items_with_experiment(obs_field_name, var_field_name, tmp_path):
     rd.prepare_experiment(soma1)
 
     with tiledbsoma.Experiment.open(soma1, "w") as exp1:
-        tiledbsoma.io.append_obs(
-            exp1,
-            adata2.obs,
-            registration_mapping=rd,
-        )
+        with pytest.deprecated_call():
+            tiledbsoma.io.append_obs(
+                exp1,
+                adata2.obs,
+                registration_mapping=rd,
+            )
 
-        tiledbsoma.io.append_var(
-            exp1,
-            adata2.var,
-            measurement_name="measname",
-            registration_mapping=rd,
-        )
+        with pytest.deprecated_call():
+            tiledbsoma.io.append_var(
+                exp1,
+                adata2.var,
+                measurement_name="measname",
+                registration_mapping=rd,
+            )
 
-        tiledbsoma.io.append_X(
-            exp1,
-            adata2.X,
-            measurement_name="measname",
-            X_layer_name="data",
-            obs_ids=list(adata2.obs.index),
-            var_ids=list(adata2.var.index),
-            registration_mapping=rd,
-        )
+        with pytest.deprecated_call():
+            tiledbsoma.io.append_X(
+                exp1,
+                adata2.X,
+                measurement_name="measname",
+                X_layer_name="data",
+                obs_ids=list(adata2.obs.index),
+                var_ids=list(adata2.var.index),
+                registration_mapping=rd,
+            )
 
     assert_adata_equal(original, adata2)
 
