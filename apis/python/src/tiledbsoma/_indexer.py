@@ -11,6 +11,7 @@ import numpy.typing as npt
 import pandas as pd
 import pyarrow as pa
 from somacore.query.types import IndexLike
+from typing_extensions import deprecated
 
 from tiledbsoma import pytiledbsoma as clib
 
@@ -28,6 +29,7 @@ IndexerDataType = Union[
 ]
 
 
+@deprecated("This function is deprecated and will be removed in a future release.")
 def tiledbsoma_build_index(data: IndexerDataType, *, context: SOMATileDBContext | None = None) -> IndexLike:
     """Initialize re-indexer for provided indices (deprecated).
 

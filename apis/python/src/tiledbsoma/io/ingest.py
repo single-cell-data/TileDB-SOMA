@@ -40,6 +40,7 @@ import pandas as pd
 import pyarrow as pa
 import scipy.sparse as sp
 from more_itertools import batched
+from typing_extensions import deprecated
 
 # As of anndata 0.11 we get a warning importing anndata.experimental.
 # But anndata.abc doesn't exist in anndata 0.10. And anndata 0.11 doesn't
@@ -347,12 +348,20 @@ def from_h5ad(
         ingest_mode: The ingestion type to perform:
 
             - ``write``: Writes all data, creating new layers if the SOMA already exists.
-            - ``resume``: Adds data to an existing SOMA, skipping writing data
+            - ``resume``: (deprecated) Adds data to an existing SOMA, skipping writing data
               that was previously written. Useful for continuing after a partial
               or interrupted ingestion operation.
             - ``schema_only``: Creates groups and the array schema, without
               writing any data to the array. Useful to prepare for appending
               multiple H5AD files to a single SOMA.
+
+          The 'resume' ingest_mode is deprecated and will be removed in a future version. The
+          current implementation has a known issue that can can cause multi-dataset appends to
+          not resume correctly.
+
+          The recommended and safest approach for recovering from a failed ingestion is to delete
+          the partially written SOMA Experiment and restart the ingestion process from the original
+          input files or a known-good backup.
 
         X_kind: Which type of matrix is used to store dense X data from the
           H5AD file: ``DenseNDArray`` or ``SparseNDArray``.
@@ -408,6 +417,7 @@ def from_h5ad(
     """
     if ingest_mode not in INGEST_MODES:
         raise SOMAError(f'expected ingest_mode to be one of {INGEST_MODES}; got "{ingest_mode}"')
+    _check_for_deprecated_modes(ingest_mode)
 
     if isinstance(input_path, ad.AnnData):
         raise TypeError("input path is an AnnData object -- did you want from_anndata?")
@@ -422,7 +432,7 @@ def from_h5ad(
     with read_h5ad(input_path, mode="r", ctx=context) as anndata:
         logging.log_io(None, _util.format_elapsed(s, f"FINISH READING {input_path}"))
 
-        uri = from_anndata(
+        uri = _from_anndata(
             experiment_uri,
             anndata,
             measurement_name,
@@ -490,7 +500,46 @@ def from_anndata(
     """
     if ingest_mode not in INGEST_MODES:
         raise SOMAError(f'expected ingest_mode to be one of {INGEST_MODES}; got "{ingest_mode}"')
+    _check_for_deprecated_modes(ingest_mode)
 
+    return _from_anndata(
+        experiment_uri,
+        anndata,
+        measurement_name,
+        context=context,
+        platform_config=platform_config,
+        obs_id_name=obs_id_name,
+        var_id_name=var_id_name,
+        X_layer_name=X_layer_name,
+        raw_X_layer_name=raw_X_layer_name,
+        ingest_mode=ingest_mode,
+        use_relative_uri=use_relative_uri,
+        X_kind=X_kind,
+        registration_mapping=registration_mapping,
+        uns_keys=uns_keys,
+        additional_metadata=additional_metadata,
+    )
+
+
+def _from_anndata(
+    experiment_uri: str,
+    anndata: ad.AnnData,
+    measurement_name: str,
+    *,
+    context: SOMATileDBContext | None = None,
+    platform_config: PlatformConfig | None = None,
+    obs_id_name: str = "obs_id",
+    var_id_name: str = "var_id",
+    X_layer_name: str = "data",
+    raw_X_layer_name: str = "data",
+    ingest_mode: IngestMode = "write",
+    use_relative_uri: bool | None = None,
+    X_kind: type[SparseNDArray] | type[DenseNDArray] = SparseNDArray,
+    registration_mapping: ExperimentAmbientLabelMapping | None = None,
+    uns_keys: Sequence[str] | None = None,
+    additional_metadata: AdditionalMetadata = None,
+) -> str:
+    """Private helper function."""
     # Map the user-level ingest mode to a set of implementation-level boolean flags
     ingestion_params = IngestionParams(ingest_mode, registration_mapping)
 
@@ -784,6 +833,11 @@ def from_anndata(
     return experiment.uri
 
 
+@deprecated(
+    """This function is deprecated and will be removed in a future version of this package.
+
+It is recommended to use tiledbsoma.io.from_anndata (with a registration map from tiledbsoma.io.register_anndatas or tiledbsoma.io.register_h5ads) for appending new, complete AnnData objects to an Experiment."""
+)
 def append_obs(
     exp: Experiment,
     new_obs: pd.DataFrame,
@@ -795,6 +849,12 @@ def append_obs(
 ) -> str:
     """Writes new rows to an existing ``obs`` dataframe (this is distinct from ``update_obs``
     which mutates the entirety of the ``obs`` dataframe, e.g. to add/remove columns).
+
+    This function is deprecated and will be removed in a future version of this package.
+
+    It is recommended to use ``tiledbsoma.io.from_anndata`` (with a registration map from
+    ``tiledbsoma.io.register_anndatas`` or ``tiledbsoma.io.register_h5ads``) for appending new,
+    complete AnnData objects to an :class:`Experiment`.
 
     Example::
 
@@ -812,7 +872,7 @@ def append_obs(
             )
 
     Lifecycle:
-        Maturing.
+        Deprecated.
     """
     exp.verify_open_for_writing()
 
@@ -839,6 +899,11 @@ def append_obs(
     return exp.obs.uri
 
 
+@deprecated(
+    """This function is deprecated and will be removed in a future version of this package.
+
+It is recommended to use tiledbsoma.io.from_anndata (with a registration map from tiledbsoma.io.register_anndatas or tiledbsoma.io.register_h5ads) for appending new, complete AnnData objects to an Experiment."""
+)
 def append_var(
     exp: Experiment,
     new_var: pd.DataFrame,
@@ -851,6 +916,12 @@ def append_var(
 ) -> str:
     """Writes new rows to an existing ``var`` dataframe (this is distinct from ``update_var``
     which mutates the entirety of the ``var`` dataframe, e.g. to add/remove columns).
+
+    This function is deprecated and will be removed in a future version of this package.
+
+    It is recommended to use ``tiledbsoma.io.from_anndata`` (with a registration map from
+    ``tiledbsoma.io.register_anndatas`` or ``tiledbsoma.io.register_h5ads``) for appending new,
+    complete AnnData objects to an :class:`Experiment`.
 
     Example::
 
@@ -868,7 +939,7 @@ def append_var(
             )
 
     Lifecycle:
-        Maturing.
+        Deprecated.
     """
     exp.verify_open_for_writing()
     if measurement_name not in exp.ms:
@@ -898,6 +969,11 @@ def append_var(
     return sdf.uri
 
 
+@deprecated(
+    """This function is deprecated and will be removed in a future version of this package.
+
+It is recommended to use tiledbsoma.io.from_anndata (with a registration map from tiledbsoma.io.register_anndatas or tiledbsoma.io.register_h5ads) for appending new, complete AnnData objects to an Experiment."""
+)
 def append_X(
     exp: Experiment,
     new_X: Matrix | h5py.Dataset,
@@ -914,6 +990,12 @@ def append_X(
     """Appends new data to an existing ``X`` matrix. Nominally to be used in conjunction
     with ``update_obs`` and ``update_var``, as an itemized alternative to doing
     ``from_anndata`` with a registration mapping supplied.
+
+    This function is deprecated and will be removed in a future version of this package.
+
+    It is recommended to use ``tiledbsoma.io.from_anndata`` (with a registration map from
+    ``tiledbsoma.io.register_anndatas`` or ``tiledbsoma.io.register_h5ads``) for appending new,
+    complete AnnData objects to an :class:`Experiment`.
 
     Example::
 
@@ -938,7 +1020,7 @@ def append_X(
             )
 
     Lifecycle:
-        Maturing.
+        Deprecated.
     """
     exp.verify_open_for_writing()
     if measurement_name not in exp.ms:
@@ -1419,6 +1501,11 @@ def _write_dataframe_impl(
     return soma_df
 
 
+@deprecated(
+    """This function is deprecated and will be removed in a future version of this package.
+
+To add a new matrix as a layer within an existing SOMA Experiment (e.g., to X, obsm, varm), please use the more specific functions tiledbsoma.io.add_X_layer or tiledbsoma.io.add_matrix_to_collection. If you need to create a standalone SOMA NDArray outside of a pre-defined Experiment structure, please use the direct SOMA API constructors, such as tiledbsoma.SparseNDArray.create."""
+)
 def create_from_matrix(
     cls: type[_NDArr],
     uri: str,
@@ -1429,9 +1516,14 @@ def create_from_matrix(
 ) -> _NDArr:
     """Create and populate the ``soma_matrix`` from the contents of ``matrix``.
 
+    This function is deprecated and will be removed in a future version of this package.
+
+    To add a new matrix as a layer within an existing SOMA :class:`Experiment` (e.g., to X, obsm, varm), please use the more specific functions ``tiledbsoma.io.add_X_layer`` or ``tiledbsoma.io.add_matrix_to_collection``. If you need to create a standalone SOMA NDArray outside of a pre-defined :class:`Experiment` structure, please use the direct SOMA API constructors, such as ``tiledbsoma.SparseNDArray.create``.
+
     Lifecycle:
-        Maturing.
+        Deprecated.
     """
+    _check_for_deprecated_modes(ingest_mode)
     return _create_from_matrix(
         cls,
         uri,
@@ -1824,12 +1916,11 @@ def add_X_layer(
     `Scanpy <https://scanpy.readthedocs.io/>`_'s ``scanpy.pp.normalize_total``,
     ``scanpy.pp.log1p``, etc.
 
-    Use ``ingest_mode="resume"`` to not error out if the schema already exists.
-
     Lifecycle:
         Maturing.
     """
     exp.verify_open_for_writing()
+    _check_for_deprecated_modes(ingest_mode)
     add_matrix_to_collection(
         exp,
         measurement_name,
@@ -1856,12 +1947,11 @@ def add_matrix_to_collection(
     """This is useful for adding X/obsp/varm/etc data, for example from
     Scanpy's ``scanpy.pp.normalize_total``, ``scanpy.pp.log1p``, etc.
 
-    Use ``ingest_mode="resume"`` to not error out if the schema already exists.
-
     Lifecycle:
         Maturing.
     """
     ingestion_params = IngestionParams(ingest_mode, None)
+    _check_for_deprecated_modes(ingest_mode)
 
     # For local disk and S3, creation and storage URIs are identical.  For
     # cloud, creation URIs look like tiledb://namespace/s3://bucket/path/to/obj
@@ -2955,3 +3045,18 @@ def _concurrency_level(context: SOMATileDBContext) -> int:
             int(context.tiledb_config.get("soma.compute_concurrency_level", concurrency_level)),
         )
     return concurrency_level
+
+
+@deprecated(
+    """The 'resume' ingest_mode is deprecated and will be removed in a future version. The current implementation has a known issue that can can cause multi-dataset appends to not resume correctly.
+
+The recommended and safest approach for recovering from a failed ingestion is to delete the partially written SOMA Experiment and restart the ingestion process from the original input files or a known-good backup.""",
+    stacklevel=3,
+)
+def _resume_mode_is_deprecated() -> None:
+    pass
+
+
+def _check_for_deprecated_modes(ingest_mode: str) -> None:
+    if ingest_mode == "resume":
+        _resume_mode_is_deprecated()
