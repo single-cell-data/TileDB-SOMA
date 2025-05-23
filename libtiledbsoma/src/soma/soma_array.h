@@ -1148,6 +1148,13 @@ class SOMAArray : public SOMAObject {
 
     void fill_columns();
 
+    /**
+     * Convenience function for creating an ArraySchemaEvolution object
+     * referencing this array's context pointer, along with its open-at
+     * timestamp (if any).
+     */
+    ArraySchemaEvolution _make_se();
+
     // Metadata cache
     std::map<std::string, MetadataValue> metadata_;
 

@@ -75,7 +75,8 @@ void SOMADenseNDArray::create(
             std::nullopt,
             "SOMADenseNDArray",
             false,
-            platform_config);
+            platform_config,
+            timestamp);
 
     SOMAArray::create(
         ctx, uri, tiledb_schema, "SOMADenseNDArray", std::nullopt, timestamp);
