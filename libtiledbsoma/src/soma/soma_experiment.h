@@ -14,6 +14,7 @@
 #ifndef SOMA_EXPERIMENT
 #define SOMA_EXPERIMENT
 
+#include <tiledbsoma_export.h>
 #include <tiledb/tiledb>
 
 #include "soma_collection.h"
@@ -22,7 +23,7 @@
 namespace tiledbsoma {
 
 using namespace tiledb;
-class SOMAExperiment : public SOMACollection {
+class TILEDBSOMA_EXPORT SOMAExperiment : public SOMACollection {
    public:
     //===================================================================
     //= public static

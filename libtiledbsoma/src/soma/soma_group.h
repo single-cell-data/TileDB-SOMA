@@ -14,6 +14,7 @@
 #ifndef SOMA_GROUP
 #define SOMA_GROUP
 
+#include <tiledbsoma_export.h>
 #include <future>
 #include <stdexcept>
 #include <tiledb/tiledb>
@@ -29,7 +30,7 @@ using namespace tiledb;
 // Pair storing uri and soma type
 using SOMAGroupEntry = std::pair<std::string, std::string>;
 
-class SOMAGroup : public SOMAObject {
+class TILEDBSOMA_EXPORT SOMAGroup : public SOMAObject {
    public:
     //===================================================================
     //= public static

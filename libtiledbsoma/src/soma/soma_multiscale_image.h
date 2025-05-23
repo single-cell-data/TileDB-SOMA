@@ -14,6 +14,7 @@
 #ifndef SOMA_MULTISCALE_IMAGE
 #define SOMA_MULTISCALE_IMAGE
 
+#include <tiledbsoma_export.h>
 #include <tiledb/tiledb>
 
 #include "soma_collection.h"
@@ -22,7 +23,7 @@
 namespace tiledbsoma {
 
 using namespace tiledb;
-class SOMAMultiscaleImage : public SOMACollection {
+class TILEDBSOMA_EXPORT SOMAMultiscaleImage : public SOMACollection {
    public:
     //===================================================================
     //= public static

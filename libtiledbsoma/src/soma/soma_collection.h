@@ -14,6 +14,7 @@
 #ifndef SOMA_COLLECTION
 #define SOMA_COLLECTION
 
+#include <tiledbsoma_export.h>
 #include <tiledb/tiledb>
 
 #include "enums.h"
@@ -30,7 +31,7 @@ class SOMAMeasurement;
 
 using namespace tiledb;
 
-class SOMACollection : public SOMAGroup {
+class TILEDBSOMA_EXPORT SOMACollection : public SOMAGroup {
    public:
     //===================================================================
     //= public static

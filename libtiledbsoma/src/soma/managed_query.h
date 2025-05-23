@@ -19,6 +19,7 @@
 #include <stdexcept>  // for windows: error C2039: 'runtime_error': is not a member of 'std'
 #include <unordered_set>
 
+#include <tiledbsoma_export.h>
 #include <tiledb/tiledb>
 
 #include "../utils/common.h"
@@ -33,7 +34,7 @@ using namespace tiledb;
 class SOMAArray;
 
 // Probably we should just use a std::tuple here
-class StatusAndException {
+class TILEDBSOMA_EXPORT StatusAndException {
    public:
     StatusAndException(bool succeeded, std::string message)
         : succeeded_(succeeded)
@@ -52,7 +53,7 @@ class StatusAndException {
     std::string message_;
 };
 
-class ManagedQuery {
+class TILEDBSOMA_EXPORT ManagedQuery {
    public:
     //===================================================================
     //= public non-static

@@ -19,6 +19,7 @@
 #include <future>
 #include <span>
 
+#include <tiledbsoma_export.h>
 #include <tiledb/tiledb>
 #include <tiledb/tiledb_experimental>
 #include "../utils/arrow_adapter.h"
@@ -71,7 +72,7 @@ using namespace tiledb;
 
 using StatusAndReason = std::pair<bool, std::string>;
 
-class SOMAArray : public SOMAObject {
+class TILEDBSOMA_EXPORT SOMAArray : public SOMAObject {
    public:
     friend class ManagedQuery;
 

@@ -14,9 +14,11 @@
 #ifndef SOMA_METADATA
 #define SOMA_METADATA
 
+#include <tiledbsoma_export.h>
 #include <optional>
 #include <string>
 #include <vector>
+
 #include "../utils/common.h"
 
 namespace tiledbsoma {
@@ -34,7 +36,7 @@ struct SOMAAxis {
     }
 };
 
-class SOMACoordinateSpace {
+class TILEDBSOMA_EXPORT SOMACoordinateSpace {
    public:
     static SOMACoordinateSpace from_metadata(
         tiledb_datatype_t value_type, uint32_t value_num, const void* value);

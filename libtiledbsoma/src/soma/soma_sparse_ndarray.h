@@ -14,6 +14,7 @@
 #ifndef SOMA_SPARSE_NDARRAY
 #define SOMA_SPARSE_NDARRAY
 
+#include <tiledbsoma_export.h>
 #include <filesystem>
 
 #include "soma_array.h"
@@ -24,7 +25,7 @@ class ArrayBuffers;
 
 using namespace tiledb;
 
-class SOMASparseNDArray : public SOMAArray {
+class TILEDBSOMA_EXPORT SOMASparseNDArray : public SOMAArray {
    public:
     //===================================================================
     //= public static

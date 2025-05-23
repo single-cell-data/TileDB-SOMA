@@ -14,6 +14,7 @@
 #ifndef SOMA_CONTEXT
 #define SOMA_CONTEXT
 
+#include <tiledbsoma_export.h>
 #include <map>
 #include <mutex>
 #include <string>
@@ -24,7 +25,7 @@ class ThreadPool;
 
 using namespace tiledb;
 
-class SOMAContext {
+class TILEDBSOMA_EXPORT SOMAContext {
     // Controls concurrency level for SOMA compute thread pool. Defaults to host
     // CPU count.
     inline static const std::string

@@ -19,6 +19,7 @@
 
 #include <any>
 
+#include <tiledbsoma_export.h>
 #include <map>
 #include <optional>
 #include <span>
@@ -33,7 +34,7 @@
 namespace tiledbsoma {
 using namespace tiledb;
 
-class SOMAColumn {
+class TILEDBSOMA_EXPORT SOMAColumn {
    public:
     //===================================================================
     //= public static

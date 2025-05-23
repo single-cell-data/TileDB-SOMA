@@ -1,12 +1,13 @@
 #ifndef SOMA_TRANSFORMERS_H
 #define SOMA_TRANSFORMERS_H
 
+#include <tiledbsoma_export.h>
 #include "../utils/transformer.h"
 #include "soma_coordinates.h"
 
 namespace tiledbsoma {
 
-class OutlineTransformer : public Transformer {
+class TILEDBSOMA_EXPORT OutlineTransformer : public Transformer {
    public:
     OutlineTransformer(SOMACoordinateSpace coordinate_space);
 

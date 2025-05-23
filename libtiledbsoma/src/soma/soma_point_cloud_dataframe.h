@@ -14,6 +14,7 @@
 #ifndef SOMA_POINT_CLOUD_DATAFRAME
 #define SOMA_POINT_CLOUD_DATAFRAME
 
+#include <tiledbsoma_export.h>
 #include <filesystem>
 
 #include "soma_array.h"
@@ -25,7 +26,7 @@ class ArrayBuffers;
 
 using namespace tiledb;
 
-class SOMAPointCloudDataFrame : public SOMAArray {
+class TILEDBSOMA_EXPORT SOMAPointCloudDataFrame : public SOMAArray {
    public:
     //===================================================================
     //= public static

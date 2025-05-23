@@ -26,6 +26,7 @@
 #include <algorithm>
 #include <vector>
 
+#include <tiledbsoma_export.h>
 #include <tiledb/tiledb>
 #include "soma_column.h"
 #include "soma_coordinates.h"
@@ -36,7 +37,7 @@ class ArrayBuffers;
 
 using namespace tiledb;
 
-class SOMAGeometryColumn : public SOMAColumn {
+class TILEDBSOMA_EXPORT SOMAGeometryColumn : public SOMAColumn {
    public:
     //===================================================================
     //= public static

@@ -14,6 +14,7 @@
 #ifndef SOMA_GEOMETRY_DATAFRAME
 #define SOMA_GEOMETRY_DATAFRAME
 
+#include <tiledbsoma_export.h>
 #include <filesystem>
 #include <vector>
 
@@ -26,7 +27,7 @@ class ArrayBuffers;
 
 using namespace tiledb;
 
-class SOMAGeometryDataFrame : virtual public SOMAArray {
+class TILEDBSOMA_EXPORT SOMAGeometryDataFrame : virtual public SOMAArray {
    public:
     //===================================================================
     //= public static

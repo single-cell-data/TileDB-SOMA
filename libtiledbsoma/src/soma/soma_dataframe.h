@@ -14,6 +14,7 @@
 #ifndef SOMA_DATAFRAME
 #define SOMA_DATAFRAME
 
+#include <tiledbsoma_export.h>
 #include <filesystem>
 
 #include "soma_array.h"
@@ -24,7 +25,7 @@ class ArrayBuffers;
 
 using namespace tiledb;
 
-class SOMADataFrame : public SOMAArray {
+class TILEDBSOMA_EXPORT SOMADataFrame : public SOMAArray {
    public:
     //===================================================================
     //= public static

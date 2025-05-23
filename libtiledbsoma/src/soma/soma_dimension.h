@@ -20,14 +20,16 @@
 #include <algorithm>
 #include <vector>
 
+#include <tiledbsoma_export.h>
 #include <tiledb/tiledb>
+
 #include "soma_column.h"
 
 namespace tiledbsoma {
 
 using namespace tiledb;
 
-class SOMADimension : public SOMAColumn {
+class TILEDBSOMA_EXPORT SOMADimension : public SOMAColumn {
    public:
     //===================================================================
     //= public static

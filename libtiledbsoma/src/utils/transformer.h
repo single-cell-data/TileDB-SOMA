@@ -19,13 +19,14 @@
 
 #include "arrow_adapter.h"
 
+#include <tiledbsoma_export.h>
 #include <concepts>
 #include <functional>
 #include <vector>
 
 namespace tiledbsoma {
 
-class Transformer {
+class TILEDBSOMA_EXPORT Transformer {
    public:
     virtual ~Transformer();
 

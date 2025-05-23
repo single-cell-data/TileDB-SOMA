@@ -17,6 +17,7 @@
 #include <span>
 #include <stdexcept>  // for windows: error C2039: 'runtime_error': is not a member of 'std'
 
+#include <tiledbsoma_export.h>
 #include <tiledb/tiledb>
 #include <tiledb/tiledb_experimental>
 
@@ -32,7 +33,7 @@ using namespace tiledb;
  * @brief Class to store data for a TileDB dimension or attribute.
  *
  */
-class ColumnBuffer {
+class TILEDBSOMA_EXPORT ColumnBuffer {
     // This "medium size" -- 1 GiB -- is a good balance between improved remote
     // I/O performance (bigger = better) and friendliness for smaller hardware
     // (e.g.  tiny CI runners). This value is good for general in-between

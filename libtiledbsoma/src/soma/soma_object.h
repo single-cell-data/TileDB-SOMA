@@ -16,6 +16,7 @@
 #ifndef SOMA_OBJECT
 #define SOMA_OBJECT
 
+#include <tiledbsoma_export.h>
 #include <filesystem>
 #include <map>
 #include <string>
@@ -26,7 +27,7 @@
 namespace tiledbsoma {
 
 using namespace tiledb;
-class SOMAObject {
+class TILEDBSOMA_EXPORT SOMAObject {
    public:
     //===================================================================
     //= public non-static

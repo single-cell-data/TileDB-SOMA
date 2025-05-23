@@ -14,6 +14,7 @@
 #ifndef SOMA_SCENE
 #define SOMA_SCENE
 
+#include <tiledbsoma_export.h>
 #include <tiledb/tiledb>
 
 #include "soma_collection.h"
@@ -22,7 +23,7 @@
 namespace tiledbsoma {
 
 using namespace tiledb;
-class SOMAScene : public SOMACollection {
+class TILEDBSOMA_EXPORT SOMAScene : public SOMACollection {
    public:
     //===================================================================
     //= public static

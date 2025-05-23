@@ -13,6 +13,7 @@
 #ifndef SOMA_DENSE_NDARRAY
 #define SOMA_DENSE_NDARRAY
 
+#include <tiledbsoma_export.h>
 #include <filesystem>
 
 #include "soma_array.h"
@@ -23,7 +24,7 @@ class ArrayBuffers;
 
 using namespace tiledb;
 
-class SOMADenseNDArray : public SOMAArray {
+class TILEDBSOMA_EXPORT SOMADenseNDArray : public SOMAArray {
    public:
     //===================================================================
     //= public static

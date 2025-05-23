@@ -16,6 +16,7 @@
 
 #include <stdexcept>  // for windows: error C2039: 'runtime_error': is not a member of 'std'
 
+#include <tiledbsoma_export.h>
 #include <tiledb/tiledb>
 
 #include "../utils/common.h"
@@ -25,7 +26,7 @@ namespace tiledbsoma {
 
 using namespace tiledb;
 
-class ArrayBuffers {
+class TILEDBSOMA_EXPORT ArrayBuffers {
    public:
     ArrayBuffers() = default;
     ArrayBuffers(const ArrayBuffers&) = default;
