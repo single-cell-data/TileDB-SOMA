@@ -49,6 +49,7 @@
 // explicit, and robust to go the `_string` suffix route, and it's friendlier to
 // current and future maintainers of this code.
 
+#include <tiledbsoma_export.h>
 #include "nanoarrow/nanoarrow.hpp"
 #include "nlohmann/json.hpp"
 
@@ -78,7 +79,7 @@ struct ArrowBuffer {
 using ArrowTable =
     std::pair<std::unique_ptr<ArrowArray>, std::unique_ptr<ArrowSchema>>;
 
-struct PlatformConfig {
+struct TILEDBSOMA_EXPORT PlatformConfig {
    public:
     /* Set the ZstdFilter's level for DataFrame dims */
     int32_t dataframe_dim_zstd_level = 3;
@@ -209,7 +210,7 @@ struct PlatformConfig {
 /** TileDB specific configuration options that can be read back from a single
  * TileDB ArraySchema.
  */
-struct PlatformSchemaConfig {
+struct TILEDBSOMA_EXPORT PlatformSchemaConfig {
    public:
     /* Set whether the TileDB Array allows duplicate values */
     bool allows_duplicates = false;
@@ -330,7 +331,7 @@ struct PlatformSchemaConfig {
  * key for Python/R interop with C++ libtiledbsoma.
  */
 
-class ArrowAdapter {
+class TILEDBSOMA_EXPORT ArrowAdapter {
    public:
     static void release_schema(struct ArrowSchema* schema);
     static void release_array(struct ArrowArray* array);

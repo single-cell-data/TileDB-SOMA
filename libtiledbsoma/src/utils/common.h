@@ -14,11 +14,11 @@
 #ifndef TILEDBSOMA_COMMON_H
 #define TILEDBSOMA_COMMON_H
 
+#include <tiledbsoma_export.h>
 #include <stdexcept>  // for windows: error C2039: 'runtime_error': is not a member of 'std'
 #include <string>
 #include <string_view>
 #include <tiledb/tiledb>
-#include <tiledbsoma_export.h>
 
 namespace tiledbsoma {
 

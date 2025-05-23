@@ -54,7 +54,8 @@ struct TILEDBSOMA_EXPORT WKBWriteOperator {
 
 size_t TILEDBSOMA_EXPORT wkb_size(const GenericGeometry& geometry);
 
-void TILEDBSOMA_EXPORT to_wkb(const GenericGeometry& geometry, uint8_t* buffer, size_t size);
+void TILEDBSOMA_EXPORT
+to_wkb(const GenericGeometry& geometry, uint8_t* buffer, size_t size);
 
 BinaryBuffer TILEDBSOMA_EXPORT to_wkb(const GenericGeometry& geometry);
 

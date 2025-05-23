@@ -2,10 +2,10 @@
 #define TILEDBSOMA_GEOMETRY_BASE_H
 
 #include <math.h>
+#include <tiledbsoma_export.h>
 #include <memory>
 #include <optional>
 #include <vector>
-#include <tiledbsoma_export.h>
 
 namespace tiledbsoma::geometry {
 

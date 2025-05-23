@@ -34,7 +34,8 @@ using GenericGeometry = std::variant<
     MultiPolygon,
     GeometryCollection>;
 
-struct TILEDBSOMA_EXPORT GeometryCollection : public std::vector<GenericGeometry> {
+struct TILEDBSOMA_EXPORT GeometryCollection
+    : public std::vector<GenericGeometry> {
     using std::vector<GenericGeometry>::vector;
 };
 }  // namespace tiledbsoma::geometry
