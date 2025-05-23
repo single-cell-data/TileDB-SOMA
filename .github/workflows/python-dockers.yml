@@ -28,18 +28,18 @@ jobs:
           - name: Ubuntu 1.15.7
             file: ubuntu
             args: v=1.15.7
-          - name: Ubuntu 1.16.0
+          - name: Ubuntu 1.16.2
             file: ubuntu
-            args: v=1.16.0
+            args: v=1.16.2
           - name: Debian 1.15.7 gcc12
             file: bookworm
             args: gcc=12 v=1.15.7
           - name: Debian 1.15.7 gcc13
             file: bookworm
             args: gcc=13 v=1.15.7
-          - name: Debian 1.16.0 gcc13
+          - name: Debian 1.16.2 gcc13
             file: bookworm
-            args: gcc=13 v=1.16.0
+            args: gcc=13 v=1.16.2
           - name: Langchain
             file: langchain
           - name: Python 3.12 + uv
