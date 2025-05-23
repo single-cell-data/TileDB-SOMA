@@ -39,7 +39,7 @@ SOMASparseNDArray <- R6::R6Class(
     #' @param log_level Optional logging level with default value of `"warn"`.
     #' @return \link{SOMASparseNDArrayRead}
     read = function(coords = NULL, result_order = "auto", log_level = "auto") {
-      private$check_open_for_read()
+      private$.check_open_for_read()
       result_order <- map_query_layout(match_query_layout(result_order))
 
       if (!is.null(coords)) {
@@ -209,7 +209,7 @@ SOMASparseNDArray <- R6::R6Class(
     #' @return Invisibly returns \code{self}
     #'
     .write_coordinates = function(values) {
-      private$check_open_for_write()
+      private$.check_open_for_write()
       dnames <- self$dimnames()
       attrn <- self$attrnames()
 
@@ -291,8 +291,6 @@ SOMASparseNDArray <- R6::R6Class(
     }
   ),
   private = list(
-    .is_sparse = TRUE,
-
     # Given a user-specified shape along a particular dimension, returns a named
     # list containing name, capacity, and extent elements. If no shape is
     # provided the .Machine$integer.max - 1 is used.
@@ -312,9 +310,6 @@ SOMASparseNDArray <- R6::R6Class(
       }
 
       out
-    },
-
-    # Internal marking of one or zero based matrices for iterated reads
-    zero_based = NA
+    }
   )
 )

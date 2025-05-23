@@ -4,13 +4,18 @@
 \alias{SOMADataFrame}
 \title{SOMADataFrame}
 \description{
-\code{SOMADataFrame} is a multi-column table that must contain a column
-called \code{soma_joinid} of type \code{int64}, which contains a unique value for each
-row and is intended to act as a join key for other objects, such as
-\code{\link{SOMASparseNDArray}}.  (lifecycle: maturing)
+A SOMA data frame is a multi-column table that must contain a
+column called \dQuote{\code{soma_joinid}} of type \code{int64}, which
+contains a unique value for each row and is intended to act as a join key
+for other objects, such as \code{\link{SOMASparseNDArray}} (lifecycle: maturing)
+}
+\note{
+\code{create()} is considered internal and should not be called
+directly; use factory functions (eg. \code{\link{SOMACollectionCreate}()})
+instead
 }
 \section{Super classes}{
-\code{\link[tiledbsoma:TileDBObject]{tiledbsoma::TileDBObject}} -> \code{\link[tiledbsoma:TileDBArray]{tiledbsoma::TileDBArray}} -> \code{\link[tiledbsoma:SOMAArrayBase]{tiledbsoma::SOMAArrayBase}} -> \code{SOMADataFrame}
+\code{\link[tiledbsoma:SOMAObject]{tiledbsoma::SOMAObject}} -> \code{\link[tiledbsoma:SOMAArrayBase]{tiledbsoma::SOMAArrayBase}} -> \code{SOMADataFrame}
 }
 \section{Methods}{
 \subsection{Public methods}{
@@ -34,30 +39,28 @@ row and is intended to act as a join key for other objects, such as
 \if{html}{\out{
 <details><summary>Inherited methods</summary>
 <ul>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="class"><a href='../../tiledbsoma/html/TileDBObject.html#method-TileDBObject-class'><code>tiledbsoma::TileDBObject$class()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="exists"><a href='../../tiledbsoma/html/TileDBObject.html#method-TileDBObject-exists'><code>tiledbsoma::TileDBObject$exists()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="initialize"><a href='../../tiledbsoma/html/TileDBObject.html#method-TileDBObject-initialize'><code>tiledbsoma::TileDBObject$initialize()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="is_open"><a href='../../tiledbsoma/html/TileDBObject.html#method-TileDBObject-is_open'><code>tiledbsoma::TileDBObject$is_open()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="mode"><a href='../../tiledbsoma/html/TileDBObject.html#method-TileDBObject-mode'><code>tiledbsoma::TileDBObject$mode()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="reopen"><a href='../../tiledbsoma/html/TileDBObject.html#method-TileDBObject-reopen'><code>tiledbsoma::TileDBObject$reopen()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="attrnames"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-attrnames'><code>tiledbsoma::TileDBArray$attrnames()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="close"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-close'><code>tiledbsoma::TileDBArray$close()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="colnames"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-colnames'><code>tiledbsoma::TileDBArray$colnames()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="dimensions"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-dimensions'><code>tiledbsoma::TileDBArray$dimensions()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="dimnames"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-dimnames'><code>tiledbsoma::TileDBArray$dimnames()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="get_metadata"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-get_metadata'><code>tiledbsoma::TileDBArray$get_metadata()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="index_column_names"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-index_column_names'><code>tiledbsoma::TileDBArray$index_column_names()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="ndim"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-ndim'><code>tiledbsoma::TileDBArray$ndim()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="non_empty_domain"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-non_empty_domain'><code>tiledbsoma::TileDBArray$non_empty_domain()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="open"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-open'><code>tiledbsoma::TileDBArray$open()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="print"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-print'><code>tiledbsoma::TileDBArray$print()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="schema"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-schema'><code>tiledbsoma::TileDBArray$schema()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="set_metadata"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-set_metadata'><code>tiledbsoma::TileDBArray$set_metadata()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="tiledb_array"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-tiledb_array'><code>tiledbsoma::TileDBArray$tiledb_array()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="tiledb_schema"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-tiledb_schema'><code>tiledbsoma::TileDBArray$tiledb_schema()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAObject" data-id="class"><a href='../../tiledbsoma/html/SOMAObject.html#method-SOMAObject-class'><code>tiledbsoma::SOMAObject$class()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAObject" data-id="exists"><a href='../../tiledbsoma/html/SOMAObject.html#method-SOMAObject-exists'><code>tiledbsoma::SOMAObject$exists()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAObject" data-id="get_metadata"><a href='../../tiledbsoma/html/SOMAObject.html#method-SOMAObject-get_metadata'><code>tiledbsoma::SOMAObject$get_metadata()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAObject" data-id="initialize"><a href='../../tiledbsoma/html/SOMAObject.html#method-SOMAObject-initialize'><code>tiledbsoma::SOMAObject$initialize()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAObject" data-id="is_open"><a href='../../tiledbsoma/html/SOMAObject.html#method-SOMAObject-is_open'><code>tiledbsoma::SOMAObject$is_open()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAObject" data-id="mode"><a href='../../tiledbsoma/html/SOMAObject.html#method-SOMAObject-mode'><code>tiledbsoma::SOMAObject$mode()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAObject" data-id="reopen"><a href='../../tiledbsoma/html/SOMAObject.html#method-SOMAObject-reopen'><code>tiledbsoma::SOMAObject$reopen()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAObject" data-id="set_metadata"><a href='../../tiledbsoma/html/SOMAObject.html#method-SOMAObject-set_metadata'><code>tiledbsoma::SOMAObject$set_metadata()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAArrayBase" data-id="allows_duplicates"><a href='../../tiledbsoma/html/SOMAArrayBase.html#method-SOMAArrayBase-allows_duplicates'><code>tiledbsoma::SOMAArrayBase$allows_duplicates()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAArrayBase" data-id="attributes"><a href='../../tiledbsoma/html/SOMAArrayBase.html#method-SOMAArrayBase-attributes'><code>tiledbsoma::SOMAArrayBase$attributes()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAArrayBase" data-id="attrnames"><a href='../../tiledbsoma/html/SOMAArrayBase.html#method-SOMAArrayBase-attrnames'><code>tiledbsoma::SOMAArrayBase$attrnames()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAArrayBase" data-id="close"><a href='../../tiledbsoma/html/SOMAArrayBase.html#method-SOMAArrayBase-close'><code>tiledbsoma::SOMAArrayBase$close()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAArrayBase" data-id="colnames"><a href='../../tiledbsoma/html/SOMAArrayBase.html#method-SOMAArrayBase-colnames'><code>tiledbsoma::SOMAArrayBase$colnames()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAArrayBase" data-id="dimensions"><a href='../../tiledbsoma/html/SOMAArrayBase.html#method-SOMAArrayBase-dimensions'><code>tiledbsoma::SOMAArrayBase$dimensions()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAArrayBase" data-id="dimnames"><a href='../../tiledbsoma/html/SOMAArrayBase.html#method-SOMAArrayBase-dimnames'><code>tiledbsoma::SOMAArrayBase$dimnames()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAArrayBase" data-id="index_column_names"><a href='../../tiledbsoma/html/SOMAArrayBase.html#method-SOMAArrayBase-index_column_names'><code>tiledbsoma::SOMAArrayBase$index_column_names()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAArrayBase" data-id="is_sparse"><a href='../../tiledbsoma/html/SOMAArrayBase.html#method-SOMAArrayBase-is_sparse'><code>tiledbsoma::SOMAArrayBase$is_sparse()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAArrayBase" data-id="ndim"><a href='../../tiledbsoma/html/SOMAArrayBase.html#method-SOMAArrayBase-ndim'><code>tiledbsoma::SOMAArrayBase$ndim()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAArrayBase" data-id="non_empty_domain"><a href='../../tiledbsoma/html/SOMAArrayBase.html#method-SOMAArrayBase-non_empty_domain'><code>tiledbsoma::SOMAArrayBase$non_empty_domain()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAArrayBase" data-id="open"><a href='../../tiledbsoma/html/SOMAArrayBase.html#method-SOMAArrayBase-open'><code>tiledbsoma::SOMAArrayBase$open()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAArrayBase" data-id="print"><a href='../../tiledbsoma/html/SOMAArrayBase.html#method-SOMAArrayBase-print'><code>tiledbsoma::SOMAArrayBase$print()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAArrayBase" data-id="schema"><a href='../../tiledbsoma/html/SOMAArrayBase.html#method-SOMAArrayBase-schema'><code>tiledbsoma::SOMAArrayBase$schema()</code></a></span></li>
 </ul>
 </details>
 }}
@@ -65,24 +68,23 @@ row and is intended to act as a join key for other objects, such as
 \if{html}{\out{<a id="method-SOMADataFrame-create"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMADataFrame-create}{}}}
 \subsection{Method \code{create()}}{
-Create (lifecycle: maturing)
+Create a SOMA data frame (lifecycle: maturing)
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMADataFrame$create(
   schema,
   index_column_names = c("soma_joinid"),
   domain = NULL,
-  platform_config = NULL,
-  internal_use_only = NULL
+  platform_config = NULL
 )}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{schema}}{an \code{\link[arrow:schema]{arrow::schema}}.}
+\item{\code{schema}}{An \link[arrow:schema]{Arrow schema}}
 
 \item{\code{index_column_names}}{A vector of column names to use as user-defined
-index columns.  All named columns must exist in the schema, and at least
+index columns. All named columns must exist in the schema, and at least
 one index column name is required.}
 
 \item{\code{domain}}{An optional list specifying the domain of each
@@ -90,32 +92,33 @@ index column. Each slot in the list must have its name being the name
 of an index column, and its value being be a length-two vector
 consisting of the minimum and maximum values storable in the index
 column. For example, if there is a single int64-valued index column
-\code{soma_joinid}, then \code{domain} might be \code{list(soma_joinid=c(100, 200))}
-to indicate that values between 100 and 200, inclusive, can be stored
-in that column.  If provided, this sequence must have the same length
-as \code{index_column_names}, and the index-column domain will be as
-specified.  If omitted entirely, or if \code{NULL} in a given dimension, the
-corresponding index-column domain will use an empty range, and data writes
-after that will fail with "A range was set outside of the current domain".
-Unless you have a particular reason not to, you should always provide the
-desired \code{domain} at create time: this is an optional but strongly
-recommended parameter.  See also \code{change_domain} which allows you to
+\code{soma_joinid}, then \code{domain} might be
+\code{list(soma_joinid=c(100, 200))} to indicate that values between 100
+and 200, inclusive, can be stored in that column. If provided, this
+sequence must have the same length as \code{index_column_names}, and the
+index-column domain will be as specified. If omitted entirely, or if
+\code{NULL} in a given dimension, the corresponding index-column domain
+will use an empty range, and data writes after that will fail with
+\dQuote{A range was set outside of the current domain}. Unless you have
+a particular reason not to, you should always provide the desired
+\code{domain} at create time: this is an optional but strongly
+recommended parameter. See also \code{change_domain} which allows you to
 expand the domain after create.}
 
 \item{\code{platform_config}}{A \link[tiledbsoma:PlatformConfig]{platform configuration}
 object}
-
-\item{\code{internal_use_only}}{Character value to signal this is a 'permitted' call,
-as \code{create()} is considered internal and should not be called directly.}
 }
 \if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+\code{self}
 }
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-SOMADataFrame-write"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMADataFrame-write}{}}}
 \subsection{Method \code{write()}}{
-Write (lifecycle: maturing)
+Write values to the data frame (lifecycle: maturing)
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMADataFrame$write(values)}\if{html}{\out{</div>}}
 }
@@ -123,27 +126,29 @@ Write (lifecycle: maturing)
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{values}}{An \code{\link[arrow:Table-class]{arrow::Table}} or \code{\link[arrow:RecordBatch-class]{arrow::RecordBatch}}
-containing all columns, including any index columns. The
-schema for \code{values} must match the schema for the \code{SOMADataFrame}.}
+\item{\code{values}}{An \link[arrow:Table]{Arrow table} or
+\link[arrow:RecordBatch]{record batch} containing all columns, including
+any index columns. The schema for \code{values} must match the schema
+for the data frame}
 }
 \if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+Invisibly returns \code{self}
 }
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-SOMADataFrame-read"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMADataFrame-read}{}}}
 \subsection{Method \code{read()}}{
-Read (lifecycle: maturing)
-Read a user-defined subset of data, addressed by the dataframe indexing
-column, and optionally filtered.
+Read a user-defined subset of data, addressed by the
+data frame indexing column, and optionally filtered. (lifecycle: maturing)
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMADataFrame$read(
   coords = NULL,
   column_names = NULL,
   value_filter = NULL,
   result_order = "auto",
-  iterated = FALSE,
   log_level = "auto"
 )}\if{html}{\out{</div>}}
 }
@@ -163,15 +168,12 @@ more information.}
 \item{\code{result_order}}{Optional order of read results. This can be one of either
 \verb{"ROW_MAJOR, }"COL_MAJOR"\verb{, or }"auto"` (default).}
 
-\item{\code{iterated}}{Option boolean indicated whether data is read in call (when
-\code{FALSE}, the default value) or in several iterated steps.}
-
 \item{\code{log_level}}{Optional logging level with default value of \code{"warn"}.}
 }
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-arrow::\link[arrow]{Table} or \link{TableReadIter}
+A \link{TableReadIter}
 }
 }
 \if{html}{\out{<hr>}}

@@ -1,28 +1,29 @@
 #' SOMADenseNDArray
 #'
-#' @description
-#' `SOMADenseNDArray` is a dense, N-dimensional array of `primitive` type, with
-#' offset (zero-based) `int64` integer indexing on each dimension with domain
-#' `[0, maxInt64)`. The `SOMADenseNDArray` has a user-defined schema, which
-#' includes:
-#'
-#' - **type**: A `primitive` type, expressed as an Arrow type (e.g., `int64`,
-#'   `float32`, etc), indicating the type of data contained within the array.
-#' - **shape**: The shape of the array, i.e., number and length of each
-#'   dimension. This is a soft limit which can be increased using `resize`,
-#'   up to the `maxshape`.
-#' - **maxshape**: The hard limit up to which `shape` may be increased using
-#'   `resize`.
+#' @description \code{SOMADenseNDArray} is a dense, N-dimensional array of
+#' \code{primitive} type, with offset (zero-based) \code{int64} integer
+#' indexing on each dimension with domain \code{[0, maxInt64)}. The
+#' \code{SOMADenseNDArray} has a user-defined schema, which includes:
+#' \itemize{
+#'  \item \strong{type}: A \code{primitive} type, expressed as an Arrow type
+#'   (e.g., \code{int64}, \code{float32}, etc), indicating the type of data
+#'   contained within the array
+#'  \item \strong{shape}: The shape of the array, i.e., number and length of
+#'   each dimension. This is a soft limit which can be increased using
+#'   \code{$resize()}, up to the \code{maxshape}
+#'  \item \strong{maxshape}: The hard limit up to which \code{shape} may be
+#'   increased using \code{$resize()}
+#' }
 #'
 #' All dimensions must have a positive, non-zero length, and there must be 1 or
 #' more dimensions.
 #'
-#' The default "fill" value for `SOMADenseNDArray` is the zero or null value of
-#' the array type (e.g., Arrow.float32 defaults to 0.0).
+#' The default \dQuote{fill} value for \code{SOMADenseNDArray} is the zero or
+#' null value of the array type (e.g.,
+#' \code{\link[arrow:float32]{arrow::float32}()} defaults to 0.0).
 #'
-#' The `write` method is currently limited to writing from 2-d matrices.
-#' (lifecycle: maturing)
 #' @export
+#'
 SOMADenseNDArray <- R6::R6Class(
   classname = "SOMADenseNDArray",
   inherit = SOMANDArrayBase,
@@ -40,7 +41,7 @@ SOMADenseNDArray <- R6::R6Class(
       result_order = "auto",
       log_level = "auto"
     ) {
-      private$check_open_for_read()
+      private$.check_open_for_read()
 
       uri <- self$uri
 
@@ -84,7 +85,7 @@ SOMADenseNDArray <- R6::R6Class(
       result_order = "ROW_MAJOR",
       log_level = "warn"
     ) {
-      private$check_open_for_read()
+      private$.check_open_for_read()
 
       ndim <- self$ndim()
       attrnames <- self$attrnames()
@@ -112,16 +113,22 @@ SOMADenseNDArray <- R6::R6Class(
     },
 
     #' @description Write matrix data to the array. (lifecycle: maturing)
-    #'
     #' More general write methods for higher-dimensional array could be added.
     #'
-    #' @param values A `matrix`. Character dimension names are ignored because
-    #' `SOMANDArray`'s use integer indexing.
-    #' @param coords A `list` of integer vectors, one for each dimension, with a
-    #' length equal to the number of values to write. If `NULL`, the default,
-    #' the values are taken from the row and column names of `values`.
+    #' @param values A \code{matrix}. Character dimension names are ignored
+    #' because \code{SOMANDArray}'s use integer indexing.
+    #' @param coords A \code{list} of integer vectors, one for each dimension,
+    #' with a length equal to the number of values to write. If \code{NULL},
+    #' the default, the values are taken from the row and column names
+    #' of \code{values}.
+    #'
+    #' @return Invisibly returns \code{self}
+    #'
+    #' @note The \code{$write()} method is currently limited to writing from
+    #' two-dimensional matrices. (lifecycle: maturing)
+    #'
     write = function(values, coords = NULL) {
-      private$check_open_for_write()
+      private$.check_open_for_write()
 
       spdl::debug("[SOMADenseNDArray::write] entered")
       stopifnot(
@@ -144,7 +151,7 @@ SOMADenseNDArray <- R6::R6Class(
         private$.type <- self$schema()[["soma_data"]]$type
       }
 
-      arr <- self$object
+      arr <- private$.tiledb_array
       tiledb::query_layout(arr) <- "COL_MAJOR"
       spdl::debug("[SOMADenseNDArray::write] about to call write")
       arrsch <- arrow::schema(arrow::field("soma_data", private$.type))
@@ -154,7 +161,6 @@ SOMADenseNDArray <- R6::R6Class(
       naap <- nanoarrow::nanoarrow_allocate_array()
       nasp <- nanoarrow::nanoarrow_allocate_schema()
       arrow::as_record_batch(tbl)$export_to_c(naap, nasp)
-      # arr[] <- values
       writeArrayFromArrow(
         uri = self$uri,
         naap = naap,
@@ -166,15 +172,10 @@ SOMADenseNDArray <- R6::R6Class(
       )
       spdl::debug("[SOMADenseNDArray::write] written")
 
-      # tiledb-r always closes the array after a write operation so we need to
-      # manually reopen it until close-on-write is optional
-      # self$open("WRITE", internal_use_only = "allowed_use")
-      invisible(self)
+      return(invisible(self))
     }
   ),
   private = list(
-    .is_sparse = FALSE,
-
     # Given a user-specified shape along a particular dimension, returns a named
     # list containing name, capacity, and extent elements. The shape cannot be
     # NULL for dense arrays.
