@@ -13,115 +13,62 @@ writeArrayFromArrow <- function(uri, naap, nasp, ctxxp, arraytype = "", config =
     invisible(.Call(`_tiledbsoma_writeArrayFromArrow`, uri, naap, nasp, ctxxp, arraytype, config, tsvec))
 }
 
-#' @noRd
 c_group_create <- function(uri, type, ctxxp, timestamp = NULL) {
     invisible(.Call(`_tiledbsoma_c_group_create`, uri, type, ctxxp, timestamp))
 }
 
-#' @noRd
 c_group_open <- function(uri, type, ctxxp, timestamp = NULL) {
     .Call(`_tiledbsoma_c_group_open`, uri, type, ctxxp, timestamp)
 }
 
-#' @noRd
 c_group_member_count <- function(xp) {
     .Call(`_tiledbsoma_c_group_member_count`, xp)
 }
 
-#' @noRd
 c_group_members <- function(xp) {
     .Call(`_tiledbsoma_c_group_members`, xp)
 }
 
-#' @noRd
 c_group_get_metadata <- function(xp) {
     .Call(`_tiledbsoma_c_group_get_metadata`, xp)
 }
 
-#' @noRd
 c_group_close <- function(xp) {
     invisible(.Call(`_tiledbsoma_c_group_close`, xp))
 }
 
-#' @noRd
 c_group_set <- function(xp, uri, uri_type_int, name, soma_type) {
     invisible(.Call(`_tiledbsoma_c_group_set`, xp, uri, uri_type_int, name, soma_type))
 }
 
-#' @noRd
 c_group_remove_member <- function(xp, name) {
     invisible(.Call(`_tiledbsoma_c_group_remove_member`, xp, name))
 }
 
-#' @noRd
 c_group_put_metadata <- function(xp, key, obj) {
     invisible(.Call(`_tiledbsoma_c_group_put_metadata`, xp, key, obj))
 }
 
-#' Get nnumber of metadata items
-#' @param uri The array URI
-#' @param is_array A boolean to indicate array or group
-#' @param ctxxp An external pointer to the SOMAContext wrapper
-#' @export
 get_metadata_num <- function(uri, is_array, ctxxp) {
     .Call(`_tiledbsoma_get_metadata_num`, uri, is_array, ctxxp)
 }
 
-#' Read all metadata (as named list)
-#'
-#' This function currently supports metadata as either a string or an 'int64'
-#' (or 'int32'). It will error if a different datatype is encountered.
-#' @param uri The array URI
-#' @param is_array A boolean to indicate array or group
-#' @param ctxxp An external pointer to the SOMAContext wrapper
-#' @export
 get_all_metadata <- function(uri, is_array, ctxxp) {
     .Call(`_tiledbsoma_get_all_metadata`, uri, is_array, ctxxp)
 }
 
-#' Read metadata (as a string)
-#'
-#' @param uri The array URI
-#' @param key The array metadata key
-#' @param is_array A boolean to indicate array or group
-#' @param ctxxp An external pointer to the SOMAContext wrapper
-#' @export
 get_metadata <- function(uri, key, is_array, ctxxp) {
     .Call(`_tiledbsoma_get_metadata`, uri, key, is_array, ctxxp)
 }
 
-#' Check for metadata given key
-#'
-#' @param uri The array URI
-#' @param key The array metadata key
-#' @param is_array A boolean to indicate array or group
-#' @param ctxxp An external pointer to the SOMAContext wrapper
-#' @export
 has_metadata <- function(uri, key, is_array, ctxxp) {
     .Call(`_tiledbsoma_has_metadata`, uri, key, is_array, ctxxp)
 }
 
-#' Delete metadata for given key
-#'
-#' @param uri The array URI
-#' @param key The array metadata key
-#' @param is_array A boolean to indicate array or group
-#' @param ctxxp An external pointer to the SOMAContext wrapper
-#' @export
 delete_metadata <- function(uri, key, is_array, ctxxp) {
     invisible(.Call(`_tiledbsoma_delete_metadata`, uri, key, is_array, ctxxp))
 }
 
-#' Set metadata (as a string)
-#'
-#' @param uri The array URI
-#' @param key The array metadata key
-#' @param valuesxp The metadata value
-#' @param type The datatype
-#' @param is_array A boolean to indicate array or group
-#' @param ctxxp An external pointer to the SOMAContext wrapper
-#' @param tsvec An optional two-element datetime vector
-#' @export
 set_metadata <- function(uri, key, valuesxp, type, is_array, ctxxp, tsvec = NULL) {
     invisible(.Call(`_tiledbsoma_set_metadata`, uri, key, valuesxp, type, is_array, ctxxp, tsvec))
 }
@@ -154,24 +101,26 @@ reindex_lookup <- function(idx, kvec) {
     .Call(`_tiledbsoma_reindex_lookup`, idx, kvec)
 }
 
-#' @noRd
 soma_array_reader_impl <- function(uri, ctxxp, colnames = NULL, qc = NULL, dim_points = NULL, dim_ranges = NULL, batch_size = "auto", result_order = "auto", loglevel = "auto", timestamprange = NULL) {
     .Call(`_tiledbsoma_soma_array_reader`, uri, ctxxp, colnames, qc, dim_points, dim_ranges, batch_size, result_order, loglevel, timestamprange)
 }
 
-#' Set the logging level for the R package and underlying C++ library
+#' Set TileDB-SOMA Logging Level
+#'
+#' Set the logging level for the \R package and underlying C++ library
 #'
 #' @param level A character value with logging level understood by
 #' \sQuote{spdlog} such as \dQuote{trace}, \dQuote{debug}, \dQuote{info}, or
-#' \dQuote{warn}.
-#' @return Nothing is returned as the function is invoked for
-#' the side-effect.
+#' \dQuote{warn}
+#'
+#' @return Invisibly returns \code{NULL}
+#'
 #' @export
+#'
 set_log_level <- function(level) {
     invisible(.Call(`_tiledbsoma_set_log_level`, level))
 }
 
-#' @noRd
 get_column_types <- function(uri, colnames) {
     .Call(`_tiledbsoma_get_column_types`, uri, colnames)
 }
@@ -180,12 +129,10 @@ nnz <- function(uri, ctxxp) {
     .Call(`_tiledbsoma_nnz`, uri, ctxxp)
 }
 
-#' @noRd
 check_arrow_schema_tag <- function(xp) {
     .Call(`_tiledbsoma_check_arrow_schema_tag`, xp)
 }
 
-#' @noRd
 check_arrow_array_tag <- function(xp) {
     .Call(`_tiledbsoma_check_arrow_array_tag`, xp)
 }
@@ -298,59 +245,6 @@ c_update_dataframe_schema <- function(uri, ctxxp, column_names_to_drop, add_cols
     invisible(.Call(`_tiledbsoma_c_update_dataframe_schema`, uri, ctxxp, column_names_to_drop, add_cols_types, add_cols_enum_value_types, add_cols_enum_ordered))
 }
 
-#' Iterator-Style Access to SOMA Array via ManagedQuery
-#'
-#' The `mq_*` functions provide low-level access to an instance of a ManagedQuery
-#' class so that iterative access over parts of a (large) array is possible.
-#' \describe{
-#'   \item{\code{mq_setup}}{instantiates and by default also submits a query}
-#'   \item{\code{mq_complete}}{checks if more data is available}
-#'   \item{\code{mq_next}}{returns the next chunk}
-#' }
-#'
-#' @param uri Character value with URI path to a SOMA data set
-#' @param config Named chracter vector with \sQuote{key} and \sQuote{value} pairs
-#' used as TileDB config parameters.
-#' @param colnames Optional vector of character value with the name of the
-#' columns to retrieve
-#' @param qc Optional external Pointer object to TileDB Query Condition,
-#' defaults to \sQuote{NULL} i.e. no query condition
-#' @param dim_points Optional named list with vector of data points to select
-#' on the given dimension(s). Each dimension can be one entry in the list.
-#' @param dim_ranges Optional named list with two-column matrix where each row
-#' select a range for the given dimension. Each dimension can be one entry in
-#'the list.
-#' @param batch_size Optional argument for size of data batches, defaults to
-#'\sQuote{auto}
-#' @param result_order Optional argument for query result order, defaults to
-#' \sQuote{auto}
-#' @param loglevel Character value with the desired logging level, defaults to
-#' \sQuote{auto} which lets prior setting prevail, any other value is set as
-#' new logging level.
-#' @param timestamprange Optional POSIXct (i.e. Datetime) vector with start
-#' and end of ' interval for which data is considered.
-#' @param mq An external pointer to a ManagedQuery object.
-#'
-#' @return \code{mq_setup} returns an external pointer to a ManagedQuery object.
-#' \code{mq_complete} ' returns a boolean, and \code{mq_next} returns an Arrow
-#' array helper object.
-#'
-#' @examples
-#' \dontrun{
-#' uri <- extract_dataset("soma-dataframe-pbmc3k-processed-obs")
-#' ctxcp <- soma_context()
-#' mq <- mq_setup(uri, ctxxp)
-#' rl <- data.frame()
-#' while (!mq_complete(mq)) {
-#'   dat <- mq_next(mq)
-#'   rb <- arrow::RecordBatch$import_from_c(dat$array_data, dat$schema)
-#'   rl <- rbind(rl, as.data.frame(rb))
-#' }
-#' summary(rl)
-#' }
-#' @noRd
-NULL
-
 mq_setup <- function(uri, ctxxp, colnames = NULL, qc = NULL, dim_points = NULL, dim_ranges = NULL, batch_size = "auto", result_order = "auto", timestamprange = NULL, loglevel = "auto") {
     .Call(`_tiledbsoma_mq_setup`, uri, ctxxp, colnames, qc, dim_points, dim_ranges, batch_size, result_order, timestamprange, loglevel)
 }
@@ -359,8 +253,6 @@ mq_complete <- function(mq) {
     .Call(`_tiledbsoma_mq_complete`, mq)
 }
 
-#' @noRd
-#' @import nanoarrow
 create_empty_arrow_table <- function() {
     .Call(`_tiledbsoma_create_empty_arrow_table`)
 }
@@ -377,60 +269,64 @@ mq_set_dim_points <- function(mq, dim, points) {
     invisible(.Call(`_tiledbsoma_mq_set_dim_points`, mq, dim, points))
 }
 
-#' TileDB SOMA statistics
+#' TileDB SOMA Statistics
 #'
 #' These functions expose the TileDB Core functionality for performance
-#'  measurements and statistics.
+#'  measurements and statistics
 #'
-#' - `tiledbsoma_stats_enable()`/`tiledbsoma_stats_disable()`: Enable and
-#'    disable TileDB's internal statistics.
-#' - `tiledbsoma_stats_reset()`: Reset all statistics to 0.
-#' - `tiledbsoma_stats_dump()`: Dump all statistics to a JSON string.
-#' - `tiledbsoma_stats_show()`: Print all statistics to the console.
+#' \itemize{
+#'  \item \code{tiledbsoma_stats_enable()}/\code{tiledbsoma_stats_disable()}:
+#'   Enable and disable TielDB's internal statistics
+#'  \item \code{tiledbsoma_stats_reset()}: Reset all statistics to \code{0}
+#'  \item \code{tiledbsoma_stats_dump()}: Dump all statistics as a JSON string
+#'  \item \code{tiledbsoma_stats_show()}: Pretty-print the JSON statistics
+#' }
+#'
+#' @return \code{tiledbsoma_stats_show()}: a single-length character vector
+#' with the TileDB statistics encoded in JSON format
+#'
+#' @return All other functions invisibly return \code{NULL}
 #'
 #' @name tiledbsoma_stats
+#'
 #' @export
+#'
 tiledbsoma_stats_enable <- function() {
     invisible(.Call(`_tiledbsoma_tiledbsoma_stats_enable`))
 }
 
 #' @rdname tiledbsoma_stats
+#'
 #' @export
+#'
 tiledbsoma_stats_disable <- function() {
     invisible(.Call(`_tiledbsoma_tiledbsoma_stats_disable`))
 }
 
 #' @rdname tiledbsoma_stats
+#'
 #' @export
+#'
 tiledbsoma_stats_reset <- function() {
     invisible(.Call(`_tiledbsoma_tiledbsoma_stats_reset`))
 }
 
 #' @rdname tiledbsoma_stats
+#'
 #' @export
+#'
 tiledbsoma_stats_dump <- function() {
     .Call(`_tiledbsoma_tiledbsoma_stats_dump`)
 }
 
-#' libtiledbsoma version
-#'
-#' Returns a string with version information for libtiledbsoma and the linked
-#' TileDB Embedded library. If argument `compact` is set to `TRUE`, a shorter
-#' version of just the TileDB Embedded library version is returned.
-#' @noRd
 libtiledbsoma_version <- function(compact = FALSE, major_minor_only = FALSE) {
     .Call(`_tiledbsoma_libtiledbsoma_version`, compact, major_minor_only)
 }
 
-#' TileDB embedded version
-#'
-#' Gets the version of the TileDB Embedded library that is currently in use.
-#' @noRd
 tiledb_embedded_version <- function() {
     .Call(`_tiledbsoma_tiledb_embedded_version`)
 }
 
-#' @noRd
 tiledb_datatype_max_value <- function(datatype) {
     .Call(`_tiledbsoma_tiledb_datatype_max_value`, datatype)
 }

@@ -53,7 +53,7 @@ show_package_versions <- function() {
 }
 
 #' @rdname tiledbsoma_stats
+#'
 #' @export
-tiledbsoma_stats_show <- function() {
-  cat(tiledbsoma_stats_dump(), "\n")
-}
+#'
+tiledbsoma_stats_show <- \() cat(tiledbsoma_stats_dump(), "\n")

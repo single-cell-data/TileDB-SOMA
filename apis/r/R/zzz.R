@@ -1,3 +1,4 @@
+#' @import nanoarrow
 #' @importFrom Rcpp evalCpp
 #' @importFrom methods as is
 #' @importFrom Matrix as.matrix

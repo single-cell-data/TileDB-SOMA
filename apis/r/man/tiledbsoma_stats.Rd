@@ -7,7 +7,7 @@
 \alias{tiledbsoma_stats_reset}
 \alias{tiledbsoma_stats_dump}
 \alias{tiledbsoma_stats_show}
-\title{TileDB SOMA statistics}
+\title{TileDB SOMA Statistics}
 \usage{
 tiledbsoma_stats_enable()
 
@@ -19,16 +19,22 @@ tiledbsoma_stats_dump()
 
 tiledbsoma_stats_show()
 }
+\value{
+\code{tiledbsoma_stats_show()}: a single-length character vector
+with the TileDB statistics encoded in JSON format
+
+All other functions invisibly return \code{NULL}
+}
 \description{
 These functions expose the TileDB Core functionality for performance
-measurements and statistics.
+measurements and statistics
 }
 \details{
 \itemize{
-\item \code{tiledbsoma_stats_enable()}/\code{tiledbsoma_stats_disable()}: Enable and
-disable TileDB's internal statistics.
-\item \code{tiledbsoma_stats_reset()}: Reset all statistics to 0.
-\item \code{tiledbsoma_stats_dump()}: Dump all statistics to a JSON string.
-\item \code{tiledbsoma_stats_show()}: Print all statistics to the console.
+\item \code{tiledbsoma_stats_enable()}/\code{tiledbsoma_stats_disable()}:
+Enable and disable TielDB's internal statistics
+\item \code{tiledbsoma_stats_reset()}: Reset all statistics to \code{0}
+\item \code{tiledbsoma_stats_dump()}: Dump all statistics as a JSON string
+\item \code{tiledbsoma_stats_show()}: Pretty-print the JSON statistics
 }
 }
