@@ -38,7 +38,7 @@ from ._constants import (
 )
 from ._exception import SOMAError
 from ._funcs import typeguard_ignore
-from ._soma_object import AnySOMAObject, SOMAObject, _read_soma_type
+from ._soma_object import AnySOMAObject, SOMAObject
 from ._types import OpenTimestamp
 from .options import SOMATileDBContext
 from .options._soma_tiledb_context import _validate_soma_tiledb_context
@@ -144,7 +144,7 @@ def open(
 @typeguard_ignore
 def reify_handle(hdl: _Wrapper) -> SOMAObject[_Wrapper]:
     """Picks out the appropriate SOMA class for a handle and wraps it."""
-    typename = _read_soma_type(hdl)
+    typename = hdl.metadata.get(SOMA_OBJECT_TYPE_METADATA_KEY)
     cls = _type_name_to_cls(typename)  # type: ignore[no-untyped-call]
     if not isinstance(hdl, cls._wrapper_type):
         raise SOMAError(f"cannot open {hdl.uri!r}: a {type(hdl._handle)}" f" cannot be converted to a {typename}")
