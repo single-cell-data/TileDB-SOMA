@@ -5,6 +5,11 @@ createSOMAContext <- function(config = NULL) {
     .Call(`_tiledbsoma_createSOMAContext`, config)
 }
 
+#' @export
+mapFromSOMAContext <- function(ctxxp) {
+    .Call(`_tiledbsoma_mapFromSOMAContext`, ctxxp)
+}
+
 createSchemaFromArrow <- function(uri, nasp, nadimap, nadimsp, sparse, datatype, pclst, ctxxp, tsvec = NULL) {
     invisible(.Call(`_tiledbsoma_createSchemaFromArrow`, uri, nasp, nadimap, nadimsp, sparse, datatype, pclst, ctxxp, tsvec))
 }
