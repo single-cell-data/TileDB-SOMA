@@ -5,10 +5,11 @@
 #include <memory>
 #include <optional>
 #include <vector>
+#include <tiledbsoma_export.h>
 
 namespace tiledbsoma::geometry {
 
-struct BasePoint {
+struct TILEDBSOMA_EXPORT BasePoint {
     BasePoint(
         double_t x,
         double_t y,

@@ -6,7 +6,7 @@
 #include "linestring.h"
 
 namespace tiledbsoma::geometry {
-class MultiLineString {
+class TILEDBSOMA_EXPORT MultiLineString {
    public:
     MultiLineString(
         std::vector<LineString>&& linestring = std::vector<LineString>());

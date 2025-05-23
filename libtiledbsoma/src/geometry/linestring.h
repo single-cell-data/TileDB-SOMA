@@ -7,7 +7,7 @@
 
 namespace tiledbsoma::geometry {
 
-class LineString {
+class TILEDBSOMA_EXPORT LineString {
    public:
     LineString(std::vector<BasePoint>&& points = std::vector<BasePoint>());
     ~LineString();

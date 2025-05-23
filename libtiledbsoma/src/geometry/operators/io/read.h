@@ -15,7 +15,7 @@ template <typename Input>
 struct Reader {};
 
 template <>
-struct Reader<BinaryBuffer> {
+struct TILEDBSOMA_EXPORT Reader<BinaryBuffer> {
     Reader(const BinaryBuffer& buffer)
         : buffer(buffer)
         , position(0) {
@@ -71,7 +71,7 @@ GeometryCollection parse(Reader<BinaryBuffer>& reader);
 }  // namespace implementation
 
 template <typename Geometry = GenericGeometry>
-Geometry from_wkb(BinaryBuffer& buffer) {
+Geometry TILEDBSOMA_EXPORT from_wkb(BinaryBuffer& buffer) {
     Reader<BinaryBuffer> reader(buffer);
 
     return implementation::parse<Geometry>(reader);

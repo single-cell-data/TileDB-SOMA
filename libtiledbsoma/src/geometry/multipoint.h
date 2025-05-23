@@ -6,7 +6,7 @@
 #include "point.h"
 
 namespace tiledbsoma::geometry {
-class MultiPoint {
+class TILEDBSOMA_EXPORT MultiPoint {
    public:
     MultiPoint(std::vector<Point>&& points = std::vector<Point>());
     ~MultiPoint();

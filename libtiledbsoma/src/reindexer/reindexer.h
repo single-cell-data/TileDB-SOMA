@@ -15,6 +15,7 @@
 #define TILEDBSOMA_REINDEXER_H
 
 #include <assert.h>
+#include <tiledbsoma_export.h>
 
 #include <memory>
 #include <stdexcept>
@@ -26,7 +27,7 @@ namespace tiledbsoma {
 
 class SOMAContext;
 
-class IntIndexer {
+class TILEDBSOMA_EXPORT IntIndexer {
    public:
     /**
      * Perform intitalization of hash and threadpool

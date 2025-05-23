@@ -7,13 +7,13 @@
 
 namespace tiledbsoma::geometry {
 
-struct Envelope {
+struct TILEDBSOMA_EXPORT Envelope {
     Envelope();
 
     std::array<std::pair<double_t, double_t>, 4> range;
 };
 
-struct EnvelopeOperator {
+struct TILEDBSOMA_EXPORT EnvelopeOperator {
     EnvelopeOperator(Envelope& envelope);
 
     void base_envelope(const BasePoint& point);
@@ -28,7 +28,7 @@ struct EnvelopeOperator {
     Envelope& envelope;
 };
 
-Envelope envelope(const GenericGeometry& geometry);
+Envelope TILEDBSOMA_EXPORT envelope(const GenericGeometry& geometry);
 
 }  // namespace tiledbsoma::geometry
 #endif

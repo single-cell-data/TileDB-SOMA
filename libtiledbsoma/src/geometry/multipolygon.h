@@ -6,7 +6,7 @@
 #include "polygon.h"
 
 namespace tiledbsoma::geometry {
-class MultiPolygon {
+class TILEDBSOMA_EXPORT MultiPolygon {
    public:
     MultiPolygon(std::vector<Polygon>&& polygons = std::vector<Polygon>());
     ~MultiPolygon();

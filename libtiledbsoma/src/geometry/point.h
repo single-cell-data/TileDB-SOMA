@@ -8,7 +8,7 @@
 
 namespace tiledbsoma::geometry {
 
-class Point : public BasePoint {
+class TILEDBSOMA_EXPORT Point : public BasePoint {
    public:
     Point();
     Point(

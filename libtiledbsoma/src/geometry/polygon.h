@@ -7,7 +7,7 @@
 #include "point.h"
 
 namespace tiledbsoma::geometry {
-class Polygon {
+class TILEDBSOMA_EXPORT Polygon {
    public:
     Polygon(
         std::vector<BasePoint>&& exteriorRing = std::vector<BasePoint>(),

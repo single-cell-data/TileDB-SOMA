@@ -16,7 +16,7 @@ const size_t WKB_BYTE_ORDER_SIZE = 1;
 const size_t WKB_GEOEMTRY_TYPE_SIZE = 4;
 const size_t WKB_ELEMENT_COUNT_SIZE = 4;
 
-struct WKBSizeOperator {
+struct TILEDBSOMA_EXPORT WKBSizeOperator {
     size_t binary_size(const BasePoint& point);
     size_t operator()(const Point& point);
     size_t operator()(const LineString& linestring);
@@ -27,7 +27,7 @@ struct WKBSizeOperator {
     size_t operator()(const GeometryCollection& collection);
 };
 
-struct WKBWriteOperator {
+struct TILEDBSOMA_EXPORT WKBWriteOperator {
     WKBWriteOperator(std::byte* buffer, size_t& position, size_t size);
 
     template <typename T>
@@ -52,11 +52,11 @@ struct WKBWriteOperator {
     size_t size;
 };
 
-size_t wkb_size(const GenericGeometry& geometry);
+size_t TILEDBSOMA_EXPORT wkb_size(const GenericGeometry& geometry);
 
-void to_wkb(const GenericGeometry& geometry, uint8_t* buffer, size_t size);
+void TILEDBSOMA_EXPORT to_wkb(const GenericGeometry& geometry, uint8_t* buffer, size_t size);
 
-BinaryBuffer to_wkb(const GenericGeometry& geometry);
+BinaryBuffer TILEDBSOMA_EXPORT to_wkb(const GenericGeometry& geometry);
 
 }  // namespace tiledbsoma::geometry
 

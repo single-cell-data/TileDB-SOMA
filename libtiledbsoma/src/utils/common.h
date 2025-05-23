@@ -18,6 +18,7 @@
 #include <string>
 #include <string_view>
 #include <tiledb/tiledb>
+#include <tiledbsoma_export.h>
 
 namespace tiledbsoma {
 
@@ -47,7 +48,7 @@ enum MetadataInfo { dtype = 0, num, value };
 
 using TimestampRange = std::pair<uint64_t, uint64_t>;
 
-class TileDBSOMAError : public std::runtime_error {
+class TILEDBSOMA_EXPORT TileDBSOMAError : public std::runtime_error {
    public:
     explicit TileDBSOMAError(const char* m)
         : std::runtime_error(m){};
@@ -62,7 +63,7 @@ class TileDBSOMAError : public std::runtime_error {
 
 // From
 // https://github.com/TileDB-Inc/TileDB/blob/main/tiledb/common/scoped_executor.h
-class ScopedExecutor final {
+class TILEDBSOMA_EXPORT ScopedExecutor final {
    public:
     /** Default constructor. */
     ScopedExecutor() = default;
