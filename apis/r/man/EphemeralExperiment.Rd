@@ -7,7 +7,24 @@
 Ephemeral version of \code{\link{SOMAExperiment}s}; ephemeral
 experiments are equivalent to
 \link[tiledbsoma:SOMAExperiment]{SOMA experiments} but are stored in-memory
-instead of on-disk
+instead of on-disk.
+}
+\examples{
+(exp <- EphemeralExperiment$new())
+exp$soma_type
+
+\dontshow{if (requireNamespace("withr", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+dir <- withr::local_tempfile(pattern = "obs")
+dir.create(dir, recursive = TRUE)
+
+(obs <- load_dataset("soma-dataframe-pbmc3k-processed-obs", dir))
+exp$set(obs, "obs")
+exp$obs
+
+\dontshow{
+obs$close()
+}
+\dontshow{\}) # examplesIf}
 }
 \keyword{internal}
 \section{Super classes}{
@@ -19,12 +36,12 @@ instead of on-disk
 \item{\code{obs}}{A \code{\link{SOMADataFrame}} containing the annotations on
 the observation axis. The contents of the \code{soma_joinid} column
 define the observation index domain \code{obs_id}. All observations for
-the \code{SOMAExperiment} must be defined in this data frame}
+the \code{SOMAExperiment} must be defined in this data frame.}
 
 \item{\code{ms}}{A \code{\link{SOMACollection}} of named
-\code{\link{SOMAMeasurement}}s}
+\code{\link{SOMAMeasurement}}s.}
 
-\item{\code{soma_type}}{The SOMA object type}
+\item{\code{soma_type}}{The SOMA object type.}
 }
 \if{html}{\out{</div>}}
 }
