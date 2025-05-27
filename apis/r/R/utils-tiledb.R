@@ -36,10 +36,13 @@ get_tiledb_version <- function(compact = FALSE) {
 
 #' Display package versions
 #'
-#' Print version information for \pkg{tiledb} (R package), libtiledbsoma, and
-#' TileDB embedded, suitable for assisting with bug reports.
+#' Print version information for \CRANpkg{tiledb} (R package), libtiledbsoma,
+#' and TileDB embedded, suitable for assisting with bug reports.
 #'
 #' @export
+#'
+#' @examples
+#' show_package_versions()
 #'
 show_package_versions <- function() {
   cat("tiledbsoma:    ", toString(utils::packageVersion("tiledbsoma")), "\n",
@@ -56,4 +59,6 @@ show_package_versions <- function() {
 #'
 #' @export
 #'
-tiledbsoma_stats_show <- \() cat(tiledbsoma_stats_dump(), "\n")
+tiledbsoma_stats_show <- function() {
+  cat(tiledbsoma_stats_dump(), "\n")
+}
