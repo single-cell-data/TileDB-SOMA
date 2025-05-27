@@ -1,7 +1,10 @@
-#' SOMA NDArray Base Class
+#' SOMA ND-Array Base Class
 #'
-#' @description Virtual base class to add NDArray-specific functionality to the
-#' \code{\link{SOMAArrayBase}} class (lifecycle: maturing)
+#' @description Virtual base class to add ND-array-specific functionality to the
+#' \code{\link{SOMAArrayBase}} class (lifecycle: maturing).
+#'
+#' @param check_only If true, does not apply the operation, but only reports
+#' whether it would have succeeded.
 #'
 #' @keywords internal
 #'
@@ -15,15 +18,19 @@ SOMANDArrayBase <- R6::R6Class(
   inherit = SOMAArrayBase,
   public = list(
 
-    #' @description Create a SOMA NDArray named with the URI. (lifecycle:
-    #' maturing)
-    #' @param type an [Arrow type][arrow::data-type] defining the type of each
-    #' element in the array.
+    #' @description Create a SOMA NDArray named with the URI
+    #' (lifecycle: maturing).
+    #'
+    #' @param type An \link[arrow:data-type]{Arrow type} defining the type
+    #' of each element in the array.
     #' @param shape a vector of integers defining the shape of the array.
     #' @template param-platform-config
     #' @param internal_use_only Character value to signal this is a 'permitted'
-    #' call, as `create()` is considered internal and should not be called
+    #' call, as \code{create()} is considered internal and should not be called
     #' directly.
+    #'
+    #' @return Returns \code{self}
+    #'
     create = function(
       type,
       shape,
@@ -81,33 +88,38 @@ SOMANDArrayBase <- R6::R6Class(
     },
 
     ## needed eg after open() to set (Arrow) type
-    #' @description Sets a cache value for the datatype (lifecycle: maturing)
-    #' @param type A character value describing the TileDB data type
+    #' @description Sets a cache value for the datatype (lifecycle: maturing).
+    #'
+    #' @param type A character value describing the TileDB data type.
+    #'
     set_data_type = function(type) {
       spdl::debug("[SOMANDArrayBase::set_data_type] caching type {}", type$ToString())
       private$.type <- type
     },
 
-    #' @description Returns TRUE if the array has the upgraded resizeable shape
-    #' feature from TileDB-SOMA 1.15: the array was created with this support,
-    #' or it has had ``upgrade_domain`` applied to it.
-    #' (lifecycle: maturing)
-    #' @return Logical
+    #' @description Test if the array has the upgraded resizeable shape feature
+    #' from TileDB-SOMA 1.15, the array was created with this support, or it has
+    #' had \code{$upgrade_domain()} applied to it (lifecycle: maturing).
+    #'
+    #' @return Returns \code{TRUE} if the array has the upgraded resizable
+    #' shape feature; otherwise, returns \code{FALSE}.
+    #'
     tiledbsoma_has_upgraded_shape = function() {
       has_current_domain(self$uri, private$.soma_context)
     },
 
     #' @description Increases the shape of the array as specified, up to the hard
-    #' limit which is `maxshape`. Raises an error if the new shape is less than
-    #' the current shape in any dimension.  Raises an error if the requested new
-    #' shape exceeds `maxshape` in any dimension. Raises an error if the array
-    #' doesn't already have a shape: in that case please call
-    #' `tiledbsoma_upgrade_shape`. (lifecycle: maturing)
-    #' @param new_shape A vector of integerish, of the same length as the array's `ndim`.
-    #' @param check_only If true, does not apply the operation, but only reports
-    #' whether it would have succeeded.
-    #' @return No return value if `check_only` is `FALSE`. If `check_only` is `TRUE`,
-    #' returns the empty string if no error is detected, else a description of the error.
+    #' limit which is \code{maxshape}. Raises an error if the new shape is less
+    #' than the current shape or exceeds \code{maxshape} in any dimension. Also
+    #' raises an error if the array doesn't already have a shape; in that case
+    #' please call \code{$tiledbsoma_upgrade_shape()} (lifecycle: maturing).
+    #' @param new_shape An integerish vector of the same length as the array's
+    #' \code{$ndim()}.
+    #'
+    #' @return If \code{check_only}, returns the empty string if no error is
+    #' detected, else a description of the error. Otherwise, invisibly returns
+    #' \code{NULL}
+    #'
     resize = function(new_shape, check_only = FALSE) {
       stopifnot(
         "'new_shape' must be a vector of integerish values, of the same length as maxshape" =
@@ -127,18 +139,21 @@ SOMANDArrayBase <- R6::R6Class(
       return(invisible(NULL))
     },
 
-    #' @description Allows the array to have a resizeable shape as described in the
-    #' TileDB-SOMA 1.15 release notes.  Raises an error if the shape exceeds maxshape in any
-    #' dimension. Raises an error if the array already has a shape. The methods
-    #' `tiledbsoma_upgrade_shape` and `resize` are very similar: the former must be
-    #' call on a pre-1.15 array the first time a shape is set on it; the latter must
-    #' be used for subsequent resizes on any array which already has upgraded shape.
-    #' (lifecycle: maturing)
-    #' @param shape A vector of integerish, of the same length as the array's `ndim`.
-    #' @param check_only If true, does not apply the operation, but only reports
-    #' whether it would have succeeded.
-    #' @return No return value if `check_only` is `FALSE`. If `check_only` is `TRUE`,
-    #' returns the empty string if no error is detected, else a description of the error.
+    #' @description Allows the array to have a resizeable shape as described in
+    #' the TileDB-SOMA 1.15 release notes. Raises an error if the shape exceeds
+    #' \code{maxshape} in any dimension, or if the array already has a shape.
+    #' The methods \code{$tiledbsoma_upgrade_shape()} and \code{$resize()} are
+    #' very similar: the former must be called on a pre-1.15 array the first
+    #' time a shape is set on it; the latter must be used for subsequent resizes
+    #' on any array which already has upgraded shape (lifecycle: maturing).
+    #'
+    #' @param shape An integerish vector of the same length as the array's
+    #' \code{$ndim()}.
+    #'
+    #' @return If \code{check_only}, returns the empty string if no error is
+    #' detected, else a description of the error. Otherwise, invisibly returns
+    #' \code{NULL}
+    #'
     tiledbsoma_upgrade_shape = function(shape, check_only = FALSE) {
       stopifnot(
         "'shape' must be a vector of integerish values, of the same length as maxshape" =

@@ -1,7 +1,8 @@
 #' SOMA Collection Base Class
 #'
 #' @description Base class for objects containing persistent collection of SOMA
-#' objects, mapping string keys to any SOMA object.  (lifecycle: maturing)
+#' objects, mapping string keys to any SOMA object (lifecycle: maturing).
+#'
 #' @keywords internal
 #' @export
 #'
@@ -14,14 +15,17 @@ SOMACollectionBase <- R6::R6Class(
   inherit = TileDBGroup,
   public = list(
 
-    #' @description Create a new `SOMACollection`. (lifecycle: maturing)
+    #' @description Create a new \code{\link{SOMACollection}}
+    #' (lifecycle: maturing).
     #'
-    #' @param uri URI of the TileDB group
-    #' @param platform_config Optional storage-engine specific configuration
-    #' @param tiledbsoma_ctx optional SOMATileDBContext
-    #' @param tiledb_timestamp Optional Datetime (POSIXct) for TileDB timestamp
-    #' @param internal_use_only Character value to signal this is a 'permitted' call,
-    #' as `new()` is considered internal and should not be called directly.
+    #' @param uri URI of the TileDB group.
+    #' @param platform_config Optional storage-engine specific configuration.
+    #' @param tiledbsoma_ctx optional SOMATileDBContext.
+    #' @param tiledb_timestamp Optional Datetime (POSIXct) for TileDB timestamp.
+    #' @param internal_use_only Character value to signal this is a 'permitted'
+    #' call, as \code{new()} is considered internal and should not be called
+    #' directly.
+    #'
     initialize = function(
       uri,
       platform_config = NULL,
@@ -38,9 +42,15 @@ SOMACollectionBase <- R6::R6Class(
       ))
     },
 
-    #' @description Add a new SOMA object to the collection. (lifecycle: maturing)
-    #' @param internal_use_only Character value to signal this is a 'permitted' call,
-    #' as `create()` is considered internal and should not be called directly.
+    #' @description Add a new SOMA object to the collection
+    #' (lifecycle: maturing).
+    #'
+    #' @param internal_use_only Character value to signal this is a 'permitted'
+    #' call, as \code{create()} is considered internal and should not be called
+    #' directly.
+    #'
+    #' @return Returns \code{self}
+    #'
     create = function(internal_use_only = NULL) {
       if (is.null(internal_use_only) || internal_use_only != "allowed_use") {
         stop(paste(
@@ -74,42 +84,59 @@ SOMACollectionBase <- R6::R6Class(
       self
     },
 
-    #' @description Add a new SOMA object to the collection. (lifecycle: maturing)
+    #' @description Add a new SOMA object to the collection
+    #' (lifecycle: maturing).
+    #'
     #' @param object SOMA object.
     #' @param name The name to use for the object. Defaults to the object URI's
     #' base name.
     #' @param relative An optional logical value indicating whether the new
-    #' object's URI is relative to the collection's URI. If `NULL` (the
+    #' object's URI is relative to the collection's URI. If \code{NULL} (the
     #' default), the object's URI is assumed to be relative unless it is a
-    #' `tiledb://` URI.
+    #' \code{tiledb://} URI.
+    #'
     set = function(object, name = NULL, relative = NULL) {
       # TODO: Check that object is a SOMA object
       super$set(object, name, relative)
     },
 
     #' @description Retrieve a SOMA object by name. (lifecycle: maturing)
+    #'
     #' @param name The name of the object to retrieve.
-    #' @param mode Mode to open in
-    #' @returns SOMA object.
+    #'
+    #' @return The SOMA object stored as \code{name}.
+    #'
     get = function(name) {
       super$get(name)
     },
 
-    #' @description Add a new SOMA collection to this collection. (lifecycle: maturing)
+    #' @description Add a new SOMA collection to this collection
+    #'  (lifecycle: maturing).
+    #'
     #' @param object SOMA collection object.
     #' @param key The key to be added.
+    #'
+    #' @return Returns \code{object}
+    #'
     add_new_collection = function(object, key) {
       # TODO: Check that object is a collection
       super$set(object, key)
       object
     },
 
-    #' @description Add a new SOMA dataframe to this collection. (lifecycle: maturing)
+    #' @description Add a new SOMA data frame to this collection
+    #' (lifecycle: maturing).
+    #'
     #' @param key The key to be added.
-    #' @param schema Arrow schema argument passed on to DataFrame$create()
-    #' @param index_column_names Index column names passed on to DataFrame$create()
-    #' @param domain As in ``SOMADataFrameCreate``.
+    #' @param schema Arrow schema argument passed on to
+    #' \code{SOMADataFrame$create()}.
+    #' @param index_column_names Index column names passed on to
+    #' \code{SOMADataFrame$create()}.
+    #' @param domain As in \code{\link{SOMADataFrameCreate}}.
     #' @template param-platform-config
+    #'
+    #' @return Returns the newly created data frame stored at \code{key}
+    #'
     add_new_dataframe = function(
       key,
       schema,
@@ -131,12 +158,17 @@ SOMACollectionBase <- R6::R6Class(
       sdf
     },
 
-    #' @description Add a new SOMA DenseNdArray to this collection. (lifecycle: maturing)
+    #' @description Add a new SOMA DenseNdArray to this collection
+    #' (lifecycle: maturing).
+    #'
     #' @param key The key to be added.
-    #' @param type an [Arrow type][arrow::data-type] defining the type of each
-    #' element in the array.
+    #' @param type An \link[arrow:data-type]{Arrow type} defining the
+    #' type of each element in the array.
     #' @param shape a vector of integers defining the shape of the array.
     #' @template param-platform-config
+    #'
+    #' @return Returns the newly-created array stored at \code{key}
+    #'
     add_new_dense_ndarray = function(key, type, shape, platform_config = NULL) {
       ndarr <- SOMADenseNDArray$new(
         uri = file_path(self$uri, key),
@@ -151,12 +183,17 @@ SOMACollectionBase <- R6::R6Class(
       ndarr
     },
 
-    #' @description Add a new SOMA SparseNdArray to this collection. (lifecycle: maturing)
+    #' @description Add a new SOMA SparseNdArray to this collection
+    #' (lifecycle: maturing).
+    #'
     #' @param key The key to be added.
-    #' @param type an [Arrow type][arrow::data-type] defining the type of each
-    #' element in the array.
+    #' @param type An \link[arrow:data-type]{Arrow type} defining the
+    #' type of each element in the array.
     #' @param shape a vector of integers defining the shape of the array.
     #' @template param-platform-config
+    #'
+    #' @return Returns the newly-created array stored at \code{key}
+    #'
     add_new_sparse_ndarray = function(key, type, shape, platform_config = NULL) {
       ndarr <- SOMASparseNDArray$new(
         uri = file_path(self$uri, key),
@@ -173,6 +210,7 @@ SOMACollectionBase <- R6::R6Class(
   ),
   active = list(
     #' @field soma_type Retrieve the SOMA object type.
+    #'
     soma_type = function(value) {
       stopifnot("'soma_type' is a read-only field" = missing(value))
       if (is.null(private$soma_type_cache)) {

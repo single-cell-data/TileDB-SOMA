@@ -13,25 +13,25 @@ SOMAExperimentOpen(
 )
 }
 \arguments{
-\item{uri}{URI for the TileDB object}
+\item{uri}{URI for the TileDB object.}
 
-\item{mode}{One of \dQuote{\code{READ}} or \dQuote{\code{WRITE}}}
+\item{mode}{One of \dQuote{\code{READ}} or \dQuote{\code{WRITE}}.}
 
-\item{platform_config}{Optional platform configuration}
+\item{platform_config}{Optional platform configuration.}
 
-\item{tiledbsoma_ctx}{Optional SOMATileDBContext}
+\item{tiledbsoma_ctx}{Optional SOMATileDBContext.}
 
 \item{tiledb_timestamp}{Optional Datetime (POSIXct) for TileDB timestamp;
 defaults to the current time. If not \code{NULL}, all members accessed
-through the collection inherit the timestamp}
+through the collection inherit the timestamp.}
 }
 \value{
 A \link[tiledbsoma:SOMAExperiment]{SOMA experiment} stored at
-\code{uri} opened in mode \code{mode}
+\code{uri} opened in mode \code{mode}.
 }
 \description{
 Factory function to open a \link[tiledbsoma:SOMAExperiment]{SOMA experiment}
-for reading (lifecycle: maturing)
+for reading (lifecycle: maturing).
 }
 \examples{
 \dontshow{if (requireNamespace("withr", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}

@@ -17,14 +17,14 @@ SOMADataFrameCreate(
 )
 }
 \arguments{
-\item{uri}{URI for the TileDB object}
+\item{uri}{URI for the TileDB object.}
 
 \item{schema}{Arrow schema argument for the
-\link[tiledbsoma:SOMADataFrame]{SOMA data frame}}
+\link[tiledbsoma:SOMADataFrame]{SOMA dataframe}.}
 
 \item{index_column_names}{A vector of column names to use as user-defined
 index columns; all named columns must exist in the schema, and at least
-one index column name is required}
+one index column name is required.}
 
 \item{domain}{An optional list of 2-element vectors specifying the domain of
 each index column. Each vector should be a pair consisting of the minimum and
@@ -41,26 +41,27 @@ values for the column's datatype. This makes a SOMA data frame growable.}
 choose from:
 \itemize{
 \item \dQuote{\code{write}}: create a new TileDB object and error if
-it already exists
+it already exists.
 \item \dQuote{\code{resume}}: attempt to create a new TileDB object;
-if it already exists, simply open it for writing
+if it already exists, simply open it for writing.
 }}
 
-\item{platform_config}{Optional platform configuration}
+\item{platform_config}{Optional platform configuration.}
 
-\item{tiledbsoma_ctx}{Optional SOMATileDBContext}
+\item{tiledbsoma_ctx}{Optional SOMATileDBContext.}
 
-\item{tiledb_timestamp}{Optional Datetime (POSIXct) for TileDB timestamp}
+\item{tiledb_timestamp}{Optional Datetime (POSIXct) for TileDB timestamp.}
 
-\item{soma_context}{A SOMA context as created by \code{\link{soma_context}()}}
+\item{soma_context}{A SOMA context as created by
+\code{\link{soma_context}()}.}
 }
 \value{
 A new \link[tiledbsoma:SOMADataFrame]{SOMA data frame} stored at
-\code{uri} opened for writing
+\code{uri} opened for writing.
 }
 \description{
 Factory function to create a \link[tiledbsoma:SOMADataFrame]{SOMA data frame}
-for writing (lifecycle: maturing)
+for writing (lifecycle: maturing).
 }
 \examples{
 \dontshow{if (requireNamespace("withr", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}

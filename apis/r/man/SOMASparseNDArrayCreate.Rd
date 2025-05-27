@@ -15,36 +15,36 @@ SOMASparseNDArrayCreate(
 )
 }
 \arguments{
-\item{uri}{URI for the TileDB object}
+\item{uri}{URI for the TileDB object.}
 
-\item{type}{An \code{\link[arrow:data-type]{Arrow type}} defining the type
-of each element in the array}
+\item{type}{An \link[arrow:data-type]{Arrow type} defining the type
+of each element in the array.}
 
-\item{shape}{A vector of integers defining the shape of the array}
+\item{shape}{A vector of integers defining the shape of the array.}
 
 \item{ingest_mode}{Ingestion mode when creating the TileDB object;
 choose from:
 \itemize{
 \item \dQuote{\code{write}}: create a new TileDB object and error if
-it already exists
+it already exists.
 \item \dQuote{\code{resume}}: attempt to create a new TileDB object;
-if it already exists, simply open it for writing
+if it already exists, simply open it for writing.
 }}
 
-\item{platform_config}{Optional platform configuration}
+\item{platform_config}{Optional platform configuration.}
 
-\item{tiledbsoma_ctx}{Optional SOMATileDBContext}
+\item{tiledbsoma_ctx}{Optional SOMATileDBContext.}
 
-\item{tiledb_timestamp}{Optional Datetime (POSIXct) for TileDB timestamp}
+\item{tiledb_timestamp}{Optional Datetime (POSIXct) for TileDB timestamp.}
 }
 \value{
 A new \link[tiledbsoma:SOMASparseNDArray]{SOMA sparse ND array}
-stored at \code{uri} opened for writing
+stored at \code{uri} opened for writing.
 }
 \description{
 Factory function to create a
 \link[tiledbsoma:SOMASparseNDArray]{SOMA sparse ND array} for writing
-(lifecycle: maturing)
+(lifecycle: maturing).
 }
 \examples{
 \dontshow{if (requireNamespace("withr", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}

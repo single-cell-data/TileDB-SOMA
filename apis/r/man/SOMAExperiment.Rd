@@ -4,10 +4,11 @@
 \alias{SOMAExperiment}
 \title{SOMA Experiment}
 \description{
-\code{SOMAExperiment} is a specialized \code{\link{SOMACollection}},
-representing one or more modes of measurement across a single collection of
-cells (aka a "multimodal dataset") with pre-defined fields: \code{obs} and \code{ms}
-(see \emph{Active Bindings} below for details). (lifecycle: maturing)
+\code{SOMAExperiment} is a specialized
+\code{\link{SOMACollection}}, representing one or more modes of measurement
+across a single collection of cells (aka a \dQuote{multimodal dataset}) with
+pre-defined fields: \code{obs} and \code{ms} (see \emph{Active Bindings} below
+for details) (lifecycle: maturing).
 }
 \section{Adding new objects to a collection}{
 
@@ -56,12 +57,13 @@ exp$close()
 \section{Active bindings}{
 \if{html}{\out{<div class="r6-active-bindings">}}
 \describe{
-\item{\code{obs}}{a \code{\link{SOMADataFrame}} containing primary annotations on the
-observation axis. The contents of the \code{soma_joinid} column define the
-observation index domain, \code{obs_id}. All observations for the
-\code{SOMAExperiment} must be defined in this dataframe.}
+\item{\code{obs}}{A \code{\link{SOMADataFrame}} containing primary annotations
+on the observation axis. The contents of the \code{soma_joinid} column
+define the observation index domain, \code{obs_id}. All observations for
+the \code{SOMAExperiment} must be defined in this data frame.}
 
-\item{\code{ms}}{a \code{\link{SOMACollection}} of named \code{\link{SOMAMeasurement}}s.}
+\item{\code{ms}}{A \code{\link{SOMACollection}} of named
+\code{\link{SOMAMeasurement}s}.}
 }
 \if{html}{\out{</div>}}
 }
@@ -107,8 +109,8 @@ observation index domain, \code{obs_id}. All observations for the
 \if{html}{\out{<a id="method-SOMAExperiment-axis_query"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMAExperiment-axis_query}{}}}
 \subsection{Method \code{axis_query()}}{
-Subset and extract data from a \code{\link{SOMAMeasurement}} by
-querying the \code{obs}/\code{var} axes.
+Subset and extract data from a \code{\link{SOMAMeasurement}}
+by querying the \code{obs}/\code{var} axes.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMAExperiment$axis_query(measurement_name, obs_query = NULL, var_query = NULL)}\if{html}{\out{</div>}}
 }
@@ -118,8 +120,8 @@ querying the \code{obs}/\code{var} axes.
 \describe{
 \item{\code{measurement_name}}{The name of the measurement to query.}
 
-\item{\code{obs_query, var_query}}{An \code{\link{SOMAAxisQuery}} object for the obs/var
-axis.}
+\item{\code{obs_query, var_query}}{An \code{\link{SOMAAxisQuery}} object for the
+obs/var axis.}
 }
 \if{html}{\out{</div>}}
 }
@@ -131,8 +133,9 @@ A \code{\link{SOMAExperimentAxisQuery}} object.
 \if{html}{\out{<a id="method-SOMAExperiment-update_obs"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMAExperiment-update_obs}{}}}
 \subsection{Method \code{update_obs()}}{
-Update the obs \code{\link{SOMADataFrame}} to add or remove columns.
-See \code{\link[=SOMADataFrame]{SOMADataFrame$update()}} for details.
+Update the \code{obs} data frame to add or remove columns.
+See \code{\link[tiledbomsa:SOMADataFrame]{SOMADataFrame$update()}} for
+more details.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMAExperiment$update_obs(values, row_index_name = NULL)}\if{html}{\out{</div>}}
 }
@@ -140,12 +143,12 @@ See \code{\link[=SOMADataFrame]{SOMADataFrame$update()}} for details.
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{values}}{A \code{data.frame}, \code{\link[arrow:Table-class]{arrow::Table}}, or
-\code{\link[arrow:RecordBatch-class]{arrow::RecordBatch}}.}
+\item{\code{values}}{A data frame, \link[arrow:Table]{Arrow table}, or
+\link[arrow:RecordBatch]{Arrow record batch}.}
 
 \item{\code{row_index_name}}{An optional scalar character. If provided, and if
-the \code{values} argument is a \code{data.frame} with row names, then the row
-names will be extracted and added as a new column to the \code{data.frame}
+the \code{values} argument is a data frame with row names, then the row
+names will be extracted and added as a new column to the data frame
 prior to performing the update. The name of this new column will be set
 to the value specified by \code{row_index_name}.}
 }
@@ -156,8 +159,9 @@ to the value specified by \code{row_index_name}.}
 \if{html}{\out{<a id="method-SOMAExperiment-update_var"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMAExperiment-update_var}{}}}
 \subsection{Method \code{update_var()}}{
-Update the var \code{SOMADataFrame} to add or remove columns.
-See \code{\link[=SOMADataFrame]{SOMADataFrame$update()}} for details.
+Update the \code{var} data frame to add or remove columns.
+See \code{\link[tiledbomsa:SOMADataFrame]{SOMADataFrame$update()}} for
+more details.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMAExperiment$update_var(values, measurement_name, row_index_name = NULL)}\if{html}{\out{</div>}}
 }
@@ -165,15 +169,15 @@ See \code{\link[=SOMADataFrame]{SOMADataFrame$update()}} for details.
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{values}}{A \code{data.frame}, \code{\link[arrow:Table-class]{arrow::Table}}, or
-\code{\link[arrow:RecordBatch-class]{arrow::RecordBatch}}.}
+\item{\code{values}}{A data frame, \link[arrow:Table]{Arrow table}, or
+\link[arrow:RecordBatch]{Arrow record batch}.}
 
-\item{\code{measurement_name}}{The name of the \code{\link{SOMAMeasurement}} whose \code{var}
-will be updated.}
+\item{\code{measurement_name}}{The name of the \code{\link{SOMAMeasurement}}
+whose \code{var} will be updated.}
 
 \item{\code{row_index_name}}{An optional scalar character. If provided, and if
-the \code{values} argument is a \code{data.frame} with row names, then the row
-names will be extracted and added as a new column to the \code{data.frame}
+the \code{values} argument is a data frame with row names, then the row
+names will be extracted and added as a new column to the data frame
 prior to performing the update. The name of this new column will be set
 to the value specified by \code{row_index_name}.}
 }

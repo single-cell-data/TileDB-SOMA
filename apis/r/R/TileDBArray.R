@@ -1,7 +1,7 @@
 #' TileDB Array Base Class
 #'
 #' @description Virtual base class for representing an individual TileDB array
-#' (lifecycle: maturing)
+#' (lifecycle: maturing).
 #'
 #' @keywords internal
 #'
@@ -15,10 +15,14 @@ TileDBArray <- R6::R6Class(
   public = list(
 
     #' @description Open the SOMA object for read or write.
-    #' @param mode Mode to open in; defaults to `READ`.
-    #' @param internal_use_only Character value to signal this is a 'permitted' call,
-    #' as `open()` is considered internal and should not be called directly.
-    #' @return The object, invisibly
+    #'
+    #' @param mode Mode to open in; defaults to \code{READ}.
+    #' @param internal_use_only Character value to signal this is a 'permitted'
+    #' call, as \code{open()} is considered internal and should not be called
+    #' directly.
+    #'
+    #' @return Returns \code{self}
+    #'
     open = function(mode = c("READ", "WRITE"), internal_use_only = NULL) {
       mode <- match.arg(mode)
       if (is.null(internal_use_only) || internal_use_only != "allowed_use") {
@@ -54,7 +58,9 @@ TileDBArray <- R6::R6Class(
     },
 
     #' @description Close the SOMA object.
-    #' @return The object, invisibly
+    #'
+    #' @return Invisibly returns \code{self}.
+    #'
     close = function() {
       spdl::debug("[TileDBArray$close] Closing {} '{}'", self$class(), self$uri)
       private$.mode <- "CLOSED"
@@ -62,7 +68,8 @@ TileDBArray <- R6::R6Class(
       invisible(self)
     },
 
-    #' @description Print summary of the array. (lifecycle: maturing)
+    #' @description Print summary of the array (lifecycle: maturing).
+    #'
     print = function() {
       super$print()
       if (self$exists()) {
@@ -71,9 +78,14 @@ TileDBArray <- R6::R6Class(
       }
     },
 
-    #' @description Return a [`TileDBArray`] object (lifecycle: maturing)
-    #' @param ... Optional arguments to pass to `tiledb::tiledb_array()`
-    #' @return A [`tiledb::tiledb_array`] object.
+    #' @description Return a \code{\link[tiledb]{tiledb_array}} object
+    #' (lifecycle: maturing).
+    #'
+    #' @param ... Optional arguments to pass to
+    #' \code{\link[tiledb:tiledb_array]{tiledb::tiledb_array}()}.
+    #'
+    #' @return A \code{\link[tiledb]{tiledb_array}} object.
+    #'
     tiledb_array = function(...) {
       args <- list(...)
       args$uri <- self$uri
@@ -84,9 +96,13 @@ TileDBArray <- R6::R6Class(
       do.call(tiledb::tiledb_array, args)
     },
 
-    #' @description Retrieve metadata from the TileDB array. (lifecycle: maturing)
+    #' @description Retrieve metadata from the TileDB array
+    #' (lifecycle: maturing).
+    #'
     #' @param key The name of the metadata attribute to retrieve.
+    #'
     #' @return A list of metadata values.
+    #'
     get_metadata = function(key = NULL) {
       private$check_open_for_read_or_write()
 
@@ -101,9 +117,13 @@ TileDBArray <- R6::R6Class(
       }
     },
 
-    #' @description Add list of metadata to the specified TileDB array. (lifecycle: maturing)
+    #' @description Add list of metadata to the specified TileDB array
+    #' (lifecycle: maturing).
+    #'
     #' @param metadata Named list of metadata to add.
-    #' @return NULL
+    #'
+    #' @return Invisibly returns \code{NULL}.
+    #'
     set_metadata = function(metadata) {
       stopifnot(
         "Metadata must be a named list" = is_named_list(metadata)
@@ -133,53 +153,68 @@ TileDBArray <- R6::R6Class(
       )
     },
 
-    #' @description Retrieve the array schema as an Arrow schema (lifecycle: maturing)
-    #' @return A [`arrow::schema`] object
+    #' @description Retrieve the array schema as an Arrow schema
+    #' (lifecycle: maturing).
+    #'
+    #' @return An \link[arrow:Schema]{Arrow schema} object.
+    #'
     schema = function() {
       return(arrow::as_schema(c_schema(self$uri, private$.soma_context)))
     },
 
-    #' @description Retrieve the array schema as TileDB schema (lifecycle: maturing)
-    #' @return A [`tiledb::tiledb_array_schema`] object
+    #' @description Retrieve the array schema as TileDB schema
+    #' (lifecycle: maturing).
+    #'
+    #' @return A \code{\link[tiledb]{tiledb_array_schema}} object.
+    #'
     tiledb_schema = function() {
       tiledb::schema(self$object)
     },
 
-    #' @description Retrieve the array dimensions (lifecycle: maturing)
-    #' @return A named list of [`tiledb::tiledb_dim`] objects
+    #' @description Retrieve the array dimensions (lifecycle: maturing).
+    #'
+    #' @return A named list of \code{\link[tiledb]{tiledb_dim}} objects.
+    #'
     dimensions = function() {
       dims <- tiledb::dimensions(self$tiledb_schema())
       return(stats::setNames(dims, nm = vapply_char(dims, tiledb::name)))
     },
 
     #' @description Retrieve the shape, i.e. the capacity of each dimension.
-    #' Attempted reads and writes outside the `shape` will result in a runtime
-    #' error: this is the purpose of `shape`.  This will not necessarily match
-    #' the bounds of occupied cells within the array. Using `resize`, this may be
-    #' increased up to the hard limit which `maxshape` reports.
-    #' (lifecycle: maturing)
-    #' @return A named vector of dimension length (and the same type as the dimension)
+    #' Attempted reads and writes outside the \code{shape} will result in a
+    #' runtime error: this is the purpose of \code{shape}. This will not
+    #' necessarily match the bounds of occupied cells within the array.
+    #' Using \code{$resize()}, this may be increased up to the hard limit which
+    #' \code{$maxshape()} reports (lifecycle: maturing).
+    #'
+    #' @return A named vector of dimension length
+    #' (and the same type as the dimension).
+    #'
     shape = function() {
       return(bit64::as.integer64(shape(self$uri, private$.soma_context)))
     },
 
     #' @description Retrieve the hard limit up to which the array may be resized
-    #' using the `resize` method.
-    #' (lifecycle: maturing)
-    #' @return A named vector of dimension length (and the same type as the dimension)
+    #' using the \code{$resize()} method (lifecycle: maturing).
+    #'
+    #' @return A named vector of dimension length
+    #' (and the same type as the dimension).
+    #'
     maxshape = function() {
       return(bit64::as.integer64(maxshape(self$uri, private$.soma_context)))
     },
 
-    #' @description Returns a named list of minimum/maximum pairs, one per index
-    #' column, which are the smallest and largest values written on that
+    #' @description Returns a named list of minimum/maximum pairs, one per
+    #' index column, which are the smallest and largest values written on that
     #' index column.
+    #'
     #' @param index1 Return the non-empty domain with 1-based indices.
     #' @param max_only Return only the max value per dimension, and return
-    #' this as a vector. Names are dropped.
-    #' (lifecycle: maturing)
+    #' this as a vector. Names are dropped (lifecycle: maturing).
+    #'
     #' @return Named list of minimum/maximum values, or integer vector
     #' of maximum values.
+    #'
     non_empty_domain = function(index1 = FALSE, max_only = FALSE) {
       retval <- as.list(
         arrow::as_record_batch(
@@ -202,46 +237,60 @@ TileDBArray <- R6::R6Class(
       return(retval)
     },
 
-    #' @description Retrieve number of dimensions (lifecycle: maturing)
-    #' @return A scalar with the number of dimensions
+    #' @description Retrieve number of dimensions (lifecycle: maturing).
+    #'
+    #' @return A scalar with the number of dimensions.
+    #'
     ndim = function() {
       ndim(self$uri, private$.soma_context)
     },
 
-    #' @description Retrieve the array attributes (lifecycle: maturing)
-    #' @return A list of [`tiledb::tiledb_attr`] objects
+    #' @description Retrieve the array attributes (lifecycle: maturing).
+    #'
+    #' @return A list of \code{\link[tiledb]{tiledb_attr}} objects.
+    #'
     attributes = function() {
       tiledb::attrs(self$tiledb_schema())
     },
 
-    #' @description Retrieve dimension names (lifecycle: maturing)
-    #' @return A character vector with the array's dimension names
+    #' @description Retrieve dimension names (lifecycle: maturing).
+    #'
+    #' @return A character vector with the array's dimension names.
+    #'
     dimnames = function() {
       c_dimnames(self$uri, private$.soma_context)
     },
 
-    #' @description Retrieve attribute names (lifecycle: maturing)
-    #' @return A character vector with the array's attribute names
+    #' @description Retrieve attribute names (lifecycle: maturing).
+    #'
+    #' @return A character vector with the array's attribute names.
+    #'
     attrnames = function() {
       c_attrnames(self$uri, private$.soma_context)
     },
 
     #' @description Retrieve the names of all columns, including dimensions and
-    #' attributes (lifecycle: maturing)
-    #' @return A character vector with the array's column names
+    #' attributes (lifecycle: maturing).
+    #'
+    #' @return A character vector with the array's column names.
+    #'
     colnames = function() {
       c(self$dimnames(), self$attrnames())
     },
 
-    #' @description Retrieve names of index (dimension) columns (lifecycle: maturing)
-    #' @return A character vector with the array index (dimension) names
+    #' @description Retrieve names of index (dimension) columns
+    #' (lifecycle: maturing).
+    #'
+    #' @return A character vector with the array index (dimension) names.
+    #'
     index_column_names = function() {
       self$dimnames()
     }
   ),
   active = list(
     #' @field object Access the underlying TileB object directly (either a
-    #' [`tiledb::tiledb_array`] or [`tiledb::tiledb_group`]).
+    #' \code{\link[tiledb]{tiledb_array}} or \code{\link[tiledb]{tiledb_group}}).
+    #'
     object = function(value) {
       if (!missing(value)) {
         stop(sprintf("'%s' is a read-only field.", "object"), call. = FALSE)

@@ -1,14 +1,14 @@
 #' Create a SOMA Data Frame
 #'
 #' Factory function to create a \link[tiledbsoma:SOMADataFrame]{SOMA data frame}
-#' for writing (lifecycle: maturing)
+#' for writing (lifecycle: maturing).
 #'
-#' @param uri URI for the TileDB object
+#' @param uri URI for the TileDB object.
 #' @param schema Arrow schema argument for the
-#' \link[tiledbsoma:SOMADataFrame]{SOMA dataframe}
+#' \link[tiledbsoma:SOMADataFrame]{SOMA dataframe}.
 #' @param index_column_names A vector of column names to use as user-defined
 #' index columns; all named columns must exist in the schema, and at least
-#' one index column name is required
+#' one index column name is required.
 #' @param domain An optional list of 2-element vectors specifying the domain of
 #' each index column. Each vector should be a pair consisting of the minimum and
 #' maximum values storable in the index column. For example, if there is a
@@ -23,17 +23,18 @@
 #' choose from:
 #' \itemize{
 #'  \item \dQuote{\code{write}}: create a new TileDB object and error if
-#'   it already exists
+#'   it already exists.
 #'  \item \dQuote{\code{resume}}: attempt to create a new TileDB object;
-#'   if it already exists, simply open it for writing
+#'   if it already exists, simply open it for writing.
 #' }
-#' @param platform_config Optional platform configuration
-#' @param tiledbsoma_ctx Optional SOMATileDBContext
-#' @param tiledb_timestamp Optional Datetime (POSIXct) for TileDB timestamp
-#' @param soma_context A SOMA context as created by \code{\link{soma_context}()}
+#' @param platform_config Optional platform configuration.
+#' @param tiledbsoma_ctx Optional SOMATileDBContext.
+#' @param tiledb_timestamp Optional Datetime (POSIXct) for TileDB timestamp.
+#' @param soma_context A SOMA context as created by
+#' \code{\link{soma_context}()}.
 #'
 #' @return A new \link[tiledbsoma:SOMADataFrame]{SOMA data frame} stored at
-#' \code{uri} opened for writing
+#' \code{uri} opened for writing.
 #'
 #' @export
 #'
@@ -97,16 +98,16 @@ SOMADataFrameCreate <- function(
 #' Open a SOMA Data Frame
 #'
 #' Factory function to open a \link[tiledbsoma:SOMADataFrame]{SOMA data frame}
-#' for reading (lifecycle: maturing)
+#' for reading (lifecycle: maturing).
 #'
 #' @inheritParams SOMADataFrameCreate
-#' @param mode One of \dQuote{\code{READ}} or \dQuote{\code{WRITE}}
-#' @param platform_config Optional platform configuration
+#' @param mode One of \dQuote{\code{READ}} or \dQuote{\code{WRITE}}.
+#' @param platform_config Optional platform configuration.
 #' @param tiledb_timestamp Optional Datetime (POSIXct) for TileDB timestamp;
-#' defaults to the current time
+#' defaults to the current time.
 #'
 #' @return A \link[tiledbsoma:SOMADataFrame]{SOMA data frame} stored at
-#' \code{uri} opened in mode \code{mode}
+#' \code{uri} opened in mode \code{mode}.
 #'
 #' @export
 #'
@@ -137,15 +138,15 @@ SOMADataFrameOpen <- function(
 #'
 #' Factory function to create a
 #' \link[tiledbsoma:SOMASparseNDArray]{SOMA sparse ND array} for writing
-#' (lifecycle: maturing)
+#' (lifecycle: maturing).
 #'
 #' @inheritParams SOMADataFrameCreate
-#' @param type An \code{\link[arrow:data-type]{Arrow type}} defining the type
-#' of each element in the array
-#' @param shape A vector of integers defining the shape of the array
+#' @param type An \link[arrow:data-type]{Arrow type} defining the type
+#' of each element in the array.
+#' @param shape A vector of integers defining the shape of the array.
 #'
 #' @return A new \link[tiledbsoma:SOMASparseNDArray]{SOMA sparse ND array}
-#' stored at \code{uri} opened for writing
+#' stored at \code{uri} opened for writing.
 #'
 #' @export
 #'
@@ -204,12 +205,12 @@ SOMASparseNDArrayCreate <- function(
 #'
 #' Factory function to open a
 #' \link[tiledbsoma:SOMASparseNDArray]{SOMA sparse ND array} for reading
-#' (lifecycle: maturing)
+#' (lifecycle: maturing).
 #'
 #' @inheritParams SOMADataFrameOpen
 #'
 #' @return A \link[tiledbsoma:SOMASparseNDArray]{SOMA sparse ND array} stored at
-#' \code{uri} opened in mode \code{mode}
+#' \code{uri} opened in mode \code{mode}.
 #'
 #' @export
 #'
@@ -237,12 +238,12 @@ SOMASparseNDArrayOpen <- function(
 #'
 #' Factory function to create a
 #' \link[tiledbsoma:SOMADenseNDArray]{SOMA dense ND array} for writing
-#' (lifecycle: maturing)
+#' (lifecycle: maturing).
 #'
 #' @inheritParams SOMASparseNDArrayCreate
 #'
 #' @return A new \link[tiledbsoma:SOMADenseNDArray]{SOMA dense ND array}
-#' stored at \code{uri} opened for writing
+#' stored at \code{uri} opened for writing.
 #'
 #' @export
 #'
@@ -290,14 +291,14 @@ SOMADenseNDArrayCreate <- function(
 #'
 #' Factory function to open a
 #' \link[tiledbsoma:SOMADenseNDArray]{SOMA dense ND array} for reading
-#' (lifecycle: maturing)
+#' (lifecycle: maturing).
 #'
 #' @inheritParams SOMADataFrameOpen
 #'
-#' @export
-#'
 #' @return A \link[tiledbsoma:SOMADenseNDArray]{SOMA dense ND array} stored at
-#' \code{uri} opened in mode \code{mode}
+#' \code{uri} opened in mode \code{mode}.
+#'
+#' @export
 #'
 #' @inherit SOMADenseNDArrayCreate examples
 #'
@@ -323,12 +324,12 @@ SOMADenseNDArrayOpen <- function(
 #'
 #' Factory function to create a
 #' \link[tiledbsoma:SOMACollection]{SOMA collection} for writing
-#' (lifecycle: maturing)
+#' (lifecycle: maturing).
 #'
 #' @inheritParams SOMADataFrameCreate
 #'
 #' @return A new \link[tiledbsoma:SOMACollection]{SOMA collection} stored at
-#' \code{uri} opened for writing
+#' \code{uri} opened for writing.
 #'
 #' @export
 #'
@@ -377,17 +378,17 @@ SOMACollectionCreate <- function(
 #' Open a SOMA Collection
 #'
 #' Factory function to open a \link[tiledbsoma:SOMACollection]{SOMA collection}
-#' for reading (lifecycle: maturing)
+#' for reading (lifecycle: maturing).
 #'
 #' @inheritParams SOMADataFrameOpen
 #' @param tiledb_timestamp Optional Datetime (POSIXct) for TileDB timestamp;
 #' defaults to the current time. If not \code{NULL}, all members accessed
-#' through the collection inherit the timestamp
-#'
-#' @export
+#' through the collection inherit the timestamp.
 #'
 #' @return A \link[tiledbsoma:SOMACollection]{SOMA collection} stored at
-#' \code{uri} opened in mode \code{mode}
+#' \code{uri} opened in mode \code{mode}.
+#'
+#' @export
 #'
 #' @inherit SOMACollectionCreate examples
 #'
@@ -413,12 +414,12 @@ SOMACollectionOpen <- function(
 #'
 #' Factory function to create a
 #' \link[tiledbsoma:SOMAMeasurement]{SOMA measurement} for writing
-#' (lifecycle: maturing)
+#' (lifecycle: maturing).
 #'
 #' @inheritParams SOMACollectionCreate
 #'
 #' @return A new \link[tiledbsoma:SOMAMeasurement]{SOMA measurement} stored at
-#' \code{uri} opened for writing
+#' \code{uri} opened for writing.
 #'
 #' @export
 #'
@@ -480,12 +481,12 @@ SOMAMeasurementCreate <- function(
 #'
 #' Factory function to open a
 #' \link[tiledbsoma:SOMAMeasurement]{SOMA measurement} for reading
-#' (lifecycle: maturing)
+#' (lifecycle: maturing).
 #'
 #' @inheritParams SOMACollectionOpen
 #'
 #' @return A \link[tiledbsoma:SOMAMeasurement]{SOMA measurement} stored at
-#' \code{uri} opened in mode \code{mode}
+#' \code{uri} opened in mode \code{mode}.
 #'
 #' @export
 #'
@@ -513,12 +514,12 @@ SOMAMeasurementOpen <- function(
 #'
 #' Factory function to create a
 #' \link[tiledbsoma:SOMAExperiment]{SOMA experiment} for writing
-#' (lifecycle: maturing)
+#' (lifecycle: maturing).
 #'
 #' @inheritParams SOMACollectionCreate
 #'
 #' @return A new \link[tiledbsoma:SOMAExperiment]{SOMA experiment} stored at
-#' \code{uri} opened for writing
+#' \code{uri} opened for writing.
 #'
 #' @export
 #'
@@ -579,12 +580,12 @@ SOMAExperimentCreate <- function(
 #' Open SOMA Experiment
 #'
 #' Factory function to open a \link[tiledbsoma:SOMAExperiment]{SOMA experiment}
-#' for reading (lifecycle: maturing)
+#' for reading (lifecycle: maturing).
 #'
 #' @inheritParams SOMACollectionOpen
 #'
 #' @return A \link[tiledbsoma:SOMAExperiment]{SOMA experiment} stored at
-#' \code{uri} opened in mode \code{mode}
+#' \code{uri} opened in mode \code{mode}.
 #'
 #' @export
 #'

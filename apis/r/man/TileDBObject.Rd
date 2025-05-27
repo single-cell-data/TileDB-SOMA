@@ -5,7 +5,7 @@
 \title{TileDB Object Base Class}
 \description{
 Virtual base class to implement shared functionality across the
-TileDBArray and TileDBGroup classes (lifecycle: maturing)
+TileDBArray and TileDBGroup classes (lifecycle: maturing).
 }
 \seealso{
 Derived classes: \code{\link{TileDBArray}},
@@ -14,15 +14,15 @@ Derived classes: \code{\link{TileDBArray}},
 \section{Active bindings}{
 \if{html}{\out{<div class="r6-active-bindings">}}
 \describe{
-\item{\code{platform_config}}{Platform configuration}
+\item{\code{platform_config}}{Platform configuration.}
 
-\item{\code{tiledbsoma_ctx}}{SOMATileDBContext}
+\item{\code{tiledbsoma_ctx}}{SOMATileDBContext.}
 
-\item{\code{tiledb_timestamp}}{Time that object was opened at}
+\item{\code{tiledb_timestamp}}{Time that object was opened at.}
 
 \item{\code{uri}}{The URI of the TileDB object.}
 
-\item{\code{.tiledb_timestamp_range}}{Time range for libtiledbsoma}
+\item{\code{.tiledb_timestamp_range}}{Time range for libtiledbsoma.}
 }
 \if{html}{\out{</div>}}
 }
@@ -43,7 +43,7 @@ Derived classes: \code{\link{TileDBArray}},
 \if{html}{\out{<a id="method-TileDBObject-new"></a>}}
 \if{latex}{\out{\hypertarget{method-TileDBObject-new}{}}}
 \subsection{Method \code{new()}}{
-Create a new TileDB object. (lifecycle: maturing)
+Create a new TileDB object (lifecycle: maturing).
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{TileDBObject$new(
   uri,
@@ -58,19 +58,21 @@ Create a new TileDB object. (lifecycle: maturing)
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{uri}}{URI for the TileDB object}
+\item{\code{uri}}{URI for the TileDB object.}
 
-\item{\code{platform_config}}{Optional platform configuration}
+\item{\code{platform_config}}{Optional platform configuration.}
 
-\item{\code{tiledbsoma_ctx}}{Optional SOMATileDBContext}
+\item{\code{tiledbsoma_ctx}}{Optional SOMATileDBContext.}
 
-\item{\code{tiledb_timestamp}}{Optional Datetime (POSIXct) with TileDB timestamp}
+\item{\code{tiledb_timestamp}}{Optional Datetime (POSIXct) with TileDB
+timestamp.}
 
 \item{\code{internal_use_only}}{Character value to signal this is a 'permitted'
-call, as \code{new()} is considered internal and should not be called directly.}
+call, as \code{new()} is considered internal and should not be called
+directly.}
 
 \item{\code{soma_context}}{A SOMA context as created by
-\code{\link{soma_context}()}}
+\code{\link{soma_context}()}.}
 }
 \if{html}{\out{</div>}}
 }
@@ -89,34 +91,34 @@ Print the name of the R6 class.
 \if{html}{\out{<a id="method-TileDBObject-is_open"></a>}}
 \if{latex}{\out{\hypertarget{method-TileDBObject-is_open}{}}}
 \subsection{Method \code{is_open()}}{
-Determine if the object is open for reading or writing
+Determine if the object is open for reading or writing.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{TileDBObject$is_open()}\if{html}{\out{</div>}}
 }
 
 \subsection{Returns}{
-\code{TRUE} if the object is open, otherwise \code{FALSE}
+\code{TRUE} if the object is open, otherwise \code{FALSE}.
 }
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-TileDBObject-mode"></a>}}
 \if{latex}{\out{\hypertarget{method-TileDBObject-mode}{}}}
 \subsection{Method \code{mode()}}{
-Get the mode of the object
+Get the mode of the object.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{TileDBObject$mode()}\if{html}{\out{</div>}}
 }
 
 \subsection{Returns}{
 If the object is closed, returns \dQuote{\code{CLOSED}};
-otherwise returns the mode (eg. \dQuote{\code{READ}}) of the object
+otherwise returns the mode (eg. \dQuote{\code{READ}}) of the object.
 }
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-TileDBObject-reopen"></a>}}
 \if{latex}{\out{\hypertarget{method-TileDBObject-reopen}{}}}
 \subsection{Method \code{reopen()}}{
-Close and reopen the TileDB object in a new mode
+Close and reopen the TileDB object in a new mode.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{TileDBObject$reopen(mode, tiledb_timestamp = NULL)}\if{html}{\out{</div>}}
 }
@@ -130,12 +132,13 @@ Close and reopen the TileDB object in a new mode
 \item \dQuote{\code{WRITE}}
 }}
 
-\item{\code{tiledb_timestamp}}{Optional Datetime (POSIXct) with TileDB timestamp}
+\item{\code{tiledb_timestamp}}{Optional Datetime (POSIXct) with TileDB
+timestamp.}
 }
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-Invisibly returns \code{self} opened in \code{mode}
+Invisibly returns \code{self} opened in \code{mode}.
 }
 }
 \if{html}{\out{<hr>}}
@@ -152,13 +155,13 @@ Print-friendly representation of the object.
 \if{html}{\out{<a id="method-TileDBObject-exists"></a>}}
 \if{latex}{\out{\hypertarget{method-TileDBObject-exists}{}}}
 \subsection{Method \code{exists()}}{
-Check if the object exists. (lifecycle: maturing)
+Check if the object exists (lifecycle: maturing).
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{TileDBObject$exists()}\if{html}{\out{</div>}}
 }
 
 \subsection{Returns}{
-\verb{TRUE`` if the object exists, }FALSE` otherwise.
+\code{TRUE} if the object exists, otherwise \code{FALSE}.
 }
 }
 \if{html}{\out{<hr>}}
