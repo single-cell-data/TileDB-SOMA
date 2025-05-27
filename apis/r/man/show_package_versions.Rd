@@ -10,3 +10,7 @@ show_package_versions()
 Print version information for \pkg{tiledb} (R package), libtiledbsoma, and
 TileDB embedded, suitable for assisting with bug reports.
 }
+\examples{
+show_package_versions()
+
+}
