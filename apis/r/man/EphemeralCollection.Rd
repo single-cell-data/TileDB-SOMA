@@ -9,6 +9,23 @@ collections are equivalent to
 \link[tiledbsoma:SOMACollection]{SOMA collections} but are stored in-memory
 instead of on-disk
 }
+\examples{
+(col <- EphemeralCollection$new())
+col$soma_type
+
+\dontshow{if (requireNamespace("withr", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+dir <- withr::local_tempfile(pattern = "obs")
+dir.create(dir, recursive = TRUE)
+
+(obs <- load_dataset("soma-dataframe-pbmc3k-processed-obs", dir))
+col$set(obs, "obs")
+col$names()
+
+\dontshow{
+obs$close()
+}
+\dontshow{\}) # examplesIf}
+}
 \keyword{internal}
 \section{Super classes}{
 \code{\link[tiledbsoma:TileDBObject]{tiledbsoma::TileDBObject}} -> \code{\link[tiledbsoma:TileDBGroup]{tiledbsoma::TileDBGroup}} -> \code{\link[tiledbsoma:SOMACollectionBase]{tiledbsoma::SOMACollectionBase}} -> \code{\link[tiledbsoma:EphemeralCollectionBase]{tiledbsoma::EphemeralCollectionBase}} -> \code{EphemeralCollection}
