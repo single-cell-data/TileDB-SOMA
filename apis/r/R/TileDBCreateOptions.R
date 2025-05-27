@@ -53,6 +53,13 @@
 #'
 #' @noMd
 #'
+#' @examples
+#' (cfg <- PlatformConfig$new())
+#' (tdco <- TileDBCreateOptions$new(cfg))
+#' tdco$cell_tile_orders()
+#' tdco$to_list()
+#' tdco$to_list(build_filters = FALSE)
+#'
 TileDBCreateOptions <- R6::R6Class(
   classname = "TileDBCreateOptions",
   inherit = MappingBase,
@@ -82,8 +89,8 @@ TileDBCreateOptions <- R6::R6Class(
     },
 
     #' @description Returns the cell and tile orders that should be used.
-    #' If neither \code{cell_order} nor \code{tile_order} is present, only in this
-    #' case will we use the default values provided.
+    #' If neither \code{cell_order} nor \code{tile_order} is present, only in
+    #' this case will we use the default values provided.
     #
     #' @return A two-length character vector with names of
     #' \dQuote{\code{cell_order}} and \dQuote{\code{tile_order}}

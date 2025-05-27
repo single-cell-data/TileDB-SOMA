@@ -11,6 +11,12 @@ Provides strongly-typed access and default values for
 Intended for internal use only.
 }
 \examples{
+(cfg <- PlatformConfig$new())
+(tdco <- TileDBCreateOptions$new(cfg))
+tdco$cell_tile_orders()
+tdco$to_list()
+tdco$to_list(build_filters = FALSE)
+
 
 ## ------------------------------------------------
 ## Method `TileDBCreateOptions$dim_tile`
@@ -122,8 +128,8 @@ object}
 \if{latex}{\out{\hypertarget{method-TileDBCreateOptions-cell_tile_orders}{}}}
 \subsection{Method \code{cell_tile_orders()}}{
 Returns the cell and tile orders that should be used.
-If neither \code{cell_order} nor \code{tile_order} is present, only in this
-case will we use the default values provided.
+If neither \code{cell_order} nor \code{tile_order} is present, only in
+this case will we use the default values provided.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{TileDBCreateOptions$cell_tile_orders()}\if{html}{\out{</div>}}
 }
