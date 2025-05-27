@@ -7,16 +7,20 @@
 soma_context(config)
 }
 \arguments{
-\item{config}{A named character vector with \sQuote{key} and \sQuote{value} pairs defining the
-configuration setting}
+\item{config}{A named character vector with \dQuote{key} and \dQuote{value}
+pairs defining the configuration setting}
 }
 \value{
-An external pointer object containing a shared pointer instance of \code{SOMAContext}
+An external pointer object containing a shared pointer instance
+of \code{SOMAContext}
 }
 \description{
 Create and cache a SOMA Context Object
 }
 \examples{
-cfgvec <- as.vector(tiledb::tiledb_config()) # TileDB Config in vector form
-sctx <- soma_context(cfgvec)
+\dontshow{if (requireNamespace("tiledb", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+head(cfgvec <- as.vector(tiledb::tiledb_config())) # TileDB config as a vector
+(sctx <- soma_context(cfgvec))
+\dontshow{\}) # examplesIf}
 }
+\keyword{internal}
