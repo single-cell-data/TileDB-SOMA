@@ -17,6 +17,14 @@
 #'
 #' @keywords internal
 #'
+#' @examplesIf requireNamespace("withr", quietly = TRUE) && requireNamespace("SeuratObject", quietly = TRUE)
+#' uri <- withr::local_tempfile(pattern = "seurat-sub")
+#'
+#' data("pbmc_small", package = "SeuratObject")
+#' suppressWarnings(pbmc_small <- SeuratObject::UpdateSeuratObject(pbmc_small))
+#'
+#' col <- SOMACollectionCreate(uri)
+#'
 NULL
 
 #' @return \code{Assay} and \code{Assay5} methods: a
@@ -49,6 +57,10 @@ NULL
 #'
 #' @method write_soma Assay
 #' @export
+#'
+#' @examplesIf requireNamespace("withr", quietly = TRUE) && requireNamespace("SeuratObject", quietly = TRUE)
+#' (assay <- pbmc_small[["RNA"]])
+#' (ms <- write_soma(assay, "RNA", soma_parent = col))
 #'
 write_soma.Assay <- .write_seurat_assay
 
@@ -86,6 +98,14 @@ write_soma.Assay <- .write_seurat_assay
 #' @method write_soma Assay5
 #' @export
 #'
+#' @examplesIf requireNamespace("withr", quietly = TRUE) && requireNamespace("SeuratObject", quietly = TRUE)
+#' (assay5 <- methods::as(pbmc_small[["RNA"]], "Assay5"))
+#' (ms5 <- write_soma(assay5, "RNA5", soma_parent = col))
+#'
+#' \dontshow{
+#' ms5$close()
+#' }
+#'
 write_soma.Assay5 <- .write_seurat_assay
 
 #' @param fidx An integer vector describing the location of features in
@@ -119,6 +139,11 @@ write_soma.Assay5 <- .write_seurat_assay
 #'
 #' @method write_soma DimReduc
 #' @export
+#'
+#' @examplesIf requireNamespace("withr", quietly = TRUE) && requireNamespace("SeuratObject", quietly = TRUE)
+#' (tsne <- pbmc_small[["tsne"]])
+#' write_soma(tsne, soma_parent = ms)
+#' ms$obsm
 #'
 write_soma.DimReduc <- function(
   x,
@@ -301,6 +326,11 @@ write_soma.DimReduc <- function(
 #' @method write_soma Graph
 #' @export
 #'
+#' @examplesIf requireNamespace("withr", quietly = TRUE) && requireNamespace("SeuratObject", quietly = TRUE)
+#' (snn <- pbmc_small[["RNA_snn"]])
+#' write_soma(snn, "snn", soma_parent = ms)
+#' ms$obsp
+#'
 write_soma.Graph <- function(
   x,
   uri,
@@ -358,6 +388,7 @@ write_soma.Graph <- function(
     uri = uri,
     soma_parent = obsp,
     sparse = TRUE,
+    type = arrow::infer_type(methods::slot(x, "x")),
     transpose = FALSE,
     key = basename(uri),
     ingest_mode = ingest_mode,
@@ -386,6 +417,28 @@ write_soma.Graph <- function(
 #'
 #' @method write_soma Seurat
 #' @export
+#'
+#' @examplesIf requireNamespace("withr", quietly = TRUE) && requireNamespace("SeuratObject", quietly = TRUE)
+#' uri <- withr::local_tempfile(pattern = "pbmc-small")
+#'
+#' data("pbmc_small", package = "SeuratObject")
+#' suppressWarnings(pbmc_small <- SeuratObject::UpdateSeuratObject(pbmc_small))
+#'
+#' uri <- write_soma(pbmc_small, uri)
+#'
+#' (exp <- SOMAExperimentOpen(uri))
+#' exp$obs
+#' exp$get("uns")$get("seurat_commands")$names()
+#' (ms <- exp$ms$get("RNA"))
+#' ms$var
+#' ms$X$names()
+#' ms$obsm$names()
+#' ms$varm$names()
+#' ms$obsp$names()
+#'
+#' \dontshow{
+#' exp$close()
+#' }
 #'
 write_soma.Seurat <- function(
   x,
@@ -652,6 +705,16 @@ write_soma.Seurat <- function(
 #'
 #' @method write_soma SeuratCommand
 #' @export
+#'
+#' @examplesIf requireNamespace("withr", quietly = TRUE) && requireNamespace("SeuratObject", quietly = TRUE)
+#' (cmd <- pbmc_small[["NormalizeData.RNA"]])
+#' write_soma(cmd, "NormalizeData.RNA", soma_parent = col)
+#' (logs <- col$get("seurat_commands"))
+#' logs$get("NormalizeData.RNA")
+#'
+#' \dontshow{
+#' col$close()
+#' }
 #'
 write_soma.SeuratCommand <- function(
   x,

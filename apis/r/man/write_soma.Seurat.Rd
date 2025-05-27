@@ -137,3 +137,27 @@ as \link[tiledbsoma:SOMADataFrame]{data frames} to the
 \link[tiledbsoma:SOMACollection]{collection}
 }
 
+\examples{
+\dontshow{if (requireNamespace("withr", quietly = TRUE) && requireNamespace("SeuratObject", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+uri <- withr::local_tempfile(pattern = "pbmc-small")
+
+data("pbmc_small", package = "SeuratObject")
+suppressWarnings(pbmc_small <- SeuratObject::UpdateSeuratObject(pbmc_small))
+
+uri <- write_soma(pbmc_small, uri)
+
+(exp <- SOMAExperimentOpen(uri))
+exp$obs
+exp$get("uns")$get("seurat_commands")$names()
+(ms <- exp$ms$get("RNA"))
+ms$var
+ms$X$names()
+ms$obsm$names()
+ms$varm$names()
+ms$obsp$names()
+
+\dontshow{
+exp$close()
+}
+\dontshow{\}) # examplesIf}
+}
