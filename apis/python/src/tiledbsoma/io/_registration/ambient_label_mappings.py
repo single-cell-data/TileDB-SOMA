@@ -691,7 +691,7 @@ def _get_dataframe_joinid_index(df: pd.DataFrame, field_name: str) -> pd.Index: 
     if field_name in df:
         return cast("pd.Index[Any]", pd.Index(df[field_name]))
     if df.index.name in (field_name, "index", None):
-        return df.index
+        return cast("pd.Index[Any]", df.index)
     raise ValueError(f"Could not find field name {field_name} in dataframe.")
 
 
