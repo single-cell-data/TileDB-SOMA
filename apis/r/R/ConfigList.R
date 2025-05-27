@@ -9,6 +9,12 @@
 #'
 #' @noMd
 #'
+#' @examples
+#' (cfg <- ConfigList$new())
+#' cfg$set("op1", "a", 1L)
+#' cfg
+#' cfg$get("op1")
+#'
 ConfigList <- R6::R6Class(
   classname = "ConfigList",
   inherit = MappingBase,
@@ -39,6 +45,7 @@ ConfigList <- R6::R6Class(
       }
       return(parammap$get(key = key, default = default))
     },
+
     #' @param param Outer key or \dQuote{parameter} to set
     #' @param key Inner key to set
     #' @param value Value to add for \code{key}, or \code{NULL} to remove
@@ -49,6 +56,7 @@ ConfigList <- R6::R6Class(
     #'
     #' @return \[chainable\] Invisibly returns \code{self} with \code{value}
     #' added for \code{key} in \code{param}
+    #'
     set = function(param, key, value) {
       stopifnot(
         "'param' must be a single character" = is_scalar_character(param)
@@ -63,6 +71,7 @@ ConfigList <- R6::R6Class(
       super$set(key = param, value = parammap)
       return(invisible(self))
     },
+
     #' @template param-dots-ignored
     #'
     #' @return Nothing; \code{setv()} is disabled for \code{ConfigList} objects
