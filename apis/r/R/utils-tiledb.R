@@ -36,8 +36,8 @@ get_tiledb_version <- function(compact = FALSE) {
 
 #' Display package versions
 #'
-#' Print version information for \pkg{tiledb} (R package), libtiledbsoma, and
-#' TileDB embedded, suitable for assisting with bug reports.
+#' Print version information for \CRANpkg{tiledb} (R package), libtiledbsoma,
+#' and TileDB embedded, suitable for assisting with bug reports.
 #'
 #' @export
 #'

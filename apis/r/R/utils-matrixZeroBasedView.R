@@ -2,7 +2,7 @@
 #'
 #' \code{matrixZeroBasedView} is a wrapper shim for a matrix or
 #' \code{\link[Matrix:sparseMatrix]{Matrix::sparseMatrix}} that allows
-#' elemental matrix access using zero-based indices
+#' elemental matrix access using zero-based indices.
 #'
 #' @export
 #'
@@ -16,9 +16,9 @@
 matrixZeroBasedView <- R6::R6Class(
   classname = "matrixZeroBasedView",
   public = list(
-    #' @description Initialize (lifecycle: maturing)
+    #' @description Initialize (lifecycle: maturing).
     #'
-    #' @param x A matrix
+    #' @param x A matrix.
     #'
     initialize = function(x) {
       if (!inherits(x, "matrix") && !inherits(x, "sparseMatrix") && !inherits(one_based_matrix, "Matrix")) {
@@ -30,12 +30,12 @@ matrixZeroBasedView <- R6::R6Class(
       private$one_based_matrix <- x
     },
 
-    #' @description Zero-based matrix element access
+    #' @description Zero-based matrix element access.
     #'
-    #' @param i Row index (zero-based)
-    #' @param j Column index (zero-based)
+    #' @param i Row index (zero-based).
+    #' @param j Column index (zero-based).
     #'
-    #' @return The specified matrix slice as another \link{matrixZeroBasedView}
+    #' @return The specified matrix slice as another \code{matrixZeroBasedView}.
     #'
     take = function(i = NULL, j = NULL) {
       x <- NULL
@@ -52,7 +52,7 @@ matrixZeroBasedView <- R6::R6Class(
       matrixZeroBasedView$new(x)
     },
 
-    #' @description dim
+    #' @description dim.
     #'
     #' @return The dimensions of the matrix.
     #'
@@ -60,9 +60,9 @@ matrixZeroBasedView <- R6::R6Class(
       dim(private$one_based_matrix)
     },
 
-    #' @description nrow
+    #' @description nrow.
     #'
-    #' @return Matrix row count
+    #' @return Matrix row count.
     #'
     #' @export
     #'
@@ -70,28 +70,28 @@ matrixZeroBasedView <- R6::R6Class(
       nrow(private$one_based_matrix)
     },
 
-    #' @description ncol
+    #' @description ncol.
     #'
-    #' @return Matrix column count
+    #' @return Matrix column count.
     #'
     ncol = function() {
       ncol(private$one_based_matrix)
     },
 
-    #' @description Get the one-based R matrix with its original class
+    #' @description Get the one-based \R matrix with its original class.
     #'
-    #' @return One-based matrix
+    #' @return One-based matrix.
     #'
     get_one_based_matrix = function() {
       private$one_based_matrix
     },
 
     #' @description Perform arithmetic sum between this
-    #' \link{matrixZeroBasedView} and another \link{matrixZeroBasedView}
+    #' \code{matrixZeroBasedView} and another \code{matrixZeroBasedView}.
     #'
-    #' @param x the \link{matrixZeroBasedView} to sum
+    #' @param x the \code{matrixZeroBasedView} to sum.
     #'
-    #' @return The result of the sum as a \link{matrixZeroBasedView}
+    #' @return The result of the sum as a \code{matrixZeroBasedView}.
     #'
     sum = function(x) {
       if (!inherits(x, "matrixZeroBasedView")) {
@@ -100,9 +100,9 @@ matrixZeroBasedView <- R6::R6Class(
       matrixZeroBasedView$new(private$one_based_matrix + x$get_one_based_matrix())
     },
 
-    #' @description print
+    #' @description print.
     #'
-    #' @return Invisibly returns \code{self}
+    #' @return Invisibly returns \code{self}.
     #'
     print = function() {
       dims <- self$dim()

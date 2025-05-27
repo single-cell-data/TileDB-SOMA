@@ -11,7 +11,7 @@ Zero-based Wrapper for Sparse Matrices
 \details{
 \code{matrixZeroBasedView} is a wrapper shim for a matrix or
 \code{\link[Matrix:sparseMatrix]{Matrix::sparseMatrix}} that allows
-elemental matrix access using zero-based indices
+elemental matrix access using zero-based indices.
 }
 \examples{
 (mat <- Matrix::rsparsematrix(3L, 3L, 0.3))
@@ -39,7 +39,7 @@ mat0$take(0, 0:2)$get_one_based_matrix()
 \if{html}{\out{<a id="method-matrixZeroBasedView-new"></a>}}
 \if{latex}{\out{\hypertarget{method-matrixZeroBasedView-new}{}}}
 \subsection{Method \code{new()}}{
-Initialize (lifecycle: maturing)
+Initialize (lifecycle: maturing).
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{matrixZeroBasedView$new(x)}\if{html}{\out{</div>}}
 }
@@ -47,7 +47,7 @@ Initialize (lifecycle: maturing)
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{x}}{A matrix}
+\item{\code{x}}{A matrix.}
 }
 \if{html}{\out{</div>}}
 }
@@ -56,7 +56,7 @@ Initialize (lifecycle: maturing)
 \if{html}{\out{<a id="method-matrixZeroBasedView-take"></a>}}
 \if{latex}{\out{\hypertarget{method-matrixZeroBasedView-take}{}}}
 \subsection{Method \code{take()}}{
-Zero-based matrix element access
+Zero-based matrix element access.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{matrixZeroBasedView$take(i = NULL, j = NULL)}\if{html}{\out{</div>}}
 }
@@ -64,21 +64,21 @@ Zero-based matrix element access
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{i}}{Row index (zero-based)}
+\item{\code{i}}{Row index (zero-based).}
 
-\item{\code{j}}{Column index (zero-based)}
+\item{\code{j}}{Column index (zero-based).}
 }
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-The specified matrix slice as another \link{matrixZeroBasedView}
+The specified matrix slice as another \code{matrixZeroBasedView}.
 }
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-matrixZeroBasedView-dim"></a>}}
 \if{latex}{\out{\hypertarget{method-matrixZeroBasedView-dim}{}}}
 \subsection{Method \code{dim()}}{
-dim
+dim.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{matrixZeroBasedView$dim()}\if{html}{\out{</div>}}
 }
@@ -91,39 +91,39 @@ The dimensions of the matrix.
 \if{html}{\out{<a id="method-matrixZeroBasedView-nrow"></a>}}
 \if{latex}{\out{\hypertarget{method-matrixZeroBasedView-nrow}{}}}
 \subsection{Method \code{nrow()}}{
-nrow
+nrow.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{matrixZeroBasedView$nrow()}\if{html}{\out{</div>}}
 }
 
 \subsection{Returns}{
-Matrix row count
+Matrix row count.
 }
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-matrixZeroBasedView-ncol"></a>}}
 \if{latex}{\out{\hypertarget{method-matrixZeroBasedView-ncol}{}}}
 \subsection{Method \code{ncol()}}{
-ncol
+ncol.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{matrixZeroBasedView$ncol()}\if{html}{\out{</div>}}
 }
 
 \subsection{Returns}{
-Matrix column count
+Matrix column count.
 }
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-matrixZeroBasedView-get_one_based_matrix"></a>}}
 \if{latex}{\out{\hypertarget{method-matrixZeroBasedView-get_one_based_matrix}{}}}
 \subsection{Method \code{get_one_based_matrix()}}{
-Get the one-based R matrix with its original class
+Get the one-based \R matrix with its original class.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{matrixZeroBasedView$get_one_based_matrix()}\if{html}{\out{</div>}}
 }
 
 \subsection{Returns}{
-One-based matrix
+One-based matrix.
 }
 }
 \if{html}{\out{<hr>}}
@@ -131,7 +131,7 @@ One-based matrix
 \if{latex}{\out{\hypertarget{method-matrixZeroBasedView-sum}{}}}
 \subsection{Method \code{sum()}}{
 Perform arithmetic sum between this
-\link{matrixZeroBasedView} and another \link{matrixZeroBasedView}
+\code{matrixZeroBasedView} and another \code{matrixZeroBasedView}.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{matrixZeroBasedView$sum(x)}\if{html}{\out{</div>}}
 }
@@ -139,25 +139,25 @@ Perform arithmetic sum between this
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{x}}{the \link{matrixZeroBasedView} to sum}
+\item{\code{x}}{the \code{matrixZeroBasedView} to sum.}
 }
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-The result of the sum as a \link{matrixZeroBasedView}
+The result of the sum as a \code{matrixZeroBasedView}.
 }
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-matrixZeroBasedView-print"></a>}}
 \if{latex}{\out{\hypertarget{method-matrixZeroBasedView-print}{}}}
 \subsection{Method \code{print()}}{
-print
+print.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{matrixZeroBasedView$print()}\if{html}{\out{</div>}}
 }
 
 \subsection{Returns}{
-Invisibly returns \code{self}
+Invisibly returns \code{self}.
 }
 }
 \if{html}{\out{<hr>}}
