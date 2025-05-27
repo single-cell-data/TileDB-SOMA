@@ -3,12 +3,14 @@
 \name{SOMACollectionBase}
 \alias{SOMACollectionBase}
 \title{SOMA Collection Base Class}
-\value{
-SOMA object.
-}
 \description{
 Base class for objects containing persistent collection of SOMA
-objects, mapping string keys to any SOMA object.  (lifecycle: maturing)
+objects, mapping string keys to any SOMA object (lifecycle: maturing).
+}
+\seealso{
+Derived classes: \code{\link{SOMACollection}},
+\code{\link{SOMAMeasurement}},
+\code{\link{SOMAExperiment}}
 }
 \keyword{internal}
 \section{Super classes}{
@@ -60,7 +62,8 @@ objects, mapping string keys to any SOMA object.  (lifecycle: maturing)
 \if{html}{\out{<a id="method-SOMACollectionBase-new"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMACollectionBase-new}{}}}
 \subsection{Method \code{new()}}{
-Create a new \code{SOMACollection}. (lifecycle: maturing)
+Create a new \code{\link{SOMACollection}}
+(lifecycle: maturing).
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMACollectionBase$new(
   uri,
@@ -74,16 +77,17 @@ Create a new \code{SOMACollection}. (lifecycle: maturing)
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{uri}}{URI of the TileDB group}
+\item{\code{uri}}{URI of the TileDB group.}
 
-\item{\code{platform_config}}{Optional storage-engine specific configuration}
+\item{\code{platform_config}}{Optional storage-engine specific configuration.}
 
-\item{\code{tiledbsoma_ctx}}{optional SOMATileDBContext}
+\item{\code{tiledbsoma_ctx}}{optional SOMATileDBContext.}
 
-\item{\code{tiledb_timestamp}}{Optional Datetime (POSIXct) for TileDB timestamp}
+\item{\code{tiledb_timestamp}}{Optional Datetime (POSIXct) for TileDB timestamp.}
 
-\item{\code{internal_use_only}}{Character value to signal this is a 'permitted' call,
-as \code{new()} is considered internal and should not be called directly.}
+\item{\code{internal_use_only}}{Character value to signal this is a 'permitted'
+call, as \code{new()} is considered internal and should not be called
+directly.}
 }
 \if{html}{\out{</div>}}
 }
@@ -92,7 +96,8 @@ as \code{new()} is considered internal and should not be called directly.}
 \if{html}{\out{<a id="method-SOMACollectionBase-create"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMACollectionBase-create}{}}}
 \subsection{Method \code{create()}}{
-Add a new SOMA object to the collection. (lifecycle: maturing)
+Add a new SOMA object to the collection
+(lifecycle: maturing).
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMACollectionBase$create(internal_use_only = NULL)}\if{html}{\out{</div>}}
 }
@@ -100,17 +105,22 @@ Add a new SOMA object to the collection. (lifecycle: maturing)
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{internal_use_only}}{Character value to signal this is a 'permitted' call,
-as \code{create()} is considered internal and should not be called directly.}
+\item{\code{internal_use_only}}{Character value to signal this is a 'permitted'
+call, as \code{create()} is considered internal and should not be called
+directly.}
 }
 \if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+Returns \code{self}
 }
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-SOMACollectionBase-set"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMACollectionBase-set}{}}}
 \subsection{Method \code{set()}}{
-Add a new SOMA object to the collection. (lifecycle: maturing)
+Add a new SOMA object to the collection
+(lifecycle: maturing).
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMACollectionBase$set(object, name = NULL, relative = NULL)}\if{html}{\out{</div>}}
 }
@@ -126,7 +136,7 @@ base name.}
 \item{\code{relative}}{An optional logical value indicating whether the new
 object's URI is relative to the collection's URI. If \code{NULL} (the
 default), the object's URI is assumed to be relative unless it is a
-\verb{tiledb://} URI.}
+\code{tiledb://} URI.}
 }
 \if{html}{\out{</div>}}
 }
@@ -144,17 +154,19 @@ Retrieve a SOMA object by name. (lifecycle: maturing)
 \if{html}{\out{<div class="arguments">}}
 \describe{
 \item{\code{name}}{The name of the object to retrieve.}
-
-\item{\code{mode}}{Mode to open in}
 }
 \if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+The SOMA object stored as \code{name}.
 }
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-SOMACollectionBase-add_new_collection"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMACollectionBase-add_new_collection}{}}}
 \subsection{Method \code{add_new_collection()}}{
-Add a new SOMA collection to this collection. (lifecycle: maturing)
+Add a new SOMA collection to this collection
+(lifecycle: maturing).
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMACollectionBase$add_new_collection(object, key)}\if{html}{\out{</div>}}
 }
@@ -168,12 +180,16 @@ Add a new SOMA collection to this collection. (lifecycle: maturing)
 }
 \if{html}{\out{</div>}}
 }
+\subsection{Returns}{
+Returns \code{object}
+}
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-SOMACollectionBase-add_new_dataframe"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMACollectionBase-add_new_dataframe}{}}}
 \subsection{Method \code{add_new_dataframe()}}{
-Add a new SOMA dataframe to this collection. (lifecycle: maturing)
+Add a new SOMA data frame to this collection
+(lifecycle: maturing).
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMACollectionBase$add_new_dataframe(
   key,
@@ -189,11 +205,13 @@ Add a new SOMA dataframe to this collection. (lifecycle: maturing)
 \describe{
 \item{\code{key}}{The key to be added.}
 
-\item{\code{schema}}{Arrow schema argument passed on to DataFrame$create()}
+\item{\code{schema}}{Arrow schema argument passed on to
+\code{SOMADataFrame$create()}.}
 
-\item{\code{index_column_names}}{Index column names passed on to DataFrame$create()}
+\item{\code{index_column_names}}{Index column names passed on to
+\code{SOMADataFrame$create()}.}
 
-\item{\code{domain}}{As in \code{SOMADataFrameCreate}.}
+\item{\code{domain}}{As in \code{\link{SOMADataFrameCreate}}.}
 
 \item{\code{platform_config}}{A \link[tiledbsoma:PlatformConfig]{platform configuration}
 object}
@@ -206,12 +224,16 @@ object}
 }
 \if{html}{\out{</div>}}
 }
+\subsection{Returns}{
+Returns the newly created data frame stored at \code{key}
+}
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-SOMACollectionBase-add_new_dense_ndarray"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMACollectionBase-add_new_dense_ndarray}{}}}
 \subsection{Method \code{add_new_dense_ndarray()}}{
-Add a new SOMA DenseNdArray to this collection. (lifecycle: maturing)
+Add a new SOMA DenseNdArray to this collection
+(lifecycle: maturing).
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMACollectionBase$add_new_dense_ndarray(
   key,
@@ -226,8 +248,8 @@ Add a new SOMA DenseNdArray to this collection. (lifecycle: maturing)
 \describe{
 \item{\code{key}}{The key to be added.}
 
-\item{\code{type}}{an \link[arrow:data-type]{Arrow type} defining the type of each
-element in the array.}
+\item{\code{type}}{An \link[arrow:data-type]{Arrow type} defining the
+type of each element in the array.}
 
 \item{\code{shape}}{a vector of integers defining the shape of the array.}
 
@@ -242,12 +264,16 @@ object}
 }
 \if{html}{\out{</div>}}
 }
+\subsection{Returns}{
+Returns the newly-created array stored at \code{key}
+}
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-SOMACollectionBase-add_new_sparse_ndarray"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMACollectionBase-add_new_sparse_ndarray}{}}}
 \subsection{Method \code{add_new_sparse_ndarray()}}{
-Add a new SOMA SparseNdArray to this collection. (lifecycle: maturing)
+Add a new SOMA SparseNdArray to this collection
+(lifecycle: maturing).
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMACollectionBase$add_new_sparse_ndarray(
   key,
@@ -262,8 +288,8 @@ Add a new SOMA SparseNdArray to this collection. (lifecycle: maturing)
 \describe{
 \item{\code{key}}{The key to be added.}
 
-\item{\code{type}}{an \link[arrow:data-type]{Arrow type} defining the type of each
-element in the array.}
+\item{\code{type}}{An \link[arrow:data-type]{Arrow type} defining the
+type of each element in the array.}
 
 \item{\code{shape}}{a vector of integers defining the shape of the array.}
 
@@ -277,6 +303,9 @@ object}
 object}
 }
 \if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+Returns the newly-created array stored at \code{key}
 }
 }
 \if{html}{\out{<hr>}}

@@ -4,10 +4,11 @@
 \alias{SOMAMeasurement}
 \title{SOMA Measurement}
 \description{
-A \code{SOMAMeasurement} is a sub-element of a \code{\link{SOMAExperiment}},
-and is otherwise a specialized \code{\link{SOMACollection}} with pre-defined fields:
-\code{X}, \code{var}, \code{obsm}/\code{varm}, and \code{obsp}/\code{varp} (see \emph{Active Bindings} below for
-details). (lifecycle: maturing)
+A \code{SOMAMeasurement} is a sub-element of a
+\code{\link{SOMAExperiment}}, and is otherwise a specialized
+\code{\link{SOMACollection}} with pre-defined fields: \code{X}, \code{var},
+\code{obsm}/\code{varm}, and \code{obsp}/\code{varp} (see
+\emph{Active Bindings} below for details) (lifecycle: maturing).
 }
 \section{Adding new objects to a collection}{
 
@@ -22,34 +23,68 @@ default platform configuration by passing a custom configuration to the
 \code{platform_config} argument.
 }
 
+\examples{
+\dontshow{if (requireNamespace("withr", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+uri <- withr::local_tempfile(pattern = "soma-measurement")
+var <- data.frame(
+  soma_joinid = bit64::seq.integer64(0L, 99L),
+  var_id = paste0("feature_", seq_len(100L))
+)
+sch <- arrow::infer_schema(var)
+
+(ms <- SOMAMeasurementCreate(uri))
+sdf <- ms$add_new_dataframe(
+  "var",
+  sch,
+  "soma_joinid",
+  list(soma_joinid = c(0, 100))
+)
+sdf$write(arrow::as_arrow_table(var, schema = sch))
+sdf$close()
+ms$close()
+
+(ms <- SOMAMeasurementOpen(uri))
+ms$var
+
+\dontshow{
+ms$close()
+}
+\dontshow{\}) # examplesIf}
+}
 \section{Super classes}{
 \code{\link[tiledbsoma:TileDBObject]{tiledbsoma::TileDBObject}} -> \code{\link[tiledbsoma:TileDBGroup]{tiledbsoma::TileDBGroup}} -> \code{\link[tiledbsoma:SOMACollectionBase]{tiledbsoma::SOMACollectionBase}} -> \code{SOMAMeasurement}
 }
 \section{Active bindings}{
 \if{html}{\out{<div class="r6-active-bindings">}}
 \describe{
-\item{\code{var}}{a \code{\link{SOMADataFrame}} containing primary annotations on the
-variable axis, for variables in this measurement (i.e., annotates columns
-of \code{X}). The contents of the \code{soma_joinid} column define the variable
-index domain, \code{var_id}. All variables for this measurement must be
-defined in this dataframe.}
+\item{\code{var}}{A \code{\link{SOMADataFrame}} containing primary annotations
+on the variable axis, for variables in this measurement
+(i.e., annotates columns of \code{X}). The contents of the
+\code{soma_joinid} column define the variable index domain,
+\code{var_id}. All variables for this measurement must be defined in this
+data frame.}
 
-\item{\code{X}}{a \code{\link{SOMACollection}} of \code{\link{SOMASparseNDArray}}s, each contains
-measured feature values indexed by \verb{[obsid, varid]}.}
+\item{\code{X}}{A \code{\link{SOMACollection}} of
+\code{\link{SOMASparseNDArray}s}, each contains measured feature values
+indexed by \code{[obsid, varid]}.}
 
-\item{\code{obsm}}{a \code{\link{SOMACollection}} of \code{\link{SOMADenseNDArray}}s containing
-annotations on the observation axis. Each array is indexed by \code{obsid} and
-has the same shape as \code{obs}.}
+\item{\code{obsm}}{A \code{\link{SOMACollection}} of
+\code{\link{SOMADenseNDArray}s} containing annotations on the observation
+axis. Each array is indexed by \code{obsid} and has the same shape as
+\code{obs}.}
 
-\item{\code{obsp}}{a \code{\link{SOMACollection}} of \code{\link{SOMASparseNDArray}}s containing
-pairwise annotations on the observation axis and indexed with \verb{[obsid_1, obsid_2]}.}
+\item{\code{obsp}}{A \code{\link{SOMACollection}} of
+\code{\link{SOMASparseNDArray}s} containing pairwise annotations on the
+observation axis and indexed with \code{[obsid_1, obsid_2]}.}
 
-\item{\code{varm}}{a \code{\link{SOMACollection}} of \code{\link{SOMADenseNDArray}}s containing
-annotations on the variable axis. Each array is indexed by \code{varid} and
-has the same shape as \code{var}.}
+\item{\code{varm}}{A \code{\link{SOMACollection}} of
+\code{\link{SOMADenseNDArray}s} containing annotations on the variable
+axis. Each array is indexed by \code{varid} and has the same shape as
+\code{var}.}
 
-\item{\code{varp}}{a \code{\link{SOMACollection}} of \code{\link{SOMASparseNDArray}}s containing
-pairwise annotations on the variable axis and indexed with \verb{[varid_1, varid_2]}.}
+\item{\code{varp}}{A \code{\link{SOMACollection}} of
+\code{\link{SOMASparseNDArray}s} containing pairwise annotations on the
+variable axis and indexed with \code{[varid_1, varid_2]}.}
 }
 \if{html}{\out{</div>}}
 }

@@ -1,21 +1,29 @@
 #' TileDB Object Base Class
 #'
-#' @description
-#' Base class to implement shared functionality across the TileDBArray and
-#' TileDBGroup classes. (lifecycle: maturing)
+#' @description Virtual base class to implement shared functionality across the
+#' TileDBArray and TileDBGroup classes (lifecycle: maturing).
+#'
 #' @export
+#'
+#' @seealso Derived classes: \code{\link{TileDBArray}},
+#' \code{\link{TileDBGroup}}
+#'
 TileDBObject <- R6::R6Class(
   classname = "TileDBObject",
   public = list(
-    #' @description Create a new TileDB object. (lifecycle: maturing)
-    #' @param uri URI for the TileDB object
-    #' @param platform_config Optional platform configuration
-    #' @param tiledbsoma_ctx Optional SOMATileDBContext
-    #' @param tiledb_timestamp Optional Datetime (POSIXct) with TileDB timestamp
+    #' @description Create a new TileDB object (lifecycle: maturing).
+    #'
+    #' @param uri URI for the TileDB object.
+    #' @param platform_config Optional platform configuration.
+    #' @param tiledbsoma_ctx Optional SOMATileDBContext.
+    #' @param tiledb_timestamp Optional Datetime (POSIXct) with TileDB
+    #' timestamp.
     #' @param internal_use_only Character value to signal this is a 'permitted'
-    #' call, as `new()` is considered internal and should not be called directly.
+    #' call, as \code{new()} is considered internal and should not be called
+    #' directly.
     #' @param soma_context A SOMA context as created by
-    #' \code{\link{soma_context}()}
+    #' \code{\link{soma_context}()}.
+    #'
     initialize = function(
       uri,
       platform_config = NULL,
@@ -99,25 +107,26 @@ TileDBObject <- R6::R6Class(
     },
 
     #' @description Print the name of the R6 class.
+    #'
     class = function() {
       class(self)[1]
     },
 
     # The create/open/close are necessarily specific to TileDBArray/TileDBGroup.
     # This is a bit of re-use at the TileDBObject level.
-    #' @description Determine if the object is open for reading or writing
+    #' @description Determine if the object is open for reading or writing.
     #'
-    #' @return \code{TRUE} if the object is open, otherwise \code{FALSE}
+    #' @return \code{TRUE} if the object is open, otherwise \code{FALSE}.
     #'
     is_open = function() {
       return(self$mode() != "CLOSED")
     },
 
     # TODO: make this an active
-    #' @description Get the mode of the object
+    #' @description Get the mode of the object.
     #'
     #' @return If the object is closed, returns \dQuote{\code{CLOSED}};
-    #' otherwise returns the mode (eg. \dQuote{\code{READ}}) of the object
+    #' otherwise returns the mode (eg. \dQuote{\code{READ}}) of the object.
     #'
     mode = function() {
       if (is.null(private$.mode)) {
@@ -127,16 +136,17 @@ TileDBObject <- R6::R6Class(
       }
     },
 
-    #' @description Close and reopen the TileDB object in a new mode
+    #' @description Close and reopen the TileDB object in a new mode.
     #'
     #' @param mode New mode to open the object in; choose from:
     #' \itemize{
     #'  \item \dQuote{\code{READ}}
     #'  \item \dQuote{\code{WRITE}}
     #' }
-    #' @param tiledb_timestamp Optional Datetime (POSIXct) with TileDB timestamp
+    #' @param tiledb_timestamp Optional Datetime (POSIXct) with TileDB
+    #' timestamp.
     #'
-    #' @return Invisibly returns \code{self} opened in \code{mode}
+    #' @return Invisibly returns \code{self} opened in \code{mode}.
     #'
     reopen = function(mode, tiledb_timestamp = NULL) {
       mode <- match.arg(mode, choices = c("READ", "WRITE"))
@@ -151,13 +161,16 @@ TileDBObject <- R6::R6Class(
     },
 
     #' @description Print-friendly representation of the object.
+    #'
     print = function() {
       cat(glue::glue("<{self$class()}>"), sep = "\n")
       cat("  uri:", self$uri, "\n")
     },
 
-    #' @description Check if the object exists. (lifecycle: maturing)
-    #' @return `TRUE`` if the object exists, `FALSE` otherwise.
+    #' @description Check if the object exists (lifecycle: maturing).
+    #'
+    #' @return \code{TRUE} if the object exists, otherwise \code{FALSE}.
+    #'
     exists = function() {
       if (self$class() == "TileDBObject") {
         expected_type <- c("ARRAY", "GROUP")
@@ -172,21 +185,25 @@ TileDBObject <- R6::R6Class(
     }
   ),
   active = list(
-    #' @field platform_config Platform configuration
+    #' @field platform_config Platform configuration.
+    #'
     platform_config = function(value) {
       if (!missing(x = value)) {
         stop("'platform_config' is a read-only field", call. = FALSE)
       }
       return(private$.tiledb_platform_config)
     },
-    #' @field tiledbsoma_ctx SOMATileDBContext
+
+    #' @field tiledbsoma_ctx SOMATileDBContext.
+    #'
     tiledbsoma_ctx = function(value) {
       if (!missing(x = value)) {
         stop("'tiledbsoma_ctx' is a read-only field", call. = FALSE)
       }
       return(private$.tiledbsoma_ctx)
     },
-    #' @field tiledb_timestamp Time that object was opened at
+
+    #' @field tiledb_timestamp Time that object was opened at.
     #'
     tiledb_timestamp = function(value) {
       if (!missing(value)) {
@@ -194,15 +211,17 @@ TileDBObject <- R6::R6Class(
       }
       return(private$.tiledb_timestamp)
     },
-    #' @field uri
-    #' The URI of the TileDB object.
+
+    #' @field uri The URI of the TileDB object.
+    #'
     uri = function(value) {
       if (missing(value)) {
         return(private$tiledb_uri)
       }
       stop(sprintf("'%s' is a read-only field.", "uri"), call. = FALSE)
     },
-    #' @field .tiledb_timestamp_range Time range for libtiledbsoma
+
+    #' @field .tiledb_timestamp_range Time range for libtiledbsoma.
     #'
     .tiledb_timestamp_range = function(value) {
       if (!missing(value)) {

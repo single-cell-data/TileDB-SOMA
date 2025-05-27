@@ -2,7 +2,7 @@
 % Please edit documentation in R/Factory.R
 \name{SOMAExperimentCreate}
 \alias{SOMAExperimentCreate}
-\title{Create SOMA Experiment}
+\title{Create a SOMA Experiment}
 \usage{
 SOMAExperimentCreate(
   uri,
@@ -13,23 +13,57 @@ SOMAExperimentCreate(
 )
 }
 \arguments{
-\item{uri}{URI for the TileDB object}
+\item{uri}{URI for the TileDB object.}
 
 \item{ingest_mode}{Ingestion mode when creating the TileDB object;
 choose from:
 \itemize{
 \item \dQuote{\code{write}}: create a new TileDB object and error if
-it already exists
+it already exists.
 \item \dQuote{\code{resume}}: attempt to create a new TileDB object;
-if it already exists, simply open it for writing
+if it already exists, simply open it for writing.
 }}
 
-\item{platform_config}{Optional platform configuration}
+\item{platform_config}{Optional platform configuration.}
 
-\item{tiledbsoma_ctx}{Optional SOMATileDBContext}
+\item{tiledbsoma_ctx}{Optional SOMATileDBContext.}
 
-\item{tiledb_timestamp}{Optional Datetime (POSIXct) for TileDB timestamp}
+\item{tiledb_timestamp}{Optional Datetime (POSIXct) for TileDB timestamp.}
+}
+\value{
+A new \link[tiledbsoma:SOMAExperiment]{SOMA experiment} stored at
+\code{uri} opened for writing.
 }
 \description{
-Factory function to create a SOMADataFrame for writing, (lifecycle: maturing)
+Factory function to create a
+\link[tiledbsoma:SOMAExperiment]{SOMA experiment} for writing
+(lifecycle: maturing).
+}
+\examples{
+\dontshow{if (requireNamespace("withr", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+uri <- withr::local_tempfile(pattern = "soma-experiment")
+obs <- data.frame(
+  soma_joinid = bit64::seq.integer64(0L, 99L),
+  obs_id = paste0("cell_", seq_len(100L))
+)
+sch <- arrow::infer_schema(obs)
+
+(exp <- SOMAExperimentCreate(uri))
+sdf <- exp$add_new_dataframe(
+  "obs",
+  sch,
+  "soma_joinid",
+  list(soma_joinid = c(0, 100))
+)
+sdf$write(arrow::as_arrow_table(obs, schema = sch))
+sdf$close()
+exp$close()
+
+(exp <- SOMAExperimentOpen(uri))
+exp$obs
+
+\dontshow{
+exp$close()
+}
+\dontshow{\}) # examplesIf}
 }

@@ -1,18 +1,21 @@
 #' TileDB Group Base Class
 #'
-#' @description
-#' Base class for interacting with TileDB groups (lifecycle: maturing)
+#' @description Virtual base class for interacting with TileDB groups
+#' (lifecycle: maturing).
 #'
 #' @keywords internal
 #'
 #' @export
+#'
+#' @seealso Derived classes: \code{\link{SOMACollectionBase}}
 #'
 TileDBGroup <- R6::R6Class(
   classname = "TileDBGroup",
   inherit = TileDBObject,
   public = list(
 
-    #' @description Print summary of the group. (lifecycle: maturing)
+    #' @description Print summary of the group (lifecycle: maturing).
+    #'
     print = function() {
       super$print()
       if (self$exists()) {
@@ -24,9 +27,13 @@ TileDBGroup <- R6::R6Class(
       }
     },
 
-    #' @description Creates the data structure on disk/S3/cloud. (lifecycle: maturing)
-    #' @param internal_use_only Character value to signal this is a 'permitted' call,
-    #' as `create()` is considered internal and should not be called directly.
+    #' @description Creates the data structure on disk/S3/cloud
+    #' (lifecycle: maturing).
+    #'
+    #' @param internal_use_only Character value to signal this is a 'permitted'
+    #' call, as \code{create()} is considered internal and should not be called
+    #' directly.
+    #'
     create = function(internal_use_only = NULL) {
       if (is.null(internal_use_only) || internal_use_only != "allowed_use") {
         stop(paste(
@@ -48,10 +55,14 @@ TileDBGroup <- R6::R6Class(
     },
 
     #' @description Open the SOMA object for read or write.
-    #' @param mode Mode to open in; defaults to `READ`.
-    #' @param internal_use_only Character value to signal this is a 'permitted' call,
-    #' as `open()` is considered internal and should not be called directly.
-    #' @return The object, invisibly
+    #'
+    #' @param mode Mode to open in; defaults to \code{READ}.
+    #' @param internal_use_only Character value to signal this is a 'permitted'
+    #' call, as \code{open()} is considered internal and should not be called
+    #' directly.
+    #'
+    #' @return Returns \code{self}.
+    #'
     open = function(mode = c("READ", "WRITE"), internal_use_only = NULL) {
       mode <- match.arg(mode)
       if (is.null(internal_use_only) || internal_use_only != "allowed_use") {
@@ -97,7 +108,9 @@ TileDBGroup <- R6::R6Class(
     },
 
     #' @description Close the SOMA object.
-    #' @return The object, invisibly
+    #'
+    #' @return Invisibly returns \code{self}.
+    #'
     close = function() {
       if (self$is_open()) {
         for (member in private$.member_cache) {
@@ -118,14 +131,16 @@ TileDBGroup <- R6::R6Class(
       invisible(self)
     },
 
-    #' @description Add new member to the group. (lifecycle: maturing)
-    #' @param object A `TileDBArray` or `TileDBGroup` object to add.
+    #' @description Add new member to the group (lifecycle: maturing).
+    #'
+    #' @param object A \code{TileDBArray} or \code{TileDBGroup} object to add.
     #' @param name Name to use for the member. By default the base name of
     #' the object's URI is used.
     #' @param relative An optional logical value indicating whether the new
-    #' object's URI is relative to the group's URI. If `NULL` (the
+    #' object's URI is relative to the group's URI. If \code{NULL} (the
     #' default), the object's URI is assumed to be relative unless it is a
-    #' `tiledb://` URI.
+    #' \code{tiledb://} URI.
+    #'
     set = function(object, name = NULL, relative = NULL) {
       stopifnot(
         "Only 'TileDBArray' or 'TileDBGroup' objects can be added" =
@@ -162,10 +177,12 @@ TileDBGroup <- R6::R6Class(
     },
 
     #' @description Retrieve a group member by name. If the member isn't already
-    #' open, it is opened in the same mode as the parent. (lifecycle: maturing)
+    #' open, it is opened in the same mode as the parent (lifecycle: maturing).
+    #'
     #' @param name The name of the member.
-    #' @param mode Mode to open in
-    #' @returns A `TileDBArray` or `TileDBGroup`.
+    #'
+    #' @returns A \code{TileDBArray} or \code{TileDBGroup}.
+    #'
     get = function(name) {
       stopifnot(is_scalar_character(name))
       private$check_open_for_read_or_write()
@@ -204,9 +221,10 @@ TileDBGroup <- R6::R6Class(
       obj
     },
 
-    #' @description Remove member. (lifecycle: maturing)
+    #' @description Remove member (lifecycle: maturing).
+    #'
     #' @param name Name of the member to remove.
-    #' @export
+    #'
     remove = function(name) {
       stopifnot(is_scalar_character(name))
       private$check_open_for_write()
@@ -219,30 +237,36 @@ TileDBGroup <- R6::R6Class(
       }
     },
 
-    #' @description Length in the number of members. (lifecycle: maturing)
-    #' @return Scalar `integer`
+    #' @description Length in the number of members (lifecycle: maturing).
+    #'
+    #' @return Scalar \code{integer}.
+    #'
     length = function() {
       private$check_open_for_read_or_write()
       private$fill_member_cache_if_null()
       length(private$.member_cache)
     },
 
-    #' @description Retrieve the names of members. (lifecycle: maturing)
-    #' @return A `character` vector of member names.
+    #' @description Retrieve the names of members (lifecycle: maturing).
+    #'
+    #' @return A \code{character} vector of member names.
+    #'
     names = function() {
       private$check_open_for_read_or_write()
       private$fill_member_cache_if_null()
       names(private$.member_cache) %||% character(length = 0L)
     },
 
-    #' @description Retrieve a `list` of members. (lifecycle: maturing)
+    #' @description Retrieve a \code{list} of members (lifecycle: maturing).
+    #'
     to_list = function() {
       private$check_open_for_read_or_write()
       private$fill_member_cache_if_null()
       private$.member_cache
     },
 
-    #' @description Retrieve a `data.frame` of members. (lifecycle: maturing)
+    #' @description Retrieve a data frame of members (lifecycle: maturing).
+    #'
     to_data_frame = function() {
       private$check_open_for_read_or_write()
       count <- self$length()
@@ -262,10 +286,12 @@ TileDBGroup <- R6::R6Class(
       df
     },
 
-    #' @description Retrieve metadata. (lifecycle: maturing)
+    #' @description Retrieve metadata (lifecycle: maturing).
+    #'
     #' @param key The name of the metadata attribute to retrieve.
-    #'   is not NULL.
+    #'
     #' @return A list of metadata values.
+    #'
     get_metadata = function(key = NULL) {
       private$check_open_for_read_or_write()
 
@@ -281,9 +307,12 @@ TileDBGroup <- R6::R6Class(
       }
     },
 
-    #' @description Add list of metadata. (lifecycle: maturing)
+    #' @description Add list of metadata (lifecycle: maturing).
+    #'
     #' @param metadata Named list of metadata to add.
-    #' @return NULL
+    #'
+    #' @return Invisibly returns \code{NULL}.
+    #'
     set_metadata = function(metadata) {
       stopifnot(
         "Metadata must be a named list" = is_named_list(metadata)
