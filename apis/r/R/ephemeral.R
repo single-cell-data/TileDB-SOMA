@@ -2,8 +2,8 @@
 #'
 #' @description Virtual base class for ephemeral collections; ephemeral
 #' collections are equivalent to
-#' \link[tiledbsoma:SOMACollection]{SOMA collections} but are stored in-memory
-#' instead of on-disk
+#' \link[tiledbsoma:SOMACollection]{SOMA collections} but are stored in memory
+#' instead of on disk
 #'
 #' @keywords internal
 #'

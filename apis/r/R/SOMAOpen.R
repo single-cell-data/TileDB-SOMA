@@ -1,6 +1,6 @@
 #' Open a SOMA Object
 #'
-#' Utility function to open the corresponding SOMA Object given a URI
+#' Utility function to open the corresponding SOMA object given a URI
 #' (lifecycle: maturing)
 #'
 #' @inheritParams SOMACollectionOpen
