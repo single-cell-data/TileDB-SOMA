@@ -5,7 +5,7 @@
 #'
 #' @param uri URI for the TileDB object
 #' @param schema Arrow schema argument for the
-#' \link[tiledbsoma:SOMADataFrame]{SOMA data frame}
+#' \link[tiledbsoma:SOMADataFrame]{SOMA dataframe}
 #' @param index_column_names A vector of column names to use as user-defined
 #' index columns; all named columns must exist in the schema, and at least
 #' one index column name is required
