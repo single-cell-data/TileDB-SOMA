@@ -2,7 +2,7 @@
 % Please edit documentation in R/Factory.R
 \name{SOMACollectionCreate}
 \alias{SOMACollectionCreate}
-\title{Create SOMA Collection}
+\title{Create a SOMA Collection}
 \usage{
 SOMACollectionCreate(
   uri,
@@ -30,6 +30,28 @@ if it already exists, simply open it for writing
 
 \item{tiledb_timestamp}{Optional Datetime (POSIXct) for TileDB timestamp}
 }
+\value{
+A new \link[tiledbsoma:SOMACollection]{SOMA collection} stored at
+\code{uri} opened for writing
+}
 \description{
-Factory function to create a SOMADataFrame for writing, (lifecycle: maturing)
+Factory function to create a
+\link[tiledbsoma:SOMACollection]{SOMA collection} for writing
+(lifecycle: maturing)
+}
+\examples{
+\dontshow{if (requireNamespace("withr", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+uri <- withr::local_tempfile(pattern = "soma-collection")
+
+(col <- SOMACollectionCreate(uri))
+col$add_new_sparse_ndarray("sparse", arrow::float64(), shape = c(100L, 100L))
+col$close()
+
+(col <- SOMACollectionOpen(uri))
+col$names()
+
+\dontshow{
+col$close()
+}
+\dontshow{\}) # examplesIf}
 }

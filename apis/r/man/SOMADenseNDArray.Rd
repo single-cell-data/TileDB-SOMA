@@ -27,6 +27,23 @@ the array type (e.g., Arrow.float32 defaults to 0.0).
 The \code{write} method is currently limited to writing from 2-d matrices.
 (lifecycle: maturing)
 }
+\examples{
+\dontshow{if (requireNamespace("withr", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+uri <- withr::local_tempfile(pattern = "soma-dense-array")
+mat <- matrix(stats::rnorm(100L ^ 2L), nrow = 100L, ncol = 100L)
+mat[1:3, 1:5]
+
+(arr <- SOMADenseNDArrayCreate(uri, arrow::float64(), shape = dim(mat)))
+arr$write(mat)
+arr$close()
+
+(arr <- SOMADenseNDArrayOpen(uri))
+arr$read_arrow_table()
+\dontshow{
+arr$close()
+}
+\dontshow{\}) # examplesIf}
+}
 \section{Super classes}{
 \code{\link[tiledbsoma:TileDBObject]{tiledbsoma::TileDBObject}} -> \code{\link[tiledbsoma:TileDBArray]{tiledbsoma::TileDBArray}} -> \code{\link[tiledbsoma:SOMAArrayBase]{tiledbsoma::SOMAArrayBase}} -> \code{\link[tiledbsoma:SOMANDArrayBase]{tiledbsoma::SOMANDArrayBase}} -> \code{SOMADenseNDArray}
 }

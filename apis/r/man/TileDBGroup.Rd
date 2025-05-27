@@ -7,7 +7,11 @@
 A \code{TileDBArray} or \code{TileDBGroup}.
 }
 \description{
-Base class for interacting with TileDB groups (lifecycle: maturing)
+Virtual base class for interacting with TileDB groups
+(lifecycle: maturing)
+}
+\seealso{
+Derived classes: \code{\link{SOMACollectionBase}}
 }
 \keyword{internal}
 \section{Super class}{

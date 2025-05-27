@@ -4,8 +4,11 @@
 \alias{TileDBArray}
 \title{TileDB Array Base Class}
 \description{
-Base class for representing an individual TileDB array.
+Virtual base class for representing an individual TileDB array
 (lifecycle: maturing)
+}
+\seealso{
+Derived classes: \code{\link{SOMAArray}}
 }
 \keyword{internal}
 \section{Super class}{

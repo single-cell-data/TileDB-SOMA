@@ -4,8 +4,12 @@
 \alias{TileDBObject}
 \title{TileDB Object Base Class}
 \description{
-Base class to implement shared functionality across the TileDBArray and
-TileDBGroup classes. (lifecycle: maturing)
+Virtual base class to implement shared functionality across the
+TileDBArray and TileDBGroup classes (lifecycle: maturing)
+}
+\seealso{
+Derived classes: \code{\link{TileDBArray}},
+\code{\link{TileDBGroup}}
 }
 \section{Active bindings}{
 \if{html}{\out{<div class="r6-active-bindings">}}

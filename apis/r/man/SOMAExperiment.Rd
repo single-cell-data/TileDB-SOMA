@@ -22,6 +22,34 @@ default platform configuration by passing a custom configuration to the
 \code{platform_config} argument.
 }
 
+\examples{
+\dontshow{if (requireNamespace("withr", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+uri <- withr::local_tempfile(pattern = "soma-experiment")
+obs <- data.frame(
+  soma_joinid = bit64::seq.integer64(0L, 99L),
+  obs_id = paste0("cell_", seq_len(100L))
+)
+sch <- arrow::infer_schema(obs)
+
+(exp <- SOMAExperimentCreate(uri))
+sdf <- exp$add_new_dataframe(
+  "obs",
+  sch,
+  "soma_joinid",
+  list(soma_joinid = c(0, 100))
+)
+sdf$write(arrow::as_arrow_table(obs, schema = sch))
+sdf$close()
+exp$close()
+
+(exp <- SOMAExperimentOpen(uri))
+exp$obs
+
+\dontshow{
+exp$close()
+}
+\dontshow{\}) # examplesIf}
+}
 \section{Super classes}{
 \code{\link[tiledbsoma:TileDBObject]{tiledbsoma::TileDBObject}} -> \code{\link[tiledbsoma:TileDBGroup]{tiledbsoma::TileDBGroup}} -> \code{\link[tiledbsoma:SOMACollectionBase]{tiledbsoma::SOMACollectionBase}} -> \code{SOMAExperiment}
 }

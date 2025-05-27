@@ -22,7 +22,11 @@
 #'
 #' The `write` method is currently limited to writing from 2-d matrices.
 #' (lifecycle: maturing)
+#'
 #' @export
+#'
+#' @inherit SOMADenseNDArrayCreate examples
+#'
 SOMADenseNDArray <- R6::R6Class(
   classname = "SOMADenseNDArray",
   inherit = SOMANDArrayBase,

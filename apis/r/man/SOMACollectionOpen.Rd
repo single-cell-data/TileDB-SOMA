@@ -2,7 +2,7 @@
 % Please edit documentation in R/Factory.R
 \name{SOMACollectionOpen}
 \alias{SOMACollectionOpen}
-\title{Open SOMA Collection}
+\title{Open a SOMA Collection}
 \usage{
 SOMACollectionOpen(
   uri,
@@ -15,16 +15,37 @@ SOMACollectionOpen(
 \arguments{
 \item{uri}{URI for the TileDB object}
 
-\item{mode}{One of \code{"READ"} or \code{"WRITE"}}
+\item{mode}{One of \dQuote{\code{READ}} or \dQuote{\code{WRITE}}}
 
 \item{platform_config}{Optional platform configuration}
 
 \item{tiledbsoma_ctx}{Optional SOMATileDBContext}
 
-\item{tiledb_timestamp}{Optional Datetime (POSIXct) for TileDB timestamp.
-In READ mode, defaults to the current time. If non-NULL, then all members
-accessed through the collection object inherit the timestamp.}
+\item{tiledb_timestamp}{Optional Datetime (POSIXct) for TileDB timestamp;
+defaults to the current time. If not \code{NULL}, all members accessed
+through the collection inherit the timestamp}
+}
+\value{
+A \link[tiledbsoma:SOMACollection]{SOMA collection} stored at
+\code{uri} opened in mode \code{mode}
 }
 \description{
-Factory function to open a SOMACollection for reading, (lifecycle: maturing)
+Factory function to open a \link[tiledbsoma:SOMACollection]{SOMA collection}
+for reading (lifecycle: maturing)
+}
+\examples{
+\dontshow{if (requireNamespace("withr", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+uri <- withr::local_tempfile(pattern = "soma-collection")
+
+(col <- SOMACollectionCreate(uri))
+col$add_new_sparse_ndarray("sparse", arrow::float64(), shape = c(100L, 100L))
+col$close()
+
+(col <- SOMACollectionOpen(uri))
+col$names()
+
+\dontshow{
+col$close()
+}
+\dontshow{\}) # examplesIf}
 }

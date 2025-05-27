@@ -1,11 +1,14 @@
 #' SOMA NDArray Base Class
 #'
-#' @description
-#' Adds NDArray-specific functionality to the [`SOMAArrayBase`] class.
-#' (lifecycle: maturing)
+#' @description Virtual base class to add NDArray-specific functionality to the
+#' \code{\link{SOMAArrayBase}} class (lifecycle: maturing)
 #'
 #' @keywords internal
+#'
 #' @export
+#'
+#' @seealso Derived classes: \code{\link{SOMADenseNDArray}},
+#' \code{\link{SOMASparseNDArray}}
 #'
 SOMANDArrayBase <- R6::R6Class(
   classname = "SOMANDArrayBase",

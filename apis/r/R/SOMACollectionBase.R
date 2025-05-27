@@ -4,7 +4,11 @@
 #' objects, mapping string keys to any SOMA object.  (lifecycle: maturing)
 #' @keywords internal
 #' @export
-
+#'
+#' @seealso Derived classes: \code{\link{SOMACollection}},
+#' \code{\link{SOMAMeasurement}},
+#' \code{\link{SOMAExperiment}}
+#'
 SOMACollectionBase <- R6::R6Class(
   classname = "SOMACollectionBase",
   inherit = TileDBGroup,
