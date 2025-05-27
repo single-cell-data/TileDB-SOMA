@@ -9,7 +9,12 @@ SOMA Read Iterator Base class
 SOMA Read Iterator Base class
 }
 \details{
-Class that allows for read iteration of SOMA reads.
+Virtual class that allows for read iteration of SOMA reads.
+}
+\seealso{
+\code{\link{BlockwiseReadIterBase}},
+\code{\link{SparseReadIter}},
+\code{\link{TableReadIter}}
 }
 \keyword{internal}
 \section{Methods}{
@@ -26,7 +31,7 @@ Class that allows for read iteration of SOMA reads.
 \if{html}{\out{<a id="method-ReadIter-new"></a>}}
 \if{latex}{\out{\hypertarget{method-ReadIter-new}{}}}
 \subsection{Method \code{new()}}{
-Create (lifecycle: maturing)
+Create (lifecycle: maturing).
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{ReadIter$new(sr)}\if{html}{\out{</div>}}
 }
@@ -34,7 +39,7 @@ Create (lifecycle: maturing)
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{sr}}{soma read pointer}
+\item{\code{sr}}{soma read pointer.}
 }
 \if{html}{\out{</div>}}
 }
@@ -43,7 +48,8 @@ Create (lifecycle: maturing)
 \if{html}{\out{<a id="method-ReadIter-read_complete"></a>}}
 \if{latex}{\out{\hypertarget{method-ReadIter-read_complete}{}}}
 \subsection{Method \code{read_complete()}}{
-Check if iterated read is complete or not. (lifecycle: maturing)
+@description Check if iterated read is complete or not
+(lifecycle: maturing).
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{ReadIter$read_complete()}\if{html}{\out{</div>}}
 }
@@ -56,21 +62,22 @@ logical
 \if{html}{\out{<a id="method-ReadIter-read_next"></a>}}
 \if{latex}{\out{\hypertarget{method-ReadIter-read_next}{}}}
 \subsection{Method \code{read_next()}}{
-Read the next chunk of an iterated read. (lifecycle: maturing).
-If read is complete, retunrs \code{NULL} and raises warning.
+Read the next chunk of an iterated read. If read is
+complete, returns \code{NULL} and raises warning (lifecycle: maturing).
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{ReadIter$read_next()}\if{html}{\out{</div>}}
 }
 
 \subsection{Returns}{
-\code{NULL} or one of arrow::\link[arrow]{Table}, \link{matrixZeroBasedView}
+\code{NULL} or one of \link[arrow:Table]{arrow::Table},
+\link{matrixZeroBasedView}.
 }
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-ReadIter-concat"></a>}}
 \if{latex}{\out{\hypertarget{method-ReadIter-concat}{}}}
 \subsection{Method \code{concat()}}{
-Concatenate remainder of iterator
+Concatenate remainder of iterator.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{ReadIter$concat()}\if{html}{\out{</div>}}
 }

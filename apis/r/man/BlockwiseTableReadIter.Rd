@@ -5,7 +5,27 @@
 \title{SOMA Blockwise Read Iterator for Arrow Tables}
 \description{
 Class that allows for blockwise read iteration of SOMA reads
-as Arrow \code{\link[arrow]{Table}s}
+as Arrow \code{\link[arrow]{Table}s}.
+}
+\examples{
+\dontshow{if (requireNamespace("withr", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+dir <- withr::local_tempfile(pattern = "blockwise-table")
+dir.create(dir, recursive = TRUE)
+(exp <- load_dataset("soma-exp-pbmc-small", dir))
+qry <- exp$axis_query("RNA")
+xqry <- qry$X("data")
+
+iter <- xqry$blockwise(0L, size = 20L, reindex_disable_on_axis = TRUE)$tables()
+stopifnot(inherits(iter, "BlockwiseTableReadIter"))
+
+while (!iter$read_complete()) {
+  block <- iter$read_next()
+}
+
+\dontshow{
+exp$close()
+}
+\dontshow{\}) # examplesIf}
 }
 \keyword{internal}
 \section{Super classes}{
@@ -31,13 +51,13 @@ as Arrow \code{\link[arrow]{Table}s}
 \if{html}{\out{<a id="method-BlockwiseTableReadIter-concat"></a>}}
 \if{latex}{\out{\hypertarget{method-BlockwiseTableReadIter-concat}{}}}
 \subsection{Method \code{concat()}}{
-Concatenate the remainder of the blockwise iterator
+Concatenate the remainder of the blockwise iterator.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{BlockwiseTableReadIter$concat()}\if{html}{\out{</div>}}
 }
 
 \subsection{Returns}{
-An Arrow Table with the remainder of the iterator
+An Arrow Table with the remainder of the iterator.
 }
 }
 \if{html}{\out{<hr>}}
