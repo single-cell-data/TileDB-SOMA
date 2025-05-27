@@ -1,4 +1,4 @@
-include RELEASE-VERSION version.py py.typed
+include RELEASE-VERSION version.py
 include src/tiledbsoma/*.cc
 include src/tiledbsoma/*.h
 graft dist_links
