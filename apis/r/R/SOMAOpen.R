@@ -1,14 +1,32 @@
-#' @title Open a SOMA Object
-#' @description Utility function to open the corresponding SOMA Object given a URI, (lifecycle: maturing)
-#' @param mode One of `"READ"` or `"WRITE"`
-#' @param uri URI for the TileDB object
-#' @param platform_config Optional platform configuration
-#' @param tiledbsoma_ctx Optional SOMATileDBContext
-#' @param tiledb_timestamp Optional Datetime (POSIXct) with TileDB timestamp. For SOMACollections,
-#'        all accessed members inherit the collection opening timestamp, and in READ mode the
-#'        collection timestamp defaults to the time of opening.
+#' Open a SOMA Object
+#'
+#' Utility function to open the corresponding SOMA object given a URI
+#' (lifecycle: maturing).
+#'
+#' @inheritParams SOMACollectionOpen
+#' @param mode One of \dQuote{\code{READ}} or \dQuote{\code{WRITE}}
+#'
+#' @return A SOMA object
 #'
 #' @export
+#'
+#' @examplesIf requireNamespace("withr", quietly = TRUE)
+#' dir <- withr::local_tempfile(pattern = "soma-open")
+#' dir.create(dir, recursive = TRUE)
+#'
+#' uri <- extract_dataset("soma-exp-pbmc-small", dir)
+#' (exp <- SOMAOpen(uri))
+#'
+#' \dontshow{
+#' exp$close()
+#' }
+#'
+#' uri <- extract_dataset("soma-dataframe-pbmc3k-processed-obs", dir)
+#' (obs <- SOMAOpen(uri))
+#'
+#' \dontshow{
+#' obs$close()
+#' }
 #'
 SOMAOpen <- function(
   uri,

@@ -1,18 +1,24 @@
 #' Ephemeral Collection Base
 #'
-#' @description Base class for ephemeral collections; ephemeral collections are
-#' equivalent to \link[tiledbsoma:SOMACollection]{SOMA collections} but are
-#' stored in-memory instead of on-disks
+#' @description Virtual base class for ephemeral collections; ephemeral
+#' collections are equivalent to
+#' \link[tiledbsoma:SOMACollection]{SOMA collections} but are stored in memory
+#' instead of on disk.
 #'
 #' @keywords internal
+#'
 #' @export
+#'
+#' @seealso Derived classes: \code{\link{EphemeralCollection}},
+#' \code{\link{EphemeralMeasurement}},
+#' \code{\link{EphemeralExperiment}}
 #'
 EphemeralCollectionBase <- R6::R6Class(
   classname = "EphemeralCollectionBase",
   inherit = SOMACollectionBase,
   public = list(
     # Override TileDBObject methods
-    #' @description Create an ephemeral collection
+    #' @description Create an ephemeral collection.
     #'
     #' @template param-dots-ignored
     #'
@@ -36,9 +42,9 @@ EphemeralCollectionBase <- R6::R6Class(
       private$.data <- list()
     },
 
-    #' @description Create a new, empty ephemeral collection
+    #' @description Create a new, empty ephemeral collection.
     #'
-    #' @return Returns a new ephemeral collection of class \code{class(self)}
+    #' @return Returns a new ephemeral collection of class \code{class(self)}.
     #'
     create = function() {
       gen <- getAnywhere(self$class())[["objs"]][[1L]]
@@ -53,21 +59,22 @@ EphemeralCollectionBase <- R6::R6Class(
     },
 
     # Override TileDBGroup private methods
-    #' @description Dummy method for ephemeral cobjects for compatibility with
-    #' SOMA collections
+    #' @description Dummy method for ephemeral objects for compatibility with
+    #' SOMA collections.
     #'
-    #' @param mode Ignored for ephemeral objects
+    #' @param mode Ignored for ephemeral objects.
     #'
-    #' @return Throws an error as this method is not supported by ephemeral objects
+    #' @return Throws an error as this method is not supported by ephemeral
+    #' objects.
     #'
     open = function(mode) {
       private$.ephemeral_error("opened")
     },
 
-    #' @description Dummy method for ephemeral cobjects for compatibility with
-    #' SOMA collections
+    #' @description Dummy method for ephemeral objects for compatibility with
+    #' SOMA collections.
     #'
-    #' @return Invisibly returns \code{NULL}
+    #' @return Invisibly returns \code{NULL}.
     #'
     close = function() {
       tryCatch(
@@ -79,21 +86,22 @@ EphemeralCollectionBase <- R6::R6Class(
       return(invisible(NULL))
     },
 
-    #' @description Dummy method for ephemeral cobjects for compatibility with
-    #' SOMA collections
+    #' @description Dummy method for ephemeral objects for compatibility with
+    #' SOMA collections.
     #'
     #' @return Returns \code{FALSE} as ephemeral collections do not
-    #' exist on-disk
+    #' exist on-disk.
     #'
     exists = function() {
       return(FALSE)
     },
 
     # Override TileDBGroup methods
-    #' @description Special method for printing object representation to console
+    #' @description Special method for printing object representation to
+    #' console.
     #'
     #' @return Prints details about the ephemeral collection and invisibly
-    #' returns itself
+    #' returns itself.
     #'
     print = function() {
       super$print()
@@ -101,13 +109,13 @@ EphemeralCollectionBase <- R6::R6Class(
       return(invisible(self))
     },
 
-    #' @description Dummy method for ephemeral cobjects for compatibility with
-    #' SOMA collections
+    #' @description Dummy method for ephemeral objects for compatibility with
+    #' SOMA collections.
     #'
-    #' @param param Ignored for ephemeral objects
+    #' @param param Ignored for ephemeral objects.
     #'
     #' @return Returns \code{NULL} as ephemeral collections do not have an
-    #' on-disk configuration
+    #' on-disk configuration.
     #'
     get_tiledb_config = function(param = NULL) {
       if (!is.null(param)) {
@@ -121,28 +129,31 @@ EphemeralCollectionBase <- R6::R6Class(
       return(NULL)
     },
 
-    #' @description Retrieve the number of items in the collection
+    #' @description Retrieve the number of items in the collection.
     #'
-    #' @return The length of the collection
+    #' @return The length of the collection.
+    #'
     length = function() {
       length(private$.data)
     },
 
-    #' @description Retrieve the names of members. (lifecycle: maturing)
+    #' @description Retrieve the names of members. (lifecycle: maturing).
+    #'
     #' @return A \code{character} vector of member names.
+    #'
     names = function() {
       names(private$.data) %||% character(length = 0L)
     },
 
-    #' @description Add object to an ephemeral collection
+    #' @description Add object to an ephemeral collection.
     #'
     #' @param object A TileDB object (eg. \code{\link{TileDBGroup}}) to add
-    #' to the collection
-    #' @param name A name to add \code{object} as
-    #' @param relative Ignored for ephemeral objects
+    #' to the collection.
+    #' @param name A name to add \code{object} as.
+    #' @param relative Ignored for ephemeral objects.
     #'
     #' @return \[chainable] Invisibly returns \code{self} with \code{object}
-    #' added as \code{name}
+    #' added as \code{name}.
     #'
     set = function(object, name = NULL, relative = NULL) {
       stopifnot(
@@ -164,11 +175,11 @@ EphemeralCollectionBase <- R6::R6Class(
       return(invisible(self))
     },
 
-    #' @description Get objects from an ephemeral collection
+    #' @description Get objects from an ephemeral collection.
     #'
-    #' @param name Name of object in the collection to get
+    #' @param name Name of object in the collection to get.
     #'
-    #' @return The object named \code{name}
+    #' @return The object named \code{name}.
     #'
     get = function(name) {
       stopifnot(is_scalar_character(name))
@@ -176,12 +187,13 @@ EphemeralCollectionBase <- R6::R6Class(
       return(private$.data[[name]])
     },
 
-    #' @description Remove objects from an ephemeral collection
+    #' @description Remove objects from an ephemeral collection.
     #'
-    #' @param name Name of object to remove from the collection
+    #' @param name Name of object to remove from the collection.
     #'
     #' @return \[chainable\] Invisibly returns \code{self} with the object at
-    #' \code{name} removed
+    #' \code{name} removed.
+    #'
     remove = function(name) {
       stopifnot(is_scalar_character(name))
       name <- match.arg(arg = name, choices = self$names())
@@ -189,23 +201,24 @@ EphemeralCollectionBase <- R6::R6Class(
       return(invisible(self))
     },
 
-    #' @description Dummy method for ephemeral cobjects for compatibility with
-    #' SOMA collections
+    #' @description Dummy method for ephemeral objects for compatibility with
+    #' SOMA collections.
     #'
-    #' @param metadata Ignored for ephemeral objects
+    #' @param metadata Ignored for ephemeral objects.
     #'
-    #' @return Throws an error as this method is not supported by ephemeral objects
+    #' @return Throws an error as this method is not supported by ephemeral
+    #' objects.
     #'
     set_metadata = function(metadata) {
       private$.ephemeral_error("edited")
     },
 
-    #' @description Dummy method for ephemeral cobjects for compatibility with
-    #' SOMA collections
+    #' @description Dummy method for ephemeral objects for compatibility with
+    #' SOMA collections.
     #'
-    #' @param key Ignored for ephemeral objects
+    #' @param key Ignored for ephemeral objects.
     #'
-    #' @return An empty list
+    #' @return An empty list.
     #'
     get_metadata = function(key = NULL) {
       tryCatch(
@@ -218,45 +231,49 @@ EphemeralCollectionBase <- R6::R6Class(
     },
 
     # Override SOMACollectionBase methods
-    #' @description Dummy method for ephemeral cobjects for compatibility with
-    #' SOMA collections
+    #' @description Dummy method for ephemeral objects for compatibility with
+    #' SOMA collections.
     #'
-    #' @param object,key Ignored for ephemeral objects
+    #' @param object,key Ignored for ephemeral objects.
     #'
-    #' @return Throws an error as this method is not supported by ephemeral objects
+    #' @return Throws an error as this method is not supported by ephemeral
+    #' objects.
     #'
     add_new_collection = function(object, key) {
       private$.ephemeral_error()
     },
 
-    #' @description Dummy method for ephemeral cobjects for compatibility with
-    #' SOMA collections
+    #' @description Dummy method for ephemeral objects for compatibility with
+    #' SOMA collections.
     #'
-    #' @param key,schema,index_column_names Ignored for ephemeral objects
+    #' @param key,schema,index_column_names Ignored for ephemeral objects.
     #'
-    #' @return Throws an error as this method is not supported by ephemeral objects
+    #' @return Throws an error as this method is not supported by ephemeral
+    #' objects.
     #'
     add_new_dataframe = function(key, schema, index_column_names) {
       private$.ephemeral_error()
     },
 
-    #' @description Dummy method for ephemeral cobjects for compatibility with
-    #' SOMA collections
+    #' @description Dummy method for ephemeral objects for compatibility with
+    #' SOMA collections.
     #'
-    #' @param key,type,shape Ignored for ephemeral objects
+    #' @param key,type,shape Ignored for ephemeral objects.
     #'
-    #' @return Throws an error as this method is not supported by ephemeral objects
+    #' @return Throws an error as this method is not supported by ephemeral
+    #' objects.
     #'
     add_new_dense_ndarray = function(key, type, shape) {
       private$.ephemeral_error()
     },
 
-    #' @description Dummy method for ephemeral cobjects for compatibility with
-    #' SOMA collections
+    #' @description Dummy method for ephemeral objects for compatibility with
+    #' SOMA collections.
     #'
-    #' @param key,type,shape Ignored for ephemeral objects
+    #' @param key,type,shape Ignored for ephemeral objects.
     #'
-    #' @return Throws an error as this method is not supported by ephemeral objects
+    #' @return Throws an error as this method is not supported by ephemeral
+    #' objects.
     #'
     add_new_sparse_ndarray = function(key, type, shape) {
       private$.ephemeral_error()
@@ -264,7 +281,8 @@ EphemeralCollectionBase <- R6::R6Class(
   ),
   active = list(
 
-    #' @field uri \dQuote{\code{ephemeral-collection:<MEMORY_ADDRESS>}}
+    #' @field uri \dQuote{\code{ephemeral-collection:<MEMORY_ADDRESS>}}.
+    #'
     uri = function(value) {
       if (!missing(value)) {
         private$.read_only_error("uri")
@@ -274,7 +292,8 @@ EphemeralCollectionBase <- R6::R6Class(
 
     # Override SOMACollectionBase fields
     #' @field soma_type Dummy field for ephemeral objects for compatibility with
-    #' SOMA collections
+    #' SOMA collections.
+    #'
     soma_type = function(value) {
       if (!missing(value)) {
         private$.read_only_error("soma_type")
@@ -284,7 +303,8 @@ EphemeralCollectionBase <- R6::R6Class(
 
     # Override TileDBObject fields
     #' @field platform_config Dummy field for ephemeral objects for
-    #' compatibility with SOMA collections
+    #' compatibility with SOMA collections.
+    #'
     platform_config = function(value) {
       if (!missing(value)) {
         private$.read_only_error("platform_config")
@@ -293,7 +313,8 @@ EphemeralCollectionBase <- R6::R6Class(
     },
 
     #' @field tiledbsoma_ctx Dummy field for ephemeral objects for compatibility
-    #' with SOMA collections
+    #' with SOMA collections.
+    #'
     tiledbsoma_ctx = function(value) {
       if (!missing(value)) {
         private$.read_only_error("tiledbsoma_ctx")
@@ -302,7 +323,8 @@ EphemeralCollectionBase <- R6::R6Class(
     },
 
     #' @field object Dummy field for ephemeral objects for compatibility with
-    #' SOMA collections
+    #' SOMA collections.
+    #'
     object = function(value) {
       if (!missing(value)) {
         private$.read_only_error("object")
@@ -388,17 +410,34 @@ EphemeralCollectionBase <- R6::R6Class(
 #' @description Ephemeral version of \code{\link{SOMACollection}s}; ephemeral
 #' collections are equivalent to
 #' \link[tiledbsoma:SOMACollection]{SOMA collections} but are stored in-memory
-#' instead of on-disk
+#' instead of on-disk.
 #'
 #' @keywords internal
 #'
 #' @export
 #'
+#' @examples
+#' (col <- EphemeralCollection$new())
+#' col$soma_type
+#'
+#' @examplesIf requireNamespace("withr", quietly = TRUE)
+#' dir <- withr::local_tempfile(pattern = "obs")
+#' dir.create(dir, recursive = TRUE)
+#'
+#' (obs <- load_dataset("soma-dataframe-pbmc3k-processed-obs", dir))
+#' col$set(obs, "obs")
+#' col$names()
+#'
+#' \dontshow{
+#' obs$close()
+#' }
+#'
 EphemeralCollection <- R6::R6Class(
   classname = "EphemeralCollection",
   inherit = EphemeralCollectionBase,
   active = list(
-    #' @field soma_type The SOMA object type
+    #' @field soma_type The SOMA object type.
+    #'
     soma_type = function(value) {
       if (!missing(value)) {
         private$.read_only_error("soma_type")
@@ -413,11 +452,18 @@ EphemeralCollection <- R6::R6Class(
 #' @description Ephemeral version of \code{\link{SOMAMeasurement}s}; ephemeral
 #' measurements are equivalent to
 #' \link[tiledbsoma:SOMAMeasurement]{SOMA measurements} but are stored in-memory
-#' instead of on-disk
+#' instead of on-disk.
 #'
 #' @keywords internal
 #'
 #' @export
+#'
+#' @examples
+#' (ms <- EphemeralMeasurement$new())
+#' ms$soma_type
+#'
+#' ms$set(EphemeralCollection$new(), "X")
+#' ms$X
 #'
 EphemeralMeasurement <- R6::R6Class(
   classname = "EphemeralMeasurement",
@@ -427,7 +473,8 @@ EphemeralMeasurement <- R6::R6Class(
     #' on the variable axis, for variables in this measurement (i.e., annotates
     #' columns of \code{X}). The contents of the \code{soma_joinid} column
     #' define the variable index domain, \code{var_id}. All variables for this
-    #' measurement must be defined in this data frame
+    #' measurement must be defined in this data frame.
+    #'
     var = function(value) {
       private$get_or_set_soma_field(
         value = value,
@@ -438,7 +485,8 @@ EphemeralMeasurement <- R6::R6Class(
 
     #' @field X A \code{\link{SOMACollection}} of
     #' \code{\link{SOMASparseNDArray}}s; each contain measured feature values
-    #' indexed by \code{[obsid, varid]}
+    #' indexed by \code{[obsid, varid]}.
+    #'
     X = function(value) {
       private$get_or_set_soma_field(
         value = value,
@@ -450,7 +498,8 @@ EphemeralMeasurement <- R6::R6Class(
     #' @field obsm A \code{\link{SOMACollection}} of
     #' \code{\link{SOMADenseNDArray}}s containing annotations on the observation
     #' axis. Each array is indexed by \code{obsid} and has the same shape as
-    #' \code{obs}
+    #' \code{obs}.
+    #'
     obsm = function(value) {
       private$get_or_set_soma_field(
         value = value,
@@ -461,7 +510,8 @@ EphemeralMeasurement <- R6::R6Class(
 
     #' @field obsp A \code{\link{SOMACollection}} of
     #' \code{\link{SOMASparseNDArray}}s containing pairwise annotations on the
-    #' observation axis and indexed with \code{[obsid_1, obsid_2]}
+    #' observation axis and indexed with \code{[obsid_1, obsid_2]}.
+    #'
     obsp = function(value) {
       private$get_or_set_soma_field(
         value = value,
@@ -473,7 +523,8 @@ EphemeralMeasurement <- R6::R6Class(
     #' @field varm A \code{\link{SOMACollection}} of
     #' \code{\link{SOMADenseNDArray}}s containing annotations on the variable
     #' axis. Each array is indexed by \code{varid} and has the same shape as
-    #' \code{var}
+    #' \code{var}.
+    #'
     varm = function(value) {
       private$get_or_set_soma_field(
         value = value,
@@ -484,7 +535,8 @@ EphemeralMeasurement <- R6::R6Class(
 
     #' @field varp A \code{\link{SOMACollection}} of
     #' \code{\link{SOMASparseNDArray}}s containing pairwise annotations on the
-    #' variable axis and indexed with \code{[varid_1, varid_2]}
+    #' variable axis and indexed with \code{[varid_1, varid_2]}.
+    #'
     varp = function(value) {
       private$get_or_set_soma_field(
         value = value,
@@ -493,7 +545,8 @@ EphemeralMeasurement <- R6::R6Class(
       )
     },
 
-    #' @field soma_type The SOMA object type
+    #' @field soma_type The SOMA object type.
+    #'
     soma_type = function(value) {
       if (!missing(value)) {
         private$.read_only_error("soma_type")
@@ -508,11 +561,27 @@ EphemeralMeasurement <- R6::R6Class(
 #' @description Ephemeral version of \code{\link{SOMAExperiment}s}; ephemeral
 #' experiments are equivalent to
 #' \link[tiledbsoma:SOMAExperiment]{SOMA experiments} but are stored in-memory
-#' instead of on-disk
+#' instead of on-disk.
 #'
 #' @keywords internal
 #'
 #' @export
+#'
+#' @examples
+#' (exp <- EphemeralExperiment$new())
+#' exp$soma_type
+#'
+#' @examplesIf requireNamespace("withr", quietly = TRUE)
+#' dir <- withr::local_tempfile(pattern = "obs")
+#' dir.create(dir, recursive = TRUE)
+#'
+#' (obs <- load_dataset("soma-dataframe-pbmc3k-processed-obs", dir))
+#' exp$set(obs, "obs")
+#' exp$obs
+#'
+#' \dontshow{
+#' obs$close()
+#' }
 #'
 EphemeralExperiment <- R6::R6Class(
   classname = "EphemeralExperiment",
@@ -521,7 +590,8 @@ EphemeralExperiment <- R6::R6Class(
     #' @field obs A \code{\link{SOMADataFrame}} containing the annotations on
     #' the observation axis. The contents of the \code{soma_joinid} column
     #' define the observation index domain \code{obs_id}. All observations for
-    #' the \code{SOMAExperiment} must be defined in this data frame
+    #' the \code{SOMAExperiment} must be defined in this data frame.
+    #'
     obs = function(value) {
       private$get_or_set_soma_field(
         value = value,
@@ -531,7 +601,8 @@ EphemeralExperiment <- R6::R6Class(
     },
 
     #' @field ms A \code{\link{SOMACollection}} of named
-    #' \code{\link{SOMAMeasurement}}s
+    #' \code{\link{SOMAMeasurement}}s.
+    #'
     ms = function(value) {
       private$get_or_set_soma_field(
         value = value,
@@ -540,7 +611,8 @@ EphemeralExperiment <- R6::R6Class(
       )
     },
 
-    #' @field soma_type The SOMA object type
+    #' @field soma_type The SOMA object type.
+    #'
     soma_type = function(value) {
       if (!missing(value)) {
         private$.read_only_error("soma_type")
