@@ -8,11 +8,11 @@ soma_context(config)
 }
 \arguments{
 \item{config}{A named character vector with \dQuote{key} and \dQuote{value}
-pairs defining the configuration setting}
+pairs defining the configuration setting.}
 }
 \value{
 An external pointer object containing a shared pointer instance
-of \code{SOMAContext}
+of \code{SOMAContext}.
 }
 \description{
 Create and cache a SOMA Context Object

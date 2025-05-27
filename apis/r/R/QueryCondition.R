@@ -276,9 +276,9 @@ parse_query_condition <- function(
 
 #' An S4 class for a TileDB QueryCondition object
 #'
-#' @slot ptr An external pointer to the underlying implementation
+#' @slot ptr An external pointer to the underlying implementation.
 #' @slot init A logical variable tracking if the query condition object has
-#' been initialized
+#' been initialized.
 #'
 #' @noRd
 #'
@@ -290,9 +290,9 @@ setClass(
 #' Creates a 'tiledbsoma_query_condition' object
 #'
 #' @param somactx (optional) A TileDB Ctx object; if not supplied the default
-#' context object is retrieved
+#' context object is retrieved,
 #'
-#' @return A 'tiledbsoma_query_condition' object
+#' @return A 'tiledbsoma_query_condition' object.
 #'
 #' @noRd
 #'
@@ -315,17 +315,17 @@ tiledbsoma_empty_query_condition <- function(somactx) {
 #' and attribute to compare against. At present only integer or numeric
 #' attribute comparisons are implemented.
 #'
-#' @param attr_name A character value with the scheme attribute name
-#' @param value A scalar value that the attribute is compared against
+#' @param attr_name A character value with the scheme attribute name.
+#' @param value A scalar value that the attribute is compared against.
 #' @param arrow_type_name A character value with the TileDB data type of the
 #' attribute column, for example 'float' or 'int32'.
 #'
 #' @param op_name A character value with the comparison operation. This must be
 #' one of 'LT', 'LE', 'GT', 'GE', 'EQ', 'NE'.
 #' @param qc A 'tiledbsoma_query_condition' object to be initialized by
-#' this call
+#' this call.
 #'
-#' @return The initialized 'tiledbsoma_query_condition' object
+#' @return The initialized 'tiledbsoma_query_condition' object.
 #'
 #' @noRd
 #'
@@ -364,14 +364,14 @@ tiledbsoma_query_condition_from_triple <- function(
 #' Combines two query condition objects using a relatiional operator.
 #'
 #' @param lhs A 'tiledbsoma_query_condition' object on the left-hand side
-#' of the relation
+#' of the relation.
 #' @param rhs A 'tiledbsoma_query_condition' object on the right-hand side
-#' of the relation
+#' of the relation.
 #' @param op_name A character value with the relation, which must be one of
-#' 'AND', 'OR', or 'NOT'
-#' @param somactx SOMAContext pointer
+#' 'AND', 'OR', or 'NOT'.
+#' @param somactx SOMAContext pointer.
 #'
-#' @return The combined 'tiledbsoma_query_condition' object
+#' @return The combined 'tiledbsoma_query_condition' object.
 #'
 #' @noRd
 #'
@@ -390,7 +390,7 @@ tiledbsoma_query_condition_combine <- function(lhs, rhs, op_name, somactx) {
 
 #' Create a query condition for vector 'IN' and 'NOT_IN' operations
 #'
-#' Uses \dQuote{IN} and \dQuote{NOT_IN} operators on given attribute
+#' Uses \dQuote{IN} and \dQuote{NOT_IN} operators on given attribute.
 #'
 #' @param attr_name A character value with the schema attribute name.
 #'
@@ -402,7 +402,7 @@ tiledbsoma_query_condition_combine <- function(lhs, rhs, op_name, somactx) {
 #'
 #' @param somactx SOMAContext pointer.
 #'
-#' @return A query-condition object is returned
+#' @return A query-condition object is returned.
 #'
 #' @noRd
 #'

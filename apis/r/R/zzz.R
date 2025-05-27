@@ -16,9 +16,9 @@ NULL
 #'
 #' \code{R CMD check} tries to check use of all imported dependencies; however,
 #' it sometimes misses, such as in R6 methods. This function exists to satiate
-#' \code{R CMD check} by showing usage of imported dependencies
+#' \code{R CMD check} by showing usage of imported dependencies.
 #'
-#' @return Invisibly returns \code{NULL}
+#' @return Invisibly returns \code{NULL}.
 #'
 #' @keywords internal
 #'
@@ -66,10 +66,10 @@ NULL
 #' Create and cache a SOMA Context Object
 #'
 #' @param config A named character vector with \dQuote{key} and \dQuote{value}
-#' pairs defining the configuration setting
+#' pairs defining the configuration setting.
 #'
 #' @return An external pointer object containing a shared pointer instance
-#' of \code{SOMAContext}
+#' of \code{SOMAContext}.
 #'
 #' @keywords internal
 #'
