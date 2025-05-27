@@ -295,40 +295,55 @@ std::vector<int64_t> i64_from_rcpp_numeric(const Rcpp::NumericVector& input) {
 
 // formerly stats.cpp
 
-//' TileDB SOMA statistics
+//' TileDB SOMA Statistics
 //'
 //' These functions expose the TileDB Core functionality for performance
-//'  measurements and statistics.
+//'  measurements and statistics
 //'
-//' - `tiledbsoma_stats_enable()`/`tiledbsoma_stats_disable()`: Enable and
-//'    disable TileDB's internal statistics.
-//' - `tiledbsoma_stats_reset()`: Reset all statistics to 0.
-//' - `tiledbsoma_stats_dump()`: Dump all statistics to a JSON string.
-//' - `tiledbsoma_stats_show()`: Print all statistics to the console.
+//' \itemize{
+//'  \item \code{tiledbsoma_stats_enable()}/\code{tiledbsoma_stats_disable()}:
+//'   Enable and disable TielDB's internal statistics
+//'  \item \code{tiledbsoma_stats_reset()}: Reset all statistics to \code{0}
+//'  \item \code{tiledbsoma_stats_dump()}: Dump all statistics as a JSON string
+//'  \item \code{tiledbsoma_stats_show()}: Pretty-print the JSON statistics
+//' }
+//'
+//' @return \code{tiledbsoma_stats_show()}: a single-length character vector
+//' with the TileDB statistics encoded in JSON format
+//'
+//' @return All other functions invisibly return \code{NULL}
 //'
 //' @name tiledbsoma_stats
+//'
 //' @export
+//'
 // [[Rcpp::export]]
 void tiledbsoma_stats_enable() {
     tiledbsoma::stats::enable();
 }
 
 //' @rdname tiledbsoma_stats
+//'
 //' @export
+//'
 // [[Rcpp::export]]
 void tiledbsoma_stats_disable() {
     tiledbsoma::stats::disable();
 }
 
 //' @rdname tiledbsoma_stats
+//'
 //' @export
+//'
 // [[Rcpp::export]]
 void tiledbsoma_stats_reset() {
     tiledbsoma::stats::reset();
 }
 
 //' @rdname tiledbsoma_stats
+//'
 //' @export
+//'
 // [[Rcpp::export]]
 std::string tiledbsoma_stats_dump() {
     return tiledbsoma::stats::dump();
@@ -336,12 +351,12 @@ std::string tiledbsoma_stats_dump() {
 
 // formerly version.cpp
 
-//' libtiledbsoma version
-//'
-//' Returns a string with version information for libtiledbsoma and the linked
-//' TileDB Embedded library. If argument `compact` is set to `TRUE`, a shorter
-//' version of just the TileDB Embedded library version is returned.
-//' @noRd
+// libtiledbsoma version
+//
+// Returns a string with version information for libtiledbsoma and the linked
+// TileDB Embedded library. If argument `compact` is set to `TRUE`, a shorter
+// version of just the TileDB Embedded library version is returned.
+//
 // [[Rcpp::export]]
 std::string libtiledbsoma_version(
     const bool compact = false, const bool major_minor_only = false) {
@@ -360,10 +375,10 @@ std::string libtiledbsoma_version(
     }
 }
 
-//' TileDB embedded version
-//'
-//' Gets the version of the TileDB Embedded library that is currently in use.
-//' @noRd
+// TileDB embedded version
+//
+// Gets the version of the TileDB Embedded library that is currently in use.
+//
 // [[Rcpp::export]]
 Rcpp::IntegerVector tiledb_embedded_version() {
     std::tuple<int, int, int>
@@ -374,7 +389,7 @@ Rcpp::IntegerVector tiledb_embedded_version() {
 
 // Also present in tiledb-r but only after 0.23.0 so this can be removed (and
 // the call to it updated) once we hit a new tiledb-r release 0.24.0 (or 0.23.1)
-//' @noRd
+//
 // [[Rcpp::export]]
 size_t tiledb_datatype_max_value(const std::string& datatype) {
     if (datatype == "INT8")
