@@ -29,8 +29,8 @@ accessed through the collection object inherit the timestamp.}
 A SOMA object
 }
 \description{
-Utility function to open the corresponding SOMA Object given a URI
-(lifecycle: maturing)
+Utility function to open the corresponding SOMA object given a URI
+(lifecycle: maturing).
 }
 \examples{
 \dontshow{if (requireNamespace("withr", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}

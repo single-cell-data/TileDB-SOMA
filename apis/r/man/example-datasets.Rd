@@ -14,24 +14,24 @@ extract_dataset(name, dir = tempdir())
 load_dataset(name, dir = tempdir(), tiledbsoma_ctx = NULL)
 }
 \arguments{
-\item{name}{The name of the dataset}
+\item{name}{The name of the dataset.}
 
 \item{dir}{The directory where the dataset will be extracted to
-(default: \code{\link[base]{tempdir}()})}
+(default: \code{\link[base]{tempdir}()}).}
 
 \item{tiledbsoma_ctx}{Optional TileDB \dQuote{Context} object,
-defaults to \code{NULL}}
+which defaults to \code{NULL}.}
 }
 \value{
 \code{list_datasets()}: returns a character vector of the
-available datasets
+available datasets.
 
-\code{extract_dataset()}: returns the path to the extracted dataset
+\code{extract_dataset()}: returns the path to the extracted dataset.
 
 \code{load_dataset()}: returns a SOMA object.
 }
 \description{
-Access example SOMA objects bundled with the tiledbsoma package\cr
+Access example SOMA objects bundled with the tiledbsoma package.\cr
 \cr
 Use \code{list_datasets()} to list the available datasets and
 \code{load_dataset()} to load a dataset into memory using the appropriate

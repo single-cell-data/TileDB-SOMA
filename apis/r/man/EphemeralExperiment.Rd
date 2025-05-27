@@ -7,7 +7,7 @@
 Ephemeral version of \code{\link{SOMAExperiment}s}; ephemeral
 experiments are equivalent to
 \link[tiledbsoma:SOMAExperiment]{SOMA experiments} but are stored in-memory
-instead of on-disk
+instead of on-disk.
 }
 \examples{
 (exp <- EphemeralExperiment$new())
@@ -36,12 +36,12 @@ obs$close()
 \item{\code{obs}}{A \code{\link{SOMADataFrame}} containing the annotations on
 the observation axis. The contents of the \code{soma_joinid} column
 define the observation index domain \code{obs_id}. All observations for
-the \code{SOMAExperiment} must be defined in this data frame}
+the \code{SOMAExperiment} must be defined in this data frame.}
 
 \item{\code{ms}}{A \code{\link{SOMACollection}} of named
-\code{\link{SOMAMeasurement}}s}
+\code{\link{SOMAMeasurement}}s.}
 
-\item{\code{soma_type}}{The SOMA object type}
+\item{\code{soma_type}}{The SOMA object type.}
 }
 \if{html}{\out{</div>}}
 }

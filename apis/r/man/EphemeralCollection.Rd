@@ -7,7 +7,7 @@
 Ephemeral version of \code{\link{SOMACollection}s}; ephemeral
 collections are equivalent to
 \link[tiledbsoma:SOMACollection]{SOMA collections} but are stored in-memory
-instead of on-disk
+instead of on-disk.
 }
 \examples{
 (col <- EphemeralCollection$new())
@@ -33,7 +33,7 @@ obs$close()
 \section{Active bindings}{
 \if{html}{\out{<div class="r6-active-bindings">}}
 \describe{
-\item{\code{soma_type}}{The SOMA object type}
+\item{\code{soma_type}}{The SOMA object type.}
 }
 \if{html}{\out{</div>}}
 }
