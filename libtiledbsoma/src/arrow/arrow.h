@@ -57,7 +57,8 @@ class Array {
     /*                 API               */
     /* ********************************* */
 
-    static std::shared_ptr<const Array> create(ArrowSchema* schema, ArrowArray* array);
+    static std::shared_ptr<const Array> create(
+        ArrowSchema* schema, ArrowArray* array);
 
     std::pair<ArrowArray, ArrowSchema> export_to_c() const noexcept;
 

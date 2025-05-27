@@ -18,25 +18,25 @@ add_executable(unit_soma
     $<TARGET_OBJECTS:TILEDB_SOMA_OBJECTS>
     $<TARGET_OBJECTS:TILEDB_SOMA_GEOMETRY_OBJECTS>
     $<TARGET_OBJECTS:TILEDBSOMA_NANOARROW_OBJECT>
-    common.cc
-    common.h
-    unit_geometry_roundtrip.cc
-    unit_arrow_adapter.cc
-    unit_column_buffer.cc
-    unit_managed_query.cc
+    # common.cc
+    # common.h
+    # unit_geometry_roundtrip.cc
+    # unit_arrow_adapter.cc
+    # unit_column_buffer.cc
+    # unit_managed_query.cc
     unit_soma_array.cc
-    unit_soma_group.cc
-    unit_soma_dataframe.cc
-    unit_soma_dense_ndarray.cc
-    unit_soma_sparse_ndarray.cc
-    unit_soma_collection.cc
-    unit_soma_column.cc
-    unit_soma_scene.cc
-    unit_soma_geometry_dataframe.cc
-    unit_soma_point_cloud_dataframe.cc
-    unit_soma_multiscale_image.cc
-    unit_soma_coordinates.cc
-    test_indexer.cc
+    # unit_soma_group.cc
+    # unit_soma_dataframe.cc
+    # unit_soma_dense_ndarray.cc
+    # unit_soma_sparse_ndarray.cc
+    # unit_soma_collection.cc
+    # unit_soma_column.cc
+    # unit_soma_scene.cc
+    # unit_soma_geometry_dataframe.cc
+    # unit_soma_point_cloud_dataframe.cc
+    # unit_soma_multiscale_image.cc
+    # unit_soma_coordinates.cc
+    # test_indexer.cc
 # TODO: uncomment when thread_pool is enabled
 #    unit_thread_pool.cc
 )

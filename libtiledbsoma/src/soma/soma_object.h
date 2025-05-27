@@ -26,7 +26,7 @@
 namespace tiledbsoma {
 
 using namespace tiledb;
-class SOMAObject {
+class __attribute__((visibility("default"))) SOMAObject {
    public:
     //===================================================================
     //= public non-static

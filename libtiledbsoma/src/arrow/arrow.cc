@@ -4,7 +4,8 @@
 
 namespace tiledbsoma::arrow {
 
-std::shared_ptr<const Array> Array::create(ArrowSchema* schema, ArrowArray* array) {
+std::shared_ptr<const Array> Array::create(
+    ArrowSchema* schema, ArrowArray* array) {
     return make_shared_array(schema, array);
 }
 
@@ -49,7 +50,7 @@ tiledb_datatype_t Array::tdb_type() const noexcept {
         default:
             return TILEDB_ANY;
     }
-} 
+}
 
 std::pair<ArrowArray, ArrowSchema> Array::export_to_c() const noexcept {
     return sparrow::extract_arrow_structures(std::move(*array_));

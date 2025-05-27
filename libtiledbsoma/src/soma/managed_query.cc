@@ -23,6 +23,9 @@
 #include "utils/logger.h"
 #include "utils/util.h"
 
+#include <date/tz.h>
+#include <sparrow/sparrow.hpp>
+
 namespace tiledbsoma {
 
 using namespace tiledb;
@@ -1616,4 +1619,234 @@ Enumeration ManagedQuery::get_enumeration(
     ArrowSchema* value_schema) {
     return util::get_enumeration(ctx, arr, index_schema, value_schema);
 }
+
+std::optional<std::vector<std::pair<ArrowArray, ArrowSchema>>>
+ManagedQuery::fill_next() {
+    setup_read();
+
+    if (is_empty_query() && !query_submitted_) {
+        query_submitted_ = true;
+
+        return buffers_to_arrow();
+    }
+
+    if (is_complete(false)) {
+        return std::nullopt;
+    }
+
+    query_submitted_ = true;
+    query_future_ = std::async(std::launch::async, [&]() {
+        LOG_DEBUG("[ManagedQuery] submit thread start");
+        try {
+            query_->submit();
+        } catch (const std::exception& e) {
+            return StatusAndException(false, e.what());
+        }
+        LOG_DEBUG("[ManagedQuery] submit thread done");
+        return StatusAndException(true, "success");
+    });
+
+    if (query_future_.valid()) {
+        LOG_DEBUG(fmt::format("[ManagedQuery] [{}] Waiting for query", name_));
+        query_future_.wait();
+        LOG_DEBUG(
+            fmt::format("[ManagedQuery] [{}] Done waiting for query", name_));
+
+        auto retval = query_future_.get();
+        if (!retval.succeeded()) {
+            throw TileDBSOMAError(fmt::format(
+                "[ManagedQuery] [{}] Query FAILED: {}",
+                name_,
+                retval.message()));
+        }
+
+    } else {
+        throw TileDBSOMAError(
+            fmt::format("[ManagedQuery] [{}] 'query_future_' invalid", name_));
+    }
+
+    auto status = query_->query_status();
+
+    if (status == Query::Status::FAILED) {
+        throw TileDBSOMAError(
+            fmt::format("[ManagedQuery] [{}] Query FAILED", name_));
+    }
+
+    // If the query was ever incomplete, the result buffers contents are not
+    // complete.
+    if (status == Query::Status::INCOMPLETE) {
+        results_complete_ = false;
+    } else if (status == Query::Status::COMPLETE) {
+        results_complete_ = true;
+    }
+
+    // Update ColumnBuffer size to match query results
+    size_t num_cells = 0;
+    for (auto& name : buffers_->names()) {
+        num_cells = buffers_->at(name)->update_size(*query_);
+        LOG_DEBUG(fmt::format(
+            "[ManagedQuery] [{}] Buffer {} cells={}", name_, name, num_cells));
+    }
+    total_num_cells_ += num_cells;
+
+    // TODO: retry the query with larger buffers
+    if (status == Query::Status::INCOMPLETE && !num_cells) {
+        throw TileDBSOMAError(
+            fmt::format("[ManagedQuery] [{}] Buffers are too small.", name_));
+    }
+
+    return buffers_to_arrow();
+}
+
+std::vector<std::pair<ArrowArray, ArrowSchema>>
+ManagedQuery::buffers_to_arrow() {
+    std::vector<std::pair<ArrowArray, ArrowSchema>> arrays;
+    for (const auto& column : columns_) {
+        auto buffer = buffers_->at(column);
+
+        auto validity = buffer->is_nullable() ?
+                            sparrow::dynamic_bitset<uint8_t>(
+                                buffer->validity()) :
+                            sparrow::dynamic_bitset<uint8_t>();
+
+        switch (buffer->type()) {
+            case TILEDB_INT8:
+                arrays.push_back(sparrow::extract_arrow_structures(
+                    sparrow::primitive_array<int8_t>(
+                        sparrow::u8_buffer<int8_t>(buffer->data<int8_t>()),
+                        buffer->size(),
+                        std::move(validity),
+                        buffer->name())));
+                break;
+            case TILEDB_UINT8:
+                arrays.push_back(sparrow::extract_arrow_structures(
+                    sparrow::primitive_array<uint8_t>(
+                        sparrow::u8_buffer<uint8_t>(buffer->data<uint8_t>()),
+                        buffer->size(),
+                        std::move(validity),
+                        buffer->name())));
+                break;
+            case TILEDB_INT16:
+                arrays.push_back(sparrow::extract_arrow_structures(
+                    sparrow::primitive_array<int16_t>(
+                        sparrow::u8_buffer<int16_t>(buffer->data<int16_t>()),
+                        buffer->size(),
+                        std::move(validity),
+                        buffer->name())));
+                break;
+            case TILEDB_UINT16:
+                arrays.push_back(sparrow::extract_arrow_structures(
+                    sparrow::primitive_array<uint16_t>(
+                        sparrow::u8_buffer<uint16_t>(buffer->data<uint16_t>()),
+                        buffer->size(),
+                        std::move(validity),
+                        buffer->name())));
+                break;
+            case TILEDB_INT32:
+                arrays.push_back(sparrow::extract_arrow_structures(
+                    sparrow::primitive_array<int32_t>(
+                        sparrow::u8_buffer<int32_t>(buffer->data<int32_t>()),
+                        buffer->size(),
+                        std::move(validity),
+                        buffer->name())));
+                break;
+            case TILEDB_UINT32:
+                arrays.push_back(sparrow::extract_arrow_structures(
+                    sparrow::primitive_array<uint32_t>(
+                        sparrow::u8_buffer<uint32_t>(buffer->data<uint32_t>()),
+                        buffer->size(),
+                        std::move(validity),
+                        buffer->name())));
+                break;
+            case TILEDB_INT64:
+                arrays.push_back(sparrow::extract_arrow_structures(
+                    sparrow::primitive_array<int64_t>(
+                        sparrow::u8_buffer<int64_t>(buffer->data<int64_t>()),
+                        buffer->size(),
+                        std::move(validity),
+                        buffer->name())));
+                break;
+            case TILEDB_UINT64:
+                arrays.push_back(sparrow::extract_arrow_structures(
+                    sparrow::primitive_array<uint64_t>(
+                        sparrow::u8_buffer<uint64_t>(buffer->data<uint64_t>()),
+                        buffer->size(),
+                        std::move(validity),
+                        buffer->name())));
+                break;
+            case TILEDB_FLOAT32:
+                arrays.push_back(sparrow::extract_arrow_structures(
+                    sparrow::primitive_array<float_t>(
+                        sparrow::u8_buffer<float_t>(buffer->data<float_t>()),
+                        buffer->size(),
+                        std::move(validity),
+                        buffer->name())));
+                break;
+            case TILEDB_FLOAT64:
+                arrays.push_back(sparrow::extract_arrow_structures(
+                    sparrow::primitive_array<double_t>(
+                        sparrow::u8_buffer<double_t>(buffer->data<double_t>()),
+                        buffer->size(),
+                        std::move(validity),
+                        buffer->name())));
+                break;
+            case TILEDB_CHAR:
+            case TILEDB_STRING_ASCII:
+            case TILEDB_STRING_UTF8:
+                arrays.push_back(
+                    sparrow::extract_arrow_structures(sparrow::big_string_array(
+                        sparrow::u8_buffer<uint8_t>(buffer->data<uint8_t>()),
+                        sparrow::u8_buffer<int64_t>(buffer->offsets()),
+                        std::move(validity),
+                        buffer->name())));
+                break;
+            case TILEDB_BLOB:
+            case TILEDB_GEOM_WKB:
+                arrays.push_back(
+                    sparrow::extract_arrow_structures(sparrow::big_binary_array(
+                        sparrow::u8_buffer<uint8_t>(buffer->data<uint8_t>()),
+                        sparrow::u8_buffer<int64_t>(buffer->offsets()),
+                        std::move(validity),
+                        buffer->name())));
+                break;
+            case TILEDB_DATETIME_SEC:
+                arrays.push_back(sparrow::extract_arrow_structures(
+                    sparrow::timestamp_array<sparrow::timestamp_second>(
+                        date::locate_zone("America/New_York"),
+                        sparrow::u8_buffer<int64_t>(buffer->data<int64_t>()),
+                        std::move(validity),
+                        buffer->name())));
+                break;
+            case TILEDB_DATETIME_MS:
+                arrays.push_back(sparrow::extract_arrow_structures(
+                    sparrow::timestamp_array<sparrow::timestamp_millisecond>(
+                        date::locate_zone("America/New_York"),
+                        sparrow::u8_buffer<int64_t>(buffer->data<int64_t>()),
+                        std::move(validity),
+                        buffer->name())));
+                break;
+            case TILEDB_DATETIME_US:
+                arrays.push_back(sparrow::extract_arrow_structures(
+                    sparrow::timestamp_array<sparrow::timestamp_microsecond>(
+                        date::locate_zone("America/New_York"),
+                        sparrow::u8_buffer<int64_t>(buffer->data<int64_t>()),
+                        std::move(validity),
+                        buffer->name())));
+                break;
+            case TILEDB_DATETIME_NS:
+                arrays.push_back(sparrow::extract_arrow_structures(
+                    sparrow::timestamp_array<sparrow::timestamp_nanosecond>(
+                        date::locate_zone("America/New_York"),
+                        sparrow::u8_buffer<int64_t>(buffer->data<int64_t>()),
+                        std::move(validity),
+                        buffer->name())));
+                break;
+            default:
+                throw std::runtime_error("");
+        }
+    }
+
+    return arrays;
+}
+
 };  // namespace tiledbsoma

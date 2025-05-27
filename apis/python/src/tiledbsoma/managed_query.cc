@@ -98,13 +98,32 @@ void load_managed_query(py::module& m) {
             "next",
             [](ManagedQuery& mq) -> std::optional<py::object> {
                 // Release python GIL before reading data
+                // py::gil_scoped_release release;
+                // std::optional<std::shared_ptr<ArrayBuffers>> tbl;
+                // try {
+                //     tbl = mq.read_next();
+                // } catch (const std::exception& e) {
+                //     throw TileDBSOMAError(e.what());
+                // }
+                // // Acquire python GIL before accessing python objects
+                // py::gil_scoped_acquire acquire;
+
+                // if (!tbl) {
+                //     throw py::stop_iteration();
+                // }
+
+                // return to_table(tbl);
+
                 py::gil_scoped_release release;
-                std::optional<std::shared_ptr<ArrayBuffers>> tbl;
+
+                std::optional<std::vector<std::pair<ArrowArray, ArrowSchema>>>
+                    tbl;
                 try {
-                    tbl = mq.read_next();
+                    tbl = mq.fill_next();
                 } catch (const std::exception& e) {
                     throw TileDBSOMAError(e.what());
                 }
+
                 // Acquire python GIL before accessing python objects
                 py::gil_scoped_acquire acquire;
 
@@ -112,9 +131,8 @@ void load_managed_query(py::module& m) {
                     throw py::stop_iteration();
                 }
 
-                return to_table(tbl);
+                return to_table(tbl.value());
             })
-
         .def(
             "set_array_data",
             [](ManagedQuery& mq, py::handle py_batch) {

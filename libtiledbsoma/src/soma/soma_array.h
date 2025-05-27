@@ -71,7 +71,7 @@ using namespace tiledb;
 
 using StatusAndReason = std::pair<bool, std::string>;
 
-class SOMAArray : public SOMAObject {
+class __attribute__((visibility("default"))) SOMAArray : public SOMAObject {
    public:
     friend class ManagedQuery;
 

@@ -219,6 +219,28 @@ std::optional<py::object> to_table(
     return std::nullopt;
 }
 
+std::optional<py::object> to_table(
+    const std::vector<std::pair<ArrowArray, ArrowSchema>>& arrays) {
+    auto pa = py::module::import("pyarrow");
+    auto pa_array_import = pa.attr("Array").attr("_import_from_c");
+    auto pa_dtype_import = pa.attr("DataType").attr("_import_from_c");
+    auto pa_table_from_arrays = pa.attr("Table").attr("from_arrays");
+
+    py::list array_list;
+    py::list field_list;
+
+    for (auto& [array, schema] : arrays) {
+        auto nullable = (schema.flags & ARROW_FLAG_NULLABLE) != 0;
+        auto name = std::string(schema.name);
+        auto dtype = pa_dtype_import(py::capsule(&schema));
+        array_list.append(pa_array_import(py::capsule(&array), dtype));
+        field_list.append(pa.attr("field")(name, dtype, nullable));
+    }
+
+    return pa_table_from_arrays(
+        array_list, "schema"_a = pa.attr("schema")(field_list));
+}
+
 py::dict meta(std::map<std::string, MetadataValue> metadata_mapping) {
     py::dict results;
 

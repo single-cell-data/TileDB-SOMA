@@ -308,6 +308,10 @@ class ManagedQuery {
 
     std::optional<std::shared_ptr<ArrayBuffers>> read_next();
 
+    std::optional<std::vector<std::pair<ArrowArray, ArrowSchema>>> fill_next();
+
+    std::vector<std::pair<ArrowArray, ArrowSchema>> buffers_to_arrow();
+
     /**
      * @brief Check if the query is complete.
      *
