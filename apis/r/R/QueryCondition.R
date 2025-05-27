@@ -309,19 +309,19 @@ tiledbsoma_empty_query_condition <- function(somactx) {
 
 #' Initialize a 'tiledbsoma_query_condition' object
 #'
-#' Initializes (and possibly allocates) a query condition object using a
+#' Initializes (and possibly allocates) a query-condition object using a
 #' triplet of attribute name, comparison value, and operator.  Six types of
-#' conditions are supported, they all take a single scalar comparison argument
+#' conditions are supported. They all take a single scalar comparison argument
 #' and attribute to compare against. At present only integer or numeric
 #' attribute comparisons are implemented.
 #'
 #' @param attr_name A character value with the scheme attribute name
 #' @param value A scalar value that the attribute is compared against
 #' @param arrow_type_name A character value with the TileDB data type of the
-#' attribute column, for example 'float' or 'int32'
+#' attribute column, for example 'float' or 'int32'.
 #'
 #' @param op_name A character value with the comparison operation. This must be
-#' one of 'LT', 'LE', 'GT', 'GE', 'EQ', 'NE'
+#' one of 'LT', 'LE', 'GT', 'GE', 'EQ', 'NE'.
 #' @param qc A 'tiledbsoma_query_condition' object to be initialized by
 #' this call
 #'
@@ -368,7 +368,7 @@ tiledbsoma_query_condition_from_triple <- function(
 #' @param rhs A 'tiledbsoma_query_condition' object on the right-hand side
 #' of the relation
 #' @param op_name A character value with the relation, which must be one of
-#' 'AND', 'OR' or 'NOT'
+#' 'AND', 'OR', or 'NOT'
 #' @param somactx SOMAContext pointer
 #'
 #' @return The combined 'tiledbsoma_query_condition' object

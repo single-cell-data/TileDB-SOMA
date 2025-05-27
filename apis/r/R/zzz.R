@@ -14,7 +14,7 @@ NULL
 
 #' Import Helper
 #'
-#' \code{R CMD check} tries to check use of all imported dependencies; however
+#' \code{R CMD check} tries to check use of all imported dependencies; however,
 #' it sometimes misses, such as in R6 methods. This function exists to satiate
 #' \code{R CMD check} by showing usage of imported dependencies
 #'
