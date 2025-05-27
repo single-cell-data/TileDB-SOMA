@@ -104,24 +104,27 @@ write_soma.Hits <- function(
 #' @inheritParams write_soma
 #' @inheritParams write_soma_objects
 #' @param ms_name Name for resulting measurement; defaults to
-#' \code{\link[SingleCellExperiment]{mainExpName}(x)}
+#' \code{\link[SingleCellExperiment]{mainExpName}(x)}.
 #'
 #' @inherit write_soma.SummarizedExperiment return sections
 #'
 #' @section Writing Reduced Dimensions:
 #' Reduced dimensions are written out as
-#' \link[tiledbsoma:SOMASparseNDArray]{sparse matrices} within the `obsm` group
-#' of \code{\link[tiledbsoma:SOMAMeasurement]{measurement}} names `ms_name`
+#' \link[tiledbsoma:SOMASparseNDArray]{sparse matrices} within the \code{obsm}
+#' group of \code{\link[tiledbsoma:SOMAMeasurement]{measurement}}
+#' named \code{ms_name}.
 #'
 #' @section Writing Column Pairs:
 #' Column-wise relationship matrices are written out as
-#' \link[tiledbsoma:SOMASparseNDArray]{sparse matrices} within the `obsp` group
-#' of \code{\link[tiledbsoma:SOMAMeasurement]{measurement}} names `ms_name`
+#' \link[tiledbsoma:SOMASparseNDArray]{sparse matrices} within the
+#' \code{obsp} group of \code{\link[tiledbsoma:SOMAMeasurement]{measurement}}
+#' named \code{ms_name}.
 #'
 #' @section Writing Row Pairs:
 #' Row-wise relationship matrices are written out as
-#' \link[tiledbsoma:SOMASparseNDArray]{sparse matrices} within the `varp` group
-#' of \code{\link[tiledbsoma:SOMAMeasurement]{measurement}} names `ms_name`
+#' \link[tiledbsoma:SOMASparseNDArray]{sparse matrices} within the
+#' \code{varp} group of \code{\link[tiledbsoma:SOMAMeasurement]{measurement}}
+#' named \code{ms_name}.
 #'
 #' @method write_soma SingleCellExperiment
 #' @export
@@ -321,27 +324,27 @@ write_soma.SingleCellExperiment <- function(
 #'
 #' @inheritParams write_soma
 #' @inheritParams write_soma_objects
-#' @param ms_name Name for resulting measurement
+#' @param ms_name Name for resulting measurement.
 #'
 #' @inherit write_soma return
 #'
-#' @section Writing `colData`:
-#' `colData` is written out as a
-#' \link[tiledbsoma:SOMADataFrame]{data frame} called \dQuote{`obs`} at
-#' the \code{\link[tiledbsoma:SOMAExperiment]{experiment}} level
+#' @section Writing \code{colData}:
+#' \code{colData} is written out as a
+#' \link[tiledbsoma:SOMADataFrame]{data frame} called \dQuote{\code{obs}} at
+#' the \code{\link[tiledbsoma:SOMAExperiment]{experiment}} level.
 #'
 #' @section Writing Assay Matrices:
 #' Each \link[SummarizedExperiment:assay]{assay matrix} is written out as a
-#' \link[tiledbsoma:SOMASparseNDArray]{sparse matrix} within the `X` group of
-#' \code{\link[tiledbsoma:SOMAMeasurement]{measurement}} names `ms_name`. Names
-#' for assay matrices within `X` are taken from the
+#' \link[tiledbsoma:SOMASparseNDArray]{sparse matrix} within the \code{X} group
+#' of \code{\link[tiledbsoma:SOMAMeasurement]{measurement}} named
+#' \code{ms_name}. Names for assay matrices within \code{X} are taken from the
 #' \link[SummarizedExperiment:assayNames]{assay names}. Assay matrices are
-#' transposed (samples as rows) prior to writing
+#' transposed (samples as rows) prior to writing.
 #'
-#' @section Writing `rowData`:
-#' `rowData` is written out as a
-#' \link[tiledbsoma:SOMADataFrame]{data frame} called \dQuote{`var`} at
-#' the \code{\link[tiledbsoma:SOMAMeasurement]{measurement}} level
+#' @section Writing \code{rowData}:
+#' \code{rowData} is written out as a
+#' \link[tiledbsoma:SOMADataFrame]{data frame} called \dQuote{\code{var}} at
+#' the \code{\link[tiledbsoma:SOMAMeasurement]{measurement}} level.
 #'
 #' @method write_soma SummarizedExperiment
 #' @export

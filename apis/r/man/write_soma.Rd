@@ -7,32 +7,32 @@
 write_soma(x, uri, ..., platform_config = NULL, tiledbsoma_ctx = NULL)
 }
 \arguments{
-\item{x}{An object}
+\item{x}{An object.}
 
-\item{uri}{URI for resulting SOMA object}
+\item{uri}{URI for resulting SOMA object.}
 
 \item{...}{Arguments passed to other methods}
 
 \item{platform_config}{Optional \link[tiledbsoma:PlatformConfig]{platform
-configuration}}
+configuration}.}
 
-\item{tiledbsoma_ctx}{Optional \code{\link{SOMATileDBContext}}}
+\item{tiledbsoma_ctx}{Optional \code{\link{SOMATileDBContext}}.}
 }
 \value{
 The URI to the resulting \code{\link{SOMAExperiment}} generated from
-the data contained in \code{x}
+the data contained in \code{x}.
 }
 \description{
 Convert \R objects to their appropriate SOMA counterpart
 function and methods can be written for it to provide a high-level
-\R \eqn{\rightarrow} SOMA interface
+\R \eqn{\rightarrow} SOMA interface.
 }
 \section{Known methods}{
 
 \itemize{
-\item \link[tiledbsoma:write_soma.Seurat]{Writing Seurat objects}
-\item \link[tiledbsoma:write_soma.SummarizedExperiment]{Writing SummarizedExperiment objects}
-\item \link[tiledbsoma:write_soma.SingleCellExperiment]{Writing SingleCellExperiment objects}
+\item \link[tiledbsoma:write_soma.Seurat]{Writing Seurat objects}.
+\item \link[tiledbsoma:write_soma.SummarizedExperiment]{Writing SummarizedExperiment objects}.
+\item \link[tiledbsoma:write_soma.SingleCellExperiment]{Writing SingleCellExperiment objects}.
 }
 }
 

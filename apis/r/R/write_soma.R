@@ -2,23 +2,23 @@
 #'
 #' Convert \R objects to their appropriate SOMA counterpart
 #' function and methods can be written for it to provide a high-level
-#' \R \eqn{\rightarrow} SOMA interface
+#' \R \eqn{\rightarrow} SOMA interface.
 #'
-#' @param x An object
-#' @param uri URI for resulting SOMA object
+#' @param x An object.
+#' @param uri URI for resulting SOMA object.
 #' @template param-dots-method
 #' @param platform_config Optional \link[tiledbsoma:PlatformConfig]{platform
-#' configuration}
-#' @param tiledbsoma_ctx Optional \code{\link{SOMATileDBContext}}
+#' configuration}.
+#' @param tiledbsoma_ctx Optional \code{\link{SOMATileDBContext}}.
 #'
 #' @return The URI to the resulting \code{\link{SOMAExperiment}} generated from
-#' the data contained in \code{x}
+#' the data contained in \code{x}.
 #'
 #' @section Known methods:
 #' \itemize{
-#'  \item \link[tiledbsoma:write_soma.Seurat]{Writing Seurat objects}
-#'  \item \link[tiledbsoma:write_soma.SummarizedExperiment]{Writing SummarizedExperiment objects}
-#'  \item \link[tiledbsoma:write_soma.SingleCellExperiment]{Writing SingleCellExperiment objects}
+#'  \item \link[tiledbsoma:write_soma.Seurat]{Writing Seurat objects}.
+#'  \item \link[tiledbsoma:write_soma.SummarizedExperiment]{Writing SummarizedExperiment objects}.
+#'  \item \link[tiledbsoma:write_soma.SingleCellExperiment]{Writing SingleCellExperiment objects}.
 #' }
 #'
 #' @export
@@ -31,23 +31,24 @@ write_soma <- function(x, uri, ..., platform_config = NULL, tiledbsoma_ctx = NUL
 
 #' Write R Objects to SOMA
 #'
-#' Various helpers to write R objects to SOMA
+#' Various helpers to write R objects to SOMA.
 #'
 #' @inheritParams write_soma
 #' @param soma_parent The parent \link[tiledbsoma:SOMACollection]{collection}
 #' (eg. a \code{\link{SOMACollection}}, \code{\link{SOMAExperiment}}, or
-#' \code{\link{SOMAMeasurement}})
+#' \code{\link{SOMAMeasurement}}).
 #' @param ingest_mode Ingestion mode when creating the SOMA; choose from:
 #' \itemize{
-#'  \item \dQuote{\code{write}}: create a new SOMA and error if it already exists
+#'  \item \dQuote{\code{write}}: create a new SOMA and error if it already
+#'   exists.
 #'  \item \dQuote{\code{resume}}: attempt to create a new SOMA; if it already
-#'   exists, simply open it for writing
+#'   exists, simply open it for writing.
 #' }
 #' @param relative \strong{\[Internal use only\]} Is \code{uri}
-#' relative or absolute
+#' relative or absolute.
 #'
 #' @return The resulting SOMA \link[tiledbsoma:SOMASparseNDArray]{array} or
-#' \link[tiledbsoma:SOMADataFrame]{data frame}, returned opened for write
+#' \link[tiledbsoma:SOMADataFrame]{data frame}, returned opened for write.
 #'
 #' @name write_soma_objects
 #' @rdname write_soma_objects
@@ -64,7 +65,7 @@ NULL
 #' additionally one bit of array-level metadata is added:
 #' \itemize{
 #'  \item \dQuote{\code{soma_uns_outgest_hint}} with a value of
-#'   \dQuote{\code{array_1d}}
+#'   \dQuote{\code{array_1d}}.
 #' }
 #'
 #' @method write_soma character
@@ -108,12 +109,12 @@ write_soma.character <- function(
 #' @param df_index The name of the column in \code{x} with the index
 #' (row names); by default, will automatically add the row names of \code{x}
 #' to an attribute named \dQuote{\code{index}} to the resulting
-#' \code{\link{SOMADataFrame}}
+#' \code{\link{SOMADataFrame}}.
 #' @param index_column_names Names of columns in \code{x} to index in the
-#' resulting SOMA object
+#' resulting SOMA object.
 #' @param key Optionally register the resulting \code{SOMADataFrame} in
 #' \code{soma_parent} as \code{key}; pass \code{NULL} to prevent registration
-#' to handle manually
+#' to handle manually.
 #'
 #' @name write_soma_objects
 #' @rdname write_soma_objects
@@ -125,19 +126,16 @@ write_soma.character <- function(
 #' \itemize{
 #'  \item row names are added to a column in \code{x} entitled
 #'   \dQuote{\code{index}}, \dQuote{\code{_index}}, or a random name if
-#'   either option is already present in \code{x}
+#'   either option is already present in \code{x}.
 #'  \item a column \dQuote{\code{soma_joinid}} will be automatically
 #'   added going from \code{[0, nrow(x) - 1]} encoded as
-#'   \link[bit64:integer64]{64-bit integers}
-#  \item all columns not containing \link[base:is.atomic]{atomic} types
-#   (excluding \link[base:factor]{factors}, \code{\link[base]{complex}es},
-#   and \code{\link[base]{raw}s}) will be removed
+#'   \link[bit64:integer64]{64-bit integers}.
 #' }
 #' The array type for each column will be determined by
 #' \code{\link[arrow:infer_type]{arrow::infer_type}()}; if any column contains
 #' a \link[base:is.atomic]{non-atomic} type (excluding
 #' \link[base:factor]{factors}, \code{\link[base]{complex}es},and
-#' \code{\link[base]{raw}s}), the code will error out
+#' \code{\link[base]{raw}s}), the code will error out.
 #'
 #' @method write_soma data.frame
 #' @export
@@ -296,13 +294,14 @@ write_soma.data.frame <- function(
 }
 
 #' @param sparse Create a \link[tiledbsoma:SOMASparseNDArray]{sparse} or
-#' \link[tiledbsoma:SOMADenseNDArray]{dense} array from \code{x}
+#' \link[tiledbsoma:SOMADenseNDArray]{dense} array from \code{x}.
 #' @param type \link[arrow:data-type]{Arrow type} for encoding \code{x}
 #' (eg. \code{\link[arrow:data-type]{arrow::int32}()}); by default, attempts to
-#' determine arrow type with \code{\link[arrow:infer_type]{arrow::infer_type}()}
-#' @param transpose Transpose \code{x} before writing
+#' determine arrow type with
+#' \code{\link[arrow:infer_type]{arrow::infer_type}()}.
+#' @param transpose Transpose \code{x} before writing.
 #' @param shape A vector of two positive integers giving the on-disk shape of
-#' the array; defaults to \code{dim(x)}
+#' the array; defaults to \code{dim(x)}.
 #'
 #'
 #' @name write_soma_objects
@@ -312,7 +311,7 @@ write_soma.data.frame <- function(
 #' Dense matrices are written as two-dimensional
 #' \link[tiledbsoma:SOMADenseNDArray]{dense arrays}. The overall shape of the
 #' array is determined by \code{dim(x)} and the type of the array is determined
-#' by \code{type} or \code{\link[arrow:infer_type]{arrow::infer_type}(x)}
+#' by \code{type} or \code{\link[arrow:infer_type]{arrow::infer_type}(x)}.
 #'
 #' @method write_soma matrix
 #' @export
@@ -459,14 +458,14 @@ write_soma.Matrix <- write_soma.matrix
 #' \href{https://en.wikipedia.org/wiki/Sparse_matrix#Coordinate_list_(COO)}{COO format}:
 #' \itemize{
 #'  \item the row indices (\dQuote{\code{i}}) are written out as
-#'   \dQuote{\code{soma_dim_0}}
+#'   \dQuote{\code{soma_dim_0}}.
 #'  \item the column indices (\dQuote{\code{j}}) are written out as
-#'   \dQuote{\code{soma_dim_1}}
+#'   \dQuote{\code{soma_dim_1}}.
 #'  \item the non-zero values (\dQuote{\code{x}}) are written out as
-#'   \dQuote{\code{soma_data}}
+#'   \dQuote{\code{soma_data}}.
 #' }
 #' The array type is determined by \code{type}, or
-#' \code{\link[arrow:infer_type]{arrow::infer_type}(slot(x, "x"))}
+#' \code{\link[arrow:infer_type]{arrow::infer_type}(slot(x, "x"))}.
 #'
 #' @method write_soma TsparseMatrix
 #' @export
@@ -607,21 +606,21 @@ write_soma.TsparseMatrix <- function(
 #' \code{x}'s existing names. The potential names, in order of preference, are:
 #' \itemize{
 #'  \item \dQuote{\code{obs_id}} or \dQuote{\code{var_id}},
-#'    depending on \code{axis}
-#'  \item \code{alt}
-#'  \item \code{paste0(prefix, "obs_id")} or \code{paste0(prefix, "var_id")}
-#'  \item \code{paste(prefix, alt, sep = "_")}
+#'    depending on \code{axis}.
+#'  \item \code{alt}.
+#'  \item \code{paste0(prefix, "obs_id")} or \code{paste0(prefix, "var_id")}.
+#'  \item \code{paste(prefix, alt, sep = "_")}.
 #' }
 #'
 #' @inheritParams SeuratObject::RandomName
-#' @param x A \code{data.frame}
-#' @param alt An alternate index name
+#' @param x A \code{data.frame}.
+#' @param alt An alternate index name.
 #' @param axis Either \dQuote{\code{obs}} or \dQuote{\code{var}} for
-#' default index name
-#' @param prefix Prefix for alternate indexes
+#' default index name.
+#' @param prefix Prefix for alternate indexes.
 #'
 #' @return \code{x} with the row names added as an index and an attribute named
-#' \dQuote{\code{index}} naming the index column
+#' \dQuote{\code{index}} naming the index column.
 #'
 #' @keywords internal
 #'

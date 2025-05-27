@@ -112,61 +112,63 @@
 )
 }
 \arguments{
-\item{x}{An object}
+\item{x}{An object.}
 
-\item{uri}{URI for resulting SOMA object}
+\item{uri}{URI for resulting SOMA object.}
 
 \item{soma_parent}{The parent \link[tiledbsoma:SOMACollection]{collection}
 (eg. a \code{\link{SOMACollection}}, \code{\link{SOMAExperiment}}, or
-\code{\link{SOMAMeasurement}})}
+\code{\link{SOMAMeasurement}}).}
 
 \item{df_index}{The name of the column in \code{x} with the index
 (row names); by default, will automatically add the row names of \code{x}
 to an attribute named \dQuote{\code{index}} to the resulting
-\code{\link{SOMADataFrame}}}
+\code{\link{SOMADataFrame}}.}
 
 \item{index_column_names}{Names of columns in \code{x} to index in the
-resulting SOMA object}
+resulting SOMA object.}
 
 \item{...}{Arguments passed to other methods}
 
 \item{ingest_mode}{Ingestion mode when creating the SOMA; choose from:
 \itemize{
-\item \dQuote{\code{write}}: create a new SOMA and error if it already exists
+\item \dQuote{\code{write}}: create a new SOMA and error if it already
+exists.
 \item \dQuote{\code{resume}}: attempt to create a new SOMA; if it already
-exists, simply open it for writing
+exists, simply open it for writing.
 }}
 
 \item{platform_config}{Optional \link[tiledbsoma:PlatformConfig]{platform
-configuration}}
+configuration}.}
 
-\item{tiledbsoma_ctx}{Optional \code{\link{SOMATileDBContext}}}
+\item{tiledbsoma_ctx}{Optional \code{\link{SOMATileDBContext}}.}
 
 \item{relative}{\strong{[Internal use only]} Is \code{uri}
-relative or absolute}
+relative or absolute.}
 
 \item{sparse}{Create a \link[tiledbsoma:SOMASparseNDArray]{sparse} or
-\link[tiledbsoma:SOMADenseNDArray]{dense} array from \code{x}}
+\link[tiledbsoma:SOMADenseNDArray]{dense} array from \code{x}.}
 
 \item{type}{\link[arrow:data-type]{Arrow type} for encoding \code{x}
 (eg. \code{\link[arrow:data-type]{arrow::int32}()}); by default, attempts to
-determine arrow type with \code{\link[arrow:infer_type]{arrow::infer_type}()}}
+determine arrow type with
+\code{\link[arrow:infer_type]{arrow::infer_type}()}.}
 
-\item{transpose}{Transpose \code{x} before writing}
+\item{transpose}{Transpose \code{x} before writing.}
 
 \item{key}{Optionally register the resulting \code{SOMADataFrame} in
 \code{soma_parent} as \code{key}; pass \code{NULL} to prevent registration
-to handle manually}
+to handle manually.}
 
 \item{shape}{A vector of two positive integers giving the on-disk shape of
-the array; defaults to \code{dim(x)}}
+the array; defaults to \code{dim(x)}.}
 }
 \value{
 The resulting SOMA \link[tiledbsoma:SOMASparseNDArray]{array} or
-\link[tiledbsoma:SOMADataFrame]{data frame}, returned opened for write
+\link[tiledbsoma:SOMADataFrame]{data frame}, returned opened for write.
 }
 \description{
-Various helpers to write R objects to SOMA
+Various helpers to write R objects to SOMA.
 }
 \section{Writing Character Arrays}{
 
@@ -175,7 +177,7 @@ Various helpers to write R objects to SOMA
 additionally one bit of array-level metadata is added:
 \itemize{
 \item \dQuote{\code{soma_uns_outgest_hint}} with a value of
-\dQuote{\code{array_1d}}
+\dQuote{\code{array_1d}}.
 }
 }
 
@@ -187,16 +189,16 @@ are applied to \code{x}:
 \itemize{
 \item row names are added to a column in \code{x} entitled
 \dQuote{\code{index}}, \dQuote{\code{_index}}, or a random name if
-either option is already present in \code{x}
+either option is already present in \code{x}.
 \item a column \dQuote{\code{soma_joinid}} will be automatically
 added going from \code{[0, nrow(x) - 1]} encoded as
-\link[bit64:integer64]{64-bit integers}
+\link[bit64:integer64]{64-bit integers}.
 }
 The array type for each column will be determined by
 \code{\link[arrow:infer_type]{arrow::infer_type}()}; if any column contains
 a \link[base:is.atomic]{non-atomic} type (excluding
 \link[base:factor]{factors}, \code{\link[base]{complex}es},and
-\code{\link[base]{raw}s}), the code will error out
+\code{\link[base]{raw}s}), the code will error out.
 }
 
 \section{Writing Dense Matrices}{
@@ -204,7 +206,7 @@ a \link[base:is.atomic]{non-atomic} type (excluding
 Dense matrices are written as two-dimensional
 \link[tiledbsoma:SOMADenseNDArray]{dense arrays}. The overall shape of the
 array is determined by \code{dim(x)} and the type of the array is determined
-by \code{type} or \code{\link[arrow:infer_type]{arrow::infer_type}(x)}
+by \code{type} or \code{\link[arrow:infer_type]{arrow::infer_type}(x)}.
 }
 
 \section{Writing Sparse Matrices}{
@@ -214,14 +216,14 @@ Sparse matrices are written out as two-dimensional
 \href{https://en.wikipedia.org/wiki/Sparse_matrix#Coordinate_list_(COO)}{COO format}:
 \itemize{
 \item the row indices (\dQuote{\code{i}}) are written out as
-\dQuote{\code{soma_dim_0}}
+\dQuote{\code{soma_dim_0}}.
 \item the column indices (\dQuote{\code{j}}) are written out as
-\dQuote{\code{soma_dim_1}}
+\dQuote{\code{soma_dim_1}}.
 \item the non-zero values (\dQuote{\code{x}}) are written out as
-\dQuote{\code{soma_data}}
+\dQuote{\code{soma_data}}.
 }
 The array type is determined by \code{type}, or
-\code{\link[arrow:infer_type]{arrow::infer_type}(slot(x, "x"))}
+\code{\link[arrow:infer_type]{arrow::infer_type}(slot(x, "x"))}.
 }
 
 \examples{
