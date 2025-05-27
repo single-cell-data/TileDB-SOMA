@@ -5,7 +5,7 @@
 \title{SOMA Blockwise Read Iterator for Sparse Matrices}
 \description{
 Class that allows for blockwise read iteration of SOMA reads
-as sparse matrices
+as sparse matrices.
 }
 \examples{
 \dontshow{if (requireNamespace("withr", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
@@ -34,7 +34,7 @@ exp$close()
 \section{Active bindings}{
 \if{html}{\out{<div class="r6-active-bindings">}}
 \describe{
-\item{\code{repr}}{Representation of the sparse matrix to return}
+\item{\code{repr}}{Representation of the sparse matrix to return.}
 }
 \if{html}{\out{</div>}}
 }
@@ -58,7 +58,7 @@ exp$close()
 \if{html}{\out{<a id="method-BlockwiseSparseReadIter-new"></a>}}
 \if{latex}{\out{\hypertarget{method-BlockwiseSparseReadIter-new}{}}}
 \subsection{Method \code{new()}}{
-Create
+Create.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{BlockwiseSparseReadIter$new(
   sr,
@@ -115,14 +115,14 @@ disable re-indexing
 \if{html}{\out{<a id="method-BlockwiseSparseReadIter-concat"></a>}}
 \if{latex}{\out{\hypertarget{method-BlockwiseSparseReadIter-concat}{}}}
 \subsection{Method \code{concat()}}{
-Concatenate the remainder of the blockwise iterator
+Concatenate the remainder of the blockwise iterator.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{BlockwiseSparseReadIter$concat()}\if{html}{\out{</div>}}
 }
 
 \subsection{Returns}{
 A sparse matrix (determined by \code{self$repr}) with
-the remainder of the iterator
+the remainder of the iterator.
 }
 }
 \if{html}{\out{<hr>}}

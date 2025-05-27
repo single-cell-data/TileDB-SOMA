@@ -6,7 +6,7 @@
 \description{
 \code{TableReadIter} is a class that allows for iteration over
 a reads on \link{SOMASparseNDArray} and \link{SOMADataFrame}.
-Iteration chunks are retrieved as an Arrow \link[arrow]{Table}
+Iteration chunks are retrieved as an Arrow \link[arrow]{Table}.
 }
 \examples{
 \dontshow{if (requireNamespace("withr", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
@@ -51,13 +51,13 @@ exp$close()
 \if{html}{\out{<a id="method-TableReadIter-concat"></a>}}
 \if{latex}{\out{\hypertarget{method-TableReadIter-concat}{}}}
 \subsection{Method \code{concat()}}{
-Concatenate remainder of iterator
+Concatenate remainder of iterator.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{TableReadIter$concat()}\if{html}{\out{</div>}}
 }
 
 \subsection{Returns}{
-An Arrow \code{\link[arrow:Table]{Table}}
+An Arrow \code{\link[arrow:Table]{Table}}.
 }
 }
 \if{html}{\out{<hr>}}

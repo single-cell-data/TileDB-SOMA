@@ -1,7 +1,7 @@
 #' SOMA Read Iterator Over Sparse Matrices
 #'
 #' @description \code{SparseReadIter} is a class that allows for iteration over
-#' a reads on \link{SOMASparseNDArray}
+#' a reads on \link{SOMASparseNDArray}.
 #'
 #' @export
 #'
@@ -28,11 +28,11 @@ SparseReadIter <- R6::R6Class(
   inherit = ReadIter,
   public = list(
 
-    #' @description Create (lifecycle: maturing)
+    #' @description Create (lifecycle: maturing).
     #'
-    #' @param sr Soma reader pointer
-    #' @param shape Shape of the full matrix
-    #' @param zero_based Logical, if TRUE will make iterator for
+    #' @param sr Soma reader pointer.
+    #' @param shape Shape of the full matrix.
+    #' @param zero_based Logical, if \code{TRUE} will make iterator for
     #' Matrix::\link[Matrix]{dgTMatrix-class}
     #' otherwise \link{matrixZeroBasedView}.
     #'
@@ -53,7 +53,7 @@ SparseReadIter <- R6::R6Class(
 
     #' @description  Concatenate remainder of iterator.
     #'
-    #' @return \link{matrixZeroBasedView} of Matrix::\link[Matrix]{sparseMatrix}
+    #' @return \link{matrixZeroBasedView} of Matrix::\link[Matrix]{sparseMatrix}.
     #'
     concat = function() soma_array_to_sparse_matrix_concat(
       self,

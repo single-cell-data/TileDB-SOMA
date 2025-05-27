@@ -1,6 +1,6 @@
 #' SOMA Read Iterator Base class
 #'
-#' Virtual class that allows for read iteration of SOMA reads
+#' Virtual class that allows for read iteration of SOMA reads.
 #'
 #' @keywords internal
 #'
@@ -14,16 +14,16 @@ ReadIter <- R6::R6Class(
   classname = "ReadIter",
   public = list(
 
-    #' @description Create (lifecycle: maturing)
+    #' @description Create (lifecycle: maturing).
     #'
-    #' @param sr soma read pointer
+    #' @param sr soma read pointer.
     #'
     initialize = function(sr) {
       private$soma_reader_pointer <- sr
     },
 
     #' @description @description Check if iterated read is complete or not
-    #' (lifecycle: maturing)
+    #' (lifecycle: maturing).
     #'
     #' @return logical
     #'
@@ -36,10 +36,10 @@ ReadIter <- R6::R6Class(
     },
 
     #' @description Read the next chunk of an iterated read. If read is
-    #' complete, returns \code{NULL} and raises warning (lifecycle: maturing)
+    #' complete, returns \code{NULL} and raises warning (lifecycle: maturing).
     #'
     #' @return \code{NULL} or one of \link[arrow:Table]{arrow::Table},
-    #' \link{matrixZeroBasedView}
+    #' \link{matrixZeroBasedView}.
     #'
     read_next = function() {
       if (is.null(private$soma_reader_pointer)) {
@@ -52,7 +52,7 @@ ReadIter <- R6::R6Class(
       return(private$.read_next())
     },
 
-    #' @description  Concatenate remainder of iterator
+    #' @description  Concatenate remainder of iterator.
     # to be refined in derived classes
     #
     concat = function() {

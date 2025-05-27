@@ -2,7 +2,7 @@
 #'
 #' @description \code{TableReadIter} is a class that allows for iteration over
 #' a reads on \link{SOMASparseNDArray} and \link{SOMADataFrame}.
-#' Iteration chunks are retrieved as an Arrow \link[arrow]{Table}
+#' Iteration chunks are retrieved as an Arrow \link[arrow]{Table}.
 #'
 #' @export
 #'
@@ -28,9 +28,9 @@ TableReadIter <- R6::R6Class(
   classname = "TableReadIter",
   inherit = ReadIter,
   public = list(
-    #' @description  Concatenate remainder of iterator
+    #' @description  Concatenate remainder of iterator.
     #'
-    #' @return An Arrow \code{\link[arrow:Table]{Table}}
+    #' @return An Arrow \code{\link[arrow:Table]{Table}}.
     #'
     concat = function() soma_array_to_arrow_table_concat(self)
   ),

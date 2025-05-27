@@ -5,7 +5,7 @@
 \title{SOMA Read Iterator Over Sparse Matrices}
 \description{
 \code{SparseReadIter} is a class that allows for iteration over
-a reads on \link{SOMASparseNDArray}
+a reads on \link{SOMASparseNDArray}.
 }
 \examples{
 \dontshow{if (requireNamespace("withr", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
@@ -50,7 +50,7 @@ exp$close()
 \if{html}{\out{<a id="method-SparseReadIter-new"></a>}}
 \if{latex}{\out{\hypertarget{method-SparseReadIter-new}{}}}
 \subsection{Method \code{new()}}{
-Create (lifecycle: maturing)
+Create (lifecycle: maturing).
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SparseReadIter$new(sr, shape, zero_based = FALSE)}\if{html}{\out{</div>}}
 }
@@ -58,11 +58,11 @@ Create (lifecycle: maturing)
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{sr}}{Soma reader pointer}
+\item{\code{sr}}{Soma reader pointer.}
 
-\item{\code{shape}}{Shape of the full matrix}
+\item{\code{shape}}{Shape of the full matrix.}
 
-\item{\code{zero_based}}{Logical, if TRUE will make iterator for
+\item{\code{zero_based}}{Logical, if \code{TRUE} will make iterator for
 Matrix::\link[Matrix]{dgTMatrix-class}
 otherwise \link{matrixZeroBasedView}.}
 }
@@ -79,7 +79,7 @@ Concatenate remainder of iterator.
 }
 
 \subsection{Returns}{
-\link{matrixZeroBasedView} of Matrix::\link[Matrix]{sparseMatrix}
+\link{matrixZeroBasedView} of Matrix::\link[Matrix]{sparseMatrix}.
 }
 }
 \if{html}{\out{<hr>}}

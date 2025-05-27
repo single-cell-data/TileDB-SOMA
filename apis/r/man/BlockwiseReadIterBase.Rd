@@ -4,7 +4,8 @@
 \alias{BlockwiseReadIterBase}
 \title{SOMA Blockwise Read Iterator Base Class}
 \description{
-Class that allows for blockwise read iteration of SOMA reads
+Virtual base class that allows for blockwise read iteration of
+SOMA reads.
 }
 \seealso{
 Derived classes: \code{\link{BlockwiseTableReadIter}},
@@ -17,20 +18,21 @@ Derived classes: \code{\link{BlockwiseTableReadIter}},
 \section{Active bindings}{
 \if{html}{\out{<div class="r6-active-bindings">}}
 \describe{
-\item{\code{array}}{The underlying SOMA array}
+\item{\code{array}}{The underlying SOMA array.}
 
-\item{\code{axis}}{The axis to iterate over in a blockwise fashion}
+\item{\code{axis}}{The axis to iterate over in a blockwise fashion.}
 
-\item{\code{axes_to_reindex}}{The axes to re-index}
+\item{\code{axes_to_reindex}}{The axes to re-index.}
 
-\item{\code{coords}}{A list of \code{\link{CoordsStrider}} objects}
+\item{\code{coords}}{A list of \code{\link{CoordsStrider}} objects.}
 
-\item{\code{coords_axis}}{The \code{\link{CoordsStrider}} for \code{axis}}
+\item{\code{coords_axis}}{The \code{\link{CoordsStrider}} for \code{axis}.}
 
-\item{\code{reindex_disable_on_axis}}{Additional axes that will not be re-indexed}
+\item{\code{reindex_disable_on_axis}}{Additional axes that will not be
+re-indexed.}
 
 \item{\code{reindexable}}{Shorthand to see if this iterator is poised to be
-re-indexed or not}
+re-indexed or not.}
 }
 \if{html}{\out{</div>}}
 }
@@ -54,7 +56,7 @@ re-indexed or not}
 \if{html}{\out{<a id="method-BlockwiseReadIterBase-new"></a>}}
 \if{latex}{\out{\hypertarget{method-BlockwiseReadIterBase-new}{}}}
 \subsection{Method \code{new()}}{
-Create
+Create.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{BlockwiseReadIterBase$new(
   sr,
@@ -97,13 +99,13 @@ disable re-indexing
 \if{html}{\out{<a id="method-BlockwiseReadIterBase-read_complete"></a>}}
 \if{latex}{\out{\hypertarget{method-BlockwiseReadIterBase-read_complete}{}}}
 \subsection{Method \code{read_complete()}}{
-Check if the iterated read is complete or not
+Check if the iterated read is complete or not.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{BlockwiseReadIterBase$read_complete()}\if{html}{\out{</div>}}
 }
 
 \subsection{Returns}{
-\code{TRUE} if read is complete, otherwise \code{FALSE}
+\code{TRUE} if read is complete, otherwise \code{FALSE}.
 }
 }
 \if{html}{\out{<hr>}}
@@ -112,13 +114,13 @@ Check if the iterated read is complete or not
 \subsection{Method \code{read_next()}}{
 Read the next chunk of the iterated read. If read
 is complete, throws an \code{iterationCompleteWarning} warning and
-returns \code{NULL}
+returns \code{NULL}.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{BlockwiseReadIterBase$read_next()}\if{html}{\out{</div>}}
 }
 
 \subsection{Returns}{
-\code{NULL} or the next blockwise chunk of the iterated read
+\code{NULL} or the next blockwise chunk of the iterated read.
 }
 }
 \if{html}{\out{<hr>}}

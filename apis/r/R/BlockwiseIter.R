@@ -1,6 +1,7 @@
 #' SOMA Blockwise Read Iterator Base Class
 #'
-#' @description Class that allows for blockwise read iteration of SOMA reads
+#' @description Virtual base class that allows for blockwise read iteration of
+#' SOMA reads.
 #'
 #' @keywords internal
 #'
@@ -13,7 +14,7 @@ BlockwiseReadIterBase <- R6::R6Class(
   classname = "BlockwiseReadIterBase",
   inherit = ReadIter,
   public = list(
-    #' @description Create
+    #' @description Create.
     #'
     #' @template param-blockwise-iter
     #' @template param-coords-iter
@@ -98,9 +99,9 @@ BlockwiseReadIterBase <- R6::R6Class(
         names(private$.reindexers)[i] <- dnames[ax]
       }
     },
-    #' @description Check if the iterated read is complete or not
+    #' @description Check if the iterated read is complete or not.
     #'
-    #' @return \code{TRUE} if read is complete, otherwise \code{FALSE}
+    #' @return \code{TRUE} if read is complete, otherwise \code{FALSE}.
     #'
     read_complete = function() {
       !self$coords_axis$has_next() ||
@@ -108,9 +109,9 @@ BlockwiseReadIterBase <- R6::R6Class(
     },
     #' @description Read the next chunk of the iterated read. If read
     #' is complete, throws an \code{iterationCompleteWarning} warning and
-    #' returns \code{NULL}
+    #' returns \code{NULL}.
     #'
-    #' @return \code{NULL} or the next blockwise chunk of the iterated read
+    #' @return \code{NULL} or the next blockwise chunk of the iterated read.
     #'
     read_next = function() {
       if (is.null(private$soma_reader_pointer)) {
@@ -127,13 +128,13 @@ BlockwiseReadIterBase <- R6::R6Class(
     }
   ),
   active = list(
-    #' @field array The underlying SOMA array
+    #' @field array The underlying SOMA array.
     #'
     array = function() private$.array,
-    #' @field axis The axis to iterate over in a blockwise fashion
+    #' @field axis The axis to iterate over in a blockwise fashion.
     #'
     axis = function() private$.axis,
-    #' @field axes_to_reindex The axes to re-index
+    #' @field axes_to_reindex The axes to re-index.
     #'
     axes_to_reindex = function() {
       ax <- seq(bit64::as.integer64(0L), self$array$ndim() - 1L)
@@ -146,20 +147,21 @@ BlockwiseReadIterBase <- R6::R6Class(
       }
       return(ax)
     },
-    #' @field coords A list of \code{\link{CoordsStrider}} objects
+    #' @field coords A list of \code{\link{CoordsStrider}} objects.
     #'
     coords = function() private$.coords,
-    #' @field coords_axis The \code{\link{CoordsStrider}} for \code{axis}
+    #' @field coords_axis The \code{\link{CoordsStrider}} for \code{axis}.
     #'
     coords_axis = function() {
       dname <- self$array$dimnames()[self$axis + 1L]
       return(self$coords[[dname]])
     },
-    #' @field reindex_disable_on_axis Additional axes that will not be re-indexed
+    #' @field reindex_disable_on_axis Additional axes that will not be
+    #' re-indexed.
     #'
     reindex_disable_on_axis = function() private$.reindex_disable_on_axis,
     #' @field reindexable Shorthand to see if this iterator is poised to be
-    #' re-indexed or not
+    #' re-indexed or not.
     #'
     reindexable = function() {
       length(self$axes_to_reindex) ||
@@ -249,7 +251,7 @@ BlockwiseReadIterBase <- R6::R6Class(
 #' SOMA Blockwise Read Iterator for Arrow Tables
 #'
 #' @description Class that allows for blockwise read iteration of SOMA reads
-#' as Arrow \code{\link[arrow]{Table}s}
+#' as Arrow \code{\link[arrow]{Table}s}.
 #'
 #' @keywords internal
 #'
@@ -277,9 +279,9 @@ BlockwiseTableReadIter <- R6::R6Class(
   classname = "BlockwiseTableReadIter",
   inherit = BlockwiseReadIterBase,
   public = list(
-    #' @description Concatenate the remainder of the blockwise iterator
+    #' @description Concatenate the remainder of the blockwise iterator.
     #'
-    #' @return An Arrow Table with the remainder of the iterator
+    #' @return An Arrow Table with the remainder of the iterator.
     #'
     concat = function() {
       if (self$reindexable) {
@@ -299,7 +301,7 @@ BlockwiseTableReadIter <- R6::R6Class(
 #' SOMA Blockwise Read Iterator for Sparse Matrices
 #'
 #' @description Class that allows for blockwise read iteration of SOMA reads
-#' as sparse matrices
+#' as sparse matrices.
 #'
 #' @keywords internal
 #'
@@ -327,7 +329,7 @@ BlockwiseSparseReadIter <- R6::R6Class(
   classname = "BlockwiseSparseReadIter",
   inherit = BlockwiseReadIterBase,
   public = list(
-    #' @description Create
+    #' @description Create.
     #'
     #' @template param-blockwise-iter
     #' @template param-coords-iter
@@ -362,10 +364,10 @@ BlockwiseSparseReadIter <- R6::R6Class(
       private$.repr <- match.arg(repr, choices = reprs)
       private$.shape <- sapply(coords, length)
     },
-    #' @description Concatenate the remainder of the blockwise iterator
+    #' @description Concatenate the remainder of the blockwise iterator.
     #'
     #' @return A sparse matrix (determined by \code{self$repr}) with
-    #' the remainder of the iterator
+    #' the remainder of the iterator.
     #'
     concat = function() {
       if (self$reindexable) {
@@ -375,7 +377,7 @@ BlockwiseSparseReadIter <- R6::R6Class(
     }
   ),
   active = list(
-    #' @field repr Representation of the sparse matrix to return
+    #' @field repr Representation of the sparse matrix to return.
     #'
     repr = function() private$.repr
   ),

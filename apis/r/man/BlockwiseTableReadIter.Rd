@@ -5,7 +5,7 @@
 \title{SOMA Blockwise Read Iterator for Arrow Tables}
 \description{
 Class that allows for blockwise read iteration of SOMA reads
-as Arrow \code{\link[arrow]{Table}s}
+as Arrow \code{\link[arrow]{Table}s}.
 }
 \examples{
 \dontshow{if (requireNamespace("withr", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
@@ -51,13 +51,13 @@ exp$close()
 \if{html}{\out{<a id="method-BlockwiseTableReadIter-concat"></a>}}
 \if{latex}{\out{\hypertarget{method-BlockwiseTableReadIter-concat}{}}}
 \subsection{Method \code{concat()}}{
-Concatenate the remainder of the blockwise iterator
+Concatenate the remainder of the blockwise iterator.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{BlockwiseTableReadIter$concat()}\if{html}{\out{</div>}}
 }
 
 \subsection{Returns}{
-An Arrow Table with the remainder of the iterator
+An Arrow Table with the remainder of the iterator.
 }
 }
 \if{html}{\out{<hr>}}
