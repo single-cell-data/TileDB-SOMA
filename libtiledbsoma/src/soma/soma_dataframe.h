@@ -24,7 +24,7 @@ class ArrayBuffers;
 
 using namespace tiledb;
 
-class __attribute__((visibility("default"))) SOMADataFrame : public SOMAArray {
+class SOMADataFrame : public SOMAArray {
    public:
     //===================================================================
     //= public static
