@@ -1,7 +1,7 @@
 #' Open a SOMA Object
 #'
 #' Utility function to open the corresponding SOMA object given a URI
-#' (lifecycle: maturing)
+#' (lifecycle: maturing).
 #'
 #' @inheritParams SOMACollectionOpen
 #' @param mode One of \dQuote{\code{READ}} or \dQuote{\code{WRITE}}

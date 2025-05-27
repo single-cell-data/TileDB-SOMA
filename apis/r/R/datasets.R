@@ -1,6 +1,6 @@
 #' SOMA Example Datasets
 #'
-#' Access example SOMA objects bundled with the tiledbsoma package\cr
+#' Access example SOMA objects bundled with the tiledbsoma package.\cr
 #' \cr
 #' Use \code{list_datasets()} to list the available datasets and
 #' \code{load_dataset()} to load a dataset into memory using the appropriate
@@ -21,7 +21,7 @@ NULL
 #' @rdname example-datasets
 #'
 #' @return \code{list_datasets()}: returns a character vector of the
-#' available datasets
+#' available datasets.
 #'
 #' @export
 #'
@@ -36,11 +36,11 @@ list_datasets <- function() {
 
 #' @rdname example-datasets
 #'
-#' @param name The name of the dataset
+#' @param name The name of the dataset.
 #' @param dir The directory where the dataset will be extracted to
-#' (default: \code{\link[base]{tempdir}()})
+#' (default: \code{\link[base]{tempdir}()}).
 #'
-#' @return \code{extract_dataset()}: returns the path to the extracted dataset
+#' @return \code{extract_dataset()}: returns the path to the extracted dataset.
 #'
 #' @export
 #'
@@ -73,7 +73,7 @@ extract_dataset <- function(name, dir = tempdir()) {
 #' @rdname example-datasets
 #'
 #' @param tiledbsoma_ctx Optional TileDB \dQuote{Context} object,
-#' which defaults to \code{NULL}
+#' which defaults to \code{NULL}.
 #'
 #' @return \code{load_dataset()}: returns a SOMA object.
 #'
