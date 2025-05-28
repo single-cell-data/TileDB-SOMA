@@ -186,9 +186,7 @@ class SOMAArray(SOMAObject[_tdb_handles.SOMAArrayWrapper[Any]]):
         if not batches:
             return
 
-        layout = (
-            clib.ResultOrder.unordered if sort_coords else clib.ResultOrder.globalorder
-        )
+        layout = clib.ResultOrder.unordered if sort_coords else clib.ResultOrder.globalorder
 
         if layout == clib.ResultOrder.unordered:
             # Finalize for each batch

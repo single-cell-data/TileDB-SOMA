@@ -318,11 +318,7 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
 
             mq = ManagedQuery(self, platform_config)
 
-            layout = (
-                clib.ResultOrder.unordered
-                if write_options.sort_coords
-                else clib.ResultOrder.globalorder
-            )
+            layout = clib.ResultOrder.unordered if write_options.sort_coords else clib.ResultOrder.globalorder
             mq._handle.set_layout(layout)
 
             for i, c in enumerate(coords.T):
@@ -358,11 +354,7 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
 
             mq = ManagedQuery(self, platform_config)
 
-            layout = (
-                clib.ResultOrder.unordered
-                if write_options.sort_coords
-                else clib.ResultOrder.globalorder
-            )
+            layout = clib.ResultOrder.unordered if write_options.sort_coords else clib.ResultOrder.globalorder
             mq._handle.set_layout(layout)
 
             for i, c in enumerate([sp.row, sp.col]):
