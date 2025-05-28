@@ -304,13 +304,11 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
             Maturing.
         """
         write_options: TileDBCreateOptions | TileDBWriteOptions
-        sort_coords = None
         if isinstance(platform_config, TileDBCreateOptions):
             raise ValueError(
                 "As of TileDB-SOMA 1.13, the write method takes " "TileDBWriteOptions instead of TileDBCreateOptions"
             )
         write_options = TileDBWriteOptions.from_platform_config(platform_config)
-        sort_coords = write_options.sort_coords
 
         clib_sparse_array = self._handle._handle
 
@@ -319,6 +317,10 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
             data, coords = values.to_numpy()
 
             mq = ManagedQuery(self, platform_config)
+
+            layout = clib.ResultOrder.unordered if write_options.sort_coords else clib.ResultOrder.globalorder
+            mq._handle.set_layout(layout)
+
             for i, c in enumerate(coords.T):
                 mq._handle.set_column_data(
                     f"soma_dim_{i}",
@@ -331,7 +333,12 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
                 "soma_data",
                 np.array(data, dtype=self.schema.field("soma_data").type.to_pandas_dtype()),
             )
-            mq._handle.submit_write(sort_coords or True)
+
+            if layout == clib.ResultOrder.unordered:
+                mq._handle.submit_write()
+                mq._handle.finalize()
+            else:
+                mq._handle.submit_and_finalize()
 
             if write_options.consolidate_and_vacuum:
                 # Consolidate non-bulk data
@@ -346,6 +353,10 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
             sp = values.to_scipy().tocoo()
 
             mq = ManagedQuery(self, platform_config)
+
+            layout = clib.ResultOrder.unordered if write_options.sort_coords else clib.ResultOrder.globalorder
+            mq._handle.set_layout(layout)
+
             for i, c in enumerate([sp.row, sp.col]):
                 mq._handle.set_column_data(
                     f"soma_dim_{i}",
@@ -358,7 +369,12 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
                 "soma_data",
                 np.array(sp.data, dtype=self.schema.field("soma_data").type.to_pandas_dtype()),
             )
-            mq._handle.submit_write(sort_coords or True)
+
+            if layout == clib.ResultOrder.unordered:
+                mq._handle.submit_write()
+                mq._handle.finalize()
+            else:
+                mq._handle.submit_and_finalize()
 
             if write_options.consolidate_and_vacuum:
                 # Consolidate non-bulk data
@@ -366,12 +382,7 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
             return self
 
         if isinstance(values, pa.Table):
-            # Write bulk data
-            for batch in values.to_batches():
-                # clib_sparse_array.write(batch, sort_coords or False)
-                mq = ManagedQuery(self, None)
-                mq._handle.set_array_data(batch)
-                mq._handle.submit_write(sort_coords or False)
+            self._write_table(values, write_options.sort_coords)
 
             if write_options.consolidate_and_vacuum:
                 # Consolidate non-bulk data
