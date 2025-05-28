@@ -145,10 +145,20 @@ class PyQueryCondition {
     PyQueryCondition combine(
         PyQueryCondition qc,
         tiledb_query_condition_combination_op_t combination_op) const {
-        return PyQueryCondition(
-            std::make_shared<QueryCondition>(
-                qc_->combine(*qc.qc_, combination_op)),
-            ctx_.ptr().get());
+        auto pyqc = PyQueryCondition(nullptr, ctx_.ptr().get());
+
+        tiledb_query_condition_t* combined_qc = nullptr;
+        ctx_.handle_error(tiledb_query_condition_combine(
+            ctx_.ptr().get(),
+            qc_->ptr().get(),
+            qc.qc_->ptr().get(),
+            combination_op,
+            &combined_qc));
+
+        pyqc.qc_ = std::shared_ptr<QueryCondition>(
+            new QueryCondition(pyqc.ctx_, combined_qc));
+
+        return pyqc;
     }
 
    private:
