@@ -227,12 +227,13 @@ The array type is determined by \code{type}, or
 }
 
 \examples{
-\dontshow{if (requireNamespace("withr", quietly = TRUE) && requireNamespace("datasets", quietly = TRUE) && requireNamespace("S4Vectors", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+\dontshow{if (requireNamespace("withr", quietly = TRUE) && requireNamespace("SeuratObject", quietly = TRUE) && requireNamespace("S4Vectors", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
 uri <- withr::local_tempfile(pattern = "s4-data-frame")
-data("mtcars", package = "datasets")
-head(mtcars <- as(mtcars, "DataFrame"))
+data("pbmc_small", package = "SeuratObject")
+obs <- suppressWarnings(SeuratObject::UpdateSeuratObject(pbmc_small))[[]]
+head(obs <- as(obs, "DataFrame"))
 
-(sdf <- write_soma(mtcars, uri, soma_parent = NULL, relative = FALSE))
+(sdf <- write_soma(obs, uri, soma_parent = NULL, relative = FALSE))
 
 \dontshow{
 sdf$close()
@@ -261,11 +262,12 @@ uri <- withr::local_tempfile(pattern = "character")
 sdf$close()
 }
 \dontshow{\}) # examplesIf}
-\dontshow{if (requireNamespace("withr", quietly = TRUE) && requireNamespace("datasets", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+\dontshow{if (requireNamespace("withr", quietly = TRUE) && requireNamespace("SeuratObject", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
 uri <- withr::local_tempfile(pattern = "data-frame")
-data("mtcars", package = "datasets")
+data("pbmc_small", package = "SeuratObject")
+head(obs <- suppressWarnings(SeuratObject::UpdateSeuratObject(pbmc_small))[[]])
 
-(sdf <- write_soma(mtcars, uri, soma_parent = NULL, relative = FALSE))
+(sdf <- write_soma(obs, uri, soma_parent = NULL, relative = FALSE))
 
 \dontshow{
 sdf$close()

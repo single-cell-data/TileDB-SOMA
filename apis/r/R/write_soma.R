@@ -140,11 +140,12 @@ write_soma.character <- function(
 #' @method write_soma data.frame
 #' @export
 #'
-#' @examplesIf requireNamespace("withr", quietly = TRUE) && requireNamespace("datasets", quietly = TRUE)
+#' @examplesIf requireNamespace("withr", quietly = TRUE) && requireNamespace("SeuratObject", quietly = TRUE)
 #' uri <- withr::local_tempfile(pattern = "data-frame")
-#' data("mtcars", package = "datasets")
+#' data("pbmc_small", package = "SeuratObject")
+#' head(obs <- suppressWarnings(SeuratObject::UpdateSeuratObject(pbmc_small))[[]])
 #'
-#' (sdf <- write_soma(mtcars, uri, soma_parent = NULL, relative = FALSE))
+#' (sdf <- write_soma(obs, uri, soma_parent = NULL, relative = FALSE))
 #'
 #' \dontshow{
 #' sdf$close()
