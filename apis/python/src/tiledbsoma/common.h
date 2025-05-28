@@ -148,9 +148,6 @@ class PyQueryCondition {
         auto pyqc = PyQueryCondition(nullptr, ctx_.ptr().get());
 
         tiledb_query_condition_t* combined_qc = nullptr;
-        ctx_.handle_error(
-            tiledb_query_condition_alloc(ctx_.ptr().get(), &combined_qc));
-
         ctx_.handle_error(tiledb_query_condition_combine(
             ctx_.ptr().get(),
             qc_->ptr().get(),
