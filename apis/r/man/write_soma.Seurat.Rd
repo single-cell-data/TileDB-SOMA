@@ -14,27 +14,28 @@
 )
 }
 \arguments{
-\item{x}{A \code{\link[SeuratObject]{Seurat}} object}
+\item{x}{A \code{\link[SeuratObject]{Seurat}} object.}
 
-\item{uri}{URI for resulting SOMA object}
+\item{uri}{URI for resulting SOMA object.}
 
 \item{...}{Arguments passed to other methods}
 
 \item{ingest_mode}{Ingestion mode when creating the SOMA; choose from:
 \itemize{
-\item \dQuote{\code{write}}: create a new SOMA and error if it already exists
+\item \dQuote{\code{write}}: create a new SOMA and error if it already
+exists.
 \item \dQuote{\code{resume}}: attempt to create a new SOMA; if it already
-exists, simply open it for writing
+exists, simply open it for writing.
 }}
 
 \item{platform_config}{Optional \link[tiledbsoma:PlatformConfig]{platform
-configuration}}
+configuration}.}
 
-\item{tiledbsoma_ctx}{Optional \code{\link{SOMATileDBContext}}}
+\item{tiledbsoma_ctx}{Optional \code{\link{SOMATileDBContext}}.}
 }
 \value{
 The URI to the resulting \code{\link{SOMAExperiment}} generated from
-the data contained in \code{x}
+the data contained in \code{x}.
 }
 \description{
 Write a \code{\link[SeuratObject]{Seurat}} object to a SOMA
@@ -43,7 +44,7 @@ Write a \code{\link[SeuratObject]{Seurat}} object to a SOMA
 
 Cell-level metadata is written out as a
 \link[tiledbsoma:SOMADataFrame]{data frame} called \dQuote{\code{obs}} at
-the \code{\link[tiledbsoma:SOMAExperiment]{experiment}} level
+the \code{\link[tiledbsoma:SOMAExperiment]{experiment}} level.
 }
 
 \section{Writing v3 \code{\link[SeuratObject]{Assay}s}}{
@@ -53,21 +54,21 @@ individual \link[tiledbsoma:SOMAMeasurement]{measurements}:
 \itemize{
 \item the \dQuote{\code{data}} matrix is written out as a
 \link[tiledbsoma:SOMASparseNDArray]{sparse array} called
-\dQuote{\code{data}} within the \dQuote{\code{X}} group
+\dQuote{\code{data}} within the \dQuote{\code{X}} group.
 \item the \dQuote{\code{counts}} matrix, if not
 \link[SeuratObject:IsMatrixEmpty]{empty}, is written out as a
 \link[tiledbsoma:SOMASparseNDArray]{sparse array} called
-\dQuote{\code{counts}} within the \dQuote{\code{X}} group
+\dQuote{\code{counts}} within the \dQuote{\code{X}} group.
 \item the \dQuote{\code{scale.data}} matrix, if not
 \link[SeuratObject:IsMatrixEmpty]{empty}, is written out as a
 \link[tiledbsoma:SOMASparseNDArray]{sparse array} called
-\dQuote{\code{scale_data}} within the \dQuote{\code{X}} group
+\dQuote{\code{scale_data}} within the \dQuote{\code{X}} group.
 \item feature-level metadata is written out as a
-\link[tiledbsoma:SOMADataFrame]{data frame} called \dQuote{\code{var}}
+\link[tiledbsoma:SOMADataFrame]{data frame} called \dQuote{\code{var}}.
 }
 Expression matrices are transposed (cells as rows) prior to writing. All
 other slots, including results from extended assays (eg. \code{SCTAssay},
-\code{ChromatinAssay}) are lost
+\code{ChromatinAssay}) are lost.
 }
 
 \section{Writing v5 \code{Assays}}{
@@ -77,27 +78,27 @@ out as individual\link[tiledbsoma:SOMAMeasurement]{measurements}:
 \itemize{
 \item the layer matrices are written out as
 \link[tiledbsoma:SOMASparseNDArray]{sparse arrays} within the
-\dQuote{\code{X}} group
+\dQuote{\code{X}} group.
 \item feature-level metadata is written out as a
-\link[tiledbsoma:SOMADataFrame]{data frame} called \dQuote{\code{var}}
+\link[tiledbsoma:SOMADataFrame]{data frame} called \dQuote{\code{var}}.
 }
 Expression matrices are transposed (cells as rows) prior to writing. All
 other slots, including results from extended assays (eg. \code{SCTAssay},
-\code{ChromatinAssay}) are lost\cr
+\code{ChromatinAssay}) are lost.\cr
 The following bits of metadata are written in various parts of the measurement
 \itemize{
 \item \dQuote{\code{soma_ecosystem_seurat_assay_version}}: written at the
 measurement level; indicates the Seurat assay version.
-Set to \dQuote{\code{v5}}
+Set to \dQuote{\code{v5}}.
 \item \dQuote{\code{soma_ecosystem_seurat_v5_default_layers}}: written at
 the \dQuote{\code{X}} group level; indicates the
-\link[SeuratObject:DefaultLayer]{default layers}
+\link[SeuratObject:DefaultLayer]{default layers}.
 \item \dQuote{\code{soma_ecosystem_seurat_v5_ragged}}: written at the
 \dQuote{\code{X/<layer>}} array level; with a value of
-\dQuote{\code{ragged}}, indicates whether or not the layer is ragged
+\dQuote{\code{ragged}}, indicates whether or not the layer is ragged.
 \item \dQuote{\code{soma_r_type_hint}}: written at the
 \dQuote{\code{X/<layer>}} array level; indicates the \R class and
-defining package (for S4 classes) of the original layer
+defining package (for S4 classes) of the original layer.
 }
 }
 
@@ -109,16 +110,16 @@ to the \dQuote{\code{obsm}} and \dQuote{\code{varm}} groups of a
 \itemize{
 \item cell embeddings are written out as a
 \link[tiledbsoma:SOMASparseNDArray]{sparse matrix} in the
-\dQuote{\code{obsm}} group
+\dQuote{\code{obsm}} group.
 \item feature loadings, if not \link[SeuratObject:IsMatrixEmpty]{empty},
 are written out as a \link[tiledbsoma:SOMASparseNDArray]{sparse matrix} in
 the \dQuote{\code{varm}} groups; loadings are padded with \code{NAs}
-to include all features
+to include all features.
 }
 Dimensional reduction names are translated to AnnData-style names (eg.
 \dQuote{\code{pca}} becomes \code{X_pca} for embeddings and
 \dQuote{\code{PCs}} for loadings). All other slots, including projected
-feature loadings and jackstraw information, are lost
+feature loadings and jackstraw information, are lost.
 }
 
 \section{Writing \code{\link[SeuratObject]{Graph}s}}{
@@ -126,7 +127,7 @@ feature loadings and jackstraw information, are lost
 \pkg{Seurat} \code{\link[SeuratObject]{Graph}} objects are
 written out as \link[tiledbsoma:SOMASparseNDArray]{sparse matrices}
 to the \dQuote{\code{obsp}} group of a
-\link[tiledbsoma:SOMAMeasurement]{measurement}
+\link[tiledbsoma:SOMAMeasurement]{measurement}.
 }
 
 \section{Writing \code{\link[SeuratObject]{SeuratCommand}s}}{
@@ -134,6 +135,30 @@ to the \dQuote{\code{obsp}} group of a
 \pkg{Seurat} \link[SeuratObject:SeuratCommand]{command logs} are written out
 as \link[tiledbsoma:SOMADataFrame]{data frames} to the
 \dQuote{\code{seurat_commands}} group of a
-\link[tiledbsoma:SOMACollection]{collection}
+\link[tiledbsoma:SOMACollection]{collection}.
 }
 
+\examples{
+\dontshow{if (requireNamespace("withr", quietly = TRUE) && requireNamespace("SeuratObject", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+uri <- withr::local_tempfile(pattern = "pbmc-small")
+
+data("pbmc_small", package = "SeuratObject")
+suppressWarnings(pbmc_small <- SeuratObject::UpdateSeuratObject(pbmc_small))
+
+uri <- write_soma(pbmc_small, uri)
+
+(exp <- SOMAExperimentOpen(uri))
+exp$obs
+exp$get("uns")$get("seurat_commands")$names()
+(ms <- exp$ms$get("RNA"))
+ms$var
+ms$X$names()
+ms$obsm$names()
+ms$varm$names()
+ms$obsp$names()
+
+\dontshow{
+exp$close()
+}
+\dontshow{\}) # examplesIf}
+}

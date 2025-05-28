@@ -1,7 +1,20 @@
+#' @name write_soma_objects
 #' @rdname write_soma_objects
 #'
 #' @method write_soma DataFrame
 #' @export
+#'
+#' @examplesIf requireNamespace("withr", quietly = TRUE) && requireNamespace("SeuratObject", quietly = TRUE) && requireNamespace("S4Vectors", quietly = TRUE)
+#' uri <- withr::local_tempfile(pattern = "s4-data-frame")
+#' data("pbmc_small", package = "SeuratObject")
+#' obs <- suppressWarnings(SeuratObject::UpdateSeuratObject(pbmc_small))[[]]
+#' head(obs <- as(obs, "DataFrame"))
+#'
+#' (sdf <- write_soma(obs, uri, soma_parent = NULL, relative = FALSE))
+#'
+#' \dontshow{
+#' sdf$close()
+#' }
 #'
 write_soma.DataFrame <- function(
   x,
@@ -43,6 +56,21 @@ write_soma.DataFrame <- function(
 #' @method write_soma Hits
 #' @export
 #'
+#' @examplesIf requireNamespace("withr", quietly = TRUE) && requireNamespace("S4Vectors", quietly = TRUE)
+#' uri <- withr::local_tempfile(pattern = "hits")
+#' (hits <- S4Vectors::SelfHits(
+#'   c(2, 3, 3, 3, 3, 3, 4, 4, 4),
+#'   c(4, 3, 2:4, 2, 2:3, 2),
+#'   4,
+#'   x = stats::rnorm(9L)
+#' ))
+#'
+#' (arr <- write_soma(hits, uri, soma_parent = NULL, relative = FALSE))
+#'
+#' \dontshow{
+#' arr$close()
+#' }
+#'
 write_soma.Hits <- function(
   x,
   uri,
@@ -77,27 +105,61 @@ write_soma.Hits <- function(
 #' @inheritParams write_soma
 #' @inheritParams write_soma_objects
 #' @param ms_name Name for resulting measurement; defaults to
-#' \code{\link[SingleCellExperiment]{mainExpName}(x)}
+#' \code{\link[SingleCellExperiment]{mainExpName}(x)}.
 #'
 #' @inherit write_soma.SummarizedExperiment return sections
 #'
 #' @section Writing Reduced Dimensions:
 #' Reduced dimensions are written out as
-#' \link[tiledbsoma:SOMASparseNDArray]{sparse matrices} within the `obsm` group
-#' of \code{\link[tiledbsoma:SOMAMeasurement]{measurement}} names `ms_name`
+#' \link[tiledbsoma:SOMASparseNDArray]{sparse matrices} within the \code{obsm}
+#' group of \code{\link[tiledbsoma:SOMAMeasurement]{measurement}}
+#' named \code{ms_name}.
 #'
 #' @section Writing Column Pairs:
 #' Column-wise relationship matrices are written out as
-#' \link[tiledbsoma:SOMASparseNDArray]{sparse matrices} within the `obsp` group
-#' of \code{\link[tiledbsoma:SOMAMeasurement]{measurement}} names `ms_name`
+#' \link[tiledbsoma:SOMASparseNDArray]{sparse matrices} within the
+#' \code{obsp} group of \code{\link[tiledbsoma:SOMAMeasurement]{measurement}}
+#' named \code{ms_name}.
 #'
 #' @section Writing Row Pairs:
 #' Row-wise relationship matrices are written out as
-#' \link[tiledbsoma:SOMASparseNDArray]{sparse matrices} within the `varp` group
-#' of \code{\link[tiledbsoma:SOMAMeasurement]{measurement}} names `ms_name`
+#' \link[tiledbsoma:SOMASparseNDArray]{sparse matrices} within the
+#' \code{varp} group of \code{\link[tiledbsoma:SOMAMeasurement]{measurement}}
+#' named \code{ms_name}.
 #'
 #' @method write_soma SingleCellExperiment
 #' @export
+#'
+#' @examplesIf requireNamespace("withr", quietly = TRUE) && requireNamespace("SingleCellExperiment", quietly = TRUE)
+#' uri <- withr::local_tempfile(pattern = "single-cell-experiment")
+#'
+#' mat <- abs(Matrix::rsparsematrix(
+#'   230L,
+#'   80L,
+#'   0.3,
+#'   dimnames = list(paste0("feature_", seq_len(230)), paste0("cell_", seq_len(80)))
+#' ))
+#' (sce <- SingleCellExperiment::SingleCellExperiment(
+#'   assays = list(counts = mat, logcounts = log2(mat + 1L)),
+#'   reducedDims = list(
+#'     pca = matrix(stats::runif(80 * 5L), nrow = 80),
+#'     tsne = matrix(stats::rnorm(80 * 2L), nrow = 80)
+#'   ),
+#'   mainExpName = "RNA"
+#' ))
+#'
+#' uri <- write_soma(sce, uri)
+#'
+#' (exp <- SOMAExperimentOpen(uri))
+#' exp$obs
+#' (ms <- exp$ms$get("RNA"))
+#' ms$var
+#' ms$X$names()
+#' ms$obsm$names()
+#'
+#' \dontshow{
+#' exp$close()
+#' }
 #'
 write_soma.SingleCellExperiment <- function(
   x,
@@ -263,30 +325,53 @@ write_soma.SingleCellExperiment <- function(
 #'
 #' @inheritParams write_soma
 #' @inheritParams write_soma_objects
-#' @param ms_name Name for resulting measurement
+#' @param ms_name Name for resulting measurement.
 #'
 #' @inherit write_soma return
 #'
-#' @section Writing `colData`:
-#' `colData` is written out as a
-#' \link[tiledbsoma:SOMADataFrame]{data frame} called \dQuote{`obs`} at
-#' the \code{\link[tiledbsoma:SOMAExperiment]{experiment}} level
+#' @section Writing \code{colData}:
+#' \code{colData} is written out as a
+#' \link[tiledbsoma:SOMADataFrame]{data frame} called \dQuote{\code{obs}} at
+#' the \code{\link[tiledbsoma:SOMAExperiment]{experiment}} level.
 #'
 #' @section Writing Assay Matrices:
 #' Each \link[SummarizedExperiment:assay]{assay matrix} is written out as a
-#' \link[tiledbsoma:SOMASparseNDArray]{sparse matrix} within the `X` group of
-#' \code{\link[tiledbsoma:SOMAMeasurement]{measurement}} names `ms_name`. Names
-#' for assay matrices within `X` are taken from the
+#' \link[tiledbsoma:SOMASparseNDArray]{sparse matrix} within the \code{X} group
+#' of \code{\link[tiledbsoma:SOMAMeasurement]{measurement}} named
+#' \code{ms_name}. Names for assay matrices within \code{X} are taken from the
 #' \link[SummarizedExperiment:assayNames]{assay names}. Assay matrices are
-#' transposed (samples as rows) prior to writing
+#' transposed (samples as rows) prior to writing.
 #'
-#' @section Writing `rowData`:
-#' `rowData` is written out as a
-#' \link[tiledbsoma:SOMADataFrame]{data frame} called \dQuote{`var`} at
-#' the \code{\link[tiledbsoma:SOMAMeasurement]{measurement}} level
+#' @section Writing \code{rowData}:
+#' \code{rowData} is written out as a
+#' \link[tiledbsoma:SOMADataFrame]{data frame} called \dQuote{\code{var}} at
+#' the \code{\link[tiledbsoma:SOMAMeasurement]{measurement}} level.
 #'
 #' @method write_soma SummarizedExperiment
 #' @export
+#'
+#' @examplesIf requireNamespace("withr", quietly = TRUE) && requireNamespace("SummarizedExperiment", quietly = TRUE)
+#' uri <- withr::local_tempfile(pattern = "summarized-experiment")
+#'
+#' mat <- abs(Matrix::rsparsematrix(
+#'   230L,
+#'   80L,
+#'   0.3,
+#'   dimnames = list(paste0("feature_", seq_len(230)), paste0("cell_", seq_len(80)))
+#' ))
+#' (se <- SummarizedExperiment::SummarizedExperiment(list(counts = mat, logcounts = log2(mat + 1L))))
+#'
+#' uri <- write_soma(se, uri, ms_name = "RNA")
+#'
+#' (exp <- SOMAExperimentOpen(uri))
+#' exp$obs
+#' (ms <- exp$ms$get("RNA"))
+#' ms$var
+#' ms$X$names()
+#'
+#' \dontshow{
+#' exp$close()
+#' }
 #'
 write_soma.SummarizedExperiment <- function(
   x,
