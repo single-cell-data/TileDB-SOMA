@@ -4,7 +4,7 @@
 \alias{SOMADataFrame}
 \title{SOMADataFrame}
 \description{
-\code{SOMADataFrame} is a multi-column table that must contain a
+A SOMA data frame  is a multi-column table that must contain a
 column called \dQuote{\code{soma_joinid}} of type \code{int64}, which
 contains a unique value for each row and is intended to act as a join key for
 other objects, such as \code{\link{SOMASparseNDArray}} (lifecycle: maturing).
@@ -83,7 +83,11 @@ sdf$close()
 \if{html}{\out{<a id="method-SOMADataFrame-create"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMADataFrame-create}{}}}
 \subsection{Method \code{create()}}{
-Create (lifecycle: maturing).
+Create a SOMA data frame (lifecycle: maturing).\cr
+\cr
+\strong{Note}: \code{$create()} is considered internal and should not be
+called directly; use factory functions
+(eg. \code{\link{SOMADataFrameCreate}()}) instead.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMADataFrame$create(
   schema,
@@ -122,22 +126,18 @@ expand the domain after create.}
 
 \item{\code{platform_config}}{A \link[tiledbsoma:PlatformConfig]{platform configuration}
 object}
-
-\item{\code{internal_use_only}}{Character value to signal this is a 'permitted'
-call, as \code{create()} is considered internal and should not be called
-directly.}
 }
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-Returns \code{self}
+Returns \code{self}.
 }
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-SOMADataFrame-write"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMADataFrame-write}{}}}
 \subsection{Method \code{write()}}{
-Write (lifecycle: maturing).
+Write values to the data frame (lifecycle: maturing).
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMADataFrame$write(values)}\if{html}{\out{</div>}}
 }
@@ -153,7 +153,7 @@ schema for the data frame.}
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-Invisibly returns \code{self}
+Invisibly returns \code{self}.
 }
 }
 \if{html}{\out{<hr>}}
@@ -188,9 +188,6 @@ for more information.}
 
 \item{\code{result_order}}{Optional order of read results. This can be one of either
 \verb{"ROW_MAJOR, }"COL_MAJOR"\verb{, or }"auto"` (default).}
-
-\item{\code{iterated}}{Option boolean indicated whether data is read in call
-(when \code{FALSE}, the default value) or in several iterated steps.}
 
 \item{\code{log_level}}{Optional logging level with default value of
 \dQuote{\code{warn}}.}

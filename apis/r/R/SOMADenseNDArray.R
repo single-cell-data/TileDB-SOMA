@@ -1,4 +1,4 @@
-#' SOMADenseNDArray
+#' SOMA Dense Nd-Array
 #'
 #' @description \code{SOMADenseNDArray} is a dense, N-dimensional array of
 #' a \code{primitive} type, with offset (zero-based) \code{int64} integer
@@ -20,9 +20,6 @@
 #' The default \dQuote{fill} value for \code{SOMADenseNDArray} is the zero or
 #' null value of the array type (e.g.,
 #' \code{\link[arrow:float32]{arrow::float32}()} defaults to 0.0).
-#'
-#' The \code{$write()} method is currently limited to writing from 2-d matrices
-#' (lifecycle: maturing).
 #'
 #' @param coords Optional \code{list} of integer vectors, one for each
 #' dimension, with a length equal to the number of values to read. If
@@ -99,7 +96,10 @@ SOMADenseNDArray <- R6::R6Class(
 
       stopifnot(
         "Array must have two dimensions" = ndim == 2,
-        "Array must contain column 'soma_data'" = all.equal("soma_data", attrnames)
+        "Array must contain column 'soma_data'" = all.equal(
+          "soma_data",
+          attrnames
+        )
       )
 
       if (is.null(coords)) {
@@ -112,28 +112,34 @@ SOMADenseNDArray <- R6::R6Class(
         ncol <- length(unique(as.numeric(coords[[2]])))
       }
 
-      tbl <- self$read_arrow_table(coords = coords, result_order = result_order, log_level = log_level)
-      m <- matrix(as.numeric(tbl$GetColumnByName("soma_data")),
-        nrow = nrow, ncol = ncol,
-        byrow = result_order == "ROW_MAJOR"
+      tbl <- self$read_arrow_table(
+        coords = coords,
+        result_order = result_order,
+        log_level = log_level
       )
+      return(matrix(
+        as.numeric(tbl$GetColumnByName("soma_data")),
+        nrow = nrow,
+        ncol = ncol,
+        byrow = result_order == "ROW_MAJOR"
+      ))
     },
 
-    #' @description Write matrix data to the array (lifecycle: maturing).
+    #' @description Write matrix data to the array (lifecycle: maturing).\cr
+    #' \cr
+    #' \strong{Note}: The \code{$write()} method is currently limited to writing
+    #' from two-dimensional matrices (lifecycle: maturing).
     #'
     # More general write methods for higher-dimensional array could be added.
     #'
     #' @param values A \code{matrix}. Character dimension names are ignored
-    #' because \code{SOMANDArray}'s use integer indexing.
+    #' because \code{SOMANDArray}s use integer indexing.
     #' @param coords A \code{list} of integer vectors, one for each dimension,
     #' with a length equal to the number of values to write. If \code{NULL},
     #' the default, the values are taken from the row and column names
     #' of \code{values}.
     #'
     #' @return Invisibly returns \code{self}.
-    #'
-    #' @note The \code{$write()} method is currently limited to writing from
-    #' two-dimensional matrices (lifecycle: maturing).
     #'
     write = function(values, coords = NULL) {
       private$.check_open_for_write()

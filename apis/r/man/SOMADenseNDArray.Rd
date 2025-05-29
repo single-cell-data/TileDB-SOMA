@@ -2,7 +2,7 @@
 % Please edit documentation in R/SOMADenseNDArray.R
 \name{SOMADenseNDArray}
 \alias{SOMADenseNDArray}
-\title{SOMADenseNDArray}
+\title{SOMA Dense Nd-Array}
 \description{
 \code{SOMADenseNDArray} is a dense, N-dimensional array of
 a \code{primitive} type, with offset (zero-based) \code{int64} integer
@@ -22,11 +22,8 @@ All dimensions must have a positive, non-zero length, and there must be 1 or
 more dimensions.
 
 The default \dQuote{fill} value for \code{SOMADenseNDArray} is the zero or
-null value of the array type (e.g. \code{\link[arrow]{float32}} defaults
-to 0.0).
-
-The \code{$write()} method is currently limited to writing from 2-d matrices
-(lifecycle: maturing).
+null value of the array type (e.g.,
+\code{\link[arrow:float32]{arrow::float32}()} defaults to 0.0).
 }
 \examples{
 \dontshow{if (requireNamespace("withr", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
@@ -163,7 +160,10 @@ A \code{matrix}.
 \if{html}{\out{<a id="method-SOMADenseNDArray-write"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMADenseNDArray-write}{}}}
 \subsection{Method \code{write()}}{
-Write matrix data to the array (lifecycle: maturing).
+Write matrix data to the array (lifecycle: maturing).\cr
+\cr
+\strong{Note}: The \code{$write()} method is currently limited to writing
+from two-dimensional matrices (lifecycle: maturing).
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMADenseNDArray$write(values, coords = NULL)}\if{html}{\out{</div>}}
 }
@@ -175,14 +175,14 @@ Write matrix data to the array (lifecycle: maturing).
 because \code{SOMANDArray}s use integer indexing.}
 
 \item{\code{coords}}{A \code{list} of integer vectors, one for each dimension,
-with a length equal to the number of values to write. If \code{NULL}, the
-default, the values are taken from the row and column names of
-\code{values}.}
+with a length equal to the number of values to write. If \code{NULL},
+the default, the values are taken from the row and column names
+of \code{values}.}
 }
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-Invisibly returns \code{self}
+Invisibly returns \code{self}.
 }
 }
 \if{html}{\out{<hr>}}

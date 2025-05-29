@@ -19,7 +19,7 @@ Derived classes: \code{\link{SOMACollection}},
 \section{Active bindings}{
 \if{html}{\out{<div class="r6-active-bindings">}}
 \describe{
-\item{\code{members}}{A list with the members of this collection}
+\item{\code{members}}{A list with the members of this collection.}
 }
 \if{html}{\out{</div>}}
 }
@@ -57,73 +57,57 @@ Derived classes: \code{\link{SOMACollection}},
 </details>
 }}
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-SOMACollectionBase-new"></a>}}
-\if{latex}{\out{\hypertarget{method-SOMACollectionBase-new}{}}}
-\subsection{Method \code{new()}}{
-Create a new \code{\link{SOMACollection}}
-(lifecycle: maturing).
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{SOMACollectionBase$new(
-  uri,
-  platform_config = NULL,
-  tiledbsoma_ctx = NULL,
-  tiledb_timestamp = NULL,
-  internal_use_only = NULL
-)}\if{html}{\out{</div>}}
-}
-
-\subsection{Arguments}{
-\if{html}{\out{<div class="arguments">}}
-\describe{
-\item{\code{uri}}{URI of the TileDB group.}
-
-\item{\code{platform_config}}{Optional storage-engine specific configuration.}
-
-\item{\code{tiledbsoma_ctx}}{optional SOMATileDBContext.}
-
-\item{\code{tiledb_timestamp}}{Optional Datetime (POSIXct) for TileDB timestamp.}
-
-\item{\code{internal_use_only}}{Character value to signal this is a 'permitted'
-call, as \code{new()} is considered internal and should not be called
-directly.}
-}
-\if{html}{\out{</div>}}
-}
-}
-\if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-SOMACollectionBase-create"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMACollectionBase-create}{}}}
 \subsection{Method \code{create()}}{
-Add a new SOMA object to the collection
-(lifecycle: maturing).
+Create a SOMA collection (lifecycle: maturing).\cr
+\cr
+\strong{Note}: \code{$create()} is considered internal and should not be
+called directly; use factory functions
+(eg. \code{\link{SOMACollectionCreate}()}) instead.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMACollectionBase$create()}\if{html}{\out{</div>}}
 }
 
 \subsection{Returns}{
-\code{self}
+Returns \code{self}.
 }
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-SOMACollectionBase-open"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMACollectionBase-open}{}}}
 \subsection{Method \code{open()}}{
-Open the SOMA collection for read or write
+Open the SOMA collection for read or write.\cr
+\cr
+\strong{Note}: \code{$open()} is considered internal and should not be
+called#' directly; use factory functions
+(eg. \code{\link{SOMACollectionOpen}()}) instead.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{SOMACollectionBase$open(mode = c("READ", "WRITE"), ...)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{SOMACollectionBase$open(mode = c("READ", "WRITE"))}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{internal_use_only}}{Character value to signal this is a 'permitted'
-call, as \code{create()} is considered internal and should not be called
-directly.}
+\item{\code{mode}}{Mode to open the object in.}
 }
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-Returns \code{self}
+Returns \code{self}.
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SOMACollectionBase-close"></a>}}
+\if{latex}{\out{\hypertarget{method-SOMACollectionBase-close}{}}}
+\subsection{Method \code{close()}}{
+Close the SOMA collection.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SOMACollectionBase$close()}\if{html}{\out{</div>}}
+}
+
+\subsection{Returns}{
+Invisibly returns \code{self}.
 }
 }
 \if{html}{\out{<hr>}}
@@ -142,7 +126,7 @@ Add a new SOMA object to the collection
 \item{\code{object}}{SOMA object.}
 
 \item{\code{name}}{The name to use for the object; defaults to the basename of
-\code{object$uri}}
+\code{object$uri}.}
 
 \item{\code{relative}}{An optional logical value indicating whether the new
 object's URI is relative to the collection's URI. If \code{NULL} (the
@@ -150,6 +134,9 @@ default), the object's URI is assumed to be relative unless it is a
 \code{tiledb://} URI.}
 }
 \if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+Invisibly returns \code{self}.
 }
 }
 \if{html}{\out{<hr>}}
@@ -173,6 +160,73 @@ The SOMA object stored as \code{name}.
 }
 }
 \if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SOMACollectionBase-remove"></a>}}
+\if{latex}{\out{\hypertarget{method-SOMACollectionBase-remove}{}}}
+\subsection{Method \code{remove()}}{
+Remove member. (lifecycle: maturing)
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SOMACollectionBase$remove(name)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{name}}{Name of the member to remove.}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+Invisibly returns \code{self}
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SOMACollectionBase-length"></a>}}
+\if{latex}{\out{\hypertarget{method-SOMACollectionBase-length}{}}}
+\subsection{Method \code{length()}}{
+Get the number of members in this collection
+(lifecycle: maturing).
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SOMACollectionBase$length()}\if{html}{\out{</div>}}
+}
+
+\subsection{Returns}{
+The number of members in this collection.
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SOMACollectionBase-names"></a>}}
+\if{latex}{\out{\hypertarget{method-SOMACollectionBase-names}{}}}
+\subsection{Method \code{names()}}{
+Retrieve the names of members (lifecycle: maturing).
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SOMACollectionBase$names()}\if{html}{\out{</div>}}
+}
+
+\subsection{Returns}{
+A character vector of member names.
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SOMACollectionBase-set_metadata"></a>}}
+\if{latex}{\out{\hypertarget{method-SOMACollectionBase-set_metadata}{}}}
+\subsection{Method \code{set_metadata()}}{
+Add list of metadata (lifecycle: maturing).
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SOMACollectionBase$set_metadata(metadata)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{metadata}}{Named list of metadata to add.}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+Invisibly returns \code{self}.
+}
+}
+\if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-SOMACollectionBase-add_new_collection"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMACollectionBase-add_new_collection}{}}}
 \subsection{Method \code{add_new_collection()}}{
@@ -192,7 +246,7 @@ Add a new SOMA collection to this collection
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-Returns \code{object}
+Returns \code{object}.
 }
 }
 \if{html}{\out{<hr>}}
@@ -236,7 +290,7 @@ object}
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-Returns the newly created data frame stored at \code{key}
+Returns the newly created data frame stored at \code{key}.
 }
 }
 \if{html}{\out{<hr>}}
@@ -276,7 +330,7 @@ object}
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-Returns the newly-created array stored at \code{key}
+Returns the newly-created array stored at \code{key}.
 }
 }
 \if{html}{\out{<hr>}}
@@ -316,20 +370,20 @@ object}
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-Returns the newly-created array stored at \code{key}
+Returns the newly-created array stored at \code{key}.
 }
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-SOMACollectionBase-print"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMACollectionBase-print}{}}}
 \subsection{Method \code{print()}}{
-Print-friendly representation of the object
+Print-friendly representation of the object.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMACollectionBase$print()}\if{html}{\out{</div>}}
 }
 
 \subsection{Returns}{
-Invisibly returns \code{self}
+Invisibly returns \code{self}.
 }
 }
 \if{html}{\out{<hr>}}

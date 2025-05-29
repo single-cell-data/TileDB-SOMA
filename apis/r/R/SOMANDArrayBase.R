@@ -19,14 +19,18 @@ SOMANDArrayBase <- R6::R6Class(
   public = list(
 
     #' @description Create a SOMA NDArray named with the URI
-    #' (lifecycle: maturing).
+    #' (lifecycle: maturing).\cr
+    #' \cr
+    #' \strong{Note}: \code{$create()} is considered internal and should not be
+    #' called directly; use factory functions
+    #' (eg. \code{\link{SOMASparseNDArrayCreate}()}) instead.
     #'
     #' @param type An \link[arrow:data-type]{Arrow type} defining the type
     #' of each element in the array.
     #' @param shape a vector of integers defining the shape of the array.
     #' @template param-platform-config
     #'
-    #' @return Returns \code{self}
+    #' @return Returns \code{self}.
     #'
     create = function(
       type,
@@ -126,7 +130,7 @@ SOMANDArrayBase <- R6::R6Class(
     #'
     #' @return If \code{check_only}, returns the empty string if no error is
     #' detected, else a description of the error. Otherwise, invisibly returns
-    #' \code{NULL}
+    #' \code{NULL}.
     #'
     resize = function(new_shape, check_only = FALSE) {
       stopifnot(
@@ -166,7 +170,7 @@ SOMANDArrayBase <- R6::R6Class(
     #'
     #' @return If \code{check_only}, returns the empty string if no error is
     #' detected, else a description of the error. Otherwise, invisibly returns
-    #' \code{NULL}
+    #' \code{NULL}.
     #'
     tiledbsoma_upgrade_shape = function(shape, check_only = FALSE) {
       stopifnot(
