@@ -266,24 +266,6 @@ SOMAArrayBase <- R6::R6Class(
       return(invisible(self))
     }
   ),
-  active = list(
-
-    #' @field object Access the underlying TileDB array.
-    #'
-    object = function(value) {
-      if (!missing(value)) {
-        stop(sprintf("'%s' is a read-only field.", "object"), call. = FALSE)
-      }
-      if (is.null(private$.tiledb_array)) {
-        private$.tiledb_array <- tiledb::tiledb_array(
-          uri = self$uri,
-          ctx = self$tiledbsoma_ctx$context(),
-          query_layout = "UNORDERED"
-        )
-      }
-      return(private$.tiledb_array)
-    }
-  ),
   private = list(
     .tiledb_array = NULL,
 

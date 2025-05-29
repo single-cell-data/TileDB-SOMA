@@ -20,13 +20,6 @@ Derived classes: \code{\link{SOMADataFrame}},
 \section{Super class}{
 \code{\link[tiledbsoma:SOMAObject]{tiledbsoma::SOMAObject}} -> \code{SOMAArrayBase}
 }
-\section{Active bindings}{
-\if{html}{\out{<div class="r6-active-bindings">}}
-\describe{
-\item{\code{object}}{Access the underlying TileDB array.}
-}
-\if{html}{\out{</div>}}
-}
 \section{Methods}{
 \subsection{Public methods}{
 \itemize{
