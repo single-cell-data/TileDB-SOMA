@@ -15,6 +15,8 @@
 
 ## Removed
 
+- `SOMAArray$object` has been removed ([#3771](https://github.com/single-cell-data/TileDB-SOMA/pull/3771))
+
 ## Fixed
 
 ## Security

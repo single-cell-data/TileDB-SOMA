@@ -374,26 +374,6 @@ EphemeralCollectionBase <- R6::R6Class(
 
     # Override SOMACollectionBase private fields
     soma_type_cache = NULL,
-    # initialize_object = function() {
-    #   private$.ephemeral_error("custom", "and cannot be initialized")
-    # },
-    # get_all_members = function() {
-    #   if (!length(private$.data)) {
-    #     return(list())
-    #   }
-    #   members <- vector(mode = "list", length = length(private$.data))
-    #   names(members) <- names(private$.data)
-    #   for (i in seq_along(members)) {
-    #     members[[i]] <- list(
-    #       type = get_tiledb_object_type(
-    #         private$.data[[i]]$uri,
-    #         private$.soma_context
-    #       ),
-    #       uri = private$.data[[i]]$uri, name = names(private$.data)[i]
-    #     )
-    #   }
-    #   return(members)
-    # },
 
     # Ephemeral fields
     .data = NULL,
