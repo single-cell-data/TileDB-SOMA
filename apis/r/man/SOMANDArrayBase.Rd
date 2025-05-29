@@ -61,7 +61,11 @@ Derived classes: \code{\link{SOMADenseNDArray}},
 \if{latex}{\out{\hypertarget{method-SOMANDArrayBase-create}{}}}
 \subsection{Method \code{create()}}{
 Create a SOMA NDArray named with the URI
-(lifecycle: maturing).
+(lifecycle: maturing).\cr
+\cr
+\strong{Note}: \code{$create()} is considered internal and should not be
+called directly; use factory functions
+(eg. \code{\link{SOMASparseNDArrayCreate}()}) instead.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMANDArrayBase$create(type, shape, platform_config = NULL)}\if{html}{\out{</div>}}
 }
@@ -80,7 +84,7 @@ object}
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-Returns \code{self}
+Returns \code{self}.
 }
 }
 \if{html}{\out{<hr>}}
@@ -143,7 +147,7 @@ whether it would have succeeded.}
 \subsection{Returns}{
 If \code{check_only}, returns the empty string if no error is
 detected, else a description of the error. Otherwise, invisibly returns
-\code{NULL}
+\code{NULL}.
 }
 }
 \if{html}{\out{<hr>}}
@@ -175,7 +179,7 @@ whether it would have succeeded.}
 \subsection{Returns}{
 If \code{check_only}, returns the empty string if no error is
 detected, else a description of the error. Otherwise, invisibly returns
-\code{NULL}
+\code{NULL}.
 }
 }
 \if{html}{\out{<hr>}}

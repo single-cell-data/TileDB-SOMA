@@ -2,7 +2,7 @@
 % Please edit documentation in R/SOMASparseNDArray.R
 \name{SOMASparseNDArray}
 \alias{SOMASparseNDArray}
-\title{SOMASparseNDArray}
+\title{SOMA Sparse Nd-Array}
 \description{
 \code{SOMASparseNDArray} is a sparse, N-dimensional array with
 offset (zero-based) integer indexing on each dimension. The

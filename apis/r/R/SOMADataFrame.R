@@ -20,7 +20,11 @@ SOMADataFrame <- R6::R6Class(
   inherit = SOMAArrayBase,
   public = list(
 
-    #' @description Create a SOMA data frame (lifecycle: maturing).
+    #' @description Create a SOMA data frame (lifecycle: maturing).\cr
+    #' \cr
+    #' \strong{Note}: \code{$create()} is considered internal and should not be
+    #' called directly; use factory functions
+    #' (eg. \code{\link{SOMADataFrameCreate}()}) instead.
     #'
     #' @param schema An \link[arrow:schema]{Arrow schema}.
     #' @param index_column_names A vector of column names to use as user-defined
@@ -46,10 +50,6 @@ SOMADataFrame <- R6::R6Class(
     #' @template param-platform-config
     #'
     #' @return Returns \code{self}.
-    #'
-    #' @note \code{create()} is considered internal and should not be called
-    #' directly; use factory functions (eg. \code{\link{SOMACollectionCreate}()})
-    #' instead.
     #'
     create = function(
       schema,
@@ -182,8 +182,8 @@ SOMADataFrame <- R6::R6Class(
       nasp <- nanoarrow::nanoarrow_allocate_schema()
       arrow::as_record_batch(values)$export_to_c(naap, nasp)
 
-      df <- as.data.frame(values)[schema_names]
-      arr <- self$object
+      # df <- as.data.frame(values)[schema_names]
+      # arr <- private$.tiledb_array
       writeArrayFromArrow(
         uri = self$uri,
         naap = naap,

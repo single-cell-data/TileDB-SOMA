@@ -1,4 +1,4 @@
-#' SOMASparseNDArray
+#' SOMA Sparse Nd-Array
 #'
 #' @description \code{SOMASparseNDArray} is a sparse, N-dimensional array with
 #' offset (zero-based) integer indexing on each dimension. The

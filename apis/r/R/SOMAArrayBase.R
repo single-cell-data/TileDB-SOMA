@@ -15,15 +15,15 @@ SOMAArrayBase <- R6::R6Class(
   inherit = SOMAObject,
   public = list(
 
-    #' @description Open the SOMA object for read or write
+    #' @description Open the SOMA object for read or write.\cr
+    #' \cr
+    #' \strong{Note}: \code{open()} is considered internal and should not be
+    #' called directly; use factory functions
+    #' (eg. \code{\link{SOMASparseNDArrayOpen}()}) instead.
     #'
-    #' @param mode Mode to open the object in
+    #' @param mode Mode to open the object in.
     #'
-    #' @return \code{self}
-    #'
-    #' @note \code{open()} is considered internal and should not be called
-    #' directly; use factory functions (eg. \code{\link{SOMACollectionOpen}()})
-    #' instead
+    #' @return Return s\code{self}.
     #'
     open = function(mode = c("READ", "WRITE")) {
       envs <- unique(vapply(
@@ -87,9 +87,9 @@ SOMAArrayBase <- R6::R6Class(
       return(self)
     },
 
-    #' @description Close the SOMA array
+    #' @description Close the SOMA array.
     #'
-    #' @return Invisibly returns \code{self}
+    #' @return Invisibly returns \code{self}.
     #'
     close = function() {
       spdl::debug("[SOMAArrayBase$close] Closing {} '{}'", self$class(), self$uri)
@@ -113,18 +113,18 @@ SOMAArrayBase <- R6::R6Class(
     #' @description Is an array sparse?
     #'
     #' @return \code{TRUE} if the underlying TileDB array is sparse;
-    #' otherwise \code{FALSE}
+    #' otherwise \code{FALSE}.
     #'
     is_sparse = \() c_is_sparse(self$uri, private$.soma_context),
 
     #' @description Retrieve the array schema as an Arrow schema
-    #' (lifecycle: maturing)
+    #' (lifecycle: maturing).
     #'
-    #' @return An Arrow \code{\link[arrow:Schema]{Schema}} object
+    #' @return An Arrow \code{\link[arrow:Schema]{Schema}} object.
     #'
     schema = \() arrow::as_schema(c_schema(self$uri, private$.soma_context)),
 
-    #' @description Retrieve the array attributes
+    #' @description Retrieve the array attributes.
     #'
     #' @return A named list of array attributes; each entry contains the
     #' following named entries:
@@ -148,9 +148,9 @@ SOMAArrayBase <- R6::R6Class(
     #'
     attributes = \() c_attributes(self$uri, private$.soma_context),
 
-    #' @description Retrieve attribute names (lifecycle: maturing)
+    #' @description Retrieve attribute names (lifecycle: maturing).
     #'
-    #' @return A character vector with the array's attribute names
+    #' @return A character vector with the array's attribute names.
     #'
     attrnames = \() c_attrnames(self$uri, private$.soma_context),
 
@@ -159,11 +159,11 @@ SOMAArrayBase <- R6::R6Class(
     #' @return A named list of array dimensions; each entry contains the
     #' following named entries:
     #' \itemize{
-    #'  \item \dQuote{\code{name}}: name of the dimension
-    #'  \item \dQuote{\code{type}}: datatype of the dimension
-    #'  \item \dQuote{\code{ncells}}: number of values per dimension cell
-    #'  \item \dQuote{\code{domain}}: domain of the dimension
-    #'  \item \dQuote{\code{tile}}: tile of the dimension
+    #'  \item \dQuote{\code{name}}: name of the dimension.
+    #'  \item \dQuote{\code{type}}: datatype of the dimension.
+    #'  \item \dQuote{\code{ncells}}: number of values per dimension cell.
+    #'  \item \dQuote{\code{domain}}: domain of the dimension.
+    #'  \item \dQuote{\code{tile}}: tile of the dimension.
     #'  \item \dQuote{\code{filter_list}}: a list with filter information; this
     #'   list contains the following entries:
     #'   \itemize{
@@ -179,16 +179,16 @@ SOMAArrayBase <- R6::R6Class(
     #'
     dimensions = \() c_domain(self$uri, private$.soma_context),
 
-    #' @description Retrieve dimension names (lifecycle: maturing)
+    #' @description Retrieve dimension names (lifecycle: maturing).
     #'
-    #' @return A character vector with the array's dimension names
+    #' @return A character vector with the array's dimension names.
     #'
     dimnames = \() c_dimnames(self$uri, private$.soma_context),
 
     #' @description Retrieve the names of all columns, including dimensions and
-    #' attributes (lifecycle: maturing)
+    #' attributes (lifecycle: maturing).
     #'
-    #' @return A character vector with the array's column names
+    #' @return A character vector with the array's column names.
     #'
     colnames = \() c(self$dimnames(), self$attrnames()),
 
@@ -203,27 +203,28 @@ SOMAArrayBase <- R6::R6Class(
     #' run-time error: this is the purpose of \code{shape}. This will not
     #' necessarily match the bounds of occupied cells within the array.
     #' Using \code{$resize()}, this may be increased up to the hard limit which
-    #' \code{maxshape()} reports. (lifecycle: maturing)
+    #' \code{maxshape()} reports (lifecycle: maturing).
     #'
     #' @return A named vector of dimension length and of the same type as
-    #' the dimension
+    #' the dimension.
     #'
     shape = \() bit64::as.integer64(shape(self$uri, private$.soma_context)),
 
     #' @description Retrieve the hard limit up to which the array may be resized
-    #' using the \code{$resize()} method (lifecycle: maturing)
+    #' using the \code{$resize()} method (lifecycle: maturing).
     #'
     #' @return A named vector of dimension length and of the same type as
-    #' the dimension
+    #' the dimension.
+    #'
     maxshape = \() bit64::as.integer64(maxshape(self$uri, private$.soma_context)),
 
     #' @description Returns a named list of minimum/maximum pairs, one per index
     #' column, which are the smallest and largest values written on that
-    #' index column
+    #' index column.
     #'
     #' @param index1 Return the non-empty domain with 1-based indices
     #' @param max_only Return only the max value per dimension, and return
-    #' this as a vector. Names are dropped (lifecycle: maturing)
+    #' this as a vector. Names are dropped (lifecycle: maturing).
     #'
     #' @return Named list of minimum/maximum values, or integer vector
     #' of maximum values.
@@ -246,15 +247,15 @@ SOMAArrayBase <- R6::R6Class(
       return(retval)
     },
 
-    #' @description Retrieve number of dimensions (lifecycle: maturing)
+    #' @description Retrieve number of dimensions (lifecycle: maturing).
     #'
-    #' @return A scalar with the number of dimensions
+    #' @return A scalar with the number of dimensions.
     #'
     ndim = \() ndim(self$uri, private$.soma_context),
 
-    #' @description Print-friendly representation of the object
+    #' @description Print-friendly representation of the object.
     #'
-    #' @return Invisibly returns \code{self}
+    #' @return Invisibly returns \code{self}.
     #'
     print = function() {
       super$print()
@@ -267,7 +268,7 @@ SOMAArrayBase <- R6::R6Class(
   ),
   active = list(
 
-    #' @field object Access the underlying TileDB array
+    #' @field object Access the underlying TileDB array.
     #'
     object = function(value) {
       if (!missing(value)) {

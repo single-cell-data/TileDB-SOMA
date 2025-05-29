@@ -16,50 +16,41 @@ SOMACollectionBase <- R6::R6Class(
   inherit = SOMAObject,
   public = list(
 
-    #' @description Create a new \code{\link{SOMACollection}}
-    #' (lifecycle: maturing).
+    #' @description Create a SOMA collection (lifecycle: maturing).\cr
+    #' \cr
+    #' \strong{Note}: \code{$create()} is considered internal and should not be
+    #' called directly; use factory functions
+    #' (eg. \code{\link{SOMACollectionCreate}()}) instead.
     #'
-    #' @param uri URI of the TileDB group.
-    #' @param platform_config Optional storage-engine specific configuration.
-    #' @param tiledbsoma_ctx optional SOMATileDBContext.
-    #' @param tiledb_timestamp Optional Datetime (POSIXct) for TileDB timestamp.
-    #' @param internal_use_only Character value to signal this is a 'permitted'
-    #' call, as \code{new()} is considered internal and should not be called
-    #' directly.
+    #' @return Returns \code{self}.
     #'
-    initialize = function(
-      uri,
-      platform_config = NULL,
-      tiledbsoma_ctx = NULL,
-      tiledb_timestamp = NULL,
-      internal_use_only = NULL
-    ) {
-      return(super$initialize(
-        uri = uri,
-        platform_config = platform_config,
-        tiledbsoma_ctx = tiledbsoma_ctx,
-        tiledb_timestamp = tiledb_timestamp,
-        internal_use_only = internal_use_only
+    create = function() {
+      # browser()
+      envs <- unique(vapply(
+        X = unique(sys.parents()),
+        FUN = function(n) environmentName(environment(sys.function(n))),
+        FUN.VALUE = character(1L)
       ))
-    },
-
-    #' @description Add a new SOMA object to the collection
-    #' (lifecycle: maturing).
-    #'
-    #' @param internal_use_only Character value to signal this is a 'permitted'
-    #' call, as \code{create()} is considered internal and should not be called
-    #' directly.
-    #'
-    #' @return Returns \code{self}
-    #'
-    create = function(internal_use_only = NULL) {
-      if (is.null(internal_use_only) || internal_use_only != "allowed_use") {
-        stop(paste(
-          "Use of the create() method is for internal use only. Consider using a",
-          "factory method as e.g. 'SOMACollectionCreate()'."
-        ), call. = FALSE)
+      if (!"tiledbsoma" %in% envs) {
+        stop(
+          paste(strwrap(private$.internal_use_only("create", "collection")), collapse = '\n'),
+          call. = FALSE
+        )
       }
-      super$create(internal_use_only = internal_use_only)
+
+      # Instantiate the TileDB group
+      spdl::debug(
+        "[SOMACollectionBase$create] Creating new {} at '{}' at {}",
+        self$class(),
+        self$uri,
+        self$tiledb_timestamp
+      )
+      private$.tiledb_group <- c_group_create(
+        uri = self$uri,
+        type = self$class(),
+        ctxxp = private$.soma_context,
+        timestamp = self$.tiledb_timestamp_range
+      )
 
       # Root SOMA objects include a `dataset_type` entry to allow the
       # TileDB Cloud UI to detect that they are SOMA datasets.
@@ -85,18 +76,17 @@ SOMACollectionBase <- R6::R6Class(
       return(self)
     },
 
-    #' @description Open the SOMA collection for read or write
+    #' @description Open the SOMA collection for read or write.\cr
+    #' \cr
+    #' \strong{Note}: \code{$open()} is considered internal and should not be
+    #' called#' directly; use factory functions
+    #' (eg. \code{\link{SOMACollectionOpen}()}) instead.
     #'
-    #' @param mode Mode to open the object in
-    #' @param ... Ignored
+    #' @param mode Mode to open the object in.
     #'
-    #' @return \code{self}
+    #' @return Returns \code{self}.
     #'
-    #' @note \code{open()} is considered internal and should not be called
-    #' directly; use factory functions (eg. \code{\link{SOMACollectionOpen}()})
-    #' instead
-    #'
-    open = function(mode = c("READ", "WRITE"), ...) {
+    open = function(mode = c("READ", "WRITE")) {
       envs <- unique(vapply(
         X = unique(sys.parents()),
         FUN = function(n) environmentName(environment(sys.function(n))),
@@ -138,9 +128,9 @@ SOMACollectionBase <- R6::R6Class(
       return(self)
     },
 
-    #' @description Close the SOMA collection
+    #' @description Close the SOMA collection.
     #'
-    #' @return Invisibly returns \code{self}
+    #' @return Invisibly returns \code{self}.
     #'
     close = function() {
       if (self$is_open()) {
@@ -165,11 +155,13 @@ SOMACollectionBase <- R6::R6Class(
     #'
     #' @param object SOMA object.
     #' @param name The name to use for the object; defaults to the basename of
-    #' \code{object$uri}
+    #' \code{object$uri}.
     #' @param relative An optional logical value indicating whether the new
     #' object's URI is relative to the collection's URI. If \code{NULL} (the
     #' default), the object's URI is assumed to be relative unless it is a
     #' \code{tiledb://} URI.
+    #'
+    #' @return Invisibly returns \code{self}.
     #'
     set = function(object, name = NULL, relative = NULL) {
       stopifnot(
@@ -185,7 +177,11 @@ SOMACollectionBase <- R6::R6Class(
       private$.check_open_for_write()
 
       # Make the URI relative before adding it
-      uri <- if (relative) make_uri_relative(object$uri, self$uri) else object$uri
+      uri <- if (relative) {
+        make_uri_relative(object$uri, self$uri)
+      } else {
+        object$uri
+      }
       name <- name %||% basename(uri)
       spdl::debug(
         "[SOMACollectionBase$set] '{}' uri {} relative {}",
@@ -217,7 +213,6 @@ SOMACollectionBase <- R6::R6Class(
     #' @return The SOMA object stored as \code{name}.
     #'
     get = function(name) {
-      # browser()
       if (!is.character(name) || length(name) != 1L || !nzchar(name)) {
         stop("'name' must be a single, non-empty string", call. = FALSE)
       }
@@ -274,9 +269,10 @@ SOMACollectionBase <- R6::R6Class(
       return(invisible(self))
     },
 
-    #' @description Get the number of members in this collection (lifecycle: maturing)
+    #' @description Get the number of members in this collection
+    #' (lifecycle: maturing).
     #'
-    #' @return The number of members in this collection
+    #' @return The number of members in this collection.
     #'
     length = function() {
       private$.check_open_for_read_or_write()
@@ -284,21 +280,21 @@ SOMACollectionBase <- R6::R6Class(
       return(length(self$members))
     },
 
-    #' @description Retrieve the names of members. (lifecycle: maturing)
+    #' @description Retrieve the names of members (lifecycle: maturing).
     #'
     #' @return A character vector of member names.
     #'
     names = function() {
       private$.check_open_for_read_or_write()
       private$.update_member_cache()
-      names(self$members) %||% character(length = 0L)
+      return(names(self$members) %||% character(length = 0L))
     },
 
-    #' @description Add list of metadata. (lifecycle: maturing)
+    #' @description Add list of metadata (lifecycle: maturing).
     #'
-    #' @param metadata Named list of metadata to add
+    #' @param metadata Named list of metadata to add.
     #'
-    #' @return Invisibly returns \code{self}
+    #' @return Invisibly returns \code{self}.
     #'
     set_metadata = function(metadata) {
       stopifnot(
@@ -325,7 +321,7 @@ SOMACollectionBase <- R6::R6Class(
     #' @param object SOMA collection object.
     #' @param key The key to be added.
     #'
-    #' @return Returns \code{object}
+    #' @return Returns \code{object}.
     #'
     add_new_collection = function(object, key) {
       if (!inherits(object, "SOMACollectionBase")) {
@@ -346,7 +342,7 @@ SOMACollectionBase <- R6::R6Class(
     #' @param domain As in \code{\link{SOMADataFrameCreate}}.
     #' @template param-platform-config
     #'
-    #' @return Returns the newly created data frame stored at \code{key}
+    #' @return Returns the newly created data frame stored at \code{key}.
     #'
     add_new_dataframe = function(
       key,
@@ -377,7 +373,7 @@ SOMACollectionBase <- R6::R6Class(
     #' @param shape a vector of integers defining the shape of the array.
     #' @template param-platform-config
     #'
-    #' @return Returns the newly-created array stored at \code{key}
+    #' @return Returns the newly-created array stored at \code{key}.
     #'
     add_new_dense_ndarray = function(key, type, shape, platform_config = NULL) {
       ndarr <- SOMADenseNDArrayCreate(
@@ -401,7 +397,7 @@ SOMACollectionBase <- R6::R6Class(
     #' @param shape a vector of integers defining the shape of the array.
     #' @template param-platform-config
     #'
-    #' @return Returns the newly-created array stored at \code{key}
+    #' @return Returns the newly-created array stored at \code{key}.
     #'
     add_new_sparse_ndarray = function(key, type, shape, platform_config = NULL) {
       ndarr <- SOMASparseNDArrayCreate(
@@ -416,9 +412,9 @@ SOMACollectionBase <- R6::R6Class(
       return(ndarr)
     },
 
-    #' @description Print-friendly representation of the object
+    #' @description Print-friendly representation of the object.
     #'
-    #' @return Invisibly returns \code{self}
+    #' @return Invisibly returns \code{self}.
     #'
     print = function() {
       super$print()
@@ -456,7 +452,7 @@ SOMACollectionBase <- R6::R6Class(
     }
   ),
   active = list(
-    #' @field members A list with the members of this collection
+    #' @field members A list with the members of this collection.
     #'
     members = function(value) {
       if (!missing(value)) {

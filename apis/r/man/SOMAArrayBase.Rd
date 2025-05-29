@@ -4,7 +4,9 @@
 \alias{SOMAArrayBase}
 \title{SOMA Array Base Class}
 \description{
-Base class for representing SOMA arrays
+SOMA Array Base Class
+
+SOMA Array Base Class
 }
 \details{
 Virtual base class to add SOMA-specific functionality to the
@@ -21,7 +23,7 @@ Derived classes: \code{\link{SOMADataFrame}},
 \section{Active bindings}{
 \if{html}{\out{<div class="r6-active-bindings">}}
 \describe{
-\item{\code{object}}{Access the underlying TileDB array}
+\item{\code{object}}{Access the underlying TileDB array.}
 }
 \if{html}{\out{</div>}}
 }
@@ -65,7 +67,11 @@ Derived classes: \code{\link{SOMADataFrame}},
 \if{html}{\out{<a id="method-SOMAArrayBase-open"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMAArrayBase-open}{}}}
 \subsection{Method \code{open()}}{
-Open the SOMA object for read or write
+Open the SOMA object for read or write.\cr
+\cr
+\strong{Note}: \code{open()} is considered internal and should not be
+called directly; use factory functions
+(eg. \code{\link{SOMASparseNDArrayOpen}()}) instead.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMAArrayBase$open(mode = c("READ", "WRITE"))}\if{html}{\out{</div>}}
 }
@@ -73,25 +79,25 @@ Open the SOMA object for read or write
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{mode}}{Mode to open the object in}
+\item{\code{mode}}{Mode to open the object in.}
 }
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-\code{self}
+Return s\code{self}.
 }
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-SOMAArrayBase-close"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMAArrayBase-close}{}}}
 \subsection{Method \code{close()}}{
-Close the SOMA array
+Close the SOMA array.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMAArrayBase$close()}\if{html}{\out{</div>}}
 }
 
 \subsection{Returns}{
-Invisibly returns \code{self}
+Invisibly returns \code{self}.
 }
 }
 \if{html}{\out{<hr>}}
@@ -119,7 +125,7 @@ Is an array sparse?
 
 \subsection{Returns}{
 \code{TRUE} if the underlying TileDB array is sparse;
-otherwise \code{FALSE}
+otherwise \code{FALSE}.
 }
 }
 \if{html}{\out{<hr>}}
@@ -127,13 +133,13 @@ otherwise \code{FALSE}
 \if{latex}{\out{\hypertarget{method-SOMAArrayBase-schema}{}}}
 \subsection{Method \code{schema()}}{
 Retrieve the array schema as an Arrow schema
-(lifecycle: maturing)
+(lifecycle: maturing).
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMAArrayBase$schema()}\if{html}{\out{</div>}}
 }
 
 \subsection{Returns}{
-An Arrow \code{\link[arrow:Schema]{Schema}} object
+An Arrow \code{\link[arrow:Schema]{Schema}} object.
 }
 }
 \if{html}{\out{<hr>}}
@@ -168,17 +174,61 @@ list contains the following entries:
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-SOMAArrayBase-is_sparse"></a>}}
-\if{latex}{\out{\hypertarget{method-SOMAArrayBase-is_sparse}{}}}
-\subsection{Method \code{is_sparse()}}{
-Is an array sparse?
+\if{html}{\out{<a id="method-SOMAArrayBase-attrnames"></a>}}
+\if{latex}{\out{\hypertarget{method-SOMAArrayBase-attrnames}{}}}
+\subsection{Method \code{attrnames()}}{
+Retrieve attribute names (lifecycle: maturing).
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{SOMAArrayBase$is_sparse()}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{SOMAArrayBase$attrnames()}\if{html}{\out{</div>}}
 }
 
 \subsection{Returns}{
-\code{TRUE} if the underlying TileDB array is sparse;
-otherwise \code{FALSE}.
+A character vector with the array's attribute names.
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SOMAArrayBase-dimensions"></a>}}
+\if{latex}{\out{\hypertarget{method-SOMAArrayBase-dimensions}{}}}
+\subsection{Method \code{dimensions()}}{
+Retrieve the array dimensions (lifecycle: maturing)
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SOMAArrayBase$dimensions()}\if{html}{\out{</div>}}
+}
+
+\subsection{Returns}{
+A named list of array dimensions; each entry contains the
+following named entries:
+\itemize{
+\item \dQuote{\code{name}}: name of the dimension.
+\item \dQuote{\code{type}}: datatype of the dimension.
+\item \dQuote{\code{ncells}}: number of values per dimension cell.
+\item \dQuote{\code{domain}}: domain of the dimension.
+\item \dQuote{\code{tile}}: tile of the dimension.
+\item \dQuote{\code{filter_list}}: a list with filter information; this
+list contains the following entries:
+\itemize{
+\item \dQuote{\code{filter_type}}
+\item \dQuote{\code{compression_level}}
+\item \dQuote{\code{bit_width}}
+\item \dQuote{\code{positive_delta}}
+\item \dQuote{\code{float_bytewidth}}
+\item \dQuote{\code{float_factor}}
+\item \dQuote{\code{float_offset}}
+}
+}
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SOMAArrayBase-dimnames"></a>}}
+\if{latex}{\out{\hypertarget{method-SOMAArrayBase-dimnames}{}}}
+\subsection{Method \code{dimnames()}}{
+Retrieve dimension names (lifecycle: maturing).
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SOMAArrayBase$dimnames()}\if{html}{\out{</div>}}
+}
+
+\subsection{Returns}{
+A character vector with the array's dimension names.
 }
 }
 \if{html}{\out{<hr>}}
@@ -186,13 +236,13 @@ otherwise \code{FALSE}.
 \if{latex}{\out{\hypertarget{method-SOMAArrayBase-colnames}{}}}
 \subsection{Method \code{colnames()}}{
 Retrieve the names of all columns, including dimensions and
-attributes (lifecycle: maturing)
+attributes (lifecycle: maturing).
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMAArrayBase$colnames()}\if{html}{\out{</div>}}
 }
 
 \subsection{Returns}{
-A character vector with the array's column names
+A character vector with the array's column names.
 }
 }
 \if{html}{\out{<hr>}}
@@ -217,14 +267,14 @@ Attempted reads and writes outside the \code{shape} will result in a
 run-time error: this is the purpose of \code{shape}. This will not
 necessarily match the bounds of occupied cells within the array.
 Using \code{$resize()}, this may be increased up to the hard limit which
-\code{maxshape()} reports. (lifecycle: maturing)
+\code{maxshape()} reports (lifecycle: maturing).
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMAArrayBase$shape()}\if{html}{\out{</div>}}
 }
 
 \subsection{Returns}{
 A named vector of dimension length and of the same type as
-the dimension
+the dimension.
 }
 }
 \if{html}{\out{<hr>}}
@@ -232,14 +282,14 @@ the dimension
 \if{latex}{\out{\hypertarget{method-SOMAArrayBase-maxshape}{}}}
 \subsection{Method \code{maxshape()}}{
 Retrieve the hard limit up to which the array may be resized
-using the \code{$resize()} method (lifecycle: maturing)
+using the \code{$resize()} method (lifecycle: maturing).
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMAArrayBase$maxshape()}\if{html}{\out{</div>}}
 }
 
 \subsection{Returns}{
 A named vector of dimension length and of the same type as
-the dimension
+the dimension.
 }
 }
 \if{html}{\out{<hr>}}
@@ -248,7 +298,7 @@ the dimension
 \subsection{Method \code{non_empty_domain()}}{
 Returns a named list of minimum/maximum pairs, one per index
 column, which are the smallest and largest values written on that
-index column
+index column.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMAArrayBase$non_empty_domain(index1 = FALSE, max_only = FALSE)}\if{html}{\out{</div>}}
 }
@@ -259,7 +309,7 @@ index column
 \item{\code{index1}}{Return the non-empty domain with 1-based indices}
 
 \item{\code{max_only}}{Return only the max value per dimension, and return
-this as a vector. Names are dropped (lifecycle: maturing)}
+this as a vector. Names are dropped (lifecycle: maturing).}
 }
 \if{html}{\out{</div>}}
 }
@@ -272,26 +322,26 @@ of maximum values.
 \if{html}{\out{<a id="method-SOMAArrayBase-ndim"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMAArrayBase-ndim}{}}}
 \subsection{Method \code{ndim()}}{
-Retrieve number of dimensions (lifecycle: maturing)
+Retrieve number of dimensions (lifecycle: maturing).
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMAArrayBase$ndim()}\if{html}{\out{</div>}}
 }
 
 \subsection{Returns}{
-A scalar with the number of dimensions
+A scalar with the number of dimensions.
 }
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-SOMAArrayBase-print"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMAArrayBase-print}{}}}
 \subsection{Method \code{print()}}{
-Print-friendly representation of the object
+Print-friendly representation of the object.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMAArrayBase$print()}\if{html}{\out{</div>}}
 }
 
 \subsection{Returns}{
-Invisibly returns \code{self}
+Invisibly returns \code{self}.
 }
 }
 \if{html}{\out{<hr>}}
