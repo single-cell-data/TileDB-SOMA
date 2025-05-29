@@ -357,7 +357,11 @@ test_that("creation with ordered factors", {
   expect_identical(lvls$ord, levels(df$ord))
   expect_identical(sdf$levels("ord"), levels(df$ord))
 
-  expect_s3_class(ord <- sdf$object[]$ord, c("ordered", "factor"), exact = TRUE)
+  expect_s3_class(
+    ord <- sdf$.__enclos_env__$private$.tiledb_array[]$ord,
+    c("ordered", "factor"),
+    exact = TRUE
+  )
   expect_length(ord, n)
   expect_identical(levels(ord), levels(df$ord))
   rm(df, tbl)
@@ -388,7 +392,11 @@ test_that("explicit casting of ordered factors to regular factors", {
   expect_no_condition(sdf$write(values = tbl))
   expect_s3_class(sdf <- SOMADataFrameOpen(uri), "SOMADataFrame")
   expect_true(sdf$schema()$GetFieldByName("ord")$type$ordered)
-  expect_s3_class(ord <- sdf$object[]$ord, c("ordered", "factor"), exact = TRUE)
+  expect_s3_class(
+    ord <- sdf$.__enclos_env__$private$.tiledb_array[]$ord,
+    c("ordered", "factor"),
+    exact = TRUE
+  )
   expect_true(is.ordered(ord))
   expect_length(ord, n)
   expect_identical(levels(ord), levels(df$ord))
