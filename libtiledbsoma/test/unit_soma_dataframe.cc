@@ -608,7 +608,7 @@ TEST_CASE_METHOD(
 
         // Apply the domain change
         if (test_upgrade_domain) {
-            std::unique_ptr<ArrowSchema>
+            managed_unique_ptr<ArrowSchema>
                 domain_schema = create_index_cols_info_schema(dim_infos);
             auto domain_array = ArrowAdapter::make_arrow_array_parent(
                 dim_infos.size());
@@ -864,7 +864,7 @@ TEST_CASE_METHOD(
 
         // Apply the domain change
         if (test_upgrade_domain) {
-            std::unique_ptr<ArrowSchema>
+            managed_unique_ptr<ArrowSchema>
                 domain_schema = create_index_cols_info_schema(dim_infos);
             auto domain_array = ArrowAdapter::make_arrow_array_parent(
                 dim_infos.size());
@@ -1124,7 +1124,7 @@ TEST_CASE_METHOD(
 
             // Apply the domain change
             if (test_upgrade_domain) {
-                std::unique_ptr<ArrowSchema>
+                managed_unique_ptr<ArrowSchema>
                     domain_schema = create_index_cols_info_schema(dim_infos);
                 auto domain_array = ArrowAdapter::make_arrow_array_parent(
                     dim_infos.size());
@@ -1366,7 +1366,7 @@ TEST_CASE_METHOD(
 
             // Apply the domain change
             if (test_upgrade_domain) {
-                std::unique_ptr<ArrowSchema>
+                managed_unique_ptr<ArrowSchema>
                     domain_schema = create_index_cols_info_schema(dim_infos);
                 auto domain_array = ArrowAdapter::make_arrow_array_parent(
                     dim_infos.size());

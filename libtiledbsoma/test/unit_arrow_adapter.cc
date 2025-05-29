@@ -27,9 +27,9 @@ TEST_CASE("name", "[pattern]") {
     REQUIRE(names.size() == tiledb_datatypes.size());
     auto n_columns = names.size();
 
-    std::unique_ptr<ArrowSchema> arrow_schema = ArrowAdapter::make_arrow_schema(
-        names, tiledb_datatypes);
-    std::unique_ptr<ArrowArray>
+    managed_unique_ptr<ArrowSchema>
+        arrow_schema = ArrowAdapter::make_arrow_schema(names, tiledb_datatypes);
+    managed_unique_ptr<ArrowArray>
         arrow_array = ArrowAdapter::make_arrow_array_parent(n_columns);
 
     std::vector<int64_t> inputs_int64({1000, 2000, 3000});
