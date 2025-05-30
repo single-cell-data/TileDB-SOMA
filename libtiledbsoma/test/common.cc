@@ -16,7 +16,7 @@
 
 namespace helper {
 
-static std::unique_ptr<ArrowArray> _create_index_cols_info_array(
+static managed_unique_ptr<ArrowArray> _create_index_cols_info_array(
     const std::vector<DimInfo>& dim_infos,
     std::optional<SOMACoordinateSpace> coordinate_space = std::nullopt);
 
@@ -62,7 +62,7 @@ bool have_dense_current_domain_support() {
 
 // Create ArrowSchema for the entire SOMAArray -- dims and attrs both -- as well
 // as index-column info
-std::pair<std::unique_ptr<ArrowSchema>, ArrowTable>
+std::pair<managed_unique_ptr<ArrowSchema>, ArrowTable>
 create_arrow_schema_and_index_columns(
     const std::vector<DimInfo>& dim_infos,
     const std::vector<AttrInfo>& attr_infos,
@@ -115,7 +115,7 @@ ArrowTable create_column_index_info(const std::vector<DimInfo>& dim_infos) {
         std::move(index_cols_info_array), std::move(index_cols_info_schema));
 }
 
-std::unique_ptr<ArrowSchema> create_index_cols_info_schema(
+managed_unique_ptr<ArrowSchema> create_index_cols_info_schema(
     const std::vector<DimInfo>& dim_infos,
     std::optional<SOMACoordinateSpace> coordinate_space) {
     auto ndim = dim_infos.size();
@@ -176,7 +176,7 @@ std::unique_ptr<ArrowSchema> create_index_cols_info_schema(
     return schema;
 }
 
-static std::unique_ptr<ArrowArray> _create_index_cols_info_array(
+static managed_unique_ptr<ArrowArray> _create_index_cols_info_array(
     const std::vector<DimInfo>& dim_infos,
     std::optional<SOMACoordinateSpace> coordinate_space) {
     int ndim = dim_infos.size();

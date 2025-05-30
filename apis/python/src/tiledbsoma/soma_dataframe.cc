@@ -82,10 +82,11 @@ void load_soma_dataframe(py::module& m) {
                 try {
                     SOMADataFrame::create(
                         uri,
-                        std::make_unique<ArrowSchema>(schema),
+                        make_managed_unique<ArrowSchema>(schema),
                         ArrowTable(
-                            std::make_unique<ArrowArray>(index_column_array),
-                            std::make_unique<ArrowSchema>(index_column_schema)),
+                            make_managed_unique<ArrowArray>(index_column_array),
+                            make_managed_unique<ArrowSchema>(
+                                index_column_schema)),
                         context,
                         platform_config,
                         timestamp);
@@ -94,9 +95,6 @@ void load_soma_dataframe(py::module& m) {
                 } catch (const std::exception& e) {
                     TPY_ERROR_LOC(e.what());
                 }
-                schema.release(&schema);
-                index_column_array.release(&index_column_array);
-                index_column_schema.release(&index_column_schema);
             },
             "uri"_a,
             py::kw_only(),
@@ -139,10 +137,6 @@ void load_soma_dataframe(py::module& m) {
                     py::gil_scoped_acquire acquire;
 
                     auto ncol = t.second->n_children;
-                    ScopedExecutor cleanup([&]() {
-                        t.first->release(t.first.get());
-                        t.second->release(t.second.get());
-                    });
 
                     py::dict retval;
                     for (auto i = 0; i < ncol; i++) {
@@ -308,19 +302,14 @@ void load_soma_dataframe(py::module& m) {
                 pyarrow_domain_table.attr("_export_to_c")(
                     nanoarrow_domain_array_ptr, nanoarrow_domain_schema_ptr);
                 ArrowTable nanoarrow_domain_table(
-                    std::make_unique<ArrowArray>(pyarrow_domain_array),
-                    std::make_unique<ArrowSchema>(pyarrow_domain_schema));
+                    make_managed_unique<ArrowArray>(pyarrow_domain_array),
+                    make_managed_unique<ArrowSchema>(pyarrow_domain_schema));
                 try {
                     sdf.upgrade_domain(
                         nanoarrow_domain_table, function_name_for_messages);
                 } catch (const std::exception& e) {
                     throw TileDBSOMAError(e.what());
                 }
-
-                nanoarrow_domain_table.first->release(
-                    nanoarrow_domain_table.first.get());
-                nanoarrow_domain_table.second->release(
-                    nanoarrow_domain_table.second.get());
             },
             "pyarrow_domain_table"_a,
             "function_name_for_messages"_a)
@@ -339,19 +328,14 @@ void load_soma_dataframe(py::module& m) {
                 pyarrow_domain_table.attr("_export_to_c")(
                     nanoarrow_domain_array_ptr, nanoarrow_domain_schema_ptr);
                 ArrowTable nanoarrow_domain_table(
-                    std::make_unique<ArrowArray>(pyarrow_domain_array),
-                    std::make_unique<ArrowSchema>(pyarrow_domain_schema));
+                    make_managed_unique<ArrowArray>(pyarrow_domain_array),
+                    make_managed_unique<ArrowSchema>(pyarrow_domain_schema));
                 try {
                     return sdf.can_upgrade_domain(
                         nanoarrow_domain_table, function_name_for_messages);
                 } catch (const std::exception& e) {
                     throw TileDBSOMAError(e.what());
                 }
-
-                nanoarrow_domain_table.first->release(
-                    nanoarrow_domain_table.first.get());
-                nanoarrow_domain_table.second->release(
-                    nanoarrow_domain_table.second.get());
             },
             "pyarrow_domain_table"_a,
             "function_name_for_messages"_a)
@@ -370,19 +354,14 @@ void load_soma_dataframe(py::module& m) {
                 pyarrow_domain_table.attr("_export_to_c")(
                     nanoarrow_domain_array_ptr, nanoarrow_domain_schema_ptr);
                 ArrowTable nanoarrow_domain_table(
-                    std::make_unique<ArrowArray>(pyarrow_domain_array),
-                    std::make_unique<ArrowSchema>(pyarrow_domain_schema));
+                    make_managed_unique<ArrowArray>(pyarrow_domain_array),
+                    make_managed_unique<ArrowSchema>(pyarrow_domain_schema));
                 try {
                     sdf.change_domain(
                         nanoarrow_domain_table, function_name_for_messages);
                 } catch (const std::exception& e) {
                     throw TileDBSOMAError(e.what());
                 }
-
-                nanoarrow_domain_table.first->release(
-                    nanoarrow_domain_table.first.get());
-                nanoarrow_domain_table.second->release(
-                    nanoarrow_domain_table.second.get());
             },
             "pyarrow_domain_table"_a,
             "function_name_for_messages"_a)
@@ -401,19 +380,14 @@ void load_soma_dataframe(py::module& m) {
                 pyarrow_domain_table.attr("_export_to_c")(
                     nanoarrow_domain_array_ptr, nanoarrow_domain_schema_ptr);
                 ArrowTable nanoarrow_domain_table(
-                    std::make_unique<ArrowArray>(pyarrow_domain_array),
-                    std::make_unique<ArrowSchema>(pyarrow_domain_schema));
+                    make_managed_unique<ArrowArray>(pyarrow_domain_array),
+                    make_managed_unique<ArrowSchema>(pyarrow_domain_schema));
                 try {
                     return sdf.can_change_domain(
                         nanoarrow_domain_table, function_name_for_messages);
                 } catch (const std::exception& e) {
                     throw TileDBSOMAError(e.what());
                 }
-
-                nanoarrow_domain_table.first->release(
-                    nanoarrow_domain_table.first.get());
-                nanoarrow_domain_table.second->release(
-                    nanoarrow_domain_table.second.get());
             },
             "pyarrow_domain_table"_a,
             "function_name_for_messages"_a)

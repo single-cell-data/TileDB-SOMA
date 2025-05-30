@@ -298,7 +298,7 @@ class SOMAArray : public SOMAObject {
      *
      * @return std::unique_ptr<ArrowSchema> Schema
      */
-    std::unique_ptr<ArrowSchema> arrow_schema() const {
+    managed_unique_ptr<ArrowSchema> arrow_schema() const {
         auto schema = ArrowAdapter::make_arrow_schema_parent(columns_.size());
 
         for (size_t i = 0; i < columns_.size(); ++i) {

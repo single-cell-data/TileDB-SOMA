@@ -2,7 +2,8 @@
 
 namespace tiledbsoma {
 TransformerPipeline::TransformerPipeline(
-    std::unique_ptr<ArrowArray> array, std::unique_ptr<ArrowSchema> schema)
+    managed_unique_ptr<ArrowArray> array,
+    managed_unique_ptr<ArrowSchema> schema)
     : array(std::move(array))
     , schema(std::move(schema)) {
 }

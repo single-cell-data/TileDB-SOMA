@@ -117,7 +117,7 @@ class SOMADenseNDArray : public SOMAArray {
      *
      * @return std::unique_ptr<ArrowSchema>
      */
-    std::unique_ptr<ArrowSchema> schema() const;
+    managed_unique_ptr<ArrowSchema> schema() const;
 
     /**
      * @brief Get the soma_data's dtype in the form of an Arrow

@@ -939,9 +939,6 @@ void SOMAArray::_set_soma_joinid_shape_helper(
         }
 
         new_current_domain.set_ndrectangle(ndrect);
-        soma_domain.first->release(soma_domain.first.get());
-        soma_domain.second->release(soma_domain.second.get());
-
     } else {
         // For resize: copy from the existing current domain except for the
         // new soma_joinid value.

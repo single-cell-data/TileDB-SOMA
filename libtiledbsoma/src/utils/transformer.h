@@ -30,13 +30,14 @@ class Transformer {
     virtual ~Transformer();
 
     virtual ArrowTable apply(
-        std::unique_ptr<ArrowArray>, std::unique_ptr<ArrowSchema>) = 0;
+        managed_unique_ptr<ArrowArray>, managed_unique_ptr<ArrowSchema>) = 0;
 };
 
 class TransformerPipeline {
    public:
     TransformerPipeline(
-        std::unique_ptr<ArrowArray> array, std::unique_ptr<ArrowSchema> schema);
+        managed_unique_ptr<ArrowArray> array,
+        managed_unique_ptr<ArrowSchema> schema);
 
     TransformerPipeline(TransformerPipeline&& other);
 
@@ -63,14 +64,14 @@ class TransformerPipeline {
     template <typename T, class... Ts>
         requires std::invocable<
                      T,
-                     std::unique_ptr<ArrowArray>,
-                     std::unique_ptr<ArrowSchema>,
+                     managed_unique_ptr<ArrowArray>,
+                     managed_unique_ptr<ArrowSchema>,
                      Ts...> &&
                  std::same_as<
                      std::invoke_result_t<
                          T,
-                         std::unique_ptr<ArrowArray>,
-                         std::unique_ptr<ArrowSchema>,
+                         managed_unique_ptr<ArrowArray>,
+                         managed_unique_ptr<ArrowSchema>,
                          Ts...>,
                      ArrowTable>
     TransformerPipeline& transform(T transformer, Ts... args) {
@@ -83,8 +84,8 @@ class TransformerPipeline {
     ArrowTable asTable();
 
    private:
-    std::unique_ptr<ArrowArray> array;
-    std::unique_ptr<ArrowSchema> schema;
+    managed_unique_ptr<ArrowArray> array;
+    managed_unique_ptr<ArrowSchema> schema;
 };
 }  // namespace tiledbsoma
 

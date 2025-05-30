@@ -106,10 +106,6 @@ struct VariouslyIndexedDataFrameFixture {
             helper::create_arrow_schema_and_index_columns(
                 dim_infos, attr_infos);
         SOMADataFrame::create(uri_, schema, index_columns, ctx_);
-
-        schema->release(schema.get());
-        index_columns.first->release(index_columns.first.get());
-        index_columns.second->release(index_columns.second.get());
     }
 
     void create(
@@ -127,10 +123,6 @@ struct VariouslyIndexedDataFrameFixture {
             ctx_,
             platform_config,
             timestamp_range);
-
-        schema->release(schema.get());
-        index_columns.first->release(index_columns.first.get());
-        index_columns.second->release(index_columns.second.get());
     }
 
     std::unique_ptr<SOMADataFrame> open(
@@ -244,9 +236,6 @@ TEST_CASE("SOMAColumn: SOMADimension") {
             columns.back()->tiledb_dimensions().value()[0].type() ==
             dim_infos[i].tiledb_datatype);
     }
-
-    index_columns.first->release(index_columns.first.get());
-    index_columns.second->release(index_columns.second.get());
 
     REQUIRE(
         columns[1]->core_domain_slot<double_t>() ==
@@ -366,13 +355,6 @@ TEST_CASE_METHOD(
             ArrowAdapter::get_array_string_column, col_soma_maxdomain);
 
         // Cleanup domain arrow tables
-        non_empty_domain.first->release(non_empty_domain.first.get());
-        non_empty_domain.second->release(non_empty_domain.second.get());
-        soma_domain.first->release(soma_domain.first.get());
-        soma_domain.second->release(soma_domain.second.get());
-        soma_maxdomain.first->release(soma_maxdomain.first.get());
-        soma_maxdomain.second->release(soma_maxdomain.second.get());
-
         col_non_empty_domain.first->release(col_non_empty_domain.first);
         col_non_empty_domain.second->release(col_non_empty_domain.second);
         col_soma_domain.first->release(col_soma_domain.first);
@@ -545,13 +527,6 @@ TEST_CASE_METHOD(
             ArrowAdapter::get_array_string_column, col_soma_maxdomain);
 
         // Cleanup domain arrow tables
-        non_empty_domain.first->release(non_empty_domain.first.get());
-        non_empty_domain.second->release(non_empty_domain.second.get());
-        soma_domain.first->release(soma_domain.first.get());
-        soma_domain.second->release(soma_domain.second.get());
-        soma_maxdomain.first->release(soma_maxdomain.first.get());
-        soma_maxdomain.second->release(soma_maxdomain.second.get());
-
         col_non_empty_domain.first->release(col_non_empty_domain.first);
         col_non_empty_domain.second->release(col_non_empty_domain.second);
         col_soma_domain.first->release(col_soma_domain.first);

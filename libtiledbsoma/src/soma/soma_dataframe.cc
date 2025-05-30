@@ -25,7 +25,7 @@ using namespace tiledb;
 
 void SOMADataFrame::create(
     std::string_view uri,
-    const std::unique_ptr<ArrowSchema>& schema,
+    const managed_unique_ptr<ArrowSchema>& schema,
     const ArrowTable& index_columns,
     std::shared_ptr<SOMAContext> ctx,
     PlatformConfig platform_config,
@@ -265,7 +265,7 @@ void SOMADataFrame::update_dataframe_schema(
 //= public non-static
 //===================================================================
 
-std::unique_ptr<ArrowSchema> SOMADataFrame::schema() const {
+managed_unique_ptr<ArrowSchema> SOMADataFrame::schema() const {
     return this->arrow_schema();
 }
 

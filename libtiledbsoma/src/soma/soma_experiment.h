@@ -37,7 +37,7 @@ class SOMAExperiment : public SOMACollection {
      */
     static void create(
         std::string_view uri,
-        const std::unique_ptr<ArrowSchema>& schema,
+        const managed_unique_ptr<ArrowSchema>& schema,
         const ArrowTable& index_columns,
         std::shared_ptr<SOMAContext> ctx,
         PlatformConfig platform_config = PlatformConfig(),

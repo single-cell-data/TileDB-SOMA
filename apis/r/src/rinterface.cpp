@@ -386,7 +386,7 @@ Rcpp::CharacterVector c_attrnames(
 // [[Rcpp::export]]
 SEXP c_schema(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
     auto sr = tdbs::SOMAArray::open(OpenMode::read, uri, ctxxp->ctxptr);
-    std::unique_ptr<ArrowSchema> lib_retval = sr->arrow_schema();
+    tdbs::managed_unique_ptr<ArrowSchema> lib_retval = sr->arrow_schema();
     sr->close();
 
     auto schemaxp = nanoarrow_schema_owning_xptr();
@@ -806,8 +806,8 @@ std::string upgrade_or_change_domain(
     nanoarrow::UniqueArray apdim{nanoarrow_array_from_xptr(nadimap)};
     nanoarrow::UniqueSchema spdim{nanoarrow_schema_from_xptr(nadimsp)};
 
-    auto dimarr = std::make_unique<ArrowArray>();
-    auto dimsch = std::make_unique<ArrowSchema>();
+    auto dimarr = tdbs::make_managed_unique<ArrowArray>();
+    auto dimsch = tdbs::make_managed_unique<ArrowSchema>();
 
     apdim.move(dimarr.get());
     spdim.move(dimsch.get());

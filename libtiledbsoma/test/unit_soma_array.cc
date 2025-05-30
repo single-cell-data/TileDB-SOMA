@@ -564,7 +564,7 @@ TEST_CASE("SOMAArray: Write and read back Boolean") {
     SOMAArray::create(ctx, uri, std::move(schema), "NONE");
     auto soma_array = SOMAArray::open(OpenMode::write, uri, ctx);
 
-    auto arrow_schema = std::make_unique<ArrowSchema>();
+    auto arrow_schema = make_managed_unique<ArrowSchema>();
     arrow_schema->format = strdup("+s");
     arrow_schema->n_children = 2;
     arrow_schema->dictionary = nullptr;
@@ -592,7 +592,7 @@ TEST_CASE("SOMAArray: Write and read back Boolean") {
     arrow_att->children = nullptr;
     arrow_att->release = &ArrowAdapter::release_schema;
 
-    auto arrow_array = std::make_unique<ArrowArray>();
+    auto arrow_array = make_managed_unique<ArrowArray>();
     arrow_array->length = 0;
     arrow_array->null_count = 0;
     arrow_array->offset = 0;
@@ -660,7 +660,4 @@ TEST_CASE("SOMAArray: Write and read back Boolean") {
         std::vector<bool>(
             {false, true, false, true, false, true, false, true}));
     soma_array->close();
-
-    arrow_array->release(arrow_array.get());
-    arrow_schema->release(arrow_schema.get());
 }

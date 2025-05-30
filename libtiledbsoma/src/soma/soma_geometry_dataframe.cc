@@ -30,7 +30,7 @@ using namespace tiledb;
 
 void SOMAGeometryDataFrame::create(
     std::string_view uri,
-    const std::unique_ptr<ArrowSchema>& schema,
+    const managed_unique_ptr<ArrowSchema>& schema,
     const ArrowTable& index_columns,
     const SOMACoordinateSpace& coordinate_space,
     std::shared_ptr<SOMAContext> ctx,
@@ -90,7 +90,7 @@ bool SOMAGeometryDataFrame::exists(
 //= public non-static
 //===================================================================
 
-std::unique_ptr<ArrowSchema> SOMAGeometryDataFrame::schema() const {
+managed_unique_ptr<ArrowSchema> SOMAGeometryDataFrame::schema() const {
     return this->arrow_schema();
 }
 

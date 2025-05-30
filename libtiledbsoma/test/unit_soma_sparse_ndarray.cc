@@ -50,9 +50,6 @@ TEST_CASE("SOMASparseNDArray: basic", "[SOMASparseNDArray]") {
         PlatformConfig(),
         TimestampRange(0, 2));
 
-    index_columns.first->release(index_columns.first.get());
-    index_columns.second->release(index_columns.second.get());
-
     REQUIRE(SOMASparseNDArray::exists(uri, ctx));
     REQUIRE(!SOMADataFrame::exists(uri, ctx));
     REQUIRE(!SOMADenseNDArray::exists(uri, ctx));
@@ -173,9 +170,6 @@ TEST_CASE("SOMASparseNDArray: platform_config", "[SOMASparseNDArray]") {
     SOMASparseNDArray::create(
         uri, attr_arrow_format, index_columns, ctx, platform_config);
 
-    index_columns.first->release(index_columns.first.get());
-    index_columns.second->release(index_columns.second.get());
-
     auto soma_dataframe = SOMASparseNDArray::open(uri, OpenMode::read, ctx);
     auto dim_filter = soma_dataframe->tiledb_schema()
                           ->domain()
@@ -217,9 +211,6 @@ TEST_CASE("SOMASparseNDArray: metadata", "[SOMASparseNDArray]") {
         ctx,
         PlatformConfig(),
         TimestampRange(0, 1));
-
-    index_columns.first->release(index_columns.first.get());
-    index_columns.second->release(index_columns.second.get());
 
     auto snda = SOMASparseNDArray::open(
         uri, OpenMode::write, ctx, TimestampRange(0, 2));
@@ -297,9 +288,6 @@ TEST_CASE(
 
     SOMASparseNDArray::create(uri, attr_arrow_format, index_columns, ctx);
 
-    index_columns.first->release(index_columns.first.get());
-    index_columns.second->release(index_columns.second.get());
-
     auto snda = SOMASparseNDArray::open(uri, OpenMode::write, ctx);
     REQUIRE(snda->has_current_domain());
 
@@ -355,9 +343,6 @@ TEST_CASE("SOMASparseNDArray: can_resize", "[SOMASparseNDArray]") {
     auto index_columns = helper::create_column_index_info(dim_infos);
 
     SOMASparseNDArray::create(uri, attr_arrow_format, index_columns, ctx);
-
-    index_columns.first->release(index_columns.first.get());
-    index_columns.second->release(index_columns.second.get());
 
     auto snda = SOMASparseNDArray::open(uri, OpenMode::write, ctx);
     REQUIRE(snda->has_current_domain());
@@ -419,9 +404,6 @@ TEST_CASE("SOMASparseNDArray: nnz", "[SOMASparseNDArray]") {
     auto index_columns = helper::create_column_index_info(dim_infos);
 
     SOMASparseNDArray::create(uri, attr_arrow_format, index_columns, ctx);
-
-    index_columns.first->release(index_columns.first.get());
-    index_columns.second->release(index_columns.second.get());
 
     // Create vectors of data for writing.
     std::vector<int64_t> d0 = {1, 2, 3};

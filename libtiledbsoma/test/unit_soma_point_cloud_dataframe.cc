@@ -61,10 +61,6 @@ TEST_CASE(
         platform_config,
         std::nullopt);
 
-    schema->release(schema.get());
-    index_columns.first->release(index_columns.first.get());
-    index_columns.second->release(index_columns.second.get());
-
     // Check the point cloud exists and it cannot be read as a different
     // object.
     REQUIRE(SOMAPointCloudDataFrame::exists(uri, ctx));
