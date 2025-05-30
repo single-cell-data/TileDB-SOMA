@@ -79,8 +79,6 @@ void SOMADenseNDArray::create(
 
     SOMAArray::create(
         ctx, uri, tiledb_schema, "SOMADenseNDArray", std::nullopt, timestamp);
-
-    schema->release(schema.get());
 }
 
 std::unique_ptr<SOMADenseNDArray> SOMADenseNDArray::open(

@@ -1840,8 +1840,6 @@ managed_unique_ptr<ArrowArray> ArrowAdapter::arrow_array_insert_at_index(
         }
     }
 
-    parent_array->release(parent_array.get());
-
     return array;
 }
 
@@ -1875,8 +1873,6 @@ managed_unique_ptr<ArrowSchema> ArrowAdapter::arrow_schema_insert_at_index(
         }
     }
 
-    parent_schema->release(parent_schema.get());
-
     return schema;
 }
 
@@ -1897,8 +1893,6 @@ managed_unique_ptr<ArrowArray> ArrowAdapter::arrow_array_remove_at_index(
             ArrowArrayMove(array->children[i], array_new->children[idx]);
         }
     }
-
-    array->release(array.get());
 
     return array_new;
 }
@@ -1922,8 +1916,6 @@ managed_unique_ptr<ArrowSchema> ArrowAdapter::arrow_schema_remove_at_index(
             ArrowSchemaMove(schema->children[i], schema_new->children[idx]);
         }
     }
-
-    schema->release(schema.get());
 
     return schema_new;
 }

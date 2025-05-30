@@ -80,8 +80,6 @@ void SOMASparseNDArray::create(
 
     SOMAArray::create(
         ctx, uri, tiledb_schema, "SOMASparseNDArray", std::nullopt, timestamp);
-
-    schema->release(schema.get());
 }
 
 std::unique_ptr<SOMASparseNDArray> SOMASparseNDArray::open(
