@@ -79,7 +79,4 @@ TEST_CASE("name", "[pattern]") {
     REQUIRE(outputs_float32 == inputs_float32);
     REQUIRE(outputs_bool == inputs_bool);
     REQUIRE(outputs_string == inputs_string);
-
-    arrow_table.first->release(arrow_table.first.get());
-    arrow_table.second->release(arrow_table.second.get());
 }

@@ -660,7 +660,4 @@ TEST_CASE("SOMAArray: Write and read back Boolean") {
         std::vector<bool>(
             {false, true, false, true, false, true, false, true}));
     soma_array->close();
-
-    arrow_array->release(arrow_array.get());
-    arrow_schema->release(arrow_schema.get());
 }

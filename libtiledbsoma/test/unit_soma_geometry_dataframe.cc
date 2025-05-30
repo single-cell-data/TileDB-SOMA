@@ -59,10 +59,6 @@ TEST_CASE("SOMAGeometryDataFrame: basic", "[SOMAGeometryDataFrame]") {
         platform_config,
         std::nullopt);
 
-    schema->release(schema.get());
-    index_columns.first->release(index_columns.first.get());
-    index_columns.second->release(index_columns.second.get());
-
     // Check the geometry dataframe exists and it cannot be read as a
     // different object.
     REQUIRE(SOMAGeometryDataFrame::exists(uri, ctx));
@@ -123,10 +119,6 @@ TEST_CASE("SOMAGeometryDataFrame: Roundtrip", "[SOMAGeometryDataFrame]") {
         ctx,
         platform_config,
         std::nullopt);
-
-    schema->release(schema.get());
-    index_columns.first->release(index_columns.first.get());
-    index_columns.second->release(index_columns.second.get());
 
     // Create table of data for writing
     managed_unique_ptr<ArrowSchema>
@@ -215,9 +207,6 @@ TEST_CASE("SOMAGeometryDataFrame: Roundtrip", "[SOMAGeometryDataFrame]") {
     mq.set_array_data(data_schema.get(), data_array.get());
     mq.submit_write();
     soma_geometry->close();
-
-    data_schema->release(data_schema.get());
-    data_array->release(data_array.get());
 
     // Read back the data.
     soma_geometry = SOMAGeometryDataFrame::open(
