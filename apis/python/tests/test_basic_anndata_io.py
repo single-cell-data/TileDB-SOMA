@@ -1178,12 +1178,13 @@ def test_outgest_X_layers(tmp_path):
         assert sorted(list(bdata.layers.keys())) == ["data2", "data3"]
 
 
-# fmt: off
-@pytest.mark.parametrize("dtype", ["float64", "string"])          # new column dtype
-@pytest.mark.parametrize("nans", ["all", "none", "some"])         # how many `nan`s in new column?
-@pytest.mark.parametrize("new_obs_ids", ["all", "none", "half"])  # how many new obs IDs?
-# fmt: on
-def test_nan_append(conftest_pbmc_small, dtype, nans, new_obs_ids, tmp_path):
+@pytest.mark.parametrize("dtype", ["float64", "string"])  # new column dtype
+@pytest.mark.parametrize("nans", ["all", "none", "some"])  # how many `nan`s in new column?
+@pytest.mark.parametrize(
+    "new_obs_ids,allow_duplicate_obs_ids",
+    [("all", False), ("all", True), ("none", True), ("half", True)],
+)  # how many new obs IDs?
+def test_nan_append(conftest_pbmc_small, dtype, nans, new_obs_ids, allow_duplicate_obs_ids, tmp_path):
     """Test append-ingesting an AnnData object, including a new `obs` column with various properties:
 
     - {all,some,none} of its values are `nan`
@@ -1231,6 +1232,7 @@ def test_nan_append(conftest_pbmc_small, dtype, nans, new_obs_ids, tmp_path):
         measurement_name="RNA",
         obs_field_name="obs_id",
         var_field_name="var_id",
+        allow_duplicate_obs_ids=allow_duplicate_obs_ids,
     )
 
     rd.prepare_experiment(experiment_uri=SOMA_URI)
