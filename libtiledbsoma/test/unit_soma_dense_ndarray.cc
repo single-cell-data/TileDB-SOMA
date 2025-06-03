@@ -61,6 +61,11 @@ TEST_CASE("SOMADenseNDArray: basic", "[SOMADenseNDArray]") {
             PlatformConfig(),
             TimestampRange(0, 2)));
     }
+
+    REQUIRE(SOMADenseNDArray::exists(uri, ctx));
+
+    index_columns.first->release(index_columns.first.get());
+    index_columns.second->release(index_columns.second.get());
 }
 
 TEST_CASE("SOMADenseNDArray: platform_config", "[SOMADenseNDArray]") {

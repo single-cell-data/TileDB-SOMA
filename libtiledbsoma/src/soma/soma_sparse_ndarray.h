@@ -70,7 +70,10 @@ class SOMASparseNDArray : public SOMAArray {
      *
      * @param ctx SOMAContext
      */
-    static bool exists(std::string_view uri, std::shared_ptr<SOMAContext> ctx);
+    static inline bool exists(
+        std::string_view uri, std::shared_ptr<SOMAContext> ctx) {
+        return SOMAArray::_exists(uri, "SOMASparseNDArray", ctx);
+    }
 
     //===================================================================
     //= public non-static
