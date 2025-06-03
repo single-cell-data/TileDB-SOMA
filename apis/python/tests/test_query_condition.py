@@ -78,9 +78,7 @@ def test_query_condition(condition):
     soma_arrow = soma_query(uri, condition)
     assert len(pandas.index) == soma_arrow.num_rows
     assert pandas.empty or (
-        (pandas.reset_index(drop=True) == soma_arrow.to_pandas().reset_index(drop=True))
-        .all()
-        .all()
+        (pandas.reset_index(drop=True) == soma_arrow.to_pandas().reset_index(drop=True)).all().all()
     )
 
 
@@ -116,11 +114,7 @@ def test_query_condition_extensions(condition, pandas_equivalent_condition):
     pandas = pandas_query(uri, pandas_equivalent_condition)
     soma_arrow = soma_query(uri, condition)
     assert len(pandas.index) == soma_arrow.num_rows
-    assert (
-        (pandas.reset_index(drop=True) == soma_arrow.to_pandas().reset_index(drop=True))
-        .all()
-        .all()
-    )
+    assert (pandas.reset_index(drop=True) == soma_arrow.to_pandas().reset_index(drop=True)).all().all()
 
 
 def test_query_condition_select_columns():

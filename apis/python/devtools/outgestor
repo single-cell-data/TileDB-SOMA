@@ -27,15 +27,9 @@ logger = logging.getLogger("tiledbsoma")
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="Outgest soma data from TileDB group structure to anndata/h5ad"
-    )
-    parser.add_argument(
-        "-q", "--quiet", help="decrease output verbosity", action="store_true"
-    )
-    parser.add_argument(
-        "-d", "--debug", help="increase output verbosity", action="store_true"
-    )
+    parser = argparse.ArgumentParser(description="Outgest soma data from TileDB group structure to anndata/h5ad")
+    parser.add_argument("-q", "--quiet", help="decrease output verbosity", action="store_true")
+    parser.add_argument("-d", "--debug", help="increase output verbosity", action="store_true")
     parser.add_argument("-s", "--stats", help="show TileDB stats", action="store_true")
     parser.add_argument(
         "-o",

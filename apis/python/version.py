@@ -84,9 +84,7 @@ RELEASE_VERSION_FILE = join(dirname(__file__), "RELEASE-VERSION")
 # http://www.python.org/dev/peps/pep-0386/
 _PEP386_SHORT_VERSION_RE = r"\d+(?:\.\d+)+(?:(?:[abc]|rc)\d+(?:\.\d+)*)?"
 _PEP386_VERSION_RE = r"^%s(?:\.post\d+)?(?:\.dev\d+)?$" % _PEP386_SHORT_VERSION_RE
-_GIT_DESCRIPTION_RE = (
-    r"^(?P<ver>%s)-(?P<commits>\d+)-g(?P<sha>[\da-f]+)$" % _PEP386_SHORT_VERSION_RE
-)
+_GIT_DESCRIPTION_RE = r"^(?P<ver>%s)-(?P<commits>\d+)-g(?P<sha>[\da-f]+)$" % _PEP386_SHORT_VERSION_RE
 
 
 def err(*args, **kwargs):
@@ -94,9 +92,7 @@ def err(*args, **kwargs):
     print(*args, file=sys.stderr, **kwargs)
 
 
-def lines(
-    *cmd, drop_trailing_newline: bool = True, stderr=DEVNULL, **kwargs
-) -> list[str] | None:
+def lines(*cmd, drop_trailing_newline: bool = True, stderr=DEVNULL, **kwargs) -> list[str] | None:
     """Run a command, return its stdout as a list of lines.
 
     Strip each line's trailing newline, and drop the last line if it's empty, by default.
@@ -104,10 +100,7 @@ def lines(
     If `CalledProcessError` is raised, return `None`.
     """
     try:
-        lns = [
-            ln.rstrip("\n")
-            for ln in check_output(cmd, stderr=stderr, **kwargs).decode().splitlines()
-        ]
+        lns = [ln.rstrip("\n") for ln in check_output(cmd, stderr=stderr, **kwargs).decode().splitlines()]
     except CalledProcessError:
         return None
     if lns and drop_trailing_newline and not lns[-1]:
@@ -156,9 +149,7 @@ def get_default_remote() -> str | None:
     - Otherwise, if there's only one remote, use that
     - Otherwise, return `None`
     """
-    tracked_branch = line(
-        "git", "rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{u}"
-    )
+    tracked_branch = line("git", "rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{u}")
     if tracked_branch:
         tracked_remote = tracked_branch.split("/")[0]
         err(f"Parsed tracked remote {tracked_remote} from branch {tracked_branch}")
@@ -224,9 +215,7 @@ def get_git_version() -> str | None:
                 if not latest_tag:
                     err(f"Failed to find tags in remote {remote}")
                     return None
-                err(
-                    f"Git traversal returned {ver}, using latest tag {latest_tag} from tracked remote {remote}"
-                )
+                err(f"Git traversal returned {ver}, using latest tag {latest_tag} from tracked remote {remote}")
             else:
                 err("Failed to find a suitable remote for tag traversal")
                 return None
@@ -252,8 +241,7 @@ def read_release_version() -> str | None:
             ver = fd.readline().strip()
         if not re.search(_PEP386_VERSION_RE, ver):
             err(
-                "version: release version (%s) is invalid, "
-                "will use it anyway\n" % ver,
+                "version: release version (%s) is invalid, " "will use it anyway\n" % ver,
             )
         return ver
     except FileNotFoundError:
@@ -277,9 +265,7 @@ def get_version():
         version = release_version
     if not version:
         version = generate_cal_version()
-        err(
-            f"No {basename(RELEASE_VERSION_FILE)} or Git version found, using calver {version}"
-        )
+        err(f"No {basename(RELEASE_VERSION_FILE)} or Git version found, using calver {version}")
     if version != release_version:
         write_release_version(version)
     return version

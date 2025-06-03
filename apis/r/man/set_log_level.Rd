@@ -2,19 +2,18 @@
 % Please edit documentation in R/RcppExports.R
 \name{set_log_level}
 \alias{set_log_level}
-\title{Set the logging level for the R package and underlying C++ library}
+\title{Set TileDB-SOMA Logging Level}
 \usage{
 set_log_level(level)
 }
 \arguments{
 \item{level}{A character value with logging level understood by
 \sQuote{spdlog} such as \dQuote{trace}, \dQuote{debug}, \dQuote{info}, or
-\dQuote{warn}.}
+\dQuote{warn}}
 }
 \value{
-Nothing is returned as the function is invoked for
-the side-effect.
+Invisibly returns \code{NULL}
 }
 \description{
-Set the logging level for the R package and underlying C++ library
+Set the logging level for the \R package and underlying C++ library
 }

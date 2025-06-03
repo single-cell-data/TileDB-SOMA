@@ -39,9 +39,7 @@ def _unique_ptr(indptr: npt.NDArray) -> npt.NDArray:
     return np.array(
         [
             index
-            for index, (prev_nval, total_nval) in enumerate(
-                zip(indptr[:-1], indptr[1:])
-            )
+            for index, (prev_nval, total_nval) in enumerate(zip(indptr[:-1], indptr[1:]))
             if total_nval - prev_nval > 0
         ],
         dtype=np.int64,
@@ -65,11 +63,7 @@ def _version_less_than(version: str, upper_bound: tuple[int, int, int]) -> bool:
     return (
         major < upper_bound[0]
         or (major == upper_bound[0] and minor < upper_bound[1])
-        or (
-            major == upper_bound[0]
-            and minor == upper_bound[1]
-            and patch < upper_bound[2]
-        )
+        or (major == upper_bound[0] and minor == upper_bound[1] and patch < upper_bound[2])
     )
 
 
@@ -151,10 +145,7 @@ class TenXCountMatrixReader:
         try:
             raw_version = self._root.attrs["software_version"]
         except KeyError as ke:
-            raise SOMAError(
-                f"Unable to read software version from gene expression file "
-                f"{self._path}."
-            ) from ke
+            raise SOMAError(f"Unable to read software version from gene expression file " f"{self._path}.") from ke
         if not isinstance(raw_version, str):
             raise SOMAError(
                 f"Unexpected type {type(raw_version)!r} for software version in gene "
@@ -168,8 +159,7 @@ class TenXCountMatrixReader:
             version = version[1]
         else:
             raise SOMAError(
-                f"Unexpected value {raw_version} for 'software_version' in gene "
-                f"expression file {self._path}."
+                f"Unexpected value {raw_version} for 'software_version' in gene " f"expression file {self._path}."
             )
 
         version = version.split(".")
@@ -245,9 +235,7 @@ class TenXCountMatrixReader:
         if self._barcode_indices is None:
             self._barcode_indptr = self.matrix_group["indptr"][()]
             nvalues = self.matrix_group["data"].size
-            self._barcode_indices = _expand_compressed_index_pointers(
-                self._barcode_indptr, nvalues
-            )
+            self._barcode_indices = _expand_compressed_index_pointers(self._barcode_indptr, nvalues)
         return pa.array(self._barcode_indices)
 
     def open(self) -> None:
@@ -274,9 +262,7 @@ class TenXCountMatrixReader:
         self._data = matrix_group["data"][()]
         self._feature_indices = matrix_group["indices"][()]
         self._barcode_indptr = matrix_group["indptr"][()]
-        self._barcode_indices = _expand_compressed_index_pointers(
-            self._barcode_indptr, self._data.size
-        )
+        self._barcode_indices = _expand_compressed_index_pointers(self._barcode_indptr, self._data.size)
 
         # obs data
         self._barcodes = matrix_group["barcodes"][()].astype(str)

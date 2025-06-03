@@ -108,9 +108,7 @@ ROUND_TRIPS = [
 # fmt: on
 
 
-def verify_metadata(
-    sdf: DataFrame, persisted_column_names: list[str], persisted_metadata: str | None
-):
+def verify_metadata(sdf: DataFrame, persisted_column_names: list[str], persisted_metadata: str | None):
     # Verify column names and types
     schema = sdf.schema
     assert schema.names == [SOMA_JOINID, *persisted_column_names]
@@ -120,9 +118,7 @@ def verify_metadata(
         assert string_col_type == pa.large_string()
 
     # Verify "original index metadata"
-    actual_index_metadata = json.loads(
-        sdf.metadata[_DATAFRAME_ORIGINAL_INDEX_NAME_JSON]
-    )
+    actual_index_metadata = json.loads(sdf.metadata[_DATAFRAME_ORIGINAL_INDEX_NAME_JSON])
     assert actual_index_metadata == persisted_metadata
 
 
@@ -142,7 +138,7 @@ def test_adata_io_roundtrips(
     """
     uri = str(tmp_path)
     n_obs = len(original_df)
-    var = pd.DataFrame({"var1": [1, 2, 3], "var2": ["a", "b", "c"]})  # unused
+    var = pd.DataFrame({"var1": [1, 2, 3], "var2": ["a", "b", "c"]}, index=["A", "B", "C"])  # unused
     n_var = len(var)
     X = csr_matrix(np.array([0] * n_obs * n_var).reshape(n_obs, n_var))  # unused
     adata0 = AnnData(X=X, obs=original_df, var=var)

@@ -15,16 +15,40 @@ SOMAOpen(
 \arguments{
 \item{uri}{URI for the TileDB object}
 
-\item{mode}{One of \code{"READ"} or \code{"WRITE"}}
+\item{mode}{One of \dQuote{\code{READ}} or \dQuote{\code{WRITE}}}
 
 \item{platform_config}{Optional platform configuration}
 
 \item{tiledbsoma_ctx}{Optional SOMATileDBContext}
 
-\item{tiledb_timestamp}{Optional Datetime (POSIXct) with TileDB timestamp. For SOMACollections,
-all accessed members inherit the collection opening timestamp, and in READ mode the
-collection timestamp defaults to the time of opening.}
+\item{tiledb_timestamp}{Optional Datetime (POSIXct) for TileDB timestamp.
+In READ mode, defaults to the current time. If non-NULL, then all members
+accessed through the collection object inherit the timestamp.}
+}
+\value{
+A SOMA object
 }
 \description{
-Utility function to open the corresponding SOMA Object given a URI, (lifecycle: maturing)
+Utility function to open the corresponding SOMA object given a URI
+(lifecycle: maturing).
+}
+\examples{
+\dontshow{if (requireNamespace("withr", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+dir <- withr::local_tempfile(pattern = "soma-open")
+dir.create(dir, recursive = TRUE)
+
+uri <- extract_dataset("soma-exp-pbmc-small", dir)
+(exp <- SOMAOpen(uri))
+
+\dontshow{
+exp$close()
+}
+
+uri <- extract_dataset("soma-dataframe-pbmc3k-processed-obs", dir)
+(obs <- SOMAOpen(uri))
+
+\dontshow{
+obs$close()
+}
+\dontshow{\}) # examplesIf}
 }

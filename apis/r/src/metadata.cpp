@@ -28,11 +28,14 @@ std::unique_ptr<tdbs::SOMAObject> getObjectUniquePointer(
     }
 }
 
-//' Get nnumber of metadata items
-//' @param uri The array URI
-//' @param is_array A boolean to indicate array or group
-//' @param ctxxp An external pointer to the SOMAContext wrapper
-//' @export
+// Get number of metadata items
+//
+// @param uri The array URI
+// @param is_array A boolean to indicate array or group
+// @param ctxxp An external pointer to the SOMAContext wrapper
+//
+// @export
+//
 // [[Rcpp::export]]
 int32_t get_metadata_num(
     std::string& uri, bool is_array, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
@@ -44,14 +47,17 @@ int32_t get_metadata_num(
     return nb;
 }
 
-//' Read all metadata (as named list)
-//'
-//' This function currently supports metadata as either a string or an 'int64'
-//' (or 'int32'). It will error if a different datatype is encountered.
-//' @param uri The array URI
-//' @param is_array A boolean to indicate array or group
-//' @param ctxxp An external pointer to the SOMAContext wrapper
-//' @export
+// Read all metadata (as named list)
+//
+// This function currently supports metadata as either a string or an 'int64'
+// (or 'int32'). It will error if a different datatype is encountered.
+//
+// @param uri The array URI
+// @param is_array A boolean to indicate array or group
+// @param ctxxp An external pointer to the SOMAContext wrapper
+//
+// @export
+//
 // [[Rcpp::export]]
 Rcpp::List get_all_metadata(
     std::string& uri, bool is_array, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
@@ -90,13 +96,15 @@ Rcpp::List get_all_metadata(
     return lst;
 }
 
-//' Read metadata (as a string)
-//'
-//' @param uri The array URI
-//' @param key The array metadata key
-//' @param is_array A boolean to indicate array or group
-//' @param ctxxp An external pointer to the SOMAContext wrapper
-//' @export
+// Read metadata (as a string)
+//
+// @param uri The array URI
+// @param key The array metadata key
+// @param is_array A boolean to indicate array or group
+// @param ctxxp An external pointer to the SOMAContext wrapper
+//
+// @export
+//
 // [[Rcpp::export]]
 std::string get_metadata(
     std::string& uri,
@@ -124,13 +132,15 @@ std::string get_metadata(
     return str;
 }
 
-//' Check for metadata given key
-//'
-//' @param uri The array URI
-//' @param key The array metadata key
-//' @param is_array A boolean to indicate array or group
-//' @param ctxxp An external pointer to the SOMAContext wrapper
-//' @export
+// Check for metadata given key
+//
+// @param uri The array URI
+// @param key The array metadata key
+// @param is_array A boolean to indicate array or group
+// @param ctxxp An external pointer to the SOMAContext wrapper
+//
+// @export
+//
 // [[Rcpp::export]]
 bool has_metadata(
     std::string& uri,
@@ -144,13 +154,15 @@ bool has_metadata(
     return soup->has_metadata(key);
 }
 
-//' Delete metadata for given key
-//'
-//' @param uri The array URI
-//' @param key The array metadata key
-//' @param is_array A boolean to indicate array or group
-//' @param ctxxp An external pointer to the SOMAContext wrapper
-//' @export
+// Delete metadata for given key
+//
+// @param uri The array URI
+// @param key The array metadata key
+// @param is_array A boolean to indicate array or group
+// @param ctxxp An external pointer to the SOMAContext wrapper
+//
+// @export
+//
 // [[Rcpp::export]]
 void delete_metadata(
     std::string& uri,
@@ -165,16 +177,18 @@ void delete_metadata(
     soup->close();
 }
 
-//' Set metadata (as a string)
-//'
-//' @param uri The array URI
-//' @param key The array metadata key
-//' @param valuesxp The metadata value
-//' @param type The datatype
-//' @param is_array A boolean to indicate array or group
-//' @param ctxxp An external pointer to the SOMAContext wrapper
-//' @param tsvec An optional two-element datetime vector
-//' @export
+// Set metadata (as a string)
+//
+// @param uri The array URI
+// @param key The array metadata key
+// @param valuesxp The metadata value
+// @param type The datatype
+// @param is_array A boolean to indicate array or group
+// @param ctxxp An external pointer to the SOMAContext wrapper
+// @param tsvec An optional two-element datetime vector
+//
+// @export
+//
 // [[Rcpp::export]]
 void set_metadata(
     std::string& uri,

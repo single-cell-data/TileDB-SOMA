@@ -14,7 +14,6 @@
 #ifndef MANAGED_QUERY_H
 #define MANAGED_QUERY_H
 
-#include <concepts>
 #include <future>
 #include <span>
 #include <stdexcept>  // for windows: error C2039: 'runtime_error': is not a member of 'std'
@@ -634,13 +633,6 @@ class ManagedQuery {
 
     // Query layout
     ResultOrder layout_ = ResultOrder::automatic;
-
-    /**
-     * Convenience function for creating an ArraySchemaEvolution object
-     * referencing this array's context pointer, along with its open-at
-     * timestamp (if any).
-     */
-    ArraySchemaEvolution _make_se();
 
     uint64_t _get_max_capacity(tiledb_datatype_t index_type);
 

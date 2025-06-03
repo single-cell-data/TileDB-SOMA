@@ -85,8 +85,7 @@ jobs:
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
           working-directory: 'apis/r/'
-          cache-version: 2
-          pak-version: "devel"
+          cache-version: 3
 
       # - name: CMake
       #   uses: lukka/get-cmake@latest

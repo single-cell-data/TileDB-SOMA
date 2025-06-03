@@ -11,9 +11,7 @@ import tiledbsoma.io
 from .util import util_pbmc3k_unprocessed_versions
 
 if os.getenv("TILEDB_REST_UNITTEST_TOKEN") is None:
-    pytest.skip(
-        reason="$TILEDB_REST_UNITTEST_TOKEN is not set", allow_module_level=True
-    )
+    pytest.skip(reason="$TILEDB_REST_UNITTEST_TOKEN is not set", allow_module_level=True)
 
 
 @pytest.mark.parametrize(

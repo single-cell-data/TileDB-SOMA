@@ -11,6 +11,7 @@ import time
 import urllib.parse
 from concurrent.futures import Future
 from itertools import zip_longest
+from string import ascii_lowercase, ascii_uppercase, digits
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -82,9 +83,7 @@ def make_relative_path(uri: str, relative_to: str) -> str:
     uri_scheme = p_uri.scheme if p_uri.scheme != "" else "file"
     relative_to_scheme = p_relative_to.scheme if p_relative_to.scheme != "" else "file"
     if uri_scheme != relative_to_scheme:
-        raise ValueError(
-            "Unable to make relative path between URIs with different scheme"
-        )
+        raise ValueError("Unable to make relative path between URIs with different scheme")
 
     relpath = pathlib.PurePath(p_uri.path).relative_to(p_relative_to.path).as_posix()
     return relpath
@@ -135,19 +134,13 @@ def validate_slice(slc: Slice[Any]) -> None:
         # All half-specified slices are valid.
         return
 
-    if isinstance(slc.stop, pa.TimestampScalar) or isinstance(
-        slc.start, pa.TimestampScalar
-    ):
+    if isinstance(slc.stop, pa.TimestampScalar) or isinstance(slc.start, pa.TimestampScalar):
         if to_unix_ts(slc.stop) < to_unix_ts(slc.start):
-            raise ValueError(
-                f"slice start ({slc.start!r}) must be <= slice stop ({slc.stop!r})"
-            )
+            raise ValueError(f"slice start ({slc.start!r}) must be <= slice stop ({slc.stop!r})")
         return
 
     if slc.stop < slc.start:
-        raise ValueError(
-            f"slice start ({slc.start!r}) must be <= slice stop ({slc.stop!r})"
-        )
+        raise ValueError(f"slice start ({slc.start!r}) must be <= slice stop ({slc.stop!r})")
 
 
 _T = TypeVar("_T")
@@ -157,9 +150,7 @@ class NonNumericDimensionError(TypeError):
     """Raised when trying to get a numeric range for a non-numeric dimension."""
 
 
-def slice_to_numeric_range(
-    slc: Slice[Any], domain: tuple[_T, _T]
-) -> tuple[_T, _T] | None:
+def slice_to_numeric_range(slc: Slice[Any], domain: tuple[_T, _T]) -> tuple[_T, _T] | None:
     """Constrains the given slice to the ``domain`` for numeric dimensions.
 
     We assume the slice has already been validated by validate_slice.
@@ -182,10 +173,7 @@ def slice_to_numeric_range(
         # With the above, we have guaranteed that at least one bound will
         # include the domain.  If we get here, that means that the other bound
         # never included it (e.g. stop == slc.stop < domain_start == start).
-        raise ValueError(
-            f"slice [{slc.start!r}:{slc.stop!r}] does not overlap"
-            f" [{domain_start!r}:{domain_stop!r}]"
-        )
+        raise ValueError(f"slice [{slc.start!r}:{slc.stop!r}] does not overlap" f" [{domain_start!r}:{domain_stop!r}]")
 
     return start, stop
 
@@ -201,15 +189,9 @@ def dense_indices_to_shape(
     to the number of dimensions in the array.
     """
     if len(coords) > len(array_shape):
-        raise ValueError(
-            f"coordinate length ({len(coords)}) must be <="
-            f" array dimension count ({len(array_shape)})"
-        )
+        raise ValueError(f"coordinate length ({len(coords)}) must be <=" f" array dimension count ({len(array_shape)})")
 
-    shape = tuple(
-        dense_index_to_shape(coord, extent)
-        for coord, extent in zip_longest(coords, array_shape)
-    )
+    shape = tuple(dense_index_to_shape(coord, extent) for coord, extent in zip_longest(coords, array_shape))
     if result_order == somacore.ResultOrder.ROW_MAJOR:
         return shape
     return tuple(reversed(shape))
@@ -247,12 +229,8 @@ def check_type(
     """Verifies the type of an argument, or produces a useful error message."""
     if not isinstance(actual_value, expected_types):
         if len(expected_types) == 1:
-            raise TypeError(
-                f"expected {name} argument to be of type {expected_types[0]}; got {type(actual_value)}"
-            )
-        raise TypeError(
-            f"expected {name} argument to be one of {expected_types!r}; got {type(actual_value)}"
-        )
+            raise TypeError(f"expected {name} argument to be of type {expected_types[0]}; got {type(actual_value)}")
+        raise TypeError(f"expected {name} argument to be one of {expected_types!r}; got {type(actual_value)}")
 
 
 def check_unpartitioned(partitions: options.ReadPartitions | None) -> None:
@@ -376,9 +354,7 @@ def _build_column_config(col: Mapping[str, _ColumnConfig] | None) -> str:
     return json.dumps(column_config)
 
 
-def _build_filter_list(
-    filters: tuple[_DictFilterSpec, ...] | None, return_json: bool = True
-) -> _JSONFilterList:
+def _build_filter_list(filters: tuple[_DictFilterSpec, ...] | None, return_json: bool = True) -> _JSONFilterList:
     _convert_filter = {
         "GzipFilter": "GZIP",
         "ZstdFilter": "ZSTD",
@@ -445,9 +421,7 @@ def _build_filter_list(
                 if option_name == "_type":
                     filter["name"] = filter_name
                 else:
-                    filter[_convert_option[filter_name][option_name]] = cast(
-                        Union[float, int], option_value
-                    )
+                    filter[_convert_option[filter_name][option_name]] = cast(Union[float, int], option_value)
         filter_list.append(filter)
     return json.dumps(filter_list) if return_json else filter_list
 
@@ -457,9 +431,7 @@ def _cast_domainish(domainish: list[Any]) -> tuple[tuple[object, object], ...]:
     for slot in domainish:
         arrow_type = slot[0].type
         if pa.types.is_timestamp(arrow_type):
-            result.append(
-                tuple(pa.scalar(to_unix_ts(e), type=arrow_type) for e in slot)
-            )
+            result.append(tuple(pa.scalar(to_unix_ts(e), type=arrow_type) for e in slot))
         else:
             result.append(tuple(e.as_py() for e in slot))
 
@@ -472,10 +444,7 @@ def _set_coords(
     axis_names: Sequence[str] | None = None,
 ) -> None:
     if not is_nonstringy_sequence(coords):
-        raise TypeError(
-            f"coords type {type(coords)} must be a regular sequence,"
-            " not str or bytes"
-        )
+        raise TypeError(f"coords type {type(coords)} must be a regular sequence," " not str or bytes")
 
     if len(coords) > len(mq._array._handle._handle.dimension_names):
         raise ValueError(
@@ -504,13 +473,9 @@ def _set_coord(
     if dim.metadata is not None:
         if dim.metadata[b"dtype"].decode("utf-8") == "WKB":
             if axis_names is None:
-                raise ValueError(
-                    "Axis names are required to set geometry column coordinates"
-                )
+                raise ValueError("Axis names are required to set geometry column coordinates")
             if not isinstance(dom[0], Mapping) or not isinstance(dom[1], Mapping):
-                raise ValueError(
-                    "Domain should be expressed per axis for geometry columns"
-                )
+                raise ValueError("Domain should be expressed per axis for geometry columns")
 
             _set_geometry_coord(
                 mq,
@@ -521,12 +486,8 @@ def _set_coord(
             )
             return
 
-    if isinstance(coord, str):
-        column.set_dim_points_string(mq._handle, [coord])
-        return
-
-    if isinstance(coord, bytes):
-        column.set_dim_points_bytes(mq._handle, [coord])
+    if isinstance(coord, (str, bytes)):
+        column.set_dim_points_string_or_bytes(mq._handle, [coord])
         return
 
     if isinstance(coord, (pa.Array, pa.ChunkedArray)):
@@ -543,9 +504,7 @@ def _set_coord(
 
     # Note: slice(None, None) matches the is_slice_of part, unless we also check
     # the dim-type part
-    if (
-        is_slice_of(coord, str) or is_slice_of(coord, bytes)
-    ) and pa_types_is_string_or_bytes(dim.type):
+    if (is_slice_of(coord, str) or is_slice_of(coord, bytes)) and pa_types_is_string_or_bytes(dim.type):
         validate_slice(coord)
         dim_type = type(dom[0])
         # A ``None`` or empty start is always equivalent to empty str/bytes.
@@ -557,21 +516,13 @@ def _set_coord(
             _, stop = ned[dim_idx]
         else:
             stop = coord.stop
-
-        if pa.types.is_large_string(dim.type) or pa.types.is_string(dim.type):
-            column.set_dim_ranges_string(mq._handle, [(start, stop)])
-            return
-
-        if pa.types.is_large_binary(dim.type) or pa.types.is_binary(dim.type):
-            column.set_dim_ranges_bytes(mq._handle, [(start, stop)])
-            return
+        column.set_dim_ranges_string_or_bytes(mq._handle, [(start, stop)])
+        return
 
     # Note: slice(None, None) matches the is_slice_of part, unless we also check
     # the dim-type part.
     if (
-        is_slice_of(coord, np.datetime64)
-        or is_slice_of(coord, pa.TimestampScalar)
-        or is_slice_of(coord, int)
+        is_slice_of(coord, np.datetime64) or is_slice_of(coord, pa.TimestampScalar) or is_slice_of(coord, int)
     ) and pa.types.is_timestamp(dim.type):
         validate_slice(coord)
 
@@ -601,9 +552,7 @@ def _set_geometry_coord(
     axis_names: Sequence[str],
 ) -> None:
     if not isinstance(coord, Sequence):
-        raise ValueError(
-            f"unhandled coord type {type(coord)} for index column named {dim.name}"
-        )
+        raise ValueError(f"unhandled coord type {type(coord)} for index column named {dim.name}")
 
     ordered_dom_min = [dom[0][axis] for axis in axis_names]
     ordered_dom_max = [dom[1][axis] for axis in axis_names]
@@ -629,19 +578,13 @@ def _set_geometry_coord(
     elif all([isinstance(x, np.number) for x in coord]):
         column.set_dim_points_double_array(mq._handle, [coord])
     else:
-        raise ValueError(
-            f"Unsupported spatial coordinate type. Expected slice or float, found {type(coord)}"
-        )
+        raise ValueError(f"Unsupported spatial coordinate type. Expected slice or float, found {type(coord)}")
 
 
-def _set_coord_by_py_seq_or_np_array(
-    mq: ManagedQuery, dim: pa.Field, coord: object
-) -> None:
+def _set_coord_by_py_seq_or_np_array(mq: ManagedQuery, dim: pa.Field, coord: object) -> None:
     if isinstance(coord, np.ndarray):
         if coord.ndim != 1:
-            raise ValueError(
-                f"only 1D numpy arrays may be used to index; got {coord.ndim}"
-            )
+            raise ValueError(f"only 1D numpy arrays may be used to index; got {coord.ndim}")
 
     column = mq._array._handle._handle.get_column(dim.name)
 
@@ -654,19 +597,13 @@ def _set_coord_by_py_seq_or_np_array(
         set_dim_points(mq._handle, coord)
         return
 
-    if pa.types.is_large_string(dim.type) or pa.types.is_string(dim.type):
-        column.set_dim_points_string(mq._handle, coord)
-        return
-
-    if pa.types.is_large_binary(dim.type) or pa.types.is_binary(dim.type):
-        column.set_dim_points_bytes(mq._handle, coord)
+    if pa_types_is_string_or_bytes(dim.type):
+        column.set_dim_points_string_or_bytes(mq._handle, coord)
         return
 
     if pa.types.is_timestamp(dim.type):
         if not isinstance(coord, (tuple, list, np.ndarray)):
-            raise ValueError(
-                f"unhandled coord type {type(coord)} for index column named {dim.name}"
-            )
+            raise ValueError(f"unhandled coord type {type(coord)} for index column named {dim.name}")
 
         icoord = [to_unix_ts(e) for e in coord]
         column.set_dim_points_int64(mq._handle, icoord)
@@ -675,9 +612,7 @@ def _set_coord_by_py_seq_or_np_array(
     raise ValueError(f"unhandled type {dim.type} for index column named {dim.name}")
 
 
-def _set_coord_by_numeric_slice(
-    mq: ManagedQuery, dim: pa.Field, dom: tuple[object, object], coord: Slice[Any]
-) -> None:
+def _set_coord_by_numeric_slice(mq: ManagedQuery, dim: pa.Field, dom: tuple[object, object], coord: Slice[Any]) -> None:
     try:
         lo_hi = slice_to_numeric_range(coord, dom)
     except NonNumericDimensionError:
@@ -730,3 +665,16 @@ class Sentinel:
 
 
 MISSING = Sentinel()
+
+
+def sanitize_key(key: str) -> str:
+    # Encode everything outside of the safe characters set
+    safe_puncuation = "-_.()^!@+={}~'"
+    safe_character_set = f"{digits}{ascii_lowercase}{ascii_uppercase}{safe_puncuation}"
+    sanitized_name = urllib.parse.quote(key, safe=safe_character_set)
+
+    # Ensure that the final key is valid
+    if sanitized_name in ["..", "."]:
+        raise ValueError(f"{key} is not a supported name")
+
+    return sanitized_name

@@ -26,9 +26,7 @@ def coordinate_space_from_json(data: str) -> somacore.CoordinateSpace:
 
 def coordinate_space_to_json(coord_space: somacore.CoordinateSpace) -> str:
     """Returns json string representation of the coordinate space."""
-    return json.dumps(
-        tuple({"name": axis.name, "unit": axis.unit} for axis in coord_space.axes)
-    )
+    return json.dumps(tuple({"name": axis.name, "unit": axis.unit} for axis in coord_space.axes))
 
 
 def transform_from_json(data: str) -> somacore.CoordinateTransform:
@@ -39,16 +37,14 @@ def transform_from_json(data: str) -> somacore.CoordinateTransform:
         transform_type = raw.pop("transform_type")
     except KeyError:
         raise KeyError(
-            "'transform_type' not found when attempting to convert "
-            "JSON to CoordinateTransform child class"
+            "'transform_type' not found when attempting to convert " "JSON to CoordinateTransform child class"
         )
 
     try:
         kwargs = raw.pop("transform")
     except KeyError:
         raise KeyError(
-            "'transform' kwargs options not found when attempting to "
-            "convert JSON to CoordinateTransform child class"
+            "'transform' kwargs options not found when attempting to " "convert JSON to CoordinateTransform child class"
         )
 
     coord_transform_init: dict[str, type[somacore.CoordinateTransform]] = {
@@ -90,9 +86,7 @@ def transform_region(
     transform: somacore.CoordinateTransform,
 ) -> shapely.geometry.base.BaseGeometry:
     if len(transform.input_axes) != 2:
-        raise NotImplementedError(
-            "Spatial queries are currently only supported for 2D coordinates."
-        )
+        raise NotImplementedError("Spatial queries are currently only supported for 2D coordinates.")
     if isinstance(region, shapely.geometry.base.BaseGeometry):
         if region.has_z:
             raise ValueError("Only 2d shapely geometries are supported.")
@@ -121,9 +115,7 @@ def process_image_region(
     transform: somacore.CoordinateTransform,
     channel_coords: options.DenseCoord,
     data_order: tuple[int, ...],
-) -> tuple[
-    options.DenseNDCoords, options.SpatialRegion | None, somacore.CoordinateTransform
-]:
+) -> tuple[options.DenseNDCoords, options.SpatialRegion | None, somacore.CoordinateTransform]:
 
     if region is None:
         # Select the full region.
@@ -169,9 +161,7 @@ def process_image_region(
         elif axis == 1:
             coords.append(y_coords)  # type: ignore[attr-defined]
         elif axis == 2:
-            raise NotImplementedError(
-                "Spatial queries are currently only supported for 2D coordinates."
-            )
+            raise NotImplementedError("Spatial queries are currently only supported for 2D coordinates.")
 
     return (coords, data_region, inv_transform)
 
@@ -205,9 +195,7 @@ def process_spatial_df_region(
     else:
         # Restricted to guarantee data region is a box.
         if isinstance(region, shapely.GeometryType):
-            raise NotImplementedError(
-                "Support for querying point clouds by geometries is not yet implemented."
-            )
+            raise NotImplementedError("Support for querying point clouds by geometries is not yet implemented.")
         if not isinstance(transform, somacore.ScaleTransform):
             raise NotImplementedError(
                 f"Support for querying point clouds with a transform of type "
@@ -230,12 +218,8 @@ def process_spatial_df_region(
         (x_min, y_min, x_max, y_max) = shapely.bounds(data_region)
 
         if spatial_column is None:
-            coords_by_name[axis_names[0]] = axis_slice(
-                x_min, x_max, schema.field(axis_names[0]).type
-            )
-            coords_by_name[axis_names[1]] = axis_slice(
-                y_min, y_max, schema.field(axis_names[1]).type
-            )
+            coords_by_name[axis_names[0]] = axis_slice(x_min, x_max, schema.field(axis_names[0]).type)
+            coords_by_name[axis_names[1]] = axis_slice(y_min, y_max, schema.field(axis_names[1]).type)
         else:
             coords_by_name[spatial_column] = [
                 axis_slice(x_min, x_max, pa.float64()),

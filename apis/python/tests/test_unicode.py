@@ -68,9 +68,7 @@ def test_dataframe_unicode_value_filter(sample_dataframe_path):
 
     # filter on ascii
     with soma.DataFrame.open(sample_dataframe_path) as sdf:
-        assert sdf.read(
-            value_filter="ascii in ['aa', 'cccccc']"
-        ).concat().to_pydict() == {
+        assert sdf.read(value_filter="ascii in ['aa', 'cccccc']").concat().to_pydict() == {
             "soma_joinid": [0, 2],
             "unicode": [
                 "\N{LATIN CAPITAL LETTER E}\N{COMBINING CIRCUMFLEX ACCENT}",

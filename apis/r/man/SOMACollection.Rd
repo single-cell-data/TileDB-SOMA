@@ -6,8 +6,38 @@
 \description{
 Contains a key-value mapping where the keys are string names and
 the values are any SOMA-defined foundational or composed type, including
-\code{\link{SOMACollection}}, \code{\link{SOMADataFrame}}, \code{\link{SOMADenseNDArray}},
-\code{\link{SOMASparseNDArray}}, or \code{\link{SOMAExperiment}}.  (lifecycle: maturing)
+\code{\link{SOMACollection}}, \code{\link{SOMADataFrame}},
+\code{\link{SOMADenseNDArray}}, \code{\link{SOMASparseNDArray}}, or
+\code{\link{SOMAExperiment}} (lifecycle: maturing).
+}
+\section{Adding new objects to a collection}{
+
+
+The \code{\link{SOMACollection}} class provides a number of type-specific methods for
+adding new a object to the collection, such as \code{add_new_sparse_ndarray()} and
+\code{add_new_dataframe()}. These methods will create the new object and add it as
+member of the \code{SOMACollection}. The new object will always inherit the parent
+context (see \code{\link{SOMATileDBContext}}) and, by default, its platform
+configuration (see \code{\link{PlatformConfig}}). However, the user can override the
+default platform configuration by passing a custom configuration to the
+\code{platform_config} argument.
+}
+
+\examples{
+\dontshow{if (requireNamespace("withr", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+uri <- withr::local_tempfile(pattern = "soma-collection")
+
+(col <- SOMACollectionCreate(uri))
+col$add_new_sparse_ndarray("sparse", arrow::float64(), shape = c(100L, 100L))
+col$close()
+
+(col <- SOMACollectionOpen(uri))
+col$names()
+
+\dontshow{
+col$close()
+}
+\dontshow{\}) # examplesIf}
 }
 \section{Super classes}{
 \code{\link[tiledbsoma:TileDBObject]{tiledbsoma::TileDBObject}} -> \code{\link[tiledbsoma:TileDBGroup]{tiledbsoma::TileDBGroup}} -> \code{\link[tiledbsoma:SOMACollectionBase]{tiledbsoma::SOMACollectionBase}} -> \code{SOMACollection}

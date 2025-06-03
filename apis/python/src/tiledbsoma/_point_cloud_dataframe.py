@@ -136,12 +136,9 @@ class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
                     axis_dtype = schema.field(column_name).type
                 except KeyError as ke:
                     raise ValueError(
-                        f"Coordinate system axis '{column_name}' must be a column in the "
-                        f"schema."
+                        f"Coordinate system axis '{column_name}' must be a column in the " f"schema."
                     ) from ke
-                if not (
-                    pa.types.is_integer(axis_dtype) or pa.types.is_floating(axis_dtype)
-                ):
+                if not (pa.types.is_integer(axis_dtype) or pa.types.is_floating(axis_dtype)):
                     raise ValueError(
                         f"Spatial column '{column_name}' must have an integer or "
                         f"floating-point type. Column type is {axis_dtype!r}"
@@ -151,8 +148,7 @@ class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
                     column_dtype = schema.field(column_name).type
                 except KeyError as ke:
                     raise ValueError(
-                        f"Coordinate system axis '{column_name}' must be a column in the "
-                        f"schema."
+                        f"Coordinate system axis '{column_name}' must be a column in the " f"schema."
                     ) from ke
                 if column_dtype != axis_dtype:
                     raise ValueError("All spatial axes must have the same datatype.")
@@ -199,9 +195,7 @@ class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
 
         for index_column_name, slot_soma_domain in zip(index_column_names, soma_domain):
             pa_field = schema.field(index_column_name)
-            dtype = _arrow_types.tiledb_type_from_arrow_type(
-                pa_field.type, is_indexed_column=True
-            )
+            dtype = _arrow_types.tiledb_type_from_arrow_type(pa_field.type, is_indexed_column=True)
 
             (slot_core_current_domain, saturated_cd) = _fill_out_slot_soma_domain(
                 slot_soma_domain, False, index_column_name, pa_field.type, dtype
@@ -219,12 +213,8 @@ class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
 
             # Necessary to avoid core array-creation error "Reduce domain max by
             # 1 tile extent to allow for expansion."
-            slot_core_current_domain = _revise_domain_for_extent(
-                slot_core_current_domain, extent, saturated_cd
-            )
-            slot_core_max_domain = _revise_domain_for_extent(
-                slot_core_max_domain, extent, saturated_md
-            )
+            slot_core_current_domain = _revise_domain_for_extent(slot_core_current_domain, extent, saturated_cd)
+            slot_core_max_domain = _revise_domain_for_extent(slot_core_max_domain, extent, saturated_md)
 
             # Here is our Arrow data API for communicating schema info between
             # Python/R and C++ libtiledbsoma:
@@ -244,9 +234,7 @@ class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
                 *slot_core_current_domain,
             ]
 
-        index_column_info = pa.RecordBatch.from_pydict(
-            index_column_data, schema=pa.schema(index_column_schema)
-        )
+        index_column_info = pa.RecordBatch.from_pydict(index_column_data, schema=pa.schema(index_column_schema))
 
         plt_cfg = _util.build_clib_platform_config(platform_config)
         timestamp_ms = context._open_timestamp_ms(tiledb_timestamp)
@@ -285,8 +273,7 @@ class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
         for name in self._coord_space.axis_names:
             if name not in self.index_column_names:
                 raise SOMAError(
-                    f"Point cloud dataframe axis '{name}' does not match any of the "
-                    f"index column names."
+                    f"Point cloud dataframe axis '{name}' does not match any of the " f"index column names."
                 )
 
     # Data operations
@@ -396,20 +383,13 @@ class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
         """
         # Set/check transform and region coordinate space.
         if region_transform is None:
-            region_transform = somacore.IdentityTransform(
-                self.axis_names, self.axis_names
-            )
+            region_transform = somacore.IdentityTransform(self.axis_names, self.axis_names)
             if region_coord_space is not None:
-                raise ValueError(
-                    "Cannot specify the output coordinate space when region transform i"
-                    "is ``None``."
-                )
+                raise ValueError("Cannot specify the output coordinate space when region transform i" "is ``None``.")
             region_coord_space = self._coord_space
         else:
             if region_coord_space is None:
-                region_coord_space = CoordinateSpace.from_axis_names(
-                    region_transform.input_axes
-                )
+                region_coord_space = CoordinateSpace.from_axis_names(region_transform.input_axes)
             elif region_transform.input_axes != region_coord_space.axis_names:
                 raise ValueError(
                     f"The input axes '{region_transform.input_axes}' of the region "
@@ -475,8 +455,7 @@ class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
         sort_coords = None
         if isinstance(platform_config, TileDBCreateOptions):
             raise ValueError(
-                "As of TileDB-SOMA 1.13, the write method takes "
-                "TileDBWriteOptions instead of TileDBCreateOptions"
+                "As of TileDB-SOMA 1.13, the write method takes " "TileDBWriteOptions instead of TileDBCreateOptions"
             )
         write_options = TileDBWriteOptions.from_platform_config(platform_config)
         sort_coords = write_options.sort_coords
@@ -518,9 +497,7 @@ class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
                     f"axis names are {self._coord_space.axis_names}. New coordinate "
                     f"space has axis names {value.axis_names}."
                 )
-        self.metadata[SOMA_COORDINATE_SPACE_METADATA_KEY] = coordinate_space_to_json(
-            value
-        )
+        self.metadata[SOMA_COORDINATE_SPACE_METADATA_KEY] = coordinate_space_to_json(value)
         self._coord_space = value
 
     @property

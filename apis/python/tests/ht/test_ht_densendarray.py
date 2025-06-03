@@ -120,9 +120,7 @@ def densendarray_datatype() -> st.SearchStrategy[pa.DataType]:
     # Arrow Tensor doesn't support bool_ or timestamp, and that is the only
     # read accessor we have. So for now, don't test those types.
     if HT_TEST_CONFIG["sc-61743_workaround"]:
-        return ndarray_datatype().filter(
-            lambda t: t != pa.bool_() and not pa.types.is_timestamp(t)
-        )
+        return ndarray_datatype().filter(lambda t: t != pa.bool_() and not pa.types.is_timestamp(t))
 
     return ndarray_datatype()
 
@@ -174,19 +172,11 @@ class SOMADenseNDArrayStateMachine(SOMANDArrayStateMachine):
             allows_duplicates=False,
         )
 
-    def _array_exists(
-        self, uri: str, context: soma.SOMATileDBContext, tiledb_timestamp: int | None
-    ) -> bool:
-        return soma.DenseNDArray.exists(
-            uri, context=context, tiledb_timestamp=tiledb_timestamp
-        )
+    def _array_exists(self, uri: str, context: soma.SOMATileDBContext, tiledb_timestamp: int | None) -> bool:
+        return soma.DenseNDArray.exists(uri, context=context, tiledb_timestamp=tiledb_timestamp)
 
-    def _array_open(
-        self, *, mode: OpenMode, tiledb_timestamp: int | None = None
-    ) -> None:
-        self.A = soma.DenseNDArray.open(
-            self.uri, mode=mode, context=self.context, tiledb_timestamp=tiledb_timestamp
-        )
+    def _array_open(self, *, mode: OpenMode, tiledb_timestamp: int | None = None) -> None:
+        self.A = soma.DenseNDArray.open(self.uri, mode=mode, context=self.context, tiledb_timestamp=tiledb_timestamp)
 
     ##
     ## --- schema
@@ -212,9 +202,7 @@ class SOMADenseNDArrayStateMachine(SOMANDArrayStateMachine):
     @rule(result_order=st.sampled_from(["row-major", "column-major"]))
     def check_read_all(self, result_order: str) -> None:
         tensor = self.A.read(result_order=result_order)
-        expected = self.data_ledger.read(
-            timestamp_ms=self.A.tiledb_timestamp_ms
-        ).to_tensor()
+        expected = self.data_ledger.read(timestamp_ms=self.A.tiledb_timestamp_ms).to_tensor()
         if result_order != "row-major":
             expected = pa.Tensor.from_numpy(expected.to_numpy().T)
 
@@ -235,16 +223,10 @@ class SOMADenseNDArrayStateMachine(SOMANDArrayStateMachine):
         assert self.type.to_pandas_dtype() == tensor.dtype
 
         subslc = tuple(
-            (
-                slice(c.start, c.stop + 1 if c.stop is not None else None)
-                if isinstance(c, slice)
-                else slice(c, c + 1)
-            )
+            (slice(c.start, c.stop + 1 if c.stop is not None else None) if isinstance(c, slice) else slice(c, c + 1))
             for c in coords
         )
-        expected = self.data_ledger.read(
-            timestamp_ms=self.A.tiledb_timestamp_ms
-        ).to_numpy()[subslc]
+        expected = self.data_ledger.read(timestamp_ms=self.A.tiledb_timestamp_ms).to_numpy()[subslc]
         assert tensor.shape == expected.shape
         assert tensor.dtype == expected.dtype
         assert np.array_equal(tensor, expected, equal_nan=True)
@@ -258,12 +240,8 @@ class SOMADenseNDArrayStateMachine(SOMANDArrayStateMachine):
 
         # draw sub-array
         ndim = len(self.shape)
-        first = tuple(
-            data.draw(st.integers(min_value=0, max_value=s - 1)) for s in self.shape
-        )
-        second = tuple(
-            data.draw(st.integers(min_value=0, max_value=s - 1)) for s in self.shape
-        )
+        first = tuple(data.draw(st.integers(min_value=0, max_value=s - 1)) for s in self.shape)
+        second = tuple(data.draw(st.integers(min_value=0, max_value=s - 1)) for s in self.shape)
         top_left = tuple(min(first[i], second[i]) for i in range(ndim))
         bot_right = tuple(max(first[i], second[i]) for i in range(ndim))
         coords = tuple(slice(top_left[i], bot_right[i]) for i in range(ndim))
@@ -277,19 +255,13 @@ class SOMADenseNDArrayStateMachine(SOMANDArrayStateMachine):
         # Write sub-array to the SOMA array
         fragments_before_write = get_entries(f"{self.uri}/__fragments")
         self.A.write(coords, pa.Tensor.from_numpy(subarray))
-        new_fragments = set(get_entries(f"{self.uri}/__fragments")) - set(
-            fragments_before_write
-        )
+        new_fragments = set(get_entries(f"{self.uri}/__fragments")) - set(fragments_before_write)
         assert len(new_fragments) == 1
 
         # Save write in the ledger. The tensor ledger expects the "entire" array value,
         # not a differential value (i.e., it currently does not consolidate).
-        merged_array = self.data_ledger.read(
-            timestamp_ms=self.A.tiledb_timestamp_ms
-        ).to_numpy()
-        inclusive_coords = tuple(
-            slice(s.start, s.stop + 1) if isinstance(s, slice) else s for s in coords
-        )
+        merged_array = self.data_ledger.read(timestamp_ms=self.A.tiledb_timestamp_ms).to_numpy()
+        inclusive_coords = tuple(slice(s.start, s.stop + 1) if isinstance(s, slice) else s for s in coords)
         merged_array[inclusive_coords] = subarray
         self.data_ledger.write(
             ArrowTensorLedgerEntry(
@@ -300,6 +272,4 @@ class SOMADenseNDArrayStateMachine(SOMANDArrayStateMachine):
         )
 
 
-TestSOMADenseNDArray = pytest.mark.usefixtures("make_tmp_dir")(
-    SOMADenseNDArrayStateMachine.TestCase
-)
+TestSOMADenseNDArray = pytest.mark.usefixtures("make_tmp_dir")(SOMADenseNDArrayStateMachine.TestCase)

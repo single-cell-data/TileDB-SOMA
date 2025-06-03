@@ -54,9 +54,7 @@ def test_dataframe(tmp_path, arrow_schema):
     with pytest.raises(ValueError):
         # nonexistent indexed column
         soma.DataFrame.create(uri, schema=asch, index_column_names=["bogus"])
-    soma.DataFrame.create(
-        uri, schema=asch, index_column_names=["myint"], domain=[[0, 99]]
-    ).close()
+    soma.DataFrame.create(uri, schema=asch, index_column_names=["myint"], domain=[[0, 99]]).close()
 
     assert soma.DataFrame.exists(uri)
     assert not soma.Collection.exists(uri)
@@ -66,9 +64,7 @@ def test_dataframe(tmp_path, arrow_schema):
         assert sdf.count == 0
         assert len(sdf) == 0
 
-        assert sorted(sdf.schema.names) == sorted(
-            ["myint", "myfloat", "mystring", "soma_joinid", "mybool"]
-        )
+        assert sorted(sdf.schema.names) == sorted(["myint", "myfloat", "mystring", "soma_joinid", "mybool"])
         assert sorted(sdf.keys()) == sorted(sdf.schema.names)
 
     pydict = {}
@@ -128,9 +124,7 @@ def test_dataframe(tmp_path, arrow_schema):
 
     # Open and read with bindings
     with contextlib.closing(
-        soma.pytiledbsoma.SOMADataFrame.open(
-            uri, soma.pytiledbsoma.OpenMode.read, soma.pytiledbsoma.SOMAContext()
-        )
+        soma.pytiledbsoma.SOMADataFrame.open(uri, soma.pytiledbsoma.OpenMode.read, soma.pytiledbsoma.SOMAContext())
     ) as sdf:
         mq = soma.pytiledbsoma.ManagedQuery(sdf, sdf.context())
         table = mq.next()
@@ -145,12 +139,8 @@ def test_dataframe(tmp_path, arrow_schema):
     with soma.DataFrame.open(uri) as A:
         cfg = A.schema_config_options()
         assert not cfg.allows_duplicates
-        assert json.loads(cfg.dims)["myint"]["filters"] == [
-            {"COMPRESSION_LEVEL": 3, "name": "ZSTD"}
-        ]
-        assert json.loads(cfg.attrs)["myfloat"]["filters"] == [
-            {"COMPRESSION_LEVEL": -1, "name": "ZSTD"}
-        ]
+        assert json.loads(cfg.dims)["myint"]["filters"] == [{"COMPRESSION_LEVEL": 3, "name": "ZSTD"}]
+        assert json.loads(cfg.attrs)["myfloat"]["filters"] == [{"COMPRESSION_LEVEL": -1, "name": "ZSTD"}]
 
     with soma.DataFrame.open(uri) as sdf:
         assert sdf.count == 5
@@ -191,9 +181,7 @@ def test_dataframe(tmp_path, arrow_schema):
 
 
 def test_dataframe_reopen(tmp_path, arrow_schema):
-    soma.DataFrame.create(
-        tmp_path.as_posix(), schema=arrow_schema(), tiledb_timestamp=1
-    )
+    soma.DataFrame.create(tmp_path.as_posix(), schema=arrow_schema(), tiledb_timestamp=1)
 
     with soma.DataFrame.open(tmp_path.as_posix(), "r", tiledb_timestamp=1) as sdf1:
         with raises_no_typeguard(ValueError):
@@ -230,9 +218,7 @@ def test_dataframe_reopen(tmp_path, arrow_schema):
 
 
 def test_dataframe_with_float_dim(tmp_path, arrow_schema):
-    sdf = soma.DataFrame.create(
-        tmp_path.as_posix(), schema=arrow_schema(), index_column_names=("myfloat",)
-    )
+    sdf = soma.DataFrame.create(tmp_path.as_posix(), schema=arrow_schema(), index_column_names=("myfloat",))
     assert sdf.index_column_names == ("myfloat",)
 
 
@@ -244,9 +230,7 @@ def test_dataframe_with_enumeration(tmp_path):
         ]
     )
     enums = {"enmr1": ("a", "bb", "ccc"), "enmr2": ("cat", "dog")}
-    with soma.DataFrame.create(
-        tmp_path.as_posix(), schema=schema, domain=[[0, 5]]
-    ) as sdf:
+    with soma.DataFrame.create(tmp_path.as_posix(), schema=schema, domain=[[0, 5]]) as sdf:
         data = {}
         data["soma_joinid"] = [0, 1, 2, 3, 4]
         data["myint"] = ["a", "bb", "ccc", "bb", "a"]
@@ -299,9 +283,7 @@ def test_get_enumeration_values(tmp_path, ordered, mode):
         with pytest.raises(KeyError):
             sdf.get_enumeration_values(["string_enum", "not_an_enum"])
 
-        actual = sdf.get_enumeration_values(
-            ["string_enum", "int64_enum", "float64_enum", "bool_enum"]
-        )
+        actual = sdf.get_enumeration_values(["string_enum", "int64_enum", "float64_enum", "bool_enum"])
         expect = {
             "string_enum": pa.array([], type=pa.large_string()),
             "int64_enum": pa.array([], type=pa.int64()),
@@ -319,9 +301,7 @@ def test_get_enumeration_values(tmp_path, ordered, mode):
         "soma_joinid": [0, 1, 2, 3, 4],
         "not_an_enum": ["a", "nn", "zzz", "nn", "a"],
         "string_enum": pd.Categorical(["a", "nn", "zzz", "nn", "a"], ordered=ordered),
-        "int64_enum": pd.Categorical(
-            [111111111, 99999, 3333333, 111111111, 99999], ordered=ordered
-        ),
+        "int64_enum": pd.Categorical([111111111, 99999, 3333333, 111111111, 99999], ordered=ordered),
         # Note: some older versions (I can vouch for pandas 1.5.3 and numpy 1.25.0) do something
         # very sad here:
         #
@@ -338,9 +318,7 @@ def test_get_enumeration_values(tmp_path, ordered, mode):
         # for it. And for as long as this suite must pass on these older versions
         # of pandas/numpy, we must not insist that it do something which it is
         # demonstrably incapable of doing.
-        "float64_enum": pd.Categorical(
-            np.array([1.5, 0.5, 99.0, 1.5, 99.0], dtype=np.float64), ordered=ordered
-        ),
+        "float64_enum": pd.Categorical(np.array([1.5, 0.5, 99.0, 1.5, 99.0], dtype=np.float64), ordered=ordered),
         "bool_enum": pd.Categorical(
             [True, True, True, True, True],
             ordered=ordered,
@@ -360,9 +338,7 @@ def test_get_enumeration_values(tmp_path, ordered, mode):
         with pytest.raises(KeyError):
             sdf.get_enumeration_values(["string_enum", "not_an_enum"])
 
-        actual = sdf.get_enumeration_values(
-            ["string_enum", "int64_enum", "float64_enum", "bool_enum"]
-        )
+        actual = sdf.get_enumeration_values(["string_enum", "int64_enum", "float64_enum", "bool_enum"])
         expect = {
             "string_enum": pa.array(["a", "nn", "zzz"], type=pa.large_string()),
             "int64_enum": pa.array([111111111, 3333333, 99999], type=pa.int64()),
@@ -376,9 +352,7 @@ def test_get_enumeration_values(tmp_path, ordered, mode):
         "not_an_enum": ["dddd", "nn", "zzz"],
         "string_enum": pd.Categorical(["dddd", "nn", "zzz"], ordered=ordered),
         "int64_enum": pd.Categorical([555555555, 111111111, 99999], ordered=ordered),
-        "float64_enum": pd.Categorical(
-            np.array([44.25, 0.5, 99.0], dtype=np.float64), ordered=ordered
-        ),
+        "float64_enum": pd.Categorical(np.array([44.25, 0.5, 99.0], dtype=np.float64), ordered=ordered),
         "bool_enum": pd.Categorical([True, False, True], ordered=ordered),
     }
     arrow_data = pa.Table.from_pydict(pd_data)
@@ -394,14 +368,10 @@ def test_get_enumeration_values(tmp_path, ordered, mode):
         with pytest.raises(KeyError):
             sdf.get_enumeration_values(["string_enum", "not_an_enum"])
 
-        actual = sdf.get_enumeration_values(
-            ["string_enum", "int64_enum", "float64_enum", "bool_enum"]
-        )
+        actual = sdf.get_enumeration_values(["string_enum", "int64_enum", "float64_enum", "bool_enum"])
         expect = {
             "string_enum": pa.array(["a", "nn", "zzz", "dddd"], type=pa.large_string()),
-            "int64_enum": pa.array(
-                [99999, 3333333, 111111111, 555555555], type=pa.int64()
-            ),
+            "int64_enum": pa.array([99999, 3333333, 111111111, 555555555], type=pa.int64()),
             "float64_enum": pa.array([0.5, 1.5, 99.0, 44.25], type=pa.float64()),
             "bool_enum": pa.array([True, False], type=pa.bool_()),
         }
@@ -417,9 +387,7 @@ def test_get_enumeration_values(tmp_path, ordered, mode):
         with pytest.raises(KeyError):
             sdf.get_enumeration_values(["string_enum", "not_an_enum"])
 
-        actual = sdf.get_enumeration_values(
-            ["string_enum", "int64_enum", "float64_enum", "bool_enum"]
-        )
+        actual = sdf.get_enumeration_values(["string_enum", "int64_enum", "float64_enum", "bool_enum"])
         expect = {
             "string_enum": pa.array(["a", "nn", "zzz"], type=pa.large_string()),
             "int64_enum": pa.array([111111111, 3333333, 99999], type=pa.int64()),
@@ -438,15 +406,12 @@ def test_get_enumeration_values_historical(version, name):
     uri = str(path)
     if not os.path.isdir(uri):
         raise RuntimeError(
-            f"Missing '{uri}' directory. Try running `make data` "
-            "from the TileDB-SOMA project root directory."
+            f"Missing '{uri}' directory. Try running `make data` " "from the TileDB-SOMA project root directory."
         )
 
     with soma.Experiment.open(uri) as exp:
         if name == "pbmc3k_unprocessed":
-            values = exp.obs.get_enumeration_values(
-                ["orig.ident", "seurat_annotations"]
-            )
+            values = exp.obs.get_enumeration_values(["orig.ident", "seurat_annotations"])
 
             expect = ["pbmc3k"]
             assert values["orig.ident"].to_pylist() == expect
@@ -486,12 +451,7 @@ def test_get_enumeration_values_historical(version, name):
 )
 def test_extend_enumeration_values_historical(tmp_path, version):
 
-    original_data_uri = str(
-        ROOT_DATA_DIR
-        / "soma-experiment-versions-2025-04-04"
-        / version
-        / "pbmc3k_processed"
-    )
+    original_data_uri = str(ROOT_DATA_DIR / "soma-experiment-versions-2025-04-04" / version / "pbmc3k_processed")
 
     if not os.path.isdir(original_data_uri):
         raise RuntimeError(
@@ -634,38 +594,26 @@ def test_extend_enumeration_values(tmp_path, extend_not_write, ordered):
             "int64_enum2": pa.dictionary(pa.int8(), pa.int64(), ordered=ordered),
             "int64_enum3": pa.dictionary(pa.int8(), pa.int64(), ordered=ordered),
             "float64_enum": pa.dictionary(pa.int8(), pa.float64(), ordered=ordered),
-            "string_enum1": pa.dictionary(
-                pa.int32(), pa.large_string(), ordered=ordered
-            ),
-            "string_enum2": pa.dictionary(
-                pa.int32(), pa.large_string(), ordered=ordered
-            ),
+            "string_enum1": pa.dictionary(pa.int32(), pa.large_string(), ordered=ordered),
+            "string_enum2": pa.dictionary(pa.int32(), pa.large_string(), ordered=ordered),
             "bool_enum1": pa.dictionary(pa.int32(), pa.bool_(), ordered=ordered),
             "bool_enum2": pa.dictionary(pa.int32(), pa.bool_(), ordered=ordered),
         }
     )
-    enum_column_names = [
-        name for name in schema.names if pa.types.is_dictionary(schema.field(name).type)
-    ]
+    enum_column_names = [name for name in schema.names if pa.types.is_dictionary(schema.field(name).type)]
 
     pandas_data = {
         "soma_joinid": [0, 1, 2],
         "not_an_enum": ["quick", "brown", "fox"],
         "int64_enum1": pd.Categorical([55555, 55555, 7777777], ordered=ordered),
-        "int64_enum2": pd.Categorical(
-            np.array([55555, 55555, 7777777]), ordered=ordered
-        ),
+        "int64_enum2": pd.Categorical(np.array([55555, 55555, 7777777]), ordered=ordered),
         "int64_enum3": pd.Categorical(
             np.array([7777777, 55555, 55555], dtype=np.int64),
             ordered=ordered,
         ),
-        "float64_enum": pd.Categorical(
-            np.array([2.5, 8.875, 2.5], dtype=np.float64), ordered=ordered
-        ),
+        "float64_enum": pd.Categorical(np.array([2.5, 8.875, 2.5], dtype=np.float64), ordered=ordered),
         "string_enum1": pd.Categorical(["hello", "hello", "goodbye"], ordered=ordered),
-        "string_enum2": pd.Categorical(
-            ["goodbye", "goodbye", "hello"], ordered=ordered
-        ),
+        "string_enum2": pd.Categorical(["goodbye", "goodbye", "hello"], ordered=ordered),
         "bool_enum1": pd.Categorical([True, True, False], ordered=ordered),
         "bool_enum2": pd.Categorical([False, False, True], ordered=ordered),
     }
@@ -686,9 +634,7 @@ def test_extend_enumeration_values(tmp_path, extend_not_write, ordered):
     # Note: doing the .categories bit is implicitly deduplicating the data
     # before it's sent to tiledbsoma. Other tests, not this one, stress the
     # deduplicate-or-not logic.
-    values = {
-        name: pa.array(pandas_data[name].categories) for name in enum_column_names
-    }
+    values = {name: pa.array(pandas_data[name].categories) for name in enum_column_names}
 
     # Do the extend without write, or write with implicit extend.
     # Note: this function does not test multiple extensions, but another one does.
@@ -751,8 +697,7 @@ def test_extend_enumeration_values(tmp_path, extend_not_write, ordered):
             "int64_enum3": pd.Categorical(np.array([4444, 333, 333], dtype=np.float32)),
         }
         type_mismatch_values = {
-            name: pa.array(type_mismatch_pandas_data[name].categories)
-            for name in type_mismatch_pandas_data.keys()
+            name: pa.array(type_mismatch_pandas_data[name].categories) for name in type_mismatch_pandas_data.keys()
         }
         with pytest.raises(soma.SOMAError):
             sdf.extend_enumeration_values(type_mismatch_values)
@@ -775,9 +720,7 @@ def test_extend_enumeration_values(tmp_path, extend_not_write, ordered):
 @pytest.mark.parametrize("deduplicate", [False, True])
 @pytest.mark.parametrize("ordered", [False, True])
 @pytest.mark.parametrize("extend_not_first_write", [False, True])
-def test_extend_enumeration_values_deduplication(
-    tmp_path, deduplicate, ordered, extend_not_first_write
-):
+def test_extend_enumeration_values_deduplication(tmp_path, deduplicate, ordered, extend_not_first_write):
     uri = tmp_path.as_posix()
     domain = [[0, 9]]
 
@@ -785,9 +728,7 @@ def test_extend_enumeration_values_deduplication(
         {
             "soma_joinid": pa.int64(),
             "not_an_enum": pa.large_string(),
-            "string_enum": pa.dictionary(
-                pa.int32(), pa.large_string(), ordered=ordered
-            ),
+            "string_enum": pa.dictionary(pa.int32(), pa.large_string(), ordered=ordered),
             "int64_enum": pa.dictionary(pa.int8(), pa.int64(), ordered=ordered),
             "float32_enum": pa.dictionary(pa.int8(), pa.float32(), ordered=ordered),
             "bool_enum": pa.dictionary(pa.int32(), pa.bool_(), ordered=ordered),
@@ -830,21 +771,11 @@ def test_extend_enumeration_values_deduplication(
             data = pa.Table.from_pydict(
                 {
                     "soma_joinid": pa.array([0, 1, 2, 3], type=pa.int64()),
-                    "not_an_enum": pa.array(
-                        ["the", "quick", "brown", "fox"], type=pa.large_string()
-                    ),
-                    "string_enum": pa.DictionaryArray.from_arrays(
-                        [0, 1, 0, 1], values["string_enum"]
-                    ),
-                    "int64_enum": pa.DictionaryArray.from_arrays(
-                        [0, 2, 3, 1], values["int64_enum"]
-                    ),
-                    "float32_enum": pa.DictionaryArray.from_arrays(
-                        [0, 0, 0, 1], values["float32_enum"]
-                    ),
-                    "bool_enum": pa.DictionaryArray.from_arrays(
-                        [0, 0, 0, 0], values["bool_enum"]
-                    ),
+                    "not_an_enum": pa.array(["the", "quick", "brown", "fox"], type=pa.large_string()),
+                    "string_enum": pa.DictionaryArray.from_arrays([0, 1, 0, 1], values["string_enum"]),
+                    "int64_enum": pa.DictionaryArray.from_arrays([0, 2, 3, 1], values["int64_enum"]),
+                    "float32_enum": pa.DictionaryArray.from_arrays([0, 0, 0, 1], values["float32_enum"]),
+                    "bool_enum": pa.DictionaryArray.from_arrays([0, 0, 0, 0], values["bool_enum"]),
                 }
             )
             sdf.write(data)
@@ -869,9 +800,7 @@ def test_extend_enumeration_values_deduplication(
 
     if deduplicate:
         expect = {
-            "string_enum": pa.array(
-                ["hello", "goodbye", "farewell"], type=pa.large_string()
-            ),
+            "string_enum": pa.array(["hello", "goodbye", "farewell"], type=pa.large_string()),
             "int64_enum": pa.array([55555, 22, 333, 7777777, 4444], type=pa.int64()),
             "float32_enum": pa.array([2.25, 3.75, 9.0], type=pa.float32()),
             "bool_enum": pa.array([True, False], type=pa.bool_()),
@@ -885,9 +814,7 @@ def test_extend_enumeration_values_deduplication(
         }
 
     with soma.DataFrame.open(uri) as sdf:
-        actual = sdf.get_enumeration_values(
-            ["string_enum", "int64_enum", "float32_enum", "bool_enum"]
-        )
+        actual = sdf.get_enumeration_values(["string_enum", "int64_enum", "float32_enum", "bool_enum"])
         assert actual == expect
 
     # Different representations of single-precision NaNs.  There are
@@ -934,9 +861,7 @@ def test_extend_enumeration_values_offsets(tmp_path, ordered):
         {
             "soma_joinid": pa.int64(),
             "not_an_enum": pa.large_string(),
-            "string_enum": pa.dictionary(
-                pa.int32(), pa.large_string(), ordered=ordered
-            ),
+            "string_enum": pa.dictionary(pa.int32(), pa.large_string(), ordered=ordered),
             "int64_enum": pa.dictionary(pa.int8(), pa.int64(), ordered=ordered),
             "float32_enum": pa.dictionary(pa.int8(), pa.float32(), ordered=ordered),
             "bool_enum": pa.dictionary(pa.int32(), pa.bool_(), ordered=ordered),
@@ -944,9 +869,7 @@ def test_extend_enumeration_values_offsets(tmp_path, ordered):
     )
 
     values = {
-        "string_enum": pa.array(
-            ["auf", "wieder", "sehen", "Freunde"], type=pa.large_string()
-        )[1:3],
+        "string_enum": pa.array(["auf", "wieder", "sehen", "Freunde"], type=pa.large_string())[1:3],
         "int64_enum": pa.array([1234, 2345, 3456, 4567], type=pa.int64())[1:3],
         "float32_enum": pa.array([25.0, 26.0, 27.0, 28.0], type=pa.float32())[1:3],
         "bool_enum": pa.array([False, True, True, False], type=pa.bool_())[1:2],
@@ -966,9 +889,7 @@ def test_extend_enumeration_values_offsets(tmp_path, ordered):
         "bool_enum": pa.array([True], type=pa.bool_()),
     }
     with soma.DataFrame.open(uri) as sdf:
-        actual = sdf.get_enumeration_values(
-            ["string_enum", "int64_enum", "float32_enum", "bool_enum"]
-        )
+        actual = sdf.get_enumeration_values(["string_enum", "int64_enum", "float32_enum", "bool_enum"])
         assert actual == expect
 
 
@@ -1617,9 +1538,7 @@ def test_extend_enumeration_empty(tmp_path):
         sdf.write(data1)
 
     with soma.DataFrame.open(uri, "r") as sdf:
-        assert sdf.get_enumeration_values(["string_enum"])[
-            "string_enum"
-        ].to_pylist() == [
+        assert sdf.get_enumeration_values(["string_enum"])["string_enum"].to_pylist() == [
             "red",
             "yellow",
             "green",
@@ -1627,9 +1546,7 @@ def test_extend_enumeration_empty(tmp_path):
         ]
 
     with soma.DataFrame.open(uri, "w") as sdf:
-        sdf.extend_enumeration_values(
-            {"string_enum": pa.array([], type=pa.large_string())}
-        )
+        sdf.extend_enumeration_values({"string_enum": pa.array([], type=pa.large_string())})
 
 
 @pytest.fixture
@@ -1692,11 +1609,7 @@ def simple_data_frame(tmp_path):
 def test_DataFrame_read_column_names(simple_data_frame, ids, col_names):
     sdf, n_data = simple_data_frame
 
-    expected_schema = (
-        sdf.schema
-        if col_names is None
-        else pa.schema([sdf.schema.field(name) for name in col_names])
-    )
+    expected_schema = sdf.schema if col_names is None else pa.schema([sdf.schema.field(name) for name in col_names])
 
     def _check_tbl(tbl, col_names, ids):
         assert tbl.num_columns == len(sdf.schema if col_names is None else col_names)
@@ -1799,9 +1712,7 @@ def test_columns(tmp_path):
     with pytest.raises(ValueError):
         soma.DataFrame.create(
             (tmp_path / "E").as_posix(),
-            schema=pa.schema(
-                [("a", pa.int32()), ("soma_is_a_reserved_prefix", pa.bool_())]
-            ),
+            schema=pa.schema([("a", pa.int32()), ("soma_is_a_reserved_prefix", pa.bool_())]),
             index_column_names=["a"],
         )
 
@@ -1874,9 +1785,7 @@ def test_index_types(tmp_path, make_dataframe):
     sdf.write(make_dataframe[0])
 
 
-def make_multiply_indexed_dataframe(
-    tmp_path, index_column_names: list[str], domain: List[Any]
-):
+def make_multiply_indexed_dataframe(tmp_path, index_column_names: list[str], domain: List[Any]):
     """
     Creates a variably-indexed DataFrame for use in tests below.
     """
@@ -2021,9 +1930,7 @@ def make_multiply_indexed_dataframe(
             "name": "1D indexing by 2D np.ndarray",
             "index_column_names": ["0_thru_5"],
             "domain": [[-1000, 1000]],
-            "coords": [
-                np.asarray([[1, 3], [2, 4]])
-            ],  # Error since 2D array in the slot
+            "coords": [np.asarray([[1, 3], [2, 4]])],  # Error since 2D array in the slot
             "A": [11, 13],
             "throws": ValueError,
         },
@@ -2031,9 +1938,7 @@ def make_multiply_indexed_dataframe(
             "name": "1D indexing by slice(None)",
             "index_column_names": ["0_thru_5"],
             "domain": [[-1000, 1000]],
-            "coords": [
-                slice(None)
-            ],  # Indexing slot is none-slice i.e. `[:]` which is like None
+            "coords": [slice(None)],  # Indexing slot is none-slice i.e. `[:]` which is like None
             "A": [10, 11, 12, 13, 14, 15],
             "throws": None,
         },
@@ -2264,16 +2169,12 @@ def make_multiply_indexed_dataframe(
 def test_read_indexing(tmp_path, io):
     """Test various ways of indexing on read"""
 
-    schema, sdf, n_data = make_multiply_indexed_dataframe(
-        tmp_path, io["index_column_names"], io["domain"]
-    )
+    schema, sdf, n_data = make_multiply_indexed_dataframe(tmp_path, io["index_column_names"], io["domain"])
     with soma.DataFrame.open(uri=sdf.uri) as sdf:
         assert list(sdf.index_column_names) == io["index_column_names"]
 
         read_kwargs = {"column_names": ["A"]}
-        read_kwargs.update(
-            {k: io[k] for k in ("coords", "partitions", "value_filter") if k in io}
-        )
+        read_kwargs.update({k: io[k] for k in ("coords", "partitions", "value_filter") if k in io})
 
         # `throws` can be `type[Exception]`, or `(type[Exception], bool)` indicating explicitly
         # whether Typeguard should be enabled during the `with raises` check.
@@ -2334,15 +2235,9 @@ def test_write_categorical_types(tmp_path):
         df = pd.DataFrame(
             data={
                 "soma_joinid": [0, 1, 2, 3],
-                "string-ordered": pd.Categorical(
-                    ["a", "b", "a", "b"], ordered=True, categories=["b", "a"]
-                ),
-                "string-unordered": pd.Categorical(
-                    ["a", "b", "a", "b"], ordered=False, categories=["b", "a"]
-                ),
-                "string-compat": pd.Categorical(
-                    ["a", "b", "a", "b"], ordered=False, categories=["a", "b"]
-                ),
+                "string-ordered": pd.Categorical(["a", "b", "a", "b"], ordered=True, categories=["b", "a"]),
+                "string-unordered": pd.Categorical(["a", "b", "a", "b"], ordered=False, categories=["b", "a"]),
+                "string-compat": pd.Categorical(["a", "b", "a", "b"], ordered=False, categories=["a", "b"]),
                 "int-ordered": pd.Categorical(
                     [777777777, 888888888, 777777777, 888888888],
                     ordered=True,
@@ -2540,9 +2435,7 @@ def test_result_order(tmp_path):
         ),
     ),
 )
-def test_create_platform_config_overrides(
-    tmp_path, create_options, expected_schema_fields
-):
+def test_create_platform_config_overrides(tmp_path, create_options, expected_schema_fields):
     uri = tmp_path.as_posix()
     soma.DataFrame.create(
         uri,
@@ -2552,9 +2445,7 @@ def test_create_platform_config_overrides(
 
     with soma.DataFrame.open(tmp_path.as_posix()) as A:
         cfg = A.schema_config_options()
-        assert expected_schema_fields["validity_filters"] == json.loads(
-            cfg.validity_filters
-        )
+        assert expected_schema_fields["validity_filters"] == json.loads(cfg.validity_filters)
         assert expected_schema_fields["allows_duplicates"] == cfg.allows_duplicates
 
 
@@ -2649,39 +2540,17 @@ def test_extend_enumerations(tmp_path):
             "soma_joinid": pd.Series([0, 1, 2, 3, 4, 5], dtype=np.int64),
             "str": pd.Series(["A", "B", "A", "B", "B", "B"], dtype="category"),
             "byte": pd.Series([b"A", b"B", b"A", b"B", b"B", b"B"], dtype="category"),
-            "bool": pd.Series(
-                [True, False, True, False, False, False], dtype="category"
-            ),
-            "int64": pd.Series(
-                np.array([0, 1, 2, 0, 1, 2], dtype=np.int64), dtype="category"
-            ),
-            "uint64": pd.Series(
-                np.array([0, 1, 2, 0, 1, 2], dtype=np.uint64), dtype="category"
-            ),
-            "int32": pd.Series(
-                np.array([0, 1, 2, 0, 1, 2], dtype=np.int32), dtype="category"
-            ),
-            "uint32": pd.Series(
-                np.array([0, 1, 2, 0, 1, 2], dtype=np.uint32), dtype="category"
-            ),
-            "int16": pd.Series(
-                np.array([0, 1, 2, 0, 1, 2], dtype=np.int16), dtype="category"
-            ),
-            "uint16": pd.Series(
-                np.array([0, 1, 2, 0, 1, 2], dtype=np.uint16), dtype="category"
-            ),
-            "int8": pd.Series(
-                np.array([0, 1, 2, 0, 1, 2], dtype=np.int8), dtype="category"
-            ),
-            "uint8": pd.Series(
-                np.array([0, 1, 2, 0, 1, 2], dtype=np.uint8), dtype="category"
-            ),
-            "float32": pd.Series(
-                np.array([0, 1.1, 2.1, 0, 1.1, 2.1], dtype=np.float32), dtype="category"
-            ),
-            "float64": pd.Series(
-                np.array([0, 1.1, 2.1, 0, 1.1, 2.1], dtype=np.float64), dtype="category"
-            ),
+            "bool": pd.Series([True, False, True, False, False, False], dtype="category"),
+            "int64": pd.Series(np.array([0, 1, 2, 0, 1, 2], dtype=np.int64), dtype="category"),
+            "uint64": pd.Series(np.array([0, 1, 2, 0, 1, 2], dtype=np.uint64), dtype="category"),
+            "int32": pd.Series(np.array([0, 1, 2, 0, 1, 2], dtype=np.int32), dtype="category"),
+            "uint32": pd.Series(np.array([0, 1, 2, 0, 1, 2], dtype=np.uint32), dtype="category"),
+            "int16": pd.Series(np.array([0, 1, 2, 0, 1, 2], dtype=np.int16), dtype="category"),
+            "uint16": pd.Series(np.array([0, 1, 2, 0, 1, 2], dtype=np.uint16), dtype="category"),
+            "int8": pd.Series(np.array([0, 1, 2, 0, 1, 2], dtype=np.int8), dtype="category"),
+            "uint8": pd.Series(np.array([0, 1, 2, 0, 1, 2], dtype=np.uint8), dtype="category"),
+            "float32": pd.Series(np.array([0, 1.1, 2.1, 0, 1.1, 2.1], dtype=np.float32), dtype="category"),
+            "float64": pd.Series(np.array([0, 1.1, 2.1, 0, 1.1, 2.1], dtype=np.float64), dtype="category"),
             "float64_w_non_finite": pd.Series(
                 np.array([0, 1.1, 2.1, 0, np.inf, -np.inf], dtype=np.float64),
                 dtype="category",
@@ -2719,9 +2588,7 @@ def test_extend_enumerations(tmp_path):
 
     schema = pa.Schema.from_pandas(written_df, preserve_index=False)
 
-    with soma.DataFrame.create(
-        str(tmp_path), schema=schema, domain=[[0, 9]]
-    ) as soma_dataframe:
+    with soma.DataFrame.create(str(tmp_path), schema=schema, domain=[[0, 9]]) as soma_dataframe:
         tbl = pa.Table.from_pandas(written_df, preserve_index=False)
         soma_dataframe.write(tbl)
 
@@ -2730,10 +2597,7 @@ def test_extend_enumerations(tmp_path):
         for c in readback_df:
             assert readback_df[c].dtype == written_df[c].dtype
             if readback_df[c].dtype == "category":
-                assert (
-                    readback_df[c].cat.categories.dtype
-                    == written_df[c].cat.categories.dtype
-                )
+                assert readback_df[c].cat.categories.dtype == written_df[c].cat.categories.dtype
             assert (readback_df[c] == written_df[c]).all()
 
 
@@ -2745,9 +2609,7 @@ def test_multiple_writes_with_str_enums(tmp_path):
             ("soma_joinid", pa.int64()),
             (
                 "obs",
-                pa.dictionary(
-                    index_type=pa.int8(), value_type=pa.string(), ordered=False
-                ),
+                pa.dictionary(index_type=pa.int8(), value_type=pa.string(), ordered=False),
             ),
         ]
     )
@@ -2816,9 +2678,7 @@ def test_multiple_writes_with_int_enums(tmp_path):
             ("soma_joinid", pa.int64()),
             (
                 "obs",
-                pa.dictionary(
-                    index_type=pa.int8(), value_type=pa.int64(), ordered=False
-                ),
+                pa.dictionary(index_type=pa.int8(), value_type=pa.int64(), ordered=False),
             ),
         ]
     )
@@ -2996,9 +2856,7 @@ def test_enum_extend_past_numerical_limit(tmp_path):
             ("soma_joinid", pa.int64()),
             (
                 "obs",
-                pa.dictionary(
-                    index_type=pa.int8(), value_type=pa.large_string(), ordered=False
-                ),
+                pa.dictionary(index_type=pa.int8(), value_type=pa.large_string(), ordered=False),
             ),
         ]
     )
@@ -3009,9 +2867,7 @@ def test_enum_extend_past_numerical_limit(tmp_path):
     df1 = pd.DataFrame(
         {
             "soma_joinid": pd.Series(np.arange(n_elem), dtype=np.int64),
-            "obs": pd.Series(
-                [f"enum_{i % n_cats}" for i in range(n_elem)], dtype="category"
-            ),
+            "obs": pd.Series([f"enum_{i % n_cats}" for i in range(n_elem)], dtype="category"),
         }
     )
 
@@ -3023,9 +2879,7 @@ def test_enum_extend_past_numerical_limit(tmp_path):
     more_elem = 4
     df2 = pd.DataFrame(
         {
-            "soma_joinid": pd.Series(
-                np.arange(n_elem, n_elem + more_elem), dtype=np.int64
-            ),
+            "soma_joinid": pd.Series(np.arange(n_elem, n_elem + more_elem), dtype=np.int64),
             "obs": pd.Series(["TEST"] * more_elem, dtype="category"),
         }
     )
@@ -3051,9 +2905,7 @@ def test_enum_schema_report(tmp_path):
             "int": pd.Series([10, 20, 10, 20, 20, 20]),
             "str_cat": pd.Series(["A", "B", "A", "B", "B", "B"], dtype="category"),
             "str": pd.Series(["A", "B", "A", "B", "B", "B"]),
-            "byte_cat": pd.Series(
-                [b"A", b"B", b"A", b"B", b"B", b"B"], dtype="category"
-            ),
+            "byte_cat": pd.Series([b"A", b"B", b"A", b"B", b"B", b"B"], dtype="category"),
             "byte": pd.Series([b"A", b"B", b"A", b"B", b"B", b"B"]),
         },
     )
@@ -3112,9 +2964,7 @@ def test_nullable(tmp_path):
     pydict["soma_joinid"] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
     pydict["int"] = [1, 2, 3, 4, 5, 6, None, 8, None, None]
     pydict["bool"] = [True, True, True, False, True, False, None, False, None, None]
-    pydict["ord"] = pd.Categorical(
-        ["g1", "g2", "g3", None, "g2", "g3", "g1", None, "g3", "g1"]
-    )
+    pydict["ord"] = pd.Categorical(["g1", "g2", "g3", None, "g2", "g3", "g1", None, "g3", "g1"])
     pydict["no-meta-flag-unspecified"] = [1, 2, 3, 4, 5, 6, None, 8, None, None]
     pydict["no-meta-flag-true"] = [1, 2, 3, 4, 5, 6, None, 8, None, None]
     pydict["no-meta-flag-false"] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
@@ -3306,9 +3156,7 @@ def test_pass_configs(tmp_path, arrow_schema):
     with soma.DataFrame.open(
         uri,
         "r",
-        context=soma.SOMATileDBContext(
-            {"sm.mem.total_budget": "0", "sm.io_concurrency_level": "0"}
-        ),
+        context=soma.SOMATileDBContext({"sm.mem.total_budget": "0", "sm.io_concurrency_level": "0"}),
     ) as sdf:
 
         # This errors out as 0 is not a valid value to set the total memory
@@ -3353,15 +3201,9 @@ def test_arrow_table_sliced_writer(tmp_path):
         "myint": np.random.randint(10, 100, size=num_rows),
         "mystring": [f"s_{np.random.randint(1, 100000):08d}" for _ in range(num_rows)],
         "mybool": np.random.choice([False, True], size=num_rows),
-        "myenumint": pd.Categorical(
-            np.random.choice([1, 2, 3], size=num_rows, replace=True)
-        ),
-        "myenumstr": pd.Categorical(
-            np.random.choice(["a", "bb", "ccc"], size=num_rows, replace=True)
-        ),
-        "myenumbool": pd.Categorical(
-            np.random.choice([False, True], size=num_rows, replace=True)
-        ),
+        "myenumint": pd.Categorical(np.random.choice([1, 2, 3], size=num_rows, replace=True)),
+        "myenumstr": pd.Categorical(np.random.choice(["a", "bb", "ccc"], size=num_rows, replace=True)),
+        "myenumbool": pd.Categorical(np.random.choice([False, True], size=num_rows, replace=True)),
     }
 
     pydict["myenumint"] = pa.DictionaryArray.from_arrays(
@@ -3448,9 +3290,7 @@ def test_arrow_table_validity_with_slicing(tmp_path):
         np.datetime64("NaT", "s"),
         np.datetime64(9, "s"),
     ]
-    pydict["myenum"] = pd.Categorical(
-        ["g1", "g2", "g3", None, "g2", "g3", "g1", None, "g3", "g1"]
-    )
+    pydict["myenum"] = pd.Categorical(["g1", "g2", "g3", None, "g2", "g3", "g1", None, "g3", "g1"])
     table = pa.Table.from_pydict(pydict)
 
     # As of version 1.15.6 we were throwing in this case. However, we found
@@ -3506,24 +3346,18 @@ def test_enum_regression_62887(tmp_path):
                 [
                     pa.DictionaryArray.from_arrays(
                         indices=pa.array([0, 0, 0, 0, 0, 0, 0, 0], type=pa.int8()),
-                        dictionary=pa.array(
-                            [0, 1, 2, 3, 4, 5, 6, 7, 8], type=pa.int8()
-                        ),
+                        dictionary=pa.array([0, 1, 2, 3, 4, 5, 6, 7, 8], type=pa.int8()),
                     ),
                     pa.DictionaryArray.from_arrays(
                         indices=pa.array([0, 0], type=pa.int8()),
-                        dictionary=pa.array(
-                            [0, 1, 2, 3, 4, 5, 6, 7, 8], type=pa.int8()
-                        ),
+                        dictionary=pa.array([0, 1, 2, 3, 4, 5, 6, 7, 8], type=pa.int8()),
                     ),
                 ]
             ),
         }
     )
 
-    with soma.DataFrame.create(
-        uri, schema=schema, index_column_names=["soma_joinid"], domain=[(0, 10000000)]
-    ) as A:
+    with soma.DataFrame.create(uri, schema=schema, index_column_names=["soma_joinid"], domain=[(0, 10000000)]) as A:
         A.write(tbl)
 
     with soma.open(uri) as A:
@@ -3539,11 +3373,7 @@ def test_enum_handling_category_of_nan_62449(tmp_path):
     signaling_nan = struct.unpack(">f", b"\x7f\x80\x00\x01")[0]
 
     def nan_check(expected_nan, dict_vals):
-        return any(
-            math.isnan(val)
-            and struct.pack(">f", val) == struct.pack(">f", expected_nan)
-            for val in dict_vals
-        )
+        return any(math.isnan(val) and struct.pack(">f", val) == struct.pack(">f", expected_nan) for val in dict_vals)
 
     schema = pa.schema(
         [
@@ -3558,16 +3388,12 @@ def test_enum_handling_category_of_nan_62449(tmp_path):
             "soma_joinid": [0, 1, 2, 3],
             "A": pa.DictionaryArray.from_arrays(
                 indices=pa.array([0, 1, 2, 0], type=pa.int32()),
-                dictionary=pa.array(
-                    [negative_nan, quiet_nan, signaling_nan], type=pa.float32()
-                ),
+                dictionary=pa.array([negative_nan, quiet_nan, signaling_nan], type=pa.float32()),
             ),
         }
     )
 
-    with soma.DataFrame.create(
-        uri, schema=schema, index_column_names=["soma_joinid"], domain=[(0, 5)]
-    ) as A:
+    with soma.DataFrame.create(uri, schema=schema, index_column_names=["soma_joinid"], domain=[(0, 5)]) as A:
         A.write(expected_data1)
 
     with soma.open(uri) as A:
@@ -3615,9 +3441,7 @@ def test_return_datetime_type_for_domain_and_maxdomain_62887(tmp_path):
         (np.datetime64("2000-01-01T00:00:00"), np.datetime64("2025-01-04T09:16:49")),
     )
 
-    soma.DataFrame.create(
-        uri, schema=schema, index_column_names=index_column_names, domain=domain
-    )
+    soma.DataFrame.create(uri, schema=schema, index_column_names=index_column_names, domain=domain)
 
     with soma.DataFrame.open(uri) as A:
         assert A.index_column_names == index_column_names
@@ -3711,3 +3535,44 @@ def test_no_extent_warning_61509(tmp_path):
             index_column_names=("float_index",),
             domain=((-fmax, fmax),),
         ).close()
+
+
+def test_append_enumerations_at_timestamp_2879(tmp_path):
+    # https://github.com/single-cell-data/TileDB-SOMA/issues/2879
+
+    uri = tmp_path.as_posix()
+    asch = pa.schema([("foo", pa.dictionary(pa.int8(), pa.large_string()))])
+    soma.DataFrame.create(uri, schema=asch, tiledb_timestamp=1, domain=[(0, 4)])
+
+    pydict1 = {}
+    pydict1["soma_joinid"] = [0, 1, 2]
+    pydict1["foo"] = pd.Series(["a", "b", "a"], dtype="category")
+    rb1 = pa.Table.from_pydict(pydict1)
+
+    with soma.DataFrame.open(uri, "w", tiledb_timestamp=2) as sdf:
+        sdf.write(rb1)
+
+    pydict2 = {}
+    pydict2["soma_joinid"] = [3, 4]
+    pydict2["foo"] = pd.Series(["b", "b"], dtype="category")
+    rb2 = pa.Table.from_pydict(pydict2)
+
+    rb3 = pa.Table.from_pandas(
+        pd.concat([rb1.to_pandas(), rb2.to_pandas()], ignore_index=True),
+        schema=rb1.schema,
+    )
+
+    with soma.DataFrame.open(uri, "w", tiledb_timestamp=3) as sdf:
+        sdf.write(rb2)
+
+    with soma.DataFrame.open(uri) as sdf:
+        assert sdf.read().concat()["foo"] == rb3["foo"]
+
+    with soma.DataFrame.open(uri, tiledb_timestamp=1) as sdf:
+        assert len(sdf.read().concat()) == 0
+
+    with soma.DataFrame.open(uri, tiledb_timestamp=2) as sdf:
+        assert sdf.read().concat()["foo"] == rb1["foo"]
+
+    with soma.DataFrame.open(uri, tiledb_timestamp=3) as sdf:
+        assert sdf.read().concat()["foo"] == rb3["foo"]

@@ -35,10 +35,7 @@ except ModuleNotFoundError:
 
 def _check_tiledb_ctx() -> None:
     if not TILEDB_EXISTS:
-        raise ModuleNotFoundError(
-            "The 'tiledb' module is required to access 'tiledb_ctx' but is "
-            "not installed."
-        )
+        raise ModuleNotFoundError("The 'tiledb' module is required to access 'tiledb_ctx' but is " "not installed.")
 
 
 ConfigVal = Union[str, float]
@@ -152,8 +149,7 @@ class SOMATileDBContext(ContextBase):
         """
         if tiledb_ctx is not None and tiledb_config is not None:
             raise ValueError(
-                "only one of tiledb_config or tiledb_ctx"
-                " may be set when constructing a SOMATileDBContext"
+                "only one of tiledb_config or tiledb_ctx" " may be set when constructing a SOMATileDBContext"
             )
 
         # A TileDB Context may only be passed if tiledb is installed
@@ -163,9 +159,7 @@ class SOMATileDBContext(ContextBase):
         self._lock = threading.Lock()
         """A lock to ensure single initialization of ``_tiledb_ctx``."""
 
-        self._initial_config: ConfigDict | None = (
-            None if tiledb_config is None else _default_config(tiledb_config)
-        )
+        self._initial_config: ConfigDict | None = None if tiledb_config is None else _default_config(tiledb_config)
         """A dictionary of options to override the default TileDB config.
 
         This includes both the user-provided options and the default options
@@ -207,18 +201,14 @@ class SOMATileDBContext(ContextBase):
                 if self._initial_config is not None:
                     # The user passed in a tiledb_config
                     cfg = self._internal_tiledb_config()
-                    self._native_context = clib.SOMAContext(
-                        {k: str(v) for k, v in cfg.items()}
-                    )
+                    self._native_context = clib.SOMAContext({k: str(v) for k, v in cfg.items()})
                 elif self._tiledb_ctx is not None:
                     # The user passed in a tiledb_ctx; if tiledb is not installed
                     # it should be impossible to enter into this block because
                     # we already check that in the constructor
                     assert TileDBCtx is not None
                     cfg = self._tiledb_ctx.config().dict()
-                    self._native_context = clib.SOMAContext(
-                        {k: str(v) for k, v in cfg.items()}
-                    )
+                    self._native_context = clib.SOMAContext({k: str(v) for k, v in cfg.items()})
                 else:
                     # The user did not provide settings so create a default
                     self._native_context = _default_global_native_context()
@@ -279,11 +269,7 @@ class SOMATileDBContext(ContextBase):
 
         # Our context has not yet been built.
         # We return what will be passed into the context.
-        return (
-            dict(self._initial_config)
-            if self._initial_config is not None
-            else _default_config({})
-        )
+        return dict(self._initial_config) if self._initial_config is not None else _default_config({})
 
     def replace(
         self,
@@ -324,14 +310,11 @@ class SOMATileDBContext(ContextBase):
             if tiledb_config is not None:
                 if tiledb_ctx:
                     raise ValueError(
-                        "Either tiledb_config or tiledb_ctx may be provided"
-                        " to replace(), but not both."
+                        "Either tiledb_config or tiledb_ctx may be provided" " to replace(), but not both."
                     )
                 new_config = cast(ReplaceConfig, self._internal_tiledb_config())
                 new_config.update(tiledb_config)
-                new_tiledb_config: ConfigDict | None = {
-                    k: v for k, v in new_config.items() if v is not None
-                }
+                new_tiledb_config: ConfigDict | None = {k: v for k, v in new_config.items() if v is not None}
             else:
                 new_tiledb_config = None
 
@@ -354,10 +337,18 @@ class SOMATileDBContext(ContextBase):
         )
 
     def _open_timestamp_ms(self, in_timestamp: OpenTimestamp | None) -> int:
-        """Returns the real timestamp that should be used to open an object."""
-        if in_timestamp is not None:
+        """Returns the real timestamp that should be used to open an object.
+
+        Timestamp values of zero or None are treated as "use default". This is
+        consistent with other TileDB API (e.g., TileDB-Py). The datetime.datetime
+        epoch is treated as zero/default.
+        """
+        if isinstance(in_timestamp, datetime.datetime):
+            # if a datetime, convert to int/ms
+            in_timestamp = to_timestamp_ms(in_timestamp)
+        if in_timestamp is not None and in_timestamp != 0:
             return to_timestamp_ms(in_timestamp)
-        if self.timestamp_ms is not None:
+        if self.timestamp_ms is not None and self.timestamp_ms != 0:
             return self.timestamp_ms
         return int(time.time() * 1000)
 

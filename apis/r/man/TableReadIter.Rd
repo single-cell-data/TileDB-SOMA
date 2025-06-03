@@ -2,11 +2,31 @@
 % Please edit documentation in R/TableReadIter.R
 \name{TableReadIter}
 \alias{TableReadIter}
-\title{SOMA Read Iterator over Arrow Table}
+\title{SOMA Read Iterator Over Arrow Tables}
 \description{
 \code{TableReadIter} is a class that allows for iteration over
 a reads on \link{SOMASparseNDArray} and \link{SOMADataFrame}.
-Iteration chunks are retrieved as arrow::\link[arrow]{Table}
+Iteration chunks are retrieved as an Arrow \link[arrow]{Table}.
+}
+\examples{
+\dontshow{if (requireNamespace("withr", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+dir <- withr::local_tempfile(pattern = "table-iter")
+dir.create(dir, recursive = TRUE)
+(exp <- load_dataset("soma-exp-pbmc-small", dir))
+qry <- exp$axis_query("RNA")
+xqry <- qry$X("data")
+
+iter <- xqry$tables()
+stopifnot(inherits(iter, "TableReadIter"))
+
+while (!iter$read_complete()) {
+  block <- iter$read_next()
+}
+
+\dontshow{
+exp$close()
+}
+\dontshow{\}) # examplesIf}
 }
 \section{Super class}{
 \code{\link[tiledbsoma:ReadIter]{tiledbsoma::ReadIter}} -> \code{TableReadIter}
@@ -37,7 +57,7 @@ Concatenate remainder of iterator.
 }
 
 \subsection{Returns}{
-arrow::\link[arrow]{Table}
+An Arrow \code{\link[arrow:Table]{Table}}.
 }
 }
 \if{html}{\out{<hr>}}

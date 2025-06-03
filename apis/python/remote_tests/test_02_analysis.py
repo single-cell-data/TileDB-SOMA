@@ -13,14 +13,10 @@ import tiledbsoma.logging
 from .util import util_make_uri, util_tear_down_uri
 
 if os.getenv("TILEDB_REST_UNITTEST_TOKEN") is None:
-    pytest.skip(
-        reason="$TILEDB_REST_UNITTEST_TOKEN is not set", allow_module_level=True
-    )
+    pytest.skip(reason="$TILEDB_REST_UNITTEST_TOKEN is not set", allow_module_level=True)
 
 
-def test_write_with_updates(
-    conftest_context, conftest_namespace, conftest_default_s3_path
-):
+def test_write_with_updates(conftest_context, conftest_namespace, conftest_default_s3_path):
     (creation_uri, readback_uri) = util_make_uri(
         "soma-prod-ephemeral-data",
         "ephemeral_analysis",
@@ -46,10 +42,7 @@ def test_write_with_updates(
         assert exp.obs.metadata.get("soma_object_type") == "SOMADataFrame"
         assert exp.ms["RNA"].var.metadata.get("soma_object_type") == "SOMADataFrame"
         assert "data" in exp.ms["RNA"].X
-        assert (
-            exp.ms["RNA"].X["data"].metadata.get("soma_object_type")
-            == "SOMASparseNDArray"
-        )
+        assert exp.ms["RNA"].X["data"].metadata.get("soma_object_type") == "SOMASparseNDArray"
 
         assert exp.obs.count == adata.obs.shape[0]
         assert exp.ms["RNA"].var.count == adata.var.shape[0]

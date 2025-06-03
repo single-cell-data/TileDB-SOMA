@@ -64,9 +64,7 @@ def update_version(filepath, new_version, new_hash, update_sha=True):
             line = line.rstrip()
 
             if old_version is None:
-                m = re.search(
-                    r"TileDB/releases/download/(.*?)/.*-(.*)\.(zip|tar)", line
-                )
+                m = re.search(r"TileDB/releases/download/(.*?)/.*-(.*)\.(zip|tar)", line)
                 if m:
                     old_version = m.group(1)
                     old_hash = m.group(2)
@@ -116,21 +114,15 @@ def main(args):
     update_version(filepath, new_version, new_hash, update_sha=False)
 
     # update CI version
-    filepath = (
-        f"{os.path.dirname(__file__)}/../.github/workflows/python-ci-packaging.yml"
-    )
+    filepath = f"{os.path.dirname(__file__)}/../.github/workflows/python-ci-packaging.yml"
     update_version(filepath, new_version, new_hash)
 
-    filepath = (
-        f"{os.path.dirname(__file__)}/../.github/workflows/libtiledbsoma-asan-ci.yml"
-    )
+    filepath = f"{os.path.dirname(__file__)}/../.github/workflows/libtiledbsoma-asan-ci.yml"
     update_version(filepath, new_version, new_hash)
 
 
 if __name__ == "__main__":
-    description = (
-        "Update FindTileDB_EP.cmake and get_tarball.R with a new TileDB version"
-    )
+    description = "Update FindTileDB_EP.cmake and get_tarball.R with a new TileDB version"
     epilog = f"Example: {__file__} 2.12.0"
     parser = argparse.ArgumentParser(description=description, epilog=epilog)
     parser.add_argument("version", help="new TileDB version")

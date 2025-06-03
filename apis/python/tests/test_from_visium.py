@@ -1,5 +1,7 @@
 import os
+from contextlib import nullcontext
 
+import anndata as ad
 import numpy as np
 import pandas as pd
 import pytest
@@ -116,7 +118,9 @@ def test_from_visium(tmp_path, version, visium_v1_path, visium_v2_path):
 
     # Get input data and open AnnData for comparisons.
     visium_paths = spatial_io.VisiumPaths.from_base_folder(visium_dir_path)
-    adata = scanpy.read_10x_h5(visium_paths.gene_expression)
+    settings = ad.settings.override(check_uniqueness=False) if hasattr(ad, "settings") else nullcontext()
+    with settings:
+        adata = scanpy.read_10x_h5(visium_paths.gene_expression)
 
     # Set URI for output data.
     uri = f"{tmp_path.as_uri()}/from_visium_for_visium_{version}"
@@ -174,9 +178,7 @@ def test_from_visium(tmp_path, version, visium_v1_path, visium_v2_path):
         assert isinstance(exp.ms["RNA"].var_spatial_presence, soma.DataFrame)
 
         # Define some expected data.
-        pixel_coord_space = soma.CoordinateSpace(
-            (soma.Axis("x", "pixels"), soma.Axis("y", "pixels"))
-        )
+        pixel_coord_space = soma.CoordinateSpace((soma.Axis("x", "pixels"), soma.Axis("y", "pixels")))
 
         # Check the scene exists and has the desired metadata.
         assert isinstance(exp.spatial[scene_name], soma.Scene)
@@ -204,9 +206,7 @@ def test_from_visium(tmp_path, version, visium_v1_path, visium_v2_path):
         assert isinstance(img_transform, soma.ScaleTransform)
         assert img_transform.input_axes == ("x", "y")
         assert img_transform.output_axes == ("x", "y")
-        np.testing.assert_allclose(
-            img_transform.scale_factors, expected_scale_factors, atol=0.000001
-        )
+        np.testing.assert_allclose(img_transform.scale_factors, expected_scale_factors, atol=0.000001)
 
         # Check spot locations.
         loc = scene.obsl["loc"]

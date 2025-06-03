@@ -111,9 +111,7 @@ def _update_uns(
         at the corresponding level, and the update is skipped.
     """
     if measurement_name not in exp.ms:
-        raise ValueError(
-            f"cannot find measurement name {measurement_name} within experiment at {exp.uri}"
-        )
+        raise ValueError(f"cannot find measurement name {measurement_name} within experiment at {exp.uri}")
 
     ingest_platform_ctx = IngestPlatformCtx(
         context=context,
@@ -182,9 +180,7 @@ def _update_uns_dict(
 
         if isinstance(v, (str, int, float, np.generic)):
             if k in coll:
-                raise ValueError(
-                    f"can't overwrite {type(cur).__name__} at {coll.uri}/{k} with scalar {v}"
-                )
+                raise ValueError(f"can't overwrite {type(cur).__name__} at {coll.uri}/{k} with scalar {v}")
             if isinstance(v, np.generic):
                 # Unwrap numpy scalar
                 v = v.item()
@@ -206,9 +202,7 @@ def _update_uns_dict(
         elif isinstance(v, dict):
             if exists:
                 if not isinstance(cur, Collection):
-                    raise ValueError(
-                        f"{coll.uri}/{k}: expected Collection, found {type(cur).__name__}"
-                    )
+                    raise ValueError(f"{coll.uri}/{k}: expected Collection, found {type(cur).__name__}")
             _update_uns_dict(
                 coll[k],
                 v,

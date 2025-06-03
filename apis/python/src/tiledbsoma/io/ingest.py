@@ -40,6 +40,7 @@ import pandas as pd
 import pyarrow as pa
 import scipy.sparse as sp
 from more_itertools import batched
+from typing_extensions import deprecated
 
 # As of anndata 0.11 we get a warning importing anndata.experimental.
 # But anndata.abc doesn't exist in anndata 0.10. And anndata 0.11 doesn't
@@ -177,9 +178,7 @@ class IngestionParams:
             self.appending = False
 
         else:
-            raise SOMAError(
-                f'expected ingest_mode to be one of {_INGEST_MODES}; got "{ingest_mode}"'
-            )
+            raise SOMAError(f'expected ingest_mode to be one of {_INGEST_MODES}; got "{ingest_mode}"')
 
 
 # The tiledbsoma.io._registration package is private. These are the two sole user-facing API
@@ -212,9 +211,7 @@ def register_h5ads(
     concurrency_level = _concurrency_level(context)
 
     logging.log_io(None, f"Loading per-axis metadata for {len(h5ad_file_names)} files.")
-    executor_context: contextlib.AbstractContextManager[
-        ProcessPoolExecutor | ThreadPoolExecutor
-    ]
+    executor_context: contextlib.AbstractContextManager[ProcessPoolExecutor | ThreadPoolExecutor]
     if use_multiprocessing:
         if multiprocessing.get_start_method() == "fork":
             warnings.warn(
@@ -351,12 +348,20 @@ def from_h5ad(
         ingest_mode: The ingestion type to perform:
 
             - ``write``: Writes all data, creating new layers if the SOMA already exists.
-            - ``resume``: Adds data to an existing SOMA, skipping writing data
+            - ``resume``: (deprecated) Adds data to an existing SOMA, skipping writing data
               that was previously written. Useful for continuing after a partial
               or interrupted ingestion operation.
             - ``schema_only``: Creates groups and the array schema, without
               writing any data to the array. Useful to prepare for appending
               multiple H5AD files to a single SOMA.
+
+          The 'resume' ingest_mode is deprecated and will be removed in a future version. The
+          current implementation has a known issue that can can cause multi-dataset appends to
+          not resume correctly.
+
+          The recommended and safest approach for recovering from a failed ingestion is to delete
+          the partially written SOMA Experiment and restart the ingestion process from the original
+          input files or a known-good backup.
 
         X_kind: Which type of matrix is used to store dense X data from the
           H5AD file: ``DenseNDArray`` or ``SparseNDArray``.
@@ -411,9 +416,8 @@ def from_h5ad(
         Maturing.
     """
     if ingest_mode not in INGEST_MODES:
-        raise SOMAError(
-            f'expected ingest_mode to be one of {INGEST_MODES}; got "{ingest_mode}"'
-        )
+        raise SOMAError(f'expected ingest_mode to be one of {INGEST_MODES}; got "{ingest_mode}"')
+    _check_for_deprecated_modes(ingest_mode)
 
     if isinstance(input_path, ad.AnnData):
         raise TypeError("input path is an AnnData object -- did you want from_anndata?")
@@ -428,7 +432,7 @@ def from_h5ad(
     with read_h5ad(input_path, mode="r", ctx=context) as anndata:
         logging.log_io(None, _util.format_elapsed(s, f"FINISH READING {input_path}"))
 
-        uri = from_anndata(
+        uri = _from_anndata(
             experiment_uri,
             anndata,
             measurement_name,
@@ -446,9 +450,7 @@ def from_h5ad(
             additional_metadata=additional_metadata,
         )
 
-    logging.log_io(
-        None, _util.format_elapsed(s, f"FINISH Experiment.from_h5ad {input_path} {uri}")
-    )
+    logging.log_io(None, _util.format_elapsed(s, f"FINISH Experiment.from_h5ad {input_path} {uri}"))
     return uri
 
 
@@ -497,10 +499,47 @@ def from_anndata(
         Maturing.
     """
     if ingest_mode not in INGEST_MODES:
-        raise SOMAError(
-            f'expected ingest_mode to be one of {INGEST_MODES}; got "{ingest_mode}"'
-        )
+        raise SOMAError(f'expected ingest_mode to be one of {INGEST_MODES}; got "{ingest_mode}"')
+    _check_for_deprecated_modes(ingest_mode)
 
+    return _from_anndata(
+        experiment_uri,
+        anndata,
+        measurement_name,
+        context=context,
+        platform_config=platform_config,
+        obs_id_name=obs_id_name,
+        var_id_name=var_id_name,
+        X_layer_name=X_layer_name,
+        raw_X_layer_name=raw_X_layer_name,
+        ingest_mode=ingest_mode,
+        use_relative_uri=use_relative_uri,
+        X_kind=X_kind,
+        registration_mapping=registration_mapping,
+        uns_keys=uns_keys,
+        additional_metadata=additional_metadata,
+    )
+
+
+def _from_anndata(
+    experiment_uri: str,
+    anndata: ad.AnnData,
+    measurement_name: str,
+    *,
+    context: SOMATileDBContext | None = None,
+    platform_config: PlatformConfig | None = None,
+    obs_id_name: str = "obs_id",
+    var_id_name: str = "var_id",
+    X_layer_name: str = "data",
+    raw_X_layer_name: str = "data",
+    ingest_mode: IngestMode = "write",
+    use_relative_uri: bool | None = None,
+    X_kind: type[SparseNDArray] | type[DenseNDArray] = SparseNDArray,
+    registration_mapping: ExperimentAmbientLabelMapping | None = None,
+    uns_keys: Sequence[str] | None = None,
+    additional_metadata: AdditionalMetadata = None,
+) -> str:
+    """Private helper function."""
     # Map the user-level ingest mode to a set of implementation-level boolean flags
     ingestion_params = IngestionParams(ingest_mode, registration_mapping)
 
@@ -508,9 +547,7 @@ def from_anndata(
         raise ValueError("dense X is not supported for append mode")
 
     if not isinstance(anndata, ad.AnnData):
-        raise TypeError(
-            "Second argument is not an AnnData object -- did you want from_h5ad?"
-        )
+        raise TypeError("Second argument is not an AnnData object -- did you want from_h5ad?")
 
     for ad_key in ["obsm", "obsp", "varm", "varp"]:
         for key, val in getattr(anndata, ad_key).items():
@@ -534,17 +571,13 @@ def from_anndata(
     #
     # * Here we select out the renumberings for the obs, var, X, etc. array indices
     if registration_mapping is None:
-        joinid_maps = ExperimentIDMapping.from_anndata(
-            anndata, measurement_name=measurement_name
-        )
+        joinid_maps = ExperimentIDMapping.from_anndata(anndata, measurement_name=measurement_name)
     else:
         if not registration_mapping.prepared and Experiment.exists(experiment_uri):
             raise SOMAError(
                 "Experiment must be prepared prior to ingestion. Please call ``registration_map.prepare_experiment`` method."
             )
-        joinid_maps = registration_mapping.id_mappings_for_anndata(
-            anndata, measurement_name=measurement_name
-        )
+        joinid_maps = registration_mapping.id_mappings_for_anndata(anndata, measurement_name=measurement_name)
 
     context = _validate_soma_tiledb_context(context)
 
@@ -568,9 +601,7 @@ def from_anndata(
         ingestion_params=ingestion_params,
         additional_metadata=additional_metadata,
     )
-    ingest_platform_ctx: IngestPlatformCtx = dict(
-        **ingest_ctx, platform_config=platform_config
-    )
+    ingest_platform_ctx: IngestPlatformCtx = dict(**ingest_ctx, platform_config=platform_config)
 
     # Must be done first, to create the parent directory.
     experiment = _create_or_open_collection(Experiment, experiment_uri, **ingest_ctx)
@@ -606,15 +637,13 @@ def from_anndata(
 
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         # MS/meas
-        measurement_uri = _util.uri_joinpath(experiment_ms_uri, measurement_name)
+        measurement_uri = _util.uri_joinpath(experiment_ms_uri, _util.sanitize_key(measurement_name))
         with _create_or_open_collection(
             Measurement,
             measurement_uri,
             **ingest_ctx,
         ) as measurement:
-            _maybe_set(
-                ms, measurement_name, measurement, use_relative_uri=use_relative_uri
-            )
+            _maybe_set(ms, measurement_name, measurement, use_relative_uri=use_relative_uri)
 
             # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
             # ms/meas/uns
@@ -666,28 +695,24 @@ def from_anndata(
                 if has_X:
                     with _create_from_matrix(
                         X_kind,
-                        _util.uri_joinpath(measurement_X_uri, X_layer_name),
+                        _util.uri_joinpath(measurement_X_uri, _util.sanitize_key(X_layer_name)),
                         anndata.X,
                         axis_0_mapping=joinid_maps.obs_axis,
                         axis_1_mapping=joinid_maps.var_axes[measurement_name],
                         **ingest_platform_ctx,
                     ) as data:
-                        _maybe_set(
-                            x, X_layer_name, data, use_relative_uri=use_relative_uri
-                        )
+                        _maybe_set(x, X_layer_name, data, use_relative_uri=use_relative_uri)
 
                 for layer_name, layer in anndata.layers.items():
                     with _create_from_matrix(
                         X_kind,
-                        _util.uri_joinpath(measurement_X_uri, layer_name),
+                        _util.uri_joinpath(measurement_X_uri, _util.sanitize_key(layer_name)),
                         layer,
                         axis_0_mapping=joinid_maps.obs_axis,
                         axis_1_mapping=joinid_maps.var_axes[measurement_name],
                         **ingest_platform_ctx,
                     ) as layer_data:
-                        _maybe_set(
-                            x, layer_name, layer_data, use_relative_uri=use_relative_uri
-                        )
+                        _maybe_set(x, layer_name, layer_data, use_relative_uri=use_relative_uri)
 
                 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
                 # MS/meas/OBSM,VARM,OBSP,VARP
@@ -698,7 +723,7 @@ def from_anndata(
                 ) -> None:
                     ad_val = getattr(anndata, ad_key)
                     if len(ad_val.keys()) > 0:  # do not create an empty collection
-                        ad_val_uri = _util.uri_joinpath(measurement_uri, ad_key)
+                        ad_val_uri = _util.uri_joinpath(measurement_uri, _util.sanitize_key(ad_key))
                         with _create_or_open_collection(
                             Collection,
                             ad_val_uri,
@@ -713,20 +738,14 @@ def from_anndata(
                             for key in ad_val.keys():
                                 val = ad_val[key]
                                 num_cols = val.shape[1]
-                                _axis_1_mapping = (
-                                    axis_1_mapping
-                                    if axis_1_mapping
-                                    else AxisIDMapping.identity(num_cols)
-                                )
+                                _axis_1_mapping = axis_1_mapping if axis_1_mapping else AxisIDMapping.identity(num_cols)
                                 with _create_from_matrix(
                                     # TODO (https://github.com/single-cell-data/TileDB-SOMA/issues/1245):
                                     # consider a use-dense flag at the tiledbsoma.io API
                                     # DenseNDArray,
                                     SparseNDArray,
-                                    _util.uri_joinpath(ad_val_uri, key),
-                                    conversions.to_tiledb_supported_array_type(
-                                        key, val
-                                    ),
+                                    _util.uri_joinpath(ad_val_uri, _util.sanitize_key(key)),
+                                    conversions.to_tiledb_supported_array_type(key, val),
                                     axis_0_mapping=axis_0_mapping,
                                     axis_1_mapping=_axis_1_mapping,
                                     **ingest_platform_ctx,
@@ -765,9 +784,7 @@ def from_anndata(
 
                         with _write_dataframe(
                             _util.uri_joinpath(raw_uri, "var"),
-                            conversions.obs_or_var_to_tiledb_supported_array_type(
-                                anndata.raw.var
-                            ),
+                            conversions.obs_or_var_to_tiledb_supported_array_type(anndata.raw.var),
                             id_column_name=var_id_name,
                             axis_mapping=joinid_maps.var_axes["raw"],
                             **ingest_platform_ctx,
@@ -794,7 +811,7 @@ def from_anndata(
 
                             with _create_from_matrix(
                                 SparseNDArray,
-                                _util.uri_joinpath(raw_X_uri, raw_X_layer_name),
+                                _util.uri_joinpath(raw_X_uri, _util.sanitize_key(raw_X_layer_name)),
                                 anndata.raw.X,
                                 axis_0_mapping=joinid_maps.obs_axis,
                                 axis_1_mapping=joinid_maps.var_axes["raw"],
@@ -816,6 +833,11 @@ def from_anndata(
     return experiment.uri
 
 
+@deprecated(
+    """This function is deprecated and will be removed in a future version of this package.
+
+It is recommended to use tiledbsoma.io.from_anndata (with a registration map from tiledbsoma.io.register_anndatas or tiledbsoma.io.register_h5ads) for appending new, complete AnnData objects to an Experiment."""
+)
 def append_obs(
     exp: Experiment,
     new_obs: pd.DataFrame,
@@ -827,6 +849,12 @@ def append_obs(
 ) -> str:
     """Writes new rows to an existing ``obs`` dataframe (this is distinct from ``update_obs``
     which mutates the entirety of the ``obs`` dataframe, e.g. to add/remove columns).
+
+    This function is deprecated and will be removed in a future version of this package.
+
+    It is recommended to use ``tiledbsoma.io.from_anndata`` (with a registration map from
+    ``tiledbsoma.io.register_anndatas`` or ``tiledbsoma.io.register_h5ads``) for appending new,
+    complete AnnData objects to an :class:`Experiment`.
 
     Example::
 
@@ -844,7 +872,7 @@ def append_obs(
             )
 
     Lifecycle:
-        Maturing.
+        Deprecated.
     """
     exp.verify_open_for_writing()
 
@@ -867,12 +895,15 @@ def append_obs(
         axis_mapping=joinid_map,
         must_exist=True,
     ):
-        logging.log_io_same(
-            _util.format_elapsed(s, f"Finish writing obs for {exp.obs.uri}")
-        )
+        logging.log_io_same(_util.format_elapsed(s, f"Finish writing obs for {exp.obs.uri}"))
     return exp.obs.uri
 
 
+@deprecated(
+    """This function is deprecated and will be removed in a future version of this package.
+
+It is recommended to use tiledbsoma.io.from_anndata (with a registration map from tiledbsoma.io.register_anndatas or tiledbsoma.io.register_h5ads) for appending new, complete AnnData objects to an Experiment."""
+)
 def append_var(
     exp: Experiment,
     new_var: pd.DataFrame,
@@ -885,6 +916,12 @@ def append_var(
 ) -> str:
     """Writes new rows to an existing ``var`` dataframe (this is distinct from ``update_var``
     which mutates the entirety of the ``var`` dataframe, e.g. to add/remove columns).
+
+    This function is deprecated and will be removed in a future version of this package.
+
+    It is recommended to use ``tiledbsoma.io.from_anndata`` (with a registration map from
+    ``tiledbsoma.io.register_anndatas`` or ``tiledbsoma.io.register_h5ads``) for appending new,
+    complete AnnData objects to an :class:`Experiment`.
 
     Example::
 
@@ -902,22 +939,18 @@ def append_var(
             )
 
     Lifecycle:
-        Maturing.
+        Deprecated.
     """
     exp.verify_open_for_writing()
     if measurement_name not in exp.ms:
-        raise SOMAError(
-            f"Experiment {exp.uri} has no measurement named {measurement_name}"
-        )
+        raise SOMAError(f"Experiment {exp.uri} has no measurement named {measurement_name}")
     sdf = exp.ms[measurement_name].var
 
     # Map the user-level ingest mode to a set of implementation-level boolean flags.
     # See comments in from_anndata.
     context = _validate_soma_tiledb_context(context)
     ingestion_params = IngestionParams("write", registration_mapping)
-    joinid_map = registration_mapping.var_axes[
-        measurement_name
-    ].id_mapping_from_dataframe(new_var)
+    joinid_map = registration_mapping.var_axes[measurement_name].id_mapping_from_dataframe(new_var)
 
     s = _util.get_start_stamp()
     logging.log_io_same(f"Start  writing var for {sdf.uri}")
@@ -932,12 +965,15 @@ def append_var(
         axis_mapping=joinid_map,
         must_exist=True,
     ):
-        logging.log_io_same(
-            _util.format_elapsed(s, f"Finish writing var for {sdf.uri}")
-        )
+        logging.log_io_same(_util.format_elapsed(s, f"Finish writing var for {sdf.uri}"))
     return sdf.uri
 
 
+@deprecated(
+    """This function is deprecated and will be removed in a future version of this package.
+
+It is recommended to use tiledbsoma.io.from_anndata (with a registration map from tiledbsoma.io.register_anndatas or tiledbsoma.io.register_h5ads) for appending new, complete AnnData objects to an Experiment."""
+)
 def append_X(
     exp: Experiment,
     new_X: Matrix | h5py.Dataset,
@@ -954,6 +990,12 @@ def append_X(
     """Appends new data to an existing ``X`` matrix. Nominally to be used in conjunction
     with ``update_obs`` and ``update_var``, as an itemized alternative to doing
     ``from_anndata`` with a registration mapping supplied.
+
+    This function is deprecated and will be removed in a future version of this package.
+
+    It is recommended to use ``tiledbsoma.io.from_anndata`` (with a registration map from
+    ``tiledbsoma.io.register_anndatas`` or ``tiledbsoma.io.register_h5ads``) for appending new,
+    complete AnnData objects to an :class:`Experiment`.
 
     Example::
 
@@ -978,17 +1020,13 @@ def append_X(
             )
 
     Lifecycle:
-        Maturing.
+        Deprecated.
     """
     exp.verify_open_for_writing()
     if measurement_name not in exp.ms:
-        raise SOMAError(
-            f"Experiment {exp.uri} has no measurement named {measurement_name}"
-        )
+        raise SOMAError(f"Experiment {exp.uri} has no measurement named {measurement_name}")
     if X_layer_name not in exp.ms[measurement_name].X:
-        raise SOMAError(
-            f"Experiment {exp.uri} has no X layer named {X_layer_name} in measurement {measurement_name}"
-        )
+        raise SOMAError(f"Experiment {exp.uri} has no X layer named {X_layer_name} in measurement {measurement_name}")
     X = exp.ms[measurement_name].X[X_layer_name]
 
     # Map the user-level ingest mode to a set of implementation-level boolean flags.
@@ -1000,9 +1038,7 @@ def append_X(
     logging.log_io_same(f"Start  writing var for {X.uri}")
 
     axis_0_mapping = registration_mapping.obs_axis.id_mapping_from_values(obs_ids)
-    axis_1_mapping = registration_mapping.var_axes[
-        measurement_name
-    ].id_mapping_from_values(var_ids)
+    axis_1_mapping = registration_mapping.var_axes[measurement_name].id_mapping_from_values(var_ids)
 
     with _create_from_matrix(
         X_kind,
@@ -1174,9 +1210,7 @@ def _extract_new_values_for_append_aux(
     storage has non-categorical, we must write the new data as non-categorical.
     """
     # Retain only the new rows.
-    previous_sjids_table = previous_soma_dataframe.read(
-        column_names=["soma_joinid"]
-    ).concat()
+    previous_sjids_table = previous_soma_dataframe.read(column_names=["soma_joinid"]).concat()
     # use numpy.isin over pyarrow.compute.is_in, as it is MUCH faster
     mask = pa.array(
         np.isin(
@@ -1240,18 +1274,14 @@ def _extract_new_values_for_append_aux(
                 # Convert from categorical to non-categorical.  Note that if
                 # this is a pa.ChunkedArray, there is no .dictionary_decode()
                 # for it, but each chunk does have a .dictionary_decode().
-                column = pa.chunked_array(
-                    [chunk.dictionary_decode() for chunk in column.chunks]
-                )
+                column = pa.chunked_array([chunk.dictionary_decode() for chunk in column.chunks])
 
             elif is_cat(old_field) and not is_cat(new_field):
                 # Convert from non-categorical to categorical.  Note:
                 # libtiledbsoma already merges the enum mappings, e.g if the
                 # storage has red, yellow, & green, but our new data has some
                 # yellow, green, and orange.
-                column = pa.chunked_array(
-                    [chunk.dictionary_encode() for chunk in column.chunks]
-                )
+                column = pa.chunked_array([chunk.dictionary_encode() for chunk in column.chunks])
 
             fields_dict[name] = column
         arrow_table = pa.Table.from_pydict(fields_dict)
@@ -1286,12 +1316,8 @@ def _extract_new_values_for_append(
     _new_ genes not yet seen before (if any).
     """
     try:
-        with _factory.open(
-            df_uri, "r", soma_type=DataFrame, context=context
-        ) as previous_soma_dataframe:
-            return _extract_new_values_for_append_aux(
-                previous_soma_dataframe, arrow_table
-            )
+        with _factory.open(df_uri, "r", soma_type=DataFrame, context=context) as previous_soma_dataframe:
+            return _extract_new_values_for_append_aux(previous_soma_dataframe, arrow_table)
 
     except DoesNotExistError:
         return arrow_table
@@ -1308,16 +1334,10 @@ def _write_arrow_table(
     if arrow_table.nbytes > cap:
         n = len(arrow_table)
         if n < 2:
-            raise SOMAError(
-                "single table row nbytes {arrow_table.nbytes} exceeds cap nbytes {cap}"
-            )
+            raise SOMAError("single table row nbytes {arrow_table.nbytes} exceeds cap nbytes {cap}")
         m = n // 2
-        _write_arrow_table(
-            arrow_table[:m], handle, tiledb_create_options, tiledb_write_options
-        )
-        _write_arrow_table(
-            arrow_table[m:], handle, tiledb_create_options, tiledb_write_options
-        )
+        _write_arrow_table(arrow_table[:m], handle, tiledb_create_options, tiledb_write_options)
+        _write_arrow_table(arrow_table[m:], handle, tiledb_create_options, tiledb_write_options)
     else:
         logging.log_io(
             None,
@@ -1451,9 +1471,7 @@ def _write_dataframe_impl(
             )
             # Save the original index name for outgest. We use JSON for elegant indication of index name
             # being None (in Python anyway).
-            soma_df.metadata[_DATAFRAME_ORIGINAL_INDEX_NAME_JSON] = json.dumps(
-                original_index_metadata
-            )
+            soma_df.metadata[_DATAFRAME_ORIGINAL_INDEX_NAME_JSON] = json.dumps(original_index_metadata)
         except (AlreadyExistsError, NotCreateableError):
             if ingestion_params.error_if_already_exists:
                 raise SOMAError(f"{df_uri} already exists")
@@ -1471,12 +1489,8 @@ def _write_dataframe_impl(
     tiledb_create_options = TileDBCreateOptions.from_platform_config(platform_config)
     tiledb_write_options = TileDBWriteOptions.from_platform_config(platform_config)
 
-    if arrow_table and not any(
-        column.num_chunks == 0 for column in arrow_table.columns
-    ):
-        _write_arrow_table(
-            arrow_table, soma_df, tiledb_create_options, tiledb_write_options
-        )
+    if arrow_table and not any(column.num_chunks == 0 for column in arrow_table.columns):
+        _write_arrow_table(arrow_table, soma_df, tiledb_create_options, tiledb_write_options)
 
     add_metadata(soma_df, additional_metadata)
 
@@ -1487,6 +1501,11 @@ def _write_dataframe_impl(
     return soma_df
 
 
+@deprecated(
+    """This function is deprecated and will be removed in a future version of this package.
+
+To add a new matrix as a layer within an existing SOMA Experiment (e.g., to X, obsm, varm), please use the more specific functions tiledbsoma.io.add_X_layer or tiledbsoma.io.add_matrix_to_collection. If you need to create a standalone SOMA NDArray outside of a pre-defined Experiment structure, please use the direct SOMA API constructors, such as tiledbsoma.SparseNDArray.create."""
+)
 def create_from_matrix(
     cls: type[_NDArr],
     uri: str,
@@ -1497,9 +1516,14 @@ def create_from_matrix(
 ) -> _NDArr:
     """Create and populate the ``soma_matrix`` from the contents of ``matrix``.
 
+    This function is deprecated and will be removed in a future version of this package.
+
+    To add a new matrix as a layer within an existing SOMA :class:`Experiment` (e.g., to X, obsm, varm), please use the more specific functions ``tiledbsoma.io.add_X_layer`` or ``tiledbsoma.io.add_matrix_to_collection``. If you need to create a standalone SOMA NDArray outside of a pre-defined :class:`Experiment` structure, please use the direct SOMA API constructors, such as ``tiledbsoma.SparseNDArray.create``.
+
     Lifecycle:
-        Maturing.
+        Deprecated.
     """
+    _check_for_deprecated_modes(ingest_mode)
     return _create_from_matrix(
         cls,
         uri,
@@ -1536,9 +1560,7 @@ def _create_from_matrix(
     if must_exist:
         if ingestion_params.error_if_already_exists:
             raise SOMAError(f"{uri} already exists")
-        soma_ndarray = cls.open(
-            uri, "w", platform_config=platform_config, context=context
-        )
+        soma_ndarray = cls.open(uri, "w", platform_config=platform_config, context=context)
     else:
         try:
             shape: Sequence[int | None] = ()
@@ -1561,9 +1583,7 @@ def _create_from_matrix(
         except (AlreadyExistsError, NotCreateableError):
             if ingestion_params.error_if_already_exists:
                 raise SOMAError(f"{uri} already exists")
-            soma_ndarray = cls.open(
-                uri, "w", platform_config=platform_config, context=context
-            )
+            soma_ndarray = cls.open(uri, "w", platform_config=platform_config, context=context)
 
     if ingestion_params.write_schema_no_data:
         logging.log_io(
@@ -1581,12 +1601,8 @@ def _create_from_matrix(
         _write_matrix_to_denseNDArray(
             soma_ndarray,
             matrix,
-            tiledb_create_options=TileDBCreateOptions.from_platform_config(
-                platform_config
-            ),
-            tiledb_write_options=TileDBWriteOptions.from_platform_config(
-                platform_config
-            ),
+            tiledb_create_options=TileDBCreateOptions.from_platform_config(platform_config),
+            tiledb_write_options=TileDBWriteOptions.from_platform_config(platform_config),
             ingestion_params=ingestion_params,
             additional_metadata=additional_metadata,
         )
@@ -1594,12 +1610,8 @@ def _create_from_matrix(
         _write_matrix_to_sparseNDArray(
             soma_ndarray,
             matrix,
-            tiledb_create_options=TileDBCreateOptions.from_platform_config(
-                platform_config
-            ),
-            tiledb_write_options=TileDBWriteOptions.from_platform_config(
-                platform_config
-            ),
+            tiledb_create_options=TileDBCreateOptions.from_platform_config(platform_config),
+            tiledb_write_options=TileDBWriteOptions.from_platform_config(platform_config),
             ingestion_params=ingestion_params,
             additional_metadata=additional_metadata,
             axis_0_mapping=axis_0_mapping,
@@ -1705,9 +1717,7 @@ def update_var(
         Maturing.
     """
     if measurement_name not in exp.ms:
-        raise ValueError(
-            f"cannot find measurement name {measurement_name} within experiment at {exp.uri}"
-        )
+        raise ValueError(f"cannot find measurement name {measurement_name} within experiment at {exp.uri}")
 
     _update_dataframe(
         exp.ms[measurement_name].var,
@@ -1734,15 +1744,10 @@ def _update_dataframe(
     new_schema = conversions.df_to_arrow_schema(new_data, default_index_name)
     new_sig = conversions._string_dict_from_arrow_schema(new_schema)
 
-    with DataFrame.open(
-        sdf.uri, mode="r", context=context, platform_config=platform_config
-    ) as sdf_r:
+    with DataFrame.open(sdf.uri, mode="r", context=context, platform_config=platform_config) as sdf_r:
         # Until we someday support deletes, this is the correct check on the existing,
         # contiguous soma join IDs compared to the new contiguous ones about to be created.
-        old_jids = sorted(
-            e.as_py()
-            for e in sdf_r.read(column_names=["soma_joinid"]).concat()["soma_joinid"]
-        )
+        old_jids = sorted(e.as_py() for e in sdf_r.read(column_names=["soma_joinid"]).concat()["soma_joinid"])
         num_old_data = len(old_jids)
         num_new_data = len(new_data)
         if num_old_data != num_new_data:
@@ -1752,15 +1757,10 @@ def _update_dataframe(
         new_jids = list(range(num_new_data))
         if old_jids != new_jids:
             max_jid_diffs_to_display = 10
-            jid_diffs = [
-                (old_jid, new_jid)
-                for old_jid, new_jid in zip(old_jids, new_jids)
-                if old_jid != new_jid
-            ]
-            jid_diff_strs = [
-                f"{old_jid} != {new_jid}"
-                for old_jid, new_jid in jid_diffs[:max_jid_diffs_to_display]
-            ] + (["…"] if len(jid_diffs) > max_jid_diffs_to_display else [])
+            jid_diffs = [(old_jid, new_jid) for old_jid, new_jid in zip(old_jids, new_jids) if old_jid != new_jid]
+            jid_diff_strs = [f"{old_jid} != {new_jid}" for old_jid, new_jid in jid_diffs[:max_jid_diffs_to_display]] + (
+                ["…"] if len(jid_diffs) > max_jid_diffs_to_display else []
+            )
             raise ValueError(
                 f"{caller_name}: old data soma_joinid must be [0,{num_old_data}), found {len(jid_diffs)} diffs: {', '.join(jid_diff_strs)}"
             )
@@ -1802,9 +1802,7 @@ def _update_dataframe(
             else:
                 add_attrs[add_key] = get_arrow_str_format(atype)
 
-        sdf_r._handle._handle._update_dataframe_schema(
-            list(drop_keys), add_attrs, add_enmrs
-        )
+        sdf_r._handle._handle._update_dataframe_schema(list(drop_keys), add_attrs, add_enmrs)
 
     _write_dataframe(
         df_uri=sdf.uri,
@@ -1879,12 +1877,8 @@ def update_matrix(
         _write_matrix_to_denseNDArray(
             soma_ndarray,
             new_data,
-            tiledb_create_options=TileDBCreateOptions.from_platform_config(
-                platform_config
-            ),
-            tiledb_write_options=TileDBWriteOptions.from_platform_config(
-                platform_config
-            ),
+            tiledb_create_options=TileDBCreateOptions.from_platform_config(platform_config),
+            tiledb_write_options=TileDBWriteOptions.from_platform_config(platform_config),
             ingestion_params=ingestion_params,
             additional_metadata=None,
         )
@@ -1892,12 +1886,8 @@ def update_matrix(
         _write_matrix_to_sparseNDArray(
             soma_ndarray,
             new_data,
-            tiledb_create_options=TileDBCreateOptions.from_platform_config(
-                platform_config
-            ),
-            tiledb_write_options=TileDBWriteOptions.from_platform_config(
-                platform_config
-            ),
+            tiledb_create_options=TileDBCreateOptions.from_platform_config(platform_config),
+            tiledb_write_options=TileDBWriteOptions.from_platform_config(platform_config),
             ingestion_params=ingestion_params,
             additional_metadata=None,
             axis_0_mapping=AxisIDMapping.identity(new_data.shape[0]),
@@ -1926,12 +1916,11 @@ def add_X_layer(
     `Scanpy <https://scanpy.readthedocs.io/>`_'s ``scanpy.pp.normalize_total``,
     ``scanpy.pp.log1p``, etc.
 
-    Use ``ingest_mode="resume"`` to not error out if the schema already exists.
-
     Lifecycle:
         Maturing.
     """
     exp.verify_open_for_writing()
+    _check_for_deprecated_modes(ingest_mode)
     add_matrix_to_collection(
         exp,
         measurement_name,
@@ -1958,12 +1947,11 @@ def add_matrix_to_collection(
     """This is useful for adding X/obsp/varm/etc data, for example from
     Scanpy's ``scanpy.pp.normalize_total``, ``scanpy.pp.log1p``, etc.
 
-    Use ``ingest_mode="resume"`` to not error out if the schema already exists.
-
     Lifecycle:
         Maturing.
     """
     ingestion_params = IngestionParams(ingest_mode, None)
+    _check_for_deprecated_modes(ingest_mode)
 
     # For local disk and S3, creation and storage URIs are identical.  For
     # cloud, creation URIs look like tiledb://namespace/s3://bucket/path/to/obj
@@ -1974,9 +1962,9 @@ def add_matrix_to_collection(
 
     with exp.ms[measurement_name] as meas:
         if extend_creation_uri:
-            coll_uri = f"{exp.uri}/ms/{measurement_name}/{collection_name}"
+            coll_uri = f"{exp.uri}/ms/{_util.sanitize_key(measurement_name)}/{_util.sanitize_key(collection_name)}"
         else:
-            coll_uri = f"{meas.uri}/{collection_name}"
+            coll_uri = _util.uri_joinpath(meas.uri, _util.sanitize_key(collection_name))
 
         if collection_name in meas:
             coll = cast(Collection[RawHandle], meas[collection_name])
@@ -1989,7 +1977,7 @@ def add_matrix_to_collection(
             )
             _maybe_set(meas, collection_name, coll, use_relative_uri=use_relative_uri)
         with coll:
-            matrix_uri = f"{coll_uri}/{matrix_name}"
+            matrix_uri = _util.uri_joinpath(coll_uri, _util.sanitize_key(matrix_name))
 
             with _create_from_matrix(
                 SparseNDArray,
@@ -2035,17 +2023,13 @@ def _write_matrix_to_denseNDArray(
     if ingestion_params.skip_existing_nonempty_domain:
         # This lets us check for already-ingested chunks, when in resume-ingest mode.
         storage_ned = _read_nonempty_domain(soma_ndarray)
-        matrix_bounds = [
-            (0, int(n - 1)) for n in matrix.shape
-        ]  # Cast for lint in case np.int64
+        matrix_bounds = [(0, int(n - 1)) for n in matrix.shape]  # Cast for lint in case np.int64
         logging.log_io(
             None,
             f"Input bounds {tuple(matrix_bounds)} storage non-empty domain {storage_ned}",
         )
         if _chunk_is_contained_in(matrix_bounds, storage_ned):
-            logging.log_io(
-                f"Skipped {soma_ndarray.uri}", f"SKIPPED WRITING {soma_ndarray.uri}"
-            )
+            logging.log_io(f"Skipped {soma_ndarray.uri}", f"SKIPPED WRITING {soma_ndarray.uri}")
             return
 
     # Write all at once?
@@ -2063,9 +2047,7 @@ def _write_matrix_to_denseNDArray(
         nrow = matrix.shape[0]
         ncol = 1
     else:
-        raise ValueError(
-            f"only 1D or 2D dense arrays are supported here; got {matrix.ndim}"
-        )
+        raise ValueError(f"only 1D or 2D dense arrays are supported here; got {matrix.ndim}")
 
     # Number of rows to chunk by. These are dense writes, so this is loop-invariant.
     # * The goal_chunk_nnz is an older parameter. It's still important, as for backed AnnData,
@@ -2082,9 +2064,7 @@ def _write_matrix_to_denseNDArray(
         itemsize = matrix.data.itemsize
 
     total_nbytes = matrix.size * itemsize
-    nbytes_num_chunks = math.ceil(
-        total_nbytes / tiledb_create_options.remote_cap_nbytes
-    )
+    nbytes_num_chunks = math.ceil(total_nbytes / tiledb_create_options.remote_cap_nbytes)
     nbytes_num_chunks = min(1, nbytes_num_chunks)
     chunk_size_using_nbytes = math.floor(nrow / nbytes_num_chunks)
 
@@ -2099,8 +2079,7 @@ def _write_matrix_to_denseNDArray(
         chunk_percent = min(100, 100 * (i2 - 1) / nrow)
         logging.log_io(
             None,
-            "START  chunk rows %d..%d of %d (%.3f%%)"
-            % (i, i2 - 1, nrow, chunk_percent),
+            "START  chunk rows %d..%d of %d (%.3f%%)" % (i, i2 - 1, nrow, chunk_percent),
         )
 
         if matrix.ndim == 2:
@@ -2118,8 +2097,7 @@ def _write_matrix_to_denseNDArray(
                 # Print doubly inclusive lo..hi like 0..17 and 18..31.
                 logging.log_io(
                     "... %7.3f%% done" % chunk_percent,
-                    "SKIP   chunk rows %d..%d of %d (%.3f%%)"
-                    % (i, i2 - 1, nrow, chunk_percent),
+                    "SKIP   chunk rows %d..%d of %d (%.3f%%)" % (i, i2 - 1, nrow, chunk_percent),
                 )
                 i = i2
                 continue
@@ -2140,8 +2118,7 @@ def _write_matrix_to_denseNDArray(
         if chunk_percent < 100:
             logging.log_io(
                 "... %7.3f%% done, ETA %s" % (chunk_percent, eta_seconds),
-                "FINISH chunk in %.3f seconds, %7.3f%% done, ETA %s"
-                % (chunk_seconds, chunk_percent, eta_seconds),
+                "FINISH chunk in %.3f seconds, %7.3f%% done, ETA %s" % (chunk_seconds, chunk_percent, eta_seconds),
             )
 
         i = i2
@@ -2455,26 +2432,20 @@ def _write_matrix_to_sparseNDArray(
         # This lets us check for already-ingested chunks, when in resume-ingest mode.
         # THIS IS A HACK AND ONLY WORKS BECAUSE WE ARE DOING THIS BEFORE ALL WRITES.
         storage_ned = _read_nonempty_domain(soma_ndarray)
-        matrix_bounds = [
-            (0, int(n - 1)) for n in matrix.shape
-        ]  # Cast for lint in case np.int64
+        matrix_bounds = [(0, int(n - 1)) for n in matrix.shape]  # Cast for lint in case np.int64
         logging.log_io(
             None,
             f"Input bounds {tuple(matrix_bounds)} storage non-empty domain {storage_ned}",
         )
         if _chunk_is_contained_in(matrix_bounds, storage_ned):
-            logging.log_io(
-                f"Skipped {soma_ndarray.uri}", f"SKIPPED WRITING {soma_ndarray.uri}"
-            )
+            logging.log_io(f"Skipped {soma_ndarray.uri}", f"SKIPPED WRITING {soma_ndarray.uri}")
             return
 
     add_metadata(soma_ndarray, additional_metadata)
 
     # Write all at once?
     if not tiledb_create_options.write_X_chunked:
-        soma_ndarray.write(
-            _coo_to_table(sp.coo_matrix(matrix), axis_0_mapping, axis_1_mapping)
-        )
+        soma_ndarray.write(_coo_to_table(sp.coo_matrix(matrix), axis_0_mapping, axis_1_mapping))
         return
 
     # Or, write in chunks, striding across the most efficient slice axis
@@ -2620,12 +2591,8 @@ def _write_matrix_to_sparseNDArray(
             ),
         )
 
-        arrow_table = _coo_to_table(
-            chunk_coo, axis_0_mapping, axis_1_mapping, stride_axis, i
-        )
-        _write_arrow_table(
-            arrow_table, soma_ndarray, tiledb_create_options, tiledb_write_options
-        )
+        arrow_table = _coo_to_table(chunk_coo, axis_0_mapping, axis_1_mapping, stride_axis, i)
+        _write_arrow_table(arrow_table, soma_ndarray, tiledb_create_options, tiledb_write_options)
 
         t2 = time.time()
         chunk_seconds = t2 - t1
@@ -2634,8 +2601,7 @@ def _write_matrix_to_sparseNDArray(
         if chunk_percent < 100:
             logging.log_io(
                 "... %7.3f%% done, ETA %s" % (chunk_percent, eta_seconds),
-                "FINISH chunk in %.3f seconds, %7.3f%% done, ETA %s"
-                % (chunk_seconds, chunk_percent, eta_seconds),
+                "FINISH chunk in %.3f seconds, %7.3f%% done, ETA %s" % (chunk_seconds, chunk_percent, eta_seconds),
             )
 
         i = i2
@@ -2738,7 +2704,7 @@ def _ingest_uns_dict(
 ) -> None:
     with _create_or_open_collection(
         Collection,
-        _util.uri_joinpath(parent.uri, parent_key),
+        _util.uri_joinpath(parent.uri, _util.sanitize_key(parent_key)),
         ingestion_params=ingestion_params,
         context=context,
         additional_metadata=additional_metadata,
@@ -2807,7 +2773,7 @@ def _ingest_uns_node(
     if isinstance(value, pd.DataFrame):
         num_rows = value.shape[0]
         with _write_dataframe(
-            _util.uri_joinpath(coll.uri, key),
+            _util.uri_joinpath(coll.uri, _util.sanitize_key(key)),
             # _write_dataframe modifies passed DataFrame in-place (adding a "soma_joinid" index)
             value.copy(),
             None,
@@ -2829,9 +2795,7 @@ def _ingest_uns_node(
         )
         return
 
-    msg = (
-        f"Skipped {coll.uri}[{key!r}]" f" (uns object): unrecognized type {type(value)}"
-    )
+    msg = f"Skipped {coll.uri}[{key!r}]" f" (uns object): unrecognized type {type(value)}"
     logging.log_io(msg, msg)
 
 
@@ -2849,9 +2813,7 @@ def _ingest_uns_array(
     """
     if value.dtype.names is not None:
         # This is a structured array, which we do not support.
-        logging.log_io_same(
-            f"Skipped {coll.uri}[{key!r}]" " (uns): unsupported structured array"
-        )
+        logging.log_io_same(f"Skipped {coll.uri}[{key!r}]" " (uns): unsupported structured array")
 
     if value.dtype.char in ("U", "O"):
         # In the wild it's quite common to see arrays of strings in uns data.
@@ -2897,8 +2859,7 @@ def _ingest_uns_string_array(
         helper = _ingest_uns_2d_string_array
     else:
         msg = (
-            f"Skipped {coll.uri}[{key!r}]"
-            f" (uns object): string array is neither one-dimensional nor two-dimensional"
+            f"Skipped {coll.uri}[{key!r}]" f" (uns object): string array is neither one-dimensional nor two-dimensional"
         )
         logging.log_io(msg, msg)
         return
@@ -2941,7 +2902,7 @@ def _ingest_uns_1d_string_array(
     )
     df.set_index("soma_joinid", inplace=True)
 
-    df_uri = _util.uri_joinpath(coll.uri, key)
+    df_uri = _util.uri_joinpath(coll.uri, _util.sanitize_key(key))
     with _write_dataframe_impl(
         df,
         df_uri,
@@ -2988,7 +2949,7 @@ def _ingest_uns_2d_string_array(
     df = pd.DataFrame(data=data)
     df.set_index("soma_joinid", inplace=True)
 
-    df_uri = _util.uri_joinpath(coll.uri, key)
+    df_uri = _util.uri_joinpath(coll.uri, _util.sanitize_key(key))
     with _write_dataframe_impl(
         df,
         df_uri,
@@ -3018,7 +2979,7 @@ def _ingest_uns_ndarray(
     ingestion_params: IngestionParams,
     additional_metadata: AdditionalMetadata = None,
 ) -> None:
-    arr_uri = _util.uri_joinpath(coll.uri, key)
+    arr_uri = _util.uri_joinpath(coll.uri, _util.sanitize_key(key))
 
     if any(e <= 0 for e in value.shape):
         msg = f"Skipped {arr_uri} (uns ndarray): zero in shape {value.shape}"
@@ -3028,10 +2989,7 @@ def _ingest_uns_ndarray(
     try:
         pa_dtype = pa.from_numpy_dtype(value.dtype)
     except pa.ArrowNotImplementedError:
-        msg = (
-            f"Skipped {arr_uri} (uns ndarray):"
-            f" unsupported dtype {value.dtype!r} ({value.dtype})"
-        )
+        msg = f"Skipped {arr_uri} (uns ndarray):" f" unsupported dtype {value.dtype!r} ({value.dtype})"
         logging.log_io(msg, msg)
         return
     try:
@@ -3063,12 +3021,8 @@ def _ingest_uns_ndarray(
         _write_matrix_to_denseNDArray(
             soma_arr,
             value,
-            tiledb_create_options=TileDBCreateOptions.from_platform_config(
-                platform_config
-            ),
-            tiledb_write_options=TileDBWriteOptions.from_platform_config(
-                platform_config
-            ),
+            tiledb_create_options=TileDBCreateOptions.from_platform_config(platform_config),
+            tiledb_write_options=TileDBWriteOptions.from_platform_config(platform_config),
             ingestion_params=ingestion_params,
             additional_metadata=additional_metadata,
         )
@@ -3088,10 +3042,21 @@ def _concurrency_level(context: SOMATileDBContext) -> int:
     if context is not None:
         concurrency_level = min(
             concurrency_level,
-            int(
-                context.tiledb_config.get(
-                    "soma.compute_concurrency_level", concurrency_level
-                )
-            ),
+            int(context.tiledb_config.get("soma.compute_concurrency_level", concurrency_level)),
         )
     return concurrency_level
+
+
+@deprecated(
+    """The 'resume' ingest_mode is deprecated and will be removed in a future version. The current implementation has a known issue that can can cause multi-dataset appends to not resume correctly.
+
+The recommended and safest approach for recovering from a failed ingestion is to delete the partially written SOMA Experiment and restart the ingestion process from the original input files or a known-good backup.""",
+    stacklevel=3,
+)
+def _resume_mode_is_deprecated() -> None:
+    pass
+
+
+def _check_for_deprecated_modes(ingest_mode: str) -> None:
+    if ingest_mode == "resume":
+        _resume_mode_is_deprecated()

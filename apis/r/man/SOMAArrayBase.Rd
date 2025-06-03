@@ -9,8 +9,12 @@ SOMA Array Base Class
 SOMA Array Base Class
 }
 \details{
-Adds SOMA-specific functionality to the \code{\link{TileDBArray}} class.  (lifecycle:
-maturing)
+Virtual base class to add SOMA-specific functionality to the
+\code{\link{TileDBArray}} class (lifecycle: maturing).
+}
+\seealso{
+Derived classes: \code{\link{SOMADataFrame}},
+\code{\link{SOMANDArrayBase}}
 }
 \keyword{internal}
 \section{Super classes}{
@@ -72,14 +76,14 @@ Does an array allow duplicates?
 
 \subsection{Returns}{
 \code{TRUE} if the underlying TileDB array allows duplicates;
-otherwise \code{FALSE}
+otherwise \code{FALSE}.
 }
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-SOMAArrayBase-attributes"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMAArrayBase-attributes}{}}}
 \subsection{Method \code{attributes()}}{
-Retrieve the array attributes
+Retrieve the array attributes.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMAArrayBase$attributes()}\if{html}{\out{</div>}}
 }
@@ -88,10 +92,10 @@ Retrieve the array attributes
 A named list of array attributes; each entry contains the
 following named entries:
 \itemize{
-\item \dQuote{\code{name}}: name of the attribute
-\item \dQuote{\code{type}}: datatype of the attribute
-\item \dQuote{\code{ncells}}: number of values per dimension cell
-\item \dQuote{\code{nullable}}: is the attribute nullable
+\item \dQuote{\code{name}}: name of the attribute.
+\item \dQuote{\code{type}}: datatype of the attribute.
+\item \dQuote{\code{ncells}}: number of values per dimension cell.
+\item \dQuote{\code{nullable}}: is the attribute nullable.
 \item \dQuote{\code{filter_list}}: a list with filter information; this
 list contains the following entries:
 \itemize{
@@ -117,7 +121,7 @@ Is an array sparse?
 
 \subsection{Returns}{
 \code{TRUE} if the underlying TileDB array is sparse;
-otherwise \code{FALSE}
+otherwise \code{FALSE}.
 }
 }
 \if{html}{\out{<hr>}}

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import tempfile
 from dataclasses import dataclass
+from typing import Generator
 
 import numpy as np
 import pandas as pd
@@ -21,7 +22,7 @@ from ._util import (
 
 
 @dataclass
-class TestCase:
+class ATestCase:
     """Group of related objects, used by test cases in this file, that share a creation code-path and are exposed as
     `pytest.fixture`s below."""
 
@@ -35,24 +36,20 @@ class TestCase:
 
 
 @pytest.fixture
-def multiple_fixtures_with_readback(request, conftest_pbmc_small) -> TestCase:
+def multiple_fixtures_with_readback(request, conftest_pbmc_small) -> Generator[ATestCase, None, None]:
     """
-    Ingest an `AnnData`to a SOMA `Experiment`, yielding a `TestCase` with the old and new AnnData objects.
+    Ingest an `AnnData`to a SOMA `Experiment`, yielding `ATestCase` with the old and new AnnData objects.
 
     * The input AnnData is always `conftest_pbmc_small` (from conftest.py), not specifiable here as an argument
     * `request.param` (a.k.a. `use_readback` below) is a boolean, populated by pytest, that specifies whether:
       * `False`: the returned `new_obs` and `new_var` come directly from the input `conftest_pbmc_small`, or
       * `True`: `new_obs` and `new_var` are returned after round-tripping `conftest_pbmc_small` through SOMA and back to
         AnnData/Pandas.
-    * Each `TestCase` member is also exposed directly as its own `fixture` below.
+    * Each `ATestCase` member is also exposed directly as its own `fixture` below.
     """
-    with tempfile.TemporaryDirectory(
-        "multiple_fixtures_with_readback_"
-    ) as experiment_path:
+    with tempfile.TemporaryDirectory("multiple_fixtures_with_readback_") as experiment_path:
         old_anndata = conftest_pbmc_small.copy()
-        tiledbsoma.io.from_anndata(
-            experiment_path, conftest_pbmc_small, measurement_name="RNA"
-        )
+        tiledbsoma.io.from_anndata(experiment_path, conftest_pbmc_small, measurement_name="RNA")
 
         # Check that the anndata-to-soma ingestion didn't modify the old_anndata object (which is
         # passed by reference to the ingestor) while it was doing the ingest
@@ -70,7 +67,7 @@ def multiple_fixtures_with_readback(request, conftest_pbmc_small) -> TestCase:
                 new_obs = conftest_pbmc_small.obs
                 new_var = conftest_pbmc_small.var
 
-            yield TestCase(
+            yield ATestCase(
                 experiment_path=experiment_path,
                 old_anndata=old_anndata,
                 new_anndata=conftest_pbmc_small,
@@ -81,7 +78,7 @@ def multiple_fixtures_with_readback(request, conftest_pbmc_small) -> TestCase:
             )
 
 
-# Expose each field of the TestCase object as a pytest.fixture, to reduce boilerplate in test functions.
+# Expose each field of the ATestCase object as a pytest.fixture, to reduce boilerplate in test functions.
 @pytest.fixture
 def experiment_path(multiple_fixtures_with_readback):
     return multiple_fixtures_with_readback.experiment_path
@@ -160,9 +157,7 @@ with_and_without_soma_roundtrip = pytest.mark.parametrize(
 
 
 @with_and_without_soma_roundtrip
-def test_no_change(
-    experiment_path, old_anndata, new_anndata, new_obs, new_var, obs_schema, var_schema
-):
+def test_no_change(experiment_path, old_anndata, new_anndata, new_obs, new_var, obs_schema, var_schema):
     verify_updates(experiment_path, new_obs, new_var)
     verify_schemas(experiment_path, obs_schema, var_schema)
     assert_adata_equal(old_anndata, new_anndata)
@@ -175,9 +170,7 @@ def test_add(experiment_path, new_obs, new_var):
     # int
     new_obs["seq"] = np.arange(new_obs.shape[0], dtype=np.int32)
     # categorical of string
-    new_obs["parity"] = pd.Categorical(
-        np.asarray([["even", "odd"][e % 2] for e in range(len(new_obs))])
-    )
+    new_obs["parity"] = pd.Categorical(np.asarray([["even", "odd"][e % 2] for e in range(len(new_obs))]))
 
     new_var["vst.mean.sq"] = new_var["vst.mean"] ** 2
 
@@ -191,9 +184,7 @@ def test_add(experiment_path, new_obs, new_var):
     assert o2.field("is_g1").type == pa.bool_()
     assert o2.field("seq").type == pa.int32()
     # tiledbsoma.io upgrades int8 and int16 to int32 for appendability
-    assert o2.field("parity").type == pa.dictionary(
-        index_type=pa.int32(), value_type=pa.string(), ordered=False
-    )
+    assert o2.field("parity").type == pa.dictionary(index_type=pa.int32(), value_type=pa.string(), ordered=False)
     assert obs["parity"][0] == "even"
     assert obs["parity"][1] == "odd"
     assert v2.field("vst.mean.sq").type == pa.float64()

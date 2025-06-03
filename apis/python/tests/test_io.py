@@ -14,11 +14,7 @@ from tiledbsoma.options._tiledb_create_write_options import TileDBCreateOptions
 def src_matrix(request):
     format, shape, density = request.param
     if format == "dense":
-        return (
-            np.random.default_rng()
-            .standard_normal(np.prod(shape), dtype=np.float32)
-            .reshape(shape)
-        )
+        return np.random.default_rng().standard_normal(np.prod(shape), dtype=np.float32).reshape(shape)
 
     return sp.random(10, 89, density=density, format=format, dtype=np.float32)
 
@@ -54,12 +50,13 @@ def test_io_create_from_matrix_dense_nd_array(tmp_path, tdb_create_options, src_
     * _tiledb_platform_config.write_X_chunked: True or False
     * src_array bigger or smaller than _tiledb_platform_config.goal_chunk_nnz
     """
-    somaio.create_from_matrix(
-        soma.DenseNDArray,
-        tmp_path.as_posix(),
-        src_matrix,
-        platform_config={"tiledb": {"create": tdb_create_options}},
-    ).close()
+    with pytest.deprecated_call():
+        somaio.create_from_matrix(
+            soma.DenseNDArray,
+            tmp_path.as_posix(),
+            src_matrix,
+            platform_config={"tiledb": {"create": tdb_create_options}},
+        ).close()
     with _factory.open(tmp_path.as_posix()) as snda:
         assert snda.ndim == src_matrix.ndim
 
@@ -94,9 +91,7 @@ def test_io_create_from_matrix_dense_nd_array(tmp_path, tdb_create_options, src_
     ],
     indirect=True,
 )
-def test_io_create_from_matrix_sparse_nd_array(
-    tmp_path, tdb_create_options, src_matrix
-):
+def test_io_create_from_matrix_sparse_nd_array(tmp_path, tdb_create_options, src_matrix):
     """
     Test soma.io.from_matrix to a SparseNDArray.
 
@@ -105,12 +100,13 @@ def test_io_create_from_matrix_sparse_nd_array(
     * _tiledb_platform_config.write_X_chunked: True or False
     * src_array bigger or smaller than _tiledb_platform_config.goal_chunk_nnz
     """
-    somaio.create_from_matrix(
-        soma.SparseNDArray,
-        tmp_path.as_posix(),
-        src_matrix,
-        platform_config={"tiledb": {"create": tdb_create_options}},
-    ).close()
+    with pytest.deprecated_call():
+        somaio.create_from_matrix(
+            soma.SparseNDArray,
+            tmp_path.as_posix(),
+            src_matrix,
+            platform_config={"tiledb": {"create": tdb_create_options}},
+        ).close()
 
     with _factory.open(tmp_path.as_posix()) as snda:
         assert snda.ndim == src_matrix.ndim

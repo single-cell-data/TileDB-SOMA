@@ -333,18 +333,14 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
 
         Lifecycle: maturing
         """
-        return self._get_annotation_layer("obsm", layer).read(
-            (self._joinids.obs, slice(None))
-        )
+        return self._get_annotation_layer("obsm", layer).read((self._joinids.obs, slice(None)))
 
     def varm(self, layer: str) -> SparseRead:
         """Returns a ``varm`` layer as a sparse read.
 
         Lifecycle: maturing
         """
-        return self._get_annotation_layer("varm", layer).read(
-            (self._joinids.var, slice(None))
-        )
+        return self._get_annotation_layer("varm", layer).read((self._joinids.var, slice(None)))
 
     def obs_scene_ids(self) -> pa.Array:
         """Returns a pyarrow array with scene ids that contain obs from this query.
@@ -354,14 +350,9 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
         try:
             obs_scene = self.experiment.obs_spatial_presence
         except KeyError as ke:
-            raise KeyError(
-                "No obs_spatial_presence dataframe in this experiment."
-            ) from ke
+            raise KeyError("No obs_spatial_presence dataframe in this experiment.") from ke
         if not isinstance(obs_scene, DataFrame):
-            raise TypeError(
-                f"obs_spatial_presence must be a dataframe; got "
-                f"{type(obs_scene).__name__}."
-            )
+            raise TypeError(f"obs_spatial_presence must be a dataframe; got " f"{type(obs_scene).__name__}.")
 
         full_table = obs_scene.read(
             coords=(self._joinids.obs, slice(None)),
@@ -380,15 +371,9 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
         try:
             var_scene = self._ms.var_spatial_presence
         except KeyError as ke:
-            raise KeyError(
-                f"No var_spatial_presence dataframe in measurement "
-                f"'{self.measurement_name}'."
-            ) from ke
+            raise KeyError(f"No var_spatial_presence dataframe in measurement " f"'{self.measurement_name}'.") from ke
         if not isinstance(var_scene, DataFrame):
-            raise TypeError(
-                f"var_spatial_presence must be a dataframe; got "
-                f"{type(var_scene).__name__}."
-            )
+            raise TypeError(f"var_spatial_presence must be a dataframe; got " f"{type(var_scene).__name__}.")
 
         full_table = var_scene.read(
             coords=(self._joinids.var, slice(None)),
@@ -599,8 +584,7 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
             scene_names = tuple(str(scene_name) for scene_name in self.var_scene_ids())
         else:
             raise ValueError(
-                f"Invalid scene presence mode '{scene_presence_mode}'. Valid options "
-                f"are 'obs' and 'var'."
+                f"Invalid scene presence mode '{scene_presence_mode}'. Valid options " f"are 'obs' and 'var'."
             )
 
         # Get the anndata table.
@@ -650,11 +634,7 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
         joinids_cached = self._joinids._is_cached(axis)
         query_columns = column_names
         added_soma_joinid_to_columns = False
-        if (
-            not joinids_cached
-            and column_names is not None
-            and "soma_joinid" not in column_names
-        ):
+        if not joinids_cached and column_names is not None and "soma_joinid" not in column_names:
             # If we want to fill the join ID cache, ensure that we query the
             # soma_joinid column so that it is included in the results.
             # We'll filter it out later.
@@ -684,9 +664,7 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
             arrow_table = arrow_table.drop(["soma_joinid"])
         return arrow_table
 
-    def _get_annotation_layer(
-        self, annotation_name: str, layer_name: str
-    ) -> SparseNDArray:
+    def _get_annotation_layer(self, annotation_name: str, layer_name: str) -> SparseNDArray:
         """Helper function to make error messages consistent.
 
         Args:
@@ -700,21 +678,15 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
         except KeyError:
             raise ValueError(f"Measurement does not contain {annotation_name!r} data.")
         if not isinstance(coll, Collection):
-            raise TypeError(
-                f"Unexpected SOMA type {type(coll).__name__} for "
-                f"{annotation_name!r}."
-            )
+            raise TypeError(f"Unexpected SOMA type {type(coll).__name__} for " f"{annotation_name!r}.")
 
         try:
             layer = coll[layer_name]
         except KeyError:
-            raise ValueError(
-                f"layer {layer_name!r} is not available in {annotation_name!r}."
-            )
+            raise ValueError(f"layer {layer_name!r} is not available in {annotation_name!r}.")
         if not isinstance(layer, SparseNDArray):
             raise TypeError(
-                f"Unexpected SOMA type {type(layer).__name__} stored in "
-                f"{annotation_name!r} layer {layer_name!r}."
+                f"Unexpected SOMA type {type(layer).__name__} stored in " f"{annotation_name!r} layer {layer_name!r}."
             )
         return layer
 
@@ -772,9 +744,7 @@ class JoinIDCache:
     def obs(self) -> pa.IntegerArray:
         """Join IDs for the obs axis. Will load and cache if not already."""
         if not self._cached_obs:
-            self._cached_obs = load_joinids(
-                self.owner._obs_df, self.owner._matrix_axis_query.obs
-            )
+            self._cached_obs = load_joinids(self.owner._obs_df, self.owner._matrix_axis_query.obs)
         return self._cached_obs
 
     @obs.setter
@@ -785,9 +755,7 @@ class JoinIDCache:
     def var(self) -> pa.IntegerArray:
         """Join IDs for the var axis. Will load and cache if not already."""
         if not self._cached_var:
-            self._cached_var = load_joinids(
-                self.owner._var_df, self.owner._matrix_axis_query.var
-            )
+            self._cached_var = load_joinids(self.owner._var_df, self.owner._matrix_axis_query.var)
         return self._cached_var
 
     @var.setter
@@ -837,11 +805,7 @@ def _read_as_csr(
         frag_cell_count = None
 
     # if able, downcast from int64 - reduces working memory
-    index_dtype = (
-        np.int32
-        if max(len(d0_joinids), len(d1_joinids)) < np.iinfo(np.int32).max
-        else np.int64
-    )
+    index_dtype = np.int32 if max(len(d0_joinids), len(d1_joinids)) < np.iinfo(np.int32).max else np.int64
     pa_schema = pa.schema(
         [
             pa.field("soma_dim_0", pa.from_numpy_dtype(index_dtype)),
@@ -850,9 +814,7 @@ def _read_as_csr(
         ]
     )
 
-    def _read_and_reindex(
-        X: SparseNDArray, oids: npt.NDArray[np.int64], vids: npt.NDArray[np.int64]
-    ) -> pa.Table:
+    def _read_and_reindex(X: SparseNDArray, oids: npt.NDArray[np.int64], vids: npt.NDArray[np.int64]) -> pa.Table:
         def _reindex(batch: pa.RecordBatch) -> pa.RecordBatch:
             return pa.RecordBatch.from_pydict(
                 {
@@ -864,11 +826,7 @@ def _read_as_csr(
             )
 
         return pa.Table.from_batches(
-            (
-                _reindex(_batch)
-                for _tbl in X.read(coords=(oids, vids)).tables()
-                for _batch in _tbl.to_batches()
-            ),
+            (_reindex(_batch) for _tbl in X.read(coords=(oids, vids)).tables() for _batch in _tbl.to_batches()),
             schema=pa_schema,
         )
 
@@ -882,8 +840,7 @@ def _read_as_csr(
     # compute partition size from array density and target point count, rounding to nearest 1024.
     partition_size = (
         max(
-            1024
-            * round(approx_X_shape[0] * target_point_count / frag_cell_count / 1024),
+            1024 * round(approx_X_shape[0] * target_point_count / frag_cell_count / 1024),
             1024,
         )
         if frag_cell_count is not None and frag_cell_count > 0
@@ -911,6 +868,4 @@ def _read_as_csr(
     else:
         tbl = _read_and_reindex(matrix, d0_joinids, d1_joinids)
 
-    return CompressedMatrix.from_soma(
-        tbl, (len(d0_joinids), len(d1_joinids)), "csr", True, matrix.context
-    ).to_scipy()
+    return CompressedMatrix.from_soma(tbl, (len(d0_joinids), len(d1_joinids)), "csr", True, matrix.context).to_scipy()

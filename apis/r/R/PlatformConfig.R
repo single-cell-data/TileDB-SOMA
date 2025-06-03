@@ -10,6 +10,14 @@
 #'
 #' @noMd
 #'
+#' @examples
+#' (cfg <- PlatformConfig$new())
+#' cfg$set("plat1", "op1", "a", 1L)
+#' cfg
+#'
+#' cfg$get("plat1")
+#' cfg$get("plat1")$get("op1")
+#'
 PlatformConfig <- R6::R6Class(
   classname = "PlatformConfig",
   inherit = MappingBase,
@@ -47,6 +55,7 @@ PlatformConfig <- R6::R6Class(
       platform <- match.arg(arg = platform, choices = self$platforms())
       return(super$get(key = platform)$keys())
     },
+
     #' @param platform The name of the \dQuote{platform} (outer key) to fetch
     #' @param param The name of the \dQuote{paramters} of \code{platform}
     #' to fetch; if \code{NULL}, returns the
@@ -89,6 +98,7 @@ PlatformConfig <- R6::R6Class(
       }
       return(pmap$get(param = param, key = key, default = default))
     },
+
     #' @param platform The name of the \dQuote{platform} (outer key) to fetch
     #'
     #' @return The \code{\link{ConfigList}} for \code{platform}
@@ -102,6 +112,7 @@ PlatformConfig <- R6::R6Class(
       platform <- match.arg(arg = platform, choices = self$platforms())
       return(super$get(platform))
     },
+
     #' @param platform The name of the \dQuote{platform} (outer key) to set
     #' @param param Name of the \dQuote{parameter} (middle key) in
     #' \code{platform} to set
@@ -125,6 +136,7 @@ PlatformConfig <- R6::R6Class(
       super$set(key = platform, value = pmap)
       return(invisible(self))
     },
+
     #' @template param-dots-ignored
     #'
     #' @return Nothing; \code{setv()} is disabled for

@@ -100,9 +100,7 @@ class FileBasedProfileDB(ProfileDB):
                 with open(os.path.join(command_hash, "command.txt"), "r") as f:
                     command = f.read()
                 n_runs = len(glob.glob(os.path.join(command_hash, "*.json")))
-                result += (
-                    f"[{command_hash.split('/')[-1]}] \"{command}\": {n_runs} runs\n"
-                )
+                result += f"[{command_hash.split('/')[-1]}] \"{command}\": {n_runs} runs\n"
             return result
         return ""
 
@@ -173,11 +171,7 @@ class S3ProfileDB(ProfileDB):
         self.bucket = boto3.resource("s3").Bucket(self.bucket_name)
         # Check if the bucket exists
         if not self.bucket_exist_and_accessible():
-            raise (
-                Exception(
-                    f"Bucket {self.bucket_name} does not exist or access is not granted."
-                )
-            )
+            raise (Exception(f"Bucket {self.bucket_name} does not exist or access is not granted."))
 
     def __str__(self):
         result = ""
@@ -192,9 +186,7 @@ class S3ProfileDB(ProfileDB):
                     n_runs = len(self.read_object_keys(runs_prefix, ".json"))
                     result = +f'[{command_file_key}] "{command}": {n_runs} runs\n'
             return result
-        return Exception(
-            f"Bucket {self.bucket_name} does not exist or access is not granted."
-        )
+        return Exception(f"Bucket {self.bucket_name} does not exist or access is not granted.")
 
     def find(self, command) -> list[ProfileData]:
         key = _command_key(command)
@@ -214,9 +206,7 @@ class S3ProfileDB(ProfileDB):
 
         with open(filename, "w") as fp:
             fp.write(data.command.strip())
-        self.s3.upload_file(
-            os.path.abspath(str(fp.name)), self.bucket_name, s3_command_key
-        )
+        self.s3.upload_file(os.path.abspath(str(fp.name)), self.bucket_name, s3_command_key)
         os.unlink(filename)
 
         key2 = data.timestamp

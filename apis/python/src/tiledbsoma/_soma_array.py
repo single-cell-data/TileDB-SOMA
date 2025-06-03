@@ -6,6 +6,7 @@ import warnings
 from typing import Any
 
 import pyarrow as pa
+from typing_extensions import deprecated
 
 from . import _tdb_handles
 
@@ -63,6 +64,7 @@ class SOMAArray(SOMAObject[_tdb_handles.SOMAArrayWrapper[Any]]):
         """
         return self._handle.schema_config_options()
 
+    @deprecated("This method is deprecated and will be removed in a future release.")
     def config_options_from_schema(self) -> clib.PlatformConfig:
         """Returns metadata about the array that is not encompassed within the
         Arrow Schema, in the form of a PlatformConfig (deprecated).
@@ -100,9 +102,7 @@ class SOMAArray(SOMAObject[_tdb_handles.SOMAArrayWrapper[Any]]):
         Lifecycle:
             Deprecated.
         """
-        warnings.warn(
-            "Deprecated. Use schema_config_options instead.", DeprecationWarning
-        )
+        warnings.warn("Deprecated. Use schema_config_options instead.", DeprecationWarning)
         return self._handle.config_options_from_schema()
 
     def non_empty_domain(self) -> tuple[tuple[Any, Any], ...]:

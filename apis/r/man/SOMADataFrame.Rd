@@ -4,10 +4,30 @@
 \alias{SOMADataFrame}
 \title{SOMADataFrame}
 \description{
-\code{SOMADataFrame} is a multi-column table that must contain a column
-called \code{soma_joinid} of type \code{int64}, which contains a unique value for each
-row and is intended to act as a join key for other objects, such as
-\code{\link{SOMASparseNDArray}}.  (lifecycle: maturing)
+\code{SOMADataFrame} is a multi-column table that must contain a
+column called \dQuote{\code{soma_joinid}} of type \code{int64}, which
+contains a unique value for each row and is intended to act as a join key for
+other objects, such as \code{\link{SOMASparseNDArray}} (lifecycle: maturing).
+}
+\examples{
+\dontshow{if (requireNamespace("withr", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+uri <- withr::local_tempfile(pattern = "soma-data-frame")
+df <- data.frame(
+  soma_joinid = bit64::seq.integer64(0L, 99L),
+  group = sample(factor(c("g1", "g2")), size = 100L, replace = TRUE),
+  nCount = stats::rbinom(100L, 10L, 0.3)
+)
+(sch <- arrow::infer_schema(df))
+(sdf <- SOMADataFrameCreate(uri, sch, domain = list(soma_joinid = c(0, 100))))
+sdf$write(arrow::as_arrow_table(df, schema = sch))
+sdf$close()
+
+(sdf <- SOMADataFrameOpen(uri))
+head(as.data.frame(sdf$read()$concat()))
+\dontshow{
+sdf$close()
+}
+\dontshow{\}) # examplesIf}
 }
 \section{Super classes}{
 \code{\link[tiledbsoma:TileDBObject]{tiledbsoma::TileDBObject}} -> \code{\link[tiledbsoma:TileDBArray]{tiledbsoma::TileDBArray}} -> \code{\link[tiledbsoma:SOMAArrayBase]{tiledbsoma::SOMAArrayBase}} -> \code{SOMADataFrame}
@@ -65,7 +85,7 @@ row and is intended to act as a join key for other objects, such as
 \if{html}{\out{<a id="method-SOMADataFrame-create"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMADataFrame-create}{}}}
 \subsection{Method \code{create()}}{
-Create (lifecycle: maturing)
+Create (lifecycle: maturing).
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMADataFrame$create(
   schema,
@@ -79,7 +99,7 @@ Create (lifecycle: maturing)
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{schema}}{an \code{\link[arrow:schema]{arrow::schema}}.}
+\item{\code{schema}}{An \link[arrow:schema]{Arrow schema}.}
 
 \item{\code{index_column_names}}{A vector of column names to use as user-defined
 index columns.  All named columns must exist in the schema, and at least
@@ -90,32 +110,37 @@ index column. Each slot in the list must have its name being the name
 of an index column, and its value being be a length-two vector
 consisting of the minimum and maximum values storable in the index
 column. For example, if there is a single int64-valued index column
-\code{soma_joinid}, then \code{domain} might be \code{list(soma_joinid=c(100, 200))}
-to indicate that values between 100 and 200, inclusive, can be stored
-in that column.  If provided, this sequence must have the same length
-as \code{index_column_names}, and the index-column domain will be as
-specified.  If omitted entirely, or if \code{NULL} in a given dimension, the
-corresponding index-column domain will use an empty range, and data writes
-after that will fail with "A range was set outside of the current domain".
-Unless you have a particular reason not to, you should always provide the
-desired \code{domain} at create time: this is an optional but strongly
-recommended parameter.  See also \code{change_domain} which allows you to
+\code{soma_joinid}, then \code{domain} might be
+\code{list(soma_joinid=c(100, 200))} to indicate that values between 100
+and 200, inclusive, can be stored in that column.  If provided, this
+sequence must have the same length as \code{index_column_names}, and the
+index-column domain will be as specified.  If omitted entirely, or if
+\code{NULL} in a given dimension, the corresponding index-column domain
+will use an empty range, and data writes after that will fail with
+\dQuote{A range was set outside of the current domain}. Unless you have
+a particular reason not to, you should always provide the desired
+\code{domain} at create time: this is an optional but strongly
+recommended parameter. See also \code{change_domain} which allows you to
 expand the domain after create.}
 
 \item{\code{platform_config}}{A \link[tiledbsoma:PlatformConfig]{platform configuration}
 object}
 
-\item{\code{internal_use_only}}{Character value to signal this is a 'permitted' call,
-as \code{create()} is considered internal and should not be called directly.}
+\item{\code{internal_use_only}}{Character value to signal this is a 'permitted'
+call, as \code{create()} is considered internal and should not be called
+directly.}
 }
 \if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+Returns \code{self}
 }
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-SOMADataFrame-write"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMADataFrame-write}{}}}
 \subsection{Method \code{write()}}{
-Write (lifecycle: maturing)
+Write (lifecycle: maturing).
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMADataFrame$write(values)}\if{html}{\out{</div>}}
 }
@@ -123,9 +148,10 @@ Write (lifecycle: maturing)
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{values}}{An \code{\link[arrow:Table-class]{arrow::Table}} or \code{\link[arrow:RecordBatch-class]{arrow::RecordBatch}}
-containing all columns, including any index columns. The
-schema for \code{values} must match the schema for the \code{SOMADataFrame}.}
+\item{\code{values}}{An \link[arrow:Table]{Arrow table} or
+\link[arrow:RecordBatch]{Arrow record batch} containing all columns,
+including any index columns. The schema for \code{values} must match the
+schema for the data frame.}
 }
 \if{html}{\out{</div>}}
 }
@@ -134,9 +160,9 @@ schema for \code{values} must match the schema for the \code{SOMADataFrame}.}
 \if{html}{\out{<a id="method-SOMADataFrame-read"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMADataFrame-read}{}}}
 \subsection{Method \code{read()}}{
-Read (lifecycle: maturing)
-Read a user-defined subset of data, addressed by the dataframe indexing
-column, and optionally filtered.
+Read a user-defined subset of data, addressed by the
+data frame indexing column, and optionally filtered
+(lifecycle: maturing).
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMADataFrame$read(
   coords = NULL,
@@ -156,29 +182,31 @@ each (named) list element corresponds to a dimension of the same name.}
 
 \item{\code{column_names}}{Optional character vector of column names to return.}
 
-\item{\code{value_filter}}{Optional string containing a logical expression that is used
-to filter the returned values. See \code{\link[tiledb:parse_query_condition]{tiledb::parse_query_condition}} for
-more information.}
+\item{\code{value_filter}}{Optional string containing a logical expression that
+is used to filter the returned values. See
+\code{\link[tiledb:parse_query_condition]{tiledb::parse_query_condition}()}
+for more information.}
 
 \item{\code{result_order}}{Optional order of read results. This can be one of either
 \verb{"ROW_MAJOR, }"COL_MAJOR"\verb{, or }"auto"` (default).}
 
-\item{\code{iterated}}{Option boolean indicated whether data is read in call (when
-\code{FALSE}, the default value) or in several iterated steps.}
+\item{\code{iterated}}{Option boolean indicated whether data is read in call
+(when \code{FALSE}, the default value) or in several iterated steps.}
 
-\item{\code{log_level}}{Optional logging level with default value of \code{"warn"}.}
+\item{\code{log_level}}{Optional logging level with default value of
+\dQuote{\code{warn}}.}
 }
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-arrow::\link[arrow]{Table} or \link{TableReadIter}
+An \link[arrow:Table]{Arrow table} or \code{\link{TableReadIter}}
 }
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-SOMADataFrame-update"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMADataFrame-update}{}}}
 \subsection{Method \code{update()}}{
-Update (lifecycle: maturing)
+Update (lifecycle: maturing).
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMADataFrame$update(values, row_index_name = NULL)}\if{html}{\out{</div>}}
 }
@@ -186,40 +214,42 @@ Update (lifecycle: maturing)
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{values}}{A \code{data.frame}, \code{\link[arrow:Table-class]{arrow::Table}}, or
-\code{\link[arrow:RecordBatch-class]{arrow::RecordBatch}}.}
+\item{\code{values}}{A data frame, \link[arrow:Table]{Arrow table}, or
+\link[arrow:RecordBatch]{Arrow record batch}.}
 
 \item{\code{row_index_name}}{An optional scalar character. If provided, and if
-the \code{values} argument is a \code{data.frame} with row names, then the row
-names will be extracted and added as a new column to the \code{data.frame}
+the \code{values} argument is a data frame with row names, then the row
+names will be extracted and added as a new column to the data frame
 prior to performing the update. The name of this new column will be set
 to the value specified by \code{row_index_name}.}
 }
 \if{html}{\out{</div>}}
 }
 \subsection{Details}{
-Update the existing \code{SOMADataFrame} to add or remove columns based on the
-input:
+Update the existing \code{SOMADataFrame} to add or remove columns based
+on the input:
 \itemize{
-\item columns present in the current the \code{SOMADataFrame} but absent from the
-new \code{values} will be dropped
-\item columns absent in current \code{SOMADataFrame} but present in the new
-\code{values} will be added
-\item any columns present in both will be left alone, with the exception that
-if \code{values} has a different type for the column, the entire update
-will fail because attribute types cannot be changed.
+\item columns present in the current the \code{SOMADataFrame} but absent
+from the new \code{values} will be dropped.
+\item columns absent in current \code{SOMADataFrame} but present in the
+new \code{values} will be added.
+\item any columns present in both will be left alone, with the
+exception that if \code{values} has a different type for the column,
+the entire update will fail because attribute types cannot be changed.
+}
+Furthermore, \code{values} must contain the same number of rows as the
+current \code{SOMADataFrame}.
 }
 
-Furthermore, \code{values} must contain the same number of rows as the current
-\code{SOMADataFrame}.
+\subsection{Returns}{
+Invisibly returns \code{NULL}
 }
-
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-SOMADataFrame-levels"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMADataFrame-levels}{}}}
 \subsection{Method \code{levels()}}{
-Get the levels for an enumerated (\code{factor}) column
+Get the levels for an enumerated (\code{factor}) column.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMADataFrame$levels(column_names = NULL, simplify = TRUE)}\if{html}{\out{</div>}}
 }
@@ -228,22 +258,22 @@ Get the levels for an enumerated (\code{factor}) column
 \if{html}{\out{<div class="arguments">}}
 \describe{
 \item{\code{column_names}}{Optional character vector of column names to pull
-enumeration levels for; defaults to all enumerated columns}
+enumeration levels for; defaults to all enumerated columns.}
 
-\item{\code{simplify}}{Simplify the result down to a vector or matrix}
+\item{\code{simplify}}{Simplify the result down to a vector or matrix.}
 }
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
 If \code{simplify} returns one of the following:
 \itemize{
-\item a vector of there is only one enumerated column
+\item a vector of there is only one enumerated column.
 \item a matrix if there are multiple enumerated columns with the same
-number of levels
+number of levels.
 \item a named list if there are multiple enumerated columns with
-differing numbers of levels
+differing numbers of levels.
 }
-Otherwise, returns a named list
+Otherwise, returns a named list.
 }
 }
 \if{html}{\out{<hr>}}
@@ -251,27 +281,29 @@ Otherwise, returns a named list
 \if{latex}{\out{\hypertarget{method-SOMADataFrame-shape}{}}}
 \subsection{Method \code{shape()}}{
 Retrieve the shape; as \code{SOMADataFrames} are shapeless,
-simply raises an error
+simply raises an error.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMADataFrame$shape()}\if{html}{\out{</div>}}
 }
 
 \subsection{Returns}{
-None, instead a \code{\link{.NotYetImplemented}()} error is raised
+None, instead a \code{\link{.NotYetImplemented}()} error
+is raised.
 }
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-SOMADataFrame-maxshape"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMADataFrame-maxshape}{}}}
 \subsection{Method \code{maxshape()}}{
-Retrieve the maxshape; as \code{SOMADataFrames} are shapeless,
-simply raises an error
+Retrieve the max shape; as \code{SOMADataFrames} are
+shapeless, simply raises an error.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMADataFrame$maxshape()}\if{html}{\out{</div>}}
 }
 
 \subsection{Returns}{
-None, instead a \code{\link{.NotYetImplemented}()} error is raised
+None, instead a \code{\link{.NotYetImplemented}()} error
+is raised.
 }
 }
 \if{html}{\out{<hr>}}
@@ -279,9 +311,8 @@ None, instead a \code{\link{.NotYetImplemented}()} error is raised
 \if{latex}{\out{\hypertarget{method-SOMADataFrame-domain}{}}}
 \subsection{Method \code{domain()}}{
 Returns a named list of minimum/maximum pairs, one per index
-column, currently storable on each index column of the dataframe. These
-can be resized up to \code{maxdomain}.
-(lifecycle: maturing)
+column, currently storable on each index column of the data frame. These
+can be resized up to \code{maxdomain} (lifecycle: maturing).
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMADataFrame$domain()}\if{html}{\out{</div>}}
 }
@@ -295,9 +326,8 @@ Named list of minimum/maximum values.
 \if{latex}{\out{\hypertarget{method-SOMADataFrame-maxdomain}{}}}
 \subsection{Method \code{maxdomain()}}{
 Returns a named list of minimum/maximum pairs, one per index
-column, which are the limits up to which the dataframe can have its
-domain resized.
-(lifecycle: maturing)
+column, which are the limits up to which the data frame can have its
+domain resized (lifecycle: maturing).
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMADataFrame$maxdomain()}\if{html}{\out{</div>}}
 }
@@ -310,30 +340,30 @@ Named list of minimum/maximum values.
 \if{html}{\out{<a id="method-SOMADataFrame-tiledbsoma_has_upgraded_domain"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMADataFrame-tiledbsoma_has_upgraded_domain}{}}}
 \subsection{Method \code{tiledbsoma_has_upgraded_domain()}}{
-Returns TRUE if the array has the upgraded resizeable domain
-feature from TileDB-SOMA 1.15: the array was created with this support,
-or it has had \code{upgrade_domain} applied to it.
-(lifecycle: maturing)
+Test if the array has the upgraded resizeable domain feature
+from TileDB-SOMA 1.15, the array was created with this support, or it has
+had \code{$upgrade_domain()} applied to it (lifecycle: maturing).
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMADataFrame$tiledbsoma_has_upgraded_domain()}\if{html}{\out{</div>}}
 }
 
 \subsection{Returns}{
-Logical
+Returns \code{TRUE} if the array has the upgraded resizable
+domain feature; otherwise, returns \code{FALSE}.
 }
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-SOMADataFrame-tiledbsoma_resize_soma_joinid_shape"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMADataFrame-tiledbsoma_resize_soma_joinid_shape}{}}}
 \subsection{Method \code{tiledbsoma_resize_soma_joinid_shape()}}{
-Increases the shape of the dataframe on the \code{soma_joinid}
-index column, if it indeed is an index column, leaving all other index
-columns as-is. If the \code{soma_joinid} is not an index column, no change is
-made.  This is a special case of \code{upgrade_domain} (WIP for 1.15), but
-simpler to keystroke, and handles the most common case for dataframe
-domain expansion.  Raises an error if the dataframe doesn't already have a
-domain: in that case please call \code{tiledbsoma_upgrade_domain} (WIP for
-1.15).
+Increases the shape of the data frame on the
+\code{soma_joinid} index column, if it indeed is an index column, leaving
+all other index columns as-is. If the \code{soma_joinid} is not an index
+column, no change is made. This is a special case of
+\code{upgrade_domain()}, but simpler to keystroke, and
+handles the most common case for data frame domain expansion. Raises an
+error if the data frame doesn't already have a domain; in that case
+please call \code{$tiledbsoma_upgrade_domain()}.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMADataFrame$tiledbsoma_resize_soma_joinid_shape(new_shape)}\if{html}{\out{</div>}}
 }
@@ -347,21 +377,21 @@ domain: in that case please call \code{tiledbsoma_upgrade_domain} (WIP for
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-No return value
+Invisibly returns \code{NULL}
 }
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-SOMADataFrame-tiledbsoma_upgrade_domain"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMADataFrame-tiledbsoma_upgrade_domain}{}}}
 \subsection{Method \code{tiledbsoma_upgrade_domain()}}{
-Allows you to set the domain of a \code{SOMADataFrame}, when the
-\code{SOMADataFrame} does not have a domain set yet.  The argument must be a
-tuple of pairs of low/high values for the desired domain, one pair per
-index column. For string index columns, you must offer the low/high pair
-as \verb{("", "")}, or as \code{NULL}.  If \code{check_only} is \code{True}, returns
-whether the operation would succeed if attempted, and a reason why it
-would not. The domain being requested must be contained within what
-\code{maxdomain} returns.
+Allows you to set the domain of a \code{SOMADataFrame},
+when the \code{SOMADataFrame} does not have a domain set yet. The
+argument must be a list of pairs of low/high values for the desired
+domain, one pair per index column. For string index columns, you must
+offer the low/high pair as \code{c("", "")}, or as \code{NULL}. If
+\code{check_only} is \code{True}, returns whether the operation would
+succeed if attempted, or a reason why it would not. The domain being
+requested must be contained within what \code{$maxdomain()} returns.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMADataFrame$tiledbsoma_upgrade_domain(new_domain, check_only = FALSE)}\if{html}{\out{</div>}}
 }
@@ -379,23 +409,25 @@ whether it would have succeeded.}
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-No return value if \code{check_only} is \code{FALSE}. If \code{check_only} is \code{TRUE},
-returns the empty string if no error is detected, else a description of the error.
+If \code{check_only}, returns the empty string if no error is
+detected, else a description of the error. Otherwise, invisibly returns
+\code{NULL}
 }
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-SOMADataFrame-change_domain"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMADataFrame-change_domain}{}}}
 \subsection{Method \code{change_domain()}}{
-Allows you to set the domain of a \code{SOMADataFrame}, when the
-\code{SOMADataFrame} already has a domain set yet.  The argument must be a
-tuple of pairs of low/high values for the desired domain, one pair per
-index column. For string index columns, you must offer the low/high pair
-as \verb{("", "")}, or as \code{NULL}.  If \code{check_only} is \code{True}, returns
-whether the operation would succeed if attempted, and a reason why it
-would not. The return value from \code{domain} must be contained within
-the requested \code{new_domain}, and the requested \code{new_domain} must be
-contained within the return value from \code{maxdomain}. (lifecycle: maturing)
+Allows you to set the domain of a \code{SOMADataFrame}, when
+the \code{SOMADataFrame} already has a domain set yet. The argument must
+be a list of pairs of low/high values for the desired domain, one pair
+per index column. For string index columns, you must offer the low/high
+pair as \code{c("", "")}, or as \code{NULL}. If \code{check_only} is
+\code{True}, returns whether the operation would succeed if attempted,
+or a reason why it would not. The return value from \code{domain} must be
+contained within the requested \code{new_domain}, and the requested
+\code{new_domain} must be contained within the return value from
+\code{$maxdomain()} (lifecycle: maturing).
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMADataFrame$change_domain(new_domain, check_only = FALSE)}\if{html}{\out{</div>}}
 }
@@ -413,8 +445,9 @@ whether it would have succeeded.}
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-No return value if \code{check_only} is \code{FALSE}. If \code{check_only} is \code{TRUE},
-returns the empty string if no error is detected, else a description of the error.
+If \code{check_only}, returns the empty string if no error is
+detected, else a description of the error. Otherwise, invisibly returns
+\code{NULL}
 }
 }
 \if{html}{\out{<hr>}}

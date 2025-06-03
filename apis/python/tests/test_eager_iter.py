@@ -40,9 +40,7 @@ class EagerIterTest(unittest.TestCase):
     def test_nesting(self):
         inner = EagerIterator(iter("abc"), pool=self.kiddie_pool)
         outer = EagerIterator(inner, pool=self.kiddie_pool)
-        self.assertEqual(
-            "a, b, c", self.verify_pool.submit(", ".join, outer).result(0.1)
-        )
+        self.assertEqual("a, b, c", self.verify_pool.submit(", ".join, outer).result(0.1))
 
     def test_exceptions(self):
         flaky = mock.MagicMock()

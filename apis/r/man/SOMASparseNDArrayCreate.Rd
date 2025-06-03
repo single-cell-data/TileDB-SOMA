@@ -2,7 +2,7 @@
 % Please edit documentation in R/Factory.R
 \name{SOMASparseNDArrayCreate}
 \alias{SOMASparseNDArrayCreate}
-\title{Create SOMA Sparse Nd Array}
+\title{Create a SOMA Sparse ND Array}
 \usage{
 SOMASparseNDArrayCreate(
   uri,
@@ -15,9 +15,10 @@ SOMASparseNDArrayCreate(
 )
 }
 \arguments{
-\item{uri}{URI for the TileDB object}
+\item{uri}{URI for the TileDB object.}
 
-\item{type}{An \link[arrow:data-type]{Arrow type} defining the type of each element in the array.}
+\item{type}{An \link[arrow:data-type]{Arrow type} defining the type
+of each element in the array.}
 
 \item{shape}{A vector of integers defining the shape of the array.}
 
@@ -25,17 +26,41 @@ SOMASparseNDArrayCreate(
 choose from:
 \itemize{
 \item \dQuote{\code{write}}: create a new TileDB object and error if
-it already exists
+it already exists.
 \item \dQuote{\code{resume}}: attempt to create a new TileDB object;
-if it already exists, simply open it for writing
+if it already exists, simply open it for writing.
 }}
 
-\item{platform_config}{Optional platform configuration}
+\item{platform_config}{Optional platform configuration.}
 
-\item{tiledbsoma_ctx}{Optional SOMATileDBContext}
+\item{tiledbsoma_ctx}{Optional SOMATileDBContext.}
 
-\item{tiledb_timestamp}{Optional Datetime (POSIXct) for TileDB timestamp}
+\item{tiledb_timestamp}{Optional Datetime (POSIXct) for TileDB timestamp.}
+}
+\value{
+A new \link[tiledbsoma:SOMASparseNDArray]{SOMA sparse ND array}
+stored at \code{uri} opened for writing.
 }
 \description{
-Factory function to create a SOMASparseNDArray for writing, (lifecycle: maturing)
+Factory function to create a
+\link[tiledbsoma:SOMASparseNDArray]{SOMA sparse ND array} for writing
+(lifecycle: maturing).
+}
+\examples{
+\dontshow{if (requireNamespace("withr", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+uri <- withr::local_tempfile(pattern = "soma-sparse-array")
+mat <- Matrix::rsparsematrix(100L, 100L, 0.7, repr = "T")
+mat[1:3, 1:5]
+
+(arr <- SOMASparseNDArrayCreate(uri, arrow::float64(), shape = dim(mat)))
+arr$write(mat)
+arr$close()
+
+(arr <- SOMASparseNDArrayOpen(uri))
+m2 <- arr$read()$sparse_matrix()$concat()
+m2[1:3, 1:5]
+\dontshow{
+arr$close()
+}
+\dontshow{\}) # examplesIf}
 }

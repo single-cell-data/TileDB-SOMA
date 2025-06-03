@@ -2,11 +2,30 @@
 % Please edit documentation in R/SparseReadIter.R
 \name{SparseReadIter}
 \alias{SparseReadIter}
-\title{SparseReadIter}
+\title{SOMA Read Iterator Over Sparse Matrices}
 \description{
 \code{SparseReadIter} is a class that allows for iteration over
 a reads on \link{SOMASparseNDArray}.
-Iteration chunks are retrieved as 0-based Views \link{matrixZeroBasedView} of Matrix::\link[Matrix]{sparseMatrix}.
+}
+\examples{
+\dontshow{if (requireNamespace("withr", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+dir <- withr::local_tempfile(pattern = "matrix-iter")
+dir.create(dir, recursive = TRUE)
+(exp <- load_dataset("soma-exp-pbmc-small", dir))
+qry <- exp$axis_query("RNA")
+xqry <- qry$X("data")
+
+iter <- xqry$sparse_matrix()
+stopifnot(inherits(iter, "SparseReadIter"))
+
+while (!iter$read_complete()) {
+  block <- iter$read_next()
+}
+
+\dontshow{
+exp$close()
+}
+\dontshow{\}) # examplesIf}
 }
 \section{Super class}{
 \code{\link[tiledbsoma:ReadIter]{tiledbsoma::ReadIter}} -> \code{SparseReadIter}
@@ -31,7 +50,7 @@ Iteration chunks are retrieved as 0-based Views \link{matrixZeroBasedView} of Ma
 \if{html}{\out{<a id="method-SparseReadIter-new"></a>}}
 \if{latex}{\out{\hypertarget{method-SparseReadIter-new}{}}}
 \subsection{Method \code{new()}}{
-Create (lifecycle: maturing)
+Create (lifecycle: maturing).
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SparseReadIter$new(sr, shape, zero_based = FALSE)}\if{html}{\out{</div>}}
 }
@@ -39,11 +58,12 @@ Create (lifecycle: maturing)
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{sr}}{Soma reader pointer}
+\item{\code{sr}}{Soma reader pointer.}
 
-\item{\code{shape}}{Shape of the full matrix}
+\item{\code{shape}}{Shape of the full matrix.}
 
-\item{\code{zero_based}}{Logical, if TRUE will make iterator for Matrix::\link[Matrix]{dgTMatrix-class}
+\item{\code{zero_based}}{Logical, if \code{TRUE} will make iterator for
+Matrix::\link[Matrix]{dgTMatrix-class}
 otherwise \link{matrixZeroBasedView}.}
 }
 \if{html}{\out{</div>}}
@@ -59,7 +79,7 @@ Concatenate remainder of iterator.
 }
 
 \subsection{Returns}{
-\link{matrixZeroBasedView} of Matrix::\link[Matrix]{sparseMatrix}
+\link{matrixZeroBasedView} of Matrix::\link[Matrix]{sparseMatrix}.
 }
 }
 \if{html}{\out{<hr>}}

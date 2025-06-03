@@ -7,7 +7,24 @@
 Ephemeral version of \code{\link{SOMACollection}s}; ephemeral
 collections are equivalent to
 \link[tiledbsoma:SOMACollection]{SOMA collections} but are stored in-memory
-instead of on-disk
+instead of on-disk.
+}
+\examples{
+(col <- EphemeralCollection$new())
+col$soma_type
+
+\dontshow{if (requireNamespace("withr", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+dir <- withr::local_tempfile(pattern = "obs")
+dir.create(dir, recursive = TRUE)
+
+(obs <- load_dataset("soma-dataframe-pbmc3k-processed-obs", dir))
+col$set(obs, "obs")
+col$names()
+
+\dontshow{
+obs$close()
+}
+\dontshow{\}) # examplesIf}
 }
 \keyword{internal}
 \section{Super classes}{
@@ -16,7 +33,7 @@ instead of on-disk
 \section{Active bindings}{
 \if{html}{\out{<div class="r6-active-bindings">}}
 \describe{
-\item{\code{soma_type}}{The SOMA object type}
+\item{\code{soma_type}}{The SOMA object type.}
 }
 \if{html}{\out{</div>}}
 }

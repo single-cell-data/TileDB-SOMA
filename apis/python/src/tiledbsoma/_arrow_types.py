@@ -104,9 +104,7 @@ _ARROW_TO_TDB_DIM.update(
 )
 
 
-def tiledb_type_from_arrow_type(
-    t: pa.DataType, is_indexed_column: bool = False
-) -> npt.DTypeLike:
+def tiledb_type_from_arrow_type(t: pa.DataType, is_indexed_column: bool = False) -> npt.DTypeLike:
     """Given an Arrow type, return the corresponding TileDB type as a NumPy dtype.
     Building block for Arrow-to-TileDB schema translation.
 
@@ -160,9 +158,7 @@ def tiledb_type_from_arrow_type(
         raise TypeError("Unsupported Arrow type") from exc
 
 
-def arrow_type_from_tiledb_dtype(
-    tiledb_dtype: npt.DTypeLike, bytes_are_ascii: bool = True
-) -> pa.DataType:
+def arrow_type_from_tiledb_dtype(tiledb_dtype: npt.DTypeLike, bytes_are_ascii: bool = True) -> pa.DataType:
     """Maps a TileDB dtype (``'bytes'``, ``'ascii'``, or an ``np.dtype``) to an Arrow type.  Note that
     when we read tiledb schema off storage, ``ascii`` and ``bytes`` both have ``dtype`` of `"S"`
     which is equal to ``bytes`` -- so, the caller should disambgiuate.

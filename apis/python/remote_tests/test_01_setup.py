@@ -24,9 +24,7 @@ from .util import util_make_uri, util_tear_down_uri
 # For CI, this environment variable is a GitHub Actions secret, propagated in
 # the CI YAML.
 if os.getenv("TILEDB_REST_UNITTEST_TOKEN") is None:
-    pytest.skip(
-        reason="$TILEDB_REST_UNITTEST_TOKEN is not set", allow_module_level=True
-    )
+    pytest.skip(reason="$TILEDB_REST_UNITTEST_TOKEN is not set", allow_module_level=True)
 
 
 def test_skipping_correctly():

@@ -74,9 +74,7 @@ def test_dask_load_csc(
 class VerifyDaskArray(Protocol):
     """Type-alias for the verifier-function returned by the ``verify_dask_array`` fixture below."""
 
-    def __call__(
-        self, X1: csr_matrix, X2: DaskArray, nnz: int | None = None
-    ) -> None: ...
+    def __call__(self, X1: csr_matrix, X2: DaskArray, nnz: int | None = None) -> None: ...
 
 
 @pytest.fixture
@@ -171,9 +169,7 @@ def test_dask_query_to_anndata_timestamp(
             data = X["data"]
             shape = data.shape
             R, C = shape
-            soma_dim_0, soma_dim_1, soma_data = zip(
-                *[(r, c, v) for r in range(R) for c in range(C)]
-            )
+            soma_dim_0, soma_dim_1, soma_data = zip(*[(r, c, v) for r in range(R) for c in range(C)])
             tbl = pa.Table.from_pydict(
                 dict(
                     soma_dim_0=soma_dim_0,

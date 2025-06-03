@@ -21,7 +21,7 @@ ignore_errors = true
 fix = true
 exclude = ["*.cc"]
 target-version = "py39"
-line-length = 88
+line-length = 120
 
 [tool.ruff.lint]
 extend-select = ["I001"]  # unsorted-imports
@@ -68,5 +68,5 @@ markers = [
 ]
 
 [tool.black]
-line-length = 88
-target-version = ["py39"]
+line-length = 120
+target-version = ["py39", "py310", "py311", "py312", "py313"]

@@ -41,9 +41,7 @@ class SOMADaskConfig(TypedDict, total=False):
     tiledb_config: dict[str, ConfigVal]
 
 
-def chunk_ids_sizes(
-    joinids: JoinIDs, chunk_size: int, dim_size: int
-) -> tuple[list[JoinIDs], list[int]]:
+def chunk_ids_sizes(joinids: JoinIDs, chunk_size: int, dim_size: int) -> tuple[list[JoinIDs], list[int]]:
     """Slice chunks from joinids, return chunks' joinids and sizes."""
     chunk_joinids: list[JoinIDs] = []
     chunk_sizes: list[int] = []
@@ -94,9 +92,7 @@ def coord_to_joinids(coord: SparseNDCoord, n: int) -> JoinIDs:
         raise ValueError(f"Unexpected coord type {type(coord)}: {coord}")
 
 
-def coords_to_joinids(
-    coords: SparseNDCoords | None, shape: tuple[int, ...]
-) -> tuple[JoinIDs, JoinIDs]:
+def coords_to_joinids(coords: SparseNDCoords | None, shape: tuple[int, ...]) -> tuple[JoinIDs, JoinIDs]:
     """Convert a ``SparseNDCoords`` to two Numpy arrays (for obs and var), for slicing into Dask tasks."""
     if len(shape) != 2:
         raise ValueError(f"Shape must have length 2: {shape}")
@@ -109,7 +105,5 @@ def coords_to_joinids(
     elif len(coords) == 2:
         obs, var = coords
     else:
-        raise ValueError(
-            f"coords must be a list of 0, 1, or 2 elements, for {len(coords)}: {coords}"
-        )
+        raise ValueError(f"coords must be a list of 0, 1, or 2 elements, for {len(coords)}: {coords}")
     return coord_to_joinids(obs, n_obs), coord_to_joinids(var, n_var)
