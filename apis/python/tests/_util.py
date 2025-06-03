@@ -18,7 +18,6 @@ if Version(_pytest.__version__) < Version("8.4.0"):
     from _pytest.python_api import RaisesContext
 
     E = TypeVar("E", bound=BaseException, default=BaseException)
-
     MaybeRaisesReturn = Union[RaisesContext[E], ExceptionInfo[E], nullcontext]
 else:
     from _pytest.raises import RaisesExc
