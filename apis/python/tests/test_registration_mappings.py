@@ -520,7 +520,6 @@ def test_multiples_without_experiment(
         h5ad_file_names[permutation[2]],
         h5ad_file_names[permutation[3]],
     ]:
-
         if tiledbsoma.Experiment.exists(experiment_uri):
             rd.prepare_experiment(experiment_uri)
 
@@ -1738,3 +1737,57 @@ def test_field_name(tmp_path):
     with tiledbsoma.Experiment.open(soma_uri) as exp:
         assert exp.obs.count == sum(adata.n_obs for adata in anndatas)
         assert exp.ms[ms_name].var.count == pd.concat(adata.var[var_field_name] for adata in anndatas).nunique()
+
+
+def test_empty_measurement_SOMA_184(tmp_path):
+    """Verify that prepare_experiment correctly handles empty Measurements."""
+
+    exp_uri = tmp_path.as_posix()
+
+    # make anndata
+    X = sp.random(100, 20, format="csr")
+    obs = pd.DataFrame({"cell_type": ["T cell", "B cell"] * 50, "batch": ["batch1", "batch2"] * 50})
+    var = pd.DataFrame({"gene_names": ["gene" + str(i) for i in range(20)]}, index=["gene" + str(i) for i in range(20)])
+    adata = ad.AnnData(X=X, obs=obs, var=var)
+
+    tiledbsoma.io.from_anndata(
+        exp_uri,
+        anndata=adata,
+        measurement_name="RNA",
+        ingest_mode="schema_only",
+    )
+
+    # sim a new anndata
+    new_adata = adata.copy()
+    new_adata.obs.index = new_adata.obs.index + "_2"
+
+    tiledbsoma.io.from_anndata(
+        exp_uri,
+        anndata=new_adata,
+        measurement_name="prot",
+        ingest_mode="schema_only",  # must be schema only
+    )
+
+    reg = tiledbsoma.io.register_anndatas(
+        exp_uri,
+        new_adata,
+        measurement_name="prot",
+        obs_field_name="obs_id",
+        var_field_name="var_id",
+    )
+
+    reg.prepare_experiment(exp_uri)
+
+    tiledbsoma.io.from_anndata(
+        experiment_uri=exp_uri,
+        anndata=new_adata,
+        measurement_name="prot",
+        obs_id_name="obs_id",
+        var_id_name="var_id",
+        registration_mapping=reg,
+    )
+
+    with tiledbsoma.Experiment.open(exp_uri, "r") as exp:
+        assert exp.ms["RNA"].var.count == 0
+        assert exp.ms["prot"].var.count == 20
+        assert exp.obs.count == 100

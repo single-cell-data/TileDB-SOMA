@@ -102,7 +102,6 @@ class ExperimentAmbientLabelMapping:
     prepared: bool = False
 
     def id_mappings_for_anndata(self, adata: ad.AnnData, *, measurement_name: str = "RNA") -> ExperimentIDMapping:
-
         obs_axis = AxisIDMapping(
             data=self.obs_axis.joinid_map.loc[
                 _get_dataframe_joinid_index(adata.obs, self.obs_axis.field_name)
@@ -210,7 +209,6 @@ class ExperimentAmbientLabelMapping:
                         )
 
         with Experiment.open(experiment_uri, context=context) as E:
-
             _check_experiment_structure(E)
 
             # Resize is done only if we have an Experiment supporting current domain.
@@ -221,7 +219,7 @@ class ExperimentAmbientLabelMapping:
                 tiledbsoma.io.resize_experiment(
                     experiment_uri,
                     nobs=self.get_obs_shape(),
-                    nvars=self.get_var_shapes(),
+                    nvars={k: v for k, v in self.get_var_shapes().items() if v > 0},
                     context=context,
                 )
             else:
@@ -231,7 +229,6 @@ class ExperimentAmbientLabelMapping:
                 )
 
         with Experiment.open(experiment_uri, context=context, mode="w") as E:
-
             # Enumerations schema evolution
             extend_enumerations(E.obs, self.obs_axis.enum_values)
 
@@ -266,7 +263,6 @@ class ExperimentAmbientLabelMapping:
             )
 
         for adata in adatas:
-
             validate_anndata(adata)  # may throw
 
             obs_metadata.append(
