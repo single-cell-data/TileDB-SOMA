@@ -16,29 +16,30 @@ object to a SOMA}
 )
 }
 \arguments{
-\item{x}{An object}
+\item{x}{An object.}
 
-\item{uri}{URI for resulting SOMA object}
+\item{uri}{URI for resulting SOMA object.}
 
-\item{ms_name}{Name for resulting measurement}
+\item{ms_name}{Name for resulting measurement.}
 
 \item{...}{Arguments passed to other methods}
 
 \item{ingest_mode}{Ingestion mode when creating the SOMA; choose from:
 \itemize{
-\item \dQuote{\code{write}}: create a new SOMA and error if it already exists
+\item \dQuote{\code{write}}: create a new SOMA and error if it already
+exists.
 \item \dQuote{\code{resume}}: attempt to create a new SOMA; if it already
-exists, simply open it for writing
+exists, simply open it for writing.
 }}
 
 \item{platform_config}{Optional \link[tiledbsoma:PlatformConfig]{platform
-configuration}}
+configuration}.}
 
-\item{tiledbsoma_ctx}{Optional \code{\link{SOMATileDBContext}}}
+\item{tiledbsoma_ctx}{Optional \code{\link{SOMATileDBContext}}.}
 }
 \value{
 The URI to the resulting \code{\link{SOMAExperiment}} generated from
-the data contained in \code{x}
+the data contained in \code{x}.
 }
 \description{
 Write a \code{\link[SummarizedExperiment:SummarizedExperiment-class]{SummarizedExperiment}}
@@ -48,23 +49,48 @@ object to a SOMA
 
 \code{colData} is written out as a
 \link[tiledbsoma:SOMADataFrame]{data frame} called \dQuote{\code{obs}} at
-the \code{\link[tiledbsoma:SOMAExperiment]{experiment}} level
+the \code{\link[tiledbsoma:SOMAExperiment]{experiment}} level.
 }
 
 \section{Writing Assay Matrices}{
 
 Each \link[SummarizedExperiment:assay]{assay matrix} is written out as a
-\link[tiledbsoma:SOMASparseNDArray]{sparse matrix} within the \code{X} group of
-\code{\link[tiledbsoma:SOMAMeasurement]{measurement}} names \code{ms_name}. Names
-for assay matrices within \code{X} are taken from the
+\link[tiledbsoma:SOMASparseNDArray]{sparse matrix} within the \code{X} group
+of \code{\link[tiledbsoma:SOMAMeasurement]{measurement}} named
+\code{ms_name}. Names for assay matrices within \code{X} are taken from the
 \link[SummarizedExperiment:assayNames]{assay names}. Assay matrices are
-transposed (samples as rows) prior to writing
+transposed (samples as rows) prior to writing.
 }
 
 \section{Writing \code{rowData}}{
 
 \code{rowData} is written out as a
 \link[tiledbsoma:SOMADataFrame]{data frame} called \dQuote{\code{var}} at
-the \code{\link[tiledbsoma:SOMAMeasurement]{measurement}} level
+the \code{\link[tiledbsoma:SOMAMeasurement]{measurement}} level.
 }
 
+\examples{
+\dontshow{if (requireNamespace("withr", quietly = TRUE) && requireNamespace("SummarizedExperiment", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+uri <- withr::local_tempfile(pattern = "summarized-experiment")
+
+mat <- abs(Matrix::rsparsematrix(
+  230L,
+  80L,
+  0.3,
+  dimnames = list(paste0("feature_", seq_len(230)), paste0("cell_", seq_len(80)))
+))
+(se <- SummarizedExperiment::SummarizedExperiment(list(counts = mat, logcounts = log2(mat + 1L))))
+
+uri <- write_soma(se, uri, ms_name = "RNA")
+
+(exp <- SOMAExperimentOpen(uri))
+exp$obs
+(ms <- exp$ms$get("RNA"))
+ms$var
+ms$X$names()
+
+\dontshow{
+exp$close()
+}
+\dontshow{\}) # examplesIf}
+}

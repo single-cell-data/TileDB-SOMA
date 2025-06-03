@@ -1924,3 +1924,35 @@ def test_match_read_schemas_61222(tmp_path):
     soma.SparseNDArray.create(uri, type=pa.int32(), shape=(None, None))
     with soma.SparseNDArray.open(uri) as A:
         assert A.schema == A.read().tables().concat().schema
+
+
+@pytest.mark.parametrize("ts", (None, 1))
+def test_resize_with_time_travel_61254(tmp_path, ts):
+    uri = tmp_path.as_posix()
+    data = {"soma_dim_0": [9], "soma_data": [9]}
+
+    soma.SparseNDArray.create(uri, type=pa.int32(), shape=(10,), tiledb_timestamp=ts)
+
+    ts = ts + 1 if ts is not None else None
+    with soma.open(uri, mode="w", tiledb_timestamp=ts) as A:
+        A.write(pa.Table.from_pydict(data))
+        most_recent_write_ts = A.tiledb_timestamp_ms
+
+    # verify shape and contents using the most recent write timestamp
+    with soma.open(uri, mode="r", tiledb_timestamp=most_recent_write_ts) as A:
+        assert A.shape == (10,), f"Expected {(10,)}, got {A.shape}"
+        assert A.read().tables().concat()["soma_dim_0"].to_pylist()[-1] == 9
+
+    ts = ts + 1 if ts is not None else None
+    with soma.open(uri, mode="w", tiledb_timestamp=ts) as A:
+        A.resize((20,))
+
+    ts = ts + 1 if ts is not None else None
+    with soma.open(uri, mode="w", tiledb_timestamp=ts) as A:
+        A.write(pa.Table.from_pydict(data))
+        most_recent_write_ts = A.tiledb_timestamp_ms
+
+    # verify shape and contents using the most recent write timestamp
+    with soma.open(uri, mode="r", tiledb_timestamp=most_recent_write_ts) as A:
+        assert A.shape == (20,), f"Expected {(20,)}, got {A.shape}"
+        assert A.read().tables().concat()["soma_dim_0"].to_pylist()[-1] == 9

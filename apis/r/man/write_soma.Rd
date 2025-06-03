@@ -7,32 +7,123 @@
 write_soma(x, uri, ..., platform_config = NULL, tiledbsoma_ctx = NULL)
 }
 \arguments{
-\item{x}{An object}
+\item{x}{An object.}
 
-\item{uri}{URI for resulting SOMA object}
+\item{uri}{URI for resulting SOMA object.}
 
 \item{...}{Arguments passed to other methods}
 
 \item{platform_config}{Optional \link[tiledbsoma:PlatformConfig]{platform
-configuration}}
+configuration}.}
 
-\item{tiledbsoma_ctx}{Optional \code{\link{SOMATileDBContext}}}
+\item{tiledbsoma_ctx}{Optional \code{\link{SOMATileDBContext}}.}
 }
 \value{
 The URI to the resulting \code{\link{SOMAExperiment}} generated from
-the data contained in \code{x}
+the data contained in \code{x}.
 }
 \description{
 Convert \R objects to their appropriate SOMA counterpart
 function and methods can be written for it to provide a high-level
-\R \eqn{\rightarrow} SOMA interface
+\R \eqn{\rightarrow} SOMA interface.
 }
 \section{Known methods}{
 
 \itemize{
-\item \link[tiledbsoma:write_soma.Seurat]{Writing Seurat objects}
-\item \link[tiledbsoma:write_soma.SummarizedExperiment]{Writing SummarizedExperiment objects}
-\item \link[tiledbsoma:write_soma.SingleCellExperiment]{Writing SingleCellExperiment objects}
+\item \link[tiledbsoma:write_soma.Seurat]{Writing Seurat objects}.
+\item \link[tiledbsoma:write_soma.SummarizedExperiment]{Writing SummarizedExperiment objects}.
+\item \link[tiledbsoma:write_soma.SingleCellExperiment]{Writing SingleCellExperiment objects}.
 }
 }
 
+\examples{
+\dontshow{if (requireNamespace("withr", quietly = TRUE) && requireNamespace("SeuratObject", quietly = TRUE) && requireNamespace("S4Vectors", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+uri <- withr::local_tempfile(pattern = "s4-data-frame")
+data("pbmc_small", package = "SeuratObject")
+obs <- suppressWarnings(SeuratObject::UpdateSeuratObject(pbmc_small))[[]]
+head(obs <- as(obs, "DataFrame"))
+
+(sdf <- write_soma(obs, uri, soma_parent = NULL, relative = FALSE))
+
+\dontshow{
+sdf$close()
+}
+\dontshow{\}) # examplesIf}
+\dontshow{if (requireNamespace("withr", quietly = TRUE) && requireNamespace("S4Vectors", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+uri <- withr::local_tempfile(pattern = "hits")
+(hits <- S4Vectors::SelfHits(
+  c(2, 3, 3, 3, 3, 3, 4, 4, 4),
+  c(4, 3, 2:4, 2, 2:3, 2),
+  4,
+  x = stats::rnorm(9L)
+))
+
+(arr <- write_soma(hits, uri, soma_parent = NULL, relative = FALSE))
+
+\dontshow{
+arr$close()
+}
+\dontshow{\}) # examplesIf}
+\dontshow{if (requireNamespace("withr", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+uri <- withr::local_tempfile(pattern = "character")
+(sdf <- write_soma(letters, uri, soma_parent = NULL, relative = FALSE))
+
+\dontshow{
+sdf$close()
+}
+\dontshow{\}) # examplesIf}
+\dontshow{if (requireNamespace("withr", quietly = TRUE) && requireNamespace("SeuratObject", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+uri <- withr::local_tempfile(pattern = "data-frame")
+data("pbmc_small", package = "SeuratObject")
+head(obs <- suppressWarnings(SeuratObject::UpdateSeuratObject(pbmc_small))[[]])
+
+(sdf <- write_soma(obs, uri, soma_parent = NULL, relative = FALSE))
+
+\dontshow{
+sdf$close()
+}
+\dontshow{\}) # examplesIf}
+\dontshow{if (requireNamespace("withr", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+uri <- withr::local_tempfile(pattern = "matrix")
+mat <- matrix(stats::rnorm(25L), nrow = 5L, ncol = 5L)
+(arr <- write_soma(mat, uri, soma_parent = NULL, sparse = FALSE, relative = FALSE))
+
+\dontshow{
+arr$close()
+}
+\dontshow{\}) # examplesIf}
+\dontshow{if (requireNamespace("withr", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+uri <- withr::local_tempfile(pattern = "s4-matrix")
+mat <- Matrix::Matrix(stats::rnorm(25L), nrow = 5L, ncol = 5L)
+(arr <- write_soma(mat, uri, soma_parent = NULL, sparse = FALSE, relative = FALSE))
+
+\dontshow{
+arr$close()
+}
+\dontshow{\}) # examplesIf}
+\dontshow{if (requireNamespace("withr", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+uri <- withr::local_tempfile(pattern = "tsparse-matrix")
+mat <- Matrix::rsparsematrix(5L, 5L, 0.3, repr = "T")
+(arr <- write_soma(mat, uri, soma_parent = NULL, relative = FALSE))
+
+\dontshow{
+arr$close()
+}
+
+uri <- withr::local_tempfile(pattern = "csparse-matrix")
+mat <- Matrix::rsparsematrix(5L, 5L, 0.3, repr = "C")
+(arr <- write_soma(mat, uri, soma_parent = NULL, relative = FALSE))
+
+\dontshow{
+arr$close()
+}
+
+uri <- withr::local_tempfile(pattern = "rsparse-matrix")
+mat <- Matrix::rsparsematrix(5L, 5L, 0.3, repr = "R")
+(arr <- write_soma(mat, uri, soma_parent = NULL, relative = FALSE))
+
+\dontshow{
+arr$close()
+}
+\dontshow{\}) # examplesIf}
+}

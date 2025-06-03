@@ -4,28 +4,49 @@
 \alias{SOMASparseNDArray}
 \title{SOMASparseNDArray}
 \description{
-\code{SOMASparseNDArray} is a sparse, N-dimensional array with offset
-(zero-based) integer indexing on each dimension. The \code{SOMASparseNDArray} has
-a user-defined schema, which includes:
+\code{SOMASparseNDArray} is a sparse, N-dimensional array with
+offset (zero-based) integer indexing on each dimension. The
+\code{SOMASparseNDArray} has a user-defined schema, which includes:
 \itemize{
-\item \strong{type}: A \code{primitive} type, expressed as an Arrow type (e.g., \code{int64},
-\code{float32}, etc), indicating the type of data contained within the array.
-\item \strong{shape}: The shape of the array, i.e., number and length of each
-dimension. This is a soft limit which can be increased using \code{resize},
-up to the \code{maxshape}.
-\item \strong{maxshape}: The hard limit up to which \code{shape} may be increased using
-\code{resize}.
+\item \code{type}: a \code{primitive} type, expressed as an Arrow type
+(e.g., \code{\link[arrow]{int64}}, \code{\link[arrow]{float32}}, etc),
+indicating the type of data contained within the array.
+\item \code{shape}: the shape of the array, i.e., number and length of each
+dimension. This is a soft limit which can be increased using
+\code{$resize()} up to the \code{maxshape}.
+\item \code{maxshape}: the hard limit up to which \code{shape} may be
+increased using \code{$resize()}.
 }
-
 All dimensions must have a positive, non-zero length.
-
-\strong{Note} - on TileDB this is an sparse array with \code{N} int64 dimensions of
-domain [0, maxInt64), and a single attribute.
-\subsection{Duplicate writes}{
+}
+\note{
+In TileDB this is an sparse array with \code{N} \code{int64} dimensions
+of domain \code{[0, maxInt64)} and a single attribute.
+}
+\section{Duplicate Writes}{
 
 As duplicate index values are not allowed, index values already present in
-the object are overwritten and new index values are added. (lifecycle: maturing)
+the object are overwritten and new index values are added
+(lifecycle: maturing).
 }
+
+\examples{
+\dontshow{if (requireNamespace("withr", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+uri <- withr::local_tempfile(pattern = "soma-sparse-array")
+mat <- Matrix::rsparsematrix(100L, 100L, 0.7, repr = "T")
+mat[1:3, 1:5]
+
+(arr <- SOMASparseNDArrayCreate(uri, arrow::float64(), shape = dim(mat)))
+arr$write(mat)
+arr$close()
+
+(arr <- SOMASparseNDArrayOpen(uri))
+m2 <- arr$read()$sparse_matrix()$concat()
+m2[1:3, 1:5]
+\dontshow{
+arr$close()
+}
+\dontshow{\}) # examplesIf}
 }
 \section{Super classes}{
 \code{\link[tiledbsoma:TileDBObject]{tiledbsoma::TileDBObject}} -> \code{\link[tiledbsoma:TileDBArray]{tiledbsoma::TileDBArray}} -> \code{\link[tiledbsoma:SOMAArrayBase]{tiledbsoma::SOMAArrayBase}} -> \code{\link[tiledbsoma:SOMANDArrayBase]{tiledbsoma::SOMANDArrayBase}} -> \code{SOMASparseNDArray}
@@ -81,7 +102,7 @@ the object are overwritten and new index values are added. (lifecycle: maturing)
 \if{html}{\out{<a id="method-SOMASparseNDArray-read"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMASparseNDArray-read}{}}}
 \subsection{Method \code{read()}}{
-Reads a user-defined slice of the \code{SOMASparseNDArray}
+Reads a user-defined slice of the \code{SOMASparseNDArray}.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMASparseNDArray$read(
   coords = NULL,
@@ -93,29 +114,28 @@ Reads a user-defined slice of the \code{SOMASparseNDArray}
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{coords}}{Optional \code{list} of integer vectors, one for each dimension, with a
-length equal to the number of values to read. If \code{NULL}, all values are
-read. List elements can be named when specifying a subset of dimensions.}
+\item{\code{coords}}{Optional \code{list} of integer vectors, one for each
+dimension, with a length equal to the number of values to read. If
+\code{NULL}, all values are read. List elements can be named when
+specifying a subset of dimensions.}
 
 \item{\code{result_order}}{Optional order of read results. This can be one of either
 \verb{"ROW_MAJOR, }"COL_MAJOR"\verb{, or }"auto"` (default).}
 
-\item{\code{log_level}}{Optional logging level with default value of \code{"warn"}.}
-
-\item{\code{iterated}}{Option boolean indicated whether data is read in call (when
-\code{FALSE}, the default value) or in several iterated steps.}
+\item{\code{log_level}}{Optional logging level with default value of
+\dQuote{\code{warn}}.}
 }
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-\link{SOMASparseNDArrayRead}
+A \link{SOMASparseNDArrayRead}.
 }
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-SOMASparseNDArray-write"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMASparseNDArray-write}{}}}
 \subsection{Method \code{write()}}{
-Write matrix-like data to the array. (lifecycle: maturing)
+Write matrix-like data to the array (lifecycle: maturing).
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMASparseNDArray$write(values, bbox = NULL)}\if{html}{\out{</div>}}
 }
@@ -124,8 +144,9 @@ Write matrix-like data to the array. (lifecycle: maturing)
 \if{html}{\out{<div class="arguments">}}
 \describe{
 \item{\code{values}}{Any \code{matrix}-like object coercible to a
-\code{\link[Matrix:TsparseMatrix-class]{TsparseMatrix}}. Character dimension
-names are ignored because \code{SOMANDArray}'s use integer indexing.}
+\code{\link[Matrix:TsparseMatrix-class]{TsparseMatrix}}. Character
+dimension names are ignored because \code{SOMANDArray}s use integer
+indexing.}
 
 \item{\code{bbox}}{A vector of integers describing the upper bounds of each
 dimension of \code{values}. Generally should be \code{NULL}.}
@@ -133,27 +154,27 @@ dimension of \code{values}. Generally should be \code{NULL}.}
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-Invisibly returns \code{self}
+Invisibly returns \code{self}.
 }
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-SOMASparseNDArray-nnz"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMASparseNDArray-nnz}{}}}
 \subsection{Method \code{nnz()}}{
-Retrieve number of non-zero elements (lifecycle: maturing)
+Retrieve number of non-zero elements (lifecycle: maturing).
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMASparseNDArray$nnz()}\if{html}{\out{</div>}}
 }
 
 \subsection{Returns}{
-A scalar with the number of non-zero elements
+A scalar with the number of non-zero elements.
 }
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-SOMASparseNDArray-.write_coordinates"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMASparseNDArray-.write_coordinates}{}}}
 \subsection{Method \code{.write_coordinates()}}{
-Write a COO table to the array
+Write a COO table to the array.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMASparseNDArray$.write_coordinates(values)}\if{html}{\out{</div>}}
 }
@@ -161,14 +182,14 @@ Write a COO table to the array
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{values}}{A \code{data.frame} or \code{\link[arrow:Table]{Arrow::Table}}
+\item{\code{values}}{A \code{data.frame} or \link[arrow:Table]{Arrow table}
 with data in COO format; must be named with the dimension and attribute
-labels of the array}
+labels of the array.}
 }
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-Invisibly returns \code{self}
+Invisibly returns \code{self}.
 }
 }
 \if{html}{\out{<hr>}}

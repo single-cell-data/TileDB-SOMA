@@ -76,7 +76,8 @@ void SOMASparseNDArray::create(
             std::nullopt,
             "SOMASparseNDArray",
             true,
-            platform_config);
+            platform_config,
+            timestamp);
 
     SOMAArray::create(
         ctx, uri, tiledb_schema, "SOMASparseNDArray", std::nullopt, timestamp);
