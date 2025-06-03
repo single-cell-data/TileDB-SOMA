@@ -81,7 +81,10 @@ class SOMAGeometryDataFrame : virtual public SOMAArray {
      * @param uri URI to create the SOMAGeometryDataFrame
      * @param ctx SOMAContext
      */
-    static bool exists(std::string_view uri, std::shared_ptr<SOMAContext> ctx);
+    static inline bool exists(
+        std::string_view uri, std::shared_ptr<SOMAContext> ctx) {
+        return SOMAArray::_exists(uri, "SOMAGeometryDataFrame", ctx);
+    }
 
     //===================================================================
     //= public non-static

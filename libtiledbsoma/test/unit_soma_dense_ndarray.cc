@@ -62,6 +62,8 @@ TEST_CASE("SOMADenseNDArray: basic", "[SOMADenseNDArray]") {
             TimestampRange(0, 2)));
     }
 
+    REQUIRE(SOMADenseNDArray::exists(uri, ctx));
+
     index_columns.first->release(index_columns.first.get());
     index_columns.second->release(index_columns.second.get());
 }

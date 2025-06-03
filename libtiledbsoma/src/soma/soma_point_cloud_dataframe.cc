@@ -79,16 +79,6 @@ std::unique_ptr<SOMAPointCloudDataFrame> SOMAPointCloudDataFrame::open(
     return array;
 }
 
-bool SOMAPointCloudDataFrame::exists(
-    std::string_view uri, std::shared_ptr<SOMAContext> ctx) {
-    try {
-        auto obj = SOMAObject::open(uri, OpenMode::read, ctx);
-        return "SOMAPointCloudDataFrame" == obj->type();
-    } catch (TileDBSOMAError& e) {
-        return false;
-    }
-}
-
 //===================================================================
 //= public non-static
 //===================================================================

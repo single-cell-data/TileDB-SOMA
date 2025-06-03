@@ -76,16 +76,6 @@ std::unique_ptr<SOMAGeometryDataFrame> SOMAGeometryDataFrame::open(
     return std::make_unique<SOMAGeometryDataFrame>(mode, uri, ctx, timestamp);
 }
 
-bool SOMAGeometryDataFrame::exists(
-    std::string_view uri, std::shared_ptr<SOMAContext> ctx) {
-    try {
-        auto obj = SOMAObject::open(uri, OpenMode::read, ctx);
-        return "SOMAGeometryDataFrame" == obj->type();
-    } catch (TileDBSOMAError& e) {
-        return false;
-    }
-}
-
 //===================================================================
 //= public non-static
 //===================================================================
