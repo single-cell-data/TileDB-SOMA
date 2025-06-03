@@ -5,12 +5,28 @@ from contextlib import contextmanager, nullcontext
 from pathlib import Path
 from typing import Any, Union
 
+import _pytest
 import numpy as np
 import pandas as pd
 import pytest
 from _pytest._code import ExceptionInfo
 from _pytest.logging import LogCaptureFixture
-from _pytest.python_api import E, RaisesContext
+from packaging.version import Version
+from typing_extensions import TypeVar
+
+if Version(_pytest.__version__) < Version("8.4.0"):
+    from _pytest.python_api import RaisesContext
+
+    E = TypeVar("E", bound=BaseException, default=BaseException)
+
+    MaybeRaisesReturn = Union[RaisesContext[E], ExceptionInfo[E], nullcontext]
+else:
+    from _pytest.raises import RaisesExc
+
+    E = TypeVar("E", bound=BaseException, default=BaseException)
+    MaybeRaisesReturn = Union[RaisesExc[E], ExceptionInfo[E], nullcontext]
+
+
 from anndata import AnnData
 from numpy import array_equal
 from pandas._testing import assert_frame_equal, assert_series_equal
@@ -155,11 +171,7 @@ def raises_no_typeguard(exc: type[Exception], *args: Any, **kwargs: Any):
 Err = Union[str, type[E], tuple[type[E], str]]
 
 
-def maybe_raises(
-    expected_exception: Err | None,
-    *args: Any,
-    **kwargs: Any,
-) -> Union[RaisesContext[E], ExceptionInfo[E], nullcontext]:
+def maybe_raises(expected_exception: Err | None, *args: Any, **kwargs: Any) -> MaybeRaisesReturn:
     """
     Wrapper around ``pytest.raises`` that additionally accepts ``None`` (signifying no exception
     should be raised), a string (signifying a message match) or a tuple of (exception, message).
