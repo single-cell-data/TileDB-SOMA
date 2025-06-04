@@ -1905,8 +1905,12 @@ def test_reopen_metadata_sc61118(tmp_path):
     uri = tmp_path.as_posix()
     with soma.SparseNDArray.create(uri, type=pa.int64(), shape=(10,)) as A1:
         A1.metadata["foo"] = "bar"
+        with pytest.raises(soma.SOMAError):
+            A1.reopen(mode="r")
+        expected_metadata = dict(A1.metadata)
+        A1.close()
         with A1.reopen(mode="r") as A2:
-            assert dict(A1.metadata) == dict(A2.metadata)
+            assert dict(A2.metadata) == expected_metadata
 
 
 def test_reopen_shape_sc61123(tmp_path):
