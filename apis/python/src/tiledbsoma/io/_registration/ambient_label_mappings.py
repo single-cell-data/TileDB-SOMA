@@ -700,6 +700,6 @@ def _raise_non_unique_obs_id_error(examples: PDIndex) -> None:
     msg = f"""Duplicate obs IDs found during registration. {len(examples)} obs IDs are not unique across the provided inputs.
 Example duplicate obs ID(s): {a_few_examples}.
 
-Please ensure obs IDs are unique across all input files for append operations.
+Please ensure obs IDs are unique across all inputs for append operations.
 If you are intentionally adding a new Measurement to existing observations, use the 'allow_duplicate_obs_ids=True' flag."""
     raise SOMAError(msg)
