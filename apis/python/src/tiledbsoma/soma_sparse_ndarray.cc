@@ -52,8 +52,9 @@ void load_soma_sparse_ndarray(py::module& m) {
                         uri,
                         format,
                         ArrowTable(
-                            std::make_unique<ArrowArray>(index_column_array),
-                            std::make_unique<ArrowSchema>(index_column_schema)),
+                            make_managed_unique<ArrowArray>(index_column_array),
+                            make_managed_unique<ArrowSchema>(
+                                index_column_schema)),
                         context,
                         platform_config,
                         timestamp);
@@ -62,8 +63,6 @@ void load_soma_sparse_ndarray(py::module& m) {
                 } catch (const std::exception& e) {
                     TPY_ERROR_LOC(e.what());
                 }
-                index_column_array.release(&index_column_array);
-                index_column_schema.release(&index_column_schema);
             },
             "uri"_a,
             py::kw_only(),

@@ -13,7 +13,8 @@ class OutlineTransformer : public Transformer {
     virtual ~OutlineTransformer();
 
     ArrowTable apply(
-        std::unique_ptr<ArrowArray>, std::unique_ptr<ArrowSchema>) override;
+        managed_unique_ptr<ArrowArray>,
+        managed_unique_ptr<ArrowSchema>) override;
 
    private:
     /**
@@ -22,8 +23,8 @@ class OutlineTransformer : public Transformer {
      * index-column arrays based on the spatial axes.
      */
     std::pair<
-        std::vector<std::unique_ptr<ArrowArray>>,
-        std::vector<std::unique_ptr<ArrowSchema>>>
+        std::vector<managed_unique_ptr<ArrowArray>>,
+        std::vector<managed_unique_ptr<ArrowSchema>>>
     _cast_polygon_vertex_list_to_wkb(
         ArrowArray* array, const SOMACoordinateSpace& coordinate_space);
 

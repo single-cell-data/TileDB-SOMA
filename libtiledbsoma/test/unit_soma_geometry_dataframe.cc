@@ -59,10 +59,6 @@ TEST_CASE("SOMAGeometryDataFrame: basic", "[SOMAGeometryDataFrame]") {
         platform_config,
         std::nullopt);
 
-    schema->release(schema.get());
-    index_columns.first->release(index_columns.first.get());
-    index_columns.second->release(index_columns.second.get());
-
     // Check the geometry dataframe exists and it cannot be read as a
     // different object.
     REQUIRE(SOMAGeometryDataFrame::exists(uri, ctx));
@@ -124,15 +120,11 @@ TEST_CASE("SOMAGeometryDataFrame: Roundtrip", "[SOMAGeometryDataFrame]") {
         platform_config,
         std::nullopt);
 
-    schema->release(schema.get());
-    index_columns.first->release(index_columns.first.get());
-    index_columns.second->release(index_columns.second.get());
-
     // Create table of data for writing
-    std::unique_ptr<ArrowSchema> data_schema = std::make_unique<ArrowSchema>(
-        ArrowSchema{});
-    std::unique_ptr<ArrowArray> data_array = std::make_unique<ArrowArray>(
-        ArrowArray{});
+    managed_unique_ptr<ArrowSchema>
+        data_schema = make_managed_unique<ArrowSchema>();
+    managed_unique_ptr<ArrowArray>
+        data_array = make_managed_unique<ArrowArray>();
 
     nanoarrow::UniqueBuffer metadata_buffer;
     ArrowMetadataBuilderInit(metadata_buffer.get(), nullptr);
@@ -215,9 +207,6 @@ TEST_CASE("SOMAGeometryDataFrame: Roundtrip", "[SOMAGeometryDataFrame]") {
     mq.set_array_data(data_schema.get(), data_array.get());
     mq.submit_write();
     soma_geometry->close();
-
-    data_schema->release(data_schema.get());
-    data_array->release(data_array.get());
 
     // Read back the data.
     soma_geometry = SOMAGeometryDataFrame::open(
