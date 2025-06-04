@@ -8,6 +8,10 @@ Base class to implement shared functionality across the
 \code{\link{SOMAArrayBase}} and \code{\link{SOMACollectionBase}} classes.
 (lifecycle: maturing)
 }
+\seealso{
+Derived classes: \code{\link{SOMAArrayBase}},
+\code{\link{SOMACollectionBase}}
+}
 \keyword{internal}
 \section{Active bindings}{
 \if{html}{\out{<div class="r6-active-bindings">}}

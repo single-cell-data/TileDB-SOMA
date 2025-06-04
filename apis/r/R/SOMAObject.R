@@ -8,6 +8,9 @@
 #'
 #' @export
 #'
+#' @seealso Derived classes: \code{\link{SOMAArrayBase}},
+#' \code{\link{SOMACollectionBase}}
+#'
 SOMAObject <- R6::R6Class(
   classname = "SOMAObject",
   public = list(
