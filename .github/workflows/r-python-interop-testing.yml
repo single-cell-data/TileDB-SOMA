@@ -54,7 +54,7 @@ jobs:
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
           working-directory: 'apis/r/'
-          pak-version: "devel"
+          cache-version: 3
 
       - name: Build Package
         run: cd apis/r && R CMD build --no-build-vignettes --no-manual .

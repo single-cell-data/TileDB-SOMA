@@ -491,3 +491,60 @@ TEST_CASE("SOMASparseNDArray: nnz", "[SOMASparseNDArray]") {
 
     REQUIRE(snda->nnz() == 13);
 }
+
+TEST_CASE("SOMASparseNDArray: resize with timestamp", "[SOMASparseNDArray]") {
+    // Core uses domain & current domain like (0, 999); SOMA uses shape like
+    // 1000. We want to carefully and explicitly test here that there aren't any
+    // off-by-one errors.
+    int64_t dim_max = 999;
+    int64_t shape = 1000;
+
+    auto orig_shape = std::vector<int64_t>({shape});
+    auto new_shape = std::vector<int64_t>({shape * 2});
+
+    auto ctx = std::make_shared<SOMAContext>();
+    std::string uri = "mem://unit-test-sparse-ndarray-basic";
+    std::string dim_name = "soma_dim_0";
+    std::string attr_name = "soma_data";
+    tiledb_datatype_t dim_tiledb_datatype = TILEDB_INT64;
+    tiledb_datatype_t attr_tiledb_datatype = TILEDB_INT32;
+    std::string dim_arrow_format = ArrowAdapter::tdb_to_arrow_type(
+        dim_tiledb_datatype);
+    std::string attr_arrow_format = ArrowAdapter::tdb_to_arrow_type(
+        attr_tiledb_datatype);
+
+    REQUIRE(!SOMASparseNDArray::exists(uri, ctx));
+
+    std::vector<helper::DimInfo> dim_infos(
+        {{.name = dim_name,
+          .tiledb_datatype = dim_tiledb_datatype,
+          .dim_max = dim_max,
+          .string_lo = "N/A",
+          .string_hi = "N/A"}});
+
+    auto index_columns = helper::create_column_index_info(dim_infos);
+
+    SOMASparseNDArray::create(
+        uri,
+        attr_arrow_format,
+        index_columns,
+        ctx,
+        PlatformConfig(),
+        TimestampRange(0, 1));
+
+    index_columns.first->release(index_columns.first.get());
+    index_columns.second->release(index_columns.second.get());
+
+    auto snda = SOMASparseNDArray::open(
+        uri, OpenMode::write, ctx, TimestampRange(0, 2));
+    snda->resize(new_shape, "testing");
+    snda->close();
+
+    snda->open(OpenMode::read, TimestampRange(0, 1));
+    REQUIRE(snda->shape() == orig_shape);
+    snda->close();
+
+    snda->open(OpenMode::read, TimestampRange(0, 2));
+    REQUIRE(snda->shape() == new_shape);
+    snda->close();
+}

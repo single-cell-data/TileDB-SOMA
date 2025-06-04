@@ -841,7 +841,7 @@ void SOMAArray::_set_shape_helper(
     _check_dims_are_int64();
 
     auto tctx = ctx_->tiledb_ctx();
-    ArraySchemaEvolution schema_evolution(*tctx);
+    ArraySchemaEvolution schema_evolution = _make_se();
     CurrentDomain new_current_domain(*tctx);
 
     NDRectangle ndrect(*tctx, arr_->schema().domain());
@@ -896,7 +896,7 @@ void SOMAArray::_set_soma_joinid_shape_helper(
     }
 
     auto tctx = ctx_->tiledb_ctx();
-    ArraySchemaEvolution schema_evolution(*tctx);
+    ArraySchemaEvolution schema_evolution = _make_se();
     CurrentDomain new_current_domain(*tctx);
 
     if (!must_already_have) {
@@ -1105,7 +1105,7 @@ void SOMAArray::_set_domain_helper(
     auto tctx = ctx_->tiledb_ctx();
     NDRectangle ndrect(*tctx, arr_->schema().domain());
     CurrentDomain new_current_domain(*tctx);
-    ArraySchemaEvolution schema_evolution(*tctx);
+    ArraySchemaEvolution schema_evolution = _make_se();
 
     for (const auto& column :
          columns_ | std::views::filter(
@@ -1238,6 +1238,18 @@ void SOMAArray::_check_dims_are_int64() {
             "[SOMAArray] internal coding error: expected all dims to be "
             "int64");
     }
+}
+
+ArraySchemaEvolution SOMAArray::_make_se() {
+    ArraySchemaEvolution se(*ctx_->tiledb_ctx());
+    if (timestamp_.has_value()) {
+        // ArraySchemaEvolution requires us to pair (t2, t2) even if our range
+        // is (t1, t2).
+        auto v = timestamp_.value();
+        TimestampRange tr(v.second, v.second);
+        se.set_timestamp_range(tr);
+    }
+    return se;
 }
 
 std::shared_ptr<SOMAColumn> SOMAArray::get_column(std::string_view name) const {
