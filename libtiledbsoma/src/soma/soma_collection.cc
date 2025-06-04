@@ -100,7 +100,7 @@ std::shared_ptr<SOMAExperiment> SOMACollection::add_new_experiment(
     std::string_view uri,
     URIType uri_type,
     std::shared_ptr<SOMAContext> ctx,
-    const std::unique_ptr<ArrowSchema>& schema,
+    const managed_unique_ptr<ArrowSchema>& schema,
     const ArrowTable& index_columns,
     PlatformConfig platform_config,
     std::optional<TimestampRange> timestamp) {
@@ -126,7 +126,7 @@ std::shared_ptr<SOMAMeasurement> SOMACollection::add_new_measurement(
     std::string_view uri,
     URIType uri_type,
     std::shared_ptr<SOMAContext> ctx,
-    const std::unique_ptr<ArrowSchema>& schema,
+    const managed_unique_ptr<ArrowSchema>& schema,
     const ArrowTable& index_columns,
     PlatformConfig platform_config,
     std::optional<TimestampRange> timestamp) {
@@ -152,7 +152,7 @@ std::shared_ptr<SOMADataFrame> SOMACollection::add_new_dataframe(
     std::string_view uri,
     URIType uri_type,
     std::shared_ptr<SOMAContext> ctx,
-    const std::unique_ptr<ArrowSchema>& schema,
+    const managed_unique_ptr<ArrowSchema>& schema,
     const ArrowTable& index_columns,
     PlatformConfig platform_config,
     std::optional<TimestampRange> timestamp) {
