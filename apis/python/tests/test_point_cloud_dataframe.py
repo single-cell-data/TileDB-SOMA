@@ -1,12 +1,16 @@
+from pathlib import Path
 from urllib.parse import urljoin
 
 import numpy as np
+import pandas as pd
 import pyarrow as pa
 import pytest
 import shapely
 import typeguard
 
 import tiledbsoma as soma
+
+from . import NDARRAY_ARROW_TYPES_SUPPORTED
 
 
 def test_point_cloud_bad_create(tmp_path):
@@ -697,3 +701,62 @@ def test_point_cloud_read_spatial_region_region_coord_space(tmp_path):
                 region_transform=soma.IdentityTransform(input_axes=("a", "b"), output_axes=("x", "y")),
                 region_coord_space=soma.CoordinateSpace([soma.Axis(name="x"), soma.Axis(name="y")]),
             )
+
+
+@pytest.mark.parametrize(
+    "dtype",
+    ["int8", "int16", "int32", "uint8", "uint16", "uint32", "uint64", "float32", "float64"],
+)
+def test_fragments_in_writes(tmp_path, dtype):
+    uri = tmp_path.as_posix()
+
+    # --- three dataframes, all with identical schema
+    df_0 = pd.DataFrame(
+        {
+            "x": pd.Series([0, 1, 2, 3], dtype=dtype),
+            "y": pd.Series([0, 1, 2, 3], dtype=dtype),
+            "soma_joinid": pd.Series([0, 1, 2, 3], dtype=np.int64),
+        }
+    )
+    df_1 = pd.DataFrame(
+        {
+            "x": pd.Series([4, 5, 6, 7], dtype=dtype),
+            "y": pd.Series([0, 1, 2, 3], dtype=dtype),
+            "soma_joinid": pd.Series([4, 5, 6, 7], dtype=np.int64),
+        }
+    )
+    df_2 = pd.DataFrame(
+        {
+            "x": pd.Series([8, 9, 10, 11], dtype=dtype),
+            "y": pd.Series([0, 1, 2, 3], dtype=dtype),
+            "soma_joinid": pd.Series([8, 9, 10, 11], dtype=np.int64),
+        }
+    )
+    expected_df = pd.concat([df_0, df_1, df_2], ignore_index=True)
+
+    soma.PointCloudDataFrame.create(
+        uri, schema=pa.Schema.from_pandas(df_0, preserve_index=False), domain=[[0, 11], [0, 11], [0, 11]]
+    ).close()
+
+    with soma.PointCloudDataFrame.open(uri, mode="w") as A:
+        # Three-chunk table
+        A.write(
+            pa.concat_tables(
+                [
+                    pa.Table.from_pandas(df_0, preserve_index=False),
+                    pa.Table.from_pandas(df_1, preserve_index=False),
+                    pa.Table.from_pandas(df_2, preserve_index=False),
+                ]
+            ),
+            platform_config=soma.TileDBWriteOptions(**{"sort_coords": False}),
+        )
+
+    # There should be a single fragment even though there are three chunks (and
+    # therefore three submits) in the array because we only finalize once at
+    # the end
+    assert len(list((Path(uri) / "__commits").iterdir())) == 1
+    assert len(list((Path(uri) / "__fragments").iterdir())) == 1
+
+    with soma.open(uri) as A:
+        df = A.read().concat().to_pandas()
+        np.testing.assert_array_equal(df, expected_df)
