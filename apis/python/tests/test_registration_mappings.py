@@ -273,6 +273,7 @@ def test_axis_mappings(obs_field_name, var_field_name, tmp_path):
         joinid_map=pd.Series({"a": 10, "b": 20, "c": 30}, name="soma_joinid").to_frame(),
         field_name=obs_field_name,
         enum_values={},
+        allow_duplicate_ids=True,
     )
 
     assert_array_equal(dictionary.id_mapping_from_values(["a", "b", "c"]).data, (10, 20, 30))
@@ -423,6 +424,7 @@ def test_multiples_without_experiment(
             obs_field_name=obs_field_name,
             var_field_name=var_field_name,
             use_multiprocessing=use_multiprocessing,
+            allow_duplicate_obs_ids=True,
         )
         rd.prepare_experiment(experiment_uri)
 
@@ -435,6 +437,7 @@ def test_multiples_without_experiment(
             obs_field_name=obs_field_name,
             var_field_name=var_field_name,
             use_multiprocessing=use_multiprocessing,
+            allow_duplicate_obs_ids=True,
         )
 
     assert_array_equal(rd.obs_axis.id_mapping_from_values(["AGAG", "GGAG"]).data, (2, 8))
@@ -931,6 +934,7 @@ def test_append_with_disjoint_measurements(tmp_path, obs_field_name, var_field_n
         measurement_name="two",
         obs_field_name=obs_field_name,
         var_field_name=var_field_name,
+        allow_duplicate_obs_ids=use_same_cells,
     )
 
     rd.prepare_experiment(soma_uri)
@@ -1380,6 +1384,7 @@ def test_multimodal_names(tmp_path, conftest_pbmc3k_adata):
         measurement_name="protein",
         obs_field_name=adata_protein.obs.index.name,
         var_field_name=adata_protein.var.index.name,
+        allow_duplicate_obs_ids=True,
     )
 
     assert rd.get_obs_shape() == 2638
@@ -1737,6 +1742,38 @@ def test_field_name(tmp_path):
     with tiledbsoma.Experiment.open(soma_uri) as exp:
         assert exp.obs.count == sum(adata.n_obs for adata in anndatas)
         assert exp.ms[ms_name].var.count == pd.concat(adata.var[var_field_name] for adata in anndatas).nunique()
+
+
+def test_allow_duplicate_obs_ids_catches_dups(tmp_path):
+    obs_field_name = "obs_id"
+    var_field_name = "var_id"
+    ms_name = "RNA"
+
+    adata1 = create_anndata_canned(1, obs_field_name, var_field_name)
+
+    # catch dup between AnnData?
+    tiledbsoma.io.from_anndata(
+        (tmp_path / "soma1").as_posix(), adata1, measurement_name=ms_name, ingest_mode="schema_only"
+    )
+    with pytest.raises(tiledbsoma.SOMAError):
+        tiledbsoma.io.register_anndatas(
+            (tmp_path / "soma1").as_posix(),
+            [adata1, adata1.copy()],
+            measurement_name=ms_name,
+            obs_field_name=obs_field_name,
+            var_field_name=var_field_name,
+        )
+
+    # catch dup between existing SOMA and AnnData
+    tiledbsoma.io.from_anndata((tmp_path / "soma2").as_posix(), adata1, measurement_name=ms_name)
+    with pytest.raises(tiledbsoma.SOMAError):
+        tiledbsoma.io.register_anndatas(
+            (tmp_path / "soma2").as_posix(),
+            [adata1],
+            measurement_name=ms_name,
+            obs_field_name=obs_field_name,
+            var_field_name=var_field_name,
+        )
 
 
 def test_empty_measurement_SOMA_184(tmp_path):

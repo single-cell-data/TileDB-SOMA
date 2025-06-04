@@ -193,10 +193,16 @@ def register_h5ads(
     append_obsm_varm: bool = False,
     context: SOMATileDBContext | None = None,
     use_multiprocessing: bool = False,
+    allow_duplicate_obs_ids: bool = False,
 ) -> ExperimentAmbientLabelMapping:
     """Extends registration data from the baseline, already-written SOMA
     experiment to include multiple H5AD input files. See ``from_h5ad`` and
     ``from_anndata`` on-line help.
+
+    The registration process will raise an error if any `obs` IDs (from `obs_field_name`)
+    are duplicated across the combination of all inputs and the target SOMA Experiment.
+    You can set `allow_duplicate_obs_ids=True` to bypass this check if you are adding a
+    new Measurement to existing observations.
 
     If enabled via the ``use_multiprocessing`` parameter, this function will use multiprocessing
     to register each H5AD in parallel. In cases with many files, this can produce a performance
@@ -248,6 +254,7 @@ def register_h5ads(
         obs_field_name=obs_field_name,
         var_field_name=var_field_name,
         context=context,
+        allow_duplicate_obs_ids=allow_duplicate_obs_ids,
     )
 
 
@@ -260,6 +267,7 @@ def register_anndatas(
     var_field_name: str,
     append_obsm_varm: bool = False,
     context: SOMATileDBContext | None = None,
+    allow_duplicate_obs_ids: bool = False,
 ) -> ExperimentAmbientLabelMapping:
     """Extends registration data from the baseline, already-written SOMA
     experiment to include multiple H5AD input files. See ``from_h5ad`` and
@@ -286,6 +294,7 @@ def register_anndatas(
         obs_field_name=obs_field_name,
         var_field_name=var_field_name,
         context=context,
+        allow_duplicate_obs_ids=allow_duplicate_obs_ids,
     )
 
 
@@ -2795,7 +2804,7 @@ def _ingest_uns_node(
         )
         return
 
-    msg = f"Skipped {coll.uri}[{key!r}]" f" (uns object): unrecognized type {type(value)}"
+    msg = f"Skipped {coll.uri}[{key!r}] (uns object): unrecognized type {type(value)}"
     logging.log_io(msg, msg)
 
 
@@ -2813,7 +2822,7 @@ def _ingest_uns_array(
     """
     if value.dtype.names is not None:
         # This is a structured array, which we do not support.
-        logging.log_io_same(f"Skipped {coll.uri}[{key!r}]" " (uns): unsupported structured array")
+        logging.log_io_same(f"Skipped {coll.uri}[{key!r}] (uns): unsupported structured array")
 
     if value.dtype.char in ("U", "O"):
         # In the wild it's quite common to see arrays of strings in uns data.
@@ -2858,9 +2867,7 @@ def _ingest_uns_string_array(
     elif len(value.shape) == 2:
         helper = _ingest_uns_2d_string_array
     else:
-        msg = (
-            f"Skipped {coll.uri}[{key!r}]" f" (uns object): string array is neither one-dimensional nor two-dimensional"
-        )
+        msg = f"Skipped {coll.uri}[{key!r}] (uns object): string array is neither one-dimensional nor two-dimensional"
         logging.log_io(msg, msg)
         return
 
@@ -2989,7 +2996,7 @@ def _ingest_uns_ndarray(
     try:
         pa_dtype = pa.from_numpy_dtype(value.dtype)
     except pa.ArrowNotImplementedError:
-        msg = f"Skipped {arr_uri} (uns ndarray):" f" unsupported dtype {value.dtype!r} ({value.dtype})"
+        msg = f"Skipped {arr_uri} (uns ndarray): unsupported dtype {value.dtype!r} ({value.dtype})"
         logging.log_io(msg, msg)
         return
     try:
