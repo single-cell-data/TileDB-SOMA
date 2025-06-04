@@ -199,9 +199,9 @@ def register_h5ads(
     experiment to include multiple H5AD input files. See ``from_h5ad`` and
     ``from_anndata`` on-line help.
 
-    The registration process will raise an error if any obs IDs (from obs_field_name)
+    The registration process will raise an error if any `obs` IDs (from `obs_field_name`)
     are duplicated across the combination of all inputs and the target SOMA Experiment.
-    You can set allow_duplicate_obs_ids=True to bypass this check if you are adding a
+    You can set `allow_duplicate_obs_ids=True` to bypass this check if you are adding a
     new Measurement to existing observations.
 
     If enabled via the ``use_multiprocessing`` parameter, this function will use multiprocessing
