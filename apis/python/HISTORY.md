@@ -10,7 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
-- \[[#3983](https://github.com/single-cell-data/TileDB-SOMA/pull/3983)\] [python] Global-order writes across multiple batches now generate a single fragment instead of multiple fragments. This internal optimization improves efficiency without changing the user interface.
+- \[[#3983](https://github.com/single-cell-data/TileDB-SOMA/pull/3983)\] [python] Multiple writes of pre-sorted data may now be written to a single fragment using TileDB global order writes. Enable this performance optimization by setting the platform_config parameter sort_coords to True in the call to write. Will raise an error if data is not written in global sort order.
 
 ### Deprecated
 

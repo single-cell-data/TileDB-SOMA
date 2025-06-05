@@ -3753,6 +3753,7 @@ def test_fragments_in_writes_empty_batch(tmp_path):
             "obs": pd.Series([], dtype="str"),
         }
     )
+    expected_df = pd.concat([df, empty_df], ignore_index=True)
 
     cfg = soma.TileDBWriteOptions(**{"sort_coords": False})
     soma.DataFrame.create(uri, schema=schema, domain=[[0, 3]]).close()
@@ -3767,6 +3768,11 @@ def test_fragments_in_writes_empty_batch(tmp_path):
             ),
             platform_config=cfg,
         )
+
+    with soma.DataFrame.open(uri, mode="r") as A:
+        actual_df = A.read().concat().to_pandas()
+
+    assert actual_df.equals(expected_df)
 
 
 def test_fragments_in_writes_null(tmp_path):
@@ -3791,6 +3797,7 @@ def test_fragments_in_writes_null(tmp_path):
             "obs": pd.Series([None], dtype="str"),
         }
     )
+    expected_df = pd.concat([df, null_df], ignore_index=True)
 
     cfg = soma.TileDBWriteOptions(**{"sort_coords": False})
     soma.DataFrame.create(uri, schema=schema, domain=[[0, 4]]).close()
@@ -3805,6 +3812,11 @@ def test_fragments_in_writes_null(tmp_path):
             ),
             platform_config=cfg,
         )
+
+    with soma.DataFrame.open(uri, mode="r") as A:
+        actual_df = A.read().concat().to_pandas()
+
+    assert actual_df.equals(expected_df)
 
 
 def test_managed_query_gow(tmp_path):
@@ -3838,3 +3850,48 @@ def test_managed_query_gow(tmp_path):
         # Finalizing should reset
         with pytest.raises(soma.SOMAError):
             mq.finalize()
+
+
+def test_gow_mixed_idxes(tmp_path):
+    uri = tmp_path.as_posix()
+
+    df_0 = pd.DataFrame(
+        {
+            "soma_joinid": pd.Series([4], dtype=np.int64),
+            "str_idx": pd.Series(["a"], dtype=str),
+            "float_idx": pd.Series([1.1], dtype=np.float32),
+            "attr": pd.Series(["hi"], dtype="str"),
+        }
+    )
+    df_1 = pd.DataFrame(
+        {
+            "soma_joinid": pd.Series([6], dtype=np.int64),
+            "str_idx": pd.Series(["b"], dtype=str),
+            "float_idx": pd.Series([2.2], dtype=np.float32),
+            "attr": pd.Series(["bye"], dtype="str"),
+        }
+    )
+    expected_df = pd.concat([df_0, df_1], ignore_index=True)
+
+    soma.DataFrame.create(
+        uri,
+        schema=pa.Schema.from_pandas(df_0),
+        index_column_names=["soma_joinid", "str_idx", "float_idx"],
+        domain=[[0, 10], ["", ""], [0, 10]],
+    )
+
+    with soma.DataFrame.open(uri, mode="w") as A:
+        A.write(
+            pa.concat_tables(
+                [
+                    pa.Table.from_pandas(df_0, preserve_index=False),
+                    pa.Table.from_pandas(df_1, preserve_index=False),
+                ]
+            ),
+            platform_config=soma.TileDBWriteOptions(**{"sort_coords": False}),
+        )
+
+    with soma.open(uri) as A:
+        df = A.read().concat().to_pandas()
+
+    assert df.equals(expected_df)
