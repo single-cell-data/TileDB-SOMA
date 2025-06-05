@@ -98,12 +98,6 @@ Rcpp::XPtr<tdbs::ManagedQuery> mq_setup(
 
     // shared pointer to SOMAContext from external pointer wrapper
     std::shared_ptr<tdbs::SOMAContext> somactx = ctxxp->ctxptr;
-    // shared pointer to TileDB Context from SOMAContext
-    std::shared_ptr<tiledb::Context> ctxptr = somactx->tiledb_ctx();
-
-    ctx_wrap_t* ctxwrap_p = new ContextWrapper(ctxptr);
-    Rcpp::XPtr<ctx_wrap_t> ctx_wrap_xptr = make_xptr<ctx_wrap_t>(
-        ctxwrap_p, false);
 
     if (!colnames.isNull()) {
         column_names = Rcpp::as<std::vector<std::string>>(colnames);
