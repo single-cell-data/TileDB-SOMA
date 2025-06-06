@@ -17,54 +17,82 @@ Derived classes: \code{\link{SOMADataFrame}},
 \code{\link{SOMANDArrayBase}}
 }
 \keyword{internal}
-\section{Super classes}{
-\code{\link[tiledbsoma:TileDBObject]{tiledbsoma::TileDBObject}} -> \code{\link[tiledbsoma:TileDBArray]{tiledbsoma::TileDBArray}} -> \code{SOMAArrayBase}
-}
-\section{Active bindings}{
-\if{html}{\out{<div class="r6-active-bindings">}}
-\describe{
-\item{\code{soma_type}}{Retrieve the SOMA object type.}
-}
-\if{html}{\out{</div>}}
+\section{Super class}{
+\code{\link[tiledbsoma:SOMAObject]{tiledbsoma::SOMAObject}} -> \code{SOMAArrayBase}
 }
 \section{Methods}{
 \subsection{Public methods}{
 \itemize{
+\item \href{#method-SOMAArrayBase-open}{\code{SOMAArrayBase$open()}}
+\item \href{#method-SOMAArrayBase-close}{\code{SOMAArrayBase$close()}}
 \item \href{#method-SOMAArrayBase-allows_duplicates}{\code{SOMAArrayBase$allows_duplicates()}}
-\item \href{#method-SOMAArrayBase-attributes}{\code{SOMAArrayBase$attributes()}}
 \item \href{#method-SOMAArrayBase-is_sparse}{\code{SOMAArrayBase$is_sparse()}}
+\item \href{#method-SOMAArrayBase-schema}{\code{SOMAArrayBase$schema()}}
+\item \href{#method-SOMAArrayBase-attributes}{\code{SOMAArrayBase$attributes()}}
+\item \href{#method-SOMAArrayBase-attrnames}{\code{SOMAArrayBase$attrnames()}}
+\item \href{#method-SOMAArrayBase-dimensions}{\code{SOMAArrayBase$dimensions()}}
+\item \href{#method-SOMAArrayBase-dimnames}{\code{SOMAArrayBase$dimnames()}}
+\item \href{#method-SOMAArrayBase-colnames}{\code{SOMAArrayBase$colnames()}}
+\item \href{#method-SOMAArrayBase-index_column_names}{\code{SOMAArrayBase$index_column_names()}}
+\item \href{#method-SOMAArrayBase-shape}{\code{SOMAArrayBase$shape()}}
+\item \href{#method-SOMAArrayBase-maxshape}{\code{SOMAArrayBase$maxshape()}}
+\item \href{#method-SOMAArrayBase-non_empty_domain}{\code{SOMAArrayBase$non_empty_domain()}}
+\item \href{#method-SOMAArrayBase-ndim}{\code{SOMAArrayBase$ndim()}}
+\item \href{#method-SOMAArrayBase-print}{\code{SOMAArrayBase$print()}}
 \item \href{#method-SOMAArrayBase-clone}{\code{SOMAArrayBase$clone()}}
 }
 }
 \if{html}{\out{
 <details><summary>Inherited methods</summary>
 <ul>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="class"><a href='../../tiledbsoma/html/TileDBObject.html#method-TileDBObject-class'><code>tiledbsoma::TileDBObject$class()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="exists"><a href='../../tiledbsoma/html/TileDBObject.html#method-TileDBObject-exists'><code>tiledbsoma::TileDBObject$exists()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="initialize"><a href='../../tiledbsoma/html/TileDBObject.html#method-TileDBObject-initialize'><code>tiledbsoma::TileDBObject$initialize()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="is_open"><a href='../../tiledbsoma/html/TileDBObject.html#method-TileDBObject-is_open'><code>tiledbsoma::TileDBObject$is_open()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="mode"><a href='../../tiledbsoma/html/TileDBObject.html#method-TileDBObject-mode'><code>tiledbsoma::TileDBObject$mode()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="reopen"><a href='../../tiledbsoma/html/TileDBObject.html#method-TileDBObject-reopen'><code>tiledbsoma::TileDBObject$reopen()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="attrnames"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-attrnames'><code>tiledbsoma::TileDBArray$attrnames()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="close"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-close'><code>tiledbsoma::TileDBArray$close()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="colnames"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-colnames'><code>tiledbsoma::TileDBArray$colnames()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="dimensions"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-dimensions'><code>tiledbsoma::TileDBArray$dimensions()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="dimnames"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-dimnames'><code>tiledbsoma::TileDBArray$dimnames()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="get_metadata"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-get_metadata'><code>tiledbsoma::TileDBArray$get_metadata()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="index_column_names"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-index_column_names'><code>tiledbsoma::TileDBArray$index_column_names()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="maxshape"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-maxshape'><code>tiledbsoma::TileDBArray$maxshape()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="ndim"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-ndim'><code>tiledbsoma::TileDBArray$ndim()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="non_empty_domain"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-non_empty_domain'><code>tiledbsoma::TileDBArray$non_empty_domain()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="open"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-open'><code>tiledbsoma::TileDBArray$open()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="print"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-print'><code>tiledbsoma::TileDBArray$print()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="schema"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-schema'><code>tiledbsoma::TileDBArray$schema()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="set_metadata"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-set_metadata'><code>tiledbsoma::TileDBArray$set_metadata()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="shape"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-shape'><code>tiledbsoma::TileDBArray$shape()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="tiledb_array"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-tiledb_array'><code>tiledbsoma::TileDBArray$tiledb_array()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="tiledb_schema"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-tiledb_schema'><code>tiledbsoma::TileDBArray$tiledb_schema()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAObject" data-id="class"><a href='../../tiledbsoma/html/SOMAObject.html#method-SOMAObject-class'><code>tiledbsoma::SOMAObject$class()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAObject" data-id="exists"><a href='../../tiledbsoma/html/SOMAObject.html#method-SOMAObject-exists'><code>tiledbsoma::SOMAObject$exists()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAObject" data-id="get_metadata"><a href='../../tiledbsoma/html/SOMAObject.html#method-SOMAObject-get_metadata'><code>tiledbsoma::SOMAObject$get_metadata()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAObject" data-id="initialize"><a href='../../tiledbsoma/html/SOMAObject.html#method-SOMAObject-initialize'><code>tiledbsoma::SOMAObject$initialize()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAObject" data-id="is_open"><a href='../../tiledbsoma/html/SOMAObject.html#method-SOMAObject-is_open'><code>tiledbsoma::SOMAObject$is_open()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAObject" data-id="mode"><a href='../../tiledbsoma/html/SOMAObject.html#method-SOMAObject-mode'><code>tiledbsoma::SOMAObject$mode()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAObject" data-id="reopen"><a href='../../tiledbsoma/html/SOMAObject.html#method-SOMAObject-reopen'><code>tiledbsoma::SOMAObject$reopen()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAObject" data-id="set_metadata"><a href='../../tiledbsoma/html/SOMAObject.html#method-SOMAObject-set_metadata'><code>tiledbsoma::SOMAObject$set_metadata()</code></a></span></li>
 </ul>
 </details>
 }}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SOMAArrayBase-open"></a>}}
+\if{latex}{\out{\hypertarget{method-SOMAArrayBase-open}{}}}
+\subsection{Method \code{open()}}{
+Open the SOMA object for read or write.\cr
+\cr
+\strong{Note}: \code{open()} is considered internal and should not be
+called directly; use factory functions
+(eg. \code{\link{SOMASparseNDArrayOpen}()}) instead.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SOMAArrayBase$open(mode = c("READ", "WRITE"))}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{mode}}{Mode to open the object in.}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+Return s\code{self}.
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SOMAArrayBase-close"></a>}}
+\if{latex}{\out{\hypertarget{method-SOMAArrayBase-close}{}}}
+\subsection{Method \code{close()}}{
+Close the SOMA array.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SOMAArrayBase$close()}\if{html}{\out{</div>}}
+}
+
+\subsection{Returns}{
+Invisibly returns \code{self}.
+}
+}
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-SOMAArrayBase-allows_duplicates"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMAArrayBase-allows_duplicates}{}}}
@@ -77,6 +105,34 @@ Does an array allow duplicates?
 \subsection{Returns}{
 \code{TRUE} if the underlying TileDB array allows duplicates;
 otherwise \code{FALSE}.
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SOMAArrayBase-is_sparse"></a>}}
+\if{latex}{\out{\hypertarget{method-SOMAArrayBase-is_sparse}{}}}
+\subsection{Method \code{is_sparse()}}{
+Is an array sparse?
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SOMAArrayBase$is_sparse()}\if{html}{\out{</div>}}
+}
+
+\subsection{Returns}{
+\code{TRUE} if the underlying TileDB array is sparse;
+otherwise \code{FALSE}.
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SOMAArrayBase-schema"></a>}}
+\if{latex}{\out{\hypertarget{method-SOMAArrayBase-schema}{}}}
+\subsection{Method \code{schema()}}{
+Retrieve the array schema as an Arrow schema
+(lifecycle: maturing).
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SOMAArrayBase$schema()}\if{html}{\out{</div>}}
+}
+
+\subsection{Returns}{
+An Arrow \code{\link[arrow:Schema]{Schema}} object.
 }
 }
 \if{html}{\out{<hr>}}
@@ -111,17 +167,174 @@ list contains the following entries:
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-SOMAArrayBase-is_sparse"></a>}}
-\if{latex}{\out{\hypertarget{method-SOMAArrayBase-is_sparse}{}}}
-\subsection{Method \code{is_sparse()}}{
-Is an array sparse?
+\if{html}{\out{<a id="method-SOMAArrayBase-attrnames"></a>}}
+\if{latex}{\out{\hypertarget{method-SOMAArrayBase-attrnames}{}}}
+\subsection{Method \code{attrnames()}}{
+Retrieve attribute names (lifecycle: maturing).
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{SOMAArrayBase$is_sparse()}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{SOMAArrayBase$attrnames()}\if{html}{\out{</div>}}
 }
 
 \subsection{Returns}{
-\code{TRUE} if the underlying TileDB array is sparse;
-otherwise \code{FALSE}.
+A character vector with the array's attribute names.
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SOMAArrayBase-dimensions"></a>}}
+\if{latex}{\out{\hypertarget{method-SOMAArrayBase-dimensions}{}}}
+\subsection{Method \code{dimensions()}}{
+Retrieve the array dimensions (lifecycle: maturing)
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SOMAArrayBase$dimensions()}\if{html}{\out{</div>}}
+}
+
+\subsection{Returns}{
+A named list of array dimensions; each entry contains the
+following named entries:
+\itemize{
+\item \dQuote{\code{name}}: name of the dimension.
+\item \dQuote{\code{type}}: datatype of the dimension.
+\item \dQuote{\code{ncells}}: number of values per dimension cell.
+\item \dQuote{\code{domain}}: domain of the dimension.
+\item \dQuote{\code{tile}}: tile of the dimension.
+\item \dQuote{\code{filter_list}}: a list with filter information; this
+list contains the following entries:
+\itemize{
+\item \dQuote{\code{filter_type}}
+\item \dQuote{\code{compression_level}}
+\item \dQuote{\code{bit_width}}
+\item \dQuote{\code{positive_delta}}
+\item \dQuote{\code{float_bytewidth}}
+\item \dQuote{\code{float_factor}}
+\item \dQuote{\code{float_offset}}
+}
+}
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SOMAArrayBase-dimnames"></a>}}
+\if{latex}{\out{\hypertarget{method-SOMAArrayBase-dimnames}{}}}
+\subsection{Method \code{dimnames()}}{
+Retrieve dimension names (lifecycle: maturing).
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SOMAArrayBase$dimnames()}\if{html}{\out{</div>}}
+}
+
+\subsection{Returns}{
+A character vector with the array's dimension names.
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SOMAArrayBase-colnames"></a>}}
+\if{latex}{\out{\hypertarget{method-SOMAArrayBase-colnames}{}}}
+\subsection{Method \code{colnames()}}{
+Retrieve the names of all columns, including dimensions and
+attributes (lifecycle: maturing).
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SOMAArrayBase$colnames()}\if{html}{\out{</div>}}
+}
+
+\subsection{Returns}{
+A character vector with the array's column names.
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SOMAArrayBase-index_column_names"></a>}}
+\if{latex}{\out{\hypertarget{method-SOMAArrayBase-index_column_names}{}}}
+\subsection{Method \code{index_column_names()}}{
+Retrieve names of index (dimension) columns (lifecycle: maturing)
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SOMAArrayBase$index_column_names()}\if{html}{\out{</div>}}
+}
+
+\subsection{Returns}{
+A character vector with the array index (dimension) names
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SOMAArrayBase-shape"></a>}}
+\if{latex}{\out{\hypertarget{method-SOMAArrayBase-shape}{}}}
+\subsection{Method \code{shape()}}{
+Retrieve the shape, i.e. the capacity of each dimension
+Attempted reads and writes outside the \code{shape} will result in a
+run-time error: this is the purpose of \code{shape}. This will not
+necessarily match the bounds of occupied cells within the array.
+Using \code{$resize()}, this may be increased up to the hard limit which
+\code{maxshape()} reports (lifecycle: maturing).
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SOMAArrayBase$shape()}\if{html}{\out{</div>}}
+}
+
+\subsection{Returns}{
+A named vector of dimension length and of the same type as
+the dimension.
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SOMAArrayBase-maxshape"></a>}}
+\if{latex}{\out{\hypertarget{method-SOMAArrayBase-maxshape}{}}}
+\subsection{Method \code{maxshape()}}{
+Retrieve the hard limit up to which the array may be resized
+using the \code{$resize()} method (lifecycle: maturing).
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SOMAArrayBase$maxshape()}\if{html}{\out{</div>}}
+}
+
+\subsection{Returns}{
+A named vector of dimension length and of the same type as
+the dimension.
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SOMAArrayBase-non_empty_domain"></a>}}
+\if{latex}{\out{\hypertarget{method-SOMAArrayBase-non_empty_domain}{}}}
+\subsection{Method \code{non_empty_domain()}}{
+Returns a named list of minimum/maximum pairs, one per index
+column, which are the smallest and largest values written on that
+index column.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SOMAArrayBase$non_empty_domain(index1 = FALSE, max_only = FALSE)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{index1}}{Return the non-empty domain with 1-based indices}
+
+\item{\code{max_only}}{Return only the max value per dimension, and return
+this as a vector. Names are dropped (lifecycle: maturing).}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+Named list of minimum/maximum values, or integer vector
+of maximum values.
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SOMAArrayBase-ndim"></a>}}
+\if{latex}{\out{\hypertarget{method-SOMAArrayBase-ndim}{}}}
+\subsection{Method \code{ndim()}}{
+Retrieve number of dimensions (lifecycle: maturing).
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SOMAArrayBase$ndim()}\if{html}{\out{</div>}}
+}
+
+\subsection{Returns}{
+A scalar with the number of dimensions.
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SOMAArrayBase-print"></a>}}
+\if{latex}{\out{\hypertarget{method-SOMAArrayBase-print}{}}}
+\subsection{Method \code{print()}}{
+Print-friendly representation of the object.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SOMAArrayBase$print()}\if{html}{\out{</div>}}
+}
+
+\subsection{Returns}{
+Invisibly returns \code{self}.
 }
 }
 \if{html}{\out{<hr>}}

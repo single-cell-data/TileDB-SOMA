@@ -284,7 +284,7 @@ uns_hint <- function(type = c("1d", "2d")) {
 #' @noRd
 #'
 .read_soma_joinids <- function(x, ...) {
-  stopifnot(inherits(x = x, what = "TileDBArray"))
+  stopifnot(inherits(x = x, what = "SOMAArrayBase"))
   oldmode <- x$mode()
   on.exit(
     x$reopen(oldmode, tiledb_timestamp = x$tiledb_timestamp),

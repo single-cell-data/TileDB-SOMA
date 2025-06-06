@@ -1,6 +1,6 @@
 #' SOMADataFrame
 #'
-#' @description \code{SOMADataFrame} is a multi-column table that must contain a
+#' @description A SOMA data frame  is a multi-column table that must contain a
 #' column called \dQuote{\code{soma_joinid}} of type \code{int64}, which
 #' contains a unique value for each row and is intended to act as a join key for
 #' other objects, such as \code{\link{SOMASparseNDArray}} (lifecycle: maturing).
@@ -20,11 +20,15 @@ SOMADataFrame <- R6::R6Class(
   inherit = SOMAArrayBase,
   public = list(
 
-    #' @description Create (lifecycle: maturing).
+    #' @description Create a SOMA data frame (lifecycle: maturing).\cr
+    #' \cr
+    #' \strong{Note}: \code{$create()} is considered internal and should not be
+    #' called directly; use factory functions
+    #' (eg. \code{\link{SOMADataFrameCreate}()}) instead.
     #'
     #' @param schema An \link[arrow:schema]{Arrow schema}.
     #' @param index_column_names A vector of column names to use as user-defined
-    #' index columns.  All named columns must exist in the schema, and at least
+    #' index columns. All named columns must exist in the schema, and at least
     #' one index column name is required.
     #' @param domain An optional list specifying the domain of each
     #' index column. Each slot in the list must have its name being the name
@@ -44,25 +48,27 @@ SOMADataFrame <- R6::R6Class(
     #' recommended parameter. See also \code{change_domain} which allows you to
     #' expand the domain after create.
     #' @template param-platform-config
-    #' @param internal_use_only Character value to signal this is a 'permitted'
-    #' call, as \code{create()} is considered internal and should not be called
-    #' directly.
     #'
-    #' @return Returns \code{self}
+    #' @return Returns \code{self}.
     #'
     create = function(
       schema,
       index_column_names = c("soma_joinid"),
       domain = NULL,
-      platform_config = NULL,
-      internal_use_only = NULL
+      platform_config = NULL
     ) {
-      if (is.null(internal_use_only) || internal_use_only != "allowed_use") {
-        stop(paste(
-          "Use of the create() method is for internal use only. Consider using a",
-          "factory method as e.g. 'SOMADataFrameCreate()'."
-        ), call. = FALSE)
+      envs <- unique(vapply(
+        X = unique(sys.parents()),
+        FUN = function(n) environmentName(environment(sys.function(n))),
+        FUN.VALUE = character(1L)
+      ))
+      if (!"tiledbsoma" %in% envs) {
+        stop(
+          paste(strwrap(private$.internal_use_only("create", "collection")), collapse = '\n'),
+          call. = FALSE
+        )
       }
+
       schema <- private$validate_schema(schema, index_column_names)
 
       stopifnot(
@@ -133,21 +139,24 @@ SOMADataFrame <- R6::R6Class(
       )
 
       spdl::debug("[SOMADataFrame$create] about to call write_object_type_metadata")
+      self$open("WRITE")
       private$write_object_type_metadata()
+      self$reopen("WRITE", tiledb_timestamp = self$tiledb_timestamp)
 
-      self$open("WRITE", internal_use_only = "allowed_use")
-      self
+      return(self)
     },
 
-    #' @description Write (lifecycle: maturing).
+    #' @description Write values to the data frame (lifecycle: maturing).
     #'
     #' @param values An \link[arrow:Table]{Arrow table} or
     #' \link[arrow:RecordBatch]{Arrow record batch} containing all columns,
     #' including any index columns. The schema for \code{values} must match the
     #' schema for the data frame.
     #'
+    #' @return Invisibly returns \code{self}.
+    #'
     write = function(values) {
-      private$check_open_for_write()
+      private$.check_open_for_write()
 
       # Prevent downcasting of int64 to int32 when materializing a column
       op <- options(arrow.int64_downcast = FALSE)
@@ -173,8 +182,8 @@ SOMADataFrame <- R6::R6Class(
       nasp <- nanoarrow::nanoarrow_allocate_schema()
       arrow::as_record_batch(values)$export_to_c(naap, nasp)
 
-      df <- as.data.frame(values)[schema_names]
-      arr <- self$object
+      # df <- as.data.frame(values)[schema_names]
+      # arr <- private$.tiledb_array
       writeArrayFromArrow(
         uri = self$uri,
         naap = naap,
@@ -185,7 +194,7 @@ SOMADataFrame <- R6::R6Class(
         tsvec = self$.tiledb_timestamp_range
       )
 
-      invisible(self)
+      return(invisible(self))
     },
 
     #' @description Read a user-defined subset of data, addressed by the
@@ -200,8 +209,6 @@ SOMADataFrame <- R6::R6Class(
     #' \code{\link[tiledb:parse_query_condition]{tiledb::parse_query_condition}()}
     #' for more information.
     #' @template param-result-order
-    #' @param iterated Option boolean indicated whether data is read in call
-    #' (when \code{FALSE}, the default value) or in several iterated steps.
     #' @param log_level Optional logging level with default value of
     #' \dQuote{\code{warn}}.
     #'
@@ -212,10 +219,9 @@ SOMADataFrame <- R6::R6Class(
       column_names = NULL,
       value_filter = NULL,
       result_order = "auto",
-      iterated = FALSE,
       log_level = "auto"
     ) {
-      private$check_open_for_read()
+      private$.check_open_for_read()
 
       result_order <- match_query_layout(result_order)
 
@@ -246,8 +252,10 @@ SOMADataFrame <- R6::R6Class(
         value_filter <- parsed@ptr
       }
       spdl::debug(
-        "[SOMADataFrame$read] calling mq_setup for {} at ({},{})", self$uri,
-        private$tiledb_timestamp[1], private$tiledb_timestamp[2]
+        "[SOMADataFrame$read] calling mq_setup for {} at ({},{})",
+        self$uri,
+        self$.tiledb_timestamp_range[1],
+        self$.tiledb_timestamp_range[2]
       )
       sr <- mq_setup(
         uri = self$uri,
@@ -258,7 +266,7 @@ SOMADataFrame <- R6::R6Class(
         timestamprange = self$.tiledb_timestamp_range, # NULL or two-elem vector
         loglevel = log_level
       )
-      TableReadIter$new(sr)
+      return(TableReadIter$new(sr))
     },
 
     #' @description Update (lifecycle: maturing).
@@ -289,7 +297,7 @@ SOMADataFrame <- R6::R6Class(
     #' @return Invisibly returns \code{NULL}
     #'
     update = function(values, row_index_name = NULL) {
-      private$check_open_for_write()
+      private$.check_open_for_write()
       stopifnot(
         "'values' must be a data.frame, Arrow Table or RecordBatch" =
           is.data.frame(values) || is_arrow_table(values) || is_arrow_record_batch(values)

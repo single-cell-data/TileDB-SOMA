@@ -566,7 +566,12 @@ test_that("SOMASparseNDArray timestamped ops", {
 
   # t=10: create 2x2 array and write 1 into top-left entry
   t10 <- as.POSIXct(10, tz = "UTC", origin = "1970-01-01")
-  snda <- SOMASparseNDArrayCreate(uri = uri, type = arrow::int16(), shape = c(2, 2), tiledb_timestamp = t10)
+  snda <- SOMASparseNDArrayCreate(
+    uri = uri,
+    type = arrow::int16(),
+    shape = c(2, 2),
+    tiledb_timestamp = t10
+  )
   snda$write(Matrix::sparseMatrix(i = 1, j = 1, x = 1, dims = c(2, 2)))
   snda$close()
 

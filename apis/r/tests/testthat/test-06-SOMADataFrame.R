@@ -131,14 +131,19 @@ test_that("Basic mechanics with default index_column_names", {
   uri <- withr::local_tempdir("soma-dataframe-soma-joinid")
   asch <- create_arrow_schema(foo_first = FALSE)
 
-  sdf <- SOMADataFrame$new(uri, internal_use_only = "allowed_use")
   expect_error(
-    sdf$create(asch, index_column_names = "qux", internal_use_only = "allowed_use"),
-    "The following indexed field does not exist: qux"
+    SOMADataFrameCreate(tempfile(), schema = asch, index_column_names = "qux"),
+    regexp = "The following indexed field does not exist: qux"
   )
+
   if (dir.exists(uri)) unlink(uri, recursive = TRUE)
 
-  sdf$create(asch, domain = list(soma_joinid = c(0, 99)), internal_use_only = "allowed_use")
+  expect_no_condition(sdf <- SOMADataFrameCreate(
+    uri,
+    schema = asch,
+    domain = list(soma_joinid = c(0, 99))
+  ))
+  expect_s3_class(sdf, "SOMADataFrame")
   expect_true(sdf$exists())
   expect_true(dir.exists(uri))
   expect_match(sdf$soma_type, "SOMADataFrame")
@@ -352,7 +357,11 @@ test_that("creation with ordered factors", {
   expect_identical(lvls$ord, levels(df$ord))
   expect_identical(sdf$levels("ord"), levels(df$ord))
 
-  expect_s3_class(ord <- sdf$object[]$ord, c("ordered", "factor"), exact = TRUE)
+  expect_s3_class(
+    ord <- sdf$.__enclos_env__$private$.tiledb_array[]$ord,
+    c("ordered", "factor"),
+    exact = TRUE
+  )
   expect_length(ord, n)
   expect_identical(levels(ord), levels(df$ord))
   rm(df, tbl)
@@ -383,7 +392,11 @@ test_that("explicit casting of ordered factors to regular factors", {
   expect_no_condition(sdf$write(values = tbl))
   expect_s3_class(sdf <- SOMADataFrameOpen(uri), "SOMADataFrame")
   expect_true(sdf$schema()$GetFieldByName("ord")$type$ordered)
-  expect_s3_class(ord <- sdf$object[]$ord, c("ordered", "factor"), exact = TRUE)
+  expect_s3_class(
+    ord <- sdf$.__enclos_env__$private$.tiledb_array[]$ord,
+    c("ordered", "factor"),
+    exact = TRUE
+  )
   expect_true(is.ordered(ord))
   expect_length(ord, n)
   expect_identical(levels(ord), levels(df$ord))
@@ -654,7 +667,11 @@ test_that("SOMADataFrame timestamped ops", {
     arrow::field("valdbl", arrow::float64(), nullable = FALSE)
   )
   if (dir.exists(uri)) unlink(uri, recursive = TRUE)
-  sdf <- SOMADataFrameCreate(uri = uri, schema = sch, domain = list(soma_joinid = c(0, 99)))
+  sdf <- SOMADataFrameCreate(
+    uri = uri,
+    schema = sch,
+    domain = list(soma_joinid = c(0, 99))
+  )
   rb1 <- arrow::record_batch(
     soma_joinid = bit64::as.integer64(0L:2L),
     valint = 1L:3L,
@@ -687,8 +704,14 @@ test_that("SOMADataFrame timestamped ops", {
   expect_equal(as.data.frame(sdf$read()$concat()), d2)
   sdf$close()
 
-  sdf <- SOMADataFrameOpen(uri = uri, tiledb_timestamp = t10 + 0.5 * as.numeric(t20 - t10))
-  expect_equal(as.data.frame(sdf$read()$concat()), d1) # read between t10 and t20 sees only first write
+  sdf <- SOMADataFrameOpen(
+    uri = uri,
+    tiledb_timestamp = t10 + 0.5 * as.numeric(t20 - t10)
+  )
+  expect_equal(# read between t10 and t20 sees only first write
+    as.data.frame(sdf$read()$concat()),
+    d1
+  )
   sdf$close()
 })
 

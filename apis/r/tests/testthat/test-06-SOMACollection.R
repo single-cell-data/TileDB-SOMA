@@ -133,15 +133,15 @@ test_that("Platform config and context are respected by add_ methods", {
     platform_config = cfg,
     tiledbsoma_ctx = ctx
   )
+  on.exit(collection$close(), add = TRUE, after = FALSE)
 
   # Add a dataframe element to the collection
   tbl <- create_arrow_table()
   sdf1 <- collection$add_new_dataframe("sdf1", tbl$schema, "soma_joinid", domain = list(soma_joinid = c(0, 999)))
   sdf1$write(tbl)
-  collection$close()
 
   # Verify the config and context params were inherited
-  collection$open("READ", internal_use_only = "allowed_use")
+  collection <- collection$reopen("READ")
   expect_equal(
     collection$get("sdf1")$platform_config$get("tiledb", "test", "int_column"),
     "float_column"
@@ -150,10 +150,9 @@ test_that("Platform config and context are respected by add_ methods", {
     collection$get("sdf1")$tiledbsoma_ctx$get("int_column"),
     "float_column"
   )
-  collection$close()
 
   # Method-level config params override instance params
-  collection$open("WRITE", internal_use_only = "allowed_use")
+  collection <- collection$reopen("WRITE")
   cfg$set("tiledb", "test", "int_column", "string_column")
   sdf2 <- collection$add_new_dataframe(
     key = "sdf2",
@@ -168,5 +167,4 @@ test_that("Platform config and context are respected by add_ methods", {
     collection$get("sdf2")$platform_config$get("tiledb", "test", "int_column"),
     "string_column"
   )
-  collection$close()
 })
