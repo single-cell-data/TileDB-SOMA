@@ -212,19 +212,9 @@ class Wrapper(Generic[_RawHdl_co], metaclass=abc.ABCMeta):
         """Opens and returns a TileDB object specific to this type."""
         raise NotImplementedError()
 
-    def reopen(self, mode: options.OpenMode, timestamp: OpenTimestamp | None) -> Wrapper[_RawHdl_co]:
-        """Returns a new copy of the wrapper handle in the requested mode and at the requested timestamp."""
-        if mode not in ("r", "w"):
-            raise ValueError(f"Invalid mode '{mode}' passed. " "Valid modes are 'r' and 'w'.")
-        ts = self.context._open_timestamp_ms(timestamp)
-        self.metadata._write()
-        clib_handle = self._handle.reopen(clib.OpenMode.read if mode == "r" else clib.OpenMode.write, (0, ts))
-        return self.__class__.open(
-            uri=clib_handle.uri,
-            mode=mode,
-            context=self.context,
-            timestamp=ts,
-        )
+    def has_modified_metadata(self) -> bool:
+        """Write metadata changes to disk, if there were any."""
+        return not self.metadata.is_synced
 
     # Covariant types should normally not be in parameters, but this is for
     # internal use only so it's OK.
@@ -831,6 +821,10 @@ class MetadataWrapper(MutableMapping[str, Any]):
         if self.owner.closed:
             return f"<{prefix}>"
         return f"<{prefix} {self.cache}>"
+
+    @property
+    def is_synced(self) -> bool:
+        return not self._mods
 
 
 def _check_metadata_type(key: str, obj: Metadatum) -> None:

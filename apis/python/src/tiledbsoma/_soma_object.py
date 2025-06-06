@@ -153,22 +153,24 @@ class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
                 - ``r``: Open for reading only (cannot write).
                 - ``w``: Open for writing only (cannot read).
             tiledb_timestamp:
-                The TileDB timestamp to open this object at,
-                either an int representing milliseconds since the Unix epoch
-                or a datetime.datetime object.
-                When not provided (the default), the current time is used.
+                The TileDB timestamp to open this object at, either an int representing milliseconds since the Unix
+                epoch or a datetime.datetime object. When not provided (the default), the current time is used.
 
         Raises:
             ValueError:
                 If the user-provided ``mode`` is invalid.
+            SOMAError:
+                If the object has unwritten metadata.
 
         Lifecycle:
             Experimental.
         """
-        return self.__class__(
-            self._handle.reopen(mode, tiledb_timestamp),  # type: ignore[arg-type]
-            _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code",
-        )
+        if self._handle.has_modified_metadata():
+            raise SOMAError(
+                f"Cannot reopen a SOMAObject with modified metadata that has not been "
+                f"written. To sync metadata close this object."
+            )
+        return self.__class__.open(self.uri, mode, tiledb_timestamp=tiledb_timestamp, context=self.context)
 
     @property
     def context(self) -> SOMATileDBContext:
