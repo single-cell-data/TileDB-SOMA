@@ -7,6 +7,7 @@ from __future__ import annotations
 from typing import Any, Callable, Generic, Iterable, Iterator, TypeVar, cast
 
 import attrs
+from somacore import options
 from typing_extensions import Self
 
 from . import _tdb_handles
@@ -15,6 +16,7 @@ from . import _tdb_handles
 from . import pytiledbsoma as clib  # noqa: E402
 from ._exception import SOMAError, is_does_not_exist_error
 from ._soma_object import AnySOMAObject, SOMAObject
+from ._types import OpenTimestamp
 from ._util import is_relative_uri, make_relative_path, sanitize_key, uri_joinpath
 
 CollectionElementType = TypeVar("CollectionElementType", bound=AnySOMAObject)
@@ -220,6 +222,33 @@ class SOMAGroup(SOMAObject[_tdb_handles.SOMAGroupWrapper[Any]], Generic[Collecti
         # name rather than creation path.
         absolute_uri = uri_joinpath(self.uri, maybe_relative_uri)
         return _ChildURI(add_uri=absolute_uri, full_uri=absolute_uri, relative=False)
+
+    def reopen(self, mode: options.OpenMode, tiledb_timestamp: OpenTimestamp | None = None) -> Self:
+        """Return a new copy of the SOMAObject with the given mode at the current
+        Unix timestamp.
+
+        Args:
+            mode:
+                The mode to open the object in.
+                - ``r``: Open for reading only (cannot write).
+                - ``w``: Open for writing only (cannot read).
+            tiledb_timestamp:
+                The TileDB timestamp to open this object at, either an int representing milliseconds since the Unix
+                epoch or a datetime.datetime object. When not provided (the default), the current time is used.
+
+        Raises:
+            ValueError:
+                If the user-provided ``mode`` is invalid.
+            SOMAError:
+                If the object has unwritten metadata.
+
+        Lifecycle:
+            Experimental.
+        """
+        super().reopen(mode, tiledb_timestamp)
+        self._contents = {key: _CachedElement(entry) for key, entry in self._handle.initial_contents.items()}  # type: ignore[union-attr]
+        self._mutated_keys = set()
+        return self
 
     def set(
         self,

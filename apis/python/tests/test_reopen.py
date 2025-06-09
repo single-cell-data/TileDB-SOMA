@@ -1,5 +1,6 @@
 import datetime
 
+import pyarrow as pa
 import pytest
 
 import tiledbsoma
@@ -82,3 +83,53 @@ def test_experiment_reopen(tmp_path, soma_type):
             now = datetime.datetime.now(datetime.timezone.utc)
             assert x1.tiledb_timestamp <= now
         assert x1.closed
+
+
+def test_collection_add_elements(tmp_path):
+    uri = f"{tmp_path}/coll_add_and_reopen"
+    with tiledbsoma.Collection.create(uri) as coll:
+        assert "subcoll" not in coll
+        assert "array1" not in coll
+        with tiledbsoma.Collection.open(uri, mode="w") as coll2:
+            coll2.add_new_collection("subcoll1")
+            coll2.add_new_sparse_ndarray("array1", type=pa.float32(), shape=(100, 100))
+            assert "subcoll1" in coll2
+            assert "array1" in coll2
+
+        assert "subcoll1" not in coll
+        assert "array1" not in coll
+
+        coll.reopen(mode="r")
+
+        assert "subcoll1" in coll
+        assert "array1" in coll
+
+
+def test_reopen_scene_add_coord_space(tmp_path):
+    uri = f"{tmp_path}/scene_reopen_add_coord_space"
+    coords = tiledbsoma.CoordinateSpace([tiledbsoma.Axis("x", "meters"), tiledbsoma.Axis("y", "meters")])
+    with create_basic_object("SOMAScene", uri) as scene:
+        assert scene.coordinate_space is None
+        with tiledbsoma.Scene.open(uri, mode="w") as scene2:
+            scene2.coordinate_space = coords
+            assert scene2.coordinate_space == coords
+        assert scene.coordinate_space is None
+        scene.reopen(mode="r")
+        assert scene.coordinate_space == coords
+
+
+def test_reopen_multiscale_image_add_level(tmp_path):
+    uri = f"{tmp_path}/multiscal_image_reopen_add_level"
+    # Need to create and close Multiscale image to fully flush creation metadata.
+    image = tiledbsoma.MultiscaleImage.create(uri, type=pa.uint8(), level_shape=(3, 16, 32))
+    image.close()
+
+    with tiledbsoma.MultiscaleImage.open(uri) as image:
+        assert len(image.levels()) == 1
+
+        with tiledbsoma.MultiscaleImage.open(uri, mode="w") as image2:
+            image2.add_new_level("level2", shape=(3, 8, 16))
+            assert len(image2.levels()) == 2
+        assert len(image.levels()) == 1
+        image.reopen(mode="r")
+        assert len(image.levels()) == 2
