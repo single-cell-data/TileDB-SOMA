@@ -37,9 +37,6 @@ py::list domainish_to_list(ArrowArray* arrow_array, ArrowSchema* arrow_schema) {
         array_list.append(array);
     }
 
-    arrow_array->release(arrow_array);
-    arrow_schema->release(arrow_schema);
-
     return array_list;
 }
 

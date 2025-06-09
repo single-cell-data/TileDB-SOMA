@@ -13,17 +13,17 @@ SOMAOpen(
 )
 }
 \arguments{
-\item{uri}{URI for the TileDB object}
+\item{uri}{URI for the TileDB object.}
 
 \item{mode}{One of \dQuote{\code{READ}} or \dQuote{\code{WRITE}}}
 
-\item{platform_config}{Optional platform configuration}
+\item{platform_config}{Optional platform configuration.}
 
-\item{tiledbsoma_ctx}{Optional SOMATileDBContext}
+\item{tiledbsoma_ctx}{Optional SOMATileDBContext.}
 
-\item{tiledb_timestamp}{Optional Datetime (POSIXct) for TileDB timestamp.
-In READ mode, defaults to the current time. If non-NULL, then all members
-accessed through the collection object inherit the timestamp.}
+\item{tiledb_timestamp}{Optional Datetime (POSIXct) for TileDB timestamp;
+defaults to the current time. If not \code{NULL}, all members accessed
+through the collection inherit the timestamp.}
 }
 \value{
 A SOMA object

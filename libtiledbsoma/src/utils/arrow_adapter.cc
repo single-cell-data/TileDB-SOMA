@@ -362,13 +362,14 @@ json ArrowAdapter::_get_filter_list_json(FilterList filter_list) {
     return filter_list_as_json;
 }
 
-std::unique_ptr<ArrowSchema> ArrowAdapter::arrow_schema_from_tiledb_array(
+managed_unique_ptr<ArrowSchema> ArrowAdapter::arrow_schema_from_tiledb_array(
     std::shared_ptr<Context> ctx, std::shared_ptr<Array> tiledb_array) {
     auto tiledb_schema = tiledb_array->schema();
     auto ndim = tiledb_schema.domain().ndim();
     auto nattr = tiledb_schema.attribute_num();
 
-    std::unique_ptr<ArrowSchema> arrow_schema = std::make_unique<ArrowSchema>();
+    managed_unique_ptr<ArrowSchema>
+        arrow_schema = make_managed_unique<ArrowSchema>();
     arrow_schema->format = strdup("+s");
     arrow_schema->name = strdup("parent");
     arrow_schema->metadata = nullptr;
@@ -472,10 +473,16 @@ std::unique_ptr<ArrowSchema> ArrowAdapter::arrow_schema_from_tiledb_array(
 
 ArrowSchema* ArrowAdapter::arrow_schema_from_tiledb_dimension(
     const Dimension& dimension) {
+    // Accessing dimension attributes may throw.
+    // To avoid leaking memory we need to access the before allocating any
+    // memory so we are able to free any allocated memory of the caller without
+    // any leaking from this function
+    auto format = ArrowAdapter::to_arrow_format(dimension.type());
+    auto name = dimension.name();
+
     ArrowSchema* arrow_schema = (ArrowSchema*)malloc(sizeof(ArrowSchema));
-    arrow_schema->format = strdup(
-        ArrowAdapter::to_arrow_format(dimension.type()).data());
-    arrow_schema->name = strdup(dimension.name().c_str());
+    arrow_schema->format = strdup(format.data());
+    arrow_schema->name = strdup(name.c_str());
     arrow_schema->metadata = nullptr;
     arrow_schema->flags = 0;
     arrow_schema->n_children = 0;
@@ -494,10 +501,22 @@ ArrowSchema* ArrowAdapter::arrow_schema_from_tiledb_dimension(
 
 ArrowSchema* ArrowAdapter::arrow_schema_from_tiledb_attribute(
     const Attribute& attribute, const Context& ctx, const Array& tiledb_array) {
+    // Accessing dimension attributes may throw.
+    // To avoid leaking memory we need to access the before allocating any
+    // memory so we are able to free any allocated memory of the caller without
+    // any leaking from this function
+    auto format = ArrowAdapter::to_arrow_format(attribute.type());
+    auto name = attribute.name();
+    auto enmr_name = AttributeExperimental::get_enumeration_name(
+        ctx, attribute);
+    auto enmr = enmr_name ?
+                    std::make_optional(ArrayExperimental::get_enumeration(
+                        ctx, tiledb_array, *enmr_name)) :
+                    std::nullopt;
+
     ArrowSchema* arrow_schema = (ArrowSchema*)malloc(sizeof(ArrowSchema));
-    arrow_schema->format = strdup(
-        ArrowAdapter::to_arrow_format(attribute.type()).data());
-    arrow_schema->name = strdup(attribute.name().c_str());
+    arrow_schema->format = strdup(format.data());
+    arrow_schema->name = strdup(name.c_str());
     arrow_schema->metadata = nullptr;
     arrow_schema->flags = 0;
     if (attribute.nullable() && attribute.name() != SOMA_GEOMETRY_COLUMN_NAME) {
@@ -527,23 +546,19 @@ ArrowSchema* ArrowAdapter::arrow_schema_from_tiledb_attribute(
         "name {}",
         arrow_schema->format,
         arrow_schema->name));
-    // We shouldn;t have to cast constness away. Maybe missing const qualifier
-    // from AttributeExperimental::get_enumeration_name
-    auto enmr_name = AttributeExperimental::get_enumeration_name(
-        ctx, const_cast<Attribute&>(attribute));
+
     if (enmr_name.has_value()) {
-        auto enmr = ArrayExperimental::get_enumeration(
-            ctx, tiledb_array, *enmr_name);
         auto dict = (ArrowSchema*)malloc(sizeof(ArrowSchema));
-        if (enmr.type() == TILEDB_STRING_ASCII || enmr.type() == TILEDB_CHAR) {
+        if (enmr->type() == TILEDB_STRING_ASCII ||
+            enmr->type() == TILEDB_CHAR) {
             dict->format = strdup("z");
         } else {
             dict->format = strdup(
-                ArrowAdapter::to_arrow_format(enmr.type(), false).data());
+                ArrowAdapter::to_arrow_format(enmr->type(), false).data());
         }
-        dict->name = strdup(enmr.name().c_str());
+        dict->name = strdup(enmr->name().c_str());
         dict->metadata = nullptr;
-        if (enmr.ordered()) {
+        if (enmr->ordered()) {
             arrow_schema->flags |= ARROW_FLAG_DICTIONARY_ORDERED;
         } else {
             arrow_schema->flags &= ~ARROW_FLAG_DICTIONARY_ORDERED;
@@ -555,7 +570,7 @@ ArrowSchema* ArrowAdapter::arrow_schema_from_tiledb_attribute(
         dict->private_data = nullptr;
         arrow_schema->dictionary = dict;
     }
-    arrow_schema->release = &ArrowAdapter::release_schema;
+
     return arrow_schema;
 }
 
@@ -895,7 +910,7 @@ tiledb_layout_t ArrowAdapter::_get_order(std::string order) {
 std::tuple<ArraySchema, nlohmann::json>
 ArrowAdapter::tiledb_schema_from_arrow_schema(
     std::shared_ptr<Context> ctx,
-    const std::unique_ptr<ArrowSchema>& arrow_schema,
+    const managed_unique_ptr<ArrowSchema>& arrow_schema,
     const ArrowTable& index_column_info,
     const std::optional<SOMACoordinateSpace>& coordinate_space,
     std::string soma_type,
@@ -1264,10 +1279,10 @@ inline void exitIfError(const ArrowErrorCode ec, const std::string& msg) {
             fmt::format("ArrowAdapter: Arrow Error {} ", msg));
 }
 
-std::pair<std::unique_ptr<ArrowArray>, std::unique_ptr<ArrowSchema>>
+std::pair<managed_unique_ptr<ArrowArray>, managed_unique_ptr<ArrowSchema>>
 ArrowAdapter::to_arrow(std::shared_ptr<ColumnBuffer> column) {
-    std::unique_ptr<ArrowSchema> schema = std::make_unique<ArrowSchema>();
-    std::unique_ptr<ArrowArray> array = std::make_unique<ArrowArray>();
+    managed_unique_ptr<ArrowSchema> schema = make_managed_unique<ArrowSchema>();
+    managed_unique_ptr<ArrowArray> array = make_managed_unique<ArrowArray>();
     auto sch = schema.get();
     auto arr = array.get();
 
@@ -1588,7 +1603,7 @@ std::string_view ArrowAdapter::to_arrow_readable(std::string_view arrow_dtype) {
                "CDataInterface.html#data-type-description-format-strings]";
 }
 
-std::unique_ptr<ArrowSchema> ArrowAdapter::make_arrow_schema(
+managed_unique_ptr<ArrowSchema> ArrowAdapter::make_arrow_schema(
     const std::vector<std::string>& names,
     const std::vector<tiledb_datatype_t>& tiledb_datatypes) {
     auto num_names = names.size();
@@ -1602,7 +1617,7 @@ std::unique_ptr<ArrowSchema> ArrowAdapter::make_arrow_schema(
             num_types));
     }
 
-    auto arrow_schema = std::make_unique<ArrowSchema>();
+    auto arrow_schema = make_managed_unique<ArrowSchema>();
     arrow_schema->format = strdup("+s");  // structure, i.e. non-leaf node
     arrow_schema->name = strdup("parent");
     arrow_schema->metadata = nullptr;
@@ -1661,9 +1676,10 @@ ArrowSchema* ArrowAdapter::make_arrow_schema_child(
     return arrow_schema;
 }
 
-std::unique_ptr<ArrowSchema> ArrowAdapter::make_arrow_schema_parent(
+managed_unique_ptr<ArrowSchema> ArrowAdapter::make_arrow_schema_parent(
     size_t num_columns, std::string_view name) {
-    auto arrow_schema = std::make_unique<ArrowSchema>();
+    auto arrow_schema = make_managed_unique<ArrowSchema>();
+
     arrow_schema->format = strdup("+s");  // structure, i.e. non-leaf node
     arrow_schema->name = strdup(name.data());
     arrow_schema->metadata = nullptr;
@@ -1687,9 +1703,9 @@ std::unique_ptr<ArrowSchema> ArrowAdapter::make_arrow_schema_parent(
     return arrow_schema;
 }
 
-std::unique_ptr<ArrowArray> ArrowAdapter::make_arrow_array_parent(
+managed_unique_ptr<ArrowArray> ArrowAdapter::make_arrow_array_parent(
     size_t num_columns) {
-    auto arrow_array = std::make_unique<ArrowArray>();
+    auto arrow_array = make_managed_unique<ArrowArray>();
 
     // All zero/null since this is a parent ArrowArray, and each
     // column/child is also of type ArrowArray.
@@ -1810,9 +1826,9 @@ ArrowArray* ArrowAdapter::_get_and_check_column(
     return child;
 }
 
-std::unique_ptr<ArrowArray> ArrowAdapter::arrow_array_insert_at_index(
-    std::unique_ptr<ArrowArray> parent_array,
-    std::vector<std::unique_ptr<ArrowArray>> child_arrays,
+managed_unique_ptr<ArrowArray> ArrowAdapter::arrow_array_insert_at_index(
+    managed_unique_ptr<ArrowArray> parent_array,
+    std::vector<managed_unique_ptr<ArrowArray>> child_arrays,
     int64_t index) {
     if (parent_array->n_children < index || index < 0) {
         throw std::runtime_error(
@@ -1839,14 +1855,12 @@ std::unique_ptr<ArrowArray> ArrowAdapter::arrow_array_insert_at_index(
         }
     }
 
-    parent_array->release(parent_array.get());
-
     return array;
 }
 
-std::unique_ptr<ArrowSchema> ArrowAdapter::arrow_schema_insert_at_index(
-    std::unique_ptr<ArrowSchema> parent_schema,
-    std::vector<std::unique_ptr<ArrowSchema>> child_schemas,
+managed_unique_ptr<ArrowSchema> ArrowAdapter::arrow_schema_insert_at_index(
+    managed_unique_ptr<ArrowSchema> parent_schema,
+    std::vector<managed_unique_ptr<ArrowSchema>> child_schemas,
     int64_t index) {
     if (parent_schema->n_children < index || index < 0) {
         throw std::runtime_error(
@@ -1874,13 +1888,11 @@ std::unique_ptr<ArrowSchema> ArrowAdapter::arrow_schema_insert_at_index(
         }
     }
 
-    parent_schema->release(parent_schema.get());
-
     return schema;
 }
 
-std::unique_ptr<ArrowArray> ArrowAdapter::arrow_array_remove_at_index(
-    std::unique_ptr<ArrowArray> array, int64_t index) {
+managed_unique_ptr<ArrowArray> ArrowAdapter::arrow_array_remove_at_index(
+    managed_unique_ptr<ArrowArray> array, int64_t index) {
     if (array->n_children <= index || index < 0) {
         throw std::runtime_error(
             "[ArrowAdapter][arrow_array_remove_at_index] Invalid index to "
@@ -1897,13 +1909,11 @@ std::unique_ptr<ArrowArray> ArrowAdapter::arrow_array_remove_at_index(
         }
     }
 
-    array->release(array.get());
-
     return array_new;
 }
 
-std::unique_ptr<ArrowSchema> ArrowAdapter::arrow_schema_remove_at_index(
-    std::unique_ptr<ArrowSchema> schema, int64_t index) {
+managed_unique_ptr<ArrowSchema> ArrowAdapter::arrow_schema_remove_at_index(
+    managed_unique_ptr<ArrowSchema> schema, int64_t index) {
     if (schema->n_children <= index || index < 0) {
         throw std::runtime_error(
             "[ArrowAdapter][arrow_schema_remove_at_index] Invalid index to "
@@ -1921,8 +1931,6 @@ std::unique_ptr<ArrowSchema> ArrowAdapter::arrow_schema_remove_at_index(
             ArrowSchemaMove(schema->children[i], schema_new->children[idx]);
         }
     }
-
-    schema->release(schema.get());
 
     return schema_new;
 }

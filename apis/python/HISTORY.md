@@ -11,6 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Changed
 
 - \[[#3983](https://github.com/single-cell-data/TileDB-SOMA/pull/3983)\] [python] Multiple writes of pre-sorted data may now be written to a single fragment using TileDB global order writes. Enable this performance optimization by setting the platform_config parameter sort_coords to True in the call to write. Will raise an error if data is not written in global sort order.
+- \[[#4086](https://github.com/single-cell-data/TileDB-SOMA/pull/4086)\] [python] Add new parameter `allow_duplicate_obs_ids` to the `tiledbsoma.io` functions `register_anndatas` and `register_h5ads`.  When `False` (default), a error will be raised if there are any duplicate `obs` IDs in the provided SOMA Experiment or AnnData objects. Set the parameter to `True` for legacy behavior. ID handling on the `var` axis is unchanged.
 
 ### Deprecated
 
@@ -23,6 +24,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Fixed
 
 - \[[#4071](https://github.com/single-cell-data/TileDB-SOMA/pull/4071)\] [python] A `tiledb_timestamp` with value of zero is now equivalent to an unspecified timestamp (or `None`), and will be a synonym for "current time". Prior to this fix, a zero-valued timestamp would generate errors or unpredictable results.
+- \[[#4103](https://github.com/single-cell-data/TileDB-SOMA/pull/4103)\] [python] Do not attempt to resize empty measurements in tiledbsoma.io.prepare_experiment. This fixes a bug where calling `prepare_experiment` would fail if the Experiment contained any empty Measurements.
 
 ### Security
 
@@ -42,12 +44,9 @@ The primary change in 1.17.0 is the upgrade to TileDB 2.28.
 ### Fixed
 
 - \[[#4040](https://github.com/single-cell-data/TileDB-SOMA/pull/4040)\] [python] suppress insignificant overflow warning from numpy.
-
 - \[[#4050](https://github.com/single-cell-data/TileDB-SOMA/pull/4050)\] DataFrame `count` and SparseNDArray `nnz` fix - report correct number of cells in array in the case where a delete query had been previously applied.
-
 - \[[#4055](https://github.com/single-cell-data/TileDB-SOMA/pull/4055)\] Various `open()` code paths failed to check the SOMA encoding version number, and would fail with cryptic errors.
 - \[[#4066](https://github.com/single-cell-data/TileDB-SOMA/pull/4066)\] Fix various memory leaks related to releasing Arrow structures when transfering ownership between C++ and Python and vise versa.
-
 - \[[#4031](https://github.com/single-cell-data/TileDB-SOMA/pull/4031)\] [python] Storage paths generated from collection keys are now URL-escaped if they contain characters outside the safe set (`a-zA-Z0-9-_.()^!@+={}~'`). Additionally, the special names `..` and `.` are now prohibited.
 
 ## [Release prior to 1.17.0]

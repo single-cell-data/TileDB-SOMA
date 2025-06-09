@@ -92,19 +92,23 @@ load_dataset <- function(name, dir = tempdir(), tiledbsoma_ctx = NULL) {
   dataset_uri <- extract_dataset(name, dir)
 
   # Inspect the object's metadata
-  object <- switch(get_tiledb_object_type(dataset_uri, soma_context()),
-    "ARRAY" = TileDBArray$new(dataset_uri, internal_use_only = "allowed_use"),
-    "GROUP" = TileDBGroup$new(dataset_uri, internal_use_only = "allowed_use"),
-    stop("The dataset is not a TileDB Array or Group", call. = FALSE)
+  ctx <- soma_context()
+  metadata <- get_all_metadata(
+    dataset_uri,
+    is_array = switch(
+      get_tiledb_object_type(dataset_uri, ctxxp = ctx),
+      ARRAY = TRUE,
+      GROUP = FALSE,
+      stop("The dataset is not a TileDB Array or Group", call. = FALSE)
+    ),
+    ctxxp = ctx
   )
-
-  # Instantiate the proper SOMA object
-  object$open(internal_use_only = "allowed_use")
-  switch(object$get_metadata("soma_object_type"),
-    "SOMAExperiment" = SOMAExperimentOpen(dataset_uri, tiledbsoma_ctx = tiledbsoma_ctx),
-    "SOMADataFrame" = SOMADataFrameOpen(dataset_uri, tiledbsoma_ctx = tiledbsoma_ctx),
+  return(switch(
+    metadata$soma_object_type %||% "",
+    SOMAExperiment = SOMAExperimentOpen(dataset_uri, tiledbsoma_ctx = tiledbsoma_ctx),
+    SOMADataFrame = SOMADataFrameOpen(dataset_uri, tiledbsoma_ctx = tiledbsoma_ctx),
     stop("The dataset is an unsupported SOMA object", call. = FALSE)
-  )
+  ))
 }
 
 example_data_dir <- function() {

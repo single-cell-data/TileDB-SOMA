@@ -21,6 +21,7 @@ import tiledbsoma
 import tiledbsoma.io
 import tiledbsoma.logging as logging
 from tiledbsoma import DataFrame, Experiment, SOMAError
+from tiledbsoma._types import PDIndex
 from tiledbsoma.options import SOMATileDBContext
 from tiledbsoma.options._soma_tiledb_context import _validate_soma_tiledb_context
 
@@ -45,11 +46,13 @@ class AxisAmbientLabelMapping:
     field_name: str
     joinid_map: pd.DataFrame  # id -> soma_joinid
     enum_values: dict[str, pd.CategoricalDtype]
+    allow_duplicate_ids: bool
 
     shape: int = attrs.field(init=False)
 
     def __attrs_post_init__(self) -> None:
         assert self.joinid_map.empty or self.joinid_map.soma_joinid.dtype == np.int64
+        assert self.joinid_map.index.is_unique
         object.__setattr__(
             self,
             "shape",
@@ -102,7 +105,6 @@ class ExperimentAmbientLabelMapping:
     prepared: bool = False
 
     def id_mappings_for_anndata(self, adata: ad.AnnData, *, measurement_name: str = "RNA") -> ExperimentIDMapping:
-
         obs_axis = AxisIDMapping(
             data=self.obs_axis.joinid_map.loc[
                 _get_dataframe_joinid_index(adata.obs, self.obs_axis.field_name)
@@ -210,7 +212,6 @@ class ExperimentAmbientLabelMapping:
                         )
 
         with Experiment.open(experiment_uri, context=context) as E:
-
             _check_experiment_structure(E)
 
             # Resize is done only if we have an Experiment supporting current domain.
@@ -221,7 +222,7 @@ class ExperimentAmbientLabelMapping:
                 tiledbsoma.io.resize_experiment(
                     experiment_uri,
                     nobs=self.get_obs_shape(),
-                    nvars=self.get_var_shapes(),
+                    nvars={k: v for k, v in self.get_var_shapes().items() if v > 0},
                     context=context,
                 )
             else:
@@ -231,7 +232,6 @@ class ExperimentAmbientLabelMapping:
                 )
 
         with Experiment.open(experiment_uri, context=context, mode="w") as E:
-
             # Enumerations schema evolution
             extend_enumerations(E.obs, self.obs_axis.enum_values)
 
@@ -266,7 +266,6 @@ class ExperimentAmbientLabelMapping:
             )
 
         for adata in adatas:
-
             validate_anndata(adata)  # may throw
 
             obs_metadata.append(
@@ -384,6 +383,7 @@ class ExperimentAmbientLabelMapping:
         obs_field_name: str,
         var_field_name: str,
         context: SOMATileDBContext,
+        allow_duplicate_obs_ids: bool,
     ) -> ExperimentAmbientLabelMapping:
         """Private method used by various constructor paths -- shared code for registration.
 
@@ -431,6 +431,20 @@ class ExperimentAmbientLabelMapping:
                 [t[2] for t in axes_metadata if t[2] is not None],  # raw.var
             ],
         )
+
+        var_axis_metadata = attrs.evolve(var_axis_metadata, field_index=var_axis_metadata.field_index.drop_duplicates())
+        raw_var_axis_metadata = attrs.evolve(
+            raw_var_axis_metadata, field_index=raw_var_axis_metadata.field_index.drop_duplicates()
+        )
+
+        if allow_duplicate_obs_ids:
+            obs_axis_metadata = attrs.evolve(
+                obs_axis_metadata, field_index=obs_axis_metadata.field_index.drop_duplicates()
+            )
+        elif not obs_axis_metadata.field_index.is_unique:
+            examples = obs_axis_metadata.field_index[obs_axis_metadata.field_index.duplicated().nonzero()[0]]
+            _raise_non_unique_obs_id_error(examples)
+
         logging.log_io_same("Finished reducing axis metadata")
 
         # And, grab the result of step 1 from the futures
@@ -457,10 +471,18 @@ class ExperimentAmbientLabelMapping:
         def _make_joinid_map(
             joinids_index: pd.Index,  # type:ignore[type-arg]
             prev_joinid_map: pd.DataFrame,
+            raise_on_dups: bool,
         ) -> pd.DataFrame:
             maps = []
             if len(prev_joinid_map) > 0:
-                joinids_index = joinids_index.difference(prev_joinid_map.index, sort=False)
+                # find any joinids not already in he prev_joinid_map
+                new_joinids_index = joinids_index.difference(prev_joinid_map.index, sort=False)
+                if raise_on_dups and len(new_joinids_index) != len(joinids_index):
+                    examples = joinids_index.intersection(prev_joinid_map.index)
+                    _raise_non_unique_obs_id_error(examples)
+                else:
+                    joinids_index = new_joinids_index
+
                 next_soma_joinid = prev_joinid_map.soma_joinid.max() + 1
                 maps.append(prev_joinid_map)
             else:
@@ -481,12 +503,15 @@ class ExperimentAmbientLabelMapping:
             )
             return pd.concat(maps)
 
-        obs_joinid_map_future = tp.submit(_make_joinid_map, obs_axis_metadata.field_index, existing_obs_joinid_map)
+        obs_joinid_map_future = tp.submit(
+            _make_joinid_map, obs_axis_metadata.field_index, existing_obs_joinid_map, not allow_duplicate_obs_ids
+        )
         var_joinid_maps_future = {
             measurement_name: tp.submit(
                 _make_joinid_map,
                 var_axis_metadata.field_index,
                 existing_var_joinid_maps.get(measurement_name, pd.DataFrame()),
+                False,
             )
         }
         if len(raw_var_axis_metadata.field_index) > 0:
@@ -494,6 +519,7 @@ class ExperimentAmbientLabelMapping:
                 _make_joinid_map,
                 raw_var_axis_metadata.field_index,
                 existing_var_joinid_maps.get("raw", pd.DataFrame()),
+                False,
             )
 
         obs_joinid_map = obs_joinid_map_future.result()
@@ -527,12 +553,14 @@ class ExperimentAmbientLabelMapping:
             field_name=obs_field_name,
             joinid_map=obs_joinid_map,
             enum_values=obs_enum_values,
+            allow_duplicate_ids=allow_duplicate_obs_ids,
         )
         var_axes = {
             k: AxisAmbientLabelMapping(
                 field_name=var_field_name,
                 joinid_map=(var_joinid_maps[k] if k in var_joinid_maps else pd.DataFrame()),
                 enum_values=var_enum_values[k] if k in var_enum_values else {},
+                allow_duplicate_ids=True,
             )
             for k in set(var_joinid_maps.keys()) | set(var_enum_values.keys())
         }
@@ -600,7 +628,7 @@ class AnnDataAxisMetadata:
                 return pd.Index([])
             if len(indices) == 1:
                 return indices[0]
-            return cast("pd.Index[Any]", indices[0].append(indices[1:]).drop_duplicates())  # type: ignore[no-untyped-call]
+            return cast("pd.Index[Any]", indices[0].append(indices[1:]))  # type: ignore[no-untyped-call]
 
         return cls(
             field_name=ams[0].field_name,
@@ -661,3 +689,13 @@ def _get_dataframe_joinid_index(df: pd.DataFrame, field_name: str) -> pd.Index: 
     if df.index.name in (field_name, "index", None):
         return cast("pd.Index[Any]", df.index)
     raise ValueError(f"Could not find field name {field_name} in dataframe.")
+
+
+def _raise_non_unique_obs_id_error(examples: PDIndex) -> None:
+    a_few_examples = examples[0:4].to_list()
+    msg = f"""Duplicate obs IDs found during registration. {len(examples)} obs IDs are not unique across the provided inputs.
+Example duplicate obs ID(s): {a_few_examples}.
+
+Please ensure obs IDs are unique across all inputs for append operations.
+If you are intentionally adding a new Measurement to existing observations, use the 'allow_duplicate_obs_ids=True' flag."""
+    raise SOMAError(msg)
