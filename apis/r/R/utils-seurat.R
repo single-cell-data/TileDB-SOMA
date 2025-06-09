@@ -361,5 +361,7 @@
       immediate. = TRUE
     )
   }
+  spdl::debug("gc assay")
+  gc()
   return(ms)
 }

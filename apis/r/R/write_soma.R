@@ -103,6 +103,8 @@ write_soma.character <- function(
     relative = relative
   )
   sdf$set_metadata(uns_hint("1d"))
+  spdl::debug("gc character")
+  gc()
   return(sdf)
 }
 
@@ -291,6 +293,8 @@ write_soma.data.frame <- function(
     )
   }
   # Return
+  spdl::debug("gc data frame")
+  gc()
   return(sdf)
 }
 
@@ -430,6 +434,8 @@ write_soma.matrix <- function(
     )
   }
   # Return
+  spdl::debug("gc matrix")
+  gc()
   return(array)
 }
 
@@ -598,6 +604,8 @@ write_soma.TsparseMatrix <- function(
     )
   }
   # Return
+  spdl::debug("gc tsparse")
+  gc()
   return(array)
 }
 
