@@ -24,6 +24,7 @@ from . import (
     _dataframe,
     _dense_nd_array,
     _experiment,
+    _geometry_dataframe,
     _measurement,
     _multiscale_image,
     _point_cloud_dataframe,
@@ -168,6 +169,7 @@ def _type_name_to_cls(type_name: str) -> type[AnySOMAObject]:
             _sparse_nd_array.SparseNDArray,
             _scene.Scene,
             _point_cloud_dataframe.PointCloudDataFrame,
+            _geometry_dataframe.GeometryDataFrame,
         )
     }
     try:
