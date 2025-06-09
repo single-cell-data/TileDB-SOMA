@@ -818,10 +818,6 @@ class MetadataWrapper(MutableMapping[str, Any]):
             return f"<{prefix}>"
         return f"<{prefix} {self.cache}>"
 
-    @property
-    def is_synced(self) -> bool:
-        return not self._mods
-
 
 def _check_metadata_type(key: str, obj: Metadatum) -> None:
     """Pre-checks that a metadata entry can be stored in an array.
