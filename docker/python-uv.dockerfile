@@ -22,10 +22,7 @@ RUN pip install --upgrade pip \
   && uv init example
 
 WORKDIR example
-# Required on ARM, until ARM Linux wheels are published:
-# - https://github.com/single-cell-data/TileDB-SOMA/issues/3890
-# - https://github.com/single-cell-data/TileDB-SOMA/issues/3909
-RUN echo "cmake<4" > constraints.txt
-RUN uv pip install --system --build-constraints constraints.txt tiledbsoma
+# Explicit scanpy>=1.11 pin is required, otherwise `uv` gets confused and fails trying to install Scanpy 1.9 → Numba 0.53 → llvmlite 0.36 → Python 3.8
+RUN uv pip install --system tiledbsoma 'scanpy>=1.11'
 
 ENTRYPOINT [ "python", "-c", "import tiledbsoma; tiledbsoma.show_package_versions()" ]
