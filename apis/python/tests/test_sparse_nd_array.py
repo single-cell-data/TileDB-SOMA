@@ -9,10 +9,12 @@ import operator
 import pathlib
 import sys
 from concurrent import futures
+from pathlib import Path
 from typing import Any, Union
 from unittest import mock
 
 import numpy as np
+import pandas as pd
 import pyarrow as pa
 import pytest
 import scipy.sparse as sparse
@@ -1956,3 +1958,113 @@ def test_resize_with_time_travel_61254(tmp_path, ts):
     with soma.open(uri, mode="r", tiledb_timestamp=most_recent_write_ts) as A:
         assert A.shape == (20,), f"Expected {(20,)}, got {A.shape}"
         assert A.read().tables().concat()["soma_dim_0"].to_pylist()[-1] == 9
+
+
+@pytest.mark.parametrize("element_type", NDARRAY_ARROW_TYPES_SUPPORTED)
+def test_fragments_in_writes(tmp_path, element_type):
+    uri = tmp_path.as_posix()
+
+    # --- three dataframes, all with identical schema
+    df_0 = pd.DataFrame(
+        {
+            "soma_dim_0": pd.Series([0, 1, 2, 3], dtype=np.int64),
+            "soma_data": pd.Series([0, 1, 2, 3], dtype="int32"),
+        }
+    )
+    df_1 = pd.DataFrame(
+        {
+            "soma_dim_0": pd.Series([4, 5, 6, 7], dtype=np.int64),
+            "soma_data": pd.Series([0, 1, 2, 3], dtype="int32"),
+        }
+    )
+    df_2 = pd.DataFrame(
+        {
+            "soma_dim_0": pd.Series([8, 9, 10, 11], dtype=np.int64),
+            "soma_data": pd.Series([0, 1, 2, 3], dtype="int32"),
+        }
+    )
+    expected_df = pd.concat([df_0, df_1, df_2], ignore_index=True)
+
+    soma.SparseNDArray.create(uri, type=pa.int32(), shape=(12,))
+
+    with soma.SparseNDArray.open(uri, mode="w") as A:
+        # Three-chunk table
+        A.write(
+            pa.concat_tables(
+                [
+                    pa.Table.from_pandas(df_0, preserve_index=False),
+                    pa.Table.from_pandas(df_1, preserve_index=False),
+                    pa.Table.from_pandas(df_2, preserve_index=False),
+                ]
+            ),
+            platform_config=soma.TileDBWriteOptions(**{"sort_coords": False}),
+        )
+
+    # There should be a single fragment even though there are three chunks (and
+    # therefore three submits) in the array because we only finalize once at
+    # the end
+    assert len(list((Path(uri) / "__commits").iterdir())) == 1
+    assert len(list((Path(uri) / "__fragments").iterdir())) == 1
+
+    with soma.open(uri) as A:
+        df = A.read().tables().concat().to_pandas()
+
+    assert df.equals(expected_df)
+
+
+@pytest.mark.parametrize(
+    "dtype",
+    ["int8", "int16", "int32", "uint8", "uint16", "uint32", "uint64", "float32", "float64"],
+)
+def test_fragments_in_writes_2d(tmp_path, dtype):
+    uri = tmp_path.as_posix()
+
+    # --- three dataframes, all with identical schema
+    df_0 = pd.DataFrame(
+        {
+            "soma_dim_0": pd.Series([0, 1, 2, 3], dtype=dtype),
+            "soma_dim_1": pd.Series([0, 1, 2, 3], dtype=dtype),
+            "soma_data": pd.Series([0, 1, 2, 3], dtype="int32"),
+        }
+    )
+    df_1 = pd.DataFrame(
+        {
+            "soma_dim_0": pd.Series([4, 5, 6, 7], dtype=dtype),
+            "soma_dim_1": pd.Series([4, 5, 6, 7], dtype=dtype),
+            "soma_data": pd.Series([0, 1, 2, 3], dtype="int32"),
+        }
+    )
+    df_2 = pd.DataFrame(
+        {
+            "soma_dim_0": pd.Series([8, 9, 10, 11], dtype=dtype),
+            "soma_dim_1": pd.Series([8, 9, 10, 11], dtype=dtype),
+            "soma_data": pd.Series([0, 1, 2, 3], dtype="int32"),
+        }
+    )
+    expected_df = pd.concat([df_0, df_1, df_2], ignore_index=True)
+
+    soma.SparseNDArray.create(uri, type=pa.int32(), shape=(12, 12))
+
+    with soma.SparseNDArray.open(uri, mode="w") as A:
+        # Three-chunk table
+        A.write(
+            pa.concat_tables(
+                [
+                    pa.Table.from_pandas(df_0, preserve_index=False),
+                    pa.Table.from_pandas(df_1, preserve_index=False),
+                    pa.Table.from_pandas(df_2, preserve_index=False),
+                ]
+            ),
+            platform_config=soma.TileDBWriteOptions(**{"sort_coords": False}),
+        )
+
+    # There should be a single fragment even though there are three chunks (and
+    # therefore three submits) in the array because we only finalize once at
+    # the end
+    assert len(list((Path(uri) / "__commits").iterdir())) == 1
+    assert len(list((Path(uri) / "__fragments").iterdir())) == 1
+
+    with soma.open(uri) as A:
+        df = A.read().tables().concat().to_pandas()
+
+    np.testing.assert_array_equal(df, expected_df)

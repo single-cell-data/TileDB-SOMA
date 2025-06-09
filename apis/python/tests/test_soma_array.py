@@ -2,9 +2,12 @@
 
 import os
 
+import numpy as np
+import pandas as pd
 import pyarrow as pa
 import pytest
 
+import tiledbsoma as soma
 import tiledbsoma.pytiledbsoma as clib
 
 VERBOSE = False

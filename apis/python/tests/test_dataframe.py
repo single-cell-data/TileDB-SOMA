@@ -23,6 +23,7 @@ import tiledbsoma as soma
 
 from tests._util import raises_no_typeguard
 
+from . import NDARRAY_ARROW_TYPES_SUPPORTED
 from ._util import ROOT_DATA_DIR
 
 
@@ -3576,3 +3577,321 @@ def test_append_enumerations_at_timestamp_2879(tmp_path):
 
     with soma.DataFrame.open(uri, tiledb_timestamp=3) as sdf:
         assert sdf.read().concat()["foo"] == rb3["foo"]
+
+
+@pytest.mark.parametrize(
+    "dtype",
+    ["int8", "int16", "int32", "uint8", "uint16", "uint32", "uint64", "float32", "float64"],
+)
+def test_fragments_in_writes(tmp_path, dtype):
+    uri = tmp_path.as_posix()
+
+    # --- three dataframes, all with identical schema
+    df_0 = pd.DataFrame(
+        {
+            "soma_joinid": pd.Series([0, 1, 2, 3], dtype=np.int64),
+            "obs": pd.Series([0, 1, 2, 3], dtype=dtype),
+        }
+    )
+    df_1 = pd.DataFrame(
+        {
+            "soma_joinid": pd.Series([4, 5, 6, 7], dtype=np.int64),
+            "obs": pd.Series([4, 5, 6, 7], dtype=dtype),
+        }
+    )
+    df_2 = pd.DataFrame(
+        {
+            "soma_joinid": pd.Series([8, 9, 10, 11], dtype=np.int64),
+            "obs": pd.Series([8, 9, 10, 11], dtype=dtype),
+        }
+    )
+    expected_df = pd.concat([df_0, df_1, df_2], ignore_index=True)
+
+    soma.DataFrame.create(
+        uri,
+        schema=pa.Schema.from_pandas(df_0, preserve_index=False),
+        domain=[[0, 11]],
+    ).close()
+
+    with soma.DataFrame.open(uri, mode="w") as A:
+        # Three-chunk table
+        A.write(
+            pa.concat_tables(
+                [
+                    pa.Table.from_pandas(df_0, preserve_index=False),
+                    pa.Table.from_pandas(df_1, preserve_index=False),
+                    pa.Table.from_pandas(df_2, preserve_index=False),
+                ]
+            ),
+            platform_config=soma.TileDBWriteOptions(**{"sort_coords": False}),
+        )
+
+    # There should be a single fragment even though there are three chunks (and
+    # therefore three submits) in the array because we only finalize once at
+    # the end
+    assert len(list((Path(uri) / "__commits").iterdir())) == 1
+    assert len(list((Path(uri) / "__fragments").iterdir())) == 1
+
+    with soma.open(uri) as A:
+        df = A.read().concat().to_pandas()
+
+    np.testing.assert_array_equal(df, expected_df)
+
+
+def test_fragments_in_writes_str(tmp_path):
+    uri = tmp_path.as_posix()
+
+    # --- three dataframes, all with identical schema
+    df_0 = pd.DataFrame(
+        {
+            "soma_joinid": pd.Series([0, 1, 2, 3], dtype=np.int64),
+            "obs": pd.Series(["A", "B", "A", "B"], dtype="str"),
+        }
+    )
+    df_1 = pd.DataFrame(
+        {
+            "soma_joinid": pd.Series([4, 5, 6, 7], dtype=np.int64),
+            "obs": pd.Series(["A", "A", "B", "B"], dtype="str"),
+        }
+    )
+    df_2 = pd.DataFrame(
+        {
+            "soma_joinid": pd.Series([8, 9, 10, 11], dtype=np.int64),
+            "obs": pd.Series(["B", "C", "B", "C"], dtype="str"),
+        }
+    )
+    expected_df = pd.concat([df_0, df_1, df_2], ignore_index=True)
+
+    soma.DataFrame.create(
+        uri,
+        schema=pa.Schema.from_pandas(df_0, preserve_index=False),
+        domain=[[0, 11]],
+    ).close()
+
+    with soma.DataFrame.open(uri, mode="w") as A:
+        # Three-chunk table
+        A.write(
+            pa.concat_tables(
+                [
+                    pa.Table.from_pandas(df_0, preserve_index=False),
+                    pa.Table.from_pandas(df_1, preserve_index=False),
+                    pa.Table.from_pandas(df_2, preserve_index=False),
+                ]
+            ),
+            platform_config=soma.TileDBWriteOptions(**{"sort_coords": False}),
+        )
+
+    # There should be a single fragment even though there are three chunks (and
+    # therefore three submits) in the array because we only finalize once at
+    # the end
+    assert len(list((Path(uri) / "__commits").iterdir())) == 1
+    assert len(list((Path(uri) / "__fragments").iterdir())) == 1
+
+    with soma.open(uri) as A:
+        df = A.read().concat().to_pandas()
+
+    np.testing.assert_array_equal(df, expected_df)
+
+
+def test_fragments_in_writes_ooo_batch(tmp_path):
+    uri = tmp_path.as_posix()
+
+    schema = pa.schema(
+        [
+            ("soma_joinid", pa.int64()),
+            ("obs", pa.string()),
+        ]
+    )
+
+    df = pd.DataFrame(
+        {
+            "soma_joinid": pd.Series([0, 1, 2, 3], dtype=np.int64),
+            "obs": pd.Series(["A", "B", "A", "B"], dtype="str"),
+        }
+    )
+    out_of_order_df = pd.DataFrame(
+        {
+            "soma_joinid": pd.Series([5, 4], dtype=np.int64),
+            "obs": pd.Series(["A", "B"], dtype="str"),
+        }
+    )
+    cfg = soma.TileDBWriteOptions(**{"sort_coords": False})
+    soma.DataFrame.create(uri, schema=schema, domain=[[0, 5]]).close()
+
+    with soma.DataFrame.open(uri, mode="w") as A:
+        with pytest.raises(soma.SOMAError):
+            A.write(
+                pa.concat_tables(
+                    [
+                        pa.Table.from_pandas(df, preserve_index=False),
+                        pa.Table.from_pandas(out_of_order_df, preserve_index=False),
+                    ]
+                ),
+                platform_config=cfg,
+            )
+
+
+def test_fragments_in_writes_empty_batch(tmp_path):
+    uri = tmp_path.as_posix()
+
+    schema = pa.schema(
+        [
+            ("soma_joinid", pa.int64()),
+            ("obs", pa.string()),
+        ]
+    )
+
+    df = pd.DataFrame(
+        {
+            "soma_joinid": pd.Series([0, 1, 2, 3], dtype=np.int64),
+            "obs": pd.Series(["A", "B", "A", "B"], dtype="str"),
+        }
+    )
+    empty_df = pd.DataFrame(
+        {
+            "soma_joinid": pd.Series([], dtype=np.int64),
+            "obs": pd.Series([], dtype="str"),
+        }
+    )
+    expected_df = pd.concat([df, empty_df], ignore_index=True)
+
+    cfg = soma.TileDBWriteOptions(**{"sort_coords": False})
+    soma.DataFrame.create(uri, schema=schema, domain=[[0, 3]]).close()
+
+    with soma.DataFrame.open(uri, mode="w") as A:
+        A.write(
+            pa.concat_tables(
+                [
+                    pa.Table.from_pandas(df, preserve_index=False),
+                    pa.Table.from_pandas(empty_df, schema=schema, preserve_index=False),
+                ]
+            ),
+            platform_config=cfg,
+        )
+
+    with soma.DataFrame.open(uri, mode="r") as A:
+        actual_df = A.read().concat().to_pandas()
+
+    assert actual_df.equals(expected_df)
+
+
+def test_fragments_in_writes_null(tmp_path):
+    uri = tmp_path.as_posix()
+
+    schema = pa.schema(
+        [
+            ("soma_joinid", pa.int64()),
+            ("obs", pa.string()),
+        ]
+    )
+
+    df = pd.DataFrame(
+        {
+            "soma_joinid": pd.Series([0, 1, 2, 3], dtype=np.int64),
+            "obs": pd.Series(["A", "B", "A", "B"], dtype="str"),
+        }
+    )
+    null_df = pd.DataFrame(
+        {
+            "soma_joinid": pd.Series([4], dtype=np.int64),
+            "obs": pd.Series([None], dtype="str"),
+        }
+    )
+    expected_df = pd.concat([df, null_df], ignore_index=True)
+
+    cfg = soma.TileDBWriteOptions(**{"sort_coords": False})
+    soma.DataFrame.create(uri, schema=schema, domain=[[0, 4]]).close()
+
+    with soma.DataFrame.open(uri, mode="w") as A:
+        A.write(
+            pa.concat_tables(
+                [
+                    pa.Table.from_pandas(df, preserve_index=False),
+                    pa.Table.from_pandas(null_df, schema=schema, preserve_index=False),
+                ]
+            ),
+            platform_config=cfg,
+        )
+
+    with soma.DataFrame.open(uri, mode="r") as A:
+        actual_df = A.read().concat().to_pandas()
+
+    assert actual_df.equals(expected_df)
+
+
+def test_managed_query_gow(tmp_path):
+    uri = tmp_path.as_posix()
+
+    df = pd.DataFrame(
+        {
+            "soma_joinid": pd.Series([0, 1, 2, 3], dtype=np.int64),
+            "obs": pd.Series(["A", "B", "A", "B"], dtype="str"),
+        }
+    )
+    tbl = pa.Table.from_pandas(df, preserve_index=False)
+
+    soma.DataFrame.create(
+        uri,
+        schema=pa.Schema.from_pandas(df, preserve_index=False),
+        domain=[[0, 3]],
+    ).close()
+
+    with soma.DataFrame.open(uri, "w") as A:
+        mq = soma.pytiledbsoma.ManagedQuery(A._handle._handle, A.context.native_context)
+        mq.set_layout(soma.pytiledbsoma.ResultOrder.globalorder)
+
+        # Cannot finalize before submitting
+        with pytest.raises(soma.SOMAError):
+            mq.finalize()
+
+        mq.submit_batch(tbl.to_batches()[0])
+        mq.finalize()
+
+        # Finalizing should reset
+        with pytest.raises(soma.SOMAError):
+            mq.finalize()
+
+
+def test_gow_mixed_idxes(tmp_path):
+    uri = tmp_path.as_posix()
+
+    df_0 = pd.DataFrame(
+        {
+            "soma_joinid": pd.Series([4], dtype=np.int64),
+            "str_idx": pd.Series(["a"], dtype=str),
+            "float_idx": pd.Series([1.1], dtype=np.float32),
+            "attr": pd.Series(["hi"], dtype="str"),
+        }
+    )
+    df_1 = pd.DataFrame(
+        {
+            "soma_joinid": pd.Series([6], dtype=np.int64),
+            "str_idx": pd.Series(["b"], dtype=str),
+            "float_idx": pd.Series([2.2], dtype=np.float32),
+            "attr": pd.Series(["bye"], dtype="str"),
+        }
+    )
+    expected_df = pd.concat([df_0, df_1], ignore_index=True)
+
+    soma.DataFrame.create(
+        uri,
+        schema=pa.Schema.from_pandas(df_0),
+        index_column_names=["soma_joinid", "str_idx", "float_idx"],
+        domain=[[0, 10], ["", ""], [0, 10]],
+    )
+
+    with soma.DataFrame.open(uri, mode="w") as A:
+        A.write(
+            pa.concat_tables(
+                [
+                    pa.Table.from_pandas(df_0, preserve_index=False),
+                    pa.Table.from_pandas(df_1, preserve_index=False),
+                ]
+            ),
+            platform_config=soma.TileDBWriteOptions(**{"sort_coords": False}),
+        )
+
+    with soma.open(uri) as A:
+        df = A.read().concat().to_pandas()
+
+    assert df.equals(expected_df)

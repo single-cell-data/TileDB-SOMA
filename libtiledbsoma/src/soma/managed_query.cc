@@ -59,6 +59,8 @@ void ManagedQuery::reset() {
     query_ = std::make_unique<Query>(*ctx_, *array_);
     subarray_ = std::make_unique<Subarray>(*ctx_, *array_);
 
+    set_layout(layout_);
+
     subarray_range_set_ = {};
     subarray_range_empty_ = {};
     columns_.clear();
@@ -173,32 +175,30 @@ void ManagedQuery::setup_read() {
     }
 }
 
-void ManagedQuery::submit_write(bool sort_coords) {
-    _fill_in_subarrays_if_dense(false);
-
+void ManagedQuery::_setup_write() {
     if (array_->query_type() != TILEDB_WRITE) {
         throw TileDBSOMAError(
-            "[ManagedQuery] write requires array to be opened in write mode");
+            "[ManagedQuery] write requires array to be opened in write "
+            "mode");
     }
+
+    _fill_in_subarrays_if_dense(false);
 
     if (array_->schema().array_type() == TILEDB_DENSE) {
         query_->set_subarray(*subarray_);
-    } else {
-        query_->set_layout(
-            sort_coords ? TILEDB_UNORDERED : TILEDB_GLOBAL_ORDER);
     }
+}
 
-    if (query_->query_layout() == TILEDB_GLOBAL_ORDER) {
-        query_->submit_and_finalize();
-    } else {
-        query_->submit();
-        query_->finalize();
-    }
+void ManagedQuery::_teardown_write() {
+    // Reset
+    buffers_.reset();
 
     // When we evolve the schema, the ArraySchema needs to be updated to the
     // latest version so re-open the Array
     array_->close();
     array_->open(TILEDB_WRITE);
+
+    query_submitted_ = false;
 }
 
 void ManagedQuery::submit_read() {
@@ -520,6 +520,8 @@ uint64_t ManagedQuery::_get_max_capacity(tiledb_datatype_t index_type) {
 
 void ManagedQuery::set_array_data(
     ArrowSchema* arrow_schema, ArrowArray* arrow_array) {
+    buffers_.reset();
+
     // Go through all columns in the ArrowTable and cast the values to what is
     // in the ArraySchema on disk
     ArraySchemaEvolution se(*ctx_);
