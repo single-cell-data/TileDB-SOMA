@@ -142,6 +142,11 @@ class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
             )
         self._handle = handle
         self._close_stack.enter_context(self._handle)
+        self._parse_special_metadata()
+
+    def _parse_special_metadata(self) -> None:
+        """Helper function the subclasses can override if they require additional validation or set-up."""
+        return
 
     def reopen(self, mode: options.OpenMode, tiledb_timestamp: OpenTimestamp | None = None) -> Self:
         """Return a new copy of the SOMAObject with the given mode at the current
@@ -165,12 +170,11 @@ class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
         Lifecycle:
             Experimental.
         """
-        if self._handle.has_modified_metadata():
-            raise SOMAError(
-                f"Cannot reopen a SOMAObject with modified metadata that has not been "
-                f"written. To sync metadata close this object."
-            )
-        return self.__class__.open(self.uri, mode, tiledb_timestamp=tiledb_timestamp, context=self.context)
+        self._handle.close()
+        self._handle = self._wrapper_type.open(self._handle.uri, mode, self._handle.context, tiledb_timestamp)  # type: ignore
+        self._close_stack.enter_context(self._handle)
+        self._parse_special_metadata()
+        return self
 
     @property
     def context(self) -> SOMATileDBContext:

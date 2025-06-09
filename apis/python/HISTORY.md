@@ -12,6 +12,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - \[[#4086](https://github.com/single-cell-data/TileDB-SOMA/pull/4086)\] [python] Add new parameter `allow_duplicate_obs_ids` to the `tiledbsoma.io` functions `register_anndatas` and `register_h5ads`.  When `False` (default), a error will be raised if there are any duplicate `obs` IDs in the provided SOMA Experiment or AnnData objects. Set the parameter to `True` for legacy behavior. ID handling on the `var` axis is unchanged.
 
+- \[[#4106](https://github.com/single-cell-data/TileDB-SOMA/pull/4106)\] [python][BREAKING] The `SOMAObject.reopen` method now modifies the orginal `SOMAObject` in place (flushes data to disk and reopens with the requested timestamp and mode) and returns a reference to itself instead of flushing data to disk and opening a new object.
+
 ### Deprecated
 
 - \[[#4081](https://github.com/single-cell-data/TileDB-SOMA/pull/4081)\] [python] the `tiledbsoma.io` functions `append_obs`, `append_var` and `append_X` are deprecated and will be removed in a future release. It is recommended to use tiledbsoma.io.from_anndata (with a registration map from tiledbsoma.io.register_anndatas or tiledbsoma.io.register_h5ads) for appending new, complete AnnData objects to an Experiment.
@@ -24,8 +26,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - \[[#4071](https://github.com/single-cell-data/TileDB-SOMA/pull/4071)\] [python] A `tiledb_timestamp` with value of zero is now equivalent to an unspecified timestamp (or `None`), and will be a synonym for "current time". Prior to this fix, a zero-valued timestamp would generate errors or unpredictable results.
 - \[[#4103](https://github.com/single-cell-data/TileDB-SOMA/pull/4103)\] [python] Do not attempt to resize empty measurements in tiledbsoma.io.prepare_experiment. This fixes a bug where calling `prepare_experiment` would fail if the Experiment contained any empty Measurements.
-
-- \[[#4106](https://github.com/single-cell-data/TileDB-SOMA/pull/4106)\] [python] The `SOMAObject.reopen` method no longer modifies the original `SOMAObject`. It only creates a new instance of a `SOMAObject` in the requested mode and at the requested timestamp. Attempting to `reopen` an object with unwritten metadata now raises a `SOMAError`.
 
 ### Security
 

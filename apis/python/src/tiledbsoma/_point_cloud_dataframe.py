@@ -257,13 +257,7 @@ class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
             _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code",
         )
 
-    def __init__(
-        self,
-        handle: PointCloudDataFrameWrapper,
-        **kwargs: Any,
-    ):
-        super().__init__(handle, **kwargs)
-
+    def _parse_special_metadata(self) -> None:
         # Get and validate coordinate space.
         try:
             coord_space = self.metadata[SOMA_COORDINATE_SPACE_METADATA_KEY]

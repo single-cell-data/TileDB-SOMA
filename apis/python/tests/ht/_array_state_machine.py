@@ -120,18 +120,16 @@ class SOMAArrayStateMachine(RuleBasedStateMachine):
         # TODO: time travel
         self._open(mode=mode)
 
-    @precondition(lambda self: not self.closed)
-    @precondition(lambda self: not self.A._handle.has_modified_metadata)
+    @precondition(lambda self: self.is_initialized)
     @rule(mode=st.sampled_from(["r", "w"]))
     def reopen(self, mode: OpenMode) -> None:
-        assert not self.A._handle.has_modified_metadata
-        assert self.mode is not None
-        self.A = self.A.reopen(
+        self.A.reopen(
             mode,
             tiledb_timestamp=None,  # no time-travel for now
         )
-        self.mode = mode
         assert self.A.mode == mode and not self.A.closed
+        self.closed = False
+        self.mode = mode
 
     ##
     ## --- metadata

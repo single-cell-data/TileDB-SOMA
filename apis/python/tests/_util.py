@@ -8,11 +8,14 @@ from typing import Any, Union
 import _pytest
 import numpy as np
 import pandas as pd
+import pyarrow as pa
 import pytest
 from _pytest._code import ExceptionInfo
 from _pytest.logging import LogCaptureFixture
 from packaging.version import Version
 from typing_extensions import TypeVar
+
+import tiledbsoma
 
 if Version(_pytest.__version__) < Version("8.4.0"):
     from _pytest.python_api import RaisesContext
@@ -212,3 +215,39 @@ def verify_logs(caplog: LogCaptureFixture, expected_logs: list[str] | None) -> N
 def filter(value_filter: str) -> AxisQuery:
     """Shorthand for creating an ``AxisQuery`` with a value_filter, in tests."""
     return AxisQuery(value_filter=value_filter)
+
+
+def create_basic_object(soma_type, uri, **kwargs) -> SOMAObject:
+    """Create a basic SOMA object of the requested type."""
+
+    if soma_type == "SOMAExperiment":
+        return tiledbsoma.Experiment.create(uri, **kwargs)
+    if soma_type == "SOMAMeasurement":
+        return tiledbsoma.Measurement.create(uri, **kwargs)
+    if soma_type == "SOMACollection":
+        return tiledbsoma.Collection.create(uri, **kwargs)
+    if soma_type == "SOMAScene":
+        return tiledbsoma.Scene.create(uri, **kwargs)
+    if soma_type == "SOMADataFrame":
+        kwargs.setdefault("schema", pa.schema([pa.field("myint", pa.int64())]))
+        return tiledbsoma.DataFrame.create(uri, **kwargs)
+    if soma_type == "SOMAGeometryDataFrame":
+        kwargs.setdefault("schema", pa.schema([("quality", pa.float32())]))
+        return tiledbsoma.GeometryDataFrame.create(uri, **kwargs)
+    if soma_type == "SOMAPointCloudDataFrame":
+        kwargs.setdefault("schema", pa.schema([("x", pa.float64()), ("y", pa.float64())]))
+        return tiledbsoma.PointCloudDataFrame.create(uri, **kwargs)
+    if soma_type == "SOMADenseNDArray":
+        kwargs.setdefault("type", pa.float64())
+        kwargs.setdefault("shape", (100, 100))
+        return tiledbsoma.DenseNDArray.create(uri, **kwargs)
+    if soma_type == "SOMASparseNDArray":
+        kwargs.setdefault("type", pa.float64())
+        kwargs.setdefault("shape", (100, 100))
+        return tiledbsoma.SparseNDArray.create(uri, **kwargs)
+    if soma_type == "SOMAMultiscaleImage":
+        kwargs.setdefault("type", pa.uint8())
+        kwargs.setdefault("level_shape", (3, 64, 128))
+        return tiledbsoma.MultiscaleImage.create(uri, **kwargs)
+
+    raise "Internal error: Unexepcted soma type '{soma_type}'."

@@ -130,12 +130,7 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
         except SOMAError as e:
             raise map_exception_for_create(e, uri) from None
 
-    def __init__(
-        self,
-        handle: _tdb_handles.SOMAGroupWrapper[Any],
-        **kwargs: Any,
-    ):
-        super().__init__(handle, **kwargs)
+    def _parse_special_metadata(self) -> None:
         coord_space = self.metadata.get(SOMA_COORDINATE_SPACE_METADATA_KEY)
         if coord_space is None:
             self._coord_space: CoordinateSpace | None = None

@@ -270,12 +270,7 @@ class GeometryDataFrame(SpatialDataFrame, somacore.GeometryDataFrame):
             _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code",
         )
 
-    def __init__(
-        self,
-        handle: GeometryDataFrameWrapper,
-        **kwargs: Any,
-    ):
-        super().__init__(handle, **kwargs)
+    def _parse_special_metadata(self) -> None:
 
         # Get and validate coordinate space.
         try:
