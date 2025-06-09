@@ -3,7 +3,6 @@ import datetime
 import pytest
 
 import tiledbsoma
-import tiledb
 
 from ._util import create_basic_object, raises_no_typeguard
 
