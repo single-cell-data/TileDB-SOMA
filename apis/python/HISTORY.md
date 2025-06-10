@@ -20,7 +20,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Release 1.18.0]
 
-The primary changes are modifications and deprecations to the `tiledbsoma.io` ingestion methods.
+The primary changes are modifications and deprecations to the `tiledbsoma.io` ingestion methods. Also introduced an option for writing pre-sorted data via TileDB global order writes.
 
 ### Changed
 
