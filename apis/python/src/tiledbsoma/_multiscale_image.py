@@ -237,14 +237,7 @@ class MultiscaleImage(  # type: ignore[misc]  # __eq__ false positive
 
         return multiscale
 
-    def __init__(
-        self,
-        handle: _tdb_handles.SOMAGroupWrapper[Any],
-        **kwargs: Any,
-    ):
-        # Do generic SOMA collection initialization.
-        super().__init__(handle, **kwargs)
-
+    def _parse_special_metadata(self) -> None:
         try:
             spatial_encoding_version = self.metadata[SOMA_SPATIAL_VERSION_METADATA_KEY]
             if isinstance(spatial_encoding_version, bytes):

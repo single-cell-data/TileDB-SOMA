@@ -142,6 +142,11 @@ class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
             )
         self._handle = handle
         self._close_stack.enter_context(self._handle)
+        self._parse_special_metadata()
+
+    def _parse_special_metadata(self) -> None:
+        """Helper function the subclasses can override if they require additional validation or set-up."""
+        return
 
     def reopen(self, mode: options.OpenMode, tiledb_timestamp: OpenTimestamp | None = None) -> Self:
         """Return a new copy of the SOMAObject with the given mode at the current
@@ -153,22 +158,23 @@ class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
                 - ``r``: Open for reading only (cannot write).
                 - ``w``: Open for writing only (cannot read).
             tiledb_timestamp:
-                The TileDB timestamp to open this object at,
-                either an int representing milliseconds since the Unix epoch
-                or a datetime.datetime object.
-                When not provided (the default), the current time is used.
+                The TileDB timestamp to open this object at, either an int representing milliseconds since the Unix
+                epoch or a datetime.datetime object. When not provided (the default), the current time is used.
 
         Raises:
             ValueError:
                 If the user-provided ``mode`` is invalid.
+            SOMAError:
+                If the object has unwritten metadata.
 
         Lifecycle:
             Experimental.
         """
-        return self.__class__(
-            self._handle.reopen(mode, tiledb_timestamp),  # type: ignore[arg-type]
-            _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code",
-        )
+        self._handle.close()
+        self._handle = self._wrapper_type.open(self._handle.uri, mode, self._handle.context, tiledb_timestamp)  # type: ignore
+        self._close_stack.enter_context(self._handle)
+        self._parse_special_metadata()
+        return self
 
     @property
     def context(self) -> SOMATileDBContext:

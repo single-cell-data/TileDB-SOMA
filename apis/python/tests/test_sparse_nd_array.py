@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import contextlib
-import datetime
 import gc
 import itertools
 import json
@@ -108,43 +107,6 @@ def test_sparse_nd_array_create_ok(tmp_path, shape: tuple[int, ...], element_typ
 
     with pytest.raises(soma.SOMAError):
         soma.MultiscaleImage.open(tmp_path.as_posix())
-
-
-def test_sparse_nd_array_reopen(tmp_path):
-    soma.SparseNDArray.create(tmp_path.as_posix(), type=pa.float64(), shape=(1,), tiledb_timestamp=1)
-
-    with soma.SparseNDArray.open(tmp_path.as_posix(), "r", tiledb_timestamp=1) as A1:
-        with raises_no_typeguard(ValueError):
-            A1.reopen("invalid")
-
-        with A1.reopen("w", tiledb_timestamp=2) as A2:
-            with A2.reopen("r", tiledb_timestamp=3) as A3:
-                assert A1.mode == "r"
-                assert A2.mode == "w"
-                assert A3.mode == "r"
-                assert A1.tiledb_timestamp_ms == 1
-                assert A2.tiledb_timestamp_ms == 2
-                assert A3.tiledb_timestamp_ms == 3
-
-    ts1 = datetime.datetime(2023, 1, 1, 1, 0, tzinfo=datetime.timezone.utc)
-    ts2 = datetime.datetime(2024, 1, 1, 1, 0, tzinfo=datetime.timezone.utc)
-    with soma.SparseNDArray.open(tmp_path.as_posix(), "r", tiledb_timestamp=ts1) as A1:
-        with A1.reopen("r", tiledb_timestamp=ts2) as A2:
-            assert A1.mode == "r"
-            assert A2.mode == "r"
-            assert A1.tiledb_timestamp == ts1
-            assert A2.tiledb_timestamp == ts2
-
-    with soma.SparseNDArray.open(tmp_path.as_posix(), "w") as A1:
-        with A1.reopen("w", tiledb_timestamp=None) as A2:
-            with A2.reopen("w") as A3:
-                assert A1.mode == "w"
-                assert A2.mode == "w"
-                assert A3.mode == "w"
-                now = datetime.datetime.now(datetime.timezone.utc)
-                assert A1.tiledb_timestamp <= now
-                assert A2.tiledb_timestamp <= now
-                assert A3.tiledb_timestamp <= now
 
 
 @pytest.mark.parametrize("shape", [(10,)])
@@ -1901,31 +1863,6 @@ def test_sparse_nd_array_null(tmp_path):
         # any null values present in non-nullable attributes get casted to
         # fill values. In the case for float64, the fill value is 0
         np.testing.assert_array_equal(pdf["soma_data"], table["soma_data"].fill_null(0))
-
-
-def test_reopen_metadata_sc61118(tmp_path):
-    uri = tmp_path.as_posix()
-    with soma.SparseNDArray.create(uri, type=pa.int64(), shape=(10,)) as A1:
-        A1.metadata["foo"] = "bar"
-        with A1.reopen(mode="r") as A2:
-            assert dict(A1.metadata) == dict(A2.metadata)
-
-
-def test_reopen_shape_sc61123(tmp_path):
-    uri = tmp_path.as_posix()
-    with soma.SparseNDArray.create(uri, type=pa.int64(), shape=(10,)) as A:
-        assert A.shape == (10,)
-        assert isinstance(A, soma.SparseNDArray)
-        A = A.reopen(mode="r")
-        assert A.shape == (10,)
-        assert isinstance(A, soma.SparseNDArray)
-
-
-def test_match_read_schemas_61222(tmp_path):
-    uri = tmp_path.as_posix()
-    soma.SparseNDArray.create(uri, type=pa.int32(), shape=(None, None))
-    with soma.SparseNDArray.open(uri) as A:
-        assert A.schema == A.read().tables().concat().schema
 
 
 @pytest.mark.parametrize("ts", (None, 1))

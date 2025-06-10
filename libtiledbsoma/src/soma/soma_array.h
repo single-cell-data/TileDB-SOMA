@@ -213,16 +213,6 @@ class SOMAArray : public SOMAObject {
         OpenMode mode, std::optional<TimestampRange> timestamp = std::nullopt);
 
     /**
-     * Return a new SOMAArray with the given mode at the current Unix timestamp.
-     *
-     * @param mode if the OpenMode is not given, If the SOMAObject was opened in
-     * READ mode, reopen it in WRITE mode and vice versa
-     * @param timestamp Timestamp
-     */
-    std::unique_ptr<SOMAArray> reopen(
-        OpenMode mode, std::optional<TimestampRange> timestamp = std::nullopt);
-
-    /**
      * Close the SOMAArray object.
      */
     void close();
