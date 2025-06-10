@@ -2,6 +2,20 @@
 
 ## Added
 
+## Changed
+
+## Deprecated
+
+## Removed
+
+## Fixed
+
+## Security
+
+# tiledbsoma 1.18.0
+
+## Added
+
 - New `SOMAObject` base class to serve as root for `SOMAArrayBase` and `SOMACollectionBase` ([#3771](https://github.com/single-cell-data/TileDB-SOMA/pull/3771))
 - New field `SOMACollectionBase$members` to get a list with the members of a collection ([#3771](https://github.com/single-cell-data/TileDB-SOMA/pull/3771))
 
@@ -11,15 +25,12 @@
 - `TileDBObject`, `TileDBArray`, and `TileDBGroup` classes have been removed ([#3771](https://github.com/single-cell-data/TileDB-SOMA/pull/3771))
 - `SOMACollection$to_list()` and `SOMACollection$to_data_frame()` have been removed as they were unused public internal methods inherited from `TileDBGroup` ([#3771](https://github.com/single-cell-data/TileDB-SOMA/pull/3771))
 
-## Deprecated
 
 ## Removed
 
 - `SOMAArray$object` has been removed ([#3771](https://github.com/single-cell-data/TileDB-SOMA/pull/3771))
 
-## Fixed
 
-## Security
 
 # tiledbsoma 1.17.0
 
