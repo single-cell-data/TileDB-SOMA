@@ -93,7 +93,10 @@ SOMAGroup::SOMAGroup(
     : ctx_(ctx)
     , uri_(util::rstrip_uri(uri))
     , name_(name)
-    , timestamp_(timestamp) {
+    , timestamp_(timestamp)
+    , soma_mode_(mode) {
+    // Note: both OpenMode.write and OpenMode.del should be opened in
+    // TILEDB_WRITE mode.
     group_ = std::make_shared<Group>(
         *ctx_->tiledb_ctx(),
         std::string(uri),
@@ -110,6 +113,31 @@ SOMAGroup::SOMAGroup(
     , uri_(util::rstrip_uri(group->uri()))
     , group_(group)
     , timestamp_(timestamp) {
+    switch (group_->query_type()) {
+        case TILEDB_READ:
+            soma_mode_ = OpenMode::read;
+            break;
+        case TILEDB_WRITE:
+            soma_mode_ = OpenMode::write;
+            break;
+        case TILEDB_MODIFY_EXCLUSIVE:  // Not supported in SOMA
+        {
+            const char* query_type_str = nullptr;
+            tiledb_query_type_to_str(group_->query_type(), &query_type_str);
+            throw std::invalid_argument(fmt::format(
+                "Cannot open a TileDB group with query type '{}' in "
+                "TileDB-SOMA.",
+                query_type_str));
+        }
+        default: {  // Remaining querty types are only supported on TileDB
+                    // arrays.
+            const char* query_type_str = nullptr;
+            tiledb_query_type_to_str(group_->query_type(), &query_type_str);
+            throw TileDBSOMAError(fmt::format(
+                "Internal error: unexpected TileDB group query type '{}'",
+                query_type_str));
+        }
+    }
     fill_caches();
 }
 
@@ -142,11 +170,13 @@ void SOMAGroup::fill_caches() {
     }
 }
 
-void SOMAGroup::open(
-    OpenMode query_type, std::optional<TimestampRange> timestamp) {
+void SOMAGroup::open(OpenMode mode, std::optional<TimestampRange> timestamp) {
     timestamp_ = timestamp;
+    soma_mode_ = mode;
     group_->set_config(_set_timestamp(ctx_, timestamp));
-    group_->open(query_type == OpenMode::read ? TILEDB_READ : TILEDB_WRITE);
+    // Note: both OpenMode.write and OpenMode.del should be opened in
+    // TILEDB_WRITE mode.
+    group_->open(mode == OpenMode::read ? TILEDB_READ : TILEDB_WRITE);
     fill_caches();
 }
 
