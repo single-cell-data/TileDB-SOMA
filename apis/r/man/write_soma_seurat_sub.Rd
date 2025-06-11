@@ -223,9 +223,7 @@ col <- SOMACollectionCreate(uri)
 (assay5 <- methods::as(pbmc_small[["RNA"]], "Assay5"))
 (ms5 <- write_soma(assay5, "RNA5", soma_parent = col))
 
-\dontshow{
 ms5$close()
-}
 \dontshow{\}) # examplesIf}
 \dontshow{if (requireNamespace("withr", quietly = TRUE) && requireNamespace("SeuratObject", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
 (tsne <- pbmc_small[["tsne"]])
@@ -243,9 +241,7 @@ write_soma(cmd, "NormalizeData.RNA", soma_parent = col)
 (logs <- col$get("seurat_commands"))
 logs$get("NormalizeData.RNA")
 
-\dontshow{
 col$close()
-}
 \dontshow{\}) # examplesIf}
 }
 \keyword{internal}
