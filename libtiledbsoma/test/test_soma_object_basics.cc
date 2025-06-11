@@ -20,6 +20,9 @@ void create_soma_object(
     if (soma_type == "SOMACollection") {
         return SOMACollection::create(uri, context);
     }
+    if (soma_type == "SOMAScene") {
+        return SOMAScene::create(uri, context, std::nullopt);
+    }
     if (soma_type == "SOMADataFrame") {
         auto [schema, index_columns] =
             helper::create_arrow_schema_and_index_columns(
@@ -51,6 +54,65 @@ void create_soma_object(
              .string_lo = "N/A",
              .string_hi = "N/A"})});
         return SOMADenseNDArray::create(uri, "g", index_columns, context);
+    }
+    if (soma_type == "SOMAMultiscaleImage") {
+        SOMACoordinateSpace coord_space{};
+        return SOMAMultiscaleImage::create(
+            uri, context, coord_space, std::nullopt);
+    }
+    if (soma_type == "SOMAPointCloudDataFrame") {
+        std::vector<helper::DimInfo> dim_infos({
+            helper::DimInfo(
+                {.name = "soma_joinid",
+                 .tiledb_datatype = TILEDB_INT64,
+                 .dim_max = 1000,
+                 .string_lo = "N/A",
+                 .string_hi = "N/A"}),
+            helper::DimInfo(
+                {.name = "x",
+                 .tiledb_datatype = TILEDB_UINT32,
+                 .dim_max = 100,
+                 .string_lo = "N/A",
+                 .string_hi = "N/A"}),
+            helper::DimInfo(
+                {.name = "y",
+                 .tiledb_datatype = TILEDB_UINT32,
+                 .dim_max = 100,
+                 .string_lo = "N/A",
+                 .string_hi = "N/A"}),
+        });
+        std::vector<helper::AttrInfo> attr_infos({helper::AttrInfo(
+            {.name = "radius", .tiledb_datatype = TILEDB_FLOAT64})});
+        auto [schema, index_columns] =
+            helper::create_arrow_schema_and_index_columns(
+                dim_infos, attr_infos);
+        SOMACoordinateSpace coord_space{};
+        return SOMAPointCloudDataFrame::create(
+            uri, schema, index_columns, coord_space, context);
+    }
+    if (soma_type == "SOMAGeometryDataFrame") {
+        std::vector<helper::DimInfo> dim_infos(
+            {helper::DimInfo(
+                 {.name = "soma_joinid",
+                  .tiledb_datatype = TILEDB_INT64,
+                  .dim_max = 1000,
+                  .string_lo = "N/A",
+                  .string_hi = "N/A"}),
+             helper::DimInfo(
+                 {.name = "soma_geometry",
+                  .tiledb_datatype = TILEDB_GEOM_WKB,
+                  .dim_max = 100,
+                  .string_lo = "N/A",
+                  .string_hi = "N/A"})});
+
+        std::vector<helper::AttrInfo> attr_infos({helper::AttrInfo(
+            {.name = "quality", .tiledb_datatype = TILEDB_FLOAT64})});
+        SOMACoordinateSpace coord_space{};
+        auto [schema, index_columns] =
+            helper::create_arrow_schema_and_index_columns(
+                dim_infos, attr_infos, coord_space);
+        SOMAGeometryDataFrame::create(
+            uri, schema, index_columns, coord_space, context);
     }
 
     INFO("No support for testing type " + std::string(soma_type));
