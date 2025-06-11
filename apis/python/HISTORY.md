@@ -10,6 +10,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+### Deprecated
+
+### Removed
+
+### Fixed
+
+### Security
+
+## [Release 1.18.0]
+
+The primary changes are modifications and deprecations to the `tiledbsoma.io` ingestion methods. Also introduced an option for writing pre-sorted data via TileDB global order writes.
+
+### Changed
+
 - \[[#3983](https://github.com/single-cell-data/TileDB-SOMA/pull/3983)\] [python] Multiple writes of pre-sorted data may now be written to a single fragment using TileDB global order writes. Enable this performance optimization by setting the platform_config parameter `sort_coords` to `False` in the call to write. Will raise an error if data is not written in global sort order.
 - \[[#4086](https://github.com/single-cell-data/TileDB-SOMA/pull/4086)\] [python] Add new parameter `allow_duplicate_obs_ids` to the `tiledbsoma.io` functions `register_anndatas` and `register_h5ads`.  When `False` (default), a error will be raised if there are any duplicate `obs` IDs in the provided SOMA Experiment or AnnData objects. Set the parameter to `True` for legacy behavior. ID handling on the `var` axis is unchanged.
 - \[[#4108](https://github.com/single-cell-data/TileDB-SOMA/pull/4108)\] [python] improve performance of `tiledbsoma.io.from_anndata` and `from_h5ad` when appending groups of AnnData known to have no duplicate obs axis IDs.
@@ -20,14 +34,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - \[[#4082](https://github.com/single-cell-data/TileDB-SOMA/pull/4082)\] [python] `tiledbsoma.io.create_from_matrix` is deprecated and will be removed in a future release. To add a new matrix as a layer within an existing SOMA Experiment (e.g., to X, obsm, varm), please use the more specific functions tiledbsoma.io.add_X_layer or tiledbsoma.io.add_matrix_to_collection. If you need to create a standalone SOMA NDArray outside of a pre-defined Experiment structure, please use the direct SOMA API constructors, such as tiledbsoma.SparseNDArray.create.
 - \[[#4083](https://github.com/single-cell-data/TileDB-SOMA/pull/4083)\] [python] "resume" mode in tiledbsoma.io ingestion methods is deprecated and will be removed i a future release. This includes from_anndata, from_h5ad and related ingest functions. The recommended and safest approach for recovering from a failed ingestion is to delete the partially written SOMA Experiment and restart the ingestion process from the original input files or a known-good backup.
 
-### Removed
-
 ### Fixed
 
 - \[[#4071](https://github.com/single-cell-data/TileDB-SOMA/pull/4071)\] [python] A `tiledb_timestamp` with value of zero is now equivalent to an unspecified timestamp (or `None`), and will be a synonym for "current time". Prior to this fix, a zero-valued timestamp would generate errors or unpredictable results.
 - \[[#4103](https://github.com/single-cell-data/TileDB-SOMA/pull/4103)\] [python] Do not attempt to resize empty measurements in tiledbsoma.io.prepare_experiment. This fixes a bug where calling `prepare_experiment` would fail if the Experiment contained any empty Measurements.
-
-### Security
 
 ## [Release 1.17.0]
 
