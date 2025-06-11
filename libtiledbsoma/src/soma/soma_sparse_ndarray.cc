@@ -98,16 +98,6 @@ std::unique_ptr<SOMASparseNDArray> SOMASparseNDArray::open(
     return array;
 }
 
-bool SOMASparseNDArray::exists(
-    std::string_view uri, std::shared_ptr<SOMAContext> ctx) {
-    try {
-        auto obj = SOMAObject::open(uri, OpenMode::read, ctx);
-        return "SOMASparseNDArray" == obj->type();
-    } catch (TileDBSOMAError& e) {
-        return false;
-    }
-}
-
 std::string_view SOMASparseNDArray::soma_data_type() {
     return ArrowAdapter::to_arrow_format(
         tiledb_schema()->attribute("soma_data").type());

@@ -76,16 +76,6 @@ std::unique_ptr<SOMADataFrame> SOMADataFrame::open(
     return array;
 }
 
-bool SOMADataFrame::exists(
-    std::string_view uri, std::shared_ptr<SOMAContext> ctx) {
-    try {
-        auto obj = SOMAObject::open(uri, OpenMode::read, ctx);
-        return "SOMADataFrame" == obj->type();
-    } catch (TileDBSOMAError& e) {
-        return false;
-    }
-}
-
 void SOMADataFrame::update_dataframe_schema(
     std::vector<std::string> drop_attrs,
     std::map<std::string, std::string> add_attrs,

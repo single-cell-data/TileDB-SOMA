@@ -875,6 +875,11 @@ class SOMAArray : public SOMAObject {
     std::shared_ptr<SOMAColumn> get_column(std::size_t index) const;
 
    protected:
+    static bool _exists(
+        std::string_view uri,
+        std::string_view soma_type,
+        std::shared_ptr<SOMAContext> ctx);
+
     // See top-of-file notes regarding methods for SOMADataFrame being
     // defined in this file.
     //
