@@ -9,8 +9,8 @@ SOMA Array Base Class
 SOMA Array Base Class
 }
 \details{
-Virtual base class to add SOMA-specific functionality to the
-\code{\link{TileDBArray}} class (lifecycle: maturing).
+Virtual base class to add array-specific functionality to the
+\code{\link{SOMAObject}} class (lifecycle: maturing).
 }
 \seealso{
 Derived classes: \code{\link{SOMADataFrame}},
