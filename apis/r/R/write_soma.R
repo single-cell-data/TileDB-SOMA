@@ -539,7 +539,10 @@ write_soma.TsparseMatrix <- function(
   }
   # Transpose the matrix
   if (isTRUE(transpose)) {
+    spdl::debug("Transposing 'x'")
     x <- Matrix::t(x)
+    spdl::debug("gc transpose")
+    gc()
   }
   # Check the shape
   if (!is.null(shape) && any(shape < dim(x))) {
@@ -579,20 +582,35 @@ write_soma.TsparseMatrix <- function(
     )
     tbl <- tbl[-which(tbl$i %in% row_ids & tbl$j %in% col_ids), , drop = FALSE]
     x <- if (nrow(tbl)) {
-      Matrix::sparseMatrix(
-        i = as.integer(tbl$i),
-        j = as.integer(tbl$j),
-        x = tbl$x,
-        dims = dim(x),
-        index1 = FALSE,
-        repr = "T"
+      arrow::arrow_table(
+        soma_dim_0 = tbl$i,
+        soma_dim_1 = tbl$j,
+        soma_data = tbl$x
       )
+      # Matrix::sparseMatrix(
+      #   i = as.integer(tbl$i),
+      #   j = as.integer(tbl$j),
+      #   x = tbl$x,
+      #   dims = dim(x),
+      #   index1 = FALSE,
+      #   repr = "T"
+      # )
     } else {
       NULL
     }
+  } else {
+    spdl::debug("casting to Arrow")
+    x <- arrow::arrow_table(
+      soma_dim_0 = bit64::as.integer64(methods::slot(x, "i")),
+      soma_dim_1 = bit64::as.integer64(methods::slot(x, "j")),
+      soma_data = methods::slot(x, "x")
+    )
+    spdl::debug("gc cast")
+    gc()
   }
   if (!is.null(x)) {
-    array$write(x)
+    # array$write(x)
+    array$.write_coordinates(x)
   }
   # Add to `soma_parent`
   if (is.character(key)) {
