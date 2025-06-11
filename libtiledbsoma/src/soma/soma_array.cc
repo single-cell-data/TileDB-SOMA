@@ -1170,6 +1170,18 @@ std::vector<int64_t> SOMAArray::_shape_via_tiledb_domain() {
     return result;
 }
 
+bool SOMAArray::_exists(
+    std::string_view uri,
+    std::string_view soma_type,
+    std::shared_ptr<SOMAContext> ctx) {
+    try {
+        auto obj = SOMAArray::open(OpenMode::read, uri, ctx, std::nullopt);
+        return soma_type == obj->type();
+    } catch (TileDBSOMAError& e) {
+        return false;
+    }
+}
+
 std::optional<int64_t> SOMAArray::_maybe_soma_joinid_shape() {
     return _get_current_domain().is_empty() ?
                _maybe_soma_joinid_shape_via_tiledb_domain() :
