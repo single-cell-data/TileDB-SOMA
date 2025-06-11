@@ -161,25 +161,6 @@ class SOMAArray : public SOMAObject {
         std::optional<TimestampRange> timestamp = std::nullopt);
 
     /**
-     * @brief Copy constructor for a new SOMAArray object
-     */
-    SOMAArray(const SOMAArray& other)
-        // Ensure protected attributes initalized first in a consistent ordering
-        : uri_(other.uri_)
-        , ctx_(other.ctx_)
-        , arr_(other.arr_)
-        // Initialize private attributes next to control the order of
-        // destruction
-        , metadata_(other.metadata_)
-        , timestamp_(other.timestamp_)
-        , soma_mode_(other.soma_mode_)
-        , schema_(other.schema_)
-        , meta_cache_arr_(other.meta_cache_arr_) {
-        fill_metadata_cache(soma_mode_, timestamp_);
-        fill_columns();
-    }
-
-    /**
      * @brief Construct a new SOMAArray from a TileDB array
      *
      * @param ctx SOMAContext
@@ -191,6 +172,7 @@ class SOMAArray : public SOMAObject {
         std::shared_ptr<Array> arr,
         std::optional<TimestampRange> timestamp);
 
+    SOMAArray(const SOMAArray& other) = default;
     SOMAArray(SOMAArray&&) = default;
 
     SOMAArray() = delete;
