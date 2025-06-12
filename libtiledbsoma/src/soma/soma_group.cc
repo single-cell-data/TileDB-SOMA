@@ -100,7 +100,7 @@ SOMAGroup::SOMAGroup(
     group_ = std::make_shared<Group>(
         *ctx_->tiledb_ctx(),
         std::string(uri),
-        mode == OpenMode::read ? TILEDB_READ : TILEDB_WRITE,
+        mode == OpenMode::soma_read ? TILEDB_READ : TILEDB_WRITE,
         _set_timestamp(ctx, timestamp));
     fill_caches();
 }
@@ -115,10 +115,10 @@ SOMAGroup::SOMAGroup(
     , timestamp_(timestamp) {
     switch (group_->query_type()) {
         case TILEDB_READ:
-            soma_mode_ = OpenMode::read;
+            soma_mode_ = OpenMode::soma_read;
             break;
         case TILEDB_WRITE:
-            soma_mode_ = OpenMode::write;
+            soma_mode_ = OpenMode::soma_write;
             break;
         case TILEDB_MODIFY_EXCLUSIVE:  // Not supported in SOMA
         {
@@ -176,7 +176,7 @@ void SOMAGroup::open(OpenMode mode, std::optional<TimestampRange> timestamp) {
     group_->set_config(_set_timestamp(ctx_, timestamp));
     // Note: both OpenMode.write and OpenMode.del should be opened in
     // TILEDB_WRITE mode.
-    group_->open(mode == OpenMode::read ? TILEDB_READ : TILEDB_WRITE);
+    group_->open(mode == OpenMode::soma_read ? TILEDB_READ : TILEDB_WRITE);
     fill_caches();
 }
 

@@ -136,7 +136,8 @@ TEST_CASE(
     create_soma_object(soma_type, uri, context);
 
     // Close and test opening in different modes.
-    OpenMode mode = GENERATE(OpenMode::read, OpenMode::write, OpenMode::del);
+    OpenMode mode = GENERATE(
+        OpenMode::soma_read, OpenMode::soma_write, OpenMode::soma_delete);
     INFO("Setting open mode to " + open_mode_to_string(mode));
 
     auto soma_obj = SOMAObject::open(uri, mode, context, std::nullopt);

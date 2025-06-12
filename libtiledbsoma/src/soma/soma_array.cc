@@ -141,10 +141,10 @@ SOMAArray::SOMAArray(
     , schema_(std::make_shared<ArraySchema>(arr->schema())) {
     switch (arr_->query_type()) {
         case TILEDB_READ:
-            soma_mode_ = OpenMode::read;
+            soma_mode_ = OpenMode::soma_read;
             break;
         case TILEDB_WRITE:
-            soma_mode_ = OpenMode::write;
+            soma_mode_ = OpenMode::soma_write;
             break;
         default: {  // Remaining querty types are only supported on TileDB
             const char* query_type_str = nullptr;
@@ -162,7 +162,7 @@ SOMAArray::SOMAArray(
 
 void SOMAArray::fill_metadata_cache(
     OpenMode mode, std::optional<TimestampRange> timestamp) {
-    if (mode == OpenMode::read) {
+    if (mode == OpenMode::soma_read) {
         meta_cache_arr_ = arr_;
     } else {  // Need to create a metadata cache array for all non-read modes.
         if (timestamp) {
@@ -337,13 +337,13 @@ void SOMAArray::validate(
     OpenMode mode, std::optional<TimestampRange> timestamp) {
     tiledb_query_type_t tiledb_mode{};
     switch (mode) {
-        case OpenMode::read: {
+        case OpenMode::soma_read: {
             tiledb_mode = TILEDB_READ;
         } break;
-        case OpenMode::write: {
+        case OpenMode::soma_write: {
             tiledb_mode = TILEDB_WRITE;
         } break;
-        case OpenMode::del: {
+        case OpenMode::soma_delete: {
             tiledb_mode = TILEDB_DELETE;
         } break;
         default:
@@ -1193,7 +1193,7 @@ bool SOMAArray::_exists(
     std::string_view soma_type,
     std::shared_ptr<SOMAContext> ctx) {
     try {
-        auto obj = SOMAArray::open(OpenMode::read, uri, ctx, std::nullopt);
+        auto obj = SOMAArray::open(OpenMode::soma_read, uri, ctx, std::nullopt);
         return soma_type == obj->type();
     } catch (TileDBSOMAError& e) {
         return false;

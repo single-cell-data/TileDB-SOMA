@@ -17,7 +17,7 @@
 #include <string>
 
 /** Defines whether the SOMAObject should be opened in read or write mode */
-enum class OpenMode { read = 0, write, del };
+enum class OpenMode { soma_read, soma_write, soma_delete };
 
 /** Defines whether the result should be opened in row-major or column-major
  * order */
@@ -42,11 +42,11 @@ enum class Domainish {
 
 inline std::string open_mode_to_string(OpenMode mode) {
     switch (mode) {
-        case OpenMode::read:
+        case OpenMode::soma_read:
             return "read";
-        case OpenMode::write:
+        case OpenMode::soma_write:
             return "write";
-        case OpenMode::del:
+        case OpenMode::soma_delete:
             return "delete";
         default:
             return "invalid";
