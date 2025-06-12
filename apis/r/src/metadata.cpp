@@ -42,7 +42,8 @@ int32_t get_metadata_num(
     // shared pointer to SOMAContext from external pointer wrapper
     std::shared_ptr<tdbs::SOMAContext> sctx = ctxxp->ctxptr;
     // SOMA Object unique pointer (aka soup)
-    auto soup = getObjectUniquePointer(is_array, OpenMode::read, uri, sctx);
+    auto soup = getObjectUniquePointer(
+        is_array, OpenMode::soma_read, uri, sctx);
     int32_t nb = soup->metadata_num();
     return nb;
 }
@@ -65,7 +66,8 @@ Rcpp::List get_all_metadata(
     std::shared_ptr<tdbs::SOMAContext> sctx = ctxxp->ctxptr;
 
     // SOMA Object unique pointer (aka soup)
-    auto soup = getObjectUniquePointer(is_array, OpenMode::read, uri, sctx);
+    auto soup = getObjectUniquePointer(
+        is_array, OpenMode::soma_read, uri, sctx);
     auto mvmap = soup->get_metadata();
 
     std::vector<std::string> namvec;
@@ -115,7 +117,8 @@ std::string get_metadata(
     std::shared_ptr<tdbs::SOMAContext> sctx = ctxxp->ctxptr;
 
     // SOMA Object unique pointer (aka soup)
-    auto soup = getObjectUniquePointer(is_array, OpenMode::read, uri, sctx);
+    auto soup = getObjectUniquePointer(
+        is_array, OpenMode::soma_read, uri, sctx);
     auto mv = soup->get_metadata(key);
     if (!mv.has_value()) {
         Rcpp::stop("No value for '%s'", key.c_str());
@@ -150,7 +153,8 @@ bool has_metadata(
     // shared pointer to SOMAContext from external pointer wrapper
     std::shared_ptr<tdbs::SOMAContext> sctx = ctxxp->ctxptr;
     // SOMA Object unique pointer (aka soup)
-    auto soup = getObjectUniquePointer(is_array, OpenMode::read, uri, sctx);
+    auto soup = getObjectUniquePointer(
+        is_array, OpenMode::soma_read, uri, sctx);
     return soup->has_metadata(key);
 }
 
@@ -172,7 +176,8 @@ void delete_metadata(
     // shared pointer to SOMAContext from external pointer wrapper
     std::shared_ptr<tdbs::SOMAContext> sctx = ctxxp->ctxptr;
     // SOMA Object unique pointer (aka soup)
-    auto soup = getObjectUniquePointer(is_array, OpenMode::write, uri, sctx);
+    auto soup = getObjectUniquePointer(
+        is_array, OpenMode::soma_write, uri, sctx);
     soup->delete_metadata(key);
     soup->close();
 }
@@ -202,12 +207,13 @@ void set_metadata(
     std::shared_ptr<tdbs::SOMAContext> sctx = ctxxp->ctxptr;
     // SOMA Object unique pointer (aka soup)
     auto soup = getObjectUniquePointer(
-        is_array, OpenMode::write, uri, sctx, tsvec);
+        is_array, OpenMode::soma_write, uri, sctx, tsvec);
 
     if (type == "character") {
         const tiledb_datatype_t value_type = TILEDB_STRING_UTF8;
         std::string value = Rcpp::as<std::string>(valuesxp);
-        tdbs::LOG_DEBUG(fmt::format("[set_metadata] key {} value {} is_array {} type {}",
+        tdbs::LOG_DEBUG(fmt::format(
+            "[set_metadata] key {} value {} is_array {} type {}",
             key,
             value,
             is_array,
@@ -218,7 +224,8 @@ void set_metadata(
         const tiledb_datatype_t value_type = TILEDB_INT64;
         double dv = Rcpp::as<double>(valuesxp);
         int64_t value = Rcpp::fromInteger64(dv);
-        tdbs::LOG_DEBUG(fmt::format("[set_metadata] key {} value {} is_array {} type {}",
+        tdbs::LOG_DEBUG(fmt::format(
+            "[set_metadata] key {} value {} is_array {} type {}",
             key,
             value,
             is_array,

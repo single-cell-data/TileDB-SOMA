@@ -1,4 +1,4 @@
-#include <Rcpp/Lighter>             // for R interface to C++
+#include <Rcpp/Lighter>  // for R interface to C++
 
 #include <nanoarrow/r.h>  // for C/C++ interface to Arrow (via header exported from the R package)
 #include <RcppInt64>                // for fromInteger64
@@ -223,11 +223,12 @@ void writeArrayFromArrow(
     std::optional<tdbs::TimestampRange> tsrng = makeTimestampRange(tsvec);
 
     std::unique_ptr<tdbs::SOMAArray> arrup = tdbs::SOMAArray::open(
-        OpenMode::write, uri, somactx, tsrng);
+        OpenMode::soma_write, uri, somactx, tsrng);
 
     auto mq = tdbs::ManagedQuery(*arrup, somactx->tiledb_ctx(), "unnamed");
-    mq.set_layout(arraytype == "SOMADenseNDArray" ? 
-                  ResultOrder::colmajor : ResultOrder::automatic);
+    mq.set_layout(
+        arraytype == "SOMADenseNDArray" ? ResultOrder::colmajor :
+                                          ResultOrder::automatic);
     mq.set_array_data(schema.get(), array.get());
     mq.submit_write();
     mq.close();
