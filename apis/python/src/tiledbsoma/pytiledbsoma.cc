@@ -62,8 +62,9 @@ PYBIND11_MODULE(pytiledbsoma, m) {
     });
 
     py::enum_<OpenMode>(m, "OpenMode")
-        .value("read", OpenMode::read)
-        .value("write", OpenMode::write);
+        .value("soma_read", OpenMode::soma_read)
+        .value("soma_write", OpenMode::soma_write)
+        .value("soma_delete", OpenMode::soma_delete);
 
     py::enum_<ResultOrder>(m, "ResultOrder")
         .value("automatic", ResultOrder::automatic)
