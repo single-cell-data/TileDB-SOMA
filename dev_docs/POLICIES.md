@@ -26,12 +26,19 @@ For **non-experimental** interfaces and features:
 - Deprecations may be introduced in `major` or `minor` releases. A deprecation will maintain existing functionality, but provide a warning about the upcoming API change, and any available guidance on migration. Deprecations must be documented in the appropriate change log.
 - Warnings of future compatibility changes, which are not "deprecate and remove", may be introduced in a `major` or `minor` release. Future compatibility warnings must be included in the appropriate change log.
 - A `patch` release may not introduce deprecations or future incompatibility change warnings.
+- On disk format changes to the [TileDB storage format](https://github.com/TileDB-Inc/TileDB/tree/main/format_spec) will only occur on a `major` release.
+- Changes to the [TileDB-SOMA encoding specification](https://github.com/single-cell-data/TileDB-SOMA/blob/main/encoding_specification.md) for non-experimental datatypes that are are either not backward-compatible or not forward-compatible (cannot be accessed from older versions of the TileDB-SOMA software) will only occur on a `major` release.
 
-Experimental features may be modified in a `major` or `minor` release without prior warning. However, where possible, advance warning of changes will be provided.
 
 ## Warning period
 
-Breaking API changes will provide notice of at least two `minor` releases or six months, whichever is greater, before effecting the change.
+A best effort to use the following warning periods will be made. Any discrepancies will be highlighted in the changelog.
+
+- Breaking API changes will provide notice of at least two `minor` releases or three months, whichever is greater, before effecting the change.
+- Experimental features may be modified in a `major` or `minor` release without prior warning. However, where possible, advance warning of changes will be provided.
+- Changes to the [TileDB-SOMA encoding specification](https://github.com/single-cell-data/TileDB-SOMA/blob/main/encoding_specification.md) that are not backward compatible will provide notice of at least two `minor` release or three months, whichever is greater, before effecting the change.
+- No prior notice is given for changes to the [TileDB-SOMA encoding specification](https://github.com/single-cell-data/TileDB-SOMA/blob/main/encoding_specification.md) that are backward comaptible but not forward compatible.
+- No prior notice is given for format changes to the [TileDB storage format](https://github.com/TileDB-Inc/TileDB/tree/main/format_spec).
 
 ## Implementing Deprecation
 
