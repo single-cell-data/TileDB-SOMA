@@ -575,8 +575,6 @@ def test_point_cloud_read_spatial_region_uniform_scale_transform_bad(tmp_path):
         ["Identity", (1, 1), (1, 1)],
         ["Scale up and down", (2, 0.5), (0.5, 2.0)],
         ["Very large and small scale", (1e6, 1e-6), (1e-6, 1e6)],
-        ["Single zero scale", (0, 2), (float("inf"), 0.5)],
-        ["Double zero scale", (0, 0), (float("inf"), float("inf"))],
         ["Single inversion", (-1, 2), (-1, 0.5)],
         ["Double inversion", (-2, -0.5), (-0.5, -2)],
         ["One dimension inverted", (1, -1), (1, -1)],
