@@ -32,13 +32,14 @@ For **non-experimental** interfaces and features:
 
 ## Warning period
 
-A best effort to use the following warning periods will be made. Any discrepancies will be highlighted in the changelog.
+For breaking API changes and backward-incompatible updates to the TileDB-SOMA encoding specification, we will generally provide notice of at least two minor releases or 3 months (whichever is greater) before the change takes effect. In rare scenarios where we are unable to adhere to this policy, the discrepancies will be clearly highlighted in the changelog.
 
-- Breaking API changes will provide notice of at least two `minor` releases or three months, whichever is greater, before effecting the change.
-- Experimental features may be modified in a `major` or `minor` release without prior warning. However, where possible, advance warning of changes will be provided.
-- Changes to the [TileDB-SOMA encoding specification](https://github.com/single-cell-data/TileDB-SOMA/blob/main/encoding_specification.md) that are not backward compatible will provide notice of at least two `minor` release or three months, whichever is greater, before effecting the change.
-- No prior notice is given for changes to the [TileDB-SOMA encoding specification](https://github.com/single-cell-data/TileDB-SOMA/blob/main/encoding_specification.md) that are backward compatible but not forward compatible.
-- No prior notice is given for format changes to the [TileDB storage format](https://github.com/TileDB-Inc/TileDB/tree/main/format_spec).
+Advance warning may not be provided for changes to:
+
+- experimental features in a `major` or `minor` release.
+- the [TileDB-SOMA encoding specification](https://github.com/single-cell-data/TileDB-SOMA/blob/main/encoding_specification.md) that are backward compatible.
+- the [TileDB storage format](https://github.com/TileDB-Inc/TileDB/tree/main/format_spec).
+
 
 ## Implementing Deprecation
 
