@@ -48,7 +48,18 @@ void load_soma_group(py::module& m) {
         .def_property_readonly(
             "mode",
             [](SOMAGroup& group) {
-                return group.mode() == OpenMode::read ? "r" : "w";
+                OpenMode soma_mode = group.mode();
+                switch (soma_mode) {
+                    case OpenMode::soma_read:
+                        return "r";
+                    case OpenMode::soma_write:
+                        return "w";
+                    case OpenMode::soma_delete:
+                        return "d";
+                    default:
+                        throw TileDBSOMAError(
+                            "Internal error: unrecognized mode.");
+                }
             })
         .def("close", &SOMAGroup::close)
         .def_property_readonly(

@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import abc
 import enum
+import warnings
 from typing import (
     Any,
     Generic,
@@ -160,7 +161,7 @@ class Wrapper(Generic[_RawHdl_co], metaclass=abc.ABCMeta):
         context: SOMATileDBContext,
         timestamp: OpenTimestamp | None,
     ) -> Self:
-        if mode not in ("r", "w"):
+        if mode not in ("r", "w", "d"):
             raise ValueError(f"Invalid open mode {mode!r}")
         timestamp_ms = context._open_timestamp_ms(timestamp)
 
@@ -237,7 +238,7 @@ class Wrapper(Generic[_RawHdl_co], metaclass=abc.ABCMeta):
             raise SOMAError(f"{self} is closed")
         if self.mode == "r":
             return self._handle
-        raise SOMAError(f"cannot read from {self}; it is open for writing")
+        raise SOMAError(f"Cannot read from {self}; current mode='{self.mode}'. Reopen in mode='r'.")
 
     @property
     def writer(self) -> _RawHdl_co:
@@ -246,7 +247,21 @@ class Wrapper(Generic[_RawHdl_co], metaclass=abc.ABCMeta):
             raise SOMAError(f"{self} is closed")
         if self.mode == "w":
             return self._handle
-        raise SOMAError(f"cannot write to {self}; it is open for reading")
+        raise SOMAError(f"Cannot write to {self}; current mode='{self.mode}'. Reopen in mode='w'.")
+
+    @property
+    def deleter(self, allow_deprecated_writer: bool = False) -> _RawHdl_co:
+        """Accessor to assert that you are working in delete mode."""
+        if self.closed:
+            raise SOMAError(f"{self} is closed")
+        if self.mode == "d":
+            return self._handle
+        if allow_deprecated_writer and self.mode == "w":
+            warnings.warn(
+                f"Deleting in write mode is deprecated. {self} should be reopened with mode='d'.", DeprecationWarning
+            )
+            return self._handle
+        raise SOMAError(f"Cannot delete from {self}; current mode='{self.mode}'. Reopen in mode='d'.")
 
     def close(self) -> None:
         if self.closed:

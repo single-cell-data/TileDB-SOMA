@@ -190,6 +190,22 @@ def test_delete_add(soma_object, tmp_path: pathlib.Path):
             update["porkchop sandwiches"] = soma_object
 
 
+def test_delete_add_write_mode(soma_object, tmp_path: pathlib.Path):
+    tmp_uri = tmp_path.as_uri()
+    with soma.Collection.create(tmp_uri) as create:
+        create["porkchop sandwiches"] = soma_object
+
+    with soma.open(tmp_uri, "w", soma_type=soma.Collection) as update:
+        with warnings.catch_warnings(record=True) as warn_list:
+            del update["porkchop sandwiches"]
+            assert len(warn_list) == 1
+            assert issubclass(warn_list[0].category, DeprecationWraning)
+        # TEMPORARY: This should no longer raise once TileDB supports replacing
+        # an existing group member.
+        with pytest.raises(soma.SOMAError):
+            update["porkchop sandwiches"] = soma_object
+
+
 @pytest.mark.parametrize("relative", [False, True])
 def test_collection_repr(tmp_path: pathlib.Path, relative: bool) -> None:
     a_path = tmp_path / "A"
