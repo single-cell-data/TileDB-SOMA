@@ -95,7 +95,7 @@ class SOMAGroup : public SOMAObject {
      * @param ctx SOMA context
      * @param group TileDB group to open as a SOMAGroup. Must be opened in read
      * or write mode.
-     * @param timestamp 
+     * @param timestamp
      */
     SOMAGroup(
         std::shared_ptr<SOMAContext> ctx,
