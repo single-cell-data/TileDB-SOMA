@@ -116,7 +116,7 @@ def test_dense_nd_array_read_write_tensor(tmp_path, shape: tuple[int, ...]):
     with contextlib.closing(
         soma.pytiledbsoma.SOMADenseNDArray.open(
             uri,
-            soma.pytiledbsoma.OpenMode.read,
+            soma.pytiledbsoma.OpenMode.soma_read,
             soma.pytiledbsoma.SOMAContext(),
         )
     ) as a:
