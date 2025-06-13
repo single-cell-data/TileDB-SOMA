@@ -830,6 +830,11 @@ def _canonicalize_schema(
     if not index_column_names:
         raise ValueError("DataFrame requires one or more index columns")
 
+    # Check for column names containing null bytes
+    for field in schema:
+        if any([char == "\x00" for char in field.name]):
+            raise ValueError(f"Illegal character in field name `{field.name}`. Null byte found.")
+
     if SOMA_JOINID in schema.names:
         joinid_type = schema.field(SOMA_JOINID).type
         if joinid_type != pa.int64():
