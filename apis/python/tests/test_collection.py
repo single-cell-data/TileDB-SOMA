@@ -182,7 +182,7 @@ def test_delete_add(soma_object, tmp_path: pathlib.Path):
     with soma.Collection.create(tmp_uri) as create:
         create["porkchop sandwiches"] = soma_object
 
-    with soma.open(tmp_uri, "w", soma_type=soma.Collection) as update:
+    with soma.open(tmp_uri, "d", soma_type=soma.Collection) as update:
         del update["porkchop sandwiches"]
         # TEMPORARY: This should no longer raise once TileDB supports replacing
         # an existing group member.
