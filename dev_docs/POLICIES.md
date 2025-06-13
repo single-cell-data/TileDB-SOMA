@@ -26,12 +26,20 @@ For **non-experimental** interfaces and features:
 - Deprecations may be introduced in `major` or `minor` releases. A deprecation will maintain existing functionality, but provide a warning about the upcoming API change, and any available guidance on migration. Deprecations must be documented in the appropriate change log.
 - Warnings of future compatibility changes, which are not "deprecate and remove", may be introduced in a `major` or `minor` release. Future compatibility warnings must be included in the appropriate change log.
 - A `patch` release may not introduce deprecations or future incompatibility change warnings.
+- Changes to the [TileDB storage format](https://github.com/TileDB-Inc/TileDB/tree/main/format_spec) will only occur on a `major` release.
+- Changes to the [TileDB-SOMA encoding specification](https://github.com/single-cell-data/TileDB-SOMA/blob/main/encoding_specification.md) that are backward- or  forward-incompatible will only occur on a `major` release.
 
-Experimental features may be modified in a `major` or `minor` release without prior warning. However, where possible, advance warning of changes will be provided.
 
 ## Warning period
 
-Breaking API changes will provide notice of at least two `minor` releases or six months, whichever is greater, before effecting the change.
+For breaking API changes and backward-incompatible updates to the TileDB-SOMA encoding specification, we will generally provide notice of at least two minor releases or 3 months (whichever is greater) before the change takes effect. In rare scenarios where we are unable to adhere to this policy, the discrepancies will be clearly highlighted in the changelog.
+
+Advance warning may not be provided for changes to:
+
+- experimental features in a `major` or `minor` release.
+- the [TileDB-SOMA encoding specification](https://github.com/single-cell-data/TileDB-SOMA/blob/main/encoding_specification.md) that are backward compatible.
+- the [TileDB storage format](https://github.com/TileDB-Inc/TileDB/tree/main/format_spec).
+
 
 ## Implementing Deprecation
 
