@@ -55,7 +55,7 @@ test_that("context-create", {
   group$close()
 
   # Remove
-  group$open(mode = "WRITE", internal_use_only = "allowed_use")
+  group$open(mode = "DELETE", internal_use_only = "allowed_use")
   group$remove("a1")
   expect_equal(group$length(), 1)
   group$remove("g1")
