@@ -250,13 +250,13 @@ class Wrapper(Generic[_RawHdl_co], metaclass=abc.ABCMeta):
         raise SOMAError(f"Cannot write to {self}; current mode='{self.mode}'. Reopen in mode='w'.")
 
     @property
-    def deleter(self, allow_deprecated_writer: bool = False) -> _RawHdl_co:
+    def deleter(self) -> _RawHdl_co:
         """Accessor to assert that you are working in delete mode."""
         if self.closed:
             raise SOMAError(f"{self} is closed")
         if self.mode == "d":
             return self._handle
-        if allow_deprecated_writer and self.mode == "w":
+        if self.mode == "w":
             warnings.warn(
                 f"Deleting in write mode is deprecated. {self} should be reopened with mode='d'.", DeprecationWarning
             )

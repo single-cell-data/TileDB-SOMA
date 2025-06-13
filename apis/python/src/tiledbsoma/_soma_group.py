@@ -154,7 +154,7 @@ class SOMAGroup(SOMAObject[_tdb_handles.SOMAGroupWrapper[Any]], Generic[Collecti
         if key in self._mutated_keys:
             raise SOMAError(f"cannot delete previously-mutated key {key!r}")
         try:
-            self._handle.deleter.remove(key, True)
+            self._handle.deleter.remove(key)
         except RuntimeError as tdbe:
             if is_does_not_exist_error(tdbe):
                 raise KeyError(tdbe) from tdbe
