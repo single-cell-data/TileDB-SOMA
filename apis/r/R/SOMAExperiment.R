@@ -44,7 +44,7 @@ SOMAExperiment <- R6::R6Class(
     },
 
     #' @description Update the \code{obs} data frame to add or remove columns.
-    #' See \code{\link[tiledbomsa:SOMADataFrame]{SOMADataFrame$update()}} for
+    #' See \code{\link[tiledbsoma:SOMADataFrame]{SOMADataFrame$update()}} for
     #' more details.
     #'
     update_obs = function(values, row_index_name = NULL) {
@@ -52,7 +52,7 @@ SOMAExperiment <- R6::R6Class(
     },
 
     #' @description Update the \code{var} data frame to add or remove columns.
-    #' See \code{\link[tiledbomsa:SOMADataFrame]{SOMADataFrame$update()}} for
+    #' See \code{\link[tiledbsoma:SOMADataFrame]{SOMADataFrame$update()}} for
     #' more details.
     #'
     #' @param measurement_name The name of the \code{\link{SOMAMeasurement}}

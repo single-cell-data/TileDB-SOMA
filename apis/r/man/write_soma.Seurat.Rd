@@ -140,6 +140,7 @@ as \link[tiledbsoma:SOMADataFrame]{data frames} to the
 
 \examples{
 \dontshow{if (requireNamespace("withr", quietly = TRUE) && requireNamespace("SeuratObject", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+\donttest{
 uri <- withr::local_tempfile(pattern = "pbmc-small")
 
 data("pbmc_small", package = "SeuratObject")
@@ -157,7 +158,6 @@ ms$obsm$names()
 ms$varm$names()
 ms$obsp$names()
 
-\dontshow{
 exp$close()
 }
 \dontshow{\}) # examplesIf}
