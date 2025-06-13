@@ -48,7 +48,7 @@ void load_soma_array(py::module& m) {
                    std::map<std::string, std::string> platform_config,
                    std::optional<std::pair<uint64_t, uint64_t>> timestamp) {
                     return SOMAArray::open(
-                        OpenMode::read,
+                        OpenMode::soma_read,
                         uri,
                         std::make_shared<SOMAContext>(platform_config),
                         timestamp);
@@ -73,7 +73,18 @@ void load_soma_array(py::module& m) {
         .def_property_readonly(
             "mode",
             [](SOMAArray& array) {
-                return array.mode() == OpenMode::read ? "r" : "w";
+                OpenMode soma_mode = array.mode();
+                switch (soma_mode) {
+                    case OpenMode::soma_read:
+                        return "r";
+                    case OpenMode::soma_write:
+                        return "w";
+                    case OpenMode::soma_delete:
+                        return "d";
+                    default:
+                        throw TileDBSOMAError(
+                            "Internal error: unrecognized mode.");
+                }
             })
         .def_property_readonly(
             "schema",

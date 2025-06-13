@@ -109,11 +109,11 @@ Rcpp::XPtr<tdbs::ManagedQuery> mq_setup(
 
     auto tdb_result_order = get_tdb_result_order(result_order);
 
-    auto arr = tdbs::SOMAArray(OpenMode::read, uri, somactx, tsrng);
+    auto arr = tdbs::SOMAArray(OpenMode::soma_read, uri, somactx, tsrng);
 
     auto mq = new tdbs::ManagedQuery(arr, somactx->tiledb_ctx(), name);
     mq->set_layout(tdb_result_order);
-    if(!column_names.empty()){
+    if (!column_names.empty()) {
         mq->select_columns(column_names);
     }
 
@@ -123,7 +123,8 @@ Rcpp::XPtr<tdbs::ManagedQuery> mq_setup(
     tiledb::Domain domain = schema->domain();
     std::vector<tiledb::Dimension> dims = domain.dimensions();
     for (auto& dim : dims) {
-        tdbs::LOG_DEBUG(fmt::format("[mq_setup] Dimension {} type {} domain {} extent {}",
+        tdbs::LOG_DEBUG(fmt::format(
+            "[mq_setup] Dimension {} type {} domain {} extent {}",
             dim.name(),
             tiledb::impl::to_str(dim.type()),
             dim.domain_to_str(),
@@ -222,7 +223,7 @@ SEXP mq_next(Rcpp::XPtr<tdbs::ManagedQuery> mq) {
         mq_data->get()->num_rows(),
         mq_data->get()->names().size()));
 
-    if(!mq_data){
+    if (!mq_data) {
         tdbs::LOG_TRACE("[mq_next] complete - mq_data read no data");
         return create_empty_arrow_table();
     }
@@ -249,7 +250,8 @@ SEXP mq_next(Rcpp::XPtr<tdbs::ManagedQuery> mq) {
     arr->length = 0;  // initial value
 
     for (size_t i = 0; i < ncol; i++) {
-        tdbs::LOG_TRACE(fmt::format("[mq_next] Accessing {} at {}", names[i], i));
+        tdbs::LOG_TRACE(
+            fmt::format("[mq_next] Accessing {} at {}", names[i], i));
 
         // now buf is a shared_ptr to ColumnBuffer
         auto buf = mq_data->get()->at(names[i]);
@@ -268,7 +270,8 @@ SEXP mq_next(Rcpp::XPtr<tdbs::ManagedQuery> mq) {
         }
     }
 
-    tdbs::LOG_DEBUG(fmt::format("[mq_next] Exporting chunk with {} rows", arr->length));
+    tdbs::LOG_DEBUG(
+        fmt::format("[mq_next] Exporting chunk with {} rows", arr->length));
     // Nanoarrow special: stick schema into xptr tag to return single SEXP
     array_xptr_set_schema(arrayxp, schemaxp);  // embed schema in array
     return arrayxp;

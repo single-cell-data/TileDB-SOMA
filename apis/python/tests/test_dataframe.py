@@ -125,7 +125,7 @@ def test_dataframe(tmp_path, arrow_schema):
 
     # Open and read with bindings
     with contextlib.closing(
-        soma.pytiledbsoma.SOMADataFrame.open(uri, soma.pytiledbsoma.OpenMode.read, soma.pytiledbsoma.SOMAContext())
+        soma.pytiledbsoma.SOMADataFrame.open(uri, soma.pytiledbsoma.OpenMode.soma_read, soma.pytiledbsoma.SOMAContext())
     ) as sdf:
         mq = soma.pytiledbsoma.ManagedQuery(sdf, sdf.context())
         table = mq.next()

@@ -115,13 +115,13 @@ class SOMAArrayStateMachine(RuleBasedStateMachine):
         self._close()
 
     @precondition(lambda self: self.closed)
-    @rule(mode=st.sampled_from(["r", "w"]))
+    @rule(mode=st.sampled_from(["r", "w", "d"]))
     def open(self, mode: OpenMode) -> None:
         # TODO: time travel
         self._open(mode=mode)
 
     @precondition(lambda self: self.is_initialized)
-    @rule(mode=st.sampled_from(["r", "w"]))
+    @rule(mode=st.sampled_from(["r", "w", "d"]))
     def reopen(self, mode: OpenMode) -> None:
         self.A.reopen(
             mode,

@@ -75,7 +75,8 @@ SEXP soma_array_reader(
     std::vector<std::string> column_names = {};
     if (!colnames.isNull()) {  // If we have column names, select them
         column_names = Rcpp::as<std::vector<std::string>>(colnames);
-        tdbs::LOG_DEBUG(fmt::format("[soma_array_reader] Selecting {} columns", column_names.size()));
+        tdbs::LOG_DEBUG(fmt::format(
+            "[soma_array_reader] Selecting {} columns", column_names.size()));
     }
 
     auto tdb_result_order = get_tdb_result_order(result_order);
@@ -85,15 +86,16 @@ SEXP soma_array_reader(
         timestamprange);
     if (timestamprange.isNotNull()) {
         Rcpp::DatetimeVector vec(timestamprange);
-        tdbs::LOG_DEBUG(fmt::format("[soma_array_reader] timestamprange ({},{})", vec[0], vec[1]));
+        tdbs::LOG_DEBUG(fmt::format(
+            "[soma_array_reader] timestamprange ({},{})", vec[0], vec[1]));
     }
 
     // Read selected columns from the uri (return is unique_ptr<SOMAArray>)
-    auto sr = tdbs::SOMAArray::open(OpenMode::read, uri, somactx, tsrng);
+    auto sr = tdbs::SOMAArray::open(OpenMode::soma_read, uri, somactx, tsrng);
 
     auto mq = tdbs::ManagedQuery(*sr, somactx->tiledb_ctx(), "unnamed");
     mq.set_layout(tdb_result_order);
-    if(!column_names.empty()){
+    if (!column_names.empty()) {
         mq.select_columns(column_names);
     }
 
@@ -103,7 +105,8 @@ SEXP soma_array_reader(
     tiledb::Domain domain = schema->domain();
     std::vector<tiledb::Dimension> dims = domain.dimensions();
     for (auto& dim : dims) {
-        tdbs::LOG_INFO(fmt::format("[soma_array_reader] Dimension {} type {} domain {} extent {}",
+        tdbs::LOG_INFO(fmt::format(
+            "[soma_array_reader] Dimension {} type {} domain {} extent {}",
             dim.name(),
             tiledb::impl::to_str(dim.type()),
             dim.domain_to_str(),
@@ -144,7 +147,8 @@ SEXP soma_array_reader(
             "or using iterated partial reads.",
             uri);
     }
-    tdbs::LOG_INFO(fmt::format("[soma_array_reader] Read complete with {} rows and {} cols",
+    tdbs::LOG_INFO(fmt::format(
+        "[soma_array_reader] Read complete with {} rows and {} cols",
         sr_data->get()->num_rows(),
         sr_data->get()->names().size()));
 
@@ -169,7 +173,8 @@ SEXP soma_array_reader(
 
     arr->length = 0;  // initial value
     for (size_t i = 0; i < ncol; i++) {
-        tdbs::LOG_INFO(fmt::format("[soma_array_reader] Accessing '{}' at pos {}", names[i], i));
+        tdbs::LOG_INFO(fmt::format(
+            "[soma_array_reader] Accessing '{}' at pos {}", names[i], i));
 
         // now buf is a shared_ptr to ColumnBuffer
         auto buf = sr_data->get()->at(names[i]);
@@ -182,12 +187,14 @@ SEXP soma_array_reader(
         // pp.first.get(), sizeof(ArrowArray));
         ArrowArrayMove(pp.first.get(), arr->children[i]);
         ArrowSchemaMove(pp.second.get(), sch->children[i]);
-        tdbs::LOG_INFO(fmt::format("[soma_array_reader] Incoming name {} length {}",
+        tdbs::LOG_INFO(fmt::format(
+            "[soma_array_reader] Incoming name {} length {}",
             std::string(pp.second->name),
             pp.first->length));
 
         if (pp.first->length > arr->length) {
-            tdbs::LOG_DEBUG(fmt::format("[soma_array_reader] Setting array length to {}",
+            tdbs::LOG_DEBUG(fmt::format(
+                "[soma_array_reader] Setting array length to {}",
                 pp.first->length));
             arr->length = pp.first->length;
         }
@@ -220,7 +227,7 @@ void set_log_level(const std::string& level) {
 // [[Rcpp::export]]
 Rcpp::CharacterVector get_column_types(
     const std::string& uri, const std::vector<std::string>& colnames) {
-    auto sr = tdbs::SOMAArray::open(OpenMode::read, uri);
+    auto sr = tdbs::SOMAArray::open(OpenMode::soma_read, uri);
     auto mq = tdbs::ManagedQuery(*sr, sr->ctx()->tiledb_ctx());
     auto sr_data = mq.read_next();
     size_t n = colnames.size();
@@ -236,7 +243,7 @@ Rcpp::CharacterVector get_column_types(
 
 // [[Rcpp::export]]
 double nnz(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
-    auto sr = tdbs::SOMAArray::open(OpenMode::read, uri, ctxxp->ctxptr);
+    auto sr = tdbs::SOMAArray::open(OpenMode::soma_read, uri, ctxxp->ctxptr);
     auto retval = static_cast<double>(sr->nnz());
     sr->close();
     return retval;
@@ -257,7 +264,7 @@ bool check_arrow_array_tag(Rcpp::XPtr<ArrowArray> xp) {
 // [[Rcpp::export]]
 Rcpp::NumericVector shape(
     const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
-    auto sr = tdbs::SOMAArray::open(OpenMode::read, uri, ctxxp->ctxptr);
+    auto sr = tdbs::SOMAArray::open(OpenMode::soma_read, uri, ctxxp->ctxptr);
     auto retval = Rcpp::toInteger64(sr->shape());
     sr->close();
     return retval;
@@ -266,7 +273,7 @@ Rcpp::NumericVector shape(
 // [[Rcpp::export]]
 Rcpp::NumericVector maxshape(
     const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
-    auto sr = tdbs::SOMAArray::open(OpenMode::read, uri, ctxxp->ctxptr);
+    auto sr = tdbs::SOMAArray::open(OpenMode::soma_read, uri, ctxxp->ctxptr);
     auto retval = Rcpp::toInteger64(sr->maxshape());
     sr->close();
     return retval;
@@ -275,7 +282,7 @@ Rcpp::NumericVector maxshape(
 // [[Rcpp::export]]
 SEXP non_empty_domain(
     const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
-    auto sdf = tdbs::SOMAArray::open(OpenMode::read, uri, ctxxp->ctxptr);
+    auto sdf = tdbs::SOMAArray::open(OpenMode::soma_read, uri, ctxxp->ctxptr);
     tdbs::ArrowTable arrow_table = sdf->get_non_empty_domain();
     SEXP retval = convert_domainish(arrow_table);
     sdf->close();
@@ -284,7 +291,8 @@ SEXP non_empty_domain(
 
 // [[Rcpp::export]]
 SEXP domain(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
-    auto sdf = tdbs::SOMADataFrame::open(uri, OpenMode::read, ctxxp->ctxptr);
+    auto sdf = tdbs::SOMADataFrame::open(
+        uri, OpenMode::soma_read, ctxxp->ctxptr);
     tdbs::ArrowTable arrow_table = sdf->get_soma_domain();
     SEXP retval = convert_domainish(arrow_table);
     sdf->close();
@@ -293,7 +301,8 @@ SEXP domain(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
 
 // [[Rcpp::export]]
 SEXP maxdomain(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
-    auto sdf = tdbs::SOMADataFrame::open(uri, OpenMode::read, ctxxp->ctxptr);
+    auto sdf = tdbs::SOMADataFrame::open(
+        uri, OpenMode::soma_read, ctxxp->ctxptr);
     tdbs::ArrowTable arrow_table = sdf->get_soma_maxdomain();
     SEXP retval = convert_domainish(arrow_table);
     sdf->close();
@@ -309,7 +318,8 @@ Rcpp::NumericVector maybe_soma_joinid_shape(
     // This was done intentionally to resolve an ambiguous-overload compiler
     // error. ^ Unsure. This is C++, and it is typed so member functions return
     // objects of their class.
-    auto sr = tdbs::SOMADataFrame::open(uri, OpenMode::read, ctxxp->ctxptr);
+    auto sr = tdbs::SOMADataFrame::open(
+        uri, OpenMode::soma_read, ctxxp->ctxptr);
     auto retval = sr->maybe_soma_joinid_shape();
     sr->close();
     if (retval.has_value()) {
@@ -323,7 +333,8 @@ Rcpp::NumericVector maybe_soma_joinid_shape(
 // [[Rcpp::export]]
 Rcpp::NumericVector maybe_soma_joinid_maxshape(
     const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
-    auto sr = tdbs::SOMADataFrame::open(uri, OpenMode::read, ctxxp->ctxptr);
+    auto sr = tdbs::SOMADataFrame::open(
+        uri, OpenMode::soma_read, ctxxp->ctxptr);
     auto retval = sr->maybe_soma_joinid_maxshape();
     sr->close();
     if (retval.has_value()) {
@@ -337,7 +348,7 @@ Rcpp::NumericVector maybe_soma_joinid_maxshape(
 // [[Rcpp::export]]
 Rcpp::LogicalVector has_current_domain(
     const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
-    auto sr = tdbs::SOMAArray::open(OpenMode::read, uri, ctxxp->ctxptr);
+    auto sr = tdbs::SOMAArray::open(OpenMode::soma_read, uri, ctxxp->ctxptr);
     auto retval = Rcpp::LogicalVector(sr->has_current_domain());
     sr->close();
     return retval;
@@ -346,7 +357,7 @@ Rcpp::LogicalVector has_current_domain(
 // [[Rcpp::export]]
 Rcpp::NumericVector ndim(
     const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
-    auto sr = tdbs::SOMAArray::open(OpenMode::read, uri, ctxxp->ctxptr);
+    auto sr = tdbs::SOMAArray::open(OpenMode::soma_read, uri, ctxxp->ctxptr);
     auto lib_retval = sr->ndim();
     sr->close();
 
@@ -356,7 +367,7 @@ Rcpp::NumericVector ndim(
 // [[Rcpp::export]]
 Rcpp::CharacterVector c_dimnames(
     const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
-    auto sr = tdbs::SOMAArray::open(OpenMode::read, uri, ctxxp->ctxptr);
+    auto sr = tdbs::SOMAArray::open(OpenMode::soma_read, uri, ctxxp->ctxptr);
     auto lib_retval = sr->dimension_names();
     sr->close();
 
@@ -371,7 +382,7 @@ Rcpp::CharacterVector c_dimnames(
 // [[Rcpp::export]]
 Rcpp::CharacterVector c_attrnames(
     const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
-    auto sr = tdbs::SOMAArray::open(OpenMode::read, uri, ctxxp->ctxptr);
+    auto sr = tdbs::SOMAArray::open(OpenMode::soma_read, uri, ctxxp->ctxptr);
     auto lib_retval = sr->attribute_names();
     sr->close();
 
@@ -385,7 +396,7 @@ Rcpp::CharacterVector c_attrnames(
 
 // [[Rcpp::export]]
 SEXP c_schema(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
-    auto sr = tdbs::SOMAArray::open(OpenMode::read, uri, ctxxp->ctxptr);
+    auto sr = tdbs::SOMAArray::open(OpenMode::soma_read, uri, ctxxp->ctxptr);
     tdbs::managed_unique_ptr<ArrowSchema> lib_retval = sr->arrow_schema();
     sr->close();
 
@@ -399,7 +410,8 @@ SEXP c_schema(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
         "Bad schema children alloc");
 
     for (size_t i = 0; i < static_cast<size_t>(lib_retval->n_children); i++) {
-        tdbs::LOG_INFO(fmt::format("[c_schema] Accessing name '{}' format '{}' at position {}",
+        tdbs::LOG_INFO(fmt::format(
+            "[c_schema] Accessing name '{}' format '{}' at position {}",
             std::string(lib_retval->children[i]->name),
             std::string(lib_retval->children[i]->format),
             i));
@@ -412,7 +424,7 @@ SEXP c_schema(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
 
 // [[Rcpp::export]]
 bool c_is_sparse(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
-    auto sr = tdbs::SOMAArray::open(OpenMode::read, uri, ctxxp->ctxptr);
+    auto sr = tdbs::SOMAArray::open(OpenMode::soma_read, uri, ctxxp->ctxptr);
     std::shared_ptr<tiledb::ArraySchema> sch = sr->tiledb_schema();
     sr->close();
 
@@ -421,7 +433,7 @@ bool c_is_sparse(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
 
 // [[Rcpp::export]]
 bool c_allows_dups(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
-    auto sr = tdbs::SOMAArray::open(OpenMode::read, uri, ctxxp->ctxptr);
+    auto sr = tdbs::SOMAArray::open(OpenMode::soma_read, uri, ctxxp->ctxptr);
     std::shared_ptr<tiledb::ArraySchema> sch = sr->tiledb_schema();
     sr->close();
 
@@ -430,7 +442,7 @@ bool c_allows_dups(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
 
 // [[Rcpp::export]]
 double c_capacity(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
-    auto sr = tdbs::SOMAArray::open(OpenMode::read, uri, ctxxp->ctxptr);
+    auto sr = tdbs::SOMAArray::open(OpenMode::soma_read, uri, ctxxp->ctxptr);
     std::shared_ptr<tiledb::ArraySchema> sch = sr->tiledb_schema();
     sr->close();
 
@@ -439,8 +451,9 @@ double c_capacity(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
 }
 
 // [[Rcpp::export]]
-std::string c_tile_order(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
-    auto sr = tdbs::SOMAArray::open(OpenMode::read, uri, ctxxp->ctxptr);
+std::string c_tile_order(
+    const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
+    auto sr = tdbs::SOMAArray::open(OpenMode::soma_read, uri, ctxxp->ctxptr);
     std::shared_ptr<tiledb::ArraySchema> sch = sr->tiledb_schema();
     sr->close();
 
@@ -449,8 +462,9 @@ std::string c_tile_order(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxx
 }
 
 // [[Rcpp::export]]
-std::string c_cell_order(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
-    auto sr = tdbs::SOMAArray::open(OpenMode::read, uri, ctxxp->ctxptr);
+std::string c_cell_order(
+    const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
+    auto sr = tdbs::SOMAArray::open(OpenMode::soma_read, uri, ctxxp->ctxptr);
     std::shared_ptr<tiledb::ArraySchema> sch = sr->tiledb_schema();
     sr->close();
 
@@ -459,35 +473,43 @@ std::string c_cell_order(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxx
 }
 
 // [[Rcpp::export]]
-Rcpp::List c_schema_filters(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
-    auto sr = tdbs::SOMAArray::open(OpenMode::read, uri, ctxxp->ctxptr);
+Rcpp::List c_schema_filters(
+    const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
+    auto sr = tdbs::SOMAArray::open(OpenMode::soma_read, uri, ctxxp->ctxptr);
     std::shared_ptr<tiledb::ArraySchema> sch = sr->tiledb_schema();
     sr->close();
 
     Rcpp::List filter_list, coord_filters, offset_filters, validity_filters;
 
-    auto coords_filter_list = make_xptr<tiledb::FilterList>(new tiledb::FilterList(sch->coords_filter_list()));
+    auto coords_filter_list = make_xptr<tiledb::FilterList>(
+        new tiledb::FilterList(sch->coords_filter_list()));
     int ncoords_filters = static_cast<int32_t>(coords_filter_list->nfilters());
     for (int i = 0; i < ncoords_filters; i++) {
-        auto filter = make_xptr<tiledb::Filter>(new tiledb::Filter(coords_filter_list->filter(i)));
+        auto filter = make_xptr<tiledb::Filter>(
+            new tiledb::Filter(coords_filter_list->filter(i)));
         auto filter_type = tiledb::Filter::to_str(filter->filter_type());
         coord_filters[filter_type] = _get_filter_options(filter);
     }
     filter_list["coords"] = coord_filters;
 
-    auto offset_filter_list = make_xptr<tiledb::FilterList>(new tiledb::FilterList(sch->offsets_filter_list()));
+    auto offset_filter_list = make_xptr<tiledb::FilterList>(
+        new tiledb::FilterList(sch->offsets_filter_list()));
     int noffset_filters = static_cast<int32_t>(offset_filter_list->nfilters());
     for (int i = 0; i < noffset_filters; i++) {
-        auto filter = make_xptr<tiledb::Filter>(new tiledb::Filter(offset_filter_list->filter(i)));
+        auto filter = make_xptr<tiledb::Filter>(
+            new tiledb::Filter(offset_filter_list->filter(i)));
         auto filter_type = tiledb::Filter::to_str(filter->filter_type());
         offset_filters[filter_type] = _get_filter_options(filter);
     }
     filter_list["offsets"] = offset_filters;
 
-    auto validity_filter_list = make_xptr<tiledb::FilterList>(new tiledb::FilterList(sch->validity_filter_list()));
-    int nvalidity_filters = static_cast<int32_t>(validity_filter_list->nfilters());
+    auto validity_filter_list = make_xptr<tiledb::FilterList>(
+        new tiledb::FilterList(sch->validity_filter_list()));
+    int nvalidity_filters = static_cast<int32_t>(
+        validity_filter_list->nfilters());
     for (int i = 0; i < nvalidity_filters; i++) {
-        auto filter = make_xptr<tiledb::Filter>(new tiledb::Filter(validity_filter_list->filter(i)));
+        auto filter = make_xptr<tiledb::Filter>(
+            new tiledb::Filter(validity_filter_list->filter(i)));
         auto filter_type = tiledb::Filter::to_str(filter->filter_type());
         validity_filters[filter_type] = _get_filter_options(filter);
     }
@@ -498,80 +520,80 @@ Rcpp::List c_schema_filters(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> c
 
 // Taken from tiledb-r
 // https://github.com/TileDB-Inc/TileDB-R/blob/525bdfc0f34aadb74a312a5d8428bd07819a8f83/src/libtiledb.cpp#L31C1-L110C2
-const char *_tiledb_datatype_to_string(tiledb_datatype_t dtype) {
+const char* _tiledb_datatype_to_string(tiledb_datatype_t dtype) {
     switch (dtype) {
-    case TILEDB_INT8:
-        return "INT8";
-    case TILEDB_UINT8:
-        return "UINT8";
-    case TILEDB_INT16:
-        return "INT16";
-    case TILEDB_UINT16:
-        return "UINT16";
-    case TILEDB_INT32:
-        return "INT32";
-    case TILEDB_UINT32:
-        return "UINT32";
-    case TILEDB_INT64:
-        return "INT64";
-    case TILEDB_UINT64:
-        return "UINT64";
-    case TILEDB_FLOAT32:
-        return "FLOAT32";
-    case TILEDB_FLOAT64:
-        return "FLOAT64";
-    case TILEDB_CHAR:
-        return "CHAR";
-    case TILEDB_STRING_ASCII:
-        return "ASCII";
-    case TILEDB_STRING_UTF8:
-        return "UTF8";
-    case TILEDB_STRING_UTF16:
-        return "UTF16";
-    case TILEDB_STRING_UTF32:
-        return "UTF32";
-    case TILEDB_STRING_UCS2:
-        return "UCS2";
-    case TILEDB_STRING_UCS4:
-        return "UCS4";
-    case TILEDB_ANY:
-        return "ANY";
-    case TILEDB_DATETIME_YEAR:
-        return "DATETIME_YEAR";
-    case TILEDB_DATETIME_MONTH:
-        return "DATETIME_MONTH";
-    case TILEDB_DATETIME_WEEK:
-        return "DATETIME_WEEK";
-    case TILEDB_DATETIME_DAY:
-        return "DATETIME_DAY";
-    case TILEDB_DATETIME_HR:
-        return "DATETIME_HR";
-    case TILEDB_DATETIME_MIN:
-        return "DATETIME_MIN";
-    case TILEDB_DATETIME_SEC:
-        return "DATETIME_SEC";
-    case TILEDB_DATETIME_MS:
-        return "DATETIME_MS";
-    case TILEDB_DATETIME_US:
-        return "DATETIME_US";
-    case TILEDB_DATETIME_NS:
-        return "DATETIME_NS";
-    case TILEDB_DATETIME_PS:
-        return "DATETIME_PS";
-    case TILEDB_DATETIME_FS:
-        return "DATETIME_FS";
-    case TILEDB_DATETIME_AS:
-        return "DATETIME_AS";
-    case TILEDB_BLOB:
-        return "BLOB";
-    case TILEDB_BOOL:
-        return "BOOL";
-    case TILEDB_GEOM_WKB:
-        return "GEOM_WKB";
-    case TILEDB_GEOM_WKT:
-        return "GEOM_WKT";
-    default:
-        Rcpp::stop("unknown tiledb_datatype_t (%d)", dtype);
+        case TILEDB_INT8:
+            return "INT8";
+        case TILEDB_UINT8:
+            return "UINT8";
+        case TILEDB_INT16:
+            return "INT16";
+        case TILEDB_UINT16:
+            return "UINT16";
+        case TILEDB_INT32:
+            return "INT32";
+        case TILEDB_UINT32:
+            return "UINT32";
+        case TILEDB_INT64:
+            return "INT64";
+        case TILEDB_UINT64:
+            return "UINT64";
+        case TILEDB_FLOAT32:
+            return "FLOAT32";
+        case TILEDB_FLOAT64:
+            return "FLOAT64";
+        case TILEDB_CHAR:
+            return "CHAR";
+        case TILEDB_STRING_ASCII:
+            return "ASCII";
+        case TILEDB_STRING_UTF8:
+            return "UTF8";
+        case TILEDB_STRING_UTF16:
+            return "UTF16";
+        case TILEDB_STRING_UTF32:
+            return "UTF32";
+        case TILEDB_STRING_UCS2:
+            return "UCS2";
+        case TILEDB_STRING_UCS4:
+            return "UCS4";
+        case TILEDB_ANY:
+            return "ANY";
+        case TILEDB_DATETIME_YEAR:
+            return "DATETIME_YEAR";
+        case TILEDB_DATETIME_MONTH:
+            return "DATETIME_MONTH";
+        case TILEDB_DATETIME_WEEK:
+            return "DATETIME_WEEK";
+        case TILEDB_DATETIME_DAY:
+            return "DATETIME_DAY";
+        case TILEDB_DATETIME_HR:
+            return "DATETIME_HR";
+        case TILEDB_DATETIME_MIN:
+            return "DATETIME_MIN";
+        case TILEDB_DATETIME_SEC:
+            return "DATETIME_SEC";
+        case TILEDB_DATETIME_MS:
+            return "DATETIME_MS";
+        case TILEDB_DATETIME_US:
+            return "DATETIME_US";
+        case TILEDB_DATETIME_NS:
+            return "DATETIME_NS";
+        case TILEDB_DATETIME_PS:
+            return "DATETIME_PS";
+        case TILEDB_DATETIME_FS:
+            return "DATETIME_FS";
+        case TILEDB_DATETIME_AS:
+            return "DATETIME_AS";
+        case TILEDB_BLOB:
+            return "BLOB";
+        case TILEDB_BOOL:
+            return "BOOL";
+        case TILEDB_GEOM_WKB:
+            return "GEOM_WKB";
+        case TILEDB_GEOM_WKT:
+            return "GEOM_WKT";
+        default:
+            Rcpp::stop("unknown tiledb_datatype_t (%d)", dtype);
     }
 }
 
@@ -584,7 +606,8 @@ int _get_ncells(AttrOrDim x) {
     if (x->cell_val_num() == TILEDB_VAR_NUM) {
         ncells = R_NaInt;
     } else if (x->cell_val_num() > std::numeric_limits<int32_t>::max()) {
-        Rcpp::stop("tiledb_attr ncells value not representable as an R integer");
+        Rcpp::stop(
+            "tiledb_attr ncells value not representable as an R integer");
     } else {
         ncells = static_cast<int32_t>(x->cell_val_num());
     }
@@ -592,25 +615,29 @@ int _get_ncells(AttrOrDim x) {
 }
 
 // [[Rcpp::export]]
-Rcpp::List c_attributes(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
-    auto sr = tdbs::SOMAArray::open(OpenMode::read, uri, ctxxp->ctxptr);
+Rcpp::List c_attributes(
+    const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
+    auto sr = tdbs::SOMAArray::open(OpenMode::soma_read, uri, ctxxp->ctxptr);
     std::shared_ptr<tiledb::ArraySchema> sch = sr->tiledb_schema();
     sr->close();
 
     Rcpp::List result;
     int nattr = sch->attribute_num();
     for (auto i = 0; i < nattr; i++) {
-        auto attr = make_xptr<tiledb::Attribute>(new tiledb::Attribute(sch->attribute(i)));
+        auto attr = make_xptr<tiledb::Attribute>(
+            new tiledb::Attribute(sch->attribute(i)));
         auto name = attr->name();
 
         // identify the filters
         // filter options taken from tiledb-r
         // https://github.com/TileDB-Inc/TileDB-R/blob/525bdfc0f34aadb74a312a5d8428bd07819a8f83/src/libtiledb.cpp#L369-L388
         Rcpp::List filters;
-        auto filter_list = make_xptr<tiledb::FilterList>(new tiledb::FilterList(attr->filter_list()));
+        auto filter_list = make_xptr<tiledb::FilterList>(
+            new tiledb::FilterList(attr->filter_list()));
         int nfilters = static_cast<int32_t>(filter_list->nfilters());
         for (auto j = 0; j < nfilters; j++) {
-            auto filter = make_xptr<tiledb::Filter>(new tiledb::Filter(filter_list->filter(j)));
+            auto filter = make_xptr<tiledb::Filter>(
+                new tiledb::Filter(filter_list->filter(j)));
             auto filter_type = tiledb::Filter::to_str(filter->filter_type());
             filters[filter_type] = _get_filter_options(filter);
         }
@@ -619,10 +646,10 @@ Rcpp::List c_attributes(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp
         result[name] = Rcpp::List::create(
             Rcpp::Named("name") = name,
             Rcpp::Named("type") = _tiledb_datatype_to_string(attr->type()),
-            Rcpp::Named("ncells") = _get_ncells<Rcpp::XPtr<tiledb::Attribute>>(attr),
+            Rcpp::Named("ncells") = _get_ncells<Rcpp::XPtr<tiledb::Attribute>>(
+                attr),
             Rcpp::Named("nullable") = attr->nullable(),
-            Rcpp::Named("filter_list") = filters
-        );
+            Rcpp::Named("filter_list") = filters);
     }
 
     return result;
@@ -631,8 +658,9 @@ Rcpp::List c_attributes(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp
 // adapted from tiledb-r
 // https://github.com/TileDB-Inc/TileDB-R/blob/525bdfc0f34aadb74a312a5d8428bd07819a8f83/src/libtiledb.cpp#L3027-L3042
 // [[Rcpp::export]]
-Rcpp::LogicalVector c_attributes_enumerated(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
-    auto sr = tdbs::SOMAArray::open(OpenMode::read, uri, ctxxp->ctxptr);
+Rcpp::LogicalVector c_attributes_enumerated(
+    const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
+    auto sr = tdbs::SOMAArray::open(OpenMode::soma_read, uri, ctxxp->ctxptr);
     std::shared_ptr<tiledb::ArraySchema> sch = sr->tiledb_schema();
     sr->close();
 
@@ -640,11 +668,10 @@ Rcpp::LogicalVector c_attributes_enumerated(const std::string& uri, Rcpp::XPtr<s
     Rcpp::LogicalVector has_enum = Rcpp::LogicalVector(nattrs);
     Rcpp::CharacterVector names = Rcpp::CharacterVector(nattrs);
     for (int i = 0; i < nattrs; i++) {
-        auto attr = make_xptr<tiledb::Attribute>(new tiledb::Attribute(sch->attribute(i)));
+        auto attr = make_xptr<tiledb::Attribute>(
+            new tiledb::Attribute(sch->attribute(i)));
         auto enmr = tiledb::AttributeExperimental::get_enumeration_name(
-            *(ctxxp->ctxptr->tiledb_ctx()),
-            *attr.get()
-        );
+            *(ctxxp->ctxptr->tiledb_ctx()), *attr.get());
         has_enum(i) = enmr != std::nullopt;
         names(i) = attr->name();
     }
@@ -655,12 +682,12 @@ Rcpp::LogicalVector c_attributes_enumerated(const std::string& uri, Rcpp::XPtr<s
 
 // [[Rcpp::export]]
 Rcpp::CharacterVector c_attribute_enumeration_levels(
-        const std::string& uri,
-        Rcpp::XPtr<somactx_wrap_t> ctxxp,
-        const std::string& name
-) {
-    auto sr = tdbs::SOMAArray::open(OpenMode::read, uri, ctxxp->ctxptr);
-    std::pair<ArrowArray*, ArrowSchema*> enum_values = sr->get_enumeration_values_for_column(name);
+    const std::string& uri,
+    Rcpp::XPtr<somactx_wrap_t> ctxxp,
+    const std::string& name) {
+    auto sr = tdbs::SOMAArray::open(OpenMode::soma_read, uri, ctxxp->ctxptr);
+    std::pair<ArrowArray*, ArrowSchema*>
+        enum_values = sr->get_enumeration_values_for_column(name);
     sr->close();
 
     if (enum_values.first->length > std::numeric_limits<int32_t>::max()) {
@@ -669,7 +696,8 @@ Rcpp::CharacterVector c_attribute_enumeration_levels(
 
     nanoarrow::UniqueArrayView enum_view;
     ArrowArrayViewInitFromType(enum_view.get(), NANOARROW_TYPE_LARGE_STRING);
-    NANOARROW_RETURN_NOT_OK(ArrowArrayViewSetArray(enum_view.get(), enum_values.first, nullptr));
+    NANOARROW_RETURN_NOT_OK(
+        ArrowArrayViewSetArray(enum_view.get(), enum_values.first, nullptr));
 
     int nlevels = static_cast<int32_t>(enum_values.first->length);
     Rcpp::CharacterVector enumerations = Rcpp::CharacterVector(nlevels);
@@ -677,7 +705,8 @@ Rcpp::CharacterVector c_attribute_enumeration_levels(
         if (ArrowArrayViewIsNull(enum_view.get(), i)) {
             enumerations(i) = R_NaString;
         } else {
-            ArrowStringView item = ArrowArrayViewGetStringUnsafe(enum_view.get(), i);
+            ArrowStringView item = ArrowArrayViewGetStringUnsafe(
+                enum_view.get(), i);
             enumerations(i) = std::string(item.data, item.size_bytes);
         }
     }
@@ -687,7 +716,7 @@ Rcpp::CharacterVector c_attribute_enumeration_levels(
 
 // [[Rcpp::export]]
 Rcpp::List c_domain(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
-    auto sr = tdbs::SOMAArray::open(OpenMode::read, uri, ctxxp->ctxptr);
+    auto sr = tdbs::SOMAArray::open(OpenMode::soma_read, uri, ctxxp->ctxptr);
     std::shared_ptr<tiledb::ArraySchema> sch = sr->tiledb_schema();
     sr->close();
 
@@ -701,15 +730,18 @@ Rcpp::List c_domain(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
     }
     int ndim = static_cast<int32_t>(rank);
     for (int i = 0; i < ndim; i++) {
-        auto dim = make_xptr<tiledb::Dimension>(new tiledb::Dimension(domain->dimension(i)));
+        auto dim = make_xptr<tiledb::Dimension>(
+            new tiledb::Dimension(domain->dimension(i)));
         auto name = dim->name();
 
         // identify the filters
         Rcpp::List filters;
-        auto filter_list = make_xptr<tiledb::FilterList>(new tiledb::FilterList(dim->filter_list()));
+        auto filter_list = make_xptr<tiledb::FilterList>(
+            new tiledb::FilterList(dim->filter_list()));
         int nfilters = static_cast<int32_t>(filter_list->nfilters());
         for (auto j = 0; j < nfilters; j++) {
-            auto filter = make_xptr<tiledb::Filter>(new tiledb::Filter(filter_list->filter(j)));
+            auto filter = make_xptr<tiledb::Filter>(
+                new tiledb::Filter(filter_list->filter(j)));
             auto filter_type = tiledb::Filter::to_str(filter->filter_type());
             filters[filter_type] = _get_filter_options(filter);
         }
@@ -718,11 +750,11 @@ Rcpp::List c_domain(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
         result[name] = Rcpp::List::create(
             Rcpp::Named("name") = name,
             Rcpp::Named("type") = _tiledb_datatype_to_string(dim->type()),
-            Rcpp::Named("ncells") = _get_ncells<Rcpp::XPtr<tiledb::Dimension>>(dim),
+            Rcpp::Named("ncells") = _get_ncells<Rcpp::XPtr<tiledb::Dimension>>(
+                dim),
             Rcpp::Named("domain") = _get_dim_domain(dim),
             Rcpp::Named("tile") = _get_dim_tile(dim),
-            Rcpp::Named("filters") = filters
-        );
+            Rcpp::Named("filters") = filters);
     }
 
     return result;
@@ -738,7 +770,7 @@ std::string resize(
     // This function is solely for SparseNDArray and DenseNDArray for which the
     // dims are required by the SOMA spec to be of type int64. Domain-resize for
     // variant-indexed dataframes is via upgrade_domain and change_domain.
-    auto sr = tdbs::SOMAArray::open(OpenMode::write, uri, ctxxp->ctxptr);
+    auto sr = tdbs::SOMAArray::open(OpenMode::soma_write, uri, ctxxp->ctxptr);
     std::vector<int64_t> new_shape_i64 = i64_from_rcpp_numeric(new_shape);
 
     std::string retval = "";
@@ -761,7 +793,8 @@ void resize_soma_joinid_shape(
     std::string function_name_for_messages,
     Rcpp::XPtr<somactx_wrap_t> ctxxp) {
     // This function is solely for SOMADataFrame.
-    auto sr = tdbs::SOMADataFrame::open(uri, OpenMode::write, ctxxp->ctxptr);
+    auto sr = tdbs::SOMADataFrame::open(
+        uri, OpenMode::soma_write, ctxxp->ctxptr);
     std::vector<int64_t> new_shape_i64 = i64_from_rcpp_numeric(new_shape);
     sr->resize_soma_joinid_shape(new_shape_i64[0], function_name_for_messages);
     sr->close();
@@ -777,7 +810,7 @@ std::string tiledbsoma_upgrade_shape(
     // This function is solely for SparseNDArray and DenseNDArray for which the
     // dims are required by the SOMA spec to be of type int64. Domain-resize for
     // variant-indexed dataframes is via upgrade_domain and change_domain.
-    auto sr = tdbs::SOMAArray::open(OpenMode::write, uri, ctxxp->ctxptr);
+    auto sr = tdbs::SOMAArray::open(OpenMode::soma_write, uri, ctxxp->ctxptr);
     std::vector<int64_t> new_shape_i64 = i64_from_rcpp_numeric(new_shape);
 
     std::string retval = "";
@@ -816,7 +849,8 @@ std::string upgrade_or_change_domain(
 
     // Now call libtiledbsoma
     std::string reason_string = "";
-    auto sr = tdbs::SOMADataFrame::open(uri, OpenMode::write, ctxxp->ctxptr);
+    auto sr = tdbs::SOMADataFrame::open(
+        uri, OpenMode::soma_write, ctxxp->ctxptr);
     if (is_change_domain) {
         if (check_only) {
             auto status_and_reason = sr->can_change_domain(
@@ -914,7 +948,8 @@ void c_update_dataframe_schema(
         }
     }
 
-    auto sdf = tdbs::SOMADataFrame::open(uri, OpenMode::write, ctxxp->ctxptr);
+    auto sdf = tdbs::SOMADataFrame::open(
+        uri, OpenMode::soma_write, ctxxp->ctxptr);
     sdf->update_dataframe_schema(drop_attrs, add_attrs, add_enmrs);
     sdf->close();
 }

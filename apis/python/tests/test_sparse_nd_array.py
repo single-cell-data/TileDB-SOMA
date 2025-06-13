@@ -69,7 +69,7 @@ def test_sparse_nd_array_create_ok(tmp_path, shape: tuple[int, ...], element_typ
     with contextlib.closing(
         soma.pytiledbsoma.SOMASparseNDArray.open(
             tmp_path.as_posix(),
-            soma.pytiledbsoma.OpenMode.read,
+            soma.pytiledbsoma.OpenMode.soma_read,
             soma.pytiledbsoma.SOMAContext(),
         )
     ) as b:

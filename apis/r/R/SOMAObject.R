@@ -141,6 +141,7 @@ SOMAObject <- R6::R6Class(
     #'  \item \dQuote{\code{CLOSED}}
     #'  \item \dQuote{\code{READ}}
     #'  \item \dQuote{\code{WRITE}}
+    #'  \item \dQuote{\code{DELETE}}
     #' }
     #'
     mode = \() private$.mode %||% "CLOSED",
@@ -151,13 +152,14 @@ SOMAObject <- R6::R6Class(
     #' \itemize{
     #'  \item \dQuote{\code{READ}}
     #'  \item \dQuote{\code{WRITE}}
+    #'  \item \dQuote{\code{DELETE}}
     #' }
     #' @param tiledb_timestamp Optional Datetime (POSIXct) with TileDB timestamp
     #'
     #' @return Invisibly returns \code{self} opened in \code{mode}
     #'
     reopen = function(mode, tiledb_timestamp = NULL) {
-      mode <- match.arg(mode, choices = c("READ", "WRITE"))
+      mode <- match.arg(mode, choices = c("READ", "WRITE", "DELETE"))
       stopifnot(
         "'tiledb_timestamp' must be a POSIXct datetime object" = is.null(tiledb_timestamp) ||
           (inherits(tiledb_timestamp, what = "POSIXct") && length(tiledb_timestamp) == 1L && !is.na(tiledb_timestamp))
@@ -196,7 +198,7 @@ SOMAObject <- R6::R6Class(
       if (!(is.null(key) || (is_scalar_character(key) && nzchar(key)))) {
         stop("'key' must be a single, non-empty string", call. = FALSE)
       }
-      private$.check_open_for_read_or_write()
+      private$.check_open()
       private$.update_metadata_cache()
 
       spdl::debug("Retrieving metadata for {} '{}'", self$class(), self$uri)
@@ -405,11 +407,28 @@ SOMAObject <- R6::R6Class(
       return(invisible(NULL))
     },
 
+    # @desciption Check that the object is open for delete
+    .check_open_for_delete = function () {
+      if (self$mode() != "DELETE") {
+        stop("Item must be open for delete: ", self$uri, call. = FALSE)
+      }
+      return(invisible(NULL))
+    },
+
     # @description Check that the object is open
     #
     .check_open_for_read_or_write = function() {
-      if (!self$is_open()) {
+      if (!switch(self$mode() %||% "", READ = TRUE, WRITE = TRUE, FALSE)) {
         stop("Item must be open for read or write: ", self$uri, call. = FALSE)
+      }
+      return(invisible(NULL))
+    },
+
+    # @description Check that the object is open
+    #
+    .check_open = function() {
+      if (!self$is_open()) {
+        stop("Item must be open for read, write, or, delete: ", self$uri, call. = FALSE)
       }
       return(invisible(NULL))
     },

@@ -350,7 +350,7 @@ setuptools.setup(
         "scanpy>=1.9.2",
         "scipy",
         # Note: the somacore version is also in .pre-commit-config.yaml
-        "somacore==1.0.28",
+        "somacore @ git+https://github.com/single-cell-data/SOMA.git@04f02d3",  # DO NOT MERGE
         "typing-extensions>=4.5.0",  # Note "-" even though `import typing_extensions`
     ],
     extras_require={

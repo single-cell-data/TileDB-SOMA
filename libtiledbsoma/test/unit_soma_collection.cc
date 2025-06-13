@@ -21,7 +21,8 @@ TEST_CASE("SOMACollection: basic") {
     std::string uri = "mem://unit-test-collection-basic";
 
     SOMACollection::create(uri, ctx, ts);
-    auto soma_collection = SOMACollection::open(uri, OpenMode::read, ctx, ts);
+    auto soma_collection = SOMACollection::open(
+        uri, OpenMode::soma_read, ctx, ts);
     REQUIRE(soma_collection->uri() == uri);
     REQUIRE(soma_collection->ctx() == ctx);
     REQUIRE(soma_collection->type() == "SOMACollection");
@@ -53,7 +54,7 @@ TEST_CASE("SOMACollection: add SOMASparseNDArray") {
         {"sparse_ndarray", SOMAGroupEntry(sub_uri, "SOMAArray")}};
 
     auto soma_collection = SOMACollection::open(
-        base_uri, OpenMode::write, ctx, ts);
+        base_uri, OpenMode::soma_write, ctx, ts);
     REQUIRE(soma_collection->timestamp() == ts);
 
     auto soma_sparse = soma_collection->add_new_sparse_ndarray(
@@ -75,7 +76,7 @@ TEST_CASE("SOMACollection: add SOMASparseNDArray") {
     soma_sparse->close();
     soma_collection->close();
 
-    soma_collection = SOMACollection::open(base_uri, OpenMode::read, ctx);
+    soma_collection = SOMACollection::open(base_uri, OpenMode::soma_read, ctx);
     REQUIRE(soma_collection->members_map() == expected_map);
     soma_collection->close();
 }
@@ -102,7 +103,7 @@ TEST_CASE("SOMACollection: add SOMADenseNDArray") {
         {"dense_ndarray", SOMAGroupEntry(sub_uri, "SOMAArray")}};
 
     auto soma_collection = SOMACollection::open(
-        base_uri, OpenMode::write, ctx, ts);
+        base_uri, OpenMode::soma_write, ctx, ts);
     REQUIRE(soma_collection->timestamp() == ts);
 
     if (helper::have_dense_current_domain_support()) {
@@ -124,7 +125,8 @@ TEST_CASE("SOMACollection: add SOMADenseNDArray") {
         REQUIRE(soma_dense->timestamp() == ts);
         soma_collection->close();
 
-        soma_collection = SOMACollection::open(base_uri, OpenMode::read, ctx);
+        soma_collection = SOMACollection::open(
+            base_uri, OpenMode::soma_read, ctx);
         REQUIRE(soma_collection->members_map() == expected_map);
         soma_collection->close();
     }
@@ -158,7 +160,7 @@ TEST_CASE("SOMACollection: add SOMADataFrame") {
         {"dataframe", SOMAGroupEntry(sub_uri, "SOMAArray")}};
 
     auto soma_collection = SOMACollection::open(
-        base_uri, OpenMode::write, ctx, ts);
+        base_uri, OpenMode::soma_write, ctx, ts);
     REQUIRE(soma_collection->timestamp() == ts);
 
     auto soma_dataframe = soma_collection->add_new_dataframe(
@@ -174,7 +176,7 @@ TEST_CASE("SOMACollection: add SOMADataFrame") {
     REQUIRE(soma_dataframe->timestamp() == ts);
     soma_collection->close();
 
-    soma_collection = SOMACollection::open(base_uri, OpenMode::read, ctx);
+    soma_collection = SOMACollection::open(base_uri, OpenMode::soma_read, ctx);
     REQUIRE(soma_collection->members_map() == expected_map);
     REQUIRE(soma_dataframe->count() == 0);
     soma_collection->close();
@@ -192,7 +194,8 @@ TEST_CASE("SOMACollection: add SOMACollection") {
     std::map<std::string, SOMAGroupEntry> expected_map{
         {"subcollection", SOMAGroupEntry(sub_uri, "SOMAGroup")}};
 
-    auto soma_collection = SOMACollection::open(base_uri, OpenMode::write, ctx);
+    auto soma_collection = SOMACollection::open(
+        base_uri, OpenMode::soma_write, ctx);
     auto soma_subcollection = soma_collection->add_new_collection(
         "subcollection", sub_uri, URIType::absolute, ctx);
     REQUIRE(soma_collection->members_map() == expected_map);
@@ -201,7 +204,7 @@ TEST_CASE("SOMACollection: add SOMACollection") {
     REQUIRE(soma_subcollection->type() == "SOMACollection");
     soma_collection->close();
 
-    soma_collection = SOMACollection::open(base_uri, OpenMode::read, ctx);
+    soma_collection = SOMACollection::open(base_uri, OpenMode::soma_read, ctx);
     REQUIRE(soma_collection->members_map() == expected_map);
     soma_collection->close();
 }
@@ -231,7 +234,8 @@ TEST_CASE("SOMACollection: add SOMAExperiment") {
     std::map<std::string, SOMAGroupEntry> expected_map{
         {"experiment", SOMAGroupEntry(sub_uri, "SOMAGroup")}};
 
-    auto soma_collection = SOMACollection::open(base_uri, OpenMode::write, ctx);
+    auto soma_collection = SOMACollection::open(
+        base_uri, OpenMode::soma_write, ctx);
     auto soma_experiment = soma_collection->add_new_experiment(
         "experiment", sub_uri, URIType::absolute, ctx, schema, index_columns);
 
@@ -242,7 +246,7 @@ TEST_CASE("SOMACollection: add SOMAExperiment") {
     soma_experiment->close();
     soma_collection->close();
 
-    soma_collection = SOMACollection::open(base_uri, OpenMode::read, ctx);
+    soma_collection = SOMACollection::open(base_uri, OpenMode::soma_read, ctx);
     REQUIRE(soma_collection->members_map() == expected_map);
     soma_collection->close();
 }
@@ -272,7 +276,8 @@ TEST_CASE("SOMACollection: add SOMAMeasurement") {
     std::map<std::string, SOMAGroupEntry> expected_map{
         {"measurement", SOMAGroupEntry(sub_uri, "SOMAGroup")}};
 
-    auto soma_collection = SOMACollection::open(base_uri, OpenMode::write, ctx);
+    auto soma_collection = SOMACollection::open(
+        base_uri, OpenMode::soma_write, ctx);
     auto soma_measurement = soma_collection->add_new_measurement(
         "measurement", sub_uri, URIType::absolute, ctx, schema, index_columns);
 
@@ -283,7 +288,7 @@ TEST_CASE("SOMACollection: add SOMAMeasurement") {
     soma_measurement->close();
     soma_collection->close();
 
-    soma_collection = SOMACollection::open(base_uri, OpenMode::read, ctx);
+    soma_collection = SOMACollection::open(base_uri, OpenMode::soma_read, ctx);
     REQUIRE(soma_collection->members_map() == expected_map);
     soma_collection->close();
 }
@@ -294,14 +299,14 @@ TEST_CASE("SOMACollection: metadata") {
     std::string uri = "mem://unit-test-collection";
     SOMACollection::create(uri, ctx, TimestampRange(0, 2));
     auto soma_collection = SOMACollection::open(
-        uri, OpenMode::write, ctx, std::pair<uint64_t, uint64_t>(1, 1));
+        uri, OpenMode::soma_write, ctx, std::pair<uint64_t, uint64_t>(1, 1));
 
     int32_t val = 100;
     soma_collection->set_metadata("md", TILEDB_INT32, 1, &val);
     soma_collection->close();
 
     // Read metadata
-    soma_collection->open(OpenMode::read, TimestampRange(0, 2));
+    soma_collection->open(OpenMode::soma_read, TimestampRange(0, 2));
     REQUIRE(soma_collection->metadata_num() == 3);
     REQUIRE(soma_collection->has_metadata("soma_object_type"));
     REQUIRE(soma_collection->has_metadata("soma_encoding_version"));
@@ -313,7 +318,7 @@ TEST_CASE("SOMACollection: metadata") {
     soma_collection->close();
 
     // md should not be available at (2, 2)
-    soma_collection->open(OpenMode::read, TimestampRange(2, 2));
+    soma_collection->open(OpenMode::soma_read, TimestampRange(2, 2));
     REQUIRE(soma_collection->metadata_num() == 2);
     REQUIRE(soma_collection->has_metadata("soma_object_type"));
     REQUIRE(soma_collection->has_metadata("soma_encoding_version"));
@@ -321,7 +326,7 @@ TEST_CASE("SOMACollection: metadata") {
     soma_collection->close();
 
     // Metadata should also be retrievable in write mode
-    soma_collection->open(OpenMode::write, TimestampRange(0, 2));
+    soma_collection->open(OpenMode::soma_write, TimestampRange(0, 2));
     REQUIRE(soma_collection->metadata_num() == 3);
     REQUIRE(soma_collection->has_metadata("soma_object_type"));
     REQUIRE(soma_collection->has_metadata("soma_encoding_version"));
@@ -337,7 +342,7 @@ TEST_CASE("SOMACollection: metadata") {
     soma_collection->close();
 
     // Confirm delete in read mode
-    soma_collection->open(OpenMode::read, TimestampRange(0, 2));
+    soma_collection->open(OpenMode::soma_read, TimestampRange(0, 2));
     REQUIRE(!soma_collection->has_metadata("md"));
     REQUIRE(soma_collection->metadata_num() == 2);
 }
@@ -371,7 +376,7 @@ TEST_CASE("SOMAExperiment: metadata") {
         TimestampRange(0, 2));
 
     auto soma_experiment = SOMAExperiment::open(
-        uri, OpenMode::write, ctx, std::pair<uint64_t, uint64_t>(1, 1));
+        uri, OpenMode::soma_write, ctx, std::pair<uint64_t, uint64_t>(1, 1));
 
     int32_t val = 100;
     soma_experiment->set_metadata("md", TILEDB_INT32, 1, &val);
@@ -379,7 +384,7 @@ TEST_CASE("SOMAExperiment: metadata") {
 
     // Read metadata
     soma_experiment = SOMAExperiment::open(
-        uri, OpenMode::read, ctx, TimestampRange(0, 2));
+        uri, OpenMode::soma_read, ctx, TimestampRange(0, 2));
     REQUIRE(soma_experiment->metadata_num() == 4);
     REQUIRE(soma_experiment->has_metadata("dataset_type"));
     REQUIRE(soma_experiment->has_metadata("soma_object_type"));
@@ -393,7 +398,7 @@ TEST_CASE("SOMAExperiment: metadata") {
 
     // md should not be available at (2, 2)
     soma_experiment = SOMAExperiment::open(
-        uri, OpenMode::read, ctx, TimestampRange(2, 2));
+        uri, OpenMode::soma_read, ctx, TimestampRange(2, 2));
     REQUIRE(soma_experiment->metadata_num() == 3);
     REQUIRE(soma_experiment->has_metadata("dataset_type"));
     REQUIRE(soma_experiment->has_metadata("soma_object_type"));
@@ -403,7 +408,7 @@ TEST_CASE("SOMAExperiment: metadata") {
 
     // Metadata should also be retrievable in write mode
     soma_experiment = SOMAExperiment::open(
-        uri, OpenMode::write, ctx, TimestampRange(0, 2));
+        uri, OpenMode::soma_write, ctx, TimestampRange(0, 2));
     REQUIRE(soma_experiment->metadata_num() == 4);
     REQUIRE(soma_experiment->has_metadata("dataset_type"));
     REQUIRE(soma_experiment->has_metadata("soma_object_type"));
@@ -421,7 +426,7 @@ TEST_CASE("SOMAExperiment: metadata") {
 
     // Confirm delete in read mode
     soma_experiment = SOMAExperiment::open(
-        uri, OpenMode::read, ctx, TimestampRange(0, 2));
+        uri, OpenMode::soma_read, ctx, TimestampRange(0, 2));
     REQUIRE(!soma_experiment->has_metadata("md"));
     REQUIRE(soma_experiment->metadata_num() == 3);
 }
@@ -454,7 +459,7 @@ TEST_CASE("SOMAMeasurement: metadata") {
         TimestampRange(0, 2));
 
     auto soma_measurement = SOMAMeasurement::open(
-        uri, OpenMode::write, ctx, std::pair<uint64_t, uint64_t>(1, 1));
+        uri, OpenMode::soma_write, ctx, std::pair<uint64_t, uint64_t>(1, 1));
 
     int32_t val = 100;
     soma_measurement->set_metadata("md", TILEDB_INT32, 1, &val);
@@ -462,7 +467,7 @@ TEST_CASE("SOMAMeasurement: metadata") {
 
     // Read metadata
     soma_measurement = SOMAMeasurement::open(
-        uri, OpenMode::read, ctx, TimestampRange(0, 2));
+        uri, OpenMode::soma_read, ctx, TimestampRange(0, 2));
     REQUIRE(soma_measurement->metadata_num() == 3);
     REQUIRE(soma_measurement->has_metadata("soma_object_type"));
     REQUIRE(soma_measurement->has_metadata("soma_encoding_version"));
@@ -475,7 +480,7 @@ TEST_CASE("SOMAMeasurement: metadata") {
 
     // md should not be available at (2, 2)
     soma_measurement = SOMAMeasurement::open(
-        uri, OpenMode::read, ctx, TimestampRange(2, 2));
+        uri, OpenMode::soma_read, ctx, TimestampRange(2, 2));
     REQUIRE(soma_measurement->metadata_num() == 2);
     REQUIRE(soma_measurement->has_metadata("soma_object_type"));
     REQUIRE(soma_measurement->has_metadata("soma_encoding_version"));
@@ -484,7 +489,7 @@ TEST_CASE("SOMAMeasurement: metadata") {
 
     // Metadata should also be retrievable in write mode
     soma_measurement = SOMAMeasurement::open(
-        uri, OpenMode::write, ctx, TimestampRange(0, 2));
+        uri, OpenMode::soma_write, ctx, TimestampRange(0, 2));
     REQUIRE(soma_measurement->metadata_num() == 3);
     REQUIRE(soma_measurement->has_metadata("soma_object_type"));
     REQUIRE(soma_measurement->has_metadata("soma_encoding_version"));
@@ -501,7 +506,7 @@ TEST_CASE("SOMAMeasurement: metadata") {
 
     // Confirm delete in read mode
     soma_measurement = SOMAMeasurement::open(
-        uri, OpenMode::read, ctx, TimestampRange(0, 2));
+        uri, OpenMode::soma_read, ctx, TimestampRange(0, 2));
     REQUIRE(!soma_measurement->has_metadata("md"));
     REQUIRE(soma_measurement->metadata_num() == 2);
 }

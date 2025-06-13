@@ -46,7 +46,11 @@ void SOMAExperiment::create(
 
         auto name = std::string(std::filesystem::path(uri).filename());
         auto group = SOMAGroup::open(
-            OpenMode::write, experiment_uri.string(), ctx, name, timestamp);
+            OpenMode::soma_write,
+            experiment_uri.string(),
+            ctx,
+            name,
+            timestamp);
         group->set(
             (experiment_uri / "obs").string(),
             URIType::absolute,
@@ -87,7 +91,7 @@ std::shared_ptr<SOMADataFrame> SOMAExperiment::obs() {
     if (obs_ == nullptr) {
         obs_ = SOMADataFrame::open(
             (std::filesystem::path(uri()) / "obs").string(),
-            OpenMode::read,
+            OpenMode::soma_read,
             ctx(),
             timestamp());
     }
@@ -98,7 +102,7 @@ std::shared_ptr<SOMACollection> SOMAExperiment::ms() {
     if (ms_ == nullptr) {
         ms_ = SOMACollection::open(
             (std::filesystem::path(uri()) / "ms").string(),
-            OpenMode::read,
+            OpenMode::soma_read,
             ctx(),
             timestamp());
     }

@@ -67,7 +67,7 @@ TEST_CASE("SOMAGeometryDataFrame: basic", "[SOMAGeometryDataFrame]") {
     REQUIRE(!SOMADataFrame::exists(uri, ctx));
 
     auto soma_geometry = SOMAGeometryDataFrame::open(
-        uri, OpenMode::read, ctx, std::nullopt);
+        uri, OpenMode::soma_read, ctx, std::nullopt);
     REQUIRE(soma_geometry->uri() == uri);
     REQUIRE(soma_geometry->ctx() == ctx);
     REQUIRE(soma_geometry->type() == "SOMAGeometryDataFrame");
@@ -79,7 +79,7 @@ TEST_CASE("SOMAGeometryDataFrame: basic", "[SOMAGeometryDataFrame]") {
     REQUIRE(soma_geometry->nnz() == 0);
     soma_geometry->close();
 
-    auto soma_object = SOMAObject::open(uri, OpenMode::read, ctx);
+    auto soma_object = SOMAObject::open(uri, OpenMode::soma_read, ctx);
     REQUIRE(soma_object->uri() == uri);
     REQUIRE(soma_object->type() == "SOMAGeometryDataFrame");
     soma_object->close();
@@ -195,7 +195,7 @@ TEST_CASE("SOMAGeometryDataFrame: Roundtrip", "[SOMAGeometryDataFrame]") {
 
     // Write to point cloud.
     auto soma_geometry = SOMAGeometryDataFrame::open(
-        uri, OpenMode::write, ctx, std::nullopt);
+        uri, OpenMode::soma_write, ctx, std::nullopt);
     auto mq = ManagedQuery(*soma_geometry, ctx->tiledb_ctx());
     std::tie(data_array, data_schema) = TransformerPipeline(
                                             std::move(data_array),
@@ -210,7 +210,7 @@ TEST_CASE("SOMAGeometryDataFrame: Roundtrip", "[SOMAGeometryDataFrame]") {
 
     // Read back the data.
     soma_geometry = SOMAGeometryDataFrame::open(
-        uri, OpenMode::read, ctx, std::nullopt);
+        uri, OpenMode::soma_read, ctx, std::nullopt);
     mq = ManagedQuery(*soma_geometry, ctx->tiledb_ctx());
     while (auto batch = mq.read_next()) {
         auto arrbuf = batch.value();
@@ -247,7 +247,7 @@ TEST_CASE("SOMAGeometryDataFrame: Roundtrip", "[SOMAGeometryDataFrame]") {
     }
     soma_geometry->close();
 
-    auto soma_object = SOMAObject::open(uri, OpenMode::read, ctx);
+    auto soma_object = SOMAObject::open(uri, OpenMode::soma_read, ctx);
     REQUIRE(soma_object->uri() == uri);
     REQUIRE(soma_object->type() == "SOMAGeometryDataFrame");
     soma_object->close();

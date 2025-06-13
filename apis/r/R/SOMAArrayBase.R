@@ -25,7 +25,7 @@ SOMAArrayBase <- R6::R6Class(
     #'
     #' @return Return s\code{self}.
     #'
-    open = function(mode = c("READ", "WRITE")) {
+    open = function(mode = c("READ", "WRITE", "DELETE")) {
       envs <- unique(vapply(
         X = unique(sys.parents()),
         FUN = function(n) environmentName(environment(sys.function(n))),

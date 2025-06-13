@@ -49,7 +49,7 @@ TEST_CASE("SOMADenseNDArray: basic", "[SOMADenseNDArray]") {
             PlatformConfig(),
             TimestampRange(0, 2));
 
-        auto dnda = SOMADenseNDArray::open(uri, OpenMode::read, ctx);
+        auto dnda = SOMADenseNDArray::open(uri, OpenMode::soma_read, ctx);
         REQUIRE(dnda->shape() == std::vector<int64_t>{dim_max + 1});
         dnda->close();
     } else {
@@ -92,7 +92,7 @@ TEST_CASE("SOMADenseNDArray: platform_config", "[SOMADenseNDArray]") {
         SOMADenseNDArray::create(
             uri, arrow_format, index_columns, ctx, platform_config);
 
-        auto dnda = SOMADenseNDArray::open(uri, OpenMode::read, ctx);
+        auto dnda = SOMADenseNDArray::open(uri, OpenMode::soma_read, ctx);
         auto dim_filter = dnda->tiledb_schema()
                               ->domain()
                               .dimension(dim_name)
@@ -137,14 +137,14 @@ TEST_CASE("SOMADenseNDArray: metadata", "[SOMADenseNDArray]") {
     // TO DO: do more data writes and readbacks here in C++ tests.
     // https://github.com/single-cell-data/TileDB-SOMA/issues/3721
     auto dnda = SOMADenseNDArray::open(
-        uri, OpenMode::write, ctx, TimestampRange(0, 2));
+        uri, OpenMode::soma_write, ctx, TimestampRange(0, 2));
 
     int32_t val = 100;
     dnda->set_metadata("md", TILEDB_INT32, 1, &val);
     dnda->close();
 
     // Read metadata
-    dnda->open(OpenMode::read, TimestampRange(0, 2));
+    dnda->open(OpenMode::soma_read, TimestampRange(0, 2));
     REQUIRE(dnda->metadata_num() == 3);
     REQUIRE(dnda->has_metadata("soma_object_type"));
     REQUIRE(dnda->has_metadata("soma_encoding_version"));
@@ -156,7 +156,7 @@ TEST_CASE("SOMADenseNDArray: metadata", "[SOMADenseNDArray]") {
     dnda->close();
 
     // md should not be available at (0, 1)
-    dnda->open(OpenMode::read, TimestampRange(0, 1));
+    dnda->open(OpenMode::soma_read, TimestampRange(0, 1));
     REQUIRE(dnda->metadata_num() == 2);
     REQUIRE(dnda->has_metadata("soma_object_type"));
     REQUIRE(dnda->has_metadata("soma_encoding_version"));
@@ -164,7 +164,7 @@ TEST_CASE("SOMADenseNDArray: metadata", "[SOMADenseNDArray]") {
     dnda->close();
 
     // Metadata should also be retrievable in write mode
-    dnda->open(OpenMode::write);
+    dnda->open(OpenMode::soma_write);
     REQUIRE(dnda->metadata_num() == 3);
     REQUIRE(dnda->has_metadata("soma_object_type"));
     REQUIRE(dnda->has_metadata("soma_encoding_version"));
@@ -179,7 +179,7 @@ TEST_CASE("SOMADenseNDArray: metadata", "[SOMADenseNDArray]") {
     dnda->close();
 
     // Confirm delete in read mode
-    dnda->open(OpenMode::read);
+    dnda->open(OpenMode::soma_read);
     REQUIRE(!dnda->has_metadata("md"));
     REQUIRE(dnda->metadata_num() == 2);
 }

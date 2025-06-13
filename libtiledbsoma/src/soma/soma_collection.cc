@@ -69,7 +69,7 @@ void SOMACollection::close() {
 std::unique_ptr<SOMAObject> SOMACollection::get(const std::string& key) {
     auto tiledb_obj = SOMAGroup::get(key);
     auto soma_obj = SOMAObject::open(
-        tiledb_obj.uri(), OpenMode::read, this->ctx(), this->timestamp());
+        tiledb_obj.uri(), OpenMode::soma_read, this->ctx(), this->timestamp());
     return soma_obj;
 }
 
@@ -89,7 +89,7 @@ std::shared_ptr<SOMACollection> SOMACollection::add_new_collection(
     // unique_ptr because we place the SOMA object into the `children_` cache
     // in addition to returning the SOMA object to the user.
     std::shared_ptr<SOMACollection> member = SOMACollection::open(
-        uri, OpenMode::read, ctx, timestamp);
+        uri, OpenMode::soma_read, ctx, timestamp);
     this->set(std::string(uri), uri_type, std::string(key), "SOMAGroup");
     children_[std::string(key)] = member;
     return member;
@@ -115,7 +115,7 @@ std::shared_ptr<SOMAExperiment> SOMACollection::add_new_experiment(
     // unique_ptr because we place the SOMA object into the `children_` cache
     // in addition to returning the SOMA object to the user.
     std::shared_ptr<SOMAExperiment> member = SOMAExperiment::open(
-        uri, OpenMode::read, ctx, timestamp);
+        uri, OpenMode::soma_read, ctx, timestamp);
     this->set(std::string(uri), uri_type, std::string(key), "SOMAGroup");
     children_[std::string(key)] = member;
     return member;
@@ -141,7 +141,7 @@ std::shared_ptr<SOMAMeasurement> SOMACollection::add_new_measurement(
     // unique_ptr because we place the SOMA object into the `children_` cache
     // in addition to returning the SOMA object to the user.
     std::shared_ptr<SOMAMeasurement> member = SOMAMeasurement::open(
-        uri, OpenMode::read, ctx, timestamp);
+        uri, OpenMode::soma_read, ctx, timestamp);
     this->set(std::string(uri), uri_type, std::string(key), "SOMAGroup");
     children_[std::string(key)] = member;
     return member;
@@ -167,7 +167,7 @@ std::shared_ptr<SOMADataFrame> SOMACollection::add_new_dataframe(
     // unique_ptr because we place the SOMA object into the `children_` cache
     // in addition to returning the SOMA object to the user.
     std::shared_ptr<SOMADataFrame> member = SOMADataFrame::open(
-        uri, OpenMode::read, ctx, timestamp);
+        uri, OpenMode::soma_read, ctx, timestamp);
     this->set(std::string(uri), uri_type, std::string(key), "SOMAArray");
     children_[std::string(key)] = member;
     return member;
@@ -193,7 +193,7 @@ std::shared_ptr<SOMADenseNDArray> SOMACollection::add_new_dense_ndarray(
     // unique_ptr because we place the SOMA object into the `children_` cache
     // in addition to returning the SOMA object to the user.
     std::shared_ptr<SOMADenseNDArray> member = SOMADenseNDArray::open(
-        uri, OpenMode::read, ctx, timestamp);
+        uri, OpenMode::soma_read, ctx, timestamp);
     this->set(std::string(uri), uri_type, std::string(key), "SOMAArray");
     children_[std::string(key)] = member;
     return member;
@@ -219,7 +219,7 @@ std::shared_ptr<SOMASparseNDArray> SOMACollection::add_new_sparse_ndarray(
     // unique_ptr because we place the SOMA object into the `children_` cache
     // in addition to returning the SOMA object to the user.
     std::shared_ptr<SOMASparseNDArray> member = SOMASparseNDArray::open(
-        uri, OpenMode::read, ctx, timestamp);
+        uri, OpenMode::soma_read, ctx, timestamp);
     this->set(std::string(uri), uri_type, std::string(key), "SOMAArray");
     children_[std::string(key)] = member;
     return member;

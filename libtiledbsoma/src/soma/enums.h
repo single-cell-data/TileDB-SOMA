@@ -14,8 +14,10 @@
 #ifndef SOMA_ENUMS
 #define SOMA_ENUMS
 
+#include <string>
+
 /** Defines whether the SOMAObject should be opened in read or write mode */
-enum class OpenMode { read = 0, write };
+enum class OpenMode { soma_read, soma_write, soma_delete };
 
 /** Defines whether the result should be opened in row-major or column-major
  * order */
@@ -37,5 +39,18 @@ enum class Domainish {
     kind_core_current_domain = 1,
     kind_non_empty_domain = 2
 };
+
+inline std::string open_mode_to_string(OpenMode mode) {
+    switch (mode) {
+        case OpenMode::soma_read:
+            return "read";
+        case OpenMode::soma_write:
+            return "write";
+        case OpenMode::soma_delete:
+            return "delete";
+        default:
+            return "invalid";
+    }
+}
 
 #endif  // SOMA_ENUMS
