@@ -27,8 +27,7 @@ For **non-experimental** interfaces and features:
 - Warnings of future compatibility changes, which are not "deprecate and remove", may be introduced in a `major` or `minor` release. Future compatibility warnings must be included in the appropriate change log.
 - A `patch` release may not introduce deprecations or future incompatibility change warnings.
 - Changes to the [TileDB storage format](https://github.com/TileDB-Inc/TileDB/tree/main/format_spec) will only occur on a `major` release.
-- Changes to the [TileDB-SOMA encoding specification](https://github.com/single-cell-data/TileDB-SOMA/blob/main/encoding_specification.md) that are backward- or  forward-incompatible will only occur on a `major` release.
-
+- Changes to the [TileDB-SOMA encoding specification](https://github.com/single-cell-data/TileDB-SOMA/blob/main/encoding_specification.md) that are backward- or forward-incompatible will only occur on a `major` release.
 
 ## Warning period
 
@@ -39,7 +38,6 @@ Advance warning may not be provided for changes to:
 - experimental features in a `major` or `minor` release.
 - the [TileDB-SOMA encoding specification](https://github.com/single-cell-data/TileDB-SOMA/blob/main/encoding_specification.md) that are backward compatible.
 - the [TileDB storage format](https://github.com/TileDB-Inc/TileDB/tree/main/format_spec).
-
 
 ## Implementing Deprecation
 
