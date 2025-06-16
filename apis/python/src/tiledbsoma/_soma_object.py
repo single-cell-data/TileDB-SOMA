@@ -99,19 +99,7 @@ class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
         """
         del platform_config  # unused
         context = _validate_soma_tiledb_context(context)
-        handle = _tdb_handles.open(
-            uri,
-            mode,
-            context,
-            tiledb_timestamp,
-            clib_type=cls._wrapper_type._WRAPPED_TYPE.__name__,
-        )
-        if _read_soma_type(handle) != cls.soma_type:
-            raise SOMAError(
-                "Unexpected SOMA metadata encoding - object encoding metadata value did not match expected value."
-            )
-        if not isinstance(handle, cls._wrapper_type):
-            handle = cls._wrapper_type.open(uri, mode, context, tiledb_timestamp)
+        handle = cls._wrapper_type.open(uri, mode, context, tiledb_timestamp)
         return cls(
             handle,  # type: ignore[arg-type]
             _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code",
@@ -154,6 +142,11 @@ class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
             )
         self._handle = handle
         self._close_stack.enter_context(self._handle)
+        self._parse_special_metadata()
+
+    def _parse_special_metadata(self) -> None:
+        """Helper function the subclasses can override if they require additional validation or set-up."""
+        return
 
     def reopen(self, mode: options.OpenMode, tiledb_timestamp: OpenTimestamp | None = None) -> Self:
         """Return a new copy of the SOMAObject with the given mode at the current
@@ -165,23 +158,23 @@ class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
                 - ``r``: Open for reading only (cannot write).
                 - ``w``: Open for writing only (cannot read).
             tiledb_timestamp:
-                The TileDB timestamp to open this object at,
-                either an int representing milliseconds since the Unix epoch
-                or a datetime.datetime object.
-                When not provided (the default), the current time is used.
+                The TileDB timestamp to open this object at, either an int representing milliseconds since the Unix
+                epoch or a datetime.datetime object. When not provided (the default), the current time is used.
 
         Raises:
             ValueError:
                 If the user-provided ``mode`` is invalid.
+            SOMAError:
+                If the object has unwritten metadata.
 
         Lifecycle:
             Experimental.
         """
-        handle = self._wrapper_type._from_soma_object(self._handle.reopen(mode, tiledb_timestamp), self.context)
-        return self.__class__(
-            handle,  # type: ignore[arg-type]
-            _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code",
-        )
+        self._handle.close()
+        self._handle = self._wrapper_type.open(self._handle.uri, mode, self._handle.context, tiledb_timestamp)  # type: ignore
+        self._close_stack.enter_context(self._handle)
+        self._parse_special_metadata()
+        return self
 
     @property
     def context(self) -> SOMATileDBContext:
@@ -330,39 +323,3 @@ class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
 
 
 AnySOMAObject = SOMAObject[_tdb_handles.AnyWrapper]
-
-
-def _read_soma_type(hdl: _tdb_handles.AnyWrapper) -> str:
-    obj_type = hdl.metadata.get(SOMA_OBJECT_TYPE_METADATA_KEY)
-    encoding_version = hdl.metadata.get(SOMA_ENCODING_VERSION_METADATA_KEY)
-
-    if obj_type is None:
-        raise SOMAError(
-            f"Cannot access stored TileDB object with TileDB-SOMA. The object is missing "
-            f"the required '{SOMA_OBJECT_TYPE_METADATA_KEY!r}' metadata key."
-        )
-
-    if isinstance(obj_type, bytes):
-        obj_type = str(obj_type, "utf-8")
-
-    if not isinstance(obj_type, str):
-        raise SOMAError(
-            f"Cannot access stored TileDB object with TileDB-SOMA. The metadata key "
-            f"'{SOMA_OBJECT_TYPE_METADATA_KEY!r}' has unexpected type '{type(obj_type)}'."
-        )
-    if encoding_version is None:
-        raise SOMAError(
-            f"Cannot access stored TileDB object with TileDB-SOMA. The object is missing "
-            f"the required '{SOMA_ENCODING_VERSION_METADATA_KEY!r}' metadata key."
-        )
-
-    if isinstance(encoding_version, bytes):
-        encoding_version = str(encoding_version, "utf-8")
-
-    if encoding_version not in SUPPORTED_SOMA_ENCODING_VERSIONS:
-        raise ValueError(
-            f"Unsupported SOMA object encoding version '{encoding_version}'. TileDB-SOMA "
-            f"needs to be updated to a more recent version."
-        )
-
-    return obj_type

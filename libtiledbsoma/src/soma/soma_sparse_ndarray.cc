@@ -31,7 +31,7 @@ void SOMASparseNDArray::create(
     auto& index_column_schema = index_columns.second;
     uint64_t index_column_size = index_column_schema->n_children;
 
-    auto schema = std::make_unique<ArrowSchema>();
+    auto schema = make_managed_unique<ArrowSchema>();
     schema->name = nullptr;
     schema->format = strdup("+s");
     schema->n_children = index_column_size + 1;
@@ -76,12 +76,11 @@ void SOMASparseNDArray::create(
             std::nullopt,
             "SOMASparseNDArray",
             true,
-            platform_config);
+            platform_config,
+            timestamp);
 
     SOMAArray::create(
         ctx, uri, tiledb_schema, "SOMASparseNDArray", std::nullopt, timestamp);
-
-    schema->release(schema.get());
 }
 
 std::unique_ptr<SOMASparseNDArray> SOMASparseNDArray::open(
@@ -99,16 +98,6 @@ std::unique_ptr<SOMASparseNDArray> SOMASparseNDArray::open(
     return array;
 }
 
-bool SOMASparseNDArray::exists(
-    std::string_view uri, std::shared_ptr<SOMAContext> ctx) {
-    try {
-        auto obj = SOMAObject::open(uri, OpenMode::read, ctx);
-        return "SOMASparseNDArray" == obj->type();
-    } catch (TileDBSOMAError& e) {
-        return false;
-    }
-}
-
 std::string_view SOMASparseNDArray::soma_data_type() {
     return ArrowAdapter::to_arrow_format(
         tiledb_schema()->attribute("soma_data").type());
@@ -118,7 +107,7 @@ std::string_view SOMASparseNDArray::soma_data_type() {
 //= public non-static
 //===================================================================
 
-std::unique_ptr<ArrowSchema> SOMASparseNDArray::schema() const {
+managed_unique_ptr<ArrowSchema> SOMASparseNDArray::schema() const {
     return this->arrow_schema();
 }
 }  // namespace tiledbsoma

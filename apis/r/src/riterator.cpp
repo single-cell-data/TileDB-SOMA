@@ -21,57 +21,58 @@
 namespace tdbs = tiledbsoma;
 
 // clang-format off
-//' Iterator-Style Access to SOMA Array via ManagedQuery
-//'
-//' The `mq_*` functions provide low-level access to an instance of a ManagedQuery
-//' class so that iterative access over parts of a (large) array is possible.
-//' \describe{
-//'   \item{\code{mq_setup}}{instantiates and by default also submits a query}
-//'   \item{\code{mq_complete}}{checks if more data is available}
-//'   \item{\code{mq_next}}{returns the next chunk}
-//' }
-//'
-//' @param uri Character value with URI path to a SOMA data set
-//' @param config Named chracter vector with \sQuote{key} and \sQuote{value} pairs
-//' used as TileDB config parameters.
-//' @param colnames Optional vector of character value with the name of the
-//' columns to retrieve
-//' @param qc Optional external Pointer object to TileDB Query Condition,
-//' defaults to \sQuote{NULL} i.e. no query condition
-//' @param dim_points Optional named list with vector of data points to select
-//' on the given dimension(s). Each dimension can be one entry in the list.
-//' @param dim_ranges Optional named list with two-column matrix where each row
-//' select a range for the given dimension. Each dimension can be one entry in
-//'the list.
-//' @param batch_size Optional argument for size of data batches, defaults to
-//'\sQuote{auto}
-//' @param result_order Optional argument for query result order, defaults to
-//' \sQuote{auto}
-//' @param loglevel Character value with the desired logging level, defaults to
-//' \sQuote{auto} which lets prior setting prevail, any other value is set as
-//' new logging level.
-//' @param timestamprange Optional POSIXct (i.e. Datetime) vector with start
-//' and end of ' interval for which data is considered.
-//' @param mq An external pointer to a ManagedQuery object.
-//'
-//' @return \code{mq_setup} returns an external pointer to a ManagedQuery object.
-//' \code{mq_complete} ' returns a boolean, and \code{mq_next} returns an Arrow
-//' array helper object.
-//'
-//' @examples
-//' \dontrun{
-//' uri <- extract_dataset("soma-dataframe-pbmc3k-processed-obs")
-//' ctxcp <- soma_context()
-//' mq <- mq_setup(uri, ctxxp)
-//' rl <- data.frame()
-//' while (!mq_complete(mq)) {
-//'   dat <- mq_next(mq)
-//'   rb <- arrow::RecordBatch$import_from_c(dat$array_data, dat$schema)
-//'   rl <- rbind(rl, as.data.frame(rb))
-//' }
-//' summary(rl)
-//' }
-//' @noRd
+// Iterator-Style Access to SOMA Array via ManagedQuery
+//
+// The `mq_*` functions provide low-level access to an instance of a
+// ManagedQuery class so that iterative access over parts of a (large) array
+// is possible.
+// \describe{
+//   \item{\code{mq_setup}}{instantiates and by default also submits a query}
+//   \item{\code{mq_complete}}{checks if more data is available}
+//   \item{\code{mq_next}}{returns the next chunk}
+// }
+//
+// @param uri Character value with URI path to a SOMA data set
+// @param config Named chracter vector with \dQuote{key} and \dQuote{value}
+// pairs used as TileDB config parameters.
+// @param colnames Optional vector of character value with the name of the
+// columns to retrieve
+// @param qc Optional external Pointer object to TileDB Query Condition,
+// defaults to \code{NULL} i.e. no query condition
+// @param dim_points Optional named list with vector of data points to select
+// on the given dimension(s). Each dimension can be one entry in the list.
+// @param dim_ranges Optional named list with two-column matrix where each row
+// select a range for the given dimension. Each dimension can be one entry in
+// the list.
+// @param batch_size Optional argument for size of data batches, defaults to
+// \dQuote{\code{auto}}
+// @param result_order Optional argument for query result order, defaults to
+// \dQuote{\code{auto}}
+// @param loglevel Character value with the desired logging level, defaults to
+// \dQuote{\code{auto}} which lets prior setting prevail, any other value is
+// set as new logging level.
+// @param timestamprange Optional POSIXct (i.e. Datetime) vector with start
+// and end of interval for which data is considered.
+// @param mq An external pointer to a ManagedQuery object.
+//
+// @return \code{mq_setup}: returns an external pointer to a ManagedQuery
+// object.
+//
+// @examples
+// \dontrun{
+// uri <- extract_dataset("soma-dataframe-pbmc3k-processed-obs")
+// ctxcp <- soma_context()
+// mq <- mq_setup(uri, ctxxp)
+// rl <- data.frame()
+// while (!mq_complete(mq)) {
+//   dat <- mq_next(mq)
+//   rb <- arrow::RecordBatch$import_from_c(dat$array_data, dat$schema)
+//   rl <- rbind(rl, as.data.frame(rb))
+// }
+// summary(rl)
+// }
+//
+// @noRd
 // clang-format on
 // [[Rcpp::export]]
 Rcpp::XPtr<tdbs::ManagedQuery> mq_setup(
@@ -97,12 +98,6 @@ Rcpp::XPtr<tdbs::ManagedQuery> mq_setup(
 
     // shared pointer to SOMAContext from external pointer wrapper
     std::shared_ptr<tdbs::SOMAContext> somactx = ctxxp->ctxptr;
-    // shared pointer to TileDB Context from SOMAContext
-    std::shared_ptr<tiledb::Context> ctxptr = somactx->tiledb_ctx();
-
-    ctx_wrap_t* ctxwrap_p = new ContextWrapper(ctxptr);
-    Rcpp::XPtr<ctx_wrap_t> ctx_wrap_xptr = make_xptr<ctx_wrap_t>(
-        ctxwrap_p, false);
 
     if (!colnames.isNull()) {
         column_names = Rcpp::as<std::vector<std::string>>(colnames);
@@ -163,14 +158,18 @@ Rcpp::XPtr<tdbs::ManagedQuery> mq_setup(
     return xptr;
 }
 
+// @rdname mq_setup
+//
+// @return \code{mq_complete}: returns a boolean
+//
+// @noRd
+//
 // [[Rcpp::export]]
 bool mq_complete(Rcpp::XPtr<tdbs::ManagedQuery> mq) {
     check_xptr_tag<tdbs::ManagedQuery>(mq);
     return mq->results_complete();
 }
 
-//' @noRd
-//' @import nanoarrow
 // [[Rcpp::export]]
 SEXP create_empty_arrow_table() {
     int ncol = 0;
@@ -199,6 +198,12 @@ SEXP create_empty_arrow_table() {
     return arrayxp;
 }
 
+// @rdname mq_setup
+//
+// @return \code{mq_next}: returns an Arrow array helper object.
+//
+// @noRd
+//
 // [[Rcpp::export]]
 SEXP mq_next(Rcpp::XPtr<tdbs::ManagedQuery> mq) {
     check_xptr_tag<tdbs::ManagedQuery>(mq);

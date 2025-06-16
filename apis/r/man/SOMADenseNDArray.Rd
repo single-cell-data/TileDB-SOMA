@@ -2,33 +2,48 @@
 % Please edit documentation in R/SOMADenseNDArray.R
 \name{SOMADenseNDArray}
 \alias{SOMADenseNDArray}
-\title{SOMADenseNDArray}
+\title{SOMA Dense Nd-Array}
 \description{
-\code{SOMADenseNDArray} is a dense, N-dimensional array of \code{primitive} type, with
-offset (zero-based) \code{int64} integer indexing on each dimension with domain
-\verb{[0, maxInt64)}. The \code{SOMADenseNDArray} has a user-defined schema, which
-includes:
+\code{SOMADenseNDArray} is a dense, N-dimensional array of
+a \code{primitive} type, with offset (zero-based) \code{int64} integer
+indexing on each dimension with domain \code{[0, maxInt64)}. The
+\code{SOMADenseNDArray} has a user-defined schema, which includes:
 \itemize{
-\item \strong{type}: A \code{primitive} type, expressed as an Arrow type (e.g., \code{int64},
-\code{float32}, etc), indicating the type of data contained within the array.
-\item \strong{shape}: The shape of the array, i.e., number and length of each
-dimension. This is a soft limit which can be increased using \code{resize},
-up to the \code{maxshape}.
-\item \strong{maxshape}: The hard limit up to which \code{shape} may be increased using
-\code{resize}.
+\item \code{type}: a \code{primitive} type, expressed as an Arrow type
+(e.g., \code{\link[arrow]{int64}}, \code{\link[arrow]{float32}}, etc),
+indicating the type of data contained within the array.
+\item \code{shape}: the shape of the array, i.e., number and length of each
+dimension. This is a soft limit which can be increased using
+\code{$resize()} up to the \code{maxshape}.
+\item \code{maxshape}: the hard limit up to which \code{shape} may be
+increased using \code{$resize()}.
 }
-
 All dimensions must have a positive, non-zero length, and there must be 1 or
 more dimensions.
 
-The default "fill" value for \code{SOMADenseNDArray} is the zero or null value of
-the array type (e.g., Arrow.float32 defaults to 0.0).
+The default \dQuote{fill} value for \code{SOMADenseNDArray} is the zero or
+null value of the array type (e.g.,
+\code{\link[arrow:float32]{arrow::float32}()} defaults to 0.0).
+}
+\examples{
+\dontshow{if (requireNamespace("withr", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+uri <- withr::local_tempfile(pattern = "soma-dense-array")
+mat <- matrix(stats::rnorm(100L ^ 2L), nrow = 100L, ncol = 100L)
+mat[1:3, 1:5]
 
-The \code{write} method is currently limited to writing from 2-d matrices.
-(lifecycle: maturing)
+(arr <- SOMADenseNDArrayCreate(uri, arrow::float64(), shape = dim(mat)))
+arr$write(mat)
+arr$close()
+
+(arr <- SOMADenseNDArrayOpen(uri))
+arr$read_arrow_table()
+\dontshow{
+arr$close()
+}
+\dontshow{\}) # examplesIf}
 }
 \section{Super classes}{
-\code{\link[tiledbsoma:TileDBObject]{tiledbsoma::TileDBObject}} -> \code{\link[tiledbsoma:TileDBArray]{tiledbsoma::TileDBArray}} -> \code{\link[tiledbsoma:SOMAArrayBase]{tiledbsoma::SOMAArrayBase}} -> \code{\link[tiledbsoma:SOMANDArrayBase]{tiledbsoma::SOMANDArrayBase}} -> \code{SOMADenseNDArray}
+\code{\link[tiledbsoma:SOMAObject]{tiledbsoma::SOMAObject}} -> \code{\link[tiledbsoma:SOMAArrayBase]{tiledbsoma::SOMAArrayBase}} -> \code{\link[tiledbsoma:SOMANDArrayBase]{tiledbsoma::SOMANDArrayBase}} -> \code{SOMADenseNDArray}
 }
 \section{Methods}{
 \subsection{Public methods}{
@@ -42,32 +57,30 @@ The \code{write} method is currently limited to writing from 2-d matrices.
 \if{html}{\out{
 <details><summary>Inherited methods</summary>
 <ul>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="class"><a href='../../tiledbsoma/html/TileDBObject.html#method-TileDBObject-class'><code>tiledbsoma::TileDBObject$class()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="exists"><a href='../../tiledbsoma/html/TileDBObject.html#method-TileDBObject-exists'><code>tiledbsoma::TileDBObject$exists()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="initialize"><a href='../../tiledbsoma/html/TileDBObject.html#method-TileDBObject-initialize'><code>tiledbsoma::TileDBObject$initialize()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="is_open"><a href='../../tiledbsoma/html/TileDBObject.html#method-TileDBObject-is_open'><code>tiledbsoma::TileDBObject$is_open()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="mode"><a href='../../tiledbsoma/html/TileDBObject.html#method-TileDBObject-mode'><code>tiledbsoma::TileDBObject$mode()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="reopen"><a href='../../tiledbsoma/html/TileDBObject.html#method-TileDBObject-reopen'><code>tiledbsoma::TileDBObject$reopen()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="attrnames"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-attrnames'><code>tiledbsoma::TileDBArray$attrnames()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="close"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-close'><code>tiledbsoma::TileDBArray$close()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="colnames"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-colnames'><code>tiledbsoma::TileDBArray$colnames()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="dimensions"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-dimensions'><code>tiledbsoma::TileDBArray$dimensions()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="dimnames"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-dimnames'><code>tiledbsoma::TileDBArray$dimnames()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="get_metadata"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-get_metadata'><code>tiledbsoma::TileDBArray$get_metadata()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="index_column_names"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-index_column_names'><code>tiledbsoma::TileDBArray$index_column_names()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="maxshape"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-maxshape'><code>tiledbsoma::TileDBArray$maxshape()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="ndim"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-ndim'><code>tiledbsoma::TileDBArray$ndim()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="non_empty_domain"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-non_empty_domain'><code>tiledbsoma::TileDBArray$non_empty_domain()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="open"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-open'><code>tiledbsoma::TileDBArray$open()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="print"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-print'><code>tiledbsoma::TileDBArray$print()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="schema"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-schema'><code>tiledbsoma::TileDBArray$schema()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="set_metadata"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-set_metadata'><code>tiledbsoma::TileDBArray$set_metadata()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="shape"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-shape'><code>tiledbsoma::TileDBArray$shape()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="tiledb_array"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-tiledb_array'><code>tiledbsoma::TileDBArray$tiledb_array()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="tiledb_schema"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-tiledb_schema'><code>tiledbsoma::TileDBArray$tiledb_schema()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAObject" data-id="class"><a href='../../tiledbsoma/html/SOMAObject.html#method-SOMAObject-class'><code>tiledbsoma::SOMAObject$class()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAObject" data-id="exists"><a href='../../tiledbsoma/html/SOMAObject.html#method-SOMAObject-exists'><code>tiledbsoma::SOMAObject$exists()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAObject" data-id="get_metadata"><a href='../../tiledbsoma/html/SOMAObject.html#method-SOMAObject-get_metadata'><code>tiledbsoma::SOMAObject$get_metadata()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAObject" data-id="initialize"><a href='../../tiledbsoma/html/SOMAObject.html#method-SOMAObject-initialize'><code>tiledbsoma::SOMAObject$initialize()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAObject" data-id="is_open"><a href='../../tiledbsoma/html/SOMAObject.html#method-SOMAObject-is_open'><code>tiledbsoma::SOMAObject$is_open()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAObject" data-id="mode"><a href='../../tiledbsoma/html/SOMAObject.html#method-SOMAObject-mode'><code>tiledbsoma::SOMAObject$mode()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAObject" data-id="reopen"><a href='../../tiledbsoma/html/SOMAObject.html#method-SOMAObject-reopen'><code>tiledbsoma::SOMAObject$reopen()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAObject" data-id="set_metadata"><a href='../../tiledbsoma/html/SOMAObject.html#method-SOMAObject-set_metadata'><code>tiledbsoma::SOMAObject$set_metadata()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAArrayBase" data-id="allows_duplicates"><a href='../../tiledbsoma/html/SOMAArrayBase.html#method-SOMAArrayBase-allows_duplicates'><code>tiledbsoma::SOMAArrayBase$allows_duplicates()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAArrayBase" data-id="attributes"><a href='../../tiledbsoma/html/SOMAArrayBase.html#method-SOMAArrayBase-attributes'><code>tiledbsoma::SOMAArrayBase$attributes()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAArrayBase" data-id="attrnames"><a href='../../tiledbsoma/html/SOMAArrayBase.html#method-SOMAArrayBase-attrnames'><code>tiledbsoma::SOMAArrayBase$attrnames()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAArrayBase" data-id="close"><a href='../../tiledbsoma/html/SOMAArrayBase.html#method-SOMAArrayBase-close'><code>tiledbsoma::SOMAArrayBase$close()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAArrayBase" data-id="colnames"><a href='../../tiledbsoma/html/SOMAArrayBase.html#method-SOMAArrayBase-colnames'><code>tiledbsoma::SOMAArrayBase$colnames()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAArrayBase" data-id="dimensions"><a href='../../tiledbsoma/html/SOMAArrayBase.html#method-SOMAArrayBase-dimensions'><code>tiledbsoma::SOMAArrayBase$dimensions()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAArrayBase" data-id="dimnames"><a href='../../tiledbsoma/html/SOMAArrayBase.html#method-SOMAArrayBase-dimnames'><code>tiledbsoma::SOMAArrayBase$dimnames()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAArrayBase" data-id="index_column_names"><a href='../../tiledbsoma/html/SOMAArrayBase.html#method-SOMAArrayBase-index_column_names'><code>tiledbsoma::SOMAArrayBase$index_column_names()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAArrayBase" data-id="is_sparse"><a href='../../tiledbsoma/html/SOMAArrayBase.html#method-SOMAArrayBase-is_sparse'><code>tiledbsoma::SOMAArrayBase$is_sparse()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAArrayBase" data-id="maxshape"><a href='../../tiledbsoma/html/SOMAArrayBase.html#method-SOMAArrayBase-maxshape'><code>tiledbsoma::SOMAArrayBase$maxshape()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAArrayBase" data-id="ndim"><a href='../../tiledbsoma/html/SOMAArrayBase.html#method-SOMAArrayBase-ndim'><code>tiledbsoma::SOMAArrayBase$ndim()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAArrayBase" data-id="non_empty_domain"><a href='../../tiledbsoma/html/SOMAArrayBase.html#method-SOMAArrayBase-non_empty_domain'><code>tiledbsoma::SOMAArrayBase$non_empty_domain()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAArrayBase" data-id="open"><a href='../../tiledbsoma/html/SOMAArrayBase.html#method-SOMAArrayBase-open'><code>tiledbsoma::SOMAArrayBase$open()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAArrayBase" data-id="print"><a href='../../tiledbsoma/html/SOMAArrayBase.html#method-SOMAArrayBase-print'><code>tiledbsoma::SOMAArrayBase$print()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAArrayBase" data-id="schema"><a href='../../tiledbsoma/html/SOMAArrayBase.html#method-SOMAArrayBase-schema'><code>tiledbsoma::SOMAArrayBase$schema()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAArrayBase" data-id="shape"><a href='../../tiledbsoma/html/SOMAArrayBase.html#method-SOMAArrayBase-shape'><code>tiledbsoma::SOMAArrayBase$shape()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMANDArrayBase" data-id="create"><a href='../../tiledbsoma/html/SOMANDArrayBase.html#method-SOMANDArrayBase-create'><code>tiledbsoma::SOMANDArrayBase$create()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMANDArrayBase" data-id="resize"><a href='../../tiledbsoma/html/SOMANDArrayBase.html#method-SOMANDArrayBase-resize'><code>tiledbsoma::SOMANDArrayBase$resize()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMANDArrayBase" data-id="set_data_type"><a href='../../tiledbsoma/html/SOMANDArrayBase.html#method-SOMANDArrayBase-set_data_type'><code>tiledbsoma::SOMANDArrayBase$set_data_type()</code></a></span></li>
@@ -80,7 +93,8 @@ The \code{write} method is currently limited to writing from 2-d matrices.
 \if{html}{\out{<a id="method-SOMADenseNDArray-read_arrow_table"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMADenseNDArray-read_arrow_table}{}}}
 \subsection{Method \code{read_arrow_table()}}{
-Read as an 'arrow::Table' (lifecycle: maturing)
+Read as an \link[arrow:Table]{Arrow table}
+(lifecycle: maturing).
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMADenseNDArray$read_arrow_table(
   coords = NULL,
@@ -92,29 +106,28 @@ Read as an 'arrow::Table' (lifecycle: maturing)
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{coords}}{Optional \code{list} of integer vectors, one for each dimension, with a
-length equal to the number of values to read. If \code{NULL}, all values are
-read. List elements can be named when specifying a subset of dimensions.}
+\item{\code{coords}}{Optional \code{list} of integer vectors, one for each
+dimension, with a length equal to the number of values to read. If
+\code{NULL}, all values are read. List elements can be named when
+specifying a subset of dimensions.}
 
 \item{\code{result_order}}{Optional order of read results. This can be one of either
 \verb{"ROW_MAJOR, }"COL_MAJOR"\verb{, or }"auto"` (default).}
 
-\item{\code{result_order}}{Optional order of read results. This can be one of either
-\verb{"ROW_MAJOR, }"COL_MAJOR"\verb{, or }"auto"` (default).}
-
-\item{\code{log_level}}{Optional logging level with default value of \code{"warn"}.}
+\item{\code{log_level}}{Optional logging level with default value of
+\dQuote{\code{warn}}.}
 }
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-An \code{\link[arrow:Table-class]{arrow::Table}}.
+An \link[arrow:Table]{Arrow table}.
 }
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-SOMADenseNDArray-read_dense_matrix"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMADenseNDArray-read_dense_matrix}{}}}
 \subsection{Method \code{read_dense_matrix()}}{
-Read as a dense matrix (lifecycle: maturing)
+Read as a dense matrix (lifecycle: maturing).
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMADenseNDArray$read_dense_matrix(
   coords = NULL,
@@ -126,31 +139,31 @@ Read as a dense matrix (lifecycle: maturing)
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{coords}}{Optional \code{list} of integer vectors, one for each dimension, with a
-length equal to the number of values to read. If \code{NULL}, all values are
-read. List elements can be named when specifying a subset of dimensions.}
+\item{\code{coords}}{Optional \code{list} of integer vectors, one for each
+dimension, with a length equal to the number of values to read. If
+\code{NULL}, all values are read. List elements can be named when
+specifying a subset of dimensions.}
 
 \item{\code{result_order}}{Optional order of read results. This can be one of either
 \verb{"ROW_MAJOR, }"COL_MAJOR"\verb{, or }"auto"` (default).}
 
-\item{\code{result_order}}{Optional order of read results. This can be one of either
-\verb{"ROW_MAJOR, }"COL_MAJOR"\verb{, or }"auto"` (default).}
-
-\item{\code{log_level}}{Optional logging level with default value of \code{"warn"}.}
+\item{\code{log_level}}{Optional logging level with default value of
+\dQuote{\code{warn}}.}
 }
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-A \code{matrix} object
+A \code{matrix}.
 }
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-SOMADenseNDArray-write"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMADenseNDArray-write}{}}}
 \subsection{Method \code{write()}}{
-Write matrix data to the array. (lifecycle: maturing)
-
-More general write methods for higher-dimensional array could be added.
+Write matrix data to the array (lifecycle: maturing).\cr
+\cr
+\strong{Note}: The \code{$write()} method is currently limited to writing
+from two-dimensional matrices (lifecycle: maturing).
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMADenseNDArray$write(values, coords = NULL)}\if{html}{\out{</div>}}
 }
@@ -158,14 +171,18 @@ More general write methods for higher-dimensional array could be added.
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{values}}{A \code{matrix}. Character dimension names are ignored because
-\code{SOMANDArray}'s use integer indexing.}
+\item{\code{values}}{A \code{matrix}. Character dimension names are ignored
+because \code{SOMANDArray}s use integer indexing.}
 
-\item{\code{coords}}{A \code{list} of integer vectors, one for each dimension, with a
-length equal to the number of values to write. If \code{NULL}, the default,
-the values are taken from the row and column names of \code{values}.}
+\item{\code{coords}}{A \code{list} of integer vectors, one for each dimension,
+with a length equal to the number of values to write. If \code{NULL},
+the default, the values are taken from the row and column names
+of \code{values}.}
 }
 \if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+Invisibly returns \code{self}.
 }
 }
 \if{html}{\out{<hr>}}

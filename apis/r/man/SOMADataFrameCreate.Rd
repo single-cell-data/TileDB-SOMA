@@ -2,7 +2,7 @@
 % Please edit documentation in R/Factory.R
 \name{SOMADataFrameCreate}
 \alias{SOMADataFrameCreate}
-\title{Create SOMA DataFrame}
+\title{Create a SOMA Data Frame}
 \usage{
 SOMADataFrameCreate(
   uri,
@@ -17,43 +17,69 @@ SOMADataFrameCreate(
 )
 }
 \arguments{
-\item{uri}{URI for the TileDB object}
+\item{uri}{URI for the TileDB object.}
 
 \item{schema}{Arrow schema argument for the
-\link[tiledbsoma:SOMADataFrame]{SOMA dataframe}}
+\link[tiledbsoma:SOMADataFrame]{SOMA dataframe}.}
 
 \item{index_column_names}{A vector of column names to use as user-defined
 index columns; all named columns must exist in the schema, and at least
-one index column name is required}
+one index column name is required.}
 
 \item{domain}{An optional list of 2-element vectors specifying the domain of
 each index column. Each vector should be a pair consisting of the minimum and
 maximum values storable in the index column. For example, if there is a
-single int64-valued index column, then \code{domain} might be \code{c(100, 200)} to
-indicate that values between 100 and 200, inclusive, can be stored in that
-column. If provided, this list must have the same length as
-\code{index_column_names}, and the index-column domain will be as specified. If
-omitted entirely, or if \code{NULL} in a given dimension, the corresponding
-index-column domain will use the minimum and maximum possible values for the
-column's datatype.  This makes a \code{DataFrame} growable.}
+single int64-valued index column, then \code{domain} might be
+\code{c(100, 200)} to indicate that values between 100 and 200, inclusive,
+can be stored in that column. If provided, this list must have the same
+length as \code{index_column_names}, and the index-column domain will be as
+specified. If omitted entirely, or if \code{NULL} in a given dimension, the
+corresponding index-column domain will use the minimum and maximum possible
+values for the column's datatype. This makes a SOMA data frame growable.}
 
 \item{ingest_mode}{Ingestion mode when creating the TileDB object;
 choose from:
 \itemize{
 \item \dQuote{\code{write}}: create a new TileDB object and error if
-it already exists
+it already exists.
 \item \dQuote{\code{resume}}: attempt to create a new TileDB object;
-if it already exists, simply open it for writing
+if it already exists, simply open it for writing.
 }}
 
-\item{platform_config}{Optional platform configuration}
+\item{platform_config}{Optional platform configuration.}
 
-\item{tiledbsoma_ctx}{Optional SOMATileDBContext}
+\item{tiledbsoma_ctx}{Optional SOMATileDBContext.}
 
-\item{tiledb_timestamp}{Optional Datetime (POSIXct) for TileDB timestamp}
+\item{tiledb_timestamp}{Optional Datetime (POSIXct) for TileDB timestamp.}
 
-\item{soma_context}{A SOMA context as created by \code{\link{soma_context}()}}
+\item{soma_context}{A SOMA context as created by
+\code{\link{soma_context}()}.}
+}
+\value{
+A new \link[tiledbsoma:SOMADataFrame]{SOMA data frame} stored at
+\code{uri} opened for writing.
 }
 \description{
-Factory function to create a SOMADataFrame for writing, (lifecycle: maturing)
+Factory function to create a \link[tiledbsoma:SOMADataFrame]{SOMA data frame}
+for writing (lifecycle: maturing).
+}
+\examples{
+\dontshow{if (requireNamespace("withr", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+uri <- withr::local_tempfile(pattern = "soma-data-frame")
+df <- data.frame(
+  soma_joinid = bit64::seq.integer64(0L, 99L),
+  group = sample(factor(c("g1", "g2")), size = 100L, replace = TRUE),
+  nCount = stats::rbinom(100L, 10L, 0.3)
+)
+(sch <- arrow::infer_schema(df))
+(sdf <- SOMADataFrameCreate(uri, sch, domain = list(soma_joinid = c(0, 100))))
+sdf$write(arrow::as_arrow_table(df, schema = sch))
+sdf$close()
+
+(sdf <- SOMADataFrameOpen(uri))
+head(as.data.frame(sdf$read()$concat()))
+\dontshow{
+sdf$close()
+}
+\dontshow{\}) # examplesIf}
 }

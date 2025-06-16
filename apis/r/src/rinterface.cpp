@@ -34,6 +34,7 @@ Rcpp::XPtr<ArrowSchema> schema_owning_xptr(void) {
     Rcpp::XPtr<ArrowSchema> schema_xptr = make_xptr(schema, false);
     return schema_xptr;
 }
+
 // Create an external pointer with the proper class and that will release any
 // non-null, non-released pointer when garbage collected. We use a tagged XPtr,
 // but do not set an XPtr finalizer
@@ -49,7 +50,6 @@ Rcpp::XPtr<ArrowArray> array_owning_xptr(void) {
 
 namespace tdbs = tiledbsoma;
 
-//' @noRd
 // [[Rcpp::export(soma_array_reader_impl)]]
 SEXP soma_array_reader(
     const std::string& uri,
@@ -199,21 +199,24 @@ SEXP soma_array_reader(
     return arrayxp;
 }
 
-//' Set the logging level for the R package and underlying C++ library
+//' Set TileDB-SOMA Logging Level
+//'
+//' Set the logging level for the \R package and underlying C++ library
 //'
 //' @param level A character value with logging level understood by
 //' \sQuote{spdlog} such as \dQuote{trace}, \dQuote{debug}, \dQuote{info}, or
-//' \dQuote{warn}.
-//' @return Nothing is returned as the function is invoked for
-//' the side-effect.
+//' \dQuote{warn}
+//'
+//' @return Invisibly returns \code{NULL}
+//'
 //' @export
+//'
 // [[Rcpp::export]]
 void set_log_level(const std::string& level) {
     spdl::setup("R", level);
     tdbs::LOG_SET_LEVEL(level);
 }
 
-//' @noRd
 // [[Rcpp::export]]
 Rcpp::CharacterVector get_column_types(
     const std::string& uri, const std::vector<std::string>& colnames) {
@@ -239,14 +242,12 @@ double nnz(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
     return retval;
 }
 
-//' @noRd
 // [[Rcpp::export]]
 bool check_arrow_schema_tag(Rcpp::XPtr<ArrowSchema> xp) {
     check_xptr_tag<ArrowSchema>(xp);  // throws if mismatched
     return true;
 }
 
-//' @noRd
 // [[Rcpp::export]]
 bool check_arrow_array_tag(Rcpp::XPtr<ArrowArray> xp) {
     check_xptr_tag<ArrowArray>(xp);  // throws if mismatched
@@ -385,7 +386,7 @@ Rcpp::CharacterVector c_attrnames(
 // [[Rcpp::export]]
 SEXP c_schema(const std::string& uri, Rcpp::XPtr<somactx_wrap_t> ctxxp) {
     auto sr = tdbs::SOMAArray::open(OpenMode::read, uri, ctxxp->ctxptr);
-    std::unique_ptr<ArrowSchema> lib_retval = sr->arrow_schema();
+    tdbs::managed_unique_ptr<ArrowSchema> lib_retval = sr->arrow_schema();
     sr->close();
 
     auto schemaxp = nanoarrow_schema_owning_xptr();
@@ -805,8 +806,8 @@ std::string upgrade_or_change_domain(
     nanoarrow::UniqueArray apdim{nanoarrow_array_from_xptr(nadimap)};
     nanoarrow::UniqueSchema spdim{nanoarrow_schema_from_xptr(nadimsp)};
 
-    auto dimarr = std::make_unique<ArrowArray>();
-    auto dimsch = std::make_unique<ArrowSchema>();
+    auto dimarr = tdbs::make_managed_unique<ArrowArray>();
+    auto dimsch = tdbs::make_managed_unique<ArrowSchema>();
 
     apdim.move(dimarr.get());
     spdim.move(dimsch.get());

@@ -87,10 +87,11 @@ void load_soma_geometry_dataframe(py::module& m) {
                 try {
                     SOMAGeometryDataFrame::create(
                         uri,
-                        std::make_unique<ArrowSchema>(schema),
+                        make_managed_unique<ArrowSchema>(schema),
                         ArrowTable(
-                            std::make_unique<ArrowArray>(index_column_array),
-                            std::make_unique<ArrowSchema>(index_column_schema)),
+                            make_managed_unique<ArrowArray>(index_column_array),
+                            make_managed_unique<ArrowSchema>(
+                                index_column_schema)),
                         coord_space,
                         context,
                         platform_config,
@@ -100,10 +101,6 @@ void load_soma_geometry_dataframe(py::module& m) {
                 } catch (const std::exception& e) {
                     TPY_ERROR_LOC(e.what());
                 }
-
-                schema.release(&schema);
-                index_column_array.release(&index_column_array);
-                index_column_schema.release(&index_column_schema);
             },
             "uri"_a,
             py::kw_only(),

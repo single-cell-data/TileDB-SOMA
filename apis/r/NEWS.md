@@ -12,6 +12,26 @@
 
 ## Security
 
+# tiledbsoma 1.18.0
+
+## Added
+
+- New `SOMAObject` base class to serve as root for `SOMAArrayBase` and `SOMACollectionBase` ([#3771](https://github.com/single-cell-data/TileDB-SOMA/pull/3771))
+- New field `SOMACollectionBase$members` to get a list with the members of a collection ([#3771](https://github.com/single-cell-data/TileDB-SOMA/pull/3771))
+
+## Changed
+
+- Handshake `internal_use_only = "allowed_use"` for `$new()`, `$open()`, and `$create()` has been replaced with environment scoping; use of factory functions for opening and creation is now mandatory ([#3771](https://github.com/single-cell-data/TileDB-SOMA/pull/3771))
+- `TileDBObject`, `TileDBArray`, and `TileDBGroup` classes have been removed ([#3771](https://github.com/single-cell-data/TileDB-SOMA/pull/3771))
+- `SOMACollection$to_list()` and `SOMACollection$to_data_frame()` have been removed as they were unused public internal methods inherited from `TileDBGroup` ([#3771](https://github.com/single-cell-data/TileDB-SOMA/pull/3771))
+
+
+## Removed
+
+- `SOMAArray$object` has been removed ([#3771](https://github.com/single-cell-data/TileDB-SOMA/pull/3771))
+
+
+
 # tiledbsoma 1.17.0
 
 ## Removed

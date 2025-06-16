@@ -120,24 +120,16 @@ class SOMAArrayStateMachine(RuleBasedStateMachine):
         # TODO: time travel
         self._open(mode=mode)
 
-    @precondition(
-        lambda self: not HT_TEST_CONFIG["sc-61123_workaround"]
-    )  # TODO: this entire rule disabled until sc-61123 fixed.
-    @precondition(lambda self: not self.closed)
-    @precondition(
-        lambda self: not HT_TEST_CONFIG["sc-61118_workaround"] or self.mode != "w"
-    )  # TODO - fails due to loss of metadata on reopen from w->r. See sc-61118. Remove when fixed.
+    @precondition(lambda self: self.is_initialized)
     @rule(mode=st.sampled_from(["r", "w"]))
     def reopen(self, mode: OpenMode) -> None:
-        assert not self.A.closed
-        assert not self.closed
-        assert self.mode is not None
-        self.A = self.A.reopen(
+        self.A.reopen(
             mode,
             tiledb_timestamp=None,  # no time-travel for now
         )
-        self.mode = mode
         assert self.A.mode == mode and not self.A.closed
+        self.closed = False
+        self.mode = mode
 
     ##
     ## --- metadata

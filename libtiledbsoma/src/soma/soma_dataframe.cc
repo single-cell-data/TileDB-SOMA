@@ -25,7 +25,7 @@ using namespace tiledb;
 
 void SOMADataFrame::create(
     std::string_view uri,
-    const std::unique_ptr<ArrowSchema>& schema,
+    const managed_unique_ptr<ArrowSchema>& schema,
     const ArrowTable& index_columns,
     std::shared_ptr<SOMAContext> ctx,
     PlatformConfig platform_config,
@@ -38,7 +38,9 @@ void SOMADataFrame::create(
             std::nullopt,
             "SOMADataFrame",
             true,
-            platform_config);
+            platform_config,
+            timestamp);
+
     SOMAArray::create(
         ctx, uri, tiledb_schema, "SOMADataFrame", std::nullopt, timestamp);
 }
@@ -72,16 +74,6 @@ std::unique_ptr<SOMADataFrame> SOMADataFrame::open(
     }
 
     return array;
-}
-
-bool SOMADataFrame::exists(
-    std::string_view uri, std::shared_ptr<SOMAContext> ctx) {
-    try {
-        auto obj = SOMAObject::open(uri, OpenMode::read, ctx);
-        return "SOMADataFrame" == obj->type();
-    } catch (TileDBSOMAError& e) {
-        return false;
-    }
 }
 
 void SOMADataFrame::update_dataframe_schema(
@@ -265,7 +257,7 @@ void SOMADataFrame::update_dataframe_schema(
 //= public non-static
 //===================================================================
 
-std::unique_ptr<ArrowSchema> SOMADataFrame::schema() const {
+managed_unique_ptr<ArrowSchema> SOMADataFrame::schema() const {
     return this->arrow_schema();
 }
 

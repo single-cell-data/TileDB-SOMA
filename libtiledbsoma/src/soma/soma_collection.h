@@ -150,7 +150,7 @@ class SOMACollection : public SOMAGroup {
         std::string_view uri,
         URIType uri_type,
         std::shared_ptr<SOMAContext> ctx,
-        const std::unique_ptr<ArrowSchema>& schema,
+        const managed_unique_ptr<ArrowSchema>& schema,
         const ArrowTable& index_columns,
         PlatformConfig platform_config = PlatformConfig(),
         std::optional<TimestampRange> timestamp = std::nullopt);
@@ -169,7 +169,7 @@ class SOMACollection : public SOMAGroup {
         std::string_view uri,
         URIType uri_type,
         std::shared_ptr<SOMAContext> ctx,
-        const std::unique_ptr<ArrowSchema>& schema,
+        const managed_unique_ptr<ArrowSchema>& schema,
         const ArrowTable& index_columns,
         PlatformConfig platform_config = PlatformConfig(),
         std::optional<TimestampRange> timestamp = std::nullopt);
@@ -193,7 +193,7 @@ class SOMACollection : public SOMAGroup {
         std::string_view uri,
         URIType uri_type,
         std::shared_ptr<SOMAContext> ctx,
-        const std::unique_ptr<ArrowSchema>& schema,
+        const managed_unique_ptr<ArrowSchema>& schema,
         const ArrowTable& index_columns,
         PlatformConfig platform_config = PlatformConfig(),
         std::optional<TimestampRange> timestamp = std::nullopt);

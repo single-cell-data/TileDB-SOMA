@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import contextlib
-import datetime
 import gc
 import itertools
 import json
@@ -9,10 +8,12 @@ import operator
 import pathlib
 import sys
 from concurrent import futures
+from pathlib import Path
 from typing import Any, Union
 from unittest import mock
 
 import numpy as np
+import pandas as pd
 import pyarrow as pa
 import pytest
 import scipy.sparse as sparse
@@ -106,43 +107,6 @@ def test_sparse_nd_array_create_ok(tmp_path, shape: tuple[int, ...], element_typ
 
     with pytest.raises(soma.SOMAError):
         soma.MultiscaleImage.open(tmp_path.as_posix())
-
-
-def test_sparse_nd_array_reopen(tmp_path):
-    soma.SparseNDArray.create(tmp_path.as_posix(), type=pa.float64(), shape=(1,), tiledb_timestamp=1)
-
-    with soma.SparseNDArray.open(tmp_path.as_posix(), "r", tiledb_timestamp=1) as A1:
-        with raises_no_typeguard(ValueError):
-            A1.reopen("invalid")
-
-        with A1.reopen("w", tiledb_timestamp=2) as A2:
-            with A2.reopen("r", tiledb_timestamp=3) as A3:
-                assert A1.mode == "r"
-                assert A2.mode == "w"
-                assert A3.mode == "r"
-                assert A1.tiledb_timestamp_ms == 1
-                assert A2.tiledb_timestamp_ms == 2
-                assert A3.tiledb_timestamp_ms == 3
-
-    ts1 = datetime.datetime(2023, 1, 1, 1, 0, tzinfo=datetime.timezone.utc)
-    ts2 = datetime.datetime(2024, 1, 1, 1, 0, tzinfo=datetime.timezone.utc)
-    with soma.SparseNDArray.open(tmp_path.as_posix(), "r", tiledb_timestamp=ts1) as A1:
-        with A1.reopen("r", tiledb_timestamp=ts2) as A2:
-            assert A1.mode == "r"
-            assert A2.mode == "r"
-            assert A1.tiledb_timestamp == ts1
-            assert A2.tiledb_timestamp == ts2
-
-    with soma.SparseNDArray.open(tmp_path.as_posix(), "w") as A1:
-        with A1.reopen("w", tiledb_timestamp=None) as A2:
-            with A2.reopen("w") as A3:
-                assert A1.mode == "w"
-                assert A2.mode == "w"
-                assert A3.mode == "w"
-                now = datetime.datetime.now(datetime.timezone.utc)
-                assert A1.tiledb_timestamp <= now
-                assert A2.tiledb_timestamp <= now
-                assert A3.tiledb_timestamp <= now
 
 
 @pytest.mark.parametrize("shape", [(10,)])
@@ -1901,26 +1865,143 @@ def test_sparse_nd_array_null(tmp_path):
         np.testing.assert_array_equal(pdf["soma_data"], table["soma_data"].fill_null(0))
 
 
-def test_reopen_metadata_sc61118(tmp_path):
+@pytest.mark.parametrize("ts", (None, 1))
+def test_resize_with_time_travel_61254(tmp_path, ts):
     uri = tmp_path.as_posix()
-    with soma.SparseNDArray.create(uri, type=pa.int64(), shape=(10,)) as A1:
-        A1.metadata["foo"] = "bar"
-        with A1.reopen(mode="r") as A2:
-            assert dict(A1.metadata) == dict(A2.metadata)
+    data = {"soma_dim_0": [9], "soma_data": [9]}
+
+    soma.SparseNDArray.create(uri, type=pa.int32(), shape=(10,), tiledb_timestamp=ts)
+
+    ts = ts + 1 if ts is not None else None
+    with soma.open(uri, mode="w", tiledb_timestamp=ts) as A:
+        A.write(pa.Table.from_pydict(data))
+        most_recent_write_ts = A.tiledb_timestamp_ms
+
+    # verify shape and contents using the most recent write timestamp
+    with soma.open(uri, mode="r", tiledb_timestamp=most_recent_write_ts) as A:
+        assert A.shape == (10,), f"Expected {(10,)}, got {A.shape}"
+        assert A.read().tables().concat()["soma_dim_0"].to_pylist()[-1] == 9
+
+    ts = ts + 1 if ts is not None else None
+    with soma.open(uri, mode="w", tiledb_timestamp=ts) as A:
+        A.resize((20,))
+
+    ts = ts + 1 if ts is not None else None
+    with soma.open(uri, mode="w", tiledb_timestamp=ts) as A:
+        A.write(pa.Table.from_pydict(data))
+        most_recent_write_ts = A.tiledb_timestamp_ms
+
+    # verify shape and contents using the most recent write timestamp
+    with soma.open(uri, mode="r", tiledb_timestamp=most_recent_write_ts) as A:
+        assert A.shape == (20,), f"Expected {(20,)}, got {A.shape}"
+        assert A.read().tables().concat()["soma_dim_0"].to_pylist()[-1] == 9
 
 
-def test_reopen_shape_sc61123(tmp_path):
+@pytest.mark.parametrize("element_type", NDARRAY_ARROW_TYPES_SUPPORTED)
+def test_fragments_in_writes(tmp_path, element_type):
     uri = tmp_path.as_posix()
-    with soma.SparseNDArray.create(uri, type=pa.int64(), shape=(10,)) as A:
-        assert A.shape == (10,)
-        assert isinstance(A, soma.SparseNDArray)
-        A = A.reopen(mode="r")
-        assert A.shape == (10,)
-        assert isinstance(A, soma.SparseNDArray)
+
+    # --- three dataframes, all with identical schema
+    df_0 = pd.DataFrame(
+        {
+            "soma_dim_0": pd.Series([0, 1, 2, 3], dtype=np.int64),
+            "soma_data": pd.Series([0, 1, 2, 3], dtype="int32"),
+        }
+    )
+    df_1 = pd.DataFrame(
+        {
+            "soma_dim_0": pd.Series([4, 5, 6, 7], dtype=np.int64),
+            "soma_data": pd.Series([0, 1, 2, 3], dtype="int32"),
+        }
+    )
+    df_2 = pd.DataFrame(
+        {
+            "soma_dim_0": pd.Series([8, 9, 10, 11], dtype=np.int64),
+            "soma_data": pd.Series([0, 1, 2, 3], dtype="int32"),
+        }
+    )
+    expected_df = pd.concat([df_0, df_1, df_2], ignore_index=True)
+
+    soma.SparseNDArray.create(uri, type=pa.int32(), shape=(12,))
+
+    with soma.SparseNDArray.open(uri, mode="w") as A:
+        # Three-chunk table
+        A.write(
+            pa.concat_tables(
+                [
+                    pa.Table.from_pandas(df_0, preserve_index=False),
+                    pa.Table.from_pandas(df_1, preserve_index=False),
+                    pa.Table.from_pandas(df_2, preserve_index=False),
+                ]
+            ),
+            platform_config=soma.TileDBWriteOptions(**{"sort_coords": False}),
+        )
+
+    # There should be a single fragment even though there are three chunks (and
+    # therefore three submits) in the array because we only finalize once at
+    # the end
+    assert len(list((Path(uri) / "__commits").iterdir())) == 1
+    assert len(list((Path(uri) / "__fragments").iterdir())) == 1
+
+    with soma.open(uri) as A:
+        df = A.read().tables().concat().to_pandas()
+
+    assert df.equals(expected_df)
 
 
-def test_match_read_schemas_61222(tmp_path):
+@pytest.mark.parametrize(
+    "dtype",
+    ["int8", "int16", "int32", "uint8", "uint16", "uint32", "uint64", "float32", "float64"],
+)
+def test_fragments_in_writes_2d(tmp_path, dtype):
     uri = tmp_path.as_posix()
-    soma.SparseNDArray.create(uri, type=pa.int32(), shape=(None, None))
-    with soma.SparseNDArray.open(uri) as A:
-        assert A.schema == A.read().tables().concat().schema
+
+    # --- three dataframes, all with identical schema
+    df_0 = pd.DataFrame(
+        {
+            "soma_dim_0": pd.Series([0, 1, 2, 3], dtype=dtype),
+            "soma_dim_1": pd.Series([0, 1, 2, 3], dtype=dtype),
+            "soma_data": pd.Series([0, 1, 2, 3], dtype="int32"),
+        }
+    )
+    df_1 = pd.DataFrame(
+        {
+            "soma_dim_0": pd.Series([4, 5, 6, 7], dtype=dtype),
+            "soma_dim_1": pd.Series([4, 5, 6, 7], dtype=dtype),
+            "soma_data": pd.Series([0, 1, 2, 3], dtype="int32"),
+        }
+    )
+    df_2 = pd.DataFrame(
+        {
+            "soma_dim_0": pd.Series([8, 9, 10, 11], dtype=dtype),
+            "soma_dim_1": pd.Series([8, 9, 10, 11], dtype=dtype),
+            "soma_data": pd.Series([0, 1, 2, 3], dtype="int32"),
+        }
+    )
+    expected_df = pd.concat([df_0, df_1, df_2], ignore_index=True)
+
+    soma.SparseNDArray.create(uri, type=pa.int32(), shape=(12, 12))
+
+    with soma.SparseNDArray.open(uri, mode="w") as A:
+        # Three-chunk table
+        A.write(
+            pa.concat_tables(
+                [
+                    pa.Table.from_pandas(df_0, preserve_index=False),
+                    pa.Table.from_pandas(df_1, preserve_index=False),
+                    pa.Table.from_pandas(df_2, preserve_index=False),
+                ]
+            ),
+            platform_config=soma.TileDBWriteOptions(**{"sort_coords": False}),
+        )
+
+    # There should be a single fragment even though there are three chunks (and
+    # therefore three submits) in the array because we only finalize once at
+    # the end
+    assert len(list((Path(uri) / "__commits").iterdir())) == 1
+    assert len(list((Path(uri) / "__fragments").iterdir())) == 1
+
+    with soma.open(uri) as A:
+        df = A.read().tables().concat().to_pandas()
+
+    np.testing.assert_array_equal(df, expected_df)

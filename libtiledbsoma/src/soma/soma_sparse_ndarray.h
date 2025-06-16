@@ -70,7 +70,10 @@ class SOMASparseNDArray : public SOMAArray {
      *
      * @param ctx SOMAContext
      */
-    static bool exists(std::string_view uri, std::shared_ptr<SOMAContext> ctx);
+    static inline bool exists(
+        std::string_view uri, std::shared_ptr<SOMAContext> ctx) {
+        return SOMAArray::_exists(uri, "SOMASparseNDArray", ctx);
+    }
 
     //===================================================================
     //= public non-static
@@ -117,7 +120,7 @@ class SOMASparseNDArray : public SOMAArray {
      *
      * @return std::unique_ptr<ArrowSchema>
      */
-    std::unique_ptr<ArrowSchema> schema() const;
+    managed_unique_ptr<ArrowSchema> schema() const;
 
     /**
      * @brief Get the soma_data's dtype in the form of an Arrow

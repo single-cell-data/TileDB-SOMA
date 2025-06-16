@@ -43,7 +43,7 @@ class SOMADataFrame : public SOMAArray {
      */
     static void create(
         std::string_view uri,
-        const std::unique_ptr<ArrowSchema>& schema,
+        const managed_unique_ptr<ArrowSchema>& schema,
         const ArrowTable& index_columns,
         std::shared_ptr<SOMAContext> ctx,
         PlatformConfig platform_config = PlatformConfig(),
@@ -98,7 +98,10 @@ class SOMADataFrame : public SOMAArray {
      * @param uri URI to create the SOMADataFrame
      * @param ctx SOMAContext
      */
-    static bool exists(std::string_view uri, std::shared_ptr<SOMAContext> ctx);
+    static inline bool exists(
+        std::string_view uri, std::shared_ptr<SOMAContext> ctx) {
+        return SOMAArray::_exists(uri, "SOMADataFrame", ctx);
+    }
 
     /**
      * This is for schema evolution.
@@ -184,7 +187,7 @@ class SOMADataFrame : public SOMAArray {
      *
      * @return std::unique_ptr<ArrowSchema>
      */
-    std::unique_ptr<ArrowSchema> schema() const;
+    managed_unique_ptr<ArrowSchema> schema() const;
 
     /**
      * Return the index (dimension) column names.

@@ -30,6 +30,11 @@ from somacore import options
 from typing_extensions import Literal, Self
 
 from . import pytiledbsoma as clib
+from ._constants import (
+    SOMA_ENCODING_VERSION_METADATA_KEY,
+    SOMA_OBJECT_TYPE_METADATA_KEY,
+    SUPPORTED_SOMA_ENCODING_VERSIONS,
+)
 from ._exception import DoesNotExistError, SOMAError, is_does_not_exist_error
 from ._types import METADATA_TYPES, Metadatum, OpenTimestamp, StatusAndReason
 from .options._soma_tiledb_context import SOMATileDBContext
@@ -57,7 +62,7 @@ _RawHdl_co = TypeVar("_RawHdl_co", bound=RawHandle, covariant=True)
 _SOMAObjectType = TypeVar("_SOMAObjectType", bound=clib.SOMAObject)
 
 
-def open(
+def open_handle_wrapper(
     uri: str,
     mode: options.OpenMode,
     context: SOMATileDBContext,
@@ -114,10 +119,13 @@ def open(
     }
 
     try:
-        return _type_to_class[soma_object.type.lower()]._from_soma_object(soma_object, context)
+        return _type_to_class[soma_object.type.lower()].open(
+            uri=soma_object.uri,
+            mode=soma_object.mode,
+            context=context,
+            timestamp=soma_object.timestamp,
+        )
     except KeyError:
-        if soma_object.type.lower() == "somageometrydataframe":
-            raise NotImplementedError(f"Support for {soma_object.type!r} is not yet implemented.")
         raise SOMAError(f"{uri!r} has unknown storage type {soma_object.type!r}")
 
 
@@ -148,39 +156,49 @@ class Wrapper(Generic[_RawHdl_co], metaclass=abc.ABCMeta):
         if mode not in ("r", "w"):
             raise ValueError(f"Invalid open mode {mode!r}")
         timestamp_ms = context._open_timestamp_ms(timestamp)
+
         try:
-            tdb = cls._opener(uri, mode, context, timestamp_ms)
-            handle = cls(uri, mode, context, timestamp_ms, tdb)
+            tdb_handle = cls._opener(uri, mode, context, timestamp_ms)
+            wrapper = cls(uri, mode, context, timestamp_ms, tdb_handle)
             if mode == "w":
                 with cls._opener(uri, "r", context, timestamp_ms) as auxiliary_reader:
-                    handle._do_initial_reads(auxiliary_reader)
+                    wrapper._do_initial_reads(auxiliary_reader)
             else:
-                handle._do_initial_reads(tdb)
-
-        except RuntimeError as tdbe:
+                wrapper._do_initial_reads(tdb_handle)
+        except (RuntimeError, SOMAError) as tdbe:
             if is_does_not_exist_error(tdbe):
                 raise DoesNotExistError(tdbe) from tdbe
-            raise
-        return handle
+            raise SOMAError(tdbe) from tdbe
 
-    @classmethod
-    def _from_soma_object(cls, soma_object: clib.SOMAObject, context: SOMATileDBContext) -> Self:
-        uri = soma_object.uri
-        mode = soma_object.mode
-        timestamp = context._open_timestamp_ms(soma_object.timestamp)
-        try:
-            handle = cls(uri, mode, context, timestamp, soma_object)
-            if handle.mode == "w":
-                with cls._opener(uri, mode, context, timestamp) as auxiliary_reader:
-                    handle._do_initial_reads(auxiliary_reader)
-            else:
-                handle._do_initial_reads(soma_object)
+        obj_type = wrapper.metadata.get(SOMA_OBJECT_TYPE_METADATA_KEY)
+        if obj_type is None:
+            raise SOMAError(
+                f"Cannot access stored TileDB object with TileDB-SOMA. The object is missing "
+                f"the required '{SOMA_OBJECT_TYPE_METADATA_KEY!r}' metadata key."
+            )
+        if isinstance(obj_type, bytes):
+            obj_type = str(obj_type, "utf-8")
+        if not isinstance(obj_type, str):
+            raise SOMAError(
+                f"Cannot access stored TileDB object with TileDB-SOMA. The metadata key "
+                f"'{SOMA_OBJECT_TYPE_METADATA_KEY!r}' has unexpected type '{type(obj_type)}'."
+            )
 
-        except RuntimeError as tdbe:
-            if is_does_not_exist_error(tdbe):
-                raise DoesNotExistError(tdbe) from tdbe
-            raise
-        return handle
+        encoding_version = wrapper.metadata.get(SOMA_ENCODING_VERSION_METADATA_KEY)
+        if encoding_version is None:
+            raise SOMAError(
+                f"Cannot access stored TileDB object with TileDB-SOMA. The object is missing "
+                f"the required '{SOMA_ENCODING_VERSION_METADATA_KEY!r}' metadata key."
+            )
+        if isinstance(encoding_version, bytes):
+            encoding_version = str(encoding_version, "utf-8")
+        if encoding_version not in SUPPORTED_SOMA_ENCODING_VERSIONS:
+            raise ValueError(
+                f"Unsupported SOMA object encoding version '{encoding_version}'. TileDB-SOMA "
+                f"needs to be updated to a more recent version."
+            )
+
+        return wrapper
 
     @classmethod
     @abc.abstractmethod
@@ -193,13 +211,6 @@ class Wrapper(Generic[_RawHdl_co], metaclass=abc.ABCMeta):
     ) -> _RawHdl_co:
         """Opens and returns a TileDB object specific to this type."""
         raise NotImplementedError()
-
-    def reopen(self, mode: options.OpenMode, timestamp: OpenTimestamp | None) -> clib.SOMAObject:
-        if mode not in ("r", "w"):
-            raise ValueError(f"Invalid mode '{mode}' passed. " "Valid modes are 'r' and 'w'.")
-        ts = self.context._open_timestamp_ms(timestamp)
-        self.metadata._write()
-        return self._handle.reopen(clib.OpenMode.read if mode == "r" else clib.OpenMode.write, (0, ts))
 
     # Covariant types should normally not be in parameters, but this is for
     # internal use only so it's OK.

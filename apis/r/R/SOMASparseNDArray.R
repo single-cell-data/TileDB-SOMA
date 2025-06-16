@@ -1,45 +1,51 @@
-#' SOMASparseNDArray
+#' SOMA Sparse Nd-Array
 #'
-#' @description
-#' `SOMASparseNDArray` is a sparse, N-dimensional array with offset
-#' (zero-based) integer indexing on each dimension. The `SOMASparseNDArray` has
-#' a user-defined schema, which includes:
-#'
-#' - **type**: A `primitive` type, expressed as an Arrow type (e.g., `int64`,
-#'   `float32`, etc), indicating the type of data contained within the array.
-#' - **shape**: The shape of the array, i.e., number and length of each
-#'   dimension. This is a soft limit which can be increased using `resize`,
-#'   up to the `maxshape`.
-#' - **maxshape**: The hard limit up to which `shape` may be increased using
-#'   `resize`.
-#'
+#' @description \code{SOMASparseNDArray} is a sparse, N-dimensional array with
+#' offset (zero-based) integer indexing on each dimension. The
+#' \code{SOMASparseNDArray} has a user-defined schema, which includes:
+#' \itemize{
+#'  \item \code{type}: a \code{primitive} type, expressed as an Arrow type
+#'   (e.g., \code{\link[arrow]{int64}}, \code{\link[arrow]{float32}}, etc),
+#'   indicating the type of data contained within the array.
+#'  \item \code{shape}: the shape of the array, i.e., number and length of each
+#'   dimension. This is a soft limit which can be increased using
+#'   \code{$resize()} up to the \code{maxshape}.
+#'  \item \code{maxshape}: the hard limit up to which \code{shape} may be
+#'   increased using \code{$resize()}.
+#' }
 #' All dimensions must have a positive, non-zero length.
 #'
-#' **Note** - on TileDB this is an sparse array with `N` int64 dimensions of
-#' domain [0, maxInt64), and a single attribute.
+#' @note In TileDB this is an sparse array with \code{N} \code{int64} dimensions
+#' of domain \code{[0, maxInt64)} and a single attribute.
 #'
-#' ## Duplicate writes
-#'
+#' @section Duplicate Writes:
 #' As duplicate index values are not allowed, index values already present in
-#' the object are overwritten and new index values are added. (lifecycle: maturing)
+#' the object are overwritten and new index values are added
+#' (lifecycle: maturing).
 #'
 #' @export
+#'
+#' @inherit SOMASparseNDArrayCreate examples
+#'
 SOMASparseNDArray <- R6::R6Class(
   classname = "SOMASparseNDArray",
   inherit = SOMANDArrayBase,
   public = list(
 
-    #' @description Reads a user-defined slice of the \code{SOMASparseNDArray}
-    #' @param coords Optional `list` of integer vectors, one for each dimension, with a
-    #' length equal to the number of values to read. If `NULL`, all values are
-    #' read. List elements can be named when specifying a subset of dimensions.
+    #' @description Reads a user-defined slice of the \code{SOMASparseNDArray}.
+    #'
+    #' @param coords Optional \code{list} of integer vectors, one for each
+    #' dimension, with a length equal to the number of values to read. If
+    #' \code{NULL}, all values are read. List elements can be named when
+    #' specifying a subset of dimensions.
     #' @template param-result-order
-    #' @param iterated Option boolean indicated whether data is read in call (when
-    #' `FALSE`, the default value) or in several iterated steps.
-    #' @param log_level Optional logging level with default value of `"warn"`.
-    #' @return \link{SOMASparseNDArrayRead}
+    #' @param log_level Optional logging level with default value of
+    #' \dQuote{\code{warn}}.
+    #'
+    #' @return A \link{SOMASparseNDArrayRead}.
+    #'
     read = function(coords = NULL, result_order = "auto", log_level = "auto") {
-      private$check_open_for_read()
+      private$.check_open_for_read()
       result_order <- map_query_layout(match_query_layout(result_order))
 
       if (!is.null(coords)) {
@@ -58,15 +64,16 @@ SOMASparseNDArray <- R6::R6Class(
       return(SOMASparseNDArrayRead$new(sr, self, coords))
     },
 
-    #' @description Write matrix-like data to the array. (lifecycle: maturing)
+    #' @description Write matrix-like data to the array (lifecycle: maturing).
     #'
-    #' @param values Any `matrix`-like object coercible to a
-    #' [`TsparseMatrix`][`Matrix::TsparseMatrix-class`]. Character dimension
-    #' names are ignored because `SOMANDArray`'s use integer indexing.
+    #' @param values Any \code{matrix}-like object coercible to a
+    #' \code{\link[Matrix:TsparseMatrix-class]{TsparseMatrix}}. Character
+    #' dimension names are ignored because \code{SOMANDArray}s use integer
+    #' indexing.
     #' @param bbox A vector of integers describing the upper bounds of each
-    #' dimension of `values`. Generally should be `NULL`.
+    #' dimension of \code{values}. Generally should be \code{NULL}.
     #'
-    #' @return Invisibly returns \code{self}
+    #' @return Invisibly returns \code{self}.
     #'
     write = function(values, bbox = NULL) {
       stopifnot(
@@ -194,22 +201,24 @@ SOMASparseNDArray <- R6::R6Class(
       return(invisible(self))
     },
 
-    #' @description Retrieve number of non-zero elements (lifecycle: maturing)
-    #' @return A scalar with the number of non-zero elements
+    #' @description Retrieve number of non-zero elements (lifecycle: maturing).
+    #'
+    #' @return A scalar with the number of non-zero elements.
+    #'
     nnz = function() {
       nnz(self$uri, private$.soma_context)
     },
 
-    #' @description Write a COO table to the array
+    #' @description Write a COO table to the array.
     #'
-    #' @param values A \code{data.frame} or \code{\link[arrow:Table]{Arrow::Table}}
+    #' @param values A \code{data.frame} or \link[arrow:Table]{Arrow table}
     #' with data in COO format; must be named with the dimension and attribute
-    #' labels of the array
+    #' labels of the array.
     #'
-    #' @return Invisibly returns \code{self}
+    #' @return Invisibly returns \code{self}.
     #'
     .write_coordinates = function(values) {
-      private$check_open_for_write()
+      private$.check_open_for_write()
       dnames <- self$dimnames()
       attrn <- self$attrnames()
 
@@ -291,8 +300,6 @@ SOMASparseNDArray <- R6::R6Class(
     }
   ),
   private = list(
-    .is_sparse = TRUE,
-
     # Given a user-specified shape along a particular dimension, returns a named
     # list containing name, capacity, and extent elements. If no shape is
     # provided the .Machine$integer.max - 1 is used.
@@ -312,9 +319,6 @@ SOMASparseNDArray <- R6::R6Class(
       }
 
       out
-    },
-
-    # Internal marking of one or zero based matrices for iterated reads
-    zero_based = NA
+    }
   )
 )

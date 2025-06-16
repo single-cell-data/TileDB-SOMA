@@ -24,6 +24,7 @@ from . import (
     _dataframe,
     _dense_nd_array,
     _experiment,
+    _geometry_dataframe,
     _measurement,
     _multiscale_image,
     _point_cloud_dataframe,
@@ -38,7 +39,7 @@ from ._constants import (
 )
 from ._exception import SOMAError
 from ._funcs import typeguard_ignore
-from ._soma_object import AnySOMAObject, SOMAObject, _read_soma_type
+from ._soma_object import AnySOMAObject, SOMAObject
 from ._types import OpenTimestamp
 from .options import SOMATileDBContext
 from .options._soma_tiledb_context import _validate_soma_tiledb_context
@@ -119,9 +120,12 @@ def open(
         Maturing.
     """
     context = _validate_soma_tiledb_context(context)
-    obj: SOMAObject[_Wrapper] = _open_internal(  # type: ignore[valid-type]
-        _tdb_handles.open, uri, mode, context, tiledb_timestamp
-    )
+    handle = _tdb_handles.open_handle_wrapper(uri, mode, context, tiledb_timestamp)
+    try:
+        obj: SOMAObject[_Wrapper] = reify_handle(handle)  # type: ignore[valid-type]
+    except Exception:
+        handle.close()
+        raise
     try:
         if soma_type:
             if isinstance(soma_type, str):
@@ -129,35 +133,19 @@ def open(
             elif issubclass(soma_type, somacore.SOMAObject):
                 soma_type_name = soma_type.soma_type
             else:
-                raise TypeError(f"cannot convert {soma_type!r} to expected SOMA type")
+                raise TypeError(f"Cannot convert soma_type {soma_type!r} to expected SOMA type.")
             if obj.soma_type.lower() != soma_type_name.lower():
-                raise TypeError(f"type of URI {uri!r} was {obj.soma_type}; expected {soma_type_name}")
+                raise TypeError(f"Type of URI {uri!r} was {obj.soma_type}; expected {soma_type_name}.")
         return obj
     except Exception:
         obj.close()
         raise
 
 
-def _open_internal(
-    opener: Callable[[str, options.OpenMode, SOMATileDBContext, OpenTimestamp | None], _Wrapper],
-    uri: str,
-    mode: options.OpenMode,
-    context: SOMATileDBContext,
-    timestamp: OpenTimestamp | None,
-) -> SOMAObject[_Wrapper]:
-    """Lower-level open function for internal use only."""
-    handle = opener(uri, mode, context, timestamp)
-    try:
-        return reify_handle(handle)
-    except Exception:
-        handle.close()
-        raise
-
-
 @typeguard_ignore
 def reify_handle(hdl: _Wrapper) -> SOMAObject[_Wrapper]:
     """Picks out the appropriate SOMA class for a handle and wraps it."""
-    typename = _read_soma_type(hdl)
+    typename = hdl.metadata.get(SOMA_OBJECT_TYPE_METADATA_KEY)
     cls = _type_name_to_cls(typename)  # type: ignore[no-untyped-call]
     if not isinstance(hdl, cls._wrapper_type):
         raise SOMAError(f"cannot open {hdl.uri!r}: a {type(hdl._handle)}" f" cannot be converted to a {typename}")
@@ -181,6 +169,7 @@ def _type_name_to_cls(type_name: str) -> type[AnySOMAObject]:
             _sparse_nd_array.SparseNDArray,
             _scene.Scene,
             _point_cloud_dataframe.PointCloudDataFrame,
+            _geometry_dataframe.GeometryDataFrame,
         )
     }
     try:

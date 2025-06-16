@@ -2,7 +2,7 @@
 % Please edit documentation in R/Factory.R
 \name{SOMASparseNDArrayOpen}
 \alias{SOMASparseNDArrayOpen}
-\title{Open SOMA Sparse Nd Array}
+\title{Open a SOMA Sparse ND Array}
 \usage{
 SOMASparseNDArrayOpen(
   uri,
@@ -13,18 +13,41 @@ SOMASparseNDArrayOpen(
 )
 }
 \arguments{
-\item{uri}{URI for the TileDB object}
+\item{uri}{URI for the TileDB object.}
 
-\item{mode}{One of \code{"READ"} or \code{"WRITE"}}
+\item{mode}{One of \dQuote{\code{READ}} or \dQuote{\code{WRITE}}.}
 
-\item{platform_config}{Optional platform configuration}
+\item{platform_config}{Optional platform configuration.}
 
-\item{tiledbsoma_ctx}{Optional SOMATileDBContext}
+\item{tiledbsoma_ctx}{Optional SOMATileDBContext.}
 
-\item{tiledb_timestamp}{Optional Datetime (POSIXct) for TileDB timestamp.
-In READ mode, defaults to the current time. If non-NULL, then all members
-accessed through the collection object inherit the timestamp.}
+\item{tiledb_timestamp}{Optional Datetime (POSIXct) for TileDB timestamp;
+defaults to the current time.}
+}
+\value{
+A \link[tiledbsoma:SOMASparseNDArray]{SOMA sparse ND array} stored at
+\code{uri} opened in mode \code{mode}.
 }
 \description{
-Factory function to open a SOMASparseNDArray for reading, (lifecycle: maturing)
+Factory function to open a
+\link[tiledbsoma:SOMASparseNDArray]{SOMA sparse ND array} for reading
+(lifecycle: maturing).
+}
+\examples{
+\dontshow{if (requireNamespace("withr", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+uri <- withr::local_tempfile(pattern = "soma-sparse-array")
+mat <- Matrix::rsparsematrix(100L, 100L, 0.7, repr = "T")
+mat[1:3, 1:5]
+
+(arr <- SOMASparseNDArrayCreate(uri, arrow::float64(), shape = dim(mat)))
+arr$write(mat)
+arr$close()
+
+(arr <- SOMASparseNDArrayOpen(uri))
+m2 <- arr$read()$sparse_matrix()$concat()
+m2[1:3, 1:5]
+\dontshow{
+arr$close()
+}
+\dontshow{\}) # examplesIf}
 }

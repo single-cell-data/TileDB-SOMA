@@ -213,16 +213,6 @@ class SOMAArray : public SOMAObject {
         OpenMode mode, std::optional<TimestampRange> timestamp = std::nullopt);
 
     /**
-     * Return a new SOMAArray with the given mode at the current Unix timestamp.
-     *
-     * @param mode if the OpenMode is not given, If the SOMAObject was opened in
-     * READ mode, reopen it in WRITE mode and vice versa
-     * @param timestamp Timestamp
-     */
-    std::unique_ptr<SOMAArray> reopen(
-        OpenMode mode, std::optional<TimestampRange> timestamp = std::nullopt);
-
-    /**
      * Close the SOMAArray object.
      */
     void close();
@@ -298,7 +288,7 @@ class SOMAArray : public SOMAObject {
      *
      * @return std::unique_ptr<ArrowSchema> Schema
      */
-    std::unique_ptr<ArrowSchema> arrow_schema() const {
+    managed_unique_ptr<ArrowSchema> arrow_schema() const {
         auto schema = ArrowAdapter::make_arrow_schema_parent(columns_.size());
 
         for (size_t i = 0; i < columns_.size(); ++i) {
@@ -885,6 +875,11 @@ class SOMAArray : public SOMAObject {
     std::shared_ptr<SOMAColumn> get_column(std::size_t index) const;
 
    protected:
+    static bool _exists(
+        std::string_view uri,
+        std::string_view soma_type,
+        std::shared_ptr<SOMAContext> ctx);
+
     // See top-of-file notes regarding methods for SOMADataFrame being
     // defined in this file.
     //
@@ -1147,6 +1142,13 @@ class SOMAArray : public SOMAObject {
     void fill_metadata_cache(std::optional<TimestampRange> timestamp);
 
     void fill_columns();
+
+    /**
+     * Convenience function for creating an ArraySchemaEvolution object
+     * referencing this array's context pointer, along with its open-at
+     * timestamp (if any).
+     */
+    ArraySchemaEvolution _make_se();
 
     // Metadata cache
     std::map<std::string, MetadataValue> metadata_;

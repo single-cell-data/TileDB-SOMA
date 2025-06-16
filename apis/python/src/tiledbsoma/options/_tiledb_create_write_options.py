@@ -171,7 +171,18 @@ class TileDBCreateOptions:
 
 @attrs_.define(frozen=True, kw_only=True, slots=True)
 class TileDBWriteOptions:
-    """Tuning options used when writing to SOMA arrays."""
+    """Tuning options used when writing to SOMA arrays.
+
+    Options:
+
+    sort_coords (bool): Whether to sort coordinates before writing.
+        - If True (default), assumes coordinates are *not* in global order and performs a sort.
+        - If False, assumes coordinates are already sorted, skipping the sort step for improved performance.
+
+    consolidate_and_vacuum (bool): Whether to consolidate and vacuum fragments after writing.
+        - If True, all fragments will be consolidated and vacuumed after writing.
+        - Defaults to False.
+    """
 
     sort_coords: bool = attrs_.field(validator=vld.instance_of(bool), default=True)
     consolidate_and_vacuum: bool | None = attrs_.field(validator=vld.instance_of(bool), default=False)

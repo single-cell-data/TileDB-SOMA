@@ -2,14 +2,18 @@
 % Please edit documentation in R/SOMANDArrayBase.R
 \name{SOMANDArrayBase}
 \alias{SOMANDArrayBase}
-\title{SOMA NDArray Base Class}
+\title{SOMA ND-Array Base Class}
 \description{
-Adds NDArray-specific functionality to the \code{\link{SOMAArrayBase}} class.
-(lifecycle: maturing)
+Virtual base class to add ND-array-specific functionality to the
+\code{\link{SOMAArrayBase}} class (lifecycle: maturing).
+}
+\seealso{
+Derived classes: \code{\link{SOMADenseNDArray}},
+\code{\link{SOMASparseNDArray}}
 }
 \keyword{internal}
 \section{Super classes}{
-\code{\link[tiledbsoma:TileDBObject]{tiledbsoma::TileDBObject}} -> \code{\link[tiledbsoma:TileDBArray]{tiledbsoma::TileDBArray}} -> \code{\link[tiledbsoma:SOMAArrayBase]{tiledbsoma::SOMAArrayBase}} -> \code{SOMANDArrayBase}
+\code{\link[tiledbsoma:SOMAObject]{tiledbsoma::SOMAObject}} -> \code{\link[tiledbsoma:SOMAArrayBase]{tiledbsoma::SOMAArrayBase}} -> \code{SOMANDArrayBase}
 }
 \section{Methods}{
 \subsection{Public methods}{
@@ -25,32 +29,30 @@ Adds NDArray-specific functionality to the \code{\link{SOMAArrayBase}} class.
 \if{html}{\out{
 <details><summary>Inherited methods</summary>
 <ul>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="class"><a href='../../tiledbsoma/html/TileDBObject.html#method-TileDBObject-class'><code>tiledbsoma::TileDBObject$class()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="exists"><a href='../../tiledbsoma/html/TileDBObject.html#method-TileDBObject-exists'><code>tiledbsoma::TileDBObject$exists()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="initialize"><a href='../../tiledbsoma/html/TileDBObject.html#method-TileDBObject-initialize'><code>tiledbsoma::TileDBObject$initialize()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="is_open"><a href='../../tiledbsoma/html/TileDBObject.html#method-TileDBObject-is_open'><code>tiledbsoma::TileDBObject$is_open()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="mode"><a href='../../tiledbsoma/html/TileDBObject.html#method-TileDBObject-mode'><code>tiledbsoma::TileDBObject$mode()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="reopen"><a href='../../tiledbsoma/html/TileDBObject.html#method-TileDBObject-reopen'><code>tiledbsoma::TileDBObject$reopen()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="attrnames"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-attrnames'><code>tiledbsoma::TileDBArray$attrnames()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="close"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-close'><code>tiledbsoma::TileDBArray$close()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="colnames"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-colnames'><code>tiledbsoma::TileDBArray$colnames()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="dimensions"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-dimensions'><code>tiledbsoma::TileDBArray$dimensions()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="dimnames"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-dimnames'><code>tiledbsoma::TileDBArray$dimnames()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="get_metadata"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-get_metadata'><code>tiledbsoma::TileDBArray$get_metadata()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="index_column_names"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-index_column_names'><code>tiledbsoma::TileDBArray$index_column_names()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="maxshape"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-maxshape'><code>tiledbsoma::TileDBArray$maxshape()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="ndim"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-ndim'><code>tiledbsoma::TileDBArray$ndim()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="non_empty_domain"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-non_empty_domain'><code>tiledbsoma::TileDBArray$non_empty_domain()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="open"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-open'><code>tiledbsoma::TileDBArray$open()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="print"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-print'><code>tiledbsoma::TileDBArray$print()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="schema"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-schema'><code>tiledbsoma::TileDBArray$schema()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="set_metadata"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-set_metadata'><code>tiledbsoma::TileDBArray$set_metadata()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="shape"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-shape'><code>tiledbsoma::TileDBArray$shape()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="tiledb_array"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-tiledb_array'><code>tiledbsoma::TileDBArray$tiledb_array()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBArray" data-id="tiledb_schema"><a href='../../tiledbsoma/html/TileDBArray.html#method-TileDBArray-tiledb_schema'><code>tiledbsoma::TileDBArray$tiledb_schema()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAObject" data-id="class"><a href='../../tiledbsoma/html/SOMAObject.html#method-SOMAObject-class'><code>tiledbsoma::SOMAObject$class()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAObject" data-id="exists"><a href='../../tiledbsoma/html/SOMAObject.html#method-SOMAObject-exists'><code>tiledbsoma::SOMAObject$exists()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAObject" data-id="get_metadata"><a href='../../tiledbsoma/html/SOMAObject.html#method-SOMAObject-get_metadata'><code>tiledbsoma::SOMAObject$get_metadata()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAObject" data-id="initialize"><a href='../../tiledbsoma/html/SOMAObject.html#method-SOMAObject-initialize'><code>tiledbsoma::SOMAObject$initialize()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAObject" data-id="is_open"><a href='../../tiledbsoma/html/SOMAObject.html#method-SOMAObject-is_open'><code>tiledbsoma::SOMAObject$is_open()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAObject" data-id="mode"><a href='../../tiledbsoma/html/SOMAObject.html#method-SOMAObject-mode'><code>tiledbsoma::SOMAObject$mode()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAObject" data-id="reopen"><a href='../../tiledbsoma/html/SOMAObject.html#method-SOMAObject-reopen'><code>tiledbsoma::SOMAObject$reopen()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAObject" data-id="set_metadata"><a href='../../tiledbsoma/html/SOMAObject.html#method-SOMAObject-set_metadata'><code>tiledbsoma::SOMAObject$set_metadata()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAArrayBase" data-id="allows_duplicates"><a href='../../tiledbsoma/html/SOMAArrayBase.html#method-SOMAArrayBase-allows_duplicates'><code>tiledbsoma::SOMAArrayBase$allows_duplicates()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAArrayBase" data-id="attributes"><a href='../../tiledbsoma/html/SOMAArrayBase.html#method-SOMAArrayBase-attributes'><code>tiledbsoma::SOMAArrayBase$attributes()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAArrayBase" data-id="attrnames"><a href='../../tiledbsoma/html/SOMAArrayBase.html#method-SOMAArrayBase-attrnames'><code>tiledbsoma::SOMAArrayBase$attrnames()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAArrayBase" data-id="close"><a href='../../tiledbsoma/html/SOMAArrayBase.html#method-SOMAArrayBase-close'><code>tiledbsoma::SOMAArrayBase$close()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAArrayBase" data-id="colnames"><a href='../../tiledbsoma/html/SOMAArrayBase.html#method-SOMAArrayBase-colnames'><code>tiledbsoma::SOMAArrayBase$colnames()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAArrayBase" data-id="dimensions"><a href='../../tiledbsoma/html/SOMAArrayBase.html#method-SOMAArrayBase-dimensions'><code>tiledbsoma::SOMAArrayBase$dimensions()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAArrayBase" data-id="dimnames"><a href='../../tiledbsoma/html/SOMAArrayBase.html#method-SOMAArrayBase-dimnames'><code>tiledbsoma::SOMAArrayBase$dimnames()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAArrayBase" data-id="index_column_names"><a href='../../tiledbsoma/html/SOMAArrayBase.html#method-SOMAArrayBase-index_column_names'><code>tiledbsoma::SOMAArrayBase$index_column_names()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAArrayBase" data-id="is_sparse"><a href='../../tiledbsoma/html/SOMAArrayBase.html#method-SOMAArrayBase-is_sparse'><code>tiledbsoma::SOMAArrayBase$is_sparse()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAArrayBase" data-id="maxshape"><a href='../../tiledbsoma/html/SOMAArrayBase.html#method-SOMAArrayBase-maxshape'><code>tiledbsoma::SOMAArrayBase$maxshape()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAArrayBase" data-id="ndim"><a href='../../tiledbsoma/html/SOMAArrayBase.html#method-SOMAArrayBase-ndim'><code>tiledbsoma::SOMAArrayBase$ndim()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAArrayBase" data-id="non_empty_domain"><a href='../../tiledbsoma/html/SOMAArrayBase.html#method-SOMAArrayBase-non_empty_domain'><code>tiledbsoma::SOMAArrayBase$non_empty_domain()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAArrayBase" data-id="open"><a href='../../tiledbsoma/html/SOMAArrayBase.html#method-SOMAArrayBase-open'><code>tiledbsoma::SOMAArrayBase$open()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAArrayBase" data-id="print"><a href='../../tiledbsoma/html/SOMAArrayBase.html#method-SOMAArrayBase-print'><code>tiledbsoma::SOMAArrayBase$print()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAArrayBase" data-id="schema"><a href='../../tiledbsoma/html/SOMAArrayBase.html#method-SOMAArrayBase-schema'><code>tiledbsoma::SOMAArrayBase$schema()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAArrayBase" data-id="shape"><a href='../../tiledbsoma/html/SOMAArrayBase.html#method-SOMAArrayBase-shape'><code>tiledbsoma::SOMAArrayBase$shape()</code></a></span></li>
 </ul>
 </details>
 }}
@@ -58,40 +60,38 @@ Adds NDArray-specific functionality to the \code{\link{SOMAArrayBase}} class.
 \if{html}{\out{<a id="method-SOMANDArrayBase-create"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMANDArrayBase-create}{}}}
 \subsection{Method \code{create()}}{
-Create a SOMA NDArray named with the URI. (lifecycle:
-maturing)
+Create a SOMA NDArray named with the URI
+(lifecycle: maturing).\cr
+\cr
+\strong{Note}: \code{$create()} is considered internal and should not be
+called directly; use factory functions
+(eg. \code{\link{SOMASparseNDArrayCreate}()}) instead.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{SOMANDArrayBase$create(
-  type,
-  shape,
-  platform_config = NULL,
-  internal_use_only = NULL
-)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{SOMANDArrayBase$create(type, shape, platform_config = NULL)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{type}}{an \link[arrow:data-type]{Arrow type} defining the type of each
-element in the array.}
+\item{\code{type}}{An \link[arrow:data-type]{Arrow type} defining the type
+of each element in the array.}
 
 \item{\code{shape}}{a vector of integers defining the shape of the array.}
 
 \item{\code{platform_config}}{A \link[tiledbsoma:PlatformConfig]{platform configuration}
 object}
-
-\item{\code{internal_use_only}}{Character value to signal this is a 'permitted'
-call, as \code{create()} is considered internal and should not be called
-directly.}
 }
 \if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+Returns \code{self}.
 }
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-SOMANDArrayBase-set_data_type"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMANDArrayBase-set_data_type}{}}}
 \subsection{Method \code{set_data_type()}}{
-Sets a cache value for the datatype (lifecycle: maturing)
+Sets a cache value for the datatype (lifecycle: maturing).
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMANDArrayBase$set_data_type(type)}\if{html}{\out{</div>}}
 }
@@ -99,7 +99,7 @@ Sets a cache value for the datatype (lifecycle: maturing)
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{type}}{A character value describing the TileDB data type}
+\item{\code{type}}{A character value describing the TileDB data type.}
 }
 \if{html}{\out{</div>}}
 }
@@ -108,16 +108,16 @@ Sets a cache value for the datatype (lifecycle: maturing)
 \if{html}{\out{<a id="method-SOMANDArrayBase-tiledbsoma_has_upgraded_shape"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMANDArrayBase-tiledbsoma_has_upgraded_shape}{}}}
 \subsection{Method \code{tiledbsoma_has_upgraded_shape()}}{
-Returns TRUE if the array has the upgraded resizeable shape
-feature from TileDB-SOMA 1.15: the array was created with this support,
-or it has had \code{upgrade_domain} applied to it.
-(lifecycle: maturing)
+Test if the array has the upgraded resizeable shape feature
+from TileDB-SOMA 1.15, the array was created with this support, or it has
+had \code{$upgrade_domain()} applied to it (lifecycle: maturing).
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMANDArrayBase$tiledbsoma_has_upgraded_shape()}\if{html}{\out{</div>}}
 }
 
 \subsection{Returns}{
-Logical
+Returns \code{TRUE} if the array has the upgraded resizable
+shape feature; otherwise, returns \code{FALSE}.
 }
 }
 \if{html}{\out{<hr>}}
@@ -125,11 +125,10 @@ Logical
 \if{latex}{\out{\hypertarget{method-SOMANDArrayBase-resize}{}}}
 \subsection{Method \code{resize()}}{
 Increases the shape of the array as specified, up to the hard
-limit which is \code{maxshape}. Raises an error if the new shape is less than
-the current shape in any dimension.  Raises an error if the requested new
-shape exceeds \code{maxshape} in any dimension. Raises an error if the array
-doesn't already have a shape: in that case please call
-\code{tiledbsoma_upgrade_shape}. (lifecycle: maturing)
+limit which is \code{maxshape}. Raises an error if the new shape is less
+than the current shape or exceeds \code{maxshape} in any dimension. Also
+raises an error if the array doesn't already have a shape; in that case
+please call \code{$tiledbsoma_upgrade_shape()} (lifecycle: maturing).
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMANDArrayBase$resize(new_shape, check_only = FALSE)}\if{html}{\out{</div>}}
 }
@@ -137,7 +136,8 @@ doesn't already have a shape: in that case please call
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{new_shape}}{A vector of integerish, of the same length as the array's \code{ndim}.}
+\item{\code{new_shape}}{An integerish vector of the same length as the array's
+\code{$ndim()}.}
 
 \item{\code{check_only}}{If true, does not apply the operation, but only reports
 whether it would have succeeded.}
@@ -145,21 +145,22 @@ whether it would have succeeded.}
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-No return value if \code{check_only} is \code{FALSE}. If \code{check_only} is \code{TRUE},
-returns the empty string if no error is detected, else a description of the error.
+If \code{check_only}, returns the empty string if no error is
+detected, else a description of the error. Otherwise, invisibly returns
+\code{NULL}.
 }
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-SOMANDArrayBase-tiledbsoma_upgrade_shape"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMANDArrayBase-tiledbsoma_upgrade_shape}{}}}
 \subsection{Method \code{tiledbsoma_upgrade_shape()}}{
-Allows the array to have a resizeable shape as described in the
-TileDB-SOMA 1.15 release notes.  Raises an error if the shape exceeds maxshape in any
-dimension. Raises an error if the array already has a shape. The methods
-\code{tiledbsoma_upgrade_shape} and \code{resize} are very similar: the former must be
-call on a pre-1.15 array the first time a shape is set on it; the latter must
-be used for subsequent resizes on any array which already has upgraded shape.
-(lifecycle: maturing)
+Allows the array to have a resizeable shape as described in
+the TileDB-SOMA 1.15 release notes. Raises an error if the shape exceeds
+\code{maxshape} in any dimension, or if the array already has a shape.
+The methods \code{$tiledbsoma_upgrade_shape()} and \code{$resize()} are
+very similar: the former must be called on a pre-1.15 array the first
+time a shape is set on it; the latter must be used for subsequent resizes
+on any array which already has upgraded shape (lifecycle: maturing).
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMANDArrayBase$tiledbsoma_upgrade_shape(shape, check_only = FALSE)}\if{html}{\out{</div>}}
 }
@@ -167,7 +168,8 @@ be used for subsequent resizes on any array which already has upgraded shape.
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{shape}}{A vector of integerish, of the same length as the array's \code{ndim}.}
+\item{\code{shape}}{An integerish vector of the same length as the array's
+\code{$ndim()}.}
 
 \item{\code{check_only}}{If true, does not apply the operation, but only reports
 whether it would have succeeded.}
@@ -175,8 +177,9 @@ whether it would have succeeded.}
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-No return value if \code{check_only} is \code{FALSE}. If \code{check_only} is \code{TRUE},
-returns the empty string if no error is detected, else a description of the error.
+If \code{check_only}, returns the empty string if no error is
+detected, else a description of the error. Otherwise, invisibly returns
+\code{NULL}.
 }
 }
 \if{html}{\out{<hr>}}

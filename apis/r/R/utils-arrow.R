@@ -146,9 +146,11 @@ arrow_type_from_tiledb_type <- function(x) {
 #'
 #' @keywords internal
 #'
-#' @export
+# @export
 #'
 #' @seealso \code{\link[base]{typeof}()}
+#'
+#' @noRd
 #'
 r_type_from_arrow_type <- function(x) UseMethod("r_type_from_arrow_type")
 
@@ -156,6 +158,8 @@ r_type_from_arrow_type <- function(x) UseMethod("r_type_from_arrow_type")
 #'
 #' @method r_type_from_arrow_type Schema
 #' @export
+#'
+#' @noRd
 #'
 r_type_from_arrow_type.Schema <- function(x) {
   return(vapply(
@@ -171,6 +175,8 @@ r_type_from_arrow_type.Schema <- function(x) {
 #' @method r_type_from_arrow_type Field
 #' @export
 #'
+#' @noRd
+#'
 r_type_from_arrow_type.Field <- function(x) {
   tt <- r_type_from_arrow_type(x$type)
   names(x = tt) <- x$name
@@ -181,6 +187,8 @@ r_type_from_arrow_type.Field <- function(x) {
 #'
 #' @method r_type_from_arrow_type DataType
 #' @export
+#'
+#' @noRd
 #'
 r_type_from_arrow_type.DataType <- function(x) {
   # Types are equivalent to `typeof()`, not `mode()` or `class()`
@@ -250,12 +258,6 @@ arrow_type_unsigned_range <- function(x) {
     range[1]
   )
   range
-}
-
-## With a nod to Kevin Ushey
-#' @noRd
-yoink <- function(package, symbol) {
-  do.call(":::", list(package, symbol))
 }
 
 #' Create a TileDB attribute from an Arrow field

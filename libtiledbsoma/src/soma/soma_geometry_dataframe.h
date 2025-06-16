@@ -47,7 +47,7 @@ class SOMAGeometryDataFrame : virtual public SOMAArray {
      */
     static void create(
         std::string_view uri,
-        const std::unique_ptr<ArrowSchema>& schema,
+        const managed_unique_ptr<ArrowSchema>& schema,
         const ArrowTable& index_columns,
         const SOMACoordinateSpace& coordinate_space,
         std::shared_ptr<SOMAContext> ctx,
@@ -81,7 +81,10 @@ class SOMAGeometryDataFrame : virtual public SOMAArray {
      * @param uri URI to create the SOMAGeometryDataFrame
      * @param ctx SOMAContext
      */
-    static bool exists(std::string_view uri, std::shared_ptr<SOMAContext> ctx);
+    static inline bool exists(
+        std::string_view uri, std::shared_ptr<SOMAContext> ctx) {
+        return SOMAArray::_exists(uri, "SOMAGeometryDataFrame", ctx);
+    }
 
     //===================================================================
     //= public non-static
@@ -124,7 +127,7 @@ class SOMAGeometryDataFrame : virtual public SOMAArray {
      *
      * @return std::unique_ptr<ArrowSchema>
      */
-    std::unique_ptr<ArrowSchema> schema() const;
+    managed_unique_ptr<ArrowSchema> schema() const;
 
     /**
      * Return the index (dimension) column names.

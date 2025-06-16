@@ -1,46 +1,54 @@
-#' SOMADenseNDArray
+#' SOMA Dense Nd-Array
 #'
-#' @description
-#' `SOMADenseNDArray` is a dense, N-dimensional array of `primitive` type, with
-#' offset (zero-based) `int64` integer indexing on each dimension with domain
-#' `[0, maxInt64)`. The `SOMADenseNDArray` has a user-defined schema, which
-#' includes:
-#'
-#' - **type**: A `primitive` type, expressed as an Arrow type (e.g., `int64`,
-#'   `float32`, etc), indicating the type of data contained within the array.
-#' - **shape**: The shape of the array, i.e., number and length of each
-#'   dimension. This is a soft limit which can be increased using `resize`,
-#'   up to the `maxshape`.
-#' - **maxshape**: The hard limit up to which `shape` may be increased using
-#'   `resize`.
-#'
+#' @description \code{SOMADenseNDArray} is a dense, N-dimensional array of
+#' a \code{primitive} type, with offset (zero-based) \code{int64} integer
+#' indexing on each dimension with domain \code{[0, maxInt64)}. The
+#' \code{SOMADenseNDArray} has a user-defined schema, which includes:
+#' \itemize{
+#'  \item \code{type}: a \code{primitive} type, expressed as an Arrow type
+#'   (e.g., \code{\link[arrow]{int64}}, \code{\link[arrow]{float32}}, etc),
+#'   indicating the type of data contained within the array.
+#'  \item \code{shape}: the shape of the array, i.e., number and length of each
+#'   dimension. This is a soft limit which can be increased using
+#'   \code{$resize()} up to the \code{maxshape}.
+#'  \item \code{maxshape}: the hard limit up to which \code{shape} may be
+#'   increased using \code{$resize()}.
+#' }
 #' All dimensions must have a positive, non-zero length, and there must be 1 or
 #' more dimensions.
 #'
-#' The default "fill" value for `SOMADenseNDArray` is the zero or null value of
-#' the array type (e.g., Arrow.float32 defaults to 0.0).
+#' The default \dQuote{fill} value for \code{SOMADenseNDArray} is the zero or
+#' null value of the array type (e.g.,
+#' \code{\link[arrow:float32]{arrow::float32}()} defaults to 0.0).
 #'
-#' The `write` method is currently limited to writing from 2-d matrices.
-#' (lifecycle: maturing)
+#' @param coords Optional \code{list} of integer vectors, one for each
+#' dimension, with a length equal to the number of values to read. If
+#' \code{NULL}, all values are read. List elements can be named when
+#' specifying a subset of dimensions.
+#' @template param-result-order
+#' @param log_level Optional logging level with default value of
+#' \dQuote{\code{warn}}.
+#'
 #' @export
+#'
+#' @inherit SOMADenseNDArrayCreate examples
+#'
 SOMADenseNDArray <- R6::R6Class(
   classname = "SOMADenseNDArray",
   inherit = SOMANDArrayBase,
   public = list(
 
-    #' @description Read as an 'arrow::Table' (lifecycle: maturing)
-    #' @param coords Optional `list` of integer vectors, one for each dimension, with a
-    #' length equal to the number of values to read. If `NULL`, all values are
-    #' read. List elements can be named when specifying a subset of dimensions.
-    #' @template param-result-order
-    #' @param log_level Optional logging level with default value of `"warn"`.
-    #' @return An [`arrow::Table`].
+    #' @description Read as an \link[arrow:Table]{Arrow table}
+    #' (lifecycle: maturing).
+    #'
+    #' @return An \link[arrow:Table]{Arrow table}.
+    #'
     read_arrow_table = function(
       coords = NULL,
       result_order = "auto",
       log_level = "auto"
     ) {
-      private$check_open_for_read()
+      private$.check_open_for_read()
 
       uri <- self$uri
 
@@ -72,26 +80,26 @@ SOMADenseNDArray <- R6::R6Class(
       soma_array_to_arrow_table(rl)
     },
 
-    #' @description Read as a dense matrix (lifecycle: maturing)
-    #' @param coords Optional `list` of integer vectors, one for each dimension, with a
-    #' length equal to the number of values to read. If `NULL`, all values are
-    #' read. List elements can be named when specifying a subset of dimensions.
-    #' @template param-result-order
-    #' @param log_level Optional logging level with default value of `"warn"`.
-    #' @return A `matrix` object
+    #' @description Read as a dense matrix (lifecycle: maturing).
+    #'
+    #' @return A \code{matrix}.
+    #'
     read_dense_matrix = function(
       coords = NULL,
       result_order = "ROW_MAJOR",
       log_level = "warn"
     ) {
-      private$check_open_for_read()
+      private$.check_open_for_read()
 
       ndim <- self$ndim()
       attrnames <- self$attrnames()
 
       stopifnot(
         "Array must have two dimensions" = ndim == 2,
-        "Array must contain column 'soma_data'" = all.equal("soma_data", attrnames)
+        "Array must contain column 'soma_data'" = all.equal(
+          "soma_data",
+          attrnames
+        )
       )
 
       if (is.null(coords)) {
@@ -104,24 +112,37 @@ SOMADenseNDArray <- R6::R6Class(
         ncol <- length(unique(as.numeric(coords[[2]])))
       }
 
-      tbl <- self$read_arrow_table(coords = coords, result_order = result_order, log_level = log_level)
-      m <- matrix(as.numeric(tbl$GetColumnByName("soma_data")),
-        nrow = nrow, ncol = ncol,
-        byrow = result_order == "ROW_MAJOR"
+      tbl <- self$read_arrow_table(
+        coords = coords,
+        result_order = result_order,
+        log_level = log_level
       )
+      return(matrix(
+        as.numeric(tbl$GetColumnByName("soma_data")),
+        nrow = nrow,
+        ncol = ncol,
+        byrow = result_order == "ROW_MAJOR"
+      ))
     },
 
-    #' @description Write matrix data to the array. (lifecycle: maturing)
+    #' @description Write matrix data to the array (lifecycle: maturing).\cr
+    #' \cr
+    #' \strong{Note}: The \code{$write()} method is currently limited to writing
+    #' from two-dimensional matrices (lifecycle: maturing).
     #'
-    #' More general write methods for higher-dimensional array could be added.
+    # More general write methods for higher-dimensional array could be added.
     #'
-    #' @param values A `matrix`. Character dimension names are ignored because
-    #' `SOMANDArray`'s use integer indexing.
-    #' @param coords A `list` of integer vectors, one for each dimension, with a
-    #' length equal to the number of values to write. If `NULL`, the default,
-    #' the values are taken from the row and column names of `values`.
+    #' @param values A \code{matrix}. Character dimension names are ignored
+    #' because \code{SOMANDArray}s use integer indexing.
+    #' @param coords A \code{list} of integer vectors, one for each dimension,
+    #' with a length equal to the number of values to write. If \code{NULL},
+    #' the default, the values are taken from the row and column names
+    #' of \code{values}.
+    #'
+    #' @return Invisibly returns \code{self}.
+    #'
     write = function(values, coords = NULL) {
-      private$check_open_for_write()
+      private$.check_open_for_write()
 
       spdl::debug("[SOMADenseNDArray::write] entered")
       stopifnot(
@@ -144,7 +165,7 @@ SOMADenseNDArray <- R6::R6Class(
         private$.type <- self$schema()[["soma_data"]]$type
       }
 
-      arr <- self$object
+      arr <- private$.tiledb_array
       tiledb::query_layout(arr) <- "COL_MAJOR"
       spdl::debug("[SOMADenseNDArray::write] about to call write")
       arrsch <- arrow::schema(arrow::field("soma_data", private$.type))
@@ -154,7 +175,6 @@ SOMADenseNDArray <- R6::R6Class(
       naap <- nanoarrow::nanoarrow_allocate_array()
       nasp <- nanoarrow::nanoarrow_allocate_schema()
       arrow::as_record_batch(tbl)$export_to_c(naap, nasp)
-      # arr[] <- values
       writeArrayFromArrow(
         uri = self$uri,
         naap = naap,
@@ -166,15 +186,10 @@ SOMADenseNDArray <- R6::R6Class(
       )
       spdl::debug("[SOMADenseNDArray::write] written")
 
-      # tiledb-r always closes the array after a write operation so we need to
-      # manually reopen it until close-on-write is optional
-      # self$open("WRITE", internal_use_only = "allowed_use")
-      invisible(self)
+      return(invisible(self))
     }
   ),
   private = list(
-    .is_sparse = FALSE,
-
     # Given a user-specified shape along a particular dimension, returns a named
     # list containing name, capacity, and extent elements. The shape cannot be
     # NULL for dense arrays.

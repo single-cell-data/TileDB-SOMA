@@ -1,55 +1,74 @@
 #' SOMADataFrame
 #'
-#' @description
-#' `SOMADataFrame` is a multi-column table that must contain a column
-#' called `soma_joinid` of type `int64`, which contains a unique value for each
-#' row and is intended to act as a join key for other objects, such as
-#' [`SOMASparseNDArray`].  (lifecycle: maturing)
+#' @description A SOMA data frame  is a multi-column table that must contain a
+#' column called \dQuote{\code{soma_joinid}} of type \code{int64}, which
+#' contains a unique value for each row and is intended to act as a join key for
+#' other objects, such as \code{\link{SOMASparseNDArray}} (lifecycle: maturing).
+#'
+#' @param new_domain A named list, keyed by index-column name, with values
+#' being two-element vectors containing the desired lower and upper bounds
+#' for the domain.
+#' @param check_only If true, does not apply the operation, but only reports
+#' whether it would have succeeded.
 #'
 #' @export
+#'
+#' @inherit SOMADataFrameCreate examples
 #'
 SOMADataFrame <- R6::R6Class(
   classname = "SOMADataFrame",
   inherit = SOMAArrayBase,
   public = list(
 
-    #' @description Create (lifecycle: maturing)
-    #' @param schema an [`arrow::schema`].
+    #' @description Create a SOMA data frame (lifecycle: maturing).\cr
+    #' \cr
+    #' \strong{Note}: \code{$create()} is considered internal and should not be
+    #' called directly; use factory functions
+    #' (eg. \code{\link{SOMADataFrameCreate}()}) instead.
+    #'
+    #' @param schema An \link[arrow:schema]{Arrow schema}.
     #' @param index_column_names A vector of column names to use as user-defined
-    #' index columns.  All named columns must exist in the schema, and at least
+    #' index columns. All named columns must exist in the schema, and at least
     #' one index column name is required.
     #' @param domain An optional list specifying the domain of each
     #' index column. Each slot in the list must have its name being the name
     #' of an index column, and its value being be a length-two vector
     #' consisting of the minimum and maximum values storable in the index
     #' column. For example, if there is a single int64-valued index column
-    #' `soma_joinid`, then `domain` might be `list(soma_joinid=c(100, 200))`
-    #' to indicate that values between 100 and 200, inclusive, can be stored
-    #' in that column.  If provided, this sequence must have the same length
-    #' as `index_column_names`, and the index-column domain will be as
-    #' specified.  If omitted entirely, or if `NULL` in a given dimension, the
-    #' corresponding index-column domain will use an empty range, and data writes
-    #' after that will fail with "A range was set outside of the current domain".
-    #' Unless you have a particular reason not to, you should always provide the
-    #' desired `domain` at create time: this is an optional but strongly
-    #' recommended parameter.  See also `change_domain` which allows you to
+    #' \code{soma_joinid}, then \code{domain} might be
+    #' \code{list(soma_joinid=c(100, 200))} to indicate that values between 100
+    #' and 200, inclusive, can be stored in that column.  If provided, this
+    #' sequence must have the same length as \code{index_column_names}, and the
+    #' index-column domain will be as specified.  If omitted entirely, or if
+    #' \code{NULL} in a given dimension, the corresponding index-column domain
+    #' will use an empty range, and data writes after that will fail with
+    #' \dQuote{A range was set outside of the current domain}. Unless you have
+    #' a particular reason not to, you should always provide the desired
+    #' \code{domain} at create time: this is an optional but strongly
+    #' recommended parameter. See also \code{change_domain} which allows you to
     #' expand the domain after create.
     #' @template param-platform-config
-    #' @param internal_use_only Character value to signal this is a 'permitted' call,
-    #' as `create()` is considered internal and should not be called directly.
+    #'
+    #' @return Returns \code{self}.
+    #'
     create = function(
       schema,
       index_column_names = c("soma_joinid"),
       domain = NULL,
-      platform_config = NULL,
-      internal_use_only = NULL
+      platform_config = NULL
     ) {
-      if (is.null(internal_use_only) || internal_use_only != "allowed_use") {
-        stop(paste(
-          "Use of the create() method is for internal use only. Consider using a",
-          "factory method as e.g. 'SOMADataFrameCreate()'."
-        ), call. = FALSE)
+      envs <- unique(vapply(
+        X = unique(sys.parents()),
+        FUN = function(n) environmentName(environment(sys.function(n))),
+        FUN.VALUE = character(1L)
+      ))
+      if (!"tiledbsoma" %in% envs) {
+        stop(
+          paste(strwrap(private$.internal_use_only("create", "collection")), collapse = '\n'),
+          call. = FALSE
+        )
       }
+
       schema <- private$validate_schema(schema, index_column_names)
 
       stopifnot(
@@ -120,20 +139,24 @@ SOMADataFrame <- R6::R6Class(
       )
 
       spdl::debug("[SOMADataFrame$create] about to call write_object_type_metadata")
+      self$open("WRITE")
       private$write_object_type_metadata()
+      self$reopen("WRITE", tiledb_timestamp = self$tiledb_timestamp)
 
-      self$open("WRITE", internal_use_only = "allowed_use")
-      self
+      return(self)
     },
 
-    #' @description Write (lifecycle: maturing)
+    #' @description Write values to the data frame (lifecycle: maturing).
     #'
-    #' @param values An [`arrow::Table`] or [`arrow::RecordBatch`]
-    #' containing all columns, including any index columns. The
-    #' schema for `values` must match the schema for the `SOMADataFrame`.
+    #' @param values An \link[arrow:Table]{Arrow table} or
+    #' \link[arrow:RecordBatch]{Arrow record batch} containing all columns,
+    #' including any index columns. The schema for \code{values} must match the
+    #' schema for the data frame.
+    #'
+    #' @return Invisibly returns \code{self}.
     #'
     write = function(values) {
-      private$check_open_for_write()
+      private$.check_open_for_write()
 
       # Prevent downcasting of int64 to int32 when materializing a column
       op <- options(arrow.int64_downcast = FALSE)
@@ -159,8 +182,8 @@ SOMADataFrame <- R6::R6Class(
       nasp <- nanoarrow::nanoarrow_allocate_schema()
       arrow::as_record_batch(values)$export_to_c(naap, nasp)
 
-      df <- as.data.frame(values)[schema_names]
-      arr <- self$object
+      # df <- as.data.frame(values)[schema_names]
+      # arr <- private$.tiledb_array
       writeArrayFromArrow(
         uri = self$uri,
         naap = naap,
@@ -171,32 +194,34 @@ SOMADataFrame <- R6::R6Class(
         tsvec = self$.tiledb_timestamp_range
       )
 
-      invisible(self)
+      return(invisible(self))
     },
 
-    #' @description Read (lifecycle: maturing)
-    #' Read a user-defined subset of data, addressed by the dataframe indexing
-    #' column, and optionally filtered.
+    #' @description Read a user-defined subset of data, addressed by the
+    #' data frame indexing column, and optionally filtered
+    #' (lifecycle: maturing).
+    #'
     #' @param coords Optional named list of indices specifying the rows to read;
     #' each (named) list element corresponds to a dimension of the same name.
     #' @param column_names Optional character vector of column names to return.
-    #' @param value_filter Optional string containing a logical expression that is used
-    #' to filter the returned values. See [`tiledb::parse_query_condition`] for
-    #' more information.
+    #' @param value_filter Optional string containing a logical expression that
+    #' is used to filter the returned values. See
+    #' \code{\link[tiledb:parse_query_condition]{tiledb::parse_query_condition}()}
+    #' for more information.
     #' @template param-result-order
-    #' @param iterated Option boolean indicated whether data is read in call (when
-    #' `FALSE`, the default value) or in several iterated steps.
-    #' @param log_level Optional logging level with default value of `"warn"`.
-    #' @return arrow::\link[arrow]{Table} or \link{TableReadIter}
+    #' @param log_level Optional logging level with default value of
+    #' \dQuote{\code{warn}}.
+    #'
+    #' @return An \link[arrow:Table]{Arrow table} or \code{\link{TableReadIter}}
+    #'
     read = function(
       coords = NULL,
       column_names = NULL,
       value_filter = NULL,
       result_order = "auto",
-      iterated = FALSE,
       log_level = "auto"
     ) {
-      private$check_open_for_read()
+      private$.check_open_for_read()
 
       result_order <- match_query_layout(result_order)
 
@@ -227,8 +252,10 @@ SOMADataFrame <- R6::R6Class(
         value_filter <- parsed@ptr
       }
       spdl::debug(
-        "[SOMADataFrame$read] calling mq_setup for {} at ({},{})", self$uri,
-        private$tiledb_timestamp[1], private$tiledb_timestamp[2]
+        "[SOMADataFrame$read] calling mq_setup for {} at ({},{})",
+        self$uri,
+        self$.tiledb_timestamp_range[1],
+        self$.tiledb_timestamp_range[2]
       )
       sr <- mq_setup(
         uri = self$uri,
@@ -239,33 +266,38 @@ SOMADataFrame <- R6::R6Class(
         timestamprange = self$.tiledb_timestamp_range, # NULL or two-elem vector
         loglevel = log_level
       )
-      TableReadIter$new(sr)
+      return(TableReadIter$new(sr))
     },
 
-    #' @description Update (lifecycle: maturing)
+    #' @description Update (lifecycle: maturing).
+    #'
     #' @details
-    #' Update the existing `SOMADataFrame` to add or remove columns based on the
-    #' input:
-    #' - columns present in the current the `SOMADataFrame` but absent from the
-    #'   new `values` will be dropped
-    #' - columns absent in current `SOMADataFrame` but present in the new
-    #'   `values` will be added
-    #' - any columns present in both will be left alone, with the exception that
-    #'   if `values` has a different type for the column, the entire update
-    #'   will fail because attribute types cannot be changed.
+    #' Update the existing \code{SOMADataFrame} to add or remove columns based
+    #' on the input:
+    #' \itemize{
+    #'  \item columns present in the current the \code{SOMADataFrame} but absent
+    #'   from the new \code{values} will be dropped.
+    #'  \item columns absent in current \code{SOMADataFrame} but present in the
+    #'   new \code{values} will be added.
+    #'  \item any columns present in both will be left alone, with the
+    #'   exception that if \code{values} has a different type for the column,
+    #'   the entire update will fail because attribute types cannot be changed.
+    #' }
+    #' Furthermore, \code{values} must contain the same number of rows as the
+    #' current \code{SOMADataFrame}.
     #'
-    #' Furthermore, `values` must contain the same number of rows as the current
-    #' `SOMADataFrame`.
-    #'
-    #' @param values A `data.frame`, [`arrow::Table`], or
-    #' [`arrow::RecordBatch`].
+    #' @param values A data frame, \link[arrow:Table]{Arrow table}, or
+    #' \link[arrow:RecordBatch]{Arrow record batch}.
     #' @param row_index_name An optional scalar character. If provided, and if
-    #' the `values` argument is a `data.frame` with row names, then the row
-    #' names will be extracted and added as a new column to the `data.frame`
+    #' the \code{values} argument is a data frame with row names, then the row
+    #' names will be extracted and added as a new column to the data frame
     #' prior to performing the update. The name of this new column will be set
-    #' to the value specified by `row_index_name`.
+    #' to the value specified by \code{row_index_name}.
+    #'
+    #' @return Invisibly returns \code{NULL}
+    #'
     update = function(values, row_index_name = NULL) {
-      private$check_open_for_write()
+      private$.check_open_for_write()
       stopifnot(
         "'values' must be a data.frame, Arrow Table or RecordBatch" =
           is.data.frame(values) || is_arrow_table(values) || is_arrow_record_batch(values)
@@ -377,21 +409,21 @@ SOMADataFrame <- R6::R6Class(
       self$write(values)
     },
 
-    #' @description Get the levels for an enumerated (\code{factor}) column
+    #' @description Get the levels for an enumerated (\code{factor}) column.
     #'
     #' @param column_names Optional character vector of column names to pull
-    #' enumeration levels for; defaults to all enumerated columns
-    #' @param simplify Simplify the result down to a vector or matrix
+    #' enumeration levels for; defaults to all enumerated columns.
+    #' @param simplify Simplify the result down to a vector or matrix.
     #'
     #' @return If \code{simplify} returns one of the following:
     #' \itemize{
-    #'  \item a vector of there is only one enumerated column
+    #'  \item a vector of there is only one enumerated column.
     #'  \item a matrix if there are multiple enumerated columns with the same
-    #'   number of levels
+    #'   number of levels.
     #'  \item a named list if there are multiple enumerated columns with
-    #'   differing numbers of levels
+    #'   differing numbers of levels.
     #' }
-    #' Otherwise, returns a named list
+    #' Otherwise, returns a named list.
     #'
     levels = function(column_names = NULL, simplify = TRUE) {
       stopifnot(
@@ -427,9 +459,10 @@ SOMADataFrame <- R6::R6Class(
     },
 
     #' @description Retrieve the shape; as \code{SOMADataFrames} are shapeless,
-    #' simply raises an error
+    #' simply raises an error.
     #'
-    #' @return None, instead a \code{\link{.NotYetImplemented}()} error is raised
+    #' @return None, instead a \code{\link{.NotYetImplemented}()} error
+    #' is raised.
     #'
     shape = function() {
       stop(errorCondition(
@@ -438,10 +471,11 @@ SOMADataFrame <- R6::R6Class(
       ))
     },
 
-    #' @description Retrieve the maxshape; as \code{SOMADataFrames} are shapeless,
-    #' simply raises an error
+    #' @description Retrieve the max shape; as \code{SOMADataFrames} are
+    #' shapeless, simply raises an error.
     #'
-    #' @return None, instead a \code{\link{.NotYetImplemented}()} error is raised
+    #' @return None, instead a \code{\link{.NotYetImplemented}()} error
+    #' is raised.
     #'
     maxshape = function() {
       stop(errorCondition(
@@ -451,10 +485,11 @@ SOMADataFrame <- R6::R6Class(
     },
 
     #' @description Returns a named list of minimum/maximum pairs, one per index
-    #' column, currently storable on each index column of the dataframe. These
-    #' can be resized up to `maxdomain`.
-    #' (lifecycle: maturing)
+    #' column, currently storable on each index column of the data frame. These
+    #' can be resized up to \code{maxdomain} (lifecycle: maturing).
+    #'
     #' @return Named list of minimum/maximum values.
+    #'
     domain = function() {
       as.list(
         arrow::as_record_batch(
@@ -466,10 +501,11 @@ SOMADataFrame <- R6::R6Class(
     },
 
     #' @description Returns a named list of minimum/maximum pairs, one per index
-    #' column, which are the limits up to which the dataframe can have its
-    #' domain resized.
-    #' (lifecycle: maturing)
+    #' column, which are the limits up to which the data frame can have its
+    #' domain resized (lifecycle: maturing).
+    #'
     #' @return Named list of minimum/maximum values.
+    #'
     maxdomain = function() {
       as.list(
         arrow::as_record_batch(
@@ -480,26 +516,31 @@ SOMADataFrame <- R6::R6Class(
       )
     },
 
-    #' @description Returns TRUE if the array has the upgraded resizeable domain
-    #' feature from TileDB-SOMA 1.15: the array was created with this support,
-    #' or it has had ``upgrade_domain`` applied to it.
-    #' (lifecycle: maturing)
-    #' @return Logical
+    #' @description Test if the array has the upgraded resizeable domain feature
+    #' from TileDB-SOMA 1.15, the array was created with this support, or it has
+    #' had \code{$upgrade_domain()} applied to it (lifecycle: maturing).
+    #'
+    #' @return Returns \code{TRUE} if the array has the upgraded resizable
+    #' domain feature; otherwise, returns \code{FALSE}.
+    #'
     tiledbsoma_has_upgraded_domain = function() {
       has_current_domain(self$uri, private$.soma_context)
     },
 
-    #' @description Increases the shape of the dataframe on the ``soma_joinid``
-    #' index column, if it indeed is an index column, leaving all other index
-    #' columns as-is. If the ``soma_joinid`` is not an index column, no change is
-    #' made.  This is a special case of ``upgrade_domain`` (WIP for 1.15), but
-    #' simpler to keystroke, and handles the most common case for dataframe
-    #' domain expansion.  Raises an error if the dataframe doesn't already have a
-    #' domain: in that case please call ``tiledbsoma_upgrade_domain`` (WIP for
-    #' 1.15).
+    #' @description Increases the shape of the data frame on the
+    #' \code{soma_joinid} index column, if it indeed is an index column, leaving
+    #' all other index columns as-is. If the \code{soma_joinid} is not an index
+    #' column, no change is made. This is a special case of
+    #' \code{upgrade_domain()}, but simpler to keystroke, and
+    #' handles the most common case for data frame domain expansion. Raises an
+    #' error if the data frame doesn't already have a domain; in that case
+    #' please call \code{$tiledbsoma_upgrade_domain()}.
+    #'
     #' @param new_shape An integer, greater than or equal to 1 + the
-    #' `soma_joinid` domain slot.
-    #' @return No return value
+    #' \code{soma_joinid} domain slot.
+    #'
+    #' @return Invisibly returns \code{NULL}
+    #'
     tiledbsoma_resize_soma_joinid_shape = function(new_shape) {
       stopifnot("'new_shape' must be an integer" = rlang::is_integerish(new_shape, n = 1) ||
         (bit64::is.integer64(new_shape) && length(new_shape) == 1))
@@ -509,21 +550,19 @@ SOMADataFrame <- R6::R6Class(
           self$uri, new_shape, .name_of_function(), private$.soma_context))
     },
 
-    #' @description Allows you to set the domain of a `SOMADataFrame`, when the
-    #' `SOMADataFrame` does not have a domain set yet.  The argument must be a
-    #' tuple of pairs of low/high values for the desired domain, one pair per
-    #' index column. For string index columns, you must offer the low/high pair
-    #' as `("", "")`, or as `NULL`.  If ``check_only`` is ``True``, returns
-    #' whether the operation would succeed if attempted, and a reason why it
-    #' would not. The domain being requested must be contained within what
-    #' `maxdomain` returns.
-    #' @param new_domain A named list, keyed by index-column name, with values
-    #' being two-element vectors containing the desired lower and upper bounds
-    #' for the domain.
-    #' @param check_only If true, does not apply the operation, but only reports
-    #' whether it would have succeeded.
-    #' @return No return value if `check_only` is `FALSE`. If `check_only` is `TRUE`,
-    #' returns the empty string if no error is detected, else a description of the error.
+    #' @description Allows you to set the domain of a \code{SOMADataFrame},
+    #' when the \code{SOMADataFrame} does not have a domain set yet. The
+    #' argument must be a list of pairs of low/high values for the desired
+    #' domain, one pair per index column. For string index columns, you must
+    #' offer the low/high pair as \code{c("", "")}, or as \code{NULL}. If
+    #' \code{check_only} is \code{True}, returns whether the operation would
+    #' succeed if attempted, or a reason why it would not. The domain being
+    #' requested must be contained within what \code{$maxdomain()} returns.
+    #'
+    #' @return If \code{check_only}, returns the empty string if no error is
+    #' detected, else a description of the error. Otherwise, invisibly returns
+    #' \code{NULL}
+    #'
     tiledbsoma_upgrade_domain = function(new_domain, check_only = FALSE) {
       # Checking slotwise new shape >= old shape, and <= max_shape, is already
       # done in libtiledbsoma
@@ -551,22 +590,21 @@ SOMADataFrame <- R6::R6Class(
       return(invisible(NULL))
     },
 
-    #' @description Allows you to set the domain of a `SOMADataFrame`, when the
-    #' `SOMADataFrame` already has a domain set yet.  The argument must be a
-    #' tuple of pairs of low/high values for the desired domain, one pair per
-    #' index column. For string index columns, you must offer the low/high pair
-    #' as `("", "")`, or as `NULL`.  If ``check_only`` is ``True``, returns
-    #' whether the operation would succeed if attempted, and a reason why it
-    #' would not. The return value from `domain` must be contained within
-    #' the requested `new_domain`, and the requested `new_domain` must be
-    #' contained within the return value from `maxdomain`. (lifecycle: maturing)
-    #' @param new_domain A named list, keyed by index-column name, with values
-    #' being two-element vectors containing the desired lower and upper bounds
-    #' for the domain.
-    #' @param check_only If true, does not apply the operation, but only reports
-    #' whether it would have succeeded.
-    #' @return No return value if `check_only` is `FALSE`. If `check_only` is `TRUE`,
-    #' returns the empty string if no error is detected, else a description of the error.
+    #' @description Allows you to set the domain of a \code{SOMADataFrame}, when
+    #' the \code{SOMADataFrame} already has a domain set yet. The argument must
+    #' be a list of pairs of low/high values for the desired domain, one pair
+    #' per index column. For string index columns, you must offer the low/high
+    #' pair as \code{c("", "")}, or as \code{NULL}. If \code{check_only} is
+    #' \code{True}, returns whether the operation would succeed if attempted,
+    #' or a reason why it would not. The return value from \code{domain} must be
+    #' contained within the requested \code{new_domain}, and the requested
+    #' \code{new_domain} must be contained within the return value from
+    #' \code{$maxdomain()} (lifecycle: maturing).
+    #'
+    #' @return If \code{check_only}, returns the empty string if no error is
+    #' detected, else a description of the error. Otherwise, invisibly returns
+    #' \code{NULL}
+    #'
     change_domain = function(new_domain, check_only = FALSE) {
       # Checking slotwise new shape >= old shape, and <= max_shape, is already
       # done in libtiledbsoma

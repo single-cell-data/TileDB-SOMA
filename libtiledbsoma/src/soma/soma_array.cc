@@ -208,17 +208,6 @@ void SOMAArray::open(OpenMode mode, std::optional<TimestampRange> timestamp) {
     fill_columns();
 }
 
-std::unique_ptr<SOMAArray> SOMAArray::reopen(
-    OpenMode mode, std::optional<TimestampRange> timestamp) {
-    if (arr_->query_type() == TILEDB_READ) {
-        arr_->reopen();
-    } else {
-        arr_->close();
-        arr_->open(TILEDB_WRITE);
-    }
-    return std::make_unique<SOMAArray>(mode, uri_, ctx_, timestamp);
-}
-
 void SOMAArray::close() {
     if (arr_->query_type() == TILEDB_WRITE) {
         meta_cache_arr_->close();
@@ -841,7 +830,7 @@ void SOMAArray::_set_shape_helper(
     _check_dims_are_int64();
 
     auto tctx = ctx_->tiledb_ctx();
-    ArraySchemaEvolution schema_evolution(*tctx);
+    ArraySchemaEvolution schema_evolution = _make_se();
     CurrentDomain new_current_domain(*tctx);
 
     NDRectangle ndrect(*tctx, arr_->schema().domain());
@@ -896,7 +885,7 @@ void SOMAArray::_set_soma_joinid_shape_helper(
     }
 
     auto tctx = ctx_->tiledb_ctx();
-    ArraySchemaEvolution schema_evolution(*tctx);
+    ArraySchemaEvolution schema_evolution = _make_se();
     CurrentDomain new_current_domain(*tctx);
 
     if (!must_already_have) {
@@ -939,9 +928,6 @@ void SOMAArray::_set_soma_joinid_shape_helper(
         }
 
         new_current_domain.set_ndrectangle(ndrect);
-        soma_domain.first->release(soma_domain.first.get());
-        soma_domain.second->release(soma_domain.second.get());
-
     } else {
         // For resize: copy from the existing current domain except for the
         // new soma_joinid value.
@@ -1108,7 +1094,7 @@ void SOMAArray::_set_domain_helper(
     auto tctx = ctx_->tiledb_ctx();
     NDRectangle ndrect(*tctx, arr_->schema().domain());
     CurrentDomain new_current_domain(*tctx);
-    ArraySchemaEvolution schema_evolution(*tctx);
+    ArraySchemaEvolution schema_evolution = _make_se();
 
     for (const auto& column :
          columns_ | std::views::filter(
@@ -1171,6 +1157,18 @@ std::vector<int64_t> SOMAArray::_shape_via_tiledb_domain() {
     }
 
     return result;
+}
+
+bool SOMAArray::_exists(
+    std::string_view uri,
+    std::string_view soma_type,
+    std::shared_ptr<SOMAContext> ctx) {
+    try {
+        auto obj = SOMAArray::open(OpenMode::read, uri, ctx, std::nullopt);
+        return soma_type == obj->type();
+    } catch (TileDBSOMAError& e) {
+        return false;
+    }
 }
 
 std::optional<int64_t> SOMAArray::_maybe_soma_joinid_shape() {
@@ -1241,6 +1239,18 @@ void SOMAArray::_check_dims_are_int64() {
             "[SOMAArray] internal coding error: expected all dims to be "
             "int64");
     }
+}
+
+ArraySchemaEvolution SOMAArray::_make_se() {
+    ArraySchemaEvolution se(*ctx_->tiledb_ctx());
+    if (timestamp_.has_value()) {
+        // ArraySchemaEvolution requires us to pair (t2, t2) even if our range
+        // is (t1, t2).
+        auto v = timestamp_.value();
+        TimestampRange tr(v.second, v.second);
+        se.set_timestamp_range(tr);
+    }
+    return se;
 }
 
 std::shared_ptr<SOMAColumn> SOMAArray::get_column(std::string_view name) const {

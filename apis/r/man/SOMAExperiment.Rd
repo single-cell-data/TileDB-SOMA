@@ -4,10 +4,11 @@
 \alias{SOMAExperiment}
 \title{SOMA Experiment}
 \description{
-\code{SOMAExperiment} is a specialized \code{\link{SOMACollection}},
-representing one or more modes of measurement across a single collection of
-cells (aka a "multimodal dataset") with pre-defined fields: \code{obs} and \code{ms}
-(see \emph{Active Bindings} below for details). (lifecycle: maturing)
+\code{SOMAExperiment} is a specialized
+\code{\link{SOMACollection}}, representing one or more modes of measurement
+across a single collection of cells (aka a \dQuote{multimodal dataset}) with
+pre-defined fields: \code{obs} and \code{ms} (see \emph{Active Bindings} below
+for details) (lifecycle: maturing).
 }
 \section{Adding new objects to a collection}{
 
@@ -22,18 +23,47 @@ default platform configuration by passing a custom configuration to the
 \code{platform_config} argument.
 }
 
+\examples{
+\dontshow{if (requireNamespace("withr", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+uri <- withr::local_tempfile(pattern = "soma-experiment")
+obs <- data.frame(
+  soma_joinid = bit64::seq.integer64(0L, 99L),
+  obs_id = paste0("cell_", seq_len(100L))
+)
+sch <- arrow::infer_schema(obs)
+
+(exp <- SOMAExperimentCreate(uri))
+sdf <- exp$add_new_dataframe(
+  "obs",
+  sch,
+  "soma_joinid",
+  list(soma_joinid = c(0, 100))
+)
+sdf$write(arrow::as_arrow_table(obs, schema = sch))
+sdf$close()
+exp$close()
+
+(exp <- SOMAExperimentOpen(uri))
+exp$obs
+
+\dontshow{
+exp$close()
+}
+\dontshow{\}) # examplesIf}
+}
 \section{Super classes}{
-\code{\link[tiledbsoma:TileDBObject]{tiledbsoma::TileDBObject}} -> \code{\link[tiledbsoma:TileDBGroup]{tiledbsoma::TileDBGroup}} -> \code{\link[tiledbsoma:SOMACollectionBase]{tiledbsoma::SOMACollectionBase}} -> \code{SOMAExperiment}
+\code{\link[tiledbsoma:SOMAObject]{tiledbsoma::SOMAObject}} -> \code{\link[tiledbsoma:SOMACollectionBase]{tiledbsoma::SOMACollectionBase}} -> \code{SOMAExperiment}
 }
 \section{Active bindings}{
 \if{html}{\out{<div class="r6-active-bindings">}}
 \describe{
-\item{\code{obs}}{a \code{\link{SOMADataFrame}} containing primary annotations on the
-observation axis. The contents of the \code{soma_joinid} column define the
-observation index domain, \code{obs_id}. All observations for the
-\code{SOMAExperiment} must be defined in this dataframe.}
+\item{\code{obs}}{A \code{\link{SOMADataFrame}} containing primary annotations
+on the observation axis. The contents of the \code{soma_joinid} column
+define the observation index domain, \code{obs_id}. All observations for
+the \code{SOMAExperiment} must be defined in this data frame.}
 
-\item{\code{ms}}{a \code{\link{SOMACollection}} of named \code{\link{SOMAMeasurement}}s.}
+\item{\code{ms}}{A \code{\link{SOMACollection}} of named
+\code{\link{SOMAMeasurement}s}.}
 }
 \if{html}{\out{</div>}}
 }
@@ -49,29 +79,27 @@ observation index domain, \code{obs_id}. All observations for the
 \if{html}{\out{
 <details><summary>Inherited methods</summary>
 <ul>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="class"><a href='../../tiledbsoma/html/TileDBObject.html#method-TileDBObject-class'><code>tiledbsoma::TileDBObject$class()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="exists"><a href='../../tiledbsoma/html/TileDBObject.html#method-TileDBObject-exists'><code>tiledbsoma::TileDBObject$exists()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="is_open"><a href='../../tiledbsoma/html/TileDBObject.html#method-TileDBObject-is_open'><code>tiledbsoma::TileDBObject$is_open()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="mode"><a href='../../tiledbsoma/html/TileDBObject.html#method-TileDBObject-mode'><code>tiledbsoma::TileDBObject$mode()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="reopen"><a href='../../tiledbsoma/html/TileDBObject.html#method-TileDBObject-reopen'><code>tiledbsoma::TileDBObject$reopen()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBGroup" data-id="close"><a href='../../tiledbsoma/html/TileDBGroup.html#method-TileDBGroup-close'><code>tiledbsoma::TileDBGroup$close()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBGroup" data-id="get_metadata"><a href='../../tiledbsoma/html/TileDBGroup.html#method-TileDBGroup-get_metadata'><code>tiledbsoma::TileDBGroup$get_metadata()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBGroup" data-id="length"><a href='../../tiledbsoma/html/TileDBGroup.html#method-TileDBGroup-length'><code>tiledbsoma::TileDBGroup$length()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBGroup" data-id="names"><a href='../../tiledbsoma/html/TileDBGroup.html#method-TileDBGroup-names'><code>tiledbsoma::TileDBGroup$names()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBGroup" data-id="open"><a href='../../tiledbsoma/html/TileDBGroup.html#method-TileDBGroup-open'><code>tiledbsoma::TileDBGroup$open()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBGroup" data-id="print"><a href='../../tiledbsoma/html/TileDBGroup.html#method-TileDBGroup-print'><code>tiledbsoma::TileDBGroup$print()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBGroup" data-id="remove"><a href='../../tiledbsoma/html/TileDBGroup.html#method-TileDBGroup-remove'><code>tiledbsoma::TileDBGroup$remove()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBGroup" data-id="set_metadata"><a href='../../tiledbsoma/html/TileDBGroup.html#method-TileDBGroup-set_metadata'><code>tiledbsoma::TileDBGroup$set_metadata()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBGroup" data-id="to_data_frame"><a href='../../tiledbsoma/html/TileDBGroup.html#method-TileDBGroup-to_data_frame'><code>tiledbsoma::TileDBGroup$to_data_frame()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBGroup" data-id="to_list"><a href='../../tiledbsoma/html/TileDBGroup.html#method-TileDBGroup-to_list'><code>tiledbsoma::TileDBGroup$to_list()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAObject" data-id="class"><a href='../../tiledbsoma/html/SOMAObject.html#method-SOMAObject-class'><code>tiledbsoma::SOMAObject$class()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAObject" data-id="exists"><a href='../../tiledbsoma/html/SOMAObject.html#method-SOMAObject-exists'><code>tiledbsoma::SOMAObject$exists()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAObject" data-id="get_metadata"><a href='../../tiledbsoma/html/SOMAObject.html#method-SOMAObject-get_metadata'><code>tiledbsoma::SOMAObject$get_metadata()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAObject" data-id="initialize"><a href='../../tiledbsoma/html/SOMAObject.html#method-SOMAObject-initialize'><code>tiledbsoma::SOMAObject$initialize()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAObject" data-id="is_open"><a href='../../tiledbsoma/html/SOMAObject.html#method-SOMAObject-is_open'><code>tiledbsoma::SOMAObject$is_open()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAObject" data-id="mode"><a href='../../tiledbsoma/html/SOMAObject.html#method-SOMAObject-mode'><code>tiledbsoma::SOMAObject$mode()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAObject" data-id="reopen"><a href='../../tiledbsoma/html/SOMAObject.html#method-SOMAObject-reopen'><code>tiledbsoma::SOMAObject$reopen()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMACollectionBase" data-id="add_new_collection"><a href='../../tiledbsoma/html/SOMACollectionBase.html#method-SOMACollectionBase-add_new_collection'><code>tiledbsoma::SOMACollectionBase$add_new_collection()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMACollectionBase" data-id="add_new_dataframe"><a href='../../tiledbsoma/html/SOMACollectionBase.html#method-SOMACollectionBase-add_new_dataframe'><code>tiledbsoma::SOMACollectionBase$add_new_dataframe()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMACollectionBase" data-id="add_new_dense_ndarray"><a href='../../tiledbsoma/html/SOMACollectionBase.html#method-SOMACollectionBase-add_new_dense_ndarray'><code>tiledbsoma::SOMACollectionBase$add_new_dense_ndarray()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMACollectionBase" data-id="add_new_sparse_ndarray"><a href='../../tiledbsoma/html/SOMACollectionBase.html#method-SOMACollectionBase-add_new_sparse_ndarray'><code>tiledbsoma::SOMACollectionBase$add_new_sparse_ndarray()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMACollectionBase" data-id="close"><a href='../../tiledbsoma/html/SOMACollectionBase.html#method-SOMACollectionBase-close'><code>tiledbsoma::SOMACollectionBase$close()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMACollectionBase" data-id="create"><a href='../../tiledbsoma/html/SOMACollectionBase.html#method-SOMACollectionBase-create'><code>tiledbsoma::SOMACollectionBase$create()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMACollectionBase" data-id="get"><a href='../../tiledbsoma/html/SOMACollectionBase.html#method-SOMACollectionBase-get'><code>tiledbsoma::SOMACollectionBase$get()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMACollectionBase" data-id="initialize"><a href='../../tiledbsoma/html/SOMACollectionBase.html#method-SOMACollectionBase-initialize'><code>tiledbsoma::SOMACollectionBase$initialize()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMACollectionBase" data-id="length"><a href='../../tiledbsoma/html/SOMACollectionBase.html#method-SOMACollectionBase-length'><code>tiledbsoma::SOMACollectionBase$length()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMACollectionBase" data-id="names"><a href='../../tiledbsoma/html/SOMACollectionBase.html#method-SOMACollectionBase-names'><code>tiledbsoma::SOMACollectionBase$names()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMACollectionBase" data-id="open"><a href='../../tiledbsoma/html/SOMACollectionBase.html#method-SOMACollectionBase-open'><code>tiledbsoma::SOMACollectionBase$open()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMACollectionBase" data-id="print"><a href='../../tiledbsoma/html/SOMACollectionBase.html#method-SOMACollectionBase-print'><code>tiledbsoma::SOMACollectionBase$print()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMACollectionBase" data-id="remove"><a href='../../tiledbsoma/html/SOMACollectionBase.html#method-SOMACollectionBase-remove'><code>tiledbsoma::SOMACollectionBase$remove()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMACollectionBase" data-id="set"><a href='../../tiledbsoma/html/SOMACollectionBase.html#method-SOMACollectionBase-set'><code>tiledbsoma::SOMACollectionBase$set()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMACollectionBase" data-id="set_metadata"><a href='../../tiledbsoma/html/SOMACollectionBase.html#method-SOMACollectionBase-set_metadata'><code>tiledbsoma::SOMACollectionBase$set_metadata()</code></a></span></li>
 </ul>
 </details>
 }}
@@ -79,8 +107,8 @@ observation index domain, \code{obs_id}. All observations for the
 \if{html}{\out{<a id="method-SOMAExperiment-axis_query"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMAExperiment-axis_query}{}}}
 \subsection{Method \code{axis_query()}}{
-Subset and extract data from a \code{\link{SOMAMeasurement}} by
-querying the \code{obs}/\code{var} axes.
+Subset and extract data from a \code{\link{SOMAMeasurement}}
+by querying the \code{obs}/\code{var} axes.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMAExperiment$axis_query(measurement_name, obs_query = NULL, var_query = NULL)}\if{html}{\out{</div>}}
 }
@@ -90,8 +118,8 @@ querying the \code{obs}/\code{var} axes.
 \describe{
 \item{\code{measurement_name}}{The name of the measurement to query.}
 
-\item{\code{obs_query, var_query}}{An \code{\link{SOMAAxisQuery}} object for the obs/var
-axis.}
+\item{\code{obs_query, var_query}}{An \code{\link{SOMAAxisQuery}} object for the
+obs/var axis.}
 }
 \if{html}{\out{</div>}}
 }
@@ -103,8 +131,9 @@ A \code{\link{SOMAExperimentAxisQuery}} object.
 \if{html}{\out{<a id="method-SOMAExperiment-update_obs"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMAExperiment-update_obs}{}}}
 \subsection{Method \code{update_obs()}}{
-Update the obs \code{\link{SOMADataFrame}} to add or remove columns.
-See \code{\link[=SOMADataFrame]{SOMADataFrame$update()}} for details.
+Update the \code{obs} data frame to add or remove columns.
+See \code{\link[tiledbomsa:SOMADataFrame]{SOMADataFrame$update()}} for
+more details.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMAExperiment$update_obs(values, row_index_name = NULL)}\if{html}{\out{</div>}}
 }
@@ -112,12 +141,12 @@ See \code{\link[=SOMADataFrame]{SOMADataFrame$update()}} for details.
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{values}}{A \code{data.frame}, \code{\link[arrow:Table-class]{arrow::Table}}, or
-\code{\link[arrow:RecordBatch-class]{arrow::RecordBatch}}.}
+\item{\code{values}}{A data frame, \link[arrow:Table]{Arrow table}, or
+\link[arrow:RecordBatch]{Arrow record batch}.}
 
 \item{\code{row_index_name}}{An optional scalar character. If provided, and if
-the \code{values} argument is a \code{data.frame} with row names, then the row
-names will be extracted and added as a new column to the \code{data.frame}
+the \code{values} argument is a data frame with row names, then the row
+names will be extracted and added as a new column to the data frame
 prior to performing the update. The name of this new column will be set
 to the value specified by \code{row_index_name}.}
 }
@@ -128,8 +157,9 @@ to the value specified by \code{row_index_name}.}
 \if{html}{\out{<a id="method-SOMAExperiment-update_var"></a>}}
 \if{latex}{\out{\hypertarget{method-SOMAExperiment-update_var}{}}}
 \subsection{Method \code{update_var()}}{
-Update the var \code{SOMADataFrame} to add or remove columns.
-See \code{\link[=SOMADataFrame]{SOMADataFrame$update()}} for details.
+Update the \code{var} data frame to add or remove columns.
+See \code{\link[tiledbomsa:SOMADataFrame]{SOMADataFrame$update()}} for
+more details.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SOMAExperiment$update_var(values, measurement_name, row_index_name = NULL)}\if{html}{\out{</div>}}
 }
@@ -137,15 +167,15 @@ See \code{\link[=SOMADataFrame]{SOMADataFrame$update()}} for details.
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{values}}{A \code{data.frame}, \code{\link[arrow:Table-class]{arrow::Table}}, or
-\code{\link[arrow:RecordBatch-class]{arrow::RecordBatch}}.}
+\item{\code{values}}{A data frame, \link[arrow:Table]{Arrow table}, or
+\link[arrow:RecordBatch]{Arrow record batch}.}
 
-\item{\code{measurement_name}}{The name of the \code{\link{SOMAMeasurement}} whose \code{var}
-will be updated.}
+\item{\code{measurement_name}}{The name of the \code{\link{SOMAMeasurement}}
+whose \code{var} will be updated.}
 
 \item{\code{row_index_name}}{An optional scalar character. If provided, and if
-the \code{values} argument is a \code{data.frame} with row names, then the row
-names will be extracted and added as a new column to the \code{data.frame}
+the \code{values} argument is a data frame with row names, then the row
+names will be extracted and added as a new column to the data frame
 prior to performing the update. The name of this new column will be set
 to the value specified by \code{row_index_name}.}
 }

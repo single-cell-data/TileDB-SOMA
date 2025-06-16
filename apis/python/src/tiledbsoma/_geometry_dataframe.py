@@ -36,7 +36,7 @@ from ._dataframe import (
     _revise_domain_for_extent,
 )
 from ._exception import SOMAError, map_exception_for_create
-from ._read_iters import ManagedQuery, TableReadIter
+from ._read_iters import TableReadIter
 from ._spatial_dataframe import SpatialDataFrame
 from ._spatial_util import (
     coordinate_space_from_json,
@@ -270,12 +270,7 @@ class GeometryDataFrame(SpatialDataFrame, somacore.GeometryDataFrame):
             _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code",
         )
 
-    def __init__(
-        self,
-        handle: GeometryDataFrameWrapper,
-        **kwargs: Any,
-    ):
-        super().__init__(handle, **kwargs)
+    def _parse_special_metadata(self) -> None:
 
         # Get and validate coordinate space.
         try:
@@ -463,23 +458,15 @@ class GeometryDataFrame(SpatialDataFrame, somacore.GeometryDataFrame):
         _util.check_type("values", values, (pa.Table,))
 
         write_options: TileDBCreateOptions | TileDBWriteOptions
-        sort_coords = None
         if isinstance(platform_config, TileDBCreateOptions):
             raise ValueError(
                 "As of TileDB-SOMA 1.13, the write method takes " "TileDBWriteOptions instead of TileDBCreateOptions"
             )
         write_options = TileDBWriteOptions.from_platform_config(platform_config)
-        sort_coords = write_options.sort_coords
-
-        clib_dataframe = self._handle._handle
-
-        for batch in values.to_batches():
-            mq = ManagedQuery(self, None)
-            mq._handle.set_array_data(batch)
-            mq._handle.submit_write(sort_coords or False)
+        self._write_table(values, write_options.sort_coords)
 
         if write_options.consolidate_and_vacuum:
-            clib_dataframe.consolidate_and_vacuum()
+            self._handle._handle.consolidate_and_vacuum()
 
         return self
 

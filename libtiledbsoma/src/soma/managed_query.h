@@ -398,7 +398,35 @@ class ManagedQuery {
      * @brief Submit the write query.
      *
      */
-    void submit_write(bool sort_coords = true);
+    void submit_write() {
+        query_submitted_ = true;
+        _setup_write();
+        query_->submit();
+    }
+
+    /**
+     * @brief Finalize the write query.
+     *
+     */
+    void finalize() {
+        if (!query_submitted_) {
+            throw TileDBSOMAError(
+                "[ManagedQuery] Write query needs to be submitted before "
+                "finalizing");
+        }
+        query_->finalize();
+        _teardown_write();
+    }
+
+    /**
+     * @brief Submit and finalize the write query.
+     *
+     */
+    void submit_and_finalize() {
+        _setup_write();
+        query_->submit_and_finalize();
+        _teardown_write();
+    }
 
     /**
      * @brief Get the schema of the array as a TileDB ArraySchema.
@@ -633,13 +661,6 @@ class ManagedQuery {
 
     // Query layout
     ResultOrder layout_ = ResultOrder::automatic;
-
-    /**
-     * Convenience function for creating an ArraySchemaEvolution object
-     * referencing this array's context pointer, along with its open-at
-     * timestamp (if any).
-     */
-    ArraySchemaEvolution _make_se();
 
     uint64_t _get_max_capacity(tiledb_datatype_t index_type);
 
@@ -1242,6 +1263,19 @@ class ManagedQuery {
                 return std::memcmp(&target, &candidate, sizeof(T)) == 0;
             });
     }
+
+    /**
+     * @brief Check if the array is opened in write mode and set the subarray
+     * for dense arrays.
+     */
+    void _setup_write();
+
+    /**
+     * @brief Reset the ManagedQuery options and update the ArraySchema
+     * on-disk by re-opening the Array (required when doing schema evolution
+     * when extending enumerations).
+     */
+    void _teardown_write();
 };
 
 // These are all specializations to string/bool of various methods

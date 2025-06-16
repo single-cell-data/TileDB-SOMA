@@ -193,10 +193,16 @@ def register_h5ads(
     append_obsm_varm: bool = False,
     context: SOMATileDBContext | None = None,
     use_multiprocessing: bool = False,
+    allow_duplicate_obs_ids: bool = False,
 ) -> ExperimentAmbientLabelMapping:
     """Extends registration data from the baseline, already-written SOMA
     experiment to include multiple H5AD input files. See ``from_h5ad`` and
     ``from_anndata`` on-line help.
+
+    The registration process will raise an error if any `obs` IDs (from `obs_field_name`)
+    are duplicated across the combination of all inputs and the target SOMA Experiment.
+    You can set `allow_duplicate_obs_ids=True` to bypass this check if you are adding a
+    new Measurement to existing observations.
 
     If enabled via the ``use_multiprocessing`` parameter, this function will use multiprocessing
     to register each H5AD in parallel. In cases with many files, this can produce a performance
@@ -248,6 +254,7 @@ def register_h5ads(
         obs_field_name=obs_field_name,
         var_field_name=var_field_name,
         context=context,
+        allow_duplicate_obs_ids=allow_duplicate_obs_ids,
     )
 
 
@@ -260,6 +267,7 @@ def register_anndatas(
     var_field_name: str,
     append_obsm_varm: bool = False,
     context: SOMATileDBContext | None = None,
+    allow_duplicate_obs_ids: bool = False,
 ) -> ExperimentAmbientLabelMapping:
     """Extends registration data from the baseline, already-written SOMA
     experiment to include multiple H5AD input files. See ``from_h5ad`` and
@@ -286,6 +294,7 @@ def register_anndatas(
         obs_field_name=obs_field_name,
         var_field_name=var_field_name,
         context=context,
+        allow_duplicate_obs_ids=allow_duplicate_obs_ids,
     )
 
 
@@ -572,12 +581,14 @@ def _from_anndata(
     # * Here we select out the renumberings for the obs, var, X, etc. array indices
     if registration_mapping is None:
         joinid_maps = ExperimentIDMapping.from_anndata(anndata, measurement_name=measurement_name)
+        filter_existing_obs_joinids: bool = True
     else:
         if not registration_mapping.prepared and Experiment.exists(experiment_uri):
             raise SOMAError(
                 "Experiment must be prepared prior to ingestion. Please call ``registration_map.prepare_experiment`` method."
             )
         joinid_maps = registration_mapping.id_mappings_for_anndata(anndata, measurement_name=measurement_name)
+        filter_existing_obs_joinids = registration_mapping.obs_axis.allow_duplicate_ids
 
     context = _validate_soma_tiledb_context(context)
 
@@ -615,6 +626,7 @@ def _from_anndata(
         id_column_name=obs_id_name,
         axis_mapping=joinid_maps.obs_axis,
         **ingest_platform_ctx,
+        filter_existing_joinids=filter_existing_obs_joinids,
     ) as obs:
         _maybe_set(experiment, "obs", obs, use_relative_uri=use_relative_uri)
 
@@ -1173,6 +1185,7 @@ def _create_or_open_coll(
 def _extract_new_values_for_append_aux(
     previous_soma_dataframe: DataFrame,
     arrow_table: pa.Table,
+    filter_existing_joinids: bool,
 ) -> pa.Table:
     """Helper function for _extract_new_values_for_append.
 
@@ -1209,18 +1222,19 @@ def _extract_new_values_for_append_aux(
     enough cardinality that we would keep it as categorical, but the existing
     storage has non-categorical, we must write the new data as non-categorical.
     """
-    # Retain only the new rows.
-    previous_sjids_table = previous_soma_dataframe.read(column_names=["soma_joinid"]).concat()
-    # use numpy.isin over pyarrow.compute.is_in, as it is MUCH faster
-    mask = pa.array(
-        np.isin(
-            arrow_table[SOMA_JOINID].to_numpy(),
-            previous_sjids_table[SOMA_JOINID].to_numpy(),
-            invert=True,
+    if filter_existing_joinids:
+        # Retain only the new rows.
+        previous_sjids_table = previous_soma_dataframe.read(column_names=["soma_joinid"]).concat()
+        # use numpy.isin over pyarrow.compute.is_in, as it is MUCH faster
+        mask = pa.array(
+            np.isin(
+                arrow_table[SOMA_JOINID].to_numpy(),
+                previous_sjids_table[SOMA_JOINID].to_numpy(),
+                invert=True,
+            )
         )
-    )
 
-    arrow_table = arrow_table.filter(mask)
+        arrow_table = arrow_table.filter(mask)
 
     # Check if any new data.
     if any(column.num_chunks == 0 for column in arrow_table.columns):
@@ -1292,6 +1306,7 @@ def _extract_new_values_for_append_aux(
 def _extract_new_values_for_append(
     df_uri: str,
     arrow_table: pa.Table,
+    filter_existing_joinids: bool,
     context: SOMATileDBContext | None = None,
 ) -> pa.Table:
     """For append mode: mostly we just go ahead and write the data, except var.
@@ -1317,7 +1332,7 @@ def _extract_new_values_for_append(
     """
     try:
         with _factory.open(df_uri, "r", soma_type=DataFrame, context=context) as previous_soma_dataframe:
-            return _extract_new_values_for_append_aux(previous_soma_dataframe, arrow_table)
+            return _extract_new_values_for_append_aux(previous_soma_dataframe, arrow_table, filter_existing_joinids)
 
     except DoesNotExistError:
         return arrow_table
@@ -1357,6 +1372,7 @@ def _write_dataframe(
     context: SOMATileDBContext | None = None,
     axis_mapping: AxisIDMapping,
     must_exist: bool = False,
+    filter_existing_joinids: bool = True,
 ) -> DataFrame:
     """Convert and save a pd.DataFrame as a SOMA DataFrame.
 
@@ -1385,6 +1401,7 @@ def _write_dataframe(
         platform_config=platform_config,
         context=context,
         must_exist=must_exist,
+        filter_existing_joinids=filter_existing_joinids,
     )
 
 
@@ -1400,6 +1417,7 @@ def _write_dataframe_impl(
     platform_config: PlatformConfig | None = None,
     context: SOMATileDBContext | None = None,
     must_exist: bool = False,
+    filter_existing_joinids: bool = True,
 ) -> DataFrame:
     """Save a Pandas DataFrame as a SOMA DataFrame.
 
@@ -1418,7 +1436,7 @@ def _write_dataframe_impl(
             # Nominally, nil id_column_name only happens for uns append and we do not append uns,
             # which is a concern for our caller. This is a second-level check.
             raise ValueError("internal coding error: id_column_name unspecified")
-        arrow_table = _extract_new_values_for_append(df_uri, arrow_table, context)
+        arrow_table = _extract_new_values_for_append(df_uri, arrow_table, filter_existing_joinids, context)
 
     def check_for_containment(
         df: pd.DataFrame,
@@ -2795,7 +2813,7 @@ def _ingest_uns_node(
         )
         return
 
-    msg = f"Skipped {coll.uri}[{key!r}]" f" (uns object): unrecognized type {type(value)}"
+    msg = f"Skipped {coll.uri}[{key!r}] (uns object): unrecognized type {type(value)}"
     logging.log_io(msg, msg)
 
 
@@ -2813,7 +2831,7 @@ def _ingest_uns_array(
     """
     if value.dtype.names is not None:
         # This is a structured array, which we do not support.
-        logging.log_io_same(f"Skipped {coll.uri}[{key!r}]" " (uns): unsupported structured array")
+        logging.log_io_same(f"Skipped {coll.uri}[{key!r}] (uns): unsupported structured array")
 
     if value.dtype.char in ("U", "O"):
         # In the wild it's quite common to see arrays of strings in uns data.
@@ -2858,9 +2876,7 @@ def _ingest_uns_string_array(
     elif len(value.shape) == 2:
         helper = _ingest_uns_2d_string_array
     else:
-        msg = (
-            f"Skipped {coll.uri}[{key!r}]" f" (uns object): string array is neither one-dimensional nor two-dimensional"
-        )
+        msg = f"Skipped {coll.uri}[{key!r}] (uns object): string array is neither one-dimensional nor two-dimensional"
         logging.log_io(msg, msg)
         return
 
@@ -2989,7 +3005,7 @@ def _ingest_uns_ndarray(
     try:
         pa_dtype = pa.from_numpy_dtype(value.dtype)
     except pa.ArrowNotImplementedError:
-        msg = f"Skipped {arr_uri} (uns ndarray):" f" unsupported dtype {value.dtype!r} ({value.dtype})"
+        msg = f"Skipped {arr_uri} (uns ndarray): unsupported dtype {value.dtype!r} ({value.dtype})"
         logging.log_io(msg, msg)
         return
     try:

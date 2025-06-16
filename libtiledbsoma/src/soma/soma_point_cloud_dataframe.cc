@@ -24,7 +24,7 @@ using namespace tiledb;
 
 void SOMAPointCloudDataFrame::create(
     std::string_view uri,
-    const std::unique_ptr<ArrowSchema>& schema,
+    const managed_unique_ptr<ArrowSchema>& schema,
     const ArrowTable& index_columns,
     const SOMACoordinateSpace& coordinate_space,
     std::shared_ptr<SOMAContext> ctx,
@@ -79,21 +79,11 @@ std::unique_ptr<SOMAPointCloudDataFrame> SOMAPointCloudDataFrame::open(
     return array;
 }
 
-bool SOMAPointCloudDataFrame::exists(
-    std::string_view uri, std::shared_ptr<SOMAContext> ctx) {
-    try {
-        auto obj = SOMAObject::open(uri, OpenMode::read, ctx);
-        return "SOMAPointCloudDataFrame" == obj->type();
-    } catch (TileDBSOMAError& e) {
-        return false;
-    }
-}
-
 //===================================================================
 //= public non-static
 //===================================================================
 
-std::unique_ptr<ArrowSchema> SOMAPointCloudDataFrame::schema() const {
+managed_unique_ptr<ArrowSchema> SOMAPointCloudDataFrame::schema() const {
     return this->arrow_schema();
 }
 

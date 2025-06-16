@@ -25,7 +25,7 @@ from . import _arrow_types, _util
 from . import pytiledbsoma as clib
 from ._constants import SOMA_GEOMETRY, SOMA_JOINID
 from ._exception import SOMAError, map_exception_for_create
-from ._read_iters import ManagedQuery, TableReadIter
+from ._read_iters import TableReadIter
 from ._soma_array import SOMAArray
 from ._tdb_handles import DataFrameWrapper
 from ._types import (
@@ -803,12 +803,7 @@ class DataFrame(SOMAArray, somacore.DataFrame):
                 "As of TileDB-SOMA 1.13, the write method takes " "TileDBWriteOptions instead of TileDBCreateOptions"
             )
         write_options = TileDBWriteOptions.from_platform_config(platform_config)
-        sort_coords = write_options.sort_coords
-
-        for batch in values.to_batches():
-            mq = ManagedQuery(self)
-            mq._handle.set_array_data(batch)
-            mq._handle.submit_write(sort_coords or False)
+        self._write_table(values, write_options.sort_coords)
 
         if write_options.consolidate_and_vacuum:
             self._handle._handle.consolidate_and_vacuum()
@@ -829,6 +824,11 @@ def _canonicalize_schema(
     _util.check_type("schema", schema, (pa.Schema,))
     if not index_column_names:
         raise ValueError("DataFrame requires one or more index columns")
+
+    # Check for column names containing null bytes
+    for field in schema:
+        if any([char == "\x00" for char in field.name]):
+            raise ValueError(f"Illegal character in field name `{field.name}`. Null byte found.")
 
     if SOMA_JOINID in schema.names:
         joinid_type = schema.field(SOMA_JOINID).type

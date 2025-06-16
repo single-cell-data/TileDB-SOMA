@@ -7,11 +7,19 @@
 Ephemeral version of \code{\link{SOMAMeasurement}s}; ephemeral
 measurements are equivalent to
 \link[tiledbsoma:SOMAMeasurement]{SOMA measurements} but are stored in-memory
-instead of on-disk
+instead of on-disk.
+}
+\examples{
+(ms <- EphemeralMeasurement$new())
+ms$soma_type
+
+ms$set(EphemeralCollection$new(), "X")
+ms$X
+
 }
 \keyword{internal}
 \section{Super classes}{
-\code{\link[tiledbsoma:TileDBObject]{tiledbsoma::TileDBObject}} -> \code{\link[tiledbsoma:TileDBGroup]{tiledbsoma::TileDBGroup}} -> \code{\link[tiledbsoma:SOMACollectionBase]{tiledbsoma::SOMACollectionBase}} -> \code{\link[tiledbsoma:EphemeralCollectionBase]{tiledbsoma::EphemeralCollectionBase}} -> \code{EphemeralMeasurement}
+\code{\link[tiledbsoma:SOMAObject]{tiledbsoma::SOMAObject}} -> \code{\link[tiledbsoma:SOMACollectionBase]{tiledbsoma::SOMACollectionBase}} -> \code{\link[tiledbsoma:EphemeralCollectionBase]{tiledbsoma::EphemeralCollectionBase}} -> \code{EphemeralMeasurement}
 }
 \section{Active bindings}{
 \if{html}{\out{<div class="r6-active-bindings">}}
@@ -20,31 +28,31 @@ instead of on-disk
 on the variable axis, for variables in this measurement (i.e., annotates
 columns of \code{X}). The contents of the \code{soma_joinid} column
 define the variable index domain, \code{var_id}. All variables for this
-measurement must be defined in this data frame}
+measurement must be defined in this data frame.}
 
 \item{\code{X}}{A \code{\link{SOMACollection}} of
 \code{\link{SOMASparseNDArray}}s; each contain measured feature values
-indexed by \code{[obsid, varid]}}
+indexed by \code{[obsid, varid]}.}
 
 \item{\code{obsm}}{A \code{\link{SOMACollection}} of
 \code{\link{SOMADenseNDArray}}s containing annotations on the observation
 axis. Each array is indexed by \code{obsid} and has the same shape as
-\code{obs}}
+\code{obs}.}
 
 \item{\code{obsp}}{A \code{\link{SOMACollection}} of
 \code{\link{SOMASparseNDArray}}s containing pairwise annotations on the
-observation axis and indexed with \code{[obsid_1, obsid_2]}}
+observation axis and indexed with \code{[obsid_1, obsid_2]}.}
 
 \item{\code{varm}}{A \code{\link{SOMACollection}} of
 \code{\link{SOMADenseNDArray}}s containing annotations on the variable
 axis. Each array is indexed by \code{varid} and has the same shape as
-\code{var}}
+\code{var}.}
 
 \item{\code{varp}}{A \code{\link{SOMACollection}} of
 \code{\link{SOMASparseNDArray}}s containing pairwise annotations on the
-variable axis and indexed with \code{[varid_1, varid_2]}}
+variable axis and indexed with \code{[varid_1, varid_2]}.}
 
-\item{\code{soma_type}}{The SOMA object type}
+\item{\code{soma_type}}{The SOMA object type.}
 }
 \if{html}{\out{</div>}}
 }
@@ -57,12 +65,10 @@ variable axis and indexed with \code{[varid_1, varid_2]}}
 \if{html}{\out{
 <details><summary>Inherited methods</summary>
 <ul>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="class"><a href='../../tiledbsoma/html/TileDBObject.html#method-TileDBObject-class'><code>tiledbsoma::TileDBObject$class()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="is_open"><a href='../../tiledbsoma/html/TileDBObject.html#method-TileDBObject-is_open'><code>tiledbsoma::TileDBObject$is_open()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="mode"><a href='../../tiledbsoma/html/TileDBObject.html#method-TileDBObject-mode'><code>tiledbsoma::TileDBObject$mode()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBObject" data-id="reopen"><a href='../../tiledbsoma/html/TileDBObject.html#method-TileDBObject-reopen'><code>tiledbsoma::TileDBObject$reopen()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBGroup" data-id="to_data_frame"><a href='../../tiledbsoma/html/TileDBGroup.html#method-TileDBGroup-to_data_frame'><code>tiledbsoma::TileDBGroup$to_data_frame()</code></a></span></li>
-<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="TileDBGroup" data-id="to_list"><a href='../../tiledbsoma/html/TileDBGroup.html#method-TileDBGroup-to_list'><code>tiledbsoma::TileDBGroup$to_list()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAObject" data-id="class"><a href='../../tiledbsoma/html/SOMAObject.html#method-SOMAObject-class'><code>tiledbsoma::SOMAObject$class()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAObject" data-id="is_open"><a href='../../tiledbsoma/html/SOMAObject.html#method-SOMAObject-is_open'><code>tiledbsoma::SOMAObject$is_open()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAObject" data-id="mode"><a href='../../tiledbsoma/html/SOMAObject.html#method-SOMAObject-mode'><code>tiledbsoma::SOMAObject$mode()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="SOMAObject" data-id="reopen"><a href='../../tiledbsoma/html/SOMAObject.html#method-SOMAObject-reopen'><code>tiledbsoma::SOMAObject$reopen()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="EphemeralCollectionBase" data-id="add_new_collection"><a href='../../tiledbsoma/html/EphemeralCollectionBase.html#method-EphemeralCollectionBase-add_new_collection'><code>tiledbsoma::EphemeralCollectionBase$add_new_collection()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="EphemeralCollectionBase" data-id="add_new_dataframe"><a href='../../tiledbsoma/html/EphemeralCollectionBase.html#method-EphemeralCollectionBase-add_new_dataframe'><code>tiledbsoma::EphemeralCollectionBase$add_new_dataframe()</code></a></span></li>
 <li><span class="pkg-link" data-pkg="tiledbsoma" data-topic="EphemeralCollectionBase" data-id="add_new_dense_ndarray"><a href='../../tiledbsoma/html/EphemeralCollectionBase.html#method-EphemeralCollectionBase-add_new_dense_ndarray'><code>tiledbsoma::EphemeralCollectionBase$add_new_dense_ndarray()</code></a></span></li>

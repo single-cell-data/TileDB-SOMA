@@ -13,18 +13,51 @@ SOMAExperimentOpen(
 )
 }
 \arguments{
-\item{uri}{URI for the TileDB object}
+\item{uri}{URI for the TileDB object.}
 
-\item{mode}{One of \code{"READ"} or \code{"WRITE"}}
+\item{mode}{One of \dQuote{\code{READ}} or \dQuote{\code{WRITE}}.}
 
-\item{platform_config}{Optional platform configuration}
+\item{platform_config}{Optional platform configuration.}
 
-\item{tiledbsoma_ctx}{Optional SOMATileDBContext}
+\item{tiledbsoma_ctx}{Optional SOMATileDBContext.}
 
-\item{tiledb_timestamp}{Optional Datetime (POSIXct) for TileDB timestamp.
-In READ mode, defaults to the current time. If non-NULL, then all members
-accessed through the collection object inherit the timestamp.}
+\item{tiledb_timestamp}{Optional Datetime (POSIXct) for TileDB timestamp;
+defaults to the current time. If not \code{NULL}, all members accessed
+through the collection inherit the timestamp.}
+}
+\value{
+A \link[tiledbsoma:SOMAExperiment]{SOMA experiment} stored at
+\code{uri} opened in mode \code{mode}.
 }
 \description{
-Factory function to open a SOMAExperiment for reading, (lifecycle: maturing)
+Factory function to open a \link[tiledbsoma:SOMAExperiment]{SOMA experiment}
+for reading (lifecycle: maturing).
+}
+\examples{
+\dontshow{if (requireNamespace("withr", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+uri <- withr::local_tempfile(pattern = "soma-experiment")
+obs <- data.frame(
+  soma_joinid = bit64::seq.integer64(0L, 99L),
+  obs_id = paste0("cell_", seq_len(100L))
+)
+sch <- arrow::infer_schema(obs)
+
+(exp <- SOMAExperimentCreate(uri))
+sdf <- exp$add_new_dataframe(
+  "obs",
+  sch,
+  "soma_joinid",
+  list(soma_joinid = c(0, 100))
+)
+sdf$write(arrow::as_arrow_table(obs, schema = sch))
+sdf$close()
+exp$close()
+
+(exp <- SOMAExperimentOpen(uri))
+exp$obs
+
+\dontshow{
+exp$close()
+}
+\dontshow{\}) # examplesIf}
 }

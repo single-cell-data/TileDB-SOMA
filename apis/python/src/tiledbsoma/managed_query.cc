@@ -116,7 +116,7 @@ void load_managed_query(py::module& m) {
             })
 
         .def(
-            "set_array_data",
+            "submit_batch",
             [](ManagedQuery& mq, py::handle py_batch) {
                 ArrowSchema arrow_schema;
                 ArrowArray arrow_array;
@@ -128,6 +128,29 @@ void load_managed_query(py::module& m) {
                 py::gil_scoped_release release;
                 try {
                     mq.set_array_data(&arrow_schema, &arrow_array);
+                    mq.submit_write();
+                } catch (const std::exception& e) {
+                    TPY_ERROR_LOC(e.what());
+                }
+                py::gil_scoped_acquire acquire;
+
+                arrow_schema.release(&arrow_schema);
+                arrow_array.release(&arrow_array);
+            })
+        .def(
+            "submit_and_finalize_batch",
+            [](ManagedQuery& mq, py::handle py_batch) {
+                ArrowSchema arrow_schema;
+                ArrowArray arrow_array;
+                uintptr_t arrow_schema_ptr = (uintptr_t)(&arrow_schema);
+                uintptr_t arrow_array_ptr = (uintptr_t)(&arrow_array);
+                py_batch.attr("_export_to_c")(
+                    arrow_array_ptr, arrow_schema_ptr);
+
+                py::gil_scoped_release release;
+                try {
+                    mq.set_array_data(&arrow_schema, &arrow_array);
+                    mq.submit_and_finalize();
                 } catch (const std::exception& e) {
                     TPY_ERROR_LOC(e.what());
                 }
@@ -154,16 +177,39 @@ void load_managed_query(py::module& m) {
                 }
                 py::gil_scoped_acquire acquire;
             })
+        .def("reset_columns", &ManagedQuery::reset_columns)
+
         .def(
             "submit_write",
-            [](ManagedQuery& mq, bool sort_coords) {
+            [](ManagedQuery& mq) {
                 try {
-                    mq.submit_write(sort_coords);
+                    mq.submit_write();
                 } catch (const std::exception& e) {
-                    TPY_ERROR_LOC(e.what());
+                    throw TileDBSOMAError(e.what());
                 }
             },
-            "sort_coords"_a = false,
+            py::call_guard<py::gil_scoped_release>())
+
+        .def(
+            "submit_and_finalize",
+            [](ManagedQuery& mq) {
+                try {
+                    mq.submit_and_finalize();
+                } catch (const std::exception& e) {
+                    throw TileDBSOMAError(e.what());
+                }
+            },
+            py::call_guard<py::gil_scoped_release>())
+
+        .def(
+            "finalize",
+            [](ManagedQuery& mq) {
+                try {
+                    mq.finalize();
+                } catch (const std::exception& e) {
+                    throw TileDBSOMAError(e.what());
+                }
+            },
             py::call_guard<py::gil_scoped_release>())
 
         .def("reset", &ManagedQuery::reset)

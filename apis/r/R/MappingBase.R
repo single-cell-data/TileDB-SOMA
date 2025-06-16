@@ -5,15 +5,22 @@
 #' getting (\code{self$get()}) and setting (\code{self$set()}) items in the map
 #'
 #' @keywords internal
+#'
 #' @export
-
+#'
+#' @seealso Derived classes: \code{\link{ConfigList}},
+#' \code{\link{PlatformConfig}},
+#' \code{\link{ScalarMap}},
+#' \code{\link{TileDBCreateOptions}}
+#'
 MappingBase <- R6::R6Class(
   classname = "MappingBase",
   lock_class = TRUE,
   public = list(
     #' @param ... Ignored
     #'
-    #' @return This is a \strong{virtual} class and cannot be directly instantiated
+    #' @return This is a \strong{virtual} class and cannot be
+    #' directly instantiated
     #'
     initialize = function(...) {
       calls <- vapply_char(
@@ -29,21 +36,25 @@ MappingBase <- R6::R6Class(
       }
       private$.data <- list()
     },
+
     #' @return The keys of the map
     #'
     keys = function() {
       return(names(private$.data))
     },
+
     #' @return A `list` containing the map values
     #'
     values = function() {
       return(unname(self$items()))
     },
+
     #' @return Return the items of the map as a list
     #'
     items = function() {
       return(private$.data)
     },
+
     #' @param key Key to fetch
     #' @templateVar key key
     #' @templateVar default NULL
@@ -65,6 +76,7 @@ MappingBase <- R6::R6Class(
       }
       return(value)
     },
+
     #' @param key Key to set
     #' @templateVar key key
     #' @template param-value
@@ -83,6 +95,7 @@ MappingBase <- R6::R6Class(
       }
       return(invisible(self))
     },
+
     #' @param ... Named arguments to add to \code{self}
     #'
     #' @return \[chainable\] Invisibly returns \code{self} with the values
@@ -96,6 +109,7 @@ MappingBase <- R6::R6Class(
       }
       return(invisible(self))
     },
+
     #' @param key Key to remove
     #'
     #' @return \[chainable\] Invisibly returns \code{self} with \code{key}
@@ -105,6 +119,7 @@ MappingBase <- R6::R6Class(
       self$set(key = key, value = NULL)
       return(invisible(self))
     },
+
     #' @param map A mapping type to update the current map with
     #'
     #' @return \[chainable\] Invisibly returns \code{self} with the value
@@ -117,16 +132,19 @@ MappingBase <- R6::R6Class(
       self$setv(map$items())
       return(invisible(self))
     },
+
     #' @return The number of items in the map
     #'
     length = function() {
       return(length(private$.data))
     },
+
     #' @return The map as a list
     #'
     to_list = function() {
       return(self$items())
     },
+
     #' @return \[chainable\] Prints information about the map to \code{stdout}
     #' and invisibly returns \code{self}
     #'

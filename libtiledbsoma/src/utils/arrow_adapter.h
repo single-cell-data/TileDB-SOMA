@@ -15,6 +15,7 @@
 #define ARROW_ADAPTER_H
 
 #include <any>
+#include <concepts>
 
 #include <tiledb/tiledb>
 #include <tiledb/tiledb_experimental>
@@ -75,8 +76,24 @@ struct ArrowBuffer {
     std::shared_ptr<ColumnBuffer> buffer_;
 };
 
+template <typename T>
+using managed_unique_ptr = std::unique_ptr<T, std::function<void(T*)>>;
+
+template <typename T, typename... Args>
+    requires std::same_as<T, ArrowArray> || std::same_as<T, ArrowSchema>
+managed_unique_ptr<T> make_managed_unique(Args&&... args) {
+    return managed_unique_ptr<T>(
+        new T(std::forward<Args>(args)...), [](T* arrow_struct) {
+            if (arrow_struct->release != nullptr) {
+                arrow_struct->release(arrow_struct);
+            }
+
+            delete arrow_struct;
+        });
+}
+
 using ArrowTable =
-    std::pair<std::unique_ptr<ArrowArray>, std::unique_ptr<ArrowSchema>>;
+    std::pair<managed_unique_ptr<ArrowArray>, managed_unique_ptr<ArrowSchema>>;
 
 struct PlatformConfig {
    public:
@@ -343,15 +360,16 @@ class ArrowAdapter {
      * @return std::pair<std::unique_ptr<ArrowArray>,
      * std::unique_ptr<ArrowSchema>>
      */
-    static std::pair<std::unique_ptr<ArrowArray>, std::unique_ptr<ArrowSchema>>
-    to_arrow(std::shared_ptr<ColumnBuffer> column);
+    static std::
+        pair<managed_unique_ptr<ArrowArray>, managed_unique_ptr<ArrowSchema>>
+        to_arrow(std::shared_ptr<ColumnBuffer> column);
 
     /**
      * @brief Create a an ArrowSchema from TileDB Schema
      *
      * @return ArrowSchema
      */
-    static std::unique_ptr<ArrowSchema> arrow_schema_from_tiledb_array(
+    static managed_unique_ptr<ArrowSchema> arrow_schema_from_tiledb_array(
         std::shared_ptr<Context> ctx, std::shared_ptr<Array> tiledb_array);
 
     /** @brief Create a an ArrowSchema from TileDB Dimension
@@ -407,12 +425,14 @@ class ArrowAdapter {
     static std::tuple<ArraySchema, nlohmann::json>
     tiledb_schema_from_arrow_schema(
         std::shared_ptr<Context> ctx,
-        const std::unique_ptr<ArrowSchema>& arrow_schema,
+        const managed_unique_ptr<ArrowSchema>& arrow_schema,
         const ArrowTable& index_column_info,
         const std::optional<SOMACoordinateSpace>& coordinate_space,
         std::string soma_type,
         bool is_sparse = true,
-        PlatformConfig platform_config = PlatformConfig());
+        PlatformConfig platform_config = PlatformConfig(),
+        std::optional<std::pair<int64_t, int64_t>> timestamp_range =
+            std::nullopt);
 
     /**
      * @brief Get a TileDB dimension from an Arrow schema.
@@ -510,7 +530,7 @@ class ArrowAdapter {
      * Note that the parents and children in nanoarrow are both of type
      * ArrowSchema. This constructs the parent and the children.
      */
-    static std::unique_ptr<ArrowSchema> make_arrow_schema(
+    static managed_unique_ptr<ArrowSchema> make_arrow_schema(
         const std::vector<std::string>& names,
         const std::vector<tiledb_datatype_t>& tiledb_datatypes);
 
@@ -530,7 +550,7 @@ class ArrowAdapter {
      * Note that the parents and children in nanoarrow are both of type
      * ArrowSchema. This constructs the parent and not the children.
      */
-    static std::unique_ptr<ArrowSchema> make_arrow_schema_parent(
+    static managed_unique_ptr<ArrowSchema> make_arrow_schema_parent(
         size_t num_columns, std::string_view name = "parent");
 
     /**
@@ -540,7 +560,7 @@ class ArrowAdapter {
      * Note that the parents and children in nanoarrow are both of type
      * ArrowArray. This constructs the parent and not the children.
      */
-    static std::unique_ptr<ArrowArray> make_arrow_array_parent(
+    static managed_unique_ptr<ArrowArray> make_arrow_array_parent(
         size_t num_columns);
 
     /**
@@ -1284,21 +1304,21 @@ class ArrowAdapter {
         }
     }
 
-    static std::unique_ptr<ArrowArray> arrow_array_insert_at_index(
-        std::unique_ptr<ArrowArray> parent_array,
-        std::vector<std::unique_ptr<ArrowArray>> child_arrays,
+    static managed_unique_ptr<ArrowArray> arrow_array_insert_at_index(
+        managed_unique_ptr<ArrowArray> parent_array,
+        std::vector<managed_unique_ptr<ArrowArray>> child_arrays,
         int64_t index);
 
-    static std::unique_ptr<ArrowSchema> arrow_schema_insert_at_index(
-        std::unique_ptr<ArrowSchema> parent_schema,
-        std::vector<std::unique_ptr<ArrowSchema>> child_schemas,
+    static managed_unique_ptr<ArrowSchema> arrow_schema_insert_at_index(
+        managed_unique_ptr<ArrowSchema> parent_schema,
+        std::vector<managed_unique_ptr<ArrowSchema>> child_schemas,
         int64_t index);
 
-    static std::unique_ptr<ArrowArray> arrow_array_remove_at_index(
-        std::unique_ptr<ArrowArray> array, int64_t index);
+    static managed_unique_ptr<ArrowArray> arrow_array_remove_at_index(
+        managed_unique_ptr<ArrowArray> array, int64_t index);
 
-    static std::unique_ptr<ArrowSchema> arrow_schema_remove_at_index(
-        std::unique_ptr<ArrowSchema> schema, int64_t index);
+    static managed_unique_ptr<ArrowSchema> arrow_schema_remove_at_index(
+        managed_unique_ptr<ArrowSchema> schema, int64_t index);
 
    private:
     static size_t _set_var_dictionary_buffers(

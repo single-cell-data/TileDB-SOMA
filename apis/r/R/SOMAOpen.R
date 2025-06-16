@@ -1,14 +1,32 @@
-#' @title Open a SOMA Object
-#' @description Utility function to open the corresponding SOMA Object given a URI, (lifecycle: maturing)
-#' @param mode One of `"READ"` or `"WRITE"`
-#' @param uri URI for the TileDB object
-#' @param platform_config Optional platform configuration
-#' @param tiledbsoma_ctx Optional SOMATileDBContext
-#' @param tiledb_timestamp Optional Datetime (POSIXct) with TileDB timestamp. For SOMACollections,
-#'        all accessed members inherit the collection opening timestamp, and in READ mode the
-#'        collection timestamp defaults to the time of opening.
+#' Open a SOMA Object
+#'
+#' Utility function to open the corresponding SOMA object given a URI
+#' (lifecycle: maturing).
+#'
+#' @inheritParams SOMACollectionOpen
+#' @param mode One of \dQuote{\code{READ}} or \dQuote{\code{WRITE}}
+#'
+#' @return A SOMA object
 #'
 #' @export
+#'
+#' @examplesIf requireNamespace("withr", quietly = TRUE)
+#' dir <- withr::local_tempfile(pattern = "soma-open")
+#' dir.create(dir, recursive = TRUE)
+#'
+#' uri <- extract_dataset("soma-exp-pbmc-small", dir)
+#' (exp <- SOMAOpen(uri))
+#'
+#' \dontshow{
+#' exp$close()
+#' }
+#'
+#' uri <- extract_dataset("soma-dataframe-pbmc3k-processed-obs", dir)
+#' (obs <- SOMAOpen(uri))
+#'
+#' \dontshow{
+#' obs$close()
+#' }
 #'
 SOMAOpen <- function(
   uri,
@@ -17,55 +35,23 @@ SOMAOpen <- function(
   tiledbsoma_ctx = NULL,
   tiledb_timestamp = NULL
 ) {
-  # As an alternative we could rely tiledb-r and its tiledb_object_type but
-  # this would require instantiating a ctx object first. It is a possible
-  # refinement if and when we decide to hold an array or group pointer.
-  # For now, first attempt to instantiate a TileDBArray to take advantage of
-  # its handling of the config and ctx object as well as the caching
-  obj <- tryCatch(
-    expr = {
-      arr <- TileDBArray$new(uri,
-        platform_config = platform_config,
-        tiledbsoma_ctx = tiledbsoma_ctx,
-        tiledb_timestamp = tiledb_timestamp,
-        internal_use_only = "allowed_use"
-      )
-      arr$open(mode = "READ", internal_use_only = "allowed_use")
-      obj <- arr$get_metadata("soma_object_type")
-      arr$close()
-      obj
-    },
-    error = function(...) NULL,
-    finally = function(...) NULL
+  ctx <- soma_context()
+  metadata <- get_all_metadata(
+    uri,
+    is_array = switch(
+      get_tiledb_object_type(uri, ctxxp = ctx),
+      ARRAY = TRUE,
+      GROUP = FALSE,
+      stop("Unknown TileDB object type: ", dQuote(type), call. = FALSE)
+    ),
+    ctxxp = ctx
   )
-
-  # In case of an error try again as TileDBGroup
-  if (is.null(obj)) {
-    obj <- tryCatch(
-      expr = {
-        grp <- TileDBGroup$new(uri,
-          platform_config = platform_config,
-          tiledbsoma_ctx = tiledbsoma_ctx,
-          tiledb_timestamp = tiledb_timestamp,
-          internal_use_only = "allowed_use"
-        )
-        grp$open(mode = "READ", internal_use_only = "allowed_use")
-        obj <- grp$get_metadata("soma_object_type")
-        grp$close()
-        obj
-      },
-      error = function(...) NULL,
-      finally = function(...) NULL
-    )
+  if (is.null(metadata$soma_object_type)) {
+    stop("URI ", sQuote(uri), " is not a TileDB SOMA object", call. = FALSE)
   }
 
-  # If this also errored no other
-  if (is.null(obj)) {
-    stop("URI '", uri, "' is not a TileDB SOMA object.", call. = FALSE)
-  }
-
-  switch(
-    EXPR = obj,
+  return(switch(
+    EXPR = metadata$soma_object_type,
     SOMACollection = SOMACollectionOpen(
       uri,
       mode = mode,
@@ -109,5 +95,5 @@ SOMAOpen <- function(
       tiledb_timestamp = tiledb_timestamp
     ),
     stop(sprintf("No support for type '%s'", obj), call. = FALSE)
-  )
+  ))
 }
