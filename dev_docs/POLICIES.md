@@ -49,7 +49,7 @@ Upon deprecation of Python functionality:
 
 - a `DeprecationWarning` must be issued by the deprecated functionality and a unit test provided to confirm warning issuance.
 - affected lifecyle tags must be set to "deprecated", typically in the docstring and other user-visible documentation.
-- docstrings must clearly indicate the scope of deprecation (e.g, function, a particular set of parameters, etc) and must include actionable guidance on migration.
+- docstrings must clearly indicate the scope of deprecation (e.g., function, a particular set of parameters, etc) and must include actionable guidance on migration.
 - HISTORY.md must clearly indicate the deprecation and any guidance on migration.
 
 For other breaking changes which are not "deprecate and remove":
