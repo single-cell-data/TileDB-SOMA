@@ -10,7 +10,7 @@ from typing import Any, Mapping, Sequence
 try:
     import spatialdata as sd
 except ImportError as err:
-    warnings.warn("Experimental spatial outgestor requires the spatialdata package.")
+    warnings.warn("Experimental spatial outgestor requires the spatialdata package.", stacklevel=1)
     raise err
 
 
@@ -45,7 +45,7 @@ def to_spatialdata(
             pass to table conversions. See :method:`to_anndata` for possible keyword
             arguments.
     """
-    warnings.warn(SPATIAL_DISCLAIMER)
+    warnings.warn(SPATIAL_DISCLAIMER, stacklevel=2)
 
     # Read non-spatial data into Anndata tables.
     if measurement_names is not None:

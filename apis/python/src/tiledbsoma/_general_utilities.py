@@ -3,6 +3,7 @@
 # Licensed under the MIT License.
 
 """General utility functions."""
+
 import importlib.metadata
 import platform
 import sys
@@ -42,7 +43,7 @@ def get_implementation_version() -> str:
 def assert_version_before(major: int, minor: int) -> None:
     version_string = get_implementation_version()
     if version_string == "unknown":
-        warnings.warn("`assert_version_before` could not retrieve the current " "implementation version")
+        warnings.warn("`assert_version_before` could not retrieve the current implementation version", stacklevel=2)
         return
 
     version = version_string.split(".")

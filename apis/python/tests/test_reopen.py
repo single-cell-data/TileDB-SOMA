@@ -68,7 +68,7 @@ def test_experiment_reopen(tmp_path, soma_type):
 
     ts1 = datetime.datetime(2023, 1, 1, 1, 0, tzinfo=datetime.timezone.utc)
     ts2 = datetime.datetime(2024, 1, 1, 1, 0, tzinfo=datetime.timezone.utc)
-    for mode in ["r", "w"]:
+    for _mode in ["r", "w"]:
         with tiledbsoma.open(uri, "r", tiledb_timestamp=ts1) as x1:
             x2 = x1.reopen("r", tiledb_timestamp=ts2)
             assert x2 is x1

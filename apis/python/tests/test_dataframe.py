@@ -23,7 +23,6 @@ import tiledbsoma as soma
 
 from tests._util import raises_no_typeguard
 
-from . import NDARRAY_ARROW_TYPES_SUPPORTED
 from ._util import ROOT_DATA_DIR
 
 

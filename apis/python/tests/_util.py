@@ -217,7 +217,7 @@ def filter(value_filter: str) -> AxisQuery:
     return AxisQuery(value_filter=value_filter)
 
 
-def create_basic_object(soma_type, uri, **kwargs) -> SOMAObject:
+def create_basic_object(soma_type, uri, **kwargs) -> tiledbsoma.SOMAObject:
     """Create a basic SOMA object of the requested type."""
 
     if soma_type == "SOMAExperiment":

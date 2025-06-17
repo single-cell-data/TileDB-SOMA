@@ -162,12 +162,16 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
         experiment: "Experiment",
         measurement_name: str,
         *,
-        obs_query: AxisQuery = AxisQuery(),
-        var_query: AxisQuery = AxisQuery(),
+        obs_query: AxisQuery | None = None,
+        var_query: AxisQuery | None = None,
         index_factory: IndexFactory = pd.Index,
     ):
         if measurement_name not in experiment.ms:
             raise ValueError("Measurement does not exist in the experiment")
+        if obs_query is None:
+            obs_query = AxisQuery()
+        if var_query is None:
+            var_query = AxisQuery()
 
         # Users often like to pass `foo=None` and we should let them
         obs_query = obs_query or AxisQuery()
@@ -188,7 +192,7 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
         self,
         *,
         column_names: Sequence[str] | None = None,
-        batch_size: BatchSize = BatchSize(),
+        batch_size: BatchSize | None = None,
         partitions: ReadPartitions | None = None,
         result_order: ResultOrderStr = _RO_AUTO,
         platform_config: PlatformConfig | None = None,
@@ -199,6 +203,8 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
 
         Lifecycle: maturing
         """
+        if batch_size is None:
+            batch_size = BatchSize()
         obs_query = self._matrix_axis_query.obs
         return self._obs_df.read(
             obs_query.coords,
@@ -214,7 +220,7 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
         self,
         *,
         column_names: Sequence[str] | None = None,
-        batch_size: BatchSize = BatchSize(),
+        batch_size: BatchSize | None = None,
         partitions: ReadPartitions | None = None,
         result_order: ResultOrderStr = _RO_AUTO,
         platform_config: PlatformConfig | None = None,
@@ -225,6 +231,8 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
 
         Lifecycle: maturing
         """
+        if batch_size is None:
+            batch_size = BatchSize()
         var_query = self._matrix_axis_query.var
         return self._var_df.read(
             var_query.coords,
@@ -278,7 +286,7 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
         self,
         layer_name: str,
         *,
-        batch_size: BatchSize = BatchSize(),
+        batch_size: BatchSize | None = None,
         partitions: ReadPartitions | None = None,
         result_order: ResultOrderStr = _RO_AUTO,
         platform_config: PlatformConfig | None = None,
@@ -296,6 +304,8 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
 
         Lifecycle: maturing
         """
+        if batch_size is None:
+            batch_size = BatchSize()
         try:
             x_layer = self._ms.X[layer_name]
         except KeyError as ke:
@@ -352,7 +362,7 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
         except KeyError as ke:
             raise KeyError("No obs_spatial_presence dataframe in this experiment.") from ke
         if not isinstance(obs_scene, DataFrame):
-            raise TypeError(f"obs_spatial_presence must be a dataframe; got " f"{type(obs_scene).__name__}.")
+            raise TypeError(f"obs_spatial_presence must be a dataframe; got {type(obs_scene).__name__}.")
 
         full_table = obs_scene.read(
             coords=(self._joinids.obs, slice(None)),
@@ -371,9 +381,9 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
         try:
             var_scene = self._ms.var_spatial_presence
         except KeyError as ke:
-            raise KeyError(f"No var_spatial_presence dataframe in measurement " f"'{self.measurement_name}'.") from ke
+            raise KeyError(f"No var_spatial_presence dataframe in measurement '{self.measurement_name}'.") from ke
         if not isinstance(var_scene, DataFrame):
-            raise TypeError(f"var_spatial_presence must be a dataframe; got " f"{type(var_scene).__name__}.")
+            raise TypeError(f"var_spatial_presence must be a dataframe; got {type(var_scene).__name__}.")
 
         full_table = var_scene.read(
             coords=(self._joinids.var, slice(None)),
@@ -575,7 +585,7 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
         """
         from .io.spatial._spatialdata_util import _spatial_to_spatialdata
 
-        warnings.warn(SPATIAL_DISCLAIMER)
+        warnings.warn(SPATIAL_DISCLAIMER, stacklevel=2)
 
         # Get a list of scenes to add to SpatialData object.
         if scene_presence_mode == "obs":
@@ -583,9 +593,7 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
         elif scene_presence_mode == "var":
             scene_names = tuple(str(scene_name) for scene_name in self.var_scene_ids())
         else:
-            raise ValueError(
-                f"Invalid scene presence mode '{scene_presence_mode}'. Valid options " f"are 'obs' and 'var'."
-            )
+            raise ValueError(f"Invalid scene presence mode '{scene_presence_mode}'. Valid options are 'obs' and 'var'.")
 
         # Get the anndata table.
         ad = self.to_anndata(
@@ -676,17 +684,17 @@ class ExperimentAxisQuery(query.ExperimentAxisQuery):
         try:
             coll: Collection[NDArray] = self._ms[annotation_name]  # type: ignore
         except KeyError:
-            raise ValueError(f"Measurement does not contain {annotation_name!r} data.")
+            raise ValueError(f"Measurement does not contain {annotation_name!r} data.") from None
         if not isinstance(coll, Collection):
-            raise TypeError(f"Unexpected SOMA type {type(coll).__name__} for " f"{annotation_name!r}.")
+            raise TypeError(f"Unexpected SOMA type {type(coll).__name__} for {annotation_name!r}.")
 
         try:
             layer = coll[layer_name]
         except KeyError:
-            raise ValueError(f"layer {layer_name!r} is not available in {annotation_name!r}.")
+            raise ValueError(f"layer {layer_name!r} is not available in {annotation_name!r}.") from None
         if not isinstance(layer, SparseNDArray):
             raise TypeError(
-                f"Unexpected SOMA type {type(layer).__name__} stored in " f"{annotation_name!r} layer {layer_name!r}."
+                f"Unexpected SOMA type {type(layer).__name__} stored in {annotation_name!r} layer {layer_name!r}."
             )
         return layer
 
@@ -795,7 +803,6 @@ def _read_as_csr(
     d0_indexer: Callable[[Numpyable], npt.NDArray[np.intp]],
     d1_indexer: Callable[[Numpyable], npt.NDArray[np.intp]],
 ) -> sp.csr_matrix:
-
     d0_joinids = d0_joinids_arr.to_numpy()
     d1_joinids = d1_joinids_arr.to_numpy()
     try:

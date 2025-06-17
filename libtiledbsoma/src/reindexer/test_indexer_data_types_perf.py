@@ -73,7 +73,7 @@ def main():
         ]
     )
     lookups = []
-    for x in range(10):
+    for _x in range(10):
         lookups.append(list(np.random.randint(0, 1000, 100000000, dtype=np.int64)))
     lookups = pa.chunked_array(lookups)
     indexer_test_build("pa.chunked_array", keys, lookups)

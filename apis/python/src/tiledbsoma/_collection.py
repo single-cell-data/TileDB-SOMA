@@ -100,7 +100,7 @@ class CollectionBase(  # type: ignore[misc]  # __eq__ false positive
         """
         context = _validate_soma_tiledb_context(context)
         try:
-            wrapper = cast(_tdb_handles.SOMAGroupWrapper[Any], cls._wrapper_type)
+            wrapper = cast("_tdb_handles.SOMAGroupWrapper[Any]", cls._wrapper_type)
             timestamp_ms = context._open_timestamp_ms(tiledb_timestamp)
             clib.SOMAGroup.create(
                 uri=uri,
@@ -379,7 +379,7 @@ class CollectionBase(  # type: ignore[misc]  # __eq__ false positive
 
     def members(self) -> dict[str, tuple[str, str]]:
         """Get a mapping of {member_name: (uri, soma_object_type)}."""
-        handle = cast(_tdb_handles.SOMAGroupWrapper[Any], self._handle)
+        handle = cast("_tdb_handles.SOMAGroupWrapper[Any]", self._handle)
         return handle.members()
 
     def __repr__(self) -> str:
@@ -511,7 +511,7 @@ def _real_class(cls: type[Any]) -> type:
     err = TypeError(f"{cls} cannot be turned into a real type")
     try:
         # All types of generic alias have this.
-        origin = getattr(cls, "__origin__")
+        origin = cls.__origin__
         # Other special forms, like Union, also have an __origin__ that is not
         # an actual type.  Verify that the origin is a real, instantiable type.
         issubclass(object, origin)  # Ordering intentional here.

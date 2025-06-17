@@ -348,7 +348,7 @@ def _build_column_config(col: Mapping[str, _ColumnConfig] | None) -> str:
         if col[k].filters is not None:
             dikt["filters"] = _build_filter_list(col[k].filters, False)
         if col[k].tile is not None:
-            dikt["tile"] = cast(int, col[k].tile)
+            dikt["tile"] = cast("int", col[k].tile)
         if len(dikt) != 0:
             column_config[k] = dikt
     return json.dumps(column_config)
@@ -413,15 +413,15 @@ def _build_filter_list(filters: tuple[_DictFilterSpec, ...] | None, return_json:
 
     for info in filters:
         if len(info) == 1:
-            filter = _convert_filter[cast(str, info["_type"])]
+            filter = _convert_filter[cast("str", info["_type"])]
         else:
             filter = dict()
             for option_name, option_value in info.items():
-                filter_name = _convert_filter[cast(str, info["_type"])]
+                filter_name = _convert_filter[cast("str", info["_type"])]
                 if option_name == "_type":
                     filter["name"] = filter_name
                 else:
-                    filter[_convert_option[filter_name][option_name]] = cast(Union[float, int], option_value)
+                    filter[_convert_option[filter_name][option_name]] = cast("Union[float, int]", option_value)
         filter_list.append(filter)
     return json.dumps(filter_list) if return_json else filter_list
 
@@ -480,7 +480,7 @@ def _set_coord(
             _set_geometry_coord(
                 mq,
                 dim,
-                cast(tuple[Mapping[str, float], Mapping[str, float]], dom),
+                cast("tuple[Mapping[str, float], Mapping[str, float]]", dom),
                 coord,
                 axis_names,
             )

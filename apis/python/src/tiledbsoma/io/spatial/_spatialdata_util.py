@@ -14,19 +14,19 @@ from anndata import AnnData
 try:
     import spatialdata as sd
 except ImportError as err:
-    warnings.warn("Experimental spatial outgestor requires the spatialdata package.")
+    warnings.warn("Experimental spatial outgestor requires the spatialdata package.", stacklevel=1)
     raise err
 
 try:
     import dask.dataframe as dd
 except ImportError as err:
-    warnings.warn("Experimental spatial outgestor requires the dask package.")
+    warnings.warn("Experimental spatial outgestor requires the dask package.", stacklevel=1)
     raise err
 
 try:
     import geopandas as gpd
 except ImportError as err:
-    warnings.warn("Experimental spatial outgestor requires the geopandas package.")
+    warnings.warn("Experimental spatial outgestor requires the geopandas package.", stacklevel=1)
     raise err
 
 
@@ -106,7 +106,7 @@ def _transform_to_spatialdata(
         return sd.transformations.Affine(transform.augmented_matrix, input_axes, output_axes)
 
     raise NotImplementedError(
-        f"Support for converting transform of type {type(transform).__name__} is not " f"yet implemented."
+        f"Support for converting transform of type {type(transform).__name__} is not yet implemented."
     )
 
 
@@ -177,13 +177,13 @@ def to_spatialdata_shapes(
         radius = points.metadata["soma_geometry"]
     except KeyError as ke:
         raise KeyError(
-            "Missing metadata 'soma_geometry' needed for reading the point cloud " "dataframe as a shape."
+            "Missing metadata 'soma_geometry' needed for reading the point cloud dataframe as a shape."
         ) from ke
     try:
         soma_geometry_type = points.metadata["soma_geometry_type"]
         if soma_geometry_type != "radius":
             raise NotImplementedError(
-                f"Support for a point cloud with shape '{soma_geometry_type}' is " f"not yet implemented."
+                f"Support for a point cloud with shape '{soma_geometry_type}' is not yet implemented."
             )
     except KeyError as ke:
         raise KeyError("Missing metadata 'soma_geometry_type'.") from ke
@@ -208,7 +208,7 @@ def to_spatialdata_shapes(
         geometry = gpd.points_from_xy(data.pop(orig_axis_names[0]), data.pop(orig_axis_names[1]))
     else:
         raise NotImplementedError(
-            f"Support for export {ndim}D point cloud dataframes to SpatialData shapes " f"is not yet implemented."
+            f"Support for export {ndim}D point cloud dataframes to SpatialData shapes is not yet implemented."
         )
     df = gpd.GeoDataFrame(data, geometry=geometry)
     df.attrs["transform"] = transforms
@@ -240,8 +240,7 @@ def to_spatialdata_image(
     """
     if not image.has_channel_axis:
         raise NotImplementedError(
-            "Support for exporting a MultiscaleImage to without a channel axis to "
-            "SpatialData is not yet implemented."
+            "Support for exporting a MultiscaleImage to without a channel axis to SpatialData is not yet implemented."
         )
 
     # Convert from SOMA axis names to SpatialData axis names.
@@ -253,9 +252,7 @@ def to_spatialdata_image(
     # Get the URI of the requested level.
     if level is None:
         if image.level_count != 1:
-            raise ValueError(
-                "The level must be specified for a multiscale image with more than one " "resolution level."
-            )
+            raise ValueError("The level must be specified for a multiscale image with more than one resolution level.")
         level = 0
     level_uri = image.level_uri(level)
 
@@ -313,8 +310,7 @@ def to_spatialdata_multiscale_image(
     # Check for channel axis.
     if not image.has_channel_axis:
         raise NotImplementedError(
-            "Support for exporting a MultiscaleImage to without a channel axis to "
-            "SpatialData is not yet implemented."
+            "Support for exporting a MultiscaleImage to without a channel axis to SpatialData is not yet implemented."
         )
 
     # Convert from SOMA axis names to SpatialData axis names.
@@ -436,7 +432,8 @@ def _spatial_to_spatialdata(
 
                 else:
                     warnings.warn(
-                        f"Skipping obsl[{key}] in Scene {scene_name}; unexpected " f"datatype {type(df).__name__}."
+                        f"Skipping obsl[{key}] in Scene {scene_name}; unexpected datatype {type(df).__name__}.",
+                        stacklevel=3,
                     )
 
         # Export varl data to SpatialData.
@@ -475,7 +472,8 @@ def _spatial_to_spatialdata(
                     else:
                         warnings.warn(
                             f"Skipping varl[{measurement_name}][{key}] in Scene "
-                            f"{scene_name}; unexpected datatype {type(df).__name__}."
+                            f"{scene_name}; unexpected datatype {type(df).__name__}.",
+                            stacklevel=3,
                         )
 
         # Export img data to SpatialData.
@@ -485,7 +483,8 @@ def _spatial_to_spatialdata(
                 transform = _get_transform_from_collection(key, scene.img.metadata)
                 if not isinstance(image, MultiscaleImage):
                     warnings.warn(  # type: ignore[unreachable]
-                        f"Skipping img[{image}] in Scene {scene_name}; unexpected " f"datatype {type(image).__name__}."
+                        f"Skipping img[{image}] in Scene {scene_name}; unexpected datatype {type(image).__name__}.",
+                        stacklevel=3,
                     )
                 if image.level_count == 1:
                     sdata.images[output_key] = to_spatialdata_image(
@@ -543,7 +542,7 @@ def _spatial_to_spatialdata(
                     )
                 except pd.errors.MergeError as err:
                     raise NotImplementedError(
-                        "Unable to export to SpatialData; exported assets have " "overlapping observations."
+                        "Unable to export to SpatialData; exported assets have overlapping observations."
                     ) from err
                 adata.obs["region_key"] = pd.Categorical(adata.obs["region_key"])
                 regions = list(region_joinids.keys())

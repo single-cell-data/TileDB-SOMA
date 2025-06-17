@@ -222,6 +222,7 @@ def register_h5ads(
         if multiprocessing.get_start_method() == "fork":
             warnings.warn(
                 "Multiprocessing `fork` start method is inherently unsafe -- use `spawn`. See `multiprocessing.set_start_method()`",
+                stacklevel=2,
             )
         executor_context = ProcessPoolExecutor(max_workers=concurrency_level)
     else:
@@ -1126,10 +1127,10 @@ def _create_or_open_collection(
 ) -> CollectionBase[_TDBO]:
     try:
         coll = cls.create(uri, context=context)
-    except (AlreadyExistsError, NotCreateableError):
+    except (AlreadyExistsError, NotCreateableError) as e:
         # It already exists. Are we resuming?
         if ingestion_params.error_if_already_exists:
-            raise SOMAError(f"{uri} already exists")
+            raise SOMAError(f"{uri} already exists") from e
         coll = cls.open(uri, "w", context=context)
 
     add_metadata(coll, additional_metadata)
@@ -1251,7 +1252,7 @@ def _extract_new_values_for_append_aux(
     # and new schema have the same column names.
 
     def is_cat(field: pa.Field) -> bool:
-        return cast(bool, pa.types.is_dictionary(field.type))
+        return cast("bool", pa.types.is_dictionary(field.type))
 
     # Make a quick check of the old and new schemas to see if any columns need
     # changing between non-categorical and categorical.  We're about to
@@ -1490,9 +1491,9 @@ def _write_dataframe_impl(
             # Save the original index name for outgest. We use JSON for elegant indication of index name
             # being None (in Python anyway).
             soma_df.metadata[_DATAFRAME_ORIGINAL_INDEX_NAME_JSON] = json.dumps(original_index_metadata)
-        except (AlreadyExistsError, NotCreateableError):
+        except (AlreadyExistsError, NotCreateableError) as e:
             if ingestion_params.error_if_already_exists:
-                raise SOMAError(f"{df_uri} already exists")
+                raise SOMAError(f"{df_uri} already exists") from e
             soma_df = DataFrame.open(df_uri, "w", context=context)
             check_for_containment(df, soma_df, ingestion_params)
 
@@ -1598,9 +1599,9 @@ def _create_from_matrix(
                 platform_config=platform_config,
                 context=context,
             )
-        except (AlreadyExistsError, NotCreateableError):
+        except (AlreadyExistsError, NotCreateableError) as e:
             if ingestion_params.error_if_already_exists:
-                raise SOMAError(f"{uri} already exists")
+                raise SOMAError(f"{uri} already exists") from e
             soma_ndarray = cls.open(uri, "w", platform_config=platform_config, context=context)
 
     if ingestion_params.write_schema_no_data:
@@ -1985,7 +1986,7 @@ def add_matrix_to_collection(
             coll_uri = _util.uri_joinpath(meas.uri, _util.sanitize_key(collection_name))
 
         if collection_name in meas:
-            coll = cast(Collection[RawHandle], meas[collection_name])
+            coll = cast("Collection[RawHandle]", meas[collection_name])
         else:
             coll = _create_or_open_collection(
                 Collection,
@@ -2380,7 +2381,7 @@ def _find_sparse_chunk_size_backed(
     # Small chunk: try to enlarge for efficiency.
     # Large chunk: must split for local/remote resource limits.
     # In either case, we divide by the ration of actual vs goal.
-    for i in range(max_iterations):
+    for _i in range(max_iterations):
         # Omitting the adjustment ratio would mean our next try would be likely
         # to be say 1.000002x the goal, resulting in an unnecessary extra
         # iteration.  Since the "just-right zone" is between 0.7 and 1.0 times

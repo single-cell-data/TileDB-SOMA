@@ -80,7 +80,7 @@ class SOMAGroup(SOMAObject[_tdb_handles.SOMAGroupWrapper[Any]], Generic[Collecti
 
             # Since we just opened this object, we own it and should close it.
             self._close_stack.enter_context(entry.soma)
-        return cast(CollectionElementType, entry.soma)
+        return cast("CollectionElementType", entry.soma)
 
     def __setitem__(self, key: str, value: CollectionElementType) -> None:
         """Default collection __setattr__."""

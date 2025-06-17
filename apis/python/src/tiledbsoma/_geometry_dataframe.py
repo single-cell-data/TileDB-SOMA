@@ -110,7 +110,7 @@ class GeometryDataFrame(SpatialDataFrame, somacore.GeometryDataFrame):
         Lifecycle:
             Experimental.
         """
-        warnings.warn(SPATIAL_DISCLAIMER)
+        warnings.warn(SPATIAL_DISCLAIMER, stacklevel=2)
 
         # Get coordinate space axis data.
         if isinstance(coordinate_space, CoordinateSpace):
@@ -290,7 +290,7 @@ class GeometryDataFrame(SpatialDataFrame, somacore.GeometryDataFrame):
         """Returns the number of rows in the geometry dataframe."""
         self._verify_open_for_reading()
         # if is it in read open mode, then it is a GeometryDataFrameWrapper
-        return cast(GeometryDataFrameWrapper, self._handle).count
+        return cast("GeometryDataFrameWrapper", self._handle).count
 
     def read(
         self,

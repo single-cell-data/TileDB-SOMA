@@ -224,6 +224,7 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
                 "removed in future versions. Please use 'row-order' (the default "
                 "if no option is provided) or 'col-order' instead.",
                 DeprecationWarning,
+                stacklevel=2,
             )
             result_order = somacore.ResultOrder.ROW_MAJOR
 

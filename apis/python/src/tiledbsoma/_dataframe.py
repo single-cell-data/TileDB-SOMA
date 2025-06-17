@@ -448,7 +448,7 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         """
         self._verify_open_for_reading()
         # if is it in read open mode, then it is a DataFrameWrapper
-        return cast(DataFrameWrapper, self._handle).count
+        return cast("DataFrameWrapper", self._handle).count
 
     @property
     def _maybe_soma_joinid_shape(self) -> int | None:
@@ -505,7 +505,7 @@ class DataFrame(SOMAArray, somacore.DataFrame):
 
         if check_only:
             return cast(
-                StatusAndReason,
+                "StatusAndReason",
                 self._handle._handle.can_resize_soma_joinid_shape(
                     newshape,
                     function_name_for_messages=function_name_for_messages,
@@ -532,7 +532,7 @@ class DataFrame(SOMAArray, somacore.DataFrame):
 
         if check_only:
             return cast(
-                StatusAndReason,
+                "StatusAndReason",
                 self._handle._handle.can_upgrade_soma_joinid_shape(
                     newshape,
                     function_name_for_messages=function_name_for_messages,
@@ -616,7 +616,7 @@ class DataFrame(SOMAArray, somacore.DataFrame):
 
         if check_only:
             return cast(
-                StatusAndReason,
+                "StatusAndReason",
                 self._handle._handle.can_upgrade_domain(
                     pyarrow_domain_table,
                     function_name_for_messages,
@@ -671,7 +671,7 @@ class DataFrame(SOMAArray, somacore.DataFrame):
         )
         if check_only:
             return cast(
-                StatusAndReason,
+                "StatusAndReason",
                 self._handle._handle.can_change_domain(
                     pyarrow_domain_table,
                     function_name_for_messages,
@@ -977,7 +977,7 @@ def _fill_out_slot_soma_domain(
         if is_max_domain:
             # Core max domain is immutable. If unspecified, it should be as big
             # as possible since it can never be resized.
-            iinfo: NPIInfo = np.iinfo(cast(NPInteger, dtype))
+            iinfo: NPIInfo = np.iinfo(cast("NPInteger", dtype))
             slot_domain = iinfo.min, iinfo.max - 1
             # Here the slot_domain isn't specified by the user; we're setting it.
             # The SOMA spec disallows negative soma_joinid.
@@ -995,7 +995,7 @@ def _fill_out_slot_soma_domain(
             slot_domain = 0, 0
     elif np.issubdtype(dtype, NPFloating):
         if is_max_domain:
-            finfo: NPFInfo = np.finfo(cast(NPFloating, dtype))
+            finfo: NPFInfo = np.finfo(cast("NPFloating", dtype))
             slot_domain = finfo.min, finfo.max
             saturated_range = True
         else:
@@ -1016,25 +1016,25 @@ def _fill_out_slot_soma_domain(
     #   to allow for expansion.
     elif dtype == "datetime64[s]":
         if is_max_domain:
-            iinfo = np.iinfo(cast(NPInteger, np.int64))
+            iinfo = np.iinfo(cast("NPInteger", np.int64))
             slot_domain = np.datetime64(iinfo.min + 1, "s"), np.datetime64(iinfo.max - 1000000, "s")
         else:
             slot_domain = np.datetime64(0, "s"), np.datetime64(0, "s")
     elif dtype == "datetime64[ms]":
         if is_max_domain:
-            iinfo = np.iinfo(cast(NPInteger, np.int64))
+            iinfo = np.iinfo(cast("NPInteger", np.int64))
             slot_domain = np.datetime64(iinfo.min + 1, "ms"), np.datetime64(iinfo.max - 1000000, "ms")
         else:
             slot_domain = np.datetime64(0, "ms"), np.datetime64(0, "ms")
     elif dtype == "datetime64[us]":
         if is_max_domain:
-            iinfo = np.iinfo(cast(NPInteger, np.int64))
+            iinfo = np.iinfo(cast("NPInteger", np.int64))
             slot_domain = np.datetime64(iinfo.min + 1, "us"), np.datetime64(iinfo.max - 1000000, "us")
         else:
             slot_domain = np.datetime64(0, "us"), np.datetime64(0, "us")
     elif dtype == "datetime64[ns]":
         if is_max_domain:
-            iinfo = np.iinfo(cast(NPInteger, np.int64))
+            iinfo = np.iinfo(cast("NPInteger", np.int64))
             slot_domain = np.datetime64(iinfo.min + 1, "ns"), np.datetime64(iinfo.max - 1000000, "ns")
         else:
             slot_domain = np.datetime64(0, "ns"), np.datetime64(0, "ns")
@@ -1108,7 +1108,7 @@ def _revise_domain_for_extent(
     domain: tuple[Any, Any], extent: Any, saturated_range: bool | tuple[bool, ...]
 ) -> tuple[Any, Any]:
     if isinstance(domain[0], (np.datetime64, pa.TimestampScalar)):
-        domain = cast(tuple[Any, Any], (_util.to_unix_ts(domain[0]), _util.to_unix_ts(domain[1])))
+        domain = cast("tuple[Any, Any]", (_util.to_unix_ts(domain[0]), _util.to_unix_ts(domain[1])))
 
     if isinstance(saturated_range, tuple):
         # Handle SOMA_GEOMETRY domain with is tuple[list[float], list[float]]

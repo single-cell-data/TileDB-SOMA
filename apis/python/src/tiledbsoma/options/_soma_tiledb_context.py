@@ -312,7 +312,7 @@ class SOMATileDBContext(ContextBase):
                     raise ValueError(
                         "Either tiledb_config or tiledb_ctx may be provided" " to replace(), but not both."
                     )
-                new_config = cast(ReplaceConfig, self._internal_tiledb_config())
+                new_config = cast("ReplaceConfig", self._internal_tiledb_config())
                 new_config.update(tiledb_config)
                 new_tiledb_config: ConfigDict | None = {k: v for k, v in new_config.items() if v is not None}
             else:

@@ -7,8 +7,6 @@ import pytest
 import tiledbsoma as soma
 from tiledbsoma import _factory
 
-from tests._util import raises_no_typeguard
-
 
 # ----------------------------------------------------------------
 def create_and_populate_obs(uri: str) -> soma.DataFrame:
