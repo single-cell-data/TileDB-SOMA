@@ -42,9 +42,7 @@ void load_transformers(py::module& m) {
         }))
         .def(
             "transform",
-            [](TransformerPipeline& pipeline,
-               std::shared_ptr<Transformer> transformer)
-                -> TransformerPipeline& {
+            [](TransformerPipeline& pipeline, std::shared_ptr<Transformer> transformer) -> TransformerPipeline& {
                 return pipeline.transform(transformer);
             })
         .def("asTable", [](TransformerPipeline& pipeline) {
@@ -63,9 +61,7 @@ void load_transformers(py::module& m) {
                 // py::capsule gets ownership of the memory
                 names.append(std::string(schema->children[i]->name));
 
-                auto pa_array = pa_array_import(
-                    py::capsule(array->children[i]),
-                    py::capsule(schema->children[i]));
+                auto pa_array = pa_array_import(py::capsule(array->children[i]), py::capsule(schema->children[i]));
 
                 array_list.append(pa_array);
             }
@@ -77,13 +73,9 @@ void load_transformers(py::module& m) {
         });
 
     py::class_<Transformer, std::shared_ptr<Transformer>>(m, "Transformer");
-    py::class_<
-        OutlineTransformer,
-        Transformer,
-        std::shared_ptr<OutlineTransformer>>(m, "OutlineTransformer")
+    py::class_<OutlineTransformer, Transformer, std::shared_ptr<OutlineTransformer>>(m, "OutlineTransformer")
         .def(py::init([](std::string coord_space) {
-            auto coordinate_space = SOMACoordinateSpace::from_string(
-                coord_space);
+            auto coordinate_space = SOMACoordinateSpace::from_string(coord_space);
 
             return std::make_shared<OutlineTransformer>(coordinate_space);
         }));

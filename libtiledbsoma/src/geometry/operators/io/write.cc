@@ -18,33 +18,27 @@ size_t WKBSizeOperator::operator()(const Point& point) {
 }
 
 size_t WKBSizeOperator::operator()(const LineString& linestring) {
-    size_t size = WKB_BYTE_ORDER_SIZE + WKB_GEOEMTRY_TYPE_SIZE +
-                  WKB_ELEMENT_COUNT_SIZE;
+    size_t size = WKB_BYTE_ORDER_SIZE + WKB_GEOEMTRY_TYPE_SIZE + WKB_ELEMENT_COUNT_SIZE;
     if (linestring.points.size() == 0) {
         return size;
     }
 
-    return size +
-           linestring.points.size() * binary_size(linestring.points.front());
+    return size + linestring.points.size() * binary_size(linestring.points.front());
 }
 
 size_t WKBSizeOperator::operator()(const Polygon& polygon) {
-    size_t size = WKB_BYTE_ORDER_SIZE + WKB_GEOEMTRY_TYPE_SIZE +
-                  WKB_ELEMENT_COUNT_SIZE;  // Number of rings
+    size_t size = WKB_BYTE_ORDER_SIZE + WKB_GEOEMTRY_TYPE_SIZE + WKB_ELEMENT_COUNT_SIZE;  // Number of rings
 
     // At least one ring is required and the first ring is the exterior ring
     if (polygon.exteriorRing.size() != 0) {
-        size += WKB_ELEMENT_COUNT_SIZE +
-                polygon.exteriorRing.size() *
-                    binary_size(polygon.exteriorRing.front());
+        size += WKB_ELEMENT_COUNT_SIZE + polygon.exteriorRing.size() * binary_size(polygon.exteriorRing.front());
     } else {
         size += WKB_ELEMENT_COUNT_SIZE;
     }
 
     for (auto& ring : polygon.interiorRings) {
         if (ring.size() != 0) {
-            size += WKB_ELEMENT_COUNT_SIZE +
-                    ring.size() * binary_size(ring.front());
+            size += WKB_ELEMENT_COUNT_SIZE + ring.size() * binary_size(ring.front());
         } else {
             size += WKB_ELEMENT_COUNT_SIZE;
         }
@@ -54,8 +48,7 @@ size_t WKBSizeOperator::operator()(const Polygon& polygon) {
 }
 
 size_t WKBSizeOperator::operator()(const MultiPoint& multi_point) {
-    size_t size = WKB_BYTE_ORDER_SIZE + WKB_GEOEMTRY_TYPE_SIZE +
-                  WKB_ELEMENT_COUNT_SIZE;
+    size_t size = WKB_BYTE_ORDER_SIZE + WKB_GEOEMTRY_TYPE_SIZE + WKB_ELEMENT_COUNT_SIZE;
 
     for (auto& point : multi_point.points) {
         size += this->operator()(point);
@@ -65,8 +58,7 @@ size_t WKBSizeOperator::operator()(const MultiPoint& multi_point) {
 }
 
 size_t WKBSizeOperator::operator()(const MultiLineString& multi_linestring) {
-    size_t size = WKB_BYTE_ORDER_SIZE + WKB_GEOEMTRY_TYPE_SIZE +
-                  WKB_ELEMENT_COUNT_SIZE;
+    size_t size = WKB_BYTE_ORDER_SIZE + WKB_GEOEMTRY_TYPE_SIZE + WKB_ELEMENT_COUNT_SIZE;
 
     for (auto& linestring : multi_linestring.linestrings) {
         size += this->operator()(linestring);
@@ -76,8 +68,7 @@ size_t WKBSizeOperator::operator()(const MultiLineString& multi_linestring) {
 }
 
 size_t WKBSizeOperator::operator()(const MultiPolygon& multi_polygon) {
-    size_t size = WKB_BYTE_ORDER_SIZE + WKB_GEOEMTRY_TYPE_SIZE +
-                  WKB_ELEMENT_COUNT_SIZE;
+    size_t size = WKB_BYTE_ORDER_SIZE + WKB_GEOEMTRY_TYPE_SIZE + WKB_ELEMENT_COUNT_SIZE;
 
     for (auto& polygon : multi_polygon.polygons) {
         size += this->operator()(polygon);
@@ -87,8 +78,7 @@ size_t WKBSizeOperator::operator()(const MultiPolygon& multi_polygon) {
 }
 
 size_t WKBSizeOperator::operator()(const GeometryCollection& collection) {
-    size_t size = WKB_BYTE_ORDER_SIZE + WKB_GEOEMTRY_TYPE_SIZE +
-                  WKB_ELEMENT_COUNT_SIZE;
+    size_t size = WKB_BYTE_ORDER_SIZE + WKB_GEOEMTRY_TYPE_SIZE + WKB_ELEMENT_COUNT_SIZE;
 
     for (auto& geometry : collection) {
         size += std::visit(WKBSizeOperator{}, geometry);
@@ -101,8 +91,7 @@ size_t wkb_size(const GenericGeometry& geometry) {
     return std::visit(WKBSizeOperator{}, geometry);
 }
 
-WKBWriteOperator::WKBWriteOperator(
-    std::byte* buffer, size_t& position, size_t size)
+WKBWriteOperator::WKBWriteOperator(std::byte* buffer, size_t& position, size_t size)
     : buffer(buffer)
     , position(position)
     , size(size) {
@@ -179,9 +168,7 @@ void WKBWriteOperator::operator()(const GeometryCollection& collection) {
     write(static_cast<uint32_t>(GeometryType::GEOMETRYCOLLECTION));
     write((uint32_t)collection.size());
     for (auto& geometry : collection) {
-        std::visit(
-            WKBWriteOperator{this->buffer, this->position, this->size},
-            geometry);
+        std::visit(WKBWriteOperator{this->buffer, this->position, this->size}, geometry);
     }
 }
 

@@ -25,14 +25,8 @@ enum GeometryType : uint32_t {
 using BinaryBuffer = std::vector<std::byte>;
 
 struct GeometryCollection;
-using GenericGeometry = std::variant<
-    Point,
-    LineString,
-    Polygon,
-    MultiPoint,
-    MultiLineString,
-    MultiPolygon,
-    GeometryCollection>;
+using GenericGeometry =
+    std::variant<Point, LineString, Polygon, MultiPoint, MultiLineString, MultiPolygon, GeometryCollection>;
 
 struct GeometryCollection : public std::vector<GenericGeometry> {
     using std::vector<GenericGeometry>::vector;

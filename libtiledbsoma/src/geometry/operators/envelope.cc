@@ -5,18 +5,10 @@
 namespace tiledbsoma::geometry {
 Envelope::Envelope() {
     this->range = {
-        std::make_pair(
-            std::numeric_limits<double_t>::max(),
-            -std::numeric_limits<double_t>::max()),
-        std::make_pair(
-            std::numeric_limits<double_t>::max(),
-            -std::numeric_limits<double_t>::max()),
-        std::make_pair(
-            std::numeric_limits<double_t>::max(),
-            -std::numeric_limits<double_t>::max()),
-        std::make_pair(
-            std::numeric_limits<double_t>::max(),
-            -std::numeric_limits<double_t>::max())};
+        std::make_pair(std::numeric_limits<double_t>::max(), -std::numeric_limits<double_t>::max()),
+        std::make_pair(std::numeric_limits<double_t>::max(), -std::numeric_limits<double_t>::max()),
+        std::make_pair(std::numeric_limits<double_t>::max(), -std::numeric_limits<double_t>::max()),
+        std::make_pair(std::numeric_limits<double_t>::max(), -std::numeric_limits<double_t>::max())};
 }
 
 EnvelopeOperator::EnvelopeOperator(Envelope& envelope)
@@ -24,28 +16,20 @@ EnvelopeOperator::EnvelopeOperator(Envelope& envelope)
 }
 
 void EnvelopeOperator::base_envelope(const BasePoint& point) {
-    this->envelope.range[0].first = std::min(
-        this->envelope.range[0].first, point.x);
-    this->envelope.range[0].second = std::max(
-        this->envelope.range[0].second, point.x);
+    this->envelope.range[0].first = std::min(this->envelope.range[0].first, point.x);
+    this->envelope.range[0].second = std::max(this->envelope.range[0].second, point.x);
 
-    this->envelope.range[1].first = std::min(
-        this->envelope.range[1].first, point.y);
-    this->envelope.range[1].second = std::max(
-        this->envelope.range[1].second, point.y);
+    this->envelope.range[1].first = std::min(this->envelope.range[1].first, point.y);
+    this->envelope.range[1].second = std::max(this->envelope.range[1].second, point.y);
 
     if (point.z.has_value()) {
-        this->envelope.range[2].first = std::min(
-            this->envelope.range[2].first, point.z.value());
-        this->envelope.range[2].second = std::max(
-            this->envelope.range[2].second, point.z.value());
+        this->envelope.range[2].first = std::min(this->envelope.range[2].first, point.z.value());
+        this->envelope.range[2].second = std::max(this->envelope.range[2].second, point.z.value());
     }
 
     if (point.m.has_value()) {
-        this->envelope.range[3].first = std::min(
-            this->envelope.range[3].first, point.m.value());
-        this->envelope.range[3].second = std::max(
-            this->envelope.range[3].second, point.m.value());
+        this->envelope.range[3].first = std::min(this->envelope.range[3].first, point.m.value());
+        this->envelope.range[3].second = std::max(this->envelope.range[3].second, point.m.value());
     }
 }
 

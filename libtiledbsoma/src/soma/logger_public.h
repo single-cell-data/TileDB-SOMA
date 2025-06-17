@@ -31,8 +31,7 @@
 namespace tiledbsoma {
 
 /** Set log level for global logger and optionally set a logfile. */
-TILEDBSOMA_EXPORT void LOG_CONFIG(
-    const std::string& level, const std::string& logfile = "");
+TILEDBSOMA_EXPORT void LOG_CONFIG(const std::string& level, const std::string& logfile = "");
 
 /** Set log level for global logger. */
 void LOG_SET_LEVEL(const std::string& level);

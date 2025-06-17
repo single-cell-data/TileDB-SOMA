@@ -27,8 +27,7 @@ using namespace tiledb;
 class SOMAContext {
     // Controls concurrency level for SOMA compute thread pool. Defaults to host
     // CPU count.
-    inline static const std::string
-        CONFIG_KEY_COMPUTE_CONCURRENCY_LEVEL = "soma.compute_concurrency_level";
+    inline static const std::string CONFIG_KEY_COMPUTE_CONCURRENCY_LEVEL = "soma.compute_concurrency_level";
 
    public:
     //===================================================================

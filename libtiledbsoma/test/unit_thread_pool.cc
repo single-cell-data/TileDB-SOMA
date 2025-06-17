@@ -23,8 +23,7 @@
 using namespace tiledbsoma;
 
 size_t random_ms(size_t max = 3) {
-    thread_local static uint64_t generator_seed = std::hash<std::thread::id>()(
-        std::this_thread::get_id());
+    thread_local static uint64_t generator_seed = std::hash<std::thread::id>()(std::this_thread::get_id());
     thread_local static std::mt19937_64 generator(generator_seed);
     std::uniform_int_distribution<size_t> distribution(0, max);
     return distribution(generator);
@@ -91,8 +90,7 @@ TEST_CASE("ThreadPool: Test no wait", "[threadpool]") {
         for (int i = 0; i < 5; i++) {
             ThreadPool::Task task = pool.execute([&result]() {
                 result++;
-                std::this_thread::sleep_for(
-                    std::chrono::milliseconds(random_ms(1000)));
+                std::this_thread::sleep_for(std::chrono::milliseconds(random_ms(1000)));
                 return Status::Ok();
             });
             REQUIRE(task.valid());
@@ -163,8 +161,7 @@ TEST_CASE("ThreadPool: Test recursion", "[threadpool]") {
             std::vector<ThreadPool::Task> inner_tasks;
             for (size_t j = 0; j < num_nested_tasks; ++j) {
                 auto inner_task = pool.execute([&]() {
-                    std::this_thread::sleep_for(
-                        std::chrono::milliseconds(random_ms()));
+                    std::this_thread::sleep_for(std::chrono::milliseconds(random_ms()));
                     ++result;
                     return Status::Ok();
                 });
@@ -190,8 +187,7 @@ TEST_CASE("ThreadPool: Test recursion", "[threadpool]") {
         auto task = pool.execute([&]() {
             for (size_t j = 0; j < num_nested_tasks; ++j) {
                 pool.execute([&]() {
-                    std::this_thread::sleep_for(
-                        std::chrono::milliseconds(random_ms()));
+                    std::this_thread::sleep_for(std::chrono::milliseconds(random_ms()));
 
                     std::unique_lock<std::mutex> ul(cv_mutex);
                     if (--result == 0) {
@@ -261,8 +257,7 @@ TEST_CASE("ThreadPool: Test recursion, two pools", "[threadpool]") {
                         std::vector<ThreadPool::Task> tasks_c;
                         for (size_t k = 0; k < num_tasks_b; ++k) {
                             auto task_c = pool_a.execute([&result]() {
-                                std::this_thread::sleep_for(
-                                    std::chrono::milliseconds(random_ms()));
+                                std::this_thread::sleep_for(std::chrono::milliseconds(random_ms()));
                                 ++result;
                                 return Status::Ok();
                             });
@@ -299,8 +294,7 @@ TEST_CASE("ThreadPool: Test recursion, two pools", "[threadpool]") {
                         std::vector<ThreadPool::Task> tasks_c;
                         for (size_t k = 0; k < num_tasks_c; ++k) {
                             auto task_c = pool_a.execute([&]() {
-                                std::this_thread::sleep_for(
-                                    std::chrono::milliseconds(random_ms()));
+                                std::this_thread::sleep_for(std::chrono::milliseconds(random_ms()));
                                 if (--result == 0) {
                                     std::unique_lock<std::mutex> ul(cv_mutex);
                                     cv.notify_all();
@@ -354,9 +348,7 @@ TEST_CASE("ThreadPool: Test Exceptions", "[threadpool]") {
             }));
         }
 
-        REQUIRE(
-            pool.wait_all(results).to_string() ==
-            unripe_banana_status.to_string());
+        REQUIRE(pool.wait_all(results).to_string() == unripe_banana_status.to_string());
         REQUIRE(result == 207);
     }
 
@@ -373,9 +365,7 @@ TEST_CASE("ThreadPool: Test Exceptions", "[threadpool]") {
             }));
         }
 
-        REQUIRE(
-            pool.wait_all(results).to_string() ==
-            unbaked_potato_status.to_string());
+        REQUIRE(pool.wait_all(results).to_string() == unbaked_potato_status.to_string());
         REQUIRE(result == 207);
     }
 
@@ -444,9 +434,7 @@ TEST_CASE("ThreadPool: Test Exceptions", "[threadpool]") {
             }));
         }
 
-        REQUIRE(
-            pool.wait_all(results).to_string() ==
-            unripe_banana_status.to_string());
+        REQUIRE(pool.wait_all(results).to_string() == unripe_banana_status.to_string());
         REQUIRE(result == 207);
     }
 
@@ -467,9 +455,7 @@ TEST_CASE("ThreadPool: Test Exceptions", "[threadpool]") {
             }));
         }
 
-        REQUIRE(
-            pool.wait_all(results).to_string() ==
-            unbaked_potato_status.to_string());
+        REQUIRE(pool.wait_all(results).to_string() == unbaked_potato_status.to_string());
         REQUIRE(result == 207);
     }
 }

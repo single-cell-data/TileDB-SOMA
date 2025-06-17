@@ -27,8 +27,7 @@ std::unique_ptr<SOMAObject> SOMAObject::open(
     std::optional<TimestampRange> timestamp,
     std::optional<std::string> soma_type) {
     if (soma_type == std::nullopt) {
-        auto tiledb_type = Object::object(*ctx->tiledb_ctx(), std::string(uri))
-                               .type();
+        auto tiledb_type = Object::object(*ctx->tiledb_ctx(), std::string(uri)).type();
         soma_type = util::soma_type_from_tiledb_type(tiledb_type);
     }
 
@@ -37,14 +36,11 @@ std::unique_ptr<SOMAObject> SOMAObject::open(
         auto array_type = array_->type();
 
         if (!array_type.has_value())
-            throw TileDBSOMAError(fmt::format(
-                "[SOMAObject::open] SOMAArray '{}' has no type info", uri));
+            throw TileDBSOMAError(fmt::format("[SOMAObject::open] SOMAArray '{}' has no type info", uri));
 
-        std::transform(
-            array_type->begin(),
-            array_type->end(),
-            array_type->begin(),
-            [](unsigned char c) { return std::tolower(c); });
+        std::transform(array_type->begin(), array_type->end(), array_type->begin(), [](unsigned char c) {
+            return std::tolower(c);
+        });
 
         if (array_type == "somadataframe") {
             return std::make_unique<SOMADataFrame>(*array_);
@@ -57,22 +53,18 @@ std::unique_ptr<SOMAObject> SOMAObject::open(
         } else if (array_type == "somageometrydataframe") {
             return std::make_unique<SOMAGeometryDataFrame>(*array_);
         } else {
-            throw TileDBSOMAError(
-                "[SOMAObject::open] Saw invalid SOMAArray type");
+            throw TileDBSOMAError("[SOMAObject::open] Saw invalid SOMAArray type");
         }
     } else if (soma_type == "SOMAGroup") {
         auto group_ = SOMAGroup::open(mode, uri, ctx, "", timestamp);
         auto group_type = group_->type();
 
         if (!group_type.has_value())
-            throw TileDBSOMAError(fmt::format(
-                "[SOMAObject::open] SOMAGroup '{}' has no type info", uri));
+            throw TileDBSOMAError(fmt::format("[SOMAObject::open] SOMAGroup '{}' has no type info", uri));
 
-        std::transform(
-            group_type->begin(),
-            group_type->end(),
-            group_type->begin(),
-            [](unsigned char c) { return std::tolower(c); });
+        std::transform(group_type->begin(), group_type->end(), group_type->begin(), [](unsigned char c) {
+            return std::tolower(c);
+        });
 
         if (group_type == "somacollection") {
             return std::make_unique<SOMACollection>(*group_);
@@ -85,13 +77,11 @@ std::unique_ptr<SOMAObject> SOMAObject::open(
         } else if (group_type == "somamultiscaleimage") {
             return std::make_unique<SOMAMultiscaleImage>(*group_);
         } else {
-            throw TileDBSOMAError(
-                "[SOMAObject::open] Saw invalid SOMAGroup type");
+            throw TileDBSOMAError("[SOMAObject::open] Saw invalid SOMAGroup type");
         }
     }
 
-    throw TileDBSOMAError(
-        "[SOMAObject::open] Invalid TileDB object passed to SOMAObject::open");
+    throw TileDBSOMAError("[SOMAObject::open] Invalid TileDB object passed to SOMAObject::open");
 }
 
 const std::optional<std::string> SOMAObject::type() {
@@ -100,8 +90,7 @@ const std::optional<std::string> SOMAObject::type() {
     if (!soma_object_type.has_value())
         return std::nullopt;
 
-    const char* dtype = (const char*)std::get<MetadataInfo::value>(
-        *soma_object_type);
+    const char* dtype = (const char*)std::get<MetadataInfo::value>(*soma_object_type);
     uint32_t sz = std::get<MetadataInfo::num>(*soma_object_type);
 
     return std::string(dtype, sz);
@@ -113,17 +102,13 @@ bool SOMAObject::check_type(std::string expected_type) {
     if (!soma_object_type.has_value())
         return false;
 
-    std::transform(
-        soma_object_type->begin(),
-        soma_object_type->end(),
-        soma_object_type->begin(),
-        [](unsigned char c) { return std::tolower(c); });
+    std::transform(soma_object_type->begin(), soma_object_type->end(), soma_object_type->begin(), [](unsigned char c) {
+        return std::tolower(c);
+    });
 
-    std::transform(
-        expected_type.begin(),
-        expected_type.end(),
-        expected_type.begin(),
-        [](unsigned char c) { return std::tolower(c); });
+    std::transform(expected_type.begin(), expected_type.end(), expected_type.begin(), [](unsigned char c) {
+        return std::tolower(c);
+    });
 
     return soma_object_type == expected_type;
 };

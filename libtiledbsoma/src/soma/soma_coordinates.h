@@ -36,8 +36,7 @@ struct SOMAAxis {
 
 class SOMACoordinateSpace {
    public:
-    static SOMACoordinateSpace from_metadata(
-        tiledb_datatype_t value_type, uint32_t value_num, const void* value);
+    static SOMACoordinateSpace from_metadata(tiledb_datatype_t value_type, uint32_t value_num, const void* value);
 
     static SOMACoordinateSpace from_string(std::string_view metadata);
 
@@ -48,16 +47,13 @@ class SOMACoordinateSpace {
     SOMACoordinateSpace(const std::vector<std::string>& axis_names);
 
     SOMACoordinateSpace(
-        const std::vector<std::string>& axis_names,
-        const std::vector<std::optional<std::string>>& axis_units);
+        const std::vector<std::string>& axis_names, const std::vector<std::optional<std::string>>& axis_units);
 
-    inline friend bool operator==(
-        const SOMACoordinateSpace& lhs, const SOMACoordinateSpace& rhs) {
+    inline friend bool operator==(const SOMACoordinateSpace& lhs, const SOMACoordinateSpace& rhs) {
         return lhs.axes_ == rhs.axes_;
     }
 
-    inline friend bool operator!=(
-        const SOMACoordinateSpace& lhs, const SOMACoordinateSpace& rhs) {
+    inline friend bool operator!=(const SOMACoordinateSpace& lhs, const SOMACoordinateSpace& rhs) {
         return !(lhs == rhs);
     }
 

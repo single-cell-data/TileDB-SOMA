@@ -46,11 +46,9 @@ class IntIndexer {
      * @return and array of looked up value (same size as keys)
      */
     void lookup(const int64_t* keys, int64_t* results, size_t size);
-    void lookup(
-        const std::vector<int64_t>& keys, std::vector<int64_t>& results) {
+    void lookup(const std::vector<int64_t>& keys, std::vector<int64_t>& results) {
         if (keys.size() != results.size())
-            throw std::runtime_error(
-                "The size of input and results arrays must be the same.");
+            throw std::runtime_error("The size of input and results arrays must be the same.");
 
         lookup(keys.data(), results.data(), keys.size());
     }

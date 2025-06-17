@@ -38,16 +38,13 @@ void SOMADenseNDArray::create(
     schema->metadata = nullptr;
     schema->flags = 0;
     schema->release = &ArrowAdapter::release_schema;
-    schema->children = (ArrowSchema**)malloc(
-        schema->n_children * sizeof(ArrowSchema*));
+    schema->children = (ArrowSchema**)malloc(schema->n_children * sizeof(ArrowSchema*));
 
     std::vector<std::string> index_column_names;
     for (uint64_t dim_idx = 0; dim_idx < index_column_size; ++dim_idx) {
-        ArrowSchema* dim = schema->children[dim_idx] = (ArrowSchema*)malloc(
-            sizeof(ArrowSchema));
+        ArrowSchema* dim = schema->children[dim_idx] = (ArrowSchema*)malloc(sizeof(ArrowSchema));
         dim->format = strdup("l");
-        dim->name = strdup(
-            std::string("soma_dim_" + std::to_string(dim_idx)).c_str());
+        dim->name = strdup(std::string("soma_dim_" + std::to_string(dim_idx)).c_str());
         dim->n_children = 0;
         dim->children = nullptr;
         dim->metadata = nullptr;
@@ -56,8 +53,7 @@ void SOMADenseNDArray::create(
         index_column_names.push_back(dim->name);
     }
 
-    ArrowSchema* attr = schema->children[index_column_size] = (ArrowSchema*)
-        malloc(sizeof(ArrowSchema));
+    ArrowSchema* attr = schema->children[index_column_size] = (ArrowSchema*)malloc(sizeof(ArrowSchema));
     attr->format = strdup(std::string(format).c_str());
     attr->name = strdup("soma_data");
     attr->n_children = 0;
@@ -67,39 +63,25 @@ void SOMADenseNDArray::create(
     attr->metadata = nullptr;
     attr->release = &ArrowAdapter::release_schema;
 
-    auto [tiledb_schema, soma_schema_extension] =
-        ArrowAdapter::tiledb_schema_from_arrow_schema(
-            ctx->tiledb_ctx(),
-            schema,
-            index_columns,
-            std::nullopt,
-            "SOMADenseNDArray",
-            false,
-            platform_config,
-            timestamp);
+    auto [tiledb_schema, soma_schema_extension] = ArrowAdapter::tiledb_schema_from_arrow_schema(
+        ctx->tiledb_ctx(), schema, index_columns, std::nullopt, "SOMADenseNDArray", false, platform_config, timestamp);
 
-    SOMAArray::create(
-        ctx, uri, tiledb_schema, "SOMADenseNDArray", std::nullopt, timestamp);
+    SOMAArray::create(ctx, uri, tiledb_schema, "SOMADenseNDArray", std::nullopt, timestamp);
 }
 
 std::unique_ptr<SOMADenseNDArray> SOMADenseNDArray::open(
-    std::string_view uri,
-    OpenMode mode,
-    std::shared_ptr<SOMAContext> ctx,
-    std::optional<TimestampRange> timestamp) {
+    std::string_view uri, OpenMode mode, std::shared_ptr<SOMAContext> ctx, std::optional<TimestampRange> timestamp) {
     auto array = std::make_unique<SOMADenseNDArray>(mode, uri, ctx, timestamp);
 
     if (!array->check_type("SOMADenseNDArray")) {
-        throw TileDBSOMAError(
-            "[SOMADenseNDArray::open] Object is not a SOMADenseNDArray");
+        throw TileDBSOMAError("[SOMADenseNDArray::open] Object is not a SOMADenseNDArray");
     }
 
     return array;
 }
 
 std::string_view SOMADenseNDArray::soma_data_type() {
-    return ArrowAdapter::to_arrow_format(
-        tiledb_schema()->attribute("soma_data").type());
+    return ArrowAdapter::to_arrow_format(tiledb_schema()->attribute("soma_data").type());
 }
 
 //===================================================================

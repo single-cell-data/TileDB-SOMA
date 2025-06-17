@@ -31,10 +31,7 @@ using namespace tiledb;
 //= public non-static
 //===================================================================
 
-ManagedQuery::ManagedQuery(
-    std::shared_ptr<Array> array,
-    std::shared_ptr<Context> ctx,
-    std::string_view name)
+ManagedQuery::ManagedQuery(std::shared_ptr<Array> array, std::shared_ptr<Context> ctx, std::string_view name)
     : ctx_(ctx)
     , array_(array)
     , name_(name)
@@ -42,8 +39,7 @@ ManagedQuery::ManagedQuery(
     reset();
 }
 
-ManagedQuery::ManagedQuery(
-    SOMAArray array, std::shared_ptr<Context> ctx, std::string_view name)
+ManagedQuery::ManagedQuery(SOMAArray array, std::shared_ptr<Context> ctx, std::string_view name)
     : ctx_(ctx)
     , array_(array.arr_)
     , name_(name)
@@ -91,9 +87,8 @@ void ManagedQuery::set_layout(ResultOrder layout) {
             query_->set_layout(TILEDB_COL_MAJOR);
             break;
         default:
-            throw std::invalid_argument(fmt::format(
-                "[ManagedQuery] invalid ResultOrder({}) passed",
-                static_cast<int>(layout)));
+            throw std::invalid_argument(
+                fmt::format("[ManagedQuery] invalid ResultOrder({}) passed", static_cast<int>(layout)));
     }
 
     layout_ = layout;
@@ -103,8 +98,7 @@ ResultOrder ManagedQuery::result_order() {
     return layout_;
 }
 
-void ManagedQuery::select_columns(
-    const std::vector<std::string>& names, bool if_not_empty, bool replace) {
+void ManagedQuery::select_columns(const std::vector<std::string>& names, bool if_not_empty, bool replace) {
     // Return if we are selecting all columns (columns_ is empty) and we want to
     // continue selecting all columns (if_not_empty == true).
     if (if_not_empty && columns_.empty()) {
@@ -117,12 +111,8 @@ void ManagedQuery::select_columns(
 
     for (auto& name : names) {
         // Name is not an attribute or dimension.
-        if (!schema_->has_attribute(name) &&
-            !schema_->domain().has_dimension(name)) {
-            LOG_WARN(fmt::format(
-                "[TileDB-SOMA::ManagedQuery] [{}] Invalid column selected: {}",
-                name_,
-                name));
+        if (!schema_->has_attribute(name) && !schema_->domain().has_dimension(name)) {
+            LOG_WARN(fmt::format("[TileDB-SOMA::ManagedQuery] [{}] Invalid column selected: {}", name_, name));
         } else {
             columns_.push_back(name);
         }
@@ -168,8 +158,7 @@ void ManagedQuery::setup_read() {
     LOG_TRACE("[ManagedQuery] allocate new buffers");
     buffers_ = std::make_shared<ArrayBuffers>();
     for (auto& name : columns_) {
-        LOG_DEBUG(fmt::format(
-            "[ManagedQuery] [{}] Adding buffer for column '{}'", name_, name));
+        LOG_DEBUG(fmt::format("[ManagedQuery] [{}] Adding buffer for column '{}'", name_, name));
         buffers_->emplace(name, ColumnBuffer::create(array_, name));
         buffers_->at(name)->attach(*query_);
     }
@@ -242,27 +231,21 @@ std::optional<std::shared_ptr<ArrayBuffers>> ManagedQuery::read_next() {
     if (query_future_.valid()) {
         LOG_DEBUG(fmt::format("[ManagedQuery] [{}] Waiting for query", name_));
         query_future_.wait();
-        LOG_DEBUG(
-            fmt::format("[ManagedQuery] [{}] Done waiting for query", name_));
+        LOG_DEBUG(fmt::format("[ManagedQuery] [{}] Done waiting for query", name_));
 
         auto retval = query_future_.get();
         if (!retval.succeeded()) {
-            throw TileDBSOMAError(fmt::format(
-                "[ManagedQuery] [{}] Query FAILED: {}",
-                name_,
-                retval.message()));
+            throw TileDBSOMAError(fmt::format("[ManagedQuery] [{}] Query FAILED: {}", name_, retval.message()));
         }
 
     } else {
-        throw TileDBSOMAError(
-            fmt::format("[ManagedQuery] [{}] 'query_future_' invalid", name_));
+        throw TileDBSOMAError(fmt::format("[ManagedQuery] [{}] 'query_future_' invalid", name_));
     }
 
     auto status = query_->query_status();
 
     if (status == Query::Status::FAILED) {
-        throw TileDBSOMAError(
-            fmt::format("[ManagedQuery] [{}] Query FAILED", name_));
+        throw TileDBSOMAError(fmt::format("[ManagedQuery] [{}] Query FAILED", name_));
     }
 
     // If the query was ever incomplete, the result buffers contents are not
@@ -277,15 +260,13 @@ std::optional<std::shared_ptr<ArrayBuffers>> ManagedQuery::read_next() {
     size_t num_cells = 0;
     for (auto& name : buffers_->names()) {
         num_cells = buffers_->at(name)->update_size(*query_);
-        LOG_DEBUG(fmt::format(
-            "[ManagedQuery] [{}] Buffer {} cells={}", name_, name, num_cells));
+        LOG_DEBUG(fmt::format("[ManagedQuery] [{}] Buffer {} cells={}", name_, name, num_cells));
     }
     total_num_cells_ += num_cells;
 
     // TODO: retry the query with larger buffers
     if (status == Query::Status::INCOMPLETE && !num_cells) {
-        throw TileDBSOMAError(
-            fmt::format("[ManagedQuery] [{}] Buffers are too small.", name_));
+        throw TileDBSOMAError(fmt::format("[ManagedQuery] [{}] Buffers are too small.", name_));
     }
 
     return buffers_;
@@ -308,8 +289,7 @@ void ManagedQuery::_fill_in_subarrays_if_dense(bool is_read) {
     }
 
     // Don't do this if the array doesn't have new shape AKA current domain.
-    auto current_domain = tiledb::ArraySchemaExperimental::current_domain(
-        *ctx_, schema);
+    auto current_domain = tiledb::ArraySchemaExperimental::current_domain(*ctx_, schema);
     if (current_domain.is_empty()) {
         _fill_in_subarrays_if_dense_without_new_shape(is_read);
     } else {
@@ -319,8 +299,7 @@ void ManagedQuery::_fill_in_subarrays_if_dense(bool is_read) {
 }
 
 void ManagedQuery::_fill_in_subarrays_if_dense_without_new_shape(bool is_read) {
-    LOG_TRACE(
-        "[ManagedQuery] _fill_in_subarrays_if_dense_without_new_shape enter");
+    LOG_TRACE("[ManagedQuery] _fill_in_subarrays_if_dense_without_new_shape enter");
     // Dense array must have a subarray set for read. If the array is dense and
     // no ranges have been set, add a range for the array's entire full
     // domain on dimension 0
@@ -341,18 +320,14 @@ void ManagedQuery::_fill_in_subarrays_if_dense_without_new_shape(bool is_read) {
     array_shape = schema.domain().dimension(0).domain<int64_t>();
     subarray_->add_range(0, array_shape.first, array_shape.second);
     LOG_TRACE(fmt::format(
-        "[ManagedQuery] Add full range to dense subarray dim0 = ({}, {})",
-        array_shape.first,
-        array_shape.second));
+        "[ManagedQuery] Add full range to dense subarray dim0 = ({}, {})", array_shape.first, array_shape.second));
 
     // Set the subarray for range slicing
     query_->set_subarray(*subarray_);
 }
 
-void ManagedQuery::_fill_in_subarrays_if_dense_with_new_shape(
-    const CurrentDomain& current_domain, bool is_read) {
-    LOG_TRACE(
-        "[ManagedQuery] _fill_in_subarrays_if_dense_with_new_shape enter");
+void ManagedQuery::_fill_in_subarrays_if_dense_with_new_shape(const CurrentDomain& current_domain, bool is_read) {
+    LOG_TRACE("[ManagedQuery] _fill_in_subarrays_if_dense_with_new_shape enter");
     if (current_domain.type() != TILEDB_NDRECTANGLE) {
         throw TileDBSOMAError("found non-rectangle current-domain type");
     }
@@ -364,8 +339,7 @@ void ManagedQuery::_fill_in_subarrays_if_dense_with_new_shape(
     for (const auto& dim : schema.domain().dimensions()) {
         std::string dim_name = dim.name();
         if (subarray_range_set_[dim_name]) {
-            LOG_TRACE(fmt::format(
-                "[ManagedQuery] _fill_in_subarrays continue {}", dim_name));
+            LOG_TRACE(fmt::format("[ManagedQuery] _fill_in_subarrays continue {}", dim_name));
             continue;
         }
 
@@ -373,14 +347,11 @@ void ManagedQuery::_fill_in_subarrays_if_dense_with_new_shape(
         // Per the spec DenseNDArray must only have dims named
         // soma_dim_{i} with i=0,1,2,...,n-1, of type int64.
         if (dim_name.rfind("soma_dim_", 0) != 0) {
-            throw TileDBSOMAError(fmt::format(
-                "found dense array with unexpected dim name {}", dim_name));
+            throw TileDBSOMAError(fmt::format("found dense array with unexpected dim name {}", dim_name));
         }
         if (dim.type() != TILEDB_INT64) {
             throw TileDBSOMAError(fmt::format(
-                "expected dense arrays to have int64 dims; got {} for {}",
-                tiledb::impl::to_str(dim.type()),
-                dim_name));
+                "expected dense arrays to have int64 dims; got {} for {}", tiledb::impl::to_str(dim.type()), dim_name));
         }
 
         std::array<int64_t, 2> lo_hi_arr = ndrect.range<int64_t>(dim_name);
@@ -397,9 +368,7 @@ void ManagedQuery::_fill_in_subarrays_if_dense_with_new_shape(
             cd_hi));
 
         if (is_read) {
-            auto [dom_lo, dom_hi] = schema.domain()
-                                        .dimension(0)
-                                        .domain<int64_t>();
+            auto [dom_lo, dom_hi] = schema.domain().dimension(0).domain<int64_t>();
             LOG_TRACE(fmt::format(
                 "[ManagedQuery] _fill_in_subarrays_if_dense_with_new_shape "
                 "dim name {} non-empty domain ({}, {})",
@@ -435,27 +404,21 @@ std::shared_ptr<ArrayBuffers> ManagedQuery::results() {
     if (query_future_.valid()) {
         LOG_DEBUG(fmt::format("[ManagedQuery] [{}] Waiting for query", name_));
         query_future_.wait();
-        LOG_DEBUG(
-            fmt::format("[ManagedQuery] [{}] Done waiting for query", name_));
+        LOG_DEBUG(fmt::format("[ManagedQuery] [{}] Done waiting for query", name_));
 
         auto retval = query_future_.get();
         if (!retval.succeeded()) {
-            throw TileDBSOMAError(fmt::format(
-                "[ManagedQuery] [{}] Query FAILED: {}",
-                name_,
-                retval.message()));
+            throw TileDBSOMAError(fmt::format("[ManagedQuery] [{}] Query FAILED: {}", name_, retval.message()));
         }
 
     } else {
-        throw TileDBSOMAError(
-            fmt::format("[ManagedQuery] [{}] 'query_future_' invalid", name_));
+        throw TileDBSOMAError(fmt::format("[ManagedQuery] [{}] 'query_future_' invalid", name_));
     }
 
     auto status = query_->query_status();
 
     if (status == Query::Status::FAILED) {
-        throw TileDBSOMAError(
-            fmt::format("[ManagedQuery] [{}] Query FAILED", name_));
+        throw TileDBSOMAError(fmt::format("[ManagedQuery] [{}] Query FAILED", name_));
     }
 
     // If the query was ever incomplete, the result buffers contents are not
@@ -470,15 +433,13 @@ std::shared_ptr<ArrayBuffers> ManagedQuery::results() {
     size_t num_cells = 0;
     for (auto& name : buffers_->names()) {
         num_cells = buffers_->at(name)->update_size(*query_);
-        LOG_DEBUG(fmt::format(
-            "[ManagedQuery] [{}] Buffer {} cells={}", name_, name, num_cells));
+        LOG_DEBUG(fmt::format("[ManagedQuery] [{}] Buffer {} cells={}", name_, name, num_cells));
     }
     total_num_cells_ += num_cells;
 
     // TODO: retry the query with larger buffers
     if (status == Query::Status::INCOMPLETE && !num_cells) {
-        throw TileDBSOMAError(
-            fmt::format("[ManagedQuery] [{}] Buffers are too small.", name_));
+        throw TileDBSOMAError(fmt::format("[ManagedQuery] [{}] Buffers are too small.", name_));
     }
 
     return buffers_;
@@ -518,8 +479,7 @@ uint64_t ManagedQuery::_get_max_capacity(tiledb_datatype_t index_type) {
     }
 }
 
-void ManagedQuery::set_array_data(
-    ArrowSchema* arrow_schema, ArrowArray* arrow_array) {
+void ManagedQuery::set_array_data(ArrowSchema* arrow_schema, ArrowArray* arrow_array) {
     buffers_.reset();
 
     // Go through all columns in the ArrowTable and cast the values to what is
@@ -529,8 +489,7 @@ void ManagedQuery::set_array_data(
     se.set_timestamp_range(TimestampRange(ts, ts));
     bool evolve_schema = false;
     for (auto i = 0; i < arrow_schema->n_children; ++i) {
-        bool enmr_extended = _cast_column(
-            arrow_schema->children[i], arrow_array->children[i], se);
+        bool enmr_extended = _cast_column(arrow_schema->children[i], arrow_array->children[i], se);
         evolve_schema = evolve_schema || enmr_extended;
     }
     if (evolve_schema) {
@@ -538,17 +497,14 @@ void ManagedQuery::set_array_data(
     }
 };
 
-bool ManagedQuery::_cast_column(
-    ArrowSchema* schema, ArrowArray* array, ArraySchemaEvolution se) {
+bool ManagedQuery::_cast_column(ArrowSchema* schema, ArrowArray* array, ArraySchemaEvolution se) {
     auto user_type = ArrowAdapter::to_tiledb_format(schema->format);
     bool has_attr = schema_->has_attribute(schema->name);
 
     // If the attribute is enumerated, but the provided column is not, error out
     if (has_attr && attr_has_enum(schema->name)) {
         if (schema->dictionary == nullptr || array->dictionary == nullptr) {
-            throw std::invalid_argument(
-                "[SOMAArray] " + std::string(schema->name) +
-                " requires dictionary entry");
+            throw std::invalid_argument("[SOMAArray] " + std::string(schema->name) + " requires dictionary entry");
         }
     }
 
@@ -608,15 +564,13 @@ bool ManagedQuery::_cast_column(
     }
 }
 
-void ManagedQuery::_promote_indexes_to_values(
-    ArrowSchema* schema, ArrowArray* array) {
+void ManagedQuery::_promote_indexes_to_values(ArrowSchema* schema, ArrowArray* array) {
     // This is a column with a dictionary. However, the associated TileDB
     // attribute on disk is not enumerated. We will need to map the dictionary
     // indexes to the associated dictionary values and write the values to disk.
     // Here, we identify the passed-in column type
 
-    auto value_type = ArrowAdapter::to_tiledb_format(
-        schema->dictionary->format);
+    auto value_type = ArrowAdapter::to_tiledb_format(schema->dictionary->format);
     switch (value_type) {
         case TILEDB_STRING_ASCII:
         case TILEDB_STRING_UTF8:
@@ -657,8 +611,7 @@ void ManagedQuery::_promote_indexes_to_values(
 }
 
 template <typename T>
-void ManagedQuery::_cast_dictionary_values(
-    ArrowSchema* schema, ArrowArray* array) {
+void ManagedQuery::_cast_dictionary_values(ArrowSchema* schema, ArrowArray* array) {
     // This is a column with a dictionary. However, the associated TileDB
     // attribute on disk is not enumerated. Here, we map the dictionary indexes
     // to the associated dictionary values and set the buffers to use the
@@ -691,8 +644,7 @@ void ManagedQuery::_cast_dictionary_values(
 }
 
 template <>
-void ManagedQuery::_cast_dictionary_values<std::string>(
-    ArrowSchema* schema, ArrowArray* array) {
+void ManagedQuery::_cast_dictionary_values<std::string>(ArrowSchema* schema, ArrowArray* array) {
     // String types require special handling due to large vs regular
     // string/binary
 
@@ -702,8 +654,7 @@ void ManagedQuery::_cast_dictionary_values<std::string>(
     uint64_t num_elems = value_array->length;
 
     std::vector<uint64_t> offsets_v;
-    if ((strcmp(value_schema->format, "U") == 0) ||
-        (strcmp(value_schema->format, "Z") == 0)) {
+    if ((strcmp(value_schema->format, "U") == 0) || (strcmp(value_schema->format, "Z") == 0)) {
         uint64_t* offsets = (uint64_t*)value_array->buffers[1];
         offsets_v.resize(num_elems + 1);
         offsets_v.assign(offsets, offsets + num_elems + 1);
@@ -715,19 +666,16 @@ void ManagedQuery::_cast_dictionary_values<std::string>(
         }
     }
 
-    std::string_view data(
-        static_cast<const char*>(value_array->buffers[2]), offsets_v.back());
+    std::string_view data(static_cast<const char*>(value_array->buffers[2]), offsets_v.back());
 
     std::vector<std::string_view> values;
-    for (size_t offset_idx = 0; offset_idx < offsets_v.size() - 1;
-         ++offset_idx) {
+    for (size_t offset_idx = 0; offset_idx < offsets_v.size() - 1; ++offset_idx) {
         auto beg = offsets_v[offset_idx];
         auto sz = offsets_v[offset_idx + 1] - beg;
         values.push_back(data.substr(beg, sz));
     }
 
-    std::vector<int64_t> indexes = ManagedQuery::_get_index_vector(
-        schema, array);
+    std::vector<int64_t> indexes = ManagedQuery::_get_index_vector(schema, array);
 
     uint64_t offset_sum = 0;
     std::vector<uint64_t> value_offsets = {0};
@@ -748,8 +696,7 @@ void ManagedQuery::_cast_dictionary_values<std::string>(
 }
 
 template <>
-void ManagedQuery::_cast_dictionary_values<bool>(
-    ArrowSchema* schema, ArrowArray* array) {
+void ManagedQuery::_cast_dictionary_values<bool>(ArrowSchema* schema, ArrowArray* array) {
     // Boolean types require special handling due to bit vs uint8_t
     // representation in Arrow vs TileDB respectively
 
@@ -757,8 +704,7 @@ void ManagedQuery::_cast_dictionary_values<bool>(
     auto value_array = array->dictionary;
 
     std::vector<int64_t> indexes = _get_index_vector(schema, array);
-    std::vector<uint8_t> values = _bool_data_bits_to_bytes(
-        value_schema, value_array);
+    std::vector<uint8_t> values = _bool_data_bits_to_bytes(value_schema, value_array);
     std::vector<uint8_t> index_to_value;
 
     for (auto i : indexes) {
@@ -774,8 +720,7 @@ void ManagedQuery::_cast_dictionary_values<bool>(
 }
 
 template <>
-bool ManagedQuery::_cast_column_aux<std::string>(
-    ArrowSchema* schema, ArrowArray* array, ArraySchemaEvolution se) {
+bool ManagedQuery::_cast_column_aux<std::string>(ArrowSchema* schema, ArrowArray* array, ArraySchemaEvolution se) {
     (void)se;  // se is unused in std::string specialization
 
     // A few things in play here:
@@ -801,8 +746,7 @@ bool ManagedQuery::_cast_column_aux<std::string>(
     // buffer since it is indexed via offsets, which we slice
     // into below.
 
-    if ((strcmp(schema->format, "U") == 0) ||
-        (strcmp(schema->format, "Z") == 0)) {
+    if ((strcmp(schema->format, "U") == 0) || (strcmp(schema->format, "Z") == 0)) {
         // If this is a table-slice, slice into the offsets buffer.
         uint64_t* offset = (uint64_t*)array->buffers[1] + array->offset;
         setup_write_column(schema->name, array->length, data, offset, validity);
@@ -816,24 +760,18 @@ bool ManagedQuery::_cast_column_aux<std::string>(
 }
 
 template <>
-bool ManagedQuery::_cast_column_aux<bool>(
-    ArrowSchema* schema, ArrowArray* array, ArraySchemaEvolution se) {
+bool ManagedQuery::_cast_column_aux<bool>(ArrowSchema* schema, ArrowArray* array, ArraySchemaEvolution se) {
     (void)se;  // se is unused in bool specialization
 
     auto casted = _bool_data_bits_to_bytes(schema, array);
 
     setup_write_column(
-        schema->name,
-        array->length,
-        (const void*)casted.data(),
-        (uint64_t*)nullptr,
-        _cast_validity_buffer(array));
+        schema->name, array->length, (const void*)casted.data(), (uint64_t*)nullptr, _cast_validity_buffer(array));
     return false;
 }
 
 template <typename UserType>
-bool ManagedQuery::_cast_column_aux(
-    ArrowSchema* schema, ArrowArray* array, ArraySchemaEvolution se) {
+bool ManagedQuery::_cast_column_aux(ArrowSchema* schema, ArrowArray* array, ArraySchemaEvolution se) {
     // We need to cast the passed-in column to be what is the type in the schema
     // on disk. Here we identify the on-disk attribute or dimension type
     // (DiskType).
@@ -947,8 +885,7 @@ bool ManagedQuery::_extend_and_write_enumeration(
                 value_schema, value_array, index_schema, index_array, enmr, se);
         default:
             throw TileDBSOMAError(fmt::format(
-                "ArrowAdapter: Unsupported TileDB dict datatype: {} ",
-                tiledb::impl::type_to_str(value_type)));
+                "ArrowAdapter: Unsupported TileDB dict datatype: {} ", tiledb::impl::type_to_str(value_type)));
     }
 }
 
@@ -964,22 +901,10 @@ bool ManagedQuery::_extend_and_evolve_schema_and_write<std::string>(
 
     const auto [was_extended, enum_values_in_write, extended_enmr] =
         _extend_and_evolve_schema_with_details<std::string, std::string_view>(
-            value_schema,
-            value_array,
-            index_schema,
-            index_array,
-            column_name,
-            true,
-            enmr,
-            se);
+            value_schema, value_array, index_schema, index_array, column_name, true, enmr, se);
 
     if (was_extended) {
-        ManagedQuery::_remap_indexes(
-            column_name,
-            extended_enmr,
-            enum_values_in_write,
-            index_schema,
-            index_array);
+        ManagedQuery::_remap_indexes(column_name, extended_enmr, enum_values_in_write, index_schema, index_array);
 
         return true;
     } else {
@@ -991,8 +916,7 @@ bool ManagedQuery::_extend_and_evolve_schema_and_write<std::string>(
         //   from the user, have indices 0,1.
         // * We need to remap those to 1,2.
 
-        ManagedQuery::_remap_indexes(
-            column_name, enmr, enum_values_in_write, index_schema, index_array);
+        ManagedQuery::_remap_indexes(column_name, enmr, enum_values_in_write, index_schema, index_array);
     }
     return false;
 }
@@ -1009,14 +933,7 @@ bool ManagedQuery::_extend_and_evolve_schema_and_write(
 
     const auto [was_extended, enum_values_in_write, extended_enmr] =
         _extend_and_evolve_schema_with_details<ValueType, ValueType>(
-            value_schema,
-            value_array,
-            index_schema,
-            index_array,
-            column_name,
-            true,
-            enmr,
-            se);
+            value_schema, value_array, index_schema, index_array, column_name, true, enmr, se);
 
     if (was_extended) {
         // If the passed-in enumerations are only a subset of the new extended
@@ -1024,12 +941,7 @@ bool ManagedQuery::_extend_and_evolve_schema_and_write(
         // passes in values [B, C] which maps to indexes [0, 1]. However, the
         // full set of extended enumerations is [A, B, C] which means we need to
         // remap [B, C] to be indexes [1, 2]
-        ManagedQuery::_remap_indexes(
-            column_name,
-            extended_enmr,
-            enum_values_in_write,
-            index_schema,
-            index_array);
+        ManagedQuery::_remap_indexes(column_name, extended_enmr, enum_values_in_write, index_schema, index_array);
 
         // The enumeration was extended
         return true;
@@ -1041,8 +953,7 @@ bool ManagedQuery::_extend_and_evolve_schema_and_write(
         // * User appends values b,c which, within the Arrow data coming in
         //   from the user, have indices 0,1.
         // * We need to remap those to 1,2.
-        ManagedQuery::_remap_indexes(
-            column_name, enmr, enum_values_in_write, index_schema, index_array);
+        ManagedQuery::_remap_indexes(column_name, enmr, enum_values_in_write, index_schema, index_array);
 
         // The enumeration was not extended
         return false;
@@ -1060,8 +971,7 @@ bool ManagedQuery::_extend_enumeration(
     // enumeration to extend any new enumeration values
 
     auto value_type_in_schema = enmr.type();
-    auto value_type_in_data = ArrowAdapter::to_tiledb_format(
-        value_schema->format);
+    auto value_type_in_data = ArrowAdapter::to_tiledb_format(value_schema->format);
 
     if (value_type_in_schema != value_type_in_data) {
         throw TileDBSOMAError(fmt::format(
@@ -1074,9 +984,7 @@ bool ManagedQuery::_extend_enumeration(
         case TILEDB_STRING_ASCII:
         case TILEDB_STRING_UTF8:
         case TILEDB_CHAR:
-            return _extend_and_evolve_schema_without_details<
-                std::string,
-                std::string_view>(
+            return _extend_and_evolve_schema_without_details<std::string, std::string_view>(
                 value_schema, value_array, column_name, deduplicate, enmr, se);
         case TILEDB_INT8:
             return _extend_and_evolve_schema_without_details<int8_t, int8_t>(
@@ -1089,25 +997,19 @@ bool ManagedQuery::_extend_enumeration(
             return _extend_and_evolve_schema_without_details<int16_t, int16_t>(
                 value_schema, value_array, column_name, deduplicate, enmr, se);
         case TILEDB_UINT16:
-            return _extend_and_evolve_schema_without_details<
-                uint16_t,
-                uint16_t>(
+            return _extend_and_evolve_schema_without_details<uint16_t, uint16_t>(
                 value_schema, value_array, column_name, deduplicate, enmr, se);
         case TILEDB_INT32:
             return _extend_and_evolve_schema_without_details<int32_t, int32_t>(
                 value_schema, value_array, column_name, deduplicate, enmr, se);
         case TILEDB_UINT32:
-            return _extend_and_evolve_schema_without_details<
-                uint32_t,
-                uint32_t>(
+            return _extend_and_evolve_schema_without_details<uint32_t, uint32_t>(
                 value_schema, value_array, column_name, deduplicate, enmr, se);
         case TILEDB_INT64:
             return _extend_and_evolve_schema_without_details<int64_t, int64_t>(
                 value_schema, value_array, column_name, deduplicate, enmr, se);
         case TILEDB_UINT64:
-            return _extend_and_evolve_schema_without_details<
-                uint64_t,
-                uint64_t>(
+            return _extend_and_evolve_schema_without_details<uint64_t, uint64_t>(
                 value_schema, value_array, column_name, deduplicate, enmr, se);
         case TILEDB_FLOAT32:
             return _extend_and_evolve_schema_without_details<float, float>(
@@ -1123,24 +1025,15 @@ bool ManagedQuery::_extend_enumeration(
 }
 
 template <>
-bool ManagedQuery::
-    _extend_and_evolve_schema_without_details<std::string, std::string_view>(
-        ArrowSchema* value_schema,
-        ArrowArray* value_array,
-        const std::string& column_name,
-        bool deduplicate,
-        Enumeration enmr,
-        ArraySchemaEvolution& se) {
-    const auto [was_extended, _1, _2] =
-        _extend_and_evolve_schema_with_details<std::string, std::string_view>(
-            value_schema,
-            value_array,
-            nullptr,
-            nullptr,
-            column_name,
-            deduplicate,
-            enmr,
-            se);
+bool ManagedQuery::_extend_and_evolve_schema_without_details<std::string, std::string_view>(
+    ArrowSchema* value_schema,
+    ArrowArray* value_array,
+    const std::string& column_name,
+    bool deduplicate,
+    Enumeration enmr,
+    ArraySchemaEvolution& se) {
+    const auto [was_extended, _1, _2] = _extend_and_evolve_schema_with_details<std::string, std::string_view>(
+        value_schema, value_array, nullptr, nullptr, column_name, deduplicate, enmr, se);
     return was_extended;
 }
 
@@ -1152,16 +1045,8 @@ bool ManagedQuery::_extend_and_evolve_schema_without_details(
     bool deduplicate,
     Enumeration enmr,
     ArraySchemaEvolution& se) {
-    const auto [was_extended, _1, _2] =
-        _extend_and_evolve_schema_with_details<ValueType, ValueType>(
-            value_schema,
-            value_array,
-            nullptr,
-            nullptr,
-            column_name,
-            deduplicate,
-            enmr,
-            se);
+    const auto [was_extended, _1, _2] = _extend_and_evolve_schema_with_details<ValueType, ValueType>(
+        value_schema, value_array, nullptr, nullptr, column_name, deduplicate, enmr, se);
     return was_extended;
 }
 
@@ -1192,9 +1077,9 @@ ManagedQuery::_extend_and_evolve_schema_with_details<std::string>(
     }
 
     if (value_array->null_count != 0) {
-        throw std::invalid_argument(fmt::format(
-            "[ManagedQuery] _extend_and_evolve_schema_with_details string: "
-            "null values are not supported"));
+        throw std::invalid_argument(
+            fmt::format("[ManagedQuery] _extend_and_evolve_schema_with_details string: "
+                        "null values are not supported"));
     }
 
     // Set up input values as a char buffer, and offsets within it.  This is
@@ -1211,12 +1096,9 @@ ManagedQuery::_extend_and_evolve_schema_with_details<std::string>(
     // offsets to specify the starts and ends of n string values within a
     // column.
     std::vector<uint64_t> offsets_v;
-    if ((strcmp(value_schema->format, "U") == 0) ||
-        (strcmp(value_schema->format, "Z") == 0)) {
+    if ((strcmp(value_schema->format, "U") == 0) || (strcmp(value_schema->format, "Z") == 0)) {
         uint64_t* offsets = (uint64_t*)value_array->buffers[1];
-        offsets_v.assign(
-            offsets + value_array->offset,
-            offsets + value_array->offset + num_elems + 1);
+        offsets_v.assign(offsets + value_array->offset, offsets + value_array->offset + num_elems + 1);
     } else {
         uint32_t* offsets = (uint32_t*)value_array->buffers[1];
         for (size_t i = 0; i < num_elems + 1; ++i) {
@@ -1224,8 +1106,7 @@ ManagedQuery::_extend_and_evolve_schema_with_details<std::string>(
         }
     }
 
-    std::string_view data_as_char(
-        static_cast<const char*>(value_array->buffers[2]), offsets_v.back());
+    std::string_view data_as_char(static_cast<const char*>(value_array->buffers[2]), offsets_v.back());
 
     // Create a vector of string-views into the char buffer.
     // We need this in order to partition the requested values
@@ -1253,16 +1134,14 @@ ManagedQuery::_extend_and_evolve_schema_with_details<std::string>(
 
     // Separate out the values already in the array schema from the
     // values not already in the array schema.
-    auto enum_values_existing = _enumeration_values_view<std::string_view>(
-        enmr);
+    auto enum_values_existing = _enumeration_values_view<std::string_view>(enmr);
     std::unordered_set<std::string_view> existing_enums_set;
     for (const auto& existing_enum_val : enum_values_existing) {
         existing_enums_set.insert(existing_enum_val);
     }
 
-    std::optional<std::unordered_set<std::string_view>>
-        opt_covered_values = _find_covered_enum_values(
-            enum_values_in_write, index_schema, index_array);
+    std::optional<std::unordered_set<std::string_view>> opt_covered_values = _find_covered_enum_values(
+        enum_values_in_write, index_schema, index_array);
 
     std::vector<std::string_view> enum_values_to_add;
     size_t total_size = 0;
@@ -1300,8 +1179,7 @@ ManagedQuery::_extend_and_evolve_schema_with_details<std::string>(
     //    * If the deduplicate flag was passed, then we allow that, but
     //      we still need to pass core only the d,e values. (It will
     //      throw otherwise).
-    if (!deduplicate &&
-        enum_values_to_add.size() != enum_values_in_write.size()) {
+    if (!deduplicate && enum_values_to_add.size() != enum_values_in_write.size()) {
         throw TileDBSOMAError(fmt::format(
             "[extend_enumeration] one or more values provided are already "
             "present in the enumeration for column '{}', and deduplicate was "
@@ -1315,12 +1193,10 @@ ManagedQuery::_extend_and_evolve_schema_with_details<std::string>(
         // Check that we extend the enumeration values without
         // overflowing
         auto disk_index_type = schema_->attribute(column_name).type();
-        uint64_t max_capacity = ManagedQuery::_get_max_capacity(
-            disk_index_type);
+        uint64_t max_capacity = ManagedQuery::_get_max_capacity(disk_index_type);
         auto free_capacity = max_capacity - enum_values_existing.size();
         if (free_capacity < enum_values_to_add.size()) {
-            throw TileDBSOMAError(
-                "Cannot extend enumeration; reached maximum capacity");
+            throw TileDBSOMAError("Cannot extend enumeration; reached maximum capacity");
         }
 
         std::vector<uint8_t> extend_data(total_size);
@@ -1328,10 +1204,7 @@ ManagedQuery::_extend_and_evolve_schema_with_details<std::string>(
         extend_offsets.reserve(enum_values_to_add.size());
         size_t curr_offset = 0;
         for (const auto& enum_val : enum_values_to_add) {
-            std::memcpy(
-                extend_data.data() + curr_offset,
-                enum_val.data(),
-                enum_val.size());
+            std::memcpy(extend_data.data() + curr_offset, enum_val.data(), enum_val.size());
             extend_offsets.push_back(curr_offset);
             curr_offset += enum_val.size();
         }
@@ -1384,9 +1257,9 @@ ManagedQuery::_extend_and_evolve_schema_with_details(
     }
 
     if (value_array->null_count != 0) {
-        throw std::invalid_argument(fmt::format(
-            "[ManagedQuery] _extend_and_evolve_schema_with_details non-string: "
-            "null values are not supported"));
+        throw std::invalid_argument(
+            fmt::format("[ManagedQuery] _extend_and_evolve_schema_with_details non-string: "
+                        "null values are not supported"));
     }
     std::optional<std::vector<uint8_t>> validities = std::nullopt;
     if (index_array != nullptr) {
@@ -1400,8 +1273,7 @@ ManagedQuery::_extend_and_evolve_schema_with_details(
         // Specially handle Boolean types as their representation in Arrow (bit)
         // is different from what is in TileDB (uint8_t). Here we must copy.
         auto expanded = _bool_data_bits_to_bytes(value_schema, value_array);
-        enum_values_in_write.assign(
-            expanded.data(), expanded.data() + num_elems);
+        enum_values_in_write.assign(expanded.data(), expanded.data() + num_elems);
     } else {
         // General case. This is zero-copy since the Arrow buffer is already
         // contiguous, and the Arrow in-memory storage model is identical to the
@@ -1412,11 +1284,9 @@ ManagedQuery::_extend_and_evolve_schema_with_details(
         } else {
             data = (ValueType*)value_array->buffers[1] + value_array->offset;
         }
-        enum_values_in_write.assign(
-            (ValueType*)data, (ValueType*)data + num_elems);
+        enum_values_in_write.assign((ValueType*)data, (ValueType*)data + num_elems);
     }
-    std::unordered_set<ValueType> unique_values_in_write(
-        enum_values_in_write.begin(), enum_values_in_write.end());
+    std::unordered_set<ValueType> unique_values_in_write(enum_values_in_write.begin(), enum_values_in_write.end());
 
     // Check for non-unique values in the input, even before we check the
     // values in the array schema. See also sc-65078.
@@ -1436,8 +1306,7 @@ ManagedQuery::_extend_and_evolve_schema_with_details(
     std::vector<std::string_view> enum_values_in_write_as_sv(n);
     for (size_t i = 0; i < n; i++) {
         auto sv = std::string_view(
-            reinterpret_cast<const char*>(&enum_values_in_write[i]),
-            sizeof(enum_values_in_write[i]));
+            reinterpret_cast<const char*>(&enum_values_in_write[i]), sizeof(enum_values_in_write[i]));
         enum_values_in_write_as_sv[i] = sv;
     }
 
@@ -1465,18 +1334,15 @@ ManagedQuery::_extend_and_evolve_schema_with_details(
     // that transition will be seamless.
     std::unordered_set<std::string_view> existing_enums_set;
     for (const auto& enum_value_existing : enum_values_existing) {
-        auto sv = std::string_view(
-            static_cast<char*>((char*)&enum_value_existing),
-            sizeof(enum_value_existing));
+        auto sv = std::string_view(static_cast<char*>((char*)&enum_value_existing), sizeof(enum_value_existing));
         existing_enums_set.insert(sv);
     }
 
     // Find any new enumeration values
     std::vector<ValueType> enum_values_to_add;
 
-    std::optional<std::unordered_set<std::string_view>>
-        opt_covered_values = _find_covered_enum_values(
-            enum_values_in_write_as_sv, index_schema, index_array);
+    std::optional<std::unordered_set<std::string_view>> opt_covered_values = _find_covered_enum_values(
+        enum_values_in_write_as_sv, index_schema, index_array);
 
     if (opt_covered_values.has_value()) {
         const auto& covered_values = opt_covered_values.value();
@@ -1513,8 +1379,7 @@ ManagedQuery::_extend_and_evolve_schema_with_details(
     //    * If the deduplicate flag was passed, then we allow that, but
     //      we still need to pass core only the d,e values. (It will
     //      throw otherwise).
-    if (!deduplicate &&
-        enum_values_to_add.size() != enum_values_in_write.size()) {
+    if (!deduplicate && enum_values_to_add.size() != enum_values_in_write.size()) {
         throw TileDBSOMAError(fmt::format(
             "[extend_enumeration] one or more values provided are already "
             "present in the enumeration for column '{}', and deduplicate was "
@@ -1533,8 +1398,7 @@ ManagedQuery::_extend_and_evolve_schema_with_details(
         uint64_t max_capacity = _get_max_capacity(disk_index_type);
         auto free_capacity = max_capacity - enum_values_existing.size();
         if (free_capacity < enum_values_to_add.size()) {
-            throw TileDBSOMAError(
-                "Cannot extend enumeration; reached maximum capacity");
+            throw TileDBSOMAError("Cannot extend enumeration; reached maximum capacity");
         }
 
         // Take the existing enumeration values on disk and extend with the new
@@ -1555,8 +1419,7 @@ ManagedQuery::_extend_and_evolve_schema_with_details(
     }
 }
 
-std::vector<uint8_t> ManagedQuery::_bool_data_bits_to_bytes(
-    ArrowSchema* schema, ArrowArray* array) {
+std::vector<uint8_t> ManagedQuery::_bool_data_bits_to_bytes(ArrowSchema* schema, ArrowArray* array) {
     if (strcmp(schema->format, "b") != 0) {
         throw TileDBSOMAError(fmt::format(
             "_cast_bit_to_uint8 expected column format to be 'b' but saw "
@@ -1568,26 +1431,22 @@ std::vector<uint8_t> ManagedQuery::_bool_data_bits_to_bytes(
     return *util::bitmap_to_uint8(data, array->length, array->offset);
 }
 
-std::optional<std::vector<uint8_t>> ManagedQuery::_cast_validity_buffer(
-    ArrowArray* array) {
-    const uint8_t* validity = reinterpret_cast<const uint8_t*>(
-        array->buffers[0]);
+std::optional<std::vector<uint8_t>> ManagedQuery::_cast_validity_buffer(ArrowArray* array) {
+    const uint8_t* validity = reinterpret_cast<const uint8_t*>(array->buffers[0]);
     return util::bitmap_to_uint8(validity, array->length, array->offset);
 }
 
 template <>
-std::vector<std::string_view> ManagedQuery::_enumeration_values_view(
-    Enumeration& enumeration) {
+std::vector<std::string_view> ManagedQuery::_enumeration_values_view(Enumeration& enumeration) {
     const void* data;
     uint64_t data_size;
 
-    ctx_->handle_error(tiledb_enumeration_get_data(
-        ctx_->ptr().get(), enumeration.ptr().get(), &data, &data_size));
+    ctx_->handle_error(tiledb_enumeration_get_data(ctx_->ptr().get(), enumeration.ptr().get(), &data, &data_size));
 
     const void* offsets;
     uint64_t offsets_size;
-    ctx_->handle_error(tiledb_enumeration_get_offsets(
-        ctx_->ptr().get(), enumeration.ptr().get(), &offsets, &offsets_size));
+    ctx_->handle_error(
+        tiledb_enumeration_get_offsets(ctx_->ptr().get(), enumeration.ptr().get(), &offsets, &offsets_size));
 
     std::string_view char_data(static_cast<const char*>(data), data_size);
     const uint64_t* elems = static_cast<const uint64_t*>(offsets);
@@ -1609,10 +1468,7 @@ std::vector<std::string_view> ManagedQuery::_enumeration_values_view(
 }
 
 Enumeration ManagedQuery::get_enumeration(
-    std::shared_ptr<Context> ctx,
-    std::shared_ptr<Array> arr,
-    ArrowSchema* index_schema,
-    ArrowSchema* value_schema) {
+    std::shared_ptr<Context> ctx, std::shared_ptr<Array> arr, ArrowSchema* index_schema, ArrowSchema* value_schema) {
     return util::get_enumeration(ctx, arr, index_schema, value_schema);
 }
 };  // namespace tiledbsoma

@@ -34,8 +34,7 @@ KHASH_MAP_INIT_INT64(m64, int64_t)
 // exception.
 std::vector<bool> uniqueness = {false, false, true, true, true};
 
-bool run_test(
-    size_t id, std::vector<int64_t> keys, std::vector<int64_t> lookups) {
+bool run_test(size_t id, std::vector<int64_t> keys, std::vector<int64_t> lookups) {
     try {
         std::vector<int64_t> indexer_results;
         indexer_results.resize(lookups.size());
@@ -79,47 +78,40 @@ bool run_test(
 std::vector<std::unordered_map<std::string, std::vector<int64_t>>> test_data = {
     {
         {"keys", {-1, -1, -1, 0, 0, 0}},
-        {"lookups",
-         {1, 2, 3, 4, 5, 1, 2, 3, 4, 5, 1, 2, 3, 4, 5, 1, 2, 3, 4, 5}},
+        {"lookups", {1, 2, 3, 4, 5, 1, 2, 3, 4, 5, 1, 2, 3, 4, 5, 1, 2, 3, 4, 5}},
     },
     {{"keys",
       {
-          -1, 1, 2, 3, 4, 5, -1, 1, 2, 3, 4, 5,
-          -1, 1, 2, 3, 4, 5, -1, 1, 2, 3, 4, 5,
+          -1, 1, 2, 3, 4, 5, -1, 1, 2, 3, 4, 5, -1, 1, 2, 3, 4, 5, -1, 1, 2, 3, 4, 5,
       }},
      {"lookups", {-10000, 1, 2, 3, 5, 6}}},
     {
         {"keys", {-1, 1, 2, 3, 4, 5}},
         {"lookups",
          {
-             -1, 1, 2, 3, 4, 5, -1, 1, 2, 3, 4, 5,
-             -1, 1, 2, 3, 4, 5, -1, 1, 2, 3, 4, 5,
+             -1, 1, 2, 3, 4, 5, -1, 1, 2, 3, 4, 5, -1, 1, 2, 3, 4, 5, -1, 1, 2, 3, 4, 5,
          }},
     },
     {
         {"keys", {-10000, -100000, 200000, 5, 1, 7}},
         {"lookups",
          {
-             -1, 1, 2, 3, 4, 5, -1, 1, 2, 3, 4, 5,
-             -1, 1, 2, 3, 4, 5, -1, 1, 2, 3, 4, 5,
+             -1, 1, 2, 3, 4, 5, -1, 1, 2, 3, 4, 5, -1, 1, 2, 3, 4, 5, -1, 1, 2, 3, 4, 5,
          }},
     },
     {
         {"keys", {-10000, -200000, 1000, 3000, 1, 2}},
         {"lookups",
          {
-             -1, 1, 2, 3, 4, 5, -1, 1, 2, 3, 4, 5,
-             -1, 1, 2, 3, 4, 5, -1, 1, 2, 3, 4, 5,
+             -1, 1, 2, 3, 4, 5, -1, 1, 2, 3, 4, 5, -1, 1, 2, 3, 4, 5, -1, 1, 2, 3, 4, 5,
          }},
     }};
 
 TEST_CASE("C++ re-indexer") {
     for (size_t test = 0; test < test_data.size(); test++) {
-        bool result = run_test(
-            test, test_data[test]["keys"], test_data[test]["lookups"]);
+        bool result = run_test(test, test_data[test]["keys"], test_data[test]["lookups"]);
         if (!result) {
-            throw std::runtime_error(
-                "Test " + std::to_string(test) + " failed");
+            throw std::runtime_error("Test " + std::to_string(test) + " failed");
         }
     }
 }

@@ -26,9 +26,8 @@ std::shared_ptr<SOMAColumn> SOMAAttribute::deserialize(
             "'tiledb_attributes'");
     }
 
-    std::vector<std::string>
-        attribute_names = soma_schema[TILEDB_SOMA_SCHEMA_COL_ATTR_KEY]
-                              .template get<std::vector<std::string>>();
+    std::vector<std::string> attribute_names = soma_schema[TILEDB_SOMA_SCHEMA_COL_ATTR_KEY]
+                                                   .template get<std::vector<std::string>>();
 
     if (attribute_names.size() != 1) {
         throw TileDBSOMAError(fmt::format(
@@ -43,28 +42,21 @@ std::shared_ptr<SOMAColumn> SOMAAttribute::deserialize(
     }
 
     auto attribute = array.schema().attribute(attribute_names[0]);
-    auto enumeration_name = AttributeExperimental::get_enumeration_name(
-        ctx, attribute);
+    auto enumeration_name = AttributeExperimental::get_enumeration_name(ctx, attribute);
 
-    std::optional<Enumeration>
-        enumeration = enumeration_name.has_value() ?
-                          std::make_optional(ArrayExperimental::get_enumeration(
-                              ctx, array, enumeration_name.value())) :
-                          std::nullopt;
+    std::optional<Enumeration> enumeration = enumeration_name.has_value() ?
+                                                 std::make_optional(ArrayExperimental::get_enumeration(
+                                                     ctx, array, enumeration_name.value())) :
+                                                 std::nullopt;
 
     return std::make_shared<SOMAAttribute>(attribute, enumeration);
 }
 
 std::shared_ptr<SOMAAttribute> SOMAAttribute::create(
-    std::shared_ptr<Context> ctx,
-    ArrowSchema* schema,
-    std::string_view type_metadata,
-    PlatformConfig platform_config) {
-    auto attribute = ArrowAdapter::tiledb_attribute_from_arrow_schema(
-        ctx, schema, type_metadata, platform_config);
+    std::shared_ptr<Context> ctx, ArrowSchema* schema, std::string_view type_metadata, PlatformConfig platform_config) {
+    auto attribute = ArrowAdapter::tiledb_attribute_from_arrow_schema(ctx, schema, type_metadata, platform_config);
 
-    return std::make_shared<SOMAAttribute>(
-        SOMAAttribute(attribute.first, attribute.second));
+    return std::make_shared<SOMAAttribute>(SOMAAttribute(attribute.first, attribute.second));
 }
 
 void SOMAAttribute::_set_dim_points(ManagedQuery&, const std::any&) const {
@@ -81,8 +73,7 @@ void SOMAAttribute::_set_dim_ranges(ManagedQuery&, const std::any&) const {
         name()));
 }
 
-void SOMAAttribute::_set_current_domain_slot(
-    NDRectangle&, std::span<const std::any>) const {
+void SOMAAttribute::_set_current_domain_slot(NDRectangle&, std::span<const std::any>) const {
     throw TileDBSOMAError(fmt::format(
         "[SOMAAttribute][_set_current_domain_slot] Column with name {} is not "
         "an index column",
@@ -111,16 +102,14 @@ std::any SOMAAttribute::_non_empty_domain_slot(Array&) const {
         name()));
 }
 
-std::any SOMAAttribute::_non_empty_domain_slot_opt(
-    const SOMAContext&, Array&) const {
+std::any SOMAAttribute::_non_empty_domain_slot_opt(const SOMAContext&, Array&) const {
     throw TileDBSOMAError(fmt::format(
         "[SOMAAttribute][_non_empty_domain_slot] Column with name {} is not an "
         "index column",
         name()));
 }
 
-std::any SOMAAttribute::_core_current_domain_slot(
-    const SOMAContext&, Array&) const {
+std::any SOMAAttribute::_core_current_domain_slot(const SOMAContext&, Array&) const {
     throw TileDBSOMAError(fmt::format(
         "[SOMAAttribute][_core_current_domain_slot] Column with name {} is not "
         "an index column",
@@ -142,17 +131,14 @@ std::pair<ArrowArray*, ArrowSchema*> SOMAAttribute::arrow_domain_slot(
         name()));
 }
 
-ArrowSchema* SOMAAttribute::arrow_schema_slot(
-    const SOMAContext& ctx, Array& array) const {
-    return ArrowAdapter::arrow_schema_from_tiledb_attribute(
-        attribute, *ctx.tiledb_ctx(), array);
+ArrowSchema* SOMAAttribute::arrow_schema_slot(const SOMAContext& ctx, Array& array) const {
+    return ArrowAdapter::arrow_schema_from_tiledb_attribute(attribute, *ctx.tiledb_ctx(), array);
 }
 
 void SOMAAttribute::serialize(nlohmann::json& columns_schema) const {
     nlohmann::json column;
 
-    column[TILEDB_SOMA_SCHEMA_COL_TYPE_KEY] = static_cast<uint32_t>(
-        soma_column_datatype_t::SOMA_COLUMN_ATTRIBUTE);
+    column[TILEDB_SOMA_SCHEMA_COL_TYPE_KEY] = static_cast<uint32_t>(soma_column_datatype_t::SOMA_COLUMN_ATTRIBUTE);
     column[TILEDB_SOMA_SCHEMA_COL_ATTR_KEY] = {attribute.name()};
 
     columns_schema.push_back(column);

@@ -11,8 +11,7 @@ class Polygon {
    public:
     Polygon(
         std::vector<BasePoint>&& exteriorRing = std::vector<BasePoint>(),
-        std::vector<std::vector<BasePoint>>&& interiorRings =
-            std::vector<std::vector<BasePoint>>());
+        std::vector<std::vector<BasePoint>>&& interiorRings = std::vector<std::vector<BasePoint>>());
     ~Polygon();
 
     std::vector<BasePoint> exteriorRing;

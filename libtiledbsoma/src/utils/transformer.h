@@ -29,15 +29,12 @@ class Transformer {
    public:
     virtual ~Transformer();
 
-    virtual ArrowTable apply(
-        managed_unique_ptr<ArrowArray>, managed_unique_ptr<ArrowSchema>) = 0;
+    virtual ArrowTable apply(managed_unique_ptr<ArrowArray>, managed_unique_ptr<ArrowSchema>) = 0;
 };
 
 class TransformerPipeline {
    public:
-    TransformerPipeline(
-        managed_unique_ptr<ArrowArray> array,
-        managed_unique_ptr<ArrowSchema> schema);
+    TransformerPipeline(managed_unique_ptr<ArrowArray> array, managed_unique_ptr<ArrowSchema> schema);
 
     TransformerPipeline(TransformerPipeline&& other);
 
@@ -46,8 +43,7 @@ class TransformerPipeline {
     TransformerPipeline& operator=(TransformerPipeline&& other);
 
     TransformerPipeline& transform(std::shared_ptr<Transformer> transformer) {
-        std::tie(array, schema) = transformer->apply(
-            std::move(array), std::move(schema));
+        std::tie(array, schema) = transformer->apply(std::move(array), std::move(schema));
 
         return *this;
     }
@@ -55,28 +51,18 @@ class TransformerPipeline {
     template <class T>
         requires std::derived_from<T, Transformer>
     TransformerPipeline& transform(T transformer) {
-        std::tie(array, schema) = transformer.apply(
-            std::move(array), std::move(schema));
+        std::tie(array, schema) = transformer.apply(std::move(array), std::move(schema));
 
         return *this;
     }
 
     template <typename T, class... Ts>
-        requires std::invocable<
-                     T,
-                     managed_unique_ptr<ArrowArray>,
-                     managed_unique_ptr<ArrowSchema>,
-                     Ts...> &&
+        requires std::invocable<T, managed_unique_ptr<ArrowArray>, managed_unique_ptr<ArrowSchema>, Ts...> &&
                  std::same_as<
-                     std::invoke_result_t<
-                         T,
-                         managed_unique_ptr<ArrowArray>,
-                         managed_unique_ptr<ArrowSchema>,
-                         Ts...>,
+                     std::invoke_result_t<T, managed_unique_ptr<ArrowArray>, managed_unique_ptr<ArrowSchema>, Ts...>,
                      ArrowTable>
     TransformerPipeline& transform(T transformer, Ts... args) {
-        std::tie(array, schema) = transformer(
-            std::move(array), std::move(schema), args...);
+        std::tie(array, schema) = transformer(std::move(array), std::move(schema), args...);
 
         return *this;
     }

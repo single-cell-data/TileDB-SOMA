@@ -57,10 +57,7 @@ std::tuple<std::string, uint64_t> create_array(
     // Create schema
     ArraySchema schema(*ctx->tiledb_ctx(), TILEDB_SPARSE);
 
-    auto dim = Dimension::create<int64_t>(
-        *ctx->tiledb_ctx(),
-        dim_name,
-        {0, std::numeric_limits<int64_t>::max() - 1});
+    auto dim = Dimension::create<int64_t>(*ctx->tiledb_ctx(), dim_name, {0, std::numeric_limits<int64_t>::max() - 1});
 
     Domain domain(*ctx->tiledb_ctx());
     domain.add_dimension(dim);
@@ -72,13 +69,7 @@ std::tuple<std::string, uint64_t> create_array(
     schema.check();
 
     // Create array
-    SOMAArray::create(
-        ctx,
-        uri,
-        std::move(schema),
-        "NONE",
-        std::nullopt,
-        TimestampRange(0, 2));
+    SOMAArray::create(ctx, uri, std::move(schema), "NONE", std::nullopt, TimestampRange(0, 2));
 
     uint64_t nnz = num_fragments * num_cells_per_fragment;
 
@@ -112,11 +103,7 @@ std::tuple<std::vector<int64_t>, std::vector<int32_t>> write_array(
     // Write to SOMAArray
     for (auto i = 0; i < num_fragments; ++i) {
         auto frag_num = frags[i];
-        auto soma_array = SOMAArray::open(
-            OpenMode::soma_write,
-            uri,
-            ctx,
-            TimestampRange(timestamp + i, timestamp + i));
+        auto soma_array = SOMAArray::open(OpenMode::soma_write, uri, ctx, TimestampRange(timestamp + i, timestamp + i));
 
         std::vector<int64_t> d0(num_cells_per_fragment);
         for (int j = 0; j < num_cells_per_fragment; j++) {
@@ -132,30 +119,22 @@ std::tuple<std::vector<int64_t>, std::vector<int32_t>> write_array(
         // Write data to array
         auto mq = ManagedQuery(*soma_array, ctx->tiledb_ctx(), "");
         mq.set_layout(ResultOrder::unordered);
-        mq.setup_write_column(
-            attr_name, a0.size(), a0.data(), (uint64_t*)nullptr);
-        mq.setup_write_column(
-            dim_name, d0.size(), d0.data(), (uint64_t*)nullptr);
+        mq.setup_write_column(attr_name, a0.size(), a0.data(), (uint64_t*)nullptr);
+        mq.setup_write_column(dim_name, d0.size(), d0.data(), (uint64_t*)nullptr);
         mq.submit_write();
         mq.close();
         soma_array->close();
     }
 
     // Read from TileDB Array to get expected data
-    Array tiledb_array(
-        *ctx->tiledb_ctx(),
-        uri,
-        TILEDB_READ,
-        TemporalPolicy(TimeTravel, timestamp + num_fragments - 1));
+    Array tiledb_array(*ctx->tiledb_ctx(), uri, TILEDB_READ, TemporalPolicy(TimeTravel, timestamp + num_fragments - 1));
     tiledb_array.reopen();
 
     std::vector<int64_t> expected_d0(num_cells_per_fragment * num_fragments);
     std::vector<int32_t> expected_a0(num_cells_per_fragment * num_fragments);
 
     Query query(*ctx->tiledb_ctx(), tiledb_array);
-    query.set_layout(TILEDB_UNORDERED)
-        .set_data_buffer(dim_name, expected_d0)
-        .set_data_buffer(attr_name, expected_a0);
+    query.set_layout(TILEDB_UNORDERED).set_data_buffer(dim_name, expected_d0).set_data_buffer(attr_name, expected_a0);
     query.submit();
 
     tiledb_array.close();
@@ -179,10 +158,7 @@ TEST_CASE("SOMAArray: random nnz") {
     // Create schema
     ArraySchema schema(*ctx->tiledb_ctx(), TILEDB_SPARSE);
 
-    auto dim = Dimension::create<int64_t>(
-        *ctx->tiledb_ctx(),
-        dim_name,
-        {0, std::numeric_limits<int64_t>::max() - 1});
+    auto dim = Dimension::create<int64_t>(*ctx->tiledb_ctx(), dim_name, {0, std::numeric_limits<int64_t>::max() - 1});
 
     Domain domain(*ctx->tiledb_ctx());
     domain.add_dimension(dim);
@@ -194,18 +170,11 @@ TEST_CASE("SOMAArray: random nnz") {
     schema.check();
 
     // Create array
-    SOMAArray::create(
-        ctx,
-        base_uri,
-        std::move(schema),
-        "NONE",
-        std::nullopt,
-        TimestampRange(0, 2));
+    SOMAArray::create(ctx, base_uri, std::move(schema), "NONE", std::nullopt, TimestampRange(0, 2));
 
     std::vector<size_t> fragment_ids(10);
     std::iota(fragment_ids.begin(), fragment_ids.end(), 0);
-    std::shuffle(
-        fragment_ids.begin(), fragment_ids.end(), std::random_device{});
+    std::shuffle(fragment_ids.begin(), fragment_ids.end(), std::random_device{});
 
     // Generate 10 random fragments with no overlap
     for (size_t i : fragment_ids) {
@@ -218,10 +187,8 @@ TEST_CASE("SOMAArray: random nnz") {
         // Write data to array
         auto mq = ManagedQuery(*soma_array, ctx->tiledb_ctx(), "");
         mq.set_layout(ResultOrder::unordered);
-        mq.setup_write_column(
-            attr_name, a0.size(), a0.data(), (uint64_t*)nullptr);
-        mq.setup_write_column(
-            dim_name, d0.size(), d0.data(), (uint64_t*)nullptr);
+        mq.setup_write_column(attr_name, a0.size(), a0.data(), (uint64_t*)nullptr);
+        mq.setup_write_column(dim_name, d0.size(), d0.data(), (uint64_t*)nullptr);
         mq.submit_write();
         mq.close();
         soma_array->close();
@@ -231,8 +198,7 @@ TEST_CASE("SOMAArray: random nnz") {
     {
         std::random_device dev;
         std::mt19937 rng(dev());
-        std::uniform_int_distribution<std::mt19937::result_type> dist(
-            256, 1023);
+        std::uniform_int_distribution<std::mt19937::result_type> dist(256, 1023);
 
         auto limit0 = dist(rng);
         auto limit1 = dist(rng);
@@ -249,10 +215,8 @@ TEST_CASE("SOMAArray: random nnz") {
         // Write data to array
         auto mq = ManagedQuery(*soma_array, ctx->tiledb_ctx(), "");
         mq.set_layout(ResultOrder::unordered);
-        mq.setup_write_column(
-            attr_name, a0.size(), a0.data(), (uint64_t*)nullptr);
-        mq.setup_write_column(
-            dim_name, d0.size(), d0.data(), (uint64_t*)nullptr);
+        mq.setup_write_column(attr_name, a0.size(), a0.data(), (uint64_t*)nullptr);
+        mq.setup_write_column(dim_name, d0.size(), d0.data(), (uint64_t*)nullptr);
         mq.submit_write();
         mq.close();
         soma_array->close();
@@ -287,8 +251,7 @@ TEST_CASE("SOMAArray: nnz") {
     // header spd/log/fmt/fmt.h and should not be used. In C++20, this can be
     // replaced with std::format.
     std::ostringstream section;
-    section << "- fragments=" << num_fragments << ", overlap" << overlap
-            << ", allow_duplicates=" << allow_duplicates;
+    section << "- fragments=" << num_fragments << ", overlap" << overlap << ", allow_duplicates=" << allow_duplicates;
 
     SECTION(section.str()) {
         auto ctx = std::make_shared<SOMAContext>();
@@ -296,28 +259,15 @@ TEST_CASE("SOMAArray: nnz") {
         // Create array
         std::string base_uri = "mem://unit-test-array";
         auto [uri, expected_nnz] = create_array(
-            base_uri,
-            ctx,
-            num_cells_per_fragment,
-            num_fragments,
-            overlap,
-            allow_duplicates);
+            base_uri, ctx, num_cells_per_fragment, num_fragments, overlap, allow_duplicates);
 
         // Write at timestamp 10
         auto [expected_d0, expected_a0] = write_array(
-            uri,
-            ctx,
-            num_cells_per_fragment,
-            num_fragments,
-            overlap,
-            timestamp);
+            uri, ctx, num_cells_per_fragment, num_fragments, overlap, timestamp);
 
         // Get total cell num
         auto soma_array = SOMAArray::open(
-            OpenMode::soma_read,
-            uri,
-            ctx,
-            TimestampRange(timestamp, timestamp + num_fragments - 1));
+            OpenMode::soma_read, uri, ctx, TimestampRange(timestamp, timestamp + num_fragments - 1));
 
         uint64_t nnz = soma_array->nnz();
         REQUIRE(nnz == expected_nnz);
@@ -332,9 +282,7 @@ TEST_CASE("SOMAArray: nnz") {
         mq.set_layout(ResultOrder::unordered);
         while (!mq.results_complete()) {
             auto arrbuf = mq.read_next().value();
-            REQUIRE(
-                arrbuf->names() ==
-                std::vector<std::string>({dim_name, attr_name}));
+            REQUIRE(arrbuf->names() == std::vector<std::string>({dim_name, attr_name}));
             REQUIRE(arrbuf->num_rows() == nnz);
 
             auto d0span = arrbuf->at(dim_name)->data<int64_t>();
@@ -361,8 +309,7 @@ TEST_CASE("SOMAArray: nnz with timestamp") {
     // header spd/log/fmt/fmt.h and should not be used. In C++20, this can be
     // replaced with std::format.
     std::ostringstream section;
-    section << "- fragments=" << num_fragments << ", overlap" << overlap
-            << ", allow_duplicates=" << allow_duplicates;
+    section << "- fragments=" << num_fragments << ", overlap" << overlap << ", allow_duplicates=" << allow_duplicates;
 
     SECTION(section.str()) {
         auto ctx = std::make_shared<SOMAContext>();
@@ -370,26 +317,18 @@ TEST_CASE("SOMAArray: nnz with timestamp") {
         // Create array
         std::string base_uri = "mem://unit-test-array";
         const auto& [uri, expected_nnz] = create_array(
-            base_uri,
-            ctx,
-            num_cells_per_fragment,
-            num_fragments,
-            overlap,
-            allow_duplicates);
+            base_uri, ctx, num_cells_per_fragment, num_fragments, overlap, allow_duplicates);
 
         // Write at timestamp 10
-        write_array(
-            uri, ctx, num_cells_per_fragment, num_fragments, overlap, 10);
+        write_array(uri, ctx, num_cells_per_fragment, num_fragments, overlap, 10);
 
         // Write more data to the array at timestamp 40, which will be
         // not be included in the nnz call with a timestamp
-        write_array(
-            uri, ctx, num_cells_per_fragment, num_fragments, overlap, 40);
+        write_array(uri, ctx, num_cells_per_fragment, num_fragments, overlap, 40);
 
         // Get total cell num at timestamp (0, 20)
         TimestampRange timestamp{0, 20};
-        auto soma_array = SOMAArray::open(
-            OpenMode::soma_read, uri, ctx, timestamp);
+        auto soma_array = SOMAArray::open(OpenMode::soma_read, uri, ctx, timestamp);
 
         uint64_t nnz = soma_array->nnz();
         REQUIRE(nnz == expected_nnz);
@@ -408,8 +347,7 @@ TEST_CASE("SOMAArray: nnz with consolidation") {
     // header spd/log/fmt/fmt.h and should not be used. In C++20, this can be
     // replaced with std::format.
     std::ostringstream section;
-    section << "- fragments=" << num_fragments << ", overlap" << overlap
-            << ", allow_duplicates=" << allow_duplicates;
+    section << "- fragments=" << num_fragments << ", overlap" << overlap << ", allow_duplicates=" << allow_duplicates;
 
     SECTION(section.str()) {
         auto ctx = std::make_shared<SOMAContext>();
@@ -417,22 +355,15 @@ TEST_CASE("SOMAArray: nnz with consolidation") {
         // Create array
         std::string base_uri = "mem://unit-test-array";
         const auto& [uri, expected_nnz] = create_array(
-            base_uri,
-            ctx,
-            num_cells_per_fragment,
-            num_fragments,
-            overlap,
-            allow_duplicates);
+            base_uri, ctx, num_cells_per_fragment, num_fragments, overlap, allow_duplicates);
 
         // Write at timestamp 10
-        write_array(
-            uri, ctx, num_cells_per_fragment, num_fragments, overlap, 10);
+        write_array(uri, ctx, num_cells_per_fragment, num_fragments, overlap, 10);
 
         // Write more data to the array at timestamp 20, which will be
         // duplicates of the data written at timestamp 10
         // The duplicates get merged into one fragment during consolidation.
-        write_array(
-            uri, ctx, num_cells_per_fragment, num_fragments, overlap, 20);
+        write_array(uri, ctx, num_cells_per_fragment, num_fragments, overlap, 20);
 
         // Consolidate and optionally vacuum
         Array::consolidate(*ctx->tiledb_ctx(), uri);
@@ -458,8 +389,7 @@ TEST_CASE("SOMAArray: metadata") {
     std::string base_uri = "mem://unit-test-array";
     const auto& [uri, expected_nnz] = create_array(base_uri, ctx);
 
-    auto soma_array = SOMAArray::open(
-        OpenMode::soma_write, uri, ctx, TimestampRange(1, 1));
+    auto soma_array = SOMAArray::open(OpenMode::soma_write, uri, ctx, TimestampRange(1, 1));
 
     int32_t val = 100;
     soma_array->set_metadata("md", TILEDB_INT32, 1, &val);
@@ -541,8 +471,7 @@ TEST_CASE("SOMAArray: ResultOrder") {
     REQUIRE(mq.result_order() == ResultOrder::rowmajor);
     mq.set_layout(ResultOrder::colmajor);
     REQUIRE(mq.result_order() == ResultOrder::colmajor);
-    REQUIRE_THROWS_AS(
-        mq.set_layout(static_cast<ResultOrder>(10)), std::invalid_argument);
+    REQUIRE_THROWS_AS(mq.set_layout(static_cast<ResultOrder>(10)), std::invalid_argument);
 }
 
 TEST_CASE("SOMAArray: Write and read back Boolean") {
@@ -571,20 +500,16 @@ TEST_CASE("SOMAArray: Write and read back Boolean") {
     arrow_schema->dictionary = nullptr;
     arrow_schema->metadata = nullptr;
     arrow_schema->release = &ArrowAdapter::release_schema;
-    arrow_schema->children = (ArrowSchema**)malloc(
-        arrow_schema->n_children * sizeof(ArrowSchema*));
-    ArrowSchema* arrow_dim = arrow_schema->children[0] = (ArrowSchema*)malloc(
-        sizeof(ArrowSchema));
-    arrow_dim->format = strdup(
-        ArrowAdapter::tdb_to_arrow_type(TILEDB_INT64).c_str());
+    arrow_schema->children = (ArrowSchema**)malloc(arrow_schema->n_children * sizeof(ArrowSchema*));
+    ArrowSchema* arrow_dim = arrow_schema->children[0] = (ArrowSchema*)malloc(sizeof(ArrowSchema));
+    arrow_dim->format = strdup(ArrowAdapter::tdb_to_arrow_type(TILEDB_INT64).c_str());
     arrow_dim->name = strdup(dim_name);
     arrow_dim->n_children = 0;
     arrow_dim->dictionary = nullptr;
     arrow_dim->metadata = nullptr;
     arrow_dim->children = nullptr;
     arrow_dim->release = &ArrowAdapter::release_schema;
-    ArrowSchema* arrow_att = arrow_schema->children[1] = (ArrowSchema*)malloc(
-        sizeof(ArrowSchema));
+    ArrowSchema* arrow_att = arrow_schema->children[1] = (ArrowSchema*)malloc(sizeof(ArrowSchema));
     arrow_att->format = strdup("b");
     arrow_att->name = strdup(attr_name);
     arrow_att->n_children = 0;
@@ -605,8 +530,7 @@ TEST_CASE("SOMAArray: Write and read back Boolean") {
     arrow_array->children = (ArrowArray**)malloc(2 * sizeof(ArrowArray*));
     arrow_array->dictionary = nullptr;
 
-    auto d0_expected = arrow_array->children[0] = (ArrowArray*)malloc(
-        sizeof(ArrowArray));
+    auto d0_expected = arrow_array->children[0] = (ArrowArray*)malloc(sizeof(ArrowArray));
     d0_expected->length = 8;
     d0_expected->null_count = 0;
     d0_expected->offset = 0;
@@ -622,8 +546,7 @@ TEST_CASE("SOMAArray: Write and read back Boolean") {
     int64_t d0_data[] = {0, 1, 2, 3, 4, 5, 6, 7};
     std::memcpy((void*)d0_expected->buffers[1], &d0_data, sizeof(int64_t) * 8);
 
-    auto a0_expected = arrow_array->children[1] = (ArrowArray*)malloc(
-        sizeof(ArrowArray));
+    auto a0_expected = arrow_array->children[1] = (ArrowArray*)malloc(sizeof(ArrowArray));
     ;
     a0_expected->length = 8;
     a0_expected->null_count = 0;
@@ -651,14 +574,11 @@ TEST_CASE("SOMAArray: Write and read back Boolean") {
     auto arrbuf = mq_read.read_next().value();
 
     auto d0_span = arrbuf->at(dim_name)->data<int64_t>();
-    REQUIRE(
-        std::vector<int64_t>(d0_span.begin(), d0_span.end()) ==
-        std::vector<int64_t>(d0_data, d0_data + 8));
+    REQUIRE(std::vector<int64_t>(d0_span.begin(), d0_span.end()) == std::vector<int64_t>(d0_data, d0_data + 8));
 
     auto a0_span = arrbuf->at(attr_name)->data<bool>();
     REQUIRE(
         std::vector<bool>(a0_span.begin(), a0_span.end()) ==
-        std::vector<bool>(
-            {false, true, false, true, false, true, false, true}));
+        std::vector<bool>({false, true, false, true, false, true, false, true}));
     soma_array->close();
 }

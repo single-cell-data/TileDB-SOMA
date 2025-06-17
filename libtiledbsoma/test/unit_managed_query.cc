@@ -51,8 +51,7 @@ auto create_array(const std::string& uri, Context& ctx) {
 
     // Create schema
     ArraySchema schema(ctx, TILEDB_SPARSE);
-    auto dim = Dimension::create(
-        ctx, dim_name, TILEDB_STRING_ASCII, nullptr, nullptr);
+    auto dim = Dimension::create(ctx, dim_name, TILEDB_STRING_ASCII, nullptr, nullptr);
     dim.set_cell_val_num(TILEDB_VAR_NUM);
 
     Domain domain(ctx);
@@ -68,12 +67,10 @@ auto create_array(const std::string& uri, Context& ctx) {
     Array::create(uri, std::move(schema));
     Array array(ctx, uri, TILEDB_WRITE);
 
-    std::vector<std::string> d0 = {
-        "a", "bb", "ccc", "dddd", "eeeee", "fffffff"};
+    std::vector<std::string> d0 = {"a", "bb", "ccc", "dddd", "eeeee", "fffffff"};
     auto [d0_data, d0_offsets] = util::to_varlen_buffers(d0, false);
 
-    std::vector<std::string> a0 = {
-        "A", "BB", "CCC", "DDDD", "EEEEE", "FFFFFFF"};
+    std::vector<std::string> a0 = {"A", "BB", "CCC", "DDDD", "EEEEE", "FFFFFFF"};
     auto [a0_data, a0_offsets] = util::to_varlen_buffers(a0, false);
 
     std::vector<uint8_t> a0_valids = {1, 1, 1, 1, 0, 0};
@@ -90,8 +87,7 @@ auto create_array(const std::string& uri, Context& ctx) {
     array.close();
 
     // Open the array for reading and return a shared pointer
-    return std::tuple(
-        std::make_shared<Array>(ctx, uri, TILEDB_READ), d0, a0, a0_valids);
+    return std::tuple(std::make_shared<Array>(ctx, uri, TILEDB_READ), d0, a0, a0_valids);
 }
 
 };  // namespace
@@ -140,8 +136,7 @@ TEST_CASE("ManagedQuery: Select test") {
     REQUIRE_THROWS(mq.strings(dim_name));
     REQUIRE_THROWS(mq.string_view("d1", 0));
 
-    REQUIRE_THAT(
-        std::string(a0[0]), Equals(std::string(mq.string_view(attr_name, 0))));
+    REQUIRE_THAT(std::string(a0[0]), Equals(std::string(mq.string_view(attr_name, 0))));
 }
 
 TEST_CASE("ManagedQuery: Validity test") {

@@ -39,8 +39,7 @@ class ColumnBuffer {
     // hardware including modern laptops and a broad range of EC2 instances. CI
     // can ask for smaller; power-server users can ask for larger.
     inline static const size_t DEFAULT_ALLOC_BYTES = 1 << 30;
-    inline static const std::string
-        CONFIG_KEY_INIT_BYTES = "soma.init_buffer_bytes";
+    inline static const std::string CONFIG_KEY_INIT_BYTES = "soma.init_buffer_bytes";
 
    public:
     //===================================================================
@@ -54,8 +53,7 @@ class ColumnBuffer {
      * @param name TileDB dimension or attribute name
      * @return ColumnBuffer
      */
-    static std::shared_ptr<ColumnBuffer> create(
-        std::shared_ptr<Array> array, std::string_view name);
+    static std::shared_ptr<ColumnBuffer> create(std::shared_ptr<Array> array, std::string_view name);
 
     /**
      * @brief Convert a bytemap to a bitmap in place.
@@ -116,15 +114,13 @@ class ColumnBuffer {
             "offsets must be either uint32_t* or uint64_t*");
 
         if (offsets != nullptr) {
-            offsets_ = std::vector<uint64_t>(
-                (T*)offsets, (T*)offsets + num_elems + 1);
+            offsets_ = std::vector<uint64_t>((T*)offsets, (T*)offsets + num_elems + 1);
 
             data_size_ = offsets_[num_elems];
             data_.assign((std::byte*)data, (std::byte*)data + data_size_);
         } else {
             data_size_ = num_elems;
-            data_.assign(
-                (std::byte*)data, (std::byte*)data + num_elems * type_size_);
+            data_.assign((std::byte*)data, (std::byte*)data + num_elems * type_size_);
         }
 
         if (validity.has_value()) {
@@ -201,8 +197,7 @@ class ColumnBuffer {
      */
     std::span<uint64_t> offsets() {
         if (!is_var_) {
-            throw TileDBSOMAError(
-                "[ColumnBuffer] Offsets buffer not defined for " + name_);
+            throw TileDBSOMAError("[ColumnBuffer] Offsets buffer not defined for " + name_);
         }
 
         return std::span<uint64_t>(offsets_.data(), num_cells_);
@@ -215,8 +210,7 @@ class ColumnBuffer {
      */
     std::span<uint8_t> validity() {
         if (!is_nullable_) {
-            throw TileDBSOMAError(
-                "[ColumnBuffer] Validity buffer not defined for " + name_);
+            throw TileDBSOMAError("[ColumnBuffer] Validity buffer not defined for " + name_);
         }
         return std::span<uint8_t>(validity_.data(), num_cells_);
     }
@@ -303,8 +297,7 @@ class ColumnBuffer {
      */
     void convert_enumeration() {
         if (!has_enumeration_) {
-            throw TileDBSOMAError(
-                "[ColumnBuffer] No enumeration defined for " + name_);
+            throw TileDBSOMAError("[ColumnBuffer] No enumeration defined for " + name_);
         }
         const size_t n_vec = enums_.size();  // plus one for extra offset
         enum_offsets_.resize(n_vec + 1);
@@ -325,8 +318,7 @@ class ColumnBuffer {
      */
     std::span<uint32_t> enum_offsets() {
         if (!has_enumeration_) {
-            throw TileDBSOMAError(
-                "[ColumnBuffer] No enumeration defined for " + name_);
+            throw TileDBSOMAError("[ColumnBuffer] No enumeration defined for " + name_);
         }
         return std::span<uint32_t>(enum_offsets_.data(), enum_offsets_.size());
     }
@@ -337,8 +329,7 @@ class ColumnBuffer {
      */
     std::span<char> enum_string() {
         if (!has_enumeration_) {
-            throw TileDBSOMAError(
-                "[ColumnBuffer] No enumeration defined for " + name_);
+            throw TileDBSOMAError("[ColumnBuffer] No enumeration defined for " + name_);
         }
         return std::span<char>(enum_str_.data(), enum_str_.length());
     }

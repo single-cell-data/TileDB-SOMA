@@ -48,8 +48,7 @@ PYBIND11_MODULE(pytiledbsoma, m) {
      * https://github.com/single-cell-data/TileDB-SOMA/pull/2963
      */
     py::register_exception_translator([](std::exception_ptr p) {
-        auto tiledb_soma_error = (py::object)py::module::import("tiledbsoma")
-                                     .attr("SOMAError");
+        auto tiledb_soma_error = (py::object)py::module::import("tiledbsoma").attr("SOMAError");
 
         try {
             if (p)
@@ -81,15 +80,11 @@ PYBIND11_MODULE(pytiledbsoma, m) {
     m.doc() = "SOMA acceleration library";
 
     m.def("version", []() { return tiledbsoma::version::as_string(); });
-    m.def("embedded_version_triple", []() {
-        return tiledbsoma::version::embedded_version_triple();
-    });
+    m.def("embedded_version_triple", []() { return tiledbsoma::version::embedded_version_triple(); });
 
     m.def(
         "config_logging",
-        [](const std::string& level, const std::string& logfile) {
-            LOG_CONFIG(level, logfile);
-        },
+        [](const std::string& level, const std::string& logfile) { LOG_CONFIG(level, logfile); },
         "level"_a,
         "logfile"_a = "");
 
@@ -126,15 +121,9 @@ PYBIND11_MODULE(pytiledbsoma, m) {
 
     py::class_<PlatformConfig>(m, "PlatformConfig")
         .def(py::init<>())
-        .def_readwrite(
-            "dataframe_dim_zstd_level",
-            &PlatformConfig::dataframe_dim_zstd_level)
-        .def_readwrite(
-            "sparse_nd_array_dim_zstd_level",
-            &PlatformConfig::sparse_nd_array_dim_zstd_level)
-        .def_readwrite(
-            "dense_nd_array_dim_zstd_level",
-            &PlatformConfig::sparse_nd_array_dim_zstd_level)
+        .def_readwrite("dataframe_dim_zstd_level", &PlatformConfig::dataframe_dim_zstd_level)
+        .def_readwrite("sparse_nd_array_dim_zstd_level", &PlatformConfig::sparse_nd_array_dim_zstd_level)
+        .def_readwrite("dense_nd_array_dim_zstd_level", &PlatformConfig::sparse_nd_array_dim_zstd_level)
         .def_readwrite("write_X_chunked", &PlatformConfig::write_X_chunked)
         .def_readwrite("goal_chunk_nnz", &PlatformConfig::goal_chunk_nnz)
         .def_readwrite("remote_cap_nbytes", &PlatformConfig::remote_cap_nbytes)
@@ -146,20 +135,16 @@ PYBIND11_MODULE(pytiledbsoma, m) {
         .def_readwrite("allows_duplicates", &PlatformConfig::allows_duplicates)
         .def_readwrite("tile_order", &PlatformConfig::tile_order)
         .def_readwrite("cell_order", &PlatformConfig::cell_order)
-        .def_readwrite(
-            "consolidate_and_vacuum", &PlatformConfig::consolidate_and_vacuum);
+        .def_readwrite("consolidate_and_vacuum", &PlatformConfig::consolidate_and_vacuum);
 
     py::class_<PlatformSchemaConfig>(m, "PlatformSchemaConfig")
         .def(py::init<>())
         .def_readwrite("capacity", &PlatformSchemaConfig::capacity)
-        .def_readwrite(
-            "offsets_filters", &PlatformSchemaConfig::offsets_filters)
-        .def_readwrite(
-            "validity_filters", &PlatformSchemaConfig::validity_filters)
+        .def_readwrite("offsets_filters", &PlatformSchemaConfig::offsets_filters)
+        .def_readwrite("validity_filters", &PlatformSchemaConfig::validity_filters)
         .def_readwrite("attrs", &PlatformSchemaConfig::attrs)
         .def_readwrite("dims", &PlatformSchemaConfig::dims)
-        .def_readwrite(
-            "allows_duplicates", &PlatformSchemaConfig::allows_duplicates)
+        .def_readwrite("allows_duplicates", &PlatformSchemaConfig::allows_duplicates)
         .def_readwrite("tile_order", &PlatformSchemaConfig::tile_order)
         .def_readwrite("cell_order", &PlatformSchemaConfig::cell_order);
 

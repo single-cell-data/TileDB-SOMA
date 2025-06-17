@@ -28,8 +28,7 @@ using namespace py::literals;
 using namespace tiledbsoma;
 
 void load_soma_geometry_dataframe(py::module& m) {
-    py::class_<SOMAGeometryDataFrame, SOMAArray, SOMAObject>(
-        m, "SOMAGeometryDataFrame")
+    py::class_<SOMAGeometryDataFrame, SOMAArray, SOMAObject>(m, "SOMAGeometryDataFrame")
 
         .def_static(
             "create",
@@ -63,11 +62,9 @@ void load_soma_geometry_dataframe(py::module& m) {
                 if (py::hasattr(metadata, "get")) {
                     for (int64_t i = 0; i < schema.n_children; ++i) {
                         auto child = schema.children[i];
-                        auto val = metadata.attr("get")(
-                            py::str(child->name).attr("encode")("utf-8"));
+                        auto val = metadata.attr("get")(py::str(child->name).attr("encode")("utf-8"));
 
-                        if (!val.is(py::none()) &&
-                            val.cast<std::string>() == "nullable") {
+                        if (!val.is(py::none()) && val.cast<std::string>() == "nullable") {
                             child->flags |= ARROW_FLAG_NULLABLE;
                         }
                     }
@@ -75,12 +72,9 @@ void load_soma_geometry_dataframe(py::module& m) {
 
                 ArrowSchema index_column_schema;
                 ArrowArray index_column_array;
-                uintptr_t
-                    index_column_schema_ptr = (uintptr_t)(&index_column_schema);
-                uintptr_t
-                    index_column_array_ptr = (uintptr_t)(&index_column_array);
-                index_column_info.attr("_export_to_c")(
-                    index_column_array_ptr, index_column_schema_ptr);
+                uintptr_t index_column_schema_ptr = (uintptr_t)(&index_column_schema);
+                uintptr_t index_column_array_ptr = (uintptr_t)(&index_column_array);
+                index_column_info.attr("_export_to_c")(index_column_array_ptr, index_column_schema_ptr);
 
                 SOMACoordinateSpace coord_space{axis_names, axis_units};
 
@@ -90,8 +84,7 @@ void load_soma_geometry_dataframe(py::module& m) {
                         make_managed_unique<ArrowSchema>(schema),
                         ArrowTable(
                             make_managed_unique<ArrowArray>(index_column_array),
-                            make_managed_unique<ArrowSchema>(
-                                index_column_schema)),
+                            make_managed_unique<ArrowSchema>(index_column_schema)),
                         coord_space,
                         context,
                         platform_config,
@@ -118,8 +111,7 @@ void load_soma_geometry_dataframe(py::module& m) {
                 std::string_view,
                 OpenMode,
                 std::shared_ptr<SOMAContext>,
-                std::optional<std::pair<uint64_t, uint64_t>>>(
-                &SOMAGeometryDataFrame::open),
+                std::optional<std::pair<uint64_t, uint64_t>>>(&SOMAGeometryDataFrame::open),
             "uri"_a,
             "mode"_a,
             "context"_a,
@@ -128,11 +120,7 @@ void load_soma_geometry_dataframe(py::module& m) {
             py::call_guard<py::gil_scoped_release>())
 
         .def_static("exists", &SOMAGeometryDataFrame::exists)
-        .def_property_readonly(
-            "index_column_names", &SOMAGeometryDataFrame::index_column_names)
-        .def_property_readonly(
-            "count",
-            &SOMAGeometryDataFrame::count,
-            py::call_guard<py::gil_scoped_release>());
+        .def_property_readonly("index_column_names", &SOMAGeometryDataFrame::index_column_names)
+        .def_property_readonly("count", &SOMAGeometryDataFrame::count, py::call_guard<py::gil_scoped_release>());
 }
 }  // namespace libtiledbsomacpp

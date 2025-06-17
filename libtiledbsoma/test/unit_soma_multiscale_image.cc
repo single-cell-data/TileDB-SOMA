@@ -18,8 +18,7 @@ TEST_CASE("SOMAMultiscaleImage: basic", "[multiscale_image][spatial]") {
 
     SOMACoordinateSpace coord_space{};
     SOMAMultiscaleImage::create(uri, ctx, coord_space, std::nullopt);
-    auto soma_image = SOMAMultiscaleImage::open(
-        uri, OpenMode::soma_read, ctx, std::nullopt);
+    auto soma_image = SOMAMultiscaleImage::open(uri, OpenMode::soma_read, ctx, std::nullopt);
     REQUIRE(soma_image->uri() == uri);
     REQUIRE(soma_image->ctx() == ctx);
     REQUIRE(soma_image->type() == "SOMAMultiscaleImage");

@@ -65,8 +65,7 @@ struct AttrInfo {
     tiledb_datatype_t tiledb_datatype;
 };
 
-std::pair<managed_unique_ptr<ArrowSchema>, ArrowTable>
-create_arrow_schema_and_index_columns(
+std::pair<managed_unique_ptr<ArrowSchema>, ArrowTable> create_arrow_schema_and_index_columns(
     const std::vector<DimInfo>& dim_infos,
     const std::vector<AttrInfo>& attr_infos,
     std::optional<SOMACoordinateSpace> coordinate_space = std::nullopt);
@@ -79,8 +78,7 @@ std::string to_arrow_format(tiledb_datatype_t tiledb_datatype);
 bool have_dense_current_domain_support();
 
 managed_unique_ptr<ArrowSchema> create_index_cols_info_schema(
-    const std::vector<DimInfo>& dim_infos,
-    std::optional<SOMACoordinateSpace> coordinate_space = std::nullopt);
+    const std::vector<DimInfo>& dim_infos, std::optional<SOMACoordinateSpace> coordinate_space = std::nullopt);
 
 }  // namespace helper
 #endif

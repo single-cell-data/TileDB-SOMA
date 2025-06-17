@@ -36,30 +36,16 @@ using namespace Catch::Matchers;
 
 TEST_CASE("Geometry: Envelope") {
     Point point(10, 20);
-    LineString linestring(
-        std::vector<BasePoint>({BasePoint(2, 2), BasePoint(3, 4)}));
-    Polygon polygon(std::vector<BasePoint>(
-        {BasePoint(0, 0), BasePoint(1, 0), BasePoint(0, 1)}));
+    LineString linestring(std::vector<BasePoint>({BasePoint(2, 2), BasePoint(3, 4)}));
+    Polygon polygon(std::vector<BasePoint>({BasePoint(0, 0), BasePoint(1, 0), BasePoint(0, 1)}));
     MultiPoint multi_point(std::vector<Point>({Point(0, 0), Point(1, 1)}));
     MultiLineString multi_linestring(std::vector<LineString>(
         {LineString(std::vector<BasePoint>({BasePoint(2, 2), BasePoint(3, 4)})),
-         LineString(
-             std::vector<BasePoint>({BasePoint(0, -2), BasePoint(3, 0)}))}));
+         LineString(std::vector<BasePoint>({BasePoint(0, -2), BasePoint(3, 0)}))}));
     MultiPolygon multi_polygon(std::vector<Polygon>(
-        {Polygon(std::vector<BasePoint>(
-             {BasePoint(0, 1), BasePoint(1, 1), BasePoint(-10, 10)})),
-         Polygon(std::vector<BasePoint>(
-             {BasePoint(-2, -2),
-              BasePoint(-2, 2),
-              BasePoint(2, 2),
-              BasePoint(2, -2)}))}));
-    GeometryCollection collection(
-        {point,
-         linestring,
-         polygon,
-         multi_point,
-         multi_linestring,
-         multi_polygon});
+        {Polygon(std::vector<BasePoint>({BasePoint(0, 1), BasePoint(1, 1), BasePoint(-10, 10)})),
+         Polygon(std::vector<BasePoint>({BasePoint(-2, -2), BasePoint(-2, 2), BasePoint(2, 2), BasePoint(2, -2)}))}));
+    GeometryCollection collection({point, linestring, polygon, multi_point, multi_linestring, multi_polygon});
 
     Envelope point_envelope = envelope(point);
     CHECK(point_envelope.range.at(0).first == point.x);

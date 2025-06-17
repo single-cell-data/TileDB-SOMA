@@ -115,8 +115,7 @@ class SOMAObject {
      * @note If the key does not exist, this will take no effect
      *     (i.e., the function will not error out).
      */
-    virtual void delete_metadata(
-        const std::string& key, bool force = false) = 0;
+    virtual void delete_metadata(const std::string& key, bool force = false) = 0;
 
     /**
      * @brief Given a key, get the associated value datatype, number of
@@ -144,8 +143,7 @@ class SOMAObject {
      *     are acceptable.
      * @return std::optional<MetadataValue>
      */
-    virtual std::optional<MetadataValue> get_metadata(
-        const std::string& key) = 0;
+    virtual std::optional<MetadataValue> get_metadata(const std::string& key) = 0;
 
     /**
      * Get a mapping of all metadata keys with its associated value datatype,

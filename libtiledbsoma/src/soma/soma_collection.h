@@ -43,9 +43,7 @@ class SOMACollection : public SOMAGroup {
      * @param uri URI to create the SOMACollection
      */
     static void create(
-        std::string_view uri,
-        std::shared_ptr<SOMAContext> ctx,
-        std::optional<TimestampRange> timestamp = std::nullopt);
+        std::string_view uri, std::shared_ptr<SOMAContext> ctx, std::optional<TimestampRange> timestamp = std::nullopt);
 
     /**
      * @brief Open a group at the specified URI and return SOMACollection
@@ -77,10 +75,7 @@ class SOMACollection : public SOMAGroup {
      * @param timestamp Optional pair indicating timestamp start and end
      */
     SOMACollection(
-        OpenMode mode,
-        std::string_view uri,
-        std::shared_ptr<SOMAContext> ctx,
-        std::optional<TimestampRange> timestamp)
+        OpenMode mode, std::string_view uri, std::shared_ptr<SOMAContext> ctx, std::optional<TimestampRange> timestamp)
         : SOMAGroup(
               mode,
               uri,
@@ -97,8 +92,7 @@ class SOMACollection : public SOMAGroup {
     SOMACollection(SOMACollection&&) = default;
     virtual ~SOMACollection() = default;
 
-    using iterator =
-        typename std::map<std::string, std::shared_ptr<SOMAObject>>::iterator;
+    using iterator = typename std::map<std::string, std::shared_ptr<SOMAObject>>::iterator;
     iterator begin() {
         return children_.begin();
     }

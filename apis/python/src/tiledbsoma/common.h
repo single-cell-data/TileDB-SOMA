@@ -39,8 +39,7 @@ size_t sanitize_string(std::span<const T> string_raw, size_t num_elements) {
 
     for (const T& element : string_raw) {
         if (element == 0) {
-            throw TileDBSOMAError(
-                "[sanitize_string] String contains NULL bytes");
+            throw TileDBSOMAError("[sanitize_string] String contains NULL bytes");
         }
     }
 
@@ -53,15 +52,10 @@ tiledb_datatype_t np_to_tdb_dtype(py::dtype type);
 
 bool is_tdb_str(tiledb_datatype_t type);
 
-std::optional<py::object> to_table(
-    std::optional<std::shared_ptr<ArrayBuffers>> buffers);
+std::optional<py::object> to_table(std::optional<std::shared_ptr<ArrayBuffers>> buffers);
 
 py::dict meta(std::map<std::string, MetadataValue> metadata_mapping);
-void set_metadata(
-    SOMAObject& soma_object,
-    const std::string& key,
-    py::array value,
-    bool force = false);
+void set_metadata(SOMAObject& soma_object, const std::string& key, py::array value, bool force = false);
 
 class PyQueryCondition {
    private:
@@ -92,10 +86,7 @@ class PyQueryCondition {
         }
     }
 
-    void init(
-        const string& attribute_name,
-        const string& condition_value,
-        tiledb_query_condition_op_t op) {
+    void init(const string& attribute_name, const string& condition_value, tiledb_query_condition_op_t op) {
         try {
             qc_->init(attribute_name, condition_value, op);
         } catch (TileDBError& e) {
@@ -104,13 +95,9 @@ class PyQueryCondition {
     }
 
     template <typename T>
-    void init(
-        const string& attribute_name,
-        T condition_value,
-        tiledb_query_condition_op_t op) {
+    void init(const string& attribute_name, T condition_value, tiledb_query_condition_op_t op) {
         try {
-            qc_->init(
-                attribute_name, &condition_value, sizeof(condition_value), op);
+            qc_->init(attribute_name, &condition_value, sizeof(condition_value), op);
         } catch (TileDBError& e) {
             TPY_ERROR_LOC(e.what());
         }
@@ -126,37 +113,26 @@ class PyQueryCondition {
 
     template <typename T>
     static PyQueryCondition create(
-        const std::string& field_name,
-        const std::vector<T>& values,
-        tiledb_query_condition_op_t op) {
+        const std::string& field_name, const std::vector<T>& values, tiledb_query_condition_op_t op) {
         auto pyqc = PyQueryCondition();
 
         const Context ctx = std::as_const(pyqc.ctx_);
 
-        auto set_membership_qc = QueryConditionExperimental::create(
-            ctx, field_name, values, op);
+        auto set_membership_qc = QueryConditionExperimental::create(ctx, field_name, values, op);
 
-        pyqc.qc_ = std::make_shared<QueryCondition>(
-            std::move(set_membership_qc));
+        pyqc.qc_ = std::make_shared<QueryCondition>(std::move(set_membership_qc));
 
         return pyqc;
     }
 
-    PyQueryCondition combine(
-        PyQueryCondition qc,
-        tiledb_query_condition_combination_op_t combination_op) const {
+    PyQueryCondition combine(PyQueryCondition qc, tiledb_query_condition_combination_op_t combination_op) const {
         auto pyqc = PyQueryCondition(nullptr, ctx_.ptr().get());
 
         tiledb_query_condition_t* combined_qc = nullptr;
         ctx_.handle_error(tiledb_query_condition_combine(
-            ctx_.ptr().get(),
-            qc_->ptr().get(),
-            qc.qc_->ptr().get(),
-            combination_op,
-            &combined_qc));
+            ctx_.ptr().get(), qc_->ptr().get(), qc.qc_->ptr().get(), combination_op, &combined_qc));
 
-        pyqc.qc_ = std::shared_ptr<QueryCondition>(
-            new QueryCondition(pyqc.ctx_, combined_qc));
+        pyqc.qc_ = std::shared_ptr<QueryCondition>(new QueryCondition(pyqc.ctx_, combined_qc));
 
         return pyqc;
     }

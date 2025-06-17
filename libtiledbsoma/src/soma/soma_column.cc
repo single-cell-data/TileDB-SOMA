@@ -21,23 +21,17 @@
 namespace tiledbsoma {
 
 std::vector<std::shared_ptr<SOMAColumn>> SOMAColumn::deserialize(
-    const Context& ctx,
-    const Array& array,
-    const std::map<std::string, tiledbsoma::MetadataValue>& metadata) {
+    const Context& ctx, const Array& array, const std::map<std::string, tiledbsoma::MetadataValue>& metadata) {
     std::vector<std::shared_ptr<SOMAColumn>> columns;
 
     nlohmann::json soma_schema_columns = nlohmann::json::array();
 
     if (metadata.contains(TILEDB_SOMA_SCHEMA_KEY)) {
         auto soma_schema_extension_raw = metadata.at(TILEDB_SOMA_SCHEMA_KEY);
-        auto data = static_cast<const char*>(
-            std::get<2>(soma_schema_extension_raw));
-        auto soma_schema_extension = data != nullptr ?
-                                         nlohmann::json::parse(std::string(
-                                             data,
-                                             std::get<1>(
-                                                 soma_schema_extension_raw))) :
-                                         nlohmann::json::object();
+        auto data = static_cast<const char*>(std::get<2>(soma_schema_extension_raw));
+        auto soma_schema_extension = data != nullptr ? nlohmann::json::parse(
+                                                           std::string(data, std::get<1>(soma_schema_extension_raw))) :
+                                                       nlohmann::json::object();
 
         if (!soma_schema_extension.contains(TILEDB_SOMA_SCHEMA_COL_KEY)) {
             throw TileDBSOMAError(fmt::format(
@@ -46,34 +40,27 @@ std::vector<std::shared_ptr<SOMAColumn>> SOMAColumn::deserialize(
                 TILEDB_SOMA_SCHEMA_KEY));
         }
 
-        soma_schema_columns = soma_schema_extension.value(
-            TILEDB_SOMA_SCHEMA_COL_KEY, nlohmann::json::array());
+        soma_schema_columns = soma_schema_extension.value(TILEDB_SOMA_SCHEMA_COL_KEY, nlohmann::json::array());
     }
 
     if (!soma_schema_columns.empty()) {
         for (auto& column : soma_schema_columns) {
-            auto type = column[TILEDB_SOMA_SCHEMA_COL_TYPE_KEY]
-                            .template get<uint32_t>();
+            auto type = column[TILEDB_SOMA_SCHEMA_COL_TYPE_KEY].template get<uint32_t>();
 
             std::shared_ptr<SOMAColumn> col;
 
             switch (static_cast<soma_column_datatype_t>(type)) {
                 case soma_column_datatype_t::SOMA_COLUMN_ATTRIBUTE:
-                    col = SOMAAttribute::deserialize(
-                        column, ctx, array, metadata);
+                    col = SOMAAttribute::deserialize(column, ctx, array, metadata);
                     break;
                 case soma_column_datatype_t::SOMA_COLUMN_DIMENSION:
-                    col = SOMADimension::deserialize(
-                        column, ctx, array, metadata);
+                    col = SOMADimension::deserialize(column, ctx, array, metadata);
                     break;
                 case soma_column_datatype_t::SOMA_COLUMN_GEOMETRY:
-                    col = SOMAGeometryColumn::deserialize(
-                        column, ctx, array, metadata);
+                    col = SOMAGeometryColumn::deserialize(column, ctx, array, metadata);
                     break;
                 default:
-                    throw TileDBSOMAError(fmt::format(
-                        "[SOMAColumn][deserialize] Unknown column type {}",
-                        type));
+                    throw TileDBSOMAError(fmt::format("[SOMAColumn][deserialize] Unknown column type {}", type));
             }
 
             if (col) {
@@ -87,9 +74,7 @@ std::vector<std::shared_ptr<SOMAColumn>> SOMAColumn::deserialize(
         std::unordered_set<std::string> used_attribute_names;
 
         std::for_each(
-            columns.cbegin(),
-            columns.cend(),
-            [&used_attribute_names](const std::shared_ptr<SOMAColumn>& col) {
+            columns.cbegin(), columns.cend(), [&used_attribute_names](const std::shared_ptr<SOMAColumn>& col) {
                 if (col->tiledb_attributes().has_value()) {
                     auto attributes = col->tiledb_attributes().value();
                     for (const auto& attribute : attributes) {
@@ -106,18 +91,12 @@ std::vector<std::shared_ptr<SOMAColumn>> SOMAColumn::deserialize(
                 continue;
             }
 
-            auto enumeration_name = AttributeExperimental::get_enumeration_name(
-                ctx, attribute);
-            auto enumeration = enumeration_name.has_value() ?
-                                   std::make_optional(
-                                       ArrayExperimental::get_enumeration(
-                                           ctx,
-                                           array,
-                                           enumeration_name.value())) :
-                                   std::nullopt;
+            auto enumeration_name = AttributeExperimental::get_enumeration_name(ctx, attribute);
+            auto enumeration = enumeration_name.has_value() ? std::make_optional(ArrayExperimental::get_enumeration(
+                                                                  ctx, array, enumeration_name.value())) :
+                                                              std::nullopt;
 
-            columns.push_back(
-                std::make_shared<SOMAAttribute>(attribute, enumeration));
+            columns.push_back(std::make_shared<SOMAAttribute>(attribute, enumeration));
         }
     } else {
         // All arrays before the introduction of SOMAColumn do not have
@@ -128,18 +107,12 @@ std::vector<std::shared_ptr<SOMAColumn>> SOMAColumn::deserialize(
 
         for (size_t i = 0; i < array.schema().attribute_num(); ++i) {
             auto attribute = array.schema().attribute(i);
-            auto enumeration_name = AttributeExperimental::get_enumeration_name(
-                ctx, attribute);
-            auto enumeration = enumeration_name.has_value() ?
-                                   std::make_optional(
-                                       ArrayExperimental::get_enumeration(
-                                           ctx,
-                                           array,
-                                           enumeration_name.value())) :
-                                   std::nullopt;
+            auto enumeration_name = AttributeExperimental::get_enumeration_name(ctx, attribute);
+            auto enumeration = enumeration_name.has_value() ? std::make_optional(ArrayExperimental::get_enumeration(
+                                                                  ctx, array, enumeration_name.value())) :
+                                                              std::nullopt;
 
-            columns.push_back(
-                std::make_shared<SOMAAttribute>(attribute, enumeration));
+            columns.push_back(std::make_shared<SOMAAttribute>(attribute, enumeration));
         }
     }
 
@@ -147,14 +120,12 @@ std::vector<std::shared_ptr<SOMAColumn>> SOMAColumn::deserialize(
 }
 
 template <>
-std::pair<std::string, std::string> SOMAColumn::core_domain_slot<std::string>()
-    const {
+std::pair<std::string, std::string> SOMAColumn::core_domain_slot<std::string>() const {
     return std::pair<std::string, std::string>("", "");
 }
 
 template <>
-std::pair<std::string, std::string>
-SOMAColumn::core_current_domain_slot<std::string>(
+std::pair<std::string, std::string> SOMAColumn::core_current_domain_slot<std::string>(
     const SOMAContext& ctx, Array& array) const {
     // Here is an intersection of a few oddities:
     //
@@ -173,12 +144,10 @@ SOMAColumn::core_current_domain_slot<std::string>(
     // was some pre-1.15 software using "\xff" and it's super-cheap to check for
     // that as well.)
     try {
-        std::pair<std::string, std::string>
-            current_domain = std::any_cast<std::pair<std::string, std::string>>(
-                _core_current_domain_slot(ctx, array));
+        std::pair<std::string, std::string> current_domain = std::any_cast<std::pair<std::string, std::string>>(
+            _core_current_domain_slot(ctx, array));
 
-        if (current_domain.first == "" && (current_domain.second == "\x7f" ||
-                                           current_domain.second == "\xff")) {
+        if (current_domain.first == "" && (current_domain.second == "\x7f" || current_domain.second == "\xff")) {
             return std::pair<std::string, std::string>("", "");
         } else {
             throw TileDBSOMAError(fmt::format(
@@ -193,15 +162,12 @@ SOMAColumn::core_current_domain_slot<std::string>(
 }
 
 template <>
-std::pair<std::string, std::string>
-SOMAColumn::core_current_domain_slot<std::string>(NDRectangle& ndrect) const {
+std::pair<std::string, std::string> SOMAColumn::core_current_domain_slot<std::string>(NDRectangle& ndrect) const {
     try {
-        std::pair<std::string, std::string>
-            current_domain = std::any_cast<std::pair<std::string, std::string>>(
-                _core_current_domain_slot(ndrect));
+        std::pair<std::string, std::string> current_domain = std::any_cast<std::pair<std::string, std::string>>(
+            _core_current_domain_slot(ndrect));
 
-        if (current_domain.first == "" && (current_domain.second == "\x7f" ||
-                                           current_domain.second == "\xff")) {
+        if (current_domain.first == "" && (current_domain.second == "\x7f" || current_domain.second == "\xff")) {
             return std::pair<std::string, std::string>("", "");
         } else {
             throw TileDBSOMAError(fmt::format(

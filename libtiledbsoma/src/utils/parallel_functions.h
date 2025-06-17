@@ -31,11 +31,8 @@ namespace tiledbsoma {
  * @param end End of range to sort (exclusive).
  * @param cmp Comparator.
  */
-template <
-    typename IterT,
-    typename CmpT = std::less<typename std::iterator_traits<IterT>::value_type>>
-void parallel_sort(
-    ThreadPool* const tp, IterT begin, IterT end, const CmpT& cmp = CmpT()) {
+template <typename IterT, typename CmpT = std::less<typename std::iterator_traits<IterT>::value_type>>
+void parallel_sort(ThreadPool* const tp, IterT begin, IterT end, const CmpT& cmp = CmpT()) {
     // Sort the range using a quicksort. The algorithm is:
     // 1. Pick a pivot value in the range.
     // 2. Re-order the range so that all values less than the
@@ -114,17 +111,13 @@ void parallel_sort(
         // Step #3: Recursively sort the left and right partitions.
         std::vector<ThreadPool::Task> tasks;
         if (begin != middle) {
-            std::function<Status()> quick_sort_left = std::bind(
-                quick_sort, depth + 1, begin, middle);
-            ThreadPool::Task left_task = tp->execute(
-                std::move(quick_sort_left));
+            std::function<Status()> quick_sort_left = std::bind(quick_sort, depth + 1, begin, middle);
+            ThreadPool::Task left_task = tp->execute(std::move(quick_sort_left));
             tasks.emplace_back(std::move(left_task));
         }
         if (middle != end) {
-            std::function<Status()> quick_sort_right = std::bind(
-                quick_sort, depth + 1, middle + 1, end);
-            ThreadPool::Task right_task = tp->execute(
-                std::move(quick_sort_right));
+            std::function<Status()> quick_sort_right = std::bind(quick_sort, depth + 1, middle + 1, end);
+            ThreadPool::Task right_task = tp->execute(std::move(quick_sort_right));
             tasks.emplace_back(std::move(right_task));
         }
 
@@ -148,8 +141,7 @@ void parallel_sort(
  * @return Status
  */
 template <typename FuncT>
-Status parallel_for(
-    ThreadPool* const tp, uint64_t begin, uint64_t end, const FuncT& F) {
+Status parallel_for(ThreadPool* const tp, uint64_t begin, uint64_t end, const FuncT& F) {
     assert(begin <= end);
 
     const uint64_t range_len = end - begin;
@@ -185,8 +177,7 @@ Status parallel_for(
      */
     std::function<Status(uint64_t, uint64_t)> execute_subrange =
         [&failed, &failed_exception, &failed_status, &failed_mutex, &F](
-            const uint64_t subrange_start,
-            const uint64_t subrange_end) -> Status {
+            const uint64_t subrange_start, const uint64_t subrange_end) -> Status {
         for (uint64_t i = subrange_start; i < subrange_end; ++i) {
             Status st;
             try {
@@ -233,16 +224,14 @@ Status parallel_for(
     std::vector<ThreadPool::Task> tasks;
     tasks.reserve(concurrency_level);
     for (size_t i = 0; i < concurrency_level; ++i) {
-        const uint64_t task_subrange_len = subrange_len +
-                                           ((i < subrange_len_carry) ? 1 : 0);
+        const uint64_t task_subrange_len = subrange_len + ((i < subrange_len_carry) ? 1 : 0);
 
         if (task_subrange_len == 0)
             break;
 
         const uint64_t subrange_start = begin + fn_iter;
         const uint64_t subrange_end = begin + fn_iter + task_subrange_len;
-        std::function<Status()> bound_fn = std::bind(
-            execute_subrange, subrange_start, subrange_end);
+        std::function<Status()> bound_fn = std::bind(execute_subrange, subrange_start, subrange_end);
         tasks.emplace_back(tp->execute(std::move(bound_fn)));
 
         fn_iter += task_subrange_len;
@@ -276,13 +265,7 @@ Status parallel_for(
  * @return Status
  */
 template <typename FuncT>
-Status parallel_for_2d(
-    ThreadPool* const tp,
-    uint64_t i0,
-    uint64_t i1,
-    uint64_t j0,
-    uint64_t j1,
-    const FuncT& F) {
+Status parallel_for_2d(ThreadPool* const tp, uint64_t i0, uint64_t i1, uint64_t j0, uint64_t j1, const FuncT& F) {
     assert(i0 <= i1);
     assert(j0 <= j1);
 
@@ -308,12 +291,9 @@ Status parallel_for_2d(
 
     // Executes subarray [begin_i, end_i) x [start_j, end_j) within the
     // array [i0, i1) x [j0, j1).
-    std::function<Status(uint64_t, uint64_t, uint64_t, uint64_t)>
-        execute_subrange_ij = [&failed, &return_st, &return_st_mutex, &F](
-                                  const uint64_t begin_i,
-                                  const uint64_t end_i,
-                                  const uint64_t start_j,
-                                  const uint64_t end_j) -> Status {
+    std::function<Status(uint64_t, uint64_t, uint64_t, uint64_t)> execute_subrange_ij =
+        [&failed, &return_st, &return_st_mutex, &F](
+            const uint64_t begin_i, const uint64_t end_i, const uint64_t start_j, const uint64_t end_j) -> Status {
         for (uint64_t i = begin_i; i < end_i; ++i) {
             for (uint64_t j = start_j; j < end_j; ++j) {
                 const Status st = F(i, j);
@@ -334,12 +314,8 @@ Status parallel_for_2d(
     uint64_t iter_i = 0;
     uint64_t iter_j = 0;
     for (size_t t = 0; t < concurrency_level; ++t) {
-        const uint64_t task_subrange_len_i = subrange_len_i +
-                                             ((t < subrange_len_i_carry) ? 1 :
-                                                                           0);
-        const uint64_t task_subrange_len_j = subrange_len_j +
-                                             ((t < subrange_len_j_carry) ? 1 :
-                                                                           0);
+        const uint64_t task_subrange_len_i = subrange_len_i + ((t < subrange_len_i_carry) ? 1 : 0);
+        const uint64_t task_subrange_len_j = subrange_len_j + ((t < subrange_len_j_carry) ? 1 : 0);
 
         if (task_subrange_len_i == 0 && task_subrange_len_j == 0)
             break;
@@ -366,11 +342,7 @@ Status parallel_for_2d(
     for (const auto& subrange_i : subranges_i) {
         for (const auto& subrange_j : subranges_j) {
             std::function<Status()> bound_fn = std::bind(
-                execute_subrange_ij,
-                subrange_i.first,
-                subrange_i.second,
-                subrange_j.first,
-                subrange_j.second);
+                execute_subrange_ij, subrange_i.first, subrange_i.second, subrange_j.first, subrange_j.second);
             tasks.emplace_back(tp->execute(std::move(bound_fn)));
         }
     }

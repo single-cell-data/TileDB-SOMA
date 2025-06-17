@@ -82,18 +82,16 @@ using managed_unique_ptr = std::unique_ptr<T, std::function<void(T*)>>;
 template <typename T, typename... Args>
     requires std::same_as<T, ArrowArray> || std::same_as<T, ArrowSchema>
 managed_unique_ptr<T> make_managed_unique(Args&&... args) {
-    return managed_unique_ptr<T>(
-        new T(std::forward<Args>(args)...), [](T* arrow_struct) {
-            if (arrow_struct->release != nullptr) {
-                arrow_struct->release(arrow_struct);
-            }
+    return managed_unique_ptr<T>(new T(std::forward<Args>(args)...), [](T* arrow_struct) {
+        if (arrow_struct->release != nullptr) {
+            arrow_struct->release(arrow_struct);
+        }
 
-            delete arrow_struct;
-        });
+        delete arrow_struct;
+    });
 }
 
-using ArrowTable =
-    std::pair<managed_unique_ptr<ArrowArray>, managed_unique_ptr<ArrowSchema>>;
+using ArrowTable = std::pair<managed_unique_ptr<ArrowArray>, managed_unique_ptr<ArrowSchema>>;
 
 struct PlatformConfig {
    public:
@@ -178,8 +176,7 @@ struct PlatformConfig {
      * ]
      *
      */
-    std::string
-        offsets_filters = R"(["DOUBLE_DELTA", "BIT_WIDTH_REDUCTION", "ZSTD"])";
+    std::string offsets_filters = R"(["DOUBLE_DELTA", "BIT_WIDTH_REDUCTION", "ZSTD"])";
 
     /* Set the validity filters. */
     std::string validity_filters = "";
@@ -302,8 +299,7 @@ struct PlatformSchemaConfig {
      * ]
      *
      */
-    std::string
-        offsets_filters = R"(["DOUBLE_DELTA", "BIT_WIDTH_REDUCTION", "ZSTD"])";
+    std::string offsets_filters = R"(["DOUBLE_DELTA", "BIT_WIDTH_REDUCTION", "ZSTD"])";
 
     /* Set the validity filters. */
     std::string validity_filters = "";
@@ -360,9 +356,8 @@ class ArrowAdapter {
      * @return std::pair<std::unique_ptr<ArrowArray>,
      * std::unique_ptr<ArrowSchema>>
      */
-    static std::
-        pair<managed_unique_ptr<ArrowArray>, managed_unique_ptr<ArrowSchema>>
-        to_arrow(std::shared_ptr<ColumnBuffer> column);
+    static std::pair<managed_unique_ptr<ArrowArray>, managed_unique_ptr<ArrowSchema>> to_arrow(
+        std::shared_ptr<ColumnBuffer> column);
 
     /**
      * @brief Create a an ArrowSchema from TileDB Schema
@@ -376,8 +371,7 @@ class ArrowAdapter {
      *
      * @return ArrowSchema
      */
-    static ArrowSchema* arrow_schema_from_tiledb_dimension(
-        const Dimension& dimension);
+    static ArrowSchema* arrow_schema_from_tiledb_dimension(const Dimension& dimension);
 
     /**
      * @brief Create a an ArrowSchema from TileDB Attribute
@@ -385,9 +379,7 @@ class ArrowAdapter {
      * @return ArrowSchema
      */
     static ArrowSchema* arrow_schema_from_tiledb_attribute(
-        const Attribute& attribute,
-        const Context& ctx,
-        const Array& tiledb_array);
+        const Attribute& attribute, const Context& ctx, const Array& tiledb_array);
 
     /**
      * @brief Get members of the TileDB Schema in the form of a
@@ -395,16 +387,14 @@ class ArrowAdapter {
      *
      * @return PlatformSchemaConfig
      */
-    static PlatformSchemaConfig platform_schema_config_from_tiledb(
-        ArraySchema tiledb_schema);
+    static PlatformSchemaConfig platform_schema_config_from_tiledb(ArraySchema tiledb_schema);
 
     /**
      * @brief Get members of the TileDB Schema in the form of a PlatformConfig
      *
      * @return PlatformConfig
      */
-    static PlatformConfig platform_config_from_tiledb_schema(
-        ArraySchema tiledb_schema);
+    static PlatformConfig platform_config_from_tiledb_schema(ArraySchema tiledb_schema);
 
     /**
      * @brief Create a TileDB ArraySchema from ArrowSchema and additional JSON
@@ -422,8 +412,7 @@ class ArrowAdapter {
      *
      * @return std::tuple<tiledb::ArraySchema, nlohmann::json>
      */
-    static std::tuple<ArraySchema, nlohmann::json>
-    tiledb_schema_from_arrow_schema(
+    static std::tuple<ArraySchema, nlohmann::json> tiledb_schema_from_arrow_schema(
         std::shared_ptr<Context> ctx,
         const managed_unique_ptr<ArrowSchema>& arrow_schema,
         const ArrowTable& index_column_info,
@@ -431,8 +420,7 @@ class ArrowAdapter {
         std::string soma_type,
         bool is_sparse = true,
         PlatformConfig platform_config = PlatformConfig(),
-        std::optional<std::pair<int64_t, int64_t>> timestamp_range =
-            std::nullopt);
+        std::optional<std::pair<int64_t, int64_t>> timestamp_range = std::nullopt);
 
     /**
      * @brief Get a TileDB dimension from an Arrow schema.
@@ -474,8 +462,7 @@ class ArrowAdapter {
      *
      * @return std::pair<Attribute, std::optional<Enumeration>>
      */
-    static std::pair<Attribute, std::optional<Enumeration>>
-    tiledb_attribute_from_arrow_schema(
+    static std::pair<Attribute, std::optional<Enumeration>> tiledb_attribute_from_arrow_schema(
         std::shared_ptr<Context> ctx,
         ArrowSchema* arrow_schema,
         std::string_view type_metadata,
@@ -487,8 +474,7 @@ class ArrowAdapter {
      * @param tiledb_dtype TileDB datatype.
      * @return std::string_view Arrow format string.
      */
-    static std::string_view to_arrow_format(
-        tiledb_datatype_t tiledb_dtype, bool use_large = true);
+    static std::string_view to_arrow_format(tiledb_datatype_t tiledb_dtype, bool use_large = true);
 
     /**
      * @brief Keystroke saver to determine whether Arrow type is of string,
@@ -507,13 +493,10 @@ class ArrowAdapter {
      * differentiating between BLOB and WKB.
      * @return std::string_view Arrow format string.
      */
-    static tiledb_datatype_t to_tiledb_format(
-        std::string_view arrow_dtype,
-        std::string_view arrow_dtype_metadata = {});
+    static tiledb_datatype_t to_tiledb_format(std::string_view arrow_dtype, std::string_view arrow_dtype_metadata = {});
 
     static enum ArrowType to_nanoarrow_type(std::string_view arrow_dtype);
-    static std::pair<enum ArrowType, enum ArrowTimeUnit> to_nanoarrow_time(
-        std::string_view arrow_dtype);
+    static std::pair<enum ArrowType, enum ArrowTimeUnit> to_nanoarrow_time(std::string_view arrow_dtype);
     static std::string_view to_arrow_readable(std::string_view arrow_dtype);
 
     /**
@@ -531,8 +514,7 @@ class ArrowAdapter {
      * ArrowSchema. This constructs the parent and the children.
      */
     static managed_unique_ptr<ArrowSchema> make_arrow_schema(
-        const std::vector<std::string>& names,
-        const std::vector<tiledb_datatype_t>& tiledb_datatypes);
+        const std::vector<std::string>& names, const std::vector<tiledb_datatype_t>& tiledb_datatypes);
 
     /**
      * @brief Creates a nanoarrow ArrowSchema given a names and a TileDB
@@ -540,8 +522,7 @@ class ArrowAdapter {
      *
      * This constructs the child element, for a single column/attribute.
      */
-    static ArrowSchema* make_arrow_schema_child(
-        std::string name, tiledb_datatype_t tiledb_datatype);
+    static ArrowSchema* make_arrow_schema_child(std::string name, tiledb_datatype_t tiledb_datatype);
 
     /**
      * @brief Creates a nanoarrow ArrowSchema which accommodates
@@ -560,8 +541,7 @@ class ArrowAdapter {
      * Note that the parents and children in nanoarrow are both of type
      * ArrowArray. This constructs the parent and not the children.
      */
-    static managed_unique_ptr<ArrowArray> make_arrow_array_parent(
-        size_t num_columns);
+    static managed_unique_ptr<ArrowArray> make_arrow_array_parent(size_t num_columns);
 
     /**
      * @brief Creates a nanoarrow ArrowArray for a single column.
@@ -579,16 +559,14 @@ class ArrowAdapter {
     static void log_make_arrow_array_child(ArrowArray* child);
 
     template <typename T>
-    static ArrowArray* make_arrow_array_child_var(
-        const std::pair<std::vector<T>, std::vector<T>>& pair) {
+    static ArrowArray* make_arrow_array_child_var(const std::pair<std::vector<T>, std::vector<T>>& pair) {
         std::vector<T> v = pair.first;
         v.insert(v.end(), pair.second.begin(), pair.second.end());
         ArrowArray* child = make_arrow_array_child<T>(v);
         return child;
     }
 
-    static ArrowArray* make_arrow_array_child_string(
-        const std::pair<std::string, std::string>& pair) {
+    static ArrowArray* make_arrow_array_child_string(const std::pair<std::string, std::string>& pair) {
         std::vector<std::string> v({pair.first, pair.second});
         return make_arrow_array_child_string(v);
     }
@@ -597,8 +575,7 @@ class ArrowAdapter {
         // Use malloc here, not new, to match ArrowAdapter::release_array
         auto arrow_array = (ArrowArray*)malloc(sizeof(ArrowArray));
 
-        ArrowArrayInitFromType(
-            arrow_array, ArrowType::NANOARROW_TYPE_LARGE_BINARY);
+        ArrowArrayInitFromType(arrow_array, ArrowType::NANOARROW_TYPE_LARGE_BINARY);
 
         return arrow_array;
     }
@@ -671,8 +648,7 @@ class ArrowAdapter {
     // using Arrow's validity buffers?  Or do we use ("", "") as TileDB-Py does?
     //
     // We choose the latter.
-    static ArrowArray* make_arrow_array_child_string(
-        const std::vector<std::string>& v) {
+    static ArrowArray* make_arrow_array_child_string(const std::vector<std::string>& v) {
         // Use malloc here, not new, to match ArrowAdapter::release_array
         auto arrow_array = (ArrowArray*)malloc(sizeof(ArrowArray));
 
@@ -726,8 +702,7 @@ class ArrowAdapter {
     }
 
     // Given TileDB 8-bit booleans, packs them to 1-bit Arrow-style booleans.
-    static ArrowArray* make_arrow_array_child_bool(
-        const std::vector<uint8_t>& v) {
+    static ArrowArray* make_arrow_array_child_bool(const std::vector<uint8_t>& v) {
         // Use malloc here, not new, to match ArrowAdapter::release_array
         auto arrow_array = (ArrowArray*)malloc(sizeof(ArrowArray));
 
@@ -782,8 +757,7 @@ class ArrowAdapter {
     // primarily for keystroke-reduction in unit-test cases.
 
     template <typename T>
-    static std::vector<T> get_table_non_string_column_by_name(
-        const ArrowTable& arrow_table, std::string column_name) {
+    static std::vector<T> get_table_non_string_column_by_name(const ArrowTable& arrow_table, std::string column_name) {
         int64_t index = _get_column_index_from_name(arrow_table, column_name);
         return get_table_non_string_column_by_index<T>(arrow_table, index);
     }
@@ -799,8 +773,7 @@ class ArrowAdapter {
      * ArrowTable as a standard/non-Arrow C++ object.
      */
     template <typename T>
-    static std::vector<T> get_table_non_string_column_by_index(
-        const ArrowTable& arrow_table, int64_t column_index) {
+    static std::vector<T> get_table_non_string_column_by_index(const ArrowTable& arrow_table, int64_t column_index) {
         ArrowArray* arrow_array = arrow_table.first.get();
         ArrowSchema* arrow_schema = arrow_table.second.get();
         _check_shapes(arrow_array, arrow_schema);
@@ -811,8 +784,7 @@ class ArrowAdapter {
                 "template-specialization failure.");
         }
 
-        ArrowArray* child_array = _get_and_check_column(
-            arrow_table, column_index, 2);
+        ArrowArray* child_array = _get_and_check_column(arrow_table, column_index, 2);
 
         return get_array_non_string_column<T>(child_array);
     }
@@ -827,8 +799,7 @@ class ArrowAdapter {
         ArrowSchema* arrow_schema = arrow_table.second.get();
         _check_shapes(arrow_array, arrow_schema);
 
-        ArrowArray* child_array = _get_and_check_column(
-            arrow_table, column_index, 3);
+        ArrowArray* child_array = _get_and_check_column(arrow_table, column_index, 3);
 
         const ArrowSchema* child_schema = arrow_schema->children[column_index];
 
@@ -847,8 +818,7 @@ class ArrowAdapter {
      * not top-level ArrowTables.
      */
     template <typename T>
-    static std::vector<T> get_array_non_string_column(
-        const ArrowArray* arrow_array) {
+    static std::vector<T> get_array_non_string_column(const ArrowArray* arrow_array) {
         if (arrow_array->n_children != 0) {
             throw std::runtime_error(
                 "ArrowAdapter::get_array_non_string_column: expected leaf "
@@ -950,8 +920,7 @@ class ArrowAdapter {
 
         const char* data = (char*)arrow_array->buffers[2];
 
-        if (strcmp(arrow_schema->format, "u") == 0 ||
-            strcmp(arrow_schema->format, "z") == 0) {
+        if (strcmp(arrow_schema->format, "u") == 0 || strcmp(arrow_schema->format, "z") == 0) {
             uint32_t* offsets = (uint32_t*)arrow_array->buffers[1];
             int num_cells = (int)arrow_array->length;
             std::vector<std::string> retval(num_cells);
@@ -961,9 +930,7 @@ class ArrowAdapter {
             }
             return retval;
 
-        } else if (
-            strcmp(arrow_schema->format, "U") == 0 ||
-            strcmp(arrow_schema->format, "Z") == 0) {
+        } else if (strcmp(arrow_schema->format, "U") == 0 || strcmp(arrow_schema->format, "Z") == 0) {
             uint64_t* offsets = (uint64_t*)arrow_array->buffers[1];
             int num_cells = (int)arrow_array->length;
             std::vector<std::string> retval(num_cells);
@@ -1027,12 +994,10 @@ class ArrowAdapter {
                 ArrowArray* array = selected_array->children[i];
                 ArrowSchema* schema = selected_schema->children[i];
 
-                result.push_back(
-                    get_table_any_column<S>(array, schema, offset));
+                result.push_back(get_table_any_column<S>(array, schema, offset));
             }
         } else {
-            result.push_back(get_table_any_column<S>(
-                selected_array, selected_schema, offset));
+            result.push_back(get_table_any_column<S>(selected_array, selected_schema, offset));
         }
 
         return result;
@@ -1073,8 +1038,7 @@ class ArrowAdapter {
      * is a stylistic choice.
      */
     template <size_t S>
-    static std::any get_table_any_column(
-        ArrowArray* array, ArrowSchema* schema, size_t offset) {
+    static std::any get_table_any_column(ArrowArray* array, ArrowSchema* schema, size_t offset) {
         auto tdb_type = to_tiledb_format(schema->format, "");
 
         if (array->n_children != 0) {
@@ -1085,13 +1049,10 @@ class ArrowAdapter {
 
         if (array->length < static_cast<int64_t>(S + offset)) {
             throw std::runtime_error(
-                "ArrowAdapter::get_table_any_column: expected at least " +
-                std::to_string(S + offset) + " elements");
+                "ArrowAdapter::get_table_any_column: expected at least " + std::to_string(S + offset) + " elements");
         }
 
-        if (strcmp(schema->format, "u") == 0 ||
-            strcmp(schema->format, "z") == 0 ||
-            strcmp(schema->format, "U") == 0 ||
+        if (strcmp(schema->format, "u") == 0 || strcmp(schema->format, "z") == 0 || strcmp(schema->format, "U") == 0 ||
             strcmp(schema->format, "Z") == 0) {
             if (array->n_buffers != 3) {
                 throw std::runtime_error(
@@ -1127,8 +1088,7 @@ class ArrowAdapter {
                     "unsupported here");
             }
             if (array->buffers[1] == nullptr) {
-                throw std::runtime_error(
-                    "ArrowAdapter::get_table_any_column: null data buffer");
+                throw std::runtime_error("ArrowAdapter::get_table_any_column: null data buffer");
             }
         }
 
@@ -1138,40 +1098,32 @@ class ArrowAdapter {
             case TILEDB_BOOL: {
                 std::array<bool, S> result;
                 for (size_t i = 0; i < S; ++i) {
-                    result[i] = static_cast<bool>(ArrowBitGet(
-                        static_cast<const uint8_t*>(array->buffers[1]),
-                        i + arrow_offset + offset));
+                    result[i] = static_cast<bool>(
+                        ArrowBitGet(static_cast<const uint8_t*>(array->buffers[1]), i + arrow_offset + offset));
                 }
                 return std::make_any<std::array<bool, S>>(result);
             }
             case TILEDB_UINT8:
                 return std::make_any<std::array<uint8_t, S>>(
-                    std::to_array((uint8_t(&)[S])(*(
-                        (uint8_t*)array->buffers[1] + arrow_offset + offset))));
+                    std::to_array((uint8_t(&)[S])(*((uint8_t*)array->buffers[1] + arrow_offset + offset))));
             case TILEDB_UINT16:
-                return std::make_any<std::array<uint16_t, S>>(std::to_array((
-                    uint16_t(&)[S])(
-                    *((uint16_t*)array->buffers[1] + arrow_offset + offset))));
+                return std::make_any<std::array<uint16_t, S>>(
+                    std::to_array((uint16_t(&)[S])(*((uint16_t*)array->buffers[1] + arrow_offset + offset))));
             case TILEDB_UINT32:
-                return std::make_any<std::array<uint32_t, S>>(std::to_array((
-                    uint32_t(&)[S])(
-                    *((uint32_t*)array->buffers[1] + arrow_offset + offset))));
+                return std::make_any<std::array<uint32_t, S>>(
+                    std::to_array((uint32_t(&)[S])(*((uint32_t*)array->buffers[1] + arrow_offset + offset))));
             case TILEDB_UINT64:
-                return std::make_any<std::array<uint64_t, S>>(std::to_array((
-                    uint64_t(&)[S])(
-                    *((uint64_t*)array->buffers[1] + arrow_offset + offset))));
+                return std::make_any<std::array<uint64_t, S>>(
+                    std::to_array((uint64_t(&)[S])(*((uint64_t*)array->buffers[1] + arrow_offset + offset))));
             case TILEDB_INT8:
                 return std::make_any<std::array<int8_t, S>>(
-                    std::to_array((int8_t(&)[S])(*(
-                        (int8_t*)array->buffers[1] + arrow_offset + offset))));
+                    std::to_array((int8_t(&)[S])(*((int8_t*)array->buffers[1] + arrow_offset + offset))));
             case TILEDB_INT16:
                 return std::make_any<std::array<int16_t, S>>(
-                    std::to_array((int16_t(&)[S])(*(
-                        (int16_t*)array->buffers[1] + arrow_offset + offset))));
+                    std::to_array((int16_t(&)[S])(*((int16_t*)array->buffers[1] + arrow_offset + offset))));
             case TILEDB_INT32:
                 return std::make_any<std::array<int32_t, S>>(
-                    std::to_array((int32_t(&)[S])(*(
-                        (int32_t*)array->buffers[1] + arrow_offset + offset))));
+                    std::to_array((int32_t(&)[S])(*((int32_t*)array->buffers[1] + arrow_offset + offset))));
             case TILEDB_DATETIME_YEAR:
             case TILEDB_DATETIME_MONTH:
             case TILEDB_DATETIME_WEEK:
@@ -1187,51 +1139,37 @@ class ArrowAdapter {
             case TILEDB_DATETIME_AS:
             case TILEDB_INT64:
                 return std::make_any<std::array<int64_t, S>>(
-                    std::to_array((int64_t(&)[S])(*(
-                        (int64_t*)array->buffers[1] + arrow_offset + offset))));
+                    std::to_array((int64_t(&)[S])(*((int64_t*)array->buffers[1] + arrow_offset + offset))));
             case TILEDB_FLOAT32:
                 return std::make_any<std::array<float_t, S>>(
-                    std::to_array((float_t(&)[S])(*(
-                        (float_t*)array->buffers[1] + arrow_offset + offset))));
+                    std::to_array((float_t(&)[S])(*((float_t*)array->buffers[1] + arrow_offset + offset))));
             case TILEDB_FLOAT64:
-                return std::make_any<std::array<double_t, S>>(std::to_array((
-                    double_t(&)[S])(
-                    *((double_t*)array->buffers[1] + arrow_offset + offset))));
+                return std::make_any<std::array<double_t, S>>(
+                    std::to_array((double_t(&)[S])(*((double_t*)array->buffers[1] + arrow_offset + offset))));
             case TILEDB_STRING_ASCII:
             case TILEDB_STRING_UTF8:
             case TILEDB_CHAR:
             case TILEDB_GEOM_WKT: {
-                if (strcmp(schema->format, "u") == 0 ||
-                    strcmp(schema->format, "z") == 0) {
-                    auto offsets = static_cast<const uint32_t*>(
-                        array->buffers[1]);
+                if (strcmp(schema->format, "u") == 0 || strcmp(schema->format, "z") == 0) {
+                    auto offsets = static_cast<const uint32_t*>(array->buffers[1]);
                     auto data = static_cast<const char*>(array->buffers[2]);
 
                     std::array<std::string, S> result;
-                    for (size_t i = arrow_offset + offset;
-                         i < arrow_offset + S + offset;
-                         ++i) {
+                    for (size_t i = arrow_offset + offset; i < arrow_offset + S + offset; ++i) {
                         if (offsets[i + 1] - offsets[i] != 0) {
-                            result[i - arrow_offset - offset] = std::string(
-                                &data[offsets[i]], &data[offsets[i + 1]]);
+                            result[i - arrow_offset - offset] = std::string(&data[offsets[i]], &data[offsets[i + 1]]);
                         }
                     }
 
                     return std::make_any<std::array<std::string, S>>(result);
-                } else if (
-                    strcmp(schema->format, "U") == 0 ||
-                    strcmp(schema->format, "Z") == 0) {
-                    auto offsets = static_cast<const uint64_t*>(
-                        array->buffers[1]);
+                } else if (strcmp(schema->format, "U") == 0 || strcmp(schema->format, "Z") == 0) {
+                    auto offsets = static_cast<const uint64_t*>(array->buffers[1]);
                     auto data = static_cast<const char*>(array->buffers[2]);
 
                     std::array<std::string, S> result;
-                    for (size_t i = arrow_offset + offset;
-                         i < arrow_offset + S + offset;
-                         ++i) {
+                    for (size_t i = arrow_offset + offset; i < arrow_offset + S + offset; ++i) {
                         if (offsets[i + 1] - offsets[i] != 0) {
-                            result[i - arrow_offset - offset] = std::string(
-                                &data[offsets[i]], &data[offsets[i + 1]]);
+                            result[i - arrow_offset - offset] = std::string(&data[offsets[i]], &data[offsets[i + 1]]);
                         }
                     }
 
@@ -1245,49 +1183,32 @@ class ArrowAdapter {
             } break;
             case TILEDB_BLOB:
             case TILEDB_GEOM_WKB: {
-                if (strcmp(schema->format, "u") == 0 ||
-                    strcmp(schema->format, "z") == 0) {
-                    auto offsets = static_cast<const uint32_t*>(
-                        array->buffers[1]);
-                    auto data = static_cast<const std::byte*>(
-                        array->buffers[2]);
+                if (strcmp(schema->format, "u") == 0 || strcmp(schema->format, "z") == 0) {
+                    auto offsets = static_cast<const uint32_t*>(array->buffers[1]);
+                    auto data = static_cast<const std::byte*>(array->buffers[2]);
 
                     std::array<std::vector<std::byte>, S> result;
-                    for (size_t i = arrow_offset + offset;
-                         i < arrow_offset + S + offset;
-                         ++i) {
+                    for (size_t i = arrow_offset + offset; i < arrow_offset + S + offset; ++i) {
                         if (offsets[i + 1] - offsets[i] != 0) {
                             std::copy(
-                                &data[offsets[i]],
-                                &data[offsets[i + 1]],
-                                result[i - arrow_offset - offset].begin());
+                                &data[offsets[i]], &data[offsets[i + 1]], result[i - arrow_offset - offset].begin());
                         }
                     }
 
-                    return std::make_any<std::array<std::vector<std::byte>, S>>(
-                        result);
-                } else if (
-                    strcmp(schema->format, "U") == 0 ||
-                    strcmp(schema->format, "Z") == 0) {
-                    auto offsets = static_cast<const uint64_t*>(
-                        array->buffers[1]);
-                    auto data = static_cast<const std::byte*>(
-                        array->buffers[2]);
+                    return std::make_any<std::array<std::vector<std::byte>, S>>(result);
+                } else if (strcmp(schema->format, "U") == 0 || strcmp(schema->format, "Z") == 0) {
+                    auto offsets = static_cast<const uint64_t*>(array->buffers[1]);
+                    auto data = static_cast<const std::byte*>(array->buffers[2]);
 
                     std::array<std::vector<std::byte>, S> result;
-                    for (size_t i = arrow_offset + offset;
-                         i < arrow_offset + S + offset;
-                         ++i) {
+                    for (size_t i = arrow_offset + offset; i < arrow_offset + S + offset; ++i) {
                         if (offsets[i + 1] - offsets[i] != 0) {
                             std::copy(
-                                &data[offsets[i]],
-                                &data[offsets[i + 1]],
-                                result[i - arrow_offset - offset].begin());
+                                &data[offsets[i]], &data[offsets[i + 1]], result[i - arrow_offset - offset].begin());
                         }
                     }
 
-                    return std::make_any<std::array<std::vector<std::byte>, S>>(
-                        result);
+                    return std::make_any<std::array<std::vector<std::byte>, S>>(result);
                 } else {
                     throw std::runtime_error(
                         "ArrowAdapter::get_table_any_column: Unknown "
@@ -1321,54 +1242,36 @@ class ArrowAdapter {
         managed_unique_ptr<ArrowSchema> schema, int64_t index);
 
    private:
-    static size_t _set_var_dictionary_buffers(
-        Enumeration& enumeration, const Context& ctx, const void** buffers);
+    static size_t _set_var_dictionary_buffers(Enumeration& enumeration, const Context& ctx, const void** buffers);
 
-    static size_t _set_dictionary_buffers(
-        Enumeration& enumeration, const Context& ctx, const void** buffers);
+    static size_t _set_dictionary_buffers(Enumeration& enumeration, const Context& ctx, const void** buffers);
 
-    static size_t _set_bool_dictionary_buffers(
-        Enumeration& enumeration, const Context& ctx, const void** buffers);
+    static size_t _set_bool_dictionary_buffers(Enumeration& enumeration, const Context& ctx, const void** buffers);
 
     static Dimension _create_dim(
-        tiledb_datatype_t type,
-        std::string name,
-        const void* buff,
-        std::shared_ptr<Context> ctx);
+        tiledb_datatype_t type, std::string name, const void* buff, std::shared_ptr<Context> ctx);
 
     template <typename T>
-    static Dimension _create_dim_aux(
-        std::shared_ptr<Context> ctx, std::string name, T* b) {
+    static Dimension _create_dim_aux(std::shared_ptr<Context> ctx, std::string name, T* b) {
         return Dimension::create<T>(*ctx, name, {b[0], b[1]}, b[2]);
     }
 
-    static FilterList _create_filter_list(
-        std::string filters, std::shared_ptr<Context> ctx);
+    static FilterList _create_filter_list(std::string filters, std::shared_ptr<Context> ctx);
 
-    static FilterList _create_filter_list(
-        json filters, std::shared_ptr<Context> ctx);
+    static FilterList _create_filter_list(json filters, std::shared_ptr<Context> ctx);
 
     static FilterList _create_attr_filter_list(
-        std::string name,
-        PlatformConfig platform_config,
-        std::shared_ptr<Context> ctx);
+        std::string name, PlatformConfig platform_config, std::shared_ptr<Context> ctx);
 
     static FilterList _create_dim_filter_list(
-        std::string name,
-        PlatformConfig platform_config,
-        std::string soma_type,
-        std::shared_ptr<Context> ctx);
+        std::string name, PlatformConfig platform_config, std::string soma_type, std::shared_ptr<Context> ctx);
 
     static Filter _get_zstd_default(
-        PlatformConfig platform_config,
-        std::string soma_type,
-        std::shared_ptr<Context> ctx);
+        PlatformConfig platform_config, std::string soma_type, std::shared_ptr<Context> ctx);
 
-    static void _append_to_filter_list(
-        FilterList filter_list, json filter, std::shared_ptr<Context> ctx);
+    static void _append_to_filter_list(FilterList filter_list, json filter, std::shared_ptr<Context> ctx);
 
-    static void _set_filter_option(
-        Filter filter, std::string option_name, json value);
+    static void _set_filter_option(Filter filter, std::string option_name, json value);
 
     static tiledb_layout_t _get_order(std::string order);
 
@@ -1380,17 +1283,13 @@ class ArrowAdapter {
 
     // Throws if the array and the schema don't have the same
     // recursive child-counts.
-    static void _check_shapes(
-        ArrowArray* arrow_array, ArrowSchema* arrow_schema);
+    static void _check_shapes(ArrowArray* arrow_array, ArrowSchema* arrow_schema);
 
     // Throws if the table doesn't have the column name.
-    static int64_t _get_column_index_from_name(
-        const ArrowTable& arrow_table, std::string column_name);
+    static int64_t _get_column_index_from_name(const ArrowTable& arrow_table, std::string column_name);
 
     static ArrowArray* _get_and_check_column(
-        const ArrowTable& arrow_table,
-        int64_t column_index,
-        int64_t expected_n_buffers);
+        const ArrowTable& arrow_table, int64_t column_index, int64_t expected_n_buffers);
 
 };  // class ArrowAdapter
 };  // namespace tiledbsoma

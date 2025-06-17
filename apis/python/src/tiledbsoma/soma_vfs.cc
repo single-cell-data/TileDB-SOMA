@@ -64,11 +64,9 @@ class SOMAFileHandle {
         } else if (whence == 1) {
             offset_ += buf_.seekoff(offset, std::ios::cur, std::ios::in);
         } else if (whence == 2) {
-            offset_ = vfs_.file_size(buf_.get_uri()) -
-                      buf_.seekoff(offset, std::ios::end, std::ios::in);
+            offset_ = vfs_.file_size(buf_.get_uri()) - buf_.seekoff(offset, std::ios::end, std::ios::in);
         } else {
-            TPY_ERROR_LOC(
-                "whence must be equal to SEEK_SET, SEEK_CUR, SEEK_END");
+            TPY_ERROR_LOC("whence must be equal to SEEK_SET, SEEK_CUR, SEEK_END");
         }
 
         return offset_;
@@ -79,9 +77,7 @@ class SOMAFileHandle {
             TPY_ERROR_LOC("File must be open before performing read");
         }
 
-        int64_t nbytes = (size < 0 || size > buf_.showmanyc()) ?
-                             buf_.showmanyc() :
-                             size;
+        int64_t nbytes = (size < 0 || size > buf_.showmanyc()) ? buf_.showmanyc() : size;
         if (nbytes <= 0) {
             return py::bytes("");
         }
@@ -157,12 +153,7 @@ void load_soma_vfs(py::module& m) {
         .def("writable", &SOMAFileHandle::writable)
         .def_property_readonly("closed", &SOMAFileHandle::closed)
         .def("seekable", &SOMAFileHandle::seekable)
-        .def(
-            "seek",
-            &SOMAFileHandle::seek,
-            "offset"_a,
-            "whence"_a = 0,
-            py::call_guard<py::gil_scoped_release>())
+        .def("seek", &SOMAFileHandle::seek, "offset"_a, "whence"_a = 0, py::call_guard<py::gil_scoped_release>())
         .def("close", &SOMAFileHandle::close, "should_throw"_a = true);
 }
 }  // namespace libtiledbsomacpp

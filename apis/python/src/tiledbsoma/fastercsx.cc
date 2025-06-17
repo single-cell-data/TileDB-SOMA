@@ -44,9 +44,7 @@ std::vector<T> to_vector_(const py::tuple& tup) {
     for (py::size_t i = 0; i < tup.size(); ++i) {
         auto v = tup[i];
         if (!py::isinstance<T>(v))
-            throw py::type_error(
-                std::string("Unable to cast tuple element to '") +
-                py::type_id<T>() + "'");
+            throw py::type_error(std::string("Unable to cast tuple element to '") + py::type_id<T>() + "'");
         vec.push_back(v.cast<T>());
     }
     return vec;
@@ -65,17 +63,14 @@ std::span<T const> make_span_(py::array arr) {
 template <typename T>
 std::span<T> make_mutable_span_(py::array arr) {
     assert(py::isinstance<py::array_t<T>>(arr));
-    return std::span<T>(
-        arr.mutable_unchecked<T, 1>().mutable_data(0), arr.size());
+    return std::span<T>(arr.mutable_unchecked<T, 1>().mutable_data(0), arr.size());
 }
 
 template <typename T, typename R>
 std::span<R const> make_casted_span_(py::array arr) {
     static_assert(sizeof(T) == sizeof(R));
     assert(py::isinstance<py::array_t<T>>(arr));
-    std::remove_cv_t<T>* p = (std::remove_cv_t<T>*)arr
-                                 .unchecked<std::remove_cv_t<T>, 1>()
-                                 .data(0);
+    std::remove_cv_t<T>* p = (std::remove_cv_t<T>*)arr.unchecked<std::remove_cv_t<T>, 1>().data(0);
     return std::span<R const>(reinterpret_cast<R*>(p), arr.size());
 }
 
@@ -83,9 +78,7 @@ template <typename T, typename R>
 std::span<R> make_mutable_casted_span_(py::array arr) {
     static_assert(sizeof(T) == sizeof(R));
     assert(py::isinstance<py::array_t<T>>(arr));
-    std::remove_cv_t<T>* p = (std::remove_cv_t<T>*)arr
-                                 .mutable_unchecked<std::remove_cv_t<T>, 1>()
-                                 .data(0);
+    std::remove_cv_t<T>* p = (std::remove_cv_t<T>*)arr.mutable_unchecked<std::remove_cv_t<T>, 1>().data(0);
     return std::span<R>(reinterpret_cast<R*>(p), arr.size());
 }
 
@@ -110,8 +103,7 @@ bool is_native_byteorder(const char byteorder) {
  */
 void check_byteorder(const py::dtype& dtype) {
     if (!is_native_byteorder(dtype.byteorder()))
-        throw invalid_argument(
-            "All arrays must have native byteorder (endianness).");
+        throw invalid_argument("All arrays must have native byteorder (endianness).");
 }
 
 /*
@@ -178,14 +170,10 @@ using ValueType = std::variant<
  * Small (width) types are primarily for memory savings, so this is not an
  * exhaustive list. int32/int64 are important for SciPy compatibility.
  */
-using CsxIndexType = std::variant<
-    type_identity<int32_t>,
-    type_identity<int64_t>,
-    type_identity<uint16_t>,
-    type_identity<uint32_t>>;
+using CsxIndexType =
+    std::variant<type_identity<int32_t>, type_identity<int64_t>, type_identity<uint16_t>, type_identity<uint32_t>>;
 
-using CooIndexType =
-    std::variant<type_identity<int32_t>, type_identity<int64_t>>;
+using CooIndexType = std::variant<type_identity<int32_t>, type_identity<int64_t>>;
 
 static const std::unordered_map<int, ValueType> value_type_dispatch = {
     {npy_api::NPY_INT8_, type_identity<int8_t>{}},
@@ -207,23 +195,17 @@ static const std::unordered_map<int, CsxIndexType> csx_index_type_dispatch = {
     {npy_api::NPY_UINT32_, type_identity<uint32_t>{}}};
 
 static const std::unordered_map<int, CooIndexType> coo_index_type_dispatch = {
-    {npy_api::NPY_INT32_, type_identity<int32_t>{}},
-    {npy_api::NPY_INT64_, type_identity<int64_t>{}}};
+    {npy_api::NPY_INT32_, type_identity<int32_t>{}}, {npy_api::NPY_INT64_, type_identity<int64_t>{}}};
 
 template <typename T>
-T lookup_dtype_(
-    const std::unordered_map<int, T>& index,
-    const py::dtype& dtype,
-    const std::string& array_name) {
+T lookup_dtype_(const std::unordered_map<int, T>& index, const py::dtype& dtype, const std::string& array_name) {
     check_byteorder(dtype);
     try {
         return index.at(dtype.num());
     } catch (const std::out_of_range& oor) {
         // will bubble up as a ValueError
         std::string name = dtype.attr("name").cast<std::string>();
-        throw std::invalid_argument(
-            "Unsupported type: " + array_name + " has an unsupported dtype: '" +
-            name + "'");
+        throw std::invalid_argument("Unsupported type: " + array_name + " has an unsupported dtype: '" + name + "'");
     }
 }
 
@@ -262,23 +244,18 @@ void compress_coo_validate_args_(
     auto n_chunks = Ai.size();
     for (auto& vec : {Ai, Aj, Ad}) {
         if (vec.size() != n_chunks)
-            throw std::length_error(
-                "All COO array tuples must contain same number of chunks.");
+            throw std::length_error("All COO array tuples must contain same number of chunks.");
         for (auto& arr : vec) {
             if (arr.ndim() != 1)
-                throw std::length_error(
-                    "All arrays must be of dimension rank 1.");
+                throw std::length_error("All arrays must be of dimension rank 1.");
             if (arr.dtype().num() != vec[0].dtype().num())
-                throw pybind11::type_error(
-                    "All chunks of COO arrays must be of same type.");
+                throw pybind11::type_error("All chunks of COO arrays must be of same type.");
             check_byteorder(arr.dtype());
         }
     }
     for (uint64_t chunk_idx = 0; chunk_idx < n_chunks; chunk_idx++) {
-        if ((Ai[chunk_idx].size() != Aj[chunk_idx].size()) ||
-            (Ai[chunk_idx].size() != Ad[chunk_idx].size()))
-            throw std::length_error(
-                "All COO array tuple elements must be of the same size.");
+        if ((Ai[chunk_idx].size() != Aj[chunk_idx].size()) || (Ai[chunk_idx].size() != Ad[chunk_idx].size()))
+            throw std::length_error("All COO array tuple elements must be of the same size.");
     }
 
     if (Bp.ndim() != 1 || Bj.ndim() != 1 || Bd.ndim() != 1)
@@ -295,17 +272,13 @@ void compress_coo_validate_args_(
     uint64_t nnz = Bd.size();
     for (auto& vec : {Ai, Aj, Ad}) {
         std::size_t s = std::transform_reduce(
-            vec.cbegin(), vec.cend(), 0ul, std::plus<>{}, [](py::array a) {
-                return a.size();
-            });
+            vec.cbegin(), vec.cend(), 0ul, std::plus<>{}, [](py::array a) { return a.size(); });
         if (s != nnz)
-            throw std::length_error(
-                "All COO arrays must have same size (nnz).");
+            throw std::length_error("All COO arrays must have same size (nnz).");
     }
 
     if (static_cast<uint64_t>(Bj.size()) != nnz)
-        throw std::length_error(
-            "All output data arrays must have same size (nnz).");
+        throw std::length_error("All output data arrays must have same size (nnz).");
     if (Bp.size() != (n_row + 1))
         throw std::length_error("Pointer array size does not match n_rows.");
 
@@ -314,8 +287,7 @@ void compress_coo_validate_args_(
 
     if (Ai.size() > 0) {
         if (!Ai[0].dtype().is(Aj[0].dtype()))
-            throw pybind11::type_error(
-                "COO index arrays must have same dtype.");
+            throw pybind11::type_error("COO index arrays must have same dtype.");
     }
 }
 
@@ -340,9 +312,7 @@ void compress_coo(
         Aj = to_vector_<py::array>(Aj_);
         Ad = to_vector_<py::array>(Ad_);
     } catch (const py::cast_error& e) {
-        throw pybind11::type_error(
-            std::string("All COO data must be tuple of ndarray (") + e.what() +
-            ")");
+        throw pybind11::type_error(std::string("All COO data must be tuple of ndarray (") + e.what() + ")");
     }
 
     const auto [n_row, n_col] = shape;
@@ -352,26 +322,17 @@ void compress_coo(
     compress_coo_validate_args_(n_row, n_col, Ai, Aj, Ad, Bp, Bj, Bd);
 
     // Lookup the underlying C++ primitive type for tag dispatch.
-    CooIndexType coo_index_type = lookup_dtype_(
-        coo_index_type_dispatch, Ai[0].dtype(), "COO index (row, col) arrays");
-    CsxIndexType csx_major_index_type = lookup_dtype_(
-        csx_index_type_dispatch, Bp.dtype(), "CSx indptr array");
-    CsxIndexType csx_minor_index_type = lookup_dtype_(
-        csx_index_type_dispatch, Bj.dtype(), "CSx indices array");
-    ValueType value_type = lookup_dtype_(
-        value_type_dispatch, Bd.dtype(), "CSx data array");
+    CooIndexType coo_index_type = lookup_dtype_(coo_index_type_dispatch, Ai[0].dtype(), "COO index (row, col) arrays");
+    CsxIndexType csx_major_index_type = lookup_dtype_(csx_index_type_dispatch, Bp.dtype(), "CSx indptr array");
+    CsxIndexType csx_minor_index_type = lookup_dtype_(csx_index_type_dispatch, Bj.dtype(), "CSx indices array");
+    ValueType value_type = lookup_dtype_(value_type_dispatch, Bd.dtype(), "CSx data array");
 
     // Dispatch by type
     std::visit(
-        [&](auto value_type,
-            auto csx_major_index_type,
-            auto csx_minor_index_type,
-            auto coo_index_type) {
+        [&](auto value_type, auto csx_major_index_type, auto csx_minor_index_type, auto coo_index_type) {
             using COO_INDEX = typename decltype(coo_index_type)::type;
-            using CSX_MAJOR_INDEX =
-                typename decltype(csx_major_index_type)::type;
-            using CSX_MINOR_INDEX =
-                typename decltype(csx_minor_index_type)::type;
+            using CSX_MAJOR_INDEX = typename decltype(csx_major_index_type)::type;
+            using CSX_MINOR_INDEX = typename decltype(csx_minor_index_type)::type;
             using VALUE = typename decltype(value_type)::type;
 
             std::vector<std::span<COO_INDEX const>> Ai_views, Aj_views;
@@ -379,25 +340,15 @@ void compress_coo(
             for (size_t i = 0; i < Ai.size(); ++i) {
                 Ai_views.push_back(make_span_<COO_INDEX>(Ai[i]));
                 Aj_views.push_back(make_span_<COO_INDEX>(Aj[i]));
-                Ad_views.push_back(
-                    make_casted_span_<VALUE, remap_value_t<VALUE>>(Ad[i]));
+                Ad_views.push_back(make_casted_span_<VALUE, remap_value_t<VALUE>>(Ad[i]));
             }
             auto Bp_view = make_mutable_span_<CSX_MAJOR_INDEX>(Bp);
             auto Bj_view = make_mutable_span_<CSX_MINOR_INDEX>(Bj);
-            auto Bd_view =
-                make_mutable_casted_span_<VALUE, remap_value_t<VALUE>>(Bd);
+            auto Bd_view = make_mutable_casted_span_<VALUE, remap_value_t<VALUE>>(Bd);
 
             py::gil_scoped_release release;
             return fastercsx::compress_coo(
-                ctx->thread_pool().get(),
-                shape,
-                nnz,
-                Ai_views,
-                Aj_views,
-                Ad_views,
-                Bp_view,
-                Bj_view,
-                Bd_view);
+                ctx->thread_pool().get(), shape, nnz, Ai_views, Aj_views, Ad_views, Bp_view, Bj_view, Bd_view);
         },
         value_type,
         csx_major_index_type,
@@ -412,11 +363,7 @@ void compress_coo(
  * Returns false if the matrix contains duplicate coordinates, true if all
  * coordinates are unique.
  */
-bool sort_csx_indices(
-    std::shared_ptr<tiledbsoma::SOMAContext> ctx,
-    py::array Bp,
-    py::array Bj,
-    py::array Bd) {
+bool sort_csx_indices(std::shared_ptr<tiledbsoma::SOMAContext> ctx, py::array Bp, py::array Bj, py::array Bd) {
     // Error checks first
     //
     if (Bp.ndim() != 1 || Bj.ndim() != 1 || Bd.ndim() != 1)
@@ -429,22 +376,15 @@ bool sort_csx_indices(
     check_byteorder(Bd.dtype());
 
     // Get dispatch types
-    CsxIndexType csx_major_index_type = lookup_dtype_(
-        csx_index_type_dispatch, Bp.dtype(), "CSx indptr array");
-    CsxIndexType csx_minor_index_type = lookup_dtype_(
-        csx_index_type_dispatch, Bj.dtype(), "CSx indices array");
-    ValueType value_type = lookup_dtype_(
-        value_type_dispatch, Bd.dtype(), "CSx data array");
+    CsxIndexType csx_major_index_type = lookup_dtype_(csx_index_type_dispatch, Bp.dtype(), "CSx indptr array");
+    CsxIndexType csx_minor_index_type = lookup_dtype_(csx_index_type_dispatch, Bj.dtype(), "CSx indices array");
+    ValueType value_type = lookup_dtype_(value_type_dispatch, Bd.dtype(), "CSx data array");
 
     // Dispatch by type
     auto no_duplicates = std::visit(
-        [&](auto value_type,
-            auto csx_major_index_type,
-            auto csx_minor_index_type) -> bool {
-            using CSX_MAJOR_INDEX =
-                typename decltype(csx_major_index_type)::type;
-            using CSX_MINOR_INDEX =
-                typename decltype(csx_minor_index_type)::type;
+        [&](auto value_type, auto csx_major_index_type, auto csx_minor_index_type) -> bool {
+            using CSX_MAJOR_INDEX = typename decltype(csx_major_index_type)::type;
+            using CSX_MINOR_INDEX = typename decltype(csx_minor_index_type)::type;
             using VALUE = typename decltype(value_type)::type;
 
             auto n_row = Bp.size() - 1;
@@ -454,17 +394,10 @@ bool sort_csx_indices(
 
             auto Bp_view = make_span_<CSX_MAJOR_INDEX>(Bp);
             auto Bj_view = make_mutable_span_<CSX_MINOR_INDEX>(Bj);
-            auto Bd_view =
-                make_mutable_casted_span_<VALUE, remap_value_t<VALUE>>(Bd);
+            auto Bd_view = make_mutable_casted_span_<VALUE, remap_value_t<VALUE>>(Bd);
 
             py::gil_scoped_release release;
-            return fastercsx::sort_csx_indices(
-                ctx->thread_pool().get(),
-                n_row,
-                nnz,
-                Bp_view,
-                Bj_view,
-                Bd_view);
+            return fastercsx::sort_csx_indices(ctx->thread_pool().get(), n_row, nnz, Bp_view, Bj_view, Bd_view);
         },
         value_type,
         csx_major_index_type,
@@ -488,8 +421,7 @@ void copy_csx_to_dense(
     py::array out) {
     if (format != "csr" && format != "csc")
         throw std::invalid_argument("format must be 'csr' or 'csc'");
-    const fastercsx::Format cm_format =
-        (format == "csr" ? fastercsx::Format::CSR : fastercsx::Format::CSC);
+    const fastercsx::Format cm_format = (format == "csr" ? fastercsx::Format::CSR : fastercsx::Format::CSC);
 
     auto [n_row, n_col] = shape;
     if (n_row < 0 || n_col < 0)
@@ -497,8 +429,7 @@ void copy_csx_to_dense(
     auto n_major = (format == "csr") ? n_row : n_col;
 
     if (major_idx_start < 0 || major_idx_end > n_major)
-        throw std::range_error(
-            "row_start must be >= 0 and row_end < array shape");
+        throw std::range_error("row_start must be >= 0 and row_end < array shape");
     if (n_major != Bp.size() - 1)
         throw std::length_error("n_rows does not match Bp.size()");
     if (!out.writeable())
@@ -507,28 +438,20 @@ void copy_csx_to_dense(
         throw pybind11::type_error("out dtype must match Bd dtype");
 
     // Get dispatch types
-    CsxIndexType csx_major_index_type = lookup_dtype_(
-        csx_index_type_dispatch, Bp.dtype(), "CSx indptr array");
-    CsxIndexType csx_minor_index_type = lookup_dtype_(
-        csx_index_type_dispatch, Bj.dtype(), "CSx indices array");
-    ValueType value_type = lookup_dtype_(
-        value_type_dispatch, Bd.dtype(), "CSx data array");
+    CsxIndexType csx_major_index_type = lookup_dtype_(csx_index_type_dispatch, Bp.dtype(), "CSx indptr array");
+    CsxIndexType csx_minor_index_type = lookup_dtype_(csx_index_type_dispatch, Bj.dtype(), "CSx indices array");
+    ValueType value_type = lookup_dtype_(value_type_dispatch, Bd.dtype(), "CSx data array");
 
     std::visit(
-        [&](auto value_type,
-            auto csx_major_index_type,
-            auto csx_minor_index_type) {
-            using CSX_MAJOR_INDEX =
-                typename decltype(csx_major_index_type)::type;
-            using CSX_MINOR_INDEX =
-                typename decltype(csx_minor_index_type)::type;
+        [&](auto value_type, auto csx_major_index_type, auto csx_minor_index_type) {
+            using CSX_MAJOR_INDEX = typename decltype(csx_major_index_type)::type;
+            using CSX_MINOR_INDEX = typename decltype(csx_minor_index_type)::type;
             using VALUE = typename decltype(value_type)::type;
 
             auto Bp_view = make_span_<CSX_MAJOR_INDEX>(Bp);
             auto Bj_view = make_span_<CSX_MINOR_INDEX>(Bj);
             auto Bd_view = make_casted_span_<VALUE, remap_value_t<VALUE>>(Bd);
-            auto out_view =
-                make_mutable_casted_span_<VALUE, remap_value_t<VALUE>>(out);
+            auto out_view = make_mutable_casted_span_<VALUE, remap_value_t<VALUE>>(out);
 
             py::gil_scoped_release release;
             return fastercsx::copy_csx_to_dense(
@@ -559,9 +482,7 @@ void count_rows(
     {
         Ai = to_vector_<py::array>(Ai_);
     } catch (const py::cast_error& e) {
-        throw pybind11::type_error(
-            std::string("All COO data must be tuple of ndarray (") + e.what() +
-            ")");
+        throw pybind11::type_error(std::string("All COO data must be tuple of ndarray (") + e.what() + ")");
     }
 
     if (Bp.ndim() != 1)
@@ -573,16 +494,13 @@ void count_rows(
     if (!Bp.writeable())
         throw std::invalid_argument("Output arrays must be writeable.");
 
-    CooIndexType coo_index_type = lookup_dtype_(
-        coo_index_type_dispatch, Ai[0].dtype(), "COO index (row, col) arrays");
-    CsxIndexType csx_major_index_type = lookup_dtype_(
-        csx_index_type_dispatch, Bp.dtype(), "CSx indptr array");
+    CooIndexType coo_index_type = lookup_dtype_(coo_index_type_dispatch, Ai[0].dtype(), "COO index (row, col) arrays");
+    CsxIndexType csx_major_index_type = lookup_dtype_(csx_index_type_dispatch, Bp.dtype(), "CSx indptr array");
 
     std::visit(
         [&](auto csx_major_index_type, auto coo_index_type) {
             using COO_INDEX = typename decltype(coo_index_type)::type;
-            using CSX_MAJOR_INDEX =
-                typename decltype(csx_major_index_type)::type;
+            using CSX_MAJOR_INDEX = typename decltype(csx_major_index_type)::type;
 
             std::vector<std::span<COO_INDEX const>> Ai_views, Aj_views;
             for (size_t i = 0; i < Ai.size(); ++i) {
@@ -591,8 +509,7 @@ void count_rows(
             auto Bp_view = make_mutable_span_<CSX_MAJOR_INDEX>(Bp);
 
             py::gil_scoped_release release;
-            fastercsx::count_rows(
-                ctx->thread_pool().get(), n_row, nnz, Ai_views, Bp_view);
+            fastercsx::count_rows(ctx->thread_pool().get(), n_row, nnz, Ai_views, Bp_view);
         },
         csx_major_index_type,
         coo_index_type);

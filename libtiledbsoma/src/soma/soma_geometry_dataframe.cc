@@ -36,23 +36,17 @@ void SOMAGeometryDataFrame::create(
     std::shared_ptr<SOMAContext> ctx,
     PlatformConfig platform_config,
     std::optional<TimestampRange> timestamp) {
-    auto [tiledb_schema, soma_schema_extension] =
-        ArrowAdapter::tiledb_schema_from_arrow_schema(
-            ctx->tiledb_ctx(),
-            schema,
-            index_columns,
-            std::make_optional(coordinate_space),
-            "SOMAGeometryDataFrame",
-            true,
-            platform_config);
+    auto [tiledb_schema, soma_schema_extension] = ArrowAdapter::tiledb_schema_from_arrow_schema(
+        ctx->tiledb_ctx(),
+        schema,
+        index_columns,
+        std::make_optional(coordinate_space),
+        "SOMAGeometryDataFrame",
+        true,
+        platform_config);
 
     auto array = SOMAArray::_create(
-        ctx,
-        uri,
-        tiledb_schema,
-        "SOMAGeometryDataFrame",
-        soma_schema_extension.dump(),
-        timestamp);
+        ctx, uri, tiledb_schema, "SOMAGeometryDataFrame", soma_schema_extension.dump(), timestamp);
 
     // Add additional geometry dataframe metadata.
     array.put_metadata(
@@ -69,10 +63,7 @@ void SOMAGeometryDataFrame::create(
 }
 
 std::unique_ptr<SOMAGeometryDataFrame> SOMAGeometryDataFrame::open(
-    std::string_view uri,
-    OpenMode mode,
-    std::shared_ptr<SOMAContext> ctx,
-    std::optional<TimestampRange> timestamp) {
+    std::string_view uri, OpenMode mode, std::shared_ptr<SOMAContext> ctx, std::optional<TimestampRange> timestamp) {
     return std::make_unique<SOMAGeometryDataFrame>(mode, uri, ctx, timestamp);
 }
 
@@ -84,8 +75,7 @@ managed_unique_ptr<ArrowSchema> SOMAGeometryDataFrame::schema() const {
     return this->arrow_schema();
 }
 
-const std::vector<std::string> SOMAGeometryDataFrame::index_column_names()
-    const {
+const std::vector<std::string> SOMAGeometryDataFrame::index_column_names() const {
     return this->dimension_names();
 }
 
@@ -107,8 +97,7 @@ void SOMAGeometryDataFrame::initialize() {
             SOMA_COORDINATE_SPACE_KEY));
     }
 
-    coord_space_ = std::apply(
-        SOMACoordinateSpace::from_metadata, coordinate_space_meta.value());
+    coord_space_ = std::apply(SOMACoordinateSpace::from_metadata, coordinate_space_meta.value());
 }
 
 }  // namespace tiledbsoma
