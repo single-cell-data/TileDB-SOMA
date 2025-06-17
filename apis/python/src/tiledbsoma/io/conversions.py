@@ -14,9 +14,7 @@ import pandas._typing as pdt
 import pandas.api.types
 import pyarrow as pa
 import scipy.sparse as sp
-from pandas.core.dtypes.dtypes import (
-    ExtensionDtype,  # do not delete. referenced by "_DT" type alias
-)
+from pandas.api.extensions import ExtensionDtype  # noqa - required to resolve pdt.Dtype below
 
 from .._fastercsx import CompressedMatrix
 from .._funcs import typeguard_ignore
@@ -180,7 +178,7 @@ def obs_or_var_to_tiledb_supported_array_type(obs_or_var: pd.DataFrame) -> pd.Da
 def _to_tiledb_supported_dtype(dtype: _DT) -> _DT:
     """A handful of types are cast into the TileDB type system."""
     # TileDB has no float16 -- cast up to float32
-    return cast(_DT, np.dtype("float32")) if dtype == np.dtype("float16") else dtype
+    return cast("_DT", np.dtype("float32")) if dtype == np.dtype("float16") else dtype
 
 
 def to_tiledb_supported_array_type(name: str, x: _MT) -> _MT:
