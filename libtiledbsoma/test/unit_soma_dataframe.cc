@@ -128,7 +128,7 @@ struct VariouslyIndexedDataFrameFixture {
     }
 
     void write_sjid_u32_str_data_from(int64_t sjid_base) {
-        auto sdf = SOMADataFrame::open(uri_, OpenMode::write, ctx_);
+        auto sdf = SOMADataFrame::open(uri_, OpenMode::soma_write, ctx_);
 
         auto i64_data = std::vector<int64_t>({sjid_base + 1, sjid_base + 2});
 
@@ -181,7 +181,7 @@ TEST_CASE_METHOD(
     REQUIRE(!SOMASparseNDArray::exists(uri_, ctx_));
     REQUIRE(!SOMADenseNDArray::exists(uri_, ctx_));
 
-    auto sdf = open(OpenMode::read);
+    auto sdf = open(OpenMode::soma_read);
     REQUIRE(sdf->uri() == uri_);
     REQUIRE(sdf->ctx() == ctx_);
     REQUIRE(sdf->type() == "SOMADataFrame");
@@ -196,7 +196,7 @@ TEST_CASE_METHOD(
     std::vector<uint32_t> a0(10, 1);
 
     // A write in read mode should fail
-    sdf = open(OpenMode::read);
+    sdf = open(OpenMode::soma_read);
     auto mq = ManagedQuery(*sdf, ctx_->tiledb_ctx());
     mq.setup_write_column(
         dim_infos[0].name, d0.size(), d0.data(), (uint64_t*)nullptr);
@@ -205,7 +205,7 @@ TEST_CASE_METHOD(
     REQUIRE_THROWS(mq.submit_write());
     sdf->close();
 
-    sdf = open(OpenMode::write);
+    sdf = open(OpenMode::soma_write);
     mq = ManagedQuery(*sdf, ctx_->tiledb_ctx());
     mq.setup_write_column(
         dim_infos[0].name, d0.size(), d0.data(), (uint64_t*)nullptr);
@@ -214,7 +214,7 @@ TEST_CASE_METHOD(
     mq.submit_write();
     sdf->close();
 
-    sdf = open(OpenMode::read);
+    sdf = open(OpenMode::soma_read);
     mq = ManagedQuery(*sdf, ctx_->tiledb_ctx());
     while (auto batch = mq.read_next()) {
         auto arrbuf = batch.value();
@@ -225,7 +225,7 @@ TEST_CASE_METHOD(
     }
     sdf->close();
 
-    auto soma_object = SOMAObject::open(uri_, OpenMode::read, ctx_);
+    auto soma_object = SOMAObject::open(uri_, OpenMode::soma_read, ctx_);
     REQUIRE(soma_object->uri() == uri_);
     REQUIRE(soma_object->type() == "SOMADataFrame");
     soma_object->close();
@@ -298,7 +298,7 @@ TEST_CASE_METHOD(
 
         create(dim_infos, attr_infos, platform_config);
 
-        auto sdf = open(OpenMode::read);
+        auto sdf = open(OpenMode::soma_read);
         auto sch = sdf->tiledb_schema();
         REQUIRE(
             sch->offsets_filter_list().filter(0).filter_type() ==
@@ -361,14 +361,14 @@ TEST_CASE_METHOD(
 
     create(dim_infos, attr_infos, PlatformConfig(), TimestampRange(0, 1));
 
-    auto sdf = open(OpenMode::write, TimestampRange(0, 2));
+    auto sdf = open(OpenMode::soma_write, TimestampRange(0, 2));
 
     int32_t val = 100;
     sdf->set_metadata("md", TILEDB_INT32, 1, &val);
     sdf->close();
 
     // Read metadata
-    sdf->open(OpenMode::read, TimestampRange(0, 2));
+    sdf->open(OpenMode::soma_read, TimestampRange(0, 2));
     REQUIRE(sdf->metadata_num() == 3);
     REQUIRE(sdf->has_metadata("soma_object_type"));
     REQUIRE(sdf->has_metadata("soma_encoding_version"));
@@ -380,7 +380,7 @@ TEST_CASE_METHOD(
     sdf->close();
 
     // md should not be available at (0, 1)
-    sdf->open(OpenMode::read, TimestampRange(0, 1));
+    sdf->open(OpenMode::soma_read, TimestampRange(0, 1));
     REQUIRE(sdf->metadata_num() == 2);
     REQUIRE(sdf->has_metadata("soma_object_type"));
     REQUIRE(sdf->has_metadata("soma_encoding_version"));
@@ -388,7 +388,7 @@ TEST_CASE_METHOD(
     sdf->close();
 
     // Metadata should also be retrievable in write mode
-    sdf->open(OpenMode::write);
+    sdf->open(OpenMode::soma_write);
     REQUIRE(sdf->metadata_num() == 3);
     REQUIRE(sdf->has_metadata("soma_object_type"));
     REQUIRE(sdf->has_metadata("soma_encoding_version"));
@@ -403,7 +403,7 @@ TEST_CASE_METHOD(
     sdf->close();
 
     // Confirm delete in read mode
-    sdf->open(OpenMode::read);
+    sdf->open(OpenMode::soma_read);
     REQUIRE(!sdf->has_metadata("md"));
     REQUIRE(sdf->metadata_num() == 2);
 }
@@ -424,7 +424,7 @@ TEST_CASE_METHOD(
 
     create(dim_infos, attr_infos);
 
-    auto sdf = open(OpenMode::write);
+    auto sdf = open(OpenMode::soma_write);
     auto mq = ManagedQuery(*sdf, ctx_->tiledb_ctx());
 
     std::vector<int64_t> d0({old_max + 1, old_max + 2});
@@ -437,11 +437,11 @@ TEST_CASE_METHOD(
     REQUIRE_THROWS(mq.submit_write());
     sdf->close();
 
-    sdf = open(OpenMode::write);
+    sdf = open(OpenMode::soma_write);
     sdf->resize_soma_joinid_shape(int64_t{new_max}, "testing");
     sdf->close();
 
-    sdf = open(OpenMode::write);
+    sdf = open(OpenMode::soma_write);
     mq = ManagedQuery(*sdf, ctx_->tiledb_ctx());
     mq.setup_write_column(
         dim_infos[0].name, d0.size(), d0.data(), (uint64_t*)nullptr);
@@ -483,7 +483,7 @@ TEST_CASE_METHOD(
         create(dim_infos, attr_infos);
 
         // Check current domain
-        auto sdf = open(OpenMode::read);
+        auto sdf = open(OpenMode::soma_read);
 
         CurrentDomain current_domain = sdf->get_current_domain_for_test();
         REQUIRE(!current_domain.is_empty());
@@ -509,7 +509,7 @@ TEST_CASE_METHOD(
         write_sjid_u32_str_data_from(0);
 
         // Check shape after write
-        sdf->open(OpenMode::read);
+        sdf->open(OpenMode::soma_read);
 
         REQUIRE(sdf->nnz() == 2);
 
@@ -547,7 +547,7 @@ TEST_CASE_METHOD(
         write_sjid_u32_str_data_from(8);
         REQUIRE(sdf->nnz() == 4);
 
-        sdf->open(OpenMode::read);
+        sdf->open(OpenMode::soma_read);
 
         // Check can_upgrade_domain
         // std::unique_ptr<ArrowSchema>
@@ -582,7 +582,7 @@ TEST_CASE_METHOD(
         REQUIRE_THROWS(write_sjid_u32_str_data_from(SOMA_JOINID_DIM_MAX));
 
         // Check shape after write
-        sdf = open(OpenMode::read);
+        sdf = open(OpenMode::soma_read);
         expect = dim_infos[0].dim_max + 1;
 
         actual = sdf->maybe_soma_joinid_shape();
@@ -602,28 +602,28 @@ TEST_CASE_METHOD(
                 std::move(domain_array), std::move(domain_schema));
 
             // Not open for write
-            sdf = open(OpenMode::read);
+            sdf = open(OpenMode::soma_read);
             REQUIRE_THROWS(sdf->change_domain(domain_table, "testing"));
             sdf->close();
 
             // Open for write
-            sdf = open(OpenMode::write);
+            sdf = open(OpenMode::soma_write);
             sdf->change_domain(domain_table, "testing");
             sdf->close();
         } else {
             // Not open for write
-            sdf = open(OpenMode::read);
+            sdf = open(OpenMode::soma_read);
             REQUIRE_THROWS(sdf->resize_soma_joinid_shape(new_shape, "testing"));
             sdf->close();
 
             // Open for write
-            sdf = open(OpenMode::write);
+            sdf = open(OpenMode::soma_write);
             sdf->resize_soma_joinid_shape(new_shape, "testing");
             sdf->close();
         }
 
         // Check shape after resize
-        sdf = open(OpenMode::read);
+        sdf = open(OpenMode::soma_read);
         expect = SOMA_JOINID_RESIZE_DIM_MAX + 1;
         actual = sdf->maybe_soma_joinid_shape();
         REQUIRE(actual.has_value());
@@ -634,7 +634,7 @@ TEST_CASE_METHOD(
         write_sjid_u32_str_data_from(SOMA_JOINID_DIM_MAX);
 
         // Check domainish accessors after resize
-        sdf->open(OpenMode::read);
+        sdf->open(OpenMode::soma_read);
 
         non_empty_domain = sdf->get_non_empty_domain();
         ned_sjid = ArrowAdapter::get_table_non_string_column_by_name<int64_t>(
@@ -671,7 +671,7 @@ TEST_CASE_METHOD(
         sdf->close();
 
         // Check can_upgrade_domain
-        sdf->open(OpenMode::read);
+        sdf->open(OpenMode::soma_read);
         // The dataframe now has a shape
         check = sdf->can_upgrade_soma_joinid_shape(1, "testing");
         // Must fail since this is too small.
@@ -712,7 +712,7 @@ TEST_CASE_METHOD(
         create(dim_infos, attr_infos);
 
         // Check current domain
-        auto sdf = open(OpenMode::read);
+        auto sdf = open(OpenMode::soma_read);
 
         CurrentDomain current_domain = sdf->get_current_domain_for_test();
         REQUIRE(!current_domain.is_empty());
@@ -747,7 +747,7 @@ TEST_CASE_METHOD(
         REQUIRE(sdf->nnz() == 4);
 
         // Check domainish accessors before resize
-        sdf->open(OpenMode::read);
+        sdf->open(OpenMode::soma_read);
 
         ArrowTable non_empty_domain = sdf->get_non_empty_domain();
         std::vector<int64_t> ned_sjid =
@@ -788,7 +788,7 @@ TEST_CASE_METHOD(
         sdf->close();
 
         // Check shape after write
-        sdf = open(OpenMode::read);
+        sdf = open(OpenMode::soma_read);
         expect = dim_infos[1].dim_max + 1;
         actual = sdf->maybe_soma_joinid_shape();
         REQUIRE(actual.has_value());
@@ -819,7 +819,7 @@ TEST_CASE_METHOD(
         REQUIRE_THROWS(write_sjid_u32_str_data_from(SOMA_JOINID_DIM_MAX));
 
         // Check shape after write
-        sdf = open(OpenMode::read);
+        sdf = open(OpenMode::soma_read);
         expect = dim_infos[1].dim_max + 1;
         actual = sdf->maybe_soma_joinid_shape();
         REQUIRE(actual.has_value());
@@ -840,22 +840,22 @@ TEST_CASE_METHOD(
                 std::move(domain_array), std::move(domain_schema));
 
             // Not open for write
-            sdf = open(OpenMode::read);
+            sdf = open(OpenMode::soma_read);
             REQUIRE_THROWS(sdf->change_domain(domain_table, "testing"));
             sdf->close();
 
             // Open for write
-            sdf = open(OpenMode::write);
+            sdf = open(OpenMode::soma_write);
             sdf->change_domain(domain_table, "testing");
             sdf->close();
         } else {
             // Not open for write
-            sdf = open(OpenMode::read);
+            sdf = open(OpenMode::soma_read);
             REQUIRE_THROWS(sdf->resize_soma_joinid_shape(new_shape, "testing"));
             sdf->close();
 
             // Open for write
-            sdf = open(OpenMode::write);
+            sdf = open(OpenMode::soma_write);
             sdf->resize_soma_joinid_shape(new_shape, "testing");
             sdf->close();
         }
@@ -865,7 +865,7 @@ TEST_CASE_METHOD(
         write_sjid_u32_str_data_from(SOMA_JOINID_DIM_MAX);
 
         // Check domainish accessors after resize
-        sdf->open(OpenMode::read);
+        sdf->open(OpenMode::soma_read);
 
         non_empty_domain = sdf->get_non_empty_domain();
         ned_sjid = ArrowAdapter::get_table_non_string_column_by_name<int64_t>(
@@ -949,7 +949,7 @@ TEST_CASE_METHOD(
             create(dim_infos, attr_infos);
 
             // Check current domain
-            auto sdf = open(OpenMode::read);
+            auto sdf = open(OpenMode::soma_read);
 
             CurrentDomain current_domain = sdf->get_current_domain_for_test();
             REQUIRE(!current_domain.is_empty());
@@ -988,7 +988,7 @@ TEST_CASE_METHOD(
             REQUIRE(sdf->nnz() == 4);
 
             // Check shape after write
-            sdf = open(OpenMode::read);
+            sdf = open(OpenMode::soma_read);
             expect = dim_infos[0].dim_max + 1;
             actual = sdf->maybe_soma_joinid_shape();
             REQUIRE(actual.has_value());
@@ -1039,7 +1039,7 @@ TEST_CASE_METHOD(
             sdf->close();
 
             // Check can_upgrade_domain
-            sdf = open(OpenMode::read);
+            sdf = open(OpenMode::soma_read);
             StatusAndReason check = sdf->can_upgrade_soma_joinid_shape(
                 1, "testing");
             // Must fail since this is too small.
@@ -1059,7 +1059,7 @@ TEST_CASE_METHOD(
             REQUIRE_THROWS(write_sjid_u32_str_data_from(SOMA_JOINID_DIM_MAX));
 
             // Check shape after write
-            sdf = open(OpenMode::read);
+            sdf = open(OpenMode::soma_read);
             expect = dim_infos[0].dim_max + 1;
             actual = sdf->maybe_soma_joinid_shape();
             REQUIRE(actual.has_value());
@@ -1082,35 +1082,35 @@ TEST_CASE_METHOD(
                     std::move(domain_array), std::move(domain_schema));
 
                 // Not open for write
-                sdf = open(OpenMode::read);
+                sdf = open(OpenMode::soma_read);
                 REQUIRE_THROWS(sdf->change_domain(domain_table, "testing"));
                 sdf->close();
 
                 // Open for write
-                sdf = open(OpenMode::write);
+                sdf = open(OpenMode::soma_write);
                 sdf->change_domain(domain_table, "testing");
                 sdf->close();
             } else {
                 // Not open for write
-                sdf = open(OpenMode::read);
+                sdf = open(OpenMode::soma_read);
                 REQUIRE_THROWS(
                     sdf->resize_soma_joinid_shape(new_shape, "testing"));
                 sdf->close();
 
                 // Open for write
-                sdf = open(OpenMode::write);
+                sdf = open(OpenMode::soma_write);
                 sdf->resize_soma_joinid_shape(new_shape, "testing");
 
                 sdf->close();
             }
 
-            sdf->open(OpenMode::write);
+            sdf->open(OpenMode::soma_write);
             // Implicitly we expect no throw
             write_sjid_u32_str_data_from(SOMA_JOINID_DIM_MAX);
             sdf->close();
 
             // Check domainish accessors after resize
-            sdf->open(OpenMode::read, TimestampRange(0, 2));
+            sdf->open(OpenMode::soma_read, TimestampRange(0, 2));
 
             non_empty_domain = sdf->get_non_empty_domain();
             ned_sjid = ArrowAdapter::get_table_non_string_column_by_name<
@@ -1196,7 +1196,7 @@ TEST_CASE_METHOD(
             create(dim_infos, attr_infos);
 
             // Check current domain
-            auto sdf = open(OpenMode::read);
+            auto sdf = open(OpenMode::soma_read);
 
             CurrentDomain current_domain = sdf->get_current_domain_for_test();
             REQUIRE(!current_domain.is_empty());
@@ -1262,13 +1262,13 @@ TEST_CASE_METHOD(
             REQUIRE(sdf->nnz() == 2);
 
             // Check shape after write
-            sdf = open(OpenMode::read);
+            sdf = open(OpenMode::soma_read);
             actual = sdf->maybe_soma_joinid_shape();
             REQUIRE(!actual.has_value());
             sdf->close();
 
             // Check can_upgrade_domain
-            sdf = open(OpenMode::read);
+            sdf = open(OpenMode::soma_read);
             StatusAndReason check = sdf->can_upgrade_soma_joinid_shape(
                 1, "testing");
             // Must fail since this is too small.
@@ -1284,7 +1284,7 @@ TEST_CASE_METHOD(
             uint32_t new_u32_dim_max = u32_dim_max * 2 + 1;
 
             // Check shape after write
-            sdf = open(OpenMode::read);
+            sdf = open(OpenMode::soma_read);
             actual = sdf->maybe_soma_joinid_shape();
             REQUIRE(!actual.has_value());
             sdf->close();
@@ -1305,33 +1305,33 @@ TEST_CASE_METHOD(
                     std::move(domain_array), std::move(domain_schema));
 
                 // Not open for write
-                sdf = open(OpenMode::read);
+                sdf = open(OpenMode::soma_read);
                 REQUIRE_THROWS(sdf->change_domain(domain_table, "testing"));
                 sdf->close();
 
                 // Open for write
-                sdf = open(OpenMode::write);
+                sdf = open(OpenMode::soma_write);
                 sdf->change_domain(domain_table, "testing");
                 sdf->close();
             } else {
                 // Not open for write
-                sdf = open(OpenMode::read);
+                sdf = open(OpenMode::soma_read);
                 REQUIRE_THROWS(
                     sdf->resize_soma_joinid_shape(new_shape, "testing"));
                 sdf->close();
 
                 // Open for write
-                sdf = open(OpenMode::write);
+                sdf = open(OpenMode::soma_write);
                 sdf->resize_soma_joinid_shape(new_shape, "testing");
                 sdf->close();
             }
 
-            sdf = open(OpenMode::write);
+            sdf = open(OpenMode::soma_write);
             write_sjid_u32_str_data_from(SOMA_JOINID_DIM_MAX);
             sdf->close();
 
             // Check domainish accessors after resize
-            sdf->open(OpenMode::read, TimestampRange(0, 2));
+            sdf->open(OpenMode::soma_read, TimestampRange(0, 2));
 
             non_empty_domain = sdf->get_non_empty_domain();
             ned_str = ArrowAdapter::get_table_string_column_by_name(

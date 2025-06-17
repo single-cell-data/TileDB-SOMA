@@ -1,4 +1,4 @@
-#include <Rcpp/Lighter>             // for R interface to C++
+#include <Rcpp/Lighter>  // for R interface to C++
 
 #include <nanoarrow/r.h>  // for C/C++ interface to Arrow (via header exported from the R package)
 #include <RcppInt64>                // for fromInteger64
@@ -20,7 +20,7 @@ std::string get_soma_object_type(
     // shared pointer to TileDB Context from SOMAContext
     std::shared_ptr<tiledb::Context> ctx = sctx->tiledb_ctx();
 
-    auto soup = tdbs::SOMAObject::open(uri, OpenMode::read, sctx);
+    auto soup = tdbs::SOMAObject::open(uri, OpenMode::soma_read, sctx);
     auto tpstr = soup->type();
     if (!tpstr.has_value()) {
         Rcpp::stop("No object type value for URI '%s'", uri);

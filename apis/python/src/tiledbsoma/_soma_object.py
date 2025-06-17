@@ -74,8 +74,9 @@ class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
                 The URI to open.
             mode:
                 The mode to open the object in.
-                - ``r``: Open for reading only (cannot write).
-                - ``w``: Open for writing only (cannot read).
+                - ``r``: Open for reading only (cannot write or delete).
+                - ``w``: Open for writing only (cannot read or delete).
+                - ``d``: Open for deleting only (cannot read or write).
             tiledb_timestamp:
                 The TileDB timestamp to open this object at,
                 either an int representing milliseconds since the Unix epoch
@@ -156,8 +157,9 @@ class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
         Args:
             mode:
                 The mode to open the object in.
-                - ``r``: Open for reading only (cannot write).
-                - ``w``: Open for writing only (cannot read).
+                - ``r``: Open for reading only (cannot write or delete).
+                - ``w``: Open for writing only (cannot read or delete).
+                - ``d``: Open for deleting only (cannot read or write).
             tiledb_timestamp:
                 The TileDB timestamp to open this object at, either an int representing milliseconds since the Unix
                 epoch or a datetime.datetime object. When not provided (the default), the current time is used.
@@ -237,7 +239,7 @@ class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
 
     @property
     def mode(self) -> options.OpenMode:
-        """The mode this object was opened in, either ``r`` or ``w``.
+        """The mode this object was opened in, either ``r``, ``w``, or ``d``.
 
         Examples:
             >>> with tiledbsoma.open("an_object") as soma_object:
@@ -250,19 +252,26 @@ class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
         """
         return self._handle.mode
 
+    def _verify_open_for_deleting(self) -> None:
+        """Raises an error if the object is not open for deleting."""
+        if self.closed:
+            raise SOMAError(f"{self.__class__.__name__} ({self.uri}) must be open for deleting (closed).")
+        if self.mode != "d":
+            raise SOMAError(f"{self.__class__.__name__} ({self.uri}) must be open for deleting. Mode is '{self.mode}'.")
+
     def verify_open_for_writing(self) -> None:
         """Raises an error if the object is not open for writing."""
         if self.closed:
             raise SOMAError(f"{self.__class__.__name__} ({self.uri}) must be open for writing (closed)")
         if self.mode != "w":
-            raise SOMAError(f"{self.__class__.__name__} ({self.uri}) must be open for writing")
+            raise SOMAError(f"{self.__class__.__name__} ({self.uri}) must be open for writing. Mode is '{self.mode}'.")
 
     def _verify_open_for_reading(self) -> None:
         """Raises an error if the object is not open for reading."""
         if self.closed:
             raise SOMAError(f"{self.__class__.__name__} ({self.uri}) must be open for reading (closed)")
         if self.mode != "r":
-            raise SOMAError(f"{self.__class__.__name__} ({self.uri}) must be open for reading")
+            raise SOMAError(f"{self.__class__.__name__} ({self.uri}) must be open for reading. Mode is '{self.mode}'.")
 
     @property
     def tiledb_timestamp(self) -> datetime.datetime:

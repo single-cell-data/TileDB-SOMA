@@ -86,7 +86,7 @@ SOMACollectionBase <- R6::R6Class(
     #'
     #' @return Returns \code{self}.
     #'
-    open = function(mode = c("READ", "WRITE")) {
+    open = function(mode = c("READ", "WRITE", "DELETE")) {
       envs <- unique(vapply(
         X = unique(sys.parents()),
         FUN = function(n) environmentName(environment(sys.function(n))),
@@ -216,7 +216,7 @@ SOMACollectionBase <- R6::R6Class(
       if (!is.character(name) || length(name) != 1L || !nzchar(name)) {
         stop("'name' must be a single, non-empty string", call. = FALSE)
       }
-      private$.check_open_for_read_or_write()
+      private$.check_open()
       private$.update_member_cache()
 
       if (is.null(member <- self$members[[name]])) {
@@ -254,10 +254,20 @@ SOMACollectionBase <- R6::R6Class(
     #' @return Invisibly returns \code{self}
     #'
     remove = function(name) {
+      if (self$mode == "WRITE") {
+        .Deprecated(msg = sprintf(
+          "Removing a member in %s mode is deprecated. Collection should be opened in %s mode.",
+          sQuote("WRITE"),
+          sQuote("DELETE")
+        ))
+      } else if (self$mode != "DELETE") {
+        stop("SOMA object is not opened in 'delete' mode; cannot remove member.", call. = FALSE)
+      }
+
       if (!is.character(name) || length(name) != 1L || !nzchar(name)) {
         stop("'name' must be a single, non-empty string", call. = FALSE)
       }
-      private$.check_open_for_read_or_write()
+      private$.check_open()
 
       c_group_remove_member(private$.tiledb_group, name)
 
@@ -275,7 +285,7 @@ SOMACollectionBase <- R6::R6Class(
     #' @return The number of members in this collection.
     #'
     length = function() {
-      private$.check_open_for_read_or_write()
+      private$.check_open()
       private$.update_member_cache()
       return(length(self$members))
     },
@@ -285,7 +295,7 @@ SOMACollectionBase <- R6::R6Class(
     #' @return A character vector of member names.
     #'
     names = function() {
-      private$.check_open_for_read_or_write()
+      private$.check_open()
       private$.update_member_cache()
       return(names(self$members) %||% character(length = 0L))
     },
@@ -687,7 +697,7 @@ SOMACollectionBase <- R6::R6Class(
     # @param name the name of the field to retrieve or set.
     # @param expected_class the expected class of the value to set.
     get_or_set_soma_field = function(value, name, expected_class) {
-      private$.check_open_for_read_or_write()
+      private$.check_open()
 
       if (missing(value)) {
         return(self$get(name))

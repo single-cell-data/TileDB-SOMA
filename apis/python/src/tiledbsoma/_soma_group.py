@@ -154,7 +154,7 @@ class SOMAGroup(SOMAObject[_tdb_handles.SOMAGroupWrapper[Any]], Generic[Collecti
         if key in self._mutated_keys:
             raise SOMAError(f"cannot delete previously-mutated key {key!r}")
         try:
-            self._handle.writer.remove(key)
+            self._handle.deleter.remove(key)
         except RuntimeError as tdbe:
             if is_does_not_exist_error(tdbe):
                 raise KeyError(tdbe) from tdbe
@@ -230,8 +230,9 @@ class SOMAGroup(SOMAObject[_tdb_handles.SOMAGroupWrapper[Any]], Generic[Collecti
         Args:
             mode:
                 The mode to open the object in.
-                - ``r``: Open for reading only (cannot write).
-                - ``w``: Open for writing only (cannot read).
+                - ``r``: Open for reading only (cannot write or delete).
+                - ``w``: Open for writing only (cannot read or delete).
+                - ``d``: Open for deleting only (cannot read or write).
             tiledb_timestamp:
                 The TileDB timestamp to open this object at, either an int representing milliseconds since the Unix
                 epoch or a datetime.datetime object. When not provided (the default), the current time is used. A
