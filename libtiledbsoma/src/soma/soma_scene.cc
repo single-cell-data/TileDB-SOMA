@@ -87,7 +87,7 @@ std::shared_ptr<SOMACollection> SOMAScene::img() {
     if (img_ == nullptr) {
         img_ = SOMACollection::open(
             (std::filesystem::path(uri()) / "img").string(),
-            OpenMode::read,
+            OpenMode::soma_read,
             ctx(),
             timestamp());
     }
@@ -98,7 +98,7 @@ std::shared_ptr<SOMACollection> SOMAScene::obsl() {
     if (obsl_ == nullptr) {
         obsl_ = SOMACollection::open(
             (std::filesystem::path(uri()) / "obsl").string(),
-            OpenMode::read,
+            OpenMode::soma_read,
             ctx(),
             timestamp());
     }
@@ -109,7 +109,7 @@ std::shared_ptr<SOMACollection> SOMAScene::varl() {
     if (varl_ == nullptr) {
         varl_ = SOMACollection::open(
             (std::filesystem::path(uri()) / "varl").string(),
-            OpenMode::read,
+            OpenMode::soma_read,
             ctx(),
             timestamp());
     }

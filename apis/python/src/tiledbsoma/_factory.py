@@ -83,7 +83,10 @@ def open(
         uri:
             The URI to open.
         mode:
-            The mode to open in: ``r`` to read (default), ``w`` to write.
+            The mode to open the object in.
+            - ``r``: Open to read.
+            - ``w``: Open to write.
+            - ``d``: Open to delete.
         soma_type:
             If set, the SOMA class you are expecting to get back.
             This can be provided as a SOMA type name.

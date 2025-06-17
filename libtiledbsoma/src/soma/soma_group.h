@@ -87,6 +87,16 @@ class SOMAGroup : public SOMAObject {
         std::string_view name,
         std::optional<TimestampRange> timestamp = std::nullopt);
 
+    /**
+     * @brief Construct a new SOMAGroup object from a TileDB Group.
+     *
+     * This can only be used to create a SOMAGroup opened in read or write mode.
+     *
+     * @param ctx SOMA context
+     * @param group TileDB group to open as a SOMAGroup. Must be opened in read
+     * or write mode.
+     * @param timestamp
+     */
     SOMAGroup(
         std::shared_ptr<SOMAContext> ctx,
         std::shared_ptr<Group> group,
@@ -125,9 +135,8 @@ class SOMAGroup : public SOMAObject {
      *
      * @return OpenMode
      */
-    OpenMode mode() const {
-        return group_->query_type() == TILEDB_READ ? OpenMode::read :
-                                                     OpenMode::write;
+    inline OpenMode mode() const {
+        return soma_mode_;
     }
 
     /**
@@ -335,6 +344,9 @@ class SOMAGroup : public SOMAObject {
 
     // Read timestamp range (start, end)
     std::optional<TimestampRange> timestamp_;
+
+    // Current mode of the group.
+    OpenMode soma_mode_;
 
     // Member-to-URI cache
     std::map<std::string, SOMAGroupEntry> members_map_;

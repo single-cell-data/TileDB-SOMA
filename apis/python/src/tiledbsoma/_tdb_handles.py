@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import abc
 import enum
+import warnings
 from typing import (
     Any,
     Generic,
@@ -62,6 +63,18 @@ _RawHdl_co = TypeVar("_RawHdl_co", bound=RawHandle, covariant=True)
 _SOMAObjectType = TypeVar("_SOMAObjectType", bound=clib.SOMAObject)
 
 
+def _open_mode_to_clib_mode(mode: options.OpenMode) -> clib.OpenMode:
+    """Convert options.OpenMode to clib.OpenMode."""
+    if mode == "r":
+        return clib.OpenMode.soma_read
+    elif mode == "w":
+        return clib.OpenMode.soma_write
+    elif mode == "d":
+        return clib.OpenMode.soma_delete
+    else:
+        raise ValueError(f"Unexpected mode '{mode}'. Valid modes are 'r', 'w', or 'd'.")
+
+
 def open_handle_wrapper(
     uri: str,
     mode: options.OpenMode,
@@ -70,8 +83,7 @@ def open_handle_wrapper(
     clib_type: str | None = None,
 ) -> "Wrapper[RawHandle]":
     """Determine whether the URI is an array or group, and open it."""
-    open_mode = clib.OpenMode.read if mode == "r" else clib.OpenMode.write
-
+    open_mode = _open_mode_to_clib_mode(mode)
     timestamp_ms = context._open_timestamp_ms(timestamp)
 
     _type_to_open = {
@@ -153,7 +165,7 @@ class Wrapper(Generic[_RawHdl_co], metaclass=abc.ABCMeta):
         context: SOMATileDBContext,
         timestamp: OpenTimestamp | None,
     ) -> Self:
-        if mode not in ("r", "w"):
+        if mode not in ("r", "w", "d"):
             raise ValueError(f"Invalid open mode {mode!r}")
         timestamp_ms = context._open_timestamp_ms(timestamp)
 
@@ -230,7 +242,7 @@ class Wrapper(Generic[_RawHdl_co], metaclass=abc.ABCMeta):
             raise SOMAError(f"{self} is closed")
         if self.mode == "r":
             return self._handle
-        raise SOMAError(f"cannot read from {self}; it is open for writing")
+        raise SOMAError(f"Cannot read from {self}; current mode='{self.mode}'. Reopen in mode='r'.")
 
     @property
     def writer(self) -> _RawHdl_co:
@@ -239,7 +251,21 @@ class Wrapper(Generic[_RawHdl_co], metaclass=abc.ABCMeta):
             raise SOMAError(f"{self} is closed")
         if self.mode == "w":
             return self._handle
-        raise SOMAError(f"cannot write to {self}; it is open for reading")
+        raise SOMAError(f"Cannot write to {self}; current mode='{self.mode}'. Reopen in mode='w'.")
+
+    @property
+    def deleter(self) -> _RawHdl_co:
+        """Accessor to assert that you are working in delete mode."""
+        if self.closed:
+            raise SOMAError(f"{self} is closed")
+        if self.mode == "d":
+            return self._handle
+        if self.mode == "w":
+            warnings.warn(
+                f"Deleting in write mode is deprecated. {self} should be reopened with mode='d'.", DeprecationWarning
+            )
+            return self._handle
+        raise SOMAError(f"Cannot delete from {self}; current mode='{self.mode}'. Reopen in mode='d'.")
 
     def close(self) -> None:
         if self.closed:
@@ -300,7 +326,7 @@ class SOMAGroupWrapper(Wrapper[_SOMAObjectType]):
         context: SOMATileDBContext,
         timestamp: int,
     ) -> clib.SOMAGroup:
-        open_mode = clib.OpenMode.read if mode == "r" else clib.OpenMode.write
+        open_mode = _open_mode_to_clib_mode(mode)
         return cls._WRAPPED_TYPE.open(
             uri,
             mode=open_mode,
@@ -368,8 +394,7 @@ class SOMAArrayWrapper(Wrapper[_SOMAObjectType]):
         context: SOMATileDBContext,
         timestamp: int,
     ) -> clib.SOMAArray:
-        open_mode = clib.OpenMode.read if mode == "r" else clib.OpenMode.write
-
+        open_mode = _open_mode_to_clib_mode(mode)
         return cls._WRAPPED_TYPE.open(
             uri,
             mode=open_mode,

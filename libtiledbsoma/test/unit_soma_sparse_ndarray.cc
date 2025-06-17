@@ -54,7 +54,7 @@ TEST_CASE("SOMASparseNDArray: basic", "[SOMASparseNDArray]") {
     REQUIRE(!SOMADataFrame::exists(uri, ctx));
     REQUIRE(!SOMADenseNDArray::exists(uri, ctx));
 
-    auto snda = SOMASparseNDArray::open(uri, OpenMode::read, ctx);
+    auto snda = SOMASparseNDArray::open(uri, OpenMode::soma_read, ctx);
     REQUIRE(snda->uri() == uri);
     REQUIRE(snda->ctx() == ctx);
     REQUIRE(snda->type() == "SOMASparseNDArray");
@@ -78,21 +78,21 @@ TEST_CASE("SOMASparseNDArray: basic", "[SOMASparseNDArray]") {
     std::vector<int32_t> a0(10, 1);
 
     // A write in read mode should fail
-    snda->open(OpenMode::read);
+    snda->open(OpenMode::soma_read);
     auto mq = ManagedQuery(*snda, ctx->tiledb_ctx());
     mq.setup_write_column(dim_name, d0.size(), d0.data(), (uint64_t*)nullptr);
     mq.setup_write_column(attr_name, a0.size(), a0.data(), (uint64_t*)nullptr);
     REQUIRE_THROWS(mq.submit_write());
     snda->close();
 
-    snda->open(OpenMode::write);
+    snda->open(OpenMode::soma_write);
     mq = ManagedQuery(*snda, ctx->tiledb_ctx());
     mq.setup_write_column(dim_name, d0.size(), d0.data(), (uint64_t*)nullptr);
     mq.setup_write_column(attr_name, a0.size(), a0.data(), (uint64_t*)nullptr);
     mq.submit_write();
     snda->close();
 
-    snda->open(OpenMode::read);
+    snda->open(OpenMode::soma_read);
     mq = ManagedQuery(*snda, ctx->tiledb_ctx());
     while (auto batch = mq.read_next()) {
         auto arrbuf = batch.value();
@@ -111,7 +111,7 @@ TEST_CASE("SOMASparseNDArray: basic", "[SOMASparseNDArray]") {
     //   outside the (immutable) doqain.
     // * With current domain support: this should throw since it's outside
     // the (mutable) current domain.
-    snda = SOMASparseNDArray::open(uri, OpenMode::write, ctx);
+    snda = SOMASparseNDArray::open(uri, OpenMode::soma_write, ctx);
     mq = ManagedQuery(*snda, ctx->tiledb_ctx());
     mq.setup_write_column(dim_name, d0b.size(), d0b.data(), (uint64_t*)nullptr);
     mq.setup_write_column(
@@ -121,7 +121,7 @@ TEST_CASE("SOMASparseNDArray: basic", "[SOMASparseNDArray]") {
 
     auto new_shape = std::vector<int64_t>({shape * 2});
 
-    snda = SOMASparseNDArray::open(uri, OpenMode::write, ctx);
+    snda = SOMASparseNDArray::open(uri, OpenMode::soma_write, ctx);
     // Should throw since this already has a shape (core current
     // domain).
     REQUIRE_THROWS(snda->upgrade_shape(new_shape, "testing"));
@@ -129,7 +129,7 @@ TEST_CASE("SOMASparseNDArray: basic", "[SOMASparseNDArray]") {
     snda->close();
 
     // Try out-of-bounds write after resize.
-    snda->open(OpenMode::write);
+    snda->open(OpenMode::soma_write);
     mq = ManagedQuery(*snda, ctx->tiledb_ctx());
     mq.setup_write_column(dim_name, d0b.size(), d0b.data(), (uint64_t*)nullptr);
     mq.setup_write_column(
@@ -138,7 +138,7 @@ TEST_CASE("SOMASparseNDArray: basic", "[SOMASparseNDArray]") {
     mq.submit_write();
     snda->close();
 
-    snda->open(OpenMode::read);
+    snda->open(OpenMode::soma_read);
     REQUIRE(snda->shape() == new_shape);
     snda->close();
 }
@@ -170,7 +170,8 @@ TEST_CASE("SOMASparseNDArray: platform_config", "[SOMASparseNDArray]") {
     SOMASparseNDArray::create(
         uri, attr_arrow_format, index_columns, ctx, platform_config);
 
-    auto soma_dataframe = SOMASparseNDArray::open(uri, OpenMode::read, ctx);
+    auto soma_dataframe = SOMASparseNDArray::open(
+        uri, OpenMode::soma_read, ctx);
     auto dim_filter = soma_dataframe->tiledb_schema()
                           ->domain()
                           .dimension(dim_name)
@@ -213,14 +214,14 @@ TEST_CASE("SOMASparseNDArray: metadata", "[SOMASparseNDArray]") {
         TimestampRange(0, 1));
 
     auto snda = SOMASparseNDArray::open(
-        uri, OpenMode::write, ctx, TimestampRange(0, 2));
+        uri, OpenMode::soma_write, ctx, TimestampRange(0, 2));
 
     int32_t val = 100;
     snda->set_metadata("md", TILEDB_INT32, 1, &val);
     snda->close();
 
     // Read metadata
-    snda->open(OpenMode::read, TimestampRange(0, 2));
+    snda->open(OpenMode::soma_read, TimestampRange(0, 2));
     REQUIRE(snda->metadata_num() == 3);
     REQUIRE(snda->has_metadata("soma_object_type"));
     REQUIRE(snda->has_metadata("soma_encoding_version"));
@@ -232,7 +233,7 @@ TEST_CASE("SOMASparseNDArray: metadata", "[SOMASparseNDArray]") {
     snda->close();
 
     // md should not be available at (0, 1)
-    snda->open(OpenMode::read, TimestampRange(0, 1));
+    snda->open(OpenMode::soma_read, TimestampRange(0, 1));
     REQUIRE(snda->metadata_num() == 2);
     REQUIRE(snda->has_metadata("soma_object_type"));
     REQUIRE(snda->has_metadata("soma_encoding_version"));
@@ -240,7 +241,7 @@ TEST_CASE("SOMASparseNDArray: metadata", "[SOMASparseNDArray]") {
     snda->close();
 
     // Metadata should also be retrievable in write mode
-    snda->open(OpenMode::write);
+    snda->open(OpenMode::soma_write);
     REQUIRE(snda->metadata_num() == 3);
     REQUIRE(snda->has_metadata("soma_object_type"));
     REQUIRE(snda->has_metadata("soma_encoding_version"));
@@ -257,7 +258,7 @@ TEST_CASE("SOMASparseNDArray: metadata", "[SOMASparseNDArray]") {
     snda->close();
 
     // Confirm delete in read mode
-    snda->open(OpenMode::read);
+    snda->open(OpenMode::soma_read);
     REQUIRE(!snda->has_metadata("md"));
     REQUIRE(snda->metadata_num() == 2);
 }
@@ -288,7 +289,7 @@ TEST_CASE(
 
     SOMASparseNDArray::create(uri, attr_arrow_format, index_columns, ctx);
 
-    auto snda = SOMASparseNDArray::open(uri, OpenMode::write, ctx);
+    auto snda = SOMASparseNDArray::open(uri, OpenMode::soma_write, ctx);
     REQUIRE(snda->has_current_domain());
 
     auto dom = snda->soma_domain_slot<int64_t>(dim_name);
@@ -344,7 +345,7 @@ TEST_CASE("SOMASparseNDArray: can_resize", "[SOMASparseNDArray]") {
 
     SOMASparseNDArray::create(uri, attr_arrow_format, index_columns, ctx);
 
-    auto snda = SOMASparseNDArray::open(uri, OpenMode::write, ctx);
+    auto snda = SOMASparseNDArray::open(uri, OpenMode::soma_write, ctx);
     REQUIRE(snda->has_current_domain());
 
     // For new-style arrays, with the current-domain feature:
@@ -409,7 +410,7 @@ TEST_CASE("SOMASparseNDArray: nnz", "[SOMASparseNDArray]") {
     std::vector<int64_t> d0 = {1, 2, 3};
     std::vector<int32_t> a0 = {0, 0, 0};
 
-    auto snda = SOMASparseNDArray::open(uri, OpenMode::write, ctx);
+    auto snda = SOMASparseNDArray::open(uri, OpenMode::soma_write, ctx);
     auto mq = ManagedQuery(*snda, ctx->tiledb_ctx());
     mq.setup_write_column(
         dim_infos[0].name, d0.size(), d0.data(), (uint64_t*)nullptr);
@@ -424,7 +425,7 @@ TEST_CASE("SOMASparseNDArray: nnz", "[SOMASparseNDArray]") {
     d0 = {4, 5, 6};
     a0 = {1, 1, 1};
 
-    snda = SOMASparseNDArray::open(uri, OpenMode::write, ctx);
+    snda = SOMASparseNDArray::open(uri, OpenMode::soma_write, ctx);
     mq = ManagedQuery(*snda, ctx->tiledb_ctx());
     mq.setup_write_column(
         dim_infos[0].name, d0.size(), d0.data(), (uint64_t*)nullptr);
@@ -439,7 +440,7 @@ TEST_CASE("SOMASparseNDArray: nnz", "[SOMASparseNDArray]") {
     d0 = {6, 7, 8};
     a0 = {2, 2, 2};
 
-    snda = SOMASparseNDArray::open(uri, OpenMode::write, ctx);
+    snda = SOMASparseNDArray::open(uri, OpenMode::soma_write, ctx);
     mq = ManagedQuery(*snda, ctx->tiledb_ctx());
     mq.setup_write_column(
         dim_infos[0].name, d0.size(), d0.data(), (uint64_t*)nullptr);
@@ -454,7 +455,7 @@ TEST_CASE("SOMASparseNDArray: nnz", "[SOMASparseNDArray]") {
     d0 = {1, 4, 8};
     a0 = {3, 3, 3};
 
-    snda = SOMASparseNDArray::open(uri, OpenMode::write, ctx);
+    snda = SOMASparseNDArray::open(uri, OpenMode::soma_write, ctx);
     mq = ManagedQuery(*snda, ctx->tiledb_ctx());
     mq.setup_write_column(
         dim_infos[0].name, d0.size(), d0.data(), (uint64_t*)nullptr);
@@ -469,7 +470,7 @@ TEST_CASE("SOMASparseNDArray: nnz", "[SOMASparseNDArray]") {
     d0 = {10, 11, 12};
     a0 = {4, 4, 4};
 
-    snda = SOMASparseNDArray::open(uri, OpenMode::write, ctx);
+    snda = SOMASparseNDArray::open(uri, OpenMode::soma_write, ctx);
     mq = ManagedQuery(*snda, ctx->tiledb_ctx());
     mq.setup_write_column(
         dim_infos[0].name, d0.size(), d0.data(), (uint64_t*)nullptr);
@@ -536,15 +537,15 @@ TEST_CASE("SOMASparseNDArray: resize with timestamp", "[SOMASparseNDArray]") {
     index_columns.second->release(index_columns.second.get());
 
     auto snda = SOMASparseNDArray::open(
-        uri, OpenMode::write, ctx, TimestampRange(0, 2));
+        uri, OpenMode::soma_write, ctx, TimestampRange(0, 2));
     snda->resize(new_shape, "testing");
     snda->close();
 
-    snda->open(OpenMode::read, TimestampRange(0, 1));
+    snda->open(OpenMode::soma_read, TimestampRange(0, 1));
     REQUIRE(snda->shape() == orig_shape);
     snda->close();
 
-    snda->open(OpenMode::read, TimestampRange(0, 2));
+    snda->open(OpenMode::soma_read, TimestampRange(0, 2));
     REQUIRE(snda->shape() == new_shape);
     snda->close();
 }

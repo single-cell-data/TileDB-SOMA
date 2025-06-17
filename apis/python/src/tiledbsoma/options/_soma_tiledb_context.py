@@ -137,7 +137,8 @@ class SOMATileDBContext(ContextBase):
                 that of the time you called ``open``.
 
                 If a value is passed, that timestamp is used as the timestamp
-                to record all operations.
+                to record all operations. A timestamp value of zero (0) is
+                equivalent to current time.
 
                 Set to 0xFFFFFFFFFFFFFFFF (UINT64_MAX) to get the absolute
                 latest revision (i.e., including changes that occur "after"
@@ -339,9 +340,9 @@ class SOMATileDBContext(ContextBase):
     def _open_timestamp_ms(self, in_timestamp: OpenTimestamp | None) -> int:
         """Returns the real timestamp that should be used to open an object.
 
-        Timestamp values of zero or None are treated as "use default". This is
-        consistent with other TileDB API (e.g., TileDB-Py). The datetime.datetime
-        epoch is treated as zero/default.
+        Timestamp values of zero or None are treated as "use default", which results
+        in "current time". This is consistent with other TileDB API (e.g., TileDB-Py).
+        The datetime.datetime epoch is treated as zero/default.
         """
         if isinstance(in_timestamp, datetime.datetime):
             # if a datetime, convert to int/ms

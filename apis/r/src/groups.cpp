@@ -28,7 +28,8 @@ void c_group_create(
     std::optional<tdbs::TimestampRange> tsrng = makeTimestampRange(timestamp);
     if (timestamp.isNotNull()) {
         Rcpp::DatetimeVector v(timestamp);
-        tdbs::LOG_DEBUG(fmt::format("[c_group_create] uri {} ts ({},{})", uri, v[0], v[1]));
+        tdbs::LOG_DEBUG(
+            fmt::format("[c_group_create] uri {} ts ({},{})", uri, v[0], v[1]));
     } else {
         tdbs::LOG_DEBUG(fmt::format("[c_group_create] uri {}", uri));
     }
@@ -50,7 +51,9 @@ Rcpp::XPtr<somagrp_wrap_t> c_group_open(
     // optional timestamp range
     std::optional<tdbs::TimestampRange> tsrng = makeTimestampRange(timestamp);
 
-    OpenMode mode = type == "READ" ? OpenMode::read : OpenMode::write;
+    // Note: both OpenMode.soma_write and OpenMode.soma_delete should be opened
+    // in TILEDB_WRITE mode.
+    OpenMode mode = type == "READ" ? OpenMode::soma_read : OpenMode::soma_write;
 
     auto sgrpptr = tdbs::SOMAGroup::open(mode, uri, sctx, "unnamed", tsrng);
 

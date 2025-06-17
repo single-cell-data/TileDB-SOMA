@@ -93,11 +93,14 @@ SOMAGroup::SOMAGroup(
     : ctx_(ctx)
     , uri_(util::rstrip_uri(uri))
     , name_(name)
-    , timestamp_(timestamp) {
+    , timestamp_(timestamp)
+    , soma_mode_(mode) {
+    // Note: both OpenMode.write and OpenMode.del should be opened in
+    // TILEDB_WRITE mode.
     group_ = std::make_shared<Group>(
         *ctx_->tiledb_ctx(),
         std::string(uri),
-        mode == OpenMode::read ? TILEDB_READ : TILEDB_WRITE,
+        mode == OpenMode::soma_read ? TILEDB_READ : TILEDB_WRITE,
         _set_timestamp(ctx, timestamp));
     fill_caches();
 }
@@ -110,6 +113,23 @@ SOMAGroup::SOMAGroup(
     , uri_(util::rstrip_uri(group->uri()))
     , group_(group)
     , timestamp_(timestamp) {
+    switch (group_->query_type()) {
+        case TILEDB_READ:
+            soma_mode_ = OpenMode::soma_read;
+            break;
+        case TILEDB_WRITE:
+            soma_mode_ = OpenMode::soma_write;
+            break;
+        default: {  // Only allow read/write when constructing from TileDB.
+            const char* query_type_str = nullptr;
+            tiledb_query_type_to_str(group_->query_type(), &query_type_str);
+            throw TileDBSOMAError(fmt::format(
+                "Internal error: SOMAGroup constructor does not accept a "
+                "TileDB group opened in mode '{}'. The group must be opened in "
+                "either read or write mode.",
+                query_type_str));
+        }
+    }
     fill_caches();
 }
 
@@ -142,11 +162,13 @@ void SOMAGroup::fill_caches() {
     }
 }
 
-void SOMAGroup::open(
-    OpenMode query_type, std::optional<TimestampRange> timestamp) {
+void SOMAGroup::open(OpenMode mode, std::optional<TimestampRange> timestamp) {
     timestamp_ = timestamp;
+    soma_mode_ = mode;
     group_->set_config(_set_timestamp(ctx_, timestamp));
-    group_->open(query_type == OpenMode::read ? TILEDB_READ : TILEDB_WRITE);
+    // Note: both OpenMode.write and OpenMode.del should be opened in
+    // TILEDB_WRITE mode.
+    group_->open(mode == OpenMode::soma_read ? TILEDB_READ : TILEDB_WRITE);
     fill_caches();
 }
 

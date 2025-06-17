@@ -160,31 +160,20 @@ class SOMAArray : public SOMAObject {
         std::shared_ptr<SOMAContext> ctx,
         std::optional<TimestampRange> timestamp = std::nullopt);
 
-    SOMAArray(const SOMAArray& other)
-        // Ensure protected attributes initalized first in a consistent ordering
-        : uri_(other.uri_)
-        , ctx_(other.ctx_)
-        , arr_(other.arr_)
-        // Initialize private attributes next to control the order of
-        // destruction
-        , metadata_(other.metadata_)
-        , timestamp_(other.timestamp_)
-        , schema_(other.schema_)
-        , meta_cache_arr_(other.meta_cache_arr_) {
-        fill_metadata_cache(timestamp_);
-        fill_columns();
-    }
-
+    /**
+     * @brief Construct a new SOMAArray from a TileDB array
+     *
+     * @param ctx SOMAContext
+     * @param arr TileDB array.
+     * @param timestamp Timestamp range the array was opened at.
+     */
     SOMAArray(
         std::shared_ptr<SOMAContext> ctx,
         std::shared_ptr<Array> arr,
         std::optional<TimestampRange> timestamp);
 
+    SOMAArray(const SOMAArray& other) = default;
     SOMAArray(SOMAArray&&) = default;
-
-    SOMAArray(const SOMAObject& other)
-        : SOMAObject(other) {
-    }
 
     SOMAArray() = delete;
     virtual ~SOMAArray() = default;
@@ -222,7 +211,7 @@ class SOMAArray : public SOMAObject {
      *
      * @return bool true if open
      */
-    bool is_open() const {
+    inline bool is_open() const {
         return arr_->is_open();
     }
 
@@ -231,9 +220,8 @@ class SOMAArray : public SOMAObject {
      *
      * @return OpenMode
      */
-    OpenMode mode() const {
-        return arr_->query_type() == TILEDB_READ ? OpenMode::read :
-                                                   OpenMode::write;
+    inline OpenMode mode() const {
+        return soma_mode_;
     }
 
     /**
@@ -1139,7 +1127,8 @@ class SOMAArray : public SOMAObject {
     std::optional<int64_t> _maybe_soma_joinid_shape_via_tiledb_current_domain();
     std::optional<int64_t> _maybe_soma_joinid_shape_via_tiledb_domain();
 
-    void fill_metadata_cache(std::optional<TimestampRange> timestamp);
+    void fill_metadata_cache(
+        OpenMode mode, std::optional<TimestampRange> timestamp);
 
     void fill_columns();
 
@@ -1158,6 +1147,9 @@ class SOMAArray : public SOMAObject {
 
     // Read timestamp range (start, end)
     std::optional<TimestampRange> timestamp_;
+
+    // The mode the SOMAArray is opened in.
+    OpenMode soma_mode_;
 
     // The TileDB ArraySchema. The schema is inaccessible when the TileDB Array
     // is closed or opened in write mode which means we cannot use arr->schema()

@@ -366,7 +366,9 @@ EphemeralCollectionBase <- R6::R6Class(
     # Override SOMAObject private methods
     .check_open_for_read = \() invisible(NULL),
     .check_open_for_write = \() invisible(NULL),
+    .check_open_for_delete = \() invisible(NULL),
     .check_open_for_read_or_write = \() invisible(NULL),
+    .check_open = \() invisible(NULL),
 
     # Override TileDBGroup private fields
     .member_cache = NULL,

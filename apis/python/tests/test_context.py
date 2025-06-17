@@ -80,12 +80,14 @@ def test_replace_config_after_construction():
 
     # verify defaults expected by subsequent tests
     assert context.timestamp_ms is None
-    if tiledbsoma.pytiledbsoma.embedded_version_triple() < (2, 27, 0):
+    if tiledbsoma.pytiledbsoma.tiledb_version() < (2, 27, 0):
         assert context.native_context.config()["vfs.s3.region"] == "us-east-1"
     else:
         assert context.native_context.config()["vfs.s3.region"] == ""
 
     now = int(time.time() * 1000)
+    open_ts = context._open_timestamp_ms(0)
+    assert -100 < now - open_ts < 100
     open_ts = context._open_timestamp_ms(None)
     assert -100 < now - open_ts < 100
     assert 999 == context._open_timestamp_ms(999)

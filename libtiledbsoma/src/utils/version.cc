@@ -28,4 +28,14 @@ std::tuple<int, int, int> embedded_version_triple() {
     return std::make_tuple(major, minor, patch);
 }
 
+/**
+ * @brief Link-time version of TileDB. Used for error checking at runtime.
+ *
+ * @return std::tuple<int, int, int>
+ */
+std::tuple<int, int, int> expected_version() {
+    return std::make_tuple(
+        TILEDB_VERSION_MAJOR, TILEDB_VERSION_MINOR, TILEDB_VERSION_PATCH);
+}
+
 };  // namespace tiledbsoma::version

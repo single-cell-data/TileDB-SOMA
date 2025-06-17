@@ -69,7 +69,7 @@ TEST_CASE(
     REQUIRE(!SOMADataFrame::exists(uri, ctx));
 
     auto soma_point_cloud = SOMAPointCloudDataFrame::open(
-        uri, OpenMode::read, ctx, std::nullopt);
+        uri, OpenMode::soma_read, ctx, std::nullopt);
     REQUIRE(soma_point_cloud->uri() == uri);
     REQUIRE(soma_point_cloud->ctx() == ctx);
     REQUIRE(soma_point_cloud->type() == "SOMAPointCloudDataFrame");
@@ -90,7 +90,8 @@ TEST_CASE(
     std::vector<double> a0(10, 1.0);
 
     // Write to point cloud.
-    soma_point_cloud = SOMAPointCloudDataFrame::open(uri, OpenMode::write, ctx);
+    soma_point_cloud = SOMAPointCloudDataFrame::open(
+        uri, OpenMode::soma_write, ctx);
     auto mq = ManagedQuery(*soma_point_cloud, ctx->tiledb_ctx());
     mq.setup_write_column(
         dim_infos[0].name, d0.size(), d0.data(), (uint64_t*)nullptr);
@@ -105,7 +106,7 @@ TEST_CASE(
 
     // Read back the data.
     soma_point_cloud = SOMAPointCloudDataFrame::open(
-        uri, OpenMode::read, ctx, std::nullopt);
+        uri, OpenMode::soma_read, ctx, std::nullopt);
     mq = ManagedQuery(*soma_point_cloud, ctx->tiledb_ctx());
     while (auto batch = mq.read_next()) {
         auto arrbuf = batch.value();
@@ -124,7 +125,7 @@ TEST_CASE(
     CHECK(point_cloud_coord_space == coord_space);
     soma_point_cloud->close();
 
-    auto soma_object = SOMAObject::open(uri, OpenMode::read, ctx);
+    auto soma_object = SOMAObject::open(uri, OpenMode::soma_read, ctx);
     REQUIRE(soma_object->uri() == uri);
     REQUIRE(soma_object->type() == "SOMAPointCloudDataFrame");
     soma_object->close();

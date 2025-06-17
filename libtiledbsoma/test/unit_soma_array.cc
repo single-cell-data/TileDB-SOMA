@@ -113,7 +113,7 @@ std::tuple<std::vector<int64_t>, std::vector<int32_t>> write_array(
     for (auto i = 0; i < num_fragments; ++i) {
         auto frag_num = frags[i];
         auto soma_array = SOMAArray::open(
-            OpenMode::write,
+            OpenMode::soma_write,
             uri,
             ctx,
             TimestampRange(timestamp + i, timestamp + i));
@@ -213,7 +213,7 @@ TEST_CASE("SOMAArray: random nnz") {
         std::vector<int32_t> a0(128 - i, i);
         std::iota(d0.begin(), d0.end(), i * 128);
 
-        auto soma_array = SOMAArray::open(OpenMode::write, base_uri, ctx);
+        auto soma_array = SOMAArray::open(OpenMode::soma_write, base_uri, ctx);
 
         // Write data to array
         auto mq = ManagedQuery(*soma_array, ctx->tiledb_ctx(), "");
@@ -244,7 +244,7 @@ TEST_CASE("SOMAArray: random nnz") {
         std::vector<int32_t> a0(max - min, max);
         std::iota(d0.begin(), d0.end(), min);
 
-        auto soma_array = SOMAArray::open(OpenMode::write, base_uri, ctx);
+        auto soma_array = SOMAArray::open(OpenMode::soma_write, base_uri, ctx);
 
         // Write data to array
         auto mq = ManagedQuery(*soma_array, ctx->tiledb_ctx(), "");
@@ -259,7 +259,7 @@ TEST_CASE("SOMAArray: random nnz") {
     }
 
     // Get total cell num
-    auto soma_array = SOMAArray::open(OpenMode::read, base_uri, ctx);
+    auto soma_array = SOMAArray::open(OpenMode::soma_read, base_uri, ctx);
 
     uint64_t nnz = soma_array->nnz();
     auto mq = ManagedQuery(*soma_array, ctx->tiledb_ctx(), "");
@@ -314,7 +314,7 @@ TEST_CASE("SOMAArray: nnz") {
 
         // Get total cell num
         auto soma_array = SOMAArray::open(
-            OpenMode::read,
+            OpenMode::soma_read,
             uri,
             ctx,
             TimestampRange(timestamp, timestamp + num_fragments - 1));
@@ -388,7 +388,8 @@ TEST_CASE("SOMAArray: nnz with timestamp") {
 
         // Get total cell num at timestamp (0, 20)
         TimestampRange timestamp{0, 20};
-        auto soma_array = SOMAArray::open(OpenMode::read, uri, ctx, timestamp);
+        auto soma_array = SOMAArray::open(
+            OpenMode::soma_read, uri, ctx, timestamp);
 
         uint64_t nnz = soma_array->nnz();
         REQUIRE(nnz == expected_nnz);
@@ -440,7 +441,7 @@ TEST_CASE("SOMAArray: nnz with consolidation") {
         }
 
         // Get total cell num
-        auto soma_array = SOMAArray::open(OpenMode::read, uri, ctx);
+        auto soma_array = SOMAArray::open(OpenMode::soma_read, uri, ctx);
 
         uint64_t nnz = soma_array->nnz();
         if (allow_duplicates) {
@@ -458,14 +459,14 @@ TEST_CASE("SOMAArray: metadata") {
     const auto& [uri, expected_nnz] = create_array(base_uri, ctx);
 
     auto soma_array = SOMAArray::open(
-        OpenMode::write, uri, ctx, TimestampRange(1, 1));
+        OpenMode::soma_write, uri, ctx, TimestampRange(1, 1));
 
     int32_t val = 100;
     soma_array->set_metadata("md", TILEDB_INT32, 1, &val);
     soma_array->close();
 
     // Read metadata
-    soma_array->open(OpenMode::read, TimestampRange(0, 2));
+    soma_array->open(OpenMode::soma_read, TimestampRange(0, 2));
     REQUIRE(soma_array->metadata_num() == 3);
     REQUIRE(soma_array->has_metadata("soma_object_type"));
     REQUIRE(soma_array->has_metadata("soma_encoding_version"));
@@ -477,7 +478,7 @@ TEST_CASE("SOMAArray: metadata") {
     soma_array->close();
 
     // md should not be available at (2, 2)
-    soma_array->open(OpenMode::read, TimestampRange(2, 2));
+    soma_array->open(OpenMode::soma_read, TimestampRange(2, 2));
     REQUIRE(soma_array->metadata_num() == 2);
     REQUIRE(soma_array->has_metadata("soma_object_type"));
     REQUIRE(soma_array->has_metadata("soma_encoding_version"));
@@ -485,7 +486,7 @@ TEST_CASE("SOMAArray: metadata") {
     soma_array->close();
 
     // Metadata should also be retrievable in write mode
-    soma_array->open(OpenMode::write, TimestampRange(0, 2));
+    soma_array->open(OpenMode::soma_write, TimestampRange(0, 2));
     REQUIRE(soma_array->metadata_num() == 3);
     REQUIRE(soma_array->has_metadata("soma_object_type"));
     REQUIRE(soma_array->has_metadata("soma_encoding_version"));
@@ -500,7 +501,7 @@ TEST_CASE("SOMAArray: metadata") {
     soma_array->close();
 
     // Confirm delete in read mode
-    soma_array->open(OpenMode::read, TimestampRange(0, 2));
+    soma_array->open(OpenMode::soma_read, TimestampRange(0, 2));
     REQUIRE(!soma_array->has_metadata("md"));
     REQUIRE(soma_array->metadata_num() == 2);
 }
@@ -518,7 +519,7 @@ TEST_CASE("SOMAArray: Test buffer size") {
     std::string base_uri = "mem://unit-test-array";
     auto [uri, expected_nnz] = create_array(base_uri, ctx);
     auto [expected_d0, expected_a0] = write_array(uri, ctx);
-    auto soma_array = SOMAArray::open(OpenMode::read, uri, ctx);
+    auto soma_array = SOMAArray::open(OpenMode::soma_read, uri, ctx);
     auto mq = ManagedQuery(*soma_array, ctx->tiledb_ctx());
 
     size_t loops = 0;
@@ -533,7 +534,7 @@ TEST_CASE("SOMAArray: ResultOrder") {
     std::string base_uri = "mem://unit-test-array-result-order";
     auto [uri, expected_nnz] = create_array(base_uri, ctx);
     auto [expected_d0, expected_a0] = write_array(uri, ctx);
-    auto soma_array = SOMAArray::open(OpenMode::read, uri, ctx);
+    auto soma_array = SOMAArray::open(OpenMode::soma_read, uri, ctx);
     auto mq = ManagedQuery(*soma_array, ctx->tiledb_ctx());
     REQUIRE(mq.result_order() == ResultOrder::automatic);
     mq.set_layout(ResultOrder::rowmajor);
@@ -562,7 +563,7 @@ TEST_CASE("SOMAArray: Write and read back Boolean") {
     schema.set_allows_dups(true);
 
     SOMAArray::create(ctx, uri, std::move(schema), "NONE");
-    auto soma_array = SOMAArray::open(OpenMode::write, uri, ctx);
+    auto soma_array = SOMAArray::open(OpenMode::soma_write, uri, ctx);
 
     auto arrow_schema = make_managed_unique<ArrowSchema>();
     arrow_schema->format = strdup("+s");
@@ -645,7 +646,7 @@ TEST_CASE("SOMAArray: Write and read back Boolean") {
     mq_write.close();
     soma_array->close();
 
-    soma_array = SOMAArray::open(OpenMode::read, uri, ctx);
+    soma_array = SOMAArray::open(OpenMode::soma_read, uri, ctx);
     auto mq_read = ManagedQuery(*soma_array, ctx->tiledb_ctx());
     auto arrbuf = mq_read.read_next().value();
 

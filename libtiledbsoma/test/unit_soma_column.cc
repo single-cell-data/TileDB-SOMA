@@ -132,7 +132,7 @@ struct VariouslyIndexedDataFrameFixture {
     }
 
     void write_sjid_u32_str_data_from(int64_t sjid_base) {
-        auto sdf = SOMADataFrame::open(uri_, OpenMode::write, ctx_);
+        auto sdf = SOMADataFrame::open(uri_, OpenMode::soma_write, ctx_);
 
         auto i64_data = std::vector<int64_t>({sjid_base + 1, sjid_base + 2});
 
@@ -272,7 +272,7 @@ TEST_CASE_METHOD(
         create(dim_infos, attr_infos);
 
         // Check current domain
-        auto sdf = open(OpenMode::read);
+        auto sdf = open(OpenMode::soma_read);
 
         // External column initialization
         auto raw_array = tiledb::Array(*ctx_->tiledb_ctx(), uri_, TILEDB_READ);
@@ -385,17 +385,18 @@ TEST_CASE_METHOD(
 
         sdf->close();
 
-        sdf = open(OpenMode::write);
+        sdf = open(OpenMode::soma_write);
         write_sjid_u32_str_data_from(0);
 
         sdf->close();
 
-        sdf = open(OpenMode::read);
+        sdf = open(OpenMode::soma_read);
         REQUIRE(sdf->nnz() == 2);
 
         sdf->close();
 
-        ManagedQuery external_query(*open(OpenMode::read), ctx_->tiledb_ctx());
+        ManagedQuery external_query(
+            *open(OpenMode::soma_read), ctx_->tiledb_ctx());
 
         columns[1]->select_columns(external_query);
         columns[1]->set_dim_point<uint32_t>(external_query, 1234);
@@ -444,7 +445,7 @@ TEST_CASE_METHOD(
         create(dim_infos, attr_infos);
 
         // Check current domain
-        auto sdf = open(OpenMode::read);
+        auto sdf = open(OpenMode::soma_read);
 
         // External column initialization
         auto raw_array = tiledb::Array(*ctx_->tiledb_ctx(), uri_, TILEDB_READ);
@@ -557,17 +558,18 @@ TEST_CASE_METHOD(
 
         sdf->close();
 
-        sdf = open(OpenMode::write);
+        sdf = open(OpenMode::soma_write);
         write_sjid_u32_str_data_from(0);
 
         sdf->close();
 
-        sdf = open(OpenMode::read);
+        sdf = open(OpenMode::soma_read);
         REQUIRE(sdf->nnz() == 2);
 
         sdf->close();
 
-        ManagedQuery external_query(*open(OpenMode::read), ctx_->tiledb_ctx());
+        ManagedQuery external_query(
+            *open(OpenMode::soma_read), ctx_->tiledb_ctx());
 
         columns[1]->select_columns(external_query);
         columns[1]->set_dim_point<uint32_t>(external_query, 1234);

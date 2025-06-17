@@ -54,6 +54,15 @@ test_that("`reopen()` works on arrays", {
     )
     expect_true(arr$is_open(), info = is_open)
 
+    # Test reopen("DELETE")
+    expect_invisible(arr$reopen("DELETE"), label = lab)
+    expect_identical(
+      arr$mode(),
+      "DELETE",
+      info = sprintf("%s$reopen('DELETE') reopens as 'DELETE'", cls)
+    )
+    expect_true(arr$is_open(), info = is_open)
+
     # Test reopening in the same mode
     orig <- arr$mode()
     expect_invisible(arr$reopen(orig), label = lab)
