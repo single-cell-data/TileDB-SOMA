@@ -150,9 +150,9 @@ SOMAArray::SOMAArray(
             const char* query_type_str = nullptr;
             tiledb_query_type_to_str(arr_->query_type(), &query_type_str);
             throw std::invalid_argument(fmt::format(
-                "SOMAArray constructor does not accept a TileDB array opened "
-                "in mode '{}'. The array must be opened in either read or "
-                "write mode.",
+                "Internal error: SOMAArray constructor does not accept a "
+                "TileDB array opened in mode '{}'. The array must be opened in "
+                "either read or write mode.",
                 query_type_str));
         }
     }

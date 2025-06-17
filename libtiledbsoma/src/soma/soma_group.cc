@@ -120,21 +120,13 @@ SOMAGroup::SOMAGroup(
         case TILEDB_WRITE:
             soma_mode_ = OpenMode::soma_write;
             break;
-        case TILEDB_MODIFY_EXCLUSIVE:  // Not supported in SOMA
-        {
-            const char* query_type_str = nullptr;
-            tiledb_query_type_to_str(group_->query_type(), &query_type_str);
-            throw std::invalid_argument(fmt::format(
-                "Cannot open a TileDB group with query type '{}' in "
-                "TileDB-SOMA.",
-                query_type_str));
-        }
-        default: {  // Remaining query types are only supported on TileDB
-                    // arrays.
+        default: {  // Only allow read/write when constructing from TileDB.
             const char* query_type_str = nullptr;
             tiledb_query_type_to_str(group_->query_type(), &query_type_str);
             throw TileDBSOMAError(fmt::format(
-                "Internal error: unexpected TileDB group query type '{}'",
+                "Internal error: SOMAGroup constructor does not accept a "
+                "TileDB group opened in mode '{}'. The group must be opened in "
+                "either read or write mode.",
                 query_type_str));
         }
     }
