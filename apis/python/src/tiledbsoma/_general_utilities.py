@@ -81,6 +81,8 @@ def _verify_expected_tiledb_version() -> None:
     found = tiledb_version()
     if found != expected:
         warnings.warn(
-            f"TileDB version mismatch - expected version {expected}, but found {found}",
+            f"TileDB version mismatch - expected version {expected}, but found {found}. This should not occur, and"
+            "is likely the result of a corrupted package installation. Recommend uninstalling/reinstalling the"
+            "tiledbsoma package.",
             category=RuntimeWarning,
         )

@@ -10,6 +10,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- \[[#4126](https://github.com/single-cell-data/TileDB-SOMA/pull/4126)\] [python] at package import time, validate that the expected TileDB version is installed and used. Raises a RuntimeWarning if the condition is not met. This is an attempt to better warn users who have corrupted conda installations.
+
 ### Deprecated
 
 ### Removed
@@ -25,7 +27,7 @@ The primary changes are modifications and deprecations to the `tiledbsoma.io` in
 ### Changed
 
 - \[[#3983](https://github.com/single-cell-data/TileDB-SOMA/pull/3983)\] [python] Multiple writes of pre-sorted data may now be written to a single fragment using TileDB global order writes. Enable this performance optimization by setting the platform_config parameter `sort_coords` to `False` in the call to write. Will raise an error if data is not written in global sort order.
-- \[[#4086](https://github.com/single-cell-data/TileDB-SOMA/pull/4086)\] [python] Add new parameter `allow_duplicate_obs_ids` to the `tiledbsoma.io` functions `register_anndatas` and `register_h5ads`.  When `False` (default), a error will be raised if there are any duplicate `obs` IDs in the provided SOMA Experiment or AnnData objects. Set the parameter to `True` for legacy behavior. ID handling on the `var` axis is unchanged.
+- \[[#4086](https://github.com/single-cell-data/TileDB-SOMA/pull/4086)\] [python] Add new parameter `allow_duplicate_obs_ids` to the `tiledbsoma.io` functions `register_anndatas` and `register_h5ads`. When `False` (default), a error will be raised if there are any duplicate `obs` IDs in the provided SOMA Experiment or AnnData objects. Set the parameter to `True` for legacy behavior. ID handling on the `var` axis is unchanged.
 - \[[#4108](https://github.com/single-cell-data/TileDB-SOMA/pull/4108)\] [python] improve performance of `tiledbsoma.io.from_anndata` and `from_h5ad` when appending groups of AnnData known to have no duplicate obs axis IDs.
 
 - \[[#4106](https://github.com/single-cell-data/TileDB-SOMA/pull/4106)\] [python][BREAKING] The `SOMAObject.reopen` method now modifies the orginal `SOMAObject` in place (flushes data to disk and reopens with the requested timestamp and mode) and returns a reference to itself instead of flushing data to disk and opening a new object.
