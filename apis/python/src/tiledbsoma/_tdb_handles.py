@@ -63,6 +63,18 @@ _RawHdl_co = TypeVar("_RawHdl_co", bound=RawHandle, covariant=True)
 _SOMAObjectType = TypeVar("_SOMAObjectType", bound=clib.SOMAObject)
 
 
+def _open_mode_to_clib_mode(mode: options.OpenMode) -> clib.OpenMode:
+    """Convert options.OpenMode to clib.OpenMode."""
+    if mode == "r":
+        return clib.OpenMode.soma_read
+    elif mode == "w":
+        return clib.OpenMode.soma_write
+    elif mode == "d":
+        return clib.OpenMode.soma_delete
+    else:
+        raise ValueError(f"Unexpected mode '{mode}'. Valid modes are 'r', 'w', or 'd'.")
+
+
 def open_handle_wrapper(
     uri: str,
     mode: options.OpenMode,
@@ -71,15 +83,7 @@ def open_handle_wrapper(
     clib_type: str | None = None,
 ) -> "Wrapper[RawHandle]":
     """Determine whether the URI is an array or group, and open it."""
-    if mode == "r":
-        open_mode = clib.OpenMode.soma_read
-    elif mode == "w":
-        open_mode = clib.OpenMode.soma_write
-    elif mode == "d":
-        open_mode = clib.OpenMode.soma_delete
-    else:
-        raise ValueError(f"Unexpected mode '{mode}'. Valid modes are 'r', 'w', or 'd'.")
-
+    open_mode = _open_mode_to_clib_mode(mode)
     timestamp_ms = context._open_timestamp_ms(timestamp)
 
     _type_to_open = {
@@ -322,15 +326,7 @@ class SOMAGroupWrapper(Wrapper[_SOMAObjectType]):
         context: SOMATileDBContext,
         timestamp: int,
     ) -> clib.SOMAGroup:
-        if mode == "r":
-            open_mode = clib.OpenMode.soma_read
-        elif mode == "w":
-            open_mode = clib.OpenMode.soma_write
-        elif mode == "d":
-            open_mode = clib.OpenMode.soma_delete
-        else:
-            raise ValueError(f"Unexpected mode '{mode}'. Valid modes are 'r', 'w', or 'd'.")
-
+        open_mode = _open_mode_to_clib_mode(mode)
         return cls._WRAPPED_TYPE.open(
             uri,
             mode=open_mode,
@@ -398,15 +394,7 @@ class SOMAArrayWrapper(Wrapper[_SOMAObjectType]):
         context: SOMATileDBContext,
         timestamp: int,
     ) -> clib.SOMAArray:
-        if mode == "r":
-            open_mode = clib.OpenMode.soma_read
-        elif mode == "w":
-            open_mode = clib.OpenMode.soma_write
-        elif mode == "d":
-            open_mode = clib.OpenMode.soma_delete
-        else:
-            raise ValueError(f"Unexpected mode '{mode}'. Valid modes are 'r', 'w', or 'd'.")
-
+        open_mode = _open_mode_to_clib_mode(mode)
         return cls._WRAPPED_TYPE.open(
             uri,
             mode=open_mode,
