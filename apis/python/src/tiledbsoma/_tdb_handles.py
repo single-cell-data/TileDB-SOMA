@@ -262,7 +262,9 @@ class Wrapper(Generic[_RawHdl_co], metaclass=abc.ABCMeta):
             return self._handle
         if self.mode == "w":
             warnings.warn(
-                f"Deleting in write mode is deprecated. {self} should be reopened with mode='d'.", DeprecationWarning
+                f"Deleting in write mode is deprecated. {self} should be reopened with mode='d'.",
+                DeprecationWarning,
+                stacklevel=3,
             )
             return self._handle
         raise SOMAError(f"Cannot delete from {self}; current mode='{self.mode}'. Reopen in mode='d'.")
