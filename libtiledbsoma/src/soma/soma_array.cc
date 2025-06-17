@@ -146,7 +146,7 @@ SOMAArray::SOMAArray(
         case TILEDB_WRITE:
             soma_mode_ = OpenMode::soma_write;
             break;
-        default: {  // Remaining querty types are only supported on TileDB
+        default: {  // Only allow read/write when constructing from TileDB.
             const char* query_type_str = nullptr;
             tiledb_query_type_to_str(arr_->query_type(), &query_type_str);
             throw std::invalid_argument(fmt::format(

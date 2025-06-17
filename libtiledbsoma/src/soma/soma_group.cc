@@ -129,7 +129,7 @@ SOMAGroup::SOMAGroup(
                 "TileDB-SOMA.",
                 query_type_str));
         }
-        default: {  // Remaining querty types are only supported on TileDB
+        default: {  // Remaining query types are only supported on TileDB
                     // arrays.
             const char* query_type_str = nullptr;
             tiledb_query_type_to_str(group_->query_type(), &query_type_str);
