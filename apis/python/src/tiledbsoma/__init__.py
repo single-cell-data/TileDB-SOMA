@@ -168,6 +168,7 @@ from ._exception import (
 from ._experiment import Experiment
 from ._factory import open
 from ._general_utilities import (
+    _verify_expected_tiledb_version,
     get_implementation,
     get_implementation_version,
     get_libtiledbsoma_core_version,
@@ -195,6 +196,7 @@ from .stats import (
     tiledbsoma_stats_json,
 )
 
+_verify_expected_tiledb_version()
 __version__ = get_implementation_version()
 
 __all__ = [
@@ -213,6 +215,7 @@ __all__ = [
     "GeometryDataFrame",
     "get_implementation_version",
     "get_implementation",
+    "get_libtiledbsoma_core_version",
     "get_SOMA_version",
     "get_storage_engine",
     "IdentityTransform",
