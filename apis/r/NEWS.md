@@ -2,13 +2,13 @@
 
 ## Added
 
-* Add delete mode specified by `mode="DELETE"`. ([#4125](https://github.com/single-cell-data/tiledb-soma/pull/4125))
+- Add delete mode specified by `mode="DELETE"`. ([#4125](https://github.com/single-cell-data/tiledb-soma/pull/4125))
 
 ## Changed
 
 ## Deprecated
 
-* Deprecate removing elements from a collection in write mode. In the future, all new removals will need to be done in delete mode. ([#4125](https://github.com/single-cell-data/tiledb-soma/pull/4125))
+- Deprecate removing elements from a collection in write mode. In the future, all new removals will need to be done in delete mode. ([#4125](https://github.com/single-cell-data/tiledb-soma/pull/4125))
 
 ## Removed
 
@@ -29,12 +29,9 @@
 - `TileDBObject`, `TileDBArray`, and `TileDBGroup` classes have been removed ([#3771](https://github.com/single-cell-data/TileDB-SOMA/pull/3771))
 - `SOMACollection$to_list()` and `SOMACollection$to_data_frame()` have been removed as they were unused public internal methods inherited from `TileDBGroup` ([#3771](https://github.com/single-cell-data/TileDB-SOMA/pull/3771))
 
-
 ## Removed
 
 - `SOMAArray$object` has been removed ([#3771](https://github.com/single-cell-data/TileDB-SOMA/pull/3771))
-
-
 
 # tiledbsoma 1.17.0
 
