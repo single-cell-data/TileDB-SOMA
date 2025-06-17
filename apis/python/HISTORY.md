@@ -10,7 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
-- \[[#4126](https://github.com/single-cell-data/TileDB-SOMA/pull/4126)\] [python] at package import time, validate that the expected TileDB version is installed and used. Raises a RuntimeWarning if the condition is not met. This is an attempt to better warn users who have corrupted conda installations.
+- \[[#4126](https://github.com/single-cell-data/TileDB-SOMA/pull/4126)\] [python] At package import time, validate that the expected TileDB version is installed and used. Raises a RuntimeError exception if the condition is not met. This is an attempt to better warn users who have corrupted conda installations.
 
 ### Deprecated
 
