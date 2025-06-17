@@ -54,7 +54,7 @@ class IntIndexer {
 
         lookup(keys.data(), results.data(), keys.size());
     }
-    IntIndexer(){};
+    IntIndexer() {};
     IntIndexer(std::shared_ptr<tiledbsoma::SOMAContext> context)
         : context_(context) {
     }

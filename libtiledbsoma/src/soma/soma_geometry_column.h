@@ -63,7 +63,7 @@ class SOMAGeometryColumn : public SOMAColumn {
         SOMACoordinateSpace coordinate_space)
         : dimensions(dimensions)
         , attribute(attribute)
-        , coordinate_space(coordinate_space){};
+        , coordinate_space(coordinate_space) {};
 
     inline std::string name() const override {
         return SOMA_GEOMETRY_COLUMN_NAME;

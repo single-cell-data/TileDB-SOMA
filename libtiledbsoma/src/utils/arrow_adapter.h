@@ -71,7 +71,7 @@ class SOMACoordinateSpace;
  */
 struct ArrowBuffer {
     ArrowBuffer(std::shared_ptr<ColumnBuffer> buffer)
-        : buffer_(buffer){};
+        : buffer_(buffer) {};
 
     std::shared_ptr<ColumnBuffer> buffer_;
 };
