@@ -42,10 +42,6 @@ extend-select = []
 [tool.ruff.lint.per-file-ignores]
 # Ignore these rules everywhere except for the `src/` directory.
 "!apis/python/src/**.py" = ["D", "B"]
-# Ignore line too long (E501) in tests
-"apis/python/tests/**/*.py" = ["E501"]
-# Ignore line too long in notebooks
-"apis/python/**/*.ipynb" = ["E501"]
 
 # Temporarily disable checks in the io and io.spatial modules.
 "apis/python/src/tiledbsoma/io/**/*.py" = [
