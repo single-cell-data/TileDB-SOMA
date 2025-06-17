@@ -24,19 +24,28 @@ target-version = "py39"
 line-length = 120
 
 [tool.ruff.lint]
-extend-select = ["I001"]  # unsorted-imports
-
-# Enable all `pydocstyle` rules, limiting to those that adhere to the
-# Google convention via `convention = "google"`, below.
-select = ["D"]
+select = [  # see https://docs.astral.sh/ruff/rules/
+    "B",    # bugbear
+    "D",    # pydocstyle (Google convention, see setting below)
+    "E",    # pycodestyle
+    "F",    # Pyflakes
+    "I",    # isort
+    "W",    # pycodestyle warnings
+]
 ignore = [
+    "E501",  # line too long
     "D417",  # disable documentation for every function parameter
     "D205",  # disable blank line requirement between summary and description
 ]
+extend-select = []
 
 [tool.ruff.lint.per-file-ignores]
-# Ignore `D` rules everywhere except for the `src/` directory.
-"!apis/python/src/**.py" = ["D"]
+# Ignore these rules everywhere except for the `src/` directory.
+"!apis/python/src/**.py" = ["D", "B"]
+# Ignore line too long (E501) in tests
+"apis/python/tests/**/*.py" = ["E501"]
+# Ignore line too long in notebooks
+"apis/python/**/*.ipynb" = ["E501"]
 
 # Temporarily disable checks in the io and io.spatial modules.
 "apis/python/src/tiledbsoma/io/**/*.py" = [
