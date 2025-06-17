@@ -201,7 +201,7 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
             Maturing.
         """
         del partitions  # Currently unused.
-        self.verify_open_for_reading()
+        self._verify_open_for_reading()
         result_order = somacore.ResultOrder(result_order)
 
         # The dense_indices_to_shape includes, as one of its roles, how to handle default

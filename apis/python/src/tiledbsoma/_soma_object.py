@@ -251,8 +251,8 @@ class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
         """
         return self._handle.mode
 
-    def verify_open_for_deleting(self) -> None:
-        """Raises an error if the object is not open for reading."""
+    def _verify_open_for_deleting(self) -> None:
+        """Raises an error if the object is not open for deleting."""
         if self.closed:
             raise SOMAError(f"{self.__class__.__name__} ({self.uri}) must be open for deleting (closed).")
         if self.mode != "d":
@@ -265,7 +265,7 @@ class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
         if self.mode != "w":
             raise SOMAError(f"{self.__class__.__name__} ({self.uri}) must be open for writing. Mode is '{self.mode}'.")
 
-    def verify_open_for_reading(self) -> None:
+    def _verify_open_for_reading(self) -> None:
         """Raises an error if the object is not open for reading."""
         if self.closed:
             raise SOMAError(f"{self.__class__.__name__} ({self.uri}) must be open for reading (closed)")

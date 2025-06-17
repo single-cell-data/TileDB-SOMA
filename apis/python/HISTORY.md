@@ -9,7 +9,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Added
 
 * \[[#4125](https://github.com/single-cell-data/TileDB-SOMA/pull/4125)\] Add delete mode specified by `mode='d'`.
-* \[[#4125](https://github.com/single-cell-data/tiledb-soma/pull/4125)\] Add `verify_open_for_reading` and `verify_open_for_deleting` to SOMA objects.
 
 ### Changed
 
