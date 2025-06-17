@@ -2,7 +2,7 @@
 
 ## Added
 
-* Add delete mode specified by `mode='d'`. ([#4125](https://github.com/single-cell-data/tiledb-soma/pull/4125))
+* Add delete mode specified by `mode="DELETE"`. ([#4125](https://github.com/single-cell-data/tiledb-soma/pull/4125))
 
 ## Changed
 

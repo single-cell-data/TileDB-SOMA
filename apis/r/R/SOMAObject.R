@@ -418,7 +418,7 @@ SOMAObject <- R6::R6Class(
     # @description Check that the object is open
     #
     .check_open_for_read_or_write = function() {
-      if (!switch(self$mode() %||% "", READ = TRUE, WRITE = TRUE, FALSE)) {
+      if (!switch(self$mode() %||% "", READ = , WRITE = TRUE, FALSE)) {
         stop("Item must be open for read or write: ", self$uri, call. = FALSE)
       }
       return(invisible(NULL))
