@@ -64,23 +64,6 @@ set(INHERITED_CMAKE_ARGS
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules/FindTileDB_EP.cmake)
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules/FindSpdlog_EP.cmake)
 
-############################################################
-# 'make format' target
-############################################################
-
-set(SCRIPTS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../scripts")
-
-find_package(ClangTools)
-if (${CLANG_FORMAT_FOUND})
-  # Runs clang-format and updates files in place.
-  add_custom_target(format ${SCRIPTS_DIR}/run-clang-format.sh ${CMAKE_CURRENT_SOURCE_DIR}/src ${CLANG_FORMAT_BIN} 1
-    `find ${CMAKE_CURRENT_SOURCE_DIR} -name \\*.cc -or -name \\*.c -or -name \\*.h`)
-
-  # Runs clang-format and exits with a non-zero exit code# if any files need to
-  # be reformatted
-  add_custom_target(check-format ${SCRIPTS_DIR}/run-clang-format.sh ${CMAKE_CURRENT_SOURCE_DIR}/src ${CLANG_FORMAT_BIN} 0
-    `find ${CMAKE_CURRENT_SOURCE_DIR} -name \\*.cc -or -name \\*.c -or -name \\*.h`)
-endif()
 
 ############################################################
 # Set up the regular build (i.e. non-superbuild).
