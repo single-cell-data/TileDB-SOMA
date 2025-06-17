@@ -227,5 +227,6 @@ def process_spatial_df_region(
             ]
 
     coords = tuple(coords_by_name.get(index_name) for index_name in index_columns)
-    inv_transform = transform.inverse_transform()
+    with np.errstate(divide="ignore"):
+        inv_transform = transform.inverse_transform()
     return (coords, data_region, inv_transform)
