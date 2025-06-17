@@ -1,6 +1,6 @@
 #include <Rcpp/Lightest>  // for R interface to C++
 
-#include <RcppInt64>      // for fromInteger64
+#include <RcppInt64>  // for fromInteger64
 
 #include <tiledbsoma/tiledbsoma>
 #if TILEDB_VERSION_MAJOR == 2 && TILEDB_VERSION_MINOR >= 4
@@ -20,8 +20,7 @@ Rcpp::XPtr<tdbs::IntIndexer> reindex_create() {
 }
 
 // [[Rcpp::export]]
-Rcpp::XPtr<tdbs::IntIndexer> reindex_map(
-    Rcpp::XPtr<tdbs::IntIndexer> idx, const Rcpp::NumericVector nvec) {
+Rcpp::XPtr<tdbs::IntIndexer> reindex_map(Rcpp::XPtr<tdbs::IntIndexer> idx, const Rcpp::NumericVector nvec) {
     check_xptr_tag<tdbs::IntIndexer>(idx);
     const std::vector<int64_t> vec = Rcpp::fromInteger64(nvec);
     idx->map_locations(vec);
@@ -29,8 +28,7 @@ Rcpp::XPtr<tdbs::IntIndexer> reindex_map(
 }
 
 // [[Rcpp::export]]
-Rcpp::NumericVector reindex_lookup(
-    Rcpp::XPtr<tdbs::IntIndexer> idx, const Rcpp::NumericVector kvec) {
+Rcpp::NumericVector reindex_lookup(Rcpp::XPtr<tdbs::IntIndexer> idx, const Rcpp::NumericVector kvec) {
     check_xptr_tag<tdbs::IntIndexer>(idx);
     const std::vector<int64_t> keys = Rcpp::fromInteger64(kvec);
     int sz = keys.size();

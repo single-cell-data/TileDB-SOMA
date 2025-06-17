@@ -18,8 +18,7 @@ namespace tdbs = tiledbsoma;
 
 void apply_dim_points(
     tdbs::ManagedQuery* mq,
-    std::unordered_map<std::string, std::shared_ptr<tiledb::Dimension>>&
-        name2dim,
+    std::unordered_map<std::string, std::shared_ptr<tiledb::Dimension>>& name2dim,
     Rcpp::List lst) {
     std::vector<std::string> colnames = lst.attr("names");
     for (auto& nm : colnames) {
@@ -34,11 +33,8 @@ void apply_dim_points(
             for (size_t i = 0; i < iv.size(); i++) {
                 uv[i] = static_cast<uint64_t>(iv[i]);
                 if (uv[i] >= pr.first && uv[i] <= pr.second) {
-                    mq->select_point<uint64_t>(
-                        nm, uv[i]);  // bonked when use with vector
-                    tdbs::LOG_INFO(fmt::format("[apply_dim_points] Applying dim point {} on {}",
-                        uv[i],
-                        nm));
+                    mq->select_point<uint64_t>(nm, uv[i]);  // bonked when use with vector
+                    tdbs::LOG_INFO(fmt::format("[apply_dim_points] Applying dim point {} on {}", uv[i], nm));
                     suitable = true;
                 }
             }
@@ -49,9 +45,7 @@ void apply_dim_points(
             for (size_t i = 0; i < iv.size(); i++) {
                 if (iv[i] >= pr.first && iv[i] <= pr.second) {
                     mq->select_point<int64_t>(nm, iv[i]);
-                    tdbs::LOG_DEBUG(fmt::format("[apply_dim_points] Applying dim point {} on {}",
-                        iv[i],
-                        nm));
+                    tdbs::LOG_DEBUG(fmt::format("[apply_dim_points] Applying dim point {} on {}", iv[i], nm));
                     suitable = true;
                 }
             }
@@ -62,9 +56,7 @@ void apply_dim_points(
                 float v = static_cast<float>(payload[i]);
                 if (v >= pr.first && v <= pr.second) {
                     mq->select_point<float>(nm, v);
-                    tdbs::LOG_DEBUG(fmt::format("[apply_dim_points] Applying dim point {} on {}",
-                        v,
-                        nm));
+                    tdbs::LOG_DEBUG(fmt::format("[apply_dim_points] Applying dim point {} on {}", v, nm));
                     suitable = true;
                 }
             }
@@ -74,9 +66,7 @@ void apply_dim_points(
             for (R_xlen_t i = 0; i < payload.size(); i++) {
                 if (payload[i] >= pr.first && payload[i] <= pr.second) {
                     mq->select_point<double>(nm, payload[i]);
-                    tdbs::LOG_DEBUG(fmt::format("[apply_dim_points] Applying dim point {} on {}",
-                        payload[i],
-                        nm));
+                    tdbs::LOG_DEBUG(fmt::format("[apply_dim_points] Applying dim point {} on {}", payload[i], nm));
                     suitable = true;
                 }
             }
@@ -86,29 +76,22 @@ void apply_dim_points(
             for (R_xlen_t i = 0; i < payload.size(); i++) {
                 if (payload[i] >= pr.first && payload[i] <= pr.second) {
                     mq->select_point<int32_t>(nm, payload[i]);
-                    tdbs::LOG_DEBUG(fmt::format("[apply_dim_points] Applying dim point {} on {}",
-                        payload[i],
-                        nm));
+                    tdbs::LOG_DEBUG(fmt::format("[apply_dim_points] Applying dim point {} on {}", payload[i], nm));
                     suitable = true;
                 }
             }
         } else {
-            Rcpp::stop(
-                "Currently unsupported type: ", tiledb::impl::to_str(tp));
+            Rcpp::stop("Currently unsupported type: ", tiledb::impl::to_str(tp));
         }
         if (!suitable) {
-            Rcpp::stop(
-                "Unsuitable dim points on dimension '%s' with domain %s",
-                nm,
-                dm->domain_to_str());
+            Rcpp::stop("Unsuitable dim points on dimension '%s' with domain %s", nm, dm->domain_to_str());
         }
     }
 }
 
 void apply_dim_ranges(
     tdbs::ManagedQuery* mq,
-    std::unordered_map<std::string, std::shared_ptr<tiledb::Dimension>>&
-        name2dim,
+    std::unordered_map<std::string, std::shared_ptr<tiledb::Dimension>>& name2dim,
     Rcpp::List lst) {
     std::vector<std::string> colnames = lst.attr("names");
     for (auto& nm : colnames) {
@@ -117,26 +100,23 @@ void apply_dim_ranges(
         bool suitable = false;
         if (tp == TILEDB_UINT64) {
             Rcpp::NumericMatrix mm = lst[nm];
-            Rcpp::NumericMatrix::Column lo = mm.column(
-                0);  // works as proxy for int and float types
-            Rcpp::NumericMatrix::Column hi = mm.column(
-                1);  // works as proxy for int and float types
+            Rcpp::NumericMatrix::Column lo = mm.column(0);  // works as proxy for int and float types
+            Rcpp::NumericMatrix::Column hi = mm.column(1);  // works as proxy for int and float types
             std::vector<std::pair<uint64_t, uint64_t>> vp(mm.nrow());
             const std::pair<uint64_t, uint64_t> pr = dm->domain<uint64_t>();
             for (int i = 0; i < mm.nrow(); i++) {
                 uint64_t l = static_cast<uint64_t>(Rcpp::fromInteger64(lo[i]));
                 uint64_t h = static_cast<uint64_t>(Rcpp::fromInteger64(hi[i]));
-                vp[i] = std::make_pair(
-                    std::max(l, pr.first), std::min(h, pr.second));
-                tdbs::LOG_DEBUG(fmt::format("[apply_dim_ranges] Applying dim point {} on {} with {} - "
+                vp[i] = std::make_pair(std::max(l, pr.first), std::min(h, pr.second));
+                tdbs::LOG_DEBUG(fmt::format(
+                    "[apply_dim_ranges] Applying dim point {} on {} with {} - "
                     "{}",
                     i,
                     nm,
                     l,
                     h));
-                suitable = l < pr.second &&
-                           h > pr.first;  // lower must be less than max, higher
-                                          // more than min
+                suitable = l < pr.second && h > pr.first;  // lower must be less than max, higher
+                                                           // more than min
             }
             if (suitable)
                 mq->select_ranges<uint64_t>(nm, vp);
@@ -147,107 +127,92 @@ void apply_dim_ranges(
             std::vector<std::pair<int64_t, int64_t>> vp(mm.nrow());
             const std::pair<int64_t, int64_t> pr = dm->domain<int64_t>();
             for (int i = 0; i < mm.nrow(); i++) {
-                vp[i] = std::make_pair(
-                    std::max(lo[i], pr.first), std::min(hi[i], pr.second));
-                tdbs::LOG_DEBUG(fmt::format("[apply_dim_ranges] Applying dim point {} on {} with {} - "
+                vp[i] = std::make_pair(std::max(lo[i], pr.first), std::min(hi[i], pr.second));
+                tdbs::LOG_DEBUG(fmt::format(
+                    "[apply_dim_ranges] Applying dim point {} on {} with {} - "
                     "{}",
                     i,
                     nm,
                     lo[i],
                     hi[i]));
-                suitable = lo[i] < pr.second &&
-                           hi[i] > pr.first;  // lower must be less than max,
-                                              // higher more than min
+                suitable = lo[i] < pr.second && hi[i] > pr.first;  // lower must be less than max,
+                                                                   // higher more than min
             }
             if (suitable)
                 mq->select_ranges<int64_t>(nm, vp);
         } else if (tp == TILEDB_FLOAT32) {
             Rcpp::NumericMatrix mm = lst[nm];
-            Rcpp::NumericMatrix::Column lo = mm.column(
-                0);  // works as proxy for int and float types
-            Rcpp::NumericMatrix::Column hi = mm.column(
-                1);  // works as proxy for int and float types
+            Rcpp::NumericMatrix::Column lo = mm.column(0);  // works as proxy for int and float types
+            Rcpp::NumericMatrix::Column hi = mm.column(1);  // works as proxy for int and float types
             std::vector<std::pair<float, float>> vp(mm.nrow());
             const std::pair<float, float> pr = dm->domain<float>();
             for (int i = 0; i < mm.nrow(); i++) {
                 float l = static_cast<float>(lo[i]);
                 float h = static_cast<float>(hi[i]);
-                vp[i] = std::make_pair(
-                    std::max(l, pr.first), std::min(h, pr.second));
-                tdbs::LOG_DEBUG(fmt::format("[apply_dim_ranges] Applying dim point {} on {} with {} - "
+                vp[i] = std::make_pair(std::max(l, pr.first), std::min(h, pr.second));
+                tdbs::LOG_DEBUG(fmt::format(
+                    "[apply_dim_ranges] Applying dim point {} on {} with {} - "
                     "{}",
                     i,
                     nm,
                     l,
                     h));
-                suitable = l < pr.second &&
-                           h > pr.first;  // lower must be less than max, higher
-                                          // more than min
+                suitable = l < pr.second && h > pr.first;  // lower must be less than max, higher
+                                                           // more than min
             }
             if (suitable)
                 mq->select_ranges<float>(nm, vp);
         } else if (tp == TILEDB_FLOAT64) {
             Rcpp::NumericMatrix mm = lst[nm];
-            Rcpp::NumericMatrix::Column lo = mm.column(
-                0);  // works as proxy for int and float types
-            Rcpp::NumericMatrix::Column hi = mm.column(
-                1);  // works as proxy for int and float types
+            Rcpp::NumericMatrix::Column lo = mm.column(0);  // works as proxy for int and float types
+            Rcpp::NumericMatrix::Column hi = mm.column(1);  // works as proxy for int and float types
             std::vector<std::pair<double, double>> vp(mm.nrow());
             const std::pair<double, double> pr = dm->domain<double>();
             for (int i = 0; i < mm.nrow(); i++) {
-                vp[i] = std::make_pair(
-                    std::max(lo[i], pr.first), std::min(hi[i], pr.second));
-                tdbs::LOG_DEBUG(fmt::format("[apply_dim_ranges] Applying dim point {} on {} with {} - "
+                vp[i] = std::make_pair(std::max(lo[i], pr.first), std::min(hi[i], pr.second));
+                tdbs::LOG_DEBUG(fmt::format(
+                    "[apply_dim_ranges] Applying dim point {} on {} with {} - "
                     "{}",
                     i,
                     nm,
                     lo[i],
                     hi[i]));
-                suitable = lo[i] < pr.second &&
-                           hi[i] > pr.first;  // lower must be less than max,
-                                              // higher more than min
+                suitable = lo[i] < pr.second && hi[i] > pr.first;  // lower must be less than max,
+                                                                   // higher more than min
             }
             if (suitable)
                 mq->select_ranges<double>(nm, vp);
         } else if (tp == TILEDB_INT32) {
             Rcpp::IntegerMatrix mm = lst[nm];
-            Rcpp::IntegerMatrix::Column lo = mm.column(
-                0);  // works as proxy for int and float types
-            Rcpp::IntegerMatrix::Column hi = mm.column(
-                1);  // works as proxy for int and float types
+            Rcpp::IntegerMatrix::Column lo = mm.column(0);  // works as proxy for int and float types
+            Rcpp::IntegerMatrix::Column hi = mm.column(1);  // works as proxy for int and float types
             std::vector<std::pair<int32_t, int32_t>> vp(mm.nrow());
             const std::pair<int32_t, int32_t> pr = dm->domain<int32_t>();
             for (int i = 0; i < mm.nrow(); i++) {
-                vp[i] = std::make_pair(
-                    std::max(lo[i], pr.first), std::min(hi[i], pr.second));
-                tdbs::LOG_DEBUG(fmt::format("[apply_dim_ranges] Applying dim point {} on {} with {} - "
+                vp[i] = std::make_pair(std::max(lo[i], pr.first), std::min(hi[i], pr.second));
+                tdbs::LOG_DEBUG(fmt::format(
+                    "[apply_dim_ranges] Applying dim point {} on {} with {} - "
                     "{}",
                     i,
                     nm[i],
                     lo[i],
                     hi[i]));
-                suitable = lo[i] < pr.second &&
-                           hi[i] > pr.first;  // lower must be less than max,
-                                              // higher more than min
+                suitable = lo[i] < pr.second && hi[i] > pr.first;  // lower must be less than max,
+                                                                   // higher more than min
             }
             if (suitable)
                 mq->select_ranges<int32_t>(nm, vp);
         } else {
-            Rcpp::stop(
-                "Currently unsupported type: ", tiledb::impl::to_str(tp));
+            Rcpp::stop("Currently unsupported type: ", tiledb::impl::to_str(tp));
         }
         if (!suitable) {
-            Rcpp::stop(
-                "Unsuitable dim ranges on dimension '%s' with domain %s",
-                nm,
-                dm->domain_to_str());
+            Rcpp::stop("Unsuitable dim ranges on dimension '%s' with domain %s", nm, dm->domain_to_str());
         }
     }
 }
 
 // initialize arrow schema and array, respectively
-Rcpp::XPtr<ArrowSchema> schema_setup_struct(
-    Rcpp::XPtr<ArrowSchema> schxp, int64_t n_children) {
+Rcpp::XPtr<ArrowSchema> schema_setup_struct(Rcpp::XPtr<ArrowSchema> schxp, int64_t n_children) {
     ArrowSchema* schema = schxp.get();
     auto type = NANOARROW_TYPE_STRUCT;
 
@@ -263,8 +228,7 @@ Rcpp::XPtr<ArrowSchema> schema_setup_struct(
         Rcpp::stop("Error allocation as children not null");
 
     if (n_children > 0) {
-        auto ptr = (struct ArrowSchema**)ArrowMalloc(
-            n_children * sizeof(struct ArrowSchema*));
+        auto ptr = (struct ArrowSchema**)ArrowMalloc(n_children * sizeof(struct ArrowSchema*));
         Rcpp::XPtr<ArrowSchema*> schema_ptrxp = make_xptr(ptr, false);
         schema->children = schema_ptrxp.get();
         if (schema->children == NULL)
@@ -358,16 +322,14 @@ std::string tiledbsoma_stats_dump() {
 // version of just the TileDB Embedded library version is returned.
 //
 // [[Rcpp::export]]
-std::string libtiledbsoma_version(
-    const bool compact = false, const bool major_minor_only = false) {
+std::string libtiledbsoma_version(const bool compact = false, const bool major_minor_only = false) {
     if (compact) {
         auto v = tiledbsoma::version::embedded_version_triple();
         std::ostringstream txt;
         if (major_minor_only) {
             txt << std::get<0>(v) << "." << std::get<1>(v);
         } else {
-            txt << std::get<0>(v) << "." << std::get<1>(v) << "."
-                << std::get<2>(v);
+            txt << std::get<0>(v) << "." << std::get<1>(v) << "." << std::get<2>(v);
         }
         return txt.str();
     } else {
@@ -381,10 +343,8 @@ std::string libtiledbsoma_version(
 //
 // [[Rcpp::export]]
 Rcpp::IntegerVector tiledb_embedded_version() {
-    std::tuple<int, int, int>
-        triple = tiledbsoma::version::embedded_version_triple();
-    return Rcpp::IntegerVector::create(
-        std::get<0>(triple), std::get<1>(triple), std::get<2>(triple));
+    std::tuple<int, int, int> triple = tiledbsoma::version::embedded_version_triple();
+    return Rcpp::IntegerVector::create(std::get<0>(triple), std::get<1>(triple), std::get<2>(triple));
 }
 
 // Also present in tiledb-r but only after 0.23.0 so this can be removed (and
@@ -414,8 +374,7 @@ size_t tiledb_datatype_max_value(const std::string& datatype) {
 
 // Make (optional) TimestampRange from (nullable, two-element)
 // Rcpp::DatetimeVector
-std::optional<tdbs::TimestampRange> makeTimestampRange(
-    Rcpp::Nullable<Rcpp::DatetimeVector> tsvec) {
+std::optional<tdbs::TimestampRange> makeTimestampRange(Rcpp::Nullable<Rcpp::DatetimeVector> tsvec) {
     // optional timestamp, defaults to 'none' aka std::nullopt
     std::optional<tdbs::TimestampRange> tsrng = std::nullopt;
 
@@ -427,15 +386,11 @@ std::optional<tdbs::TimestampRange> makeTimestampRange(
                                           // w/ (fract.) secs since epoch
         if (vec.size() == 1) {
             tsrng = std::make_pair<uint64_t>(
-                0,
-                static_cast<uint64_t>(
-                    Rcpp::Datetime(vec[0]).getFractionalTimestamp() * 1000));
+                0, static_cast<uint64_t>(Rcpp::Datetime(vec[0]).getFractionalTimestamp() * 1000));
         } else if (vec.size() == 2) {
             tsrng = std::make_pair<uint64_t>(
-                static_cast<uint64_t>(
-                    Rcpp::Datetime(vec[0]).getFractionalTimestamp() * 1000),
-                static_cast<uint64_t>(
-                    Rcpp::Datetime(vec[1]).getFractionalTimestamp() * 1000));
+                static_cast<uint64_t>(Rcpp::Datetime(vec[0]).getFractionalTimestamp() * 1000),
+                static_cast<uint64_t>(Rcpp::Datetime(vec[1]).getFractionalTimestamp() * 1000));
         } else {
             Rcpp::stop("TimestampRange must be a one or two-element vector");
         }
@@ -450,37 +405,29 @@ SEXP convert_domainish(const tdbs::ArrowTable& arrow_table) {
 
     auto schemaxp = nanoarrow_schema_owning_xptr();
     auto sch = nanoarrow_output_schema_from_xptr(schemaxp);
-    exitIfError(
-        ArrowSchemaInitFromType(sch, NANOARROW_TYPE_STRUCT), "Bad schema init");
+    exitIfError(ArrowSchemaInitFromType(sch, NANOARROW_TYPE_STRUCT), "Bad schema init");
     exitIfError(ArrowSchemaSetName(sch, ""), "Bad schema name");
-    exitIfError(
-        ArrowSchemaAllocateChildren(sch, arrow_schema->n_children),
-        "Bad schema children alloc");
+    exitIfError(ArrowSchemaAllocateChildren(sch, arrow_schema->n_children), "Bad schema children alloc");
 
     if (arrow_array->n_children != arrow_schema->n_children) {
         Rcpp::stop(
-            "schema/data column mismatch %d != %d\n",
-            (int)arrow_array->n_children,
-            (int)arrow_schema->n_children);
+            "schema/data column mismatch %d != %d\n", (int)arrow_array->n_children, (int)arrow_schema->n_children);
     }
     auto ncol = arrow_schema->n_children;
 
     auto arrayxp = nanoarrow_array_owning_xptr();
     auto arr = nanoarrow_output_array_from_xptr(arrayxp);
-    exitIfError(
-        ArrowArrayInitFromType(arr, NANOARROW_TYPE_STRUCT), "Bad array init");
-    exitIfError(
-        ArrowArrayAllocateChildren(arr, arrow_array->n_children),
-        "Bad array children alloc");
+    exitIfError(ArrowArrayInitFromType(arr, NANOARROW_TYPE_STRUCT), "Bad array init");
+    exitIfError(ArrowArrayAllocateChildren(arr, arrow_array->n_children), "Bad array children alloc");
 
     for (size_t i = 0; i < static_cast<size_t>(ncol); i++) {
         if (arrow_array->children[i]->n_buffers == 3) {
             // Arrow semantics: variable-length: buffers 0,1,2 are validity,
             // offsets, data
-            std::vector<std::string>
-                lohi = tiledbsoma::ArrowAdapter::get_array_string_column(
-                    arrow_array->children[i], arrow_schema->children[i]);
-            tdbs::LOG_INFO(fmt::format("[domainish] name {} format {} length {} lo {} hi {}",
+            std::vector<std::string> lohi = tiledbsoma::ArrowAdapter::get_array_string_column(
+                arrow_array->children[i], arrow_schema->children[i]);
+            tdbs::LOG_INFO(fmt::format(
+                "[domainish] name {} format {} length {} lo {} hi {}",
                 std::string(arrow_schema->children[i]->name),
                 std::string(arrow_schema->children[i]->format),
                 arrow_array->children[i]->length,
@@ -489,7 +436,8 @@ SEXP convert_domainish(const tdbs::ArrowTable& arrow_table) {
         } else {
             // Arrow semantics: non-variable-length: buffers 0,1 are validity &
             // data
-            tdbs::LOG_INFO(fmt::format("[domainish] name {} format {} length {}",
+            tdbs::LOG_INFO(fmt::format(
+                "[domainish] name {} format {} length {}",
                 std::string(arrow_schema->children[i]->name),
                 std::string(arrow_schema->children[i]->format),
                 arrow_array->children[i]->length));
@@ -531,20 +479,20 @@ std::string remap_arrow_type_code_r_to_c(std::string input) {
 
 // Taken from tiledb-r
 // https://github.com/TileDB-Inc/TileDB-R/blob/525bdfc0f34aadb74a312a5d8428bd07819a8f83/src/libtiledb.cpp#L246C1-L261C2
-const char *_tiledb_layout_to_string(tiledb_layout_t layout) {
+const char* _tiledb_layout_to_string(tiledb_layout_t layout) {
     switch (layout) {
-    case TILEDB_ROW_MAJOR:
-        return "ROW_MAJOR";
-    case TILEDB_COL_MAJOR:
-        return "COL_MAJOR";
-    case TILEDB_GLOBAL_ORDER:
-        return "GLOBAL_ORDER";
-    case TILEDB_UNORDERED:
-        return "UNORDERED";
-    case TILEDB_HILBERT:
-        return "HILBERT";
-    default:
-        Rcpp::stop("unknown tiledb_layout_t (%d)", layout);
+        case TILEDB_ROW_MAJOR:
+            return "ROW_MAJOR";
+        case TILEDB_COL_MAJOR:
+            return "COL_MAJOR";
+        case TILEDB_GLOBAL_ORDER:
+            return "GLOBAL_ORDER";
+        case TILEDB_UNORDERED:
+            return "UNORDERED";
+        case TILEDB_HILBERT:
+            return "HILBERT";
+        default:
+            Rcpp::stop("unknown tiledb_layout_t (%d)", layout);
     }
 }
 
@@ -556,13 +504,13 @@ template <typename Numeric>
 Numeric _get_filter_option(Rcpp::XPtr<tiledb::Filter> filter, tiledb_filter_option_t option) {
     try {
         switch (option) {
-        case TILEDB_BIT_WIDTH_MAX_WINDOW:
-        case TILEDB_POSITIVE_DELTA_MAX_WINDOW:
-            return static_cast<Numeric>(filter->get_option<uint32_t>(option));
-        case TILEDB_SCALE_FLOAT_BYTEWIDTH:
-            return static_cast<Numeric>(filter->get_option<uint64_t>(option));
-        default:
-            return filter->get_option<Numeric>(option);
+            case TILEDB_BIT_WIDTH_MAX_WINDOW:
+            case TILEDB_POSITIVE_DELTA_MAX_WINDOW:
+                return static_cast<Numeric>(filter->get_option<uint32_t>(option));
+            case TILEDB_SCALE_FLOAT_BYTEWIDTH:
+                return static_cast<Numeric>(filter->get_option<uint64_t>(option));
+            default:
+                return filter->get_option<Numeric>(option);
         }
     } catch (const tiledb::TileDBError& e) {
         const std::string msg = e.what();
@@ -592,8 +540,7 @@ Rcpp::List _get_filter_options(Rcpp::XPtr<tiledb::Filter> filter) {
         Rcpp::Named("positive_delta") = _get_filter_option<int32_t>(filter, TILEDB_POSITIVE_DELTA_MAX_WINDOW),
         Rcpp::Named("float_bytewidth") = _get_filter_option<double>(filter, TILEDB_SCALE_FLOAT_BYTEWIDTH),
         Rcpp::Named("float_factor") = _get_filter_option<double>(filter, TILEDB_SCALE_FLOAT_FACTOR),
-        Rcpp::Named("float_offset") = _get_filter_option<double>(filter, TILEDB_SCALE_FLOAT_OFFSET)
-    );
+        Rcpp::Named("float_offset") = _get_filter_option<double>(filter, TILEDB_SCALE_FLOAT_OFFSET));
 }
 
 // adapted from tiledb-r
@@ -601,90 +548,90 @@ Rcpp::List _get_filter_options(Rcpp::XPtr<tiledb::Filter> filter) {
 SEXP _get_dim_domain(Rcpp::XPtr<tiledb::Dimension> dim) {
     auto dim_type = dim->type();
     switch (dim_type) {
-    case TILEDB_FLOAT32: {
-        using DataType = tiledb::impl::tiledb_to_type<TILEDB_FLOAT32>::type;
-        return Rcpp::NumericVector({dim->domain<DataType>().first, dim->domain<DataType>().second});
-    }
-    case TILEDB_FLOAT64: {
-        using DataType = tiledb::impl::tiledb_to_type<TILEDB_FLOAT64>::type;
-        auto d1 = dim->domain<DataType>().first;
-        auto d2 = dim->domain<DataType>().second;
-        if (d1 == R_NaReal || d2 == R_NaReal) {
-            Rcpp::stop("tiledb_dim domain FLOAT64 value not representable as an R double");
+        case TILEDB_FLOAT32: {
+            using DataType = tiledb::impl::tiledb_to_type<TILEDB_FLOAT32>::type;
+            return Rcpp::NumericVector({dim->domain<DataType>().first, dim->domain<DataType>().second});
         }
-        return Rcpp::NumericVector({d1, d2});
-    }
-    case TILEDB_INT8: {
-        using DataType = tiledb::impl::tiledb_to_type<TILEDB_INT8>::type;
-        return Rcpp::IntegerVector({dim->domain<DataType>().first, dim->domain<DataType>().second});
-    }
-    case TILEDB_UINT8: {
-        using DataType = tiledb::impl::tiledb_to_type<TILEDB_UINT8>::type;
-        return Rcpp::IntegerVector({dim->domain<DataType>().first, dim->domain<DataType>().second});
-    }
-    case TILEDB_INT16: {
-        using DataType = tiledb::impl::tiledb_to_type<TILEDB_INT16>::type;
-        return Rcpp::IntegerVector({dim->domain<DataType>().first, dim->domain<DataType>().second});
-    }
-    case TILEDB_UINT16: {
-        using DataType = tiledb::impl::tiledb_to_type<TILEDB_UINT16>::type;
-        return Rcpp::IntegerVector({dim->domain<DataType>().first, dim->domain<DataType>().second});
-    }
-    case TILEDB_INT32: {
-        using DataType = tiledb::impl::tiledb_to_type<TILEDB_INT32>::type;
-        auto d1 = dim->domain<DataType>().first;
-        auto d2 = dim->domain<DataType>().second;
-        if (d1 == R_NaInt || d2 == R_NaInt) {
-            Rcpp::stop("tiledb_dim domain INT32 value not representable as an R integer");
+        case TILEDB_FLOAT64: {
+            using DataType = tiledb::impl::tiledb_to_type<TILEDB_FLOAT64>::type;
+            auto d1 = dim->domain<DataType>().first;
+            auto d2 = dim->domain<DataType>().second;
+            if (d1 == R_NaReal || d2 == R_NaReal) {
+                Rcpp::stop("tiledb_dim domain FLOAT64 value not representable as an R double");
+            }
+            return Rcpp::NumericVector({d1, d2});
         }
-        return Rcpp::IntegerVector({d1, d2});
-    }
-    case TILEDB_UINT32: {
-        using DataType = tiledb::impl::tiledb_to_type<TILEDB_UINT32>::type;
-        auto d1 = dim->domain<DataType>().first;
-        auto d2 = dim->domain<DataType>().second;
-        auto uint_max = std::numeric_limits<uint32_t>::max();
-        if (d1 > uint_max ||d2 > uint_max) {
-            Rcpp::stop("tiledb_dim domain UINT32 value not representable as an R integer64 type");
+        case TILEDB_INT8: {
+            using DataType = tiledb::impl::tiledb_to_type<TILEDB_INT8>::type;
+            return Rcpp::IntegerVector({dim->domain<DataType>().first, dim->domain<DataType>().second});
         }
-        return Rcpp::NumericVector({static_cast<double>(d1), static_cast<double>(d2)});
-    }
-    case TILEDB_INT64: {
-        using DataType = tiledb::impl::tiledb_to_type<TILEDB_INT64>::type;
-        auto d1 = dim->domain<DataType>().first;
-        auto d2 = dim->domain<DataType>().second;
-        return Rcpp::NumericVector({static_cast<double>(d1), static_cast<double>(d2)});
-    }
-    case TILEDB_UINT64: {
-        using DataType = tiledb::impl::tiledb_to_type<TILEDB_UINT64>::type;
-        auto d1 = dim->domain<DataType>().first;
-        auto d2 = dim->domain<DataType>().second;
-        return Rcpp::NumericVector({static_cast<double>(d1), static_cast<double>(d2)});
-    }
-    case TILEDB_DATETIME_YEAR:
-    case TILEDB_DATETIME_MONTH:
-    case TILEDB_DATETIME_WEEK:
-    case TILEDB_DATETIME_DAY:
-    case TILEDB_DATETIME_HR:
-    case TILEDB_DATETIME_MIN:
-    case TILEDB_DATETIME_SEC:
-    case TILEDB_DATETIME_MS:
-    case TILEDB_DATETIME_US:
-    case TILEDB_DATETIME_NS:
-    case TILEDB_DATETIME_PS:
-    case TILEDB_DATETIME_FS:
-    case TILEDB_DATETIME_AS: {
-        using DataType = tiledb::impl::tiledb_to_type<TILEDB_INT64>::type;
-        auto d1 = dim->domain<DataType>().first;
-        auto d2 = dim->domain<DataType>().second;
-        auto int32_max = std::numeric_limits<int32_t>::max();
-        if (d1 <= R_NaInt || d1 > int32_max || d2 <= R_NaInt || d2 > int32_max) {
+        case TILEDB_UINT8: {
+            using DataType = tiledb::impl::tiledb_to_type<TILEDB_UINT8>::type;
+            return Rcpp::IntegerVector({dim->domain<DataType>().first, dim->domain<DataType>().second});
+        }
+        case TILEDB_INT16: {
+            using DataType = tiledb::impl::tiledb_to_type<TILEDB_INT16>::type;
+            return Rcpp::IntegerVector({dim->domain<DataType>().first, dim->domain<DataType>().second});
+        }
+        case TILEDB_UINT16: {
+            using DataType = tiledb::impl::tiledb_to_type<TILEDB_UINT16>::type;
+            return Rcpp::IntegerVector({dim->domain<DataType>().first, dim->domain<DataType>().second});
+        }
+        case TILEDB_INT32: {
+            using DataType = tiledb::impl::tiledb_to_type<TILEDB_INT32>::type;
+            auto d1 = dim->domain<DataType>().first;
+            auto d2 = dim->domain<DataType>().second;
+            if (d1 == R_NaInt || d2 == R_NaInt) {
+                Rcpp::stop("tiledb_dim domain INT32 value not representable as an R integer");
+            }
+            return Rcpp::IntegerVector({d1, d2});
+        }
+        case TILEDB_UINT32: {
+            using DataType = tiledb::impl::tiledb_to_type<TILEDB_UINT32>::type;
+            auto d1 = dim->domain<DataType>().first;
+            auto d2 = dim->domain<DataType>().second;
+            auto uint_max = std::numeric_limits<uint32_t>::max();
+            if (d1 > uint_max || d2 > uint_max) {
+                Rcpp::stop("tiledb_dim domain UINT32 value not representable as an R integer64 type");
+            }
             return Rcpp::NumericVector({static_cast<double>(d1), static_cast<double>(d2)});
         }
-        return Rcpp::IntegerVector({static_cast<int32_t>(d1), static_cast<int32_t>(d2)});
-    }
-    default:
-        Rcpp::stop("invalid tiledb_dim domain type (%s)", tiledb::impl::to_str(dim_type));
+        case TILEDB_INT64: {
+            using DataType = tiledb::impl::tiledb_to_type<TILEDB_INT64>::type;
+            auto d1 = dim->domain<DataType>().first;
+            auto d2 = dim->domain<DataType>().second;
+            return Rcpp::NumericVector({static_cast<double>(d1), static_cast<double>(d2)});
+        }
+        case TILEDB_UINT64: {
+            using DataType = tiledb::impl::tiledb_to_type<TILEDB_UINT64>::type;
+            auto d1 = dim->domain<DataType>().first;
+            auto d2 = dim->domain<DataType>().second;
+            return Rcpp::NumericVector({static_cast<double>(d1), static_cast<double>(d2)});
+        }
+        case TILEDB_DATETIME_YEAR:
+        case TILEDB_DATETIME_MONTH:
+        case TILEDB_DATETIME_WEEK:
+        case TILEDB_DATETIME_DAY:
+        case TILEDB_DATETIME_HR:
+        case TILEDB_DATETIME_MIN:
+        case TILEDB_DATETIME_SEC:
+        case TILEDB_DATETIME_MS:
+        case TILEDB_DATETIME_US:
+        case TILEDB_DATETIME_NS:
+        case TILEDB_DATETIME_PS:
+        case TILEDB_DATETIME_FS:
+        case TILEDB_DATETIME_AS: {
+            using DataType = tiledb::impl::tiledb_to_type<TILEDB_INT64>::type;
+            auto d1 = dim->domain<DataType>().first;
+            auto d2 = dim->domain<DataType>().second;
+            auto int32_max = std::numeric_limits<int32_t>::max();
+            if (d1 <= R_NaInt || d1 > int32_max || d2 <= R_NaInt || d2 > int32_max) {
+                return Rcpp::NumericVector({static_cast<double>(d1), static_cast<double>(d2)});
+            }
+            return Rcpp::IntegerVector({static_cast<int32_t>(d1), static_cast<int32_t>(d2)});
+        }
+        default:
+            Rcpp::stop("invalid tiledb_dim domain type (%s)", tiledb::impl::to_str(dim_type));
     }
 }
 
@@ -693,73 +640,73 @@ SEXP _get_dim_domain(Rcpp::XPtr<tiledb::Dimension> dim) {
 SEXP _get_dim_tile(Rcpp::XPtr<tiledb::Dimension> dim) {
     auto dim_type = dim->type();
     switch (dim_type) {
-    case TILEDB_FLOAT32: {
-        using DataType = tiledb::impl::tiledb_to_type<TILEDB_FLOAT32>::type;
-        return Rcpp::wrap(static_cast<double>(dim->tile_extent<DataType>()));
-    }
-    case TILEDB_FLOAT64: {
-        using DataType = tiledb::impl::tiledb_to_type<TILEDB_FLOAT64>::type;
-        auto t = dim->tile_extent<DataType>();
-        if (t == R_NaReal) {
-            Rcpp::stop("tiledb_dim tile FLOAT64 value not representable as an R double");
+        case TILEDB_FLOAT32: {
+            using DataType = tiledb::impl::tiledb_to_type<TILEDB_FLOAT32>::type;
+            return Rcpp::wrap(static_cast<double>(dim->tile_extent<DataType>()));
         }
-        return Rcpp::wrap(static_cast<double>(t));
-    }
-    case TILEDB_INT8: {
-        using DataType = tiledb::impl::tiledb_to_type<TILEDB_INT8>::type;
-        return Rcpp::wrap(static_cast<int32_t>(dim->tile_extent<DataType>()));
-    }
-    case TILEDB_UINT8: {
-        using DataType = tiledb::impl::tiledb_to_type<TILEDB_UINT8>::type;
-        return Rcpp::wrap(static_cast<int32_t>(dim->tile_extent<DataType>()));
-    }
-    case TILEDB_INT16: {
-        using DataType = tiledb::impl::tiledb_to_type<TILEDB_INT16>::type;
-        return Rcpp::wrap(static_cast<int32_t>(dim->tile_extent<DataType>()));
-    }
-    case TILEDB_UINT16: {
-        using DataType = tiledb::impl::tiledb_to_type<TILEDB_UINT16>::type;
-        return Rcpp::wrap(static_cast<int32_t>(dim->tile_extent<DataType>()));
-    }
-    case TILEDB_INT32: {
-        using DataType = tiledb::impl::tiledb_to_type<TILEDB_INT32>::type;
-        auto t = dim->tile_extent<DataType>();
-        if (t == R_NaInt) {
-            Rcpp::stop("tiledb_dim tile INT32 value not representable as an R integer");
-        }
-        return Rcpp::wrap(static_cast<int32_t>(t));
-    }
-    case TILEDB_UINT32: {
-        using DataType = tiledb::impl::tiledb_to_type<TILEDB_UINT32>::type;
-        auto t = dim->tile_extent<DataType>();
-        if (t > std::numeric_limits<int32_t>::max()) {
-            Rcpp::warning("tiledb_dim tile UINT32 value not representable as an R integer, returning double");
+        case TILEDB_FLOAT64: {
+            using DataType = tiledb::impl::tiledb_to_type<TILEDB_FLOAT64>::type;
+            auto t = dim->tile_extent<DataType>();
+            if (t == R_NaReal) {
+                Rcpp::stop("tiledb_dim tile FLOAT64 value not representable as an R double");
+            }
             return Rcpp::wrap(static_cast<double>(t));
         }
-        return Rcpp::wrap(static_cast<int32_t>(t));
-    }
-    case TILEDB_DATETIME_YEAR:
-    case TILEDB_DATETIME_MONTH:
-    case TILEDB_DATETIME_WEEK:
-    case TILEDB_DATETIME_DAY:
-    case TILEDB_DATETIME_HR:
-    case TILEDB_DATETIME_MIN:
-    case TILEDB_DATETIME_SEC:
-    case TILEDB_DATETIME_MS:
-    case TILEDB_DATETIME_US:
-    case TILEDB_DATETIME_NS:
-    case TILEDB_DATETIME_PS:
-    case TILEDB_DATETIME_FS:
-    case TILEDB_DATETIME_AS:
-    case TILEDB_INT64: {
-        using DataType = tiledb::impl::tiledb_to_type<TILEDB_INT64>::type;
-        return Rcpp::wrap(static_cast<double>(dim->tile_extent<DataType>()));
-    }
-    case TILEDB_UINT64: {
-        using DataType = tiledb::impl::tiledb_to_type<TILEDB_UINT64>::type;
-        return Rcpp::wrap(static_cast<double>(dim->tile_extent<DataType>()));
-    }
-    default:
-        Rcpp::stop("invalid tiledb_dim domain type (%s)", tiledb::impl::to_str(dim_type));
+        case TILEDB_INT8: {
+            using DataType = tiledb::impl::tiledb_to_type<TILEDB_INT8>::type;
+            return Rcpp::wrap(static_cast<int32_t>(dim->tile_extent<DataType>()));
+        }
+        case TILEDB_UINT8: {
+            using DataType = tiledb::impl::tiledb_to_type<TILEDB_UINT8>::type;
+            return Rcpp::wrap(static_cast<int32_t>(dim->tile_extent<DataType>()));
+        }
+        case TILEDB_INT16: {
+            using DataType = tiledb::impl::tiledb_to_type<TILEDB_INT16>::type;
+            return Rcpp::wrap(static_cast<int32_t>(dim->tile_extent<DataType>()));
+        }
+        case TILEDB_UINT16: {
+            using DataType = tiledb::impl::tiledb_to_type<TILEDB_UINT16>::type;
+            return Rcpp::wrap(static_cast<int32_t>(dim->tile_extent<DataType>()));
+        }
+        case TILEDB_INT32: {
+            using DataType = tiledb::impl::tiledb_to_type<TILEDB_INT32>::type;
+            auto t = dim->tile_extent<DataType>();
+            if (t == R_NaInt) {
+                Rcpp::stop("tiledb_dim tile INT32 value not representable as an R integer");
+            }
+            return Rcpp::wrap(static_cast<int32_t>(t));
+        }
+        case TILEDB_UINT32: {
+            using DataType = tiledb::impl::tiledb_to_type<TILEDB_UINT32>::type;
+            auto t = dim->tile_extent<DataType>();
+            if (t > std::numeric_limits<int32_t>::max()) {
+                Rcpp::warning("tiledb_dim tile UINT32 value not representable as an R integer, returning double");
+                return Rcpp::wrap(static_cast<double>(t));
+            }
+            return Rcpp::wrap(static_cast<int32_t>(t));
+        }
+        case TILEDB_DATETIME_YEAR:
+        case TILEDB_DATETIME_MONTH:
+        case TILEDB_DATETIME_WEEK:
+        case TILEDB_DATETIME_DAY:
+        case TILEDB_DATETIME_HR:
+        case TILEDB_DATETIME_MIN:
+        case TILEDB_DATETIME_SEC:
+        case TILEDB_DATETIME_MS:
+        case TILEDB_DATETIME_US:
+        case TILEDB_DATETIME_NS:
+        case TILEDB_DATETIME_PS:
+        case TILEDB_DATETIME_FS:
+        case TILEDB_DATETIME_AS:
+        case TILEDB_INT64: {
+            using DataType = tiledb::impl::tiledb_to_type<TILEDB_INT64>::type;
+            return Rcpp::wrap(static_cast<double>(dim->tile_extent<DataType>()));
+        }
+        case TILEDB_UINT64: {
+            using DataType = tiledb::impl::tiledb_to_type<TILEDB_UINT64>::type;
+            return Rcpp::wrap(static_cast<double>(dim->tile_extent<DataType>()));
+        }
+        default:
+            Rcpp::stop("invalid tiledb_dim domain type (%s)", tiledb::impl::to_str(dim_type));
     }
 }

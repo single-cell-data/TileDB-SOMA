@@ -1,6 +1,6 @@
 #include <Rcpp/Lighter>  // for R interface to C++
 
-#include <nanoarrow/r.h>  // for C/C++ interface to Arrow (via header exported from the R package)
+#include <nanoarrow/r.h>            // for C/C++ interface to Arrow (via header exported from the R package)
 #include <RcppInt64>                // for fromInteger64
 #include <nanoarrow/nanoarrow.hpp>  // for C/C++ interface to Arrow (vendored)
 
@@ -28,8 +28,7 @@ void c_group_create(
     std::optional<tdbs::TimestampRange> tsrng = makeTimestampRange(timestamp);
     if (timestamp.isNotNull()) {
         Rcpp::DatetimeVector v(timestamp);
-        tdbs::LOG_DEBUG(
-            fmt::format("[c_group_create] uri {} ts ({},{})", uri, v[0], v[1]));
+        tdbs::LOG_DEBUG(fmt::format("[c_group_create] uri {} ts ({},{})", uri, v[0], v[1]));
     } else {
         tdbs::LOG_DEBUG(fmt::format("[c_group_create] uri {}", uri));
     }
@@ -58,8 +57,7 @@ Rcpp::XPtr<somagrp_wrap_t> c_group_open(
     auto sgrpptr = tdbs::SOMAGroup::open(mode, uri, sctx, "unnamed", tsrng);
 
     somagrp_wrap_t* somagrp_p = new SOMAGroupWrapper(std::move(sgrpptr));
-    Rcpp::XPtr<somagrp_wrap_t> somagrp_xptr = make_xptr<somagrp_wrap_t>(
-        somagrp_p);
+    Rcpp::XPtr<somagrp_wrap_t> somagrp_xptr = make_xptr<somagrp_wrap_t>(somagrp_p);
     return somagrp_xptr;
 }
 
@@ -108,8 +106,7 @@ Rcpp::IntegerVector copy_int_vector(const uint32_t v_num, const void* v) {
     return (vec);
 }
 // helper function to convert_metadata
-SEXP _metadata_to_sexp(
-    const tiledb_datatype_t v_type, const uint32_t v_num, const void* v) {
+SEXP _metadata_to_sexp(const tiledb_datatype_t v_type, const uint32_t v_num, const void* v) {
     // This supports a limited set of basic types as the metadata
     // annotation is not meant to support complete serialization
     if (v_type == TILEDB_INT32) {
@@ -127,9 +124,7 @@ SEXP _metadata_to_sexp(
         for (size_t i = 0; i < n; i++)
             vec[i] = static_cast<double>(fvec[i]);
         return (vec);
-    } else if (
-        v_type == TILEDB_CHAR || v_type == TILEDB_STRING_ASCII ||
-        v_type == TILEDB_STRING_UTF8) {
+    } else if (v_type == TILEDB_CHAR || v_type == TILEDB_STRING_ASCII || v_type == TILEDB_STRING_UTF8) {
         std::string s(static_cast<const char*>(v), v_num);
         return (Rcpp::wrap(s));
     } else if (v_type == TILEDB_INT8) {
@@ -157,9 +152,7 @@ SEXP _metadata_to_sexp(
     } else if (v_type == TILEDB_UINT64) {
         return copy_int_vector<uint64_t>(v_num, v);
     } else {
-        Rcpp::stop(
-            "No support yet for TileDB data type %s",
-            tiledb::impl::type_to_str(v_type));
+        Rcpp::stop("No support yet for TileDB data type %s", tiledb::impl::type_to_str(v_type));
     }
 }
 
@@ -178,8 +171,7 @@ Rcpp::List c_group_get_metadata(Rcpp::XPtr<somagrp_wrap_t> xp) {
         // what is keyed using MetadataValue = std::tuple<tiledb_datatype_t,
         // uint32_t, const void*>
         auto tpl = key.second;
-        auto sxp = _metadata_to_sexp(
-            std::get<0>(tpl), std::get<1>(tpl), std::get<2>(tpl));
+        auto sxp = _metadata_to_sexp(std::get<0>(tpl), std::get<1>(tpl), std::get<2>(tpl));
         Rcpp::List row = Rcpp::List::create(Rcpp::Named("name") = sxp);
         lst[i] = row;
         i++;
@@ -195,8 +187,7 @@ void c_group_close(Rcpp::XPtr<somagrp_wrap_t> xp) {
     xp->grpptr->close();
 }
 
-std::map<int, URIType> uritypemap = {
-    {0, URIType::automatic}, {1, URIType::absolute}, {2, URIType::relative}};
+std::map<int, URIType> uritypemap = {{0, URIType::automatic}, {1, URIType::absolute}, {2, URIType::relative}};
 
 // [[Rcpp::export]]
 void c_group_set(
@@ -210,15 +201,13 @@ void c_group_set(
 }
 
 // [[Rcpp::export]]
-void c_group_remove_member(
-    Rcpp::XPtr<somagrp_wrap_t> xp, const std::string& name) {
+void c_group_remove_member(Rcpp::XPtr<somagrp_wrap_t> xp, const std::string& name) {
     check_xptr_tag<somagrp_wrap_t>(xp);  // throws if mismatched
     xp->grpptr->del(name);
 }
 
 // [[Rcpp::export]]
-void c_group_put_metadata(
-    Rcpp::XPtr<somagrp_wrap_t> xp, std::string key, SEXP obj) {
+void c_group_put_metadata(Rcpp::XPtr<somagrp_wrap_t> xp, std::string key, SEXP obj) {
     check_xptr_tag<somagrp_wrap_t>(xp);  // throws if mismatched
     // we implement a simpler interface here as the 'type' is given from the
     // supplied SEXP, as is the extent
@@ -230,11 +219,9 @@ void c_group_put_metadata(
         case REALSXP: {
             Rcpp::NumericVector v(obj);
             if (Rcpp::isInteger64(obj)) {
-                xp->grpptr->set_metadata(
-                    key, TILEDB_INT64, v.size(), v.begin());
+                xp->grpptr->set_metadata(key, TILEDB_INT64, v.size(), v.begin());
             } else {
-                xp->grpptr->set_metadata(
-                    key, TILEDB_FLOAT64, v.size(), v.begin());
+                xp->grpptr->set_metadata(key, TILEDB_FLOAT64, v.size(), v.begin());
             }
             break;
         }
@@ -249,8 +236,7 @@ void c_group_put_metadata(
             // We use TILEDB_CHAR interchangeably with TILEDB_STRING_ASCII is
             // this best string type?
             // Use TILEDB_STRING_UTF8 for compatibility with Python API
-            xp->grpptr->set_metadata(
-                key, TILEDB_STRING_UTF8, s.length(), s.c_str());
+            xp->grpptr->set_metadata(key, TILEDB_STRING_UTF8, s.length(), s.c_str());
             break;
         }
         case LGLSXP: {  // experimental: map R logical (ie TRUE, FALSE, NA) to
@@ -259,8 +245,7 @@ void c_group_put_metadata(
             break;  // not reached
         }
         default: {
-            Rcpp::stop(
-                "No support (yet) for type '%s'.", Rf_type2char(TYPEOF(obj)));
+            Rcpp::stop("No support (yet) for type '%s'.", Rf_type2char(TYPEOF(obj)));
             break;  // not reached
         }
     }

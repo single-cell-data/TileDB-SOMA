@@ -5,8 +5,8 @@ repos:
     hooks:
     - id: clang-format
       types_or: [c++, c]
-      files: 'libtiledbsoma/.*|apis/python/src/.*'
-      exclude: 'libtiledbsoma/src/external/.*'
+      files: 'libtiledbsoma/.*|apis/python/src/.*|apis/r/src/.*'
+      exclude: 'libtiledbsoma/src/external/.*|apis/r/src/RcppExports.cpp'
   - repo: https://github.com/psf/black
     rev: "25.1.0"
     hooks:
