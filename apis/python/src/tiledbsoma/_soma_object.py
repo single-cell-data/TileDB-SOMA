@@ -81,6 +81,7 @@ class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
                 either an int representing milliseconds since the Unix epoch
                 or a datetime.datetime object.
                 When not provided (the default), the current time is used.
+                A value of zero results in default, i.e., the current time.
 
         Returns:
             The opened SOMA object.
@@ -292,6 +293,7 @@ class SOMAObject(somacore.SOMAObject, Generic[_WrapperType_co]):
                 The TileDB timestamp to open this object at,
                 measured in milliseconds since the Unix epoch.
                 When unset (the default), the current time is used.
+                A value of zero results in default, i.e., current time.
 
         Raises:
             TypeError:
