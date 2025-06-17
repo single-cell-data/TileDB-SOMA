@@ -234,7 +234,8 @@ class SOMAGroup(SOMAObject[_tdb_handles.SOMAGroupWrapper[Any]], Generic[Collecti
                 - ``w``: Open for writing only (cannot read).
             tiledb_timestamp:
                 The TileDB timestamp to open this object at, either an int representing milliseconds since the Unix
-                epoch or a datetime.datetime object. When not provided (the default), the current time is used.
+                epoch or a datetime.datetime object. When not provided (the default), the current time is used. A
+                value of zero results in current time.
 
         Raises:
             ValueError:
