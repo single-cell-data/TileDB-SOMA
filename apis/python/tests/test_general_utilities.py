@@ -26,7 +26,7 @@ def test_verify_expected_tiledb_version() -> None:
     with mock.patch("tiledbsoma._general_utilities.expected_tiledb_version") as mock_expected_tiledb_version:
         mock_expected_tiledb_version.return_value = (1, 2, 3)
 
-        with pytest.warns(RuntimeWarning, match="TileDB version mismatch"):
+        with pytest.raises(RuntimeError):
             _verify_expected_tiledb_version()
 
         mock_expected_tiledb_version.assert_called_once()
