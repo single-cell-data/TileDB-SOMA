@@ -19,6 +19,7 @@ import tiledbsoma
 from .._soma_object import SOMAObject
 
 Printable = Union[io.TextIOWrapper, io.StringIO]
+printableStdout = cast("Printable", sys.stdout)
 
 _SOMAObjectType = TypeVar("_SOMAObjectType", bound=SOMAObject)  # type: ignore[type-arg]
 
@@ -123,7 +124,7 @@ def show_experiment_shapes(
     uri: str,
     *,
     context: tiledbsoma.SOMATileDBContext | None = None,
-    output_handle: Printable = cast(Printable, sys.stdout),
+    output_handle: Printable = printableStdout,
 ) -> bool:
     """Outputs the current shapes of the elements in the ``Experiment``.
 
@@ -200,7 +201,7 @@ def upgrade_experiment_shapes(
     verbose: bool = False,
     check_only: bool = False,
     context: tiledbsoma.SOMATileDBContext | None = None,
-    output_handle: Printable = cast(Printable, sys.stdout),
+    output_handle: Printable = printableStdout,
 ) -> bool:
     """Upgrade the elements inside a SOMA ``Experiment`` to use the ``shape`` feature
     introduced in TileDB-SOMA 1.15.
@@ -292,7 +293,7 @@ def resize_experiment(
     verbose: bool = False,
     check_only: bool = False,
     context: tiledbsoma.SOMATileDBContext | None = None,
-    output_handle: Printable = cast(Printable, sys.stdout),
+    output_handle: Printable = printableStdout,
 ) -> bool:
     """Resize the elements in the SOMA ``Experiment`` to fit the requested number
     of observations and variables.
@@ -999,7 +1000,7 @@ def _get_new_ndarray_shape(
     try:
         return coll_dict[coll_name]
     except KeyError:
-        raise tiledbsoma.SOMAError(f"experiment resize: internal error: unhandled collection {coll_name}")
+        raise tiledbsoma.SOMAError(f"experiment resize: internal error: unhandled collection {coll_name}") from None
 
 
 def _leaf_visitor_get_shapes(
@@ -1064,7 +1065,7 @@ def _check_statuses(dikt: dict[str, Any]) -> bool:
         ok = dikt["status"]
         assert isinstance(ok, bool)
         return ok
-    for key, value in dikt.items():
+    for _key, value in dikt.items():
         assert isinstance(value, dict)
         if not _check_statuses(value):
             return False

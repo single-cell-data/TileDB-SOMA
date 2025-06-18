@@ -13,11 +13,6 @@ from somacore import options
 from typing_extensions import Self
 
 from . import _constants, _tdb_handles
-from ._constants import (
-    SOMA_ENCODING_VERSION_METADATA_KEY,
-    SOMA_OBJECT_TYPE_METADATA_KEY,
-    SUPPORTED_SOMA_ENCODING_VERSIONS,
-)
 from ._exception import SOMAError
 from ._types import OpenTimestamp
 from ._util import check_type, ms_to_datetime

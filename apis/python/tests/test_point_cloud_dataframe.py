@@ -10,8 +10,6 @@ import typeguard
 
 import tiledbsoma as soma
 
-from . import NDARRAY_ARROW_TYPES_SUPPORTED
-
 
 def test_point_cloud_bad_create(tmp_path):
     baseuri = urljoin(f"{tmp_path.as_uri()}/", "bad_create")

@@ -355,7 +355,7 @@ def to_anndata(
             raise ValueError(f"X_layer_name '{X_layer_name}' not found in measurement: {measurement.X.keys()}")
         anndata_X_future = _extract_X_key(
             measurement=measurement,
-            X_layer_name=cast(str, X_layer_name),
+            X_layer_name=cast("str", X_layer_name),
             nobs=nobs,
             nvar=nvar,
             dask=dask,
@@ -436,7 +436,7 @@ def to_anndata(
     uns_future: Future[dict[str, FutureUnsDictNode]] | None = None
     if "uns" in measurement:
         s = _util.get_start_stamp()
-        uns_coll = cast(Collection[Any], measurement["uns"])
+        uns_coll = cast("Collection[Any]", measurement["uns"])
         logging.log_io(None, f"Start  writing uns for {uns_coll.uri}")
         uns_future = tp.submit(_extract_uns, uns_coll, uns_keys=uns_keys)
         logging.log_io(

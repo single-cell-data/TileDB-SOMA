@@ -5,7 +5,7 @@
 from __future__ import annotations
 
 from os.path import join
-from typing import Literal
+from typing import Any, Literal
 
 import numpy as np
 import pandas as pd
@@ -13,7 +13,7 @@ from somacore.options import PlatformConfig
 
 from tiledbsoma import Experiment, SOMATileDBContext
 from tiledbsoma._collection import AnyTileDBCollection, Collection
-from tiledbsoma.io._common import AdditionalMetadata, UnsMapping
+from tiledbsoma.io._common import AdditionalMetadata, UnsMapping, UnsNode
 from tiledbsoma.io._registration import AxisIDMapping
 from tiledbsoma.io.ingest import (
     IngestionParams,
@@ -156,20 +156,20 @@ def _update_uns_dict(
             cur = coll[k]
         if k in coll.metadata:
             if cur is not None:
-                logger.warn(f"{coll.uri}[{k}] exists as both metadata and child")
+                logger.warning(f"{coll.uri}[{k}] exists as both metadata and child")
             else:
                 cur = coll.metadata[k]
         exists = cur is not None
 
-        def can_write() -> bool:
-            if exists:
+        def can_write(k: str, v: UnsNode, cur: Any | None) -> bool:
+            if cur is not None:
                 msg = f"{coll.uri}[{k}]: already exists (type {type(cur).__name__}), refusing to overwrite with {v}"
                 if strict in ["dry_run", "raise"]:
                     raise ValueError(msg)
                 else:
                     msg = f"Skipping {msg}"
                     if strict == "warn":
-                        logger.warn(msg)
+                        logger.warning(msg)
                     elif strict == "info":
                         logger.info(msg)
                     elif strict == "debug":
@@ -187,7 +187,7 @@ def _update_uns_dict(
             if strict != "dry_run":
                 coll.metadata[k] = v
         elif isinstance(v, pd.DataFrame):
-            if can_write():
+            if can_write(k, v, cur):
                 with _write_dataframe(
                     df_uri=join(coll.uri, k),
                     df=v.copy(),  # `_write_dataframe` modifies the `pd.DataFrame` it's passed
@@ -212,7 +212,7 @@ def _update_uns_dict(
                 strict=strict,
             )
         elif isinstance(v, np.ndarray):
-            if can_write():
+            if can_write(k, v, cur):
                 _ingest_uns_array(
                     coll,
                     k,

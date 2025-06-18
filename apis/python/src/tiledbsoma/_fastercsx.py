@@ -117,7 +117,7 @@ class CompressedMatrix:
         tbl = pa.concat_tables(tables) if isinstance(tables, collections.abc.Sequence) else tables
 
         def chunks(a: pa.Array | pa.ChunkedArray) -> list[pa.Array]:
-            return list(a) if isinstance(a, pa.Array) else cast(list[pa.Array], a.chunks)
+            return list(a) if isinstance(a, pa.Array) else cast("list[pa.Array]", a.chunks)
 
         if len(tbl) > 0:
             i = tuple(a.to_numpy() for a in chunks(tbl["soma_dim_0"]))

@@ -103,7 +103,7 @@ class SOMAArray(SOMAObject[_tdb_handles.SOMAArrayWrapper[Any]]):
         Lifecycle:
             Deprecated.
         """
-        warnings.warn("Deprecated. Use schema_config_options instead.", DeprecationWarning)
+        warnings.warn("Deprecated. Use schema_config_options instead.", DeprecationWarning, stacklevel=2)
         return self._handle.config_options_from_schema()
 
     def non_empty_domain(self) -> tuple[tuple[Any, Any], ...]:

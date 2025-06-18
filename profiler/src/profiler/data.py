@@ -179,7 +179,7 @@ class S3ProfileDB(ProfileDB):
             for command_file_key in self.read_object_keys("", "/command.txt"):
                 # Extract runs prefix
                 runs_prefix = command_file_key.replace("/command.txt", "")
-                for data_file_key in self.read_object_keys(runs_prefix, ".json"):
+                for _data_file_key in self.read_object_keys(runs_prefix, ".json"):
                     # Read command.
                     command = self.read_s3_text(command_file_key)
                     # Get the number of runs.

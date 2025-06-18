@@ -403,7 +403,7 @@ class QueryConditionTree(ast.NodeVisitor):
                 if isinstance(val, str):
                     raise SOMAError(f"Cannot cast `{val}` to {dtype}.")
                 if np.issubdtype(dtype, np.datetime64):
-                    cast = getattr(np, "int64")
+                    cast = np.int64
                 # silence DeprecationWarning: `np.bool`
                 elif dtype == "bool":
                     cast = bool
@@ -411,7 +411,7 @@ class QueryConditionTree(ast.NodeVisitor):
                     cast = getattr(np, dtype)
                 val = cast(val)
             except ValueError:
-                raise SOMAError(f"Cannot cast `{val}` to {dtype}.")
+                raise SOMAError(f"Cannot cast `{val}` to {dtype}.") from None
 
         return val
 
@@ -444,7 +444,9 @@ class QueryConditionTree(ast.NodeVisitor):
         try:
             op = self.visit(node.op)
         except KeyError:
-            raise SOMAError(f"Unsupported binary operator: {ast.dump(node.op)}. Only & is currently supported.")
+            raise SOMAError(
+                f"Unsupported binary operator: {ast.dump(node.op)}. Only & is currently supported."
+            ) from None
 
         result = self.visit(node.left)
         rhs = node.right[1:] if isinstance(node.right, list) else [node.right]
@@ -453,7 +455,7 @@ class QueryConditionTree(ast.NodeVisitor):
             if not isinstance(result, clib.PyQueryCondition):
                 raise Exception(
                     f"Unable to parse expression component {ast.dump(node)} -- did you mean to quote it as a string?"
-                )
+                ) from None
             result = result.combine(visited, op)
 
         return result
@@ -462,7 +464,7 @@ class QueryConditionTree(ast.NodeVisitor):
         try:
             op = self.visit(node.op)
         except KeyError:
-            raise SOMAError(f"Unsupported Boolean operator: {ast.dump(node.op)}.")
+            raise SOMAError(f"Unsupported Boolean operator: {ast.dump(node.op)}.") from None
 
         result = self.visit(node.values[0])
         for value in node.values[1:]:

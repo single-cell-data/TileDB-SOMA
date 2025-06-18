@@ -228,7 +228,8 @@ class ExperimentAmbientLabelMapping:
             else:
                 warnings.warn(
                     "Experiment does not support resizing. Please consider upgrading the dataset "
-                    "using 'tiledbsoma.io.upgrade_experiment_shapes'."
+                    "using 'tiledbsoma.io.upgrade_experiment_shapes'.",
+                    stacklevel=2,
                 )
 
         with Experiment.open(experiment_uri, context=context, mode="w") as E:
@@ -261,7 +262,7 @@ class ExperimentAmbientLabelMapping:
 
         def categorical_columns(df: pd.DataFrame) -> dict[Any, pd.CategoricalDtype]:
             return cast(
-                dict[str, pd.CategoricalDtype],
+                "dict[str, pd.CategoricalDtype]",
                 {k: v.dtype for k, v in df.items() if v.dtype == "category"},
             )
 
@@ -353,7 +354,7 @@ class ExperimentAmbientLabelMapping:
 
         def _get_joinid_map(df: DataFrame, field_name: str) -> pd.DataFrame:
             return cast(
-                pd.DataFrame,
+                "pd.DataFrame",
                 df.read(column_names=["soma_joinid", field_name]).concat().to_pandas().set_index(field_name),
             )
 
@@ -594,7 +595,8 @@ class ExperimentAmbientLabelMapping:
             warnings.warn(
                 "The append-mode ingest of 'uns' is typically an error due to uns key collisions "
                 "across multiple AnnData. Drop 'uns' from AnnData to remove this warning, or if you "
-                "intend for 'uns' to merge, ensure each AnnData uses unique keys."
+                "intend for 'uns' to merge, ensure each AnnData uses unique keys.",
+                stacklevel=3,
             )
 
 

@@ -220,7 +220,7 @@ class SparseNDArray(NDArray, somacore.SparseNDArray):
             Maturing.
         """
         self._verify_open_for_reading()
-        return cast(SparseNDArrayWrapper, self._handle).nnz
+        return cast("SparseNDArrayWrapper", self._handle).nnz
 
     def read(
         self,
