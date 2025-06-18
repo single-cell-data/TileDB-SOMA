@@ -36,10 +36,11 @@ SOMAOpen <- function(
   tiledb_timestamp = NULL
 ) {
   ctx <- soma_context()
+  type <- get_tiledb_object_type(uri, ctxxp = ctx)
   metadata <- get_all_metadata(
     uri,
     is_array = switch(
-      get_tiledb_object_type(uri, ctxxp = ctx),
+      EXPR = type,
       ARRAY = TRUE,
       GROUP = FALSE,
       stop("Unknown TileDB object type: ", dQuote(type), call. = FALSE)
@@ -94,6 +95,10 @@ SOMAOpen <- function(
       tiledbsoma_ctx = tiledbsoma_ctx,
       tiledb_timestamp = tiledb_timestamp
     ),
-    stop(sprintf("No support for type '%s'", obj), call. = FALSE)
+    stop(
+      "No support for type ",
+      dQuote(metadata$soma_object_type),
+      call. = FALSE
+    )
   ))
 }

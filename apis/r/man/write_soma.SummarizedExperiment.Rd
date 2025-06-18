@@ -71,6 +71,7 @@ the \code{\link[tiledbsoma:SOMAMeasurement]{measurement}} level.
 
 \examples{
 \dontshow{if (requireNamespace("withr", quietly = TRUE) && requireNamespace("SummarizedExperiment", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+\donttest{
 uri <- withr::local_tempfile(pattern = "summarized-experiment")
 
 mat <- abs(Matrix::rsparsematrix(
@@ -89,7 +90,6 @@ exp$obs
 ms$var
 ms$X$names()
 
-\dontshow{
 exp$close()
 }
 \dontshow{\}) # examplesIf}

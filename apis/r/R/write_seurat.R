@@ -102,9 +102,7 @@ write_soma.Assay <- .write_seurat_assay
 #' (assay5 <- methods::as(pbmc_small[["RNA"]], "Assay5"))
 #' (ms5 <- write_soma(assay5, "RNA5", soma_parent = col))
 #'
-#' \dontshow{
 #' ms5$close()
-#' }
 #'
 write_soma.Assay5 <- .write_seurat_assay
 
@@ -420,6 +418,7 @@ write_soma.Graph <- function(
 #' @export
 #'
 #' @examplesIf requireNamespace("withr", quietly = TRUE) && requireNamespace("SeuratObject", quietly = TRUE)
+#' \donttest{
 #' uri <- withr::local_tempfile(pattern = "pbmc-small")
 #'
 #' data("pbmc_small", package = "SeuratObject")
@@ -437,7 +436,6 @@ write_soma.Graph <- function(
 #' ms$varm$names()
 #' ms$obsp$names()
 #'
-#' \dontshow{
 #' exp$close()
 #' }
 #'
@@ -713,9 +711,7 @@ write_soma.Seurat <- function(
 #' (logs <- col$get("seurat_commands"))
 #' logs$get("NormalizeData.RNA")
 #'
-#' \dontshow{
 #' col$close()
-#' }
 #'
 write_soma.SeuratCommand <- function(
   x,

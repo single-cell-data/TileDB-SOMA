@@ -58,7 +58,6 @@ EphemeralCollectionBase <- R6::R6Class(
       return(gen$new())
     },
 
-    # Override TileDBGroup private methods
     #' @description Dummy method for ephemeral objects for compatibility with
     #' SOMA collections.
     #'
@@ -92,7 +91,6 @@ EphemeralCollectionBase <- R6::R6Class(
     #'
     exists = \() FALSE,
 
-    # Override TileDBGroup methods
     #' @description Special method for printing object representation to
     #' console.
     #'
@@ -157,7 +155,7 @@ EphemeralCollectionBase <- R6::R6Class(
 
     #' @description Add object to an ephemeral collection.
     #'
-    #' @param object A TileDB object (eg. \code{\link{TileDBGroup}}) to add
+    #' @param object A SOMA object (eg. \code{\link{SOMACollection}}) to add
     #' to the collection.
     #' @param name A name to add \code{object} as.
     #' @param relative Ignored for ephemeral objects.
@@ -370,12 +368,9 @@ EphemeralCollectionBase <- R6::R6Class(
     .check_open_for_read_or_write = \() invisible(NULL),
     .check_open = \() invisible(NULL),
 
-    # Override TileDBGroup private fields
+    # Override SOMACollectionBase private fields
     .member_cache = NULL,
     .update_member_cache = \() invisible(self),
-
-    # Override SOMACollectionBase private fields
-    soma_type_cache = NULL,
 
     # Ephemeral fields
     .data = NULL,
