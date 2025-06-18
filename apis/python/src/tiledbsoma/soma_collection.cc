@@ -35,8 +35,7 @@ void load_soma_collection(py::module& m) {
                 std::string_view,
                 OpenMode,
                 std::shared_ptr<SOMAContext>,
-                std::optional<std::pair<uint64_t, uint64_t>>>(
-                &SOMACollection::open),
+                std::optional<std::pair<uint64_t, uint64_t>>>(&SOMACollection::open),
             "uri"_a,
             py::kw_only(),
             "mode"_a,
@@ -45,14 +44,11 @@ void load_soma_collection(py::module& m) {
             py::call_guard<py::gil_scoped_release>())
         .def(
             "__iter__",
-            [](SOMACollection& collection) {
-                return py::make_iterator(collection.begin(), collection.end());
-            },
+            [](SOMACollection& collection) { return py::make_iterator(collection.begin(), collection.end()); },
             py::keep_alive<0, 1>())
         .def("get", &SOMACollection::get);
 
-    py::class_<SOMAExperiment, SOMACollection, SOMAGroup, SOMAObject>(
-        m, "SOMAExperiment")
+    py::class_<SOMAExperiment, SOMACollection, SOMAGroup, SOMAObject>(m, "SOMAExperiment")
         .def_static(
             "open",
             &SOMAExperiment::open,
@@ -63,8 +59,7 @@ void load_soma_collection(py::module& m) {
             "timestamp"_a = py::none(),
             py::call_guard<py::gil_scoped_release>());
 
-    py::class_<SOMAMeasurement, SOMACollection, SOMAGroup, SOMAObject>(
-        m, "SOMAMeasurement")
+    py::class_<SOMAMeasurement, SOMACollection, SOMAGroup, SOMAObject>(m, "SOMAMeasurement")
         .def_static(
             "open",
             &SOMAMeasurement::open,
@@ -81,18 +76,15 @@ void load_soma_collection(py::module& m) {
             [](std::shared_ptr<SOMAContext> ctx,
                std::string_view uri,
                const std::optional<std::vector<std::string>>& axis_names,
-               const std::optional<std::vector<std::optional<std::string>>>&
-                   axis_units,
+               const std::optional<std::vector<std::optional<std::string>>>& axis_units,
                std::optional<TimestampRange> timestamp) {
                 if (axis_units.has_value() && !axis_names.has_value()) {
-                    throw TileDBSOMAError(
-                        "Cannot provide axis units without axis names.");
+                    throw TileDBSOMAError("Cannot provide axis units without axis names.");
                 }
                 std::optional<SOMACoordinateSpace> coord_space{std::nullopt};
                 if (axis_names.has_value()) {
                     if (axis_units.has_value()) {
-                        coord_space = SOMACoordinateSpace(
-                            axis_names.value(), axis_units.value());
+                        coord_space = SOMACoordinateSpace(axis_names.value(), axis_units.value());
                     } else {
                         coord_space = SOMACoordinateSpace(axis_names.value());
                     }
@@ -119,8 +111,7 @@ void load_soma_collection(py::module& m) {
             "timestamp"_a = py::none(),
             py::call_guard<py::gil_scoped_release>());
 
-    py::class_<SOMAMultiscaleImage, SOMACollection, SOMAGroup, SOMAObject>(
-        m, "SOMAMultiscaleImage")
+    py::class_<SOMAMultiscaleImage, SOMACollection, SOMAGroup, SOMAObject>(m, "SOMAMultiscaleImage")
         .def_static(
             "create",
             [](std::shared_ptr<SOMAContext> ctx,
@@ -130,8 +121,7 @@ void load_soma_collection(py::module& m) {
                std::optional<TimestampRange> timestamp) {
                 SOMACoordinateSpace coord_space{axis_names, axis_units};
                 try {
-                    SOMAMultiscaleImage::create(
-                        uri, ctx, coord_space, timestamp);
+                    SOMAMultiscaleImage::create(uri, ctx, coord_space, timestamp);
                 } catch (const std::exception& e) {
                     TPY_ERROR_LOC(e.what());
                 }

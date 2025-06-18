@@ -31,22 +31,15 @@ void SOMAPointCloudDataFrame::create(
     PlatformConfig platform_config,
     std::optional<TimestampRange> timestamp) {
     // Create TileDB array that is open for writing.
-    auto [tiledb_schema, soma_schema_extension] =
-        ArrowAdapter::tiledb_schema_from_arrow_schema(
-            ctx->tiledb_ctx(),
-            schema,
-            index_columns,
-            std::make_optional(coordinate_space),
-            "SOMAPointCloudDataFrame",
-            true,
-            platform_config);
-    auto array = SOMAArray::_create(
-        ctx,
-        uri,
-        tiledb_schema,
+    auto [tiledb_schema, soma_schema_extension] = ArrowAdapter::tiledb_schema_from_arrow_schema(
+        ctx->tiledb_ctx(),
+        schema,
+        index_columns,
+        std::make_optional(coordinate_space),
         "SOMAPointCloudDataFrame",
-        std::nullopt,
-        timestamp);
+        true,
+        platform_config);
+    auto array = SOMAArray::_create(ctx, uri, tiledb_schema, "SOMAPointCloudDataFrame", std::nullopt, timestamp);
 
     // Add additional point cloud dataframe metadata.
     array.put_metadata(
@@ -63,12 +56,8 @@ void SOMAPointCloudDataFrame::create(
 }
 
 std::unique_ptr<SOMAPointCloudDataFrame> SOMAPointCloudDataFrame::open(
-    std::string_view uri,
-    OpenMode mode,
-    std::shared_ptr<SOMAContext> ctx,
-    std::optional<TimestampRange> timestamp) {
-    auto array = std::make_unique<SOMAPointCloudDataFrame>(
-        mode, uri, ctx, timestamp);
+    std::string_view uri, OpenMode mode, std::shared_ptr<SOMAContext> ctx, std::optional<TimestampRange> timestamp) {
+    auto array = std::make_unique<SOMAPointCloudDataFrame>(mode, uri, ctx, timestamp);
 
     if (!array->check_type("SOMAPointCloudDataFrame")) {
         throw TileDBSOMAError(
@@ -87,8 +76,7 @@ managed_unique_ptr<ArrowSchema> SOMAPointCloudDataFrame::schema() const {
     return this->arrow_schema();
 }
 
-const std::vector<std::string> SOMAPointCloudDataFrame::index_column_names()
-    const {
+const std::vector<std::string> SOMAPointCloudDataFrame::index_column_names() const {
     return this->dimension_names();
 }
 

@@ -37,65 +37,53 @@ void load_query_condition(py::module& m) {
 
         .def(
             "init_string",
-            static_cast<void (PyQueryCondition::*)(
-                const string&, const string&, tiledb_query_condition_op_t)>(
+            static_cast<void (PyQueryCondition::*)(const string&, const string&, tiledb_query_condition_op_t)>(
                 &PyQueryCondition::init))
 
         .def(
             "init_uint64",
-            static_cast<void (PyQueryCondition::*)(
-                const string&, uint64_t, tiledb_query_condition_op_t)>(
+            static_cast<void (PyQueryCondition::*)(const string&, uint64_t, tiledb_query_condition_op_t)>(
                 &PyQueryCondition::init))
         .def(
             "init_int64",
-            static_cast<void (PyQueryCondition::*)(
-                const string&, int64_t, tiledb_query_condition_op_t)>(
+            static_cast<void (PyQueryCondition::*)(const string&, int64_t, tiledb_query_condition_op_t)>(
                 &PyQueryCondition::init))
         .def(
             "init_uint32",
-            static_cast<void (PyQueryCondition::*)(
-                const string&, uint32_t, tiledb_query_condition_op_t)>(
+            static_cast<void (PyQueryCondition::*)(const string&, uint32_t, tiledb_query_condition_op_t)>(
                 &PyQueryCondition::init))
         .def(
             "init_int32",
-            static_cast<void (PyQueryCondition::*)(
-                const string&, int32_t, tiledb_query_condition_op_t)>(
+            static_cast<void (PyQueryCondition::*)(const string&, int32_t, tiledb_query_condition_op_t)>(
                 &PyQueryCondition::init))
         .def(
             "init_uint16",
-            static_cast<void (PyQueryCondition::*)(
-                const string&, uint16_t, tiledb_query_condition_op_t)>(
+            static_cast<void (PyQueryCondition::*)(const string&, uint16_t, tiledb_query_condition_op_t)>(
                 &PyQueryCondition::init))
         .def(
             "init_int16",
-            static_cast<void (PyQueryCondition::*)(
-                const string&, int16_t, tiledb_query_condition_op_t)>(
+            static_cast<void (PyQueryCondition::*)(const string&, int16_t, tiledb_query_condition_op_t)>(
                 &PyQueryCondition::init))
         .def(
             "init_uint8",
-            static_cast<void (PyQueryCondition::*)(
-                const string&, uint8_t, tiledb_query_condition_op_t)>(
+            static_cast<void (PyQueryCondition::*)(const string&, uint8_t, tiledb_query_condition_op_t)>(
                 &PyQueryCondition::init))
         .def(
             "init_int8",
-            static_cast<void (PyQueryCondition::*)(
-                const string&, int8_t, tiledb_query_condition_op_t)>(
+            static_cast<void (PyQueryCondition::*)(const string&, int8_t, tiledb_query_condition_op_t)>(
                 &PyQueryCondition::init))
 
         .def(
             "init_float32",
-            static_cast<void (PyQueryCondition::*)(
-                const string&, float, tiledb_query_condition_op_t)>(
+            static_cast<void (PyQueryCondition::*)(const string&, float, tiledb_query_condition_op_t)>(
                 &PyQueryCondition::init))
         .def(
             "init_float64",
-            static_cast<void (PyQueryCondition::*)(
-                const string&, double, tiledb_query_condition_op_t)>(
+            static_cast<void (PyQueryCondition::*)(const string&, double, tiledb_query_condition_op_t)>(
                 &PyQueryCondition::init))
         .def(
             "init_bool",
-            static_cast<void (PyQueryCondition::*)(
-                const string&, bool, tiledb_query_condition_op_t)>(
+            static_cast<void (PyQueryCondition::*)(const string&, bool, tiledb_query_condition_op_t)>(
                 &PyQueryCondition::init))
 
         .def("combine", &PyQueryCondition::combine)
@@ -103,74 +91,61 @@ void load_query_condition(py::module& m) {
         .def_static(
             "create_string",
             static_cast<PyQueryCondition (*)(
-                const std::string&,
-                const std::vector<std::string>&,
-                tiledb_query_condition_op_t)>(&PyQueryCondition::create))
+                const std::string&, const std::vector<std::string>&, tiledb_query_condition_op_t)>(
+                &PyQueryCondition::create))
         .def_static(
             "create_uint64",
             static_cast<PyQueryCondition (*)(
-                const std::string&,
-                const std::vector<uint64_t>&,
-                tiledb_query_condition_op_t)>(&PyQueryCondition::create))
+                const std::string&, const std::vector<uint64_t>&, tiledb_query_condition_op_t)>(
+                &PyQueryCondition::create))
         .def_static(
             "create_int64",
             static_cast<PyQueryCondition (*)(
-                const std::string&,
-                const std::vector<int64_t>&,
-                tiledb_query_condition_op_t)>(&PyQueryCondition::create))
+                const std::string&, const std::vector<int64_t>&, tiledb_query_condition_op_t)>(
+                &PyQueryCondition::create))
         .def_static(
             "create_uint32",
             static_cast<PyQueryCondition (*)(
-                const std::string&,
-                const std::vector<uint32_t>&,
-                tiledb_query_condition_op_t)>(&PyQueryCondition::create))
+                const std::string&, const std::vector<uint32_t>&, tiledb_query_condition_op_t)>(
+                &PyQueryCondition::create))
         .def_static(
             "create_int32",
             static_cast<PyQueryCondition (*)(
-                const std::string&,
-                const std::vector<int32_t>&,
-                tiledb_query_condition_op_t)>(&PyQueryCondition::create))
+                const std::string&, const std::vector<int32_t>&, tiledb_query_condition_op_t)>(
+                &PyQueryCondition::create))
         .def_static(
             "create_uint16",
             static_cast<PyQueryCondition (*)(
-                const std::string&,
-                const std::vector<uint16_t>&,
-                tiledb_query_condition_op_t)>(&PyQueryCondition::create))
+                const std::string&, const std::vector<uint16_t>&, tiledb_query_condition_op_t)>(
+                &PyQueryCondition::create))
         .def_static(
             "create_int8",
             static_cast<PyQueryCondition (*)(
-                const std::string&,
-                const std::vector<int8_t>&,
-                tiledb_query_condition_op_t)>(&PyQueryCondition::create))
+                const std::string&, const std::vector<int8_t>&, tiledb_query_condition_op_t)>(
+                &PyQueryCondition::create))
         .def_static(
             "create_uint16",
             static_cast<PyQueryCondition (*)(
-                const std::string&,
-                const std::vector<uint16_t>&,
-                tiledb_query_condition_op_t)>(&PyQueryCondition::create))
+                const std::string&, const std::vector<uint16_t>&, tiledb_query_condition_op_t)>(
+                &PyQueryCondition::create))
         .def_static(
             "create_int8",
             static_cast<PyQueryCondition (*)(
-                const std::string&,
-                const std::vector<int8_t>&,
-                tiledb_query_condition_op_t)>(&PyQueryCondition::create))
+                const std::string&, const std::vector<int8_t>&, tiledb_query_condition_op_t)>(
+                &PyQueryCondition::create))
         .def_static(
             "create_float32",
             static_cast<PyQueryCondition (*)(
-                const std::string&,
-                const std::vector<float>&,
-                tiledb_query_condition_op_t)>(&PyQueryCondition::create))
+                const std::string&, const std::vector<float>&, tiledb_query_condition_op_t)>(&PyQueryCondition::create))
         .def_static(
             "create_float64",
             static_cast<PyQueryCondition (*)(
-                const std::string&,
-                const std::vector<double>&,
-                tiledb_query_condition_op_t)>(&PyQueryCondition::create))
+                const std::string&, const std::vector<double>&, tiledb_query_condition_op_t)>(
+                &PyQueryCondition::create))
 
         .def("__capsule__", &PyQueryCondition::__capsule__);
 
-    py::enum_<tiledb_query_condition_op_t>(
-        m, "tiledb_query_condition_op_t", py::arithmetic(), py::module_local())
+    py::enum_<tiledb_query_condition_op_t>(m, "tiledb_query_condition_op_t", py::arithmetic(), py::module_local())
         .value("TILEDB_LT", TILEDB_LT)
         .value("TILEDB_LE", TILEDB_LE)
         .value("TILEDB_GT", TILEDB_GT)
@@ -182,10 +157,7 @@ void load_query_condition(py::module& m) {
         .export_values();
 
     py::enum_<tiledb_query_condition_combination_op_t>(
-        m,
-        "tiledb_query_condition_combination_op_t",
-        py::arithmetic(),
-        py::module_local())
+        m, "tiledb_query_condition_combination_op_t", py::arithmetic(), py::module_local())
         .value("TILEDB_AND", TILEDB_AND)
         .value("TILEDB_OR", TILEDB_OR)
         .export_values();

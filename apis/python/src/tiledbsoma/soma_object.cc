@@ -40,8 +40,7 @@ void load_soma_object(py::module& m) {
                std::optional<std::string> clib_type) -> py::object {
                 auto soma_obj = ([&]() {
                     py::gil_scoped_release release;
-                    return SOMAObject::open(
-                        uri, mode, context, timestamp, clib_type);
+                    return SOMAObject::open(uri, mode, context, timestamp, clib_type);
                 })();
 
                 std::optional<std::string> soma_obj_type;
@@ -61,22 +60,18 @@ void load_soma_object(py::module& m) {
                 }
 
                 std::transform(
-                    soma_obj_type->begin(),
-                    soma_obj_type->end(),
-                    soma_obj_type->begin(),
-                    [](unsigned char c) { return std::tolower(c); });
+                    soma_obj_type->begin(), soma_obj_type->end(), soma_obj_type->begin(), [](unsigned char c) {
+                        return std::tolower(c);
+                    });
 
                 if (soma_obj_type == "somadataframe")
                     return py::cast(dynamic_cast<SOMADataFrame&>(*soma_obj));
                 else if (soma_obj_type == "somapointclouddataframe")
-                    return py::cast(
-                        dynamic_cast<SOMAPointCloudDataFrame&>(*soma_obj));
+                    return py::cast(dynamic_cast<SOMAPointCloudDataFrame&>(*soma_obj));
                 else if (soma_obj_type == "somageometrydataframe")
-                    return py::cast(
-                        dynamic_cast<SOMAGeometryDataFrame&>(*soma_obj));
+                    return py::cast(dynamic_cast<SOMAGeometryDataFrame&>(*soma_obj));
                 else if (soma_obj_type == "somasparsendarray")
-                    return py::cast(
-                        dynamic_cast<SOMASparseNDArray&>(*soma_obj));
+                    return py::cast(dynamic_cast<SOMASparseNDArray&>(*soma_obj));
                 else if (soma_obj_type == "somadensendarray")
                     return py::cast(dynamic_cast<SOMADenseNDArray&>(*soma_obj));
                 else if (soma_obj_type == "somacollection")
@@ -88,8 +83,7 @@ void load_soma_object(py::module& m) {
                 else if (soma_obj_type == "somascene")
                     return py::cast(dynamic_cast<SOMAScene&>(*soma_obj));
                 else if (soma_obj_type == "somamultiscaleimage")
-                    return py::cast(
-                        dynamic_cast<SOMAMultiscaleImage&>(*soma_obj));
+                    return py::cast(dynamic_cast<SOMAMultiscaleImage&>(*soma_obj));
 
                 assert(
                     false &&

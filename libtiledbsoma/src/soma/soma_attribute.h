@@ -47,9 +47,7 @@ class SOMAAttribute : public SOMAColumn {
         std::string_view type_metadata,
         PlatformConfig platform_config);
 
-    SOMAAttribute(
-        Attribute attribute,
-        std::optional<Enumeration> enumeration = std::nullopt)
+    SOMAAttribute(Attribute attribute, std::optional<Enumeration> enumeration = std::nullopt)
         : attribute(attribute)
         , enumeration(enumeration) {
     }
@@ -62,8 +60,7 @@ class SOMAAttribute : public SOMAColumn {
         return false;
     }
 
-    inline void select_columns(
-        ManagedQuery& query, bool if_not_empty = false) const override {
+    inline void select_columns(ManagedQuery& query, bool if_not_empty = false) const override {
         query.select_columns(std::vector({attribute.name()}), if_not_empty);
     };
 
@@ -87,8 +84,7 @@ class SOMAAttribute : public SOMAColumn {
         return std::vector({attribute});
     }
 
-    inline std::optional<std::vector<Enumeration>> tiledb_enumerations()
-        override {
+    inline std::optional<std::vector<Enumeration>> tiledb_enumerations() override {
         if (!enumeration.has_value()) {
             return std::nullopt;
         }
@@ -97,39 +93,29 @@ class SOMAAttribute : public SOMAColumn {
     }
 
     std::pair<ArrowArray*, ArrowSchema*> arrow_domain_slot(
-        const SOMAContext& ctx,
-        Array& array,
-        enum Domainish kind) const override;
+        const SOMAContext& ctx, Array& array, enum Domainish kind) const override;
 
-    ArrowSchema* arrow_schema_slot(
-        const SOMAContext& ctx, Array& array) const override;
+    ArrowSchema* arrow_schema_slot(const SOMAContext& ctx, Array& array) const override;
 
     void serialize(nlohmann::json&) const override;
 
    private:
-    void _set_dim_points(
-        ManagedQuery& query, const std::any& points) const override;
+    void _set_dim_points(ManagedQuery& query, const std::any& points) const override;
 
-    void _set_dim_ranges(
-        ManagedQuery& query, const std::any& ranges) const override;
+    void _set_dim_ranges(ManagedQuery& query, const std::any& ranges) const override;
 
-    void _set_current_domain_slot(
-        NDRectangle& rectangle,
-        std::span<const std::any> domain) const override;
+    void _set_current_domain_slot(NDRectangle& rectangle, std::span<const std::any> domain) const override;
 
     std::pair<bool, std::string> _can_set_current_domain_slot(
-        std::optional<NDRectangle>& rectangle,
-        std::span<const std::any> new_domain) const override;
+        std::optional<NDRectangle>& rectangle, std::span<const std::any> new_domain) const override;
 
     std::any _core_domain_slot() const override;
 
     std::any _non_empty_domain_slot(Array& array) const override;
 
-    std::any _non_empty_domain_slot_opt(
-        const SOMAContext& ctx, Array& array) const override;
+    std::any _non_empty_domain_slot_opt(const SOMAContext& ctx, Array& array) const override;
 
-    std::any _core_current_domain_slot(
-        const SOMAContext& ctx, Array& array) const override;
+    std::any _core_current_domain_slot(const SOMAContext& ctx, Array& array) const override;
 
     std::any _core_current_domain_slot(NDRectangle& ndrect) const override;
 

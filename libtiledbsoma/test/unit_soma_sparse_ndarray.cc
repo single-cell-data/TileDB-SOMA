@@ -26,10 +26,8 @@ TEST_CASE("SOMASparseNDArray: basic", "[SOMASparseNDArray]") {
     std::string attr_name = "soma_data";
     tiledb_datatype_t dim_tiledb_datatype = TILEDB_INT64;
     tiledb_datatype_t attr_tiledb_datatype = TILEDB_INT32;
-    std::string dim_arrow_format = ArrowAdapter::tdb_to_arrow_type(
-        dim_tiledb_datatype);
-    std::string attr_arrow_format = ArrowAdapter::tdb_to_arrow_type(
-        attr_tiledb_datatype);
+    std::string dim_arrow_format = ArrowAdapter::tdb_to_arrow_type(dim_tiledb_datatype);
+    std::string attr_arrow_format = ArrowAdapter::tdb_to_arrow_type(attr_tiledb_datatype);
 
     REQUIRE(!SOMASparseNDArray::exists(uri, ctx));
 
@@ -42,13 +40,7 @@ TEST_CASE("SOMASparseNDArray: basic", "[SOMASparseNDArray]") {
 
     auto index_columns = helper::create_column_index_info(dim_infos);
 
-    SOMASparseNDArray::create(
-        uri,
-        attr_arrow_format,
-        index_columns,
-        ctx,
-        PlatformConfig(),
-        TimestampRange(0, 2));
+    SOMASparseNDArray::create(uri, attr_arrow_format, index_columns, ctx, PlatformConfig(), TimestampRange(0, 2));
 
     REQUIRE(SOMASparseNDArray::exists(uri, ctx));
     REQUIRE(!SOMADataFrame::exists(uri, ctx));
@@ -114,8 +106,7 @@ TEST_CASE("SOMASparseNDArray: basic", "[SOMASparseNDArray]") {
     snda = SOMASparseNDArray::open(uri, OpenMode::soma_write, ctx);
     mq = ManagedQuery(*snda, ctx->tiledb_ctx());
     mq.setup_write_column(dim_name, d0b.size(), d0b.data(), (uint64_t*)nullptr);
-    mq.setup_write_column(
-        attr_name, a0b.size(), a0b.data(), (uint64_t*)nullptr);
+    mq.setup_write_column(attr_name, a0b.size(), a0b.data(), (uint64_t*)nullptr);
     REQUIRE_THROWS(mq.submit_write());
     snda->close();
 
@@ -132,8 +123,7 @@ TEST_CASE("SOMASparseNDArray: basic", "[SOMASparseNDArray]") {
     snda->open(OpenMode::soma_write);
     mq = ManagedQuery(*snda, ctx->tiledb_ctx());
     mq.setup_write_column(dim_name, d0b.size(), d0b.data(), (uint64_t*)nullptr);
-    mq.setup_write_column(
-        attr_name, a0b.size(), a0b.data(), (uint64_t*)nullptr);
+    mq.setup_write_column(attr_name, a0b.size(), a0b.data(), (uint64_t*)nullptr);
     // Implicitly checking for no throw
     mq.submit_write();
     snda->close();
@@ -150,10 +140,8 @@ TEST_CASE("SOMASparseNDArray: platform_config", "[SOMASparseNDArray]") {
     std::string dim_name = "soma_dim_0";
     tiledb_datatype_t dim_tiledb_datatype = TILEDB_INT64;
     tiledb_datatype_t attr_tiledb_datatype = TILEDB_INT32;
-    std::string dim_arrow_format = ArrowAdapter::tdb_to_arrow_type(
-        dim_tiledb_datatype);
-    std::string attr_arrow_format = ArrowAdapter::tdb_to_arrow_type(
-        attr_tiledb_datatype);
+    std::string dim_arrow_format = ArrowAdapter::tdb_to_arrow_type(dim_tiledb_datatype);
+    std::string attr_arrow_format = ArrowAdapter::tdb_to_arrow_type(attr_tiledb_datatype);
 
     PlatformConfig platform_config;
     platform_config.sparse_nd_array_dim_zstd_level = 6;
@@ -167,16 +155,10 @@ TEST_CASE("SOMASparseNDArray: platform_config", "[SOMASparseNDArray]") {
 
     auto index_columns = helper::create_column_index_info(dim_infos);
 
-    SOMASparseNDArray::create(
-        uri, attr_arrow_format, index_columns, ctx, platform_config);
+    SOMASparseNDArray::create(uri, attr_arrow_format, index_columns, ctx, platform_config);
 
-    auto soma_dataframe = SOMASparseNDArray::open(
-        uri, OpenMode::soma_read, ctx);
-    auto dim_filter = soma_dataframe->tiledb_schema()
-                          ->domain()
-                          .dimension(dim_name)
-                          .filter_list()
-                          .filter(0);
+    auto soma_dataframe = SOMASparseNDArray::open(uri, OpenMode::soma_read, ctx);
+    auto dim_filter = soma_dataframe->tiledb_schema()->domain().dimension(dim_name).filter_list().filter(0);
     REQUIRE(dim_filter.filter_type() == TILEDB_FILTER_ZSTD);
     REQUIRE(dim_filter.get_option<int32_t>(TILEDB_COMPRESSION_LEVEL) == 6);
 
@@ -191,10 +173,8 @@ TEST_CASE("SOMASparseNDArray: metadata", "[SOMASparseNDArray]") {
     std::string dim_name = "soma_dim_0";
     tiledb_datatype_t dim_tiledb_datatype = TILEDB_INT64;
     tiledb_datatype_t attr_tiledb_datatype = TILEDB_INT32;
-    std::string dim_arrow_format = ArrowAdapter::tdb_to_arrow_type(
-        dim_tiledb_datatype);
-    std::string attr_arrow_format = ArrowAdapter::tdb_to_arrow_type(
-        attr_tiledb_datatype);
+    std::string dim_arrow_format = ArrowAdapter::tdb_to_arrow_type(dim_tiledb_datatype);
+    std::string attr_arrow_format = ArrowAdapter::tdb_to_arrow_type(attr_tiledb_datatype);
 
     std::vector<helper::DimInfo> dim_infos(
         {{.name = dim_name,
@@ -205,16 +185,9 @@ TEST_CASE("SOMASparseNDArray: metadata", "[SOMASparseNDArray]") {
 
     auto index_columns = helper::create_column_index_info(dim_infos);
 
-    SOMASparseNDArray::create(
-        uri,
-        attr_arrow_format,
-        index_columns,
-        ctx,
-        PlatformConfig(),
-        TimestampRange(0, 1));
+    SOMASparseNDArray::create(uri, attr_arrow_format, index_columns, ctx, PlatformConfig(), TimestampRange(0, 1));
 
-    auto snda = SOMASparseNDArray::open(
-        uri, OpenMode::soma_write, ctx, TimestampRange(0, 2));
+    auto snda = SOMASparseNDArray::open(uri, OpenMode::soma_write, ctx, TimestampRange(0, 2));
 
     int32_t val = 100;
     snda->set_metadata("md", TILEDB_INT32, 1, &val);
@@ -263,8 +236,7 @@ TEST_CASE("SOMASparseNDArray: metadata", "[SOMASparseNDArray]") {
     REQUIRE(snda->metadata_num() == 2);
 }
 
-TEST_CASE(
-    "SOMASparseNDArray: can_tiledbsoma_upgrade_shape", "[SOMASparseNDArray]") {
+TEST_CASE("SOMASparseNDArray: can_tiledbsoma_upgrade_shape", "[SOMASparseNDArray]") {
     int64_t dim_max = 999;
 
     auto ctx = std::make_shared<SOMAContext>();
@@ -273,10 +245,8 @@ TEST_CASE(
     std::string dim_name = "soma_dim_0";
     tiledb_datatype_t dim_tiledb_datatype = TILEDB_INT64;
     tiledb_datatype_t attr_tiledb_datatype = TILEDB_INT32;
-    std::string dim_arrow_format = ArrowAdapter::tdb_to_arrow_type(
-        dim_tiledb_datatype);
-    std::string attr_arrow_format = ArrowAdapter::tdb_to_arrow_type(
-        attr_tiledb_datatype);
+    std::string dim_arrow_format = ArrowAdapter::tdb_to_arrow_type(dim_tiledb_datatype);
+    std::string attr_arrow_format = ArrowAdapter::tdb_to_arrow_type(attr_tiledb_datatype);
 
     std::vector<helper::DimInfo> dim_infos(
         {{.name = dim_name,
@@ -309,15 +279,11 @@ TEST_CASE(
 
     check = snda->can_upgrade_shape(newshape_too_big, "testing");
     REQUIRE(check.first == false);
-    REQUIRE(
-        check.second ==
-        "testing: array already has a shape: please use resize");
+    REQUIRE(check.second == "testing: array already has a shape: please use resize");
 
     check = snda->can_upgrade_shape(newshape_good, "testing");
     REQUIRE(check.first == false);
-    REQUIRE(
-        check.second ==
-        "testing: array already has a shape: please use resize");
+    REQUIRE(check.second == "testing: array already has a shape: please use resize");
 }
 
 TEST_CASE("SOMASparseNDArray: can_resize", "[SOMASparseNDArray]") {
@@ -329,10 +295,8 @@ TEST_CASE("SOMASparseNDArray: can_resize", "[SOMASparseNDArray]") {
     std::string dim_name = "soma_dim_0";
     tiledb_datatype_t dim_tiledb_datatype = TILEDB_INT64;
     tiledb_datatype_t attr_tiledb_datatype = TILEDB_INT32;
-    std::string dim_arrow_format = ArrowAdapter::tdb_to_arrow_type(
-        dim_tiledb_datatype);
-    std::string attr_arrow_format = ArrowAdapter::tdb_to_arrow_type(
-        attr_tiledb_datatype);
+    std::string dim_arrow_format = ArrowAdapter::tdb_to_arrow_type(dim_tiledb_datatype);
+    std::string attr_arrow_format = ArrowAdapter::tdb_to_arrow_type(attr_tiledb_datatype);
 
     std::vector<helper::DimInfo> dim_infos(
         {{.name = dim_name,
@@ -365,9 +329,7 @@ TEST_CASE("SOMASparseNDArray: can_resize", "[SOMASparseNDArray]") {
 
     auto check = snda->can_resize(newshape_wrong_dims, "testing");
     REQUIRE(check.first == false);
-    REQUIRE(
-        check.second ==
-        "testing: provided shape has ndim 2, while the array has 1");
+    REQUIRE(check.second == "testing: provided shape has ndim 2, while the array has 1");
 
     check = snda->can_resize(newshape_too_small, "testing");
     REQUIRE(check.first == false);
@@ -390,10 +352,8 @@ TEST_CASE("SOMASparseNDArray: nnz", "[SOMASparseNDArray]") {
     std::string dim_name = "soma_dim_0";
     tiledb_datatype_t dim_tiledb_datatype = TILEDB_INT64;
     tiledb_datatype_t attr_tiledb_datatype = TILEDB_INT32;
-    std::string dim_arrow_format = ArrowAdapter::tdb_to_arrow_type(
-        dim_tiledb_datatype);
-    std::string attr_arrow_format = ArrowAdapter::tdb_to_arrow_type(
-        attr_tiledb_datatype);
+    std::string dim_arrow_format = ArrowAdapter::tdb_to_arrow_type(dim_tiledb_datatype);
+    std::string attr_arrow_format = ArrowAdapter::tdb_to_arrow_type(attr_tiledb_datatype);
 
     std::vector<helper::DimInfo> dim_infos(
         {{.name = dim_name,
@@ -412,10 +372,8 @@ TEST_CASE("SOMASparseNDArray: nnz", "[SOMASparseNDArray]") {
 
     auto snda = SOMASparseNDArray::open(uri, OpenMode::soma_write, ctx);
     auto mq = ManagedQuery(*snda, ctx->tiledb_ctx());
-    mq.setup_write_column(
-        dim_infos[0].name, d0.size(), d0.data(), (uint64_t*)nullptr);
-    mq.setup_write_column(
-        "soma_data", a0.size(), a0.data(), (uint64_t*)nullptr);
+    mq.setup_write_column(dim_infos[0].name, d0.size(), d0.data(), (uint64_t*)nullptr);
+    mq.setup_write_column("soma_data", a0.size(), a0.data(), (uint64_t*)nullptr);
     mq.submit_write();
     snda->close();
 
@@ -427,10 +385,8 @@ TEST_CASE("SOMASparseNDArray: nnz", "[SOMASparseNDArray]") {
 
     snda = SOMASparseNDArray::open(uri, OpenMode::soma_write, ctx);
     mq = ManagedQuery(*snda, ctx->tiledb_ctx());
-    mq.setup_write_column(
-        dim_infos[0].name, d0.size(), d0.data(), (uint64_t*)nullptr);
-    mq.setup_write_column(
-        "soma_data", a0.size(), a0.data(), (uint64_t*)nullptr);
+    mq.setup_write_column(dim_infos[0].name, d0.size(), d0.data(), (uint64_t*)nullptr);
+    mq.setup_write_column("soma_data", a0.size(), a0.data(), (uint64_t*)nullptr);
     mq.submit_write();
     snda->close();
 
@@ -442,10 +398,8 @@ TEST_CASE("SOMASparseNDArray: nnz", "[SOMASparseNDArray]") {
 
     snda = SOMASparseNDArray::open(uri, OpenMode::soma_write, ctx);
     mq = ManagedQuery(*snda, ctx->tiledb_ctx());
-    mq.setup_write_column(
-        dim_infos[0].name, d0.size(), d0.data(), (uint64_t*)nullptr);
-    mq.setup_write_column(
-        "soma_data", a0.size(), a0.data(), (uint64_t*)nullptr);
+    mq.setup_write_column(dim_infos[0].name, d0.size(), d0.data(), (uint64_t*)nullptr);
+    mq.setup_write_column("soma_data", a0.size(), a0.data(), (uint64_t*)nullptr);
     mq.submit_write();
     snda->close();
 
@@ -457,10 +411,8 @@ TEST_CASE("SOMASparseNDArray: nnz", "[SOMASparseNDArray]") {
 
     snda = SOMASparseNDArray::open(uri, OpenMode::soma_write, ctx);
     mq = ManagedQuery(*snda, ctx->tiledb_ctx());
-    mq.setup_write_column(
-        dim_infos[0].name, d0.size(), d0.data(), (uint64_t*)nullptr);
-    mq.setup_write_column(
-        "soma_data", a0.size(), a0.data(), (uint64_t*)nullptr);
+    mq.setup_write_column(dim_infos[0].name, d0.size(), d0.data(), (uint64_t*)nullptr);
+    mq.setup_write_column("soma_data", a0.size(), a0.data(), (uint64_t*)nullptr);
     mq.submit_write();
     snda->close();
 
@@ -472,10 +424,8 @@ TEST_CASE("SOMASparseNDArray: nnz", "[SOMASparseNDArray]") {
 
     snda = SOMASparseNDArray::open(uri, OpenMode::soma_write, ctx);
     mq = ManagedQuery(*snda, ctx->tiledb_ctx());
-    mq.setup_write_column(
-        dim_infos[0].name, d0.size(), d0.data(), (uint64_t*)nullptr);
-    mq.setup_write_column(
-        "soma_data", a0.size(), a0.data(), (uint64_t*)nullptr);
+    mq.setup_write_column(dim_infos[0].name, d0.size(), d0.data(), (uint64_t*)nullptr);
+    mq.setup_write_column("soma_data", a0.size(), a0.data(), (uint64_t*)nullptr);
     mq.submit_write();
 
     mq.reset();
@@ -483,10 +433,8 @@ TEST_CASE("SOMASparseNDArray: nnz", "[SOMASparseNDArray]") {
     a0 = {5, 5, 5};
 
     mq = ManagedQuery(*snda, ctx->tiledb_ctx());
-    mq.setup_write_column(
-        dim_infos[0].name, d0.size(), d0.data(), (uint64_t*)nullptr);
-    mq.setup_write_column(
-        "soma_data", a0.size(), a0.data(), (uint64_t*)nullptr);
+    mq.setup_write_column(dim_infos[0].name, d0.size(), d0.data(), (uint64_t*)nullptr);
+    mq.setup_write_column("soma_data", a0.size(), a0.data(), (uint64_t*)nullptr);
     mq.submit_write();
     snda->close();
 
@@ -509,10 +457,8 @@ TEST_CASE("SOMASparseNDArray: resize with timestamp", "[SOMASparseNDArray]") {
     std::string attr_name = "soma_data";
     tiledb_datatype_t dim_tiledb_datatype = TILEDB_INT64;
     tiledb_datatype_t attr_tiledb_datatype = TILEDB_INT32;
-    std::string dim_arrow_format = ArrowAdapter::tdb_to_arrow_type(
-        dim_tiledb_datatype);
-    std::string attr_arrow_format = ArrowAdapter::tdb_to_arrow_type(
-        attr_tiledb_datatype);
+    std::string dim_arrow_format = ArrowAdapter::tdb_to_arrow_type(dim_tiledb_datatype);
+    std::string attr_arrow_format = ArrowAdapter::tdb_to_arrow_type(attr_tiledb_datatype);
 
     REQUIRE(!SOMASparseNDArray::exists(uri, ctx));
 
@@ -525,19 +471,12 @@ TEST_CASE("SOMASparseNDArray: resize with timestamp", "[SOMASparseNDArray]") {
 
     auto index_columns = helper::create_column_index_info(dim_infos);
 
-    SOMASparseNDArray::create(
-        uri,
-        attr_arrow_format,
-        index_columns,
-        ctx,
-        PlatformConfig(),
-        TimestampRange(0, 1));
+    SOMASparseNDArray::create(uri, attr_arrow_format, index_columns, ctx, PlatformConfig(), TimestampRange(0, 1));
 
     index_columns.first->release(index_columns.first.get());
     index_columns.second->release(index_columns.second.get());
 
-    auto snda = SOMASparseNDArray::open(
-        uri, OpenMode::soma_write, ctx, TimestampRange(0, 2));
+    auto snda = SOMASparseNDArray::open(uri, OpenMode::soma_write, ctx, TimestampRange(0, 2));
     snda->resize(new_shape, "testing");
     snda->close();
 

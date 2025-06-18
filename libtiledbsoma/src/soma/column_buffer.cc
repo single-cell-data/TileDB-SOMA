@@ -22,8 +22,7 @@ using namespace tiledb;
 //= public static
 //===================================================================
 
-std::shared_ptr<ColumnBuffer> ColumnBuffer::create(
-    std::shared_ptr<Array> array, std::string_view name) {
+std::shared_ptr<ColumnBuffer> ColumnBuffer::create(std::shared_ptr<Array> array, std::string_view name) {
     auto schema = array->schema();
     auto name_str = std::string(name);  // string for TileDB API
 
@@ -32,53 +31,33 @@ std::shared_ptr<ColumnBuffer> ColumnBuffer::create(
         auto type = attr.type();
         bool is_var = attr.cell_val_num() == TILEDB_VAR_NUM;
         bool is_nullable = attr.nullable();
-        auto enum_name = AttributeExperimental::get_enumeration_name(
-            schema.context(), attr);
+        auto enum_name = AttributeExperimental::get_enumeration_name(schema.context(), attr);
         std::optional<Enumeration> enumeration = std::nullopt;
         bool is_ordered = false;
         if (enum_name.has_value()) {
-            auto enmr = ArrayExperimental::get_enumeration(
-                schema.context(), *array, *enum_name);
+            auto enmr = ArrayExperimental::get_enumeration(schema.context(), *array, *enum_name);
             is_ordered = enmr.ordered();
             enumeration = std::make_optional<Enumeration>(enmr);
         }
 
         if (!is_var && attr.cell_val_num() != 1) {
-            throw TileDBSOMAError(
-                "[ColumnBuffer] Values per cell > 1 is not supported: " +
-                name_str);
+            throw TileDBSOMAError("[ColumnBuffer] Values per cell > 1 is not supported: " + name_str);
         }
 
         return ColumnBuffer::alloc(
-            schema.context().config(),
-            name_str,
-            type,
-            is_var,
-            is_nullable,
-            enumeration,
-            is_ordered);
+            schema.context().config(), name_str, type, is_var, is_nullable, enumeration, is_ordered);
 
     } else if (schema.domain().has_dimension(name_str)) {
         auto dim = schema.domain().dimension(name_str);
         auto type = dim.type();
-        bool is_var = dim.cell_val_num() == TILEDB_VAR_NUM ||
-                      dim.type() == TILEDB_STRING_ASCII ||
+        bool is_var = dim.cell_val_num() == TILEDB_VAR_NUM || dim.type() == TILEDB_STRING_ASCII ||
                       dim.type() == TILEDB_STRING_UTF8;
 
         if (!is_var && dim.cell_val_num() != 1) {
-            throw TileDBSOMAError(
-                "[ColumnBuffer] Values per cell > 1 is not supported: " +
-                name_str);
+            throw TileDBSOMAError("[ColumnBuffer] Values per cell > 1 is not supported: " + name_str);
         }
 
-        return ColumnBuffer::alloc(
-            schema.context().config(),
-            name_str,
-            type,
-            is_var,
-            false,
-            std::nullopt,
-            false);
+        return ColumnBuffer::alloc(schema.context().config(), name_str, type, is_var, false, std::nullopt, false);
     }
 
     throw TileDBSOMAError("[ColumnBuffer] Column name not found: " + name_str);
@@ -92,8 +71,7 @@ void ColumnBuffer::to_bitmap(std::span<uint8_t> bytemap) {
             // Each bit in the bitmap corresponds to one byte in the bytemap
             // Note: the bitmap must be byte-aligned (8 bits)
             int bitmap = 0;
-            for (unsigned int i = i_src; i < i_src + 8 && i < bytemap.size();
-                 i++) {
+            for (unsigned int i = i_src; i < i_src + 8 && i < bytemap.size(); i++) {
                 bitmap |= bytemap[i] << (i % 8);
             }
             bytemap[i_dst++] = bitmap;
@@ -122,12 +100,8 @@ ColumnBuffer::ColumnBuffer(
     , is_nullable_(is_nullable)
     , enumeration_(enumeration)
     , is_ordered_(is_ordered) {
-    LOG_DEBUG(fmt::format(
-        "[ColumnBuffer] '{}' {} bytes is_var={} is_nullable={}",
-        name,
-        num_bytes,
-        is_var_,
-        is_nullable_));
+    LOG_DEBUG(
+        fmt::format("[ColumnBuffer] '{}' {} bytes is_var={} is_nullable={}", name, num_bytes, is_var_, is_nullable_));
     // Call reserve() to allocate memory without initializing the contents.
     // This reduce the time to allocate the buffer and reduces the
     // resident memory footprint of the buffer.
@@ -182,8 +156,7 @@ void ColumnBuffer::attach_buffer(Query& query) {
     if (is_var_) {
         // Remove one offset for TileDB, which checks that the offsets and
         // validity buffers are the same size
-        auto offsets_sz = is_write ? offsets_.size() - 1 :
-                                     offsets_.capacity() - 1;
+        auto offsets_sz = is_write ? offsets_.size() - 1 : offsets_.capacity() - 1;
         query.set_offsets_buffer(name_, offsets_.data(), offsets_sz);
     }
     if (is_nullable_) {
@@ -250,8 +223,7 @@ std::vector<std::vector<std::byte>> ColumnBuffer::binaries() {
     std::vector<std::vector<std::byte>> result;
 
     for (size_t i = 0; i < num_cells_; i++) {
-        result.emplace_back(std::vector<std::byte>(
-            data_.data() + offsets_[i], data_.data() + offsets_[i + 1]));
+        result.emplace_back(std::vector<std::byte>(data_.data() + offsets_[i], data_.data() + offsets_[i + 1]));
     }
 
     return result;
@@ -293,11 +265,8 @@ std::shared_ptr<ColumnBuffer> ColumnBuffer::alloc(
         try {
             num_bytes = std::stoull(value_str);
         } catch (const std::exception& e) {
-            throw TileDBSOMAError(fmt::format(
-                "[ColumnBuffer] Error parsing {}: '{}' ({})",
-                CONFIG_KEY_INIT_BYTES,
-                value_str,
-                e.what()));
+            throw TileDBSOMAError(
+                fmt::format("[ColumnBuffer] Error parsing {}: '{}' ({})", CONFIG_KEY_INIT_BYTES, value_str, e.what()));
         }
     }
 
@@ -311,18 +280,10 @@ std::shared_ptr<ColumnBuffer> ColumnBuffer::alloc(
     //   offset type.
     // For non-variable length column types, the number of cells is computed
     //   from the type size.
-    size_t num_cells = is_var ? num_bytes / sizeof(uint64_t) :
-                                num_bytes / tiledb::impl::type_size(type);
+    size_t num_cells = is_var ? num_bytes / sizeof(uint64_t) : num_bytes / tiledb::impl::type_size(type);
 
     return std::make_shared<ColumnBuffer>(
-        name,
-        type,
-        num_cells,
-        num_bytes,
-        is_var,
-        is_nullable,
-        enumeration,
-        is_ordered);
+        name, type, num_cells, num_bytes, is_var, is_nullable, enumeration, is_ordered);
 }
 
 }  // namespace tiledbsoma

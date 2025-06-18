@@ -33,8 +33,7 @@ namespace {
  * @param ctx TileDB context
  * @return std::shared_ptr<Array>
  */
-static std::shared_ptr<Array> create_array(
-    const std::string& uri, Context& ctx) {
+static std::shared_ptr<Array> create_array(const std::string& uri, Context& ctx) {
     // delete array if it exists
     auto vfs = VFS(ctx);
     if (vfs.is_dir(uri)) {
@@ -42,8 +41,7 @@ static std::shared_ptr<Array> create_array(
     }
 
     ArraySchema schema(ctx, TILEDB_SPARSE);
-    auto dim = Dimension::create(
-        ctx, "d1", TILEDB_STRING_ASCII, nullptr, nullptr);
+    auto dim = Dimension::create(ctx, "d1", TILEDB_STRING_ASCII, nullptr, nullptr);
     dim.set_cell_val_num(TILEDB_VAR_NUM);
 
     Domain domain(ctx);

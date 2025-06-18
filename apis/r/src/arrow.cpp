@@ -1,6 +1,6 @@
 #include <Rcpp/Lighter>  // for R interface to C++
 
-#include <nanoarrow/r.h>  // for C/C++ interface to Arrow (via header exported from the R package)
+#include <nanoarrow/r.h>            // for C/C++ interface to Arrow (via header exported from the R package)
 #include <RcppInt64>                // for fromInteger64
 #include <nanoarrow/nanoarrow.hpp>  // for C/C++ interface to Arrow (vendored)
 
@@ -12,8 +12,7 @@
 
 namespace tdbs = tiledbsoma;
 
-void _show_content(
-    const nanoarrow::UniqueArray& ap, const nanoarrow::UniqueSchema& sp) {
+void _show_content(const nanoarrow::UniqueArray& ap, const nanoarrow::UniqueSchema& sp) {
     int n = sp.get()->n_children;
     ArrowError ec;
     for (auto i = 0; i < n; i++) {
@@ -31,8 +30,7 @@ void _show_content(
 }
 
 // [[Rcpp::export]]
-Rcpp::XPtr<somactx_wrap_t> createSOMAContext(
-    Rcpp::Nullable<Rcpp::CharacterVector> config = R_NilValue) {
+Rcpp::XPtr<somactx_wrap_t> createSOMAContext(Rcpp::Nullable<Rcpp::CharacterVector> config = R_NilValue) {
     // if we hae a config, use it
     std::shared_ptr<tdbs::SOMAContext> somactx;
     if (config.isNotNull()) {
@@ -93,12 +91,9 @@ void createSchemaFromArrow(
     apdim.move(dimarr.get());
 
     tdbs::PlatformConfig pltcfg;
-    pltcfg.dataframe_dim_zstd_level = Rcpp::as<int>(
-        pclst["dataframe_dim_zstd_level"]);
-    pltcfg.sparse_nd_array_dim_zstd_level = Rcpp::as<int>(
-        pclst["sparse_nd_array_dim_zstd_level"]);
-    pltcfg.dense_nd_array_dim_zstd_level = Rcpp::as<int>(
-        pclst["dense_nd_array_dim_zstd_level"]);
+    pltcfg.dataframe_dim_zstd_level = Rcpp::as<int>(pclst["dataframe_dim_zstd_level"]);
+    pltcfg.sparse_nd_array_dim_zstd_level = Rcpp::as<int>(pclst["sparse_nd_array_dim_zstd_level"]);
+    pltcfg.dense_nd_array_dim_zstd_level = Rcpp::as<int>(pclst["dense_nd_array_dim_zstd_level"]);
     pltcfg.write_X_chunked = Rcpp::as<bool>(pclst["write_X_chunked"]);
     pltcfg.goal_chunk_nnz = Rcpp::as<double>(pclst["goal_chunk_nnz"]);
     pltcfg.capacity = Rcpp::as<double>(pclst["capacity"]);
@@ -126,8 +121,7 @@ void createSchemaFromArrow(
     } else if (datatype == "SOMADenseNDArray") {
         exists = tdbs::SOMADenseNDArray::exists(uri, sctx);
     } else {
-        Rcpp::stop(
-            tfm::format("Error: Invalid SOMA type_argument '%s'", datatype));
+        Rcpp::stop(tfm::format("Error: Invalid SOMA type_argument '%s'", datatype));
     }
 
     if (exists) {
@@ -136,37 +130,21 @@ void createSchemaFromArrow(
 
     if (datatype == "SOMADataFrame") {
         tdbs::SOMADataFrame::create(
-            uri,
-            std::move(schema),
-            std::pair(std::move(dimarr), std::move(dimsch)),
-            sctx,
-            pltcfg,
-            tsrng);
+            uri, std::move(schema), std::pair(std::move(dimarr), std::move(dimsch)), sctx, pltcfg, tsrng);
     } else if (datatype == "SOMASparseNDArray") {
         // for arrays n_children will be three as we have two dims and a data
         // col
         std::string datacoltype = sp->children[sp->n_children - 1]->format;
         tdbs::SOMASparseNDArray::create(
-            uri,
-            datacoltype,
-            std::pair(std::move(dimarr), std::move(dimsch)),
-            sctx,
-            pltcfg,
-            tsrng);
+            uri, datacoltype, std::pair(std::move(dimarr), std::move(dimsch)), sctx, pltcfg, tsrng);
     } else if (datatype == "SOMADenseNDArray") {
         // for arrays n_children will be three as we have two dims and a data
         // col
         std::string datacoltype = sp->children[sp->n_children - 1]->format;
         tdbs::SOMADenseNDArray::create(
-            uri,
-            datacoltype,
-            std::pair(std::move(dimarr), std::move(dimsch)),
-            sctx,
-            pltcfg,
-            tsrng);
+            uri, datacoltype, std::pair(std::move(dimarr), std::move(dimsch)), sctx, pltcfg, tsrng);
     } else {
-        Rcpp::stop(
-            tfm::format("Error: Invalid SOMA type_argument '%s'", datatype));
+        Rcpp::stop(tfm::format("Error: Invalid SOMA type_argument '%s'", datatype));
     }
 }
 
@@ -222,13 +200,10 @@ void writeArrayFromArrow(
     // optional timestamp range
     std::optional<tdbs::TimestampRange> tsrng = makeTimestampRange(tsvec);
 
-    std::unique_ptr<tdbs::SOMAArray> arrup = tdbs::SOMAArray::open(
-        OpenMode::soma_write, uri, somactx, tsrng);
+    std::unique_ptr<tdbs::SOMAArray> arrup = tdbs::SOMAArray::open(OpenMode::soma_write, uri, somactx, tsrng);
 
     auto mq = tdbs::ManagedQuery(*arrup, somactx->tiledb_ctx(), "unnamed");
-    mq.set_layout(
-        arraytype == "SOMADenseNDArray" ? ResultOrder::colmajor :
-                                          ResultOrder::automatic);
+    mq.set_layout(arraytype == "SOMADenseNDArray" ? ResultOrder::colmajor : ResultOrder::automatic);
     mq.set_array_data(schema.get(), array.get());
     mq.submit_write();
     mq.close();

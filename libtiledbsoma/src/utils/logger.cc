@@ -31,8 +31,7 @@ namespace tiledbsoma {
 // [log level]
 // text to log...
 // %$ : end color range
-const std::string LOG_PATTERN =
-    "%^[%Y-%m-%d %H:%M:%S.%e] [%n] [Process: %P] [Thread: %t] [%l] %v%$";
+const std::string LOG_PATTERN = "%^[%Y-%m-%d %H:%M:%S.%e] [%n] [Process: %P] [Thread: %t] [%l] %v%$";
 const std::string CONSOLE_LOGGER = "tiledbsoma";
 const std::string FILE_LOGGER = "tiledbsoma-file";
 
@@ -47,10 +46,8 @@ Logger::Logger() {
         logger_->set_pattern(LOG_PATTERN);
 #if !defined(_WIN32)
         // change color of critical messages
-        auto console_sink = static_cast<spdlog::sinks::stdout_color_sink_mt*>(
-            logger_->sinks().back().get());
-        console_sink->set_color(
-            spdlog::level::critical, console_sink->red_bold);
+        auto console_sink = static_cast<spdlog::sinks::stdout_color_sink_mt*>(logger_->sinks().back().get());
+        console_sink->set_color(spdlog::level::critical, console_sink->red_bold);
 #endif
     }
     set_level("INFO");
@@ -94,8 +91,7 @@ void Logger::critical(const char* msg) {
 void Logger::set_level(const std::string& level_in) {
     // convert level to lower case
     std::string level = level_in;
-    std::for_each(
-        level.begin(), level.end(), [](char& c) { c = ::tolower(c); });
+    std::for_each(level.begin(), level.end(), [](char& c) { c = ::tolower(c); });
 
     if (level == "fatal" || level[0] == 'f') {
         level_ = spdlog::level::critical;

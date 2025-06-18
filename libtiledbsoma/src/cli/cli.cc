@@ -45,10 +45,7 @@ void test_sdf(const std::string& uri) {
     }
 
     // Read all values from the X/data array
-    auto x_data = SOMAArray::open(
-        OpenMode::soma_read,
-        uri + "/ms/RNA/X/data",
-        std::make_shared<SOMAContext>(config));
+    auto x_data = SOMAArray::open(OpenMode::soma_read, uri + "/ms/RNA/X/data", std::make_shared<SOMAContext>(config));
     auto x_mq = ManagedQuery(*x_data, ctx->tiledb_ctx(), "X/data");
 
     int batches = 0;
@@ -77,19 +74,14 @@ void test_arrow(const std::string& uri) {
         exit(-1);
     }
     tdbs::LOG_INFO(fmt::format(
-        "Read complete with {} obs and {} cols",
-        obs_data->get()->num_rows(),
-        obs_data->get()->names().size()));
+        "Read complete with {} obs and {} cols", obs_data->get()->num_rows(), obs_data->get()->names().size()));
     std::vector<std::string> names = obs_data->get()->names();
     for (auto nm : names) {
         auto buf = obs_data->get()->at(nm);
         auto pp = tdbs::ArrowAdapter::to_arrow(buf);
         ArrowSchema* schema = pp.second.get();
-        tdbs::LOG_INFO(fmt::format(
-            "Accessing '{}', retrieved '{}', n_children {}",
-            nm,
-            schema->name,
-            schema->n_children));
+        tdbs::LOG_INFO(
+            fmt::format("Accessing '{}', retrieved '{}', n_children {}", nm, schema->name, schema->n_children));
     }
 }
 

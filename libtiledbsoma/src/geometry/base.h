@@ -10,10 +10,7 @@ namespace tiledbsoma::geometry {
 
 struct BasePoint {
     BasePoint(
-        double_t x,
-        double_t y,
-        std::optional<double_t> z = std::nullopt,
-        std::optional<double_t> m = std::nullopt)
+        double_t x, double_t y, std::optional<double_t> z = std::nullopt, std::optional<double_t> m = std::nullopt)
         : x(x)
         , y(y)
         , z(z)

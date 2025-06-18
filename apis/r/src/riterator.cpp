@@ -104,8 +104,7 @@ Rcpp::XPtr<tdbs::ManagedQuery> mq_setup(
     }
 
     // optional timestamp range
-    std::optional<tdbs::TimestampRange> tsrng = makeTimestampRange(
-        timestamprange);
+    std::optional<tdbs::TimestampRange> tsrng = makeTimestampRange(timestamprange);
 
     auto tdb_result_order = get_tdb_result_order(result_order);
 
@@ -117,8 +116,7 @@ Rcpp::XPtr<tdbs::ManagedQuery> mq_setup(
         mq->select_columns(column_names);
     }
 
-    std::unordered_map<std::string, std::shared_ptr<tiledb::Dimension>>
-        name2dim;
+    std::unordered_map<std::string, std::shared_ptr<tiledb::Dimension>> name2dim;
     std::shared_ptr<tiledb::ArraySchema> schema = arr.tiledb_schema();
     tiledb::Domain domain = schema->domain();
     std::vector<tiledb::Dimension> dims = domain.dimensions();
@@ -129,8 +127,7 @@ Rcpp::XPtr<tdbs::ManagedQuery> mq_setup(
             tiledb::impl::to_str(dim.type()),
             dim.domain_to_str(),
             dim.tile_extent_to_str()));
-        name2dim.emplace(std::make_pair(
-            dim.name(), std::make_shared<tiledb::Dimension>(dim)));
+        name2dim.emplace(std::make_pair(dim.name(), std::make_shared<tiledb::Dimension>(dim)));
     }
 
     // If we have a query condition, apply it
@@ -178,19 +175,15 @@ SEXP create_empty_arrow_table() {
     // Schema first
     auto schemaxp = nanoarrow_schema_owning_xptr();
     auto sch = nanoarrow_output_schema_from_xptr(schemaxp);
-    exitIfError(
-        ArrowSchemaInitFromType(sch, NANOARROW_TYPE_STRUCT), "Bad schema init");
+    exitIfError(ArrowSchemaInitFromType(sch, NANOARROW_TYPE_STRUCT), "Bad schema init");
     exitIfError(ArrowSchemaSetName(sch, ""), "Bad schema name");
-    exitIfError(
-        ArrowSchemaAllocateChildren(sch, ncol), "Bad schema children alloc");
+    exitIfError(ArrowSchemaAllocateChildren(sch, ncol), "Bad schema children alloc");
 
     // Array second
     auto arrayxp = nanoarrow_array_owning_xptr();
     auto arr = nanoarrow_output_array_from_xptr(arrayxp);
-    exitIfError(
-        ArrowArrayInitFromType(arr, NANOARROW_TYPE_STRUCT), "Bad array init");
-    exitIfError(
-        ArrowArrayAllocateChildren(arr, ncol), "Bad array children alloc");
+    exitIfError(ArrowArrayInitFromType(arr, NANOARROW_TYPE_STRUCT), "Bad array init");
+    exitIfError(ArrowArrayAllocateChildren(arr, ncol), "Bad array children alloc");
     arr->length = 0;
 
     // Nanoarrow special: stick schema into xptr tag to return single SEXP
@@ -210,18 +203,14 @@ SEXP mq_next(Rcpp::XPtr<tdbs::ManagedQuery> mq) {
     check_xptr_tag<tdbs::ManagedQuery>(mq);
 
     if (mq_complete(mq)) {
-        tdbs::LOG_TRACE(fmt::format(
-            "[mq_next] complete {} num_cells {}",
-            mq->is_complete(true),
-            mq->total_num_cells()));
+        tdbs::LOG_TRACE(
+            fmt::format("[mq_next] complete {} num_cells {}", mq->is_complete(true), mq->total_num_cells()));
         return create_empty_arrow_table();
     }
 
     auto mq_data = mq->read_next();
-    tdbs::LOG_DEBUG(fmt::format(
-        "[mq_next] Read {} rows and {} cols",
-        mq_data->get()->num_rows(),
-        mq_data->get()->names().size()));
+    tdbs::LOG_DEBUG(
+        fmt::format("[mq_next] Read {} rows and {} cols", mq_data->get()->num_rows(), mq_data->get()->names().size()));
 
     if (!mq_data) {
         tdbs::LOG_TRACE("[mq_next] complete - mq_data read no data");
@@ -233,25 +222,20 @@ SEXP mq_next(Rcpp::XPtr<tdbs::ManagedQuery> mq) {
     // Schema first
     auto schemaxp = nanoarrow_schema_owning_xptr();
     auto sch = nanoarrow_output_schema_from_xptr(schemaxp);
-    exitIfError(
-        ArrowSchemaInitFromType(sch, NANOARROW_TYPE_STRUCT), "Bad schema init");
+    exitIfError(ArrowSchemaInitFromType(sch, NANOARROW_TYPE_STRUCT), "Bad schema init");
     exitIfError(ArrowSchemaSetName(sch, ""), "Bad schema name");
-    exitIfError(
-        ArrowSchemaAllocateChildren(sch, ncol), "Bad schema children alloc");
+    exitIfError(ArrowSchemaAllocateChildren(sch, ncol), "Bad schema children alloc");
 
     // Array second
     auto arrayxp = nanoarrow_array_owning_xptr();
     auto arr = nanoarrow_output_array_from_xptr(arrayxp);
-    exitIfError(
-        ArrowArrayInitFromType(arr, NANOARROW_TYPE_STRUCT), "Bad array init");
-    exitIfError(
-        ArrowArrayAllocateChildren(arr, ncol), "Bad array children alloc");
+    exitIfError(ArrowArrayInitFromType(arr, NANOARROW_TYPE_STRUCT), "Bad array init");
+    exitIfError(ArrowArrayAllocateChildren(arr, ncol), "Bad array children alloc");
 
     arr->length = 0;  // initial value
 
     for (size_t i = 0; i < ncol; i++) {
-        tdbs::LOG_TRACE(
-            fmt::format("[mq_next] Accessing {} at {}", names[i], i));
+        tdbs::LOG_TRACE(fmt::format("[mq_next] Accessing {} at {}", names[i], i));
 
         // now buf is a shared_ptr to ColumnBuffer
         auto buf = mq_data->get()->at(names[i]);
@@ -263,15 +247,12 @@ SEXP mq_next(Rcpp::XPtr<tdbs::ManagedQuery> mq) {
         ArrowSchemaMove(pp.second.get(), sch->children[i]);
 
         if (pp.first->length > arr->length) {
-            tdbs::LOG_DEBUG(fmt::format(
-                "[soma_array_reader] Setting array length to {}",
-                pp.first->length));
+            tdbs::LOG_DEBUG(fmt::format("[soma_array_reader] Setting array length to {}", pp.first->length));
             arr->length = pp.first->length;
         }
     }
 
-    tdbs::LOG_DEBUG(
-        fmt::format("[mq_next] Exporting chunk with {} rows", arr->length));
+    tdbs::LOG_DEBUG(fmt::format("[mq_next] Exporting chunk with {} rows", arr->length));
     // Nanoarrow special: stick schema into xptr tag to return single SEXP
     array_xptr_set_schema(arrayxp, schemaxp);  // embed schema in array
     return arrayxp;
@@ -285,10 +266,7 @@ void mq_reset(Rcpp::XPtr<tdbs::ManagedQuery> mq) {
 }
 
 // [[Rcpp::export]]
-void mq_set_dim_points(
-    Rcpp::XPtr<tdbs::ManagedQuery> mq,
-    std::string dim,
-    Rcpp::NumericVector points) {
+void mq_set_dim_points(Rcpp::XPtr<tdbs::ManagedQuery> mq, std::string dim, Rcpp::NumericVector points) {
     check_xptr_tag<tdbs::ManagedQuery>(mq);
     // check args ?
 

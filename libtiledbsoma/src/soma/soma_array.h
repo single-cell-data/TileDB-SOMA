@@ -167,10 +167,7 @@ class SOMAArray : public SOMAObject {
      * @param arr TileDB array.
      * @param timestamp Timestamp range the array was opened at.
      */
-    SOMAArray(
-        std::shared_ptr<SOMAContext> ctx,
-        std::shared_ptr<Array> arr,
-        std::optional<TimestampRange> timestamp);
+    SOMAArray(std::shared_ptr<SOMAContext> ctx, std::shared_ptr<Array> arr, std::optional<TimestampRange> timestamp);
 
     SOMAArray(const SOMAArray& other) = default;
     SOMAArray(SOMAArray&&) = default;
@@ -198,8 +195,7 @@ class SOMAArray : public SOMAObject {
      * @param mode read or write
      * @param timestamp Timestamp
      */
-    void open(
-        OpenMode mode, std::optional<TimestampRange> timestamp = std::nullopt);
+    void open(OpenMode mode, std::optional<TimestampRange> timestamp = std::nullopt);
 
     /**
      * Close the SOMAArray object.
@@ -258,8 +254,7 @@ class SOMAArray : public SOMAObject {
      * @param modes List of modes to apply. By default, apply to fragment_meta
      * and commits
      */
-    void consolidate_and_vacuum(
-        std::vector<std::string> modes = {"fragment_meta", "commits"});
+    void consolidate_and_vacuum(std::vector<std::string> modes = {"fragment_meta", "commits"});
 
     /**
      * @brief Get the TileDB ArraySchema. This should eventually
@@ -292,9 +287,7 @@ class SOMAArray : public SOMAObject {
                 return columns_[i]->arrow_schema_slot(*ctx_, *arr_);
             }
         }
-        throw TileDBSOMAError(
-            "[arrow_schema_for_column] column name '" + column_name +
-            "' not present in schema");
+        throw TileDBSOMAError("[arrow_schema_for_column] column name '" + column_name + "' not present in schema");
     }
 
     /**
@@ -437,8 +430,7 @@ class SOMAArray : public SOMAObject {
      * @tparam std::string column name
      * @return ArrowTable with one column
      */
-    std::pair<ArrowArray*, ArrowSchema*> get_enumeration_values_for_column(
-        std::string column_name);
+    std::pair<ArrowArray*, ArrowSchema*> get_enumeration_values_for_column(std::string column_name);
 
     /**
      * Adds new values to enumeration columns.
@@ -452,8 +444,7 @@ class SOMAArray : public SOMAObject {
      * disjoint for each given column.
      */
     void extend_enumeration_values(
-        std::map<std::string, std::pair<ArrowSchema*, ArrowArray*>> values,
-        bool deduplicate);
+        std::map<std::string, std::pair<ArrowSchema*, ArrowArray*>> values, bool deduplicate);
 
     /**
      * Retrieves the non-empty domain from the array. This is the union of the
@@ -471,8 +462,7 @@ class SOMAArray : public SOMAObject {
      * domains.
      */
     template <typename T>
-    std::optional<std::pair<T, T>> non_empty_domain_slot_opt(
-        std::string_view name) const {
+    std::optional<std::pair<T, T>> non_empty_domain_slot_opt(std::string_view name) const {
         return get_column(name)->non_empty_domain_slot_opt<T>(*ctx_, *arr_);
     }
 
@@ -625,8 +615,7 @@ class SOMAArray : public SOMAObject {
      * domain, and core non-empty domain.
      */
     template <typename T>
-    std::pair<T, T> _core_domainish_slot(
-        std::string_view name, enum Domainish which_kind) const {
+    std::pair<T, T> _core_domainish_slot(std::string_view name, enum Domainish which_kind) const {
         return get_column(name)->domain_slot<T>(*ctx_, *arr_, which_kind);
     }
 
@@ -696,11 +685,8 @@ class SOMAArray : public SOMAObject {
      * upgrade_shape), or the requested shape doesn't fit within the array's
      * existing core domain.
      */
-    StatusAndReason can_resize(
-        const std::vector<int64_t>& newshape,
-        std::string function_name_for_messages) {
-        return _can_set_shape_helper(
-            newshape, true, function_name_for_messages);
+    StatusAndReason can_resize(const std::vector<int64_t>& newshape, std::string function_name_for_messages) {
+        return _can_set_shape_helper(newshape, true, function_name_for_messages);
     }
 
     /**
@@ -720,49 +706,38 @@ class SOMAArray : public SOMAObject {
      * the requested shape is a downsize of the array's existing core current
      * domain.
      */
-    StatusAndReason can_upgrade_shape(
-        const std::vector<int64_t>& newshape,
-        std::string function_name_for_messages) {
-        return _can_set_shape_helper(
-            newshape, false, function_name_for_messages);
+    StatusAndReason can_upgrade_shape(const std::vector<int64_t>& newshape, std::string function_name_for_messages) {
+        return _can_set_shape_helper(newshape, false, function_name_for_messages);
     }
 
     /**
      * This is similar to can_upgrade_shape, but it's a can-we call
      * for resize_soma_joinid_shape.
      */
-    StatusAndReason can_resize_soma_joinid_shape(
-        int64_t newshape, std::string function_name_for_messages) {
-        return _can_set_soma_joinid_shape_helper(
-            newshape, true, function_name_for_messages);
+    StatusAndReason can_resize_soma_joinid_shape(int64_t newshape, std::string function_name_for_messages) {
+        return _can_set_soma_joinid_shape_helper(newshape, true, function_name_for_messages);
     }
 
     /**
      * This is similar to can_upgrade_shape, but it's a can-we call
      * for upgrade_soma_joinid_shape.
      */
-    StatusAndReason can_upgrade_soma_joinid_shape(
-        int64_t newshape, std::string function_name_for_messages) {
-        return _can_set_soma_joinid_shape_helper(
-            newshape, false, function_name_for_messages);
+    StatusAndReason can_upgrade_soma_joinid_shape(int64_t newshape, std::string function_name_for_messages) {
+        return _can_set_soma_joinid_shape_helper(newshape, false, function_name_for_messages);
     }
 
     /**
      * This is for SOMADataFrame.
      */
-    StatusAndReason can_upgrade_domain(
-        const ArrowTable& newdomain, std::string function_name_for_messages) {
-        return _can_set_domain_helper(
-            newdomain, false, function_name_for_messages);
+    StatusAndReason can_upgrade_domain(const ArrowTable& newdomain, std::string function_name_for_messages) {
+        return _can_set_domain_helper(newdomain, false, function_name_for_messages);
     }
 
     /**
      * This is for SOMADataFrame.
      */
-    StatusAndReason can_change_domain(
-        const ArrowTable& newdomain, std::string function_name_for_messages) {
-        return _can_set_domain_helper(
-            newdomain, true, function_name_for_messages);
+    StatusAndReason can_change_domain(const ArrowTable& newdomain, std::string function_name_for_messages) {
+        return _can_set_domain_helper(newdomain, true, function_name_for_messages);
     }
 
     /**
@@ -776,9 +751,7 @@ class SOMAArray : public SOMAObject {
      * @return Nothing. Raises an exception if the resize would be a downsize,
      * which is not supported.
      */
-    void resize(
-        const std::vector<int64_t>& newshape,
-        std::string function_name_for_messages) {
+    void resize(const std::vector<int64_t>& newshape, std::string function_name_for_messages) {
         _set_shape_helper(newshape, true, function_name_for_messages);
     }
 
@@ -788,9 +761,7 @@ class SOMAArray : public SOMAObject {
      * of int64 type. Namely, all SparseNDArray/DenseNDArray, and
      * default-indexed DataFrame.
      */
-    void upgrade_shape(
-        const std::vector<int64_t>& newshape,
-        std::string function_name_for_messages) {
+    void upgrade_shape(const std::vector<int64_t>& newshape, std::string function_name_for_messages) {
         _set_shape_helper(newshape, false, function_name_for_messages);
     }
 
@@ -808,10 +779,8 @@ class SOMAArray : public SOMAObject {
      * @return Throws if the requested shape exceeds the array's create-time
      * maxshape. Throws if the array does not have current-domain support.
      */
-    void resize_soma_joinid_shape(
-        int64_t newshape, std::string function_name_for_messages) {
-        return _set_soma_joinid_shape_helper(
-            newshape, true, function_name_for_messages);
+    void resize_soma_joinid_shape(int64_t newshape, std::string function_name_for_messages) {
+        return _set_soma_joinid_shape_helper(newshape, true, function_name_for_messages);
     }
 
     /**
@@ -828,10 +797,8 @@ class SOMAArray : public SOMAObject {
      * @return Throws if the requested shape exceeds the array's create-time
      * maxshape. Throws if the array does not have current-domain support.
      */
-    void upgrade_soma_joinid_shape(
-        int64_t newshape, std::string function_name_for_messages) {
-        return _set_soma_joinid_shape_helper(
-            newshape, false, function_name_for_messages);
+    void upgrade_soma_joinid_shape(int64_t newshape, std::string function_name_for_messages) {
+        return _set_soma_joinid_shape_helper(newshape, false, function_name_for_messages);
     }
 
     /**
@@ -841,8 +808,7 @@ class SOMAArray : public SOMAObject {
      * this allows the full-generality resize-every-index-column case
      * (which only applies to variant-indexed/non-standard dataframes).
      */
-    void change_domain(
-        const ArrowTable& newdomain, std::string function_name_for_messages) {
+    void change_domain(const ArrowTable& newdomain, std::string function_name_for_messages) {
         _set_domain_helper(newdomain, true, function_name_for_messages);
     }
 
@@ -853,8 +819,7 @@ class SOMAArray : public SOMAObject {
      * this allows the full-generality resize-every-index-column case
      * (which only applies to variant-indexed/non-standard dataframes).
      */
-    void upgrade_domain(
-        const ArrowTable& newdomain, std::string function_name_for_messages) {
+    void upgrade_domain(const ArrowTable& newdomain, std::string function_name_for_messages) {
         _set_domain_helper(newdomain, false, function_name_for_messages);
     }
 
@@ -863,10 +828,7 @@ class SOMAArray : public SOMAObject {
     std::shared_ptr<SOMAColumn> get_column(std::size_t index) const;
 
    protected:
-    static bool _exists(
-        std::string_view uri,
-        std::string_view soma_type,
-        std::shared_ptr<SOMAContext> ctx);
+    static bool _exists(std::string_view uri, std::string_view soma_type, std::shared_ptr<SOMAContext> ctx);
 
     // See top-of-file notes regarding methods for SOMADataFrame being
     // defined in this file.
@@ -921,8 +883,7 @@ class SOMAArray : public SOMAObject {
      * here, but, that would be a redundant indicator.
      */
     CurrentDomain _get_current_domain() const {
-        return tiledb::ArraySchemaExperimental::current_domain(
-            *ctx_->tiledb_ctx(), *schema_);
+        return tiledb::ArraySchemaExperimental::current_domain(*ctx_->tiledb_ctx(), *schema_);
     }
 
     /**
@@ -945,25 +906,20 @@ class SOMAArray : public SOMAObject {
      * This is a code-dedupe helper for can_resize and can_upgrade_shape.
      */
     StatusAndReason _can_set_shape_helper(
-        const std::vector<int64_t>& newshape,
-        bool must_already_have,
-        std::string function_name_for_messages);
+        const std::vector<int64_t>& newshape, bool must_already_have, std::string function_name_for_messages);
 
     /**
      * This is a code-dedupe helper method for can_change_domain and
      * can_upgrade_domain.
      */
     StatusAndReason _can_set_domain_helper(
-        const ArrowTable& newdomain,
-        bool must_already_have,
-        std::string function_name_for_messages);
+        const ArrowTable& newdomain, bool must_already_have, std::string function_name_for_messages);
 
     /**
      * This is a second-level code-dedupe helper for _can_set_shape_helper.
      */
     StatusAndReason _can_set_shape_domainish_subhelper(
-        const std::vector<int64_t>& newshape,
-        std::string function_name_for_messages);
+        const std::vector<int64_t>& newshape, std::string function_name_for_messages);
 
     /**
      * This is a code-dedupe helper for can_upgrade_domain.
@@ -976,49 +932,36 @@ class SOMAArray : public SOMAObject {
      * can_upgrade_domain_soma_joinid_shape.
      */
     StatusAndReason _can_set_soma_joinid_shape_helper(
-        int64_t newshape,
-        bool must_already_have,
-        std::string function_name_for_messages);
+        int64_t newshape, bool must_already_have, std::string function_name_for_messages);
 
     /**
      * This is a code-dedupe helper method for resize and upgrade_shape.
      */
     void _set_shape_helper(
-        const std::vector<int64_t>& newshape,
-        bool must_already_have,
-        std::string function_name_for_messages);
+        const std::vector<int64_t>& newshape, bool must_already_have, std::string function_name_for_messages);
 
     /**
      * This is a code-dedupe helper method for resize_soma_joinid_shape and
      * upgrade_soma_joinid_shape.
      */
     void _set_soma_joinid_shape_helper(
-        int64_t newshape,
-        bool must_already_have,
-        std::string function_name_for_messages);
+        int64_t newshape, bool must_already_have, std::string function_name_for_messages);
 
     /**
      * This is a code-dedupe helper method for change_domain and upgrade_domain.
      */
     void _set_domain_helper(
-        const ArrowTable& newdomain,
-        bool must_already_have,
-        std::string function_name_for_messages);
+        const ArrowTable& newdomain, bool must_already_have, std::string function_name_for_messages);
 
     /**
      * This is a helper for can_upgrade_domain.
      */
     template <typename T>
     StatusAndReason _can_set_dataframe_domainish_slot_checker_non_string(
-        bool check_current_domain,
-        const ArrowTable& domain_table,
-        std::string dim_name) {
-        std::pair<T, T> old_lo_hi = check_current_domain ?
-                                        _core_current_domain_slot<T>(dim_name) :
-                                        _core_domain_slot<T>(dim_name);
-        std::vector<T>
-            new_lo_hi = ArrowAdapter::get_table_non_string_column_by_name<T>(
-                domain_table, dim_name);
+        bool check_current_domain, const ArrowTable& domain_table, std::string dim_name) {
+        std::pair<T, T> old_lo_hi = check_current_domain ? _core_current_domain_slot<T>(dim_name) :
+                                                           _core_domain_slot<T>(dim_name);
+        std::vector<T> new_lo_hi = ArrowAdapter::get_table_non_string_column_by_name<T>(domain_table, dim_name);
         if (new_lo_hi.size() != 2) {
             throw TileDBSOMAError(
                 "internal coding error detected at "
@@ -1037,36 +980,24 @@ class SOMAArray : public SOMAObject {
         // domain must be contained within the core (max) domain.
 
         if (new_lo > new_hi) {
-            return std::pair(
-                false,
-                "index-column name " + dim_name + ": new lower > new upper");
+            return std::pair(false, "index-column name " + dim_name + ": new lower > new upper");
         }
 
         if (check_current_domain) {
             if (new_lo > old_lo) {
                 return std::pair(
-                    false,
-                    "index-column name " + dim_name +
-                        ": new lower > old lower (downsize is unsupported)");
+                    false, "index-column name " + dim_name + ": new lower > old lower (downsize is unsupported)");
             }
             if (new_hi < old_hi) {
                 return std::pair(
-                    false,
-                    "index-column name " + dim_name +
-                        ": new upper < old upper (downsize is unsupported)");
+                    false, "index-column name " + dim_name + ": new upper < old upper (downsize is unsupported)");
             }
         } else {
             if (new_lo < old_lo) {
-                return std::pair(
-                    false,
-                    "index-column name " + dim_name +
-                        ": new lower < limit lower");
+                return std::pair(false, "index-column name " + dim_name + ": new lower < limit lower");
             }
             if (new_hi > old_hi) {
-                return std::pair(
-                    false,
-                    "index-column name " + dim_name +
-                        ": new upper > limit upper");
+                return std::pair(false, "index-column name " + dim_name + ": new upper > limit upper");
             }
         }
         return std::pair(true, "");
@@ -1076,12 +1007,8 @@ class SOMAArray : public SOMAObject {
      * This is a helper for can_upgrade_domain.
      */
     StatusAndReason _can_set_dataframe_domainish_slot_checker_string(
-        bool /*check_current_domain*/,
-        const ArrowTable& domain_table,
-        std::string dim_name) {
-        std::vector<std::string>
-            new_lo_hi = ArrowAdapter::get_table_string_column_by_name(
-                domain_table, dim_name);
+        bool /*check_current_domain*/, const ArrowTable& domain_table, std::string dim_name) {
+        std::vector<std::string> new_lo_hi = ArrowAdapter::get_table_string_column_by_name(domain_table, dim_name);
         if (new_lo_hi.size() != 2) {
             throw TileDBSOMAError(
                 "internal coding error detected at "
@@ -1127,8 +1054,7 @@ class SOMAArray : public SOMAObject {
     std::optional<int64_t> _maybe_soma_joinid_shape_via_tiledb_current_domain();
     std::optional<int64_t> _maybe_soma_joinid_shape_via_tiledb_domain();
 
-    void fill_metadata_cache(
-        OpenMode mode, std::optional<TimestampRange> timestamp);
+    void fill_metadata_cache(OpenMode mode, std::optional<TimestampRange> timestamp);
 
     void fill_columns();
 

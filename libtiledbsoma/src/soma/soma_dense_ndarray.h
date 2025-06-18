@@ -70,8 +70,7 @@ class SOMADenseNDArray : public SOMAArray {
      * @param uri URI to create the SOMADenseNDArray
      * @param ctx SOMAContext
      */
-    static inline bool exists(
-        std::string_view uri, std::shared_ptr<SOMAContext> ctx) {
+    static inline bool exists(std::string_view uri, std::shared_ptr<SOMAContext> ctx) {
         return SOMAArray::_exists(uri, "SOMADenseNDArray", ctx);
     }
 
@@ -88,10 +87,7 @@ class SOMADenseNDArray : public SOMAArray {
      * @param timestamp Timestamp
      */
     SOMADenseNDArray(
-        OpenMode mode,
-        std::string_view uri,
-        std::shared_ptr<SOMAContext> ctx,
-        std::optional<TimestampRange> timestamp)
+        OpenMode mode, std::string_view uri, std::shared_ptr<SOMAContext> ctx, std::optional<TimestampRange> timestamp)
         : SOMAArray(mode, uri, ctx, timestamp) {
     }
 

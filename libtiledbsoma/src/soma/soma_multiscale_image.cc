@@ -28,8 +28,7 @@ void SOMAMultiscaleImage::create(
     std::optional<TimestampRange> timestamp) {
     try {
         std::filesystem::path image_uri(uri);
-        auto group = SOMAGroup::create(
-            ctx, image_uri.string(), "SOMAMultiscaleImage", timestamp);
+        auto group = SOMAGroup::create(ctx, image_uri.string(), "SOMAMultiscaleImage", timestamp);
 
         // Set spatial-encoding metadata.
         group->set_metadata(
@@ -54,13 +53,9 @@ void SOMAMultiscaleImage::create(
 }
 
 std::unique_ptr<SOMAMultiscaleImage> SOMAMultiscaleImage::open(
-    std::string_view uri,
-    OpenMode mode,
-    std::shared_ptr<SOMAContext> ctx,
-    std::optional<TimestampRange> timestamp) {
+    std::string_view uri, OpenMode mode, std::shared_ptr<SOMAContext> ctx, std::optional<TimestampRange> timestamp) {
     try {
-        auto group = std::make_unique<SOMAMultiscaleImage>(
-            mode, uri, ctx, timestamp);
+        auto group = std::make_unique<SOMAMultiscaleImage>(mode, uri, ctx, timestamp);
 
         if (!group->check_type("SOMAMultiscaleImage")) {
             throw TileDBSOMAError(

@@ -130,9 +130,7 @@ GenericGeometry parse(Reader<BinaryBuffer>& reader) {
         case GeometryType::GEOMETRYCOLLECTION:
             return parse<GeometryCollection>(reader);
         default:
-            throw std::runtime_error(
-                "Unkown geometry type " +
-                std::to_string(static_cast<uint32_t>(type)));
+            throw std::runtime_error("Unkown geometry type " + std::to_string(static_cast<uint32_t>(type)));
     }
 }
 

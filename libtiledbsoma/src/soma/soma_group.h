@@ -97,10 +97,7 @@ class SOMAGroup : public SOMAObject {
      * or write mode.
      * @param timestamp
      */
-    SOMAGroup(
-        std::shared_ptr<SOMAContext> ctx,
-        std::shared_ptr<Group> group,
-        std::optional<TimestampRange> timestamp);
+    SOMAGroup(std::shared_ptr<SOMAContext> ctx, std::shared_ptr<Group> group, std::optional<TimestampRange> timestamp);
 
     SOMAGroup() = delete;
     SOMAGroup(const SOMAGroup&) = default;
@@ -113,8 +110,7 @@ class SOMAGroup : public SOMAObject {
      * @param mode read or write
      * @param timestamp Optional pair indicating timestamp start and end
      */
-    void open(
-        OpenMode mode, std::optional<TimestampRange> timestamp = std::nullopt);
+    void open(OpenMode mode, std::optional<TimestampRange> timestamp = std::nullopt);
 
     /**
      * Close the SOMAGroup object.
@@ -189,11 +185,7 @@ class SOMAGroup : public SOMAObject {
      * or relative
      * @param name of member
      */
-    void set(
-        const std::string& uri,
-        URIType uri_type,
-        const std::string& name,
-        const std::string& soma_type);
+    void set(const std::string& uri, URIType uri_type, const std::string& name, const std::string& soma_type);
 
     /**
      * Get the number of members in the SOMAGroup.
@@ -309,9 +301,7 @@ class SOMAGroup : public SOMAObject {
      * Helper function to set the pass in timestamp in the config associated
      * with the SOMAContext passed in
      */
-    static Config _set_timestamp(
-        std::shared_ptr<SOMAContext> ctx,
-        std::optional<TimestampRange> timestamp);
+    static Config _set_timestamp(std::shared_ptr<SOMAContext> ctx, std::optional<TimestampRange> timestamp);
 
     /**
      * Fills the metadata and member-to-uri caches upon opening the array.

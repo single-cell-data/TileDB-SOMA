@@ -28,8 +28,7 @@ using namespace tiledbsoma;
  * @param lookups input values to be looked up
  * @return looked up values
  */
-py::array_t<int64_t> get_indexer_general_aux(
-    IntIndexer& indexer, py::array_t<int64_t> lookups) {
+py::array_t<int64_t> get_indexer_general_aux(IntIndexer& indexer, py::array_t<int64_t> lookups) {
     auto input_buffer = lookups.request();
     int64_t* input_ptr = static_cast<int64_t*>(input_buffer.ptr);
     size_t size = input_buffer.shape[0];
@@ -43,11 +42,9 @@ py::array_t<int64_t> get_indexer_general_aux(
 
     return results;
 }
-py::array_t<int64_t> get_indexer_general(
-    IntIndexer& indexer, py::array_t<int64_t> lookups) {
+py::array_t<int64_t> get_indexer_general(IntIndexer& indexer, py::array_t<int64_t> lookups) {
     if (lookups.ndim() != 1) {
-        throw std::invalid_argument(
-            "IntIndexer only supports arrays of dimension 1");
+        throw std::invalid_argument("IntIndexer only supports arrays of dimension 1");
     }
     if (!lookups.dtype().is(py::dtype::of<int64_t>())) {
         throw py::type_error("IntIndexer only supports array of type int64");
@@ -67,10 +64,7 @@ py::array_t<int64_t> get_indexer_general(
  * @param arrow_schema extracted array schema
  */
 //
-void extract_py_array_schema(
-    const pybind11::handle object,
-    ArrowArray& arrow_array,
-    ArrowSchema& arrow_schema) {
+void extract_py_array_schema(const pybind11::handle object, ArrowArray& arrow_array, ArrowSchema& arrow_schema) {
     uintptr_t arrow_schema_ptr = (uintptr_t)(&arrow_schema);
     uintptr_t arrow_array_ptr = (uintptr_t)(&arrow_array);
 
@@ -84,11 +78,9 @@ void extract_py_array_schema(
  * @py_arrow_array pyarrow inputs to be looked up
  * @return looked up values
  */
-py::array_t<int64_t> get_indexer_py_arrow_aux(
-    IntIndexer& indexer, py::object py_arrow_array) {
+py::array_t<int64_t> get_indexer_py_arrow_aux(IntIndexer& indexer, py::object py_arrow_array) {
     // Check if it is not a pyarrow array or pyarrow chunked array
-    if (!py::hasattr(py_arrow_array, "_export_to_c") &&
-        !py::hasattr(py_arrow_array, "chunks") &&
+    if (!py::hasattr(py_arrow_array, "_export_to_c") && !py::hasattr(py_arrow_array, "chunks") &&
         !py::hasattr(py_arrow_array, "combine_chunks")) {
         // Handle the general case (no py arrow objects)
         return get_indexer_general(indexer, py_arrow_array);
@@ -115,8 +107,7 @@ py::array_t<int64_t> get_indexer_py_arrow_aux(
         arrow_array.release(&arrow_array);
 
         if (!type_ok)
-            throw TileDBSOMAError(
-                "IntIndexer only supports array of type int64");
+            throw TileDBSOMAError("IntIndexer only supports array of type int64");
     }
 
     // Allocate the output
@@ -133,8 +124,7 @@ py::array_t<int64_t> get_indexer_py_arrow_aux(
         auto input_ptr = (int64_t*)arrow_array.buffers[1] + arrow_array.offset;
 
         py::gil_scoped_release release;
-        indexer.lookup(
-            input_ptr, results_ptr + write_offset, arrow_array.length);
+        indexer.lookup(input_ptr, results_ptr + write_offset, arrow_array.length);
         py::gil_scoped_acquire acquire;
 
         write_offset += arrow_array.length;
@@ -145,8 +135,7 @@ py::array_t<int64_t> get_indexer_py_arrow_aux(
     return results;
 }
 
-py::array_t<int64_t> get_indexer_py_arrow(
-    IntIndexer& indexer, py::object py_arrow_array) {
+py::array_t<int64_t> get_indexer_py_arrow(IntIndexer& indexer, py::object py_arrow_array) {
     try {
         return get_indexer_py_arrow_aux(indexer, py_arrow_array);
     } catch (const std::exception& e) {
@@ -159,19 +148,15 @@ void load_reindexer(py::module& m) {
     // between 0 and number of keys - 1) based on khash
     py::class_<IntIndexer>(m, "IntIndexer")
         .def(py::init<>())
-        .def(
-            py::init<std::shared_ptr<SOMAContext>>(),
-            py::arg("context").noconvert())
+        .def(py::init<std::shared_ptr<SOMAContext>>(), py::arg("context").noconvert())
         .def(
             "map_locations",
             [](IntIndexer& indexer, py::array keys) {
                 if (keys.ndim() != 1) {
-                    throw std::invalid_argument(
-                        "IntIndexer only supports arrays of dimension 1");
+                    throw std::invalid_argument("IntIndexer only supports arrays of dimension 1");
                 }
                 if (!keys.dtype().is(py::dtype::of<int64_t>())) {
-                    throw py::type_error(
-                        "IntIndexer only supports array of type int64");
+                    throw py::type_error("IntIndexer only supports array of type int64");
                 }
 
                 auto keys_int64 = py::cast<py::array_t<int64_t>>(keys);
@@ -194,8 +179,7 @@ void load_reindexer(py::module& m) {
 
         // If the input is not arrow (does not have _export_to_c attribute),
         // it will be handled using a general input method.
-        .def(
-            "get_indexer_pyarrow", get_indexer_py_arrow, py::arg().noconvert());
+        .def("get_indexer_pyarrow", get_indexer_py_arrow, py::arg().noconvert());
 }
 
 }  // namespace libtiledbsomacpp

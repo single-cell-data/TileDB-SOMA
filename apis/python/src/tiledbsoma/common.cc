@@ -102,8 +102,7 @@ py::dtype tdb_to_np_dtype(tiledb_datatype_t type, uint32_t cell_val_num) {
         return py::dtype(base_str);
     }
 
-    if (type == TILEDB_CHAR || type == TILEDB_STRING_UTF8 ||
-        type == TILEDB_STRING_ASCII) {
+    if (type == TILEDB_CHAR || type == TILEDB_STRING_UTF8 || type == TILEDB_STRING_ASCII) {
         std::string base_str = (type == TILEDB_STRING_UTF8) ? "|U" : "|S";
         if (cell_val_num < TILEDB_VAR_NUM)
             base_str += std::to_string(cell_val_num);
@@ -159,8 +158,7 @@ tiledb_datatype_t np_to_tdb_dtype(py::dtype type) {
         return TILEDB_STRING_UTF8;
     // Numpy encodes strings as UTF-32
     if (kind.is(py::str("U")))
-        TPY_ERROR_LOC(
-            "[np_to_tdb_dtype] UTF-32 encoded strings are not supported");
+        TPY_ERROR_LOC("[np_to_tdb_dtype] UTF-32 encoded strings are not supported");
 
     // No std::format in C++17, and, including logger/fmt headers
     // is tetchy here.
@@ -204,12 +202,10 @@ py::object _buffer_to_table(std::shared_ptr<ArrayBuffers> buffers) {
         array_list.append(pa_array_import(py::capsule(pa_array.get()), dtype));
         field_list.append(pa.attr("field")(name, dtype, nullable));
     }
-    return pa_table_from_arrays(
-        array_list, "schema"_a = pa.attr("schema")(field_list));
+    return pa_table_from_arrays(array_list, "schema"_a = pa.attr("schema")(field_list));
 }
 
-std::optional<py::object> to_table(
-    std::optional<std::shared_ptr<ArrayBuffers>> buffers) {
+std::optional<py::object> to_table(std::optional<std::shared_ptr<ArrayBuffers>> buffers) {
     // If more data was read, convert it to an arrow table and return
     if (buffers.has_value()) {
         return _buffer_to_table(*buffers);
@@ -232,27 +228,20 @@ py::dict meta(std::map<std::string, MetadataValue> metadata_mapping) {
                 results[py::str(key)] = "";
             } else {
                 auto py_buf = py::array(py::dtype("|S1"), value_num, value);
-                results[py::str(key)] = py_buf.attr("tobytes")().attr("decode")(
-                    "UTF-8");
+                results[py::str(key)] = py_buf.attr("tobytes")().attr("decode")("UTF-8");
             }
         } else if (tdb_type == TILEDB_BLOB) {
             py::dtype value_type = tdb_to_np_dtype(tdb_type, value_num);
-            results[py::str(key)] = py::array(value_type, value_num, value)
-                                        .attr("item")(0);
+            results[py::str(key)] = py::array(value_type, value_num, value).attr("item")(0);
         } else {
             py::dtype value_type = tdb_to_np_dtype(tdb_type, value_num);
-            results[py::str(key)] = py::array(value_type, value_num, value)
-                                        .attr("item")(0);
+            results[py::str(key)] = py::array(value_type, value_num, value).attr("item")(0);
         }
     }
     return results;
 }
 
-void set_metadata(
-    SOMAObject& soma_object,
-    const std::string& key,
-    py::array value,
-    bool force) {
+void set_metadata(SOMAObject& soma_object, const std::string& key, py::array value, bool force) {
     tiledb_datatype_t value_type = np_to_tdb_dtype(value.dtype());
 
     // For https://github.com/single-cell-data/TileDB-SOMA/pull/2900:
@@ -276,18 +265,15 @@ void set_metadata(
         switch (value_type) {
             case TILEDB_STRING_UTF8:
                 value_num = sanitize_string(
-                    std::span<const uint8_t>(
-                        static_cast<const uint8_t*>(value.data()), value_num),
-                    value_num);
+                    std::span<const uint8_t>(static_cast<const uint8_t*>(value.data()), value_num), value_num);
 
                 break;
             default:
                 // No std::format in C++17, and, including logger/fmt headers
                 // is tetchy here.
                 std::stringstream ss;
-                ss << "[set_metadata] Unsupported string encoding '"
-                   << tiledb::impl::type_to_str(value_type) << "' for key '"
-                   << key << "'";
+                ss << "[set_metadata] Unsupported string encoding '" << tiledb::impl::type_to_str(value_type)
+                   << "' for key '" << key << "'";
                 throw TileDBSOMAError(ss.str());
         }
     }
@@ -300,9 +286,7 @@ void set_metadata(
 
     // Moreover all python strings are utf-8 encoded so eny NULL byte included
     // in the bytestream will be indeed a NULL byte
-    if (sanitize_string(
-            std::span<const char>(key.c_str(), key.length()), key.length()) !=
-        key.length()) {
+    if (sanitize_string(std::span<const char>(key.c_str(), key.length()), key.length()) != key.length()) {
         throw TileDBSOMAError("[set_metadata] Key contains NULL bytes");
     }
 

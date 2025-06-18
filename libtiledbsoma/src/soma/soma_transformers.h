@@ -12,9 +12,7 @@ class OutlineTransformer : public Transformer {
 
     virtual ~OutlineTransformer();
 
-    ArrowTable apply(
-        managed_unique_ptr<ArrowArray>,
-        managed_unique_ptr<ArrowSchema>) override;
+    ArrowTable apply(managed_unique_ptr<ArrowArray>, managed_unique_ptr<ArrowSchema>) override;
 
    private:
     /**
@@ -22,11 +20,8 @@ class OutlineTransformer : public Transformer {
      * array holding the WKB-encoded polygons and generate the additional
      * index-column arrays based on the spatial axes.
      */
-    std::pair<
-        std::vector<managed_unique_ptr<ArrowArray>>,
-        std::vector<managed_unique_ptr<ArrowSchema>>>
-    _cast_polygon_vertex_list_to_wkb(
-        ArrowArray* array, const SOMACoordinateSpace& coordinate_space);
+    std::pair<std::vector<managed_unique_ptr<ArrowArray>>, std::vector<managed_unique_ptr<ArrowSchema>>>
+    _cast_polygon_vertex_list_to_wkb(ArrowArray* array, const SOMACoordinateSpace& coordinate_space);
 
     tiledbsoma::SOMACoordinateSpace coordinate_space;
 };

@@ -31,11 +31,7 @@ void write(SOMAArray& array, py::array data) {
     ManagedQuery mq(array, array.ctx()->tiledb_ctx());
 
     py::buffer_info data_info = data.request();
-    mq.setup_write_column(
-        "soma_data",
-        data.size(),
-        (const void*)data_info.ptr,
-        (uint64_t*)nullptr);
+    mq.setup_write_column("soma_data", data.size(), (const void*)data_info.ptr, (uint64_t*)nullptr);
 
     try {
         mq.submit_write();
@@ -58,12 +54,9 @@ void load_soma_dense_ndarray(py::module& m) {
                std::optional<std::pair<uint64_t, uint64_t>> timestamp) {
                 ArrowSchema index_column_schema;
                 ArrowArray index_column_array;
-                uintptr_t
-                    index_column_schema_ptr = (uintptr_t)(&index_column_schema);
-                uintptr_t
-                    index_column_array_ptr = (uintptr_t)(&index_column_array);
-                index_column_info.attr("_export_to_c")(
-                    index_column_array_ptr, index_column_schema_ptr);
+                uintptr_t index_column_schema_ptr = (uintptr_t)(&index_column_schema);
+                uintptr_t index_column_array_ptr = (uintptr_t)(&index_column_array);
+                index_column_info.attr("_export_to_c")(index_column_array_ptr, index_column_schema_ptr);
 
                 try {
                     SOMADenseNDArray::create(
@@ -71,8 +64,7 @@ void load_soma_dense_ndarray(py::module& m) {
                         format,
                         ArrowTable(
                             make_managed_unique<ArrowArray>(index_column_array),
-                            make_managed_unique<ArrowSchema>(
-                                index_column_schema)),
+                            make_managed_unique<ArrowSchema>(index_column_schema)),
                         context,
                         platform_config,
                         timestamp);
@@ -96,8 +88,7 @@ void load_soma_dense_ndarray(py::module& m) {
                 std::string_view,
                 OpenMode,
                 std::shared_ptr<SOMAContext>,
-                std::optional<std::pair<uint64_t, uint64_t>>>(
-                &SOMADenseNDArray::open),
+                std::optional<std::pair<uint64_t, uint64_t>>>(&SOMADenseNDArray::open),
             "uri"_a,
             "mode"_a,
             "context"_a,

@@ -18,8 +18,7 @@ TEST_CASE("SOMAScene: basic", "[scene][spatial]") {
     std::string uri{"mem://unit-test-scene-basic"};
 
     SOMAScene::create(uri, ctx, std::nullopt);
-    auto soma_scene = SOMAScene::open(
-        uri, OpenMode::soma_read, ctx, std::nullopt);
+    auto soma_scene = SOMAScene::open(uri, OpenMode::soma_read, ctx, std::nullopt);
     CHECK(soma_scene->uri() == uri);
     CHECK(soma_scene->ctx() == ctx);
     CHECK(soma_scene->type() == "SOMAScene");
@@ -37,8 +36,7 @@ TEST_CASE("SOMAScene: with coordinates", "[scene][spatial]") {
 
     SOMAScene::create(uri, ctx, coord_space, std::nullopt);
 
-    auto soma_scene = SOMAScene::open(
-        uri, OpenMode::soma_read, ctx, std::nullopt);
+    auto soma_scene = SOMAScene::open(uri, OpenMode::soma_read, ctx, std::nullopt);
     CHECK(soma_scene->uri() == uri);
     CHECK(soma_scene->ctx() == ctx);
     CHECK(soma_scene->type() == "SOMAScene");

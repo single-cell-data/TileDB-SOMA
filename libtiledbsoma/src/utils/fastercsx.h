@@ -57,9 +57,7 @@ std::pair<T, T> get_split_(T n_elements, T n_sections, T section) noexcept {
 template <typename T>
 size_t sum_over_size_(const std::vector<std::span<const T>>& v) noexcept {
     return std::transform_reduce(
-        v.cbegin(), v.cend(), 0ul, std::plus<>{}, [](std::span<const T> a) {
-            return a.size();
-        });
+        v.cbegin(), v.cend(), 0ul, std::plus<>{}, [](std::span<const T> a) { return a.size(); });
 }
 
 /**
@@ -75,8 +73,7 @@ bool no_ragged_chunks(
         return false;
 
     for (uint64_t chunk_idx = 0; chunk_idx < Ai.size(); chunk_idx++) {
-        if ((Ai[chunk_idx].size() != Aj[chunk_idx].size()) ||
-            (Ai[chunk_idx].size() != Ad[chunk_idx].size()))
+        if ((Ai[chunk_idx].size() != Aj[chunk_idx].size()) || (Ai[chunk_idx].size() != Ad[chunk_idx].size()))
             return false;
     }
     return true;
@@ -102,9 +99,7 @@ struct Partition {
 };
 
 template <typename COO_IDX>
-void bin_view_(
-    std::vector<Partition<COO_IDX>>& partitions,
-    const std::span<COO_IDX>& view) {
+void bin_view_(std::vector<Partition<COO_IDX>>& partitions, const std::span<COO_IDX>& view) {
     // find minimum size partition and add the span to that partition.
     size_t min_idx = 0;
     for (size_t pidx = 1; pidx < partitions.size(); ++pidx) {
@@ -117,15 +112,11 @@ void bin_view_(
 
 template <typename COO_IDX>
 std::vector<Partition<COO_IDX>> partition_views_(
-    std::vector<std::span<COO_IDX>> const& Ai,
-    const size_t max_partitions,
-    const size_t partition_size) {
+    std::vector<std::span<COO_IDX>> const& Ai, const size_t max_partitions, const size_t partition_size) {
     assert(max_partitions > 0);
     std::vector<Partition<COO_IDX>> partitions(max_partitions);
     for (auto& view : Ai) {
-        size_t n_partitions = std::min(
-            (view.size() + partition_size - 1) / partition_size,
-            max_partitions);
+        size_t n_partitions = std::min((view.size() + partition_size - 1) / partition_size, max_partitions);
         for (size_t i = 0; i < n_partitions; ++i) {
             const auto [start, stop] = get_split_(view.size(), n_partitions, i);
             bin_view_(partitions, view.subspan(start, stop - start));
@@ -134,10 +125,7 @@ std::vector<Partition<COO_IDX>> partition_views_(
 
     // Erase any partitions that are zero length
     partitions.erase(
-        std::remove_if(
-            partitions.begin(),
-            partitions.end(),
-            [](const Partition<COO_IDX>& p) { return p.size == 0; }),
+        std::remove_if(partitions.begin(), partitions.end(), [](const Partition<COO_IDX>& p) { return p.size == 0; }),
         partitions.end());
 
     return partitions;
@@ -160,8 +148,7 @@ void count_rows_(
 
     std::fill(Bp.begin(), Bp.end(), 0);
 
-    auto partitions = partition_views_(
-        Ai, tp->concurrency_level(), 32 * MEBI /* heuristic (empirical) */);
+    auto partitions = partition_views_(Ai, tp->concurrency_level(), 32 * MEBI /* heuristic (empirical) */);
     auto n_partitions = partitions.size();
     if (n_partitions > 1) {
         // for multiple partitions, allocate accumulators and perform in
@@ -170,17 +157,12 @@ void count_rows_(
             n_partitions, std::vector<CSX_MAJOR_IDX>(n_row + 1, 0));
 
         auto status = parallel_for(
-            tp,
-            0ul,
-            n_partitions,
-            [&partition_counts, &partitions, &n_row](const uint64_t partition) {
+            tp, 0ul, n_partitions, [&partition_counts, &partitions, &n_row](const uint64_t partition) {
                 auto& counts = partition_counts[partition];
                 for (auto& Ai_view : partitions[partition].views) {
                     for (size_t n = 0; n < Ai_view.size(); n++) {
                         auto row = Ai_view[n];
-                        if ((row < 0) ||
-                            (static_cast<std::make_unsigned_t<COO_IDX>>(row) >=
-                             n_row)) [[unlikely]] {
+                        if ((row < 0) || (static_cast<std::make_unsigned_t<COO_IDX>>(row) >= n_row)) [[unlikely]] {
                             // std::format isn't until C++ 20, and including
                             // utils/logger.h or spdlog/fmt/fmt.h is fiddly
                             // inside of a header file (fastercsx.h). For
@@ -191,8 +173,7 @@ void count_rows_(
                             // https://github.com/single-cell-data/TileDB-SOMA/issues/3154
                             // resolved.
                             std::stringstream ss;
-                            ss << "First coordinate " << row << " out of range "
-                               << n_row << ".";
+                            ss << "First coordinate " << row << " out of range " << n_row << ".";
                             throw std::out_of_range(ss.str());
                         }
                         counts[row]++;
@@ -214,12 +195,9 @@ void count_rows_(
         for (auto& Ai_view : partitions[0].views) {
             for (size_t n = 0; n < Ai_view.size(); n++) {
                 auto row = Ai_view[n];
-                if ((row < 0) ||
-                    (static_cast<std::make_unsigned_t<COO_IDX>>(row) >= n_row))
-                    [[unlikely]] {
+                if ((row < 0) || (static_cast<std::make_unsigned_t<COO_IDX>>(row) >= n_row)) [[unlikely]] {
                     std::stringstream ss;
-                    ss << "First coordinate " << row << " out of range "
-                       << n_row << ".";
+                    ss << "First coordinate " << row << " out of range " << n_row << ".";
                     throw std::out_of_range(ss.str());
                 }
                 Bp[row]++;
@@ -244,11 +222,7 @@ void sum_rows_to_pointers_(std::span<CSX_MAJOR_IDX>& Bp) {
     }
 }
 
-template <
-    typename VALUE,
-    typename COO_IDX,
-    typename CSX_MINOR_IDX,
-    typename CSX_MAJOR_IDX>
+template <typename VALUE, typename COO_IDX, typename CSX_MINOR_IDX, typename CSX_MAJOR_IDX>
 void compress_coo_inner_left_(
     const uint64_t& row_partition,
     const int& partition_bits,
@@ -265,12 +239,9 @@ void compress_coo_inner_left_(
             continue;
 
         const auto dest = Bp[row];
-        if ((Aj_[n] < 0) ||
-            (static_cast<std::make_unsigned_t<COO_IDX>>(Aj_[n]) >= n_col))
-            [[unlikely]] {
+        if ((Aj_[n] < 0) || (static_cast<std::make_unsigned_t<COO_IDX>>(Aj_[n]) >= n_col)) [[unlikely]] {
             std::stringstream ss;
-            ss << "Second coordinate " << Aj_[n] << " out of range " << n_col
-               << ".";
+            ss << "Second coordinate " << Aj_[n] << " out of range " << n_col << ".";
             throw std::out_of_range(ss.str());
         }
         Bj[dest] = Aj_[n];
@@ -279,11 +250,7 @@ void compress_coo_inner_left_(
     }
 }
 
-template <
-    typename VALUE,
-    typename COO_IDX,
-    typename CSX_MINOR_IDX,
-    typename CSX_MAJOR_IDX>
+template <typename VALUE, typename COO_IDX, typename CSX_MINOR_IDX, typename CSX_MAJOR_IDX>
 void compress_coo_inner_right_(
     unsigned int row_partition,
     unsigned int partition_bits,
@@ -302,12 +269,9 @@ void compress_coo_inner_right_(
 
         Bp[row]--;
         const auto dest = Bp[row];
-        if ((Aj_[n] < 0) ||
-            (static_cast<std::make_unsigned_t<COO_IDX>>(Aj_[n]) >= n_col))
-            [[unlikely]] {
+        if ((Aj_[n] < 0) || (static_cast<std::make_unsigned_t<COO_IDX>>(Aj_[n]) >= n_col)) [[unlikely]] {
             std::stringstream ss;
-            ss << "Second coordinate " << Aj_[n] << " out of range " << n_col
-               << ".";
+            ss << "Second coordinate " << Aj_[n] << " out of range " << n_col << ".";
             throw std::out_of_range(ss.str());
         }
 
@@ -373,27 +337,14 @@ void compress_coo(
     // dimension beginning and end of range) - this reduces the number of major
     // dimension reads by half.
     //
-    const auto partition_bits = std::max(
-                                    13L,
-                                    std::lround(std::ceil(std::log2(
-                                        n_row / tp->concurrency_level())))) +
-                                1;
-    const auto n_partitions = (n_row + (1 << partition_bits) - 1) >>
-                              partition_bits;
+    const auto partition_bits = std::max(13L, std::lround(std::ceil(std::log2(n_row / tp->concurrency_level())))) + 1;
+    const auto n_partitions = (n_row + (1 << partition_bits) - 1) >> partition_bits;
     assert((n_partitions > 0) || (n_row == 0));
     auto status = parallel_for(
         tp,
         0ul,
         2 * n_partitions,
-        [&partition_bits,
-         &Ai,
-         &Bp_left_span,
-         &Bp_right_span,
-         &Aj,
-         &Bj,
-         &Ad,
-         &Bd,
-         &n_col](const uint64_t partition) {
+        [&partition_bits, &Ai, &Bp_left_span, &Bp_right_span, &Aj, &Bj, &Ad, &Bd, &n_col](const uint64_t partition) {
             for (uint64_t chnk = 0; chnk < Ai.size(); ++chnk) {
                 auto Ai_ = Ai[chnk];
                 auto Aj_ = Aj[chnk];
@@ -402,27 +353,10 @@ void compress_coo(
                 const auto row_partition = partition / 2;
                 const auto left_half = ((partition & 0x1) == 0x0);
                 if (left_half) {
-                    compress_coo_inner_left_(
-                        row_partition,
-                        partition_bits,
-                        n_col,
-                        Ai_,
-                        Aj_,
-                        Ad_,
-                        Bp_left_span,
-                        Bj,
-                        Bd);
+                    compress_coo_inner_left_(row_partition, partition_bits, n_col, Ai_, Aj_, Ad_, Bp_left_span, Bj, Bd);
                 } else {
                     compress_coo_inner_right_(
-                        row_partition,
-                        partition_bits,
-                        n_col,
-                        Ai_,
-                        Aj_,
-                        Ad_,
-                        Bp_right_span,
-                        Bj,
-                        Bd);
+                        row_partition, partition_bits, n_col, Ai_, Aj_, Ad_, Bp_right_span, Bj, Bd);
                 }
             }
 
@@ -433,9 +367,7 @@ void compress_coo(
 };
 
 template <typename CSX_MINOR_IDX, typename VALUE>
-bool index_lt_(
-    const std::pair<CSX_MINOR_IDX, VALUE>& a,
-    const std::pair<CSX_MINOR_IDX, VALUE>& b) {
+bool index_lt_(const std::pair<CSX_MINOR_IDX, VALUE>& a, const std::pair<CSX_MINOR_IDX, VALUE>& b) {
     return a.first < b.first;
 }
 
@@ -459,33 +391,30 @@ bool sort_csx_indices(
 
     std::atomic<bool> no_duplicates(true);
 
-    auto status = parallel_for(
-        tp, 0ul, n_row, [&Bp, &Bj, &Bd, &nnz, &no_duplicates](uint64_t row) {
-            uint64_t idx_start = Bp[row];
-            uint64_t idx_end = Bp[row + 1];
+    auto status = parallel_for(tp, 0ul, n_row, [&Bp, &Bj, &Bd, &nnz, &no_duplicates](uint64_t row) {
+        uint64_t idx_start = Bp[row];
+        uint64_t idx_end = Bp[row + 1];
 
-            if (idx_end < idx_start || idx_end > nnz)
-                throw std::overflow_error("Row pointer exceeds nnz");
+        if (idx_end < idx_start || idx_end > nnz)
+            throw std::overflow_error("Row pointer exceeds nnz");
 
-            std::vector<std::pair<CSX_MINOR_IDX, VALUE>> temp(
-                idx_end - idx_start);
-            for (uint64_t n = 0, idx = idx_start; idx < idx_end; ++n, ++idx) {
-                temp[n] = std::make_pair(Bj[idx], Bd[idx]);
-            }
+        std::vector<std::pair<CSX_MINOR_IDX, VALUE>> temp(idx_end - idx_start);
+        for (uint64_t n = 0, idx = idx_start; idx < idx_end; ++n, ++idx) {
+            temp[n] = std::make_pair(Bj[idx], Bd[idx]);
+        }
 
-            std::sort(
-                temp.begin(), temp.end(), index_lt_<CSX_MINOR_IDX, VALUE>);
+        std::sort(temp.begin(), temp.end(), index_lt_<CSX_MINOR_IDX, VALUE>);
 
-            for (uint64_t n = 0, idx = idx_start; idx < idx_end; ++n, ++idx) {
-                Bj[idx] = temp[n].first;
-                Bd[idx] = temp[n].second;
+        for (uint64_t n = 0, idx = idx_start; idx < idx_end; ++n, ++idx) {
+            Bj[idx] = temp[n].first;
+            Bd[idx] = temp[n].second;
 
-                if (n > 0 && Bj[idx] == Bj[idx - 1])
-                    no_duplicates = false;
-            }
+            if (n > 0 && Bj[idx] == Bj[idx - 1])
+                no_duplicates = false;
+        }
 
-            return Status::Ok();
-        });
+        return Status::Ok();
+    });
 
     assert(status.ok());
     return no_duplicates;
@@ -517,17 +446,13 @@ void copy_csx_to_dense(
     if (cm_format == Format::CSR) {
         uint64_t out_n_col = n_col;
         auto status = parallel_for(
-            tp,
-            major_start,
-            major_end,
-            [&Bp, &Bj, &Bd, &major_start, &out_n_col, &out](uint64_t i) {
+            tp, major_start, major_end, [&Bp, &Bj, &Bd, &major_start, &out_n_col, &out](uint64_t i) {
                 uint64_t p_start = Bp[i];
                 uint64_t p_stop = Bp[i + 1];
                 uint64_t out_row = i - major_start;
                 for (uint64_t j = p_start; j < p_stop; ++j) {
                     uint64_t out_col = Bj[j];
-                    uint64_t out_idx = out_row * out_n_col +
-                                       out_col;  // C ordered
+                    uint64_t out_idx = out_row * out_n_col + out_col;  // C ordered
                     if (out_idx >= out.size()) [[unlikely]]
                         throw std::overflow_error(
                             "Out array is too small for provided "
@@ -555,10 +480,7 @@ void copy_csx_to_dense(
         assert(cm_format == Format::CSC);
         uint64_t out_n_col = major_end - major_start;
         auto status = parallel_for(
-            tp,
-            major_start,
-            major_end,
-            [&Bp, &Bj, &Bd, &major_start, &out_n_col, &out](uint64_t i) {
+            tp, major_start, major_end, [&Bp, &Bj, &Bd, &major_start, &out_n_col, &out](uint64_t i) {
                 uint64_t p_start = Bp[i];
                 uint64_t p_stop = Bp[i + 1];
                 uint64_t out_col = i - major_start;

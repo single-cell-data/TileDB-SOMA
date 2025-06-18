@@ -8,8 +8,7 @@
 namespace tiledbsoma::geometry {
 class MultiLineString {
    public:
-    MultiLineString(
-        std::vector<LineString>&& linestring = std::vector<LineString>());
+    MultiLineString(std::vector<LineString>&& linestring = std::vector<LineString>());
     ~MultiLineString();
 
     std::vector<LineString> linestrings;

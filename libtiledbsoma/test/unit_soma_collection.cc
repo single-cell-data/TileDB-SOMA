@@ -21,8 +21,7 @@ TEST_CASE("SOMACollection: basic") {
     std::string uri = "mem://unit-test-collection-basic";
 
     SOMACollection::create(uri, ctx, ts);
-    auto soma_collection = SOMACollection::open(
-        uri, OpenMode::soma_read, ctx, ts);
+    auto soma_collection = SOMACollection::open(uri, OpenMode::soma_read, ctx, ts);
     REQUIRE(soma_collection->uri() == uri);
     REQUIRE(soma_collection->ctx() == ctx);
     REQUIRE(soma_collection->type() == "SOMACollection");
@@ -50,20 +49,13 @@ TEST_CASE("SOMACollection: add SOMASparseNDArray") {
 
     auto index_columns = helper::create_column_index_info(dim_infos);
 
-    std::map<std::string, SOMAGroupEntry> expected_map{
-        {"sparse_ndarray", SOMAGroupEntry(sub_uri, "SOMAArray")}};
+    std::map<std::string, SOMAGroupEntry> expected_map{{"sparse_ndarray", SOMAGroupEntry(sub_uri, "SOMAArray")}};
 
-    auto soma_collection = SOMACollection::open(
-        base_uri, OpenMode::soma_write, ctx, ts);
+    auto soma_collection = SOMACollection::open(base_uri, OpenMode::soma_write, ctx, ts);
     REQUIRE(soma_collection->timestamp() == ts);
 
     auto soma_sparse = soma_collection->add_new_sparse_ndarray(
-        "sparse_ndarray",
-        sub_uri,
-        URIType::absolute,
-        ctx,
-        arrow_format,
-        index_columns);
+        "sparse_ndarray", sub_uri, URIType::absolute, ctx, arrow_format, index_columns);
 
     REQUIRE(soma_collection->members_map() == expected_map);
     REQUIRE(soma_sparse->uri() == sub_uri);
@@ -99,21 +91,14 @@ TEST_CASE("SOMACollection: add SOMADenseNDArray") {
           .string_hi = "N/A"}});
     auto index_columns = helper::create_column_index_info(dim_infos);
 
-    std::map<std::string, SOMAGroupEntry> expected_map{
-        {"dense_ndarray", SOMAGroupEntry(sub_uri, "SOMAArray")}};
+    std::map<std::string, SOMAGroupEntry> expected_map{{"dense_ndarray", SOMAGroupEntry(sub_uri, "SOMAArray")}};
 
-    auto soma_collection = SOMACollection::open(
-        base_uri, OpenMode::soma_write, ctx, ts);
+    auto soma_collection = SOMACollection::open(base_uri, OpenMode::soma_write, ctx, ts);
     REQUIRE(soma_collection->timestamp() == ts);
 
     if (helper::have_dense_current_domain_support()) {
         auto soma_dense = soma_collection->add_new_dense_ndarray(
-            "dense_ndarray",
-            sub_uri,
-            URIType::absolute,
-            ctx,
-            arrow_format,
-            index_columns);
+            "dense_ndarray", sub_uri, URIType::absolute, ctx, arrow_format, index_columns);
 
         REQUIRE(soma_collection->members_map() == expected_map);
         REQUIRE(soma_dense->uri() == sub_uri);
@@ -125,8 +110,7 @@ TEST_CASE("SOMACollection: add SOMADenseNDArray") {
         REQUIRE(soma_dense->timestamp() == ts);
         soma_collection->close();
 
-        soma_collection = SOMACollection::open(
-            base_uri, OpenMode::soma_read, ctx);
+        soma_collection = SOMACollection::open(base_uri, OpenMode::soma_read, ctx);
         REQUIRE(soma_collection->members_map() == expected_map);
         soma_collection->close();
     }
@@ -151,16 +135,12 @@ TEST_CASE("SOMACollection: add SOMADataFrame") {
           .dim_max = DIM_MAX,
           .string_lo = "N/A",
           .string_hi = "N/A"}});
-    std::vector<helper::AttrInfo> attr_infos(
-        {{.name = attr_name, .tiledb_datatype = tiledb_datatype}});
-    auto [schema, index_columns] =
-        helper::create_arrow_schema_and_index_columns(dim_infos, attr_infos);
+    std::vector<helper::AttrInfo> attr_infos({{.name = attr_name, .tiledb_datatype = tiledb_datatype}});
+    auto [schema, index_columns] = helper::create_arrow_schema_and_index_columns(dim_infos, attr_infos);
 
-    std::map<std::string, SOMAGroupEntry> expected_map{
-        {"dataframe", SOMAGroupEntry(sub_uri, "SOMAArray")}};
+    std::map<std::string, SOMAGroupEntry> expected_map{{"dataframe", SOMAGroupEntry(sub_uri, "SOMAArray")}};
 
-    auto soma_collection = SOMACollection::open(
-        base_uri, OpenMode::soma_write, ctx, ts);
+    auto soma_collection = SOMACollection::open(base_uri, OpenMode::soma_write, ctx, ts);
     REQUIRE(soma_collection->timestamp() == ts);
 
     auto soma_dataframe = soma_collection->add_new_dataframe(
@@ -171,8 +151,7 @@ TEST_CASE("SOMACollection: add SOMADataFrame") {
     REQUIRE(soma_dataframe->ctx() == ctx);
     REQUIRE(soma_dataframe->type() == "SOMADataFrame");
     std::vector<std::string> expected_index_column_names = {dim_name};
-    REQUIRE(
-        soma_dataframe->index_column_names() == expected_index_column_names);
+    REQUIRE(soma_dataframe->index_column_names() == expected_index_column_names);
     REQUIRE(soma_dataframe->timestamp() == ts);
     soma_collection->close();
 
@@ -191,13 +170,10 @@ TEST_CASE("SOMACollection: add SOMACollection") {
 
     SOMACollection::create(base_uri, ctx);
 
-    std::map<std::string, SOMAGroupEntry> expected_map{
-        {"subcollection", SOMAGroupEntry(sub_uri, "SOMAGroup")}};
+    std::map<std::string, SOMAGroupEntry> expected_map{{"subcollection", SOMAGroupEntry(sub_uri, "SOMAGroup")}};
 
-    auto soma_collection = SOMACollection::open(
-        base_uri, OpenMode::soma_write, ctx);
-    auto soma_subcollection = soma_collection->add_new_collection(
-        "subcollection", sub_uri, URIType::absolute, ctx);
+    auto soma_collection = SOMACollection::open(base_uri, OpenMode::soma_write, ctx);
+    auto soma_subcollection = soma_collection->add_new_collection("subcollection", sub_uri, URIType::absolute, ctx);
     REQUIRE(soma_collection->members_map() == expected_map);
     REQUIRE(soma_subcollection->uri() == sub_uri);
     REQUIRE(soma_subcollection->ctx() == ctx);
@@ -226,16 +202,12 @@ TEST_CASE("SOMACollection: add SOMAExperiment") {
           .dim_max = DIM_MAX,
           .string_lo = "N/A",
           .string_hi = "N/A"}});
-    std::vector<helper::AttrInfo> attr_infos(
-        {{.name = attr_name, .tiledb_datatype = tiledb_datatype}});
-    auto [schema, index_columns] =
-        helper::create_arrow_schema_and_index_columns(dim_infos, attr_infos);
+    std::vector<helper::AttrInfo> attr_infos({{.name = attr_name, .tiledb_datatype = tiledb_datatype}});
+    auto [schema, index_columns] = helper::create_arrow_schema_and_index_columns(dim_infos, attr_infos);
 
-    std::map<std::string, SOMAGroupEntry> expected_map{
-        {"experiment", SOMAGroupEntry(sub_uri, "SOMAGroup")}};
+    std::map<std::string, SOMAGroupEntry> expected_map{{"experiment", SOMAGroupEntry(sub_uri, "SOMAGroup")}};
 
-    auto soma_collection = SOMACollection::open(
-        base_uri, OpenMode::soma_write, ctx);
+    auto soma_collection = SOMACollection::open(base_uri, OpenMode::soma_write, ctx);
     auto soma_experiment = soma_collection->add_new_experiment(
         "experiment", sub_uri, URIType::absolute, ctx, schema, index_columns);
 
@@ -268,16 +240,12 @@ TEST_CASE("SOMACollection: add SOMAMeasurement") {
           .dim_max = DIM_MAX,
           .string_lo = "N/A",
           .string_hi = "N/A"}});
-    std::vector<helper::AttrInfo> attr_infos(
-        {{.name = attr_name, .tiledb_datatype = tiledb_datatype}});
-    auto [schema, index_columns] =
-        helper::create_arrow_schema_and_index_columns(dim_infos, attr_infos);
+    std::vector<helper::AttrInfo> attr_infos({{.name = attr_name, .tiledb_datatype = tiledb_datatype}});
+    auto [schema, index_columns] = helper::create_arrow_schema_and_index_columns(dim_infos, attr_infos);
 
-    std::map<std::string, SOMAGroupEntry> expected_map{
-        {"measurement", SOMAGroupEntry(sub_uri, "SOMAGroup")}};
+    std::map<std::string, SOMAGroupEntry> expected_map{{"measurement", SOMAGroupEntry(sub_uri, "SOMAGroup")}};
 
-    auto soma_collection = SOMACollection::open(
-        base_uri, OpenMode::soma_write, ctx);
+    auto soma_collection = SOMACollection::open(base_uri, OpenMode::soma_write, ctx);
     auto soma_measurement = soma_collection->add_new_measurement(
         "measurement", sub_uri, URIType::absolute, ctx, schema, index_columns);
 
@@ -298,8 +266,7 @@ TEST_CASE("SOMACollection: metadata") {
 
     std::string uri = "mem://unit-test-collection";
     SOMACollection::create(uri, ctx, TimestampRange(0, 2));
-    auto soma_collection = SOMACollection::open(
-        uri, OpenMode::soma_write, ctx, std::pair<uint64_t, uint64_t>(1, 1));
+    auto soma_collection = SOMACollection::open(uri, OpenMode::soma_write, ctx, std::pair<uint64_t, uint64_t>(1, 1));
 
     int32_t val = 100;
     soma_collection->set_metadata("md", TILEDB_INT32, 1, &val);
@@ -362,29 +329,19 @@ TEST_CASE("SOMAExperiment: metadata") {
           .dim_max = DIM_MAX,
           .string_lo = "N/A",
           .string_hi = "N/A"}});
-    std::vector<helper::AttrInfo> attr_infos(
-        {{.name = attr_name, .tiledb_datatype = tiledb_datatype}});
-    auto [schema, index_columns] =
-        helper::create_arrow_schema_and_index_columns(dim_infos, attr_infos);
+    std::vector<helper::AttrInfo> attr_infos({{.name = attr_name, .tiledb_datatype = tiledb_datatype}});
+    auto [schema, index_columns] = helper::create_arrow_schema_and_index_columns(dim_infos, attr_infos);
 
-    SOMAExperiment::create(
-        uri,
-        schema,
-        index_columns,
-        ctx,
-        PlatformConfig(),
-        TimestampRange(0, 2));
+    SOMAExperiment::create(uri, schema, index_columns, ctx, PlatformConfig(), TimestampRange(0, 2));
 
-    auto soma_experiment = SOMAExperiment::open(
-        uri, OpenMode::soma_write, ctx, std::pair<uint64_t, uint64_t>(1, 1));
+    auto soma_experiment = SOMAExperiment::open(uri, OpenMode::soma_write, ctx, std::pair<uint64_t, uint64_t>(1, 1));
 
     int32_t val = 100;
     soma_experiment->set_metadata("md", TILEDB_INT32, 1, &val);
     soma_experiment->close();
 
     // Read metadata
-    soma_experiment = SOMAExperiment::open(
-        uri, OpenMode::soma_read, ctx, TimestampRange(0, 2));
+    soma_experiment = SOMAExperiment::open(uri, OpenMode::soma_read, ctx, TimestampRange(0, 2));
     REQUIRE(soma_experiment->metadata_num() == 4);
     REQUIRE(soma_experiment->has_metadata("dataset_type"));
     REQUIRE(soma_experiment->has_metadata("soma_object_type"));
@@ -397,8 +354,7 @@ TEST_CASE("SOMAExperiment: metadata") {
     soma_experiment->close();
 
     // md should not be available at (2, 2)
-    soma_experiment = SOMAExperiment::open(
-        uri, OpenMode::soma_read, ctx, TimestampRange(2, 2));
+    soma_experiment = SOMAExperiment::open(uri, OpenMode::soma_read, ctx, TimestampRange(2, 2));
     REQUIRE(soma_experiment->metadata_num() == 3);
     REQUIRE(soma_experiment->has_metadata("dataset_type"));
     REQUIRE(soma_experiment->has_metadata("soma_object_type"));
@@ -407,8 +363,7 @@ TEST_CASE("SOMAExperiment: metadata") {
     soma_experiment->close();
 
     // Metadata should also be retrievable in write mode
-    soma_experiment = SOMAExperiment::open(
-        uri, OpenMode::soma_write, ctx, TimestampRange(0, 2));
+    soma_experiment = SOMAExperiment::open(uri, OpenMode::soma_write, ctx, TimestampRange(0, 2));
     REQUIRE(soma_experiment->metadata_num() == 4);
     REQUIRE(soma_experiment->has_metadata("dataset_type"));
     REQUIRE(soma_experiment->has_metadata("soma_object_type"));
@@ -425,8 +380,7 @@ TEST_CASE("SOMAExperiment: metadata") {
     soma_experiment->close();
 
     // Confirm delete in read mode
-    soma_experiment = SOMAExperiment::open(
-        uri, OpenMode::soma_read, ctx, TimestampRange(0, 2));
+    soma_experiment = SOMAExperiment::open(uri, OpenMode::soma_read, ctx, TimestampRange(0, 2));
     REQUIRE(!soma_experiment->has_metadata("md"));
     REQUIRE(soma_experiment->metadata_num() == 3);
 }
@@ -445,29 +399,19 @@ TEST_CASE("SOMAMeasurement: metadata") {
           .dim_max = DIM_MAX,
           .string_lo = "N/A",
           .string_hi = "N/A"}});
-    std::vector<helper::AttrInfo> attr_infos(
-        {{.name = attr_name, .tiledb_datatype = tiledb_datatype}});
-    auto [schema, index_columns] =
-        helper::create_arrow_schema_and_index_columns(dim_infos, attr_infos);
+    std::vector<helper::AttrInfo> attr_infos({{.name = attr_name, .tiledb_datatype = tiledb_datatype}});
+    auto [schema, index_columns] = helper::create_arrow_schema_and_index_columns(dim_infos, attr_infos);
 
-    SOMAMeasurement::create(
-        uri,
-        schema,
-        index_columns,
-        ctx,
-        PlatformConfig(),
-        TimestampRange(0, 2));
+    SOMAMeasurement::create(uri, schema, index_columns, ctx, PlatformConfig(), TimestampRange(0, 2));
 
-    auto soma_measurement = SOMAMeasurement::open(
-        uri, OpenMode::soma_write, ctx, std::pair<uint64_t, uint64_t>(1, 1));
+    auto soma_measurement = SOMAMeasurement::open(uri, OpenMode::soma_write, ctx, std::pair<uint64_t, uint64_t>(1, 1));
 
     int32_t val = 100;
     soma_measurement->set_metadata("md", TILEDB_INT32, 1, &val);
     soma_measurement->close();
 
     // Read metadata
-    soma_measurement = SOMAMeasurement::open(
-        uri, OpenMode::soma_read, ctx, TimestampRange(0, 2));
+    soma_measurement = SOMAMeasurement::open(uri, OpenMode::soma_read, ctx, TimestampRange(0, 2));
     REQUIRE(soma_measurement->metadata_num() == 3);
     REQUIRE(soma_measurement->has_metadata("soma_object_type"));
     REQUIRE(soma_measurement->has_metadata("soma_encoding_version"));
@@ -479,8 +423,7 @@ TEST_CASE("SOMAMeasurement: metadata") {
     soma_measurement->close();
 
     // md should not be available at (2, 2)
-    soma_measurement = SOMAMeasurement::open(
-        uri, OpenMode::soma_read, ctx, TimestampRange(2, 2));
+    soma_measurement = SOMAMeasurement::open(uri, OpenMode::soma_read, ctx, TimestampRange(2, 2));
     REQUIRE(soma_measurement->metadata_num() == 2);
     REQUIRE(soma_measurement->has_metadata("soma_object_type"));
     REQUIRE(soma_measurement->has_metadata("soma_encoding_version"));
@@ -488,8 +431,7 @@ TEST_CASE("SOMAMeasurement: metadata") {
     soma_measurement->close();
 
     // Metadata should also be retrievable in write mode
-    soma_measurement = SOMAMeasurement::open(
-        uri, OpenMode::soma_write, ctx, TimestampRange(0, 2));
+    soma_measurement = SOMAMeasurement::open(uri, OpenMode::soma_write, ctx, TimestampRange(0, 2));
     REQUIRE(soma_measurement->metadata_num() == 3);
     REQUIRE(soma_measurement->has_metadata("soma_object_type"));
     REQUIRE(soma_measurement->has_metadata("soma_encoding_version"));
@@ -505,8 +447,7 @@ TEST_CASE("SOMAMeasurement: metadata") {
     soma_measurement->close();
 
     // Confirm delete in read mode
-    soma_measurement = SOMAMeasurement::open(
-        uri, OpenMode::soma_read, ctx, TimestampRange(0, 2));
+    soma_measurement = SOMAMeasurement::open(uri, OpenMode::soma_read, ctx, TimestampRange(0, 2));
     REQUIRE(!soma_measurement->has_metadata("md"));
     REQUIRE(soma_measurement->metadata_num() == 2);
 }

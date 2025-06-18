@@ -17,8 +17,7 @@
 #include "xptr-utils.h"  // xptr taggging utilities
 
 // Helper
-tiledb_query_condition_combination_op_t
-_tiledb_query_string_to_condition_combination_op(const std::string& opstr) {
+tiledb_query_condition_combination_op_t _tiledb_query_string_to_condition_combination_op(const std::string& opstr) {
     if (opstr == "AND") {
         return TILEDB_AND;
     } else if (opstr == "OR") {
@@ -54,15 +53,13 @@ tiledb_query_condition_op_t _op_name_to_tdb_op(const std::string& opstr) {
 }
 
 // [[Rcpp::export]]
-Rcpp::XPtr<tdbs::QueryCondition> libtiledbsoma_empty_query_condition(
-    Rcpp::XPtr<somactx_wrap_t> ctxxp) {
+Rcpp::XPtr<tdbs::QueryCondition> libtiledbsoma_empty_query_condition(Rcpp::XPtr<somactx_wrap_t> ctxxp) {
     // Shared pointer to SOMAContext from external pointer wrapper:
     std::shared_ptr<tdbs::SOMAContext> sctx = ctxxp->ctxptr;
     // Shared pointer to TileDB Context from SOMAContext:
     std::shared_ptr<tiledb::Context> ctx = sctx->tiledb_ctx();
     // Core constructor
-    return make_xptr<tdbs::QueryCondition>(
-        new tdbs::QueryCondition(*ctx.get()));
+    return make_xptr<tdbs::QueryCondition>(new tdbs::QueryCondition(*ctx.get()));
 }
 
 // [[Rcpp::export]]
@@ -131,8 +128,8 @@ void libtiledbsoma_query_condition_from_triple(
         query_cond->init(attr_name, (void*)&v, cond_val_size, op);
 
     } else if (
-        arrow_type_name == "string" || arrow_type_name == "ascii" ||
-        arrow_type_name == "utf8" || arrow_type_name == "large_utf8") {
+        arrow_type_name == "string" || arrow_type_name == "ascii" || arrow_type_name == "utf8" ||
+        arrow_type_name == "large_utf8") {
         std::string v = Rcpp::as<std::string>(condition_value);
         query_cond->init(attr_name, v, op);
 
@@ -142,28 +139,24 @@ void libtiledbsoma_query_condition_from_triple(
         query_cond->init(attr_name, (void*)&v, cond_val_size, op);
 
     } else if (arrow_type_name == "timestamp_s") {
-        int64_t v = static_cast<int64_t>(
-            Rcpp::as<double>(condition_value));
+        int64_t v = static_cast<int64_t>(Rcpp::as<double>(condition_value));
         tdbs::LOG_DEBUG(fmt::format("ts3 {}", v));
         uint64_t cond_val_size = sizeof(int64_t);
         query_cond->init(attr_name, (void*)&v, cond_val_size, op);
 
     } else if (arrow_type_name == "timestamp_ms") {
-        int64_t v = static_cast<int64_t>(
-            Rcpp::as<double>(condition_value) * 1000);
+        int64_t v = static_cast<int64_t>(Rcpp::as<double>(condition_value) * 1000);
         uint64_t cond_val_size = sizeof(int64_t);
         query_cond->init(attr_name, (void*)&v, cond_val_size, op);
 
     } else if (arrow_type_name == "timestamp_us") {
-        int64_t v = static_cast<int64_t>(
-            Rcpp::as<double>(condition_value) * 1e6);
+        int64_t v = static_cast<int64_t>(Rcpp::as<double>(condition_value) * 1e6);
         uint64_t cond_val_size = sizeof(int64_t);
         query_cond->init(attr_name, (void*)&v, cond_val_size, op);
 
     } else if (arrow_type_name == "timestamp_ns") {
         // XXX nanotime ...
-        int64_t v = static_cast<int64_t>(
-            Rcpp::as<double>(condition_value) * 1e9);
+        int64_t v = static_cast<int64_t>(Rcpp::as<double>(condition_value) * 1e9);
         uint64_t cond_val_size = sizeof(int64_t);
         query_cond->init(attr_name, (void*)&v, cond_val_size, op);
 
@@ -174,31 +167,23 @@ void libtiledbsoma_query_condition_from_triple(
         query_cond->init(attr_name, (void*)&v, cond_val_size, op);
 
     } else {
-        Rcpp::stop(
-            "tiledbsoma query condition: currently unsupported type \"%s\"",
-            arrow_type_name);
+        Rcpp::stop("tiledbsoma query condition: currently unsupported type \"%s\"", arrow_type_name);
     }
 }
 
 // [[Rcpp::export]]
 Rcpp::XPtr<tdbs::QueryCondition> libtiledbsoma_query_condition_combine(
-    Rcpp::XPtr<tdbs::QueryCondition> lhs,
-    Rcpp::XPtr<tdbs::QueryCondition> rhs,
-    const std::string& str) {
+    Rcpp::XPtr<tdbs::QueryCondition> lhs, Rcpp::XPtr<tdbs::QueryCondition> rhs, const std::string& str) {
     check_xptr_tag<tdbs::QueryCondition>(lhs);
     check_xptr_tag<tdbs::QueryCondition>(lhs);
-    tiledb_query_condition_combination_op_t
-        op = _tiledb_query_string_to_condition_combination_op(str);
+    tiledb_query_condition_combination_op_t op = _tiledb_query_string_to_condition_combination_op(str);
     tdbs::QueryCondition res = lhs->combine(*rhs.get(), op);
     return make_xptr<tdbs::QueryCondition>(new tdbs::QueryCondition(res));
 }
 
 // [[Rcpp::export]]
 Rcpp::XPtr<tdbs::QueryCondition> libtiledbsoma_query_condition_in_nin(
-    Rcpp::XPtr<somactx_wrap_t> ctxxp,
-    const std::string& attr_name,
-    const std::string& op_name,
-    SEXP values) {
+    Rcpp::XPtr<somactx_wrap_t> ctxxp, const std::string& attr_name, const std::string& op_name, SEXP values) {
     // Shared pointer to SOMAContext from external pointer wrapper:
     std::shared_ptr<tdbs::SOMAContext> sctx = ctxxp->ctxptr;
     // Shared pointer to TileDB Context from SOMAContext:
@@ -208,31 +193,23 @@ Rcpp::XPtr<tdbs::QueryCondition> libtiledbsoma_query_condition_in_nin(
 
     if (TYPEOF(values) == INTSXP) {
         std::vector<int32_t> iv = Rcpp::as<std::vector<int32_t>>(values);
-        auto qc = tdbs::QueryConditionExperimental::create<int32_t>(
-            *ctx.get(), attr_name, iv, op);
+        auto qc = tdbs::QueryConditionExperimental::create<int32_t>(*ctx.get(), attr_name, iv, op);
         return make_xptr<tdbs::QueryCondition>(new tdbs::QueryCondition(qc));
 
     } else if (TYPEOF(values) == REALSXP) {
         if (Rcpp::isInteger64(values)) {
-            std::vector<int64_t> dv = Rcpp::fromInteger64(
-                Rcpp::NumericVector(values));
-            auto qc = tdbs::QueryConditionExperimental::create<int64_t>(
-                *ctx.get(), attr_name, dv, op);
-            return make_xptr<tdbs::QueryCondition>(
-                new tdbs::QueryCondition(qc));
+            std::vector<int64_t> dv = Rcpp::fromInteger64(Rcpp::NumericVector(values));
+            auto qc = tdbs::QueryConditionExperimental::create<int64_t>(*ctx.get(), attr_name, dv, op);
+            return make_xptr<tdbs::QueryCondition>(new tdbs::QueryCondition(qc));
         } else {
             std::vector<double> dv = Rcpp::as<std::vector<double>>(values);
-            auto qc = tdbs::QueryConditionExperimental::create<double>(
-                *ctx.get(), attr_name, dv, op);
-            return make_xptr<tdbs::QueryCondition>(
-                new tdbs::QueryCondition(qc));
+            auto qc = tdbs::QueryConditionExperimental::create<double>(*ctx.get(), attr_name, dv, op);
+            return make_xptr<tdbs::QueryCondition>(new tdbs::QueryCondition(qc));
         }
 
     } else if (TYPEOF(values) == STRSXP) {
-        std::vector<std::string> sv = Rcpp::as<std::vector<std::string>>(
-            values);
-        auto qc = tdbs::QueryConditionExperimental::create(
-            *ctx.get(), attr_name, sv, op);
+        std::vector<std::string> sv = Rcpp::as<std::vector<std::string>>(values);
+        auto qc = tdbs::QueryConditionExperimental::create(*ctx.get(), attr_name, sv, op);
         return make_xptr<tdbs::QueryCondition>(new tdbs::QueryCondition(qc));
 
     } else {
