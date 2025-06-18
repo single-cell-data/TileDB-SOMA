@@ -6,11 +6,7 @@
 
 from __future__ import annotations
 
-from typing import (
-    TYPE_CHECKING,
-    Sequence,
-    cast,
-)
+from typing import TYPE_CHECKING, Sequence, cast
 
 import numpy as np
 import pyarrow as pa
@@ -27,24 +23,13 @@ from ._arrow_types import pyarrow_to_carrow_type
 from ._common_nd_array import NDArray
 from ._dask.util import SOMADaskConfig
 from ._exception import SOMAError, map_exception_for_create
-from ._read_iters import (
-    BlockwiseScipyReadIter,
-    BlockwiseTableReadIter,
-    ManagedQuery,
-    SparseCOOTensorReadIter,
-    TableReadIter,
-)
+from ._managed_query import ManagedQuery
+from ._read_iters import BlockwiseScipyReadIter, BlockwiseTableReadIter, SparseCOOTensorReadIter, TableReadIter
 from ._tdb_handles import SparseNDArrayWrapper
 from ._types import NTuple, OpenTimestamp
 from ._util import from_clib_result_order
-from .options._soma_tiledb_context import (
-    SOMATileDBContext,
-    _validate_soma_tiledb_context,
-)
-from .options._tiledb_create_write_options import (
-    TileDBCreateOptions,
-    TileDBWriteOptions,
-)
+from .options._soma_tiledb_context import SOMATileDBContext, _validate_soma_tiledb_context
+from .options._tiledb_create_write_options import TileDBCreateOptions, TileDBWriteOptions
 
 if TYPE_CHECKING:
     try:
