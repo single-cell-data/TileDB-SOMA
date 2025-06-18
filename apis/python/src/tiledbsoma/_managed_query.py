@@ -7,7 +7,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Mapping, Sequence, cast
+from typing import TYPE_CHECKING, Mapping, Sequence, cast
 
 import attrs
 import numpy as np
@@ -73,7 +73,7 @@ class ManagedQuery:
 
         raise ValueError(f"unhandled type {dim.type} for index column named {dim.name}")
 
-    def _set_coord_by_numeric_slice(self, dim: pa.Field, dom: tuple[object, object], coord: slice[Any]) -> None:
+    def _set_coord_by_numeric_slice(self, dim: pa.Field, dom: tuple[object, object], coord: slice) -> None:
         try:
             lo_hi = _util.slice_to_numeric_range(coord, dom)
         except _util.NonNumericDimensionError:
@@ -92,6 +92,9 @@ class ManagedQuery:
             return
 
     def set_coord(self, dim_idx: int, coord: object, axis_names: Sequence[str] | None = None) -> None:
+        if coord is None:
+            return
+
         array_handle = self._array._handle._handle
         dim = array_handle.schema.field(dim_idx)
         dom = _util._cast_domainish(array_handle.domain())[dim_idx]
