@@ -23,7 +23,7 @@ from ._arrow_types import pyarrow_to_carrow_type
 from ._common_nd_array import NDArray
 from ._dask.util import SOMADaskConfig
 from ._exception import SOMAError, map_exception_for_create
-from ._manged_query import ManagedQuery
+from ._managed_query import ManagedQuery
 from ._read_iters import BlockwiseScipyReadIter, BlockwiseTableReadIter, SparseCOOTensorReadIter, TableReadIter
 from ._tdb_handles import SparseNDArrayWrapper
 from ._types import NTuple, OpenTimestamp
