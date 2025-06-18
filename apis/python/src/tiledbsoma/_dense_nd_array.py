@@ -20,18 +20,13 @@ from . import pytiledbsoma as clib
 from ._arrow_types import pyarrow_to_carrow_type
 from ._common_nd_array import NDArray
 from ._exception import SOMAError, map_exception_for_create
-from ._read_iters import ManagedQuery, TableReadIter
+from ._managed_query import ManagedQuery
+from ._read_iters import TableReadIter
 from ._tdb_handles import DenseNDArrayWrapper
 from ._types import OpenTimestamp, Slice
 from ._util import dense_indices_to_shape
-from .options._soma_tiledb_context import (
-    SOMATileDBContext,
-    _validate_soma_tiledb_context,
-)
-from .options._tiledb_create_write_options import (
-    TileDBCreateOptions,
-    TileDBWriteOptions,
-)
+from .options._soma_tiledb_context import SOMATileDBContext, _validate_soma_tiledb_context
+from .options._tiledb_create_write_options import TileDBCreateOptions, TileDBWriteOptions
 
 
 class DenseNDArray(NDArray, somacore.DenseNDArray):
@@ -308,7 +303,7 @@ class DenseNDArray(NDArray, somacore.DenseNDArray):
 
         mq = ManagedQuery(self, platform_config)
         mq._handle.set_layout(order)
-        _util._set_coords(mq, new_coords)
+        mq.set_coords(new_coords)
         mq._handle.set_column_data("soma_data", input)
         mq._handle.submit_write()
         mq._handle.finalize()

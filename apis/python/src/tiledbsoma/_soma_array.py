@@ -12,7 +12,7 @@ from . import _tdb_handles
 
 # This package's pybind11 code
 from . import pytiledbsoma as clib  # noqa: E402
-from ._read_iters import ManagedQuery
+from ._managed_query import ManagedQuery
 from ._soma_object import SOMAObject
 
 

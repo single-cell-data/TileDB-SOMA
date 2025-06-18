@@ -16,7 +16,6 @@ from typing import (
     TYPE_CHECKING,
     Any,
     Mapping,
-    Sequence,
     TypeVar,
     Union,
     cast,
@@ -28,7 +27,7 @@ import somacore
 from somacore import options
 
 from . import pytiledbsoma as clib
-from ._types import OpenTimestamp, Slice, is_nonstringy_sequence, is_slice_of
+from ._types import OpenTimestamp, Slice, is_slice_of
 from .options._tiledb_create_write_options import (
     TileDBCreateOptions,
     _ColumnConfig,
@@ -36,7 +35,7 @@ from .options._tiledb_create_write_options import (
 )
 
 if TYPE_CHECKING:
-    from ._read_iters import ManagedQuery
+    pass
 
 _JSONFilter = Union[str, dict[str, Union[str, Union[int, float]]]]
 _JSONFilterList = Union[str, list[_JSONFilter]]
@@ -436,199 +435,6 @@ def _cast_domainish(domainish: list[Any]) -> tuple[tuple[object, object], ...]:
             result.append(tuple(e.as_py() for e in slot))
 
     return tuple(result)
-
-
-def _set_coords(
-    mq: ManagedQuery,
-    coords: options.SparseNDCoords,
-    axis_names: Sequence[str] | None = None,
-) -> None:
-    if not is_nonstringy_sequence(coords):
-        raise TypeError(f"coords type {type(coords)} must be a regular sequence," " not str or bytes")
-
-    if len(coords) > len(mq._array._handle._handle.dimension_names):
-        raise ValueError(
-            f"coords ({len(coords)} elements) must be shorter than ndim"
-            f" ({len(mq._array._handle._handle.dimension_names)})"
-        )
-
-    for i, coord in enumerate(coords):
-        _set_coord(i, mq, coord, axis_names)
-
-
-def _set_coord(
-    dim_idx: int,
-    mq: ManagedQuery,
-    coord: object,
-    axis_names: Sequence[str] | None = None,
-) -> None:
-    if coord is None:
-        return
-
-    dim = mq._array._handle._handle.schema.field(dim_idx)
-    dom = _cast_domainish(mq._array._handle._handle.domain())[dim_idx]
-
-    column = mq._array._handle._handle.get_column(dim.name)
-
-    if dim.metadata is not None:
-        if dim.metadata[b"dtype"].decode("utf-8") == "WKB":
-            if axis_names is None:
-                raise ValueError("Axis names are required to set geometry column coordinates")
-            if not isinstance(dom[0], Mapping) or not isinstance(dom[1], Mapping):
-                raise ValueError("Domain should be expressed per axis for geometry columns")
-
-            _set_geometry_coord(
-                mq,
-                dim,
-                cast("tuple[Mapping[str, float], Mapping[str, float]]", dom),
-                coord,
-                axis_names,
-            )
-            return
-
-    if isinstance(coord, (str, bytes)):
-        column.set_dim_points_string_or_bytes(mq._handle, [coord])
-        return
-
-    if isinstance(coord, (pa.Array, pa.ChunkedArray)):
-        column.set_dim_points_arrow(mq._handle, coord)
-        return
-
-    if isinstance(coord, (Sequence, np.ndarray)):
-        _set_coord_by_py_seq_or_np_array(mq, dim, coord)
-        return
-
-    if isinstance(coord, int):
-        column.set_dim_points_int64(mq._handle, [coord])
-        return
-
-    # Note: slice(None, None) matches the is_slice_of part, unless we also check
-    # the dim-type part
-    if (is_slice_of(coord, str) or is_slice_of(coord, bytes)) and pa_types_is_string_or_bytes(dim.type):
-        validate_slice(coord)
-        dim_type = type(dom[0])
-        # A ``None`` or empty start is always equivalent to empty str/bytes.
-        start = coord.start or dim_type()
-        if coord.stop is None:
-            # There's no way to specify "to infinity" for strings.
-            # We have to get the nonempty domain and use that as the end.\
-            ned = _cast_domainish(mq._array._handle._handle.non_empty_domain())
-            _, stop = ned[dim_idx]
-        else:
-            stop = coord.stop
-        column.set_dim_ranges_string_or_bytes(mq._handle, [(start, stop)])
-        return
-
-    # Note: slice(None, None) matches the is_slice_of part, unless we also check
-    # the dim-type part.
-    if (
-        is_slice_of(coord, np.datetime64) or is_slice_of(coord, pa.TimestampScalar) or is_slice_of(coord, int)
-    ) and pa.types.is_timestamp(dim.type):
-        validate_slice(coord)
-
-        # These timestamp types are stored in Arrow as well as TileDB as 64-bit
-        # integers (with distinguishing metadata of course). For purposes of the
-        # query logic they're just int64.
-        istart = to_unix_ts(coord.start or dom[0])
-        istop = to_unix_ts(coord.stop or dom[1])
-        column.set_dim_ranges_int64(mq._handle, [(istart, istop)])
-        return
-
-    if isinstance(coord, slice):
-        validate_slice(coord)
-        if coord.start is None and coord.stop is None:
-            return
-        _set_coord_by_numeric_slice(mq, dim, dom, coord)
-        return
-
-    raise TypeError(f"unhandled type {dim.type} for index column named {dim.name}")
-
-
-def _set_geometry_coord(
-    mq: ManagedQuery,
-    dim: pa.Field,
-    dom: tuple[Mapping[str, float], Mapping[str, float]],
-    coord: object,
-    axis_names: Sequence[str],
-) -> None:
-    if not isinstance(coord, Sequence):
-        raise ValueError(f"unhandled coord type {type(coord)} for index column named {dim.name}")
-
-    ordered_dom_min = [dom[0][axis] for axis in axis_names]
-    ordered_dom_max = [dom[1][axis] for axis in axis_names]
-
-    column = mq._array._handle._handle.get_column(dim.name)
-
-    if all([is_slice_of(x, np.float64) for x in coord]):
-        range_min = []
-        range_max = []
-        for sub_coord, dom_min, dom_max in zip(coord, ordered_dom_min, ordered_dom_max):
-            validate_slice(sub_coord)
-            lo_hi = slice_to_numeric_range(sub_coord, (dom_min, dom_max))
-
-            # None slices need to be set to the domain size
-            if lo_hi is None:
-                range_min.append(dom_min)
-                range_max.append(dom_max)
-            else:
-                range_min.append(lo_hi[0])
-                range_max.append(lo_hi[1])
-
-        column.set_dim_ranges_double_array(mq._handle, [(range_min, range_max)])
-    elif all([isinstance(x, np.number) for x in coord]):
-        column.set_dim_points_double_array(mq._handle, [coord])
-    else:
-        raise ValueError(f"Unsupported spatial coordinate type. Expected slice or float, found {type(coord)}")
-
-
-def _set_coord_by_py_seq_or_np_array(mq: ManagedQuery, dim: pa.Field, coord: object) -> None:
-    if isinstance(coord, np.ndarray):
-        if coord.ndim != 1:
-            raise ValueError(f"only 1D numpy arrays may be used to index; got {coord.ndim}")
-
-    column = mq._array._handle._handle.get_column(dim.name)
-
-    try:
-        set_dim_points = getattr(column, f"set_dim_points_{dim.type}")
-    except AttributeError:
-        # We have to handle this type specially below
-        pass
-    else:
-        set_dim_points(mq._handle, coord)
-        return
-
-    if pa_types_is_string_or_bytes(dim.type):
-        column.set_dim_points_string_or_bytes(mq._handle, coord)
-        return
-
-    if pa.types.is_timestamp(dim.type):
-        if not isinstance(coord, (tuple, list, np.ndarray)):
-            raise ValueError(f"unhandled coord type {type(coord)} for index column named {dim.name}")
-
-        icoord = [to_unix_ts(e) for e in coord]
-        column.set_dim_points_int64(mq._handle, icoord)
-        return
-
-    raise ValueError(f"unhandled type {dim.type} for index column named {dim.name}")
-
-
-def _set_coord_by_numeric_slice(mq: ManagedQuery, dim: pa.Field, dom: tuple[object, object], coord: Slice[Any]) -> None:
-    try:
-        lo_hi = slice_to_numeric_range(coord, dom)
-    except NonNumericDimensionError:
-        return
-
-    if not lo_hi:
-        return
-
-    column = mq._array._handle._handle.get_column(dim.name)
-
-    try:
-        set_dim_range = getattr(column, f"set_dim_ranges_{dim.type}")
-        set_dim_range(mq._handle, [lo_hi])
-        return
-    except AttributeError:
-        return
 
 
 def _resolve_futures(unresolved: dict[str, Any], deep: bool = False) -> dict[str, Any]:

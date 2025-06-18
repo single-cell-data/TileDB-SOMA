@@ -9,17 +9,8 @@ from __future__ import annotations
 import abc
 from concurrent import futures
 from concurrent.futures import ThreadPoolExecutor
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Iterator,
-    Sequence,
-    TypeVar,
-    Union,
-    cast,
-)
+from typing import TYPE_CHECKING, Any, Iterator, Sequence, TypeVar, Union, cast
 
-import attrs
 import numpy as np
 import numpy.typing as npt
 import pyarrow as pa
@@ -35,6 +26,7 @@ from ._eager_iter import EagerIterator
 from ._exception import SOMAError
 from ._fastercsx import CompressedMatrix
 from ._indexer import IntIndexer
+from ._managed_query import ManagedQuery
 from ._query_condition import QueryCondition
 from ._types import NTuple
 from .options import SOMATileDBContext
@@ -458,27 +450,6 @@ class BlockwiseScipyReadIter(BlockwiseReadIterBase[BlockwiseScipyReadIterResult]
             yield sp, indices
 
 
-@attrs.define(frozen=True)
-class ManagedQuery:
-    """Keep the lifetime of the SOMAArray tethered to ManagedQuery."""
-
-    _array: SOMAArray
-    _platform_config: options.PlatformConfig | None = None
-    _handle: clib.ManagedQuery = attrs.field(init=False)
-
-    def __attrs_post_init__(self) -> None:
-        clib_handle = self._array._handle._handle
-
-        if self._platform_config is not None:
-            cfg = clib_handle.context().config()
-            cfg.update(self._platform_config)
-            ctx = clib.SOMAContext(cfg)
-        else:
-            ctx = clib_handle.context()
-
-        object.__setattr__(self, "_handle", clib.ManagedQuery(clib_handle, ctx))
-
-
 class SparseTensorReadIterBase(somacore.ReadIter[_RT], metaclass=abc.ABCMeta):
     """Private implementation class."""
 
@@ -500,7 +471,7 @@ class SparseTensorReadIterBase(somacore.ReadIter[_RT], metaclass=abc.ABCMeta):
 
         self.mq._handle.set_layout(result_order)
 
-        _util._set_coords(self.mq, coords)
+        self.mq.set_coords(coords)
 
     @abc.abstractmethod
     def _from_table(self, arrow_table: pa.Table) -> _RT:
@@ -562,7 +533,7 @@ class ArrowTableRead(Iterator[pa.Table]):
         if value_filter is not None:
             self.mq._handle.set_condition(QueryCondition(value_filter), clib_handle.schema)
 
-        _util._set_coords(self.mq, coords, coord_space.axis_names if coord_space else None)
+        self.mq.set_coords(coords, coord_space.axis_names if coord_space else None)
 
     def __next__(self) -> pa.Table:
         return self.mq._handle.next()
