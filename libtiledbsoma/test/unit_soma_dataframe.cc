@@ -131,7 +131,7 @@ struct VariouslyIndexedDataFrameFixture {
         }
         char_offsets.push_back(offset);
 
-        auto mq = ManagedQuery(*sdf, ctx_->tiledb_ctx());
+        auto mq = sdf->create_managed_query();
         mq.setup_write_column(i64_name, i64_data.size(), i64_data.data(), (uint64_t*)nullptr);
         mq.setup_write_column(str_name, strings.size(), char_data.data(), char_offsets.data());
         mq.setup_write_column(u32_name, u32_data.size(), u32_data.data(), (uint64_t*)nullptr);
@@ -172,7 +172,7 @@ TEST_CASE_METHOD(VariouslyIndexedDataFrameFixture, "SOMADataFrame: basic", "[SOM
     // A write in read mode should fail
     {
         sdf = open(OpenMode::soma_read);
-        auto mq = ManagedQuery(*sdf, ctx_->tiledb_ctx());
+        auto mq = sdf->create_managed_query();
         mq.setup_write_column(dim_infos[0].name, d0.size(), d0.data(), (uint64_t*)nullptr);
         mq.setup_write_column(attr_infos[0].name, a0.size(), a0.data(), (uint64_t*)nullptr);
         REQUIRE_THROWS(mq.submit_write());
@@ -181,7 +181,7 @@ TEST_CASE_METHOD(VariouslyIndexedDataFrameFixture, "SOMADataFrame: basic", "[SOM
 
     {
         sdf = open(OpenMode::soma_write);
-        auto mq = ManagedQuery(*sdf, ctx_->tiledb_ctx());
+        auto mq = sdf->create_managed_query();
         mq.setup_write_column(dim_infos[0].name, d0.size(), d0.data(), (uint64_t*)nullptr);
         mq.setup_write_column(attr_infos[0].name, a0.size(), a0.data(), (uint64_t*)nullptr);
         mq.submit_write();
@@ -190,7 +190,7 @@ TEST_CASE_METHOD(VariouslyIndexedDataFrameFixture, "SOMADataFrame: basic", "[SOM
 
     {
         sdf = open(OpenMode::soma_read);
-        auto mq = ManagedQuery(*sdf, ctx_->tiledb_ctx());
+        auto mq = sdf->create_managed_query();
         while (auto batch = mq.read_next()) {
             auto arrbuf = batch.value();
             auto d0span = arrbuf->at(dim_infos[0].name)->data<int64_t>();
@@ -363,7 +363,7 @@ TEST_CASE_METHOD(VariouslyIndexedDataFrameFixture, "SOMADataFrame: bounds-checki
 
     {
         auto sdf = open(OpenMode::soma_write);
-        auto mq = ManagedQuery(*sdf, ctx_->tiledb_ctx());
+        auto mq = sdf->create_managed_query();
 
         mq.setup_write_column(dim_infos[0].name, d0.size(), d0.data(), (uint64_t*)nullptr);
         mq.setup_write_column(attr_infos[0].name, a0.size(), a0.data(), (uint64_t*)nullptr);
@@ -378,7 +378,7 @@ TEST_CASE_METHOD(VariouslyIndexedDataFrameFixture, "SOMADataFrame: bounds-checki
 
     {
         auto sdf = open(OpenMode::soma_write);
-        auto mq = ManagedQuery(*sdf, ctx_->tiledb_ctx());
+        auto mq = sdf->create_managed_query();
         mq.setup_write_column(dim_infos[0].name, d0.size(), d0.data(), (uint64_t*)nullptr);
         mq.setup_write_column(attr_infos[0].name, a0.size(), a0.data(), (uint64_t*)nullptr);
         // Writing after resize should succeed

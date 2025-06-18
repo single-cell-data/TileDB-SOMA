@@ -72,7 +72,7 @@ TEST_CASE("SOMASparseNDArray: basic", "[SOMASparseNDArray]") {
     // A write in read mode should fail
     {
         snda->open(OpenMode::soma_read);
-        auto mq = ManagedQuery(*snda, ctx->tiledb_ctx());
+        auto mq = snda->create_managed_query();
         mq.setup_write_column(dim_name, d0.size(), d0.data(), (uint64_t*)nullptr);
         mq.setup_write_column(attr_name, a0.size(), a0.data(), (uint64_t*)nullptr);
         REQUIRE_THROWS(mq.submit_write());
@@ -81,7 +81,7 @@ TEST_CASE("SOMASparseNDArray: basic", "[SOMASparseNDArray]") {
 
     {
         snda->open(OpenMode::soma_write);
-        auto mq = ManagedQuery(*snda, ctx->tiledb_ctx());
+        auto mq = snda->create_managed_query();
         mq.setup_write_column(dim_name, d0.size(), d0.data(), (uint64_t*)nullptr);
         mq.setup_write_column(attr_name, a0.size(), a0.data(), (uint64_t*)nullptr);
         mq.submit_write();
@@ -90,7 +90,7 @@ TEST_CASE("SOMASparseNDArray: basic", "[SOMASparseNDArray]") {
 
     {
         snda->open(OpenMode::soma_read);
-        auto mq = ManagedQuery(*snda, ctx->tiledb_ctx());
+        auto mq = snda->create_managed_query();
         while (auto batch = mq.read_next()) {
             auto arrbuf = batch.value();
             auto d0span = arrbuf->at(dim_name)->data<int64_t>();
@@ -111,7 +111,7 @@ TEST_CASE("SOMASparseNDArray: basic", "[SOMASparseNDArray]") {
     // the (mutable) current domain.
     {
         snda->open(OpenMode::soma_write);
-        auto mq = ManagedQuery(*snda, ctx->tiledb_ctx());
+        auto mq = snda->create_managed_query();
         mq.setup_write_column(dim_name, d0b.size(), d0b.data(), (uint64_t*)nullptr);
         mq.setup_write_column(attr_name, a0b.size(), a0b.data(), (uint64_t*)nullptr);
         REQUIRE_THROWS(mq.submit_write());
@@ -130,7 +130,7 @@ TEST_CASE("SOMASparseNDArray: basic", "[SOMASparseNDArray]") {
     // Try out-of-bounds write after resize.
     {
         snda->open(OpenMode::soma_write);
-        auto mq = ManagedQuery(*snda, ctx->tiledb_ctx());
+        auto mq = snda->create_managed_query();
         mq.setup_write_column(dim_name, d0b.size(), d0b.data(), (uint64_t*)nullptr);
         mq.setup_write_column(attr_name, a0b.size(), a0b.data(), (uint64_t*)nullptr);
         // Implicitly checking for no throw
@@ -381,7 +381,7 @@ TEST_CASE("SOMASparseNDArray: nnz", "[SOMASparseNDArray]") {
 
     {
         auto snda = SOMASparseNDArray::open(uri, OpenMode::soma_write, ctx);
-        auto mq = ManagedQuery(*snda, ctx->tiledb_ctx());
+        auto mq = snda->create_managed_query();
         mq.setup_write_column(dim_infos[0].name, d0.size(), d0.data(), (uint64_t*)nullptr);
         mq.setup_write_column("soma_data", a0.size(), a0.data(), (uint64_t*)nullptr);
         mq.submit_write();
@@ -395,7 +395,7 @@ TEST_CASE("SOMASparseNDArray: nnz", "[SOMASparseNDArray]") {
 
     {
         auto snda = SOMASparseNDArray::open(uri, OpenMode::soma_write, ctx);
-        auto mq = ManagedQuery(*snda, ctx->tiledb_ctx());
+        auto mq = snda->create_managed_query();
         mq.setup_write_column(dim_infos[0].name, d0.size(), d0.data(), (uint64_t*)nullptr);
         mq.setup_write_column("soma_data", a0.size(), a0.data(), (uint64_t*)nullptr);
         mq.submit_write();
@@ -410,7 +410,7 @@ TEST_CASE("SOMASparseNDArray: nnz", "[SOMASparseNDArray]") {
 
     {
         auto snda = SOMASparseNDArray::open(uri, OpenMode::soma_write, ctx);
-        auto mq = ManagedQuery(*snda, ctx->tiledb_ctx());
+        auto mq = snda->create_managed_query();
         mq.setup_write_column(dim_infos[0].name, d0.size(), d0.data(), (uint64_t*)nullptr);
         mq.setup_write_column("soma_data", a0.size(), a0.data(), (uint64_t*)nullptr);
         mq.submit_write();
@@ -424,7 +424,7 @@ TEST_CASE("SOMASparseNDArray: nnz", "[SOMASparseNDArray]") {
     a0 = {3, 3, 3};
     {
         auto snda = SOMASparseNDArray::open(uri, OpenMode::soma_write, ctx);
-        auto mq = ManagedQuery(*snda, ctx->tiledb_ctx());
+        auto mq = snda->create_managed_query();
         mq.setup_write_column(dim_infos[0].name, d0.size(), d0.data(), (uint64_t*)nullptr);
         mq.setup_write_column("soma_data", a0.size(), a0.data(), (uint64_t*)nullptr);
         mq.submit_write();
@@ -439,7 +439,7 @@ TEST_CASE("SOMASparseNDArray: nnz", "[SOMASparseNDArray]") {
 
     {
         auto snda = SOMASparseNDArray::open(uri, OpenMode::soma_write, ctx);
-        auto mq1 = ManagedQuery(*snda, ctx->tiledb_ctx());
+        auto mq1 = snda->create_managed_query();
         mq1.setup_write_column(dim_infos[0].name, d0.size(), d0.data(), (uint64_t*)nullptr);
         mq1.setup_write_column("soma_data", a0.size(), a0.data(), (uint64_t*)nullptr);
         mq1.submit_write();
@@ -448,7 +448,7 @@ TEST_CASE("SOMASparseNDArray: nnz", "[SOMASparseNDArray]") {
 
         d0 = {12, 13, 14};
         a0 = {5, 5, 5};
-        auto mq2 = ManagedQuery(*snda, ctx->tiledb_ctx());
+        auto mq2 = snda->create_managed_query();
         mq2.setup_write_column(dim_infos[0].name, d0.size(), d0.data(), (uint64_t*)nullptr);
         mq2.setup_write_column("soma_data", a0.size(), a0.data(), (uint64_t*)nullptr);
         mq2.submit_write();

@@ -28,7 +28,7 @@ using namespace py::literals;
 using namespace tiledbsoma;
 
 void write(SOMAArray& array, py::array data) {
-    ManagedQuery mq(array, array.ctx()->tiledb_ctx());
+    auto mq = array.create_managed_query();
 
     py::buffer_info data_info = data.request();
     mq.setup_write_column("soma_data", data.size(), (const void*)data_info.ptr, (uint64_t*)nullptr);

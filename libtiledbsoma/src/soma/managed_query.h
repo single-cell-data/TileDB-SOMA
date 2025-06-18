@@ -66,8 +66,6 @@ class ManagedQuery {
      */
     ManagedQuery(std::shared_ptr<Array> array, std::shared_ptr<Context> ctx, std::string_view name = "unnamed");
 
-    ManagedQuery(SOMAArray array, std::shared_ptr<Context> ctx, std::string_view name = "unnamed");
-
     /** No default constructor. */
     ManagedQuery() = delete;
 

@@ -71,7 +71,7 @@ TEST_CASE("SOMAPointCloudDataFrame: basic", "[point_cloud_dataframe][spatial]") 
     // Write to point cloud.
     {
         auto soma_point_cloud = SOMAPointCloudDataFrame::open(uri, OpenMode::soma_write, ctx);
-        auto mq = ManagedQuery(*soma_point_cloud, ctx->tiledb_ctx());
+        auto mq = soma_point_cloud->create_managed_query();
         mq.setup_write_column(dim_infos[0].name, d0.size(), d0.data(), (uint64_t*)nullptr);
         mq.setup_write_column(dim_infos[1].name, d1.size(), d1.data(), (uint64_t*)nullptr);
         mq.setup_write_column(dim_infos[2].name, d2.size(), d2.data(), (uint64_t*)nullptr);
@@ -83,7 +83,7 @@ TEST_CASE("SOMAPointCloudDataFrame: basic", "[point_cloud_dataframe][spatial]") 
     // Read back the data.
     {
         auto soma_point_cloud = SOMAPointCloudDataFrame::open(uri, OpenMode::soma_read, ctx, std::nullopt);
-        auto mq = ManagedQuery(*soma_point_cloud, ctx->tiledb_ctx());
+        auto mq = soma_point_cloud->create_managed_query();
         while (auto batch = mq.read_next()) {
             auto arrbuf = batch.value();
             auto d0span = arrbuf->at(dim_infos[0].name)->data<int64_t>();

@@ -31,12 +31,12 @@ void test_sdf(const std::string& uri) {
 
     // Read all values from the obs array
     auto obs = SOMAArray::open(OpenMode::soma_read, uri + "/obs", ctx);
-    auto obs_mq = ManagedQuery(*obs, ctx->tiledb_ctx(), "obs");
+    auto obs_mq = obs->create_managed_query("obs");
     auto obs_data = obs_mq.read_next();
 
     // Read all values from the var array
     auto var = SOMAArray::open(OpenMode::soma_read, uri + "/ms/RNA/var", ctx);
-    auto var_mq = ManagedQuery(*var, ctx->tiledb_ctx(), "var");
+    auto var_mq = var->create_managed_query("var");
     auto var_data = var_mq.read_next();
 
     // Check if obs and var reads are complete
@@ -46,7 +46,7 @@ void test_sdf(const std::string& uri) {
 
     // Read all values from the X/data array
     auto x_data = SOMAArray::open(OpenMode::soma_read, uri + "/ms/RNA/X/data", std::make_shared<SOMAContext>(config));
-    auto x_mq = ManagedQuery(*x_data, ctx->tiledb_ctx(), "X/data");
+    auto x_mq = x_data->create_managed_query("X/data");
 
     int batches = 0;
     int total_num_rows = 0;
@@ -66,7 +66,7 @@ void test_arrow(const std::string& uri) {
     auto ctx = std::make_shared<SOMAContext>();
     const std::vector<std::string>& colnames{"n_counts", "n_genes", "louvain"};
     auto obs = tdbs::SOMAArray::open(OpenMode::soma_read, uri, ctx);
-    auto obs_mq = ManagedQuery(*obs, ctx->tiledb_ctx(), "");
+    auto obs_mq = obs->create_managed_query("");
     // Getting next batch:  std::optional<std::shared_ptr<ArrayBuffers>>
     auto obs_data = obs_mq.read_next();
     if (!obs_mq.results_complete()) {

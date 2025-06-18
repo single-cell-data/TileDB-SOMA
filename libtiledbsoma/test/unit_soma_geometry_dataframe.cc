@@ -131,8 +131,9 @@ TEST_CASE("SOMAGeometryDataFrame: Roundtrip", "[SOMAGeometryDataFrame]") {
     ArrowArrayStartAppending(data_array->children[1]);
     ArrowArrayStartAppending(data_array->children[2]);
 
-    geometry::GenericGeometry polygon = geometry::Polygon(std::vector<geometry::BasePoint>(
-        {geometry::BasePoint(0, 0), geometry::BasePoint(1, 0), geometry::BasePoint(0, 1)}));
+    geometry::GenericGeometry polygon = geometry::Polygon(
+        std::vector<geometry::BasePoint>(
+            {geometry::BasePoint(0, 0), geometry::BasePoint(1, 0), geometry::BasePoint(0, 1)}));
     NANOARROW_THROW_NOT_OK(ArrowBufferAppendUInt32(ArrowArrayBuffer(data_array->children[0], 1), 0));
     data_array->children[0]->length = 1;
     NANOARROW_THROW_NOT_OK(ArrowArrayAppendDouble(data_array->children[0]->children[0], 0));
@@ -152,7 +153,7 @@ TEST_CASE("SOMAGeometryDataFrame: Roundtrip", "[SOMAGeometryDataFrame]") {
     // Write to point cloud.
     {
         auto soma_geometry = SOMAGeometryDataFrame::open(uri, OpenMode::soma_write, ctx, std::nullopt);
-        auto mq = ManagedQuery(*soma_geometry, ctx->tiledb_ctx());
+        auto mq = soma_geometry->create_managed_query();
         std::tie(data_array, data_schema) = TransformerPipeline(std::move(data_array), std::move(data_schema))
                                                 .transform(OutlineTransformer(coord_space))
                                                 .asTable();
@@ -165,7 +166,7 @@ TEST_CASE("SOMAGeometryDataFrame: Roundtrip", "[SOMAGeometryDataFrame]") {
     // Read back the data.
     {
         auto soma_geometry = SOMAGeometryDataFrame::open(uri, OpenMode::soma_read, ctx, std::nullopt);
-        auto mq = ManagedQuery(*soma_geometry, ctx->tiledb_ctx());
+        auto mq = soma_geometry->create_managed_query();
         while (auto batch = mq.read_next()) {
             auto arrbuf = batch.value();
             auto d0span = arrbuf->at(dim_infos[0].name)->data<int64_t>();
