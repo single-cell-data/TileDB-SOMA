@@ -170,30 +170,36 @@ TEST_CASE_METHOD(VariouslyIndexedDataFrameFixture, "SOMADataFrame: basic", "[SOM
     std::vector<uint32_t> a0(10, 1);
 
     // A write in read mode should fail
-    sdf = open(OpenMode::soma_read);
-    auto mq = ManagedQuery(*sdf, ctx_->tiledb_ctx());
-    mq.setup_write_column(dim_infos[0].name, d0.size(), d0.data(), (uint64_t*)nullptr);
-    mq.setup_write_column(attr_infos[0].name, a0.size(), a0.data(), (uint64_t*)nullptr);
-    REQUIRE_THROWS(mq.submit_write());
-    sdf->close();
-
-    sdf = open(OpenMode::soma_write);
-    mq = ManagedQuery(*sdf, ctx_->tiledb_ctx());
-    mq.setup_write_column(dim_infos[0].name, d0.size(), d0.data(), (uint64_t*)nullptr);
-    mq.setup_write_column(attr_infos[0].name, a0.size(), a0.data(), (uint64_t*)nullptr);
-    mq.submit_write();
-    sdf->close();
-
-    sdf = open(OpenMode::soma_read);
-    mq = ManagedQuery(*sdf, ctx_->tiledb_ctx());
-    while (auto batch = mq.read_next()) {
-        auto arrbuf = batch.value();
-        auto d0span = arrbuf->at(dim_infos[0].name)->data<int64_t>();
-        auto a0span = arrbuf->at(attr_infos[0].name)->data<uint32_t>();
-        REQUIRE(d0 == std::vector<int64_t>(d0span.begin(), d0span.end()));
-        REQUIRE(a0 == std::vector<uint32_t>(a0span.begin(), a0span.end()));
+    {
+        sdf = open(OpenMode::soma_read);
+        auto mq = ManagedQuery(*sdf, ctx_->tiledb_ctx());
+        mq.setup_write_column(dim_infos[0].name, d0.size(), d0.data(), (uint64_t*)nullptr);
+        mq.setup_write_column(attr_infos[0].name, a0.size(), a0.data(), (uint64_t*)nullptr);
+        REQUIRE_THROWS(mq.submit_write());
+        sdf->close();
     }
-    sdf->close();
+
+    {
+        sdf = open(OpenMode::soma_write);
+        auto mq = ManagedQuery(*sdf, ctx_->tiledb_ctx());
+        mq.setup_write_column(dim_infos[0].name, d0.size(), d0.data(), (uint64_t*)nullptr);
+        mq.setup_write_column(attr_infos[0].name, a0.size(), a0.data(), (uint64_t*)nullptr);
+        mq.submit_write();
+        sdf->close();
+    }
+
+    {
+        sdf = open(OpenMode::soma_read);
+        auto mq = ManagedQuery(*sdf, ctx_->tiledb_ctx());
+        while (auto batch = mq.read_next()) {
+            auto arrbuf = batch.value();
+            auto d0span = arrbuf->at(dim_infos[0].name)->data<int64_t>();
+            auto a0span = arrbuf->at(attr_infos[0].name)->data<uint32_t>();
+            REQUIRE(d0 == std::vector<int64_t>(d0span.begin(), d0span.end()));
+            REQUIRE(a0 == std::vector<uint32_t>(a0span.begin(), a0span.end()));
+        }
+        sdf->close();
+    }
 
     auto soma_object = SOMAObject::open(uri_, OpenMode::soma_read, ctx_);
     REQUIRE(soma_object->uri() == uri_);
@@ -352,30 +358,34 @@ TEST_CASE_METHOD(VariouslyIndexedDataFrameFixture, "SOMADataFrame: bounds-checki
     REQUIRE(!SOMADataFrame::exists(uri_, ctx_));
 
     create(dim_infos, attr_infos);
-
-    auto sdf = open(OpenMode::soma_write);
-    auto mq = ManagedQuery(*sdf, ctx_->tiledb_ctx());
-
     std::vector<int64_t> d0({old_max + 1, old_max + 2});
     std::vector<double> a0({1.5, 2.5});
-    mq.setup_write_column(dim_infos[0].name, d0.size(), d0.data(), (uint64_t*)nullptr);
-    mq.setup_write_column(attr_infos[0].name, a0.size(), a0.data(), (uint64_t*)nullptr);
-    // Writing outside the current domain should fail
-    REQUIRE_THROWS(mq.submit_write());
-    sdf->close();
 
-    sdf = open(OpenMode::soma_write);
-    sdf->resize_soma_joinid_shape(int64_t{new_max}, "testing");
-    sdf->close();
+    {
+        auto sdf = open(OpenMode::soma_write);
+        auto mq = ManagedQuery(*sdf, ctx_->tiledb_ctx());
 
-    sdf = open(OpenMode::soma_write);
-    mq = ManagedQuery(*sdf, ctx_->tiledb_ctx());
-    mq.setup_write_column(dim_infos[0].name, d0.size(), d0.data(), (uint64_t*)nullptr);
-    mq.setup_write_column(attr_infos[0].name, a0.size(), a0.data(), (uint64_t*)nullptr);
-    // Writing after resize should succeed
-    mq.submit_write();
+        mq.setup_write_column(dim_infos[0].name, d0.size(), d0.data(), (uint64_t*)nullptr);
+        mq.setup_write_column(attr_infos[0].name, a0.size(), a0.data(), (uint64_t*)nullptr);
+        // Writing outside the current domain should fail
+        REQUIRE_THROWS(mq.submit_write());
+        sdf->close();
 
-    sdf->close();
+        sdf = open(OpenMode::soma_write);
+        sdf->resize_soma_joinid_shape(int64_t{new_max}, "testing");
+        sdf->close();
+    }
+
+    {
+        auto sdf = open(OpenMode::soma_write);
+        auto mq = ManagedQuery(*sdf, ctx_->tiledb_ctx());
+        mq.setup_write_column(dim_infos[0].name, d0.size(), d0.data(), (uint64_t*)nullptr);
+        mq.setup_write_column(attr_infos[0].name, a0.size(), a0.data(), (uint64_t*)nullptr);
+        // Writing after resize should succeed
+        mq.submit_write();
+
+        sdf->close();
+    }
 }
 
 TEST_CASE_METHOD(

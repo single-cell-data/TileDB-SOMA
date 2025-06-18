@@ -68,40 +68,11 @@ class ManagedQuery {
 
     ManagedQuery(SOMAArray array, std::shared_ptr<Context> ctx, std::string_view name = "unnamed");
 
+    /** No default constructor. */
     ManagedQuery() = delete;
 
-    ManagedQuery(const ManagedQuery& other)
-        : ctx_(other.ctx_)
-        , array_(other.array_)
-        , name_(other.name_)
-        , schema_(other.schema_)
-        , query_(std::make_unique<Query>(*other.ctx_, *other.array_))
-        , subarray_(std::make_unique<Subarray>(*other.ctx_, *other.array_))
-        , subarray_range_set_(other.subarray_range_set_)
-        , subarray_range_empty_(other.subarray_range_empty_)
-        , columns_(other.columns_)
-        , results_complete_(other.results_complete_)
-        , total_num_cells_(other.total_num_cells_)
-        , buffers_(other.buffers_)
-        , query_submitted_(other.query_submitted_) {
-    }
-
-    ManagedQuery& operator=(const ManagedQuery& other) {
-        ctx_ = other.ctx_;
-        array_ = other.array_;
-        name_ = other.name_;
-        schema_ = other.schema_;
-        query_ = std::make_unique<Query>(*other.ctx_, *other.array_);
-        subarray_ = std::make_unique<Subarray>(*other.ctx_, *other.array_);
-        subarray_range_set_ = other.subarray_range_set_;
-        subarray_range_empty_ = other.subarray_range_empty_;
-        columns_ = other.columns_;
-        results_complete_ = other.results_complete_;
-        total_num_cells_ = other.total_num_cells_;
-        buffers_ = other.buffers_;
-        query_submitted_ = other.query_submitted_;
-        return *this;
-    }
+    /** No copy constructor: use move constructor instead. */
+    ManagedQuery(const ManagedQuery&) = delete;
 
     ManagedQuery(ManagedQuery&& other)
         : ctx_(std::move(other.ctx_))

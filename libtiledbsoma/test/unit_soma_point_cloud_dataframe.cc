@@ -69,34 +69,38 @@ TEST_CASE("SOMAPointCloudDataFrame: basic", "[point_cloud_dataframe][spatial]") 
     std::vector<double> a0(10, 1.0);
 
     // Write to point cloud.
-    soma_point_cloud = SOMAPointCloudDataFrame::open(uri, OpenMode::soma_write, ctx);
-    auto mq = ManagedQuery(*soma_point_cloud, ctx->tiledb_ctx());
-    mq.setup_write_column(dim_infos[0].name, d0.size(), d0.data(), (uint64_t*)nullptr);
-    mq.setup_write_column(dim_infos[1].name, d1.size(), d1.data(), (uint64_t*)nullptr);
-    mq.setup_write_column(dim_infos[2].name, d2.size(), d2.data(), (uint64_t*)nullptr);
-    mq.setup_write_column(attr_infos[0].name, a0.size(), a0.data(), (uint64_t*)nullptr);
-    mq.submit_write();
-    soma_point_cloud->close();
+    {
+        auto soma_point_cloud = SOMAPointCloudDataFrame::open(uri, OpenMode::soma_write, ctx);
+        auto mq = ManagedQuery(*soma_point_cloud, ctx->tiledb_ctx());
+        mq.setup_write_column(dim_infos[0].name, d0.size(), d0.data(), (uint64_t*)nullptr);
+        mq.setup_write_column(dim_infos[1].name, d1.size(), d1.data(), (uint64_t*)nullptr);
+        mq.setup_write_column(dim_infos[2].name, d2.size(), d2.data(), (uint64_t*)nullptr);
+        mq.setup_write_column(attr_infos[0].name, a0.size(), a0.data(), (uint64_t*)nullptr);
+        mq.submit_write();
+        soma_point_cloud->close();
+    }
 
     // Read back the data.
-    soma_point_cloud = SOMAPointCloudDataFrame::open(uri, OpenMode::soma_read, ctx, std::nullopt);
-    mq = ManagedQuery(*soma_point_cloud, ctx->tiledb_ctx());
-    while (auto batch = mq.read_next()) {
-        auto arrbuf = batch.value();
-        auto d0span = arrbuf->at(dim_infos[0].name)->data<int64_t>();
-        auto d1span = arrbuf->at(dim_infos[1].name)->data<uint32_t>();
-        auto d2span = arrbuf->at(dim_infos[2].name)->data<uint32_t>();
-        auto a0span = arrbuf->at(attr_infos[0].name)->data<double>();
-        CHECK(d0 == std::vector<int64_t>(d0span.begin(), d0span.end()));
-        CHECK(d1 == std::vector<uint32_t>(d1span.begin(), d1span.end()));
-        CHECK(d2 == std::vector<uint32_t>(d2span.begin(), d2span.end()));
-        CHECK(a0 == std::vector<double>(a0span.begin(), a0span.end()));
+    {
+        auto soma_point_cloud = SOMAPointCloudDataFrame::open(uri, OpenMode::soma_read, ctx, std::nullopt);
+        auto mq = ManagedQuery(*soma_point_cloud, ctx->tiledb_ctx());
+        while (auto batch = mq.read_next()) {
+            auto arrbuf = batch.value();
+            auto d0span = arrbuf->at(dim_infos[0].name)->data<int64_t>();
+            auto d1span = arrbuf->at(dim_infos[1].name)->data<uint32_t>();
+            auto d2span = arrbuf->at(dim_infos[2].name)->data<uint32_t>();
+            auto a0span = arrbuf->at(attr_infos[0].name)->data<double>();
+            CHECK(d0 == std::vector<int64_t>(d0span.begin(), d0span.end()));
+            CHECK(d1 == std::vector<uint32_t>(d1span.begin(), d1span.end()));
+            CHECK(d2 == std::vector<uint32_t>(d2span.begin(), d2span.end()));
+            CHECK(a0 == std::vector<double>(a0span.begin(), a0span.end()));
+        }
+        CHECK(soma_point_cloud->has_metadata("soma_encoding_version"));
+        CHECK(soma_point_cloud->has_metadata("soma_spatial_encoding_version"));
+        auto point_cloud_coord_space = soma_point_cloud->coordinate_space();
+        CHECK(point_cloud_coord_space == coord_space);
+        soma_point_cloud->close();
     }
-    CHECK(soma_point_cloud->has_metadata("soma_encoding_version"));
-    CHECK(soma_point_cloud->has_metadata("soma_spatial_encoding_version"));
-    auto point_cloud_coord_space = soma_point_cloud->coordinate_space();
-    CHECK(point_cloud_coord_space == coord_space);
-    soma_point_cloud->close();
 
     auto soma_object = SOMAObject::open(uri, OpenMode::soma_read, ctx);
     REQUIRE(soma_object->uri() == uri);

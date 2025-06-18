@@ -131,9 +131,8 @@ TEST_CASE("SOMAGeometryDataFrame: Roundtrip", "[SOMAGeometryDataFrame]") {
     ArrowArrayStartAppending(data_array->children[1]);
     ArrowArrayStartAppending(data_array->children[2]);
 
-    geometry::GenericGeometry polygon = geometry::Polygon(
-        std::vector<geometry::BasePoint>(
-            {geometry::BasePoint(0, 0), geometry::BasePoint(1, 0), geometry::BasePoint(0, 1)}));
+    geometry::GenericGeometry polygon = geometry::Polygon(std::vector<geometry::BasePoint>(
+        {geometry::BasePoint(0, 0), geometry::BasePoint(1, 0), geometry::BasePoint(0, 1)}));
     NANOARROW_THROW_NOT_OK(ArrowBufferAppendUInt32(ArrowArrayBuffer(data_array->children[0], 1), 0));
     data_array->children[0]->length = 1;
     NANOARROW_THROW_NOT_OK(ArrowArrayAppendDouble(data_array->children[0]->children[0], 0));
@@ -151,37 +150,41 @@ TEST_CASE("SOMAGeometryDataFrame: Roundtrip", "[SOMAGeometryDataFrame]") {
     NANOARROW_THROW_NOT_OK(ArrowArrayFinishBuildingDefault(data_array->children[2], nullptr));
 
     // Write to point cloud.
-    auto soma_geometry = SOMAGeometryDataFrame::open(uri, OpenMode::soma_write, ctx, std::nullopt);
-    auto mq = ManagedQuery(*soma_geometry, ctx->tiledb_ctx());
-    std::tie(data_array, data_schema) = TransformerPipeline(std::move(data_array), std::move(data_schema))
-                                            .transform(OutlineTransformer(coord_space))
-                                            .asTable();
+    {
+        auto soma_geometry = SOMAGeometryDataFrame::open(uri, OpenMode::soma_write, ctx, std::nullopt);
+        auto mq = ManagedQuery(*soma_geometry, ctx->tiledb_ctx());
+        std::tie(data_array, data_schema) = TransformerPipeline(std::move(data_array), std::move(data_schema))
+                                                .transform(OutlineTransformer(coord_space))
+                                                .asTable();
 
-    mq.set_array_data(data_schema.get(), data_array.get());
-    mq.submit_write();
-    soma_geometry->close();
+        mq.set_array_data(data_schema.get(), data_array.get());
+        mq.submit_write();
+        soma_geometry->close();
+    }
 
     // Read back the data.
-    soma_geometry = SOMAGeometryDataFrame::open(uri, OpenMode::soma_read, ctx, std::nullopt);
-    mq = ManagedQuery(*soma_geometry, ctx->tiledb_ctx());
-    while (auto batch = mq.read_next()) {
-        auto arrbuf = batch.value();
-        auto d0span = arrbuf->at(dim_infos[0].name)->data<int64_t>();
-        auto d1span = arrbuf->at(SOMA_GEOMETRY_DIMENSION_PREFIX + "x__min")->data<double_t>();
-        auto d2span = arrbuf->at(SOMA_GEOMETRY_DIMENSION_PREFIX + "x__max")->data<double_t>();
-        auto d3span = arrbuf->at(SOMA_GEOMETRY_DIMENSION_PREFIX + "y__min")->data<double_t>();
-        auto d4span = arrbuf->at(SOMA_GEOMETRY_DIMENSION_PREFIX + "y__max")->data<double_t>();
-        auto wkbs = arrbuf->at(dim_infos[1].name)->binaries();
-        auto a0span = arrbuf->at(attr_infos[0].name)->data<double>();
-        CHECK(std::vector<int64_t>({1}) == std::vector<int64_t>(d0span.begin(), d0span.end()));
-        CHECK(std::vector<double_t>({0}) == std::vector<double_t>(d1span.begin(), d1span.end()));
-        CHECK(std::vector<double_t>({1}) == std::vector<double_t>(d2span.begin(), d2span.end()));
-        CHECK(std::vector<double_t>({0}) == std::vector<double_t>(d3span.begin(), d3span.end()));
-        CHECK(std::vector<double_t>({1}) == std::vector<double_t>(d4span.begin(), d4span.end()));
-        CHECK(geometry::to_wkb(polygon) == wkbs[0]);
-        CHECK(std::vector<double_t>({63}) == std::vector<double>(a0span.begin(), a0span.end()));
+    {
+        auto soma_geometry = SOMAGeometryDataFrame::open(uri, OpenMode::soma_read, ctx, std::nullopt);
+        auto mq = ManagedQuery(*soma_geometry, ctx->tiledb_ctx());
+        while (auto batch = mq.read_next()) {
+            auto arrbuf = batch.value();
+            auto d0span = arrbuf->at(dim_infos[0].name)->data<int64_t>();
+            auto d1span = arrbuf->at(SOMA_GEOMETRY_DIMENSION_PREFIX + "x__min")->data<double_t>();
+            auto d2span = arrbuf->at(SOMA_GEOMETRY_DIMENSION_PREFIX + "x__max")->data<double_t>();
+            auto d3span = arrbuf->at(SOMA_GEOMETRY_DIMENSION_PREFIX + "y__min")->data<double_t>();
+            auto d4span = arrbuf->at(SOMA_GEOMETRY_DIMENSION_PREFIX + "y__max")->data<double_t>();
+            auto wkbs = arrbuf->at(dim_infos[1].name)->binaries();
+            auto a0span = arrbuf->at(attr_infos[0].name)->data<double>();
+            CHECK(std::vector<int64_t>({1}) == std::vector<int64_t>(d0span.begin(), d0span.end()));
+            CHECK(std::vector<double_t>({0}) == std::vector<double_t>(d1span.begin(), d1span.end()));
+            CHECK(std::vector<double_t>({1}) == std::vector<double_t>(d2span.begin(), d2span.end()));
+            CHECK(std::vector<double_t>({0}) == std::vector<double_t>(d3span.begin(), d3span.end()));
+            CHECK(std::vector<double_t>({1}) == std::vector<double_t>(d4span.begin(), d4span.end()));
+            CHECK(geometry::to_wkb(polygon) == wkbs[0]);
+            CHECK(std::vector<double_t>({63}) == std::vector<double>(a0span.begin(), a0span.end()));
+        }
+        soma_geometry->close();
     }
-    soma_geometry->close();
 
     auto soma_object = SOMAObject::open(uri, OpenMode::soma_read, ctx);
     REQUIRE(soma_object->uri() == uri);
