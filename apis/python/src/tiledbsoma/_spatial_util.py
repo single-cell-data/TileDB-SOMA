@@ -38,14 +38,14 @@ def transform_from_json(data: str) -> somacore.CoordinateTransform:
     except KeyError:
         raise KeyError(
             "'transform_type' not found when attempting to convert " "JSON to CoordinateTransform child class"
-        )
+        ) from None
 
     try:
         kwargs = raw.pop("transform")
     except KeyError:
         raise KeyError(
             "'transform' kwargs options not found when attempting to " "convert JSON to CoordinateTransform child class"
-        )
+        ) from None
 
     coord_transform_init: dict[str, type[somacore.CoordinateTransform]] = {
         "AffineTransform": somacore.AffineTransform,
@@ -57,7 +57,7 @@ def transform_from_json(data: str) -> somacore.CoordinateTransform:
     try:
         return coord_transform_init[transform_type](**kwargs)
     except KeyError:
-        raise KeyError(f"Unrecognized transform type key '{transform_type}'")
+        raise KeyError(f"Unrecognized transform type key '{transform_type}'") from None
 
 
 def transform_to_json(transform: somacore.CoordinateTransform) -> str:

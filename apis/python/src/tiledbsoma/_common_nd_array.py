@@ -122,7 +122,7 @@ class NDArray(SOMAArray, somacore.NDArray):
         Lifecycle:
             Maturing.
         """
-        return cast(tuple[int, ...], tuple(self._handle.shape))
+        return cast("tuple[int, ...]", tuple(self._handle.shape))
 
     @property
     def maxshape(self) -> tuple[int, ...]:
@@ -133,7 +133,7 @@ class NDArray(SOMAArray, somacore.NDArray):
         Lifecycle:
             Maturing.
         """
-        return cast(tuple[int, ...], tuple(self._handle.maxshape))
+        return cast("tuple[int, ...]", tuple(self._handle.maxshape))
 
     @property
     def tiledbsoma_has_upgraded_shape(self) -> bool:

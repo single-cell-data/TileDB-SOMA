@@ -19,7 +19,6 @@ from typing_extensions import TypeAlias
 
 import tiledbsoma as soma
 
-from tests.ht._ht_test_config import HT_TEST_CONFIG
 from tests.ht._ledger import Ledger, PyDictLedgerEntry
 
 SOMAArray: TypeAlias = Union[soma.DataFrame, soma.SparseNDArray, soma.DenseNDArray]

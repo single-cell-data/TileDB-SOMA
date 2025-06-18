@@ -119,4 +119,4 @@ def get_arrow_str_format(pa_type: pa.DataType) -> str:
     try:
         return _pa_type_to_str_fmt[pa_type]
     except KeyError:
-        raise SOMAError(f"Could not convert {pa_type} to Arrow string format")
+        raise SOMAError(f"Could not convert {pa_type} to Arrow string format") from None

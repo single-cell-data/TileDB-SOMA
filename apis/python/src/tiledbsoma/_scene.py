@@ -100,7 +100,7 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
         Lifecycle:
             Experimental.
         """
-        warnings.warn(SPATIAL_DISCLAIMER)
+        warnings.warn(SPATIAL_DISCLAIMER, stacklevel=2)
 
         context = _validate_soma_tiledb_context(context)
 
@@ -605,7 +605,7 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
         try:
             transform_json = coll.metadata[f"soma_scene_registry_{key}"]
         except KeyError:
-            raise KeyError(f"No coordinate space registry for '{key}' in collection " f"'{subcollection}'")
+            raise KeyError(f"No coordinate space registry for '{key}' in collection " f"'{subcollection}'") from None
         base_transform = transform_from_json(transform_json)
         try:
             image: MultiscaleImage = coll[key]  # type: ignore[assignment]
@@ -683,7 +683,7 @@ class Scene(  # type: ignore[misc]   # __eq__ false positive
         try:
             transform_json = coll.metadata[f"soma_scene_registry_{key}"]
         except KeyError:
-            raise KeyError(f"No coordinate space registry for '{key}' in collection " f"'{subcollection}'")
+            raise KeyError(f"No coordinate space registry for '{key}' in collection " f"'{subcollection}'") from None
         base_transform = transform_from_json(transform_json)
         if level is None:
             return base_transform

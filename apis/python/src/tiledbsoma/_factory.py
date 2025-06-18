@@ -9,7 +9,6 @@ Collection.
 from __future__ import annotations
 
 from typing import (
-    Callable,
     TypeVar,
     cast,
     no_type_check,
@@ -34,7 +33,6 @@ from . import (
     _tdb_handles,
 )
 from ._constants import (
-    SOMA_ENCODING_VERSION_METADATA_KEY,
     SOMA_OBJECT_TYPE_METADATA_KEY,
 )
 from ._exception import SOMAError
@@ -153,7 +151,7 @@ def reify_handle(hdl: _Wrapper) -> SOMAObject[_Wrapper]:
     if not isinstance(hdl, cls._wrapper_type):
         raise SOMAError(f"cannot open {hdl.uri!r}: a {type(hdl._handle)}" f" cannot be converted to a {typename}")
     return cast(
-        _soma_object.SOMAObject[_Wrapper],
+        "_soma_object.SOMAObject[_Wrapper]",
         cls(hdl, _dont_call_this_use_create_or_open_instead="tiledbsoma-internal-code"),
     )
 

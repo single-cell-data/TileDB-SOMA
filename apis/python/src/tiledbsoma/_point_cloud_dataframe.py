@@ -6,7 +6,7 @@
 from __future__ import annotations
 
 import warnings
-from typing import Any, Sequence, cast
+from typing import Sequence, cast
 
 import pyarrow as pa
 import somacore
@@ -117,7 +117,7 @@ class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
         Lifecycle:
             Experimental.
         """
-        warnings.warn(SPATIAL_DISCLAIMER)
+        warnings.warn(SPATIAL_DISCLAIMER, stacklevel=2)
 
         axis_dtype: pa.DataType | None = None
 
@@ -281,7 +281,7 @@ class PointCloudDataFrame(SpatialDataFrame, somacore.PointCloudDataFrame):
         """Returns the number of rows in the dataframe."""
         self._verify_open_for_reading()
         # if is it in read open mode, then it is a PointCloudDataFrameWrapper
-        return cast(PointCloudDataFrameWrapper, self._handle).count
+        return cast("PointCloudDataFrameWrapper", self._handle).count
 
     def read(
         self,

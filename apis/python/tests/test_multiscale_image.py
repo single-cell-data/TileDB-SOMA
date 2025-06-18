@@ -490,7 +490,7 @@ def test_multiscale_2d_read_region_with_channel(
             image[f"level{i}"].write((slice(None), slice(None)), pa.Tensor.from_numpy(data))
 
     with soma.MultiscaleImage.open(image_uri, mode="r") as image:
-        for i, shape in enumerate(shapes):
+        for i, _shape in enumerate(shapes):
             actual_data = image.read_spatial_region(i, region=region).data
             if expected_coords is None:
                 expected_data = image[f"level{i}"].read()

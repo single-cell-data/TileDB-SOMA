@@ -7,7 +7,6 @@
 import importlib.metadata
 import platform
 import sys
-import warnings
 from re import fullmatch
 
 from .pytiledbsoma import expected_tiledb_version, tiledb_version

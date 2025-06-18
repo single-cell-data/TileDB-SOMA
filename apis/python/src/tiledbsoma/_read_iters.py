@@ -402,7 +402,7 @@ class BlockwiseScipyReadIter(BlockwiseReadIterBase[BlockwiseScipyReadIterResult]
 
         Make shape of this iterator step.
         """
-        shape = cast(tuple[int, int], tuple(self.shape))
+        shape = cast("tuple[int, int]", tuple(self.shape))
         assert len(shape) == 2
         _sp_shape: list[int] = list(shape)
 
@@ -411,7 +411,7 @@ class BlockwiseScipyReadIter(BlockwiseReadIterBase[BlockwiseScipyReadIterResult]
         if self.minor_axis not in self.reindex_disable_on_axis:
             _sp_shape[self.minor_axis] = len(minor_coords)
 
-        return cast(tuple[int, int], tuple(_sp_shape))
+        return cast("tuple[int, int]", tuple(_sp_shape))
 
     def _coo_reader(self, _pool: ThreadPoolExecutor | None = None) -> Iterator[tuple[sparse.coo_matrix, IndicesType]]:
         """Private.
@@ -604,7 +604,7 @@ def _coords_strider(coords: options.SparseNDCoord, length: int, stride: int) -> 
     else:
         assert isinstance(coords, np.ndarray) and coords.dtype == np.int64
         for i in range(0, len(coords), stride):
-            yield cast(npt.NDArray[np.int64], coords[i : i + stride])
+            yield cast("npt.NDArray[np.int64]", coords[i : i + stride])
 
 
 _ElemT = TypeVar("_ElemT")

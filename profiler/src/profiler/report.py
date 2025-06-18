@@ -21,7 +21,7 @@ def collect_tiledb_stats(data: ProfileData) -> dict[str, Union[int, float]]:
 
     lines = tiledb_stats.split("\n")
 
-    for idx, line in enumerate(lines):
+    for _idx, line in enumerate(lines):
         perf_match = re.match(r"\s+\"(.+)\": (\d+\.\d+)\s*,", line)
         if perf_match:
             value = float(perf_match.groups()[1])
@@ -41,7 +41,7 @@ def extract_tiledb_data(data: ProfileData, metric: str) -> Union[int, float, Non
     """
     tiledb_stats = getattr(data, str("tiledb_stats"))
     lines = tiledb_stats.split("\n")
-    for idx, line in enumerate(lines):
+    for _idx, line in enumerate(lines):
         perf_match = re.match(rf"\s+\"{metric}\": (\d+\.\d+)\s*,", line)
         if perf_match:
             value = float(perf_match.groups()[0])

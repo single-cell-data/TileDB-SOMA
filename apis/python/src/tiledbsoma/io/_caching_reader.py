@@ -110,7 +110,7 @@ class CachingReader:
             self._cache.move_to_end(block_idx)
             self._cache_stats[block_idx].hit += 1
 
-        for i in range(max(0, len(self._cache) - self._max_cache_blocks)):
+        for _i in range(max(0, len(self._cache) - self._max_cache_blocks)):
             self._cache.popitem(last=False)
 
     def _reset_cache(self) -> None:
@@ -139,7 +139,7 @@ class CachingReader:
         assert arr.offset == 0
         b = arr.buffers()[1].to_pybytes()  # NB: copy
         self._pos += len(b)
-        return cast(bytes, b)
+        return cast("bytes", b)
 
     def readinto(self, buf: WritableBuffer) -> int | None:
         """Read bytes into a pre-allocated, writable bytes-like object b,

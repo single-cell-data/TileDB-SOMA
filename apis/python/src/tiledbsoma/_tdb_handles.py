@@ -138,7 +138,7 @@ def open_handle_wrapper(
             timestamp=soma_object.timestamp,
         )
     except KeyError:
-        raise SOMAError(f"{uri!r} has unknown storage type {soma_object.type!r}")
+        raise SOMAError(f"{uri!r} has unknown storage type {soma_object.type!r}") from None
 
 
 @attrs.define(eq=False, hash=False, slots=False)
@@ -262,7 +262,9 @@ class Wrapper(Generic[_RawHdl_co], metaclass=abc.ABCMeta):
             return self._handle
         if self.mode == "w":
             warnings.warn(
-                f"Deleting in write mode is deprecated. {self} should be reopened with mode='d'.", DeprecationWarning
+                f"Deleting in write mode is deprecated. {self} should be reopened with mode='d'.",
+                DeprecationWarning,
+                stacklevel=3,
             )
             return self._handle
         raise SOMAError(f"Cannot delete from {self}; current mode='{self.mode}'. Reopen in mode='d'.")
@@ -346,7 +348,7 @@ class SOMAGroupWrapper(Wrapper[_SOMAObjectType]):
         return self.metadata
 
     def members(self) -> dict[str, tuple[str, str]]:
-        return cast(dict[str, tuple[str, str]], self._handle.members())
+        return cast("dict[str, tuple[str, str]]", self._handle.members())
 
 
 class CollectionWrapper(SOMAGroupWrapper[clib.SOMACollection]):
@@ -460,12 +462,12 @@ class SOMAArrayWrapper(Wrapper[_SOMAObjectType]):
     @property
     def shape(self) -> tuple[int, ...]:
         """Not implemented for DataFrame."""
-        return cast(tuple[int, ...], tuple(self._handle.shape))
+        return cast("tuple[int, ...]", tuple(self._handle.shape))
 
     @property
     def maxshape(self) -> tuple[int, ...]:
         """Not implemented for DataFrame."""
-        return cast(tuple[int, ...], tuple(self._handle.maxshape))
+        return cast("tuple[int, ...]", tuple(self._handle.maxshape))
 
     @property
     def maybe_soma_joinid_shape(self) -> int | None:
@@ -555,7 +557,7 @@ class DataFrameWrapper(SOMAArrayWrapper[clib.SOMADataFrame]):
         self._handle.write(values)
 
     def get_enumeration_values(self, column_names: Sequence[str]) -> dict[str, pa.Array]:
-        return cast(dict[str, pa.Array], self._handle.get_enumeration_values(column_names))
+        return cast("dict[str, pa.Array]", self._handle.get_enumeration_values(column_names))
 
     def extend_enumeration_values(self, values: dict[str, pa.Array], deduplicate: bool) -> None:
         self._handle.extend_enumeration_values(values, deduplicate)
@@ -563,17 +565,17 @@ class DataFrameWrapper(SOMAArrayWrapper[clib.SOMADataFrame]):
     @property
     def maybe_soma_joinid_shape(self) -> int | None:
         """Wrapper-class internals."""
-        return cast(Union[int, None], self._handle.maybe_soma_joinid_shape)
+        return cast("Union[int, None]", self._handle.maybe_soma_joinid_shape)
 
     @property
     def maybe_soma_joinid_maxshape(self) -> int | None:
         """Wrapper-class internals."""
-        return cast(Union[int, None], self._handle.maybe_soma_joinid_maxshape)
+        return cast("Union[int, None]", self._handle.maybe_soma_joinid_maxshape)
 
     @property
     def tiledbsoma_has_upgraded_domain(self) -> bool:
         """Wrapper-class internals."""
-        return cast(bool, self._handle.tiledbsoma_has_upgraded_domain)
+        return cast("bool", self._handle.tiledbsoma_has_upgraded_domain)
 
     def resize_soma_joinid_shape(self, newshape: int, function_name_for_messages: str) -> None:
         """Wrapper-class internals."""
@@ -582,7 +584,7 @@ class DataFrameWrapper(SOMAArrayWrapper[clib.SOMADataFrame]):
     def can_resize_soma_joinid_shape(self, newshape: int, function_name_for_messages: str) -> StatusAndReason:
         """Wrapper-class internals."""
         return cast(
-            StatusAndReason,
+            "StatusAndReason",
             self._handle.can_resize_soma_joinid_shape(newshape, function_name_for_messages),
         )
 
@@ -593,7 +595,7 @@ class DataFrameWrapper(SOMAArrayWrapper[clib.SOMADataFrame]):
     def can_upgrade_soma_joinid_shape(self, newshape: int, function_name_for_messages: str) -> StatusAndReason:
         """Wrapper-class internals."""
         return cast(
-            StatusAndReason,
+            "StatusAndReason",
             self._handle.can_upgrade_soma_joinid_shape(newshape, function_name_for_messages),
         )
 
@@ -604,7 +606,7 @@ class DataFrameWrapper(SOMAArrayWrapper[clib.SOMADataFrame]):
     def can_upgrade_domain(self, newdomain: Domain, function_name_for_messages: str) -> StatusAndReason:
         """Wrapper-class internals."""
         return cast(
-            StatusAndReason,
+            "StatusAndReason",
             self._handle.can_upgrade_domain(newdomain, function_name_for_messages),
         )
 
@@ -615,7 +617,7 @@ class DataFrameWrapper(SOMAArrayWrapper[clib.SOMADataFrame]):
     def can_change_domain(self, newdomain: Domain, function_name_for_messages: str) -> StatusAndReason:
         """Wrapper-class internals."""
         return cast(
-            StatusAndReason,
+            "StatusAndReason",
             self._handle.can_change_domain(newdomain, function_name_for_messages),
         )
 
@@ -654,7 +656,7 @@ class DenseNDArrayWrapper(SOMAArrayWrapper[clib.SOMADenseNDArray]):
     @property
     def tiledbsoma_has_upgraded_shape(self) -> bool:
         """Wrapper-class internals."""
-        return cast(bool, self._handle.tiledbsoma_has_upgraded_shape)
+        return cast("bool", self._handle.tiledbsoma_has_upgraded_shape)
 
     def resize(self, newshape: Sequence[int | None]) -> None:
         """Wrapper-class internals."""
@@ -662,7 +664,7 @@ class DenseNDArrayWrapper(SOMAArrayWrapper[clib.SOMADenseNDArray]):
 
     def tiledbsoma_can_resize(self, newshape: Sequence[int | None]) -> StatusAndReason:
         """Wrapper-class internals."""
-        return cast(StatusAndReason, self._handle.tiledbsoma_can_resize(newshape))
+        return cast("StatusAndReason", self._handle.tiledbsoma_can_resize(newshape))
 
     def tiledbsoma_upgrade_shape(self, newshape: Sequence[int | None]) -> None:
         """Wrapper-class internals."""
@@ -670,7 +672,7 @@ class DenseNDArrayWrapper(SOMAArrayWrapper[clib.SOMADenseNDArray]):
 
     def tiledbsoma_can_upgrade_shape(self, newshape: Sequence[int | None]) -> StatusAndReason:
         """Wrapper-class internals."""
-        return cast(StatusAndReason, self._handle.tiledbsoma_can_upgrade_shape(newshape))
+        return cast("StatusAndReason", self._handle.tiledbsoma_can_upgrade_shape(newshape))
 
 
 class SparseNDArrayWrapper(SOMAArrayWrapper[clib.SOMASparseNDArray]):
@@ -685,7 +687,7 @@ class SparseNDArrayWrapper(SOMAArrayWrapper[clib.SOMASparseNDArray]):
     @property
     def tiledbsoma_has_upgraded_shape(self) -> bool:
         """Wrapper-class internals."""
-        return cast(bool, self._handle.tiledbsoma_has_upgraded_shape)
+        return cast("bool", self._handle.tiledbsoma_has_upgraded_shape)
 
     def resize(self, newshape: Sequence[int | None]) -> None:
         """Wrapper-class internals."""
@@ -693,7 +695,7 @@ class SparseNDArrayWrapper(SOMAArrayWrapper[clib.SOMASparseNDArray]):
 
     def tiledbsoma_can_resize(self, newshape: Sequence[int | None]) -> StatusAndReason:
         """Wrapper-class internals."""
-        return cast(StatusAndReason, self._handle.can_resize(newshape))
+        return cast("StatusAndReason", self._handle.can_resize(newshape))
 
     def tiledbsoma_upgrade_shape(self, newshape: Sequence[int | None]) -> None:
         """Wrapper-class internals."""
@@ -701,7 +703,7 @@ class SparseNDArrayWrapper(SOMAArrayWrapper[clib.SOMASparseNDArray]):
 
     def tiledbsoma_can_upgrade_shape(self, newshape: Sequence[int | None]) -> StatusAndReason:
         """Wrapper-class internals."""
-        return cast(StatusAndReason, self._handle.tiledbsoma_can_upgrade_shape(newshape))
+        return cast("StatusAndReason", self._handle.tiledbsoma_can_upgrade_shape(newshape))
 
 
 class _DictMod(enum.Enum):
@@ -783,14 +785,14 @@ class MetadataWrapper(MutableMapping[str, Any]):
         return self.cache[key]
 
     def __setitem__(self, key: str, value: Any) -> None:
-        self.owner.writer  # Ensures we're open in write mode.
+        self.owner.writer  # noqa: B018 Ensures we're open in write mode.
         state = self._current_state(key)
         _check_metadata_type(key, value)
         self.cache[key] = value
         self._mods[key] = state.next_state("set")
 
     def __delitem__(self, key: str) -> None:
-        self.owner.writer  # Ensures we're open in write mode.
+        self.owner.writer  # noqa: B018 Ensures we're open in write mode.
         state = self._current_state(key)
         del self.cache[key]
         self._mods[key] = state.next_state("del")
