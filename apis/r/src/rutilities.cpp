@@ -108,13 +108,14 @@ void apply_dim_ranges(
                 uint64_t l = static_cast<uint64_t>(Rcpp::fromInteger64(lo[i]));
                 uint64_t h = static_cast<uint64_t>(Rcpp::fromInteger64(hi[i]));
                 vp[i] = std::make_pair(std::max(l, pr.first), std::min(h, pr.second));
-                tdbs::LOG_DEBUG(fmt::format(
-                    "[apply_dim_ranges] Applying dim point {} on {} with {} - "
-                    "{}",
-                    i,
-                    nm,
-                    l,
-                    h));
+                tdbs::LOG_DEBUG(
+                    fmt::format(
+                        "[apply_dim_ranges] Applying dim point {} on {} with {} - "
+                        "{}",
+                        i,
+                        nm,
+                        l,
+                        h));
                 suitable = l < pr.second && h > pr.first;  // lower must be less than max, higher
                                                            // more than min
             }
@@ -128,13 +129,14 @@ void apply_dim_ranges(
             const std::pair<int64_t, int64_t> pr = dm->domain<int64_t>();
             for (int i = 0; i < mm.nrow(); i++) {
                 vp[i] = std::make_pair(std::max(lo[i], pr.first), std::min(hi[i], pr.second));
-                tdbs::LOG_DEBUG(fmt::format(
-                    "[apply_dim_ranges] Applying dim point {} on {} with {} - "
-                    "{}",
-                    i,
-                    nm,
-                    lo[i],
-                    hi[i]));
+                tdbs::LOG_DEBUG(
+                    fmt::format(
+                        "[apply_dim_ranges] Applying dim point {} on {} with {} - "
+                        "{}",
+                        i,
+                        nm,
+                        lo[i],
+                        hi[i]));
                 suitable = lo[i] < pr.second && hi[i] > pr.first;  // lower must be less than max,
                                                                    // higher more than min
             }
@@ -150,13 +152,14 @@ void apply_dim_ranges(
                 float l = static_cast<float>(lo[i]);
                 float h = static_cast<float>(hi[i]);
                 vp[i] = std::make_pair(std::max(l, pr.first), std::min(h, pr.second));
-                tdbs::LOG_DEBUG(fmt::format(
-                    "[apply_dim_ranges] Applying dim point {} on {} with {} - "
-                    "{}",
-                    i,
-                    nm,
-                    l,
-                    h));
+                tdbs::LOG_DEBUG(
+                    fmt::format(
+                        "[apply_dim_ranges] Applying dim point {} on {} with {} - "
+                        "{}",
+                        i,
+                        nm,
+                        l,
+                        h));
                 suitable = l < pr.second && h > pr.first;  // lower must be less than max, higher
                                                            // more than min
             }
@@ -170,13 +173,14 @@ void apply_dim_ranges(
             const std::pair<double, double> pr = dm->domain<double>();
             for (int i = 0; i < mm.nrow(); i++) {
                 vp[i] = std::make_pair(std::max(lo[i], pr.first), std::min(hi[i], pr.second));
-                tdbs::LOG_DEBUG(fmt::format(
-                    "[apply_dim_ranges] Applying dim point {} on {} with {} - "
-                    "{}",
-                    i,
-                    nm,
-                    lo[i],
-                    hi[i]));
+                tdbs::LOG_DEBUG(
+                    fmt::format(
+                        "[apply_dim_ranges] Applying dim point {} on {} with {} - "
+                        "{}",
+                        i,
+                        nm,
+                        lo[i],
+                        hi[i]));
                 suitable = lo[i] < pr.second && hi[i] > pr.first;  // lower must be less than max,
                                                                    // higher more than min
             }
@@ -190,13 +194,14 @@ void apply_dim_ranges(
             const std::pair<int32_t, int32_t> pr = dm->domain<int32_t>();
             for (int i = 0; i < mm.nrow(); i++) {
                 vp[i] = std::make_pair(std::max(lo[i], pr.first), std::min(hi[i], pr.second));
-                tdbs::LOG_DEBUG(fmt::format(
-                    "[apply_dim_ranges] Applying dim point {} on {} with {} - "
-                    "{}",
-                    i,
-                    nm[i],
-                    lo[i],
-                    hi[i]));
+                tdbs::LOG_DEBUG(
+                    fmt::format(
+                        "[apply_dim_ranges] Applying dim point {} on {} with {} - "
+                        "{}",
+                        i,
+                        nm[i],
+                        lo[i],
+                        hi[i]));
                 suitable = lo[i] < pr.second && hi[i] > pr.first;  // lower must be less than max,
                                                                    // higher more than min
             }
@@ -426,21 +431,23 @@ SEXP convert_domainish(const tdbs::ArrowTable& arrow_table) {
             // offsets, data
             std::vector<std::string> lohi = tiledbsoma::ArrowAdapter::get_array_string_column(
                 arrow_array->children[i], arrow_schema->children[i]);
-            tdbs::LOG_INFO(fmt::format(
-                "[domainish] name {} format {} length {} lo {} hi {}",
-                std::string(arrow_schema->children[i]->name),
-                std::string(arrow_schema->children[i]->format),
-                arrow_array->children[i]->length,
-                lohi[0],
-                lohi[1]));
+            tdbs::LOG_INFO(
+                fmt::format(
+                    "[domainish] name {} format {} length {} lo {} hi {}",
+                    std::string(arrow_schema->children[i]->name),
+                    std::string(arrow_schema->children[i]->format),
+                    arrow_array->children[i]->length,
+                    lohi[0],
+                    lohi[1]));
         } else {
             // Arrow semantics: non-variable-length: buffers 0,1 are validity &
             // data
-            tdbs::LOG_INFO(fmt::format(
-                "[domainish] name {} format {} length {}",
-                std::string(arrow_schema->children[i]->name),
-                std::string(arrow_schema->children[i]->format),
-                arrow_array->children[i]->length));
+            tdbs::LOG_INFO(
+                fmt::format(
+                    "[domainish] name {} format {} length {}",
+                    std::string(arrow_schema->children[i]->name),
+                    std::string(arrow_schema->children[i]->format),
+                    arrow_array->children[i]->length));
         }
 
         ArrowArrayMove(arrow_array->children[i], arr->children[i]);

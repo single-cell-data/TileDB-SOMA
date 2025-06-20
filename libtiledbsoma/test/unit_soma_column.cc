@@ -197,13 +197,14 @@ TEST_CASE("SOMAColumn: SOMADimension") {
     std::vector<std::shared_ptr<SOMAColumn>> columns;
 
     for (int64_t i = 0; i < index_columns.second->n_children; ++i) {
-        columns.push_back(SOMADimension::create(
-            ctx->tiledb_ctx(),
-            index_columns.second->children[i],
-            index_columns.first->children[i],
-            "SOMAGeometryDataFrame",
-            "",
-            platform_config));
+        columns.push_back(
+            SOMADimension::create(
+                ctx->tiledb_ctx(),
+                index_columns.second->children[i],
+                index_columns.first->children[i],
+                "SOMAGeometryDataFrame",
+                "",
+                platform_config));
 
         REQUIRE(columns.back()->tiledb_dimensions().value()[0].type() == dim_infos[i].tiledb_datatype);
     }

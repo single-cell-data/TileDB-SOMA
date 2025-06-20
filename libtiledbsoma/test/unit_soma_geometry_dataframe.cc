@@ -131,8 +131,9 @@ TEST_CASE("SOMAGeometryDataFrame: Roundtrip", "[SOMAGeometryDataFrame]") {
     ArrowArrayStartAppending(data_array->children[1]);
     ArrowArrayStartAppending(data_array->children[2]);
 
-    geometry::GenericGeometry polygon = geometry::Polygon(std::vector<geometry::BasePoint>(
-        {geometry::BasePoint(0, 0), geometry::BasePoint(1, 0), geometry::BasePoint(0, 1)}));
+    geometry::GenericGeometry polygon = geometry::Polygon(
+        std::vector<geometry::BasePoint>(
+            {geometry::BasePoint(0, 0), geometry::BasePoint(1, 0), geometry::BasePoint(0, 1)}));
     NANOARROW_THROW_NOT_OK(ArrowBufferAppendUInt32(ArrowArrayBuffer(data_array->children[0], 1), 0));
     data_array->children[0]->length = 1;
     NANOARROW_THROW_NOT_OK(ArrowArrayAppendDouble(data_array->children[0]->children[0], 0));

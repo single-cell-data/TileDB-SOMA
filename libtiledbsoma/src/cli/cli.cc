@@ -73,8 +73,9 @@ void test_arrow(const std::string& uri) {
         tdbs::LOG_WARN(fmt::format("Read of '{}' incomplete", uri));
         exit(-1);
     }
-    tdbs::LOG_INFO(fmt::format(
-        "Read complete with {} obs and {} cols", obs_data->get()->num_rows(), obs_data->get()->names().size()));
+    tdbs::LOG_INFO(
+        fmt::format(
+            "Read complete with {} obs and {} cols", obs_data->get()->num_rows(), obs_data->get()->names().size()));
     std::vector<std::string> names = obs_data->get()->names();
     for (auto nm : names) {
         auto buf = obs_data->get()->at(nm);

@@ -30,10 +30,11 @@ std::shared_ptr<SOMAColumn> SOMAAttribute::deserialize(
                                                    .template get<std::vector<std::string>>();
 
     if (attribute_names.size() != 1) {
-        throw TileDBSOMAError(fmt::format(
-            "[SOMAAttribute][deserialize] Invalid number of attributes. "
-            "Epected 1, got {}",
-            attribute_names.size()));
+        throw TileDBSOMAError(
+            fmt::format(
+                "[SOMAAttribute][deserialize] Invalid number of attributes. "
+                "Epected 1, got {}",
+                attribute_names.size()));
     }
 
     if (!array.schema().has_attribute(attribute_names[0])) {
@@ -45,8 +46,9 @@ std::shared_ptr<SOMAColumn> SOMAAttribute::deserialize(
     auto enumeration_name = AttributeExperimental::get_enumeration_name(ctx, attribute);
 
     std::optional<Enumeration> enumeration = enumeration_name.has_value() ?
-                                                 std::make_optional(ArrayExperimental::get_enumeration(
-                                                     ctx, array, enumeration_name.value())) :
+                                                 std::make_optional(
+                                                     ArrayExperimental::get_enumeration(
+                                                         ctx, array, enumeration_name.value())) :
                                                  std::nullopt;
 
     return std::make_shared<SOMAAttribute>(attribute, enumeration);
@@ -60,75 +62,85 @@ std::shared_ptr<SOMAAttribute> SOMAAttribute::create(
 }
 
 void SOMAAttribute::_set_dim_points(ManagedQuery&, const std::any&) const {
-    throw TileDBSOMAError(fmt::format(
-        "[SOMAAttribute][_set_dim_points] Column with name {} is not an index "
-        "column",
-        name()));
+    throw TileDBSOMAError(
+        fmt::format(
+            "[SOMAAttribute][_set_dim_points] Column with name {} is not an index "
+            "column",
+            name()));
 }
 
 void SOMAAttribute::_set_dim_ranges(ManagedQuery&, const std::any&) const {
-    throw TileDBSOMAError(fmt::format(
-        "[SOMAAttribute][_set_dim_ranges] Column with name {} is not an index "
-        "column",
-        name()));
+    throw TileDBSOMAError(
+        fmt::format(
+            "[SOMAAttribute][_set_dim_ranges] Column with name {} is not an index "
+            "column",
+            name()));
 }
 
 void SOMAAttribute::_set_current_domain_slot(NDRectangle&, std::span<const std::any>) const {
-    throw TileDBSOMAError(fmt::format(
-        "[SOMAAttribute][_set_current_domain_slot] Column with name {} is not "
-        "an index column",
-        name()));
+    throw TileDBSOMAError(
+        fmt::format(
+            "[SOMAAttribute][_set_current_domain_slot] Column with name {} is not "
+            "an index column",
+            name()));
 }
 
 std::pair<bool, std::string> SOMAAttribute::_can_set_current_domain_slot(
     std::optional<NDRectangle>&, std::span<const std::any>) const {
-    throw TileDBSOMAError(fmt::format(
-        "[SOMAAttribute][_set_current_domain_slot] Column with name {} is not "
-        "an index column",
-        name()));
+    throw TileDBSOMAError(
+        fmt::format(
+            "[SOMAAttribute][_set_current_domain_slot] Column with name {} is not "
+            "an index column",
+            name()));
 };
 
 std::any SOMAAttribute::_core_domain_slot() const {
-    throw TileDBSOMAError(fmt::format(
-        "[SOMAAttribute][_core_domain_slot] Column with name {} is not an "
-        "index column",
-        name()));
+    throw TileDBSOMAError(
+        fmt::format(
+            "[SOMAAttribute][_core_domain_slot] Column with name {} is not an "
+            "index column",
+            name()));
 }
 
 std::any SOMAAttribute::_non_empty_domain_slot(Array&) const {
-    throw TileDBSOMAError(fmt::format(
-        "[SOMAAttribute][_non_empty_domain_slot] Column with name {} is not an "
-        "index column",
-        name()));
+    throw TileDBSOMAError(
+        fmt::format(
+            "[SOMAAttribute][_non_empty_domain_slot] Column with name {} is not an "
+            "index column",
+            name()));
 }
 
 std::any SOMAAttribute::_non_empty_domain_slot_opt(const SOMAContext&, Array&) const {
-    throw TileDBSOMAError(fmt::format(
-        "[SOMAAttribute][_non_empty_domain_slot] Column with name {} is not an "
-        "index column",
-        name()));
+    throw TileDBSOMAError(
+        fmt::format(
+            "[SOMAAttribute][_non_empty_domain_slot] Column with name {} is not an "
+            "index column",
+            name()));
 }
 
 std::any SOMAAttribute::_core_current_domain_slot(const SOMAContext&, Array&) const {
-    throw TileDBSOMAError(fmt::format(
-        "[SOMAAttribute][_core_current_domain_slot] Column with name {} is not "
-        "an index column",
-        name()));
+    throw TileDBSOMAError(
+        fmt::format(
+            "[SOMAAttribute][_core_current_domain_slot] Column with name {} is not "
+            "an index column",
+            name()));
 }
 
 std::any SOMAAttribute::_core_current_domain_slot(NDRectangle&) const {
-    throw TileDBSOMAError(fmt::format(
-        "[SOMAAttribute][_core_current_domain_slot] Column with name {} is not "
-        "an index column",
-        name()));
+    throw TileDBSOMAError(
+        fmt::format(
+            "[SOMAAttribute][_core_current_domain_slot] Column with name {} is not "
+            "an index column",
+            name()));
 }
 
 std::pair<ArrowArray*, ArrowSchema*> SOMAAttribute::arrow_domain_slot(
     const SOMAContext&, Array&, enum Domainish) const {
-    throw TileDBSOMAError(fmt::format(
-        "[SOMAAttribute][arrow_domain_slot] Column with name {} is not an "
-        "index column",
-        name()));
+    throw TileDBSOMAError(
+        fmt::format(
+            "[SOMAAttribute][arrow_domain_slot] Column with name {} is not an "
+            "index column",
+            name()));
 }
 
 ArrowSchema* SOMAAttribute::arrow_schema_slot(const SOMAContext& ctx, Array& array) const {

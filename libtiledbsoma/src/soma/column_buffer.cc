@@ -135,10 +135,11 @@ void ColumnBuffer::attach(Query& query, std::optional<Subarray> subarray) {
     // compatibility issue with pyarrow versions below 17. Thus we log and
     // continue.
     if (!validity_.empty() && is_dim) {
-        LOG_DEBUG(fmt::format(
-            "[ColumnBuffer::attach] Validity buffer passed for dimension '{}' "
-            "is being ignored",
-            name_));
+        LOG_DEBUG(
+            fmt::format(
+                "[ColumnBuffer::attach] Validity buffer passed for dimension '{}' "
+                "is being ignored",
+                name_));
     }
 
     return use_subarray ? attach_subarray(*subarray) : attach_buffer(query);
